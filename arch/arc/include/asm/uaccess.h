@@ -1,79 +1,80 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2004, 2007-2010, 2011-2012 Synopsys, Inc. (www.synopsys.com)
  *
  * vineetg: June 2010
- *    -__clear_user( ) called multiple times during elf load was byte loop
- *    converted to do as much word clear as possible.
+ *    -__clear_user( ) called multiple बार during elf load was byte loop
+ *    converted to करो as much word clear as possible.
  *
  * vineetg: Dec 2009
- *    -Hand crafted constant propagation for "constant" copy sizes
+ *    -Hand crafted स्थिरant propagation क्रम "constant" copy sizes
  *    -stock kernel shrunk by 33K at -O3
  *
  * vineetg: Sept 2009
- *    -Added option to (UN)inline copy_(to|from)_user to reduce code sz
+ *    -Added option to (UN)अंतरभूत copy_(to|from)_user to reduce code sz
  *    -kernel shrunk by 200K even at -O3 (gcc 4.2.1)
- *    -Enabled when doing -Os
+ *    -Enabled when करोing -Os
  *
  * Amit Bhor, Sameer Dhavale: Codito Technologies 2004
  */
 
-#ifndef _ASM_ARC_UACCESS_H
-#define _ASM_ARC_UACCESS_H
+#अगर_अघोषित _ASM_ARC_UACCESS_H
+#घोषणा _ASM_ARC_UACCESS_H
 
-#include <linux/string.h>	/* for generic string functions */
+#समावेश <linux/माला.स>	/* क्रम generic string functions */
 
 
-#define __kernel_ok		(uaccess_kernel())
+#घोषणा __kernel_ok		(uaccess_kernel())
 
 /*
- * Algorithmically, for __user_ok() we want do:
+ * Algorithmically, क्रम __user_ok() we want करो:
  * 	(start < TASK_SIZE) && (start+len < TASK_SIZE)
- * where TASK_SIZE could either be retrieved from thread_info->addr_limit or
+ * where TASK_SIZE could either be retrieved from thपढ़ो_info->addr_limit or
  * emitted directly in code.
  *
  * This can however be rewritten as follows:
  *	(len <= TASK_SIZE) && (start+len < TASK_SIZE)
  *
- * Because it essentially checks if buffer end is within limit and @len is
+ * Because it essentially checks अगर buffer end is within limit and @len is
  * non-ngeative, which implies that buffer start will be within limit too.
  *
- * The reason for rewriting being, for majority of cases, @len is generally
- * compile time constant, causing first sub-expression to be compile time
+ * The reason क्रम rewriting being, क्रम majority of हालs, @len is generally
+ * compile समय स्थिरant, causing first sub-expression to be compile समय
  * subsumed.
  *
  * The second part would generate weird large LIMMs e.g. (0x6000_0000 - 0x10),
- * so we check for TASK_SIZE using get_fs() since the addr_limit load from mem
- * would already have been done at this call site for __kernel_ok()
+ * so we check क्रम TASK_SIZE using get_fs() since the addr_limit load from mem
+ * would alपढ़ोy have been करोne at this call site क्रम __kernel_ok()
  *
  */
-#define __user_ok(addr, sz)	(((sz) <= TASK_SIZE) && \
+#घोषणा __user_ok(addr, sz)	(((sz) <= TASK_SIZE) && \
 				 ((addr) <= (get_fs() - (sz))))
-#define __access_ok(addr, sz)	(unlikely(__kernel_ok) || \
+#घोषणा __access_ok(addr, sz)	(unlikely(__kernel_ok) || \
 				 likely(__user_ok((addr), (sz))))
 
 /*********** Single byte/hword/word copies ******************/
 
-#define __get_user_fn(sz, u, k)					\
-({								\
-	long __ret = 0;	/* success by default */	\
-	switch (sz) {						\
-	case 1: __arc_get_user_one(*(k), u, "ldb", __ret); break;	\
-	case 2: __arc_get_user_one(*(k), u, "ldw", __ret); break;	\
-	case 4: __arc_get_user_one(*(k), u, "ld", __ret);  break;	\
-	case 8: __arc_get_user_one_64(*(k), u, __ret);     break;	\
-	}							\
+#घोषणा __get_user_fn(sz, u, k)					\
+(अणु								\
+	दीर्घ __ret = 0;	/* success by शेष */	\
+	चयन (sz) अणु						\
+	हाल 1: __arc_get_user_one(*(k), u, "ldb", __ret); अवरोध;	\
+	हाल 2: __arc_get_user_one(*(k), u, "ldw", __ret); अवरोध;	\
+	हाल 4: __arc_get_user_one(*(k), u, "ld", __ret);  अवरोध;	\
+	हाल 8: __arc_get_user_one_64(*(k), u, __ret);     अवरोध;	\
+	पूर्ण							\
 	__ret;							\
-})
+पूर्ण)
 
 /*
- * Returns 0 on success, -EFAULT if not.
- * @ret already contains 0 - given that errors will be less likely
- * (hence +r asm constraint below).
- * In case of error, fixup code will make it -EFAULT
+ * Returns 0 on success, -EFAULT अगर not.
+ * @ret alपढ़ोy contains 0 - given that errors will be less likely
+ * (hence +r यंत्र स्थिरraपूर्णांक below).
+ * In हाल of error, fixup code will make it -EFAULT
  */
-#define __arc_get_user_one(dst, src, op, ret)	\
-	__asm__ __volatile__(                   \
+#घोषणा __arc_get_user_one(dst, src, op, ret)	\
+	__यंत्र__ __अस्थिर__(                   \
 	"1:	"op"    %1,[%2]\n"		\
 	"2:	;nop\n"				\
 	"	.section .fixup, \"ax\"\n"	\
@@ -92,8 +93,8 @@
 	: "+r" (ret), "=r" (dst)		\
 	: "r" (src), "ir" (-EFAULT))
 
-#define __arc_get_user_one_64(dst, src, ret)	\
-	__asm__ __volatile__(                   \
+#घोषणा __arc_get_user_one_64(dst, src, ret)	\
+	__यंत्र__ __अस्थिर__(                   \
 	"1:	ld   %1,[%2]\n"			\
 	"4:	ld  %R1,[%2, 4]\n"		\
 	"2:	;nop\n"				\
@@ -115,20 +116,20 @@
 	: "+r" (ret), "=r" (dst)		\
 	: "r" (src), "ir" (-EFAULT))
 
-#define __put_user_fn(sz, u, k)					\
-({								\
-	long __ret = 0;	/* success by default */	\
-	switch (sz) {						\
-	case 1: __arc_put_user_one(*(k), u, "stb", __ret); break;	\
-	case 2: __arc_put_user_one(*(k), u, "stw", __ret); break;	\
-	case 4: __arc_put_user_one(*(k), u, "st", __ret);  break;	\
-	case 8: __arc_put_user_one_64(*(k), u, __ret);     break;	\
-	}							\
+#घोषणा __put_user_fn(sz, u, k)					\
+(अणु								\
+	दीर्घ __ret = 0;	/* success by शेष */	\
+	चयन (sz) अणु						\
+	हाल 1: __arc_put_user_one(*(k), u, "stb", __ret); अवरोध;	\
+	हाल 2: __arc_put_user_one(*(k), u, "stw", __ret); अवरोध;	\
+	हाल 4: __arc_put_user_one(*(k), u, "st", __ret);  अवरोध;	\
+	हाल 8: __arc_put_user_one_64(*(k), u, __ret);     अवरोध;	\
+	पूर्ण							\
 	__ret;							\
-})
+पूर्ण)
 
-#define __arc_put_user_one(src, dst, op, ret)	\
-	__asm__ __volatile__(                   \
+#घोषणा __arc_put_user_one(src, dst, op, ret)	\
+	__यंत्र__ __अस्थिर__(                   \
 	"1:	"op"    %1,[%2]\n"		\
 	"2:	;nop\n"				\
 	"	.section .fixup, \"ax\"\n"	\
@@ -144,8 +145,8 @@
 	: "+r" (ret)				\
 	: "r" (src), "r" (dst), "ir" (-EFAULT))
 
-#define __arc_put_user_one_64(src, dst, ret)	\
-	__asm__ __volatile__(                   \
+#घोषणा __arc_put_user_one_64(src, dst, ret)	\
+	__यंत्र__ __अस्थिर__(                   \
 	"1:	st   %1,[%2]\n"			\
 	"4:	st  %R1,[%2, 4]\n"		\
 	"2:	;nop\n"				\
@@ -164,23 +165,23 @@
 	: "r" (src), "r" (dst), "ir" (-EFAULT))
 
 
-static inline unsigned long
-raw_copy_from_user(void *to, const void __user *from, unsigned long n)
-{
-	long res = 0;
-	char val;
-	unsigned long tmp1, tmp2, tmp3, tmp4;
-	unsigned long orig_n = n;
+अटल अंतरभूत अचिन्हित दीर्घ
+raw_copy_from_user(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
+अणु
+	दीर्घ res = 0;
+	अक्षर val;
+	अचिन्हित दीर्घ पंचांगp1, पंचांगp2, पंचांगp3, पंचांगp4;
+	अचिन्हित दीर्घ orig_n = n;
 
-	if (n == 0)
-		return 0;
+	अगर (n == 0)
+		वापस 0;
 
 	/* unaligned */
-	if (((unsigned long)to & 0x3) || ((unsigned long)from & 0x3)) {
+	अगर (((अचिन्हित दीर्घ)to & 0x3) || ((अचिन्हित दीर्घ)from & 0x3)) अणु
 
-		unsigned char tmp;
+		अचिन्हित अक्षर पंचांगp;
 
-		__asm__ __volatile__ (
+		__यंत्र__ __अस्थिर__ (
 		"	mov.f   lp_count, %0		\n"
 		"	lpnz 2f				\n"
 		"1:	ldb.ab  %1, [%3, 1]		\n"
@@ -198,28 +199,28 @@ raw_copy_from_user(void *to, const void __user *from, unsigned long n)
 
 		: "+r" (n),
 		/*
-		 * Note as an '&' earlyclobber operand to make sure the
-		 * temporary register inside the loop is not the same as
+		 * Note as an '&' earlyclobber opeअक्रम to make sure the
+		 * temporary रेजिस्टर inside the loop is not the same as
 		 *  FROM or TO.
 		*/
-		  "=&r" (tmp), "+r" (to), "+r" (from)
+		  "=&r" (पंचांगp), "+r" (to), "+r" (from)
 		:
 		: "lp_count", "memory");
 
-		return n;
-	}
+		वापस n;
+	पूर्ण
 
 	/*
-	 * Hand-crafted constant propagation to reduce code sz of the
+	 * Hand-crafted स्थिरant propagation to reduce code sz of the
 	 * laddered copy 16x,8,4,2,1
 	 */
-	if (__builtin_constant_p(orig_n)) {
+	अगर (__builtin_स्थिरant_p(orig_n)) अणु
 		res = orig_n;
 
-		if (orig_n / 16) {
+		अगर (orig_n / 16) अणु
 			orig_n = orig_n % 16;
 
-			__asm__ __volatile__(
+			__यंत्र__ __अस्थिर__(
 			"	lsr   lp_count, %7,4		\n"
 			"	lp    3f			\n"
 			"1:	ld.ab   %3, [%2, 4]		\n"
@@ -244,14 +245,14 @@ raw_copy_from_user(void *to, const void __user *from, unsigned long n)
 			"	.word   13b,4b			\n"
 			"	.previous			\n"
 			: "+r" (res), "+r"(to), "+r"(from),
-			  "=r"(tmp1), "=r"(tmp2), "=r"(tmp3), "=r"(tmp4)
+			  "=r"(पंचांगp1), "=r"(पंचांगp2), "=r"(पंचांगp3), "=r"(पंचांगp4)
 			: "ir"(n)
 			: "lp_count", "memory");
-		}
-		if (orig_n / 8) {
+		पूर्ण
+		अगर (orig_n / 8) अणु
 			orig_n = orig_n % 8;
 
-			__asm__ __volatile__(
+			__यंत्र__ __अस्थिर__(
 			"14:	ld.ab   %3, [%2,4]		\n"
 			"15:	ld.ab   %4, [%2,4]		\n"
 			"	st.ab   %3, [%1,4]		\n"
@@ -268,14 +269,14 @@ raw_copy_from_user(void *to, const void __user *from, unsigned long n)
 			"	.word   15b,4b			\n"
 			"	.previous			\n"
 			: "+r" (res), "+r"(to), "+r"(from),
-			  "=r"(tmp1), "=r"(tmp2)
+			  "=r"(पंचांगp1), "=r"(पंचांगp2)
 			:
 			: "memory");
-		}
-		if (orig_n / 4) {
+		पूर्ण
+		अगर (orig_n / 4) अणु
 			orig_n = orig_n % 4;
 
-			__asm__ __volatile__(
+			__यंत्र__ __अस्थिर__(
 			"16:	ld.ab   %3, [%2,4]		\n"
 			"	st.ab   %3, [%1,4]		\n"
 			"	sub     %0,%0,4			\n"
@@ -288,14 +289,14 @@ raw_copy_from_user(void *to, const void __user *from, unsigned long n)
 			"	.align 4			\n"
 			"	.word   16b,4b			\n"
 			"	.previous			\n"
-			: "+r" (res), "+r"(to), "+r"(from), "=r"(tmp1)
+			: "+r" (res), "+r"(to), "+r"(from), "=r"(पंचांगp1)
 			:
 			: "memory");
-		}
-		if (orig_n / 2) {
+		पूर्ण
+		अगर (orig_n / 2) अणु
 			orig_n = orig_n % 2;
 
-			__asm__ __volatile__(
+			__यंत्र__ __अस्थिर__(
 			"17:	ldw.ab   %3, [%2,2]		\n"
 			"	stw.ab   %3, [%1,2]		\n"
 			"	sub      %0,%0,2		\n"
@@ -308,12 +309,12 @@ raw_copy_from_user(void *to, const void __user *from, unsigned long n)
 			"	.align 4			\n"
 			"	.word   17b,4b			\n"
 			"	.previous			\n"
-			: "+r" (res), "+r"(to), "+r"(from), "=r"(tmp1)
+			: "+r" (res), "+r"(to), "+r"(from), "=r"(पंचांगp1)
 			:
 			: "memory");
-		}
-		if (orig_n & 1) {
-			__asm__ __volatile__(
+		पूर्ण
+		अगर (orig_n & 1) अणु
+			__यंत्र__ __अस्थिर__(
 			"18:	ldb.ab   %3, [%2,2]		\n"
 			"	stb.ab   %3, [%1,2]		\n"
 			"	sub      %0,%0,1		\n"
@@ -326,13 +327,13 @@ raw_copy_from_user(void *to, const void __user *from, unsigned long n)
 			"	.align 4			\n"
 			"	.word   18b,4b			\n"
 			"	.previous			\n"
-			: "+r" (res), "+r"(to), "+r"(from), "=r"(tmp1)
+			: "+r" (res), "+r"(to), "+r"(from), "=r"(पंचांगp1)
 			:
 			: "memory");
-		}
-	} else {  /* n is NOT constant, so laddered copy of 16x,8,4,2,1  */
+		पूर्ण
+	पूर्ण अन्यथा अणु  /* n is NOT स्थिरant, so laddered copy of 16x,8,4,2,1  */
 
-		__asm__ __volatile__(
+		__यंत्र__ __अस्थिर__(
 		"	mov %0,%3			\n"
 		"	lsr.f   lp_count, %3,4		\n"  /* 16x bytes */
 		"	lpnz    3f			\n"
@@ -383,31 +384,31 @@ raw_copy_from_user(void *to, const void __user *from, unsigned long n)
 		"	.word   18b,4b			\n"
 		"	.previous			\n"
 		: "=r" (res), "+r"(to), "+r"(from), "+r"(n), "=r"(val),
-		  "=r"(tmp1), "=r"(tmp2), "=r"(tmp3), "=r"(tmp4)
+		  "=r"(पंचांगp1), "=r"(पंचांगp2), "=r"(पंचांगp3), "=r"(पंचांगp4)
 		:
 		: "lp_count", "memory");
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static inline unsigned long
-raw_copy_to_user(void __user *to, const void *from, unsigned long n)
-{
-	long res = 0;
-	char val;
-	unsigned long tmp1, tmp2, tmp3, tmp4;
-	unsigned long orig_n = n;
+अटल अंतरभूत अचिन्हित दीर्घ
+raw_copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
+अणु
+	दीर्घ res = 0;
+	अक्षर val;
+	अचिन्हित दीर्घ पंचांगp1, पंचांगp2, पंचांगp3, पंचांगp4;
+	अचिन्हित दीर्घ orig_n = n;
 
-	if (n == 0)
-		return 0;
+	अगर (n == 0)
+		वापस 0;
 
 	/* unaligned */
-	if (((unsigned long)to & 0x3) || ((unsigned long)from & 0x3)) {
+	अगर (((अचिन्हित दीर्घ)to & 0x3) || ((अचिन्हित दीर्घ)from & 0x3)) अणु
 
-		unsigned char tmp;
+		अचिन्हित अक्षर पंचांगp;
 
-		__asm__ __volatile__(
+		__यंत्र__ __अस्थिर__(
 		"	mov.f   lp_count, %0		\n"
 		"	lpnz 3f				\n"
 		"	ldb.ab  %1, [%3, 1]		\n"
@@ -424,24 +425,24 @@ raw_copy_to_user(void __user *to, const void *from, unsigned long n)
 		"	.previous			\n"
 
 		: "+r" (n),
-		/* Note as an '&' earlyclobber operand to make sure the
-		 * temporary register inside the loop is not the same as
+		/* Note as an '&' earlyclobber opeअक्रम to make sure the
+		 * temporary रेजिस्टर inside the loop is not the same as
 		 * FROM or TO.
 		 */
-		  "=&r" (tmp), "+r" (to), "+r" (from)
+		  "=&r" (पंचांगp), "+r" (to), "+r" (from)
 		:
 		: "lp_count", "memory");
 
-		return n;
-	}
+		वापस n;
+	पूर्ण
 
-	if (__builtin_constant_p(orig_n)) {
+	अगर (__builtin_स्थिरant_p(orig_n)) अणु
 		res = orig_n;
 
-		if (orig_n / 16) {
+		अगर (orig_n / 16) अणु
 			orig_n = orig_n % 16;
 
-			__asm__ __volatile__(
+			__यंत्र__ __अस्थिर__(
 			"	lsr lp_count, %7,4		\n"
 			"	lp  3f				\n"
 			"	ld.ab %3, [%2, 4]		\n"
@@ -466,14 +467,14 @@ raw_copy_to_user(void __user *to, const void *from, unsigned long n)
 			"	.word   13b,4b			\n"
 			"	.previous			\n"
 			: "+r" (res), "+r"(to), "+r"(from),
-			  "=r"(tmp1), "=r"(tmp2), "=r"(tmp3), "=r"(tmp4)
+			  "=r"(पंचांगp1), "=r"(पंचांगp2), "=r"(पंचांगp3), "=r"(पंचांगp4)
 			: "ir"(n)
 			: "lp_count", "memory");
-		}
-		if (orig_n / 8) {
+		पूर्ण
+		अगर (orig_n / 8) अणु
 			orig_n = orig_n % 8;
 
-			__asm__ __volatile__(
+			__यंत्र__ __अस्थिर__(
 			"	ld.ab   %3, [%2,4]		\n"
 			"	ld.ab   %4, [%2,4]		\n"
 			"14:	st.ab   %3, [%1,4]		\n"
@@ -490,14 +491,14 @@ raw_copy_to_user(void __user *to, const void *from, unsigned long n)
 			"	.word   15b,4b			\n"
 			"	.previous			\n"
 			: "+r" (res), "+r"(to), "+r"(from),
-			  "=r"(tmp1), "=r"(tmp2)
+			  "=r"(पंचांगp1), "=r"(पंचांगp2)
 			:
 			: "memory");
-		}
-		if (orig_n / 4) {
+		पूर्ण
+		अगर (orig_n / 4) अणु
 			orig_n = orig_n % 4;
 
-			__asm__ __volatile__(
+			__यंत्र__ __अस्थिर__(
 			"	ld.ab   %3, [%2,4]		\n"
 			"16:	st.ab   %3, [%1,4]		\n"
 			"	sub     %0, %0, 4		\n"
@@ -510,14 +511,14 @@ raw_copy_to_user(void __user *to, const void *from, unsigned long n)
 			"	.align 4			\n"
 			"	.word   16b,4b			\n"
 			"	.previous			\n"
-			: "+r" (res), "+r"(to), "+r"(from), "=r"(tmp1)
+			: "+r" (res), "+r"(to), "+r"(from), "=r"(पंचांगp1)
 			:
 			: "memory");
-		}
-		if (orig_n / 2) {
+		पूर्ण
+		अगर (orig_n / 2) अणु
 			orig_n = orig_n % 2;
 
-			__asm__ __volatile__(
+			__यंत्र__ __अस्थिर__(
 			"	ldw.ab    %3, [%2,2]		\n"
 			"17:	stw.ab    %3, [%1,2]		\n"
 			"	sub       %0, %0, 2		\n"
@@ -530,12 +531,12 @@ raw_copy_to_user(void __user *to, const void *from, unsigned long n)
 			"	.align 4			\n"
 			"	.word   17b,4b			\n"
 			"	.previous			\n"
-			: "+r" (res), "+r"(to), "+r"(from), "=r"(tmp1)
+			: "+r" (res), "+r"(to), "+r"(from), "=r"(पंचांगp1)
 			:
 			: "memory");
-		}
-		if (orig_n & 1) {
-			__asm__ __volatile__(
+		पूर्ण
+		अगर (orig_n & 1) अणु
+			__यंत्र__ __अस्थिर__(
 			"	ldb.ab  %3, [%2,1]		\n"
 			"18:	stb.ab  %3, [%1,1]		\n"
 			"	sub     %0, %0, 1		\n"
@@ -548,13 +549,13 @@ raw_copy_to_user(void __user *to, const void *from, unsigned long n)
 			"	.align 4			\n"
 			"	.word   18b,4b			\n"
 			"	.previous			\n"
-			: "+r" (res), "+r"(to), "+r"(from), "=r"(tmp1)
+			: "+r" (res), "+r"(to), "+r"(from), "=r"(पंचांगp1)
 			:
 			: "memory");
-		}
-	} else {  /* n is NOT constant, so laddered copy of 16x,8,4,2,1  */
+		पूर्ण
+	पूर्ण अन्यथा अणु  /* n is NOT स्थिरant, so laddered copy of 16x,8,4,2,1  */
 
-		__asm__ __volatile__(
+		__यंत्र__ __अस्थिर__(
 		"	mov   %0,%3			\n"
 		"	lsr.f lp_count, %3,4		\n"  /* 16x bytes */
 		"	lpnz  3f			\n"
@@ -605,20 +606,20 @@ raw_copy_to_user(void __user *to, const void *from, unsigned long n)
 		"	.word   18b,4b			\n"
 		"	.previous			\n"
 		: "=r" (res), "+r"(to), "+r"(from), "+r"(n), "=r"(val),
-		  "=r"(tmp1), "=r"(tmp2), "=r"(tmp3), "=r"(tmp4)
+		  "=r"(पंचांगp1), "=r"(पंचांगp2), "=r"(पंचांगp3), "=r"(पंचांगp4)
 		:
 		: "lp_count", "memory");
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static inline unsigned long __arc_clear_user(void __user *to, unsigned long n)
-{
-	long res = n;
-	unsigned char *d_char = to;
+अटल अंतरभूत अचिन्हित दीर्घ __arc_clear_user(व्योम __user *to, अचिन्हित दीर्घ n)
+अणु
+	दीर्घ res = n;
+	अचिन्हित अक्षर *d_अक्षर = to;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	bbit0   %0, 0, 1f		\n"
 	"75:	stb.ab  %2, [%0,1]		\n"
 	"	sub %1, %1, 1			\n"
@@ -648,23 +649,23 @@ static inline unsigned long __arc_clear_user(void __user *to, unsigned long n)
 	"	.word   78b, 3b			\n"
 	"	.word   79b, 3b			\n"
 	"	.previous			\n"
-	: "+r"(d_char), "+r"(res)
+	: "+r"(d_अक्षर), "+r"(res)
 	: "i"(0)
 	: "lp_count", "memory");
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static inline long
-__arc_strncpy_from_user(char *dst, const char __user *src, long count)
-{
-	long res = 0;
-	char val;
+अटल अंतरभूत दीर्घ
+__arc_म_नकलन_from_user(अक्षर *dst, स्थिर अक्षर __user *src, दीर्घ count)
+अणु
+	दीर्घ res = 0;
+	अक्षर val;
 
-	if (count == 0)
-		return 0;
+	अगर (count == 0)
+		वापस 0;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	mov	lp_count, %5		\n"
 	"	lp	3f			\n"
 	"1:	ldb.ab  %3, [%2, 1]		\n"
@@ -685,15 +686,15 @@ __arc_strncpy_from_user(char *dst, const char __user *src, long count)
 	: "g"(-EFAULT), "r"(count)
 	: "lp_count", "memory");
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static inline long __arc_strnlen_user(const char __user *s, long n)
-{
-	long res, tmp1, cnt;
-	char val;
+अटल अंतरभूत दीर्घ __arc_strnlen_user(स्थिर अक्षर __user *s, दीर्घ n)
+अणु
+	दीर्घ res, पंचांगp1, cnt;
+	अक्षर val;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	mov %2, %1			\n"
 	"1:	ldb.ab  %3, [%0, 1]		\n"
 	"	breq.d  %3, 0, 2f		\n"
@@ -711,35 +712,35 @@ static inline long __arc_strnlen_user(const char __user *s, long n)
 	"	.align 4			\n"
 	"	.word 1b, 4b			\n"
 	"	.previous			\n"
-	: "=r"(res), "=r"(tmp1), "=r"(cnt), "=r"(val)
+	: "=r"(res), "=r"(पंचांगp1), "=r"(cnt), "=r"(val)
 	: "0"(s), "1"(n)
 	: "memory");
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-#ifndef CONFIG_CC_OPTIMIZE_FOR_SIZE
+#अगर_अघोषित CONFIG_CC_OPTIMIZE_FOR_SIZE
 
-#define INLINE_COPY_TO_USER
-#define INLINE_COPY_FROM_USER
+#घोषणा INLINE_COPY_TO_USER
+#घोषणा INLINE_COPY_FROM_USER
 
-#define __clear_user(d, n)		__arc_clear_user(d, n)
-#define __strncpy_from_user(d, s, n)	__arc_strncpy_from_user(d, s, n)
-#define __strnlen_user(s, n)		__arc_strnlen_user(s, n)
-#else
-extern unsigned long arc_clear_user_noinline(void __user *to,
-		unsigned long n);
-extern long arc_strncpy_from_user_noinline (char *dst, const char __user *src,
-		long count);
-extern long arc_strnlen_user_noinline(const char __user *src, long n);
+#घोषणा __clear_user(d, n)		__arc_clear_user(d, n)
+#घोषणा __म_नकलन_from_user(d, s, n)	__arc_म_नकलन_from_user(d, s, n)
+#घोषणा __strnlen_user(s, n)		__arc_strnlen_user(s, n)
+#अन्यथा
+बाह्य अचिन्हित दीर्घ arc_clear_user_noअंतरभूत(व्योम __user *to,
+		अचिन्हित दीर्घ n);
+बाह्य दीर्घ arc_म_नकलन_from_user_noअंतरभूत (अक्षर *dst, स्थिर अक्षर __user *src,
+		दीर्घ count);
+बाह्य दीर्घ arc_strnlen_user_noअंतरभूत(स्थिर अक्षर __user *src, दीर्घ n);
 
-#define __clear_user(d, n)		arc_clear_user_noinline(d, n)
-#define __strncpy_from_user(d, s, n)	arc_strncpy_from_user_noinline(d, s, n)
-#define __strnlen_user(s, n)		arc_strnlen_user_noinline(s, n)
+#घोषणा __clear_user(d, n)		arc_clear_user_noअंतरभूत(d, n)
+#घोषणा __म_नकलन_from_user(d, s, n)	arc_म_नकलन_from_user_noअंतरभूत(d, s, n)
+#घोषणा __strnlen_user(s, n)		arc_strnlen_user_noअंतरभूत(s, n)
 
-#endif
+#पूर्ण_अगर
 
-#include <asm/segment.h>
-#include <asm-generic/uaccess.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <यंत्र-generic/uaccess.h>
 
-#endif
+#पूर्ण_अगर

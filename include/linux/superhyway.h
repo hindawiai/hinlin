@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * include/linux/superhyway.h
  *
@@ -6,102 +7,102 @@
  * Copyright (C) 2004, 2005  Paul Mundt <lethal@linux-sh.org>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#ifndef __LINUX_SUPERHYWAY_H
-#define __LINUX_SUPERHYWAY_H
+#अगर_अघोषित __LINUX_SUPERHYWAY_H
+#घोषणा __LINUX_SUPERHYWAY_H
 
-#include <linux/device.h>
+#समावेश <linux/device.h>
 
 /*
  * SuperHyway IDs
  */
-#define SUPERHYWAY_DEVICE_ID_SH5_DMAC	0x0183
+#घोषणा SUPERHYWAY_DEVICE_ID_SH5_DMAC	0x0183
 
-struct superhyway_vcr_info {
+काष्ठा superhyway_vcr_info अणु
 	u8	perr_flags;	/* P-port Error flags */
 	u8	merr_flags;	/* Module Error flags */
 	u16	mod_vers;	/* Module Version */
 	u16	mod_id;		/* Module ID */
 	u8	bot_mb;		/* Bottom Memory block */
 	u8	top_mb;		/* Top Memory block */
-};
+पूर्ण;
 
-struct superhyway_ops {
-	int (*read_vcr)(unsigned long base, struct superhyway_vcr_info *vcr);
-	int (*write_vcr)(unsigned long base, struct superhyway_vcr_info vcr);
-};
+काष्ठा superhyway_ops अणु
+	पूर्णांक (*पढ़ो_vcr)(अचिन्हित दीर्घ base, काष्ठा superhyway_vcr_info *vcr);
+	पूर्णांक (*ग_लिखो_vcr)(अचिन्हित दीर्घ base, काष्ठा superhyway_vcr_info vcr);
+पूर्ण;
 
-struct superhyway_bus {
-	struct superhyway_ops *ops;
-};
+काष्ठा superhyway_bus अणु
+	काष्ठा superhyway_ops *ops;
+पूर्ण;
 
-extern struct superhyway_bus superhyway_channels[];
+बाह्य काष्ठा superhyway_bus superhyway_channels[];
 
-struct superhyway_device_id {
-	unsigned int id;
-	unsigned long driver_data;
-};
+काष्ठा superhyway_device_id अणु
+	अचिन्हित पूर्णांक id;
+	अचिन्हित दीर्घ driver_data;
+पूर्ण;
 
-struct superhyway_device;
-extern struct bus_type superhyway_bus_type;
+काष्ठा superhyway_device;
+बाह्य काष्ठा bus_type superhyway_bus_type;
 
-struct superhyway_driver {
-	char *name;
+काष्ठा superhyway_driver अणु
+	अक्षर *name;
 
-	const struct superhyway_device_id *id_table;
-	struct device_driver drv;
+	स्थिर काष्ठा superhyway_device_id *id_table;
+	काष्ठा device_driver drv;
 
-	int (*probe)(struct superhyway_device *dev, const struct superhyway_device_id *id);
-	void (*remove)(struct superhyway_device *dev);
-};
+	पूर्णांक (*probe)(काष्ठा superhyway_device *dev, स्थिर काष्ठा superhyway_device_id *id);
+	व्योम (*हटाओ)(काष्ठा superhyway_device *dev);
+पूर्ण;
 
-#define to_superhyway_driver(d)	container_of((d), struct superhyway_driver, drv)
+#घोषणा to_superhyway_driver(d)	container_of((d), काष्ठा superhyway_driver, drv)
 
-struct superhyway_device {
-	char name[32];
+काष्ठा superhyway_device अणु
+	अक्षर name[32];
 
-	struct device dev;
+	काष्ठा device dev;
 
-	struct superhyway_device_id id;
-	struct superhyway_driver *drv;
-	struct superhyway_bus *bus;
+	काष्ठा superhyway_device_id id;
+	काष्ठा superhyway_driver *drv;
+	काष्ठा superhyway_bus *bus;
 
-	int num_resources;
-	struct resource *resource;
-	struct superhyway_vcr_info vcr;
-};
+	पूर्णांक num_resources;
+	काष्ठा resource *resource;
+	काष्ठा superhyway_vcr_info vcr;
+पूर्ण;
 
-#define to_superhyway_device(d)	container_of((d), struct superhyway_device, dev)
+#घोषणा to_superhyway_device(d)	container_of((d), काष्ठा superhyway_device, dev)
 
-#define superhyway_get_drvdata(d)	dev_get_drvdata(&(d)->dev)
-#define superhyway_set_drvdata(d,p)	dev_set_drvdata(&(d)->dev, (p))
+#घोषणा superhyway_get_drvdata(d)	dev_get_drvdata(&(d)->dev)
+#घोषणा superhyway_set_drvdata(d,p)	dev_set_drvdata(&(d)->dev, (p))
 
-static inline int
-superhyway_read_vcr(struct superhyway_device *dev, unsigned long base,
-		    struct superhyway_vcr_info *vcr)
-{
-	return dev->bus->ops->read_vcr(base, vcr);
-}
+अटल अंतरभूत पूर्णांक
+superhyway_पढ़ो_vcr(काष्ठा superhyway_device *dev, अचिन्हित दीर्घ base,
+		    काष्ठा superhyway_vcr_info *vcr)
+अणु
+	वापस dev->bus->ops->पढ़ो_vcr(base, vcr);
+पूर्ण
 
-static inline int
-superhyway_write_vcr(struct superhyway_device *dev, unsigned long base,
-		     struct superhyway_vcr_info vcr)
-{
-	return dev->bus->ops->write_vcr(base, vcr);
-}
+अटल अंतरभूत पूर्णांक
+superhyway_ग_लिखो_vcr(काष्ठा superhyway_device *dev, अचिन्हित दीर्घ base,
+		     काष्ठा superhyway_vcr_info vcr)
+अणु
+	वापस dev->bus->ops->ग_लिखो_vcr(base, vcr);
+पूर्ण
 
-extern int superhyway_scan_bus(struct superhyway_bus *);
+बाह्य पूर्णांक superhyway_scan_bus(काष्ठा superhyway_bus *);
 
 /* drivers/sh/superhyway/superhyway.c */
-int superhyway_register_driver(struct superhyway_driver *);
-void superhyway_unregister_driver(struct superhyway_driver *);
-int superhyway_add_device(unsigned long base, struct superhyway_device *, struct superhyway_bus *);
-int superhyway_add_devices(struct superhyway_bus *bus, struct superhyway_device **devices, int nr_devices);
+पूर्णांक superhyway_रेजिस्टर_driver(काष्ठा superhyway_driver *);
+व्योम superhyway_unरेजिस्टर_driver(काष्ठा superhyway_driver *);
+पूर्णांक superhyway_add_device(अचिन्हित दीर्घ base, काष्ठा superhyway_device *, काष्ठा superhyway_bus *);
+पूर्णांक superhyway_add_devices(काष्ठा superhyway_bus *bus, काष्ठा superhyway_device **devices, पूर्णांक nr_devices);
 
 /* drivers/sh/superhyway/superhyway-sysfs.c */
-extern const struct attribute_group *superhyway_dev_groups[];
+बाह्य स्थिर काष्ठा attribute_group *superhyway_dev_groups[];
 
-#endif /* __LINUX_SUPERHYWAY_H */
+#पूर्ण_अगर /* __LINUX_SUPERHYWAY_H */
 

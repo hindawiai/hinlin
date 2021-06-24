@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Intel Emmitsburg PCH pinctrl/GPIO driver
  *
  * Copyright (C) 2020, Intel Corporation
- * Author: Andy Shevchenko <andriy.shevchenko@linux.intel.com>
+ * Author: Andy Shevchenko <andriy.shevchenko@linux.पूर्णांकel.com>
  */
 
-#include <linux/mod_devicetable.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinctrl.h>
 
-#include "pinctrl-intel.h"
+#समावेश "pinctrl-intel.h"
 
-#define EBG_PAD_OWN	0x0a0
-#define EBG_PADCFGLOCK	0x100
-#define EBG_HOSTSW_OWN	0x130
-#define EBG_GPI_IS	0x200
-#define EBG_GPI_IE	0x210
+#घोषणा EBG_PAD_OWN	0x0a0
+#घोषणा EBG_PADCFGLOCK	0x100
+#घोषणा EBG_HOSTSW_OWN	0x130
+#घोषणा EBG_GPI_IS	0x200
+#घोषणा EBG_GPI_IE	0x210
 
-#define EBG_GPP(r, s, e)				\
-	{						\
+#घोषणा EBG_GPP(r, s, e)				\
+	अणु						\
 		.reg_num = (r),				\
 		.base = (s),				\
 		.size = ((e) - (s) + 1),		\
-	}
+	पूर्ण
 
-#define EBG_COMMUNITY(b, s, e, g)			\
-	{						\
+#घोषणा EBG_COMMUNITY(b, s, e, g)			\
+	अणु						\
 		.barno = (b),				\
-		.padown_offset = EBG_PAD_OWN,		\
+		.paकरोwn_offset = EBG_PAD_OWN,		\
 		.padcfglock_offset = EBG_PADCFGLOCK,	\
 		.hostown_offset = EBG_HOSTSW_OWN,	\
 		.is_offset = EBG_GPI_IS,		\
@@ -39,10 +40,10 @@
 		.npins = ((e) - (s) + 1),		\
 		.gpps = (g),				\
 		.ngpps = ARRAY_SIZE(g),			\
-	}
+	पूर्ण
 
 /* Emmitsburg */
-static const struct pinctrl_pin_desc ebg_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc ebg_pins[] = अणु
 	/* GPP_A */
 	PINCTRL_PIN(0, "ESPI_ALERT0B"),
 	PINCTRL_PIN(1, "ESPI_ALERT1B"),
@@ -318,69 +319,69 @@ static const struct pinctrl_pin_desc ebg_pins[] = {
 	PINCTRL_PIN(259, "NAC_NCSI_OE_N"),
 	PINCTRL_PIN(260, "NAC_GR_N"),
 	PINCTRL_PIN(261, "NAC_INIT_SX_WAKE_N"),
-};
+पूर्ण;
 
-static const struct intel_padgroup ebg_community0_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup ebg_community0_gpps[] = अणु
 	EBG_GPP(0, 0, 20),	/* GPP_A */
 	EBG_GPP(1, 21, 44),	/* GPP_B */
 	EBG_GPP(2, 45, 65),	/* SPI */
-};
+पूर्ण;
 
-static const struct intel_padgroup ebg_community1_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup ebg_community1_gpps[] = अणु
 	EBG_GPP(0, 66, 87),	/* GPP_C */
 	EBG_GPP(1, 88, 111),	/* GPP_D */
-};
+पूर्ण;
 
-static const struct intel_padgroup ebg_community3_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup ebg_community3_gpps[] = अणु
 	EBG_GPP(0, 112, 135),	/* GPP_E */
 	EBG_GPP(1, 136, 145),	/* JTAG */
-};
+पूर्ण;
 
-static const struct intel_padgroup ebg_community4_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup ebg_community4_gpps[] = अणु
 	EBG_GPP(0, 146, 165),	/* GPP_H */
 	EBG_GPP(1, 166, 183),	/* GPP_J */
-};
+पूर्ण;
 
-static const struct intel_padgroup ebg_community5_gpps[] = {
+अटल स्थिर काष्ठा पूर्णांकel_padgroup ebg_community5_gpps[] = अणु
 	EBG_GPP(0, 184, 207),	/* GPP_I */
 	EBG_GPP(1, 208, 225),	/* GPP_L */
 	EBG_GPP(2, 226, 243),	/* GPP_M */
 	EBG_GPP(3, 244, 261),	/* GPP_N */
-};
+पूर्ण;
 
-static const struct intel_community ebg_communities[] = {
+अटल स्थिर काष्ठा पूर्णांकel_community ebg_communities[] = अणु
 	EBG_COMMUNITY(0, 0, 65, ebg_community0_gpps),
 	EBG_COMMUNITY(1, 66, 111, ebg_community1_gpps),
 	EBG_COMMUNITY(2, 112, 145, ebg_community3_gpps),
 	EBG_COMMUNITY(3, 146, 183, ebg_community4_gpps),
 	EBG_COMMUNITY(4, 184, 261, ebg_community5_gpps),
-};
+पूर्ण;
 
-static const struct intel_pinctrl_soc_data ebg_soc_data = {
+अटल स्थिर काष्ठा पूर्णांकel_pinctrl_soc_data ebg_soc_data = अणु
 	.pins = ebg_pins,
 	.npins = ARRAY_SIZE(ebg_pins),
 	.communities = ebg_communities,
 	.ncommunities = ARRAY_SIZE(ebg_communities),
-};
+पूर्ण;
 
-static const struct acpi_device_id ebg_pinctrl_acpi_match[] = {
-	{ "INTC1071", (kernel_ulong_t)&ebg_soc_data },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id ebg_pinctrl_acpi_match[] = अणु
+	अणु "INTC1071", (kernel_uदीर्घ_t)&ebg_soc_data पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, ebg_pinctrl_acpi_match);
 
-static INTEL_PINCTRL_PM_OPS(ebg_pinctrl_pm_ops);
+अटल INTEL_PINCTRL_PM_OPS(ebg_pinctrl_pm_ops);
 
-static struct platform_driver ebg_pinctrl_driver = {
-	.probe = intel_pinctrl_probe_by_hid,
-	.driver = {
+अटल काष्ठा platक्रमm_driver ebg_pinctrl_driver = अणु
+	.probe = पूर्णांकel_pinctrl_probe_by_hid,
+	.driver = अणु
 		.name = "emmitsburg-pinctrl",
 		.acpi_match_table = ebg_pinctrl_acpi_match,
 		.pm = &ebg_pinctrl_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ebg_pinctrl_driver);
+module_platक्रमm_driver(ebg_pinctrl_driver);
 
 MODULE_AUTHOR("Andy Shevchenko <andriy.shevchenko@linux.intel.com>");
 MODULE_DESCRIPTION("Intel Emmitsburg PCH pinctrl/GPIO driver");

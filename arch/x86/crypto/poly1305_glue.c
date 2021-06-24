@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#include <crypto/algapi.h>
-#include <crypto/internal/hash.h>
-#include <crypto/internal/poly1305.h>
-#include <crypto/internal/simd.h>
-#include <linux/crypto.h>
-#include <linux/jump_label.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sizes.h>
-#include <asm/intel-family.h>
-#include <asm/simd.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/poly1305.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sizes.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#समावेश <यंत्र/simd.h>
 
-asmlinkage void poly1305_init_x86_64(void *ctx,
-				     const u8 key[POLY1305_BLOCK_SIZE]);
-asmlinkage void poly1305_blocks_x86_64(void *ctx, const u8 *inp,
-				       const size_t len, const u32 padbit);
-asmlinkage void poly1305_emit_x86_64(void *ctx, u8 mac[POLY1305_DIGEST_SIZE],
-				     const u32 nonce[4]);
-asmlinkage void poly1305_emit_avx(void *ctx, u8 mac[POLY1305_DIGEST_SIZE],
-				  const u32 nonce[4]);
-asmlinkage void poly1305_blocks_avx(void *ctx, const u8 *inp, const size_t len,
-				    const u32 padbit);
-asmlinkage void poly1305_blocks_avx2(void *ctx, const u8 *inp, const size_t len,
-				     const u32 padbit);
-asmlinkage void poly1305_blocks_avx512(void *ctx, const u8 *inp,
-				       const size_t len, const u32 padbit);
+यंत्रlinkage व्योम poly1305_init_x86_64(व्योम *ctx,
+				     स्थिर u8 key[POLY1305_BLOCK_SIZE]);
+यंत्रlinkage व्योम poly1305_blocks_x86_64(व्योम *ctx, स्थिर u8 *inp,
+				       स्थिर माप_प्रकार len, स्थिर u32 padbit);
+यंत्रlinkage व्योम poly1305_emit_x86_64(व्योम *ctx, u8 mac[POLY1305_DIGEST_SIZE],
+				     स्थिर u32 nonce[4]);
+यंत्रlinkage व्योम poly1305_emit_avx(व्योम *ctx, u8 mac[POLY1305_DIGEST_SIZE],
+				  स्थिर u32 nonce[4]);
+यंत्रlinkage व्योम poly1305_blocks_avx(व्योम *ctx, स्थिर u8 *inp, स्थिर माप_प्रकार len,
+				    स्थिर u32 padbit);
+यंत्रlinkage व्योम poly1305_blocks_avx2(व्योम *ctx, स्थिर u8 *inp, स्थिर माप_प्रकार len,
+				     स्थिर u32 padbit);
+यंत्रlinkage व्योम poly1305_blocks_avx512(व्योम *ctx, स्थिर u8 *inp,
+				       स्थिर माप_प्रकार len, स्थिर u32 padbit);
 
-static __ro_after_init DEFINE_STATIC_KEY_FALSE(poly1305_use_avx);
-static __ro_after_init DEFINE_STATIC_KEY_FALSE(poly1305_use_avx2);
-static __ro_after_init DEFINE_STATIC_KEY_FALSE(poly1305_use_avx512);
+अटल __ro_after_init DEFINE_STATIC_KEY_FALSE(poly1305_use_avx);
+अटल __ro_after_init DEFINE_STATIC_KEY_FALSE(poly1305_use_avx2);
+अटल __ro_after_init DEFINE_STATIC_KEY_FALSE(poly1305_use_avx512);
 
-struct poly1305_arch_internal {
-	union {
-		struct {
+काष्ठा poly1305_arch_पूर्णांकernal अणु
+	जोड़ अणु
+		काष्ठा अणु
 			u32 h[5];
 			u32 is_base2_26;
-		};
+		पूर्ण;
 		u64 hs[3];
-	};
+	पूर्ण;
 	u64 r[2];
 	u64 pad;
-	struct { u32 r2, r1, r4, r3; } rn[9];
-};
+	काष्ठा अणु u32 r2, r1, r4, r3; पूर्ण rn[9];
+पूर्ण;
 
-/* The AVX code uses base 2^26, while the scalar code uses base 2^64. If we hit
- * the unfortunate situation of using AVX and then having to go back to scalar
+/* The AVX code uses base 2^26, जबतक the scalar code uses base 2^64. If we hit
+ * the unक्रमtunate situation of using AVX and then having to go back to scalar
  * -- because the user is silly and has called the update function from two
- * separate contexts -- then we need to convert back to the original base before
+ * separate contexts -- then we need to convert back to the original base beक्रमe
  * proceeding. It is possible to reason that the initial reduction below is
- * sufficient given the implementation invariants. However, for an avoidance of
- * doubt and because this is not performance critical, we do the full reduction
+ * sufficient given the implementation invariants. However, क्रम an aव्योमance of
+ * करोubt and because this is not perक्रमmance critical, we करो the full reduction
  * anyway. Z3 proof of below function: https://xn--4db.cc/ltPtHCKN/py
  */
-static void convert_to_base2_64(void *ctx)
-{
-	struct poly1305_arch_internal *state = ctx;
+अटल व्योम convert_to_base2_64(व्योम *ctx)
+अणु
+	काष्ठा poly1305_arch_पूर्णांकernal *state = ctx;
 	u32 cy;
 
-	if (!state->is_base2_26)
-		return;
+	अगर (!state->is_base2_26)
+		वापस;
 
 	cy = state->h[0] >> 26; state->h[0] &= 0x3ffffff; state->h[1] += cy;
 	cy = state->h[1] >> 26; state->h[1] &= 0x3ffffff; state->h[2] += cy;
@@ -71,66 +72,66 @@ static void convert_to_base2_64(void *ctx)
 	state->hs[0] = ((u64)state->h[2] << 52) | ((u64)state->h[1] << 26) | state->h[0];
 	state->hs[1] = ((u64)state->h[4] << 40) | ((u64)state->h[3] << 14) | (state->h[2] >> 12);
 	state->hs[2] = state->h[4] >> 24;
-#define ULT(a, b) ((a ^ ((a ^ b) | ((a - b) ^ b))) >> (sizeof(a) * 8 - 1))
+#घोषणा ULT(a, b) ((a ^ ((a ^ b) | ((a - b) ^ b))) >> (माप(a) * 8 - 1))
 	cy = (state->hs[2] >> 2) + (state->hs[2] & ~3ULL);
 	state->hs[2] &= 3;
 	state->hs[0] += cy;
 	state->hs[1] += (cy = ULT(state->hs[0], cy));
 	state->hs[2] += ULT(state->hs[1], cy);
-#undef ULT
+#अघोषित ULT
 	state->is_base2_26 = 0;
-}
+पूर्ण
 
-static void poly1305_simd_init(void *ctx, const u8 key[POLY1305_BLOCK_SIZE])
-{
+अटल व्योम poly1305_simd_init(व्योम *ctx, स्थिर u8 key[POLY1305_BLOCK_SIZE])
+अणु
 	poly1305_init_x86_64(ctx, key);
-}
+पूर्ण
 
-static void poly1305_simd_blocks(void *ctx, const u8 *inp, size_t len,
-				 const u32 padbit)
-{
-	struct poly1305_arch_internal *state = ctx;
+अटल व्योम poly1305_simd_blocks(व्योम *ctx, स्थिर u8 *inp, माप_प्रकार len,
+				 स्थिर u32 padbit)
+अणु
+	काष्ठा poly1305_arch_पूर्णांकernal *state = ctx;
 
 	/* SIMD disables preemption, so relax after processing each page. */
 	BUILD_BUG_ON(SZ_4K < POLY1305_BLOCK_SIZE ||
 		     SZ_4K % POLY1305_BLOCK_SIZE);
 
-	if (!static_branch_likely(&poly1305_use_avx) ||
+	अगर (!अटल_branch_likely(&poly1305_use_avx) ||
 	    (len < (POLY1305_BLOCK_SIZE * 18) && !state->is_base2_26) ||
-	    !crypto_simd_usable()) {
+	    !crypto_simd_usable()) अणु
 		convert_to_base2_64(ctx);
 		poly1305_blocks_x86_64(ctx, inp, len, padbit);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	do {
-		const size_t bytes = min_t(size_t, len, SZ_4K);
+	करो अणु
+		स्थिर माप_प्रकार bytes = min_t(माप_प्रकार, len, SZ_4K);
 
 		kernel_fpu_begin();
-		if (IS_ENABLED(CONFIG_AS_AVX512) && static_branch_likely(&poly1305_use_avx512))
+		अगर (IS_ENABLED(CONFIG_AS_AVX512) && अटल_branch_likely(&poly1305_use_avx512))
 			poly1305_blocks_avx512(ctx, inp, bytes, padbit);
-		else if (static_branch_likely(&poly1305_use_avx2))
+		अन्यथा अगर (अटल_branch_likely(&poly1305_use_avx2))
 			poly1305_blocks_avx2(ctx, inp, bytes, padbit);
-		else
+		अन्यथा
 			poly1305_blocks_avx(ctx, inp, bytes, padbit);
 		kernel_fpu_end();
 
 		len -= bytes;
 		inp += bytes;
-	} while (len);
-}
+	पूर्ण जबतक (len);
+पूर्ण
 
-static void poly1305_simd_emit(void *ctx, u8 mac[POLY1305_DIGEST_SIZE],
-			       const u32 nonce[4])
-{
-	if (!static_branch_likely(&poly1305_use_avx))
+अटल व्योम poly1305_simd_emit(व्योम *ctx, u8 mac[POLY1305_DIGEST_SIZE],
+			       स्थिर u32 nonce[4])
+अणु
+	अगर (!अटल_branch_likely(&poly1305_use_avx))
 		poly1305_emit_x86_64(ctx, mac, nonce);
-	else
+	अन्यथा
 		poly1305_emit_avx(ctx, mac, nonce);
-}
+पूर्ण
 
-void poly1305_init_arch(struct poly1305_desc_ctx *dctx, const u8 key[POLY1305_KEY_SIZE])
-{
+व्योम poly1305_init_arch(काष्ठा poly1305_desc_ctx *dctx, स्थिर u8 key[POLY1305_KEY_SIZE])
+अणु
 	poly1305_simd_init(&dctx->h, key);
 	dctx->s[0] = get_unaligned_le32(&key[16]);
 	dctx->s[1] = get_unaligned_le32(&key[20]);
@@ -138,150 +139,150 @@ void poly1305_init_arch(struct poly1305_desc_ctx *dctx, const u8 key[POLY1305_KE
 	dctx->s[3] = get_unaligned_le32(&key[28]);
 	dctx->buflen = 0;
 	dctx->sset = true;
-}
+पूर्ण
 EXPORT_SYMBOL(poly1305_init_arch);
 
-static unsigned int crypto_poly1305_setdctxkey(struct poly1305_desc_ctx *dctx,
-					       const u8 *inp, unsigned int len)
-{
-	unsigned int acc = 0;
-	if (unlikely(!dctx->sset)) {
-		if (!dctx->rset && len >= POLY1305_BLOCK_SIZE) {
+अटल अचिन्हित पूर्णांक crypto_poly1305_setdctxkey(काष्ठा poly1305_desc_ctx *dctx,
+					       स्थिर u8 *inp, अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक acc = 0;
+	अगर (unlikely(!dctx->sset)) अणु
+		अगर (!dctx->rset && len >= POLY1305_BLOCK_SIZE) अणु
 			poly1305_simd_init(&dctx->h, inp);
 			inp += POLY1305_BLOCK_SIZE;
 			len -= POLY1305_BLOCK_SIZE;
 			acc += POLY1305_BLOCK_SIZE;
 			dctx->rset = 1;
-		}
-		if (len >= POLY1305_BLOCK_SIZE) {
+		पूर्ण
+		अगर (len >= POLY1305_BLOCK_SIZE) अणु
 			dctx->s[0] = get_unaligned_le32(&inp[0]);
 			dctx->s[1] = get_unaligned_le32(&inp[4]);
 			dctx->s[2] = get_unaligned_le32(&inp[8]);
 			dctx->s[3] = get_unaligned_le32(&inp[12]);
 			acc += POLY1305_BLOCK_SIZE;
 			dctx->sset = true;
-		}
-	}
-	return acc;
-}
+		पूर्ण
+	पूर्ण
+	वापस acc;
+पूर्ण
 
-void poly1305_update_arch(struct poly1305_desc_ctx *dctx, const u8 *src,
-			  unsigned int srclen)
-{
-	unsigned int bytes, used;
+व्योम poly1305_update_arch(काष्ठा poly1305_desc_ctx *dctx, स्थिर u8 *src,
+			  अचिन्हित पूर्णांक srclen)
+अणु
+	अचिन्हित पूर्णांक bytes, used;
 
-	if (unlikely(dctx->buflen)) {
+	अगर (unlikely(dctx->buflen)) अणु
 		bytes = min(srclen, POLY1305_BLOCK_SIZE - dctx->buflen);
-		memcpy(dctx->buf + dctx->buflen, src, bytes);
+		स_नकल(dctx->buf + dctx->buflen, src, bytes);
 		src += bytes;
 		srclen -= bytes;
 		dctx->buflen += bytes;
 
-		if (dctx->buflen == POLY1305_BLOCK_SIZE) {
-			if (likely(!crypto_poly1305_setdctxkey(dctx, dctx->buf, POLY1305_BLOCK_SIZE)))
+		अगर (dctx->buflen == POLY1305_BLOCK_SIZE) अणु
+			अगर (likely(!crypto_poly1305_setdctxkey(dctx, dctx->buf, POLY1305_BLOCK_SIZE)))
 				poly1305_simd_blocks(&dctx->h, dctx->buf, POLY1305_BLOCK_SIZE, 1);
 			dctx->buflen = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (likely(srclen >= POLY1305_BLOCK_SIZE)) {
-		bytes = round_down(srclen, POLY1305_BLOCK_SIZE);
+	अगर (likely(srclen >= POLY1305_BLOCK_SIZE)) अणु
+		bytes = round_करोwn(srclen, POLY1305_BLOCK_SIZE);
 		srclen -= bytes;
 		used = crypto_poly1305_setdctxkey(dctx, src, bytes);
-		if (likely(bytes - used))
+		अगर (likely(bytes - used))
 			poly1305_simd_blocks(&dctx->h, src + used, bytes - used, 1);
 		src += bytes;
-	}
+	पूर्ण
 
-	if (unlikely(srclen)) {
+	अगर (unlikely(srclen)) अणु
 		dctx->buflen = srclen;
-		memcpy(dctx->buf, src, srclen);
-	}
-}
+		स_नकल(dctx->buf, src, srclen);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(poly1305_update_arch);
 
-void poly1305_final_arch(struct poly1305_desc_ctx *dctx, u8 *dst)
-{
-	if (unlikely(dctx->buflen)) {
+व्योम poly1305_final_arch(काष्ठा poly1305_desc_ctx *dctx, u8 *dst)
+अणु
+	अगर (unlikely(dctx->buflen)) अणु
 		dctx->buf[dctx->buflen++] = 1;
-		memset(dctx->buf + dctx->buflen, 0,
+		स_रखो(dctx->buf + dctx->buflen, 0,
 		       POLY1305_BLOCK_SIZE - dctx->buflen);
 		poly1305_simd_blocks(&dctx->h, dctx->buf, POLY1305_BLOCK_SIZE, 0);
-	}
+	पूर्ण
 
 	poly1305_simd_emit(&dctx->h, dst, dctx->s);
-	memzero_explicit(dctx, sizeof(*dctx));
-}
+	memzero_explicit(dctx, माप(*dctx));
+पूर्ण
 EXPORT_SYMBOL(poly1305_final_arch);
 
-static int crypto_poly1305_init(struct shash_desc *desc)
-{
-	struct poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
+अटल पूर्णांक crypto_poly1305_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
 
-	*dctx = (struct poly1305_desc_ctx){};
-	return 0;
-}
+	*dctx = (काष्ठा poly1305_desc_ctx)अणुपूर्ण;
+	वापस 0;
+पूर्ण
 
-static int crypto_poly1305_update(struct shash_desc *desc,
-				  const u8 *src, unsigned int srclen)
-{
-	struct poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
+अटल पूर्णांक crypto_poly1305_update(काष्ठा shash_desc *desc,
+				  स्थिर u8 *src, अचिन्हित पूर्णांक srclen)
+अणु
+	काष्ठा poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
 
 	poly1305_update_arch(dctx, src, srclen);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crypto_poly1305_final(struct shash_desc *desc, u8 *dst)
-{
-	struct poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
+अटल पूर्णांक crypto_poly1305_final(काष्ठा shash_desc *desc, u8 *dst)
+अणु
+	काष्ठा poly1305_desc_ctx *dctx = shash_desc_ctx(desc);
 
-	if (unlikely(!dctx->sset))
-		return -ENOKEY;
+	अगर (unlikely(!dctx->sset))
+		वापस -ENOKEY;
 
 	poly1305_final_arch(dctx, dst);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shash_alg alg = {
+अटल काष्ठा shash_alg alg = अणु
 	.digestsize	= POLY1305_DIGEST_SIZE,
 	.init		= crypto_poly1305_init,
 	.update		= crypto_poly1305_update,
 	.final		= crypto_poly1305_final,
-	.descsize	= sizeof(struct poly1305_desc_ctx),
-	.base		= {
+	.descsize	= माप(काष्ठा poly1305_desc_ctx),
+	.base		= अणु
 		.cra_name		= "poly1305",
 		.cra_driver_name	= "poly1305-simd",
 		.cra_priority		= 300,
 		.cra_blocksize		= POLY1305_BLOCK_SIZE,
 		.cra_module		= THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init poly1305_simd_mod_init(void)
-{
-	if (boot_cpu_has(X86_FEATURE_AVX) &&
-	    cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, NULL))
-		static_branch_enable(&poly1305_use_avx);
-	if (boot_cpu_has(X86_FEATURE_AVX) && boot_cpu_has(X86_FEATURE_AVX2) &&
-	    cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, NULL))
-		static_branch_enable(&poly1305_use_avx2);
-	if (IS_ENABLED(CONFIG_AS_AVX512) && boot_cpu_has(X86_FEATURE_AVX) &&
+अटल पूर्णांक __init poly1305_simd_mod_init(व्योम)
+अणु
+	अगर (boot_cpu_has(X86_FEATURE_AVX) &&
+	    cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, शून्य))
+		अटल_branch_enable(&poly1305_use_avx);
+	अगर (boot_cpu_has(X86_FEATURE_AVX) && boot_cpu_has(X86_FEATURE_AVX2) &&
+	    cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM, शून्य))
+		अटल_branch_enable(&poly1305_use_avx2);
+	अगर (IS_ENABLED(CONFIG_AS_AVX512) && boot_cpu_has(X86_FEATURE_AVX) &&
 	    boot_cpu_has(X86_FEATURE_AVX2) && boot_cpu_has(X86_FEATURE_AVX512F) &&
-	    cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM | XFEATURE_MASK_AVX512, NULL) &&
-	    /* Skylake downclocks unacceptably much when using zmm, but later generations are fast. */
+	    cpu_has_xfeatures(XFEATURE_MASK_SSE | XFEATURE_MASK_YMM | XFEATURE_MASK_AVX512, शून्य) &&
+	    /* Skylake करोwnघड़ीs unacceptably much when using zmm, but later generations are fast. */
 	    boot_cpu_data.x86_model != INTEL_FAM6_SKYLAKE_X)
-		static_branch_enable(&poly1305_use_avx512);
-	return IS_REACHABLE(CONFIG_CRYPTO_HASH) ? crypto_register_shash(&alg) : 0;
-}
+		अटल_branch_enable(&poly1305_use_avx512);
+	वापस IS_REACHABLE(CONFIG_CRYPTO_HASH) ? crypto_रेजिस्टर_shash(&alg) : 0;
+पूर्ण
 
-static void __exit poly1305_simd_mod_exit(void)
-{
-	if (IS_REACHABLE(CONFIG_CRYPTO_HASH))
-		crypto_unregister_shash(&alg);
-}
+अटल व्योम __निकास poly1305_simd_mod_निकास(व्योम)
+अणु
+	अगर (IS_REACHABLE(CONFIG_CRYPTO_HASH))
+		crypto_unरेजिस्टर_shash(&alg);
+पूर्ण
 
 module_init(poly1305_simd_mod_init);
-module_exit(poly1305_simd_mod_exit);
+module_निकास(poly1305_simd_mod_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jason A. Donenfeld <Jason@zx2c4.com>");

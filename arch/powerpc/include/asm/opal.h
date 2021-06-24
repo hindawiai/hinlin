@@ -1,402 +1,403 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * PowerNV OPAL definitions.
  *
  * Copyright 2011 IBM Corp.
  */
 
-#ifndef _ASM_POWERPC_OPAL_H
-#define _ASM_POWERPC_OPAL_H
+#अगर_अघोषित _ASM_POWERPC_OPAL_H
+#घोषणा _ASM_POWERPC_OPAL_H
 
-#include <asm/opal-api.h>
+#समावेश <यंत्र/opal-api.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/notifier.h>
+#समावेश <linux/notअगरier.h>
 
 /* We calculate number of sg entries based on PAGE_SIZE */
-#define SG_ENTRIES_PER_NODE ((PAGE_SIZE - 16) / sizeof(struct opal_sg_entry))
+#घोषणा SG_ENTRIES_PER_NODE ((PAGE_SIZE - 16) / माप(काष्ठा opal_sg_entry))
 
-/* Default time to sleep or delay between OPAL_BUSY/OPAL_BUSY_EVENT loops */
-#define OPAL_BUSY_DELAY_MS	10
+/* Default समय to sleep or delay between OPAL_BUSY/OPAL_BUSY_EVENT loops */
+#घोषणा OPAL_BUSY_DELAY_MS	10
 
 /* /sys/firmware/opal */
-extern struct kobject *opal_kobj;
+बाह्य काष्ठा kobject *opal_kobj;
 
 /* /ibm,opal */
-extern struct device_node *opal_node;
+बाह्य काष्ठा device_node *opal_node;
 
 /* API functions */
-int64_t opal_invalid_call(void);
-int64_t opal_npu_map_lpar(uint64_t phb_id, uint64_t bdf, uint64_t lparid,
-			uint64_t lpcr);
-int64_t opal_npu_spa_setup(uint64_t phb_id, uint32_t bdfn,
-			uint64_t addr, uint64_t PE_mask);
-int64_t opal_npu_spa_clear_cache(uint64_t phb_id, uint32_t bdfn,
-				uint64_t PE_handle);
-int64_t opal_npu_tl_set(uint64_t phb_id, uint32_t bdfn, long cap,
-			uint64_t rate_phys, uint32_t size);
+पूर्णांक64_t opal_invalid_call(व्योम);
+पूर्णांक64_t opal_npu_map_lpar(uपूर्णांक64_t phb_id, uपूर्णांक64_t bdf, uपूर्णांक64_t lparid,
+			uपूर्णांक64_t lpcr);
+पूर्णांक64_t opal_npu_spa_setup(uपूर्णांक64_t phb_id, uपूर्णांक32_t bdfn,
+			uपूर्णांक64_t addr, uपूर्णांक64_t PE_mask);
+पूर्णांक64_t opal_npu_spa_clear_cache(uपूर्णांक64_t phb_id, uपूर्णांक32_t bdfn,
+				uपूर्णांक64_t PE_handle);
+पूर्णांक64_t opal_npu_tl_set(uपूर्णांक64_t phb_id, uपूर्णांक32_t bdfn, दीर्घ cap,
+			uपूर्णांक64_t rate_phys, uपूर्णांक32_t size);
 
-int64_t opal_console_write(int64_t term_number, __be64 *length,
-			   const uint8_t *buffer);
-int64_t opal_console_read(int64_t term_number, __be64 *length,
-			  uint8_t *buffer);
-int64_t opal_console_write_buffer_space(int64_t term_number,
+पूर्णांक64_t opal_console_ग_लिखो(पूर्णांक64_t term_number, __be64 *length,
+			   स्थिर uपूर्णांक8_t *buffer);
+पूर्णांक64_t opal_console_पढ़ो(पूर्णांक64_t term_number, __be64 *length,
+			  uपूर्णांक8_t *buffer);
+पूर्णांक64_t opal_console_ग_लिखो_buffer_space(पूर्णांक64_t term_number,
 					__be64 *length);
-int64_t opal_console_flush(int64_t term_number);
-int64_t opal_rtc_read(__be32 *year_month_day,
+पूर्णांक64_t opal_console_flush(पूर्णांक64_t term_number);
+पूर्णांक64_t opal_rtc_पढ़ो(__be32 *year_month_day,
 		      __be64 *hour_minute_second_millisecond);
-int64_t opal_rtc_write(uint32_t year_month_day,
-		       uint64_t hour_minute_second_millisecond);
-int64_t opal_tpo_read(uint64_t token, __be32 *year_mon_day, __be32 *hour_min);
-int64_t opal_tpo_write(uint64_t token, uint32_t year_mon_day,
-		       uint32_t hour_min);
-int64_t opal_cec_power_down(uint64_t request);
-int64_t opal_cec_reboot(void);
-int64_t opal_cec_reboot2(uint32_t reboot_type, const char *diag);
-int64_t opal_read_nvram(uint64_t buffer, uint64_t size, uint64_t offset);
-int64_t opal_write_nvram(uint64_t buffer, uint64_t size, uint64_t offset);
-int64_t opal_handle_interrupt(uint64_t isn, __be64 *outstanding_event_mask);
-int64_t opal_poll_events(__be64 *outstanding_event_mask);
-int64_t opal_pci_set_hub_tce_memory(uint64_t hub_id, uint64_t tce_mem_addr,
-				    uint64_t tce_mem_size);
-int64_t opal_pci_set_phb_tce_memory(uint64_t phb_id, uint64_t tce_mem_addr,
-				    uint64_t tce_mem_size);
-int64_t opal_pci_config_read_byte(uint64_t phb_id, uint64_t bus_dev_func,
-				  uint64_t offset, uint8_t *data);
-int64_t opal_pci_config_read_half_word(uint64_t phb_id, uint64_t bus_dev_func,
-				       uint64_t offset, __be16 *data);
-int64_t opal_pci_config_read_word(uint64_t phb_id, uint64_t bus_dev_func,
-				  uint64_t offset, __be32 *data);
-int64_t opal_pci_config_write_byte(uint64_t phb_id, uint64_t bus_dev_func,
-				   uint64_t offset, uint8_t data);
-int64_t opal_pci_config_write_half_word(uint64_t phb_id, uint64_t bus_dev_func,
-					uint64_t offset, uint16_t data);
-int64_t opal_pci_config_write_word(uint64_t phb_id, uint64_t bus_dev_func,
-				   uint64_t offset, uint32_t data);
-int64_t opal_set_xive(uint32_t isn, uint16_t server, uint8_t priority);
-int64_t opal_get_xive(uint32_t isn, __be16 *server, uint8_t *priority);
-int64_t opal_register_exception_handler(uint64_t opal_exception,
-					uint64_t handler_address,
-					uint64_t glue_cache_line);
-int64_t opal_pci_eeh_freeze_status(uint64_t phb_id, uint64_t pe_number,
-				   uint8_t *freeze_state,
+पूर्णांक64_t opal_rtc_ग_लिखो(uपूर्णांक32_t year_month_day,
+		       uपूर्णांक64_t hour_minute_second_millisecond);
+पूर्णांक64_t opal_tpo_पढ़ो(uपूर्णांक64_t token, __be32 *year_mon_day, __be32 *hour_min);
+पूर्णांक64_t opal_tpo_ग_लिखो(uपूर्णांक64_t token, uपूर्णांक32_t year_mon_day,
+		       uपूर्णांक32_t hour_min);
+पूर्णांक64_t opal_cec_घातer_करोwn(uपूर्णांक64_t request);
+पूर्णांक64_t opal_cec_reboot(व्योम);
+पूर्णांक64_t opal_cec_reboot2(uपूर्णांक32_t reboot_type, स्थिर अक्षर *diag);
+पूर्णांक64_t opal_पढ़ो_nvram(uपूर्णांक64_t buffer, uपूर्णांक64_t size, uपूर्णांक64_t offset);
+पूर्णांक64_t opal_ग_लिखो_nvram(uपूर्णांक64_t buffer, uपूर्णांक64_t size, uपूर्णांक64_t offset);
+पूर्णांक64_t opal_handle_पूर्णांकerrupt(uपूर्णांक64_t isn, __be64 *outstanding_event_mask);
+पूर्णांक64_t opal_poll_events(__be64 *outstanding_event_mask);
+पूर्णांक64_t opal_pci_set_hub_tce_memory(uपूर्णांक64_t hub_id, uपूर्णांक64_t tce_mem_addr,
+				    uपूर्णांक64_t tce_mem_size);
+पूर्णांक64_t opal_pci_set_phb_tce_memory(uपूर्णांक64_t phb_id, uपूर्णांक64_t tce_mem_addr,
+				    uपूर्णांक64_t tce_mem_size);
+पूर्णांक64_t opal_pci_config_पढ़ो_byte(uपूर्णांक64_t phb_id, uपूर्णांक64_t bus_dev_func,
+				  uपूर्णांक64_t offset, uपूर्णांक8_t *data);
+पूर्णांक64_t opal_pci_config_पढ़ो_half_word(uपूर्णांक64_t phb_id, uपूर्णांक64_t bus_dev_func,
+				       uपूर्णांक64_t offset, __be16 *data);
+पूर्णांक64_t opal_pci_config_पढ़ो_word(uपूर्णांक64_t phb_id, uपूर्णांक64_t bus_dev_func,
+				  uपूर्णांक64_t offset, __be32 *data);
+पूर्णांक64_t opal_pci_config_ग_लिखो_byte(uपूर्णांक64_t phb_id, uपूर्णांक64_t bus_dev_func,
+				   uपूर्णांक64_t offset, uपूर्णांक8_t data);
+पूर्णांक64_t opal_pci_config_ग_लिखो_half_word(uपूर्णांक64_t phb_id, uपूर्णांक64_t bus_dev_func,
+					uपूर्णांक64_t offset, uपूर्णांक16_t data);
+पूर्णांक64_t opal_pci_config_ग_लिखो_word(uपूर्णांक64_t phb_id, uपूर्णांक64_t bus_dev_func,
+				   uपूर्णांक64_t offset, uपूर्णांक32_t data);
+पूर्णांक64_t opal_set_xive(uपूर्णांक32_t isn, uपूर्णांक16_t server, uपूर्णांक8_t priority);
+पूर्णांक64_t opal_get_xive(uपूर्णांक32_t isn, __be16 *server, uपूर्णांक8_t *priority);
+पूर्णांक64_t opal_रेजिस्टर_exception_handler(uपूर्णांक64_t opal_exception,
+					uपूर्णांक64_t handler_address,
+					uपूर्णांक64_t glue_cache_line);
+पूर्णांक64_t opal_pci_eeh_मुक्तze_status(uपूर्णांक64_t phb_id, uपूर्णांक64_t pe_number,
+				   uपूर्णांक8_t *मुक्तze_state,
 				   __be16 *pci_error_type,
 				   __be64 *phb_status);
-int64_t opal_pci_eeh_freeze_clear(uint64_t phb_id, uint64_t pe_number,
-				  uint64_t eeh_action_token);
-int64_t opal_pci_eeh_freeze_set(uint64_t phb_id, uint64_t pe_number,
-				uint64_t eeh_action_token);
-int64_t opal_pci_err_inject(uint64_t phb_id, uint32_t pe_no, uint32_t type,
-			    uint32_t func, uint64_t addr, uint64_t mask);
-int64_t opal_pci_shpc(uint64_t phb_id, uint64_t shpc_action, uint8_t *state);
+पूर्णांक64_t opal_pci_eeh_मुक्तze_clear(uपूर्णांक64_t phb_id, uपूर्णांक64_t pe_number,
+				  uपूर्णांक64_t eeh_action_token);
+पूर्णांक64_t opal_pci_eeh_मुक्तze_set(uपूर्णांक64_t phb_id, uपूर्णांक64_t pe_number,
+				uपूर्णांक64_t eeh_action_token);
+पूर्णांक64_t opal_pci_err_inject(uपूर्णांक64_t phb_id, uपूर्णांक32_t pe_no, uपूर्णांक32_t type,
+			    uपूर्णांक32_t func, uपूर्णांक64_t addr, uपूर्णांक64_t mask);
+पूर्णांक64_t opal_pci_shpc(uपूर्णांक64_t phb_id, uपूर्णांक64_t shpc_action, uपूर्णांक8_t *state);
 
 
 
-int64_t opal_pci_phb_mmio_enable(uint64_t phb_id, uint16_t window_type,
-				 uint16_t window_num, uint16_t enable);
-int64_t opal_pci_set_phb_mem_window(uint64_t phb_id, uint16_t window_type,
-				    uint16_t window_num,
-				    uint64_t starting_real_address,
-				    uint64_t starting_pci_address,
-				    uint64_t size);
-int64_t opal_pci_map_pe_mmio_window(uint64_t phb_id, uint16_t pe_number,
-				    uint16_t window_type, uint16_t window_num,
-				    uint16_t segment_num);
-int64_t opal_pci_set_phb_table_memory(uint64_t phb_id, uint64_t rtt_addr,
-				      uint64_t ivt_addr, uint64_t ivt_len,
-				      uint64_t reject_array_addr,
-				      uint64_t peltv_addr);
-int64_t opal_pci_set_pe(uint64_t phb_id, uint64_t pe_number, uint64_t bus_dev_func,
-			uint8_t bus_compare, uint8_t dev_compare, uint8_t func_compare,
-			uint8_t pe_action);
-int64_t opal_pci_set_peltv(uint64_t phb_id, uint32_t parent_pe, uint32_t child_pe,
-			   uint8_t state);
-int64_t opal_pci_set_mve(uint64_t phb_id, uint32_t mve_number, uint32_t pe_number);
-int64_t opal_pci_set_mve_enable(uint64_t phb_id, uint32_t mve_number,
-				uint32_t state);
-int64_t opal_pci_get_xive_reissue(uint64_t phb_id, uint32_t xive_number,
-				  uint8_t *p_bit, uint8_t *q_bit);
-int64_t opal_pci_set_xive_reissue(uint64_t phb_id, uint32_t xive_number,
-				  uint8_t p_bit, uint8_t q_bit);
-int64_t opal_pci_msi_eoi(uint64_t phb_id, uint32_t hw_irq);
-int64_t opal_pci_set_xive_pe(uint64_t phb_id, uint32_t pe_number,
-			     uint32_t xive_num);
-int64_t opal_get_xive_source(uint64_t phb_id, uint32_t xive_num,
-			     __be32 *interrupt_source_number);
-int64_t opal_get_msi_32(uint64_t phb_id, uint32_t mve_number, uint32_t xive_num,
-			uint8_t msi_range, __be32 *msi_address,
+पूर्णांक64_t opal_pci_phb_mmio_enable(uपूर्णांक64_t phb_id, uपूर्णांक16_t winकरोw_type,
+				 uपूर्णांक16_t winकरोw_num, uपूर्णांक16_t enable);
+पूर्णांक64_t opal_pci_set_phb_mem_winकरोw(uपूर्णांक64_t phb_id, uपूर्णांक16_t winकरोw_type,
+				    uपूर्णांक16_t winकरोw_num,
+				    uपूर्णांक64_t starting_real_address,
+				    uपूर्णांक64_t starting_pci_address,
+				    uपूर्णांक64_t size);
+पूर्णांक64_t opal_pci_map_pe_mmio_winकरोw(uपूर्णांक64_t phb_id, uपूर्णांक16_t pe_number,
+				    uपूर्णांक16_t winकरोw_type, uपूर्णांक16_t winकरोw_num,
+				    uपूर्णांक16_t segment_num);
+पूर्णांक64_t opal_pci_set_phb_table_memory(uपूर्णांक64_t phb_id, uपूर्णांक64_t rtt_addr,
+				      uपूर्णांक64_t ivt_addr, uपूर्णांक64_t ivt_len,
+				      uपूर्णांक64_t reject_array_addr,
+				      uपूर्णांक64_t peltv_addr);
+पूर्णांक64_t opal_pci_set_pe(uपूर्णांक64_t phb_id, uपूर्णांक64_t pe_number, uपूर्णांक64_t bus_dev_func,
+			uपूर्णांक8_t bus_compare, uपूर्णांक8_t dev_compare, uपूर्णांक8_t func_compare,
+			uपूर्णांक8_t pe_action);
+पूर्णांक64_t opal_pci_set_peltv(uपूर्णांक64_t phb_id, uपूर्णांक32_t parent_pe, uपूर्णांक32_t child_pe,
+			   uपूर्णांक8_t state);
+पूर्णांक64_t opal_pci_set_mve(uपूर्णांक64_t phb_id, uपूर्णांक32_t mve_number, uपूर्णांक32_t pe_number);
+पूर्णांक64_t opal_pci_set_mve_enable(uपूर्णांक64_t phb_id, uपूर्णांक32_t mve_number,
+				uपूर्णांक32_t state);
+पूर्णांक64_t opal_pci_get_xive_reissue(uपूर्णांक64_t phb_id, uपूर्णांक32_t xive_number,
+				  uपूर्णांक8_t *p_bit, uपूर्णांक8_t *q_bit);
+पूर्णांक64_t opal_pci_set_xive_reissue(uपूर्णांक64_t phb_id, uपूर्णांक32_t xive_number,
+				  uपूर्णांक8_t p_bit, uपूर्णांक8_t q_bit);
+पूर्णांक64_t opal_pci_msi_eoi(uपूर्णांक64_t phb_id, uपूर्णांक32_t hw_irq);
+पूर्णांक64_t opal_pci_set_xive_pe(uपूर्णांक64_t phb_id, uपूर्णांक32_t pe_number,
+			     uपूर्णांक32_t xive_num);
+पूर्णांक64_t opal_get_xive_source(uपूर्णांक64_t phb_id, uपूर्णांक32_t xive_num,
+			     __be32 *पूर्णांकerrupt_source_number);
+पूर्णांक64_t opal_get_msi_32(uपूर्णांक64_t phb_id, uपूर्णांक32_t mve_number, uपूर्णांक32_t xive_num,
+			uपूर्णांक8_t msi_range, __be32 *msi_address,
 			__be32 *message_data);
-int64_t opal_get_msi_64(uint64_t phb_id, uint32_t mve_number,
-			uint32_t xive_num, uint8_t msi_range,
+पूर्णांक64_t opal_get_msi_64(uपूर्णांक64_t phb_id, uपूर्णांक32_t mve_number,
+			uपूर्णांक32_t xive_num, uपूर्णांक8_t msi_range,
 			__be64 *msi_address, __be32 *message_data);
-int64_t opal_start_cpu(uint64_t thread_number, uint64_t start_address);
-int64_t opal_query_cpu_status(uint64_t thread_number, uint8_t *thread_status);
-int64_t opal_write_oppanel(oppanel_line_t *lines, uint64_t num_lines);
-int64_t opal_pci_map_pe_dma_window(uint64_t phb_id, uint16_t pe_number, uint16_t window_id,
-				   uint16_t tce_levels, uint64_t tce_table_addr,
-				   uint64_t tce_table_size, uint64_t tce_page_size);
-int64_t opal_pci_map_pe_dma_window_real(uint64_t phb_id, uint16_t pe_number,
-					uint16_t dma_window_number, uint64_t pci_start_addr,
-					uint64_t pci_mem_size);
-int64_t opal_pci_reset(uint64_t id, uint8_t reset_scope, uint8_t assert_state);
+पूर्णांक64_t opal_start_cpu(uपूर्णांक64_t thपढ़ो_number, uपूर्णांक64_t start_address);
+पूर्णांक64_t opal_query_cpu_status(uपूर्णांक64_t thपढ़ो_number, uपूर्णांक8_t *thपढ़ो_status);
+पूर्णांक64_t opal_ग_लिखो_oppanel(oppanel_line_t *lines, uपूर्णांक64_t num_lines);
+पूर्णांक64_t opal_pci_map_pe_dma_winकरोw(uपूर्णांक64_t phb_id, uपूर्णांक16_t pe_number, uपूर्णांक16_t winकरोw_id,
+				   uपूर्णांक16_t tce_levels, uपूर्णांक64_t tce_table_addr,
+				   uपूर्णांक64_t tce_table_size, uपूर्णांक64_t tce_page_size);
+पूर्णांक64_t opal_pci_map_pe_dma_winकरोw_real(uपूर्णांक64_t phb_id, uपूर्णांक16_t pe_number,
+					uपूर्णांक16_t dma_winकरोw_number, uपूर्णांक64_t pci_start_addr,
+					uपूर्णांक64_t pci_mem_size);
+पूर्णांक64_t opal_pci_reset(uपूर्णांक64_t id, uपूर्णांक8_t reset_scope, uपूर्णांक8_t निश्चित_state);
 
-int64_t opal_pci_get_hub_diag_data(uint64_t hub_id, void *diag_buffer,
-				   uint64_t diag_buffer_len);
-int64_t opal_pci_get_phb_diag_data(uint64_t phb_id, void *diag_buffer,
-				   uint64_t diag_buffer_len);
-int64_t opal_pci_get_phb_diag_data2(uint64_t phb_id, void *diag_buffer,
-				    uint64_t diag_buffer_len);
-int64_t opal_pci_fence_phb(uint64_t phb_id);
-int64_t opal_pci_reinit(uint64_t phb_id, uint64_t reinit_scope, uint64_t data);
-int64_t opal_pci_mask_pe_error(uint64_t phb_id, uint16_t pe_number, uint8_t error_type, uint8_t mask_action);
-int64_t opal_set_slot_led_status(uint64_t phb_id, uint64_t slot_id, uint8_t led_type, uint8_t led_action);
-int64_t opal_get_epow_status(__be16 *epow_status, __be16 *num_epow_classes);
-int64_t opal_get_dpo_status(__be64 *dpo_timeout);
-int64_t opal_set_system_attention_led(uint8_t led_action);
-int64_t opal_pci_next_error(uint64_t phb_id, __be64 *first_frozen_pe,
+पूर्णांक64_t opal_pci_get_hub_diag_data(uपूर्णांक64_t hub_id, व्योम *diag_buffer,
+				   uपूर्णांक64_t diag_buffer_len);
+पूर्णांक64_t opal_pci_get_phb_diag_data(uपूर्णांक64_t phb_id, व्योम *diag_buffer,
+				   uपूर्णांक64_t diag_buffer_len);
+पूर्णांक64_t opal_pci_get_phb_diag_data2(uपूर्णांक64_t phb_id, व्योम *diag_buffer,
+				    uपूर्णांक64_t diag_buffer_len);
+पूर्णांक64_t opal_pci_fence_phb(uपूर्णांक64_t phb_id);
+पूर्णांक64_t opal_pci_reinit(uपूर्णांक64_t phb_id, uपूर्णांक64_t reinit_scope, uपूर्णांक64_t data);
+पूर्णांक64_t opal_pci_mask_pe_error(uपूर्णांक64_t phb_id, uपूर्णांक16_t pe_number, uपूर्णांक8_t error_type, uपूर्णांक8_t mask_action);
+पूर्णांक64_t opal_set_slot_led_status(uपूर्णांक64_t phb_id, uपूर्णांक64_t slot_id, uपूर्णांक8_t led_type, uपूर्णांक8_t led_action);
+पूर्णांक64_t opal_get_eघात_status(__be16 *eघात_status, __be16 *num_eघात_classes);
+पूर्णांक64_t opal_get_dpo_status(__be64 *dpo_समयout);
+पूर्णांक64_t opal_set_प्रणाली_attention_led(uपूर्णांक8_t led_action);
+पूर्णांक64_t opal_pci_next_error(uपूर्णांक64_t phb_id, __be64 *first_frozen_pe,
 			    __be16 *pci_error_type, __be16 *severity);
-int64_t opal_pci_poll(uint64_t id);
-int64_t opal_return_cpu(void);
-int64_t opal_check_token(uint64_t token);
-int64_t opal_reinit_cpus(uint64_t flags);
+पूर्णांक64_t opal_pci_poll(uपूर्णांक64_t id);
+पूर्णांक64_t opal_वापस_cpu(व्योम);
+पूर्णांक64_t opal_check_token(uपूर्णांक64_t token);
+पूर्णांक64_t opal_reinit_cpus(uपूर्णांक64_t flags);
 
-int64_t opal_xscom_read(uint32_t gcid, uint64_t pcb_addr, __be64 *val);
-int64_t opal_xscom_write(uint32_t gcid, uint64_t pcb_addr, uint64_t val);
+पूर्णांक64_t opal_xscom_पढ़ो(uपूर्णांक32_t gcid, uपूर्णांक64_t pcb_addr, __be64 *val);
+पूर्णांक64_t opal_xscom_ग_लिखो(uपूर्णांक32_t gcid, uपूर्णांक64_t pcb_addr, uपूर्णांक64_t val);
 
-int64_t opal_lpc_write(uint32_t chip_id, enum OpalLPCAddressType addr_type,
-		       uint32_t addr, uint32_t data, uint32_t sz);
-int64_t opal_lpc_read(uint32_t chip_id, enum OpalLPCAddressType addr_type,
-		      uint32_t addr, __be32 *data, uint32_t sz);
+पूर्णांक64_t opal_lpc_ग_लिखो(uपूर्णांक32_t chip_id, क्रमागत OpalLPCAddressType addr_type,
+		       uपूर्णांक32_t addr, uपूर्णांक32_t data, uपूर्णांक32_t sz);
+पूर्णांक64_t opal_lpc_पढ़ो(uपूर्णांक32_t chip_id, क्रमागत OpalLPCAddressType addr_type,
+		      uपूर्णांक32_t addr, __be32 *data, uपूर्णांक32_t sz);
 
-int64_t opal_read_elog(uint64_t buffer, uint64_t size, uint64_t log_id);
-int64_t opal_get_elog_size(__be64 *log_id, __be64 *size, __be64 *elog_type);
-int64_t opal_write_elog(uint64_t buffer, uint64_t size, uint64_t offset);
-int64_t opal_send_ack_elog(uint64_t log_id);
-void opal_resend_pending_logs(void);
+पूर्णांक64_t opal_पढ़ो_elog(uपूर्णांक64_t buffer, uपूर्णांक64_t size, uपूर्णांक64_t log_id);
+पूर्णांक64_t opal_get_elog_size(__be64 *log_id, __be64 *size, __be64 *elog_type);
+पूर्णांक64_t opal_ग_लिखो_elog(uपूर्णांक64_t buffer, uपूर्णांक64_t size, uपूर्णांक64_t offset);
+पूर्णांक64_t opal_send_ack_elog(uपूर्णांक64_t log_id);
+व्योम opal_resend_pending_logs(व्योम);
 
-int64_t opal_validate_flash(uint64_t buffer, uint32_t *size, uint32_t *result);
-int64_t opal_manage_flash(uint8_t op);
-int64_t opal_update_flash(uint64_t blk_list);
-int64_t opal_dump_init(uint8_t dump_type);
-int64_t opal_dump_info(__be32 *dump_id, __be32 *dump_size);
-int64_t opal_dump_info2(__be32 *dump_id, __be32 *dump_size, __be32 *dump_type);
-int64_t opal_dump_read(uint32_t dump_id, uint64_t buffer);
-int64_t opal_dump_ack(uint32_t dump_id);
-int64_t opal_dump_resend_notification(void);
+पूर्णांक64_t opal_validate_flash(uपूर्णांक64_t buffer, uपूर्णांक32_t *size, uपूर्णांक32_t *result);
+पूर्णांक64_t opal_manage_flash(uपूर्णांक8_t op);
+पूर्णांक64_t opal_update_flash(uपूर्णांक64_t blk_list);
+पूर्णांक64_t opal_dump_init(uपूर्णांक8_t dump_type);
+पूर्णांक64_t opal_dump_info(__be32 *dump_id, __be32 *dump_size);
+पूर्णांक64_t opal_dump_info2(__be32 *dump_id, __be32 *dump_size, __be32 *dump_type);
+पूर्णांक64_t opal_dump_पढ़ो(uपूर्णांक32_t dump_id, uपूर्णांक64_t buffer);
+पूर्णांक64_t opal_dump_ack(uपूर्णांक32_t dump_id);
+पूर्णांक64_t opal_dump_resend_notअगरication(व्योम);
 
-int64_t opal_get_msg(uint64_t buffer, uint64_t size);
-int64_t opal_write_oppanel_async(uint64_t token, oppanel_line_t *lines,
-					uint64_t num_lines);
-int64_t opal_check_completion(uint64_t buffer, uint64_t size, uint64_t token);
-int64_t opal_sync_host_reboot(void);
-int64_t opal_get_param(uint64_t token, uint32_t param_id, uint64_t buffer,
-		uint64_t length);
-int64_t opal_set_param(uint64_t token, uint32_t param_id, uint64_t buffer,
-		uint64_t length);
-int64_t opal_sensor_read(uint32_t sensor_hndl, int token, __be32 *sensor_data);
-int64_t opal_sensor_read_u64(u32 sensor_hndl, int token, __be64 *sensor_data);
-int64_t opal_handle_hmi(void);
-int64_t opal_handle_hmi2(__be64 *out_flags);
-int64_t opal_register_dump_region(uint32_t id, uint64_t start, uint64_t end);
-int64_t opal_unregister_dump_region(uint32_t id);
-int64_t opal_slw_set_reg(uint64_t cpu_pir, uint64_t sprn, uint64_t val);
-int64_t opal_config_cpu_idle_state(uint64_t state, uint64_t flag);
-int64_t opal_pci_set_phb_cxl_mode(uint64_t phb_id, uint64_t mode, uint64_t pe_number);
-int64_t opal_pci_get_pbcq_tunnel_bar(uint64_t phb_id, uint64_t *addr);
-int64_t opal_pci_set_pbcq_tunnel_bar(uint64_t phb_id, uint64_t addr);
-int64_t opal_ipmi_send(uint64_t interface, struct opal_ipmi_msg *msg,
-		uint64_t msg_len);
-int64_t opal_ipmi_recv(uint64_t interface, struct opal_ipmi_msg *msg,
-		uint64_t *msg_len);
-int64_t opal_i2c_request(uint64_t async_token, uint32_t bus_id,
-			 struct opal_i2c_request *oreq);
-int64_t opal_prd_msg(struct opal_prd_msg *msg);
-int64_t opal_leds_get_ind(char *loc_code, __be64 *led_mask,
+पूर्णांक64_t opal_get_msg(uपूर्णांक64_t buffer, uपूर्णांक64_t size);
+पूर्णांक64_t opal_ग_लिखो_oppanel_async(uपूर्णांक64_t token, oppanel_line_t *lines,
+					uपूर्णांक64_t num_lines);
+पूर्णांक64_t opal_check_completion(uपूर्णांक64_t buffer, uपूर्णांक64_t size, uपूर्णांक64_t token);
+पूर्णांक64_t opal_sync_host_reboot(व्योम);
+पूर्णांक64_t opal_get_param(uपूर्णांक64_t token, uपूर्णांक32_t param_id, uपूर्णांक64_t buffer,
+		uपूर्णांक64_t length);
+पूर्णांक64_t opal_set_param(uपूर्णांक64_t token, uपूर्णांक32_t param_id, uपूर्णांक64_t buffer,
+		uपूर्णांक64_t length);
+पूर्णांक64_t opal_sensor_पढ़ो(uपूर्णांक32_t sensor_hndl, पूर्णांक token, __be32 *sensor_data);
+पूर्णांक64_t opal_sensor_पढ़ो_u64(u32 sensor_hndl, पूर्णांक token, __be64 *sensor_data);
+पूर्णांक64_t opal_handle_hmi(व्योम);
+पूर्णांक64_t opal_handle_hmi2(__be64 *out_flags);
+पूर्णांक64_t opal_रेजिस्टर_dump_region(uपूर्णांक32_t id, uपूर्णांक64_t start, uपूर्णांक64_t end);
+पूर्णांक64_t opal_unरेजिस्टर_dump_region(uपूर्णांक32_t id);
+पूर्णांक64_t opal_slw_set_reg(uपूर्णांक64_t cpu_pir, uपूर्णांक64_t sprn, uपूर्णांक64_t val);
+पूर्णांक64_t opal_config_cpu_idle_state(uपूर्णांक64_t state, uपूर्णांक64_t flag);
+पूर्णांक64_t opal_pci_set_phb_cxl_mode(uपूर्णांक64_t phb_id, uपूर्णांक64_t mode, uपूर्णांक64_t pe_number);
+पूर्णांक64_t opal_pci_get_pbcq_tunnel_bar(uपूर्णांक64_t phb_id, uपूर्णांक64_t *addr);
+पूर्णांक64_t opal_pci_set_pbcq_tunnel_bar(uपूर्णांक64_t phb_id, uपूर्णांक64_t addr);
+पूर्णांक64_t opal_ipmi_send(uपूर्णांक64_t पूर्णांकerface, काष्ठा opal_ipmi_msg *msg,
+		uपूर्णांक64_t msg_len);
+पूर्णांक64_t opal_ipmi_recv(uपूर्णांक64_t पूर्णांकerface, काष्ठा opal_ipmi_msg *msg,
+		uपूर्णांक64_t *msg_len);
+पूर्णांक64_t opal_i2c_request(uपूर्णांक64_t async_token, uपूर्णांक32_t bus_id,
+			 काष्ठा opal_i2c_request *oreq);
+पूर्णांक64_t opal_prd_msg(काष्ठा opal_prd_msg *msg);
+पूर्णांक64_t opal_leds_get_ind(अक्षर *loc_code, __be64 *led_mask,
 			  __be64 *led_value, __be64 *max_led_type);
-int64_t opal_leds_set_ind(uint64_t token, char *loc_code, const u64 led_mask,
-			  const u64 led_value, __be64 *max_led_type);
+पूर्णांक64_t opal_leds_set_ind(uपूर्णांक64_t token, अक्षर *loc_code, स्थिर u64 led_mask,
+			  स्थिर u64 led_value, __be64 *max_led_type);
 
-int64_t opal_flash_read(uint64_t id, uint64_t offset, uint64_t buf,
-		uint64_t size, uint64_t token);
-int64_t opal_flash_write(uint64_t id, uint64_t offset, uint64_t buf,
-		uint64_t size, uint64_t token);
-int64_t opal_flash_erase(uint64_t id, uint64_t offset, uint64_t size,
-		uint64_t token);
-int64_t opal_get_device_tree(uint32_t phandle, uint64_t buf, uint64_t len);
-int64_t opal_pci_get_presence_state(uint64_t id, uint64_t data);
-int64_t opal_pci_get_power_state(uint64_t id, uint64_t data);
-int64_t opal_pci_set_power_state(uint64_t async_token, uint64_t id,
-				 uint64_t data);
-int64_t opal_pci_poll2(uint64_t id, uint64_t data);
+पूर्णांक64_t opal_flash_पढ़ो(uपूर्णांक64_t id, uपूर्णांक64_t offset, uपूर्णांक64_t buf,
+		uपूर्णांक64_t size, uपूर्णांक64_t token);
+पूर्णांक64_t opal_flash_ग_लिखो(uपूर्णांक64_t id, uपूर्णांक64_t offset, uपूर्णांक64_t buf,
+		uपूर्णांक64_t size, uपूर्णांक64_t token);
+पूर्णांक64_t opal_flash_erase(uपूर्णांक64_t id, uपूर्णांक64_t offset, uपूर्णांक64_t size,
+		uपूर्णांक64_t token);
+पूर्णांक64_t opal_get_device_tree(uपूर्णांक32_t phandle, uपूर्णांक64_t buf, uपूर्णांक64_t len);
+पूर्णांक64_t opal_pci_get_presence_state(uपूर्णांक64_t id, uपूर्णांक64_t data);
+पूर्णांक64_t opal_pci_get_घातer_state(uपूर्णांक64_t id, uपूर्णांक64_t data);
+पूर्णांक64_t opal_pci_set_घातer_state(uपूर्णांक64_t async_token, uपूर्णांक64_t id,
+				 uपूर्णांक64_t data);
+पूर्णांक64_t opal_pci_poll2(uपूर्णांक64_t id, uपूर्णांक64_t data);
 
-int64_t opal_int_get_xirr(uint32_t *out_xirr, bool just_poll);
-int64_t opal_int_set_cppr(uint8_t cppr);
-int64_t opal_int_eoi(uint32_t xirr);
-int64_t opal_int_set_mfrr(uint32_t cpu, uint8_t mfrr);
-int64_t opal_pci_tce_kill(uint64_t phb_id, uint32_t kill_type,
-			  uint32_t pe_num, uint32_t tce_size,
-			  uint64_t dma_addr, uint32_t npages);
-int64_t opal_nmmu_set_ptcr(uint64_t chip_id, uint64_t ptcr);
-int64_t opal_xive_reset(uint64_t version);
-int64_t opal_xive_get_irq_info(uint32_t girq,
+पूर्णांक64_t opal_पूर्णांक_get_xirr(uपूर्णांक32_t *out_xirr, bool just_poll);
+पूर्णांक64_t opal_पूर्णांक_set_cppr(uपूर्णांक8_t cppr);
+पूर्णांक64_t opal_पूर्णांक_eoi(uपूर्णांक32_t xirr);
+पूर्णांक64_t opal_पूर्णांक_set_mfrr(uपूर्णांक32_t cpu, uपूर्णांक8_t mfrr);
+पूर्णांक64_t opal_pci_tce_समाप्त(uपूर्णांक64_t phb_id, uपूर्णांक32_t समाप्त_type,
+			  uपूर्णांक32_t pe_num, uपूर्णांक32_t tce_size,
+			  uपूर्णांक64_t dma_addr, uपूर्णांक32_t npages);
+पूर्णांक64_t opal_nmmu_set_ptcr(uपूर्णांक64_t chip_id, uपूर्णांक64_t ptcr);
+पूर्णांक64_t opal_xive_reset(uपूर्णांक64_t version);
+पूर्णांक64_t opal_xive_get_irq_info(uपूर्णांक32_t girq,
 			       __be64 *out_flags,
 			       __be64 *out_eoi_page,
 			       __be64 *out_trig_page,
-			       __be32 *out_esb_shift,
+			       __be32 *out_esb_shअगरt,
 			       __be32 *out_src_chip);
-int64_t opal_xive_get_irq_config(uint32_t girq, __be64 *out_vp,
-				 uint8_t *out_prio, __be32 *out_lirq);
-int64_t opal_xive_set_irq_config(uint32_t girq, uint64_t vp, uint8_t prio,
-				 uint32_t lirq);
-int64_t opal_xive_get_queue_info(uint64_t vp, uint32_t prio,
+पूर्णांक64_t opal_xive_get_irq_config(uपूर्णांक32_t girq, __be64 *out_vp,
+				 uपूर्णांक8_t *out_prio, __be32 *out_lirq);
+पूर्णांक64_t opal_xive_set_irq_config(uपूर्णांक32_t girq, uपूर्णांक64_t vp, uपूर्णांक8_t prio,
+				 uपूर्णांक32_t lirq);
+पूर्णांक64_t opal_xive_get_queue_info(uपूर्णांक64_t vp, uपूर्णांक32_t prio,
 				 __be64 *out_qpage,
 				 __be64 *out_qsize,
 				 __be64 *out_qeoi_page,
 				 __be32 *out_escalate_irq,
 				 __be64 *out_qflags);
-int64_t opal_xive_set_queue_info(uint64_t vp, uint32_t prio,
-				 uint64_t qpage,
-				 uint64_t qsize,
-				 uint64_t qflags);
-int64_t opal_xive_donate_page(uint32_t chip_id, uint64_t addr);
-int64_t opal_xive_alloc_vp_block(uint32_t alloc_order);
-int64_t opal_xive_free_vp_block(uint64_t vp);
-int64_t opal_xive_get_vp_info(uint64_t vp,
+पूर्णांक64_t opal_xive_set_queue_info(uपूर्णांक64_t vp, uपूर्णांक32_t prio,
+				 uपूर्णांक64_t qpage,
+				 uपूर्णांक64_t qsize,
+				 uपूर्णांक64_t qflags);
+पूर्णांक64_t opal_xive_करोnate_page(uपूर्णांक32_t chip_id, uपूर्णांक64_t addr);
+पूर्णांक64_t opal_xive_alloc_vp_block(uपूर्णांक32_t alloc_order);
+पूर्णांक64_t opal_xive_मुक्त_vp_block(uपूर्णांक64_t vp);
+पूर्णांक64_t opal_xive_get_vp_info(uपूर्णांक64_t vp,
 			      __be64 *out_flags,
 			      __be64 *out_cam_value,
 			      __be64 *out_report_cl_pair,
 			      __be32 *out_chip_id);
-int64_t opal_xive_set_vp_info(uint64_t vp,
-			      uint64_t flags,
-			      uint64_t report_cl_pair);
-int64_t opal_xive_allocate_irq_raw(uint32_t chip_id);
-int64_t opal_xive_free_irq(uint32_t girq);
-int64_t opal_xive_sync(uint32_t type, uint32_t id);
-int64_t opal_xive_dump(uint32_t type, uint32_t id);
-int64_t opal_xive_get_queue_state(uint64_t vp, uint32_t prio,
+पूर्णांक64_t opal_xive_set_vp_info(uपूर्णांक64_t vp,
+			      uपूर्णांक64_t flags,
+			      uपूर्णांक64_t report_cl_pair);
+पूर्णांक64_t opal_xive_allocate_irq_raw(uपूर्णांक32_t chip_id);
+पूर्णांक64_t opal_xive_मुक्त_irq(uपूर्णांक32_t girq);
+पूर्णांक64_t opal_xive_sync(uपूर्णांक32_t type, uपूर्णांक32_t id);
+पूर्णांक64_t opal_xive_dump(uपूर्णांक32_t type, uपूर्णांक32_t id);
+पूर्णांक64_t opal_xive_get_queue_state(uपूर्णांक64_t vp, uपूर्णांक32_t prio,
 				  __be32 *out_qtoggle,
 				  __be32 *out_qindex);
-int64_t opal_xive_set_queue_state(uint64_t vp, uint32_t prio,
-				  uint32_t qtoggle,
-				  uint32_t qindex);
-int64_t opal_xive_get_vp_state(uint64_t vp, __be64 *out_w01);
+पूर्णांक64_t opal_xive_set_queue_state(uपूर्णांक64_t vp, uपूर्णांक32_t prio,
+				  uपूर्णांक32_t qtoggle,
+				  uपूर्णांक32_t qindex);
+पूर्णांक64_t opal_xive_get_vp_state(uपूर्णांक64_t vp, __be64 *out_w01);
 
-int64_t opal_imc_counters_init(uint32_t type, uint64_t address,
-							uint64_t cpu_pir);
-int64_t opal_imc_counters_start(uint32_t type, uint64_t cpu_pir);
-int64_t opal_imc_counters_stop(uint32_t type, uint64_t cpu_pir);
+पूर्णांक64_t opal_imc_counters_init(uपूर्णांक32_t type, uपूर्णांक64_t address,
+							uपूर्णांक64_t cpu_pir);
+पूर्णांक64_t opal_imc_counters_start(uपूर्णांक32_t type, uपूर्णांक64_t cpu_pir);
+पूर्णांक64_t opal_imc_counters_stop(uपूर्णांक32_t type, uपूर्णांक64_t cpu_pir);
 
-int opal_get_powercap(u32 handle, int token, u32 *pcap);
-int opal_set_powercap(u32 handle, int token, u32 pcap);
-int opal_get_power_shift_ratio(u32 handle, int token, u32 *psr);
-int opal_set_power_shift_ratio(u32 handle, int token, u32 psr);
-int opal_sensor_group_clear(u32 group_hndl, int token);
-int opal_sensor_group_enable(u32 group_hndl, int token, bool enable);
-int opal_nx_coproc_init(uint32_t chip_id, uint32_t ct);
+पूर्णांक opal_get_घातercap(u32 handle, पूर्णांक token, u32 *pcap);
+पूर्णांक opal_set_घातercap(u32 handle, पूर्णांक token, u32 pcap);
+पूर्णांक opal_get_घातer_shअगरt_ratio(u32 handle, पूर्णांक token, u32 *psr);
+पूर्णांक opal_set_घातer_shअगरt_ratio(u32 handle, पूर्णांक token, u32 psr);
+पूर्णांक opal_sensor_group_clear(u32 group_hndl, पूर्णांक token);
+पूर्णांक opal_sensor_group_enable(u32 group_hndl, पूर्णांक token, bool enable);
+पूर्णांक opal_nx_coproc_init(uपूर्णांक32_t chip_id, uपूर्णांक32_t ct);
 
-int opal_secvar_get(const char *key, uint64_t key_len, u8 *data,
-		    uint64_t *data_size);
-int opal_secvar_get_next(const char *key, uint64_t *key_len,
-			 uint64_t key_buf_size);
-int opal_secvar_enqueue_update(const char *key, uint64_t key_len, u8 *data,
-			       uint64_t data_size);
+पूर्णांक opal_secvar_get(स्थिर अक्षर *key, uपूर्णांक64_t key_len, u8 *data,
+		    uपूर्णांक64_t *data_size);
+पूर्णांक opal_secvar_get_next(स्थिर अक्षर *key, uपूर्णांक64_t *key_len,
+			 uपूर्णांक64_t key_buf_size);
+पूर्णांक opal_secvar_enqueue_update(स्थिर अक्षर *key, uपूर्णांक64_t key_len, u8 *data,
+			       uपूर्णांक64_t data_size);
 
-s64 opal_mpipl_update(enum opal_mpipl_ops op, u64 src, u64 dest, u64 size);
-s64 opal_mpipl_register_tag(enum opal_mpipl_tags tag, u64 addr);
-s64 opal_mpipl_query_tag(enum opal_mpipl_tags tag, __be64 *addr);
+s64 opal_mpipl_update(क्रमागत opal_mpipl_ops op, u64 src, u64 dest, u64 size);
+s64 opal_mpipl_रेजिस्टर_tag(क्रमागत opal_mpipl_tags tag, u64 addr);
+s64 opal_mpipl_query_tag(क्रमागत opal_mpipl_tags tag, __be64 *addr);
 
-s64 opal_signal_system_reset(s32 cpu);
-s64 opal_quiesce(u64 shutdown_type, s32 cpu);
+s64 opal_संकेत_प्रणाली_reset(s32 cpu);
+s64 opal_quiesce(u64 shutकरोwn_type, s32 cpu);
 
 /* Internal functions */
-extern int early_init_dt_scan_opal(unsigned long node, const char *uname,
-				   int depth, void *data);
-extern int early_init_dt_scan_recoverable_ranges(unsigned long node,
-				 const char *uname, int depth, void *data);
-extern void opal_configure_cores(void);
+बाह्य पूर्णांक early_init_dt_scan_opal(अचिन्हित दीर्घ node, स्थिर अक्षर *uname,
+				   पूर्णांक depth, व्योम *data);
+बाह्य पूर्णांक early_init_dt_scan_recoverable_ranges(अचिन्हित दीर्घ node,
+				 स्थिर अक्षर *uname, पूर्णांक depth, व्योम *data);
+बाह्य व्योम opal_configure_cores(व्योम);
 
-extern int opal_get_chars(uint32_t vtermno, char *buf, int count);
-extern int opal_put_chars(uint32_t vtermno, const char *buf, int total_len);
-extern int opal_put_chars_atomic(uint32_t vtermno, const char *buf, int total_len);
-extern int opal_flush_chars(uint32_t vtermno, bool wait);
-extern int opal_flush_console(uint32_t vtermno);
+बाह्य पूर्णांक opal_get_अक्षरs(uपूर्णांक32_t vtermno, अक्षर *buf, पूर्णांक count);
+बाह्य पूर्णांक opal_put_अक्षरs(uपूर्णांक32_t vtermno, स्थिर अक्षर *buf, पूर्णांक total_len);
+बाह्य पूर्णांक opal_put_अक्षरs_atomic(uपूर्णांक32_t vtermno, स्थिर अक्षर *buf, पूर्णांक total_len);
+बाह्य पूर्णांक opal_flush_अक्षरs(uपूर्णांक32_t vtermno, bool रुको);
+बाह्य पूर्णांक opal_flush_console(uपूर्णांक32_t vtermno);
 
-extern void hvc_opal_init_early(void);
+बाह्य व्योम hvc_opal_init_early(व्योम);
 
-extern int opal_notifier_register(struct notifier_block *nb);
-extern int opal_notifier_unregister(struct notifier_block *nb);
+बाह्य पूर्णांक opal_notअगरier_रेजिस्टर(काष्ठा notअगरier_block *nb);
+बाह्य पूर्णांक opal_notअगरier_unरेजिस्टर(काष्ठा notअगरier_block *nb);
 
-extern int opal_message_notifier_register(enum opal_msg_type msg_type,
-						struct notifier_block *nb);
-extern int opal_message_notifier_unregister(enum opal_msg_type msg_type,
-					    struct notifier_block *nb);
-extern void opal_notifier_enable(void);
-extern void opal_notifier_disable(void);
-extern void opal_notifier_update_evt(uint64_t evt_mask, uint64_t evt_val);
+बाह्य पूर्णांक opal_message_notअगरier_रेजिस्टर(क्रमागत opal_msg_type msg_type,
+						काष्ठा notअगरier_block *nb);
+बाह्य पूर्णांक opal_message_notअगरier_unरेजिस्टर(क्रमागत opal_msg_type msg_type,
+					    काष्ठा notअगरier_block *nb);
+बाह्य व्योम opal_notअगरier_enable(व्योम);
+बाह्य व्योम opal_notअगरier_disable(व्योम);
+बाह्य व्योम opal_notअगरier_update_evt(uपूर्णांक64_t evt_mask, uपूर्णांक64_t evt_val);
 
-extern int opal_async_get_token_interruptible(void);
-extern int opal_async_release_token(int token);
-extern int opal_async_wait_response(uint64_t token, struct opal_msg *msg);
-extern int opal_async_wait_response_interruptible(uint64_t token,
-		struct opal_msg *msg);
-extern int opal_get_sensor_data(u32 sensor_hndl, u32 *sensor_data);
-extern int opal_get_sensor_data_u64(u32 sensor_hndl, u64 *sensor_data);
-extern int sensor_group_enable(u32 grp_hndl, bool enable);
+बाह्य पूर्णांक opal_async_get_token_पूर्णांकerruptible(व्योम);
+बाह्य पूर्णांक opal_async_release_token(पूर्णांक token);
+बाह्य पूर्णांक opal_async_रुको_response(uपूर्णांक64_t token, काष्ठा opal_msg *msg);
+बाह्य पूर्णांक opal_async_रुको_response_पूर्णांकerruptible(uपूर्णांक64_t token,
+		काष्ठा opal_msg *msg);
+बाह्य पूर्णांक opal_get_sensor_data(u32 sensor_hndl, u32 *sensor_data);
+बाह्य पूर्णांक opal_get_sensor_data_u64(u32 sensor_hndl, u64 *sensor_data);
+बाह्य पूर्णांक sensor_group_enable(u32 grp_hndl, bool enable);
 
-struct rtc_time;
-extern time64_t opal_get_boot_time(void);
-extern void opal_nvram_init(void);
-extern void opal_flash_update_init(void);
-extern void opal_flash_update_print_message(void);
-extern int opal_elog_init(void);
-extern void opal_platform_dump_init(void);
-extern void opal_sys_param_init(void);
-extern void opal_msglog_init(void);
-extern void opal_msglog_sysfs_init(void);
-extern int opal_async_comp_init(void);
-extern int opal_sensor_init(void);
-extern int opal_hmi_handler_init(void);
-extern int opal_event_init(void);
-int opal_power_control_init(void);
+काष्ठा rtc_समय;
+बाह्य समय64_t opal_get_boot_समय(व्योम);
+बाह्य व्योम opal_nvram_init(व्योम);
+बाह्य व्योम opal_flash_update_init(व्योम);
+बाह्य व्योम opal_flash_update_prपूर्णांक_message(व्योम);
+बाह्य पूर्णांक opal_elog_init(व्योम);
+बाह्य व्योम opal_platक्रमm_dump_init(व्योम);
+बाह्य व्योम opal_sys_param_init(व्योम);
+बाह्य व्योम opal_msglog_init(व्योम);
+बाह्य व्योम opal_msglog_sysfs_init(व्योम);
+बाह्य पूर्णांक opal_async_comp_init(व्योम);
+बाह्य पूर्णांक opal_sensor_init(व्योम);
+बाह्य पूर्णांक opal_hmi_handler_init(व्योम);
+बाह्य पूर्णांक opal_event_init(व्योम);
+पूर्णांक opal_घातer_control_init(व्योम);
 
-extern int opal_machine_check(struct pt_regs *regs);
-extern bool opal_mce_check_early_recovery(struct pt_regs *regs);
-extern int opal_hmi_exception_early(struct pt_regs *regs);
-extern int opal_hmi_exception_early2(struct pt_regs *regs);
-extern int opal_handle_hmi_exception(struct pt_regs *regs);
+बाह्य पूर्णांक opal_machine_check(काष्ठा pt_regs *regs);
+बाह्य bool opal_mce_check_early_recovery(काष्ठा pt_regs *regs);
+बाह्य पूर्णांक opal_hmi_exception_early(काष्ठा pt_regs *regs);
+बाह्य पूर्णांक opal_hmi_exception_early2(काष्ठा pt_regs *regs);
+बाह्य पूर्णांक opal_handle_hmi_exception(काष्ठा pt_regs *regs);
 
-extern void opal_shutdown(void);
-extern int opal_resync_timebase(void);
+बाह्य व्योम opal_shutकरोwn(व्योम);
+बाह्य पूर्णांक opal_resync_समयbase(व्योम);
 
-extern void opal_lpc_init(void);
+बाह्य व्योम opal_lpc_init(व्योम);
 
-extern void opal_kmsg_init(void);
+बाह्य व्योम opal_kmsg_init(व्योम);
 
-extern int opal_event_request(unsigned int opal_event_nr);
+बाह्य पूर्णांक opal_event_request(अचिन्हित पूर्णांक opal_event_nr);
 
-struct opal_sg_list *opal_vmalloc_to_sg_list(void *vmalloc_addr,
-					     unsigned long vmalloc_size);
-void opal_free_sg_list(struct opal_sg_list *sg);
+काष्ठा opal_sg_list *opal_vदो_स्मृति_to_sg_list(व्योम *vदो_स्मृति_addr,
+					     अचिन्हित दीर्घ vदो_स्मृति_size);
+व्योम opal_मुक्त_sg_list(काष्ठा opal_sg_list *sg);
 
-extern int opal_error_code(int rc);
+बाह्य पूर्णांक opal_error_code(पूर्णांक rc);
 
-ssize_t opal_msglog_copy(char *to, loff_t pos, size_t count);
+sमाप_प्रकार opal_msglog_copy(अक्षर *to, loff_t pos, माप_प्रकार count);
 
-static inline int opal_get_async_rc(struct opal_msg msg)
-{
-	if (msg.msg_type != OPAL_MSG_ASYNC_COMP)
-		return OPAL_PARAMETER;
-	else
-		return be64_to_cpu(msg.params[1]);
-}
+अटल अंतरभूत पूर्णांक opal_get_async_rc(काष्ठा opal_msg msg)
+अणु
+	अगर (msg.msg_type != OPAL_MSG_ASYNC_COMP)
+		वापस OPAL_PARAMETER;
+	अन्यथा
+		वापस be64_to_cpu(msg.params[1]);
+पूर्ण
 
-void opal_wake_poller(void);
+व्योम opal_wake_poller(व्योम);
 
-void opal_powercap_init(void);
-void opal_psr_init(void);
-void opal_sensor_groups_init(void);
+व्योम opal_घातercap_init(व्योम);
+व्योम opal_psr_init(व्योम);
+व्योम opal_sensor_groups_init(व्योम);
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _ASM_POWERPC_OPAL_H */
+#पूर्ण_अगर /* _ASM_POWERPC_OPAL_H */

@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Rockchip IO Voltage Domain driver
+ * Rockchip IO Voltage Doमुख्य driver
  *
- * Copyright 2014 MundoReader S.L.
+ * Copyright 2014 MunकरोReader S.L.
  * Copyright 2014 Google, Inc.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/consumer.h>
 
-#define MAX_SUPPLIES		16
+#घोषणा MAX_SUPPLIES		16
 
 /*
- * The max voltage for 1.8V and 3.3V come from the Rockchip datasheet under
- * "Recommended Operating Conditions" for "Digital GPIO".   When the typical
+ * The max voltage क्रम 1.8V and 3.3V come from the Rockchip datasheet under
+ * "Recommended Operating Conditions" क्रम "Digital GPIO".   When the typical
  * is 3.3V the max is 3.6V.  When the typical is 1.8V the max is 1.98V.
  *
  * They are used like this:
@@ -28,57 +29,57 @@
  * - If the voltage on a rail is above the "3.3" voltage (3.6V) we'll consider
  *   that to be an error.
  */
-#define MAX_VOLTAGE_1_8		1980000
-#define MAX_VOLTAGE_3_3		3600000
+#घोषणा MAX_VOLTAGE_1_8		1980000
+#घोषणा MAX_VOLTAGE_3_3		3600000
 
-#define PX30_IO_VSEL			0x180
-#define PX30_IO_VSEL_VCCIO6_SRC		BIT(0)
-#define PX30_IO_VSEL_VCCIO6_SUPPLY_NUM	1
+#घोषणा PX30_IO_VSEL			0x180
+#घोषणा PX30_IO_VSEL_VCCIO6_SRC		BIT(0)
+#घोषणा PX30_IO_VSEL_VCCIO6_SUPPLY_NUM	1
 
-#define RK3288_SOC_CON2			0x24c
-#define RK3288_SOC_CON2_FLASH0		BIT(7)
-#define RK3288_SOC_FLASH_SUPPLY_NUM	2
+#घोषणा RK3288_SOC_CON2			0x24c
+#घोषणा RK3288_SOC_CON2_FLASH0		BIT(7)
+#घोषणा RK3288_SOC_FLASH_SUPPLY_NUM	2
 
-#define RK3328_SOC_CON4			0x410
-#define RK3328_SOC_CON4_VCCIO2		BIT(7)
-#define RK3328_SOC_VCCIO2_SUPPLY_NUM	1
+#घोषणा RK3328_SOC_CON4			0x410
+#घोषणा RK3328_SOC_CON4_VCCIO2		BIT(7)
+#घोषणा RK3328_SOC_VCCIO2_SUPPLY_NUM	1
 
-#define RK3368_SOC_CON15		0x43c
-#define RK3368_SOC_CON15_FLASH0		BIT(14)
-#define RK3368_SOC_FLASH_SUPPLY_NUM	2
+#घोषणा RK3368_SOC_CON15		0x43c
+#घोषणा RK3368_SOC_CON15_FLASH0		BIT(14)
+#घोषणा RK3368_SOC_FLASH_SUPPLY_NUM	2
 
-#define RK3399_PMUGRF_CON0		0x180
-#define RK3399_PMUGRF_CON0_VSEL		BIT(8)
-#define RK3399_PMUGRF_VSEL_SUPPLY_NUM	9
+#घोषणा RK3399_PMUGRF_CON0		0x180
+#घोषणा RK3399_PMUGRF_CON0_VSEL		BIT(8)
+#घोषणा RK3399_PMUGRF_VSEL_SUPPLY_NUM	9
 
-struct rockchip_iodomain;
+काष्ठा rockchip_ioकरोमुख्य;
 
-struct rockchip_iodomain_soc_data {
-	int grf_offset;
-	const char *supply_names[MAX_SUPPLIES];
-	void (*init)(struct rockchip_iodomain *iod);
-};
+काष्ठा rockchip_ioकरोमुख्य_soc_data अणु
+	पूर्णांक grf_offset;
+	स्थिर अक्षर *supply_names[MAX_SUPPLIES];
+	व्योम (*init)(काष्ठा rockchip_ioकरोमुख्य *iod);
+पूर्ण;
 
-struct rockchip_iodomain_supply {
-	struct rockchip_iodomain *iod;
-	struct regulator *reg;
-	struct notifier_block nb;
-	int idx;
-};
+काष्ठा rockchip_ioकरोमुख्य_supply अणु
+	काष्ठा rockchip_ioकरोमुख्य *iod;
+	काष्ठा regulator *reg;
+	काष्ठा notअगरier_block nb;
+	पूर्णांक idx;
+पूर्ण;
 
-struct rockchip_iodomain {
-	struct device *dev;
-	struct regmap *grf;
-	const struct rockchip_iodomain_soc_data *soc_data;
-	struct rockchip_iodomain_supply supplies[MAX_SUPPLIES];
-};
+काष्ठा rockchip_ioकरोमुख्य अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *grf;
+	स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data *soc_data;
+	काष्ठा rockchip_ioकरोमुख्य_supply supplies[MAX_SUPPLIES];
+पूर्ण;
 
-static int rockchip_iodomain_write(struct rockchip_iodomain_supply *supply,
-				   int uV)
-{
-	struct rockchip_iodomain *iod = supply->iod;
+अटल पूर्णांक rockchip_ioकरोमुख्य_ग_लिखो(काष्ठा rockchip_ioकरोमुख्य_supply *supply,
+				   पूर्णांक uV)
+अणु
+	काष्ठा rockchip_ioकरोमुख्य *iod = supply->iod;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	/* set value bit */
 	val = (uV > MAX_VOLTAGE_1_8) ? 0 : 1;
@@ -87,162 +88,162 @@ static int rockchip_iodomain_write(struct rockchip_iodomain_supply *supply,
 	/* apply hiword-mask */
 	val |= (BIT(supply->idx) << 16);
 
-	ret = regmap_write(iod->grf, iod->soc_data->grf_offset, val);
-	if (ret)
+	ret = regmap_ग_लिखो(iod->grf, iod->soc_data->grf_offset, val);
+	अगर (ret)
 		dev_err(iod->dev, "Couldn't write to GRF\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rockchip_iodomain_notify(struct notifier_block *nb,
-				    unsigned long event,
-				    void *data)
-{
-	struct rockchip_iodomain_supply *supply =
-			container_of(nb, struct rockchip_iodomain_supply, nb);
-	int uV;
-	int ret;
+अटल पूर्णांक rockchip_ioकरोमुख्य_notअगरy(काष्ठा notअगरier_block *nb,
+				    अचिन्हित दीर्घ event,
+				    व्योम *data)
+अणु
+	काष्ठा rockchip_ioकरोमुख्य_supply *supply =
+			container_of(nb, काष्ठा rockchip_ioकरोमुख्य_supply, nb);
+	पूर्णांक uV;
+	पूर्णांक ret;
 
 	/*
-	 * According to Rockchip it's important to keep the SoC IO domain
-	 * higher than (or equal to) the external voltage.  That means we need
-	 * to change it before external voltage changes happen in the case
+	 * According to Rockchip it's important to keep the SoC IO करोमुख्य
+	 * higher than (or equal to) the बाह्यal voltage.  That means we need
+	 * to change it beक्रमe बाह्यal voltage changes happen in the हाल
 	 * of an increase.
 	 *
 	 * Note that in the "pre" change we pick the max possible voltage that
 	 * the regulator might end up at (the client requests a range and we
-	 * don't know for certain the exact voltage).  Right now we rely on the
-	 * slop in MAX_VOLTAGE_1_8 and MAX_VOLTAGE_3_3 to save us if clients
+	 * करोn't know क्रम certain the exact voltage).  Right now we rely on the
+	 * slop in MAX_VOLTAGE_1_8 and MAX_VOLTAGE_3_3 to save us अगर clients
 	 * request something like a max of 3.6V when they really want 3.3V.
-	 * We could attempt to come up with better rules if this fails.
+	 * We could attempt to come up with better rules अगर this fails.
 	 */
-	if (event & REGULATOR_EVENT_PRE_VOLTAGE_CHANGE) {
-		struct pre_voltage_change_data *pvc_data = data;
+	अगर (event & REGULATOR_EVENT_PRE_VOLTAGE_CHANGE) अणु
+		काष्ठा pre_voltage_change_data *pvc_data = data;
 
-		uV = max_t(unsigned long, pvc_data->old_uV, pvc_data->max_uV);
-	} else if (event & (REGULATOR_EVENT_VOLTAGE_CHANGE |
-			    REGULATOR_EVENT_ABORT_VOLTAGE_CHANGE)) {
-		uV = (unsigned long)data;
-	} else {
-		return NOTIFY_OK;
-	}
+		uV = max_t(अचिन्हित दीर्घ, pvc_data->old_uV, pvc_data->max_uV);
+	पूर्ण अन्यथा अगर (event & (REGULATOR_EVENT_VOLTAGE_CHANGE |
+			    REGULATOR_EVENT_ABORT_VOLTAGE_CHANGE)) अणु
+		uV = (अचिन्हित दीर्घ)data;
+	पूर्ण अन्यथा अणु
+		वापस NOTIFY_OK;
+	पूर्ण
 
 	dev_dbg(supply->iod->dev, "Setting to %d\n", uV);
 
-	if (uV > MAX_VOLTAGE_3_3) {
+	अगर (uV > MAX_VOLTAGE_3_3) अणु
 		dev_err(supply->iod->dev, "Voltage too high: %d\n", uV);
 
-		if (event == REGULATOR_EVENT_PRE_VOLTAGE_CHANGE)
-			return NOTIFY_BAD;
-	}
+		अगर (event == REGULATOR_EVENT_PRE_VOLTAGE_CHANGE)
+			वापस NOTIFY_BAD;
+	पूर्ण
 
-	ret = rockchip_iodomain_write(supply, uV);
-	if (ret && event == REGULATOR_EVENT_PRE_VOLTAGE_CHANGE)
-		return NOTIFY_BAD;
+	ret = rockchip_ioकरोमुख्य_ग_लिखो(supply, uV);
+	अगर (ret && event == REGULATOR_EVENT_PRE_VOLTAGE_CHANGE)
+		वापस NOTIFY_BAD;
 
 	dev_dbg(supply->iod->dev, "Setting to %d done\n", uV);
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static void px30_iodomain_init(struct rockchip_iodomain *iod)
-{
-	int ret;
+अटल व्योम px30_ioकरोमुख्य_init(काष्ठा rockchip_ioकरोमुख्य *iod)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	/* if no VCCIO6 supply we should leave things alone */
-	if (!iod->supplies[PX30_IO_VSEL_VCCIO6_SUPPLY_NUM].reg)
-		return;
+	/* अगर no VCCIO6 supply we should leave things alone */
+	अगर (!iod->supplies[PX30_IO_VSEL_VCCIO6_SUPPLY_NUM].reg)
+		वापस;
 
 	/*
-	 * set vccio6 iodomain to also use this framework
+	 * set vccio6 ioकरोमुख्य to also use this framework
 	 * instead of a special gpio.
 	 */
 	val = PX30_IO_VSEL_VCCIO6_SRC | (PX30_IO_VSEL_VCCIO6_SRC << 16);
-	ret = regmap_write(iod->grf, PX30_IO_VSEL, val);
-	if (ret < 0)
+	ret = regmap_ग_लिखो(iod->grf, PX30_IO_VSEL, val);
+	अगर (ret < 0)
 		dev_warn(iod->dev, "couldn't update vccio6 ctrl\n");
-}
+पूर्ण
 
-static void rk3288_iodomain_init(struct rockchip_iodomain *iod)
-{
-	int ret;
+अटल व्योम rk3288_ioकरोमुख्य_init(काष्ठा rockchip_ioकरोमुख्य *iod)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	/* if no flash supply we should leave things alone */
-	if (!iod->supplies[RK3288_SOC_FLASH_SUPPLY_NUM].reg)
-		return;
+	/* अगर no flash supply we should leave things alone */
+	अगर (!iod->supplies[RK3288_SOC_FLASH_SUPPLY_NUM].reg)
+		वापस;
 
 	/*
-	 * set flash0 iodomain to also use this framework
+	 * set flash0 ioकरोमुख्य to also use this framework
 	 * instead of a special gpio.
 	 */
 	val = RK3288_SOC_CON2_FLASH0 | (RK3288_SOC_CON2_FLASH0 << 16);
-	ret = regmap_write(iod->grf, RK3288_SOC_CON2, val);
-	if (ret < 0)
+	ret = regmap_ग_लिखो(iod->grf, RK3288_SOC_CON2, val);
+	अगर (ret < 0)
 		dev_warn(iod->dev, "couldn't update flash0 ctrl\n");
-}
+पूर्ण
 
-static void rk3328_iodomain_init(struct rockchip_iodomain *iod)
-{
-	int ret;
+अटल व्योम rk3328_ioकरोमुख्य_init(काष्ठा rockchip_ioकरोमुख्य *iod)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	/* if no vccio2 supply we should leave things alone */
-	if (!iod->supplies[RK3328_SOC_VCCIO2_SUPPLY_NUM].reg)
-		return;
+	/* अगर no vccio2 supply we should leave things alone */
+	अगर (!iod->supplies[RK3328_SOC_VCCIO2_SUPPLY_NUM].reg)
+		वापस;
 
 	/*
-	 * set vccio2 iodomain to also use this framework
+	 * set vccio2 ioकरोमुख्य to also use this framework
 	 * instead of a special gpio.
 	 */
 	val = RK3328_SOC_CON4_VCCIO2 | (RK3328_SOC_CON4_VCCIO2 << 16);
-	ret = regmap_write(iod->grf, RK3328_SOC_CON4, val);
-	if (ret < 0)
+	ret = regmap_ग_लिखो(iod->grf, RK3328_SOC_CON4, val);
+	अगर (ret < 0)
 		dev_warn(iod->dev, "couldn't update vccio2 vsel ctrl\n");
-}
+पूर्ण
 
-static void rk3368_iodomain_init(struct rockchip_iodomain *iod)
-{
-	int ret;
+अटल व्योम rk3368_ioकरोमुख्य_init(काष्ठा rockchip_ioकरोमुख्य *iod)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	/* if no flash supply we should leave things alone */
-	if (!iod->supplies[RK3368_SOC_FLASH_SUPPLY_NUM].reg)
-		return;
+	/* अगर no flash supply we should leave things alone */
+	अगर (!iod->supplies[RK3368_SOC_FLASH_SUPPLY_NUM].reg)
+		वापस;
 
 	/*
-	 * set flash0 iodomain to also use this framework
+	 * set flash0 ioकरोमुख्य to also use this framework
 	 * instead of a special gpio.
 	 */
 	val = RK3368_SOC_CON15_FLASH0 | (RK3368_SOC_CON15_FLASH0 << 16);
-	ret = regmap_write(iod->grf, RK3368_SOC_CON15, val);
-	if (ret < 0)
+	ret = regmap_ग_लिखो(iod->grf, RK3368_SOC_CON15, val);
+	अगर (ret < 0)
 		dev_warn(iod->dev, "couldn't update flash0 ctrl\n");
-}
+पूर्ण
 
-static void rk3399_pmu_iodomain_init(struct rockchip_iodomain *iod)
-{
-	int ret;
+अटल व्योम rk3399_pmu_ioकरोमुख्य_init(काष्ठा rockchip_ioकरोमुख्य *iod)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	/* if no pmu io supply we should leave things alone */
-	if (!iod->supplies[RK3399_PMUGRF_VSEL_SUPPLY_NUM].reg)
-		return;
+	/* अगर no pmu io supply we should leave things alone */
+	अगर (!iod->supplies[RK3399_PMUGRF_VSEL_SUPPLY_NUM].reg)
+		वापस;
 
 	/*
-	 * set pmu io iodomain to also use this framework
+	 * set pmu io ioकरोमुख्य to also use this framework
 	 * instead of a special gpio.
 	 */
 	val = RK3399_PMUGRF_CON0_VSEL | (RK3399_PMUGRF_CON0_VSEL << 16);
-	ret = regmap_write(iod->grf, RK3399_PMUGRF_CON0, val);
-	if (ret < 0)
+	ret = regmap_ग_लिखो(iod->grf, RK3399_PMUGRF_CON0, val);
+	अगर (ret < 0)
 		dev_warn(iod->dev, "couldn't update pmu io iodomain ctrl\n");
-}
+पूर्ण
 
-static const struct rockchip_iodomain_soc_data soc_data_px30 = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_px30 = अणु
 	.grf_offset = 0x180,
-	.supply_names = {
-		NULL,
+	.supply_names = अणु
+		शून्य,
 		"vccio6",
 		"vccio1",
 		"vccio2",
@@ -250,47 +251,47 @@ static const struct rockchip_iodomain_soc_data soc_data_px30 = {
 		"vccio4",
 		"vccio5",
 		"vccio-oscgpi",
-	},
-	.init = px30_iodomain_init,
-};
+	पूर्ण,
+	.init = px30_ioकरोमुख्य_init,
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_px30_pmu = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_px30_pmu = अणु
 	.grf_offset = 0x100,
-	.supply_names = {
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
+	.supply_names = अणु
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
 		"pmuio1",
 		"pmuio2",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * On the rk3188 the io-domains are handled by a shared register with the
+ * On the rk3188 the io-करोमुख्यs are handled by a shared रेजिस्टर with the
  * lower 8 bits being still being continuing drive-strength settings.
  */
-static const struct rockchip_iodomain_soc_data soc_data_rk3188 = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rk3188 = अणु
 	.grf_offset = 0x104,
-	.supply_names = {
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
+	.supply_names = अणु
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
 		"ap0",
 		"ap1",
 		"cif",
@@ -299,22 +300,22 @@ static const struct rockchip_iodomain_soc_data soc_data_rk3188 = {
 		"vccio1",
 		"lcdc0",
 		"lcdc1",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_rk3228 = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rk3228 = अणु
 	.grf_offset = 0x418,
-	.supply_names = {
+	.supply_names = अणु
 		"vccio1",
 		"vccio2",
 		"vccio3",
 		"vccio4",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_rk3288 = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rk3288 = अणु
 	.grf_offset = 0x380,
-	.supply_names = {
+	.supply_names = अणु
 		"lcdc",		/* LCDC_VDD */
 		"dvp",		/* DVPIO_VDD */
 		"flash0",	/* FLASH0_VDD (emmc) */
@@ -325,13 +326,13 @@ static const struct rockchip_iodomain_soc_data soc_data_rk3288 = {
 		"sdcard",	/* SDMMC0_VDD (sdmmc) */
 		"gpio30",	/* APIO1_VDD */
 		"gpio1830",	/* APIO2_VDD */
-	},
-	.init = rk3288_iodomain_init,
-};
+	पूर्ण,
+	.init = rk3288_ioकरोमुख्य_init,
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_rk3328 = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rk3328 = अणु
 	.grf_offset = 0x410,
-	.supply_names = {
+	.supply_names = अणु
 		"vccio1",
 		"vccio2",
 		"vccio3",
@@ -339,288 +340,288 @@ static const struct rockchip_iodomain_soc_data soc_data_rk3328 = {
 		"vccio5",
 		"vccio6",
 		"pmuio",
-	},
-	.init = rk3328_iodomain_init,
-};
+	पूर्ण,
+	.init = rk3328_ioकरोमुख्य_init,
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_rk3368 = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rk3368 = अणु
 	.grf_offset = 0x900,
-	.supply_names = {
-		NULL,		/* reserved */
+	.supply_names = अणु
+		शून्य,		/* reserved */
 		"dvp",		/* DVPIO_VDD */
 		"flash0",	/* FLASH0_VDD (emmc) */
 		"wifi",		/* APIO2_VDD (sdio0) */
-		NULL,
+		शून्य,
 		"audio",	/* APIO3_VDD */
 		"sdcard",	/* SDMMC0_VDD (sdmmc) */
 		"gpio30",	/* APIO1_VDD */
 		"gpio1830",	/* APIO4_VDD (gpujtag) */
-	},
-	.init = rk3368_iodomain_init,
-};
+	पूर्ण,
+	.init = rk3368_ioकरोमुख्य_init,
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_rk3368_pmu = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rk3368_pmu = अणु
 	.grf_offset = 0x100,
-	.supply_names = {
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		"pmu",	        /*PMU IO domain*/
-		"vop",	        /*LCDC IO domain*/
-	},
-};
+	.supply_names = अणु
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		"pmu",	        /*PMU IO करोमुख्य*/
+		"vop",	        /*LCDC IO करोमुख्य*/
+	पूर्ण,
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_rk3399 = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rk3399 = अणु
 	.grf_offset = 0xe640,
-	.supply_names = {
+	.supply_names = अणु
 		"bt656",		/* APIO2_VDD */
 		"audio",		/* APIO5_VDD */
 		"sdmmc",		/* SDMMC0_VDD */
 		"gpio1830",		/* APIO4_VDD */
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_rk3399_pmu = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rk3399_pmu = अणु
 	.grf_offset = 0x180,
-	.supply_names = {
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
+	.supply_names = अणु
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
 		"pmu1830",		/* PMUIO2_VDD */
-	},
-	.init = rk3399_pmu_iodomain_init,
-};
+	पूर्ण,
+	.init = rk3399_pmu_ioकरोमुख्य_init,
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_rv1108 = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rv1108 = अणु
 	.grf_offset = 0x404,
-	.supply_names = {
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL,
+	.supply_names = अणु
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
+		शून्य,
 		"vccio1",
 		"vccio2",
 		"vccio3",
 		"vccio5",
 		"vccio6",
-	},
+	पूर्ण,
 
-};
+पूर्ण;
 
-static const struct rockchip_iodomain_soc_data soc_data_rv1108_pmu = {
+अटल स्थिर काष्ठा rockchip_ioकरोमुख्य_soc_data soc_data_rv1108_pmu = अणु
 	.grf_offset = 0x104,
-	.supply_names = {
+	.supply_names = अणु
 		"pmu",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct of_device_id rockchip_iodomain_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id rockchip_ioकरोमुख्य_match[] = अणु
+	अणु
 		.compatible = "rockchip,px30-io-voltage-domain",
-		.data = (void *)&soc_data_px30
-	},
-	{
+		.data = (व्योम *)&soc_data_px30
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,px30-pmu-io-voltage-domain",
-		.data = (void *)&soc_data_px30_pmu
-	},
-	{
+		.data = (व्योम *)&soc_data_px30_pmu
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rk3188-io-voltage-domain",
 		.data = &soc_data_rk3188
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rk3228-io-voltage-domain",
 		.data = &soc_data_rk3228
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rk3288-io-voltage-domain",
 		.data = &soc_data_rk3288
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rk3328-io-voltage-domain",
 		.data = &soc_data_rk3328
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rk3368-io-voltage-domain",
 		.data = &soc_data_rk3368
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rk3368-pmu-io-voltage-domain",
 		.data = &soc_data_rk3368_pmu
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rk3399-io-voltage-domain",
 		.data = &soc_data_rk3399
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rk3399-pmu-io-voltage-domain",
 		.data = &soc_data_rk3399_pmu
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rv1108-io-voltage-domain",
 		.data = &soc_data_rv1108
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "rockchip,rv1108-pmu-io-voltage-domain",
 		.data = &soc_data_rv1108_pmu
-	},
-	{ /* sentinel */ },
-};
-MODULE_DEVICE_TABLE(of, rockchip_iodomain_match);
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, rockchip_ioकरोमुख्य_match);
 
-static int rockchip_iodomain_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	const struct of_device_id *match;
-	struct rockchip_iodomain *iod;
-	struct device *parent;
-	int i, ret = 0;
+अटल पूर्णांक rockchip_ioकरोमुख्य_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	स्थिर काष्ठा of_device_id *match;
+	काष्ठा rockchip_ioकरोमुख्य *iod;
+	काष्ठा device *parent;
+	पूर्णांक i, ret = 0;
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
-	iod = devm_kzalloc(&pdev->dev, sizeof(*iod), GFP_KERNEL);
-	if (!iod)
-		return -ENOMEM;
+	iod = devm_kzalloc(&pdev->dev, माप(*iod), GFP_KERNEL);
+	अगर (!iod)
+		वापस -ENOMEM;
 
 	iod->dev = &pdev->dev;
-	platform_set_drvdata(pdev, iod);
+	platक्रमm_set_drvdata(pdev, iod);
 
-	match = of_match_node(rockchip_iodomain_match, np);
+	match = of_match_node(rockchip_ioकरोमुख्य_match, np);
 	iod->soc_data = match->data;
 
 	parent = pdev->dev.parent;
-	if (parent && parent->of_node) {
+	अगर (parent && parent->of_node) अणु
 		iod->grf = syscon_node_to_regmap(parent->of_node);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&pdev->dev, "falling back to old binding\n");
 		iod->grf = syscon_regmap_lookup_by_phandle(np, "rockchip,grf");
-	}
+	पूर्ण
 
-	if (IS_ERR(iod->grf)) {
+	अगर (IS_ERR(iod->grf)) अणु
 		dev_err(&pdev->dev, "couldn't find grf regmap\n");
-		return PTR_ERR(iod->grf);
-	}
+		वापस PTR_ERR(iod->grf);
+	पूर्ण
 
-	for (i = 0; i < MAX_SUPPLIES; i++) {
-		const char *supply_name = iod->soc_data->supply_names[i];
-		struct rockchip_iodomain_supply *supply = &iod->supplies[i];
-		struct regulator *reg;
-		int uV;
+	क्रम (i = 0; i < MAX_SUPPLIES; i++) अणु
+		स्थिर अक्षर *supply_name = iod->soc_data->supply_names[i];
+		काष्ठा rockchip_ioकरोमुख्य_supply *supply = &iod->supplies[i];
+		काष्ठा regulator *reg;
+		पूर्णांक uV;
 
-		if (!supply_name)
-			continue;
+		अगर (!supply_name)
+			जारी;
 
 		reg = devm_regulator_get_optional(iod->dev, supply_name);
-		if (IS_ERR(reg)) {
+		अगर (IS_ERR(reg)) अणु
 			ret = PTR_ERR(reg);
 
 			/* If a supply wasn't specified, that's OK */
-			if (ret == -ENODEV)
-				continue;
-			else if (ret != -EPROBE_DEFER)
+			अगर (ret == -ENODEV)
+				जारी;
+			अन्यथा अगर (ret != -EPROBE_DEFER)
 				dev_err(iod->dev, "couldn't get regulator %s\n",
 					supply_name);
-			goto unreg_notify;
-		}
+			जाओ unreg_notअगरy;
+		पूर्ण
 
 		/* set initial correct value */
 		uV = regulator_get_voltage(reg);
 
 		/* must be a regulator we can get the voltage of */
-		if (uV < 0) {
+		अगर (uV < 0) अणु
 			dev_err(iod->dev, "Can't determine voltage: %s\n",
 				supply_name);
 			ret = uV;
-			goto unreg_notify;
-		}
+			जाओ unreg_notअगरy;
+		पूर्ण
 
-		if (uV > MAX_VOLTAGE_3_3) {
+		अगर (uV > MAX_VOLTAGE_3_3) अणु
 			dev_crit(iod->dev,
 				 "%d uV is too high. May damage SoC!\n",
 				 uV);
 			ret = -EINVAL;
-			goto unreg_notify;
-		}
+			जाओ unreg_notअगरy;
+		पूर्ण
 
 		/* setup our supply */
 		supply->idx = i;
 		supply->iod = iod;
 		supply->reg = reg;
-		supply->nb.notifier_call = rockchip_iodomain_notify;
+		supply->nb.notअगरier_call = rockchip_ioकरोमुख्य_notअगरy;
 
-		ret = rockchip_iodomain_write(supply, uV);
-		if (ret) {
-			supply->reg = NULL;
-			goto unreg_notify;
-		}
+		ret = rockchip_ioकरोमुख्य_ग_लिखो(supply, uV);
+		अगर (ret) अणु
+			supply->reg = शून्य;
+			जाओ unreg_notअगरy;
+		पूर्ण
 
-		/* register regulator notifier */
-		ret = regulator_register_notifier(reg, &supply->nb);
-		if (ret) {
+		/* रेजिस्टर regulator notअगरier */
+		ret = regulator_रेजिस्टर_notअगरier(reg, &supply->nb);
+		अगर (ret) अणु
 			dev_err(&pdev->dev,
 				"regulator notifier request failed\n");
-			supply->reg = NULL;
-			goto unreg_notify;
-		}
-	}
+			supply->reg = शून्य;
+			जाओ unreg_notअगरy;
+		पूर्ण
+	पूर्ण
 
-	if (iod->soc_data->init)
+	अगर (iod->soc_data->init)
 		iod->soc_data->init(iod);
 
-	return 0;
+	वापस 0;
 
-unreg_notify:
-	for (i = MAX_SUPPLIES - 1; i >= 0; i--) {
-		struct rockchip_iodomain_supply *io_supply = &iod->supplies[i];
+unreg_notअगरy:
+	क्रम (i = MAX_SUPPLIES - 1; i >= 0; i--) अणु
+		काष्ठा rockchip_ioकरोमुख्य_supply *io_supply = &iod->supplies[i];
 
-		if (io_supply->reg)
-			regulator_unregister_notifier(io_supply->reg,
+		अगर (io_supply->reg)
+			regulator_unरेजिस्टर_notअगरier(io_supply->reg,
 						      &io_supply->nb);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rockchip_iodomain_remove(struct platform_device *pdev)
-{
-	struct rockchip_iodomain *iod = platform_get_drvdata(pdev);
-	int i;
+अटल पूर्णांक rockchip_ioकरोमुख्य_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rockchip_ioकरोमुख्य *iod = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
 
-	for (i = MAX_SUPPLIES - 1; i >= 0; i--) {
-		struct rockchip_iodomain_supply *io_supply = &iod->supplies[i];
+	क्रम (i = MAX_SUPPLIES - 1; i >= 0; i--) अणु
+		काष्ठा rockchip_ioकरोमुख्य_supply *io_supply = &iod->supplies[i];
 
-		if (io_supply->reg)
-			regulator_unregister_notifier(io_supply->reg,
+		अगर (io_supply->reg)
+			regulator_unरेजिस्टर_notअगरier(io_supply->reg,
 						      &io_supply->nb);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver rockchip_iodomain_driver = {
-	.probe   = rockchip_iodomain_probe,
-	.remove  = rockchip_iodomain_remove,
-	.driver  = {
+अटल काष्ठा platक्रमm_driver rockchip_ioकरोमुख्य_driver = अणु
+	.probe   = rockchip_ioकरोमुख्य_probe,
+	.हटाओ  = rockchip_ioकरोमुख्य_हटाओ,
+	.driver  = अणु
 		.name  = "rockchip-iodomain",
-		.of_match_table = rockchip_iodomain_match,
-	},
-};
+		.of_match_table = rockchip_ioकरोमुख्य_match,
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(rockchip_iodomain_driver);
+module_platक्रमm_driver(rockchip_ioकरोमुख्य_driver);
 
 MODULE_DESCRIPTION("Rockchip IO-domain driver");
 MODULE_AUTHOR("Heiko Stuebner <heiko@sntech.de>");

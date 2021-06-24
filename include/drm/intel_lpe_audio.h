@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,31 +22,31 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _INTEL_LPE_AUDIO_H_
-#define _INTEL_LPE_AUDIO_H_
+#अगर_अघोषित _INTEL_LPE_AUDIO_H_
+#घोषणा _INTEL_LPE_AUDIO_H_
 
-#include <linux/types.h>
-#include <linux/spinlock_types.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spinlock_types.h>
 
-struct platform_device;
+काष्ठा platक्रमm_device;
 
-#define HDMI_MAX_ELD_BYTES	128
+#घोषणा HDMI_MAX_ELD_BYTES	128
 
-struct intel_hdmi_lpe_audio_port_pdata {
+काष्ठा पूर्णांकel_hdmi_lpe_audio_port_pdata अणु
 	u8 eld[HDMI_MAX_ELD_BYTES];
-	int port;
-	int pipe;
-	int ls_clock;
+	पूर्णांक port;
+	पूर्णांक pipe;
+	पूर्णांक ls_घड़ी;
 	bool dp_output;
-};
+पूर्ण;
 
-struct intel_hdmi_lpe_audio_pdata {
-	struct intel_hdmi_lpe_audio_port_pdata port[3]; /* for ports B,C,D */
-	int num_ports;
-	int num_pipes;
+काष्ठा पूर्णांकel_hdmi_lpe_audio_pdata अणु
+	काष्ठा पूर्णांकel_hdmi_lpe_audio_port_pdata port[3]; /* क्रम ports B,C,D */
+	पूर्णांक num_ports;
+	पूर्णांक num_pipes;
 
-	void (*notify_audio_lpe)(struct platform_device *pdev, int port); /* port: 0==B,1==C,2==D */
+	व्योम (*notअगरy_audio_lpe)(काष्ठा platक्रमm_device *pdev, पूर्णांक port); /* port: 0==B,1==C,2==D */
 	spinlock_t lpe_audio_slock;
-};
+पूर्ण;
 
-#endif /* _I915_LPE_AUDIO_H_ */
+#पूर्ण_अगर /* _I915_LPE_AUDIO_H_ */

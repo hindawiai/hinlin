@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Based on arch/arm/kernel/ptrace.c
  *
  * By Ross Biro 1/23/92
  * edited by Linus Torvalds
- * ARM modifications Copyright (C) 2000 Russell King
+ * ARM modअगरications Copyright (C) 2000 Russell King
  * Copyright (C) 2012 ARM Ltd.
  */
 
-#include <linux/audit.h>
-#include <linux/compat.h>
-#include <linux/kernel.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/task_stack.h>
-#include <linux/mm.h>
-#include <linux/nospec.h>
-#include <linux/smp.h>
-#include <linux/ptrace.h>
-#include <linux/user.h>
-#include <linux/seccomp.h>
-#include <linux/security.h>
-#include <linux/init.h>
-#include <linux/signal.h>
-#include <linux/string.h>
-#include <linux/uaccess.h>
-#include <linux/perf_event.h>
-#include <linux/hw_breakpoint.h>
-#include <linux/regset.h>
-#include <linux/tracehook.h>
-#include <linux/elf.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/nospec.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/user.h>
+#समावेश <linux/seccomp.h>
+#समावेश <linux/security.h>
+#समावेश <linux/init.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#समावेश <linux/regset.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/elf.h>
 
-#include <asm/compat.h>
-#include <asm/cpufeature.h>
-#include <asm/debug-monitors.h>
-#include <asm/fpsimd.h>
-#include <asm/mte.h>
-#include <asm/pointer_auth.h>
-#include <asm/stacktrace.h>
-#include <asm/syscall.h>
-#include <asm/traps.h>
-#include <asm/system_misc.h>
+#समावेश <यंत्र/compat.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/debug-monitors.h>
+#समावेश <यंत्र/fpsimd.h>
+#समावेश <यंत्र/mte.h>
+#समावेश <यंत्र/poपूर्णांकer_auth.h>
+#समावेश <यंत्र/stacktrace.h>
+#समावेश <यंत्र/syscall.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/syscalls.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/syscalls.h>
 
-struct pt_regs_offset {
-	const char *name;
-	int offset;
-};
+काष्ठा pt_regs_offset अणु
+	स्थिर अक्षर *name;
+	पूर्णांक offset;
+पूर्ण;
 
-#define REG_OFFSET_NAME(r) {.name = #r, .offset = offsetof(struct pt_regs, r)}
-#define REG_OFFSET_END {.name = NULL, .offset = 0}
-#define GPR_OFFSET_NAME(r) \
-	{.name = "x" #r, .offset = offsetof(struct pt_regs, regs[r])}
+#घोषणा REG_OFFSET_NAME(r) अणु.name = #r, .offset = दुरत्व(काष्ठा pt_regs, r)पूर्ण
+#घोषणा REG_OFFSET_END अणु.name = शून्य, .offset = 0पूर्ण
+#घोषणा GPR_OFFSET_NAME(r) \
+	अणु.name = "x" #r, .offset = दुरत्व(काष्ठा pt_regs, regs[r])पूर्ण
 
-static const struct pt_regs_offset regoffset_table[] = {
+अटल स्थिर काष्ठा pt_regs_offset regoffset_table[] = अणु
 	GPR_OFFSET_NAME(0),
 	GPR_OFFSET_NAME(1),
 	GPR_OFFSET_NAME(2),
@@ -86,225 +87,225 @@ static const struct pt_regs_offset regoffset_table[] = {
 	GPR_OFFSET_NAME(28),
 	GPR_OFFSET_NAME(29),
 	GPR_OFFSET_NAME(30),
-	{.name = "lr", .offset = offsetof(struct pt_regs, regs[30])},
+	अणु.name = "lr", .offset = दुरत्व(काष्ठा pt_regs, regs[30])पूर्ण,
 	REG_OFFSET_NAME(sp),
 	REG_OFFSET_NAME(pc),
 	REG_OFFSET_NAME(pstate),
 	REG_OFFSET_END,
-};
+पूर्ण;
 
 /**
- * regs_query_register_offset() - query register offset from its name
- * @name:	the name of a register
+ * regs_query_रेजिस्टर_offset() - query रेजिस्टर offset from its name
+ * @name:	the name of a रेजिस्टर
  *
- * regs_query_register_offset() returns the offset of a register in struct
- * pt_regs from its name. If the name is invalid, this returns -EINVAL;
+ * regs_query_रेजिस्टर_offset() वापसs the offset of a रेजिस्टर in काष्ठा
+ * pt_regs from its name. If the name is invalid, this वापसs -EINVAL;
  */
-int regs_query_register_offset(const char *name)
-{
-	const struct pt_regs_offset *roff;
+पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name)
+अणु
+	स्थिर काष्ठा pt_regs_offset *roff;
 
-	for (roff = regoffset_table; roff->name != NULL; roff++)
-		if (!strcmp(roff->name, name))
-			return roff->offset;
-	return -EINVAL;
-}
+	क्रम (roff = regoffset_table; roff->name != शून्य; roff++)
+		अगर (!म_भेद(roff->name, name))
+			वापस roff->offset;
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * regs_within_kernel_stack() - check the address in the stack
- * @regs:      pt_regs which contains kernel stack pointer.
+ * @regs:      pt_regs which contains kernel stack poपूर्णांकer.
  * @addr:      address which is checked.
  *
  * regs_within_kernel_stack() checks @addr is within the kernel stack page(s).
- * If @addr is within the kernel stack, it returns true. If not, returns false.
+ * If @addr is within the kernel stack, it वापसs true. If not, वापसs false.
  */
-static bool regs_within_kernel_stack(struct pt_regs *regs, unsigned long addr)
-{
-	return ((addr & ~(THREAD_SIZE - 1))  ==
-		(kernel_stack_pointer(regs) & ~(THREAD_SIZE - 1))) ||
-		on_irq_stack(addr, NULL);
-}
+अटल bool regs_within_kernel_stack(काष्ठा pt_regs *regs, अचिन्हित दीर्घ addr)
+अणु
+	वापस ((addr & ~(THREAD_SIZE - 1))  ==
+		(kernel_stack_poपूर्णांकer(regs) & ~(THREAD_SIZE - 1))) ||
+		on_irq_stack(addr, शून्य);
+पूर्ण
 
 /**
  * regs_get_kernel_stack_nth() - get Nth entry of the stack
- * @regs:	pt_regs which contains kernel stack pointer.
+ * @regs:	pt_regs which contains kernel stack poपूर्णांकer.
  * @n:		stack entry number.
  *
- * regs_get_kernel_stack_nth() returns @n th entry of the kernel stack which
- * is specified by @regs. If the @n th entry is NOT in the kernel stack,
- * this returns 0.
+ * regs_get_kernel_stack_nth() वापसs @n th entry of the kernel stack which
+ * is specअगरied by @regs. If the @n th entry is NOT in the kernel stack,
+ * this वापसs 0.
  */
-unsigned long regs_get_kernel_stack_nth(struct pt_regs *regs, unsigned int n)
-{
-	unsigned long *addr = (unsigned long *)kernel_stack_pointer(regs);
+अचिन्हित दीर्घ regs_get_kernel_stack_nth(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक n)
+अणु
+	अचिन्हित दीर्घ *addr = (अचिन्हित दीर्घ *)kernel_stack_poपूर्णांकer(regs);
 
 	addr += n;
-	if (regs_within_kernel_stack(regs, (unsigned long)addr))
-		return *addr;
-	else
-		return 0;
-}
+	अगर (regs_within_kernel_stack(regs, (अचिन्हित दीर्घ)addr))
+		वापस *addr;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
 /*
- * TODO: does not yet catch signals sent when the child dies.
- * in exit.c or in signal.c.
+ * TODO: करोes not yet catch संकेतs sent when the child dies.
+ * in निकास.c or in संकेत.c.
  */
 
 /*
  * Called by kernel/ptrace.c when detaching..
  */
-void ptrace_disable(struct task_struct *child)
-{
+व्योम ptrace_disable(काष्ठा task_काष्ठा *child)
+अणु
 	/*
 	 * This would be better off in core code, but PTRACE_DETACH has
-	 * grown its fair share of arch-specific worts and changing it
+	 * grown its fair share of arch-specअगरic worts and changing it
 	 * is likely to cause regressions on obscure architectures.
 	 */
 	user_disable_single_step(child);
-}
+पूर्ण
 
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
 /*
- * Handle hitting a HW-breakpoint.
+ * Handle hitting a HW-अवरोधpoपूर्णांक.
  */
-static void ptrace_hbptriggered(struct perf_event *bp,
-				struct perf_sample_data *data,
-				struct pt_regs *regs)
-{
-	struct arch_hw_breakpoint *bkpt = counter_arch_bp(bp);
-	const char *desc = "Hardware breakpoint trap (ptrace)";
+अटल व्योम ptrace_hbptriggered(काष्ठा perf_event *bp,
+				काष्ठा perf_sample_data *data,
+				काष्ठा pt_regs *regs)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *bkpt = counter_arch_bp(bp);
+	स्थिर अक्षर *desc = "Hardware breakpoint trap (ptrace)";
 
-#ifdef CONFIG_COMPAT
-	if (is_compat_task()) {
-		int si_errno = 0;
-		int i;
+#अगर_घोषित CONFIG_COMPAT
+	अगर (is_compat_task()) अणु
+		पूर्णांक si_त्रुटि_सं = 0;
+		पूर्णांक i;
 
-		for (i = 0; i < ARM_MAX_BRP; ++i) {
-			if (current->thread.debug.hbp_break[i] == bp) {
-				si_errno = (i << 1) + 1;
-				break;
-			}
-		}
+		क्रम (i = 0; i < ARM_MAX_BRP; ++i) अणु
+			अगर (current->thपढ़ो.debug.hbp_अवरोध[i] == bp) अणु
+				si_त्रुटि_सं = (i << 1) + 1;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		for (i = 0; i < ARM_MAX_WRP; ++i) {
-			if (current->thread.debug.hbp_watch[i] == bp) {
-				si_errno = -((i << 1) + 1);
-				break;
-			}
-		}
-		arm64_force_sig_ptrace_errno_trap(si_errno, bkpt->trigger,
+		क्रम (i = 0; i < ARM_MAX_WRP; ++i) अणु
+			अगर (current->thपढ़ो.debug.hbp_watch[i] == bp) अणु
+				si_त्रुटि_सं = -((i << 1) + 1);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		arm64_क्रमce_sig_ptrace_त्रुटि_सं_trap(si_त्रुटि_सं, bkpt->trigger,
 						  desc);
-		return;
-	}
-#endif
-	arm64_force_sig_fault(SIGTRAP, TRAP_HWBKPT, bkpt->trigger, desc);
-}
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
+	arm64_क्रमce_sig_fault(SIGTRAP, TRAP_HWBKPT, bkpt->trigger, desc);
+पूर्ण
 
 /*
- * Unregister breakpoints from this task and reset the pointers in
- * the thread_struct.
+ * Unरेजिस्टर अवरोधpoपूर्णांकs from this task and reset the poपूर्णांकers in
+ * the thपढ़ो_काष्ठा.
  */
-void flush_ptrace_hw_breakpoint(struct task_struct *tsk)
-{
-	int i;
-	struct thread_struct *t = &tsk->thread;
+व्योम flush_ptrace_hw_अवरोधpoपूर्णांक(काष्ठा task_काष्ठा *tsk)
+अणु
+	पूर्णांक i;
+	काष्ठा thपढ़ो_काष्ठा *t = &tsk->thपढ़ो;
 
-	for (i = 0; i < ARM_MAX_BRP; i++) {
-		if (t->debug.hbp_break[i]) {
-			unregister_hw_breakpoint(t->debug.hbp_break[i]);
-			t->debug.hbp_break[i] = NULL;
-		}
-	}
+	क्रम (i = 0; i < ARM_MAX_BRP; i++) अणु
+		अगर (t->debug.hbp_अवरोध[i]) अणु
+			unरेजिस्टर_hw_अवरोधpoपूर्णांक(t->debug.hbp_अवरोध[i]);
+			t->debug.hbp_अवरोध[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < ARM_MAX_WRP; i++) {
-		if (t->debug.hbp_watch[i]) {
-			unregister_hw_breakpoint(t->debug.hbp_watch[i]);
-			t->debug.hbp_watch[i] = NULL;
-		}
-	}
-}
+	क्रम (i = 0; i < ARM_MAX_WRP; i++) अणु
+		अगर (t->debug.hbp_watch[i]) अणु
+			unरेजिस्टर_hw_अवरोधpoपूर्णांक(t->debug.hbp_watch[i]);
+			t->debug.hbp_watch[i] = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void ptrace_hw_copy_thread(struct task_struct *tsk)
-{
-	memset(&tsk->thread.debug, 0, sizeof(struct debug_info));
-}
+व्योम ptrace_hw_copy_thपढ़ो(काष्ठा task_काष्ठा *tsk)
+अणु
+	स_रखो(&tsk->thपढ़ो.debug, 0, माप(काष्ठा debug_info));
+पूर्ण
 
-static struct perf_event *ptrace_hbp_get_event(unsigned int note_type,
-					       struct task_struct *tsk,
-					       unsigned long idx)
-{
-	struct perf_event *bp = ERR_PTR(-EINVAL);
+अटल काष्ठा perf_event *ptrace_hbp_get_event(अचिन्हित पूर्णांक note_type,
+					       काष्ठा task_काष्ठा *tsk,
+					       अचिन्हित दीर्घ idx)
+अणु
+	काष्ठा perf_event *bp = ERR_PTR(-EINVAL);
 
-	switch (note_type) {
-	case NT_ARM_HW_BREAK:
-		if (idx >= ARM_MAX_BRP)
-			goto out;
+	चयन (note_type) अणु
+	हाल NT_ARM_HW_BREAK:
+		अगर (idx >= ARM_MAX_BRP)
+			जाओ out;
 		idx = array_index_nospec(idx, ARM_MAX_BRP);
-		bp = tsk->thread.debug.hbp_break[idx];
-		break;
-	case NT_ARM_HW_WATCH:
-		if (idx >= ARM_MAX_WRP)
-			goto out;
+		bp = tsk->thपढ़ो.debug.hbp_अवरोध[idx];
+		अवरोध;
+	हाल NT_ARM_HW_WATCH:
+		अगर (idx >= ARM_MAX_WRP)
+			जाओ out;
 		idx = array_index_nospec(idx, ARM_MAX_WRP);
-		bp = tsk->thread.debug.hbp_watch[idx];
-		break;
-	}
+		bp = tsk->thपढ़ो.debug.hbp_watch[idx];
+		अवरोध;
+	पूर्ण
 
 out:
-	return bp;
-}
+	वापस bp;
+पूर्ण
 
-static int ptrace_hbp_set_event(unsigned int note_type,
-				struct task_struct *tsk,
-				unsigned long idx,
-				struct perf_event *bp)
-{
-	int err = -EINVAL;
+अटल पूर्णांक ptrace_hbp_set_event(अचिन्हित पूर्णांक note_type,
+				काष्ठा task_काष्ठा *tsk,
+				अचिन्हित दीर्घ idx,
+				काष्ठा perf_event *bp)
+अणु
+	पूर्णांक err = -EINVAL;
 
-	switch (note_type) {
-	case NT_ARM_HW_BREAK:
-		if (idx >= ARM_MAX_BRP)
-			goto out;
+	चयन (note_type) अणु
+	हाल NT_ARM_HW_BREAK:
+		अगर (idx >= ARM_MAX_BRP)
+			जाओ out;
 		idx = array_index_nospec(idx, ARM_MAX_BRP);
-		tsk->thread.debug.hbp_break[idx] = bp;
+		tsk->thपढ़ो.debug.hbp_अवरोध[idx] = bp;
 		err = 0;
-		break;
-	case NT_ARM_HW_WATCH:
-		if (idx >= ARM_MAX_WRP)
-			goto out;
+		अवरोध;
+	हाल NT_ARM_HW_WATCH:
+		अगर (idx >= ARM_MAX_WRP)
+			जाओ out;
 		idx = array_index_nospec(idx, ARM_MAX_WRP);
-		tsk->thread.debug.hbp_watch[idx] = bp;
+		tsk->thपढ़ो.debug.hbp_watch[idx] = bp;
 		err = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct perf_event *ptrace_hbp_create(unsigned int note_type,
-					    struct task_struct *tsk,
-					    unsigned long idx)
-{
-	struct perf_event *bp;
-	struct perf_event_attr attr;
-	int err, type;
+अटल काष्ठा perf_event *ptrace_hbp_create(अचिन्हित पूर्णांक note_type,
+					    काष्ठा task_काष्ठा *tsk,
+					    अचिन्हित दीर्घ idx)
+अणु
+	काष्ठा perf_event *bp;
+	काष्ठा perf_event_attr attr;
+	पूर्णांक err, type;
 
-	switch (note_type) {
-	case NT_ARM_HW_BREAK:
+	चयन (note_type) अणु
+	हाल NT_ARM_HW_BREAK:
 		type = HW_BREAKPOINT_X;
-		break;
-	case NT_ARM_HW_WATCH:
+		अवरोध;
+	हाल NT_ARM_HW_WATCH:
 		type = HW_BREAKPOINT_RW;
-		break;
-	default:
-		return ERR_PTR(-EINVAL);
-	}
+		अवरोध;
+	शेष:
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	ptrace_breakpoint_init(&attr);
+	ptrace_अवरोधpoपूर्णांक_init(&attr);
 
 	/*
-	 * Initialise fields to sane defaults
+	 * Initialise fields to sane शेषs
 	 * (i.e. values that will pass validation).
 	 */
 	attr.bp_addr	= 0;
@@ -312,465 +313,465 @@ static struct perf_event *ptrace_hbp_create(unsigned int note_type,
 	attr.bp_type	= type;
 	attr.disabled	= 1;
 
-	bp = register_user_hw_breakpoint(&attr, ptrace_hbptriggered, NULL, tsk);
-	if (IS_ERR(bp))
-		return bp;
+	bp = रेजिस्टर_user_hw_अवरोधpoपूर्णांक(&attr, ptrace_hbptriggered, शून्य, tsk);
+	अगर (IS_ERR(bp))
+		वापस bp;
 
 	err = ptrace_hbp_set_event(note_type, tsk, idx, bp);
-	if (err)
-		return ERR_PTR(err);
+	अगर (err)
+		वापस ERR_PTR(err);
 
-	return bp;
-}
+	वापस bp;
+पूर्ण
 
-static int ptrace_hbp_fill_attr_ctrl(unsigned int note_type,
-				     struct arch_hw_breakpoint_ctrl ctrl,
-				     struct perf_event_attr *attr)
-{
-	int err, len, type, offset, disabled = !ctrl.enabled;
+अटल पूर्णांक ptrace_hbp_fill_attr_ctrl(अचिन्हित पूर्णांक note_type,
+				     काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl ctrl,
+				     काष्ठा perf_event_attr *attr)
+अणु
+	पूर्णांक err, len, type, offset, disabled = !ctrl.enabled;
 
 	attr->disabled = disabled;
-	if (disabled)
-		return 0;
+	अगर (disabled)
+		वापस 0;
 
 	err = arch_bp_generic_fields(ctrl, &len, &type, &offset);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	switch (note_type) {
-	case NT_ARM_HW_BREAK:
-		if ((type & HW_BREAKPOINT_X) != type)
-			return -EINVAL;
-		break;
-	case NT_ARM_HW_WATCH:
-		if ((type & HW_BREAKPOINT_RW) != type)
-			return -EINVAL;
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (note_type) अणु
+	हाल NT_ARM_HW_BREAK:
+		अगर ((type & HW_BREAKPOINT_X) != type)
+			वापस -EINVAL;
+		अवरोध;
+	हाल NT_ARM_HW_WATCH:
+		अगर ((type & HW_BREAKPOINT_RW) != type)
+			वापस -EINVAL;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	attr->bp_len	= len;
 	attr->bp_type	= type;
 	attr->bp_addr	+= offset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ptrace_hbp_get_resource_info(unsigned int note_type, u32 *info)
-{
+अटल पूर्णांक ptrace_hbp_get_resource_info(अचिन्हित पूर्णांक note_type, u32 *info)
+अणु
 	u8 num;
 	u32 reg = 0;
 
-	switch (note_type) {
-	case NT_ARM_HW_BREAK:
-		num = hw_breakpoint_slots(TYPE_INST);
-		break;
-	case NT_ARM_HW_WATCH:
-		num = hw_breakpoint_slots(TYPE_DATA);
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (note_type) अणु
+	हाल NT_ARM_HW_BREAK:
+		num = hw_अवरोधpoपूर्णांक_slots(TYPE_INST);
+		अवरोध;
+	हाल NT_ARM_HW_WATCH:
+		num = hw_अवरोधpoपूर्णांक_slots(TYPE_DATA);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	reg |= debug_monitors_arch();
 	reg <<= 8;
 	reg |= num;
 
 	*info = reg;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ptrace_hbp_get_ctrl(unsigned int note_type,
-			       struct task_struct *tsk,
-			       unsigned long idx,
+अटल पूर्णांक ptrace_hbp_get_ctrl(अचिन्हित पूर्णांक note_type,
+			       काष्ठा task_काष्ठा *tsk,
+			       अचिन्हित दीर्घ idx,
 			       u32 *ctrl)
-{
-	struct perf_event *bp = ptrace_hbp_get_event(note_type, tsk, idx);
+अणु
+	काष्ठा perf_event *bp = ptrace_hbp_get_event(note_type, tsk, idx);
 
-	if (IS_ERR(bp))
-		return PTR_ERR(bp);
+	अगर (IS_ERR(bp))
+		वापस PTR_ERR(bp);
 
 	*ctrl = bp ? encode_ctrl_reg(counter_arch_bp(bp)->ctrl) : 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ptrace_hbp_get_addr(unsigned int note_type,
-			       struct task_struct *tsk,
-			       unsigned long idx,
+अटल पूर्णांक ptrace_hbp_get_addr(अचिन्हित पूर्णांक note_type,
+			       काष्ठा task_काष्ठा *tsk,
+			       अचिन्हित दीर्घ idx,
 			       u64 *addr)
-{
-	struct perf_event *bp = ptrace_hbp_get_event(note_type, tsk, idx);
+अणु
+	काष्ठा perf_event *bp = ptrace_hbp_get_event(note_type, tsk, idx);
 
-	if (IS_ERR(bp))
-		return PTR_ERR(bp);
+	अगर (IS_ERR(bp))
+		वापस PTR_ERR(bp);
 
 	*addr = bp ? counter_arch_bp(bp)->address : 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct perf_event *ptrace_hbp_get_initialised_bp(unsigned int note_type,
-							struct task_struct *tsk,
-							unsigned long idx)
-{
-	struct perf_event *bp = ptrace_hbp_get_event(note_type, tsk, idx);
+अटल काष्ठा perf_event *ptrace_hbp_get_initialised_bp(अचिन्हित पूर्णांक note_type,
+							काष्ठा task_काष्ठा *tsk,
+							अचिन्हित दीर्घ idx)
+अणु
+	काष्ठा perf_event *bp = ptrace_hbp_get_event(note_type, tsk, idx);
 
-	if (!bp)
+	अगर (!bp)
 		bp = ptrace_hbp_create(note_type, tsk, idx);
 
-	return bp;
-}
+	वापस bp;
+पूर्ण
 
-static int ptrace_hbp_set_ctrl(unsigned int note_type,
-			       struct task_struct *tsk,
-			       unsigned long idx,
+अटल पूर्णांक ptrace_hbp_set_ctrl(अचिन्हित पूर्णांक note_type,
+			       काष्ठा task_काष्ठा *tsk,
+			       अचिन्हित दीर्घ idx,
 			       u32 uctrl)
-{
-	int err;
-	struct perf_event *bp;
-	struct perf_event_attr attr;
-	struct arch_hw_breakpoint_ctrl ctrl;
+अणु
+	पूर्णांक err;
+	काष्ठा perf_event *bp;
+	काष्ठा perf_event_attr attr;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl ctrl;
 
 	bp = ptrace_hbp_get_initialised_bp(note_type, tsk, idx);
-	if (IS_ERR(bp)) {
+	अगर (IS_ERR(bp)) अणु
 		err = PTR_ERR(bp);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	attr = bp->attr;
 	decode_ctrl_reg(uctrl, &ctrl);
 	err = ptrace_hbp_fill_attr_ctrl(note_type, ctrl, &attr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return modify_user_hw_breakpoint(bp, &attr);
-}
+	वापस modअगरy_user_hw_अवरोधpoपूर्णांक(bp, &attr);
+पूर्ण
 
-static int ptrace_hbp_set_addr(unsigned int note_type,
-			       struct task_struct *tsk,
-			       unsigned long idx,
+अटल पूर्णांक ptrace_hbp_set_addr(अचिन्हित पूर्णांक note_type,
+			       काष्ठा task_काष्ठा *tsk,
+			       अचिन्हित दीर्घ idx,
 			       u64 addr)
-{
-	int err;
-	struct perf_event *bp;
-	struct perf_event_attr attr;
+अणु
+	पूर्णांक err;
+	काष्ठा perf_event *bp;
+	काष्ठा perf_event_attr attr;
 
 	bp = ptrace_hbp_get_initialised_bp(note_type, tsk, idx);
-	if (IS_ERR(bp)) {
+	अगर (IS_ERR(bp)) अणु
 		err = PTR_ERR(bp);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	attr = bp->attr;
 	attr.bp_addr = addr;
-	err = modify_user_hw_breakpoint(bp, &attr);
-	return err;
-}
+	err = modअगरy_user_hw_अवरोधpoपूर्णांक(bp, &attr);
+	वापस err;
+पूर्ण
 
-#define PTRACE_HBP_ADDR_SZ	sizeof(u64)
-#define PTRACE_HBP_CTRL_SZ	sizeof(u32)
-#define PTRACE_HBP_PAD_SZ	sizeof(u32)
+#घोषणा PTRACE_HBP_ADDR_SZ	माप(u64)
+#घोषणा PTRACE_HBP_CTRL_SZ	माप(u32)
+#घोषणा PTRACE_HBP_PAD_SZ	माप(u32)
 
-static int hw_break_get(struct task_struct *target,
-			const struct user_regset *regset,
-			struct membuf to)
-{
-	unsigned int note_type = regset->core_note_type;
-	int ret, idx = 0;
+अटल पूर्णांक hw_अवरोध_get(काष्ठा task_काष्ठा *target,
+			स्थिर काष्ठा user_regset *regset,
+			काष्ठा membuf to)
+अणु
+	अचिन्हित पूर्णांक note_type = regset->core_note_type;
+	पूर्णांक ret, idx = 0;
 	u32 info, ctrl;
 	u64 addr;
 
 	/* Resource info */
 	ret = ptrace_hbp_get_resource_info(note_type, &info);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	membuf_write(&to, &info, sizeof(info));
-	membuf_zero(&to, sizeof(u32));
-	/* (address, ctrl) registers */
-	while (to.left) {
+	membuf_ग_लिखो(&to, &info, माप(info));
+	membuf_zero(&to, माप(u32));
+	/* (address, ctrl) रेजिस्टरs */
+	जबतक (to.left) अणु
 		ret = ptrace_hbp_get_addr(note_type, target, idx, &addr);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		ret = ptrace_hbp_get_ctrl(note_type, target, idx, &ctrl);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		membuf_store(&to, addr);
 		membuf_store(&to, ctrl);
-		membuf_zero(&to, sizeof(u32));
+		membuf_zero(&to, माप(u32));
 		idx++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int hw_break_set(struct task_struct *target,
-			const struct user_regset *regset,
-			unsigned int pos, unsigned int count,
-			const void *kbuf, const void __user *ubuf)
-{
-	unsigned int note_type = regset->core_note_type;
-	int ret, idx = 0, offset, limit;
+अटल पूर्णांक hw_अवरोध_set(काष्ठा task_काष्ठा *target,
+			स्थिर काष्ठा user_regset *regset,
+			अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+			स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	अचिन्हित पूर्णांक note_type = regset->core_note_type;
+	पूर्णांक ret, idx = 0, offset, limit;
 	u32 ctrl;
 	u64 addr;
 
 	/* Resource info and pad */
-	offset = offsetof(struct user_hwdebug_state, dbg_regs);
+	offset = दुरत्व(काष्ठा user_hwdebug_state, dbg_regs);
 	ret = user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf, 0, offset);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* (address, ctrl) registers */
+	/* (address, ctrl) रेजिस्टरs */
 	limit = regset->n * regset->size;
-	while (count && offset < limit) {
-		if (count < PTRACE_HBP_ADDR_SZ)
-			return -EINVAL;
+	जबतक (count && offset < limit) अणु
+		अगर (count < PTRACE_HBP_ADDR_SZ)
+			वापस -EINVAL;
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &addr,
 					 offset, offset + PTRACE_HBP_ADDR_SZ);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		ret = ptrace_hbp_set_addr(note_type, target, idx, addr);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		offset += PTRACE_HBP_ADDR_SZ;
 
-		if (!count)
-			break;
+		अगर (!count)
+			अवरोध;
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &ctrl,
 					 offset, offset + PTRACE_HBP_CTRL_SZ);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		ret = ptrace_hbp_set_ctrl(note_type, target, idx, ctrl);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		offset += PTRACE_HBP_CTRL_SZ;
 
 		ret = user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
 						offset,
 						offset + PTRACE_HBP_PAD_SZ);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		offset += PTRACE_HBP_PAD_SZ;
 		idx++;
-	}
+	पूर्ण
 
-	return 0;
-}
-#endif	/* CONFIG_HAVE_HW_BREAKPOINT */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_HAVE_HW_BREAKPOINT */
 
-static int gpr_get(struct task_struct *target,
-		   const struct user_regset *regset,
-		   struct membuf to)
-{
-	struct user_pt_regs *uregs = &task_pt_regs(target)->user_regs;
-	return membuf_write(&to, uregs, sizeof(*uregs));
-}
+अटल पूर्णांक gpr_get(काष्ठा task_काष्ठा *target,
+		   स्थिर काष्ठा user_regset *regset,
+		   काष्ठा membuf to)
+अणु
+	काष्ठा user_pt_regs *uregs = &task_pt_regs(target)->user_regs;
+	वापस membuf_ग_लिखो(&to, uregs, माप(*uregs));
+पूर्ण
 
-static int gpr_set(struct task_struct *target, const struct user_regset *regset,
-		   unsigned int pos, unsigned int count,
-		   const void *kbuf, const void __user *ubuf)
-{
-	int ret;
-	struct user_pt_regs newregs = task_pt_regs(target)->user_regs;
+अटल पूर्णांक gpr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		   स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
+	काष्ठा user_pt_regs newregs = task_pt_regs(target)->user_regs;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &newregs, 0, -1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!valid_user_regs(&newregs, target))
-		return -EINVAL;
+	अगर (!valid_user_regs(&newregs, target))
+		वापस -EINVAL;
 
 	task_pt_regs(target)->user_regs = newregs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int fpr_active(struct task_struct *target, const struct user_regset *regset)
-{
-	if (!system_supports_fpsimd())
-		return -ENODEV;
-	return regset->n;
-}
+अटल पूर्णांक fpr_active(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset)
+अणु
+	अगर (!प्रणाली_supports_fpsimd())
+		वापस -ENODEV;
+	वापस regset->n;
+पूर्ण
 
 /*
- * TODO: update fp accessors for lazy context switching (sync/flush hwstate)
+ * TODO: update fp accessors क्रम lazy context चयनing (sync/flush hwstate)
  */
-static int __fpr_get(struct task_struct *target,
-		     const struct user_regset *regset,
-		     struct membuf to)
-{
-	struct user_fpsimd_state *uregs;
+अटल पूर्णांक __fpr_get(काष्ठा task_काष्ठा *target,
+		     स्थिर काष्ठा user_regset *regset,
+		     काष्ठा membuf to)
+अणु
+	काष्ठा user_fpsimd_state *uregs;
 
 	sve_sync_to_fpsimd(target);
 
-	uregs = &target->thread.uw.fpsimd_state;
+	uregs = &target->thपढ़ो.uw.fpsimd_state;
 
-	return membuf_write(&to, uregs, sizeof(*uregs));
-}
+	वापस membuf_ग_लिखो(&to, uregs, माप(*uregs));
+पूर्ण
 
-static int fpr_get(struct task_struct *target, const struct user_regset *regset,
-		   struct membuf to)
-{
-	if (!system_supports_fpsimd())
-		return -EINVAL;
+अटल पूर्णांक fpr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		   काष्ठा membuf to)
+अणु
+	अगर (!प्रणाली_supports_fpsimd())
+		वापस -EINVAL;
 
-	if (target == current)
+	अगर (target == current)
 		fpsimd_preserve_current_state();
 
-	return __fpr_get(target, regset, to);
-}
+	वापस __fpr_get(target, regset, to);
+पूर्ण
 
-static int __fpr_set(struct task_struct *target,
-		     const struct user_regset *regset,
-		     unsigned int pos, unsigned int count,
-		     const void *kbuf, const void __user *ubuf,
-		     unsigned int start_pos)
-{
-	int ret;
-	struct user_fpsimd_state newstate;
+अटल पूर्णांक __fpr_set(काष्ठा task_काष्ठा *target,
+		     स्थिर काष्ठा user_regset *regset,
+		     अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		     स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf,
+		     अचिन्हित पूर्णांक start_pos)
+अणु
+	पूर्णांक ret;
+	काष्ठा user_fpsimd_state newstate;
 
 	/*
-	 * Ensure target->thread.uw.fpsimd_state is up to date, so that a
-	 * short copyin can't resurrect stale data.
+	 * Ensure target->thपढ़ो.uw.fpsimd_state is up to date, so that a
+	 * लघु copyin can't resurrect stale data.
 	 */
 	sve_sync_to_fpsimd(target);
 
-	newstate = target->thread.uw.fpsimd_state;
+	newstate = target->thपढ़ो.uw.fpsimd_state;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &newstate,
-				 start_pos, start_pos + sizeof(newstate));
-	if (ret)
-		return ret;
+				 start_pos, start_pos + माप(newstate));
+	अगर (ret)
+		वापस ret;
 
-	target->thread.uw.fpsimd_state = newstate;
+	target->thपढ़ो.uw.fpsimd_state = newstate;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fpr_set(struct task_struct *target, const struct user_regset *regset,
-		   unsigned int pos, unsigned int count,
-		   const void *kbuf, const void __user *ubuf)
-{
-	int ret;
+अटल पूर्णांक fpr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		   स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
 
-	if (!system_supports_fpsimd())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_fpsimd())
+		वापस -EINVAL;
 
 	ret = __fpr_set(target, regset, pos, count, kbuf, ubuf, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	sve_sync_from_fpsimd_zeropad(target);
 	fpsimd_flush_task_state(target);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int tls_get(struct task_struct *target, const struct user_regset *regset,
-		   struct membuf to)
-{
-	if (target == current)
+अटल पूर्णांक tls_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		   काष्ठा membuf to)
+अणु
+	अगर (target == current)
 		tls_preserve_current_state();
 
-	return membuf_store(&to, target->thread.uw.tp_value);
-}
+	वापस membuf_store(&to, target->thपढ़ो.uw.tp_value);
+पूर्ण
 
-static int tls_set(struct task_struct *target, const struct user_regset *regset,
-		   unsigned int pos, unsigned int count,
-		   const void *kbuf, const void __user *ubuf)
-{
-	int ret;
-	unsigned long tls = target->thread.uw.tp_value;
+अटल पूर्णांक tls_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		   स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ tls = target->thपढ़ो.uw.tp_value;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &tls, 0, -1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	target->thread.uw.tp_value = tls;
-	return ret;
-}
+	target->thपढ़ो.uw.tp_value = tls;
+	वापस ret;
+पूर्ण
 
-static int system_call_get(struct task_struct *target,
-			   const struct user_regset *regset,
-			   struct membuf to)
-{
-	return membuf_store(&to, task_pt_regs(target)->syscallno);
-}
+अटल पूर्णांक प्रणाली_call_get(काष्ठा task_काष्ठा *target,
+			   स्थिर काष्ठा user_regset *regset,
+			   काष्ठा membuf to)
+अणु
+	वापस membuf_store(&to, task_pt_regs(target)->syscallno);
+पूर्ण
 
-static int system_call_set(struct task_struct *target,
-			   const struct user_regset *regset,
-			   unsigned int pos, unsigned int count,
-			   const void *kbuf, const void __user *ubuf)
-{
-	int syscallno = task_pt_regs(target)->syscallno;
-	int ret;
+अटल पूर्णांक प्रणाली_call_set(काष्ठा task_काष्ठा *target,
+			   स्थिर काष्ठा user_regset *regset,
+			   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+			   स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक syscallno = task_pt_regs(target)->syscallno;
+	पूर्णांक ret;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &syscallno, 0, -1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	task_pt_regs(target)->syscallno = syscallno;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_ARM64_SVE
+#अगर_घोषित CONFIG_ARM64_SVE
 
-static void sve_init_header_from_task(struct user_sve_header *header,
-				      struct task_struct *target)
-{
-	unsigned int vq;
+अटल व्योम sve_init_header_from_task(काष्ठा user_sve_header *header,
+				      काष्ठा task_काष्ठा *target)
+अणु
+	अचिन्हित पूर्णांक vq;
 
-	memset(header, 0, sizeof(*header));
+	स_रखो(header, 0, माप(*header));
 
-	header->flags = test_tsk_thread_flag(target, TIF_SVE) ?
+	header->flags = test_tsk_thपढ़ो_flag(target, TIF_SVE) ?
 		SVE_PT_REGS_SVE : SVE_PT_REGS_FPSIMD;
-	if (test_tsk_thread_flag(target, TIF_SVE_VL_INHERIT))
+	अगर (test_tsk_thपढ़ो_flag(target, TIF_SVE_VL_INHERIT))
 		header->flags |= SVE_PT_VL_INHERIT;
 
-	header->vl = target->thread.sve_vl;
+	header->vl = target->thपढ़ो.sve_vl;
 	vq = sve_vq_from_vl(header->vl);
 
 	header->max_vl = sve_max_vl;
 	header->size = SVE_PT_SIZE(vq, header->flags);
 	header->max_size = SVE_PT_SIZE(sve_vq_from_vl(header->max_vl),
 				      SVE_PT_REGS_SVE);
-}
+पूर्ण
 
-static unsigned int sve_size_from_header(struct user_sve_header const *header)
-{
-	return ALIGN(header->size, SVE_VQ_BYTES);
-}
+अटल अचिन्हित पूर्णांक sve_size_from_header(काष्ठा user_sve_header स्थिर *header)
+अणु
+	वापस ALIGN(header->size, SVE_VQ_BYTES);
+पूर्ण
 
-static int sve_get(struct task_struct *target,
-		   const struct user_regset *regset,
-		   struct membuf to)
-{
-	struct user_sve_header header;
-	unsigned int vq;
-	unsigned long start, end;
+अटल पूर्णांक sve_get(काष्ठा task_काष्ठा *target,
+		   स्थिर काष्ठा user_regset *regset,
+		   काष्ठा membuf to)
+अणु
+	काष्ठा user_sve_header header;
+	अचिन्हित पूर्णांक vq;
+	अचिन्हित दीर्घ start, end;
 
-	if (!system_supports_sve())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_sve())
+		वापस -EINVAL;
 
 	/* Header */
 	sve_init_header_from_task(&header, target);
 	vq = sve_vq_from_vl(header.vl);
 
-	membuf_write(&to, &header, sizeof(header));
+	membuf_ग_लिखो(&to, &header, माप(header));
 
-	if (target == current)
+	अगर (target == current)
 		fpsimd_preserve_current_state();
 
-	/* Registers: FPSIMD-only case */
+	/* Registers: FPSIMD-only हाल */
 
-	BUILD_BUG_ON(SVE_PT_FPSIMD_OFFSET != sizeof(header));
-	if ((header.flags & SVE_PT_REGS_MASK) == SVE_PT_REGS_FPSIMD)
-		return __fpr_get(target, regset, to);
+	BUILD_BUG_ON(SVE_PT_FPSIMD_OFFSET != माप(header));
+	अगर ((header.flags & SVE_PT_REGS_MASK) == SVE_PT_REGS_FPSIMD)
+		वापस __fpr_get(target, regset, to);
 
-	/* Otherwise: full SVE case */
+	/* Otherwise: full SVE हाल */
 
-	BUILD_BUG_ON(SVE_PT_SVE_OFFSET != sizeof(header));
+	BUILD_BUG_ON(SVE_PT_SVE_OFFSET != माप(header));
 	start = SVE_PT_SVE_OFFSET;
 	end = SVE_PT_SVE_FFR_OFFSET(vq) + SVE_PT_SVE_FFR_SIZE(vq);
-	membuf_write(&to, target->thread.sve_state, end - start);
+	membuf_ग_लिखो(&to, target->thपढ़ो.sve_state, end - start);
 
 	start = end;
 	end = SVE_PT_SVE_FPSR_OFFSET(vq);
@@ -778,403 +779,403 @@ static int sve_get(struct task_struct *target,
 
 	/*
 	 * Copy fpsr, and fpcr which must follow contiguously in
-	 * struct fpsimd_state:
+	 * काष्ठा fpsimd_state:
 	 */
 	start = end;
 	end = SVE_PT_SVE_FPCR_OFFSET(vq) + SVE_PT_SVE_FPCR_SIZE;
-	membuf_write(&to, &target->thread.uw.fpsimd_state.fpsr, end - start);
+	membuf_ग_लिखो(&to, &target->thपढ़ो.uw.fpsimd_state.fpsr, end - start);
 
 	start = end;
 	end = sve_size_from_header(&header);
-	return membuf_zero(&to, end - start);
-}
+	वापस membuf_zero(&to, end - start);
+पूर्ण
 
-static int sve_set(struct task_struct *target,
-		   const struct user_regset *regset,
-		   unsigned int pos, unsigned int count,
-		   const void *kbuf, const void __user *ubuf)
-{
-	int ret;
-	struct user_sve_header header;
-	unsigned int vq;
-	unsigned long start, end;
+अटल पूर्णांक sve_set(काष्ठा task_काष्ठा *target,
+		   स्थिर काष्ठा user_regset *regset,
+		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		   स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
+	काष्ठा user_sve_header header;
+	अचिन्हित पूर्णांक vq;
+	अचिन्हित दीर्घ start, end;
 
-	if (!system_supports_sve())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_sve())
+		वापस -EINVAL;
 
 	/* Header */
-	if (count < sizeof(header))
-		return -EINVAL;
+	अगर (count < माप(header))
+		वापस -EINVAL;
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &header,
-				 0, sizeof(header));
-	if (ret)
-		goto out;
+				 0, माप(header));
+	अगर (ret)
+		जाओ out;
 
 	/*
 	 * Apart from SVE_PT_REGS_MASK, all SVE_PT_* flags are consumed by
-	 * sve_set_vector_length(), which will also validate them for us:
+	 * sve_set_vector_length(), which will also validate them क्रम us:
 	 */
 	ret = sve_set_vector_length(target, header.vl,
-		((unsigned long)header.flags & ~SVE_PT_REGS_MASK) << 16);
-	if (ret)
-		goto out;
+		((अचिन्हित दीर्घ)header.flags & ~SVE_PT_REGS_MASK) << 16);
+	अगर (ret)
+		जाओ out;
 
-	/* Actual VL set may be less than the user asked for: */
-	vq = sve_vq_from_vl(target->thread.sve_vl);
+	/* Actual VL set may be less than the user asked क्रम: */
+	vq = sve_vq_from_vl(target->thपढ़ो.sve_vl);
 
-	/* Registers: FPSIMD-only case */
+	/* Registers: FPSIMD-only हाल */
 
-	BUILD_BUG_ON(SVE_PT_FPSIMD_OFFSET != sizeof(header));
-	if ((header.flags & SVE_PT_REGS_MASK) == SVE_PT_REGS_FPSIMD) {
+	BUILD_BUG_ON(SVE_PT_FPSIMD_OFFSET != माप(header));
+	अगर ((header.flags & SVE_PT_REGS_MASK) == SVE_PT_REGS_FPSIMD) अणु
 		ret = __fpr_set(target, regset, pos, count, kbuf, ubuf,
 				SVE_PT_FPSIMD_OFFSET);
-		clear_tsk_thread_flag(target, TIF_SVE);
-		goto out;
-	}
+		clear_tsk_thपढ़ो_flag(target, TIF_SVE);
+		जाओ out;
+	पूर्ण
 
-	/* Otherwise: full SVE case */
+	/* Otherwise: full SVE हाल */
 
 	/*
-	 * If setting a different VL from the requested VL and there is
-	 * register data, the data layout will be wrong: don't even
-	 * try to set the registers in this case.
+	 * If setting a dअगरferent VL from the requested VL and there is
+	 * रेजिस्टर data, the data layout will be wrong: करोn't even
+	 * try to set the रेजिस्टरs in this हाल.
 	 */
-	if (count && vq != sve_vq_from_vl(header.vl)) {
+	अगर (count && vq != sve_vq_from_vl(header.vl)) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sve_alloc(target);
 
 	/*
-	 * Ensure target->thread.sve_state is up to date with target's
-	 * FPSIMD regs, so that a short copyin leaves trailing registers
-	 * unmodified.
+	 * Ensure target->thपढ़ो.sve_state is up to date with target's
+	 * FPSIMD regs, so that a लघु copyin leaves trailing रेजिस्टरs
+	 * unmodअगरied.
 	 */
 	fpsimd_sync_to_sve(target);
-	set_tsk_thread_flag(target, TIF_SVE);
+	set_tsk_thपढ़ो_flag(target, TIF_SVE);
 
-	BUILD_BUG_ON(SVE_PT_SVE_OFFSET != sizeof(header));
+	BUILD_BUG_ON(SVE_PT_SVE_OFFSET != माप(header));
 	start = SVE_PT_SVE_OFFSET;
 	end = SVE_PT_SVE_FFR_OFFSET(vq) + SVE_PT_SVE_FFR_SIZE(vq);
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 target->thread.sve_state,
+				 target->thपढ़ो.sve_state,
 				 start, end);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	start = end;
 	end = SVE_PT_SVE_FPSR_OFFSET(vq);
 	ret = user_regset_copyin_ignore(&pos, &count, &kbuf, &ubuf,
 					start, end);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/*
 	 * Copy fpsr, and fpcr which must follow contiguously in
-	 * struct fpsimd_state:
+	 * काष्ठा fpsimd_state:
 	 */
 	start = end;
 	end = SVE_PT_SVE_FPCR_OFFSET(vq) + SVE_PT_SVE_FPCR_SIZE;
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				 &target->thread.uw.fpsimd_state.fpsr,
+				 &target->thपढ़ो.uw.fpsimd_state.fpsr,
 				 start, end);
 
 out:
 	fpsimd_flush_task_state(target);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#endif /* CONFIG_ARM64_SVE */
+#पूर्ण_अगर /* CONFIG_ARM64_SVE */
 
-#ifdef CONFIG_ARM64_PTR_AUTH
-static int pac_mask_get(struct task_struct *target,
-			const struct user_regset *regset,
-			struct membuf to)
-{
+#अगर_घोषित CONFIG_ARM64_PTR_AUTH
+अटल पूर्णांक pac_mask_get(काष्ठा task_काष्ठा *target,
+			स्थिर काष्ठा user_regset *regset,
+			काष्ठा membuf to)
+अणु
 	/*
-	 * The PAC bits can differ across data and instruction pointers
+	 * The PAC bits can dअगरfer across data and inकाष्ठाion poपूर्णांकers
 	 * depending on TCR_EL1.TBID*, which we may make use of in future, so
 	 * we expose separate masks.
 	 */
-	unsigned long mask = ptrauth_user_pac_mask();
-	struct user_pac_mask uregs = {
+	अचिन्हित दीर्घ mask = ptrauth_user_pac_mask();
+	काष्ठा user_pac_mask uregs = अणु
 		.data_mask = mask,
 		.insn_mask = mask,
-	};
+	पूर्ण;
 
-	if (!system_supports_address_auth())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_address_auth())
+		वापस -EINVAL;
 
-	return membuf_write(&to, &uregs, sizeof(uregs));
-}
+	वापस membuf_ग_लिखो(&to, &uregs, माप(uregs));
+पूर्ण
 
-static int pac_enabled_keys_get(struct task_struct *target,
-				const struct user_regset *regset,
-				struct membuf to)
-{
-	long enabled_keys = ptrauth_get_enabled_keys(target);
+अटल पूर्णांक pac_enabled_keys_get(काष्ठा task_काष्ठा *target,
+				स्थिर काष्ठा user_regset *regset,
+				काष्ठा membuf to)
+अणु
+	दीर्घ enabled_keys = ptrauth_get_enabled_keys(target);
 
-	if (IS_ERR_VALUE(enabled_keys))
-		return enabled_keys;
+	अगर (IS_ERR_VALUE(enabled_keys))
+		वापस enabled_keys;
 
-	return membuf_write(&to, &enabled_keys, sizeof(enabled_keys));
-}
+	वापस membuf_ग_लिखो(&to, &enabled_keys, माप(enabled_keys));
+पूर्ण
 
-static int pac_enabled_keys_set(struct task_struct *target,
-				const struct user_regset *regset,
-				unsigned int pos, unsigned int count,
-				const void *kbuf, const void __user *ubuf)
-{
-	int ret;
-	long enabled_keys = ptrauth_get_enabled_keys(target);
+अटल पूर्णांक pac_enabled_keys_set(काष्ठा task_काष्ठा *target,
+				स्थिर काष्ठा user_regset *regset,
+				अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+				स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
+	दीर्घ enabled_keys = ptrauth_get_enabled_keys(target);
 
-	if (IS_ERR_VALUE(enabled_keys))
-		return enabled_keys;
+	अगर (IS_ERR_VALUE(enabled_keys))
+		वापस enabled_keys;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &enabled_keys, 0,
-				 sizeof(long));
-	if (ret)
-		return ret;
+				 माप(दीर्घ));
+	अगर (ret)
+		वापस ret;
 
-	return ptrauth_set_enabled_keys(target, PR_PAC_ENABLED_KEYS_MASK,
+	वापस ptrauth_set_enabled_keys(target, PR_PAC_ENABLED_KEYS_MASK,
 					enabled_keys);
-}
+पूर्ण
 
-#ifdef CONFIG_CHECKPOINT_RESTORE
-static __uint128_t pac_key_to_user(const struct ptrauth_key *key)
-{
-	return (__uint128_t)key->hi << 64 | key->lo;
-}
+#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
+अटल __uपूर्णांक128_t pac_key_to_user(स्थिर काष्ठा ptrauth_key *key)
+अणु
+	वापस (__uपूर्णांक128_t)key->hi << 64 | key->lo;
+पूर्ण
 
-static struct ptrauth_key pac_key_from_user(__uint128_t ukey)
-{
-	struct ptrauth_key key = {
-		.lo = (unsigned long)ukey,
-		.hi = (unsigned long)(ukey >> 64),
-	};
+अटल काष्ठा ptrauth_key pac_key_from_user(__uपूर्णांक128_t ukey)
+अणु
+	काष्ठा ptrauth_key key = अणु
+		.lo = (अचिन्हित दीर्घ)ukey,
+		.hi = (अचिन्हित दीर्घ)(ukey >> 64),
+	पूर्ण;
 
-	return key;
-}
+	वापस key;
+पूर्ण
 
-static void pac_address_keys_to_user(struct user_pac_address_keys *ukeys,
-				     const struct ptrauth_keys_user *keys)
-{
+अटल व्योम pac_address_keys_to_user(काष्ठा user_pac_address_keys *ukeys,
+				     स्थिर काष्ठा ptrauth_keys_user *keys)
+अणु
 	ukeys->apiakey = pac_key_to_user(&keys->apia);
 	ukeys->apibkey = pac_key_to_user(&keys->apib);
 	ukeys->apdakey = pac_key_to_user(&keys->apda);
 	ukeys->apdbkey = pac_key_to_user(&keys->apdb);
-}
+पूर्ण
 
-static void pac_address_keys_from_user(struct ptrauth_keys_user *keys,
-				       const struct user_pac_address_keys *ukeys)
-{
+अटल व्योम pac_address_keys_from_user(काष्ठा ptrauth_keys_user *keys,
+				       स्थिर काष्ठा user_pac_address_keys *ukeys)
+अणु
 	keys->apia = pac_key_from_user(ukeys->apiakey);
 	keys->apib = pac_key_from_user(ukeys->apibkey);
 	keys->apda = pac_key_from_user(ukeys->apdakey);
 	keys->apdb = pac_key_from_user(ukeys->apdbkey);
-}
+पूर्ण
 
-static int pac_address_keys_get(struct task_struct *target,
-				const struct user_regset *regset,
-				struct membuf to)
-{
-	struct ptrauth_keys_user *keys = &target->thread.keys_user;
-	struct user_pac_address_keys user_keys;
+अटल पूर्णांक pac_address_keys_get(काष्ठा task_काष्ठा *target,
+				स्थिर काष्ठा user_regset *regset,
+				काष्ठा membuf to)
+अणु
+	काष्ठा ptrauth_keys_user *keys = &target->thपढ़ो.keys_user;
+	काष्ठा user_pac_address_keys user_keys;
 
-	if (!system_supports_address_auth())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_address_auth())
+		वापस -EINVAL;
 
 	pac_address_keys_to_user(&user_keys, keys);
 
-	return membuf_write(&to, &user_keys, sizeof(user_keys));
-}
+	वापस membuf_ग_लिखो(&to, &user_keys, माप(user_keys));
+पूर्ण
 
-static int pac_address_keys_set(struct task_struct *target,
-				const struct user_regset *regset,
-				unsigned int pos, unsigned int count,
-				const void *kbuf, const void __user *ubuf)
-{
-	struct ptrauth_keys_user *keys = &target->thread.keys_user;
-	struct user_pac_address_keys user_keys;
-	int ret;
+अटल पूर्णांक pac_address_keys_set(काष्ठा task_काष्ठा *target,
+				स्थिर काष्ठा user_regset *regset,
+				अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+				स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	काष्ठा ptrauth_keys_user *keys = &target->thपढ़ो.keys_user;
+	काष्ठा user_pac_address_keys user_keys;
+	पूर्णांक ret;
 
-	if (!system_supports_address_auth())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_address_auth())
+		वापस -EINVAL;
 
 	pac_address_keys_to_user(&user_keys, keys);
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 &user_keys, 0, -1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	pac_address_keys_from_user(keys, &user_keys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pac_generic_keys_to_user(struct user_pac_generic_keys *ukeys,
-				     const struct ptrauth_keys_user *keys)
-{
+अटल व्योम pac_generic_keys_to_user(काष्ठा user_pac_generic_keys *ukeys,
+				     स्थिर काष्ठा ptrauth_keys_user *keys)
+अणु
 	ukeys->apgakey = pac_key_to_user(&keys->apga);
-}
+पूर्ण
 
-static void pac_generic_keys_from_user(struct ptrauth_keys_user *keys,
-				       const struct user_pac_generic_keys *ukeys)
-{
+अटल व्योम pac_generic_keys_from_user(काष्ठा ptrauth_keys_user *keys,
+				       स्थिर काष्ठा user_pac_generic_keys *ukeys)
+अणु
 	keys->apga = pac_key_from_user(ukeys->apgakey);
-}
+पूर्ण
 
-static int pac_generic_keys_get(struct task_struct *target,
-				const struct user_regset *regset,
-				struct membuf to)
-{
-	struct ptrauth_keys_user *keys = &target->thread.keys_user;
-	struct user_pac_generic_keys user_keys;
+अटल पूर्णांक pac_generic_keys_get(काष्ठा task_काष्ठा *target,
+				स्थिर काष्ठा user_regset *regset,
+				काष्ठा membuf to)
+अणु
+	काष्ठा ptrauth_keys_user *keys = &target->thपढ़ो.keys_user;
+	काष्ठा user_pac_generic_keys user_keys;
 
-	if (!system_supports_generic_auth())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_generic_auth())
+		वापस -EINVAL;
 
 	pac_generic_keys_to_user(&user_keys, keys);
 
-	return membuf_write(&to, &user_keys, sizeof(user_keys));
-}
+	वापस membuf_ग_लिखो(&to, &user_keys, माप(user_keys));
+पूर्ण
 
-static int pac_generic_keys_set(struct task_struct *target,
-				const struct user_regset *regset,
-				unsigned int pos, unsigned int count,
-				const void *kbuf, const void __user *ubuf)
-{
-	struct ptrauth_keys_user *keys = &target->thread.keys_user;
-	struct user_pac_generic_keys user_keys;
-	int ret;
+अटल पूर्णांक pac_generic_keys_set(काष्ठा task_काष्ठा *target,
+				स्थिर काष्ठा user_regset *regset,
+				अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+				स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	काष्ठा ptrauth_keys_user *keys = &target->thपढ़ो.keys_user;
+	काष्ठा user_pac_generic_keys user_keys;
+	पूर्णांक ret;
 
-	if (!system_supports_generic_auth())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_generic_auth())
+		वापस -EINVAL;
 
 	pac_generic_keys_to_user(&user_keys, keys);
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 &user_keys, 0, -1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	pac_generic_keys_from_user(keys, &user_keys);
 
-	return 0;
-}
-#endif /* CONFIG_CHECKPOINT_RESTORE */
-#endif /* CONFIG_ARM64_PTR_AUTH */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CHECKPOINT_RESTORE */
+#पूर्ण_अगर /* CONFIG_ARM64_PTR_AUTH */
 
-#ifdef CONFIG_ARM64_TAGGED_ADDR_ABI
-static int tagged_addr_ctrl_get(struct task_struct *target,
-				const struct user_regset *regset,
-				struct membuf to)
-{
-	long ctrl = get_tagged_addr_ctrl(target);
+#अगर_घोषित CONFIG_ARM64_TAGGED_ADDR_ABI
+अटल पूर्णांक tagged_addr_ctrl_get(काष्ठा task_काष्ठा *target,
+				स्थिर काष्ठा user_regset *regset,
+				काष्ठा membuf to)
+अणु
+	दीर्घ ctrl = get_tagged_addr_ctrl(target);
 
-	if (IS_ERR_VALUE(ctrl))
-		return ctrl;
+	अगर (IS_ERR_VALUE(ctrl))
+		वापस ctrl;
 
-	return membuf_write(&to, &ctrl, sizeof(ctrl));
-}
+	वापस membuf_ग_लिखो(&to, &ctrl, माप(ctrl));
+पूर्ण
 
-static int tagged_addr_ctrl_set(struct task_struct *target, const struct
-				user_regset *regset, unsigned int pos,
-				unsigned int count, const void *kbuf, const
-				void __user *ubuf)
-{
-	int ret;
-	long ctrl;
+अटल पूर्णांक tagged_addr_ctrl_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा
+				user_regset *regset, अचिन्हित पूर्णांक pos,
+				अचिन्हित पूर्णांक count, स्थिर व्योम *kbuf, स्थिर
+				व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
+	दीर्घ ctrl;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &ctrl, 0, -1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return set_tagged_addr_ctrl(target, ctrl);
-}
-#endif
+	वापस set_tagged_addr_ctrl(target, ctrl);
+पूर्ण
+#पूर्ण_अगर
 
-enum aarch64_regset {
+क्रमागत aarch64_regset अणु
 	REGSET_GPR,
 	REGSET_FPR,
 	REGSET_TLS,
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
 	REGSET_HW_BREAK,
 	REGSET_HW_WATCH,
-#endif
+#पूर्ण_अगर
 	REGSET_SYSTEM_CALL,
-#ifdef CONFIG_ARM64_SVE
+#अगर_घोषित CONFIG_ARM64_SVE
 	REGSET_SVE,
-#endif
-#ifdef CONFIG_ARM64_PTR_AUTH
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARM64_PTR_AUTH
 	REGSET_PAC_MASK,
 	REGSET_PAC_ENABLED_KEYS,
-#ifdef CONFIG_CHECKPOINT_RESTORE
+#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
 	REGSET_PACA_KEYS,
 	REGSET_PACG_KEYS,
-#endif
-#endif
-#ifdef CONFIG_ARM64_TAGGED_ADDR_ABI
+#पूर्ण_अगर
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARM64_TAGGED_ADDR_ABI
 	REGSET_TAGGED_ADDR_CTRL,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct user_regset aarch64_regsets[] = {
-	[REGSET_GPR] = {
+अटल स्थिर काष्ठा user_regset aarch64_regsets[] = अणु
+	[REGSET_GPR] = अणु
 		.core_note_type = NT_PRSTATUS,
-		.n = sizeof(struct user_pt_regs) / sizeof(u64),
-		.size = sizeof(u64),
-		.align = sizeof(u64),
+		.n = माप(काष्ठा user_pt_regs) / माप(u64),
+		.size = माप(u64),
+		.align = माप(u64),
 		.regset_get = gpr_get,
 		.set = gpr_set
-	},
-	[REGSET_FPR] = {
+	पूर्ण,
+	[REGSET_FPR] = अणु
 		.core_note_type = NT_PRFPREG,
-		.n = sizeof(struct user_fpsimd_state) / sizeof(u32),
+		.n = माप(काष्ठा user_fpsimd_state) / माप(u32),
 		/*
-		 * We pretend we have 32-bit registers because the fpsr and
+		 * We pretend we have 32-bit रेजिस्टरs because the fpsr and
 		 * fpcr are 32-bits wide.
 		 */
-		.size = sizeof(u32),
-		.align = sizeof(u32),
+		.size = माप(u32),
+		.align = माप(u32),
 		.active = fpr_active,
 		.regset_get = fpr_get,
 		.set = fpr_set
-	},
-	[REGSET_TLS] = {
+	पूर्ण,
+	[REGSET_TLS] = अणु
 		.core_note_type = NT_ARM_TLS,
 		.n = 1,
-		.size = sizeof(void *),
-		.align = sizeof(void *),
+		.size = माप(व्योम *),
+		.align = माप(व्योम *),
 		.regset_get = tls_get,
 		.set = tls_set,
-	},
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-	[REGSET_HW_BREAK] = {
+	पूर्ण,
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+	[REGSET_HW_BREAK] = अणु
 		.core_note_type = NT_ARM_HW_BREAK,
-		.n = sizeof(struct user_hwdebug_state) / sizeof(u32),
-		.size = sizeof(u32),
-		.align = sizeof(u32),
-		.regset_get = hw_break_get,
-		.set = hw_break_set,
-	},
-	[REGSET_HW_WATCH] = {
+		.n = माप(काष्ठा user_hwdebug_state) / माप(u32),
+		.size = माप(u32),
+		.align = माप(u32),
+		.regset_get = hw_अवरोध_get,
+		.set = hw_अवरोध_set,
+	पूर्ण,
+	[REGSET_HW_WATCH] = अणु
 		.core_note_type = NT_ARM_HW_WATCH,
-		.n = sizeof(struct user_hwdebug_state) / sizeof(u32),
-		.size = sizeof(u32),
-		.align = sizeof(u32),
-		.regset_get = hw_break_get,
-		.set = hw_break_set,
-	},
-#endif
-	[REGSET_SYSTEM_CALL] = {
+		.n = माप(काष्ठा user_hwdebug_state) / माप(u32),
+		.size = माप(u32),
+		.align = माप(u32),
+		.regset_get = hw_अवरोध_get,
+		.set = hw_अवरोध_set,
+	पूर्ण,
+#पूर्ण_अगर
+	[REGSET_SYSTEM_CALL] = अणु
 		.core_note_type = NT_ARM_SYSTEM_CALL,
 		.n = 1,
-		.size = sizeof(int),
-		.align = sizeof(int),
-		.regset_get = system_call_get,
-		.set = system_call_set,
-	},
-#ifdef CONFIG_ARM64_SVE
-	[REGSET_SVE] = { /* Scalable Vector Extension */
+		.size = माप(पूर्णांक),
+		.align = माप(पूर्णांक),
+		.regset_get = प्रणाली_call_get,
+		.set = प्रणाली_call_set,
+	पूर्ण,
+#अगर_घोषित CONFIG_ARM64_SVE
+	[REGSET_SVE] = अणु /* Scalable Vector Extension */
 		.core_note_type = NT_ARM_SVE,
 		.n = DIV_ROUND_UP(SVE_PT_SIZE(SVE_VQ_MAX, SVE_PT_REGS_SVE),
 				  SVE_VQ_BYTES),
@@ -1182,396 +1183,396 @@ static const struct user_regset aarch64_regsets[] = {
 		.align = SVE_VQ_BYTES,
 		.regset_get = sve_get,
 		.set = sve_set,
-	},
-#endif
-#ifdef CONFIG_ARM64_PTR_AUTH
-	[REGSET_PAC_MASK] = {
+	पूर्ण,
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARM64_PTR_AUTH
+	[REGSET_PAC_MASK] = अणु
 		.core_note_type = NT_ARM_PAC_MASK,
-		.n = sizeof(struct user_pac_mask) / sizeof(u64),
-		.size = sizeof(u64),
-		.align = sizeof(u64),
+		.n = माप(काष्ठा user_pac_mask) / माप(u64),
+		.size = माप(u64),
+		.align = माप(u64),
 		.regset_get = pac_mask_get,
 		/* this cannot be set dynamically */
-	},
-	[REGSET_PAC_ENABLED_KEYS] = {
+	पूर्ण,
+	[REGSET_PAC_ENABLED_KEYS] = अणु
 		.core_note_type = NT_ARM_PAC_ENABLED_KEYS,
 		.n = 1,
-		.size = sizeof(long),
-		.align = sizeof(long),
+		.size = माप(दीर्घ),
+		.align = माप(दीर्घ),
 		.regset_get = pac_enabled_keys_get,
 		.set = pac_enabled_keys_set,
-	},
-#ifdef CONFIG_CHECKPOINT_RESTORE
-	[REGSET_PACA_KEYS] = {
+	पूर्ण,
+#अगर_घोषित CONFIG_CHECKPOINT_RESTORE
+	[REGSET_PACA_KEYS] = अणु
 		.core_note_type = NT_ARM_PACA_KEYS,
-		.n = sizeof(struct user_pac_address_keys) / sizeof(__uint128_t),
-		.size = sizeof(__uint128_t),
-		.align = sizeof(__uint128_t),
+		.n = माप(काष्ठा user_pac_address_keys) / माप(__uपूर्णांक128_t),
+		.size = माप(__uपूर्णांक128_t),
+		.align = माप(__uपूर्णांक128_t),
 		.regset_get = pac_address_keys_get,
 		.set = pac_address_keys_set,
-	},
-	[REGSET_PACG_KEYS] = {
+	पूर्ण,
+	[REGSET_PACG_KEYS] = अणु
 		.core_note_type = NT_ARM_PACG_KEYS,
-		.n = sizeof(struct user_pac_generic_keys) / sizeof(__uint128_t),
-		.size = sizeof(__uint128_t),
-		.align = sizeof(__uint128_t),
+		.n = माप(काष्ठा user_pac_generic_keys) / माप(__uपूर्णांक128_t),
+		.size = माप(__uपूर्णांक128_t),
+		.align = माप(__uपूर्णांक128_t),
 		.regset_get = pac_generic_keys_get,
 		.set = pac_generic_keys_set,
-	},
-#endif
-#endif
-#ifdef CONFIG_ARM64_TAGGED_ADDR_ABI
-	[REGSET_TAGGED_ADDR_CTRL] = {
+	पूर्ण,
+#पूर्ण_अगर
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ARM64_TAGGED_ADDR_ABI
+	[REGSET_TAGGED_ADDR_CTRL] = अणु
 		.core_note_type = NT_ARM_TAGGED_ADDR_CTRL,
 		.n = 1,
-		.size = sizeof(long),
-		.align = sizeof(long),
+		.size = माप(दीर्घ),
+		.align = माप(दीर्घ),
 		.regset_get = tagged_addr_ctrl_get,
 		.set = tagged_addr_ctrl_set,
-	},
-#endif
-};
+	पूर्ण,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct user_regset_view user_aarch64_view = {
+अटल स्थिर काष्ठा user_regset_view user_aarch64_view = अणु
 	.name = "aarch64", .e_machine = EM_AARCH64,
 	.regsets = aarch64_regsets, .n = ARRAY_SIZE(aarch64_regsets)
-};
+पूर्ण;
 
-#ifdef CONFIG_COMPAT
-enum compat_regset {
+#अगर_घोषित CONFIG_COMPAT
+क्रमागत compat_regset अणु
 	REGSET_COMPAT_GPR,
 	REGSET_COMPAT_VFP,
-};
+पूर्ण;
 
-static inline compat_ulong_t compat_get_user_reg(struct task_struct *task, int idx)
-{
-	struct pt_regs *regs = task_pt_regs(task);
+अटल अंतरभूत compat_uदीर्घ_t compat_get_user_reg(काष्ठा task_काष्ठा *task, पूर्णांक idx)
+अणु
+	काष्ठा pt_regs *regs = task_pt_regs(task);
 
-	switch (idx) {
-	case 15:
-		return regs->pc;
-	case 16:
-		return pstate_to_compat_psr(regs->pstate);
-	case 17:
-		return regs->orig_x0;
-	default:
-		return regs->regs[idx];
-	}
-}
+	चयन (idx) अणु
+	हाल 15:
+		वापस regs->pc;
+	हाल 16:
+		वापस pstate_to_compat_psr(regs->pstate);
+	हाल 17:
+		वापस regs->orig_x0;
+	शेष:
+		वापस regs->regs[idx];
+	पूर्ण
+पूर्ण
 
-static int compat_gpr_get(struct task_struct *target,
-			  const struct user_regset *regset,
-			  struct membuf to)
-{
-	int i = 0;
+अटल पूर्णांक compat_gpr_get(काष्ठा task_काष्ठा *target,
+			  स्थिर काष्ठा user_regset *regset,
+			  काष्ठा membuf to)
+अणु
+	पूर्णांक i = 0;
 
-	while (to.left)
+	जबतक (to.left)
 		membuf_store(&to, compat_get_user_reg(target, i++));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int compat_gpr_set(struct task_struct *target,
-			  const struct user_regset *regset,
-			  unsigned int pos, unsigned int count,
-			  const void *kbuf, const void __user *ubuf)
-{
-	struct pt_regs newregs;
-	int ret = 0;
-	unsigned int i, start, num_regs;
+अटल पूर्णांक compat_gpr_set(काष्ठा task_काष्ठा *target,
+			  स्थिर काष्ठा user_regset *regset,
+			  अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+			  स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	काष्ठा pt_regs newregs;
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक i, start, num_regs;
 
-	/* Calculate the number of AArch32 registers contained in count */
+	/* Calculate the number of AArch32 रेजिस्टरs contained in count */
 	num_regs = count / regset->size;
 
-	/* Convert pos into an register number */
+	/* Convert pos पूर्णांकo an रेजिस्टर number */
 	start = pos / regset->size;
 
-	if (start + num_regs > regset->n)
-		return -EIO;
+	अगर (start + num_regs > regset->n)
+		वापस -EIO;
 
 	newregs = *task_pt_regs(target);
 
-	for (i = 0; i < num_regs; ++i) {
-		unsigned int idx = start + i;
-		compat_ulong_t reg;
+	क्रम (i = 0; i < num_regs; ++i) अणु
+		अचिन्हित पूर्णांक idx = start + i;
+		compat_uदीर्घ_t reg;
 
-		if (kbuf) {
-			memcpy(&reg, kbuf, sizeof(reg));
-			kbuf += sizeof(reg);
-		} else {
-			ret = copy_from_user(&reg, ubuf, sizeof(reg));
-			if (ret) {
+		अगर (kbuf) अणु
+			स_नकल(&reg, kbuf, माप(reg));
+			kbuf += माप(reg);
+		पूर्ण अन्यथा अणु
+			ret = copy_from_user(&reg, ubuf, माप(reg));
+			अगर (ret) अणु
 				ret = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			ubuf += sizeof(reg);
-		}
+			ubuf += माप(reg);
+		पूर्ण
 
-		switch (idx) {
-		case 15:
+		चयन (idx) अणु
+		हाल 15:
 			newregs.pc = reg;
-			break;
-		case 16:
+			अवरोध;
+		हाल 16:
 			reg = compat_psr_to_pstate(reg);
 			newregs.pstate = reg;
-			break;
-		case 17:
+			अवरोध;
+		हाल 17:
 			newregs.orig_x0 = reg;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			newregs.regs[idx] = reg;
-		}
+		पूर्ण
 
-	}
+	पूर्ण
 
-	if (valid_user_regs(&newregs.user_regs, target))
+	अगर (valid_user_regs(&newregs.user_regs, target))
 		*task_pt_regs(target) = newregs;
-	else
+	अन्यथा
 		ret = -EINVAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int compat_vfp_get(struct task_struct *target,
-			  const struct user_regset *regset,
-			  struct membuf to)
-{
-	struct user_fpsimd_state *uregs;
-	compat_ulong_t fpscr;
+अटल पूर्णांक compat_vfp_get(काष्ठा task_काष्ठा *target,
+			  स्थिर काष्ठा user_regset *regset,
+			  काष्ठा membuf to)
+अणु
+	काष्ठा user_fpsimd_state *uregs;
+	compat_uदीर्घ_t fpscr;
 
-	if (!system_supports_fpsimd())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_fpsimd())
+		वापस -EINVAL;
 
-	uregs = &target->thread.uw.fpsimd_state;
+	uregs = &target->thपढ़ो.uw.fpsimd_state;
 
-	if (target == current)
+	अगर (target == current)
 		fpsimd_preserve_current_state();
 
 	/*
-	 * The VFP registers are packed into the fpsimd_state, so they all sit
-	 * nicely together for us. We just need to create the fpscr separately.
+	 * The VFP रेजिस्टरs are packed पूर्णांकo the fpsimd_state, so they all sit
+	 * nicely together क्रम us. We just need to create the fpscr separately.
 	 */
-	membuf_write(&to, uregs, VFP_STATE_SIZE - sizeof(compat_ulong_t));
+	membuf_ग_लिखो(&to, uregs, VFP_STATE_SIZE - माप(compat_uदीर्घ_t));
 	fpscr = (uregs->fpsr & VFP_FPSCR_STAT_MASK) |
 		(uregs->fpcr & VFP_FPSCR_CTRL_MASK);
-	return membuf_store(&to, fpscr);
-}
+	वापस membuf_store(&to, fpscr);
+पूर्ण
 
-static int compat_vfp_set(struct task_struct *target,
-			  const struct user_regset *regset,
-			  unsigned int pos, unsigned int count,
-			  const void *kbuf, const void __user *ubuf)
-{
-	struct user_fpsimd_state *uregs;
-	compat_ulong_t fpscr;
-	int ret, vregs_end_pos;
+अटल पूर्णांक compat_vfp_set(काष्ठा task_काष्ठा *target,
+			  स्थिर काष्ठा user_regset *regset,
+			  अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+			  स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	काष्ठा user_fpsimd_state *uregs;
+	compat_uदीर्घ_t fpscr;
+	पूर्णांक ret, vregs_end_pos;
 
-	if (!system_supports_fpsimd())
-		return -EINVAL;
+	अगर (!प्रणाली_supports_fpsimd())
+		वापस -EINVAL;
 
-	uregs = &target->thread.uw.fpsimd_state;
+	uregs = &target->thपढ़ो.uw.fpsimd_state;
 
-	vregs_end_pos = VFP_STATE_SIZE - sizeof(compat_ulong_t);
+	vregs_end_pos = VFP_STATE_SIZE - माप(compat_uदीर्घ_t);
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, uregs, 0,
 				 vregs_end_pos);
 
-	if (count && !ret) {
+	अगर (count && !ret) अणु
 		ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &fpscr,
 					 vregs_end_pos, VFP_STATE_SIZE);
-		if (!ret) {
+		अगर (!ret) अणु
 			uregs->fpsr = fpscr & VFP_FPSCR_STAT_MASK;
 			uregs->fpcr = fpscr & VFP_FPSCR_CTRL_MASK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	fpsimd_flush_task_state(target);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int compat_tls_get(struct task_struct *target,
-			  const struct user_regset *regset,
-			  struct membuf to)
-{
-	return membuf_store(&to, (compat_ulong_t)target->thread.uw.tp_value);
-}
+अटल पूर्णांक compat_tls_get(काष्ठा task_काष्ठा *target,
+			  स्थिर काष्ठा user_regset *regset,
+			  काष्ठा membuf to)
+अणु
+	वापस membuf_store(&to, (compat_uदीर्घ_t)target->thपढ़ो.uw.tp_value);
+पूर्ण
 
-static int compat_tls_set(struct task_struct *target,
-			  const struct user_regset *regset, unsigned int pos,
-			  unsigned int count, const void *kbuf,
-			  const void __user *ubuf)
-{
-	int ret;
-	compat_ulong_t tls = target->thread.uw.tp_value;
+अटल पूर्णांक compat_tls_set(काष्ठा task_काष्ठा *target,
+			  स्थिर काष्ठा user_regset *regset, अचिन्हित पूर्णांक pos,
+			  अचिन्हित पूर्णांक count, स्थिर व्योम *kbuf,
+			  स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
+	compat_uदीर्घ_t tls = target->thपढ़ो.uw.tp_value;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &tls, 0, -1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	target->thread.uw.tp_value = tls;
-	return ret;
-}
+	target->thपढ़ो.uw.tp_value = tls;
+	वापस ret;
+पूर्ण
 
-static const struct user_regset aarch32_regsets[] = {
-	[REGSET_COMPAT_GPR] = {
+अटल स्थिर काष्ठा user_regset aarch32_regsets[] = अणु
+	[REGSET_COMPAT_GPR] = अणु
 		.core_note_type = NT_PRSTATUS,
 		.n = COMPAT_ELF_NGREG,
-		.size = sizeof(compat_elf_greg_t),
-		.align = sizeof(compat_elf_greg_t),
+		.size = माप(compat_elf_greg_t),
+		.align = माप(compat_elf_greg_t),
 		.regset_get = compat_gpr_get,
 		.set = compat_gpr_set
-	},
-	[REGSET_COMPAT_VFP] = {
+	पूर्ण,
+	[REGSET_COMPAT_VFP] = अणु
 		.core_note_type = NT_ARM_VFP,
-		.n = VFP_STATE_SIZE / sizeof(compat_ulong_t),
-		.size = sizeof(compat_ulong_t),
-		.align = sizeof(compat_ulong_t),
+		.n = VFP_STATE_SIZE / माप(compat_uदीर्घ_t),
+		.size = माप(compat_uदीर्घ_t),
+		.align = माप(compat_uदीर्घ_t),
 		.active = fpr_active,
 		.regset_get = compat_vfp_get,
 		.set = compat_vfp_set
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct user_regset_view user_aarch32_view = {
+अटल स्थिर काष्ठा user_regset_view user_aarch32_view = अणु
 	.name = "aarch32", .e_machine = EM_ARM,
 	.regsets = aarch32_regsets, .n = ARRAY_SIZE(aarch32_regsets)
-};
+पूर्ण;
 
-static const struct user_regset aarch32_ptrace_regsets[] = {
-	[REGSET_GPR] = {
+अटल स्थिर काष्ठा user_regset aarch32_ptrace_regsets[] = अणु
+	[REGSET_GPR] = अणु
 		.core_note_type = NT_PRSTATUS,
 		.n = COMPAT_ELF_NGREG,
-		.size = sizeof(compat_elf_greg_t),
-		.align = sizeof(compat_elf_greg_t),
+		.size = माप(compat_elf_greg_t),
+		.align = माप(compat_elf_greg_t),
 		.regset_get = compat_gpr_get,
 		.set = compat_gpr_set
-	},
-	[REGSET_FPR] = {
+	पूर्ण,
+	[REGSET_FPR] = अणु
 		.core_note_type = NT_ARM_VFP,
-		.n = VFP_STATE_SIZE / sizeof(compat_ulong_t),
-		.size = sizeof(compat_ulong_t),
-		.align = sizeof(compat_ulong_t),
+		.n = VFP_STATE_SIZE / माप(compat_uदीर्घ_t),
+		.size = माप(compat_uदीर्घ_t),
+		.align = माप(compat_uदीर्घ_t),
 		.regset_get = compat_vfp_get,
 		.set = compat_vfp_set
-	},
-	[REGSET_TLS] = {
+	पूर्ण,
+	[REGSET_TLS] = अणु
 		.core_note_type = NT_ARM_TLS,
 		.n = 1,
-		.size = sizeof(compat_ulong_t),
-		.align = sizeof(compat_ulong_t),
+		.size = माप(compat_uदीर्घ_t),
+		.align = माप(compat_uदीर्घ_t),
 		.regset_get = compat_tls_get,
 		.set = compat_tls_set,
-	},
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-	[REGSET_HW_BREAK] = {
+	पूर्ण,
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+	[REGSET_HW_BREAK] = अणु
 		.core_note_type = NT_ARM_HW_BREAK,
-		.n = sizeof(struct user_hwdebug_state) / sizeof(u32),
-		.size = sizeof(u32),
-		.align = sizeof(u32),
-		.regset_get = hw_break_get,
-		.set = hw_break_set,
-	},
-	[REGSET_HW_WATCH] = {
+		.n = माप(काष्ठा user_hwdebug_state) / माप(u32),
+		.size = माप(u32),
+		.align = माप(u32),
+		.regset_get = hw_अवरोध_get,
+		.set = hw_अवरोध_set,
+	पूर्ण,
+	[REGSET_HW_WATCH] = अणु
 		.core_note_type = NT_ARM_HW_WATCH,
-		.n = sizeof(struct user_hwdebug_state) / sizeof(u32),
-		.size = sizeof(u32),
-		.align = sizeof(u32),
-		.regset_get = hw_break_get,
-		.set = hw_break_set,
-	},
-#endif
-	[REGSET_SYSTEM_CALL] = {
+		.n = माप(काष्ठा user_hwdebug_state) / माप(u32),
+		.size = माप(u32),
+		.align = माप(u32),
+		.regset_get = hw_अवरोध_get,
+		.set = hw_अवरोध_set,
+	पूर्ण,
+#पूर्ण_अगर
+	[REGSET_SYSTEM_CALL] = अणु
 		.core_note_type = NT_ARM_SYSTEM_CALL,
 		.n = 1,
-		.size = sizeof(int),
-		.align = sizeof(int),
-		.regset_get = system_call_get,
-		.set = system_call_set,
-	},
-};
+		.size = माप(पूर्णांक),
+		.align = माप(पूर्णांक),
+		.regset_get = प्रणाली_call_get,
+		.set = प्रणाली_call_set,
+	पूर्ण,
+पूर्ण;
 
-static const struct user_regset_view user_aarch32_ptrace_view = {
+अटल स्थिर काष्ठा user_regset_view user_aarch32_ptrace_view = अणु
 	.name = "aarch32", .e_machine = EM_ARM,
 	.regsets = aarch32_ptrace_regsets, .n = ARRAY_SIZE(aarch32_ptrace_regsets)
-};
+पूर्ण;
 
-static int compat_ptrace_read_user(struct task_struct *tsk, compat_ulong_t off,
-				   compat_ulong_t __user *ret)
-{
-	compat_ulong_t tmp;
+अटल पूर्णांक compat_ptrace_पढ़ो_user(काष्ठा task_काष्ठा *tsk, compat_uदीर्घ_t off,
+				   compat_uदीर्घ_t __user *ret)
+अणु
+	compat_uदीर्घ_t पंचांगp;
 
-	if (off & 3)
-		return -EIO;
+	अगर (off & 3)
+		वापस -EIO;
 
-	if (off == COMPAT_PT_TEXT_ADDR)
-		tmp = tsk->mm->start_code;
-	else if (off == COMPAT_PT_DATA_ADDR)
-		tmp = tsk->mm->start_data;
-	else if (off == COMPAT_PT_TEXT_END_ADDR)
-		tmp = tsk->mm->end_code;
-	else if (off < sizeof(compat_elf_gregset_t))
-		tmp = compat_get_user_reg(tsk, off >> 2);
-	else if (off >= COMPAT_USER_SZ)
-		return -EIO;
-	else
-		tmp = 0;
+	अगर (off == COMPAT_PT_TEXT_ADDR)
+		पंचांगp = tsk->mm->start_code;
+	अन्यथा अगर (off == COMPAT_PT_DATA_ADDR)
+		पंचांगp = tsk->mm->start_data;
+	अन्यथा अगर (off == COMPAT_PT_TEXT_END_ADDR)
+		पंचांगp = tsk->mm->end_code;
+	अन्यथा अगर (off < माप(compat_elf_gregset_t))
+		पंचांगp = compat_get_user_reg(tsk, off >> 2);
+	अन्यथा अगर (off >= COMPAT_USER_SZ)
+		वापस -EIO;
+	अन्यथा
+		पंचांगp = 0;
 
-	return put_user(tmp, ret);
-}
+	वापस put_user(पंचांगp, ret);
+पूर्ण
 
-static int compat_ptrace_write_user(struct task_struct *tsk, compat_ulong_t off,
-				    compat_ulong_t val)
-{
-	struct pt_regs newregs = *task_pt_regs(tsk);
-	unsigned int idx = off / 4;
+अटल पूर्णांक compat_ptrace_ग_लिखो_user(काष्ठा task_काष्ठा *tsk, compat_uदीर्घ_t off,
+				    compat_uदीर्घ_t val)
+अणु
+	काष्ठा pt_regs newregs = *task_pt_regs(tsk);
+	अचिन्हित पूर्णांक idx = off / 4;
 
-	if (off & 3 || off >= COMPAT_USER_SZ)
-		return -EIO;
+	अगर (off & 3 || off >= COMPAT_USER_SZ)
+		वापस -EIO;
 
-	if (off >= sizeof(compat_elf_gregset_t))
-		return 0;
+	अगर (off >= माप(compat_elf_gregset_t))
+		वापस 0;
 
-	switch (idx) {
-	case 15:
+	चयन (idx) अणु
+	हाल 15:
 		newregs.pc = val;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		newregs.pstate = compat_psr_to_pstate(val);
-		break;
-	case 17:
+		अवरोध;
+	हाल 17:
 		newregs.orig_x0 = val;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		newregs.regs[idx] = val;
-	}
+	पूर्ण
 
-	if (!valid_user_regs(&newregs.user_regs, tsk))
-		return -EINVAL;
+	अगर (!valid_user_regs(&newregs.user_regs, tsk))
+		वापस -EINVAL;
 
 	*task_pt_regs(tsk) = newregs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
 
 /*
- * Convert a virtual register number into an index for a thread_info
- * breakpoint array. Breakpoints are identified using positive numbers
- * whilst watchpoints are negative. The registers are laid out as pairs
- * of (address, control), each pair mapping to a unique hw_breakpoint struct.
- * Register 0 is reserved for describing resource information.
+ * Convert a भव रेजिस्टर number पूर्णांकo an index क्रम a thपढ़ो_info
+ * अवरोधpoपूर्णांक array. Breakpoपूर्णांकs are identअगरied using positive numbers
+ * whilst watchpoपूर्णांकs are negative. The रेजिस्टरs are laid out as pairs
+ * of (address, control), each pair mapping to a unique hw_अवरोधpoपूर्णांक काष्ठा.
+ * Register 0 is reserved क्रम describing resource inक्रमmation.
  */
-static int compat_ptrace_hbp_num_to_idx(compat_long_t num)
-{
-	return (abs(num) - 1) >> 1;
-}
+अटल पूर्णांक compat_ptrace_hbp_num_to_idx(compat_दीर्घ_t num)
+अणु
+	वापस (असल(num) - 1) >> 1;
+पूर्ण
 
-static int compat_ptrace_hbp_get_resource_info(u32 *kdata)
-{
+अटल पूर्णांक compat_ptrace_hbp_get_resource_info(u32 *kdata)
+अणु
 	u8 num_brps, num_wrps, debug_arch, wp_len;
 	u32 reg = 0;
 
-	num_brps	= hw_breakpoint_slots(TYPE_INST);
-	num_wrps	= hw_breakpoint_slots(TYPE_DATA);
+	num_brps	= hw_अवरोधpoपूर्णांक_slots(TYPE_INST);
+	num_wrps	= hw_अवरोधpoपूर्णांक_slots(TYPE_DATA);
 
 	debug_arch	= debug_monitors_arch();
 	wp_len		= 8;
@@ -1584,291 +1585,291 @@ static int compat_ptrace_hbp_get_resource_info(u32 *kdata)
 	reg		|= num_brps;
 
 	*kdata = reg;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int compat_ptrace_hbp_get(unsigned int note_type,
-				 struct task_struct *tsk,
-				 compat_long_t num,
+अटल पूर्णांक compat_ptrace_hbp_get(अचिन्हित पूर्णांक note_type,
+				 काष्ठा task_काष्ठा *tsk,
+				 compat_दीर्घ_t num,
 				 u32 *kdata)
-{
+अणु
 	u64 addr = 0;
 	u32 ctrl = 0;
 
-	int err, idx = compat_ptrace_hbp_num_to_idx(num);
+	पूर्णांक err, idx = compat_ptrace_hbp_num_to_idx(num);
 
-	if (num & 1) {
+	अगर (num & 1) अणु
 		err = ptrace_hbp_get_addr(note_type, tsk, idx, &addr);
 		*kdata = (u32)addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = ptrace_hbp_get_ctrl(note_type, tsk, idx, &ctrl);
 		*kdata = ctrl;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int compat_ptrace_hbp_set(unsigned int note_type,
-				 struct task_struct *tsk,
-				 compat_long_t num,
+अटल पूर्णांक compat_ptrace_hbp_set(अचिन्हित पूर्णांक note_type,
+				 काष्ठा task_काष्ठा *tsk,
+				 compat_दीर्घ_t num,
 				 u32 *kdata)
-{
+अणु
 	u64 addr;
 	u32 ctrl;
 
-	int err, idx = compat_ptrace_hbp_num_to_idx(num);
+	पूर्णांक err, idx = compat_ptrace_hbp_num_to_idx(num);
 
-	if (num & 1) {
+	अगर (num & 1) अणु
 		addr = *kdata;
 		err = ptrace_hbp_set_addr(note_type, tsk, idx, addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl = *kdata;
 		err = ptrace_hbp_set_ctrl(note_type, tsk, idx, ctrl);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int compat_ptrace_gethbpregs(struct task_struct *tsk, compat_long_t num,
-				    compat_ulong_t __user *data)
-{
-	int ret;
+अटल पूर्णांक compat_ptrace_gethbpregs(काष्ठा task_काष्ठा *tsk, compat_दीर्घ_t num,
+				    compat_uदीर्घ_t __user *data)
+अणु
+	पूर्णांक ret;
 	u32 kdata;
 
-	/* Watchpoint */
-	if (num < 0) {
+	/* Watchpoपूर्णांक */
+	अगर (num < 0) अणु
 		ret = compat_ptrace_hbp_get(NT_ARM_HW_WATCH, tsk, num, &kdata);
 	/* Resource info */
-	} else if (num == 0) {
+	पूर्ण अन्यथा अगर (num == 0) अणु
 		ret = compat_ptrace_hbp_get_resource_info(&kdata);
-	/* Breakpoint */
-	} else {
+	/* Breakpoपूर्णांक */
+	पूर्ण अन्यथा अणु
 		ret = compat_ptrace_hbp_get(NT_ARM_HW_BREAK, tsk, num, &kdata);
-	}
+	पूर्ण
 
-	if (!ret)
+	अगर (!ret)
 		ret = put_user(kdata, data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int compat_ptrace_sethbpregs(struct task_struct *tsk, compat_long_t num,
-				    compat_ulong_t __user *data)
-{
-	int ret;
+अटल पूर्णांक compat_ptrace_sethbpregs(काष्ठा task_काष्ठा *tsk, compat_दीर्घ_t num,
+				    compat_uदीर्घ_t __user *data)
+अणु
+	पूर्णांक ret;
 	u32 kdata = 0;
 
-	if (num == 0)
-		return 0;
+	अगर (num == 0)
+		वापस 0;
 
 	ret = get_user(kdata, data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (num < 0)
+	अगर (num < 0)
 		ret = compat_ptrace_hbp_set(NT_ARM_HW_WATCH, tsk, num, &kdata);
-	else
+	अन्यथा
 		ret = compat_ptrace_hbp_set(NT_ARM_HW_BREAK, tsk, num, &kdata);
 
-	return ret;
-}
-#endif	/* CONFIG_HAVE_HW_BREAKPOINT */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_HAVE_HW_BREAKPOINT */
 
-long compat_arch_ptrace(struct task_struct *child, compat_long_t request,
-			compat_ulong_t caddr, compat_ulong_t cdata)
-{
-	unsigned long addr = caddr;
-	unsigned long data = cdata;
-	void __user *datap = compat_ptr(data);
-	int ret;
+दीर्घ compat_arch_ptrace(काष्ठा task_काष्ठा *child, compat_दीर्घ_t request,
+			compat_uदीर्घ_t caddr, compat_uदीर्घ_t cdata)
+अणु
+	अचिन्हित दीर्घ addr = caddr;
+	अचिन्हित दीर्घ data = cdata;
+	व्योम __user *datap = compat_ptr(data);
+	पूर्णांक ret;
 
-	switch (request) {
-		case PTRACE_PEEKUSR:
-			ret = compat_ptrace_read_user(child, addr, datap);
-			break;
+	चयन (request) अणु
+		हाल PTRACE_PEEKUSR:
+			ret = compat_ptrace_पढ़ो_user(child, addr, datap);
+			अवरोध;
 
-		case PTRACE_POKEUSR:
-			ret = compat_ptrace_write_user(child, addr, data);
-			break;
+		हाल PTRACE_POKEUSR:
+			ret = compat_ptrace_ग_लिखो_user(child, addr, data);
+			अवरोध;
 
-		case COMPAT_PTRACE_GETREGS:
+		हाल COMPAT_PTRACE_GETREGS:
 			ret = copy_regset_to_user(child,
 						  &user_aarch32_view,
 						  REGSET_COMPAT_GPR,
-						  0, sizeof(compat_elf_gregset_t),
+						  0, माप(compat_elf_gregset_t),
 						  datap);
-			break;
+			अवरोध;
 
-		case COMPAT_PTRACE_SETREGS:
+		हाल COMPAT_PTRACE_SETREGS:
 			ret = copy_regset_from_user(child,
 						    &user_aarch32_view,
 						    REGSET_COMPAT_GPR,
-						    0, sizeof(compat_elf_gregset_t),
+						    0, माप(compat_elf_gregset_t),
 						    datap);
-			break;
+			अवरोध;
 
-		case COMPAT_PTRACE_GET_THREAD_AREA:
-			ret = put_user((compat_ulong_t)child->thread.uw.tp_value,
-				       (compat_ulong_t __user *)datap);
-			break;
+		हाल COMPAT_PTRACE_GET_THREAD_AREA:
+			ret = put_user((compat_uदीर्घ_t)child->thपढ़ो.uw.tp_value,
+				       (compat_uदीर्घ_t __user *)datap);
+			अवरोध;
 
-		case COMPAT_PTRACE_SET_SYSCALL:
+		हाल COMPAT_PTRACE_SET_SYSCALL:
 			task_pt_regs(child)->syscallno = data;
 			ret = 0;
-			break;
+			अवरोध;
 
-		case COMPAT_PTRACE_GETVFPREGS:
+		हाल COMPAT_PTRACE_GETVFPREGS:
 			ret = copy_regset_to_user(child,
 						  &user_aarch32_view,
 						  REGSET_COMPAT_VFP,
 						  0, VFP_STATE_SIZE,
 						  datap);
-			break;
+			अवरोध;
 
-		case COMPAT_PTRACE_SETVFPREGS:
+		हाल COMPAT_PTRACE_SETVFPREGS:
 			ret = copy_regset_from_user(child,
 						    &user_aarch32_view,
 						    REGSET_COMPAT_VFP,
 						    0, VFP_STATE_SIZE,
 						    datap);
-			break;
+			अवरोध;
 
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-		case COMPAT_PTRACE_GETHBPREGS:
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+		हाल COMPAT_PTRACE_GETHBPREGS:
 			ret = compat_ptrace_gethbpregs(child, addr, datap);
-			break;
+			अवरोध;
 
-		case COMPAT_PTRACE_SETHBPREGS:
+		हाल COMPAT_PTRACE_SETHBPREGS:
 			ret = compat_ptrace_sethbpregs(child, addr, datap);
-			break;
-#endif
+			अवरोध;
+#पूर्ण_अगर
 
-		default:
+		शेष:
 			ret = compat_ptrace_request(child, request, addr,
 						    data);
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
-#endif /* CONFIG_COMPAT */
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
-const struct user_regset_view *task_user_regset_view(struct task_struct *task)
-{
-#ifdef CONFIG_COMPAT
+स्थिर काष्ठा user_regset_view *task_user_regset_view(काष्ठा task_काष्ठा *task)
+अणु
+#अगर_घोषित CONFIG_COMPAT
 	/*
 	 * Core dumping of 32-bit tasks or compat ptrace requests must use the
 	 * user_aarch32_view compatible with arm32. Native ptrace requests on
 	 * 32-bit children use an extended user_aarch32_ptrace_view to allow
-	 * access to the TLS register.
+	 * access to the TLS रेजिस्टर.
 	 */
-	if (is_compat_task())
-		return &user_aarch32_view;
-	else if (is_compat_thread(task_thread_info(task)))
-		return &user_aarch32_ptrace_view;
-#endif
-	return &user_aarch64_view;
-}
+	अगर (is_compat_task())
+		वापस &user_aarch32_view;
+	अन्यथा अगर (is_compat_thपढ़ो(task_thपढ़ो_info(task)))
+		वापस &user_aarch32_ptrace_view;
+#पूर्ण_अगर
+	वापस &user_aarch64_view;
+पूर्ण
 
-long arch_ptrace(struct task_struct *child, long request,
-		 unsigned long addr, unsigned long data)
-{
-	switch (request) {
-	case PTRACE_PEEKMTETAGS:
-	case PTRACE_POKEMTETAGS:
-		return mte_ptrace_copy_tags(child, request, addr, data);
-	}
+दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
+		 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
+अणु
+	चयन (request) अणु
+	हाल PTRACE_PEEKMTETAGS:
+	हाल PTRACE_POKEMTETAGS:
+		वापस mte_ptrace_copy_tags(child, request, addr, data);
+	पूर्ण
 
-	return ptrace_request(child, request, addr, data);
-}
+	वापस ptrace_request(child, request, addr, data);
+पूर्ण
 
-enum ptrace_syscall_dir {
+क्रमागत ptrace_syscall_dir अणु
 	PTRACE_SYSCALL_ENTER = 0,
 	PTRACE_SYSCALL_EXIT,
-};
+पूर्ण;
 
-static void tracehook_report_syscall(struct pt_regs *regs,
-				     enum ptrace_syscall_dir dir)
-{
-	int regno;
-	unsigned long saved_reg;
+अटल व्योम tracehook_report_syscall(काष्ठा pt_regs *regs,
+				     क्रमागत ptrace_syscall_dir dir)
+अणु
+	पूर्णांक regno;
+	अचिन्हित दीर्घ saved_reg;
 
 	/*
 	 * We have some ABI weirdness here in the way that we handle syscall
-	 * exit stops because we indicate whether or not the stop has been
-	 * signalled from syscall entry or syscall exit by clobbering a general
-	 * purpose register (ip/r12 for AArch32, x7 for AArch64) in the tracee
+	 * निकास stops because we indicate whether or not the stop has been
+	 * संकेतled from syscall entry or syscall निकास by clobbering a general
+	 * purpose रेजिस्टर (ip/r12 क्रम AArch32, x7 क्रम AArch64) in the tracee
 	 * and restoring its old value after the stop. This means that:
 	 *
-	 * - Any writes by the tracer to this register during the stop are
+	 * - Any ग_लिखोs by the tracer to this रेजिस्टर during the stop are
 	 *   ignored/discarded.
 	 *
-	 * - The actual value of the register is not available during the stop,
+	 * - The actual value of the रेजिस्टर is not available during the stop,
 	 *   so the tracer cannot save it and restore it later.
 	 *
-	 * - Syscall stops behave differently to seccomp and pseudo-step traps
-	 *   (the latter do not nobble any registers).
+	 * - Syscall stops behave dअगरferently to seccomp and pseuकरो-step traps
+	 *   (the latter करो not nobble any रेजिस्टरs).
 	 */
 	regno = (is_compat_task() ? 12 : 7);
 	saved_reg = regs->regs[regno];
 	regs->regs[regno] = dir;
 
-	if (dir == PTRACE_SYSCALL_ENTER) {
-		if (tracehook_report_syscall_entry(regs))
-			forget_syscall(regs);
+	अगर (dir == PTRACE_SYSCALL_ENTER) अणु
+		अगर (tracehook_report_syscall_entry(regs))
+			क्रमget_syscall(regs);
 		regs->regs[regno] = saved_reg;
-	} else if (!test_thread_flag(TIF_SINGLESTEP)) {
-		tracehook_report_syscall_exit(regs, 0);
+	पूर्ण अन्यथा अगर (!test_thपढ़ो_flag(TIF_SINGLESTEP)) अणु
+		tracehook_report_syscall_निकास(regs, 0);
 		regs->regs[regno] = saved_reg;
-	} else {
+	पूर्ण अन्यथा अणु
 		regs->regs[regno] = saved_reg;
 
 		/*
-		 * Signal a pseudo-step exception since we are stepping but
-		 * tracer modifications to the registers may have rewound the
+		 * Signal a pseuकरो-step exception since we are stepping but
+		 * tracer modअगरications to the रेजिस्टरs may have rewound the
 		 * state machine.
 		 */
-		tracehook_report_syscall_exit(regs, 1);
-	}
-}
+		tracehook_report_syscall_निकास(regs, 1);
+	पूर्ण
+पूर्ण
 
-int syscall_trace_enter(struct pt_regs *regs)
-{
-	unsigned long flags = READ_ONCE(current_thread_info()->flags);
+पूर्णांक syscall_trace_enter(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ flags = READ_ONCE(current_thपढ़ो_info()->flags);
 
-	if (flags & (_TIF_SYSCALL_EMU | _TIF_SYSCALL_TRACE)) {
+	अगर (flags & (_TIF_SYSCALL_EMU | _TIF_SYSCALL_TRACE)) अणु
 		tracehook_report_syscall(regs, PTRACE_SYSCALL_ENTER);
-		if (flags & _TIF_SYSCALL_EMU)
-			return NO_SYSCALL;
-	}
+		अगर (flags & _TIF_SYSCALL_EMU)
+			वापस NO_SYSCALL;
+	पूर्ण
 
 	/* Do the secure computing after ptrace; failures should be fast. */
-	if (secure_computing() == -1)
-		return NO_SYSCALL;
+	अगर (secure_computing() == -1)
+		वापस NO_SYSCALL;
 
-	if (test_thread_flag(TIF_SYSCALL_TRACEPOINT))
+	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACEPOINT))
 		trace_sys_enter(regs, regs->syscallno);
 
 	audit_syscall_entry(regs->syscallno, regs->orig_x0, regs->regs[1],
 			    regs->regs[2], regs->regs[3]);
 
-	return regs->syscallno;
-}
+	वापस regs->syscallno;
+पूर्ण
 
-void syscall_trace_exit(struct pt_regs *regs)
-{
-	unsigned long flags = READ_ONCE(current_thread_info()->flags);
+व्योम syscall_trace_निकास(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ flags = READ_ONCE(current_thपढ़ो_info()->flags);
 
-	audit_syscall_exit(regs);
+	audit_syscall_निकास(regs);
 
-	if (flags & _TIF_SYSCALL_TRACEPOINT)
-		trace_sys_exit(regs, regs_return_value(regs));
+	अगर (flags & _TIF_SYSCALL_TRACEPOINT)
+		trace_sys_निकास(regs, regs_वापस_value(regs));
 
-	if (flags & (_TIF_SYSCALL_TRACE | _TIF_SINGLESTEP))
+	अगर (flags & (_TIF_SYSCALL_TRACE | _TIF_SINGLESTEP))
 		tracehook_report_syscall(regs, PTRACE_SYSCALL_EXIT);
 
 	rseq_syscall(regs);
-}
+पूर्ण
 
 /*
  * SPSR_ELx bits which are always architecturally RES0 per ARM DDI 0487D.a.
@@ -1877,32 +1878,32 @@ void syscall_trace_exit(struct pt_regs *regs)
  * We treat PAN and UAO as RES0 bits, as they are meaningless at EL0, and may
  * be allocated an EL0 meaning in future.
  * Userspace cannot use these until they have an architectural meaning.
- * Note that this follows the SPSR_ELx format, not the AArch32 PSR format.
- * We also reserve IL for the kernel; SS is handled dynamically.
+ * Note that this follows the SPSR_ELx क्रमmat, not the AArch32 PSR क्रमmat.
+ * We also reserve IL क्रम the kernel; SS is handled dynamically.
  */
-#define SPSR_EL1_AARCH64_RES0_BITS \
+#घोषणा SPSR_EL1_AARCH64_RES0_BITS \
 	(GENMASK_ULL(63, 32) | GENMASK_ULL(27, 26) | GENMASK_ULL(23, 22) | \
 	 GENMASK_ULL(20, 13) | GENMASK_ULL(5, 5))
-#define SPSR_EL1_AARCH32_RES0_BITS \
+#घोषणा SPSR_EL1_AARCH32_RES0_BITS \
 	(GENMASK_ULL(63, 32) | GENMASK_ULL(22, 22) | GENMASK_ULL(20, 20))
 
-static int valid_compat_regs(struct user_pt_regs *regs)
-{
+अटल पूर्णांक valid_compat_regs(काष्ठा user_pt_regs *regs)
+अणु
 	regs->pstate &= ~SPSR_EL1_AARCH32_RES0_BITS;
 
-	if (!system_supports_mixed_endian_el0()) {
-		if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+	अगर (!प्रणाली_supports_mixed_endian_el0()) अणु
+		अगर (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 			regs->pstate |= PSR_AA32_E_BIT;
-		else
+		अन्यथा
 			regs->pstate &= ~PSR_AA32_E_BIT;
-	}
+	पूर्ण
 
-	if (user_mode(regs) && (regs->pstate & PSR_MODE32_BIT) &&
+	अगर (user_mode(regs) && (regs->pstate & PSR_MODE32_BIT) &&
 	    (regs->pstate & PSR_AA32_A_BIT) == 0 &&
 	    (regs->pstate & PSR_AA32_I_BIT) == 0 &&
-	    (regs->pstate & PSR_AA32_F_BIT) == 0) {
-		return 1;
-	}
+	    (regs->pstate & PSR_AA32_F_BIT) == 0) अणु
+		वापस 1;
+	पूर्ण
 
 	/*
 	 * Force PSR to a valid 32-bit EL0t, preserving the same bits as
@@ -1915,38 +1916,38 @@ static int valid_compat_regs(struct user_pt_regs *regs)
 			PSR_AA32_T_BIT;
 	regs->pstate |= PSR_MODE32_BIT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int valid_native_regs(struct user_pt_regs *regs)
-{
+अटल पूर्णांक valid_native_regs(काष्ठा user_pt_regs *regs)
+अणु
 	regs->pstate &= ~SPSR_EL1_AARCH64_RES0_BITS;
 
-	if (user_mode(regs) && !(regs->pstate & PSR_MODE32_BIT) &&
+	अगर (user_mode(regs) && !(regs->pstate & PSR_MODE32_BIT) &&
 	    (regs->pstate & PSR_D_BIT) == 0 &&
 	    (regs->pstate & PSR_A_BIT) == 0 &&
 	    (regs->pstate & PSR_I_BIT) == 0 &&
-	    (regs->pstate & PSR_F_BIT) == 0) {
-		return 1;
-	}
+	    (regs->pstate & PSR_F_BIT) == 0) अणु
+		वापस 1;
+	पूर्ण
 
 	/* Force PSR to a valid 64-bit EL0t */
 	regs->pstate &= PSR_N_BIT | PSR_Z_BIT | PSR_C_BIT | PSR_V_BIT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Are the current registers suitable for user mode? (used to maintain
- * security in signal handlers)
+ * Are the current रेजिस्टरs suitable क्रम user mode? (used to मुख्यtain
+ * security in संकेत handlers)
  */
-int valid_user_regs(struct user_pt_regs *regs, struct task_struct *task)
-{
+पूर्णांक valid_user_regs(काष्ठा user_pt_regs *regs, काष्ठा task_काष्ठा *task)
+अणु
 	/* https://lore.kernel.org/lkml/20191118131525.GA4180@willie-the-truck */
 	user_regs_reset_single_step(regs, task);
 
-	if (is_compat_thread(task_thread_info(task)))
-		return valid_compat_regs(regs);
-	else
-		return valid_native_regs(regs);
-}
+	अगर (is_compat_thपढ़ो(task_thपढ़ो_info(task)))
+		वापस valid_compat_regs(regs);
+	अन्यथा
+		वापस valid_native_regs(regs);
+पूर्ण

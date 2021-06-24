@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 // Copyright(c) 2015-2020 Intel Corporation.
 
 /*
@@ -6,60 +7,60 @@
  *
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/slab.h>
-#include <linux/soundwire/sdw.h>
-#include "bus.h"
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/soundwire/sdw.h>
+#समावेश "bus.h"
 
-#define SDW_STRM_RATE_GROUPING		1
+#घोषणा SDW_STRM_RATE_GROUPING		1
 
-struct sdw_group_params {
-	unsigned int rate;
-	int full_bw;
-	int payload_bw;
-	int hwidth;
-};
+काष्ठा sdw_group_params अणु
+	अचिन्हित पूर्णांक rate;
+	पूर्णांक full_bw;
+	पूर्णांक payload_bw;
+	पूर्णांक hwidth;
+पूर्ण;
 
-struct sdw_group {
-	unsigned int count;
-	unsigned int max_size;
-	unsigned int *rates;
-};
+काष्ठा sdw_group अणु
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक max_size;
+	अचिन्हित पूर्णांक *rates;
+पूर्ण;
 
-struct sdw_transport_data {
-	int hstart;
-	int hstop;
-	int block_offset;
-	int sub_block_offset;
-};
+काष्ठा sdw_transport_data अणु
+	पूर्णांक hstart;
+	पूर्णांक hstop;
+	पूर्णांक block_offset;
+	पूर्णांक sub_block_offset;
+पूर्ण;
 
-static void sdw_compute_slave_ports(struct sdw_master_runtime *m_rt,
-				    struct sdw_transport_data *t_data)
-{
-	struct sdw_slave_runtime *s_rt = NULL;
-	struct sdw_port_runtime *p_rt;
-	int port_bo, sample_int;
-	unsigned int rate, bps, ch = 0;
-	unsigned int slave_total_ch;
-	struct sdw_bus_params *b_params = &m_rt->bus->params;
+अटल व्योम sdw_compute_slave_ports(काष्ठा sdw_master_runसमय *m_rt,
+				    काष्ठा sdw_transport_data *t_data)
+अणु
+	काष्ठा sdw_slave_runसमय *s_rt = शून्य;
+	काष्ठा sdw_port_runसमय *p_rt;
+	पूर्णांक port_bo, sample_पूर्णांक;
+	अचिन्हित पूर्णांक rate, bps, ch = 0;
+	अचिन्हित पूर्णांक slave_total_ch;
+	काष्ठा sdw_bus_params *b_params = &m_rt->bus->params;
 
 	port_bo = t_data->block_offset;
 
-	list_for_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) {
+	list_क्रम_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) अणु
 		rate = m_rt->stream->params.rate;
 		bps = m_rt->stream->params.bps;
-		sample_int = (m_rt->bus->params.curr_dr_freq / rate);
+		sample_पूर्णांक = (m_rt->bus->params.curr_dr_freq / rate);
 		slave_total_ch = 0;
 
-		list_for_each_entry(p_rt, &s_rt->port_list, port_node) {
+		list_क्रम_each_entry(p_rt, &s_rt->port_list, port_node) अणु
 			ch = sdw_ch_mask_to_ch(p_rt->ch_mask);
 
 			sdw_fill_xport_params(&p_rt->transport_params,
 					      p_rt->num, false,
 					      SDW_BLK_GRP_CNT_1,
-					      sample_int, port_bo, port_bo >> 8,
+					      sample_पूर्णांक, port_bo, port_bo >> 8,
 					      t_data->hstart,
 					      t_data->hstop,
 					      SDW_BLK_PKG_PER_PORT, 0x0);
@@ -71,48 +72,48 @@ static void sdw_compute_slave_ports(struct sdw_master_runtime *m_rt,
 
 			port_bo += bps * ch;
 			slave_total_ch += ch;
-		}
+		पूर्ण
 
-		if (m_rt->direction == SDW_DATA_DIR_TX &&
-		    m_rt->ch_count == slave_total_ch) {
+		अगर (m_rt->direction == SDW_DATA_सूची_TX &&
+		    m_rt->ch_count == slave_total_ch) अणु
 			/*
 			 * Slave devices were configured to access all channels
 			 * of the stream, which indicates that they operate in
-			 * 'mirror mode'. Make sure we reset the port offset for
+			 * 'mirror mode'. Make sure we reset the port offset क्रम
 			 * the next device in the list
 			 */
 			port_bo = t_data->block_offset;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void sdw_compute_master_ports(struct sdw_master_runtime *m_rt,
-				     struct sdw_group_params *params,
-				     int port_bo, int hstop)
-{
-	struct sdw_transport_data t_data = {0};
-	struct sdw_port_runtime *p_rt;
-	struct sdw_bus *bus = m_rt->bus;
-	struct sdw_bus_params *b_params = &bus->params;
-	int sample_int, hstart = 0;
-	unsigned int rate, bps, ch;
+अटल व्योम sdw_compute_master_ports(काष्ठा sdw_master_runसमय *m_rt,
+				     काष्ठा sdw_group_params *params,
+				     पूर्णांक port_bo, पूर्णांक hstop)
+अणु
+	काष्ठा sdw_transport_data t_data = अणु0पूर्ण;
+	काष्ठा sdw_port_runसमय *p_rt;
+	काष्ठा sdw_bus *bus = m_rt->bus;
+	काष्ठा sdw_bus_params *b_params = &bus->params;
+	पूर्णांक sample_पूर्णांक, hstart = 0;
+	अचिन्हित पूर्णांक rate, bps, ch;
 
 	rate = m_rt->stream->params.rate;
 	bps = m_rt->stream->params.bps;
 	ch = m_rt->ch_count;
-	sample_int = (bus->params.curr_dr_freq / rate);
+	sample_पूर्णांक = (bus->params.curr_dr_freq / rate);
 
-	if (rate != params->rate)
-		return;
+	अगर (rate != params->rate)
+		वापस;
 
 	t_data.hstop = hstop;
 	hstart = hstop - params->hwidth + 1;
 	t_data.hstart = hstart;
 
-	list_for_each_entry(p_rt, &m_rt->port_list, port_node) {
+	list_क्रम_each_entry(p_rt, &m_rt->port_list, port_node) अणु
 
 		sdw_fill_xport_params(&p_rt->transport_params, p_rt->num,
-				      false, SDW_BLK_GRP_CNT_1, sample_int,
+				      false, SDW_BLK_GRP_CNT_1, sample_पूर्णांक,
 				      port_bo, port_bo >> 8, hstart, hstop,
 				      SDW_BLK_PKG_PER_PORT, 0x0);
 
@@ -121,303 +122,303 @@ static void sdw_compute_master_ports(struct sdw_master_runtime *m_rt,
 				     SDW_PORT_FLOW_MODE_ISOCH,
 				     b_params->m_data_mode);
 
-		/* Check for first entry */
-		if (!(p_rt == list_first_entry(&m_rt->port_list,
-					       struct sdw_port_runtime,
-					       port_node))) {
+		/* Check क्रम first entry */
+		अगर (!(p_rt == list_first_entry(&m_rt->port_list,
+					       काष्ठा sdw_port_runसमय,
+					       port_node))) अणु
 			port_bo += bps * ch;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		t_data.hstart = hstart;
 		t_data.hstop = hstop;
 		t_data.block_offset = port_bo;
 		t_data.sub_block_offset = 0;
 		port_bo += bps * ch;
-	}
+	पूर्ण
 
 	sdw_compute_slave_ports(m_rt, &t_data);
-}
+पूर्ण
 
-static void _sdw_compute_port_params(struct sdw_bus *bus,
-				     struct sdw_group_params *params, int count)
-{
-	struct sdw_master_runtime *m_rt;
-	int hstop = bus->params.col - 1;
-	int block_offset, port_bo, i;
+अटल व्योम _sdw_compute_port_params(काष्ठा sdw_bus *bus,
+				     काष्ठा sdw_group_params *params, पूर्णांक count)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	पूर्णांक hstop = bus->params.col - 1;
+	पूर्णांक block_offset, port_bo, i;
 
-	/* Run loop for all groups to compute transport parameters */
-	for (i = 0; i < count; i++) {
+	/* Run loop क्रम all groups to compute transport parameters */
+	क्रम (i = 0; i < count; i++) अणु
 		port_bo = 1;
 		block_offset = 1;
 
-		list_for_each_entry(m_rt, &bus->m_rt_list, bus_node) {
+		list_क्रम_each_entry(m_rt, &bus->m_rt_list, bus_node) अणु
 			sdw_compute_master_ports(m_rt, &params[i],
 						 port_bo, hstop);
 
 			block_offset += m_rt->ch_count *
 					m_rt->stream->params.bps;
 			port_bo = block_offset;
-		}
+		पूर्ण
 
 		hstop = hstop - params[i].hwidth;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sdw_compute_group_params(struct sdw_bus *bus,
-				    struct sdw_group_params *params,
-				    int *rates, int count)
-{
-	struct sdw_master_runtime *m_rt;
-	int sel_col = bus->params.col;
-	unsigned int rate, bps, ch;
-	int i, column_needed = 0;
+अटल पूर्णांक sdw_compute_group_params(काष्ठा sdw_bus *bus,
+				    काष्ठा sdw_group_params *params,
+				    पूर्णांक *rates, पूर्णांक count)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	पूर्णांक sel_col = bus->params.col;
+	अचिन्हित पूर्णांक rate, bps, ch;
+	पूर्णांक i, column_needed = 0;
 
 	/* Calculate bandwidth per group */
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		params[i].rate = rates[i];
 		params[i].full_bw = bus->params.curr_dr_freq / params[i].rate;
-	}
+	पूर्ण
 
-	list_for_each_entry(m_rt, &bus->m_rt_list, bus_node) {
+	list_क्रम_each_entry(m_rt, &bus->m_rt_list, bus_node) अणु
 		rate = m_rt->stream->params.rate;
 		bps = m_rt->stream->params.bps;
 		ch = m_rt->ch_count;
 
-		for (i = 0; i < count; i++) {
-			if (rate == params[i].rate)
+		क्रम (i = 0; i < count; i++) अणु
+			अगर (rate == params[i].rate)
 				params[i].payload_bw += bps * ch;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		params[i].hwidth = (sel_col *
 			params[i].payload_bw + params[i].full_bw - 1) /
 			params[i].full_bw;
 
 		column_needed += params[i].hwidth;
-	}
+	पूर्ण
 
-	if (column_needed > sel_col - 1)
-		return -EINVAL;
+	अगर (column_needed > sel_col - 1)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdw_add_element_group_count(struct sdw_group *group,
-				       unsigned int rate)
-{
-	int num = group->count;
-	int i;
+अटल पूर्णांक sdw_add_element_group_count(काष्ठा sdw_group *group,
+				       अचिन्हित पूर्णांक rate)
+अणु
+	पूर्णांक num = group->count;
+	पूर्णांक i;
 
-	for (i = 0; i <= num; i++) {
-		if (rate == group->rates[i])
-			break;
+	क्रम (i = 0; i <= num; i++) अणु
+		अगर (rate == group->rates[i])
+			अवरोध;
 
-		if (i != num)
-			continue;
+		अगर (i != num)
+			जारी;
 
-		if (group->count >= group->max_size) {
-			unsigned int *rates;
+		अगर (group->count >= group->max_size) अणु
+			अचिन्हित पूर्णांक *rates;
 
 			group->max_size += 1;
-			rates = krealloc(group->rates,
-					 (sizeof(int) * group->max_size),
+			rates = kपुनः_स्मृति(group->rates,
+					 (माप(पूर्णांक) * group->max_size),
 					 GFP_KERNEL);
-			if (!rates)
-				return -ENOMEM;
+			अगर (!rates)
+				वापस -ENOMEM;
 			group->rates = rates;
-		}
+		पूर्ण
 
 		group->rates[group->count++] = rate;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdw_get_group_count(struct sdw_bus *bus,
-			       struct sdw_group *group)
-{
-	struct sdw_master_runtime *m_rt;
-	unsigned int rate;
-	int ret = 0;
+अटल पूर्णांक sdw_get_group_count(काष्ठा sdw_bus *bus,
+			       काष्ठा sdw_group *group)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	अचिन्हित पूर्णांक rate;
+	पूर्णांक ret = 0;
 
 	group->count = 0;
 	group->max_size = SDW_STRM_RATE_GROUPING;
-	group->rates = kcalloc(group->max_size, sizeof(int), GFP_KERNEL);
-	if (!group->rates)
-		return -ENOMEM;
+	group->rates = kसुस्मृति(group->max_size, माप(पूर्णांक), GFP_KERNEL);
+	अगर (!group->rates)
+		वापस -ENOMEM;
 
-	list_for_each_entry(m_rt, &bus->m_rt_list, bus_node) {
+	list_क्रम_each_entry(m_rt, &bus->m_rt_list, bus_node) अणु
 		rate = m_rt->stream->params.rate;
-		if (m_rt == list_first_entry(&bus->m_rt_list,
-					     struct sdw_master_runtime,
-					     bus_node)) {
+		अगर (m_rt == list_first_entry(&bus->m_rt_list,
+					     काष्ठा sdw_master_runसमय,
+					     bus_node)) अणु
 			group->rates[group->count++] = rate;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = sdw_add_element_group_count(group, rate);
-			if (ret < 0) {
-				kfree(group->rates);
-				return ret;
-			}
-		}
-	}
+			अगर (ret < 0) अणु
+				kमुक्त(group->rates);
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * sdw_compute_port_params: Compute transport and port parameters
  *
  * @bus: SDW Bus instance
  */
-static int sdw_compute_port_params(struct sdw_bus *bus)
-{
-	struct sdw_group_params *params = NULL;
-	struct sdw_group group;
-	int ret;
+अटल पूर्णांक sdw_compute_port_params(काष्ठा sdw_bus *bus)
+अणु
+	काष्ठा sdw_group_params *params = शून्य;
+	काष्ठा sdw_group group;
+	पूर्णांक ret;
 
 	ret = sdw_get_group_count(bus, &group);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (group.count == 0)
-		goto out;
+	अगर (group.count == 0)
+		जाओ out;
 
-	params = kcalloc(group.count, sizeof(*params), GFP_KERNEL);
-	if (!params) {
+	params = kसुस्मृति(group.count, माप(*params), GFP_KERNEL);
+	अगर (!params) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Compute transport parameters for grouped streams */
+	/* Compute transport parameters क्रम grouped streams */
 	ret = sdw_compute_group_params(bus, params,
 				       &group.rates[0], group.count);
-	if (ret < 0)
-		goto free_params;
+	अगर (ret < 0)
+		जाओ मुक्त_params;
 
 	_sdw_compute_port_params(bus, params, group.count);
 
-free_params:
-	kfree(params);
+मुक्त_params:
+	kमुक्त(params);
 out:
-	kfree(group.rates);
+	kमुक्त(group.rates);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdw_select_row_col(struct sdw_bus *bus, int clk_freq)
-{
-	struct sdw_master_prop *prop = &bus->prop;
-	int frame_int, frame_freq;
-	int r, c;
+अटल पूर्णांक sdw_select_row_col(काष्ठा sdw_bus *bus, पूर्णांक clk_freq)
+अणु
+	काष्ठा sdw_master_prop *prop = &bus->prop;
+	पूर्णांक frame_पूर्णांक, frame_freq;
+	पूर्णांक r, c;
 
-	for (c = 0; c < SDW_FRAME_COLS; c++) {
-		for (r = 0; r < SDW_FRAME_ROWS; r++) {
-			if (sdw_rows[r] != prop->default_row ||
-			    sdw_cols[c] != prop->default_col)
-				continue;
+	क्रम (c = 0; c < SDW_FRAME_COLS; c++) अणु
+		क्रम (r = 0; r < SDW_FRAME_ROWS; r++) अणु
+			अगर (sdw_rows[r] != prop->शेष_row ||
+			    sdw_cols[c] != prop->शेष_col)
+				जारी;
 
-			frame_int = sdw_rows[r] * sdw_cols[c];
-			frame_freq = clk_freq / frame_int;
+			frame_पूर्णांक = sdw_rows[r] * sdw_cols[c];
+			frame_freq = clk_freq / frame_पूर्णांक;
 
-			if ((clk_freq - (frame_freq * SDW_FRAME_CTRL_BITS)) <
+			अगर ((clk_freq - (frame_freq * SDW_FRAME_CTRL_BITS)) <
 			    bus->params.bandwidth)
-				continue;
+				जारी;
 
 			bus->params.row = sdw_rows[r];
 			bus->params.col = sdw_cols[c];
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * sdw_compute_bus_params: Compute bus parameters
  *
  * @bus: SDW Bus instance
  */
-static int sdw_compute_bus_params(struct sdw_bus *bus)
-{
-	unsigned int max_dr_freq, curr_dr_freq = 0;
-	struct sdw_master_prop *mstr_prop = &bus->prop;
-	int i, clk_values, ret;
+अटल पूर्णांक sdw_compute_bus_params(काष्ठा sdw_bus *bus)
+अणु
+	अचिन्हित पूर्णांक max_dr_freq, curr_dr_freq = 0;
+	काष्ठा sdw_master_prop *mstr_prop = &bus->prop;
+	पूर्णांक i, clk_values, ret;
 	bool is_gear = false;
 	u32 *clk_buf;
 
-	if (mstr_prop->num_clk_gears) {
+	अगर (mstr_prop->num_clk_gears) अणु
 		clk_values = mstr_prop->num_clk_gears;
 		clk_buf = mstr_prop->clk_gears;
 		is_gear = true;
-	} else if (mstr_prop->num_clk_freq) {
+	पूर्ण अन्यथा अगर (mstr_prop->num_clk_freq) अणु
 		clk_values = mstr_prop->num_clk_freq;
 		clk_buf = mstr_prop->clk_freq;
-	} else {
+	पूर्ण अन्यथा अणु
 		clk_values = 1;
-		clk_buf = NULL;
-	}
+		clk_buf = शून्य;
+	पूर्ण
 
 	max_dr_freq = mstr_prop->max_clk_freq * SDW_DOUBLE_RATE_FACTOR;
 
-	for (i = 0; i < clk_values; i++) {
-		if (!clk_buf)
+	क्रम (i = 0; i < clk_values; i++) अणु
+		अगर (!clk_buf)
 			curr_dr_freq = max_dr_freq;
-		else
+		अन्यथा
 			curr_dr_freq = (is_gear) ?
 				(max_dr_freq >>  clk_buf[i]) :
 				clk_buf[i] * SDW_DOUBLE_RATE_FACTOR;
 
-		if (curr_dr_freq <= bus->params.bandwidth)
-			continue;
+		अगर (curr_dr_freq <= bus->params.bandwidth)
+			जारी;
 
-		break;
+		अवरोध;
 
 		/*
 		 * TODO: Check all the Slave(s) port(s) audio modes and find
-		 * whether given clock rate is supported with glitchless
+		 * whether given घड़ी rate is supported with glitchless
 		 * transition.
 		 */
-	}
+	पूर्ण
 
-	if (i == clk_values)
-		return -EINVAL;
+	अगर (i == clk_values)
+		वापस -EINVAL;
 
 	ret = sdw_select_row_col(bus, curr_dr_freq);
-	if (ret < 0)
-		return -EINVAL;
+	अगर (ret < 0)
+		वापस -EINVAL;
 
 	bus->params.curr_dr_freq = curr_dr_freq;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sdw_compute_params: Compute bus, transport and port parameters
  *
  * @bus: SDW Bus instance
  */
-int sdw_compute_params(struct sdw_bus *bus)
-{
-	int ret;
+पूर्णांक sdw_compute_params(काष्ठा sdw_bus *bus)
+अणु
+	पूर्णांक ret;
 
-	/* Computes clock frequency, frame shape and frame frequency */
+	/* Computes घड़ी frequency, frame shape and frame frequency */
 	ret = sdw_compute_bus_params(bus);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "Compute bus params failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Compute transport and port params */
 	ret = sdw_compute_port_params(bus);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "Compute transport params failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(sdw_compute_params);
 
 MODULE_LICENSE("Dual BSD/GPL");

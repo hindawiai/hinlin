@@ -1,3 +1,4 @@
+<शैली गुरु>
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
 /*
@@ -5,12 +6,12 @@
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -27,102 +28,102 @@
  *
  */
 
-#include <linux/acpi.h>
-#include <linux/device.h>
-#include <linux/oom.h>
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
-#include <linux/pnp.h>
-#include <linux/slab.h>
-#include <linux/vga_switcheroo.h>
-#include <linux/vt.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/device.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pnp.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vga_चयनeroo.h>
+#समावेश <linux/vt.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_ioctl.h>
-#include <drm/drm_irq.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_probe_helper.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_ioctl.h>
+#समावेश <drm/drm_irq.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_probe_helper.h>
 
-#include "display/intel_acpi.h"
-#include "display/intel_bw.h"
-#include "display/intel_cdclk.h"
-#include "display/intel_csr.h"
-#include "display/intel_display_types.h"
-#include "display/intel_dp.h"
-#include "display/intel_fbdev.h"
-#include "display/intel_hotplug.h"
-#include "display/intel_overlay.h"
-#include "display/intel_pipe_crc.h"
-#include "display/intel_pps.h"
-#include "display/intel_sprite.h"
-#include "display/intel_vga.h"
+#समावेश "display/intel_acpi.h"
+#समावेश "display/intel_bw.h"
+#समावेश "display/intel_cdclk.h"
+#समावेश "display/intel_csr.h"
+#समावेश "display/intel_display_types.h"
+#समावेश "display/intel_dp.h"
+#समावेश "display/intel_fbdev.h"
+#समावेश "display/intel_hotplug.h"
+#समावेश "display/intel_overlay.h"
+#समावेश "display/intel_pipe_crc.h"
+#समावेश "display/intel_pps.h"
+#समावेश "display/intel_sprite.h"
+#समावेश "display/intel_vga.h"
 
-#include "gem/i915_gem_context.h"
-#include "gem/i915_gem_ioctls.h"
-#include "gem/i915_gem_mman.h"
-#include "gem/i915_gem_pm.h"
-#include "gt/intel_gt.h"
-#include "gt/intel_gt_pm.h"
-#include "gt/intel_rc6.h"
+#समावेश "gem/i915_gem_context.h"
+#समावेश "gem/i915_gem_ioctls.h"
+#समावेश "gem/i915_gem_mman.h"
+#समावेश "gem/i915_gem_pm.h"
+#समावेश "gt/intel_gt.h"
+#समावेश "gt/intel_gt_pm.h"
+#समावेश "gt/intel_rc6.h"
 
-#include "i915_debugfs.h"
-#include "i915_drv.h"
-#include "i915_ioc32.h"
-#include "i915_irq.h"
-#include "i915_memcpy.h"
-#include "i915_perf.h"
-#include "i915_query.h"
-#include "i915_suspend.h"
-#include "i915_switcheroo.h"
-#include "i915_sysfs.h"
-#include "i915_trace.h"
-#include "i915_vgpu.h"
-#include "intel_dram.h"
-#include "intel_gvt.h"
-#include "intel_memory_region.h"
-#include "intel_pm.h"
-#include "intel_sideband.h"
-#include "vlv_suspend.h"
+#समावेश "i915_debugfs.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_ioc32.h"
+#समावेश "i915_irq.h"
+#समावेश "i915_memcpy.h"
+#समावेश "i915_perf.h"
+#समावेश "i915_query.h"
+#समावेश "i915_suspend.h"
+#समावेश "i915_switcheroo.h"
+#समावेश "i915_sysfs.h"
+#समावेश "i915_trace.h"
+#समावेश "i915_vgpu.h"
+#समावेश "intel_dram.h"
+#समावेश "intel_gvt.h"
+#समावेश "intel_memory_region.h"
+#समावेश "intel_pm.h"
+#समावेश "intel_sideband.h"
+#समावेश "vlv_suspend.h"
 
-static const struct drm_driver driver;
+अटल स्थिर काष्ठा drm_driver driver;
 
-static int i915_get_bridge_dev(struct drm_i915_private *dev_priv)
-{
-	int domain = pci_domain_nr(to_pci_dev(dev_priv->drm.dev)->bus);
+अटल पूर्णांक i915_get_bridge_dev(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांक करोमुख्य = pci_करोमुख्य_nr(to_pci_dev(dev_priv->drm.dev)->bus);
 
 	dev_priv->bridge_dev =
-		pci_get_domain_bus_and_slot(domain, 0, PCI_DEVFN(0, 0));
-	if (!dev_priv->bridge_dev) {
+		pci_get_करोमुख्य_bus_and_slot(करोमुख्य, 0, PCI_DEVFN(0, 0));
+	अगर (!dev_priv->bridge_dev) अणु
 		drm_err(&dev_priv->drm, "bridge device not found\n");
-		return -1;
-	}
-	return 0;
-}
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Allocate space for the MCH regs if needed, return nonzero on error */
-static int
-intel_alloc_mchbar_resource(struct drm_i915_private *dev_priv)
-{
-	int reg = INTEL_GEN(dev_priv) >= 4 ? MCHBAR_I965 : MCHBAR_I915;
+/* Allocate space क्रम the MCH regs अगर needed, वापस nonzero on error */
+अटल पूर्णांक
+पूर्णांकel_alloc_mchbar_resource(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांक reg = INTEL_GEN(dev_priv) >= 4 ? MCHBAR_I965 : MCHBAR_I915;
 	u32 temp_lo, temp_hi = 0;
 	u64 mchbar_addr;
-	int ret;
+	पूर्णांक ret;
 
-	if (INTEL_GEN(dev_priv) >= 4)
-		pci_read_config_dword(dev_priv->bridge_dev, reg + 4, &temp_hi);
-	pci_read_config_dword(dev_priv->bridge_dev, reg, &temp_lo);
+	अगर (INTEL_GEN(dev_priv) >= 4)
+		pci_पढ़ो_config_dword(dev_priv->bridge_dev, reg + 4, &temp_hi);
+	pci_पढ़ो_config_dword(dev_priv->bridge_dev, reg, &temp_lo);
 	mchbar_addr = ((u64)temp_hi << 32) | temp_lo;
 
-	/* If ACPI doesn't have it, assume we need to allocate it ourselves */
-#ifdef CONFIG_PNP
-	if (mchbar_addr &&
+	/* If ACPI करोesn't have it, assume we need to allocate it ourselves */
+#अगर_घोषित CONFIG_PNP
+	अगर (mchbar_addr &&
 	    pnp_range_reserved(mchbar_addr, mchbar_addr + MCHBAR_SIZE))
-		return 0;
-#endif
+		वापस 0;
+#पूर्ण_अगर
 
-	/* Get some space for it */
+	/* Get some space क्रम it */
 	dev_priv->mch_res.name = "i915 MCHBAR";
 	dev_priv->mch_res.flags = IORESOURCE_MEM;
 	ret = pci_bus_alloc_resource(dev_priv->bridge_dev->bus,
@@ -131,142 +132,142 @@ intel_alloc_mchbar_resource(struct drm_i915_private *dev_priv)
 				     PCIBIOS_MIN_MEM,
 				     0, pcibios_align_resource,
 				     dev_priv->bridge_dev);
-	if (ret) {
+	अगर (ret) अणु
 		drm_dbg(&dev_priv->drm, "failed bus alloc: %d\n", ret);
 		dev_priv->mch_res.start = 0;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (INTEL_GEN(dev_priv) >= 4)
-		pci_write_config_dword(dev_priv->bridge_dev, reg + 4,
+	अगर (INTEL_GEN(dev_priv) >= 4)
+		pci_ग_लिखो_config_dword(dev_priv->bridge_dev, reg + 4,
 				       upper_32_bits(dev_priv->mch_res.start));
 
-	pci_write_config_dword(dev_priv->bridge_dev, reg,
+	pci_ग_लिखो_config_dword(dev_priv->bridge_dev, reg,
 			       lower_32_bits(dev_priv->mch_res.start));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Setup MCHBAR if possible, return true if we should disable it again */
-static void
-intel_setup_mchbar(struct drm_i915_private *dev_priv)
-{
-	int mchbar_reg = INTEL_GEN(dev_priv) >= 4 ? MCHBAR_I965 : MCHBAR_I915;
+/* Setup MCHBAR अगर possible, वापस true अगर we should disable it again */
+अटल व्योम
+पूर्णांकel_setup_mchbar(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांक mchbar_reg = INTEL_GEN(dev_priv) >= 4 ? MCHBAR_I965 : MCHBAR_I915;
 	u32 temp;
 	bool enabled;
 
-	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
-		return;
+	अगर (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+		वापस;
 
 	dev_priv->mchbar_need_disable = false;
 
-	if (IS_I915G(dev_priv) || IS_I915GM(dev_priv)) {
-		pci_read_config_dword(dev_priv->bridge_dev, DEVEN, &temp);
+	अगर (IS_I915G(dev_priv) || IS_I915GM(dev_priv)) अणु
+		pci_पढ़ो_config_dword(dev_priv->bridge_dev, DEVEN, &temp);
 		enabled = !!(temp & DEVEN_MCHBAR_EN);
-	} else {
-		pci_read_config_dword(dev_priv->bridge_dev, mchbar_reg, &temp);
+	पूर्ण अन्यथा अणु
+		pci_पढ़ो_config_dword(dev_priv->bridge_dev, mchbar_reg, &temp);
 		enabled = temp & 1;
-	}
+	पूर्ण
 
-	/* If it's already enabled, don't have to do anything */
-	if (enabled)
-		return;
+	/* If it's already enabled, don't have to करो anything */
+	अगर (enabled)
+		वापस;
 
-	if (intel_alloc_mchbar_resource(dev_priv))
-		return;
+	अगर (पूर्णांकel_alloc_mchbar_resource(dev_priv))
+		वापस;
 
 	dev_priv->mchbar_need_disable = true;
 
 	/* Space is allocated or reserved, so enable it. */
-	if (IS_I915G(dev_priv) || IS_I915GM(dev_priv)) {
-		pci_write_config_dword(dev_priv->bridge_dev, DEVEN,
+	अगर (IS_I915G(dev_priv) || IS_I915GM(dev_priv)) अणु
+		pci_ग_लिखो_config_dword(dev_priv->bridge_dev, DEVEN,
 				       temp | DEVEN_MCHBAR_EN);
-	} else {
-		pci_read_config_dword(dev_priv->bridge_dev, mchbar_reg, &temp);
-		pci_write_config_dword(dev_priv->bridge_dev, mchbar_reg, temp | 1);
-	}
-}
+	पूर्ण अन्यथा अणु
+		pci_पढ़ो_config_dword(dev_priv->bridge_dev, mchbar_reg, &temp);
+		pci_ग_लिखो_config_dword(dev_priv->bridge_dev, mchbar_reg, temp | 1);
+	पूर्ण
+पूर्ण
 
-static void
-intel_teardown_mchbar(struct drm_i915_private *dev_priv)
-{
-	int mchbar_reg = INTEL_GEN(dev_priv) >= 4 ? MCHBAR_I965 : MCHBAR_I915;
+अटल व्योम
+पूर्णांकel_tearकरोwn_mchbar(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांक mchbar_reg = INTEL_GEN(dev_priv) >= 4 ? MCHBAR_I965 : MCHBAR_I915;
 
-	if (dev_priv->mchbar_need_disable) {
-		if (IS_I915G(dev_priv) || IS_I915GM(dev_priv)) {
+	अगर (dev_priv->mchbar_need_disable) अणु
+		अगर (IS_I915G(dev_priv) || IS_I915GM(dev_priv)) अणु
 			u32 deven_val;
 
-			pci_read_config_dword(dev_priv->bridge_dev, DEVEN,
+			pci_पढ़ो_config_dword(dev_priv->bridge_dev, DEVEN,
 					      &deven_val);
 			deven_val &= ~DEVEN_MCHBAR_EN;
-			pci_write_config_dword(dev_priv->bridge_dev, DEVEN,
+			pci_ग_लिखो_config_dword(dev_priv->bridge_dev, DEVEN,
 					       deven_val);
-		} else {
+		पूर्ण अन्यथा अणु
 			u32 mchbar_val;
 
-			pci_read_config_dword(dev_priv->bridge_dev, mchbar_reg,
+			pci_पढ़ो_config_dword(dev_priv->bridge_dev, mchbar_reg,
 					      &mchbar_val);
 			mchbar_val &= ~1;
-			pci_write_config_dword(dev_priv->bridge_dev, mchbar_reg,
+			pci_ग_लिखो_config_dword(dev_priv->bridge_dev, mchbar_reg,
 					       mchbar_val);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (dev_priv->mch_res.start)
+	अगर (dev_priv->mch_res.start)
 		release_resource(&dev_priv->mch_res);
-}
+पूर्ण
 
-static int i915_workqueues_init(struct drm_i915_private *dev_priv)
-{
+अटल पूर्णांक i915_workqueues_init(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	/*
-	 * The i915 workqueue is primarily used for batched retirement of
+	 * The i915 workqueue is primarily used क्रम batched retirement of
 	 * requests (and thus managing bo) once the task has been completed
 	 * by the GPU. i915_retire_requests() is called directly when we
-	 * need high-priority retirement, such as waiting for an explicit
+	 * need high-priority retirement, such as रुकोing क्रम an explicit
 	 * bo.
 	 *
-	 * It is also used for periodic low-priority events, such as
-	 * idle-timers and recording error state.
+	 * It is also used क्रम periodic low-priority events, such as
+	 * idle-समयrs and recording error state.
 	 *
 	 * All tasks on the workqueue are expected to acquire the dev mutex
-	 * so there is no point in running more than one instance of the
-	 * workqueue at any time.  Use an ordered one.
+	 * so there is no poपूर्णांक in running more than one instance of the
+	 * workqueue at any समय.  Use an ordered one.
 	 */
 	dev_priv->wq = alloc_ordered_workqueue("i915", 0);
-	if (dev_priv->wq == NULL)
-		goto out_err;
+	अगर (dev_priv->wq == शून्य)
+		जाओ out_err;
 
 	dev_priv->hotplug.dp_wq = alloc_ordered_workqueue("i915-dp", 0);
-	if (dev_priv->hotplug.dp_wq == NULL)
-		goto out_free_wq;
+	अगर (dev_priv->hotplug.dp_wq == शून्य)
+		जाओ out_मुक्त_wq;
 
-	return 0;
+	वापस 0;
 
-out_free_wq:
+out_मुक्त_wq:
 	destroy_workqueue(dev_priv->wq);
 out_err:
 	drm_err(&dev_priv->drm, "Failed to allocate workqueues.\n");
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void i915_workqueues_cleanup(struct drm_i915_private *dev_priv)
-{
+अटल व्योम i915_workqueues_cleanup(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	destroy_workqueue(dev_priv->hotplug.dp_wq);
 	destroy_workqueue(dev_priv->wq);
-}
+पूर्ण
 
 /*
- * We don't keep the workarounds for pre-production hardware, so we expect our
+ * We करोn't keep the workarounds क्रम pre-production hardware, so we expect our
  * driver to fail on these machines in one way or another. A little warning on
  * dmesg may help both the user and the bug triagers.
  *
- * Our policy for removing pre-production workarounds is to keep the
+ * Our policy क्रम removing pre-production workarounds is to keep the
  * current gen workarounds as a guide to the bring-up of the next gen
  * (workarounds have a habit of persisting!). Anything older than that
- * should be removed along with the complications they introduce.
+ * should be हटाओd aदीर्घ with the complications they पूर्णांकroduce.
  */
-static void intel_detect_preproduction_hw(struct drm_i915_private *dev_priv)
-{
+अटल व्योम पूर्णांकel_detect_preproduction_hw(काष्ठा drm_i915_निजी *dev_priv)
+अणु
 	bool pre = false;
 
 	pre |= IS_HSW_EARLY_SDV(dev_priv);
@@ -275,41 +276,41 @@ static void intel_detect_preproduction_hw(struct drm_i915_private *dev_priv)
 	pre |= IS_KBL_GT_STEP(dev_priv, 0, STEP_A0);
 	pre |= IS_GLK_REVID(dev_priv, 0, GLK_REVID_A2);
 
-	if (pre) {
+	अगर (pre) अणु
 		drm_err(&dev_priv->drm, "This is a pre-production stepping. "
 			  "It may not be fully functional.\n");
-		add_taint(TAINT_MACHINE_CHECK, LOCKDEP_STILL_OK);
-	}
-}
+		add_taपूर्णांक(TAINT_MACHINE_CHECK, LOCKDEP_STILL_OK);
+	पूर्ण
+पूर्ण
 
-static void sanitize_gpu(struct drm_i915_private *i915)
-{
-	if (!INTEL_INFO(i915)->gpu_reset_clobbers_display)
-		__intel_gt_reset(&i915->gt, ALL_ENGINES);
-}
+अटल व्योम sanitize_gpu(काष्ठा drm_i915_निजी *i915)
+अणु
+	अगर (!INTEL_INFO(i915)->gpu_reset_clobbers_display)
+		__पूर्णांकel_gt_reset(&i915->gt, ALL_ENGINES);
+पूर्ण
 
 /**
  * i915_driver_early_probe - setup state not requiring device access
- * @dev_priv: device private
+ * @dev_priv: device निजी
  *
  * Initialize everything that is a "SW-only" state, that is state not
- * requiring accessing the device or exposing the driver via kernel internal
- * or userspace interfaces. Example steps belonging here: lock initialization,
- * system memory allocation, setting up device specific attributes and
+ * requiring accessing the device or exposing the driver via kernel पूर्णांकernal
+ * or userspace पूर्णांकerfaces. Example steps beदीर्घing here: lock initialization,
+ * प्रणाली memory allocation, setting up device specअगरic attributes and
  * function hooks not requiring accessing the device.
  */
-static int i915_driver_early_probe(struct drm_i915_private *dev_priv)
-{
-	int ret = 0;
+अटल पूर्णांक i915_driver_early_probe(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांक ret = 0;
 
-	if (i915_inject_probe_failure(dev_priv))
-		return -ENODEV;
+	अगर (i915_inject_probe_failure(dev_priv))
+		वापस -ENODEV;
 
-	intel_device_info_subplatform_init(dev_priv);
-	intel_step_init(dev_priv);
+	पूर्णांकel_device_info_subplatक्रमm_init(dev_priv);
+	पूर्णांकel_step_init(dev_priv);
 
-	intel_uncore_mmio_debug_init_early(&dev_priv->mmio_debug);
-	intel_uncore_init_early(&dev_priv->uncore, dev_priv);
+	पूर्णांकel_uncore_mmio_debug_init_early(&dev_priv->mmio_debug);
+	पूर्णांकel_uncore_init_early(&dev_priv->uncore, dev_priv);
 
 	spin_lock_init(&dev_priv->irq_lock);
 	spin_lock_init(&dev_priv->gpu_error.lock);
@@ -323,439 +324,439 @@ static int i915_driver_early_probe(struct drm_i915_private *dev_priv)
 	mutex_init(&dev_priv->pps_mutex);
 	mutex_init(&dev_priv->hdcp_comp_mutex);
 
-	i915_memcpy_init_early(dev_priv);
-	intel_runtime_pm_init_early(&dev_priv->runtime_pm);
+	i915_स_नकल_init_early(dev_priv);
+	पूर्णांकel_runसमय_pm_init_early(&dev_priv->runसमय_pm);
 
 	ret = i915_workqueues_init(dev_priv);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = vlv_suspend_init(dev_priv);
-	if (ret < 0)
-		goto err_workqueues;
+	अगर (ret < 0)
+		जाओ err_workqueues;
 
-	intel_wopcm_init_early(&dev_priv->wopcm);
+	पूर्णांकel_wopcm_init_early(&dev_priv->wopcm);
 
-	intel_gt_init_early(&dev_priv->gt, dev_priv);
+	पूर्णांकel_gt_init_early(&dev_priv->gt, dev_priv);
 
 	i915_gem_init_early(dev_priv);
 
-	/* This must be called before any calls to HAS_PCH_* */
-	intel_detect_pch(dev_priv);
+	/* This must be called beक्रमe any calls to HAS_PCH_* */
+	पूर्णांकel_detect_pch(dev_priv);
 
-	intel_pm_setup(dev_priv);
-	ret = intel_power_domains_init(dev_priv);
-	if (ret < 0)
-		goto err_gem;
-	intel_irq_init(dev_priv);
-	intel_init_display_hooks(dev_priv);
-	intel_init_clock_gating_hooks(dev_priv);
+	पूर्णांकel_pm_setup(dev_priv);
+	ret = पूर्णांकel_घातer_करोमुख्यs_init(dev_priv);
+	अगर (ret < 0)
+		जाओ err_gem;
+	पूर्णांकel_irq_init(dev_priv);
+	पूर्णांकel_init_display_hooks(dev_priv);
+	पूर्णांकel_init_घड़ी_gating_hooks(dev_priv);
 
-	intel_detect_preproduction_hw(dev_priv);
+	पूर्णांकel_detect_preproduction_hw(dev_priv);
 
-	return 0;
+	वापस 0;
 
 err_gem:
 	i915_gem_cleanup_early(dev_priv);
-	intel_gt_driver_late_release(&dev_priv->gt);
+	पूर्णांकel_gt_driver_late_release(&dev_priv->gt);
 	vlv_suspend_cleanup(dev_priv);
 err_workqueues:
 	i915_workqueues_cleanup(dev_priv);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * i915_driver_late_release - cleanup the setup done in
+ * i915_driver_late_release - cleanup the setup करोne in
  *			       i915_driver_early_probe()
- * @dev_priv: device private
+ * @dev_priv: device निजी
  */
-static void i915_driver_late_release(struct drm_i915_private *dev_priv)
-{
-	intel_irq_fini(dev_priv);
-	intel_power_domains_cleanup(dev_priv);
+अटल व्योम i915_driver_late_release(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांकel_irq_fini(dev_priv);
+	पूर्णांकel_घातer_करोमुख्यs_cleanup(dev_priv);
 	i915_gem_cleanup_early(dev_priv);
-	intel_gt_driver_late_release(&dev_priv->gt);
+	पूर्णांकel_gt_driver_late_release(&dev_priv->gt);
 	vlv_suspend_cleanup(dev_priv);
 	i915_workqueues_cleanup(dev_priv);
 
-	cpu_latency_qos_remove_request(&dev_priv->sb_qos);
+	cpu_latency_qos_हटाओ_request(&dev_priv->sb_qos);
 	mutex_destroy(&dev_priv->sb_lock);
 
-	i915_params_free(&dev_priv->params);
-}
+	i915_params_मुक्त(&dev_priv->params);
+पूर्ण
 
 /**
  * i915_driver_mmio_probe - setup device MMIO
- * @dev_priv: device private
+ * @dev_priv: device निजी
  *
- * Setup minimal device state necessary for MMIO accesses later in the
- * initialization sequence. The setup here should avoid any other device-wide
- * side effects or exposing the driver via kernel internal or user space
- * interfaces.
+ * Setup minimal device state necessary क्रम MMIO accesses later in the
+ * initialization sequence. The setup here should aव्योम any other device-wide
+ * side effects or exposing the driver via kernel पूर्णांकernal or user space
+ * पूर्णांकerfaces.
  */
-static int i915_driver_mmio_probe(struct drm_i915_private *dev_priv)
-{
-	int ret;
+अटल पूर्णांक i915_driver_mmio_probe(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांक ret;
 
-	if (i915_inject_probe_failure(dev_priv))
-		return -ENODEV;
+	अगर (i915_inject_probe_failure(dev_priv))
+		वापस -ENODEV;
 
-	if (i915_get_bridge_dev(dev_priv))
-		return -EIO;
+	अगर (i915_get_bridge_dev(dev_priv))
+		वापस -EIO;
 
-	ret = intel_uncore_init_mmio(&dev_priv->uncore);
-	if (ret < 0)
-		goto err_bridge;
+	ret = पूर्णांकel_uncore_init_mmio(&dev_priv->uncore);
+	अगर (ret < 0)
+		जाओ err_bridge;
 
-	/* Try to make sure MCHBAR is enabled before poking at it */
-	intel_setup_mchbar(dev_priv);
-	intel_device_info_runtime_init(dev_priv);
+	/* Try to make sure MCHBAR is enabled beक्रमe poking at it */
+	पूर्णांकel_setup_mchbar(dev_priv);
+	पूर्णांकel_device_info_runसमय_init(dev_priv);
 
-	ret = intel_gt_init_mmio(&dev_priv->gt);
-	if (ret)
-		goto err_uncore;
+	ret = पूर्णांकel_gt_init_mmio(&dev_priv->gt);
+	अगर (ret)
+		जाओ err_uncore;
 
-	/* As early as possible, scrub existing GPU state before clobbering */
+	/* As early as possible, scrub existing GPU state beक्रमe clobbering */
 	sanitize_gpu(dev_priv);
 
-	return 0;
+	वापस 0;
 
 err_uncore:
-	intel_teardown_mchbar(dev_priv);
-	intel_uncore_fini_mmio(&dev_priv->uncore);
+	पूर्णांकel_tearकरोwn_mchbar(dev_priv);
+	पूर्णांकel_uncore_fini_mmio(&dev_priv->uncore);
 err_bridge:
 	pci_dev_put(dev_priv->bridge_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * i915_driver_mmio_release - cleanup the setup done in i915_driver_mmio_probe()
- * @dev_priv: device private
+ * i915_driver_mmio_release - cleanup the setup करोne in i915_driver_mmio_probe()
+ * @dev_priv: device निजी
  */
-static void i915_driver_mmio_release(struct drm_i915_private *dev_priv)
-{
-	intel_teardown_mchbar(dev_priv);
-	intel_uncore_fini_mmio(&dev_priv->uncore);
+अटल व्योम i915_driver_mmio_release(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांकel_tearकरोwn_mchbar(dev_priv);
+	पूर्णांकel_uncore_fini_mmio(&dev_priv->uncore);
 	pci_dev_put(dev_priv->bridge_dev);
-}
+पूर्ण
 
-static void intel_sanitize_options(struct drm_i915_private *dev_priv)
-{
-	intel_gvt_sanitize_options(dev_priv);
-}
+अटल व्योम पूर्णांकel_sanitize_options(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	पूर्णांकel_gvt_sanitize_options(dev_priv);
+पूर्ण
 
 /**
- * i915_set_dma_info - set all relevant PCI dma info as configured for the
- * platform
+ * i915_set_dma_info - set all relevant PCI dma info as configured क्रम the
+ * platक्रमm
  * @i915: valid i915 instance
  *
  * Set the dma max segment size, device and coherent masks.  The dma mask set
- * needs to occur before i915_ggtt_probe_hw.
+ * needs to occur beक्रमe i915_ggtt_probe_hw.
  *
- * A couple of platforms have special needs.  Address them as well.
+ * A couple of platक्रमms have special needs.  Address them as well.
  *
  */
-static int i915_set_dma_info(struct drm_i915_private *i915)
-{
-	unsigned int mask_size = INTEL_INFO(i915)->dma_mask_size;
-	int ret;
+अटल पूर्णांक i915_set_dma_info(काष्ठा drm_i915_निजी *i915)
+अणु
+	अचिन्हित पूर्णांक mask_size = INTEL_INFO(i915)->dma_mask_size;
+	पूर्णांक ret;
 
 	GEM_BUG_ON(!mask_size);
 
 	/*
-	 * We don't have a max segment size, so set it to the max so sg's
-	 * debugging layer doesn't complain
+	 * We करोn't have a max segment size, so set it to the max so sg's
+	 * debugging layer करोesn't complain
 	 */
-	dma_set_max_seg_size(i915->drm.dev, UINT_MAX);
+	dma_set_max_seg_size(i915->drm.dev, अच_पूर्णांक_उच्च);
 
 	ret = dma_set_mask(i915->drm.dev, DMA_BIT_MASK(mask_size));
-	if (ret)
-		goto mask_err;
+	अगर (ret)
+		जाओ mask_err;
 
 	/* overlay on gen2 is broken and can't address above 1G */
-	if (IS_GEN(i915, 2))
+	अगर (IS_GEN(i915, 2))
 		mask_size = 30;
 
 	/*
-	 * 965GM sometimes incorrectly writes to hardware status page (HWS)
-	 * using 32bit addressing, overwriting memory if HWS is located
+	 * 965GM someबार incorrectly ग_लिखोs to hardware status page (HWS)
+	 * using 32bit addressing, overwriting memory अगर HWS is located
 	 * above 4GB.
 	 *
-	 * The documentation also mentions an issue with undefined
-	 * behaviour if any general state is accessed within a page above 4GB,
+	 * The करोcumentation also mentions an issue with undefined
+	 * behaviour अगर any general state is accessed within a page above 4GB,
 	 * which also needs to be handled carefully.
 	 */
-	if (IS_I965G(i915) || IS_I965GM(i915))
+	अगर (IS_I965G(i915) || IS_I965GM(i915))
 		mask_size = 32;
 
 	ret = dma_set_coherent_mask(i915->drm.dev, DMA_BIT_MASK(mask_size));
-	if (ret)
-		goto mask_err;
+	अगर (ret)
+		जाओ mask_err;
 
-	return 0;
+	वापस 0;
 
 mask_err:
 	drm_err(&i915->drm, "Can't set DMA mask/consistent mask (%d)\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * i915_driver_hw_probe - setup state requiring device access
- * @dev_priv: device private
+ * @dev_priv: device निजी
  *
- * Setup state that requires accessing the device, but doesn't require
- * exposing the driver via kernel internal or userspace interfaces.
+ * Setup state that requires accessing the device, but करोesn't require
+ * exposing the driver via kernel पूर्णांकernal or userspace पूर्णांकerfaces.
  */
-static int i915_driver_hw_probe(struct drm_i915_private *dev_priv)
-{
-	struct pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
-	int ret;
+अटल पूर्णांक i915_driver_hw_probe(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
+	पूर्णांक ret;
 
-	if (i915_inject_probe_failure(dev_priv))
-		return -ENODEV;
+	अगर (i915_inject_probe_failure(dev_priv))
+		वापस -ENODEV;
 
-	if (HAS_PPGTT(dev_priv)) {
-		if (intel_vgpu_active(dev_priv) &&
-		    !intel_vgpu_has_full_ppgtt(dev_priv)) {
+	अगर (HAS_PPGTT(dev_priv)) अणु
+		अगर (पूर्णांकel_vgpu_active(dev_priv) &&
+		    !पूर्णांकel_vgpu_has_full_ppgtt(dev_priv)) अणु
 			i915_report_error(dev_priv,
 					  "incompatible vGPU found, support for isolated ppGTT required\n");
-			return -ENXIO;
-		}
-	}
+			वापस -ENXIO;
+		पूर्ण
+	पूर्ण
 
-	if (HAS_EXECLISTS(dev_priv)) {
+	अगर (HAS_EXECLISTS(dev_priv)) अणु
 		/*
-		 * Older GVT emulation depends upon intercepting CSB mmio,
-		 * which we no longer use, preferring to use the HWSP cache
+		 * Older GVT emulation depends upon पूर्णांकercepting CSB mmio,
+		 * which we no दीर्घer use, preferring to use the HWSP cache
 		 * instead.
 		 */
-		if (intel_vgpu_active(dev_priv) &&
-		    !intel_vgpu_has_hwsp_emulation(dev_priv)) {
+		अगर (पूर्णांकel_vgpu_active(dev_priv) &&
+		    !पूर्णांकel_vgpu_has_hwsp_emulation(dev_priv)) अणु
 			i915_report_error(dev_priv,
 					  "old vGPU host found, support for HWSP emulation required\n");
-			return -ENXIO;
-		}
-	}
+			वापस -ENXIO;
+		पूर्ण
+	पूर्ण
 
-	intel_sanitize_options(dev_priv);
+	पूर्णांकel_sanitize_options(dev_priv);
 
-	/* needs to be done before ggtt probe */
-	intel_dram_edram_detect(dev_priv);
+	/* needs to be करोne beक्रमe ggtt probe */
+	पूर्णांकel_dram_edram_detect(dev_priv);
 
 	ret = i915_set_dma_info(dev_priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	i915_perf_init(dev_priv);
 
 	ret = i915_ggtt_probe_hw(dev_priv);
-	if (ret)
-		goto err_perf;
+	अगर (ret)
+		जाओ err_perf;
 
-	ret = drm_fb_helper_remove_conflicting_pci_framebuffers(pdev, "inteldrmfb");
-	if (ret)
-		goto err_ggtt;
+	ret = drm_fb_helper_हटाओ_conflicting_pci_framebuffers(pdev, "inteldrmfb");
+	अगर (ret)
+		जाओ err_ggtt;
 
 	ret = i915_ggtt_init_hw(dev_priv);
-	if (ret)
-		goto err_ggtt;
+	अगर (ret)
+		जाओ err_ggtt;
 
-	ret = intel_memory_regions_hw_probe(dev_priv);
-	if (ret)
-		goto err_ggtt;
+	ret = पूर्णांकel_memory_regions_hw_probe(dev_priv);
+	अगर (ret)
+		जाओ err_ggtt;
 
-	intel_gt_init_hw_early(&dev_priv->gt, &dev_priv->ggtt);
+	पूर्णांकel_gt_init_hw_early(&dev_priv->gt, &dev_priv->ggtt);
 
-	ret = intel_gt_probe_lmem(&dev_priv->gt);
-	if (ret)
-		goto err_mem_regions;
+	ret = पूर्णांकel_gt_probe_lmem(&dev_priv->gt);
+	अगर (ret)
+		जाओ err_mem_regions;
 
 	ret = i915_ggtt_enable_hw(dev_priv);
-	if (ret) {
+	अगर (ret) अणु
 		drm_err(&dev_priv->drm, "failed to enable GGTT\n");
-		goto err_mem_regions;
-	}
+		जाओ err_mem_regions;
+	पूर्ण
 
 	pci_set_master(pdev);
 
-	intel_gt_init_workarounds(dev_priv);
+	पूर्णांकel_gt_init_workarounds(dev_priv);
 
 	/* On the 945G/GM, the chipset reports the MSI capability on the
-	 * integrated graphics even though the support isn't actually there
-	 * according to the published specs.  It doesn't appear to function
+	 * पूर्णांकegrated graphics even though the support isn't actually there
+	 * according to the published specs.  It करोesn't appear to function
 	 * correctly in testing on 945G.
-	 * This may be a side effect of MSI having been made available for PEG
-	 * and the registers being closely associated.
+	 * This may be a side effect of MSI having been made available क्रम PEG
+	 * and the रेजिस्टरs being बंदly associated.
 	 *
-	 * According to chipset errata, on the 965GM, MSI interrupts may
-	 * be lost or delayed, and was defeatured. MSI interrupts seem to
-	 * get lost on g4x as well, and interrupt delivery seems to stay
-	 * properly dead afterwards. So we'll just disable them for all
+	 * According to chipset errata, on the 965GM, MSI पूर्णांकerrupts may
+	 * be lost or delayed, and was defeatured. MSI पूर्णांकerrupts seem to
+	 * get lost on g4x as well, and पूर्णांकerrupt delivery seems to stay
+	 * properly dead afterwards. So we'll just disable them क्रम all
 	 * pre-gen5 chipsets.
 	 *
 	 * dp aux and gmbus irq on gen4 seems to be able to generate legacy
-	 * interrupts even when in MSI mode. This results in spurious
-	 * interrupt warnings if the legacy irq no. is shared with another
-	 * device. The kernel then disables that interrupt source and so
+	 * पूर्णांकerrupts even when in MSI mode. This results in spurious
+	 * पूर्णांकerrupt warnings अगर the legacy irq no. is shared with another
+	 * device. The kernel then disables that पूर्णांकerrupt source and so
 	 * prevents the other device from working properly.
 	 */
-	if (INTEL_GEN(dev_priv) >= 5) {
-		if (pci_enable_msi(pdev) < 0)
+	अगर (INTEL_GEN(dev_priv) >= 5) अणु
+		अगर (pci_enable_msi(pdev) < 0)
 			drm_dbg(&dev_priv->drm, "can't enable MSI");
-	}
+	पूर्ण
 
-	ret = intel_gvt_init(dev_priv);
-	if (ret)
-		goto err_msi;
+	ret = पूर्णांकel_gvt_init(dev_priv);
+	अगर (ret)
+		जाओ err_msi;
 
-	intel_opregion_setup(dev_priv);
+	पूर्णांकel_opregion_setup(dev_priv);
 
-	intel_pcode_init(dev_priv);
+	पूर्णांकel_pcode_init(dev_priv);
 
 	/*
-	 * Fill the dram structure to get the system dram info. This will be
-	 * used for memory latency calculation.
+	 * Fill the dram काष्ठाure to get the प्रणाली dram info. This will be
+	 * used क्रम memory latency calculation.
 	 */
-	intel_dram_detect(dev_priv);
+	पूर्णांकel_dram_detect(dev_priv);
 
-	intel_bw_init_hw(dev_priv);
+	पूर्णांकel_bw_init_hw(dev_priv);
 
-	return 0;
+	वापस 0;
 
 err_msi:
-	if (pdev->msi_enabled)
+	अगर (pdev->msi_enabled)
 		pci_disable_msi(pdev);
 err_mem_regions:
-	intel_memory_regions_driver_release(dev_priv);
+	पूर्णांकel_memory_regions_driver_release(dev_priv);
 err_ggtt:
 	i915_ggtt_driver_release(dev_priv);
 err_perf:
 	i915_perf_fini(dev_priv);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * i915_driver_hw_remove - cleanup the setup done in i915_driver_hw_probe()
- * @dev_priv: device private
+ * i915_driver_hw_हटाओ - cleanup the setup करोne in i915_driver_hw_probe()
+ * @dev_priv: device निजी
  */
-static void i915_driver_hw_remove(struct drm_i915_private *dev_priv)
-{
-	struct pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
+अटल व्योम i915_driver_hw_हटाओ(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
 
 	i915_perf_fini(dev_priv);
 
-	if (pdev->msi_enabled)
+	अगर (pdev->msi_enabled)
 		pci_disable_msi(pdev);
-}
+पूर्ण
 
 /**
- * i915_driver_register - register the driver with the rest of the system
- * @dev_priv: device private
+ * i915_driver_रेजिस्टर - रेजिस्टर the driver with the rest of the प्रणाली
+ * @dev_priv: device निजी
  *
- * Perform any steps necessary to make the driver available via kernel
- * internal or userspace interfaces.
+ * Perक्रमm any steps necessary to make the driver available via kernel
+ * पूर्णांकernal or userspace पूर्णांकerfaces.
  */
-static void i915_driver_register(struct drm_i915_private *dev_priv)
-{
-	struct drm_device *dev = &dev_priv->drm;
+अटल व्योम i915_driver_रेजिस्टर(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा drm_device *dev = &dev_priv->drm;
 
-	i915_gem_driver_register(dev_priv);
-	i915_pmu_register(dev_priv);
+	i915_gem_driver_रेजिस्टर(dev_priv);
+	i915_pmu_रेजिस्टर(dev_priv);
 
-	intel_vgpu_register(dev_priv);
+	पूर्णांकel_vgpu_रेजिस्टर(dev_priv);
 
 	/* Reveal our presence to userspace */
-	if (drm_dev_register(dev, 0)) {
+	अगर (drm_dev_रेजिस्टर(dev, 0)) अणु
 		drm_err(&dev_priv->drm,
 			"Failed to register driver for userspace access!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	i915_debugfs_register(dev_priv);
+	i915_debugfs_रेजिस्टर(dev_priv);
 	i915_setup_sysfs(dev_priv);
 
 	/* Depends on sysfs having been initialized */
-	i915_perf_register(dev_priv);
+	i915_perf_रेजिस्टर(dev_priv);
 
-	intel_gt_driver_register(&dev_priv->gt);
+	पूर्णांकel_gt_driver_रेजिस्टर(&dev_priv->gt);
 
-	intel_display_driver_register(dev_priv);
+	पूर्णांकel_display_driver_रेजिस्टर(dev_priv);
 
-	intel_power_domains_enable(dev_priv);
-	intel_runtime_pm_enable(&dev_priv->runtime_pm);
+	पूर्णांकel_घातer_करोमुख्यs_enable(dev_priv);
+	पूर्णांकel_runसमय_pm_enable(&dev_priv->runसमय_pm);
 
-	intel_register_dsm_handler();
+	पूर्णांकel_रेजिस्टर_dsm_handler();
 
-	if (i915_switcheroo_register(dev_priv))
+	अगर (i915_चयनeroo_रेजिस्टर(dev_priv))
 		drm_err(&dev_priv->drm, "Failed to register vga switcheroo!\n");
-}
+पूर्ण
 
 /**
- * i915_driver_unregister - cleanup the registration done in i915_driver_regiser()
- * @dev_priv: device private
+ * i915_driver_unरेजिस्टर - cleanup the registration करोne in i915_driver_regiser()
+ * @dev_priv: device निजी
  */
-static void i915_driver_unregister(struct drm_i915_private *dev_priv)
-{
-	i915_switcheroo_unregister(dev_priv);
+अटल व्योम i915_driver_unरेजिस्टर(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	i915_चयनeroo_unरेजिस्टर(dev_priv);
 
-	intel_unregister_dsm_handler();
+	पूर्णांकel_unरेजिस्टर_dsm_handler();
 
-	intel_runtime_pm_disable(&dev_priv->runtime_pm);
-	intel_power_domains_disable(dev_priv);
+	पूर्णांकel_runसमय_pm_disable(&dev_priv->runसमय_pm);
+	पूर्णांकel_घातer_करोमुख्यs_disable(dev_priv);
 
-	intel_display_driver_unregister(dev_priv);
+	पूर्णांकel_display_driver_unरेजिस्टर(dev_priv);
 
-	intel_gt_driver_unregister(&dev_priv->gt);
+	पूर्णांकel_gt_driver_unरेजिस्टर(&dev_priv->gt);
 
-	i915_perf_unregister(dev_priv);
-	i915_pmu_unregister(dev_priv);
+	i915_perf_unरेजिस्टर(dev_priv);
+	i915_pmu_unरेजिस्टर(dev_priv);
 
-	i915_teardown_sysfs(dev_priv);
+	i915_tearकरोwn_sysfs(dev_priv);
 	drm_dev_unplug(&dev_priv->drm);
 
-	i915_gem_driver_unregister(dev_priv);
-}
+	i915_gem_driver_unरेजिस्टर(dev_priv);
+पूर्ण
 
-static void i915_welcome_messages(struct drm_i915_private *dev_priv)
-{
-	if (drm_debug_enabled(DRM_UT_DRIVER)) {
-		struct drm_printer p = drm_debug_printer("i915 device info:");
+अटल व्योम i915_welcome_messages(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	अगर (drm_debug_enabled(DRM_UT_DRIVER)) अणु
+		काष्ठा drm_prपूर्णांकer p = drm_debug_prपूर्णांकer("i915 device info:");
 
-		drm_printf(&p, "pciid=0x%04x rev=0x%02x platform=%s (subplatform=0x%x) gen=%i\n",
+		drm_म_लिखो(&p, "pciid=0x%04x rev=0x%02x platform=%s (subplatform=0x%x) gen=%i\n",
 			   INTEL_DEVID(dev_priv),
 			   INTEL_REVID(dev_priv),
-			   intel_platform_name(INTEL_INFO(dev_priv)->platform),
-			   intel_subplatform(RUNTIME_INFO(dev_priv),
-					     INTEL_INFO(dev_priv)->platform),
+			   पूर्णांकel_platक्रमm_name(INTEL_INFO(dev_priv)->platक्रमm),
+			   पूर्णांकel_subplatक्रमm(RUNTIME_INFO(dev_priv),
+					     INTEL_INFO(dev_priv)->platक्रमm),
 			   INTEL_GEN(dev_priv));
 
-		intel_device_info_print_static(INTEL_INFO(dev_priv), &p);
-		intel_device_info_print_runtime(RUNTIME_INFO(dev_priv), &p);
-		intel_gt_info_print(&dev_priv->gt.info, &p);
-	}
+		पूर्णांकel_device_info_prपूर्णांक_अटल(INTEL_INFO(dev_priv), &p);
+		पूर्णांकel_device_info_prपूर्णांक_runसमय(RUNTIME_INFO(dev_priv), &p);
+		पूर्णांकel_gt_info_prपूर्णांक(&dev_priv->gt.info, &p);
+	पूर्ण
 
-	if (IS_ENABLED(CONFIG_DRM_I915_DEBUG))
+	अगर (IS_ENABLED(CONFIG_DRM_I915_DEBUG))
 		drm_info(&dev_priv->drm, "DRM_I915_DEBUG enabled\n");
-	if (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
+	अगर (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
 		drm_info(&dev_priv->drm, "DRM_I915_DEBUG_GEM enabled\n");
-	if (IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM))
+	अगर (IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM))
 		drm_info(&dev_priv->drm,
 			 "DRM_I915_DEBUG_RUNTIME_PM enabled\n");
-}
+पूर्ण
 
-static struct drm_i915_private *
-i915_driver_create(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	const struct intel_device_info *match_info =
-		(struct intel_device_info *)ent->driver_data;
-	struct intel_device_info *device_info;
-	struct drm_i915_private *i915;
+अटल काष्ठा drm_i915_निजी *
+i915_driver_create(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	स्थिर काष्ठा पूर्णांकel_device_info *match_info =
+		(काष्ठा पूर्णांकel_device_info *)ent->driver_data;
+	काष्ठा पूर्णांकel_device_info *device_info;
+	काष्ठा drm_i915_निजी *i915;
 
 	i915 = devm_drm_dev_alloc(&pdev->dev, &driver,
-				  struct drm_i915_private, drm);
-	if (IS_ERR(i915))
-		return i915;
+				  काष्ठा drm_i915_निजी, drm);
+	अगर (IS_ERR(i915))
+		वापस i915;
 
 	i915->drm.pdev = pdev;
 	pci_set_drvdata(pdev, i915);
@@ -763,864 +764,864 @@ i915_driver_create(struct pci_dev *pdev, const struct pci_device_id *ent)
 	/* Device parameters start as a copy of module parameters. */
 	i915_params_copy(&i915->params, &i915_modparams);
 
-	/* Setup the write-once "constant" device info */
-	device_info = mkwrite_device_info(i915);
-	memcpy(device_info, match_info, sizeof(*device_info));
+	/* Setup the ग_लिखो-once "constant" device info */
+	device_info = mkग_लिखो_device_info(i915);
+	स_नकल(device_info, match_info, माप(*device_info));
 	RUNTIME_INFO(i915)->device_id = pdev->device;
 
 	BUG_ON(device_info->gen > BITS_PER_TYPE(device_info->gen_mask));
 
-	return i915;
-}
+	वापस i915;
+पूर्ण
 
 /**
  * i915_driver_probe - setup chip and create an initial config
  * @pdev: PCI device
  * @ent: matching PCI ID entry
  *
- * The driver probe routine has to do several things:
- *   - drive output discovery via intel_modeset_init()
+ * The driver probe routine has to करो several things:
+ *   - drive output discovery via पूर्णांकel_modeset_init()
  *   - initialize the memory manager
  *   - allocate initial config memory
  *   - setup the DRM framebuffer with the allocated memory
  */
-int i915_driver_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	const struct intel_device_info *match_info =
-		(struct intel_device_info *)ent->driver_data;
-	struct drm_i915_private *i915;
-	int ret;
+पूर्णांक i915_driver_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	स्थिर काष्ठा पूर्णांकel_device_info *match_info =
+		(काष्ठा पूर्णांकel_device_info *)ent->driver_data;
+	काष्ठा drm_i915_निजी *i915;
+	पूर्णांक ret;
 
 	i915 = i915_driver_create(pdev, ent);
-	if (IS_ERR(i915))
-		return PTR_ERR(i915);
+	अगर (IS_ERR(i915))
+		वापस PTR_ERR(i915);
 
-	/* Disable nuclear pageflip by default on pre-ILK */
-	if (!i915->params.nuclear_pageflip && match_info->gen < 5)
+	/* Disable nuclear pageflip by शेष on pre-ILK */
+	अगर (!i915->params.nuclear_pageflip && match_info->gen < 5)
 		i915->drm.driver_features &= ~DRIVER_ATOMIC;
 
 	/*
-	 * Check if we support fake LMEM -- for now we only unleash this for
-	 * the live selftests(test-and-exit).
+	 * Check अगर we support fake LMEM -- क्रम now we only unleash this क्रम
+	 * the live selftests(test-and-निकास).
 	 */
-#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-	if (IS_ENABLED(CONFIG_DRM_I915_UNSTABLE_FAKE_LMEM)) {
-		if (INTEL_GEN(i915) >= 9 && i915_selftest.live < 0 &&
-		    i915->params.fake_lmem_start) {
-			mkwrite_device_info(i915)->memory_regions =
+#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+	अगर (IS_ENABLED(CONFIG_DRM_I915_UNSTABLE_FAKE_LMEM)) अणु
+		अगर (INTEL_GEN(i915) >= 9 && i915_selftest.live < 0 &&
+		    i915->params.fake_lmem_start) अणु
+			mkग_लिखो_device_info(i915)->memory_regions =
 				REGION_SMEM | REGION_LMEM | REGION_STOLEN_SMEM;
 			GEM_BUG_ON(!HAS_LMEM(i915));
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	ret = pci_enable_device(pdev);
-	if (ret)
-		goto out_fini;
+	अगर (ret)
+		जाओ out_fini;
 
 	ret = i915_driver_early_probe(i915);
-	if (ret < 0)
-		goto out_pci_disable;
+	अगर (ret < 0)
+		जाओ out_pci_disable;
 
-	disable_rpm_wakeref_asserts(&i915->runtime_pm);
+	disable_rpm_wakeref_निश्चितs(&i915->runसमय_pm);
 
-	intel_vgpu_detect(i915);
+	पूर्णांकel_vgpu_detect(i915);
 
 	ret = i915_driver_mmio_probe(i915);
-	if (ret < 0)
-		goto out_runtime_pm_put;
+	अगर (ret < 0)
+		जाओ out_runसमय_pm_put;
 
 	ret = i915_driver_hw_probe(i915);
-	if (ret < 0)
-		goto out_cleanup_mmio;
+	अगर (ret < 0)
+		जाओ out_cleanup_mmio;
 
-	ret = intel_modeset_init_noirq(i915);
-	if (ret < 0)
-		goto out_cleanup_hw;
+	ret = पूर्णांकel_modeset_init_noirq(i915);
+	अगर (ret < 0)
+		जाओ out_cleanup_hw;
 
-	ret = intel_irq_install(i915);
-	if (ret)
-		goto out_cleanup_modeset;
+	ret = पूर्णांकel_irq_install(i915);
+	अगर (ret)
+		जाओ out_cleanup_modeset;
 
-	ret = intel_modeset_init_nogem(i915);
-	if (ret)
-		goto out_cleanup_irq;
+	ret = पूर्णांकel_modeset_init_nogem(i915);
+	अगर (ret)
+		जाओ out_cleanup_irq;
 
 	ret = i915_gem_init(i915);
-	if (ret)
-		goto out_cleanup_modeset2;
+	अगर (ret)
+		जाओ out_cleanup_modeset2;
 
-	ret = intel_modeset_init(i915);
-	if (ret)
-		goto out_cleanup_gem;
+	ret = पूर्णांकel_modeset_init(i915);
+	अगर (ret)
+		जाओ out_cleanup_gem;
 
-	i915_driver_register(i915);
+	i915_driver_रेजिस्टर(i915);
 
-	enable_rpm_wakeref_asserts(&i915->runtime_pm);
+	enable_rpm_wakeref_निश्चितs(&i915->runसमय_pm);
 
 	i915_welcome_messages(i915);
 
-	i915->do_release = true;
+	i915->करो_release = true;
 
-	return 0;
+	वापस 0;
 
 out_cleanup_gem:
 	i915_gem_suspend(i915);
-	i915_gem_driver_remove(i915);
+	i915_gem_driver_हटाओ(i915);
 	i915_gem_driver_release(i915);
 out_cleanup_modeset2:
 	/* FIXME clean up the error path */
-	intel_modeset_driver_remove(i915);
-	intel_irq_uninstall(i915);
-	intel_modeset_driver_remove_noirq(i915);
-	goto out_cleanup_modeset;
+	पूर्णांकel_modeset_driver_हटाओ(i915);
+	पूर्णांकel_irq_uninstall(i915);
+	पूर्णांकel_modeset_driver_हटाओ_noirq(i915);
+	जाओ out_cleanup_modeset;
 out_cleanup_irq:
-	intel_irq_uninstall(i915);
+	पूर्णांकel_irq_uninstall(i915);
 out_cleanup_modeset:
-	intel_modeset_driver_remove_nogem(i915);
+	पूर्णांकel_modeset_driver_हटाओ_nogem(i915);
 out_cleanup_hw:
-	i915_driver_hw_remove(i915);
-	intel_memory_regions_driver_release(i915);
+	i915_driver_hw_हटाओ(i915);
+	पूर्णांकel_memory_regions_driver_release(i915);
 	i915_ggtt_driver_release(i915);
 out_cleanup_mmio:
 	i915_driver_mmio_release(i915);
-out_runtime_pm_put:
-	enable_rpm_wakeref_asserts(&i915->runtime_pm);
+out_runसमय_pm_put:
+	enable_rpm_wakeref_निश्चितs(&i915->runसमय_pm);
 	i915_driver_late_release(i915);
 out_pci_disable:
 	pci_disable_device(pdev);
 out_fini:
 	i915_probe_error(i915, "Device initialization failed (%d)\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void i915_driver_remove(struct drm_i915_private *i915)
-{
-	disable_rpm_wakeref_asserts(&i915->runtime_pm);
+व्योम i915_driver_हटाओ(काष्ठा drm_i915_निजी *i915)
+अणु
+	disable_rpm_wakeref_निश्चितs(&i915->runसमय_pm);
 
-	i915_driver_unregister(i915);
+	i915_driver_unरेजिस्टर(i915);
 
-	/* Flush any external code that still may be under the RCU lock */
+	/* Flush any बाह्यal code that still may be under the RCU lock */
 	synchronize_rcu();
 
 	i915_gem_suspend(i915);
 
-	intel_gvt_driver_remove(i915);
+	पूर्णांकel_gvt_driver_हटाओ(i915);
 
-	intel_modeset_driver_remove(i915);
+	पूर्णांकel_modeset_driver_हटाओ(i915);
 
-	intel_irq_uninstall(i915);
+	पूर्णांकel_irq_uninstall(i915);
 
-	intel_modeset_driver_remove_noirq(i915);
+	पूर्णांकel_modeset_driver_हटाओ_noirq(i915);
 
 	i915_reset_error_state(i915);
-	i915_gem_driver_remove(i915);
+	i915_gem_driver_हटाओ(i915);
 
-	intel_modeset_driver_remove_nogem(i915);
+	पूर्णांकel_modeset_driver_हटाओ_nogem(i915);
 
-	i915_driver_hw_remove(i915);
+	i915_driver_hw_हटाओ(i915);
 
-	enable_rpm_wakeref_asserts(&i915->runtime_pm);
-}
+	enable_rpm_wakeref_निश्चितs(&i915->runसमय_pm);
+पूर्ण
 
-static void i915_driver_release(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	struct intel_runtime_pm *rpm = &dev_priv->runtime_pm;
+अटल व्योम i915_driver_release(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+	काष्ठा पूर्णांकel_runसमय_pm *rpm = &dev_priv->runसमय_pm;
 
-	if (!dev_priv->do_release)
-		return;
+	अगर (!dev_priv->करो_release)
+		वापस;
 
-	disable_rpm_wakeref_asserts(rpm);
+	disable_rpm_wakeref_निश्चितs(rpm);
 
 	i915_gem_driver_release(dev_priv);
 
-	intel_memory_regions_driver_release(dev_priv);
+	पूर्णांकel_memory_regions_driver_release(dev_priv);
 	i915_ggtt_driver_release(dev_priv);
-	i915_gem_drain_freed_objects(dev_priv);
+	i915_gem_drain_मुक्तd_objects(dev_priv);
 
 	i915_driver_mmio_release(dev_priv);
 
-	enable_rpm_wakeref_asserts(rpm);
-	intel_runtime_pm_driver_release(rpm);
+	enable_rpm_wakeref_निश्चितs(rpm);
+	पूर्णांकel_runसमय_pm_driver_release(rpm);
 
 	i915_driver_late_release(dev_priv);
-}
+पूर्ण
 
-static int i915_driver_open(struct drm_device *dev, struct drm_file *file)
-{
-	struct drm_i915_private *i915 = to_i915(dev);
-	int ret;
+अटल पूर्णांक i915_driver_खोलो(काष्ठा drm_device *dev, काष्ठा drm_file *file)
+अणु
+	काष्ठा drm_i915_निजी *i915 = to_i915(dev);
+	पूर्णांक ret;
 
-	ret = i915_gem_open(i915, file);
-	if (ret)
-		return ret;
+	ret = i915_gem_खोलो(i915, file);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * i915_driver_lastclose - clean up after all DRM clients have exited
+ * i915_driver_lastबंद - clean up after all DRM clients have निकासed
  * @dev: DRM device
  *
- * Take care of cleaning up after all DRM clients have exited.  In the
- * mode setting case, we want to restore the kernel's initial mode (just
- * in case the last client left us in a bad state).
+ * Take care of cleaning up after all DRM clients have निकासed.  In the
+ * mode setting हाल, we want to restore the kernel's initial mode (just
+ * in हाल the last client left us in a bad state).
  *
- * Additionally, in the non-mode setting case, we'll tear down the GTT
- * and DMA structures, since the kernel won't be using them, and clea
+ * Additionally, in the non-mode setting हाल, we'll tear करोwn the GTT
+ * and DMA काष्ठाures, since the kernel won't be using them, and clea
  * up any GEM state.
  */
-static void i915_driver_lastclose(struct drm_device *dev)
-{
-	intel_fbdev_restore_mode(dev);
-	vga_switcheroo_process_delayed_switch();
-}
+अटल व्योम i915_driver_lastबंद(काष्ठा drm_device *dev)
+अणु
+	पूर्णांकel_fbdev_restore_mode(dev);
+	vga_चयनeroo_process_delayed_चयन();
+पूर्ण
 
-static void i915_driver_postclose(struct drm_device *dev, struct drm_file *file)
-{
-	struct drm_i915_file_private *file_priv = file->driver_priv;
+अटल व्योम i915_driver_postबंद(काष्ठा drm_device *dev, काष्ठा drm_file *file)
+अणु
+	काष्ठा drm_i915_file_निजी *file_priv = file->driver_priv;
 
-	i915_gem_context_close(file);
+	i915_gem_context_बंद(file);
 
-	kfree_rcu(file_priv, rcu);
+	kमुक्त_rcu(file_priv, rcu);
 
-	/* Catch up with all the deferred frees from "this" client */
-	i915_gem_flush_free_objects(to_i915(dev));
-}
+	/* Catch up with all the deferred मुक्तs from "this" client */
+	i915_gem_flush_मुक्त_objects(to_i915(dev));
+पूर्ण
 
-static void intel_suspend_encoders(struct drm_i915_private *dev_priv)
-{
-	struct drm_device *dev = &dev_priv->drm;
-	struct intel_encoder *encoder;
+अटल व्योम पूर्णांकel_suspend_encoders(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा drm_device *dev = &dev_priv->drm;
+	काष्ठा पूर्णांकel_encoder *encoder;
 
 	drm_modeset_lock_all(dev);
-	for_each_intel_encoder(dev, encoder)
-		if (encoder->suspend)
+	क्रम_each_पूर्णांकel_encoder(dev, encoder)
+		अगर (encoder->suspend)
 			encoder->suspend(encoder);
 	drm_modeset_unlock_all(dev);
-}
+पूर्ण
 
-static void intel_shutdown_encoders(struct drm_i915_private *dev_priv)
-{
-	struct drm_device *dev = &dev_priv->drm;
-	struct intel_encoder *encoder;
+अटल व्योम पूर्णांकel_shutकरोwn_encoders(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	काष्ठा drm_device *dev = &dev_priv->drm;
+	काष्ठा पूर्णांकel_encoder *encoder;
 
 	drm_modeset_lock_all(dev);
-	for_each_intel_encoder(dev, encoder)
-		if (encoder->shutdown)
-			encoder->shutdown(encoder);
+	क्रम_each_पूर्णांकel_encoder(dev, encoder)
+		अगर (encoder->shutकरोwn)
+			encoder->shutकरोwn(encoder);
 	drm_modeset_unlock_all(dev);
-}
+पूर्ण
 
-void i915_driver_shutdown(struct drm_i915_private *i915)
-{
-	disable_rpm_wakeref_asserts(&i915->runtime_pm);
-	intel_runtime_pm_disable(&i915->runtime_pm);
-	intel_power_domains_disable(i915);
+व्योम i915_driver_shutकरोwn(काष्ठा drm_i915_निजी *i915)
+अणु
+	disable_rpm_wakeref_निश्चितs(&i915->runसमय_pm);
+	पूर्णांकel_runसमय_pm_disable(&i915->runसमय_pm);
+	पूर्णांकel_घातer_करोमुख्यs_disable(i915);
 
 	i915_gem_suspend(i915);
 
 	drm_kms_helper_poll_disable(&i915->drm);
 
-	drm_atomic_helper_shutdown(&i915->drm);
+	drm_atomic_helper_shutकरोwn(&i915->drm);
 
-	intel_dp_mst_suspend(i915);
+	पूर्णांकel_dp_mst_suspend(i915);
 
-	intel_runtime_pm_disable_interrupts(i915);
-	intel_hpd_cancel_work(i915);
+	पूर्णांकel_runसमय_pm_disable_पूर्णांकerrupts(i915);
+	पूर्णांकel_hpd_cancel_work(i915);
 
-	intel_suspend_encoders(i915);
-	intel_shutdown_encoders(i915);
+	पूर्णांकel_suspend_encoders(i915);
+	पूर्णांकel_shutकरोwn_encoders(i915);
 
 	/*
 	 * The only requirement is to reboot with display DC states disabled,
-	 * for now leaving all display power wells in the INIT power domain
+	 * क्रम now leaving all display घातer wells in the INIT घातer करोमुख्य
 	 * enabled matching the driver reload sequence.
 	 */
-	intel_power_domains_driver_remove(i915);
-	enable_rpm_wakeref_asserts(&i915->runtime_pm);
+	पूर्णांकel_घातer_करोमुख्यs_driver_हटाओ(i915);
+	enable_rpm_wakeref_निश्चितs(&i915->runसमय_pm);
 
-	intel_runtime_pm_driver_release(&i915->runtime_pm);
-}
+	पूर्णांकel_runसमय_pm_driver_release(&i915->runसमय_pm);
+पूर्ण
 
-static bool suspend_to_idle(struct drm_i915_private *dev_priv)
-{
-#if IS_ENABLED(CONFIG_ACPI_SLEEP)
-	if (acpi_target_system_state() < ACPI_STATE_S3)
-		return true;
-#endif
-	return false;
-}
+अटल bool suspend_to_idle(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+#अगर IS_ENABLED(CONFIG_ACPI_SLEEP)
+	अगर (acpi_target_प्रणाली_state() < ACPI_STATE_S3)
+		वापस true;
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
-static int i915_drm_prepare(struct drm_device *dev)
-{
-	struct drm_i915_private *i915 = to_i915(dev);
+अटल पूर्णांक i915_drm_prepare(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = to_i915(dev);
 
 	/*
-	 * NB intel_display_suspend() may issue new requests after we've
-	 * ostensibly marked the GPU as ready-to-sleep here. We need to
-	 * split out that work and pull it forward so that after point,
+	 * NB पूर्णांकel_display_suspend() may issue new requests after we've
+	 * ostensibly marked the GPU as पढ़ोy-to-sleep here. We need to
+	 * split out that work and pull it क्रमward so that after poपूर्णांक,
 	 * the GPU is not woken again.
 	 */
 	i915_gem_suspend(i915);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i915_drm_suspend(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	struct pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
-	pci_power_t opregion_target_state;
+अटल पूर्णांक i915_drm_suspend(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
+	pci_घातer_t opregion_target_state;
 
-	disable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
+	disable_rpm_wakeref_निश्चितs(&dev_priv->runसमय_pm);
 
-	/* We do a lot of poking in a lot of registers, make sure they work
+	/* We करो a lot of poking in a lot of रेजिस्टरs, make sure they work
 	 * properly. */
-	intel_power_domains_disable(dev_priv);
+	पूर्णांकel_घातer_करोमुख्यs_disable(dev_priv);
 
 	drm_kms_helper_poll_disable(dev);
 
 	pci_save_state(pdev);
 
-	intel_display_suspend(dev);
+	पूर्णांकel_display_suspend(dev);
 
-	intel_dp_mst_suspend(dev_priv);
+	पूर्णांकel_dp_mst_suspend(dev_priv);
 
-	intel_runtime_pm_disable_interrupts(dev_priv);
-	intel_hpd_cancel_work(dev_priv);
+	पूर्णांकel_runसमय_pm_disable_पूर्णांकerrupts(dev_priv);
+	पूर्णांकel_hpd_cancel_work(dev_priv);
 
-	intel_suspend_encoders(dev_priv);
+	पूर्णांकel_suspend_encoders(dev_priv);
 
-	intel_suspend_hw(dev_priv);
+	पूर्णांकel_suspend_hw(dev_priv);
 
 	i915_ggtt_suspend(&dev_priv->ggtt);
 
 	i915_save_display(dev_priv);
 
 	opregion_target_state = suspend_to_idle(dev_priv) ? PCI_D1 : PCI_D3cold;
-	intel_opregion_suspend(dev_priv, opregion_target_state);
+	पूर्णांकel_opregion_suspend(dev_priv, opregion_target_state);
 
-	intel_fbdev_set_suspend(dev, FBINFO_STATE_SUSPENDED, true);
+	पूर्णांकel_fbdev_set_suspend(dev, FBINFO_STATE_SUSPENDED, true);
 
 	dev_priv->suspend_count++;
 
-	intel_csr_ucode_suspend(dev_priv);
+	पूर्णांकel_csr_ucode_suspend(dev_priv);
 
-	enable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
+	enable_rpm_wakeref_निश्चितs(&dev_priv->runसमय_pm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum i915_drm_suspend_mode
-get_suspend_mode(struct drm_i915_private *dev_priv, bool hibernate)
-{
-	if (hibernate)
-		return I915_DRM_SUSPEND_HIBERNATE;
+अटल क्रमागत i915_drm_suspend_mode
+get_suspend_mode(काष्ठा drm_i915_निजी *dev_priv, bool hibernate)
+अणु
+	अगर (hibernate)
+		वापस I915_DRM_SUSPEND_HIBERNATE;
 
-	if (suspend_to_idle(dev_priv))
-		return I915_DRM_SUSPEND_IDLE;
+	अगर (suspend_to_idle(dev_priv))
+		वापस I915_DRM_SUSPEND_IDLE;
 
-	return I915_DRM_SUSPEND_MEM;
-}
+	वापस I915_DRM_SUSPEND_MEM;
+पूर्ण
 
-static int i915_drm_suspend_late(struct drm_device *dev, bool hibernation)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	struct pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
-	struct intel_runtime_pm *rpm = &dev_priv->runtime_pm;
-	int ret;
+अटल पूर्णांक i915_drm_suspend_late(काष्ठा drm_device *dev, bool hibernation)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
+	काष्ठा पूर्णांकel_runसमय_pm *rpm = &dev_priv->runसमय_pm;
+	पूर्णांक ret;
 
-	disable_rpm_wakeref_asserts(rpm);
+	disable_rpm_wakeref_निश्चितs(rpm);
 
 	i915_gem_suspend_late(dev_priv);
 
-	intel_uncore_suspend(&dev_priv->uncore);
+	पूर्णांकel_uncore_suspend(&dev_priv->uncore);
 
-	intel_power_domains_suspend(dev_priv,
+	पूर्णांकel_घातer_करोमुख्यs_suspend(dev_priv,
 				    get_suspend_mode(dev_priv, hibernation));
 
-	intel_display_power_suspend_late(dev_priv);
+	पूर्णांकel_display_घातer_suspend_late(dev_priv);
 
 	ret = vlv_suspend_complete(dev_priv);
-	if (ret) {
+	अगर (ret) अणु
 		drm_err(&dev_priv->drm, "Suspend complete failed: %d\n", ret);
-		intel_power_domains_resume(dev_priv);
+		पूर्णांकel_घातer_करोमुख्यs_resume(dev_priv);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pci_disable_device(pdev);
 	/*
-	 * During hibernation on some platforms the BIOS may try to access
-	 * the device even though it's already in D3 and hang the machine. So
-	 * leave the device in D0 on those platforms and hope the BIOS will
-	 * power down the device properly. The issue was seen on multiple old
-	 * GENs with different BIOS vendors, so having an explicit blacklist
+	 * During hibernation on some platक्रमms the BIOS may try to access
+	 * the device even though it's alपढ़ोy in D3 and hang the machine. So
+	 * leave the device in D0 on those platक्रमms and hope the BIOS will
+	 * घातer करोwn the device properly. The issue was seen on multiple old
+	 * GENs with dअगरferent BIOS venकरोrs, so having an explicit blacklist
 	 * is inpractical; apply the workaround on everything pre GEN6. The
-	 * platforms where the issue was seen:
+	 * platक्रमms where the issue was seen:
 	 * Lenovo Thinkpad X301, X61s, X60, T60, X41
 	 * Fujitsu FSC S7110
 	 * Acer Aspire 1830T
 	 */
-	if (!(hibernation && INTEL_GEN(dev_priv) < 6))
-		pci_set_power_state(pdev, PCI_D3hot);
+	अगर (!(hibernation && INTEL_GEN(dev_priv) < 6))
+		pci_set_घातer_state(pdev, PCI_D3hot);
 
 out:
-	enable_rpm_wakeref_asserts(rpm);
-	if (!dev_priv->uncore.user_forcewake_count)
-		intel_runtime_pm_driver_release(rpm);
+	enable_rpm_wakeref_निश्चितs(rpm);
+	अगर (!dev_priv->uncore.user_क्रमcewake_count)
+		पूर्णांकel_runसमय_pm_driver_release(rpm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int i915_suspend_switcheroo(struct drm_i915_private *i915, pm_message_t state)
-{
-	int error;
+पूर्णांक i915_suspend_चयनeroo(काष्ठा drm_i915_निजी *i915, pm_message_t state)
+अणु
+	पूर्णांक error;
 
-	if (drm_WARN_ON_ONCE(&i915->drm, state.event != PM_EVENT_SUSPEND &&
+	अगर (drm_WARN_ON_ONCE(&i915->drm, state.event != PM_EVENT_SUSPEND &&
 			     state.event != PM_EVENT_FREEZE))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (i915->drm.switch_power_state == DRM_SWITCH_POWER_OFF)
-		return 0;
+	अगर (i915->drm.चयन_घातer_state == DRM_SWITCH_POWER_OFF)
+		वापस 0;
 
 	error = i915_drm_suspend(&i915->drm);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	return i915_drm_suspend_late(&i915->drm, false);
-}
+	वापस i915_drm_suspend_late(&i915->drm, false);
+पूर्ण
 
-static int i915_drm_resume(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	int ret;
+अटल पूर्णांक i915_drm_resume(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+	पूर्णांक ret;
 
-	disable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
+	disable_rpm_wakeref_निश्चितs(&dev_priv->runसमय_pm);
 
 	sanitize_gpu(dev_priv);
 
 	ret = i915_ggtt_enable_hw(dev_priv);
-	if (ret)
+	अगर (ret)
 		drm_err(&dev_priv->drm, "failed to re-enable GGTT\n");
 
 	i915_ggtt_resume(&dev_priv->ggtt);
 
-	intel_csr_ucode_resume(dev_priv);
+	पूर्णांकel_csr_ucode_resume(dev_priv);
 
 	i915_restore_display(dev_priv);
-	intel_pps_unlock_regs_wa(dev_priv);
+	पूर्णांकel_pps_unlock_regs_wa(dev_priv);
 
-	intel_init_pch_refclk(dev_priv);
+	पूर्णांकel_init_pch_refclk(dev_priv);
 
 	/*
-	 * Interrupts have to be enabled before any batches are run. If not the
+	 * Interrupts have to be enabled beक्रमe any batches are run. If not the
 	 * GPU will hang. i915_gem_init_hw() will initiate batches to
 	 * update/restore the context.
 	 *
-	 * drm_mode_config_reset() needs AUX interrupts.
+	 * drm_mode_config_reset() needs AUX पूर्णांकerrupts.
 	 *
-	 * Modeset enabling in intel_modeset_init_hw() also needs working
-	 * interrupts.
+	 * Modeset enabling in पूर्णांकel_modeset_init_hw() also needs working
+	 * पूर्णांकerrupts.
 	 */
-	intel_runtime_pm_enable_interrupts(dev_priv);
+	पूर्णांकel_runसमय_pm_enable_पूर्णांकerrupts(dev_priv);
 
 	drm_mode_config_reset(dev);
 
 	i915_gem_resume(dev_priv);
 
-	intel_modeset_init_hw(dev_priv);
-	intel_init_clock_gating(dev_priv);
-	intel_hpd_init(dev_priv);
+	पूर्णांकel_modeset_init_hw(dev_priv);
+	पूर्णांकel_init_घड़ी_gating(dev_priv);
+	पूर्णांकel_hpd_init(dev_priv);
 
-	/* MST sideband requires HPD interrupts enabled */
-	intel_dp_mst_resume(dev_priv);
-	intel_display_resume(dev);
+	/* MST sideband requires HPD पूर्णांकerrupts enabled */
+	पूर्णांकel_dp_mst_resume(dev_priv);
+	पूर्णांकel_display_resume(dev);
 
-	intel_hpd_poll_disable(dev_priv);
+	पूर्णांकel_hpd_poll_disable(dev_priv);
 	drm_kms_helper_poll_enable(dev);
 
-	intel_opregion_resume(dev_priv);
+	पूर्णांकel_opregion_resume(dev_priv);
 
-	intel_fbdev_set_suspend(dev, FBINFO_STATE_RUNNING, false);
+	पूर्णांकel_fbdev_set_suspend(dev, FBINFO_STATE_RUNNING, false);
 
-	intel_power_domains_enable(dev_priv);
+	पूर्णांकel_घातer_करोमुख्यs_enable(dev_priv);
 
-	intel_gvt_resume(dev_priv);
+	पूर्णांकel_gvt_resume(dev_priv);
 
-	enable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
+	enable_rpm_wakeref_निश्चितs(&dev_priv->runसमय_pm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i915_drm_resume_early(struct drm_device *dev)
-{
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	struct pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
-	int ret;
+अटल पूर्णांक i915_drm_resume_early(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
+	काष्ठा pci_dev *pdev = to_pci_dev(dev_priv->drm.dev);
+	पूर्णांक ret;
 
 	/*
 	 * We have a resume ordering issue with the snd-hda driver also
-	 * requiring our device to be power up. Due to the lack of a
+	 * requiring our device to be घातer up. Due to the lack of a
 	 * parent/child relationship we currently solve this with an early
 	 * resume hook.
 	 *
 	 * FIXME: This should be solved with a special hdmi sink device or
-	 * similar so that power domains can be employed.
+	 * similar so that घातer करोमुख्यs can be employed.
 	 */
 
 	/*
-	 * Note that we need to set the power state explicitly, since we
-	 * powered off the device during freeze and the PCI core won't power
-	 * it back up for us during thaw. Powering off the device during
-	 * freeze is not a hard requirement though, and during the
+	 * Note that we need to set the घातer state explicitly, since we
+	 * घातered off the device during मुक्तze and the PCI core won't घातer
+	 * it back up क्रम us during thaw. Powering off the device during
+	 * मुक्तze is not a hard requirement though, and during the
 	 * suspend/resume phases the PCI core makes sure we get here with the
-	 * device powered on. So in case we change our freeze logic and keep
-	 * the device powered we can also remove the following set power state
+	 * device घातered on. So in हाल we change our मुक्तze logic and keep
+	 * the device घातered we can also हटाओ the following set घातer state
 	 * call.
 	 */
-	ret = pci_set_power_state(pdev, PCI_D0);
-	if (ret) {
+	ret = pci_set_घातer_state(pdev, PCI_D0);
+	अगर (ret) अणु
 		drm_err(&dev_priv->drm,
 			"failed to set PCI D0 power state (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Note that pci_enable_device() first enables any parent bridge
-	 * device and only then sets the power state for this device. The
+	 * device and only then sets the घातer state क्रम this device. The
 	 * bridge enabling is a nop though, since bridge devices are resumed
-	 * first. The order of enabling power and enabling the device is
+	 * first. The order of enabling घातer and enabling the device is
 	 * imposed by the PCI core as described above, so here we preserve the
-	 * same order for the freeze/thaw phases.
+	 * same order क्रम the मुक्तze/thaw phases.
 	 *
-	 * TODO: eventually we should remove pci_disable_device() /
+	 * TODO: eventually we should हटाओ pci_disable_device() /
 	 * pci_enable_enable_device() from suspend/resume. Due to how they
 	 * depend on the device enable refcount we can't anyway depend on them
 	 * disabling/enabling the device.
 	 */
-	if (pci_enable_device(pdev))
-		return -EIO;
+	अगर (pci_enable_device(pdev))
+		वापस -EIO;
 
 	pci_set_master(pdev);
 
-	disable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
+	disable_rpm_wakeref_निश्चितs(&dev_priv->runसमय_pm);
 
 	ret = vlv_resume_prepare(dev_priv, false);
-	if (ret)
+	अगर (ret)
 		drm_err(&dev_priv->drm,
 			"Resume prepare failed: %d, continuing anyway\n", ret);
 
-	intel_uncore_resume_early(&dev_priv->uncore);
+	पूर्णांकel_uncore_resume_early(&dev_priv->uncore);
 
-	intel_gt_check_and_clear_faults(&dev_priv->gt);
+	पूर्णांकel_gt_check_and_clear_faults(&dev_priv->gt);
 
-	intel_display_power_resume_early(dev_priv);
+	पूर्णांकel_display_घातer_resume_early(dev_priv);
 
-	intel_power_domains_resume(dev_priv);
+	पूर्णांकel_घातer_करोमुख्यs_resume(dev_priv);
 
-	enable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
+	enable_rpm_wakeref_निश्चितs(&dev_priv->runसमय_pm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int i915_resume_switcheroo(struct drm_i915_private *i915)
-{
-	int ret;
+पूर्णांक i915_resume_चयनeroo(काष्ठा drm_i915_निजी *i915)
+अणु
+	पूर्णांक ret;
 
-	if (i915->drm.switch_power_state == DRM_SWITCH_POWER_OFF)
-		return 0;
+	अगर (i915->drm.चयन_घातer_state == DRM_SWITCH_POWER_OFF)
+		वापस 0;
 
 	ret = i915_drm_resume_early(&i915->drm);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return i915_drm_resume(&i915->drm);
-}
+	वापस i915_drm_resume(&i915->drm);
+पूर्ण
 
-static int i915_pm_prepare(struct device *kdev)
-{
-	struct drm_i915_private *i915 = kdev_to_i915(kdev);
+अटल पूर्णांक i915_pm_prepare(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = kdev_to_i915(kdev);
 
-	if (!i915) {
+	अगर (!i915) अणु
 		dev_err(kdev, "DRM not initialized, aborting suspend.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (i915->drm.switch_power_state == DRM_SWITCH_POWER_OFF)
-		return 0;
+	अगर (i915->drm.चयन_घातer_state == DRM_SWITCH_POWER_OFF)
+		वापस 0;
 
-	return i915_drm_prepare(&i915->drm);
-}
+	वापस i915_drm_prepare(&i915->drm);
+पूर्ण
 
-static int i915_pm_suspend(struct device *kdev)
-{
-	struct drm_i915_private *i915 = kdev_to_i915(kdev);
+अटल पूर्णांक i915_pm_suspend(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = kdev_to_i915(kdev);
 
-	if (!i915) {
+	अगर (!i915) अणु
 		dev_err(kdev, "DRM not initialized, aborting suspend.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (i915->drm.switch_power_state == DRM_SWITCH_POWER_OFF)
-		return 0;
+	अगर (i915->drm.चयन_घातer_state == DRM_SWITCH_POWER_OFF)
+		वापस 0;
 
-	return i915_drm_suspend(&i915->drm);
-}
+	वापस i915_drm_suspend(&i915->drm);
+पूर्ण
 
-static int i915_pm_suspend_late(struct device *kdev)
-{
-	struct drm_i915_private *i915 = kdev_to_i915(kdev);
+अटल पूर्णांक i915_pm_suspend_late(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = kdev_to_i915(kdev);
 
 	/*
 	 * We have a suspend ordering issue with the snd-hda driver also
-	 * requiring our device to be power up. Due to the lack of a
+	 * requiring our device to be घातer up. Due to the lack of a
 	 * parent/child relationship we currently solve this with an late
 	 * suspend hook.
 	 *
 	 * FIXME: This should be solved with a special hdmi sink device or
-	 * similar so that power domains can be employed.
+	 * similar so that घातer करोमुख्यs can be employed.
 	 */
-	if (i915->drm.switch_power_state == DRM_SWITCH_POWER_OFF)
-		return 0;
+	अगर (i915->drm.चयन_घातer_state == DRM_SWITCH_POWER_OFF)
+		वापस 0;
 
-	return i915_drm_suspend_late(&i915->drm, false);
-}
+	वापस i915_drm_suspend_late(&i915->drm, false);
+पूर्ण
 
-static int i915_pm_poweroff_late(struct device *kdev)
-{
-	struct drm_i915_private *i915 = kdev_to_i915(kdev);
+अटल पूर्णांक i915_pm_घातeroff_late(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = kdev_to_i915(kdev);
 
-	if (i915->drm.switch_power_state == DRM_SWITCH_POWER_OFF)
-		return 0;
+	अगर (i915->drm.चयन_घातer_state == DRM_SWITCH_POWER_OFF)
+		वापस 0;
 
-	return i915_drm_suspend_late(&i915->drm, true);
-}
+	वापस i915_drm_suspend_late(&i915->drm, true);
+पूर्ण
 
-static int i915_pm_resume_early(struct device *kdev)
-{
-	struct drm_i915_private *i915 = kdev_to_i915(kdev);
+अटल पूर्णांक i915_pm_resume_early(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = kdev_to_i915(kdev);
 
-	if (i915->drm.switch_power_state == DRM_SWITCH_POWER_OFF)
-		return 0;
+	अगर (i915->drm.चयन_घातer_state == DRM_SWITCH_POWER_OFF)
+		वापस 0;
 
-	return i915_drm_resume_early(&i915->drm);
-}
+	वापस i915_drm_resume_early(&i915->drm);
+पूर्ण
 
-static int i915_pm_resume(struct device *kdev)
-{
-	struct drm_i915_private *i915 = kdev_to_i915(kdev);
+अटल पूर्णांक i915_pm_resume(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = kdev_to_i915(kdev);
 
-	if (i915->drm.switch_power_state == DRM_SWITCH_POWER_OFF)
-		return 0;
+	अगर (i915->drm.चयन_घातer_state == DRM_SWITCH_POWER_OFF)
+		वापस 0;
 
-	return i915_drm_resume(&i915->drm);
-}
+	वापस i915_drm_resume(&i915->drm);
+पूर्ण
 
-/* freeze: before creating the hibernation_image */
-static int i915_pm_freeze(struct device *kdev)
-{
-	struct drm_i915_private *i915 = kdev_to_i915(kdev);
-	int ret;
+/* मुक्तze: beक्रमe creating the hibernation_image */
+अटल पूर्णांक i915_pm_मुक्तze(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = kdev_to_i915(kdev);
+	पूर्णांक ret;
 
-	if (i915->drm.switch_power_state != DRM_SWITCH_POWER_OFF) {
+	अगर (i915->drm.चयन_घातer_state != DRM_SWITCH_POWER_OFF) अणु
 		ret = i915_drm_suspend(&i915->drm);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = i915_gem_freeze(i915);
-	if (ret)
-		return ret;
+	ret = i915_gem_मुक्तze(i915);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int i915_pm_freeze_late(struct device *kdev)
-{
-	struct drm_i915_private *i915 = kdev_to_i915(kdev);
-	int ret;
+अटल पूर्णांक i915_pm_मुक्तze_late(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = kdev_to_i915(kdev);
+	पूर्णांक ret;
 
-	if (i915->drm.switch_power_state != DRM_SWITCH_POWER_OFF) {
+	अगर (i915->drm.चयन_घातer_state != DRM_SWITCH_POWER_OFF) अणु
 		ret = i915_drm_suspend_late(&i915->drm, true);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = i915_gem_freeze_late(i915);
-	if (ret)
-		return ret;
+	ret = i915_gem_मुक्तze_late(i915);
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* thaw: called after creating the hibernation image, but before turning off. */
-static int i915_pm_thaw_early(struct device *kdev)
-{
-	return i915_pm_resume_early(kdev);
-}
+/* thaw: called after creating the hibernation image, but beक्रमe turning off. */
+अटल पूर्णांक i915_pm_thaw_early(काष्ठा device *kdev)
+अणु
+	वापस i915_pm_resume_early(kdev);
+पूर्ण
 
-static int i915_pm_thaw(struct device *kdev)
-{
-	return i915_pm_resume(kdev);
-}
+अटल पूर्णांक i915_pm_thaw(काष्ठा device *kdev)
+अणु
+	वापस i915_pm_resume(kdev);
+पूर्ण
 
 /* restore: called after loading the hibernation image. */
-static int i915_pm_restore_early(struct device *kdev)
-{
-	return i915_pm_resume_early(kdev);
-}
+अटल पूर्णांक i915_pm_restore_early(काष्ठा device *kdev)
+अणु
+	वापस i915_pm_resume_early(kdev);
+पूर्ण
 
-static int i915_pm_restore(struct device *kdev)
-{
-	return i915_pm_resume(kdev);
-}
+अटल पूर्णांक i915_pm_restore(काष्ठा device *kdev)
+अणु
+	वापस i915_pm_resume(kdev);
+पूर्ण
 
-static int intel_runtime_suspend(struct device *kdev)
-{
-	struct drm_i915_private *dev_priv = kdev_to_i915(kdev);
-	struct intel_runtime_pm *rpm = &dev_priv->runtime_pm;
-	int ret;
+अटल पूर्णांक पूर्णांकel_runसमय_suspend(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = kdev_to_i915(kdev);
+	काष्ठा पूर्णांकel_runसमय_pm *rpm = &dev_priv->runसमय_pm;
+	पूर्णांक ret;
 
-	if (drm_WARN_ON_ONCE(&dev_priv->drm, !HAS_RUNTIME_PM(dev_priv)))
-		return -ENODEV;
+	अगर (drm_WARN_ON_ONCE(&dev_priv->drm, !HAS_RUNTIME_PM(dev_priv)))
+		वापस -ENODEV;
 
 	drm_dbg_kms(&dev_priv->drm, "Suspending device\n");
 
-	disable_rpm_wakeref_asserts(rpm);
+	disable_rpm_wakeref_निश्चितs(rpm);
 
 	/*
 	 * We are safe here against re-faults, since the fault handler takes
 	 * an RPM reference.
 	 */
-	i915_gem_runtime_suspend(dev_priv);
+	i915_gem_runसमय_suspend(dev_priv);
 
-	intel_gt_runtime_suspend(&dev_priv->gt);
+	पूर्णांकel_gt_runसमय_suspend(&dev_priv->gt);
 
-	intel_runtime_pm_disable_interrupts(dev_priv);
+	पूर्णांकel_runसमय_pm_disable_पूर्णांकerrupts(dev_priv);
 
-	intel_uncore_suspend(&dev_priv->uncore);
+	पूर्णांकel_uncore_suspend(&dev_priv->uncore);
 
-	intel_display_power_suspend(dev_priv);
+	पूर्णांकel_display_घातer_suspend(dev_priv);
 
 	ret = vlv_suspend_complete(dev_priv);
-	if (ret) {
+	अगर (ret) अणु
 		drm_err(&dev_priv->drm,
 			"Runtime suspend failed, disabling it (%d)\n", ret);
-		intel_uncore_runtime_resume(&dev_priv->uncore);
+		पूर्णांकel_uncore_runसमय_resume(&dev_priv->uncore);
 
-		intel_runtime_pm_enable_interrupts(dev_priv);
+		पूर्णांकel_runसमय_pm_enable_पूर्णांकerrupts(dev_priv);
 
-		intel_gt_runtime_resume(&dev_priv->gt);
+		पूर्णांकel_gt_runसमय_resume(&dev_priv->gt);
 
-		enable_rpm_wakeref_asserts(rpm);
+		enable_rpm_wakeref_निश्चितs(rpm);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	enable_rpm_wakeref_asserts(rpm);
-	intel_runtime_pm_driver_release(rpm);
+	enable_rpm_wakeref_निश्चितs(rpm);
+	पूर्णांकel_runसमय_pm_driver_release(rpm);
 
-	if (intel_uncore_arm_unclaimed_mmio_detection(&dev_priv->uncore))
+	अगर (पूर्णांकel_uncore_arm_unclaimed_mmio_detection(&dev_priv->uncore))
 		drm_err(&dev_priv->drm,
 			"Unclaimed access detected prior to suspending\n");
 
 	rpm->suspended = true;
 
 	/*
-	 * FIXME: We really should find a document that references the arguments
+	 * FIXME: We really should find a करोcument that references the arguments
 	 * used below!
 	 */
-	if (IS_BROADWELL(dev_priv)) {
+	अगर (IS_BROADWELL(dev_priv)) अणु
 		/*
-		 * On Broadwell, if we use PCI_D1 the PCH DDI ports will stop
-		 * being detected, and the call we do at intel_runtime_resume()
+		 * On Broadwell, अगर we use PCI_D1 the PCH DDI ports will stop
+		 * being detected, and the call we करो at पूर्णांकel_runसमय_resume()
 		 * won't be able to restore them. Since PCI_D3hot matches the
-		 * actual specification and appears to be working, use it.
+		 * actual specअगरication and appears to be working, use it.
 		 */
-		intel_opregion_notify_adapter(dev_priv, PCI_D3hot);
-	} else {
+		पूर्णांकel_opregion_notअगरy_adapter(dev_priv, PCI_D3hot);
+	पूर्ण अन्यथा अणु
 		/*
 		 * current versions of firmware which depend on this opregion
-		 * notification have repurposed the D1 definition to mean
+		 * notअगरication have repurposed the D1 definition to mean
 		 * "runtime suspended" vs. what you would normally expect (D3)
-		 * to distinguish it from notifications that might be sent via
+		 * to distinguish it from notअगरications that might be sent via
 		 * the suspend path.
 		 */
-		intel_opregion_notify_adapter(dev_priv, PCI_D1);
-	}
+		पूर्णांकel_opregion_notअगरy_adapter(dev_priv, PCI_D1);
+	पूर्ण
 
-	assert_forcewakes_inactive(&dev_priv->uncore);
+	निश्चित_क्रमcewakes_inactive(&dev_priv->uncore);
 
-	if (!IS_VALLEYVIEW(dev_priv) && !IS_CHERRYVIEW(dev_priv))
-		intel_hpd_poll_enable(dev_priv);
+	अगर (!IS_VALLEYVIEW(dev_priv) && !IS_CHERRYVIEW(dev_priv))
+		पूर्णांकel_hpd_poll_enable(dev_priv);
 
 	drm_dbg_kms(&dev_priv->drm, "Device suspended\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int intel_runtime_resume(struct device *kdev)
-{
-	struct drm_i915_private *dev_priv = kdev_to_i915(kdev);
-	struct intel_runtime_pm *rpm = &dev_priv->runtime_pm;
-	int ret;
+अटल पूर्णांक पूर्णांकel_runसमय_resume(काष्ठा device *kdev)
+अणु
+	काष्ठा drm_i915_निजी *dev_priv = kdev_to_i915(kdev);
+	काष्ठा पूर्णांकel_runसमय_pm *rpm = &dev_priv->runसमय_pm;
+	पूर्णांक ret;
 
-	if (drm_WARN_ON_ONCE(&dev_priv->drm, !HAS_RUNTIME_PM(dev_priv)))
-		return -ENODEV;
+	अगर (drm_WARN_ON_ONCE(&dev_priv->drm, !HAS_RUNTIME_PM(dev_priv)))
+		वापस -ENODEV;
 
 	drm_dbg_kms(&dev_priv->drm, "Resuming device\n");
 
-	drm_WARN_ON_ONCE(&dev_priv->drm, atomic_read(&rpm->wakeref_count));
-	disable_rpm_wakeref_asserts(rpm);
+	drm_WARN_ON_ONCE(&dev_priv->drm, atomic_पढ़ो(&rpm->wakeref_count));
+	disable_rpm_wakeref_निश्चितs(rpm);
 
-	intel_opregion_notify_adapter(dev_priv, PCI_D0);
+	पूर्णांकel_opregion_notअगरy_adapter(dev_priv, PCI_D0);
 	rpm->suspended = false;
-	if (intel_uncore_unclaimed_mmio(&dev_priv->uncore))
+	अगर (पूर्णांकel_uncore_unclaimed_mmio(&dev_priv->uncore))
 		drm_dbg(&dev_priv->drm,
 			"Unclaimed access during suspend, bios?\n");
 
-	intel_display_power_resume(dev_priv);
+	पूर्णांकel_display_घातer_resume(dev_priv);
 
 	ret = vlv_resume_prepare(dev_priv, true);
 
-	intel_uncore_runtime_resume(&dev_priv->uncore);
+	पूर्णांकel_uncore_runसमय_resume(&dev_priv->uncore);
 
-	intel_runtime_pm_enable_interrupts(dev_priv);
-
-	/*
-	 * No point of rolling back things in case of an error, as the best
-	 * we can do is to hope that things will still work (and disable RPM).
-	 */
-	intel_gt_runtime_resume(&dev_priv->gt);
+	पूर्णांकel_runसमय_pm_enable_पूर्णांकerrupts(dev_priv);
 
 	/*
-	 * On VLV/CHV display interrupts are part of the display
-	 * power well, so hpd is reinitialized from there. For
-	 * everyone else do it here.
+	 * No poपूर्णांक of rolling back things in हाल of an error, as the best
+	 * we can करो is to hope that things will still work (and disable RPM).
 	 */
-	if (!IS_VALLEYVIEW(dev_priv) && !IS_CHERRYVIEW(dev_priv)) {
-		intel_hpd_init(dev_priv);
-		intel_hpd_poll_disable(dev_priv);
-	}
+	पूर्णांकel_gt_runसमय_resume(&dev_priv->gt);
 
-	intel_enable_ipc(dev_priv);
+	/*
+	 * On VLV/CHV display पूर्णांकerrupts are part of the display
+	 * घातer well, so hpd is reinitialized from there. For
+	 * everyone अन्यथा करो it here.
+	 */
+	अगर (!IS_VALLEYVIEW(dev_priv) && !IS_CHERRYVIEW(dev_priv)) अणु
+		पूर्णांकel_hpd_init(dev_priv);
+		पूर्णांकel_hpd_poll_disable(dev_priv);
+	पूर्ण
 
-	enable_rpm_wakeref_asserts(rpm);
+	पूर्णांकel_enable_ipc(dev_priv);
 
-	if (ret)
+	enable_rpm_wakeref_निश्चितs(rpm);
+
+	अगर (ret)
 		drm_err(&dev_priv->drm,
 			"Runtime resume failed, disabling it (%d)\n", ret);
-	else
+	अन्यथा
 		drm_dbg_kms(&dev_priv->drm, "Device resumed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct dev_pm_ops i915_pm_ops = {
+स्थिर काष्ठा dev_pm_ops i915_pm_ops = अणु
 	/*
-	 * S0ix (via system suspend) and S3 event handlers [PMSG_SUSPEND,
+	 * S0ix (via प्रणाली suspend) and S3 event handlers [PMSG_SUSPEND,
 	 * PMSG_RESUME]
 	 */
 	.prepare = i915_pm_prepare,
@@ -1631,53 +1632,53 @@ const struct dev_pm_ops i915_pm_ops = {
 
 	/*
 	 * S4 event handlers
-	 * @freeze, @freeze_late    : called (1) before creating the
+	 * @मुक्तze, @मुक्तze_late    : called (1) beक्रमe creating the
 	 *                            hibernation image [PMSG_FREEZE] and
-	 *                            (2) after rebooting, before restoring
+	 *                            (2) after rebooting, beक्रमe restoring
 	 *                            the image [PMSG_QUIESCE]
 	 * @thaw, @thaw_early       : called (1) after creating the hibernation
-	 *                            image, before writing it [PMSG_THAW]
+	 *                            image, beक्रमe writing it [PMSG_THAW]
 	 *                            and (2) after failing to create or
 	 *                            restore the image [PMSG_RECOVER]
-	 * @poweroff, @poweroff_late: called after writing the hibernation
-	 *                            image, before rebooting [PMSG_HIBERNATE]
+	 * @घातeroff, @घातeroff_late: called after writing the hibernation
+	 *                            image, beक्रमe rebooting [PMSG_HIBERNATE]
 	 * @restore, @restore_early : called after rebooting and restoring the
 	 *                            hibernation image [PMSG_RESTORE]
 	 */
-	.freeze = i915_pm_freeze,
-	.freeze_late = i915_pm_freeze_late,
+	.मुक्तze = i915_pm_मुक्तze,
+	.मुक्तze_late = i915_pm_मुक्तze_late,
 	.thaw_early = i915_pm_thaw_early,
 	.thaw = i915_pm_thaw,
-	.poweroff = i915_pm_suspend,
-	.poweroff_late = i915_pm_poweroff_late,
+	.घातeroff = i915_pm_suspend,
+	.घातeroff_late = i915_pm_घातeroff_late,
 	.restore_early = i915_pm_restore_early,
 	.restore = i915_pm_restore,
 
-	/* S0ix (via runtime suspend) event handlers */
-	.runtime_suspend = intel_runtime_suspend,
-	.runtime_resume = intel_runtime_resume,
-};
+	/* S0ix (via runसमय suspend) event handlers */
+	.runसमय_suspend = पूर्णांकel_runसमय_suspend,
+	.runसमय_resume = पूर्णांकel_runसमय_resume,
+पूर्ण;
 
-static const struct file_operations i915_driver_fops = {
+अटल स्थिर काष्ठा file_operations i915_driver_fops = अणु
 	.owner = THIS_MODULE,
-	.open = drm_open,
+	.खोलो = drm_खोलो,
 	.release = drm_release_noglobal,
 	.unlocked_ioctl = drm_ioctl,
 	.mmap = i915_gem_mmap,
 	.poll = drm_poll,
-	.read = drm_read,
+	.पढ़ो = drm_पढ़ो,
 	.compat_ioctl = i915_ioc32_compat_ioctl,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
-static int
-i915_gem_reject_pin_ioctl(struct drm_device *dev, void *data,
-			  struct drm_file *file)
-{
-	return -ENODEV;
-}
+अटल पूर्णांक
+i915_gem_reject_pin_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *file)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static const struct drm_ioctl_desc i915_ioctls[] = {
+अटल स्थिर काष्ठा drm_ioctl_desc i915_ioctls[] = अणु
 	DRM_IOCTL_DEF_DRV(I915_INIT, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF_DRV(I915_FLUSH, drm_noop, DRM_AUTH),
 	DRM_IOCTL_DEF_DRV(I915_FLIP, drm_noop, DRM_AUTH),
@@ -1707,49 +1708,49 @@ static const struct drm_ioctl_desc i915_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(I915_GEM_ENTERVT, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF_DRV(I915_GEM_LEAVEVT, drm_noop, DRM_AUTH|DRM_MASTER|DRM_ROOT_ONLY),
 	DRM_IOCTL_DEF_DRV(I915_GEM_CREATE, i915_gem_create_ioctl, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(I915_GEM_PREAD, i915_gem_pread_ioctl, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(I915_GEM_PWRITE, i915_gem_pwrite_ioctl, DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(I915_GEM_PREAD, i915_gem_pपढ़ो_ioctl, DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(I915_GEM_PWRITE, i915_gem_pग_लिखो_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_MMAP, i915_gem_mmap_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_MMAP_OFFSET, i915_gem_mmap_offset_ioctl, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(I915_GEM_SET_DOMAIN, i915_gem_set_domain_ioctl, DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(I915_GEM_SET_DOMAIN, i915_gem_set_करोमुख्य_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_SW_FINISH, i915_gem_sw_finish_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_SET_TILING, i915_gem_set_tiling_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_GET_TILING, i915_gem_get_tiling_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_GET_APERTURE, i915_gem_get_aperture_ioctl, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(I915_GET_PIPE_FROM_CRTC_ID, intel_get_pipe_from_crtc_id_ioctl, 0),
+	DRM_IOCTL_DEF_DRV(I915_GET_PIPE_FROM_CRTC_ID, पूर्णांकel_get_pipe_from_crtc_id_ioctl, 0),
 	DRM_IOCTL_DEF_DRV(I915_GEM_MADVISE, i915_gem_madvise_ioctl, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(I915_OVERLAY_PUT_IMAGE, intel_overlay_put_image_ioctl, DRM_MASTER),
-	DRM_IOCTL_DEF_DRV(I915_OVERLAY_ATTRS, intel_overlay_attrs_ioctl, DRM_MASTER),
-	DRM_IOCTL_DEF_DRV(I915_SET_SPRITE_COLORKEY, intel_sprite_set_colorkey_ioctl, DRM_MASTER),
+	DRM_IOCTL_DEF_DRV(I915_OVERLAY_PUT_IMAGE, पूर्णांकel_overlay_put_image_ioctl, DRM_MASTER),
+	DRM_IOCTL_DEF_DRV(I915_OVERLAY_ATTRS, पूर्णांकel_overlay_attrs_ioctl, DRM_MASTER),
+	DRM_IOCTL_DEF_DRV(I915_SET_SPRITE_COLORKEY, पूर्णांकel_sprite_set_colorkey_ioctl, DRM_MASTER),
 	DRM_IOCTL_DEF_DRV(I915_GET_SPRITE_COLORKEY, drm_noop, DRM_MASTER),
-	DRM_IOCTL_DEF_DRV(I915_GEM_WAIT, i915_gem_wait_ioctl, DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(I915_GEM_WAIT, i915_gem_रुको_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_CONTEXT_CREATE_EXT, i915_gem_context_create_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_CONTEXT_DESTROY, i915_gem_context_destroy_ioctl, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(I915_REG_READ, i915_reg_read_ioctl, DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(I915_REG_READ, i915_reg_पढ़ो_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GET_RESET_STATS, i915_gem_context_reset_stats_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_USERPTR, i915_gem_userptr_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_CONTEXT_GETPARAM, i915_gem_context_getparam_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_CONTEXT_SETPARAM, i915_gem_context_setparam_ioctl, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(I915_PERF_OPEN, i915_perf_open_ioctl, DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(I915_PERF_OPEN, i915_perf_खोलो_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_PERF_ADD_CONFIG, i915_perf_add_config_ioctl, DRM_RENDER_ALLOW),
-	DRM_IOCTL_DEF_DRV(I915_PERF_REMOVE_CONFIG, i915_perf_remove_config_ioctl, DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(I915_PERF_REMOVE_CONFIG, i915_perf_हटाओ_config_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_QUERY, i915_query_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_VM_CREATE, i915_gem_vm_create_ioctl, DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(I915_GEM_VM_DESTROY, i915_gem_vm_destroy_ioctl, DRM_RENDER_ALLOW),
-};
+पूर्ण;
 
-static const struct drm_driver driver = {
+अटल स्थिर काष्ठा drm_driver driver = अणु
 	/* Don't use MTRRs here; the Xserver or userspace app should
-	 * deal with them for Intel hardware.
+	 * deal with them क्रम Intel hardware.
 	 */
 	.driver_features =
 	    DRIVER_GEM |
 	    DRIVER_RENDER | DRIVER_MODESET | DRIVER_ATOMIC | DRIVER_SYNCOBJ |
 	    DRIVER_SYNCOBJ_TIMELINE,
 	.release = i915_driver_release,
-	.open = i915_driver_open,
-	.lastclose = i915_driver_lastclose,
-	.postclose = i915_driver_postclose,
+	.खोलो = i915_driver_खोलो,
+	.lastबंद = i915_driver_lastबंद,
+	.postबंद = i915_driver_postबंद,
 
 	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
 	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
@@ -1767,4 +1768,4 @@ static const struct drm_driver driver = {
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
-};
+पूर्ण;

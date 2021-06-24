@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * include/linux/buffer_head.h
  *
- * Everything to do with buffer_heads.
+ * Everything to करो with buffer_heads.
  */
 
-#ifndef _LINUX_BUFFER_HEAD_H
-#define _LINUX_BUFFER_HEAD_H
+#अगर_अघोषित _LINUX_BUFFER_HEAD_H
+#घोषणा _LINUX_BUFFER_HEAD_H
 
-#include <linux/types.h>
-#include <linux/fs.h>
-#include <linux/linkage.h>
-#include <linux/pagemap.h>
-#include <linux/wait.h>
-#include <linux/atomic.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/atomic.h>
 
-#ifdef CONFIG_BLOCK
+#अगर_घोषित CONFIG_BLOCK
 
-enum bh_state_bits {
+क्रमागत bh_state_bits अणु
 	BH_Uptodate,	/* Contains valid data */
 	BH_Dirty,	/* Is dirty */
 	BH_Lock,	/* Is locked */
-	BH_Req,		/* Has been submitted for I/O */
+	BH_Req,		/* Has been submitted क्रम I/O */
 
 	BH_Mapped,	/* Has a disk mapping */
 	BH_New,		/* Disk mapping was newly created by get_block */
-	BH_Async_Read,	/* Is under end_buffer_async_read I/O */
-	BH_Async_Write,	/* Is under end_buffer_async_write I/O */
+	BH_Async_Read,	/* Is under end_buffer_async_पढ़ो I/O */
+	BH_Async_Write,	/* Is under end_buffer_async_ग_लिखो I/O */
 	BH_Delay,	/* Buffer is not yet allocated on disk */
 	BH_Boundary,	/* Block is followed by a discontiguity */
-	BH_Write_EIO,	/* I/O error on write */
+	BH_Write_EIO,	/* I/O error on ग_लिखो */
 	BH_Unwritten,	/* Buffer is allocated on disk but not written */
 	BH_Quiet,	/* Buffer Error Prinks to be quiet */
 	BH_Meta,	/* Buffer contains metadata */
@@ -37,85 +38,85 @@ enum bh_state_bits {
 	BH_Defer_Completion, /* Defer AIO completion to workqueue */
 
 	BH_PrivateStart,/* not a state bit, but the first bit available
-			 * for private allocation by other entities
+			 * क्रम निजी allocation by other entities
 			 */
-};
+पूर्ण;
 
-#define MAX_BUF_PER_PAGE (PAGE_SIZE / 512)
+#घोषणा MAX_BUF_PER_PAGE (PAGE_SIZE / 512)
 
-struct page;
-struct buffer_head;
-struct address_space;
-typedef void (bh_end_io_t)(struct buffer_head *bh, int uptodate);
+काष्ठा page;
+काष्ठा buffer_head;
+काष्ठा address_space;
+प्रकार व्योम (bh_end_io_t)(काष्ठा buffer_head *bh, पूर्णांक uptodate);
 
 /*
  * Historically, a buffer_head was used to map a single block
  * within a page, and of course as the unit of I/O through the
- * filesystem and block layers.  Nowadays the basic I/O unit
- * is the bio, and buffer_heads are used for extracting block
- * mappings (via a get_block_t call), for tracking state within
- * a page (via a page_mapping) and for wrapping bio submission
- * for backward compatibility reasons (e.g. submit_bh).
+ * fileप्रणाली and block layers.  Nowadays the basic I/O unit
+ * is the bio, and buffer_heads are used क्रम extracting block
+ * mappings (via a get_block_t call), क्रम tracking state within
+ * a page (via a page_mapping) and क्रम wrapping bio submission
+ * क्रम backward compatibility reasons (e.g. submit_bh).
  */
-struct buffer_head {
-	unsigned long b_state;		/* buffer state bitmap (see above) */
-	struct buffer_head *b_this_page;/* circular list of page's buffers */
-	struct page *b_page;		/* the page this bh is mapped to */
+काष्ठा buffer_head अणु
+	अचिन्हित दीर्घ b_state;		/* buffer state biपंचांगap (see above) */
+	काष्ठा buffer_head *b_this_page;/* circular list of page's buffers */
+	काष्ठा page *b_page;		/* the page this bh is mapped to */
 
 	sector_t b_blocknr;		/* start block number */
-	size_t b_size;			/* size of mapping */
-	char *b_data;			/* pointer to data within the page */
+	माप_प्रकार b_size;			/* size of mapping */
+	अक्षर *b_data;			/* poपूर्णांकer to data within the page */
 
-	struct block_device *b_bdev;
+	काष्ठा block_device *b_bdev;
 	bh_end_io_t *b_end_io;		/* I/O completion */
- 	void *b_private;		/* reserved for b_end_io */
-	struct list_head b_assoc_buffers; /* associated with another mapping */
-	struct address_space *b_assoc_map;	/* mapping this buffer is
+ 	व्योम *b_निजी;		/* reserved क्रम b_end_io */
+	काष्ठा list_head b_assoc_buffers; /* associated with another mapping */
+	काष्ठा address_space *b_assoc_map;	/* mapping this buffer is
 						   associated with */
 	atomic_t b_count;		/* users using this buffer_head */
 	spinlock_t b_uptodate_lock;	/* Used by the first bh in a page, to
 					 * serialise IO completion of other
 					 * buffers in the page */
-};
+पूर्ण;
 
 /*
  * macro tricks to expand the set_buffer_foo(), clear_buffer_foo()
  * and buffer_foo() functions.
- * To avoid reset buffer flags that are already set, because that causes
+ * To aव्योम reset buffer flags that are alपढ़ोy set, because that causes
  * a costly cache line transition, check the flag first.
  */
-#define BUFFER_FNS(bit, name)						\
-static __always_inline void set_buffer_##name(struct buffer_head *bh)	\
-{									\
-	if (!test_bit(BH_##bit, &(bh)->b_state))			\
+#घोषणा BUFFER_FNS(bit, name)						\
+अटल __always_अंतरभूत व्योम set_buffer_##name(काष्ठा buffer_head *bh)	\
+अणु									\
+	अगर (!test_bit(BH_##bit, &(bh)->b_state))			\
 		set_bit(BH_##bit, &(bh)->b_state);			\
-}									\
-static __always_inline void clear_buffer_##name(struct buffer_head *bh)	\
-{									\
+पूर्ण									\
+अटल __always_अंतरभूत व्योम clear_buffer_##name(काष्ठा buffer_head *bh)	\
+अणु									\
 	clear_bit(BH_##bit, &(bh)->b_state);				\
-}									\
-static __always_inline int buffer_##name(const struct buffer_head *bh)	\
-{									\
-	return test_bit(BH_##bit, &(bh)->b_state);			\
-}
+पूर्ण									\
+अटल __always_अंतरभूत पूर्णांक buffer_##name(स्थिर काष्ठा buffer_head *bh)	\
+अणु									\
+	वापस test_bit(BH_##bit, &(bh)->b_state);			\
+पूर्ण
 
 /*
  * test_set_buffer_foo() and test_clear_buffer_foo()
  */
-#define TAS_BUFFER_FNS(bit, name)					\
-static __always_inline int test_set_buffer_##name(struct buffer_head *bh) \
-{									\
-	return test_and_set_bit(BH_##bit, &(bh)->b_state);		\
-}									\
-static __always_inline int test_clear_buffer_##name(struct buffer_head *bh) \
-{									\
-	return test_and_clear_bit(BH_##bit, &(bh)->b_state);		\
-}									\
+#घोषणा TAS_BUFFER_FNS(bit, name)					\
+अटल __always_अंतरभूत पूर्णांक test_set_buffer_##name(काष्ठा buffer_head *bh) \
+अणु									\
+	वापस test_and_set_bit(BH_##bit, &(bh)->b_state);		\
+पूर्ण									\
+अटल __always_अंतरभूत पूर्णांक test_clear_buffer_##name(काष्ठा buffer_head *bh) \
+अणु									\
+	वापस test_and_clear_bit(BH_##bit, &(bh)->b_state);		\
+पूर्ण									\
 
 /*
  * Emit the buffer bitops functions.   Note that there are also functions
- * of the form "mark_buffer_foo()".  These are higher-level functions which
- * do something in addition to setting a b_state bit.
+ * of the क्रमm "mark_buffer_foo()".  These are higher-level functions which
+ * करो something in addition to setting a b_state bit.
  */
 BUFFER_FNS(Uptodate, uptodate)
 BUFFER_FNS(Dirty, dirty)
@@ -125,292 +126,292 @@ BUFFER_FNS(Req, req)
 TAS_BUFFER_FNS(Req, req)
 BUFFER_FNS(Mapped, mapped)
 BUFFER_FNS(New, new)
-BUFFER_FNS(Async_Read, async_read)
-BUFFER_FNS(Async_Write, async_write)
+BUFFER_FNS(Async_Read, async_पढ़ो)
+BUFFER_FNS(Async_Write, async_ग_लिखो)
 BUFFER_FNS(Delay, delay)
 BUFFER_FNS(Boundary, boundary)
-BUFFER_FNS(Write_EIO, write_io_error)
+BUFFER_FNS(Write_EIO, ग_लिखो_io_error)
 BUFFER_FNS(Unwritten, unwritten)
 BUFFER_FNS(Meta, meta)
 BUFFER_FNS(Prio, prio)
 BUFFER_FNS(Defer_Completion, defer_completion)
 
-#define bh_offset(bh)		((unsigned long)(bh)->b_data & ~PAGE_MASK)
+#घोषणा bh_offset(bh)		((अचिन्हित दीर्घ)(bh)->b_data & ~PAGE_MASK)
 
-/* If we *know* page->private refers to buffer_heads */
-#define page_buffers(page)					\
-	({							\
+/* If we *know* page->निजी refers to buffer_heads */
+#घोषणा page_buffers(page)					\
+	(अणु							\
 		BUG_ON(!PagePrivate(page));			\
-		((struct buffer_head *)page_private(page));	\
-	})
-#define page_has_buffers(page)	PagePrivate(page)
+		((काष्ठा buffer_head *)page_निजी(page));	\
+	पूर्ण)
+#घोषणा page_has_buffers(page)	PagePrivate(page)
 
-void buffer_check_dirty_writeback(struct page *page,
-				     bool *dirty, bool *writeback);
+व्योम buffer_check_dirty_ग_लिखोback(काष्ठा page *page,
+				     bool *dirty, bool *ग_लिखोback);
 
 /*
  * Declarations
  */
 
-void mark_buffer_dirty(struct buffer_head *bh);
-void mark_buffer_write_io_error(struct buffer_head *bh);
-void touch_buffer(struct buffer_head *bh);
-void set_bh_page(struct buffer_head *bh,
-		struct page *page, unsigned long offset);
-int try_to_free_buffers(struct page *);
-struct buffer_head *alloc_page_buffers(struct page *page, unsigned long size,
+व्योम mark_buffer_dirty(काष्ठा buffer_head *bh);
+व्योम mark_buffer_ग_लिखो_io_error(काष्ठा buffer_head *bh);
+व्योम touch_buffer(काष्ठा buffer_head *bh);
+व्योम set_bh_page(काष्ठा buffer_head *bh,
+		काष्ठा page *page, अचिन्हित दीर्घ offset);
+पूर्णांक try_to_मुक्त_buffers(काष्ठा page *);
+काष्ठा buffer_head *alloc_page_buffers(काष्ठा page *page, अचिन्हित दीर्घ size,
 		bool retry);
-void create_empty_buffers(struct page *, unsigned long,
-			unsigned long b_state);
-void end_buffer_read_sync(struct buffer_head *bh, int uptodate);
-void end_buffer_write_sync(struct buffer_head *bh, int uptodate);
-void end_buffer_async_write(struct buffer_head *bh, int uptodate);
+व्योम create_empty_buffers(काष्ठा page *, अचिन्हित दीर्घ,
+			अचिन्हित दीर्घ b_state);
+व्योम end_buffer_पढ़ो_sync(काष्ठा buffer_head *bh, पूर्णांक uptodate);
+व्योम end_buffer_ग_लिखो_sync(काष्ठा buffer_head *bh, पूर्णांक uptodate);
+व्योम end_buffer_async_ग_लिखो(काष्ठा buffer_head *bh, पूर्णांक uptodate);
 
-/* Things to do with buffers at mapping->private_list */
-void mark_buffer_dirty_inode(struct buffer_head *bh, struct inode *inode);
-int inode_has_buffers(struct inode *);
-void invalidate_inode_buffers(struct inode *);
-int remove_inode_buffers(struct inode *inode);
-int sync_mapping_buffers(struct address_space *mapping);
-void clean_bdev_aliases(struct block_device *bdev, sector_t block,
+/* Things to करो with buffers at mapping->निजी_list */
+व्योम mark_buffer_dirty_inode(काष्ठा buffer_head *bh, काष्ठा inode *inode);
+पूर्णांक inode_has_buffers(काष्ठा inode *);
+व्योम invalidate_inode_buffers(काष्ठा inode *);
+पूर्णांक हटाओ_inode_buffers(काष्ठा inode *inode);
+पूर्णांक sync_mapping_buffers(काष्ठा address_space *mapping);
+व्योम clean_bdev_aliases(काष्ठा block_device *bdev, sector_t block,
 			sector_t len);
-static inline void clean_bdev_bh_alias(struct buffer_head *bh)
-{
+अटल अंतरभूत व्योम clean_bdev_bh_alias(काष्ठा buffer_head *bh)
+अणु
 	clean_bdev_aliases(bh->b_bdev, bh->b_blocknr, 1);
-}
+पूर्ण
 
-void mark_buffer_async_write(struct buffer_head *bh);
-void __wait_on_buffer(struct buffer_head *);
-wait_queue_head_t *bh_waitq_head(struct buffer_head *bh);
-struct buffer_head *__find_get_block(struct block_device *bdev, sector_t block,
-			unsigned size);
-struct buffer_head *__getblk_gfp(struct block_device *bdev, sector_t block,
-				  unsigned size, gfp_t gfp);
-void __brelse(struct buffer_head *);
-void __bforget(struct buffer_head *);
-void __breadahead(struct block_device *, sector_t block, unsigned int size);
-void __breadahead_gfp(struct block_device *, sector_t block, unsigned int size,
+व्योम mark_buffer_async_ग_लिखो(काष्ठा buffer_head *bh);
+व्योम __रुको_on_buffer(काष्ठा buffer_head *);
+रुको_queue_head_t *bh_रुकोq_head(काष्ठा buffer_head *bh);
+काष्ठा buffer_head *__find_get_block(काष्ठा block_device *bdev, sector_t block,
+			अचिन्हित size);
+काष्ठा buffer_head *__getblk_gfp(काष्ठा block_device *bdev, sector_t block,
+				  अचिन्हित size, gfp_t gfp);
+व्योम __brअन्यथा(काष्ठा buffer_head *);
+व्योम __bक्रमget(काष्ठा buffer_head *);
+व्योम __bपढ़ोahead(काष्ठा block_device *, sector_t block, अचिन्हित पूर्णांक size);
+व्योम __bपढ़ोahead_gfp(काष्ठा block_device *, sector_t block, अचिन्हित पूर्णांक size,
 		  gfp_t gfp);
-struct buffer_head *__bread_gfp(struct block_device *,
-				sector_t block, unsigned size, gfp_t gfp);
-void invalidate_bh_lrus(void);
-void invalidate_bh_lrus_cpu(int cpu);
-bool has_bh_in_lru(int cpu, void *dummy);
-struct buffer_head *alloc_buffer_head(gfp_t gfp_flags);
-void free_buffer_head(struct buffer_head * bh);
-void unlock_buffer(struct buffer_head *bh);
-void __lock_buffer(struct buffer_head *bh);
-void ll_rw_block(int, int, int, struct buffer_head * bh[]);
-int sync_dirty_buffer(struct buffer_head *bh);
-int __sync_dirty_buffer(struct buffer_head *bh, int op_flags);
-void write_dirty_buffer(struct buffer_head *bh, int op_flags);
-int submit_bh(int, int, struct buffer_head *);
-void write_boundary_block(struct block_device *bdev,
-			sector_t bblock, unsigned blocksize);
-int bh_uptodate_or_lock(struct buffer_head *bh);
-int bh_submit_read(struct buffer_head *bh);
+काष्ठा buffer_head *__bपढ़ो_gfp(काष्ठा block_device *,
+				sector_t block, अचिन्हित size, gfp_t gfp);
+व्योम invalidate_bh_lrus(व्योम);
+व्योम invalidate_bh_lrus_cpu(पूर्णांक cpu);
+bool has_bh_in_lru(पूर्णांक cpu, व्योम *dummy);
+काष्ठा buffer_head *alloc_buffer_head(gfp_t gfp_flags);
+व्योम मुक्त_buffer_head(काष्ठा buffer_head * bh);
+व्योम unlock_buffer(काष्ठा buffer_head *bh);
+व्योम __lock_buffer(काष्ठा buffer_head *bh);
+व्योम ll_rw_block(पूर्णांक, पूर्णांक, पूर्णांक, काष्ठा buffer_head * bh[]);
+पूर्णांक sync_dirty_buffer(काष्ठा buffer_head *bh);
+पूर्णांक __sync_dirty_buffer(काष्ठा buffer_head *bh, पूर्णांक op_flags);
+व्योम ग_लिखो_dirty_buffer(काष्ठा buffer_head *bh, पूर्णांक op_flags);
+पूर्णांक submit_bh(पूर्णांक, पूर्णांक, काष्ठा buffer_head *);
+व्योम ग_लिखो_boundary_block(काष्ठा block_device *bdev,
+			sector_t bblock, अचिन्हित blocksize);
+पूर्णांक bh_uptodate_or_lock(काष्ठा buffer_head *bh);
+पूर्णांक bh_submit_पढ़ो(काष्ठा buffer_head *bh);
 
-extern int buffer_heads_over_limit;
+बाह्य पूर्णांक buffer_heads_over_limit;
 
 /*
- * Generic address_space_operations implementations for buffer_head-backed
+ * Generic address_space_operations implementations क्रम buffer_head-backed
  * address_spaces.
  */
-void block_invalidatepage(struct page *page, unsigned int offset,
-			  unsigned int length);
-int block_write_full_page(struct page *page, get_block_t *get_block,
-				struct writeback_control *wbc);
-int __block_write_full_page(struct inode *inode, struct page *page,
-			get_block_t *get_block, struct writeback_control *wbc,
+व्योम block_invalidatepage(काष्ठा page *page, अचिन्हित पूर्णांक offset,
+			  अचिन्हित पूर्णांक length);
+पूर्णांक block_ग_लिखो_full_page(काष्ठा page *page, get_block_t *get_block,
+				काष्ठा ग_लिखोback_control *wbc);
+पूर्णांक __block_ग_लिखो_full_page(काष्ठा inode *inode, काष्ठा page *page,
+			get_block_t *get_block, काष्ठा ग_लिखोback_control *wbc,
 			bh_end_io_t *handler);
-int block_read_full_page(struct page*, get_block_t*);
-int block_is_partially_uptodate(struct page *page, unsigned long from,
-				unsigned long count);
-int block_write_begin(struct address_space *mapping, loff_t pos, unsigned len,
-		unsigned flags, struct page **pagep, get_block_t *get_block);
-int __block_write_begin(struct page *page, loff_t pos, unsigned len,
+पूर्णांक block_पढ़ो_full_page(काष्ठा page*, get_block_t*);
+पूर्णांक block_is_partially_uptodate(काष्ठा page *page, अचिन्हित दीर्घ from,
+				अचिन्हित दीर्घ count);
+पूर्णांक block_ग_लिखो_begin(काष्ठा address_space *mapping, loff_t pos, अचिन्हित len,
+		अचिन्हित flags, काष्ठा page **pagep, get_block_t *get_block);
+पूर्णांक __block_ग_लिखो_begin(काष्ठा page *page, loff_t pos, अचिन्हित len,
 		get_block_t *get_block);
-int block_write_end(struct file *, struct address_space *,
-				loff_t, unsigned, unsigned,
-				struct page *, void *);
-int generic_write_end(struct file *, struct address_space *,
-				loff_t, unsigned, unsigned,
-				struct page *, void *);
-void page_zero_new_buffers(struct page *page, unsigned from, unsigned to);
-void clean_page_buffers(struct page *page);
-int cont_write_begin(struct file *, struct address_space *, loff_t,
-			unsigned, unsigned, struct page **, void **,
+पूर्णांक block_ग_लिखो_end(काष्ठा file *, काष्ठा address_space *,
+				loff_t, अचिन्हित, अचिन्हित,
+				काष्ठा page *, व्योम *);
+पूर्णांक generic_ग_लिखो_end(काष्ठा file *, काष्ठा address_space *,
+				loff_t, अचिन्हित, अचिन्हित,
+				काष्ठा page *, व्योम *);
+व्योम page_zero_new_buffers(काष्ठा page *page, अचिन्हित from, अचिन्हित to);
+व्योम clean_page_buffers(काष्ठा page *page);
+पूर्णांक cont_ग_लिखो_begin(काष्ठा file *, काष्ठा address_space *, loff_t,
+			अचिन्हित, अचिन्हित, काष्ठा page **, व्योम **,
 			get_block_t *, loff_t *);
-int generic_cont_expand_simple(struct inode *inode, loff_t size);
-int block_commit_write(struct page *page, unsigned from, unsigned to);
-int block_page_mkwrite(struct vm_area_struct *vma, struct vm_fault *vmf,
+पूर्णांक generic_cont_expand_simple(काष्ठा inode *inode, loff_t size);
+पूर्णांक block_commit_ग_लिखो(काष्ठा page *page, अचिन्हित from, अचिन्हित to);
+पूर्णांक block_page_mkग_लिखो(काष्ठा vm_area_काष्ठा *vma, काष्ठा vm_fault *vmf,
 				get_block_t get_block);
-/* Convert errno to return value from ->page_mkwrite() call */
-static inline vm_fault_t block_page_mkwrite_return(int err)
-{
-	if (err == 0)
-		return VM_FAULT_LOCKED;
-	if (err == -EFAULT || err == -EAGAIN)
-		return VM_FAULT_NOPAGE;
-	if (err == -ENOMEM)
-		return VM_FAULT_OOM;
+/* Convert त्रुटि_सं to वापस value from ->page_mkग_लिखो() call */
+अटल अंतरभूत vm_fault_t block_page_mkग_लिखो_वापस(पूर्णांक err)
+अणु
+	अगर (err == 0)
+		वापस VM_FAULT_LOCKED;
+	अगर (err == -EFAULT || err == -EAGAIN)
+		वापस VM_FAULT_NOPAGE;
+	अगर (err == -ENOMEM)
+		वापस VM_FAULT_OOM;
 	/* -ENOSPC, -EDQUOT, -EIO ... */
-	return VM_FAULT_SIGBUS;
-}
-sector_t generic_block_bmap(struct address_space *, sector_t, get_block_t *);
-int block_truncate_page(struct address_space *, loff_t, get_block_t *);
-int nobh_write_begin(struct address_space *, loff_t, unsigned, unsigned,
-				struct page **, void **, get_block_t*);
-int nobh_write_end(struct file *, struct address_space *,
-				loff_t, unsigned, unsigned,
-				struct page *, void *);
-int nobh_truncate_page(struct address_space *, loff_t, get_block_t *);
-int nobh_writepage(struct page *page, get_block_t *get_block,
-                        struct writeback_control *wbc);
+	वापस VM_FAULT_SIGBUS;
+पूर्ण
+sector_t generic_block_bmap(काष्ठा address_space *, sector_t, get_block_t *);
+पूर्णांक block_truncate_page(काष्ठा address_space *, loff_t, get_block_t *);
+पूर्णांक nobh_ग_लिखो_begin(काष्ठा address_space *, loff_t, अचिन्हित, अचिन्हित,
+				काष्ठा page **, व्योम **, get_block_t*);
+पूर्णांक nobh_ग_लिखो_end(काष्ठा file *, काष्ठा address_space *,
+				loff_t, अचिन्हित, अचिन्हित,
+				काष्ठा page *, व्योम *);
+पूर्णांक nobh_truncate_page(काष्ठा address_space *, loff_t, get_block_t *);
+पूर्णांक nobh_ग_लिखोpage(काष्ठा page *page, get_block_t *get_block,
+                        काष्ठा ग_लिखोback_control *wbc);
 
-void buffer_init(void);
+व्योम buffer_init(व्योम);
 
 /*
- * inline definitions
+ * अंतरभूत definitions
  */
 
-static inline void get_bh(struct buffer_head *bh)
-{
+अटल अंतरभूत व्योम get_bh(काष्ठा buffer_head *bh)
+अणु
         atomic_inc(&bh->b_count);
-}
+पूर्ण
 
-static inline void put_bh(struct buffer_head *bh)
-{
-        smp_mb__before_atomic();
+अटल अंतरभूत व्योम put_bh(काष्ठा buffer_head *bh)
+अणु
+        smp_mb__beक्रमe_atomic();
         atomic_dec(&bh->b_count);
-}
+पूर्ण
 
-static inline void brelse(struct buffer_head *bh)
-{
-	if (bh)
-		__brelse(bh);
-}
+अटल अंतरभूत व्योम brअन्यथा(काष्ठा buffer_head *bh)
+अणु
+	अगर (bh)
+		__brअन्यथा(bh);
+पूर्ण
 
-static inline void bforget(struct buffer_head *bh)
-{
-	if (bh)
-		__bforget(bh);
-}
+अटल अंतरभूत व्योम bक्रमget(काष्ठा buffer_head *bh)
+अणु
+	अगर (bh)
+		__bक्रमget(bh);
+पूर्ण
 
-static inline struct buffer_head *
-sb_bread(struct super_block *sb, sector_t block)
-{
-	return __bread_gfp(sb->s_bdev, block, sb->s_blocksize, __GFP_MOVABLE);
-}
+अटल अंतरभूत काष्ठा buffer_head *
+sb_bपढ़ो(काष्ठा super_block *sb, sector_t block)
+अणु
+	वापस __bपढ़ो_gfp(sb->s_bdev, block, sb->s_blocksize, __GFP_MOVABLE);
+पूर्ण
 
-static inline struct buffer_head *
-sb_bread_unmovable(struct super_block *sb, sector_t block)
-{
-	return __bread_gfp(sb->s_bdev, block, sb->s_blocksize, 0);
-}
+अटल अंतरभूत काष्ठा buffer_head *
+sb_bपढ़ो_unmovable(काष्ठा super_block *sb, sector_t block)
+अणु
+	वापस __bपढ़ो_gfp(sb->s_bdev, block, sb->s_blocksize, 0);
+पूर्ण
 
-static inline void
-sb_breadahead(struct super_block *sb, sector_t block)
-{
-	__breadahead(sb->s_bdev, block, sb->s_blocksize);
-}
+अटल अंतरभूत व्योम
+sb_bपढ़ोahead(काष्ठा super_block *sb, sector_t block)
+अणु
+	__bपढ़ोahead(sb->s_bdev, block, sb->s_blocksize);
+पूर्ण
 
-static inline void
-sb_breadahead_unmovable(struct super_block *sb, sector_t block)
-{
-	__breadahead_gfp(sb->s_bdev, block, sb->s_blocksize, 0);
-}
+अटल अंतरभूत व्योम
+sb_bपढ़ोahead_unmovable(काष्ठा super_block *sb, sector_t block)
+अणु
+	__bपढ़ोahead_gfp(sb->s_bdev, block, sb->s_blocksize, 0);
+पूर्ण
 
-static inline struct buffer_head *
-sb_getblk(struct super_block *sb, sector_t block)
-{
-	return __getblk_gfp(sb->s_bdev, block, sb->s_blocksize, __GFP_MOVABLE);
-}
+अटल अंतरभूत काष्ठा buffer_head *
+sb_getblk(काष्ठा super_block *sb, sector_t block)
+अणु
+	वापस __getblk_gfp(sb->s_bdev, block, sb->s_blocksize, __GFP_MOVABLE);
+पूर्ण
 
 
-static inline struct buffer_head *
-sb_getblk_gfp(struct super_block *sb, sector_t block, gfp_t gfp)
-{
-	return __getblk_gfp(sb->s_bdev, block, sb->s_blocksize, gfp);
-}
+अटल अंतरभूत काष्ठा buffer_head *
+sb_getblk_gfp(काष्ठा super_block *sb, sector_t block, gfp_t gfp)
+अणु
+	वापस __getblk_gfp(sb->s_bdev, block, sb->s_blocksize, gfp);
+पूर्ण
 
-static inline struct buffer_head *
-sb_find_get_block(struct super_block *sb, sector_t block)
-{
-	return __find_get_block(sb->s_bdev, block, sb->s_blocksize);
-}
+अटल अंतरभूत काष्ठा buffer_head *
+sb_find_get_block(काष्ठा super_block *sb, sector_t block)
+अणु
+	वापस __find_get_block(sb->s_bdev, block, sb->s_blocksize);
+पूर्ण
 
-static inline void
-map_bh(struct buffer_head *bh, struct super_block *sb, sector_t block)
-{
+अटल अंतरभूत व्योम
+map_bh(काष्ठा buffer_head *bh, काष्ठा super_block *sb, sector_t block)
+अणु
 	set_buffer_mapped(bh);
 	bh->b_bdev = sb->s_bdev;
 	bh->b_blocknr = block;
 	bh->b_size = sb->s_blocksize;
-}
+पूर्ण
 
-static inline void wait_on_buffer(struct buffer_head *bh)
-{
+अटल अंतरभूत व्योम रुको_on_buffer(काष्ठा buffer_head *bh)
+अणु
 	might_sleep();
-	if (buffer_locked(bh))
-		__wait_on_buffer(bh);
-}
+	अगर (buffer_locked(bh))
+		__रुको_on_buffer(bh);
+पूर्ण
 
-static inline int trylock_buffer(struct buffer_head *bh)
-{
-	return likely(!test_and_set_bit_lock(BH_Lock, &bh->b_state));
-}
+अटल अंतरभूत पूर्णांक trylock_buffer(काष्ठा buffer_head *bh)
+अणु
+	वापस likely(!test_and_set_bit_lock(BH_Lock, &bh->b_state));
+पूर्ण
 
-static inline void lock_buffer(struct buffer_head *bh)
-{
+अटल अंतरभूत व्योम lock_buffer(काष्ठा buffer_head *bh)
+अणु
 	might_sleep();
-	if (!trylock_buffer(bh))
+	अगर (!trylock_buffer(bh))
 		__lock_buffer(bh);
-}
+पूर्ण
 
-static inline struct buffer_head *getblk_unmovable(struct block_device *bdev,
+अटल अंतरभूत काष्ठा buffer_head *getblk_unmovable(काष्ठा block_device *bdev,
 						   sector_t block,
-						   unsigned size)
-{
-	return __getblk_gfp(bdev, block, size, 0);
-}
+						   अचिन्हित size)
+अणु
+	वापस __getblk_gfp(bdev, block, size, 0);
+पूर्ण
 
-static inline struct buffer_head *__getblk(struct block_device *bdev,
+अटल अंतरभूत काष्ठा buffer_head *__getblk(काष्ठा block_device *bdev,
 					   sector_t block,
-					   unsigned size)
-{
-	return __getblk_gfp(bdev, block, size, __GFP_MOVABLE);
-}
+					   अचिन्हित size)
+अणु
+	वापस __getblk_gfp(bdev, block, size, __GFP_MOVABLE);
+पूर्ण
 
 /**
- *  __bread() - reads a specified block and returns the bh
- *  @bdev: the block_device to read from
+ *  __bपढ़ो() - पढ़ोs a specअगरied block and वापसs the bh
+ *  @bdev: the block_device to पढ़ो from
  *  @block: number of block
- *  @size: size (in bytes) to read
+ *  @size: size (in bytes) to पढ़ो
  *
- *  Reads a specified block, and returns buffer head that contains it.
+ *  Reads a specअगरied block, and वापसs buffer head that contains it.
  *  The page cache is allocated from movable area so that it can be migrated.
- *  It returns NULL if the block was unreadable.
+ *  It वापसs शून्य अगर the block was unपढ़ोable.
  */
-static inline struct buffer_head *
-__bread(struct block_device *bdev, sector_t block, unsigned size)
-{
-	return __bread_gfp(bdev, block, size, __GFP_MOVABLE);
-}
+अटल अंतरभूत काष्ठा buffer_head *
+__bपढ़ो(काष्ठा block_device *bdev, sector_t block, अचिन्हित size)
+अणु
+	वापस __bपढ़ो_gfp(bdev, block, size, __GFP_MOVABLE);
+पूर्ण
 
-extern int __set_page_dirty_buffers(struct page *page);
+बाह्य पूर्णांक __set_page_dirty_buffers(काष्ठा page *page);
 
-#else /* CONFIG_BLOCK */
+#अन्यथा /* CONFIG_BLOCK */
 
-static inline void buffer_init(void) {}
-static inline int try_to_free_buffers(struct page *page) { return 1; }
-static inline int inode_has_buffers(struct inode *inode) { return 0; }
-static inline void invalidate_inode_buffers(struct inode *inode) {}
-static inline int remove_inode_buffers(struct inode *inode) { return 1; }
-static inline int sync_mapping_buffers(struct address_space *mapping) { return 0; }
-static inline void invalidate_bh_lrus_cpu(int cpu) {}
-static inline bool has_bh_in_lru(int cpu, void *dummy) { return 0; }
-#define buffer_heads_over_limit 0
+अटल अंतरभूत व्योम buffer_init(व्योम) अणुपूर्ण
+अटल अंतरभूत पूर्णांक try_to_मुक्त_buffers(काष्ठा page *page) अणु वापस 1; पूर्ण
+अटल अंतरभूत पूर्णांक inode_has_buffers(काष्ठा inode *inode) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम invalidate_inode_buffers(काष्ठा inode *inode) अणुपूर्ण
+अटल अंतरभूत पूर्णांक हटाओ_inode_buffers(काष्ठा inode *inode) अणु वापस 1; पूर्ण
+अटल अंतरभूत पूर्णांक sync_mapping_buffers(काष्ठा address_space *mapping) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम invalidate_bh_lrus_cpu(पूर्णांक cpu) अणुपूर्ण
+अटल अंतरभूत bool has_bh_in_lru(पूर्णांक cpu, व्योम *dummy) अणु वापस 0; पूर्ण
+#घोषणा buffer_heads_over_limit 0
 
-#endif /* CONFIG_BLOCK */
-#endif /* _LINUX_BUFFER_HEAD_H */
+#पूर्ण_अगर /* CONFIG_BLOCK */
+#पूर्ण_अगर /* _LINUX_BUFFER_HEAD_H */

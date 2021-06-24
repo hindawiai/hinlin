@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _FIPS_H
-#define _FIPS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _FIPS_H
+#घोषणा _FIPS_H
 
-#ifdef CONFIG_CRYPTO_FIPS
-extern int fips_enabled;
-extern struct atomic_notifier_head fips_fail_notif_chain;
+#अगर_घोषित CONFIG_CRYPTO_FIPS
+बाह्य पूर्णांक fips_enabled;
+बाह्य काष्ठा atomic_notअगरier_head fips_fail_notअगर_chain;
 
-void fips_fail_notify(void);
+व्योम fips_fail_notअगरy(व्योम);
 
-#else
-#define fips_enabled 0
+#अन्यथा
+#घोषणा fips_enabled 0
 
-static inline void fips_fail_notify(void) {}
+अटल अंतरभूत व्योम fips_fail_notअगरy(व्योम) अणुपूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Backlight Driver for Intel-based Apples
+ *  Backlight Driver क्रम Intel-based Apples
  *
  *  Copyright (c) Red Hat <mjg@redhat.com>
  *  Based on code from Pommed:
@@ -10,242 +11,242 @@
  *
  *  This driver triggers SMIs which cause the firmware to change the
  *  backlight brightness. This is icky in many ways, but it's impractical to
- *  get at the firmware code in order to figure out what it's actually doing.
+ *  get at the firmware code in order to figure out what it's actually करोing.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/backlight.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/pci.h>
-#include <linux/acpi.h>
-#include <linux/atomic.h>
-#include <linux/apple_bl.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/apple_bl.h>
 
-static struct backlight_device *apple_backlight_device;
+अटल काष्ठा backlight_device *apple_backlight_device;
 
-struct hw_data {
+काष्ठा hw_data अणु
 	/* I/O resource to allocate. */
-	unsigned long iostart;
-	unsigned long iolen;
-	/* Backlight operations structure. */
-	const struct backlight_ops backlight_ops;
-	void (*set_brightness)(int);
-};
+	अचिन्हित दीर्घ iostart;
+	अचिन्हित दीर्घ iolen;
+	/* Backlight operations काष्ठाure. */
+	स्थिर काष्ठा backlight_ops backlight_ops;
+	व्योम (*set_brightness)(पूर्णांक);
+पूर्ण;
 
-static const struct hw_data *hw_data;
+अटल स्थिर काष्ठा hw_data *hw_data;
 
 /* Module parameters. */
-static int debug;
-module_param_named(debug, debug, int, 0644);
+अटल पूर्णांक debug;
+module_param_named(debug, debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "Set to one to enable debugging messages.");
 
 /*
- * Implementation for machines with Intel chipset.
+ * Implementation क्रम machines with Intel chipset.
  */
-static void intel_chipset_set_brightness(int intensity)
-{
-	outb(0x04 | (intensity << 4), 0xb3);
+अटल व्योम पूर्णांकel_chipset_set_brightness(पूर्णांक पूर्णांकensity)
+अणु
+	outb(0x04 | (पूर्णांकensity << 4), 0xb3);
 	outb(0xbf, 0xb2);
-}
+पूर्ण
 
-static int intel_chipset_send_intensity(struct backlight_device *bd)
-{
-	int intensity = bd->props.brightness;
+अटल पूर्णांक पूर्णांकel_chipset_send_पूर्णांकensity(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक पूर्णांकensity = bd->props.brightness;
 
-	if (debug)
-		pr_debug("setting brightness to %d\n", intensity);
+	अगर (debug)
+		pr_debug("setting brightness to %d\n", पूर्णांकensity);
 
-	intel_chipset_set_brightness(intensity);
-	return 0;
-}
+	पूर्णांकel_chipset_set_brightness(पूर्णांकensity);
+	वापस 0;
+पूर्ण
 
-static int intel_chipset_get_intensity(struct backlight_device *bd)
-{
-	int intensity;
+अटल पूर्णांक पूर्णांकel_chipset_get_पूर्णांकensity(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक पूर्णांकensity;
 
 	outb(0x03, 0xb3);
 	outb(0xbf, 0xb2);
-	intensity = inb(0xb3) >> 4;
+	पूर्णांकensity = inb(0xb3) >> 4;
 
-	if (debug)
-		pr_debug("read brightness of %d\n", intensity);
+	अगर (debug)
+		pr_debug("read brightness of %d\n", पूर्णांकensity);
 
-	return intensity;
-}
+	वापस पूर्णांकensity;
+पूर्ण
 
-static const struct hw_data intel_chipset_data = {
+अटल स्थिर काष्ठा hw_data पूर्णांकel_chipset_data = अणु
 	.iostart = 0xb2,
 	.iolen = 2,
-	.backlight_ops	= {
+	.backlight_ops	= अणु
 		.options	= BL_CORE_SUSPENDRESUME,
-		.get_brightness	= intel_chipset_get_intensity,
-		.update_status	= intel_chipset_send_intensity,
-	},
-	.set_brightness = intel_chipset_set_brightness,
-};
+		.get_brightness	= पूर्णांकel_chipset_get_पूर्णांकensity,
+		.update_status	= पूर्णांकel_chipset_send_पूर्णांकensity,
+	पूर्ण,
+	.set_brightness = पूर्णांकel_chipset_set_brightness,
+पूर्ण;
 
 /*
- * Implementation for machines with Nvidia chipset.
+ * Implementation क्रम machines with Nvidia chipset.
  */
-static void nvidia_chipset_set_brightness(int intensity)
-{
-	outb(0x04 | (intensity << 4), 0x52f);
+अटल व्योम nvidia_chipset_set_brightness(पूर्णांक पूर्णांकensity)
+अणु
+	outb(0x04 | (पूर्णांकensity << 4), 0x52f);
 	outb(0xbf, 0x52e);
-}
+पूर्ण
 
-static int nvidia_chipset_send_intensity(struct backlight_device *bd)
-{
-	int intensity = bd->props.brightness;
+अटल पूर्णांक nvidia_chipset_send_पूर्णांकensity(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक पूर्णांकensity = bd->props.brightness;
 
-	if (debug)
-		pr_debug("setting brightness to %d\n", intensity);
+	अगर (debug)
+		pr_debug("setting brightness to %d\n", पूर्णांकensity);
 
-	nvidia_chipset_set_brightness(intensity);
-	return 0;
-}
+	nvidia_chipset_set_brightness(पूर्णांकensity);
+	वापस 0;
+पूर्ण
 
-static int nvidia_chipset_get_intensity(struct backlight_device *bd)
-{
-	int intensity;
+अटल पूर्णांक nvidia_chipset_get_पूर्णांकensity(काष्ठा backlight_device *bd)
+अणु
+	पूर्णांक पूर्णांकensity;
 
 	outb(0x03, 0x52f);
 	outb(0xbf, 0x52e);
-	intensity = inb(0x52f) >> 4;
+	पूर्णांकensity = inb(0x52f) >> 4;
 
-	if (debug)
-		pr_debug("read brightness of %d\n", intensity);
+	अगर (debug)
+		pr_debug("read brightness of %d\n", पूर्णांकensity);
 
-	return intensity;
-}
+	वापस पूर्णांकensity;
+पूर्ण
 
-static const struct hw_data nvidia_chipset_data = {
+अटल स्थिर काष्ठा hw_data nvidia_chipset_data = अणु
 	.iostart = 0x52e,
 	.iolen = 2,
-	.backlight_ops		= {
+	.backlight_ops		= अणु
 		.options	= BL_CORE_SUSPENDRESUME,
-		.get_brightness	= nvidia_chipset_get_intensity,
-		.update_status	= nvidia_chipset_send_intensity
-	},
+		.get_brightness	= nvidia_chipset_get_पूर्णांकensity,
+		.update_status	= nvidia_chipset_send_पूर्णांकensity
+	पूर्ण,
 	.set_brightness = nvidia_chipset_set_brightness,
-};
+पूर्ण;
 
-static int apple_bl_add(struct acpi_device *dev)
-{
-	struct backlight_properties props;
-	struct pci_dev *host;
-	int intensity;
+अटल पूर्णांक apple_bl_add(काष्ठा acpi_device *dev)
+अणु
+	काष्ठा backlight_properties props;
+	काष्ठा pci_dev *host;
+	पूर्णांक पूर्णांकensity;
 
-	host = pci_get_domain_bus_and_slot(0, 0, 0);
+	host = pci_get_करोमुख्य_bus_and_slot(0, 0, 0);
 
-	if (!host) {
+	अगर (!host) अणु
 		pr_err("unable to find PCI host\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (host->vendor == PCI_VENDOR_ID_INTEL)
-		hw_data = &intel_chipset_data;
-	else if (host->vendor == PCI_VENDOR_ID_NVIDIA)
+	अगर (host->venकरोr == PCI_VENDOR_ID_INTEL)
+		hw_data = &पूर्णांकel_chipset_data;
+	अन्यथा अगर (host->venकरोr == PCI_VENDOR_ID_NVIDIA)
 		hw_data = &nvidia_chipset_data;
 
 	pci_dev_put(host);
 
-	if (!hw_data) {
+	अगर (!hw_data) अणु
 		pr_err("unknown hardware\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Check that the hardware responds - this may not work under EFI */
 
-	intensity = hw_data->backlight_ops.get_brightness(NULL);
+	पूर्णांकensity = hw_data->backlight_ops.get_brightness(शून्य);
 
-	if (!intensity) {
+	अगर (!पूर्णांकensity) अणु
 		hw_data->set_brightness(1);
-		if (!hw_data->backlight_ops.get_brightness(NULL))
-			return -ENODEV;
+		अगर (!hw_data->backlight_ops.get_brightness(शून्य))
+			वापस -ENODEV;
 
 		hw_data->set_brightness(0);
-	}
+	पूर्ण
 
-	if (!request_region(hw_data->iostart, hw_data->iolen,
+	अगर (!request_region(hw_data->iostart, hw_data->iolen,
 			    "Apple backlight"))
-		return -ENXIO;
+		वापस -ENXIO;
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.type = BACKLIGHT_PLATFORM;
 	props.max_brightness = 15;
-	apple_backlight_device = backlight_device_register("apple_backlight",
-				  NULL, NULL, &hw_data->backlight_ops, &props);
+	apple_backlight_device = backlight_device_रेजिस्टर("apple_backlight",
+				  शून्य, शून्य, &hw_data->backlight_ops, &props);
 
-	if (IS_ERR(apple_backlight_device)) {
+	अगर (IS_ERR(apple_backlight_device)) अणु
 		release_region(hw_data->iostart, hw_data->iolen);
-		return PTR_ERR(apple_backlight_device);
-	}
+		वापस PTR_ERR(apple_backlight_device);
+	पूर्ण
 
 	apple_backlight_device->props.brightness =
 		hw_data->backlight_ops.get_brightness(apple_backlight_device);
 	backlight_update_status(apple_backlight_device);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int apple_bl_remove(struct acpi_device *dev)
-{
-	backlight_device_unregister(apple_backlight_device);
+अटल पूर्णांक apple_bl_हटाओ(काष्ठा acpi_device *dev)
+अणु
+	backlight_device_unरेजिस्टर(apple_backlight_device);
 
 	release_region(hw_data->iostart, hw_data->iolen);
-	hw_data = NULL;
-	return 0;
-}
+	hw_data = शून्य;
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id apple_bl_ids[] = {
-	{"APP0002", 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id apple_bl_ids[] = अणु
+	अणु"APP0002", 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 
-static struct acpi_driver apple_bl_driver = {
+अटल काष्ठा acpi_driver apple_bl_driver = अणु
 	.name = "Apple backlight",
 	.ids = apple_bl_ids,
-	.ops = {
+	.ops = अणु
 		.add = apple_bl_add,
-		.remove = apple_bl_remove,
-	},
-};
+		.हटाओ = apple_bl_हटाओ,
+	पूर्ण,
+पूर्ण;
 
-static atomic_t apple_bl_registered = ATOMIC_INIT(0);
+अटल atomic_t apple_bl_रेजिस्टरed = ATOMIC_INIT(0);
 
-int apple_bl_register(void)
-{
-	if (atomic_xchg(&apple_bl_registered, 1) == 0)
-		return acpi_bus_register_driver(&apple_bl_driver);
+पूर्णांक apple_bl_रेजिस्टर(व्योम)
+अणु
+	अगर (atomic_xchg(&apple_bl_रेजिस्टरed, 1) == 0)
+		वापस acpi_bus_रेजिस्टर_driver(&apple_bl_driver);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(apple_bl_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(apple_bl_रेजिस्टर);
 
-void apple_bl_unregister(void)
-{
-	if (atomic_xchg(&apple_bl_registered, 0) == 1)
-		acpi_bus_unregister_driver(&apple_bl_driver);
-}
-EXPORT_SYMBOL_GPL(apple_bl_unregister);
+व्योम apple_bl_unरेजिस्टर(व्योम)
+अणु
+	अगर (atomic_xchg(&apple_bl_रेजिस्टरed, 0) == 1)
+		acpi_bus_unरेजिस्टर_driver(&apple_bl_driver);
+पूर्ण
+EXPORT_SYMBOL_GPL(apple_bl_unरेजिस्टर);
 
-static int __init apple_bl_init(void)
-{
-	return apple_bl_register();
-}
+अटल पूर्णांक __init apple_bl_init(व्योम)
+अणु
+	वापस apple_bl_रेजिस्टर();
+पूर्ण
 
-static void __exit apple_bl_exit(void)
-{
-	apple_bl_unregister();
-}
+अटल व्योम __निकास apple_bl_निकास(व्योम)
+अणु
+	apple_bl_unरेजिस्टर();
+पूर्ण
 
 module_init(apple_bl_init);
-module_exit(apple_bl_exit);
+module_निकास(apple_bl_निकास);
 
 MODULE_AUTHOR("Matthew Garrett <mjg@redhat.com>");
 MODULE_DESCRIPTION("Apple Backlight Driver");

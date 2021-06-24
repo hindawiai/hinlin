@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mdio
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM mdio
 
-#if !defined(_TRACE_MDIO_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_MDIO_H
+#अगर !defined(_TRACE_MDIO_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_MDIO_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_EVENT_CONDITION(mdio_access,
 
-	TP_PROTO(struct mii_bus *bus, char read,
-		 u8 addr, unsigned regnum, u16 val, int err),
+	TP_PROTO(काष्ठा mii_bus *bus, अक्षर पढ़ो,
+		 u8 addr, अचिन्हित regnum, u16 val, पूर्णांक err),
 
-	TP_ARGS(bus, read, addr, regnum, val, err),
+	TP_ARGS(bus, पढ़ो, addr, regnum, val, err),
 
 	TP_CONDITION(err >= 0),
 
 	TP_STRUCT__entry(
-		__array(char, busid, MII_BUS_ID_SIZE)
-		__field(char, read)
+		__array(अक्षर, busid, MII_BUS_ID_SIZE)
+		__field(अक्षर, पढ़ो)
 		__field(u8, addr)
 		__field(u16, val)
-		__field(unsigned, regnum)
+		__field(अचिन्हित, regnum)
 	),
 
 	TP_fast_assign(
-		strncpy(__entry->busid, bus->id, MII_BUS_ID_SIZE);
-		__entry->read = read;
+		म_नकलन(__entry->busid, bus->id, MII_BUS_ID_SIZE);
+		__entry->पढ़ो = पढ़ो;
 		__entry->addr = addr;
 		__entry->regnum = regnum;
 		__entry->val = val;
 	),
 
-	TP_printk("%s %-5s phy:0x%02hhx reg:0x%02x val:0x%04hx",
-		  __entry->busid, __entry->read ? "read" : "write",
+	TP_prपूर्णांकk("%s %-5s phy:0x%02hhx reg:0x%02x val:0x%04hx",
+		  __entry->busid, __entry->पढ़ो ? "read" : "write",
 		  __entry->addr, __entry->regnum, __entry->val)
 );
 
-#endif /* if !defined(_TRACE_MDIO_H) || defined(TRACE_HEADER_MULTI_READ) */
+#पूर्ण_अगर /* अगर !defined(_TRACE_MDIO_H) || defined(TRACE_HEADER_MULTI_READ) */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

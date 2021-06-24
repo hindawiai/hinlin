@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics hts221 sensor driver
  *
@@ -7,61 +8,61 @@
  * Lorenzo Bianconi <lorenzo.bianconi@st.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/iio/sysfs.h>
-#include <linux/delay.h>
-#include <linux/pm.h>
-#include <linux/regmap.h>
-#include <linux/bitfield.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/bitfield.h>
 
-#include "hts221.h"
+#समावेश "hts221.h"
 
-#define HTS221_REG_WHOAMI_ADDR		0x0f
-#define HTS221_REG_WHOAMI_VAL		0xbc
+#घोषणा HTS221_REG_WHOAMI_ADDR		0x0f
+#घोषणा HTS221_REG_WHOAMI_VAL		0xbc
 
-#define HTS221_REG_CNTRL1_ADDR		0x20
-#define HTS221_REG_CNTRL2_ADDR		0x21
+#घोषणा HTS221_REG_CNTRL1_ADDR		0x20
+#घोषणा HTS221_REG_CNTRL2_ADDR		0x21
 
-#define HTS221_ODR_MASK			0x03
-#define HTS221_BDU_MASK			BIT(2)
-#define HTS221_ENABLE_MASK		BIT(7)
+#घोषणा HTS221_ODR_MASK			0x03
+#घोषणा HTS221_BDU_MASK			BIT(2)
+#घोषणा HTS221_ENABLE_MASK		BIT(7)
 
-/* calibration registers */
-#define HTS221_REG_0RH_CAL_X_H		0x36
-#define HTS221_REG_1RH_CAL_X_H		0x3a
-#define HTS221_REG_0RH_CAL_Y_H		0x30
-#define HTS221_REG_1RH_CAL_Y_H		0x31
-#define HTS221_REG_0T_CAL_X_L		0x3c
-#define HTS221_REG_1T_CAL_X_L		0x3e
-#define HTS221_REG_0T_CAL_Y_H		0x32
-#define HTS221_REG_1T_CAL_Y_H		0x33
-#define HTS221_REG_T1_T0_CAL_Y_H	0x35
+/* calibration रेजिस्टरs */
+#घोषणा HTS221_REG_0RH_CAL_X_H		0x36
+#घोषणा HTS221_REG_1RH_CAL_X_H		0x3a
+#घोषणा HTS221_REG_0RH_CAL_Y_H		0x30
+#घोषणा HTS221_REG_1RH_CAL_Y_H		0x31
+#घोषणा HTS221_REG_0T_CAL_X_L		0x3c
+#घोषणा HTS221_REG_1T_CAL_X_L		0x3e
+#घोषणा HTS221_REG_0T_CAL_Y_H		0x32
+#घोषणा HTS221_REG_1T_CAL_Y_H		0x33
+#घोषणा HTS221_REG_T1_T0_CAL_Y_H	0x35
 
-struct hts221_odr {
+काष्ठा hts221_odr अणु
 	u8 hz;
 	u8 val;
-};
+पूर्ण;
 
-#define HTS221_AVG_DEPTH		8
-struct hts221_avg {
+#घोषणा HTS221_AVG_DEPTH		8
+काष्ठा hts221_avg अणु
 	u8 addr;
 	u8 mask;
 	u16 avg_avl[HTS221_AVG_DEPTH];
-};
+पूर्ण;
 
-static const struct hts221_odr hts221_odr_table[] = {
-	{  1, 0x01 },	/* 1Hz */
-	{  7, 0x02 },	/* 7Hz */
-	{ 13, 0x03 },	/* 12.5Hz */
-};
+अटल स्थिर काष्ठा hts221_odr hts221_odr_table[] = अणु
+	अणु  1, 0x01 पूर्ण,	/* 1Hz */
+	अणु  7, 0x02 पूर्ण,	/* 7Hz */
+	अणु 13, 0x03 पूर्ण,	/* 12.5Hz */
+पूर्ण;
 
-static const struct hts221_avg hts221_avg_list[] = {
-	{
+अटल स्थिर काष्ठा hts221_avg hts221_avg_list[] = अणु
+	अणु
 		.addr = 0x10,
 		.mask = 0x07,
-		.avg_avl = {
+		.avg_avl = अणु
 			4, /* 0.4 %RH */
 			8, /* 0.3 %RH */
 			16, /* 0.2 %RH */
@@ -70,12 +71,12 @@ static const struct hts221_avg hts221_avg_list[] = {
 			128, /* 0.07 %RH */
 			256, /* 0.05 %RH */
 			512, /* 0.03 %RH */
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.addr = 0x10,
 		.mask = 0x38,
-		.avg_avl = {
+		.avg_avl = अणु
 			2, /* 0.08 degC */
 			4, /* 0.05 degC */
 			8, /* 0.04 degC */
@@ -84,12 +85,12 @@ static const struct hts221_avg hts221_avg_list[] = {
 			64, /* 0.015 degC */
 			128, /* 0.01 degC */
 			256, /* 0.007 degC */
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec hts221_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec hts221_channels[] = अणु
+	अणु
 		.type = IIO_HUMIDITYRELATIVE,
 		.address = 0x28,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
@@ -98,14 +99,14 @@ static const struct iio_chan_spec hts221_channels[] = {
 				      BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
 		.scan_index = 0,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 's',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_LE,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.type = IIO_TEMP,
 		.address = 0x2a,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
@@ -114,177 +115,177 @@ static const struct iio_chan_spec hts221_channels[] = {
 				      BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
 		.info_mask_shared_by_all = BIT(IIO_CHAN_INFO_SAMP_FREQ),
 		.scan_index = 1,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 's',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_LE,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	IIO_CHAN_SOFT_TIMESTAMP(2),
-};
+पूर्ण;
 
-static int hts221_check_whoami(struct hts221_hw *hw)
-{
-	int err, data;
+अटल पूर्णांक hts221_check_whoami(काष्ठा hts221_hw *hw)
+अणु
+	पूर्णांक err, data;
 
-	err = regmap_read(hw->regmap, HTS221_REG_WHOAMI_ADDR, &data);
-	if (err < 0) {
+	err = regmap_पढ़ो(hw->regmap, HTS221_REG_WHOAMI_ADDR, &data);
+	अगर (err < 0) अणु
 		dev_err(hw->dev, "failed to read whoami register\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (data != HTS221_REG_WHOAMI_VAL) {
+	अगर (data != HTS221_REG_WHOAMI_VAL) अणु
 		dev_err(hw->dev, "wrong whoami {%02x vs %02x}\n",
 			data, HTS221_REG_WHOAMI_VAL);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hts221_update_odr(struct hts221_hw *hw, u8 odr)
-{
-	int i, err;
+अटल पूर्णांक hts221_update_odr(काष्ठा hts221_hw *hw, u8 odr)
+अणु
+	पूर्णांक i, err;
 
-	for (i = 0; i < ARRAY_SIZE(hts221_odr_table); i++)
-		if (hts221_odr_table[i].hz == odr)
-			break;
+	क्रम (i = 0; i < ARRAY_SIZE(hts221_odr_table); i++)
+		अगर (hts221_odr_table[i].hz == odr)
+			अवरोध;
 
-	if (i == ARRAY_SIZE(hts221_odr_table))
-		return -EINVAL;
+	अगर (i == ARRAY_SIZE(hts221_odr_table))
+		वापस -EINVAL;
 
 	err = regmap_update_bits(hw->regmap, HTS221_REG_CNTRL1_ADDR,
 				 HTS221_ODR_MASK,
 				 FIELD_PREP(HTS221_ODR_MASK,
 					    hts221_odr_table[i].val));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	hw->odr = odr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hts221_update_avg(struct hts221_hw *hw,
-			     enum hts221_sensor_type type,
+अटल पूर्णांक hts221_update_avg(काष्ठा hts221_hw *hw,
+			     क्रमागत hts221_sensor_type type,
 			     u16 val)
-{
-	const struct hts221_avg *avg = &hts221_avg_list[type];
-	int i, err, data;
+अणु
+	स्थिर काष्ठा hts221_avg *avg = &hts221_avg_list[type];
+	पूर्णांक i, err, data;
 
-	for (i = 0; i < HTS221_AVG_DEPTH; i++)
-		if (avg->avg_avl[i] == val)
-			break;
+	क्रम (i = 0; i < HTS221_AVG_DEPTH; i++)
+		अगर (avg->avg_avl[i] == val)
+			अवरोध;
 
-	if (i == HTS221_AVG_DEPTH)
-		return -EINVAL;
+	अगर (i == HTS221_AVG_DEPTH)
+		वापस -EINVAL;
 
 	data = ((i << __ffs(avg->mask)) & avg->mask);
 	err = regmap_update_bits(hw->regmap, avg->addr,
 				 avg->mask, data);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	hw->sensors[type].cur_avg_idx = i;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t hts221_sysfs_sampling_freq(struct device *dev,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	int i;
-	ssize_t len = 0;
+अटल sमाप_प्रकार hts221_sysfs_sampling_freq(काष्ठा device *dev,
+					  काष्ठा device_attribute *attr,
+					  अक्षर *buf)
+अणु
+	पूर्णांक i;
+	sमाप_प्रकार len = 0;
 
-	for (i = 0; i < ARRAY_SIZE(hts221_odr_table); i++)
-		len += scnprintf(buf + len, PAGE_SIZE - len, "%d ",
+	क्रम (i = 0; i < ARRAY_SIZE(hts221_odr_table); i++)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len, "%d ",
 				 hts221_odr_table[i].hz);
 	buf[len - 1] = '\n';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t
-hts221_sysfs_rh_oversampling_avail(struct device *dev,
-				   struct device_attribute *attr,
-				   char *buf)
-{
-	const struct hts221_avg *avg = &hts221_avg_list[HTS221_SENSOR_H];
-	ssize_t len = 0;
-	int i;
+अटल sमाप_प्रकार
+hts221_sysfs_rh_oversampling_avail(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   अक्षर *buf)
+अणु
+	स्थिर काष्ठा hts221_avg *avg = &hts221_avg_list[HTS221_SENSOR_H];
+	sमाप_प्रकार len = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(avg->avg_avl); i++)
-		len += scnprintf(buf + len, PAGE_SIZE - len, "%d ",
+	क्रम (i = 0; i < ARRAY_SIZE(avg->avg_avl); i++)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len, "%d ",
 				 avg->avg_avl[i]);
 	buf[len - 1] = '\n';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static ssize_t
-hts221_sysfs_temp_oversampling_avail(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	const struct hts221_avg *avg = &hts221_avg_list[HTS221_SENSOR_T];
-	ssize_t len = 0;
-	int i;
+अटल sमाप_प्रकार
+hts221_sysfs_temp_oversampling_avail(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	स्थिर काष्ठा hts221_avg *avg = &hts221_avg_list[HTS221_SENSOR_T];
+	sमाप_प्रकार len = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(avg->avg_avl); i++)
-		len += scnprintf(buf + len, PAGE_SIZE - len, "%d ",
+	क्रम (i = 0; i < ARRAY_SIZE(avg->avg_avl); i++)
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len, "%d ",
 				 avg->avg_avl[i]);
 	buf[len - 1] = '\n';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-int hts221_set_enable(struct hts221_hw *hw, bool enable)
-{
-	int err;
+पूर्णांक hts221_set_enable(काष्ठा hts221_hw *hw, bool enable)
+अणु
+	पूर्णांक err;
 
 	err = regmap_update_bits(hw->regmap, HTS221_REG_CNTRL1_ADDR,
 				 HTS221_ENABLE_MASK,
 				 FIELD_PREP(HTS221_ENABLE_MASK, enable));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	hw->enabled = enable;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hts221_parse_temp_caldata(struct hts221_hw *hw)
-{
-	int err, *slope, *b_gen, cal0, cal1;
+अटल पूर्णांक hts221_parse_temp_caldata(काष्ठा hts221_hw *hw)
+अणु
+	पूर्णांक err, *slope, *b_gen, cal0, cal1;
 	s16 cal_x0, cal_x1, cal_y0, cal_y1;
 	__le16 val;
 
-	err = regmap_read(hw->regmap, HTS221_REG_0T_CAL_Y_H, &cal0);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(hw->regmap, HTS221_REG_0T_CAL_Y_H, &cal0);
+	अगर (err < 0)
+		वापस err;
 
-	err = regmap_read(hw->regmap, HTS221_REG_T1_T0_CAL_Y_H, &cal1);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(hw->regmap, HTS221_REG_T1_T0_CAL_Y_H, &cal1);
+	अगर (err < 0)
+		वापस err;
 	cal_y0 = ((cal1 & 0x3) << 8) | cal0;
 
-	err = regmap_read(hw->regmap, HTS221_REG_1T_CAL_Y_H, &cal0);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(hw->regmap, HTS221_REG_1T_CAL_Y_H, &cal0);
+	अगर (err < 0)
+		वापस err;
 	cal_y1 = (((cal1 & 0xc) >> 2) << 8) | cal0;
 
-	err = regmap_bulk_read(hw->regmap, HTS221_REG_0T_CAL_X_L,
-			       &val, sizeof(val));
-	if (err < 0)
-		return err;
+	err = regmap_bulk_पढ़ो(hw->regmap, HTS221_REG_0T_CAL_X_L,
+			       &val, माप(val));
+	अगर (err < 0)
+		वापस err;
 	cal_x0 = le16_to_cpu(val);
 
-	err = regmap_bulk_read(hw->regmap, HTS221_REG_1T_CAL_X_L,
-			       &val, sizeof(val));
-	if (err < 0)
-		return err;
+	err = regmap_bulk_पढ़ो(hw->regmap, HTS221_REG_1T_CAL_X_L,
+			       &val, माप(val));
+	अगर (err < 0)
+		वापस err;
 	cal_x1 = le16_to_cpu(val);
 
 	slope = &hw->sensors[HTS221_SENSOR_T].slope;
@@ -295,35 +296,35 @@ static int hts221_parse_temp_caldata(struct hts221_hw *hw)
 		 (cal_x1 - cal_x0);
 	*b_gen *= 8;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hts221_parse_rh_caldata(struct hts221_hw *hw)
-{
-	int err, *slope, *b_gen, data;
+अटल पूर्णांक hts221_parse_rh_caldata(काष्ठा hts221_hw *hw)
+अणु
+	पूर्णांक err, *slope, *b_gen, data;
 	s16 cal_x0, cal_x1, cal_y0, cal_y1;
 	__le16 val;
 
-	err = regmap_read(hw->regmap, HTS221_REG_0RH_CAL_Y_H, &data);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(hw->regmap, HTS221_REG_0RH_CAL_Y_H, &data);
+	अगर (err < 0)
+		वापस err;
 	cal_y0 = data;
 
-	err = regmap_read(hw->regmap, HTS221_REG_1RH_CAL_Y_H, &data);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(hw->regmap, HTS221_REG_1RH_CAL_Y_H, &data);
+	अगर (err < 0)
+		वापस err;
 	cal_y1 = data;
 
-	err = regmap_bulk_read(hw->regmap, HTS221_REG_0RH_CAL_X_H,
-			       &val, sizeof(val));
-	if (err < 0)
-		return err;
+	err = regmap_bulk_पढ़ो(hw->regmap, HTS221_REG_0RH_CAL_X_H,
+			       &val, माप(val));
+	अगर (err < 0)
+		वापस err;
 	cal_x0 = le16_to_cpu(val);
 
-	err = regmap_bulk_read(hw->regmap, HTS221_REG_1RH_CAL_X_H,
-			       &val, sizeof(val));
-	if (err < 0)
-		return err;
+	err = regmap_bulk_पढ़ो(hw->regmap, HTS221_REG_1RH_CAL_X_H,
+			       &val, माप(val));
+	अगर (err < 0)
+		वापस err;
 	cal_x1 = le16_to_cpu(val);
 
 	slope = &hw->sensors[HTS221_SENSOR_H].slope;
@@ -334,261 +335,261 @@ static int hts221_parse_rh_caldata(struct hts221_hw *hw)
 		 (cal_x1 - cal_x0);
 	*b_gen *= 8;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hts221_get_sensor_scale(struct hts221_hw *hw,
-				   enum iio_chan_type ch_type,
-				   int *val, int *val2)
-{
-	s64 tmp;
-	s32 rem, div, data;
+अटल पूर्णांक hts221_get_sensor_scale(काष्ठा hts221_hw *hw,
+				   क्रमागत iio_chan_type ch_type,
+				   पूर्णांक *val, पूर्णांक *val2)
+अणु
+	s64 पंचांगp;
+	s32 rem, भाग, data;
 
-	switch (ch_type) {
-	case IIO_HUMIDITYRELATIVE:
+	चयन (ch_type) अणु
+	हाल IIO_HUMIDITYRELATIVE:
 		data = hw->sensors[HTS221_SENSOR_H].slope;
-		div = (1 << 4) * 1000;
-		break;
-	case IIO_TEMP:
+		भाग = (1 << 4) * 1000;
+		अवरोध;
+	हाल IIO_TEMP:
 		data = hw->sensors[HTS221_SENSOR_T].slope;
-		div = (1 << 6) * 1000;
-		break;
-	default:
-		return -EINVAL;
-	}
+		भाग = (1 << 6) * 1000;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	tmp = div_s64(data * 1000000000LL, div);
-	tmp = div_s64_rem(tmp, 1000000000LL, &rem);
+	पंचांगp = भाग_s64(data * 1000000000LL, भाग);
+	पंचांगp = भाग_s64_rem(पंचांगp, 1000000000LL, &rem);
 
-	*val = tmp;
+	*val = पंचांगp;
 	*val2 = rem;
 
-	return IIO_VAL_INT_PLUS_NANO;
-}
+	वापस IIO_VAL_INT_PLUS_न_अंकO;
+पूर्ण
 
-static int hts221_get_sensor_offset(struct hts221_hw *hw,
-				    enum iio_chan_type ch_type,
-				    int *val, int *val2)
-{
-	s64 tmp;
-	s32 rem, div, data;
+अटल पूर्णांक hts221_get_sensor_offset(काष्ठा hts221_hw *hw,
+				    क्रमागत iio_chan_type ch_type,
+				    पूर्णांक *val, पूर्णांक *val2)
+अणु
+	s64 पंचांगp;
+	s32 rem, भाग, data;
 
-	switch (ch_type) {
-	case IIO_HUMIDITYRELATIVE:
+	चयन (ch_type) अणु
+	हाल IIO_HUMIDITYRELATIVE:
 		data = hw->sensors[HTS221_SENSOR_H].b_gen;
-		div = hw->sensors[HTS221_SENSOR_H].slope;
-		break;
-	case IIO_TEMP:
+		भाग = hw->sensors[HTS221_SENSOR_H].slope;
+		अवरोध;
+	हाल IIO_TEMP:
 		data = hw->sensors[HTS221_SENSOR_T].b_gen;
-		div = hw->sensors[HTS221_SENSOR_T].slope;
-		break;
-	default:
-		return -EINVAL;
-	}
+		भाग = hw->sensors[HTS221_SENSOR_T].slope;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	tmp = div_s64(data * 1000000000LL, div);
-	tmp = div_s64_rem(tmp, 1000000000LL, &rem);
+	पंचांगp = भाग_s64(data * 1000000000LL, भाग);
+	पंचांगp = भाग_s64_rem(पंचांगp, 1000000000LL, &rem);
 
-	*val = tmp;
+	*val = पंचांगp;
 	*val2 = rem;
 
-	return IIO_VAL_INT_PLUS_NANO;
-}
+	वापस IIO_VAL_INT_PLUS_न_अंकO;
+पूर्ण
 
-static int hts221_read_oneshot(struct hts221_hw *hw, u8 addr, int *val)
-{
+अटल पूर्णांक hts221_पढ़ो_oneshot(काष्ठा hts221_hw *hw, u8 addr, पूर्णांक *val)
+अणु
 	__le16 data;
-	int err;
+	पूर्णांक err;
 
 	err = hts221_set_enable(hw, true);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	msleep(50);
 
-	err = regmap_bulk_read(hw->regmap, addr, &data, sizeof(data));
-	if (err < 0)
-		return err;
+	err = regmap_bulk_पढ़ो(hw->regmap, addr, &data, माप(data));
+	अगर (err < 0)
+		वापस err;
 
 	hts221_set_enable(hw, false);
 
 	*val = (s16)le16_to_cpu(data);
 
-	return IIO_VAL_INT;
-}
+	वापस IIO_VAL_INT;
+पूर्ण
 
-static int hts221_read_raw(struct iio_dev *iio_dev,
-			   struct iio_chan_spec const *ch,
-			   int *val, int *val2, long mask)
-{
-	struct hts221_hw *hw = iio_priv(iio_dev);
-	int ret;
+अटल पूर्णांक hts221_पढ़ो_raw(काष्ठा iio_dev *iio_dev,
+			   काष्ठा iio_chan_spec स्थिर *ch,
+			   पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
+	पूर्णांक ret;
 
 	ret = iio_device_claim_direct_mode(iio_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		ret = hts221_read_oneshot(hw, ch->address, val);
-		break;
-	case IIO_CHAN_INFO_SCALE:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		ret = hts221_पढ़ो_oneshot(hw, ch->address, val);
+		अवरोध;
+	हाल IIO_CHAN_INFO_SCALE:
 		ret = hts221_get_sensor_scale(hw, ch->type, val, val2);
-		break;
-	case IIO_CHAN_INFO_OFFSET:
+		अवरोध;
+	हाल IIO_CHAN_INFO_OFFSET:
 		ret = hts221_get_sensor_offset(hw, ch->type, val, val2);
-		break;
-	case IIO_CHAN_INFO_SAMP_FREQ:
+		अवरोध;
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		*val = hw->odr;
 		ret = IIO_VAL_INT;
-		break;
-	case IIO_CHAN_INFO_OVERSAMPLING_RATIO: {
+		अवरोध;
+	हाल IIO_CHAN_INFO_OVERSAMPLING_RATIO: अणु
 		u8 idx;
-		const struct hts221_avg *avg;
+		स्थिर काष्ठा hts221_avg *avg;
 
-		switch (ch->type) {
-		case IIO_HUMIDITYRELATIVE:
+		चयन (ch->type) अणु
+		हाल IIO_HUMIDITYRELATIVE:
 			avg = &hts221_avg_list[HTS221_SENSOR_H];
 			idx = hw->sensors[HTS221_SENSOR_H].cur_avg_idx;
 			*val = avg->avg_avl[idx];
 			ret = IIO_VAL_INT;
-			break;
-		case IIO_TEMP:
+			अवरोध;
+		हाल IIO_TEMP:
 			avg = &hts221_avg_list[HTS221_SENSOR_T];
 			idx = hw->sensors[HTS221_SENSOR_T].cur_avg_idx;
 			*val = avg->avg_avl[idx];
 			ret = IIO_VAL_INT;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-			break;
-		}
-		break;
-	}
-	default:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	iio_device_release_direct_mode(iio_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hts221_write_raw(struct iio_dev *iio_dev,
-			    struct iio_chan_spec const *chan,
-			    int val, int val2, long mask)
-{
-	struct hts221_hw *hw = iio_priv(iio_dev);
-	int ret;
+अटल पूर्णांक hts221_ग_लिखो_raw(काष्ठा iio_dev *iio_dev,
+			    काष्ठा iio_chan_spec स्थिर *chan,
+			    पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
+	पूर्णांक ret;
 
 	ret = iio_device_claim_direct_mode(iio_dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SAMP_FREQ:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
 		ret = hts221_update_odr(hw, val);
-		break;
-	case IIO_CHAN_INFO_OVERSAMPLING_RATIO:
-		switch (chan->type) {
-		case IIO_HUMIDITYRELATIVE:
+		अवरोध;
+	हाल IIO_CHAN_INFO_OVERSAMPLING_RATIO:
+		चयन (chan->type) अणु
+		हाल IIO_HUMIDITYRELATIVE:
 			ret = hts221_update_avg(hw, HTS221_SENSOR_H, val);
-			break;
-		case IIO_TEMP:
+			अवरोध;
+		हाल IIO_TEMP:
 			ret = hts221_update_avg(hw, HTS221_SENSOR_T, val);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = -EINVAL;
-			break;
-		}
-		break;
-	default:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	iio_device_release_direct_mode(iio_dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hts221_validate_trigger(struct iio_dev *iio_dev,
-				   struct iio_trigger *trig)
-{
-	struct hts221_hw *hw = iio_priv(iio_dev);
+अटल पूर्णांक hts221_validate_trigger(काष्ठा iio_dev *iio_dev,
+				   काष्ठा iio_trigger *trig)
+अणु
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
 
-	return hw->trig == trig ? 0 : -EINVAL;
-}
+	वापस hw->trig == trig ? 0 : -EINVAL;
+पूर्ण
 
-static IIO_DEVICE_ATTR(in_humidity_oversampling_ratio_available, S_IRUGO,
-		       hts221_sysfs_rh_oversampling_avail, NULL, 0);
-static IIO_DEVICE_ATTR(in_temp_oversampling_ratio_available, S_IRUGO,
-		       hts221_sysfs_temp_oversampling_avail, NULL, 0);
-static IIO_DEV_ATTR_SAMP_FREQ_AVAIL(hts221_sysfs_sampling_freq);
+अटल IIO_DEVICE_ATTR(in_humidity_oversampling_ratio_available, S_IRUGO,
+		       hts221_sysfs_rh_oversampling_avail, शून्य, 0);
+अटल IIO_DEVICE_ATTR(in_temp_oversampling_ratio_available, S_IRUGO,
+		       hts221_sysfs_temp_oversampling_avail, शून्य, 0);
+अटल IIO_DEV_ATTR_SAMP_FREQ_AVAIL(hts221_sysfs_sampling_freq);
 
-static struct attribute *hts221_attributes[] = {
+अटल काष्ठा attribute *hts221_attributes[] = अणु
 	&iio_dev_attr_sampling_frequency_available.dev_attr.attr,
 	&iio_dev_attr_in_humidity_oversampling_ratio_available.dev_attr.attr,
 	&iio_dev_attr_in_temp_oversampling_ratio_available.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group hts221_attribute_group = {
+अटल स्थिर काष्ठा attribute_group hts221_attribute_group = अणु
 	.attrs = hts221_attributes,
-};
+पूर्ण;
 
-static const struct iio_info hts221_info = {
+अटल स्थिर काष्ठा iio_info hts221_info = अणु
 	.attrs = &hts221_attribute_group,
-	.read_raw = hts221_read_raw,
-	.write_raw = hts221_write_raw,
+	.पढ़ो_raw = hts221_पढ़ो_raw,
+	.ग_लिखो_raw = hts221_ग_लिखो_raw,
 	.validate_trigger = hts221_validate_trigger,
-};
+पूर्ण;
 
-static const unsigned long hts221_scan_masks[] = {0x3, 0x0};
+अटल स्थिर अचिन्हित दीर्घ hts221_scan_masks[] = अणु0x3, 0x0पूर्ण;
 
-static int hts221_init_regulators(struct device *dev)
-{
-	struct iio_dev *iio_dev = dev_get_drvdata(dev);
-	struct hts221_hw *hw = iio_priv(iio_dev);
-	int err;
+अटल पूर्णांक hts221_init_regulators(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *iio_dev = dev_get_drvdata(dev);
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
+	पूर्णांक err;
 
 	hw->vdd = devm_regulator_get(dev, "vdd");
-	if (IS_ERR(hw->vdd))
-		return dev_err_probe(dev, PTR_ERR(hw->vdd),
+	अगर (IS_ERR(hw->vdd))
+		वापस dev_err_probe(dev, PTR_ERR(hw->vdd),
 				     "failed to get vdd regulator\n");
 
 	err = regulator_enable(hw->vdd);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "failed to enable vdd regulator: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	msleep(50);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hts221_chip_uninit(void *data)
-{
-	struct hts221_hw *hw = data;
+अटल व्योम hts221_chip_uninit(व्योम *data)
+अणु
+	काष्ठा hts221_hw *hw = data;
 
 	regulator_disable(hw->vdd);
-}
+पूर्ण
 
-int hts221_probe(struct device *dev, int irq, const char *name,
-		 struct regmap *regmap)
-{
-	struct iio_dev *iio_dev;
-	struct hts221_hw *hw;
-	int err;
+पूर्णांक hts221_probe(काष्ठा device *dev, पूर्णांक irq, स्थिर अक्षर *name,
+		 काष्ठा regmap *regmap)
+अणु
+	काष्ठा iio_dev *iio_dev;
+	काष्ठा hts221_hw *hw;
+	पूर्णांक err;
 	u8 data;
 
-	iio_dev = devm_iio_device_alloc(dev, sizeof(*hw));
-	if (!iio_dev)
-		return -ENOMEM;
+	iio_dev = devm_iio_device_alloc(dev, माप(*hw));
+	अगर (!iio_dev)
+		वापस -ENOMEM;
 
-	dev_set_drvdata(dev, (void *)iio_dev);
+	dev_set_drvdata(dev, (व्योम *)iio_dev);
 
 	hw = iio_priv(iio_dev);
 	hw->name = name;
@@ -597,18 +598,18 @@ int hts221_probe(struct device *dev, int irq, const char *name,
 	hw->regmap = regmap;
 
 	err = hts221_init_regulators(dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devm_add_action_or_reset(dev, hts221_chip_uninit, hw);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = hts221_check_whoami(hw);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	iio_dev->modes = INDIO_DIRECT_MODE;
+	iio_dev->modes = INDIO_सूचीECT_MODE;
 	iio_dev->available_scan_masks = hts221_scan_masks;
 	iio_dev->channels = hts221_channels;
 	iio_dev->num_channels = ARRAY_SIZE(hts221_channels);
@@ -619,84 +620,84 @@ int hts221_probe(struct device *dev, int irq, const char *name,
 	err = regmap_update_bits(hw->regmap, HTS221_REG_CNTRL1_ADDR,
 				 HTS221_BDU_MASK,
 				 FIELD_PREP(HTS221_BDU_MASK, 1));
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = hts221_update_odr(hw, hts221_odr_table[0].hz);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* configure humidity sensor */
 	err = hts221_parse_rh_caldata(hw);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(hw->dev, "failed to get rh calibration data\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	data = hts221_avg_list[HTS221_SENSOR_H].avg_avl[3];
 	err = hts221_update_avg(hw, HTS221_SENSOR_H, data);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(hw->dev, "failed to set rh oversampling ratio\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	/* configure temperature sensor */
 	err = hts221_parse_temp_caldata(hw);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(hw->dev,
 			"failed to get temperature calibration data\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	data = hts221_avg_list[HTS221_SENSOR_T].avg_avl[3];
 	err = hts221_update_avg(hw, HTS221_SENSOR_T, data);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(hw->dev,
 			"failed to set temperature oversampling ratio\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (hw->irq > 0) {
+	अगर (hw->irq > 0) अणु
 		err = hts221_allocate_buffers(iio_dev);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = hts221_allocate_trigger(iio_dev);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return devm_iio_device_register(hw->dev, iio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(hw->dev, iio_dev);
+पूर्ण
 EXPORT_SYMBOL(hts221_probe);
 
-static int __maybe_unused hts221_suspend(struct device *dev)
-{
-	struct iio_dev *iio_dev = dev_get_drvdata(dev);
-	struct hts221_hw *hw = iio_priv(iio_dev);
+अटल पूर्णांक __maybe_unused hts221_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *iio_dev = dev_get_drvdata(dev);
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
 
-	return regmap_update_bits(hw->regmap, HTS221_REG_CNTRL1_ADDR,
+	वापस regmap_update_bits(hw->regmap, HTS221_REG_CNTRL1_ADDR,
 				  HTS221_ENABLE_MASK,
 				  FIELD_PREP(HTS221_ENABLE_MASK, false));
-}
+पूर्ण
 
-static int __maybe_unused hts221_resume(struct device *dev)
-{
-	struct iio_dev *iio_dev = dev_get_drvdata(dev);
-	struct hts221_hw *hw = iio_priv(iio_dev);
-	int err = 0;
+अटल पूर्णांक __maybe_unused hts221_resume(काष्ठा device *dev)
+अणु
+	काष्ठा iio_dev *iio_dev = dev_get_drvdata(dev);
+	काष्ठा hts221_hw *hw = iio_priv(iio_dev);
+	पूर्णांक err = 0;
 
-	if (hw->enabled)
+	अगर (hw->enabled)
 		err = regmap_update_bits(hw->regmap, HTS221_REG_CNTRL1_ADDR,
 					 HTS221_ENABLE_MASK,
 					 FIELD_PREP(HTS221_ENABLE_MASK,
 						    true));
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct dev_pm_ops hts221_pm_ops = {
+स्थिर काष्ठा dev_pm_ops hts221_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(hts221_suspend, hts221_resume)
-};
+पूर्ण;
 EXPORT_SYMBOL(hts221_pm_ops);
 
 MODULE_AUTHOR("Lorenzo Bianconi <lorenzo.bianconi@st.com>");

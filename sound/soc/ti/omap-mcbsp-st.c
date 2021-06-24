@@ -1,89 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * McBSP Sidetone support
  *
  * Copyright (C) 2004 Nokia Corporation
  * Author: Samuel Ortiz <samuel.ortiz@nokia.com>
  *
- * Contact: Jarkko Nikula <jarkko.nikula@bitmer.com>
+ * Contact: Jarkko Nikula <jarkko.nikula@biपंचांगer.com>
  *          Peter Ujfalusi <peter.ujfalusi@ti.com>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/err.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include "omap-mcbsp.h"
-#include "omap-mcbsp-priv.h"
+#समावेश "omap-mcbsp.h"
+#समावेश "omap-mcbsp-priv.h"
 
-/* OMAP3 sidetone control registers */
-#define OMAP_ST_REG_REV		0x00
-#define OMAP_ST_REG_SYSCONFIG	0x10
-#define OMAP_ST_REG_IRQSTATUS	0x18
-#define OMAP_ST_REG_IRQENABLE	0x1C
-#define OMAP_ST_REG_SGAINCR	0x24
-#define OMAP_ST_REG_SFIRCR	0x28
-#define OMAP_ST_REG_SSELCR	0x2C
+/* OMAP3 sidetone control रेजिस्टरs */
+#घोषणा OMAP_ST_REG_REV		0x00
+#घोषणा OMAP_ST_REG_SYSCONFIG	0x10
+#घोषणा OMAP_ST_REG_IRQSTATUS	0x18
+#घोषणा OMAP_ST_REG_IRQENABLE	0x1C
+#घोषणा OMAP_ST_REG_SGAINCR	0x24
+#घोषणा OMAP_ST_REG_SFIRCR	0x28
+#घोषणा OMAP_ST_REG_SSELCR	0x2C
 
 /********************** McBSP SSELCR bit definitions ***********************/
-#define SIDETONEEN		BIT(10)
+#घोषणा SIDETONEEN		BIT(10)
 
 /********************** McBSP Sidetone SYSCONFIG bit definitions ***********/
-#define ST_AUTOIDLE		BIT(0)
+#घोषणा ST_AUTOIDLE		BIT(0)
 
 /********************** McBSP Sidetone SGAINCR bit definitions *************/
-#define ST_CH0GAIN(value)	((value) & 0xffff)	/* Bits 0:15 */
-#define ST_CH1GAIN(value)	(((value) & 0xffff) << 16) /* Bits 16:31 */
+#घोषणा ST_CH0GAIN(value)	((value) & 0xffff)	/* Bits 0:15 */
+#घोषणा ST_CH1GAIN(value)	(((value) & 0xffff) << 16) /* Bits 16:31 */
 
 /********************** McBSP Sidetone SFIRCR bit definitions **************/
-#define ST_FIRCOEFF(value)	((value) & 0xffff)	/* Bits 0:15 */
+#घोषणा ST_FIRCOEFF(value)	((value) & 0xffff)	/* Bits 0:15 */
 
 /********************** McBSP Sidetone SSELCR bit definitions **************/
-#define ST_SIDETONEEN		BIT(0)
-#define ST_COEFFWREN		BIT(1)
-#define ST_COEFFWRDONE		BIT(2)
+#घोषणा ST_SIDETONEEN		BIT(0)
+#घोषणा ST_COEFFWREN		BIT(1)
+#घोषणा ST_COEFFWRDONE		BIT(2)
 
-struct omap_mcbsp_st_data {
-	void __iomem *io_base_st;
-	struct clk *mcbsp_iclk;
+काष्ठा omap_mcbsp_st_data अणु
+	व्योम __iomem *io_base_st;
+	काष्ठा clk *mcbsp_iclk;
 	bool running;
 	bool enabled;
 	s16 taps[128];	/* Sidetone filter coefficients */
-	int nr_taps;	/* Number of filter coefficients in use */
+	पूर्णांक nr_taps;	/* Number of filter coefficients in use */
 	s16 ch0gain;
 	s16 ch1gain;
-};
+पूर्ण;
 
-static void omap_mcbsp_st_write(struct omap_mcbsp *mcbsp, u16 reg, u32 val)
-{
-	writel_relaxed(val, mcbsp->st_data->io_base_st + reg);
-}
+अटल व्योम omap_mcbsp_st_ग_लिखो(काष्ठा omap_mcbsp *mcbsp, u16 reg, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, mcbsp->st_data->io_base_st + reg);
+पूर्ण
 
-static int omap_mcbsp_st_read(struct omap_mcbsp *mcbsp, u16 reg)
-{
-	return readl_relaxed(mcbsp->st_data->io_base_st + reg);
-}
+अटल पूर्णांक omap_mcbsp_st_पढ़ो(काष्ठा omap_mcbsp *mcbsp, u16 reg)
+अणु
+	वापस पढ़ोl_relaxed(mcbsp->st_data->io_base_st + reg);
+पूर्ण
 
-#define MCBSP_ST_READ(mcbsp, reg) omap_mcbsp_st_read(mcbsp, OMAP_ST_REG_##reg)
-#define MCBSP_ST_WRITE(mcbsp, reg, val) \
-			omap_mcbsp_st_write(mcbsp, OMAP_ST_REG_##reg, val)
+#घोषणा MCBSP_ST_READ(mcbsp, reg) omap_mcbsp_st_पढ़ो(mcbsp, OMAP_ST_REG_##reg)
+#घोषणा MCBSP_ST_WRITE(mcbsp, reg, val) \
+			omap_mcbsp_st_ग_लिखो(mcbsp, OMAP_ST_REG_##reg, val)
 
-static void omap_mcbsp_st_on(struct omap_mcbsp *mcbsp)
-{
-	unsigned int w;
+अटल व्योम omap_mcbsp_st_on(काष्ठा omap_mcbsp *mcbsp)
+अणु
+	अचिन्हित पूर्णांक w;
 
-	if (mcbsp->pdata->force_ick_on)
-		mcbsp->pdata->force_ick_on(mcbsp->st_data->mcbsp_iclk, true);
+	अगर (mcbsp->pdata->क्रमce_ick_on)
+		mcbsp->pdata->क्रमce_ick_on(mcbsp->st_data->mcbsp_iclk, true);
 
-	/* Disable Sidetone clock auto-gating for normal operation */
+	/* Disable Sidetone घड़ी स्वतः-gating क्रम normal operation */
 	w = MCBSP_ST_READ(mcbsp, SYSCONFIG);
 	MCBSP_ST_WRITE(mcbsp, SYSCONFIG, w & ~(ST_AUTOIDLE));
 
@@ -94,11 +95,11 @@ static void omap_mcbsp_st_on(struct omap_mcbsp *mcbsp)
 	/* Enable Sidetone from Sidetone Core */
 	w = MCBSP_ST_READ(mcbsp, SSELCR);
 	MCBSP_ST_WRITE(mcbsp, SSELCR, w | ST_SIDETONEEN);
-}
+पूर्ण
 
-static void omap_mcbsp_st_off(struct omap_mcbsp *mcbsp)
-{
-	unsigned int w;
+अटल व्योम omap_mcbsp_st_off(काष्ठा omap_mcbsp *mcbsp)
+अणु
+	अचिन्हित पूर्णांक w;
 
 	w = MCBSP_ST_READ(mcbsp, SSELCR);
 	MCBSP_ST_WRITE(mcbsp, SSELCR, w & ~(ST_SIDETONEEN));
@@ -106,369 +107,369 @@ static void omap_mcbsp_st_off(struct omap_mcbsp *mcbsp)
 	w = MCBSP_READ(mcbsp, SSELCR);
 	MCBSP_WRITE(mcbsp, SSELCR, w & ~(SIDETONEEN));
 
-	/* Enable Sidetone clock auto-gating to reduce power consumption */
+	/* Enable Sidetone घड़ी स्वतः-gating to reduce घातer consumption */
 	w = MCBSP_ST_READ(mcbsp, SYSCONFIG);
 	MCBSP_ST_WRITE(mcbsp, SYSCONFIG, w | ST_AUTOIDLE);
 
-	if (mcbsp->pdata->force_ick_on)
-		mcbsp->pdata->force_ick_on(mcbsp->st_data->mcbsp_iclk, false);
-}
+	अगर (mcbsp->pdata->क्रमce_ick_on)
+		mcbsp->pdata->क्रमce_ick_on(mcbsp->st_data->mcbsp_iclk, false);
+पूर्ण
 
-static void omap_mcbsp_st_fir_write(struct omap_mcbsp *mcbsp, s16 *fir)
-{
+अटल व्योम omap_mcbsp_st_fir_ग_लिखो(काष्ठा omap_mcbsp *mcbsp, s16 *fir)
+अणु
 	u16 val, i;
 
 	val = MCBSP_ST_READ(mcbsp, SSELCR);
 
-	if (val & ST_COEFFWREN)
+	अगर (val & ST_COEFFWREN)
 		MCBSP_ST_WRITE(mcbsp, SSELCR, val & ~(ST_COEFFWREN));
 
 	MCBSP_ST_WRITE(mcbsp, SSELCR, val | ST_COEFFWREN);
 
-	for (i = 0; i < 128; i++)
+	क्रम (i = 0; i < 128; i++)
 		MCBSP_ST_WRITE(mcbsp, SFIRCR, fir[i]);
 
 	i = 0;
 
 	val = MCBSP_ST_READ(mcbsp, SSELCR);
-	while (!(val & ST_COEFFWRDONE) && (++i < 1000))
+	जबतक (!(val & ST_COEFFWRDONE) && (++i < 1000))
 		val = MCBSP_ST_READ(mcbsp, SSELCR);
 
 	MCBSP_ST_WRITE(mcbsp, SSELCR, val & ~(ST_COEFFWREN));
 
-	if (i == 1000)
+	अगर (i == 1000)
 		dev_err(mcbsp->dev, "McBSP FIR load error!\n");
-}
+पूर्ण
 
-static void omap_mcbsp_st_chgain(struct omap_mcbsp *mcbsp)
-{
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
+अटल व्योम omap_mcbsp_st_chgain(काष्ठा omap_mcbsp *mcbsp)
+अणु
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
 
 	MCBSP_ST_WRITE(mcbsp, SGAINCR, ST_CH0GAIN(st_data->ch0gain) |
 		       ST_CH1GAIN(st_data->ch1gain));
-}
+पूर्ण
 
-static int omap_mcbsp_st_set_chgain(struct omap_mcbsp *mcbsp, int channel,
+अटल पूर्णांक omap_mcbsp_st_set_chgain(काष्ठा omap_mcbsp *mcbsp, पूर्णांक channel,
 				    s16 chgain)
-{
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
-	int ret = 0;
+अणु
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
+	पूर्णांक ret = 0;
 
-	if (!st_data)
-		return -ENOENT;
+	अगर (!st_data)
+		वापस -ENOENT;
 
 	spin_lock_irq(&mcbsp->lock);
-	if (channel == 0)
+	अगर (channel == 0)
 		st_data->ch0gain = chgain;
-	else if (channel == 1)
+	अन्यथा अगर (channel == 1)
 		st_data->ch1gain = chgain;
-	else
+	अन्यथा
 		ret = -EINVAL;
 
-	if (st_data->enabled)
+	अगर (st_data->enabled)
 		omap_mcbsp_st_chgain(mcbsp);
 	spin_unlock_irq(&mcbsp->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int omap_mcbsp_st_get_chgain(struct omap_mcbsp *mcbsp, int channel,
+अटल पूर्णांक omap_mcbsp_st_get_chgain(काष्ठा omap_mcbsp *mcbsp, पूर्णांक channel,
 				    s16 *chgain)
-{
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
-	int ret = 0;
+अणु
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
+	पूर्णांक ret = 0;
 
-	if (!st_data)
-		return -ENOENT;
+	अगर (!st_data)
+		वापस -ENOENT;
 
 	spin_lock_irq(&mcbsp->lock);
-	if (channel == 0)
+	अगर (channel == 0)
 		*chgain = st_data->ch0gain;
-	else if (channel == 1)
+	अन्यथा अगर (channel == 1)
 		*chgain = st_data->ch1gain;
-	else
+	अन्यथा
 		ret = -EINVAL;
 	spin_unlock_irq(&mcbsp->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int omap_mcbsp_st_enable(struct omap_mcbsp *mcbsp)
-{
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
+अटल पूर्णांक omap_mcbsp_st_enable(काष्ठा omap_mcbsp *mcbsp)
+अणु
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
 
-	if (!st_data)
-		return -ENODEV;
+	अगर (!st_data)
+		वापस -ENODEV;
 
 	spin_lock_irq(&mcbsp->lock);
 	st_data->enabled = 1;
 	omap_mcbsp_st_start(mcbsp);
 	spin_unlock_irq(&mcbsp->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int omap_mcbsp_st_disable(struct omap_mcbsp *mcbsp)
-{
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
-	int ret = 0;
+अटल पूर्णांक omap_mcbsp_st_disable(काष्ठा omap_mcbsp *mcbsp)
+अणु
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
+	पूर्णांक ret = 0;
 
-	if (!st_data)
-		return -ENODEV;
+	अगर (!st_data)
+		वापस -ENODEV;
 
 	spin_lock_irq(&mcbsp->lock);
 	omap_mcbsp_st_stop(mcbsp);
 	st_data->enabled = 0;
 	spin_unlock_irq(&mcbsp->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int omap_mcbsp_st_is_enabled(struct omap_mcbsp *mcbsp)
-{
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
+अटल पूर्णांक omap_mcbsp_st_is_enabled(काष्ठा omap_mcbsp *mcbsp)
+अणु
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
 
-	if (!st_data)
-		return -ENODEV;
+	अगर (!st_data)
+		वापस -ENODEV;
 
-	return st_data->enabled;
-}
+	वापस st_data->enabled;
+पूर्ण
 
-static ssize_t st_taps_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	struct omap_mcbsp *mcbsp = dev_get_drvdata(dev);
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
-	ssize_t status = 0;
-	int i;
+अटल sमाप_प्रकार st_taps_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा omap_mcbsp *mcbsp = dev_get_drvdata(dev);
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
+	sमाप_प्रकार status = 0;
+	पूर्णांक i;
 
 	spin_lock_irq(&mcbsp->lock);
-	for (i = 0; i < st_data->nr_taps; i++)
-		status += sprintf(&buf[status], (i ? ", %d" : "%d"),
+	क्रम (i = 0; i < st_data->nr_taps; i++)
+		status += प्र_लिखो(&buf[status], (i ? ", %d" : "%d"),
 				  st_data->taps[i]);
-	if (i)
-		status += sprintf(&buf[status], "\n");
+	अगर (i)
+		status += प्र_लिखो(&buf[status], "\n");
 	spin_unlock_irq(&mcbsp->lock);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static ssize_t st_taps_store(struct device *dev,
-			     struct device_attribute *attr,
-			     const char *buf, size_t size)
-{
-	struct omap_mcbsp *mcbsp = dev_get_drvdata(dev);
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
-	int val, tmp, status, i = 0;
+अटल sमाप_प्रकार st_taps_store(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा omap_mcbsp *mcbsp = dev_get_drvdata(dev);
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
+	पूर्णांक val, पंचांगp, status, i = 0;
 
 	spin_lock_irq(&mcbsp->lock);
-	memset(st_data->taps, 0, sizeof(st_data->taps));
+	स_रखो(st_data->taps, 0, माप(st_data->taps));
 	st_data->nr_taps = 0;
 
-	do {
-		status = sscanf(buf, "%d%n", &val, &tmp);
-		if (status < 0 || status == 0) {
+	करो अणु
+		status = माला_पूछो(buf, "%d%n", &val, &पंचांगp);
+		अगर (status < 0 || status == 0) अणु
 			size = -EINVAL;
-			goto out;
-		}
-		if (val < -32768 || val > 32767) {
+			जाओ out;
+		पूर्ण
+		अगर (val < -32768 || val > 32767) अणु
 			size = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		st_data->taps[i++] = val;
-		buf += tmp;
-		if (*buf != ',')
-			break;
+		buf += पंचांगp;
+		अगर (*buf != ',')
+			अवरोध;
 		buf++;
-	} while (1);
+	पूर्ण जबतक (1);
 
 	st_data->nr_taps = i;
 
 out:
 	spin_unlock_irq(&mcbsp->lock);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static DEVICE_ATTR_RW(st_taps);
+अटल DEVICE_ATTR_RW(st_taps);
 
-static const struct attribute *sidetone_attrs[] = {
+अटल स्थिर काष्ठा attribute *sidetone_attrs[] = अणु
 	&dev_attr_st_taps.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group sidetone_attr_group = {
-	.attrs = (struct attribute **)sidetone_attrs,
-};
+अटल स्थिर काष्ठा attribute_group sidetone_attr_group = अणु
+	.attrs = (काष्ठा attribute **)sidetone_attrs,
+पूर्ण;
 
-int omap_mcbsp_st_start(struct omap_mcbsp *mcbsp)
-{
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
+पूर्णांक omap_mcbsp_st_start(काष्ठा omap_mcbsp *mcbsp)
+अणु
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
 
-	if (st_data->enabled && !st_data->running) {
-		omap_mcbsp_st_fir_write(mcbsp, st_data->taps);
+	अगर (st_data->enabled && !st_data->running) अणु
+		omap_mcbsp_st_fir_ग_लिखो(mcbsp, st_data->taps);
 		omap_mcbsp_st_chgain(mcbsp);
 
-		if (!mcbsp->free) {
+		अगर (!mcbsp->मुक्त) अणु
 			omap_mcbsp_st_on(mcbsp);
 			st_data->running = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int omap_mcbsp_st_stop(struct omap_mcbsp *mcbsp)
-{
-	struct omap_mcbsp_st_data *st_data = mcbsp->st_data;
+पूर्णांक omap_mcbsp_st_stop(काष्ठा omap_mcbsp *mcbsp)
+अणु
+	काष्ठा omap_mcbsp_st_data *st_data = mcbsp->st_data;
 
-	if (st_data->running) {
-		if (!mcbsp->free) {
+	अगर (st_data->running) अणु
+		अगर (!mcbsp->मुक्त) अणु
 			omap_mcbsp_st_off(mcbsp);
 			st_data->running = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int omap_mcbsp_st_init(struct platform_device *pdev)
-{
-	struct omap_mcbsp *mcbsp = platform_get_drvdata(pdev);
-	struct omap_mcbsp_st_data *st_data;
-	struct resource *res;
-	int ret;
+पूर्णांक omap_mcbsp_st_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_mcbsp *mcbsp = platक्रमm_get_drvdata(pdev);
+	काष्ठा omap_mcbsp_st_data *st_data;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "sidetone");
-	if (!res)
-		return 0;
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "sidetone");
+	अगर (!res)
+		वापस 0;
 
-	st_data = devm_kzalloc(mcbsp->dev, sizeof(*mcbsp->st_data), GFP_KERNEL);
-	if (!st_data)
-		return -ENOMEM;
+	st_data = devm_kzalloc(mcbsp->dev, माप(*mcbsp->st_data), GFP_KERNEL);
+	अगर (!st_data)
+		वापस -ENOMEM;
 
 	st_data->mcbsp_iclk = clk_get(mcbsp->dev, "ick");
-	if (IS_ERR(st_data->mcbsp_iclk)) {
+	अगर (IS_ERR(st_data->mcbsp_iclk)) अणु
 		dev_warn(mcbsp->dev,
 			 "Failed to get ick, sidetone might be broken\n");
-		st_data->mcbsp_iclk = NULL;
-	}
+		st_data->mcbsp_iclk = शून्य;
+	पूर्ण
 
 	st_data->io_base_st = devm_ioremap(mcbsp->dev, res->start,
 					   resource_size(res));
-	if (!st_data->io_base_st)
-		return -ENOMEM;
+	अगर (!st_data->io_base_st)
+		वापस -ENOMEM;
 
 	ret = sysfs_create_group(&mcbsp->dev->kobj, &sidetone_attr_group);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mcbsp->st_data = st_data;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void omap_mcbsp_st_cleanup(struct platform_device *pdev)
-{
-	struct omap_mcbsp *mcbsp = platform_get_drvdata(pdev);
+व्योम omap_mcbsp_st_cleanup(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_mcbsp *mcbsp = platक्रमm_get_drvdata(pdev);
 
-	if (mcbsp->st_data) {
-		sysfs_remove_group(&mcbsp->dev->kobj, &sidetone_attr_group);
+	अगर (mcbsp->st_data) अणु
+		sysfs_हटाओ_group(&mcbsp->dev->kobj, &sidetone_attr_group);
 		clk_put(mcbsp->st_data->mcbsp_iclk);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int omap_mcbsp_st_info_volsw(struct snd_kcontrol *kcontrol,
-				    struct snd_ctl_elem_info *uinfo)
-{
-	struct soc_mixer_control *mc =
-		(struct soc_mixer_control *)kcontrol->private_value;
-	int max = mc->max;
-	int min = mc->min;
+अटल पूर्णांक omap_mcbsp_st_info_volsw(काष्ठा snd_kcontrol *kcontrol,
+				    काष्ठा snd_ctl_elem_info *uinfo)
+अणु
+	काष्ठा soc_mixer_control *mc =
+		(काष्ठा soc_mixer_control *)kcontrol->निजी_value;
+	पूर्णांक max = mc->max;
+	पूर्णांक min = mc->min;
 
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = min;
-	uinfo->value.integer.max = max;
-	return 0;
-}
+	uinfo->value.पूर्णांकeger.min = min;
+	uinfo->value.पूर्णांकeger.max = max;
+	वापस 0;
+पूर्ण
 
-#define OMAP_MCBSP_ST_CHANNEL_VOLUME(channel)				\
-static int								\
-omap_mcbsp_set_st_ch##channel##_volume(struct snd_kcontrol *kc,		\
-				       struct snd_ctl_elem_value *uc)	\
-{									\
-	struct snd_soc_dai *cpu_dai = snd_kcontrol_chip(kc);		\
-	struct omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);	\
-	struct soc_mixer_control *mc =					\
-		(struct soc_mixer_control *)kc->private_value;		\
-	int max = mc->max;						\
-	int min = mc->min;						\
-	int val = uc->value.integer.value[0];				\
+#घोषणा OMAP_MCBSP_ST_CHANNEL_VOLUME(channel)				\
+अटल पूर्णांक								\
+omap_mcbsp_set_st_ch##channel##_volume(काष्ठा snd_kcontrol *kc,		\
+				       काष्ठा snd_ctl_elem_value *uc)	\
+अणु									\
+	काष्ठा snd_soc_dai *cpu_dai = snd_kcontrol_chip(kc);		\
+	काष्ठा omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);	\
+	काष्ठा soc_mixer_control *mc =					\
+		(काष्ठा soc_mixer_control *)kc->निजी_value;		\
+	पूर्णांक max = mc->max;						\
+	पूर्णांक min = mc->min;						\
+	पूर्णांक val = uc->value.पूर्णांकeger.value[0];				\
 									\
-	if (val < min || val > max)					\
-		return -EINVAL;						\
+	अगर (val < min || val > max)					\
+		वापस -EINVAL;						\
 									\
 	/* OMAP McBSP implementation uses index values 0..4 */		\
-	return omap_mcbsp_st_set_chgain(mcbsp, channel, val);		\
-}									\
+	वापस omap_mcbsp_st_set_chgain(mcbsp, channel, val);		\
+पूर्ण									\
 									\
-static int								\
-omap_mcbsp_get_st_ch##channel##_volume(struct snd_kcontrol *kc,		\
-				       struct snd_ctl_elem_value *uc)	\
-{									\
-	struct snd_soc_dai *cpu_dai = snd_kcontrol_chip(kc);		\
-	struct omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);	\
+अटल पूर्णांक								\
+omap_mcbsp_get_st_ch##channel##_volume(काष्ठा snd_kcontrol *kc,		\
+				       काष्ठा snd_ctl_elem_value *uc)	\
+अणु									\
+	काष्ठा snd_soc_dai *cpu_dai = snd_kcontrol_chip(kc);		\
+	काष्ठा omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);	\
 	s16 chgain;							\
 									\
-	if (omap_mcbsp_st_get_chgain(mcbsp, channel, &chgain))		\
-		return -EAGAIN;						\
+	अगर (omap_mcbsp_st_get_chgain(mcbsp, channel, &chgain))		\
+		वापस -EAGAIN;						\
 									\
-	uc->value.integer.value[0] = chgain;				\
-	return 0;							\
-}
+	uc->value.पूर्णांकeger.value[0] = chgain;				\
+	वापस 0;							\
+पूर्ण
 
 OMAP_MCBSP_ST_CHANNEL_VOLUME(0)
 OMAP_MCBSP_ST_CHANNEL_VOLUME(1)
 
-static int omap_mcbsp_st_put_mode(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dai *cpu_dai = snd_kcontrol_chip(kcontrol);
-	struct omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);
-	u8 value = ucontrol->value.integer.value[0];
+अटल पूर्णांक omap_mcbsp_st_put_mode(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dai *cpu_dai = snd_kcontrol_chip(kcontrol);
+	काष्ठा omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);
+	u8 value = ucontrol->value.पूर्णांकeger.value[0];
 
-	if (value == omap_mcbsp_st_is_enabled(mcbsp))
-		return 0;
+	अगर (value == omap_mcbsp_st_is_enabled(mcbsp))
+		वापस 0;
 
-	if (value)
+	अगर (value)
 		omap_mcbsp_st_enable(mcbsp);
-	else
+	अन्यथा
 		omap_mcbsp_st_disable(mcbsp);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int omap_mcbsp_st_get_mode(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dai *cpu_dai = snd_kcontrol_chip(kcontrol);
-	struct omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);
+अटल पूर्णांक omap_mcbsp_st_get_mode(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dai *cpu_dai = snd_kcontrol_chip(kcontrol);
+	काष्ठा omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);
 
-	ucontrol->value.integer.value[0] = omap_mcbsp_st_is_enabled(mcbsp);
-	return 0;
-}
+	ucontrol->value.पूर्णांकeger.value[0] = omap_mcbsp_st_is_enabled(mcbsp);
+	वापस 0;
+पूर्ण
 
-#define OMAP_MCBSP_SOC_SINGLE_S16_EXT(xname, xmin, xmax,		\
+#घोषणा OMAP_MCBSP_SOC_SINGLE_S16_EXT(xname, xmin, xmax,		\
 				      xhandler_get, xhandler_put)	\
-{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,		\
+अणु	.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER, .name = xname,		\
 	.info = omap_mcbsp_st_info_volsw,				\
 	.get = xhandler_get, .put = xhandler_put,			\
-	.private_value = (unsigned long)&(struct soc_mixer_control)	\
-	{.min = xmin, .max = xmax} }
+	.निजी_value = (अचिन्हित दीर्घ)&(काष्ठा soc_mixer_control)	\
+	अणु.min = xmin, .max = xmaxपूर्ण पूर्ण
 
-#define OMAP_MCBSP_ST_CONTROLS(port)					  \
-static const struct snd_kcontrol_new omap_mcbsp##port##_st_controls[] = { \
+#घोषणा OMAP_MCBSP_ST_CONTROLS(port)					  \
+अटल स्थिर काष्ठा snd_kcontrol_new omap_mcbsp##port##_st_controls[] = अणु \
 SOC_SINGLE_EXT("McBSP" #port " Sidetone Switch", 1, 0, 1, 0,		  \
 	       omap_mcbsp_st_get_mode, omap_mcbsp_st_put_mode),		  \
 OMAP_MCBSP_SOC_SINGLE_S16_EXT("McBSP" #port " Sidetone Channel 0 Volume", \
@@ -479,35 +480,35 @@ OMAP_MCBSP_SOC_SINGLE_S16_EXT("McBSP" #port " Sidetone Channel 1 Volume", \
 			      -32768, 32767,				  \
 			      omap_mcbsp_get_st_ch1_volume,		  \
 			      omap_mcbsp_set_st_ch1_volume),		  \
-}
+पूर्ण
 
 OMAP_MCBSP_ST_CONTROLS(2);
 OMAP_MCBSP_ST_CONTROLS(3);
 
-int omap_mcbsp_st_add_controls(struct snd_soc_pcm_runtime *rtd, int port_id)
-{
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	struct omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);
+पूर्णांक omap_mcbsp_st_add_controls(काष्ठा snd_soc_pcm_runसमय *rtd, पूर्णांक port_id)
+अणु
+	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	काष्ठा omap_mcbsp *mcbsp = snd_soc_dai_get_drvdata(cpu_dai);
 
-	if (!mcbsp->st_data) {
+	अगर (!mcbsp->st_data) अणु
 		dev_warn(mcbsp->dev, "No sidetone data for port\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (port_id) {
-	case 2: /* McBSP 2 */
-		return snd_soc_add_dai_controls(cpu_dai,
+	चयन (port_id) अणु
+	हाल 2: /* McBSP 2 */
+		वापस snd_soc_add_dai_controls(cpu_dai,
 					omap_mcbsp2_st_controls,
 					ARRAY_SIZE(omap_mcbsp2_st_controls));
-	case 3: /* McBSP 3 */
-		return snd_soc_add_dai_controls(cpu_dai,
+	हाल 3: /* McBSP 3 */
+		वापस snd_soc_add_dai_controls(cpu_dai,
 					omap_mcbsp3_st_controls,
 					ARRAY_SIZE(omap_mcbsp3_st_controls));
-	default:
+	शेष:
 		dev_err(mcbsp->dev, "Port %d not supported\n", port_id);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(omap_mcbsp_st_add_controls);

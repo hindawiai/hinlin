@@ -1,173 +1,174 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2010-2011 Calxeda, Inc.
  */
-#include <linux/clk.h>
-#include <linux/clkdev.h>
-#include <linux/clocksource.h>
-#include <linux/dma-map-ops.h>
-#include <linux/input.h>
-#include <linux/io.h>
-#include <linux/irqchip.h>
-#include <linux/pl320-ipc.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/of_address.h>
-#include <linux/reboot.h>
-#include <linux/amba/bus.h>
-#include <linux/platform_device.h>
-#include <linux/psci.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/pl320-ipc.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/psci.h>
 
-#include <asm/hardware/cache-l2x0.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/hardware/cache-l2x0.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include "core.h"
-#include "sysregs.h"
+#समावेश "core.h"
+#समावेश "sysregs.h"
 
-void __iomem *sregs_base;
-void __iomem *scu_base_addr;
+व्योम __iomem *sregs_base;
+व्योम __iomem *scu_base_addr;
 
-static void __init highbank_scu_map_io(void)
-{
-	unsigned long base;
+अटल व्योम __init highbank_scu_map_io(व्योम)
+अणु
+	अचिन्हित दीर्घ base;
 
 	/* Get SCU base */
-	asm("mrc p15, 4, %0, c15, c0, 0" : "=r" (base));
+	यंत्र("mrc p15, 4, %0, c15, c0, 0" : "=r" (base));
 
 	scu_base_addr = ioremap(base, SZ_4K);
-}
+पूर्ण
 
 
-static void highbank_l2c310_write_sec(unsigned long val, unsigned reg)
-{
-	if (reg == L2X0_CTRL)
+अटल व्योम highbank_l2c310_ग_लिखो_sec(अचिन्हित दीर्घ val, अचिन्हित reg)
+अणु
+	अगर (reg == L2X0_CTRL)
 		highbank_smc1(0x102, val);
-	else
+	अन्यथा
 		WARN_ONCE(1, "Highbank L2C310: ignoring write to reg 0x%x\n",
 			  reg);
-}
+पूर्ण
 
-static void __init highbank_init_irq(void)
-{
+अटल व्योम __init highbank_init_irq(व्योम)
+अणु
 	irqchip_init();
 
-	if (of_find_compatible_node(NULL, NULL, "arm,cortex-a9"))
+	अगर (of_find_compatible_node(शून्य, शून्य, "arm,cortex-a9"))
 		highbank_scu_map_io();
-}
+पूर्ण
 
-static void highbank_power_off(void)
-{
-	highbank_set_pwr_shutdown();
+अटल व्योम highbank_घातer_off(व्योम)
+अणु
+	highbank_set_pwr_shutकरोwn();
 
-	while (1)
-		cpu_do_idle();
-}
+	जबतक (1)
+		cpu_करो_idle();
+पूर्ण
 
-static int highbank_platform_notifier(struct notifier_block *nb,
-				  unsigned long event, void *__dev)
-{
-	struct resource *res;
-	int reg = -1;
+अटल पूर्णांक highbank_platक्रमm_notअगरier(काष्ठा notअगरier_block *nb,
+				  अचिन्हित दीर्घ event, व्योम *__dev)
+अणु
+	काष्ठा resource *res;
+	पूर्णांक reg = -1;
 	u32 val;
-	struct device *dev = __dev;
+	काष्ठा device *dev = __dev;
 
-	if (event != BUS_NOTIFY_ADD_DEVICE)
-		return NOTIFY_DONE;
+	अगर (event != BUS_NOTIFY_ADD_DEVICE)
+		वापस NOTIFY_DONE;
 
-	if (of_device_is_compatible(dev->of_node, "calxeda,hb-ahci"))
+	अगर (of_device_is_compatible(dev->of_node, "calxeda,hb-ahci"))
 		reg = 0xc;
-	else if (of_device_is_compatible(dev->of_node, "calxeda,hb-sdhci"))
+	अन्यथा अगर (of_device_is_compatible(dev->of_node, "calxeda,hb-sdhci"))
 		reg = 0x18;
-	else if (of_device_is_compatible(dev->of_node, "arm,pl330"))
+	अन्यथा अगर (of_device_is_compatible(dev->of_node, "arm,pl330"))
 		reg = 0x20;
-	else if (of_device_is_compatible(dev->of_node, "calxeda,hb-xgmac")) {
-		res = platform_get_resource(to_platform_device(dev),
+	अन्यथा अगर (of_device_is_compatible(dev->of_node, "calxeda,hb-xgmac")) अणु
+		res = platक्रमm_get_resource(to_platक्रमm_device(dev),
 					    IORESOURCE_MEM, 0);
-		if (res) {
-			if (res->start == 0xfff50000)
+		अगर (res) अणु
+			अगर (res->start == 0xfff50000)
 				reg = 0;
-			else if (res->start == 0xfff51000)
+			अन्यथा अगर (res->start == 0xfff51000)
 				reg = 4;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (reg < 0)
-		return NOTIFY_DONE;
+	अगर (reg < 0)
+		वापस NOTIFY_DONE;
 
-	if (of_property_read_bool(dev->of_node, "dma-coherent")) {
-		val = readl(sregs_base + reg);
-		writel(val | 0xff01, sregs_base + reg);
+	अगर (of_property_पढ़ो_bool(dev->of_node, "dma-coherent")) अणु
+		val = पढ़ोl(sregs_base + reg);
+		ग_लिखोl(val | 0xff01, sregs_base + reg);
 		set_dma_ops(dev, &arm_coherent_dma_ops);
-	}
+	पूर्ण
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block highbank_amba_nb = {
-	.notifier_call = highbank_platform_notifier,
-};
+अटल काष्ठा notअगरier_block highbank_amba_nb = अणु
+	.notअगरier_call = highbank_platक्रमm_notअगरier,
+पूर्ण;
 
-static struct notifier_block highbank_platform_nb = {
-	.notifier_call = highbank_platform_notifier,
-};
+अटल काष्ठा notअगरier_block highbank_platक्रमm_nb = अणु
+	.notअगरier_call = highbank_platक्रमm_notअगरier,
+पूर्ण;
 
-static struct platform_device highbank_cpuidle_device = {
+अटल काष्ठा platक्रमm_device highbank_cpuidle_device = अणु
 	.name = "cpuidle-calxeda",
-};
+पूर्ण;
 
-static int hb_keys_notifier(struct notifier_block *nb, unsigned long event, void *data)
-{
+अटल पूर्णांक hb_keys_notअगरier(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ event, व्योम *data)
+अणु
 	u32 key = *(u32 *)data;
 
-	if (event != 0x1000)
-		return 0;
+	अगर (event != 0x1000)
+		वापस 0;
 
-	if (key == KEY_POWER)
-		orderly_poweroff(false);
-	else if (key == 0xffff)
+	अगर (key == KEY_POWER)
+		orderly_घातeroff(false);
+	अन्यथा अगर (key == 0xffff)
 		ctrl_alt_del();
 
-	return 0;
-}
-static struct notifier_block hb_keys_nb = {
-	.notifier_call = hb_keys_notifier,
-};
+	वापस 0;
+पूर्ण
+अटल काष्ठा notअगरier_block hb_keys_nb = अणु
+	.notअगरier_call = hb_keys_notअगरier,
+पूर्ण;
 
-static void __init highbank_init(void)
-{
-	struct device_node *np;
+अटल व्योम __init highbank_init(व्योम)
+अणु
+	काष्ठा device_node *np;
 
-	/* Map system registers */
-	np = of_find_compatible_node(NULL, NULL, "calxeda,hb-sregs");
+	/* Map प्रणाली रेजिस्टरs */
+	np = of_find_compatible_node(शून्य, शून्य, "calxeda,hb-sregs");
 	sregs_base = of_iomap(np, 0);
 	WARN_ON(!sregs_base);
 
-	pm_power_off = highbank_power_off;
+	pm_घातer_off = highbank_घातer_off;
 	highbank_pm_init();
 
-	bus_register_notifier(&platform_bus_type, &highbank_platform_nb);
-	bus_register_notifier(&amba_bustype, &highbank_amba_nb);
+	bus_रेजिस्टर_notअगरier(&platक्रमm_bus_type, &highbank_platक्रमm_nb);
+	bus_रेजिस्टर_notअगरier(&amba_bustype, &highbank_amba_nb);
 
-	pl320_ipc_register_notifier(&hb_keys_nb);
+	pl320_ipc_रेजिस्टर_notअगरier(&hb_keys_nb);
 
-	if (psci_ops.cpu_suspend)
-		platform_device_register(&highbank_cpuidle_device);
-}
+	अगर (psci_ops.cpu_suspend)
+		platक्रमm_device_रेजिस्टर(&highbank_cpuidle_device);
+पूर्ण
 
-static const char *const highbank_match[] __initconst = {
+अटल स्थिर अक्षर *स्थिर highbank_match[] __initस्थिर = अणु
 	"calxeda,highbank",
 	"calxeda,ecx-2000",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(HIGHBANK, "Highbank")
-#if defined(CONFIG_ZONE_DMA) && defined(CONFIG_ARM_LPAE)
+#अगर defined(CONFIG_ZONE_DMA) && defined(CONFIG_ARM_LPAE)
 	.dma_zone_size	= (4ULL * SZ_1G),
-#endif
+#पूर्ण_अगर
 	.l2c_aux_val	= 0,
 	.l2c_aux_mask	= ~0,
-	.l2c_write_sec	= highbank_l2c310_write_sec,
+	.l2c_ग_लिखो_sec	= highbank_l2c310_ग_लिखो_sec,
 	.init_irq	= highbank_init_irq,
 	.init_machine	= highbank_init,
 	.dt_compat	= highbank_match,

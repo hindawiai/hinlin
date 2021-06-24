@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * A driver for the ARM PL022 PrimeCell SSP/SPI bus master.
+ * A driver क्रम the ARM PL022 PrimeCell SSP/SPI bus master.
  *
  * Copyright (C) 2008-2012 ST-Ericsson AB
  * Copyright (C) 2006 STMicroelectronics Pvt. Ltd.
@@ -9,565 +10,565 @@
  *
  * Initial version inspired by:
  *	linux-2.6.17-rc3-mm1/drivers/spi/pxa2xx_spi.c
- * Initial adoption to PL022 by:
+ * Initial aकरोption to PL022 by:
  *      Sachin Verma <sachin.verma@st.com>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/ioport.h>
-#include <linux/errno.h>
-#include <linux/interrupt.h>
-#include <linux/spi/spi.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/amba/bus.h>
-#include <linux/amba/pl022.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/scatterlist.h>
-#include <linux/pm_runtime.h>
-#include <linux/of.h>
-#include <linux/pinctrl/consumer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/amba/pl022.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/of.h>
+#समावेश <linux/pinctrl/consumer.h>
 
 /*
- * This macro is used to define some register default values.
+ * This macro is used to define some रेजिस्टर शेष values.
  * reg is masked with mask, the OR:ed with an (again masked)
- * val shifted sb steps to the left.
+ * val shअगरted sb steps to the left.
  */
-#define SSP_WRITE_BITS(reg, val, mask, sb) \
+#घोषणा SSP_WRITE_BITS(reg, val, mask, sb) \
  ((reg) = (((reg) & ~(mask)) | (((val)<<(sb)) & (mask))))
 
 /*
- * This macro is also used to define some default values.
- * It will just shift val by sb steps to the left and mask
+ * This macro is also used to define some शेष values.
+ * It will just shअगरt val by sb steps to the left and mask
  * the result with mask.
  */
-#define GEN_MASK_BITS(val, mask, sb) \
+#घोषणा GEN_MASK_BITS(val, mask, sb) \
  (((val)<<(sb)) & (mask))
 
-#define DRIVE_TX		0
-#define DO_NOT_DRIVE_TX		1
+#घोषणा DRIVE_TX		0
+#घोषणा DO_NOT_DRIVE_TX		1
 
-#define DO_NOT_QUEUE_DMA	0
-#define QUEUE_DMA		1
+#घोषणा DO_NOT_QUEUE_DMA	0
+#घोषणा QUEUE_DMA		1
 
-#define RX_TRANSFER		1
-#define TX_TRANSFER		2
+#घोषणा RX_TRANSFER		1
+#घोषणा TX_TRANSFER		2
 
 /*
  * Macros to access SSP Registers with their offsets
  */
-#define SSP_CR0(r)	(r + 0x000)
-#define SSP_CR1(r)	(r + 0x004)
-#define SSP_DR(r)	(r + 0x008)
-#define SSP_SR(r)	(r + 0x00C)
-#define SSP_CPSR(r)	(r + 0x010)
-#define SSP_IMSC(r)	(r + 0x014)
-#define SSP_RIS(r)	(r + 0x018)
-#define SSP_MIS(r)	(r + 0x01C)
-#define SSP_ICR(r)	(r + 0x020)
-#define SSP_DMACR(r)	(r + 0x024)
-#define SSP_CSR(r)	(r + 0x030) /* vendor extension */
-#define SSP_ITCR(r)	(r + 0x080)
-#define SSP_ITIP(r)	(r + 0x084)
-#define SSP_ITOP(r)	(r + 0x088)
-#define SSP_TDR(r)	(r + 0x08C)
+#घोषणा SSP_CR0(r)	(r + 0x000)
+#घोषणा SSP_CR1(r)	(r + 0x004)
+#घोषणा SSP_DR(r)	(r + 0x008)
+#घोषणा SSP_SR(r)	(r + 0x00C)
+#घोषणा SSP_CPSR(r)	(r + 0x010)
+#घोषणा SSP_IMSC(r)	(r + 0x014)
+#घोषणा SSP_RIS(r)	(r + 0x018)
+#घोषणा SSP_MIS(r)	(r + 0x01C)
+#घोषणा SSP_ICR(r)	(r + 0x020)
+#घोषणा SSP_DMACR(r)	(r + 0x024)
+#घोषणा SSP_CSR(r)	(r + 0x030) /* venकरोr extension */
+#घोषणा SSP_ITCR(r)	(r + 0x080)
+#घोषणा SSP_ITIP(r)	(r + 0x084)
+#घोषणा SSP_ITOP(r)	(r + 0x088)
+#घोषणा SSP_TDR(r)	(r + 0x08C)
 
-#define SSP_PID0(r)	(r + 0xFE0)
-#define SSP_PID1(r)	(r + 0xFE4)
-#define SSP_PID2(r)	(r + 0xFE8)
-#define SSP_PID3(r)	(r + 0xFEC)
+#घोषणा SSP_PID0(r)	(r + 0xFE0)
+#घोषणा SSP_PID1(r)	(r + 0xFE4)
+#घोषणा SSP_PID2(r)	(r + 0xFE8)
+#घोषणा SSP_PID3(r)	(r + 0xFEC)
 
-#define SSP_CID0(r)	(r + 0xFF0)
-#define SSP_CID1(r)	(r + 0xFF4)
-#define SSP_CID2(r)	(r + 0xFF8)
-#define SSP_CID3(r)	(r + 0xFFC)
+#घोषणा SSP_CID0(r)	(r + 0xFF0)
+#घोषणा SSP_CID1(r)	(r + 0xFF4)
+#घोषणा SSP_CID2(r)	(r + 0xFF8)
+#घोषणा SSP_CID3(r)	(r + 0xFFC)
 
 /*
  * SSP Control Register 0  - SSP_CR0
  */
-#define SSP_CR0_MASK_DSS	(0x0FUL << 0)
-#define SSP_CR0_MASK_FRF	(0x3UL << 4)
-#define SSP_CR0_MASK_SPO	(0x1UL << 6)
-#define SSP_CR0_MASK_SPH	(0x1UL << 7)
-#define SSP_CR0_MASK_SCR	(0xFFUL << 8)
+#घोषणा SSP_CR0_MASK_DSS	(0x0FUL << 0)
+#घोषणा SSP_CR0_MASK_FRF	(0x3UL << 4)
+#घोषणा SSP_CR0_MASK_SPO	(0x1UL << 6)
+#घोषणा SSP_CR0_MASK_SPH	(0x1UL << 7)
+#घोषणा SSP_CR0_MASK_SCR	(0xFFUL << 8)
 
 /*
  * The ST version of this block moves som bits
  * in SSP_CR0 and extends it to 32 bits
  */
-#define SSP_CR0_MASK_DSS_ST	(0x1FUL << 0)
-#define SSP_CR0_MASK_HALFDUP_ST	(0x1UL << 5)
-#define SSP_CR0_MASK_CSS_ST	(0x1FUL << 16)
-#define SSP_CR0_MASK_FRF_ST	(0x3UL << 21)
+#घोषणा SSP_CR0_MASK_DSS_ST	(0x1FUL << 0)
+#घोषणा SSP_CR0_MASK_HALFDUP_ST	(0x1UL << 5)
+#घोषणा SSP_CR0_MASK_CSS_ST	(0x1FUL << 16)
+#घोषणा SSP_CR0_MASK_FRF_ST	(0x3UL << 21)
 
 /*
  * SSP Control Register 0  - SSP_CR1
  */
-#define SSP_CR1_MASK_LBM	(0x1UL << 0)
-#define SSP_CR1_MASK_SSE	(0x1UL << 1)
-#define SSP_CR1_MASK_MS		(0x1UL << 2)
-#define SSP_CR1_MASK_SOD	(0x1UL << 3)
+#घोषणा SSP_CR1_MASK_LBM	(0x1UL << 0)
+#घोषणा SSP_CR1_MASK_SSE	(0x1UL << 1)
+#घोषणा SSP_CR1_MASK_MS		(0x1UL << 2)
+#घोषणा SSP_CR1_MASK_SOD	(0x1UL << 3)
 
 /*
  * The ST version of this block adds some bits
  * in SSP_CR1
  */
-#define SSP_CR1_MASK_RENDN_ST	(0x1UL << 4)
-#define SSP_CR1_MASK_TENDN_ST	(0x1UL << 5)
-#define SSP_CR1_MASK_MWAIT_ST	(0x1UL << 6)
-#define SSP_CR1_MASK_RXIFLSEL_ST (0x7UL << 7)
-#define SSP_CR1_MASK_TXIFLSEL_ST (0x7UL << 10)
+#घोषणा SSP_CR1_MASK_RENDN_ST	(0x1UL << 4)
+#घोषणा SSP_CR1_MASK_TENDN_ST	(0x1UL << 5)
+#घोषणा SSP_CR1_MASK_MWAIT_ST	(0x1UL << 6)
+#घोषणा SSP_CR1_MASK_RXIFLSEL_ST (0x7UL << 7)
+#घोषणा SSP_CR1_MASK_TXIFLSEL_ST (0x7UL << 10)
 /* This one is only in the PL023 variant */
-#define SSP_CR1_MASK_FBCLKDEL_ST (0x7UL << 13)
+#घोषणा SSP_CR1_MASK_FBCLKDEL_ST (0x7UL << 13)
 
 /*
  * SSP Status Register - SSP_SR
  */
-#define SSP_SR_MASK_TFE		(0x1UL << 0) /* Transmit FIFO empty */
-#define SSP_SR_MASK_TNF		(0x1UL << 1) /* Transmit FIFO not full */
-#define SSP_SR_MASK_RNE		(0x1UL << 2) /* Receive FIFO not empty */
-#define SSP_SR_MASK_RFF		(0x1UL << 3) /* Receive FIFO full */
-#define SSP_SR_MASK_BSY		(0x1UL << 4) /* Busy Flag */
+#घोषणा SSP_SR_MASK_TFE		(0x1UL << 0) /* Transmit FIFO empty */
+#घोषणा SSP_SR_MASK_TNF		(0x1UL << 1) /* Transmit FIFO not full */
+#घोषणा SSP_SR_MASK_RNE		(0x1UL << 2) /* Receive FIFO not empty */
+#घोषणा SSP_SR_MASK_RFF		(0x1UL << 3) /* Receive FIFO full */
+#घोषणा SSP_SR_MASK_BSY		(0x1UL << 4) /* Busy Flag */
 
 /*
  * SSP Clock Prescale Register  - SSP_CPSR
  */
-#define SSP_CPSR_MASK_CPSDVSR	(0xFFUL << 0)
+#घोषणा SSP_CPSR_MASK_CPSDVSR	(0xFFUL << 0)
 
 /*
  * SSP Interrupt Mask Set/Clear Register - SSP_IMSC
  */
-#define SSP_IMSC_MASK_RORIM (0x1UL << 0) /* Receive Overrun Interrupt mask */
-#define SSP_IMSC_MASK_RTIM  (0x1UL << 1) /* Receive timeout Interrupt mask */
-#define SSP_IMSC_MASK_RXIM  (0x1UL << 2) /* Receive FIFO Interrupt mask */
-#define SSP_IMSC_MASK_TXIM  (0x1UL << 3) /* Transmit FIFO Interrupt mask */
+#घोषणा SSP_IMSC_MASK_RORIM (0x1UL << 0) /* Receive Overrun Interrupt mask */
+#घोषणा SSP_IMSC_MASK_RTIM  (0x1UL << 1) /* Receive समयout Interrupt mask */
+#घोषणा SSP_IMSC_MASK_RXIM  (0x1UL << 2) /* Receive FIFO Interrupt mask */
+#घोषणा SSP_IMSC_MASK_TXIM  (0x1UL << 3) /* Transmit FIFO Interrupt mask */
 
 /*
  * SSP Raw Interrupt Status Register - SSP_RIS
  */
 /* Receive Overrun Raw Interrupt status */
-#define SSP_RIS_MASK_RORRIS		(0x1UL << 0)
+#घोषणा SSP_RIS_MASK_RORRIS		(0x1UL << 0)
 /* Receive Timeout Raw Interrupt status */
-#define SSP_RIS_MASK_RTRIS		(0x1UL << 1)
+#घोषणा SSP_RIS_MASK_RTRIS		(0x1UL << 1)
 /* Receive FIFO Raw Interrupt status */
-#define SSP_RIS_MASK_RXRIS		(0x1UL << 2)
+#घोषणा SSP_RIS_MASK_RXRIS		(0x1UL << 2)
 /* Transmit FIFO Raw Interrupt status */
-#define SSP_RIS_MASK_TXRIS		(0x1UL << 3)
+#घोषणा SSP_RIS_MASK_TXRIS		(0x1UL << 3)
 
 /*
  * SSP Masked Interrupt Status Register - SSP_MIS
  */
 /* Receive Overrun Masked Interrupt status */
-#define SSP_MIS_MASK_RORMIS		(0x1UL << 0)
+#घोषणा SSP_MIS_MASK_RORMIS		(0x1UL << 0)
 /* Receive Timeout Masked Interrupt status */
-#define SSP_MIS_MASK_RTMIS		(0x1UL << 1)
+#घोषणा SSP_MIS_MASK_RTMIS		(0x1UL << 1)
 /* Receive FIFO Masked Interrupt status */
-#define SSP_MIS_MASK_RXMIS		(0x1UL << 2)
+#घोषणा SSP_MIS_MASK_RXMIS		(0x1UL << 2)
 /* Transmit FIFO Masked Interrupt status */
-#define SSP_MIS_MASK_TXMIS		(0x1UL << 3)
+#घोषणा SSP_MIS_MASK_TXMIS		(0x1UL << 3)
 
 /*
  * SSP Interrupt Clear Register - SSP_ICR
  */
 /* Receive Overrun Raw Clear Interrupt bit */
-#define SSP_ICR_MASK_RORIC		(0x1UL << 0)
+#घोषणा SSP_ICR_MASK_RORIC		(0x1UL << 0)
 /* Receive Timeout Clear Interrupt bit */
-#define SSP_ICR_MASK_RTIC		(0x1UL << 1)
+#घोषणा SSP_ICR_MASK_RTIC		(0x1UL << 1)
 
 /*
  * SSP DMA Control Register - SSP_DMACR
  */
 /* Receive DMA Enable bit */
-#define SSP_DMACR_MASK_RXDMAE		(0x1UL << 0)
+#घोषणा SSP_DMACR_MASK_RXDMAE		(0x1UL << 0)
 /* Transmit DMA Enable bit */
-#define SSP_DMACR_MASK_TXDMAE		(0x1UL << 1)
+#घोषणा SSP_DMACR_MASK_TXDMAE		(0x1UL << 1)
 
 /*
  * SSP Chip Select Control Register - SSP_CSR
- * (vendor extension)
+ * (venकरोr extension)
  */
-#define SSP_CSR_CSVALUE_MASK		(0x1FUL << 0)
+#घोषणा SSP_CSR_CSVALUE_MASK		(0x1FUL << 0)
 
 /*
  * SSP Integration Test control Register - SSP_ITCR
  */
-#define SSP_ITCR_MASK_ITEN		(0x1UL << 0)
-#define SSP_ITCR_MASK_TESTFIFO		(0x1UL << 1)
+#घोषणा SSP_ITCR_MASK_ITEN		(0x1UL << 0)
+#घोषणा SSP_ITCR_MASK_TESTFIFO		(0x1UL << 1)
 
 /*
  * SSP Integration Test Input Register - SSP_ITIP
  */
-#define ITIP_MASK_SSPRXD		 (0x1UL << 0)
-#define ITIP_MASK_SSPFSSIN		 (0x1UL << 1)
-#define ITIP_MASK_SSPCLKIN		 (0x1UL << 2)
-#define ITIP_MASK_RXDMAC		 (0x1UL << 3)
-#define ITIP_MASK_TXDMAC		 (0x1UL << 4)
-#define ITIP_MASK_SSPTXDIN		 (0x1UL << 5)
+#घोषणा ITIP_MASK_SSPRXD		 (0x1UL << 0)
+#घोषणा ITIP_MASK_SSPFSSIN		 (0x1UL << 1)
+#घोषणा ITIP_MASK_SSPCLKIN		 (0x1UL << 2)
+#घोषणा ITIP_MASK_RXDMAC		 (0x1UL << 3)
+#घोषणा ITIP_MASK_TXDMAC		 (0x1UL << 4)
+#घोषणा ITIP_MASK_SSPTXDIN		 (0x1UL << 5)
 
 /*
  * SSP Integration Test output Register - SSP_ITOP
  */
-#define ITOP_MASK_SSPTXD		 (0x1UL << 0)
-#define ITOP_MASK_SSPFSSOUT		 (0x1UL << 1)
-#define ITOP_MASK_SSPCLKOUT		 (0x1UL << 2)
-#define ITOP_MASK_SSPOEn		 (0x1UL << 3)
-#define ITOP_MASK_SSPCTLOEn		 (0x1UL << 4)
-#define ITOP_MASK_RORINTR		 (0x1UL << 5)
-#define ITOP_MASK_RTINTR		 (0x1UL << 6)
-#define ITOP_MASK_RXINTR		 (0x1UL << 7)
-#define ITOP_MASK_TXINTR		 (0x1UL << 8)
-#define ITOP_MASK_INTR			 (0x1UL << 9)
-#define ITOP_MASK_RXDMABREQ		 (0x1UL << 10)
-#define ITOP_MASK_RXDMASREQ		 (0x1UL << 11)
-#define ITOP_MASK_TXDMABREQ		 (0x1UL << 12)
-#define ITOP_MASK_TXDMASREQ		 (0x1UL << 13)
+#घोषणा ITOP_MASK_SSPTXD		 (0x1UL << 0)
+#घोषणा ITOP_MASK_SSPFSSOUT		 (0x1UL << 1)
+#घोषणा ITOP_MASK_SSPCLKOUT		 (0x1UL << 2)
+#घोषणा ITOP_MASK_SSPOEn		 (0x1UL << 3)
+#घोषणा ITOP_MASK_SSPCTLOEn		 (0x1UL << 4)
+#घोषणा ITOP_MASK_RORINTR		 (0x1UL << 5)
+#घोषणा ITOP_MASK_RTINTR		 (0x1UL << 6)
+#घोषणा ITOP_MASK_RXINTR		 (0x1UL << 7)
+#घोषणा ITOP_MASK_TXINTR		 (0x1UL << 8)
+#घोषणा ITOP_MASK_INTR			 (0x1UL << 9)
+#घोषणा ITOP_MASK_RXDMABREQ		 (0x1UL << 10)
+#घोषणा ITOP_MASK_RXDMASREQ		 (0x1UL << 11)
+#घोषणा ITOP_MASK_TXDMABREQ		 (0x1UL << 12)
+#घोषणा ITOP_MASK_TXDMASREQ		 (0x1UL << 13)
 
 /*
  * SSP Test Data Register - SSP_TDR
  */
-#define TDR_MASK_TESTDATA		(0xFFFFFFFF)
+#घोषणा TDR_MASK_TESTDATA		(0xFFFFFFFF)
 
 /*
  * Message State
- * we use the spi_message.state (void *) pointer to
+ * we use the spi_message.state (व्योम *) poपूर्णांकer to
  * hold a single state value, that's why all this
- * (void *) casting is done here.
+ * (व्योम *) casting is करोne here.
  */
-#define STATE_START			((void *) 0)
-#define STATE_RUNNING			((void *) 1)
-#define STATE_DONE			((void *) 2)
-#define STATE_ERROR			((void *) -1)
-#define STATE_TIMEOUT			((void *) -2)
+#घोषणा STATE_START			((व्योम *) 0)
+#घोषणा STATE_RUNNING			((व्योम *) 1)
+#घोषणा STATE_DONE			((व्योम *) 2)
+#घोषणा STATE_ERROR			((व्योम *) -1)
+#घोषणा STATE_TIMEOUT			((व्योम *) -2)
 
 /*
  * SSP State - Whether Enabled or Disabled
  */
-#define SSP_DISABLED			(0)
-#define SSP_ENABLED			(1)
+#घोषणा SSP_DISABLED			(0)
+#घोषणा SSP_ENABLED			(1)
 
 /*
  * SSP DMA State - Whether DMA Enabled or Disabled
  */
-#define SSP_DMA_DISABLED		(0)
-#define SSP_DMA_ENABLED			(1)
+#घोषणा SSP_DMA_DISABLED		(0)
+#घोषणा SSP_DMA_ENABLED			(1)
 
 /*
  * SSP Clock Defaults
  */
-#define SSP_DEFAULT_CLKRATE 0x2
-#define SSP_DEFAULT_PRESCALE 0x40
+#घोषणा SSP_DEFAULT_CLKRATE 0x2
+#घोषणा SSP_DEFAULT_PRESCALE 0x40
 
 /*
  * SSP Clock Parameter ranges
  */
-#define CPSDVR_MIN 0x02
-#define CPSDVR_MAX 0xFE
-#define SCR_MIN 0x00
-#define SCR_MAX 0xFF
+#घोषणा CPSDVR_MIN 0x02
+#घोषणा CPSDVR_MAX 0xFE
+#घोषणा SCR_MIN 0x00
+#घोषणा SCR_MAX 0xFF
 
 /*
  * SSP Interrupt related Macros
  */
-#define DEFAULT_SSP_REG_IMSC  0x0UL
-#define DISABLE_ALL_INTERRUPTS DEFAULT_SSP_REG_IMSC
-#define ENABLE_ALL_INTERRUPTS ( \
+#घोषणा DEFAULT_SSP_REG_IMSC  0x0UL
+#घोषणा DISABLE_ALL_INTERRUPTS DEFAULT_SSP_REG_IMSC
+#घोषणा ENABLE_ALL_INTERRUPTS ( \
 	SSP_IMSC_MASK_RORIM | \
 	SSP_IMSC_MASK_RTIM | \
 	SSP_IMSC_MASK_RXIM | \
 	SSP_IMSC_MASK_TXIM \
 )
 
-#define CLEAR_ALL_INTERRUPTS  0x3
+#घोषणा CLEAR_ALL_INTERRUPTS  0x3
 
-#define SPI_POLLING_TIMEOUT 1000
+#घोषणा SPI_POLLING_TIMEOUT 1000
 
 /*
- * The type of reading going on on this chip
+ * The type of पढ़ोing going on on this chip
  */
-enum ssp_reading {
-	READING_NULL,
+क्रमागत ssp_पढ़ोing अणु
+	READING_शून्य,
 	READING_U8,
 	READING_U16,
 	READING_U32
-};
+पूर्ण;
 
 /*
  * The type of writing going on on this chip
  */
-enum ssp_writing {
-	WRITING_NULL,
+क्रमागत ssp_writing अणु
+	WRITING_शून्य,
 	WRITING_U8,
 	WRITING_U16,
 	WRITING_U32
-};
+पूर्ण;
 
 /**
- * struct vendor_data - vendor-specific config parameters
- * for PL022 derivates
- * @fifodepth: depth of FIFOs (both)
+ * काष्ठा venकरोr_data - venकरोr-specअगरic config parameters
+ * क्रम PL022 derivates
+ * @fअगरodepth: depth of FIFOs (both)
  * @max_bpw: maximum number of bits per word
  * @unidir: supports unidirection transfers
- * @extended_cr: 32 bit wide control register 0 with extra
+ * @extended_cr: 32 bit wide control रेजिस्टर 0 with extra
  * features and extra features in CR1 as found in the ST variants
  * @pl023: supports a subset of the ST extensions called "PL023"
  * @loopback: supports loopback mode
- * @internal_cs_ctrl: supports chip select control register
+ * @पूर्णांकernal_cs_ctrl: supports chip select control रेजिस्टर
  */
-struct vendor_data {
-	int fifodepth;
-	int max_bpw;
+काष्ठा venकरोr_data अणु
+	पूर्णांक fअगरodepth;
+	पूर्णांक max_bpw;
 	bool unidir;
 	bool extended_cr;
 	bool pl023;
 	bool loopback;
-	bool internal_cs_ctrl;
-};
+	bool पूर्णांकernal_cs_ctrl;
+पूर्ण;
 
 /**
- * struct pl022 - This is the private SSP driver data structure
+ * काष्ठा pl022 - This is the निजी SSP driver data काष्ठाure
  * @adev: AMBA device model hookup
- * @vendor: vendor data for the IP block
+ * @venकरोr: venकरोr data क्रम the IP block
  * @phybase: the physical memory where the SSP device resides
- * @virtbase: the virtual memory where the SSP is mapped
- * @clk: outgoing clock "SPICLK" for the SPI bus
+ * @virtbase: the भव memory where the SSP is mapped
+ * @clk: outgoing घड़ी "SPICLK" क्रम the SPI bus
  * @master: SPI framework hookup
- * @master_info: controller-specific data from machine setup
+ * @master_info: controller-specअगरic data from machine setup
  * @pump_transfers: Tasklet used in Interrupt Transfer mode
- * @cur_msg: Pointer to current spi_message being processed
- * @cur_transfer: Pointer to current spi_transfer
- * @cur_chip: pointer to current clients chip(assigned from controller_state)
+ * @cur_msg: Poपूर्णांकer to current spi_message being processed
+ * @cur_transfer: Poपूर्णांकer to current spi_transfer
+ * @cur_chip: poपूर्णांकer to current clients chip(asचिन्हित from controller_state)
  * @next_msg_cs_active: the next message in the queue has been examined
  *  and it was found that it uses the same chip select as the previous
  *  message, so we left it active after the previous transfer, and it's
- *  active already.
- * @tx: current position in TX buffer to be read
- * @tx_end: end position in TX buffer to be read
+ *  active alपढ़ोy.
+ * @tx: current position in TX buffer to be पढ़ो
+ * @tx_end: end position in TX buffer to be पढ़ो
  * @rx: current position in RX buffer to be written
  * @rx_end: end position in RX buffer to be written
- * @read: the type of read currently going on
- * @write: the type of write currently going on
- * @exp_fifo_level: expected FIFO level
+ * @पढ़ो: the type of पढ़ो currently going on
+ * @ग_लिखो: the type of ग_लिखो currently going on
+ * @exp_fअगरo_level: expected FIFO level
  * @rx_lev_trig: receive FIFO watermark level which triggers IRQ
  * @tx_lev_trig: transmit FIFO watermark level which triggers IRQ
- * @dma_rx_channel: optional channel for RX DMA
- * @dma_tx_channel: optional channel for TX DMA
- * @sgt_rx: scattertable for the RX transfer
- * @sgt_tx: scattertable for the TX transfer
- * @dummypage: a dummy page used for driving data on the bus with DMA
+ * @dma_rx_channel: optional channel क्रम RX DMA
+ * @dma_tx_channel: optional channel क्रम TX DMA
+ * @sgt_rx: scattertable क्रम the RX transfer
+ * @sgt_tx: scattertable क्रम the TX transfer
+ * @dummypage: a dummy page used क्रम driving data on the bus with DMA
  * @dma_running: indicates whether DMA is in operation
  * @cur_cs: current chip select index
  * @cur_gpiod: current chip select GPIO descriptor
  */
-struct pl022 {
-	struct amba_device		*adev;
-	struct vendor_data		*vendor;
-	resource_size_t			phybase;
-	void __iomem			*virtbase;
-	struct clk			*clk;
-	struct spi_master		*master;
-	struct pl022_ssp_controller	*master_info;
+काष्ठा pl022 अणु
+	काष्ठा amba_device		*adev;
+	काष्ठा venकरोr_data		*venकरोr;
+	resource_माप_प्रकार			phybase;
+	व्योम __iomem			*virtbase;
+	काष्ठा clk			*clk;
+	काष्ठा spi_master		*master;
+	काष्ठा pl022_ssp_controller	*master_info;
 	/* Message per-transfer pump */
-	struct tasklet_struct		pump_transfers;
-	struct spi_message		*cur_msg;
-	struct spi_transfer		*cur_transfer;
-	struct chip_data		*cur_chip;
+	काष्ठा tasklet_काष्ठा		pump_transfers;
+	काष्ठा spi_message		*cur_msg;
+	काष्ठा spi_transfer		*cur_transfer;
+	काष्ठा chip_data		*cur_chip;
 	bool				next_msg_cs_active;
-	void				*tx;
-	void				*tx_end;
-	void				*rx;
-	void				*rx_end;
-	enum ssp_reading		read;
-	enum ssp_writing		write;
-	u32				exp_fifo_level;
-	enum ssp_rx_level_trig		rx_lev_trig;
-	enum ssp_tx_level_trig		tx_lev_trig;
+	व्योम				*tx;
+	व्योम				*tx_end;
+	व्योम				*rx;
+	व्योम				*rx_end;
+	क्रमागत ssp_पढ़ोing		पढ़ो;
+	क्रमागत ssp_writing		ग_लिखो;
+	u32				exp_fअगरo_level;
+	क्रमागत ssp_rx_level_trig		rx_lev_trig;
+	क्रमागत ssp_tx_level_trig		tx_lev_trig;
 	/* DMA settings */
-#ifdef CONFIG_DMA_ENGINE
-	struct dma_chan			*dma_rx_channel;
-	struct dma_chan			*dma_tx_channel;
-	struct sg_table			sgt_rx;
-	struct sg_table			sgt_tx;
-	char				*dummypage;
+#अगर_घोषित CONFIG_DMA_ENGINE
+	काष्ठा dma_chan			*dma_rx_channel;
+	काष्ठा dma_chan			*dma_tx_channel;
+	काष्ठा sg_table			sgt_rx;
+	काष्ठा sg_table			sgt_tx;
+	अक्षर				*dummypage;
 	bool				dma_running;
-#endif
-	int cur_cs;
-	struct gpio_desc *cur_gpiod;
-};
+#पूर्ण_अगर
+	पूर्णांक cur_cs;
+	काष्ठा gpio_desc *cur_gpiod;
+पूर्ण;
 
 /**
- * struct chip_data - To maintain runtime state of SSP for each client chip
- * @cr0: Value of control register CR0 of SSP - on later ST variants this
- *       register is 32 bits wide rather than just 16
- * @cr1: Value of control register CR1 of SSP
+ * काष्ठा chip_data - To मुख्यtain runसमय state of SSP क्रम each client chip
+ * @cr0: Value of control रेजिस्टर CR0 of SSP - on later ST variants this
+ *       रेजिस्टर is 32 bits wide rather than just 16
+ * @cr1: Value of control रेजिस्टर CR1 of SSP
  * @dmacr: Value of DMA control Register of SSP
- * @cpsr: Value of Clock prescale register
- * @n_bytes: how many bytes(power of 2) reqd for a given data width of client
+ * @cpsr: Value of Clock prescale रेजिस्टर
+ * @n_bytes: how many bytes(घातer of 2) reqd क्रम a given data width of client
  * @enable_dma: Whether to enable DMA or not
- * @read: function ptr to be used to read when doing xfer for this chip
- * @write: function ptr to be used to write when doing xfer for this chip
- * @xfer_type: polling/interrupt/DMA
+ * @पढ़ो: function ptr to be used to पढ़ो when करोing xfer क्रम this chip
+ * @ग_लिखो: function ptr to be used to ग_लिखो when करोing xfer क्रम this chip
+ * @xfer_type: polling/पूर्णांकerrupt/DMA
  *
- * Runtime state of the SSP controller, maintained per chip,
+ * Runसमय state of the SSP controller, मुख्यtained per chip,
  * This would be set according to the current message that would be served
  */
-struct chip_data {
+काष्ठा chip_data अणु
 	u32 cr0;
 	u16 cr1;
 	u16 dmacr;
 	u16 cpsr;
 	u8 n_bytes;
 	bool enable_dma;
-	enum ssp_reading read;
-	enum ssp_writing write;
-	int xfer_type;
-};
+	क्रमागत ssp_पढ़ोing पढ़ो;
+	क्रमागत ssp_writing ग_लिखो;
+	पूर्णांक xfer_type;
+पूर्ण;
 
 /**
- * internal_cs_control - Control chip select signals via SSP_CSR.
- * @pl022: SSP driver private data structure
+ * पूर्णांकernal_cs_control - Control chip select संकेतs via SSP_CSR.
+ * @pl022: SSP driver निजी data काष्ठाure
  * @command: select/delect the chip
  *
- * Used on controller with internal chip select control via SSP_CSR register
- * (vendor extension). Each of the 5 LSB in the register controls one chip
- * select signal.
+ * Used on controller with पूर्णांकernal chip select control via SSP_CSR रेजिस्टर
+ * (venकरोr extension). Each of the 5 LSB in the रेजिस्टर controls one chip
+ * select संकेत.
  */
-static void internal_cs_control(struct pl022 *pl022, u32 command)
-{
-	u32 tmp;
+अटल व्योम पूर्णांकernal_cs_control(काष्ठा pl022 *pl022, u32 command)
+अणु
+	u32 पंचांगp;
 
-	tmp = readw(SSP_CSR(pl022->virtbase));
-	if (command == SSP_CHIP_SELECT)
-		tmp &= ~BIT(pl022->cur_cs);
-	else
-		tmp |= BIT(pl022->cur_cs);
-	writew(tmp, SSP_CSR(pl022->virtbase));
-}
+	पंचांगp = पढ़ोw(SSP_CSR(pl022->virtbase));
+	अगर (command == SSP_CHIP_SELECT)
+		पंचांगp &= ~BIT(pl022->cur_cs);
+	अन्यथा
+		पंचांगp |= BIT(pl022->cur_cs);
+	ग_लिखोw(पंचांगp, SSP_CSR(pl022->virtbase));
+पूर्ण
 
-static void pl022_cs_control(struct pl022 *pl022, u32 command)
-{
-	if (pl022->vendor->internal_cs_ctrl)
-		internal_cs_control(pl022, command);
-	else if (pl022->cur_gpiod)
+अटल व्योम pl022_cs_control(काष्ठा pl022 *pl022, u32 command)
+अणु
+	अगर (pl022->venकरोr->पूर्णांकernal_cs_ctrl)
+		पूर्णांकernal_cs_control(pl022, command);
+	अन्यथा अगर (pl022->cur_gpiod)
 		/*
 		 * This needs to be inverted since with GPIOLIB in
 		 * control, the inversion will be handled by
 		 * GPIOLIB's active low handling. The "command"
-		 * passed into this function will be SSP_CHIP_SELECT
-		 * which is enum:ed to 0, so we need the inverse
+		 * passed पूर्णांकo this function will be SSP_CHIP_SELECT
+		 * which is क्रमागत:ed to 0, so we need the inverse
 		 * (1) to activate chip select.
 		 */
 		gpiod_set_value(pl022->cur_gpiod, !command);
-}
+पूर्ण
 
 /**
  * giveback - current spi_message is over, schedule next message and call
- * callback of this message. Assumes that caller already
+ * callback of this message. Assumes that caller alपढ़ोy
  * set message->status; dma and pio irqs are blocked
- * @pl022: SSP driver private data structure
+ * @pl022: SSP driver निजी data काष्ठाure
  */
-static void giveback(struct pl022 *pl022)
-{
-	struct spi_transfer *last_transfer;
+अटल व्योम giveback(काष्ठा pl022 *pl022)
+अणु
+	काष्ठा spi_transfer *last_transfer;
 	pl022->next_msg_cs_active = false;
 
 	last_transfer = list_last_entry(&pl022->cur_msg->transfers,
-					struct spi_transfer, transfer_list);
+					काष्ठा spi_transfer, transfer_list);
 
-	/* Delay if requested before any change in chip select */
+	/* Delay अगर requested beक्रमe any change in chip select */
 	/*
-	 * FIXME: This runs in interrupt context.
+	 * FIXME: This runs in पूर्णांकerrupt context.
 	 * Is this really smart?
 	 */
 	spi_transfer_delay_exec(last_transfer);
 
-	if (!last_transfer->cs_change) {
-		struct spi_message *next_msg;
+	अगर (!last_transfer->cs_change) अणु
+		काष्ठा spi_message *next_msg;
 
 		/*
 		 * cs_change was not set. We can keep the chip select
-		 * enabled if there is message in the queue and it is
-		 * for the same spi device.
+		 * enabled अगर there is message in the queue and it is
+		 * क्रम the same spi device.
 		 *
 		 * We cannot postpone this until pump_messages, because
 		 * after calling msg->complete (below) the driver that
 		 * sent the current message could be unloaded, which
 		 * could invalidate the cs_control() callback...
 		 */
-		/* get a pointer to the next message, if any */
+		/* get a poपूर्णांकer to the next message, अगर any */
 		next_msg = spi_get_next_queued_message(pl022->master);
 
 		/*
-		 * see if the next and current messages point
+		 * see अगर the next and current messages poपूर्णांक
 		 * to the same spi device.
 		 */
-		if (next_msg && next_msg->spi != pl022->cur_msg->spi)
-			next_msg = NULL;
-		if (!next_msg || pl022->cur_msg->state == STATE_ERROR)
+		अगर (next_msg && next_msg->spi != pl022->cur_msg->spi)
+			next_msg = शून्य;
+		अगर (!next_msg || pl022->cur_msg->state == STATE_ERROR)
 			pl022_cs_control(pl022, SSP_CHIP_DESELECT);
-		else
+		अन्यथा
 			pl022->next_msg_cs_active = true;
 
-	}
+	पूर्ण
 
-	pl022->cur_msg = NULL;
-	pl022->cur_transfer = NULL;
-	pl022->cur_chip = NULL;
+	pl022->cur_msg = शून्य;
+	pl022->cur_transfer = शून्य;
+	pl022->cur_chip = शून्य;
 
 	/* disable the SPI/SSP operation */
-	writew((readw(SSP_CR1(pl022->virtbase)) &
+	ग_लिखोw((पढ़ोw(SSP_CR1(pl022->virtbase)) &
 		(~SSP_CR1_MASK_SSE)), SSP_CR1(pl022->virtbase));
 
 	spi_finalize_current_message(pl022->master);
-}
+पूर्ण
 
 /**
  * flush - flush the FIFO to reach a clean state
- * @pl022: SSP driver private data structure
+ * @pl022: SSP driver निजी data काष्ठाure
  */
-static int flush(struct pl022 *pl022)
-{
-	unsigned long limit = loops_per_jiffy << 1;
+अटल पूर्णांक flush(काष्ठा pl022 *pl022)
+अणु
+	अचिन्हित दीर्घ limit = loops_per_jअगरfy << 1;
 
 	dev_dbg(&pl022->adev->dev, "flush\n");
-	do {
-		while (readw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_RNE)
-			readw(SSP_DR(pl022->virtbase));
-	} while ((readw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_BSY) && limit--);
+	करो अणु
+		जबतक (पढ़ोw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_RNE)
+			पढ़ोw(SSP_DR(pl022->virtbase));
+	पूर्ण जबतक ((पढ़ोw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_BSY) && limit--);
 
-	pl022->exp_fifo_level = 0;
+	pl022->exp_fअगरo_level = 0;
 
-	return limit;
-}
+	वापस limit;
+पूर्ण
 
 /**
  * restore_state - Load configuration of current chip
- * @pl022: SSP driver private data structure
+ * @pl022: SSP driver निजी data काष्ठाure
  */
-static void restore_state(struct pl022 *pl022)
-{
-	struct chip_data *chip = pl022->cur_chip;
+अटल व्योम restore_state(काष्ठा pl022 *pl022)
+अणु
+	काष्ठा chip_data *chip = pl022->cur_chip;
 
-	if (pl022->vendor->extended_cr)
-		writel(chip->cr0, SSP_CR0(pl022->virtbase));
-	else
-		writew(chip->cr0, SSP_CR0(pl022->virtbase));
-	writew(chip->cr1, SSP_CR1(pl022->virtbase));
-	writew(chip->dmacr, SSP_DMACR(pl022->virtbase));
-	writew(chip->cpsr, SSP_CPSR(pl022->virtbase));
-	writew(DISABLE_ALL_INTERRUPTS, SSP_IMSC(pl022->virtbase));
-	writew(CLEAR_ALL_INTERRUPTS, SSP_ICR(pl022->virtbase));
-}
+	अगर (pl022->venकरोr->extended_cr)
+		ग_लिखोl(chip->cr0, SSP_CR0(pl022->virtbase));
+	अन्यथा
+		ग_लिखोw(chip->cr0, SSP_CR0(pl022->virtbase));
+	ग_लिखोw(chip->cr1, SSP_CR1(pl022->virtbase));
+	ग_लिखोw(chip->dmacr, SSP_DMACR(pl022->virtbase));
+	ग_लिखोw(chip->cpsr, SSP_CPSR(pl022->virtbase));
+	ग_लिखोw(DISABLE_ALL_INTERRUPTS, SSP_IMSC(pl022->virtbase));
+	ग_लिखोw(CLEAR_ALL_INTERRUPTS, SSP_ICR(pl022->virtbase));
+पूर्ण
 
 /*
  * Default SSP Register Values
  */
-#define DEFAULT_SSP_REG_CR0 ( \
+#घोषणा DEFAULT_SSP_REG_CR0 ( \
 	GEN_MASK_BITS(SSP_DATA_BITS_12, SSP_CR0_MASK_DSS, 0)	| \
 	GEN_MASK_BITS(SSP_INTERFACE_MOTOROLA_SPI, SSP_CR0_MASK_FRF, 4) | \
 	GEN_MASK_BITS(SSP_CLK_POL_IDLE_LOW, SSP_CR0_MASK_SPO, 6) | \
@@ -575,8 +576,8 @@ static void restore_state(struct pl022 *pl022)
 	GEN_MASK_BITS(SSP_DEFAULT_CLKRATE, SSP_CR0_MASK_SCR, 8) \
 )
 
-/* ST versions have slightly different bit layout */
-#define DEFAULT_SSP_REG_CR0_ST ( \
+/* ST versions have slightly dअगरferent bit layout */
+#घोषणा DEFAULT_SSP_REG_CR0_ST ( \
 	GEN_MASK_BITS(SSP_DATA_BITS_12, SSP_CR0_MASK_DSS_ST, 0)	| \
 	GEN_MASK_BITS(SSP_MICROWIRE_CHANNEL_FULL_DUPLEX, SSP_CR0_MASK_HALFDUP_ST, 5) | \
 	GEN_MASK_BITS(SSP_CLK_POL_IDLE_LOW, SSP_CR0_MASK_SPO, 6) | \
@@ -586,23 +587,23 @@ static void restore_state(struct pl022 *pl022)
 	GEN_MASK_BITS(SSP_INTERFACE_MOTOROLA_SPI, SSP_CR0_MASK_FRF_ST, 21) \
 )
 
-/* The PL023 version is slightly different again */
-#define DEFAULT_SSP_REG_CR0_ST_PL023 ( \
+/* The PL023 version is slightly dअगरferent again */
+#घोषणा DEFAULT_SSP_REG_CR0_ST_PL023 ( \
 	GEN_MASK_BITS(SSP_DATA_BITS_12, SSP_CR0_MASK_DSS_ST, 0)	| \
 	GEN_MASK_BITS(SSP_CLK_POL_IDLE_LOW, SSP_CR0_MASK_SPO, 6) | \
 	GEN_MASK_BITS(SSP_CLK_SECOND_EDGE, SSP_CR0_MASK_SPH, 7) | \
 	GEN_MASK_BITS(SSP_DEFAULT_CLKRATE, SSP_CR0_MASK_SCR, 8) \
 )
 
-#define DEFAULT_SSP_REG_CR1 ( \
+#घोषणा DEFAULT_SSP_REG_CR1 ( \
 	GEN_MASK_BITS(LOOPBACK_DISABLED, SSP_CR1_MASK_LBM, 0) | \
 	GEN_MASK_BITS(SSP_DISABLED, SSP_CR1_MASK_SSE, 1) | \
 	GEN_MASK_BITS(SSP_MASTER, SSP_CR1_MASK_MS, 2) | \
 	GEN_MASK_BITS(DO_NOT_DRIVE_TX, SSP_CR1_MASK_SOD, 3) \
 )
 
-/* ST versions extend this register to use all 16 bits */
-#define DEFAULT_SSP_REG_CR1_ST ( \
+/* ST versions extend this रेजिस्टर to use all 16 bits */
+#घोषणा DEFAULT_SSP_REG_CR1_ST ( \
 	DEFAULT_SSP_REG_CR1 | \
 	GEN_MASK_BITS(SSP_RX_MSB, SSP_CR1_MASK_RENDN_ST, 4) | \
 	GEN_MASK_BITS(SSP_TX_MSB, SSP_CR1_MASK_TENDN_ST, 5) | \
@@ -612,10 +613,10 @@ static void restore_state(struct pl022 *pl022)
 )
 
 /*
- * The PL023 variant has further differences: no loopback mode, no microwire
- * support, and a new clock feedback delay setting.
+ * The PL023 variant has further dअगरferences: no loopback mode, no microwire
+ * support, and a new घड़ी feedback delay setting.
  */
-#define DEFAULT_SSP_REG_CR1_ST_PL023 ( \
+#घोषणा DEFAULT_SSP_REG_CR1_ST_PL023 ( \
 	GEN_MASK_BITS(SSP_DISABLED, SSP_CR1_MASK_SSE, 1) | \
 	GEN_MASK_BITS(SSP_MASTER, SSP_CR1_MASK_MS, 2) | \
 	GEN_MASK_BITS(DO_NOT_DRIVE_TX, SSP_CR1_MASK_SOD, 3) | \
@@ -626,46 +627,46 @@ static void restore_state(struct pl022 *pl022)
 	GEN_MASK_BITS(SSP_FEEDBACK_CLK_DELAY_NONE, SSP_CR1_MASK_FBCLKDEL_ST, 13) \
 )
 
-#define DEFAULT_SSP_REG_CPSR ( \
+#घोषणा DEFAULT_SSP_REG_CPSR ( \
 	GEN_MASK_BITS(SSP_DEFAULT_PRESCALE, SSP_CPSR_MASK_CPSDVSR, 0) \
 )
 
-#define DEFAULT_SSP_REG_DMACR (\
+#घोषणा DEFAULT_SSP_REG_DMACR (\
 	GEN_MASK_BITS(SSP_DMA_DISABLED, SSP_DMACR_MASK_RXDMAE, 0) | \
 	GEN_MASK_BITS(SSP_DMA_DISABLED, SSP_DMACR_MASK_TXDMAE, 1) \
 )
 
 /**
- * load_ssp_default_config - Load default configuration for SSP
- * @pl022: SSP driver private data structure
+ * load_ssp_शेष_config - Load शेष configuration क्रम SSP
+ * @pl022: SSP driver निजी data काष्ठाure
  */
-static void load_ssp_default_config(struct pl022 *pl022)
-{
-	if (pl022->vendor->pl023) {
-		writel(DEFAULT_SSP_REG_CR0_ST_PL023, SSP_CR0(pl022->virtbase));
-		writew(DEFAULT_SSP_REG_CR1_ST_PL023, SSP_CR1(pl022->virtbase));
-	} else if (pl022->vendor->extended_cr) {
-		writel(DEFAULT_SSP_REG_CR0_ST, SSP_CR0(pl022->virtbase));
-		writew(DEFAULT_SSP_REG_CR1_ST, SSP_CR1(pl022->virtbase));
-	} else {
-		writew(DEFAULT_SSP_REG_CR0, SSP_CR0(pl022->virtbase));
-		writew(DEFAULT_SSP_REG_CR1, SSP_CR1(pl022->virtbase));
-	}
-	writew(DEFAULT_SSP_REG_DMACR, SSP_DMACR(pl022->virtbase));
-	writew(DEFAULT_SSP_REG_CPSR, SSP_CPSR(pl022->virtbase));
-	writew(DISABLE_ALL_INTERRUPTS, SSP_IMSC(pl022->virtbase));
-	writew(CLEAR_ALL_INTERRUPTS, SSP_ICR(pl022->virtbase));
-}
+अटल व्योम load_ssp_शेष_config(काष्ठा pl022 *pl022)
+अणु
+	अगर (pl022->venकरोr->pl023) अणु
+		ग_लिखोl(DEFAULT_SSP_REG_CR0_ST_PL023, SSP_CR0(pl022->virtbase));
+		ग_लिखोw(DEFAULT_SSP_REG_CR1_ST_PL023, SSP_CR1(pl022->virtbase));
+	पूर्ण अन्यथा अगर (pl022->venकरोr->extended_cr) अणु
+		ग_लिखोl(DEFAULT_SSP_REG_CR0_ST, SSP_CR0(pl022->virtbase));
+		ग_लिखोw(DEFAULT_SSP_REG_CR1_ST, SSP_CR1(pl022->virtbase));
+	पूर्ण अन्यथा अणु
+		ग_लिखोw(DEFAULT_SSP_REG_CR0, SSP_CR0(pl022->virtbase));
+		ग_लिखोw(DEFAULT_SSP_REG_CR1, SSP_CR1(pl022->virtbase));
+	पूर्ण
+	ग_लिखोw(DEFAULT_SSP_REG_DMACR, SSP_DMACR(pl022->virtbase));
+	ग_लिखोw(DEFAULT_SSP_REG_CPSR, SSP_CPSR(pl022->virtbase));
+	ग_लिखोw(DISABLE_ALL_INTERRUPTS, SSP_IMSC(pl022->virtbase));
+	ग_लिखोw(CLEAR_ALL_INTERRUPTS, SSP_ICR(pl022->virtbase));
+पूर्ण
 
 /*
- * This will write to TX and read from RX according to the parameters
+ * This will ग_लिखो to TX and पढ़ो from RX according to the parameters
  * set in pl022.
  */
-static void readwriter(struct pl022 *pl022)
-{
+अटल व्योम पढ़ोग_लिखोr(काष्ठा pl022 *pl022)
+अणु
 
 	/*
-	 * The FIFO depth is different between primecell variants.
+	 * The FIFO depth is dअगरferent between primecell variants.
 	 * I believe filling in too much in the FIFO might cause
 	 * errons in 8bit wide transfers on ARM variants (just 8 words
 	 * FIFO, means only 8x8 = 64 bits in FIFO) at least.
@@ -679,203 +680,203 @@ static void readwriter(struct pl022 *pl022)
 		__func__, pl022->rx, pl022->rx_end, pl022->tx, pl022->tx_end);
 
 	/* Read as much as you can */
-	while ((readw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_RNE)
-	       && (pl022->rx < pl022->rx_end)) {
-		switch (pl022->read) {
-		case READING_NULL:
-			readw(SSP_DR(pl022->virtbase));
-			break;
-		case READING_U8:
+	जबतक ((पढ़ोw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_RNE)
+	       && (pl022->rx < pl022->rx_end)) अणु
+		चयन (pl022->पढ़ो) अणु
+		हाल READING_शून्य:
+			पढ़ोw(SSP_DR(pl022->virtbase));
+			अवरोध;
+		हाल READING_U8:
 			*(u8 *) (pl022->rx) =
-				readw(SSP_DR(pl022->virtbase)) & 0xFFU;
-			break;
-		case READING_U16:
+				पढ़ोw(SSP_DR(pl022->virtbase)) & 0xFFU;
+			अवरोध;
+		हाल READING_U16:
 			*(u16 *) (pl022->rx) =
-				(u16) readw(SSP_DR(pl022->virtbase));
-			break;
-		case READING_U32:
+				(u16) पढ़ोw(SSP_DR(pl022->virtbase));
+			अवरोध;
+		हाल READING_U32:
 			*(u32 *) (pl022->rx) =
-				readl(SSP_DR(pl022->virtbase));
-			break;
-		}
+				पढ़ोl(SSP_DR(pl022->virtbase));
+			अवरोध;
+		पूर्ण
 		pl022->rx += (pl022->cur_chip->n_bytes);
-		pl022->exp_fifo_level--;
-	}
+		pl022->exp_fअगरo_level--;
+	पूर्ण
 	/*
 	 * Write as much as possible up to the RX FIFO size
 	 */
-	while ((pl022->exp_fifo_level < pl022->vendor->fifodepth)
-	       && (pl022->tx < pl022->tx_end)) {
-		switch (pl022->write) {
-		case WRITING_NULL:
-			writew(0x0, SSP_DR(pl022->virtbase));
-			break;
-		case WRITING_U8:
-			writew(*(u8 *) (pl022->tx), SSP_DR(pl022->virtbase));
-			break;
-		case WRITING_U16:
-			writew((*(u16 *) (pl022->tx)), SSP_DR(pl022->virtbase));
-			break;
-		case WRITING_U32:
-			writel(*(u32 *) (pl022->tx), SSP_DR(pl022->virtbase));
-			break;
-		}
+	जबतक ((pl022->exp_fअगरo_level < pl022->venकरोr->fअगरodepth)
+	       && (pl022->tx < pl022->tx_end)) अणु
+		चयन (pl022->ग_लिखो) अणु
+		हाल WRITING_शून्य:
+			ग_लिखोw(0x0, SSP_DR(pl022->virtbase));
+			अवरोध;
+		हाल WRITING_U8:
+			ग_लिखोw(*(u8 *) (pl022->tx), SSP_DR(pl022->virtbase));
+			अवरोध;
+		हाल WRITING_U16:
+			ग_लिखोw((*(u16 *) (pl022->tx)), SSP_DR(pl022->virtbase));
+			अवरोध;
+		हाल WRITING_U32:
+			ग_लिखोl(*(u32 *) (pl022->tx), SSP_DR(pl022->virtbase));
+			अवरोध;
+		पूर्ण
 		pl022->tx += (pl022->cur_chip->n_bytes);
-		pl022->exp_fifo_level++;
+		pl022->exp_fअगरo_level++;
 		/*
-		 * This inner reader takes care of things appearing in the RX
+		 * This inner पढ़ोer takes care of things appearing in the RX
 		 * FIFO as we're transmitting. This will happen a lot since the
-		 * clock starts running when you put things into the TX FIFO,
-		 * and then things are continuously clocked into the RX FIFO.
+		 * घड़ी starts running when you put things पूर्णांकo the TX FIFO,
+		 * and then things are continuously घड़ीed पूर्णांकo the RX FIFO.
 		 */
-		while ((readw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_RNE)
-		       && (pl022->rx < pl022->rx_end)) {
-			switch (pl022->read) {
-			case READING_NULL:
-				readw(SSP_DR(pl022->virtbase));
-				break;
-			case READING_U8:
+		जबतक ((पढ़ोw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_RNE)
+		       && (pl022->rx < pl022->rx_end)) अणु
+			चयन (pl022->पढ़ो) अणु
+			हाल READING_शून्य:
+				पढ़ोw(SSP_DR(pl022->virtbase));
+				अवरोध;
+			हाल READING_U8:
 				*(u8 *) (pl022->rx) =
-					readw(SSP_DR(pl022->virtbase)) & 0xFFU;
-				break;
-			case READING_U16:
+					पढ़ोw(SSP_DR(pl022->virtbase)) & 0xFFU;
+				अवरोध;
+			हाल READING_U16:
 				*(u16 *) (pl022->rx) =
-					(u16) readw(SSP_DR(pl022->virtbase));
-				break;
-			case READING_U32:
+					(u16) पढ़ोw(SSP_DR(pl022->virtbase));
+				अवरोध;
+			हाल READING_U32:
 				*(u32 *) (pl022->rx) =
-					readl(SSP_DR(pl022->virtbase));
-				break;
-			}
+					पढ़ोl(SSP_DR(pl022->virtbase));
+				अवरोध;
+			पूर्ण
 			pl022->rx += (pl022->cur_chip->n_bytes);
-			pl022->exp_fifo_level--;
-		}
-	}
+			pl022->exp_fअगरo_level--;
+		पूर्ण
+	पूर्ण
 	/*
-	 * When we exit here the TX FIFO should be full and the RX FIFO
+	 * When we निकास here the TX FIFO should be full and the RX FIFO
 	 * should be empty
 	 */
-}
+पूर्ण
 
 /**
  * next_transfer - Move to the Next transfer in the current spi message
- * @pl022: SSP driver private data structure
+ * @pl022: SSP driver निजी data काष्ठाure
  *
  * This function moves though the linked list of spi transfers in the
- * current spi message and returns with the state of current spi
- * message i.e whether its last transfer is done(STATE_DONE) or
- * Next transfer is ready(STATE_RUNNING)
+ * current spi message and वापसs with the state of current spi
+ * message i.e whether its last transfer is करोne(STATE_DONE) or
+ * Next transfer is पढ़ोy(STATE_RUNNING)
  */
-static void *next_transfer(struct pl022 *pl022)
-{
-	struct spi_message *msg = pl022->cur_msg;
-	struct spi_transfer *trans = pl022->cur_transfer;
+अटल व्योम *next_transfer(काष्ठा pl022 *pl022)
+अणु
+	काष्ठा spi_message *msg = pl022->cur_msg;
+	काष्ठा spi_transfer *trans = pl022->cur_transfer;
 
 	/* Move to next transfer */
-	if (trans->transfer_list.next != &msg->transfers) {
+	अगर (trans->transfer_list.next != &msg->transfers) अणु
 		pl022->cur_transfer =
 		    list_entry(trans->transfer_list.next,
-			       struct spi_transfer, transfer_list);
-		return STATE_RUNNING;
-	}
-	return STATE_DONE;
-}
+			       काष्ठा spi_transfer, transfer_list);
+		वापस STATE_RUNNING;
+	पूर्ण
+	वापस STATE_DONE;
+पूर्ण
 
 /*
- * This DMA functionality is only compiled in if we have
+ * This DMA functionality is only compiled in अगर we have
  * access to the generic DMA devices/DMA engine.
  */
-#ifdef CONFIG_DMA_ENGINE
-static void unmap_free_dma_scatter(struct pl022 *pl022)
-{
-	/* Unmap and free the SG tables */
+#अगर_घोषित CONFIG_DMA_ENGINE
+अटल व्योम unmap_मुक्त_dma_scatter(काष्ठा pl022 *pl022)
+अणु
+	/* Unmap and मुक्त the SG tables */
 	dma_unmap_sg(pl022->dma_tx_channel->device->dev, pl022->sgt_tx.sgl,
 		     pl022->sgt_tx.nents, DMA_TO_DEVICE);
 	dma_unmap_sg(pl022->dma_rx_channel->device->dev, pl022->sgt_rx.sgl,
 		     pl022->sgt_rx.nents, DMA_FROM_DEVICE);
-	sg_free_table(&pl022->sgt_rx);
-	sg_free_table(&pl022->sgt_tx);
-}
+	sg_मुक्त_table(&pl022->sgt_rx);
+	sg_मुक्त_table(&pl022->sgt_tx);
+पूर्ण
 
-static void dma_callback(void *data)
-{
-	struct pl022 *pl022 = data;
-	struct spi_message *msg = pl022->cur_msg;
+अटल व्योम dma_callback(व्योम *data)
+अणु
+	काष्ठा pl022 *pl022 = data;
+	काष्ठा spi_message *msg = pl022->cur_msg;
 
 	BUG_ON(!pl022->sgt_rx.sgl);
 
-#ifdef VERBOSE_DEBUG
+#अगर_घोषित VERBOSE_DEBUG
 	/*
 	 * Optionally dump out buffers to inspect contents, this is
-	 * good if you want to convince yourself that the loopback
-	 * read/write contents are the same, when adopting to a new
+	 * good अगर you want to convince yourself that the loopback
+	 * पढ़ो/ग_लिखो contents are the same, when aकरोpting to a new
 	 * DMA engine.
 	 */
-	{
-		struct scatterlist *sg;
-		unsigned int i;
+	अणु
+		काष्ठा scatterlist *sg;
+		अचिन्हित पूर्णांक i;
 
-		dma_sync_sg_for_cpu(&pl022->adev->dev,
+		dma_sync_sg_क्रम_cpu(&pl022->adev->dev,
 				    pl022->sgt_rx.sgl,
 				    pl022->sgt_rx.nents,
 				    DMA_FROM_DEVICE);
 
-		for_each_sg(pl022->sgt_rx.sgl, sg, pl022->sgt_rx.nents, i) {
+		क्रम_each_sg(pl022->sgt_rx.sgl, sg, pl022->sgt_rx.nents, i) अणु
 			dev_dbg(&pl022->adev->dev, "SPI RX SG ENTRY: %d", i);
-			print_hex_dump(KERN_ERR, "SPI RX: ",
+			prपूर्णांक_hex_dump(KERN_ERR, "SPI RX: ",
 				       DUMP_PREFIX_OFFSET,
 				       16,
 				       1,
 				       sg_virt(sg),
 				       sg_dma_len(sg),
 				       1);
-		}
-		for_each_sg(pl022->sgt_tx.sgl, sg, pl022->sgt_tx.nents, i) {
+		पूर्ण
+		क्रम_each_sg(pl022->sgt_tx.sgl, sg, pl022->sgt_tx.nents, i) अणु
 			dev_dbg(&pl022->adev->dev, "SPI TX SG ENTRY: %d", i);
-			print_hex_dump(KERN_ERR, "SPI TX: ",
+			prपूर्णांक_hex_dump(KERN_ERR, "SPI TX: ",
 				       DUMP_PREFIX_OFFSET,
 				       16,
 				       1,
 				       sg_virt(sg),
 				       sg_dma_len(sg),
 				       1);
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	unmap_free_dma_scatter(pl022);
+	unmap_मुक्त_dma_scatter(pl022);
 
 	/* Update total bytes transferred */
 	msg->actual_length += pl022->cur_transfer->len;
 	/* Move to next transfer */
 	msg->state = next_transfer(pl022);
-	if (msg->state != STATE_DONE && pl022->cur_transfer->cs_change)
+	अगर (msg->state != STATE_DONE && pl022->cur_transfer->cs_change)
 		pl022_cs_control(pl022, SSP_CHIP_DESELECT);
 	tasklet_schedule(&pl022->pump_transfers);
-}
+पूर्ण
 
-static void setup_dma_scatter(struct pl022 *pl022,
-			      void *buffer,
-			      unsigned int length,
-			      struct sg_table *sgtab)
-{
-	struct scatterlist *sg;
-	int bytesleft = length;
-	void *bufp = buffer;
-	int mapbytes;
-	int i;
+अटल व्योम setup_dma_scatter(काष्ठा pl022 *pl022,
+			      व्योम *buffer,
+			      अचिन्हित पूर्णांक length,
+			      काष्ठा sg_table *sgtab)
+अणु
+	काष्ठा scatterlist *sg;
+	पूर्णांक bytesleft = length;
+	व्योम *bufp = buffer;
+	पूर्णांक mapbytes;
+	पूर्णांक i;
 
-	if (buffer) {
-		for_each_sg(sgtab->sgl, sg, sgtab->nents, i) {
+	अगर (buffer) अणु
+		क्रम_each_sg(sgtab->sgl, sg, sgtab->nents, i) अणु
 			/*
 			 * If there are less bytes left than what fits
 			 * in the current page (plus page alignment offset)
-			 * we just feed in this, else we stuff in as much
+			 * we just feed in this, अन्यथा we stuff in as much
 			 * as we can.
 			 */
-			if (bytesleft < (PAGE_SIZE - offset_in_page(bufp)))
+			अगर (bytesleft < (PAGE_SIZE - offset_in_page(bufp)))
 				mapbytes = bytesleft;
-			else
+			अन्यथा
 				mapbytes = PAGE_SIZE - offset_in_page(bufp);
 			sg_set_page(sg, virt_to_page(bufp),
 				    mapbytes, offset_in_page(bufp));
@@ -884,13 +885,13 @@ static void setup_dma_scatter(struct pl022 *pl022,
 			dev_dbg(&pl022->adev->dev,
 				"set RX/TX target page @ %p, %d bytes, %d left\n",
 				bufp, mapbytes, bytesleft);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Map the dummy buffer on every page */
-		for_each_sg(sgtab->sgl, sg, sgtab->nents, i) {
-			if (bytesleft < PAGE_SIZE)
+		क्रम_each_sg(sgtab->sgl, sg, sgtab->nents, i) अणु
+			अगर (bytesleft < PAGE_SIZE)
 				mapbytes = bytesleft;
-			else
+			अन्यथा
 				mapbytes = PAGE_SIZE;
 			sg_set_page(sg, virt_to_page(pl022->dummypage),
 				    mapbytes, 0);
@@ -899,38 +900,38 @@ static void setup_dma_scatter(struct pl022 *pl022,
 				"set RX/TX to dummy page %d bytes, %d left\n",
 				mapbytes, bytesleft);
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 	BUG_ON(bytesleft);
-}
+पूर्ण
 
 /**
- * configure_dma - configures the channels for the next transfer
- * @pl022: SSP driver's private data structure
+ * configure_dma - configures the channels क्रम the next transfer
+ * @pl022: SSP driver's निजी data काष्ठाure
  */
-static int configure_dma(struct pl022 *pl022)
-{
-	struct dma_slave_config rx_conf = {
+अटल पूर्णांक configure_dma(काष्ठा pl022 *pl022)
+अणु
+	काष्ठा dma_slave_config rx_conf = अणु
 		.src_addr = SSP_DR(pl022->phybase),
 		.direction = DMA_DEV_TO_MEM,
 		.device_fc = false,
-	};
-	struct dma_slave_config tx_conf = {
+	पूर्ण;
+	काष्ठा dma_slave_config tx_conf = अणु
 		.dst_addr = SSP_DR(pl022->phybase),
 		.direction = DMA_MEM_TO_DEV,
 		.device_fc = false,
-	};
-	unsigned int pages;
-	int ret;
-	int rx_sglen, tx_sglen;
-	struct dma_chan *rxchan = pl022->dma_rx_channel;
-	struct dma_chan *txchan = pl022->dma_tx_channel;
-	struct dma_async_tx_descriptor *rxdesc;
-	struct dma_async_tx_descriptor *txdesc;
+	पूर्ण;
+	अचिन्हित पूर्णांक pages;
+	पूर्णांक ret;
+	पूर्णांक rx_sglen, tx_sglen;
+	काष्ठा dma_chan *rxchan = pl022->dma_rx_channel;
+	काष्ठा dma_chan *txchan = pl022->dma_tx_channel;
+	काष्ठा dma_async_tx_descriptor *rxdesc;
+	काष्ठा dma_async_tx_descriptor *txdesc;
 
 	/* Check that the channels are available */
-	if (!rxchan || !txchan)
-		return -ENODEV;
+	अगर (!rxchan || !txchan)
+		वापस -ENODEV;
 
 	/*
 	 * If supplied, the DMA burstsize should equal the FIFO trigger level.
@@ -938,103 +939,103 @@ static int configure_dma(struct pl022 *pl022)
 	 * not trigger on 2 elements this needs explicit mapping rather than
 	 * calculation.
 	 */
-	switch (pl022->rx_lev_trig) {
-	case SSP_RX_1_OR_MORE_ELEM:
+	चयन (pl022->rx_lev_trig) अणु
+	हाल SSP_RX_1_OR_MORE_ELEM:
 		rx_conf.src_maxburst = 1;
-		break;
-	case SSP_RX_4_OR_MORE_ELEM:
+		अवरोध;
+	हाल SSP_RX_4_OR_MORE_ELEM:
 		rx_conf.src_maxburst = 4;
-		break;
-	case SSP_RX_8_OR_MORE_ELEM:
+		अवरोध;
+	हाल SSP_RX_8_OR_MORE_ELEM:
 		rx_conf.src_maxburst = 8;
-		break;
-	case SSP_RX_16_OR_MORE_ELEM:
+		अवरोध;
+	हाल SSP_RX_16_OR_MORE_ELEM:
 		rx_conf.src_maxburst = 16;
-		break;
-	case SSP_RX_32_OR_MORE_ELEM:
+		अवरोध;
+	हाल SSP_RX_32_OR_MORE_ELEM:
 		rx_conf.src_maxburst = 32;
-		break;
-	default:
-		rx_conf.src_maxburst = pl022->vendor->fifodepth >> 1;
-		break;
-	}
+		अवरोध;
+	शेष:
+		rx_conf.src_maxburst = pl022->venकरोr->fअगरodepth >> 1;
+		अवरोध;
+	पूर्ण
 
-	switch (pl022->tx_lev_trig) {
-	case SSP_TX_1_OR_MORE_EMPTY_LOC:
+	चयन (pl022->tx_lev_trig) अणु
+	हाल SSP_TX_1_OR_MORE_EMPTY_LOC:
 		tx_conf.dst_maxburst = 1;
-		break;
-	case SSP_TX_4_OR_MORE_EMPTY_LOC:
+		अवरोध;
+	हाल SSP_TX_4_OR_MORE_EMPTY_LOC:
 		tx_conf.dst_maxburst = 4;
-		break;
-	case SSP_TX_8_OR_MORE_EMPTY_LOC:
+		अवरोध;
+	हाल SSP_TX_8_OR_MORE_EMPTY_LOC:
 		tx_conf.dst_maxburst = 8;
-		break;
-	case SSP_TX_16_OR_MORE_EMPTY_LOC:
+		अवरोध;
+	हाल SSP_TX_16_OR_MORE_EMPTY_LOC:
 		tx_conf.dst_maxburst = 16;
-		break;
-	case SSP_TX_32_OR_MORE_EMPTY_LOC:
+		अवरोध;
+	हाल SSP_TX_32_OR_MORE_EMPTY_LOC:
 		tx_conf.dst_maxburst = 32;
-		break;
-	default:
-		tx_conf.dst_maxburst = pl022->vendor->fifodepth >> 1;
-		break;
-	}
+		अवरोध;
+	शेष:
+		tx_conf.dst_maxburst = pl022->venकरोr->fअगरodepth >> 1;
+		अवरोध;
+	पूर्ण
 
-	switch (pl022->read) {
-	case READING_NULL:
-		/* Use the same as for writing */
+	चयन (pl022->पढ़ो) अणु
+	हाल READING_शून्य:
+		/* Use the same as क्रम writing */
 		rx_conf.src_addr_width = DMA_SLAVE_BUSWIDTH_UNDEFINED;
-		break;
-	case READING_U8:
+		अवरोध;
+	हाल READING_U8:
 		rx_conf.src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-		break;
-	case READING_U16:
+		अवरोध;
+	हाल READING_U16:
 		rx_conf.src_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
-		break;
-	case READING_U32:
+		अवरोध;
+	हाल READING_U32:
 		rx_conf.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (pl022->write) {
-	case WRITING_NULL:
-		/* Use the same as for reading */
+	चयन (pl022->ग_लिखो) अणु
+	हाल WRITING_शून्य:
+		/* Use the same as क्रम पढ़ोing */
 		tx_conf.dst_addr_width = DMA_SLAVE_BUSWIDTH_UNDEFINED;
-		break;
-	case WRITING_U8:
+		अवरोध;
+	हाल WRITING_U8:
 		tx_conf.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-		break;
-	case WRITING_U16:
+		अवरोध;
+	हाल WRITING_U16:
 		tx_conf.dst_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
-		break;
-	case WRITING_U32:
+		अवरोध;
+	हाल WRITING_U32:
 		tx_conf.dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* SPI pecularity: we need to read and write the same width */
-	if (rx_conf.src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
+	/* SPI pecularity: we need to पढ़ो and ग_लिखो the same width */
+	अगर (rx_conf.src_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
 		rx_conf.src_addr_width = tx_conf.dst_addr_width;
-	if (tx_conf.dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
+	अगर (tx_conf.dst_addr_width == DMA_SLAVE_BUSWIDTH_UNDEFINED)
 		tx_conf.dst_addr_width = rx_conf.src_addr_width;
 	BUG_ON(rx_conf.src_addr_width != tx_conf.dst_addr_width);
 
 	dmaengine_slave_config(rxchan, &rx_conf);
 	dmaengine_slave_config(txchan, &tx_conf);
 
-	/* Create sglists for the transfers */
+	/* Create sglists क्रम the transfers */
 	pages = DIV_ROUND_UP(pl022->cur_transfer->len, PAGE_SIZE);
 	dev_dbg(&pl022->adev->dev, "using %d pages for transfer\n", pages);
 
 	ret = sg_alloc_table(&pl022->sgt_rx, pages, GFP_ATOMIC);
-	if (ret)
-		goto err_alloc_rx_sg;
+	अगर (ret)
+		जाओ err_alloc_rx_sg;
 
 	ret = sg_alloc_table(&pl022->sgt_tx, pages, GFP_ATOMIC);
-	if (ret)
-		goto err_alloc_tx_sg;
+	अगर (ret)
+		जाओ err_alloc_tx_sg;
 
-	/* Fill in the scatterlists for the RX+TX buffers */
+	/* Fill in the scatterlists क्रम the RX+TX buffers */
 	setup_dma_scatter(pl022, pl022->rx,
 			  pl022->cur_transfer->len, &pl022->sgt_rx);
 	setup_dma_scatter(pl022, pl022->tx,
@@ -1043,13 +1044,13 @@ static int configure_dma(struct pl022 *pl022)
 	/* Map DMA buffers */
 	rx_sglen = dma_map_sg(rxchan->device->dev, pl022->sgt_rx.sgl,
 			   pl022->sgt_rx.nents, DMA_FROM_DEVICE);
-	if (!rx_sglen)
-		goto err_rx_sgmap;
+	अगर (!rx_sglen)
+		जाओ err_rx_sgmap;
 
 	tx_sglen = dma_map_sg(txchan->device->dev, pl022->sgt_tx.sgl,
 			   pl022->sgt_tx.nents, DMA_TO_DEVICE);
-	if (!tx_sglen)
-		goto err_tx_sgmap;
+	अगर (!tx_sglen)
+		जाओ err_tx_sgmap;
 
 	/* Send both scatterlists */
 	rxdesc = dmaengine_prep_slave_sg(rxchan,
@@ -1057,29 +1058,29 @@ static int configure_dma(struct pl022 *pl022)
 				      rx_sglen,
 				      DMA_DEV_TO_MEM,
 				      DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!rxdesc)
-		goto err_rxdesc;
+	अगर (!rxdesc)
+		जाओ err_rxdesc;
 
 	txdesc = dmaengine_prep_slave_sg(txchan,
 				      pl022->sgt_tx.sgl,
 				      tx_sglen,
 				      DMA_MEM_TO_DEV,
 				      DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!txdesc)
-		goto err_txdesc;
+	अगर (!txdesc)
+		जाओ err_txdesc;
 
 	/* Put the callback on the RX transfer only, that should finish last */
 	rxdesc->callback = dma_callback;
 	rxdesc->callback_param = pl022;
 
-	/* Submit and fire RX and TX with TX last so we're ready to read! */
+	/* Submit and fire RX and TX with TX last so we're पढ़ोy to पढ़ो! */
 	dmaengine_submit(rxdesc);
 	dmaengine_submit(txdesc);
 	dma_async_issue_pending(rxchan);
 	dma_async_issue_pending(txchan);
 	pl022->dma_running = true;
 
-	return 0;
+	वापस 0;
 
 err_txdesc:
 	dmaengine_terminate_all(txchan);
@@ -1091,499 +1092,499 @@ err_tx_sgmap:
 	dma_unmap_sg(rxchan->device->dev, pl022->sgt_rx.sgl,
 		     pl022->sgt_rx.nents, DMA_FROM_DEVICE);
 err_rx_sgmap:
-	sg_free_table(&pl022->sgt_tx);
+	sg_मुक्त_table(&pl022->sgt_tx);
 err_alloc_tx_sg:
-	sg_free_table(&pl022->sgt_rx);
+	sg_मुक्त_table(&pl022->sgt_rx);
 err_alloc_rx_sg:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int pl022_dma_probe(struct pl022 *pl022)
-{
+अटल पूर्णांक pl022_dma_probe(काष्ठा pl022 *pl022)
+अणु
 	dma_cap_mask_t mask;
 
 	/* Try to acquire a generic DMA engine slave channel */
 	dma_cap_zero(mask);
 	dma_cap_set(DMA_SLAVE, mask);
 	/*
-	 * We need both RX and TX channels to do DMA, else do none
+	 * We need both RX and TX channels to करो DMA, अन्यथा करो none
 	 * of them.
 	 */
 	pl022->dma_rx_channel = dma_request_channel(mask,
 					    pl022->master_info->dma_filter,
 					    pl022->master_info->dma_rx_param);
-	if (!pl022->dma_rx_channel) {
+	अगर (!pl022->dma_rx_channel) अणु
 		dev_dbg(&pl022->adev->dev, "no RX DMA channel!\n");
-		goto err_no_rxchan;
-	}
+		जाओ err_no_rxchan;
+	पूर्ण
 
 	pl022->dma_tx_channel = dma_request_channel(mask,
 					    pl022->master_info->dma_filter,
 					    pl022->master_info->dma_tx_param);
-	if (!pl022->dma_tx_channel) {
+	अगर (!pl022->dma_tx_channel) अणु
 		dev_dbg(&pl022->adev->dev, "no TX DMA channel!\n");
-		goto err_no_txchan;
-	}
+		जाओ err_no_txchan;
+	पूर्ण
 
-	pl022->dummypage = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!pl022->dummypage)
-		goto err_no_dummypage;
+	pl022->dummypage = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!pl022->dummypage)
+		जाओ err_no_dummypage;
 
 	dev_info(&pl022->adev->dev, "setup for DMA on RX %s, TX %s\n",
 		 dma_chan_name(pl022->dma_rx_channel),
 		 dma_chan_name(pl022->dma_tx_channel));
 
-	return 0;
+	वापस 0;
 
 err_no_dummypage:
 	dma_release_channel(pl022->dma_tx_channel);
 err_no_txchan:
 	dma_release_channel(pl022->dma_rx_channel);
-	pl022->dma_rx_channel = NULL;
+	pl022->dma_rx_channel = शून्य;
 err_no_rxchan:
 	dev_err(&pl022->adev->dev,
 			"Failed to work in dma mode, work without dma!\n");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int pl022_dma_autoprobe(struct pl022 *pl022)
-{
-	struct device *dev = &pl022->adev->dev;
-	struct dma_chan *chan;
-	int err;
+अटल पूर्णांक pl022_dma_स्वतःprobe(काष्ठा pl022 *pl022)
+अणु
+	काष्ठा device *dev = &pl022->adev->dev;
+	काष्ठा dma_chan *chan;
+	पूर्णांक err;
 
-	/* automatically configure DMA channels from platform, normally using DT */
+	/* स्वतःmatically configure DMA channels from platक्रमm, normally using DT */
 	chan = dma_request_chan(dev, "rx");
-	if (IS_ERR(chan)) {
+	अगर (IS_ERR(chan)) अणु
 		err = PTR_ERR(chan);
-		goto err_no_rxchan;
-	}
+		जाओ err_no_rxchan;
+	पूर्ण
 
 	pl022->dma_rx_channel = chan;
 
 	chan = dma_request_chan(dev, "tx");
-	if (IS_ERR(chan)) {
+	अगर (IS_ERR(chan)) अणु
 		err = PTR_ERR(chan);
-		goto err_no_txchan;
-	}
+		जाओ err_no_txchan;
+	पूर्ण
 
 	pl022->dma_tx_channel = chan;
 
-	pl022->dummypage = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!pl022->dummypage) {
+	pl022->dummypage = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!pl022->dummypage) अणु
 		err = -ENOMEM;
-		goto err_no_dummypage;
-	}
+		जाओ err_no_dummypage;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_no_dummypage:
 	dma_release_channel(pl022->dma_tx_channel);
-	pl022->dma_tx_channel = NULL;
+	pl022->dma_tx_channel = शून्य;
 err_no_txchan:
 	dma_release_channel(pl022->dma_rx_channel);
-	pl022->dma_rx_channel = NULL;
+	pl022->dma_rx_channel = शून्य;
 err_no_rxchan:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void terminate_dma(struct pl022 *pl022)
-{
-	struct dma_chan *rxchan = pl022->dma_rx_channel;
-	struct dma_chan *txchan = pl022->dma_tx_channel;
+अटल व्योम terminate_dma(काष्ठा pl022 *pl022)
+अणु
+	काष्ठा dma_chan *rxchan = pl022->dma_rx_channel;
+	काष्ठा dma_chan *txchan = pl022->dma_tx_channel;
 
 	dmaengine_terminate_all(rxchan);
 	dmaengine_terminate_all(txchan);
-	unmap_free_dma_scatter(pl022);
+	unmap_मुक्त_dma_scatter(pl022);
 	pl022->dma_running = false;
-}
+पूर्ण
 
-static void pl022_dma_remove(struct pl022 *pl022)
-{
-	if (pl022->dma_running)
+अटल व्योम pl022_dma_हटाओ(काष्ठा pl022 *pl022)
+अणु
+	अगर (pl022->dma_running)
 		terminate_dma(pl022);
-	if (pl022->dma_tx_channel)
+	अगर (pl022->dma_tx_channel)
 		dma_release_channel(pl022->dma_tx_channel);
-	if (pl022->dma_rx_channel)
+	अगर (pl022->dma_rx_channel)
 		dma_release_channel(pl022->dma_rx_channel);
-	kfree(pl022->dummypage);
-}
+	kमुक्त(pl022->dummypage);
+पूर्ण
 
-#else
-static inline int configure_dma(struct pl022 *pl022)
-{
-	return -ENODEV;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक configure_dma(काष्ठा pl022 *pl022)
+अणु
+	वापस -ENODEV;
+पूर्ण
 
-static inline int pl022_dma_autoprobe(struct pl022 *pl022)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pl022_dma_स्वतःprobe(काष्ठा pl022 *pl022)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pl022_dma_probe(struct pl022 *pl022)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pl022_dma_probe(काष्ठा pl022 *pl022)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void pl022_dma_remove(struct pl022 *pl022)
-{
-}
-#endif
+अटल अंतरभूत व्योम pl022_dma_हटाओ(काष्ठा pl022 *pl022)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * pl022_interrupt_handler - Interrupt handler for SSP controller
+ * pl022_पूर्णांकerrupt_handler - Interrupt handler क्रम SSP controller
  * @irq: IRQ number
  * @dev_id: Local device data
  *
- * This function handles interrupts generated for an interrupt based transfer.
- * If a receive overrun (ROR) interrupt is there then we disable SSP, flag the
+ * This function handles पूर्णांकerrupts generated क्रम an पूर्णांकerrupt based transfer.
+ * If a receive overrun (ROR) पूर्णांकerrupt is there then we disable SSP, flag the
  * current message's state as STATE_ERROR and schedule the tasklet
- * pump_transfers which will do the postprocessing of the current message by
- * calling giveback(). Otherwise it reads data from RX FIFO till there is no
- * more data, and writes data in TX FIFO till it is not full. If we complete
+ * pump_transfers which will करो the postprocessing of the current message by
+ * calling giveback(). Otherwise it पढ़ोs data from RX FIFO till there is no
+ * more data, and ग_लिखोs data in TX FIFO till it is not full. If we complete
  * the transfer we move to the next transfer and schedule the tasklet.
  */
-static irqreturn_t pl022_interrupt_handler(int irq, void *dev_id)
-{
-	struct pl022 *pl022 = dev_id;
-	struct spi_message *msg = pl022->cur_msg;
+अटल irqवापस_t pl022_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा pl022 *pl022 = dev_id;
+	काष्ठा spi_message *msg = pl022->cur_msg;
 	u16 irq_status = 0;
 
-	if (unlikely(!msg)) {
+	अगर (unlikely(!msg)) अणु
 		dev_err(&pl022->adev->dev,
 			"bad message state in interrupt handler");
 		/* Never fail */
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	/* Read the Interrupt Status Register */
-	irq_status = readw(SSP_MIS(pl022->virtbase));
+	irq_status = पढ़ोw(SSP_MIS(pl022->virtbase));
 
-	if (unlikely(!irq_status))
-		return IRQ_NONE;
+	अगर (unlikely(!irq_status))
+		वापस IRQ_NONE;
 
 	/*
-	 * This handles the FIFO interrupts, the timeout
-	 * interrupts are flatly ignored, they cannot be
+	 * This handles the FIFO पूर्णांकerrupts, the समयout
+	 * पूर्णांकerrupts are flatly ignored, they cannot be
 	 * trusted.
 	 */
-	if (unlikely(irq_status & SSP_MIS_MASK_RORMIS)) {
+	अगर (unlikely(irq_status & SSP_MIS_MASK_RORMIS)) अणु
 		/*
-		 * Overrun interrupt - bail out since our Data has been
+		 * Overrun पूर्णांकerrupt - bail out since our Data has been
 		 * corrupted
 		 */
 		dev_err(&pl022->adev->dev, "FIFO overrun\n");
-		if (readw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_RFF)
+		अगर (पढ़ोw(SSP_SR(pl022->virtbase)) & SSP_SR_MASK_RFF)
 			dev_err(&pl022->adev->dev,
 				"RXFIFO is full\n");
 
 		/*
-		 * Disable and clear interrupts, disable SSP,
+		 * Disable and clear पूर्णांकerrupts, disable SSP,
 		 * mark message with bad status so it can be
 		 * retried.
 		 */
-		writew(DISABLE_ALL_INTERRUPTS,
+		ग_लिखोw(DISABLE_ALL_INTERRUPTS,
 		       SSP_IMSC(pl022->virtbase));
-		writew(CLEAR_ALL_INTERRUPTS, SSP_ICR(pl022->virtbase));
-		writew((readw(SSP_CR1(pl022->virtbase)) &
+		ग_लिखोw(CLEAR_ALL_INTERRUPTS, SSP_ICR(pl022->virtbase));
+		ग_लिखोw((पढ़ोw(SSP_CR1(pl022->virtbase)) &
 			(~SSP_CR1_MASK_SSE)), SSP_CR1(pl022->virtbase));
 		msg->state = STATE_ERROR;
 
 		/* Schedule message queue handler */
 		tasklet_schedule(&pl022->pump_transfers);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	readwriter(pl022);
+	पढ़ोग_लिखोr(pl022);
 
-	if (pl022->tx == pl022->tx_end) {
-		/* Disable Transmit interrupt, enable receive interrupt */
-		writew((readw(SSP_IMSC(pl022->virtbase)) &
+	अगर (pl022->tx == pl022->tx_end) अणु
+		/* Disable Transmit पूर्णांकerrupt, enable receive पूर्णांकerrupt */
+		ग_लिखोw((पढ़ोw(SSP_IMSC(pl022->virtbase)) &
 		       ~SSP_IMSC_MASK_TXIM) | SSP_IMSC_MASK_RXIM,
 		       SSP_IMSC(pl022->virtbase));
-	}
+	पूर्ण
 
 	/*
-	 * Since all transactions must write as much as shall be read,
+	 * Since all transactions must ग_लिखो as much as shall be पढ़ो,
 	 * we can conclude the entire transaction once RX is complete.
-	 * At this point, all TX will always be finished.
+	 * At this poपूर्णांक, all TX will always be finished.
 	 */
-	if (pl022->rx >= pl022->rx_end) {
-		writew(DISABLE_ALL_INTERRUPTS,
+	अगर (pl022->rx >= pl022->rx_end) अणु
+		ग_लिखोw(DISABLE_ALL_INTERRUPTS,
 		       SSP_IMSC(pl022->virtbase));
-		writew(CLEAR_ALL_INTERRUPTS, SSP_ICR(pl022->virtbase));
-		if (unlikely(pl022->rx > pl022->rx_end)) {
+		ग_लिखोw(CLEAR_ALL_INTERRUPTS, SSP_ICR(pl022->virtbase));
+		अगर (unlikely(pl022->rx > pl022->rx_end)) अणु
 			dev_warn(&pl022->adev->dev, "read %u surplus "
 				 "bytes (did you request an odd "
 				 "number of bytes on a 16bit bus?)\n",
 				 (u32) (pl022->rx - pl022->rx_end));
-		}
+		पूर्ण
 		/* Update total bytes transferred */
 		msg->actual_length += pl022->cur_transfer->len;
 		/* Move to next transfer */
 		msg->state = next_transfer(pl022);
-		if (msg->state != STATE_DONE && pl022->cur_transfer->cs_change)
+		अगर (msg->state != STATE_DONE && pl022->cur_transfer->cs_change)
 			pl022_cs_control(pl022, SSP_CHIP_DESELECT);
 		tasklet_schedule(&pl022->pump_transfers);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * This sets up the pointers to memory for the next message to
+ * This sets up the poपूर्णांकers to memory क्रम the next message to
  * send out on the SPI bus.
  */
-static int set_up_next_transfer(struct pl022 *pl022,
-				struct spi_transfer *transfer)
-{
-	int residue;
+अटल पूर्णांक set_up_next_transfer(काष्ठा pl022 *pl022,
+				काष्ठा spi_transfer *transfer)
+अणु
+	पूर्णांक residue;
 
-	/* Sanity check the message for this bus width */
+	/* Sanity check the message क्रम this bus width */
 	residue = pl022->cur_transfer->len % pl022->cur_chip->n_bytes;
-	if (unlikely(residue != 0)) {
+	अगर (unlikely(residue != 0)) अणु
 		dev_err(&pl022->adev->dev,
 			"message of %u bytes to transmit but the current "
 			"chip bus has a data width of %u bytes!\n",
 			pl022->cur_transfer->len,
 			pl022->cur_chip->n_bytes);
 		dev_err(&pl022->adev->dev, "skipping this message\n");
-		return -EIO;
-	}
-	pl022->tx = (void *)transfer->tx_buf;
+		वापस -EIO;
+	पूर्ण
+	pl022->tx = (व्योम *)transfer->tx_buf;
 	pl022->tx_end = pl022->tx + pl022->cur_transfer->len;
-	pl022->rx = (void *)transfer->rx_buf;
+	pl022->rx = (व्योम *)transfer->rx_buf;
 	pl022->rx_end = pl022->rx + pl022->cur_transfer->len;
-	pl022->write =
-	    pl022->tx ? pl022->cur_chip->write : WRITING_NULL;
-	pl022->read = pl022->rx ? pl022->cur_chip->read : READING_NULL;
-	return 0;
-}
+	pl022->ग_लिखो =
+	    pl022->tx ? pl022->cur_chip->ग_लिखो : WRITING_शून्य;
+	pl022->पढ़ो = pl022->rx ? pl022->cur_chip->पढ़ो : READING_शून्य;
+	वापस 0;
+पूर्ण
 
 /**
  * pump_transfers - Tasklet function which schedules next transfer
- * when running in interrupt or DMA transfer mode.
- * @data: SSP driver private data structure
+ * when running in पूर्णांकerrupt or DMA transfer mode.
+ * @data: SSP driver निजी data काष्ठाure
  *
  */
-static void pump_transfers(unsigned long data)
-{
-	struct pl022 *pl022 = (struct pl022 *) data;
-	struct spi_message *message = NULL;
-	struct spi_transfer *transfer = NULL;
-	struct spi_transfer *previous = NULL;
+अटल व्योम pump_transfers(अचिन्हित दीर्घ data)
+अणु
+	काष्ठा pl022 *pl022 = (काष्ठा pl022 *) data;
+	काष्ठा spi_message *message = शून्य;
+	काष्ठा spi_transfer *transfer = शून्य;
+	काष्ठा spi_transfer *previous = शून्य;
 
-	/* Get current state information */
+	/* Get current state inक्रमmation */
 	message = pl022->cur_msg;
 	transfer = pl022->cur_transfer;
 
-	/* Handle for abort */
-	if (message->state == STATE_ERROR) {
+	/* Handle क्रम पात */
+	अगर (message->state == STATE_ERROR) अणु
 		message->status = -EIO;
 		giveback(pl022);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Handle end of message */
-	if (message->state == STATE_DONE) {
+	अगर (message->state == STATE_DONE) अणु
 		message->status = 0;
 		giveback(pl022);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Delay if requested at end of transfer before CS change */
-	if (message->state == STATE_RUNNING) {
+	/* Delay अगर requested at end of transfer beक्रमe CS change */
+	अगर (message->state == STATE_RUNNING) अणु
 		previous = list_entry(transfer->transfer_list.prev,
-					struct spi_transfer,
+					काष्ठा spi_transfer,
 					transfer_list);
 		/*
-		 * FIXME: This runs in interrupt context.
+		 * FIXME: This runs in पूर्णांकerrupt context.
 		 * Is this really smart?
 		 */
 		spi_transfer_delay_exec(previous);
 
-		/* Reselect chip select only if cs_change was requested */
-		if (previous->cs_change)
+		/* Reselect chip select only अगर cs_change was requested */
+		अगर (previous->cs_change)
 			pl022_cs_control(pl022, SSP_CHIP_SELECT);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* STATE_START */
 		message->state = STATE_RUNNING;
-	}
+	पूर्ण
 
-	if (set_up_next_transfer(pl022, transfer)) {
+	अगर (set_up_next_transfer(pl022, transfer)) अणु
 		message->state = STATE_ERROR;
 		message->status = -EIO;
 		giveback(pl022);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* Flush the FIFOs and let's go! */
 	flush(pl022);
 
-	if (pl022->cur_chip->enable_dma) {
-		if (configure_dma(pl022)) {
+	अगर (pl022->cur_chip->enable_dma) अणु
+		अगर (configure_dma(pl022)) अणु
 			dev_dbg(&pl022->adev->dev,
 				"configuration of DMA failed, fall back to interrupt mode\n");
-			goto err_config_dma;
-		}
-		return;
-	}
+			जाओ err_config_dma;
+		पूर्ण
+		वापस;
+	पूर्ण
 
 err_config_dma:
-	/* enable all interrupts except RX */
-	writew(ENABLE_ALL_INTERRUPTS & ~SSP_IMSC_MASK_RXIM, SSP_IMSC(pl022->virtbase));
-}
+	/* enable all पूर्णांकerrupts except RX */
+	ग_लिखोw(ENABLE_ALL_INTERRUPTS & ~SSP_IMSC_MASK_RXIM, SSP_IMSC(pl022->virtbase));
+पूर्ण
 
-static void do_interrupt_dma_transfer(struct pl022 *pl022)
-{
+अटल व्योम करो_पूर्णांकerrupt_dma_transfer(काष्ठा pl022 *pl022)
+अणु
 	/*
-	 * Default is to enable all interrupts except RX -
+	 * Default is to enable all पूर्णांकerrupts except RX -
 	 * this will be enabled once TX is complete
 	 */
 	u32 irqflags = (u32)(ENABLE_ALL_INTERRUPTS & ~SSP_IMSC_MASK_RXIM);
 
-	/* Enable target chip, if not already active */
-	if (!pl022->next_msg_cs_active)
+	/* Enable target chip, अगर not alपढ़ोy active */
+	अगर (!pl022->next_msg_cs_active)
 		pl022_cs_control(pl022, SSP_CHIP_SELECT);
 
-	if (set_up_next_transfer(pl022, pl022->cur_transfer)) {
+	अगर (set_up_next_transfer(pl022, pl022->cur_transfer)) अणु
 		/* Error path */
 		pl022->cur_msg->state = STATE_ERROR;
 		pl022->cur_msg->status = -EIO;
 		giveback(pl022);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* If we're using DMA, set up DMA here */
-	if (pl022->cur_chip->enable_dma) {
+	अगर (pl022->cur_chip->enable_dma) अणु
 		/* Configure DMA transfer */
-		if (configure_dma(pl022)) {
+		अगर (configure_dma(pl022)) अणु
 			dev_dbg(&pl022->adev->dev,
 				"configuration of DMA failed, fall back to interrupt mode\n");
-			goto err_config_dma;
-		}
-		/* Disable interrupts in DMA mode, IRQ from DMA controller */
+			जाओ err_config_dma;
+		पूर्ण
+		/* Disable पूर्णांकerrupts in DMA mode, IRQ from DMA controller */
 		irqflags = DISABLE_ALL_INTERRUPTS;
-	}
+	पूर्ण
 err_config_dma:
-	/* Enable SSP, turn on interrupts */
-	writew((readw(SSP_CR1(pl022->virtbase)) | SSP_CR1_MASK_SSE),
+	/* Enable SSP, turn on पूर्णांकerrupts */
+	ग_लिखोw((पढ़ोw(SSP_CR1(pl022->virtbase)) | SSP_CR1_MASK_SSE),
 	       SSP_CR1(pl022->virtbase));
-	writew(irqflags, SSP_IMSC(pl022->virtbase));
-}
+	ग_लिखोw(irqflags, SSP_IMSC(pl022->virtbase));
+पूर्ण
 
-static void print_current_status(struct pl022 *pl022)
-{
-	u32 read_cr0;
-	u16 read_cr1, read_dmacr, read_sr;
+अटल व्योम prपूर्णांक_current_status(काष्ठा pl022 *pl022)
+अणु
+	u32 पढ़ो_cr0;
+	u16 पढ़ो_cr1, पढ़ो_dmacr, पढ़ो_sr;
 
-	if (pl022->vendor->extended_cr)
-		read_cr0 = readl(SSP_CR0(pl022->virtbase));
-	else
-		read_cr0 = readw(SSP_CR0(pl022->virtbase));
-	read_cr1 = readw(SSP_CR1(pl022->virtbase));
-	read_dmacr = readw(SSP_DMACR(pl022->virtbase));
-	read_sr = readw(SSP_SR(pl022->virtbase));
+	अगर (pl022->venकरोr->extended_cr)
+		पढ़ो_cr0 = पढ़ोl(SSP_CR0(pl022->virtbase));
+	अन्यथा
+		पढ़ो_cr0 = पढ़ोw(SSP_CR0(pl022->virtbase));
+	पढ़ो_cr1 = पढ़ोw(SSP_CR1(pl022->virtbase));
+	पढ़ो_dmacr = पढ़ोw(SSP_DMACR(pl022->virtbase));
+	पढ़ो_sr = पढ़ोw(SSP_SR(pl022->virtbase));
 
-	dev_warn(&pl022->adev->dev, "spi-pl022 CR0: %x\n", read_cr0);
-	dev_warn(&pl022->adev->dev, "spi-pl022 CR1: %x\n", read_cr1);
-	dev_warn(&pl022->adev->dev, "spi-pl022 DMACR: %x\n", read_dmacr);
-	dev_warn(&pl022->adev->dev, "spi-pl022 SR: %x\n", read_sr);
+	dev_warn(&pl022->adev->dev, "spi-pl022 CR0: %x\n", पढ़ो_cr0);
+	dev_warn(&pl022->adev->dev, "spi-pl022 CR1: %x\n", पढ़ो_cr1);
+	dev_warn(&pl022->adev->dev, "spi-pl022 DMACR: %x\n", पढ़ो_dmacr);
+	dev_warn(&pl022->adev->dev, "spi-pl022 SR: %x\n", पढ़ो_sr);
 	dev_warn(&pl022->adev->dev,
 			"spi-pl022 exp_fifo_level/fifodepth: %u/%d\n",
-			pl022->exp_fifo_level,
-			pl022->vendor->fifodepth);
+			pl022->exp_fअगरo_level,
+			pl022->venकरोr->fअगरodepth);
 
-}
+पूर्ण
 
-static void do_polling_transfer(struct pl022 *pl022)
-{
-	struct spi_message *message = NULL;
-	struct spi_transfer *transfer = NULL;
-	struct spi_transfer *previous = NULL;
-	unsigned long time, timeout;
+अटल व्योम करो_polling_transfer(काष्ठा pl022 *pl022)
+अणु
+	काष्ठा spi_message *message = शून्य;
+	काष्ठा spi_transfer *transfer = शून्य;
+	काष्ठा spi_transfer *previous = शून्य;
+	अचिन्हित दीर्घ समय, समयout;
 
 	message = pl022->cur_msg;
 
-	while (message->state != STATE_DONE) {
-		/* Handle for abort */
-		if (message->state == STATE_ERROR)
-			break;
+	जबतक (message->state != STATE_DONE) अणु
+		/* Handle क्रम पात */
+		अगर (message->state == STATE_ERROR)
+			अवरोध;
 		transfer = pl022->cur_transfer;
 
-		/* Delay if requested at end of transfer */
-		if (message->state == STATE_RUNNING) {
+		/* Delay अगर requested at end of transfer */
+		अगर (message->state == STATE_RUNNING) अणु
 			previous =
 			    list_entry(transfer->transfer_list.prev,
-				       struct spi_transfer, transfer_list);
+				       काष्ठा spi_transfer, transfer_list);
 			spi_transfer_delay_exec(previous);
-			if (previous->cs_change)
+			अगर (previous->cs_change)
 				pl022_cs_control(pl022, SSP_CHIP_SELECT);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* STATE_START */
 			message->state = STATE_RUNNING;
-			if (!pl022->next_msg_cs_active)
+			अगर (!pl022->next_msg_cs_active)
 				pl022_cs_control(pl022, SSP_CHIP_SELECT);
-		}
+		पूर्ण
 
 		/* Configuration Changing Per Transfer */
-		if (set_up_next_transfer(pl022, transfer)) {
+		अगर (set_up_next_transfer(pl022, transfer)) अणु
 			/* Error path */
 			message->state = STATE_ERROR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		/* Flush FIFOs and enable SSP */
 		flush(pl022);
-		writew((readw(SSP_CR1(pl022->virtbase)) | SSP_CR1_MASK_SSE),
+		ग_लिखोw((पढ़ोw(SSP_CR1(pl022->virtbase)) | SSP_CR1_MASK_SSE),
 		       SSP_CR1(pl022->virtbase));
 
 		dev_dbg(&pl022->adev->dev, "polling transfer ongoing ...\n");
 
-		timeout = jiffies + msecs_to_jiffies(SPI_POLLING_TIMEOUT);
-		while (pl022->tx < pl022->tx_end || pl022->rx < pl022->rx_end) {
-			time = jiffies;
-			readwriter(pl022);
-			if (time_after(time, timeout)) {
+		समयout = jअगरfies + msecs_to_jअगरfies(SPI_POLLING_TIMEOUT);
+		जबतक (pl022->tx < pl022->tx_end || pl022->rx < pl022->rx_end) अणु
+			समय = jअगरfies;
+			पढ़ोग_लिखोr(pl022);
+			अगर (समय_after(समय, समयout)) अणु
 				dev_warn(&pl022->adev->dev,
 				"%s: timeout!\n", __func__);
 				message->state = STATE_TIMEOUT;
-				print_current_status(pl022);
-				goto out;
-			}
+				prपूर्णांक_current_status(pl022);
+				जाओ out;
+			पूर्ण
 			cpu_relax();
-		}
+		पूर्ण
 
 		/* Update total byte transferred */
 		message->actual_length += pl022->cur_transfer->len;
 		/* Move to next transfer */
 		message->state = next_transfer(pl022);
-		if (message->state != STATE_DONE
+		अगर (message->state != STATE_DONE
 		    && pl022->cur_transfer->cs_change)
 			pl022_cs_control(pl022, SSP_CHIP_DESELECT);
-	}
+	पूर्ण
 out:
 	/* Handle end of message */
-	if (message->state == STATE_DONE)
+	अगर (message->state == STATE_DONE)
 		message->status = 0;
-	else if (message->state == STATE_TIMEOUT)
+	अन्यथा अगर (message->state == STATE_TIMEOUT)
 		message->status = -EAGAIN;
-	else
+	अन्यथा
 		message->status = -EIO;
 
 	giveback(pl022);
-	return;
-}
+	वापस;
+पूर्ण
 
-static int pl022_transfer_one_message(struct spi_master *master,
-				      struct spi_message *msg)
-{
-	struct pl022 *pl022 = spi_master_get_devdata(master);
+अटल पूर्णांक pl022_transfer_one_message(काष्ठा spi_master *master,
+				      काष्ठा spi_message *msg)
+अणु
+	काष्ठा pl022 *pl022 = spi_master_get_devdata(master);
 
 	/* Initial message state */
 	pl022->cur_msg = msg;
 	msg->state = STATE_START;
 
 	pl022->cur_transfer = list_entry(msg->transfers.next,
-					 struct spi_transfer, transfer_list);
+					 काष्ठा spi_transfer, transfer_list);
 
 	/* Setup the SPI using the per chip configuration */
 	pl022->cur_chip = spi_get_ctldata(msg->spi);
@@ -1594,151 +1595,151 @@ static int pl022_transfer_one_message(struct spi_master *master,
 	restore_state(pl022);
 	flush(pl022);
 
-	if (pl022->cur_chip->xfer_type == POLLING_TRANSFER)
-		do_polling_transfer(pl022);
-	else
-		do_interrupt_dma_transfer(pl022);
+	अगर (pl022->cur_chip->xfer_type == POLLING_TRANSFER)
+		करो_polling_transfer(pl022);
+	अन्यथा
+		करो_पूर्णांकerrupt_dma_transfer(pl022);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pl022_unprepare_transfer_hardware(struct spi_master *master)
-{
-	struct pl022 *pl022 = spi_master_get_devdata(master);
+अटल पूर्णांक pl022_unprepare_transfer_hardware(काष्ठा spi_master *master)
+अणु
+	काष्ठा pl022 *pl022 = spi_master_get_devdata(master);
 
-	/* nothing more to do - disable spi/ssp and power off */
-	writew((readw(SSP_CR1(pl022->virtbase)) &
+	/* nothing more to करो - disable spi/ssp and घातer off */
+	ग_लिखोw((पढ़ोw(SSP_CR1(pl022->virtbase)) &
 		(~SSP_CR1_MASK_SSE)), SSP_CR1(pl022->virtbase));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int verify_controller_parameters(struct pl022 *pl022,
-				struct pl022_config_chip const *chip_info)
-{
-	if ((chip_info->iface < SSP_INTERFACE_MOTOROLA_SPI)
-	    || (chip_info->iface > SSP_INTERFACE_UNIDIRECTIONAL)) {
+अटल पूर्णांक verअगरy_controller_parameters(काष्ठा pl022 *pl022,
+				काष्ठा pl022_config_chip स्थिर *chip_info)
+अणु
+	अगर ((chip_info->अगरace < SSP_INTERFACE_MOTOROLA_SPI)
+	    || (chip_info->अगरace > SSP_INTERFACE_UNIसूचीECTIONAL)) अणु
 		dev_err(&pl022->adev->dev,
 			"interface is configured incorrectly\n");
-		return -EINVAL;
-	}
-	if ((chip_info->iface == SSP_INTERFACE_UNIDIRECTIONAL) &&
-	    (!pl022->vendor->unidir)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर ((chip_info->अगरace == SSP_INTERFACE_UNIसूचीECTIONAL) &&
+	    (!pl022->venकरोr->unidir)) अणु
 		dev_err(&pl022->adev->dev,
 			"unidirectional mode not supported in this "
 			"hardware version\n");
-		return -EINVAL;
-	}
-	if ((chip_info->hierarchy != SSP_MASTER)
-	    && (chip_info->hierarchy != SSP_SLAVE)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर ((chip_info->hierarchy != SSP_MASTER)
+	    && (chip_info->hierarchy != SSP_SLAVE)) अणु
 		dev_err(&pl022->adev->dev,
 			"hierarchy is configured incorrectly\n");
-		return -EINVAL;
-	}
-	if ((chip_info->com_mode != INTERRUPT_TRANSFER)
+		वापस -EINVAL;
+	पूर्ण
+	अगर ((chip_info->com_mode != INTERRUPT_TRANSFER)
 	    && (chip_info->com_mode != DMA_TRANSFER)
-	    && (chip_info->com_mode != POLLING_TRANSFER)) {
+	    && (chip_info->com_mode != POLLING_TRANSFER)) अणु
 		dev_err(&pl022->adev->dev,
 			"Communication mode is configured incorrectly\n");
-		return -EINVAL;
-	}
-	switch (chip_info->rx_lev_trig) {
-	case SSP_RX_1_OR_MORE_ELEM:
-	case SSP_RX_4_OR_MORE_ELEM:
-	case SSP_RX_8_OR_MORE_ELEM:
+		वापस -EINVAL;
+	पूर्ण
+	चयन (chip_info->rx_lev_trig) अणु
+	हाल SSP_RX_1_OR_MORE_ELEM:
+	हाल SSP_RX_4_OR_MORE_ELEM:
+	हाल SSP_RX_8_OR_MORE_ELEM:
 		/* These are always OK, all variants can handle this */
-		break;
-	case SSP_RX_16_OR_MORE_ELEM:
-		if (pl022->vendor->fifodepth < 16) {
+		अवरोध;
+	हाल SSP_RX_16_OR_MORE_ELEM:
+		अगर (pl022->venकरोr->fअगरodepth < 16) अणु
 			dev_err(&pl022->adev->dev,
 			"RX FIFO Trigger Level is configured incorrectly\n");
-			return -EINVAL;
-		}
-		break;
-	case SSP_RX_32_OR_MORE_ELEM:
-		if (pl022->vendor->fifodepth < 32) {
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल SSP_RX_32_OR_MORE_ELEM:
+		अगर (pl022->venकरोr->fअगरodepth < 32) अणु
 			dev_err(&pl022->adev->dev,
 			"RX FIFO Trigger Level is configured incorrectly\n");
-			return -EINVAL;
-		}
-		break;
-	default:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(&pl022->adev->dev,
 			"RX FIFO Trigger Level is configured incorrectly\n");
-		return -EINVAL;
-	}
-	switch (chip_info->tx_lev_trig) {
-	case SSP_TX_1_OR_MORE_EMPTY_LOC:
-	case SSP_TX_4_OR_MORE_EMPTY_LOC:
-	case SSP_TX_8_OR_MORE_EMPTY_LOC:
+		वापस -EINVAL;
+	पूर्ण
+	चयन (chip_info->tx_lev_trig) अणु
+	हाल SSP_TX_1_OR_MORE_EMPTY_LOC:
+	हाल SSP_TX_4_OR_MORE_EMPTY_LOC:
+	हाल SSP_TX_8_OR_MORE_EMPTY_LOC:
 		/* These are always OK, all variants can handle this */
-		break;
-	case SSP_TX_16_OR_MORE_EMPTY_LOC:
-		if (pl022->vendor->fifodepth < 16) {
+		अवरोध;
+	हाल SSP_TX_16_OR_MORE_EMPTY_LOC:
+		अगर (pl022->venकरोr->fअगरodepth < 16) अणु
 			dev_err(&pl022->adev->dev,
 			"TX FIFO Trigger Level is configured incorrectly\n");
-			return -EINVAL;
-		}
-		break;
-	case SSP_TX_32_OR_MORE_EMPTY_LOC:
-		if (pl022->vendor->fifodepth < 32) {
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल SSP_TX_32_OR_MORE_EMPTY_LOC:
+		अगर (pl022->venकरोr->fअगरodepth < 32) अणु
 			dev_err(&pl022->adev->dev,
 			"TX FIFO Trigger Level is configured incorrectly\n");
-			return -EINVAL;
-		}
-		break;
-	default:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(&pl022->adev->dev,
 			"TX FIFO Trigger Level is configured incorrectly\n");
-		return -EINVAL;
-	}
-	if (chip_info->iface == SSP_INTERFACE_NATIONAL_MICROWIRE) {
-		if ((chip_info->ctrl_len < SSP_BITS_4)
-		    || (chip_info->ctrl_len > SSP_BITS_32)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (chip_info->अगरace == SSP_INTERFACE_NATIONAL_MICROWIRE) अणु
+		अगर ((chip_info->ctrl_len < SSP_BITS_4)
+		    || (chip_info->ctrl_len > SSP_BITS_32)) अणु
 			dev_err(&pl022->adev->dev,
 				"CTRL LEN is configured incorrectly\n");
-			return -EINVAL;
-		}
-		if ((chip_info->wait_state != SSP_MWIRE_WAIT_ZERO)
-		    && (chip_info->wait_state != SSP_MWIRE_WAIT_ONE)) {
+			वापस -EINVAL;
+		पूर्ण
+		अगर ((chip_info->रुको_state != SSP_MWIRE_WAIT_ZERO)
+		    && (chip_info->रुको_state != SSP_MWIRE_WAIT_ONE)) अणु
 			dev_err(&pl022->adev->dev,
 				"Wait State is configured incorrectly\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		/* Half duplex is only available in the ST Micro version */
-		if (pl022->vendor->extended_cr) {
-			if ((chip_info->duplex !=
+		अगर (pl022->venकरोr->extended_cr) अणु
+			अगर ((chip_info->duplex !=
 			     SSP_MICROWIRE_CHANNEL_FULL_DUPLEX)
 			    && (chip_info->duplex !=
-				SSP_MICROWIRE_CHANNEL_HALF_DUPLEX)) {
+				SSP_MICROWIRE_CHANNEL_HALF_DUPLEX)) अणु
 				dev_err(&pl022->adev->dev,
 					"Microwire duplex mode is configured incorrectly\n");
-				return -EINVAL;
-			}
-		} else {
-			if (chip_info->duplex != SSP_MICROWIRE_CHANNEL_FULL_DUPLEX)
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (chip_info->duplex != SSP_MICROWIRE_CHANNEL_FULL_DUPLEX)
 				dev_err(&pl022->adev->dev,
 					"Microwire half duplex mode requested,"
 					" but this is only available in the"
 					" ST version of PL022\n");
-			return -EINVAL;
-		}
-	}
-	return 0;
-}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static inline u32 spi_rate(u32 rate, u16 cpsdvsr, u16 scr)
-{
-	return rate / (cpsdvsr * (1 + scr));
-}
+अटल अंतरभूत u32 spi_rate(u32 rate, u16 cpsdvsr, u16 scr)
+अणु
+	वापस rate / (cpsdvsr * (1 + scr));
+पूर्ण
 
-static int calculate_effective_freq(struct pl022 *pl022, int freq, struct
-				    ssp_clock_params * clk_freq)
-{
+अटल पूर्णांक calculate_effective_freq(काष्ठा pl022 *pl022, पूर्णांक freq, काष्ठा
+				    ssp_घड़ी_params * clk_freq)
+अणु
 	/* Lets calculate the frequency parameters */
 	u16 cpsdvsr = CPSDVR_MIN, scr = SCR_MIN;
 	u32 rate, max_tclk, min_tclk, best_freq = 0, best_cpsdvsr = 0,
-		best_scr = 0, tmp, found = 0;
+		best_scr = 0, पंचांगp, found = 0;
 
 	rate = clk_get_rate(pl022->clk);
 	/* cpsdvscr = 2 & scr 0 */
@@ -1746,53 +1747,53 @@ static int calculate_effective_freq(struct pl022 *pl022, int freq, struct
 	/* cpsdvsr = 254 & scr = 255 */
 	min_tclk = spi_rate(rate, CPSDVR_MAX, SCR_MAX);
 
-	if (freq > max_tclk)
+	अगर (freq > max_tclk)
 		dev_warn(&pl022->adev->dev,
 			"Max speed that can be programmed is %d Hz, you requested %d\n",
 			max_tclk, freq);
 
-	if (freq < min_tclk) {
+	अगर (freq < min_tclk) अणु
 		dev_err(&pl022->adev->dev,
 			"Requested frequency: %d Hz is less than minimum possible %d Hz\n",
 			freq, min_tclk);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * best_freq will give closest possible available rate (<= requested
-	 * freq) for all values of scr & cpsdvsr.
+	 * best_freq will give बंदst possible available rate (<= requested
+	 * freq) क्रम all values of scr & cpsdvsr.
 	 */
-	while ((cpsdvsr <= CPSDVR_MAX) && !found) {
-		while (scr <= SCR_MAX) {
-			tmp = spi_rate(rate, cpsdvsr, scr);
+	जबतक ((cpsdvsr <= CPSDVR_MAX) && !found) अणु
+		जबतक (scr <= SCR_MAX) अणु
+			पंचांगp = spi_rate(rate, cpsdvsr, scr);
 
-			if (tmp > freq) {
+			अगर (पंचांगp > freq) अणु
 				/* we need lower freq */
 				scr++;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			/*
-			 * If found exact value, mark found and break.
-			 * If found more closer value, update and break.
+			 * If found exact value, mark found and अवरोध.
+			 * If found more बंदr value, update and अवरोध.
 			 */
-			if (tmp > best_freq) {
-				best_freq = tmp;
+			अगर (पंचांगp > best_freq) अणु
+				best_freq = पंचांगp;
 				best_cpsdvsr = cpsdvsr;
 				best_scr = scr;
 
-				if (tmp == freq)
+				अगर (पंचांगp == freq)
 					found = 1;
-			}
+			पूर्ण
 			/*
 			 * increased scr will give lower rates, which are not
 			 * required
 			 */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		cpsdvsr += 2;
 		scr = SCR_MIN;
-	}
+	पूर्ण
 
 	WARN(!best_freq, "pl022: Matching cpsdvsr and scr not found for %d Hz rate \n",
 			freq);
@@ -1805,127 +1806,127 @@ static int calculate_effective_freq(struct pl022 *pl022, int freq, struct
 	dev_dbg(&pl022->adev->dev, "SSP cpsdvsr = %d, scr = %d\n",
 		clk_freq->cpsdvsr, clk_freq->scr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * A piece of default chip info unless the platform
+ * A piece of शेष chip info unless the platक्रमm
  * supplies it.
  */
-static const struct pl022_config_chip pl022_default_chip_info = {
+अटल स्थिर काष्ठा pl022_config_chip pl022_शेष_chip_info = अणु
 	.com_mode = INTERRUPT_TRANSFER,
-	.iface = SSP_INTERFACE_MOTOROLA_SPI,
+	.अगरace = SSP_INTERFACE_MOTOROLA_SPI,
 	.hierarchy = SSP_MASTER,
 	.slave_tx_disable = DO_NOT_DRIVE_TX,
 	.rx_lev_trig = SSP_RX_1_OR_MORE_ELEM,
 	.tx_lev_trig = SSP_TX_1_OR_MORE_EMPTY_LOC,
 	.ctrl_len = SSP_BITS_8,
-	.wait_state = SSP_MWIRE_WAIT_ZERO,
+	.रुको_state = SSP_MWIRE_WAIT_ZERO,
 	.duplex = SSP_MICROWIRE_CHANNEL_FULL_DUPLEX,
-};
+पूर्ण;
 
 /**
- * pl022_setup - setup function registered to SPI master framework
+ * pl022_setup - setup function रेजिस्टरed to SPI master framework
  * @spi: spi device which is requesting setup
  *
- * This function is registered to the SPI framework for this SPI master
- * controller. If it is the first time when setup is called by this device,
- * this function will initialize the runtime state for this chip and save
- * the same in the device structure. Else it will update the runtime info
+ * This function is रेजिस्टरed to the SPI framework क्रम this SPI master
+ * controller. If it is the first समय when setup is called by this device,
+ * this function will initialize the runसमय state क्रम this chip and save
+ * the same in the device काष्ठाure. Else it will update the runसमय info
  * with the updated chip info. Nothing is really being written to the
- * controller hardware here, that is not done until the actual transfer
+ * controller hardware here, that is not करोne until the actual transfer
  * commence.
  */
-static int pl022_setup(struct spi_device *spi)
-{
-	struct pl022_config_chip const *chip_info;
-	struct pl022_config_chip chip_info_dt;
-	struct chip_data *chip;
-	struct ssp_clock_params clk_freq = { .cpsdvsr = 0, .scr = 0};
-	int status = 0;
-	struct pl022 *pl022 = spi_master_get_devdata(spi->master);
-	unsigned int bits = spi->bits_per_word;
-	u32 tmp;
-	struct device_node *np = spi->dev.of_node;
+अटल पूर्णांक pl022_setup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा pl022_config_chip स्थिर *chip_info;
+	काष्ठा pl022_config_chip chip_info_dt;
+	काष्ठा chip_data *chip;
+	काष्ठा ssp_घड़ी_params clk_freq = अणु .cpsdvsr = 0, .scr = 0पूर्ण;
+	पूर्णांक status = 0;
+	काष्ठा pl022 *pl022 = spi_master_get_devdata(spi->master);
+	अचिन्हित पूर्णांक bits = spi->bits_per_word;
+	u32 पंचांगp;
+	काष्ठा device_node *np = spi->dev.of_node;
 
-	if (!spi->max_speed_hz)
-		return -EINVAL;
+	अगर (!spi->max_speed_hz)
+		वापस -EINVAL;
 
-	/* Get controller_state if one is supplied */
+	/* Get controller_state अगर one is supplied */
 	chip = spi_get_ctldata(spi);
 
-	if (chip == NULL) {
-		chip = kzalloc(sizeof(struct chip_data), GFP_KERNEL);
-		if (!chip)
-			return -ENOMEM;
+	अगर (chip == शून्य) अणु
+		chip = kzalloc(माप(काष्ठा chip_data), GFP_KERNEL);
+		अगर (!chip)
+			वापस -ENOMEM;
 		dev_dbg(&spi->dev,
 			"allocated memory for controller's runtime state\n");
-	}
+	पूर्ण
 
-	/* Get controller data if one is supplied */
+	/* Get controller data अगर one is supplied */
 	chip_info = spi->controller_data;
 
-	if (chip_info == NULL) {
-		if (np) {
-			chip_info_dt = pl022_default_chip_info;
+	अगर (chip_info == शून्य) अणु
+		अगर (np) अणु
+			chip_info_dt = pl022_शेष_chip_info;
 
 			chip_info_dt.hierarchy = SSP_MASTER;
-			of_property_read_u32(np, "pl022,interface",
-				&chip_info_dt.iface);
-			of_property_read_u32(np, "pl022,com-mode",
+			of_property_पढ़ो_u32(np, "pl022,interface",
+				&chip_info_dt.अगरace);
+			of_property_पढ़ो_u32(np, "pl022,com-mode",
 				&chip_info_dt.com_mode);
-			of_property_read_u32(np, "pl022,rx-level-trig",
+			of_property_पढ़ो_u32(np, "pl022,rx-level-trig",
 				&chip_info_dt.rx_lev_trig);
-			of_property_read_u32(np, "pl022,tx-level-trig",
+			of_property_पढ़ो_u32(np, "pl022,tx-level-trig",
 				&chip_info_dt.tx_lev_trig);
-			of_property_read_u32(np, "pl022,ctrl-len",
+			of_property_पढ़ो_u32(np, "pl022,ctrl-len",
 				&chip_info_dt.ctrl_len);
-			of_property_read_u32(np, "pl022,wait-state",
-				&chip_info_dt.wait_state);
-			of_property_read_u32(np, "pl022,duplex",
+			of_property_पढ़ो_u32(np, "pl022,wait-state",
+				&chip_info_dt.रुको_state);
+			of_property_पढ़ो_u32(np, "pl022,duplex",
 				&chip_info_dt.duplex);
 
 			chip_info = &chip_info_dt;
-		} else {
-			chip_info = &pl022_default_chip_info;
+		पूर्ण अन्यथा अणु
+			chip_info = &pl022_शेष_chip_info;
 			/* spi_board_info.controller_data not is supplied */
 			dev_dbg(&spi->dev,
 				"using default controller_data settings\n");
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		dev_dbg(&spi->dev,
 			"using user supplied controller_data settings\n");
 
 	/*
-	 * We can override with custom divisors, else we use the board
+	 * We can override with custom भागisors, अन्यथा we use the board
 	 * frequency setting
 	 */
-	if ((0 == chip_info->clk_freq.cpsdvsr)
-	    && (0 == chip_info->clk_freq.scr)) {
+	अगर ((0 == chip_info->clk_freq.cpsdvsr)
+	    && (0 == chip_info->clk_freq.scr)) अणु
 		status = calculate_effective_freq(pl022,
 						  spi->max_speed_hz,
 						  &clk_freq);
-		if (status < 0)
-			goto err_config_params;
-	} else {
-		memcpy(&clk_freq, &chip_info->clk_freq, sizeof(clk_freq));
-		if ((clk_freq.cpsdvsr % 2) != 0)
+		अगर (status < 0)
+			जाओ err_config_params;
+	पूर्ण अन्यथा अणु
+		स_नकल(&clk_freq, &chip_info->clk_freq, माप(clk_freq));
+		अगर ((clk_freq.cpsdvsr % 2) != 0)
 			clk_freq.cpsdvsr =
 				clk_freq.cpsdvsr - 1;
-	}
-	if ((clk_freq.cpsdvsr < CPSDVR_MIN)
-	    || (clk_freq.cpsdvsr > CPSDVR_MAX)) {
+	पूर्ण
+	अगर ((clk_freq.cpsdvsr < CPSDVR_MIN)
+	    || (clk_freq.cpsdvsr > CPSDVR_MAX)) अणु
 		status = -EINVAL;
 		dev_err(&spi->dev,
 			"cpsdvsr is configured incorrectly\n");
-		goto err_config_params;
-	}
+		जाओ err_config_params;
+	पूर्ण
 
-	status = verify_controller_parameters(pl022, chip_info);
-	if (status) {
+	status = verअगरy_controller_parameters(pl022, chip_info);
+	अगर (status) अणु
 		dev_err(&spi->dev, "controller data is incorrect");
-		goto err_config_params;
-	}
+		जाओ err_config_params;
+	पूर्ण
 
 	pl022->rx_lev_trig = chip_info->rx_lev_trig;
 	pl022->tx_lev_trig = chip_info->tx_lev_trig;
@@ -1933,118 +1934,118 @@ static int pl022_setup(struct spi_device *spi)
 	/* Now set controller state based on controller data */
 	chip->xfer_type = chip_info->com_mode;
 
-	/* Check bits per word with vendor specific range */
-	if ((bits <= 3) || (bits > pl022->vendor->max_bpw)) {
+	/* Check bits per word with venकरोr specअगरic range */
+	अगर ((bits <= 3) || (bits > pl022->venकरोr->max_bpw)) अणु
 		status = -ENOTSUPP;
 		dev_err(&spi->dev, "illegal data size for this controller!\n");
 		dev_err(&spi->dev, "This controller can only handle 4 <= n <= %d bit words\n",
-				pl022->vendor->max_bpw);
-		goto err_config_params;
-	} else if (bits <= 8) {
+				pl022->venकरोr->max_bpw);
+		जाओ err_config_params;
+	पूर्ण अन्यथा अगर (bits <= 8) अणु
 		dev_dbg(&spi->dev, "4 <= n <=8 bits per word\n");
 		chip->n_bytes = 1;
-		chip->read = READING_U8;
-		chip->write = WRITING_U8;
-	} else if (bits <= 16) {
+		chip->पढ़ो = READING_U8;
+		chip->ग_लिखो = WRITING_U8;
+	पूर्ण अन्यथा अगर (bits <= 16) अणु
 		dev_dbg(&spi->dev, "9 <= n <= 16 bits per word\n");
 		chip->n_bytes = 2;
-		chip->read = READING_U16;
-		chip->write = WRITING_U16;
-	} else {
+		chip->पढ़ो = READING_U16;
+		chip->ग_लिखो = WRITING_U16;
+	पूर्ण अन्यथा अणु
 		dev_dbg(&spi->dev, "17 <= n <= 32 bits per word\n");
 		chip->n_bytes = 4;
-		chip->read = READING_U32;
-		chip->write = WRITING_U32;
-	}
+		chip->पढ़ो = READING_U32;
+		chip->ग_लिखो = WRITING_U32;
+	पूर्ण
 
-	/* Now Initialize all register settings required for this chip */
+	/* Now Initialize all रेजिस्टर settings required क्रम this chip */
 	chip->cr0 = 0;
 	chip->cr1 = 0;
 	chip->dmacr = 0;
 	chip->cpsr = 0;
-	if ((chip_info->com_mode == DMA_TRANSFER)
-	    && ((pl022->master_info)->enable_dma)) {
+	अगर ((chip_info->com_mode == DMA_TRANSFER)
+	    && ((pl022->master_info)->enable_dma)) अणु
 		chip->enable_dma = true;
 		dev_dbg(&spi->dev, "DMA mode set in controller state\n");
 		SSP_WRITE_BITS(chip->dmacr, SSP_DMA_ENABLED,
 			       SSP_DMACR_MASK_RXDMAE, 0);
 		SSP_WRITE_BITS(chip->dmacr, SSP_DMA_ENABLED,
 			       SSP_DMACR_MASK_TXDMAE, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		chip->enable_dma = false;
 		dev_dbg(&spi->dev, "DMA mode NOT set in controller state\n");
 		SSP_WRITE_BITS(chip->dmacr, SSP_DMA_DISABLED,
 			       SSP_DMACR_MASK_RXDMAE, 0);
 		SSP_WRITE_BITS(chip->dmacr, SSP_DMA_DISABLED,
 			       SSP_DMACR_MASK_TXDMAE, 1);
-	}
+	पूर्ण
 
 	chip->cpsr = clk_freq.cpsdvsr;
 
-	/* Special setup for the ST micro extended control registers */
-	if (pl022->vendor->extended_cr) {
+	/* Special setup क्रम the ST micro extended control रेजिस्टरs */
+	अगर (pl022->venकरोr->extended_cr) अणु
 		u32 etx;
 
-		if (pl022->vendor->pl023) {
+		अगर (pl022->venकरोr->pl023) अणु
 			/* These bits are only in the PL023 */
 			SSP_WRITE_BITS(chip->cr1, chip_info->clkdelay,
 				       SSP_CR1_MASK_FBCLKDEL_ST, 13);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* These bits are in the PL022 but not PL023 */
 			SSP_WRITE_BITS(chip->cr0, chip_info->duplex,
 				       SSP_CR0_MASK_HALFDUP_ST, 5);
 			SSP_WRITE_BITS(chip->cr0, chip_info->ctrl_len,
 				       SSP_CR0_MASK_CSS_ST, 16);
-			SSP_WRITE_BITS(chip->cr0, chip_info->iface,
+			SSP_WRITE_BITS(chip->cr0, chip_info->अगरace,
 				       SSP_CR0_MASK_FRF_ST, 21);
-			SSP_WRITE_BITS(chip->cr1, chip_info->wait_state,
+			SSP_WRITE_BITS(chip->cr1, chip_info->रुको_state,
 				       SSP_CR1_MASK_MWAIT_ST, 6);
-		}
+		पूर्ण
 		SSP_WRITE_BITS(chip->cr0, bits - 1,
 			       SSP_CR0_MASK_DSS_ST, 0);
 
-		if (spi->mode & SPI_LSB_FIRST) {
-			tmp = SSP_RX_LSB;
+		अगर (spi->mode & SPI_LSB_FIRST) अणु
+			पंचांगp = SSP_RX_LSB;
 			etx = SSP_TX_LSB;
-		} else {
-			tmp = SSP_RX_MSB;
+		पूर्ण अन्यथा अणु
+			पंचांगp = SSP_RX_MSB;
 			etx = SSP_TX_MSB;
-		}
-		SSP_WRITE_BITS(chip->cr1, tmp, SSP_CR1_MASK_RENDN_ST, 4);
+		पूर्ण
+		SSP_WRITE_BITS(chip->cr1, पंचांगp, SSP_CR1_MASK_RENDN_ST, 4);
 		SSP_WRITE_BITS(chip->cr1, etx, SSP_CR1_MASK_TENDN_ST, 5);
 		SSP_WRITE_BITS(chip->cr1, chip_info->rx_lev_trig,
 			       SSP_CR1_MASK_RXIFLSEL_ST, 7);
 		SSP_WRITE_BITS(chip->cr1, chip_info->tx_lev_trig,
 			       SSP_CR1_MASK_TXIFLSEL_ST, 10);
-	} else {
+	पूर्ण अन्यथा अणु
 		SSP_WRITE_BITS(chip->cr0, bits - 1,
 			       SSP_CR0_MASK_DSS, 0);
-		SSP_WRITE_BITS(chip->cr0, chip_info->iface,
+		SSP_WRITE_BITS(chip->cr0, chip_info->अगरace,
 			       SSP_CR0_MASK_FRF, 4);
-	}
+	पूर्ण
 
-	/* Stuff that is common for all versions */
-	if (spi->mode & SPI_CPOL)
-		tmp = SSP_CLK_POL_IDLE_HIGH;
-	else
-		tmp = SSP_CLK_POL_IDLE_LOW;
-	SSP_WRITE_BITS(chip->cr0, tmp, SSP_CR0_MASK_SPO, 6);
+	/* Stuff that is common क्रम all versions */
+	अगर (spi->mode & SPI_CPOL)
+		पंचांगp = SSP_CLK_POL_IDLE_HIGH;
+	अन्यथा
+		पंचांगp = SSP_CLK_POL_IDLE_LOW;
+	SSP_WRITE_BITS(chip->cr0, पंचांगp, SSP_CR0_MASK_SPO, 6);
 
-	if (spi->mode & SPI_CPHA)
-		tmp = SSP_CLK_SECOND_EDGE;
-	else
-		tmp = SSP_CLK_FIRST_EDGE;
-	SSP_WRITE_BITS(chip->cr0, tmp, SSP_CR0_MASK_SPH, 7);
+	अगर (spi->mode & SPI_CPHA)
+		पंचांगp = SSP_CLK_SECOND_EDGE;
+	अन्यथा
+		पंचांगp = SSP_CLK_FIRST_EDGE;
+	SSP_WRITE_BITS(chip->cr0, पंचांगp, SSP_CR0_MASK_SPH, 7);
 
 	SSP_WRITE_BITS(chip->cr0, clk_freq.scr, SSP_CR0_MASK_SCR, 8);
 	/* Loopback is available on all versions except PL023 */
-	if (pl022->vendor->loopback) {
-		if (spi->mode & SPI_LOOP)
-			tmp = LOOPBACK_ENABLED;
-		else
-			tmp = LOOPBACK_DISABLED;
-		SSP_WRITE_BITS(chip->cr1, tmp, SSP_CR1_MASK_LBM, 0);
-	}
+	अगर (pl022->venकरोr->loopback) अणु
+		अगर (spi->mode & SPI_LOOP)
+			पंचांगp = LOOPBACK_ENABLED;
+		अन्यथा
+			पंचांगp = LOOPBACK_DISABLED;
+		SSP_WRITE_BITS(chip->cr1, पंचांगp, SSP_CR1_MASK_LBM, 0);
+	पूर्ण
 	SSP_WRITE_BITS(chip->cr1, SSP_DISABLED, SSP_CR1_MASK_SSE, 1);
 	SSP_WRITE_BITS(chip->cr1, chip_info->hierarchy, SSP_CR1_MASK_MS, 2);
 	SSP_WRITE_BITS(chip->cr1, chip_info->slave_tx_disable, SSP_CR1_MASK_SOD,
@@ -2052,95 +2053,95 @@ static int pl022_setup(struct spi_device *spi)
 
 	/* Save controller_state */
 	spi_set_ctldata(spi, chip);
-	return status;
+	वापस status;
  err_config_params:
-	spi_set_ctldata(spi, NULL);
-	kfree(chip);
-	return status;
-}
+	spi_set_ctldata(spi, शून्य);
+	kमुक्त(chip);
+	वापस status;
+पूर्ण
 
 /**
- * pl022_cleanup - cleanup function registered to SPI master framework
+ * pl022_cleanup - cleanup function रेजिस्टरed to SPI master framework
  * @spi: spi device which is requesting cleanup
  *
- * This function is registered to the SPI framework for this SPI master
- * controller. It will free the runtime state of chip.
+ * This function is रेजिस्टरed to the SPI framework क्रम this SPI master
+ * controller. It will मुक्त the runसमय state of chip.
  */
-static void pl022_cleanup(struct spi_device *spi)
-{
-	struct chip_data *chip = spi_get_ctldata(spi);
+अटल व्योम pl022_cleanup(काष्ठा spi_device *spi)
+अणु
+	काष्ठा chip_data *chip = spi_get_ctldata(spi);
 
-	spi_set_ctldata(spi, NULL);
-	kfree(chip);
-}
+	spi_set_ctldata(spi, शून्य);
+	kमुक्त(chip);
+पूर्ण
 
-static struct pl022_ssp_controller *
-pl022_platform_data_dt_get(struct device *dev)
-{
-	struct device_node *np = dev->of_node;
-	struct pl022_ssp_controller *pd;
+अटल काष्ठा pl022_ssp_controller *
+pl022_platक्रमm_data_dt_get(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा pl022_ssp_controller *pd;
 
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(dev, "no dt node defined\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	pd = devm_kzalloc(dev, sizeof(struct pl022_ssp_controller), GFP_KERNEL);
-	if (!pd)
-		return NULL;
+	pd = devm_kzalloc(dev, माप(काष्ठा pl022_ssp_controller), GFP_KERNEL);
+	अगर (!pd)
+		वापस शून्य;
 
 	pd->bus_id = -1;
 	pd->enable_dma = 1;
-	of_property_read_u32(np, "pl022,autosuspend-delay",
-			     &pd->autosuspend_delay);
-	pd->rt = of_property_read_bool(np, "pl022,rt");
+	of_property_पढ़ो_u32(np, "pl022,autosuspend-delay",
+			     &pd->स्वतःsuspend_delay);
+	pd->rt = of_property_पढ़ो_bool(np, "pl022,rt");
 
-	return pd;
-}
+	वापस pd;
+पूर्ण
 
-static int pl022_probe(struct amba_device *adev, const struct amba_id *id)
-{
-	struct device *dev = &adev->dev;
-	struct pl022_ssp_controller *platform_info =
+अटल पूर्णांक pl022_probe(काष्ठा amba_device *adev, स्थिर काष्ठा amba_id *id)
+अणु
+	काष्ठा device *dev = &adev->dev;
+	काष्ठा pl022_ssp_controller *platक्रमm_info =
 			dev_get_platdata(&adev->dev);
-	struct spi_master *master;
-	struct pl022 *pl022 = NULL;	/*Data for this driver */
-	int status = 0;
+	काष्ठा spi_master *master;
+	काष्ठा pl022 *pl022 = शून्य;	/*Data क्रम this driver */
+	पूर्णांक status = 0;
 
 	dev_info(&adev->dev,
 		 "ARM PL022 driver, device ID: 0x%08x\n", adev->periphid);
-	if (!platform_info && IS_ENABLED(CONFIG_OF))
-		platform_info = pl022_platform_data_dt_get(dev);
+	अगर (!platक्रमm_info && IS_ENABLED(CONFIG_OF))
+		platक्रमm_info = pl022_platक्रमm_data_dt_get(dev);
 
-	if (!platform_info) {
+	अगर (!platक्रमm_info) अणु
 		dev_err(dev, "probe: no platform data defined\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Allocate master with space for data */
-	master = spi_alloc_master(dev, sizeof(struct pl022));
-	if (master == NULL) {
+	/* Allocate master with space क्रम data */
+	master = spi_alloc_master(dev, माप(काष्ठा pl022));
+	अगर (master == शून्य) अणु
 		dev_err(&adev->dev, "probe - cannot alloc SPI master\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pl022 = spi_master_get_devdata(master);
 	pl022->master = master;
-	pl022->master_info = platform_info;
+	pl022->master_info = platक्रमm_info;
 	pl022->adev = adev;
-	pl022->vendor = id->data;
+	pl022->venकरोr = id->data;
 
 	/*
-	 * Bus Number Which has been Assigned to this SSP controller
+	 * Bus Number Which has been Asचिन्हित to this SSP controller
 	 * on this board
 	 */
-	master->bus_num = platform_info->bus_id;
+	master->bus_num = platक्रमm_info->bus_id;
 	master->cleanup = pl022_cleanup;
 	master->setup = pl022_setup;
-	master->auto_runtime_pm = true;
+	master->स्वतः_runसमय_pm = true;
 	master->transfer_one_message = pl022_transfer_one_message;
 	master->unprepare_transfer_hardware = pl022_unprepare_transfer_hardware;
-	master->rt = platform_info->rt;
+	master->rt = platक्रमm_info->rt;
 	master->dev.of_node = dev->of_node;
 	master->use_gpio_descriptors = true;
 
@@ -2149,96 +2150,96 @@ static int pl022_probe(struct amba_device *adev, const struct amba_id *id)
 	 * always MS bit first on the original pl022.
 	 */
 	master->mode_bits = SPI_CPOL | SPI_CPHA | SPI_CS_HIGH | SPI_LOOP;
-	if (pl022->vendor->extended_cr)
+	अगर (pl022->venकरोr->extended_cr)
 		master->mode_bits |= SPI_LSB_FIRST;
 
 	dev_dbg(&adev->dev, "BUSNO: %d\n", master->bus_num);
 
-	status = amba_request_regions(adev, NULL);
-	if (status)
-		goto err_no_ioregion;
+	status = amba_request_regions(adev, शून्य);
+	अगर (status)
+		जाओ err_no_ioregion;
 
 	pl022->phybase = adev->res.start;
 	pl022->virtbase = devm_ioremap(dev, adev->res.start,
 				       resource_size(&adev->res));
-	if (pl022->virtbase == NULL) {
+	अगर (pl022->virtbase == शून्य) अणु
 		status = -ENOMEM;
-		goto err_no_ioremap;
-	}
+		जाओ err_no_ioremap;
+	पूर्ण
 	dev_info(&adev->dev, "mapped registers from %pa to %p\n",
 		&adev->res.start, pl022->virtbase);
 
-	pl022->clk = devm_clk_get(&adev->dev, NULL);
-	if (IS_ERR(pl022->clk)) {
+	pl022->clk = devm_clk_get(&adev->dev, शून्य);
+	अगर (IS_ERR(pl022->clk)) अणु
 		status = PTR_ERR(pl022->clk);
 		dev_err(&adev->dev, "could not retrieve SSP/SPI bus clock\n");
-		goto err_no_clk;
-	}
+		जाओ err_no_clk;
+	पूर्ण
 
 	status = clk_prepare_enable(pl022->clk);
-	if (status) {
+	अगर (status) अणु
 		dev_err(&adev->dev, "could not enable SSP/SPI bus clock\n");
-		goto err_no_clk_en;
-	}
+		जाओ err_no_clk_en;
+	पूर्ण
 
 	/* Initialize transfer pump */
 	tasklet_init(&pl022->pump_transfers, pump_transfers,
-		     (unsigned long)pl022);
+		     (अचिन्हित दीर्घ)pl022);
 
 	/* Disable SSP */
-	writew((readw(SSP_CR1(pl022->virtbase)) & (~SSP_CR1_MASK_SSE)),
+	ग_लिखोw((पढ़ोw(SSP_CR1(pl022->virtbase)) & (~SSP_CR1_MASK_SSE)),
 	       SSP_CR1(pl022->virtbase));
-	load_ssp_default_config(pl022);
+	load_ssp_शेष_config(pl022);
 
-	status = devm_request_irq(dev, adev->irq[0], pl022_interrupt_handler,
+	status = devm_request_irq(dev, adev->irq[0], pl022_पूर्णांकerrupt_handler,
 				  0, "pl022", pl022);
-	if (status < 0) {
+	अगर (status < 0) अणु
 		dev_err(&adev->dev, "probe - cannot get IRQ (%d)\n", status);
-		goto err_no_irq;
-	}
+		जाओ err_no_irq;
+	पूर्ण
 
-	/* Get DMA channels, try autoconfiguration first */
-	status = pl022_dma_autoprobe(pl022);
-	if (status == -EPROBE_DEFER) {
+	/* Get DMA channels, try स्वतःconfiguration first */
+	status = pl022_dma_स्वतःprobe(pl022);
+	अगर (status == -EPROBE_DEFER) अणु
 		dev_dbg(dev, "deferring probe to get DMA channel\n");
-		goto err_no_irq;
-	}
+		जाओ err_no_irq;
+	पूर्ण
 
-	/* If that failed, use channels from platform_info */
-	if (status == 0)
-		platform_info->enable_dma = 1;
-	else if (platform_info->enable_dma) {
+	/* If that failed, use channels from platक्रमm_info */
+	अगर (status == 0)
+		platक्रमm_info->enable_dma = 1;
+	अन्यथा अगर (platक्रमm_info->enable_dma) अणु
 		status = pl022_dma_probe(pl022);
-		if (status != 0)
-			platform_info->enable_dma = 0;
-	}
+		अगर (status != 0)
+			platक्रमm_info->enable_dma = 0;
+	पूर्ण
 
 	/* Register with the SPI framework */
 	amba_set_drvdata(adev, pl022);
-	status = devm_spi_register_master(&adev->dev, master);
-	if (status != 0) {
+	status = devm_spi_रेजिस्टर_master(&adev->dev, master);
+	अगर (status != 0) अणु
 		dev_err(&adev->dev,
 			"probe - problem registering spi master\n");
-		goto err_spi_register;
-	}
+		जाओ err_spi_रेजिस्टर;
+	पूर्ण
 	dev_dbg(dev, "probe succeeded\n");
 
-	/* let runtime pm put suspend */
-	if (platform_info->autosuspend_delay > 0) {
+	/* let runसमय pm put suspend */
+	अगर (platक्रमm_info->स्वतःsuspend_delay > 0) अणु
 		dev_info(&adev->dev,
 			"will use autosuspend for runtime pm, delay %dms\n",
-			platform_info->autosuspend_delay);
-		pm_runtime_set_autosuspend_delay(dev,
-			platform_info->autosuspend_delay);
-		pm_runtime_use_autosuspend(dev);
-	}
-	pm_runtime_put(dev);
+			platक्रमm_info->स्वतःsuspend_delay);
+		pm_runसमय_set_स्वतःsuspend_delay(dev,
+			platक्रमm_info->स्वतःsuspend_delay);
+		pm_runसमय_use_स्वतःsuspend(dev);
+	पूर्ण
+	pm_runसमय_put(dev);
 
-	return 0;
+	वापस 0;
 
- err_spi_register:
-	if (platform_info->enable_dma)
-		pl022_dma_remove(pl022);
+ err_spi_रेजिस्टर:
+	अगर (platक्रमm_info->enable_dma)
+		pl022_dma_हटाओ(pl022);
  err_no_irq:
 	clk_disable_unprepare(pl022->clk);
  err_no_clk_en:
@@ -2247,205 +2248,205 @@ static int pl022_probe(struct amba_device *adev, const struct amba_id *id)
 	amba_release_regions(adev);
  err_no_ioregion:
 	spi_master_put(master);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void
-pl022_remove(struct amba_device *adev)
-{
-	struct pl022 *pl022 = amba_get_drvdata(adev);
+अटल व्योम
+pl022_हटाओ(काष्ठा amba_device *adev)
+अणु
+	काष्ठा pl022 *pl022 = amba_get_drvdata(adev);
 
-	if (!pl022)
-		return;
+	अगर (!pl022)
+		वापस;
 
 	/*
-	 * undo pm_runtime_put() in probe.  I assume that we're not
+	 * unकरो pm_runसमय_put() in probe.  I assume that we're not
 	 * accessing the primecell here.
 	 */
-	pm_runtime_get_noresume(&adev->dev);
+	pm_runसमय_get_noresume(&adev->dev);
 
-	load_ssp_default_config(pl022);
-	if (pl022->master_info->enable_dma)
-		pl022_dma_remove(pl022);
+	load_ssp_शेष_config(pl022);
+	अगर (pl022->master_info->enable_dma)
+		pl022_dma_हटाओ(pl022);
 
 	clk_disable_unprepare(pl022->clk);
 	amba_release_regions(adev);
 	tasklet_disable(&pl022->pump_transfers);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int pl022_suspend(struct device *dev)
-{
-	struct pl022 *pl022 = dev_get_drvdata(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक pl022_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pl022 *pl022 = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = spi_master_suspend(pl022->master);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = pm_runtime_force_suspend(dev);
-	if (ret) {
+	ret = pm_runसमय_क्रमce_suspend(dev);
+	अगर (ret) अणु
 		spi_master_resume(pl022->master);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pinctrl_pm_select_sleep_state(dev);
 
 	dev_dbg(dev, "suspended\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pl022_resume(struct device *dev)
-{
-	struct pl022 *pl022 = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक pl022_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pl022 *pl022 = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	ret = pm_runtime_force_resume(dev);
-	if (ret)
+	ret = pm_runसमय_क्रमce_resume(dev);
+	अगर (ret)
 		dev_err(dev, "problem resuming\n");
 
 	/* Start the queue running */
 	ret = spi_master_resume(pl022->master);
-	if (!ret)
+	अगर (!ret)
 		dev_dbg(dev, "resumed\n");
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
-static int pl022_runtime_suspend(struct device *dev)
-{
-	struct pl022 *pl022 = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक pl022_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा pl022 *pl022 = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(pl022->clk);
 	pinctrl_pm_select_idle_state(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pl022_runtime_resume(struct device *dev)
-{
-	struct pl022 *pl022 = dev_get_drvdata(dev);
+अटल पूर्णांक pl022_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pl022 *pl022 = dev_get_drvdata(dev);
 
-	pinctrl_pm_select_default_state(dev);
+	pinctrl_pm_select_शेष_state(dev);
 	clk_prepare_enable(pl022->clk);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops pl022_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops pl022_dev_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(pl022_suspend, pl022_resume)
-	SET_RUNTIME_PM_OPS(pl022_runtime_suspend, pl022_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(pl022_runसमय_suspend, pl022_runसमय_resume, शून्य)
+पूर्ण;
 
-static struct vendor_data vendor_arm = {
-	.fifodepth = 8,
+अटल काष्ठा venकरोr_data venकरोr_arm = अणु
+	.fअगरodepth = 8,
 	.max_bpw = 16,
 	.unidir = false,
 	.extended_cr = false,
 	.pl023 = false,
 	.loopback = true,
-	.internal_cs_ctrl = false,
-};
+	.पूर्णांकernal_cs_ctrl = false,
+पूर्ण;
 
-static struct vendor_data vendor_st = {
-	.fifodepth = 32,
+अटल काष्ठा venकरोr_data venकरोr_st = अणु
+	.fअगरodepth = 32,
 	.max_bpw = 32,
 	.unidir = false,
 	.extended_cr = true,
 	.pl023 = false,
 	.loopback = true,
-	.internal_cs_ctrl = false,
-};
+	.पूर्णांकernal_cs_ctrl = false,
+पूर्ण;
 
-static struct vendor_data vendor_st_pl023 = {
-	.fifodepth = 32,
+अटल काष्ठा venकरोr_data venकरोr_st_pl023 = अणु
+	.fअगरodepth = 32,
 	.max_bpw = 32,
 	.unidir = false,
 	.extended_cr = true,
 	.pl023 = true,
 	.loopback = false,
-	.internal_cs_ctrl = false,
-};
+	.पूर्णांकernal_cs_ctrl = false,
+पूर्ण;
 
-static struct vendor_data vendor_lsi = {
-	.fifodepth = 8,
+अटल काष्ठा venकरोr_data venकरोr_lsi = अणु
+	.fअगरodepth = 8,
 	.max_bpw = 16,
 	.unidir = false,
 	.extended_cr = false,
 	.pl023 = false,
 	.loopback = true,
-	.internal_cs_ctrl = true,
-};
+	.पूर्णांकernal_cs_ctrl = true,
+पूर्ण;
 
-static const struct amba_id pl022_ids[] = {
-	{
+अटल स्थिर काष्ठा amba_id pl022_ids[] = अणु
+	अणु
 		/*
 		 * ARM PL022 variant, this has a 16bit wide
 		 * and 8 locations deep TX/RX FIFO
 		 */
 		.id	= 0x00041022,
 		.mask	= 0x000fffff,
-		.data	= &vendor_arm,
-	},
-	{
+		.data	= &venकरोr_arm,
+	पूर्ण,
+	अणु
 		/*
 		 * ST Micro derivative, this has 32bit wide
 		 * and 32 locations deep TX/RX FIFO
 		 */
 		.id	= 0x01080022,
 		.mask	= 0xffffffff,
-		.data	= &vendor_st,
-	},
-	{
+		.data	= &venकरोr_st,
+	पूर्ण,
+	अणु
 		/*
 		 * ST-Ericsson derivative "PL023" (this is not
 		 * an official ARM number), this is a PL022 SSP block
 		 * stripped to SPI mode only, it has 32bit wide
 		 * and 32 locations deep TX/RX FIFO but no extended
-		 * CR0/CR1 register
+		 * CR0/CR1 रेजिस्टर
 		 */
 		.id	= 0x00080023,
 		.mask	= 0xffffffff,
-		.data	= &vendor_st_pl023,
-	},
-	{
+		.data	= &venकरोr_st_pl023,
+	पूर्ण,
+	अणु
 		/*
-		 * PL022 variant that has a chip select control register whih
-		 * allows control of 5 output signals nCS[0:4].
+		 * PL022 variant that has a chip select control रेजिस्टर whih
+		 * allows control of 5 output संकेतs nCS[0:4].
 		 */
 		.id	= 0x000b6022,
 		.mask	= 0x000fffff,
-		.data	= &vendor_lsi,
-	},
-	{ 0, 0 },
-};
+		.data	= &venकरोr_lsi,
+	पूर्ण,
+	अणु 0, 0 पूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(amba, pl022_ids);
 
-static struct amba_driver pl022_driver = {
-	.drv = {
+अटल काष्ठा amba_driver pl022_driver = अणु
+	.drv = अणु
 		.name	= "ssp-pl022",
 		.pm	= &pl022_dev_pm_ops,
-	},
+	पूर्ण,
 	.id_table	= pl022_ids,
 	.probe		= pl022_probe,
-	.remove		= pl022_remove,
-};
+	.हटाओ		= pl022_हटाओ,
+पूर्ण;
 
-static int __init pl022_init(void)
-{
-	return amba_driver_register(&pl022_driver);
-}
+अटल पूर्णांक __init pl022_init(व्योम)
+अणु
+	वापस amba_driver_रेजिस्टर(&pl022_driver);
+पूर्ण
 subsys_initcall(pl022_init);
 
-static void __exit pl022_exit(void)
-{
-	amba_driver_unregister(&pl022_driver);
-}
-module_exit(pl022_exit);
+अटल व्योम __निकास pl022_निकास(व्योम)
+अणु
+	amba_driver_unरेजिस्टर(&pl022_driver);
+पूर्ण
+module_निकास(pl022_निकास);
 
 MODULE_AUTHOR("Linus Walleij <linus.walleij@stericsson.com>");
 MODULE_DESCRIPTION("PL022 SSP Controller Driver");

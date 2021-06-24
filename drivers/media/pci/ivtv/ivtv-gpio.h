@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
     gpio functions.
     Copyright (C) 2004  Chris Kennedy <c@groovy.org>
@@ -6,12 +7,12 @@
 
  */
 
-#ifndef IVTV_GPIO_H
-#define IVTV_GPIO_H
+#अगर_अघोषित IVTV_GPIO_H
+#घोषणा IVTV_GPIO_H
 
 /* GPIO stuff */
-int ivtv_gpio_init(struct ivtv *itv);
-void ivtv_reset_ir_gpio(struct ivtv *itv);
-int ivtv_reset_tuner_gpio(void *dev, int component, int cmd, int value);
+पूर्णांक ivtv_gpio_init(काष्ठा ivtv *itv);
+व्योम ivtv_reset_ir_gpio(काष्ठा ivtv *itv);
+पूर्णांक ivtv_reset_tuner_gpio(व्योम *dev, पूर्णांक component, पूर्णांक cmd, पूर्णांक value);
 
-#endif
+#पूर्ण_अगर

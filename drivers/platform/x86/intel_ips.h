@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2010 Intel Corporation
  */
 
-void ips_link_to_i915_driver(void);
+व्योम ips_link_to_i915_driver(व्योम);

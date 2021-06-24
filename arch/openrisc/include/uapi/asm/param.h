@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * OpenRISC Linux
  *
@@ -11,17 +12,17 @@
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  * et al.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
 
-#ifndef __ASM_OPENRISC_PARAM_H
-#define __ASM_OPENRISC_PARAM_H
+#अगर_अघोषित __ASM_OPENRISC_PARAM_H
+#घोषणा __ASM_OPENRISC_PARAM_H
 
-#define EXEC_PAGESIZE	8192
+#घोषणा EXEC_PAGESIZE	8192
 
-#include <asm-generic/param.h>
+#समावेश <यंत्र-generic/param.h>
 
-#endif /* __ASM_OPENRISC_PARAM_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_PARAM_H */

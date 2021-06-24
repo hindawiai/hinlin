@@ -1,170 +1,171 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *	include/asm-mips/dec/prom.h
+ *	include/यंत्र-mips/dec/prom.h
  *
- *	DECstation PROM interface.
+ *	DECstation PROM पूर्णांकerface.
  *
  *	Copyright (C) 2002  Maciej W. Rozycki
  *
  *	Based on arch/mips/dec/prom/prom.h by the Anonymous.
  */
-#ifndef _ASM_DEC_PROM_H
-#define _ASM_DEC_PROM_H
+#अगर_अघोषित _ASM_DEC_PROM_H
+#घोषणा _ASM_DEC_PROM_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include <asm/addrspace.h>
+#समावेश <यंत्र/addrspace.h>
 
 /*
- * PMAX/3MAX PROM entry points for DS2100/3100's and DS5000/2xx's.
- * Many of these will work for MIPSen as well!
+ * PMAX/3MAX PROM entry poपूर्णांकs क्रम DS2100/3100's and DS5000/2xx's.
+ * Many of these will work क्रम MIPSen as well!
  */
-#define VEC_RESET		(u64 *)CKSEG1ADDR(0x1fc00000)
+#घोषणा VEC_RESET		(u64 *)CKSEG1ADDR(0x1fc00000)
 							/* Prom base address */
 
-#define PMAX_PROM_ENTRY(x)	(VEC_RESET + (x))	/* Prom jump table */
+#घोषणा PMAX_PROM_ENTRY(x)	(VEC_RESET + (x))	/* Prom jump table */
 
-#define PMAX_PROM_HALT		PMAX_PROM_ENTRY(2)	/* valid on MIPSen */
-#define PMAX_PROM_AUTOBOOT	PMAX_PROM_ENTRY(5)	/* valid on MIPSen */
-#define PMAX_PROM_OPEN		PMAX_PROM_ENTRY(6)
-#define PMAX_PROM_READ		PMAX_PROM_ENTRY(7)
-#define PMAX_PROM_CLOSE		PMAX_PROM_ENTRY(10)
-#define PMAX_PROM_LSEEK		PMAX_PROM_ENTRY(11)
-#define PMAX_PROM_GETCHAR	PMAX_PROM_ENTRY(12)
-#define PMAX_PROM_PUTCHAR	PMAX_PROM_ENTRY(13)	/* 12 on MIPSen */
-#define PMAX_PROM_GETS		PMAX_PROM_ENTRY(15)
-#define PMAX_PROM_PRINTF	PMAX_PROM_ENTRY(17)
-#define PMAX_PROM_GETENV	PMAX_PROM_ENTRY(33)	/* valid on MIPSen */
+#घोषणा PMAX_PROM_HALT		PMAX_PROM_ENTRY(2)	/* valid on MIPSen */
+#घोषणा PMAX_PROM_AUTOBOOT	PMAX_PROM_ENTRY(5)	/* valid on MIPSen */
+#घोषणा PMAX_PROM_OPEN		PMAX_PROM_ENTRY(6)
+#घोषणा PMAX_PROM_READ		PMAX_PROM_ENTRY(7)
+#घोषणा PMAX_PROM_CLOSE		PMAX_PROM_ENTRY(10)
+#घोषणा PMAX_PROM_LSEEK		PMAX_PROM_ENTRY(11)
+#घोषणा PMAX_PROM_GETCHAR	PMAX_PROM_ENTRY(12)
+#घोषणा PMAX_PROM_PUTCHAR	PMAX_PROM_ENTRY(13)	/* 12 on MIPSen */
+#घोषणा PMAX_PROM_GETS		PMAX_PROM_ENTRY(15)
+#घोषणा PMAX_PROM_PRINTF	PMAX_PROM_ENTRY(17)
+#घोषणा PMAX_PROM_GETENV	PMAX_PROM_ENTRY(33)	/* valid on MIPSen */
 
 
 /*
  * Magic number indicating REX PROM available on DECstation.  Found in
- * register a2 on transfer of control to program from PROM.
+ * रेजिस्टर a2 on transfer of control to program from PROM.
  */
-#define REX_PROM_MAGIC		0x30464354
+#घोषणा REX_PROM_MAGIC		0x30464354
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 
-#define prom_is_rex(magic)	1	/* KN04 and KN05 are REX PROMs.  */
+#घोषणा prom_is_rex(magic)	1	/* KN04 and KN05 are REX PROMs.  */
 
-#else /* !CONFIG_64BIT */
+#अन्यथा /* !CONFIG_64BIT */
 
-#define prom_is_rex(magic)	((magic) == REX_PROM_MAGIC)
+#घोषणा prom_is_rex(magic)	((magic) == REX_PROM_MAGIC)
 
-#endif /* !CONFIG_64BIT */
+#पूर्ण_अगर /* !CONFIG_64BIT */
 
 
 /*
- * 3MIN/MAXINE PROM entry points for DS5000/1xx's, DS5000/xx's and
+ * 3MIN/MAXINE PROM entry poपूर्णांकs क्रम DS5000/1xx's, DS5000/xx's and
  * DS5000/2x0.
  */
-#define REX_PROM_GETBITMAP	0x84/4	/* get mem bitmap */
-#define REX_PROM_GETCHAR	0x24/4	/* getch() */
-#define REX_PROM_GETENV		0x64/4	/* get env. variable */
-#define REX_PROM_GETSYSID	0x80/4	/* get system id */
-#define REX_PROM_GETTCINFO	0xa4/4
-#define REX_PROM_PRINTF		0x30/4	/* printf() */
-#define REX_PROM_SLOTADDR	0x6c/4	/* slotaddr */
-#define REX_PROM_BOOTINIT	0x54/4	/* open() */
-#define REX_PROM_BOOTREAD	0x58/4	/* read() */
-#define REX_PROM_CLEARCACHE	0x7c/4
+#घोषणा REX_PROM_GETBITMAP	0x84/4	/* get mem biपंचांगap */
+#घोषणा REX_PROM_GETCHAR	0x24/4	/* अ_लोh() */
+#घोषणा REX_PROM_GETENV		0x64/4	/* get env. variable */
+#घोषणा REX_PROM_GETSYSID	0x80/4	/* get प्रणाली id */
+#घोषणा REX_PROM_GETTCINFO	0xa4/4
+#घोषणा REX_PROM_PRINTF		0x30/4	/* म_लिखो() */
+#घोषणा REX_PROM_SLOTADDR	0x6c/4	/* slotaddr */
+#घोषणा REX_PROM_BOOTINIT	0x54/4	/* खोलो() */
+#घोषणा REX_PROM_BOOTREAD	0x58/4	/* पढ़ो() */
+#घोषणा REX_PROM_CLEARCACHE	0x7c/4
 
 
 /*
- * Used by rex_getbitmap().
+ * Used by rex_getbiपंचांगap().
  */
-typedef struct {
-	int pagesize;
-	unsigned char bitmap[0];
-} memmap;
+प्रकार काष्ठा अणु
+	पूर्णांक pagesize;
+	अचिन्हित अक्षर biपंचांगap[0];
+पूर्ण memmap;
 
 
 /*
- * Function pointers as read from a PROM's callback vector.
+ * Function poपूर्णांकers as पढ़ो from a PROM's callback vector.
  */
-extern int (*__rex_bootinit)(void);
-extern int (*__rex_bootread)(void);
-extern int (*__rex_getbitmap)(memmap *);
-extern unsigned long *(*__rex_slot_address)(int);
-extern void *(*__rex_gettcinfo)(void);
-extern int (*__rex_getsysid)(void);
-extern void (*__rex_clear_cache)(void);
+बाह्य पूर्णांक (*__rex_bootinit)(व्योम);
+बाह्य पूर्णांक (*__rex_bootपढ़ो)(व्योम);
+बाह्य पूर्णांक (*__rex_getbiपंचांगap)(memmap *);
+बाह्य अचिन्हित दीर्घ *(*__rex_slot_address)(पूर्णांक);
+बाह्य व्योम *(*__rex_gettcinfo)(व्योम);
+बाह्य पूर्णांक (*__rex_माला_लोysid)(व्योम);
+बाह्य व्योम (*__rex_clear_cache)(व्योम);
 
-extern int (*__prom_getchar)(void);
-extern char *(*__prom_getenv)(char *);
-extern int (*__prom_printf)(char *, ...);
+बाह्य पूर्णांक (*__prom_अक्षर_लो)(व्योम);
+बाह्य अक्षर *(*__prom_दो_पर्या)(अक्षर *);
+बाह्य पूर्णांक (*__prom_म_लिखो)(अक्षर *, ...);
 
-extern int (*__pmax_open)(char*, int);
-extern int (*__pmax_lseek)(int, long, int);
-extern int (*__pmax_read)(int, void *, int);
-extern int (*__pmax_close)(int);
+बाह्य पूर्णांक (*__pmax_खोलो)(अक्षर*, पूर्णांक);
+बाह्य पूर्णांक (*__pmax_lseek)(पूर्णांक, दीर्घ, पूर्णांक);
+बाह्य पूर्णांक (*__pmax_पढ़ो)(पूर्णांक, व्योम *, पूर्णांक);
+बाह्य पूर्णांक (*__pmax_बंद)(पूर्णांक);
 
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 
 /*
  * On MIPS64 we have to call PROM functions via a helper
  * dispatcher to accommodate ABI incompatibilities.
  */
-#define __DEC_PROM_O32(fun, arg) fun arg __asm__(#fun); \
-				 __asm__(#fun " = call_o32")
+#घोषणा __DEC_PROM_O32(fun, arg) fun arg __यंत्र__(#fun); \
+				 __यंत्र__(#fun " = call_o32")
 
-int __DEC_PROM_O32(_rex_bootinit, (int (*)(void), void *));
-int __DEC_PROM_O32(_rex_bootread, (int (*)(void), void *));
-int __DEC_PROM_O32(_rex_getbitmap, (int (*)(memmap *), void *, memmap *));
-unsigned long *__DEC_PROM_O32(_rex_slot_address,
-			     (unsigned long *(*)(int), void *, int));
-void *__DEC_PROM_O32(_rex_gettcinfo, (void *(*)(void), void *));
-int __DEC_PROM_O32(_rex_getsysid, (int (*)(void), void *));
-void __DEC_PROM_O32(_rex_clear_cache, (void (*)(void), void *));
+पूर्णांक __DEC_PROM_O32(_rex_bootinit, (पूर्णांक (*)(व्योम), व्योम *));
+पूर्णांक __DEC_PROM_O32(_rex_bootपढ़ो, (पूर्णांक (*)(व्योम), व्योम *));
+पूर्णांक __DEC_PROM_O32(_rex_getbiपंचांगap, (पूर्णांक (*)(memmap *), व्योम *, memmap *));
+अचिन्हित दीर्घ *__DEC_PROM_O32(_rex_slot_address,
+			     (अचिन्हित दीर्घ *(*)(पूर्णांक), व्योम *, पूर्णांक));
+व्योम *__DEC_PROM_O32(_rex_gettcinfo, (व्योम *(*)(व्योम), व्योम *));
+पूर्णांक __DEC_PROM_O32(_rex_माला_लोysid, (पूर्णांक (*)(व्योम), व्योम *));
+व्योम __DEC_PROM_O32(_rex_clear_cache, (व्योम (*)(व्योम), व्योम *));
 
-int __DEC_PROM_O32(_prom_getchar, (int (*)(void), void *));
-char *__DEC_PROM_O32(_prom_getenv, (char *(*)(char *), void *, char *));
-int __DEC_PROM_O32(_prom_printf, (int (*)(char *, ...), void *, char *, ...));
+पूर्णांक __DEC_PROM_O32(_prom_अक्षर_लो, (पूर्णांक (*)(व्योम), व्योम *));
+अक्षर *__DEC_PROM_O32(_prom_दो_पर्या, (अक्षर *(*)(अक्षर *), व्योम *, अक्षर *));
+पूर्णांक __DEC_PROM_O32(_prom_म_लिखो, (पूर्णांक (*)(अक्षर *, ...), व्योम *, अक्षर *, ...));
 
 
-#define rex_bootinit()		_rex_bootinit(__rex_bootinit, NULL)
-#define rex_bootread()		_rex_bootread(__rex_bootread, NULL)
-#define rex_getbitmap(x)	_rex_getbitmap(__rex_getbitmap, NULL, x)
-#define rex_slot_address(x)	_rex_slot_address(__rex_slot_address, NULL, x)
-#define rex_gettcinfo()		_rex_gettcinfo(__rex_gettcinfo, NULL)
-#define rex_getsysid()		_rex_getsysid(__rex_getsysid, NULL)
-#define rex_clear_cache()	_rex_clear_cache(__rex_clear_cache, NULL)
+#घोषणा rex_bootinit()		_rex_bootinit(__rex_bootinit, शून्य)
+#घोषणा rex_bootपढ़ो()		_rex_bootपढ़ो(__rex_bootपढ़ो, शून्य)
+#घोषणा rex_getbiपंचांगap(x)	_rex_getbiपंचांगap(__rex_getbiपंचांगap, शून्य, x)
+#घोषणा rex_slot_address(x)	_rex_slot_address(__rex_slot_address, शून्य, x)
+#घोषणा rex_gettcinfo()		_rex_gettcinfo(__rex_gettcinfo, शून्य)
+#घोषणा rex_माला_लोysid()		_rex_माला_लोysid(__rex_माला_लोysid, शून्य)
+#घोषणा rex_clear_cache()	_rex_clear_cache(__rex_clear_cache, शून्य)
 
-#define prom_getchar()		_prom_getchar(__prom_getchar, NULL)
-#define prom_getenv(x)		_prom_getenv(__prom_getenv, NULL, x)
-#define prom_printf(x...)	_prom_printf(__prom_printf, NULL, x)
+#घोषणा prom_अक्षर_लो()		_prom_अक्षर_लो(__prom_अक्षर_लो, शून्य)
+#घोषणा prom_दो_पर्या(x)		_prom_दो_पर्या(__prom_दो_पर्या, शून्य, x)
+#घोषणा prom_म_लिखो(x...)	_prom_म_लिखो(__prom_म_लिखो, शून्य, x)
 
-#else /* !CONFIG_64BIT */
+#अन्यथा /* !CONFIG_64BIT */
 
 /*
  * On plain MIPS we just call PROM functions directly.
  */
-#define rex_bootinit		__rex_bootinit
-#define rex_bootread		__rex_bootread
-#define rex_getbitmap		__rex_getbitmap
-#define rex_slot_address	__rex_slot_address
-#define rex_gettcinfo		__rex_gettcinfo
-#define rex_getsysid		__rex_getsysid
-#define rex_clear_cache		__rex_clear_cache
+#घोषणा rex_bootinit		__rex_bootinit
+#घोषणा rex_bootपढ़ो		__rex_bootपढ़ो
+#घोषणा rex_getbiपंचांगap		__rex_getbiपंचांगap
+#घोषणा rex_slot_address	__rex_slot_address
+#घोषणा rex_gettcinfo		__rex_gettcinfo
+#घोषणा rex_माला_लोysid		__rex_माला_लोysid
+#घोषणा rex_clear_cache		__rex_clear_cache
 
-#define prom_getchar		__prom_getchar
-#define prom_getenv		__prom_getenv
-#define prom_printf		__prom_printf
+#घोषणा prom_अक्षर_लो		__prom_अक्षर_लो
+#घोषणा prom_दो_पर्या		__prom_दो_पर्या
+#घोषणा prom_म_लिखो		__prom_म_लिखो
 
-#define pmax_open		__pmax_open
-#define pmax_lseek		__pmax_lseek
-#define pmax_read		__pmax_read
-#define pmax_close		__pmax_close
+#घोषणा pmax_खोलो		__pmax_खोलो
+#घोषणा pmax_lseek		__pmax_lseek
+#घोषणा pmax_पढ़ो		__pmax_पढ़ो
+#घोषणा pmax_बंद		__pmax_बंद
 
-#endif /* !CONFIG_64BIT */
+#पूर्ण_अगर /* !CONFIG_64BIT */
 
 
-extern void prom_meminit(u32);
-extern void prom_identify_arch(u32);
-extern void prom_init_cmdline(s32, s32 *, u32);
+बाह्य व्योम prom_meminit(u32);
+बाह्य व्योम prom_identअगरy_arch(u32);
+बाह्य व्योम prom_init_cmdline(s32, s32 *, u32);
 
-extern void register_prom_console(void);
-extern void unregister_prom_console(void);
+बाह्य व्योम रेजिस्टर_prom_console(व्योम);
+बाह्य व्योम unरेजिस्टर_prom_console(व्योम);
 
-#endif /* _ASM_DEC_PROM_H */
+#पूर्ण_अगर /* _ASM_DEC_PROM_H */

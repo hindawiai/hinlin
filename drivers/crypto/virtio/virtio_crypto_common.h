@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* Common header for Virtio crypto device.
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* Common header क्रम Virtio crypto device.
  *
  * Copyright 2016 HUAWEI TECHNOLOGIES CO., LTD.
  */
 
-#ifndef _VIRTIO_CRYPTO_COMMON_H
-#define _VIRTIO_CRYPTO_COMMON_H
+#अगर_अघोषित _VIRTIO_CRYPTO_COMMON_H
+#घोषणा _VIRTIO_CRYPTO_COMMON_H
 
-#include <linux/virtio.h>
-#include <linux/crypto.h>
-#include <linux/spinlock.h>
-#include <crypto/aead.h>
-#include <crypto/aes.h>
-#include <crypto/engine.h>
+#समावेश <linux/virtपन.स>
+#समावेश <linux/crypto.h>
+#समावेश <linux/spinlock.h>
+#समावेश <crypto/aead.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/engine.h>
 
 
 /* Internal representation of a data virtqueue */
-struct data_queue {
+काष्ठा data_queue अणु
 	/* Virtqueue associated with this send _queue */
-	struct virtqueue *vq;
+	काष्ठा virtqueue *vq;
 
-	/* To protect the vq operations for the dataq */
+	/* To protect the vq operations क्रम the dataq */
 	spinlock_t lock;
 
 	/* Name of the tx queue: dataq.$index */
-	char name[32];
+	अक्षर name[32];
 
-	struct crypto_engine *engine;
-};
+	काष्ठा crypto_engine *engine;
+पूर्ण;
 
-struct virtio_crypto {
-	struct virtio_device *vdev;
-	struct virtqueue *ctrl_vq;
-	struct data_queue *data_vq;
+काष्ठा virtio_crypto अणु
+	काष्ठा virtio_device *vdev;
+	काष्ठा virtqueue *ctrl_vq;
+	काष्ठा data_queue *data_vq;
 
-	/* To protect the vq operations for the controlq */
+	/* To protect the vq operations क्रम the controlq */
 	spinlock_t ctrl_lock;
 
 	/* Maximum of data queues supported by the device */
@@ -44,7 +45,7 @@ struct virtio_crypto {
 	u32 curr_queue;
 
 	/*
-	 * Specifies the services mask which the device support,
+	 * Specअगरies the services mask which the device support,
 	 * see VIRTIO_CRYPTO_SERVICE_*
 	 */
 	u32 crypto_services;
@@ -64,72 +65,72 @@ struct virtio_crypto {
 	/* Maximum size of per request */
 	u64 max_size;
 
-	/* Control VQ buffers: protected by the ctrl_lock */
-	struct virtio_crypto_op_ctrl_req ctrl;
-	struct virtio_crypto_session_input input;
-	struct virtio_crypto_inhdr ctrl_status;
+	/* Control VQ buffers: रक्षित by the ctrl_lock */
+	काष्ठा virtio_crypto_op_ctrl_req ctrl;
+	काष्ठा virtio_crypto_session_input input;
+	काष्ठा virtio_crypto_inhdr ctrl_status;
 
-	unsigned long status;
+	अचिन्हित दीर्घ status;
 	atomic_t ref_count;
-	struct list_head list;
-	struct module *owner;
-	uint8_t dev_id;
+	काष्ठा list_head list;
+	काष्ठा module *owner;
+	uपूर्णांक8_t dev_id;
 
-	/* Does the affinity hint is set for virtqueues? */
-	bool affinity_hint_set;
-};
+	/* Does the affinity hपूर्णांक is set क्रम virtqueues? */
+	bool affinity_hपूर्णांक_set;
+पूर्ण;
 
-struct virtio_crypto_sym_session_info {
+काष्ठा virtio_crypto_sym_session_info अणु
 	/* Backend session id, which come from the host side */
 	__u64 session_id;
-};
+पूर्ण;
 
-struct virtio_crypto_request;
-typedef void (*virtio_crypto_data_callback)
-		(struct virtio_crypto_request *vc_req, int len);
+काष्ठा virtio_crypto_request;
+प्रकार व्योम (*virtio_crypto_data_callback)
+		(काष्ठा virtio_crypto_request *vc_req, पूर्णांक len);
 
-struct virtio_crypto_request {
-	uint8_t status;
-	struct virtio_crypto_op_data_req *req_data;
-	struct scatterlist **sgs;
-	struct data_queue *dataq;
+काष्ठा virtio_crypto_request अणु
+	uपूर्णांक8_t status;
+	काष्ठा virtio_crypto_op_data_req *req_data;
+	काष्ठा scatterlist **sgs;
+	काष्ठा data_queue *dataq;
 	virtio_crypto_data_callback alg_cb;
-};
+पूर्ण;
 
-int virtcrypto_devmgr_add_dev(struct virtio_crypto *vcrypto_dev);
-struct list_head *virtcrypto_devmgr_get_head(void);
-void virtcrypto_devmgr_rm_dev(struct virtio_crypto *vcrypto_dev);
-struct virtio_crypto *virtcrypto_devmgr_get_first(void);
-int virtcrypto_dev_in_use(struct virtio_crypto *vcrypto_dev);
-int virtcrypto_dev_get(struct virtio_crypto *vcrypto_dev);
-void virtcrypto_dev_put(struct virtio_crypto *vcrypto_dev);
-int virtcrypto_dev_started(struct virtio_crypto *vcrypto_dev);
-bool virtcrypto_algo_is_supported(struct virtio_crypto *vcrypto_dev,
-				  uint32_t service,
-				  uint32_t algo);
-struct virtio_crypto *virtcrypto_get_dev_node(int node,
-					      uint32_t service,
-					      uint32_t algo);
-int virtcrypto_dev_start(struct virtio_crypto *vcrypto);
-void virtcrypto_dev_stop(struct virtio_crypto *vcrypto);
-int virtio_crypto_skcipher_crypt_req(
-	struct crypto_engine *engine, void *vreq);
+पूर्णांक virtcrypto_devmgr_add_dev(काष्ठा virtio_crypto *vcrypto_dev);
+काष्ठा list_head *virtcrypto_devmgr_get_head(व्योम);
+व्योम virtcrypto_devmgr_rm_dev(काष्ठा virtio_crypto *vcrypto_dev);
+काष्ठा virtio_crypto *virtcrypto_devmgr_get_first(व्योम);
+पूर्णांक virtcrypto_dev_in_use(काष्ठा virtio_crypto *vcrypto_dev);
+पूर्णांक virtcrypto_dev_get(काष्ठा virtio_crypto *vcrypto_dev);
+व्योम virtcrypto_dev_put(काष्ठा virtio_crypto *vcrypto_dev);
+पूर्णांक virtcrypto_dev_started(काष्ठा virtio_crypto *vcrypto_dev);
+bool virtcrypto_algo_is_supported(काष्ठा virtio_crypto *vcrypto_dev,
+				  uपूर्णांक32_t service,
+				  uपूर्णांक32_t algo);
+काष्ठा virtio_crypto *virtcrypto_get_dev_node(पूर्णांक node,
+					      uपूर्णांक32_t service,
+					      uपूर्णांक32_t algo);
+पूर्णांक virtcrypto_dev_start(काष्ठा virtio_crypto *vcrypto);
+व्योम virtcrypto_dev_stop(काष्ठा virtio_crypto *vcrypto);
+पूर्णांक virtio_crypto_skcipher_crypt_req(
+	काष्ठा crypto_engine *engine, व्योम *vreq);
 
-void
-virtcrypto_clear_request(struct virtio_crypto_request *vc_req);
+व्योम
+virtcrypto_clear_request(काष्ठा virtio_crypto_request *vc_req);
 
-static inline int virtio_crypto_get_current_node(void)
-{
-	int cpu, node;
+अटल अंतरभूत पूर्णांक virtio_crypto_get_current_node(व्योम)
+अणु
+	पूर्णांक cpu, node;
 
 	cpu = get_cpu();
 	node = topology_physical_package_id(cpu);
 	put_cpu();
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-int virtio_crypto_algs_register(struct virtio_crypto *vcrypto);
-void virtio_crypto_algs_unregister(struct virtio_crypto *vcrypto);
+पूर्णांक virtio_crypto_algs_रेजिस्टर(काष्ठा virtio_crypto *vcrypto);
+व्योम virtio_crypto_algs_unरेजिस्टर(काष्ठा virtio_crypto *vcrypto);
 
-#endif /* _VIRTIO_CRYPTO_COMMON_H */
+#पूर्ण_अगर /* _VIRTIO_CRYPTO_COMMON_H */

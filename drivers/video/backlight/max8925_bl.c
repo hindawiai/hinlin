@@ -1,195 +1,196 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Backlight driver for Maxim MAX8925
+ * Backlight driver क्रम Maxim MAX8925
  *
  * Copyright (C) 2009 Marvell International Ltd.
  *      Haojian Zhuang <haojian.zhuang@marvell.com>
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/fb.h>
-#include <linux/i2c.h>
-#include <linux/backlight.h>
-#include <linux/mfd/max8925.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/mfd/max8925.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#define MAX_BRIGHTNESS		(0xff)
-#define MIN_BRIGHTNESS		(0)
+#घोषणा MAX_BRIGHTNESS		(0xff)
+#घोषणा MIN_BRIGHTNESS		(0)
 
-#define LWX_FREQ(x)		(((x - 601) / 100) & 0x7)
+#घोषणा LWX_FREQ(x)		(((x - 601) / 100) & 0x7)
 
-struct max8925_backlight_data {
-	struct max8925_chip	*chip;
+काष्ठा max8925_backlight_data अणु
+	काष्ठा max8925_chip	*chip;
 
-	int	current_brightness;
-	int	reg_mode_cntl;
-	int	reg_cntl;
-};
+	पूर्णांक	current_brightness;
+	पूर्णांक	reg_mode_cntl;
+	पूर्णांक	reg_cntl;
+पूर्ण;
 
-static int max8925_backlight_set(struct backlight_device *bl, int brightness)
-{
-	struct max8925_backlight_data *data = bl_get_data(bl);
-	struct max8925_chip *chip = data->chip;
-	unsigned char value;
-	int ret;
+अटल पूर्णांक max8925_backlight_set(काष्ठा backlight_device *bl, पूर्णांक brightness)
+अणु
+	काष्ठा max8925_backlight_data *data = bl_get_data(bl);
+	काष्ठा max8925_chip *chip = data->chip;
+	अचिन्हित अक्षर value;
+	पूर्णांक ret;
 
-	if (brightness > MAX_BRIGHTNESS)
+	अगर (brightness > MAX_BRIGHTNESS)
 		value = MAX_BRIGHTNESS;
-	else
+	अन्यथा
 		value = brightness;
 
-	ret = max8925_reg_write(chip->i2c, data->reg_cntl, value);
-	if (ret < 0)
-		goto out;
+	ret = max8925_reg_ग_लिखो(chip->i2c, data->reg_cntl, value);
+	अगर (ret < 0)
+		जाओ out;
 
-	if (!data->current_brightness && brightness)
+	अगर (!data->current_brightness && brightness)
 		/* enable WLED output */
 		ret = max8925_set_bits(chip->i2c, data->reg_mode_cntl, 1, 1);
-	else if (!brightness)
+	अन्यथा अगर (!brightness)
 		/* disable WLED output */
 		ret = max8925_set_bits(chip->i2c, data->reg_mode_cntl, 1, 0);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 	dev_dbg(chip->dev, "set brightness %d\n", value);
 	data->current_brightness = value;
-	return 0;
+	वापस 0;
 out:
 	dev_dbg(chip->dev, "set brightness %d failure with return value:%d\n",
 		value, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int max8925_backlight_update_status(struct backlight_device *bl)
-{
-	return max8925_backlight_set(bl, backlight_get_brightness(bl));
-}
+अटल पूर्णांक max8925_backlight_update_status(काष्ठा backlight_device *bl)
+अणु
+	वापस max8925_backlight_set(bl, backlight_get_brightness(bl));
+पूर्ण
 
-static int max8925_backlight_get_brightness(struct backlight_device *bl)
-{
-	struct max8925_backlight_data *data = bl_get_data(bl);
-	struct max8925_chip *chip = data->chip;
-	int ret;
+अटल पूर्णांक max8925_backlight_get_brightness(काष्ठा backlight_device *bl)
+अणु
+	काष्ठा max8925_backlight_data *data = bl_get_data(bl);
+	काष्ठा max8925_chip *chip = data->chip;
+	पूर्णांक ret;
 
-	ret = max8925_reg_read(chip->i2c, data->reg_cntl);
-	if (ret < 0)
-		return -EINVAL;
+	ret = max8925_reg_पढ़ो(chip->i2c, data->reg_cntl);
+	अगर (ret < 0)
+		वापस -EINVAL;
 	data->current_brightness = ret;
 	dev_dbg(chip->dev, "get brightness %d\n", data->current_brightness);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct backlight_ops max8925_backlight_ops = {
+अटल स्थिर काष्ठा backlight_ops max8925_backlight_ops = अणु
 	.options	= BL_CORE_SUSPENDRESUME,
 	.update_status	= max8925_backlight_update_status,
 	.get_brightness	= max8925_backlight_get_brightness,
-};
+पूर्ण;
 
-static void max8925_backlight_dt_init(struct platform_device *pdev)
-{
-	struct device_node *nproot = pdev->dev.parent->of_node, *np;
-	struct max8925_backlight_pdata *pdata;
+अटल व्योम max8925_backlight_dt_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *nproot = pdev->dev.parent->of_node, *np;
+	काष्ठा max8925_backlight_pdata *pdata;
 	u32 val;
 
-	if (!nproot || !IS_ENABLED(CONFIG_OF))
-		return;
+	अगर (!nproot || !IS_ENABLED(CONFIG_OF))
+		वापस;
 
 	pdata = devm_kzalloc(&pdev->dev,
-			     sizeof(struct max8925_backlight_pdata),
+			     माप(काष्ठा max8925_backlight_pdata),
 			     GFP_KERNEL);
-	if (!pdata)
-		return;
+	अगर (!pdata)
+		वापस;
 
 	np = of_get_child_by_name(nproot, "backlight");
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(&pdev->dev, "failed to find backlight node\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!of_property_read_u32(np, "maxim,max8925-dual-string", &val))
+	अगर (!of_property_पढ़ो_u32(np, "maxim,max8925-dual-string", &val))
 		pdata->dual_string = val;
 
 	of_node_put(np);
 
-	pdev->dev.platform_data = pdata;
-}
+	pdev->dev.platक्रमm_data = pdata;
+पूर्ण
 
-static int max8925_backlight_probe(struct platform_device *pdev)
-{
-	struct max8925_chip *chip = dev_get_drvdata(pdev->dev.parent);
-	struct max8925_backlight_pdata *pdata;
-	struct max8925_backlight_data *data;
-	struct backlight_device *bl;
-	struct backlight_properties props;
-	struct resource *res;
-	unsigned char value;
-	int ret = 0;
+अटल पूर्णांक max8925_backlight_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max8925_chip *chip = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा max8925_backlight_pdata *pdata;
+	काष्ठा max8925_backlight_data *data;
+	काष्ठा backlight_device *bl;
+	काष्ठा backlight_properties props;
+	काष्ठा resource *res;
+	अचिन्हित अक्षर value;
+	पूर्णांक ret = 0;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(struct max8925_backlight_data),
+	data = devm_kzalloc(&pdev->dev, माप(काष्ठा max8925_backlight_data),
 			    GFP_KERNEL);
-	if (data == NULL)
-		return -ENOMEM;
+	अगर (data == शून्य)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_REG, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_REG, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "No REG resource for mode control!\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	data->reg_mode_cntl = res->start;
-	res = platform_get_resource(pdev, IORESOURCE_REG, 1);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_REG, 1);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "No REG resource for control!\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	data->reg_cntl = res->start;
 
 	data->chip = chip;
 	data->current_brightness = 0;
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.type = BACKLIGHT_RAW;
 	props.max_brightness = MAX_BRIGHTNESS;
-	bl = devm_backlight_device_register(&pdev->dev, "max8925-backlight",
+	bl = devm_backlight_device_रेजिस्टर(&pdev->dev, "max8925-backlight",
 					&pdev->dev, data,
 					&max8925_backlight_ops, &props);
-	if (IS_ERR(bl)) {
+	अगर (IS_ERR(bl)) अणु
 		dev_err(&pdev->dev, "failed to register backlight\n");
-		return PTR_ERR(bl);
-	}
+		वापस PTR_ERR(bl);
+	पूर्ण
 	bl->props.brightness = MAX_BRIGHTNESS;
 
-	platform_set_drvdata(pdev, bl);
+	platक्रमm_set_drvdata(pdev, bl);
 
 	value = 0;
-	if (!pdev->dev.platform_data)
+	अगर (!pdev->dev.platक्रमm_data)
 		max8925_backlight_dt_init(pdev);
 
-	pdata = pdev->dev.platform_data;
-	if (pdata) {
-		if (pdata->lxw_scl)
+	pdata = pdev->dev.platक्रमm_data;
+	अगर (pdata) अणु
+		अगर (pdata->lxw_scl)
 			value |= (1 << 7);
-		if (pdata->lxw_freq)
+		अगर (pdata->lxw_freq)
 			value |= (LWX_FREQ(pdata->lxw_freq) << 4);
-		if (pdata->dual_string)
+		अगर (pdata->dual_string)
 			value |= (1 << 1);
-	}
+	पूर्ण
 	ret = max8925_set_bits(chip->i2c, data->reg_mode_cntl, 0xfe, value);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 	backlight_update_status(bl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver max8925_backlight_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver max8925_backlight_driver = अणु
+	.driver		= अणु
 		.name	= "max8925-backlight",
-	},
+	पूर्ण,
 	.probe		= max8925_backlight_probe,
-};
+पूर्ण;
 
-module_platform_driver(max8925_backlight_driver);
+module_platक्रमm_driver(max8925_backlight_driver);
 
 MODULE_DESCRIPTION("Backlight Driver for Maxim MAX8925");
 MODULE_AUTHOR("Haojian Zhuang <haojian.zhuang@marvell.com>");

@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ADDI_WATCHDOG_H
-#define _ADDI_WATCHDOG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ADDI_WATCHDOG_H
+#घोषणा _ADDI_WATCHDOG_H
 
-struct comedi_subdevice;
+काष्ठा comedi_subdevice;
 
-void addi_watchdog_reset(unsigned long iobase);
-int addi_watchdog_init(struct comedi_subdevice *s, unsigned long iobase);
+व्योम addi_watchकरोg_reset(अचिन्हित दीर्घ iobase);
+पूर्णांक addi_watchकरोg_init(काष्ठा comedi_subdevice *s, अचिन्हित दीर्घ iobase);
 
-#endif
+#पूर्ण_अगर

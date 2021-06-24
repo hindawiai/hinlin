@@ -1,110 +1,111 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 
-#ifndef _BR_PRIVATE_CFM_H_
-#define _BR_PRIVATE_CFM_H_
+#अगर_अघोषित _BR_PRIVATE_CFM_H_
+#घोषणा _BR_PRIVATE_CFM_H_
 
-#include "br_private.h"
-#include <uapi/linux/cfm_bridge.h>
+#समावेश "br_private.h"
+#समावेश <uapi/linux/cfm_bridge.h>
 
-struct br_cfm_mep_create {
-	enum br_cfm_domain domain; /* Domain for this MEP */
-	enum br_cfm_mep_direction direction; /* Up or Down MEP direction */
-	u32 ifindex; /* Residence port */
-};
+काष्ठा br_cfm_mep_create अणु
+	क्रमागत br_cfm_करोमुख्य करोमुख्य; /* Doमुख्य क्रम this MEP */
+	क्रमागत br_cfm_mep_direction direction; /* Up or Down MEP direction */
+	u32 अगरindex; /* Residence port */
+पूर्ण;
 
-int br_cfm_mep_create(struct net_bridge *br,
-		      const u32 instance,
-		      struct br_cfm_mep_create *const create,
-		      struct netlink_ext_ack *extack);
+पूर्णांक br_cfm_mep_create(काष्ठा net_bridge *br,
+		      स्थिर u32 instance,
+		      काष्ठा br_cfm_mep_create *स्थिर create,
+		      काष्ठा netlink_ext_ack *extack);
 
-int br_cfm_mep_delete(struct net_bridge *br,
-		      const u32 instance,
-		      struct netlink_ext_ack *extack);
+पूर्णांक br_cfm_mep_delete(काष्ठा net_bridge *br,
+		      स्थिर u32 instance,
+		      काष्ठा netlink_ext_ack *extack);
 
-struct br_cfm_mep_config {
+काष्ठा br_cfm_mep_config अणु
 	u32 mdlevel;
-	u32 mepid; /* MEPID for this MEP */
-	struct mac_addr unicast_mac; /* The MEP unicast MAC */
-};
+	u32 mepid; /* MEPID क्रम this MEP */
+	काष्ठा mac_addr unicast_mac; /* The MEP unicast MAC */
+पूर्ण;
 
-int br_cfm_mep_config_set(struct net_bridge *br,
-			  const u32 instance,
-			  const struct br_cfm_mep_config *const config,
-			  struct netlink_ext_ack *extack);
+पूर्णांक br_cfm_mep_config_set(काष्ठा net_bridge *br,
+			  स्थिर u32 instance,
+			  स्थिर काष्ठा br_cfm_mep_config *स्थिर config,
+			  काष्ठा netlink_ext_ack *extack);
 
-struct br_cfm_maid {
+काष्ठा br_cfm_maid अणु
 	u8 data[CFM_MAID_LENGTH];
-};
+पूर्ण;
 
-struct br_cfm_cc_config {
+काष्ठा br_cfm_cc_config अणु
 	/* Expected received CCM PDU MAID. */
-	struct br_cfm_maid exp_maid;
+	काष्ठा br_cfm_maid exp_maid;
 
-	/* Expected received CCM PDU interval. */
-	/* Transmitting CCM PDU interval when CCM tx is enabled. */
-	enum br_cfm_ccm_interval exp_interval;
+	/* Expected received CCM PDU पूर्णांकerval. */
+	/* Transmitting CCM PDU पूर्णांकerval when CCM tx is enabled. */
+	क्रमागत br_cfm_ccm_पूर्णांकerval exp_पूर्णांकerval;
 
 	bool enable; /* Enable/disable CCM PDU handling */
-};
+पूर्ण;
 
-int br_cfm_cc_config_set(struct net_bridge *br,
-			 const u32 instance,
-			 const struct br_cfm_cc_config *const config,
-			 struct netlink_ext_ack *extack);
+पूर्णांक br_cfm_cc_config_set(काष्ठा net_bridge *br,
+			 स्थिर u32 instance,
+			 स्थिर काष्ठा br_cfm_cc_config *स्थिर config,
+			 काष्ठा netlink_ext_ack *extack);
 
-int br_cfm_cc_peer_mep_add(struct net_bridge *br, const u32 instance,
+पूर्णांक br_cfm_cc_peer_mep_add(काष्ठा net_bridge *br, स्थिर u32 instance,
 			   u32 peer_mep_id,
-			   struct netlink_ext_ack *extack);
-int br_cfm_cc_peer_mep_remove(struct net_bridge *br, const u32 instance,
+			   काष्ठा netlink_ext_ack *extack);
+पूर्णांक br_cfm_cc_peer_mep_हटाओ(काष्ठा net_bridge *br, स्थिर u32 instance,
 			      u32 peer_mep_id,
-			      struct netlink_ext_ack *extack);
+			      काष्ठा netlink_ext_ack *extack);
 
 /* Transmitted CCM Remote Defect Indication status set.
- * This RDI is inserted in transmitted CCM PDUs if CCM transmission is enabled.
- * See br_cfm_cc_ccm_tx() with interval != BR_CFM_CCM_INTERVAL_NONE
+ * This RDI is inserted in transmitted CCM PDUs अगर CCM transmission is enabled.
+ * See br_cfm_cc_ccm_tx() with पूर्णांकerval != BR_CFM_CCM_INTERVAL_NONE
  */
-int br_cfm_cc_rdi_set(struct net_bridge *br, const u32 instance,
-		      const bool rdi, struct netlink_ext_ack *extack);
+पूर्णांक br_cfm_cc_rdi_set(काष्ठा net_bridge *br, स्थिर u32 instance,
+		      स्थिर bool rdi, काष्ठा netlink_ext_ack *extack);
 
-/* OAM PDU Tx information */
-struct br_cfm_cc_ccm_tx_info {
-	struct mac_addr dmac;
-	/* The CCM will be transmitted for this period in seconds.
-	 * Call br_cfm_cc_ccm_tx before timeout to keep transmission alive.
+/* OAM PDU Tx inक्रमmation */
+काष्ठा br_cfm_cc_ccm_tx_info अणु
+	काष्ठा mac_addr dmac;
+	/* The CCM will be transmitted क्रम this period in seconds.
+	 * Call br_cfm_cc_ccm_tx beक्रमe समयout to keep transmission alive.
 	 * When period is zero any ongoing transmission will be stopped.
 	 */
 	u32 period;
 
 	bool seq_no_update; /* Update Tx CCM sequence number */
-	bool if_tlv; /* Insert Interface Status TLV */
-	u8 if_tlv_value; /* Interface Status TLV value */
+	bool अगर_tlv; /* Insert Interface Status TLV */
+	u8 अगर_tlv_value; /* Interface Status TLV value */
 	bool port_tlv; /* Insert Port Status TLV */
 	u8 port_tlv_value; /* Port Status TLV value */
 	/* Sender ID TLV ??
-	 * Organization-Specific TLV ??
+	 * Organization-Specअगरic TLV ??
 	 */
-};
+पूर्ण;
 
-int br_cfm_cc_ccm_tx(struct net_bridge *br, const u32 instance,
-		     const struct br_cfm_cc_ccm_tx_info *const tx_info,
-		     struct netlink_ext_ack *extack);
+पूर्णांक br_cfm_cc_ccm_tx(काष्ठा net_bridge *br, स्थिर u32 instance,
+		     स्थिर काष्ठा br_cfm_cc_ccm_tx_info *स्थिर tx_info,
+		     काष्ठा netlink_ext_ack *extack);
 
-struct br_cfm_mep_status {
+काष्ठा br_cfm_mep_status अणु
 	/* Indications that an OAM PDU has been seen. */
 	bool opcode_unexp_seen; /* RX of OAM PDU with unexpected opcode */
 	bool version_unexp_seen; /* RX of OAM PDU with unexpected version */
 	bool rx_level_low_seen; /* Rx of OAM PDU with level low */
-};
+पूर्ण;
 
-struct br_cfm_cc_peer_status {
+काष्ठा br_cfm_cc_peer_status अणु
 	/* This CCM related status is based on the latest received CCM PDU. */
 	u8 port_tlv_value; /* Port Status TLV value */
-	u8 if_tlv_value; /* Interface Status TLV value */
+	u8 अगर_tlv_value; /* Interface Status TLV value */
 
-	/* CCM has not been received for 3.25 intervals */
+	/* CCM has not been received क्रम 3.25 पूर्णांकervals */
 	u8 ccm_defect:1;
 
-	/* (RDI == 1) for last received CCM PDU */
+	/* (RDI == 1) क्रम last received CCM PDU */
 	u8 rdi:1;
 
 	/* Indications that a CCM PDU has been seen. */
@@ -112,36 +113,36 @@ struct br_cfm_cc_peer_status {
 	u8 tlv_seen:1; /* CCM PDU with TLV received */
 	/* CCM PDU with unexpected sequence number received */
 	u8 seq_unexp_seen:1;
-};
+पूर्ण;
 
-struct br_cfm_mep {
+काष्ठा br_cfm_mep अणु
 	/* list header of MEP instances */
-	struct hlist_node		head;
+	काष्ठा hlist_node		head;
 	u32				instance;
-	struct br_cfm_mep_create	create;
-	struct br_cfm_mep_config	config;
-	struct br_cfm_cc_config		cc_config;
-	struct br_cfm_cc_ccm_tx_info	cc_ccm_tx_info;
+	काष्ठा br_cfm_mep_create	create;
+	काष्ठा br_cfm_mep_config	config;
+	काष्ठा br_cfm_cc_config		cc_config;
+	काष्ठा br_cfm_cc_ccm_tx_info	cc_ccm_tx_info;
 	/* List of multiple peer MEPs */
-	struct hlist_head		peer_mep_list;
-	struct net_bridge_port __rcu	*b_port;
-	unsigned long			ccm_tx_end;
-	struct delayed_work		ccm_tx_dwork;
+	काष्ठा hlist_head		peer_mep_list;
+	काष्ठा net_bridge_port __rcu	*b_port;
+	अचिन्हित दीर्घ			ccm_tx_end;
+	काष्ठा delayed_work		ccm_tx_dwork;
 	u32				ccm_tx_snumber;
 	u32				ccm_rx_snumber;
-	struct br_cfm_mep_status	status;
+	काष्ठा br_cfm_mep_status	status;
 	bool				rdi;
-	struct rcu_head			rcu;
-};
+	काष्ठा rcu_head			rcu;
+पूर्ण;
 
-struct br_cfm_peer_mep {
-	struct hlist_node		head;
-	struct br_cfm_mep		*mep;
-	struct delayed_work		ccm_rx_dwork;
+काष्ठा br_cfm_peer_mep अणु
+	काष्ठा hlist_node		head;
+	काष्ठा br_cfm_mep		*mep;
+	काष्ठा delayed_work		ccm_rx_dwork;
 	u32				mepid;
-	struct br_cfm_cc_peer_status	cc_status;
+	काष्ठा br_cfm_cc_peer_status	cc_status;
 	u32				ccm_rx_count_miss;
-	struct rcu_head			rcu;
-};
+	काष्ठा rcu_head			rcu;
+पूर्ण;
 
-#endif /* _BR_PRIVATE_CFM_H_ */
+#पूर्ण_अगर /* _BR_PRIVATE_CFM_H_ */

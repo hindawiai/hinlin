@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * DRM driver for Pervasive Displays RePaper branded e-ink panels
+ * DRM driver क्रम Pervasive Displays RePaper bअक्रमed e-ink panels
  *
  * Copyright 2013-2017 Pervasive Displays, Inc.
- * Copyright 2017 Noralf Trønnes
+ * Copyright 2017 Noralf Trथचnnes
  *
  * The driver supports:
  * Material Film: Aurora Mb (V231)
@@ -13,123 +14,123 @@
  * https://github.com/repaper/gratis
  */
 
-#include <linux/delay.h>
-#include <linux/dma-buf.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/property.h>
-#include <linux/sched/clock.h>
-#include <linux/spi/spi.h>
-#include <linux/thermal.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-buf.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/property.h>
+#समावेश <linux/sched/घड़ी.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/thermal.h>
 
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_connector.h>
-#include <drm/drm_damage_helper.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_format_helper.h>
-#include <drm/drm_gem_atomic_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_modes.h>
-#include <drm/drm_rect.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_simple_kms_helper.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_connector.h>
+#समावेश <drm/drm_damage_helper.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_fb_cma_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_क्रमmat_helper.h>
+#समावेश <drm/drm_gem_atomic_helper.h>
+#समावेश <drm/drm_gem_cma_helper.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_modes.h>
+#समावेश <drm/drm_rect.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_simple_kms_helper.h>
 
-#define REPAPER_RID_G2_COG_ID	0x12
+#घोषणा REPAPER_RID_G2_COG_ID	0x12
 
-enum repaper_model {
-	/* 0 is reserved to avoid clashing with NULL */
+क्रमागत repaper_model अणु
+	/* 0 is reserved to aव्योम clashing with शून्य */
 	E1144CS021 = 1,
 	E1190CS021,
 	E2200CS021,
 	E2271CS021,
-};
+पूर्ण;
 
-enum repaper_stage {         /* Image pixel -> Display pixel */
+क्रमागत repaper_stage अणु         /* Image pixel -> Display pixel */
 	REPAPER_COMPENSATE,  /* B -> W, W -> B (Current Image) */
 	REPAPER_WHITE,       /* B -> N, W -> W (Current Image) */
 	REPAPER_INVERSE,     /* B -> N, W -> B (New Image) */
 	REPAPER_NORMAL       /* B -> B, W -> W (New Image) */
-};
+पूर्ण;
 
-enum repaper_epd_border_byte {
+क्रमागत repaper_epd_border_byte अणु
 	REPAPER_BORDER_BYTE_NONE,
 	REPAPER_BORDER_BYTE_ZERO,
 	REPAPER_BORDER_BYTE_SET,
-};
+पूर्ण;
 
-struct repaper_epd {
-	struct drm_device drm;
-	struct drm_simple_display_pipe pipe;
-	const struct drm_display_mode *mode;
-	struct drm_connector connector;
-	struct spi_device *spi;
+काष्ठा repaper_epd अणु
+	काष्ठा drm_device drm;
+	काष्ठा drm_simple_display_pipe pipe;
+	स्थिर काष्ठा drm_display_mode *mode;
+	काष्ठा drm_connector connector;
+	काष्ठा spi_device *spi;
 
-	struct gpio_desc *panel_on;
-	struct gpio_desc *border;
-	struct gpio_desc *discharge;
-	struct gpio_desc *reset;
-	struct gpio_desc *busy;
+	काष्ठा gpio_desc *panel_on;
+	काष्ठा gpio_desc *border;
+	काष्ठा gpio_desc *disअक्षरge;
+	काष्ठा gpio_desc *reset;
+	काष्ठा gpio_desc *busy;
 
-	struct thermal_zone_device *thermal;
+	काष्ठा thermal_zone_device *thermal;
 
-	unsigned int height;
-	unsigned int width;
-	unsigned int bytes_per_scan;
-	const u8 *channel_select;
-	unsigned int stage_time;
-	unsigned int factored_stage_time;
+	अचिन्हित पूर्णांक height;
+	अचिन्हित पूर्णांक width;
+	अचिन्हित पूर्णांक bytes_per_scan;
+	स्थिर u8 *channel_select;
+	अचिन्हित पूर्णांक stage_समय;
+	अचिन्हित पूर्णांक factored_stage_समय;
 	bool middle_scan;
 	bool pre_border_byte;
-	enum repaper_epd_border_byte border_byte;
+	क्रमागत repaper_epd_border_byte border_byte;
 
 	u8 *line_buffer;
-	void *current_frame;
+	व्योम *current_frame;
 
 	bool cleared;
 	bool partial;
-};
+पूर्ण;
 
-static inline struct repaper_epd *drm_to_epd(struct drm_device *drm)
-{
-	return container_of(drm, struct repaper_epd, drm);
-}
+अटल अंतरभूत काष्ठा repaper_epd *drm_to_epd(काष्ठा drm_device *drm)
+अणु
+	वापस container_of(drm, काष्ठा repaper_epd, drm);
+पूर्ण
 
-static int repaper_spi_transfer(struct spi_device *spi, u8 header,
-				const void *tx, void *rx, size_t len)
-{
-	void *txbuf = NULL, *rxbuf = NULL;
-	struct spi_transfer tr[2] = {};
+अटल पूर्णांक repaper_spi_transfer(काष्ठा spi_device *spi, u8 header,
+				स्थिर व्योम *tx, व्योम *rx, माप_प्रकार len)
+अणु
+	व्योम *txbuf = शून्य, *rxbuf = शून्य;
+	काष्ठा spi_transfer tr[2] = अणुपूर्ण;
 	u8 *headerbuf;
-	int ret;
+	पूर्णांक ret;
 
-	headerbuf = kmalloc(1, GFP_KERNEL);
-	if (!headerbuf)
-		return -ENOMEM;
+	headerbuf = kदो_स्मृति(1, GFP_KERNEL);
+	अगर (!headerbuf)
+		वापस -ENOMEM;
 
 	headerbuf[0] = header;
 	tr[0].tx_buf = headerbuf;
 	tr[0].len = 1;
 
 	/* Stack allocated tx? */
-	if (tx && len <= 32) {
+	अगर (tx && len <= 32) अणु
 		txbuf = kmemdup(tx, len, GFP_KERNEL);
-		if (!txbuf) {
+		अगर (!txbuf) अणु
 			ret = -ENOMEM;
-			goto out_free;
-		}
-	}
+			जाओ out_मुक्त;
+		पूर्ण
+	पूर्ण
 
-	if (rx) {
-		rxbuf = kmalloc(len, GFP_KERNEL);
-		if (!rxbuf) {
+	अगर (rx) अणु
+		rxbuf = kदो_स्मृति(len, GFP_KERNEL);
+		अगर (!rxbuf) अणु
 			ret = -ENOMEM;
-			goto out_free;
-		}
-	}
+			जाओ out_मुक्त;
+		पूर्ण
+	पूर्ण
 
 	tr[1].tx_buf = txbuf ? txbuf : tx;
 	tr[1].rx_buf = rxbuf;
@@ -137,97 +138,97 @@ static int repaper_spi_transfer(struct spi_device *spi, u8 header,
 
 	ndelay(80);
 	ret = spi_sync_transfer(spi, tr, 2);
-	if (rx && !ret)
-		memcpy(rx, rxbuf, len);
+	अगर (rx && !ret)
+		स_नकल(rx, rxbuf, len);
 
-out_free:
-	kfree(headerbuf);
-	kfree(txbuf);
-	kfree(rxbuf);
+out_मुक्त:
+	kमुक्त(headerbuf);
+	kमुक्त(txbuf);
+	kमुक्त(rxbuf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int repaper_write_buf(struct spi_device *spi, u8 reg,
-			     const u8 *buf, size_t len)
-{
-	int ret;
+अटल पूर्णांक repaper_ग_लिखो_buf(काष्ठा spi_device *spi, u8 reg,
+			     स्थिर u8 *buf, माप_प्रकार len)
+अणु
+	पूर्णांक ret;
 
-	ret = repaper_spi_transfer(spi, 0x70, &reg, NULL, 1);
-	if (ret)
-		return ret;
+	ret = repaper_spi_transfer(spi, 0x70, &reg, शून्य, 1);
+	अगर (ret)
+		वापस ret;
 
-	return repaper_spi_transfer(spi, 0x72, buf, NULL, len);
-}
+	वापस repaper_spi_transfer(spi, 0x72, buf, शून्य, len);
+पूर्ण
 
-static int repaper_write_val(struct spi_device *spi, u8 reg, u8 val)
-{
-	return repaper_write_buf(spi, reg, &val, 1);
-}
+अटल पूर्णांक repaper_ग_लिखो_val(काष्ठा spi_device *spi, u8 reg, u8 val)
+अणु
+	वापस repaper_ग_लिखो_buf(spi, reg, &val, 1);
+पूर्ण
 
-static int repaper_read_val(struct spi_device *spi, u8 reg)
-{
-	int ret;
+अटल पूर्णांक repaper_पढ़ो_val(काष्ठा spi_device *spi, u8 reg)
+अणु
+	पूर्णांक ret;
 	u8 val;
 
-	ret = repaper_spi_transfer(spi, 0x70, &reg, NULL, 1);
-	if (ret)
-		return ret;
+	ret = repaper_spi_transfer(spi, 0x70, &reg, शून्य, 1);
+	अगर (ret)
+		वापस ret;
 
-	ret = repaper_spi_transfer(spi, 0x73, NULL, &val, 1);
+	ret = repaper_spi_transfer(spi, 0x73, शून्य, &val, 1);
 
-	return ret ? ret : val;
-}
+	वापस ret ? ret : val;
+पूर्ण
 
-static int repaper_read_id(struct spi_device *spi)
-{
-	int ret;
+अटल पूर्णांक repaper_पढ़ो_id(काष्ठा spi_device *spi)
+अणु
+	पूर्णांक ret;
 	u8 id;
 
-	ret = repaper_spi_transfer(spi, 0x71, NULL, &id, 1);
+	ret = repaper_spi_transfer(spi, 0x71, शून्य, &id, 1);
 
-	return ret ? ret : id;
-}
+	वापस ret ? ret : id;
+पूर्ण
 
-static void repaper_spi_mosi_low(struct spi_device *spi)
-{
-	const u8 buf[1] = { 0 };
+अटल व्योम repaper_spi_mosi_low(काष्ठा spi_device *spi)
+अणु
+	स्थिर u8 buf[1] = अणु 0 पूर्ण;
 
-	spi_write(spi, buf, 1);
-}
+	spi_ग_लिखो(spi, buf, 1);
+पूर्ण
 
 /* pixels on display are numbered from 1 so even is actually bits 1,3,5,... */
-static void repaper_even_pixels(struct repaper_epd *epd, u8 **pp,
-				const u8 *data, u8 fixed_value, const u8 *mask,
-				enum repaper_stage stage)
-{
-	unsigned int b;
+अटल व्योम repaper_even_pixels(काष्ठा repaper_epd *epd, u8 **pp,
+				स्थिर u8 *data, u8 fixed_value, स्थिर u8 *mask,
+				क्रमागत repaper_stage stage)
+अणु
+	अचिन्हित पूर्णांक b;
 
-	for (b = 0; b < (epd->width / 8); b++) {
-		if (data) {
+	क्रम (b = 0; b < (epd->width / 8); b++) अणु
+		अगर (data) अणु
 			u8 pixels = data[b] & 0xaa;
 			u8 pixel_mask = 0xff;
 			u8 p1, p2, p3, p4;
 
-			if (mask) {
+			अगर (mask) अणु
 				pixel_mask = (mask[b] ^ pixels) & 0xaa;
 				pixel_mask |= pixel_mask >> 1;
-			}
+			पूर्ण
 
-			switch (stage) {
-			case REPAPER_COMPENSATE: /* B -> W, W -> B (Current) */
+			चयन (stage) अणु
+			हाल REPAPER_COMPENSATE: /* B -> W, W -> B (Current) */
 				pixels = 0xaa | ((pixels ^ 0xaa) >> 1);
-				break;
-			case REPAPER_WHITE:      /* B -> N, W -> W (Current) */
+				अवरोध;
+			हाल REPAPER_WHITE:      /* B -> N, W -> W (Current) */
 				pixels = 0x55 + ((pixels ^ 0xaa) >> 1);
-				break;
-			case REPAPER_INVERSE:    /* B -> N, W -> B (New) */
+				अवरोध;
+			हाल REPAPER_INVERSE:    /* B -> N, W -> B (New) */
 				pixels = 0x55 | (pixels ^ 0xaa);
-				break;
-			case REPAPER_NORMAL:     /* B -> B, W -> W (New) */
+				अवरोध;
+			हाल REPAPER_NORMAL:     /* B -> B, W -> W (New) */
 				pixels = 0xaa | (pixels >> 1);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			pixels = (pixels & pixel_mask) | (~pixel_mask & 0x55);
 			p1 = (pixels >> 6) & 0x03;
@@ -236,144 +237,144 @@ static void repaper_even_pixels(struct repaper_epd *epd, u8 **pp,
 			p4 = (pixels >> 0) & 0x03;
 			pixels = (p1 << 0) | (p2 << 2) | (p3 << 4) | (p4 << 6);
 			*(*pp)++ = pixels;
-		} else {
+		पूर्ण अन्यथा अणु
 			*(*pp)++ = fixed_value;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* pixels on display are numbered from 1 so odd is actually bits 0,2,4,... */
-static void repaper_odd_pixels(struct repaper_epd *epd, u8 **pp,
-			       const u8 *data, u8 fixed_value, const u8 *mask,
-			       enum repaper_stage stage)
-{
-	unsigned int b;
+अटल व्योम repaper_odd_pixels(काष्ठा repaper_epd *epd, u8 **pp,
+			       स्थिर u8 *data, u8 fixed_value, स्थिर u8 *mask,
+			       क्रमागत repaper_stage stage)
+अणु
+	अचिन्हित पूर्णांक b;
 
-	for (b = epd->width / 8; b > 0; b--) {
-		if (data) {
+	क्रम (b = epd->width / 8; b > 0; b--) अणु
+		अगर (data) अणु
 			u8 pixels = data[b - 1] & 0x55;
 			u8 pixel_mask = 0xff;
 
-			if (mask) {
+			अगर (mask) अणु
 				pixel_mask = (mask[b - 1] ^ pixels) & 0x55;
 				pixel_mask |= pixel_mask << 1;
-			}
+			पूर्ण
 
-			switch (stage) {
-			case REPAPER_COMPENSATE: /* B -> W, W -> B (Current) */
+			चयन (stage) अणु
+			हाल REPAPER_COMPENSATE: /* B -> W, W -> B (Current) */
 				pixels = 0xaa | (pixels ^ 0x55);
-				break;
-			case REPAPER_WHITE:      /* B -> N, W -> W (Current) */
+				अवरोध;
+			हाल REPAPER_WHITE:      /* B -> N, W -> W (Current) */
 				pixels = 0x55 + (pixels ^ 0x55);
-				break;
-			case REPAPER_INVERSE:    /* B -> N, W -> B (New) */
+				अवरोध;
+			हाल REPAPER_INVERSE:    /* B -> N, W -> B (New) */
 				pixels = 0x55 | ((pixels ^ 0x55) << 1);
-				break;
-			case REPAPER_NORMAL:     /* B -> B, W -> W (New) */
+				अवरोध;
+			हाल REPAPER_NORMAL:     /* B -> B, W -> W (New) */
 				pixels = 0xaa | pixels;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			pixels = (pixels & pixel_mask) | (~pixel_mask & 0x55);
 			*(*pp)++ = pixels;
-		} else {
+		पूर्ण अन्यथा अणु
 			*(*pp)++ = fixed_value;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* interleave bits: (byte)76543210 -> (16 bit).7.6.5.4.3.2.1 */
-static inline u16 repaper_interleave_bits(u16 value)
-{
+/* पूर्णांकerleave bits: (byte)76543210 -> (16 bit).7.6.5.4.3.2.1 */
+अटल अंतरभूत u16 repaper_पूर्णांकerleave_bits(u16 value)
+अणु
 	value = (value | (value << 4)) & 0x0f0f;
 	value = (value | (value << 2)) & 0x3333;
 	value = (value | (value << 1)) & 0x5555;
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
 /* pixels on display are numbered from 1 */
-static void repaper_all_pixels(struct repaper_epd *epd, u8 **pp,
-			       const u8 *data, u8 fixed_value, const u8 *mask,
-			       enum repaper_stage stage)
-{
-	unsigned int b;
+अटल व्योम repaper_all_pixels(काष्ठा repaper_epd *epd, u8 **pp,
+			       स्थिर u8 *data, u8 fixed_value, स्थिर u8 *mask,
+			       क्रमागत repaper_stage stage)
+अणु
+	अचिन्हित पूर्णांक b;
 
-	for (b = epd->width / 8; b > 0; b--) {
-		if (data) {
-			u16 pixels = repaper_interleave_bits(data[b - 1]);
+	क्रम (b = epd->width / 8; b > 0; b--) अणु
+		अगर (data) अणु
+			u16 pixels = repaper_पूर्णांकerleave_bits(data[b - 1]);
 			u16 pixel_mask = 0xffff;
 
-			if (mask) {
-				pixel_mask = repaper_interleave_bits(mask[b - 1]);
+			अगर (mask) अणु
+				pixel_mask = repaper_पूर्णांकerleave_bits(mask[b - 1]);
 
 				pixel_mask = (pixel_mask ^ pixels) & 0x5555;
 				pixel_mask |= pixel_mask << 1;
-			}
+			पूर्ण
 
-			switch (stage) {
-			case REPAPER_COMPENSATE: /* B -> W, W -> B (Current) */
+			चयन (stage) अणु
+			हाल REPAPER_COMPENSATE: /* B -> W, W -> B (Current) */
 				pixels = 0xaaaa | (pixels ^ 0x5555);
-				break;
-			case REPAPER_WHITE:      /* B -> N, W -> W (Current) */
+				अवरोध;
+			हाल REPAPER_WHITE:      /* B -> N, W -> W (Current) */
 				pixels = 0x5555 + (pixels ^ 0x5555);
-				break;
-			case REPAPER_INVERSE:    /* B -> N, W -> B (New) */
+				अवरोध;
+			हाल REPAPER_INVERSE:    /* B -> N, W -> B (New) */
 				pixels = 0x5555 | ((pixels ^ 0x5555) << 1);
-				break;
-			case REPAPER_NORMAL:     /* B -> B, W -> W (New) */
+				अवरोध;
+			हाल REPAPER_NORMAL:     /* B -> B, W -> W (New) */
 				pixels = 0xaaaa | pixels;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			pixels = (pixels & pixel_mask) | (~pixel_mask & 0x5555);
 			*(*pp)++ = pixels >> 8;
 			*(*pp)++ = pixels;
-		} else {
+		पूर्ण अन्यथा अणु
 			*(*pp)++ = fixed_value;
 			*(*pp)++ = fixed_value;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* output one line of scan and data bytes to the display */
-static void repaper_one_line(struct repaper_epd *epd, unsigned int line,
-			     const u8 *data, u8 fixed_value, const u8 *mask,
-			     enum repaper_stage stage)
-{
+अटल व्योम repaper_one_line(काष्ठा repaper_epd *epd, अचिन्हित पूर्णांक line,
+			     स्थिर u8 *data, u8 fixed_value, स्थिर u8 *mask,
+			     क्रमागत repaper_stage stage)
+अणु
 	u8 *p = epd->line_buffer;
-	unsigned int b;
+	अचिन्हित पूर्णांक b;
 
 	repaper_spi_mosi_low(epd->spi);
 
-	if (epd->pre_border_byte)
+	अगर (epd->pre_border_byte)
 		*p++ = 0x00;
 
-	if (epd->middle_scan) {
+	अगर (epd->middle_scan) अणु
 		/* data bytes */
 		repaper_odd_pixels(epd, &p, data, fixed_value, mask, stage);
 
 		/* scan line */
-		for (b = epd->bytes_per_scan; b > 0; b--) {
-			if (line / 4 == b - 1)
+		क्रम (b = epd->bytes_per_scan; b > 0; b--) अणु
+			अगर (line / 4 == b - 1)
 				*p++ = 0x03 << (2 * (line & 0x03));
-			else
+			अन्यथा
 				*p++ = 0x00;
-		}
+		पूर्ण
 
 		/* data bytes */
 		repaper_even_pixels(epd, &p, data, fixed_value, mask, stage);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * even scan line, but as lines on display are numbered from 1,
 		 * line: 1,3,5,...
 		 */
-		for (b = 0; b < epd->bytes_per_scan; b++) {
-			if (0 != (line & 0x01) && line / 8 == b)
+		क्रम (b = 0; b < epd->bytes_per_scan; b++) अणु
+			अगर (0 != (line & 0x01) && line / 8 == b)
 				*p++ = 0xc0 >> (line & 0x06);
-			else
+			अन्यथा
 				*p++ = 0x00;
-		}
+		पूर्ण
 
 		/* data bytes */
 		repaper_all_pixels(epd, &p, data, fixed_value, mask, stage);
@@ -382,166 +383,166 @@ static void repaper_one_line(struct repaper_epd *epd, unsigned int line,
 		 * odd scan line, but as lines on display are numbered from 1,
 		 * line: 0,2,4,6,...
 		 */
-		for (b = epd->bytes_per_scan; b > 0; b--) {
-			if (0 == (line & 0x01) && line / 8 == b - 1)
+		क्रम (b = epd->bytes_per_scan; b > 0; b--) अणु
+			अगर (0 == (line & 0x01) && line / 8 == b - 1)
 				*p++ = 0x03 << (line & 0x06);
-			else
+			अन्यथा
 				*p++ = 0x00;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	switch (epd->border_byte) {
-	case REPAPER_BORDER_BYTE_NONE:
-		break;
+	चयन (epd->border_byte) अणु
+	हाल REPAPER_BORDER_BYTE_NONE:
+		अवरोध;
 
-	case REPAPER_BORDER_BYTE_ZERO:
+	हाल REPAPER_BORDER_BYTE_ZERO:
 		*p++ = 0x00;
-		break;
+		अवरोध;
 
-	case REPAPER_BORDER_BYTE_SET:
-		switch (stage) {
-		case REPAPER_COMPENSATE:
-		case REPAPER_WHITE:
-		case REPAPER_INVERSE:
+	हाल REPAPER_BORDER_BYTE_SET:
+		चयन (stage) अणु
+		हाल REPAPER_COMPENSATE:
+		हाल REPAPER_WHITE:
+		हाल REPAPER_INVERSE:
 			*p++ = 0x00;
-			break;
-		case REPAPER_NORMAL:
+			अवरोध;
+		हाल REPAPER_NORMAL:
 			*p++ = 0xaa;
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	repaper_write_buf(epd->spi, 0x0a, epd->line_buffer,
+	repaper_ग_लिखो_buf(epd->spi, 0x0a, epd->line_buffer,
 			  p - epd->line_buffer);
 
 	/* Output data to panel */
-	repaper_write_val(epd->spi, 0x02, 0x07);
+	repaper_ग_लिखो_val(epd->spi, 0x02, 0x07);
 
 	repaper_spi_mosi_low(epd->spi);
-}
+पूर्ण
 
-static void repaper_frame_fixed(struct repaper_epd *epd, u8 fixed_value,
-				enum repaper_stage stage)
-{
-	unsigned int line;
+अटल व्योम repaper_frame_fixed(काष्ठा repaper_epd *epd, u8 fixed_value,
+				क्रमागत repaper_stage stage)
+अणु
+	अचिन्हित पूर्णांक line;
 
-	for (line = 0; line < epd->height; line++)
-		repaper_one_line(epd, line, NULL, fixed_value, NULL, stage);
-}
+	क्रम (line = 0; line < epd->height; line++)
+		repaper_one_line(epd, line, शून्य, fixed_value, शून्य, stage);
+पूर्ण
 
-static void repaper_frame_data(struct repaper_epd *epd, const u8 *image,
-			       const u8 *mask, enum repaper_stage stage)
-{
-	unsigned int line;
+अटल व्योम repaper_frame_data(काष्ठा repaper_epd *epd, स्थिर u8 *image,
+			       स्थिर u8 *mask, क्रमागत repaper_stage stage)
+अणु
+	अचिन्हित पूर्णांक line;
 
-	if (!mask) {
-		for (line = 0; line < epd->height; line++) {
+	अगर (!mask) अणु
+		क्रम (line = 0; line < epd->height; line++) अणु
 			repaper_one_line(epd, line,
 					 &image[line * (epd->width / 8)],
-					 0, NULL, stage);
-		}
-	} else {
-		for (line = 0; line < epd->height; line++) {
-			size_t n = line * epd->width / 8;
+					 0, शून्य, stage);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (line = 0; line < epd->height; line++) अणु
+			माप_प्रकार n = line * epd->width / 8;
 
 			repaper_one_line(epd, line, &image[n], 0, &mask[n],
 					 stage);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void repaper_frame_fixed_repeat(struct repaper_epd *epd, u8 fixed_value,
-				       enum repaper_stage stage)
-{
-	u64 start = local_clock();
-	u64 end = start + (epd->factored_stage_time * 1000 * 1000);
+अटल व्योम repaper_frame_fixed_repeat(काष्ठा repaper_epd *epd, u8 fixed_value,
+				       क्रमागत repaper_stage stage)
+अणु
+	u64 start = local_घड़ी();
+	u64 end = start + (epd->factored_stage_समय * 1000 * 1000);
 
-	do {
+	करो अणु
 		repaper_frame_fixed(epd, fixed_value, stage);
-	} while (local_clock() < end);
-}
+	पूर्ण जबतक (local_घड़ी() < end);
+पूर्ण
 
-static void repaper_frame_data_repeat(struct repaper_epd *epd, const u8 *image,
-				      const u8 *mask, enum repaper_stage stage)
-{
-	u64 start = local_clock();
-	u64 end = start + (epd->factored_stage_time * 1000 * 1000);
+अटल व्योम repaper_frame_data_repeat(काष्ठा repaper_epd *epd, स्थिर u8 *image,
+				      स्थिर u8 *mask, क्रमागत repaper_stage stage)
+अणु
+	u64 start = local_घड़ी();
+	u64 end = start + (epd->factored_stage_समय * 1000 * 1000);
 
-	do {
+	करो अणु
 		repaper_frame_data(epd, image, mask, stage);
-	} while (local_clock() < end);
-}
+	पूर्ण जबतक (local_घड़ी() < end);
+पूर्ण
 
-static void repaper_get_temperature(struct repaper_epd *epd)
-{
-	int ret, temperature = 0;
-	unsigned int factor10x;
+अटल व्योम repaper_get_temperature(काष्ठा repaper_epd *epd)
+अणु
+	पूर्णांक ret, temperature = 0;
+	अचिन्हित पूर्णांक factor10x;
 
-	if (!epd->thermal)
-		return;
+	अगर (!epd->thermal)
+		वापस;
 
 	ret = thermal_zone_get_temp(epd->thermal, &temperature);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_DEV_ERROR(&epd->spi->dev, "Failed to get temperature (%d)\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	temperature /= 1000;
 
-	if (temperature <= -10)
+	अगर (temperature <= -10)
 		factor10x = 170;
-	else if (temperature <= -5)
+	अन्यथा अगर (temperature <= -5)
 		factor10x = 120;
-	else if (temperature <= 5)
+	अन्यथा अगर (temperature <= 5)
 		factor10x = 80;
-	else if (temperature <= 10)
+	अन्यथा अगर (temperature <= 10)
 		factor10x = 40;
-	else if (temperature <= 15)
+	अन्यथा अगर (temperature <= 15)
 		factor10x = 30;
-	else if (temperature <= 20)
+	अन्यथा अगर (temperature <= 20)
 		factor10x = 20;
-	else if (temperature <= 40)
+	अन्यथा अगर (temperature <= 40)
 		factor10x = 10;
-	else
+	अन्यथा
 		factor10x = 7;
 
-	epd->factored_stage_time = epd->stage_time * factor10x / 10;
-}
+	epd->factored_stage_समय = epd->stage_समय * factor10x / 10;
+पूर्ण
 
-static void repaper_gray8_to_mono_reversed(u8 *buf, u32 width, u32 height)
-{
+अटल व्योम repaper_gray8_to_mono_reversed(u8 *buf, u32 width, u32 height)
+अणु
 	u8 *gray8 = buf, *mono = buf;
-	int y, xb, i;
+	पूर्णांक y, xb, i;
 
-	for (y = 0; y < height; y++)
-		for (xb = 0; xb < width / 8; xb++) {
+	क्रम (y = 0; y < height; y++)
+		क्रम (xb = 0; xb < width / 8; xb++) अणु
 			u8 byte = 0x00;
 
-			for (i = 0; i < 8; i++) {
-				int x = xb * 8 + i;
+			क्रम (i = 0; i < 8; i++) अणु
+				पूर्णांक x = xb * 8 + i;
 
 				byte >>= 1;
-				if (gray8[y * width + x] >> 7)
+				अगर (gray8[y * width + x] >> 7)
 					byte |= BIT(7);
-			}
+			पूर्ण
 			*mono++ = byte;
-		}
-}
+		पूर्ण
+पूर्ण
 
-static int repaper_fb_dirty(struct drm_framebuffer *fb)
-{
-	struct drm_gem_cma_object *cma_obj = drm_fb_cma_get_gem_obj(fb, 0);
-	struct dma_buf_attachment *import_attach = cma_obj->base.import_attach;
-	struct repaper_epd *epd = drm_to_epd(fb->dev);
-	struct drm_rect clip;
-	int idx, ret = 0;
-	u8 *buf = NULL;
+अटल पूर्णांक repaper_fb_dirty(काष्ठा drm_framebuffer *fb)
+अणु
+	काष्ठा drm_gem_cma_object *cma_obj = drm_fb_cma_get_gem_obj(fb, 0);
+	काष्ठा dma_buf_attachment *import_attach = cma_obj->base.import_attach;
+	काष्ठा repaper_epd *epd = drm_to_epd(fb->dev);
+	काष्ठा drm_rect clip;
+	पूर्णांक idx, ret = 0;
+	u8 *buf = शून्य;
 
-	if (!drm_dev_enter(fb->dev, &idx))
-		return -ENODEV;
+	अगर (!drm_dev_enter(fb->dev, &idx))
+		वापस -ENODEV;
 
-	/* repaper can't do partial updates */
+	/* repaper can't करो partial updates */
 	clip.x1 = 0;
 	clip.x2 = fb->width;
 	clip.y1 = 0;
@@ -550,45 +551,45 @@ static int repaper_fb_dirty(struct drm_framebuffer *fb)
 	repaper_get_temperature(epd);
 
 	DRM_DEBUG("Flushing [FB:%d] st=%ums\n", fb->base.id,
-		  epd->factored_stage_time);
+		  epd->factored_stage_समय);
 
-	buf = kmalloc_array(fb->width, fb->height, GFP_KERNEL);
-	if (!buf) {
+	buf = kदो_स्मृति_array(fb->width, fb->height, GFP_KERNEL);
+	अगर (!buf) अणु
 		ret = -ENOMEM;
-		goto out_exit;
-	}
+		जाओ out_निकास;
+	पूर्ण
 
-	if (import_attach) {
+	अगर (import_attach) अणु
 		ret = dma_buf_begin_cpu_access(import_attach->dmabuf,
 					       DMA_FROM_DEVICE);
-		if (ret)
-			goto out_free;
-	}
+		अगर (ret)
+			जाओ out_मुक्त;
+	पूर्ण
 
 	drm_fb_xrgb8888_to_gray8(buf, cma_obj->vaddr, fb, &clip);
 
-	if (import_attach) {
+	अगर (import_attach) अणु
 		ret = dma_buf_end_cpu_access(import_attach->dmabuf,
 					     DMA_FROM_DEVICE);
-		if (ret)
-			goto out_free;
-	}
+		अगर (ret)
+			जाओ out_मुक्त;
+	पूर्ण
 
 	repaper_gray8_to_mono_reversed(buf, fb->width, fb->height);
 
-	if (epd->partial) {
+	अगर (epd->partial) अणु
 		repaper_frame_data_repeat(epd, buf, epd->current_frame,
 					  REPAPER_NORMAL);
-	} else if (epd->cleared) {
-		repaper_frame_data_repeat(epd, epd->current_frame, NULL,
+	पूर्ण अन्यथा अगर (epd->cleared) अणु
+		repaper_frame_data_repeat(epd, epd->current_frame, शून्य,
 					  REPAPER_COMPENSATE);
-		repaper_frame_data_repeat(epd, epd->current_frame, NULL,
+		repaper_frame_data_repeat(epd, epd->current_frame, शून्य,
 					  REPAPER_WHITE);
-		repaper_frame_data_repeat(epd, buf, NULL, REPAPER_INVERSE);
-		repaper_frame_data_repeat(epd, buf, NULL, REPAPER_NORMAL);
+		repaper_frame_data_repeat(epd, buf, शून्य, REPAPER_INVERSE);
+		repaper_frame_data_repeat(epd, buf, शून्य, REPAPER_NORMAL);
 
 		epd->partial = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Clear display (anything -> white) */
 		repaper_frame_fixed_repeat(epd, 0xff, REPAPER_COMPENSATE);
 		repaper_frame_fixed_repeat(epd, 0xff, REPAPER_WHITE);
@@ -598,76 +599,76 @@ static int repaper_fb_dirty(struct drm_framebuffer *fb)
 		/* Assuming a clear (white) screen output an image */
 		repaper_frame_fixed_repeat(epd, 0xaa, REPAPER_COMPENSATE);
 		repaper_frame_fixed_repeat(epd, 0xaa, REPAPER_WHITE);
-		repaper_frame_data_repeat(epd, buf, NULL, REPAPER_INVERSE);
-		repaper_frame_data_repeat(epd, buf, NULL, REPAPER_NORMAL);
+		repaper_frame_data_repeat(epd, buf, शून्य, REPAPER_INVERSE);
+		repaper_frame_data_repeat(epd, buf, शून्य, REPAPER_NORMAL);
 
 		epd->cleared = true;
 		epd->partial = true;
-	}
+	पूर्ण
 
-	memcpy(epd->current_frame, buf, fb->width * fb->height / 8);
+	स_नकल(epd->current_frame, buf, fb->width * fb->height / 8);
 
 	/*
-	 * An extra frame write is needed if pixels are set in the bottom line,
-	 * or else grey lines rises up from the pixels
+	 * An extra frame ग_लिखो is needed अगर pixels are set in the bottom line,
+	 * or अन्यथा grey lines rises up from the pixels
 	 */
-	if (epd->pre_border_byte) {
-		unsigned int x;
+	अगर (epd->pre_border_byte) अणु
+		अचिन्हित पूर्णांक x;
 
-		for (x = 0; x < (fb->width / 8); x++)
-			if (buf[x + (fb->width * (fb->height - 1) / 8)]) {
+		क्रम (x = 0; x < (fb->width / 8); x++)
+			अगर (buf[x + (fb->width * (fb->height - 1) / 8)]) अणु
 				repaper_frame_data_repeat(epd, buf,
 							  epd->current_frame,
 							  REPAPER_NORMAL);
-				break;
-			}
-	}
+				अवरोध;
+			पूर्ण
+	पूर्ण
 
-out_free:
-	kfree(buf);
-out_exit:
-	drm_dev_exit(idx);
+out_मुक्त:
+	kमुक्त(buf);
+out_निकास:
+	drm_dev_निकास(idx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void power_off(struct repaper_epd *epd)
-{
-	/* Turn off power and all signals */
+अटल व्योम घातer_off(काष्ठा repaper_epd *epd)
+अणु
+	/* Turn off घातer and all संकेतs */
 	gpiod_set_value_cansleep(epd->reset, 0);
 	gpiod_set_value_cansleep(epd->panel_on, 0);
-	if (epd->border)
+	अगर (epd->border)
 		gpiod_set_value_cansleep(epd->border, 0);
 
-	/* Ensure SPI MOSI and CLOCK are Low before CS Low */
+	/* Ensure SPI MOSI and CLOCK are Low beक्रमe CS Low */
 	repaper_spi_mosi_low(epd->spi);
 
-	/* Discharge pulse */
-	gpiod_set_value_cansleep(epd->discharge, 1);
+	/* Disअक्षरge pulse */
+	gpiod_set_value_cansleep(epd->disअक्षरge, 1);
 	msleep(150);
-	gpiod_set_value_cansleep(epd->discharge, 0);
-}
+	gpiod_set_value_cansleep(epd->disअक्षरge, 0);
+पूर्ण
 
-static void repaper_pipe_enable(struct drm_simple_display_pipe *pipe,
-				struct drm_crtc_state *crtc_state,
-				struct drm_plane_state *plane_state)
-{
-	struct repaper_epd *epd = drm_to_epd(pipe->crtc.dev);
-	struct spi_device *spi = epd->spi;
-	struct device *dev = &spi->dev;
+अटल व्योम repaper_pipe_enable(काष्ठा drm_simple_display_pipe *pipe,
+				काष्ठा drm_crtc_state *crtc_state,
+				काष्ठा drm_plane_state *plane_state)
+अणु
+	काष्ठा repaper_epd *epd = drm_to_epd(pipe->crtc.dev);
+	काष्ठा spi_device *spi = epd->spi;
+	काष्ठा device *dev = &spi->dev;
 	bool dc_ok = false;
-	int i, ret, idx;
+	पूर्णांक i, ret, idx;
 
-	if (!drm_dev_enter(pipe->crtc.dev, &idx))
-		return;
+	अगर (!drm_dev_enter(pipe->crtc.dev, &idx))
+		वापस;
 
 	DRM_DEBUG_DRIVER("\n");
 
 	/* Power up sequence */
 	gpiod_set_value_cansleep(epd->reset, 0);
 	gpiod_set_value_cansleep(epd->panel_on, 0);
-	gpiod_set_value_cansleep(epd->discharge, 0);
-	if (epd->border)
+	gpiod_set_value_cansleep(epd->disअक्षरge, 0);
+	अगर (epd->border)
 		gpiod_set_value_cansleep(epd->border, 0);
 	repaper_spi_mosi_low(spi);
 	usleep_range(5000, 10000);
@@ -679,7 +680,7 @@ static void repaper_pipe_enable(struct drm_simple_display_pipe *pipe,
 	 */
 	usleep_range(10000, 15000);
 	gpiod_set_value_cansleep(epd->reset, 1);
-	if (epd->border)
+	अगर (epd->border)
 		gpiod_set_value_cansleep(epd->border, 1);
 	usleep_range(5000, 10000);
 	gpiod_set_value_cansleep(epd->reset, 0);
@@ -687,115 +688,115 @@ static void repaper_pipe_enable(struct drm_simple_display_pipe *pipe,
 	gpiod_set_value_cansleep(epd->reset, 1);
 	usleep_range(5000, 10000);
 
-	/* Wait for COG to become ready */
-	for (i = 100; i > 0; i--) {
-		if (!gpiod_get_value_cansleep(epd->busy))
-			break;
+	/* Wait क्रम COG to become पढ़ोy */
+	क्रम (i = 100; i > 0; i--) अणु
+		अगर (!gpiod_get_value_cansleep(epd->busy))
+			अवरोध;
 
 		usleep_range(10, 100);
-	}
+	पूर्ण
 
-	if (!i) {
+	अगर (!i) अणु
 		DRM_DEV_ERROR(dev, "timeout waiting for panel to become ready.\n");
-		power_off(epd);
-		goto out_exit;
-	}
+		घातer_off(epd);
+		जाओ out_निकास;
+	पूर्ण
 
-	repaper_read_id(spi);
-	ret = repaper_read_id(spi);
-	if (ret != REPAPER_RID_G2_COG_ID) {
-		if (ret < 0)
+	repaper_पढ़ो_id(spi);
+	ret = repaper_पढ़ो_id(spi);
+	अगर (ret != REPAPER_RID_G2_COG_ID) अणु
+		अगर (ret < 0)
 			dev_err(dev, "failed to read chip (%d)\n", ret);
-		else
+		अन्यथा
 			dev_err(dev, "wrong COG ID 0x%02x\n", ret);
-		power_off(epd);
-		goto out_exit;
-	}
+		घातer_off(epd);
+		जाओ out_निकास;
+	पूर्ण
 
 	/* Disable OE */
-	repaper_write_val(spi, 0x02, 0x40);
+	repaper_ग_लिखो_val(spi, 0x02, 0x40);
 
-	ret = repaper_read_val(spi, 0x0f);
-	if (ret < 0 || !(ret & 0x80)) {
-		if (ret < 0)
+	ret = repaper_पढ़ो_val(spi, 0x0f);
+	अगर (ret < 0 || !(ret & 0x80)) अणु
+		अगर (ret < 0)
 			DRM_DEV_ERROR(dev, "failed to read chip (%d)\n", ret);
-		else
+		अन्यथा
 			DRM_DEV_ERROR(dev, "panel is reported broken\n");
-		power_off(epd);
-		goto out_exit;
-	}
+		घातer_off(epd);
+		जाओ out_निकास;
+	पूर्ण
 
 	/* Power saving mode */
-	repaper_write_val(spi, 0x0b, 0x02);
+	repaper_ग_लिखो_val(spi, 0x0b, 0x02);
 	/* Channel select */
-	repaper_write_buf(spi, 0x01, epd->channel_select, 8);
-	/* High power mode osc */
-	repaper_write_val(spi, 0x07, 0xd1);
+	repaper_ग_लिखो_buf(spi, 0x01, epd->channel_select, 8);
+	/* High घातer mode osc */
+	repaper_ग_लिखो_val(spi, 0x07, 0xd1);
 	/* Power setting */
-	repaper_write_val(spi, 0x08, 0x02);
+	repaper_ग_लिखो_val(spi, 0x08, 0x02);
 	/* Vcom level */
-	repaper_write_val(spi, 0x09, 0xc2);
+	repaper_ग_लिखो_val(spi, 0x09, 0xc2);
 	/* Power setting */
-	repaper_write_val(spi, 0x04, 0x03);
+	repaper_ग_लिखो_val(spi, 0x04, 0x03);
 	/* Driver latch on */
-	repaper_write_val(spi, 0x03, 0x01);
+	repaper_ग_लिखो_val(spi, 0x03, 0x01);
 	/* Driver latch off */
-	repaper_write_val(spi, 0x03, 0x00);
+	repaper_ग_लिखो_val(spi, 0x03, 0x00);
 	usleep_range(5000, 10000);
 
-	/* Start chargepump */
-	for (i = 0; i < 4; ++i) {
+	/* Start अक्षरgepump */
+	क्रम (i = 0; i < 4; ++i) अणु
 		/* Charge pump positive voltage on - VGH/VDL on */
-		repaper_write_val(spi, 0x05, 0x01);
+		repaper_ग_लिखो_val(spi, 0x05, 0x01);
 		msleep(240);
 
 		/* Charge pump negative voltage on - VGL/VDL on */
-		repaper_write_val(spi, 0x05, 0x03);
+		repaper_ग_लिखो_val(spi, 0x05, 0x03);
 		msleep(40);
 
 		/* Charge pump Vcom on - Vcom driver on */
-		repaper_write_val(spi, 0x05, 0x0f);
+		repaper_ग_लिखो_val(spi, 0x05, 0x0f);
 		msleep(40);
 
 		/* check DC/DC */
-		ret = repaper_read_val(spi, 0x0f);
-		if (ret < 0) {
+		ret = repaper_पढ़ो_val(spi, 0x0f);
+		अगर (ret < 0) अणु
 			DRM_DEV_ERROR(dev, "failed to read chip (%d)\n", ret);
-			power_off(epd);
-			goto out_exit;
-		}
+			घातer_off(epd);
+			जाओ out_निकास;
+		पूर्ण
 
-		if (ret & 0x40) {
+		अगर (ret & 0x40) अणु
 			dc_ok = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!dc_ok) {
+	अगर (!dc_ok) अणु
 		DRM_DEV_ERROR(dev, "dc/dc failed\n");
-		power_off(epd);
-		goto out_exit;
-	}
+		घातer_off(epd);
+		जाओ out_निकास;
+	पूर्ण
 
 	/*
 	 * Output enable to disable
 	 * The userspace driver sets this to 0x04, but the datasheet says 0x06
 	 */
-	repaper_write_val(spi, 0x02, 0x04);
+	repaper_ग_लिखो_val(spi, 0x02, 0x04);
 
 	epd->partial = false;
-out_exit:
-	drm_dev_exit(idx);
-}
+out_निकास:
+	drm_dev_निकास(idx);
+पूर्ण
 
-static void repaper_pipe_disable(struct drm_simple_display_pipe *pipe)
-{
-	struct repaper_epd *epd = drm_to_epd(pipe->crtc.dev);
-	struct spi_device *spi = epd->spi;
-	unsigned int line;
+अटल व्योम repaper_pipe_disable(काष्ठा drm_simple_display_pipe *pipe)
+अणु
+	काष्ठा repaper_epd *epd = drm_to_epd(pipe->crtc.dev);
+	काष्ठा spi_device *spi = epd->spi;
+	अचिन्हित पूर्णांक line;
 
 	/*
-	 * This callback is not protected by drm_dev_enter/exit since we want to
+	 * This callback is not रक्षित by drm_dev_enter/निकास since we want to
 	 * turn off the display on regular driver unload. It's highly unlikely
 	 * that the underlying SPI controller is gone should this be called after
 	 * unplug.
@@ -804,76 +805,76 @@ static void repaper_pipe_disable(struct drm_simple_display_pipe *pipe)
 	DRM_DEBUG_DRIVER("\n");
 
 	/* Nothing frame */
-	for (line = 0; line < epd->height; line++)
-		repaper_one_line(epd, 0x7fffu, NULL, 0x00, NULL,
+	क्रम (line = 0; line < epd->height; line++)
+		repaper_one_line(epd, 0x7fffu, शून्य, 0x00, शून्य,
 				 REPAPER_COMPENSATE);
 
 	/* 2.7" */
-	if (epd->border) {
+	अगर (epd->border) अणु
 		/* Dummy line */
-		repaper_one_line(epd, 0x7fffu, NULL, 0x00, NULL,
+		repaper_one_line(epd, 0x7fffu, शून्य, 0x00, शून्य,
 				 REPAPER_COMPENSATE);
 		msleep(25);
 		gpiod_set_value_cansleep(epd->border, 0);
 		msleep(200);
 		gpiod_set_value_cansleep(epd->border, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Border dummy line */
-		repaper_one_line(epd, 0x7fffu, NULL, 0x00, NULL,
+		repaper_one_line(epd, 0x7fffu, शून्य, 0x00, शून्य,
 				 REPAPER_NORMAL);
 		msleep(200);
-	}
+	पूर्ण
 
 	/* not described in datasheet */
-	repaper_write_val(spi, 0x0b, 0x00);
+	repaper_ग_लिखो_val(spi, 0x0b, 0x00);
 	/* Latch reset turn on */
-	repaper_write_val(spi, 0x03, 0x01);
-	/* Power off charge pump Vcom */
-	repaper_write_val(spi, 0x05, 0x03);
-	/* Power off charge pump neg voltage */
-	repaper_write_val(spi, 0x05, 0x01);
+	repaper_ग_लिखो_val(spi, 0x03, 0x01);
+	/* Power off अक्षरge pump Vcom */
+	repaper_ग_लिखो_val(spi, 0x05, 0x03);
+	/* Power off अक्षरge pump neg voltage */
+	repaper_ग_लिखो_val(spi, 0x05, 0x01);
 	msleep(120);
-	/* Discharge internal */
-	repaper_write_val(spi, 0x04, 0x80);
-	/* turn off all charge pumps */
-	repaper_write_val(spi, 0x05, 0x00);
+	/* Disअक्षरge पूर्णांकernal */
+	repaper_ग_लिखो_val(spi, 0x04, 0x80);
+	/* turn off all अक्षरge pumps */
+	repaper_ग_लिखो_val(spi, 0x05, 0x00);
 	/* Turn off osc */
-	repaper_write_val(spi, 0x07, 0x01);
+	repaper_ग_लिखो_val(spi, 0x07, 0x01);
 	msleep(50);
 
-	power_off(epd);
-}
+	घातer_off(epd);
+पूर्ण
 
-static void repaper_pipe_update(struct drm_simple_display_pipe *pipe,
-				struct drm_plane_state *old_state)
-{
-	struct drm_plane_state *state = pipe->plane.state;
-	struct drm_rect rect;
+अटल व्योम repaper_pipe_update(काष्ठा drm_simple_display_pipe *pipe,
+				काष्ठा drm_plane_state *old_state)
+अणु
+	काष्ठा drm_plane_state *state = pipe->plane.state;
+	काष्ठा drm_rect rect;
 
-	if (!pipe->crtc.state->active)
-		return;
+	अगर (!pipe->crtc.state->active)
+		वापस;
 
-	if (drm_atomic_helper_damage_merged(old_state, state, &rect))
+	अगर (drm_atomic_helper_damage_merged(old_state, state, &rect))
 		repaper_fb_dirty(state->fb);
-}
+पूर्ण
 
-static const struct drm_simple_display_pipe_funcs repaper_pipe_funcs = {
+अटल स्थिर काष्ठा drm_simple_display_pipe_funcs repaper_pipe_funcs = अणु
 	.enable = repaper_pipe_enable,
 	.disable = repaper_pipe_disable,
 	.update = repaper_pipe_update,
 	.prepare_fb = drm_gem_simple_display_pipe_prepare_fb,
-};
+पूर्ण;
 
-static int repaper_connector_get_modes(struct drm_connector *connector)
-{
-	struct repaper_epd *epd = drm_to_epd(connector->dev);
-	struct drm_display_mode *mode;
+अटल पूर्णांक repaper_connector_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा repaper_epd *epd = drm_to_epd(connector->dev);
+	काष्ठा drm_display_mode *mode;
 
 	mode = drm_mode_duplicate(connector->dev, epd->mode);
-	if (!mode) {
+	अगर (!mode) अणु
 		DRM_ERROR("Failed to duplicate mode\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	drm_mode_set_name(mode);
 	mode->type |= DRM_MODE_TYPE_PREFERRED;
@@ -882,62 +883,62 @@ static int repaper_connector_get_modes(struct drm_connector *connector)
 	connector->display_info.width_mm = mode->width_mm;
 	connector->display_info.height_mm = mode->height_mm;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct drm_connector_helper_funcs repaper_connector_hfuncs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs repaper_connector_hfuncs = अणु
 	.get_modes = repaper_connector_get_modes,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs repaper_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs repaper_connector_funcs = अणु
 	.reset = drm_atomic_helper_connector_reset,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = drm_connector_cleanup,
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
+पूर्ण;
 
-static const struct drm_mode_config_funcs repaper_mode_config_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs repaper_mode_config_funcs = अणु
 	.fb_create = drm_gem_fb_create_with_dirty,
 	.atomic_check = drm_atomic_helper_check,
 	.atomic_commit = drm_atomic_helper_commit,
-};
+पूर्ण;
 
-static const uint32_t repaper_formats[] = {
+अटल स्थिर uपूर्णांक32_t repaper_क्रमmats[] = अणु
 	DRM_FORMAT_XRGB8888,
-};
+पूर्ण;
 
-static const struct drm_display_mode repaper_e1144cs021_mode = {
+अटल स्थिर काष्ठा drm_display_mode repaper_e1144cs021_mode = अणु
 	DRM_SIMPLE_MODE(128, 96, 29, 22),
-};
+पूर्ण;
 
-static const u8 repaper_e1144cs021_cs[] = { 0x00, 0x00, 0x00, 0x00,
-					    0x00, 0x0f, 0xff, 0x00 };
+अटल स्थिर u8 repaper_e1144cs021_cs[] = अणु 0x00, 0x00, 0x00, 0x00,
+					    0x00, 0x0f, 0xff, 0x00 पूर्ण;
 
-static const struct drm_display_mode repaper_e1190cs021_mode = {
+अटल स्थिर काष्ठा drm_display_mode repaper_e1190cs021_mode = अणु
 	DRM_SIMPLE_MODE(144, 128, 36, 32),
-};
+पूर्ण;
 
-static const u8 repaper_e1190cs021_cs[] = { 0x00, 0x00, 0x00, 0x03,
-					    0xfc, 0x00, 0x00, 0xff };
+अटल स्थिर u8 repaper_e1190cs021_cs[] = अणु 0x00, 0x00, 0x00, 0x03,
+					    0xfc, 0x00, 0x00, 0xff पूर्ण;
 
-static const struct drm_display_mode repaper_e2200cs021_mode = {
+अटल स्थिर काष्ठा drm_display_mode repaper_e2200cs021_mode = अणु
 	DRM_SIMPLE_MODE(200, 96, 46, 22),
-};
+पूर्ण;
 
-static const u8 repaper_e2200cs021_cs[] = { 0x00, 0x00, 0x00, 0x00,
-					    0x01, 0xff, 0xe0, 0x00 };
+अटल स्थिर u8 repaper_e2200cs021_cs[] = अणु 0x00, 0x00, 0x00, 0x00,
+					    0x01, 0xff, 0xe0, 0x00 पूर्ण;
 
-static const struct drm_display_mode repaper_e2271cs021_mode = {
+अटल स्थिर काष्ठा drm_display_mode repaper_e2271cs021_mode = अणु
 	DRM_SIMPLE_MODE(264, 176, 57, 38),
-};
+पूर्ण;
 
-static const u8 repaper_e2271cs021_cs[] = { 0x00, 0x00, 0x00, 0x7f,
-					    0xff, 0xfe, 0x00, 0x00 };
+अटल स्थिर u8 repaper_e2271cs021_cs[] = अणु 0x00, 0x00, 0x00, 0x7f,
+					    0xff, 0xfe, 0x00, 0x00 पूर्ण;
 
 DEFINE_DRM_GEM_CMA_FOPS(repaper_fops);
 
-static const struct drm_driver repaper_driver = {
+अटल स्थिर काष्ठा drm_driver repaper_driver = अणु
 	.driver_features	= DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
 	.fops			= &repaper_fops,
 	DRM_GEM_CMA_DRIVER_OPS_VMAP,
@@ -946,178 +947,178 @@ static const struct drm_driver repaper_driver = {
 	.date			= "20170405",
 	.major			= 1,
 	.minor			= 0,
-};
+पूर्ण;
 
-static const struct of_device_id repaper_of_match[] = {
-	{ .compatible = "pervasive,e1144cs021", .data = (void *)E1144CS021 },
-	{ .compatible = "pervasive,e1190cs021", .data = (void *)E1190CS021 },
-	{ .compatible = "pervasive,e2200cs021", .data = (void *)E2200CS021 },
-	{ .compatible = "pervasive,e2271cs021", .data = (void *)E2271CS021 },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id repaper_of_match[] = अणु
+	अणु .compatible = "pervasive,e1144cs021", .data = (व्योम *)E1144CS021 पूर्ण,
+	अणु .compatible = "pervasive,e1190cs021", .data = (व्योम *)E1190CS021 पूर्ण,
+	अणु .compatible = "pervasive,e2200cs021", .data = (व्योम *)E2200CS021 पूर्ण,
+	अणु .compatible = "pervasive,e2271cs021", .data = (व्योम *)E2271CS021 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, repaper_of_match);
 
-static const struct spi_device_id repaper_id[] = {
-	{ "e1144cs021", E1144CS021 },
-	{ "e1190cs021", E1190CS021 },
-	{ "e2200cs021", E2200CS021 },
-	{ "e2271cs021", E2271CS021 },
-	{ },
-};
+अटल स्थिर काष्ठा spi_device_id repaper_id[] = अणु
+	अणु "e1144cs021", E1144CS021 पूर्ण,
+	अणु "e1190cs021", E1190CS021 पूर्ण,
+	अणु "e2200cs021", E2200CS021 पूर्ण,
+	अणु "e2271cs021", E2271CS021 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, repaper_id);
 
-static int repaper_probe(struct spi_device *spi)
-{
-	const struct drm_display_mode *mode;
-	const struct spi_device_id *spi_id;
-	struct device *dev = &spi->dev;
-	enum repaper_model model;
-	const char *thermal_zone;
-	struct repaper_epd *epd;
-	size_t line_buffer_size;
-	struct drm_device *drm;
-	const void *match;
-	int ret;
+अटल पूर्णांक repaper_probe(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा drm_display_mode *mode;
+	स्थिर काष्ठा spi_device_id *spi_id;
+	काष्ठा device *dev = &spi->dev;
+	क्रमागत repaper_model model;
+	स्थिर अक्षर *thermal_zone;
+	काष्ठा repaper_epd *epd;
+	माप_प्रकार line_buffer_size;
+	काष्ठा drm_device *drm;
+	स्थिर व्योम *match;
+	पूर्णांक ret;
 
 	match = device_get_match_data(dev);
-	if (match) {
-		model = (enum repaper_model)match;
-	} else {
+	अगर (match) अणु
+		model = (क्रमागत repaper_model)match;
+	पूर्ण अन्यथा अणु
 		spi_id = spi_get_device_id(spi);
-		model = (enum repaper_model)spi_id->driver_data;
-	}
+		model = (क्रमागत repaper_model)spi_id->driver_data;
+	पूर्ण
 
 	/* The SPI device is used to allocate dma memory */
-	if (!dev->coherent_dma_mask) {
+	अगर (!dev->coherent_dma_mask) अणु
 		ret = dma_coerce_mask_and_coherent(dev, DMA_BIT_MASK(32));
-		if (ret) {
+		अगर (ret) अणु
 			dev_warn(dev, "Failed to set dma mask %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	epd = devm_drm_dev_alloc(dev, &repaper_driver,
-				 struct repaper_epd, drm);
-	if (IS_ERR(epd))
-		return PTR_ERR(epd);
+				 काष्ठा repaper_epd, drm);
+	अगर (IS_ERR(epd))
+		वापस PTR_ERR(epd);
 
 	drm = &epd->drm;
 
 	ret = drmm_mode_config_init(drm);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	drm->mode_config.funcs = &repaper_mode_config_funcs;
 
 	epd->spi = spi;
 
 	epd->panel_on = devm_gpiod_get(dev, "panel-on", GPIOD_OUT_LOW);
-	if (IS_ERR(epd->panel_on)) {
+	अगर (IS_ERR(epd->panel_on)) अणु
 		ret = PTR_ERR(epd->panel_on);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			DRM_DEV_ERROR(dev, "Failed to get gpio 'panel-on'\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	epd->discharge = devm_gpiod_get(dev, "discharge", GPIOD_OUT_LOW);
-	if (IS_ERR(epd->discharge)) {
-		ret = PTR_ERR(epd->discharge);
-		if (ret != -EPROBE_DEFER)
+	epd->disअक्षरge = devm_gpiod_get(dev, "discharge", GPIOD_OUT_LOW);
+	अगर (IS_ERR(epd->disअक्षरge)) अणु
+		ret = PTR_ERR(epd->disअक्षरge);
+		अगर (ret != -EPROBE_DEFER)
 			DRM_DEV_ERROR(dev, "Failed to get gpio 'discharge'\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	epd->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_LOW);
-	if (IS_ERR(epd->reset)) {
+	अगर (IS_ERR(epd->reset)) अणु
 		ret = PTR_ERR(epd->reset);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			DRM_DEV_ERROR(dev, "Failed to get gpio 'reset'\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	epd->busy = devm_gpiod_get(dev, "busy", GPIOD_IN);
-	if (IS_ERR(epd->busy)) {
+	अगर (IS_ERR(epd->busy)) अणु
 		ret = PTR_ERR(epd->busy);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			DRM_DEV_ERROR(dev, "Failed to get gpio 'busy'\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!device_property_read_string(dev, "pervasive,thermal-zone",
-					 &thermal_zone)) {
+	अगर (!device_property_पढ़ो_string(dev, "pervasive,thermal-zone",
+					 &thermal_zone)) अणु
 		epd->thermal = thermal_zone_get_zone_by_name(thermal_zone);
-		if (IS_ERR(epd->thermal)) {
+		अगर (IS_ERR(epd->thermal)) अणु
 			DRM_DEV_ERROR(dev, "Failed to get thermal zone: %s\n", thermal_zone);
-			return PTR_ERR(epd->thermal);
-		}
-	}
+			वापस PTR_ERR(epd->thermal);
+		पूर्ण
+	पूर्ण
 
-	switch (model) {
-	case E1144CS021:
+	चयन (model) अणु
+	हाल E1144CS021:
 		mode = &repaper_e1144cs021_mode;
 		epd->channel_select = repaper_e1144cs021_cs;
-		epd->stage_time = 480;
+		epd->stage_समय = 480;
 		epd->bytes_per_scan = 96 / 4;
 		epd->middle_scan = true; /* data-scan-data */
 		epd->pre_border_byte = false;
 		epd->border_byte = REPAPER_BORDER_BYTE_ZERO;
-		break;
+		अवरोध;
 
-	case E1190CS021:
+	हाल E1190CS021:
 		mode = &repaper_e1190cs021_mode;
 		epd->channel_select = repaper_e1190cs021_cs;
-		epd->stage_time = 480;
+		epd->stage_समय = 480;
 		epd->bytes_per_scan = 128 / 4 / 2;
 		epd->middle_scan = false; /* scan-data-scan */
 		epd->pre_border_byte = false;
 		epd->border_byte = REPAPER_BORDER_BYTE_SET;
-		break;
+		अवरोध;
 
-	case E2200CS021:
+	हाल E2200CS021:
 		mode = &repaper_e2200cs021_mode;
 		epd->channel_select = repaper_e2200cs021_cs;
-		epd->stage_time = 480;
+		epd->stage_समय = 480;
 		epd->bytes_per_scan = 96 / 4;
 		epd->middle_scan = true; /* data-scan-data */
 		epd->pre_border_byte = true;
 		epd->border_byte = REPAPER_BORDER_BYTE_NONE;
-		break;
+		अवरोध;
 
-	case E2271CS021:
+	हाल E2271CS021:
 		epd->border = devm_gpiod_get(dev, "border", GPIOD_OUT_LOW);
-		if (IS_ERR(epd->border)) {
+		अगर (IS_ERR(epd->border)) अणु
 			ret = PTR_ERR(epd->border);
-			if (ret != -EPROBE_DEFER)
+			अगर (ret != -EPROBE_DEFER)
 				DRM_DEV_ERROR(dev, "Failed to get gpio 'border'\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		mode = &repaper_e2271cs021_mode;
 		epd->channel_select = repaper_e2271cs021_cs;
-		epd->stage_time = 630;
+		epd->stage_समय = 630;
 		epd->bytes_per_scan = 176 / 4;
 		epd->middle_scan = true; /* data-scan-data */
 		epd->pre_border_byte = true;
 		epd->border_byte = REPAPER_BORDER_BYTE_NONE;
-		break;
+		अवरोध;
 
-	default:
-		return -ENODEV;
-	}
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
 	epd->mode = mode;
 	epd->width = mode->hdisplay;
 	epd->height = mode->vdisplay;
-	epd->factored_stage_time = epd->stage_time;
+	epd->factored_stage_समय = epd->stage_समय;
 
 	line_buffer_size = 2 * epd->width / 8 + epd->bytes_per_scan + 2;
 	epd->line_buffer = devm_kzalloc(dev, line_buffer_size, GFP_KERNEL);
-	if (!epd->line_buffer)
-		return -ENOMEM;
+	अगर (!epd->line_buffer)
+		वापस -ENOMEM;
 
 	epd->current_frame = devm_kzalloc(dev, epd->width * epd->height / 8,
 					  GFP_KERNEL);
-	if (!epd->current_frame)
-		return -ENOMEM;
+	अगर (!epd->current_frame)
+		वापस -ENOMEM;
 
 	drm->mode_config.min_width = mode->hdisplay;
 	drm->mode_config.max_width = mode->hdisplay;
@@ -1127,20 +1128,20 @@ static int repaper_probe(struct spi_device *spi)
 	drm_connector_helper_add(&epd->connector, &repaper_connector_hfuncs);
 	ret = drm_connector_init(drm, &epd->connector, &repaper_connector_funcs,
 				 DRM_MODE_CONNECTOR_SPI);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = drm_simple_display_pipe_init(drm, &epd->pipe, &repaper_pipe_funcs,
-					   repaper_formats, ARRAY_SIZE(repaper_formats),
-					   NULL, &epd->connector);
-	if (ret)
-		return ret;
+					   repaper_क्रमmats, ARRAY_SIZE(repaper_क्रमmats),
+					   शून्य, &epd->connector);
+	अगर (ret)
+		वापस ret;
 
 	drm_mode_config_reset(drm);
 
-	ret = drm_dev_register(drm, 0);
-	if (ret)
-		return ret;
+	ret = drm_dev_रेजिस्टर(drm, 0);
+	अगर (ret)
+		वापस ret;
 
 	spi_set_drvdata(spi, drm);
 
@@ -1148,36 +1149,36 @@ static int repaper_probe(struct spi_device *spi)
 
 	drm_fbdev_generic_setup(drm, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int repaper_remove(struct spi_device *spi)
-{
-	struct drm_device *drm = spi_get_drvdata(spi);
+अटल पूर्णांक repaper_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा drm_device *drm = spi_get_drvdata(spi);
 
 	drm_dev_unplug(drm);
-	drm_atomic_helper_shutdown(drm);
+	drm_atomic_helper_shutकरोwn(drm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void repaper_shutdown(struct spi_device *spi)
-{
-	drm_atomic_helper_shutdown(spi_get_drvdata(spi));
-}
+अटल व्योम repaper_shutकरोwn(काष्ठा spi_device *spi)
+अणु
+	drm_atomic_helper_shutकरोwn(spi_get_drvdata(spi));
+पूर्ण
 
-static struct spi_driver repaper_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver repaper_spi_driver = अणु
+	.driver = अणु
 		.name = "repaper",
 		.of_match_table = repaper_of_match,
-	},
+	पूर्ण,
 	.id_table = repaper_id,
 	.probe = repaper_probe,
-	.remove = repaper_remove,
-	.shutdown = repaper_shutdown,
-};
+	.हटाओ = repaper_हटाओ,
+	.shutकरोwn = repaper_shutकरोwn,
+पूर्ण;
 module_spi_driver(repaper_spi_driver);
 
 MODULE_DESCRIPTION("Pervasive Displays RePaper DRM driver");
-MODULE_AUTHOR("Noralf Trønnes");
+MODULE_AUTHOR("Noralf Trथचnnes");
 MODULE_LICENSE("GPL");

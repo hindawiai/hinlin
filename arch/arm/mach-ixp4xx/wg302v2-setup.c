@@ -1,91 +1,92 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/arm/mach-ixp4xx/wg302-setup.c
  *
- * Board setup for the Netgear WG302 v2 and WAG302 v2
+ * Board setup क्रम the Netgear WG302 v2 and WAG302 v2
  *
- * Copyright (C) 2007 Imre Kaloz <Kaloz@openwrt.org>
+ * Copyright (C) 2007 Imre Kaloz <Kaloz@खोलोwrt.org>
  *
  * based on coyote-setup.c:
  *      Copyright (C) 2003-2005 MontaVista Software, Inc.
  *
- * Author: Imre Kaloz <kaloz@openwrt.org>
+ * Author: Imre Kaloz <kaloz@खोलोwrt.org>
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/serial.h>
-#include <linux/tty.h>
-#include <linux/serial_8250.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/serial_8250.h>
 
-#include <asm/types.h>
-#include <asm/setup.h>
-#include <asm/memory.h>
-#include <mach/hardware.h>
-#include <asm/irq.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/flash.h>
+#समावेश <यंत्र/types.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/memory.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/flash.h>
 
-#include "irqs.h"
+#समावेश "irqs.h"
 
-static struct flash_platform_data wg302v2_flash_data = {
+अटल काष्ठा flash_platक्रमm_data wg302v2_flash_data = अणु
 	.map_name	= "cfi_probe",
 	.width		= 2,
-};
+पूर्ण;
 
-static struct resource wg302v2_flash_resource = {
+अटल काष्ठा resource wg302v2_flash_resource = अणु
 	.flags		= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device wg302v2_flash = {
+अटल काष्ठा platक्रमm_device wg302v2_flash = अणु
 	.name		= "IXP4XX-Flash",
 	.id		= 0,
-	.dev		= {
-		.platform_data = &wg302v2_flash_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data = &wg302v2_flash_data,
+	पूर्ण,
 	.num_resources	= 1,
 	.resource	= &wg302v2_flash_resource,
-};
+पूर्ण;
 
-static struct resource wg302v2_uart_resource = {
+अटल काष्ठा resource wg302v2_uart_resource = अणु
 	.start	= IXP4XX_UART2_BASE_PHYS,
 	.end	= IXP4XX_UART2_BASE_PHYS + 0x0fff,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct plat_serial8250_port wg302v2_uart_data[] = {
-	{
+अटल काष्ठा plat_serial8250_port wg302v2_uart_data[] = अणु
+	अणु
 		.mapbase	= IXP4XX_UART2_BASE_PHYS,
-		.membase	= (char *)IXP4XX_UART2_BASE_VIRT + REG_OFFSET,
+		.membase	= (अक्षर *)IXP4XX_UART2_BASE_VIRT + REG_OFFSET,
 		.irq		= IRQ_IXP4XX_UART2,
 		.flags		= UPF_BOOT_AUTOCONF | UPF_SKIP_TEST,
 		.iotype		= UPIO_MEM,
-		.regshift	= 2,
+		.regshअगरt	= 2,
 		.uartclk	= IXP4XX_UART_XTAL,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_device wg302v2_uart = {
+अटल काष्ठा platक्रमm_device wg302v2_uart = अणु
 	.name		= "serial8250",
 	.id		= PLAT8250_DEV_PLATFORM,
-	.dev			= {
-		.platform_data	= wg302v2_uart_data,
-	},
+	.dev			= अणु
+		.platक्रमm_data	= wg302v2_uart_data,
+	पूर्ण,
 	.num_resources	= 1,
 	.resource	= &wg302v2_uart_resource,
-};
+पूर्ण;
 
-static struct platform_device *wg302v2_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *wg302v2_devices[] __initdata = अणु
 	&wg302v2_flash,
 	&wg302v2_uart,
-};
+पूर्ण;
 
-static void __init wg302v2_init(void)
-{
+अटल व्योम __init wg302v2_init(व्योम)
+अणु
 	ixp4xx_sys_init();
 
 	wg302v2_flash_resource.start = IXP4XX_EXP_BUS_BASE(0);
@@ -94,21 +95,21 @@ static void __init wg302v2_init(void)
 	*IXP4XX_EXP_CS0 |= IXP4XX_FLASH_WRITABLE;
 	*IXP4XX_EXP_CS1 = *IXP4XX_EXP_CS0;
 
-	platform_add_devices(wg302v2_devices, ARRAY_SIZE(wg302v2_devices));
-}
+	platक्रमm_add_devices(wg302v2_devices, ARRAY_SIZE(wg302v2_devices));
+पूर्ण
 
-#ifdef CONFIG_MACH_WG302V2
+#अगर_घोषित CONFIG_MACH_WG302V2
 MACHINE_START(WG302V2, "Netgear WG302 v2 / WAG302 v2")
-	/* Maintainer: Imre Kaloz <kaloz@openwrt.org> */
+	/* Maपूर्णांकainer: Imre Kaloz <kaloz@खोलोwrt.org> */
 	.map_io		= ixp4xx_map_io,
 	.init_early	= ixp4xx_init_early,
 	.init_irq	= ixp4xx_init_irq,
-	.init_time	= ixp4xx_timer_init,
+	.init_समय	= ixp4xx_समयr_init,
 	.atag_offset	= 0x100,
 	.init_machine	= wg302v2_init,
-#if defined(CONFIG_PCI)
+#अगर defined(CONFIG_PCI)
 	.dma_zone_size	= SZ_64M,
-#endif
+#पूर्ण_अगर
 	.restart	= ixp4xx_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर

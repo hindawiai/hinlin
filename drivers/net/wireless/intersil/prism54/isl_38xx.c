@@ -1,184 +1,185 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 2002 Intersil Americas Inc.
  *  Copyright (C) 2003-2004 Luis R. Rodriguez <mcgrof@ruslug.rutgers.edu>_
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/delay.h>
-#include <linux/ktime.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kसमय.स>
 
-#include <linux/uaccess.h>
-#include <asm/io.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
 
-#include "prismcompat.h"
-#include "isl_38xx.h"
-#include "islpci_dev.h"
-#include "islpci_mgt.h"
+#समावेश "prismcompat.h"
+#समावेश "isl_38xx.h"
+#समावेश "islpci_dev.h"
+#समावेश "islpci_mgt.h"
 
 /******************************************************************************
     Device Interface & Control functions
 ******************************************************************************/
 
 /**
- * isl38xx_disable_interrupts - disable all interrupts
+ * isl38xx_disable_पूर्णांकerrupts - disable all पूर्णांकerrupts
  * @device: pci memory base address
  *
- *  Instructs the device to disable all interrupt reporting by asserting
- *  the IRQ line. New events may still show up in the interrupt identification
- *  register located at offset %ISL38XX_INT_IDENT_REG.
+ *  Inकाष्ठाs the device to disable all पूर्णांकerrupt reporting by निश्चितing
+ *  the IRQ line. New events may still show up in the पूर्णांकerrupt identअगरication
+ *  रेजिस्टर located at offset %ISL38XX_INT_IDENT_REG.
  */
-void
-isl38xx_disable_interrupts(void __iomem *device)
-{
+व्योम
+isl38xx_disable_पूर्णांकerrupts(व्योम __iomem *device)
+अणु
 	isl38xx_w32_flush(device, 0x00000000, ISL38XX_INT_EN_REG);
 	udelay(ISL38XX_WRITEIO_DELAY);
-}
+पूर्ण
 
-void
+व्योम
 isl38xx_handle_sleep_request(isl38xx_control_block *control_block,
-			     int *powerstate, void __iomem *device_base)
-{
-	/* device requests to go into sleep mode
-	 * check whether the transmit queues for data and management are empty */
-	if (isl38xx_in_queue(control_block, ISL38XX_CB_TX_DATA_LQ))
+			     पूर्णांक *घातerstate, व्योम __iomem *device_base)
+अणु
+	/* device requests to go पूर्णांकo sleep mode
+	 * check whether the transmit queues क्रम data and management are empty */
+	अगर (isl38xx_in_queue(control_block, ISL38XX_CB_TX_DATA_LQ))
 		/* data tx queue not empty */
-		return;
+		वापस;
 
-	if (isl38xx_in_queue(control_block, ISL38XX_CB_TX_MGMTQ))
+	अगर (isl38xx_in_queue(control_block, ISL38XX_CB_TX_MGMTQ))
 		/* management tx queue not empty */
-		return;
+		वापस;
 
 	/* check also whether received frames are pending */
-	if (isl38xx_in_queue(control_block, ISL38XX_CB_RX_DATA_LQ))
+	अगर (isl38xx_in_queue(control_block, ISL38XX_CB_RX_DATA_LQ))
 		/* data rx queue not empty */
-		return;
+		वापस;
 
-	if (isl38xx_in_queue(control_block, ISL38XX_CB_RX_MGMTQ))
+	अगर (isl38xx_in_queue(control_block, ISL38XX_CB_RX_MGMTQ))
 		/* management rx queue not empty */
-		return;
+		वापस;
 
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 	DEBUG(SHOW_TRACING, "Device going to sleep mode\n");
-#endif
+#पूर्ण_अगर
 
-	/* all queues are empty, allow the device to go into sleep mode */
-	*powerstate = ISL38XX_PSM_POWERSAVE_STATE;
+	/* all queues are empty, allow the device to go पूर्णांकo sleep mode */
+	*घातerstate = ISL38XX_PSM_POWERSAVE_STATE;
 
-	/* assert the Sleep interrupt in the Device Interrupt Register */
+	/* निश्चित the Sleep पूर्णांकerrupt in the Device Interrupt Register */
 	isl38xx_w32_flush(device_base, ISL38XX_DEV_INT_SLEEP,
 			  ISL38XX_DEV_INT_REG);
 	udelay(ISL38XX_WRITEIO_DELAY);
-}
+पूर्ण
 
-void
+व्योम
 isl38xx_handle_wakeup(isl38xx_control_block *control_block,
-		      int *powerstate, void __iomem *device_base)
-{
-	/* device is in active state, update the powerstate flag */
-	*powerstate = ISL38XX_PSM_ACTIVE_STATE;
+		      पूर्णांक *घातerstate, व्योम __iomem *device_base)
+अणु
+	/* device is in active state, update the घातerstate flag */
+	*घातerstate = ISL38XX_PSM_ACTIVE_STATE;
 
-	/* now check whether there are frames pending for the card */
-	if (!isl38xx_in_queue(control_block, ISL38XX_CB_TX_DATA_LQ)
+	/* now check whether there are frames pending क्रम the card */
+	अगर (!isl38xx_in_queue(control_block, ISL38XX_CB_TX_DATA_LQ)
 	    && !isl38xx_in_queue(control_block, ISL38XX_CB_TX_MGMTQ))
-		return;
+		वापस;
 
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 	DEBUG(SHOW_ANYTHING, "Wake up handler trigger the device\n");
-#endif
+#पूर्ण_अगर
 
 	/* either data or management transmit queue has a frame pending
 	 * trigger the device by setting the Update bit in the Device Int reg */
 	isl38xx_w32_flush(device_base, ISL38XX_DEV_INT_UPDATE,
 			  ISL38XX_DEV_INT_REG);
 	udelay(ISL38XX_WRITEIO_DELAY);
-}
+पूर्ण
 
-void
-isl38xx_trigger_device(int asleep, void __iomem *device_base)
-{
+व्योम
+isl38xx_trigger_device(पूर्णांक asleep, व्योम __iomem *device_base)
+अणु
 	u32 reg;
 
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 	u32 counter = 0;
-	struct timespec64 current_ts64;
+	काष्ठा बारpec64 current_ts64;
 	DEBUG(SHOW_FUNCTION_CALLS, "isl38xx trigger device\n");
-#endif
+#पूर्ण_अगर
 
-	/* check whether the device is in power save mode */
-	if (asleep) {
-		/* device is in powersave, trigger the device for wakeup */
-#if VERBOSE > SHOW_ERROR_MESSAGES
-		ktime_get_real_ts64(&current_ts64);
+	/* check whether the device is in घातer save mode */
+	अगर (asleep) अणु
+		/* device is in घातersave, trigger the device क्रम wakeup */
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
+		kसमय_get_real_ts64(&current_ts64);
 		DEBUG(SHOW_TRACING, "%lld.%09ld Device wakeup triggered\n",
 		      (s64)current_ts64.tv_sec, current_ts64.tv_nsec);
 
 		DEBUG(SHOW_TRACING, "%lld.%09ld Device register read %08x\n",
 		      (s64)current_ts64.tv_sec, current_ts64.tv_nsec,
-		      readl(device_base + ISL38XX_CTRL_STAT_REG));
-#endif
+		      पढ़ोl(device_base + ISL38XX_CTRL_STAT_REG));
+#पूर्ण_अगर
 
-		reg = readl(device_base + ISL38XX_INT_IDENT_REG);
-		if (reg == 0xabadface) {
-#if VERBOSE > SHOW_ERROR_MESSAGES
-			ktime_get_real_ts64(&current_ts64);
+		reg = पढ़ोl(device_base + ISL38XX_INT_IDENT_REG);
+		अगर (reg == 0xabadface) अणु
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
+			kसमय_get_real_ts64(&current_ts64);
 			DEBUG(SHOW_TRACING,
 			      "%lld.%09ld Device register abadface\n",
 			      (s64)current_ts64.tv_sec, current_ts64.tv_nsec);
-#endif
-			/* read the Device Status Register until Sleepmode bit is set */
-			while (reg = readl(device_base + ISL38XX_CTRL_STAT_REG),
-			       (reg & ISL38XX_CTRL_STAT_SLEEPMODE) == 0) {
+#पूर्ण_अगर
+			/* पढ़ो the Device Status Register until Sleepmode bit is set */
+			जबतक (reg = पढ़ोl(device_base + ISL38XX_CTRL_STAT_REG),
+			       (reg & ISL38XX_CTRL_STAT_SLEEPMODE) == 0) अणु
 				udelay(ISL38XX_WRITEIO_DELAY);
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 				counter++;
-#endif
-			}
+#पूर्ण_अगर
+			पूर्ण
 
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 			DEBUG(SHOW_TRACING,
 			      "%lld.%09ld Device register read %08x\n",
 			      (s64)current_ts64.tv_sec, current_ts64.tv_nsec,
-			      readl(device_base + ISL38XX_CTRL_STAT_REG));
-			ktime_get_real_ts64(&current_ts64);
+			      पढ़ोl(device_base + ISL38XX_CTRL_STAT_REG));
+			kसमय_get_real_ts64(&current_ts64);
 			DEBUG(SHOW_TRACING,
 			      "%lld.%09ld Device asleep counter %i\n",
 			      (s64)current_ts64.tv_sec, current_ts64.tv_nsec,
 			      counter);
-#endif
-		}
-		/* assert the Wakeup interrupt in the Device Interrupt Register */
+#पूर्ण_अगर
+		पूर्ण
+		/* निश्चित the Wakeup पूर्णांकerrupt in the Device Interrupt Register */
 		isl38xx_w32_flush(device_base, ISL38XX_DEV_INT_WAKEUP,
 				  ISL38XX_DEV_INT_REG);
 
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 		udelay(ISL38XX_WRITEIO_DELAY);
 
-		/* perform another read on the Device Status Register */
-		reg = readl(device_base + ISL38XX_CTRL_STAT_REG);
-		ktime_get_real_ts64(&current_ts64);
+		/* perक्रमm another पढ़ो on the Device Status Register */
+		reg = पढ़ोl(device_base + ISL38XX_CTRL_STAT_REG);
+		kसमय_get_real_ts64(&current_ts64);
 		DEBUG(SHOW_TRACING, "%lld.%00ld Device register read %08x\n",
 		      (s64)current_ts64.tv_sec, current_ts64.tv_nsec, reg);
-#endif
-	} else {
+#पूर्ण_अगर
+	पूर्ण अन्यथा अणु
 		/* device is (still) awake  */
-#if VERBOSE > SHOW_ERROR_MESSAGES
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 		DEBUG(SHOW_TRACING, "Device is in active state\n");
-#endif
+#पूर्ण_अगर
 		/* trigger the device by setting the Update bit in the Device Int reg */
 
 		isl38xx_w32_flush(device_base, ISL38XX_DEV_INT_UPDATE,
 				  ISL38XX_DEV_INT_REG);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-isl38xx_interface_reset(void __iomem *device_base, dma_addr_t host_address)
-{
-#if VERBOSE > SHOW_ERROR_MESSAGES
+व्योम
+isl38xx_पूर्णांकerface_reset(व्योम __iomem *device_base, dma_addr_t host_address)
+अणु
+#अगर VERBOSE > SHOW_ERROR_MESSAGES
 	DEBUG(SHOW_FUNCTION_CALLS, "isl38xx_interface_reset\n");
-#endif
+#पूर्ण_अगर
 
 	/* load the address of the control block in the device */
 	isl38xx_w32_flush(device_base, host_address, ISL38XX_CTRL_BLK_BASE_REG);
@@ -188,30 +189,30 @@ isl38xx_interface_reset(void __iomem *device_base, dma_addr_t host_address)
 	isl38xx_w32_flush(device_base, ISL38XX_DEV_INT_RESET, ISL38XX_DEV_INT_REG);
 	udelay(ISL38XX_WRITEIO_DELAY);
 
-	/* enable the interrupt for detecting initialization */
+	/* enable the पूर्णांकerrupt क्रम detecting initialization */
 
-	/* Note: Do not enable other interrupts here. We want the
-	 * device to have come up first 100% before allowing any other
-	 * interrupts. */
+	/* Note: Do not enable other पूर्णांकerrupts here. We want the
+	 * device to have come up first 100% beक्रमe allowing any other
+	 * पूर्णांकerrupts. */
 	isl38xx_w32_flush(device_base, ISL38XX_INT_IDENT_INIT, ISL38XX_INT_EN_REG);
 	udelay(ISL38XX_WRITEIO_DELAY);  /* allow complete full reset */
-}
+पूर्ण
 
-void
-isl38xx_enable_common_interrupts(void __iomem *device_base)
-{
+व्योम
+isl38xx_enable_common_पूर्णांकerrupts(व्योम __iomem *device_base)
+अणु
 	u32 reg;
 
 	reg = ISL38XX_INT_IDENT_UPDATE | ISL38XX_INT_IDENT_SLEEP |
 	      ISL38XX_INT_IDENT_WAKEUP;
 	isl38xx_w32_flush(device_base, reg, ISL38XX_INT_EN_REG);
 	udelay(ISL38XX_WRITEIO_DELAY);
-}
+पूर्ण
 
-int
-isl38xx_in_queue(isl38xx_control_block *cb, int queue)
-{
-	const s32 delta = (le32_to_cpu(cb->driver_curr_frag[queue]) -
+पूर्णांक
+isl38xx_in_queue(isl38xx_control_block *cb, पूर्णांक queue)
+अणु
+	स्थिर s32 delta = (le32_to_cpu(cb->driver_curr_frag[queue]) -
 			   le32_to_cpu(cb->device_curr_frag[queue]));
 
 	/* determine the amount of fragments in the queue depending on the type
@@ -219,27 +220,27 @@ isl38xx_in_queue(isl38xx_control_block *cb, int queue)
 
 	BUG_ON(delta < 0);	/* driver ptr must be ahead of device ptr */
 
-	switch (queue) {
+	चयन (queue) अणु
 		/* send queues */
-	case ISL38XX_CB_TX_MGMTQ:
+	हाल ISL38XX_CB_TX_MGMTQ:
 		BUG_ON(delta > ISL38XX_CB_MGMT_QSIZE);
 		fallthrough;
 
-	case ISL38XX_CB_TX_DATA_LQ:
-	case ISL38XX_CB_TX_DATA_HQ:
+	हाल ISL38XX_CB_TX_DATA_LQ:
+	हाल ISL38XX_CB_TX_DATA_HQ:
 		BUG_ON(delta > ISL38XX_CB_TX_QSIZE);
-		return delta;
+		वापस delta;
 
 		/* receive queues */
-	case ISL38XX_CB_RX_MGMTQ:
+	हाल ISL38XX_CB_RX_MGMTQ:
 		BUG_ON(delta > ISL38XX_CB_MGMT_QSIZE);
-		return ISL38XX_CB_MGMT_QSIZE - delta;
+		वापस ISL38XX_CB_MGMT_QSIZE - delta;
 
-	case ISL38XX_CB_RX_DATA_LQ:
-	case ISL38XX_CB_RX_DATA_HQ:
+	हाल ISL38XX_CB_RX_DATA_LQ:
+	हाल ISL38XX_CB_RX_DATA_HQ:
 		BUG_ON(delta > ISL38XX_CB_RX_QSIZE);
-		return ISL38XX_CB_RX_QSIZE - delta;
-	}
+		वापस ISL38XX_CB_RX_QSIZE - delta;
+	पूर्ण
 	BUG();
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,435 +1,436 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * This is i.MX low power i2c controller driver.
+ * This is i.MX low घातer i2c controller driver.
  *
  * Copyright 2016 Freescale Semiconductor, Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/errno.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
-#define DRIVER_NAME "imx-lpi2c"
+#घोषणा DRIVER_NAME "imx-lpi2c"
 
-#define LPI2C_PARAM	0x04	/* i2c RX/TX FIFO size */
-#define LPI2C_MCR	0x10	/* i2c contrl register */
-#define LPI2C_MSR	0x14	/* i2c status register */
-#define LPI2C_MIER	0x18	/* i2c interrupt enable */
-#define LPI2C_MCFGR0	0x20	/* i2c master configuration */
-#define LPI2C_MCFGR1	0x24	/* i2c master configuration */
-#define LPI2C_MCFGR2	0x28	/* i2c master configuration */
-#define LPI2C_MCFGR3	0x2C	/* i2c master configuration */
-#define LPI2C_MCCR0	0x48	/* i2c master clk configuration */
-#define LPI2C_MCCR1	0x50	/* i2c master clk configuration */
-#define LPI2C_MFCR	0x58	/* i2c master FIFO control */
-#define LPI2C_MFSR	0x5C	/* i2c master FIFO status */
-#define LPI2C_MTDR	0x60	/* i2c master TX data register */
-#define LPI2C_MRDR	0x70	/* i2c master RX data register */
+#घोषणा LPI2C_PARAM	0x04	/* i2c RX/TX FIFO size */
+#घोषणा LPI2C_MCR	0x10	/* i2c contrl रेजिस्टर */
+#घोषणा LPI2C_MSR	0x14	/* i2c status रेजिस्टर */
+#घोषणा LPI2C_MIER	0x18	/* i2c पूर्णांकerrupt enable */
+#घोषणा LPI2C_MCFGR0	0x20	/* i2c master configuration */
+#घोषणा LPI2C_MCFGR1	0x24	/* i2c master configuration */
+#घोषणा LPI2C_MCFGR2	0x28	/* i2c master configuration */
+#घोषणा LPI2C_MCFGR3	0x2C	/* i2c master configuration */
+#घोषणा LPI2C_MCCR0	0x48	/* i2c master clk configuration */
+#घोषणा LPI2C_MCCR1	0x50	/* i2c master clk configuration */
+#घोषणा LPI2C_MFCR	0x58	/* i2c master FIFO control */
+#घोषणा LPI2C_MFSR	0x5C	/* i2c master FIFO status */
+#घोषणा LPI2C_MTDR	0x60	/* i2c master TX data रेजिस्टर */
+#घोषणा LPI2C_MRDR	0x70	/* i2c master RX data रेजिस्टर */
 
 /* i2c command */
-#define TRAN_DATA	0X00
-#define RECV_DATA	0X01
-#define GEN_STOP	0X02
-#define RECV_DISCARD	0X03
-#define GEN_START	0X04
-#define START_NACK	0X05
-#define START_HIGH	0X06
-#define START_HIGH_NACK	0X07
+#घोषणा TRAN_DATA	0X00
+#घोषणा RECV_DATA	0X01
+#घोषणा GEN_STOP	0X02
+#घोषणा RECV_DISCARD	0X03
+#घोषणा GEN_START	0X04
+#घोषणा START_NACK	0X05
+#घोषणा START_HIGH	0X06
+#घोषणा START_HIGH_NACK	0X07
 
-#define MCR_MEN		BIT(0)
-#define MCR_RST		BIT(1)
-#define MCR_DOZEN	BIT(2)
-#define MCR_DBGEN	BIT(3)
-#define MCR_RTF		BIT(8)
-#define MCR_RRF		BIT(9)
-#define MSR_TDF		BIT(0)
-#define MSR_RDF		BIT(1)
-#define MSR_SDF		BIT(9)
-#define MSR_NDF		BIT(10)
-#define MSR_ALF		BIT(11)
-#define MSR_MBF		BIT(24)
-#define MSR_BBF		BIT(25)
-#define MIER_TDIE	BIT(0)
-#define MIER_RDIE	BIT(1)
-#define MIER_SDIE	BIT(9)
-#define MIER_NDIE	BIT(10)
-#define MCFGR1_AUTOSTOP	BIT(8)
-#define MCFGR1_IGNACK	BIT(9)
-#define MRDR_RXEMPTY	BIT(14)
+#घोषणा MCR_MEN		BIT(0)
+#घोषणा MCR_RST		BIT(1)
+#घोषणा MCR_DOZEN	BIT(2)
+#घोषणा MCR_DBGEN	BIT(3)
+#घोषणा MCR_RTF		BIT(8)
+#घोषणा MCR_RRF		BIT(9)
+#घोषणा MSR_TDF		BIT(0)
+#घोषणा MSR_RDF		BIT(1)
+#घोषणा MSR_SDF		BIT(9)
+#घोषणा MSR_NDF		BIT(10)
+#घोषणा MSR_ALF		BIT(11)
+#घोषणा MSR_MBF		BIT(24)
+#घोषणा MSR_BBF		BIT(25)
+#घोषणा MIER_TDIE	BIT(0)
+#घोषणा MIER_RDIE	BIT(1)
+#घोषणा MIER_SDIE	BIT(9)
+#घोषणा MIER_NDIE	BIT(10)
+#घोषणा MCFGR1_AUTOSTOP	BIT(8)
+#घोषणा MCFGR1_IGNACK	BIT(9)
+#घोषणा MRDR_RXEMPTY	BIT(14)
 
-#define I2C_CLK_RATIO	2
-#define CHUNK_DATA	256
+#घोषणा I2C_CLK_RATIO	2
+#घोषणा CHUNK_DATA	256
 
-#define I2C_PM_TIMEOUT		10 /* ms */
+#घोषणा I2C_PM_TIMEOUT		10 /* ms */
 
-enum lpi2c_imx_mode {
+क्रमागत lpi2c_imx_mode अणु
 	STANDARD,	/* 100+Kbps */
 	FAST,		/* 400+Kbps */
 	FAST_PLUS,	/* 1.0+Mbps */
 	HS,		/* 3.4+Mbps */
 	ULTRA_FAST,	/* 5.0+Mbps */
-};
+पूर्ण;
 
-enum lpi2c_imx_pincfg {
+क्रमागत lpi2c_imx_pincfg अणु
 	TWO_PIN_OD,
 	TWO_PIN_OO,
 	TWO_PIN_PP,
 	FOUR_PIN_PP,
-};
+पूर्ण;
 
-struct lpi2c_imx_struct {
-	struct i2c_adapter	adapter;
-	struct clk		*clk;
-	void __iomem		*base;
+काष्ठा lpi2c_imx_काष्ठा अणु
+	काष्ठा i2c_adapter	adapter;
+	काष्ठा clk		*clk;
+	व्योम __iomem		*base;
 	__u8			*rx_buf;
 	__u8			*tx_buf;
-	struct completion	complete;
-	unsigned int		msglen;
-	unsigned int		delivered;
-	unsigned int		block_data;
-	unsigned int		bitrate;
-	unsigned int		txfifosize;
-	unsigned int		rxfifosize;
-	enum lpi2c_imx_mode	mode;
-};
+	काष्ठा completion	complete;
+	अचिन्हित पूर्णांक		msglen;
+	अचिन्हित पूर्णांक		delivered;
+	अचिन्हित पूर्णांक		block_data;
+	अचिन्हित पूर्णांक		bitrate;
+	अचिन्हित पूर्णांक		txfअगरosize;
+	अचिन्हित पूर्णांक		rxfअगरosize;
+	क्रमागत lpi2c_imx_mode	mode;
+पूर्ण;
 
-static void lpi2c_imx_intctrl(struct lpi2c_imx_struct *lpi2c_imx,
-			      unsigned int enable)
-{
-	writel(enable, lpi2c_imx->base + LPI2C_MIER);
-}
+अटल व्योम lpi2c_imx_पूर्णांकctrl(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx,
+			      अचिन्हित पूर्णांक enable)
+अणु
+	ग_लिखोl(enable, lpi2c_imx->base + LPI2C_MIER);
+पूर्ण
 
-static int lpi2c_imx_bus_busy(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	unsigned long orig_jiffies = jiffies;
-	unsigned int temp;
+अटल पूर्णांक lpi2c_imx_bus_busy(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	अचिन्हित दीर्घ orig_jअगरfies = jअगरfies;
+	अचिन्हित पूर्णांक temp;
 
-	while (1) {
-		temp = readl(lpi2c_imx->base + LPI2C_MSR);
+	जबतक (1) अणु
+		temp = पढ़ोl(lpi2c_imx->base + LPI2C_MSR);
 
-		/* check for arbitration lost, clear if set */
-		if (temp & MSR_ALF) {
-			writel(temp, lpi2c_imx->base + LPI2C_MSR);
-			return -EAGAIN;
-		}
+		/* check क्रम arbitration lost, clear अगर set */
+		अगर (temp & MSR_ALF) अणु
+			ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MSR);
+			वापस -EAGAIN;
+		पूर्ण
 
-		if (temp & (MSR_BBF | MSR_MBF))
-			break;
+		अगर (temp & (MSR_BBF | MSR_MBF))
+			अवरोध;
 
-		if (time_after(jiffies, orig_jiffies + msecs_to_jiffies(500))) {
+		अगर (समय_after(jअगरfies, orig_jअगरfies + msecs_to_jअगरfies(500))) अणु
 			dev_dbg(&lpi2c_imx->adapter.dev, "bus not work\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		schedule();
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lpi2c_imx_set_mode(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	unsigned int bitrate = lpi2c_imx->bitrate;
-	enum lpi2c_imx_mode mode;
+अटल व्योम lpi2c_imx_set_mode(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	अचिन्हित पूर्णांक bitrate = lpi2c_imx->bitrate;
+	क्रमागत lpi2c_imx_mode mode;
 
-	if (bitrate < I2C_MAX_FAST_MODE_FREQ)
+	अगर (bitrate < I2C_MAX_FAST_MODE_FREQ)
 		mode = STANDARD;
-	else if (bitrate < I2C_MAX_FAST_MODE_PLUS_FREQ)
+	अन्यथा अगर (bitrate < I2C_MAX_FAST_MODE_PLUS_FREQ)
 		mode = FAST;
-	else if (bitrate < I2C_MAX_HIGH_SPEED_MODE_FREQ)
+	अन्यथा अगर (bitrate < I2C_MAX_HIGH_SPEED_MODE_FREQ)
 		mode = FAST_PLUS;
-	else if (bitrate < I2C_MAX_ULTRA_FAST_MODE_FREQ)
+	अन्यथा अगर (bitrate < I2C_MAX_ULTRA_FAST_MODE_FREQ)
 		mode = HS;
-	else
+	अन्यथा
 		mode = ULTRA_FAST;
 
 	lpi2c_imx->mode = mode;
-}
+पूर्ण
 
-static int lpi2c_imx_start(struct lpi2c_imx_struct *lpi2c_imx,
-			   struct i2c_msg *msgs)
-{
-	unsigned int temp;
+अटल पूर्णांक lpi2c_imx_start(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx,
+			   काष्ठा i2c_msg *msgs)
+अणु
+	अचिन्हित पूर्णांक temp;
 
-	temp = readl(lpi2c_imx->base + LPI2C_MCR);
+	temp = पढ़ोl(lpi2c_imx->base + LPI2C_MCR);
 	temp |= MCR_RRF | MCR_RTF;
-	writel(temp, lpi2c_imx->base + LPI2C_MCR);
-	writel(0x7f00, lpi2c_imx->base + LPI2C_MSR);
+	ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MCR);
+	ग_लिखोl(0x7f00, lpi2c_imx->base + LPI2C_MSR);
 
 	temp = i2c_8bit_addr_from_msg(msgs) | (GEN_START << 8);
-	writel(temp, lpi2c_imx->base + LPI2C_MTDR);
+	ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MTDR);
 
-	return lpi2c_imx_bus_busy(lpi2c_imx);
-}
+	वापस lpi2c_imx_bus_busy(lpi2c_imx);
+पूर्ण
 
-static void lpi2c_imx_stop(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	unsigned long orig_jiffies = jiffies;
-	unsigned int temp;
+अटल व्योम lpi2c_imx_stop(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	अचिन्हित दीर्घ orig_jअगरfies = jअगरfies;
+	अचिन्हित पूर्णांक temp;
 
-	writel(GEN_STOP << 8, lpi2c_imx->base + LPI2C_MTDR);
+	ग_लिखोl(GEN_STOP << 8, lpi2c_imx->base + LPI2C_MTDR);
 
-	do {
-		temp = readl(lpi2c_imx->base + LPI2C_MSR);
-		if (temp & MSR_SDF)
-			break;
+	करो अणु
+		temp = पढ़ोl(lpi2c_imx->base + LPI2C_MSR);
+		अगर (temp & MSR_SDF)
+			अवरोध;
 
-		if (time_after(jiffies, orig_jiffies + msecs_to_jiffies(500))) {
+		अगर (समय_after(jअगरfies, orig_jअगरfies + msecs_to_jअगरfies(500))) अणु
 			dev_dbg(&lpi2c_imx->adapter.dev, "stop timeout\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		schedule();
 
-	} while (1);
-}
+	पूर्ण जबतक (1);
+पूर्ण
 
 /* CLKLO = I2C_CLK_RATIO * CLKHI, SETHOLD = CLKHI, DATAVD = CLKHI/2 */
-static int lpi2c_imx_config(struct lpi2c_imx_struct *lpi2c_imx)
-{
+अटल पूर्णांक lpi2c_imx_config(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
 	u8 prescale, filt, sethold, clkhi, clklo, datavd;
-	unsigned int clk_rate, clk_cycle;
-	enum lpi2c_imx_pincfg pincfg;
-	unsigned int temp;
+	अचिन्हित पूर्णांक clk_rate, clk_cycle;
+	क्रमागत lpi2c_imx_pincfg pincfg;
+	अचिन्हित पूर्णांक temp;
 
 	lpi2c_imx_set_mode(lpi2c_imx);
 
 	clk_rate = clk_get_rate(lpi2c_imx->clk);
-	if (lpi2c_imx->mode == HS || lpi2c_imx->mode == ULTRA_FAST)
+	अगर (lpi2c_imx->mode == HS || lpi2c_imx->mode == ULTRA_FAST)
 		filt = 0;
-	else
+	अन्यथा
 		filt = 2;
 
-	for (prescale = 0; prescale <= 7; prescale++) {
+	क्रम (prescale = 0; prescale <= 7; prescale++) अणु
 		clk_cycle = clk_rate / ((1 << prescale) * lpi2c_imx->bitrate)
 			    - 3 - (filt >> 1);
 		clkhi = (clk_cycle + I2C_CLK_RATIO) / (I2C_CLK_RATIO + 1);
 		clklo = clk_cycle - clkhi;
-		if (clklo < 64)
-			break;
-	}
+		अगर (clklo < 64)
+			अवरोध;
+	पूर्ण
 
-	if (prescale > 7)
-		return -EINVAL;
+	अगर (prescale > 7)
+		वापस -EINVAL;
 
 	/* set MCFGR1: PINCFG, PRESCALE, IGNACK */
-	if (lpi2c_imx->mode == ULTRA_FAST)
+	अगर (lpi2c_imx->mode == ULTRA_FAST)
 		pincfg = TWO_PIN_OO;
-	else
+	अन्यथा
 		pincfg = TWO_PIN_OD;
 	temp = prescale | pincfg << 24;
 
-	if (lpi2c_imx->mode == ULTRA_FAST)
+	अगर (lpi2c_imx->mode == ULTRA_FAST)
 		temp |= MCFGR1_IGNACK;
 
-	writel(temp, lpi2c_imx->base + LPI2C_MCFGR1);
+	ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MCFGR1);
 
 	/* set MCFGR2: FILTSDA, FILTSCL */
 	temp = (filt << 16) | (filt << 24);
-	writel(temp, lpi2c_imx->base + LPI2C_MCFGR2);
+	ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MCFGR2);
 
 	/* set MCCR: DATAVD, SETHOLD, CLKHI, CLKLO */
 	sethold = clkhi;
 	datavd = clkhi >> 1;
 	temp = datavd << 24 | sethold << 16 | clkhi << 8 | clklo;
 
-	if (lpi2c_imx->mode == HS)
-		writel(temp, lpi2c_imx->base + LPI2C_MCCR1);
-	else
-		writel(temp, lpi2c_imx->base + LPI2C_MCCR0);
+	अगर (lpi2c_imx->mode == HS)
+		ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MCCR1);
+	अन्यथा
+		ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MCCR0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpi2c_imx_master_enable(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	unsigned int temp;
-	int ret;
+अटल पूर्णांक lpi2c_imx_master_enable(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	अचिन्हित पूर्णांक temp;
+	पूर्णांक ret;
 
-	ret = pm_runtime_resume_and_get(lpi2c_imx->adapter.dev.parent);
-	if (ret < 0)
-		return ret;
+	ret = pm_runसमय_resume_and_get(lpi2c_imx->adapter.dev.parent);
+	अगर (ret < 0)
+		वापस ret;
 
 	temp = MCR_RST;
-	writel(temp, lpi2c_imx->base + LPI2C_MCR);
-	writel(0, lpi2c_imx->base + LPI2C_MCR);
+	ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MCR);
+	ग_लिखोl(0, lpi2c_imx->base + LPI2C_MCR);
 
 	ret = lpi2c_imx_config(lpi2c_imx);
-	if (ret)
-		goto rpm_put;
+	अगर (ret)
+		जाओ rpm_put;
 
-	temp = readl(lpi2c_imx->base + LPI2C_MCR);
+	temp = पढ़ोl(lpi2c_imx->base + LPI2C_MCR);
 	temp |= MCR_MEN;
-	writel(temp, lpi2c_imx->base + LPI2C_MCR);
+	ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MCR);
 
-	return 0;
+	वापस 0;
 
 rpm_put:
-	pm_runtime_mark_last_busy(lpi2c_imx->adapter.dev.parent);
-	pm_runtime_put_autosuspend(lpi2c_imx->adapter.dev.parent);
+	pm_runसमय_mark_last_busy(lpi2c_imx->adapter.dev.parent);
+	pm_runसमय_put_स्वतःsuspend(lpi2c_imx->adapter.dev.parent);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lpi2c_imx_master_disable(struct lpi2c_imx_struct *lpi2c_imx)
-{
+अटल पूर्णांक lpi2c_imx_master_disable(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
 	u32 temp;
 
-	temp = readl(lpi2c_imx->base + LPI2C_MCR);
+	temp = पढ़ोl(lpi2c_imx->base + LPI2C_MCR);
 	temp &= ~MCR_MEN;
-	writel(temp, lpi2c_imx->base + LPI2C_MCR);
+	ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MCR);
 
-	pm_runtime_mark_last_busy(lpi2c_imx->adapter.dev.parent);
-	pm_runtime_put_autosuspend(lpi2c_imx->adapter.dev.parent);
+	pm_runसमय_mark_last_busy(lpi2c_imx->adapter.dev.parent);
+	pm_runसमय_put_स्वतःsuspend(lpi2c_imx->adapter.dev.parent);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lpi2c_imx_msg_complete(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	unsigned long timeout;
+अटल पूर्णांक lpi2c_imx_msg_complete(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	अचिन्हित दीर्घ समयout;
 
-	timeout = wait_for_completion_timeout(&lpi2c_imx->complete, HZ);
+	समयout = रुको_क्रम_completion_समयout(&lpi2c_imx->complete, HZ);
 
-	return timeout ? 0 : -ETIMEDOUT;
-}
+	वापस समयout ? 0 : -ETIMEDOUT;
+पूर्ण
 
-static int lpi2c_imx_txfifo_empty(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	unsigned long orig_jiffies = jiffies;
+अटल पूर्णांक lpi2c_imx_txfअगरo_empty(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	अचिन्हित दीर्घ orig_jअगरfies = jअगरfies;
 	u32 txcnt;
 
-	do {
-		txcnt = readl(lpi2c_imx->base + LPI2C_MFSR) & 0xff;
+	करो अणु
+		txcnt = पढ़ोl(lpi2c_imx->base + LPI2C_MFSR) & 0xff;
 
-		if (readl(lpi2c_imx->base + LPI2C_MSR) & MSR_NDF) {
+		अगर (पढ़ोl(lpi2c_imx->base + LPI2C_MSR) & MSR_NDF) अणु
 			dev_dbg(&lpi2c_imx->adapter.dev, "NDF detected\n");
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		if (time_after(jiffies, orig_jiffies + msecs_to_jiffies(500))) {
+		अगर (समय_after(jअगरfies, orig_jअगरfies + msecs_to_jअगरfies(500))) अणु
 			dev_dbg(&lpi2c_imx->adapter.dev, "txfifo empty timeout\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		schedule();
 
-	} while (txcnt);
+	पूर्ण जबतक (txcnt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lpi2c_imx_set_tx_watermark(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	writel(lpi2c_imx->txfifosize >> 1, lpi2c_imx->base + LPI2C_MFCR);
-}
+अटल व्योम lpi2c_imx_set_tx_watermark(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	ग_लिखोl(lpi2c_imx->txfअगरosize >> 1, lpi2c_imx->base + LPI2C_MFCR);
+पूर्ण
 
-static void lpi2c_imx_set_rx_watermark(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	unsigned int temp, remaining;
+अटल व्योम lpi2c_imx_set_rx_watermark(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	अचिन्हित पूर्णांक temp, reमुख्यing;
 
-	remaining = lpi2c_imx->msglen - lpi2c_imx->delivered;
+	reमुख्यing = lpi2c_imx->msglen - lpi2c_imx->delivered;
 
-	if (remaining > (lpi2c_imx->rxfifosize >> 1))
-		temp = lpi2c_imx->rxfifosize >> 1;
-	else
+	अगर (reमुख्यing > (lpi2c_imx->rxfअगरosize >> 1))
+		temp = lpi2c_imx->rxfअगरosize >> 1;
+	अन्यथा
 		temp = 0;
 
-	writel(temp << 16, lpi2c_imx->base + LPI2C_MFCR);
-}
+	ग_लिखोl(temp << 16, lpi2c_imx->base + LPI2C_MFCR);
+पूर्ण
 
-static void lpi2c_imx_write_txfifo(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	unsigned int data, txcnt;
+अटल व्योम lpi2c_imx_ग_लिखो_txfअगरo(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	अचिन्हित पूर्णांक data, txcnt;
 
-	txcnt = readl(lpi2c_imx->base + LPI2C_MFSR) & 0xff;
+	txcnt = पढ़ोl(lpi2c_imx->base + LPI2C_MFSR) & 0xff;
 
-	while (txcnt < lpi2c_imx->txfifosize) {
-		if (lpi2c_imx->delivered == lpi2c_imx->msglen)
-			break;
+	जबतक (txcnt < lpi2c_imx->txfअगरosize) अणु
+		अगर (lpi2c_imx->delivered == lpi2c_imx->msglen)
+			अवरोध;
 
 		data = lpi2c_imx->tx_buf[lpi2c_imx->delivered++];
-		writel(data, lpi2c_imx->base + LPI2C_MTDR);
+		ग_लिखोl(data, lpi2c_imx->base + LPI2C_MTDR);
 		txcnt++;
-	}
+	पूर्ण
 
-	if (lpi2c_imx->delivered < lpi2c_imx->msglen)
-		lpi2c_imx_intctrl(lpi2c_imx, MIER_TDIE | MIER_NDIE);
-	else
+	अगर (lpi2c_imx->delivered < lpi2c_imx->msglen)
+		lpi2c_imx_पूर्णांकctrl(lpi2c_imx, MIER_TDIE | MIER_NDIE);
+	अन्यथा
 		complete(&lpi2c_imx->complete);
-}
+पूर्ण
 
-static void lpi2c_imx_read_rxfifo(struct lpi2c_imx_struct *lpi2c_imx)
-{
-	unsigned int blocklen, remaining;
-	unsigned int temp, data;
+अटल व्योम lpi2c_imx_पढ़ो_rxfअगरo(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx)
+अणु
+	अचिन्हित पूर्णांक blocklen, reमुख्यing;
+	अचिन्हित पूर्णांक temp, data;
 
-	do {
-		data = readl(lpi2c_imx->base + LPI2C_MRDR);
-		if (data & MRDR_RXEMPTY)
-			break;
+	करो अणु
+		data = पढ़ोl(lpi2c_imx->base + LPI2C_MRDR);
+		अगर (data & MRDR_RXEMPTY)
+			अवरोध;
 
 		lpi2c_imx->rx_buf[lpi2c_imx->delivered++] = data & 0xff;
-	} while (1);
+	पूर्ण जबतक (1);
 
 	/*
-	 * First byte is the length of remaining packet in the SMBus block
-	 * data read. Add it to msgs->len.
+	 * First byte is the length of reमुख्यing packet in the SMBus block
+	 * data पढ़ो. Add it to msgs->len.
 	 */
-	if (lpi2c_imx->block_data) {
+	अगर (lpi2c_imx->block_data) अणु
 		blocklen = lpi2c_imx->rx_buf[0];
 		lpi2c_imx->msglen += blocklen;
-	}
+	पूर्ण
 
-	remaining = lpi2c_imx->msglen - lpi2c_imx->delivered;
+	reमुख्यing = lpi2c_imx->msglen - lpi2c_imx->delivered;
 
-	if (!remaining) {
+	अगर (!reमुख्यing) अणु
 		complete(&lpi2c_imx->complete);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* not finished, still waiting for rx data */
+	/* not finished, still रुकोing क्रम rx data */
 	lpi2c_imx_set_rx_watermark(lpi2c_imx);
 
 	/* multiple receive commands */
-	if (lpi2c_imx->block_data) {
+	अगर (lpi2c_imx->block_data) अणु
 		lpi2c_imx->block_data = 0;
-		temp = remaining;
+		temp = reमुख्यing;
 		temp |= (RECV_DATA << 8);
-		writel(temp, lpi2c_imx->base + LPI2C_MTDR);
-	} else if (!(lpi2c_imx->delivered & 0xff)) {
-		temp = (remaining > CHUNK_DATA ? CHUNK_DATA : remaining) - 1;
+		ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MTDR);
+	पूर्ण अन्यथा अगर (!(lpi2c_imx->delivered & 0xff)) अणु
+		temp = (reमुख्यing > CHUNK_DATA ? CHUNK_DATA : reमुख्यing) - 1;
 		temp |= (RECV_DATA << 8);
-		writel(temp, lpi2c_imx->base + LPI2C_MTDR);
-	}
+		ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MTDR);
+	पूर्ण
 
-	lpi2c_imx_intctrl(lpi2c_imx, MIER_RDIE);
-}
+	lpi2c_imx_पूर्णांकctrl(lpi2c_imx, MIER_RDIE);
+पूर्ण
 
-static void lpi2c_imx_write(struct lpi2c_imx_struct *lpi2c_imx,
-			    struct i2c_msg *msgs)
-{
+अटल व्योम lpi2c_imx_ग_लिखो(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx,
+			    काष्ठा i2c_msg *msgs)
+अणु
 	lpi2c_imx->tx_buf = msgs->buf;
 	lpi2c_imx_set_tx_watermark(lpi2c_imx);
-	lpi2c_imx_write_txfifo(lpi2c_imx);
-}
+	lpi2c_imx_ग_लिखो_txfअगरo(lpi2c_imx);
+पूर्ण
 
-static void lpi2c_imx_read(struct lpi2c_imx_struct *lpi2c_imx,
-			   struct i2c_msg *msgs)
-{
-	unsigned int temp;
+अटल व्योम lpi2c_imx_पढ़ो(काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx,
+			   काष्ठा i2c_msg *msgs)
+अणु
+	अचिन्हित पूर्णांक temp;
 
 	lpi2c_imx->rx_buf = msgs->buf;
 	lpi2c_imx->block_data = msgs->flags & I2C_M_RECV_LEN;
@@ -437,56 +438,56 @@ static void lpi2c_imx_read(struct lpi2c_imx_struct *lpi2c_imx,
 	lpi2c_imx_set_rx_watermark(lpi2c_imx);
 	temp = msgs->len > CHUNK_DATA ? CHUNK_DATA - 1 : msgs->len - 1;
 	temp |= (RECV_DATA << 8);
-	writel(temp, lpi2c_imx->base + LPI2C_MTDR);
+	ग_लिखोl(temp, lpi2c_imx->base + LPI2C_MTDR);
 
-	lpi2c_imx_intctrl(lpi2c_imx, MIER_RDIE | MIER_NDIE);
-}
+	lpi2c_imx_पूर्णांकctrl(lpi2c_imx, MIER_RDIE | MIER_NDIE);
+पूर्ण
 
-static int lpi2c_imx_xfer(struct i2c_adapter *adapter,
-			  struct i2c_msg *msgs, int num)
-{
-	struct lpi2c_imx_struct *lpi2c_imx = i2c_get_adapdata(adapter);
-	unsigned int temp;
-	int i, result;
+अटल पूर्णांक lpi2c_imx_xfer(काष्ठा i2c_adapter *adapter,
+			  काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx = i2c_get_adapdata(adapter);
+	अचिन्हित पूर्णांक temp;
+	पूर्णांक i, result;
 
 	result = lpi2c_imx_master_enable(lpi2c_imx);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		result = lpi2c_imx_start(lpi2c_imx, &msgs[i]);
-		if (result)
-			goto disable;
+		अगर (result)
+			जाओ disable;
 
 		/* quick smbus */
-		if (num == 1 && msgs[0].len == 0)
-			goto stop;
+		अगर (num == 1 && msgs[0].len == 0)
+			जाओ stop;
 
 		lpi2c_imx->delivered = 0;
 		lpi2c_imx->msglen = msgs[i].len;
 		init_completion(&lpi2c_imx->complete);
 
-		if (msgs[i].flags & I2C_M_RD)
-			lpi2c_imx_read(lpi2c_imx, &msgs[i]);
-		else
-			lpi2c_imx_write(lpi2c_imx, &msgs[i]);
+		अगर (msgs[i].flags & I2C_M_RD)
+			lpi2c_imx_पढ़ो(lpi2c_imx, &msgs[i]);
+		अन्यथा
+			lpi2c_imx_ग_लिखो(lpi2c_imx, &msgs[i]);
 
 		result = lpi2c_imx_msg_complete(lpi2c_imx);
-		if (result)
-			goto stop;
+		अगर (result)
+			जाओ stop;
 
-		if (!(msgs[i].flags & I2C_M_RD)) {
-			result = lpi2c_imx_txfifo_empty(lpi2c_imx);
-			if (result)
-				goto stop;
-		}
-	}
+		अगर (!(msgs[i].flags & I2C_M_RD)) अणु
+			result = lpi2c_imx_txfअगरo_empty(lpi2c_imx);
+			अगर (result)
+				जाओ stop;
+		पूर्ण
+	पूर्ण
 
 stop:
 	lpi2c_imx_stop(lpi2c_imx);
 
-	temp = readl(lpi2c_imx->base + LPI2C_MSR);
-	if ((temp & MSR_NDF) && !result)
+	temp = पढ़ोl(lpi2c_imx->base + LPI2C_MSR);
+	अगर ((temp & MSR_NDF) && !result)
 		result = -EIO;
 
 disable:
@@ -496,182 +497,182 @@ disable:
 		(result < 0) ? "error" : "success msg",
 		(result < 0) ? result : num);
 
-	return (result < 0) ? result : num;
-}
+	वापस (result < 0) ? result : num;
+पूर्ण
 
-static irqreturn_t lpi2c_imx_isr(int irq, void *dev_id)
-{
-	struct lpi2c_imx_struct *lpi2c_imx = dev_id;
-	unsigned int temp;
+अटल irqवापस_t lpi2c_imx_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx = dev_id;
+	अचिन्हित पूर्णांक temp;
 
-	lpi2c_imx_intctrl(lpi2c_imx, 0);
-	temp = readl(lpi2c_imx->base + LPI2C_MSR);
+	lpi2c_imx_पूर्णांकctrl(lpi2c_imx, 0);
+	temp = पढ़ोl(lpi2c_imx->base + LPI2C_MSR);
 
-	if (temp & MSR_RDF)
-		lpi2c_imx_read_rxfifo(lpi2c_imx);
+	अगर (temp & MSR_RDF)
+		lpi2c_imx_पढ़ो_rxfअगरo(lpi2c_imx);
 
-	if (temp & MSR_TDF)
-		lpi2c_imx_write_txfifo(lpi2c_imx);
+	अगर (temp & MSR_TDF)
+		lpi2c_imx_ग_लिखो_txfअगरo(lpi2c_imx);
 
-	if (temp & MSR_NDF)
+	अगर (temp & MSR_NDF)
 		complete(&lpi2c_imx->complete);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static u32 lpi2c_imx_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL |
+अटल u32 lpi2c_imx_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL |
 		I2C_FUNC_SMBUS_READ_BLOCK_DATA;
-}
+पूर्ण
 
-static const struct i2c_algorithm lpi2c_imx_algo = {
+अटल स्थिर काष्ठा i2c_algorithm lpi2c_imx_algo = अणु
 	.master_xfer	= lpi2c_imx_xfer,
 	.functionality	= lpi2c_imx_func,
-};
+पूर्ण;
 
-static const struct of_device_id lpi2c_imx_of_match[] = {
-	{ .compatible = "fsl,imx7ulp-lpi2c" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id lpi2c_imx_of_match[] = अणु
+	अणु .compatible = "fsl,imx7ulp-lpi2c" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, lpi2c_imx_of_match);
 
-static int lpi2c_imx_probe(struct platform_device *pdev)
-{
-	struct lpi2c_imx_struct *lpi2c_imx;
-	unsigned int temp;
-	int irq, ret;
+अटल पूर्णांक lpi2c_imx_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx;
+	अचिन्हित पूर्णांक temp;
+	पूर्णांक irq, ret;
 
-	lpi2c_imx = devm_kzalloc(&pdev->dev, sizeof(*lpi2c_imx), GFP_KERNEL);
-	if (!lpi2c_imx)
-		return -ENOMEM;
+	lpi2c_imx = devm_kzalloc(&pdev->dev, माप(*lpi2c_imx), GFP_KERNEL);
+	अगर (!lpi2c_imx)
+		वापस -ENOMEM;
 
-	lpi2c_imx->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(lpi2c_imx->base))
-		return PTR_ERR(lpi2c_imx->base);
+	lpi2c_imx->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(lpi2c_imx->base))
+		वापस PTR_ERR(lpi2c_imx->base);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	lpi2c_imx->adapter.owner	= THIS_MODULE;
 	lpi2c_imx->adapter.algo		= &lpi2c_imx_algo;
 	lpi2c_imx->adapter.dev.parent	= &pdev->dev;
 	lpi2c_imx->adapter.dev.of_node	= pdev->dev.of_node;
 	strlcpy(lpi2c_imx->adapter.name, pdev->name,
-		sizeof(lpi2c_imx->adapter.name));
+		माप(lpi2c_imx->adapter.name));
 
-	lpi2c_imx->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(lpi2c_imx->clk)) {
+	lpi2c_imx->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(lpi2c_imx->clk)) अणु
 		dev_err(&pdev->dev, "can't get I2C peripheral clock\n");
-		return PTR_ERR(lpi2c_imx->clk);
-	}
+		वापस PTR_ERR(lpi2c_imx->clk);
+	पूर्ण
 
-	ret = of_property_read_u32(pdev->dev.of_node,
+	ret = of_property_पढ़ो_u32(pdev->dev.of_node,
 				   "clock-frequency", &lpi2c_imx->bitrate);
-	if (ret)
+	अगर (ret)
 		lpi2c_imx->bitrate = I2C_MAX_STANDARD_MODE_FREQ;
 
 	ret = devm_request_irq(&pdev->dev, irq, lpi2c_imx_isr, 0,
 			       pdev->name, lpi2c_imx);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "can't claim irq %d\n", irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	i2c_set_adapdata(&lpi2c_imx->adapter, lpi2c_imx);
-	platform_set_drvdata(pdev, lpi2c_imx);
+	platक्रमm_set_drvdata(pdev, lpi2c_imx);
 
 	ret = clk_prepare_enable(lpi2c_imx->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "clk enable failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pm_runtime_set_autosuspend_delay(&pdev->dev, I2C_PM_TIMEOUT);
-	pm_runtime_use_autosuspend(&pdev->dev);
-	pm_runtime_get_noresume(&pdev->dev);
-	pm_runtime_set_active(&pdev->dev);
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, I2C_PM_TIMEOUT);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_get_noresume(&pdev->dev);
+	pm_runसमय_set_active(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	temp = readl(lpi2c_imx->base + LPI2C_PARAM);
-	lpi2c_imx->txfifosize = 1 << (temp & 0x0f);
-	lpi2c_imx->rxfifosize = 1 << ((temp >> 8) & 0x0f);
+	temp = पढ़ोl(lpi2c_imx->base + LPI2C_PARAM);
+	lpi2c_imx->txfअगरosize = 1 << (temp & 0x0f);
+	lpi2c_imx->rxfअगरosize = 1 << ((temp >> 8) & 0x0f);
 
 	ret = i2c_add_adapter(&lpi2c_imx->adapter);
-	if (ret)
-		goto rpm_disable;
+	अगर (ret)
+		जाओ rpm_disable;
 
-	pm_runtime_mark_last_busy(&pdev->dev);
-	pm_runtime_put_autosuspend(&pdev->dev);
+	pm_runसमय_mark_last_busy(&pdev->dev);
+	pm_runसमय_put_स्वतःsuspend(&pdev->dev);
 
 	dev_info(&lpi2c_imx->adapter.dev, "LPI2C adapter registered\n");
 
-	return 0;
+	वापस 0;
 
 rpm_disable:
-	pm_runtime_put(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_dont_use_autosuspend(&pdev->dev);
+	pm_runसमय_put(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lpi2c_imx_remove(struct platform_device *pdev)
-{
-	struct lpi2c_imx_struct *lpi2c_imx = platform_get_drvdata(pdev);
+अटल पूर्णांक lpi2c_imx_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx = platक्रमm_get_drvdata(pdev);
 
 	i2c_del_adapter(&lpi2c_imx->adapter);
 
-	pm_runtime_disable(&pdev->dev);
-	pm_runtime_dont_use_autosuspend(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
+	pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused lpi2c_runtime_suspend(struct device *dev)
-{
-	struct lpi2c_imx_struct *lpi2c_imx = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused lpi2c_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(lpi2c_imx->clk);
 	pinctrl_pm_select_sleep_state(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused lpi2c_runtime_resume(struct device *dev)
-{
-	struct lpi2c_imx_struct *lpi2c_imx = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused lpi2c_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा lpi2c_imx_काष्ठा *lpi2c_imx = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	pinctrl_pm_select_default_state(dev);
+	pinctrl_pm_select_शेष_state(dev);
 	ret = clk_prepare_enable(lpi2c_imx->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable I2C clock, ret=%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops lpi2c_pm_ops = {
-	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				      pm_runtime_force_resume)
-	SET_RUNTIME_PM_OPS(lpi2c_runtime_suspend,
-			   lpi2c_runtime_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops lpi2c_pm_ops = अणु
+	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				      pm_runसमय_क्रमce_resume)
+	SET_RUNTIME_PM_OPS(lpi2c_runसमय_suspend,
+			   lpi2c_runसमय_resume, शून्य)
+पूर्ण;
 
-static struct platform_driver lpi2c_imx_driver = {
+अटल काष्ठा platक्रमm_driver lpi2c_imx_driver = अणु
 	.probe = lpi2c_imx_probe,
-	.remove = lpi2c_imx_remove,
-	.driver = {
+	.हटाओ = lpi2c_imx_हटाओ,
+	.driver = अणु
 		.name = DRIVER_NAME,
 		.of_match_table = lpi2c_imx_of_match,
 		.pm = &lpi2c_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(lpi2c_imx_driver);
+module_platक्रमm_driver(lpi2c_imx_driver);
 
 MODULE_AUTHOR("Gao Pan <pandy.gao@nxp.com>");
 MODULE_DESCRIPTION("I2C adapter driver for LPI2C bus");

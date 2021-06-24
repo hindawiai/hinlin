@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * LEDs driver for Analog Devices ADP5520/ADP5501 MFD PMICs
+ * LEDs driver क्रम Analog Devices ADP5520/ADP5501 MFD PMICs
  *
  * Copyright 2009 Analog Devices Inc.
  *
@@ -12,45 +13,45 @@
  *	Eric Miao <eric.miao@marvell.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/leds.h>
-#include <linux/mfd/adp5520.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/mfd/adp5520.h>
+#समावेश <linux/slab.h>
 
-struct adp5520_led {
-	struct led_classdev	cdev;
-	struct device		*master;
-	int			id;
-	int			flags;
-};
+काष्ठा adp5520_led अणु
+	काष्ठा led_classdev	cdev;
+	काष्ठा device		*master;
+	पूर्णांक			id;
+	पूर्णांक			flags;
+पूर्ण;
 
-static int adp5520_led_set(struct led_classdev *led_cdev,
-			   enum led_brightness value)
-{
-	struct adp5520_led *led;
+अटल पूर्णांक adp5520_led_set(काष्ठा led_classdev *led_cdev,
+			   क्रमागत led_brightness value)
+अणु
+	काष्ठा adp5520_led *led;
 
-	led = container_of(led_cdev, struct adp5520_led, cdev);
-	return adp5520_write(led->master, ADP5520_LED1_CURRENT + led->id - 1,
+	led = container_of(led_cdev, काष्ठा adp5520_led, cdev);
+	वापस adp5520_ग_लिखो(led->master, ADP5520_LED1_CURRENT + led->id - 1,
 			 value >> 2);
-}
+पूर्ण
 
-static int adp5520_led_setup(struct adp5520_led *led)
-{
-	struct device *dev = led->master;
-	int flags = led->flags;
-	int ret = 0;
+अटल पूर्णांक adp5520_led_setup(काष्ठा adp5520_led *led)
+अणु
+	काष्ठा device *dev = led->master;
+	पूर्णांक flags = led->flags;
+	पूर्णांक ret = 0;
 
-	switch (led->id) {
-	case FLAG_ID_ADP5520_LED1_ADP5501_LED0:
+	चयन (led->id) अणु
+	हाल FLAG_ID_ADP5520_LED1_ADP5501_LED0:
 		ret |= adp5520_set_bits(dev, ADP5520_LED_TIME,
 					(flags >> ADP5520_FLAG_OFFT_SHIFT) &
 					ADP5520_FLAG_OFFT_MASK);
 		ret |= adp5520_set_bits(dev, ADP5520_LED_CONTROL,
 					ADP5520_LED1_EN);
-		break;
-	case FLAG_ID_ADP5520_LED2_ADP5501_LED1:
+		अवरोध;
+	हाल FLAG_ID_ADP5520_LED2_ADP5501_LED1:
 		ret |= adp5520_set_bits(dev,  ADP5520_LED_TIME,
 					((flags >> ADP5520_FLAG_OFFT_SHIFT) &
 					ADP5520_FLAG_OFFT_MASK) << 2);
@@ -58,8 +59,8 @@ static int adp5520_led_setup(struct adp5520_led *led)
 					 ADP5520_R3_MODE);
 		ret |= adp5520_set_bits(dev, ADP5520_LED_CONTROL,
 					ADP5520_LED2_EN);
-		break;
-	case FLAG_ID_ADP5520_LED3_ADP5501_LED2:
+		अवरोध;
+	हाल FLAG_ID_ADP5520_LED3_ADP5501_LED2:
 		ret |= adp5520_set_bits(dev,  ADP5520_LED_TIME,
 					((flags >> ADP5520_FLAG_OFFT_SHIFT) &
 					ADP5520_FLAG_OFFT_MASK) << 4);
@@ -67,129 +68,129 @@ static int adp5520_led_setup(struct adp5520_led *led)
 					ADP5520_C3_MODE);
 		ret |= adp5520_set_bits(dev, ADP5520_LED_CONTROL,
 					ADP5520_LED3_EN);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adp5520_led_prepare(struct platform_device *pdev)
-{
-	struct adp5520_leds_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	struct device *dev = pdev->dev.parent;
-	int ret = 0;
+अटल पूर्णांक adp5520_led_prepare(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा adp5520_leds_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा device *dev = pdev->dev.parent;
+	पूर्णांक ret = 0;
 
-	ret |= adp5520_write(dev, ADP5520_LED1_CURRENT, 0);
-	ret |= adp5520_write(dev, ADP5520_LED2_CURRENT, 0);
-	ret |= adp5520_write(dev, ADP5520_LED3_CURRENT, 0);
-	ret |= adp5520_write(dev, ADP5520_LED_TIME, pdata->led_on_time << 6);
-	ret |= adp5520_write(dev, ADP5520_LED_FADE, FADE_VAL(pdata->fade_in,
+	ret |= adp5520_ग_लिखो(dev, ADP5520_LED1_CURRENT, 0);
+	ret |= adp5520_ग_लिखो(dev, ADP5520_LED2_CURRENT, 0);
+	ret |= adp5520_ग_लिखो(dev, ADP5520_LED3_CURRENT, 0);
+	ret |= adp5520_ग_लिखो(dev, ADP5520_LED_TIME, pdata->led_on_समय << 6);
+	ret |= adp5520_ग_लिखो(dev, ADP5520_LED_FADE, FADE_VAL(pdata->fade_in,
 		 pdata->fade_out));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adp5520_led_probe(struct platform_device *pdev)
-{
-	struct adp5520_leds_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	struct adp5520_led *led, *led_dat;
-	struct led_info *cur_led;
-	int ret, i;
+अटल पूर्णांक adp5520_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा adp5520_leds_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा adp5520_led *led, *led_dat;
+	काष्ठा led_info *cur_led;
+	पूर्णांक ret, i;
 
-	if (pdata == NULL) {
+	अगर (pdata == शून्य) अणु
 		dev_err(&pdev->dev, "missing platform data\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (pdata->num_leds > ADP5520_01_MAXLEDS) {
+	अगर (pdata->num_leds > ADP5520_01_MAXLEDS) अणु
 		dev_err(&pdev->dev, "can't handle more than %d LEDS\n",
 				 ADP5520_01_MAXLEDS);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	led = devm_kcalloc(&pdev->dev, pdata->num_leds, sizeof(*led),
+	led = devm_kसुस्मृति(&pdev->dev, pdata->num_leds, माप(*led),
 				GFP_KERNEL);
-	if (!led)
-		return -ENOMEM;
+	अगर (!led)
+		वापस -ENOMEM;
 
 	ret = adp5520_led_prepare(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to write\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < pdata->num_leds; ++i) {
+	क्रम (i = 0; i < pdata->num_leds; ++i) अणु
 		cur_led = &pdata->leds[i];
 		led_dat = &led[i];
 
 		led_dat->cdev.name = cur_led->name;
-		led_dat->cdev.default_trigger = cur_led->default_trigger;
+		led_dat->cdev.शेष_trigger = cur_led->शेष_trigger;
 		led_dat->cdev.brightness_set_blocking = adp5520_led_set;
 		led_dat->cdev.brightness = LED_OFF;
 
-		if (cur_led->flags & ADP5520_FLAG_LED_MASK)
+		अगर (cur_led->flags & ADP5520_FLAG_LED_MASK)
 			led_dat->flags = cur_led->flags;
-		else
+		अन्यथा
 			led_dat->flags = i + 1;
 
 		led_dat->id = led_dat->flags & ADP5520_FLAG_LED_MASK;
 
 		led_dat->master = pdev->dev.parent;
 
-		ret = led_classdev_register(led_dat->master, &led_dat->cdev);
-		if (ret) {
+		ret = led_classdev_रेजिस्टर(led_dat->master, &led_dat->cdev);
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to register LED %d\n",
 				led_dat->id);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
 		ret = adp5520_led_setup(led_dat);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev, "failed to write\n");
 			i++;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	platform_set_drvdata(pdev, led);
-	return 0;
+	platक्रमm_set_drvdata(pdev, led);
+	वापस 0;
 
 err:
-	if (i > 0) {
-		for (i = i - 1; i >= 0; i--)
-			led_classdev_unregister(&led[i].cdev);
-	}
+	अगर (i > 0) अणु
+		क्रम (i = i - 1; i >= 0; i--)
+			led_classdev_unरेजिस्टर(&led[i].cdev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int adp5520_led_remove(struct platform_device *pdev)
-{
-	struct adp5520_leds_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	struct adp5520_led *led;
-	int i;
+अटल पूर्णांक adp5520_led_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा adp5520_leds_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	काष्ठा adp5520_led *led;
+	पूर्णांक i;
 
-	led = platform_get_drvdata(pdev);
+	led = platक्रमm_get_drvdata(pdev);
 
 	adp5520_clr_bits(led->master, ADP5520_LED_CONTROL,
 		 ADP5520_LED1_EN | ADP5520_LED2_EN | ADP5520_LED3_EN);
 
-	for (i = 0; i < pdata->num_leds; i++) {
-		led_classdev_unregister(&led[i].cdev);
-	}
+	क्रम (i = 0; i < pdata->num_leds; i++) अणु
+		led_classdev_unरेजिस्टर(&led[i].cdev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver adp5520_led_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver adp5520_led_driver = अणु
+	.driver	= अणु
 		.name	= "adp5520-led",
-	},
+	पूर्ण,
 	.probe		= adp5520_led_probe,
-	.remove		= adp5520_led_remove,
-};
+	.हटाओ		= adp5520_led_हटाओ,
+पूर्ण;
 
-module_platform_driver(adp5520_led_driver);
+module_platक्रमm_driver(adp5520_led_driver);
 
 MODULE_AUTHOR("Michael Hennerich <hennerich@blackfin.uclinux.org>");
 MODULE_DESCRIPTION("LEDS ADP5520(01) Driver");

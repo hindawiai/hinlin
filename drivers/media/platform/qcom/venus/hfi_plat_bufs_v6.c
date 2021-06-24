@@ -1,247 +1,248 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
-#include <linux/kernel.h>
-#include <linux/sizes.h>
-#include <linux/videodev2.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/videodev2.h>
 
-#include "hfi.h"
-#include "hfi_plat_bufs.h"
-#include "helpers.h"
+#समावेश "hfi.h"
+#समावेश "hfi_plat_bufs.h"
+#समावेश "helpers.h"
 
-#define MIN_INPUT_BUFFERS				4
-#define MIN_ENC_OUTPUT_BUFFERS				4
+#घोषणा MIN_INPUT_BUFFERS				4
+#घोषणा MIN_ENC_OUTPUT_BUFFERS				4
 
-#define NV12_UBWC_Y_TILE_WIDTH				32
-#define NV12_UBWC_Y_TILE_HEIGHT				8
-#define NV12_UBWC_UV_TILE_WIDTH				16
-#define NV12_UBWC_UV_TILE_HEIGHT			8
-#define TP10_UBWC_Y_TILE_WIDTH				48
-#define TP10_UBWC_Y_TILE_HEIGHT				4
-#define METADATA_STRIDE_MULTIPLE			64
-#define METADATA_HEIGHT_MULTIPLE			16
-#define HFI_DMA_ALIGNMENT				256
+#घोषणा NV12_UBWC_Y_TILE_WIDTH				32
+#घोषणा NV12_UBWC_Y_TILE_HEIGHT				8
+#घोषणा NV12_UBWC_UV_TILE_WIDTH				16
+#घोषणा NV12_UBWC_UV_TILE_HEIGHT			8
+#घोषणा TP10_UBWC_Y_TILE_WIDTH				48
+#घोषणा TP10_UBWC_Y_TILE_HEIGHT				4
+#घोषणा METADATA_STRIDE_MULTIPLE			64
+#घोषणा METADATA_HEIGHT_MULTIPLE			16
+#घोषणा HFI_DMA_ALIGNMENT				256
 
-#define MAX_FE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE		64
-#define MAX_FE_NBR_CTRL_LCU32_LINE_BUFFER_SIZE		64
-#define MAX_FE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE		64
-#define MAX_FE_NBR_DATA_LUMA_LINE_BUFFER_SIZE		640
-#define MAX_FE_NBR_DATA_CB_LINE_BUFFER_SIZE		320
-#define MAX_FE_NBR_DATA_CR_LINE_BUFFER_SIZE		320
+#घोषणा MAX_FE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE		64
+#घोषणा MAX_FE_NBR_CTRL_LCU32_LINE_BUFFER_SIZE		64
+#घोषणा MAX_FE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE		64
+#घोषणा MAX_FE_NBR_DATA_LUMA_LINE_BUFFER_SIZE		640
+#घोषणा MAX_FE_NBR_DATA_CB_LINE_BUFFER_SIZE		320
+#घोषणा MAX_FE_NBR_DATA_CR_LINE_BUFFER_SIZE		320
 
-#define MAX_SE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE		(128 / 8)
-#define MAX_SE_NBR_CTRL_LCU32_LINE_BUFFER_SIZE		(128 / 8)
-#define MAX_SE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE		(128 / 8)
+#घोषणा MAX_SE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE		(128 / 8)
+#घोषणा MAX_SE_NBR_CTRL_LCU32_LINE_BUFFER_SIZE		(128 / 8)
+#घोषणा MAX_SE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE		(128 / 8)
 
-#define MAX_PE_NBR_DATA_LCU64_LINE_BUFFER_SIZE		(64 * 2 * 3)
-#define MAX_PE_NBR_DATA_LCU32_LINE_BUFFER_SIZE		(32 * 2 * 3)
-#define MAX_PE_NBR_DATA_LCU16_LINE_BUFFER_SIZE		(16 * 2 * 3)
+#घोषणा MAX_PE_NBR_DATA_LCU64_LINE_BUFFER_SIZE		(64 * 2 * 3)
+#घोषणा MAX_PE_NBR_DATA_LCU32_LINE_BUFFER_SIZE		(32 * 2 * 3)
+#घोषणा MAX_PE_NBR_DATA_LCU16_LINE_BUFFER_SIZE		(16 * 2 * 3)
 
-#define MAX_TILE_COLUMNS				32 /* 8K/256 */
+#घोषणा MAX_TILE_COLUMNS				32 /* 8K/256 */
 
-#define VPP_CMD_MAX_SIZE				BIT(20)
-#define NUM_HW_PIC_BUF					32
-#define BIN_BUFFER_THRESHOLD				(1280 * 736)
-#define H264D_MAX_SLICE					1800
-/* sizeof(h264d_buftab_t) aligned to 256 */
-#define SIZE_H264D_BUFTAB_T				256
-/* sizeof(h264d_hw_pic_t) aligned to 32 */
-#define SIZE_H264D_HW_PIC_T				BIT(11)
-#define SIZE_H264D_BSE_CMD_PER_BUF			(32 * 4)
-#define SIZE_H264D_VPP_CMD_PER_BUF			512
+#घोषणा VPP_CMD_MAX_SIZE				BIT(20)
+#घोषणा NUM_HW_PIC_BUF					32
+#घोषणा BIN_BUFFER_THRESHOLD				(1280 * 736)
+#घोषणा H264D_MAX_SLICE					1800
+/* माप(h264d_buftab_t) aligned to 256 */
+#घोषणा SIZE_H264D_BUFTAB_T				256
+/* माप(h264d_hw_pic_t) aligned to 32 */
+#घोषणा SIZE_H264D_HW_PIC_T				BIT(11)
+#घोषणा SIZE_H264D_BSE_CMD_PER_BUF			(32 * 4)
+#घोषणा SIZE_H264D_VPP_CMD_PER_BUF			512
 
-/* Line Buffer definitions, One for Luma and 1/2 for each Chroma */
-#define SIZE_H264D_LB_FE_TOP_DATA(width, height)	\
+/* Line Buffer definitions, One क्रम Luma and 1/2 क्रम each Chroma */
+#घोषणा SIZE_H264D_LB_FE_TOP_DATA(width, height)	\
 	(MAX_FE_NBR_DATA_LUMA_LINE_BUFFER_SIZE * ALIGN((width), 16) * 3)
 
-#define SIZE_H264D_LB_FE_TOP_CTRL(width, height)	\
+#घोषणा SIZE_H264D_LB_FE_TOP_CTRL(width, height)	\
 	(MAX_FE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE * (((width) + 15) >> 4))
 
-#define SIZE_H264D_LB_FE_LEFT_CTRL(width, height)	\
+#घोषणा SIZE_H264D_LB_FE_LEFT_CTRL(width, height)	\
 	(MAX_FE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE * (((height) + 15) >> 4))
 
-#define SIZE_H264D_LB_SE_TOP_CTRL(width, height)	\
+#घोषणा SIZE_H264D_LB_SE_TOP_CTRL(width, height)	\
 	(MAX_SE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE * (((width) + 15) >> 4))
 
-#define SIZE_H264D_LB_SE_LEFT_CTRL(width, height)	\
+#घोषणा SIZE_H264D_LB_SE_LEFT_CTRL(width, height)	\
 	(MAX_SE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE * (((height) + 15) >> 4))
 
-#define SIZE_H264D_LB_PE_TOP_DATA(width, height)	\
+#घोषणा SIZE_H264D_LB_PE_TOP_DATA(width, height)	\
 	(MAX_PE_NBR_DATA_LCU64_LINE_BUFFER_SIZE * (((width) + 15) >> 4))
 
-#define SIZE_H264D_LB_VSP_TOP(width, height)	(((((width) + 15) >> 4) << 7))
+#घोषणा SIZE_H264D_LB_VSP_TOP(width, height)	(((((width) + 15) >> 4) << 7))
 
-#define SIZE_H264D_LB_RECON_DMA_METADATA_WR(width, height)	\
+#घोषणा SIZE_H264D_LB_RECON_DMA_METADATA_WR(width, height)	\
 	(ALIGN((height), 16) * 32)
 
-#define SIZE_H264D_QP(width, height)	\
+#घोषणा SIZE_H264D_QP(width, height)	\
 	((((width) + 63) >> 6) * (((height) + 63) >> 6) * 128)
 
-#define SIZE_HW_PIC(size_per_buf)	(NUM_HW_PIC_BUF * (size_per_buf))
+#घोषणा SIZE_HW_PIC(size_per_buf)	(NUM_HW_PIC_BUF * (size_per_buf))
 
-#define H264_CABAC_HDR_RATIO_HD_TOT	1
-#define H264_CABAC_RES_RATIO_HD_TOT	3
+#घोषणा H264_CABAC_HDR_RATIO_HD_TOT	1
+#घोषणा H264_CABAC_RES_RATIO_HD_TOT	3
 
 /*
  * Some content need more bin buffer, but limit buffer
- * size for high resolution
+ * size क्रम high resolution
  */
-#define NUM_SLIST_BUF_H264		(256 + 32)
-#define SIZE_SLIST_BUF_H264		512
-#define LCU_MAX_SIZE_PELS		64
-#define LCU_MIN_SIZE_PELS		16
-#define SIZE_SEI_USERDATA		4096
+#घोषणा NUM_SLIST_BUF_H264		(256 + 32)
+#घोषणा SIZE_SLIST_BUF_H264		512
+#घोषणा LCU_MAX_SIZE_PELS		64
+#घोषणा LCU_MIN_SIZE_PELS		16
+#घोषणा SIZE_SEI_USERDATA		4096
 
-#define H265D_MAX_SLICE			600
-#define SIZE_H265D_HW_PIC_T		SIZE_H264D_HW_PIC_T
-#define SIZE_H265D_BSE_CMD_PER_BUF	(16 * sizeof(u32))
-#define SIZE_H265D_VPP_CMD_PER_BUF	256
+#घोषणा H265D_MAX_SLICE			600
+#घोषणा SIZE_H265D_HW_PIC_T		SIZE_H264D_HW_PIC_T
+#घोषणा SIZE_H265D_BSE_CMD_PER_BUF	(16 * माप(u32))
+#घोषणा SIZE_H265D_VPP_CMD_PER_BUF	256
 
-#define SIZE_H265D_LB_FE_TOP_DATA(width, height)	\
+#घोषणा SIZE_H265D_LB_FE_TOP_DATA(width, height)	\
 	(MAX_FE_NBR_DATA_LUMA_LINE_BUFFER_SIZE * (ALIGN(width, 64) + 8) * 2)
 
-#define SIZE_H265D_LB_FE_TOP_CTRL(width, height)	\
+#घोषणा SIZE_H265D_LB_FE_TOP_CTRL(width, height)	\
 	(MAX_FE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE *	\
 	(ALIGN(width, LCU_MAX_SIZE_PELS) / LCU_MIN_SIZE_PELS))
 
-#define SIZE_H265D_LB_FE_LEFT_CTRL(width, height)	\
+#घोषणा SIZE_H265D_LB_FE_LEFT_CTRL(width, height)	\
 	(MAX_FE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE *	\
 	(ALIGN(height, LCU_MAX_SIZE_PELS) / LCU_MIN_SIZE_PELS))
 
-#define SIZE_H265D_LB_SE_TOP_CTRL(width, height)	\
+#घोषणा SIZE_H265D_LB_SE_TOP_CTRL(width, height)	\
 	((LCU_MAX_SIZE_PELS / 8 * (128 / 8)) * (((width) + 15) >> 4))
 
-static inline u32 size_h265d_lb_se_left_ctrl(u32 width, u32 height)
-{
+अटल अंतरभूत u32 size_h265d_lb_se_left_ctrl(u32 width, u32 height)
+अणु
 	u32 x, y, z;
 
 	x = ((height + 16 - 1) / 8) * MAX_SE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE;
 	y = ((height + 32 - 1) / 8) * MAX_SE_NBR_CTRL_LCU32_LINE_BUFFER_SIZE;
 	z = ((height + 64 - 1) / 8) * MAX_SE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE;
 
-	return max3(x, y, z);
-}
+	वापस max3(x, y, z);
+पूर्ण
 
-#define SIZE_H265D_LB_PE_TOP_DATA(width, height)	\
+#घोषणा SIZE_H265D_LB_PE_TOP_DATA(width, height)	\
 	(MAX_PE_NBR_DATA_LCU64_LINE_BUFFER_SIZE *	\
 	(ALIGN(width, LCU_MIN_SIZE_PELS) / LCU_MIN_SIZE_PELS))
 
-#define SIZE_H265D_LB_VSP_TOP(width, height)	((((width) + 63) >> 6) * 128)
+#घोषणा SIZE_H265D_LB_VSP_TOP(width, height)	((((width) + 63) >> 6) * 128)
 
-#define SIZE_H265D_LB_VSP_LEFT(width, height)	((((height) + 63) >> 6) * 128)
+#घोषणा SIZE_H265D_LB_VSP_LEFT(width, height)	((((height) + 63) >> 6) * 128)
 
-#define SIZE_H265D_LB_RECON_DMA_METADATA_WR(width, height)	\
+#घोषणा SIZE_H265D_LB_RECON_DMA_METADATA_WR(width, height)	\
 	SIZE_H264D_LB_RECON_DMA_METADATA_WR(width, height)
 
-#define SIZE_H265D_QP(width, height)	SIZE_H264D_QP(width, height)
+#घोषणा SIZE_H265D_QP(width, height)	SIZE_H264D_QP(width, height)
 
-#define H265_CABAC_HDR_RATIO_HD_TOT	2
-#define H265_CABAC_RES_RATIO_HD_TOT	2
+#घोषणा H265_CABAC_HDR_RATIO_HD_TOT	2
+#घोषणा H265_CABAC_RES_RATIO_HD_TOT	2
 
 /*
  * Some content need more bin buffer, but limit buffer size
- * for high resolution
+ * क्रम high resolution
  */
-#define SIZE_SLIST_BUF_H265	BIT(10)
-#define NUM_SLIST_BUF_H265	(80 + 20)
-#define H265_NUM_TILE_COL	32
-#define H265_NUM_TILE_ROW	128
-#define H265_NUM_TILE		(H265_NUM_TILE_ROW * H265_NUM_TILE_COL + 1)
+#घोषणा SIZE_SLIST_BUF_H265	BIT(10)
+#घोषणा NUM_SLIST_BUF_H265	(80 + 20)
+#घोषणा H265_NUM_TILE_COL	32
+#घोषणा H265_NUM_TILE_ROW	128
+#घोषणा H265_NUM_TILE		(H265_NUM_TILE_ROW * H265_NUM_TILE_COL + 1)
 
-static inline u32 size_vpxd_lb_fe_left_ctrl(u32 width, u32 height)
-{
+अटल अंतरभूत u32 size_vpxd_lb_fe_left_ctrl(u32 width, u32 height)
+अणु
 	u32 x, y, z;
 
 	x = ((height + 15) >> 4) * MAX_FE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE;
 	y = ((height + 31) >> 5) * MAX_FE_NBR_CTRL_LCU32_LINE_BUFFER_SIZE;
 	z = ((height + 63) >> 6) * MAX_FE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE;
 
-	return max3(x, y, z);
-}
+	वापस max3(x, y, z);
+पूर्ण
 
-#define SIZE_VPXD_LB_FE_TOP_CTRL(width, height)		\
+#घोषणा SIZE_VPXD_LB_FE_TOP_CTRL(width, height)		\
 	(((ALIGN(width, 64) + 8) * 10 * 2)) /* small line */
-#define SIZE_VPXD_LB_SE_TOP_CTRL(width, height) \
+#घोषणा SIZE_VPXD_LB_SE_TOP_CTRL(width, height) \
 	((((width) + 15) >> 4) * MAX_FE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE)
 
-static inline u32 size_vpxd_lb_se_left_ctrl(u32 width, u32 height)
-{
+अटल अंतरभूत u32 size_vpxd_lb_se_left_ctrl(u32 width, u32 height)
+अणु
 	u32 x, y, z;
 
 	x = ((height + 15) >> 4) * MAX_SE_NBR_CTRL_LCU16_LINE_BUFFER_SIZE;
 	y = ((height + 31) >> 5) * MAX_SE_NBR_CTRL_LCU32_LINE_BUFFER_SIZE;
 	z = ((height + 63) >> 6) * MAX_SE_NBR_CTRL_LCU64_LINE_BUFFER_SIZE;
 
-	return max3(x, y, z);
-}
+	वापस max3(x, y, z);
+पूर्ण
 
-#define SIZE_VPXD_LB_RECON_DMA_METADATA_WR(width, height)	\
+#घोषणा SIZE_VPXD_LB_RECON_DMA_METADATA_WR(width, height)	\
 	ALIGN((ALIGN(height, 16) / (4 / 2)) * 64, 32)
-#define SIZE_VP8D_LB_FE_TOP_DATA(width, height)			\
+#घोषणा SIZE_VP8D_LB_FE_TOP_DATA(width, height)			\
 	((ALIGN(width, 16) + 8) * 10 * 2)
-#define SIZE_VP9D_LB_FE_TOP_DATA(width, height)			\
+#घोषणा SIZE_VP9D_LB_FE_TOP_DATA(width, height)			\
 	((ALIGN(ALIGN(width, 16), 64) + 8) * 10 * 2)
-#define SIZE_VP8D_LB_PE_TOP_DATA(width, height)			\
+#घोषणा SIZE_VP8D_LB_PE_TOP_DATA(width, height)			\
 	((ALIGN(width, 16) >> 4) * 64)
-#define SIZE_VP9D_LB_PE_TOP_DATA(width, height)			\
+#घोषणा SIZE_VP9D_LB_PE_TOP_DATA(width, height)			\
 	((ALIGN(ALIGN(width, 16), 64) >> 6) * 176)
-#define SIZE_VP8D_LB_VSP_TOP(width, height)			\
+#घोषणा SIZE_VP8D_LB_VSP_TOP(width, height)			\
 	(((ALIGN(width, 16) >> 4) * 64 / 2) + 256)
-#define SIZE_VP9D_LB_VSP_TOP(width, height)			\
+#घोषणा SIZE_VP9D_LB_VSP_TOP(width, height)			\
 	(((ALIGN(ALIGN(width, 16), 64) >> 6) * 64 * 8) + 256)
 
-#define HFI_IRIS2_VP9D_COMV_SIZE				\
+#घोषणा HFI_IRIS2_VP9D_COMV_SIZE				\
 	((((8192 + 63) >> 6) * ((4320 + 63) >> 6) * 8 * 8 * 2 * 8))
 
-#define VPX_DECODER_FRAME_CONCURENCY_LVL		2
-#define VPX_DECODER_FRAME_BIN_HDR_BUDGET_RATIO_NUM	1
-#define VPX_DECODER_FRAME_BIN_HDR_BUDGET_RATIO_DEN	2
-#define VPX_DECODER_FRAME_BIN_RES_BUDGET_RATIO_NUM	3
-#define VPX_DECODER_FRAME_BIN_RES_BUDGET_RATIO_DEN	2
+#घोषणा VPX_DECODER_FRAME_CONCURENCY_LVL		2
+#घोषणा VPX_DECODER_FRAME_BIN_HDR_BUDGET_RATIO_NUM	1
+#घोषणा VPX_DECODER_FRAME_BIN_HDR_BUDGET_RATIO_DEN	2
+#घोषणा VPX_DECODER_FRAME_BIN_RES_BUDGET_RATIO_NUM	3
+#घोषणा VPX_DECODER_FRAME_BIN_RES_BUDGET_RATIO_DEN	2
 
-#define VP8_NUM_FRAME_INFO_BUF			(5 + 1)
-#define VP9_NUM_FRAME_INFO_BUF			32
-#define VP8_NUM_PROBABILITY_TABLE_BUF		VP8_NUM_FRAME_INFO_BUF
-#define VP9_NUM_PROBABILITY_TABLE_BUF		(VP9_NUM_FRAME_INFO_BUF + 4)
-#define VP8_PROB_TABLE_SIZE			3840
-#define VP9_PROB_TABLE_SIZE			3840
+#घोषणा VP8_NUM_FRAME_INFO_BUF			(5 + 1)
+#घोषणा VP9_NUM_FRAME_INFO_BUF			32
+#घोषणा VP8_NUM_PROBABILITY_TABLE_BUF		VP8_NUM_FRAME_INFO_BUF
+#घोषणा VP9_NUM_PROBABILITY_TABLE_BUF		(VP9_NUM_FRAME_INFO_BUF + 4)
+#घोषणा VP8_PROB_TABLE_SIZE			3840
+#घोषणा VP9_PROB_TABLE_SIZE			3840
 
-#define VP9_UDC_HEADER_BUF_SIZE			(3 * 128)
-#define MAX_SUPERFRAME_HEADER_LEN		34
-#define CCE_TILE_OFFSET_SIZE			ALIGN(32 * 4 * 4, 32)
+#घोषणा VP9_UDC_HEADER_BUF_SIZE			(3 * 128)
+#घोषणा MAX_SUPERFRAME_HEADER_LEN		34
+#घोषणा CCE_TILE_OFFSET_SIZE			ALIGN(32 * 4 * 4, 32)
 
-#define QMATRIX_SIZE				(sizeof(u32) * 128 + 256)
-#define MP2D_QPDUMP_SIZE			115200
-#define HFI_IRIS2_ENC_PERSIST_SIZE		204800
-#define HFI_MAX_COL_FRAME			6
-#define HFI_VENUS_VENC_TRE_WB_BUFF_SIZE		(65 << 4) /* in Bytes */
-#define HFI_VENUS_VENC_DB_LINE_BUFF_PER_MB	512
-#define HFI_VENUS_VPPSG_MAX_REGISTERS		2048
-#define HFI_VENUS_WIDTH_ALIGNMENT		128
-#define HFI_VENUS_WIDTH_TEN_BIT_ALIGNMENT	192
-#define HFI_VENUS_HEIGHT_ALIGNMENT		32
+#घोषणा QMATRIX_SIZE				(माप(u32) * 128 + 256)
+#घोषणा MP2D_QPDUMP_SIZE			115200
+#घोषणा HFI_IRIS2_ENC_PERSIST_SIZE		204800
+#घोषणा HFI_MAX_COL_FRAME			6
+#घोषणा HFI_VENUS_VENC_TRE_WB_BUFF_SIZE		(65 << 4) /* in Bytes */
+#घोषणा HFI_VENUS_VENC_DB_LINE_BUFF_PER_MB	512
+#घोषणा HFI_VENUS_VPPSG_MAX_REGISTERS		2048
+#घोषणा HFI_VENUS_WIDTH_ALIGNMENT		128
+#घोषणा HFI_VENUS_WIDTH_TEN_BIT_ALIGNMENT	192
+#घोषणा HFI_VENUS_HEIGHT_ALIGNMENT		32
 
-#define SYSTEM_LAL_TILE10	192
-#define NUM_MBS_720P		(((1280 + 15) >> 4) * ((720 + 15) >> 4))
-#define NUM_MBS_4K		(((4096 + 15) >> 4) * ((2304 + 15) >> 4))
-#define MB_SIZE_IN_PIXEL	(16 * 16)
-#define HDR10PLUS_PAYLOAD_SIZE		1024
-#define HDR10_HIST_EXTRADATA_SIZE	4096
+#घोषणा SYSTEM_LAL_TILE10	192
+#घोषणा NUM_MBS_720P		(((1280 + 15) >> 4) * ((720 + 15) >> 4))
+#घोषणा NUM_MBS_4K		(((4096 + 15) >> 4) * ((2304 + 15) >> 4))
+#घोषणा MB_SIZE_IN_PIXEL	(16 * 16)
+#घोषणा HDR10PLUS_PAYLOAD_SIZE		1024
+#घोषणा HDR10_HIST_EXTRADATA_SIZE	4096
 
-static u32 size_vpss_lb(u32 width, u32 height, u32 num_vpp_pipes)
-{
-	u32 vpss_4tap_top_buffer_size, vpss_div2_top_buffer_size;
-	u32 vpss_4tap_left_buffer_size, vpss_div2_left_buffer_size;
+अटल u32 size_vpss_lb(u32 width, u32 height, u32 num_vpp_pipes)
+अणु
+	u32 vpss_4tap_top_buffer_size, vpss_भाग2_top_buffer_size;
+	u32 vpss_4tap_left_buffer_size, vpss_भाग2_left_buffer_size;
 	u32 opb_wr_top_line_luma_buf_size, opb_wr_top_line_chroma_buf_size;
 	u32 opb_lb_wr_llb_y_buffer_size, opb_lb_wr_llb_uv_buffer_size;
 	u32 macrotiling_size;
 	u32 size = 0;
 
 	vpss_4tap_top_buffer_size = 0;
-	vpss_div2_top_buffer_size = 0;
+	vpss_भाग2_top_buffer_size = 0;
 	vpss_4tap_left_buffer_size = 0;
-	vpss_div2_left_buffer_size = 0;
+	vpss_भाग2_left_buffer_size = 0;
 
 	macrotiling_size = 32;
 	opb_wr_top_line_luma_buf_size =
@@ -255,18 +256,18 @@ static u32 size_vpss_lb(u32 width, u32 height, u32 num_vpp_pipes)
 	opb_lb_wr_llb_y_buffer_size = ALIGN((ALIGN(height, 16) / 2) * 64, 32);
 	opb_lb_wr_llb_uv_buffer_size = opb_lb_wr_llb_y_buffer_size;
 	size = num_vpp_pipes *
-		2 * (vpss_4tap_top_buffer_size + vpss_div2_top_buffer_size) +
-		2 * (vpss_4tap_left_buffer_size + vpss_div2_left_buffer_size) +
+		2 * (vpss_4tap_top_buffer_size + vpss_भाग2_top_buffer_size) +
+		2 * (vpss_4tap_left_buffer_size + vpss_भाग2_left_buffer_size) +
 		opb_wr_top_line_luma_buf_size +
 		opb_wr_top_line_chroma_buf_size +
 		opb_lb_wr_llb_uv_buffer_size +
 		opb_lb_wr_llb_y_buffer_size;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 size_h264d_hw_bin_buffer(u32 width, u32 height)
-{
+अटल u32 size_h264d_hw_bin_buffer(u32 width, u32 height)
+अणु
 	u32 size_yuv, size_bin_hdr, size_bin_res;
 	u32 size = 0;
 	u32 product;
@@ -281,23 +282,23 @@ static u32 size_h264d_hw_bin_buffer(u32 width, u32 height)
 	size_bin_res = ALIGN(size_bin_res, HFI_DMA_ALIGNMENT);
 	size = size_bin_hdr + size_bin_res;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 h264d_scratch_size(u32 width, u32 height, bool is_interlaced)
-{
+अटल u32 h264d_scratch_size(u32 width, u32 height, bool is_पूर्णांकerlaced)
+अणु
 	u32 aligned_width = ALIGN(width, 16);
 	u32 aligned_height = ALIGN(height, 16);
 	u32 size = 0;
 
-	if (!is_interlaced)
+	अगर (!is_पूर्णांकerlaced)
 		size = size_h264d_hw_bin_buffer(aligned_width, aligned_height);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 size_h265d_hw_bin_buffer(u32 width, u32 height)
-{
+अटल u32 size_h265d_hw_bin_buffer(u32 width, u32 height)
+अणु
 	u32 size_yuv, size_bin_hdr, size_bin_res;
 	u32 size = 0;
 	u32 product;
@@ -311,29 +312,29 @@ static u32 size_h265d_hw_bin_buffer(u32 width, u32 height)
 	size_bin_res = ALIGN(size_bin_res, HFI_DMA_ALIGNMENT);
 	size = size_bin_hdr + size_bin_res;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 h265d_scratch_size(u32 width, u32 height, bool is_interlaced)
-{
+अटल u32 h265d_scratch_size(u32 width, u32 height, bool is_पूर्णांकerlaced)
+अणु
 	u32 aligned_width = ALIGN(width, 16);
 	u32 aligned_height = ALIGN(height, 16);
 	u32 size = 0;
 
-	if (!is_interlaced)
+	अगर (!is_पूर्णांकerlaced)
 		size = size_h265d_hw_bin_buffer(aligned_width, aligned_height);
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 vpxd_scratch_size(u32 width, u32 height, bool is_interlaced)
-{
+अटल u32 vpxd_scratch_size(u32 width, u32 height, bool is_पूर्णांकerlaced)
+अणु
 	u32 aligned_width = ALIGN(width, 16);
 	u32 aligned_height = ALIGN(height, 16);
 	u32 size_yuv = aligned_width * aligned_height * 3 / 2;
 	u32 size = 0;
 
-	if (!is_interlaced) {
+	अगर (!is_पूर्णांकerlaced) अणु
 		u32 binbuffer1_size, binbufer2_size;
 
 		binbuffer1_size = max_t(u32, size_yuv,
@@ -348,18 +349,18 @@ static u32 vpxd_scratch_size(u32 width, u32 height, bool is_interlaced)
 				  VPX_DECODER_FRAME_BIN_RES_BUDGET_RATIO_DEN;
 		size = ALIGN(binbuffer1_size + binbufer2_size,
 			     HFI_DMA_ALIGNMENT);
-	}
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 mpeg2d_scratch_size(u32 width, u32 height, bool is_interlaced)
-{
-	return 0;
-}
+अटल u32 mpeg2d_scratch_size(u32 width, u32 height, bool is_पूर्णांकerlaced)
+अणु
+	वापस 0;
+पूर्ण
 
-static u32 calculate_enc_output_frame_size(u32 width, u32 height, u32 rc_type)
-{
+अटल u32 calculate_enc_output_frame_size(u32 width, u32 height, u32 rc_type)
+अणु
 	u32 aligned_width, aligned_height;
 	u32 mbs_per_frame;
 	u32 frame_size;
@@ -377,33 +378,33 @@ static u32 calculate_enc_output_frame_size(u32 width, u32 height, u32 rc_type)
 			 ALIGN(aligned_width, 16)) / 256;
 	frame_size = width * height * 3;
 
-	if (mbs_per_frame < NUM_MBS_720P)
+	अगर (mbs_per_frame < NUM_MBS_720P)
 		frame_size = frame_size << 1;
-	else if (mbs_per_frame <= NUM_MBS_4K)
+	अन्यथा अगर (mbs_per_frame <= NUM_MBS_4K)
 		frame_size = frame_size >> 2;
-	else
+	अन्यथा
 		frame_size = frame_size >> 3;
 
-	if (rc_type == HFI_RATE_CONTROL_OFF || rc_type == HFI_RATE_CONTROL_CQ)
+	अगर (rc_type == HFI_RATE_CONTROL_OFF || rc_type == HFI_RATE_CONTROL_CQ)
 		frame_size = frame_size << 1;
 
 	/*
-	 * In case of opaque color format bitdepth will be known
-	 * with first ETB, buffers allocated already with 8 bit
-	 * won't be sufficient for 10 bit
-	 * calculate size considering 10-bit by default
-	 * For 10-bit cases size = size * 1.25
+	 * In हाल of opaque color क्रमmat bitdepth will be known
+	 * with first ETB, buffers allocated alपढ़ोy with 8 bit
+	 * won't be sufficient क्रम 10 bit
+	 * calculate size considering 10-bit by शेष
+	 * For 10-bit हालs size = size * 1.25
 	 */
 	frame_size *= 5;
 	frame_size /= 4;
 
-	return ALIGN(frame_size, SZ_4K);
-}
+	वापस ALIGN(frame_size, SZ_4K);
+पूर्ण
 
-static u32 calculate_enc_scratch_size(u32 width, u32 height, u32 work_mode,
+अटल u32 calculate_enc_scratch_size(u32 width, u32 height, u32 work_mode,
 				      u32 lcu_size, u32 num_vpp_pipes,
 				      u32 rc_type)
-{
+अणु
 	u32 aligned_width, aligned_height, bitstream_size;
 	u32 total_bitbin_buffers, size_single_pipe, bitbin_size;
 	u32 sao_bin_buffer_size, padded_bin_size, size;
@@ -415,19 +416,19 @@ static u32 calculate_enc_scratch_size(u32 width, u32 height, u32 work_mode,
 
 	bitstream_size = ALIGN(bitstream_size, HFI_DMA_ALIGNMENT);
 
-	if (work_mode == VIDC_WORK_MODE_2) {
+	अगर (work_mode == VIDC_WORK_MODE_2) अणु
 		total_bitbin_buffers = 3;
 		bitbin_size = bitstream_size * 17 / 10;
 		bitbin_size = ALIGN(bitbin_size, HFI_DMA_ALIGNMENT);
-	} else {
+	पूर्ण अन्यथा अणु
 		total_bitbin_buffers = 1;
 		bitstream_size = aligned_width * aligned_height * 3;
 		bitbin_size = ALIGN(bitstream_size, HFI_DMA_ALIGNMENT);
-	}
+	पूर्ण
 
-	if (num_vpp_pipes > 2)
+	अगर (num_vpp_pipes > 2)
 		size_single_pipe = bitbin_size / 2;
-	else
+	अन्यथा
 		size_single_pipe = bitbin_size;
 
 	size_single_pipe = ALIGN(size_single_pipe, HFI_DMA_ALIGNMENT);
@@ -440,33 +441,33 @@ static u32 calculate_enc_scratch_size(u32 width, u32 height, u32 work_mode,
 	size = ALIGN(bitbin_size, HFI_DMA_ALIGNMENT) *
 		total_bitbin_buffers + 512;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 h264e_scratch_size(u32 width, u32 height, u32 work_mode,
+अटल u32 h264e_scratch_size(u32 width, u32 height, u32 work_mode,
 			      u32 num_vpp_pipes, u32 rc_type)
-{
-	return calculate_enc_scratch_size(width, height, work_mode, 16,
+अणु
+	वापस calculate_enc_scratch_size(width, height, work_mode, 16,
 					  num_vpp_pipes, rc_type);
-}
+पूर्ण
 
-static u32 h265e_scratch_size(u32 width, u32 height, u32 work_mode,
+अटल u32 h265e_scratch_size(u32 width, u32 height, u32 work_mode,
 			      u32 num_vpp_pipes, u32 rc_type)
-{
-	return calculate_enc_scratch_size(width, height, work_mode, 32,
+अणु
+	वापस calculate_enc_scratch_size(width, height, work_mode, 32,
 					  num_vpp_pipes, rc_type);
-}
+पूर्ण
 
-static u32 vp8e_scratch_size(u32 width, u32 height, u32 work_mode,
+अटल u32 vp8e_scratch_size(u32 width, u32 height, u32 work_mode,
 			     u32 num_vpp_pipes, u32 rc_type)
-{
-	return calculate_enc_scratch_size(width, height, work_mode, 16,
+अणु
+	वापस calculate_enc_scratch_size(width, height, work_mode, 16,
 					  num_vpp_pipes, rc_type);
-}
+पूर्ण
 
-static u32 hfi_iris2_h264d_comv_size(u32 width, u32 height,
+अटल u32 hfi_iris2_h264d_comv_size(u32 width, u32 height,
 				     u32 yuv_buf_min_count)
-{
+अणु
 	u32 frame_width_in_mbs = ((width + 15) >> 4);
 	u32 frame_height_in_mbs = ((height + 15) >> 4);
 	u32 col_mv_aligned_width = (frame_width_in_mbs << 7);
@@ -488,33 +489,33 @@ static u32 hfi_iris2_h264d_comv_size(u32 width, u32 height,
 	comv_size = size_colloc * yuv_buf_min_count;
 	comv_size += 512;
 
-	return comv_size;
-}
+	वापस comv_size;
+पूर्ण
 
-static u32 size_h264d_bse_cmd_buf(u32 height)
-{
+अटल u32 size_h264d_bse_cmd_buf(u32 height)
+अणु
 	u32 aligned_height = ALIGN(height, 32);
 
-	return min_t(u32, (((aligned_height + 15) >> 4) * 3 * 4),
+	वापस min_t(u32, (((aligned_height + 15) >> 4) * 3 * 4),
 		     H264D_MAX_SLICE) * SIZE_H264D_BSE_CMD_PER_BUF;
-}
+पूर्ण
 
-static u32 size_h264d_vpp_cmd_buf(u32 height)
-{
+अटल u32 size_h264d_vpp_cmd_buf(u32 height)
+अणु
 	u32 aligned_height = ALIGN(height, 32);
 	u32 size;
 
 	size = min_t(u32, (((aligned_height + 15) >> 4) * 3 * 4),
 		     H264D_MAX_SLICE) * SIZE_H264D_VPP_CMD_PER_BUF;
-	if (size > VPP_CMD_MAX_SIZE)
+	अगर (size > VPP_CMD_MAX_SIZE)
 		size = VPP_CMD_MAX_SIZE;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 hfi_iris2_h264d_non_comv_size(u32 width, u32 height,
+अटल u32 hfi_iris2_h264d_non_comv_size(u32 width, u32 height,
 					 u32 num_vpp_pipes)
-{
+अणु
 	u32 size_bse, size_vpp, size;
 
 	size_bse = size_h264d_bse_cmd_buf(height);
@@ -540,11 +541,11 @@ static u32 hfi_iris2_h264d_non_comv_size(u32 width, u32 height,
 		      HFI_DMA_ALIGNMENT) * 2 +
 		ALIGN(SIZE_H264D_QP(width, height), HFI_DMA_ALIGNMENT);
 
-	return ALIGN(size, HFI_DMA_ALIGNMENT);
-}
+	वापस ALIGN(size, HFI_DMA_ALIGNMENT);
+पूर्ण
 
-static u32 size_h265d_bse_cmd_buf(u32 width, u32 height)
-{
+अटल u32 size_h265d_bse_cmd_buf(u32 width, u32 height)
+अणु
 	u32 size;
 
 	size = (ALIGN(width, LCU_MAX_SIZE_PELS) / LCU_MIN_SIZE_PELS) *
@@ -553,11 +554,11 @@ static u32 size_h265d_bse_cmd_buf(u32 width, u32 height)
 	size = min_t(u32, size, H265D_MAX_SLICE + 1);
 	size = 2 * size * SIZE_H265D_BSE_CMD_PER_BUF;
 
-	return ALIGN(size, HFI_DMA_ALIGNMENT);
-}
+	वापस ALIGN(size, HFI_DMA_ALIGNMENT);
+पूर्ण
 
-static u32 size_h265d_vpp_cmd_buf(u32 width, u32 height)
-{
+अटल u32 size_h265d_vpp_cmd_buf(u32 width, u32 height)
+अणु
 	u32 size;
 
 	size = (ALIGN(width, LCU_MAX_SIZE_PELS) / LCU_MIN_SIZE_PELS) *
@@ -567,27 +568,27 @@ static u32 size_h265d_vpp_cmd_buf(u32 width, u32 height)
 	size = ALIGN(size, 4);
 	size = 2 * size * SIZE_H265D_VPP_CMD_PER_BUF;
 	size = ALIGN(size, HFI_DMA_ALIGNMENT);
-	if (size > VPP_CMD_MAX_SIZE)
+	अगर (size > VPP_CMD_MAX_SIZE)
 		size = VPP_CMD_MAX_SIZE;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 hfi_iris2_h265d_comv_size(u32 width, u32 height,
+अटल u32 hfi_iris2_h265d_comv_size(u32 width, u32 height,
 				     u32 yuv_buf_count_min)
-{
+अणु
 	u32 size;
 
 	size = ALIGN(((((width + 15) >> 4) * ((height + 15) >> 4)) << 8), 512);
 	size *= yuv_buf_count_min;
 	size += 512;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 hfi_iris2_h265d_non_comv_size(u32 width, u32 height,
+अटल u32 hfi_iris2_h265d_non_comv_size(u32 width, u32 height,
 					 u32 num_vpp_pipes)
-{
+अणु
 	u32 size_bse, size_vpp, size;
 
 	size_bse = size_h265d_bse_cmd_buf(width, height);
@@ -596,7 +597,7 @@ static u32 hfi_iris2_h265d_non_comv_size(u32 width, u32 height,
 		ALIGN(size_bse, HFI_DMA_ALIGNMENT) +
 		ALIGN(size_vpp, HFI_DMA_ALIGNMENT) +
 		ALIGN(NUM_HW_PIC_BUF * 20 * 22 * 4, HFI_DMA_ALIGNMENT) +
-		ALIGN(2 * sizeof(u16) *
+		ALIGN(2 * माप(u16) *
 		(ALIGN(width, LCU_MAX_SIZE_PELS) / LCU_MIN_SIZE_PELS) *
 		(ALIGN(height, LCU_MAX_SIZE_PELS) / LCU_MIN_SIZE_PELS),
 		       HFI_DMA_ALIGNMENT) +
@@ -621,47 +622,47 @@ static u32 hfi_iris2_h265d_non_comv_size(u32 width, u32 height,
 			* 4 +
 		ALIGN(SIZE_H265D_QP(width, height), HFI_DMA_ALIGNMENT);
 
-	return ALIGN(size, HFI_DMA_ALIGNMENT);
-}
+	वापस ALIGN(size, HFI_DMA_ALIGNMENT);
+पूर्ण
 
-static u32 hfi_iris2_vp8d_comv_size(u32 width, u32 height,
+अटल u32 hfi_iris2_vp8d_comv_size(u32 width, u32 height,
 				    u32 yuv_min_buf_count)
-{
-	return (((width + 15) >> 4) * ((height + 15) >> 4) * 8 * 2);
-}
+अणु
+	वापस (((width + 15) >> 4) * ((height + 15) >> 4) * 8 * 2);
+पूर्ण
 
-static u32 h264d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
+अटल u32 h264d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
 			       bool split_mode_enabled, u32 num_vpp_pipes)
-{
+अणु
 	u32 co_mv_size, nonco_mv_size, vpss_lb_size = 0;
 
 	co_mv_size = hfi_iris2_h264d_comv_size(width, height, min_buf_count);
 	nonco_mv_size = hfi_iris2_h264d_non_comv_size(width, height,
 						      num_vpp_pipes);
-	if (split_mode_enabled)
+	अगर (split_mode_enabled)
 		vpss_lb_size = size_vpss_lb(width, height, num_vpp_pipes);
 
-	return co_mv_size + nonco_mv_size + vpss_lb_size;
-}
+	वापस co_mv_size + nonco_mv_size + vpss_lb_size;
+पूर्ण
 
-static u32 h265d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
+अटल u32 h265d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
 			       bool split_mode_enabled, u32 num_vpp_pipes)
-{
+अणु
 	u32 co_mv_size, nonco_mv_size, vpss_lb_size = 0;
 
 	co_mv_size = hfi_iris2_h265d_comv_size(width, height, min_buf_count);
 	nonco_mv_size = hfi_iris2_h265d_non_comv_size(width, height,
 						      num_vpp_pipes);
-	if (split_mode_enabled)
+	अगर (split_mode_enabled)
 		vpss_lb_size = size_vpss_lb(width, height, num_vpp_pipes);
 
-	return co_mv_size + nonco_mv_size + vpss_lb_size +
+	वापस co_mv_size + nonco_mv_size + vpss_lb_size +
 		HDR10_HIST_EXTRADATA_SIZE;
-}
+पूर्ण
 
-static u32 vp8d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
+अटल u32 vp8d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
 			      bool split_mode_enabled, u32 num_vpp_pipes)
-{
+अणु
 	u32 vpss_lb_size = 0, size;
 
 	size = hfi_iris2_vp8d_comv_size(width, height, 0);
@@ -680,17 +681,17 @@ static u32 vp8d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
 		      HFI_DMA_ALIGNMENT) +
 		ALIGN(SIZE_VP8D_LB_FE_TOP_DATA(width, height),
 		      HFI_DMA_ALIGNMENT);
-	if (split_mode_enabled)
+	अगर (split_mode_enabled)
 		vpss_lb_size = size_vpss_lb(width, height, num_vpp_pipes);
 
 	size += vpss_lb_size;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 vp9d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
+अटल u32 vp9d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
 			      bool split_mode_enabled, u32 num_vpp_pipes)
-{
+अणु
 	u32 vpss_lb_size = 0;
 	u32 size;
 
@@ -711,17 +712,17 @@ static u32 vp9d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
 		ALIGN(SIZE_VP9D_LB_FE_TOP_DATA(width, height),
 		      HFI_DMA_ALIGNMENT);
 
-	if (split_mode_enabled)
+	अगर (split_mode_enabled)
 		vpss_lb_size = size_vpss_lb(width, height, num_vpp_pipes);
 
 	size += vpss_lb_size + HDR10_HIST_EXTRADATA_SIZE;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 mpeg2d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
+अटल u32 mpeg2d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
 				bool split_mode_enabled, u32 num_vpp_pipes)
-{
+अणु
 	u32 vpss_lb_size = 0;
 	u32 size;
 
@@ -742,18 +743,18 @@ static u32 mpeg2d_scratch1_size(u32 width, u32 height, u32 min_buf_count,
 		ALIGN(SIZE_VP8D_LB_FE_TOP_DATA(width, height),
 		      HFI_DMA_ALIGNMENT);
 
-	if (split_mode_enabled)
+	अगर (split_mode_enabled)
 		vpss_lb_size = size_vpss_lb(width, height, num_vpp_pipes);
 
 	size += vpss_lb_size;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32
+अटल u32
 calculate_enc_scratch1_size(u32 width, u32 height, u32 lcu_size, u32 num_ref,
 			    bool ten_bit, u32 num_vpp_pipes, bool is_h265)
-{
+अणु
 	u32 line_buf_ctrl_size, line_buf_data_size, leftline_buf_ctrl_size;
 	u32 line_buf_sde_size, sps_pps_slice_hdr, topline_buf_ctrl_size_FE;
 	u32 leftline_buf_ctrl_size_FE, line_buf_recon_pix_size;
@@ -761,7 +762,7 @@ calculate_enc_scratch1_size(u32 width, u32 height, u32 lcu_size, u32 num_ref,
 	u32 col_mv_buf_size, vpp_reg_buffer_size, ir_buffer_size;
 	u32 vpss_line_buf, leftline_buf_meta_recony, h265e_colrcbuf_size;
 	u32 h265e_framerc_bufsize, h265e_lcubitcnt_bufsize;
-	u32 h265e_lcubitmap_bufsize, se_stats_bufsize;
+	u32 h265e_lcubiपंचांगap_bufsize, se_stats_bufsize;
 	u32 bse_reg_buffer_size, bse_slice_cmd_buffer_size, slice_info_bufsize;
 	u32 line_buf_ctrl_size_buffid2, slice_cmd_buffer_size;
 	u32 width_lcu_num, height_lcu_num, width_coded, height_coded;
@@ -792,11 +793,11 @@ calculate_enc_scratch1_size(u32 width, u32 height, u32 lcu_size, u32 num_ref,
 		((height_coded + 32) / 32 * 4 * 16) :
 		((height_coded + 15) / 16 * 5 * 16);
 
-	if (num_vpp_pipes > 1) {
+	अगर (num_vpp_pipes > 1) अणु
 		leftline_buf_ctrl_size += 512;
 		leftline_buf_ctrl_size =
 			ALIGN(leftline_buf_ctrl_size, 512) * num_vpp_pipes;
-	}
+	पूर्ण
 
 	leftline_buf_ctrl_size =
 		ALIGN(leftline_buf_ctrl_size, HFI_DMA_ALIGNMENT);
@@ -834,7 +835,7 @@ calculate_enc_scratch1_size(u32 width, u32 height, u32 lcu_size, u32 num_ref,
 		ALIGN(col_mv_buf_size, HFI_DMA_ALIGNMENT) * (num_ref + 1);
 	h265e_colrcbuf_size =
 		(((width_lcu_num + 7) >> 3) * 16 * 2 * height_lcu_num);
-	if (num_vpp_pipes > 1)
+	अगर (num_vpp_pipes > 1)
 		h265e_colrcbuf_size =
 			ALIGN(h265e_colrcbuf_size, HFI_DMA_ALIGNMENT) *
 			num_vpp_pipes;
@@ -845,7 +846,7 @@ calculate_enc_scratch1_size(u32 width, u32 height, u32 lcu_size, u32 num_ref,
 		(14 + (((height_coded >> 5) + 7) >> 3))) :
 		(256 + 16 * (14 + (((height_coded >> 4) + 7) >> 3)));
 	h265e_framerc_bufsize *= 6;   /* multiply by max numtilescol */
-	if (num_vpp_pipes > 1)
+	अगर (num_vpp_pipes > 1)
 		h265e_framerc_bufsize =
 			ALIGN(h265e_framerc_bufsize, HFI_DMA_ALIGNMENT) *
 			num_vpp_pipes;
@@ -855,16 +856,16 @@ calculate_enc_scratch1_size(u32 width, u32 height, u32 lcu_size, u32 num_ref,
 	h265e_lcubitcnt_bufsize = 256 + 4 * frame_num_lcu;
 	h265e_lcubitcnt_bufsize =
 		ALIGN(h265e_lcubitcnt_bufsize, HFI_DMA_ALIGNMENT);
-	h265e_lcubitmap_bufsize = 256 + (frame_num_lcu >> 3);
-	h265e_lcubitmap_bufsize =
-		ALIGN(h265e_lcubitmap_bufsize, HFI_DMA_ALIGNMENT);
+	h265e_lcubiपंचांगap_bufsize = 256 + (frame_num_lcu >> 3);
+	h265e_lcubiपंचांगap_bufsize =
+		ALIGN(h265e_lcubiपंचांगap_bufsize, HFI_DMA_ALIGNMENT);
 	line_buf_sde_size = 256 + 16 * (width_coded >> 4);
 	line_buf_sde_size = ALIGN(line_buf_sde_size, HFI_DMA_ALIGNMENT);
-	if ((width_coded * height_coded) > (4096 * 2160))
+	अगर ((width_coded * height_coded) > (4096 * 2160))
 		se_stats_bufsize = 0;
-	else if ((width_coded * height_coded) > (1920 * 1088))
+	अन्यथा अगर ((width_coded * height_coded) > (1920 * 1088))
 		se_stats_bufsize = (40 * 4 * frame_num_lcu + 256 + 256);
-	else
+	अन्यथा
 		se_stats_bufsize = (1024 * frame_num_lcu + 256 + 256);
 
 	se_stats_bufsize = ALIGN(se_stats_bufsize, HFI_DMA_ALIGNMENT) * 2;
@@ -893,7 +894,7 @@ calculate_enc_scratch1_size(u32 width, u32 height, u32 lcu_size, u32 num_ref,
 		leftline_buf_recon_pix_size +
 		leftline_buf_meta_recony + linebuf_meta_recon_uv +
 		h265e_colrcbuf_size + h265e_framerc_bufsize +
-		h265e_lcubitcnt_bufsize + h265e_lcubitmap_bufsize +
+		h265e_lcubitcnt_bufsize + h265e_lcubiपंचांगap_bufsize +
 		line_buf_sde_size +
 		topline_bufsize_fe_1stg_sao + override_buffer_size +
 		bse_reg_buffer_size + vpp_reg_buffer_size + sps_pps_slice_hdr +
@@ -901,52 +902,52 @@ calculate_enc_scratch1_size(u32 width, u32 height, u32 lcu_size, u32 num_ref,
 		ir_buffer_size + slice_info_bufsize + lambda_lut_size +
 		se_stats_bufsize + 1024;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 h264e_scratch1_size(u32 width, u32 height, u32 num_ref, bool ten_bit,
+अटल u32 h264e_scratch1_size(u32 width, u32 height, u32 num_ref, bool ten_bit,
 			       u32 num_vpp_pipes)
-{
-	return calculate_enc_scratch1_size(width, height, 16, num_ref, ten_bit,
+अणु
+	वापस calculate_enc_scratch1_size(width, height, 16, num_ref, ten_bit,
 					   num_vpp_pipes, false);
-}
+पूर्ण
 
-static u32 h265e_scratch1_size(u32 width, u32 height, u32 num_ref, bool ten_bit,
+अटल u32 h265e_scratch1_size(u32 width, u32 height, u32 num_ref, bool ten_bit,
 			       u32 num_vpp_pipes)
-{
-	return calculate_enc_scratch1_size(width, height, 32, num_ref, ten_bit,
+अणु
+	वापस calculate_enc_scratch1_size(width, height, 32, num_ref, ten_bit,
 					   num_vpp_pipes, true);
-}
+पूर्ण
 
-static u32 vp8e_scratch1_size(u32 width, u32 height, u32 num_ref, bool ten_bit,
+अटल u32 vp8e_scratch1_size(u32 width, u32 height, u32 num_ref, bool ten_bit,
 			      u32 num_vpp_pipes)
-{
-	return calculate_enc_scratch1_size(width, height, 16, num_ref, ten_bit,
+अणु
+	वापस calculate_enc_scratch1_size(width, height, 16, num_ref, ten_bit,
 					   1, false);
-}
+पूर्ण
 
-static u32 ubwc_metadata_plane_stride(u32 width, u32 metadata_stride_multi,
+अटल u32 ubwc_metadata_plane_stride(u32 width, u32 metadata_stride_multi,
 				      u32 tile_width_pels)
-{
-	return ALIGN(((width + (tile_width_pels - 1)) / tile_width_pels),
+अणु
+	वापस ALIGN(((width + (tile_width_pels - 1)) / tile_width_pels),
 			metadata_stride_multi);
-}
+पूर्ण
 
-static u32 ubwc_metadata_plane_bufheight(u32 height, u32 metadata_height_multi,
+अटल u32 ubwc_metadata_plane_bufheight(u32 height, u32 metadata_height_multi,
 					 u32 tile_height_pels)
-{
-	return ALIGN(((height + (tile_height_pels - 1)) / tile_height_pels),
+अणु
+	वापस ALIGN(((height + (tile_height_pels - 1)) / tile_height_pels),
 			metadata_height_multi);
-}
+पूर्ण
 
-static u32 ubwc_metadata_plane_buffer_size(u32 metadata_stride,
+अटल u32 ubwc_metadata_plane_buffer_size(u32 metadata_stride,
 					   u32 metadata_buf_height)
-{
-	return ALIGN(metadata_stride * metadata_buf_height, SZ_4K);
-}
+अणु
+	वापस ALIGN(metadata_stride * metadata_buf_height, SZ_4K);
+पूर्ण
 
-static u32 enc_scratch2_size(u32 width, u32 height, u32 num_ref, bool ten_bit)
-{
+अटल u32 enc_scratch2_size(u32 width, u32 height, u32 num_ref, bool ten_bit)
+अणु
 	u32 aligned_width, aligned_height, chroma_height, ref_buf_height;
 	u32 luma_size, chroma_size;
 	u32 metadata_stride, meta_buf_height, meta_size_y, meta_size_c;
@@ -954,7 +955,7 @@ static u32 enc_scratch2_size(u32 width, u32 height, u32 num_ref, bool ten_bit)
 	u32 ref_buf_size, ref_stride;
 	u32 size;
 
-	if (!ten_bit) {
+	अगर (!ten_bit) अणु
 		aligned_height = ALIGN(height, HFI_VENUS_HEIGHT_ALIGNMENT);
 		chroma_height = height >> 1;
 		chroma_height = ALIGN(chroma_height,
@@ -973,7 +974,7 @@ static u32 enc_scratch2_size(u32 width, u32 height, u32 num_ref, bool ten_bit)
 		size = (aligned_height + chroma_height) * aligned_width +
 			meta_size_y + meta_size_c;
 		size = (size * (num_ref + 3)) + 4096;
-	} else {
+	पूर्ण अन्यथा अणु
 		ref_buf_height = (height + (HFI_VENUS_HEIGHT_ALIGNMENT - 1))
 					& (~(HFI_VENUS_HEIGHT_ALIGNMENT - 1));
 		ref_luma_stride_bytes =
@@ -1002,37 +1003,37 @@ static u32 enc_scratch2_size(u32 width, u32 height, u32 num_ref, bool ten_bit)
 							      meta_buf_height);
 		size = ref_buf_size + meta_size_y + meta_size_c;
 		size = (size * (num_ref + 3)) + 4096;
-	}
+	पूर्ण
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static u32 enc_persist_size(void)
-{
-	return HFI_IRIS2_ENC_PERSIST_SIZE;
-}
+अटल u32 enc_persist_size(व्योम)
+अणु
+	वापस HFI_IRIS2_ENC_PERSIST_SIZE;
+पूर्ण
 
-static u32 h264d_persist1_size(void)
-{
-	return ALIGN((SIZE_SLIST_BUF_H264 * NUM_SLIST_BUF_H264
+अटल u32 h264d_persist1_size(व्योम)
+अणु
+	वापस ALIGN((SIZE_SLIST_BUF_H264 * NUM_SLIST_BUF_H264
 		     + NUM_HW_PIC_BUF * SIZE_SEI_USERDATA), HFI_DMA_ALIGNMENT);
-}
+पूर्ण
 
-static u32 h265d_persist1_size(void)
-{
-	return ALIGN((SIZE_SLIST_BUF_H265 * NUM_SLIST_BUF_H265 + H265_NUM_TILE
-			* sizeof(u32)), HFI_DMA_ALIGNMENT);
-}
+अटल u32 h265d_persist1_size(व्योम)
+अणु
+	वापस ALIGN((SIZE_SLIST_BUF_H265 * NUM_SLIST_BUF_H265 + H265_NUM_TILE
+			* माप(u32)), HFI_DMA_ALIGNMENT);
+पूर्ण
 
-static u32 vp8d_persist1_size(void)
-{
-	return ALIGN(VP8_NUM_PROBABILITY_TABLE_BUF * VP8_PROB_TABLE_SIZE,
+अटल u32 vp8d_persist1_size(व्योम)
+अणु
+	वापस ALIGN(VP8_NUM_PROBABILITY_TABLE_BUF * VP8_PROB_TABLE_SIZE,
 			HFI_DMA_ALIGNMENT);
-}
+पूर्ण
 
-static u32 vp9d_persist1_size(void)
-{
-	return
+अटल u32 vp9d_persist1_size(व्योम)
+अणु
+	वापस
 		ALIGN(VP9_NUM_PROBABILITY_TABLE_BUF * VP9_PROB_TABLE_SIZE,
 		      HFI_DMA_ALIGNMENT) +
 		ALIGN(HFI_IRIS2_VP9D_COMV_SIZE, HFI_DMA_ALIGNMENT) +
@@ -1040,177 +1041,177 @@ static u32 vp9d_persist1_size(void)
 		ALIGN(VP9_UDC_HEADER_BUF_SIZE, HFI_DMA_ALIGNMENT) +
 		ALIGN(VP9_NUM_FRAME_INFO_BUF * CCE_TILE_OFFSET_SIZE,
 		      HFI_DMA_ALIGNMENT);
-}
+पूर्ण
 
-static u32 mpeg2d_persist1_size(void)
-{
-	return QMATRIX_SIZE + MP2D_QPDUMP_SIZE;
-}
+अटल u32 mpeg2d_persist1_size(व्योम)
+अणु
+	वापस QMATRIX_SIZE + MP2D_QPDUMP_SIZE;
+पूर्ण
 
-struct dec_bufsize_ops {
-	u32 (*scratch)(u32 width, u32 height, bool is_interlaced);
+काष्ठा dec_bufsize_ops अणु
+	u32 (*scratch)(u32 width, u32 height, bool is_पूर्णांकerlaced);
 	u32 (*scratch1)(u32 width, u32 height, u32 min_buf_count,
 			bool split_mode_enabled, u32 num_vpp_pipes);
-	u32 (*persist1)(void);
-};
+	u32 (*persist1)(व्योम);
+पूर्ण;
 
-struct enc_bufsize_ops {
+काष्ठा enc_bufsize_ops अणु
 	u32 (*scratch)(u32 width, u32 height, u32 work_mode, u32 num_vpp_pipes,
 		       u32 rc_type);
 	u32 (*scratch1)(u32 width, u32 height, u32 num_ref, bool ten_bit,
 			u32 num_vpp_pipes);
 	u32 (*scratch2)(u32 width, u32 height, u32 num_ref, bool ten_bit);
-	u32 (*persist)(void);
-};
+	u32 (*persist)(व्योम);
+पूर्ण;
 
-static struct dec_bufsize_ops dec_h264_ops = {
+अटल काष्ठा dec_bufsize_ops dec_h264_ops = अणु
 	.scratch = h264d_scratch_size,
 	.scratch1 = h264d_scratch1_size,
 	.persist1 = h264d_persist1_size,
-};
+पूर्ण;
 
-static struct dec_bufsize_ops dec_h265_ops = {
+अटल काष्ठा dec_bufsize_ops dec_h265_ops = अणु
 	.scratch = h265d_scratch_size,
 	.scratch1 = h265d_scratch1_size,
 	.persist1 = h265d_persist1_size,
-};
+पूर्ण;
 
-static struct dec_bufsize_ops dec_vp8_ops = {
+अटल काष्ठा dec_bufsize_ops dec_vp8_ops = अणु
 	.scratch = vpxd_scratch_size,
 	.scratch1 = vp8d_scratch1_size,
 	.persist1 = vp8d_persist1_size,
-};
+पूर्ण;
 
-static struct dec_bufsize_ops dec_vp9_ops = {
+अटल काष्ठा dec_bufsize_ops dec_vp9_ops = अणु
 	.scratch = vpxd_scratch_size,
 	.scratch1 = vp9d_scratch1_size,
 	.persist1 = vp9d_persist1_size,
-};
+पूर्ण;
 
-static struct dec_bufsize_ops dec_mpeg2_ops = {
+अटल काष्ठा dec_bufsize_ops dec_mpeg2_ops = अणु
 	.scratch = mpeg2d_scratch_size,
 	.scratch1 = mpeg2d_scratch1_size,
 	.persist1 = mpeg2d_persist1_size,
-};
+पूर्ण;
 
-static struct enc_bufsize_ops enc_h264_ops = {
+अटल काष्ठा enc_bufsize_ops enc_h264_ops = अणु
 	.scratch = h264e_scratch_size,
 	.scratch1 = h264e_scratch1_size,
 	.scratch2 = enc_scratch2_size,
 	.persist = enc_persist_size,
-};
+पूर्ण;
 
-static struct enc_bufsize_ops enc_h265_ops = {
+अटल काष्ठा enc_bufsize_ops enc_h265_ops = अणु
 	.scratch = h265e_scratch_size,
 	.scratch1 = h265e_scratch1_size,
 	.scratch2 = enc_scratch2_size,
 	.persist = enc_persist_size,
-};
+पूर्ण;
 
-static struct enc_bufsize_ops enc_vp8_ops = {
+अटल काष्ठा enc_bufsize_ops enc_vp8_ops = अणु
 	.scratch = vp8e_scratch_size,
 	.scratch1 = vp8e_scratch1_size,
 	.scratch2 = enc_scratch2_size,
 	.persist = enc_persist_size,
-};
+पूर्ण;
 
-static u32
+अटल u32
 calculate_dec_input_frame_size(u32 width, u32 height, u32 codec,
 			       u32 max_mbs_per_frame, u32 buffer_size_limit)
-{
+अणु
 	u32 frame_size, num_mbs;
-	u32 div_factor = 1;
+	u32 भाग_factor = 1;
 	u32 base_res_mbs = NUM_MBS_4K;
 
 	/*
 	 * Decoder input size calculation:
-	 * If clip is 8k buffer size is calculated for 8k : 8k mbs/4
-	 * For 8k cases we expect width/height to be set always.
-	 * In all other cases size is calculated for 4k:
-	 * 4k mbs for VP8/VP9 and 4k/2 for remaining codecs
+	 * If clip is 8k buffer size is calculated क्रम 8k : 8k mbs/4
+	 * For 8k हालs we expect width/height to be set always.
+	 * In all other हालs size is calculated क्रम 4k:
+	 * 4k mbs क्रम VP8/VP9 and 4k/2 क्रम reमुख्यing codecs
 	 */
 	num_mbs = (ALIGN(height, 16) * ALIGN(width, 16)) / 256;
-	if (num_mbs > NUM_MBS_4K) {
-		div_factor = 4;
+	अगर (num_mbs > NUM_MBS_4K) अणु
+		भाग_factor = 4;
 		base_res_mbs = max_mbs_per_frame;
-	} else {
+	पूर्ण अन्यथा अणु
 		base_res_mbs = NUM_MBS_4K;
-		if (codec == V4L2_PIX_FMT_VP9)
-			div_factor = 1;
-		else
-			div_factor = 2;
-	}
+		अगर (codec == V4L2_PIX_FMT_VP9)
+			भाग_factor = 1;
+		अन्यथा
+			भाग_factor = 2;
+	पूर्ण
 
-	frame_size = base_res_mbs * MB_SIZE_IN_PIXEL * 3 / 2 / div_factor;
+	frame_size = base_res_mbs * MB_SIZE_IN_PIXEL * 3 / 2 / भाग_factor;
 
-	/* multiply by 10/8 (1.25) to get size for 10 bit case */
-	if (codec == V4L2_PIX_FMT_VP9 || codec == V4L2_PIX_FMT_HEVC)
+	/* multiply by 10/8 (1.25) to get size क्रम 10 bit हाल */
+	अगर (codec == V4L2_PIX_FMT_VP9 || codec == V4L2_PIX_FMT_HEVC)
 		frame_size = frame_size + (frame_size >> 2);
 
-	if (buffer_size_limit && buffer_size_limit < frame_size)
+	अगर (buffer_size_limit && buffer_size_limit < frame_size)
 		frame_size = buffer_size_limit;
 
-	return ALIGN(frame_size, SZ_4K);
-}
+	वापस ALIGN(frame_size, SZ_4K);
+पूर्ण
 
-static int output_buffer_count(u32 session_type, u32 codec)
-{
+अटल पूर्णांक output_buffer_count(u32 session_type, u32 codec)
+अणु
 	u32 output_min_count;
 
-	if (session_type == VIDC_SESSION_TYPE_DEC) {
-		switch (codec) {
-		case V4L2_PIX_FMT_MPEG2:
-		case V4L2_PIX_FMT_VP8:
+	अगर (session_type == VIDC_SESSION_TYPE_DEC) अणु
+		चयन (codec) अणु
+		हाल V4L2_PIX_FMT_MPEG2:
+		हाल V4L2_PIX_FMT_VP8:
 			output_min_count = 6;
-			break;
-		case V4L2_PIX_FMT_VP9:
+			अवरोध;
+		हाल V4L2_PIX_FMT_VP9:
 			output_min_count = 9;
-			break;
-		case V4L2_PIX_FMT_H264:
-		case V4L2_PIX_FMT_HEVC:
-		default:
+			अवरोध;
+		हाल V4L2_PIX_FMT_H264:
+		हाल V4L2_PIX_FMT_HEVC:
+		शेष:
 			output_min_count = 18;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		output_min_count = MIN_ENC_OUTPUT_BUFFERS;
-	}
+	पूर्ण
 
-	return output_min_count;
-}
+	वापस output_min_count;
+पूर्ण
 
-static int bufreq_dec(struct hfi_plat_buffers_params *params, u32 buftype,
-		      struct hfi_buffer_requirements *bufreq)
-{
-	enum hfi_version version = params->version;
+अटल पूर्णांक bufreq_dec(काष्ठा hfi_plat_buffers_params *params, u32 buftype,
+		      काष्ठा hfi_buffer_requirements *bufreq)
+अणु
+	क्रमागत hfi_version version = params->version;
 	u32 codec = params->codec;
 	u32 width = params->width, height = params->height, out_min_count;
-	struct dec_bufsize_ops *dec_ops;
+	काष्ठा dec_bufsize_ops *dec_ops;
 	bool is_secondary_output = params->dec.is_secondary_output;
-	bool is_interlaced = params->dec.is_interlaced;
+	bool is_पूर्णांकerlaced = params->dec.is_पूर्णांकerlaced;
 	u32 max_mbs_per_frame = params->dec.max_mbs_per_frame;
 	u32 buffer_size_limit = params->dec.buffer_size_limit;
 	u32 num_vpp_pipes = params->num_vpp_pipes;
 
-	switch (codec) {
-	case V4L2_PIX_FMT_H264:
+	चयन (codec) अणु
+	हाल V4L2_PIX_FMT_H264:
 		dec_ops = &dec_h264_ops;
-		break;
-	case V4L2_PIX_FMT_HEVC:
+		अवरोध;
+	हाल V4L2_PIX_FMT_HEVC:
 		dec_ops = &dec_h265_ops;
-		break;
-	case V4L2_PIX_FMT_VP8:
+		अवरोध;
+	हाल V4L2_PIX_FMT_VP8:
 		dec_ops = &dec_vp8_ops;
-		break;
-	case V4L2_PIX_FMT_VP9:
+		अवरोध;
+	हाल V4L2_PIX_FMT_VP9:
 		dec_ops = &dec_vp9_ops;
-		break;
-	case V4L2_PIX_FMT_MPEG2:
+		अवरोध;
+	हाल V4L2_PIX_FMT_MPEG2:
 		dec_ops = &dec_mpeg2_ops;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	out_min_count = output_buffer_count(VIDC_SESSION_TYPE_DEC, codec);
 
@@ -1222,38 +1223,38 @@ static int bufreq_dec(struct hfi_plat_buffers_params *params, u32 buftype,
 	bufreq->contiguous = 1;
 	bufreq->alignment = 256;
 
-	if (buftype == HFI_BUFFER_INPUT) {
+	अगर (buftype == HFI_BUFFER_INPUT) अणु
 		bufreq->count_min = MIN_INPUT_BUFFERS;
 		bufreq->size =
 			calculate_dec_input_frame_size(width, height, codec,
 						       max_mbs_per_frame,
 						       buffer_size_limit);
-	} else if (buftype == HFI_BUFFER_OUTPUT ||
-		   buftype == HFI_BUFFER_OUTPUT2) {
+	पूर्ण अन्यथा अगर (buftype == HFI_BUFFER_OUTPUT ||
+		   buftype == HFI_BUFFER_OUTPUT2) अणु
 		bufreq->count_min = out_min_count;
 		bufreq->size =
 			venus_helper_get_framesz_raw(params->hfi_color_fmt,
 						     width, height);
-	} else if (buftype == HFI_BUFFER_INTERNAL_SCRATCH(version)) {
-		bufreq->size = dec_ops->scratch(width, height, is_interlaced);
-	} else if (buftype == HFI_BUFFER_INTERNAL_SCRATCH_1(version)) {
+	पूर्ण अन्यथा अगर (buftype == HFI_BUFFER_INTERNAL_SCRATCH(version)) अणु
+		bufreq->size = dec_ops->scratch(width, height, is_पूर्णांकerlaced);
+	पूर्ण अन्यथा अगर (buftype == HFI_BUFFER_INTERNAL_SCRATCH_1(version)) अणु
 		bufreq->size = dec_ops->scratch1(width, height, out_min_count,
 						 is_secondary_output,
 						 num_vpp_pipes);
-	} else if (buftype == HFI_BUFFER_INTERNAL_PERSIST_1) {
+	पूर्ण अन्यथा अगर (buftype == HFI_BUFFER_INTERNAL_PERSIST_1) अणु
 		bufreq->size = dec_ops->persist1();
-	} else {
+	पूर्ण अन्यथा अणु
 		bufreq->size = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bufreq_enc(struct hfi_plat_buffers_params *params, u32 buftype,
-		      struct hfi_buffer_requirements *bufreq)
-{
-	enum hfi_version version = params->version;
-	struct enc_bufsize_ops *enc_ops;
+अटल पूर्णांक bufreq_enc(काष्ठा hfi_plat_buffers_params *params, u32 buftype,
+		      काष्ठा hfi_buffer_requirements *bufreq)
+अणु
+	क्रमागत hfi_version version = params->version;
+	काष्ठा enc_bufsize_ops *enc_ops;
 	u32 width = params->width;
 	u32 height = params->height;
 	bool is_tenbit = params->enc.is_tenbit;
@@ -1264,19 +1265,19 @@ static int bufreq_enc(struct hfi_plat_buffers_params *params, u32 buftype,
 	u32 num_vpp_pipes = params->num_vpp_pipes;
 	u32 num_ref;
 
-	switch (codec) {
-	case V4L2_PIX_FMT_H264:
+	चयन (codec) अणु
+	हाल V4L2_PIX_FMT_H264:
 		enc_ops = &enc_h264_ops;
-		break;
-	case V4L2_PIX_FMT_HEVC:
+		अवरोध;
+	हाल V4L2_PIX_FMT_HEVC:
 		enc_ops = &enc_h265_ops;
-		break;
-	case V4L2_PIX_FMT_VP8:
+		अवरोध;
+	हाल V4L2_PIX_FMT_VP8:
 		enc_ops = &enc_vp8_ops;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	num_ref = num_bframes > 0 ? num_bframes + 1 : 1;
 
@@ -1288,40 +1289,40 @@ static int bufreq_enc(struct hfi_plat_buffers_params *params, u32 buftype,
 	bufreq->contiguous = 1;
 	bufreq->alignment = 256;
 
-	if (buftype == HFI_BUFFER_INPUT) {
+	अगर (buftype == HFI_BUFFER_INPUT) अणु
 		bufreq->count_min = MIN_INPUT_BUFFERS;
 		bufreq->size =
 			venus_helper_get_framesz_raw(params->hfi_color_fmt,
 						     width, height);
-	} else if (buftype == HFI_BUFFER_OUTPUT ||
-		   buftype == HFI_BUFFER_OUTPUT2) {
+	पूर्ण अन्यथा अगर (buftype == HFI_BUFFER_OUTPUT ||
+		   buftype == HFI_BUFFER_OUTPUT2) अणु
 		bufreq->count_min =
 			output_buffer_count(VIDC_SESSION_TYPE_ENC, codec);
 		bufreq->size = calculate_enc_output_frame_size(width, height,
 							       rc_type);
-	} else if (buftype == HFI_BUFFER_INTERNAL_SCRATCH(version)) {
+	पूर्ण अन्यथा अगर (buftype == HFI_BUFFER_INTERNAL_SCRATCH(version)) अणु
 		bufreq->size = enc_ops->scratch(width, height, work_mode,
 						num_vpp_pipes, rc_type);
-	} else if (buftype == HFI_BUFFER_INTERNAL_SCRATCH_1(version)) {
+	पूर्ण अन्यथा अगर (buftype == HFI_BUFFER_INTERNAL_SCRATCH_1(version)) अणु
 		bufreq->size = enc_ops->scratch1(width, height, num_ref,
 						 is_tenbit, num_vpp_pipes);
-	} else if (buftype == HFI_BUFFER_INTERNAL_SCRATCH_2(version)) {
+	पूर्ण अन्यथा अगर (buftype == HFI_BUFFER_INTERNAL_SCRATCH_2(version)) अणु
 		bufreq->size = enc_ops->scratch2(width, height, num_ref,
 						 is_tenbit);
-	} else if (buftype == HFI_BUFFER_INTERNAL_PERSIST) {
+	पूर्ण अन्यथा अगर (buftype == HFI_BUFFER_INTERNAL_PERSIST) अणु
 		bufreq->size = enc_ops->persist();
-	} else {
+	पूर्ण अन्यथा अणु
 		bufreq->size = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hfi_plat_bufreq_v6(struct hfi_plat_buffers_params *params, u32 session_type,
-		       u32 buftype, struct hfi_buffer_requirements *bufreq)
-{
-	if (session_type == VIDC_SESSION_TYPE_DEC)
-		return bufreq_dec(params, buftype, bufreq);
-	else
-		return bufreq_enc(params, buftype, bufreq);
-}
+पूर्णांक hfi_plat_bufreq_v6(काष्ठा hfi_plat_buffers_params *params, u32 session_type,
+		       u32 buftype, काष्ठा hfi_buffer_requirements *bufreq)
+अणु
+	अगर (session_type == VIDC_SESSION_TYPE_DEC)
+		वापस bufreq_dec(params, buftype, bufreq);
+	अन्यथा
+		वापस bufreq_enc(params, buftype, bufreq);
+पूर्ण

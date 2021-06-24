@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Per-device information from the pin control system.
- * This is the stuff that get included into the device
+ * Per-device inक्रमmation from the pin control प्रणाली.
+ * This is the stuff that get included पूर्णांकo the device
  * core.
  *
  * Copyright (C) 2012 ST-Ericsson SA
- * Written on behalf of Linaro for ST-Ericsson
- * This interface is used in the core to keep track of pins.
+ * Written on behalf of Linaro क्रम ST-Ericsson
+ * This पूर्णांकerface is used in the core to keep track of pins.
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
 
-#ifndef PINCTRL_DEVINFO_H
-#define PINCTRL_DEVINFO_H
+#अगर_अघोषित PINCTRL_DEVINFO_H
+#घोषणा PINCTRL_DEVINFO_H
 
-#ifdef CONFIG_PINCTRL
+#अगर_घोषित CONFIG_PINCTRL
 
 /* The device core acts as a consumer toward pinctrl */
-#include <linux/pinctrl/consumer.h>
+#समावेश <linux/pinctrl/consumer.h>
 
 /**
- * struct dev_pin_info - pin state container for devices
- * @p: pinctrl handle for the containing device
- * @default_state: the default state for the handle, if found
- * @init_state: the state at probe time, if found
- * @sleep_state: the state at suspend time, if found
- * @idle_state: the state at idle (runtime suspend) time, if found
+ * काष्ठा dev_pin_info - pin state container क्रम devices
+ * @p: pinctrl handle क्रम the containing device
+ * @शेष_state: the शेष state क्रम the handle, अगर found
+ * @init_state: the state at probe समय, अगर found
+ * @sleep_state: the state at suspend समय, अगर found
+ * @idle_state: the state at idle (runसमय suspend) समय, अगर found
  */
-struct dev_pin_info {
-	struct pinctrl *p;
-	struct pinctrl_state *default_state;
-	struct pinctrl_state *init_state;
-#ifdef CONFIG_PM
-	struct pinctrl_state *sleep_state;
-	struct pinctrl_state *idle_state;
-#endif
-};
+काष्ठा dev_pin_info अणु
+	काष्ठा pinctrl *p;
+	काष्ठा pinctrl_state *शेष_state;
+	काष्ठा pinctrl_state *init_state;
+#अगर_घोषित CONFIG_PM
+	काष्ठा pinctrl_state *sleep_state;
+	काष्ठा pinctrl_state *idle_state;
+#पूर्ण_अगर
+पूर्ण;
 
-extern int pinctrl_bind_pins(struct device *dev);
-extern int pinctrl_init_done(struct device *dev);
+बाह्य पूर्णांक pinctrl_bind_pins(काष्ठा device *dev);
+बाह्य पूर्णांक pinctrl_init_करोne(काष्ठा device *dev);
 
-#else
+#अन्यथा
 
-struct device;
+काष्ठा device;
 
-/* Stubs if we're not using pinctrl */
+/* Stubs अगर we're not using pinctrl */
 
-static inline int pinctrl_bind_pins(struct device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_bind_pins(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pinctrl_init_done(struct device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_init_करोne(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_PINCTRL */
-#endif /* PINCTRL_DEVINFO_H */
+#पूर्ण_अगर /* CONFIG_PINCTRL */
+#पूर्ण_अगर /* PINCTRL_DEVINFO_H */

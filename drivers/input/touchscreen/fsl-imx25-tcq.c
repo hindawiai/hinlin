@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (C) 2014-2015 Pengutronix, Markus Pargmann <mpa@pengutronix.de>
 // Based on driver from 2011:
 //   Juergen Beisert, Pengutronix <kernel@pengutronix.de>
 //
-// This is the driver for the imx25 TCQ (Touchscreen Conversion Queue)
+// This is the driver क्रम the imx25 TCQ (Touchscreen Conversion Queue)
 // connected to the imx25 ADC.
 
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
-#include <linux/mfd/imx25-tsadc.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mfd/imx25-tsadc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-static const char mx25_tcq_name[] = "mx25-tcq";
+अटल स्थिर अक्षर mx25_tcq_name[] = "mx25-tcq";
 
-enum mx25_tcq_mode {
+क्रमागत mx25_tcq_mode अणु
 	MX25_TS_4WIRE,
-};
+पूर्ण;
 
-struct mx25_tcq_priv {
-	struct regmap *regs;
-	struct regmap *core_regs;
-	struct input_dev *idev;
-	enum mx25_tcq_mode mode;
-	unsigned int pen_threshold;
-	unsigned int sample_count;
-	unsigned int expected_samples;
-	unsigned int pen_debounce;
-	unsigned int settling_time;
-	struct clk *clk;
-	int irq;
-	struct device *dev;
-};
+काष्ठा mx25_tcq_priv अणु
+	काष्ठा regmap *regs;
+	काष्ठा regmap *core_regs;
+	काष्ठा input_dev *idev;
+	क्रमागत mx25_tcq_mode mode;
+	अचिन्हित पूर्णांक pen_threshold;
+	अचिन्हित पूर्णांक sample_count;
+	अचिन्हित पूर्णांक expected_samples;
+	अचिन्हित पूर्णांक pen_debounce;
+	अचिन्हित पूर्णांक settling_समय;
+	काष्ठा clk *clk;
+	पूर्णांक irq;
+	काष्ठा device *dev;
+पूर्ण;
 
-static struct regmap_config mx25_tcq_regconfig = {
+अटल काष्ठा regmap_config mx25_tcq_regconfig = अणु
 	.fast_io = true,
-	.max_register = 0x5c,
+	.max_रेजिस्टर = 0x5c,
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-};
+पूर्ण;
 
-static const struct of_device_id mx25_tcq_ids[] = {
-	{ .compatible = "fsl,imx25-tcq", },
-	{ /* Sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id mx25_tcq_ids[] = अणु
+	अणु .compatible = "fsl,imx25-tcq", पूर्ण,
+	अणु /* Sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mx25_tcq_ids);
 
-#define TSC_4WIRE_PRE_INDEX 0
-#define TSC_4WIRE_X_INDEX 1
-#define TSC_4WIRE_Y_INDEX 2
-#define TSC_4WIRE_POST_INDEX 3
-#define TSC_4WIRE_LEAVE 4
+#घोषणा TSC_4WIRE_PRE_INDEX 0
+#घोषणा TSC_4WIRE_X_INDEX 1
+#घोषणा TSC_4WIRE_Y_INDEX 2
+#घोषणा TSC_4WIRE_POST_INDEX 3
+#घोषणा TSC_4WIRE_LEAVE 4
 
-#define MX25_TSC_DEF_THRESHOLD 80
-#define TSC_MAX_SAMPLES 16
+#घोषणा MX25_TSC_DEF_THRESHOLD 80
+#घोषणा TSC_MAX_SAMPLES 16
 
-#define MX25_TSC_REPEAT_WAIT 14
+#घोषणा MX25_TSC_REPEAT_WAIT 14
 
-enum mx25_adc_configurations {
+क्रमागत mx25_adc_configurations अणु
 	MX25_CFG_PRECHARGE = 0,
 	MX25_CFG_TOUCH_DETECT,
 	MX25_CFG_X_MEASUREMENT,
 	MX25_CFG_Y_MEASUREMENT,
-};
+पूर्ण;
 
-#define MX25_PRECHARGE_VALUE (\
+#घोषणा MX25_PRECHARGE_VALUE (\
 			MX25_ADCQ_CFG_YPLL_OFF | \
 			MX25_ADCQ_CFG_XNUR_OFF | \
 			MX25_ADCQ_CFG_XPUL_HIGH | \
@@ -79,7 +80,7 @@ enum mx25_adc_configurations {
 			MX25_ADCQ_CFG_REFN_NGND2 | \
 			MX25_ADCQ_CFG_IGS)
 
-#define MX25_TOUCH_DETECT_VALUE (\
+#घोषणा MX25_TOUCH_DETECT_VALUE (\
 			MX25_ADCQ_CFG_YNLR | \
 			MX25_ADCQ_CFG_YPLL_OFF | \
 			MX25_ADCQ_CFG_XNUR_OFF | \
@@ -89,10 +90,10 @@ enum mx25_adc_configurations {
 			MX25_ADCQ_CFG_REFN_NGND2 | \
 			MX25_ADCQ_CFG_PENIACK)
 
-static void imx25_setup_queue_cfgs(struct mx25_tcq_priv *priv,
-				   unsigned int settling_cnt)
-{
-	u32 precharge_cfg =
+अटल व्योम imx25_setup_queue_cfgs(काष्ठा mx25_tcq_priv *priv,
+				   अचिन्हित पूर्णांक settling_cnt)
+अणु
+	u32 preअक्षरge_cfg =
 			MX25_PRECHARGE_VALUE |
 			MX25_ADCQ_CFG_SETTLING_TIME(settling_cnt);
 	u32 touch_detect_cfg =
@@ -100,18 +101,18 @@ static void imx25_setup_queue_cfgs(struct mx25_tcq_priv *priv,
 			MX25_ADCQ_CFG_NOS(1) |
 			MX25_ADCQ_CFG_SETTLING_TIME(settling_cnt);
 
-	regmap_write(priv->core_regs, MX25_TSC_TICR, precharge_cfg);
+	regmap_ग_लिखो(priv->core_regs, MX25_TSC_TICR, preअक्षरge_cfg);
 
 	/* PRECHARGE */
-	regmap_write(priv->regs, MX25_ADCQ_CFG(MX25_CFG_PRECHARGE),
-		     precharge_cfg);
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_CFG(MX25_CFG_PRECHARGE),
+		     preअक्षरge_cfg);
 
 	/* TOUCH_DETECT */
-	regmap_write(priv->regs, MX25_ADCQ_CFG(MX25_CFG_TOUCH_DETECT),
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_CFG(MX25_CFG_TOUCH_DETECT),
 		     touch_detect_cfg);
 
 	/* X Measurement */
-	regmap_write(priv->regs, MX25_ADCQ_CFG(MX25_CFG_X_MEASUREMENT),
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_CFG(MX25_CFG_X_MEASUREMENT),
 		     MX25_ADCQ_CFG_YPLL_OFF |
 		     MX25_ADCQ_CFG_XNUR_LOW |
 		     MX25_ADCQ_CFG_XPUL_HIGH |
@@ -122,7 +123,7 @@ static void imx25_setup_queue_cfgs(struct mx25_tcq_priv *priv,
 		     MX25_ADCQ_CFG_SETTLING_TIME(settling_cnt));
 
 	/* Y Measurement */
-	regmap_write(priv->regs, MX25_ADCQ_CFG(MX25_CFG_Y_MEASUREMENT),
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_CFG(MX25_CFG_Y_MEASUREMENT),
 		     MX25_ADCQ_CFG_YNLR |
 		     MX25_ADCQ_CFG_YPLL_HIGH |
 		     MX25_ADCQ_CFG_XNUR_OFF |
@@ -134,17 +135,17 @@ static void imx25_setup_queue_cfgs(struct mx25_tcq_priv *priv,
 		     MX25_ADCQ_CFG_SETTLING_TIME(settling_cnt));
 
 	/* Enable the touch detection right now */
-	regmap_write(priv->core_regs, MX25_TSC_TICR, touch_detect_cfg |
+	regmap_ग_लिखो(priv->core_regs, MX25_TSC_TICR, touch_detect_cfg |
 		     MX25_ADCQ_CFG_IGS);
-}
+पूर्ण
 
-static int imx25_setup_queue_4wire(struct mx25_tcq_priv *priv,
-				   unsigned settling_cnt, int *items)
-{
+अटल पूर्णांक imx25_setup_queue_4wire(काष्ठा mx25_tcq_priv *priv,
+				   अचिन्हित settling_cnt, पूर्णांक *items)
+अणु
 	imx25_setup_queue_cfgs(priv, settling_cnt);
 
 	/* Setup the conversion queue */
-	regmap_write(priv->regs, MX25_ADCQ_ITEM_7_0,
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_ITEM_7_0,
 		     MX25_ADCQ_ITEM(0, MX25_CFG_PRECHARGE) |
 		     MX25_ADCQ_ITEM(1, MX25_CFG_TOUCH_DETECT) |
 		     MX25_ADCQ_ITEM(2, MX25_CFG_X_MEASUREMENT) |
@@ -159,201 +160,201 @@ static int imx25_setup_queue_4wire(struct mx25_tcq_priv *priv,
 	priv->expected_samples = priv->sample_count * 2 + 2;
 	*items = 6;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mx25_tcq_disable_touch_irq(struct mx25_tcq_priv *priv)
-{
+अटल व्योम mx25_tcq_disable_touch_irq(काष्ठा mx25_tcq_priv *priv)
+अणु
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR, MX25_ADCQ_CR_PDMSK,
 			   MX25_ADCQ_CR_PDMSK);
-}
+पूर्ण
 
-static void mx25_tcq_enable_touch_irq(struct mx25_tcq_priv *priv)
-{
+अटल व्योम mx25_tcq_enable_touch_irq(काष्ठा mx25_tcq_priv *priv)
+अणु
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR, MX25_ADCQ_CR_PDMSK, 0);
-}
+पूर्ण
 
-static void mx25_tcq_disable_fifo_irq(struct mx25_tcq_priv *priv)
-{
+अटल व्योम mx25_tcq_disable_fअगरo_irq(काष्ठा mx25_tcq_priv *priv)
+अणु
 	regmap_update_bits(priv->regs, MX25_ADCQ_MR, MX25_ADCQ_MR_FDRY_IRQ,
 			   MX25_ADCQ_MR_FDRY_IRQ);
-}
+पूर्ण
 
-static void mx25_tcq_enable_fifo_irq(struct mx25_tcq_priv *priv)
-{
+अटल व्योम mx25_tcq_enable_fअगरo_irq(काष्ठा mx25_tcq_priv *priv)
+अणु
 	regmap_update_bits(priv->regs, MX25_ADCQ_MR, MX25_ADCQ_MR_FDRY_IRQ, 0);
-}
+पूर्ण
 
-static void mx25_tcq_force_queue_start(struct mx25_tcq_priv *priv)
-{
+अटल व्योम mx25_tcq_क्रमce_queue_start(काष्ठा mx25_tcq_priv *priv)
+अणु
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR,
 			   MX25_ADCQ_CR_FQS,
 			   MX25_ADCQ_CR_FQS);
-}
+पूर्ण
 
-static void mx25_tcq_force_queue_stop(struct mx25_tcq_priv *priv)
-{
+अटल व्योम mx25_tcq_क्रमce_queue_stop(काष्ठा mx25_tcq_priv *priv)
+अणु
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR,
 			   MX25_ADCQ_CR_FQS, 0);
-}
+पूर्ण
 
-static void mx25_tcq_fifo_reset(struct mx25_tcq_priv *priv)
-{
+अटल व्योम mx25_tcq_fअगरo_reset(काष्ठा mx25_tcq_priv *priv)
+अणु
 	u32 tcqcr;
 
-	regmap_read(priv->regs, MX25_ADCQ_CR, &tcqcr);
+	regmap_पढ़ो(priv->regs, MX25_ADCQ_CR, &tcqcr);
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR, MX25_ADCQ_CR_FRST,
 			   MX25_ADCQ_CR_FRST);
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR, MX25_ADCQ_CR_FRST, 0);
-	regmap_write(priv->regs, MX25_ADCQ_CR, tcqcr);
-}
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_CR, tcqcr);
+पूर्ण
 
-static void mx25_tcq_re_enable_touch_detection(struct mx25_tcq_priv *priv)
-{
+अटल व्योम mx25_tcq_re_enable_touch_detection(काष्ठा mx25_tcq_priv *priv)
+अणु
 	/* stop the queue from looping */
-	mx25_tcq_force_queue_stop(priv);
+	mx25_tcq_क्रमce_queue_stop(priv);
 
-	/* for a clean touch detection, preload the X plane */
-	regmap_write(priv->core_regs, MX25_TSC_TICR, MX25_PRECHARGE_VALUE);
+	/* क्रम a clean touch detection, preload the X plane */
+	regmap_ग_लिखो(priv->core_regs, MX25_TSC_TICR, MX25_PRECHARGE_VALUE);
 
-	/* waste some time now to pre-load the X plate to high voltage */
-	mx25_tcq_fifo_reset(priv);
+	/* waste some समय now to pre-load the X plate to high voltage */
+	mx25_tcq_fअगरo_reset(priv);
 
 	/* re-enable the detection right now */
-	regmap_write(priv->core_regs, MX25_TSC_TICR,
+	regmap_ग_लिखो(priv->core_regs, MX25_TSC_TICR,
 		     MX25_TOUCH_DETECT_VALUE | MX25_ADCQ_CFG_IGS);
 
 	regmap_update_bits(priv->regs, MX25_ADCQ_SR, MX25_ADCQ_SR_PD,
 			   MX25_ADCQ_SR_PD);
 
-	/* enable the pen down event to be a source for the interrupt */
+	/* enable the pen करोwn event to be a source क्रम the पूर्णांकerrupt */
 	regmap_update_bits(priv->regs, MX25_ADCQ_MR, MX25_ADCQ_MR_PD_IRQ, 0);
 
-	/* lets fire the next IRQ if someone touches the touchscreen */
+	/* lets fire the next IRQ अगर someone touches the touchscreen */
 	mx25_tcq_enable_touch_irq(priv);
-}
+पूर्ण
 
-static void mx25_tcq_create_event_for_4wire(struct mx25_tcq_priv *priv,
+अटल व्योम mx25_tcq_create_event_क्रम_4wire(काष्ठा mx25_tcq_priv *priv,
 					    u32 *sample_buf,
-					    unsigned int samples)
-{
-	unsigned int x_pos = 0;
-	unsigned int y_pos = 0;
-	unsigned int touch_pre = 0;
-	unsigned int touch_post = 0;
-	unsigned int i;
+					    अचिन्हित पूर्णांक samples)
+अणु
+	अचिन्हित पूर्णांक x_pos = 0;
+	अचिन्हित पूर्णांक y_pos = 0;
+	अचिन्हित पूर्णांक touch_pre = 0;
+	अचिन्हित पूर्णांक touch_post = 0;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < samples; i++) {
-		unsigned int index = MX25_ADCQ_FIFO_ID(sample_buf[i]);
-		unsigned int val = MX25_ADCQ_FIFO_DATA(sample_buf[i]);
+	क्रम (i = 0; i < samples; i++) अणु
+		अचिन्हित पूर्णांक index = MX25_ADCQ_FIFO_ID(sample_buf[i]);
+		अचिन्हित पूर्णांक val = MX25_ADCQ_FIFO_DATA(sample_buf[i]);
 
-		switch (index) {
-		case 1:
+		चयन (index) अणु
+		हाल 1:
 			touch_pre = val;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			x_pos = val;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			y_pos = val;
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			touch_post = val;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_dbg(priv->dev, "Dropped samples because of invalid index %d\n",
 				index);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (samples != 0) {
+	अगर (samples != 0) अणु
 		/*
-		 * only if both touch measures are below a threshold,
+		 * only अगर both touch measures are below a threshold,
 		 * the position is valid
 		 */
-		if (touch_pre < priv->pen_threshold &&
-		    touch_post < priv->pen_threshold) {
+		अगर (touch_pre < priv->pen_threshold &&
+		    touch_post < priv->pen_threshold) अणु
 			/* valid samples, generate a report */
 			x_pos /= priv->sample_count;
 			y_pos /= priv->sample_count;
-			input_report_abs(priv->idev, ABS_X, x_pos);
-			input_report_abs(priv->idev, ABS_Y, y_pos);
+			input_report_असल(priv->idev, ABS_X, x_pos);
+			input_report_असल(priv->idev, ABS_Y, y_pos);
 			input_report_key(priv->idev, BTN_TOUCH, 1);
 			input_sync(priv->idev);
 
 			/* get next sample */
-			mx25_tcq_enable_fifo_irq(priv);
-		} else if (touch_pre >= priv->pen_threshold &&
-			   touch_post >= priv->pen_threshold) {
+			mx25_tcq_enable_fअगरo_irq(priv);
+		पूर्ण अन्यथा अगर (touch_pre >= priv->pen_threshold &&
+			   touch_post >= priv->pen_threshold) अणु
 			/*
-			 * if both samples are invalid,
+			 * अगर both samples are invalid,
 			 * generate a release report
 			 */
 			input_report_key(priv->idev, BTN_TOUCH, 0);
 			input_sync(priv->idev);
 			mx25_tcq_re_enable_touch_detection(priv);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * if only one of both touch measurements are
+			 * अगर only one of both touch measurements are
 			 * below the threshold, still some bouncing
 			 * happens. Take additional samples in this
-			 * case to be sure
+			 * हाल to be sure
 			 */
-			mx25_tcq_enable_fifo_irq(priv);
-		}
-	}
-}
+			mx25_tcq_enable_fअगरo_irq(priv);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t mx25_tcq_irq_thread(int irq, void *dev_id)
-{
-	struct mx25_tcq_priv *priv = dev_id;
+अटल irqवापस_t mx25_tcq_irq_thपढ़ो(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mx25_tcq_priv *priv = dev_id;
 	u32 sample_buf[TSC_MAX_SAMPLES];
-	unsigned int samples;
+	अचिन्हित पूर्णांक samples;
 	u32 stats;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	/*
-	 * Check how many samples are available. We always have to read exactly
-	 * sample_count samples from the fifo, or a multiple of sample_count.
-	 * Otherwise we mixup samples into different touch events.
+	 * Check how many samples are available. We always have to पढ़ो exactly
+	 * sample_count samples from the fअगरo, or a multiple of sample_count.
+	 * Otherwise we mixup samples पूर्णांकo dअगरferent touch events.
 	 */
-	regmap_read(priv->regs, MX25_ADCQ_SR, &stats);
+	regmap_पढ़ो(priv->regs, MX25_ADCQ_SR, &stats);
 	samples = MX25_ADCQ_SR_FDN(stats);
 	samples -= samples % priv->sample_count;
 
-	if (!samples)
-		return IRQ_HANDLED;
+	अगर (!samples)
+		वापस IRQ_HANDLED;
 
-	for (i = 0; i != samples; ++i)
-		regmap_read(priv->regs, MX25_ADCQ_FIFO, &sample_buf[i]);
+	क्रम (i = 0; i != samples; ++i)
+		regmap_पढ़ो(priv->regs, MX25_ADCQ_FIFO, &sample_buf[i]);
 
-	mx25_tcq_create_event_for_4wire(priv, sample_buf, samples);
+	mx25_tcq_create_event_क्रम_4wire(priv, sample_buf, samples);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t mx25_tcq_irq(int irq, void *dev_id)
-{
-	struct mx25_tcq_priv *priv = dev_id;
+अटल irqवापस_t mx25_tcq_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mx25_tcq_priv *priv = dev_id;
 	u32 stat;
-	int ret = IRQ_HANDLED;
+	पूर्णांक ret = IRQ_HANDLED;
 
-	regmap_read(priv->regs, MX25_ADCQ_SR, &stat);
+	regmap_पढ़ो(priv->regs, MX25_ADCQ_SR, &stat);
 
-	if (stat & (MX25_ADCQ_SR_FRR | MX25_ADCQ_SR_FUR | MX25_ADCQ_SR_FOR))
+	अगर (stat & (MX25_ADCQ_SR_FRR | MX25_ADCQ_SR_FUR | MX25_ADCQ_SR_FOR))
 		mx25_tcq_re_enable_touch_detection(priv);
 
-	if (stat & MX25_ADCQ_SR_PD) {
+	अगर (stat & MX25_ADCQ_SR_PD) अणु
 		mx25_tcq_disable_touch_irq(priv);
-		mx25_tcq_force_queue_start(priv);
-		mx25_tcq_enable_fifo_irq(priv);
-	}
+		mx25_tcq_क्रमce_queue_start(priv);
+		mx25_tcq_enable_fअगरo_irq(priv);
+	पूर्ण
 
-	if (stat & MX25_ADCQ_SR_FDRY) {
-		mx25_tcq_disable_fifo_irq(priv);
+	अगर (stat & MX25_ADCQ_SR_FDRY) अणु
+		mx25_tcq_disable_fअगरo_irq(priv);
 		ret = IRQ_WAKE_THREAD;
-	}
+	पूर्ण
 
 	regmap_update_bits(priv->regs, MX25_ADCQ_SR, MX25_ADCQ_SR_FRR |
 			   MX25_ADCQ_SR_FUR | MX25_ADCQ_SR_FOR |
@@ -361,44 +362,44 @@ static irqreturn_t mx25_tcq_irq(int irq, void *dev_id)
 			   MX25_ADCQ_SR_FRR | MX25_ADCQ_SR_FUR |
 			   MX25_ADCQ_SR_FOR | MX25_ADCQ_SR_PD);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* configure the state machine for a 4-wire touchscreen */
-static int mx25_tcq_init(struct mx25_tcq_priv *priv)
-{
+/* configure the state machine क्रम a 4-wire touchscreen */
+अटल पूर्णांक mx25_tcq_init(काष्ठा mx25_tcq_priv *priv)
+अणु
 	u32 tgcr;
-	unsigned int ipg_div;
-	unsigned int adc_period;
-	unsigned int debounce_cnt;
-	unsigned int settling_cnt;
-	int itemct;
-	int error;
+	अचिन्हित पूर्णांक ipg_भाग;
+	अचिन्हित पूर्णांक adc_period;
+	अचिन्हित पूर्णांक debounce_cnt;
+	अचिन्हित पूर्णांक settling_cnt;
+	पूर्णांक itemct;
+	पूर्णांक error;
 
-	regmap_read(priv->core_regs, MX25_TSC_TGCR, &tgcr);
-	ipg_div = max_t(unsigned int, 4, MX25_TGCR_GET_ADCCLK(tgcr));
-	adc_period = USEC_PER_SEC * ipg_div * 2 + 2;
+	regmap_पढ़ो(priv->core_regs, MX25_TSC_TGCR, &tgcr);
+	ipg_भाग = max_t(अचिन्हित पूर्णांक, 4, MX25_TGCR_GET_ADCCLK(tgcr));
+	adc_period = USEC_PER_SEC * ipg_भाग * 2 + 2;
 	adc_period /= clk_get_rate(priv->clk) / 1000 + 1;
 	debounce_cnt = DIV_ROUND_UP(priv->pen_debounce, adc_period * 8) - 1;
-	settling_cnt = DIV_ROUND_UP(priv->settling_time, adc_period * 8) - 1;
+	settling_cnt = DIV_ROUND_UP(priv->settling_समय, adc_period * 8) - 1;
 
 	/* Reset */
-	regmap_write(priv->regs, MX25_ADCQ_CR,
+	regmap_ग_लिखो(priv->regs, MX25_ADCQ_CR,
 		     MX25_ADCQ_CR_QRST | MX25_ADCQ_CR_FRST);
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR,
 			   MX25_ADCQ_CR_QRST | MX25_ADCQ_CR_FRST, 0);
 
-	/* up to 128 * 8 ADC clocks are possible */
-	if (debounce_cnt > 127)
+	/* up to 128 * 8 ADC घड़ीs are possible */
+	अगर (debounce_cnt > 127)
 		debounce_cnt = 127;
 
-	/* up to 255 * 8 ADC clocks are possible */
-	if (settling_cnt > 255)
+	/* up to 255 * 8 ADC घड़ीs are possible */
+	अगर (settling_cnt > 255)
 		settling_cnt = 255;
 
 	error = imx25_setup_queue_4wire(priv, settling_cnt, &itemct);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR,
 			   MX25_ADCQ_CR_LITEMID_MASK | MX25_ADCQ_CR_WMRK_MASK,
@@ -420,168 +421,168 @@ static int mx25_tcq_init(struct mx25_tcq_priv *priv)
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR, MX25_ADCQ_CR_QSM_MASK,
 			   MX25_ADCQ_CR_QSM_FQS);
 
-	/* Enable repeat and repeat wait */
+	/* Enable repeat and repeat रुको */
 	regmap_update_bits(priv->regs, MX25_ADCQ_CR,
 			   MX25_ADCQ_CR_RPT | MX25_ADCQ_CR_RWAIT_MASK,
 			   MX25_ADCQ_CR_RPT |
 			   MX25_ADCQ_CR_RWAIT(MX25_TSC_REPEAT_WAIT));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mx25_tcq_parse_dt(struct platform_device *pdev,
-			     struct mx25_tcq_priv *priv)
-{
-	struct device_node *np = pdev->dev.of_node;
+अटल पूर्णांक mx25_tcq_parse_dt(काष्ठा platक्रमm_device *pdev,
+			     काष्ठा mx25_tcq_priv *priv)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
 	u32 wires;
-	int error;
+	पूर्णांक error;
 
-	/* Setup defaults */
+	/* Setup शेषs */
 	priv->pen_threshold = 500;
 	priv->sample_count = 3;
 	priv->pen_debounce = 1000000;
-	priv->settling_time = 250000;
+	priv->settling_समय = 250000;
 
-	error = of_property_read_u32(np, "fsl,wires", &wires);
-	if (error) {
+	error = of_property_पढ़ो_u32(np, "fsl,wires", &wires);
+	अगर (error) अणु
 		dev_err(&pdev->dev, "Failed to find fsl,wires properties\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	if (wires == 4) {
+	अगर (wires == 4) अणु
 		priv->mode = MX25_TS_4WIRE;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&pdev->dev, "%u-wire mode not supported\n", wires);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* These are optional, we don't care about the return values */
-	of_property_read_u32(np, "fsl,pen-threshold", &priv->pen_threshold);
-	of_property_read_u32(np, "fsl,settling-time-ns", &priv->settling_time);
-	of_property_read_u32(np, "fsl,pen-debounce-ns", &priv->pen_debounce);
+	/* These are optional, we करोn't care about the वापस values */
+	of_property_पढ़ो_u32(np, "fsl,pen-threshold", &priv->pen_threshold);
+	of_property_पढ़ो_u32(np, "fsl,settling-time-ns", &priv->settling_समय);
+	of_property_पढ़ो_u32(np, "fsl,pen-debounce-ns", &priv->pen_debounce);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mx25_tcq_open(struct input_dev *idev)
-{
-	struct device *dev = &idev->dev;
-	struct mx25_tcq_priv *priv = dev_get_drvdata(dev);
-	int error;
+अटल पूर्णांक mx25_tcq_खोलो(काष्ठा input_dev *idev)
+अणु
+	काष्ठा device *dev = &idev->dev;
+	काष्ठा mx25_tcq_priv *priv = dev_get_drvdata(dev);
+	पूर्णांक error;
 
 	error = clk_prepare_enable(priv->clk);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "Failed to enable ipg clock\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	error = mx25_tcq_init(priv);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "Failed to init tcq\n");
 		clk_disable_unprepare(priv->clk);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
 	mx25_tcq_re_enable_touch_detection(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mx25_tcq_close(struct input_dev *idev)
-{
-	struct mx25_tcq_priv *priv = input_get_drvdata(idev);
+अटल व्योम mx25_tcq_बंद(काष्ठा input_dev *idev)
+अणु
+	काष्ठा mx25_tcq_priv *priv = input_get_drvdata(idev);
 
-	mx25_tcq_force_queue_stop(priv);
+	mx25_tcq_क्रमce_queue_stop(priv);
 	mx25_tcq_disable_touch_irq(priv);
-	mx25_tcq_disable_fifo_irq(priv);
+	mx25_tcq_disable_fअगरo_irq(priv);
 	clk_disable_unprepare(priv->clk);
-}
+पूर्ण
 
-static int mx25_tcq_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct input_dev *idev;
-	struct mx25_tcq_priv *priv;
-	struct mx25_tsadc *tsadc = dev_get_drvdata(dev->parent);
-	void __iomem *mem;
-	int error;
+अटल पूर्णांक mx25_tcq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा input_dev *idev;
+	काष्ठा mx25_tcq_priv *priv;
+	काष्ठा mx25_tsadc *tsadc = dev_get_drvdata(dev->parent);
+	व्योम __iomem *mem;
+	पूर्णांक error;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 	priv->dev = dev;
 
-	mem = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(mem))
-		return PTR_ERR(mem);
+	mem = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(mem))
+		वापस PTR_ERR(mem);
 
 	error = mx25_tcq_parse_dt(pdev, priv);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	priv->regs = devm_regmap_init_mmio(dev, mem, &mx25_tcq_regconfig);
-	if (IS_ERR(priv->regs)) {
+	अगर (IS_ERR(priv->regs)) अणु
 		dev_err(dev, "Failed to initialize regmap\n");
-		return PTR_ERR(priv->regs);
-	}
+		वापस PTR_ERR(priv->regs);
+	पूर्ण
 
-	priv->irq = platform_get_irq(pdev, 0);
-	if (priv->irq <= 0)
-		return priv->irq;
+	priv->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (priv->irq <= 0)
+		वापस priv->irq;
 
 	idev = devm_input_allocate_device(dev);
-	if (!idev) {
+	अगर (!idev) अणु
 		dev_err(dev, "Failed to allocate input device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	idev->name = mx25_tcq_name;
 	input_set_capability(idev, EV_KEY, BTN_TOUCH);
-	input_set_abs_params(idev, ABS_X, 0, 0xfff, 0, 0);
-	input_set_abs_params(idev, ABS_Y, 0, 0xfff, 0, 0);
+	input_set_असल_params(idev, ABS_X, 0, 0xfff, 0, 0);
+	input_set_असल_params(idev, ABS_Y, 0, 0xfff, 0, 0);
 
 	idev->id.bustype = BUS_HOST;
-	idev->open = mx25_tcq_open;
-	idev->close = mx25_tcq_close;
+	idev->खोलो = mx25_tcq_खोलो;
+	idev->बंद = mx25_tcq_बंद;
 
 	priv->idev = idev;
 	input_set_drvdata(idev, priv);
 
 	priv->core_regs = tsadc->regs;
-	if (!priv->core_regs)
-		return -EINVAL;
+	अगर (!priv->core_regs)
+		वापस -EINVAL;
 
 	priv->clk = tsadc->clk;
-	if (!priv->clk)
-		return -EINVAL;
+	अगर (!priv->clk)
+		वापस -EINVAL;
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	error = devm_request_threaded_irq(dev, priv->irq, mx25_tcq_irq,
-					  mx25_tcq_irq_thread, 0, pdev->name,
+	error = devm_request_thपढ़ोed_irq(dev, priv->irq, mx25_tcq_irq,
+					  mx25_tcq_irq_thपढ़ो, 0, pdev->name,
 					  priv);
-	if (error) {
+	अगर (error) अणु
 		dev_err(dev, "Failed requesting IRQ\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	error = input_register_device(idev);
-	if (error) {
+	error = input_रेजिस्टर_device(idev);
+	अगर (error) अणु
 		dev_err(dev, "Failed to register input device\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mx25_tcq_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver mx25_tcq_driver = अणु
+	.driver		= अणु
 		.name	= "mx25-tcq",
 		.of_match_table = mx25_tcq_ids,
-	},
+	पूर्ण,
 	.probe		= mx25_tcq_probe,
-};
-module_platform_driver(mx25_tcq_driver);
+पूर्ण;
+module_platक्रमm_driver(mx25_tcq_driver);
 
 MODULE_DESCRIPTION("TS input driver for Freescale mx25");
 MODULE_AUTHOR("Markus Pargmann <mpa@pengutronix.de>");

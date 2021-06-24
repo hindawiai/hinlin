@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Registration of Cobalt LED platform device.
+ *  Registration of Cobalt LED platक्रमm device.
  *
  *  Copyright (C) 2007	Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <cobalt.h>
+#समावेश <cobalt.h>
 
-static struct resource cobalt_led_resource __initdata = {
+अटल काष्ठा resource cobalt_led_resource __initdata = अणु
 	.start	= 0x1c000000,
 	.end	= 0x1c000000,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static __init int cobalt_led_add(void)
-{
-	struct platform_device *pdev;
-	int retval;
+अटल __init पूर्णांक cobalt_led_add(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक retval;
 
-	if (cobalt_board_id == COBALT_BRD_ID_QUBE1 ||
+	अगर (cobalt_board_id == COBALT_BRD_ID_QUBE1 ||
 	    cobalt_board_id == COBALT_BRD_ID_QUBE2)
-		pdev = platform_device_alloc("cobalt-qube-leds", -1);
-	else
-		pdev = platform_device_alloc("cobalt-raq-leds", -1);
+		pdev = platक्रमm_device_alloc("cobalt-qube-leds", -1);
+	अन्यथा
+		pdev = platक्रमm_device_alloc("cobalt-raq-leds", -1);
 
-	if (!pdev)
-		return -ENOMEM;
+	अगर (!pdev)
+		वापस -ENOMEM;
 
-	retval = platform_device_add_resources(pdev, &cobalt_led_resource, 1);
-	if (retval)
-		goto err_free_device;
+	retval = platक्रमm_device_add_resources(pdev, &cobalt_led_resource, 1);
+	अगर (retval)
+		जाओ err_मुक्त_device;
 
-	retval = platform_device_add(pdev);
-	if (retval)
-		goto err_free_device;
+	retval = platक्रमm_device_add(pdev);
+	अगर (retval)
+		जाओ err_मुक्त_device;
 
-	return 0;
+	वापस 0;
 
-err_free_device:
-	platform_device_put(pdev);
+err_मुक्त_device:
+	platक्रमm_device_put(pdev);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 device_initcall(cobalt_led_add);

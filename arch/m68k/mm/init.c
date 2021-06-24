@@ -1,156 +1,157 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/m68k/mm/init.c
  *
- *  Copyright (C) 1995  Hamish Macdonald
+ *  Copyright (C) 1995  Hamish Macकरोnald
  *
- *  Contains common initialization routines, specific init code moved
+ *  Contains common initialization routines, specअगरic init code moved
  *  to motorola.c and sun3mmu.c
  */
 
-#include <linux/module.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <linux/gfp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/gfp.h>
 
-#include <asm/setup.h>
-#include <linux/uaccess.h>
-#include <asm/page.h>
-#include <asm/pgalloc.h>
-#include <asm/traps.h>
-#include <asm/machdep.h>
-#include <asm/io.h>
-#ifdef CONFIG_ATARI
-#include <asm/atari_stram.h>
-#endif
-#include <asm/sections.h>
-#include <asm/tlb.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/पन.स>
+#अगर_घोषित CONFIG_ATARI
+#समावेश <यंत्र/atari_stram.h>
+#पूर्ण_अगर
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/tlb.h>
 
 /*
- * ZERO_PAGE is a special page that is used for zero-initialized
+ * ZERO_PAGE is a special page that is used क्रम zero-initialized
  * data and COW.
  */
-void *empty_zero_page;
+व्योम *empty_zero_page;
 EXPORT_SYMBOL(empty_zero_page);
 
-#ifdef CONFIG_MMU
+#अगर_घोषित CONFIG_MMU
 
-int m68k_virt_to_node_shift;
+पूर्णांक m68k_virt_to_node_shअगरt;
 
-#ifdef CONFIG_DISCONTIGMEM
+#अगर_घोषित CONFIG_DISCONTIGMEM
 pg_data_t pg_data_map[MAX_NUMNODES];
 EXPORT_SYMBOL(pg_data_map);
 
 pg_data_t *pg_data_table[65];
 EXPORT_SYMBOL(pg_data_table);
-#endif
+#पूर्ण_अगर
 
-void __init m68k_setup_node(int node)
-{
-#ifdef CONFIG_DISCONTIGMEM
-	struct m68k_mem_info *info = m68k_memory + node;
-	int i, end;
+व्योम __init m68k_setup_node(पूर्णांक node)
+अणु
+#अगर_घोषित CONFIG_DISCONTIGMEM
+	काष्ठा m68k_mem_info *info = m68k_memory + node;
+	पूर्णांक i, end;
 
-	i = (unsigned long)phys_to_virt(info->addr) >> __virt_to_node_shift();
-	end = (unsigned long)phys_to_virt(info->addr + info->size - 1) >> __virt_to_node_shift();
-	for (; i <= end; i++) {
-		if (pg_data_table[i])
+	i = (अचिन्हित दीर्घ)phys_to_virt(info->addr) >> __virt_to_node_shअगरt();
+	end = (अचिन्हित दीर्घ)phys_to_virt(info->addr + info->size - 1) >> __virt_to_node_shअगरt();
+	क्रम (; i <= end; i++) अणु
+		अगर (pg_data_table[i])
 			pr_warn("overlap at %u for chunk %u\n", i, node);
 		pg_data_table[i] = pg_data_map + node;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 	node_set_online(node);
-}
+पूर्ण
 
-#else /* CONFIG_MMU */
+#अन्यथा /* CONFIG_MMU */
 
 /*
- * paging_init() continues the virtual memory environment setup which
+ * paging_init() जारीs the भव memory environment setup which
  * was begun by the code in arch/head.S.
- * The parameters are pointers to where to stick the starting and ending
- * addresses of available kernel virtual memory.
+ * The parameters are poपूर्णांकers to where to stick the starting and ending
+ * addresses of available kernel भव memory.
  */
-void __init paging_init(void)
-{
+व्योम __init paging_init(व्योम)
+अणु
 	/*
-	 * Make sure start_mem is page aligned, otherwise bootmem and
-	 * page_alloc get different views of the world.
+	 * Make sure start_mem is page aligned, otherwise booपंचांगem and
+	 * page_alloc get dअगरferent views of the world.
 	 */
-	unsigned long end_mem = memory_end & PAGE_MASK;
-	unsigned long max_zone_pfn[MAX_NR_ZONES] = { 0, };
+	अचिन्हित दीर्घ end_mem = memory_end & PAGE_MASK;
+	अचिन्हित दीर्घ max_zone_pfn[MAX_NR_ZONES] = अणु 0, पूर्ण;
 
-	high_memory = (void *) end_mem;
+	high_memory = (व्योम *) end_mem;
 
 	empty_zero_page = memblock_alloc(PAGE_SIZE, PAGE_SIZE);
-	if (!empty_zero_page)
+	अगर (!empty_zero_page)
 		panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 		      __func__, PAGE_SIZE, PAGE_SIZE);
 
 	/*
-	 * Set up SFC/DFC registers (user data space).
+	 * Set up SFC/DFC रेजिस्टरs (user data space).
 	 */
 	set_fs (USER_DS);
 
 	max_zone_pfn[ZONE_DMA] = end_mem >> PAGE_SHIFT;
-	free_area_init(max_zone_pfn);
-}
+	मुक्त_area_init(max_zone_pfn);
+पूर्ण
 
-#endif /* CONFIG_MMU */
+#पूर्ण_अगर /* CONFIG_MMU */
 
-void free_initmem(void)
-{
-#ifndef CONFIG_MMU_SUN3
-	free_initmem_default(-1);
-#endif /* CONFIG_MMU_SUN3 */
-}
+व्योम मुक्त_iniपंचांगem(व्योम)
+अणु
+#अगर_अघोषित CONFIG_MMU_SUN3
+	मुक्त_iniपंचांगem_शेष(-1);
+#पूर्ण_अगर /* CONFIG_MMU_SUN3 */
+पूर्ण
 
-#if defined(CONFIG_MMU) && !defined(CONFIG_COLDFIRE)
-#define VECTORS	&vectors[0]
-#else
-#define VECTORS	_ramvec
-#endif
+#अगर defined(CONFIG_MMU) && !defined(CONFIG_COLDFIRE)
+#घोषणा VECTORS	&vectors[0]
+#अन्यथा
+#घोषणा VECTORS	_ramvec
+#पूर्ण_अगर
 
-static inline void init_pointer_tables(void)
-{
-#if defined(CONFIG_MMU) && !defined(CONFIG_SUN3) && !defined(CONFIG_COLDFIRE)
-	int i, j;
+अटल अंतरभूत व्योम init_poपूर्णांकer_tables(व्योम)
+अणु
+#अगर defined(CONFIG_MMU) && !defined(CONFIG_SUN3) && !defined(CONFIG_COLDFIRE)
+	पूर्णांक i, j;
 
-	/* insert pointer tables allocated so far into the tablelist */
-	init_pointer_table(kernel_pg_dir, TABLE_PGD);
-	for (i = 0; i < PTRS_PER_PGD; i++) {
+	/* insert poपूर्णांकer tables allocated so far पूर्णांकo the tablelist */
+	init_poपूर्णांकer_table(kernel_pg_dir, TABLE_PGD);
+	क्रम (i = 0; i < PTRS_PER_PGD; i++) अणु
 		pud_t *pud = (pud_t *)&kernel_pg_dir[i];
 		pmd_t *pmd_dir;
 
-		if (!pud_present(*pud))
-			continue;
+		अगर (!pud_present(*pud))
+			जारी;
 
 		pmd_dir = (pmd_t *)pgd_page_vaddr(kernel_pg_dir[i]);
-		init_pointer_table(pmd_dir, TABLE_PMD);
+		init_poपूर्णांकer_table(pmd_dir, TABLE_PMD);
 
-		for (j = 0; j < PTRS_PER_PMD; j++) {
+		क्रम (j = 0; j < PTRS_PER_PMD; j++) अणु
 			pmd_t *pmd = &pmd_dir[j];
 			pte_t *pte_dir;
 
-			if (!pmd_present(*pmd))
-				continue;
+			अगर (!pmd_present(*pmd))
+				जारी;
 
 			pte_dir = (pte_t *)pmd_page_vaddr(*pmd);
-			init_pointer_table(pte_dir, TABLE_PTE);
-		}
-	}
-#endif
-}
+			init_poपूर्णांकer_table(pte_dir, TABLE_PTE);
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-void __init mem_init(void)
-{
-	/* this will put all memory onto the freelists */
-	memblock_free_all();
-	init_pointer_tables();
-}
+व्योम __init mem_init(व्योम)
+अणु
+	/* this will put all memory onto the मुक्तlists */
+	memblock_मुक्त_all();
+	init_poपूर्णांकer_tables();
+पूर्ण

@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 
-#ifndef __ASM_CSKY_SIGCONTEXT_H
-#define __ASM_CSKY_SIGCONTEXT_H
+#अगर_अघोषित __ASM_CSKY_SIGCONTEXT_H
+#घोषणा __ASM_CSKY_SIGCONTEXT_H
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
-struct sigcontext {
-	struct pt_regs	sc_pt_regs;
-	struct user_fp	sc_user_fp;
-};
+काष्ठा sigcontext अणु
+	काष्ठा pt_regs	sc_pt_regs;
+	काष्ठा user_fp	sc_user_fp;
+पूर्ण;
 
-#endif /* __ASM_CSKY_SIGCONTEXT_H */
+#पूर्ण_अगर /* __ASM_CSKY_SIGCONTEXT_H */

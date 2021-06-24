@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_PLATFORM_DATA_AD7791__
-#define __LINUX_PLATFORM_DATA_AD7791__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_PLATFORM_DATA_AD7791__
+#घोषणा __LINUX_PLATFORM_DATA_AD7791__
 
 /**
- * struct ad7791_platform_data - AD7791 device platform data
- * @buffered: If set to true configure the device for buffered input mode.
+ * काष्ठा ad7791_platक्रमm_data - AD7791 device platक्रमm data
+ * @buffered: If set to true configure the device क्रम buffered input mode.
  * @burnout_current: If set to true the 100mA burnout current is enabled.
- * @unipolar: If set to true sample in unipolar mode, if set to false sample in
+ * @unipolar: If set to true sample in unipolar mode, अगर set to false sample in
  *		bipolar mode.
  */
-struct ad7791_platform_data {
+काष्ठा ad7791_platक्रमm_data अणु
 	bool buffered;
 	bool burnout_current;
 	bool unipolar;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/device.h>
-#include <linux/mod_devicetable.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/device.h>
+#समावेश <linux/mod_devicetable.h>
 
-struct gio_device_id {
+काष्ठा gio_device_id अणु
 	__u8 id;
-};
+पूर्ण;
 
-struct gio_device {
-	struct device	dev;
-	struct resource resource;
-	unsigned int	irq;
-	unsigned int	slotno;
+काष्ठा gio_device अणु
+	काष्ठा device	dev;
+	काष्ठा resource resource;
+	अचिन्हित पूर्णांक	irq;
+	अचिन्हित पूर्णांक	slotno;
 
-	const char	*name;
-	struct gio_device_id id;
-	unsigned	id32:1;
-	unsigned	gio64:1;
-};
-#define to_gio_device(d) container_of(d, struct gio_device, dev)
+	स्थिर अक्षर	*name;
+	काष्ठा gio_device_id id;
+	अचिन्हित	id32:1;
+	अचिन्हित	gio64:1;
+पूर्ण;
+#घोषणा to_gio_device(d) container_of(d, काष्ठा gio_device, dev)
 
-struct gio_driver {
-	const char    *name;
-	struct module *owner;
-	const struct gio_device_id *id_table;
+काष्ठा gio_driver अणु
+	स्थिर अक्षर    *name;
+	काष्ठा module *owner;
+	स्थिर काष्ठा gio_device_id *id_table;
 
-	int  (*probe)(struct gio_device *, const struct gio_device_id *);
-	void (*remove)(struct gio_device *);
-	void (*shutdown)(struct gio_device *);
+	पूर्णांक  (*probe)(काष्ठा gio_device *, स्थिर काष्ठा gio_device_id *);
+	व्योम (*हटाओ)(काष्ठा gio_device *);
+	व्योम (*shutकरोwn)(काष्ठा gio_device *);
 
-	struct device_driver driver;
-};
-#define to_gio_driver(drv) container_of(drv, struct gio_driver, driver)
+	काष्ठा device_driver driver;
+पूर्ण;
+#घोषणा to_gio_driver(drv) container_of(drv, काष्ठा gio_driver, driver)
 
-extern struct gio_device *gio_dev_get(struct gio_device *);
-extern void gio_dev_put(struct gio_device *);
+बाह्य काष्ठा gio_device *gio_dev_get(काष्ठा gio_device *);
+बाह्य व्योम gio_dev_put(काष्ठा gio_device *);
 
-extern int gio_device_register(struct gio_device *);
-extern void gio_device_unregister(struct gio_device *);
-extern void gio_release_dev(struct device *);
+बाह्य पूर्णांक gio_device_रेजिस्टर(काष्ठा gio_device *);
+बाह्य व्योम gio_device_unरेजिस्टर(काष्ठा gio_device *);
+बाह्य व्योम gio_release_dev(काष्ठा device *);
 
-static inline void gio_device_free(struct gio_device *dev)
-{
+अटल अंतरभूत व्योम gio_device_मुक्त(काष्ठा gio_device *dev)
+अणु
 	gio_release_dev(&dev->dev);
-}
+पूर्ण
 
-extern int gio_register_driver(struct gio_driver *);
-extern void gio_unregister_driver(struct gio_driver *);
+बाह्य पूर्णांक gio_रेजिस्टर_driver(काष्ठा gio_driver *);
+बाह्य व्योम gio_unरेजिस्टर_driver(काष्ठा gio_driver *);
 
-#define gio_get_drvdata(_dev)	     dev_get_drvdata(&(_dev)->dev)
-#define gio_set_drvdata(_dev, data)  dev_set_drvdata(&(_dev)->dev, (data))
+#घोषणा gio_get_drvdata(_dev)	     dev_get_drvdata(&(_dev)->dev)
+#घोषणा gio_set_drvdata(_dev, data)  dev_set_drvdata(&(_dev)->dev, (data))
 
-extern void gio_set_master(struct gio_device *);
+बाह्य व्योम gio_set_master(काष्ठा gio_device *);

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,27 +21,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#ifndef _VEGA20_PPTABLE_H_
-#define _VEGA20_PPTABLE_H_
+#अगर_अघोषित _VEGA20_PPTABLE_H_
+#घोषणा _VEGA20_PPTABLE_H_
 
-#pragma pack(push, 1)
+#आशय pack(push, 1)
 
-#define ATOM_VEGA20_PP_THERMALCONTROLLER_NONE           0
-#define ATOM_VEGA20_PP_THERMALCONTROLLER_VEGA20     26
+#घोषणा ATOM_VEGA20_PP_THERMALCONTROLLER_NONE           0
+#घोषणा ATOM_VEGA20_PP_THERMALCONTROLLER_VEGA20     26
 
-#define ATOM_VEGA20_PP_PLATFORM_CAP_POWERPLAY                   0x1
-#define ATOM_VEGA20_PP_PLATFORM_CAP_SBIOSPOWERSOURCE            0x2
-#define ATOM_VEGA20_PP_PLATFORM_CAP_HARDWAREDC                  0x4
-#define ATOM_VEGA20_PP_PLATFORM_CAP_BACO                        0x8
-#define ATOM_VEGA20_PP_PLATFORM_CAP_BAMACO                      0x10
-#define ATOM_VEGA20_PP_PLATFORM_CAP_ENABLESHADOWPSTATE          0x20
+#घोषणा ATOM_VEGA20_PP_PLATFORM_CAP_POWERPLAY                   0x1
+#घोषणा ATOM_VEGA20_PP_PLATFORM_CAP_SBIOSPOWERSOURCE            0x2
+#घोषणा ATOM_VEGA20_PP_PLATFORM_CAP_HARDWAREDC                  0x4
+#घोषणा ATOM_VEGA20_PP_PLATFORM_CAP_BACO                        0x8
+#घोषणा ATOM_VEGA20_PP_PLATFORM_CAP_BAMACO                      0x10
+#घोषणा ATOM_VEGA20_PP_PLATFORM_CAP_ENABLESHADOWPSTATE          0x20
 
-#define ATOM_VEGA20_TABLE_REVISION_VEGA20         11
-#define ATOM_VEGA20_ODFEATURE_MAX_COUNT         32
-#define ATOM_VEGA20_ODSETTING_MAX_COUNT         32
-#define ATOM_VEGA20_PPCLOCK_MAX_COUNT           16
+#घोषणा ATOM_VEGA20_TABLE_REVISION_VEGA20         11
+#घोषणा ATOM_VEGA20_ODFEATURE_MAX_COUNT         32
+#घोषणा ATOM_VEGA20_ODSETTING_MAX_COUNT         32
+#घोषणा ATOM_VEGA20_PPCLOCK_MAX_COUNT           16
 
-enum ATOM_VEGA20_ODFEATURE_ID {
+क्रमागत ATOM_VEGA20_ODFEATURE_ID अणु
   ATOM_VEGA20_ODFEATURE_GFXCLK_LIMITS = 0,
   ATOM_VEGA20_ODFEATURE_GFXCLK_CURVE,
   ATOM_VEGA20_ODFEATURE_UCLK_MAX,
@@ -52,17 +53,17 @@ enum ATOM_VEGA20_ODFEATURE_ID {
   ATOM_VEGA20_ODFEATURE_MEMORY_TIMING_TUNE,
   ATOM_VEGA20_ODFEATURE_FAN_ZERO_RPM_CONTROL,
   ATOM_VEGA20_ODFEATURE_COUNT,
-};
+पूर्ण;
 
-enum ATOM_VEGA20_ODSETTING_ID {
+क्रमागत ATOM_VEGA20_ODSETTING_ID अणु
   ATOM_VEGA20_ODSETTING_GFXCLKFMAX = 0,
   ATOM_VEGA20_ODSETTING_GFXCLKFMIN,
   ATOM_VEGA20_ODSETTING_VDDGFXCURVEFREQ_P1,
-  ATOM_VEGA20_ODSETTING_VDDGFXCURVEVOLTAGEOFFSET_P1,
+  ATOM_VEGA20_ODSETTING_VDDGFXCURVEVOLTAGखातापूर्णFSET_P1,
   ATOM_VEGA20_ODSETTING_VDDGFXCURVEFREQ_P2,
-  ATOM_VEGA20_ODSETTING_VDDGFXCURVEVOLTAGEOFFSET_P2,
+  ATOM_VEGA20_ODSETTING_VDDGFXCURVEVOLTAGखातापूर्णFSET_P2,
   ATOM_VEGA20_ODSETTING_VDDGFXCURVEFREQ_P3,
-  ATOM_VEGA20_ODSETTING_VDDGFXCURVEVOLTAGEOFFSET_P3,
+  ATOM_VEGA20_ODSETTING_VDDGFXCURVEVOLTAGखातापूर्णFSET_P3,
   ATOM_VEGA20_ODSETTING_UCLKFMAX,
   ATOM_VEGA20_ODSETTING_POWERPERCENTAGE,
   ATOM_VEGA20_ODSETTING_FANRPMMIN,
@@ -70,20 +71,20 @@ enum ATOM_VEGA20_ODSETTING_ID {
   ATOM_VEGA20_ODSETTING_FANTARGETTEMPERATURE,
   ATOM_VEGA20_ODSETTING_OPERATINGTEMPMAX,
   ATOM_VEGA20_ODSETTING_COUNT,
-};
-typedef enum ATOM_VEGA20_ODSETTING_ID ATOM_VEGA20_ODSETTING_ID;
+पूर्ण;
+प्रकार क्रमागत ATOM_VEGA20_ODSETTING_ID ATOM_VEGA20_ODSETTING_ID;
 
-typedef struct _ATOM_VEGA20_OVERDRIVE8_RECORD
-{
+प्रकार काष्ठा _ATOM_VEGA20_OVERDRIVE8_RECORD
+अणु
   UCHAR ucODTableRevision;
   ULONG ODFeatureCount;
   UCHAR ODFeatureCapabilities [ATOM_VEGA20_ODFEATURE_MAX_COUNT];   //OD feature support flags
   ULONG ODSettingCount;
-  ULONG ODSettingsMax [ATOM_VEGA20_ODSETTING_MAX_COUNT];           //Upper Limit for each OD Setting
-  ULONG ODSettingsMin [ATOM_VEGA20_ODSETTING_MAX_COUNT];           //Lower Limit for each OD Setting
-} ATOM_VEGA20_OVERDRIVE8_RECORD;
+  ULONG ODSettingsMax [ATOM_VEGA20_ODSETTING_MAX_COUNT];           //Upper Limit क्रम each OD Setting
+  ULONG ODSettingsMin [ATOM_VEGA20_ODSETTING_MAX_COUNT];           //Lower Limit क्रम each OD Setting
+पूर्ण ATOM_VEGA20_OVERDRIVE8_RECORD;
 
-enum ATOM_VEGA20_PPCLOCK_ID {
+क्रमागत ATOM_VEGA20_PPCLOCK_ID अणु
   ATOM_VEGA20_PPCLOCK_GFXCLK = 0,
   ATOM_VEGA20_PPCLOCK_VCLK,
   ATOM_VEGA20_PPCLOCK_DCLK,
@@ -96,27 +97,27 @@ enum ATOM_VEGA20_PPCLOCK_ID {
   ATOM_VEGA20_PPCLOCK_PIXCLK,
   ATOM_VEGA20_PPCLOCK_PHYCLK,
   ATOM_VEGA20_PPCLOCK_COUNT,
-};
-typedef enum ATOM_VEGA20_PPCLOCK_ID ATOM_VEGA20_PPCLOCK_ID;
+पूर्ण;
+प्रकार क्रमागत ATOM_VEGA20_PPCLOCK_ID ATOM_VEGA20_PPCLOCK_ID;
 
-typedef struct _ATOM_VEGA20_POWER_SAVING_CLOCK_RECORD
-{
+प्रकार काष्ठा _ATOM_VEGA20_POWER_SAVING_CLOCK_RECORD
+अणु
   UCHAR ucTableRevision;
   ULONG PowerSavingClockCount;                                 // Count of PowerSavingClock Mode
   ULONG PowerSavingClockMax  [ATOM_VEGA20_PPCLOCK_MAX_COUNT];      // PowerSavingClock Mode Clock Maximum array In MHz
   ULONG PowerSavingClockMin  [ATOM_VEGA20_PPCLOCK_MAX_COUNT];      // PowerSavingClock Mode Clock Minimum array In MHz
-} ATOM_VEGA20_POWER_SAVING_CLOCK_RECORD;
+पूर्ण ATOM_VEGA20_POWER_SAVING_CLOCK_RECORD;
 
-typedef struct _ATOM_VEGA20_POWERPLAYTABLE
-{
-      struct atom_common_table_header sHeader;
+प्रकार काष्ठा _ATOM_VEGA20_POWERPLAYTABLE
+अणु
+      काष्ठा atom_common_table_header sHeader;
       UCHAR  ucTableRevision;
       USHORT usTableSize;
       ULONG  ulGoldenPPID;
       ULONG  ulGoldenRevision;
       USHORT usFormatID;
 
-      ULONG  ulPlatformCaps;
+      ULONG  ulPlatक्रमmCaps;
 
       UCHAR  ucThermalControllerType;
 
@@ -125,7 +126,7 @@ typedef struct _ATOM_VEGA20_POWERPLAYTABLE
       USHORT usBoostPowerLimit;
       USHORT usODTurboPowerLimit;
       USHORT usODPowerSavePowerLimit;
-      USHORT usSoftwareShutdownTemp;
+      USHORT usSoftwareShutकरोwnTemp;
 
       ATOM_VEGA20_POWER_SAVING_CLOCK_RECORD PowerSavingClockTable;    //PowerSavingClock Mode Clock Min/Max array
 
@@ -135,8 +136,8 @@ typedef struct _ATOM_VEGA20_POWERPLAYTABLE
 
       PPTable_t smcPPTable;
 
-} ATOM_Vega20_POWERPLAYTABLE;
+पूर्ण ATOM_Vega20_POWERPLAYTABLE;
 
-#pragma pack(pop)
+#आशय pack(pop)
 
-#endif
+#पूर्ण_अगर

@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Define generic no-op hooks for arch_dup_mmap, arch_exit_mmap
- * and arch_unmap to be included in asm-FOO/mmu_context.h for any
- * arch FOO which doesn't need to hook these.
+ * Define generic no-op hooks क्रम arch_dup_mmap, arch_निकास_mmap
+ * and arch_unmap to be included in यंत्र-FOO/mmu_context.h क्रम any
+ * arch FOO which करोesn't need to hook these.
  */
-#ifndef _ASM_GENERIC_MM_HOOKS_H
-#define _ASM_GENERIC_MM_HOOKS_H
+#अगर_अघोषित _ASM_GENERIC_MM_HOOKS_H
+#घोषणा _ASM_GENERIC_MM_HOOKS_H
 
-static inline int arch_dup_mmap(struct mm_struct *oldmm,
-				struct mm_struct *mm)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक arch_dup_mmap(काष्ठा mm_काष्ठा *oldmm,
+				काष्ठा mm_काष्ठा *mm)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void arch_exit_mmap(struct mm_struct *mm)
-{
-}
+अटल अंतरभूत व्योम arch_निकास_mmap(काष्ठा mm_काष्ठा *mm)
+अणु
+पूर्ण
 
-static inline void arch_unmap(struct mm_struct *mm,
-			unsigned long start, unsigned long end)
-{
-}
+अटल अंतरभूत व्योम arch_unmap(काष्ठा mm_काष्ठा *mm,
+			अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
+पूर्ण
 
-static inline bool arch_vma_access_permitted(struct vm_area_struct *vma,
-		bool write, bool execute, bool foreign)
-{
-	/* by default, allow everything */
-	return true;
-}
-#endif	/* _ASM_GENERIC_MM_HOOKS_H */
+अटल अंतरभूत bool arch_vma_access_permitted(काष्ठा vm_area_काष्ठा *vma,
+		bool ग_लिखो, bool execute, bool क्रमeign)
+अणु
+	/* by शेष, allow everything */
+	वापस true;
+पूर्ण
+#पूर्ण_अगर	/* _ASM_GENERIC_MM_HOOKS_H */

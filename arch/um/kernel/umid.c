@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <asm/errno.h>
-#include <init.h>
-#include <kern.h>
-#include <os.h>
+#समावेश <यंत्र/त्रुटिसं.स>
+#समावेश <init.h>
+#समावेश <kern.h>
+#समावेश <os.h>
 
 /* Changed by set_umid_arg */
-static int umid_inited = 0;
+अटल पूर्णांक umid_inited = 0;
 
-static int __init set_umid_arg(char *name, int *add)
-{
-	int err;
+अटल पूर्णांक __init set_umid_arg(अक्षर *name, पूर्णांक *add)
+अणु
+	पूर्णांक err;
 
-	if (umid_inited) {
+	अगर (umid_inited) अणु
 		os_warn("umid already set\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	*add = 0;
 	err = set_umid(name);
-	if (err == -EEXIST)
+	अगर (err == -EEXIST)
 		os_warn("umid '%s' already in use\n", name);
-	else if (!err)
+	अन्यथा अगर (!err)
 		umid_inited = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __uml_setup("umid=", set_umid_arg,
 "umid=<name>\n"

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * spcp8x5 USB to serial adaptor driver
  *
@@ -6,158 +7,158 @@
  * Copyright (C) 2006 Linxb (xubin.lin@worldplus.com.cn)
  * Copyright (C) 2006 S1 Corp.
  *
- * Original driver for 2.6.10 pl2303 driver by
- *   Greg Kroah-Hartman (greg@kroah.com)
- * Changes for 2.6.20 by Harald Klein <hari@vt100.at>
+ * Original driver क्रम 2.6.10 pl2303 driver by
+ *   Greg Kroah-Harपंचांगan (greg@kroah.com)
+ * Changes क्रम 2.6.20 by Harald Klein <hari@vt100.at>
  */
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/tty_flip.h>
-#include <linux/module.h>
-#include <linux/spinlock.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
 
-#define DRIVER_DESC	"SPCP8x5 USB to serial adaptor driver"
+#घोषणा DRIVER_DESC	"SPCP8x5 USB to serial adaptor driver"
 
-#define SPCP825_QUIRK_NO_UART_STATUS	0x01
-#define SPCP825_QUIRK_NO_WORK_MODE	0x02
+#घोषणा SPCP825_QUIRK_NO_UART_STATUS	0x01
+#घोषणा SPCP825_QUIRK_NO_WORK_MODE	0x02
 
-#define SPCP8x5_007_VID		0x04FC
-#define SPCP8x5_007_PID		0x0201
-#define SPCP8x5_008_VID		0x04fc
-#define SPCP8x5_008_PID		0x0235
-#define SPCP8x5_PHILIPS_VID	0x0471
-#define SPCP8x5_PHILIPS_PID	0x081e
-#define SPCP8x5_INTERMATIC_VID	0x04FC
-#define SPCP8x5_INTERMATIC_PID	0x0204
-#define SPCP8x5_835_VID		0x04fc
-#define SPCP8x5_835_PID		0x0231
+#घोषणा SPCP8x5_007_VID		0x04FC
+#घोषणा SPCP8x5_007_PID		0x0201
+#घोषणा SPCP8x5_008_VID		0x04fc
+#घोषणा SPCP8x5_008_PID		0x0235
+#घोषणा SPCP8x5_PHILIPS_VID	0x0471
+#घोषणा SPCP8x5_PHILIPS_PID	0x081e
+#घोषणा SPCP8x5_INTERMATIC_VID	0x04FC
+#घोषणा SPCP8x5_INTERMATIC_PID	0x0204
+#घोषणा SPCP8x5_835_VID		0x04fc
+#घोषणा SPCP8x5_835_PID		0x0231
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(SPCP8x5_PHILIPS_VID , SPCP8x5_PHILIPS_PID)},
-	{ USB_DEVICE(SPCP8x5_INTERMATIC_VID, SPCP8x5_INTERMATIC_PID)},
-	{ USB_DEVICE(SPCP8x5_835_VID, SPCP8x5_835_PID)},
-	{ USB_DEVICE(SPCP8x5_008_VID, SPCP8x5_008_PID)},
-	{ USB_DEVICE(SPCP8x5_007_VID, SPCP8x5_007_PID),
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(SPCP8x5_PHILIPS_VID , SPCP8x5_PHILIPS_PID)पूर्ण,
+	अणु USB_DEVICE(SPCP8x5_INTERMATIC_VID, SPCP8x5_INTERMATIC_PID)पूर्ण,
+	अणु USB_DEVICE(SPCP8x5_835_VID, SPCP8x5_835_PID)पूर्ण,
+	अणु USB_DEVICE(SPCP8x5_008_VID, SPCP8x5_008_PID)पूर्ण,
+	अणु USB_DEVICE(SPCP8x5_007_VID, SPCP8x5_007_PID),
 	  .driver_info = SPCP825_QUIRK_NO_UART_STATUS |
-				SPCP825_QUIRK_NO_WORK_MODE },
-	{ }					/* Terminating entry */
-};
+				SPCP825_QUIRK_NO_WORK_MODE पूर्ण,
+	अणु पूर्ण					/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, id_table);
 
-struct spcp8x5_usb_ctrl_arg {
+काष्ठा spcp8x5_usb_ctrl_arg अणु
 	u8	type;
 	u8	cmd;
 	u8	cmd_type;
 	u16	value;
 	u16	index;
 	u16	length;
-};
+पूर्ण;
 
 
-/* spcp8x5 spec register define */
-#define MCR_CONTROL_LINE_RTS		0x02
-#define MCR_CONTROL_LINE_DTR		0x01
-#define MCR_DTR				0x01
-#define MCR_RTS				0x02
+/* spcp8x5 spec रेजिस्टर define */
+#घोषणा MCR_CONTROL_LINE_RTS		0x02
+#घोषणा MCR_CONTROL_LINE_DTR		0x01
+#घोषणा MCR_DTR				0x01
+#घोषणा MCR_RTS				0x02
 
-#define MSR_STATUS_LINE_DCD		0x80
-#define MSR_STATUS_LINE_RI		0x40
-#define MSR_STATUS_LINE_DSR		0x20
-#define MSR_STATUS_LINE_CTS		0x10
+#घोषणा MSR_STATUS_LINE_DCD		0x80
+#घोषणा MSR_STATUS_LINE_RI		0x40
+#घोषणा MSR_STATUS_LINE_DSR		0x20
+#घोषणा MSR_STATUS_LINE_CTS		0x10
 
-/* verdor command here , we should define myself */
-#define SET_DEFAULT			0x40
-#define SET_DEFAULT_TYPE		0x20
+/* verकरोr command here , we should define myself */
+#घोषणा SET_DEFAULT			0x40
+#घोषणा SET_DEFAULT_TYPE		0x20
 
-#define SET_UART_FORMAT			0x40
-#define SET_UART_FORMAT_TYPE		0x21
-#define SET_UART_FORMAT_SIZE_5		0x00
-#define SET_UART_FORMAT_SIZE_6		0x01
-#define SET_UART_FORMAT_SIZE_7		0x02
-#define SET_UART_FORMAT_SIZE_8		0x03
-#define SET_UART_FORMAT_STOP_1		0x00
-#define SET_UART_FORMAT_STOP_2		0x04
-#define SET_UART_FORMAT_PAR_NONE	0x00
-#define SET_UART_FORMAT_PAR_ODD		0x10
-#define SET_UART_FORMAT_PAR_EVEN	0x30
-#define SET_UART_FORMAT_PAR_MASK	0xD0
-#define SET_UART_FORMAT_PAR_SPACE	0x90
+#घोषणा SET_UART_FORMAT			0x40
+#घोषणा SET_UART_FORMAT_TYPE		0x21
+#घोषणा SET_UART_FORMAT_SIZE_5		0x00
+#घोषणा SET_UART_FORMAT_SIZE_6		0x01
+#घोषणा SET_UART_FORMAT_SIZE_7		0x02
+#घोषणा SET_UART_FORMAT_SIZE_8		0x03
+#घोषणा SET_UART_FORMAT_STOP_1		0x00
+#घोषणा SET_UART_FORMAT_STOP_2		0x04
+#घोषणा SET_UART_FORMAT_PAR_NONE	0x00
+#घोषणा SET_UART_FORMAT_PAR_ODD		0x10
+#घोषणा SET_UART_FORMAT_PAR_EVEN	0x30
+#घोषणा SET_UART_FORMAT_PAR_MASK	0xD0
+#घोषणा SET_UART_FORMAT_PAR_SPACE	0x90
 
-#define GET_UART_STATUS_TYPE		0xc0
-#define GET_UART_STATUS			0x22
-#define GET_UART_STATUS_MSR		0x06
+#घोषणा GET_UART_STATUS_TYPE		0xc0
+#घोषणा GET_UART_STATUS			0x22
+#घोषणा GET_UART_STATUS_MSR		0x06
 
-#define SET_UART_STATUS			0x40
-#define SET_UART_STATUS_TYPE		0x23
-#define SET_UART_STATUS_MCR		0x0004
-#define SET_UART_STATUS_MCR_DTR		0x01
-#define SET_UART_STATUS_MCR_RTS		0x02
-#define SET_UART_STATUS_MCR_LOOP	0x10
+#घोषणा SET_UART_STATUS			0x40
+#घोषणा SET_UART_STATUS_TYPE		0x23
+#घोषणा SET_UART_STATUS_MCR		0x0004
+#घोषणा SET_UART_STATUS_MCR_DTR		0x01
+#घोषणा SET_UART_STATUS_MCR_RTS		0x02
+#घोषणा SET_UART_STATUS_MCR_LOOP	0x10
 
-#define SET_WORKING_MODE		0x40
-#define SET_WORKING_MODE_TYPE		0x24
-#define SET_WORKING_MODE_U2C		0x00
-#define SET_WORKING_MODE_RS485		0x01
-#define SET_WORKING_MODE_PDMA		0x02
-#define SET_WORKING_MODE_SPP		0x03
+#घोषणा SET_WORKING_MODE		0x40
+#घोषणा SET_WORKING_MODE_TYPE		0x24
+#घोषणा SET_WORKING_MODE_U2C		0x00
+#घोषणा SET_WORKING_MODE_RS485		0x01
+#घोषणा SET_WORKING_MODE_PDMA		0x02
+#घोषणा SET_WORKING_MODE_SPP		0x03
 
-#define SET_FLOWCTL_CHAR		0x40
-#define SET_FLOWCTL_CHAR_TYPE		0x25
+#घोषणा SET_FLOWCTL_CHAR		0x40
+#घोषणा SET_FLOWCTL_CHAR_TYPE		0x25
 
-#define GET_VERSION			0xc0
-#define GET_VERSION_TYPE		0x26
+#घोषणा GET_VERSION			0xc0
+#घोषणा GET_VERSION_TYPE		0x26
 
-#define SET_REGISTER			0x40
-#define SET_REGISTER_TYPE		0x27
+#घोषणा SET_REGISTER			0x40
+#घोषणा SET_REGISTER_TYPE		0x27
 
-#define	GET_REGISTER			0xc0
-#define GET_REGISTER_TYPE		0x28
+#घोषणा	GET_REGISTER			0xc0
+#घोषणा GET_REGISTER_TYPE		0x28
 
-#define SET_RAM				0x40
-#define SET_RAM_TYPE			0x31
+#घोषणा SET_RAM				0x40
+#घोषणा SET_RAM_TYPE			0x31
 
-#define GET_RAM				0xc0
-#define GET_RAM_TYPE			0x32
+#घोषणा GET_RAM				0xc0
+#घोषणा GET_RAM_TYPE			0x32
 
 /* how come ??? */
-#define UART_STATE			0x08
-#define UART_STATE_TRANSIENT_MASK	0x75
-#define UART_DCD			0x01
-#define UART_DSR			0x02
-#define UART_BREAK_ERROR		0x04
-#define UART_RING			0x08
-#define UART_FRAME_ERROR		0x10
-#define UART_PARITY_ERROR		0x20
-#define UART_OVERRUN_ERROR		0x40
-#define UART_CTS			0x80
+#घोषणा UART_STATE			0x08
+#घोषणा UART_STATE_TRANSIENT_MASK	0x75
+#घोषणा UART_DCD			0x01
+#घोषणा UART_DSR			0x02
+#घोषणा UART_BREAK_ERROR		0x04
+#घोषणा UART_RING			0x08
+#घोषणा UART_FRAME_ERROR		0x10
+#घोषणा UART_PARITY_ERROR		0x20
+#घोषणा UART_OVERRUN_ERROR		0x40
+#घोषणा UART_CTS			0x80
 
-struct spcp8x5_private {
-	unsigned		quirks;
+काष्ठा spcp8x5_निजी अणु
+	अचिन्हित		quirks;
 	spinlock_t		lock;
 	u8			line_control;
-};
+पूर्ण;
 
-static int spcp8x5_probe(struct usb_serial *serial,
-						const struct usb_device_id *id)
-{
-	usb_set_serial_data(serial, (void *)id);
+अटल पूर्णांक spcp8x5_probe(काष्ठा usb_serial *serial,
+						स्थिर काष्ठा usb_device_id *id)
+अणु
+	usb_set_serial_data(serial, (व्योम *)id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int spcp8x5_port_probe(struct usb_serial_port *port)
-{
-	const struct usb_device_id *id = usb_get_serial_data(port->serial);
-	struct spcp8x5_private *priv;
+अटल पूर्णांक spcp8x5_port_probe(काष्ठा usb_serial_port *port)
+अणु
+	स्थिर काष्ठा usb_device_id *id = usb_get_serial_data(port->serial);
+	काष्ठा spcp8x5_निजी *priv;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	spin_lock_init(&priv->lock);
 	priv->quirks = id->driver_info;
@@ -166,284 +167,284 @@ static int spcp8x5_port_probe(struct usb_serial_port *port)
 
 	port->port.drain_delay = 256;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void spcp8x5_port_remove(struct usb_serial_port *port)
-{
-	struct spcp8x5_private *priv;
+अटल व्योम spcp8x5_port_हटाओ(काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा spcp8x5_निजी *priv;
 
 	priv = usb_get_serial_port_data(port);
-	kfree(priv);
-}
+	kमुक्त(priv);
+पूर्ण
 
-static int spcp8x5_set_ctrl_line(struct usb_serial_port *port, u8 mcr)
-{
-	struct spcp8x5_private *priv = usb_get_serial_port_data(port);
-	struct usb_device *dev = port->serial->dev;
-	int retval;
+अटल पूर्णांक spcp8x5_set_ctrl_line(काष्ठा usb_serial_port *port, u8 mcr)
+अणु
+	काष्ठा spcp8x5_निजी *priv = usb_get_serial_port_data(port);
+	काष्ठा usb_device *dev = port->serial->dev;
+	पूर्णांक retval;
 
-	if (priv->quirks & SPCP825_QUIRK_NO_UART_STATUS)
-		return -EPERM;
+	अगर (priv->quirks & SPCP825_QUIRK_NO_UART_STATUS)
+		वापस -EPERM;
 
 	retval = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 				 SET_UART_STATUS_TYPE, SET_UART_STATUS,
-				 mcr, 0x04, NULL, 0, 100);
-	if (retval != 0) {
+				 mcr, 0x04, शून्य, 0, 100);
+	अगर (retval != 0) अणु
 		dev_err(&port->dev, "failed to set control lines: %d\n",
 								retval);
-	}
-	return retval;
-}
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-static int spcp8x5_get_msr(struct usb_serial_port *port, u8 *status)
-{
-	struct spcp8x5_private *priv = usb_get_serial_port_data(port);
-	struct usb_device *dev = port->serial->dev;
+अटल पूर्णांक spcp8x5_get_msr(काष्ठा usb_serial_port *port, u8 *status)
+अणु
+	काष्ठा spcp8x5_निजी *priv = usb_get_serial_port_data(port);
+	काष्ठा usb_device *dev = port->serial->dev;
 	u8 *buf;
-	int ret;
+	पूर्णांक ret;
 
-	if (priv->quirks & SPCP825_QUIRK_NO_UART_STATUS)
-		return -EPERM;
+	अगर (priv->quirks & SPCP825_QUIRK_NO_UART_STATUS)
+		वापस -EPERM;
 
 	buf = kzalloc(1, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	ret = usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
 			      GET_UART_STATUS, GET_UART_STATUS_TYPE,
 			      0, GET_UART_STATUS_MSR, buf, 1, 100);
-	if (ret < 1) {
+	अगर (ret < 1) अणु
 		dev_err(&port->dev, "failed to get modem status: %d\n", ret);
-		if (ret >= 0)
+		अगर (ret >= 0)
 			ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev_dbg(&port->dev, "0xc0:0x22:0:6  %d - 0x02%x\n", ret, *buf);
 	*status = *buf;
 	ret = 0;
 out:
-	kfree(buf);
+	kमुक्त(buf);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void spcp8x5_set_work_mode(struct usb_serial_port *port, u16 value,
+अटल व्योम spcp8x5_set_work_mode(काष्ठा usb_serial_port *port, u16 value,
 								 u16 index)
-{
-	struct spcp8x5_private *priv = usb_get_serial_port_data(port);
-	struct usb_device *dev = port->serial->dev;
-	int ret;
+अणु
+	काष्ठा spcp8x5_निजी *priv = usb_get_serial_port_data(port);
+	काष्ठा usb_device *dev = port->serial->dev;
+	पूर्णांक ret;
 
-	if (priv->quirks & SPCP825_QUIRK_NO_WORK_MODE)
-		return;
+	अगर (priv->quirks & SPCP825_QUIRK_NO_WORK_MODE)
+		वापस;
 
 	ret = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			      SET_WORKING_MODE_TYPE, SET_WORKING_MODE,
-			      value, index, NULL, 0, 100);
+			      value, index, शून्य, 0, 100);
 	dev_dbg(&port->dev, "value = %#x , index = %#x\n", value, index);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&port->dev, "failed to set work mode: %d\n", ret);
-}
+पूर्ण
 
-static int spcp8x5_carrier_raised(struct usb_serial_port *port)
-{
+अटल पूर्णांक spcp8x5_carrier_उठाओd(काष्ठा usb_serial_port *port)
+अणु
 	u8 msr;
-	int ret;
+	पूर्णांक ret;
 
 	ret = spcp8x5_get_msr(port, &msr);
-	if (ret || msr & MSR_STATUS_LINE_DCD)
-		return 1;
+	अगर (ret || msr & MSR_STATUS_LINE_DCD)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void spcp8x5_dtr_rts(struct usb_serial_port *port, int on)
-{
-	struct spcp8x5_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
+अटल व्योम spcp8x5_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
+अणु
+	काष्ठा spcp8x5_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
 	u8 control;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	if (on)
+	अगर (on)
 		priv->line_control = MCR_CONTROL_LINE_DTR
 						| MCR_CONTROL_LINE_RTS;
-	else
+	अन्यथा
 		priv->line_control &= ~ (MCR_CONTROL_LINE_DTR
 						| MCR_CONTROL_LINE_RTS);
 	control = priv->line_control;
 	spin_unlock_irqrestore(&priv->lock, flags);
 	spcp8x5_set_ctrl_line(port, control);
-}
+पूर्ण
 
-static void spcp8x5_init_termios(struct tty_struct *tty)
-{
+अटल व्योम spcp8x5_init_termios(काष्ठा tty_काष्ठा *tty)
+अणु
 	tty_encode_baud_rate(tty, 115200, 115200);
-}
+पूर्ण
 
-static void spcp8x5_set_termios(struct tty_struct *tty,
-		struct usb_serial_port *port, struct ktermios *old_termios)
-{
-	struct usb_serial *serial = port->serial;
-	struct spcp8x5_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
-	unsigned int cflag = tty->termios.c_cflag;
-	unsigned short uartdata;
-	unsigned char buf[2] = {0, 0};
-	int baud;
-	int i;
+अटल व्योम spcp8x5_set_termios(काष्ठा tty_काष्ठा *tty,
+		काष्ठा usb_serial_port *port, काष्ठा ktermios *old_termios)
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा spcp8x5_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक cflag = tty->termios.c_cflag;
+	अचिन्हित लघु uartdata;
+	अचिन्हित अक्षर buf[2] = अणु0, 0पूर्ण;
+	पूर्णांक baud;
+	पूर्णांक i;
 	u8 control;
 
 	/* check that they really want us to change something */
-	if (old_termios && !tty_termios_hw_change(&tty->termios, old_termios))
-		return;
+	अगर (old_termios && !tty_termios_hw_change(&tty->termios, old_termios))
+		वापस;
 
 	/* set DTR/RTS active */
 	spin_lock_irqsave(&priv->lock, flags);
 	control = priv->line_control;
-	if (old_termios && (old_termios->c_cflag & CBAUD) == B0) {
+	अगर (old_termios && (old_termios->c_cflag & CBAUD) == B0) अणु
 		priv->line_control |= MCR_DTR;
-		if (!(old_termios->c_cflag & CRTSCTS))
+		अगर (!(old_termios->c_cflag & CRTSCTS))
 			priv->line_control |= MCR_RTS;
-	}
-	if (control != priv->line_control) {
+	पूर्ण
+	अगर (control != priv->line_control) अणु
 		control = priv->line_control;
 		spin_unlock_irqrestore(&priv->lock, flags);
 		spcp8x5_set_ctrl_line(port, control);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&priv->lock, flags);
-	}
+	पूर्ण
 
 	/* Set Baud Rate */
 	baud = tty_get_baud_rate(tty);
-	switch (baud) {
-	case 300:	buf[0] = 0x00;	break;
-	case 600:	buf[0] = 0x01;	break;
-	case 1200:	buf[0] = 0x02;	break;
-	case 2400:	buf[0] = 0x03;	break;
-	case 4800:	buf[0] = 0x04;	break;
-	case 9600:	buf[0] = 0x05;	break;
-	case 19200:	buf[0] = 0x07;	break;
-	case 38400:	buf[0] = 0x09;	break;
-	case 57600:	buf[0] = 0x0a;	break;
-	case 115200:	buf[0] = 0x0b;	break;
-	case 230400:	buf[0] = 0x0c;	break;
-	case 460800:	buf[0] = 0x0d;	break;
-	case 921600:	buf[0] = 0x0e;	break;
-/*	case 1200000:	buf[0] = 0x0f;	break; */
-/*	case 2400000:	buf[0] = 0x10;	break; */
-	case 3000000:	buf[0] = 0x11;	break;
-/*	case 6000000:	buf[0] = 0x12;	break; */
-	case 0:
-	case 1000000:
-			buf[0] = 0x0b;	break;
-	default:
+	चयन (baud) अणु
+	हाल 300:	buf[0] = 0x00;	अवरोध;
+	हाल 600:	buf[0] = 0x01;	अवरोध;
+	हाल 1200:	buf[0] = 0x02;	अवरोध;
+	हाल 2400:	buf[0] = 0x03;	अवरोध;
+	हाल 4800:	buf[0] = 0x04;	अवरोध;
+	हाल 9600:	buf[0] = 0x05;	अवरोध;
+	हाल 19200:	buf[0] = 0x07;	अवरोध;
+	हाल 38400:	buf[0] = 0x09;	अवरोध;
+	हाल 57600:	buf[0] = 0x0a;	अवरोध;
+	हाल 115200:	buf[0] = 0x0b;	अवरोध;
+	हाल 230400:	buf[0] = 0x0c;	अवरोध;
+	हाल 460800:	buf[0] = 0x0d;	अवरोध;
+	हाल 921600:	buf[0] = 0x0e;	अवरोध;
+/*	हाल 1200000:	buf[0] = 0x0f;	अवरोध; */
+/*	हाल 2400000:	buf[0] = 0x10;	अवरोध; */
+	हाल 3000000:	buf[0] = 0x11;	अवरोध;
+/*	हाल 6000000:	buf[0] = 0x12;	अवरोध; */
+	हाल 0:
+	हाल 1000000:
+			buf[0] = 0x0b;	अवरोध;
+	शेष:
 		dev_err(&port->dev, "unsupported baudrate, using 9600\n");
-	}
+	पूर्ण
 
 	/* Set Data Length : 00:5bit, 01:6bit, 10:7bit, 11:8bit */
-	switch (cflag & CSIZE) {
-	case CS5:
+	चयन (cflag & CSIZE) अणु
+	हाल CS5:
 		buf[1] |= SET_UART_FORMAT_SIZE_5;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		buf[1] |= SET_UART_FORMAT_SIZE_6;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		buf[1] |= SET_UART_FORMAT_SIZE_7;
-		break;
-	default:
-	case CS8:
+		अवरोध;
+	शेष:
+	हाल CS8:
 		buf[1] |= SET_UART_FORMAT_SIZE_8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Set Stop bit2 : 0:1bit 1:2bit */
 	buf[1] |= (cflag & CSTOPB) ? SET_UART_FORMAT_STOP_2 :
 				     SET_UART_FORMAT_STOP_1;
 
 	/* Set Parity bit3-4 01:Odd 11:Even */
-	if (cflag & PARENB) {
+	अगर (cflag & PARENB) अणु
 		buf[1] |= (cflag & PARODD) ?
 		SET_UART_FORMAT_PAR_ODD : SET_UART_FORMAT_PAR_EVEN ;
-	} else {
+	पूर्ण अन्यथा अणु
 		buf[1] |= SET_UART_FORMAT_PAR_NONE;
-	}
+	पूर्ण
 	uartdata = buf[0] | buf[1]<<8;
 
 	i = usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0),
 			    SET_UART_FORMAT_TYPE, SET_UART_FORMAT,
-			    uartdata, 0, NULL, 0, 100);
-	if (i < 0)
+			    uartdata, 0, शून्य, 0, 100);
+	अगर (i < 0)
 		dev_err(&port->dev, "Set UART format %#x failed (error = %d)\n",
 			uartdata, i);
 	dev_dbg(&port->dev, "0x21:0x40:0:0  %d\n", i);
 
-	if (cflag & CRTSCTS) {
+	अगर (cflag & CRTSCTS) अणु
 		/* enable hardware flow control */
 		spcp8x5_set_work_mode(port, 0x000a, SET_WORKING_MODE_U2C);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int spcp8x5_open(struct tty_struct *tty, struct usb_serial_port *port)
-{
-	struct usb_serial *serial = port->serial;
-	struct spcp8x5_private *priv = usb_get_serial_port_data(port);
-	int ret;
+अटल पूर्णांक spcp8x5_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
+अणु
+	काष्ठा usb_serial *serial = port->serial;
+	काष्ठा spcp8x5_निजी *priv = usb_get_serial_port_data(port);
+	पूर्णांक ret;
 
-	usb_clear_halt(serial->dev, port->write_urb->pipe);
-	usb_clear_halt(serial->dev, port->read_urb->pipe);
+	usb_clear_halt(serial->dev, port->ग_लिखो_urb->pipe);
+	usb_clear_halt(serial->dev, port->पढ़ो_urb->pipe);
 
 	ret = usb_control_msg(serial->dev, usb_sndctrlpipe(serial->dev, 0),
 			      0x09, 0x00,
-			      0x01, 0x00, NULL, 0x00, 100);
-	if (ret)
-		return ret;
+			      0x01, 0x00, शून्य, 0x00, 100);
+	अगर (ret)
+		वापस ret;
 
 	spcp8x5_set_ctrl_line(port, priv->line_control);
 
-	if (tty)
-		spcp8x5_set_termios(tty, port, NULL);
+	अगर (tty)
+		spcp8x5_set_termios(tty, port, शून्य);
 
-	return usb_serial_generic_open(tty, port);
-}
+	वापस usb_serial_generic_खोलो(tty, port);
+पूर्ण
 
-static int spcp8x5_tiocmset(struct tty_struct *tty,
-			    unsigned int set, unsigned int clear)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct spcp8x5_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
+अटल पूर्णांक spcp8x5_tiocmset(काष्ठा tty_काष्ठा *tty,
+			    अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा spcp8x5_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
 	u8 control;
 
 	spin_lock_irqsave(&priv->lock, flags);
-	if (set & TIOCM_RTS)
+	अगर (set & TIOCM_RTS)
 		priv->line_control |= MCR_RTS;
-	if (set & TIOCM_DTR)
+	अगर (set & TIOCM_DTR)
 		priv->line_control |= MCR_DTR;
-	if (clear & TIOCM_RTS)
+	अगर (clear & TIOCM_RTS)
 		priv->line_control &= ~MCR_RTS;
-	if (clear & TIOCM_DTR)
+	अगर (clear & TIOCM_DTR)
 		priv->line_control &= ~MCR_DTR;
 	control = priv->line_control;
 	spin_unlock_irqrestore(&priv->lock, flags);
 
-	return spcp8x5_set_ctrl_line(port, control);
-}
+	वापस spcp8x5_set_ctrl_line(port, control);
+पूर्ण
 
-static int spcp8x5_tiocmget(struct tty_struct *tty)
-{
-	struct usb_serial_port *port = tty->driver_data;
-	struct spcp8x5_private *priv = usb_get_serial_port_data(port);
-	unsigned long flags;
-	unsigned int mcr;
+अटल पूर्णांक spcp8x5_tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा usb_serial_port *port = tty->driver_data;
+	काष्ठा spcp8x5_निजी *priv = usb_get_serial_port_data(port);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक mcr;
 	u8 status;
-	unsigned int result;
+	अचिन्हित पूर्णांक result;
 
 	result = spcp8x5_get_msr(port, &status);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	spin_lock_irqsave(&priv->lock, flags);
 	mcr = priv->line_control;
@@ -456,33 +457,33 @@ static int spcp8x5_tiocmget(struct tty_struct *tty)
 		  | ((status & MSR_STATUS_LINE_RI)	? TIOCM_RI  : 0)
 		  | ((status & MSR_STATUS_LINE_DCD)	? TIOCM_CD  : 0);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static struct usb_serial_driver spcp8x5_device = {
-	.driver = {
+अटल काष्ठा usb_serial_driver spcp8x5_device = अणु
+	.driver = अणु
 		.owner =	THIS_MODULE,
 		.name =		"SPCP8x5",
-	},
+	पूर्ण,
 	.id_table		= id_table,
 	.num_ports		= 1,
 	.num_bulk_in		= 1,
 	.num_bulk_out		= 1,
-	.open			= spcp8x5_open,
+	.खोलो			= spcp8x5_खोलो,
 	.dtr_rts		= spcp8x5_dtr_rts,
-	.carrier_raised		= spcp8x5_carrier_raised,
+	.carrier_उठाओd		= spcp8x5_carrier_उठाओd,
 	.set_termios		= spcp8x5_set_termios,
 	.init_termios		= spcp8x5_init_termios,
 	.tiocmget		= spcp8x5_tiocmget,
 	.tiocmset		= spcp8x5_tiocmset,
 	.probe			= spcp8x5_probe,
 	.port_probe		= spcp8x5_port_probe,
-	.port_remove		= spcp8x5_port_remove,
-};
+	.port_हटाओ		= spcp8x5_port_हटाओ,
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
-	&spcp8x5_device, NULL
-};
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+	&spcp8x5_device, शून्य
+पूर्ण;
 
 module_usb_serial_driver(serial_drivers, id_table);
 

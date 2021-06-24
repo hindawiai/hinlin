@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef FS_CEPH_HASH_H
-#define FS_CEPH_HASH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित FS_CEPH_HASH_H
+#घोषणा FS_CEPH_HASH_H
 
-#define CEPH_STR_HASH_LINUX      0x1  /* linux dcache hash */
-#define CEPH_STR_HASH_RJENKINS   0x2  /* robert jenkins' */
+#घोषणा CEPH_STR_HASH_LINUX      0x1  /* linux dcache hash */
+#घोषणा CEPH_STR_HASH_RJENKINS   0x2  /* robert jenkins' */
 
-extern unsigned ceph_str_hash_linux(const char *s, unsigned len);
-extern unsigned ceph_str_hash_rjenkins(const char *s, unsigned len);
+बाह्य अचिन्हित ceph_str_hash_linux(स्थिर अक्षर *s, अचिन्हित len);
+बाह्य अचिन्हित ceph_str_hash_rjenkins(स्थिर अक्षर *s, अचिन्हित len);
 
-extern unsigned ceph_str_hash(int type, const char *s, unsigned len);
-extern const char *ceph_str_hash_name(int type);
+बाह्य अचिन्हित ceph_str_hash(पूर्णांक type, स्थिर अक्षर *s, अचिन्हित len);
+बाह्य स्थिर अक्षर *ceph_str_hash_name(पूर्णांक type);
 
-#endif
+#पूर्ण_अगर

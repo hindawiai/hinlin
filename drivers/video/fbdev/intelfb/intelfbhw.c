@@ -1,400 +1,401 @@
+<शैली गुरु>
 /*
- * intelfb
+ * पूर्णांकelfb
  *
- * Linux framebuffer driver for Intel(R) 865G integrated graphics chips.
+ * Linux framebuffer driver क्रम Intel(R) 865G पूर्णांकegrated graphics chips.
  *
- * Copyright © 2002, 2003 David Dawes <dawes@xfree86.org>
+ * Copyright तऊ 2002, 2003 David Dawes <dawes@xमुक्त86.org>
  *                   2004 Sylvain Meyer
  *
- * This driver consists of two parts.  The first part (intelfbdrv.c) provides
- * the basic fbdev interfaces, is derived in part from the radeonfb and
- * vesafb drivers, and is covered by the GPL.  The second part (intelfbhw.c)
+ * This driver consists of two parts.  The first part (पूर्णांकelfbdrv.c) provides
+ * the basic fbdev पूर्णांकerfaces, is derived in part from the radeonfb and
+ * vesafb drivers, and is covered by the GPL.  The second part (पूर्णांकelfbhw.c)
  * provides the code to program the hardware.  Most of it is derived from
- * the i810/i830 XFree86 driver.  The HW-specific code is covered here
+ * the i810/i830 XFree86 driver.  The HW-specअगरic code is covered here
  * under a dual license (GPL and MIT/XFree86 license).
  *
  * Author: David Dawes
  *
  */
 
-/* $DHD: intelfb/intelfbhw.c,v 1.9 2003/06/27 15:06:25 dawes Exp $ */
+/* $DHD: पूर्णांकelfb/पूर्णांकelfbhw.c,v 1.9 2003/06/27 15:06:25 dawes Exp $ */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/delay.h>
-#include <linux/fb.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/pci.h>
-#include <linux/vmalloc.h>
-#include <linux/pagemap.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#include "intelfb.h"
-#include "intelfbhw.h"
+#समावेश "intelfb.h"
+#समावेश "intelfbhw.h"
 
-struct pll_min_max {
-	int min_m, max_m, min_m1, max_m1;
-	int min_m2, max_m2, min_n, max_n;
-	int min_p, max_p, min_p1, max_p1;
-	int min_vco, max_vco, p_transition_clk, ref_clk;
-	int p_inc_lo, p_inc_hi;
-};
+काष्ठा pll_min_max अणु
+	पूर्णांक min_m, max_m, min_m1, max_m1;
+	पूर्णांक min_m2, max_m2, min_n, max_n;
+	पूर्णांक min_p, max_p, min_p1, max_p1;
+	पूर्णांक min_vco, max_vco, p_transition_clk, ref_clk;
+	पूर्णांक p_inc_lo, p_inc_hi;
+पूर्ण;
 
-#define PLLS_I8xx 0
-#define PLLS_I9xx 1
-#define PLLS_MAX 2
+#घोषणा PLLS_I8xx 0
+#घोषणा PLLS_I9xx 1
+#घोषणा PLLS_MAX 2
 
-static struct pll_min_max plls[PLLS_MAX] = {
-	{ 108, 140, 18, 26,
+अटल काष्ठा pll_min_max plls[PLLS_MAX] = अणु
+	अणु 108, 140, 18, 26,
 	  6, 16, 3, 16,
 	  4, 128, 0, 31,
 	  930000, 1400000, 165000, 48000,
-	  4, 2 },		/* I8xx */
+	  4, 2 पूर्ण,		/* I8xx */
 
-	{ 75, 120, 10, 20,
+	अणु 75, 120, 10, 20,
 	  5, 9, 4, 7,
 	  5, 80, 1, 8,
 	  1400000, 2800000, 200000, 96000,
-	  10, 5 }		/* I9xx */
-};
+	  10, 5 पूर्ण		/* I9xx */
+पूर्ण;
 
-int intelfbhw_get_chipset(struct pci_dev *pdev, struct intelfb_info *dinfo)
-{
-	u32 tmp;
-	if (!pdev || !dinfo)
-		return 1;
+पूर्णांक पूर्णांकelfbhw_get_chipset(काष्ठा pci_dev *pdev, काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	u32 पंचांगp;
+	अगर (!pdev || !dinfo)
+		वापस 1;
 
-	switch (pdev->device) {
-	case PCI_DEVICE_ID_INTEL_830M:
+	चयन (pdev->device) अणु
+	हाल PCI_DEVICE_ID_INTEL_830M:
 		dinfo->name = "Intel(R) 830M";
 		dinfo->chipset = INTEL_830M;
 		dinfo->mobile = 1;
 		dinfo->pll_index = PLLS_I8xx;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_845G:
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_845G:
 		dinfo->name = "Intel(R) 845G";
 		dinfo->chipset = INTEL_845G;
 		dinfo->mobile = 0;
 		dinfo->pll_index = PLLS_I8xx;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_854:
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_854:
 		dinfo->mobile = 1;
 		dinfo->name = "Intel(R) 854";
 		dinfo->chipset = INTEL_854;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_85XGM:
-		tmp = 0;
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_85XGM:
+		पंचांगp = 0;
 		dinfo->mobile = 1;
 		dinfo->pll_index = PLLS_I8xx;
-		pci_read_config_dword(pdev, INTEL_85X_CAPID, &tmp);
-		switch ((tmp >> INTEL_85X_VARIANT_SHIFT) &
-			INTEL_85X_VARIANT_MASK) {
-		case INTEL_VAR_855GME:
+		pci_पढ़ो_config_dword(pdev, INTEL_85X_CAPID, &पंचांगp);
+		चयन ((पंचांगp >> INTEL_85X_VARIANT_SHIFT) &
+			INTEL_85X_VARIANT_MASK) अणु
+		हाल INTEL_VAR_855GME:
 			dinfo->name = "Intel(R) 855GME";
 			dinfo->chipset = INTEL_855GME;
-			return 0;
-		case INTEL_VAR_855GM:
+			वापस 0;
+		हाल INTEL_VAR_855GM:
 			dinfo->name = "Intel(R) 855GM";
 			dinfo->chipset = INTEL_855GM;
-			return 0;
-		case INTEL_VAR_852GME:
+			वापस 0;
+		हाल INTEL_VAR_852GME:
 			dinfo->name = "Intel(R) 852GME";
 			dinfo->chipset = INTEL_852GME;
-			return 0;
-		case INTEL_VAR_852GM:
+			वापस 0;
+		हाल INTEL_VAR_852GM:
 			dinfo->name = "Intel(R) 852GM";
 			dinfo->chipset = INTEL_852GM;
-			return 0;
-		default:
+			वापस 0;
+		शेष:
 			dinfo->name = "Intel(R) 852GM/855GM";
 			dinfo->chipset = INTEL_85XGM;
-			return 0;
-		}
-		break;
-	case PCI_DEVICE_ID_INTEL_865G:
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल PCI_DEVICE_ID_INTEL_865G:
 		dinfo->name = "Intel(R) 865G";
 		dinfo->chipset = INTEL_865G;
 		dinfo->mobile = 0;
 		dinfo->pll_index = PLLS_I8xx;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_915G:
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_915G:
 		dinfo->name = "Intel(R) 915G";
 		dinfo->chipset = INTEL_915G;
 		dinfo->mobile = 0;
 		dinfo->pll_index = PLLS_I9xx;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_915GM:
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_915GM:
 		dinfo->name = "Intel(R) 915GM";
 		dinfo->chipset = INTEL_915GM;
 		dinfo->mobile = 1;
 		dinfo->pll_index = PLLS_I9xx;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_945G:
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_945G:
 		dinfo->name = "Intel(R) 945G";
 		dinfo->chipset = INTEL_945G;
 		dinfo->mobile = 0;
 		dinfo->pll_index = PLLS_I9xx;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_945GM:
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_945GM:
 		dinfo->name = "Intel(R) 945GM";
 		dinfo->chipset = INTEL_945GM;
 		dinfo->mobile = 1;
 		dinfo->pll_index = PLLS_I9xx;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_945GME:
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_945GME:
 		dinfo->name = "Intel(R) 945GME";
 		dinfo->chipset = INTEL_945GME;
 		dinfo->mobile = 1;
 		dinfo->pll_index = PLLS_I9xx;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_965G:
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_965G:
 		dinfo->name = "Intel(R) 965G";
 		dinfo->chipset = INTEL_965G;
 		dinfo->mobile = 0;
 		dinfo->pll_index = PLLS_I9xx;
-		return 0;
-	case PCI_DEVICE_ID_INTEL_965GM:
+		वापस 0;
+	हाल PCI_DEVICE_ID_INTEL_965GM:
 		dinfo->name = "Intel(R) 965GM";
 		dinfo->chipset = INTEL_965GM;
 		dinfo->mobile = 1;
 		dinfo->pll_index = PLLS_I9xx;
-		return 0;
-	default:
-		return 1;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस 1;
+	पूर्ण
+पूर्ण
 
-int intelfbhw_get_memory(struct pci_dev *pdev, int *aperture_size,
-			 int *stolen_size)
-{
-	struct pci_dev *bridge_dev;
-	u16 tmp;
-	int stolen_overhead;
+पूर्णांक पूर्णांकelfbhw_get_memory(काष्ठा pci_dev *pdev, पूर्णांक *aperture_size,
+			 पूर्णांक *stolen_size)
+अणु
+	काष्ठा pci_dev *bridge_dev;
+	u16 पंचांगp;
+	पूर्णांक stolen_overhead;
 
-	if (!pdev || !aperture_size || !stolen_size)
-		return 1;
+	अगर (!pdev || !aperture_size || !stolen_size)
+		वापस 1;
 
 	/* Find the bridge device.  It is always 0:0.0 */
-	bridge_dev = pci_get_domain_bus_and_slot(pci_domain_nr(pdev->bus), 0,
+	bridge_dev = pci_get_करोमुख्य_bus_and_slot(pci_करोमुख्य_nr(pdev->bus), 0,
 						 PCI_DEVFN(0, 0));
-	if (!bridge_dev) {
+	अगर (!bridge_dev) अणु
 		ERR_MSG("cannot find bridge device\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Get the fb aperture size and "stolen" memory amount. */
-	tmp = 0;
-	pci_read_config_word(bridge_dev, INTEL_GMCH_CTRL, &tmp);
+	पंचांगp = 0;
+	pci_पढ़ो_config_word(bridge_dev, INTEL_GMCH_CTRL, &पंचांगp);
 	pci_dev_put(bridge_dev);
 
-	switch (pdev->device) {
-	case PCI_DEVICE_ID_INTEL_915G:
-	case PCI_DEVICE_ID_INTEL_915GM:
-	case PCI_DEVICE_ID_INTEL_945G:
-	case PCI_DEVICE_ID_INTEL_945GM:
-	case PCI_DEVICE_ID_INTEL_945GME:
-	case PCI_DEVICE_ID_INTEL_965G:
-	case PCI_DEVICE_ID_INTEL_965GM:
+	चयन (pdev->device) अणु
+	हाल PCI_DEVICE_ID_INTEL_915G:
+	हाल PCI_DEVICE_ID_INTEL_915GM:
+	हाल PCI_DEVICE_ID_INTEL_945G:
+	हाल PCI_DEVICE_ID_INTEL_945GM:
+	हाल PCI_DEVICE_ID_INTEL_945GME:
+	हाल PCI_DEVICE_ID_INTEL_965G:
+	हाल PCI_DEVICE_ID_INTEL_965GM:
 		/* 915, 945 and 965 chipsets support a 256MB aperture.
 		   Aperture size is determined by inspected the
 		   base address of the aperture. */
-		if (pci_resource_start(pdev, 2) & 0x08000000)
+		अगर (pci_resource_start(pdev, 2) & 0x08000000)
 			*aperture_size = MB(128);
-		else
+		अन्यथा
 			*aperture_size = MB(256);
-		break;
-	default:
-		if ((tmp & INTEL_GMCH_MEM_MASK) == INTEL_GMCH_MEM_64M)
+		अवरोध;
+	शेष:
+		अगर ((पंचांगp & INTEL_GMCH_MEM_MASK) == INTEL_GMCH_MEM_64M)
 			*aperture_size = MB(64);
-		else
+		अन्यथा
 			*aperture_size = MB(128);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Stolen memory size is reduced by the GTT and the popup.
 	   GTT is 1K per MB of aperture size, and popup is 4K. */
 	stolen_overhead = (*aperture_size / MB(1)) + 4;
-	switch(pdev->device) {
-	case PCI_DEVICE_ID_INTEL_830M:
-	case PCI_DEVICE_ID_INTEL_845G:
-		switch (tmp & INTEL_830_GMCH_GMS_MASK) {
-		case INTEL_830_GMCH_GMS_STOLEN_512:
+	चयन(pdev->device) अणु
+	हाल PCI_DEVICE_ID_INTEL_830M:
+	हाल PCI_DEVICE_ID_INTEL_845G:
+		चयन (पंचांगp & INTEL_830_GMCH_GMS_MASK) अणु
+		हाल INTEL_830_GMCH_GMS_STOLEN_512:
 			*stolen_size = KB(512) - KB(stolen_overhead);
-			return 0;
-		case INTEL_830_GMCH_GMS_STOLEN_1024:
+			वापस 0;
+		हाल INTEL_830_GMCH_GMS_STOLEN_1024:
 			*stolen_size = MB(1) - KB(stolen_overhead);
-			return 0;
-		case INTEL_830_GMCH_GMS_STOLEN_8192:
+			वापस 0;
+		हाल INTEL_830_GMCH_GMS_STOLEN_8192:
 			*stolen_size = MB(8) - KB(stolen_overhead);
-			return 0;
-		case INTEL_830_GMCH_GMS_LOCAL:
+			वापस 0;
+		हाल INTEL_830_GMCH_GMS_LOCAL:
 			ERR_MSG("only local memory found\n");
-			return 1;
-		case INTEL_830_GMCH_GMS_DISABLED:
+			वापस 1;
+		हाल INTEL_830_GMCH_GMS_DISABLED:
 			ERR_MSG("video memory is disabled\n");
-			return 1;
-		default:
+			वापस 1;
+		शेष:
 			ERR_MSG("unexpected GMCH_GMS value: 0x%02x\n",
-				tmp & INTEL_830_GMCH_GMS_MASK);
-			return 1;
-		}
-		break;
-	default:
-		switch (tmp & INTEL_855_GMCH_GMS_MASK) {
-		case INTEL_855_GMCH_GMS_STOLEN_1M:
+				पंचांगp & INTEL_830_GMCH_GMS_MASK);
+			वापस 1;
+		पूर्ण
+		अवरोध;
+	शेष:
+		चयन (पंचांगp & INTEL_855_GMCH_GMS_MASK) अणु
+		हाल INTEL_855_GMCH_GMS_STOLEN_1M:
 			*stolen_size = MB(1) - KB(stolen_overhead);
-			return 0;
-		case INTEL_855_GMCH_GMS_STOLEN_4M:
+			वापस 0;
+		हाल INTEL_855_GMCH_GMS_STOLEN_4M:
 			*stolen_size = MB(4) - KB(stolen_overhead);
-			return 0;
-		case INTEL_855_GMCH_GMS_STOLEN_8M:
+			वापस 0;
+		हाल INTEL_855_GMCH_GMS_STOLEN_8M:
 			*stolen_size = MB(8) - KB(stolen_overhead);
-			return 0;
-		case INTEL_855_GMCH_GMS_STOLEN_16M:
+			वापस 0;
+		हाल INTEL_855_GMCH_GMS_STOLEN_16M:
 			*stolen_size = MB(16) - KB(stolen_overhead);
-			return 0;
-		case INTEL_855_GMCH_GMS_STOLEN_32M:
+			वापस 0;
+		हाल INTEL_855_GMCH_GMS_STOLEN_32M:
 			*stolen_size = MB(32) - KB(stolen_overhead);
-			return 0;
-		case INTEL_915G_GMCH_GMS_STOLEN_48M:
+			वापस 0;
+		हाल INTEL_915G_GMCH_GMS_STOLEN_48M:
 			*stolen_size = MB(48) - KB(stolen_overhead);
-			return 0;
-		case INTEL_915G_GMCH_GMS_STOLEN_64M:
+			वापस 0;
+		हाल INTEL_915G_GMCH_GMS_STOLEN_64M:
 			*stolen_size = MB(64) - KB(stolen_overhead);
-			return 0;
-		case INTEL_855_GMCH_GMS_DISABLED:
+			वापस 0;
+		हाल INTEL_855_GMCH_GMS_DISABLED:
 			ERR_MSG("video memory is disabled\n");
-			return 0;
-		default:
+			वापस 0;
+		शेष:
 			ERR_MSG("unexpected GMCH_GMS value: 0x%02x\n",
-				tmp & INTEL_855_GMCH_GMS_MASK);
-			return 1;
-		}
-	}
-}
+				पंचांगp & INTEL_855_GMCH_GMS_MASK);
+			वापस 1;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int intelfbhw_check_non_crt(struct intelfb_info *dinfo)
-{
-	int dvo = 0;
+पूर्णांक पूर्णांकelfbhw_check_non_crt(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	पूर्णांक dvo = 0;
 
-	if (INREG(LVDS) & PORT_ENABLE)
+	अगर (INREG(LVDS) & PORT_ENABLE)
 		dvo |= LVDS_PORT;
-	if (INREG(DVOA) & PORT_ENABLE)
+	अगर (INREG(DVOA) & PORT_ENABLE)
 		dvo |= DVOA_PORT;
-	if (INREG(DVOB) & PORT_ENABLE)
+	अगर (INREG(DVOB) & PORT_ENABLE)
 		dvo |= DVOB_PORT;
-	if (INREG(DVOC) & PORT_ENABLE)
+	अगर (INREG(DVOC) & PORT_ENABLE)
 		dvo |= DVOC_PORT;
 
-	return dvo;
-}
+	वापस dvo;
+पूर्ण
 
-const char * intelfbhw_dvo_to_string(int dvo)
-{
-	if (dvo & DVOA_PORT)
-		return "DVO port A";
-	else if (dvo & DVOB_PORT)
-		return "DVO port B";
-	else if (dvo & DVOC_PORT)
-		return "DVO port C";
-	else if (dvo & LVDS_PORT)
-		return "LVDS port";
-	else
-		return NULL;
-}
+स्थिर अक्षर * पूर्णांकelfbhw_dvo_to_string(पूर्णांक dvo)
+अणु
+	अगर (dvo & DVOA_PORT)
+		वापस "DVO port A";
+	अन्यथा अगर (dvo & DVOB_PORT)
+		वापस "DVO port B";
+	अन्यथा अगर (dvo & DVOC_PORT)
+		वापस "DVO port C";
+	अन्यथा अगर (dvo & LVDS_PORT)
+		वापस "LVDS port";
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
 
-int intelfbhw_validate_mode(struct intelfb_info *dinfo,
-			    struct fb_var_screeninfo *var)
-{
-	int bytes_per_pixel;
-	int tmp;
+पूर्णांक पूर्णांकelfbhw_validate_mode(काष्ठा पूर्णांकelfb_info *dinfo,
+			    काष्ठा fb_var_screeninfo *var)
+अणु
+	पूर्णांक bytes_per_pixel;
+	पूर्णांक पंचांगp;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_validate_mode\n");
-#endif
+#पूर्ण_अगर
 
 	bytes_per_pixel = var->bits_per_pixel / 8;
-	if (bytes_per_pixel == 3)
+	अगर (bytes_per_pixel == 3)
 		bytes_per_pixel = 4;
 
-	/* Check if enough video memory. */
-	tmp = var->yres_virtual * var->xres_virtual * bytes_per_pixel;
-	if (tmp > dinfo->fb.size) {
+	/* Check अगर enough video memory. */
+	पंचांगp = var->yres_भव * var->xres_भव * bytes_per_pixel;
+	अगर (पंचांगp > dinfo->fb.size) अणु
 		WRN_MSG("Not enough video ram for mode "
 			"(%d KByte vs %d KByte).\n",
-			BtoKB(tmp), BtoKB(dinfo->fb.size));
-		return 1;
-	}
+			BtoKB(पंचांगp), BtoKB(dinfo->fb.size));
+		वापस 1;
+	पूर्ण
 
-	/* Check if x/y limits are OK. */
-	if (var->xres - 1 > HACTIVE_MASK) {
+	/* Check अगर x/y limits are OK. */
+	अगर (var->xres - 1 > HACTIVE_MASK) अणु
 		WRN_MSG("X resolution too large (%d vs %d).\n",
 			var->xres, HACTIVE_MASK + 1);
-		return 1;
-	}
-	if (var->yres - 1 > VACTIVE_MASK) {
+		वापस 1;
+	पूर्ण
+	अगर (var->yres - 1 > VACTIVE_MASK) अणु
 		WRN_MSG("Y resolution too large (%d vs %d).\n",
 			var->yres, VACTIVE_MASK + 1);
-		return 1;
-	}
-	if (var->xres < 4) {
+		वापस 1;
+	पूर्ण
+	अगर (var->xres < 4) अणु
 		WRN_MSG("X resolution too small (%d vs 4).\n", var->xres);
-		return 1;
-	}
-	if (var->yres < 4) {
+		वापस 1;
+	पूर्ण
+	अगर (var->yres < 4) अणु
 		WRN_MSG("Y resolution too small (%d vs 4).\n", var->yres);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* Check for doublescan modes. */
-	if (var->vmode & FB_VMODE_DOUBLE) {
+	/* Check क्रम द्विगुनscan modes. */
+	अगर (var->vmode & FB_VMODE_DOUBLE) अणु
 		WRN_MSG("Mode is double-scan.\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	if ((var->vmode & FB_VMODE_INTERLACED) && (var->yres & 1)) {
+	अगर ((var->vmode & FB_VMODE_INTERLACED) && (var->yres & 1)) अणु
 		WRN_MSG("Odd number of lines in interlaced mode\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* Check if clock is OK. */
-	tmp = 1000000000 / var->pixclock;
-	if (tmp < MIN_CLOCK) {
+	/* Check अगर घड़ी is OK. */
+	पंचांगp = 1000000000 / var->pixघड़ी;
+	अगर (पंचांगp < MIN_CLOCK) अणु
 		WRN_MSG("Pixel clock is too low (%d MHz vs %d MHz).\n",
-			(tmp + 500) / 1000, MIN_CLOCK / 1000);
-		return 1;
-	}
-	if (tmp > MAX_CLOCK) {
+			(पंचांगp + 500) / 1000, MIN_CLOCK / 1000);
+		वापस 1;
+	पूर्ण
+	अगर (पंचांगp > MAX_CLOCK) अणु
 		WRN_MSG("Pixel clock is too high (%d MHz vs %d MHz).\n",
-			(tmp + 500) / 1000, MAX_CLOCK / 1000);
-		return 1;
-	}
+			(पंचांगp + 500) / 1000, MAX_CLOCK / 1000);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int intelfbhw_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	struct intelfb_info *dinfo = GET_DINFO(info);
+पूर्णांक पूर्णांकelfbhw_pan_display(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	काष्ठा पूर्णांकelfb_info *dinfo = GET_DINFO(info);
 	u32 offset, xoffset, yoffset;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_pan_display\n");
-#endif
+#पूर्ण_अगर
 
 	xoffset = ROUND_DOWN_TO(var->xoffset, 8);
 	yoffset = var->yoffset;
 
-	if ((xoffset + info->var.xres > info->var.xres_virtual) ||
-	    (yoffset + info->var.yres > info->var.yres_virtual))
-		return -EINVAL;
+	अगर ((xoffset + info->var.xres > info->var.xres_भव) ||
+	    (yoffset + info->var.yres > info->var.yres_भव))
+		वापस -EINVAL;
 
 	offset = (yoffset * dinfo->pitch) +
 		 (xoffset * info->var.bits_per_pixel) / 8;
@@ -402,134 +403,134 @@ int intelfbhw_pan_display(struct fb_var_screeninfo *var, struct fb_info *info)
 	offset += dinfo->fb.offset << 12;
 
 	dinfo->vsync.pan_offset = offset;
-	if ((var->activate & FB_ACTIVATE_VBL) &&
-	    !intelfbhw_enable_irq(dinfo))
+	अगर ((var->activate & FB_ACTIVATE_VBL) &&
+	    !पूर्णांकelfbhw_enable_irq(dinfo))
 		dinfo->vsync.pan_display = 1;
-	else {
+	अन्यथा अणु
 		dinfo->vsync.pan_display = 0;
 		OUTREG(DSPABASE, offset);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Blank the screen. */
-void intelfbhw_do_blank(int blank, struct fb_info *info)
-{
-	struct intelfb_info *dinfo = GET_DINFO(info);
-	u32 tmp;
+व्योम पूर्णांकelfbhw_करो_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	काष्ठा पूर्णांकelfb_info *dinfo = GET_DINFO(info);
+	u32 पंचांगp;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_do_blank: blank is %d\n", blank);
-#endif
+#पूर्ण_अगर
 
 	/* Turn plane A on or off */
-	tmp = INREG(DSPACNTR);
-	if (blank)
-		tmp &= ~DISPPLANE_PLANE_ENABLE;
-	else
-		tmp |= DISPPLANE_PLANE_ENABLE;
-	OUTREG(DSPACNTR, tmp);
+	पंचांगp = INREG(DSPACNTR);
+	अगर (blank)
+		पंचांगp &= ~DISPPLANE_PLANE_ENABLE;
+	अन्यथा
+		पंचांगp |= DISPPLANE_PLANE_ENABLE;
+	OUTREG(DSPACNTR, पंचांगp);
 	/* Flush */
-	tmp = INREG(DSPABASE);
-	OUTREG(DSPABASE, tmp);
+	पंचांगp = INREG(DSPABASE);
+	OUTREG(DSPABASE, पंचांगp);
 
 	/* Turn off/on the HW cursor */
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("cursor_on is %d\n", dinfo->cursor_on);
-#endif
-	if (dinfo->cursor_on) {
-		if (blank)
-			intelfbhw_cursor_hide(dinfo);
-		else
-			intelfbhw_cursor_show(dinfo);
+#पूर्ण_अगर
+	अगर (dinfo->cursor_on) अणु
+		अगर (blank)
+			पूर्णांकelfbhw_cursor_hide(dinfo);
+		अन्यथा
+			पूर्णांकelfbhw_cursor_show(dinfo);
 		dinfo->cursor_on = 1;
-	}
+	पूर्ण
 	dinfo->cursor_blanked = blank;
 
 	/* Set DPMS level */
-	tmp = INREG(ADPA) & ~ADPA_DPMS_CONTROL_MASK;
-	switch (blank) {
-	case FB_BLANK_UNBLANK:
-	case FB_BLANK_NORMAL:
-		tmp |= ADPA_DPMS_D0;
-		break;
-	case FB_BLANK_VSYNC_SUSPEND:
-		tmp |= ADPA_DPMS_D1;
-		break;
-	case FB_BLANK_HSYNC_SUSPEND:
-		tmp |= ADPA_DPMS_D2;
-		break;
-	case FB_BLANK_POWERDOWN:
-		tmp |= ADPA_DPMS_D3;
-		break;
-	}
-	OUTREG(ADPA, tmp);
+	पंचांगp = INREG(ADPA) & ~ADPA_DPMS_CONTROL_MASK;
+	चयन (blank) अणु
+	हाल FB_BLANK_UNBLANK:
+	हाल FB_BLANK_NORMAL:
+		पंचांगp |= ADPA_DPMS_D0;
+		अवरोध;
+	हाल FB_BLANK_VSYNC_SUSPEND:
+		पंचांगp |= ADPA_DPMS_D1;
+		अवरोध;
+	हाल FB_BLANK_HSYNC_SUSPEND:
+		पंचांगp |= ADPA_DPMS_D2;
+		अवरोध;
+	हाल FB_BLANK_POWERDOWN:
+		पंचांगp |= ADPA_DPMS_D3;
+		अवरोध;
+	पूर्ण
+	OUTREG(ADPA, पंचांगp);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /* Check which pipe is connected to an active display plane. */
-int intelfbhw_active_pipe(const struct intelfb_hwstate *hw)
-{
-	int pipe = -1;
+पूर्णांक पूर्णांकelfbhw_active_pipe(स्थिर काष्ठा पूर्णांकelfb_hwstate *hw)
+अणु
+	पूर्णांक pipe = -1;
 
-	/* keep old default behaviour - prefer PIPE_A */
-	if (hw->disp_b_ctrl & DISPPLANE_PLANE_ENABLE) {
+	/* keep old शेष behaviour - prefer PIPE_A */
+	अगर (hw->disp_b_ctrl & DISPPLANE_PLANE_ENABLE) अणु
 		pipe = (hw->disp_b_ctrl >> DISPPLANE_SEL_PIPE_SHIFT);
 		pipe &= PIPE_MASK;
-		if (unlikely(pipe == PIPE_A))
-			return PIPE_A;
-	}
-	if (hw->disp_a_ctrl & DISPPLANE_PLANE_ENABLE) {
+		अगर (unlikely(pipe == PIPE_A))
+			वापस PIPE_A;
+	पूर्ण
+	अगर (hw->disp_a_ctrl & DISPPLANE_PLANE_ENABLE) अणु
 		pipe = (hw->disp_a_ctrl >> DISPPLANE_SEL_PIPE_SHIFT);
 		pipe &= PIPE_MASK;
-		if (likely(pipe == PIPE_A))
-			return PIPE_A;
-	}
-	/* Impossible that no pipe is selected - return PIPE_A */
+		अगर (likely(pipe == PIPE_A))
+			वापस PIPE_A;
+	पूर्ण
+	/* Impossible that no pipe is selected - वापस PIPE_A */
 	WARN_ON(pipe == -1);
-	if (unlikely(pipe == -1))
+	अगर (unlikely(pipe == -1))
 		pipe = PIPE_A;
 
-	return pipe;
-}
+	वापस pipe;
+पूर्ण
 
-void intelfbhw_setcolreg(struct intelfb_info *dinfo, unsigned regno,
-			 unsigned red, unsigned green, unsigned blue,
-			 unsigned transp)
-{
+व्योम पूर्णांकelfbhw_setcolreg(काष्ठा पूर्णांकelfb_info *dinfo, अचिन्हित regno,
+			 अचिन्हित red, अचिन्हित green, अचिन्हित blue,
+			 अचिन्हित transp)
+अणु
 	u32 palette_reg = (dinfo->pipe == PIPE_A) ?
 			  PALETTE_A : PALETTE_B;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_setcolreg: %d: (%d, %d, %d)\n",
 		regno, red, green, blue);
-#endif
+#पूर्ण_अगर
 
 	OUTREG(palette_reg + (regno << 2),
 	       (red << PALETTE_8_RED_SHIFT) |
 	       (green << PALETTE_8_GREEN_SHIFT) |
 	       (blue << PALETTE_8_BLUE_SHIFT));
-}
+पूर्ण
 
 
-int intelfbhw_read_hw_state(struct intelfb_info *dinfo,
-			    struct intelfb_hwstate *hw, int flag)
-{
-	int i;
+पूर्णांक पूर्णांकelfbhw_पढ़ो_hw_state(काष्ठा पूर्णांकelfb_info *dinfo,
+			    काष्ठा पूर्णांकelfb_hwstate *hw, पूर्णांक flag)
+अणु
+	पूर्णांक i;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_read_hw_state\n");
-#endif
+#पूर्ण_अगर
 
-	if (!hw || !dinfo)
-		return -1;
+	अगर (!hw || !dinfo)
+		वापस -1;
 
 	/* Read in as much of the HW state as possible. */
-	hw->vga0_divisor = INREG(VGA0_DIVISOR);
-	hw->vga1_divisor = INREG(VGA1_DIVISOR);
+	hw->vga0_भागisor = INREG(VGA0_DIVISOR);
+	hw->vga1_भागisor = INREG(VGA1_DIVISOR);
 	hw->vga_pd = INREG(VGAPD);
 	hw->dpll_a = INREG(DPLL_A);
 	hw->dpll_b = INREG(DPLL_B);
@@ -538,19 +539,19 @@ int intelfbhw_read_hw_state(struct intelfb_info *dinfo,
 	hw->fpb0 = INREG(FPB0);
 	hw->fpb1 = INREG(FPB1);
 
-	if (flag == 1)
-		return flag;
+	अगर (flag == 1)
+		वापस flag;
 
-#if 0
+#अगर 0
 	/* This seems to be a problem with the 852GM/855GM */
-	for (i = 0; i < PALETTE_8_ENTRIES; i++) {
+	क्रम (i = 0; i < PALETTE_8_ENTRIES; i++) अणु
 		hw->palette_a[i] = INREG(PALETTE_A + (i << 2));
 		hw->palette_b[i] = INREG(PALETTE_B + (i << 2));
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (flag == 2)
-		return flag;
+	अगर (flag == 2)
+		वापस flag;
 
 	hw->htotal_a = INREG(HTOTAL_A);
 	hw->hblank_a = INREG(HBLANK_A);
@@ -569,8 +570,8 @@ int intelfbhw_read_hw_state(struct intelfb_info *dinfo,
 	hw->src_size_b = INREG(SRC_SIZE_B);
 	hw->bclrpat_b = INREG(BCLRPAT_B);
 
-	if (flag == 3)
-		return flag;
+	अगर (flag == 3)
+		वापस flag;
 
 	hw->adpa = INREG(ADPA);
 	hw->dvoa = INREG(DVOA);
@@ -581,36 +582,36 @@ int intelfbhw_read_hw_state(struct intelfb_info *dinfo,
 	hw->dvoc_srcdim = INREG(DVOC_SRCDIM);
 	hw->lvds = INREG(LVDS);
 
-	if (flag == 4)
-		return flag;
+	अगर (flag == 4)
+		वापस flag;
 
 	hw->pipe_a_conf = INREG(PIPEACONF);
 	hw->pipe_b_conf = INREG(PIPEBCONF);
 	hw->disp_arb = INREG(DISPARB);
 
-	if (flag == 5)
-		return flag;
+	अगर (flag == 5)
+		वापस flag;
 
 	hw->cursor_a_control = INREG(CURSOR_A_CONTROL);
 	hw->cursor_b_control = INREG(CURSOR_B_CONTROL);
 	hw->cursor_a_base = INREG(CURSOR_A_BASEADDR);
 	hw->cursor_b_base = INREG(CURSOR_B_BASEADDR);
 
-	if (flag == 6)
-		return flag;
+	अगर (flag == 6)
+		वापस flag;
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		hw->cursor_a_palette[i] = INREG(CURSOR_A_PALETTE0 + (i << 2));
 		hw->cursor_b_palette[i] = INREG(CURSOR_B_PALETTE0 + (i << 2));
-	}
+	पूर्ण
 
-	if (flag == 7)
-		return flag;
+	अगर (flag == 7)
+		वापस flag;
 
 	hw->cursor_size = INREG(CURSOR_SIZE);
 
-	if (flag == 8)
-		return flag;
+	अगर (flag == 8)
+		वापस flag;
 
 	hw->disp_a_ctrl = INREG(DSPACNTR);
 	hw->disp_b_ctrl = INREG(DSPBCNTR);
@@ -619,27 +620,27 @@ int intelfbhw_read_hw_state(struct intelfb_info *dinfo,
 	hw->disp_a_stride = INREG(DSPASTRIDE);
 	hw->disp_b_stride = INREG(DSPBSTRIDE);
 
-	if (flag == 9)
-		return flag;
+	अगर (flag == 9)
+		वापस flag;
 
 	hw->vgacntrl = INREG(VGACNTRL);
 
-	if (flag == 10)
-		return flag;
+	अगर (flag == 10)
+		वापस flag;
 
 	hw->add_id = INREG(ADD_ID);
 
-	if (flag == 11)
-		return flag;
+	अगर (flag == 11)
+		वापस flag;
 
-	for (i = 0; i < 7; i++) {
+	क्रम (i = 0; i < 7; i++) अणु
 		hw->swf0x[i] = INREG(SWF00 + (i << 2));
 		hw->swf1x[i] = INREG(SWF10 + (i << 2));
-		if (i < 3)
+		अगर (i < 3)
 			hw->swf3x[i] = INREG(SWF30 + (i << 2));
-	}
+	पूर्ण
 
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		hw->fence[i] = INREG(FENCE + (i << 2));
 
 	hw->instpm = INREG(INSTPM);
@@ -652,398 +653,398 @@ int intelfbhw_read_hw_state(struct intelfb_info *dinfo,
 	hw->iir = INREG16(IIR);
 	hw->imr = INREG16(IMR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int calc_vclock3(int index, int m, int n, int p)
-{
-	if (p == 0 || n == 0)
-		return 0;
-	return plls[index].ref_clk * m / n / p;
-}
+अटल पूर्णांक calc_vघड़ी3(पूर्णांक index, पूर्णांक m, पूर्णांक n, पूर्णांक p)
+अणु
+	अगर (p == 0 || n == 0)
+		वापस 0;
+	वापस plls[index].ref_clk * m / n / p;
+पूर्ण
 
-static int calc_vclock(int index, int m1, int m2, int n, int p1, int p2,
-		       int lvds)
-{
-	struct pll_min_max *pll = &plls[index];
+अटल पूर्णांक calc_vघड़ी(पूर्णांक index, पूर्णांक m1, पूर्णांक m2, पूर्णांक n, पूर्णांक p1, पूर्णांक p2,
+		       पूर्णांक lvds)
+अणु
+	काष्ठा pll_min_max *pll = &plls[index];
 	u32 m, vco, p;
 
 	m = (5 * (m1 + 2)) + (m2 + 2);
 	n += 2;
 	vco = pll->ref_clk * m / n;
 
-	if (index == PLLS_I8xx)
+	अगर (index == PLLS_I8xx)
 		p = ((p1 + 2) * (1 << (p2 + 1)));
-	else
+	अन्यथा
 		p = ((p1) * (p2 ? 5 : 10));
-	return vco / p;
-}
+	वापस vco / p;
+पूर्ण
 
-#if REGDUMP
-static void intelfbhw_get_p1p2(struct intelfb_info *dinfo, int dpll,
-			       int *o_p1, int *o_p2)
-{
-	int p1, p2;
+#अगर REGDUMP
+अटल व्योम पूर्णांकelfbhw_get_p1p2(काष्ठा पूर्णांकelfb_info *dinfo, पूर्णांक dpll,
+			       पूर्णांक *o_p1, पूर्णांक *o_p2)
+अणु
+	पूर्णांक p1, p2;
 
-	if (IS_I9XX(dinfo)) {
-		if (dpll & DPLL_P1_FORCE_DIV2)
+	अगर (IS_I9XX(dinfo)) अणु
+		अगर (dpll & DPLL_P1_FORCE_DIV2)
 			p1 = 1;
-		else
+		अन्यथा
 			p1 = (dpll >> DPLL_P1_SHIFT) & 0xff;
 
 		p1 = ffs(p1);
 
 		p2 = (dpll >> DPLL_I9XX_P2_SHIFT) & DPLL_P2_MASK;
-	} else {
-		if (dpll & DPLL_P1_FORCE_DIV2)
+	पूर्ण अन्यथा अणु
+		अगर (dpll & DPLL_P1_FORCE_DIV2)
 			p1 = 0;
-		else
+		अन्यथा
 			p1 = (dpll >> DPLL_P1_SHIFT) & DPLL_P1_MASK;
 		p2 = (dpll >> DPLL_P2_SHIFT) & DPLL_P2_MASK;
-	}
+	पूर्ण
 
 	*o_p1 = p1;
 	*o_p2 = p2;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 
-void intelfbhw_print_hw_state(struct intelfb_info *dinfo,
-			      struct intelfb_hwstate *hw)
-{
-#if REGDUMP
-	int i, m1, m2, n, p1, p2;
-	int index = dinfo->pll_index;
+व्योम पूर्णांकelfbhw_prपूर्णांक_hw_state(काष्ठा पूर्णांकelfb_info *dinfo,
+			      काष्ठा पूर्णांकelfb_hwstate *hw)
+अणु
+#अगर REGDUMP
+	पूर्णांक i, m1, m2, n, p1, p2;
+	पूर्णांक index = dinfo->pll_index;
 	DBG_MSG("intelfbhw_print_hw_state\n");
 
-	if (!hw)
-		return;
+	अगर (!hw)
+		वापस;
 	/* Read in as much of the HW state as possible. */
-	printk("hw state dump start\n");
-	printk("	VGA0_DIVISOR:		0x%08x\n", hw->vga0_divisor);
-	printk("	VGA1_DIVISOR:		0x%08x\n", hw->vga1_divisor);
-	printk("	VGAPD:			0x%08x\n", hw->vga_pd);
-	n = (hw->vga0_divisor >> FP_N_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
-	m1 = (hw->vga0_divisor >> FP_M1_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
-	m2 = (hw->vga0_divisor >> FP_M2_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
+	prपूर्णांकk("hw state dump start\n");
+	prपूर्णांकk("	VGA0_DIVISOR:		0x%08x\n", hw->vga0_भागisor);
+	prपूर्णांकk("	VGA1_DIVISOR:		0x%08x\n", hw->vga1_भागisor);
+	prपूर्णांकk("	VGAPD:			0x%08x\n", hw->vga_pd);
+	n = (hw->vga0_भागisor >> FP_N_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
+	m1 = (hw->vga0_भागisor >> FP_M1_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
+	m2 = (hw->vga0_भागisor >> FP_M2_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
 
-	intelfbhw_get_p1p2(dinfo, hw->vga_pd, &p1, &p2);
+	पूर्णांकelfbhw_get_p1p2(dinfo, hw->vga_pd, &p1, &p2);
 
-	printk("	VGA0: (m1, m2, n, p1, p2) = (%d, %d, %d, %d, %d)\n",
+	prपूर्णांकk("	VGA0: (m1, m2, n, p1, p2) = (%d, %d, %d, %d, %d)\n",
 	       m1, m2, n, p1, p2);
-	printk("	VGA0: clock is %d\n",
-	       calc_vclock(index, m1, m2, n, p1, p2, 0));
+	prपूर्णांकk("	VGA0: clock is %d\n",
+	       calc_vघड़ी(index, m1, m2, n, p1, p2, 0));
 
-	n = (hw->vga1_divisor >> FP_N_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
-	m1 = (hw->vga1_divisor >> FP_M1_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
-	m2 = (hw->vga1_divisor >> FP_M2_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
+	n = (hw->vga1_भागisor >> FP_N_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
+	m1 = (hw->vga1_भागisor >> FP_M1_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
+	m2 = (hw->vga1_भागisor >> FP_M2_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
 
-	intelfbhw_get_p1p2(dinfo, hw->vga_pd, &p1, &p2);
-	printk("	VGA1: (m1, m2, n, p1, p2) = (%d, %d, %d, %d, %d)\n",
+	पूर्णांकelfbhw_get_p1p2(dinfo, hw->vga_pd, &p1, &p2);
+	prपूर्णांकk("	VGA1: (m1, m2, n, p1, p2) = (%d, %d, %d, %d, %d)\n",
 	       m1, m2, n, p1, p2);
-	printk("	VGA1: clock is %d\n",
-	       calc_vclock(index, m1, m2, n, p1, p2, 0));
+	prपूर्णांकk("	VGA1: clock is %d\n",
+	       calc_vघड़ी(index, m1, m2, n, p1, p2, 0));
 
-	printk("	DPLL_A:			0x%08x\n", hw->dpll_a);
-	printk("	DPLL_B:			0x%08x\n", hw->dpll_b);
-	printk("	FPA0:			0x%08x\n", hw->fpa0);
-	printk("	FPA1:			0x%08x\n", hw->fpa1);
-	printk("	FPB0:			0x%08x\n", hw->fpb0);
-	printk("	FPB1:			0x%08x\n", hw->fpb1);
+	prपूर्णांकk("	DPLL_A:			0x%08x\n", hw->dpll_a);
+	prपूर्णांकk("	DPLL_B:			0x%08x\n", hw->dpll_b);
+	prपूर्णांकk("	FPA0:			0x%08x\n", hw->fpa0);
+	prपूर्णांकk("	FPA1:			0x%08x\n", hw->fpa1);
+	prपूर्णांकk("	FPB0:			0x%08x\n", hw->fpb0);
+	prपूर्णांकk("	FPB1:			0x%08x\n", hw->fpb1);
 
 	n = (hw->fpa0 >> FP_N_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
 	m1 = (hw->fpa0 >> FP_M1_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
 	m2 = (hw->fpa0 >> FP_M2_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
 
-	intelfbhw_get_p1p2(dinfo, hw->dpll_a, &p1, &p2);
+	पूर्णांकelfbhw_get_p1p2(dinfo, hw->dpll_a, &p1, &p2);
 
-	printk("	PLLA0: (m1, m2, n, p1, p2) = (%d, %d, %d, %d, %d)\n",
+	prपूर्णांकk("	PLLA0: (m1, m2, n, p1, p2) = (%d, %d, %d, %d, %d)\n",
 	       m1, m2, n, p1, p2);
-	printk("	PLLA0: clock is %d\n",
-	       calc_vclock(index, m1, m2, n, p1, p2, 0));
+	prपूर्णांकk("	PLLA0: clock is %d\n",
+	       calc_vघड़ी(index, m1, m2, n, p1, p2, 0));
 
 	n = (hw->fpa1 >> FP_N_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
 	m1 = (hw->fpa1 >> FP_M1_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
 	m2 = (hw->fpa1 >> FP_M2_DIVISOR_SHIFT) & FP_DIVISOR_MASK;
 
-	intelfbhw_get_p1p2(dinfo, hw->dpll_a, &p1, &p2);
+	पूर्णांकelfbhw_get_p1p2(dinfo, hw->dpll_a, &p1, &p2);
 
-	printk("	PLLA1: (m1, m2, n, p1, p2) = (%d, %d, %d, %d, %d)\n",
+	prपूर्णांकk("	PLLA1: (m1, m2, n, p1, p2) = (%d, %d, %d, %d, %d)\n",
 	       m1, m2, n, p1, p2);
-	printk("	PLLA1: clock is %d\n",
-	       calc_vclock(index, m1, m2, n, p1, p2, 0));
+	prपूर्णांकk("	PLLA1: clock is %d\n",
+	       calc_vघड़ी(index, m1, m2, n, p1, p2, 0));
 
-#if 0
-	printk("	PALETTE_A:\n");
-	for (i = 0; i < PALETTE_8_ENTRIES)
-		printk("	%3d:	0x%08x\n", i, hw->palette_a[i]);
-	printk("	PALETTE_B:\n");
-	for (i = 0; i < PALETTE_8_ENTRIES)
-		printk("	%3d:	0x%08x\n", i, hw->palette_b[i]);
-#endif
+#अगर 0
+	prपूर्णांकk("	PALETTE_A:\n");
+	क्रम (i = 0; i < PALETTE_8_ENTRIES)
+		prपूर्णांकk("	%3d:	0x%08x\n", i, hw->palette_a[i]);
+	prपूर्णांकk("	PALETTE_B:\n");
+	क्रम (i = 0; i < PALETTE_8_ENTRIES)
+		prपूर्णांकk("	%3d:	0x%08x\n", i, hw->palette_b[i]);
+#पूर्ण_अगर
 
-	printk("	HTOTAL_A:		0x%08x\n", hw->htotal_a);
-	printk("	HBLANK_A:		0x%08x\n", hw->hblank_a);
-	printk("	HSYNC_A:		0x%08x\n", hw->hsync_a);
-	printk("	VTOTAL_A:		0x%08x\n", hw->vtotal_a);
-	printk("	VBLANK_A:		0x%08x\n", hw->vblank_a);
-	printk("	VSYNC_A:		0x%08x\n", hw->vsync_a);
-	printk("	SRC_SIZE_A:		0x%08x\n", hw->src_size_a);
-	printk("	BCLRPAT_A:		0x%08x\n", hw->bclrpat_a);
-	printk("	HTOTAL_B:		0x%08x\n", hw->htotal_b);
-	printk("	HBLANK_B:		0x%08x\n", hw->hblank_b);
-	printk("	HSYNC_B:		0x%08x\n", hw->hsync_b);
-	printk("	VTOTAL_B:		0x%08x\n", hw->vtotal_b);
-	printk("	VBLANK_B:		0x%08x\n", hw->vblank_b);
-	printk("	VSYNC_B:		0x%08x\n", hw->vsync_b);
-	printk("	SRC_SIZE_B:		0x%08x\n", hw->src_size_b);
-	printk("	BCLRPAT_B:		0x%08x\n", hw->bclrpat_b);
+	prपूर्णांकk("	HTOTAL_A:		0x%08x\n", hw->htotal_a);
+	prपूर्णांकk("	HBLANK_A:		0x%08x\n", hw->hblank_a);
+	prपूर्णांकk("	HSYNC_A:		0x%08x\n", hw->hsync_a);
+	prपूर्णांकk("	VTOTAL_A:		0x%08x\n", hw->vtotal_a);
+	prपूर्णांकk("	VBLANK_A:		0x%08x\n", hw->vblank_a);
+	prपूर्णांकk("	VSYNC_A:		0x%08x\n", hw->vsync_a);
+	prपूर्णांकk("	SRC_SIZE_A:		0x%08x\n", hw->src_size_a);
+	prपूर्णांकk("	BCLRPAT_A:		0x%08x\n", hw->bclrpat_a);
+	prपूर्णांकk("	HTOTAL_B:		0x%08x\n", hw->htotal_b);
+	prपूर्णांकk("	HBLANK_B:		0x%08x\n", hw->hblank_b);
+	prपूर्णांकk("	HSYNC_B:		0x%08x\n", hw->hsync_b);
+	prपूर्णांकk("	VTOTAL_B:		0x%08x\n", hw->vtotal_b);
+	prपूर्णांकk("	VBLANK_B:		0x%08x\n", hw->vblank_b);
+	prपूर्णांकk("	VSYNC_B:		0x%08x\n", hw->vsync_b);
+	prपूर्णांकk("	SRC_SIZE_B:		0x%08x\n", hw->src_size_b);
+	prपूर्णांकk("	BCLRPAT_B:		0x%08x\n", hw->bclrpat_b);
 
-	printk("	ADPA:			0x%08x\n", hw->adpa);
-	printk("	DVOA:			0x%08x\n", hw->dvoa);
-	printk("	DVOB:			0x%08x\n", hw->dvob);
-	printk("	DVOC:			0x%08x\n", hw->dvoc);
-	printk("	DVOA_SRCDIM:		0x%08x\n", hw->dvoa_srcdim);
-	printk("	DVOB_SRCDIM:		0x%08x\n", hw->dvob_srcdim);
-	printk("	DVOC_SRCDIM:		0x%08x\n", hw->dvoc_srcdim);
-	printk("	LVDS:			0x%08x\n", hw->lvds);
+	prपूर्णांकk("	ADPA:			0x%08x\n", hw->adpa);
+	prपूर्णांकk("	DVOA:			0x%08x\n", hw->dvoa);
+	prपूर्णांकk("	DVOB:			0x%08x\n", hw->dvob);
+	prपूर्णांकk("	DVOC:			0x%08x\n", hw->dvoc);
+	prपूर्णांकk("	DVOA_SRCDIM:		0x%08x\n", hw->dvoa_srcdim);
+	prपूर्णांकk("	DVOB_SRCDIM:		0x%08x\n", hw->dvob_srcdim);
+	prपूर्णांकk("	DVOC_SRCDIM:		0x%08x\n", hw->dvoc_srcdim);
+	prपूर्णांकk("	LVDS:			0x%08x\n", hw->lvds);
 
-	printk("	PIPEACONF:		0x%08x\n", hw->pipe_a_conf);
-	printk("	PIPEBCONF:		0x%08x\n", hw->pipe_b_conf);
-	printk("	DISPARB:		0x%08x\n", hw->disp_arb);
+	prपूर्णांकk("	PIPEACONF:		0x%08x\n", hw->pipe_a_conf);
+	prपूर्णांकk("	PIPEBCONF:		0x%08x\n", hw->pipe_b_conf);
+	prपूर्णांकk("	DISPARB:		0x%08x\n", hw->disp_arb);
 
-	printk("	CURSOR_A_CONTROL:	0x%08x\n", hw->cursor_a_control);
-	printk("	CURSOR_B_CONTROL:	0x%08x\n", hw->cursor_b_control);
-	printk("	CURSOR_A_BASEADDR:	0x%08x\n", hw->cursor_a_base);
-	printk("	CURSOR_B_BASEADDR:	0x%08x\n", hw->cursor_b_base);
+	prपूर्णांकk("	CURSOR_A_CONTROL:	0x%08x\n", hw->cursor_a_control);
+	prपूर्णांकk("	CURSOR_B_CONTROL:	0x%08x\n", hw->cursor_b_control);
+	prपूर्णांकk("	CURSOR_A_BASEADDR:	0x%08x\n", hw->cursor_a_base);
+	prपूर्णांकk("	CURSOR_B_BASEADDR:	0x%08x\n", hw->cursor_b_base);
 
-	printk("	CURSOR_A_PALETTE:	");
-	for (i = 0; i < 4; i++) {
-		printk("0x%08x", hw->cursor_a_palette[i]);
-		if (i < 3)
-			printk(", ");
-	}
-	printk("\n");
-	printk("	CURSOR_B_PALETTE:	");
-	for (i = 0; i < 4; i++) {
-		printk("0x%08x", hw->cursor_b_palette[i]);
-		if (i < 3)
-			printk(", ");
-	}
-	printk("\n");
+	prपूर्णांकk("	CURSOR_A_PALETTE:	");
+	क्रम (i = 0; i < 4; i++) अणु
+		prपूर्णांकk("0x%08x", hw->cursor_a_palette[i]);
+		अगर (i < 3)
+			prपूर्णांकk(", ");
+	पूर्ण
+	prपूर्णांकk("\n");
+	prपूर्णांकk("	CURSOR_B_PALETTE:	");
+	क्रम (i = 0; i < 4; i++) अणु
+		prपूर्णांकk("0x%08x", hw->cursor_b_palette[i]);
+		अगर (i < 3)
+			prपूर्णांकk(", ");
+	पूर्ण
+	prपूर्णांकk("\n");
 
-	printk("	CURSOR_SIZE:		0x%08x\n", hw->cursor_size);
+	prपूर्णांकk("	CURSOR_SIZE:		0x%08x\n", hw->cursor_size);
 
-	printk("	DSPACNTR:		0x%08x\n", hw->disp_a_ctrl);
-	printk("	DSPBCNTR:		0x%08x\n", hw->disp_b_ctrl);
-	printk("	DSPABASE:		0x%08x\n", hw->disp_a_base);
-	printk("	DSPBBASE:		0x%08x\n", hw->disp_b_base);
-	printk("	DSPASTRIDE:		0x%08x\n", hw->disp_a_stride);
-	printk("	DSPBSTRIDE:		0x%08x\n", hw->disp_b_stride);
+	prपूर्णांकk("	DSPACNTR:		0x%08x\n", hw->disp_a_ctrl);
+	prपूर्णांकk("	DSPBCNTR:		0x%08x\n", hw->disp_b_ctrl);
+	prपूर्णांकk("	DSPABASE:		0x%08x\n", hw->disp_a_base);
+	prपूर्णांकk("	DSPBBASE:		0x%08x\n", hw->disp_b_base);
+	prपूर्णांकk("	DSPASTRIDE:		0x%08x\n", hw->disp_a_stride);
+	prपूर्णांकk("	DSPBSTRIDE:		0x%08x\n", hw->disp_b_stride);
 
-	printk("	VGACNTRL:		0x%08x\n", hw->vgacntrl);
-	printk("	ADD_ID:			0x%08x\n", hw->add_id);
+	prपूर्णांकk("	VGACNTRL:		0x%08x\n", hw->vgacntrl);
+	prपूर्णांकk("	ADD_ID:			0x%08x\n", hw->add_id);
 
-	for (i = 0; i < 7; i++) {
-		printk("	SWF0%d			0x%08x\n", i,
+	क्रम (i = 0; i < 7; i++) अणु
+		prपूर्णांकk("	SWF0%d			0x%08x\n", i,
 			hw->swf0x[i]);
-	}
-	for (i = 0; i < 7; i++) {
-		printk("	SWF1%d			0x%08x\n", i,
+	पूर्ण
+	क्रम (i = 0; i < 7; i++) अणु
+		prपूर्णांकk("	SWF1%d			0x%08x\n", i,
 			hw->swf1x[i]);
-	}
-	for (i = 0; i < 3; i++) {
-		printk("	SWF3%d			0x%08x\n", i,
+	पूर्ण
+	क्रम (i = 0; i < 3; i++) अणु
+		prपूर्णांकk("	SWF3%d			0x%08x\n", i,
 		       hw->swf3x[i]);
-	}
-	for (i = 0; i < 8; i++)
-		printk("	FENCE%d			0x%08x\n", i,
+	पूर्ण
+	क्रम (i = 0; i < 8; i++)
+		prपूर्णांकk("	FENCE%d			0x%08x\n", i,
 		       hw->fence[i]);
 
-	printk("	INSTPM			0x%08x\n", hw->instpm);
-	printk("	MEM_MODE		0x%08x\n", hw->mem_mode);
-	printk("	FW_BLC_0		0x%08x\n", hw->fw_blc_0);
-	printk("	FW_BLC_1		0x%08x\n", hw->fw_blc_1);
+	prपूर्णांकk("	INSTPM			0x%08x\n", hw->instpm);
+	prपूर्णांकk("	MEM_MODE		0x%08x\n", hw->mem_mode);
+	prपूर्णांकk("	FW_BLC_0		0x%08x\n", hw->fw_blc_0);
+	prपूर्णांकk("	FW_BLC_1		0x%08x\n", hw->fw_blc_1);
 
-	printk("	HWSTAM			0x%04x\n", hw->hwstam);
-	printk("	IER			0x%04x\n", hw->ier);
-	printk("	IIR			0x%04x\n", hw->iir);
-	printk("	IMR			0x%04x\n", hw->imr);
-	printk("hw state dump end\n");
-#endif
-}
+	prपूर्णांकk("	HWSTAM			0x%04x\n", hw->hwstam);
+	prपूर्णांकk("	IER			0x%04x\n", hw->ier);
+	prपूर्णांकk("	IIR			0x%04x\n", hw->iir);
+	prपूर्णांकk("	IMR			0x%04x\n", hw->imr);
+	prपूर्णांकk("hw state dump end\n");
+#पूर्ण_अगर
+पूर्ण
 
 
 
-/* Split the M parameter into M1 and M2. */
-static int splitm(int index, unsigned int m, unsigned int *retm1,
-		  unsigned int *retm2)
-{
-	int m1, m2;
-	int testm;
-	struct pll_min_max *pll = &plls[index];
+/* Split the M parameter पूर्णांकo M1 and M2. */
+अटल पूर्णांक spliपंचांग(पूर्णांक index, अचिन्हित पूर्णांक m, अचिन्हित पूर्णांक *reपंचांग1,
+		  अचिन्हित पूर्णांक *reपंचांग2)
+अणु
+	पूर्णांक m1, m2;
+	पूर्णांक tesपंचांग;
+	काष्ठा pll_min_max *pll = &plls[index];
 
-	/* no point optimising too much - brute force m */
-	for (m1 = pll->min_m1; m1 < pll->max_m1 + 1; m1++) {
-		for (m2 = pll->min_m2; m2 < pll->max_m2 + 1; m2++) {
-			testm = (5 * (m1 + 2)) + (m2 + 2);
-			if (testm == m) {
-				*retm1 = (unsigned int)m1;
-				*retm2 = (unsigned int)m2;
-				return 0;
-			}
-		}
-	}
-	return 1;
-}
+	/* no poपूर्णांक optimising too much - brute क्रमce m */
+	क्रम (m1 = pll->min_m1; m1 < pll->max_m1 + 1; m1++) अणु
+		क्रम (m2 = pll->min_m2; m2 < pll->max_m2 + 1; m2++) अणु
+			tesपंचांग = (5 * (m1 + 2)) + (m2 + 2);
+			अगर (tesपंचांग == m) अणु
+				*reपंचांग1 = (अचिन्हित पूर्णांक)m1;
+				*reपंचांग2 = (अचिन्हित पूर्णांक)m2;
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-/* Split the P parameter into P1 and P2. */
-static int splitp(int index, unsigned int p, unsigned int *retp1,
-		  unsigned int *retp2)
-{
-	int p1, p2;
-	struct pll_min_max *pll = &plls[index];
+/* Split the P parameter पूर्णांकo P1 and P2. */
+अटल पूर्णांक splitp(पूर्णांक index, अचिन्हित पूर्णांक p, अचिन्हित पूर्णांक *retp1,
+		  अचिन्हित पूर्णांक *retp2)
+अणु
+	पूर्णांक p1, p2;
+	काष्ठा pll_min_max *pll = &plls[index];
 
-	if (index == PLLS_I9xx) {
+	अगर (index == PLLS_I9xx) अणु
 		p2 = (p % 10) ? 1 : 0;
 
 		p1 = p / (p2 ? 5 : 10);
 
-		*retp1 = (unsigned int)p1;
-		*retp2 = (unsigned int)p2;
-		return 0;
-	}
+		*retp1 = (अचिन्हित पूर्णांक)p1;
+		*retp2 = (अचिन्हित पूर्णांक)p2;
+		वापस 0;
+	पूर्ण
 
-	if (p % 4 == 0)
+	अगर (p % 4 == 0)
 		p2 = 1;
-	else
+	अन्यथा
 		p2 = 0;
 	p1 = (p / (1 << (p2 + 1))) - 2;
-	if (p % 4 == 0 && p1 < pll->min_p1) {
+	अगर (p % 4 == 0 && p1 < pll->min_p1) अणु
 		p2 = 0;
 		p1 = (p / (1 << (p2 + 1))) - 2;
-	}
-	if (p1 < pll->min_p1 || p1 > pll->max_p1 ||
-	    (p1 + 2) * (1 << (p2 + 1)) != p) {
-		return 1;
-	} else {
-		*retp1 = (unsigned int)p1;
-		*retp2 = (unsigned int)p2;
-		return 0;
-	}
-}
+	पूर्ण
+	अगर (p1 < pll->min_p1 || p1 > pll->max_p1 ||
+	    (p1 + 2) * (1 << (p2 + 1)) != p) अणु
+		वापस 1;
+	पूर्ण अन्यथा अणु
+		*retp1 = (अचिन्हित पूर्णांक)p1;
+		*retp2 = (अचिन्हित पूर्णांक)p2;
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int calc_pll_params(int index, int clock, u32 *retm1, u32 *retm2,
-			   u32 *retn, u32 *retp1, u32 *retp2, u32 *retclock)
-{
-	u32 m1, m2, n, p1, p2, n1, testm;
+अटल पूर्णांक calc_pll_params(पूर्णांक index, पूर्णांक घड़ी, u32 *reपंचांग1, u32 *reपंचांग2,
+			   u32 *retn, u32 *retp1, u32 *retp2, u32 *retघड़ी)
+अणु
+	u32 m1, m2, n, p1, p2, n1, tesपंचांग;
 	u32 f_vco, p, p_best = 0, m, f_out = 0;
 	u32 err_best = 10000000;
 	u32 n_best = 0, m_best = 0, f_err;
-	u32 p_min, p_max, p_inc, div_max;
-	struct pll_min_max *pll = &plls[index];
+	u32 p_min, p_max, p_inc, भाग_max;
+	काष्ठा pll_min_max *pll = &plls[index];
 
-	DBG_MSG("Clock is %d\n", clock);
+	DBG_MSG("Clock is %d\n", घड़ी);
 
-	div_max = pll->max_vco / clock;
+	भाग_max = pll->max_vco / घड़ी;
 
-	p_inc = (clock <= pll->p_transition_clk) ? pll->p_inc_lo : pll->p_inc_hi;
+	p_inc = (घड़ी <= pll->p_transition_clk) ? pll->p_inc_lo : pll->p_inc_hi;
 	p_min = p_inc;
-	p_max = ROUND_DOWN_TO(div_max, p_inc);
-	if (p_min < pll->min_p)
+	p_max = ROUND_DOWN_TO(भाग_max, p_inc);
+	अगर (p_min < pll->min_p)
 		p_min = pll->min_p;
-	if (p_max > pll->max_p)
+	अगर (p_max > pll->max_p)
 		p_max = pll->max_p;
 
 	DBG_MSG("p range is %d-%d (%d)\n", p_min, p_max, p_inc);
 
 	p = p_min;
-	do {
-		if (splitp(index, p, &p1, &p2)) {
+	करो अणु
+		अगर (splitp(index, p, &p1, &p2)) अणु
 			WRN_MSG("cannot split p = %d\n", p);
 			p += p_inc;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		n = pll->min_n;
-		f_vco = clock * p;
+		f_vco = घड़ी * p;
 
-		do {
+		करो अणु
 			m = ROUND_UP_TO(f_vco * n, pll->ref_clk) / pll->ref_clk;
-			if (m < pll->min_m)
+			अगर (m < pll->min_m)
 				m = pll->min_m + 1;
-			if (m > pll->max_m)
+			अगर (m > pll->max_m)
 				m = pll->max_m - 1;
-			for (testm = m - 1; testm <= m; testm++) {
-				f_out = calc_vclock3(index, testm, n, p);
-				if (splitm(index, testm, &m1, &m2)) {
+			क्रम (tesपंचांग = m - 1; tesपंचांग <= m; tesपंचांग++) अणु
+				f_out = calc_vघड़ी3(index, tesपंचांग, n, p);
+				अगर (spliपंचांग(index, tesपंचांग, &m1, &m2)) अणु
 					WRN_MSG("cannot split m = %d\n",
-						testm);
-					continue;
-				}
-				if (clock > f_out)
-					f_err = clock - f_out;
-				else/* slightly bias the error for bigger clocks */
-					f_err = f_out - clock + 1;
+						tesपंचांग);
+					जारी;
+				पूर्ण
+				अगर (घड़ी > f_out)
+					f_err = घड़ी - f_out;
+				अन्यथा/* slightly bias the error क्रम bigger घड़ीs */
+					f_err = f_out - घड़ी + 1;
 
-				if (f_err < err_best) {
-					m_best = testm;
+				अगर (f_err < err_best) अणु
+					m_best = tesपंचांग;
 					n_best = n;
 					p_best = p;
 					err_best = f_err;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			n++;
-		} while ((n <= pll->max_n) && (f_out >= clock));
+		पूर्ण जबतक ((n <= pll->max_n) && (f_out >= घड़ी));
 		p += p_inc;
-	} while ((p <= p_max));
+	पूर्ण जबतक ((p <= p_max));
 
-	if (!m_best) {
-		WRN_MSG("cannot find parameters for clock %d\n", clock);
-		return 1;
-	}
+	अगर (!m_best) अणु
+		WRN_MSG("cannot find parameters for clock %d\n", घड़ी);
+		वापस 1;
+	पूर्ण
 	m = m_best;
 	n = n_best;
 	p = p_best;
-	splitm(index, m, &m1, &m2);
+	spliपंचांग(index, m, &m1, &m2);
 	splitp(index, p, &p1, &p2);
 	n1 = n - 2;
 
 	DBG_MSG("m, n, p: %d (%d,%d), %d (%d), %d (%d,%d), "
 		"f: %d (%d), VCO: %d\n",
 		m, m1, m2, n, n1, p, p1, p2,
-		calc_vclock3(index, m, n, p),
-		calc_vclock(index, m1, m2, n1, p1, p2, 0),
-		calc_vclock3(index, m, n, p) * p);
-	*retm1 = m1;
-	*retm2 = m2;
+		calc_vघड़ी3(index, m, n, p),
+		calc_vघड़ी(index, m1, m2, n1, p1, p2, 0),
+		calc_vघड़ी3(index, m, n, p) * p);
+	*reपंचांग1 = m1;
+	*reपंचांग2 = m2;
 	*retn = n1;
 	*retp1 = p1;
 	*retp2 = p2;
-	*retclock = calc_vclock(index, m1, m2, n1, p1, p2, 0);
+	*retघड़ी = calc_vघड़ी(index, m1, m2, n1, p1, p2, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __inline__ int check_overflow(u32 value, u32 limit,
-				     const char *description)
-{
-	if (value > limit) {
+अटल __अंतरभूत__ पूर्णांक check_overflow(u32 value, u32 limit,
+				     स्थिर अक्षर *description)
+अणु
+	अगर (value > limit) अणु
 		WRN_MSG("%s value %d exceeds limit %d\n",
 			description, value, limit);
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* It is assumed that hw is filled in with the initial state information. */
-int intelfbhw_mode_to_hw(struct intelfb_info *dinfo,
-			 struct intelfb_hwstate *hw,
-			 struct fb_var_screeninfo *var)
-{
-	int pipe = intelfbhw_active_pipe(hw);
+/* It is assumed that hw is filled in with the initial state inक्रमmation. */
+पूर्णांक पूर्णांकelfbhw_mode_to_hw(काष्ठा पूर्णांकelfb_info *dinfo,
+			 काष्ठा पूर्णांकelfb_hwstate *hw,
+			 काष्ठा fb_var_screeninfo *var)
+अणु
+	पूर्णांक pipe = पूर्णांकelfbhw_active_pipe(hw);
 	u32 *dpll, *fp0, *fp1;
-	u32 m1, m2, n, p1, p2, clock_target, clock;
+	u32 m1, m2, n, p1, p2, घड़ी_प्रकारarget, घड़ी;
 	u32 hsync_start, hsync_end, hblank_start, hblank_end, htotal, hactive;
 	u32 vsync_start, vsync_end, vblank_start, vblank_end, vtotal, vactive;
 	u32 vsync_pol, hsync_pol;
@@ -1055,8 +1056,8 @@ int intelfbhw_mode_to_hw(struct intelfb_info *dinfo,
 	/* Disable VGA */
 	hw->vgacntrl |= VGA_DISABLE;
 
-	/* Set which pipe's registers will be set. */
-	if (pipe == PIPE_B) {
+	/* Set which pipe's रेजिस्टरs will be set. */
+	अगर (pipe == PIPE_B) अणु
 		dpll = &hw->dpll_b;
 		fp0 = &hw->fpb0;
 		fp1 = &hw->fpb1;
@@ -1068,7 +1069,7 @@ int intelfbhw_mode_to_hw(struct intelfb_info *dinfo,
 		vt = &hw->vtotal_b;
 		ss = &hw->src_size_b;
 		pipe_conf = &hw->pipe_b_conf;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpll = &hw->dpll_a;
 		fp0 = &hw->fpa0;
 		fp1 = &hw->fpa1;
@@ -1080,9 +1081,9 @@ int intelfbhw_mode_to_hw(struct intelfb_info *dinfo,
 		vt = &hw->vtotal_a;
 		ss = &hw->src_size_a;
 		pipe_conf = &hw->pipe_a_conf;
-	}
+	पूर्ण
 
-	/* Use ADPA register for sync control. */
+	/* Use ADPA रेजिस्टर क्रम sync control. */
 	hw->adpa &= ~ADPA_USE_VGA_HVPOLARITY;
 
 	/* sync polarity */
@@ -1109,35 +1110,35 @@ int intelfbhw_mode_to_hw(struct intelfb_info *dinfo,
 	*dpll &= ~(DPLL_RATE_SELECT_MASK | DPLL_REFERENCE_SELECT_MASK);
 	*dpll |= (DPLL_REFERENCE_DEFAULT | DPLL_RATE_SELECT_FP0);
 
-	/* Desired clock in kHz */
-	clock_target = 1000000000 / var->pixclock;
+	/* Desired घड़ी in kHz */
+	घड़ी_प्रकारarget = 1000000000 / var->pixघड़ी;
 
-	if (calc_pll_params(dinfo->pll_index, clock_target, &m1, &m2,
-			    &n, &p1, &p2, &clock)) {
+	अगर (calc_pll_params(dinfo->pll_index, घड़ी_प्रकारarget, &m1, &m2,
+			    &n, &p1, &p2, &घड़ी)) अणु
 		WRN_MSG("calc_pll_params failed\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* Check for overflow. */
-	if (check_overflow(p1, DPLL_P1_MASK, "PLL P1 parameter"))
-		return 1;
-	if (check_overflow(p2, DPLL_P2_MASK, "PLL P2 parameter"))
-		return 1;
-	if (check_overflow(m1, FP_DIVISOR_MASK, "PLL M1 parameter"))
-		return 1;
-	if (check_overflow(m2, FP_DIVISOR_MASK, "PLL M2 parameter"))
-		return 1;
-	if (check_overflow(n, FP_DIVISOR_MASK, "PLL N parameter"))
-		return 1;
+	/* Check क्रम overflow. */
+	अगर (check_overflow(p1, DPLL_P1_MASK, "PLL P1 parameter"))
+		वापस 1;
+	अगर (check_overflow(p2, DPLL_P2_MASK, "PLL P2 parameter"))
+		वापस 1;
+	अगर (check_overflow(m1, FP_DIVISOR_MASK, "PLL M1 parameter"))
+		वापस 1;
+	अगर (check_overflow(m2, FP_DIVISOR_MASK, "PLL M2 parameter"))
+		वापस 1;
+	अगर (check_overflow(n, FP_DIVISOR_MASK, "PLL N parameter"))
+		वापस 1;
 
 	*dpll &= ~DPLL_P1_FORCE_DIV2;
 	*dpll &= ~((DPLL_P2_MASK << DPLL_P2_SHIFT) |
 		   (DPLL_P1_MASK << DPLL_P1_SHIFT));
 
-	if (IS_I9XX(dinfo)) {
+	अगर (IS_I9XX(dinfo)) अणु
 		*dpll |= (p2 << DPLL_I9XX_P2_SHIFT);
 		*dpll |= (1 << (p1 - 1)) << DPLL_P1_SHIFT;
-	} else
+	पूर्ण अन्यथा
 		*dpll |= (p2 << DPLL_P2_SHIFT) | (p1 << DPLL_P1_SHIFT);
 
 	*fp0 = (n << FP_N_DIVISOR_SHIFT) |
@@ -1152,24 +1153,24 @@ int intelfbhw_mode_to_hw(struct intelfb_info *dinfo,
 	hw->disp_a_ctrl |= DISPPLANE_PLANE_ENABLE;
 	hw->disp_a_ctrl &= ~DISPPLANE_GAMMA_ENABLE;
 	hw->disp_a_ctrl &= ~DISPPLANE_PIXFORMAT_MASK;
-	switch (intelfb_var_to_depth(var)) {
-	case 8:
+	चयन (पूर्णांकelfb_var_to_depth(var)) अणु
+	हाल 8:
 		hw->disp_a_ctrl |= DISPPLANE_8BPP | DISPPLANE_GAMMA_ENABLE;
-		break;
-	case 15:
+		अवरोध;
+	हाल 15:
 		hw->disp_a_ctrl |= DISPPLANE_15_16BPP;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		hw->disp_a_ctrl |= DISPPLANE_16BPP;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		hw->disp_a_ctrl |= DISPPLANE_32BPP_NO_ALPHA;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	hw->disp_a_ctrl &= ~(PIPE_MASK << DISPPLANE_SEL_PIPE_SHIFT);
 	hw->disp_a_ctrl |= (pipe << DISPPLANE_SEL_PIPE_SHIFT);
 
-	/* Set CRTC registers. */
+	/* Set CRTC रेजिस्टरs. */
 	hactive = var->xres;
 	hsync_start = hactive + var->right_margin;
 	hsync_end = hsync_start + var->hsync_len;
@@ -1182,8 +1183,8 @@ int intelfbhw_mode_to_hw(struct intelfb_info *dinfo,
 		hblank_end);
 
 	vactive = var->yres;
-	if (var->vmode & FB_VMODE_INTERLACED)
-		vactive--; /* the chip adds 2 halflines automatically */
+	अगर (var->vmode & FB_VMODE_INTERLACED)
+		vactive--; /* the chip adds 2 halflines स्वतःmatically */
 	vsync_start = vactive + var->lower_margin;
 	vsync_end = vsync_start + var->vsync_len;
 	vtotal = vsync_end + var->upper_margin;
@@ -1194,44 +1195,44 @@ int intelfbhw_mode_to_hw(struct intelfb_info *dinfo,
 		vactive, vsync_start, vsync_end, vtotal, vblank_start,
 		vblank_end);
 
-	/* Adjust for register values, and check for overflow. */
+	/* Adjust क्रम रेजिस्टर values, and check क्रम overflow. */
 	hactive--;
-	if (check_overflow(hactive, HACTIVE_MASK, "CRTC hactive"))
-		return 1;
+	अगर (check_overflow(hactive, HACTIVE_MASK, "CRTC hactive"))
+		वापस 1;
 	hsync_start--;
-	if (check_overflow(hsync_start, HSYNCSTART_MASK, "CRTC hsync_start"))
-		return 1;
+	अगर (check_overflow(hsync_start, HSYNCSTART_MASK, "CRTC hsync_start"))
+		वापस 1;
 	hsync_end--;
-	if (check_overflow(hsync_end, HSYNCEND_MASK, "CRTC hsync_end"))
-		return 1;
+	अगर (check_overflow(hsync_end, HSYNCEND_MASK, "CRTC hsync_end"))
+		वापस 1;
 	htotal--;
-	if (check_overflow(htotal, HTOTAL_MASK, "CRTC htotal"))
-		return 1;
+	अगर (check_overflow(htotal, HTOTAL_MASK, "CRTC htotal"))
+		वापस 1;
 	hblank_start--;
-	if (check_overflow(hblank_start, HBLANKSTART_MASK, "CRTC hblank_start"))
-		return 1;
+	अगर (check_overflow(hblank_start, HBLANKSTART_MASK, "CRTC hblank_start"))
+		वापस 1;
 	hblank_end--;
-	if (check_overflow(hblank_end, HBLANKEND_MASK, "CRTC hblank_end"))
-		return 1;
+	अगर (check_overflow(hblank_end, HBLANKEND_MASK, "CRTC hblank_end"))
+		वापस 1;
 
 	vactive--;
-	if (check_overflow(vactive, VACTIVE_MASK, "CRTC vactive"))
-		return 1;
+	अगर (check_overflow(vactive, VACTIVE_MASK, "CRTC vactive"))
+		वापस 1;
 	vsync_start--;
-	if (check_overflow(vsync_start, VSYNCSTART_MASK, "CRTC vsync_start"))
-		return 1;
+	अगर (check_overflow(vsync_start, VSYNCSTART_MASK, "CRTC vsync_start"))
+		वापस 1;
 	vsync_end--;
-	if (check_overflow(vsync_end, VSYNCEND_MASK, "CRTC vsync_end"))
-		return 1;
+	अगर (check_overflow(vsync_end, VSYNCEND_MASK, "CRTC vsync_end"))
+		वापस 1;
 	vtotal--;
-	if (check_overflow(vtotal, VTOTAL_MASK, "CRTC vtotal"))
-		return 1;
+	अगर (check_overflow(vtotal, VTOTAL_MASK, "CRTC vtotal"))
+		वापस 1;
 	vblank_start--;
-	if (check_overflow(vblank_start, VBLANKSTART_MASK, "CRTC vblank_start"))
-		return 1;
+	अगर (check_overflow(vblank_start, VBLANKSTART_MASK, "CRTC vblank_start"))
+		वापस 1;
 	vblank_end--;
-	if (check_overflow(vblank_end, VBLANKEND_MASK, "CRTC vblank_end"))
-		return 1;
+	अगर (check_overflow(vblank_end, VBLANKEND_MASK, "CRTC vblank_end"))
+		वापस 1;
 
 	*ht = (htotal << HTOTAL_SHIFT) | (hactive << HACTIVE_SHIFT);
 	*hb = (hblank_start << HBLANKSTART_SHIFT) |
@@ -1256,50 +1257,50 @@ int intelfbhw_mode_to_hw(struct intelfb_info *dinfo,
 	/* Check stride alignment. */
 	stride_alignment = IS_I9XX(dinfo) ? STRIDE_ALIGNMENT_I9XX :
 					    STRIDE_ALIGNMENT;
-	if (hw->disp_a_stride % stride_alignment != 0) {
+	अगर (hw->disp_a_stride % stride_alignment != 0) अणु
 		WRN_MSG("display stride %d has bad alignment %d\n",
 			hw->disp_a_stride, stride_alignment);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* Set the palette to 8-bit mode. */
 	*pipe_conf &= ~PIPECONF_GAMMA;
 
-	if (var->vmode & FB_VMODE_INTERLACED)
+	अगर (var->vmode & FB_VMODE_INTERLACED)
 		*pipe_conf |= PIPECONF_INTERLACE_W_FIELD_INDICATION;
-	else
+	अन्यथा
 		*pipe_conf &= ~PIPECONF_INTERLACE_MASK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Program a (non-VGA) video mode. */
-int intelfbhw_program_mode(struct intelfb_info *dinfo,
-			   const struct intelfb_hwstate *hw, int blank)
-{
-	u32 tmp;
-	const u32 *dpll, *fp0, *fp1, *pipe_conf;
-	const u32 *hs, *ht, *hb, *vs, *vt, *vb, *ss;
+पूर्णांक पूर्णांकelfbhw_program_mode(काष्ठा पूर्णांकelfb_info *dinfo,
+			   स्थिर काष्ठा पूर्णांकelfb_hwstate *hw, पूर्णांक blank)
+अणु
+	u32 पंचांगp;
+	स्थिर u32 *dpll, *fp0, *fp1, *pipe_conf;
+	स्थिर u32 *hs, *ht, *hb, *vs, *vt, *vb, *ss;
 	u32 dpll_reg, fp0_reg, fp1_reg, pipe_conf_reg, pipe_stat_reg;
 	u32 hsync_reg, htotal_reg, hblank_reg;
 	u32 vsync_reg, vtotal_reg, vblank_reg;
 	u32 src_size_reg;
-	u32 count, tmp_val[3];
+	u32 count, पंचांगp_val[3];
 
 	/* Assume single pipe */
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_program_mode\n");
-#endif
+#पूर्ण_अगर
 
 	/* Disable VGA */
-	tmp = INREG(VGACNTRL);
-	tmp |= VGA_DISABLE;
-	OUTREG(VGACNTRL, tmp);
+	पंचांगp = INREG(VGACNTRL);
+	पंचांगp |= VGA_DISABLE;
+	OUTREG(VGACNTRL, पंचांगp);
 
-	dinfo->pipe = intelfbhw_active_pipe(hw);
+	dinfo->pipe = पूर्णांकelfbhw_active_pipe(hw);
 
-	if (dinfo->pipe == PIPE_B) {
+	अगर (dinfo->pipe == PIPE_B) अणु
 		dpll = &hw->dpll_b;
 		fp0 = &hw->fpb0;
 		fp1 = &hw->fpb1;
@@ -1323,7 +1324,7 @@ int intelfbhw_program_mode(struct intelfb_info *dinfo,
 		vtotal_reg = VTOTAL_B;
 		vblank_reg = VBLANK_B;
 		src_size_reg = SRC_SIZE_B;
-	} else {
+	पूर्ण अन्यथा अणु
 		dpll = &hw->dpll_a;
 		fp0 = &hw->fpa0;
 		fp1 = &hw->fpa1;
@@ -1347,38 +1348,38 @@ int intelfbhw_program_mode(struct intelfb_info *dinfo,
 		vtotal_reg = VTOTAL_A;
 		vblank_reg = VBLANK_A;
 		src_size_reg = SRC_SIZE_A;
-	}
+	पूर्ण
 
 	/* turn off pipe */
-	tmp = INREG(pipe_conf_reg);
-	tmp &= ~PIPECONF_ENABLE;
-	OUTREG(pipe_conf_reg, tmp);
+	पंचांगp = INREG(pipe_conf_reg);
+	पंचांगp &= ~PIPECONF_ENABLE;
+	OUTREG(pipe_conf_reg, पंचांगp);
 
 	count = 0;
-	do {
-		tmp_val[count % 3] = INREG(PIPEA_DSL);
-		if ((tmp_val[0] == tmp_val[1]) && (tmp_val[1] == tmp_val[2]))
-			break;
+	करो अणु
+		पंचांगp_val[count % 3] = INREG(PIPEA_DSL);
+		अगर ((पंचांगp_val[0] == पंचांगp_val[1]) && (पंचांगp_val[1] == पंचांगp_val[2]))
+			अवरोध;
 		count++;
 		udelay(1);
-		if (count % 200 == 0) {
-			tmp = INREG(pipe_conf_reg);
-			tmp &= ~PIPECONF_ENABLE;
-			OUTREG(pipe_conf_reg, tmp);
-		}
-	} while (count < 2000);
+		अगर (count % 200 == 0) अणु
+			पंचांगp = INREG(pipe_conf_reg);
+			पंचांगp &= ~PIPECONF_ENABLE;
+			OUTREG(pipe_conf_reg, पंचांगp);
+		पूर्ण
+	पूर्ण जबतक (count < 2000);
 
 	OUTREG(ADPA, INREG(ADPA) & ~ADPA_DAC_ENABLE);
 
 	/* Disable planes A and B. */
-	tmp = INREG(DSPACNTR);
-	tmp &= ~DISPPLANE_PLANE_ENABLE;
-	OUTREG(DSPACNTR, tmp);
-	tmp = INREG(DSPBCNTR);
-	tmp &= ~DISPPLANE_PLANE_ENABLE;
-	OUTREG(DSPBCNTR, tmp);
+	पंचांगp = INREG(DSPACNTR);
+	पंचांगp &= ~DISPPLANE_PLANE_ENABLE;
+	OUTREG(DSPACNTR, पंचांगp);
+	पंचांगp = INREG(DSPBCNTR);
+	पंचांगp &= ~DISPPLANE_PLANE_ENABLE;
+	OUTREG(DSPBCNTR, पंचांगp);
 
-	/* Wait for vblank. For now, just wait for a 50Hz cycle (20ms)) */
+	/* Wait क्रम vblank. For now, just रुको क्रम a 50Hz cycle (20ms)) */
 	mdelay(20);
 
 	OUTREG(DVOB, INREG(DVOB) & ~PORT_ENABLE);
@@ -1386,18 +1387,18 @@ int intelfbhw_program_mode(struct intelfb_info *dinfo,
 	OUTREG(ADPA, INREG(ADPA) & ~ADPA_DAC_ENABLE);
 
 	/* Disable Sync */
-	tmp = INREG(ADPA);
-	tmp &= ~ADPA_DPMS_CONTROL_MASK;
-	tmp |= ADPA_DPMS_D3;
-	OUTREG(ADPA, tmp);
+	पंचांगp = INREG(ADPA);
+	पंचांगp &= ~ADPA_DPMS_CONTROL_MASK;
+	पंचांगp |= ADPA_DPMS_D3;
+	OUTREG(ADPA, पंचांगp);
 
-	/* do some funky magic - xyzzy */
+	/* करो some funky magic - xyzzy */
 	OUTREG(0x61204, 0xabcd0000);
 
 	/* turn off PLL */
-	tmp = INREG(dpll_reg);
-	tmp &= ~DPLL_VCO_ENABLE;
-	OUTREG(dpll_reg, tmp);
+	पंचांगp = INREG(dpll_reg);
+	पंचांगp &= ~DPLL_VCO_ENABLE;
+	OUTREG(dpll_reg, पंचांगp);
 
 	/* Set PLL parameters */
 	OUTREG(fp0_reg, *fp0);
@@ -1410,7 +1411,7 @@ int intelfbhw_program_mode(struct intelfb_info *dinfo,
 	OUTREG(DVOB, hw->dvob);
 	OUTREG(DVOC, hw->dvoc);
 
-	/* undo funky magic */
+	/* unकरो funky magic */
 	OUTREG(0x61204, 0x00000000);
 
 	/* Set ADPA */
@@ -1426,219 +1427,219 @@ int intelfbhw_program_mode(struct intelfb_info *dinfo,
 	OUTREG(vtotal_reg, *vt);
 	OUTREG(src_size_reg, *ss);
 
-	switch (dinfo->info->var.vmode & (FB_VMODE_INTERLACED |
-					  FB_VMODE_ODD_FLD_FIRST)) {
-	case FB_VMODE_INTERLACED | FB_VMODE_ODD_FLD_FIRST:
+	चयन (dinfo->info->var.vmode & (FB_VMODE_INTERLACED |
+					  FB_VMODE_ODD_FLD_FIRST)) अणु
+	हाल FB_VMODE_INTERLACED | FB_VMODE_ODD_FLD_FIRST:
 		OUTREG(pipe_stat_reg, 0xFFFF | PIPESTAT_FLD_EVT_ODD_EN);
-		break;
-	case FB_VMODE_INTERLACED: /* even lines first */
+		अवरोध;
+	हाल FB_VMODE_INTERLACED: /* even lines first */
 		OUTREG(pipe_stat_reg, 0xFFFF | PIPESTAT_FLD_EVT_EVEN_EN);
-		break;
-	default:		/* non-interlaced */
+		अवरोध;
+	शेष:		/* non-पूर्णांकerlaced */
 		OUTREG(pipe_stat_reg, 0xFFFF); /* clear all status bits only */
-	}
+	पूर्ण
 	/* Enable pipe */
 	OUTREG(pipe_conf_reg, *pipe_conf | PIPECONF_ENABLE);
 
 	/* Enable sync */
-	tmp = INREG(ADPA);
-	tmp &= ~ADPA_DPMS_CONTROL_MASK;
-	tmp |= ADPA_DPMS_D0;
-	OUTREG(ADPA, tmp);
+	पंचांगp = INREG(ADPA);
+	पंचांगp &= ~ADPA_DPMS_CONTROL_MASK;
+	पंचांगp |= ADPA_DPMS_D0;
+	OUTREG(ADPA, पंचांगp);
 
 	/* setup display plane */
-	if (dinfo->pdev->device == PCI_DEVICE_ID_INTEL_830M) {
+	अगर (dinfo->pdev->device == PCI_DEVICE_ID_INTEL_830M) अणु
 		/*
 		 *      i830M errata: the display plane must be enabled
-		 *      to allow writes to the other bits in the plane
-		 *      control register.
+		 *      to allow ग_लिखोs to the other bits in the plane
+		 *      control रेजिस्टर.
 		 */
-		tmp = INREG(DSPACNTR);
-		if ((tmp & DISPPLANE_PLANE_ENABLE) != DISPPLANE_PLANE_ENABLE) {
-			tmp |= DISPPLANE_PLANE_ENABLE;
-			OUTREG(DSPACNTR, tmp);
+		पंचांगp = INREG(DSPACNTR);
+		अगर ((पंचांगp & DISPPLANE_PLANE_ENABLE) != DISPPLANE_PLANE_ENABLE) अणु
+			पंचांगp |= DISPPLANE_PLANE_ENABLE;
+			OUTREG(DSPACNTR, पंचांगp);
 			OUTREG(DSPACNTR,
 			       hw->disp_a_ctrl|DISPPLANE_PLANE_ENABLE);
 			mdelay(1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	OUTREG(DSPACNTR, hw->disp_a_ctrl & ~DISPPLANE_PLANE_ENABLE);
 	OUTREG(DSPASTRIDE, hw->disp_a_stride);
 	OUTREG(DSPABASE, hw->disp_a_base);
 
 	/* Enable plane */
-	if (!blank) {
-		tmp = INREG(DSPACNTR);
-		tmp |= DISPPLANE_PLANE_ENABLE;
-		OUTREG(DSPACNTR, tmp);
+	अगर (!blank) अणु
+		पंचांगp = INREG(DSPACNTR);
+		पंचांगp |= DISPPLANE_PLANE_ENABLE;
+		OUTREG(DSPACNTR, पंचांगp);
 		OUTREG(DSPABASE, hw->disp_a_base);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* forward declarations */
-static void refresh_ring(struct intelfb_info *dinfo);
-static void reset_state(struct intelfb_info *dinfo);
-static void do_flush(struct intelfb_info *dinfo);
+/* क्रमward declarations */
+अटल व्योम refresh_ring(काष्ठा पूर्णांकelfb_info *dinfo);
+अटल व्योम reset_state(काष्ठा पूर्णांकelfb_info *dinfo);
+अटल व्योम करो_flush(काष्ठा पूर्णांकelfb_info *dinfo);
 
-static  u32 get_ring_space(struct intelfb_info *dinfo)
-{
+अटल  u32 get_ring_space(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
 	u32 ring_space;
 
-	if (dinfo->ring_tail >= dinfo->ring_head)
+	अगर (dinfo->ring_tail >= dinfo->ring_head)
 		ring_space = dinfo->ring.size -
 			(dinfo->ring_tail - dinfo->ring_head);
-	else
+	अन्यथा
 		ring_space = dinfo->ring_head - dinfo->ring_tail;
 
-	if (ring_space > RING_MIN_FREE)
+	अगर (ring_space > RING_MIN_FREE)
 		ring_space -= RING_MIN_FREE;
-	else
+	अन्यथा
 		ring_space = 0;
 
-	return ring_space;
-}
+	वापस ring_space;
+पूर्ण
 
-static int wait_ring(struct intelfb_info *dinfo, int n)
-{
-	int i = 0;
-	unsigned long end;
+अटल पूर्णांक रुको_ring(काष्ठा पूर्णांकelfb_info *dinfo, पूर्णांक n)
+अणु
+	पूर्णांक i = 0;
+	अचिन्हित दीर्घ end;
 	u32 last_head = INREG(PRI_RING_HEAD) & RING_HEAD_MASK;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("wait_ring: %d\n", n);
-#endif
+#पूर्ण_अगर
 
-	end = jiffies + (HZ * 3);
-	while (dinfo->ring_space < n) {
+	end = jअगरfies + (HZ * 3);
+	जबतक (dinfo->ring_space < n) अणु
 		dinfo->ring_head = INREG(PRI_RING_HEAD) & RING_HEAD_MASK;
 		dinfo->ring_space = get_ring_space(dinfo);
 
-		if (dinfo->ring_head != last_head) {
-			end = jiffies + (HZ * 3);
+		अगर (dinfo->ring_head != last_head) अणु
+			end = jअगरfies + (HZ * 3);
 			last_head = dinfo->ring_head;
-		}
+		पूर्ण
 		i++;
-		if (time_before(end, jiffies)) {
-			if (!i) {
+		अगर (समय_beक्रमe(end, jअगरfies)) अणु
+			अगर (!i) अणु
 				/* Try again */
 				reset_state(dinfo);
 				refresh_ring(dinfo);
-				do_flush(dinfo);
-				end = jiffies + (HZ * 3);
+				करो_flush(dinfo);
+				end = jअगरfies + (HZ * 3);
 				i = 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				WRN_MSG("ring buffer : space: %d wanted %d\n",
 					dinfo->ring_space, n);
 				WRN_MSG("lockup - turning off hardware "
 					"acceleration\n");
 				dinfo->ring_lockup = 1;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		udelay(1);
-	}
-	return i;
-}
+	पूर्ण
+	वापस i;
+पूर्ण
 
-static void do_flush(struct intelfb_info *dinfo)
-{
+अटल व्योम करो_flush(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
 	START_RING(2);
-	OUT_RING(MI_FLUSH | MI_WRITE_DIRTY_STATE | MI_INVALIDATE_MAP_CACHE);
+	OUT_RING(MI_FLUSH | MI_WRITE_सूचीTY_STATE | MI_INVALIDATE_MAP_CACHE);
 	OUT_RING(MI_NOOP);
 	ADVANCE_RING();
-}
+पूर्ण
 
-void intelfbhw_do_sync(struct intelfb_info *dinfo)
-{
-#if VERBOSE > 0
+व्योम पूर्णांकelfbhw_करो_sync(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_do_sync\n");
-#endif
+#पूर्ण_अगर
 
-	if (!dinfo->accel)
-		return;
+	अगर (!dinfo->accel)
+		वापस;
 
 	/*
-	 * Send a flush, then wait until the ring is empty.  This is what
-	 * the XFree86 driver does, and actually it doesn't seem a lot worse
+	 * Send a flush, then रुको until the ring is empty.  This is what
+	 * the XFree86 driver करोes, and actually it करोesn't seem a lot worse
 	 * than the recommended method (both have problems).
 	 */
-	do_flush(dinfo);
-	wait_ring(dinfo, dinfo->ring.size - RING_MIN_FREE);
+	करो_flush(dinfo);
+	रुको_ring(dinfo, dinfo->ring.size - RING_MIN_FREE);
 	dinfo->ring_space = dinfo->ring.size - RING_MIN_FREE;
-}
+पूर्ण
 
-static void refresh_ring(struct intelfb_info *dinfo)
-{
-#if VERBOSE > 0
+अटल व्योम refresh_ring(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+#अगर VERBOSE > 0
 	DBG_MSG("refresh_ring\n");
-#endif
+#पूर्ण_अगर
 
 	dinfo->ring_head = INREG(PRI_RING_HEAD) & RING_HEAD_MASK;
 	dinfo->ring_tail = INREG(PRI_RING_TAIL) & RING_TAIL_MASK;
 	dinfo->ring_space = get_ring_space(dinfo);
-}
+पूर्ण
 
-static void reset_state(struct intelfb_info *dinfo)
-{
-	int i;
-	u32 tmp;
+अटल व्योम reset_state(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	पूर्णांक i;
+	u32 पंचांगp;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("reset_state\n");
-#endif
+#पूर्ण_अगर
 
-	for (i = 0; i < FENCE_NUM; i++)
+	क्रम (i = 0; i < FENCE_NUM; i++)
 		OUTREG(FENCE + (i << 2), 0);
 
-	/* Flush the ring buffer if it's enabled. */
-	tmp = INREG(PRI_RING_LENGTH);
-	if (tmp & RING_ENABLE) {
-#if VERBOSE > 0
+	/* Flush the ring buffer अगर it's enabled. */
+	पंचांगp = INREG(PRI_RING_LENGTH);
+	अगर (पंचांगp & RING_ENABLE) अणु
+#अगर VERBOSE > 0
 		DBG_MSG("reset_state: ring was enabled\n");
-#endif
+#पूर्ण_अगर
 		refresh_ring(dinfo);
-		intelfbhw_do_sync(dinfo);
+		पूर्णांकelfbhw_करो_sync(dinfo);
 		DO_RING_IDLE();
-	}
+	पूर्ण
 
 	OUTREG(PRI_RING_LENGTH, 0);
 	OUTREG(PRI_RING_HEAD, 0);
 	OUTREG(PRI_RING_TAIL, 0);
 	OUTREG(PRI_RING_START, 0);
-}
+पूर्ण
 
 /* Stop the 2D engine, and turn off the ring buffer. */
-void intelfbhw_2d_stop(struct intelfb_info *dinfo)
-{
-#if VERBOSE > 0
+व्योम पूर्णांकelfbhw_2d_stop(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_2d_stop: accel: %d, ring_active: %d\n",
 		dinfo->accel, dinfo->ring_active);
-#endif
+#पूर्ण_अगर
 
-	if (!dinfo->accel)
-		return;
+	अगर (!dinfo->accel)
+		वापस;
 
 	dinfo->ring_active = 0;
 	reset_state(dinfo);
-}
+पूर्ण
 
 /*
  * Enable the ring buffer, and initialise the 2D engine.
  * It is assumed that the graphics engine has been stopped by previously
- * calling intelfb_2d_stop().
+ * calling पूर्णांकelfb_2d_stop().
  */
-void intelfbhw_2d_start(struct intelfb_info *dinfo)
-{
-#if VERBOSE > 0
+व्योम पूर्णांकelfbhw_2d_start(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_2d_start: accel: %d, ring_active: %d\n",
 		dinfo->accel, dinfo->ring_active);
-#endif
+#पूर्ण_अगर
 
-	if (!dinfo->accel)
-		return;
+	अगर (!dinfo->accel)
+		वापस;
 
 	/* Initialise the primary ring buffer. */
 	OUTREG(PRI_RING_LENGTH, 0);
@@ -1651,18 +1652,18 @@ void intelfbhw_2d_start(struct intelfb_info *dinfo)
 		RING_NO_REPORT | RING_ENABLE);
 	refresh_ring(dinfo);
 	dinfo->ring_active = 1;
-}
+पूर्ण
 
 /* 2D fillrect (solid fill or invert) */
-void intelfbhw_do_fillrect(struct intelfb_info *dinfo, u32 x, u32 y, u32 w,
+व्योम पूर्णांकelfbhw_करो_fillrect(काष्ठा पूर्णांकelfb_info *dinfo, u32 x, u32 y, u32 w,
 			   u32 h, u32 color, u32 pitch, u32 bpp, u32 rop)
-{
+अणु
 	u32 br00, br09, br13, br14, br16;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_do_fillrect: (%d,%d) %dx%d, c 0x%06x, p %d bpp %d, "
 		"rop 0x%02x\n", x, y, w, h, color, pitch, bpp, rop);
-#endif
+#पूर्ण_अगर
 
 	br00 = COLOR_BLT_CMD;
 	br09 = dinfo->fb_start + (y * pitch + x * (bpp / 8));
@@ -1670,18 +1671,18 @@ void intelfbhw_do_fillrect(struct intelfb_info *dinfo, u32 x, u32 y, u32 w,
 	br14 = (h << HEIGHT_SHIFT) | ((w * (bpp / 8)) << WIDTH_SHIFT);
 	br16 = color;
 
-	switch (bpp) {
-	case 8:
+	चयन (bpp) अणु
+	हाल 8:
 		br13 |= COLOR_DEPTH_8;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		br13 |= COLOR_DEPTH_16;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		br13 |= COLOR_DEPTH_32;
 		br00 |= WRITE_ALPHA | WRITE_RGB;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	START_RING(6);
 	OUT_RING(br00);
@@ -1692,22 +1693,22 @@ void intelfbhw_do_fillrect(struct intelfb_info *dinfo, u32 x, u32 y, u32 w,
 	OUT_RING(MI_NOOP);
 	ADVANCE_RING();
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("ring = 0x%08x, 0x%08x (%d)\n", dinfo->ring_head,
 		dinfo->ring_tail, dinfo->ring_space);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void
-intelfbhw_do_bitblt(struct intelfb_info *dinfo, u32 curx, u32 cury,
+व्योम
+पूर्णांकelfbhw_करो_bitblt(काष्ठा पूर्णांकelfb_info *dinfo, u32 curx, u32 cury,
 		    u32 dstx, u32 dsty, u32 w, u32 h, u32 pitch, u32 bpp)
-{
+अणु
 	u32 br00, br09, br11, br12, br13, br22, br23, br26;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_do_bitblt: (%d,%d)->(%d,%d) %dx%d, p %d bpp %d\n",
 		curx, cury, dstx, dsty, w, h, pitch, bpp);
-#endif
+#पूर्ण_अगर
 
 	br00 = XY_SRC_COPY_BLT_CMD;
 	br09 = dinfo->fb_start;
@@ -1719,18 +1720,18 @@ intelfbhw_do_bitblt(struct intelfb_info *dinfo, u32 curx, u32 cury,
 	       ((dsty + h) << HEIGHT_SHIFT);
 	br26 = (curx << WIDTH_SHIFT) | (cury << HEIGHT_SHIFT);
 
-	switch (bpp) {
-	case 8:
+	चयन (bpp) अणु
+	हाल 8:
 		br13 |= COLOR_DEPTH_8;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		br13 |= COLOR_DEPTH_16;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		br13 |= COLOR_DEPTH_32;
 		br00 |= WRITE_ALPHA | WRITE_RGB;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	START_RING(8);
 	OUT_RING(br00);
@@ -1742,45 +1743,45 @@ intelfbhw_do_bitblt(struct intelfb_info *dinfo, u32 curx, u32 cury,
 	OUT_RING(br11);
 	OUT_RING(br12);
 	ADVANCE_RING();
-}
+पूर्ण
 
-int intelfbhw_do_drawglyph(struct intelfb_info *dinfo, u32 fg, u32 bg, u32 w,
-			   u32 h, const u8* cdat, u32 x, u32 y, u32 pitch,
+पूर्णांक पूर्णांकelfbhw_करो_drawglyph(काष्ठा पूर्णांकelfb_info *dinfo, u32 fg, u32 bg, u32 w,
+			   u32 h, स्थिर u8* cdat, u32 x, u32 y, u32 pitch,
 			   u32 bpp)
-{
-	int nbytes, ndwords, pad, tmp;
+अणु
+	पूर्णांक nbytes, ndwords, pad, पंचांगp;
 	u32 br00, br09, br13, br18, br19, br22, br23;
-	int dat, ix, iy, iw;
-	int i, j;
+	पूर्णांक dat, ix, iy, iw;
+	पूर्णांक i, j;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_do_drawglyph: (%d,%d) %dx%d\n", x, y, w, h);
-#endif
+#पूर्ण_अगर
 
 	/* size in bytes of a padded scanline */
 	nbytes = ROUND_UP_TO(w, 16) / 8;
 
-	/* Total bytes of padded scanline data to write out. */
+	/* Total bytes of padded scanline data to ग_लिखो out. */
 	nbytes = nbytes * h;
 
 	/*
-	 * Check if the glyph data exceeds the immediate mode limit.
+	 * Check अगर the glyph data exceeds the immediate mode limit.
 	 * It would take a large font (1K pixels) to hit this limit.
 	 */
-	if (nbytes > MAX_MONO_IMM_SIZE)
-		return 0;
+	अगर (nbytes > MAX_MONO_IMM_SIZE)
+		वापस 0;
 
-	/* Src data is packaged a dword (32-bit) at a time. */
+	/* Src data is packaged a dword (32-bit) at a समय. */
 	ndwords = ROUND_UP_TO(nbytes, 4) / 4;
 
 	/*
 	 * Ring has to be padded to a quad word. But because the command starts
-	   with 7 bytes, pad only if there is an even number of ndwords
+	   with 7 bytes, pad only अगर there is an even number of ndwords
 	 */
 	pad = !(ndwords % 2);
 
-	tmp = (XY_MONO_SRC_IMM_BLT_CMD & DW_LENGTH_MASK) + ndwords;
-	br00 = (XY_MONO_SRC_IMM_BLT_CMD & ~DW_LENGTH_MASK) | tmp;
+	पंचांगp = (XY_MONO_SRC_IMM_BLT_CMD & DW_LENGTH_MASK) + ndwords;
+	br00 = (XY_MONO_SRC_IMM_BLT_CMD & ~DW_LENGTH_MASK) | पंचांगp;
 	br09 = dinfo->fb_start;
 	br13 = (SRC_ROP_GXCOPY << ROP_SHIFT) | (pitch << PITCH_SHIFT);
 	br18 = bg;
@@ -1788,18 +1789,18 @@ int intelfbhw_do_drawglyph(struct intelfb_info *dinfo, u32 fg, u32 bg, u32 w,
 	br22 = (x << WIDTH_SHIFT) | (y << HEIGHT_SHIFT);
 	br23 = ((x + w) << WIDTH_SHIFT) | ((y + h) << HEIGHT_SHIFT);
 
-	switch (bpp) {
-	case 8:
+	चयन (bpp) अणु
+	हाल 8:
 		br13 |= COLOR_DEPTH_8;
-		break;
-	case 16:
+		अवरोध;
+	हाल 16:
 		br13 |= COLOR_DEPTH_16;
-		break;
-	case 32:
+		अवरोध;
+	हाल 32:
 		br13 |= COLOR_DEPTH_32;
 		br00 |= WRITE_ALPHA | WRITE_RGB;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	START_RING(8 + ndwords);
 	OUT_RING(br00);
@@ -1811,307 +1812,307 @@ int intelfbhw_do_drawglyph(struct intelfb_info *dinfo, u32 fg, u32 bg, u32 w,
 	OUT_RING(br19);
 	ix = iy = 0;
 	iw = ROUND_UP_TO(w, 8) / 8;
-	while (ndwords--) {
+	जबतक (ndwords--) अणु
 		dat = 0;
-		for (j = 0; j < 2; ++j) {
-			for (i = 0; i < 2; ++i) {
-				if (ix != iw || i == 0)
+		क्रम (j = 0; j < 2; ++j) अणु
+			क्रम (i = 0; i < 2; ++i) अणु
+				अगर (ix != iw || i == 0)
 					dat |= cdat[iy*iw + ix++] << (i+j*2)*8;
-			}
-			if (ix == iw && iy != (h-1)) {
+			पूर्ण
+			अगर (ix == iw && iy != (h-1)) अणु
 				ix = 0;
 				++iy;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		OUT_RING(dat);
-	}
-	if (pad)
+	पूर्ण
+	अगर (pad)
 		OUT_RING(MI_NOOP);
 	ADVANCE_RING();
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* HW cursor functions. */
-void intelfbhw_cursor_init(struct intelfb_info *dinfo)
-{
-	u32 tmp;
+व्योम पूर्णांकelfbhw_cursor_init(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	u32 पंचांगp;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_cursor_init\n");
-#endif
+#पूर्ण_अगर
 
-	if (dinfo->mobile || IS_I9XX(dinfo)) {
-		if (!dinfo->cursor.physical)
-			return;
-		tmp = INREG(CURSOR_A_CONTROL);
-		tmp &= ~(CURSOR_MODE_MASK | CURSOR_MOBILE_GAMMA_ENABLE |
+	अगर (dinfo->mobile || IS_I9XX(dinfo)) अणु
+		अगर (!dinfo->cursor.physical)
+			वापस;
+		पंचांगp = INREG(CURSOR_A_CONTROL);
+		पंचांगp &= ~(CURSOR_MODE_MASK | CURSOR_MOBILE_GAMMA_ENABLE |
 			 CURSOR_MEM_TYPE_LOCAL |
 			 (1 << CURSOR_PIPE_SELECT_SHIFT));
-		tmp |= CURSOR_MODE_DISABLE;
-		OUTREG(CURSOR_A_CONTROL, tmp);
+		पंचांगp |= CURSOR_MODE_DISABLE;
+		OUTREG(CURSOR_A_CONTROL, पंचांगp);
 		OUTREG(CURSOR_A_BASEADDR, dinfo->cursor.physical);
-	} else {
-		tmp = INREG(CURSOR_CONTROL);
-		tmp &= ~(CURSOR_FORMAT_MASK | CURSOR_GAMMA_ENABLE |
+	पूर्ण अन्यथा अणु
+		पंचांगp = INREG(CURSOR_CONTROL);
+		पंचांगp &= ~(CURSOR_FORMAT_MASK | CURSOR_GAMMA_ENABLE |
 			 CURSOR_ENABLE | CURSOR_STRIDE_MASK);
-		tmp |= CURSOR_FORMAT_3C;
-		OUTREG(CURSOR_CONTROL, tmp);
+		पंचांगp |= CURSOR_FORMAT_3C;
+		OUTREG(CURSOR_CONTROL, पंचांगp);
 		OUTREG(CURSOR_A_BASEADDR, dinfo->cursor.offset << 12);
-		tmp = (64 << CURSOR_SIZE_H_SHIFT) |
+		पंचांगp = (64 << CURSOR_SIZE_H_SHIFT) |
 		      (64 << CURSOR_SIZE_V_SHIFT);
-		OUTREG(CURSOR_SIZE, tmp);
-	}
-}
+		OUTREG(CURSOR_SIZE, पंचांगp);
+	पूर्ण
+पूर्ण
 
-void intelfbhw_cursor_hide(struct intelfb_info *dinfo)
-{
-	u32 tmp;
+व्योम पूर्णांकelfbhw_cursor_hide(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	u32 पंचांगp;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_cursor_hide\n");
-#endif
+#पूर्ण_अगर
 
 	dinfo->cursor_on = 0;
-	if (dinfo->mobile || IS_I9XX(dinfo)) {
-		if (!dinfo->cursor.physical)
-			return;
-		tmp = INREG(CURSOR_A_CONTROL);
-		tmp &= ~CURSOR_MODE_MASK;
-		tmp |= CURSOR_MODE_DISABLE;
-		OUTREG(CURSOR_A_CONTROL, tmp);
+	अगर (dinfo->mobile || IS_I9XX(dinfo)) अणु
+		अगर (!dinfo->cursor.physical)
+			वापस;
+		पंचांगp = INREG(CURSOR_A_CONTROL);
+		पंचांगp &= ~CURSOR_MODE_MASK;
+		पंचांगp |= CURSOR_MODE_DISABLE;
+		OUTREG(CURSOR_A_CONTROL, पंचांगp);
 		/* Flush changes */
 		OUTREG(CURSOR_A_BASEADDR, dinfo->cursor.physical);
-	} else {
-		tmp = INREG(CURSOR_CONTROL);
-		tmp &= ~CURSOR_ENABLE;
-		OUTREG(CURSOR_CONTROL, tmp);
-	}
-}
+	पूर्ण अन्यथा अणु
+		पंचांगp = INREG(CURSOR_CONTROL);
+		पंचांगp &= ~CURSOR_ENABLE;
+		OUTREG(CURSOR_CONTROL, पंचांगp);
+	पूर्ण
+पूर्ण
 
-void intelfbhw_cursor_show(struct intelfb_info *dinfo)
-{
-	u32 tmp;
+व्योम पूर्णांकelfbhw_cursor_show(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	u32 पंचांगp;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_cursor_show\n");
-#endif
+#पूर्ण_अगर
 
 	dinfo->cursor_on = 1;
 
-	if (dinfo->cursor_blanked)
-		return;
+	अगर (dinfo->cursor_blanked)
+		वापस;
 
-	if (dinfo->mobile || IS_I9XX(dinfo)) {
-		if (!dinfo->cursor.physical)
-			return;
-		tmp = INREG(CURSOR_A_CONTROL);
-		tmp &= ~CURSOR_MODE_MASK;
-		tmp |= CURSOR_MODE_64_4C_AX;
-		OUTREG(CURSOR_A_CONTROL, tmp);
+	अगर (dinfo->mobile || IS_I9XX(dinfo)) अणु
+		अगर (!dinfo->cursor.physical)
+			वापस;
+		पंचांगp = INREG(CURSOR_A_CONTROL);
+		पंचांगp &= ~CURSOR_MODE_MASK;
+		पंचांगp |= CURSOR_MODE_64_4C_AX;
+		OUTREG(CURSOR_A_CONTROL, पंचांगp);
 		/* Flush changes */
 		OUTREG(CURSOR_A_BASEADDR, dinfo->cursor.physical);
-	} else {
-		tmp = INREG(CURSOR_CONTROL);
-		tmp |= CURSOR_ENABLE;
-		OUTREG(CURSOR_CONTROL, tmp);
-	}
-}
+	पूर्ण अन्यथा अणु
+		पंचांगp = INREG(CURSOR_CONTROL);
+		पंचांगp |= CURSOR_ENABLE;
+		OUTREG(CURSOR_CONTROL, पंचांगp);
+	पूर्ण
+पूर्ण
 
-void intelfbhw_cursor_setpos(struct intelfb_info *dinfo, int x, int y)
-{
-	u32 tmp;
+व्योम पूर्णांकelfbhw_cursor_setpos(काष्ठा पूर्णांकelfb_info *dinfo, पूर्णांक x, पूर्णांक y)
+अणु
+	u32 पंचांगp;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_cursor_setpos: (%d, %d)\n", x, y);
-#endif
+#पूर्ण_अगर
 
 	/*
-	 * Sets the position. The coordinates are assumed to already
+	 * Sets the position. The coordinates are assumed to alपढ़ोy
 	 * have any offset adjusted. Assume that the cursor is never
 	 * completely off-screen, and that x, y are always >= 0.
 	 */
 
-	tmp = ((x & CURSOR_POS_MASK) << CURSOR_X_SHIFT) |
+	पंचांगp = ((x & CURSOR_POS_MASK) << CURSOR_X_SHIFT) |
 	      ((y & CURSOR_POS_MASK) << CURSOR_Y_SHIFT);
-	OUTREG(CURSOR_A_POSITION, tmp);
+	OUTREG(CURSOR_A_POSITION, पंचांगp);
 
-	if (IS_I9XX(dinfo))
+	अगर (IS_I9XX(dinfo))
 		OUTREG(CURSOR_A_BASEADDR, dinfo->cursor.physical);
-}
+पूर्ण
 
-void intelfbhw_cursor_setcolor(struct intelfb_info *dinfo, u32 bg, u32 fg)
-{
-#if VERBOSE > 0
+व्योम पूर्णांकelfbhw_cursor_setcolor(काष्ठा पूर्णांकelfb_info *dinfo, u32 bg, u32 fg)
+अणु
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_cursor_setcolor\n");
-#endif
+#पूर्ण_अगर
 
 	OUTREG(CURSOR_A_PALETTE0, bg & CURSOR_PALETTE_MASK);
 	OUTREG(CURSOR_A_PALETTE1, fg & CURSOR_PALETTE_MASK);
 	OUTREG(CURSOR_A_PALETTE2, fg & CURSOR_PALETTE_MASK);
 	OUTREG(CURSOR_A_PALETTE3, bg & CURSOR_PALETTE_MASK);
-}
+पूर्ण
 
-void intelfbhw_cursor_load(struct intelfb_info *dinfo, int width, int height,
+व्योम पूर्णांकelfbhw_cursor_load(काष्ठा पूर्णांकelfb_info *dinfo, पूर्णांक width, पूर्णांक height,
 			   u8 *data)
-{
-	u8 __iomem *addr = (u8 __iomem *)dinfo->cursor.virtual;
-	int i, j, w = width / 8;
-	int mod = width % 8, t_mask, d_mask;
+अणु
+	u8 __iomem *addr = (u8 __iomem *)dinfo->cursor.भव;
+	पूर्णांक i, j, w = width / 8;
+	पूर्णांक mod = width % 8, t_mask, d_mask;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_cursor_load\n");
-#endif
+#पूर्ण_अगर
 
-	if (!dinfo->cursor.virtual)
-		return;
+	अगर (!dinfo->cursor.भव)
+		वापस;
 
 	t_mask = 0xff >> mod;
 	d_mask = ~(0xff >> mod);
-	for (i = height; i--; ) {
-		for (j = 0; j < w; j++) {
-			writeb(0x00, addr + j);
-			writeb(*(data++), addr + j+8);
-		}
-		if (mod) {
-			writeb(t_mask, addr + j);
-			writeb(*(data++) & d_mask, addr + j+8);
-		}
+	क्रम (i = height; i--; ) अणु
+		क्रम (j = 0; j < w; j++) अणु
+			ग_लिखोb(0x00, addr + j);
+			ग_लिखोb(*(data++), addr + j+8);
+		पूर्ण
+		अगर (mod) अणु
+			ग_लिखोb(t_mask, addr + j);
+			ग_लिखोb(*(data++) & d_mask, addr + j+8);
+		पूर्ण
 		addr += 16;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void intelfbhw_cursor_reset(struct intelfb_info *dinfo)
-{
-	u8 __iomem *addr = (u8 __iomem *)dinfo->cursor.virtual;
-	int i, j;
+व्योम पूर्णांकelfbhw_cursor_reset(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	u8 __iomem *addr = (u8 __iomem *)dinfo->cursor.भव;
+	पूर्णांक i, j;
 
-#if VERBOSE > 0
+#अगर VERBOSE > 0
 	DBG_MSG("intelfbhw_cursor_reset\n");
-#endif
+#पूर्ण_अगर
 
-	if (!dinfo->cursor.virtual)
-		return;
+	अगर (!dinfo->cursor.भव)
+		वापस;
 
-	for (i = 64; i--; ) {
-		for (j = 0; j < 8; j++) {
-			writeb(0xff, addr + j+0);
-			writeb(0x00, addr + j+8);
-		}
+	क्रम (i = 64; i--; ) अणु
+		क्रम (j = 0; j < 8; j++) अणु
+			ग_लिखोb(0xff, addr + j+0);
+			ग_लिखोb(0x00, addr + j+8);
+		पूर्ण
 		addr += 16;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t intelfbhw_irq(int irq, void *dev_id)
-{
-	u16 tmp;
-	struct intelfb_info *dinfo = dev_id;
+अटल irqवापस_t पूर्णांकelfbhw_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	u16 पंचांगp;
+	काष्ठा पूर्णांकelfb_info *dinfo = dev_id;
 
-	spin_lock(&dinfo->int_lock);
+	spin_lock(&dinfo->पूर्णांक_lock);
 
-	tmp = INREG16(IIR);
-	if (dinfo->info->var.vmode & FB_VMODE_INTERLACED)
-		tmp &= PIPE_A_EVENT_INTERRUPT;
-	else
-		tmp &= VSYNC_PIPE_A_INTERRUPT; /* non-interlaced */
+	पंचांगp = INREG16(IIR);
+	अगर (dinfo->info->var.vmode & FB_VMODE_INTERLACED)
+		पंचांगp &= PIPE_A_EVENT_INTERRUPT;
+	अन्यथा
+		पंचांगp &= VSYNC_PIPE_A_INTERRUPT; /* non-पूर्णांकerlaced */
 
-	if (tmp == 0) {
-		spin_unlock(&dinfo->int_lock);
-		return IRQ_RETVAL(0); /* not us */
-	}
+	अगर (पंचांगp == 0) अणु
+		spin_unlock(&dinfo->पूर्णांक_lock);
+		वापस IRQ_RETVAL(0); /* not us */
+	पूर्ण
 
-	/* clear status bits 0-15 ASAP and don't touch bits 16-31 */
+	/* clear status bits 0-15 ASAP and करोn't touch bits 16-31 */
 	OUTREG(PIPEASTAT, INREG(PIPEASTAT));
 
-	OUTREG16(IIR, tmp);
-	if (dinfo->vsync.pan_display) {
+	OUTREG16(IIR, पंचांगp);
+	अगर (dinfo->vsync.pan_display) अणु
 		dinfo->vsync.pan_display = 0;
 		OUTREG(DSPABASE, dinfo->vsync.pan_offset);
-	}
+	पूर्ण
 
 	dinfo->vsync.count++;
-	wake_up_interruptible(&dinfo->vsync.wait);
+	wake_up_पूर्णांकerruptible(&dinfo->vsync.रुको);
 
-	spin_unlock(&dinfo->int_lock);
+	spin_unlock(&dinfo->पूर्णांक_lock);
 
-	return IRQ_RETVAL(1);
-}
+	वापस IRQ_RETVAL(1);
+पूर्ण
 
-int intelfbhw_enable_irq(struct intelfb_info *dinfo)
-{
-	u16 tmp;
-	if (!test_and_set_bit(0, &dinfo->irq_flags)) {
-		if (request_irq(dinfo->pdev->irq, intelfbhw_irq, IRQF_SHARED,
-				"intelfb", dinfo)) {
+पूर्णांक पूर्णांकelfbhw_enable_irq(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	u16 पंचांगp;
+	अगर (!test_and_set_bit(0, &dinfo->irq_flags)) अणु
+		अगर (request_irq(dinfo->pdev->irq, पूर्णांकelfbhw_irq, IRQF_SHARED,
+				"intelfb", dinfo)) अणु
 			clear_bit(0, &dinfo->irq_flags);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		spin_lock_irq(&dinfo->int_lock);
+		spin_lock_irq(&dinfo->पूर्णांक_lock);
 		OUTREG16(HWSTAM, 0xfffe); /* i830 DRM uses ffff */
 		OUTREG16(IMR, 0);
-	} else
-		spin_lock_irq(&dinfo->int_lock);
+	पूर्ण अन्यथा
+		spin_lock_irq(&dinfo->पूर्णांक_lock);
 
-	if (dinfo->info->var.vmode & FB_VMODE_INTERLACED)
-		tmp = PIPE_A_EVENT_INTERRUPT;
-	else
-		tmp = VSYNC_PIPE_A_INTERRUPT; /* non-interlaced */
-	if (tmp != INREG16(IER)) {
-		DBG_MSG("changing IER to 0x%X\n", tmp);
-		OUTREG16(IER, tmp);
-	}
+	अगर (dinfo->info->var.vmode & FB_VMODE_INTERLACED)
+		पंचांगp = PIPE_A_EVENT_INTERRUPT;
+	अन्यथा
+		पंचांगp = VSYNC_PIPE_A_INTERRUPT; /* non-पूर्णांकerlaced */
+	अगर (पंचांगp != INREG16(IER)) अणु
+		DBG_MSG("changing IER to 0x%X\n", पंचांगp);
+		OUTREG16(IER, पंचांगp);
+	पूर्ण
 
-	spin_unlock_irq(&dinfo->int_lock);
-	return 0;
-}
+	spin_unlock_irq(&dinfo->पूर्णांक_lock);
+	वापस 0;
+पूर्ण
 
-void intelfbhw_disable_irq(struct intelfb_info *dinfo)
-{
-	if (test_and_clear_bit(0, &dinfo->irq_flags)) {
-		if (dinfo->vsync.pan_display) {
+व्योम पूर्णांकelfbhw_disable_irq(काष्ठा पूर्णांकelfb_info *dinfo)
+अणु
+	अगर (test_and_clear_bit(0, &dinfo->irq_flags)) अणु
+		अगर (dinfo->vsync.pan_display) अणु
 			dinfo->vsync.pan_display = 0;
 			OUTREG(DSPABASE, dinfo->vsync.pan_offset);
-		}
-		spin_lock_irq(&dinfo->int_lock);
+		पूर्ण
+		spin_lock_irq(&dinfo->पूर्णांक_lock);
 		OUTREG16(HWSTAM, 0xffff);
 		OUTREG16(IMR, 0xffff);
 		OUTREG16(IER, 0x0);
 
 		OUTREG16(IIR, INREG16(IIR)); /* clear IRQ requests */
-		spin_unlock_irq(&dinfo->int_lock);
+		spin_unlock_irq(&dinfo->पूर्णांक_lock);
 
-		free_irq(dinfo->pdev->irq, dinfo);
-	}
-}
+		मुक्त_irq(dinfo->pdev->irq, dinfo);
+	पूर्ण
+पूर्ण
 
-int intelfbhw_wait_for_vsync(struct intelfb_info *dinfo, u32 pipe)
-{
-	struct intelfb_vsync *vsync;
-	unsigned int count;
-	int ret;
+पूर्णांक पूर्णांकelfbhw_रुको_क्रम_vsync(काष्ठा पूर्णांकelfb_info *dinfo, u32 pipe)
+अणु
+	काष्ठा पूर्णांकelfb_vsync *vsync;
+	अचिन्हित पूर्णांक count;
+	पूर्णांक ret;
 
-	switch (pipe) {
-		case 0:
+	चयन (pipe) अणु
+		हाल 0:
 			vsync = &dinfo->vsync;
-			break;
-		default:
-			return -ENODEV;
-	}
+			अवरोध;
+		शेष:
+			वापस -ENODEV;
+	पूर्ण
 
-	ret = intelfbhw_enable_irq(dinfo);
-	if (ret)
-		return ret;
+	ret = पूर्णांकelfbhw_enable_irq(dinfo);
+	अगर (ret)
+		वापस ret;
 
 	count = vsync->count;
-	ret = wait_event_interruptible_timeout(vsync->wait,
+	ret = रुको_event_पूर्णांकerruptible_समयout(vsync->रुको,
 					       count != vsync->count, HZ / 10);
-	if (ret < 0)
-		return ret;
-	if (ret == 0) {
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret == 0) अणु
 		DBG_MSG("wait_for_vsync timed out!\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

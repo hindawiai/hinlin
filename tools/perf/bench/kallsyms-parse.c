@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Benchmark of /proc/kallsyms parsing.
  *
  * Copyright 2020 Google LLC.
  */
-#include <stdlib.h>
-#include "bench.h"
-#include "../util/stat.h"
-#include <linux/time64.h>
-#include <subcmd/parse-options.h>
-#include <symbol/kallsyms.h>
+#समावेश <मानककोष.स>
+#समावेश "bench.h"
+#समावेश "../util/stat.h"
+#समावेश <linux/समय64.h>
+#समावेश <subcmd/parse-options.h>
+#समावेश <symbol/kallsyms.h>
 
-static unsigned int iterations = 100;
+अटल अचिन्हित पूर्णांक iterations = 100;
 
-static const struct option options[] = {
+अटल स्थिर काष्ठा option options[] = अणु
 	OPT_UINTEGER('i', "iterations", &iterations,
 		"Number of iterations used to compute average"),
 	OPT_END()
-};
+पूर्ण;
 
-static const char *const bench_usage[] = {
+अटल स्थिर अक्षर *स्थिर bench_usage[] = अणु
 	"perf bench internals kallsyms-parse <options>",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static int bench_process_symbol(void *arg __maybe_unused,
-				const char *name __maybe_unused,
-				char type __maybe_unused,
+अटल पूर्णांक bench_process_symbol(व्योम *arg __maybe_unused,
+				स्थिर अक्षर *name __maybe_unused,
+				अक्षर type __maybe_unused,
 				u64 start __maybe_unused)
-{
-	return 0;
-}
+अणु
+	वापस 0;
+पूर्ण
 
-static int do_kallsyms_parse(void)
-{
-	struct timeval start, end, diff;
-	u64 runtime_us;
-	unsigned int i;
-	double time_average, time_stddev;
-	int err;
-	struct stats time_stats;
+अटल पूर्णांक करो_kallsyms_parse(व्योम)
+अणु
+	काष्ठा समयval start, end, dअगरf;
+	u64 runसमय_us;
+	अचिन्हित पूर्णांक i;
+	द्विगुन समय_average, समय_stddev;
+	पूर्णांक err;
+	काष्ठा stats समय_stats;
 
-	init_stats(&time_stats);
+	init_stats(&समय_stats);
 
-	for (i = 0; i < iterations; i++) {
-		gettimeofday(&start, NULL);
-		err = kallsyms__parse("/proc/kallsyms", NULL,
+	क्रम (i = 0; i < iterations; i++) अणु
+		समय_लोofday(&start, शून्य);
+		err = kallsyms__parse("/proc/kallsyms", शून्य,
 				bench_process_symbol);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		gettimeofday(&end, NULL);
-		timersub(&end, &start, &diff);
-		runtime_us = diff.tv_sec * USEC_PER_SEC + diff.tv_usec;
-		update_stats(&time_stats, runtime_us);
-	}
+		समय_लोofday(&end, शून्य);
+		समयrsub(&end, &start, &dअगरf);
+		runसमय_us = dअगरf.tv_sec * USEC_PER_SEC + dअगरf.tv_usec;
+		update_stats(&समय_stats, runसमय_us);
+	पूर्ण
 
-	time_average = avg_stats(&time_stats) / USEC_PER_MSEC;
-	time_stddev = stddev_stats(&time_stats) / USEC_PER_MSEC;
-	printf("  Average kallsyms__parse took: %.3f ms (+- %.3f ms)\n",
-		time_average, time_stddev);
-	return 0;
-}
+	समय_average = avg_stats(&समय_stats) / USEC_PER_MSEC;
+	समय_stddev = stddev_stats(&समय_stats) / USEC_PER_MSEC;
+	म_लिखो("  Average kallsyms__parse took: %.3f ms (+- %.3f ms)\n",
+		समय_average, समय_stddev);
+	वापस 0;
+पूर्ण
 
-int bench_kallsyms_parse(int argc, const char **argv)
-{
+पूर्णांक bench_kallsyms_parse(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
 	argc = parse_options(argc, argv, options, bench_usage, 0);
-	if (argc) {
+	अगर (argc) अणु
 		usage_with_options(bench_usage, options);
-		exit(EXIT_FAILURE);
-	}
+		निकास(निकास_त्रुटि);
+	पूर्ण
 
-	return do_kallsyms_parse();
-}
+	वापस करो_kallsyms_parse();
+पूर्ण

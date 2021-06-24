@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * This header provides constants for the MVEBU ICU driver.
+ * This header provides स्थिरants क्रम the MVEBU ICU driver.
  */
 
-#ifndef _DT_BINDINGS_INTERRUPT_CONTROLLER_MVEBU_ICU_H
-#define _DT_BINDINGS_INTERRUPT_CONTROLLER_MVEBU_ICU_H
+#अगर_अघोषित _DT_BINDINGS_INTERRUPT_CONTROLLER_MVEBU_ICU_H
+#घोषणा _DT_BINDINGS_INTERRUPT_CONTROLLER_MVEBU_ICU_H
 
-/* interrupt specifier cell 0 */
+/* पूर्णांकerrupt specअगरier cell 0 */
 
-#define ICU_GRP_NSR		0x0
-#define ICU_GRP_SR		0x1
-#define ICU_GRP_SEI		0x4
-#define ICU_GRP_REI		0x5
+#घोषणा ICU_GRP_NSR		0x0
+#घोषणा ICU_GRP_SR		0x1
+#घोषणा ICU_GRP_SEI		0x4
+#घोषणा ICU_GRP_REI		0x5
 
-#endif
+#पूर्ण_अगर

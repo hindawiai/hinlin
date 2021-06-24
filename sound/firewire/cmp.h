@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef SOUND_FIREWIRE_CMP_H_INCLUDED
-#define SOUND_FIREWIRE_CMP_H_INCLUDED
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित SOUND_FIREWIRE_CMP_H_INCLUDED
+#घोषणा SOUND_FIREWIRE_CMP_H_INCLUDED
 
-#include <linux/mutex.h>
-#include <linux/types.h>
-#include "iso-resources.h"
+#समावेश <linux/mutex.h>
+#समावेश <linux/types.h>
+#समावेश "iso-resources.h"
 
-struct fw_unit;
+काष्ठा fw_unit;
 
-enum cmp_direction {
+क्रमागत cmp_direction अणु
 	CMP_INPUT = 0,
 	CMP_OUTPUT,
-};
+पूर्ण;
 
 /**
- * struct cmp_connection - manages an isochronous connection to a device
+ * काष्ठा cmp_connection - manages an isochronous connection to a device
  * @speed: the connection's actual speed
  *
- * This structure manages (using CMP) an isochronous stream between the local
+ * This काष्ठाure manages (using CMP) an isochronous stream between the local
  * computer and a device's input plug (iPCR) and output plug (oPCR).
  *
  * There is no corresponding oPCR created on the local computer, so it is not
  * possible to overlay connections on top of this one.
  */
-struct cmp_connection {
-	int speed;
-	/* private: */
+काष्ठा cmp_connection अणु
+	पूर्णांक speed;
+	/* निजी: */
 	bool connected;
-	struct mutex mutex;
-	struct fw_iso_resources resources;
+	काष्ठा mutex mutex;
+	काष्ठा fw_iso_resources resources;
 	__be32 last_pcr_value;
-	unsigned int pcr_index;
-	unsigned int max_speed;
-	enum cmp_direction direction;
-};
+	अचिन्हित पूर्णांक pcr_index;
+	अचिन्हित पूर्णांक max_speed;
+	क्रमागत cmp_direction direction;
+पूर्ण;
 
-int cmp_connection_init(struct cmp_connection *connection,
-			struct fw_unit *unit,
-			enum cmp_direction direction,
-			unsigned int pcr_index);
-int cmp_connection_check_used(struct cmp_connection *connection, bool *used);
-void cmp_connection_destroy(struct cmp_connection *connection);
+पूर्णांक cmp_connection_init(काष्ठा cmp_connection *connection,
+			काष्ठा fw_unit *unit,
+			क्रमागत cmp_direction direction,
+			अचिन्हित पूर्णांक pcr_index);
+पूर्णांक cmp_connection_check_used(काष्ठा cmp_connection *connection, bool *used);
+व्योम cmp_connection_destroy(काष्ठा cmp_connection *connection);
 
-int cmp_connection_reserve(struct cmp_connection *connection,
-			   unsigned int max_payload);
-void cmp_connection_release(struct cmp_connection *connection);
+पूर्णांक cmp_connection_reserve(काष्ठा cmp_connection *connection,
+			   अचिन्हित पूर्णांक max_payload);
+व्योम cmp_connection_release(काष्ठा cmp_connection *connection);
 
-int cmp_connection_establish(struct cmp_connection *connection);
-int cmp_connection_update(struct cmp_connection *connection);
-void cmp_connection_break(struct cmp_connection *connection);
+पूर्णांक cmp_connection_establish(काष्ठा cmp_connection *connection);
+पूर्णांक cmp_connection_update(काष्ठा cmp_connection *connection);
+व्योम cmp_connection_अवरोध(काष्ठा cmp_connection *connection);
 
-#endif
+#पूर्ण_अगर

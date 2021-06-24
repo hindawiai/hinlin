@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,44 +22,44 @@
  *
  * Authors: Ben Skeggs
  */
-#define gf100_clk(p) container_of((p), struct gf100_clk, base)
-#include "priv.h"
-#include "pll.h"
+#घोषणा gf100_clk(p) container_of((p), काष्ठा gf100_clk, base)
+#समावेश "priv.h"
+#समावेश "pll.h"
 
-#include <subdev/bios.h>
-#include <subdev/bios/pll.h>
-#include <subdev/timer.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/pll.h>
+#समावेश <subdev/समयr.h>
 
-struct gf100_clk_info {
+काष्ठा gf100_clk_info अणु
 	u32 freq;
 	u32 ssel;
-	u32 mdiv;
+	u32 mभाग;
 	u32 dsrc;
-	u32 ddiv;
+	u32 dभाग;
 	u32 coef;
-};
+पूर्ण;
 
-struct gf100_clk {
-	struct nvkm_clk base;
-	struct gf100_clk_info eng[16];
-};
+काष्ठा gf100_clk अणु
+	काष्ठा nvkm_clk base;
+	काष्ठा gf100_clk_info eng[16];
+पूर्ण;
 
-static u32 read_div(struct gf100_clk *, int, u32, u32);
+अटल u32 पढ़ो_भाग(काष्ठा gf100_clk *, पूर्णांक, u32, u32);
 
-static u32
-read_vco(struct gf100_clk *clk, u32 dsrc)
-{
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल u32
+पढ़ो_vco(काष्ठा gf100_clk *clk, u32 dsrc)
+अणु
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	u32 ssrc = nvkm_rd32(device, dsrc);
-	if (!(ssrc & 0x00000100))
-		return nvkm_clk_read(&clk->base, nv_clk_src_sppll0);
-	return nvkm_clk_read(&clk->base, nv_clk_src_sppll1);
-}
+	अगर (!(ssrc & 0x00000100))
+		वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_sppll0);
+	वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_sppll1);
+पूर्ण
 
-static u32
-read_pll(struct gf100_clk *clk, u32 pll)
-{
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल u32
+पढ़ो_pll(काष्ठा gf100_clk *clk, u32 pll)
+अणु
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	u32 ctrl = nvkm_rd32(device, pll + 0x00);
 	u32 coef = nvkm_rd32(device, pll + 0x04);
 	u32 P = (coef & 0x003f0000) >> 16;
@@ -66,268 +67,268 @@ read_pll(struct gf100_clk *clk, u32 pll)
 	u32 M = (coef & 0x000000ff) >> 0;
 	u32 sclk;
 
-	if (!(ctrl & 0x00000001))
-		return 0;
+	अगर (!(ctrl & 0x00000001))
+		वापस 0;
 
-	switch (pll) {
-	case 0x00e800:
-	case 0x00e820:
+	चयन (pll) अणु
+	हाल 0x00e800:
+	हाल 0x00e820:
 		sclk = device->crystal;
 		P = 1;
-		break;
-	case 0x132000:
-		sclk = nvkm_clk_read(&clk->base, nv_clk_src_mpllsrc);
-		break;
-	case 0x132020:
-		sclk = nvkm_clk_read(&clk->base, nv_clk_src_mpllsrcref);
-		break;
-	case 0x137000:
-	case 0x137020:
-	case 0x137040:
-	case 0x1370e0:
-		sclk = read_div(clk, (pll & 0xff) / 0x20, 0x137120, 0x137140);
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	हाल 0x132000:
+		sclk = nvkm_clk_पढ़ो(&clk->base, nv_clk_src_mpllsrc);
+		अवरोध;
+	हाल 0x132020:
+		sclk = nvkm_clk_पढ़ो(&clk->base, nv_clk_src_mpllsrcref);
+		अवरोध;
+	हाल 0x137000:
+	हाल 0x137020:
+	हाल 0x137040:
+	हाल 0x1370e0:
+		sclk = पढ़ो_भाग(clk, (pll & 0xff) / 0x20, 0x137120, 0x137140);
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	return sclk * N / M / P;
-}
+	वापस sclk * N / M / P;
+पूर्ण
 
-static u32
-read_div(struct gf100_clk *clk, int doff, u32 dsrc, u32 dctl)
-{
-	struct nvkm_device *device = clk->base.subdev.device;
-	u32 ssrc = nvkm_rd32(device, dsrc + (doff * 4));
-	u32 sclk, sctl, sdiv = 2;
+अटल u32
+पढ़ो_भाग(काष्ठा gf100_clk *clk, पूर्णांक करोff, u32 dsrc, u32 dctl)
+अणु
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
+	u32 ssrc = nvkm_rd32(device, dsrc + (करोff * 4));
+	u32 sclk, sctl, sभाग = 2;
 
-	switch (ssrc & 0x00000003) {
-	case 0:
-		if ((ssrc & 0x00030000) != 0x00030000)
-			return device->crystal;
-		return 108000;
-	case 2:
-		return 100000;
-	case 3:
-		sclk = read_vco(clk, dsrc + (doff * 4));
+	चयन (ssrc & 0x00000003) अणु
+	हाल 0:
+		अगर ((ssrc & 0x00030000) != 0x00030000)
+			वापस device->crystal;
+		वापस 108000;
+	हाल 2:
+		वापस 100000;
+	हाल 3:
+		sclk = पढ़ो_vco(clk, dsrc + (करोff * 4));
 
-		/* Memclk has doff of 0 despite its alt. location */
-		if (doff <= 2) {
-			sctl = nvkm_rd32(device, dctl + (doff * 4));
+		/* Memclk has करोff of 0 despite its alt. location */
+		अगर (करोff <= 2) अणु
+			sctl = nvkm_rd32(device, dctl + (करोff * 4));
 
-			if (sctl & 0x80000000) {
-				if (ssrc & 0x100)
+			अगर (sctl & 0x80000000) अणु
+				अगर (ssrc & 0x100)
 					sctl >>= 8;
 
-				sdiv = (sctl & 0x3f) + 2;
-			}
-		}
+				sभाग = (sctl & 0x3f) + 2;
+			पूर्ण
+		पूर्ण
 
-		return (sclk * 2) / sdiv;
-	default:
-		return 0;
-	}
-}
+		वापस (sclk * 2) / sभाग;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static u32
-read_clk(struct gf100_clk *clk, int idx)
-{
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल u32
+पढ़ो_clk(काष्ठा gf100_clk *clk, पूर्णांक idx)
+अणु
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	u32 sctl = nvkm_rd32(device, 0x137250 + (idx * 4));
 	u32 ssel = nvkm_rd32(device, 0x137100);
-	u32 sclk, sdiv;
+	u32 sclk, sभाग;
 
-	if (ssel & (1 << idx)) {
-		if (idx < 7)
-			sclk = read_pll(clk, 0x137000 + (idx * 0x20));
-		else
-			sclk = read_pll(clk, 0x1370e0);
-		sdiv = ((sctl & 0x00003f00) >> 8) + 2;
-	} else {
-		sclk = read_div(clk, idx, 0x137160, 0x1371d0);
-		sdiv = ((sctl & 0x0000003f) >> 0) + 2;
-	}
+	अगर (ssel & (1 << idx)) अणु
+		अगर (idx < 7)
+			sclk = पढ़ो_pll(clk, 0x137000 + (idx * 0x20));
+		अन्यथा
+			sclk = पढ़ो_pll(clk, 0x1370e0);
+		sभाग = ((sctl & 0x00003f00) >> 8) + 2;
+	पूर्ण अन्यथा अणु
+		sclk = पढ़ो_भाग(clk, idx, 0x137160, 0x1371d0);
+		sभाग = ((sctl & 0x0000003f) >> 0) + 2;
+	पूर्ण
 
-	if (sctl & 0x80000000)
-		return (sclk * 2) / sdiv;
+	अगर (sctl & 0x80000000)
+		वापस (sclk * 2) / sभाग;
 
-	return sclk;
-}
+	वापस sclk;
+पूर्ण
 
-static int
-gf100_clk_read(struct nvkm_clk *base, enum nv_clk_src src)
-{
-	struct gf100_clk *clk = gf100_clk(base);
-	struct nvkm_subdev *subdev = &clk->base.subdev;
-	struct nvkm_device *device = subdev->device;
+अटल पूर्णांक
+gf100_clk_पढ़ो(काष्ठा nvkm_clk *base, क्रमागत nv_clk_src src)
+अणु
+	काष्ठा gf100_clk *clk = gf100_clk(base);
+	काष्ठा nvkm_subdev *subdev = &clk->base.subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 
-	switch (src) {
-	case nv_clk_src_crystal:
-		return device->crystal;
-	case nv_clk_src_href:
-		return 100000;
-	case nv_clk_src_sppll0:
-		return read_pll(clk, 0x00e800);
-	case nv_clk_src_sppll1:
-		return read_pll(clk, 0x00e820);
+	चयन (src) अणु
+	हाल nv_clk_src_crystal:
+		वापस device->crystal;
+	हाल nv_clk_src_href:
+		वापस 100000;
+	हाल nv_clk_src_sppll0:
+		वापस पढ़ो_pll(clk, 0x00e800);
+	हाल nv_clk_src_sppll1:
+		वापस पढ़ो_pll(clk, 0x00e820);
 
-	case nv_clk_src_mpllsrcref:
-		return read_div(clk, 0, 0x137320, 0x137330);
-	case nv_clk_src_mpllsrc:
-		return read_pll(clk, 0x132020);
-	case nv_clk_src_mpll:
-		return read_pll(clk, 0x132000);
-	case nv_clk_src_mdiv:
-		return read_div(clk, 0, 0x137300, 0x137310);
-	case nv_clk_src_mem:
-		if (nvkm_rd32(device, 0x1373f0) & 0x00000002)
-			return nvkm_clk_read(&clk->base, nv_clk_src_mpll);
-		return nvkm_clk_read(&clk->base, nv_clk_src_mdiv);
+	हाल nv_clk_src_mpllsrcref:
+		वापस पढ़ो_भाग(clk, 0, 0x137320, 0x137330);
+	हाल nv_clk_src_mpllsrc:
+		वापस पढ़ो_pll(clk, 0x132020);
+	हाल nv_clk_src_mpll:
+		वापस पढ़ो_pll(clk, 0x132000);
+	हाल nv_clk_src_mभाग:
+		वापस पढ़ो_भाग(clk, 0, 0x137300, 0x137310);
+	हाल nv_clk_src_mem:
+		अगर (nvkm_rd32(device, 0x1373f0) & 0x00000002)
+			वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_mpll);
+		वापस nvkm_clk_पढ़ो(&clk->base, nv_clk_src_mभाग);
 
-	case nv_clk_src_gpc:
-		return read_clk(clk, 0x00);
-	case nv_clk_src_rop:
-		return read_clk(clk, 0x01);
-	case nv_clk_src_hubk07:
-		return read_clk(clk, 0x02);
-	case nv_clk_src_hubk06:
-		return read_clk(clk, 0x07);
-	case nv_clk_src_hubk01:
-		return read_clk(clk, 0x08);
-	case nv_clk_src_copy:
-		return read_clk(clk, 0x09);
-	case nv_clk_src_pmu:
-		return read_clk(clk, 0x0c);
-	case nv_clk_src_vdec:
-		return read_clk(clk, 0x0e);
-	default:
+	हाल nv_clk_src_gpc:
+		वापस पढ़ो_clk(clk, 0x00);
+	हाल nv_clk_src_rop:
+		वापस पढ़ो_clk(clk, 0x01);
+	हाल nv_clk_src_hubk07:
+		वापस पढ़ो_clk(clk, 0x02);
+	हाल nv_clk_src_hubk06:
+		वापस पढ़ो_clk(clk, 0x07);
+	हाल nv_clk_src_hubk01:
+		वापस पढ़ो_clk(clk, 0x08);
+	हाल nv_clk_src_copy:
+		वापस पढ़ो_clk(clk, 0x09);
+	हाल nv_clk_src_pmu:
+		वापस पढ़ो_clk(clk, 0x0c);
+	हाल nv_clk_src_vdec:
+		वापस पढ़ो_clk(clk, 0x0e);
+	शेष:
 		nvkm_error(subdev, "invalid clock source %d\n", src);
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static u32
-calc_div(struct gf100_clk *clk, int idx, u32 ref, u32 freq, u32 *ddiv)
-{
-	u32 div = min((ref * 2) / freq, (u32)65);
-	if (div < 2)
-		div = 2;
+अटल u32
+calc_भाग(काष्ठा gf100_clk *clk, पूर्णांक idx, u32 ref, u32 freq, u32 *dभाग)
+अणु
+	u32 भाग = min((ref * 2) / freq, (u32)65);
+	अगर (भाग < 2)
+		भाग = 2;
 
-	*ddiv = div - 2;
-	return (ref * 2) / div;
-}
+	*dभाग = भाग - 2;
+	वापस (ref * 2) / भाग;
+पूर्ण
 
-static u32
-calc_src(struct gf100_clk *clk, int idx, u32 freq, u32 *dsrc, u32 *ddiv)
-{
+अटल u32
+calc_src(काष्ठा gf100_clk *clk, पूर्णांक idx, u32 freq, u32 *dsrc, u32 *dभाग)
+अणु
 	u32 sclk;
 
-	/* use one of the fixed frequencies if possible */
-	*ddiv = 0x00000000;
-	switch (freq) {
-	case  27000:
-	case 108000:
+	/* use one of the fixed frequencies अगर possible */
+	*dभाग = 0x00000000;
+	चयन (freq) अणु
+	हाल  27000:
+	हाल 108000:
 		*dsrc = 0x00000000;
-		if (freq == 108000)
+		अगर (freq == 108000)
 			*dsrc |= 0x00030000;
-		return freq;
-	case 100000:
+		वापस freq;
+	हाल 100000:
 		*dsrc = 0x00000002;
-		return freq;
-	default:
+		वापस freq;
+	शेष:
 		*dsrc = 0x00000003;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* otherwise, calculate the closest divider */
-	sclk = read_vco(clk, 0x137160 + (idx * 4));
-	if (idx < 7)
-		sclk = calc_div(clk, idx, sclk, freq, ddiv);
-	return sclk;
-}
+	/* otherwise, calculate the बंदst भागider */
+	sclk = पढ़ो_vco(clk, 0x137160 + (idx * 4));
+	अगर (idx < 7)
+		sclk = calc_भाग(clk, idx, sclk, freq, dभाग);
+	वापस sclk;
+पूर्ण
 
-static u32
-calc_pll(struct gf100_clk *clk, int idx, u32 freq, u32 *coef)
-{
-	struct nvkm_subdev *subdev = &clk->base.subdev;
-	struct nvkm_bios *bios = subdev->device->bios;
-	struct nvbios_pll limits;
-	int N, M, P, ret;
+अटल u32
+calc_pll(काष्ठा gf100_clk *clk, पूर्णांक idx, u32 freq, u32 *coef)
+अणु
+	काष्ठा nvkm_subdev *subdev = &clk->base.subdev;
+	काष्ठा nvkm_bios *bios = subdev->device->bios;
+	काष्ठा nvbios_pll limits;
+	पूर्णांक N, M, P, ret;
 
 	ret = nvbios_pll_parse(bios, 0x137000 + (idx * 0x20), &limits);
-	if (ret)
-		return 0;
+	अगर (ret)
+		वापस 0;
 
-	limits.refclk = read_div(clk, idx, 0x137120, 0x137140);
-	if (!limits.refclk)
-		return 0;
+	limits.refclk = पढ़ो_भाग(clk, idx, 0x137120, 0x137140);
+	अगर (!limits.refclk)
+		वापस 0;
 
-	ret = gt215_pll_calc(subdev, &limits, freq, &N, NULL, &M, &P);
-	if (ret <= 0)
-		return 0;
+	ret = gt215_pll_calc(subdev, &limits, freq, &N, शून्य, &M, &P);
+	अगर (ret <= 0)
+		वापस 0;
 
 	*coef = (P << 16) | (N << 8) | M;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-calc_clk(struct gf100_clk *clk, struct nvkm_cstate *cstate, int idx, int dom)
-{
-	struct gf100_clk_info *info = &clk->eng[idx];
-	u32 freq = cstate->domain[dom];
-	u32 src0, div0, div1D, div1P = 0;
+अटल पूर्णांक
+calc_clk(काष्ठा gf100_clk *clk, काष्ठा nvkm_cstate *cstate, पूर्णांक idx, पूर्णांक करोm)
+अणु
+	काष्ठा gf100_clk_info *info = &clk->eng[idx];
+	u32 freq = cstate->करोमुख्य[करोm];
+	u32 src0, भाग0, भाग1D, भाग1P = 0;
 	u32 clk0, clk1 = 0;
 
-	/* invalid clock domain */
-	if (!freq)
-		return 0;
+	/* invalid घड़ी करोमुख्य */
+	अगर (!freq)
+		वापस 0;
 
-	/* first possible path, using only dividers */
-	clk0 = calc_src(clk, idx, freq, &src0, &div0);
-	clk0 = calc_div(clk, idx, clk0, freq, &div1D);
+	/* first possible path, using only भागiders */
+	clk0 = calc_src(clk, idx, freq, &src0, &भाग0);
+	clk0 = calc_भाग(clk, idx, clk0, freq, &भाग1D);
 
-	/* see if we can get any closer using PLLs */
-	if (clk0 != freq && (0x00004387 & (1 << idx))) {
-		if (idx <= 7)
+	/* see अगर we can get any बंदr using PLLs */
+	अगर (clk0 != freq && (0x00004387 & (1 << idx))) अणु
+		अगर (idx <= 7)
 			clk1 = calc_pll(clk, idx, freq, &info->coef);
-		else
-			clk1 = cstate->domain[nv_clk_src_hubk06];
-		clk1 = calc_div(clk, idx, clk1, freq, &div1P);
-	}
+		अन्यथा
+			clk1 = cstate->करोमुख्य[nv_clk_src_hubk06];
+		clk1 = calc_भाग(clk, idx, clk1, freq, &भाग1P);
+	पूर्ण
 
-	/* select the method which gets closest to target freq */
-	if (abs((int)freq - clk0) <= abs((int)freq - clk1)) {
+	/* select the method which माला_लो बंदst to target freq */
+	अगर (असल((पूर्णांक)freq - clk0) <= असल((पूर्णांक)freq - clk1)) अणु
 		info->dsrc = src0;
-		if (div0) {
-			info->ddiv |= 0x80000000;
-			info->ddiv |= div0 << 8;
-			info->ddiv |= div0;
-		}
-		if (div1D) {
-			info->mdiv |= 0x80000000;
-			info->mdiv |= div1D;
-		}
+		अगर (भाग0) अणु
+			info->dभाग |= 0x80000000;
+			info->dभाग |= भाग0 << 8;
+			info->dभाग |= भाग0;
+		पूर्ण
+		अगर (भाग1D) अणु
+			info->mभाग |= 0x80000000;
+			info->mभाग |= भाग1D;
+		पूर्ण
 		info->ssel = info->coef = 0;
 		info->freq = clk0;
-	} else {
-		if (div1P) {
-			info->mdiv |= 0x80000000;
-			info->mdiv |= div1P << 8;
-		}
+	पूर्ण अन्यथा अणु
+		अगर (भाग1P) अणु
+			info->mभाग |= 0x80000000;
+			info->mभाग |= भाग1P << 8;
+		पूर्ण
 		info->ssel = (1 << idx);
 		info->freq = clk1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-gf100_clk_calc(struct nvkm_clk *base, struct nvkm_cstate *cstate)
-{
-	struct gf100_clk *clk = gf100_clk(base);
-	int ret;
+अटल पूर्णांक
+gf100_clk_calc(काष्ठा nvkm_clk *base, काष्ठा nvkm_cstate *cstate)
+अणु
+	काष्ठा gf100_clk *clk = gf100_clk(base);
+	पूर्णांक ret;
 
-	if ((ret = calc_clk(clk, cstate, 0x00, nv_clk_src_gpc)) ||
+	अगर ((ret = calc_clk(clk, cstate, 0x00, nv_clk_src_gpc)) ||
 	    (ret = calc_clk(clk, cstate, 0x01, nv_clk_src_rop)) ||
 	    (ret = calc_clk(clk, cstate, 0x02, nv_clk_src_hubk07)) ||
 	    (ret = calc_clk(clk, cstate, 0x07, nv_clk_src_hubk06)) ||
@@ -335,147 +336,147 @@ gf100_clk_calc(struct nvkm_clk *base, struct nvkm_cstate *cstate)
 	    (ret = calc_clk(clk, cstate, 0x09, nv_clk_src_copy)) ||
 	    (ret = calc_clk(clk, cstate, 0x0c, nv_clk_src_pmu)) ||
 	    (ret = calc_clk(clk, cstate, 0x0e, nv_clk_src_vdec)))
-		return ret;
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-gf100_clk_prog_0(struct gf100_clk *clk, int idx)
-{
-	struct gf100_clk_info *info = &clk->eng[idx];
-	struct nvkm_device *device = clk->base.subdev.device;
-	if (idx < 7 && !info->ssel) {
-		nvkm_mask(device, 0x1371d0 + (idx * 0x04), 0x80003f3f, info->ddiv);
+अटल व्योम
+gf100_clk_prog_0(काष्ठा gf100_clk *clk, पूर्णांक idx)
+अणु
+	काष्ठा gf100_clk_info *info = &clk->eng[idx];
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
+	अगर (idx < 7 && !info->ssel) अणु
+		nvkm_mask(device, 0x1371d0 + (idx * 0x04), 0x80003f3f, info->dभाग);
 		nvkm_wr32(device, 0x137160 + (idx * 0x04), info->dsrc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-gf100_clk_prog_1(struct gf100_clk *clk, int idx)
-{
-	struct nvkm_device *device = clk->base.subdev.device;
+अटल व्योम
+gf100_clk_prog_1(काष्ठा gf100_clk *clk, पूर्णांक idx)
+अणु
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
 	nvkm_mask(device, 0x137100, (1 << idx), 0x00000000);
 	nvkm_msec(device, 2000,
-		if (!(nvkm_rd32(device, 0x137100) & (1 << idx)))
-			break;
+		अगर (!(nvkm_rd32(device, 0x137100) & (1 << idx)))
+			अवरोध;
 	);
-}
+पूर्ण
 
-static void
-gf100_clk_prog_2(struct gf100_clk *clk, int idx)
-{
-	struct gf100_clk_info *info = &clk->eng[idx];
-	struct nvkm_device *device = clk->base.subdev.device;
-	const u32 addr = 0x137000 + (idx * 0x20);
-	if (idx <= 7) {
+अटल व्योम
+gf100_clk_prog_2(काष्ठा gf100_clk *clk, पूर्णांक idx)
+अणु
+	काष्ठा gf100_clk_info *info = &clk->eng[idx];
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
+	स्थिर u32 addr = 0x137000 + (idx * 0x20);
+	अगर (idx <= 7) अणु
 		nvkm_mask(device, addr + 0x00, 0x00000004, 0x00000000);
 		nvkm_mask(device, addr + 0x00, 0x00000001, 0x00000000);
-		if (info->coef) {
+		अगर (info->coef) अणु
 			nvkm_wr32(device, addr + 0x04, info->coef);
 			nvkm_mask(device, addr + 0x00, 0x00000001, 0x00000001);
 
 			/* Test PLL lock */
 			nvkm_mask(device, addr + 0x00, 0x00000010, 0x00000000);
 			nvkm_msec(device, 2000,
-				if (nvkm_rd32(device, addr + 0x00) & 0x00020000)
-					break;
+				अगर (nvkm_rd32(device, addr + 0x00) & 0x00020000)
+					अवरोध;
 			);
 			nvkm_mask(device, addr + 0x00, 0x00000010, 0x00000010);
 
 			/* Enable sync mode */
 			nvkm_mask(device, addr + 0x00, 0x00000004, 0x00000004);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void
-gf100_clk_prog_3(struct gf100_clk *clk, int idx)
-{
-	struct gf100_clk_info *info = &clk->eng[idx];
-	struct nvkm_device *device = clk->base.subdev.device;
-	if (info->ssel) {
+अटल व्योम
+gf100_clk_prog_3(काष्ठा gf100_clk *clk, पूर्णांक idx)
+अणु
+	काष्ठा gf100_clk_info *info = &clk->eng[idx];
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
+	अगर (info->ssel) अणु
 		nvkm_mask(device, 0x137100, (1 << idx), info->ssel);
 		nvkm_msec(device, 2000,
-			u32 tmp = nvkm_rd32(device, 0x137100) & (1 << idx);
-			if (tmp == info->ssel)
-				break;
+			u32 पंचांगp = nvkm_rd32(device, 0x137100) & (1 << idx);
+			अगर (पंचांगp == info->ssel)
+				अवरोध;
 		);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-gf100_clk_prog_4(struct gf100_clk *clk, int idx)
-{
-	struct gf100_clk_info *info = &clk->eng[idx];
-	struct nvkm_device *device = clk->base.subdev.device;
-	nvkm_mask(device, 0x137250 + (idx * 0x04), 0x00003f3f, info->mdiv);
-}
+अटल व्योम
+gf100_clk_prog_4(काष्ठा gf100_clk *clk, पूर्णांक idx)
+अणु
+	काष्ठा gf100_clk_info *info = &clk->eng[idx];
+	काष्ठा nvkm_device *device = clk->base.subdev.device;
+	nvkm_mask(device, 0x137250 + (idx * 0x04), 0x00003f3f, info->mभाग);
+पूर्ण
 
-static int
-gf100_clk_prog(struct nvkm_clk *base)
-{
-	struct gf100_clk *clk = gf100_clk(base);
-	struct {
-		void (*exec)(struct gf100_clk *, int);
-	} stage[] = {
-		{ gf100_clk_prog_0 }, /* div programming */
-		{ gf100_clk_prog_1 }, /* select div mode */
-		{ gf100_clk_prog_2 }, /* (maybe) program pll */
-		{ gf100_clk_prog_3 }, /* (maybe) select pll mode */
-		{ gf100_clk_prog_4 }, /* final divider */
-	};
-	int i, j;
+अटल पूर्णांक
+gf100_clk_prog(काष्ठा nvkm_clk *base)
+अणु
+	काष्ठा gf100_clk *clk = gf100_clk(base);
+	काष्ठा अणु
+		व्योम (*exec)(काष्ठा gf100_clk *, पूर्णांक);
+	पूर्ण stage[] = अणु
+		अणु gf100_clk_prog_0 पूर्ण, /* भाग programming */
+		अणु gf100_clk_prog_1 पूर्ण, /* select भाग mode */
+		अणु gf100_clk_prog_2 पूर्ण, /* (maybe) program pll */
+		अणु gf100_clk_prog_3 पूर्ण, /* (maybe) select pll mode */
+		अणु gf100_clk_prog_4 पूर्ण, /* final भागider */
+	पूर्ण;
+	पूर्णांक i, j;
 
-	for (i = 0; i < ARRAY_SIZE(stage); i++) {
-		for (j = 0; j < ARRAY_SIZE(clk->eng); j++) {
-			if (!clk->eng[j].freq)
-				continue;
+	क्रम (i = 0; i < ARRAY_SIZE(stage); i++) अणु
+		क्रम (j = 0; j < ARRAY_SIZE(clk->eng); j++) अणु
+			अगर (!clk->eng[j].freq)
+				जारी;
 			stage[i].exec(clk, j);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-gf100_clk_tidy(struct nvkm_clk *base)
-{
-	struct gf100_clk *clk = gf100_clk(base);
-	memset(clk->eng, 0x00, sizeof(clk->eng));
-}
+अटल व्योम
+gf100_clk_tidy(काष्ठा nvkm_clk *base)
+अणु
+	काष्ठा gf100_clk *clk = gf100_clk(base);
+	स_रखो(clk->eng, 0x00, माप(clk->eng));
+पूर्ण
 
-static const struct nvkm_clk_func
-gf100_clk = {
-	.read = gf100_clk_read,
+अटल स्थिर काष्ठा nvkm_clk_func
+gf100_clk = अणु
+	.पढ़ो = gf100_clk_पढ़ो,
 	.calc = gf100_clk_calc,
 	.prog = gf100_clk_prog,
 	.tidy = gf100_clk_tidy,
-	.domains = {
-		{ nv_clk_src_crystal, 0xff },
-		{ nv_clk_src_href   , 0xff },
-		{ nv_clk_src_hubk06 , 0x00 },
-		{ nv_clk_src_hubk01 , 0x01 },
-		{ nv_clk_src_copy   , 0x02 },
-		{ nv_clk_src_gpc    , 0x03, NVKM_CLK_DOM_FLAG_VPSTATE, "core", 2000 },
-		{ nv_clk_src_rop    , 0x04 },
-		{ nv_clk_src_mem    , 0x05, 0, "memory", 1000 },
-		{ nv_clk_src_vdec   , 0x06 },
-		{ nv_clk_src_pmu    , 0x0a },
-		{ nv_clk_src_hubk07 , 0x0b },
-		{ nv_clk_src_max }
-	}
-};
+	.करोमुख्यs = अणु
+		अणु nv_clk_src_crystal, 0xff पूर्ण,
+		अणु nv_clk_src_href   , 0xff पूर्ण,
+		अणु nv_clk_src_hubk06 , 0x00 पूर्ण,
+		अणु nv_clk_src_hubk01 , 0x01 पूर्ण,
+		अणु nv_clk_src_copy   , 0x02 पूर्ण,
+		अणु nv_clk_src_gpc    , 0x03, NVKM_CLK_DOM_FLAG_VPSTATE, "core", 2000 पूर्ण,
+		अणु nv_clk_src_rop    , 0x04 पूर्ण,
+		अणु nv_clk_src_mem    , 0x05, 0, "memory", 1000 पूर्ण,
+		अणु nv_clk_src_vdec   , 0x06 पूर्ण,
+		अणु nv_clk_src_pmu    , 0x0a पूर्ण,
+		अणु nv_clk_src_hubk07 , 0x0b पूर्ण,
+		अणु nv_clk_src_max पूर्ण
+	पूर्ण
+पूर्ण;
 
-int
-gf100_clk_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_clk **pclk)
-{
-	struct gf100_clk *clk;
+पूर्णांक
+gf100_clk_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_clk **pclk)
+अणु
+	काष्ठा gf100_clk *clk;
 
-	if (!(clk = kzalloc(sizeof(*clk), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(clk = kzalloc(माप(*clk), GFP_KERNEL)))
+		वापस -ENOMEM;
 	*pclk = &clk->base;
 
-	return nvkm_clk_ctor(&gf100_clk, device, type, inst, false, &clk->base);
-}
+	वापस nvkm_clk_ctor(&gf100_clk, device, type, inst, false, &clk->base);
+पूर्ण

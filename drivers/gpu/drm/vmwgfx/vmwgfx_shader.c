@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2009-2015 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,73 +26,73 @@
  *
  **************************************************************************/
 
-#include <drm/ttm/ttm_placement.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
 
-#include "vmwgfx_drv.h"
-#include "vmwgfx_resource_priv.h"
-#include "vmwgfx_binding.h"
+#समावेश "vmwgfx_drv.h"
+#समावेश "vmwgfx_resource_priv.h"
+#समावेश "vmwgfx_binding.h"
 
-struct vmw_shader {
-	struct vmw_resource res;
+काष्ठा vmw_shader अणु
+	काष्ठा vmw_resource res;
 	SVGA3dShaderType type;
-	uint32_t size;
-	uint8_t num_input_sig;
-	uint8_t num_output_sig;
-};
+	uपूर्णांक32_t size;
+	uपूर्णांक8_t num_input_sig;
+	uपूर्णांक8_t num_output_sig;
+पूर्ण;
 
-struct vmw_user_shader {
-	struct ttm_base_object base;
-	struct vmw_shader shader;
-};
+काष्ठा vmw_user_shader अणु
+	काष्ठा tपंचांग_base_object base;
+	काष्ठा vmw_shader shader;
+पूर्ण;
 
-struct vmw_dx_shader {
-	struct vmw_resource res;
-	struct vmw_resource *ctx;
-	struct vmw_resource *cotable;
+काष्ठा vmw_dx_shader अणु
+	काष्ठा vmw_resource res;
+	काष्ठा vmw_resource *ctx;
+	काष्ठा vmw_resource *cotable;
 	u32 id;
 	bool committed;
-	struct list_head cotable_head;
-};
+	काष्ठा list_head cotable_head;
+पूर्ण;
 
-static uint64_t vmw_user_shader_size;
-static uint64_t vmw_shader_size;
-static size_t vmw_shader_dx_size;
+अटल uपूर्णांक64_t vmw_user_shader_size;
+अटल uपूर्णांक64_t vmw_shader_size;
+अटल माप_प्रकार vmw_shader_dx_size;
 
-static void vmw_user_shader_free(struct vmw_resource *res);
-static struct vmw_resource *
-vmw_user_shader_base_to_res(struct ttm_base_object *base);
+अटल व्योम vmw_user_shader_मुक्त(काष्ठा vmw_resource *res);
+अटल काष्ठा vmw_resource *
+vmw_user_shader_base_to_res(काष्ठा tपंचांग_base_object *base);
 
-static int vmw_gb_shader_create(struct vmw_resource *res);
-static int vmw_gb_shader_bind(struct vmw_resource *res,
-			       struct ttm_validate_buffer *val_buf);
-static int vmw_gb_shader_unbind(struct vmw_resource *res,
-				 bool readback,
-				 struct ttm_validate_buffer *val_buf);
-static int vmw_gb_shader_destroy(struct vmw_resource *res);
+अटल पूर्णांक vmw_gb_shader_create(काष्ठा vmw_resource *res);
+अटल पूर्णांक vmw_gb_shader_bind(काष्ठा vmw_resource *res,
+			       काष्ठा tपंचांग_validate_buffer *val_buf);
+अटल पूर्णांक vmw_gb_shader_unbind(काष्ठा vmw_resource *res,
+				 bool पढ़ोback,
+				 काष्ठा tपंचांग_validate_buffer *val_buf);
+अटल पूर्णांक vmw_gb_shader_destroy(काष्ठा vmw_resource *res);
 
-static int vmw_dx_shader_create(struct vmw_resource *res);
-static int vmw_dx_shader_bind(struct vmw_resource *res,
-			       struct ttm_validate_buffer *val_buf);
-static int vmw_dx_shader_unbind(struct vmw_resource *res,
-				 bool readback,
-				 struct ttm_validate_buffer *val_buf);
-static void vmw_dx_shader_commit_notify(struct vmw_resource *res,
-					enum vmw_cmdbuf_res_state state);
-static bool vmw_shader_id_ok(u32 user_key, SVGA3dShaderType shader_type);
-static u32 vmw_shader_key(u32 user_key, SVGA3dShaderType shader_type);
-static uint64_t vmw_user_shader_size;
+अटल पूर्णांक vmw_dx_shader_create(काष्ठा vmw_resource *res);
+अटल पूर्णांक vmw_dx_shader_bind(काष्ठा vmw_resource *res,
+			       काष्ठा tपंचांग_validate_buffer *val_buf);
+अटल पूर्णांक vmw_dx_shader_unbind(काष्ठा vmw_resource *res,
+				 bool पढ़ोback,
+				 काष्ठा tपंचांग_validate_buffer *val_buf);
+अटल व्योम vmw_dx_shader_commit_notअगरy(काष्ठा vmw_resource *res,
+					क्रमागत vmw_cmdbuf_res_state state);
+अटल bool vmw_shader_id_ok(u32 user_key, SVGA3dShaderType shader_type);
+अटल u32 vmw_shader_key(u32 user_key, SVGA3dShaderType shader_type);
+अटल uपूर्णांक64_t vmw_user_shader_size;
 
-static const struct vmw_user_resource_conv user_shader_conv = {
+अटल स्थिर काष्ठा vmw_user_resource_conv user_shader_conv = अणु
 	.object_type = VMW_RES_SHADER,
 	.base_obj_to_res = vmw_user_shader_base_to_res,
-	.res_free = vmw_user_shader_free
-};
+	.res_मुक्त = vmw_user_shader_मुक्त
+पूर्ण;
 
-const struct vmw_user_resource_conv *user_shader_converter =
+स्थिर काष्ठा vmw_user_resource_conv *user_shader_converter =
 	&user_shader_conv;
 
 
-static const struct vmw_res_func vmw_gb_shader_func = {
+अटल स्थिर काष्ठा vmw_res_func vmw_gb_shader_func = अणु
 	.res_type = vmw_res_shader,
 	.needs_backup = true,
 	.may_evict = true,
@@ -103,9 +104,9 @@ static const struct vmw_res_func vmw_gb_shader_func = {
 	.destroy = vmw_gb_shader_destroy,
 	.bind = vmw_gb_shader_bind,
 	.unbind = vmw_gb_shader_unbind
-};
+पूर्ण;
 
-static const struct vmw_res_func vmw_dx_shader_func = {
+अटल स्थिर काष्ठा vmw_res_func vmw_dx_shader_func = अणु
 	.res_type = vmw_res_shader,
 	.needs_backup = true,
 	.may_evict = true,
@@ -116,264 +117,264 @@ static const struct vmw_res_func vmw_dx_shader_func = {
 	.create = vmw_dx_shader_create,
 	/*
 	 * The destroy callback is only called with a committed resource on
-	 * context destroy, in which case we destroy the cotable anyway,
+	 * context destroy, in which हाल we destroy the cotable anyway,
 	 * so there's no need to destroy DX shaders separately.
 	 */
-	.destroy = NULL,
+	.destroy = शून्य,
 	.bind = vmw_dx_shader_bind,
 	.unbind = vmw_dx_shader_unbind,
-	.commit_notify = vmw_dx_shader_commit_notify,
-};
+	.commit_notअगरy = vmw_dx_shader_commit_notअगरy,
+पूर्ण;
 
 /*
  * Shader management:
  */
 
-static inline struct vmw_shader *
-vmw_res_to_shader(struct vmw_resource *res)
-{
-	return container_of(res, struct vmw_shader, res);
-}
+अटल अंतरभूत काष्ठा vmw_shader *
+vmw_res_to_shader(काष्ठा vmw_resource *res)
+अणु
+	वापस container_of(res, काष्ठा vmw_shader, res);
+पूर्ण
 
 /**
- * vmw_res_to_dx_shader - typecast a struct vmw_resource to a
- * struct vmw_dx_shader
+ * vmw_res_to_dx_shader - typecast a काष्ठा vmw_resource to a
+ * काष्ठा vmw_dx_shader
  *
- * @res: Pointer to the struct vmw_resource.
+ * @res: Poपूर्णांकer to the काष्ठा vmw_resource.
  */
-static inline struct vmw_dx_shader *
-vmw_res_to_dx_shader(struct vmw_resource *res)
-{
-	return container_of(res, struct vmw_dx_shader, res);
-}
+अटल अंतरभूत काष्ठा vmw_dx_shader *
+vmw_res_to_dx_shader(काष्ठा vmw_resource *res)
+अणु
+	वापस container_of(res, काष्ठा vmw_dx_shader, res);
+पूर्ण
 
-static void vmw_hw_shader_destroy(struct vmw_resource *res)
-{
-	if (likely(res->func->destroy))
-		(void) res->func->destroy(res);
-	else
+अटल व्योम vmw_hw_shader_destroy(काष्ठा vmw_resource *res)
+अणु
+	अगर (likely(res->func->destroy))
+		(व्योम) res->func->destroy(res);
+	अन्यथा
 		res->id = -1;
-}
+पूर्ण
 
 
-static int vmw_gb_shader_init(struct vmw_private *dev_priv,
-			      struct vmw_resource *res,
-			      uint32_t size,
-			      uint64_t offset,
+अटल पूर्णांक vmw_gb_shader_init(काष्ठा vmw_निजी *dev_priv,
+			      काष्ठा vmw_resource *res,
+			      uपूर्णांक32_t size,
+			      uपूर्णांक64_t offset,
 			      SVGA3dShaderType type,
-			      uint8_t num_input_sig,
-			      uint8_t num_output_sig,
-			      struct vmw_buffer_object *byte_code,
-			      void (*res_free) (struct vmw_resource *res))
-{
-	struct vmw_shader *shader = vmw_res_to_shader(res);
-	int ret;
+			      uपूर्णांक8_t num_input_sig,
+			      uपूर्णांक8_t num_output_sig,
+			      काष्ठा vmw_buffer_object *byte_code,
+			      व्योम (*res_मुक्त) (काष्ठा vmw_resource *res))
+अणु
+	काष्ठा vmw_shader *shader = vmw_res_to_shader(res);
+	पूर्णांक ret;
 
-	ret = vmw_resource_init(dev_priv, res, true, res_free,
+	ret = vmw_resource_init(dev_priv, res, true, res_मुक्त,
 				&vmw_gb_shader_func);
 
-	if (unlikely(ret != 0)) {
-		if (res_free)
-			res_free(res);
-		else
-			kfree(res);
-		return ret;
-	}
+	अगर (unlikely(ret != 0)) अणु
+		अगर (res_मुक्त)
+			res_मुक्त(res);
+		अन्यथा
+			kमुक्त(res);
+		वापस ret;
+	पूर्ण
 
 	res->backup_size = size;
-	if (byte_code) {
+	अगर (byte_code) अणु
 		res->backup = vmw_bo_reference(byte_code);
 		res->backup_offset = offset;
-	}
+	पूर्ण
 	shader->size = size;
 	shader->type = type;
 	shader->num_input_sig = num_input_sig;
 	shader->num_output_sig = num_output_sig;
 
 	res->hw_destroy = vmw_hw_shader_destroy;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * GB shader code:
  */
 
-static int vmw_gb_shader_create(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct vmw_shader *shader = vmw_res_to_shader(res);
-	int ret;
-	struct {
+अटल पूर्णांक vmw_gb_shader_create(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा vmw_shader *shader = vmw_res_to_shader(res);
+	पूर्णांक ret;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDefineGBShader body;
-	} *cmd;
+	पूर्ण *cmd;
 
-	if (likely(res->id != -1))
-		return 0;
+	अगर (likely(res->id != -1))
+		वापस 0;
 
 	ret = vmw_resource_alloc_id(res);
-	if (unlikely(ret != 0)) {
+	अगर (unlikely(ret != 0)) अणु
 		DRM_ERROR("Failed to allocate a shader id.\n");
-		goto out_no_id;
-	}
+		जाओ out_no_id;
+	पूर्ण
 
-	if (unlikely(res->id >= VMWGFX_NUM_GB_SHADER)) {
+	अगर (unlikely(res->id >= VMWGFX_NUM_GB_SHADER)) अणु
 		ret = -EBUSY;
-		goto out_no_fifo;
-	}
+		जाओ out_no_fअगरo;
+	पूर्ण
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL)) {
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य)) अणु
 		ret = -ENOMEM;
-		goto out_no_fifo;
-	}
+		जाओ out_no_fअगरo;
+	पूर्ण
 
 	cmd->header.id = SVGA_3D_CMD_DEFINE_GB_SHADER;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.shid = res->id;
 	cmd->body.type = shader->type;
 	cmd->body.sizeInBytes = shader->size;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
-	vmw_fifo_resource_inc(dev_priv);
+	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_fअगरo_resource_inc(dev_priv);
 
-	return 0;
+	वापस 0;
 
-out_no_fifo:
+out_no_fअगरo:
 	vmw_resource_release_id(res);
 out_no_id:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vmw_gb_shader_bind(struct vmw_resource *res,
-			      struct ttm_validate_buffer *val_buf)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल पूर्णांक vmw_gb_shader_bind(काष्ठा vmw_resource *res,
+			      काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdBindGBShader body;
-	} *cmd;
-	struct ttm_buffer_object *bo = val_buf->bo;
+	पूर्ण *cmd;
+	काष्ठा tपंचांग_buffer_object *bo = val_buf->bo;
 
 	BUG_ON(bo->mem.mem_type != VMW_PL_MOB);
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		return -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		वापस -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_BIND_GB_SHADER;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.shid = res->id;
 	cmd->body.mobid = bo->mem.start;
 	cmd->body.offsetInBytes = res->backup_offset;
 	res->backup_dirty = false;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmw_gb_shader_unbind(struct vmw_resource *res,
-				bool readback,
-				struct ttm_validate_buffer *val_buf)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल पूर्णांक vmw_gb_shader_unbind(काष्ठा vmw_resource *res,
+				bool पढ़ोback,
+				काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdBindGBShader body;
-	} *cmd;
-	struct vmw_fence_obj *fence;
+	पूर्ण *cmd;
+	काष्ठा vmw_fence_obj *fence;
 
 	BUG_ON(res->backup->base.mem.mem_type != VMW_PL_MOB);
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		return -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		वापस -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_BIND_GB_SHADER;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.shid = res->id;
 	cmd->body.mobid = SVGA3D_INVALID_ID;
 	cmd->body.offsetInBytes = 0;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 
 	/*
 	 * Create a fence object and fence the backup buffer.
 	 */
 
-	(void) vmw_execbuf_fence_commands(NULL, dev_priv,
-					  &fence, NULL);
+	(व्योम) vmw_execbuf_fence_commands(शून्य, dev_priv,
+					  &fence, शून्य);
 
 	vmw_bo_fence_single(val_buf->bo, fence);
 
-	if (likely(fence != NULL))
+	अगर (likely(fence != शून्य))
 		vmw_fence_obj_unreference(&fence);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vmw_gb_shader_destroy(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल पूर्णांक vmw_gb_shader_destroy(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDestroyGBShader body;
-	} *cmd;
+	पूर्ण *cmd;
 
-	if (likely(res->id == -1))
-		return 0;
+	अगर (likely(res->id == -1))
+		वापस 0;
 
 	mutex_lock(&dev_priv->binding_mutex);
 	vmw_binding_res_list_scrub(&res->binding_head);
 
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL)) {
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य)) अणु
 		mutex_unlock(&dev_priv->binding_mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	cmd->header.id = SVGA_3D_CMD_DESTROY_GB_SHADER;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.shid = res->id;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 	mutex_unlock(&dev_priv->binding_mutex);
 	vmw_resource_release_id(res);
-	vmw_fifo_resource_dec(dev_priv);
+	vmw_fअगरo_resource_dec(dev_priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * DX shader code:
  */
 
 /**
- * vmw_dx_shader_commit_notify - Notify that a shader operation has been
+ * vmw_dx_shader_commit_notअगरy - Notअगरy that a shader operation has been
  * committed to hardware from a user-supplied command stream.
  *
- * @res: Pointer to the shader resource.
+ * @res: Poपूर्णांकer to the shader resource.
  * @state: Indicating whether a creation or removal has been committed.
  *
  */
-static void vmw_dx_shader_commit_notify(struct vmw_resource *res,
-					enum vmw_cmdbuf_res_state state)
-{
-	struct vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
-	struct vmw_private *dev_priv = res->dev_priv;
+अटल व्योम vmw_dx_shader_commit_notअगरy(काष्ठा vmw_resource *res,
+					क्रमागत vmw_cmdbuf_res_state state)
+अणु
+	काष्ठा vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
 
-	if (state == VMW_CMDBUF_RES_ADD) {
+	अगर (state == VMW_CMDBUF_RES_ADD) अणु
 		mutex_lock(&dev_priv->binding_mutex);
 		vmw_cotable_add_resource(shader->cotable,
 					 &shader->cotable_head);
 		shader->committed = true;
 		res->id = shader->id;
 		mutex_unlock(&dev_priv->binding_mutex);
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_lock(&dev_priv->binding_mutex);
 		list_del_init(&shader->cotable_head);
 		shader->committed = false;
 		res->id = -1;
 		mutex_unlock(&dev_priv->binding_mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * vmw_dx_shader_unscrub - Have the device reattach a MOB to a DX shader.
@@ -382,34 +383,34 @@ static void vmw_dx_shader_commit_notify(struct vmw_resource *res,
  *
  * This function reverts a scrub operation.
  */
-static int vmw_dx_shader_unscrub(struct vmw_resource *res)
-{
-	struct vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल पूर्णांक vmw_dx_shader_unscrub(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXBindShader body;
-	} *cmd;
+	पूर्ण *cmd;
 
-	if (!list_empty(&shader->cotable_head) || !shader->committed)
-		return 0;
+	अगर (!list_empty(&shader->cotable_head) || !shader->committed)
+		वापस 0;
 
-	cmd = VMW_CMD_CTX_RESERVE(dev_priv, sizeof(*cmd), shader->ctx->id);
-	if (unlikely(cmd == NULL))
-		return -ENOMEM;
+	cmd = VMW_CMD_CTX_RESERVE(dev_priv, माप(*cmd), shader->ctx->id);
+	अगर (unlikely(cmd == शून्य))
+		वापस -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_DX_BIND_SHADER;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = shader->ctx->id;
 	cmd->body.shid = shader->id;
 	cmd->body.mobid = res->backup->base.mem.start;
 	cmd->body.offsetInBytes = res->backup_offset;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 
 	vmw_cotable_add_resource(shader->cotable, &shader->cotable_head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vmw_dx_shader_create - The DX shader create callback
@@ -417,46 +418,46 @@ static int vmw_dx_shader_unscrub(struct vmw_resource *res)
  * @res: The DX shader resource
  *
  * The create callback is called as part of resource validation and
- * makes sure that we unscrub the shader if it's previously been scrubbed.
+ * makes sure that we unscrub the shader अगर it's previously been scrubbed.
  */
-static int vmw_dx_shader_create(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
-	int ret = 0;
+अटल पूर्णांक vmw_dx_shader_create(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
+	पूर्णांक ret = 0;
 
 	WARN_ON_ONCE(!shader->committed);
 
-	if (vmw_resource_mob_attached(res)) {
+	अगर (vmw_resource_mob_attached(res)) अणु
 		mutex_lock(&dev_priv->binding_mutex);
 		ret = vmw_dx_shader_unscrub(res);
 		mutex_unlock(&dev_priv->binding_mutex);
-	}
+	पूर्ण
 
 	res->id = shader->id;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * vmw_dx_shader_bind - The DX shader bind callback
  *
  * @res: The DX shader resource
- * @val_buf: Pointer to the validate buffer.
+ * @val_buf: Poपूर्णांकer to the validate buffer.
  *
  */
-static int vmw_dx_shader_bind(struct vmw_resource *res,
-			      struct ttm_validate_buffer *val_buf)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct ttm_buffer_object *bo = val_buf->bo;
+अटल पूर्णांक vmw_dx_shader_bind(काष्ठा vmw_resource *res,
+			      काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा tपंचांग_buffer_object *bo = val_buf->bo;
 
 	BUG_ON(bo->mem.mem_type != VMW_PL_MOB);
 	mutex_lock(&dev_priv->binding_mutex);
 	vmw_dx_shader_unscrub(res);
 	mutex_unlock(&dev_priv->binding_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vmw_dx_shader_scrub - Have the device unbind a MOB from a DX shader.
@@ -465,53 +466,53 @@ static int vmw_dx_shader_bind(struct vmw_resource *res,
  *
  * This function unbinds a MOB from the DX shader without requiring the
  * MOB dma_buffer to be reserved. The driver still considers the MOB bound.
- * However, once the driver eventually decides to unbind the MOB, it doesn't
+ * However, once the driver eventually decides to unbind the MOB, it करोesn't
  * need to access the context.
  */
-static int vmw_dx_shader_scrub(struct vmw_resource *res)
-{
-	struct vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct {
+अटल पूर्णांक vmw_dx_shader_scrub(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा अणु
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXBindShader body;
-	} *cmd;
+	पूर्ण *cmd;
 
-	if (list_empty(&shader->cotable_head))
-		return 0;
+	अगर (list_empty(&shader->cotable_head))
+		वापस 0;
 
 	WARN_ON_ONCE(!shader->committed);
-	cmd = VMW_CMD_RESERVE(dev_priv, sizeof(*cmd));
-	if (unlikely(cmd == NULL))
-		return -ENOMEM;
+	cmd = VMW_CMD_RESERVE(dev_priv, माप(*cmd));
+	अगर (unlikely(cmd == शून्य))
+		वापस -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_DX_BIND_SHADER;
-	cmd->header.size = sizeof(cmd->body);
+	cmd->header.size = माप(cmd->body);
 	cmd->body.cid = shader->ctx->id;
 	cmd->body.shid = res->id;
 	cmd->body.mobid = SVGA3D_INVALID_ID;
 	cmd->body.offsetInBytes = 0;
-	vmw_cmd_commit(dev_priv, sizeof(*cmd));
+	vmw_cmd_commit(dev_priv, माप(*cmd));
 	res->id = -1;
 	list_del_init(&shader->cotable_head);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vmw_dx_shader_unbind - The dx shader unbind callback.
  *
  * @res: The shader resource
- * @readback: Whether this is a readback unbind. Currently unused.
- * @val_buf: MOB buffer information.
+ * @पढ़ोback: Whether this is a पढ़ोback unbind. Currently unused.
+ * @val_buf: MOB buffer inक्रमmation.
  */
-static int vmw_dx_shader_unbind(struct vmw_resource *res,
-				bool readback,
-				struct ttm_validate_buffer *val_buf)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct vmw_fence_obj *fence;
-	int ret;
+अटल पूर्णांक vmw_dx_shader_unbind(काष्ठा vmw_resource *res,
+				bool पढ़ोback,
+				काष्ठा tपंचांग_validate_buffer *val_buf)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा vmw_fence_obj *fence;
+	पूर्णांक ret;
 
 	BUG_ON(res->backup->base.mem.mem_type != VMW_PL_MOB);
 
@@ -519,107 +520,107 @@ static int vmw_dx_shader_unbind(struct vmw_resource *res,
 	ret = vmw_dx_shader_scrub(res);
 	mutex_unlock(&dev_priv->binding_mutex);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	(void) vmw_execbuf_fence_commands(NULL, dev_priv,
-					  &fence, NULL);
+	(व्योम) vmw_execbuf_fence_commands(शून्य, dev_priv,
+					  &fence, शून्य);
 	vmw_bo_fence_single(val_buf->bo, fence);
 
-	if (likely(fence != NULL))
+	अगर (likely(fence != शून्य))
 		vmw_fence_obj_unreference(&fence);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vmw_dx_shader_cotable_list_scrub - The cotable unbind_func callback for
+ * vmw_dx_shader_cotable_list_scrub - The cotable unbind_func callback क्रम
  * DX shaders.
  *
- * @dev_priv: Pointer to device private structure.
+ * @dev_priv: Poपूर्णांकer to device निजी काष्ठाure.
  * @list: The list of cotable resources.
- * @readback: Whether the call was part of a readback unbind.
+ * @पढ़ोback: Whether the call was part of a पढ़ोback unbind.
  *
  * Scrubs all shader MOBs so that any subsequent shader unbind or shader
  * destroy operation won't need to swap in the context.
  */
-void vmw_dx_shader_cotable_list_scrub(struct vmw_private *dev_priv,
-				      struct list_head *list,
-				      bool readback)
-{
-	struct vmw_dx_shader *entry, *next;
+व्योम vmw_dx_shader_cotable_list_scrub(काष्ठा vmw_निजी *dev_priv,
+				      काष्ठा list_head *list,
+				      bool पढ़ोback)
+अणु
+	काष्ठा vmw_dx_shader *entry, *next;
 
-	lockdep_assert_held_once(&dev_priv->binding_mutex);
+	lockdep_निश्चित_held_once(&dev_priv->binding_mutex);
 
-	list_for_each_entry_safe(entry, next, list, cotable_head) {
+	list_क्रम_each_entry_safe(entry, next, list, cotable_head) अणु
 		WARN_ON(vmw_dx_shader_scrub(&entry->res));
-		if (!readback)
+		अगर (!पढ़ोback)
 			entry->committed = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * vmw_dx_shader_res_free - The DX shader free callback
+ * vmw_dx_shader_res_मुक्त - The DX shader मुक्त callback
  *
  * @res: The shader resource
  *
  * Frees the DX shader resource and updates memory accounting.
  */
-static void vmw_dx_shader_res_free(struct vmw_resource *res)
-{
-	struct vmw_private *dev_priv = res->dev_priv;
-	struct vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
+अटल व्योम vmw_dx_shader_res_मुक्त(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
+	काष्ठा vmw_dx_shader *shader = vmw_res_to_dx_shader(res);
 
 	vmw_resource_unreference(&shader->cotable);
-	kfree(shader);
-	ttm_mem_global_free(vmw_mem_glob(dev_priv), vmw_shader_dx_size);
-}
+	kमुक्त(shader);
+	tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv), vmw_shader_dx_size);
+पूर्ण
 
 /**
  * vmw_dx_shader_add - Add a shader resource as a command buffer managed
  * resource.
  *
  * @man: The command buffer resource manager.
- * @ctx: Pointer to the context resource.
- * @user_key: The id used for this shader.
+ * @ctx: Poपूर्णांकer to the context resource.
+ * @user_key: The id used क्रम this shader.
  * @shader_type: The shader type.
  * @list: The list of staged command buffer managed resources.
  */
-int vmw_dx_shader_add(struct vmw_cmdbuf_res_manager *man,
-		      struct vmw_resource *ctx,
+पूर्णांक vmw_dx_shader_add(काष्ठा vmw_cmdbuf_res_manager *man,
+		      काष्ठा vmw_resource *ctx,
 		      u32 user_key,
 		      SVGA3dShaderType shader_type,
-		      struct list_head *list)
-{
-	struct vmw_dx_shader *shader;
-	struct vmw_resource *res;
-	struct vmw_private *dev_priv = ctx->dev_priv;
-	struct ttm_operation_ctx ttm_opt_ctx = {
-		.interruptible = true,
-		.no_wait_gpu = false
-	};
-	int ret;
+		      काष्ठा list_head *list)
+अणु
+	काष्ठा vmw_dx_shader *shader;
+	काष्ठा vmw_resource *res;
+	काष्ठा vmw_निजी *dev_priv = ctx->dev_priv;
+	काष्ठा tपंचांग_operation_ctx tपंचांग_opt_ctx = अणु
+		.पूर्णांकerruptible = true,
+		.no_रुको_gpu = false
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (!vmw_shader_dx_size)
-		vmw_shader_dx_size = ttm_round_pot(sizeof(*shader));
+	अगर (!vmw_shader_dx_size)
+		vmw_shader_dx_size = tपंचांग_round_pot(माप(*shader));
 
-	if (!vmw_shader_id_ok(user_key, shader_type))
-		return -EINVAL;
+	अगर (!vmw_shader_id_ok(user_key, shader_type))
+		वापस -EINVAL;
 
-	ret = ttm_mem_global_alloc(vmw_mem_glob(dev_priv), vmw_shader_dx_size,
-				   &ttm_opt_ctx);
-	if (ret) {
-		if (ret != -ERESTARTSYS)
+	ret = tपंचांग_mem_global_alloc(vmw_mem_glob(dev_priv), vmw_shader_dx_size,
+				   &tपंचांग_opt_ctx);
+	अगर (ret) अणु
+		अगर (ret != -ERESTARTSYS)
 			DRM_ERROR("Out of graphics memory for shader "
 				  "creation.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	shader = kmalloc(sizeof(*shader), GFP_KERNEL);
-	if (!shader) {
-		ttm_mem_global_free(vmw_mem_glob(dev_priv), vmw_shader_dx_size);
-		return -ENOMEM;
-	}
+	shader = kदो_स्मृति(माप(*shader), GFP_KERNEL);
+	अगर (!shader) अणु
+		tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv), vmw_shader_dx_size);
+		वापस -ENOMEM;
+	पूर्ण
 
 	res = &shader->res;
 	shader->ctx = ctx;
@@ -629,19 +630,19 @@ int vmw_dx_shader_add(struct vmw_cmdbuf_res_manager *man,
 	shader->committed = false;
 	INIT_LIST_HEAD(&shader->cotable_head);
 	ret = vmw_resource_init(dev_priv, res, true,
-				vmw_dx_shader_res_free, &vmw_dx_shader_func);
-	if (ret)
-		goto out_resource_init;
+				vmw_dx_shader_res_मुक्त, &vmw_dx_shader_func);
+	अगर (ret)
+		जाओ out_resource_init;
 
 	/*
-	 * The user_key name-space is not per shader type for DX shaders,
+	 * The user_key name-space is not per shader type क्रम DX shaders,
 	 * so when hashing, use a single zero shader type.
 	 */
 	ret = vmw_cmdbuf_res_add(man, vmw_cmdbuf_res_shader,
 				 vmw_shader_key(user_key, 0),
 				 res, list);
-	if (ret)
-		goto out_resource_init;
+	अगर (ret)
+		जाओ out_resource_init;
 
 	res->id = shader->id;
 	res->hw_destroy = vmw_hw_shader_destroy;
@@ -649,8 +650,8 @@ int vmw_dx_shader_add(struct vmw_cmdbuf_res_manager *man,
 out_resource_init:
 	vmw_resource_unreference(&res);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 
@@ -658,237 +659,237 @@ out_resource_init:
  * User-space shader management:
  */
 
-static struct vmw_resource *
-vmw_user_shader_base_to_res(struct ttm_base_object *base)
-{
-	return &(container_of(base, struct vmw_user_shader, base)->
+अटल काष्ठा vmw_resource *
+vmw_user_shader_base_to_res(काष्ठा tपंचांग_base_object *base)
+अणु
+	वापस &(container_of(base, काष्ठा vmw_user_shader, base)->
 		 shader.res);
-}
+पूर्ण
 
-static void vmw_user_shader_free(struct vmw_resource *res)
-{
-	struct vmw_user_shader *ushader =
-		container_of(res, struct vmw_user_shader, shader.res);
-	struct vmw_private *dev_priv = res->dev_priv;
+अटल व्योम vmw_user_shader_मुक्त(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_user_shader *ushader =
+		container_of(res, काष्ठा vmw_user_shader, shader.res);
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
 
-	ttm_base_object_kfree(ushader, base);
-	ttm_mem_global_free(vmw_mem_glob(dev_priv),
+	tपंचांग_base_object_kमुक्त(ushader, base);
+	tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv),
 			    vmw_user_shader_size);
-}
+पूर्ण
 
-static void vmw_shader_free(struct vmw_resource *res)
-{
-	struct vmw_shader *shader = vmw_res_to_shader(res);
-	struct vmw_private *dev_priv = res->dev_priv;
+अटल व्योम vmw_shader_मुक्त(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_shader *shader = vmw_res_to_shader(res);
+	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
 
-	kfree(shader);
-	ttm_mem_global_free(vmw_mem_glob(dev_priv),
+	kमुक्त(shader);
+	tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv),
 			    vmw_shader_size);
-}
+पूर्ण
 
 /*
  * This function is called when user space has no more references on the
  * base object. It releases the base-object's reference on the resource object.
  */
 
-static void vmw_user_shader_base_release(struct ttm_base_object **p_base)
-{
-	struct ttm_base_object *base = *p_base;
-	struct vmw_resource *res = vmw_user_shader_base_to_res(base);
+अटल व्योम vmw_user_shader_base_release(काष्ठा tपंचांग_base_object **p_base)
+अणु
+	काष्ठा tपंचांग_base_object *base = *p_base;
+	काष्ठा vmw_resource *res = vmw_user_shader_base_to_res(base);
 
-	*p_base = NULL;
+	*p_base = शून्य;
 	vmw_resource_unreference(&res);
-}
+पूर्ण
 
-int vmw_shader_destroy_ioctl(struct drm_device *dev, void *data,
-			      struct drm_file *file_priv)
-{
-	struct drm_vmw_shader_arg *arg = (struct drm_vmw_shader_arg *)data;
-	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+पूर्णांक vmw_shader_destroy_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_vmw_shader_arg *arg = (काष्ठा drm_vmw_shader_arg *)data;
+	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
 
-	return ttm_ref_object_base_unref(tfile, arg->handle,
+	वापस tपंचांग_ref_object_base_unref(tfile, arg->handle,
 					 TTM_REF_USAGE);
-}
+पूर्ण
 
-static int vmw_user_shader_alloc(struct vmw_private *dev_priv,
-				 struct vmw_buffer_object *buffer,
-				 size_t shader_size,
-				 size_t offset,
+अटल पूर्णांक vmw_user_shader_alloc(काष्ठा vmw_निजी *dev_priv,
+				 काष्ठा vmw_buffer_object *buffer,
+				 माप_प्रकार shader_size,
+				 माप_प्रकार offset,
 				 SVGA3dShaderType shader_type,
-				 uint8_t num_input_sig,
-				 uint8_t num_output_sig,
-				 struct ttm_object_file *tfile,
+				 uपूर्णांक8_t num_input_sig,
+				 uपूर्णांक8_t num_output_sig,
+				 काष्ठा tपंचांग_object_file *tfile,
 				 u32 *handle)
-{
-	struct vmw_user_shader *ushader;
-	struct vmw_resource *res, *tmp;
-	struct ttm_operation_ctx ctx = {
-		.interruptible = true,
-		.no_wait_gpu = false
-	};
-	int ret;
+अणु
+	काष्ठा vmw_user_shader *ushader;
+	काष्ठा vmw_resource *res, *पंचांगp;
+	काष्ठा tपंचांग_operation_ctx ctx = अणु
+		.पूर्णांकerruptible = true,
+		.no_रुको_gpu = false
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (unlikely(vmw_user_shader_size == 0))
+	अगर (unlikely(vmw_user_shader_size == 0))
 		vmw_user_shader_size =
-			ttm_round_pot(sizeof(struct vmw_user_shader)) +
+			tपंचांग_round_pot(माप(काष्ठा vmw_user_shader)) +
 			VMW_IDA_ACC_SIZE + TTM_OBJ_EXTRA_SIZE;
 
-	ret = ttm_mem_global_alloc(vmw_mem_glob(dev_priv),
+	ret = tपंचांग_mem_global_alloc(vmw_mem_glob(dev_priv),
 				   vmw_user_shader_size,
 				   &ctx);
-	if (unlikely(ret != 0)) {
-		if (ret != -ERESTARTSYS)
+	अगर (unlikely(ret != 0)) अणु
+		अगर (ret != -ERESTARTSYS)
 			DRM_ERROR("Out of graphics memory for shader "
 				  "creation.\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ushader = kzalloc(sizeof(*ushader), GFP_KERNEL);
-	if (unlikely(!ushader)) {
-		ttm_mem_global_free(vmw_mem_glob(dev_priv),
+	ushader = kzalloc(माप(*ushader), GFP_KERNEL);
+	अगर (unlikely(!ushader)) अणु
+		tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv),
 				    vmw_user_shader_size);
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	res = &ushader->shader.res;
 	ushader->base.shareable = false;
-	ushader->base.tfile = NULL;
+	ushader->base.tfile = शून्य;
 
 	/*
-	 * From here on, the destructor takes over resource freeing.
+	 * From here on, the deकाष्ठाor takes over resource मुक्तing.
 	 */
 
 	ret = vmw_gb_shader_init(dev_priv, res, shader_size,
 				 offset, shader_type, num_input_sig,
 				 num_output_sig, buffer,
-				 vmw_user_shader_free);
-	if (unlikely(ret != 0))
-		goto out;
+				 vmw_user_shader_मुक्त);
+	अगर (unlikely(ret != 0))
+		जाओ out;
 
-	tmp = vmw_resource_reference(res);
-	ret = ttm_base_object_init(tfile, &ushader->base, false,
+	पंचांगp = vmw_resource_reference(res);
+	ret = tपंचांग_base_object_init(tfile, &ushader->base, false,
 				   VMW_RES_SHADER,
-				   &vmw_user_shader_base_release, NULL);
+				   &vmw_user_shader_base_release, शून्य);
 
-	if (unlikely(ret != 0)) {
-		vmw_resource_unreference(&tmp);
-		goto out_err;
-	}
+	अगर (unlikely(ret != 0)) अणु
+		vmw_resource_unreference(&पंचांगp);
+		जाओ out_err;
+	पूर्ण
 
-	if (handle)
+	अगर (handle)
 		*handle = ushader->base.handle;
 out_err:
 	vmw_resource_unreference(&res);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static struct vmw_resource *vmw_shader_alloc(struct vmw_private *dev_priv,
-					     struct vmw_buffer_object *buffer,
-					     size_t shader_size,
-					     size_t offset,
+अटल काष्ठा vmw_resource *vmw_shader_alloc(काष्ठा vmw_निजी *dev_priv,
+					     काष्ठा vmw_buffer_object *buffer,
+					     माप_प्रकार shader_size,
+					     माप_प्रकार offset,
 					     SVGA3dShaderType shader_type)
-{
-	struct vmw_shader *shader;
-	struct vmw_resource *res;
-	struct ttm_operation_ctx ctx = {
-		.interruptible = true,
-		.no_wait_gpu = false
-	};
-	int ret;
+अणु
+	काष्ठा vmw_shader *shader;
+	काष्ठा vmw_resource *res;
+	काष्ठा tपंचांग_operation_ctx ctx = अणु
+		.पूर्णांकerruptible = true,
+		.no_रुको_gpu = false
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (unlikely(vmw_shader_size == 0))
+	अगर (unlikely(vmw_shader_size == 0))
 		vmw_shader_size =
-			ttm_round_pot(sizeof(struct vmw_shader)) +
+			tपंचांग_round_pot(माप(काष्ठा vmw_shader)) +
 			VMW_IDA_ACC_SIZE;
 
-	ret = ttm_mem_global_alloc(vmw_mem_glob(dev_priv),
+	ret = tपंचांग_mem_global_alloc(vmw_mem_glob(dev_priv),
 				   vmw_shader_size,
 				   &ctx);
-	if (unlikely(ret != 0)) {
-		if (ret != -ERESTARTSYS)
+	अगर (unlikely(ret != 0)) अणु
+		अगर (ret != -ERESTARTSYS)
 			DRM_ERROR("Out of graphics memory for shader "
 				  "creation.\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	shader = kzalloc(sizeof(*shader), GFP_KERNEL);
-	if (unlikely(!shader)) {
-		ttm_mem_global_free(vmw_mem_glob(dev_priv),
+	shader = kzalloc(माप(*shader), GFP_KERNEL);
+	अगर (unlikely(!shader)) अणु
+		tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv),
 				    vmw_shader_size);
 		ret = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	res = &shader->res;
 
 	/*
-	 * From here on, the destructor takes over resource freeing.
+	 * From here on, the deकाष्ठाor takes over resource मुक्तing.
 	 */
 	ret = vmw_gb_shader_init(dev_priv, res, shader_size,
 				 offset, shader_type, 0, 0, buffer,
-				 vmw_shader_free);
+				 vmw_shader_मुक्त);
 
 out_err:
-	return ret ? ERR_PTR(ret) : res;
-}
+	वापस ret ? ERR_PTR(ret) : res;
+पूर्ण
 
 
-static int vmw_shader_define(struct drm_device *dev, struct drm_file *file_priv,
-			     enum drm_vmw_shader_type shader_type_drm,
-			     u32 buffer_handle, size_t size, size_t offset,
-			     uint8_t num_input_sig, uint8_t num_output_sig,
-			     uint32_t *shader_handle)
-{
-	struct vmw_private *dev_priv = vmw_priv(dev);
-	struct ttm_object_file *tfile = vmw_fpriv(file_priv)->tfile;
-	struct vmw_buffer_object *buffer = NULL;
+अटल पूर्णांक vmw_shader_define(काष्ठा drm_device *dev, काष्ठा drm_file *file_priv,
+			     क्रमागत drm_vmw_shader_type shader_type_drm,
+			     u32 buffer_handle, माप_प्रकार size, माप_प्रकार offset,
+			     uपूर्णांक8_t num_input_sig, uपूर्णांक8_t num_output_sig,
+			     uपूर्णांक32_t *shader_handle)
+अणु
+	काष्ठा vmw_निजी *dev_priv = vmw_priv(dev);
+	काष्ठा tपंचांग_object_file *tfile = vmw_fpriv(file_priv)->tfile;
+	काष्ठा vmw_buffer_object *buffer = शून्य;
 	SVGA3dShaderType shader_type;
-	int ret;
+	पूर्णांक ret;
 
-	if (buffer_handle != SVGA3D_INVALID_ID) {
+	अगर (buffer_handle != SVGA3D_INVALID_ID) अणु
 		ret = vmw_user_bo_lookup(tfile, buffer_handle,
-					     &buffer, NULL);
-		if (unlikely(ret != 0)) {
+					     &buffer, शून्य);
+		अगर (unlikely(ret != 0)) अणु
 			VMW_DEBUG_USER("Couldn't find buffer for shader creation.\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if ((u64)buffer->base.base.size < (u64)size + (u64)offset) {
+		अगर ((u64)buffer->base.base.size < (u64)size + (u64)offset) अणु
 			VMW_DEBUG_USER("Illegal buffer- or shader size.\n");
 			ret = -EINVAL;
-			goto out_bad_arg;
-		}
-	}
+			जाओ out_bad_arg;
+		पूर्ण
+	पूर्ण
 
-	switch (shader_type_drm) {
-	case drm_vmw_shader_type_vs:
+	चयन (shader_type_drm) अणु
+	हाल drm_vmw_shader_type_vs:
 		shader_type = SVGA3D_SHADERTYPE_VS;
-		break;
-	case drm_vmw_shader_type_ps:
+		अवरोध;
+	हाल drm_vmw_shader_type_ps:
 		shader_type = SVGA3D_SHADERTYPE_PS;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		VMW_DEBUG_USER("Illegal shader type.\n");
 		ret = -EINVAL;
-		goto out_bad_arg;
-	}
+		जाओ out_bad_arg;
+	पूर्ण
 
-	ret = ttm_read_lock(&dev_priv->reservation_sem, true);
-	if (unlikely(ret != 0))
-		goto out_bad_arg;
+	ret = tपंचांग_पढ़ो_lock(&dev_priv->reservation_sem, true);
+	अगर (unlikely(ret != 0))
+		जाओ out_bad_arg;
 
 	ret = vmw_user_shader_alloc(dev_priv, buffer, size, offset,
 				    shader_type, num_input_sig,
 				    num_output_sig, tfile, shader_handle);
 
-	ttm_read_unlock(&dev_priv->reservation_sem);
+	tपंचांग_पढ़ो_unlock(&dev_priv->reservation_sem);
 out_bad_arg:
 	vmw_bo_unreference(&buffer);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * vmw_shader_id_ok - Check whether a compat shader user key and
@@ -897,114 +898,114 @@ out_bad_arg:
  * @user_key: User space id of the shader.
  * @shader_type: Shader type.
  *
- * Returns true if valid false if not.
+ * Returns true अगर valid false अगर not.
  */
-static bool vmw_shader_id_ok(u32 user_key, SVGA3dShaderType shader_type)
-{
-	return user_key <= ((1 << 20) - 1) && (unsigned) shader_type < 16;
-}
+अटल bool vmw_shader_id_ok(u32 user_key, SVGA3dShaderType shader_type)
+अणु
+	वापस user_key <= ((1 << 20) - 1) && (अचिन्हित) shader_type < 16;
+पूर्ण
 
 /**
- * vmw_shader_key - Compute a hash key suitable for a compat shader.
+ * vmw_shader_key - Compute a hash key suitable क्रम a compat shader.
  *
  * @user_key: User space id of the shader.
  * @shader_type: Shader type.
  *
- * Returns a hash key suitable for a command buffer managed resource
+ * Returns a hash key suitable क्रम a command buffer managed resource
  * manager hash table.
  */
-static u32 vmw_shader_key(u32 user_key, SVGA3dShaderType shader_type)
-{
-	return user_key | (shader_type << 20);
-}
+अटल u32 vmw_shader_key(u32 user_key, SVGA3dShaderType shader_type)
+अणु
+	वापस user_key | (shader_type << 20);
+पूर्ण
 
 /**
- * vmw_shader_remove - Stage a compat shader for removal.
+ * vmw_shader_हटाओ - Stage a compat shader क्रम removal.
  *
- * @man: Pointer to the compat shader manager identifying the shader namespace.
- * @user_key: The key that is used to identify the shader. The key is
+ * @man: Poपूर्णांकer to the compat shader manager identअगरying the shader namespace.
+ * @user_key: The key that is used to identअगरy the shader. The key is
  * unique to the shader type.
  * @shader_type: Shader type.
  * @list: Caller's list of staged command buffer resource actions.
  */
-int vmw_shader_remove(struct vmw_cmdbuf_res_manager *man,
+पूर्णांक vmw_shader_हटाओ(काष्ठा vmw_cmdbuf_res_manager *man,
 		      u32 user_key, SVGA3dShaderType shader_type,
-		      struct list_head *list)
-{
-	struct vmw_resource *dummy;
+		      काष्ठा list_head *list)
+अणु
+	काष्ठा vmw_resource *dummy;
 
-	if (!vmw_shader_id_ok(user_key, shader_type))
-		return -EINVAL;
+	अगर (!vmw_shader_id_ok(user_key, shader_type))
+		वापस -EINVAL;
 
-	return vmw_cmdbuf_res_remove(man, vmw_cmdbuf_res_shader,
+	वापस vmw_cmdbuf_res_हटाओ(man, vmw_cmdbuf_res_shader,
 				     vmw_shader_key(user_key, shader_type),
 				     list, &dummy);
-}
+पूर्ण
 
 /**
- * vmw_compat_shader_add - Create a compat shader and stage it for addition
+ * vmw_compat_shader_add - Create a compat shader and stage it क्रम addition
  * as a command buffer managed resource.
  *
- * @dev_priv: Pointer to device private structure.
- * @man: Pointer to the compat shader manager identifying the shader namespace.
- * @user_key: The key that is used to identify the shader. The key is
+ * @dev_priv: Poपूर्णांकer to device निजी काष्ठाure.
+ * @man: Poपूर्णांकer to the compat shader manager identअगरying the shader namespace.
+ * @user_key: The key that is used to identअगरy the shader. The key is
  * unique to the shader type.
- * @bytecode: Pointer to the bytecode of the shader.
+ * @bytecode: Poपूर्णांकer to the bytecode of the shader.
  * @shader_type: Shader type.
  * @size: Command size.
  * @list: Caller's list of staged command buffer resource actions.
  *
  */
-int vmw_compat_shader_add(struct vmw_private *dev_priv,
-			  struct vmw_cmdbuf_res_manager *man,
-			  u32 user_key, const void *bytecode,
+पूर्णांक vmw_compat_shader_add(काष्ठा vmw_निजी *dev_priv,
+			  काष्ठा vmw_cmdbuf_res_manager *man,
+			  u32 user_key, स्थिर व्योम *bytecode,
 			  SVGA3dShaderType shader_type,
-			  size_t size,
-			  struct list_head *list)
-{
-	struct ttm_operation_ctx ctx = { false, true };
-	struct vmw_buffer_object *buf;
-	struct ttm_bo_kmap_obj map;
+			  माप_प्रकार size,
+			  काष्ठा list_head *list)
+अणु
+	काष्ठा tपंचांग_operation_ctx ctx = अणु false, true पूर्ण;
+	काष्ठा vmw_buffer_object *buf;
+	काष्ठा tपंचांग_bo_kmap_obj map;
 	bool is_iomem;
-	int ret;
-	struct vmw_resource *res;
+	पूर्णांक ret;
+	काष्ठा vmw_resource *res;
 
-	if (!vmw_shader_id_ok(user_key, shader_type))
-		return -EINVAL;
+	अगर (!vmw_shader_id_ok(user_key, shader_type))
+		वापस -EINVAL;
 
 	/* Allocate and pin a DMA buffer */
-	buf = kzalloc(sizeof(*buf), GFP_KERNEL);
-	if (unlikely(!buf))
-		return -ENOMEM;
+	buf = kzalloc(माप(*buf), GFP_KERNEL);
+	अगर (unlikely(!buf))
+		वापस -ENOMEM;
 
 	ret = vmw_bo_init(dev_priv, buf, size, &vmw_sys_placement,
-			      true, true, vmw_bo_bo_free);
-	if (unlikely(ret != 0))
-		goto out;
+			      true, true, vmw_bo_bo_मुक्त);
+	अगर (unlikely(ret != 0))
+		जाओ out;
 
-	ret = ttm_bo_reserve(&buf->base, false, true, NULL);
-	if (unlikely(ret != 0))
-		goto no_reserve;
+	ret = tपंचांग_bo_reserve(&buf->base, false, true, शून्य);
+	अगर (unlikely(ret != 0))
+		जाओ no_reserve;
 
 	/* Map and copy shader bytecode. */
-	ret = ttm_bo_kmap(&buf->base, 0, PAGE_ALIGN(size) >> PAGE_SHIFT,
+	ret = tपंचांग_bo_kmap(&buf->base, 0, PAGE_ALIGN(size) >> PAGE_SHIFT,
 			  &map);
-	if (unlikely(ret != 0)) {
-		ttm_bo_unreserve(&buf->base);
-		goto no_reserve;
-	}
+	अगर (unlikely(ret != 0)) अणु
+		tपंचांग_bo_unreserve(&buf->base);
+		जाओ no_reserve;
+	पूर्ण
 
-	memcpy(ttm_kmap_obj_virtual(&map, &is_iomem), bytecode, size);
+	स_नकल(tपंचांग_kmap_obj_भव(&map, &is_iomem), bytecode, size);
 	WARN_ON(is_iomem);
 
-	ttm_bo_kunmap(&map);
-	ret = ttm_bo_validate(&buf->base, &vmw_sys_placement, &ctx);
+	tपंचांग_bo_kunmap(&map);
+	ret = tपंचांग_bo_validate(&buf->base, &vmw_sys_placement, &ctx);
 	WARN_ON(ret != 0);
-	ttm_bo_unreserve(&buf->base);
+	tपंचांग_bo_unreserve(&buf->base);
 
 	res = vmw_shader_alloc(dev_priv, buf, size, 0, shader_type);
-	if (unlikely(ret != 0))
-		goto no_reserve;
+	अगर (unlikely(ret != 0))
+		जाओ no_reserve;
 
 	ret = vmw_cmdbuf_res_add(man, vmw_cmdbuf_res_shader,
 				 vmw_shader_key(user_key, shader_type),
@@ -1013,41 +1014,41 @@ int vmw_compat_shader_add(struct vmw_private *dev_priv,
 no_reserve:
 	vmw_bo_unreference(&buf);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * vmw_shader_lookup - Look up a compat shader
  *
- * @man: Pointer to the command buffer managed resource manager identifying
+ * @man: Poपूर्णांकer to the command buffer managed resource manager identअगरying
  * the shader namespace.
  * @user_key: The user space id of the shader.
  * @shader_type: The shader type.
  *
- * Returns a refcounted pointer to a struct vmw_resource if the shader was
- * found. An error pointer otherwise.
+ * Returns a refcounted poपूर्णांकer to a काष्ठा vmw_resource अगर the shader was
+ * found. An error poपूर्णांकer otherwise.
  */
-struct vmw_resource *
-vmw_shader_lookup(struct vmw_cmdbuf_res_manager *man,
+काष्ठा vmw_resource *
+vmw_shader_lookup(काष्ठा vmw_cmdbuf_res_manager *man,
 		  u32 user_key,
 		  SVGA3dShaderType shader_type)
-{
-	if (!vmw_shader_id_ok(user_key, shader_type))
-		return ERR_PTR(-EINVAL);
+अणु
+	अगर (!vmw_shader_id_ok(user_key, shader_type))
+		वापस ERR_PTR(-EINVAL);
 
-	return vmw_cmdbuf_res_lookup(man, vmw_cmdbuf_res_shader,
+	वापस vmw_cmdbuf_res_lookup(man, vmw_cmdbuf_res_shader,
 				     vmw_shader_key(user_key, shader_type));
-}
+पूर्ण
 
-int vmw_shader_define_ioctl(struct drm_device *dev, void *data,
-			     struct drm_file *file_priv)
-{
-	struct drm_vmw_shader_create_arg *arg =
-		(struct drm_vmw_shader_create_arg *)data;
+पूर्णांक vmw_shader_define_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			     काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_vmw_shader_create_arg *arg =
+		(काष्ठा drm_vmw_shader_create_arg *)data;
 
-	return vmw_shader_define(dev, file_priv, arg->shader_type,
+	वापस vmw_shader_define(dev, file_priv, arg->shader_type,
 				 arg->buffer_handle,
 				 arg->size, arg->offset,
 				 0, 0,
 				 &arg->shader_handle);
-}
+पूर्ण

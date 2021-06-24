@@ -1,355 +1,356 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Freescale FlexTimer Module (FTM) timer driver.
+ * Freescale FlexTimer Module (FTM) समयr driver.
  *
  * Copyright 2014 Freescale Semiconductor, Inc.
  */
 
-#include <linux/clk.h>
-#include <linux/clockchips.h>
-#include <linux/clocksource.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/sched_clock.h>
-#include <linux/slab.h>
-#include <linux/fsl/ftm.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/sched_घड़ी.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/fsl/fपंचांग.h>
 
-#define FTM_SC_CLK(c)	((c) << FTM_SC_CLK_MASK_SHIFT)
+#घोषणा FTM_SC_CLK(c)	((c) << FTM_SC_CLK_MASK_SHIFT)
 
-struct ftm_clock_device {
-	void __iomem *clksrc_base;
-	void __iomem *clkevt_base;
-	unsigned long periodic_cyc;
-	unsigned long ps;
+काष्ठा fपंचांग_घड़ी_device अणु
+	व्योम __iomem *clksrc_base;
+	व्योम __iomem *clkevt_base;
+	अचिन्हित दीर्घ periodic_cyc;
+	अचिन्हित दीर्घ ps;
 	bool big_endian;
-};
+पूर्ण;
 
-static struct ftm_clock_device *priv;
+अटल काष्ठा fपंचांग_घड़ी_device *priv;
 
-static inline u32 ftm_readl(void __iomem *addr)
-{
-	if (priv->big_endian)
-		return ioread32be(addr);
-	else
-		return ioread32(addr);
-}
+अटल अंतरभूत u32 fपंचांग_पढ़ोl(व्योम __iomem *addr)
+अणु
+	अगर (priv->big_endian)
+		वापस ioपढ़ो32be(addr);
+	अन्यथा
+		वापस ioपढ़ो32(addr);
+पूर्ण
 
-static inline void ftm_writel(u32 val, void __iomem *addr)
-{
-	if (priv->big_endian)
-		iowrite32be(val, addr);
-	else
-		iowrite32(val, addr);
-}
+अटल अंतरभूत व्योम fपंचांग_ग_लिखोl(u32 val, व्योम __iomem *addr)
+अणु
+	अगर (priv->big_endian)
+		ioग_लिखो32be(val, addr);
+	अन्यथा
+		ioग_लिखो32(val, addr);
+पूर्ण
 
-static inline void ftm_counter_enable(void __iomem *base)
-{
+अटल अंतरभूत व्योम fपंचांग_counter_enable(व्योम __iomem *base)
+अणु
 	u32 val;
 
-	/* select and enable counter clock source */
-	val = ftm_readl(base + FTM_SC);
+	/* select and enable counter घड़ी source */
+	val = fपंचांग_पढ़ोl(base + FTM_SC);
 	val &= ~(FTM_SC_PS_MASK | FTM_SC_CLK_MASK);
 	val |= priv->ps | FTM_SC_CLK(1);
-	ftm_writel(val, base + FTM_SC);
-}
+	fपंचांग_ग_लिखोl(val, base + FTM_SC);
+पूर्ण
 
-static inline void ftm_counter_disable(void __iomem *base)
-{
+अटल अंतरभूत व्योम fपंचांग_counter_disable(व्योम __iomem *base)
+अणु
 	u32 val;
 
-	/* disable counter clock source */
-	val = ftm_readl(base + FTM_SC);
+	/* disable counter घड़ी source */
+	val = fपंचांग_पढ़ोl(base + FTM_SC);
 	val &= ~(FTM_SC_PS_MASK | FTM_SC_CLK_MASK);
-	ftm_writel(val, base + FTM_SC);
-}
+	fपंचांग_ग_लिखोl(val, base + FTM_SC);
+पूर्ण
 
-static inline void ftm_irq_acknowledge(void __iomem *base)
-{
+अटल अंतरभूत व्योम fपंचांग_irq_acknowledge(व्योम __iomem *base)
+अणु
 	u32 val;
 
-	val = ftm_readl(base + FTM_SC);
+	val = fपंचांग_पढ़ोl(base + FTM_SC);
 	val &= ~FTM_SC_TOF;
-	ftm_writel(val, base + FTM_SC);
-}
+	fपंचांग_ग_लिखोl(val, base + FTM_SC);
+पूर्ण
 
-static inline void ftm_irq_enable(void __iomem *base)
-{
+अटल अंतरभूत व्योम fपंचांग_irq_enable(व्योम __iomem *base)
+अणु
 	u32 val;
 
-	val = ftm_readl(base + FTM_SC);
+	val = fपंचांग_पढ़ोl(base + FTM_SC);
 	val |= FTM_SC_TOIE;
-	ftm_writel(val, base + FTM_SC);
-}
+	fपंचांग_ग_लिखोl(val, base + FTM_SC);
+पूर्ण
 
-static inline void ftm_irq_disable(void __iomem *base)
-{
+अटल अंतरभूत व्योम fपंचांग_irq_disable(व्योम __iomem *base)
+अणु
 	u32 val;
 
-	val = ftm_readl(base + FTM_SC);
+	val = fपंचांग_पढ़ोl(base + FTM_SC);
 	val &= ~FTM_SC_TOIE;
-	ftm_writel(val, base + FTM_SC);
-}
+	fपंचांग_ग_लिखोl(val, base + FTM_SC);
+पूर्ण
 
-static inline void ftm_reset_counter(void __iomem *base)
-{
+अटल अंतरभूत व्योम fपंचांग_reset_counter(व्योम __iomem *base)
+अणु
 	/*
-	 * The CNT register contains the FTM counter value.
-	 * Reset clears the CNT register. Writing any value to COUNT
+	 * The CNT रेजिस्टर contains the FTM counter value.
+	 * Reset clears the CNT रेजिस्टर. Writing any value to COUNT
 	 * updates the counter with its initial value, CNTIN.
 	 */
-	ftm_writel(0x00, base + FTM_CNT);
-}
+	fपंचांग_ग_लिखोl(0x00, base + FTM_CNT);
+पूर्ण
 
-static u64 notrace ftm_read_sched_clock(void)
-{
-	return ftm_readl(priv->clksrc_base + FTM_CNT);
-}
+अटल u64 notrace fपंचांग_पढ़ो_sched_घड़ी(व्योम)
+अणु
+	वापस fपंचांग_पढ़ोl(priv->clksrc_base + FTM_CNT);
+पूर्ण
 
-static int ftm_set_next_event(unsigned long delta,
-				struct clock_event_device *unused)
-{
+अटल पूर्णांक fपंचांग_set_next_event(अचिन्हित दीर्घ delta,
+				काष्ठा घड़ी_event_device *unused)
+अणु
 	/*
-	 * The CNNIN and MOD are all double buffer registers, writing
-	 * to the MOD register latches the value into a buffer. The MOD
-	 * register is updated with the value of its write buffer with
+	 * The CNNIN and MOD are all द्विगुन buffer रेजिस्टरs, writing
+	 * to the MOD रेजिस्टर latches the value पूर्णांकo a buffer. The MOD
+	 * रेजिस्टर is updated with the value of its ग_लिखो buffer with
 	 * the following scenario:
-	 * a, the counter source clock is disabled.
+	 * a, the counter source घड़ी is disabled.
 	 */
-	ftm_counter_disable(priv->clkevt_base);
+	fपंचांग_counter_disable(priv->clkevt_base);
 
-	/* Force the value of CNTIN to be loaded into the FTM counter */
-	ftm_reset_counter(priv->clkevt_base);
+	/* Force the value of CNTIN to be loaded पूर्णांकo the FTM counter */
+	fपंचांग_reset_counter(priv->clkevt_base);
 
 	/*
 	 * The counter increments until the value of MOD is reached,
-	 * at which point the counter is reloaded with the value of CNTIN.
+	 * at which poपूर्णांक the counter is reloaded with the value of CNTIN.
 	 * The TOF (the overflow flag) bit is set when the FTM counter
 	 * changes from MOD to CNTIN. So we should using the delta - 1.
 	 */
-	ftm_writel(delta - 1, priv->clkevt_base + FTM_MOD);
+	fपंचांग_ग_लिखोl(delta - 1, priv->clkevt_base + FTM_MOD);
 
-	ftm_counter_enable(priv->clkevt_base);
+	fपंचांग_counter_enable(priv->clkevt_base);
 
-	ftm_irq_enable(priv->clkevt_base);
+	fपंचांग_irq_enable(priv->clkevt_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ftm_set_oneshot(struct clock_event_device *evt)
-{
-	ftm_counter_disable(priv->clkevt_base);
-	return 0;
-}
+अटल पूर्णांक fपंचांग_set_oneshot(काष्ठा घड़ी_event_device *evt)
+अणु
+	fपंचांग_counter_disable(priv->clkevt_base);
+	वापस 0;
+पूर्ण
 
-static int ftm_set_periodic(struct clock_event_device *evt)
-{
-	ftm_set_next_event(priv->periodic_cyc, evt);
-	return 0;
-}
+अटल पूर्णांक fपंचांग_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
+	fपंचांग_set_next_event(priv->periodic_cyc, evt);
+	वापस 0;
+पूर्ण
 
-static irqreturn_t ftm_evt_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *evt = dev_id;
+अटल irqवापस_t fपंचांग_evt_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *evt = dev_id;
 
-	ftm_irq_acknowledge(priv->clkevt_base);
+	fपंचांग_irq_acknowledge(priv->clkevt_base);
 
-	if (likely(clockevent_state_oneshot(evt))) {
-		ftm_irq_disable(priv->clkevt_base);
-		ftm_counter_disable(priv->clkevt_base);
-	}
+	अगर (likely(घड़ीevent_state_oneshot(evt))) अणु
+		fपंचांग_irq_disable(priv->clkevt_base);
+		fपंचांग_counter_disable(priv->clkevt_base);
+	पूर्ण
 
 	evt->event_handler(evt);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct clock_event_device ftm_clockevent = {
+अटल काष्ठा घड़ी_event_device fपंचांग_घड़ीevent = अणु
 	.name			= "Freescale ftm timer",
 	.features		= CLOCK_EVT_FEAT_PERIODIC |
 				  CLOCK_EVT_FEAT_ONESHOT,
-	.set_state_periodic	= ftm_set_periodic,
-	.set_state_oneshot	= ftm_set_oneshot,
-	.set_next_event		= ftm_set_next_event,
+	.set_state_periodic	= fपंचांग_set_periodic,
+	.set_state_oneshot	= fपंचांग_set_oneshot,
+	.set_next_event		= fपंचांग_set_next_event,
 	.rating			= 300,
-};
+पूर्ण;
 
-static int __init ftm_clockevent_init(unsigned long freq, int irq)
-{
-	int err;
+अटल पूर्णांक __init fपंचांग_घड़ीevent_init(अचिन्हित दीर्घ freq, पूर्णांक irq)
+अणु
+	पूर्णांक err;
 
-	ftm_writel(0x00, priv->clkevt_base + FTM_CNTIN);
-	ftm_writel(~0u, priv->clkevt_base + FTM_MOD);
+	fपंचांग_ग_लिखोl(0x00, priv->clkevt_base + FTM_CNTIN);
+	fपंचांग_ग_लिखोl(~0u, priv->clkevt_base + FTM_MOD);
 
-	ftm_reset_counter(priv->clkevt_base);
+	fपंचांग_reset_counter(priv->clkevt_base);
 
-	err = request_irq(irq, ftm_evt_interrupt, IRQF_TIMER | IRQF_IRQPOLL,
-			  "Freescale ftm timer", &ftm_clockevent);
-	if (err) {
+	err = request_irq(irq, fपंचांग_evt_पूर्णांकerrupt, IRQF_TIMER | IRQF_IRQPOLL,
+			  "Freescale ftm timer", &fपंचांग_घड़ीevent);
+	अगर (err) अणु
 		pr_err("ftm: setup irq failed: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	ftm_clockevent.cpumask = cpumask_of(0);
-	ftm_clockevent.irq = irq;
+	fपंचांग_घड़ीevent.cpumask = cpumask_of(0);
+	fपंचांग_घड़ीevent.irq = irq;
 
-	clockevents_config_and_register(&ftm_clockevent,
+	घड़ीevents_config_and_रेजिस्टर(&fपंचांग_घड़ीevent,
 					freq / (1 << priv->ps),
 					1, 0xffff);
 
-	ftm_counter_enable(priv->clkevt_base);
+	fपंचांग_counter_enable(priv->clkevt_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init ftm_clocksource_init(unsigned long freq)
-{
-	int err;
+अटल पूर्णांक __init fपंचांग_घड़ीsource_init(अचिन्हित दीर्घ freq)
+अणु
+	पूर्णांक err;
 
-	ftm_writel(0x00, priv->clksrc_base + FTM_CNTIN);
-	ftm_writel(~0u, priv->clksrc_base + FTM_MOD);
+	fपंचांग_ग_लिखोl(0x00, priv->clksrc_base + FTM_CNTIN);
+	fपंचांग_ग_लिखोl(~0u, priv->clksrc_base + FTM_MOD);
 
-	ftm_reset_counter(priv->clksrc_base);
+	fपंचांग_reset_counter(priv->clksrc_base);
 
-	sched_clock_register(ftm_read_sched_clock, 16, freq / (1 << priv->ps));
-	err = clocksource_mmio_init(priv->clksrc_base + FTM_CNT, "fsl-ftm",
+	sched_घड़ी_रेजिस्टर(fपंचांग_पढ़ो_sched_घड़ी, 16, freq / (1 << priv->ps));
+	err = घड़ीsource_mmio_init(priv->clksrc_base + FTM_CNT, "fsl-ftm",
 				    freq / (1 << priv->ps), 300, 16,
-				    clocksource_mmio_readl_up);
-	if (err) {
+				    घड़ीsource_mmio_पढ़ोl_up);
+	अगर (err) अणु
 		pr_err("ftm: init clock source mmio failed: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	ftm_counter_enable(priv->clksrc_base);
+	fपंचांग_counter_enable(priv->clksrc_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init __ftm_clk_init(struct device_node *np, char *cnt_name,
-				 char *ftm_name)
-{
-	struct clk *clk;
-	int err;
+अटल पूर्णांक __init __fपंचांग_clk_init(काष्ठा device_node *np, अक्षर *cnt_name,
+				 अक्षर *fपंचांग_name)
+अणु
+	काष्ठा clk *clk;
+	पूर्णांक err;
 
 	clk = of_clk_get_by_name(np, cnt_name);
-	if (IS_ERR(clk)) {
+	अगर (IS_ERR(clk)) अणु
 		pr_err("ftm: Cannot get \"%s\": %ld\n", cnt_name, PTR_ERR(clk));
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 	err = clk_prepare_enable(clk);
-	if (err) {
+	अगर (err) अणु
 		pr_err("ftm: clock failed to prepare+enable \"%s\": %d\n",
 			cnt_name, err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	clk = of_clk_get_by_name(np, ftm_name);
-	if (IS_ERR(clk)) {
-		pr_err("ftm: Cannot get \"%s\": %ld\n", ftm_name, PTR_ERR(clk));
-		return PTR_ERR(clk);
-	}
+	clk = of_clk_get_by_name(np, fपंचांग_name);
+	अगर (IS_ERR(clk)) अणु
+		pr_err("ftm: Cannot get \"%s\": %ld\n", fपंचांग_name, PTR_ERR(clk));
+		वापस PTR_ERR(clk);
+	पूर्ण
 	err = clk_prepare_enable(clk);
-	if (err)
+	अगर (err)
 		pr_err("ftm: clock failed to prepare+enable \"%s\": %d\n",
-			ftm_name, err);
+			fपंचांग_name, err);
 
-	return clk_get_rate(clk);
-}
+	वापस clk_get_rate(clk);
+पूर्ण
 
-static unsigned long __init ftm_clk_init(struct device_node *np)
-{
-	long freq;
+अटल अचिन्हित दीर्घ __init fपंचांग_clk_init(काष्ठा device_node *np)
+अणु
+	दीर्घ freq;
 
-	freq = __ftm_clk_init(np, "ftm-evt-counter-en", "ftm-evt");
-	if (freq <= 0)
-		return 0;
+	freq = __fपंचांग_clk_init(np, "ftm-evt-counter-en", "ftm-evt");
+	अगर (freq <= 0)
+		वापस 0;
 
-	freq = __ftm_clk_init(np, "ftm-src-counter-en", "ftm-src");
-	if (freq <= 0)
-		return 0;
+	freq = __fपंचांग_clk_init(np, "ftm-src-counter-en", "ftm-src");
+	अगर (freq <= 0)
+		वापस 0;
 
-	return freq;
-}
+	वापस freq;
+पूर्ण
 
-static int __init ftm_calc_closest_round_cyc(unsigned long freq)
-{
+अटल पूर्णांक __init fपंचांग_calc_बंदst_round_cyc(अचिन्हित दीर्घ freq)
+अणु
 	priv->ps = 0;
 
-	/* The counter register is only using the lower 16 bits, and
-	 * if the 'freq' value is to big here, then the periodic_cyc
+	/* The counter रेजिस्टर is only using the lower 16 bits, and
+	 * अगर the 'freq' value is to big here, then the periodic_cyc
 	 * may exceed 0xFFFF.
 	 */
-	do {
+	करो अणु
 		priv->periodic_cyc = DIV_ROUND_CLOSEST(freq,
 						HZ * (1 << priv->ps++));
-	} while (priv->periodic_cyc > 0xFFFF);
+	पूर्ण जबतक (priv->periodic_cyc > 0xFFFF);
 
-	if (priv->ps > FTM_PS_MAX) {
+	अगर (priv->ps > FTM_PS_MAX) अणु
 		pr_err("ftm: the prescaler is %lu > %d\n",
 				priv->ps, FTM_PS_MAX);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init ftm_timer_init(struct device_node *np)
-{
-	unsigned long freq;
-	int ret, irq;
+अटल पूर्णांक __init fपंचांग_समयr_init(काष्ठा device_node *np)
+अणु
+	अचिन्हित दीर्घ freq;
+	पूर्णांक ret, irq;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	ret = -ENXIO;
 	priv->clkevt_base = of_iomap(np, 0);
-	if (!priv->clkevt_base) {
+	अगर (!priv->clkevt_base) अणु
 		pr_err("ftm: unable to map event timer registers\n");
-		goto err_clkevt;
-	}
+		जाओ err_clkevt;
+	पूर्ण
 
 	priv->clksrc_base = of_iomap(np, 1);
-	if (!priv->clksrc_base) {
+	अगर (!priv->clksrc_base) अणु
 		pr_err("ftm: unable to map source timer registers\n");
-		goto err_clksrc;
-	}
+		जाओ err_clksrc;
+	पूर्ण
 
 	ret = -EINVAL;
 	irq = irq_of_parse_and_map(np, 0);
-	if (irq <= 0) {
+	अगर (irq <= 0) अणु
 		pr_err("ftm: unable to get IRQ from DT, %d\n", irq);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	priv->big_endian = of_property_read_bool(np, "big-endian");
+	priv->big_endian = of_property_पढ़ो_bool(np, "big-endian");
 
-	freq = ftm_clk_init(np);
-	if (!freq)
-		goto err;
+	freq = fपंचांग_clk_init(np);
+	अगर (!freq)
+		जाओ err;
 
-	ret = ftm_calc_closest_round_cyc(freq);
-	if (ret)
-		goto err;
+	ret = fपंचांग_calc_बंदst_round_cyc(freq);
+	अगर (ret)
+		जाओ err;
 
-	ret = ftm_clocksource_init(freq);
-	if (ret)
-		goto err;
+	ret = fपंचांग_घड़ीsource_init(freq);
+	अगर (ret)
+		जाओ err;
 
-	ret = ftm_clockevent_init(freq, irq);
-	if (ret)
-		goto err;
+	ret = fपंचांग_घड़ीevent_init(freq, irq);
+	अगर (ret)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
 	iounmap(priv->clksrc_base);
 err_clksrc:
 	iounmap(priv->clkevt_base);
 err_clkevt:
-	kfree(priv);
-	return ret;
-}
-TIMER_OF_DECLARE(flextimer, "fsl,ftm-timer", ftm_timer_init);
+	kमुक्त(priv);
+	वापस ret;
+पूर्ण
+TIMER_OF_DECLARE(flexसमयr, "fsl,ftm-timer", fपंचांग_समयr_init);

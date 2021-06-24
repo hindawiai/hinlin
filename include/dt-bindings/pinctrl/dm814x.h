@@ -1,49 +1,50 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * This header provides constants specific to DM814X pinctrl bindings.
+ * This header provides स्थिरants specअगरic to DM814X pinctrl bindings.
  */
 
-#ifndef _DT_BINDINGS_PINCTRL_DM814X_H
-#define _DT_BINDINGS_PINCTRL_DM814X_H
+#अगर_अघोषित _DT_BINDINGS_PINCTRL_DM814X_H
+#घोषणा _DT_BINDINGS_PINCTRL_DM814X_H
 
-#include <dt-bindings/pinctrl/omap.h>
+#समावेश <dt-bindings/pinctrl/omap.h>
 
-#undef INPUT_EN
-#undef PULL_UP
-#undef PULL_ENA
+#अघोषित INPUT_EN
+#अघोषित PULL_UP
+#अघोषित PULL_ENA
 
 /*
  * Note that dm814x silicon revision 2.1 and older require input enabled
- * (bit 18 set) for all 3.3V I/Os to avoid cumulative hardware damage. For
+ * (bit 18 set) क्रम all 3.3V I/Os to aव्योम cumulative hardware damage. For
  * more info, see errata advisory 2.1.87. We leave bit 18 out of
- * function-mask in dm814x.h and rely on the bootloader for it.
+ * function-mask in dm814x.h and rely on the bootloader क्रम it.
  */
-#define INPUT_EN		(1 << 18)
-#define PULL_UP			(1 << 17)
-#define PULL_DISABLE		(1 << 16)
+#घोषणा INPUT_EN		(1 << 18)
+#घोषणा PULL_UP			(1 << 17)
+#घोषणा PULL_DISABLE		(1 << 16)
 
 /* update macro depending on INPUT_EN and PULL_ENA */
-#undef PIN_OUTPUT
-#undef PIN_OUTPUT_PULLUP
-#undef PIN_OUTPUT_PULLDOWN
-#undef PIN_INPUT
-#undef PIN_INPUT_PULLUP
-#undef PIN_INPUT_PULLDOWN
+#अघोषित PIN_OUTPUT
+#अघोषित PIN_OUTPUT_PULLUP
+#अघोषित PIN_OUTPUT_PULLDOWN
+#अघोषित PIN_INPUT
+#अघोषित PIN_INPUT_PULLUP
+#अघोषित PIN_INPUT_PULLDOWN
 
-#define PIN_OUTPUT		(PULL_DISABLE)
-#define PIN_OUTPUT_PULLUP	(PULL_UP)
-#define PIN_OUTPUT_PULLDOWN	0
-#define PIN_INPUT		(INPUT_EN | PULL_DISABLE)
-#define PIN_INPUT_PULLUP	(INPUT_EN | PULL_UP)
-#define PIN_INPUT_PULLDOWN	(INPUT_EN)
+#घोषणा PIN_OUTPUT		(PULL_DISABLE)
+#घोषणा PIN_OUTPUT_PULLUP	(PULL_UP)
+#घोषणा PIN_OUTPUT_PULLDOWN	0
+#घोषणा PIN_INPUT		(INPUT_EN | PULL_DISABLE)
+#घोषणा PIN_INPUT_PULLUP	(INPUT_EN | PULL_UP)
+#घोषणा PIN_INPUT_PULLDOWN	(INPUT_EN)
 
 /* undef non-existing modes */
-#undef PIN_OFF_NONE
-#undef PIN_OFF_OUTPUT_HIGH
-#undef PIN_OFF_OUTPUT_LOW
-#undef PIN_OFF_INPUT_PULLUP
-#undef PIN_OFF_INPUT_PULLDOWN
-#undef PIN_OFF_WAKEUPENABLE
+#अघोषित PIN_OFF_NONE
+#अघोषित PIN_OFF_OUTPUT_HIGH
+#अघोषित PIN_OFF_OUTPUT_LOW
+#अघोषित PIN_OFF_INPUT_PULLUP
+#अघोषित PIN_OFF_INPUT_PULLDOWN
+#अघोषित PIN_OFF_WAKEUPENABLE
 
-#endif
+#पूर्ण_अगर
 

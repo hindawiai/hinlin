@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2013, Michael Ellerman, IBM Corporation.
  */
 
-#define pr_fmt(fmt)	"powernv-rng: " fmt
+#घोषणा pr_fmt(fmt)	"powernv-rng: " fmt
 
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/slab.h>
-#include <linux/smp.h>
-#include <asm/archrandom.h>
-#include <asm/cputable.h>
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/machdep.h>
-#include <asm/smp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/smp.h>
+#समावेश <यंत्र/archअक्रमom.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/smp.h>
 
-#define DARN_ERR 0xFFFFFFFFFFFFFFFFul
+#घोषणा DARN_ERR 0xFFFFFFFFFFFFFFFFul
 
-struct powernv_rng {
-	void __iomem *regs;
-	void __iomem *regs_real;
-	unsigned long mask;
-};
+काष्ठा घातernv_rng अणु
+	व्योम __iomem *regs;
+	व्योम __iomem *regs_real;
+	अचिन्हित दीर्घ mask;
+पूर्ण;
 
-static DEFINE_PER_CPU(struct powernv_rng *, powernv_rng);
+अटल DEFINE_PER_CPU(काष्ठा घातernv_rng *, घातernv_rng);
 
 
-int powernv_hwrng_present(void)
-{
-	struct powernv_rng *rng;
+पूर्णांक घातernv_hwrng_present(व्योम)
+अणु
+	काष्ठा घातernv_rng *rng;
 
-	rng = get_cpu_var(powernv_rng);
+	rng = get_cpu_var(घातernv_rng);
 	put_cpu_var(rng);
-	return rng != NULL;
-}
+	वापस rng != शून्य;
+पूर्ण
 
-static unsigned long rng_whiten(struct powernv_rng *rng, unsigned long val)
-{
-	unsigned long parity;
+अटल अचिन्हित दीर्घ rng_whiten(काष्ठा घातernv_rng *rng, अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ parity;
 
 	/* Calculate the parity of the value */
-	asm ("popcntd %0,%1" : "=r" (parity) : "r" (val));
+	यंत्र ("popcntd %0,%1" : "=r" (parity) : "r" (val));
 
 	/* xor our value with the previous mask */
 	val ^= rng->mask;
@@ -51,108 +52,108 @@ static unsigned long rng_whiten(struct powernv_rng *rng, unsigned long val)
 	/* update the mask based on the parity of this value */
 	rng->mask = (rng->mask << 1) | (parity & 1);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-int powernv_get_random_real_mode(unsigned long *v)
-{
-	struct powernv_rng *rng;
+पूर्णांक घातernv_get_अक्रमom_real_mode(अचिन्हित दीर्घ *v)
+अणु
+	काष्ठा घातernv_rng *rng;
 
-	rng = raw_cpu_read(powernv_rng);
+	rng = raw_cpu_पढ़ो(घातernv_rng);
 
-	*v = rng_whiten(rng, __raw_rm_readq(rng->regs_real));
+	*v = rng_whiten(rng, __raw_rm_पढ़ोq(rng->regs_real));
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int powernv_get_random_darn(unsigned long *v)
-{
-	unsigned long val;
+अटल पूर्णांक घातernv_get_अक्रमom_darn(अचिन्हित दीर्घ *v)
+अणु
+	अचिन्हित दीर्घ val;
 
-	/* Using DARN with L=1 - 64-bit conditioned random number */
-	asm volatile(PPC_DARN(%0, 1) : "=r"(val));
+	/* Using DARN with L=1 - 64-bit conditioned अक्रमom number */
+	यंत्र अस्थिर(PPC_DARN(%0, 1) : "=r"(val));
 
-	if (val == DARN_ERR)
-		return 0;
+	अगर (val == DARN_ERR)
+		वापस 0;
 
 	*v = val;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int initialise_darn(void)
-{
-	unsigned long val;
-	int i;
+अटल पूर्णांक initialise_darn(व्योम)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक i;
 
-	if (!cpu_has_feature(CPU_FTR_ARCH_300))
-		return -ENODEV;
+	अगर (!cpu_has_feature(CPU_FTR_ARCH_300))
+		वापस -ENODEV;
 
-	for (i = 0; i < 10; i++) {
-		if (powernv_get_random_darn(&val)) {
-			ppc_md.get_random_seed = powernv_get_random_darn;
-			return 0;
-		}
-	}
+	क्रम (i = 0; i < 10; i++) अणु
+		अगर (घातernv_get_अक्रमom_darn(&val)) अणु
+			ppc_md.get_अक्रमom_seed = घातernv_get_अक्रमom_darn;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	pr_warn("Unable to use DARN for get_random_seed()\n");
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-int powernv_get_random_long(unsigned long *v)
-{
-	struct powernv_rng *rng;
+पूर्णांक घातernv_get_अक्रमom_दीर्घ(अचिन्हित दीर्घ *v)
+अणु
+	काष्ठा घातernv_rng *rng;
 
-	rng = get_cpu_var(powernv_rng);
+	rng = get_cpu_var(घातernv_rng);
 
 	*v = rng_whiten(rng, in_be64(rng->regs));
 
 	put_cpu_var(rng);
 
-	return 1;
-}
-EXPORT_SYMBOL_GPL(powernv_get_random_long);
+	वापस 1;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातernv_get_अक्रमom_दीर्घ);
 
-static __init void rng_init_per_cpu(struct powernv_rng *rng,
-				    struct device_node *dn)
-{
-	int chip_id, cpu;
+अटल __init व्योम rng_init_per_cpu(काष्ठा घातernv_rng *rng,
+				    काष्ठा device_node *dn)
+अणु
+	पूर्णांक chip_id, cpu;
 
 	chip_id = of_get_ibm_chip_id(dn);
-	if (chip_id == -1)
+	अगर (chip_id == -1)
 		pr_warn("No ibm,chip-id found for %pOF.\n", dn);
 
-	for_each_possible_cpu(cpu) {
-		if (per_cpu(powernv_rng, cpu) == NULL ||
-		    cpu_to_chip_id(cpu) == chip_id) {
-			per_cpu(powernv_rng, cpu) = rng;
-		}
-	}
-}
+	क्रम_each_possible_cpu(cpu) अणु
+		अगर (per_cpu(घातernv_rng, cpu) == शून्य ||
+		    cpu_to_chip_id(cpu) == chip_id) अणु
+			per_cpu(घातernv_rng, cpu) = rng;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static __init int rng_create(struct device_node *dn)
-{
-	struct powernv_rng *rng;
-	struct resource res;
-	unsigned long val;
+अटल __init पूर्णांक rng_create(काष्ठा device_node *dn)
+अणु
+	काष्ठा घातernv_rng *rng;
+	काष्ठा resource res;
+	अचिन्हित दीर्घ val;
 
-	rng = kzalloc(sizeof(*rng), GFP_KERNEL);
-	if (!rng)
-		return -ENOMEM;
+	rng = kzalloc(माप(*rng), GFP_KERNEL);
+	अगर (!rng)
+		वापस -ENOMEM;
 
-	if (of_address_to_resource(dn, 0, &res)) {
-		kfree(rng);
-		return -ENXIO;
-	}
+	अगर (of_address_to_resource(dn, 0, &res)) अणु
+		kमुक्त(rng);
+		वापस -ENXIO;
+	पूर्ण
 
-	rng->regs_real = (void __iomem *)res.start;
+	rng->regs_real = (व्योम __iomem *)res.start;
 
 	rng->regs = of_iomap(dn, 0);
-	if (!rng->regs) {
-		kfree(rng);
-		return -ENXIO;
-	}
+	अगर (!rng->regs) अणु
+		kमुक्त(rng);
+		वापस -ENXIO;
+	पूर्ण
 
 	val = in_be64(rng->regs);
 	rng->mask = val;
@@ -161,30 +162,30 @@ static __init int rng_create(struct device_node *dn)
 
 	pr_info_once("Registering arch random hook.\n");
 
-	ppc_md.get_random_seed = powernv_get_random_long;
+	ppc_md.get_अक्रमom_seed = घातernv_get_अक्रमom_दीर्घ;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __init int rng_init(void)
-{
-	struct device_node *dn;
-	int rc;
+अटल __init पूर्णांक rng_init(व्योम)
+अणु
+	काष्ठा device_node *dn;
+	पूर्णांक rc;
 
-	for_each_compatible_node(dn, NULL, "ibm,power-rng") {
+	क्रम_each_compatible_node(dn, शून्य, "ibm,power-rng") अणु
 		rc = rng_create(dn);
-		if (rc) {
+		अगर (rc) अणु
 			pr_err("Failed creating rng for %pOF (%d).\n",
 				dn, rc);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Create devices for hwrng driver */
-		of_platform_device_create(dn, NULL, NULL);
-	}
+		/* Create devices क्रम hwrng driver */
+		of_platक्रमm_device_create(dn, शून्य, शून्य);
+	पूर्ण
 
 	initialise_darn();
 
-	return 0;
-}
-machine_subsys_initcall(powernv, rng_init);
+	वापस 0;
+पूर्ण
+machine_subsys_initcall(घातernv, rng_init);

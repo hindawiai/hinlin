@@ -1,238 +1,239 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#include <stdlib.h>
-#include <string.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
 
-#include <linux/objtool.h>
-#include <asm/orc_types.h>
+#समावेश <linux/objtool.h>
+#समावेश <यंत्र/orc_types.h>
 
-#include <objtool/check.h>
-#include <objtool/warn.h>
-#include <objtool/endianness.h>
+#समावेश <objtool/check.h>
+#समावेश <objtool/warn.h>
+#समावेश <objtool/endianness.h>
 
-static int init_orc_entry(struct orc_entry *orc, struct cfi_state *cfi)
-{
-	struct instruction *insn = container_of(cfi, struct instruction, cfi);
-	struct cfi_reg *bp = &cfi->regs[CFI_BP];
+अटल पूर्णांक init_orc_entry(काष्ठा orc_entry *orc, काष्ठा cfi_state *cfi)
+अणु
+	काष्ठा inकाष्ठाion *insn = container_of(cfi, काष्ठा inकाष्ठाion, cfi);
+	काष्ठा cfi_reg *bp = &cfi->regs[CFI_BP];
 
-	memset(orc, 0, sizeof(*orc));
+	स_रखो(orc, 0, माप(*orc));
 
 	orc->end = cfi->end;
 
-	if (cfi->cfa.base == CFI_UNDEFINED) {
+	अगर (cfi->cfa.base == CFI_UNDEFINED) अणु
 		orc->sp_reg = ORC_REG_UNDEFINED;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (cfi->cfa.base) {
-	case CFI_SP:
+	चयन (cfi->cfa.base) अणु
+	हाल CFI_SP:
 		orc->sp_reg = ORC_REG_SP;
-		break;
-	case CFI_SP_INDIRECT:
-		orc->sp_reg = ORC_REG_SP_INDIRECT;
-		break;
-	case CFI_BP:
+		अवरोध;
+	हाल CFI_SP_INसूचीECT:
+		orc->sp_reg = ORC_REG_SP_INसूचीECT;
+		अवरोध;
+	हाल CFI_BP:
 		orc->sp_reg = ORC_REG_BP;
-		break;
-	case CFI_BP_INDIRECT:
-		orc->sp_reg = ORC_REG_BP_INDIRECT;
-		break;
-	case CFI_R10:
+		अवरोध;
+	हाल CFI_BP_INसूचीECT:
+		orc->sp_reg = ORC_REG_BP_INसूचीECT;
+		अवरोध;
+	हाल CFI_R10:
 		orc->sp_reg = ORC_REG_R10;
-		break;
-	case CFI_R13:
+		अवरोध;
+	हाल CFI_R13:
 		orc->sp_reg = ORC_REG_R13;
-		break;
-	case CFI_DI:
+		अवरोध;
+	हाल CFI_DI:
 		orc->sp_reg = ORC_REG_DI;
-		break;
-	case CFI_DX:
+		अवरोध;
+	हाल CFI_DX:
 		orc->sp_reg = ORC_REG_DX;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_FUNC("unknown CFA base reg %d",
 			  insn->sec, insn->offset, cfi->cfa.base);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	switch (bp->base) {
-	case CFI_UNDEFINED:
+	चयन (bp->base) अणु
+	हाल CFI_UNDEFINED:
 		orc->bp_reg = ORC_REG_UNDEFINED;
-		break;
-	case CFI_CFA:
+		अवरोध;
+	हाल CFI_CFA:
 		orc->bp_reg = ORC_REG_PREV_SP;
-		break;
-	case CFI_BP:
+		अवरोध;
+	हाल CFI_BP:
 		orc->bp_reg = ORC_REG_BP;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_FUNC("unknown BP base reg %d",
 			  insn->sec, insn->offset, bp->base);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	orc->sp_offset = cfi->cfa.offset;
 	orc->bp_offset = bp->offset;
 	orc->type = cfi->type;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int write_orc_entry(struct elf *elf, struct section *orc_sec,
-			   struct section *ip_sec, unsigned int idx,
-			   struct section *insn_sec, unsigned long insn_off,
-			   struct orc_entry *o)
-{
-	struct orc_entry *orc;
+अटल पूर्णांक ग_लिखो_orc_entry(काष्ठा elf *elf, काष्ठा section *orc_sec,
+			   काष्ठा section *ip_sec, अचिन्हित पूर्णांक idx,
+			   काष्ठा section *insn_sec, अचिन्हित दीर्घ insn_off,
+			   काष्ठा orc_entry *o)
+अणु
+	काष्ठा orc_entry *orc;
 
 	/* populate ORC data */
-	orc = (struct orc_entry *)orc_sec->data->d_buf + idx;
-	memcpy(orc, o, sizeof(*orc));
-	orc->sp_offset = bswap_if_needed(orc->sp_offset);
-	orc->bp_offset = bswap_if_needed(orc->bp_offset);
+	orc = (काष्ठा orc_entry *)orc_sec->data->d_buf + idx;
+	स_नकल(orc, o, माप(*orc));
+	orc->sp_offset = bswap_अगर_needed(orc->sp_offset);
+	orc->bp_offset = bswap_अगर_needed(orc->bp_offset);
 
-	/* populate reloc for ip */
-	if (elf_add_reloc_to_insn(elf, ip_sec, idx * sizeof(int), R_X86_64_PC32,
+	/* populate reloc क्रम ip */
+	अगर (elf_add_reloc_to_insn(elf, ip_sec, idx * माप(पूर्णांक), R_X86_64_PC32,
 				  insn_sec, insn_off))
-		return -1;
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct orc_list_entry {
-	struct list_head list;
-	struct orc_entry orc;
-	struct section *insn_sec;
-	unsigned long insn_off;
-};
+काष्ठा orc_list_entry अणु
+	काष्ठा list_head list;
+	काष्ठा orc_entry orc;
+	काष्ठा section *insn_sec;
+	अचिन्हित दीर्घ insn_off;
+पूर्ण;
 
-static int orc_list_add(struct list_head *orc_list, struct orc_entry *orc,
-			struct section *sec, unsigned long offset)
-{
-	struct orc_list_entry *entry = malloc(sizeof(*entry));
+अटल पूर्णांक orc_list_add(काष्ठा list_head *orc_list, काष्ठा orc_entry *orc,
+			काष्ठा section *sec, अचिन्हित दीर्घ offset)
+अणु
+	काष्ठा orc_list_entry *entry = दो_स्मृति(माप(*entry));
 
-	if (!entry) {
+	अगर (!entry) अणु
 		WARN("malloc failed");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	entry->orc	= *orc;
 	entry->insn_sec = sec;
 	entry->insn_off = offset;
 
 	list_add_tail(&entry->list, orc_list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long alt_group_len(struct alt_group *alt_group)
-{
-	return alt_group->last_insn->offset +
+अटल अचिन्हित दीर्घ alt_group_len(काष्ठा alt_group *alt_group)
+अणु
+	वापस alt_group->last_insn->offset +
 	       alt_group->last_insn->len -
 	       alt_group->first_insn->offset;
-}
+पूर्ण
 
-int orc_create(struct objtool_file *file)
-{
-	struct section *sec, *orc_sec;
-	unsigned int nr = 0, idx = 0;
-	struct orc_list_entry *entry;
-	struct list_head orc_list;
+पूर्णांक orc_create(काष्ठा objtool_file *file)
+अणु
+	काष्ठा section *sec, *orc_sec;
+	अचिन्हित पूर्णांक nr = 0, idx = 0;
+	काष्ठा orc_list_entry *entry;
+	काष्ठा list_head orc_list;
 
-	struct orc_entry null = {
+	काष्ठा orc_entry null = अणु
 		.sp_reg  = ORC_REG_UNDEFINED,
 		.bp_reg  = ORC_REG_UNDEFINED,
 		.type    = UNWIND_HINT_TYPE_CALL,
-	};
+	पूर्ण;
 
 	/* Build a deduplicated list of ORC entries: */
 	INIT_LIST_HEAD(&orc_list);
-	for_each_sec(file, sec) {
-		struct orc_entry orc, prev_orc = {0};
-		struct instruction *insn;
+	क्रम_each_sec(file, sec) अणु
+		काष्ठा orc_entry orc, prev_orc = अणु0पूर्ण;
+		काष्ठा inकाष्ठाion *insn;
 		bool empty = true;
 
-		if (!sec->text)
-			continue;
+		अगर (!sec->text)
+			जारी;
 
-		sec_for_each_insn(file, sec, insn) {
-			struct alt_group *alt_group = insn->alt_group;
-			int i;
+		sec_क्रम_each_insn(file, sec, insn) अणु
+			काष्ठा alt_group *alt_group = insn->alt_group;
+			पूर्णांक i;
 
-			if (!alt_group) {
-				if (init_orc_entry(&orc, &insn->cfi))
-					return -1;
-				if (!memcmp(&prev_orc, &orc, sizeof(orc)))
-					continue;
-				if (orc_list_add(&orc_list, &orc, sec,
+			अगर (!alt_group) अणु
+				अगर (init_orc_entry(&orc, &insn->cfi))
+					वापस -1;
+				अगर (!स_भेद(&prev_orc, &orc, माप(orc)))
+					जारी;
+				अगर (orc_list_add(&orc_list, &orc, sec,
 						 insn->offset))
-					return -1;
+					वापस -1;
 				nr++;
 				prev_orc = orc;
 				empty = false;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			/*
-			 * Alternatives can have different stack layout
+			 * Alternatives can have dअगरferent stack layout
 			 * possibilities (but they shouldn't conflict).
-			 * Instead of traversing the instructions, use the
+			 * Instead of traversing the inकाष्ठाions, use the
 			 * alt_group's flattened byte-offset-addressed CFI
 			 * array.
 			 */
-			for (i = 0; i < alt_group_len(alt_group); i++) {
-				struct cfi_state *cfi = alt_group->cfi[i];
-				if (!cfi)
-					continue;
-				if (init_orc_entry(&orc, cfi))
-					return -1;
-				if (!memcmp(&prev_orc, &orc, sizeof(orc)))
-					continue;
-				if (orc_list_add(&orc_list, &orc, insn->sec,
+			क्रम (i = 0; i < alt_group_len(alt_group); i++) अणु
+				काष्ठा cfi_state *cfi = alt_group->cfi[i];
+				अगर (!cfi)
+					जारी;
+				अगर (init_orc_entry(&orc, cfi))
+					वापस -1;
+				अगर (!स_भेद(&prev_orc, &orc, माप(orc)))
+					जारी;
+				अगर (orc_list_add(&orc_list, &orc, insn->sec,
 						 insn->offset + i))
-					return -1;
+					वापस -1;
 				nr++;
 				prev_orc = orc;
 				empty = false;
-			}
+			पूर्ण
 
 			/* Skip to the end of the alt_group */
 			insn = alt_group->last_insn;
-		}
+		पूर्ण
 
 		/* Add a section terminator */
-		if (!empty) {
+		अगर (!empty) अणु
 			orc_list_add(&orc_list, &null, sec, sec->len);
 			nr++;
-		}
-	}
-	if (!nr)
-		return 0;
+		पूर्ण
+	पूर्ण
+	अगर (!nr)
+		वापस 0;
 
 	/* Create .orc_unwind, .orc_unwind_ip and .rela.orc_unwind_ip sections: */
 	sec = find_section_by_name(file->elf, ".orc_unwind");
-	if (sec) {
+	अगर (sec) अणु
 		WARN("file already has .orc_unwind section, skipping");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	orc_sec = elf_create_section(file->elf, ".orc_unwind", 0,
-				     sizeof(struct orc_entry), nr);
-	if (!orc_sec)
-		return -1;
+				     माप(काष्ठा orc_entry), nr);
+	अगर (!orc_sec)
+		वापस -1;
 
-	sec = elf_create_section(file->elf, ".orc_unwind_ip", 0, sizeof(int), nr);
-	if (!sec)
-		return -1;
+	sec = elf_create_section(file->elf, ".orc_unwind_ip", 0, माप(पूर्णांक), nr);
+	अगर (!sec)
+		वापस -1;
 
 	/* Write ORC entries to sections: */
-	list_for_each_entry(entry, &orc_list, list) {
-		if (write_orc_entry(file->elf, orc_sec, sec, idx++,
+	list_क्रम_each_entry(entry, &orc_list, list) अणु
+		अगर (ग_लिखो_orc_entry(file->elf, orc_sec, sec, idx++,
 				    entry->insn_sec, entry->insn_off,
 				    &entry->orc))
-			return -1;
-	}
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

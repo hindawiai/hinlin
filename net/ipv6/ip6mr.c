@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *	Linux IPv6 multicast routing support for BSD pim6sd
+ *	Linux IPv6 multicast routing support क्रम BSD pim6sd
  *	Based on net/ipv4/ipmr.c.
  *
  *	(c) 2004 Mickael Hoerdt, <hoerdt@clarinet.u-strasbg.fr>
@@ -11,207 +12,207 @@
  *		YOSHIFUJI Hideaki <yoshfuji@linux-ipv6.org>
  */
 
-#include <linux/uaccess.h>
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/kernel.h>
-#include <linux/fcntl.h>
-#include <linux/stat.h>
-#include <linux/socket.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/inetdevice.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/init.h>
-#include <linux/compat.h>
-#include <linux/rhashtable.h>
-#include <net/protocol.h>
-#include <linux/skbuff.h>
-#include <net/raw.h>
-#include <linux/notifier.h>
-#include <linux/if_arp.h>
-#include <net/checksum.h>
-#include <net/netlink.h>
-#include <net/fib_rules.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/socket.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/init.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/rhashtable.h>
+#समावेश <net/protocol.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/raw.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <net/checksum.h>
+#समावेश <net/netlink.h>
+#समावेश <net/fib_rules.h>
 
-#include <net/ipv6.h>
-#include <net/ip6_route.h>
-#include <linux/mroute6.h>
-#include <linux/pim.h>
-#include <net/addrconf.h>
-#include <linux/netfilter_ipv6.h>
-#include <linux/export.h>
-#include <net/ip6_checksum.h>
-#include <linux/netconf.h>
-#include <net/ip_tunnels.h>
+#समावेश <net/ipv6.h>
+#समावेश <net/ip6_route.h>
+#समावेश <linux/mroute6.h>
+#समावेश <linux/pim.h>
+#समावेश <net/addrconf.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <linux/export.h>
+#समावेश <net/ip6_checksum.h>
+#समावेश <linux/netconf.h>
+#समावेश <net/ip_tunnels.h>
 
-#include <linux/nospec.h>
+#समावेश <linux/nospec.h>
 
-struct ip6mr_rule {
-	struct fib_rule		common;
-};
+काष्ठा ip6mr_rule अणु
+	काष्ठा fib_rule		common;
+पूर्ण;
 
-struct ip6mr_result {
-	struct mr_table	*mrt;
-};
+काष्ठा ip6mr_result अणु
+	काष्ठा mr_table	*mrt;
+पूर्ण;
 
-/* Big lock, protecting vif table, mrt cache and mroute socket state.
+/* Big lock, protecting vअगर table, mrt cache and mroute socket state.
    Note that the changes are semaphored via rtnl_lock.
  */
 
-static DEFINE_RWLOCK(mrt_lock);
+अटल DEFINE_RWLOCK(mrt_lock);
 
 /* Multicast router control variables */
 
-/* Special spinlock for queue of unresolved entries */
-static DEFINE_SPINLOCK(mfc_unres_lock);
+/* Special spinlock क्रम queue of unresolved entries */
+अटल DEFINE_SPINLOCK(mfc_unres_lock);
 
-/* We return to original Alan's scheme. Hash table of resolved
-   entries is changed only in process context and protected
-   with weak lock mrt_lock. Queue of unresolved entries is protected
+/* We वापस to original Alan's scheme. Hash table of resolved
+   entries is changed only in process context and रक्षित
+   with weak lock mrt_lock. Queue of unresolved entries is रक्षित
    with strong spinlock mfc_unres_lock.
 
-   In this case data path is free of exclusive locks at all.
+   In this हाल data path is मुक्त of exclusive locks at all.
  */
 
-static struct kmem_cache *mrt_cachep __read_mostly;
+अटल काष्ठा kmem_cache *mrt_cachep __पढ़ो_mostly;
 
-static struct mr_table *ip6mr_new_table(struct net *net, u32 id);
-static void ip6mr_free_table(struct mr_table *mrt);
+अटल काष्ठा mr_table *ip6mr_new_table(काष्ठा net *net, u32 id);
+अटल व्योम ip6mr_मुक्त_table(काष्ठा mr_table *mrt);
 
-static void ip6_mr_forward(struct net *net, struct mr_table *mrt,
-			   struct net_device *dev, struct sk_buff *skb,
-			   struct mfc6_cache *cache);
-static int ip6mr_cache_report(struct mr_table *mrt, struct sk_buff *pkt,
-			      mifi_t mifi, int assert);
-static void mr6_netlink_event(struct mr_table *mrt, struct mfc6_cache *mfc,
-			      int cmd);
-static void mrt6msg_netlink_event(struct mr_table *mrt, struct sk_buff *pkt);
-static int ip6mr_rtm_dumproute(struct sk_buff *skb,
-			       struct netlink_callback *cb);
-static void mroute_clean_tables(struct mr_table *mrt, int flags);
-static void ipmr_expire_process(struct timer_list *t);
+अटल व्योम ip6_mr_क्रमward(काष्ठा net *net, काष्ठा mr_table *mrt,
+			   काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			   काष्ठा mfc6_cache *cache);
+अटल पूर्णांक ip6mr_cache_report(काष्ठा mr_table *mrt, काष्ठा sk_buff *pkt,
+			      mअगरi_t mअगरi, पूर्णांक निश्चित);
+अटल व्योम mr6_netlink_event(काष्ठा mr_table *mrt, काष्ठा mfc6_cache *mfc,
+			      पूर्णांक cmd);
+अटल व्योम mrt6msg_netlink_event(काष्ठा mr_table *mrt, काष्ठा sk_buff *pkt);
+अटल पूर्णांक ip6mr_rपंचांग_dumproute(काष्ठा sk_buff *skb,
+			       काष्ठा netlink_callback *cb);
+अटल व्योम mroute_clean_tables(काष्ठा mr_table *mrt, पूर्णांक flags);
+अटल व्योम ipmr_expire_process(काष्ठा समयr_list *t);
 
-#ifdef CONFIG_IPV6_MROUTE_MULTIPLE_TABLES
-#define ip6mr_for_each_table(mrt, net) \
-	list_for_each_entry_rcu(mrt, &net->ipv6.mr6_tables, list, \
+#अगर_घोषित CONFIG_IPV6_MROUTE_MULTIPLE_TABLES
+#घोषणा ip6mr_क्रम_each_table(mrt, net) \
+	list_क्रम_each_entry_rcu(mrt, &net->ipv6.mr6_tables, list, \
 				lockdep_rtnl_is_held() || \
 				list_empty(&net->ipv6.mr6_tables))
 
-static struct mr_table *ip6mr_mr_table_iter(struct net *net,
-					    struct mr_table *mrt)
-{
-	struct mr_table *ret;
+अटल काष्ठा mr_table *ip6mr_mr_table_iter(काष्ठा net *net,
+					    काष्ठा mr_table *mrt)
+अणु
+	काष्ठा mr_table *ret;
 
-	if (!mrt)
+	अगर (!mrt)
 		ret = list_entry_rcu(net->ipv6.mr6_tables.next,
-				     struct mr_table, list);
-	else
+				     काष्ठा mr_table, list);
+	अन्यथा
 		ret = list_entry_rcu(mrt->list.next,
-				     struct mr_table, list);
+				     काष्ठा mr_table, list);
 
-	if (&ret->list == &net->ipv6.mr6_tables)
-		return NULL;
-	return ret;
-}
+	अगर (&ret->list == &net->ipv6.mr6_tables)
+		वापस शून्य;
+	वापस ret;
+पूर्ण
 
-static struct mr_table *ip6mr_get_table(struct net *net, u32 id)
-{
-	struct mr_table *mrt;
+अटल काष्ठा mr_table *ip6mr_get_table(काष्ठा net *net, u32 id)
+अणु
+	काष्ठा mr_table *mrt;
 
-	ip6mr_for_each_table(mrt, net) {
-		if (mrt->id == id)
-			return mrt;
-	}
-	return NULL;
-}
+	ip6mr_क्रम_each_table(mrt, net) अणु
+		अगर (mrt->id == id)
+			वापस mrt;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int ip6mr_fib_lookup(struct net *net, struct flowi6 *flp6,
-			    struct mr_table **mrt)
-{
-	int err;
-	struct ip6mr_result res;
-	struct fib_lookup_arg arg = {
+अटल पूर्णांक ip6mr_fib_lookup(काष्ठा net *net, काष्ठा flowi6 *flp6,
+			    काष्ठा mr_table **mrt)
+अणु
+	पूर्णांक err;
+	काष्ठा ip6mr_result res;
+	काष्ठा fib_lookup_arg arg = अणु
 		.result = &res,
 		.flags = FIB_LOOKUP_NOREF,
-	};
+	पूर्ण;
 
-	/* update flow if oif or iif point to device enslaved to l3mdev */
+	/* update flow अगर oअगर or iअगर poपूर्णांक to device enslaved to l3mdev */
 	l3mdev_update_flow(net, flowi6_to_flowi(flp6));
 
 	err = fib_rules_lookup(net->ipv6.mr6_rules_ops,
 			       flowi6_to_flowi(flp6), 0, &arg);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 	*mrt = res.mrt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip6mr_rule_action(struct fib_rule *rule, struct flowi *flp,
-			     int flags, struct fib_lookup_arg *arg)
-{
-	struct ip6mr_result *res = arg->result;
-	struct mr_table *mrt;
+अटल पूर्णांक ip6mr_rule_action(काष्ठा fib_rule *rule, काष्ठा flowi *flp,
+			     पूर्णांक flags, काष्ठा fib_lookup_arg *arg)
+अणु
+	काष्ठा ip6mr_result *res = arg->result;
+	काष्ठा mr_table *mrt;
 
-	switch (rule->action) {
-	case FR_ACT_TO_TBL:
-		break;
-	case FR_ACT_UNREACHABLE:
-		return -ENETUNREACH;
-	case FR_ACT_PROHIBIT:
-		return -EACCES;
-	case FR_ACT_BLACKHOLE:
-	default:
-		return -EINVAL;
-	}
+	चयन (rule->action) अणु
+	हाल FR_ACT_TO_TBL:
+		अवरोध;
+	हाल FR_ACT_UNREACHABLE:
+		वापस -ENETUNREACH;
+	हाल FR_ACT_PROHIBIT:
+		वापस -EACCES;
+	हाल FR_ACT_BLACKHOLE:
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	arg->table = fib_rule_get_table(rule, arg);
 
 	mrt = ip6mr_get_table(rule->fr_net, arg->table);
-	if (!mrt)
-		return -EAGAIN;
+	अगर (!mrt)
+		वापस -EAGAIN;
 	res->mrt = mrt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip6mr_rule_match(struct fib_rule *rule, struct flowi *flp, int flags)
-{
-	return 1;
-}
+अटल पूर्णांक ip6mr_rule_match(काष्ठा fib_rule *rule, काष्ठा flowi *flp, पूर्णांक flags)
+अणु
+	वापस 1;
+पूर्ण
 
-static const struct nla_policy ip6mr_rule_policy[FRA_MAX + 1] = {
+अटल स्थिर काष्ठा nla_policy ip6mr_rule_policy[FRA_MAX + 1] = अणु
 	FRA_GENERIC_POLICY,
-};
+पूर्ण;
 
-static int ip6mr_rule_configure(struct fib_rule *rule, struct sk_buff *skb,
-				struct fib_rule_hdr *frh, struct nlattr **tb,
-				struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल पूर्णांक ip6mr_rule_configure(काष्ठा fib_rule *rule, काष्ठा sk_buff *skb,
+				काष्ठा fib_rule_hdr *frh, काष्ठा nlattr **tb,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static int ip6mr_rule_compare(struct fib_rule *rule, struct fib_rule_hdr *frh,
-			      struct nlattr **tb)
-{
-	return 1;
-}
+अटल पूर्णांक ip6mr_rule_compare(काष्ठा fib_rule *rule, काष्ठा fib_rule_hdr *frh,
+			      काष्ठा nlattr **tb)
+अणु
+	वापस 1;
+पूर्ण
 
-static int ip6mr_rule_fill(struct fib_rule *rule, struct sk_buff *skb,
-			   struct fib_rule_hdr *frh)
-{
+अटल पूर्णांक ip6mr_rule_fill(काष्ठा fib_rule *rule, काष्ठा sk_buff *skb,
+			   काष्ठा fib_rule_hdr *frh)
+अणु
 	frh->dst_len = 0;
 	frh->src_len = 0;
 	frh->tos     = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct fib_rules_ops __net_initconst ip6mr_rules_ops_template = {
+अटल स्थिर काष्ठा fib_rules_ops __net_initस्थिर ip6mr_rules_ops_ढाँचा = अणु
 	.family		= RTNL_FAMILY_IP6MR,
-	.rule_size	= sizeof(struct ip6mr_rule),
-	.addr_size	= sizeof(struct in6_addr),
+	.rule_size	= माप(काष्ठा ip6mr_rule),
+	.addr_size	= माप(काष्ठा in6_addr),
 	.action		= ip6mr_rule_action,
 	.match		= ip6mr_rule_match,
 	.configure	= ip6mr_rule_configure,
@@ -220,351 +221,351 @@ static const struct fib_rules_ops __net_initconst ip6mr_rules_ops_template = {
 	.nlgroup	= RTNLGRP_IPV6_RULE,
 	.policy		= ip6mr_rule_policy,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __net_init ip6mr_rules_init(struct net *net)
-{
-	struct fib_rules_ops *ops;
-	struct mr_table *mrt;
-	int err;
+अटल पूर्णांक __net_init ip6mr_rules_init(काष्ठा net *net)
+अणु
+	काष्ठा fib_rules_ops *ops;
+	काष्ठा mr_table *mrt;
+	पूर्णांक err;
 
-	ops = fib_rules_register(&ip6mr_rules_ops_template, net);
-	if (IS_ERR(ops))
-		return PTR_ERR(ops);
+	ops = fib_rules_रेजिस्टर(&ip6mr_rules_ops_ढाँचा, net);
+	अगर (IS_ERR(ops))
+		वापस PTR_ERR(ops);
 
 	INIT_LIST_HEAD(&net->ipv6.mr6_tables);
 
 	mrt = ip6mr_new_table(net, RT6_TABLE_DFLT);
-	if (IS_ERR(mrt)) {
+	अगर (IS_ERR(mrt)) अणु
 		err = PTR_ERR(mrt);
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	err = fib_default_rule_add(ops, 0x7fff, RT6_TABLE_DFLT, 0);
-	if (err < 0)
-		goto err2;
+	err = fib_शेष_rule_add(ops, 0x7fff, RT6_TABLE_DFLT, 0);
+	अगर (err < 0)
+		जाओ err2;
 
 	net->ipv6.mr6_rules_ops = ops;
-	return 0;
+	वापस 0;
 
 err2:
-	ip6mr_free_table(mrt);
+	ip6mr_मुक्त_table(mrt);
 err1:
-	fib_rules_unregister(ops);
-	return err;
-}
+	fib_rules_unरेजिस्टर(ops);
+	वापस err;
+पूर्ण
 
-static void __net_exit ip6mr_rules_exit(struct net *net)
-{
-	struct mr_table *mrt, *next;
+अटल व्योम __net_निकास ip6mr_rules_निकास(काष्ठा net *net)
+अणु
+	काष्ठा mr_table *mrt, *next;
 
 	rtnl_lock();
-	list_for_each_entry_safe(mrt, next, &net->ipv6.mr6_tables, list) {
+	list_क्रम_each_entry_safe(mrt, next, &net->ipv6.mr6_tables, list) अणु
 		list_del(&mrt->list);
-		ip6mr_free_table(mrt);
-	}
-	fib_rules_unregister(net->ipv6.mr6_rules_ops);
+		ip6mr_मुक्त_table(mrt);
+	पूर्ण
+	fib_rules_unरेजिस्टर(net->ipv6.mr6_rules_ops);
 	rtnl_unlock();
-}
+पूर्ण
 
-static int ip6mr_rules_dump(struct net *net, struct notifier_block *nb,
-			    struct netlink_ext_ack *extack)
-{
-	return fib_rules_dump(net, nb, RTNL_FAMILY_IP6MR, extack);
-}
+अटल पूर्णांक ip6mr_rules_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस fib_rules_dump(net, nb, RTNL_FAMILY_IP6MR, extack);
+पूर्ण
 
-static unsigned int ip6mr_rules_seq_read(struct net *net)
-{
-	return fib_rules_seq_read(net, RTNL_FAMILY_IP6MR);
-}
+अटल अचिन्हित पूर्णांक ip6mr_rules_seq_पढ़ो(काष्ठा net *net)
+अणु
+	वापस fib_rules_seq_पढ़ो(net, RTNL_FAMILY_IP6MR);
+पूर्ण
 
-bool ip6mr_rule_default(const struct fib_rule *rule)
-{
-	return fib_rule_matchall(rule) && rule->action == FR_ACT_TO_TBL &&
+bool ip6mr_rule_शेष(स्थिर काष्ठा fib_rule *rule)
+अणु
+	वापस fib_rule_matchall(rule) && rule->action == FR_ACT_TO_TBL &&
 	       rule->table == RT6_TABLE_DFLT && !rule->l3mdev;
-}
-EXPORT_SYMBOL(ip6mr_rule_default);
-#else
-#define ip6mr_for_each_table(mrt, net) \
-	for (mrt = net->ipv6.mrt6; mrt; mrt = NULL)
+पूर्ण
+EXPORT_SYMBOL(ip6mr_rule_शेष);
+#अन्यथा
+#घोषणा ip6mr_क्रम_each_table(mrt, net) \
+	क्रम (mrt = net->ipv6.mrt6; mrt; mrt = शून्य)
 
-static struct mr_table *ip6mr_mr_table_iter(struct net *net,
-					    struct mr_table *mrt)
-{
-	if (!mrt)
-		return net->ipv6.mrt6;
-	return NULL;
-}
+अटल काष्ठा mr_table *ip6mr_mr_table_iter(काष्ठा net *net,
+					    काष्ठा mr_table *mrt)
+अणु
+	अगर (!mrt)
+		वापस net->ipv6.mrt6;
+	वापस शून्य;
+पूर्ण
 
-static struct mr_table *ip6mr_get_table(struct net *net, u32 id)
-{
-	return net->ipv6.mrt6;
-}
+अटल काष्ठा mr_table *ip6mr_get_table(काष्ठा net *net, u32 id)
+अणु
+	वापस net->ipv6.mrt6;
+पूर्ण
 
-static int ip6mr_fib_lookup(struct net *net, struct flowi6 *flp6,
-			    struct mr_table **mrt)
-{
+अटल पूर्णांक ip6mr_fib_lookup(काष्ठा net *net, काष्ठा flowi6 *flp6,
+			    काष्ठा mr_table **mrt)
+अणु
 	*mrt = net->ipv6.mrt6;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __net_init ip6mr_rules_init(struct net *net)
-{
-	struct mr_table *mrt;
+अटल पूर्णांक __net_init ip6mr_rules_init(काष्ठा net *net)
+अणु
+	काष्ठा mr_table *mrt;
 
 	mrt = ip6mr_new_table(net, RT6_TABLE_DFLT);
-	if (IS_ERR(mrt))
-		return PTR_ERR(mrt);
+	अगर (IS_ERR(mrt))
+		वापस PTR_ERR(mrt);
 	net->ipv6.mrt6 = mrt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit ip6mr_rules_exit(struct net *net)
-{
+अटल व्योम __net_निकास ip6mr_rules_निकास(काष्ठा net *net)
+अणु
 	rtnl_lock();
-	ip6mr_free_table(net->ipv6.mrt6);
-	net->ipv6.mrt6 = NULL;
+	ip6mr_मुक्त_table(net->ipv6.mrt6);
+	net->ipv6.mrt6 = शून्य;
 	rtnl_unlock();
-}
+पूर्ण
 
-static int ip6mr_rules_dump(struct net *net, struct notifier_block *nb,
-			    struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल पूर्णांक ip6mr_rules_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+			    काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static unsigned int ip6mr_rules_seq_read(struct net *net)
-{
-	return 0;
-}
-#endif
+अटल अचिन्हित पूर्णांक ip6mr_rules_seq_पढ़ो(काष्ठा net *net)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int ip6mr_hash_cmp(struct rhashtable_compare_arg *arg,
-			  const void *ptr)
-{
-	const struct mfc6_cache_cmp_arg *cmparg = arg->key;
-	struct mfc6_cache *c = (struct mfc6_cache *)ptr;
+अटल पूर्णांक ip6mr_hash_cmp(काष्ठा rhashtable_compare_arg *arg,
+			  स्थिर व्योम *ptr)
+अणु
+	स्थिर काष्ठा mfc6_cache_cmp_arg *cmparg = arg->key;
+	काष्ठा mfc6_cache *c = (काष्ठा mfc6_cache *)ptr;
 
-	return !ipv6_addr_equal(&c->mf6c_mcastgrp, &cmparg->mf6c_mcastgrp) ||
+	वापस !ipv6_addr_equal(&c->mf6c_mcastgrp, &cmparg->mf6c_mcastgrp) ||
 	       !ipv6_addr_equal(&c->mf6c_origin, &cmparg->mf6c_origin);
-}
+पूर्ण
 
-static const struct rhashtable_params ip6mr_rht_params = {
-	.head_offset = offsetof(struct mr_mfc, mnode),
-	.key_offset = offsetof(struct mfc6_cache, cmparg),
-	.key_len = sizeof(struct mfc6_cache_cmp_arg),
-	.nelem_hint = 3,
+अटल स्थिर काष्ठा rhashtable_params ip6mr_rht_params = अणु
+	.head_offset = दुरत्व(काष्ठा mr_mfc, mnode),
+	.key_offset = दुरत्व(काष्ठा mfc6_cache, cmparg),
+	.key_len = माप(काष्ठा mfc6_cache_cmp_arg),
+	.nelem_hपूर्णांक = 3,
 	.obj_cmpfn = ip6mr_hash_cmp,
-	.automatic_shrinking = true,
-};
+	.स्वतःmatic_shrinking = true,
+पूर्ण;
 
-static void ip6mr_new_table_set(struct mr_table *mrt,
-				struct net *net)
-{
-#ifdef CONFIG_IPV6_MROUTE_MULTIPLE_TABLES
+अटल व्योम ip6mr_new_table_set(काष्ठा mr_table *mrt,
+				काष्ठा net *net)
+अणु
+#अगर_घोषित CONFIG_IPV6_MROUTE_MULTIPLE_TABLES
 	list_add_tail_rcu(&mrt->list, &net->ipv6.mr6_tables);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static struct mfc6_cache_cmp_arg ip6mr_mr_table_ops_cmparg_any = {
+अटल काष्ठा mfc6_cache_cmp_arg ip6mr_mr_table_ops_cmparg_any = अणु
 	.mf6c_origin = IN6ADDR_ANY_INIT,
 	.mf6c_mcastgrp = IN6ADDR_ANY_INIT,
-};
+पूर्ण;
 
-static struct mr_table_ops ip6mr_mr_table_ops = {
+अटल काष्ठा mr_table_ops ip6mr_mr_table_ops = अणु
 	.rht_params = &ip6mr_rht_params,
 	.cmparg_any = &ip6mr_mr_table_ops_cmparg_any,
-};
+पूर्ण;
 
-static struct mr_table *ip6mr_new_table(struct net *net, u32 id)
-{
-	struct mr_table *mrt;
+अटल काष्ठा mr_table *ip6mr_new_table(काष्ठा net *net, u32 id)
+अणु
+	काष्ठा mr_table *mrt;
 
 	mrt = ip6mr_get_table(net, id);
-	if (mrt)
-		return mrt;
+	अगर (mrt)
+		वापस mrt;
 
-	return mr_table_alloc(net, id, &ip6mr_mr_table_ops,
+	वापस mr_table_alloc(net, id, &ip6mr_mr_table_ops,
 			      ipmr_expire_process, ip6mr_new_table_set);
-}
+पूर्ण
 
-static void ip6mr_free_table(struct mr_table *mrt)
-{
-	del_timer_sync(&mrt->ipmr_expire_timer);
+अटल व्योम ip6mr_मुक्त_table(काष्ठा mr_table *mrt)
+अणु
+	del_समयr_sync(&mrt->ipmr_expire_समयr);
 	mroute_clean_tables(mrt, MRT6_FLUSH_MIFS | MRT6_FLUSH_MIFS_STATIC |
 				 MRT6_FLUSH_MFC | MRT6_FLUSH_MFC_STATIC);
 	rhltable_destroy(&mrt->mfc_hash);
-	kfree(mrt);
-}
+	kमुक्त(mrt);
+पूर्ण
 
-#ifdef CONFIG_PROC_FS
-/* The /proc interfaces to multicast routing
- * /proc/ip6_mr_cache /proc/ip6_mr_vif
+#अगर_घोषित CONFIG_PROC_FS
+/* The /proc पूर्णांकerfaces to multicast routing
+ * /proc/ip6_mr_cache /proc/ip6_mr_vअगर
  */
 
-static void *ip6mr_vif_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *ip6mr_vअगर_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(mrt_lock)
-{
-	struct mr_vif_iter *iter = seq->private;
-	struct net *net = seq_file_net(seq);
-	struct mr_table *mrt;
+अणु
+	काष्ठा mr_vअगर_iter *iter = seq->निजी;
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा mr_table *mrt;
 
 	mrt = ip6mr_get_table(net, RT6_TABLE_DFLT);
-	if (!mrt)
-		return ERR_PTR(-ENOENT);
+	अगर (!mrt)
+		वापस ERR_PTR(-ENOENT);
 
 	iter->mrt = mrt;
 
-	read_lock(&mrt_lock);
-	return mr_vif_seq_start(seq, pos);
-}
+	पढ़ो_lock(&mrt_lock);
+	वापस mr_vअगर_seq_start(seq, pos);
+पूर्ण
 
-static void ip6mr_vif_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम ip6mr_vअगर_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(mrt_lock)
-{
-	read_unlock(&mrt_lock);
-}
+अणु
+	पढ़ो_unlock(&mrt_lock);
+पूर्ण
 
-static int ip6mr_vif_seq_show(struct seq_file *seq, void *v)
-{
-	struct mr_vif_iter *iter = seq->private;
-	struct mr_table *mrt = iter->mrt;
+अटल पूर्णांक ip6mr_vअगर_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा mr_vअगर_iter *iter = seq->निजी;
+	काष्ठा mr_table *mrt = iter->mrt;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq,
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(seq,
 			 "Interface      BytesIn  PktsIn  BytesOut PktsOut Flags\n");
-	} else {
-		const struct vif_device *vif = v;
-		const char *name = vif->dev ? vif->dev->name : "none";
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा vअगर_device *vअगर = v;
+		स्थिर अक्षर *name = vअगर->dev ? vअगर->dev->name : "none";
 
-		seq_printf(seq,
+		seq_म_लिखो(seq,
 			   "%2td %-10s %8ld %7ld  %8ld %7ld %05X\n",
-			   vif - mrt->vif_table,
-			   name, vif->bytes_in, vif->pkt_in,
-			   vif->bytes_out, vif->pkt_out,
-			   vif->flags);
-	}
-	return 0;
-}
+			   vअगर - mrt->vअगर_table,
+			   name, vअगर->bytes_in, vअगर->pkt_in,
+			   vअगर->bytes_out, vअगर->pkt_out,
+			   vअगर->flags);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ip6mr_vif_seq_ops = {
-	.start = ip6mr_vif_seq_start,
-	.next  = mr_vif_seq_next,
-	.stop  = ip6mr_vif_seq_stop,
-	.show  = ip6mr_vif_seq_show,
-};
+अटल स्थिर काष्ठा seq_operations ip6mr_vअगर_seq_ops = अणु
+	.start = ip6mr_vअगर_seq_start,
+	.next  = mr_vअगर_seq_next,
+	.stop  = ip6mr_vअगर_seq_stop,
+	.show  = ip6mr_vअगर_seq_show,
+पूर्ण;
 
-static void *ipmr_mfc_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct net *net = seq_file_net(seq);
-	struct mr_table *mrt;
+अटल व्योम *ipmr_mfc_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा mr_table *mrt;
 
 	mrt = ip6mr_get_table(net, RT6_TABLE_DFLT);
-	if (!mrt)
-		return ERR_PTR(-ENOENT);
+	अगर (!mrt)
+		वापस ERR_PTR(-ENOENT);
 
-	return mr_mfc_seq_start(seq, pos, mrt, &mfc_unres_lock);
-}
+	वापस mr_mfc_seq_start(seq, pos, mrt, &mfc_unres_lock);
+पूर्ण
 
-static int ipmr_mfc_seq_show(struct seq_file *seq, void *v)
-{
-	int n;
+अटल पूर्णांक ipmr_mfc_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	पूर्णांक n;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq,
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(seq,
 			 "Group                            "
 			 "Origin                           "
 			 "Iif      Pkts  Bytes     Wrong  Oifs\n");
-	} else {
-		const struct mfc6_cache *mfc = v;
-		const struct mr_mfc_iter *it = seq->private;
-		struct mr_table *mrt = it->mrt;
+	पूर्ण अन्यथा अणु
+		स्थिर काष्ठा mfc6_cache *mfc = v;
+		स्थिर काष्ठा mr_mfc_iter *it = seq->निजी;
+		काष्ठा mr_table *mrt = it->mrt;
 
-		seq_printf(seq, "%pI6 %pI6 %-3hd",
+		seq_म_लिखो(seq, "%pI6 %pI6 %-3hd",
 			   &mfc->mf6c_mcastgrp, &mfc->mf6c_origin,
 			   mfc->_c.mfc_parent);
 
-		if (it->cache != &mrt->mfc_unres_queue) {
-			seq_printf(seq, " %8lu %8lu %8lu",
+		अगर (it->cache != &mrt->mfc_unres_queue) अणु
+			seq_म_लिखो(seq, " %8lu %8lu %8lu",
 				   mfc->_c.mfc_un.res.pkt,
 				   mfc->_c.mfc_un.res.bytes,
-				   mfc->_c.mfc_un.res.wrong_if);
-			for (n = mfc->_c.mfc_un.res.minvif;
-			     n < mfc->_c.mfc_un.res.maxvif; n++) {
-				if (VIF_EXISTS(mrt, n) &&
+				   mfc->_c.mfc_un.res.wrong_अगर);
+			क्रम (n = mfc->_c.mfc_un.res.minvअगर;
+			     n < mfc->_c.mfc_un.res.maxvअगर; n++) अणु
+				अगर (VIF_EXISTS(mrt, n) &&
 				    mfc->_c.mfc_un.res.ttls[n] < 255)
-					seq_printf(seq,
+					seq_म_लिखो(seq,
 						   " %2d:%-3d", n,
 						   mfc->_c.mfc_un.res.ttls[n]);
-			}
-		} else {
-			/* unresolved mfc_caches don't contain
-			 * pkt, bytes and wrong_if values
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			/* unresolved mfc_caches करोn't contain
+			 * pkt, bytes and wrong_अगर values
 			 */
-			seq_printf(seq, " %8lu %8lu %8lu", 0ul, 0ul, 0ul);
-		}
-		seq_putc(seq, '\n');
-	}
-	return 0;
-}
+			seq_म_लिखो(seq, " %8lu %8lu %8lu", 0ul, 0ul, 0ul);
+		पूर्ण
+		seq_अ_दो(seq, '\n');
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations ipmr_mfc_seq_ops = {
+अटल स्थिर काष्ठा seq_operations ipmr_mfc_seq_ops = अणु
 	.start = ipmr_mfc_seq_start,
 	.next  = mr_mfc_seq_next,
 	.stop  = mr_mfc_seq_stop,
 	.show  = ipmr_mfc_seq_show,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_IPV6_PIMSM_V2
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
 
-static int pim6_rcv(struct sk_buff *skb)
-{
-	struct pimreghdr *pim;
-	struct ipv6hdr   *encap;
-	struct net_device  *reg_dev = NULL;
-	struct net *net = dev_net(skb->dev);
-	struct mr_table *mrt;
-	struct flowi6 fl6 = {
-		.flowi6_iif	= skb->dev->ifindex,
+अटल पूर्णांक pim6_rcv(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा pimreghdr *pim;
+	काष्ठा ipv6hdr   *encap;
+	काष्ठा net_device  *reg_dev = शून्य;
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा mr_table *mrt;
+	काष्ठा flowi6 fl6 = अणु
+		.flowi6_iअगर	= skb->dev->अगरindex,
 		.flowi6_mark	= skb->mark,
-	};
-	int reg_vif_num;
+	पूर्ण;
+	पूर्णांक reg_vअगर_num;
 
-	if (!pskb_may_pull(skb, sizeof(*pim) + sizeof(*encap)))
-		goto drop;
+	अगर (!pskb_may_pull(skb, माप(*pim) + माप(*encap)))
+		जाओ drop;
 
-	pim = (struct pimreghdr *)skb_transport_header(skb);
-	if (pim->type != ((PIM_VERSION << 4) | PIM_TYPE_REGISTER) ||
-	    (pim->flags & PIM_NULL_REGISTER) ||
+	pim = (काष्ठा pimreghdr *)skb_transport_header(skb);
+	अगर (pim->type != ((PIM_VERSION << 4) | PIM_TYPE_REGISTER) ||
+	    (pim->flags & PIM_शून्य_REGISTER) ||
 	    (csum_ipv6_magic(&ipv6_hdr(skb)->saddr, &ipv6_hdr(skb)->daddr,
-			     sizeof(*pim), IPPROTO_PIM,
-			     csum_partial((void *)pim, sizeof(*pim), 0)) &&
+			     माप(*pim), IPPROTO_PIM,
+			     csum_partial((व्योम *)pim, माप(*pim), 0)) &&
 	     csum_fold(skb_checksum(skb, 0, skb->len, 0))))
-		goto drop;
+		जाओ drop;
 
-	/* check if the inner packet is destined to mcast group */
-	encap = (struct ipv6hdr *)(skb_transport_header(skb) +
-				   sizeof(*pim));
+	/* check अगर the inner packet is destined to mcast group */
+	encap = (काष्ठा ipv6hdr *)(skb_transport_header(skb) +
+				   माप(*pim));
 
-	if (!ipv6_addr_is_multicast(&encap->daddr) ||
+	अगर (!ipv6_addr_is_multicast(&encap->daddr) ||
 	    encap->payload_len == 0 ||
-	    ntohs(encap->payload_len) + sizeof(*pim) > skb->len)
-		goto drop;
+	    ntohs(encap->payload_len) + माप(*pim) > skb->len)
+		जाओ drop;
 
-	if (ip6mr_fib_lookup(net, &fl6, &mrt) < 0)
-		goto drop;
-	reg_vif_num = mrt->mroute_reg_vif_num;
+	अगर (ip6mr_fib_lookup(net, &fl6, &mrt) < 0)
+		जाओ drop;
+	reg_vअगर_num = mrt->mroute_reg_vअगर_num;
 
-	read_lock(&mrt_lock);
-	if (reg_vif_num >= 0)
-		reg_dev = mrt->vif_table[reg_vif_num].dev;
-	if (reg_dev)
+	पढ़ो_lock(&mrt_lock);
+	अगर (reg_vअगर_num >= 0)
+		reg_dev = mrt->vअगर_table[reg_vअगर_num].dev;
+	अगर (reg_dev)
 		dev_hold(reg_dev);
-	read_unlock(&mrt_lock);
+	पढ़ो_unlock(&mrt_lock);
 
-	if (!reg_dev)
-		goto drop;
+	अगर (!reg_dev)
+		जाओ drop;
 
 	skb->mac_header = skb->network_header;
 	skb_pull(skb, (u8 *)encap - skb->data);
@@ -574,461 +575,461 @@ static int pim6_rcv(struct sk_buff *skb)
 
 	skb_tunnel_rx(skb, reg_dev, dev_net(reg_dev));
 
-	netif_rx(skb);
+	netअगर_rx(skb);
 
 	dev_put(reg_dev);
-	return 0;
+	वापस 0;
  drop:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static const struct inet6_protocol pim6_protocol = {
+अटल स्थिर काष्ठा inet6_protocol pim6_protocol = अणु
 	.handler	=	pim6_rcv,
-};
+पूर्ण;
 
-/* Service routines creating virtual interfaces: PIMREG */
+/* Service routines creating भव पूर्णांकerfaces: PIMREG */
 
-static netdev_tx_t reg_vif_xmit(struct sk_buff *skb,
-				      struct net_device *dev)
-{
-	struct net *net = dev_net(dev);
-	struct mr_table *mrt;
-	struct flowi6 fl6 = {
-		.flowi6_oif	= dev->ifindex,
-		.flowi6_iif	= skb->skb_iif ? : LOOPBACK_IFINDEX,
+अटल netdev_tx_t reg_vअगर_xmit(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *dev)
+अणु
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा mr_table *mrt;
+	काष्ठा flowi6 fl6 = अणु
+		.flowi6_oअगर	= dev->अगरindex,
+		.flowi6_iअगर	= skb->skb_iअगर ? : LOOPBACK_IFINDEX,
 		.flowi6_mark	= skb->mark,
-	};
+	पूर्ण;
 
-	if (!pskb_inet_may_pull(skb))
-		goto tx_err;
+	अगर (!pskb_inet_may_pull(skb))
+		जाओ tx_err;
 
-	if (ip6mr_fib_lookup(net, &fl6, &mrt) < 0)
-		goto tx_err;
+	अगर (ip6mr_fib_lookup(net, &fl6, &mrt) < 0)
+		जाओ tx_err;
 
-	read_lock(&mrt_lock);
+	पढ़ो_lock(&mrt_lock);
 	dev->stats.tx_bytes += skb->len;
 	dev->stats.tx_packets++;
-	ip6mr_cache_report(mrt, skb, mrt->mroute_reg_vif_num, MRT6MSG_WHOLEPKT);
-	read_unlock(&mrt_lock);
-	kfree_skb(skb);
-	return NETDEV_TX_OK;
+	ip6mr_cache_report(mrt, skb, mrt->mroute_reg_vअगर_num, MRT6MSG_WHOLEPKT);
+	पढ़ो_unlock(&mrt_lock);
+	kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
 
 tx_err:
 	dev->stats.tx_errors++;
-	kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int reg_vif_get_iflink(const struct net_device *dev)
-{
-	return 0;
-}
+अटल पूर्णांक reg_vअगर_get_अगरlink(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops reg_vif_netdev_ops = {
-	.ndo_start_xmit	= reg_vif_xmit,
-	.ndo_get_iflink = reg_vif_get_iflink,
-};
+अटल स्थिर काष्ठा net_device_ops reg_vअगर_netdev_ops = अणु
+	.nकरो_start_xmit	= reg_vअगर_xmit,
+	.nकरो_get_अगरlink = reg_vअगर_get_अगरlink,
+पूर्ण;
 
-static void reg_vif_setup(struct net_device *dev)
-{
+अटल व्योम reg_vअगर_setup(काष्ठा net_device *dev)
+अणु
 	dev->type		= ARPHRD_PIMREG;
-	dev->mtu		= 1500 - sizeof(struct ipv6hdr) - 8;
+	dev->mtu		= 1500 - माप(काष्ठा ipv6hdr) - 8;
 	dev->flags		= IFF_NOARP;
-	dev->netdev_ops		= &reg_vif_netdev_ops;
-	dev->needs_free_netdev	= true;
+	dev->netdev_ops		= &reg_vअगर_netdev_ops;
+	dev->needs_मुक्त_netdev	= true;
 	dev->features		|= NETIF_F_NETNS_LOCAL;
-}
+पूर्ण
 
-static struct net_device *ip6mr_reg_vif(struct net *net, struct mr_table *mrt)
-{
-	struct net_device *dev;
-	char name[IFNAMSIZ];
+अटल काष्ठा net_device *ip6mr_reg_vअगर(काष्ठा net *net, काष्ठा mr_table *mrt)
+अणु
+	काष्ठा net_device *dev;
+	अक्षर name[IFNAMSIZ];
 
-	if (mrt->id == RT6_TABLE_DFLT)
-		sprintf(name, "pim6reg");
-	else
-		sprintf(name, "pim6reg%u", mrt->id);
+	अगर (mrt->id == RT6_TABLE_DFLT)
+		प्र_लिखो(name, "pim6reg");
+	अन्यथा
+		प्र_लिखो(name, "pim6reg%u", mrt->id);
 
-	dev = alloc_netdev(0, name, NET_NAME_UNKNOWN, reg_vif_setup);
-	if (!dev)
-		return NULL;
+	dev = alloc_netdev(0, name, NET_NAME_UNKNOWN, reg_vअगर_setup);
+	अगर (!dev)
+		वापस शून्य;
 
 	dev_net_set(dev, net);
 
-	if (register_netdevice(dev)) {
-		free_netdev(dev);
-		return NULL;
-	}
+	अगर (रेजिस्टर_netdevice(dev)) अणु
+		मुक्त_netdev(dev);
+		वापस शून्य;
+	पूर्ण
 
-	if (dev_open(dev, NULL))
-		goto failure;
+	अगर (dev_खोलो(dev, शून्य))
+		जाओ failure;
 
 	dev_hold(dev);
-	return dev;
+	वापस dev;
 
 failure:
-	unregister_netdevice(dev);
-	return NULL;
-}
-#endif
+	unरेजिस्टर_netdevice(dev);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static int call_ip6mr_vif_entry_notifiers(struct net *net,
-					  enum fib_event_type event_type,
-					  struct vif_device *vif,
-					  mifi_t vif_index, u32 tb_id)
-{
-	return mr_call_vif_notifiers(net, RTNL_FAMILY_IP6MR, event_type,
-				     vif, vif_index, tb_id,
+अटल पूर्णांक call_ip6mr_vअगर_entry_notअगरiers(काष्ठा net *net,
+					  क्रमागत fib_event_type event_type,
+					  काष्ठा vअगर_device *vअगर,
+					  mअगरi_t vअगर_index, u32 tb_id)
+अणु
+	वापस mr_call_vअगर_notअगरiers(net, RTNL_FAMILY_IP6MR, event_type,
+				     vअगर, vअगर_index, tb_id,
 				     &net->ipv6.ipmr_seq);
-}
+पूर्ण
 
-static int call_ip6mr_mfc_entry_notifiers(struct net *net,
-					  enum fib_event_type event_type,
-					  struct mfc6_cache *mfc, u32 tb_id)
-{
-	return mr_call_mfc_notifiers(net, RTNL_FAMILY_IP6MR, event_type,
+अटल पूर्णांक call_ip6mr_mfc_entry_notअगरiers(काष्ठा net *net,
+					  क्रमागत fib_event_type event_type,
+					  काष्ठा mfc6_cache *mfc, u32 tb_id)
+अणु
+	वापस mr_call_mfc_notअगरiers(net, RTNL_FAMILY_IP6MR, event_type,
 				     &mfc->_c, tb_id, &net->ipv6.ipmr_seq);
-}
+पूर्ण
 
 /* Delete a VIF entry */
-static int mif6_delete(struct mr_table *mrt, int vifi, int notify,
-		       struct list_head *head)
-{
-	struct vif_device *v;
-	struct net_device *dev;
-	struct inet6_dev *in6_dev;
+अटल पूर्णांक mअगर6_delete(काष्ठा mr_table *mrt, पूर्णांक vअगरi, पूर्णांक notअगरy,
+		       काष्ठा list_head *head)
+अणु
+	काष्ठा vअगर_device *v;
+	काष्ठा net_device *dev;
+	काष्ठा inet6_dev *in6_dev;
 
-	if (vifi < 0 || vifi >= mrt->maxvif)
-		return -EADDRNOTAVAIL;
+	अगर (vअगरi < 0 || vअगरi >= mrt->maxvअगर)
+		वापस -EADDRNOTAVAIL;
 
-	v = &mrt->vif_table[vifi];
+	v = &mrt->vअगर_table[vअगरi];
 
-	if (VIF_EXISTS(mrt, vifi))
-		call_ip6mr_vif_entry_notifiers(read_pnet(&mrt->net),
-					       FIB_EVENT_VIF_DEL, v, vifi,
+	अगर (VIF_EXISTS(mrt, vअगरi))
+		call_ip6mr_vअगर_entry_notअगरiers(पढ़ो_pnet(&mrt->net),
+					       FIB_EVENT_VIF_DEL, v, vअगरi,
 					       mrt->id);
 
-	write_lock_bh(&mrt_lock);
+	ग_लिखो_lock_bh(&mrt_lock);
 	dev = v->dev;
-	v->dev = NULL;
+	v->dev = शून्य;
 
-	if (!dev) {
-		write_unlock_bh(&mrt_lock);
-		return -EADDRNOTAVAIL;
-	}
+	अगर (!dev) अणु
+		ग_लिखो_unlock_bh(&mrt_lock);
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 
-#ifdef CONFIG_IPV6_PIMSM_V2
-	if (vifi == mrt->mroute_reg_vif_num)
-		mrt->mroute_reg_vif_num = -1;
-#endif
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
+	अगर (vअगरi == mrt->mroute_reg_vअगर_num)
+		mrt->mroute_reg_vअगर_num = -1;
+#पूर्ण_अगर
 
-	if (vifi + 1 == mrt->maxvif) {
-		int tmp;
-		for (tmp = vifi - 1; tmp >= 0; tmp--) {
-			if (VIF_EXISTS(mrt, tmp))
-				break;
-		}
-		mrt->maxvif = tmp + 1;
-	}
+	अगर (vअगरi + 1 == mrt->maxvअगर) अणु
+		पूर्णांक पंचांगp;
+		क्रम (पंचांगp = vअगरi - 1; पंचांगp >= 0; पंचांगp--) अणु
+			अगर (VIF_EXISTS(mrt, पंचांगp))
+				अवरोध;
+		पूर्ण
+		mrt->maxvअगर = पंचांगp + 1;
+	पूर्ण
 
-	write_unlock_bh(&mrt_lock);
+	ग_लिखो_unlock_bh(&mrt_lock);
 
 	dev_set_allmulti(dev, -1);
 
 	in6_dev = __in6_dev_get(dev);
-	if (in6_dev) {
-		in6_dev->cnf.mc_forwarding--;
-		inet6_netconf_notify_devconf(dev_net(dev), RTM_NEWNETCONF,
+	अगर (in6_dev) अणु
+		in6_dev->cnf.mc_क्रमwarding--;
+		inet6_netconf_notअगरy_devconf(dev_net(dev), RTM_NEWNETCONF,
 					     NETCONFA_MC_FORWARDING,
-					     dev->ifindex, &in6_dev->cnf);
-	}
+					     dev->अगरindex, &in6_dev->cnf);
+	पूर्ण
 
-	if ((v->flags & MIFF_REGISTER) && !notify)
-		unregister_netdevice_queue(dev, head);
+	अगर ((v->flags & MIFF_REGISTER) && !notअगरy)
+		unरेजिस्टर_netdevice_queue(dev, head);
 
 	dev_put(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void ip6mr_cache_free_rcu(struct rcu_head *head)
-{
-	struct mr_mfc *c = container_of(head, struct mr_mfc, rcu);
+अटल अंतरभूत व्योम ip6mr_cache_मुक्त_rcu(काष्ठा rcu_head *head)
+अणु
+	काष्ठा mr_mfc *c = container_of(head, काष्ठा mr_mfc, rcu);
 
-	kmem_cache_free(mrt_cachep, (struct mfc6_cache *)c);
-}
+	kmem_cache_मुक्त(mrt_cachep, (काष्ठा mfc6_cache *)c);
+पूर्ण
 
-static inline void ip6mr_cache_free(struct mfc6_cache *c)
-{
-	call_rcu(&c->_c.rcu, ip6mr_cache_free_rcu);
-}
+अटल अंतरभूत व्योम ip6mr_cache_मुक्त(काष्ठा mfc6_cache *c)
+अणु
+	call_rcu(&c->_c.rcu, ip6mr_cache_मुक्त_rcu);
+पूर्ण
 
-/* Destroy an unresolved cache entry, killing queued skbs
-   and reporting error to netlink readers.
+/* Destroy an unresolved cache entry, समाप्तing queued skbs
+   and reporting error to netlink पढ़ोers.
  */
 
-static void ip6mr_destroy_unres(struct mr_table *mrt, struct mfc6_cache *c)
-{
-	struct net *net = read_pnet(&mrt->net);
-	struct sk_buff *skb;
+अटल व्योम ip6mr_destroy_unres(काष्ठा mr_table *mrt, काष्ठा mfc6_cache *c)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&mrt->net);
+	काष्ठा sk_buff *skb;
 
 	atomic_dec(&mrt->cache_resolve_queue_len);
 
-	while ((skb = skb_dequeue(&c->_c.mfc_un.unres.unresolved)) != NULL) {
-		if (ipv6_hdr(skb)->version == 0) {
-			struct nlmsghdr *nlh = skb_pull(skb,
-							sizeof(struct ipv6hdr));
+	जबतक ((skb = skb_dequeue(&c->_c.mfc_un.unres.unresolved)) != शून्य) अणु
+		अगर (ipv6_hdr(skb)->version == 0) अणु
+			काष्ठा nlmsghdr *nlh = skb_pull(skb,
+							माप(काष्ठा ipv6hdr));
 			nlh->nlmsg_type = NLMSG_ERROR;
-			nlh->nlmsg_len = nlmsg_msg_size(sizeof(struct nlmsgerr));
+			nlh->nlmsg_len = nlmsg_msg_size(माप(काष्ठा nlmsgerr));
 			skb_trim(skb, nlh->nlmsg_len);
-			((struct nlmsgerr *)nlmsg_data(nlh))->error = -ETIMEDOUT;
+			((काष्ठा nlmsgerr *)nlmsg_data(nlh))->error = -ETIMEDOUT;
 			rtnl_unicast(skb, net, NETLINK_CB(skb).portid);
-		} else
-			kfree_skb(skb);
-	}
+		पूर्ण अन्यथा
+			kमुक्त_skb(skb);
+	पूर्ण
 
-	ip6mr_cache_free(c);
-}
+	ip6mr_cache_मुक्त(c);
+पूर्ण
 
 
-/* Timer process for all the unresolved queue. */
+/* Timer process क्रम all the unresolved queue. */
 
-static void ipmr_do_expire_process(struct mr_table *mrt)
-{
-	unsigned long now = jiffies;
-	unsigned long expires = 10 * HZ;
-	struct mr_mfc *c, *next;
+अटल व्योम ipmr_करो_expire_process(काष्ठा mr_table *mrt)
+अणु
+	अचिन्हित दीर्घ now = jअगरfies;
+	अचिन्हित दीर्घ expires = 10 * HZ;
+	काष्ठा mr_mfc *c, *next;
 
-	list_for_each_entry_safe(c, next, &mrt->mfc_unres_queue, list) {
-		if (time_after(c->mfc_un.unres.expires, now)) {
+	list_क्रम_each_entry_safe(c, next, &mrt->mfc_unres_queue, list) अणु
+		अगर (समय_after(c->mfc_un.unres.expires, now)) अणु
 			/* not yet... */
-			unsigned long interval = c->mfc_un.unres.expires - now;
-			if (interval < expires)
-				expires = interval;
-			continue;
-		}
+			अचिन्हित दीर्घ पूर्णांकerval = c->mfc_un.unres.expires - now;
+			अगर (पूर्णांकerval < expires)
+				expires = पूर्णांकerval;
+			जारी;
+		पूर्ण
 
 		list_del(&c->list);
-		mr6_netlink_event(mrt, (struct mfc6_cache *)c, RTM_DELROUTE);
-		ip6mr_destroy_unres(mrt, (struct mfc6_cache *)c);
-	}
+		mr6_netlink_event(mrt, (काष्ठा mfc6_cache *)c, RTM_DELROUTE);
+		ip6mr_destroy_unres(mrt, (काष्ठा mfc6_cache *)c);
+	पूर्ण
 
-	if (!list_empty(&mrt->mfc_unres_queue))
-		mod_timer(&mrt->ipmr_expire_timer, jiffies + expires);
-}
+	अगर (!list_empty(&mrt->mfc_unres_queue))
+		mod_समयr(&mrt->ipmr_expire_समयr, jअगरfies + expires);
+पूर्ण
 
-static void ipmr_expire_process(struct timer_list *t)
-{
-	struct mr_table *mrt = from_timer(mrt, t, ipmr_expire_timer);
+अटल व्योम ipmr_expire_process(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mr_table *mrt = from_समयr(mrt, t, ipmr_expire_समयr);
 
-	if (!spin_trylock(&mfc_unres_lock)) {
-		mod_timer(&mrt->ipmr_expire_timer, jiffies + 1);
-		return;
-	}
+	अगर (!spin_trylock(&mfc_unres_lock)) अणु
+		mod_समयr(&mrt->ipmr_expire_समयr, jअगरfies + 1);
+		वापस;
+	पूर्ण
 
-	if (!list_empty(&mrt->mfc_unres_queue))
-		ipmr_do_expire_process(mrt);
+	अगर (!list_empty(&mrt->mfc_unres_queue))
+		ipmr_करो_expire_process(mrt);
 
 	spin_unlock(&mfc_unres_lock);
-}
+पूर्ण
 
-/* Fill oifs list. It is called under write locked mrt_lock. */
+/* Fill oअगरs list. It is called under ग_लिखो locked mrt_lock. */
 
-static void ip6mr_update_thresholds(struct mr_table *mrt,
-				    struct mr_mfc *cache,
-				    unsigned char *ttls)
-{
-	int vifi;
+अटल व्योम ip6mr_update_thresholds(काष्ठा mr_table *mrt,
+				    काष्ठा mr_mfc *cache,
+				    अचिन्हित अक्षर *ttls)
+अणु
+	पूर्णांक vअगरi;
 
-	cache->mfc_un.res.minvif = MAXMIFS;
-	cache->mfc_un.res.maxvif = 0;
-	memset(cache->mfc_un.res.ttls, 255, MAXMIFS);
+	cache->mfc_un.res.minvअगर = MAXMIFS;
+	cache->mfc_un.res.maxvअगर = 0;
+	स_रखो(cache->mfc_un.res.ttls, 255, MAXMIFS);
 
-	for (vifi = 0; vifi < mrt->maxvif; vifi++) {
-		if (VIF_EXISTS(mrt, vifi) &&
-		    ttls[vifi] && ttls[vifi] < 255) {
-			cache->mfc_un.res.ttls[vifi] = ttls[vifi];
-			if (cache->mfc_un.res.minvif > vifi)
-				cache->mfc_un.res.minvif = vifi;
-			if (cache->mfc_un.res.maxvif <= vifi)
-				cache->mfc_un.res.maxvif = vifi + 1;
-		}
-	}
-	cache->mfc_un.res.lastuse = jiffies;
-}
+	क्रम (vअगरi = 0; vअगरi < mrt->maxvअगर; vअगरi++) अणु
+		अगर (VIF_EXISTS(mrt, vअगरi) &&
+		    ttls[vअगरi] && ttls[vअगरi] < 255) अणु
+			cache->mfc_un.res.ttls[vअगरi] = ttls[vअगरi];
+			अगर (cache->mfc_un.res.minvअगर > vअगरi)
+				cache->mfc_un.res.minvअगर = vअगरi;
+			अगर (cache->mfc_un.res.maxvअगर <= vअगरi)
+				cache->mfc_un.res.maxvअगर = vअगरi + 1;
+		पूर्ण
+	पूर्ण
+	cache->mfc_un.res.lastuse = jअगरfies;
+पूर्ण
 
-static int mif6_add(struct net *net, struct mr_table *mrt,
-		    struct mif6ctl *vifc, int mrtsock)
-{
-	int vifi = vifc->mif6c_mifi;
-	struct vif_device *v = &mrt->vif_table[vifi];
-	struct net_device *dev;
-	struct inet6_dev *in6_dev;
-	int err;
+अटल पूर्णांक mअगर6_add(काष्ठा net *net, काष्ठा mr_table *mrt,
+		    काष्ठा mअगर6ctl *vअगरc, पूर्णांक mrtsock)
+अणु
+	पूर्णांक vअगरi = vअगरc->mअगर6c_mअगरi;
+	काष्ठा vअगर_device *v = &mrt->vअगर_table[vअगरi];
+	काष्ठा net_device *dev;
+	काष्ठा inet6_dev *in6_dev;
+	पूर्णांक err;
 
-	/* Is vif busy ? */
-	if (VIF_EXISTS(mrt, vifi))
-		return -EADDRINUSE;
+	/* Is vअगर busy ? */
+	अगर (VIF_EXISTS(mrt, vअगरi))
+		वापस -EADDRINUSE;
 
-	switch (vifc->mif6c_flags) {
-#ifdef CONFIG_IPV6_PIMSM_V2
-	case MIFF_REGISTER:
+	चयन (vअगरc->mअगर6c_flags) अणु
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
+	हाल MIFF_REGISTER:
 		/*
 		 * Special Purpose VIF in PIM
 		 * All the packets will be sent to the daemon
 		 */
-		if (mrt->mroute_reg_vif_num >= 0)
-			return -EADDRINUSE;
-		dev = ip6mr_reg_vif(net, mrt);
-		if (!dev)
-			return -ENOBUFS;
+		अगर (mrt->mroute_reg_vअगर_num >= 0)
+			वापस -EADDRINUSE;
+		dev = ip6mr_reg_vअगर(net, mrt);
+		अगर (!dev)
+			वापस -ENOBUFS;
 		err = dev_set_allmulti(dev, 1);
-		if (err) {
-			unregister_netdevice(dev);
+		अगर (err) अणु
+			unरेजिस्टर_netdevice(dev);
 			dev_put(dev);
-			return err;
-		}
-		break;
-#endif
-	case 0:
-		dev = dev_get_by_index(net, vifc->mif6c_pifi);
-		if (!dev)
-			return -EADDRNOTAVAIL;
+			वापस err;
+		पूर्ण
+		अवरोध;
+#पूर्ण_अगर
+	हाल 0:
+		dev = dev_get_by_index(net, vअगरc->mअगर6c_pअगरi);
+		अगर (!dev)
+			वापस -EADDRNOTAVAIL;
 		err = dev_set_allmulti(dev, 1);
-		if (err) {
+		अगर (err) अणु
 			dev_put(dev);
-			return err;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस err;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	in6_dev = __in6_dev_get(dev);
-	if (in6_dev) {
-		in6_dev->cnf.mc_forwarding++;
-		inet6_netconf_notify_devconf(dev_net(dev), RTM_NEWNETCONF,
+	अगर (in6_dev) अणु
+		in6_dev->cnf.mc_क्रमwarding++;
+		inet6_netconf_notअगरy_devconf(dev_net(dev), RTM_NEWNETCONF,
 					     NETCONFA_MC_FORWARDING,
-					     dev->ifindex, &in6_dev->cnf);
-	}
+					     dev->अगरindex, &in6_dev->cnf);
+	पूर्ण
 
-	/* Fill in the VIF structures */
-	vif_device_init(v, dev, vifc->vifc_rate_limit, vifc->vifc_threshold,
-			vifc->mif6c_flags | (!mrtsock ? VIFF_STATIC : 0),
+	/* Fill in the VIF काष्ठाures */
+	vअगर_device_init(v, dev, vअगरc->vअगरc_rate_limit, vअगरc->vअगरc_threshold,
+			vअगरc->mअगर6c_flags | (!mrtsock ? VIFF_STATIC : 0),
 			MIFF_REGISTER);
 
 	/* And finish update writing critical data */
-	write_lock_bh(&mrt_lock);
+	ग_लिखो_lock_bh(&mrt_lock);
 	v->dev = dev;
-#ifdef CONFIG_IPV6_PIMSM_V2
-	if (v->flags & MIFF_REGISTER)
-		mrt->mroute_reg_vif_num = vifi;
-#endif
-	if (vifi + 1 > mrt->maxvif)
-		mrt->maxvif = vifi + 1;
-	write_unlock_bh(&mrt_lock);
-	call_ip6mr_vif_entry_notifiers(net, FIB_EVENT_VIF_ADD,
-				       v, vifi, mrt->id);
-	return 0;
-}
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
+	अगर (v->flags & MIFF_REGISTER)
+		mrt->mroute_reg_vअगर_num = vअगरi;
+#पूर्ण_अगर
+	अगर (vअगरi + 1 > mrt->maxvअगर)
+		mrt->maxvअगर = vअगरi + 1;
+	ग_लिखो_unlock_bh(&mrt_lock);
+	call_ip6mr_vअगर_entry_notअगरiers(net, FIB_EVENT_VIF_ADD,
+				       v, vअगरi, mrt->id);
+	वापस 0;
+पूर्ण
 
-static struct mfc6_cache *ip6mr_cache_find(struct mr_table *mrt,
-					   const struct in6_addr *origin,
-					   const struct in6_addr *mcastgrp)
-{
-	struct mfc6_cache_cmp_arg arg = {
+अटल काष्ठा mfc6_cache *ip6mr_cache_find(काष्ठा mr_table *mrt,
+					   स्थिर काष्ठा in6_addr *origin,
+					   स्थिर काष्ठा in6_addr *mcastgrp)
+अणु
+	काष्ठा mfc6_cache_cmp_arg arg = अणु
 		.mf6c_origin = *origin,
 		.mf6c_mcastgrp = *mcastgrp,
-	};
+	पूर्ण;
 
-	return mr_mfc_find(mrt, &arg);
-}
+	वापस mr_mfc_find(mrt, &arg);
+पूर्ण
 
-/* Look for a (*,G) entry */
-static struct mfc6_cache *ip6mr_cache_find_any(struct mr_table *mrt,
-					       struct in6_addr *mcastgrp,
-					       mifi_t mifi)
-{
-	struct mfc6_cache_cmp_arg arg = {
+/* Look क्रम a (*,G) entry */
+अटल काष्ठा mfc6_cache *ip6mr_cache_find_any(काष्ठा mr_table *mrt,
+					       काष्ठा in6_addr *mcastgrp,
+					       mअगरi_t mअगरi)
+अणु
+	काष्ठा mfc6_cache_cmp_arg arg = अणु
 		.mf6c_origin = in6addr_any,
 		.mf6c_mcastgrp = *mcastgrp,
-	};
+	पूर्ण;
 
-	if (ipv6_addr_any(mcastgrp))
-		return mr_mfc_find_any_parent(mrt, mifi);
-	return mr_mfc_find_any(mrt, mifi, &arg);
-}
+	अगर (ipv6_addr_any(mcastgrp))
+		वापस mr_mfc_find_any_parent(mrt, mअगरi);
+	वापस mr_mfc_find_any(mrt, mअगरi, &arg);
+पूर्ण
 
-/* Look for a (S,G,iif) entry if parent != -1 */
-static struct mfc6_cache *
-ip6mr_cache_find_parent(struct mr_table *mrt,
-			const struct in6_addr *origin,
-			const struct in6_addr *mcastgrp,
-			int parent)
-{
-	struct mfc6_cache_cmp_arg arg = {
+/* Look क्रम a (S,G,iअगर) entry अगर parent != -1 */
+अटल काष्ठा mfc6_cache *
+ip6mr_cache_find_parent(काष्ठा mr_table *mrt,
+			स्थिर काष्ठा in6_addr *origin,
+			स्थिर काष्ठा in6_addr *mcastgrp,
+			पूर्णांक parent)
+अणु
+	काष्ठा mfc6_cache_cmp_arg arg = अणु
 		.mf6c_origin = *origin,
 		.mf6c_mcastgrp = *mcastgrp,
-	};
+	पूर्ण;
 
-	return mr_mfc_find_parent(mrt, &arg, parent);
-}
+	वापस mr_mfc_find_parent(mrt, &arg, parent);
+पूर्ण
 
 /* Allocate a multicast cache entry */
-static struct mfc6_cache *ip6mr_cache_alloc(void)
-{
-	struct mfc6_cache *c = kmem_cache_zalloc(mrt_cachep, GFP_KERNEL);
-	if (!c)
-		return NULL;
-	c->_c.mfc_un.res.last_assert = jiffies - MFC_ASSERT_THRESH - 1;
-	c->_c.mfc_un.res.minvif = MAXMIFS;
-	c->_c.free = ip6mr_cache_free_rcu;
+अटल काष्ठा mfc6_cache *ip6mr_cache_alloc(व्योम)
+अणु
+	काष्ठा mfc6_cache *c = kmem_cache_zalloc(mrt_cachep, GFP_KERNEL);
+	अगर (!c)
+		वापस शून्य;
+	c->_c.mfc_un.res.last_निश्चित = jअगरfies - MFC_ASSERT_THRESH - 1;
+	c->_c.mfc_un.res.minvअगर = MAXMIFS;
+	c->_c.मुक्त = ip6mr_cache_मुक्त_rcu;
 	refcount_set(&c->_c.mfc_un.res.refcount, 1);
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static struct mfc6_cache *ip6mr_cache_alloc_unres(void)
-{
-	struct mfc6_cache *c = kmem_cache_zalloc(mrt_cachep, GFP_ATOMIC);
-	if (!c)
-		return NULL;
+अटल काष्ठा mfc6_cache *ip6mr_cache_alloc_unres(व्योम)
+अणु
+	काष्ठा mfc6_cache *c = kmem_cache_zalloc(mrt_cachep, GFP_ATOMIC);
+	अगर (!c)
+		वापस शून्य;
 	skb_queue_head_init(&c->_c.mfc_un.unres.unresolved);
-	c->_c.mfc_un.unres.expires = jiffies + 10 * HZ;
-	return c;
-}
+	c->_c.mfc_un.unres.expires = jअगरfies + 10 * HZ;
+	वापस c;
+पूर्ण
 
 /*
- *	A cache entry has gone into a resolved state from queued
+ *	A cache entry has gone पूर्णांकo a resolved state from queued
  */
 
-static void ip6mr_cache_resolve(struct net *net, struct mr_table *mrt,
-				struct mfc6_cache *uc, struct mfc6_cache *c)
-{
-	struct sk_buff *skb;
+अटल व्योम ip6mr_cache_resolve(काष्ठा net *net, काष्ठा mr_table *mrt,
+				काष्ठा mfc6_cache *uc, काष्ठा mfc6_cache *c)
+अणु
+	काष्ठा sk_buff *skb;
 
 	/*
 	 *	Play the pending entries through our router
 	 */
 
-	while ((skb = __skb_dequeue(&uc->_c.mfc_un.unres.unresolved))) {
-		if (ipv6_hdr(skb)->version == 0) {
-			struct nlmsghdr *nlh = skb_pull(skb,
-							sizeof(struct ipv6hdr));
+	जबतक ((skb = __skb_dequeue(&uc->_c.mfc_un.unres.unresolved))) अणु
+		अगर (ipv6_hdr(skb)->version == 0) अणु
+			काष्ठा nlmsghdr *nlh = skb_pull(skb,
+							माप(काष्ठा ipv6hdr));
 
-			if (mr_fill_mroute(mrt, skb, &c->_c,
-					   nlmsg_data(nlh)) > 0) {
-				nlh->nlmsg_len = skb_tail_pointer(skb) - (u8 *)nlh;
-			} else {
+			अगर (mr_fill_mroute(mrt, skb, &c->_c,
+					   nlmsg_data(nlh)) > 0) अणु
+				nlh->nlmsg_len = skb_tail_poपूर्णांकer(skb) - (u8 *)nlh;
+			पूर्ण अन्यथा अणु
 				nlh->nlmsg_type = NLMSG_ERROR;
-				nlh->nlmsg_len = nlmsg_msg_size(sizeof(struct nlmsgerr));
+				nlh->nlmsg_len = nlmsg_msg_size(माप(काष्ठा nlmsgerr));
 				skb_trim(skb, nlh->nlmsg_len);
-				((struct nlmsgerr *)nlmsg_data(nlh))->error = -EMSGSIZE;
-			}
+				((काष्ठा nlmsgerr *)nlmsg_data(nlh))->error = -EMSGSIZE;
+			पूर्ण
 			rtnl_unicast(skb, net, NETLINK_CB(skb).portid);
-		} else
-			ip6_mr_forward(net, mrt, skb->dev, skb, c);
-	}
-}
+		पूर्ण अन्यथा
+			ip6_mr_क्रमward(net, mrt, skb->dev, skb, c);
+	पूर्ण
+पूर्ण
 
 /*
  *	Bounce a cache query up to pim6sd and netlink.
@@ -1036,129 +1037,129 @@ static void ip6mr_cache_resolve(struct net *net, struct mr_table *mrt,
  *	Called under mrt_lock.
  */
 
-static int ip6mr_cache_report(struct mr_table *mrt, struct sk_buff *pkt,
-			      mifi_t mifi, int assert)
-{
-	struct sock *mroute6_sk;
-	struct sk_buff *skb;
-	struct mrt6msg *msg;
-	int ret;
+अटल पूर्णांक ip6mr_cache_report(काष्ठा mr_table *mrt, काष्ठा sk_buff *pkt,
+			      mअगरi_t mअगरi, पूर्णांक निश्चित)
+अणु
+	काष्ठा sock *mroute6_sk;
+	काष्ठा sk_buff *skb;
+	काष्ठा mrt6msg *msg;
+	पूर्णांक ret;
 
-#ifdef CONFIG_IPV6_PIMSM_V2
-	if (assert == MRT6MSG_WHOLEPKT)
-		skb = skb_realloc_headroom(pkt, -skb_network_offset(pkt)
-						+sizeof(*msg));
-	else
-#endif
-		skb = alloc_skb(sizeof(struct ipv6hdr) + sizeof(*msg), GFP_ATOMIC);
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
+	अगर (निश्चित == MRT6MSG_WHOLEPKT)
+		skb = skb_पुनः_स्मृति_headroom(pkt, -skb_network_offset(pkt)
+						+माप(*msg));
+	अन्यथा
+#पूर्ण_अगर
+		skb = alloc_skb(माप(काष्ठा ipv6hdr) + माप(*msg), GFP_ATOMIC);
 
-	if (!skb)
-		return -ENOBUFS;
+	अगर (!skb)
+		वापस -ENOBUFS;
 
-	/* I suppose that internal messages
-	 * do not require checksums */
+	/* I suppose that पूर्णांकernal messages
+	 * करो not require checksums */
 
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
 
-#ifdef CONFIG_IPV6_PIMSM_V2
-	if (assert == MRT6MSG_WHOLEPKT) {
-		/* Ugly, but we have no choice with this interface.
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
+	अगर (निश्चित == MRT6MSG_WHOLEPKT) अणु
+		/* Ugly, but we have no choice with this पूर्णांकerface.
 		   Duplicate old header, fix length etc.
 		   And all this only to mangle msg->im6_msgtype and
 		   to set msg->im6_mbz to "mbz" :-)
 		 */
 		skb_push(skb, -skb_network_offset(pkt));
 
-		skb_push(skb, sizeof(*msg));
+		skb_push(skb, माप(*msg));
 		skb_reset_transport_header(skb);
-		msg = (struct mrt6msg *)skb_transport_header(skb);
+		msg = (काष्ठा mrt6msg *)skb_transport_header(skb);
 		msg->im6_mbz = 0;
 		msg->im6_msgtype = MRT6MSG_WHOLEPKT;
-		msg->im6_mif = mrt->mroute_reg_vif_num;
+		msg->im6_mअगर = mrt->mroute_reg_vअगर_num;
 		msg->im6_pad = 0;
 		msg->im6_src = ipv6_hdr(pkt)->saddr;
 		msg->im6_dst = ipv6_hdr(pkt)->daddr;
 
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
-	} else
-#endif
-	{
+	पूर्ण अन्यथा
+#पूर्ण_अगर
+	अणु
 	/*
 	 *	Copy the IP header
 	 */
 
-	skb_put(skb, sizeof(struct ipv6hdr));
+	skb_put(skb, माप(काष्ठा ipv6hdr));
 	skb_reset_network_header(skb);
-	skb_copy_to_linear_data(skb, ipv6_hdr(pkt), sizeof(struct ipv6hdr));
+	skb_copy_to_linear_data(skb, ipv6_hdr(pkt), माप(काष्ठा ipv6hdr));
 
 	/*
 	 *	Add our header
 	 */
-	skb_put(skb, sizeof(*msg));
+	skb_put(skb, माप(*msg));
 	skb_reset_transport_header(skb);
-	msg = (struct mrt6msg *)skb_transport_header(skb);
+	msg = (काष्ठा mrt6msg *)skb_transport_header(skb);
 
 	msg->im6_mbz = 0;
-	msg->im6_msgtype = assert;
-	msg->im6_mif = mifi;
+	msg->im6_msgtype = निश्चित;
+	msg->im6_mअगर = mअगरi;
 	msg->im6_pad = 0;
 	msg->im6_src = ipv6_hdr(pkt)->saddr;
 	msg->im6_dst = ipv6_hdr(pkt)->daddr;
 
 	skb_dst_set(skb, dst_clone(skb_dst(pkt)));
 	skb->ip_summed = CHECKSUM_UNNECESSARY;
-	}
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	mroute6_sk = rcu_dereference(mrt->mroute_sk);
-	if (!mroute6_sk) {
-		rcu_read_unlock();
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+	अगर (!mroute6_sk) अणु
+		rcu_पढ़ो_unlock();
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
 	mrt6msg_netlink_event(mrt, skb);
 
 	/* Deliver to user space multicast routing algorithms */
 	ret = sock_queue_rcv_skb(mroute6_sk, skb);
-	rcu_read_unlock();
-	if (ret < 0) {
+	rcu_पढ़ो_unlock();
+	अगर (ret < 0) अणु
 		net_warn_ratelimited("mroute6: pending queue full, dropping entries\n");
-		kfree_skb(skb);
-	}
+		kमुक्त_skb(skb);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Queue a packet for resolution. It gets locked cache entry! */
-static int ip6mr_cache_unresolved(struct mr_table *mrt, mifi_t mifi,
-				  struct sk_buff *skb, struct net_device *dev)
-{
-	struct mfc6_cache *c;
+/* Queue a packet क्रम resolution. It माला_लो locked cache entry! */
+अटल पूर्णांक ip6mr_cache_unresolved(काष्ठा mr_table *mrt, mअगरi_t mअगरi,
+				  काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा mfc6_cache *c;
 	bool found = false;
-	int err;
+	पूर्णांक err;
 
 	spin_lock_bh(&mfc_unres_lock);
-	list_for_each_entry(c, &mrt->mfc_unres_queue, _c.list) {
-		if (ipv6_addr_equal(&c->mf6c_mcastgrp, &ipv6_hdr(skb)->daddr) &&
-		    ipv6_addr_equal(&c->mf6c_origin, &ipv6_hdr(skb)->saddr)) {
+	list_क्रम_each_entry(c, &mrt->mfc_unres_queue, _c.list) अणु
+		अगर (ipv6_addr_equal(&c->mf6c_mcastgrp, &ipv6_hdr(skb)->daddr) &&
+		    ipv6_addr_equal(&c->mf6c_origin, &ipv6_hdr(skb)->saddr)) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
+	अगर (!found) अणु
 		/*
-		 *	Create a new entry if allowable
+		 *	Create a new entry अगर allowable
 		 */
 
 		c = ip6mr_cache_alloc_unres();
-		if (!c) {
+		अगर (!c) अणु
 			spin_unlock_bh(&mfc_unres_lock);
 
-			kfree_skb(skb);
-			return -ENOBUFS;
-		}
+			kमुक्त_skb(skb);
+			वापस -ENOBUFS;
+		पूर्ण
 
 		/* Fill in the new cache entry */
 		c->_c.mfc_parent = -1;
@@ -1168,1136 +1169,1136 @@ static int ip6mr_cache_unresolved(struct mr_table *mrt, mifi_t mifi,
 		/*
 		 *	Reflect first query at pim6sd
 		 */
-		err = ip6mr_cache_report(mrt, skb, mifi, MRT6MSG_NOCACHE);
-		if (err < 0) {
+		err = ip6mr_cache_report(mrt, skb, mअगरi, MRT6MSG_NOCACHE);
+		अगर (err < 0) अणु
 			/* If the report failed throw the cache entry
 			   out - Brad Parker
 			 */
 			spin_unlock_bh(&mfc_unres_lock);
 
-			ip6mr_cache_free(c);
-			kfree_skb(skb);
-			return err;
-		}
+			ip6mr_cache_मुक्त(c);
+			kमुक्त_skb(skb);
+			वापस err;
+		पूर्ण
 
 		atomic_inc(&mrt->cache_resolve_queue_len);
 		list_add(&c->_c.list, &mrt->mfc_unres_queue);
 		mr6_netlink_event(mrt, c, RTM_NEWROUTE);
 
-		ipmr_do_expire_process(mrt);
-	}
+		ipmr_करो_expire_process(mrt);
+	पूर्ण
 
-	/* See if we can append the packet */
-	if (c->_c.mfc_un.unres.unresolved.qlen > 3) {
-		kfree_skb(skb);
+	/* See अगर we can append the packet */
+	अगर (c->_c.mfc_un.unres.unresolved.qlen > 3) अणु
+		kमुक्त_skb(skb);
 		err = -ENOBUFS;
-	} else {
-		if (dev) {
+	पूर्ण अन्यथा अणु
+		अगर (dev) अणु
 			skb->dev = dev;
-			skb->skb_iif = dev->ifindex;
-		}
+			skb->skb_iअगर = dev->अगरindex;
+		पूर्ण
 		skb_queue_tail(&c->_c.mfc_un.unres.unresolved, skb);
 		err = 0;
-	}
+	पूर्ण
 
 	spin_unlock_bh(&mfc_unres_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  *	MFC6 cache manipulation by user space
  */
 
-static int ip6mr_mfc_delete(struct mr_table *mrt, struct mf6cctl *mfc,
-			    int parent)
-{
-	struct mfc6_cache *c;
+अटल पूर्णांक ip6mr_mfc_delete(काष्ठा mr_table *mrt, काष्ठा mf6cctl *mfc,
+			    पूर्णांक parent)
+अणु
+	काष्ठा mfc6_cache *c;
 
 	/* The entries are added/deleted only under RTNL */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	c = ip6mr_cache_find_parent(mrt, &mfc->mf6cc_origin.sin6_addr,
 				    &mfc->mf6cc_mcastgrp.sin6_addr, parent);
-	rcu_read_unlock();
-	if (!c)
-		return -ENOENT;
-	rhltable_remove(&mrt->mfc_hash, &c->_c.mnode, ip6mr_rht_params);
+	rcu_पढ़ो_unlock();
+	अगर (!c)
+		वापस -ENOENT;
+	rhltable_हटाओ(&mrt->mfc_hash, &c->_c.mnode, ip6mr_rht_params);
 	list_del_rcu(&c->_c.list);
 
-	call_ip6mr_mfc_entry_notifiers(read_pnet(&mrt->net),
+	call_ip6mr_mfc_entry_notअगरiers(पढ़ो_pnet(&mrt->net),
 				       FIB_EVENT_ENTRY_DEL, c, mrt->id);
 	mr6_netlink_event(mrt, c, RTM_DELROUTE);
 	mr_cache_put(&c->_c);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip6mr_device_event(struct notifier_block *this,
-			      unsigned long event, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct net *net = dev_net(dev);
-	struct mr_table *mrt;
-	struct vif_device *v;
-	int ct;
+अटल पूर्णांक ip6mr_device_event(काष्ठा notअगरier_block *this,
+			      अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा mr_table *mrt;
+	काष्ठा vअगर_device *v;
+	पूर्णांक ct;
 
-	if (event != NETDEV_UNREGISTER)
-		return NOTIFY_DONE;
+	अगर (event != NETDEV_UNREGISTER)
+		वापस NOTIFY_DONE;
 
-	ip6mr_for_each_table(mrt, net) {
-		v = &mrt->vif_table[0];
-		for (ct = 0; ct < mrt->maxvif; ct++, v++) {
-			if (v->dev == dev)
-				mif6_delete(mrt, ct, 1, NULL);
-		}
-	}
+	ip6mr_क्रम_each_table(mrt, net) अणु
+		v = &mrt->vअगर_table[0];
+		क्रम (ct = 0; ct < mrt->maxvअगर; ct++, v++) अणु
+			अगर (v->dev == dev)
+				mअगर6_delete(mrt, ct, 1, शून्य);
+		पूर्ण
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static unsigned int ip6mr_seq_read(struct net *net)
-{
+अटल अचिन्हित पूर्णांक ip6mr_seq_पढ़ो(काष्ठा net *net)
+अणु
 	ASSERT_RTNL();
 
-	return net->ipv6.ipmr_seq + ip6mr_rules_seq_read(net);
-}
+	वापस net->ipv6.ipmr_seq + ip6mr_rules_seq_पढ़ो(net);
+पूर्ण
 
-static int ip6mr_dump(struct net *net, struct notifier_block *nb,
-		      struct netlink_ext_ack *extack)
-{
-	return mr_dump(net, nb, RTNL_FAMILY_IP6MR, ip6mr_rules_dump,
+अटल पूर्णांक ip6mr_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+		      काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस mr_dump(net, nb, RTNL_FAMILY_IP6MR, ip6mr_rules_dump,
 		       ip6mr_mr_table_iter, &mrt_lock, extack);
-}
+पूर्ण
 
-static struct notifier_block ip6_mr_notifier = {
-	.notifier_call = ip6mr_device_event
-};
+अटल काष्ठा notअगरier_block ip6_mr_notअगरier = अणु
+	.notअगरier_call = ip6mr_device_event
+पूर्ण;
 
-static const struct fib_notifier_ops ip6mr_notifier_ops_template = {
+अटल स्थिर काष्ठा fib_notअगरier_ops ip6mr_notअगरier_ops_ढाँचा = अणु
 	.family		= RTNL_FAMILY_IP6MR,
-	.fib_seq_read	= ip6mr_seq_read,
+	.fib_seq_पढ़ो	= ip6mr_seq_पढ़ो,
 	.fib_dump	= ip6mr_dump,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __net_init ip6mr_notifier_init(struct net *net)
-{
-	struct fib_notifier_ops *ops;
+अटल पूर्णांक __net_init ip6mr_notअगरier_init(काष्ठा net *net)
+अणु
+	काष्ठा fib_notअगरier_ops *ops;
 
 	net->ipv6.ipmr_seq = 0;
 
-	ops = fib_notifier_ops_register(&ip6mr_notifier_ops_template, net);
-	if (IS_ERR(ops))
-		return PTR_ERR(ops);
+	ops = fib_notअगरier_ops_रेजिस्टर(&ip6mr_notअगरier_ops_ढाँचा, net);
+	अगर (IS_ERR(ops))
+		वापस PTR_ERR(ops);
 
-	net->ipv6.ip6mr_notifier_ops = ops;
+	net->ipv6.ip6mr_notअगरier_ops = ops;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit ip6mr_notifier_exit(struct net *net)
-{
-	fib_notifier_ops_unregister(net->ipv6.ip6mr_notifier_ops);
-	net->ipv6.ip6mr_notifier_ops = NULL;
-}
+अटल व्योम __net_निकास ip6mr_notअगरier_निकास(काष्ठा net *net)
+अणु
+	fib_notअगरier_ops_unरेजिस्टर(net->ipv6.ip6mr_notअगरier_ops);
+	net->ipv6.ip6mr_notअगरier_ops = शून्य;
+पूर्ण
 
-/* Setup for IP multicast routing */
-static int __net_init ip6mr_net_init(struct net *net)
-{
-	int err;
+/* Setup क्रम IP multicast routing */
+अटल पूर्णांक __net_init ip6mr_net_init(काष्ठा net *net)
+अणु
+	पूर्णांक err;
 
-	err = ip6mr_notifier_init(net);
-	if (err)
-		return err;
+	err = ip6mr_notअगरier_init(net);
+	अगर (err)
+		वापस err;
 
 	err = ip6mr_rules_init(net);
-	if (err < 0)
-		goto ip6mr_rules_fail;
+	अगर (err < 0)
+		जाओ ip6mr_rules_fail;
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 	err = -ENOMEM;
-	if (!proc_create_net("ip6_mr_vif", 0, net->proc_net, &ip6mr_vif_seq_ops,
-			sizeof(struct mr_vif_iter)))
-		goto proc_vif_fail;
-	if (!proc_create_net("ip6_mr_cache", 0, net->proc_net, &ipmr_mfc_seq_ops,
-			sizeof(struct mr_mfc_iter)))
-		goto proc_cache_fail;
-#endif
+	अगर (!proc_create_net("ip6_mr_vif", 0, net->proc_net, &ip6mr_vअगर_seq_ops,
+			माप(काष्ठा mr_vअगर_iter)))
+		जाओ proc_vअगर_fail;
+	अगर (!proc_create_net("ip6_mr_cache", 0, net->proc_net, &ipmr_mfc_seq_ops,
+			माप(काष्ठा mr_mfc_iter)))
+		जाओ proc_cache_fail;
+#पूर्ण_अगर
 
-	return 0;
+	वापस 0;
 
-#ifdef CONFIG_PROC_FS
+#अगर_घोषित CONFIG_PROC_FS
 proc_cache_fail:
-	remove_proc_entry("ip6_mr_vif", net->proc_net);
-proc_vif_fail:
-	ip6mr_rules_exit(net);
-#endif
+	हटाओ_proc_entry("ip6_mr_vif", net->proc_net);
+proc_vअगर_fail:
+	ip6mr_rules_निकास(net);
+#पूर्ण_अगर
 ip6mr_rules_fail:
-	ip6mr_notifier_exit(net);
-	return err;
-}
+	ip6mr_notअगरier_निकास(net);
+	वापस err;
+पूर्ण
 
-static void __net_exit ip6mr_net_exit(struct net *net)
-{
-#ifdef CONFIG_PROC_FS
-	remove_proc_entry("ip6_mr_cache", net->proc_net);
-	remove_proc_entry("ip6_mr_vif", net->proc_net);
-#endif
-	ip6mr_rules_exit(net);
-	ip6mr_notifier_exit(net);
-}
+अटल व्योम __net_निकास ip6mr_net_निकास(काष्ठा net *net)
+अणु
+#अगर_घोषित CONFIG_PROC_FS
+	हटाओ_proc_entry("ip6_mr_cache", net->proc_net);
+	हटाओ_proc_entry("ip6_mr_vif", net->proc_net);
+#पूर्ण_अगर
+	ip6mr_rules_निकास(net);
+	ip6mr_notअगरier_निकास(net);
+पूर्ण
 
-static struct pernet_operations ip6mr_net_ops = {
+अटल काष्ठा pernet_operations ip6mr_net_ops = अणु
 	.init = ip6mr_net_init,
-	.exit = ip6mr_net_exit,
-};
+	.निकास = ip6mr_net_निकास,
+पूर्ण;
 
-int __init ip6_mr_init(void)
-{
-	int err;
+पूर्णांक __init ip6_mr_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	mrt_cachep = kmem_cache_create("ip6_mrt_cache",
-				       sizeof(struct mfc6_cache),
+				       माप(काष्ठा mfc6_cache),
 				       0, SLAB_HWCACHE_ALIGN,
-				       NULL);
-	if (!mrt_cachep)
-		return -ENOMEM;
+				       शून्य);
+	अगर (!mrt_cachep)
+		वापस -ENOMEM;
 
-	err = register_pernet_subsys(&ip6mr_net_ops);
-	if (err)
-		goto reg_pernet_fail;
+	err = रेजिस्टर_pernet_subsys(&ip6mr_net_ops);
+	अगर (err)
+		जाओ reg_pernet_fail;
 
-	err = register_netdevice_notifier(&ip6_mr_notifier);
-	if (err)
-		goto reg_notif_fail;
-#ifdef CONFIG_IPV6_PIMSM_V2
-	if (inet6_add_protocol(&pim6_protocol, IPPROTO_PIM) < 0) {
+	err = रेजिस्टर_netdevice_notअगरier(&ip6_mr_notअगरier);
+	अगर (err)
+		जाओ reg_notअगर_fail;
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
+	अगर (inet6_add_protocol(&pim6_protocol, IPPROTO_PIM) < 0) अणु
 		pr_err("%s: can't add PIM protocol\n", __func__);
 		err = -EAGAIN;
-		goto add_proto_fail;
-	}
-#endif
-	err = rtnl_register_module(THIS_MODULE, RTNL_FAMILY_IP6MR, RTM_GETROUTE,
-				   NULL, ip6mr_rtm_dumproute, 0);
-	if (err == 0)
-		return 0;
+		जाओ add_proto_fail;
+	पूर्ण
+#पूर्ण_अगर
+	err = rtnl_रेजिस्टर_module(THIS_MODULE, RTNL_FAMILY_IP6MR, RTM_GETROUTE,
+				   शून्य, ip6mr_rपंचांग_dumproute, 0);
+	अगर (err == 0)
+		वापस 0;
 
-#ifdef CONFIG_IPV6_PIMSM_V2
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
 	inet6_del_protocol(&pim6_protocol, IPPROTO_PIM);
 add_proto_fail:
-	unregister_netdevice_notifier(&ip6_mr_notifier);
-#endif
-reg_notif_fail:
-	unregister_pernet_subsys(&ip6mr_net_ops);
+	unरेजिस्टर_netdevice_notअगरier(&ip6_mr_notअगरier);
+#पूर्ण_अगर
+reg_notअगर_fail:
+	unरेजिस्टर_pernet_subsys(&ip6mr_net_ops);
 reg_pernet_fail:
 	kmem_cache_destroy(mrt_cachep);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void ip6_mr_cleanup(void)
-{
-	rtnl_unregister(RTNL_FAMILY_IP6MR, RTM_GETROUTE);
-#ifdef CONFIG_IPV6_PIMSM_V2
+व्योम ip6_mr_cleanup(व्योम)
+अणु
+	rtnl_unरेजिस्टर(RTNL_FAMILY_IP6MR, RTM_GETROUTE);
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
 	inet6_del_protocol(&pim6_protocol, IPPROTO_PIM);
-#endif
-	unregister_netdevice_notifier(&ip6_mr_notifier);
-	unregister_pernet_subsys(&ip6mr_net_ops);
+#पूर्ण_अगर
+	unरेजिस्टर_netdevice_notअगरier(&ip6_mr_notअगरier);
+	unरेजिस्टर_pernet_subsys(&ip6mr_net_ops);
 	kmem_cache_destroy(mrt_cachep);
-}
+पूर्ण
 
-static int ip6mr_mfc_add(struct net *net, struct mr_table *mrt,
-			 struct mf6cctl *mfc, int mrtsock, int parent)
-{
-	unsigned char ttls[MAXMIFS];
-	struct mfc6_cache *uc, *c;
-	struct mr_mfc *_uc;
+अटल पूर्णांक ip6mr_mfc_add(काष्ठा net *net, काष्ठा mr_table *mrt,
+			 काष्ठा mf6cctl *mfc, पूर्णांक mrtsock, पूर्णांक parent)
+अणु
+	अचिन्हित अक्षर ttls[MAXMIFS];
+	काष्ठा mfc6_cache *uc, *c;
+	काष्ठा mr_mfc *_uc;
 	bool found;
-	int i, err;
+	पूर्णांक i, err;
 
-	if (mfc->mf6cc_parent >= MAXMIFS)
-		return -ENFILE;
+	अगर (mfc->mf6cc_parent >= MAXMIFS)
+		वापस -ENखाता;
 
-	memset(ttls, 255, MAXMIFS);
-	for (i = 0; i < MAXMIFS; i++) {
-		if (IF_ISSET(i, &mfc->mf6cc_ifset))
+	स_रखो(ttls, 255, MAXMIFS);
+	क्रम (i = 0; i < MAXMIFS; i++) अणु
+		अगर (IF_ISSET(i, &mfc->mf6cc_अगरset))
 			ttls[i] = 1;
-	}
+	पूर्ण
 
 	/* The entries are added/deleted only under RTNL */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	c = ip6mr_cache_find_parent(mrt, &mfc->mf6cc_origin.sin6_addr,
 				    &mfc->mf6cc_mcastgrp.sin6_addr, parent);
-	rcu_read_unlock();
-	if (c) {
-		write_lock_bh(&mrt_lock);
+	rcu_पढ़ो_unlock();
+	अगर (c) अणु
+		ग_लिखो_lock_bh(&mrt_lock);
 		c->_c.mfc_parent = mfc->mf6cc_parent;
 		ip6mr_update_thresholds(mrt, &c->_c, ttls);
-		if (!mrtsock)
+		अगर (!mrtsock)
 			c->_c.mfc_flags |= MFC_STATIC;
-		write_unlock_bh(&mrt_lock);
-		call_ip6mr_mfc_entry_notifiers(net, FIB_EVENT_ENTRY_REPLACE,
+		ग_लिखो_unlock_bh(&mrt_lock);
+		call_ip6mr_mfc_entry_notअगरiers(net, FIB_EVENT_ENTRY_REPLACE,
 					       c, mrt->id);
 		mr6_netlink_event(mrt, c, RTM_NEWROUTE);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!ipv6_addr_any(&mfc->mf6cc_mcastgrp.sin6_addr) &&
+	अगर (!ipv6_addr_any(&mfc->mf6cc_mcastgrp.sin6_addr) &&
 	    !ipv6_addr_is_multicast(&mfc->mf6cc_mcastgrp.sin6_addr))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	c = ip6mr_cache_alloc();
-	if (!c)
-		return -ENOMEM;
+	अगर (!c)
+		वापस -ENOMEM;
 
 	c->mf6c_origin = mfc->mf6cc_origin.sin6_addr;
 	c->mf6c_mcastgrp = mfc->mf6cc_mcastgrp.sin6_addr;
 	c->_c.mfc_parent = mfc->mf6cc_parent;
 	ip6mr_update_thresholds(mrt, &c->_c, ttls);
-	if (!mrtsock)
+	अगर (!mrtsock)
 		c->_c.mfc_flags |= MFC_STATIC;
 
 	err = rhltable_insert_key(&mrt->mfc_hash, &c->cmparg, &c->_c.mnode,
 				  ip6mr_rht_params);
-	if (err) {
+	अगर (err) अणु
 		pr_err("ip6mr: rhtable insert error %d\n", err);
-		ip6mr_cache_free(c);
-		return err;
-	}
+		ip6mr_cache_मुक्त(c);
+		वापस err;
+	पूर्ण
 	list_add_tail_rcu(&c->_c.list, &mrt->mfc_cache_list);
 
-	/* Check to see if we resolved a queued list. If so we
+	/* Check to see अगर we resolved a queued list. If so we
 	 * need to send on the frames and tidy up.
 	 */
 	found = false;
 	spin_lock_bh(&mfc_unres_lock);
-	list_for_each_entry(_uc, &mrt->mfc_unres_queue, list) {
-		uc = (struct mfc6_cache *)_uc;
-		if (ipv6_addr_equal(&uc->mf6c_origin, &c->mf6c_origin) &&
-		    ipv6_addr_equal(&uc->mf6c_mcastgrp, &c->mf6c_mcastgrp)) {
+	list_क्रम_each_entry(_uc, &mrt->mfc_unres_queue, list) अणु
+		uc = (काष्ठा mfc6_cache *)_uc;
+		अगर (ipv6_addr_equal(&uc->mf6c_origin, &c->mf6c_origin) &&
+		    ipv6_addr_equal(&uc->mf6c_mcastgrp, &c->mf6c_mcastgrp)) अणु
 			list_del(&_uc->list);
 			atomic_dec(&mrt->cache_resolve_queue_len);
 			found = true;
-			break;
-		}
-	}
-	if (list_empty(&mrt->mfc_unres_queue))
-		del_timer(&mrt->ipmr_expire_timer);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (list_empty(&mrt->mfc_unres_queue))
+		del_समयr(&mrt->ipmr_expire_समयr);
 	spin_unlock_bh(&mfc_unres_lock);
 
-	if (found) {
+	अगर (found) अणु
 		ip6mr_cache_resolve(net, mrt, uc, c);
-		ip6mr_cache_free(uc);
-	}
-	call_ip6mr_mfc_entry_notifiers(net, FIB_EVENT_ENTRY_ADD,
+		ip6mr_cache_मुक्त(uc);
+	पूर्ण
+	call_ip6mr_mfc_entry_notअगरiers(net, FIB_EVENT_ENTRY_ADD,
 				       c, mrt->id);
 	mr6_netlink_event(mrt, c, RTM_NEWROUTE);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	Close the multicast socket, and clear the vif tables etc
+ *	Close the multicast socket, and clear the vअगर tables etc
  */
 
-static void mroute_clean_tables(struct mr_table *mrt, int flags)
-{
-	struct mr_mfc *c, *tmp;
+अटल व्योम mroute_clean_tables(काष्ठा mr_table *mrt, पूर्णांक flags)
+अणु
+	काष्ठा mr_mfc *c, *पंचांगp;
 	LIST_HEAD(list);
-	int i;
+	पूर्णांक i;
 
-	/* Shut down all active vif entries */
-	if (flags & (MRT6_FLUSH_MIFS | MRT6_FLUSH_MIFS_STATIC)) {
-		for (i = 0; i < mrt->maxvif; i++) {
-			if (((mrt->vif_table[i].flags & VIFF_STATIC) &&
+	/* Shut करोwn all active vअगर entries */
+	अगर (flags & (MRT6_FLUSH_MIFS | MRT6_FLUSH_MIFS_STATIC)) अणु
+		क्रम (i = 0; i < mrt->maxvअगर; i++) अणु
+			अगर (((mrt->vअगर_table[i].flags & VIFF_STATIC) &&
 			     !(flags & MRT6_FLUSH_MIFS_STATIC)) ||
-			    (!(mrt->vif_table[i].flags & VIFF_STATIC) && !(flags & MRT6_FLUSH_MIFS)))
-				continue;
-			mif6_delete(mrt, i, 0, &list);
-		}
-		unregister_netdevice_many(&list);
-	}
+			    (!(mrt->vअगर_table[i].flags & VIFF_STATIC) && !(flags & MRT6_FLUSH_MIFS)))
+				जारी;
+			mअगर6_delete(mrt, i, 0, &list);
+		पूर्ण
+		unरेजिस्टर_netdevice_many(&list);
+	पूर्ण
 
 	/* Wipe the cache */
-	if (flags & (MRT6_FLUSH_MFC | MRT6_FLUSH_MFC_STATIC)) {
-		list_for_each_entry_safe(c, tmp, &mrt->mfc_cache_list, list) {
-			if (((c->mfc_flags & MFC_STATIC) && !(flags & MRT6_FLUSH_MFC_STATIC)) ||
+	अगर (flags & (MRT6_FLUSH_MFC | MRT6_FLUSH_MFC_STATIC)) अणु
+		list_क्रम_each_entry_safe(c, पंचांगp, &mrt->mfc_cache_list, list) अणु
+			अगर (((c->mfc_flags & MFC_STATIC) && !(flags & MRT6_FLUSH_MFC_STATIC)) ||
 			    (!(c->mfc_flags & MFC_STATIC) && !(flags & MRT6_FLUSH_MFC)))
-				continue;
-			rhltable_remove(&mrt->mfc_hash, &c->mnode, ip6mr_rht_params);
+				जारी;
+			rhltable_हटाओ(&mrt->mfc_hash, &c->mnode, ip6mr_rht_params);
 			list_del_rcu(&c->list);
-			call_ip6mr_mfc_entry_notifiers(read_pnet(&mrt->net),
+			call_ip6mr_mfc_entry_notअगरiers(पढ़ो_pnet(&mrt->net),
 						       FIB_EVENT_ENTRY_DEL,
-						       (struct mfc6_cache *)c, mrt->id);
-			mr6_netlink_event(mrt, (struct mfc6_cache *)c, RTM_DELROUTE);
+						       (काष्ठा mfc6_cache *)c, mrt->id);
+			mr6_netlink_event(mrt, (काष्ठा mfc6_cache *)c, RTM_DELROUTE);
 			mr_cache_put(c);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (flags & MRT6_FLUSH_MFC) {
-		if (atomic_read(&mrt->cache_resolve_queue_len) != 0) {
+	अगर (flags & MRT6_FLUSH_MFC) अणु
+		अगर (atomic_पढ़ो(&mrt->cache_resolve_queue_len) != 0) अणु
 			spin_lock_bh(&mfc_unres_lock);
-			list_for_each_entry_safe(c, tmp, &mrt->mfc_unres_queue, list) {
+			list_क्रम_each_entry_safe(c, पंचांगp, &mrt->mfc_unres_queue, list) अणु
 				list_del(&c->list);
-				mr6_netlink_event(mrt, (struct mfc6_cache *)c,
+				mr6_netlink_event(mrt, (काष्ठा mfc6_cache *)c,
 						  RTM_DELROUTE);
-				ip6mr_destroy_unres(mrt, (struct mfc6_cache *)c);
-			}
+				ip6mr_destroy_unres(mrt, (काष्ठा mfc6_cache *)c);
+			पूर्ण
 			spin_unlock_bh(&mfc_unres_lock);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ip6mr_sk_init(struct mr_table *mrt, struct sock *sk)
-{
-	int err = 0;
-	struct net *net = sock_net(sk);
+अटल पूर्णांक ip6mr_sk_init(काष्ठा mr_table *mrt, काष्ठा sock *sk)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा net *net = sock_net(sk);
 
 	rtnl_lock();
-	write_lock_bh(&mrt_lock);
-	if (rtnl_dereference(mrt->mroute_sk)) {
+	ग_लिखो_lock_bh(&mrt_lock);
+	अगर (rtnl_dereference(mrt->mroute_sk)) अणु
 		err = -EADDRINUSE;
-	} else {
-		rcu_assign_pointer(mrt->mroute_sk, sk);
+	पूर्ण अन्यथा अणु
+		rcu_assign_poपूर्णांकer(mrt->mroute_sk, sk);
 		sock_set_flag(sk, SOCK_RCU_FREE);
-		net->ipv6.devconf_all->mc_forwarding++;
-	}
-	write_unlock_bh(&mrt_lock);
+		net->ipv6.devconf_all->mc_क्रमwarding++;
+	पूर्ण
+	ग_लिखो_unlock_bh(&mrt_lock);
 
-	if (!err)
-		inet6_netconf_notify_devconf(net, RTM_NEWNETCONF,
+	अगर (!err)
+		inet6_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
 					     NETCONFA_MC_FORWARDING,
 					     NETCONFA_IFINDEX_ALL,
 					     net->ipv6.devconf_all);
 	rtnl_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ip6mr_sk_done(struct sock *sk)
-{
-	int err = -EACCES;
-	struct net *net = sock_net(sk);
-	struct mr_table *mrt;
+पूर्णांक ip6mr_sk_करोne(काष्ठा sock *sk)
+अणु
+	पूर्णांक err = -EACCES;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा mr_table *mrt;
 
-	if (sk->sk_type != SOCK_RAW ||
+	अगर (sk->sk_type != SOCK_RAW ||
 	    inet_sk(sk)->inet_num != IPPROTO_ICMPV6)
-		return err;
+		वापस err;
 
 	rtnl_lock();
-	ip6mr_for_each_table(mrt, net) {
-		if (sk == rtnl_dereference(mrt->mroute_sk)) {
-			write_lock_bh(&mrt_lock);
-			RCU_INIT_POINTER(mrt->mroute_sk, NULL);
+	ip6mr_क्रम_each_table(mrt, net) अणु
+		अगर (sk == rtnl_dereference(mrt->mroute_sk)) अणु
+			ग_लिखो_lock_bh(&mrt_lock);
+			RCU_INIT_POINTER(mrt->mroute_sk, शून्य);
 			/* Note that mroute_sk had SOCK_RCU_FREE set,
-			 * so the RCU grace period before sk freeing
-			 * is guaranteed by sk_destruct()
+			 * so the RCU grace period beक्रमe sk मुक्तing
+			 * is guaranteed by sk_deकाष्ठा()
 			 */
-			net->ipv6.devconf_all->mc_forwarding--;
-			write_unlock_bh(&mrt_lock);
-			inet6_netconf_notify_devconf(net, RTM_NEWNETCONF,
+			net->ipv6.devconf_all->mc_क्रमwarding--;
+			ग_लिखो_unlock_bh(&mrt_lock);
+			inet6_netconf_notअगरy_devconf(net, RTM_NEWNETCONF,
 						     NETCONFA_MC_FORWARDING,
 						     NETCONFA_IFINDEX_ALL,
 						     net->ipv6.devconf_all);
 
 			mroute_clean_tables(mrt, MRT6_FLUSH_MIFS | MRT6_FLUSH_MFC);
 			err = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	rtnl_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-bool mroute6_is_socket(struct net *net, struct sk_buff *skb)
-{
-	struct mr_table *mrt;
-	struct flowi6 fl6 = {
-		.flowi6_iif	= skb->skb_iif ? : LOOPBACK_IFINDEX,
-		.flowi6_oif	= skb->dev->ifindex,
+bool mroute6_is_socket(काष्ठा net *net, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mr_table *mrt;
+	काष्ठा flowi6 fl6 = अणु
+		.flowi6_iअगर	= skb->skb_iअगर ? : LOOPBACK_IFINDEX,
+		.flowi6_oअगर	= skb->dev->अगरindex,
 		.flowi6_mark	= skb->mark,
-	};
+	पूर्ण;
 
-	if (ip6mr_fib_lookup(net, &fl6, &mrt) < 0)
-		return NULL;
+	अगर (ip6mr_fib_lookup(net, &fl6, &mrt) < 0)
+		वापस शून्य;
 
-	return rcu_access_pointer(mrt->mroute_sk);
-}
+	वापस rcu_access_poपूर्णांकer(mrt->mroute_sk);
+पूर्ण
 EXPORT_SYMBOL(mroute6_is_socket);
 
 /*
- *	Socket options and virtual interface manipulation. The whole
- *	virtual interface system is a complete heap, but unfortunately
+ *	Socket options and भव पूर्णांकerface manipulation. The whole
+ *	भव पूर्णांकerface प्रणाली is a complete heap, but unक्रमtunately
  *	that's how BSD mrouted happens to think. Maybe one day with a proper
  *	MOSPF/PIM router set up we can clean this up.
  */
 
-int ip6_mroute_setsockopt(struct sock *sk, int optname, sockptr_t optval,
-			  unsigned int optlen)
-{
-	int ret, parent = 0;
-	struct mif6ctl vif;
-	struct mf6cctl mfc;
-	mifi_t mifi;
-	struct net *net = sock_net(sk);
-	struct mr_table *mrt;
+पूर्णांक ip6_mroute_setsockopt(काष्ठा sock *sk, पूर्णांक optname, sockptr_t optval,
+			  अचिन्हित पूर्णांक optlen)
+अणु
+	पूर्णांक ret, parent = 0;
+	काष्ठा mअगर6ctl vअगर;
+	काष्ठा mf6cctl mfc;
+	mअगरi_t mअगरi;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा mr_table *mrt;
 
-	if (sk->sk_type != SOCK_RAW ||
+	अगर (sk->sk_type != SOCK_RAW ||
 	    inet_sk(sk)->inet_num != IPPROTO_ICMPV6)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	mrt = ip6mr_get_table(net, raw6_sk(sk)->ip6mr_table ? : RT6_TABLE_DFLT);
-	if (!mrt)
-		return -ENOENT;
+	अगर (!mrt)
+		वापस -ENOENT;
 
-	if (optname != MRT6_INIT) {
-		if (sk != rcu_access_pointer(mrt->mroute_sk) &&
+	अगर (optname != MRT6_INIT) अणु
+		अगर (sk != rcu_access_poपूर्णांकer(mrt->mroute_sk) &&
 		    !ns_capable(net->user_ns, CAP_NET_ADMIN))
-			return -EACCES;
-	}
+			वापस -EACCES;
+	पूर्ण
 
-	switch (optname) {
-	case MRT6_INIT:
-		if (optlen < sizeof(int))
-			return -EINVAL;
+	चयन (optname) अणु
+	हाल MRT6_INIT:
+		अगर (optlen < माप(पूर्णांक))
+			वापस -EINVAL;
 
-		return ip6mr_sk_init(mrt, sk);
+		वापस ip6mr_sk_init(mrt, sk);
 
-	case MRT6_DONE:
-		return ip6mr_sk_done(sk);
+	हाल MRT6_DONE:
+		वापस ip6mr_sk_करोne(sk);
 
-	case MRT6_ADD_MIF:
-		if (optlen < sizeof(vif))
-			return -EINVAL;
-		if (copy_from_sockptr(&vif, optval, sizeof(vif)))
-			return -EFAULT;
-		if (vif.mif6c_mifi >= MAXMIFS)
-			return -ENFILE;
+	हाल MRT6_ADD_MIF:
+		अगर (optlen < माप(vअगर))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&vअगर, optval, माप(vअगर)))
+			वापस -EFAULT;
+		अगर (vअगर.mअगर6c_mअगरi >= MAXMIFS)
+			वापस -ENखाता;
 		rtnl_lock();
-		ret = mif6_add(net, mrt, &vif,
+		ret = mअगर6_add(net, mrt, &vअगर,
 			       sk == rtnl_dereference(mrt->mroute_sk));
 		rtnl_unlock();
-		return ret;
+		वापस ret;
 
-	case MRT6_DEL_MIF:
-		if (optlen < sizeof(mifi_t))
-			return -EINVAL;
-		if (copy_from_sockptr(&mifi, optval, sizeof(mifi_t)))
-			return -EFAULT;
+	हाल MRT6_DEL_MIF:
+		अगर (optlen < माप(mअगरi_t))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&mअगरi, optval, माप(mअगरi_t)))
+			वापस -EFAULT;
 		rtnl_lock();
-		ret = mif6_delete(mrt, mifi, 0, NULL);
+		ret = mअगर6_delete(mrt, mअगरi, 0, शून्य);
 		rtnl_unlock();
-		return ret;
+		वापस ret;
 
 	/*
-	 *	Manipulate the forwarding caches. These live
+	 *	Manipulate the क्रमwarding caches. These live
 	 *	in a sort of kernel/user symbiosis.
 	 */
-	case MRT6_ADD_MFC:
-	case MRT6_DEL_MFC:
+	हाल MRT6_ADD_MFC:
+	हाल MRT6_DEL_MFC:
 		parent = -1;
 		fallthrough;
-	case MRT6_ADD_MFC_PROXY:
-	case MRT6_DEL_MFC_PROXY:
-		if (optlen < sizeof(mfc))
-			return -EINVAL;
-		if (copy_from_sockptr(&mfc, optval, sizeof(mfc)))
-			return -EFAULT;
-		if (parent == 0)
+	हाल MRT6_ADD_MFC_PROXY:
+	हाल MRT6_DEL_MFC_PROXY:
+		अगर (optlen < माप(mfc))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&mfc, optval, माप(mfc)))
+			वापस -EFAULT;
+		अगर (parent == 0)
 			parent = mfc.mf6cc_parent;
 		rtnl_lock();
-		if (optname == MRT6_DEL_MFC || optname == MRT6_DEL_MFC_PROXY)
+		अगर (optname == MRT6_DEL_MFC || optname == MRT6_DEL_MFC_PROXY)
 			ret = ip6mr_mfc_delete(mrt, &mfc, parent);
-		else
+		अन्यथा
 			ret = ip6mr_mfc_add(net, mrt, &mfc,
 					    sk ==
 					    rtnl_dereference(mrt->mroute_sk),
 					    parent);
 		rtnl_unlock();
-		return ret;
+		वापस ret;
 
-	case MRT6_FLUSH:
-	{
-		int flags;
+	हाल MRT6_FLUSH:
+	अणु
+		पूर्णांक flags;
 
-		if (optlen != sizeof(flags))
-			return -EINVAL;
-		if (copy_from_sockptr(&flags, optval, sizeof(flags)))
-			return -EFAULT;
+		अगर (optlen != माप(flags))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&flags, optval, माप(flags)))
+			वापस -EFAULT;
 		rtnl_lock();
 		mroute_clean_tables(mrt, flags);
 		rtnl_unlock();
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 *	Control PIM assert (to activate pim will activate assert)
+	 *	Control PIM निश्चित (to activate pim will activate निश्चित)
 	 */
-	case MRT6_ASSERT:
-	{
-		int v;
+	हाल MRT6_ASSERT:
+	अणु
+		पूर्णांक v;
 
-		if (optlen != sizeof(v))
-			return -EINVAL;
-		if (copy_from_sockptr(&v, optval, sizeof(v)))
-			return -EFAULT;
-		mrt->mroute_do_assert = v;
-		return 0;
-	}
+		अगर (optlen != माप(v))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&v, optval, माप(v)))
+			वापस -EFAULT;
+		mrt->mroute_करो_निश्चित = v;
+		वापस 0;
+	पूर्ण
 
-#ifdef CONFIG_IPV6_PIMSM_V2
-	case MRT6_PIM:
-	{
-		int v;
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
+	हाल MRT6_PIM:
+	अणु
+		पूर्णांक v;
 
-		if (optlen != sizeof(v))
-			return -EINVAL;
-		if (copy_from_sockptr(&v, optval, sizeof(v)))
-			return -EFAULT;
+		अगर (optlen != माप(v))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&v, optval, माप(v)))
+			वापस -EFAULT;
 		v = !!v;
 		rtnl_lock();
 		ret = 0;
-		if (v != mrt->mroute_do_pim) {
-			mrt->mroute_do_pim = v;
-			mrt->mroute_do_assert = v;
-		}
+		अगर (v != mrt->mroute_करो_pim) अणु
+			mrt->mroute_करो_pim = v;
+			mrt->mroute_करो_निश्चित = v;
+		पूर्ण
 		rtnl_unlock();
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-#endif
-#ifdef CONFIG_IPV6_MROUTE_MULTIPLE_TABLES
-	case MRT6_TABLE:
-	{
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IPV6_MROUTE_MULTIPLE_TABLES
+	हाल MRT6_TABLE:
+	अणु
 		u32 v;
 
-		if (optlen != sizeof(u32))
-			return -EINVAL;
-		if (copy_from_sockptr(&v, optval, sizeof(v)))
-			return -EFAULT;
+		अगर (optlen != माप(u32))
+			वापस -EINVAL;
+		अगर (copy_from_sockptr(&v, optval, माप(v)))
+			वापस -EFAULT;
 		/* "pim6reg%u" should not exceed 16 bytes (IFNAMSIZ) */
-		if (v != RT_TABLE_DEFAULT && v >= 100000000)
-			return -EINVAL;
-		if (sk == rcu_access_pointer(mrt->mroute_sk))
-			return -EBUSY;
+		अगर (v != RT_TABLE_DEFAULT && v >= 100000000)
+			वापस -EINVAL;
+		अगर (sk == rcu_access_poपूर्णांकer(mrt->mroute_sk))
+			वापस -EBUSY;
 
 		rtnl_lock();
 		ret = 0;
 		mrt = ip6mr_new_table(net, v);
-		if (IS_ERR(mrt))
+		अगर (IS_ERR(mrt))
 			ret = PTR_ERR(mrt);
-		else
+		अन्यथा
 			raw6_sk(sk)->ip6mr_table = v;
 		rtnl_unlock();
-		return ret;
-	}
-#endif
+		वापस ret;
+	पूर्ण
+#पूर्ण_अगर
 	/*
 	 *	Spurious command, or MRT6_VERSION which you cannot
 	 *	set.
 	 */
-	default:
-		return -ENOPROTOOPT;
-	}
-}
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
+पूर्ण
 
 /*
- *	Getsock opt support for the multicast routing system.
+ *	Getsock opt support क्रम the multicast routing प्रणाली.
  */
 
-int ip6_mroute_getsockopt(struct sock *sk, int optname, char __user *optval,
-			  int __user *optlen)
-{
-	int olr;
-	int val;
-	struct net *net = sock_net(sk);
-	struct mr_table *mrt;
+पूर्णांक ip6_mroute_माला_लोockopt(काष्ठा sock *sk, पूर्णांक optname, अक्षर __user *optval,
+			  पूर्णांक __user *optlen)
+अणु
+	पूर्णांक olr;
+	पूर्णांक val;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा mr_table *mrt;
 
-	if (sk->sk_type != SOCK_RAW ||
+	अगर (sk->sk_type != SOCK_RAW ||
 	    inet_sk(sk)->inet_num != IPPROTO_ICMPV6)
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
 	mrt = ip6mr_get_table(net, raw6_sk(sk)->ip6mr_table ? : RT6_TABLE_DFLT);
-	if (!mrt)
-		return -ENOENT;
+	अगर (!mrt)
+		वापस -ENOENT;
 
-	switch (optname) {
-	case MRT6_VERSION:
+	चयन (optname) अणु
+	हाल MRT6_VERSION:
 		val = 0x0305;
-		break;
-#ifdef CONFIG_IPV6_PIMSM_V2
-	case MRT6_PIM:
-		val = mrt->mroute_do_pim;
-		break;
-#endif
-	case MRT6_ASSERT:
-		val = mrt->mroute_do_assert;
-		break;
-	default:
-		return -ENOPROTOOPT;
-	}
+		अवरोध;
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
+	हाल MRT6_PIM:
+		val = mrt->mroute_करो_pim;
+		अवरोध;
+#पूर्ण_अगर
+	हाल MRT6_ASSERT:
+		val = mrt->mroute_करो_निश्चित;
+		अवरोध;
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
 
-	if (get_user(olr, optlen))
-		return -EFAULT;
+	अगर (get_user(olr, optlen))
+		वापस -EFAULT;
 
-	olr = min_t(int, olr, sizeof(int));
-	if (olr < 0)
-		return -EINVAL;
+	olr = min_t(पूर्णांक, olr, माप(पूर्णांक));
+	अगर (olr < 0)
+		वापस -EINVAL;
 
-	if (put_user(olr, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, olr))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_user(olr, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, olr))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /*
  *	The IP multicast ioctl support routines.
  */
 
-int ip6mr_ioctl(struct sock *sk, int cmd, void __user *arg)
-{
-	struct sioc_sg_req6 sr;
-	struct sioc_mif_req6 vr;
-	struct vif_device *vif;
-	struct mfc6_cache *c;
-	struct net *net = sock_net(sk);
-	struct mr_table *mrt;
+पूर्णांक ip6mr_ioctl(काष्ठा sock *sk, पूर्णांक cmd, व्योम __user *arg)
+अणु
+	काष्ठा sioc_sg_req6 sr;
+	काष्ठा sioc_mअगर_req6 vr;
+	काष्ठा vअगर_device *vअगर;
+	काष्ठा mfc6_cache *c;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा mr_table *mrt;
 
 	mrt = ip6mr_get_table(net, raw6_sk(sk)->ip6mr_table ? : RT6_TABLE_DFLT);
-	if (!mrt)
-		return -ENOENT;
+	अगर (!mrt)
+		वापस -ENOENT;
 
-	switch (cmd) {
-	case SIOCGETMIFCNT_IN6:
-		if (copy_from_user(&vr, arg, sizeof(vr)))
-			return -EFAULT;
-		if (vr.mifi >= mrt->maxvif)
-			return -EINVAL;
-		vr.mifi = array_index_nospec(vr.mifi, mrt->maxvif);
-		read_lock(&mrt_lock);
-		vif = &mrt->vif_table[vr.mifi];
-		if (VIF_EXISTS(mrt, vr.mifi)) {
-			vr.icount = vif->pkt_in;
-			vr.ocount = vif->pkt_out;
-			vr.ibytes = vif->bytes_in;
-			vr.obytes = vif->bytes_out;
-			read_unlock(&mrt_lock);
+	चयन (cmd) अणु
+	हाल SIOCGETMIFCNT_IN6:
+		अगर (copy_from_user(&vr, arg, माप(vr)))
+			वापस -EFAULT;
+		अगर (vr.mअगरi >= mrt->maxvअगर)
+			वापस -EINVAL;
+		vr.mअगरi = array_index_nospec(vr.mअगरi, mrt->maxvअगर);
+		पढ़ो_lock(&mrt_lock);
+		vअगर = &mrt->vअगर_table[vr.mअगरi];
+		अगर (VIF_EXISTS(mrt, vr.mअगरi)) अणु
+			vr.icount = vअगर->pkt_in;
+			vr.ocount = vअगर->pkt_out;
+			vr.ibytes = vअगर->bytes_in;
+			vr.obytes = vअगर->bytes_out;
+			पढ़ो_unlock(&mrt_lock);
 
-			if (copy_to_user(arg, &vr, sizeof(vr)))
-				return -EFAULT;
-			return 0;
-		}
-		read_unlock(&mrt_lock);
-		return -EADDRNOTAVAIL;
-	case SIOCGETSGCNT_IN6:
-		if (copy_from_user(&sr, arg, sizeof(sr)))
-			return -EFAULT;
+			अगर (copy_to_user(arg, &vr, माप(vr)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+		पढ़ो_unlock(&mrt_lock);
+		वापस -EADDRNOTAVAIL;
+	हाल SIOCGETSGCNT_IN6:
+		अगर (copy_from_user(&sr, arg, माप(sr)))
+			वापस -EFAULT;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		c = ip6mr_cache_find(mrt, &sr.src.sin6_addr, &sr.grp.sin6_addr);
-		if (c) {
+		अगर (c) अणु
 			sr.pktcnt = c->_c.mfc_un.res.pkt;
 			sr.bytecnt = c->_c.mfc_un.res.bytes;
-			sr.wrong_if = c->_c.mfc_un.res.wrong_if;
-			rcu_read_unlock();
+			sr.wrong_अगर = c->_c.mfc_un.res.wrong_अगर;
+			rcu_पढ़ो_unlock();
 
-			if (copy_to_user(arg, &sr, sizeof(sr)))
-				return -EFAULT;
-			return 0;
-		}
-		rcu_read_unlock();
-		return -EADDRNOTAVAIL;
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
+			अगर (copy_to_user(arg, &sr, माप(sr)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+		rcu_पढ़ो_unlock();
+		वापस -EADDRNOTAVAIL;
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-struct compat_sioc_sg_req6 {
-	struct sockaddr_in6 src;
-	struct sockaddr_in6 grp;
-	compat_ulong_t pktcnt;
-	compat_ulong_t bytecnt;
-	compat_ulong_t wrong_if;
-};
+#अगर_घोषित CONFIG_COMPAT
+काष्ठा compat_sioc_sg_req6 अणु
+	काष्ठा sockaddr_in6 src;
+	काष्ठा sockaddr_in6 grp;
+	compat_uदीर्घ_t pktcnt;
+	compat_uदीर्घ_t bytecnt;
+	compat_uदीर्घ_t wrong_अगर;
+पूर्ण;
 
-struct compat_sioc_mif_req6 {
-	mifi_t	mifi;
-	compat_ulong_t icount;
-	compat_ulong_t ocount;
-	compat_ulong_t ibytes;
-	compat_ulong_t obytes;
-};
+काष्ठा compat_sioc_mअगर_req6 अणु
+	mअगरi_t	mअगरi;
+	compat_uदीर्घ_t icount;
+	compat_uदीर्घ_t ocount;
+	compat_uदीर्घ_t ibytes;
+	compat_uदीर्घ_t obytes;
+पूर्ण;
 
-int ip6mr_compat_ioctl(struct sock *sk, unsigned int cmd, void __user *arg)
-{
-	struct compat_sioc_sg_req6 sr;
-	struct compat_sioc_mif_req6 vr;
-	struct vif_device *vif;
-	struct mfc6_cache *c;
-	struct net *net = sock_net(sk);
-	struct mr_table *mrt;
+पूर्णांक ip6mr_compat_ioctl(काष्ठा sock *sk, अचिन्हित पूर्णांक cmd, व्योम __user *arg)
+अणु
+	काष्ठा compat_sioc_sg_req6 sr;
+	काष्ठा compat_sioc_mअगर_req6 vr;
+	काष्ठा vअगर_device *vअगर;
+	काष्ठा mfc6_cache *c;
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा mr_table *mrt;
 
 	mrt = ip6mr_get_table(net, raw6_sk(sk)->ip6mr_table ? : RT6_TABLE_DFLT);
-	if (!mrt)
-		return -ENOENT;
+	अगर (!mrt)
+		वापस -ENOENT;
 
-	switch (cmd) {
-	case SIOCGETMIFCNT_IN6:
-		if (copy_from_user(&vr, arg, sizeof(vr)))
-			return -EFAULT;
-		if (vr.mifi >= mrt->maxvif)
-			return -EINVAL;
-		vr.mifi = array_index_nospec(vr.mifi, mrt->maxvif);
-		read_lock(&mrt_lock);
-		vif = &mrt->vif_table[vr.mifi];
-		if (VIF_EXISTS(mrt, vr.mifi)) {
-			vr.icount = vif->pkt_in;
-			vr.ocount = vif->pkt_out;
-			vr.ibytes = vif->bytes_in;
-			vr.obytes = vif->bytes_out;
-			read_unlock(&mrt_lock);
+	चयन (cmd) अणु
+	हाल SIOCGETMIFCNT_IN6:
+		अगर (copy_from_user(&vr, arg, माप(vr)))
+			वापस -EFAULT;
+		अगर (vr.mअगरi >= mrt->maxvअगर)
+			वापस -EINVAL;
+		vr.mअगरi = array_index_nospec(vr.mअगरi, mrt->maxvअगर);
+		पढ़ो_lock(&mrt_lock);
+		vअगर = &mrt->vअगर_table[vr.mअगरi];
+		अगर (VIF_EXISTS(mrt, vr.mअगरi)) अणु
+			vr.icount = vअगर->pkt_in;
+			vr.ocount = vअगर->pkt_out;
+			vr.ibytes = vअगर->bytes_in;
+			vr.obytes = vअगर->bytes_out;
+			पढ़ो_unlock(&mrt_lock);
 
-			if (copy_to_user(arg, &vr, sizeof(vr)))
-				return -EFAULT;
-			return 0;
-		}
-		read_unlock(&mrt_lock);
-		return -EADDRNOTAVAIL;
-	case SIOCGETSGCNT_IN6:
-		if (copy_from_user(&sr, arg, sizeof(sr)))
-			return -EFAULT;
+			अगर (copy_to_user(arg, &vr, माप(vr)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+		पढ़ो_unlock(&mrt_lock);
+		वापस -EADDRNOTAVAIL;
+	हाल SIOCGETSGCNT_IN6:
+		अगर (copy_from_user(&sr, arg, माप(sr)))
+			वापस -EFAULT;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		c = ip6mr_cache_find(mrt, &sr.src.sin6_addr, &sr.grp.sin6_addr);
-		if (c) {
+		अगर (c) अणु
 			sr.pktcnt = c->_c.mfc_un.res.pkt;
 			sr.bytecnt = c->_c.mfc_un.res.bytes;
-			sr.wrong_if = c->_c.mfc_un.res.wrong_if;
-			rcu_read_unlock();
+			sr.wrong_अगर = c->_c.mfc_un.res.wrong_अगर;
+			rcu_पढ़ो_unlock();
 
-			if (copy_to_user(arg, &sr, sizeof(sr)))
-				return -EFAULT;
-			return 0;
-		}
-		rcu_read_unlock();
-		return -EADDRNOTAVAIL;
-	default:
-		return -ENOIOCTLCMD;
-	}
-}
-#endif
+			अगर (copy_to_user(arg, &sr, माप(sr)))
+				वापस -EFAULT;
+			वापस 0;
+		पूर्ण
+		rcu_पढ़ो_unlock();
+		वापस -EADDRNOTAVAIL;
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static inline int ip6mr_forward2_finish(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
+अटल अंतरभूत पूर्णांक ip6mr_क्रमward2_finish(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	IP6_INC_STATS(net, ip6_dst_idev(skb_dst(skb)),
 		      IPSTATS_MIB_OUTFORWDATAGRAMS);
 	IP6_ADD_STATS(net, ip6_dst_idev(skb_dst(skb)),
 		      IPSTATS_MIB_OUTOCTETS, skb->len);
-	return dst_output(net, sk, skb);
-}
+	वापस dst_output(net, sk, skb);
+पूर्ण
 
 /*
- *	Processing handlers for ip6mr_forward
+ *	Processing handlers क्रम ip6mr_क्रमward
  */
 
-static int ip6mr_forward2(struct net *net, struct mr_table *mrt,
-			  struct sk_buff *skb, int vifi)
-{
-	struct ipv6hdr *ipv6h;
-	struct vif_device *vif = &mrt->vif_table[vifi];
-	struct net_device *dev;
-	struct dst_entry *dst;
-	struct flowi6 fl6;
+अटल पूर्णांक ip6mr_क्रमward2(काष्ठा net *net, काष्ठा mr_table *mrt,
+			  काष्ठा sk_buff *skb, पूर्णांक vअगरi)
+अणु
+	काष्ठा ipv6hdr *ipv6h;
+	काष्ठा vअगर_device *vअगर = &mrt->vअगर_table[vअगरi];
+	काष्ठा net_device *dev;
+	काष्ठा dst_entry *dst;
+	काष्ठा flowi6 fl6;
 
-	if (!vif->dev)
-		goto out_free;
+	अगर (!vअगर->dev)
+		जाओ out_मुक्त;
 
-#ifdef CONFIG_IPV6_PIMSM_V2
-	if (vif->flags & MIFF_REGISTER) {
-		vif->pkt_out++;
-		vif->bytes_out += skb->len;
-		vif->dev->stats.tx_bytes += skb->len;
-		vif->dev->stats.tx_packets++;
-		ip6mr_cache_report(mrt, skb, vifi, MRT6MSG_WHOLEPKT);
-		goto out_free;
-	}
-#endif
+#अगर_घोषित CONFIG_IPV6_PIMSM_V2
+	अगर (vअगर->flags & MIFF_REGISTER) अणु
+		vअगर->pkt_out++;
+		vअगर->bytes_out += skb->len;
+		vअगर->dev->stats.tx_bytes += skb->len;
+		vअगर->dev->stats.tx_packets++;
+		ip6mr_cache_report(mrt, skb, vअगरi, MRT6MSG_WHOLEPKT);
+		जाओ out_मुक्त;
+	पूर्ण
+#पूर्ण_अगर
 
 	ipv6h = ipv6_hdr(skb);
 
-	fl6 = (struct flowi6) {
-		.flowi6_oif = vif->link,
+	fl6 = (काष्ठा flowi6) अणु
+		.flowi6_oअगर = vअगर->link,
 		.daddr = ipv6h->daddr,
-	};
+	पूर्ण;
 
-	dst = ip6_route_output(net, NULL, &fl6);
-	if (dst->error) {
+	dst = ip6_route_output(net, शून्य, &fl6);
+	अगर (dst->error) अणु
 		dst_release(dst);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	skb_dst_drop(skb);
 	skb_dst_set(skb, dst);
 
 	/*
 	 * RFC1584 teaches, that DVMRP/PIM router must deliver packets locally
-	 * not only before forwarding, but after forwarding on all output
-	 * interfaces. It is clear, if mrouter runs a multicasting
-	 * program, it should receive packets not depending to what interface
+	 * not only beक्रमe क्रमwarding, but after क्रमwarding on all output
+	 * पूर्णांकerfaces. It is clear, अगर mrouter runs a multicasting
+	 * program, it should receive packets not depending to what पूर्णांकerface
 	 * program is joined.
 	 * If we will not make it, the program will have to join on all
-	 * interfaces. On the other hand, multihoming host (or router, but
-	 * not mrouter) cannot join to more than one interface - it will
+	 * पूर्णांकerfaces. On the other hand, multihoming host (or router, but
+	 * not mrouter) cannot join to more than one पूर्णांकerface - it will
 	 * result in receiving multiple packets.
 	 */
-	dev = vif->dev;
+	dev = vअगर->dev;
 	skb->dev = dev;
-	vif->pkt_out++;
-	vif->bytes_out += skb->len;
+	vअगर->pkt_out++;
+	vअगर->bytes_out += skb->len;
 
-	/* We are about to write */
+	/* We are about to ग_लिखो */
 	/* XXX: extension headers? */
-	if (skb_cow(skb, sizeof(*ipv6h) + LL_RESERVED_SPACE(dev)))
-		goto out_free;
+	अगर (skb_cow(skb, माप(*ipv6h) + LL_RESERVED_SPACE(dev)))
+		जाओ out_मुक्त;
 
 	ipv6h = ipv6_hdr(skb);
 	ipv6h->hop_limit--;
 
 	IP6CB(skb)->flags |= IP6SKB_FORWARDED;
 
-	return NF_HOOK(NFPROTO_IPV6, NF_INET_FORWARD,
-		       net, NULL, skb, skb->dev, dev,
-		       ip6mr_forward2_finish);
+	वापस NF_HOOK(NFPROTO_IPV6, NF_INET_FORWARD,
+		       net, शून्य, skb, skb->dev, dev,
+		       ip6mr_क्रमward2_finish);
 
-out_free:
-	kfree_skb(skb);
-	return 0;
-}
+out_मुक्त:
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int ip6mr_find_vif(struct mr_table *mrt, struct net_device *dev)
-{
-	int ct;
+अटल पूर्णांक ip6mr_find_vअगर(काष्ठा mr_table *mrt, काष्ठा net_device *dev)
+अणु
+	पूर्णांक ct;
 
-	for (ct = mrt->maxvif - 1; ct >= 0; ct--) {
-		if (mrt->vif_table[ct].dev == dev)
-			break;
-	}
-	return ct;
-}
+	क्रम (ct = mrt->maxvअगर - 1; ct >= 0; ct--) अणु
+		अगर (mrt->vअगर_table[ct].dev == dev)
+			अवरोध;
+	पूर्ण
+	वापस ct;
+पूर्ण
 
-static void ip6_mr_forward(struct net *net, struct mr_table *mrt,
-			   struct net_device *dev, struct sk_buff *skb,
-			   struct mfc6_cache *c)
-{
-	int psend = -1;
-	int vif, ct;
-	int true_vifi = ip6mr_find_vif(mrt, dev);
+अटल व्योम ip6_mr_क्रमward(काष्ठा net *net, काष्ठा mr_table *mrt,
+			   काष्ठा net_device *dev, काष्ठा sk_buff *skb,
+			   काष्ठा mfc6_cache *c)
+अणु
+	पूर्णांक psend = -1;
+	पूर्णांक vअगर, ct;
+	पूर्णांक true_vअगरi = ip6mr_find_vअगर(mrt, dev);
 
-	vif = c->_c.mfc_parent;
+	vअगर = c->_c.mfc_parent;
 	c->_c.mfc_un.res.pkt++;
 	c->_c.mfc_un.res.bytes += skb->len;
-	c->_c.mfc_un.res.lastuse = jiffies;
+	c->_c.mfc_un.res.lastuse = jअगरfies;
 
-	if (ipv6_addr_any(&c->mf6c_origin) && true_vifi >= 0) {
-		struct mfc6_cache *cache_proxy;
+	अगर (ipv6_addr_any(&c->mf6c_origin) && true_vअगरi >= 0) अणु
+		काष्ठा mfc6_cache *cache_proxy;
 
 		/* For an (*,G) entry, we only check that the incoming
-		 * interface is part of the static tree.
+		 * पूर्णांकerface is part of the अटल tree.
 		 */
-		rcu_read_lock();
-		cache_proxy = mr_mfc_find_any_parent(mrt, vif);
-		if (cache_proxy &&
-		    cache_proxy->_c.mfc_un.res.ttls[true_vifi] < 255) {
-			rcu_read_unlock();
-			goto forward;
-		}
-		rcu_read_unlock();
-	}
+		rcu_पढ़ो_lock();
+		cache_proxy = mr_mfc_find_any_parent(mrt, vअगर);
+		अगर (cache_proxy &&
+		    cache_proxy->_c.mfc_un.res.ttls[true_vअगरi] < 255) अणु
+			rcu_पढ़ो_unlock();
+			जाओ क्रमward;
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
 	/*
-	 * Wrong interface: drop packet and (maybe) send PIM assert.
+	 * Wrong पूर्णांकerface: drop packet and (maybe) send PIM निश्चित.
 	 */
-	if (mrt->vif_table[vif].dev != dev) {
-		c->_c.mfc_un.res.wrong_if++;
+	अगर (mrt->vअगर_table[vअगर].dev != dev) अणु
+		c->_c.mfc_un.res.wrong_अगर++;
 
-		if (true_vifi >= 0 && mrt->mroute_do_assert &&
-		    /* pimsm uses asserts, when switching from RPT to SPT,
-		       so that we cannot check that packet arrived on an oif.
+		अगर (true_vअगरi >= 0 && mrt->mroute_करो_निश्चित &&
+		    /* pimsm uses निश्चितs, when चयनing from RPT to SPT,
+		       so that we cannot check that packet arrived on an oअगर.
 		       It is bad, but otherwise we would need to move pretty
 		       large chunk of pimd to kernel. Ough... --ANK
 		     */
-		    (mrt->mroute_do_pim ||
-		     c->_c.mfc_un.res.ttls[true_vifi] < 255) &&
-		    time_after(jiffies,
-			       c->_c.mfc_un.res.last_assert +
-			       MFC_ASSERT_THRESH)) {
-			c->_c.mfc_un.res.last_assert = jiffies;
-			ip6mr_cache_report(mrt, skb, true_vifi, MRT6MSG_WRONGMIF);
-		}
-		goto dont_forward;
-	}
+		    (mrt->mroute_करो_pim ||
+		     c->_c.mfc_un.res.ttls[true_vअगरi] < 255) &&
+		    समय_after(jअगरfies,
+			       c->_c.mfc_un.res.last_निश्चित +
+			       MFC_ASSERT_THRESH)) अणु
+			c->_c.mfc_un.res.last_निश्चित = jअगरfies;
+			ip6mr_cache_report(mrt, skb, true_vअगरi, MRT6MSG_WRONGMIF);
+		पूर्ण
+		जाओ करोnt_क्रमward;
+	पूर्ण
 
-forward:
-	mrt->vif_table[vif].pkt_in++;
-	mrt->vif_table[vif].bytes_in += skb->len;
+क्रमward:
+	mrt->vअगर_table[vअगर].pkt_in++;
+	mrt->vअगर_table[vअगर].bytes_in += skb->len;
 
 	/*
 	 *	Forward the frame
 	 */
-	if (ipv6_addr_any(&c->mf6c_origin) &&
-	    ipv6_addr_any(&c->mf6c_mcastgrp)) {
-		if (true_vifi >= 0 &&
-		    true_vifi != c->_c.mfc_parent &&
+	अगर (ipv6_addr_any(&c->mf6c_origin) &&
+	    ipv6_addr_any(&c->mf6c_mcastgrp)) अणु
+		अगर (true_vअगरi >= 0 &&
+		    true_vअगरi != c->_c.mfc_parent &&
 		    ipv6_hdr(skb)->hop_limit >
-				c->_c.mfc_un.res.ttls[c->_c.mfc_parent]) {
+				c->_c.mfc_un.res.ttls[c->_c.mfc_parent]) अणु
 			/* It's an (*,*) entry and the packet is not coming from
-			 * the upstream: forward the packet to the upstream
+			 * the upstream: क्रमward the packet to the upstream
 			 * only.
 			 */
 			psend = c->_c.mfc_parent;
-			goto last_forward;
-		}
-		goto dont_forward;
-	}
-	for (ct = c->_c.mfc_un.res.maxvif - 1;
-	     ct >= c->_c.mfc_un.res.minvif; ct--) {
-		/* For (*,G) entry, don't forward to the incoming interface */
-		if ((!ipv6_addr_any(&c->mf6c_origin) || ct != true_vifi) &&
-		    ipv6_hdr(skb)->hop_limit > c->_c.mfc_un.res.ttls[ct]) {
-			if (psend != -1) {
-				struct sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
-				if (skb2)
-					ip6mr_forward2(net, mrt, skb2, psend);
-			}
+			जाओ last_क्रमward;
+		पूर्ण
+		जाओ करोnt_क्रमward;
+	पूर्ण
+	क्रम (ct = c->_c.mfc_un.res.maxvअगर - 1;
+	     ct >= c->_c.mfc_un.res.minvअगर; ct--) अणु
+		/* For (*,G) entry, करोn't क्रमward to the incoming पूर्णांकerface */
+		अगर ((!ipv6_addr_any(&c->mf6c_origin) || ct != true_vअगरi) &&
+		    ipv6_hdr(skb)->hop_limit > c->_c.mfc_un.res.ttls[ct]) अणु
+			अगर (psend != -1) अणु
+				काष्ठा sk_buff *skb2 = skb_clone(skb, GFP_ATOMIC);
+				अगर (skb2)
+					ip6mr_क्रमward2(net, mrt, skb2, psend);
+			पूर्ण
 			psend = ct;
-		}
-	}
-last_forward:
-	if (psend != -1) {
-		ip6mr_forward2(net, mrt, skb, psend);
-		return;
-	}
+		पूर्ण
+	पूर्ण
+last_क्रमward:
+	अगर (psend != -1) अणु
+		ip6mr_क्रमward2(net, mrt, skb, psend);
+		वापस;
+	पूर्ण
 
-dont_forward:
-	kfree_skb(skb);
-}
+करोnt_क्रमward:
+	kमुक्त_skb(skb);
+पूर्ण
 
 
 /*
- *	Multicast packets for forwarding arrive here
+ *	Multicast packets क्रम क्रमwarding arrive here
  */
 
-int ip6_mr_input(struct sk_buff *skb)
-{
-	struct mfc6_cache *cache;
-	struct net *net = dev_net(skb->dev);
-	struct mr_table *mrt;
-	struct flowi6 fl6 = {
-		.flowi6_iif	= skb->dev->ifindex,
+पूर्णांक ip6_mr_input(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा mfc6_cache *cache;
+	काष्ठा net *net = dev_net(skb->dev);
+	काष्ठा mr_table *mrt;
+	काष्ठा flowi6 fl6 = अणु
+		.flowi6_iअगर	= skb->dev->अगरindex,
 		.flowi6_mark	= skb->mark,
-	};
-	int err;
-	struct net_device *dev;
+	पूर्ण;
+	पूर्णांक err;
+	काष्ठा net_device *dev;
 
-	/* skb->dev passed in is the master dev for vrfs.
-	 * Get the proper interface that does have a vif associated with it.
+	/* skb->dev passed in is the master dev क्रम vrfs.
+	 * Get the proper पूर्णांकerface that करोes have a vअगर associated with it.
 	 */
 	dev = skb->dev;
-	if (netif_is_l3_master(skb->dev)) {
-		dev = dev_get_by_index_rcu(net, IPCB(skb)->iif);
-		if (!dev) {
-			kfree_skb(skb);
-			return -ENODEV;
-		}
-	}
+	अगर (netअगर_is_l3_master(skb->dev)) अणु
+		dev = dev_get_by_index_rcu(net, IPCB(skb)->iअगर);
+		अगर (!dev) अणु
+			kमुक्त_skb(skb);
+			वापस -ENODEV;
+		पूर्ण
+	पूर्ण
 
 	err = ip6mr_fib_lookup(net, &fl6, &mrt);
-	if (err < 0) {
-		kfree_skb(skb);
-		return err;
-	}
+	अगर (err < 0) अणु
+		kमुक्त_skb(skb);
+		वापस err;
+	पूर्ण
 
-	read_lock(&mrt_lock);
+	पढ़ो_lock(&mrt_lock);
 	cache = ip6mr_cache_find(mrt,
 				 &ipv6_hdr(skb)->saddr, &ipv6_hdr(skb)->daddr);
-	if (!cache) {
-		int vif = ip6mr_find_vif(mrt, dev);
+	अगर (!cache) अणु
+		पूर्णांक vअगर = ip6mr_find_vअगर(mrt, dev);
 
-		if (vif >= 0)
+		अगर (vअगर >= 0)
 			cache = ip6mr_cache_find_any(mrt,
 						     &ipv6_hdr(skb)->daddr,
-						     vif);
-	}
+						     vअगर);
+	पूर्ण
 
 	/*
 	 *	No usable cache entry
 	 */
-	if (!cache) {
-		int vif;
+	अगर (!cache) अणु
+		पूर्णांक vअगर;
 
-		vif = ip6mr_find_vif(mrt, dev);
-		if (vif >= 0) {
-			int err = ip6mr_cache_unresolved(mrt, vif, skb, dev);
-			read_unlock(&mrt_lock);
+		vअगर = ip6mr_find_vअगर(mrt, dev);
+		अगर (vअगर >= 0) अणु
+			पूर्णांक err = ip6mr_cache_unresolved(mrt, vअगर, skb, dev);
+			पढ़ो_unlock(&mrt_lock);
 
-			return err;
-		}
-		read_unlock(&mrt_lock);
-		kfree_skb(skb);
-		return -ENODEV;
-	}
+			वापस err;
+		पूर्ण
+		पढ़ो_unlock(&mrt_lock);
+		kमुक्त_skb(skb);
+		वापस -ENODEV;
+	पूर्ण
 
-	ip6_mr_forward(net, mrt, dev, skb, cache);
+	ip6_mr_क्रमward(net, mrt, dev, skb, cache);
 
-	read_unlock(&mrt_lock);
+	पढ़ो_unlock(&mrt_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ip6mr_get_route(struct net *net, struct sk_buff *skb, struct rtmsg *rtm,
+पूर्णांक ip6mr_get_route(काष्ठा net *net, काष्ठा sk_buff *skb, काष्ठा rपंचांगsg *rपंचांग,
 		    u32 portid)
-{
-	int err;
-	struct mr_table *mrt;
-	struct mfc6_cache *cache;
-	struct rt6_info *rt = (struct rt6_info *)skb_dst(skb);
+अणु
+	पूर्णांक err;
+	काष्ठा mr_table *mrt;
+	काष्ठा mfc6_cache *cache;
+	काष्ठा rt6_info *rt = (काष्ठा rt6_info *)skb_dst(skb);
 
 	mrt = ip6mr_get_table(net, RT6_TABLE_DFLT);
-	if (!mrt)
-		return -ENOENT;
+	अगर (!mrt)
+		वापस -ENOENT;
 
-	read_lock(&mrt_lock);
+	पढ़ो_lock(&mrt_lock);
 	cache = ip6mr_cache_find(mrt, &rt->rt6i_src.addr, &rt->rt6i_dst.addr);
-	if (!cache && skb->dev) {
-		int vif = ip6mr_find_vif(mrt, skb->dev);
+	अगर (!cache && skb->dev) अणु
+		पूर्णांक vअगर = ip6mr_find_vअगर(mrt, skb->dev);
 
-		if (vif >= 0)
+		अगर (vअगर >= 0)
 			cache = ip6mr_cache_find_any(mrt, &rt->rt6i_dst.addr,
-						     vif);
-	}
+						     vअगर);
+	पूर्ण
 
-	if (!cache) {
-		struct sk_buff *skb2;
-		struct ipv6hdr *iph;
-		struct net_device *dev;
-		int vif;
+	अगर (!cache) अणु
+		काष्ठा sk_buff *skb2;
+		काष्ठा ipv6hdr *iph;
+		काष्ठा net_device *dev;
+		पूर्णांक vअगर;
 
 		dev = skb->dev;
-		if (!dev || (vif = ip6mr_find_vif(mrt, dev)) < 0) {
-			read_unlock(&mrt_lock);
-			return -ENODEV;
-		}
+		अगर (!dev || (vअगर = ip6mr_find_vअगर(mrt, dev)) < 0) अणु
+			पढ़ो_unlock(&mrt_lock);
+			वापस -ENODEV;
+		पूर्ण
 
 		/* really correct? */
-		skb2 = alloc_skb(sizeof(struct ipv6hdr), GFP_ATOMIC);
-		if (!skb2) {
-			read_unlock(&mrt_lock);
-			return -ENOMEM;
-		}
+		skb2 = alloc_skb(माप(काष्ठा ipv6hdr), GFP_ATOMIC);
+		अगर (!skb2) अणु
+			पढ़ो_unlock(&mrt_lock);
+			वापस -ENOMEM;
+		पूर्ण
 
 		NETLINK_CB(skb2).portid = portid;
 		skb_reset_transport_header(skb2);
 
-		skb_put(skb2, sizeof(struct ipv6hdr));
+		skb_put(skb2, माप(काष्ठा ipv6hdr));
 		skb_reset_network_header(skb2);
 
 		iph = ipv6_hdr(skb2);
@@ -2312,209 +2313,209 @@ int ip6mr_get_route(struct net *net, struct sk_buff *skb, struct rtmsg *rtm,
 		iph->saddr = rt->rt6i_src.addr;
 		iph->daddr = rt->rt6i_dst.addr;
 
-		err = ip6mr_cache_unresolved(mrt, vif, skb2, dev);
-		read_unlock(&mrt_lock);
+		err = ip6mr_cache_unresolved(mrt, vअगर, skb2, dev);
+		पढ़ो_unlock(&mrt_lock);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = mr_fill_mroute(mrt, skb, &cache->_c, rtm);
-	read_unlock(&mrt_lock);
-	return err;
-}
+	err = mr_fill_mroute(mrt, skb, &cache->_c, rपंचांग);
+	पढ़ो_unlock(&mrt_lock);
+	वापस err;
+पूर्ण
 
-static int ip6mr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
-			     u32 portid, u32 seq, struct mfc6_cache *c, int cmd,
-			     int flags)
-{
-	struct nlmsghdr *nlh;
-	struct rtmsg *rtm;
-	int err;
+अटल पूर्णांक ip6mr_fill_mroute(काष्ठा mr_table *mrt, काष्ठा sk_buff *skb,
+			     u32 portid, u32 seq, काष्ठा mfc6_cache *c, पूर्णांक cmd,
+			     पूर्णांक flags)
+अणु
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा rपंचांगsg *rपंचांग;
+	पूर्णांक err;
 
-	nlh = nlmsg_put(skb, portid, seq, cmd, sizeof(*rtm), flags);
-	if (!nlh)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, portid, seq, cmd, माप(*rपंचांग), flags);
+	अगर (!nlh)
+		वापस -EMSGSIZE;
 
-	rtm = nlmsg_data(nlh);
-	rtm->rtm_family   = RTNL_FAMILY_IP6MR;
-	rtm->rtm_dst_len  = 128;
-	rtm->rtm_src_len  = 128;
-	rtm->rtm_tos      = 0;
-	rtm->rtm_table    = mrt->id;
-	if (nla_put_u32(skb, RTA_TABLE, mrt->id))
-		goto nla_put_failure;
-	rtm->rtm_type = RTN_MULTICAST;
-	rtm->rtm_scope    = RT_SCOPE_UNIVERSE;
-	if (c->_c.mfc_flags & MFC_STATIC)
-		rtm->rtm_protocol = RTPROT_STATIC;
-	else
-		rtm->rtm_protocol = RTPROT_MROUTED;
-	rtm->rtm_flags    = 0;
+	rपंचांग = nlmsg_data(nlh);
+	rपंचांग->rपंचांग_family   = RTNL_FAMILY_IP6MR;
+	rपंचांग->rपंचांग_dst_len  = 128;
+	rपंचांग->rपंचांग_src_len  = 128;
+	rपंचांग->rपंचांग_tos      = 0;
+	rपंचांग->rपंचांग_table    = mrt->id;
+	अगर (nla_put_u32(skb, RTA_TABLE, mrt->id))
+		जाओ nla_put_failure;
+	rपंचांग->rपंचांग_type = RTN_MULTICAST;
+	rपंचांग->rपंचांग_scope    = RT_SCOPE_UNIVERSE;
+	अगर (c->_c.mfc_flags & MFC_STATIC)
+		rपंचांग->rपंचांग_protocol = RTPROT_STATIC;
+	अन्यथा
+		rपंचांग->rपंचांग_protocol = RTPROT_MROUTED;
+	rपंचांग->rपंचांग_flags    = 0;
 
-	if (nla_put_in6_addr(skb, RTA_SRC, &c->mf6c_origin) ||
+	अगर (nla_put_in6_addr(skb, RTA_SRC, &c->mf6c_origin) ||
 	    nla_put_in6_addr(skb, RTA_DST, &c->mf6c_mcastgrp))
-		goto nla_put_failure;
-	err = mr_fill_mroute(mrt, skb, &c->_c, rtm);
-	/* do not break the dump if cache is unresolved */
-	if (err < 0 && err != -ENOENT)
-		goto nla_put_failure;
+		जाओ nla_put_failure;
+	err = mr_fill_mroute(mrt, skb, &c->_c, rपंचांग);
+	/* करो not अवरोध the dump अगर cache is unresolved */
+	अगर (err < 0 && err != -ENOENT)
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int _ip6mr_fill_mroute(struct mr_table *mrt, struct sk_buff *skb,
-			      u32 portid, u32 seq, struct mr_mfc *c,
-			      int cmd, int flags)
-{
-	return ip6mr_fill_mroute(mrt, skb, portid, seq, (struct mfc6_cache *)c,
+अटल पूर्णांक _ip6mr_fill_mroute(काष्ठा mr_table *mrt, काष्ठा sk_buff *skb,
+			      u32 portid, u32 seq, काष्ठा mr_mfc *c,
+			      पूर्णांक cmd, पूर्णांक flags)
+अणु
+	वापस ip6mr_fill_mroute(mrt, skb, portid, seq, (काष्ठा mfc6_cache *)c,
 				 cmd, flags);
-}
+पूर्ण
 
-static int mr6_msgsize(bool unresolved, int maxvif)
-{
-	size_t len =
-		NLMSG_ALIGN(sizeof(struct rtmsg))
+अटल पूर्णांक mr6_msgsize(bool unresolved, पूर्णांक maxvअगर)
+अणु
+	माप_प्रकार len =
+		NLMSG_ALIGN(माप(काष्ठा rपंचांगsg))
 		+ nla_total_size(4)	/* RTA_TABLE */
-		+ nla_total_size(sizeof(struct in6_addr))	/* RTA_SRC */
-		+ nla_total_size(sizeof(struct in6_addr))	/* RTA_DST */
+		+ nla_total_size(माप(काष्ठा in6_addr))	/* RTA_SRC */
+		+ nla_total_size(माप(काष्ठा in6_addr))	/* RTA_DST */
 		;
 
-	if (!unresolved)
+	अगर (!unresolved)
 		len = len
 		      + nla_total_size(4)	/* RTA_IIF */
 		      + nla_total_size(0)	/* RTA_MULTIPATH */
-		      + maxvif * NLA_ALIGN(sizeof(struct rtnexthop))
+		      + maxvअगर * NLA_ALIGN(माप(काष्ठा rtnexthop))
 						/* RTA_MFC_STATS */
-		      + nla_total_size_64bit(sizeof(struct rta_mfc_stats))
+		      + nla_total_size_64bit(माप(काष्ठा rta_mfc_stats))
 		;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static void mr6_netlink_event(struct mr_table *mrt, struct mfc6_cache *mfc,
-			      int cmd)
-{
-	struct net *net = read_pnet(&mrt->net);
-	struct sk_buff *skb;
-	int err = -ENOBUFS;
+अटल व्योम mr6_netlink_event(काष्ठा mr_table *mrt, काष्ठा mfc6_cache *mfc,
+			      पूर्णांक cmd)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&mrt->net);
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = -ENOBUFS;
 
-	skb = nlmsg_new(mr6_msgsize(mfc->_c.mfc_parent >= MAXMIFS, mrt->maxvif),
+	skb = nlmsg_new(mr6_msgsize(mfc->_c.mfc_parent >= MAXMIFS, mrt->maxvअगर),
 			GFP_ATOMIC);
-	if (!skb)
-		goto errout;
+	अगर (!skb)
+		जाओ errout;
 
 	err = ip6mr_fill_mroute(mrt, skb, 0, 0, mfc, cmd, 0);
-	if (err < 0)
-		goto errout;
+	अगर (err < 0)
+		जाओ errout;
 
-	rtnl_notify(skb, net, 0, RTNLGRP_IPV6_MROUTE, NULL, GFP_ATOMIC);
-	return;
+	rtnl_notअगरy(skb, net, 0, RTNLGRP_IPV6_MROUTE, शून्य, GFP_ATOMIC);
+	वापस;
 
 errout:
-	kfree_skb(skb);
-	if (err < 0)
+	kमुक्त_skb(skb);
+	अगर (err < 0)
 		rtnl_set_sk_err(net, RTNLGRP_IPV6_MROUTE, err);
-}
+पूर्ण
 
-static size_t mrt6msg_netlink_msgsize(size_t payloadlen)
-{
-	size_t len =
-		NLMSG_ALIGN(sizeof(struct rtgenmsg))
+अटल माप_प्रकार mrt6msg_netlink_msgsize(माप_प्रकार payloadlen)
+अणु
+	माप_प्रकार len =
+		NLMSG_ALIGN(माप(काष्ठा rtgenmsg))
 		+ nla_total_size(1)	/* IP6MRA_CREPORT_MSGTYPE */
 		+ nla_total_size(4)	/* IP6MRA_CREPORT_MIF_ID */
 					/* IP6MRA_CREPORT_SRC_ADDR */
-		+ nla_total_size(sizeof(struct in6_addr))
+		+ nla_total_size(माप(काष्ठा in6_addr))
 					/* IP6MRA_CREPORT_DST_ADDR */
-		+ nla_total_size(sizeof(struct in6_addr))
+		+ nla_total_size(माप(काष्ठा in6_addr))
 					/* IP6MRA_CREPORT_PKT */
 		+ nla_total_size(payloadlen)
 		;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static void mrt6msg_netlink_event(struct mr_table *mrt, struct sk_buff *pkt)
-{
-	struct net *net = read_pnet(&mrt->net);
-	struct nlmsghdr *nlh;
-	struct rtgenmsg *rtgenm;
-	struct mrt6msg *msg;
-	struct sk_buff *skb;
-	struct nlattr *nla;
-	int payloadlen;
+अटल व्योम mrt6msg_netlink_event(काष्ठा mr_table *mrt, काष्ठा sk_buff *pkt)
+अणु
+	काष्ठा net *net = पढ़ो_pnet(&mrt->net);
+	काष्ठा nlmsghdr *nlh;
+	काष्ठा rtgenmsg *rtgenm;
+	काष्ठा mrt6msg *msg;
+	काष्ठा sk_buff *skb;
+	काष्ठा nlattr *nla;
+	पूर्णांक payloadlen;
 
-	payloadlen = pkt->len - sizeof(struct mrt6msg);
-	msg = (struct mrt6msg *)skb_transport_header(pkt);
+	payloadlen = pkt->len - माप(काष्ठा mrt6msg);
+	msg = (काष्ठा mrt6msg *)skb_transport_header(pkt);
 
 	skb = nlmsg_new(mrt6msg_netlink_msgsize(payloadlen), GFP_ATOMIC);
-	if (!skb)
-		goto errout;
+	अगर (!skb)
+		जाओ errout;
 
 	nlh = nlmsg_put(skb, 0, 0, RTM_NEWCACHEREPORT,
-			sizeof(struct rtgenmsg), 0);
-	if (!nlh)
-		goto errout;
+			माप(काष्ठा rtgenmsg), 0);
+	अगर (!nlh)
+		जाओ errout;
 	rtgenm = nlmsg_data(nlh);
 	rtgenm->rtgen_family = RTNL_FAMILY_IP6MR;
-	if (nla_put_u8(skb, IP6MRA_CREPORT_MSGTYPE, msg->im6_msgtype) ||
-	    nla_put_u32(skb, IP6MRA_CREPORT_MIF_ID, msg->im6_mif) ||
+	अगर (nla_put_u8(skb, IP6MRA_CREPORT_MSGTYPE, msg->im6_msgtype) ||
+	    nla_put_u32(skb, IP6MRA_CREPORT_MIF_ID, msg->im6_mअगर) ||
 	    nla_put_in6_addr(skb, IP6MRA_CREPORT_SRC_ADDR,
 			     &msg->im6_src) ||
 	    nla_put_in6_addr(skb, IP6MRA_CREPORT_DST_ADDR,
 			     &msg->im6_dst))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	nla = nla_reserve(skb, IP6MRA_CREPORT_PKT, payloadlen);
-	if (!nla || skb_copy_bits(pkt, sizeof(struct mrt6msg),
+	अगर (!nla || skb_copy_bits(pkt, माप(काष्ठा mrt6msg),
 				  nla_data(nla), payloadlen))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	nlmsg_end(skb, nlh);
 
-	rtnl_notify(skb, net, 0, RTNLGRP_IPV6_MROUTE_R, NULL, GFP_ATOMIC);
-	return;
+	rtnl_notअगरy(skb, net, 0, RTNLGRP_IPV6_MROUTE_R, शून्य, GFP_ATOMIC);
+	वापस;
 
 nla_put_failure:
 	nlmsg_cancel(skb, nlh);
 errout:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 	rtnl_set_sk_err(net, RTNLGRP_IPV6_MROUTE_R, -ENOBUFS);
-}
+पूर्ण
 
-static int ip6mr_rtm_dumproute(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	const struct nlmsghdr *nlh = cb->nlh;
-	struct fib_dump_filter filter = {};
-	int err;
+अटल पूर्णांक ip6mr_rपंचांग_dumproute(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	स्थिर काष्ठा nlmsghdr *nlh = cb->nlh;
+	काष्ठा fib_dump_filter filter = अणुपूर्ण;
+	पूर्णांक err;
 
-	if (cb->strict_check) {
+	अगर (cb->strict_check) अणु
 		err = ip_valid_fib_dump_req(sock_net(skb->sk), nlh,
 					    &filter, cb);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (filter.table_id) {
-		struct mr_table *mrt;
+	अगर (filter.table_id) अणु
+		काष्ठा mr_table *mrt;
 
 		mrt = ip6mr_get_table(sock_net(skb->sk), filter.table_id);
-		if (!mrt) {
-			if (rtnl_msg_family(cb->nlh) != RTNL_FAMILY_IP6MR)
-				return skb->len;
+		अगर (!mrt) अणु
+			अगर (rtnl_msg_family(cb->nlh) != RTNL_FAMILY_IP6MR)
+				वापस skb->len;
 
 			NL_SET_ERR_MSG_MOD(cb->extack, "MR table does not exist");
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 		err = mr_table_dump(mrt, skb, cb, _ip6mr_fill_mroute,
 				    &mfc_unres_lock, &filter);
-		return skb->len ? : err;
-	}
+		वापस skb->len ? : err;
+	पूर्ण
 
-	return mr_rtm_dumproute(skb, cb, ip6mr_mr_table_iter,
+	वापस mr_rपंचांग_dumproute(skb, cb, ip6mr_mr_table_iter,
 				_ip6mr_fill_mroute, &mfc_unres_lock, &filter);
-}
+पूर्ण

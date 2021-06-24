@@ -1,130 +1,131 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Virtual Processor Dispatch Trace Log
  *
  * (C) Copyright IBM Corporation 2009
  *
- * Author: Jeremy Kerr <jk@ozlabs.org>
+ * Author: Jeremy Kerr <jk@ozद_असल.org>
  */
 
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <asm/smp.h>
-#include <linux/uaccess.h>
-#include <asm/firmware.h>
-#include <asm/dtl.h>
-#include <asm/lppaca.h>
-#include <asm/debugfs.h>
-#include <asm/plpar_wrappers.h>
-#include <asm/machdep.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/dtl.h>
+#समावेश <यंत्र/lppaca.h>
+#समावेश <यंत्र/debugfs.h>
+#समावेश <यंत्र/plpar_wrappers.h>
+#समावेश <यंत्र/machdep.h>
 
-struct dtl {
-	struct dtl_entry	*buf;
-	int			cpu;
-	int			buf_entries;
+काष्ठा dtl अणु
+	काष्ठा dtl_entry	*buf;
+	पूर्णांक			cpu;
+	पूर्णांक			buf_entries;
 	u64			last_idx;
 	spinlock_t		lock;
-};
-static DEFINE_PER_CPU(struct dtl, cpu_dtl);
+पूर्ण;
+अटल DEFINE_PER_CPU(काष्ठा dtl, cpu_dtl);
 
-static u8 dtl_event_mask = DTL_LOG_ALL;
+अटल u8 dtl_event_mask = DTL_LOG_ALL;
 
 
 /*
- * Size of per-cpu log buffers. Firmware requires that the buffer does
+ * Size of per-cpu log buffers. Firmware requires that the buffer करोes
  * not cross a 4k boundary.
  */
-static int dtl_buf_entries = N_DISPATCH_LOG;
+अटल पूर्णांक dtl_buf_entries = N_DISPATCH_LOG;
 
-#ifdef CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
-struct dtl_ring {
-	u64	write_index;
-	struct dtl_entry *write_ptr;
-	struct dtl_entry *buf;
-	struct dtl_entry *buf_end;
-};
+#अगर_घोषित CONFIG_VIRT_CPU_ACCOUNTING_NATIVE
+काष्ठा dtl_ring अणु
+	u64	ग_लिखो_index;
+	काष्ठा dtl_entry *ग_लिखो_ptr;
+	काष्ठा dtl_entry *buf;
+	काष्ठा dtl_entry *buf_end;
+पूर्ण;
 
-static DEFINE_PER_CPU(struct dtl_ring, dtl_rings);
+अटल DEFINE_PER_CPU(काष्ठा dtl_ring, dtl_rings);
 
-static atomic_t dtl_count;
+अटल atomic_t dtl_count;
 
 /*
  * The cpu accounting code controls the DTL ring buffer, and we get
  * given entries as they are processed.
  */
-static void consume_dtle(struct dtl_entry *dtle, u64 index)
-{
-	struct dtl_ring *dtlr = this_cpu_ptr(&dtl_rings);
-	struct dtl_entry *wp = dtlr->write_ptr;
-	struct lppaca *vpa = local_paca->lppaca_ptr;
+अटल व्योम consume_dtle(काष्ठा dtl_entry *dtle, u64 index)
+अणु
+	काष्ठा dtl_ring *dtlr = this_cpu_ptr(&dtl_rings);
+	काष्ठा dtl_entry *wp = dtlr->ग_लिखो_ptr;
+	काष्ठा lppaca *vpa = local_paca->lppaca_ptr;
 
-	if (!wp)
-		return;
+	अगर (!wp)
+		वापस;
 
 	*wp = *dtle;
 	barrier();
 
-	/* check for hypervisor ring buffer overflow, ignore this entry if so */
-	if (index + N_DISPATCH_LOG < be64_to_cpu(vpa->dtl_idx))
-		return;
+	/* check क्रम hypervisor ring buffer overflow, ignore this entry अगर so */
+	अगर (index + N_DISPATCH_LOG < be64_to_cpu(vpa->dtl_idx))
+		वापस;
 
 	++wp;
-	if (wp == dtlr->buf_end)
+	अगर (wp == dtlr->buf_end)
 		wp = dtlr->buf;
-	dtlr->write_ptr = wp;
+	dtlr->ग_लिखो_ptr = wp;
 
-	/* incrementing write_index makes the new entry visible */
+	/* incrementing ग_लिखो_index makes the new entry visible */
 	smp_wmb();
-	++dtlr->write_index;
-}
+	++dtlr->ग_लिखो_index;
+पूर्ण
 
-static int dtl_start(struct dtl *dtl)
-{
-	struct dtl_ring *dtlr = &per_cpu(dtl_rings, dtl->cpu);
+अटल पूर्णांक dtl_start(काष्ठा dtl *dtl)
+अणु
+	काष्ठा dtl_ring *dtlr = &per_cpu(dtl_rings, dtl->cpu);
 
 	dtlr->buf = dtl->buf;
 	dtlr->buf_end = dtl->buf + dtl->buf_entries;
-	dtlr->write_index = 0;
+	dtlr->ग_लिखो_index = 0;
 
-	/* setting write_ptr enables logging into our buffer */
+	/* setting ग_लिखो_ptr enables logging पूर्णांकo our buffer */
 	smp_wmb();
-	dtlr->write_ptr = dtl->buf;
+	dtlr->ग_लिखो_ptr = dtl->buf;
 
 	/* enable event logging */
 	lppaca_of(dtl->cpu).dtl_enable_mask |= dtl_event_mask;
 
 	dtl_consumer = consume_dtle;
 	atomic_inc(&dtl_count);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dtl_stop(struct dtl *dtl)
-{
-	struct dtl_ring *dtlr = &per_cpu(dtl_rings, dtl->cpu);
+अटल व्योम dtl_stop(काष्ठा dtl *dtl)
+अणु
+	काष्ठा dtl_ring *dtlr = &per_cpu(dtl_rings, dtl->cpu);
 
-	dtlr->write_ptr = NULL;
+	dtlr->ग_लिखो_ptr = शून्य;
 	smp_wmb();
 
-	dtlr->buf = NULL;
+	dtlr->buf = शून्य;
 
 	/* restore dtl_enable_mask */
 	lppaca_of(dtl->cpu).dtl_enable_mask = DTL_LOG_PREEMPT;
 
-	if (atomic_dec_and_test(&dtl_count))
-		dtl_consumer = NULL;
-}
+	अगर (atomic_dec_and_test(&dtl_count))
+		dtl_consumer = शून्य;
+पूर्ण
 
-static u64 dtl_current_index(struct dtl *dtl)
-{
-	return per_cpu(dtl_rings, dtl->cpu).write_index;
-}
+अटल u64 dtl_current_index(काष्ठा dtl *dtl)
+अणु
+	वापस per_cpu(dtl_rings, dtl->cpu).ग_लिखो_index;
+पूर्ण
 
-#else /* CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
+#अन्यथा /* CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
 
-static int dtl_start(struct dtl *dtl)
-{
-	unsigned long addr;
-	int ret, hwcpu;
+अटल पूर्णांक dtl_start(काष्ठा dtl *dtl)
+अणु
+	अचिन्हित दीर्घ addr;
+	पूर्णांक ret, hwcpu;
 
 	/* Register our dtl buffer with the hypervisor. The HV expects the
 	 * buffer size to be passed in the second word of the buffer */
@@ -132,226 +133,226 @@ static int dtl_start(struct dtl *dtl)
 
 	hwcpu = get_hard_smp_processor_id(dtl->cpu);
 	addr = __pa(dtl->buf);
-	ret = register_dtl(hwcpu, addr);
-	if (ret) {
-		printk(KERN_WARNING "%s: DTL registration for cpu %d (hw %d) "
+	ret = रेजिस्टर_dtl(hwcpu, addr);
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_WARNING "%s: DTL registration for cpu %d (hw %d) "
 		       "failed with %d\n", __func__, dtl->cpu, hwcpu, ret);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/* set our initial buffer indices */
 	lppaca_of(dtl->cpu).dtl_idx = 0;
 
-	/* ensure that our updates to the lppaca fields have occurred before
+	/* ensure that our updates to the lppaca fields have occurred beक्रमe
 	 * we actually enable the logging */
 	smp_wmb();
 
 	/* enable event logging */
 	lppaca_of(dtl->cpu).dtl_enable_mask = dtl_event_mask;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dtl_stop(struct dtl *dtl)
-{
-	int hwcpu = get_hard_smp_processor_id(dtl->cpu);
+अटल व्योम dtl_stop(काष्ठा dtl *dtl)
+अणु
+	पूर्णांक hwcpu = get_hard_smp_processor_id(dtl->cpu);
 
 	lppaca_of(dtl->cpu).dtl_enable_mask = 0x0;
 
-	unregister_dtl(hwcpu);
-}
+	unरेजिस्टर_dtl(hwcpu);
+पूर्ण
 
-static u64 dtl_current_index(struct dtl *dtl)
-{
-	return be64_to_cpu(lppaca_of(dtl->cpu).dtl_idx);
-}
-#endif /* CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
+अटल u64 dtl_current_index(काष्ठा dtl *dtl)
+अणु
+	वापस be64_to_cpu(lppaca_of(dtl->cpu).dtl_idx);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_VIRT_CPU_ACCOUNTING_NATIVE */
 
-static int dtl_enable(struct dtl *dtl)
-{
-	long int n_entries;
-	long int rc;
-	struct dtl_entry *buf = NULL;
+अटल पूर्णांक dtl_enable(काष्ठा dtl *dtl)
+अणु
+	दीर्घ पूर्णांक n_entries;
+	दीर्घ पूर्णांक rc;
+	काष्ठा dtl_entry *buf = शून्य;
 
-	if (!dtl_cache)
-		return -ENOMEM;
+	अगर (!dtl_cache)
+		वापस -ENOMEM;
 
-	/* only allow one reader */
-	if (dtl->buf)
-		return -EBUSY;
+	/* only allow one पढ़ोer */
+	अगर (dtl->buf)
+		वापस -EBUSY;
 
 	/* ensure there are no other conflicting dtl users */
-	if (!read_trylock(&dtl_access_lock))
-		return -EBUSY;
+	अगर (!पढ़ो_trylock(&dtl_access_lock))
+		वापस -EBUSY;
 
 	n_entries = dtl_buf_entries;
 	buf = kmem_cache_alloc_node(dtl_cache, GFP_KERNEL, cpu_to_node(dtl->cpu));
-	if (!buf) {
-		printk(KERN_WARNING "%s: buffer alloc failed for cpu %d\n",
+	अगर (!buf) अणु
+		prपूर्णांकk(KERN_WARNING "%s: buffer alloc failed for cpu %d\n",
 				__func__, dtl->cpu);
-		read_unlock(&dtl_access_lock);
-		return -ENOMEM;
-	}
+		पढ़ो_unlock(&dtl_access_lock);
+		वापस -ENOMEM;
+	पूर्ण
 
 	spin_lock(&dtl->lock);
 	rc = -EBUSY;
-	if (!dtl->buf) {
-		/* store the original allocation size for use during read */
+	अगर (!dtl->buf) अणु
+		/* store the original allocation size क्रम use during पढ़ो */
 		dtl->buf_entries = n_entries;
 		dtl->buf = buf;
 		dtl->last_idx = 0;
 		rc = dtl_start(dtl);
-		if (rc)
-			dtl->buf = NULL;
-	}
+		अगर (rc)
+			dtl->buf = शून्य;
+	पूर्ण
 	spin_unlock(&dtl->lock);
 
-	if (rc) {
-		read_unlock(&dtl_access_lock);
-		kmem_cache_free(dtl_cache, buf);
-	}
+	अगर (rc) अणु
+		पढ़ो_unlock(&dtl_access_lock);
+		kmem_cache_मुक्त(dtl_cache, buf);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void dtl_disable(struct dtl *dtl)
-{
+अटल व्योम dtl_disable(काष्ठा dtl *dtl)
+अणु
 	spin_lock(&dtl->lock);
 	dtl_stop(dtl);
-	kmem_cache_free(dtl_cache, dtl->buf);
-	dtl->buf = NULL;
+	kmem_cache_मुक्त(dtl_cache, dtl->buf);
+	dtl->buf = शून्य;
 	dtl->buf_entries = 0;
 	spin_unlock(&dtl->lock);
-	read_unlock(&dtl_access_lock);
-}
+	पढ़ो_unlock(&dtl_access_lock);
+पूर्ण
 
-/* file interface */
+/* file पूर्णांकerface */
 
-static int dtl_file_open(struct inode *inode, struct file *filp)
-{
-	struct dtl *dtl = inode->i_private;
-	int rc;
+अटल पूर्णांक dtl_file_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा dtl *dtl = inode->i_निजी;
+	पूर्णांक rc;
 
 	rc = dtl_enable(dtl);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	filp->private_data = dtl;
-	return 0;
-}
+	filp->निजी_data = dtl;
+	वापस 0;
+पूर्ण
 
-static int dtl_file_release(struct inode *inode, struct file *filp)
-{
-	struct dtl *dtl = inode->i_private;
+अटल पूर्णांक dtl_file_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा dtl *dtl = inode->i_निजी;
 	dtl_disable(dtl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t dtl_file_read(struct file *filp, char __user *buf, size_t len,
+अटल sमाप_प्रकार dtl_file_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार len,
 		loff_t *pos)
-{
-	long int rc, n_read, n_req, read_size;
-	struct dtl *dtl;
+अणु
+	दीर्घ पूर्णांक rc, n_पढ़ो, n_req, पढ़ो_size;
+	काष्ठा dtl *dtl;
 	u64 cur_idx, last_idx, i;
 
-	if ((len % sizeof(struct dtl_entry)) != 0)
-		return -EINVAL;
+	अगर ((len % माप(काष्ठा dtl_entry)) != 0)
+		वापस -EINVAL;
 
-	dtl = filp->private_data;
+	dtl = filp->निजी_data;
 
-	/* requested number of entries to read */
-	n_req = len / sizeof(struct dtl_entry);
+	/* requested number of entries to पढ़ो */
+	n_req = len / माप(काष्ठा dtl_entry);
 
-	/* actual number of entries read */
-	n_read = 0;
+	/* actual number of entries पढ़ो */
+	n_पढ़ो = 0;
 
 	spin_lock(&dtl->lock);
 
 	cur_idx = dtl_current_index(dtl);
 	last_idx = dtl->last_idx;
 
-	if (last_idx + dtl->buf_entries <= cur_idx)
+	अगर (last_idx + dtl->buf_entries <= cur_idx)
 		last_idx = cur_idx - dtl->buf_entries + 1;
 
-	if (last_idx + n_req > cur_idx)
+	अगर (last_idx + n_req > cur_idx)
 		n_req = cur_idx - last_idx;
 
-	if (n_req > 0)
+	अगर (n_req > 0)
 		dtl->last_idx = last_idx + n_req;
 
 	spin_unlock(&dtl->lock);
 
-	if (n_req <= 0)
-		return 0;
+	अगर (n_req <= 0)
+		वापस 0;
 
 	i = last_idx % dtl->buf_entries;
 
-	/* read the tail of the buffer if we've wrapped */
-	if (i + n_req > dtl->buf_entries) {
-		read_size = dtl->buf_entries - i;
+	/* पढ़ो the tail of the buffer अगर we've wrapped */
+	अगर (i + n_req > dtl->buf_entries) अणु
+		पढ़ो_size = dtl->buf_entries - i;
 
 		rc = copy_to_user(buf, &dtl->buf[i],
-				read_size * sizeof(struct dtl_entry));
-		if (rc)
-			return -EFAULT;
+				पढ़ो_size * माप(काष्ठा dtl_entry));
+		अगर (rc)
+			वापस -EFAULT;
 
 		i = 0;
-		n_req -= read_size;
-		n_read += read_size;
-		buf += read_size * sizeof(struct dtl_entry);
-	}
+		n_req -= पढ़ो_size;
+		n_पढ़ो += पढ़ो_size;
+		buf += पढ़ो_size * माप(काष्ठा dtl_entry);
+	पूर्ण
 
 	/* .. and now the head */
-	rc = copy_to_user(buf, &dtl->buf[i], n_req * sizeof(struct dtl_entry));
-	if (rc)
-		return -EFAULT;
+	rc = copy_to_user(buf, &dtl->buf[i], n_req * माप(काष्ठा dtl_entry));
+	अगर (rc)
+		वापस -EFAULT;
 
-	n_read += n_req;
+	n_पढ़ो += n_req;
 
-	return n_read * sizeof(struct dtl_entry);
-}
+	वापस n_पढ़ो * माप(काष्ठा dtl_entry);
+पूर्ण
 
-static const struct file_operations dtl_fops = {
-	.open		= dtl_file_open,
+अटल स्थिर काष्ठा file_operations dtl_fops = अणु
+	.खोलो		= dtl_file_खोलो,
 	.release	= dtl_file_release,
-	.read		= dtl_file_read,
+	.पढ़ो		= dtl_file_पढ़ो,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static struct dentry *dtl_dir;
+अटल काष्ठा dentry *dtl_dir;
 
-static void dtl_setup_file(struct dtl *dtl)
-{
-	char name[10];
+अटल व्योम dtl_setup_file(काष्ठा dtl *dtl)
+अणु
+	अक्षर name[10];
 
-	sprintf(name, "cpu-%d", dtl->cpu);
+	प्र_लिखो(name, "cpu-%d", dtl->cpu);
 
 	debugfs_create_file(name, 0400, dtl_dir, dtl, &dtl_fops);
-}
+पूर्ण
 
-static int dtl_init(void)
-{
-	int i;
+अटल पूर्णांक dtl_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (!firmware_has_feature(FW_FEATURE_SPLPAR))
-		return -ENODEV;
+	अगर (!firmware_has_feature(FW_FEATURE_SPLPAR))
+		वापस -ENODEV;
 
-	/* set up common debugfs structure */
+	/* set up common debugfs काष्ठाure */
 
-	dtl_dir = debugfs_create_dir("dtl", powerpc_debugfs_root);
+	dtl_dir = debugfs_create_dir("dtl", घातerpc_debugfs_root);
 
 	debugfs_create_x8("dtl_event_mask", 0600, dtl_dir, &dtl_event_mask);
 	debugfs_create_u32("dtl_buf_entries", 0400, dtl_dir, &dtl_buf_entries);
 
-	/* set up the per-cpu log structures */
-	for_each_possible_cpu(i) {
-		struct dtl *dtl = &per_cpu(cpu_dtl, i);
+	/* set up the per-cpu log काष्ठाures */
+	क्रम_each_possible_cpu(i) अणु
+		काष्ठा dtl *dtl = &per_cpu(cpu_dtl, i);
 		spin_lock_init(&dtl->lock);
 		dtl->cpu = i;
 
 		dtl_setup_file(dtl);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 machine_arch_initcall(pseries, dtl_init);

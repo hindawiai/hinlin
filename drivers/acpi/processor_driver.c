@@ -1,158 +1,159 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * processor_driver.c - ACPI Processor Driver
  *
- *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@intel.com>
- *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@intel.com>
- *  Copyright (C) 2004       Dominik Brodowski <linux@brodo.de>
- *  Copyright (C) 2004  Anil S Keshavamurthy <anil.s.keshavamurthy@intel.com>
+ *  Copyright (C) 2001, 2002 Andy Grover <andrew.grover@पूर्णांकel.com>
+ *  Copyright (C) 2001, 2002 Paul Diefenbaugh <paul.s.diefenbaugh@पूर्णांकel.com>
+ *  Copyright (C) 2004       Dominik Broकरोwski <linux@broकरो.de>
+ *  Copyright (C) 2004  Anil S Keshavamurthy <anil.s.keshavamurthy@पूर्णांकel.com>
  *  			- Added processor hotplug support
  *  Copyright (C) 2013, Intel Corporation
- *                      Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+ *                      Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/cpufreq.h>
-#include <linux/cpu.h>
-#include <linux/cpuidle.h>
-#include <linux/slab.h>
-#include <linux/acpi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/acpi.h>
 
-#include <acpi/processor.h>
+#समावेश <acpi/processor.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-#define ACPI_PROCESSOR_NOTIFY_PERFORMANCE 0x80
-#define ACPI_PROCESSOR_NOTIFY_POWER	0x81
-#define ACPI_PROCESSOR_NOTIFY_THROTTLING	0x82
+#घोषणा ACPI_PROCESSOR_NOTIFY_PERFORMANCE 0x80
+#घोषणा ACPI_PROCESSOR_NOTIFY_POWER	0x81
+#घोषणा ACPI_PROCESSOR_NOTIFY_THROTTLING	0x82
 
 MODULE_AUTHOR("Paul Diefenbaugh");
 MODULE_DESCRIPTION("ACPI Processor Driver");
 MODULE_LICENSE("GPL");
 
-static int acpi_processor_start(struct device *dev);
-static int acpi_processor_stop(struct device *dev);
+अटल पूर्णांक acpi_processor_start(काष्ठा device *dev);
+अटल पूर्णांक acpi_processor_stop(काष्ठा device *dev);
 
-static const struct acpi_device_id processor_device_ids[] = {
-	{ACPI_PROCESSOR_OBJECT_HID, 0},
-	{ACPI_PROCESSOR_DEVICE_HID, 0},
-	{"", 0},
-};
+अटल स्थिर काष्ठा acpi_device_id processor_device_ids[] = अणु
+	अणुACPI_PROCESSOR_OBJECT_HID, 0पूर्ण,
+	अणुACPI_PROCESSOR_DEVICE_HID, 0पूर्ण,
+	अणु"", 0पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, processor_device_ids);
 
-static struct device_driver acpi_processor_driver = {
+अटल काष्ठा device_driver acpi_processor_driver = अणु
 	.name = "processor",
 	.bus = &cpu_subsys,
 	.acpi_match_table = processor_device_ids,
 	.probe = acpi_processor_start,
-	.remove = acpi_processor_stop,
-};
+	.हटाओ = acpi_processor_stop,
+पूर्ण;
 
-static void acpi_processor_notify(acpi_handle handle, u32 event, void *data)
-{
-	struct acpi_device *device = data;
-	struct acpi_processor *pr;
-	int saved;
+अटल व्योम acpi_processor_notअगरy(acpi_handle handle, u32 event, व्योम *data)
+अणु
+	काष्ठा acpi_device *device = data;
+	काष्ठा acpi_processor *pr;
+	पूर्णांक saved;
 
-	if (device->handle != handle)
-		return;
+	अगर (device->handle != handle)
+		वापस;
 
 	pr = acpi_driver_data(device);
-	if (!pr)
-		return;
+	अगर (!pr)
+		वापस;
 
-	switch (event) {
-	case ACPI_PROCESSOR_NOTIFY_PERFORMANCE:
-		saved = pr->performance_platform_limit;
+	चयन (event) अणु
+	हाल ACPI_PROCESSOR_NOTIFY_PERFORMANCE:
+		saved = pr->perक्रमmance_platक्रमm_limit;
 		acpi_processor_ppc_has_changed(pr, 1);
-		if (saved == pr->performance_platform_limit)
-			break;
+		अगर (saved == pr->perक्रमmance_platक्रमm_limit)
+			अवरोध;
 		acpi_bus_generate_netlink_event(device->pnp.device_class,
 						  dev_name(&device->dev), event,
-						  pr->performance_platform_limit);
-		break;
-	case ACPI_PROCESSOR_NOTIFY_POWER:
-		acpi_processor_power_state_has_changed(pr);
+						  pr->perक्रमmance_platक्रमm_limit);
+		अवरोध;
+	हाल ACPI_PROCESSOR_NOTIFY_POWER:
+		acpi_processor_घातer_state_has_changed(pr);
 		acpi_bus_generate_netlink_event(device->pnp.device_class,
 						  dev_name(&device->dev), event, 0);
-		break;
-	case ACPI_PROCESSOR_NOTIFY_THROTTLING:
+		अवरोध;
+	हाल ACPI_PROCESSOR_NOTIFY_THROTTLING:
 		acpi_processor_tstate_has_changed(pr);
 		acpi_bus_generate_netlink_event(device->pnp.device_class,
 						  dev_name(&device->dev), event, 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		acpi_handle_debug(handle, "Unsupported event [0x%x]\n", event);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int __acpi_processor_start(struct acpi_device *device);
+अटल पूर्णांक __acpi_processor_start(काष्ठा acpi_device *device);
 
-static int acpi_soft_cpu_online(unsigned int cpu)
-{
-	struct acpi_processor *pr = per_cpu(processors, cpu);
-	struct acpi_device *device;
+अटल पूर्णांक acpi_soft_cpu_online(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा acpi_processor *pr = per_cpu(processors, cpu);
+	काष्ठा acpi_device *device;
 
-	if (!pr || acpi_bus_get_device(pr->handle, &device))
-		return 0;
+	अगर (!pr || acpi_bus_get_device(pr->handle, &device))
+		वापस 0;
 	/*
-	 * CPU got physically hotplugged and onlined for the first time:
+	 * CPU got physically hotplugged and onlined क्रम the first समय:
 	 * Initialize missing things.
 	 */
-	if (pr->flags.need_hotplug_init) {
-		int ret;
+	अगर (pr->flags.need_hotplug_init) अणु
+		पूर्णांक ret;
 
 		pr_info("Will online and init hotplugged CPU: %d\n",
 			pr->id);
 		pr->flags.need_hotplug_init = 0;
 		ret = __acpi_processor_start(device);
 		WARN(ret, "Failed to start CPU: %d\n", pr->id);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Normal CPU soft online event. */
 		acpi_processor_ppc_has_changed(pr, 0);
 		acpi_processor_hotplug(pr);
 		acpi_processor_reevaluate_tstate(pr, false);
 		acpi_processor_tstate_has_changed(pr);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int acpi_soft_cpu_dead(unsigned int cpu)
-{
-	struct acpi_processor *pr = per_cpu(processors, cpu);
-	struct acpi_device *device;
+अटल पूर्णांक acpi_soft_cpu_dead(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा acpi_processor *pr = per_cpu(processors, cpu);
+	काष्ठा acpi_device *device;
 
-	if (!pr || acpi_bus_get_device(pr->handle, &device))
-		return 0;
+	अगर (!pr || acpi_bus_get_device(pr->handle, &device))
+		वापस 0;
 
 	acpi_processor_reevaluate_tstate(pr, true);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_ACPI_CPU_FREQ_PSS
-static int acpi_pss_perf_init(struct acpi_processor *pr,
-		struct acpi_device *device)
-{
-	int result = 0;
+#अगर_घोषित CONFIG_ACPI_CPU_FREQ_PSS
+अटल पूर्णांक acpi_pss_perf_init(काष्ठा acpi_processor *pr,
+		काष्ठा acpi_device *device)
+अणु
+	पूर्णांक result = 0;
 
 	acpi_processor_ppc_has_changed(pr, 0);
 
 	acpi_processor_get_throttling_info(pr);
 
-	if (pr->flags.throttling)
+	अगर (pr->flags.throttling)
 		pr->flags.limit = 1;
 
-	pr->cdev = thermal_cooling_device_register("Processor", device,
+	pr->cdev = thermal_cooling_device_रेजिस्टर("Processor", device,
 						   &processor_cooling_ops);
-	if (IS_ERR(pr->cdev)) {
+	अगर (IS_ERR(pr->cdev)) अणु
 		result = PTR_ERR(pr->cdev);
-		return result;
-	}
+		वापस result;
+	पूर्ण
 
 	dev_dbg(&device->dev, "registered as cooling_device%d\n",
 		pr->cdev->id);
@@ -160,204 +161,204 @@ static int acpi_pss_perf_init(struct acpi_processor *pr,
 	result = sysfs_create_link(&device->dev.kobj,
 				   &pr->cdev->device.kobj,
 				   "thermal_cooling");
-	if (result) {
+	अगर (result) अणु
 		dev_err(&device->dev,
 			"Failed to create sysfs link 'thermal_cooling'\n");
-		goto err_thermal_unregister;
-	}
+		जाओ err_thermal_unरेजिस्टर;
+	पूर्ण
 
 	result = sysfs_create_link(&pr->cdev->device.kobj,
 				   &device->dev.kobj,
 				   "device");
-	if (result) {
+	अगर (result) अणु
 		dev_err(&pr->cdev->device,
 			"Failed to create sysfs link 'device'\n");
-		goto err_remove_sysfs_thermal;
-	}
+		जाओ err_हटाओ_sysfs_thermal;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- err_remove_sysfs_thermal:
-	sysfs_remove_link(&device->dev.kobj, "thermal_cooling");
- err_thermal_unregister:
-	thermal_cooling_device_unregister(pr->cdev);
+ err_हटाओ_sysfs_thermal:
+	sysfs_हटाओ_link(&device->dev.kobj, "thermal_cooling");
+ err_thermal_unरेजिस्टर:
+	thermal_cooling_device_unरेजिस्टर(pr->cdev);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static void acpi_pss_perf_exit(struct acpi_processor *pr,
-		struct acpi_device *device)
-{
-	if (pr->cdev) {
-		sysfs_remove_link(&device->dev.kobj, "thermal_cooling");
-		sysfs_remove_link(&pr->cdev->device.kobj, "device");
-		thermal_cooling_device_unregister(pr->cdev);
-		pr->cdev = NULL;
-	}
-}
-#else
-static inline int acpi_pss_perf_init(struct acpi_processor *pr,
-		struct acpi_device *device)
-{
-	return 0;
-}
+अटल व्योम acpi_pss_perf_निकास(काष्ठा acpi_processor *pr,
+		काष्ठा acpi_device *device)
+अणु
+	अगर (pr->cdev) अणु
+		sysfs_हटाओ_link(&device->dev.kobj, "thermal_cooling");
+		sysfs_हटाओ_link(&pr->cdev->device.kobj, "device");
+		thermal_cooling_device_unरेजिस्टर(pr->cdev);
+		pr->cdev = शून्य;
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक acpi_pss_perf_init(काष्ठा acpi_processor *pr,
+		काष्ठा acpi_device *device)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void acpi_pss_perf_exit(struct acpi_processor *pr,
-		struct acpi_device *device) {}
-#endif /* CONFIG_ACPI_CPU_FREQ_PSS */
+अटल अंतरभूत व्योम acpi_pss_perf_निकास(काष्ठा acpi_processor *pr,
+		काष्ठा acpi_device *device) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI_CPU_FREQ_PSS */
 
-static int __acpi_processor_start(struct acpi_device *device)
-{
-	struct acpi_processor *pr = acpi_driver_data(device);
+अटल पूर्णांक __acpi_processor_start(काष्ठा acpi_device *device)
+अणु
+	काष्ठा acpi_processor *pr = acpi_driver_data(device);
 	acpi_status status;
-	int result = 0;
+	पूर्णांक result = 0;
 
-	if (!pr)
-		return -ENODEV;
+	अगर (!pr)
+		वापस -ENODEV;
 
-	if (pr->flags.need_hotplug_init)
-		return 0;
+	अगर (pr->flags.need_hotplug_init)
+		वापस 0;
 
 	result = acpi_cppc_processor_probe(pr);
-	if (result && !IS_ENABLED(CONFIG_ACPI_CPU_FREQ_PSS))
+	अगर (result && !IS_ENABLED(CONFIG_ACPI_CPU_FREQ_PSS))
 		dev_dbg(&device->dev, "CPPC data invalid or not present\n");
 
-	if (!cpuidle_get_driver() || cpuidle_get_driver() == &acpi_idle_driver)
-		acpi_processor_power_init(pr);
+	अगर (!cpuidle_get_driver() || cpuidle_get_driver() == &acpi_idle_driver)
+		acpi_processor_घातer_init(pr);
 
 	result = acpi_pss_perf_init(pr, device);
-	if (result)
-		goto err_power_exit;
+	अगर (result)
+		जाओ err_घातer_निकास;
 
-	status = acpi_install_notify_handler(device->handle, ACPI_DEVICE_NOTIFY,
-					     acpi_processor_notify, device);
-	if (ACPI_SUCCESS(status))
-		return 0;
+	status = acpi_install_notअगरy_handler(device->handle, ACPI_DEVICE_NOTIFY,
+					     acpi_processor_notअगरy, device);
+	अगर (ACPI_SUCCESS(status))
+		वापस 0;
 
 	result = -ENODEV;
-	acpi_pss_perf_exit(pr, device);
+	acpi_pss_perf_निकास(pr, device);
 
-err_power_exit:
-	acpi_processor_power_exit(pr);
-	return result;
-}
+err_घातer_निकास:
+	acpi_processor_घातer_निकास(pr);
+	वापस result;
+पूर्ण
 
-static int acpi_processor_start(struct device *dev)
-{
-	struct acpi_device *device = ACPI_COMPANION(dev);
-	int ret;
+अटल पूर्णांक acpi_processor_start(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_device *device = ACPI_COMPANION(dev);
+	पूर्णांक ret;
 
-	if (!device)
-		return -ENODEV;
+	अगर (!device)
+		वापस -ENODEV;
 
 	/* Protect against concurrent CPU hotplug operations */
 	cpu_hotplug_disable();
 	ret = __acpi_processor_start(device);
 	cpu_hotplug_enable();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int acpi_processor_stop(struct device *dev)
-{
-	struct acpi_device *device = ACPI_COMPANION(dev);
-	struct acpi_processor *pr;
+अटल पूर्णांक acpi_processor_stop(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_device *device = ACPI_COMPANION(dev);
+	काष्ठा acpi_processor *pr;
 
-	if (!device)
-		return 0;
+	अगर (!device)
+		वापस 0;
 
-	acpi_remove_notify_handler(device->handle, ACPI_DEVICE_NOTIFY,
-				   acpi_processor_notify);
+	acpi_हटाओ_notअगरy_handler(device->handle, ACPI_DEVICE_NOTIFY,
+				   acpi_processor_notअगरy);
 
 	pr = acpi_driver_data(device);
-	if (!pr)
-		return 0;
-	acpi_processor_power_exit(pr);
+	अगर (!pr)
+		वापस 0;
+	acpi_processor_घातer_निकास(pr);
 
-	acpi_pss_perf_exit(pr, device);
+	acpi_pss_perf_निकास(pr, device);
 
-	acpi_cppc_processor_exit(pr);
+	acpi_cppc_processor_निकास(pr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 bool acpi_processor_cpufreq_init;
 
-static int acpi_processor_notifier(struct notifier_block *nb,
-				   unsigned long event, void *data)
-{
-	struct cpufreq_policy *policy = data;
+अटल पूर्णांक acpi_processor_notअगरier(काष्ठा notअगरier_block *nb,
+				   अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा cpufreq_policy *policy = data;
 
-	if (event == CPUFREQ_CREATE_POLICY) {
+	अगर (event == CPUFREQ_CREATE_POLICY) अणु
 		acpi_thermal_cpufreq_init(policy);
 		acpi_processor_ppc_init(policy);
-	} else if (event == CPUFREQ_REMOVE_POLICY) {
-		acpi_processor_ppc_exit(policy);
-		acpi_thermal_cpufreq_exit(policy);
-	}
+	पूर्ण अन्यथा अगर (event == CPUFREQ_REMOVE_POLICY) अणु
+		acpi_processor_ppc_निकास(policy);
+		acpi_thermal_cpufreq_निकास(policy);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block acpi_processor_notifier_block = {
-	.notifier_call = acpi_processor_notifier,
-};
+अटल काष्ठा notअगरier_block acpi_processor_notअगरier_block = अणु
+	.notअगरier_call = acpi_processor_notअगरier,
+पूर्ण;
 
 /*
  * We keep the driver loaded even when ACPI is not running.
- * This is needed for the powernow-k8 driver, that works even without
+ * This is needed क्रम the घातernow-k8 driver, that works even without
  * ACPI, but needs symbols from this driver
  */
-static enum cpuhp_state hp_online;
-static int __init acpi_processor_driver_init(void)
-{
-	int result = 0;
+अटल क्रमागत cpuhp_state hp_online;
+अटल पूर्णांक __init acpi_processor_driver_init(व्योम)
+अणु
+	पूर्णांक result = 0;
 
-	if (acpi_disabled)
-		return 0;
+	अगर (acpi_disabled)
+		वापस 0;
 
-	result = driver_register(&acpi_processor_driver);
-	if (result < 0)
-		return result;
+	result = driver_रेजिस्टर(&acpi_processor_driver);
+	अगर (result < 0)
+		वापस result;
 
 	result = cpuhp_setup_state_nocalls(CPUHP_AP_ONLINE_DYN,
 					   "acpi/cpu-drv:online",
-					   acpi_soft_cpu_online, NULL);
-	if (result < 0)
-		goto err;
+					   acpi_soft_cpu_online, शून्य);
+	अगर (result < 0)
+		जाओ err;
 	hp_online = result;
 	cpuhp_setup_state_nocalls(CPUHP_ACPI_CPUDRV_DEAD, "acpi/cpu-drv:dead",
-				  NULL, acpi_soft_cpu_dead);
+				  शून्य, acpi_soft_cpu_dead);
 
-	if (!cpufreq_register_notifier(&acpi_processor_notifier_block,
-				       CPUFREQ_POLICY_NOTIFIER)) {
+	अगर (!cpufreq_रेजिस्टर_notअगरier(&acpi_processor_notअगरier_block,
+				       CPUFREQ_POLICY_NOTIFIER)) अणु
 		acpi_processor_cpufreq_init = true;
 		acpi_processor_ignore_ppc_init();
-	}
+	पूर्ण
 
 	acpi_processor_throttling_init();
-	return 0;
+	वापस 0;
 err:
-	driver_unregister(&acpi_processor_driver);
-	return result;
-}
+	driver_unरेजिस्टर(&acpi_processor_driver);
+	वापस result;
+पूर्ण
 
-static void __exit acpi_processor_driver_exit(void)
-{
-	if (acpi_disabled)
-		return;
+अटल व्योम __निकास acpi_processor_driver_निकास(व्योम)
+अणु
+	अगर (acpi_disabled)
+		वापस;
 
-	if (acpi_processor_cpufreq_init) {
-		cpufreq_unregister_notifier(&acpi_processor_notifier_block,
+	अगर (acpi_processor_cpufreq_init) अणु
+		cpufreq_unरेजिस्टर_notअगरier(&acpi_processor_notअगरier_block,
 					    CPUFREQ_POLICY_NOTIFIER);
 		acpi_processor_cpufreq_init = false;
-	}
+	पूर्ण
 
-	cpuhp_remove_state_nocalls(hp_online);
-	cpuhp_remove_state_nocalls(CPUHP_ACPI_CPUDRV_DEAD);
-	driver_unregister(&acpi_processor_driver);
-}
+	cpuhp_हटाओ_state_nocalls(hp_online);
+	cpuhp_हटाओ_state_nocalls(CPUHP_ACPI_CPUDRV_DEAD);
+	driver_unरेजिस्टर(&acpi_processor_driver);
+पूर्ण
 
 module_init(acpi_processor_driver_init);
-module_exit(acpi_processor_driver_exit);
+module_निकास(acpi_processor_driver_निकास);
 
 MODULE_ALIAS("processor");

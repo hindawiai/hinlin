@@ -1,85 +1,86 @@
-/* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause) */
 /*
  * Copyright 2013-2016 Freescale Semiconductor, Inc.
  * Copyright 2016-2017 NXP
  */
 
-#ifndef __SG_SW_QM_H
-#define __SG_SW_QM_H
+#अगर_अघोषित __SG_SW_QM_H
+#घोषणा __SG_SW_QM_H
 
-#include <soc/fsl/qman.h>
-#include "regs.h"
+#समावेश <soc/fsl/qman.h>
+#समावेश "regs.h"
 
-static inline void __dma_to_qm_sg(struct qm_sg_entry *qm_sg_ptr, dma_addr_t dma,
+अटल अंतरभूत व्योम __dma_to_qm_sg(काष्ठा qm_sg_entry *qm_sg_ptr, dma_addr_t dma,
 				  u16 offset)
-{
+अणु
 	qm_sg_entry_set64(qm_sg_ptr, dma);
 	qm_sg_ptr->__reserved2 = 0;
 	qm_sg_ptr->bpid = 0;
 	qm_sg_ptr->offset = cpu_to_be16(offset & QM_SG_OFF_MASK);
-}
+पूर्ण
 
-static inline void dma_to_qm_sg_one(struct qm_sg_entry *qm_sg_ptr,
+अटल अंतरभूत व्योम dma_to_qm_sg_one(काष्ठा qm_sg_entry *qm_sg_ptr,
 				    dma_addr_t dma, u32 len, u16 offset)
-{
+अणु
 	__dma_to_qm_sg(qm_sg_ptr, dma, offset);
 	qm_sg_entry_set_len(qm_sg_ptr, len);
-}
+पूर्ण
 
-static inline void dma_to_qm_sg_one_last(struct qm_sg_entry *qm_sg_ptr,
+अटल अंतरभूत व्योम dma_to_qm_sg_one_last(काष्ठा qm_sg_entry *qm_sg_ptr,
 					 dma_addr_t dma, u32 len, u16 offset)
-{
+अणु
 	__dma_to_qm_sg(qm_sg_ptr, dma, offset);
 	qm_sg_entry_set_f(qm_sg_ptr, len);
-}
+पूर्ण
 
-static inline void dma_to_qm_sg_one_ext(struct qm_sg_entry *qm_sg_ptr,
+अटल अंतरभूत व्योम dma_to_qm_sg_one_ext(काष्ठा qm_sg_entry *qm_sg_ptr,
 					dma_addr_t dma, u32 len, u16 offset)
-{
+अणु
 	__dma_to_qm_sg(qm_sg_ptr, dma, offset);
 	qm_sg_ptr->cfg = cpu_to_be32(QM_SG_EXT | (len & QM_SG_LEN_MASK));
-}
+पूर्ण
 
-static inline void dma_to_qm_sg_one_last_ext(struct qm_sg_entry *qm_sg_ptr,
+अटल अंतरभूत व्योम dma_to_qm_sg_one_last_ext(काष्ठा qm_sg_entry *qm_sg_ptr,
 					     dma_addr_t dma, u32 len,
 					     u16 offset)
-{
+अणु
 	__dma_to_qm_sg(qm_sg_ptr, dma, offset);
 	qm_sg_ptr->cfg = cpu_to_be32(QM_SG_EXT | QM_SG_FIN |
 				     (len & QM_SG_LEN_MASK));
-}
+पूर्ण
 
 /*
- * convert scatterlist to h/w link table format
- * but does not have final bit; instead, returns last entry
+ * convert scatterlist to h/w link table क्रमmat
+ * but करोes not have final bit; instead, वापसs last entry
  */
-static inline struct qm_sg_entry *
-sg_to_qm_sg(struct scatterlist *sg, int len,
-	    struct qm_sg_entry *qm_sg_ptr, u16 offset)
-{
-	int ent_len;
+अटल अंतरभूत काष्ठा qm_sg_entry *
+sg_to_qm_sg(काष्ठा scatterlist *sg, पूर्णांक len,
+	    काष्ठा qm_sg_entry *qm_sg_ptr, u16 offset)
+अणु
+	पूर्णांक ent_len;
 
-	while (len) {
-		ent_len = min_t(int, sg_dma_len(sg), len);
+	जबतक (len) अणु
+		ent_len = min_t(पूर्णांक, sg_dma_len(sg), len);
 
 		dma_to_qm_sg_one(qm_sg_ptr, sg_dma_address(sg), ent_len,
 				 offset);
 		qm_sg_ptr++;
 		sg = sg_next(sg);
 		len -= ent_len;
-	}
-	return qm_sg_ptr - 1;
-}
+	पूर्ण
+	वापस qm_sg_ptr - 1;
+पूर्ण
 
 /*
- * convert scatterlist to h/w link table format
+ * convert scatterlist to h/w link table क्रमmat
  * scatterlist must have been previously dma mapped
  */
-static inline void sg_to_qm_sg_last(struct scatterlist *sg, int len,
-				    struct qm_sg_entry *qm_sg_ptr, u16 offset)
-{
+अटल अंतरभूत व्योम sg_to_qm_sg_last(काष्ठा scatterlist *sg, पूर्णांक len,
+				    काष्ठा qm_sg_entry *qm_sg_ptr, u16 offset)
+अणु
 	qm_sg_ptr = sg_to_qm_sg(sg, len, qm_sg_ptr, offset);
 	qm_sg_entry_set_f(qm_sg_ptr, qm_sg_entry_get_len(qm_sg_ptr));
-}
+पूर्ण
 
-#endif /* __SG_SW_QM_H */
+#पूर्ण_अगर /* __SG_SW_QM_H */

@@ -1,86 +1,87 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
 
-#ifndef __QCOM_TSENS_H__
-#define __QCOM_TSENS_H__
+#अगर_अघोषित __QCOM_TSENS_H__
+#घोषणा __QCOM_TSENS_H__
 
-#define ONE_PT_CALIB		0x1
-#define ONE_PT_CALIB2		0x2
-#define TWO_PT_CALIB		0x3
-#define CAL_DEGC_PT1		30
-#define CAL_DEGC_PT2		120
-#define SLOPE_FACTOR		1000
-#define SLOPE_DEFAULT		3200
-#define TIMEOUT_US		100
-#define THRESHOLD_MAX_ADC_CODE	0x3ff
-#define THRESHOLD_MIN_ADC_CODE	0x0
+#घोषणा ONE_PT_CALIB		0x1
+#घोषणा ONE_PT_CALIB2		0x2
+#घोषणा TWO_PT_CALIB		0x3
+#घोषणा CAL_DEGC_PT1		30
+#घोषणा CAL_DEGC_PT2		120
+#घोषणा SLOPE_FACTOR		1000
+#घोषणा SLOPE_DEFAULT		3200
+#घोषणा TIMEOUT_US		100
+#घोषणा THRESHOLD_MAX_ADC_CODE	0x3ff
+#घोषणा THRESHOLD_MIN_ADC_CODE	0x0
 
-#include <linux/interrupt.h>
-#include <linux/thermal.h>
-#include <linux/regmap.h>
-#include <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/thermal.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/slab.h>
 
-struct tsens_priv;
+काष्ठा tsens_priv;
 
 /* IP version numbers in ascending order */
-enum tsens_ver {
+क्रमागत tsens_ver अणु
 	VER_0 = 0,
 	VER_0_1,
 	VER_1_X,
 	VER_2_X,
-};
+पूर्ण;
 
-enum tsens_irq_type {
+क्रमागत tsens_irq_type अणु
 	LOWER,
 	UPPER,
 	CRITICAL,
-};
+पूर्ण;
 
 /**
- * struct tsens_sensor - data for each sensor connected to the tsens device
+ * काष्ठा tsens_sensor - data क्रम each sensor connected to the tsens device
  * @priv: tsens device instance that this sensor is connected to
- * @tzd: pointer to the thermal zone that this sensor is in
- * @offset: offset of temperature adjustment curve
- * @hw_id: HW ID can be used in case of platform-specific IDs
- * @slope: slope of temperature adjustment curve
- * @status: 8960-specific variable to track 8960 and 8660 status register offset
+ * @tzd: poपूर्णांकer to the thermal zone that this sensor is in
+ * @offset: offset of temperature adjusपंचांगent curve
+ * @hw_id: HW ID can be used in हाल of platक्रमm-specअगरic IDs
+ * @slope: slope of temperature adjusपंचांगent curve
+ * @status: 8960-specअगरic variable to track 8960 and 8660 status रेजिस्टर offset
  */
-struct tsens_sensor {
-	struct tsens_priv		*priv;
-	struct thermal_zone_device	*tzd;
-	int				offset;
-	unsigned int			hw_id;
-	int				slope;
+काष्ठा tsens_sensor अणु
+	काष्ठा tsens_priv		*priv;
+	काष्ठा thermal_zone_device	*tzd;
+	पूर्णांक				offset;
+	अचिन्हित पूर्णांक			hw_id;
+	पूर्णांक				slope;
 	u32				status;
-};
+पूर्ण;
 
 /**
- * struct tsens_ops - operations as supported by the tsens device
+ * काष्ठा tsens_ops - operations as supported by the tsens device
  * @init: Function to initialize the tsens device
  * @calibrate: Function to calibrate the tsens device
- * @get_temp: Function which returns the temp in millidegC
- * @enable: Function to enable (clocks/power) tsens device
+ * @get_temp: Function which वापसs the temp in millidegC
+ * @enable: Function to enable (घड़ीs/घातer) tsens device
  * @disable: Function to disable the tsens device
  * @suspend: Function to suspend the tsens device
  * @resume: Function to resume the tsens device
  * @get_trend: Function to get the thermal/temp trend
  */
-struct tsens_ops {
+काष्ठा tsens_ops अणु
 	/* mandatory callbacks */
-	int (*init)(struct tsens_priv *priv);
-	int (*calibrate)(struct tsens_priv *priv);
-	int (*get_temp)(const struct tsens_sensor *s, int *temp);
+	पूर्णांक (*init)(काष्ठा tsens_priv *priv);
+	पूर्णांक (*calibrate)(काष्ठा tsens_priv *priv);
+	पूर्णांक (*get_temp)(स्थिर काष्ठा tsens_sensor *s, पूर्णांक *temp);
 	/* optional callbacks */
-	int (*enable)(struct tsens_priv *priv, int i);
-	void (*disable)(struct tsens_priv *priv);
-	int (*suspend)(struct tsens_priv *priv);
-	int (*resume)(struct tsens_priv *priv);
-	int (*get_trend)(struct tsens_sensor *s, enum thermal_trend *trend);
-};
+	पूर्णांक (*enable)(काष्ठा tsens_priv *priv, पूर्णांक i);
+	व्योम (*disable)(काष्ठा tsens_priv *priv);
+	पूर्णांक (*suspend)(काष्ठा tsens_priv *priv);
+	पूर्णांक (*resume)(काष्ठा tsens_priv *priv);
+	पूर्णांक (*get_trend)(काष्ठा tsens_sensor *s, क्रमागत thermal_trend *trend);
+पूर्ण;
 
-#define REG_FIELD_FOR_EACH_SENSOR11(_name, _offset, _startbit, _stopbit) \
+#घोषणा REG_FIELD_FOR_EACH_SENSOR11(_name, _offset, _startbit, _stopbit) \
 	[_name##_##0]  = REG_FIELD(_offset,      _startbit, _stopbit),	\
 	[_name##_##1]  = REG_FIELD(_offset +  4, _startbit, _stopbit), \
 	[_name##_##2]  = REG_FIELD(_offset +  8, _startbit, _stopbit), \
@@ -93,7 +94,7 @@ struct tsens_ops {
 	[_name##_##9]  = REG_FIELD(_offset + 36, _startbit, _stopbit), \
 	[_name##_##10] = REG_FIELD(_offset + 40, _startbit, _stopbit)
 
-#define REG_FIELD_FOR_EACH_SENSOR16(_name, _offset, _startbit, _stopbit) \
+#घोषणा REG_FIELD_FOR_EACH_SENSOR16(_name, _offset, _startbit, _stopbit) \
 	[_name##_##0]  = REG_FIELD(_offset,      _startbit, _stopbit),	\
 	[_name##_##1]  = REG_FIELD(_offset +  4, _startbit, _stopbit), \
 	[_name##_##2]  = REG_FIELD(_offset +  8, _startbit, _stopbit), \
@@ -111,7 +112,7 @@ struct tsens_ops {
 	[_name##_##14] = REG_FIELD(_offset + 56, _startbit, _stopbit), \
 	[_name##_##15] = REG_FIELD(_offset + 60, _startbit, _stopbit)
 
-#define REG_FIELD_SPLIT_BITS_0_15(_name, _offset)		\
+#घोषणा REG_FIELD_SPLIT_BITS_0_15(_name, _offset)		\
 	[_name##_##0]  = REG_FIELD(_offset,  0,  0),		\
 	[_name##_##1]  = REG_FIELD(_offset,  1,  1),	\
 	[_name##_##2]  = REG_FIELD(_offset,  2,  2),	\
@@ -129,7 +130,7 @@ struct tsens_ops {
 	[_name##_##14] = REG_FIELD(_offset, 14, 14),	\
 	[_name##_##15] = REG_FIELD(_offset, 15, 15)
 
-#define REG_FIELD_SPLIT_BITS_16_31(_name, _offset)		\
+#घोषणा REG_FIELD_SPLIT_BITS_16_31(_name, _offset)		\
 	[_name##_##0]  = REG_FIELD(_offset, 16, 16),		\
 	[_name##_##1]  = REG_FIELD(_offset, 17, 17),	\
 	[_name##_##2]  = REG_FIELD(_offset, 18, 18),	\
@@ -148,11 +149,11 @@ struct tsens_ops {
 	[_name##_##15] = REG_FIELD(_offset, 31, 31)
 
 /*
- * reg_field IDs to use as an index into an array
+ * reg_field IDs to use as an index पूर्णांकo an array
  * If you change the order of the entries, check the devm_regmap_field_alloc()
  * calls in init_common()
  */
-enum regfield_ids {
+क्रमागत regfield_ids अणु
 	/* ----- SROT ------ */
 	/* HW_VER */
 	VER_MAJOR,
@@ -168,9 +169,9 @@ enum regfield_ids {
 	/* TRDY */
 	TRDY,
 	/* INTERRUPT ENABLE */
-	INT_EN,	/* v2+ has separate enables for crit, upper and lower irq */
+	INT_EN,	/* v2+ has separate enables क्रम crit, upper and lower irq */
 	/* STATUS */
-	LAST_TEMP_0,	/* Last temperature reading */
+	LAST_TEMP_0,	/* Last temperature पढ़ोing */
 	LAST_TEMP_1,
 	LAST_TEMP_2,
 	LAST_TEMP_3,
@@ -186,7 +187,7 @@ enum regfield_ids {
 	LAST_TEMP_13,
 	LAST_TEMP_14,
 	LAST_TEMP_15,
-	VALID_0,		/* VALID reading or not */
+	VALID_0,		/* VALID पढ़ोing or not */
 	VALID_1,
 	VALID_2,
 	VALID_3,
@@ -218,7 +219,7 @@ enum regfield_ids {
 	LOWER_STATUS_13,
 	LOWER_STATUS_14,
 	LOWER_STATUS_15,
-	LOW_INT_STATUS_0,	/* LOWER interrupt status */
+	LOW_INT_STATUS_0,	/* LOWER पूर्णांकerrupt status */
 	LOW_INT_STATUS_1,
 	LOW_INT_STATUS_2,
 	LOW_INT_STATUS_3,
@@ -234,7 +235,7 @@ enum regfield_ids {
 	LOW_INT_STATUS_13,
 	LOW_INT_STATUS_14,
 	LOW_INT_STATUS_15,
-	LOW_INT_CLEAR_0,	/* LOWER interrupt clear */
+	LOW_INT_CLEAR_0,	/* LOWER पूर्णांकerrupt clear */
 	LOW_INT_CLEAR_1,
 	LOW_INT_CLEAR_2,
 	LOW_INT_CLEAR_3,
@@ -250,7 +251,7 @@ enum regfield_ids {
 	LOW_INT_CLEAR_13,
 	LOW_INT_CLEAR_14,
 	LOW_INT_CLEAR_15,
-	LOW_INT_MASK_0,	/* LOWER interrupt mask */
+	LOW_INT_MASK_0,	/* LOWER पूर्णांकerrupt mask */
 	LOW_INT_MASK_1,
 	LOW_INT_MASK_2,
 	LOW_INT_MASK_3,
@@ -298,7 +299,7 @@ enum regfield_ids {
 	UPPER_STATUS_13,
 	UPPER_STATUS_14,
 	UPPER_STATUS_15,
-	UP_INT_STATUS_0,	/* UPPER interrupt status */
+	UP_INT_STATUS_0,	/* UPPER पूर्णांकerrupt status */
 	UP_INT_STATUS_1,
 	UP_INT_STATUS_2,
 	UP_INT_STATUS_3,
@@ -314,7 +315,7 @@ enum regfield_ids {
 	UP_INT_STATUS_13,
 	UP_INT_STATUS_14,
 	UP_INT_STATUS_15,
-	UP_INT_CLEAR_0,	/* UPPER interrupt clear */
+	UP_INT_CLEAR_0,	/* UPPER पूर्णांकerrupt clear */
 	UP_INT_CLEAR_1,
 	UP_INT_CLEAR_2,
 	UP_INT_CLEAR_3,
@@ -330,7 +331,7 @@ enum regfield_ids {
 	UP_INT_CLEAR_13,
 	UP_INT_CLEAR_14,
 	UP_INT_CLEAR_15,
-	UP_INT_MASK_0,		/* UPPER interrupt mask */
+	UP_INT_MASK_0,		/* UPPER पूर्णांकerrupt mask */
 	UP_INT_MASK_1,
 	UP_INT_MASK_2,
 	UP_INT_MASK_3,
@@ -378,7 +379,7 @@ enum regfield_ids {
 	CRITICAL_STATUS_13,
 	CRITICAL_STATUS_14,
 	CRITICAL_STATUS_15,
-	CRIT_INT_STATUS_0,	/* CRITICAL interrupt status */
+	CRIT_INT_STATUS_0,	/* CRITICAL पूर्णांकerrupt status */
 	CRIT_INT_STATUS_1,
 	CRIT_INT_STATUS_2,
 	CRIT_INT_STATUS_3,
@@ -394,7 +395,7 @@ enum regfield_ids {
 	CRIT_INT_STATUS_13,
 	CRIT_INT_STATUS_14,
 	CRIT_INT_STATUS_15,
-	CRIT_INT_CLEAR_0,	/* CRITICAL interrupt clear */
+	CRIT_INT_CLEAR_0,	/* CRITICAL पूर्णांकerrupt clear */
 	CRIT_INT_CLEAR_1,
 	CRIT_INT_CLEAR_2,
 	CRIT_INT_CLEAR_3,
@@ -410,7 +411,7 @@ enum regfield_ids {
 	CRIT_INT_CLEAR_13,
 	CRIT_INT_CLEAR_14,
 	CRIT_INT_CLEAR_15,
-	CRIT_INT_MASK_0,	/* CRITICAL interrupt mask */
+	CRIT_INT_MASK_0,	/* CRITICAL पूर्णांकerrupt mask */
 	CRIT_INT_MASK_1,
 	CRIT_INT_MASK_2,
 	CRIT_INT_MASK_3,
@@ -489,110 +490,110 @@ enum regfield_ids {
 
 	/* Keep last */
 	MAX_REGFIELDS
-};
+पूर्ण;
 
 /**
- * struct tsens_features - Features supported by the IP
+ * काष्ठा tsens_features - Features supported by the IP
  * @ver_major: Major number of IP version
- * @crit_int: does the IP support critical interrupts?
- * @adc:      do the sensors only output adc code (instead of temperature)?
- * @srot_split: does the IP neatly splits the register space into SROT and TM,
+ * @crit_पूर्णांक: करोes the IP support critical पूर्णांकerrupts?
+ * @adc:      करो the sensors only output adc code (instead of temperature)?
+ * @srot_split: करोes the IP neatly splits the रेजिस्टर space पूर्णांकo SROT and TM,
  *              with SROT only being available to secure boot firmware?
- * @has_watchdog: does this IP support watchdog functionality?
+ * @has_watchकरोg: करोes this IP support watchकरोg functionality?
  * @max_sensors: maximum sensors supported by this version of the IP
  */
-struct tsens_features {
-	unsigned int ver_major;
-	unsigned int crit_int:1;
-	unsigned int adc:1;
-	unsigned int srot_split:1;
-	unsigned int has_watchdog:1;
-	unsigned int max_sensors;
-};
+काष्ठा tsens_features अणु
+	अचिन्हित पूर्णांक ver_major;
+	अचिन्हित पूर्णांक crit_पूर्णांक:1;
+	अचिन्हित पूर्णांक adc:1;
+	अचिन्हित पूर्णांक srot_split:1;
+	अचिन्हित पूर्णांक has_watchकरोg:1;
+	अचिन्हित पूर्णांक max_sensors;
+पूर्ण;
 
 /**
- * struct tsens_plat_data - tsens compile-time platform data
- * @num_sensors: Number of sensors supported by platform
+ * काष्ठा tsens_plat_data - tsens compile-समय platक्रमm data
+ * @num_sensors: Number of sensors supported by platक्रमm
  * @ops: operations the tsens instance supports
- * @hw_ids: Subset of sensors ids supported by platform, if not the first n
+ * @hw_ids: Subset of sensors ids supported by platक्रमm, अगर not the first n
  * @feat: features of the IP
  * @fields: bitfield locations
  */
-struct tsens_plat_data {
-	const u32		num_sensors;
-	const struct tsens_ops	*ops;
-	unsigned int		*hw_ids;
-	struct tsens_features	*feat;
-	const struct reg_field		*fields;
-};
+काष्ठा tsens_plat_data अणु
+	स्थिर u32		num_sensors;
+	स्थिर काष्ठा tsens_ops	*ops;
+	अचिन्हित पूर्णांक		*hw_ids;
+	काष्ठा tsens_features	*feat;
+	स्थिर काष्ठा reg_field		*fields;
+पूर्ण;
 
 /**
- * struct tsens_context - Registers to be saved/restored across a context loss
- * @threshold: Threshold register value
- * @control: Control register value
+ * काष्ठा tsens_context - Registers to be saved/restored across a context loss
+ * @threshold: Threshold रेजिस्टर value
+ * @control: Control रेजिस्टर value
  */
-struct tsens_context {
-	int	threshold;
-	int	control;
-};
+काष्ठा tsens_context अणु
+	पूर्णांक	threshold;
+	पूर्णांक	control;
+पूर्ण;
 
 /**
- * struct tsens_priv - private data for each instance of the tsens IP
- * @dev: pointer to struct device
+ * काष्ठा tsens_priv - निजी data क्रम each instance of the tsens IP
+ * @dev: poपूर्णांकer to काष्ठा device
  * @num_sensors: number of sensors enabled on this device
- * @tm_map: pointer to TM register address space
- * @srot_map: pointer to SROT register address space
- * @tm_offset: deal with old device trees that don't address TM and SROT
+ * @पंचांग_map: poपूर्णांकer to TM रेजिस्टर address space
+ * @srot_map: poपूर्णांकer to SROT रेजिस्टर address space
+ * @पंचांग_offset: deal with old device trees that करोn't address TM and SROT
  *             address space separately
- * @ul_lock: lock while processing upper/lower threshold interrupts
- * @crit_lock: lock while processing critical threshold interrupts
+ * @ul_lock: lock जबतक processing upper/lower threshold पूर्णांकerrupts
+ * @crit_lock: lock जबतक processing critical threshold पूर्णांकerrupts
  * @rf: array of regmap_fields used to store value of the field
- * @ctx: registers to be saved and restored during suspend/resume
+ * @ctx: रेजिस्टरs to be saved and restored during suspend/resume
  * @feat: features of the IP
  * @fields: bitfield locations
- * @ops: pointer to list of callbacks supported by this device
- * @debug_root: pointer to debugfs dentry for all tsens
- * @debug: pointer to debugfs dentry for tsens controller
+ * @ops: poपूर्णांकer to list of callbacks supported by this device
+ * @debug_root: poपूर्णांकer to debugfs dentry क्रम all tsens
+ * @debug: poपूर्णांकer to debugfs dentry क्रम tsens controller
  * @sensor: list of sensors attached to this device
  */
-struct tsens_priv {
-	struct device			*dev;
+काष्ठा tsens_priv अणु
+	काष्ठा device			*dev;
 	u32				num_sensors;
-	struct regmap			*tm_map;
-	struct regmap			*srot_map;
-	u32				tm_offset;
+	काष्ठा regmap			*पंचांग_map;
+	काष्ठा regmap			*srot_map;
+	u32				पंचांग_offset;
 
-	/* lock for upper/lower threshold interrupts */
+	/* lock क्रम upper/lower threshold पूर्णांकerrupts */
 	spinlock_t			ul_lock;
 
-	struct regmap_field		*rf[MAX_REGFIELDS];
-	struct tsens_context		ctx;
-	struct tsens_features		*feat;
-	const struct reg_field		*fields;
-	const struct tsens_ops		*ops;
+	काष्ठा regmap_field		*rf[MAX_REGFIELDS];
+	काष्ठा tsens_context		ctx;
+	काष्ठा tsens_features		*feat;
+	स्थिर काष्ठा reg_field		*fields;
+	स्थिर काष्ठा tsens_ops		*ops;
 
-	struct dentry			*debug_root;
-	struct dentry			*debug;
+	काष्ठा dentry			*debug_root;
+	काष्ठा dentry			*debug;
 
-	struct tsens_sensor		sensor[];
-};
+	काष्ठा tsens_sensor		sensor[];
+पूर्ण;
 
-char *qfprom_read(struct device *dev, const char *cname);
-void compute_intercept_slope(struct tsens_priv *priv, u32 *pt1, u32 *pt2, u32 mode);
-int init_common(struct tsens_priv *priv);
-int get_temp_tsens_valid(const struct tsens_sensor *s, int *temp);
-int get_temp_common(const struct tsens_sensor *s, int *temp);
+अक्षर *qfprom_पढ़ो(काष्ठा device *dev, स्थिर अक्षर *cname);
+व्योम compute_पूर्णांकercept_slope(काष्ठा tsens_priv *priv, u32 *pt1, u32 *pt2, u32 mode);
+पूर्णांक init_common(काष्ठा tsens_priv *priv);
+पूर्णांक get_temp_tsens_valid(स्थिर काष्ठा tsens_sensor *s, पूर्णांक *temp);
+पूर्णांक get_temp_common(स्थिर काष्ठा tsens_sensor *s, पूर्णांक *temp);
 
 /* TSENS target */
-extern struct tsens_plat_data data_8960;
+बाह्य काष्ठा tsens_plat_data data_8960;
 
-/* TSENS v0.1 targets */
-extern struct tsens_plat_data data_8916, data_8939, data_8974, data_9607;
+/* TSENS v0.1 tarमाला_लो */
+बाह्य काष्ठा tsens_plat_data data_8916, data_8939, data_8974, data_9607;
 
-/* TSENS v1 targets */
-extern struct tsens_plat_data data_tsens_v1, data_8976;
+/* TSENS v1 tarमाला_लो */
+बाह्य काष्ठा tsens_plat_data data_tsens_v1, data_8976;
 
-/* TSENS v2 targets */
-extern struct tsens_plat_data data_8996, data_tsens_v2;
+/* TSENS v2 tarमाला_लो */
+बाह्य काष्ठा tsens_plat_data data_8996, data_tsens_v2;
 
-#endif /* __QCOM_TSENS_H__ */
+#पूर्ण_अगर /* __QCOM_TSENS_H__ */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0+ OR BSD-3-Clause)
 /*
  * f_mass_storage.c -- Mass Storage USB Composite Function
  *
@@ -7,18 +8,18 @@
  *                    Author: Michal Nazarewicz <mina86@mina86.com>
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. Redistributions in binary form must reproduce the above copyright
+ *    without modअगरication.
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. The names of the above-listed copyright holders may not be used
- *    to endorse or promote products derived from this software without
- *    specific prior written permission.
+ *    to enकरोrse or promote products derived from this software without
+ *    specअगरic prior written permission.
  *
  * ALTERNATIVELY, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") as published by the Free Software
@@ -29,7 +30,7 @@
  * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL,
  * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
  * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
  * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -42,642 +43,642 @@
  * The Mass Storage Function acts as a USB Mass Storage device,
  * appearing to the host as a disk drive or as a CD-ROM drive.  In
  * addition to providing an example of a genuinely useful composite
- * function for a USB device, it also illustrates a technique of
- * double-buffering for increased throughput.
+ * function क्रम a USB device, it also illustrates a technique of
+ * द्विगुन-buffering क्रम increased throughput.
  *
- * For more information about MSF and in particular its module
- * parameters and sysfs interface read the
+ * For more inक्रमmation about MSF and in particular its module
+ * parameters and sysfs पूर्णांकerface पढ़ो the
  * <Documentation/usb/mass-storage.rst> file.
  */
 
 /*
- * MSF is configured by specifying a fsg_config structure.  It has the
+ * MSF is configured by specअगरying a fsg_config काष्ठाure.  It has the
  * following fields:
  *
  *	nluns		Number of LUNs function have (anywhere from 1
  *				to FSG_MAX_LUNS).
  *	luns		An array of LUN configuration values.  This
- *				should be filled for each LUN that
- *				function will include (ie. for "nluns"
+ *				should be filled क्रम each LUN that
+ *				function will include (ie. क्रम "nluns"
  *				LUNs).  Each element of the array has
  *				the following fields:
- *	->filename	The path to the backing file for the LUN.
- *				Required if LUN is not marked as
+ *	->filename	The path to the backing file क्रम the LUN.
+ *				Required अगर LUN is not marked as
  *				removable.
- *	->ro		Flag specifying access to the LUN shall be
- *				read-only.  This is implied if CD-ROM
+ *	->ro		Flag specअगरying access to the LUN shall be
+ *				पढ़ो-only.  This is implied अगर CD-ROM
  *				emulation is enabled as well as when
- *				it was impossible to open "filename"
+ *				it was impossible to खोलो "filename"
  *				in R/W mode.
- *	->removable	Flag specifying that LUN shall be indicated as
+ *	->removable	Flag specअगरying that LUN shall be indicated as
  *				being removable.
- *	->cdrom		Flag specifying that LUN shall be reported as
+ *	->cdrom		Flag specअगरying that LUN shall be reported as
  *				being a CD-ROM.
- *	->nofua		Flag specifying that FUA flag in SCSI WRITE(10,12)
- *				commands for this LUN shall be ignored.
+ *	->nofua		Flag specअगरying that FUA flag in SCSI WRITE(10,12)
+ *				commands क्रम this LUN shall be ignored.
  *
- *	vendor_name
+ *	venकरोr_name
  *	product_name
- *	release		Information used as a reply to INQUIRY
- *				request.  To use default set to NULL,
- *				NULL, 0xffff respectively.  The first
+ *	release		Inक्रमmation used as a reply to INQUIRY
+ *				request.  To use शेष set to शून्य,
+ *				शून्य, 0xffff respectively.  The first
  *				field should be 8 and the second 16
- *				characters or less.
+ *				अक्षरacters or less.
  *
- *	can_stall	Set to permit function to halt bulk endpoints.
+ *	can_stall	Set to permit function to halt bulk endpoपूर्णांकs.
  *				Disabled on some USB devices known not
  *				to work correctly.  You should set it
  *				to true.
  *
- * If "removable" is not set for a LUN then a backing file must be
- * specified.  If it is set, then NULL filename means the LUN's medium
+ * If "removable" is not set क्रम a LUN then a backing file must be
+ * specअगरied.  If it is set, then शून्य filename means the LUN's medium
  * is not loaded (an empty string as "filename" in the fsg_config
- * structure causes error).  The CD-ROM emulation includes a single
+ * काष्ठाure causes error).  The CD-ROM emulation includes a single
  * data track and no audio tracks; hence there need be only one
  * backing file per LUN.
  *
  * This function is heavily based on "File-backed Storage Gadget" by
  * Alan Stern which in turn is heavily based on "Gadget Zero" by David
- * Brownell.  The driver's SCSI command interface was based on the
+ * Brownell.  The driver's SCSI command पूर्णांकerface was based on the
  * "Information technology - Small Computer System Interface - 2"
- * document from X3T9.2 Project 375D, Revision 10L, 7-SEP-93,
+ * करोcument from X3T9.2 Project 375D, Revision 10L, 7-SEP-93,
  * available at <http://www.t10.org/ftp/t10/drafts/s2/s2-r10l.pdf>.
  * The single exception is opcode 0x23 (READ FORMAT CAPACITIES), which
  * was based on the "Universal Serial Bus Mass Storage Class UFI
- * Command Specification" document, Revision 1.0, December 14, 1998,
+ * Command Specअगरication" करोcument, Revision 1.0, December 14, 1998,
  * available at
- * <http://www.usb.org/developers/devclass_docs/usbmass-ufi10.pdf>.
+ * <http://www.usb.org/developers/devclass_करोcs/usbmass-ufi10.pdf>.
  */
 
 /*
  *				Driver Design
  *
- * The MSF is fairly straightforward.  There is a main kernel
- * thread that handles most of the work.  Interrupt routines field
- * callbacks from the controller driver: bulk- and interrupt-request
- * completion notifications, endpoint-0 events, and disconnect events.
- * Completion events are passed to the main thread by wakeup calls.  Many
- * ep0 requests are handled at interrupt time, but SetInterface,
- * SetConfiguration, and device reset requests are forwarded to the
- * thread in the form of "exceptions" using SIGUSR1 signals (since they
- * should interrupt any ongoing file I/O operations).
+ * The MSF is fairly straightक्रमward.  There is a मुख्य kernel
+ * thपढ़ो that handles most of the work.  Interrupt routines field
+ * callbacks from the controller driver: bulk- and पूर्णांकerrupt-request
+ * completion notअगरications, endpoपूर्णांक-0 events, and disconnect events.
+ * Completion events are passed to the मुख्य thपढ़ो by wakeup calls.  Many
+ * ep0 requests are handled at पूर्णांकerrupt समय, but SetInterface,
+ * SetConfiguration, and device reset requests are क्रमwarded to the
+ * thपढ़ो in the क्रमm of "exceptions" using SIGUSR1 संकेतs (since they
+ * should पूर्णांकerrupt any ongoing file I/O operations).
  *
- * The thread's main routine implements the standard command/data/status
- * parts of a SCSI interaction.  It and its subroutines are full of tests
- * for pending signals/exceptions -- all this polling is necessary since
- * the kernel has no setjmp/longjmp equivalents.  (Maybe this is an
+ * The thपढ़ो's मुख्य routine implements the standard command/data/status
+ * parts of a SCSI पूर्णांकeraction.  It and its subroutines are full of tests
+ * क्रम pending संकेतs/exceptions -- all this polling is necessary since
+ * the kernel has no बनाओ_लाँघ/दीर्घ_लाँघ equivalents.  (Maybe this is an
  * indication that the driver really wants to be running in userspace.)
- * An important point is that so long as the thread is alive it keeps an
- * open reference to the backing file.  This will prevent unmounting
- * the backing file's underlying filesystem and could cause problems
- * during system shutdown, for example.  To prevent such problems, the
- * thread catches INT, TERM, and KILL signals and converts them into
+ * An important poपूर्णांक is that so दीर्घ as the thपढ़ो is alive it keeps an
+ * खोलो reference to the backing file.  This will prevent unmounting
+ * the backing file's underlying fileप्रणाली and could cause problems
+ * during प्रणाली shutकरोwn, क्रम example.  To prevent such problems, the
+ * thपढ़ो catches INT, TERM, and KILL संकेतs and converts them पूर्णांकo
  * an EXIT exception.
  *
- * In normal operation the main thread is started during the gadget's
+ * In normal operation the मुख्य thपढ़ो is started during the gadget's
  * fsg_bind() callback and stopped during fsg_unbind().  But it can
- * also exit when it receives a signal, and there's no point leaving
- * the gadget running when the thread is dead.  As of this moment, MSF
- * provides no way to deregister the gadget when thread dies -- maybe
+ * also निकास when it receives a संकेत, and there's no poपूर्णांक leaving
+ * the gadget running when the thपढ़ो is dead.  As of this moment, MSF
+ * provides no way to deरेजिस्टर the gadget when thपढ़ो dies -- maybe
  * a callback functions is needed.
  *
  * To provide maximum throughput, the driver uses a circular pipeline of
- * buffer heads (struct fsg_buffhd).  In principle the pipeline can be
- * arbitrarily long; in practice the benefits don't justify having more
- * than 2 stages (i.e., double buffering).  But it helps to think of the
- * pipeline as being a long one.  Each buffer head contains a bulk-in and
- * a bulk-out request pointer (since the buffer can be used for both
+ * buffer heads (काष्ठा fsg_buffhd).  In principle the pipeline can be
+ * arbitrarily दीर्घ; in practice the benefits करोn't justअगरy having more
+ * than 2 stages (i.e., द्विगुन buffering).  But it helps to think of the
+ * pipeline as being a दीर्घ one.  Each buffer head contains a bulk-in and
+ * a bulk-out request poपूर्णांकer (since the buffer can be used क्रम both
  * output and input -- directions always are given from the host's
- * point of view) as well as a pointer to the buffer and various state
+ * poपूर्णांक of view) as well as a poपूर्णांकer to the buffer and various state
  * variables.
  *
  * Use of the pipeline follows a simple protocol.  There is a variable
- * (fsg->next_buffhd_to_fill) that points to the next buffer head to use.
- * At any time that buffer head may still be in use from an earlier
+ * (fsg->next_buffhd_to_fill) that poपूर्णांकs to the next buffer head to use.
+ * At any समय that buffer head may still be in use from an earlier
  * request, so each buffer head has a state variable indicating whether
- * it is EMPTY, FULL, or BUSY.  Typical use involves waiting for the
+ * it is EMPTY, FULL, or BUSY.  Typical use involves रुकोing क्रम the
  * buffer head to be EMPTY, filling the buffer either by file I/O or by
  * USB I/O (during which the buffer head is BUSY), and marking the buffer
  * head FULL when the I/O is complete.  Then the buffer will be emptied
  * (again possibly by USB I/O, during which it is marked BUSY) and
  * finally marked EMPTY again (possibly by a completion routine).
  *
- * A module parameter tells the driver to avoid stalling the bulk
- * endpoints wherever the transport specification allows.  This is
- * necessary for some UDCs like the SuperH, which cannot reliably clear a
- * halt on a bulk endpoint.  However, under certain circumstances the
- * Bulk-only specification requires a stall.  In such cases the driver
- * will halt the endpoint and set a flag indicating that it should clear
+ * A module parameter tells the driver to aव्योम stalling the bulk
+ * endpoपूर्णांकs wherever the transport specअगरication allows.  This is
+ * necessary क्रम some UDCs like the SuperH, which cannot reliably clear a
+ * halt on a bulk endpoपूर्णांक.  However, under certain circumstances the
+ * Bulk-only specअगरication requires a stall.  In such हालs the driver
+ * will halt the endpoपूर्णांक and set a flag indicating that it should clear
  * the halt in software during the next device reset.  Hopefully this
  * will permit everything to work correctly.  Furthermore, although the
- * specification allows the bulk-out endpoint to halt when the host sends
- * too much data, implementing this would cause an unavoidable race.
- * The driver will always use the "no-stall" approach for OUT transfers.
+ * specअगरication allows the bulk-out endpoपूर्णांक to halt when the host sends
+ * too much data, implementing this would cause an unaव्योमable race.
+ * The driver will always use the "no-stall" approach क्रम OUT transfers.
  *
- * One subtle point concerns sending status-stage responses for ep0
+ * One subtle poपूर्णांक concerns sending status-stage responses क्रम ep0
  * requests.  Some of these requests, such as device reset, can involve
- * interrupting an ongoing file I/O operation, which might take an
- * arbitrarily long time.  During that delay the host might give up on
+ * पूर्णांकerrupting an ongoing file I/O operation, which might take an
+ * arbitrarily दीर्घ समय.  During that delay the host might give up on
  * the original ep0 request and issue a new one.  When that happens the
- * driver should not notify the host about completion of the original
- * request, as the host will no longer be waiting for it.  So the driver
+ * driver should not notअगरy the host about completion of the original
+ * request, as the host will no दीर्घer be रुकोing क्रम it.  So the driver
  * assigns to each ep0 request a unique tag, and it keeps track of the
- * tag value of the request associated with a long-running exception
- * (device-reset, interface-change, or configuration-change).  When the
+ * tag value of the request associated with a दीर्घ-running exception
+ * (device-reset, पूर्णांकerface-change, or configuration-change).  When the
  * exception handler is finished, the status-stage response is submitted
- * only if the current ep0 request tag is equal to the exception request
+ * only अगर the current ep0 request tag is equal to the exception request
  * tag.  Thus only the most recently received ep0 request will get a
  * status-stage response.
  *
- * Warning: This driver source file is too long.  It ought to be split up
- * into a header file plus about 3 separate .c files, to handle the details
+ * Warning: This driver source file is too दीर्घ.  It ought to be split up
+ * पूर्णांकo a header file plus about 3 separate .c files, to handle the details
  * of the Gadget, USB Mass Storage, and SCSI protocols.
  */
 
 
-/* #define VERBOSE_DEBUG */
-/* #define DUMP_MSGS */
+/* #घोषणा VERBOSE_DEBUG */
+/* #घोषणा DUMP_MSGS */
 
-#include <linux/blkdev.h>
-#include <linux/completion.h>
-#include <linux/dcache.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/fcntl.h>
-#include <linux/file.h>
-#include <linux/fs.h>
-#include <linux/kthread.h>
-#include <linux/sched/signal.h>
-#include <linux/limits.h>
-#include <linux/rwsem.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/string.h>
-#include <linux/freezer.h>
-#include <linux/module.h>
-#include <linux/uaccess.h>
-#include <asm/unaligned.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/dcache.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/file.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <linux/usb/ch9.h>
-#include <linux/usb/gadget.h>
-#include <linux/usb/composite.h>
+#समावेश <linux/usb/ch9.h>
+#समावेश <linux/usb/gadget.h>
+#समावेश <linux/usb/composite.h>
 
-#include <linux/nospec.h>
+#समावेश <linux/nospec.h>
 
-#include "configfs.h"
+#समावेश "configfs.h"
 
 
 /*------------------------------------------------------------------------*/
 
-#define FSG_DRIVER_DESC		"Mass Storage Function"
-#define FSG_DRIVER_VERSION	"2009/09/11"
+#घोषणा FSG_DRIVER_DESC		"Mass Storage Function"
+#घोषणा FSG_DRIVER_VERSION	"2009/09/11"
 
-static const char fsg_string_interface[] = "Mass Storage";
+अटल स्थिर अक्षर fsg_string_पूर्णांकerface[] = "Mass Storage";
 
-#include "storage_common.h"
-#include "f_mass_storage.h"
+#समावेश "storage_common.h"
+#समावेश "f_mass_storage.h"
 
-/* Static strings, in UTF-8 (for simplicity we use only ASCII characters) */
-static struct usb_string		fsg_strings[] = {
-	{FSG_STRING_INTERFACE,		fsg_string_interface},
-	{}
-};
+/* Static strings, in UTF-8 (क्रम simplicity we use only ASCII अक्षरacters) */
+अटल काष्ठा usb_string		fsg_strings[] = अणु
+	अणुFSG_STRING_INTERFACE,		fsg_string_पूर्णांकerfaceपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct usb_gadget_strings	fsg_stringtab = {
+अटल काष्ठा usb_gadget_strings	fsg_stringtab = अणु
 	.language	= 0x0409,		/* en-us */
 	.strings	= fsg_strings,
-};
+पूर्ण;
 
-static struct usb_gadget_strings *fsg_strings_array[] = {
+अटल काष्ठा usb_gadget_strings *fsg_strings_array[] = अणु
 	&fsg_stringtab,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-struct fsg_dev;
-struct fsg_common;
+काष्ठा fsg_dev;
+काष्ठा fsg_common;
 
 /* Data shared by all the FSG instances. */
-struct fsg_common {
-	struct usb_gadget	*gadget;
-	struct usb_composite_dev *cdev;
-	struct fsg_dev		*fsg;
-	wait_queue_head_t	io_wait;
-	wait_queue_head_t	fsg_wait;
+काष्ठा fsg_common अणु
+	काष्ठा usb_gadget	*gadget;
+	काष्ठा usb_composite_dev *cdev;
+	काष्ठा fsg_dev		*fsg;
+	रुको_queue_head_t	io_रुको;
+	रुको_queue_head_t	fsg_रुको;
 
 	/* filesem protects: backing files in use */
-	struct rw_semaphore	filesem;
+	काष्ठा rw_semaphore	filesem;
 
-	/* lock protects: state and thread_task */
+	/* lock protects: state and thपढ़ो_task */
 	spinlock_t		lock;
 
-	struct usb_ep		*ep0;		/* Copy of gadget->ep0 */
-	struct usb_request	*ep0req;	/* Copy of cdev->req */
-	unsigned int		ep0_req_tag;
+	काष्ठा usb_ep		*ep0;		/* Copy of gadget->ep0 */
+	काष्ठा usb_request	*ep0req;	/* Copy of cdev->req */
+	अचिन्हित पूर्णांक		ep0_req_tag;
 
-	struct fsg_buffhd	*next_buffhd_to_fill;
-	struct fsg_buffhd	*next_buffhd_to_drain;
-	struct fsg_buffhd	*buffhds;
-	unsigned int		fsg_num_buffers;
+	काष्ठा fsg_buffhd	*next_buffhd_to_fill;
+	काष्ठा fsg_buffhd	*next_buffhd_to_drain;
+	काष्ठा fsg_buffhd	*buffhds;
+	अचिन्हित पूर्णांक		fsg_num_buffers;
 
-	int			cmnd_size;
+	पूर्णांक			cmnd_size;
 	u8			cmnd[MAX_COMMAND_SIZE];
 
-	unsigned int		lun;
-	struct fsg_lun		*luns[FSG_MAX_LUNS];
-	struct fsg_lun		*curlun;
+	अचिन्हित पूर्णांक		lun;
+	काष्ठा fsg_lun		*luns[FSG_MAX_LUNS];
+	काष्ठा fsg_lun		*curlun;
 
-	unsigned int		bulk_out_maxpacket;
-	enum fsg_state		state;		/* For exception handling */
-	unsigned int		exception_req_tag;
-	void			*exception_arg;
+	अचिन्हित पूर्णांक		bulk_out_maxpacket;
+	क्रमागत fsg_state		state;		/* For exception handling */
+	अचिन्हित पूर्णांक		exception_req_tag;
+	व्योम			*exception_arg;
 
-	enum data_direction	data_dir;
+	क्रमागत data_direction	data_dir;
 	u32			data_size;
 	u32			data_size_from_cmnd;
 	u32			tag;
 	u32			residue;
 	u32			usb_amount_left;
 
-	unsigned int		can_stall:1;
-	unsigned int		free_storage_on_release:1;
-	unsigned int		phase_error:1;
-	unsigned int		short_packet_received:1;
-	unsigned int		bad_lun_okay:1;
-	unsigned int		running:1;
-	unsigned int		sysfs:1;
+	अचिन्हित पूर्णांक		can_stall:1;
+	अचिन्हित पूर्णांक		मुक्त_storage_on_release:1;
+	अचिन्हित पूर्णांक		phase_error:1;
+	अचिन्हित पूर्णांक		लघु_packet_received:1;
+	अचिन्हित पूर्णांक		bad_lun_okay:1;
+	अचिन्हित पूर्णांक		running:1;
+	अचिन्हित पूर्णांक		sysfs:1;
 
-	struct completion	thread_notifier;
-	struct task_struct	*thread_task;
+	काष्ठा completion	thपढ़ो_notअगरier;
+	काष्ठा task_काष्ठा	*thपढ़ो_task;
 
-	/* Gadget's private data. */
-	void			*private_data;
+	/* Gadget's निजी data. */
+	व्योम			*निजी_data;
 
-	char inquiry_string[INQUIRY_STRING_LEN];
-};
+	अक्षर inquiry_string[INQUIRY_STRING_LEN];
+पूर्ण;
 
-struct fsg_dev {
-	struct usb_function	function;
-	struct usb_gadget	*gadget;	/* Copy of cdev->gadget */
-	struct fsg_common	*common;
+काष्ठा fsg_dev अणु
+	काष्ठा usb_function	function;
+	काष्ठा usb_gadget	*gadget;	/* Copy of cdev->gadget */
+	काष्ठा fsg_common	*common;
 
-	u16			interface_number;
+	u16			पूर्णांकerface_number;
 
-	unsigned int		bulk_in_enabled:1;
-	unsigned int		bulk_out_enabled:1;
+	अचिन्हित पूर्णांक		bulk_in_enabled:1;
+	अचिन्हित पूर्णांक		bulk_out_enabled:1;
 
-	unsigned long		atomic_bitflags;
-#define IGNORE_BULK_OUT		0
+	अचिन्हित दीर्घ		atomic_bitflags;
+#घोषणा IGNORE_BULK_OUT		0
 
-	struct usb_ep		*bulk_in;
-	struct usb_ep		*bulk_out;
-};
+	काष्ठा usb_ep		*bulk_in;
+	काष्ठा usb_ep		*bulk_out;
+पूर्ण;
 
-static inline int __fsg_is_set(struct fsg_common *common,
-			       const char *func, unsigned line)
-{
-	if (common->fsg)
-		return 1;
+अटल अंतरभूत पूर्णांक __fsg_is_set(काष्ठा fsg_common *common,
+			       स्थिर अक्षर *func, अचिन्हित line)
+अणु
+	अगर (common->fsg)
+		वापस 1;
 	ERROR(common, "common->fsg is NULL in %s at %u\n", func, line);
 	WARN_ON(1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define fsg_is_set(common) likely(__fsg_is_set(common, __func__, __LINE__))
+#घोषणा fsg_is_set(common) likely(__fsg_is_set(common, __func__, __LINE__))
 
-static inline struct fsg_dev *fsg_from_func(struct usb_function *f)
-{
-	return container_of(f, struct fsg_dev, function);
-}
+अटल अंतरभूत काष्ठा fsg_dev *fsg_from_func(काष्ठा usb_function *f)
+अणु
+	वापस container_of(f, काष्ठा fsg_dev, function);
+पूर्ण
 
-static int exception_in_progress(struct fsg_common *common)
-{
-	return common->state > FSG_STATE_NORMAL;
-}
+अटल पूर्णांक exception_in_progress(काष्ठा fsg_common *common)
+अणु
+	वापस common->state > FSG_STATE_NORMAL;
+पूर्ण
 
-/* Make bulk-out requests be divisible by the maxpacket size */
-static void set_bulk_out_req_length(struct fsg_common *common,
-				    struct fsg_buffhd *bh, unsigned int length)
-{
-	unsigned int	rem;
+/* Make bulk-out requests be भागisible by the maxpacket size */
+अटल व्योम set_bulk_out_req_length(काष्ठा fsg_common *common,
+				    काष्ठा fsg_buffhd *bh, अचिन्हित पूर्णांक length)
+अणु
+	अचिन्हित पूर्णांक	rem;
 
-	bh->bulk_out_intended_length = length;
+	bh->bulk_out_पूर्णांकended_length = length;
 	rem = length % common->bulk_out_maxpacket;
-	if (rem > 0)
+	अगर (rem > 0)
 		length += common->bulk_out_maxpacket - rem;
 	bh->outreq->length = length;
-}
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int fsg_set_halt(struct fsg_dev *fsg, struct usb_ep *ep)
-{
-	const char	*name;
+अटल पूर्णांक fsg_set_halt(काष्ठा fsg_dev *fsg, काष्ठा usb_ep *ep)
+अणु
+	स्थिर अक्षर	*name;
 
-	if (ep == fsg->bulk_in)
+	अगर (ep == fsg->bulk_in)
 		name = "bulk-in";
-	else if (ep == fsg->bulk_out)
+	अन्यथा अगर (ep == fsg->bulk_out)
 		name = "bulk-out";
-	else
+	अन्यथा
 		name = ep->name;
 	DBG(fsg, "%s set halt\n", name);
-	return usb_ep_set_halt(ep);
-}
+	वापस usb_ep_set_halt(ep);
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
 /* These routines may be called in process context or in_irq */
 
-static void __raise_exception(struct fsg_common *common, enum fsg_state new_state,
-			      void *arg)
-{
-	unsigned long		flags;
+अटल व्योम __उठाओ_exception(काष्ठा fsg_common *common, क्रमागत fsg_state new_state,
+			      व्योम *arg)
+अणु
+	अचिन्हित दीर्घ		flags;
 
 	/*
-	 * Do nothing if a higher-priority exception is already in progress.
+	 * Do nothing अगर a higher-priority exception is alपढ़ोy in progress.
 	 * If a lower-or-equal priority exception is in progress, preempt it
-	 * and notify the main thread by sending it a signal.
+	 * and notअगरy the मुख्य thपढ़ो by sending it a संकेत.
 	 */
 	spin_lock_irqsave(&common->lock, flags);
-	if (common->state <= new_state) {
+	अगर (common->state <= new_state) अणु
 		common->exception_req_tag = common->ep0_req_tag;
 		common->state = new_state;
 		common->exception_arg = arg;
-		if (common->thread_task)
+		अगर (common->thपढ़ो_task)
 			send_sig_info(SIGUSR1, SEND_SIG_PRIV,
-				      common->thread_task);
-	}
+				      common->thपढ़ो_task);
+	पूर्ण
 	spin_unlock_irqrestore(&common->lock, flags);
-}
+पूर्ण
 
-static void raise_exception(struct fsg_common *common, enum fsg_state new_state)
-{
-	__raise_exception(common, new_state, NULL);
-}
+अटल व्योम उठाओ_exception(काष्ठा fsg_common *common, क्रमागत fsg_state new_state)
+अणु
+	__उठाओ_exception(common, new_state, शून्य);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-static int ep0_queue(struct fsg_common *common)
-{
-	int	rc;
+अटल पूर्णांक ep0_queue(काष्ठा fsg_common *common)
+अणु
+	पूर्णांक	rc;
 
 	rc = usb_ep_queue(common->ep0, common->ep0req, GFP_ATOMIC);
 	common->ep0->driver_data = common;
-	if (rc != 0 && rc != -ESHUTDOWN) {
-		/* We can't do much more than wait for a reset */
+	अगर (rc != 0 && rc != -ESHUTDOWN) अणु
+		/* We can't करो much more than रुको क्रम a reset */
 		WARNING(common, "error in submission: %s --> %d\n",
 			common->ep0->name, rc);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
 /* Completion handlers. These always run in_irq. */
 
-static void bulk_in_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct fsg_common	*common = ep->driver_data;
-	struct fsg_buffhd	*bh = req->context;
+अटल व्योम bulk_in_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा fsg_common	*common = ep->driver_data;
+	काष्ठा fsg_buffhd	*bh = req->context;
 
-	if (req->status || req->actual != req->length)
+	अगर (req->status || req->actual != req->length)
 		DBG(common, "%s --> %d, %u/%u\n", __func__,
 		    req->status, req->actual, req->length);
-	if (req->status == -ECONNRESET)		/* Request was cancelled */
-		usb_ep_fifo_flush(ep);
+	अगर (req->status == -ECONNRESET)		/* Request was cancelled */
+		usb_ep_fअगरo_flush(ep);
 
-	/* Synchronize with the smp_load_acquire() in sleep_thread() */
+	/* Synchronize with the smp_load_acquire() in sleep_thपढ़ो() */
 	smp_store_release(&bh->state, BUF_STATE_EMPTY);
-	wake_up(&common->io_wait);
-}
+	wake_up(&common->io_रुको);
+पूर्ण
 
-static void bulk_out_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct fsg_common	*common = ep->driver_data;
-	struct fsg_buffhd	*bh = req->context;
+अटल व्योम bulk_out_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा fsg_common	*common = ep->driver_data;
+	काष्ठा fsg_buffhd	*bh = req->context;
 
 	dump_msg(common, "bulk-out", req->buf, req->actual);
-	if (req->status || req->actual != bh->bulk_out_intended_length)
+	अगर (req->status || req->actual != bh->bulk_out_पूर्णांकended_length)
 		DBG(common, "%s --> %d, %u/%u\n", __func__,
-		    req->status, req->actual, bh->bulk_out_intended_length);
-	if (req->status == -ECONNRESET)		/* Request was cancelled */
-		usb_ep_fifo_flush(ep);
+		    req->status, req->actual, bh->bulk_out_पूर्णांकended_length);
+	अगर (req->status == -ECONNRESET)		/* Request was cancelled */
+		usb_ep_fअगरo_flush(ep);
 
-	/* Synchronize with the smp_load_acquire() in sleep_thread() */
+	/* Synchronize with the smp_load_acquire() in sleep_thपढ़ो() */
 	smp_store_release(&bh->state, BUF_STATE_FULL);
-	wake_up(&common->io_wait);
-}
+	wake_up(&common->io_रुको);
+पूर्ण
 
-static int _fsg_common_get_max_lun(struct fsg_common *common)
-{
-	int i = ARRAY_SIZE(common->luns) - 1;
+अटल पूर्णांक _fsg_common_get_max_lun(काष्ठा fsg_common *common)
+अणु
+	पूर्णांक i = ARRAY_SIZE(common->luns) - 1;
 
-	while (i >= 0 && !common->luns[i])
+	जबतक (i >= 0 && !common->luns[i])
 		--i;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int fsg_setup(struct usb_function *f,
-		     const struct usb_ctrlrequest *ctrl)
-{
-	struct fsg_dev		*fsg = fsg_from_func(f);
-	struct usb_request	*req = fsg->common->ep0req;
+अटल पूर्णांक fsg_setup(काष्ठा usb_function *f,
+		     स्थिर काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा fsg_dev		*fsg = fsg_from_func(f);
+	काष्ठा usb_request	*req = fsg->common->ep0req;
 	u16			w_index = le16_to_cpu(ctrl->wIndex);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u16			w_length = le16_to_cpu(ctrl->wLength);
 
-	if (!fsg_is_set(fsg->common))
-		return -EOPNOTSUPP;
+	अगर (!fsg_is_set(fsg->common))
+		वापस -EOPNOTSUPP;
 
 	++fsg->common->ep0_req_tag;	/* Record arrival of a new request */
-	req->context = NULL;
+	req->context = शून्य;
 	req->length = 0;
-	dump_msg(fsg, "ep0-setup", (u8 *) ctrl, sizeof(*ctrl));
+	dump_msg(fsg, "ep0-setup", (u8 *) ctrl, माप(*ctrl));
 
-	switch (ctrl->bRequest) {
+	चयन (ctrl->bRequest) अणु
 
-	case US_BULK_RESET_REQUEST:
-		if (ctrl->bRequestType !=
-		    (USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE))
-			break;
-		if (w_index != fsg->interface_number || w_value != 0 ||
+	हाल US_BULK_RESET_REQUEST:
+		अगर (ctrl->bRequestType !=
+		    (USB_सूची_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE))
+			अवरोध;
+		अगर (w_index != fsg->पूर्णांकerface_number || w_value != 0 ||
 				w_length != 0)
-			return -EDOM;
+			वापस -गलत_तर्क;
 
 		/*
 		 * Raise an exception to stop the current operation
 		 * and reinitialize our state.
 		 */
 		DBG(fsg, "bulk reset request\n");
-		raise_exception(fsg->common, FSG_STATE_PROTOCOL_RESET);
-		return USB_GADGET_DELAYED_STATUS;
+		उठाओ_exception(fsg->common, FSG_STATE_PROTOCOL_RESET);
+		वापस USB_GADGET_DELAYED_STATUS;
 
-	case US_BULK_GET_MAX_LUN:
-		if (ctrl->bRequestType !=
-		    (USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE))
-			break;
-		if (w_index != fsg->interface_number || w_value != 0 ||
+	हाल US_BULK_GET_MAX_LUN:
+		अगर (ctrl->bRequestType !=
+		    (USB_सूची_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE))
+			अवरोध;
+		अगर (w_index != fsg->पूर्णांकerface_number || w_value != 0 ||
 				w_length != 1)
-			return -EDOM;
+			वापस -गलत_तर्क;
 		VDBG(fsg, "get max LUN\n");
 		*(u8 *)req->buf = _fsg_common_get_max_lun(fsg->common);
 
 		/* Respond with data/status */
 		req->length = min((u16)1, w_length);
-		return ep0_queue(fsg->common);
-	}
+		वापस ep0_queue(fsg->common);
+	पूर्ण
 
 	VDBG(fsg,
 	     "unknown class-specific control req %02x.%02x v%04x i%04x l%u\n",
 	     ctrl->bRequestType, ctrl->bRequest,
 	     le16_to_cpu(ctrl->wValue), w_index, w_length);
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
 /* All the following routines run in process context */
 
-/* Use this for bulk or interrupt transfers, not ep0 */
-static int start_transfer(struct fsg_dev *fsg, struct usb_ep *ep,
-			   struct usb_request *req)
-{
-	int	rc;
+/* Use this क्रम bulk or पूर्णांकerrupt transfers, not ep0 */
+अटल पूर्णांक start_transfer(काष्ठा fsg_dev *fsg, काष्ठा usb_ep *ep,
+			   काष्ठा usb_request *req)
+अणु
+	पूर्णांक	rc;
 
-	if (ep == fsg->bulk_in)
+	अगर (ep == fsg->bulk_in)
 		dump_msg(fsg, "bulk-in", req->buf, req->length);
 
 	rc = usb_ep_queue(ep, req, GFP_KERNEL);
-	if (rc) {
+	अगर (rc) अणु
 
-		/* We can't do much more than wait for a reset */
+		/* We can't करो much more than रुको क्रम a reset */
 		req->status = rc;
 
 		/*
 		 * Note: currently the net2280 driver fails zero-length
-		 * submissions if DMA is enabled.
+		 * submissions अगर DMA is enabled.
 		 */
-		if (rc != -ESHUTDOWN &&
+		अगर (rc != -ESHUTDOWN &&
 				!(rc == -EOPNOTSUPP && req->length == 0))
 			WARNING(fsg, "error in submission: %s --> %d\n",
 					ep->name, rc);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static bool start_in_transfer(struct fsg_common *common, struct fsg_buffhd *bh)
-{
-	if (!fsg_is_set(common))
-		return false;
+अटल bool start_in_transfer(काष्ठा fsg_common *common, काष्ठा fsg_buffhd *bh)
+अणु
+	अगर (!fsg_is_set(common))
+		वापस false;
 	bh->state = BUF_STATE_SENDING;
-	if (start_transfer(common->fsg, common->fsg->bulk_in, bh->inreq))
+	अगर (start_transfer(common->fsg, common->fsg->bulk_in, bh->inreq))
 		bh->state = BUF_STATE_EMPTY;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool start_out_transfer(struct fsg_common *common, struct fsg_buffhd *bh)
-{
-	if (!fsg_is_set(common))
-		return false;
+अटल bool start_out_transfer(काष्ठा fsg_common *common, काष्ठा fsg_buffhd *bh)
+अणु
+	अगर (!fsg_is_set(common))
+		वापस false;
 	bh->state = BUF_STATE_RECEIVING;
-	if (start_transfer(common->fsg, common->fsg->bulk_out, bh->outreq))
+	अगर (start_transfer(common->fsg, common->fsg->bulk_out, bh->outreq))
 		bh->state = BUF_STATE_FULL;
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int sleep_thread(struct fsg_common *common, bool can_freeze,
-		struct fsg_buffhd *bh)
-{
-	int	rc;
+अटल पूर्णांक sleep_thपढ़ो(काष्ठा fsg_common *common, bool can_मुक्तze,
+		काष्ठा fsg_buffhd *bh)
+अणु
+	पूर्णांक	rc;
 
-	/* Wait until a signal arrives or bh is no longer busy */
-	if (can_freeze)
+	/* Wait until a संकेत arrives or bh is no दीर्घer busy */
+	अगर (can_मुक्तze)
 		/*
 		 * synchronize with the smp_store_release(&bh->state) in
 		 * bulk_in_complete() or bulk_out_complete()
 		 */
-		rc = wait_event_freezable(common->io_wait,
+		rc = रुको_event_मुक्तzable(common->io_रुको,
 				bh && smp_load_acquire(&bh->state) >=
 					BUF_STATE_EMPTY);
-	else
-		rc = wait_event_interruptible(common->io_wait,
+	अन्यथा
+		rc = रुको_event_पूर्णांकerruptible(common->io_रुको,
 				bh && smp_load_acquire(&bh->state) >=
 					BUF_STATE_EMPTY);
-	return rc ? -EINTR : 0;
-}
+	वापस rc ? -EINTR : 0;
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int do_read(struct fsg_common *common)
-{
-	struct fsg_lun		*curlun = common->curlun;
+अटल पूर्णांक करो_पढ़ो(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_lun		*curlun = common->curlun;
 	u32			lba;
-	struct fsg_buffhd	*bh;
-	int			rc;
+	काष्ठा fsg_buffhd	*bh;
+	पूर्णांक			rc;
 	u32			amount_left;
-	loff_t			file_offset, file_offset_tmp;
-	unsigned int		amount;
-	ssize_t			nread;
+	loff_t			file_offset, file_offset_पंचांगp;
+	अचिन्हित पूर्णांक		amount;
+	sमाप_प्रकार			nपढ़ो;
 
 	/*
 	 * Get the starting Logical Block Address and check that it's
 	 * not too big.
 	 */
-	if (common->cmnd[0] == READ_6)
+	अगर (common->cmnd[0] == READ_6)
 		lba = get_unaligned_be24(&common->cmnd[1]);
-	else {
+	अन्यथा अणु
 		lba = get_unaligned_be32(&common->cmnd[2]);
 
 		/*
-		 * We allow DPO (Disable Page Out = don't save data in the
-		 * cache) and FUA (Force Unit Access = don't read from the
-		 * cache), but we don't implement them.
+		 * We allow DPO (Disable Page Out = करोn't save data in the
+		 * cache) and FUA (Force Unit Access = करोn't पढ़ो from the
+		 * cache), but we करोn't implement them.
 		 */
-		if ((common->cmnd[1] & ~0x18) != 0) {
+		अगर ((common->cmnd[1] & ~0x18) != 0) अणु
 			curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-			return -EINVAL;
-		}
-	}
-	if (lba >= curlun->num_sectors) {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	अगर (lba >= curlun->num_sectors) अणु
 		curlun->sense_data = SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	file_offset = ((loff_t) lba) << curlun->blkbits;
 
-	/* Carry out the file reads */
+	/* Carry out the file पढ़ोs */
 	amount_left = common->data_size_from_cmnd;
-	if (unlikely(amount_left == 0))
-		return -EIO;		/* No default reply */
+	अगर (unlikely(amount_left == 0))
+		वापस -EIO;		/* No शेष reply */
 
-	for (;;) {
+	क्रम (;;) अणु
 		/*
-		 * Figure out how much we need to read:
-		 * Try to read the remaining amount.
-		 * But don't read more than the buffer size.
-		 * And don't try to read past the end of the file.
+		 * Figure out how much we need to पढ़ो:
+		 * Try to पढ़ो the reमुख्यing amount.
+		 * But करोn't पढ़ो more than the buffer size.
+		 * And करोn't try to पढ़ो past the end of the file.
 		 */
 		amount = min(amount_left, FSG_BUFLEN);
 		amount = min((loff_t)amount,
 			     curlun->file_length - file_offset);
 
-		/* Wait for the next buffer to become available */
+		/* Wait क्रम the next buffer to become available */
 		bh = common->next_buffhd_to_fill;
-		rc = sleep_thread(common, false, bh);
-		if (rc)
-			return rc;
+		rc = sleep_thपढ़ो(common, false, bh);
+		अगर (rc)
+			वापस rc;
 
 		/*
-		 * If we were asked to read past the end of file,
+		 * If we were asked to पढ़ो past the end of file,
 		 * end with an empty buffer.
 		 */
-		if (amount == 0) {
+		अगर (amount == 0) अणु
 			curlun->sense_data =
 					SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
 			curlun->sense_data_info =
@@ -685,515 +686,515 @@ static int do_read(struct fsg_common *common)
 			curlun->info_valid = 1;
 			bh->inreq->length = 0;
 			bh->state = BUF_STATE_FULL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Perform the read */
-		file_offset_tmp = file_offset;
-		nread = kernel_read(curlun->filp, bh->buf, amount,
-				&file_offset_tmp);
+		/* Perक्रमm the पढ़ो */
+		file_offset_पंचांगp = file_offset;
+		nपढ़ो = kernel_पढ़ो(curlun->filp, bh->buf, amount,
+				&file_offset_पंचांगp);
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
-		      (unsigned long long)file_offset, (int)nread);
-		if (signal_pending(current))
-			return -EINTR;
+		      (अचिन्हित दीर्घ दीर्घ)file_offset, (पूर्णांक)nपढ़ो);
+		अगर (संकेत_pending(current))
+			वापस -EINTR;
 
-		if (nread < 0) {
-			LDBG(curlun, "error in file read: %d\n", (int)nread);
-			nread = 0;
-		} else if (nread < amount) {
+		अगर (nपढ़ो < 0) अणु
+			LDBG(curlun, "error in file read: %d\n", (पूर्णांक)nपढ़ो);
+			nपढ़ो = 0;
+		पूर्ण अन्यथा अगर (nपढ़ो < amount) अणु
 			LDBG(curlun, "partial file read: %d/%u\n",
-			     (int)nread, amount);
-			nread = round_down(nread, curlun->blksize);
-		}
-		file_offset  += nread;
-		amount_left  -= nread;
-		common->residue -= nread;
+			     (पूर्णांक)nपढ़ो, amount);
+			nपढ़ो = round_करोwn(nपढ़ो, curlun->blksize);
+		पूर्ण
+		file_offset  += nपढ़ो;
+		amount_left  -= nपढ़ो;
+		common->residue -= nपढ़ो;
 
 		/*
-		 * Except at the end of the transfer, nread will be
-		 * equal to the buffer size, which is divisible by the
+		 * Except at the end of the transfer, nपढ़ो will be
+		 * equal to the buffer size, which is भागisible by the
 		 * bulk-in maxpacket size.
 		 */
-		bh->inreq->length = nread;
+		bh->inreq->length = nपढ़ो;
 		bh->state = BUF_STATE_FULL;
 
 		/* If an error occurred, report it and its position */
-		if (nread < amount) {
+		अगर (nपढ़ो < amount) अणु
 			curlun->sense_data = SS_UNRECOVERED_READ_ERROR;
 			curlun->sense_data_info =
 					file_offset >> curlun->blkbits;
 			curlun->info_valid = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (amount_left == 0)
-			break;		/* No more left to read */
+		अगर (amount_left == 0)
+			अवरोध;		/* No more left to पढ़ो */
 
-		/* Send this buffer and go read some more */
+		/* Send this buffer and go पढ़ो some more */
 		bh->inreq->zero = 0;
-		if (!start_in_transfer(common, bh))
-			/* Don't know what to do if common->fsg is NULL */
-			return -EIO;
+		अगर (!start_in_transfer(common, bh))
+			/* Don't know what to करो अगर common->fsg is शून्य */
+			वापस -EIO;
 		common->next_buffhd_to_fill = bh->next;
-	}
+	पूर्ण
 
-	return -EIO;		/* No default reply */
-}
+	वापस -EIO;		/* No शेष reply */
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int do_write(struct fsg_common *common)
-{
-	struct fsg_lun		*curlun = common->curlun;
+अटल पूर्णांक करो_ग_लिखो(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_lun		*curlun = common->curlun;
 	u32			lba;
-	struct fsg_buffhd	*bh;
-	int			get_some_more;
-	u32			amount_left_to_req, amount_left_to_write;
-	loff_t			usb_offset, file_offset, file_offset_tmp;
-	unsigned int		amount;
-	ssize_t			nwritten;
-	int			rc;
+	काष्ठा fsg_buffhd	*bh;
+	पूर्णांक			get_some_more;
+	u32			amount_left_to_req, amount_left_to_ग_लिखो;
+	loff_t			usb_offset, file_offset, file_offset_पंचांगp;
+	अचिन्हित पूर्णांक		amount;
+	sमाप_प्रकार			nwritten;
+	पूर्णांक			rc;
 
-	if (curlun->ro) {
+	अगर (curlun->ro) अणु
 		curlun->sense_data = SS_WRITE_PROTECTED;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	spin_lock(&curlun->filp->f_lock);
-	curlun->filp->f_flags &= ~O_SYNC;	/* Default is not to wait */
+	curlun->filp->f_flags &= ~O_SYNC;	/* Default is not to रुको */
 	spin_unlock(&curlun->filp->f_lock);
 
 	/*
 	 * Get the starting Logical Block Address and check that it's
 	 * not too big
 	 */
-	if (common->cmnd[0] == WRITE_6)
+	अगर (common->cmnd[0] == WRITE_6)
 		lba = get_unaligned_be24(&common->cmnd[1]);
-	else {
+	अन्यथा अणु
 		lba = get_unaligned_be32(&common->cmnd[2]);
 
 		/*
-		 * We allow DPO (Disable Page Out = don't save data in the
-		 * cache) and FUA (Force Unit Access = write directly to the
-		 * medium).  We don't implement DPO; we implement FUA by
-		 * performing synchronous output.
+		 * We allow DPO (Disable Page Out = करोn't save data in the
+		 * cache) and FUA (Force Unit Access = ग_लिखो directly to the
+		 * medium).  We करोn't implement DPO; we implement FUA by
+		 * perक्रमming synchronous output.
 		 */
-		if (common->cmnd[1] & ~0x18) {
+		अगर (common->cmnd[1] & ~0x18) अणु
 			curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-			return -EINVAL;
-		}
-		if (!curlun->nofua && (common->cmnd[1] & 0x08)) { /* FUA */
+			वापस -EINVAL;
+		पूर्ण
+		अगर (!curlun->nofua && (common->cmnd[1] & 0x08)) अणु /* FUA */
 			spin_lock(&curlun->filp->f_lock);
 			curlun->filp->f_flags |= O_SYNC;
 			spin_unlock(&curlun->filp->f_lock);
-		}
-	}
-	if (lba >= curlun->num_sectors) {
+		पूर्ण
+	पूर्ण
+	अगर (lba >= curlun->num_sectors) अणु
 		curlun->sense_data = SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Carry out the file writes */
+	/* Carry out the file ग_लिखोs */
 	get_some_more = 1;
 	file_offset = usb_offset = ((loff_t) lba) << curlun->blkbits;
 	amount_left_to_req = common->data_size_from_cmnd;
-	amount_left_to_write = common->data_size_from_cmnd;
+	amount_left_to_ग_लिखो = common->data_size_from_cmnd;
 
-	while (amount_left_to_write > 0) {
+	जबतक (amount_left_to_ग_लिखो > 0) अणु
 
-		/* Queue a request for more data from the host */
+		/* Queue a request क्रम more data from the host */
 		bh = common->next_buffhd_to_fill;
-		if (bh->state == BUF_STATE_EMPTY && get_some_more) {
+		अगर (bh->state == BUF_STATE_EMPTY && get_some_more) अणु
 
 			/*
 			 * Figure out how much we want to get:
-			 * Try to get the remaining amount,
+			 * Try to get the reमुख्यing amount,
 			 * but not more than the buffer size.
 			 */
 			amount = min(amount_left_to_req, FSG_BUFLEN);
 
 			/* Beyond the end of the backing file? */
-			if (usb_offset >= curlun->file_length) {
+			अगर (usb_offset >= curlun->file_length) अणु
 				get_some_more = 0;
 				curlun->sense_data =
 					SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
 				curlun->sense_data_info =
 					usb_offset >> curlun->blkbits;
 				curlun->info_valid = 1;
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			/* Get the next buffer */
 			usb_offset += amount;
 			common->usb_amount_left -= amount;
 			amount_left_to_req -= amount;
-			if (amount_left_to_req == 0)
+			अगर (amount_left_to_req == 0)
 				get_some_more = 0;
 
 			/*
 			 * Except at the end of the transfer, amount will be
-			 * equal to the buffer size, which is divisible by
+			 * equal to the buffer size, which is भागisible by
 			 * the bulk-out maxpacket size.
 			 */
 			set_bulk_out_req_length(common, bh, amount);
-			if (!start_out_transfer(common, bh))
-				/* Dunno what to do if common->fsg is NULL */
-				return -EIO;
+			अगर (!start_out_transfer(common, bh))
+				/* Dunno what to करो अगर common->fsg is शून्य */
+				वापस -EIO;
 			common->next_buffhd_to_fill = bh->next;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Write the received data to the backing file */
 		bh = common->next_buffhd_to_drain;
-		if (bh->state == BUF_STATE_EMPTY && !get_some_more)
-			break;			/* We stopped early */
+		अगर (bh->state == BUF_STATE_EMPTY && !get_some_more)
+			अवरोध;			/* We stopped early */
 
-		/* Wait for the data to be received */
-		rc = sleep_thread(common, false, bh);
-		if (rc)
-			return rc;
+		/* Wait क्रम the data to be received */
+		rc = sleep_thपढ़ो(common, false, bh);
+		अगर (rc)
+			वापस rc;
 
 		common->next_buffhd_to_drain = bh->next;
 		bh->state = BUF_STATE_EMPTY;
 
 		/* Did something go wrong with the transfer? */
-		if (bh->outreq->status != 0) {
+		अगर (bh->outreq->status != 0) अणु
 			curlun->sense_data = SS_COMMUNICATION_FAILURE;
 			curlun->sense_data_info =
 					file_offset >> curlun->blkbits;
 			curlun->info_valid = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		amount = bh->outreq->actual;
-		if (curlun->file_length - file_offset < amount) {
+		अगर (curlun->file_length - file_offset < amount) अणु
 			LERROR(curlun, "write %u @ %llu beyond end %llu\n",
-				       amount, (unsigned long long)file_offset,
-				       (unsigned long long)curlun->file_length);
+				       amount, (अचिन्हित दीर्घ दीर्घ)file_offset,
+				       (अचिन्हित दीर्घ दीर्घ)curlun->file_length);
 			amount = curlun->file_length - file_offset;
-		}
+		पूर्ण
 
 		/*
 		 * Don't accept excess data.  The spec doesn't say
-		 * what to do in this case.  We'll ignore the error.
+		 * what to करो in this हाल.  We'll ignore the error.
 		 */
-		amount = min(amount, bh->bulk_out_intended_length);
+		amount = min(amount, bh->bulk_out_पूर्णांकended_length);
 
-		/* Don't write a partial block */
-		amount = round_down(amount, curlun->blksize);
-		if (amount == 0)
-			goto empty_write;
+		/* Don't ग_लिखो a partial block */
+		amount = round_करोwn(amount, curlun->blksize);
+		अगर (amount == 0)
+			जाओ empty_ग_लिखो;
 
-		/* Perform the write */
-		file_offset_tmp = file_offset;
-		nwritten = kernel_write(curlun->filp, bh->buf, amount,
-				&file_offset_tmp);
+		/* Perक्रमm the ग_लिखो */
+		file_offset_पंचांगp = file_offset;
+		nwritten = kernel_ग_लिखो(curlun->filp, bh->buf, amount,
+				&file_offset_पंचांगp);
 		VLDBG(curlun, "file write %u @ %llu -> %d\n", amount,
-				(unsigned long long)file_offset, (int)nwritten);
-		if (signal_pending(current))
-			return -EINTR;		/* Interrupted! */
+				(अचिन्हित दीर्घ दीर्घ)file_offset, (पूर्णांक)nwritten);
+		अगर (संकेत_pending(current))
+			वापस -EINTR;		/* Interrupted! */
 
-		if (nwritten < 0) {
+		अगर (nwritten < 0) अणु
 			LDBG(curlun, "error in file write: %d\n",
-					(int) nwritten);
+					(पूर्णांक) nwritten);
 			nwritten = 0;
-		} else if (nwritten < amount) {
+		पूर्ण अन्यथा अगर (nwritten < amount) अणु
 			LDBG(curlun, "partial file write: %d/%u\n",
-					(int) nwritten, amount);
-			nwritten = round_down(nwritten, curlun->blksize);
-		}
+					(पूर्णांक) nwritten, amount);
+			nwritten = round_करोwn(nwritten, curlun->blksize);
+		पूर्ण
 		file_offset += nwritten;
-		amount_left_to_write -= nwritten;
+		amount_left_to_ग_लिखो -= nwritten;
 		common->residue -= nwritten;
 
 		/* If an error occurred, report it and its position */
-		if (nwritten < amount) {
+		अगर (nwritten < amount) अणु
 			curlun->sense_data = SS_WRITE_ERROR;
 			curlun->sense_data_info =
 					file_offset >> curlun->blkbits;
 			curlun->info_valid = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
- empty_write:
+ empty_ग_लिखो:
 		/* Did the host decide to stop early? */
-		if (bh->outreq->actual < bh->bulk_out_intended_length) {
-			common->short_packet_received = 1;
-			break;
-		}
-	}
+		अगर (bh->outreq->actual < bh->bulk_out_पूर्णांकended_length) अणु
+			common->लघु_packet_received = 1;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return -EIO;		/* No default reply */
-}
+	वापस -EIO;		/* No शेष reply */
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int do_synchronize_cache(struct fsg_common *common)
-{
-	struct fsg_lun	*curlun = common->curlun;
-	int		rc;
+अटल पूर्णांक करो_synchronize_cache(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
+	पूर्णांक		rc;
 
-	/* We ignore the requested LBA and write out all file's
+	/* We ignore the requested LBA and ग_लिखो out all file's
 	 * dirty data buffers. */
 	rc = fsg_lun_fsync_sub(curlun);
-	if (rc)
+	अगर (rc)
 		curlun->sense_data = SS_WRITE_ERROR;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static void invalidate_sub(struct fsg_lun *curlun)
-{
-	struct file	*filp = curlun->filp;
-	struct inode	*inode = file_inode(filp);
-	unsigned long	rc;
+अटल व्योम invalidate_sub(काष्ठा fsg_lun *curlun)
+अणु
+	काष्ठा file	*filp = curlun->filp;
+	काष्ठा inode	*inode = file_inode(filp);
+	अचिन्हित दीर्घ	rc;
 
 	rc = invalidate_mapping_pages(inode->i_mapping, 0, -1);
 	VLDBG(curlun, "invalidate_mapping_pages -> %ld\n", rc);
-}
+पूर्ण
 
-static int do_verify(struct fsg_common *common)
-{
-	struct fsg_lun		*curlun = common->curlun;
+अटल पूर्णांक करो_verअगरy(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_lun		*curlun = common->curlun;
 	u32			lba;
-	u32			verification_length;
-	struct fsg_buffhd	*bh = common->next_buffhd_to_fill;
-	loff_t			file_offset, file_offset_tmp;
+	u32			verअगरication_length;
+	काष्ठा fsg_buffhd	*bh = common->next_buffhd_to_fill;
+	loff_t			file_offset, file_offset_पंचांगp;
 	u32			amount_left;
-	unsigned int		amount;
-	ssize_t			nread;
+	अचिन्हित पूर्णांक		amount;
+	sमाप_प्रकार			nपढ़ो;
 
 	/*
 	 * Get the starting Logical Block Address and check that it's
 	 * not too big.
 	 */
 	lba = get_unaligned_be32(&common->cmnd[2]);
-	if (lba >= curlun->num_sectors) {
+	अगर (lba >= curlun->num_sectors) अणु
 		curlun->sense_data = SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * We allow DPO (Disable Page Out = don't save data in the
-	 * cache) but we don't implement it.
+	 * We allow DPO (Disable Page Out = करोn't save data in the
+	 * cache) but we करोn't implement it.
 	 */
-	if (common->cmnd[1] & ~0x10) {
+	अगर (common->cmnd[1] & ~0x10) अणु
 		curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	verification_length = get_unaligned_be16(&common->cmnd[7]);
-	if (unlikely(verification_length == 0))
-		return -EIO;		/* No default reply */
+	verअगरication_length = get_unaligned_be16(&common->cmnd[7]);
+	अगर (unlikely(verअगरication_length == 0))
+		वापस -EIO;		/* No शेष reply */
 
-	/* Prepare to carry out the file verify */
-	amount_left = verification_length << curlun->blkbits;
+	/* Prepare to carry out the file verअगरy */
+	amount_left = verअगरication_length << curlun->blkbits;
 	file_offset = ((loff_t) lba) << curlun->blkbits;
 
-	/* Write out all the dirty buffers before invalidating them */
+	/* Write out all the dirty buffers beक्रमe invalidating them */
 	fsg_lun_fsync_sub(curlun);
-	if (signal_pending(current))
-		return -EINTR;
+	अगर (संकेत_pending(current))
+		वापस -EINTR;
 
 	invalidate_sub(curlun);
-	if (signal_pending(current))
-		return -EINTR;
+	अगर (संकेत_pending(current))
+		वापस -EINTR;
 
-	/* Just try to read the requested blocks */
-	while (amount_left > 0) {
+	/* Just try to पढ़ो the requested blocks */
+	जबतक (amount_left > 0) अणु
 		/*
-		 * Figure out how much we need to read:
-		 * Try to read the remaining amount, but not more than
+		 * Figure out how much we need to पढ़ो:
+		 * Try to पढ़ो the reमुख्यing amount, but not more than
 		 * the buffer size.
-		 * And don't try to read past the end of the file.
+		 * And करोn't try to पढ़ो past the end of the file.
 		 */
 		amount = min(amount_left, FSG_BUFLEN);
 		amount = min((loff_t)amount,
 			     curlun->file_length - file_offset);
-		if (amount == 0) {
+		अगर (amount == 0) अणु
 			curlun->sense_data =
 					SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
 			curlun->sense_data_info =
 				file_offset >> curlun->blkbits;
 			curlun->info_valid = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Perform the read */
-		file_offset_tmp = file_offset;
-		nread = kernel_read(curlun->filp, bh->buf, amount,
-				&file_offset_tmp);
+		/* Perक्रमm the पढ़ो */
+		file_offset_पंचांगp = file_offset;
+		nपढ़ो = kernel_पढ़ो(curlun->filp, bh->buf, amount,
+				&file_offset_पंचांगp);
 		VLDBG(curlun, "file read %u @ %llu -> %d\n", amount,
-				(unsigned long long) file_offset,
-				(int) nread);
-		if (signal_pending(current))
-			return -EINTR;
+				(अचिन्हित दीर्घ दीर्घ) file_offset,
+				(पूर्णांक) nपढ़ो);
+		अगर (संकेत_pending(current))
+			वापस -EINTR;
 
-		if (nread < 0) {
-			LDBG(curlun, "error in file verify: %d\n", (int)nread);
-			nread = 0;
-		} else if (nread < amount) {
+		अगर (nपढ़ो < 0) अणु
+			LDBG(curlun, "error in file verify: %d\n", (पूर्णांक)nपढ़ो);
+			nपढ़ो = 0;
+		पूर्ण अन्यथा अगर (nपढ़ो < amount) अणु
 			LDBG(curlun, "partial file verify: %d/%u\n",
-			     (int)nread, amount);
-			nread = round_down(nread, curlun->blksize);
-		}
-		if (nread == 0) {
+			     (पूर्णांक)nपढ़ो, amount);
+			nपढ़ो = round_करोwn(nपढ़ो, curlun->blksize);
+		पूर्ण
+		अगर (nपढ़ो == 0) अणु
 			curlun->sense_data = SS_UNRECOVERED_READ_ERROR;
 			curlun->sense_data_info =
 				file_offset >> curlun->blkbits;
 			curlun->info_valid = 1;
-			break;
-		}
-		file_offset += nread;
-		amount_left -= nread;
-	}
-	return 0;
-}
+			अवरोध;
+		पूर्ण
+		file_offset += nपढ़ो;
+		amount_left -= nपढ़ो;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int do_inquiry(struct fsg_common *common, struct fsg_buffhd *bh)
-{
-	struct fsg_lun *curlun = common->curlun;
+अटल पूर्णांक करो_inquiry(काष्ठा fsg_common *common, काष्ठा fsg_buffhd *bh)
+अणु
+	काष्ठा fsg_lun *curlun = common->curlun;
 	u8	*buf = (u8 *) bh->buf;
 
-	if (!curlun) {		/* Unsupported LUNs are okay */
+	अगर (!curlun) अणु		/* Unsupported LUNs are okay */
 		common->bad_lun_okay = 1;
-		memset(buf, 0, 36);
+		स_रखो(buf, 0, 36);
 		buf[0] = TYPE_NO_LUN;	/* Unsupported, no device-type */
 		buf[4] = 31;		/* Additional length */
-		return 36;
-	}
+		वापस 36;
+	पूर्ण
 
 	buf[0] = curlun->cdrom ? TYPE_ROM : TYPE_DISK;
 	buf[1] = curlun->removable ? 0x80 : 0;
 	buf[2] = 2;		/* ANSI SCSI level 2 */
-	buf[3] = 2;		/* SCSI-2 INQUIRY data format */
+	buf[3] = 2;		/* SCSI-2 INQUIRY data क्रमmat */
 	buf[4] = 31;		/* Additional length */
 	buf[5] = 0;		/* No special options */
 	buf[6] = 0;
 	buf[7] = 0;
-	if (curlun->inquiry_string[0])
-		memcpy(buf + 8, curlun->inquiry_string,
-		       sizeof(curlun->inquiry_string));
-	else
-		memcpy(buf + 8, common->inquiry_string,
-		       sizeof(common->inquiry_string));
-	return 36;
-}
+	अगर (curlun->inquiry_string[0])
+		स_नकल(buf + 8, curlun->inquiry_string,
+		       माप(curlun->inquiry_string));
+	अन्यथा
+		स_नकल(buf + 8, common->inquiry_string,
+		       माप(common->inquiry_string));
+	वापस 36;
+पूर्ण
 
-static int do_request_sense(struct fsg_common *common, struct fsg_buffhd *bh)
-{
-	struct fsg_lun	*curlun = common->curlun;
+अटल पूर्णांक करो_request_sense(काष्ठा fsg_common *common, काष्ठा fsg_buffhd *bh)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
 	u8		*buf = (u8 *) bh->buf;
 	u32		sd, sdinfo;
-	int		valid;
+	पूर्णांक		valid;
 
 	/*
 	 * From the SCSI-2 spec., section 7.9 (Unit attention condition):
 	 *
 	 * If a REQUEST SENSE command is received from an initiator
-	 * with a pending unit attention condition (before the target
+	 * with a pending unit attention condition (beक्रमe the target
 	 * generates the contingent allegiance condition), then the
 	 * target shall either:
 	 *   a) report any pending sense data and preserve the unit
 	 *	attention condition on the logical unit, or,
 	 *   b) report the unit attention condition, may discard any
 	 *	pending sense data, and clear the unit attention
-	 *	condition on the logical unit for that initiator.
+	 *	condition on the logical unit क्रम that initiator.
 	 *
 	 * FSG normally uses option a); enable this code to use option b).
 	 */
-#if 0
-	if (curlun && curlun->unit_attention_data != SS_NO_SENSE) {
+#अगर 0
+	अगर (curlun && curlun->unit_attention_data != SS_NO_SENSE) अणु
 		curlun->sense_data = curlun->unit_attention_data;
 		curlun->unit_attention_data = SS_NO_SENSE;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (!curlun) {		/* Unsupported LUNs are okay */
+	अगर (!curlun) अणु		/* Unsupported LUNs are okay */
 		common->bad_lun_okay = 1;
 		sd = SS_LOGICAL_UNIT_NOT_SUPPORTED;
 		sdinfo = 0;
 		valid = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		sd = curlun->sense_data;
 		sdinfo = curlun->sense_data_info;
 		valid = curlun->info_valid << 7;
 		curlun->sense_data = SS_NO_SENSE;
 		curlun->sense_data_info = 0;
 		curlun->info_valid = 0;
-	}
+	पूर्ण
 
-	memset(buf, 0, 18);
+	स_रखो(buf, 0, 18);
 	buf[0] = valid | 0x70;			/* Valid, current error */
 	buf[2] = SK(sd);
-	put_unaligned_be32(sdinfo, &buf[3]);	/* Sense information */
+	put_unaligned_be32(sdinfo, &buf[3]);	/* Sense inक्रमmation */
 	buf[7] = 18 - 8;			/* Additional sense length */
 	buf[12] = ASC(sd);
 	buf[13] = ASCQ(sd);
-	return 18;
-}
+	वापस 18;
+पूर्ण
 
-static int do_read_capacity(struct fsg_common *common, struct fsg_buffhd *bh)
-{
-	struct fsg_lun	*curlun = common->curlun;
+अटल पूर्णांक करो_पढ़ो_capacity(काष्ठा fsg_common *common, काष्ठा fsg_buffhd *bh)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
 	u32		lba = get_unaligned_be32(&common->cmnd[2]);
-	int		pmi = common->cmnd[8];
+	पूर्णांक		pmi = common->cmnd[8];
 	u8		*buf = (u8 *)bh->buf;
 
 	/* Check the PMI and LBA fields */
-	if (pmi > 1 || (pmi == 0 && lba != 0)) {
+	अगर (pmi > 1 || (pmi == 0 && lba != 0)) अणु
 		curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	put_unaligned_be32(curlun->num_sectors - 1, &buf[0]);
 						/* Max logical block */
 	put_unaligned_be32(curlun->blksize, &buf[4]);/* Block length */
-	return 8;
-}
+	वापस 8;
+पूर्ण
 
-static int do_read_header(struct fsg_common *common, struct fsg_buffhd *bh)
-{
-	struct fsg_lun	*curlun = common->curlun;
-	int		msf = common->cmnd[1] & 0x02;
+अटल पूर्णांक करो_पढ़ो_header(काष्ठा fsg_common *common, काष्ठा fsg_buffhd *bh)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
+	पूर्णांक		msf = common->cmnd[1] & 0x02;
 	u32		lba = get_unaligned_be32(&common->cmnd[2]);
 	u8		*buf = (u8 *)bh->buf;
 
-	if (common->cmnd[1] & ~0x02) {		/* Mask away MSF */
+	अगर (common->cmnd[1] & ~0x02) अणु		/* Mask away MSF */
 		curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-		return -EINVAL;
-	}
-	if (lba >= curlun->num_sectors) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (lba >= curlun->num_sectors) अणु
 		curlun->sense_data = SS_LOGICAL_BLOCK_ADDRESS_OUT_OF_RANGE;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(buf, 0, 8);
+	स_रखो(buf, 0, 8);
 	buf[0] = 0x01;		/* 2048 bytes of user data, rest is EC */
 	store_cdrom_address(&buf[4], msf, lba);
-	return 8;
-}
+	वापस 8;
+पूर्ण
 
-static int do_read_toc(struct fsg_common *common, struct fsg_buffhd *bh)
-{
-	struct fsg_lun	*curlun = common->curlun;
-	int		msf = common->cmnd[1] & 0x02;
-	int		start_track = common->cmnd[6];
+अटल पूर्णांक करो_पढ़ो_toc(काष्ठा fsg_common *common, काष्ठा fsg_buffhd *bh)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
+	पूर्णांक		msf = common->cmnd[1] & 0x02;
+	पूर्णांक		start_track = common->cmnd[6];
 	u8		*buf = (u8 *)bh->buf;
 
-	if ((common->cmnd[1] & ~0x02) != 0 ||	/* Mask away MSF */
-			start_track > 1) {
+	अगर ((common->cmnd[1] & ~0x02) != 0 ||	/* Mask away MSF */
+			start_track > 1) अणु
 		curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memset(buf, 0, 20);
+	स_रखो(buf, 0, 20);
 	buf[1] = (20-2);		/* TOC data length */
 	buf[2] = 1;			/* First track number */
 	buf[3] = 1;			/* Last track number */
@@ -1204,49 +1205,49 @@ static int do_read_toc(struct fsg_common *common, struct fsg_buffhd *bh)
 	buf[13] = 0x16;			/* Lead-out track is data */
 	buf[14] = 0xAA;			/* Lead-out track number */
 	store_cdrom_address(&buf[16], msf, curlun->num_sectors);
-	return 20;
-}
+	वापस 20;
+पूर्ण
 
-static int do_mode_sense(struct fsg_common *common, struct fsg_buffhd *bh)
-{
-	struct fsg_lun	*curlun = common->curlun;
-	int		mscmnd = common->cmnd[0];
+अटल पूर्णांक करो_mode_sense(काष्ठा fsg_common *common, काष्ठा fsg_buffhd *bh)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
+	पूर्णांक		mscmnd = common->cmnd[0];
 	u8		*buf = (u8 *) bh->buf;
 	u8		*buf0 = buf;
-	int		pc, page_code;
-	int		changeable_values, all_pages;
-	int		valid_page = 0;
-	int		len, limit;
+	पूर्णांक		pc, page_code;
+	पूर्णांक		changeable_values, all_pages;
+	पूर्णांक		valid_page = 0;
+	पूर्णांक		len, limit;
 
-	if ((common->cmnd[1] & ~0x08) != 0) {	/* Mask away DBD */
+	अगर ((common->cmnd[1] & ~0x08) != 0) अणु	/* Mask away DBD */
 		curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	pc = common->cmnd[2] >> 6;
 	page_code = common->cmnd[2] & 0x3f;
-	if (pc == 3) {
+	अगर (pc == 3) अणु
 		curlun->sense_data = SS_SAVING_PARAMETERS_NOT_SUPPORTED;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	changeable_values = (pc == 1);
 	all_pages = (page_code == 0x3f);
 
 	/*
-	 * Write the mode parameter header.  Fixed values are: default
+	 * Write the mode parameter header.  Fixed values are: शेष
 	 * medium type, no cache control (DPOFUA), and no block descriptors.
 	 * The only variable value is the WriteProtect bit.  We will fill in
 	 * the mode data length later.
 	 */
-	memset(buf, 0, 8);
-	if (mscmnd == MODE_SENSE) {
+	स_रखो(buf, 0, 8);
+	अगर (mscmnd == MODE_SENSE) अणु
 		buf[2] = (curlun->ro ? 0x80 : 0x00);		/* WP, DPOFUA */
 		buf += 4;
 		limit = 255;
-	} else {			/* MODE_SENSE_10 */
+	पूर्ण अन्यथा अणु			/* MODE_SENSE_10 */
 		buf[3] = (curlun->ro ? 0x80 : 0x00);		/* WP, DPOFUA */
 		buf += 8;
 		limit = 65535;		/* Should really be FSG_BUFLEN */
-	}
+	पूर्ण
 
 	/* No block descriptors */
 
@@ -1254,13 +1255,13 @@ static int do_mode_sense(struct fsg_common *common, struct fsg_buffhd *bh)
 	 * The mode pages, in numerical order.  The only page we support
 	 * is the Caching page.
 	 */
-	if (page_code == 0x08 || all_pages) {
+	अगर (page_code == 0x08 || all_pages) अणु
 		valid_page = 1;
 		buf[0] = 0x08;		/* Page code */
 		buf[1] = 10;		/* Page length */
-		memset(buf+2, 0, 10);	/* None of the fields are changeable */
+		स_रखो(buf+2, 0, 10);	/* None of the fields are changeable */
 
-		if (!changeable_values) {
+		अगर (!changeable_values) अणु
 			buf[2] = 0x04;	/* Write cache enable, */
 					/* Read cache not disabled */
 					/* No cache retention priorities */
@@ -1270,107 +1271,107 @@ static int do_mode_sense(struct fsg_common *common, struct fsg_buffhd *bh)
 			put_unaligned_be16(0xffff, &buf[8]);
 					/* Maximum prefetch */
 			put_unaligned_be16(0xffff, &buf[10]);
-					/* Maximum prefetch ceiling */
-		}
+					/* Maximum prefetch उच्चमानing */
+		पूर्ण
 		buf += 12;
-	}
+	पूर्ण
 
 	/*
 	 * Check that a valid page was requested and the mode data length
-	 * isn't too long.
+	 * isn't too दीर्घ.
 	 */
 	len = buf - buf0;
-	if (!valid_page || len > limit) {
+	अगर (!valid_page || len > limit) अणु
 		curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*  Store the mode data length */
-	if (mscmnd == MODE_SENSE)
+	अगर (mscmnd == MODE_SENSE)
 		buf0[0] = len - 1;
-	else
+	अन्यथा
 		put_unaligned_be16(len - 2, buf0);
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int do_start_stop(struct fsg_common *common)
-{
-	struct fsg_lun	*curlun = common->curlun;
-	int		loej, start;
+अटल पूर्णांक करो_start_stop(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
+	पूर्णांक		loej, start;
 
-	if (!curlun) {
-		return -EINVAL;
-	} else if (!curlun->removable) {
+	अगर (!curlun) अणु
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (!curlun->removable) अणु
 		curlun->sense_data = SS_INVALID_COMMAND;
-		return -EINVAL;
-	} else if ((common->cmnd[1] & ~0x01) != 0 || /* Mask away Immed */
-		   (common->cmnd[4] & ~0x03) != 0) { /* Mask LoEj, Start */
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर ((common->cmnd[1] & ~0x01) != 0 || /* Mask away Immed */
+		   (common->cmnd[4] & ~0x03) != 0) अणु /* Mask LoEj, Start */
 		curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	loej  = common->cmnd[4] & 0x02;
 	start = common->cmnd[4] & 0x01;
 
 	/*
-	 * Our emulation doesn't support mounting; the medium is
-	 * available for use as soon as it is loaded.
+	 * Our emulation करोesn't support mounting; the medium is
+	 * available क्रम use as soon as it is loaded.
 	 */
-	if (start) {
-		if (!fsg_lun_is_open(curlun)) {
+	अगर (start) अणु
+		अगर (!fsg_lun_is_खोलो(curlun)) अणु
 			curlun->sense_data = SS_MEDIUM_NOT_PRESENT;
-			return -EINVAL;
-		}
-		return 0;
-	}
+			वापस -EINVAL;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	/* Are we allowed to unload the media? */
-	if (curlun->prevent_medium_removal) {
+	अगर (curlun->prevent_medium_removal) अणु
 		LDBG(curlun, "unload attempt prevented\n");
 		curlun->sense_data = SS_MEDIUM_REMOVAL_PREVENTED;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!loej)
-		return 0;
+	अगर (!loej)
+		वापस 0;
 
-	up_read(&common->filesem);
-	down_write(&common->filesem);
-	fsg_lun_close(curlun);
-	up_write(&common->filesem);
-	down_read(&common->filesem);
+	up_पढ़ो(&common->filesem);
+	करोwn_ग_लिखो(&common->filesem);
+	fsg_lun_बंद(curlun);
+	up_ग_लिखो(&common->filesem);
+	करोwn_पढ़ो(&common->filesem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_prevent_allow(struct fsg_common *common)
-{
-	struct fsg_lun	*curlun = common->curlun;
-	int		prevent;
+अटल पूर्णांक करो_prevent_allow(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
+	पूर्णांक		prevent;
 
-	if (!common->curlun) {
-		return -EINVAL;
-	} else if (!common->curlun->removable) {
+	अगर (!common->curlun) अणु
+		वापस -EINVAL;
+	पूर्ण अन्यथा अगर (!common->curlun->removable) अणु
 		common->curlun->sense_data = SS_INVALID_COMMAND;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	prevent = common->cmnd[4] & 0x01;
-	if ((common->cmnd[4] & ~0x01) != 0) {	/* Mask away Prevent */
+	अगर ((common->cmnd[4] & ~0x01) != 0) अणु	/* Mask away Prevent */
 		curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (curlun->prevent_medium_removal && !prevent)
+	अगर (curlun->prevent_medium_removal && !prevent)
 		fsg_lun_fsync_sub(curlun);
 	curlun->prevent_medium_removal = prevent;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_read_format_capacities(struct fsg_common *common,
-			struct fsg_buffhd *bh)
-{
-	struct fsg_lun	*curlun = common->curlun;
+अटल पूर्णांक करो_पढ़ो_क्रमmat_capacities(काष्ठा fsg_common *common,
+			काष्ठा fsg_buffhd *bh)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
 	u8		*buf = (u8 *) bh->buf;
 
 	buf[0] = buf[1] = buf[2] = 0;
@@ -1381,255 +1382,255 @@ static int do_read_format_capacities(struct fsg_common *common,
 						/* Number of blocks */
 	put_unaligned_be32(curlun->blksize, &buf[4]);/* Block length */
 	buf[4] = 0x02;				/* Current capacity */
-	return 12;
-}
+	वापस 12;
+पूर्ण
 
-static int do_mode_select(struct fsg_common *common, struct fsg_buffhd *bh)
-{
-	struct fsg_lun	*curlun = common->curlun;
+अटल पूर्णांक करो_mode_select(काष्ठा fsg_common *common, काष्ठा fsg_buffhd *bh)
+अणु
+	काष्ठा fsg_lun	*curlun = common->curlun;
 
-	/* We don't support MODE SELECT */
-	if (curlun)
+	/* We करोn't support MODE SELECT */
+	अगर (curlun)
 		curlun->sense_data = SS_INVALID_COMMAND;
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int halt_bulk_in_endpoint(struct fsg_dev *fsg)
-{
-	int	rc;
+अटल पूर्णांक halt_bulk_in_endpoपूर्णांक(काष्ठा fsg_dev *fsg)
+अणु
+	पूर्णांक	rc;
 
 	rc = fsg_set_halt(fsg, fsg->bulk_in);
-	if (rc == -EAGAIN)
+	अगर (rc == -EAGAIN)
 		VDBG(fsg, "delayed bulk-in endpoint halt\n");
-	while (rc != 0) {
-		if (rc != -EAGAIN) {
+	जबतक (rc != 0) अणु
+		अगर (rc != -EAGAIN) अणु
 			WARNING(fsg, "usb_ep_set_halt -> %d\n", rc);
 			rc = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Wait for a short time and then try again */
-		if (msleep_interruptible(100) != 0)
-			return -EINTR;
+		/* Wait क्रम a लघु समय and then try again */
+		अगर (msleep_पूर्णांकerruptible(100) != 0)
+			वापस -EINTR;
 		rc = usb_ep_set_halt(fsg->bulk_in);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int wedge_bulk_in_endpoint(struct fsg_dev *fsg)
-{
-	int	rc;
+अटल पूर्णांक wedge_bulk_in_endpoपूर्णांक(काष्ठा fsg_dev *fsg)
+अणु
+	पूर्णांक	rc;
 
 	DBG(fsg, "bulk-in set wedge\n");
 	rc = usb_ep_set_wedge(fsg->bulk_in);
-	if (rc == -EAGAIN)
+	अगर (rc == -EAGAIN)
 		VDBG(fsg, "delayed bulk-in endpoint wedge\n");
-	while (rc != 0) {
-		if (rc != -EAGAIN) {
+	जबतक (rc != 0) अणु
+		अगर (rc != -EAGAIN) अणु
 			WARNING(fsg, "usb_ep_set_wedge -> %d\n", rc);
 			rc = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Wait for a short time and then try again */
-		if (msleep_interruptible(100) != 0)
-			return -EINTR;
+		/* Wait क्रम a लघु समय and then try again */
+		अगर (msleep_पूर्णांकerruptible(100) != 0)
+			वापस -EINTR;
 		rc = usb_ep_set_wedge(fsg->bulk_in);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static int throw_away_data(struct fsg_common *common)
-{
-	struct fsg_buffhd	*bh, *bh2;
+अटल पूर्णांक throw_away_data(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_buffhd	*bh, *bh2;
 	u32			amount;
-	int			rc;
+	पूर्णांक			rc;
 
-	for (bh = common->next_buffhd_to_drain;
+	क्रम (bh = common->next_buffhd_to_drain;
 	     bh->state != BUF_STATE_EMPTY || common->usb_amount_left > 0;
-	     bh = common->next_buffhd_to_drain) {
+	     bh = common->next_buffhd_to_drain) अणु
 
-		/* Try to submit another request if we need one */
+		/* Try to submit another request अगर we need one */
 		bh2 = common->next_buffhd_to_fill;
-		if (bh2->state == BUF_STATE_EMPTY &&
-				common->usb_amount_left > 0) {
+		अगर (bh2->state == BUF_STATE_EMPTY &&
+				common->usb_amount_left > 0) अणु
 			amount = min(common->usb_amount_left, FSG_BUFLEN);
 
 			/*
 			 * Except at the end of the transfer, amount will be
-			 * equal to the buffer size, which is divisible by
+			 * equal to the buffer size, which is भागisible by
 			 * the bulk-out maxpacket size.
 			 */
 			set_bulk_out_req_length(common, bh2, amount);
-			if (!start_out_transfer(common, bh2))
-				/* Dunno what to do if common->fsg is NULL */
-				return -EIO;
+			अगर (!start_out_transfer(common, bh2))
+				/* Dunno what to करो अगर common->fsg is शून्य */
+				वापस -EIO;
 			common->next_buffhd_to_fill = bh2->next;
 			common->usb_amount_left -= amount;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Wait for the data to be received */
-		rc = sleep_thread(common, false, bh);
-		if (rc)
-			return rc;
+		/* Wait क्रम the data to be received */
+		rc = sleep_thपढ़ो(common, false, bh);
+		अगर (rc)
+			वापस rc;
 
 		/* Throw away the data in a filled buffer */
 		bh->state = BUF_STATE_EMPTY;
 		common->next_buffhd_to_drain = bh->next;
 
-		/* A short packet or an error ends everything */
-		if (bh->outreq->actual < bh->bulk_out_intended_length ||
-				bh->outreq->status != 0) {
-			raise_exception(common, FSG_STATE_ABORT_BULK_OUT);
-			return -EINTR;
-		}
-	}
-	return 0;
-}
+		/* A लघु packet or an error ends everything */
+		अगर (bh->outreq->actual < bh->bulk_out_पूर्णांकended_length ||
+				bh->outreq->status != 0) अणु
+			उठाओ_exception(common, FSG_STATE_ABORT_BULK_OUT);
+			वापस -EINTR;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int finish_reply(struct fsg_common *common)
-{
-	struct fsg_buffhd	*bh = common->next_buffhd_to_fill;
-	int			rc = 0;
+अटल पूर्णांक finish_reply(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_buffhd	*bh = common->next_buffhd_to_fill;
+	पूर्णांक			rc = 0;
 
-	switch (common->data_dir) {
-	case DATA_DIR_NONE:
-		break;			/* Nothing to send */
+	चयन (common->data_dir) अणु
+	हाल DATA_सूची_NONE:
+		अवरोध;			/* Nothing to send */
 
 	/*
-	 * If we don't know whether the host wants to read or write,
+	 * If we करोn't know whether the host wants to पढ़ो or ग_लिखो,
 	 * this must be CB or CBI with an unknown command.  We mustn't
 	 * try to send or receive any data.  So stall both bulk pipes
-	 * if we can and wait for a reset.
+	 * अगर we can and रुको क्रम a reset.
 	 */
-	case DATA_DIR_UNKNOWN:
-		if (!common->can_stall) {
+	हाल DATA_सूची_UNKNOWN:
+		अगर (!common->can_stall) अणु
 			/* Nothing */
-		} else if (fsg_is_set(common)) {
+		पूर्ण अन्यथा अगर (fsg_is_set(common)) अणु
 			fsg_set_halt(common->fsg, common->fsg->bulk_out);
-			rc = halt_bulk_in_endpoint(common->fsg);
-		} else {
-			/* Don't know what to do if common->fsg is NULL */
+			rc = halt_bulk_in_endpoपूर्णांक(common->fsg);
+		पूर्ण अन्यथा अणु
+			/* Don't know what to करो अगर common->fsg is शून्य */
 			rc = -EIO;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	/* All but the last buffer of data must have already been sent */
-	case DATA_DIR_TO_HOST:
-		if (common->data_size == 0) {
+	/* All but the last buffer of data must have alपढ़ोy been sent */
+	हाल DATA_सूची_TO_HOST:
+		अगर (common->data_size == 0) अणु
 			/* Nothing to send */
 
-		/* Don't know what to do if common->fsg is NULL */
-		} else if (!fsg_is_set(common)) {
+		/* Don't know what to करो अगर common->fsg is शून्य */
+		पूर्ण अन्यथा अगर (!fsg_is_set(common)) अणु
 			rc = -EIO;
 
 		/* If there's no residue, simply send the last buffer */
-		} else if (common->residue == 0) {
+		पूर्ण अन्यथा अगर (common->residue == 0) अणु
 			bh->inreq->zero = 0;
-			if (!start_in_transfer(common, bh))
-				return -EIO;
+			अगर (!start_in_transfer(common, bh))
+				वापस -EIO;
 			common->next_buffhd_to_fill = bh->next;
 
 		/*
-		 * For Bulk-only, mark the end of the data with a short
+		 * For Bulk-only, mark the end of the data with a लघु
 		 * packet.  If we are allowed to stall, halt the bulk-in
-		 * endpoint.  (Note: This violates the Bulk-Only Transport
-		 * specification, which requires us to pad the data if we
-		 * don't halt the endpoint.  Presumably nobody will mind.)
+		 * endpoपूर्णांक.  (Note: This violates the Bulk-Only Transport
+		 * specअगरication, which requires us to pad the data अगर we
+		 * करोn't halt the endpoपूर्णांक.  Presumably nobody will mind.)
 		 */
-		} else {
+		पूर्ण अन्यथा अणु
 			bh->inreq->zero = 1;
-			if (!start_in_transfer(common, bh))
+			अगर (!start_in_transfer(common, bh))
 				rc = -EIO;
 			common->next_buffhd_to_fill = bh->next;
-			if (common->can_stall)
-				rc = halt_bulk_in_endpoint(common->fsg);
-		}
-		break;
+			अगर (common->can_stall)
+				rc = halt_bulk_in_endpoपूर्णांक(common->fsg);
+		पूर्ण
+		अवरोध;
 
 	/*
 	 * We have processed all we want from the data the host has sent.
 	 * There may still be outstanding bulk-out requests.
 	 */
-	case DATA_DIR_FROM_HOST:
-		if (common->residue == 0) {
+	हाल DATA_सूची_FROM_HOST:
+		अगर (common->residue == 0) अणु
 			/* Nothing to receive */
 
 		/* Did the host stop sending unexpectedly early? */
-		} else if (common->short_packet_received) {
-			raise_exception(common, FSG_STATE_ABORT_BULK_OUT);
+		पूर्ण अन्यथा अगर (common->लघु_packet_received) अणु
+			उठाओ_exception(common, FSG_STATE_ABORT_BULK_OUT);
 			rc = -EINTR;
 
 		/*
 		 * We haven't processed all the incoming data.  Even though
-		 * we may be allowed to stall, doing so would cause a race.
-		 * The controller may already have ACK'ed all the remaining
-		 * bulk-out packets, in which case the host wouldn't see a
-		 * STALL.  Not realizing the endpoint was halted, it wouldn't
+		 * we may be allowed to stall, करोing so would cause a race.
+		 * The controller may alपढ़ोy have ACK'ed all the reमुख्यing
+		 * bulk-out packets, in which हाल the host wouldn't see a
+		 * STALL.  Not realizing the endpoपूर्णांक was halted, it wouldn't
 		 * clear the halt -- leading to problems later on.
 		 */
-#if 0
-		} else if (common->can_stall) {
-			if (fsg_is_set(common))
+#अगर 0
+		पूर्ण अन्यथा अगर (common->can_stall) अणु
+			अगर (fsg_is_set(common))
 				fsg_set_halt(common->fsg,
 					     common->fsg->bulk_out);
-			raise_exception(common, FSG_STATE_ABORT_BULK_OUT);
+			उठाओ_exception(common, FSG_STATE_ABORT_BULK_OUT);
 			rc = -EINTR;
-#endif
+#पूर्ण_अगर
 
 		/*
 		 * We can't stall.  Read in the excess data and throw it
 		 * all away.
 		 */
-		} else {
+		पूर्ण अन्यथा अणु
 			rc = throw_away_data(common);
-		}
-		break;
-	}
-	return rc;
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static void send_status(struct fsg_common *common)
-{
-	struct fsg_lun		*curlun = common->curlun;
-	struct fsg_buffhd	*bh;
-	struct bulk_cs_wrap	*csw;
-	int			rc;
+अटल व्योम send_status(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_lun		*curlun = common->curlun;
+	काष्ठा fsg_buffhd	*bh;
+	काष्ठा bulk_cs_wrap	*csw;
+	पूर्णांक			rc;
 	u8			status = US_BULK_STAT_OK;
 	u32			sd, sdinfo = 0;
 
-	/* Wait for the next buffer to become available */
+	/* Wait क्रम the next buffer to become available */
 	bh = common->next_buffhd_to_fill;
-	rc = sleep_thread(common, false, bh);
-	if (rc)
-		return;
+	rc = sleep_thपढ़ो(common, false, bh);
+	अगर (rc)
+		वापस;
 
-	if (curlun) {
+	अगर (curlun) अणु
 		sd = curlun->sense_data;
 		sdinfo = curlun->sense_data_info;
-	} else if (common->bad_lun_okay)
+	पूर्ण अन्यथा अगर (common->bad_lun_okay)
 		sd = SS_NO_SENSE;
-	else
+	अन्यथा
 		sd = SS_LOGICAL_UNIT_NOT_SUPPORTED;
 
-	if (common->phase_error) {
+	अगर (common->phase_error) अणु
 		DBG(common, "sending phase-error status\n");
 		status = US_BULK_STAT_PHASE;
 		sd = SS_INVALID_COMMAND;
-	} else if (sd != SS_NO_SENSE) {
+	पूर्ण अन्यथा अगर (sd != SS_NO_SENSE) अणु
 		DBG(common, "sending command-failure status\n");
 		status = US_BULK_STAT_FAIL;
 		VDBG(common, "  sense data: SK x%02x, ASC x%02x, ASCQ x%02x;"
 				"  info x%x\n",
 				SK(sd), ASC(sd), ASCQ(sd), sdinfo);
-	}
+	पूर्ण
 
 	/* Store and send the Bulk-only CSW */
-	csw = (void *)bh->buf;
+	csw = (व्योम *)bh->buf;
 
 	csw->Signature = cpu_to_le32(US_BULK_CS_SIGN);
 	csw->Tag = common->tag;
@@ -1638,46 +1639,46 @@ static void send_status(struct fsg_common *common)
 
 	bh->inreq->length = US_BULK_CS_WRAP_LEN;
 	bh->inreq->zero = 0;
-	if (!start_in_transfer(common, bh))
-		/* Don't know what to do if common->fsg is NULL */
-		return;
+	अगर (!start_in_transfer(common, bh))
+		/* Don't know what to करो अगर common->fsg is शून्य */
+		वापस;
 
 	common->next_buffhd_to_fill = bh->next;
-	return;
-}
+	वापस;
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
 /*
- * Check whether the command is properly formed and whether its data size
- * and direction agree with the values we already have.
+ * Check whether the command is properly क्रमmed and whether its data size
+ * and direction agree with the values we alपढ़ोy have.
  */
-static int check_command(struct fsg_common *common, int cmnd_size,
-			 enum data_direction data_dir, unsigned int mask,
-			 int needs_medium, const char *name)
-{
-	int			i;
-	unsigned int		lun = common->cmnd[1] >> 5;
-	static const char	dirletter[4] = {'u', 'o', 'i', 'n'};
-	char			hdlen[20];
-	struct fsg_lun		*curlun;
+अटल पूर्णांक check_command(काष्ठा fsg_common *common, पूर्णांक cmnd_size,
+			 क्रमागत data_direction data_dir, अचिन्हित पूर्णांक mask,
+			 पूर्णांक needs_medium, स्थिर अक्षर *name)
+अणु
+	पूर्णांक			i;
+	अचिन्हित पूर्णांक		lun = common->cmnd[1] >> 5;
+	अटल स्थिर अक्षर	dirletter[4] = अणु'u', 'o', 'i', 'n'पूर्ण;
+	अक्षर			hdlen[20];
+	काष्ठा fsg_lun		*curlun;
 
 	hdlen[0] = 0;
-	if (common->data_dir != DATA_DIR_UNKNOWN)
-		sprintf(hdlen, ", H%c=%u", dirletter[(int) common->data_dir],
+	अगर (common->data_dir != DATA_सूची_UNKNOWN)
+		प्र_लिखो(hdlen, ", H%c=%u", dirletter[(पूर्णांक) common->data_dir],
 			common->data_size);
 	VDBG(common, "SCSI command: %s;  Dc=%d, D%c=%u;  Hc=%d%s\n",
-	     name, cmnd_size, dirletter[(int) data_dir],
+	     name, cmnd_size, dirletter[(पूर्णांक) data_dir],
 	     common->data_size_from_cmnd, common->cmnd_size, hdlen);
 
 	/*
 	 * We can't reply at all until we know the correct data direction
 	 * and size.
 	 */
-	if (common->data_size_from_cmnd == 0)
-		data_dir = DATA_DIR_NONE;
-	if (common->data_size < common->data_size_from_cmnd) {
+	अगर (common->data_size_from_cmnd == 0)
+		data_dir = DATA_सूची_NONE;
+	अगर (common->data_size < common->data_size_from_cmnd) अणु
 		/*
 		 * Host data size < Device data size is a phase error.
 		 * Carry out the command, but only transfer as much as
@@ -1685,684 +1686,684 @@ static int check_command(struct fsg_common *common, int cmnd_size,
 		 */
 		common->data_size_from_cmnd = common->data_size;
 		common->phase_error = 1;
-	}
+	पूर्ण
 	common->residue = common->data_size;
 	common->usb_amount_left = common->data_size;
 
 	/* Conflicting data directions is a phase error */
-	if (common->data_dir != data_dir && common->data_size_from_cmnd > 0) {
+	अगर (common->data_dir != data_dir && common->data_size_from_cmnd > 0) अणु
 		common->phase_error = 1;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Verify the length of the command itself */
-	if (cmnd_size != common->cmnd_size) {
+	/* Verअगरy the length of the command itself */
+	अगर (cmnd_size != common->cmnd_size) अणु
 
 		/*
-		 * Special case workaround: There are plenty of buggy SCSI
+		 * Special हाल workaround: There are plenty of buggy SCSI
 		 * implementations. Many have issues with cbw->Length
-		 * field passing a wrong command size. For those cases we
+		 * field passing a wrong command size. For those हालs we
 		 * always try to work around the problem by using the length
 		 * sent by the host side provided it is at least as large
 		 * as the correct command length.
-		 * Examples of such cases would be MS-Windows, which issues
+		 * Examples of such हालs would be MS-Winकरोws, which issues
 		 * REQUEST SENSE with cbw->Length == 12 where it should
 		 * be 6, and xbox360 issuing INQUIRY, TEST UNIT READY and
 		 * REQUEST SENSE with cbw->Length == 10 where it should
 		 * be 6 as well.
 		 */
-		if (cmnd_size <= common->cmnd_size) {
+		अगर (cmnd_size <= common->cmnd_size) अणु
 			DBG(common, "%s is buggy! Expected length %d "
 			    "but we got %d\n", name,
 			    cmnd_size, common->cmnd_size);
 			cmnd_size = common->cmnd_size;
-		} else {
+		पूर्ण अन्यथा अणु
 			common->phase_error = 1;
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* Check that the LUN values are consistent */
-	if (common->lun != lun)
+	अगर (common->lun != lun)
 		DBG(common, "using LUN %u from CBW, not LUN %u from CDB\n",
 		    common->lun, lun);
 
 	/* Check the LUN */
 	curlun = common->curlun;
-	if (curlun) {
-		if (common->cmnd[0] != REQUEST_SENSE) {
+	अगर (curlun) अणु
+		अगर (common->cmnd[0] != REQUEST_SENSE) अणु
 			curlun->sense_data = SS_NO_SENSE;
 			curlun->sense_data_info = 0;
 			curlun->info_valid = 0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		common->bad_lun_okay = 0;
 
 		/*
 		 * INQUIRY and REQUEST SENSE commands are explicitly allowed
 		 * to use unsupported LUNs; all others may not.
 		 */
-		if (common->cmnd[0] != INQUIRY &&
-		    common->cmnd[0] != REQUEST_SENSE) {
+		अगर (common->cmnd[0] != INQUIRY &&
+		    common->cmnd[0] != REQUEST_SENSE) अणु
 			DBG(common, "unsupported LUN %u\n", common->lun);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * If a unit attention condition exists, only INQUIRY and
-	 * REQUEST SENSE commands are allowed; anything else must fail.
+	 * REQUEST SENSE commands are allowed; anything अन्यथा must fail.
 	 */
-	if (curlun && curlun->unit_attention_data != SS_NO_SENSE &&
+	अगर (curlun && curlun->unit_attention_data != SS_NO_SENSE &&
 	    common->cmnd[0] != INQUIRY &&
-	    common->cmnd[0] != REQUEST_SENSE) {
+	    common->cmnd[0] != REQUEST_SENSE) अणु
 		curlun->sense_data = curlun->unit_attention_data;
 		curlun->unit_attention_data = SS_NO_SENSE;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Check that only command bytes listed in the mask are non-zero */
 	common->cmnd[1] &= 0x1f;			/* Mask away the LUN */
-	for (i = 1; i < cmnd_size; ++i) {
-		if (common->cmnd[i] && !(mask & (1 << i))) {
-			if (curlun)
+	क्रम (i = 1; i < cmnd_size; ++i) अणु
+		अगर (common->cmnd[i] && !(mask & (1 << i))) अणु
+			अगर (curlun)
 				curlun->sense_data = SS_INVALID_FIELD_IN_CDB;
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
 	/* If the medium isn't mounted and the command needs to access
-	 * it, return an error. */
-	if (curlun && !fsg_lun_is_open(curlun) && needs_medium) {
+	 * it, वापस an error. */
+	अगर (curlun && !fsg_lun_is_खोलो(curlun) && needs_medium) अणु
 		curlun->sense_data = SS_MEDIUM_NOT_PRESENT;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* wrapper of check_command for data size in blocks handling */
-static int check_command_size_in_blocks(struct fsg_common *common,
-		int cmnd_size, enum data_direction data_dir,
-		unsigned int mask, int needs_medium, const char *name)
-{
-	if (common->curlun)
+/* wrapper of check_command क्रम data size in blocks handling */
+अटल पूर्णांक check_command_size_in_blocks(काष्ठा fsg_common *common,
+		पूर्णांक cmnd_size, क्रमागत data_direction data_dir,
+		अचिन्हित पूर्णांक mask, पूर्णांक needs_medium, स्थिर अक्षर *name)
+अणु
+	अगर (common->curlun)
 		common->data_size_from_cmnd <<= common->curlun->blkbits;
-	return check_command(common, cmnd_size, data_dir,
+	वापस check_command(common, cmnd_size, data_dir,
 			mask, needs_medium, name);
-}
+पूर्ण
 
-static int do_scsi_command(struct fsg_common *common)
-{
-	struct fsg_buffhd	*bh;
-	int			rc;
-	int			reply = -EINVAL;
-	int			i;
-	static char		unknown[16];
+अटल पूर्णांक करो_scsi_command(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_buffhd	*bh;
+	पूर्णांक			rc;
+	पूर्णांक			reply = -EINVAL;
+	पूर्णांक			i;
+	अटल अक्षर		unknown[16];
 
 	dump_cdb(common);
 
-	/* Wait for the next buffer to become available for data or status */
+	/* Wait क्रम the next buffer to become available क्रम data or status */
 	bh = common->next_buffhd_to_fill;
 	common->next_buffhd_to_drain = bh;
-	rc = sleep_thread(common, false, bh);
-	if (rc)
-		return rc;
+	rc = sleep_thपढ़ो(common, false, bh);
+	अगर (rc)
+		वापस rc;
 
 	common->phase_error = 0;
-	common->short_packet_received = 0;
+	common->लघु_packet_received = 0;
 
-	down_read(&common->filesem);	/* We're using the backing file */
-	switch (common->cmnd[0]) {
+	करोwn_पढ़ो(&common->filesem);	/* We're using the backing file */
+	चयन (common->cmnd[0]) अणु
 
-	case INQUIRY:
+	हाल INQUIRY:
 		common->data_size_from_cmnd = common->cmnd[4];
-		reply = check_command(common, 6, DATA_DIR_TO_HOST,
+		reply = check_command(common, 6, DATA_सूची_TO_HOST,
 				      (1<<4), 0,
 				      "INQUIRY");
-		if (reply == 0)
-			reply = do_inquiry(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_inquiry(common, bh);
+		अवरोध;
 
-	case MODE_SELECT:
+	हाल MODE_SELECT:
 		common->data_size_from_cmnd = common->cmnd[4];
-		reply = check_command(common, 6, DATA_DIR_FROM_HOST,
+		reply = check_command(common, 6, DATA_सूची_FROM_HOST,
 				      (1<<1) | (1<<4), 0,
 				      "MODE SELECT(6)");
-		if (reply == 0)
-			reply = do_mode_select(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_mode_select(common, bh);
+		अवरोध;
 
-	case MODE_SELECT_10:
+	हाल MODE_SELECT_10:
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
-		reply = check_command(common, 10, DATA_DIR_FROM_HOST,
+		reply = check_command(common, 10, DATA_सूची_FROM_HOST,
 				      (1<<1) | (3<<7), 0,
 				      "MODE SELECT(10)");
-		if (reply == 0)
-			reply = do_mode_select(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_mode_select(common, bh);
+		अवरोध;
 
-	case MODE_SENSE:
+	हाल MODE_SENSE:
 		common->data_size_from_cmnd = common->cmnd[4];
-		reply = check_command(common, 6, DATA_DIR_TO_HOST,
+		reply = check_command(common, 6, DATA_सूची_TO_HOST,
 				      (1<<1) | (1<<2) | (1<<4), 0,
 				      "MODE SENSE(6)");
-		if (reply == 0)
-			reply = do_mode_sense(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_mode_sense(common, bh);
+		अवरोध;
 
-	case MODE_SENSE_10:
+	हाल MODE_SENSE_10:
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
-		reply = check_command(common, 10, DATA_DIR_TO_HOST,
+		reply = check_command(common, 10, DATA_सूची_TO_HOST,
 				      (1<<1) | (1<<2) | (3<<7), 0,
 				      "MODE SENSE(10)");
-		if (reply == 0)
-			reply = do_mode_sense(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_mode_sense(common, bh);
+		अवरोध;
 
-	case ALLOW_MEDIUM_REMOVAL:
+	हाल ALLOW_MEDIUM_REMOVAL:
 		common->data_size_from_cmnd = 0;
-		reply = check_command(common, 6, DATA_DIR_NONE,
+		reply = check_command(common, 6, DATA_सूची_NONE,
 				      (1<<4), 0,
 				      "PREVENT-ALLOW MEDIUM REMOVAL");
-		if (reply == 0)
-			reply = do_prevent_allow(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_prevent_allow(common);
+		अवरोध;
 
-	case READ_6:
+	हाल READ_6:
 		i = common->cmnd[4];
 		common->data_size_from_cmnd = (i == 0) ? 256 : i;
 		reply = check_command_size_in_blocks(common, 6,
-				      DATA_DIR_TO_HOST,
+				      DATA_सूची_TO_HOST,
 				      (7<<1) | (1<<4), 1,
 				      "READ(6)");
-		if (reply == 0)
-			reply = do_read(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_पढ़ो(common);
+		अवरोध;
 
-	case READ_10:
+	हाल READ_10:
 		common->data_size_from_cmnd =
 				get_unaligned_be16(&common->cmnd[7]);
 		reply = check_command_size_in_blocks(common, 10,
-				      DATA_DIR_TO_HOST,
+				      DATA_सूची_TO_HOST,
 				      (1<<1) | (0xf<<2) | (3<<7), 1,
 				      "READ(10)");
-		if (reply == 0)
-			reply = do_read(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_पढ़ो(common);
+		अवरोध;
 
-	case READ_12:
+	हाल READ_12:
 		common->data_size_from_cmnd =
 				get_unaligned_be32(&common->cmnd[6]);
 		reply = check_command_size_in_blocks(common, 12,
-				      DATA_DIR_TO_HOST,
+				      DATA_सूची_TO_HOST,
 				      (1<<1) | (0xf<<2) | (0xf<<6), 1,
 				      "READ(12)");
-		if (reply == 0)
-			reply = do_read(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_पढ़ो(common);
+		अवरोध;
 
-	case READ_CAPACITY:
+	हाल READ_CAPACITY:
 		common->data_size_from_cmnd = 8;
-		reply = check_command(common, 10, DATA_DIR_TO_HOST,
+		reply = check_command(common, 10, DATA_सूची_TO_HOST,
 				      (0xf<<2) | (1<<8), 1,
 				      "READ CAPACITY");
-		if (reply == 0)
-			reply = do_read_capacity(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_पढ़ो_capacity(common, bh);
+		अवरोध;
 
-	case READ_HEADER:
-		if (!common->curlun || !common->curlun->cdrom)
-			goto unknown_cmnd;
+	हाल READ_HEADER:
+		अगर (!common->curlun || !common->curlun->cdrom)
+			जाओ unknown_cmnd;
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
-		reply = check_command(common, 10, DATA_DIR_TO_HOST,
+		reply = check_command(common, 10, DATA_सूची_TO_HOST,
 				      (3<<7) | (0x1f<<1), 1,
 				      "READ HEADER");
-		if (reply == 0)
-			reply = do_read_header(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_पढ़ो_header(common, bh);
+		अवरोध;
 
-	case READ_TOC:
-		if (!common->curlun || !common->curlun->cdrom)
-			goto unknown_cmnd;
+	हाल READ_TOC:
+		अगर (!common->curlun || !common->curlun->cdrom)
+			जाओ unknown_cmnd;
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
-		reply = check_command(common, 10, DATA_DIR_TO_HOST,
+		reply = check_command(common, 10, DATA_सूची_TO_HOST,
 				      (7<<6) | (1<<1), 1,
 				      "READ TOC");
-		if (reply == 0)
-			reply = do_read_toc(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_पढ़ो_toc(common, bh);
+		अवरोध;
 
-	case READ_FORMAT_CAPACITIES:
+	हाल READ_FORMAT_CAPACITIES:
 		common->data_size_from_cmnd =
 			get_unaligned_be16(&common->cmnd[7]);
-		reply = check_command(common, 10, DATA_DIR_TO_HOST,
+		reply = check_command(common, 10, DATA_सूची_TO_HOST,
 				      (3<<7), 1,
 				      "READ FORMAT CAPACITIES");
-		if (reply == 0)
-			reply = do_read_format_capacities(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_पढ़ो_क्रमmat_capacities(common, bh);
+		अवरोध;
 
-	case REQUEST_SENSE:
+	हाल REQUEST_SENSE:
 		common->data_size_from_cmnd = common->cmnd[4];
-		reply = check_command(common, 6, DATA_DIR_TO_HOST,
+		reply = check_command(common, 6, DATA_सूची_TO_HOST,
 				      (1<<4), 0,
 				      "REQUEST SENSE");
-		if (reply == 0)
-			reply = do_request_sense(common, bh);
-		break;
+		अगर (reply == 0)
+			reply = करो_request_sense(common, bh);
+		अवरोध;
 
-	case START_STOP:
+	हाल START_STOP:
 		common->data_size_from_cmnd = 0;
-		reply = check_command(common, 6, DATA_DIR_NONE,
+		reply = check_command(common, 6, DATA_सूची_NONE,
 				      (1<<1) | (1<<4), 0,
 				      "START-STOP UNIT");
-		if (reply == 0)
-			reply = do_start_stop(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_start_stop(common);
+		अवरोध;
 
-	case SYNCHRONIZE_CACHE:
+	हाल SYNCHRONIZE_CACHE:
 		common->data_size_from_cmnd = 0;
-		reply = check_command(common, 10, DATA_DIR_NONE,
+		reply = check_command(common, 10, DATA_सूची_NONE,
 				      (0xf<<2) | (3<<7), 1,
 				      "SYNCHRONIZE CACHE");
-		if (reply == 0)
-			reply = do_synchronize_cache(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_synchronize_cache(common);
+		अवरोध;
 
-	case TEST_UNIT_READY:
+	हाल TEST_UNIT_READY:
 		common->data_size_from_cmnd = 0;
-		reply = check_command(common, 6, DATA_DIR_NONE,
+		reply = check_command(common, 6, DATA_सूची_NONE,
 				0, 1,
 				"TEST UNIT READY");
-		break;
+		अवरोध;
 
 	/*
-	 * Although optional, this command is used by MS-Windows.  We
+	 * Although optional, this command is used by MS-Winकरोws.  We
 	 * support a minimal version: BytChk must be 0.
 	 */
-	case VERIFY:
+	हाल VERIFY:
 		common->data_size_from_cmnd = 0;
-		reply = check_command(common, 10, DATA_DIR_NONE,
+		reply = check_command(common, 10, DATA_सूची_NONE,
 				      (1<<1) | (0xf<<2) | (3<<7), 1,
 				      "VERIFY");
-		if (reply == 0)
-			reply = do_verify(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_verअगरy(common);
+		अवरोध;
 
-	case WRITE_6:
+	हाल WRITE_6:
 		i = common->cmnd[4];
 		common->data_size_from_cmnd = (i == 0) ? 256 : i;
 		reply = check_command_size_in_blocks(common, 6,
-				      DATA_DIR_FROM_HOST,
+				      DATA_सूची_FROM_HOST,
 				      (7<<1) | (1<<4), 1,
 				      "WRITE(6)");
-		if (reply == 0)
-			reply = do_write(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_ग_लिखो(common);
+		अवरोध;
 
-	case WRITE_10:
+	हाल WRITE_10:
 		common->data_size_from_cmnd =
 				get_unaligned_be16(&common->cmnd[7]);
 		reply = check_command_size_in_blocks(common, 10,
-				      DATA_DIR_FROM_HOST,
+				      DATA_सूची_FROM_HOST,
 				      (1<<1) | (0xf<<2) | (3<<7), 1,
 				      "WRITE(10)");
-		if (reply == 0)
-			reply = do_write(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_ग_लिखो(common);
+		अवरोध;
 
-	case WRITE_12:
+	हाल WRITE_12:
 		common->data_size_from_cmnd =
 				get_unaligned_be32(&common->cmnd[6]);
 		reply = check_command_size_in_blocks(common, 12,
-				      DATA_DIR_FROM_HOST,
+				      DATA_सूची_FROM_HOST,
 				      (1<<1) | (0xf<<2) | (0xf<<6), 1,
 				      "WRITE(12)");
-		if (reply == 0)
-			reply = do_write(common);
-		break;
+		अगर (reply == 0)
+			reply = करो_ग_लिखो(common);
+		अवरोध;
 
 	/*
-	 * Some mandatory commands that we recognize but don't implement.
-	 * They don't mean much in this setting.  It's left as an exercise
-	 * for anyone interested to implement RESERVE and RELEASE in terms
+	 * Some mandatory commands that we recognize but करोn't implement.
+	 * They करोn't mean much in this setting.  It's left as an exercise
+	 * क्रम anyone पूर्णांकerested to implement RESERVE and RELEASE in terms
 	 * of Posix locks.
 	 */
-	case FORMAT_UNIT:
-	case RELEASE:
-	case RESERVE:
-	case SEND_DIAGNOSTIC:
+	हाल FORMAT_UNIT:
+	हाल RELEASE:
+	हाल RESERVE:
+	हाल SEND_DIAGNOSTIC:
 
-	default:
+	शेष:
 unknown_cmnd:
 		common->data_size_from_cmnd = 0;
-		sprintf(unknown, "Unknown x%02x", common->cmnd[0]);
+		प्र_लिखो(unknown, "Unknown x%02x", common->cmnd[0]);
 		reply = check_command(common, common->cmnd_size,
-				      DATA_DIR_UNKNOWN, ~0, 0, unknown);
-		if (reply == 0) {
+				      DATA_सूची_UNKNOWN, ~0, 0, unknown);
+		अगर (reply == 0) अणु
 			common->curlun->sense_data = SS_INVALID_COMMAND;
 			reply = -EINVAL;
-		}
-		break;
-	}
-	up_read(&common->filesem);
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	up_पढ़ो(&common->filesem);
 
-	if (reply == -EINTR || signal_pending(current))
-		return -EINTR;
+	अगर (reply == -EINTR || संकेत_pending(current))
+		वापस -EINTR;
 
-	/* Set up the single reply buffer for finish_reply() */
-	if (reply == -EINVAL)
+	/* Set up the single reply buffer क्रम finish_reply() */
+	अगर (reply == -EINVAL)
 		reply = 0;		/* Error reply length */
-	if (reply >= 0 && common->data_dir == DATA_DIR_TO_HOST) {
+	अगर (reply >= 0 && common->data_dir == DATA_सूची_TO_HOST) अणु
 		reply = min((u32)reply, common->data_size_from_cmnd);
 		bh->inreq->length = reply;
 		bh->state = BUF_STATE_FULL;
 		common->residue -= reply;
-	}				/* Otherwise it's already set */
+	पूर्ण				/* Otherwise it's alपढ़ोy set */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int received_cbw(struct fsg_dev *fsg, struct fsg_buffhd *bh)
-{
-	struct usb_request	*req = bh->outreq;
-	struct bulk_cb_wrap	*cbw = req->buf;
-	struct fsg_common	*common = fsg->common;
+अटल पूर्णांक received_cbw(काष्ठा fsg_dev *fsg, काष्ठा fsg_buffhd *bh)
+अणु
+	काष्ठा usb_request	*req = bh->outreq;
+	काष्ठा bulk_cb_wrap	*cbw = req->buf;
+	काष्ठा fsg_common	*common = fsg->common;
 
 	/* Was this a real packet?  Should it be ignored? */
-	if (req->status || test_bit(IGNORE_BULK_OUT, &fsg->atomic_bitflags))
-		return -EINVAL;
+	अगर (req->status || test_bit(IGNORE_BULK_OUT, &fsg->atomic_bitflags))
+		वापस -EINVAL;
 
 	/* Is the CBW valid? */
-	if (req->actual != US_BULK_CB_WRAP_LEN ||
+	अगर (req->actual != US_BULK_CB_WRAP_LEN ||
 			cbw->Signature != cpu_to_le32(
-				US_BULK_CB_SIGN)) {
+				US_BULK_CB_SIGN)) अणु
 		DBG(fsg, "invalid CBW: len %u sig 0x%x\n",
 				req->actual,
 				le32_to_cpu(cbw->Signature));
 
 		/*
-		 * The Bulk-only spec says we MUST stall the IN endpoint
-		 * (6.6.1), so it's unavoidable.  It also says we must
+		 * The Bulk-only spec says we MUST stall the IN endpoपूर्णांक
+		 * (6.6.1), so it's unaव्योमable.  It also says we must
 		 * retain this state until the next reset, but there's
 		 * no way to tell the controller driver it should ignore
 		 * Clear-Feature(HALT) requests.
 		 *
-		 * We aren't required to halt the OUT endpoint; instead
+		 * We aren't required to halt the OUT endpoपूर्णांक; instead
 		 * we can simply accept and discard any data received
 		 * until the next reset.
 		 */
-		wedge_bulk_in_endpoint(fsg);
+		wedge_bulk_in_endpoपूर्णांक(fsg);
 		set_bit(IGNORE_BULK_OUT, &fsg->atomic_bitflags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Is the CBW meaningful? */
-	if (cbw->Lun >= ARRAY_SIZE(common->luns) ||
+	अगर (cbw->Lun >= ARRAY_SIZE(common->luns) ||
 	    cbw->Flags & ~US_BULK_FLAG_IN || cbw->Length <= 0 ||
-	    cbw->Length > MAX_COMMAND_SIZE) {
+	    cbw->Length > MAX_COMMAND_SIZE) अणु
 		DBG(fsg, "non-meaningful CBW: lun = %u, flags = 0x%x, "
 				"cmdlen %u\n",
 				cbw->Lun, cbw->Flags, cbw->Length);
 
 		/*
-		 * We can do anything we want here, so let's stall the
-		 * bulk pipes if we are allowed to.
+		 * We can करो anything we want here, so let's stall the
+		 * bulk pipes अगर we are allowed to.
 		 */
-		if (common->can_stall) {
+		अगर (common->can_stall) अणु
 			fsg_set_halt(fsg, fsg->bulk_out);
-			halt_bulk_in_endpoint(fsg);
-		}
-		return -EINVAL;
-	}
+			halt_bulk_in_endpoपूर्णांक(fsg);
+		पूर्ण
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Save the command for later */
+	/* Save the command क्रम later */
 	common->cmnd_size = cbw->Length;
-	memcpy(common->cmnd, cbw->CDB, common->cmnd_size);
-	if (cbw->Flags & US_BULK_FLAG_IN)
-		common->data_dir = DATA_DIR_TO_HOST;
-	else
-		common->data_dir = DATA_DIR_FROM_HOST;
+	स_नकल(common->cmnd, cbw->CDB, common->cmnd_size);
+	अगर (cbw->Flags & US_BULK_FLAG_IN)
+		common->data_dir = DATA_सूची_TO_HOST;
+	अन्यथा
+		common->data_dir = DATA_सूची_FROM_HOST;
 	common->data_size = le32_to_cpu(cbw->DataTransferLength);
-	if (common->data_size == 0)
-		common->data_dir = DATA_DIR_NONE;
+	अगर (common->data_size == 0)
+		common->data_dir = DATA_सूची_NONE;
 	common->lun = cbw->Lun;
-	if (common->lun < ARRAY_SIZE(common->luns))
+	अगर (common->lun < ARRAY_SIZE(common->luns))
 		common->curlun = common->luns[common->lun];
-	else
-		common->curlun = NULL;
+	अन्यथा
+		common->curlun = शून्य;
 	common->tag = cbw->Tag;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_next_command(struct fsg_common *common)
-{
-	struct fsg_buffhd	*bh;
-	int			rc = 0;
+अटल पूर्णांक get_next_command(काष्ठा fsg_common *common)
+अणु
+	काष्ठा fsg_buffhd	*bh;
+	पूर्णांक			rc = 0;
 
-	/* Wait for the next buffer to become available */
+	/* Wait क्रम the next buffer to become available */
 	bh = common->next_buffhd_to_fill;
-	rc = sleep_thread(common, true, bh);
-	if (rc)
-		return rc;
+	rc = sleep_thपढ़ो(common, true, bh);
+	अगर (rc)
+		वापस rc;
 
-	/* Queue a request to read a Bulk-only CBW */
+	/* Queue a request to पढ़ो a Bulk-only CBW */
 	set_bulk_out_req_length(common, bh, US_BULK_CB_WRAP_LEN);
-	if (!start_out_transfer(common, bh))
-		/* Don't know what to do if common->fsg is NULL */
-		return -EIO;
+	अगर (!start_out_transfer(common, bh))
+		/* Don't know what to करो अगर common->fsg is शून्य */
+		वापस -EIO;
 
 	/*
 	 * We will drain the buffer in software, which means we
-	 * can reuse it for the next filling.  No need to advance
+	 * can reuse it क्रम the next filling.  No need to advance
 	 * next_buffhd_to_fill.
 	 */
 
-	/* Wait for the CBW to arrive */
-	rc = sleep_thread(common, true, bh);
-	if (rc)
-		return rc;
+	/* Wait क्रम the CBW to arrive */
+	rc = sleep_thपढ़ो(common, true, bh);
+	अगर (rc)
+		वापस rc;
 
 	rc = fsg_is_set(common) ? received_cbw(common->fsg, bh) : -EIO;
 	bh->state = BUF_STATE_EMPTY;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int alloc_request(struct fsg_common *common, struct usb_ep *ep,
-		struct usb_request **preq)
-{
+अटल पूर्णांक alloc_request(काष्ठा fsg_common *common, काष्ठा usb_ep *ep,
+		काष्ठा usb_request **preq)
+अणु
 	*preq = usb_ep_alloc_request(ep, GFP_ATOMIC);
-	if (*preq)
-		return 0;
+	अगर (*preq)
+		वापस 0;
 	ERROR(common, "can't allocate request for %s\n", ep->name);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-/* Reset interface setting and re-init endpoint state (toggle etc). */
-static int do_set_interface(struct fsg_common *common, struct fsg_dev *new_fsg)
-{
-	struct fsg_dev *fsg;
-	int i, rc = 0;
+/* Reset पूर्णांकerface setting and re-init endpoपूर्णांक state (toggle etc). */
+अटल पूर्णांक करो_set_पूर्णांकerface(काष्ठा fsg_common *common, काष्ठा fsg_dev *new_fsg)
+अणु
+	काष्ठा fsg_dev *fsg;
+	पूर्णांक i, rc = 0;
 
-	if (common->running)
+	अगर (common->running)
 		DBG(common, "reset interface\n");
 
 reset:
 	/* Deallocate the requests */
-	if (common->fsg) {
+	अगर (common->fsg) अणु
 		fsg = common->fsg;
 
-		for (i = 0; i < common->fsg_num_buffers; ++i) {
-			struct fsg_buffhd *bh = &common->buffhds[i];
+		क्रम (i = 0; i < common->fsg_num_buffers; ++i) अणु
+			काष्ठा fsg_buffhd *bh = &common->buffhds[i];
 
-			if (bh->inreq) {
-				usb_ep_free_request(fsg->bulk_in, bh->inreq);
-				bh->inreq = NULL;
-			}
-			if (bh->outreq) {
-				usb_ep_free_request(fsg->bulk_out, bh->outreq);
-				bh->outreq = NULL;
-			}
-		}
+			अगर (bh->inreq) अणु
+				usb_ep_मुक्त_request(fsg->bulk_in, bh->inreq);
+				bh->inreq = शून्य;
+			पूर्ण
+			अगर (bh->outreq) अणु
+				usb_ep_मुक्त_request(fsg->bulk_out, bh->outreq);
+				bh->outreq = शून्य;
+			पूर्ण
+		पूर्ण
 
-		/* Disable the endpoints */
-		if (fsg->bulk_in_enabled) {
+		/* Disable the endpoपूर्णांकs */
+		अगर (fsg->bulk_in_enabled) अणु
 			usb_ep_disable(fsg->bulk_in);
 			fsg->bulk_in_enabled = 0;
-		}
-		if (fsg->bulk_out_enabled) {
+		पूर्ण
+		अगर (fsg->bulk_out_enabled) अणु
 			usb_ep_disable(fsg->bulk_out);
 			fsg->bulk_out_enabled = 0;
-		}
+		पूर्ण
 
-		common->fsg = NULL;
-		wake_up(&common->fsg_wait);
-	}
+		common->fsg = शून्य;
+		wake_up(&common->fsg_रुको);
+	पूर्ण
 
 	common->running = 0;
-	if (!new_fsg || rc)
-		return rc;
+	अगर (!new_fsg || rc)
+		वापस rc;
 
 	common->fsg = new_fsg;
 	fsg = common->fsg;
 
-	/* Enable the endpoints */
+	/* Enable the endpoपूर्णांकs */
 	rc = config_ep_by_speed(common->gadget, &(fsg->function), fsg->bulk_in);
-	if (rc)
-		goto reset;
+	अगर (rc)
+		जाओ reset;
 	rc = usb_ep_enable(fsg->bulk_in);
-	if (rc)
-		goto reset;
+	अगर (rc)
+		जाओ reset;
 	fsg->bulk_in->driver_data = common;
 	fsg->bulk_in_enabled = 1;
 
 	rc = config_ep_by_speed(common->gadget, &(fsg->function),
 				fsg->bulk_out);
-	if (rc)
-		goto reset;
+	अगर (rc)
+		जाओ reset;
 	rc = usb_ep_enable(fsg->bulk_out);
-	if (rc)
-		goto reset;
+	अगर (rc)
+		जाओ reset;
 	fsg->bulk_out->driver_data = common;
 	fsg->bulk_out_enabled = 1;
-	common->bulk_out_maxpacket = usb_endpoint_maxp(fsg->bulk_out->desc);
+	common->bulk_out_maxpacket = usb_endpoपूर्णांक_maxp(fsg->bulk_out->desc);
 	clear_bit(IGNORE_BULK_OUT, &fsg->atomic_bitflags);
 
 	/* Allocate the requests */
-	for (i = 0; i < common->fsg_num_buffers; ++i) {
-		struct fsg_buffhd	*bh = &common->buffhds[i];
+	क्रम (i = 0; i < common->fsg_num_buffers; ++i) अणु
+		काष्ठा fsg_buffhd	*bh = &common->buffhds[i];
 
 		rc = alloc_request(common, fsg->bulk_in, &bh->inreq);
-		if (rc)
-			goto reset;
+		अगर (rc)
+			जाओ reset;
 		rc = alloc_request(common, fsg->bulk_out, &bh->outreq);
-		if (rc)
-			goto reset;
+		अगर (rc)
+			जाओ reset;
 		bh->inreq->buf = bh->outreq->buf = bh->buf;
 		bh->inreq->context = bh->outreq->context = bh;
 		bh->inreq->complete = bulk_in_complete;
 		bh->outreq->complete = bulk_out_complete;
-	}
+	पूर्ण
 
 	common->running = 1;
-	for (i = 0; i < ARRAY_SIZE(common->luns); ++i)
-		if (common->luns[i])
+	क्रम (i = 0; i < ARRAY_SIZE(common->luns); ++i)
+		अगर (common->luns[i])
 			common->luns[i]->unit_attention_data =
 				SS_RESET_OCCURRED;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /****************************** ALT CONFIGS ******************************/
 
-static int fsg_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
-{
-	struct fsg_dev *fsg = fsg_from_func(f);
+अटल पूर्णांक fsg_set_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf, अचिन्हित alt)
+अणु
+	काष्ठा fsg_dev *fsg = fsg_from_func(f);
 
-	__raise_exception(fsg->common, FSG_STATE_CONFIG_CHANGE, fsg);
-	return USB_GADGET_DELAYED_STATUS;
-}
+	__उठाओ_exception(fsg->common, FSG_STATE_CONFIG_CHANGE, fsg);
+	वापस USB_GADGET_DELAYED_STATUS;
+पूर्ण
 
-static void fsg_disable(struct usb_function *f)
-{
-	struct fsg_dev *fsg = fsg_from_func(f);
+अटल व्योम fsg_disable(काष्ठा usb_function *f)
+अणु
+	काष्ठा fsg_dev *fsg = fsg_from_func(f);
 
-	__raise_exception(fsg->common, FSG_STATE_CONFIG_CHANGE, NULL);
-}
+	__उठाओ_exception(fsg->common, FSG_STATE_CONFIG_CHANGE, शून्य);
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static void handle_exception(struct fsg_common *common)
-{
-	int			i;
-	struct fsg_buffhd	*bh;
-	enum fsg_state		old_state;
-	struct fsg_lun		*curlun;
-	unsigned int		exception_req_tag;
-	struct fsg_dev		*new_fsg;
+अटल व्योम handle_exception(काष्ठा fsg_common *common)
+अणु
+	पूर्णांक			i;
+	काष्ठा fsg_buffhd	*bh;
+	क्रमागत fsg_state		old_state;
+	काष्ठा fsg_lun		*curlun;
+	अचिन्हित पूर्णांक		exception_req_tag;
+	काष्ठा fsg_dev		*new_fsg;
 
 	/*
-	 * Clear the existing signals.  Anything but SIGUSR1 is converted
-	 * into a high-priority EXIT exception.
+	 * Clear the existing संकेतs.  Anything but SIGUSR1 is converted
+	 * पूर्णांकo a high-priority EXIT exception.
 	 */
-	for (;;) {
-		int sig = kernel_dequeue_signal();
-		if (!sig)
-			break;
-		if (sig != SIGUSR1) {
+	क्रम (;;) अणु
+		पूर्णांक sig = kernel_dequeue_संकेत();
+		अगर (!sig)
+			अवरोध;
+		अगर (sig != SIGUSR1) अणु
 			spin_lock_irq(&common->lock);
-			if (common->state < FSG_STATE_EXIT)
+			अगर (common->state < FSG_STATE_EXIT)
 				DBG(common, "Main thread exiting on signal\n");
 			common->state = FSG_STATE_EXIT;
 			spin_unlock_irq(&common->lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Cancel all the pending transfers */
-	if (likely(common->fsg)) {
-		for (i = 0; i < common->fsg_num_buffers; ++i) {
+	अगर (likely(common->fsg)) अणु
+		क्रम (i = 0; i < common->fsg_num_buffers; ++i) अणु
 			bh = &common->buffhds[i];
-			if (bh->state == BUF_STATE_SENDING)
+			अगर (bh->state == BUF_STATE_SENDING)
 				usb_ep_dequeue(common->fsg->bulk_in, bh->inreq);
-			if (bh->state == BUF_STATE_RECEIVING)
+			अगर (bh->state == BUF_STATE_RECEIVING)
 				usb_ep_dequeue(common->fsg->bulk_out,
 					       bh->outreq);
 
-			/* Wait for a transfer to become idle */
-			if (sleep_thread(common, false, bh))
-				return;
-		}
+			/* Wait क्रम a transfer to become idle */
+			अगर (sleep_thपढ़ो(common, false, bh))
+				वापस;
+		पूर्ण
 
-		/* Clear out the controller's fifos */
-		if (common->fsg->bulk_in_enabled)
-			usb_ep_fifo_flush(common->fsg->bulk_in);
-		if (common->fsg->bulk_out_enabled)
-			usb_ep_fifo_flush(common->fsg->bulk_out);
-	}
+		/* Clear out the controller's fअगरos */
+		अगर (common->fsg->bulk_in_enabled)
+			usb_ep_fअगरo_flush(common->fsg->bulk_in);
+		अगर (common->fsg->bulk_out_enabled)
+			usb_ep_fअगरo_flush(common->fsg->bulk_out);
+	पूर्ण
 
 	/*
-	 * Reset the I/O buffer states and pointers, the SCSI
+	 * Reset the I/O buffer states and poपूर्णांकers, the SCSI
 	 * state, and the exception.  Then invoke the handler.
 	 */
 	spin_lock_irq(&common->lock);
 
-	for (i = 0; i < common->fsg_num_buffers; ++i) {
+	क्रम (i = 0; i < common->fsg_num_buffers; ++i) अणु
 		bh = &common->buffhds[i];
 		bh->state = BUF_STATE_EMPTY;
-	}
+	पूर्ण
 	common->next_buffhd_to_fill = &common->buffhds[0];
 	common->next_buffhd_to_drain = &common->buffhds[0];
 	exception_req_tag = common->exception_req_tag;
@@ -2370,314 +2371,314 @@ static void handle_exception(struct fsg_common *common)
 	old_state = common->state;
 	common->state = FSG_STATE_NORMAL;
 
-	if (old_state != FSG_STATE_ABORT_BULK_OUT) {
-		for (i = 0; i < ARRAY_SIZE(common->luns); ++i) {
+	अगर (old_state != FSG_STATE_ABORT_BULK_OUT) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(common->luns); ++i) अणु
 			curlun = common->luns[i];
-			if (!curlun)
-				continue;
+			अगर (!curlun)
+				जारी;
 			curlun->prevent_medium_removal = 0;
 			curlun->sense_data = SS_NO_SENSE;
 			curlun->unit_attention_data = SS_NO_SENSE;
 			curlun->sense_data_info = 0;
 			curlun->info_valid = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irq(&common->lock);
 
-	/* Carry out any extra actions required for the exception */
-	switch (old_state) {
-	case FSG_STATE_NORMAL:
-		break;
+	/* Carry out any extra actions required क्रम the exception */
+	चयन (old_state) अणु
+	हाल FSG_STATE_NORMAL:
+		अवरोध;
 
-	case FSG_STATE_ABORT_BULK_OUT:
+	हाल FSG_STATE_ABORT_BULK_OUT:
 		send_status(common);
-		break;
+		अवरोध;
 
-	case FSG_STATE_PROTOCOL_RESET:
+	हाल FSG_STATE_PROTOCOL_RESET:
 		/*
-		 * In case we were forced against our will to halt a
-		 * bulk endpoint, clear the halt now.  (The SuperH UDC
+		 * In हाल we were क्रमced against our will to halt a
+		 * bulk endpoपूर्णांक, clear the halt now.  (The SuperH UDC
 		 * requires this.)
 		 */
-		if (!fsg_is_set(common))
-			break;
-		if (test_and_clear_bit(IGNORE_BULK_OUT,
+		अगर (!fsg_is_set(common))
+			अवरोध;
+		अगर (test_and_clear_bit(IGNORE_BULK_OUT,
 				       &common->fsg->atomic_bitflags))
 			usb_ep_clear_halt(common->fsg->bulk_in);
 
-		if (common->ep0_req_tag == exception_req_tag)
+		अगर (common->ep0_req_tag == exception_req_tag)
 			ep0_queue(common);	/* Complete the status stage */
 
 		/*
 		 * Technically this should go here, but it would only be
-		 * a waste of time.  Ditto for the INTERFACE_CHANGE and
-		 * CONFIG_CHANGE cases.
+		 * a waste of समय.  Ditto क्रम the INTERFACE_CHANGE and
+		 * CONFIG_CHANGE हालs.
 		 */
-		/* for (i = 0; i < common->ARRAY_SIZE(common->luns); ++i) */
-		/*	if (common->luns[i]) */
+		/* क्रम (i = 0; i < common->ARRAY_SIZE(common->luns); ++i) */
+		/*	अगर (common->luns[i]) */
 		/*		common->luns[i]->unit_attention_data = */
 		/*			SS_RESET_OCCURRED;  */
-		break;
+		अवरोध;
 
-	case FSG_STATE_CONFIG_CHANGE:
-		do_set_interface(common, new_fsg);
-		if (new_fsg)
-			usb_composite_setup_continue(common->cdev);
-		break;
+	हाल FSG_STATE_CONFIG_CHANGE:
+		करो_set_पूर्णांकerface(common, new_fsg);
+		अगर (new_fsg)
+			usb_composite_setup_जारी(common->cdev);
+		अवरोध;
 
-	case FSG_STATE_EXIT:
-		do_set_interface(common, NULL);		/* Free resources */
+	हाल FSG_STATE_EXIT:
+		करो_set_पूर्णांकerface(common, शून्य);		/* Free resources */
 		spin_lock_irq(&common->lock);
-		common->state = FSG_STATE_TERMINATED;	/* Stop the thread */
+		common->state = FSG_STATE_TERMINATED;	/* Stop the thपढ़ो */
 		spin_unlock_irq(&common->lock);
-		break;
+		अवरोध;
 
-	case FSG_STATE_TERMINATED:
-		break;
-	}
-}
+	हाल FSG_STATE_TERMINATED:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int fsg_main_thread(void *common_)
-{
-	struct fsg_common	*common = common_;
-	int			i;
+अटल पूर्णांक fsg_मुख्य_thपढ़ो(व्योम *common_)
+अणु
+	काष्ठा fsg_common	*common = common_;
+	पूर्णांक			i;
 
 	/*
-	 * Allow the thread to be killed by a signal, but set the signal mask
+	 * Allow the thपढ़ो to be समाप्तed by a संकेत, but set the संकेत mask
 	 * to block everything but INT, TERM, KILL, and USR1.
 	 */
-	allow_signal(SIGINT);
-	allow_signal(SIGTERM);
-	allow_signal(SIGKILL);
-	allow_signal(SIGUSR1);
+	allow_संकेत(संक_विघ्न);
+	allow_संकेत(संक_इति);
+	allow_संकेत(SIGKILL);
+	allow_संकेत(SIGUSR1);
 
-	/* Allow the thread to be frozen */
-	set_freezable();
+	/* Allow the thपढ़ो to be frozen */
+	set_मुक्तzable();
 
-	/* The main loop */
-	while (common->state != FSG_STATE_TERMINATED) {
-		if (exception_in_progress(common) || signal_pending(current)) {
+	/* The मुख्य loop */
+	जबतक (common->state != FSG_STATE_TERMINATED) अणु
+		अगर (exception_in_progress(common) || संकेत_pending(current)) अणु
 			handle_exception(common);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!common->running) {
-			sleep_thread(common, true, NULL);
-			continue;
-		}
+		अगर (!common->running) अणु
+			sleep_thपढ़ो(common, true, शून्य);
+			जारी;
+		पूर्ण
 
-		if (get_next_command(common) || exception_in_progress(common))
-			continue;
-		if (do_scsi_command(common) || exception_in_progress(common))
-			continue;
-		if (finish_reply(common) || exception_in_progress(common))
-			continue;
+		अगर (get_next_command(common) || exception_in_progress(common))
+			जारी;
+		अगर (करो_scsi_command(common) || exception_in_progress(common))
+			जारी;
+		अगर (finish_reply(common) || exception_in_progress(common))
+			जारी;
 		send_status(common);
-	}
+	पूर्ण
 
 	spin_lock_irq(&common->lock);
-	common->thread_task = NULL;
+	common->thपढ़ो_task = शून्य;
 	spin_unlock_irq(&common->lock);
 
 	/* Eject media from all LUNs */
 
-	down_write(&common->filesem);
-	for (i = 0; i < ARRAY_SIZE(common->luns); i++) {
-		struct fsg_lun *curlun = common->luns[i];
+	करोwn_ग_लिखो(&common->filesem);
+	क्रम (i = 0; i < ARRAY_SIZE(common->luns); i++) अणु
+		काष्ठा fsg_lun *curlun = common->luns[i];
 
-		if (curlun && fsg_lun_is_open(curlun))
-			fsg_lun_close(curlun);
-	}
-	up_write(&common->filesem);
+		अगर (curlun && fsg_lun_is_खोलो(curlun))
+			fsg_lun_बंद(curlun);
+	पूर्ण
+	up_ग_लिखो(&common->filesem);
 
-	/* Let fsg_unbind() know the thread has exited */
-	complete_and_exit(&common->thread_notifier, 0);
-}
+	/* Let fsg_unbind() know the thपढ़ो has निकासed */
+	complete_and_निकास(&common->thपढ़ो_notअगरier, 0);
+पूर्ण
 
 
 /*************************** DEVICE ATTRIBUTES ***************************/
 
-static ssize_t ro_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct fsg_lun		*curlun = fsg_lun_from_dev(dev);
+अटल sमाप_प्रकार ro_show(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा fsg_lun		*curlun = fsg_lun_from_dev(dev);
 
-	return fsg_show_ro(curlun, buf);
-}
+	वापस fsg_show_ro(curlun, buf);
+पूर्ण
 
-static ssize_t nofua_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	struct fsg_lun		*curlun = fsg_lun_from_dev(dev);
+अटल sमाप_प्रकार nofua_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा fsg_lun		*curlun = fsg_lun_from_dev(dev);
 
-	return fsg_show_nofua(curlun, buf);
-}
+	वापस fsg_show_nofua(curlun, buf);
+पूर्ण
 
-static ssize_t file_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct fsg_lun		*curlun = fsg_lun_from_dev(dev);
-	struct rw_semaphore	*filesem = dev_get_drvdata(dev);
+अटल sमाप_प्रकार file_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा fsg_lun		*curlun = fsg_lun_from_dev(dev);
+	काष्ठा rw_semaphore	*filesem = dev_get_drvdata(dev);
 
-	return fsg_show_file(curlun, filesem, buf);
-}
+	वापस fsg_show_file(curlun, filesem, buf);
+पूर्ण
 
-static ssize_t ro_store(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	struct fsg_lun		*curlun = fsg_lun_from_dev(dev);
-	struct rw_semaphore	*filesem = dev_get_drvdata(dev);
+अटल sमाप_प्रकार ro_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा fsg_lun		*curlun = fsg_lun_from_dev(dev);
+	काष्ठा rw_semaphore	*filesem = dev_get_drvdata(dev);
 
-	return fsg_store_ro(curlun, filesem, buf, count);
-}
+	वापस fsg_store_ro(curlun, filesem, buf, count);
+पूर्ण
 
-static ssize_t nofua_store(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t count)
-{
-	struct fsg_lun		*curlun = fsg_lun_from_dev(dev);
+अटल sमाप_प्रकार nofua_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा fsg_lun		*curlun = fsg_lun_from_dev(dev);
 
-	return fsg_store_nofua(curlun, buf, count);
-}
+	वापस fsg_store_nofua(curlun, buf, count);
+पूर्ण
 
-static ssize_t file_store(struct device *dev, struct device_attribute *attr,
-			  const char *buf, size_t count)
-{
-	struct fsg_lun		*curlun = fsg_lun_from_dev(dev);
-	struct rw_semaphore	*filesem = dev_get_drvdata(dev);
+अटल sमाप_प्रकार file_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा fsg_lun		*curlun = fsg_lun_from_dev(dev);
+	काष्ठा rw_semaphore	*filesem = dev_get_drvdata(dev);
 
-	return fsg_store_file(curlun, filesem, buf, count);
-}
+	वापस fsg_store_file(curlun, filesem, buf, count);
+पूर्ण
 
-static DEVICE_ATTR_RW(nofua);
+अटल DEVICE_ATTR_RW(nofua);
 /* mode wil be set in fsg_lun_attr_is_visible() */
-static DEVICE_ATTR(ro, 0, ro_show, ro_store);
-static DEVICE_ATTR(file, 0, file_show, file_store);
+अटल DEVICE_ATTR(ro, 0, ro_show, ro_store);
+अटल DEVICE_ATTR(file, 0, file_show, file_store);
 
 /****************************** FSG COMMON ******************************/
 
-static void fsg_lun_release(struct device *dev)
-{
-	/* Nothing needs to be done */
-}
+अटल व्योम fsg_lun_release(काष्ठा device *dev)
+अणु
+	/* Nothing needs to be करोne */
+पूर्ण
 
-static struct fsg_common *fsg_common_setup(struct fsg_common *common)
-{
-	if (!common) {
-		common = kzalloc(sizeof(*common), GFP_KERNEL);
-		if (!common)
-			return ERR_PTR(-ENOMEM);
-		common->free_storage_on_release = 1;
-	} else {
-		common->free_storage_on_release = 0;
-	}
+अटल काष्ठा fsg_common *fsg_common_setup(काष्ठा fsg_common *common)
+अणु
+	अगर (!common) अणु
+		common = kzalloc(माप(*common), GFP_KERNEL);
+		अगर (!common)
+			वापस ERR_PTR(-ENOMEM);
+		common->मुक्त_storage_on_release = 1;
+	पूर्ण अन्यथा अणु
+		common->मुक्त_storage_on_release = 0;
+	पूर्ण
 	init_rwsem(&common->filesem);
 	spin_lock_init(&common->lock);
-	init_completion(&common->thread_notifier);
-	init_waitqueue_head(&common->io_wait);
-	init_waitqueue_head(&common->fsg_wait);
+	init_completion(&common->thपढ़ो_notअगरier);
+	init_रुकोqueue_head(&common->io_रुको);
+	init_रुकोqueue_head(&common->fsg_रुको);
 	common->state = FSG_STATE_TERMINATED;
-	memset(common->luns, 0, sizeof(common->luns));
+	स_रखो(common->luns, 0, माप(common->luns));
 
-	return common;
-}
+	वापस common;
+पूर्ण
 
-void fsg_common_set_sysfs(struct fsg_common *common, bool sysfs)
-{
+व्योम fsg_common_set_sysfs(काष्ठा fsg_common *common, bool sysfs)
+अणु
 	common->sysfs = sysfs;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(fsg_common_set_sysfs);
 
-static void _fsg_common_free_buffers(struct fsg_buffhd *buffhds, unsigned n)
-{
-	if (buffhds) {
-		struct fsg_buffhd *bh = buffhds;
-		while (n--) {
-			kfree(bh->buf);
+अटल व्योम _fsg_common_मुक्त_buffers(काष्ठा fsg_buffhd *buffhds, अचिन्हित n)
+अणु
+	अगर (buffhds) अणु
+		काष्ठा fsg_buffhd *bh = buffhds;
+		जबतक (n--) अणु
+			kमुक्त(bh->buf);
 			++bh;
-		}
-		kfree(buffhds);
-	}
-}
+		पूर्ण
+		kमुक्त(buffhds);
+	पूर्ण
+पूर्ण
 
-int fsg_common_set_num_buffers(struct fsg_common *common, unsigned int n)
-{
-	struct fsg_buffhd *bh, *buffhds;
-	int i;
+पूर्णांक fsg_common_set_num_buffers(काष्ठा fsg_common *common, अचिन्हित पूर्णांक n)
+अणु
+	काष्ठा fsg_buffhd *bh, *buffhds;
+	पूर्णांक i;
 
-	buffhds = kcalloc(n, sizeof(*buffhds), GFP_KERNEL);
-	if (!buffhds)
-		return -ENOMEM;
+	buffhds = kसुस्मृति(n, माप(*buffhds), GFP_KERNEL);
+	अगर (!buffhds)
+		वापस -ENOMEM;
 
 	/* Data buffers cyclic list */
 	bh = buffhds;
 	i = n;
-	goto buffhds_first_it;
-	do {
+	जाओ buffhds_first_it;
+	करो अणु
 		bh->next = bh + 1;
 		++bh;
 buffhds_first_it:
-		bh->buf = kmalloc(FSG_BUFLEN, GFP_KERNEL);
-		if (unlikely(!bh->buf))
-			goto error_release;
-	} while (--i);
+		bh->buf = kदो_स्मृति(FSG_BUFLEN, GFP_KERNEL);
+		अगर (unlikely(!bh->buf))
+			जाओ error_release;
+	पूर्ण जबतक (--i);
 	bh->next = buffhds;
 
-	_fsg_common_free_buffers(common->buffhds, common->fsg_num_buffers);
+	_fsg_common_मुक्त_buffers(common->buffhds, common->fsg_num_buffers);
 	common->fsg_num_buffers = n;
 	common->buffhds = buffhds;
 
-	return 0;
+	वापस 0;
 
 error_release:
 	/*
-	 * "buf"s pointed to by heads after n - i are NULL
+	 * "buf"s poपूर्णांकed to by heads after n - i are शून्य
 	 * so releasing them won't hurt
 	 */
-	_fsg_common_free_buffers(buffhds, n);
+	_fsg_common_मुक्त_buffers(buffhds, n);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 EXPORT_SYMBOL_GPL(fsg_common_set_num_buffers);
 
-void fsg_common_remove_lun(struct fsg_lun *lun)
-{
-	if (device_is_registered(&lun->dev))
-		device_unregister(&lun->dev);
-	fsg_lun_close(lun);
-	kfree(lun);
-}
-EXPORT_SYMBOL_GPL(fsg_common_remove_lun);
+व्योम fsg_common_हटाओ_lun(काष्ठा fsg_lun *lun)
+अणु
+	अगर (device_is_रेजिस्टरed(&lun->dev))
+		device_unरेजिस्टर(&lun->dev);
+	fsg_lun_बंद(lun);
+	kमुक्त(lun);
+पूर्ण
+EXPORT_SYMBOL_GPL(fsg_common_हटाओ_lun);
 
-static void _fsg_common_remove_luns(struct fsg_common *common, int n)
-{
-	int i;
+अटल व्योम _fsg_common_हटाओ_luns(काष्ठा fsg_common *common, पूर्णांक n)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < n; ++i)
-		if (common->luns[i]) {
-			fsg_common_remove_lun(common->luns[i]);
-			common->luns[i] = NULL;
-		}
-}
+	क्रम (i = 0; i < n; ++i)
+		अगर (common->luns[i]) अणु
+			fsg_common_हटाओ_lun(common->luns[i]);
+			common->luns[i] = शून्य;
+		पूर्ण
+पूर्ण
 
-void fsg_common_remove_luns(struct fsg_common *common)
-{
-	_fsg_common_remove_luns(common, ARRAY_SIZE(common->luns));
-}
-EXPORT_SYMBOL_GPL(fsg_common_remove_luns);
+व्योम fsg_common_हटाओ_luns(काष्ठा fsg_common *common)
+अणु
+	_fsg_common_हटाओ_luns(common, ARRAY_SIZE(common->luns));
+पूर्ण
+EXPORT_SYMBOL_GPL(fsg_common_हटाओ_luns);
 
-void fsg_common_free_buffers(struct fsg_common *common)
-{
-	_fsg_common_free_buffers(common->buffhds, common->fsg_num_buffers);
-	common->buffhds = NULL;
-}
-EXPORT_SYMBOL_GPL(fsg_common_free_buffers);
+व्योम fsg_common_मुक्त_buffers(काष्ठा fsg_common *common)
+अणु
+	_fsg_common_मुक्त_buffers(common->buffhds, common->fsg_num_buffers);
+	common->buffhds = शून्य;
+पूर्ण
+EXPORT_SYMBOL_GPL(fsg_common_मुक्त_buffers);
 
-int fsg_common_set_cdev(struct fsg_common *common,
-			 struct usb_composite_dev *cdev, bool can_stall)
-{
-	struct usb_string *us;
+पूर्णांक fsg_common_set_cdev(काष्ठा fsg_common *common,
+			 काष्ठा usb_composite_dev *cdev, bool can_stall)
+अणु
+	काष्ठा usb_string *us;
 
 	common->gadget = cdev->gadget;
 	common->ep0 = cdev->gadget->ep0;
@@ -2686,75 +2687,75 @@ int fsg_common_set_cdev(struct fsg_common *common,
 
 	us = usb_gstrings_attach(cdev, fsg_strings_array,
 				 ARRAY_SIZE(fsg_strings));
-	if (IS_ERR(us))
-		return PTR_ERR(us);
+	अगर (IS_ERR(us))
+		वापस PTR_ERR(us);
 
-	fsg_intf_desc.iInterface = us[FSG_STRING_INTERFACE].id;
+	fsg_पूर्णांकf_desc.iInterface = us[FSG_STRING_INTERFACE].id;
 
 	/*
 	 * Some peripheral controllers are known not to be able to
-	 * halt bulk endpoints correctly.  If one of them is present,
+	 * halt bulk endpoपूर्णांकs correctly.  If one of them is present,
 	 * disable stalls.
 	 */
 	common->can_stall = can_stall &&
 			gadget_is_stall_supported(common->gadget);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(fsg_common_set_cdev);
 
-static struct attribute *fsg_lun_dev_attrs[] = {
+अटल काष्ठा attribute *fsg_lun_dev_attrs[] = अणु
 	&dev_attr_ro.attr,
 	&dev_attr_file.attr,
 	&dev_attr_nofua.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static umode_t fsg_lun_dev_is_visible(struct kobject *kobj,
-				      struct attribute *attr, int idx)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct fsg_lun *lun = fsg_lun_from_dev(dev);
+अटल umode_t fsg_lun_dev_is_visible(काष्ठा kobject *kobj,
+				      काष्ठा attribute *attr, पूर्णांक idx)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा fsg_lun *lun = fsg_lun_from_dev(dev);
 
-	if (attr == &dev_attr_ro.attr)
-		return lun->cdrom ? S_IRUGO : (S_IWUSR | S_IRUGO);
-	if (attr == &dev_attr_file.attr)
-		return lun->removable ? (S_IWUSR | S_IRUGO) : S_IRUGO;
-	return attr->mode;
-}
+	अगर (attr == &dev_attr_ro.attr)
+		वापस lun->cdrom ? S_IRUGO : (S_IWUSR | S_IRUGO);
+	अगर (attr == &dev_attr_file.attr)
+		वापस lun->removable ? (S_IWUSR | S_IRUGO) : S_IRUGO;
+	वापस attr->mode;
+पूर्ण
 
-static const struct attribute_group fsg_lun_dev_group = {
+अटल स्थिर काष्ठा attribute_group fsg_lun_dev_group = अणु
 	.attrs = fsg_lun_dev_attrs,
 	.is_visible = fsg_lun_dev_is_visible,
-};
+पूर्ण;
 
-static const struct attribute_group *fsg_lun_dev_groups[] = {
+अटल स्थिर काष्ठा attribute_group *fsg_lun_dev_groups[] = अणु
 	&fsg_lun_dev_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-int fsg_common_create_lun(struct fsg_common *common, struct fsg_lun_config *cfg,
-			  unsigned int id, const char *name,
-			  const char **name_pfx)
-{
-	struct fsg_lun *lun;
-	char *pathbuf, *p;
-	int rc = -ENOMEM;
+पूर्णांक fsg_common_create_lun(काष्ठा fsg_common *common, काष्ठा fsg_lun_config *cfg,
+			  अचिन्हित पूर्णांक id, स्थिर अक्षर *name,
+			  स्थिर अक्षर **name_pfx)
+अणु
+	काष्ठा fsg_lun *lun;
+	अक्षर *pathbuf, *p;
+	पूर्णांक rc = -ENOMEM;
 
-	if (id >= ARRAY_SIZE(common->luns))
-		return -ENODEV;
+	अगर (id >= ARRAY_SIZE(common->luns))
+		वापस -ENODEV;
 
-	if (common->luns[id])
-		return -EBUSY;
+	अगर (common->luns[id])
+		वापस -EBUSY;
 
-	if (!cfg->filename && !cfg->removable) {
+	अगर (!cfg->filename && !cfg->removable) अणु
 		pr_err("no file given for LUN%d\n", id);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	lun = kzalloc(sizeof(*lun), GFP_KERNEL);
-	if (!lun)
-		return -ENOMEM;
+	lun = kzalloc(माप(*lun), GFP_KERNEL);
+	अगर (!lun)
+		वापस -ENOMEM;
 
 	lun->name_pfx = name_pfx;
 
@@ -2763,10 +2764,10 @@ int fsg_common_create_lun(struct fsg_common *common, struct fsg_lun_config *cfg,
 	lun->initially_ro = lun->ro;
 	lun->removable = !!cfg->removable;
 
-	if (!common->sysfs) {
+	अगर (!common->sysfs) अणु
 		/* we DON'T own the name!*/
 		lun->name = name;
-	} else {
+	पूर्ण अन्यथा अणु
 		lun->dev.release = fsg_lun_release;
 		lun->dev.parent = &common->gadget->dev;
 		lun->dev.groups = fsg_lun_dev_groups;
@@ -2774,602 +2775,602 @@ int fsg_common_create_lun(struct fsg_common *common, struct fsg_lun_config *cfg,
 		dev_set_name(&lun->dev, "%s", name);
 		lun->name = dev_name(&lun->dev);
 
-		rc = device_register(&lun->dev);
-		if (rc) {
+		rc = device_रेजिस्टर(&lun->dev);
+		अगर (rc) अणु
 			pr_info("failed to register LUN%d: %d\n", id, rc);
 			put_device(&lun->dev);
-			goto error_sysfs;
-		}
-	}
+			जाओ error_sysfs;
+		पूर्ण
+	पूर्ण
 
 	common->luns[id] = lun;
 
-	if (cfg->filename) {
-		rc = fsg_lun_open(lun, cfg->filename);
-		if (rc)
-			goto error_lun;
-	}
+	अगर (cfg->filename) अणु
+		rc = fsg_lun_खोलो(lun, cfg->filename);
+		अगर (rc)
+			जाओ error_lun;
+	पूर्ण
 
-	pathbuf = kmalloc(PATH_MAX, GFP_KERNEL);
+	pathbuf = kदो_स्मृति(PATH_MAX, GFP_KERNEL);
 	p = "(no medium)";
-	if (fsg_lun_is_open(lun)) {
+	अगर (fsg_lun_is_खोलो(lun)) अणु
 		p = "(error)";
-		if (pathbuf) {
+		अगर (pathbuf) अणु
 			p = file_path(lun->filp, pathbuf, PATH_MAX);
-			if (IS_ERR(p))
+			अगर (IS_ERR(p))
 				p = "(error)";
-		}
-	}
+		पूर्ण
+	पूर्ण
 	pr_info("LUN: %s%s%sfile: %s\n",
 	      lun->removable ? "removable " : "",
 	      lun->ro ? "read only " : "",
 	      lun->cdrom ? "CD-ROM " : "",
 	      p);
-	kfree(pathbuf);
+	kमुक्त(pathbuf);
 
-	return 0;
+	वापस 0;
 
 error_lun:
-	if (device_is_registered(&lun->dev))
-		device_unregister(&lun->dev);
-	fsg_lun_close(lun);
-	common->luns[id] = NULL;
+	अगर (device_is_रेजिस्टरed(&lun->dev))
+		device_unरेजिस्टर(&lun->dev);
+	fsg_lun_बंद(lun);
+	common->luns[id] = शून्य;
 error_sysfs:
-	kfree(lun);
-	return rc;
-}
+	kमुक्त(lun);
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(fsg_common_create_lun);
 
-int fsg_common_create_luns(struct fsg_common *common, struct fsg_config *cfg)
-{
-	char buf[8]; /* enough for 100000000 different numbers, decimal */
-	int i, rc;
+पूर्णांक fsg_common_create_luns(काष्ठा fsg_common *common, काष्ठा fsg_config *cfg)
+अणु
+	अक्षर buf[8]; /* enough क्रम 100000000 dअगरferent numbers, decimal */
+	पूर्णांक i, rc;
 
-	fsg_common_remove_luns(common);
+	fsg_common_हटाओ_luns(common);
 
-	for (i = 0; i < cfg->nluns; ++i) {
-		snprintf(buf, sizeof(buf), "lun%d", i);
-		rc = fsg_common_create_lun(common, &cfg->luns[i], i, buf, NULL);
-		if (rc)
-			goto fail;
-	}
+	क्रम (i = 0; i < cfg->nluns; ++i) अणु
+		snम_लिखो(buf, माप(buf), "lun%d", i);
+		rc = fsg_common_create_lun(common, &cfg->luns[i], i, buf, शून्य);
+		अगर (rc)
+			जाओ fail;
+	पूर्ण
 
 	pr_info("Number of LUNs=%d\n", cfg->nluns);
 
-	return 0;
+	वापस 0;
 
 fail:
-	_fsg_common_remove_luns(common, i);
-	return rc;
-}
+	_fsg_common_हटाओ_luns(common, i);
+	वापस rc;
+पूर्ण
 EXPORT_SYMBOL_GPL(fsg_common_create_luns);
 
-void fsg_common_set_inquiry_string(struct fsg_common *common, const char *vn,
-				   const char *pn)
-{
-	int i;
+व्योम fsg_common_set_inquiry_string(काष्ठा fsg_common *common, स्थिर अक्षर *vn,
+				   स्थिर अक्षर *pn)
+अणु
+	पूर्णांक i;
 
 	/* Prepare inquiryString */
-	i = get_default_bcdDevice();
-	snprintf(common->inquiry_string, sizeof(common->inquiry_string),
+	i = get_शेष_bcdDevice();
+	snम_लिखो(common->inquiry_string, माप(common->inquiry_string),
 		 "%-8s%-16s%04x", vn ?: "Linux",
 		 /* Assume product name dependent on the first LUN */
 		 pn ?: ((*common->luns)->cdrom
 		     ? "File-CD Gadget"
 		     : "File-Stor Gadget"),
 		 i);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(fsg_common_set_inquiry_string);
 
-static void fsg_common_release(struct fsg_common *common)
-{
-	int i;
+अटल व्योम fsg_common_release(काष्ठा fsg_common *common)
+अणु
+	पूर्णांक i;
 
-	/* If the thread isn't already dead, tell it to exit now */
-	if (common->state != FSG_STATE_TERMINATED) {
-		raise_exception(common, FSG_STATE_EXIT);
-		wait_for_completion(&common->thread_notifier);
-	}
+	/* If the thपढ़ो isn't alपढ़ोy dead, tell it to निकास now */
+	अगर (common->state != FSG_STATE_TERMINATED) अणु
+		उठाओ_exception(common, FSG_STATE_EXIT);
+		रुको_क्रम_completion(&common->thपढ़ो_notअगरier);
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(common->luns); ++i) {
-		struct fsg_lun *lun = common->luns[i];
-		if (!lun)
-			continue;
-		fsg_lun_close(lun);
-		if (device_is_registered(&lun->dev))
-			device_unregister(&lun->dev);
-		kfree(lun);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(common->luns); ++i) अणु
+		काष्ठा fsg_lun *lun = common->luns[i];
+		अगर (!lun)
+			जारी;
+		fsg_lun_बंद(lun);
+		अगर (device_is_रेजिस्टरed(&lun->dev))
+			device_unरेजिस्टर(&lun->dev);
+		kमुक्त(lun);
+	पूर्ण
 
-	_fsg_common_free_buffers(common->buffhds, common->fsg_num_buffers);
-	if (common->free_storage_on_release)
-		kfree(common);
-}
+	_fsg_common_मुक्त_buffers(common->buffhds, common->fsg_num_buffers);
+	अगर (common->मुक्त_storage_on_release)
+		kमुक्त(common);
+पूर्ण
 
 
 /*-------------------------------------------------------------------------*/
 
-static int fsg_bind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct fsg_dev		*fsg = fsg_from_func(f);
-	struct fsg_common	*common = fsg->common;
-	struct usb_gadget	*gadget = c->cdev->gadget;
-	int			i;
-	struct usb_ep		*ep;
-	unsigned		max_burst;
-	int			ret;
-	struct fsg_opts		*opts;
+अटल पूर्णांक fsg_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा fsg_dev		*fsg = fsg_from_func(f);
+	काष्ठा fsg_common	*common = fsg->common;
+	काष्ठा usb_gadget	*gadget = c->cdev->gadget;
+	पूर्णांक			i;
+	काष्ठा usb_ep		*ep;
+	अचिन्हित		max_burst;
+	पूर्णांक			ret;
+	काष्ठा fsg_opts		*opts;
 
 	/* Don't allow to bind if we don't have at least one LUN */
 	ret = _fsg_common_get_max_lun(common);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("There should be at least one LUN.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	opts = fsg_opts_from_func_inst(f->fi);
-	if (!opts->no_configfs) {
+	अगर (!opts->no_configfs) अणु
 		ret = fsg_common_set_cdev(fsg->common, c->cdev,
 					  fsg->common->can_stall);
-		if (ret)
-			return ret;
-		fsg_common_set_inquiry_string(fsg->common, NULL, NULL);
-	}
+		अगर (ret)
+			वापस ret;
+		fsg_common_set_inquiry_string(fsg->common, शून्य, शून्य);
+	पूर्ण
 
-	if (!common->thread_task) {
+	अगर (!common->thपढ़ो_task) अणु
 		common->state = FSG_STATE_NORMAL;
-		common->thread_task =
-			kthread_create(fsg_main_thread, common, "file-storage");
-		if (IS_ERR(common->thread_task)) {
-			ret = PTR_ERR(common->thread_task);
-			common->thread_task = NULL;
+		common->thपढ़ो_task =
+			kthपढ़ो_create(fsg_मुख्य_thपढ़ो, common, "file-storage");
+		अगर (IS_ERR(common->thपढ़ो_task)) अणु
+			ret = PTR_ERR(common->thपढ़ो_task);
+			common->thपढ़ो_task = शून्य;
 			common->state = FSG_STATE_TERMINATED;
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		DBG(common, "I/O thread pid: %d\n",
-		    task_pid_nr(common->thread_task));
-		wake_up_process(common->thread_task);
-	}
+		    task_pid_nr(common->thपढ़ो_task));
+		wake_up_process(common->thपढ़ो_task);
+	पूर्ण
 
 	fsg->gadget = gadget;
 
-	/* New interface */
-	i = usb_interface_id(c, f);
-	if (i < 0)
-		goto fail;
-	fsg_intf_desc.bInterfaceNumber = i;
-	fsg->interface_number = i;
+	/* New पूर्णांकerface */
+	i = usb_पूर्णांकerface_id(c, f);
+	अगर (i < 0)
+		जाओ fail;
+	fsg_पूर्णांकf_desc.bInterfaceNumber = i;
+	fsg->पूर्णांकerface_number = i;
 
-	/* Find all the endpoints we will use */
-	ep = usb_ep_autoconfig(gadget, &fsg_fs_bulk_in_desc);
-	if (!ep)
-		goto autoconf_fail;
+	/* Find all the endpoपूर्णांकs we will use */
+	ep = usb_ep_स्वतःconfig(gadget, &fsg_fs_bulk_in_desc);
+	अगर (!ep)
+		जाओ स्वतःconf_fail;
 	fsg->bulk_in = ep;
 
-	ep = usb_ep_autoconfig(gadget, &fsg_fs_bulk_out_desc);
-	if (!ep)
-		goto autoconf_fail;
+	ep = usb_ep_स्वतःconfig(gadget, &fsg_fs_bulk_out_desc);
+	अगर (!ep)
+		जाओ स्वतःconf_fail;
 	fsg->bulk_out = ep;
 
-	/* Assume endpoint addresses are the same for both speeds */
-	fsg_hs_bulk_in_desc.bEndpointAddress =
-		fsg_fs_bulk_in_desc.bEndpointAddress;
-	fsg_hs_bulk_out_desc.bEndpointAddress =
-		fsg_fs_bulk_out_desc.bEndpointAddress;
+	/* Assume endpoपूर्णांक addresses are the same क्रम both speeds */
+	fsg_hs_bulk_in_desc.bEndpoपूर्णांकAddress =
+		fsg_fs_bulk_in_desc.bEndpoपूर्णांकAddress;
+	fsg_hs_bulk_out_desc.bEndpoपूर्णांकAddress =
+		fsg_fs_bulk_out_desc.bEndpoपूर्णांकAddress;
 
 	/* Calculate bMaxBurst, we know packet size is 1024 */
-	max_burst = min_t(unsigned, FSG_BUFLEN / 1024, 15);
+	max_burst = min_t(अचिन्हित, FSG_BUFLEN / 1024, 15);
 
-	fsg_ss_bulk_in_desc.bEndpointAddress =
-		fsg_fs_bulk_in_desc.bEndpointAddress;
+	fsg_ss_bulk_in_desc.bEndpoपूर्णांकAddress =
+		fsg_fs_bulk_in_desc.bEndpoपूर्णांकAddress;
 	fsg_ss_bulk_in_comp_desc.bMaxBurst = max_burst;
 
-	fsg_ss_bulk_out_desc.bEndpointAddress =
-		fsg_fs_bulk_out_desc.bEndpointAddress;
+	fsg_ss_bulk_out_desc.bEndpoपूर्णांकAddress =
+		fsg_fs_bulk_out_desc.bEndpoपूर्णांकAddress;
 	fsg_ss_bulk_out_comp_desc.bMaxBurst = max_burst;
 
 	ret = usb_assign_descriptors(f, fsg_fs_function, fsg_hs_function,
 			fsg_ss_function, fsg_ss_function);
-	if (ret)
-		goto autoconf_fail;
+	अगर (ret)
+		जाओ स्वतःconf_fail;
 
-	return 0;
+	वापस 0;
 
-autoconf_fail:
+स्वतःconf_fail:
 	ERROR(fsg, "unable to autoconfigure all endpoints\n");
 	i = -ENOTSUPP;
 fail:
-	/* terminate the thread */
-	if (fsg->common->state != FSG_STATE_TERMINATED) {
-		raise_exception(fsg->common, FSG_STATE_EXIT);
-		wait_for_completion(&fsg->common->thread_notifier);
-	}
-	return i;
-}
+	/* terminate the thपढ़ो */
+	अगर (fsg->common->state != FSG_STATE_TERMINATED) अणु
+		उठाओ_exception(fsg->common, FSG_STATE_EXIT);
+		रुको_क्रम_completion(&fsg->common->thपढ़ो_notअगरier);
+	पूर्ण
+	वापस i;
+पूर्ण
 
 /****************************** ALLOCATE FUNCTION *************************/
 
-static void fsg_unbind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct fsg_dev		*fsg = fsg_from_func(f);
-	struct fsg_common	*common = fsg->common;
+अटल व्योम fsg_unbind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा fsg_dev		*fsg = fsg_from_func(f);
+	काष्ठा fsg_common	*common = fsg->common;
 
 	DBG(fsg, "unbind\n");
-	if (fsg->common->fsg == fsg) {
-		__raise_exception(fsg->common, FSG_STATE_CONFIG_CHANGE, NULL);
-		/* FIXME: make interruptible or killable somehow? */
-		wait_event(common->fsg_wait, common->fsg != fsg);
-	}
+	अगर (fsg->common->fsg == fsg) अणु
+		__उठाओ_exception(fsg->common, FSG_STATE_CONFIG_CHANGE, शून्य);
+		/* FIXME: make पूर्णांकerruptible or समाप्तable somehow? */
+		रुको_event(common->fsg_रुको, common->fsg != fsg);
+	पूर्ण
 
-	usb_free_all_descriptors(&fsg->function);
-}
+	usb_मुक्त_all_descriptors(&fsg->function);
+पूर्ण
 
-static inline struct fsg_lun_opts *to_fsg_lun_opts(struct config_item *item)
-{
-	return container_of(to_config_group(item), struct fsg_lun_opts, group);
-}
+अटल अंतरभूत काष्ठा fsg_lun_opts *to_fsg_lun_opts(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item), काष्ठा fsg_lun_opts, group);
+पूर्ण
 
-static inline struct fsg_opts *to_fsg_opts(struct config_item *item)
-{
-	return container_of(to_config_group(item), struct fsg_opts,
+अटल अंतरभूत काष्ठा fsg_opts *to_fsg_opts(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item), काष्ठा fsg_opts,
 			    func_inst.group);
-}
+पूर्ण
 
-static void fsg_lun_attr_release(struct config_item *item)
-{
-	struct fsg_lun_opts *lun_opts;
+अटल व्योम fsg_lun_attr_release(काष्ठा config_item *item)
+अणु
+	काष्ठा fsg_lun_opts *lun_opts;
 
 	lun_opts = to_fsg_lun_opts(item);
-	kfree(lun_opts);
-}
+	kमुक्त(lun_opts);
+पूर्ण
 
-static struct configfs_item_operations fsg_lun_item_ops = {
+अटल काष्ठा configfs_item_operations fsg_lun_item_ops = अणु
 	.release		= fsg_lun_attr_release,
-};
+पूर्ण;
 
-static ssize_t fsg_lun_opts_file_show(struct config_item *item, char *page)
-{
-	struct fsg_lun_opts *opts = to_fsg_lun_opts(item);
-	struct fsg_opts *fsg_opts = to_fsg_opts(opts->group.cg_item.ci_parent);
+अटल sमाप_प्रकार fsg_lun_opts_file_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	काष्ठा fsg_lun_opts *opts = to_fsg_lun_opts(item);
+	काष्ठा fsg_opts *fsg_opts = to_fsg_opts(opts->group.cg_item.ci_parent);
 
-	return fsg_show_file(opts->lun, &fsg_opts->common->filesem, page);
-}
+	वापस fsg_show_file(opts->lun, &fsg_opts->common->filesem, page);
+पूर्ण
 
-static ssize_t fsg_lun_opts_file_store(struct config_item *item,
-				       const char *page, size_t len)
-{
-	struct fsg_lun_opts *opts = to_fsg_lun_opts(item);
-	struct fsg_opts *fsg_opts = to_fsg_opts(opts->group.cg_item.ci_parent);
+अटल sमाप_प्रकार fsg_lun_opts_file_store(काष्ठा config_item *item,
+				       स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	काष्ठा fsg_lun_opts *opts = to_fsg_lun_opts(item);
+	काष्ठा fsg_opts *fsg_opts = to_fsg_opts(opts->group.cg_item.ci_parent);
 
-	return fsg_store_file(opts->lun, &fsg_opts->common->filesem, page, len);
-}
+	वापस fsg_store_file(opts->lun, &fsg_opts->common->filesem, page, len);
+पूर्ण
 
 CONFIGFS_ATTR(fsg_lun_opts_, file);
 
-static ssize_t fsg_lun_opts_ro_show(struct config_item *item, char *page)
-{
-	return fsg_show_ro(to_fsg_lun_opts(item)->lun, page);
-}
+अटल sमाप_प्रकार fsg_lun_opts_ro_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस fsg_show_ro(to_fsg_lun_opts(item)->lun, page);
+पूर्ण
 
-static ssize_t fsg_lun_opts_ro_store(struct config_item *item,
-				       const char *page, size_t len)
-{
-	struct fsg_lun_opts *opts = to_fsg_lun_opts(item);
-	struct fsg_opts *fsg_opts = to_fsg_opts(opts->group.cg_item.ci_parent);
+अटल sमाप_प्रकार fsg_lun_opts_ro_store(काष्ठा config_item *item,
+				       स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	काष्ठा fsg_lun_opts *opts = to_fsg_lun_opts(item);
+	काष्ठा fsg_opts *fsg_opts = to_fsg_opts(opts->group.cg_item.ci_parent);
 
-	return fsg_store_ro(opts->lun, &fsg_opts->common->filesem, page, len);
-}
+	वापस fsg_store_ro(opts->lun, &fsg_opts->common->filesem, page, len);
+पूर्ण
 
 CONFIGFS_ATTR(fsg_lun_opts_, ro);
 
-static ssize_t fsg_lun_opts_removable_show(struct config_item *item,
-					   char *page)
-{
-	return fsg_show_removable(to_fsg_lun_opts(item)->lun, page);
-}
+अटल sमाप_प्रकार fsg_lun_opts_removable_show(काष्ठा config_item *item,
+					   अक्षर *page)
+अणु
+	वापस fsg_show_removable(to_fsg_lun_opts(item)->lun, page);
+पूर्ण
 
-static ssize_t fsg_lun_opts_removable_store(struct config_item *item,
-				       const char *page, size_t len)
-{
-	return fsg_store_removable(to_fsg_lun_opts(item)->lun, page, len);
-}
+अटल sमाप_प्रकार fsg_lun_opts_removable_store(काष्ठा config_item *item,
+				       स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	वापस fsg_store_removable(to_fsg_lun_opts(item)->lun, page, len);
+पूर्ण
 
 CONFIGFS_ATTR(fsg_lun_opts_, removable);
 
-static ssize_t fsg_lun_opts_cdrom_show(struct config_item *item, char *page)
-{
-	return fsg_show_cdrom(to_fsg_lun_opts(item)->lun, page);
-}
+अटल sमाप_प्रकार fsg_lun_opts_cdrom_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस fsg_show_cdrom(to_fsg_lun_opts(item)->lun, page);
+पूर्ण
 
-static ssize_t fsg_lun_opts_cdrom_store(struct config_item *item,
-				       const char *page, size_t len)
-{
-	struct fsg_lun_opts *opts = to_fsg_lun_opts(item);
-	struct fsg_opts *fsg_opts = to_fsg_opts(opts->group.cg_item.ci_parent);
+अटल sमाप_प्रकार fsg_lun_opts_cdrom_store(काष्ठा config_item *item,
+				       स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	काष्ठा fsg_lun_opts *opts = to_fsg_lun_opts(item);
+	काष्ठा fsg_opts *fsg_opts = to_fsg_opts(opts->group.cg_item.ci_parent);
 
-	return fsg_store_cdrom(opts->lun, &fsg_opts->common->filesem, page,
+	वापस fsg_store_cdrom(opts->lun, &fsg_opts->common->filesem, page,
 			       len);
-}
+पूर्ण
 
 CONFIGFS_ATTR(fsg_lun_opts_, cdrom);
 
-static ssize_t fsg_lun_opts_nofua_show(struct config_item *item, char *page)
-{
-	return fsg_show_nofua(to_fsg_lun_opts(item)->lun, page);
-}
+अटल sमाप_प्रकार fsg_lun_opts_nofua_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	वापस fsg_show_nofua(to_fsg_lun_opts(item)->lun, page);
+पूर्ण
 
-static ssize_t fsg_lun_opts_nofua_store(struct config_item *item,
-				       const char *page, size_t len)
-{
-	return fsg_store_nofua(to_fsg_lun_opts(item)->lun, page, len);
-}
+अटल sमाप_प्रकार fsg_lun_opts_nofua_store(काष्ठा config_item *item,
+				       स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	वापस fsg_store_nofua(to_fsg_lun_opts(item)->lun, page, len);
+पूर्ण
 
 CONFIGFS_ATTR(fsg_lun_opts_, nofua);
 
-static ssize_t fsg_lun_opts_inquiry_string_show(struct config_item *item,
-						char *page)
-{
-	return fsg_show_inquiry_string(to_fsg_lun_opts(item)->lun, page);
-}
+अटल sमाप_प्रकार fsg_lun_opts_inquiry_string_show(काष्ठा config_item *item,
+						अक्षर *page)
+अणु
+	वापस fsg_show_inquiry_string(to_fsg_lun_opts(item)->lun, page);
+पूर्ण
 
-static ssize_t fsg_lun_opts_inquiry_string_store(struct config_item *item,
-						 const char *page, size_t len)
-{
-	return fsg_store_inquiry_string(to_fsg_lun_opts(item)->lun, page, len);
-}
+अटल sमाप_प्रकार fsg_lun_opts_inquiry_string_store(काष्ठा config_item *item,
+						 स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	वापस fsg_store_inquiry_string(to_fsg_lun_opts(item)->lun, page, len);
+पूर्ण
 
 CONFIGFS_ATTR(fsg_lun_opts_, inquiry_string);
 
-static struct configfs_attribute *fsg_lun_attrs[] = {
+अटल काष्ठा configfs_attribute *fsg_lun_attrs[] = अणु
 	&fsg_lun_opts_attr_file,
 	&fsg_lun_opts_attr_ro,
 	&fsg_lun_opts_attr_removable,
 	&fsg_lun_opts_attr_cdrom,
 	&fsg_lun_opts_attr_nofua,
 	&fsg_lun_opts_attr_inquiry_string,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type fsg_lun_type = {
+अटल स्थिर काष्ठा config_item_type fsg_lun_type = अणु
 	.ct_item_ops	= &fsg_lun_item_ops,
 	.ct_attrs	= fsg_lun_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static struct config_group *fsg_lun_make(struct config_group *group,
-					 const char *name)
-{
-	struct fsg_lun_opts *opts;
-	struct fsg_opts *fsg_opts;
-	struct fsg_lun_config config;
-	char *num_str;
+अटल काष्ठा config_group *fsg_lun_make(काष्ठा config_group *group,
+					 स्थिर अक्षर *name)
+अणु
+	काष्ठा fsg_lun_opts *opts;
+	काष्ठा fsg_opts *fsg_opts;
+	काष्ठा fsg_lun_config config;
+	अक्षर *num_str;
 	u8 num;
-	int ret;
+	पूर्णांक ret;
 
-	num_str = strchr(name, '.');
-	if (!num_str) {
+	num_str = म_अक्षर(name, '.');
+	अगर (!num_str) अणु
 		pr_err("Unable to locate . in LUN.NUMBER\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 	num_str++;
 
 	ret = kstrtou8(num_str, 0, &num);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	fsg_opts = to_fsg_opts(&group->cg_item);
-	if (num >= FSG_MAX_LUNS)
-		return ERR_PTR(-ERANGE);
+	अगर (num >= FSG_MAX_LUNS)
+		वापस ERR_PTR(-दुस्फल);
 	num = array_index_nospec(num, FSG_MAX_LUNS);
 
 	mutex_lock(&fsg_opts->lock);
-	if (fsg_opts->refcnt || fsg_opts->common->luns[num]) {
+	अगर (fsg_opts->refcnt || fsg_opts->common->luns[num]) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
-	if (!opts) {
+	opts = kzalloc(माप(*opts), GFP_KERNEL);
+	अगर (!opts) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 	config.removable = true;
 
 	ret = fsg_common_create_lun(fsg_opts->common, &config, num, name,
-				    (const char **)&group->cg_item.ci_name);
-	if (ret) {
-		kfree(opts);
-		goto out;
-	}
+				    (स्थिर अक्षर **)&group->cg_item.ci_name);
+	अगर (ret) अणु
+		kमुक्त(opts);
+		जाओ out;
+	पूर्ण
 	opts->lun = fsg_opts->common->luns[num];
 	opts->lun_id = num;
 	mutex_unlock(&fsg_opts->lock);
 
 	config_group_init_type_name(&opts->group, name, &fsg_lun_type);
 
-	return &opts->group;
+	वापस &opts->group;
 out:
 	mutex_unlock(&fsg_opts->lock);
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static void fsg_lun_drop(struct config_group *group, struct config_item *item)
-{
-	struct fsg_lun_opts *lun_opts;
-	struct fsg_opts *fsg_opts;
+अटल व्योम fsg_lun_drop(काष्ठा config_group *group, काष्ठा config_item *item)
+अणु
+	काष्ठा fsg_lun_opts *lun_opts;
+	काष्ठा fsg_opts *fsg_opts;
 
 	lun_opts = to_fsg_lun_opts(item);
 	fsg_opts = to_fsg_opts(&group->cg_item);
 
 	mutex_lock(&fsg_opts->lock);
-	if (fsg_opts->refcnt) {
-		struct config_item *gadget;
+	अगर (fsg_opts->refcnt) अणु
+		काष्ठा config_item *gadget;
 
 		gadget = group->cg_item.ci_parent->ci_parent;
-		unregister_gadget_item(gadget);
-	}
+		unरेजिस्टर_gadget_item(gadget);
+	पूर्ण
 
-	fsg_common_remove_lun(lun_opts->lun);
-	fsg_opts->common->luns[lun_opts->lun_id] = NULL;
+	fsg_common_हटाओ_lun(lun_opts->lun);
+	fsg_opts->common->luns[lun_opts->lun_id] = शून्य;
 	lun_opts->lun_id = 0;
 	mutex_unlock(&fsg_opts->lock);
 
 	config_item_put(item);
-}
+पूर्ण
 
-static void fsg_attr_release(struct config_item *item)
-{
-	struct fsg_opts *opts = to_fsg_opts(item);
+अटल व्योम fsg_attr_release(काष्ठा config_item *item)
+अणु
+	काष्ठा fsg_opts *opts = to_fsg_opts(item);
 
 	usb_put_function_instance(&opts->func_inst);
-}
+पूर्ण
 
-static struct configfs_item_operations fsg_item_ops = {
+अटल काष्ठा configfs_item_operations fsg_item_ops = अणु
 	.release		= fsg_attr_release,
-};
+पूर्ण;
 
-static ssize_t fsg_opts_stall_show(struct config_item *item, char *page)
-{
-	struct fsg_opts *opts = to_fsg_opts(item);
-	int result;
+अटल sमाप_प्रकार fsg_opts_stall_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	काष्ठा fsg_opts *opts = to_fsg_opts(item);
+	पूर्णांक result;
 
 	mutex_lock(&opts->lock);
-	result = sprintf(page, "%d", opts->common->can_stall);
+	result = प्र_लिखो(page, "%d", opts->common->can_stall);
 	mutex_unlock(&opts->lock);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static ssize_t fsg_opts_stall_store(struct config_item *item, const char *page,
-				    size_t len)
-{
-	struct fsg_opts *opts = to_fsg_opts(item);
-	int ret;
+अटल sमाप_प्रकार fsg_opts_stall_store(काष्ठा config_item *item, स्थिर अक्षर *page,
+				    माप_प्रकार len)
+अणु
+	काष्ठा fsg_opts *opts = to_fsg_opts(item);
+	पूर्णांक ret;
 	bool stall;
 
 	mutex_lock(&opts->lock);
 
-	if (opts->refcnt) {
+	अगर (opts->refcnt) अणु
 		mutex_unlock(&opts->lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	ret = strtobool(page, &stall);
-	if (!ret) {
+	अगर (!ret) अणु
 		opts->common->can_stall = stall;
 		ret = len;
-	}
+	पूर्ण
 
 	mutex_unlock(&opts->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 CONFIGFS_ATTR(fsg_opts_, stall);
 
-#ifdef CONFIG_USB_GADGET_DEBUG_FILES
-static ssize_t fsg_opts_num_buffers_show(struct config_item *item, char *page)
-{
-	struct fsg_opts *opts = to_fsg_opts(item);
-	int result;
+#अगर_घोषित CONFIG_USB_GADGET_DEBUG_खाताS
+अटल sमाप_प्रकार fsg_opts_num_buffers_show(काष्ठा config_item *item, अक्षर *page)
+अणु
+	काष्ठा fsg_opts *opts = to_fsg_opts(item);
+	पूर्णांक result;
 
 	mutex_lock(&opts->lock);
-	result = sprintf(page, "%d", opts->common->fsg_num_buffers);
+	result = प्र_लिखो(page, "%d", opts->common->fsg_num_buffers);
 	mutex_unlock(&opts->lock);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static ssize_t fsg_opts_num_buffers_store(struct config_item *item,
-					  const char *page, size_t len)
-{
-	struct fsg_opts *opts = to_fsg_opts(item);
-	int ret;
+अटल sमाप_प्रकार fsg_opts_num_buffers_store(काष्ठा config_item *item,
+					  स्थिर अक्षर *page, माप_प्रकार len)
+अणु
+	काष्ठा fsg_opts *opts = to_fsg_opts(item);
+	पूर्णांक ret;
 	u8 num;
 
 	mutex_lock(&opts->lock);
-	if (opts->refcnt) {
+	अगर (opts->refcnt) अणु
 		ret = -EBUSY;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 	ret = kstrtou8(page, 0, &num);
-	if (ret)
-		goto end;
+	अगर (ret)
+		जाओ end;
 
 	ret = fsg_common_set_num_buffers(opts->common, num);
-	if (ret)
-		goto end;
+	अगर (ret)
+		जाओ end;
 	ret = len;
 
 end:
 	mutex_unlock(&opts->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 CONFIGFS_ATTR(fsg_opts_, num_buffers);
-#endif
+#पूर्ण_अगर
 
-static struct configfs_attribute *fsg_attrs[] = {
+अटल काष्ठा configfs_attribute *fsg_attrs[] = अणु
 	&fsg_opts_attr_stall,
-#ifdef CONFIG_USB_GADGET_DEBUG_FILES
+#अगर_घोषित CONFIG_USB_GADGET_DEBUG_खाताS
 	&fsg_opts_attr_num_buffers,
-#endif
-	NULL,
-};
+#पूर्ण_अगर
+	शून्य,
+पूर्ण;
 
-static struct configfs_group_operations fsg_group_ops = {
+अटल काष्ठा configfs_group_operations fsg_group_ops = अणु
 	.make_group	= fsg_lun_make,
 	.drop_item	= fsg_lun_drop,
-};
+पूर्ण;
 
-static const struct config_item_type fsg_func_type = {
+अटल स्थिर काष्ठा config_item_type fsg_func_type = अणु
 	.ct_item_ops	= &fsg_item_ops,
 	.ct_group_ops	= &fsg_group_ops,
 	.ct_attrs	= fsg_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static void fsg_free_inst(struct usb_function_instance *fi)
-{
-	struct fsg_opts *opts;
+अटल व्योम fsg_मुक्त_inst(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा fsg_opts *opts;
 
 	opts = fsg_opts_from_func_inst(fi);
 	fsg_common_release(opts->common);
-	kfree(opts);
-}
+	kमुक्त(opts);
+पूर्ण
 
-static struct usb_function_instance *fsg_alloc_inst(void)
-{
-	struct fsg_opts *opts;
-	struct fsg_lun_config config;
-	int rc;
+अटल काष्ठा usb_function_instance *fsg_alloc_inst(व्योम)
+अणु
+	काष्ठा fsg_opts *opts;
+	काष्ठा fsg_lun_config config;
+	पूर्णांक rc;
 
-	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
-	if (!opts)
-		return ERR_PTR(-ENOMEM);
+	opts = kzalloc(माप(*opts), GFP_KERNEL);
+	अगर (!opts)
+		वापस ERR_PTR(-ENOMEM);
 	mutex_init(&opts->lock);
-	opts->func_inst.free_func_inst = fsg_free_inst;
+	opts->func_inst.मुक्त_func_inst = fsg_मुक्त_inst;
 	opts->common = fsg_common_setup(opts->common);
-	if (IS_ERR(opts->common)) {
+	अगर (IS_ERR(opts->common)) अणु
 		rc = PTR_ERR(opts->common);
-		goto release_opts;
-	}
+		जाओ release_opts;
+	पूर्ण
 
 	rc = fsg_common_set_num_buffers(opts->common,
 					CONFIG_USB_GADGET_STORAGE_NUM_BUFFERS);
-	if (rc)
-		goto release_common;
+	अगर (rc)
+		जाओ release_common;
 
 	pr_info(FSG_DRIVER_DESC ", version: " FSG_DRIVER_VERSION "\n");
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 	config.removable = true;
 	rc = fsg_common_create_lun(opts->common, &config, 0, "lun.0",
-			(const char **)&opts->func_inst.group.cg_item.ci_name);
-	if (rc)
-		goto release_buffers;
+			(स्थिर अक्षर **)&opts->func_inst.group.cg_item.ci_name);
+	अगर (rc)
+		जाओ release_buffers;
 
 	opts->lun0.lun = opts->common->luns[0];
 	opts->lun0.lun_id = 0;
@@ -3377,43 +3378,43 @@ static struct usb_function_instance *fsg_alloc_inst(void)
 	config_group_init_type_name(&opts->func_inst.group, "", &fsg_func_type);
 
 	config_group_init_type_name(&opts->lun0.group, "lun.0", &fsg_lun_type);
-	configfs_add_default_group(&opts->lun0.group, &opts->func_inst.group);
+	configfs_add_शेष_group(&opts->lun0.group, &opts->func_inst.group);
 
-	return &opts->func_inst;
+	वापस &opts->func_inst;
 
 release_buffers:
-	fsg_common_free_buffers(opts->common);
+	fsg_common_मुक्त_buffers(opts->common);
 release_common:
-	kfree(opts->common);
+	kमुक्त(opts->common);
 release_opts:
-	kfree(opts);
-	return ERR_PTR(rc);
-}
+	kमुक्त(opts);
+	वापस ERR_PTR(rc);
+पूर्ण
 
-static void fsg_free(struct usb_function *f)
-{
-	struct fsg_dev *fsg;
-	struct fsg_opts *opts;
+अटल व्योम fsg_मुक्त(काष्ठा usb_function *f)
+अणु
+	काष्ठा fsg_dev *fsg;
+	काष्ठा fsg_opts *opts;
 
-	fsg = container_of(f, struct fsg_dev, function);
-	opts = container_of(f->fi, struct fsg_opts, func_inst);
+	fsg = container_of(f, काष्ठा fsg_dev, function);
+	opts = container_of(f->fi, काष्ठा fsg_opts, func_inst);
 
 	mutex_lock(&opts->lock);
 	opts->refcnt--;
 	mutex_unlock(&opts->lock);
 
-	kfree(fsg);
-}
+	kमुक्त(fsg);
+पूर्ण
 
-static struct usb_function *fsg_alloc(struct usb_function_instance *fi)
-{
-	struct fsg_opts *opts = fsg_opts_from_func_inst(fi);
-	struct fsg_common *common = opts->common;
-	struct fsg_dev *fsg;
+अटल काष्ठा usb_function *fsg_alloc(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा fsg_opts *opts = fsg_opts_from_func_inst(fi);
+	काष्ठा fsg_common *common = opts->common;
+	काष्ठा fsg_dev *fsg;
 
-	fsg = kzalloc(sizeof(*fsg), GFP_KERNEL);
-	if (unlikely(!fsg))
-		return ERR_PTR(-ENOMEM);
+	fsg = kzalloc(माप(*fsg), GFP_KERNEL);
+	अगर (unlikely(!fsg))
+		वापस ERR_PTR(-ENOMEM);
 
 	mutex_lock(&opts->lock);
 	opts->refcnt++;
@@ -3425,12 +3426,12 @@ static struct usb_function *fsg_alloc(struct usb_function_instance *fi)
 	fsg->function.setup	= fsg_setup;
 	fsg->function.set_alt	= fsg_set_alt;
 	fsg->function.disable	= fsg_disable;
-	fsg->function.free_func	= fsg_free;
+	fsg->function.मुक्त_func	= fsg_मुक्त;
 
 	fsg->common               = common;
 
-	return &fsg->function;
-}
+	वापस &fsg->function;
+पूर्ण
 
 DECLARE_USB_FUNCTION_INIT(mass_storage, fsg_alloc_inst, fsg_alloc);
 MODULE_LICENSE("GPL");
@@ -3439,36 +3440,36 @@ MODULE_AUTHOR("Michal Nazarewicz");
 /************************* Module parameters *************************/
 
 
-void fsg_config_from_params(struct fsg_config *cfg,
-		       const struct fsg_module_parameters *params,
-		       unsigned int fsg_num_buffers)
-{
-	struct fsg_lun_config *lun;
-	unsigned i;
+व्योम fsg_config_from_params(काष्ठा fsg_config *cfg,
+		       स्थिर काष्ठा fsg_module_parameters *params,
+		       अचिन्हित पूर्णांक fsg_num_buffers)
+अणु
+	काष्ठा fsg_lun_config *lun;
+	अचिन्हित i;
 
 	/* Configure LUNs */
 	cfg->nluns =
 		min(params->luns ?: (params->file_count ?: 1u),
-		    (unsigned)FSG_MAX_LUNS);
-	for (i = 0, lun = cfg->luns; i < cfg->nluns; ++i, ++lun) {
+		    (अचिन्हित)FSG_MAX_LUNS);
+	क्रम (i = 0, lun = cfg->luns; i < cfg->nluns; ++i, ++lun) अणु
 		lun->ro = !!params->ro[i];
 		lun->cdrom = !!params->cdrom[i];
 		lun->removable = !!params->removable[i];
 		lun->filename =
 			params->file_count > i && params->file[i][0]
 			? params->file[i]
-			: NULL;
-	}
+			: शून्य;
+	पूर्ण
 
-	/* Let MSF use defaults */
-	cfg->vendor_name = NULL;
-	cfg->product_name = NULL;
+	/* Let MSF use शेषs */
+	cfg->venकरोr_name = शून्य;
+	cfg->product_name = शून्य;
 
-	cfg->ops = NULL;
-	cfg->private_data = NULL;
+	cfg->ops = शून्य;
+	cfg->निजी_data = शून्य;
 
 	/* Finalise */
 	cfg->can_stall = params->stall;
 	cfg->fsg_num_buffers = fsg_num_buffers;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(fsg_config_from_params);

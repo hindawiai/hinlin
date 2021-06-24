@@ -1,98 +1,99 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2016 Broadcom
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/of_mdio.h>
-#include <linux/mdio.h>
-#include <linux/phy.h>
-#include <linux/phy/phy.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/mdपन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/phy/phy.h>
 
-#define BLK_ADDR_REG_OFFSET	0x1f
-#define PLL_AFE1_100MHZ_BLK	0x2100
-#define PLL_CLK_AMP_OFFSET	0x03
-#define PLL_CLK_AMP_2P05V	0x2b18
+#घोषणा BLK_ADDR_REG_OFFSET	0x1f
+#घोषणा PLL_AFE1_100MHZ_BLK	0x2100
+#घोषणा PLL_CLK_AMP_OFFSET	0x03
+#घोषणा PLL_CLK_AMP_2P05V	0x2b18
 
-static int ns2_pci_phy_init(struct phy *p)
-{
-	struct mdio_device *mdiodev = phy_get_drvdata(p);
-	int rc;
+अटल पूर्णांक ns2_pci_phy_init(काष्ठा phy *p)
+अणु
+	काष्ठा mdio_device *mdiodev = phy_get_drvdata(p);
+	पूर्णांक rc;
 
 	/* select the AFE 100MHz block page */
-	rc = mdiobus_write(mdiodev->bus, mdiodev->addr,
+	rc = mdiobus_ग_लिखो(mdiodev->bus, mdiodev->addr,
 			   BLK_ADDR_REG_OFFSET, PLL_AFE1_100MHZ_BLK);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
-	/* set the 100 MHz reference clock amplitude to 2.05 v */
-	rc = mdiobus_write(mdiodev->bus, mdiodev->addr,
+	/* set the 100 MHz reference घड़ी amplitude to 2.05 v */
+	rc = mdiobus_ग_लिखो(mdiodev->bus, mdiodev->addr,
 			   PLL_CLK_AMP_OFFSET, PLL_CLK_AMP_2P05V);
-	if (rc)
-		goto err;
+	अगर (rc)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
 	dev_err(&mdiodev->dev, "Error %d writing to phy\n", rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct phy_ops ns2_pci_phy_ops = {
+अटल स्थिर काष्ठा phy_ops ns2_pci_phy_ops = अणु
 	.init = ns2_pci_phy_init,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int ns2_pci_phy_probe(struct mdio_device *mdiodev)
-{
-	struct device *dev = &mdiodev->dev;
-	struct phy_provider *provider;
-	struct phy *phy;
+अटल पूर्णांक ns2_pci_phy_probe(काष्ठा mdio_device *mdiodev)
+अणु
+	काष्ठा device *dev = &mdiodev->dev;
+	काष्ठा phy_provider *provider;
+	काष्ठा phy *phy;
 
 	phy = devm_phy_create(dev, dev->of_node, &ns2_pci_phy_ops);
-	if (IS_ERR(phy)) {
+	अगर (IS_ERR(phy)) अणु
 		dev_err(dev, "failed to create Phy\n");
-		return PTR_ERR(phy);
-	}
+		वापस PTR_ERR(phy);
+	पूर्ण
 
 	phy_set_drvdata(phy, mdiodev);
 
-	provider = devm_of_phy_provider_register(&phy->dev,
+	provider = devm_of_phy_provider_रेजिस्टर(&phy->dev,
 						 of_phy_simple_xlate);
-	if (IS_ERR(provider)) {
+	अगर (IS_ERR(provider)) अणु
 		dev_err(dev, "failed to register Phy provider\n");
-		return PTR_ERR(provider);
-	}
+		वापस PTR_ERR(provider);
+	पूर्ण
 
 	dev_info(dev, "%s PHY registered\n", dev_name(dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ns2_pci_phy_of_match[] = {
-	{ .compatible = "brcm,ns2-pcie-phy", },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id ns2_pci_phy_of_match[] = अणु
+	अणु .compatible = "brcm,ns2-pcie-phy", पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ns2_pci_phy_of_match);
 
-static struct mdio_driver ns2_pci_phy_driver = {
-	.mdiodrv = {
-		.driver = {
+अटल काष्ठा mdio_driver ns2_pci_phy_driver = अणु
+	.mdiodrv = अणु
+		.driver = अणु
 			.name = "phy-bcm-ns2-pci",
 			.of_match_table = ns2_pci_phy_of_match,
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.probe = ns2_pci_phy_probe,
-};
+पूर्ण;
 mdio_module_driver(ns2_pci_phy_driver);
 
 MODULE_AUTHOR("Broadcom");

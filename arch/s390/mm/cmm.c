@@ -1,444 +1,445 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  Collaborative memory management interface.
+ *  Collaborative memory management पूर्णांकerface.
  *
  *    Copyright IBM Corp 2003, 2010
  *    Author(s): Martin Schwidefsky <schwidefsky@de.ibm.com>,
  *
  */
 
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/gfp.h>
-#include <linux/sched.h>
-#include <linux/sysctl.h>
-#include <linux/ctype.h>
-#include <linux/swap.h>
-#include <linux/kthread.h>
-#include <linux/oom.h>
-#include <linux/uaccess.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/swap.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/diag.h>
+#समावेश <यंत्र/diag.h>
 
-#ifdef CONFIG_CMM_IUCV
-static char *cmm_default_sender = "VMRMSVM";
-#endif
-static char *sender;
-module_param(sender, charp, 0400);
+#अगर_घोषित CONFIG_CMM_IUCV
+अटल अक्षर *cmm_शेष_sender = "VMRMSVM";
+#पूर्ण_अगर
+अटल अक्षर *sender;
+module_param(sender, अक्षरp, 0400);
 MODULE_PARM_DESC(sender,
 		 "Guest name that may send SMSG messages (default VMRMSVM)");
 
-#include "../../../drivers/s390/net/smsgiucv.h"
+#समावेश "../../../drivers/s390/net/smsgiucv.h"
 
-#define CMM_NR_PAGES ((PAGE_SIZE / sizeof(unsigned long)) - 2)
+#घोषणा CMM_NR_PAGES ((PAGE_SIZE / माप(अचिन्हित दीर्घ)) - 2)
 
-struct cmm_page_array {
-	struct cmm_page_array *next;
-	unsigned long index;
-	unsigned long pages[CMM_NR_PAGES];
-};
+काष्ठा cmm_page_array अणु
+	काष्ठा cmm_page_array *next;
+	अचिन्हित दीर्घ index;
+	अचिन्हित दीर्घ pages[CMM_NR_PAGES];
+पूर्ण;
 
-static long cmm_pages;
-static long cmm_timed_pages;
-static volatile long cmm_pages_target;
-static volatile long cmm_timed_pages_target;
-static long cmm_timeout_pages;
-static long cmm_timeout_seconds;
+अटल दीर्घ cmm_pages;
+अटल दीर्घ cmm_समयd_pages;
+अटल अस्थिर दीर्घ cmm_pages_target;
+अटल अस्थिर दीर्घ cmm_समयd_pages_target;
+अटल दीर्घ cmm_समयout_pages;
+अटल दीर्घ cmm_समयout_seconds;
 
-static struct cmm_page_array *cmm_page_list;
-static struct cmm_page_array *cmm_timed_page_list;
-static DEFINE_SPINLOCK(cmm_lock);
+अटल काष्ठा cmm_page_array *cmm_page_list;
+अटल काष्ठा cmm_page_array *cmm_समयd_page_list;
+अटल DEFINE_SPINLOCK(cmm_lock);
 
-static struct task_struct *cmm_thread_ptr;
-static DECLARE_WAIT_QUEUE_HEAD(cmm_thread_wait);
+अटल काष्ठा task_काष्ठा *cmm_thपढ़ो_ptr;
+अटल DECLARE_WAIT_QUEUE_HEAD(cmm_thपढ़ो_रुको);
 
-static void cmm_timer_fn(struct timer_list *);
-static void cmm_set_timer(void);
-static DEFINE_TIMER(cmm_timer, cmm_timer_fn);
+अटल व्योम cmm_समयr_fn(काष्ठा समयr_list *);
+अटल व्योम cmm_set_समयr(व्योम);
+अटल DEFINE_TIMER(cmm_समयr, cmm_समयr_fn);
 
-static long cmm_alloc_pages(long nr, long *counter,
-			    struct cmm_page_array **list)
-{
-	struct cmm_page_array *pa, *npa;
-	unsigned long addr;
+अटल दीर्घ cmm_alloc_pages(दीर्घ nr, दीर्घ *counter,
+			    काष्ठा cmm_page_array **list)
+अणु
+	काष्ठा cmm_page_array *pa, *npa;
+	अचिन्हित दीर्घ addr;
 
-	while (nr) {
-		addr = __get_free_page(GFP_NOIO);
-		if (!addr)
-			break;
+	जबतक (nr) अणु
+		addr = __get_मुक्त_page(GFP_NOIO);
+		अगर (!addr)
+			अवरोध;
 		spin_lock(&cmm_lock);
 		pa = *list;
-		if (!pa || pa->index >= CMM_NR_PAGES) {
-			/* Need a new page for the page list. */
+		अगर (!pa || pa->index >= CMM_NR_PAGES) अणु
+			/* Need a new page क्रम the page list. */
 			spin_unlock(&cmm_lock);
-			npa = (struct cmm_page_array *)
-				__get_free_page(GFP_NOIO);
-			if (!npa) {
-				free_page(addr);
-				break;
-			}
+			npa = (काष्ठा cmm_page_array *)
+				__get_मुक्त_page(GFP_NOIO);
+			अगर (!npa) अणु
+				मुक्त_page(addr);
+				अवरोध;
+			पूर्ण
 			spin_lock(&cmm_lock);
 			pa = *list;
-			if (!pa || pa->index >= CMM_NR_PAGES) {
+			अगर (!pa || pa->index >= CMM_NR_PAGES) अणु
 				npa->next = pa;
 				npa->index = 0;
 				pa = npa;
 				*list = pa;
-			} else
-				free_page((unsigned long) npa);
-		}
+			पूर्ण अन्यथा
+				मुक्त_page((अचिन्हित दीर्घ) npa);
+		पूर्ण
 		diag10_range(addr >> PAGE_SHIFT, 1);
 		pa->pages[pa->index++] = addr;
 		(*counter)++;
 		spin_unlock(&cmm_lock);
 		nr--;
-	}
-	return nr;
-}
+	पूर्ण
+	वापस nr;
+पूर्ण
 
-static long cmm_free_pages(long nr, long *counter, struct cmm_page_array **list)
-{
-	struct cmm_page_array *pa;
-	unsigned long addr;
+अटल दीर्घ cmm_मुक्त_pages(दीर्घ nr, दीर्घ *counter, काष्ठा cmm_page_array **list)
+अणु
+	काष्ठा cmm_page_array *pa;
+	अचिन्हित दीर्घ addr;
 
 	spin_lock(&cmm_lock);
 	pa = *list;
-	while (nr) {
-		if (!pa || pa->index <= 0)
-			break;
+	जबतक (nr) अणु
+		अगर (!pa || pa->index <= 0)
+			अवरोध;
 		addr = pa->pages[--pa->index];
-		if (pa->index == 0) {
+		अगर (pa->index == 0) अणु
 			pa = pa->next;
-			free_page((unsigned long) *list);
+			मुक्त_page((अचिन्हित दीर्घ) *list);
 			*list = pa;
-		}
-		free_page(addr);
+		पूर्ण
+		मुक्त_page(addr);
 		(*counter)--;
 		nr--;
-	}
+	पूर्ण
 	spin_unlock(&cmm_lock);
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-static int cmm_oom_notify(struct notifier_block *self,
-			  unsigned long dummy, void *parm)
-{
-	unsigned long *freed = parm;
-	long nr = 256;
+अटल पूर्णांक cmm_oom_notअगरy(काष्ठा notअगरier_block *self,
+			  अचिन्हित दीर्घ dummy, व्योम *parm)
+अणु
+	अचिन्हित दीर्घ *मुक्तd = parm;
+	दीर्घ nr = 256;
 
-	nr = cmm_free_pages(nr, &cmm_timed_pages, &cmm_timed_page_list);
-	if (nr > 0)
-		nr = cmm_free_pages(nr, &cmm_pages, &cmm_page_list);
+	nr = cmm_मुक्त_pages(nr, &cmm_समयd_pages, &cmm_समयd_page_list);
+	अगर (nr > 0)
+		nr = cmm_मुक्त_pages(nr, &cmm_pages, &cmm_page_list);
 	cmm_pages_target = cmm_pages;
-	cmm_timed_pages_target = cmm_timed_pages;
-	*freed += 256 - nr;
-	return NOTIFY_OK;
-}
+	cmm_समयd_pages_target = cmm_समयd_pages;
+	*मुक्तd += 256 - nr;
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block cmm_oom_nb = {
-	.notifier_call = cmm_oom_notify,
-};
+अटल काष्ठा notअगरier_block cmm_oom_nb = अणु
+	.notअगरier_call = cmm_oom_notअगरy,
+पूर्ण;
 
-static int cmm_thread(void *dummy)
-{
-	int rc;
+अटल पूर्णांक cmm_thपढ़ो(व्योम *dummy)
+अणु
+	पूर्णांक rc;
 
-	while (1) {
-		rc = wait_event_interruptible(cmm_thread_wait,
+	जबतक (1) अणु
+		rc = रुको_event_पूर्णांकerruptible(cmm_thपढ़ो_रुको,
 			cmm_pages != cmm_pages_target ||
-			cmm_timed_pages != cmm_timed_pages_target ||
-			kthread_should_stop());
-		if (kthread_should_stop() || rc == -ERESTARTSYS) {
+			cmm_समयd_pages != cmm_समयd_pages_target ||
+			kthपढ़ो_should_stop());
+		अगर (kthपढ़ो_should_stop() || rc == -ERESTARTSYS) अणु
 			cmm_pages_target = cmm_pages;
-			cmm_timed_pages_target = cmm_timed_pages;
-			break;
-		}
-		if (cmm_pages_target > cmm_pages) {
-			if (cmm_alloc_pages(1, &cmm_pages, &cmm_page_list))
+			cmm_समयd_pages_target = cmm_समयd_pages;
+			अवरोध;
+		पूर्ण
+		अगर (cmm_pages_target > cmm_pages) अणु
+			अगर (cmm_alloc_pages(1, &cmm_pages, &cmm_page_list))
 				cmm_pages_target = cmm_pages;
-		} else if (cmm_pages_target < cmm_pages) {
-			cmm_free_pages(1, &cmm_pages, &cmm_page_list);
-		}
-		if (cmm_timed_pages_target > cmm_timed_pages) {
-			if (cmm_alloc_pages(1, &cmm_timed_pages,
-					   &cmm_timed_page_list))
-				cmm_timed_pages_target = cmm_timed_pages;
-		} else if (cmm_timed_pages_target < cmm_timed_pages) {
-			cmm_free_pages(1, &cmm_timed_pages,
-				       &cmm_timed_page_list);
-		}
-		if (cmm_timed_pages > 0 && !timer_pending(&cmm_timer))
-			cmm_set_timer();
-	}
-	return 0;
-}
+		पूर्ण अन्यथा अगर (cmm_pages_target < cmm_pages) अणु
+			cmm_मुक्त_pages(1, &cmm_pages, &cmm_page_list);
+		पूर्ण
+		अगर (cmm_समयd_pages_target > cmm_समयd_pages) अणु
+			अगर (cmm_alloc_pages(1, &cmm_समयd_pages,
+					   &cmm_समयd_page_list))
+				cmm_समयd_pages_target = cmm_समयd_pages;
+		पूर्ण अन्यथा अगर (cmm_समयd_pages_target < cmm_समयd_pages) अणु
+			cmm_मुक्त_pages(1, &cmm_समयd_pages,
+				       &cmm_समयd_page_list);
+		पूर्ण
+		अगर (cmm_समयd_pages > 0 && !समयr_pending(&cmm_समयr))
+			cmm_set_समयr();
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void cmm_kick_thread(void)
-{
-	wake_up(&cmm_thread_wait);
-}
+अटल व्योम cmm_kick_thपढ़ो(व्योम)
+अणु
+	wake_up(&cmm_thपढ़ो_रुको);
+पूर्ण
 
-static void cmm_set_timer(void)
-{
-	if (cmm_timed_pages_target <= 0 || cmm_timeout_seconds <= 0) {
-		if (timer_pending(&cmm_timer))
-			del_timer(&cmm_timer);
-		return;
-	}
-	mod_timer(&cmm_timer, jiffies + msecs_to_jiffies(cmm_timeout_seconds * MSEC_PER_SEC));
-}
+अटल व्योम cmm_set_समयr(व्योम)
+अणु
+	अगर (cmm_समयd_pages_target <= 0 || cmm_समयout_seconds <= 0) अणु
+		अगर (समयr_pending(&cmm_समयr))
+			del_समयr(&cmm_समयr);
+		वापस;
+	पूर्ण
+	mod_समयr(&cmm_समयr, jअगरfies + msecs_to_jअगरfies(cmm_समयout_seconds * MSEC_PER_SEC));
+पूर्ण
 
-static void cmm_timer_fn(struct timer_list *unused)
-{
-	long nr;
+अटल व्योम cmm_समयr_fn(काष्ठा समयr_list *unused)
+अणु
+	दीर्घ nr;
 
-	nr = cmm_timed_pages_target - cmm_timeout_pages;
-	if (nr < 0)
-		cmm_timed_pages_target = 0;
-	else
-		cmm_timed_pages_target = nr;
-	cmm_kick_thread();
-	cmm_set_timer();
-}
+	nr = cmm_समयd_pages_target - cmm_समयout_pages;
+	अगर (nr < 0)
+		cmm_समयd_pages_target = 0;
+	अन्यथा
+		cmm_समयd_pages_target = nr;
+	cmm_kick_thपढ़ो();
+	cmm_set_समयr();
+पूर्ण
 
-static void cmm_set_pages(long nr)
-{
+अटल व्योम cmm_set_pages(दीर्घ nr)
+अणु
 	cmm_pages_target = nr;
-	cmm_kick_thread();
-}
+	cmm_kick_thपढ़ो();
+पूर्ण
 
-static long cmm_get_pages(void)
-{
-	return cmm_pages;
-}
+अटल दीर्घ cmm_get_pages(व्योम)
+अणु
+	वापस cmm_pages;
+पूर्ण
 
-static void cmm_add_timed_pages(long nr)
-{
-	cmm_timed_pages_target += nr;
-	cmm_kick_thread();
-}
+अटल व्योम cmm_add_समयd_pages(दीर्घ nr)
+अणु
+	cmm_समयd_pages_target += nr;
+	cmm_kick_thपढ़ो();
+पूर्ण
 
-static long cmm_get_timed_pages(void)
-{
-	return cmm_timed_pages;
-}
+अटल दीर्घ cmm_get_समयd_pages(व्योम)
+अणु
+	वापस cmm_समयd_pages;
+पूर्ण
 
-static void cmm_set_timeout(long nr, long seconds)
-{
-	cmm_timeout_pages = nr;
-	cmm_timeout_seconds = seconds;
-	cmm_set_timer();
-}
+अटल व्योम cmm_set_समयout(दीर्घ nr, दीर्घ seconds)
+अणु
+	cmm_समयout_pages = nr;
+	cmm_समयout_seconds = seconds;
+	cmm_set_समयr();
+पूर्ण
 
-static int cmm_skip_blanks(char *cp, char **endp)
-{
-	char *str;
+अटल पूर्णांक cmm_skip_blanks(अक्षर *cp, अक्षर **endp)
+अणु
+	अक्षर *str;
 
-	for (str = cp; *str == ' ' || *str == '\t'; str++)
+	क्रम (str = cp; *str == ' ' || *str == '\t'; str++)
 		;
 	*endp = str;
-	return str != cp;
-}
+	वापस str != cp;
+पूर्ण
 
-static int cmm_pages_handler(struct ctl_table *ctl, int write,
-			     void *buffer, size_t *lenp, loff_t *ppos)
-{
-	long nr = cmm_get_pages();
-	struct ctl_table ctl_entry = {
+अटल पूर्णांक cmm_pages_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+			     व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	दीर्घ nr = cmm_get_pages();
+	काष्ठा ctl_table ctl_entry = अणु
 		.procname	= ctl->procname,
 		.data		= &nr,
-		.maxlen		= sizeof(long),
-	};
-	int rc;
+		.maxlen		= माप(दीर्घ),
+	पूर्ण;
+	पूर्णांक rc;
 
-	rc = proc_doulongvec_minmax(&ctl_entry, write, buffer, lenp, ppos);
-	if (rc < 0 || !write)
-		return rc;
+	rc = proc_करोuदीर्घvec_minmax(&ctl_entry, ग_लिखो, buffer, lenp, ppos);
+	अगर (rc < 0 || !ग_लिखो)
+		वापस rc;
 
 	cmm_set_pages(nr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cmm_timed_pages_handler(struct ctl_table *ctl, int write,
-				   void *buffer, size_t *lenp,
+अटल पूर्णांक cmm_समयd_pages_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+				   व्योम *buffer, माप_प्रकार *lenp,
 				   loff_t *ppos)
-{
-	long nr = cmm_get_timed_pages();
-	struct ctl_table ctl_entry = {
+अणु
+	दीर्घ nr = cmm_get_समयd_pages();
+	काष्ठा ctl_table ctl_entry = अणु
 		.procname	= ctl->procname,
 		.data		= &nr,
-		.maxlen		= sizeof(long),
-	};
-	int rc;
+		.maxlen		= माप(दीर्घ),
+	पूर्ण;
+	पूर्णांक rc;
 
-	rc = proc_doulongvec_minmax(&ctl_entry, write, buffer, lenp, ppos);
-	if (rc < 0 || !write)
-		return rc;
+	rc = proc_करोuदीर्घvec_minmax(&ctl_entry, ग_लिखो, buffer, lenp, ppos);
+	अगर (rc < 0 || !ग_लिखो)
+		वापस rc;
 
-	cmm_add_timed_pages(nr);
-	return 0;
-}
+	cmm_add_समयd_pages(nr);
+	वापस 0;
+पूर्ण
 
-static int cmm_timeout_handler(struct ctl_table *ctl, int write,
-			       void *buffer, size_t *lenp, loff_t *ppos)
-{
-	char buf[64], *p;
-	long nr, seconds;
-	unsigned int len;
+अटल पूर्णांक cmm_समयout_handler(काष्ठा ctl_table *ctl, पूर्णांक ग_लिखो,
+			       व्योम *buffer, माप_प्रकार *lenp, loff_t *ppos)
+अणु
+	अक्षर buf[64], *p;
+	दीर्घ nr, seconds;
+	अचिन्हित पूर्णांक len;
 
-	if (!*lenp || (*ppos && !write)) {
+	अगर (!*lenp || (*ppos && !ग_लिखो)) अणु
 		*lenp = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (write) {
-		len = min(*lenp, sizeof(buf));
-		memcpy(buf, buffer, len);
+	अगर (ग_लिखो) अणु
+		len = min(*lenp, माप(buf));
+		स_नकल(buf, buffer, len);
 		buf[len - 1] = '\0';
 		cmm_skip_blanks(buf, &p);
-		nr = simple_strtoul(p, &p, 0);
+		nr = simple_म_से_अदीर्घ(p, &p, 0);
 		cmm_skip_blanks(p, &p);
-		seconds = simple_strtoul(p, &p, 0);
-		cmm_set_timeout(nr, seconds);
+		seconds = simple_म_से_अदीर्घ(p, &p, 0);
+		cmm_set_समयout(nr, seconds);
 		*ppos += *lenp;
-	} else {
-		len = sprintf(buf, "%ld %ld\n",
-			      cmm_timeout_pages, cmm_timeout_seconds);
-		if (len > *lenp)
+	पूर्ण अन्यथा अणु
+		len = प्र_लिखो(buf, "%ld %ld\n",
+			      cmm_समयout_pages, cmm_समयout_seconds);
+		अगर (len > *lenp)
 			len = *lenp;
-		memcpy(buffer, buf, len);
+		स_नकल(buffer, buf, len);
 		*lenp = len;
 		*ppos += len;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct ctl_table cmm_table[] = {
-	{
+अटल काष्ठा ctl_table cmm_table[] = अणु
+	अणु
 		.procname	= "cmm_pages",
 		.mode		= 0644,
 		.proc_handler	= cmm_pages_handler,
-	},
-	{
+	पूर्ण,
+	अणु
 		.procname	= "cmm_timed_pages",
 		.mode		= 0644,
-		.proc_handler	= cmm_timed_pages_handler,
-	},
-	{
+		.proc_handler	= cmm_समयd_pages_handler,
+	पूर्ण,
+	अणु
 		.procname	= "cmm_timeout",
 		.mode		= 0644,
-		.proc_handler	= cmm_timeout_handler,
-	},
-	{ }
-};
+		.proc_handler	= cmm_समयout_handler,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table cmm_dir_table[] = {
-	{
+अटल काष्ठा ctl_table cmm_dir_table[] = अणु
+	अणु
 		.procname	= "vm",
 		.maxlen		= 0,
 		.mode		= 0555,
 		.child		= cmm_table,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-#ifdef CONFIG_CMM_IUCV
-#define SMSG_PREFIX "CMM"
-static void cmm_smsg_target(const char *from, char *msg)
-{
-	long nr, seconds;
+#अगर_घोषित CONFIG_CMM_IUCV
+#घोषणा SMSG_PREFIX "CMM"
+अटल व्योम cmm_smsg_target(स्थिर अक्षर *from, अक्षर *msg)
+अणु
+	दीर्घ nr, seconds;
 
-	if (strlen(sender) > 0 && strcmp(from, sender) != 0)
-		return;
-	if (!cmm_skip_blanks(msg + strlen(SMSG_PREFIX), &msg))
-		return;
-	if (strncmp(msg, "SHRINK", 6) == 0) {
-		if (!cmm_skip_blanks(msg + 6, &msg))
-			return;
-		nr = simple_strtoul(msg, &msg, 0);
+	अगर (म_माप(sender) > 0 && म_भेद(from, sender) != 0)
+		वापस;
+	अगर (!cmm_skip_blanks(msg + म_माप(SMSG_PREFIX), &msg))
+		वापस;
+	अगर (म_भेदन(msg, "SHRINK", 6) == 0) अणु
+		अगर (!cmm_skip_blanks(msg + 6, &msg))
+			वापस;
+		nr = simple_म_से_अदीर्घ(msg, &msg, 0);
 		cmm_skip_blanks(msg, &msg);
-		if (*msg == '\0')
+		अगर (*msg == '\0')
 			cmm_set_pages(nr);
-	} else if (strncmp(msg, "RELEASE", 7) == 0) {
-		if (!cmm_skip_blanks(msg + 7, &msg))
-			return;
-		nr = simple_strtoul(msg, &msg, 0);
+	पूर्ण अन्यथा अगर (म_भेदन(msg, "RELEASE", 7) == 0) अणु
+		अगर (!cmm_skip_blanks(msg + 7, &msg))
+			वापस;
+		nr = simple_म_से_अदीर्घ(msg, &msg, 0);
 		cmm_skip_blanks(msg, &msg);
-		if (*msg == '\0')
-			cmm_add_timed_pages(nr);
-	} else if (strncmp(msg, "REUSE", 5) == 0) {
-		if (!cmm_skip_blanks(msg + 5, &msg))
-			return;
-		nr = simple_strtoul(msg, &msg, 0);
-		if (!cmm_skip_blanks(msg, &msg))
-			return;
-		seconds = simple_strtoul(msg, &msg, 0);
+		अगर (*msg == '\0')
+			cmm_add_समयd_pages(nr);
+	पूर्ण अन्यथा अगर (म_भेदन(msg, "REUSE", 5) == 0) अणु
+		अगर (!cmm_skip_blanks(msg + 5, &msg))
+			वापस;
+		nr = simple_म_से_अदीर्घ(msg, &msg, 0);
+		अगर (!cmm_skip_blanks(msg, &msg))
+			वापस;
+		seconds = simple_म_से_अदीर्घ(msg, &msg, 0);
 		cmm_skip_blanks(msg, &msg);
-		if (*msg == '\0')
-			cmm_set_timeout(nr, seconds);
-	}
-}
-#endif
+		अगर (*msg == '\0')
+			cmm_set_समयout(nr, seconds);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static struct ctl_table_header *cmm_sysctl_header;
+अटल काष्ठा ctl_table_header *cmm_sysctl_header;
 
-static int __init cmm_init(void)
-{
-	int rc = -ENOMEM;
+अटल पूर्णांक __init cmm_init(व्योम)
+अणु
+	पूर्णांक rc = -ENOMEM;
 
-	cmm_sysctl_header = register_sysctl_table(cmm_dir_table);
-	if (!cmm_sysctl_header)
-		goto out_sysctl;
-#ifdef CONFIG_CMM_IUCV
-	/* convert sender to uppercase characters */
-	if (sender) {
-		int len = strlen(sender);
-		while (len--)
-			sender[len] = toupper(sender[len]);
-	} else {
-		sender = cmm_default_sender;
-	}
+	cmm_sysctl_header = रेजिस्टर_sysctl_table(cmm_dir_table);
+	अगर (!cmm_sysctl_header)
+		जाओ out_sysctl;
+#अगर_घोषित CONFIG_CMM_IUCV
+	/* convert sender to upperहाल अक्षरacters */
+	अगर (sender) अणु
+		पूर्णांक len = म_माप(sender);
+		जबतक (len--)
+			sender[len] = बड़े(sender[len]);
+	पूर्ण अन्यथा अणु
+		sender = cmm_शेष_sender;
+	पूर्ण
 
-	rc = smsg_register_callback(SMSG_PREFIX, cmm_smsg_target);
-	if (rc < 0)
-		goto out_smsg;
-#endif
-	rc = register_oom_notifier(&cmm_oom_nb);
-	if (rc < 0)
-		goto out_oom_notify;
-	cmm_thread_ptr = kthread_run(cmm_thread, NULL, "cmmthread");
-	if (!IS_ERR(cmm_thread_ptr))
-		return 0;
+	rc = smsg_रेजिस्टर_callback(SMSG_PREFIX, cmm_smsg_target);
+	अगर (rc < 0)
+		जाओ out_smsg;
+#पूर्ण_अगर
+	rc = रेजिस्टर_oom_notअगरier(&cmm_oom_nb);
+	अगर (rc < 0)
+		जाओ out_oom_notअगरy;
+	cmm_thपढ़ो_ptr = kthपढ़ो_run(cmm_thपढ़ो, शून्य, "cmmthread");
+	अगर (!IS_ERR(cmm_thपढ़ो_ptr))
+		वापस 0;
 
-	rc = PTR_ERR(cmm_thread_ptr);
-	unregister_oom_notifier(&cmm_oom_nb);
-out_oom_notify:
-#ifdef CONFIG_CMM_IUCV
-	smsg_unregister_callback(SMSG_PREFIX, cmm_smsg_target);
+	rc = PTR_ERR(cmm_thपढ़ो_ptr);
+	unरेजिस्टर_oom_notअगरier(&cmm_oom_nb);
+out_oom_notअगरy:
+#अगर_घोषित CONFIG_CMM_IUCV
+	smsg_unरेजिस्टर_callback(SMSG_PREFIX, cmm_smsg_target);
 out_smsg:
-#endif
-	unregister_sysctl_table(cmm_sysctl_header);
+#पूर्ण_अगर
+	unरेजिस्टर_sysctl_table(cmm_sysctl_header);
 out_sysctl:
-	del_timer_sync(&cmm_timer);
-	return rc;
-}
+	del_समयr_sync(&cmm_समयr);
+	वापस rc;
+पूर्ण
 module_init(cmm_init);
 
-static void __exit cmm_exit(void)
-{
-	unregister_sysctl_table(cmm_sysctl_header);
-#ifdef CONFIG_CMM_IUCV
-	smsg_unregister_callback(SMSG_PREFIX, cmm_smsg_target);
-#endif
-	unregister_oom_notifier(&cmm_oom_nb);
-	kthread_stop(cmm_thread_ptr);
-	del_timer_sync(&cmm_timer);
-	cmm_free_pages(cmm_pages, &cmm_pages, &cmm_page_list);
-	cmm_free_pages(cmm_timed_pages, &cmm_timed_pages, &cmm_timed_page_list);
-}
-module_exit(cmm_exit);
+अटल व्योम __निकास cmm_निकास(व्योम)
+अणु
+	unरेजिस्टर_sysctl_table(cmm_sysctl_header);
+#अगर_घोषित CONFIG_CMM_IUCV
+	smsg_unरेजिस्टर_callback(SMSG_PREFIX, cmm_smsg_target);
+#पूर्ण_अगर
+	unरेजिस्टर_oom_notअगरier(&cmm_oom_nb);
+	kthपढ़ो_stop(cmm_thपढ़ो_ptr);
+	del_समयr_sync(&cmm_समयr);
+	cmm_मुक्त_pages(cmm_pages, &cmm_pages, &cmm_page_list);
+	cmm_मुक्त_pages(cmm_समयd_pages, &cmm_समयd_pages, &cmm_समयd_page_list);
+पूर्ण
+module_निकास(cmm_निकास);
 
 MODULE_LICENSE("GPL");

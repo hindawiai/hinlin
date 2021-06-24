@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * This header provides Tegra210-specific constants for binding
+ * This header provides Tegra210-specअगरic स्थिरants क्रम binding
  * nvidia,tegra210-car.
  */
 
-#ifndef _DT_BINDINGS_RESET_TEGRA210_CAR_H
-#define _DT_BINDINGS_RESET_TEGRA210_CAR_H
+#अगर_अघोषित _DT_BINDINGS_RESET_TEGRA210_CAR_H
+#घोषणा _DT_BINDINGS_RESET_TEGRA210_CAR_H
 
-#define TEGRA210_RESET(x)		(7 * 32 + (x))
-#define TEGRA210_RST_DFLL_DVCO		TEGRA210_RESET(0)
-#define TEGRA210_RST_ADSP		TEGRA210_RESET(1)
+#घोषणा TEGRA210_RESET(x)		(7 * 32 + (x))
+#घोषणा TEGRA210_RST_DFLL_DVCO		TEGRA210_RESET(0)
+#घोषणा TEGRA210_RST_ADSP		TEGRA210_RESET(1)
 
-#endif	/* _DT_BINDINGS_RESET_TEGRA210_CAR_H */
+#पूर्ण_अगर	/* _DT_BINDINGS_RESET_TEGRA210_CAR_H */

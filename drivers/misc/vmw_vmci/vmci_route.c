@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#include <linux/vmw_vmci_defs.h>
-#include <linux/vmw_vmci_api.h>
+#समावेश <linux/vmw_vmci_defs.h>
+#समावेश <linux/vmw_vmci_api.h>
 
-#include "vmci_context.h"
-#include "vmci_driver.h"
-#include "vmci_route.h"
+#समावेश "vmci_context.h"
+#समावेश "vmci_driver.h"
+#समावेश "vmci_route.h"
 
 /*
- * Make a routing decision for the given source and destination handles.
+ * Make a routing decision क्रम the given source and destination handles.
  * This will try to determine the route using the handles and the available
- * devices.  Will set the source context if it is invalid.
+ * devices.  Will set the source context अगर it is invalid.
  */
-int vmci_route(struct vmci_handle *src,
-	       const struct vmci_handle *dst,
+पूर्णांक vmci_route(काष्ठा vmci_handle *src,
+	       स्थिर काष्ठा vmci_handle *dst,
 	       bool from_guest,
-	       enum vmci_route *route)
-{
+	       क्रमागत vmci_route *route)
+अणु
 	bool has_host_device = vmci_host_code_active();
 	bool has_guest_device = vmci_guest_code_active();
 
@@ -33,65 +34,65 @@ int vmci_route(struct vmci_handle *src,
 	 * which comes from the VMX, so we know it is coming from a
 	 * guest.
 	 *
-	 * To avoid inconsistencies, test these once.  We will test
-	 * them again when we do the actual send to ensure that we do
+	 * To aव्योम inconsistencies, test these once.  We will test
+	 * them again when we करो the actual send to ensure that we करो
 	 * not touch a non-existent device.
 	 */
 
 	/* Must have a valid destination context. */
-	if (VMCI_INVALID_ID == dst->context)
-		return VMCI_ERROR_INVALID_ARGS;
+	अगर (VMCI_INVALID_ID == dst->context)
+		वापस VMCI_ERROR_INVALID_ARGS;
 
 	/* Anywhere to hypervisor. */
-	if (VMCI_HYPERVISOR_CONTEXT_ID == dst->context) {
+	अगर (VMCI_HYPERVISOR_CONTEXT_ID == dst->context) अणु
 
 		/*
-		 * If this message already came from a guest then we
+		 * If this message alपढ़ोy came from a guest then we
 		 * cannot send it to the hypervisor.  It must come
 		 * from a local client.
 		 */
-		if (from_guest)
-			return VMCI_ERROR_DST_UNREACHABLE;
+		अगर (from_guest)
+			वापस VMCI_ERROR_DST_UNREACHABLE;
 
 		/*
 		 * We must be acting as a guest in order to send to
 		 * the hypervisor.
 		 */
-		if (!has_guest_device)
-			return VMCI_ERROR_DEVICE_NOT_FOUND;
+		अगर (!has_guest_device)
+			वापस VMCI_ERROR_DEVICE_NOT_FOUND;
 
-		/* And we cannot send if the source is the host context. */
-		if (VMCI_HOST_CONTEXT_ID == src->context)
-			return VMCI_ERROR_INVALID_ARGS;
+		/* And we cannot send अगर the source is the host context. */
+		अगर (VMCI_HOST_CONTEXT_ID == src->context)
+			वापस VMCI_ERROR_INVALID_ARGS;
 
 		/*
 		 * If the client passed the ANON source handle then
 		 * respect it (both context and resource are invalid).
-		 * However, if they passed only an invalid context,
-		 * then they probably mean ANY, in which case we
-		 * should set the real context here before passing it
-		 * down.
+		 * However, अगर they passed only an invalid context,
+		 * then they probably mean ANY, in which हाल we
+		 * should set the real context here beक्रमe passing it
+		 * करोwn.
 		 */
-		if (VMCI_INVALID_ID == src->context &&
+		अगर (VMCI_INVALID_ID == src->context &&
 		    VMCI_INVALID_ID != src->resource)
 			src->context = vmci_get_context_id();
 
-		/* Send from local client down to the hypervisor. */
+		/* Send from local client करोwn to the hypervisor. */
 		*route = VMCI_ROUTE_AS_GUEST;
-		return VMCI_SUCCESS;
-	}
+		वापस VMCI_SUCCESS;
+	पूर्ण
 
 	/* Anywhere to local client on host. */
-	if (VMCI_HOST_CONTEXT_ID == dst->context) {
+	अगर (VMCI_HOST_CONTEXT_ID == dst->context) अणु
 		/*
 		 * If it is not from a guest but we are acting as a
-		 * guest, then we need to send it down to the host.
-		 * Note that if we are also acting as a host then this
+		 * guest, then we need to send it करोwn to the host.
+		 * Note that अगर we are also acting as a host then this
 		 * will prevent us from sending from local client to
 		 * local client, but we accept that restriction as a
-		 * way to remove any ambiguity from the host context.
+		 * way to हटाओ any ambiguity from the host context.
 		 */
-		if (src->context == VMCI_HYPERVISOR_CONTEXT_ID) {
+		अगर (src->context == VMCI_HYPERVISOR_CONTEXT_ID) अणु
 			/*
 			 * If the hypervisor is the source, this is
 			 * host local communication. The hypervisor
@@ -100,58 +101,58 @@ int vmci_route(struct vmci_handle *src,
 			 * an "outer host" through the guest device.
 			 */
 
-			if (has_host_device) {
+			अगर (has_host_device) अणु
 				*route = VMCI_ROUTE_AS_HOST;
-				return VMCI_SUCCESS;
-			} else {
-				return VMCI_ERROR_DEVICE_NOT_FOUND;
-			}
-		}
+				वापस VMCI_SUCCESS;
+			पूर्ण अन्यथा अणु
+				वापस VMCI_ERROR_DEVICE_NOT_FOUND;
+			पूर्ण
+		पूर्ण
 
-		if (!from_guest && has_guest_device) {
+		अगर (!from_guest && has_guest_device) अणु
 			/* If no source context then use the current. */
-			if (VMCI_INVALID_ID == src->context)
+			अगर (VMCI_INVALID_ID == src->context)
 				src->context = vmci_get_context_id();
 
-			/* Send it from local client down to the host. */
+			/* Send it from local client करोwn to the host. */
 			*route = VMCI_ROUTE_AS_GUEST;
-			return VMCI_SUCCESS;
-		}
+			वापस VMCI_SUCCESS;
+		पूर्ण
 
 		/*
-		 * Otherwise we already received it from a guest and
-		 * it is destined for a local client on this host, or
+		 * Otherwise we alपढ़ोy received it from a guest and
+		 * it is destined क्रम a local client on this host, or
 		 * it is from another local client on this host.  We
 		 * must be acting as a host to service it.
 		 */
-		if (!has_host_device)
-			return VMCI_ERROR_DEVICE_NOT_FOUND;
+		अगर (!has_host_device)
+			वापस VMCI_ERROR_DEVICE_NOT_FOUND;
 
-		if (VMCI_INVALID_ID == src->context) {
+		अगर (VMCI_INVALID_ID == src->context) अणु
 			/*
 			 * If it came from a guest then it must have a
 			 * valid context.  Otherwise we can use the
 			 * host context.
 			 */
-			if (from_guest)
-				return VMCI_ERROR_INVALID_ARGS;
+			अगर (from_guest)
+				वापस VMCI_ERROR_INVALID_ARGS;
 
 			src->context = VMCI_HOST_CONTEXT_ID;
-		}
+		पूर्ण
 
 		/* Route to local client. */
 		*route = VMCI_ROUTE_AS_HOST;
-		return VMCI_SUCCESS;
-	}
+		वापस VMCI_SUCCESS;
+	पूर्ण
 
 	/*
-	 * If we are acting as a host then this might be destined for
+	 * If we are acting as a host then this might be destined क्रम
 	 * a guest.
 	 */
-	if (has_host_device) {
-		/* It will have a context if it is meant for a guest. */
-		if (vmci_ctx_exists(dst->context)) {
-			if (VMCI_INVALID_ID == src->context) {
+	अगर (has_host_device) अणु
+		/* It will have a context अगर it is meant क्रम a guest. */
+		अगर (vmci_ctx_exists(dst->context)) अणु
+			अगर (VMCI_INVALID_ID == src->context) अणु
 				/*
 				 * If it came from a guest then it
 				 * must have a valid context.
@@ -159,60 +160,60 @@ int vmci_route(struct vmci_handle *src,
 				 * context.
 				 */
 
-				if (from_guest)
-					return VMCI_ERROR_INVALID_ARGS;
+				अगर (from_guest)
+					वापस VMCI_ERROR_INVALID_ARGS;
 
 				src->context = VMCI_HOST_CONTEXT_ID;
-			} else if (VMCI_CONTEXT_IS_VM(src->context) &&
-				   src->context != dst->context) {
+			पूर्ण अन्यथा अगर (VMCI_CONTEXT_IS_VM(src->context) &&
+				   src->context != dst->context) अणु
 				/*
 				 * VM to VM communication is not
 				 * allowed. Since we catch all
-				 * communication destined for the host
-				 * above, this must be destined for a
+				 * communication destined क्रम the host
+				 * above, this must be destined क्रम a
 				 * VM since there is a valid context.
 				 */
 
-				return VMCI_ERROR_DST_UNREACHABLE;
-			}
+				वापस VMCI_ERROR_DST_UNREACHABLE;
+			पूर्ण
 
 			/* Pass it up to the guest. */
 			*route = VMCI_ROUTE_AS_HOST;
-			return VMCI_SUCCESS;
-		} else if (!has_guest_device) {
+			वापस VMCI_SUCCESS;
+		पूर्ण अन्यथा अगर (!has_guest_device) अणु
 			/*
 			 * The host is attempting to reach a CID
 			 * without an active context, and we can't
-			 * send it down, since we have no guest
+			 * send it करोwn, since we have no guest
 			 * device.
 			 */
 
-			return VMCI_ERROR_DST_UNREACHABLE;
-		}
-	}
+			वापस VMCI_ERROR_DST_UNREACHABLE;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * We must be a guest trying to send to another guest, which means
-	 * we need to send it down to the host. We do not filter out VM to
+	 * we need to send it करोwn to the host. We करो not filter out VM to
 	 * VM communication here, since we want to be able to use the guest
-	 * driver on older versions that do support VM to VM communication.
+	 * driver on older versions that करो support VM to VM communication.
 	 */
-	if (!has_guest_device) {
+	अगर (!has_guest_device) अणु
 		/*
 		 * Ending up here means we have neither guest nor host
 		 * device.
 		 */
-		return VMCI_ERROR_DEVICE_NOT_FOUND;
-	}
+		वापस VMCI_ERROR_DEVICE_NOT_FOUND;
+	पूर्ण
 
 	/* If no source context then use the current context. */
-	if (VMCI_INVALID_ID == src->context)
+	अगर (VMCI_INVALID_ID == src->context)
 		src->context = vmci_get_context_id();
 
 	/*
-	 * Send it from local client down to the host, which will
-	 * route it to the other guest for us.
+	 * Send it from local client करोwn to the host, which will
+	 * route it to the other guest क्रम us.
 	 */
 	*route = VMCI_ROUTE_AS_GUEST;
-	return VMCI_SUCCESS;
-}
+	वापस VMCI_SUCCESS;
+पूर्ण

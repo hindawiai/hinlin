@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * ascot2e.h
  *
@@ -10,48 +11,48 @@
  * Copyright (C) 2014 Abylay Ospan <aospan@netup.ru>
   */
 
-#ifndef __DVB_ASCOT2E_H__
-#define __DVB_ASCOT2E_H__
+#अगर_अघोषित __DVB_ASCOT2E_H__
+#घोषणा __DVB_ASCOT2E_H__
 
-#include <linux/dvb/frontend.h>
-#include <linux/i2c.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/i2c.h>
 
 /**
- * struct ascot2e_config - the configuration of Ascot2E tuner driver
+ * काष्ठा ascot2e_config - the configuration of Ascot2E tuner driver
  * @i2c_address:	I2C address of the tuner
  * @xtal_freq_mhz:	Oscillator frequency, MHz
- * @set_tuner_priv:	Callback function private context
- * @set_tuner_callback:	Callback function that notifies the parent driver
+ * @set_tuner_priv:	Callback function निजी context
+ * @set_tuner_callback:	Callback function that notअगरies the parent driver
  *			which tuner is active now
  */
-struct ascot2e_config {
+काष्ठा ascot2e_config अणु
 	u8	i2c_address;
 	u8	xtal_freq_mhz;
-	void	*set_tuner_priv;
-	int	(*set_tuner_callback)(void *, int);
-};
+	व्योम	*set_tuner_priv;
+	पूर्णांक	(*set_tuner_callback)(व्योम *, पूर्णांक);
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_ASCOT2E)
+#अगर IS_REACHABLE(CONFIG_DVB_ASCOT2E)
 /**
  * ascot2e_attach - Attach an ascot2e tuner
  *
  * @fe: frontend to be attached
- * @config: pointer to &struct ascot2e_config with tuner configuration.
+ * @config: poपूर्णांकer to &काष्ठा ascot2e_config with tuner configuration.
  * @i2c: i2c adapter to use.
  *
- * return: FE pointer on success, NULL on failure.
+ * वापस: FE poपूर्णांकer on success, शून्य on failure.
  */
-extern struct dvb_frontend *ascot2e_attach(struct dvb_frontend *fe,
-					const struct ascot2e_config *config,
-					struct i2c_adapter *i2c);
-#else
-static inline struct dvb_frontend *ascot2e_attach(struct dvb_frontend *fe,
-					const struct ascot2e_config *config,
-					struct i2c_adapter *i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+बाह्य काष्ठा dvb_frontend *ascot2e_attach(काष्ठा dvb_frontend *fe,
+					स्थिर काष्ठा ascot2e_config *config,
+					काष्ठा i2c_adapter *i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *ascot2e_attach(काष्ठा dvb_frontend *fe,
+					स्थिर काष्ठा ascot2e_config *config,
+					काष्ठा i2c_adapter *i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

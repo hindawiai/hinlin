@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * include/linux/mpage.h
  *
@@ -7,19 +8,19 @@
  */
 
 /*
- * (And no, it doesn't do the #ifdef __MPAGE_H thing, and it doesn't do
+ * (And no, it करोesn't do the #ifdef __MPAGE_H thing, and it doesn't करो
  * nested includes.  Get it right in the .c file).
  */
-#ifdef CONFIG_BLOCK
+#अगर_घोषित CONFIG_BLOCK
 
-struct writeback_control;
-struct readahead_control;
+काष्ठा ग_लिखोback_control;
+काष्ठा पढ़ोahead_control;
 
-void mpage_readahead(struct readahead_control *, get_block_t get_block);
-int mpage_readpage(struct page *page, get_block_t get_block);
-int mpage_writepages(struct address_space *mapping,
-		struct writeback_control *wbc, get_block_t get_block);
-int mpage_writepage(struct page *page, get_block_t *get_block,
-		struct writeback_control *wbc);
+व्योम mpage_पढ़ोahead(काष्ठा पढ़ोahead_control *, get_block_t get_block);
+पूर्णांक mpage_पढ़ोpage(काष्ठा page *page, get_block_t get_block);
+पूर्णांक mpage_ग_लिखोpages(काष्ठा address_space *mapping,
+		काष्ठा ग_लिखोback_control *wbc, get_block_t get_block);
+पूर्णांक mpage_ग_लिखोpage(काष्ठा page *page, get_block_t *get_block,
+		काष्ठा ग_लिखोback_control *wbc);
 
-#endif
+#पूर्ण_अगर

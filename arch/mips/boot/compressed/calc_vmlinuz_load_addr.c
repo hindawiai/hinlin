@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2010 "Wu Zhangjin" <wuzhangjin@gmail.com>
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <linux/sizes.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <linux/sizes.h>
 
-int main(int argc, char *argv[])
-{
-	unsigned long long vmlinux_size, vmlinux_load_addr, vmlinuz_load_addr;
-	struct stat sb;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	अचिन्हित दीर्घ दीर्घ vmlinux_size, vmlinux_load_addr, vmlinuz_load_addr;
+	काष्ठा stat sb;
 
-	if (argc != 3) {
-		fprintf(stderr, "Usage: %s <pathname> <vmlinux_load_addr>\n",
+	अगर (argc != 3) अणु
+		ख_लिखो(मानक_त्रुटि, "Usage: %s <pathname> <vmlinux_load_addr>\n",
 				argv[0]);
-		return EXIT_FAILURE;
-	}
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	if (stat(argv[1], &sb) == -1) {
-		perror("stat");
-		return EXIT_FAILURE;
-	}
+	अगर (stat(argv[1], &sb) == -1) अणु
+		लिखो_त्रुटि("stat");
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	/* Convert hex characters to dec number */
-	errno = 0;
-	if (sscanf(argv[2], "%llx", &vmlinux_load_addr) != 1) {
-		if (errno != 0)
-			perror("sscanf");
-		else
-			fprintf(stderr, "No matching characters\n");
+	/* Convert hex अक्षरacters to dec number */
+	त्रुटि_सं = 0;
+	अगर (माला_पूछो(argv[2], "%llx", &vmlinux_load_addr) != 1) अणु
+		अगर (त्रुटि_सं != 0)
+			लिखो_त्रुटि("sscanf");
+		अन्यथा
+			ख_लिखो(मानक_त्रुटि, "No matching characters\n");
 
-		return EXIT_FAILURE;
-	}
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	vmlinux_size = (uint64_t)sb.st_size;
+	vmlinux_size = (uपूर्णांक64_t)sb.st_size;
 	vmlinuz_load_addr = vmlinux_load_addr + vmlinux_size;
 
 	/*
@@ -48,7 +49,7 @@ int main(int argc, char *argv[])
 
 	vmlinuz_load_addr += (SZ_64K - vmlinux_size % SZ_64K);
 
-	printf("0x%llx\n", vmlinuz_load_addr);
+	म_लिखो("0x%llx\n", vmlinuz_load_addr);
 
-	return EXIT_SUCCESS;
-}
+	वापस निकास_सफल;
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* ipv6header match - matches IPv6 packets based
    on whether they contain certain headers */
 
@@ -8,146 +9,146 @@
 /* (C) 2001-2002 Andras Kis-Szabo <kisza@sch.bme.hu>
  */
 
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/ipv6.h>
-#include <linux/types.h>
-#include <net/checksum.h>
-#include <net/ipv6.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/types.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ipv6.h>
 
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter_ipv6.h>
-#include <linux/netfilter_ipv6/ip6t_ipv6header.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <linux/netfilter_ipv6/ip6t_ipv6header.h>
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Xtables: IPv6 header types match");
 MODULE_AUTHOR("Andras Kis-Szabo <kisza@sch.bme.hu>");
 
-static bool
-ipv6header_mt6(const struct sk_buff *skb, struct xt_action_param *par)
-{
-	const struct ip6t_ipv6header_info *info = par->matchinfo;
-	unsigned int temp;
-	int len;
+अटल bool
+ipv6header_mt6(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा ip6t_ipv6header_info *info = par->matchinfo;
+	अचिन्हित पूर्णांक temp;
+	पूर्णांक len;
 	u8 nexthdr;
-	unsigned int ptr;
+	अचिन्हित पूर्णांक ptr;
 
 	/* Make sure this isn't an evil packet */
 
 	/* type of the 1st exthdr */
 	nexthdr = ipv6_hdr(skb)->nexthdr;
-	/* pointer to the 1st exthdr */
-	ptr = sizeof(struct ipv6hdr);
+	/* poपूर्णांकer to the 1st exthdr */
+	ptr = माप(काष्ठा ipv6hdr);
 	/* available length */
 	len = skb->len - ptr;
 	temp = 0;
 
-	while (nf_ip6_ext_hdr(nexthdr)) {
-		const struct ipv6_opt_hdr *hp;
-		struct ipv6_opt_hdr _hdr;
-		int hdrlen;
+	जबतक (nf_ip6_ext_hdr(nexthdr)) अणु
+		स्थिर काष्ठा ipv6_opt_hdr *hp;
+		काष्ठा ipv6_opt_hdr _hdr;
+		पूर्णांक hdrlen;
 
 		/* No more exthdr -> evaluate */
-		if (nexthdr == NEXTHDR_NONE) {
+		अगर (nexthdr == NEXTHDR_NONE) अणु
 			temp |= MASK_NONE;
-			break;
-		}
-		/* Is there enough space for the next ext header? */
-		if (len < (int)sizeof(struct ipv6_opt_hdr))
-			return false;
+			अवरोध;
+		पूर्ण
+		/* Is there enough space क्रम the next ext header? */
+		अगर (len < (पूर्णांक)माप(काष्ठा ipv6_opt_hdr))
+			वापस false;
 		/* ESP -> evaluate */
-		if (nexthdr == NEXTHDR_ESP) {
+		अगर (nexthdr == NEXTHDR_ESP) अणु
 			temp |= MASK_ESP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		hp = skb_header_pointer(skb, ptr, sizeof(_hdr), &_hdr);
-		if (!hp) {
+		hp = skb_header_poपूर्णांकer(skb, ptr, माप(_hdr), &_hdr);
+		अगर (!hp) अणु
 			par->hotdrop = true;
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
 		/* Calculate the header length */
-		if (nexthdr == NEXTHDR_FRAGMENT)
+		अगर (nexthdr == NEXTHDR_FRAGMENT)
 			hdrlen = 8;
-		else if (nexthdr == NEXTHDR_AUTH)
+		अन्यथा अगर (nexthdr == NEXTHDR_AUTH)
 			hdrlen = ipv6_authlen(hp);
-		else
+		अन्यथा
 			hdrlen = ipv6_optlen(hp);
 
 		/* set the flag */
-		switch (nexthdr) {
-		case NEXTHDR_HOP:
+		चयन (nexthdr) अणु
+		हाल NEXTHDR_HOP:
 			temp |= MASK_HOPOPTS;
-			break;
-		case NEXTHDR_ROUTING:
+			अवरोध;
+		हाल NEXTHDR_ROUTING:
 			temp |= MASK_ROUTING;
-			break;
-		case NEXTHDR_FRAGMENT:
+			अवरोध;
+		हाल NEXTHDR_FRAGMENT:
 			temp |= MASK_FRAGMENT;
-			break;
-		case NEXTHDR_AUTH:
+			अवरोध;
+		हाल NEXTHDR_AUTH:
 			temp |= MASK_AH;
-			break;
-		case NEXTHDR_DEST:
+			अवरोध;
+		हाल NEXTHDR_DEST:
 			temp |= MASK_DSTOPTS;
-			break;
-		default:
-			return false;
-		}
+			अवरोध;
+		शेष:
+			वापस false;
+		पूर्ण
 
 		nexthdr = hp->nexthdr;
 		len -= hdrlen;
 		ptr += hdrlen;
-		if (ptr > skb->len)
-			break;
-	}
+		अगर (ptr > skb->len)
+			अवरोध;
+	पूर्ण
 
-	if (nexthdr != NEXTHDR_NONE && nexthdr != NEXTHDR_ESP)
+	अगर (nexthdr != NEXTHDR_NONE && nexthdr != NEXTHDR_ESP)
 		temp |= MASK_PROTO;
 
-	if (info->modeflag)
-		return !((temp ^ info->matchflags ^ info->invflags)
+	अगर (info->modeflag)
+		वापस !((temp ^ info->matchflags ^ info->invflags)
 			 & info->matchflags);
-	else {
-		if (info->invflags)
-			return temp != info->matchflags;
-		else
-			return temp == info->matchflags;
-	}
-}
+	अन्यथा अणु
+		अगर (info->invflags)
+			वापस temp != info->matchflags;
+		अन्यथा
+			वापस temp == info->matchflags;
+	पूर्ण
+पूर्ण
 
-static int ipv6header_mt6_check(const struct xt_mtchk_param *par)
-{
-	const struct ip6t_ipv6header_info *info = par->matchinfo;
+अटल पूर्णांक ipv6header_mt6_check(स्थिर काष्ठा xt_mtchk_param *par)
+अणु
+	स्थिर काष्ठा ip6t_ipv6header_info *info = par->matchinfo;
 
 	/* invflags is 0 or 0xff in hard mode */
-	if ((!info->modeflag) && info->invflags != 0x00 &&
+	अगर ((!info->modeflag) && info->invflags != 0x00 &&
 	    info->invflags != 0xFF)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct xt_match ipv6header_mt6_reg __read_mostly = {
+अटल काष्ठा xt_match ipv6header_mt6_reg __पढ़ो_mostly = अणु
 	.name		= "ipv6header",
 	.family		= NFPROTO_IPV6,
 	.match		= ipv6header_mt6,
-	.matchsize	= sizeof(struct ip6t_ipv6header_info),
+	.matchsize	= माप(काष्ठा ip6t_ipv6header_info),
 	.checkentry	= ipv6header_mt6_check,
-	.destroy	= NULL,
+	.destroy	= शून्य,
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init ipv6header_mt6_init(void)
-{
-	return xt_register_match(&ipv6header_mt6_reg);
-}
+अटल पूर्णांक __init ipv6header_mt6_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_match(&ipv6header_mt6_reg);
+पूर्ण
 
-static void __exit ipv6header_mt6_exit(void)
-{
-	xt_unregister_match(&ipv6header_mt6_reg);
-}
+अटल व्योम __निकास ipv6header_mt6_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_match(&ipv6header_mt6_reg);
+पूर्ण
 
 module_init(ipv6header_mt6_init);
-module_exit(ipv6header_mt6_exit);
+module_निकास(ipv6header_mt6_निकास);

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * USB Glue for Amlogic G12A SoCs
+ * USB Glue क्रम Amlogic G12A SoCs
  *
  * Copyright (c) 2019 BayLibre, SAS
  * Author: Neil Armstrong <narmstrong@baylibre.com>
@@ -8,191 +9,191 @@
 
 /*
  * The USB is organized with a glue around the DWC3 Controller IP as :
- * - Control registers for each USB2 Ports
- * - Control registers for the USB PHY layer
- * - SuperSpeed PHY can be enabled only if port is used
- * - Dynamic OTG switching with ID change interrupt
+ * - Control रेजिस्टरs क्रम each USB2 Ports
+ * - Control रेजिस्टरs क्रम the USB PHY layer
+ * - SuperSpeed PHY can be enabled only अगर port is used
+ * - Dynamic OTG चयनing with ID change पूर्णांकerrupt
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
-#include <linux/bitfield.h>
-#include <linux/bitops.h>
-#include <linux/reset.h>
-#include <linux/phy/phy.h>
-#include <linux/usb/otg.h>
-#include <linux/usb/role.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/usb/otg.h>
+#समावेश <linux/usb/role.h>
+#समावेश <linux/regulator/consumer.h>
 
 /* USB2 Ports Control Registers, offsets are per-port */
 
-#define U2P_REG_SIZE						0x20
+#घोषणा U2P_REG_SIZE						0x20
 
-#define U2P_R0							0x0
-	#define U2P_R0_HOST_DEVICE				BIT(0)
-	#define U2P_R0_POWER_OK					BIT(1)
-	#define U2P_R0_HAST_MODE				BIT(2)
-	#define U2P_R0_POWER_ON_RESET				BIT(3)
-	#define U2P_R0_ID_PULLUP				BIT(4)
-	#define U2P_R0_DRV_VBUS					BIT(5)
+#घोषणा U2P_R0							0x0
+	#घोषणा U2P_R0_HOST_DEVICE				BIT(0)
+	#घोषणा U2P_R0_POWER_OK					BIT(1)
+	#घोषणा U2P_R0_HAST_MODE				BIT(2)
+	#घोषणा U2P_R0_POWER_ON_RESET				BIT(3)
+	#घोषणा U2P_R0_ID_PULLUP				BIT(4)
+	#घोषणा U2P_R0_DRV_VBUS					BIT(5)
 
-#define U2P_R1							0x4
-	#define U2P_R1_PHY_READY				BIT(0)
-	#define U2P_R1_ID_DIG					BIT(1)
-	#define U2P_R1_OTG_SESSION_VALID			BIT(2)
-	#define U2P_R1_VBUS_VALID				BIT(3)
+#घोषणा U2P_R1							0x4
+	#घोषणा U2P_R1_PHY_READY				BIT(0)
+	#घोषणा U2P_R1_ID_DIG					BIT(1)
+	#घोषणा U2P_R1_OTG_SESSION_VALID			BIT(2)
+	#घोषणा U2P_R1_VBUS_VALID				BIT(3)
 
 /* USB Glue Control Registers */
 
-#define G12A_GLUE_OFFSET					0x80
+#घोषणा G12A_GLUE_OFFSET					0x80
 
-#define USB_R0							0x00
-	#define USB_R0_P30_LANE0_TX2RX_LOOPBACK			BIT(17)
-	#define USB_R0_P30_LANE0_EXT_PCLK_REQ			BIT(18)
-	#define USB_R0_P30_PCS_RX_LOS_MASK_VAL_MASK		GENMASK(28, 19)
-	#define USB_R0_U2D_SS_SCALEDOWN_MODE_MASK		GENMASK(30, 29)
-	#define USB_R0_U2D_ACT					BIT(31)
+#घोषणा USB_R0							0x00
+	#घोषणा USB_R0_P30_LANE0_TX2RX_LOOPBACK			BIT(17)
+	#घोषणा USB_R0_P30_LANE0_EXT_PCLK_REQ			BIT(18)
+	#घोषणा USB_R0_P30_PCS_RX_LOS_MASK_VAL_MASK		GENMASK(28, 19)
+	#घोषणा USB_R0_U2D_SS_SCALEDOWN_MODE_MASK		GENMASK(30, 29)
+	#घोषणा USB_R0_U2D_ACT					BIT(31)
 
-#define USB_R1							0x04
-	#define USB_R1_U3H_BIGENDIAN_GS				BIT(0)
-	#define USB_R1_U3H_PME_ENABLE				BIT(1)
-	#define USB_R1_U3H_HUB_PORT_OVERCURRENT_MASK		GENMASK(4, 2)
-	#define USB_R1_U3H_HUB_PORT_PERM_ATTACH_MASK		GENMASK(9, 7)
-	#define USB_R1_U3H_HOST_U2_PORT_DISABLE_MASK		GENMASK(13, 12)
-	#define USB_R1_U3H_HOST_U3_PORT_DISABLE			BIT(16)
-	#define USB_R1_U3H_HOST_PORT_POWER_CONTROL_PRESENT	BIT(17)
-	#define USB_R1_U3H_HOST_MSI_ENABLE			BIT(18)
-	#define USB_R1_U3H_FLADJ_30MHZ_REG_MASK			GENMASK(24, 19)
-	#define USB_R1_P30_PCS_TX_SWING_FULL_MASK		GENMASK(31, 25)
+#घोषणा USB_R1							0x04
+	#घोषणा USB_R1_U3H_BIGENDIAN_GS				BIT(0)
+	#घोषणा USB_R1_U3H_PME_ENABLE				BIT(1)
+	#घोषणा USB_R1_U3H_HUB_PORT_OVERCURRENT_MASK		GENMASK(4, 2)
+	#घोषणा USB_R1_U3H_HUB_PORT_PERM_ATTACH_MASK		GENMASK(9, 7)
+	#घोषणा USB_R1_U3H_HOST_U2_PORT_DISABLE_MASK		GENMASK(13, 12)
+	#घोषणा USB_R1_U3H_HOST_U3_PORT_DISABLE			BIT(16)
+	#घोषणा USB_R1_U3H_HOST_PORT_POWER_CONTROL_PRESENT	BIT(17)
+	#घोषणा USB_R1_U3H_HOST_MSI_ENABLE			BIT(18)
+	#घोषणा USB_R1_U3H_FLADJ_30MHZ_REG_MASK			GENMASK(24, 19)
+	#घोषणा USB_R1_P30_PCS_TX_SWING_FULL_MASK		GENMASK(31, 25)
 
-#define USB_R2							0x08
-	#define USB_R2_P30_PCS_TX_DEEMPH_3P5DB_MASK		GENMASK(25, 20)
-	#define USB_R2_P30_PCS_TX_DEEMPH_6DB_MASK		GENMASK(31, 26)
+#घोषणा USB_R2							0x08
+	#घोषणा USB_R2_P30_PCS_TX_DEEMPH_3P5DB_MASK		GENMASK(25, 20)
+	#घोषणा USB_R2_P30_PCS_TX_DEEMPH_6DB_MASK		GENMASK(31, 26)
 
-#define USB_R3							0x0c
-	#define USB_R3_P30_SSC_ENABLE				BIT(0)
-	#define USB_R3_P30_SSC_RANGE_MASK			GENMASK(3, 1)
-	#define USB_R3_P30_SSC_REF_CLK_SEL_MASK			GENMASK(12, 4)
-	#define USB_R3_P30_REF_SSP_EN				BIT(13)
+#घोषणा USB_R3							0x0c
+	#घोषणा USB_R3_P30_SSC_ENABLE				BIT(0)
+	#घोषणा USB_R3_P30_SSC_RANGE_MASK			GENMASK(3, 1)
+	#घोषणा USB_R3_P30_SSC_REF_CLK_SEL_MASK			GENMASK(12, 4)
+	#घोषणा USB_R3_P30_REF_SSP_EN				BIT(13)
 
-#define USB_R4							0x10
-	#define USB_R4_P21_PORT_RESET_0				BIT(0)
-	#define USB_R4_P21_SLEEP_M0				BIT(1)
-	#define USB_R4_MEM_PD_MASK				GENMASK(3, 2)
-	#define USB_R4_P21_ONLY					BIT(4)
+#घोषणा USB_R4							0x10
+	#घोषणा USB_R4_P21_PORT_RESET_0				BIT(0)
+	#घोषणा USB_R4_P21_SLEEP_M0				BIT(1)
+	#घोषणा USB_R4_MEM_PD_MASK				GENMASK(3, 2)
+	#घोषणा USB_R4_P21_ONLY					BIT(4)
 
-#define USB_R5							0x14
-	#define USB_R5_ID_DIG_SYNC				BIT(0)
-	#define USB_R5_ID_DIG_REG				BIT(1)
-	#define USB_R5_ID_DIG_CFG_MASK				GENMASK(3, 2)
-	#define USB_R5_ID_DIG_EN_0				BIT(4)
-	#define USB_R5_ID_DIG_EN_1				BIT(5)
-	#define USB_R5_ID_DIG_CURR				BIT(6)
-	#define USB_R5_ID_DIG_IRQ				BIT(7)
-	#define USB_R5_ID_DIG_TH_MASK				GENMASK(15, 8)
-	#define USB_R5_ID_DIG_CNT_MASK				GENMASK(23, 16)
+#घोषणा USB_R5							0x14
+	#घोषणा USB_R5_ID_DIG_SYNC				BIT(0)
+	#घोषणा USB_R5_ID_DIG_REG				BIT(1)
+	#घोषणा USB_R5_ID_DIG_CFG_MASK				GENMASK(3, 2)
+	#घोषणा USB_R5_ID_DIG_EN_0				BIT(4)
+	#घोषणा USB_R5_ID_DIG_EN_1				BIT(5)
+	#घोषणा USB_R5_ID_DIG_CURR				BIT(6)
+	#घोषणा USB_R5_ID_DIG_IRQ				BIT(7)
+	#घोषणा USB_R5_ID_DIG_TH_MASK				GENMASK(15, 8)
+	#घोषणा USB_R5_ID_DIG_CNT_MASK				GENMASK(23, 16)
 
-#define PHY_COUNT						3
-#define USB2_OTG_PHY						1
+#घोषणा PHY_COUNT						3
+#घोषणा USB2_OTG_PHY						1
 
-static struct clk_bulk_data meson_gxl_clocks[] = {
-	{ .id = "usb_ctrl" },
-	{ .id = "ddr" },
-};
+अटल काष्ठा clk_bulk_data meson_gxl_घड़ीs[] = अणु
+	अणु .id = "usb_ctrl" पूर्ण,
+	अणु .id = "ddr" पूर्ण,
+पूर्ण;
 
-static struct clk_bulk_data meson_g12a_clocks[] = {
-	{ .id = NULL },
-};
+अटल काष्ठा clk_bulk_data meson_g12a_घड़ीs[] = अणु
+	अणु .id = शून्य पूर्ण,
+पूर्ण;
 
-static struct clk_bulk_data meson_a1_clocks[] = {
-	{ .id = "usb_ctrl" },
-	{ .id = "usb_bus" },
-	{ .id = "xtal_usb_ctrl" },
-};
+अटल काष्ठा clk_bulk_data meson_a1_घड़ीs[] = अणु
+	अणु .id = "usb_ctrl" पूर्ण,
+	अणु .id = "usb_bus" पूर्ण,
+	अणु .id = "xtal_usb_ctrl" पूर्ण,
+पूर्ण;
 
-static const char * const meson_gxm_phy_names[] = {
+अटल स्थिर अक्षर * स्थिर meson_gxm_phy_names[] = अणु
 	"usb2-phy0", "usb2-phy1", "usb2-phy2",
-};
+पूर्ण;
 
-static const char * const meson_g12a_phy_names[] = {
+अटल स्थिर अक्षर * स्थिर meson_g12a_phy_names[] = अणु
 	"usb2-phy0", "usb2-phy1", "usb3-phy0",
-};
+पूर्ण;
 
 /*
  * Amlogic A1 has a single physical PHY, in slot 1, but still has the
- * two U2 PHY controls register blocks like G12A.
+ * two U2 PHY controls रेजिस्टर blocks like G12A.
  * AXG has the similar scheme, thus needs the same tweak.
  * Handling the first PHY on slot 1 would need a large amount of code
  * changes, and the current management is generic enough to handle it
- * correctly when only the "usb2-phy1" phy is specified on-par with the
+ * correctly when only the "usb2-phy1" phy is specअगरied on-par with the
  * DT bindings.
  */
-static const char * const meson_a1_phy_names[] = {
+अटल स्थिर अक्षर * स्थिर meson_a1_phy_names[] = अणु
 	"usb2-phy0", "usb2-phy1"
-};
+पूर्ण;
 
-struct dwc3_meson_g12a;
+काष्ठा dwc3_meson_g12a;
 
-struct dwc3_meson_g12a_drvdata {
-	bool otg_switch_supported;
+काष्ठा dwc3_meson_g12a_drvdata अणु
+	bool otg_चयन_supported;
 	bool otg_phy_host_port_disable;
-	struct clk_bulk_data *clks;
-	int num_clks;
-	const char * const *phy_names;
-	int num_phys;
-	int (*setup_regmaps)(struct dwc3_meson_g12a *priv, void __iomem *base);
-	int (*usb2_init_phy)(struct dwc3_meson_g12a *priv, int i,
-			     enum phy_mode mode);
-	int (*set_phy_mode)(struct dwc3_meson_g12a *priv, int i,
-			    enum phy_mode mode);
-	int (*usb_init)(struct dwc3_meson_g12a *priv);
-	int (*usb_post_init)(struct dwc3_meson_g12a *priv);
-};
+	काष्ठा clk_bulk_data *clks;
+	पूर्णांक num_clks;
+	स्थिर अक्षर * स्थिर *phy_names;
+	पूर्णांक num_phys;
+	पूर्णांक (*setup_regmaps)(काष्ठा dwc3_meson_g12a *priv, व्योम __iomem *base);
+	पूर्णांक (*usb2_init_phy)(काष्ठा dwc3_meson_g12a *priv, पूर्णांक i,
+			     क्रमागत phy_mode mode);
+	पूर्णांक (*set_phy_mode)(काष्ठा dwc3_meson_g12a *priv, पूर्णांक i,
+			    क्रमागत phy_mode mode);
+	पूर्णांक (*usb_init)(काष्ठा dwc3_meson_g12a *priv);
+	पूर्णांक (*usb_post_init)(काष्ठा dwc3_meson_g12a *priv);
+पूर्ण;
 
-static int dwc3_meson_gxl_setup_regmaps(struct dwc3_meson_g12a *priv,
-					void __iomem *base);
-static int dwc3_meson_g12a_setup_regmaps(struct dwc3_meson_g12a *priv,
-					 void __iomem *base);
+अटल पूर्णांक dwc3_meson_gxl_setup_regmaps(काष्ठा dwc3_meson_g12a *priv,
+					व्योम __iomem *base);
+अटल पूर्णांक dwc3_meson_g12a_setup_regmaps(काष्ठा dwc3_meson_g12a *priv,
+					 व्योम __iomem *base);
 
-static int dwc3_meson_g12a_usb2_init_phy(struct dwc3_meson_g12a *priv, int i,
-					 enum phy_mode mode);
-static int dwc3_meson_gxl_usb2_init_phy(struct dwc3_meson_g12a *priv, int i,
-					enum phy_mode mode);
+अटल पूर्णांक dwc3_meson_g12a_usb2_init_phy(काष्ठा dwc3_meson_g12a *priv, पूर्णांक i,
+					 क्रमागत phy_mode mode);
+अटल पूर्णांक dwc3_meson_gxl_usb2_init_phy(काष्ठा dwc3_meson_g12a *priv, पूर्णांक i,
+					क्रमागत phy_mode mode);
 
-static int dwc3_meson_g12a_set_phy_mode(struct dwc3_meson_g12a *priv,
-					int i, enum phy_mode mode);
-static int dwc3_meson_gxl_set_phy_mode(struct dwc3_meson_g12a *priv,
-				       int i, enum phy_mode mode);
+अटल पूर्णांक dwc3_meson_g12a_set_phy_mode(काष्ठा dwc3_meson_g12a *priv,
+					पूर्णांक i, क्रमागत phy_mode mode);
+अटल पूर्णांक dwc3_meson_gxl_set_phy_mode(काष्ठा dwc3_meson_g12a *priv,
+				       पूर्णांक i, क्रमागत phy_mode mode);
 
-static int dwc3_meson_g12a_usb_init(struct dwc3_meson_g12a *priv);
-static int dwc3_meson_gxl_usb_init(struct dwc3_meson_g12a *priv);
+अटल पूर्णांक dwc3_meson_g12a_usb_init(काष्ठा dwc3_meson_g12a *priv);
+अटल पूर्णांक dwc3_meson_gxl_usb_init(काष्ठा dwc3_meson_g12a *priv);
 
-static int dwc3_meson_gxl_usb_post_init(struct dwc3_meson_g12a *priv);
+अटल पूर्णांक dwc3_meson_gxl_usb_post_init(काष्ठा dwc3_meson_g12a *priv);
 
 /*
  * For GXL and GXM SoCs:
  * USB Phy muxing between the DWC2 Device controller and the DWC3 Host
- * controller is buggy when switching from Device to Host when USB port
+ * controller is buggy when चयनing from Device to Host when USB port
  * is unpopulated, it causes the DWC3 to hard crash.
- * When populated (including OTG switching with ID pin), the switch works
- * like a charm like on the G12A platforms.
- * In order to still switch from Host to Device on an USB Type-A port,
+ * When populated (including OTG चयनing with ID pin), the चयन works
+ * like a अक्षरm like on the G12A platक्रमms.
+ * In order to still चयन from Host to Device on an USB Type-A port,
  * an U2_PORT_DISABLE bit has been added to disconnect the DWC3 Host
  * controller from the port, but when used the DWC3 controller must be
  * reset to recover usage of the port.
  */
 
-static struct dwc3_meson_g12a_drvdata gxl_drvdata = {
-	.otg_switch_supported = true,
+अटल काष्ठा dwc3_meson_g12a_drvdata gxl_drvdata = अणु
+	.otg_चयन_supported = true,
 	.otg_phy_host_port_disable = true,
-	.clks = meson_gxl_clocks,
-	.num_clks = ARRAY_SIZE(meson_g12a_clocks),
+	.clks = meson_gxl_घड़ीs,
+	.num_clks = ARRAY_SIZE(meson_g12a_घड़ीs),
 	.phy_names = meson_a1_phy_names,
 	.num_phys = ARRAY_SIZE(meson_a1_phy_names),
 	.setup_regmaps = dwc3_meson_gxl_setup_regmaps,
@@ -200,13 +201,13 @@ static struct dwc3_meson_g12a_drvdata gxl_drvdata = {
 	.set_phy_mode = dwc3_meson_gxl_set_phy_mode,
 	.usb_init = dwc3_meson_gxl_usb_init,
 	.usb_post_init = dwc3_meson_gxl_usb_post_init,
-};
+पूर्ण;
 
-static struct dwc3_meson_g12a_drvdata gxm_drvdata = {
-	.otg_switch_supported = true,
+अटल काष्ठा dwc3_meson_g12a_drvdata gxm_drvdata = अणु
+	.otg_चयन_supported = true,
 	.otg_phy_host_port_disable = true,
-	.clks = meson_gxl_clocks,
-	.num_clks = ARRAY_SIZE(meson_g12a_clocks),
+	.clks = meson_gxl_घड़ीs,
+	.num_clks = ARRAY_SIZE(meson_g12a_घड़ीs),
 	.phy_names = meson_gxm_phy_names,
 	.num_phys = ARRAY_SIZE(meson_gxm_phy_names),
 	.setup_regmaps = dwc3_meson_gxl_setup_regmaps,
@@ -214,12 +215,12 @@ static struct dwc3_meson_g12a_drvdata gxm_drvdata = {
 	.set_phy_mode = dwc3_meson_gxl_set_phy_mode,
 	.usb_init = dwc3_meson_gxl_usb_init,
 	.usb_post_init = dwc3_meson_gxl_usb_post_init,
-};
+पूर्ण;
 
-static struct dwc3_meson_g12a_drvdata axg_drvdata = {
-	.otg_switch_supported = true,
-	.clks = meson_gxl_clocks,
-	.num_clks = ARRAY_SIZE(meson_gxl_clocks),
+अटल काष्ठा dwc3_meson_g12a_drvdata axg_drvdata = अणु
+	.otg_चयन_supported = true,
+	.clks = meson_gxl_घड़ीs,
+	.num_clks = ARRAY_SIZE(meson_gxl_घड़ीs),
 	.phy_names = meson_a1_phy_names,
 	.num_phys = ARRAY_SIZE(meson_a1_phy_names),
 	.setup_regmaps = dwc3_meson_gxl_setup_regmaps,
@@ -227,127 +228,127 @@ static struct dwc3_meson_g12a_drvdata axg_drvdata = {
 	.set_phy_mode = dwc3_meson_gxl_set_phy_mode,
 	.usb_init = dwc3_meson_g12a_usb_init,
 	.usb_post_init = dwc3_meson_gxl_usb_post_init,
-};
+पूर्ण;
 
-static struct dwc3_meson_g12a_drvdata g12a_drvdata = {
-	.otg_switch_supported = true,
-	.clks = meson_g12a_clocks,
-	.num_clks = ARRAY_SIZE(meson_g12a_clocks),
+अटल काष्ठा dwc3_meson_g12a_drvdata g12a_drvdata = अणु
+	.otg_चयन_supported = true,
+	.clks = meson_g12a_घड़ीs,
+	.num_clks = ARRAY_SIZE(meson_g12a_घड़ीs),
 	.phy_names = meson_g12a_phy_names,
 	.num_phys = ARRAY_SIZE(meson_g12a_phy_names),
 	.setup_regmaps = dwc3_meson_g12a_setup_regmaps,
 	.usb2_init_phy = dwc3_meson_g12a_usb2_init_phy,
 	.set_phy_mode = dwc3_meson_g12a_set_phy_mode,
 	.usb_init = dwc3_meson_g12a_usb_init,
-};
+पूर्ण;
 
-static struct dwc3_meson_g12a_drvdata a1_drvdata = {
-	.otg_switch_supported = false,
-	.clks = meson_a1_clocks,
-	.num_clks = ARRAY_SIZE(meson_a1_clocks),
+अटल काष्ठा dwc3_meson_g12a_drvdata a1_drvdata = अणु
+	.otg_चयन_supported = false,
+	.clks = meson_a1_घड़ीs,
+	.num_clks = ARRAY_SIZE(meson_a1_घड़ीs),
 	.phy_names = meson_a1_phy_names,
 	.num_phys = ARRAY_SIZE(meson_a1_phy_names),
 	.setup_regmaps = dwc3_meson_g12a_setup_regmaps,
 	.usb2_init_phy = dwc3_meson_g12a_usb2_init_phy,
 	.set_phy_mode = dwc3_meson_g12a_set_phy_mode,
 	.usb_init = dwc3_meson_g12a_usb_init,
-};
+पूर्ण;
 
-struct dwc3_meson_g12a {
-	struct device		*dev;
-	struct regmap		*u2p_regmap[PHY_COUNT];
-	struct regmap		*usb_glue_regmap;
-	struct reset_control	*reset;
-	struct phy		*phys[PHY_COUNT];
-	enum usb_dr_mode	otg_mode;
-	enum phy_mode		otg_phy_mode;
-	unsigned int		usb2_ports;
-	unsigned int		usb3_ports;
-	struct regulator	*vbus;
-	struct usb_role_switch_desc switch_desc;
-	struct usb_role_switch	*role_switch;
-	const struct dwc3_meson_g12a_drvdata *drvdata;
-};
+काष्ठा dwc3_meson_g12a अणु
+	काष्ठा device		*dev;
+	काष्ठा regmap		*u2p_regmap[PHY_COUNT];
+	काष्ठा regmap		*usb_glue_regmap;
+	काष्ठा reset_control	*reset;
+	काष्ठा phy		*phys[PHY_COUNT];
+	क्रमागत usb_dr_mode	otg_mode;
+	क्रमागत phy_mode		otg_phy_mode;
+	अचिन्हित पूर्णांक		usb2_ports;
+	अचिन्हित पूर्णांक		usb3_ports;
+	काष्ठा regulator	*vbus;
+	काष्ठा usb_role_चयन_desc चयन_desc;
+	काष्ठा usb_role_चयन	*role_चयन;
+	स्थिर काष्ठा dwc3_meson_g12a_drvdata *drvdata;
+पूर्ण;
 
-static int dwc3_meson_gxl_set_phy_mode(struct dwc3_meson_g12a *priv,
-					 int i, enum phy_mode mode)
-{
-	return phy_set_mode(priv->phys[i], mode);
-}
+अटल पूर्णांक dwc3_meson_gxl_set_phy_mode(काष्ठा dwc3_meson_g12a *priv,
+					 पूर्णांक i, क्रमागत phy_mode mode)
+अणु
+	वापस phy_set_mode(priv->phys[i], mode);
+पूर्ण
 
-static int dwc3_meson_gxl_usb2_init_phy(struct dwc3_meson_g12a *priv, int i,
-					enum phy_mode mode)
-{
-	/* On GXL PHY must be started in device mode for DWC2 init */
-	return priv->drvdata->set_phy_mode(priv, i,
+अटल पूर्णांक dwc3_meson_gxl_usb2_init_phy(काष्ठा dwc3_meson_g12a *priv, पूर्णांक i,
+					क्रमागत phy_mode mode)
+अणु
+	/* On GXL PHY must be started in device mode क्रम DWC2 init */
+	वापस priv->drvdata->set_phy_mode(priv, i,
 				(i == USB2_OTG_PHY) ? PHY_MODE_USB_DEVICE
 						    : PHY_MODE_USB_HOST);
-}
+पूर्ण
 
-static int dwc3_meson_g12a_set_phy_mode(struct dwc3_meson_g12a *priv,
-					 int i, enum phy_mode mode)
-{
-	if (mode == PHY_MODE_USB_HOST)
+अटल पूर्णांक dwc3_meson_g12a_set_phy_mode(काष्ठा dwc3_meson_g12a *priv,
+					 पूर्णांक i, क्रमागत phy_mode mode)
+अणु
+	अगर (mode == PHY_MODE_USB_HOST)
 		regmap_update_bits(priv->u2p_regmap[i], U2P_R0,
 				U2P_R0_HOST_DEVICE,
 				U2P_R0_HOST_DEVICE);
-	else
+	अन्यथा
 		regmap_update_bits(priv->u2p_regmap[i], U2P_R0,
 				U2P_R0_HOST_DEVICE, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwc3_meson_g12a_usb2_init_phy(struct dwc3_meson_g12a *priv, int i,
-					 enum phy_mode mode)
-{
-	int ret;
+अटल पूर्णांक dwc3_meson_g12a_usb2_init_phy(काष्ठा dwc3_meson_g12a *priv, पूर्णांक i,
+					 क्रमागत phy_mode mode)
+अणु
+	पूर्णांक ret;
 
 	regmap_update_bits(priv->u2p_regmap[i], U2P_R0,
 			U2P_R0_POWER_ON_RESET,
 			U2P_R0_POWER_ON_RESET);
 
-	if (priv->drvdata->otg_switch_supported && i == USB2_OTG_PHY) {
+	अगर (priv->drvdata->otg_चयन_supported && i == USB2_OTG_PHY) अणु
 		regmap_update_bits(priv->u2p_regmap[i], U2P_R0,
 				   U2P_R0_ID_PULLUP | U2P_R0_DRV_VBUS,
 				   U2P_R0_ID_PULLUP | U2P_R0_DRV_VBUS);
 
 		ret = priv->drvdata->set_phy_mode(priv, i, mode);
-	} else
+	पूर्ण अन्यथा
 		ret = priv->drvdata->set_phy_mode(priv, i,
 						  PHY_MODE_USB_HOST);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	regmap_update_bits(priv->u2p_regmap[i], U2P_R0,
 			U2P_R0_POWER_ON_RESET, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwc3_meson_g12a_usb2_init(struct dwc3_meson_g12a *priv,
-				     enum phy_mode mode)
-{
-	int i, ret;
+अटल पूर्णांक dwc3_meson_g12a_usb2_init(काष्ठा dwc3_meson_g12a *priv,
+				     क्रमागत phy_mode mode)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < priv->drvdata->num_phys; ++i) {
-		if (!priv->phys[i])
-			continue;
+	क्रम (i = 0; i < priv->drvdata->num_phys; ++i) अणु
+		अगर (!priv->phys[i])
+			जारी;
 
-		if (!strstr(priv->drvdata->phy_names[i], "usb2"))
-			continue;
+		अगर (!म_माला(priv->drvdata->phy_names[i], "usb2"))
+			जारी;
 
 		ret = priv->drvdata->usb2_init_phy(priv, i, mode);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dwc3_meson_g12a_usb3_init(struct dwc3_meson_g12a *priv)
-{
+अटल व्योम dwc3_meson_g12a_usb3_init(काष्ठा dwc3_meson_g12a *priv)
+अणु
 	regmap_update_bits(priv->usb_glue_regmap, USB_R3,
 			USB_R3_P30_SSC_RANGE_MASK |
 			USB_R3_P30_REF_SSP_EN,
@@ -373,13 +374,13 @@ static void dwc3_meson_g12a_usb3_init(struct dwc3_meson_g12a *priv)
 	regmap_update_bits(priv->usb_glue_regmap, USB_R1,
 			USB_R1_P30_PCS_TX_SWING_FULL_MASK,
 			FIELD_PREP(USB_R1_P30_PCS_TX_SWING_FULL_MASK, 127));
-}
+पूर्ण
 
-static void dwc3_meson_g12a_usb_otg_apply_mode(struct dwc3_meson_g12a *priv,
-					       enum phy_mode mode)
-{
-	if (mode == PHY_MODE_USB_DEVICE) {
-		if (priv->otg_mode != USB_DR_MODE_OTG &&
+अटल व्योम dwc3_meson_g12a_usb_otg_apply_mode(काष्ठा dwc3_meson_g12a *priv,
+					       क्रमागत phy_mode mode)
+अणु
+	अगर (mode == PHY_MODE_USB_DEVICE) अणु
+		अगर (priv->otg_mode != USB_DR_MODE_OTG &&
 		    priv->drvdata->otg_phy_host_port_disable)
 			/* Isolate the OTG PHY port from the Host Controller */
 			regmap_update_bits(priv->usb_glue_regmap, USB_R1,
@@ -393,28 +394,28 @@ static void dwc3_meson_g12a_usb_otg_apply_mode(struct dwc3_meson_g12a *priv,
 				USB_R0_U2D_SS_SCALEDOWN_MODE_MASK, 0);
 		regmap_update_bits(priv->usb_glue_regmap, USB_R4,
 				USB_R4_P21_SLEEP_M0, USB_R4_P21_SLEEP_M0);
-	} else {
-		if (priv->otg_mode != USB_DR_MODE_OTG &&
-		    priv->drvdata->otg_phy_host_port_disable) {
+	पूर्ण अन्यथा अणु
+		अगर (priv->otg_mode != USB_DR_MODE_OTG &&
+		    priv->drvdata->otg_phy_host_port_disable) अणु
 			regmap_update_bits(priv->usb_glue_regmap, USB_R1,
 				USB_R1_U3H_HOST_U2_PORT_DISABLE_MASK, 0);
 			msleep(500);
-		}
+		पूर्ण
 		regmap_update_bits(priv->usb_glue_regmap, USB_R0,
 				USB_R0_U2D_ACT, 0);
 		regmap_update_bits(priv->usb_glue_regmap, USB_R4,
 				USB_R4_P21_SLEEP_M0, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int dwc3_meson_g12a_usb_init_glue(struct dwc3_meson_g12a *priv,
-					 enum phy_mode mode)
-{
-	int ret;
+अटल पूर्णांक dwc3_meson_g12a_usb_init_glue(काष्ठा dwc3_meson_g12a *priv,
+					 क्रमागत phy_mode mode)
+अणु
+	पूर्णांक ret;
 
 	ret = dwc3_meson_g12a_usb2_init(priv, mode);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	regmap_update_bits(priv->usb_glue_regmap, USB_R1,
 			USB_R1_U3H_FLADJ_30MHZ_REG_MASK,
@@ -431,546 +432,546 @@ static int dwc3_meson_g12a_usb_init_glue(struct dwc3_meson_g12a *priv,
 			FIELD_PREP(USB_R5_ID_DIG_TH_MASK, 0xff));
 
 	/* If we have an actual SuperSpeed port, initialize it */
-	if (priv->usb3_ports)
+	अगर (priv->usb3_ports)
 		dwc3_meson_g12a_usb3_init(priv);
 
 	dwc3_meson_g12a_usb_otg_apply_mode(priv, mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct regmap_config phy_meson_g12a_usb_glue_regmap_conf = {
+अटल स्थिर काष्ठा regmap_config phy_meson_g12a_usb_glue_regmap_conf = अणु
 	.name = "usb-glue",
 	.reg_bits = 8,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = USB_R5,
-};
+	.max_रेजिस्टर = USB_R5,
+पूर्ण;
 
-static int dwc3_meson_g12a_get_phys(struct dwc3_meson_g12a *priv)
-{
-	const char *phy_name;
-	int i;
+अटल पूर्णांक dwc3_meson_g12a_get_phys(काष्ठा dwc3_meson_g12a *priv)
+अणु
+	स्थिर अक्षर *phy_name;
+	पूर्णांक i;
 
-	for (i = 0 ; i < priv->drvdata->num_phys ; ++i) {
+	क्रम (i = 0 ; i < priv->drvdata->num_phys ; ++i) अणु
 		phy_name = priv->drvdata->phy_names[i];
 		priv->phys[i] = devm_phy_optional_get(priv->dev, phy_name);
-		if (!priv->phys[i])
-			continue;
+		अगर (!priv->phys[i])
+			जारी;
 
-		if (IS_ERR(priv->phys[i]))
-			return PTR_ERR(priv->phys[i]);
+		अगर (IS_ERR(priv->phys[i]))
+			वापस PTR_ERR(priv->phys[i]);
 
-		if (strstr(phy_name, "usb3"))
+		अगर (म_माला(phy_name, "usb3"))
 			priv->usb3_ports++;
-		else
+		अन्यथा
 			priv->usb2_ports++;
-	}
+	पूर्ण
 
 	dev_info(priv->dev, "USB2 ports: %d\n", priv->usb2_ports);
 	dev_info(priv->dev, "USB3 ports: %d\n", priv->usb3_ports);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static enum phy_mode dwc3_meson_g12a_get_id(struct dwc3_meson_g12a *priv)
-{
+अटल क्रमागत phy_mode dwc3_meson_g12a_get_id(काष्ठा dwc3_meson_g12a *priv)
+अणु
 	u32 reg;
 
-	regmap_read(priv->usb_glue_regmap, USB_R5, &reg);
+	regmap_पढ़ो(priv->usb_glue_regmap, USB_R5, &reg);
 
-	if (reg & (USB_R5_ID_DIG_SYNC | USB_R5_ID_DIG_REG))
-		return PHY_MODE_USB_DEVICE;
+	अगर (reg & (USB_R5_ID_DIG_SYNC | USB_R5_ID_DIG_REG))
+		वापस PHY_MODE_USB_DEVICE;
 
-	return PHY_MODE_USB_HOST;
-}
+	वापस PHY_MODE_USB_HOST;
+पूर्ण
 
-static int dwc3_meson_g12a_otg_mode_set(struct dwc3_meson_g12a *priv,
-					enum phy_mode mode)
-{
-	int ret;
+अटल पूर्णांक dwc3_meson_g12a_otg_mode_set(काष्ठा dwc3_meson_g12a *priv,
+					क्रमागत phy_mode mode)
+अणु
+	पूर्णांक ret;
 
-	if (!priv->drvdata->otg_switch_supported || !priv->phys[USB2_OTG_PHY])
-		return -EINVAL;
+	अगर (!priv->drvdata->otg_चयन_supported || !priv->phys[USB2_OTG_PHY])
+		वापस -EINVAL;
 
-	if (mode == PHY_MODE_USB_HOST)
+	अगर (mode == PHY_MODE_USB_HOST)
 		dev_info(priv->dev, "switching to Host Mode\n");
-	else
+	अन्यथा
 		dev_info(priv->dev, "switching to Device Mode\n");
 
-	if (priv->vbus) {
-		if (mode == PHY_MODE_USB_DEVICE)
+	अगर (priv->vbus) अणु
+		अगर (mode == PHY_MODE_USB_DEVICE)
 			ret = regulator_disable(priv->vbus);
-		else
+		अन्यथा
 			ret = regulator_enable(priv->vbus);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	priv->otg_phy_mode = mode;
 
 	ret = priv->drvdata->set_phy_mode(priv, USB2_OTG_PHY, mode);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dwc3_meson_g12a_usb_otg_apply_mode(priv, mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwc3_meson_g12a_role_set(struct usb_role_switch *sw,
-				    enum usb_role role)
-{
-	struct dwc3_meson_g12a *priv = usb_role_switch_get_drvdata(sw);
-	enum phy_mode mode;
+अटल पूर्णांक dwc3_meson_g12a_role_set(काष्ठा usb_role_चयन *sw,
+				    क्रमागत usb_role role)
+अणु
+	काष्ठा dwc3_meson_g12a *priv = usb_role_चयन_get_drvdata(sw);
+	क्रमागत phy_mode mode;
 
-	if (role == USB_ROLE_NONE)
-		return 0;
+	अगर (role == USB_ROLE_NONE)
+		वापस 0;
 
 	mode = (role == USB_ROLE_HOST) ? PHY_MODE_USB_HOST
 				       : PHY_MODE_USB_DEVICE;
 
-	if (mode == priv->otg_phy_mode)
-		return 0;
+	अगर (mode == priv->otg_phy_mode)
+		वापस 0;
 
-	if (priv->drvdata->otg_phy_host_port_disable)
+	अगर (priv->drvdata->otg_phy_host_port_disable)
 		dev_warn_once(priv->dev, "Broken manual OTG switch\n");
 
-	return dwc3_meson_g12a_otg_mode_set(priv, mode);
-}
+	वापस dwc3_meson_g12a_otg_mode_set(priv, mode);
+पूर्ण
 
-static enum usb_role dwc3_meson_g12a_role_get(struct usb_role_switch *sw)
-{
-	struct dwc3_meson_g12a *priv = usb_role_switch_get_drvdata(sw);
+अटल क्रमागत usb_role dwc3_meson_g12a_role_get(काष्ठा usb_role_चयन *sw)
+अणु
+	काष्ठा dwc3_meson_g12a *priv = usb_role_चयन_get_drvdata(sw);
 
-	return priv->otg_phy_mode == PHY_MODE_USB_HOST ?
+	वापस priv->otg_phy_mode == PHY_MODE_USB_HOST ?
 		USB_ROLE_HOST : USB_ROLE_DEVICE;
-}
+पूर्ण
 
-static irqreturn_t dwc3_meson_g12a_irq_thread(int irq, void *data)
-{
-	struct dwc3_meson_g12a *priv = data;
-	enum phy_mode otg_id;
+अटल irqवापस_t dwc3_meson_g12a_irq_thपढ़ो(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा dwc3_meson_g12a *priv = data;
+	क्रमागत phy_mode otg_id;
 
 	otg_id = dwc3_meson_g12a_get_id(priv);
-	if (otg_id != priv->otg_phy_mode) {
-		if (dwc3_meson_g12a_otg_mode_set(priv, otg_id))
+	अगर (otg_id != priv->otg_phy_mode) अणु
+		अगर (dwc3_meson_g12a_otg_mode_set(priv, otg_id))
 			dev_warn(priv->dev, "Failed to switch OTG mode\n");
-	}
+	पूर्ण
 
 	regmap_update_bits(priv->usb_glue_regmap, USB_R5,
 			   USB_R5_ID_DIG_IRQ, 0);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct device *dwc3_meson_g12_find_child(struct device *dev,
-						const char *compatible)
-{
-	struct platform_device *pdev;
-	struct device_node *np;
+अटल काष्ठा device *dwc3_meson_g12_find_child(काष्ठा device *dev,
+						स्थिर अक्षर *compatible)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा device_node *np;
 
 	np = of_get_compatible_child(dev->of_node, compatible);
-	if (!np)
-		return NULL;
+	अगर (!np)
+		वापस शून्य;
 
 	pdev = of_find_device_by_node(np);
 	of_node_put(np);
-	if (!pdev)
-		return NULL;
+	अगर (!pdev)
+		वापस शून्य;
 
-	return &pdev->dev;
-}
+	वापस &pdev->dev;
+पूर्ण
 
-static int dwc3_meson_g12a_otg_init(struct platform_device *pdev,
-				    struct dwc3_meson_g12a *priv)
-{
-	enum phy_mode otg_id;
-	int ret, irq;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक dwc3_meson_g12a_otg_init(काष्ठा platक्रमm_device *pdev,
+				    काष्ठा dwc3_meson_g12a *priv)
+अणु
+	क्रमागत phy_mode otg_id;
+	पूर्णांक ret, irq;
+	काष्ठा device *dev = &pdev->dev;
 
-	if (!priv->drvdata->otg_switch_supported)
-		return 0;
+	अगर (!priv->drvdata->otg_चयन_supported)
+		वापस 0;
 
-	if (priv->otg_mode == USB_DR_MODE_OTG) {
-		/* Ack irq before registering */
+	अगर (priv->otg_mode == USB_DR_MODE_OTG) अणु
+		/* Ack irq beक्रमe रेजिस्टरing */
 		regmap_update_bits(priv->usb_glue_regmap, USB_R5,
 				   USB_R5_ID_DIG_IRQ, 0);
 
-		irq = platform_get_irq(pdev, 0);
-		ret = devm_request_threaded_irq(&pdev->dev, irq, NULL,
-						dwc3_meson_g12a_irq_thread,
+		irq = platक्रमm_get_irq(pdev, 0);
+		ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, शून्य,
+						dwc3_meson_g12a_irq_thपढ़ो,
 						IRQF_ONESHOT, pdev->name, priv);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Setup OTG mode corresponding to the ID pin */
-	if (priv->otg_mode == USB_DR_MODE_OTG) {
+	अगर (priv->otg_mode == USB_DR_MODE_OTG) अणु
 		otg_id = dwc3_meson_g12a_get_id(priv);
-		if (otg_id != priv->otg_phy_mode) {
-			if (dwc3_meson_g12a_otg_mode_set(priv, otg_id))
+		अगर (otg_id != priv->otg_phy_mode) अणु
+			अगर (dwc3_meson_g12a_otg_mode_set(priv, otg_id))
 				dev_warn(dev, "Failed to switch OTG mode\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Setup role switcher */
-	priv->switch_desc.usb2_port = dwc3_meson_g12_find_child(dev,
+	/* Setup role चयनer */
+	priv->चयन_desc.usb2_port = dwc3_meson_g12_find_child(dev,
 								"snps,dwc3");
-	priv->switch_desc.udc = dwc3_meson_g12_find_child(dev, "snps,dwc2");
-	priv->switch_desc.allow_userspace_control = true;
-	priv->switch_desc.set = dwc3_meson_g12a_role_set;
-	priv->switch_desc.get = dwc3_meson_g12a_role_get;
-	priv->switch_desc.driver_data = priv;
+	priv->चयन_desc.udc = dwc3_meson_g12_find_child(dev, "snps,dwc2");
+	priv->चयन_desc.allow_userspace_control = true;
+	priv->चयन_desc.set = dwc3_meson_g12a_role_set;
+	priv->चयन_desc.get = dwc3_meson_g12a_role_get;
+	priv->चयन_desc.driver_data = priv;
 
-	priv->role_switch = usb_role_switch_register(dev, &priv->switch_desc);
-	if (IS_ERR(priv->role_switch))
+	priv->role_चयन = usb_role_चयन_रेजिस्टर(dev, &priv->चयन_desc);
+	अगर (IS_ERR(priv->role_चयन))
 		dev_warn(dev, "Unable to register Role Switch\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwc3_meson_gxl_setup_regmaps(struct dwc3_meson_g12a *priv,
-					void __iomem *base)
-{
-	/* GXL controls the PHY mode in the PHY registers unlike G12A */
+अटल पूर्णांक dwc3_meson_gxl_setup_regmaps(काष्ठा dwc3_meson_g12a *priv,
+					व्योम __iomem *base)
+अणु
+	/* GXL controls the PHY mode in the PHY रेजिस्टरs unlike G12A */
 	priv->usb_glue_regmap = devm_regmap_init_mmio(priv->dev, base,
 					&phy_meson_g12a_usb_glue_regmap_conf);
-	return PTR_ERR_OR_ZERO(priv->usb_glue_regmap);
-}
+	वापस PTR_ERR_OR_ZERO(priv->usb_glue_regmap);
+पूर्ण
 
-static int dwc3_meson_g12a_setup_regmaps(struct dwc3_meson_g12a *priv,
-					 void __iomem *base)
-{
-	int i;
+अटल पूर्णांक dwc3_meson_g12a_setup_regmaps(काष्ठा dwc3_meson_g12a *priv,
+					 व्योम __iomem *base)
+अणु
+	पूर्णांक i;
 
 	priv->usb_glue_regmap = devm_regmap_init_mmio(priv->dev,
 					base + G12A_GLUE_OFFSET,
 					&phy_meson_g12a_usb_glue_regmap_conf);
-	if (IS_ERR(priv->usb_glue_regmap))
-		return PTR_ERR(priv->usb_glue_regmap);
+	अगर (IS_ERR(priv->usb_glue_regmap))
+		वापस PTR_ERR(priv->usb_glue_regmap);
 
-	/* Create a regmap for each USB2 PHY control register set */
-	for (i = 0; i < priv->drvdata->num_phys; i++) {
-		struct regmap_config u2p_regmap_config = {
+	/* Create a regmap क्रम each USB2 PHY control रेजिस्टर set */
+	क्रम (i = 0; i < priv->drvdata->num_phys; i++) अणु
+		काष्ठा regmap_config u2p_regmap_config = अणु
 			.reg_bits = 8,
 			.val_bits = 32,
 			.reg_stride = 4,
-			.max_register = U2P_R1,
-		};
+			.max_रेजिस्टर = U2P_R1,
+		पूर्ण;
 
-		if (!strstr(priv->drvdata->phy_names[i], "usb2"))
-			continue;
+		अगर (!म_माला(priv->drvdata->phy_names[i], "usb2"))
+			जारी;
 
-		u2p_regmap_config.name = devm_kasprintf(priv->dev, GFP_KERNEL,
+		u2p_regmap_config.name = devm_kaप्र_लिखो(priv->dev, GFP_KERNEL,
 							"u2p-%d", i);
-		if (!u2p_regmap_config.name)
-			return -ENOMEM;
+		अगर (!u2p_regmap_config.name)
+			वापस -ENOMEM;
 
 		priv->u2p_regmap[i] = devm_regmap_init_mmio(priv->dev,
 						base + (i * U2P_REG_SIZE),
 						&u2p_regmap_config);
-		if (IS_ERR(priv->u2p_regmap[i]))
-			return PTR_ERR(priv->u2p_regmap[i]);
-	}
+		अगर (IS_ERR(priv->u2p_regmap[i]))
+			वापस PTR_ERR(priv->u2p_regmap[i]);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwc3_meson_g12a_usb_init(struct dwc3_meson_g12a *priv)
-{
-	return dwc3_meson_g12a_usb_init_glue(priv, priv->otg_phy_mode);
-}
+अटल पूर्णांक dwc3_meson_g12a_usb_init(काष्ठा dwc3_meson_g12a *priv)
+अणु
+	वापस dwc3_meson_g12a_usb_init_glue(priv, priv->otg_phy_mode);
+पूर्ण
 
-static int dwc3_meson_gxl_usb_init(struct dwc3_meson_g12a *priv)
-{
-	return dwc3_meson_g12a_usb_init_glue(priv, PHY_MODE_USB_DEVICE);
-}
+अटल पूर्णांक dwc3_meson_gxl_usb_init(काष्ठा dwc3_meson_g12a *priv)
+अणु
+	वापस dwc3_meson_g12a_usb_init_glue(priv, PHY_MODE_USB_DEVICE);
+पूर्ण
 
-static int dwc3_meson_gxl_usb_post_init(struct dwc3_meson_g12a *priv)
-{
-	int ret;
+अटल पूर्णांक dwc3_meson_gxl_usb_post_init(काष्ठा dwc3_meson_g12a *priv)
+अणु
+	पूर्णांक ret;
 
 	ret = priv->drvdata->set_phy_mode(priv, USB2_OTG_PHY,
 					  priv->otg_phy_mode);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	dwc3_meson_g12a_usb_otg_apply_mode(priv, priv->otg_phy_mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dwc3_meson_g12a_probe(struct platform_device *pdev)
-{
-	struct dwc3_meson_g12a	*priv;
-	struct device		*dev = &pdev->dev;
-	struct device_node	*np = dev->of_node;
-	void __iomem *base;
-	int ret, i;
+अटल पूर्णांक dwc3_meson_g12a_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dwc3_meson_g12a	*priv;
+	काष्ठा device		*dev = &pdev->dev;
+	काष्ठा device_node	*np = dev->of_node;
+	व्योम __iomem *base;
+	पूर्णांक ret, i;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
 	priv->drvdata = of_device_get_match_data(&pdev->dev);
 	priv->dev = dev;
 
 	priv->vbus = devm_regulator_get_optional(dev, "vbus");
-	if (IS_ERR(priv->vbus)) {
-		if (PTR_ERR(priv->vbus) == -EPROBE_DEFER)
-			return PTR_ERR(priv->vbus);
-		priv->vbus = NULL;
-	}
+	अगर (IS_ERR(priv->vbus)) अणु
+		अगर (PTR_ERR(priv->vbus) == -EPROBE_DEFER)
+			वापस PTR_ERR(priv->vbus);
+		priv->vbus = शून्य;
+	पूर्ण
 
 	ret = devm_clk_bulk_get(dev,
 				priv->drvdata->num_clks,
 				priv->drvdata->clks);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = clk_bulk_prepare_enable(priv->drvdata->num_clks,
 				      priv->drvdata->clks);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	priv->reset = devm_reset_control_get_shared(dev, NULL);
-	if (IS_ERR(priv->reset)) {
+	priv->reset = devm_reset_control_get_shared(dev, शून्य);
+	अगर (IS_ERR(priv->reset)) अणु
 		ret = PTR_ERR(priv->reset);
 		dev_err(dev, "failed to get device reset, err=%d\n", ret);
-		goto err_disable_clks;
-	}
+		जाओ err_disable_clks;
+	पूर्ण
 
 	ret = reset_control_reset(priv->reset);
-	if (ret)
-		goto err_disable_clks;
+	अगर (ret)
+		जाओ err_disable_clks;
 
 	ret = dwc3_meson_g12a_get_phys(priv);
-	if (ret)
-		goto err_disable_clks;
+	अगर (ret)
+		जाओ err_disable_clks;
 
 	ret = priv->drvdata->setup_regmaps(priv, base);
-	if (ret)
-		goto err_disable_clks;
+	अगर (ret)
+		जाओ err_disable_clks;
 
-	if (priv->vbus) {
+	अगर (priv->vbus) अणु
 		ret = regulator_enable(priv->vbus);
-		if (ret)
-			goto err_disable_clks;
-	}
+		अगर (ret)
+			जाओ err_disable_clks;
+	पूर्ण
 
 	/* Get dr_mode */
 	priv->otg_mode = usb_get_dr_mode(dev);
 
-	if (priv->otg_mode == USB_DR_MODE_PERIPHERAL)
+	अगर (priv->otg_mode == USB_DR_MODE_PERIPHERAL)
 		priv->otg_phy_mode = PHY_MODE_USB_DEVICE;
-	else
+	अन्यथा
 		priv->otg_phy_mode = PHY_MODE_USB_HOST;
 
 	ret = priv->drvdata->usb_init(priv);
-	if (ret)
-		goto err_disable_regulator;
+	अगर (ret)
+		जाओ err_disable_regulator;
 
 	/* Init PHYs */
-	for (i = 0 ; i < PHY_COUNT ; ++i) {
+	क्रम (i = 0 ; i < PHY_COUNT ; ++i) अणु
 		ret = phy_init(priv->phys[i]);
-		if (ret)
-			goto err_disable_regulator;
-	}
+		अगर (ret)
+			जाओ err_disable_regulator;
+	पूर्ण
 
 	/* Set PHY Power */
-	for (i = 0 ; i < PHY_COUNT ; ++i) {
-		ret = phy_power_on(priv->phys[i]);
-		if (ret)
-			goto err_phys_exit;
-	}
+	क्रम (i = 0 ; i < PHY_COUNT ; ++i) अणु
+		ret = phy_घातer_on(priv->phys[i]);
+		अगर (ret)
+			जाओ err_phys_निकास;
+	पूर्ण
 
-	if (priv->drvdata->usb_post_init) {
+	अगर (priv->drvdata->usb_post_init) अणु
 		ret = priv->drvdata->usb_post_init(priv);
-		if (ret)
-			goto err_phys_power;
-	}
+		अगर (ret)
+			जाओ err_phys_घातer;
+	पूर्ण
 
-	ret = of_platform_populate(np, NULL, NULL, dev);
-	if (ret)
-		goto err_phys_power;
+	ret = of_platक्रमm_populate(np, शून्य, शून्य, dev);
+	अगर (ret)
+		जाओ err_phys_घातer;
 
 	ret = dwc3_meson_g12a_otg_init(pdev, priv);
-	if (ret)
-		goto err_phys_power;
+	अगर (ret)
+		जाओ err_phys_घातer;
 
-	pm_runtime_set_active(dev);
-	pm_runtime_enable(dev);
-	pm_runtime_get_sync(dev);
+	pm_runसमय_set_active(dev);
+	pm_runसमय_enable(dev);
+	pm_runसमय_get_sync(dev);
 
-	return 0;
+	वापस 0;
 
-err_phys_power:
-	for (i = 0 ; i < PHY_COUNT ; ++i)
-		phy_power_off(priv->phys[i]);
+err_phys_घातer:
+	क्रम (i = 0 ; i < PHY_COUNT ; ++i)
+		phy_घातer_off(priv->phys[i]);
 
-err_phys_exit:
-	for (i = 0 ; i < PHY_COUNT ; ++i)
-		phy_exit(priv->phys[i]);
+err_phys_निकास:
+	क्रम (i = 0 ; i < PHY_COUNT ; ++i)
+		phy_निकास(priv->phys[i]);
 
 err_disable_regulator:
-	if (priv->vbus)
+	अगर (priv->vbus)
 		regulator_disable(priv->vbus);
 
 err_disable_clks:
 	clk_bulk_disable_unprepare(priv->drvdata->num_clks,
 				   priv->drvdata->clks);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dwc3_meson_g12a_remove(struct platform_device *pdev)
-{
-	struct dwc3_meson_g12a *priv = platform_get_drvdata(pdev);
-	struct device *dev = &pdev->dev;
-	int i;
+अटल पूर्णांक dwc3_meson_g12a_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dwc3_meson_g12a *priv = platक्रमm_get_drvdata(pdev);
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक i;
 
-	if (priv->drvdata->otg_switch_supported)
-		usb_role_switch_unregister(priv->role_switch);
+	अगर (priv->drvdata->otg_चयन_supported)
+		usb_role_चयन_unरेजिस्टर(priv->role_चयन);
 
-	of_platform_depopulate(dev);
+	of_platक्रमm_depopulate(dev);
 
-	for (i = 0 ; i < PHY_COUNT ; ++i) {
-		phy_power_off(priv->phys[i]);
-		phy_exit(priv->phys[i]);
-	}
+	क्रम (i = 0 ; i < PHY_COUNT ; ++i) अणु
+		phy_घातer_off(priv->phys[i]);
+		phy_निकास(priv->phys[i]);
+	पूर्ण
 
-	pm_runtime_disable(dev);
-	pm_runtime_put_noidle(dev);
-	pm_runtime_set_suspended(dev);
-
-	clk_bulk_disable_unprepare(priv->drvdata->num_clks,
-				   priv->drvdata->clks);
-
-	return 0;
-}
-
-static int __maybe_unused dwc3_meson_g12a_runtime_suspend(struct device *dev)
-{
-	struct dwc3_meson_g12a	*priv = dev_get_drvdata(dev);
+	pm_runसमय_disable(dev);
+	pm_runसमय_put_noidle(dev);
+	pm_runसमय_set_suspended(dev);
 
 	clk_bulk_disable_unprepare(priv->drvdata->num_clks,
 				   priv->drvdata->clks);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused dwc3_meson_g12a_runtime_resume(struct device *dev)
-{
-	struct dwc3_meson_g12a	*priv = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused dwc3_meson_g12a_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा dwc3_meson_g12a	*priv = dev_get_drvdata(dev);
 
-	return clk_bulk_prepare_enable(priv->drvdata->num_clks,
+	clk_bulk_disable_unprepare(priv->drvdata->num_clks,
+				   priv->drvdata->clks);
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक __maybe_unused dwc3_meson_g12a_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा dwc3_meson_g12a	*priv = dev_get_drvdata(dev);
+
+	वापस clk_bulk_prepare_enable(priv->drvdata->num_clks,
 				       priv->drvdata->clks);
-}
+पूर्ण
 
-static int __maybe_unused dwc3_meson_g12a_suspend(struct device *dev)
-{
-	struct dwc3_meson_g12a *priv = dev_get_drvdata(dev);
-	int i, ret;
+अटल पूर्णांक __maybe_unused dwc3_meson_g12a_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा dwc3_meson_g12a *priv = dev_get_drvdata(dev);
+	पूर्णांक i, ret;
 
-	if (priv->vbus && priv->otg_phy_mode == PHY_MODE_USB_HOST) {
+	अगर (priv->vbus && priv->otg_phy_mode == PHY_MODE_USB_HOST) अणु
 		ret = regulator_disable(priv->vbus);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	for (i = 0 ; i < PHY_COUNT ; ++i) {
-		phy_power_off(priv->phys[i]);
-		phy_exit(priv->phys[i]);
-	}
+	क्रम (i = 0 ; i < PHY_COUNT ; ++i) अणु
+		phy_घातer_off(priv->phys[i]);
+		phy_निकास(priv->phys[i]);
+	पूर्ण
 
-	reset_control_assert(priv->reset);
+	reset_control_निश्चित(priv->reset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused dwc3_meson_g12a_resume(struct device *dev)
-{
-	struct dwc3_meson_g12a *priv = dev_get_drvdata(dev);
-	int i, ret;
+अटल पूर्णांक __maybe_unused dwc3_meson_g12a_resume(काष्ठा device *dev)
+अणु
+	काष्ठा dwc3_meson_g12a *priv = dev_get_drvdata(dev);
+	पूर्णांक i, ret;
 
-	reset_control_deassert(priv->reset);
+	reset_control_deनिश्चित(priv->reset);
 
 	ret = priv->drvdata->usb_init(priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Init PHYs */
-	for (i = 0 ; i < PHY_COUNT ; ++i) {
+	क्रम (i = 0 ; i < PHY_COUNT ; ++i) अणु
 		ret = phy_init(priv->phys[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Set PHY Power */
-	for (i = 0 ; i < PHY_COUNT ; ++i) {
-		ret = phy_power_on(priv->phys[i]);
-		if (ret)
-			return ret;
-	}
+	क्रम (i = 0 ; i < PHY_COUNT ; ++i) अणु
+		ret = phy_घातer_on(priv->phys[i]);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (priv->vbus && priv->otg_phy_mode == PHY_MODE_USB_HOST) {
+	अगर (priv->vbus && priv->otg_phy_mode == PHY_MODE_USB_HOST) अणु
 		ret = regulator_enable(priv->vbus);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops dwc3_meson_g12a_dev_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops dwc3_meson_g12a_dev_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(dwc3_meson_g12a_suspend, dwc3_meson_g12a_resume)
-	SET_RUNTIME_PM_OPS(dwc3_meson_g12a_runtime_suspend,
-			   dwc3_meson_g12a_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(dwc3_meson_g12a_runसमय_suspend,
+			   dwc3_meson_g12a_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct of_device_id dwc3_meson_g12a_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id dwc3_meson_g12a_match[] = अणु
+	अणु
 		.compatible = "amlogic,meson-gxl-usb-ctrl",
 		.data = &gxl_drvdata,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "amlogic,meson-gxm-usb-ctrl",
 		.data = &gxm_drvdata,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "amlogic,meson-axg-usb-ctrl",
 		.data = &axg_drvdata,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "amlogic,meson-g12a-usb-ctrl",
 		.data = &g12a_drvdata,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "amlogic,meson-a1-usb-ctrl",
 		.data = &a1_drvdata,
-	},
-	{ /* Sentinel */ }
-};
+	पूर्ण,
+	अणु /* Sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, dwc3_meson_g12a_match);
 
-static struct platform_driver dwc3_meson_g12a_driver = {
+अटल काष्ठा platक्रमm_driver dwc3_meson_g12a_driver = अणु
 	.probe		= dwc3_meson_g12a_probe,
-	.remove		= dwc3_meson_g12a_remove,
-	.driver		= {
+	.हटाओ		= dwc3_meson_g12a_हटाओ,
+	.driver		= अणु
 		.name	= "dwc3-meson-g12a",
 		.of_match_table = dwc3_meson_g12a_match,
 		.pm	= &dwc3_meson_g12a_dev_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(dwc3_meson_g12a_driver);
+module_platक्रमm_driver(dwc3_meson_g12a_driver);
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Amlogic Meson G12A USB Glue Layer");
 MODULE_AUTHOR("Neil Armstrong <narmstrong@baylibre.com>");

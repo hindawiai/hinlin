@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Interface to booleans in the security server. This is exported
- * for the selinuxfs.
+ * क्रम the selinuxfs.
  *
  * Author: Karl MacMillan <kmacmillan@tresys.com>
  *
  * Copyright (C) 2003 - 2004 Tresys Technology, LLC
  */
 
-#ifndef _SELINUX_CONDITIONAL_H_
-#define _SELINUX_CONDITIONAL_H_
+#अगर_अघोषित _SELINUX_CONDITIONAL_H_
+#घोषणा _SELINUX_CONDITIONAL_H_
 
-#include "security.h"
+#समावेश "security.h"
 
-int security_get_bools(struct selinux_policy *policy,
-		       u32 *len, char ***names, int **values);
+पूर्णांक security_get_bools(काष्ठा selinux_policy *policy,
+		       u32 *len, अक्षर ***names, पूर्णांक **values);
 
-int security_set_bools(struct selinux_state *state, u32 len, int *values);
+पूर्णांक security_set_bools(काष्ठा selinux_state *state, u32 len, पूर्णांक *values);
 
-int security_get_bool_value(struct selinux_state *state, u32 index);
+पूर्णांक security_get_bool_value(काष्ठा selinux_state *state, u32 index);
 
-#endif
+#पूर्ण_अगर

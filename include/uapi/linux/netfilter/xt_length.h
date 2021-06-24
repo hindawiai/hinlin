@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_LENGTH_H
-#define _XT_LENGTH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_LENGTH_H
+#घोषणा _XT_LENGTH_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct xt_length_info {
+काष्ठा xt_length_info अणु
     __u16	min, max;
     __u8	invert;
-};
+पूर्ण;
 
-#endif /*_XT_LENGTH_H*/
+#पूर्ण_अगर /*_XT_LENGTH_H*/

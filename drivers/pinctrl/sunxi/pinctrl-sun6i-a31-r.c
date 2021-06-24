@@ -1,27 +1,28 @@
+<शैली गुरु>
 /*
  * Allwinner A31 SoCs special pins pinctrl driver.
  *
  * Copyright (C) 2014 Boris Brezillon
- * Boris Brezillon <boris.brezillon@free-electrons.com>
+ * Boris Brezillon <boris.brezillon@मुक्त-electrons.com>
  *
  * Copyright (C) 2014 Maxime Ripard
- * Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/reset.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/reset.h>
 
-#include "pinctrl-sunxi.h"
+#समावेश "pinctrl-sunxi.h"
 
-static const struct sunxi_desc_pin sun6i_a31_r_pins[] = {
+अटल स्थिर काष्ठा sunxi_desc_pin sun6i_a31_r_pins[] = अणु
 	SUNXI_PIN(SUNXI_PINCTRL_PIN(L, 0),
 		  SUNXI_FUNCTION(0x0, "gpio_in"),
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
@@ -99,50 +100,50 @@ static const struct sunxi_desc_pin sun6i_a31_r_pins[] = {
 		  SUNXI_FUNCTION(0x1, "gpio_out"),
 		  SUNXI_FUNCTION_IRQ_BANK(0x2, 1, 7),	/* PM_EINT7 */
 		  SUNXI_FUNCTION(0x3, "rtc")),		/* CLKO */
-};
+पूर्ण;
 
-static const struct sunxi_pinctrl_desc sun6i_a31_r_pinctrl_data = {
+अटल स्थिर काष्ठा sunxi_pinctrl_desc sun6i_a31_r_pinctrl_data = अणु
 	.pins = sun6i_a31_r_pins,
 	.npins = ARRAY_SIZE(sun6i_a31_r_pins),
 	.pin_base = PL_BASE,
 	.irq_banks = 2,
 	.disable_strict_mode = true,
-};
+पूर्ण;
 
-static int sun6i_a31_r_pinctrl_probe(struct platform_device *pdev)
-{
-	struct reset_control *rstc;
-	int ret;
+अटल पूर्णांक sun6i_a31_r_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा reset_control *rstc;
+	पूर्णांक ret;
 
-	rstc = devm_reset_control_get_exclusive(&pdev->dev, NULL);
-	if (IS_ERR(rstc)) {
+	rstc = devm_reset_control_get_exclusive(&pdev->dev, शून्य);
+	अगर (IS_ERR(rstc)) अणु
 		dev_err(&pdev->dev, "Reset controller missing\n");
-		return PTR_ERR(rstc);
-	}
+		वापस PTR_ERR(rstc);
+	पूर्ण
 
-	ret = reset_control_deassert(rstc);
-	if (ret)
-		return ret;
+	ret = reset_control_deनिश्चित(rstc);
+	अगर (ret)
+		वापस ret;
 
 	ret = sunxi_pinctrl_init(pdev,
 				 &sun6i_a31_r_pinctrl_data);
 
-	if (ret)
-		reset_control_assert(rstc);
+	अगर (ret)
+		reset_control_निश्चित(rstc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct of_device_id sun6i_a31_r_pinctrl_match[] = {
-	{ .compatible = "allwinner,sun6i-a31-r-pinctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id sun6i_a31_r_pinctrl_match[] = अणु
+	अणु .compatible = "allwinner,sun6i-a31-r-pinctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver sun6i_a31_r_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver sun6i_a31_r_pinctrl_driver = अणु
 	.probe	= sun6i_a31_r_pinctrl_probe,
-	.driver	= {
+	.driver	= अणु
 		.name		= "sun6i-a31-r-pinctrl",
 		.of_match_table	= sun6i_a31_r_pinctrl_match,
-	},
-};
-builtin_platform_driver(sun6i_a31_r_pinctrl_driver);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(sun6i_a31_r_pinctrl_driver);

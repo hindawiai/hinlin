@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * arch/arm/plat-spear/pl080.c
  *
- * DMAC pl080 definitions for SPEAr platform
+ * DMAC pl080 definitions क्रम SPEAr platक्रमm
  *
  * Copyright (C) 2012 ST Microelectronics
  * Viresh Kumar <vireshk@kernel.org>
@@ -11,68 +12,68 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/amba/pl08x.h>
-#include <linux/amba/bus.h>
-#include <linux/bug.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/spinlock_types.h>
-#include <mach/spear.h>
-#include <mach/misc_regs.h>
+#समावेश <linux/amba/pl08x.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/spinlock_types.h>
+#समावेश <mach/spear.h>
+#समावेश <mach/misc_regs.h>
 
-static spinlock_t lock = __SPIN_LOCK_UNLOCKED(x);
+अटल spinlock_t lock = __SPIN_LOCK_UNLOCKED(x);
 
-struct {
-	unsigned char busy;
-	unsigned char val;
-} signals[16] = {{0, 0}, };
+काष्ठा अणु
+	अचिन्हित अक्षर busy;
+	अचिन्हित अक्षर val;
+पूर्ण संकेतs[16] = अणुअणु0, 0पूर्ण, पूर्ण;
 
-int pl080_get_signal(const struct pl08x_channel_data *cd)
-{
-	unsigned int signal = cd->min_signal, val;
-	unsigned long flags;
+पूर्णांक pl080_get_संकेत(स्थिर काष्ठा pl08x_channel_data *cd)
+अणु
+	अचिन्हित पूर्णांक संकेत = cd->min_संकेत, val;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&lock, flags);
 
-	/* Return if signal is already acquired by somebody else */
-	if (signals[signal].busy &&
-			(signals[signal].val != cd->muxval)) {
+	/* Return अगर संकेत is alपढ़ोy acquired by somebody अन्यथा */
+	अगर (संकेतs[संकेत].busy &&
+			(संकेतs[संकेत].val != cd->muxval)) अणु
 		spin_unlock_irqrestore(&lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* If acquiring for the first time, configure it */
-	if (!signals[signal].busy) {
-		val = readl(DMA_CHN_CFG);
+	/* If acquiring क्रम the first समय, configure it */
+	अगर (!संकेतs[संकेत].busy) अणु
+		val = पढ़ोl(DMA_CHN_CFG);
 
 		/*
-		 * Each request line has two bits in DMA_CHN_CFG register. To
-		 * goto the bits of current request line, do left shift of
-		 * value by 2 * signal number.
+		 * Each request line has two bits in DMA_CHN_CFG रेजिस्टर. To
+		 * जाओ the bits of current request line, करो left shअगरt of
+		 * value by 2 * संकेत number.
 		 */
-		val &= ~(0x3 << (signal * 2));
-		val |= cd->muxval << (signal * 2);
-		writel(val, DMA_CHN_CFG);
-	}
+		val &= ~(0x3 << (संकेत * 2));
+		val |= cd->muxval << (संकेत * 2);
+		ग_लिखोl(val, DMA_CHN_CFG);
+	पूर्ण
 
-	signals[signal].busy++;
-	signals[signal].val = cd->muxval;
+	संकेतs[संकेत].busy++;
+	संकेतs[संकेत].val = cd->muxval;
 	spin_unlock_irqrestore(&lock, flags);
 
-	return signal;
-}
+	वापस संकेत;
+पूर्ण
 
-void pl080_put_signal(const struct pl08x_channel_data *cd, int signal)
-{
-	unsigned long flags;
+व्योम pl080_put_संकेत(स्थिर काष्ठा pl08x_channel_data *cd, पूर्णांक संकेत)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&lock, flags);
 
-	/* if signal is not used */
-	if (!signals[signal].busy)
+	/* अगर संकेत is not used */
+	अगर (!संकेतs[संकेत].busy)
 		BUG();
 
-	signals[signal].busy--;
+	संकेतs[संकेत].busy--;
 
 	spin_unlock_irqrestore(&lock, flags);
-}
+पूर्ण

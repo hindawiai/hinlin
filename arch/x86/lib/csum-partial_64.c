@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/x86_64/lib/csum-partial.c
  *
- * This file contains network checksum routines that are better done
- * in an architecture-specific manner due to speed.
+ * This file contains network checksum routines that are better करोne
+ * in an architecture-specअगरic manner due to speed.
  */
  
-#include <linux/compiler.h>
-#include <linux/export.h>
-#include <asm/checksum.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/export.h>
+#समावेश <यंत्र/checksum.h>
 
-static inline unsigned short from32to16(unsigned a) 
-{
-	unsigned short b = a >> 16; 
-	asm("addw %w2,%w0\n\t"
+अटल अंतरभूत अचिन्हित लघु from32to16(अचिन्हित a) 
+अणु
+	अचिन्हित लघु b = a >> 16; 
+	यंत्र("addw %w2,%w0\n\t"
 	    "adcw $0,%w0\n" 
 	    : "=r" (b)
 	    : "0" (b), "r" (a));
-	return b;
-}
+	वापस b;
+पूर्ण
 
 /*
  * Do a 64-bit checksum on an arbitrary memory area.
  * Returns a 32bit checksum.
  *
- * This isn't as time critical as it used to be because many NICs
- * do hardware checksumming these days.
+ * This isn't as समय critical as it used to be because many NICs
+ * करो hardware checksumming these days.
  * 
  * Things tried and found to not make it faster:
  * Manual Prefetching
  * Unrolling to an 128 bytes inner loop.
- * Using interleaving with more registers to break the carry chains.
+ * Using पूर्णांकerleaving with more रेजिस्टरs to अवरोध the carry chains.
  */
-static unsigned do_csum(const unsigned char *buff, unsigned len)
-{
-	unsigned odd, count;
-	unsigned long result = 0;
+अटल अचिन्हित करो_csum(स्थिर अचिन्हित अक्षर *buff, अचिन्हित len)
+अणु
+	अचिन्हित odd, count;
+	अचिन्हित दीर्घ result = 0;
 
-	if (unlikely(len == 0))
-		return result; 
-	odd = 1 & (unsigned long) buff;
-	if (unlikely(odd)) {
+	अगर (unlikely(len == 0))
+		वापस result; 
+	odd = 1 & (अचिन्हित दीर्घ) buff;
+	अगर (unlikely(odd)) अणु
 		result = *buff << 8;
 		len--;
 		buff++;
-	}
+	पूर्ण
 	count = len >> 1;		/* nr of 16-bit words.. */
-	if (count) {
-		if (2 & (unsigned long) buff) {
-			result += *(unsigned short *)buff;
+	अगर (count) अणु
+		अगर (2 & (अचिन्हित दीर्घ) buff) अणु
+			result += *(अचिन्हित लघु *)buff;
 			count--;
 			len -= 2;
 			buff += 2;
-		}
+		पूर्ण
 		count >>= 1;		/* nr of 32-bit words.. */
-		if (count) {
-			unsigned long zero;
-			unsigned count64;
-			if (4 & (unsigned long) buff) {
-				result += *(unsigned int *) buff;
+		अगर (count) अणु
+			अचिन्हित दीर्घ zero;
+			अचिन्हित count64;
+			अगर (4 & (अचिन्हित दीर्घ) buff) अणु
+				result += *(अचिन्हित पूर्णांक *) buff;
 				count--;
 				len -= 4;
 				buff += 4;
-			}
+			पूर्ण
 			count >>= 1;	/* nr of 64-bit words.. */
 
-			/* main loop using 64byte blocks */
+			/* मुख्य loop using 64byte blocks */
 			zero = 0;
 			count64 = count >> 3;
-			while (count64) { 
-				asm("addq 0*8(%[src]),%[res]\n\t"
+			जबतक (count64) अणु 
+				यंत्र("addq 0*8(%[src]),%[res]\n\t"
 				    "adcq 1*8(%[src]),%[res]\n\t"
 				    "adcq 2*8(%[src]),%[res]\n\t"
 				    "adcq 3*8(%[src]),%[res]\n\t"
@@ -83,68 +84,68 @@ static unsigned do_csum(const unsigned char *buff, unsigned len)
 				    "[res]" (result));
 				buff += 64;
 				count64--;
-			}
+			पूर्ण
 
 			/* last up to 7 8byte blocks */
 			count %= 8; 
-			while (count) { 
-				asm("addq %1,%0\n\t"
+			जबतक (count) अणु 
+				यंत्र("addq %1,%0\n\t"
 				    "adcq %2,%0\n" 
 					    : "=r" (result)
-				    : "m" (*(unsigned long *)buff), 
+				    : "m" (*(अचिन्हित दीर्घ *)buff), 
 				    "r" (zero),  "0" (result));
 				--count; 
 				buff += 8;
-			}
+			पूर्ण
 			result = add32_with_carry(result>>32,
 						  result&0xffffffff); 
 
-			if (len & 4) {
-				result += *(unsigned int *) buff;
+			अगर (len & 4) अणु
+				result += *(अचिन्हित पूर्णांक *) buff;
 				buff += 4;
-			}
-		}
-		if (len & 2) {
-			result += *(unsigned short *) buff;
+			पूर्ण
+		पूर्ण
+		अगर (len & 2) अणु
+			result += *(अचिन्हित लघु *) buff;
 			buff += 2;
-		}
-	}
-	if (len & 1)
+		पूर्ण
+	पूर्ण
+	अगर (len & 1)
 		result += *buff;
 	result = add32_with_carry(result>>32, result & 0xffffffff); 
-	if (unlikely(odd)) { 
+	अगर (unlikely(odd)) अणु 
 		result = from32to16(result);
 		result = ((result >> 8) & 0xff) | ((result & 0xff) << 8);
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
 /*
  * computes the checksum of a memory block at buff, length len,
  * and adds in "sum" (32-bit)
  *
- * returns a 32-bit number suitable for feeding into itself
+ * वापसs a 32-bit number suitable क्रम feeding पूर्णांकo itself
  * or csum_tcpudp_magic
  *
  * this function must be called with even lengths, except
- * for the last fragment, which may be odd
+ * क्रम the last fragment, which may be odd
  *
  * it's best to have buff aligned on a 64-bit boundary
  */
-__wsum csum_partial(const void *buff, int len, __wsum sum)
-{
-	return (__force __wsum)add32_with_carry(do_csum(buff, len),
-						(__force u32)sum);
-}
+__wsum csum_partial(स्थिर व्योम *buff, पूर्णांक len, __wsum sum)
+अणु
+	वापस (__क्रमce __wsum)add32_with_carry(करो_csum(buff, len),
+						(__क्रमce u32)sum);
+पूर्ण
 EXPORT_SYMBOL(csum_partial);
 
 /*
- * this routine is used for miscellaneous IP-like checksums, mainly
+ * this routine is used क्रम miscellaneous IP-like checksums, मुख्यly
  * in icmp.c
  */
-__sum16 ip_compute_csum(const void *buff, int len)
-{
-	return csum_fold(csum_partial(buff,len,0));
-}
+__sum16 ip_compute_csum(स्थिर व्योम *buff, पूर्णांक len)
+अणु
+	वापस csum_fold(csum_partial(buff,len,0));
+पूर्ण
 EXPORT_SYMBOL(ip_compute_csum);
 

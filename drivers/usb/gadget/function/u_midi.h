@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * u_midi.h
  *
- * Utility definitions for the midi function
+ * Utility definitions क्रम the midi function
  *
  * Copyright (c) 2014 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -10,28 +11,28 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
-#ifndef U_MIDI_H
-#define U_MIDI_H
+#अगर_अघोषित U_MIDI_H
+#घोषणा U_MIDI_H
 
-#include <linux/usb/composite.h>
+#समावेश <linux/usb/composite.h>
 
-struct f_midi_opts {
-	struct usb_function_instance	func_inst;
-	int				index;
-	char				*id;
+काष्ठा f_midi_opts अणु
+	काष्ठा usb_function_instance	func_inst;
+	पूर्णांक				index;
+	अक्षर				*id;
 	bool				id_allocated;
-	unsigned int			in_ports;
-	unsigned int			out_ports;
-	unsigned int			buflen;
-	unsigned int			qlen;
+	अचिन्हित पूर्णांक			in_ports;
+	अचिन्हित पूर्णांक			out_ports;
+	अचिन्हित पूर्णांक			buflen;
+	अचिन्हित पूर्णांक			qlen;
 
 	/*
-	 * Protect the data form concurrent access by read/write
-	 * and create symlink/remove symlink.
+	 * Protect the data क्रमm concurrent access by पढ़ो/ग_लिखो
+	 * and create symlink/हटाओ symlink.
 	 */
-	 struct mutex			lock;
-	 int				refcnt;
-};
+	 काष्ठा mutex			lock;
+	 पूर्णांक				refcnt;
+पूर्ण;
 
-#endif /* U_MIDI_H */
+#पूर्ण_अगर /* U_MIDI_H */
 

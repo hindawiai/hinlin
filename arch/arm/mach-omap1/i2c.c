@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Helper module for board specific I2C bus registration
+ * Helper module क्रम board specअगरic I2C bus registration
  *
  * Copyright (C) 2009 Nokia Corporation.
  */
 
-#include <linux/i2c.h>
-#include <linux/platform_data/i2c-omap.h>
-#include <mach/mux.h>
-#include "soc.h"
+#समावेश <linux/i2c.h>
+#समावेश <linux/platक्रमm_data/i2c-omap.h>
+#समावेश <mach/mux.h>
+#समावेश "soc.h"
 
-#define OMAP_I2C_SIZE		0x3f
-#define OMAP1_I2C_BASE		0xfffb3800
+#घोषणा OMAP_I2C_SIZE		0x3f
+#घोषणा OMAP1_I2C_BASE		0xfffb3800
 
-static const char name[] = "omap_i2c";
+अटल स्थिर अक्षर name[] = "omap_i2c";
 
-static struct resource i2c_resources[2] = {
-};
+अटल काष्ठा resource i2c_resources[2] = अणु
+पूर्ण;
 
-static struct platform_device omap_i2c_devices[1] = {
-};
+अटल काष्ठा platक्रमm_device omap_i2c_devices[1] = अणु
+पूर्ण;
 
-static void __init omap1_i2c_mux_pins(int bus_id)
-{
-	if (cpu_is_omap7xx()) {
+अटल व्योम __init omap1_i2c_mux_pins(पूर्णांक bus_id)
+अणु
+	अगर (cpu_is_omap7xx()) अणु
 		omap_cfg_reg(I2C_7XX_SDA);
 		omap_cfg_reg(I2C_7XX_SCL);
-	} else {
+	पूर्ण अन्यथा अणु
 		omap_cfg_reg(I2C_SDA);
 		omap_cfg_reg(I2C_SCL);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int __init omap_i2c_add_bus(struct omap_i2c_bus_platform_data *pdata,
-				int bus_id)
-{
-	struct platform_device *pdev;
-	struct resource *res;
+पूर्णांक __init omap_i2c_add_bus(काष्ठा omap_i2c_bus_platक्रमm_data *pdata,
+				पूर्णांक bus_id)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा resource *res;
 
-	if (bus_id > 1)
-		return -EINVAL;
+	अगर (bus_id > 1)
+		वापस -EINVAL;
 
 	omap1_i2c_mux_pins(bus_id);
 
@@ -55,7 +56,7 @@ int __init omap_i2c_add_bus(struct omap_i2c_bus_platform_data *pdata,
 	res[1].flags = IORESOURCE_IRQ;
 	pdev->resource = res;
 
-	/* all OMAP1 have IP version 1 register set */
+	/* all OMAP1 have IP version 1 रेजिस्टर set */
 	pdata->rev = OMAP_I2C_IP_VERSION_1;
 
 	/* all OMAP1 I2C are implemented like this */
@@ -64,102 +65,102 @@ int __init omap_i2c_add_bus(struct omap_i2c_bus_platform_data *pdata,
 		       OMAP_I2C_FLAG_16BIT_DATA_REG |
 		       OMAP_I2C_FLAG_ALWAYS_ARMXOR_CLK;
 
-	/* how the cpu bus is wired up differs for 7xx only */
+	/* how the cpu bus is wired up dअगरfers क्रम 7xx only */
 
-	if (cpu_is_omap7xx())
+	अगर (cpu_is_omap7xx())
 		pdata->flags |= OMAP_I2C_FLAG_BUS_SHIFT_1;
-	else
+	अन्यथा
 		pdata->flags |= OMAP_I2C_FLAG_BUS_SHIFT_2;
 
-	pdev->dev.platform_data = pdata;
+	pdev->dev.platक्रमm_data = pdata;
 
-	return platform_device_register(pdev);
-}
+	वापस platक्रमm_device_रेजिस्टर(pdev);
+पूर्ण
 
-#define OMAP_I2C_MAX_CONTROLLERS 4
-static struct omap_i2c_bus_platform_data i2c_pdata[OMAP_I2C_MAX_CONTROLLERS];
+#घोषणा OMAP_I2C_MAX_CONTROLLERS 4
+अटल काष्ठा omap_i2c_bus_platक्रमm_data i2c_pdata[OMAP_I2C_MAX_CONTROLLERS];
 
-#define OMAP_I2C_CMDLINE_SETUP	(BIT(31))
+#घोषणा OMAP_I2C_CMDLINE_SETUP	(BIT(31))
 
 /**
- * omap_i2c_bus_setup - Process command line options for the I2C bus speed
+ * omap_i2c_bus_setup - Process command line options क्रम the I2C bus speed
  * @str: String of options
  *
- * This function allow to override the default I2C bus speed for given I2C
+ * This function allow to override the शेष I2C bus speed क्रम given I2C
  * bus with a command line option.
  *
  * Format: i2c_bus=bus_id,clkrate (in kHz)
  *
  * Returns 1 on success, 0 otherwise.
  */
-static int __init omap_i2c_bus_setup(char *str)
-{
-	int ints[3];
+अटल पूर्णांक __init omap_i2c_bus_setup(अक्षर *str)
+अणु
+	पूर्णांक पूर्णांकs[3];
 
-	get_options(str, 3, ints);
-	if (ints[0] < 2 || ints[1] < 1 ||
-			ints[1] > OMAP_I2C_MAX_CONTROLLERS)
-		return 0;
-	i2c_pdata[ints[1] - 1].clkrate = ints[2];
-	i2c_pdata[ints[1] - 1].clkrate |= OMAP_I2C_CMDLINE_SETUP;
+	get_options(str, 3, पूर्णांकs);
+	अगर (पूर्णांकs[0] < 2 || पूर्णांकs[1] < 1 ||
+			पूर्णांकs[1] > OMAP_I2C_MAX_CONTROLLERS)
+		वापस 0;
+	i2c_pdata[पूर्णांकs[1] - 1].clkrate = पूर्णांकs[2];
+	i2c_pdata[पूर्णांकs[1] - 1].clkrate |= OMAP_I2C_CMDLINE_SETUP;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("i2c_bus=", omap_i2c_bus_setup);
 
 /*
- * Register busses defined in command line but that are not registered with
- * omap_register_i2c_bus from board initialization code.
+ * Register busses defined in command line but that are not रेजिस्टरed with
+ * omap_रेजिस्टर_i2c_bus from board initialization code.
  */
-int __init omap_register_i2c_bus_cmdline(void)
-{
-	int i, err = 0;
+पूर्णांक __init omap_रेजिस्टर_i2c_bus_cmdline(व्योम)
+अणु
+	पूर्णांक i, err = 0;
 
-	for (i = 0; i < ARRAY_SIZE(i2c_pdata); i++)
-		if (i2c_pdata[i].clkrate & OMAP_I2C_CMDLINE_SETUP) {
+	क्रम (i = 0; i < ARRAY_SIZE(i2c_pdata); i++)
+		अगर (i2c_pdata[i].clkrate & OMAP_I2C_CMDLINE_SETUP) अणु
 			i2c_pdata[i].clkrate &= ~OMAP_I2C_CMDLINE_SETUP;
 			err = omap_i2c_add_bus(&i2c_pdata[i], i + 1);
-			if (err)
-				goto out;
-		}
+			अगर (err)
+				जाओ out;
+		पूर्ण
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * omap_register_i2c_bus - register I2C bus with device descriptors
+ * omap_रेजिस्टर_i2c_bus - रेजिस्टर I2C bus with device descriptors
  * @bus_id: bus id counting from number 1
- * @clkrate: clock rate of the bus in kHz
- * @info: pointer into I2C device descriptor table or NULL
+ * @clkrate: घड़ी rate of the bus in kHz
+ * @info: poपूर्णांकer पूर्णांकo I2C device descriptor table or शून्य
  * @len: number of descriptors in the table
  *
  * Returns 0 on success or an error code.
  */
-int __init omap_register_i2c_bus(int bus_id, u32 clkrate,
-			  struct i2c_board_info const *info,
-			  unsigned len)
-{
-	int err;
+पूर्णांक __init omap_रेजिस्टर_i2c_bus(पूर्णांक bus_id, u32 clkrate,
+			  काष्ठा i2c_board_info स्थिर *info,
+			  अचिन्हित len)
+अणु
+	पूर्णांक err;
 
 	BUG_ON(bus_id < 1 || bus_id > OMAP_I2C_MAX_CONTROLLERS);
 
-	if (info) {
-		err = i2c_register_board_info(bus_id, info, len);
-		if (err)
-			return err;
-	}
+	अगर (info) अणु
+		err = i2c_रेजिस्टर_board_info(bus_id, info, len);
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (!i2c_pdata[bus_id - 1].clkrate)
+	अगर (!i2c_pdata[bus_id - 1].clkrate)
 		i2c_pdata[bus_id - 1].clkrate = clkrate;
 
 	i2c_pdata[bus_id - 1].clkrate &= ~OMAP_I2C_CMDLINE_SETUP;
 
-	return omap_i2c_add_bus(&i2c_pdata[bus_id - 1], bus_id);
-}
+	वापस omap_i2c_add_bus(&i2c_pdata[bus_id - 1], bus_id);
+पूर्ण
 
-static  int __init omap_i2c_cmdline(void)
-{
-	return omap_register_i2c_bus_cmdline();
-}
+अटल  पूर्णांक __init omap_i2c_cmdline(व्योम)
+अणु
+	वापस omap_रेजिस्टर_i2c_bus_cmdline();
+पूर्ण
 subsys_initcall(omap_i2c_cmdline);

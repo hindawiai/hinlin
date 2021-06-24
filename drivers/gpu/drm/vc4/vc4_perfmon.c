@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018 Broadcom
  */
 
 /**
- * DOC: VC4 V3D performance monitor module
+ * DOC: VC4 V3D perक्रमmance monitor module
  *
  * The V3D block provides 16 hardware counters which can count various events.
  */
 
-#include "vc4_drv.h"
-#include "vc4_regs.h"
+#समावेश "vc4_drv.h"
+#समावेश "vc4_regs.h"
 
-#define VC4_PERFMONID_MIN	1
-#define VC4_PERFMONID_MAX	U32_MAX
+#घोषणा VC4_PERFMONID_MIN	1
+#घोषणा VC4_PERFMONID_MAX	U32_MAX
 
-void vc4_perfmon_get(struct vc4_perfmon *perfmon)
-{
-	if (perfmon)
+व्योम vc4_perfmon_get(काष्ठा vc4_perfmon *perfmon)
+अणु
+	अगर (perfmon)
 		refcount_inc(&perfmon->refcnt);
-}
+पूर्ण
 
-void vc4_perfmon_put(struct vc4_perfmon *perfmon)
-{
-	if (perfmon && refcount_dec_and_test(&perfmon->refcnt))
-		kfree(perfmon);
-}
+व्योम vc4_perfmon_put(काष्ठा vc4_perfmon *perfmon)
+अणु
+	अगर (perfmon && refcount_dec_and_test(&perfmon->refcnt))
+		kमुक्त(perfmon);
+पूर्ण
 
-void vc4_perfmon_start(struct vc4_dev *vc4, struct vc4_perfmon *perfmon)
-{
-	unsigned int i;
+व्योम vc4_perfmon_start(काष्ठा vc4_dev *vc4, काष्ठा vc4_perfmon *perfmon)
+अणु
+	अचिन्हित पूर्णांक i;
 	u32 mask;
 
-	if (WARN_ON_ONCE(!perfmon || vc4->active_perfmon))
-		return;
+	अगर (WARN_ON_ONCE(!perfmon || vc4->active_perfmon))
+		वापस;
 
-	for (i = 0; i < perfmon->ncounters; i++)
+	क्रम (i = 0; i < perfmon->ncounters; i++)
 		V3D_WRITE(V3D_PCTRS(i), perfmon->events[i]);
 
 	mask = GENMASK(perfmon->ncounters - 1, 0);
 	V3D_WRITE(V3D_PCTRC, mask);
 	V3D_WRITE(V3D_PCTRE, V3D_PCTRE_EN | mask);
 	vc4->active_perfmon = perfmon;
-}
+पूर्ण
 
-void vc4_perfmon_stop(struct vc4_dev *vc4, struct vc4_perfmon *perfmon,
+व्योम vc4_perfmon_stop(काष्ठा vc4_dev *vc4, काष्ठा vc4_perfmon *perfmon,
 		      bool capture)
-{
-	unsigned int i;
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (WARN_ON_ONCE(!vc4->active_perfmon ||
+	अगर (WARN_ON_ONCE(!vc4->active_perfmon ||
 			 perfmon != vc4->active_perfmon))
-		return;
+		वापस;
 
-	if (capture) {
-		for (i = 0; i < perfmon->ncounters; i++)
+	अगर (capture) अणु
+		क्रम (i = 0; i < perfmon->ncounters; i++)
 			perfmon->counters[i] += V3D_READ(V3D_PCTR(i));
-	}
+	पूर्ण
 
 	V3D_WRITE(V3D_PCTRE, 0);
-	vc4->active_perfmon = NULL;
-}
+	vc4->active_perfmon = शून्य;
+पूर्ण
 
-struct vc4_perfmon *vc4_perfmon_find(struct vc4_file *vc4file, int id)
-{
-	struct vc4_perfmon *perfmon;
+काष्ठा vc4_perfmon *vc4_perfmon_find(काष्ठा vc4_file *vc4file, पूर्णांक id)
+अणु
+	काष्ठा vc4_perfmon *perfmon;
 
 	mutex_lock(&vc4file->perfmon.lock);
 	perfmon = idr_find(&vc4file->perfmon.idr, id);
 	vc4_perfmon_get(perfmon);
 	mutex_unlock(&vc4file->perfmon.lock);
 
-	return perfmon;
-}
+	वापस perfmon;
+पूर्ण
 
-void vc4_perfmon_open_file(struct vc4_file *vc4file)
-{
+व्योम vc4_perfmon_खोलो_file(काष्ठा vc4_file *vc4file)
+अणु
 	mutex_init(&vc4file->perfmon.lock);
 	idr_init_base(&vc4file->perfmon.idr, VC4_PERFMONID_MIN);
-}
+पूर्ण
 
-static int vc4_perfmon_idr_del(int id, void *elem, void *data)
-{
-	struct vc4_perfmon *perfmon = elem;
+अटल पूर्णांक vc4_perfmon_idr_del(पूर्णांक id, व्योम *elem, व्योम *data)
+अणु
+	काष्ठा vc4_perfmon *perfmon = elem;
 
 	vc4_perfmon_put(perfmon);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void vc4_perfmon_close_file(struct vc4_file *vc4file)
-{
+व्योम vc4_perfmon_बंद_file(काष्ठा vc4_file *vc4file)
+अणु
 	mutex_lock(&vc4file->perfmon.lock);
-	idr_for_each(&vc4file->perfmon.idr, vc4_perfmon_idr_del, NULL);
+	idr_क्रम_each(&vc4file->perfmon.idr, vc4_perfmon_idr_del, शून्य);
 	idr_destroy(&vc4file->perfmon.idr);
 	mutex_unlock(&vc4file->perfmon.lock);
-}
+पूर्ण
 
-int vc4_perfmon_create_ioctl(struct drm_device *dev, void *data,
-			     struct drm_file *file_priv)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_file *vc4file = file_priv->driver_priv;
-	struct drm_vc4_perfmon_create *req = data;
-	struct vc4_perfmon *perfmon;
-	unsigned int i;
-	int ret;
+पूर्णांक vc4_perfmon_create_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			     काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_file *vc4file = file_priv->driver_priv;
+	काष्ठा drm_vc4_perfmon_create *req = data;
+	काष्ठा vc4_perfmon *perfmon;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	if (!vc4->v3d) {
+	अगर (!vc4->v3d) अणु
 		DRM_DEBUG("Creating perfmon no VC4 V3D probed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Number of monitored counters cannot exceed HW limits. */
-	if (req->ncounters > DRM_VC4_MAX_PERF_COUNTERS ||
+	अगर (req->ncounters > DRM_VC4_MAX_PERF_COUNTERS ||
 	    !req->ncounters)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Make sure all events are valid. */
-	for (i = 0; i < req->ncounters; i++) {
-		if (req->events[i] >= VC4_PERFCNT_NUM_EVENTS)
-			return -EINVAL;
-	}
+	क्रम (i = 0; i < req->ncounters; i++) अणु
+		अगर (req->events[i] >= VC4_PERFCNT_NUM_EVENTS)
+			वापस -EINVAL;
+	पूर्ण
 
-	perfmon = kzalloc(struct_size(perfmon, counters, req->ncounters),
+	perfmon = kzalloc(काष्ठा_size(perfmon, counters, req->ncounters),
 			  GFP_KERNEL);
-	if (!perfmon)
-		return -ENOMEM;
+	अगर (!perfmon)
+		वापस -ENOMEM;
 
-	for (i = 0; i < req->ncounters; i++)
+	क्रम (i = 0; i < req->ncounters; i++)
 		perfmon->events[i] = req->events[i];
 
 	perfmon->ncounters = req->ncounters;
@@ -140,67 +141,67 @@ int vc4_perfmon_create_ioctl(struct drm_device *dev, void *data,
 			VC4_PERFMONID_MAX, GFP_KERNEL);
 	mutex_unlock(&vc4file->perfmon.lock);
 
-	if (ret < 0) {
-		kfree(perfmon);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		kमुक्त(perfmon);
+		वापस ret;
+	पूर्ण
 
 	req->id = ret;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vc4_perfmon_destroy_ioctl(struct drm_device *dev, void *data,
-			      struct drm_file *file_priv)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_file *vc4file = file_priv->driver_priv;
-	struct drm_vc4_perfmon_destroy *req = data;
-	struct vc4_perfmon *perfmon;
+पूर्णांक vc4_perfmon_destroy_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			      काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_file *vc4file = file_priv->driver_priv;
+	काष्ठा drm_vc4_perfmon_destroy *req = data;
+	काष्ठा vc4_perfmon *perfmon;
 
-	if (!vc4->v3d) {
+	अगर (!vc4->v3d) अणु
 		DRM_DEBUG("Destroying perfmon no VC4 V3D probed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	mutex_lock(&vc4file->perfmon.lock);
-	perfmon = idr_remove(&vc4file->perfmon.idr, req->id);
+	perfmon = idr_हटाओ(&vc4file->perfmon.idr, req->id);
 	mutex_unlock(&vc4file->perfmon.lock);
 
-	if (!perfmon)
-		return -EINVAL;
+	अगर (!perfmon)
+		वापस -EINVAL;
 
 	vc4_perfmon_put(perfmon);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vc4_perfmon_get_values_ioctl(struct drm_device *dev, void *data,
-				 struct drm_file *file_priv)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_file *vc4file = file_priv->driver_priv;
-	struct drm_vc4_perfmon_get_values *req = data;
-	struct vc4_perfmon *perfmon;
-	int ret;
+पूर्णांक vc4_perfmon_get_values_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				 काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_file *vc4file = file_priv->driver_priv;
+	काष्ठा drm_vc4_perfmon_get_values *req = data;
+	काष्ठा vc4_perfmon *perfmon;
+	पूर्णांक ret;
 
-	if (!vc4->v3d) {
+	अगर (!vc4->v3d) अणु
 		DRM_DEBUG("Getting perfmon no VC4 V3D probed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	mutex_lock(&vc4file->perfmon.lock);
 	perfmon = idr_find(&vc4file->perfmon.idr, req->id);
 	vc4_perfmon_get(perfmon);
 	mutex_unlock(&vc4file->perfmon.lock);
 
-	if (!perfmon)
-		return -EINVAL;
+	अगर (!perfmon)
+		वापस -EINVAL;
 
-	if (copy_to_user(u64_to_user_ptr(req->values_ptr), perfmon->counters,
-			 perfmon->ncounters * sizeof(u64)))
+	अगर (copy_to_user(u64_to_user_ptr(req->values_ptr), perfmon->counters,
+			 perfmon->ncounters * माप(u64)))
 		ret = -EFAULT;
-	else
+	अन्यथा
 		ret = 0;
 
 	vc4_perfmon_put(perfmon);
-	return ret;
-}
+	वापस ret;
+पूर्ण

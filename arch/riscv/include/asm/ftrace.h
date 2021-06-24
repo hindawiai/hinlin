@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2017 Andes Technology Corporation */
 
-#ifndef _ASM_RISCV_FTRACE_H
-#define _ASM_RISCV_FTRACE_H
+#अगर_अघोषित _ASM_RISCV_FTRACE_H
+#घोषणा _ASM_RISCV_FTRACE_H
 
 /*
- * The graph frame test is not possible if CONFIG_FRAME_POINTER is not enabled.
- * Check arch/riscv/kernel/mcount.S for detail.
+ * The graph frame test is not possible अगर CONFIG_FRAME_POINTER is not enabled.
+ * Check arch/riscv/kernel/mcount.S क्रम detail.
  */
-#if defined(CONFIG_FUNCTION_GRAPH_TRACER) && defined(CONFIG_FRAME_POINTER)
-#define HAVE_FUNCTION_GRAPH_FP_TEST
-#endif
-#define HAVE_FUNCTION_GRAPH_RET_ADDR_PTR
+#अगर defined(CONFIG_FUNCTION_GRAPH_TRACER) && defined(CONFIG_FRAME_POINTER)
+#घोषणा HAVE_FUNCTION_GRAPH_FP_TEST
+#पूर्ण_अगर
+#घोषणा HAVE_FUNCTION_GRAPH_RET_ADDR_PTR
 
 /*
  * Clang prior to 13 had "mcount" instead of "_mcount":
  * https://reviews.llvm.org/D98881
  */
-#if defined(CONFIG_CC_IS_GCC) || CONFIG_CLANG_VERSION >= 130000
-#define MCOUNT_NAME _mcount
-#else
-#define MCOUNT_NAME mcount
-#endif
+#अगर defined(CONFIG_CC_IS_GCC) || CONFIG_CLANG_VERSION >= 130000
+#घोषणा MCOUNT_NAME _mcount
+#अन्यथा
+#घोषणा MCOUNT_NAME mcount
+#पूर्ण_अगर
 
-#define ARCH_SUPPORTS_FTRACE_OPS 1
-#ifndef __ASSEMBLY__
-void MCOUNT_NAME(void);
-static inline unsigned long ftrace_call_adjust(unsigned long addr)
-{
-	return addr;
-}
+#घोषणा ARCH_SUPPORTS_FTRACE_OPS 1
+#अगर_अघोषित __ASSEMBLY__
+व्योम MCOUNT_NAME(व्योम);
+अटल अंतरभूत अचिन्हित दीर्घ ftrace_call_adjust(अचिन्हित दीर्घ addr)
+अणु
+	वापस addr;
+पूर्ण
 
-struct dyn_arch_ftrace {
-};
-#endif
+काष्ठा dyn_arch_ftrace अणु
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_DYNAMIC_FTRACE
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
 /*
  * A general call in RISC-V is a pair of insts:
- * 1) auipc: setting high-20 pc-related bits to ra register
+ * 1) auipc: setting high-20 pc-related bits to ra रेजिस्टर
  * 2) jalr: setting low-12 offset to ra, jump to ra, and set ra to
- *          return address (original pc + 4)
+ *          वापस address (original pc + 4)
  *
  * Dynamic ftrace generates probes to call sites, so we must deal with
- * both auipc and jalr at the same time.
+ * both auipc and jalr at the same समय.
  */
 
-#define MCOUNT_ADDR		((unsigned long)MCOUNT_NAME)
-#define JALR_SIGN_MASK		(0x00000800)
-#define JALR_OFFSET_MASK	(0x00000fff)
-#define AUIPC_OFFSET_MASK	(0xfffff000)
-#define AUIPC_PAD		(0x00001000)
-#define JALR_SHIFT		20
-#define JALR_BASIC		(0x000080e7)
-#define AUIPC_BASIC		(0x00000097)
-#define NOP4			(0x00000013)
+#घोषणा MCOUNT_ADDR		((अचिन्हित दीर्घ)MCOUNT_NAME)
+#घोषणा JALR_SIGN_MASK		(0x00000800)
+#घोषणा JALR_OFFSET_MASK	(0x00000fff)
+#घोषणा AUIPC_OFFSET_MASK	(0xfffff000)
+#घोषणा AUIPC_PAD		(0x00001000)
+#घोषणा JALR_SHIFT		20
+#घोषणा JALR_BASIC		(0x000080e7)
+#घोषणा AUIPC_BASIC		(0x00000097)
+#घोषणा NOP4			(0x00000013)
 
-#define make_call(caller, callee, call)					\
-do {									\
-	call[0] = to_auipc_insn((unsigned int)((unsigned long)callee -	\
-				(unsigned long)caller));		\
-	call[1] = to_jalr_insn((unsigned int)((unsigned long)callee -	\
-			       (unsigned long)caller));			\
-} while (0)
+#घोषणा make_call(caller, callee, call)					\
+करो अणु									\
+	call[0] = to_auipc_insn((अचिन्हित पूर्णांक)((अचिन्हित दीर्घ)callee -	\
+				(अचिन्हित दीर्घ)caller));		\
+	call[1] = to_jalr_insn((अचिन्हित पूर्णांक)((अचिन्हित दीर्घ)callee -	\
+			       (अचिन्हित दीर्घ)caller));			\
+पूर्ण जबतक (0)
 
-#define to_jalr_insn(offset)						\
+#घोषणा to_jalr_insn(offset)						\
 	(((offset & JALR_OFFSET_MASK) << JALR_SHIFT) | JALR_BASIC)
 
-#define to_auipc_insn(offset)						\
+#घोषणा to_auipc_insn(offset)						\
 	((offset & JALR_SIGN_MASK) ?					\
 	(((offset & AUIPC_OFFSET_MASK) + AUIPC_PAD) | AUIPC_BASIC) :	\
 	((offset & AUIPC_OFFSET_MASK) | AUIPC_BASIC))
@@ -75,14 +76,14 @@ do {									\
 /*
  * Let auipc+jalr be the basic *mcount unit*, so we make it 8 bytes here.
  */
-#define MCOUNT_INSN_SIZE 8
+#घोषणा MCOUNT_INSN_SIZE 8
 
-#ifndef __ASSEMBLY__
-struct dyn_ftrace;
-int ftrace_init_nop(struct module *mod, struct dyn_ftrace *rec);
-#define ftrace_init_nop ftrace_init_nop
-#endif
+#अगर_अघोषित __ASSEMBLY__
+काष्ठा dyn_ftrace;
+पूर्णांक ftrace_init_nop(काष्ठा module *mod, काष्ठा dyn_ftrace *rec);
+#घोषणा ftrace_init_nop ftrace_init_nop
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _ASM_RISCV_FTRACE_H */
+#पूर्ण_अगर /* _ASM_RISCV_FTRACE_H */

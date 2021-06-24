@@ -1,21 +1,22 @@
+<शैली गुरु>
 /*
  * Copyright 2003 PathScale, Inc.
  *
  * Licensed under the GPL
  */
 
-#ifndef __SYSDEP_X86_64_SYSCALLS_H__
-#define __SYSDEP_X86_64_SYSCALLS_H__
+#अगर_अघोषित __SYSDEP_X86_64_SYSCALLS_H__
+#घोषणा __SYSDEP_X86_64_SYSCALLS_H__
 
-#include <linux/msg.h>
-#include <linux/shm.h>
+#समावेश <linux/msg.h>
+#समावेश <linux/shm.h>
 
-typedef long syscall_handler_t(void);
+प्रकार दीर्घ syscall_handler_t(व्योम);
 
-extern syscall_handler_t *sys_call_table[];
+बाह्य syscall_handler_t *sys_call_table[];
 
-#define EXECUTE_SYSCALL(syscall, regs) \
-	(((long (*)(long, long, long, long, long, long)) \
+#घोषणा EXECUTE_SYSCALL(syscall, regs) \
+	(((दीर्घ (*)(दीर्घ, दीर्घ, दीर्घ, दीर्घ, दीर्घ, दीर्घ)) \
 	  (*sys_call_table[syscall]))(UPT_SYSCALL_ARG1(&regs->regs), \
 		 		      UPT_SYSCALL_ARG2(&regs->regs), \
 				      UPT_SYSCALL_ARG3(&regs->regs), \
@@ -23,10 +24,10 @@ extern syscall_handler_t *sys_call_table[];
 				      UPT_SYSCALL_ARG5(&regs->regs), \
 				      UPT_SYSCALL_ARG6(&regs->regs)))
 
-extern long old_mmap(unsigned long addr, unsigned long len,
-		     unsigned long prot, unsigned long flags,
-		     unsigned long fd, unsigned long pgoff);
-extern syscall_handler_t sys_modify_ldt;
-extern syscall_handler_t sys_arch_prctl;
+बाह्य दीर्घ old_mmap(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ len,
+		     अचिन्हित दीर्घ prot, अचिन्हित दीर्घ flags,
+		     अचिन्हित दीर्घ fd, अचिन्हित दीर्घ pgoff);
+बाह्य syscall_handler_t sys_modअगरy_ldt;
+बाह्य syscall_handler_t sys_arch_prctl;
 
-#endif
+#पूर्ण_अगर

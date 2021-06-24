@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* -*- linux-c -*- ------------------------------------------------------- *
  *
  *   Copyright (C) 1991, 1992 Linus Torvalds
@@ -9,91 +10,91 @@
 /*
  * arch/x86/boot/cpu.c
  *
- * Check for obligatory CPU features and abort if the features are not
+ * Check क्रम obligatory CPU features and पात अगर the features are not
  * present.
  */
 
-#include "boot.h"
-#ifdef CONFIG_X86_FEATURE_NAMES
-#include "cpustr.h"
-#endif
+#समावेश "boot.h"
+#अगर_घोषित CONFIG_X86_FEATURE_NAMES
+#समावेश "cpustr.h"
+#पूर्ण_अगर
 
-static char *cpu_name(int level)
-{
-	static char buf[6];
+अटल अक्षर *cpu_name(पूर्णांक level)
+अणु
+	अटल अक्षर buf[6];
 
-	if (level == 64) {
-		return "x86-64";
-	} else {
-		if (level == 15)
+	अगर (level == 64) अणु
+		वापस "x86-64";
+	पूर्ण अन्यथा अणु
+		अगर (level == 15)
 			level = 6;
-		sprintf(buf, "i%d86", level);
-		return buf;
-	}
-}
+		प्र_लिखो(buf, "i%d86", level);
+		वापस buf;
+	पूर्ण
+पूर्ण
 
-static void show_cap_strs(u32 *err_flags)
-{
-	int i, j;
-#ifdef CONFIG_X86_FEATURE_NAMES
-	const unsigned char *msg_strs = (const unsigned char *)x86_cap_strs;
-	for (i = 0; i < NCAPINTS; i++) {
+अटल व्योम show_cap_strs(u32 *err_flags)
+अणु
+	पूर्णांक i, j;
+#अगर_घोषित CONFIG_X86_FEATURE_NAMES
+	स्थिर अचिन्हित अक्षर *msg_strs = (स्थिर अचिन्हित अक्षर *)x86_cap_strs;
+	क्रम (i = 0; i < NCAPINTS; i++) अणु
 		u32 e = err_flags[i];
-		for (j = 0; j < 32; j++) {
-			if (msg_strs[0] < i ||
-			    (msg_strs[0] == i && msg_strs[1] < j)) {
+		क्रम (j = 0; j < 32; j++) अणु
+			अगर (msg_strs[0] < i ||
+			    (msg_strs[0] == i && msg_strs[1] < j)) अणु
 				/* Skip to the next string */
 				msg_strs += 2;
-				while (*msg_strs++)
+				जबतक (*msg_strs++)
 					;
-			}
-			if (e & 1) {
-				if (msg_strs[0] == i &&
+			पूर्ण
+			अगर (e & 1) अणु
+				अगर (msg_strs[0] == i &&
 				    msg_strs[1] == j &&
 				    msg_strs[2])
-					printf("%s ", msg_strs+2);
-				else
-					printf("%d:%d ", i, j);
-			}
+					म_लिखो("%s ", msg_strs+2);
+				अन्यथा
+					म_लिखो("%d:%d ", i, j);
+			पूर्ण
 			e >>= 1;
-		}
-	}
-#else
-	for (i = 0; i < NCAPINTS; i++) {
+		पूर्ण
+	पूर्ण
+#अन्यथा
+	क्रम (i = 0; i < NCAPINTS; i++) अणु
 		u32 e = err_flags[i];
-		for (j = 0; j < 32; j++) {
-			if (e & 1)
-				printf("%d:%d ", i, j);
+		क्रम (j = 0; j < 32; j++) अणु
+			अगर (e & 1)
+				म_लिखो("%d:%d ", i, j);
 			e >>= 1;
-		}
-	}
-#endif
-}
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-int validate_cpu(void)
-{
+पूर्णांक validate_cpu(व्योम)
+अणु
 	u32 *err_flags;
-	int cpu_level, req_level;
+	पूर्णांक cpu_level, req_level;
 
 	check_cpu(&cpu_level, &req_level, &err_flags);
 
-	if (cpu_level < req_level) {
-		printf("This kernel requires an %s CPU, ",
+	अगर (cpu_level < req_level) अणु
+		म_लिखो("This kernel requires an %s CPU, ",
 		       cpu_name(req_level));
-		printf("but only detected an %s CPU.\n",
+		म_लिखो("but only detected an %s CPU.\n",
 		       cpu_name(cpu_level));
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (err_flags) {
-		puts("This kernel requires the following features "
+	अगर (err_flags) अणु
+		माला_दो("This kernel requires the following features "
 		     "not present on the CPU:\n");
 		show_cap_strs(err_flags);
-		putchar('\n');
-		return -1;
-	} else if (check_knl_erratum()) {
-		return -1;
-	} else {
-		return 0;
-	}
-}
+		अक्षर_दो('\n');
+		वापस -1;
+	पूर्ण अन्यथा अगर (check_knl_erratum()) अणु
+		वापस -1;
+	पूर्ण अन्यथा अणु
+		वापस 0;
+	पूर्ण
+पूर्ण

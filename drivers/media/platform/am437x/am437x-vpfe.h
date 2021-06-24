@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2013 - 2014 Texas Instruments, Inc.
  *
@@ -6,283 +7,283 @@
  * Lad, Prabhakar <prabhakar.csengg@gmail.com>
  */
 
-#ifndef AM437X_VPFE_H
-#define AM437X_VPFE_H
+#अगर_अघोषित AM437X_VPFE_H
+#घोषणा AM437X_VPFE_H
 
-#include <linux/am437x-vpfe.h>
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/i2c.h>
-#include <linux/videodev2.h>
+#समावेश <linux/am437x-vpfe.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/videodev2.h>
 
-#include <media/v4l2-dev.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <media/v4l2-dev.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-#include "am437x-vpfe_regs.h"
+#समावेश "am437x-vpfe_regs.h"
 
-enum vpfe_pin_pol {
+क्रमागत vpfe_pin_pol अणु
 	VPFE_PINPOL_POSITIVE = 0,
 	VPFE_PINPOL_NEGATIVE,
-};
+पूर्ण;
 
-enum vpfe_hw_if_type {
+क्रमागत vpfe_hw_अगर_type अणु
 	/* Raw Bayer */
 	VPFE_RAW_BAYER = 0,
 	/* BT656 - 8 bit */
 	VPFE_BT656,
 	/* BT656 - 10 bit */
 	VPFE_BT656_10BIT,
-	/* YCbCr - 8 bit with external sync */
+	/* YCbCr - 8 bit with बाह्यal sync */
 	VPFE_YCBCR_SYNC_8,
-	/* YCbCr - 16 bit with external sync */
+	/* YCbCr - 16 bit with बाह्यal sync */
 	VPFE_YCBCR_SYNC_16,
-};
+पूर्ण;
 
-/* interface description */
-struct vpfe_hw_if_param {
-	enum vpfe_hw_if_type if_type;
-	enum vpfe_pin_pol hdpol;
-	enum vpfe_pin_pol vdpol;
-	unsigned int bus_width;
-};
+/* पूर्णांकerface description */
+काष्ठा vpfe_hw_अगर_param अणु
+	क्रमागत vpfe_hw_अगर_type अगर_type;
+	क्रमागत vpfe_pin_pol hdpol;
+	क्रमागत vpfe_pin_pol vdpol;
+	अचिन्हित पूर्णांक bus_width;
+पूर्ण;
 
-#define VPFE_MAX_SUBDEV		1
-#define VPFE_MAX_INPUTS		1
+#घोषणा VPFE_MAX_SUBDEV		1
+#घोषणा VPFE_MAX_INPUTS		1
 
-struct vpfe_std_info {
-	int active_pixels;
-	int active_lines;
-	/* current frame format */
-	int frame_format;
-};
+काष्ठा vpfe_std_info अणु
+	पूर्णांक active_pixels;
+	पूर्णांक active_lines;
+	/* current frame क्रमmat */
+	पूर्णांक frame_क्रमmat;
+पूर्ण;
 
-struct vpfe_route {
+काष्ठा vpfe_route अणु
 	u32 input;
 	u32 output;
-};
+पूर्ण;
 
-struct vpfe_subdev_info {
+काष्ठा vpfe_subdev_info अणु
 	/* Sub device group id */
-	int grp_id;
-	/* inputs available at the sub device */
-	struct v4l2_input inputs[VPFE_MAX_INPUTS];
-	/* Sub dev routing information for each input */
-	struct vpfe_route *routes;
-	/* check if sub dev supports routing */
-	int can_route;
-	/* ccdc bus/interface configuration */
-	struct vpfe_hw_if_param vpfe_param;
-	struct v4l2_subdev *sd;
-};
+	पूर्णांक grp_id;
+	/* inमाला_दो available at the sub device */
+	काष्ठा v4l2_input inमाला_दो[VPFE_MAX_INPUTS];
+	/* Sub dev routing inक्रमmation क्रम each input */
+	काष्ठा vpfe_route *routes;
+	/* check अगर sub dev supports routing */
+	पूर्णांक can_route;
+	/* ccdc bus/पूर्णांकerface configuration */
+	काष्ठा vpfe_hw_अगर_param vpfe_param;
+	काष्ठा v4l2_subdev *sd;
+पूर्ण;
 
-struct vpfe_config {
-	/* information about each subdev */
-	struct vpfe_subdev_info sub_devs[VPFE_MAX_SUBDEV];
+काष्ठा vpfe_config अणु
+	/* inक्रमmation about each subdev */
+	काष्ठा vpfe_subdev_info sub_devs[VPFE_MAX_SUBDEV];
 	/* Flat array, arranged in groups */
-	struct v4l2_async_subdev *asd[VPFE_MAX_SUBDEV];
-};
+	काष्ठा v4l2_async_subdev *asd[VPFE_MAX_SUBDEV];
+पूर्ण;
 
-struct vpfe_cap_buffer {
-	struct vb2_v4l2_buffer vb;
-	struct list_head list;
-};
+काष्ठा vpfe_cap_buffer अणु
+	काष्ठा vb2_v4l2_buffer vb;
+	काष्ठा list_head list;
+पूर्ण;
 
-enum ccdc_pixfmt {
+क्रमागत ccdc_pixfmt अणु
 	CCDC_PIXFMT_RAW = 0,
 	CCDC_PIXFMT_YCBCR_16BIT,
 	CCDC_PIXFMT_YCBCR_8BIT,
-};
+पूर्ण;
 
-enum ccdc_frmfmt {
+क्रमागत ccdc_frmfmt अणु
 	CCDC_FRMFMT_PROGRESSIVE = 0,
 	CCDC_FRMFMT_INTERLACED,
-};
+पूर्ण;
 
 /* PIXEL ORDER IN MEMORY from LSB to MSB */
-/* only applicable for 8-bit input mode  */
-enum ccdc_pixorder {
+/* only applicable क्रम 8-bit input mode  */
+क्रमागत ccdc_pixorder अणु
 	CCDC_PIXORDER_YCBYCR,
 	CCDC_PIXORDER_CBYCRY,
-};
+पूर्ण;
 
-enum ccdc_buftype {
+क्रमागत ccdc_buftype अणु
 	CCDC_BUFTYPE_FLD_INTERLEAVED,
 	CCDC_BUFTYPE_FLD_SEPARATED
-};
+पूर्ण;
 
 
-/* returns the highest bit used for the gamma */
-static inline u8 ccdc_gamma_width_max_bit(enum vpfe_ccdc_gamma_width width)
-{
-	return 15 - width;
-}
+/* वापसs the highest bit used क्रम the gamma */
+अटल अंतरभूत u8 ccdc_gamma_width_max_bit(क्रमागत vpfe_ccdc_gamma_width width)
+अणु
+	वापस 15 - width;
+पूर्ण
 
-/* returns the highest bit used for this data size */
-static inline u8 ccdc_data_size_max_bit(enum vpfe_ccdc_data_size sz)
-{
-	return sz == VPFE_CCDC_DATA_8BITS ? 7 : 15 - sz;
-}
+/* वापसs the highest bit used क्रम this data size */
+अटल अंतरभूत u8 ccdc_data_size_max_bit(क्रमागत vpfe_ccdc_data_size sz)
+अणु
+	वापस sz == VPFE_CCDC_DATA_8BITS ? 7 : 15 - sz;
+पूर्ण
 
-/* Structure for CCDC configuration parameters for raw capture mode */
-struct ccdc_params_raw {
-	/* pixel format */
-	enum ccdc_pixfmt pix_fmt;
-	/* progressive or interlaced frame */
-	enum ccdc_frmfmt frm_fmt;
-	struct v4l2_rect win;
+/* Structure क्रम CCDC configuration parameters क्रम raw capture mode */
+काष्ठा ccdc_params_raw अणु
+	/* pixel क्रमmat */
+	क्रमागत ccdc_pixfmt pix_fmt;
+	/* progressive or पूर्णांकerlaced frame */
+	क्रमागत ccdc_frmfmt frm_fmt;
+	काष्ठा v4l2_rect win;
 	/* Current Format Bytes Per Pixels */
-	unsigned int bytesperpixel;
+	अचिन्हित पूर्णांक bytesperpixel;
 	/* Current Format Bytes per Lines
-	 * (Aligned to 32 bytes) used for HORZ_INFO
+	 * (Aligned to 32 bytes) used क्रम HORZ_INFO
 	 */
-	unsigned int bytesperline;
+	अचिन्हित पूर्णांक bytesperline;
 	/* field id polarity */
-	enum vpfe_pin_pol fid_pol;
+	क्रमागत vpfe_pin_pol fid_pol;
 	/* vertical sync polarity */
-	enum vpfe_pin_pol vd_pol;
+	क्रमागत vpfe_pin_pol vd_pol;
 	/* horizontal sync polarity */
-	enum vpfe_pin_pol hd_pol;
-	/* interleaved or separated fields */
-	enum ccdc_buftype buf_type;
+	क्रमागत vpfe_pin_pol hd_pol;
+	/* पूर्णांकerleaved or separated fields */
+	क्रमागत ccdc_buftype buf_type;
 	/*
 	 * enable to store the image in inverse
 	 * order in memory(bottom to top)
 	 */
-	unsigned char image_invert_enable;
+	अचिन्हित अक्षर image_invert_enable;
 	/* configurable parameters */
-	struct vpfe_ccdc_config_params_raw config_params;
-};
+	काष्ठा vpfe_ccdc_config_params_raw config_params;
+पूर्ण;
 
-struct ccdc_params_ycbcr {
-	/* pixel format */
-	enum ccdc_pixfmt pix_fmt;
-	/* progressive or interlaced frame */
-	enum ccdc_frmfmt frm_fmt;
-	struct v4l2_rect win;
+काष्ठा ccdc_params_ycbcr अणु
+	/* pixel क्रमmat */
+	क्रमागत ccdc_pixfmt pix_fmt;
+	/* progressive or पूर्णांकerlaced frame */
+	क्रमागत ccdc_frmfmt frm_fmt;
+	काष्ठा v4l2_rect win;
 	/* Current Format Bytes Per Pixels */
-	unsigned int bytesperpixel;
+	अचिन्हित पूर्णांक bytesperpixel;
 	/* Current Format Bytes per Lines
-	 * (Aligned to 32 bytes) used for HORZ_INFO
+	 * (Aligned to 32 bytes) used क्रम HORZ_INFO
 	 */
-	unsigned int bytesperline;
+	अचिन्हित पूर्णांक bytesperline;
 	/* field id polarity */
-	enum vpfe_pin_pol fid_pol;
+	क्रमागत vpfe_pin_pol fid_pol;
 	/* vertical sync polarity */
-	enum vpfe_pin_pol vd_pol;
+	क्रमागत vpfe_pin_pol vd_pol;
 	/* horizontal sync polarity */
-	enum vpfe_pin_pol hd_pol;
+	क्रमागत vpfe_pin_pol hd_pol;
 	/* enable BT.656 embedded sync mode */
-	int bt656_enable;
+	पूर्णांक bt656_enable;
 	/* cb:y:cr:y or y:cb:y:cr in memory */
-	enum ccdc_pixorder pix_order;
-	/* interleaved or separated fields  */
-	enum ccdc_buftype buf_type;
-};
+	क्रमागत ccdc_pixorder pix_order;
+	/* पूर्णांकerleaved or separated fields  */
+	क्रमागत ccdc_buftype buf_type;
+पूर्ण;
 
 /*
  * CCDC operational configuration
  */
-struct ccdc_config {
-	/* CCDC interface type */
-	enum vpfe_hw_if_type if_type;
+काष्ठा ccdc_config अणु
+	/* CCDC पूर्णांकerface type */
+	क्रमागत vpfe_hw_अगर_type अगर_type;
 	/* Raw Bayer configuration */
-	struct ccdc_params_raw bayer;
+	काष्ठा ccdc_params_raw bayer;
 	/* YCbCr configuration */
-	struct ccdc_params_ycbcr ycbcr;
+	काष्ठा ccdc_params_ycbcr ycbcr;
 	/* ccdc base address */
-	void __iomem *base_addr;
-};
+	व्योम __iomem *base_addr;
+पूर्ण;
 
-struct vpfe_ccdc {
-	struct ccdc_config ccdc_cfg;
-	u32 ccdc_ctx[VPFE_REG_END / sizeof(u32)];
-};
+काष्ठा vpfe_ccdc अणु
+	काष्ठा ccdc_config ccdc_cfg;
+	u32 ccdc_ctx[VPFE_REG_END / माप(u32)];
+पूर्ण;
 
 /*
- * struct vpfe_fmt - VPFE media bus format information
- * fourcc: V4L2 pixel format code
- * code: V4L2 media bus format code
+ * काष्ठा vpfe_fmt - VPFE media bus क्रमmat inक्रमmation
+ * fourcc: V4L2 pixel क्रमmat code
+ * code: V4L2 media bus क्रमmat code
  * bitsperpixel: Bits per pixel over the bus
  */
-struct vpfe_fmt {
+काष्ठा vpfe_fmt अणु
 	u32 fourcc;
 	u32 code;
 	u32 bitsperpixel;
-};
+पूर्ण;
 
 /*
- * When formats[] is modified make sure to adjust this value also.
- * Expect compile time warnings if VPFE_NUM_FORMATS is smaller then
- * the number of elements in formats[].
+ * When क्रमmats[] is modअगरied make sure to adjust this value also.
+ * Expect compile समय warnings अगर VPFE_NUM_FORMATS is smaller then
+ * the number of elements in क्रमmats[].
  */
-#define VPFE_NUM_FORMATS	10
+#घोषणा VPFE_NUM_FORMATS	10
 
-struct vpfe_device {
-	/* V4l2 specific parameters */
-	/* Identifies video device for this channel */
-	struct video_device video_dev;
+काष्ठा vpfe_device अणु
+	/* V4l2 specअगरic parameters */
+	/* Identअगरies video device क्रम this channel */
+	काष्ठा video_device video_dev;
 	/* sub devices */
-	struct v4l2_subdev **sd;
+	काष्ठा v4l2_subdev **sd;
 	/* vpfe cfg */
-	struct vpfe_config *cfg;
+	काष्ठा vpfe_config *cfg;
 	/* V4l2 device */
-	struct v4l2_device v4l2_dev;
+	काष्ठा v4l2_device v4l2_dev;
 	/* parent device */
-	struct device *pdev;
-	/* subdevice async Notifier */
-	struct v4l2_async_notifier notifier;
+	काष्ठा device *pdev;
+	/* subdevice async Notअगरier */
+	काष्ठा v4l2_async_notअगरier notअगरier;
 	/* Indicates id of the field which is being displayed */
-	unsigned field;
-	unsigned sequence;
-	/* current interface type */
-	struct vpfe_hw_if_param vpfe_if_params;
+	अचिन्हित field;
+	अचिन्हित sequence;
+	/* current पूर्णांकerface type */
+	काष्ठा vpfe_hw_अगर_param vpfe_अगर_params;
 	/* ptr to currently selected sub device */
-	struct vpfe_subdev_info *current_subdev;
+	काष्ठा vpfe_subdev_info *current_subdev;
 	/* current input at the sub device */
-	int current_input;
-	/* Keeps track of the information about the standard */
-	struct vpfe_std_info std_info;
-	/* std index into std table */
-	int std_index;
+	पूर्णांक current_input;
+	/* Keeps track of the inक्रमmation about the standard */
+	काष्ठा vpfe_std_info std_info;
+	/* std index पूर्णांकo std table */
+	पूर्णांक std_index;
 	/* IRQs used when CCDC output to SDRAM */
-	unsigned int irq;
-	/* Pointer pointing to current v4l2_buffer */
-	struct vpfe_cap_buffer *cur_frm;
-	/* Pointer pointing to next v4l2_buffer */
-	struct vpfe_cap_buffer *next_frm;
-	/* Used to store pixel format */
-	struct v4l2_format fmt;
+	अचिन्हित पूर्णांक irq;
+	/* Poपूर्णांकer poपूर्णांकing to current v4l2_buffer */
+	काष्ठा vpfe_cap_buffer *cur_frm;
+	/* Poपूर्णांकer poपूर्णांकing to next v4l2_buffer */
+	काष्ठा vpfe_cap_buffer *next_frm;
+	/* Used to store pixel क्रमmat */
+	काष्ठा v4l2_क्रमmat fmt;
 	/* Used to keep a reference to the current vpfe_fmt */
-	struct vpfe_fmt *current_vpfe_fmt;
-	struct vpfe_fmt	*active_fmt[VPFE_NUM_FORMATS];
-	unsigned int num_active_fmt;
+	काष्ठा vpfe_fmt *current_vpfe_fmt;
+	काष्ठा vpfe_fmt	*active_fmt[VPFE_NUM_FORMATS];
+	अचिन्हित पूर्णांक num_active_fmt;
 
 	/*
-	 * used when IMP is chained to store the crop window which
-	 * is different from the image window
+	 * used when IMP is chained to store the crop winकरोw which
+	 * is dअगरferent from the image winकरोw
 	 */
-	struct v4l2_rect crop;
+	काष्ठा v4l2_rect crop;
 	/* Buffer queue used in video-buf */
-	struct vb2_queue buffer_queue;
+	काष्ठा vb2_queue buffer_queue;
 	/* Queue of filled frames */
-	struct list_head dma_queue;
-	/* IRQ lock for DMA queue */
+	काष्ठा list_head dma_queue;
+	/* IRQ lock क्रम DMA queue */
 	spinlock_t dma_queue_lock;
-	/* lock used to access this structure */
-	struct mutex lock;
+	/* lock used to access this काष्ठाure */
+	काष्ठा mutex lock;
 	/*
 	 * offset where second field starts from the starting of the
-	 * buffer for field separated YCbCr formats
+	 * buffer क्रम field separated YCbCr क्रमmats
 	 */
 	u32 field_off;
-	struct vpfe_ccdc ccdc;
-	int stopping;
-	struct completion capture_stop;
-};
+	काष्ठा vpfe_ccdc ccdc;
+	पूर्णांक stopping;
+	काष्ठा completion capture_stop;
+पूर्ण;
 
-#endif	/* AM437X_VPFE_H */
+#पूर्ण_अगर	/* AM437X_VPFE_H */

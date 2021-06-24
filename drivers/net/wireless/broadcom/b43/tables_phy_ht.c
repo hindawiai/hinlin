@@ -1,20 +1,21 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 
   Broadcom B43 wireless driver
   IEEE 802.11n HT-PHY data tables
 
-  Copyright (c) 2011 Rafał Miłecki <zajec5@gmail.com>
+  Copyright (c) 2011 Rafaध Miधecki <zajec5@gmail.com>
 
 
 */
 
-#include "b43.h"
-#include "tables_phy_ht.h"
-#include "phy_common.h"
-#include "phy_ht.h"
+#समावेश "b43.h"
+#समावेश "tables_phy_ht.h"
+#समावेश "phy_common.h"
+#समावेश "phy_ht.h"
 
-static const u16 b43_httab_0x12[] = {
+अटल स्थिर u16 b43_httab_0x12[] = अणु
 	0x0000, 0x0008, 0x000a, 0x0010, 0x0012, 0x0019,
 	0x001a, 0x001c, 0x0080, 0x0088, 0x008a, 0x0090,
 	0x0092, 0x0099, 0x009a, 0x009c, 0x0100, 0x0108,
@@ -37,18 +38,18 @@ static const u16 b43_httab_0x12[] = {
 	0x0007, 0x0007, 0x0007, 0x0007, 0x0007, 0x0007,
 	0x0007, 0x0007, 0x0007, 0x0007, 0x0007, 0x0007,
 	0x0007, 0x0007,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x27[] = {
+अटल स्थिर u16 b43_httab_0x27[] = अणु
 	0x0009, 0x000e, 0x0011, 0x0014, 0x0017, 0x001a,
 	0x001d, 0x0020, 0x0009, 0x000e, 0x0011, 0x0014,
 	0x0017, 0x001a, 0x001d, 0x0020, 0x0009, 0x000e,
 	0x0011, 0x0014, 0x0017, 0x001a, 0x001d, 0x0020,
 	0x0009, 0x000e, 0x0011, 0x0014, 0x0017, 0x001a,
 	0x001d, 0x0020,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x26[] = {
+अटल स्थिर u16 b43_httab_0x26[] = अणु
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -71,9 +72,9 @@ static const u16 b43_httab_0x26[] = {
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x25[] = {
+अटल स्थिर u32 b43_httab_0x25[] = अणु
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -106,18 +107,18 @@ static const u32 b43_httab_0x25[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x2f[] = {
+अटल स्थिर u32 b43_httab_0x2f[] = अणु
 	0x00035700, 0x0002cc9a, 0x00026666, 0x0001581f,
 	0x0001581f, 0x0001581f, 0x0001581f, 0x0001581f,
 	0x0001581f, 0x0001581f, 0x0001581f, 0x00035700,
 	0x0002cc9a, 0x00026666, 0x0001581f, 0x0001581f,
 	0x0001581f, 0x0001581f, 0x0001581f, 0x0001581f,
 	0x0001581f, 0x0001581f,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x1a[] = {
+अटल स्थिर u16 b43_httab_0x1a[] = अणु
 	0x0055, 0x0054, 0x0054, 0x0053, 0x0052, 0x0052,
 	0x0051, 0x0051, 0x0050, 0x004f, 0x004f, 0x004e,
 	0x004e, 0x004d, 0x004c, 0x004c, 0x004b, 0x004a,
@@ -129,9 +130,9 @@ static const u16 b43_httab_0x1a[] = {
 	0x0029, 0x0027, 0x0025, 0x0023, 0x0021, 0x001f,
 	0x001d, 0x001a, 0x0018, 0x0015, 0x0012, 0x000e,
 	0x000b, 0x0007, 0x0002, 0x00fd,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x1b[] = {
+अटल स्थिर u16 b43_httab_0x1b[] = अणु
 	0x0055, 0x0054, 0x0054, 0x0053, 0x0052, 0x0052,
 	0x0051, 0x0051, 0x0050, 0x004f, 0x004f, 0x004e,
 	0x004e, 0x004d, 0x004c, 0x004c, 0x004b, 0x004a,
@@ -143,9 +144,9 @@ static const u16 b43_httab_0x1b[] = {
 	0x0029, 0x0027, 0x0025, 0x0023, 0x0021, 0x001f,
 	0x001d, 0x001a, 0x0018, 0x0015, 0x0012, 0x000e,
 	0x000b, 0x0007, 0x0002, 0x00fd,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x1c[] = {
+अटल स्थिर u16 b43_httab_0x1c[] = अणु
 	0x0055, 0x0054, 0x0054, 0x0053, 0x0052, 0x0052,
 	0x0051, 0x0051, 0x0050, 0x004f, 0x004f, 0x004e,
 	0x004e, 0x004d, 0x004c, 0x004c, 0x004b, 0x004a,
@@ -157,9 +158,9 @@ static const u16 b43_httab_0x1c[] = {
 	0x0029, 0x0027, 0x0025, 0x0023, 0x0021, 0x001f,
 	0x001d, 0x001a, 0x0018, 0x0015, 0x0012, 0x000e,
 	0x000b, 0x0007, 0x0002, 0x00fd,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x1a_0xc0[] = {
+अटल स्थिर u32 b43_httab_0x1a_0xc0[] = अणु
 	0x5bf70044, 0x5bf70042, 0x5bf70040, 0x5bf7003e,
 	0x5bf7003c, 0x5bf7003b, 0x5bf70039, 0x5bf70037,
 	0x5bf70036, 0x5bf70034, 0x5bf70033, 0x5bf70031,
@@ -192,9 +193,9 @@ static const u32 b43_httab_0x1a_0xc0[] = {
 	0x5b070026, 0x5b070025, 0x5b070024, 0x5b070023,
 	0x5b070022, 0x5b070021, 0x5b070020, 0x5b07001f,
 	0x5b07001e, 0x5b07001d, 0x5b07001d, 0x5b07001c,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x1a_0x140[] = {
+अटल स्थिर u32 b43_httab_0x1a_0x140[] = अणु
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -227,9 +228,9 @@ static const u32 b43_httab_0x1a_0x140[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x1b_0x140[] = {
+अटल स्थिर u32 b43_httab_0x1b_0x140[] = अणु
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -262,9 +263,9 @@ static const u32 b43_httab_0x1b_0x140[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x1c_0x140[] = {
+अटल स्थिर u32 b43_httab_0x1c_0x140[] = अणु
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
@@ -297,9 +298,9 @@ static const u32 b43_httab_0x1c_0x140[] = {
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
 	0x00000000, 0x00000000, 0x00000000, 0x00000000,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x1a_0x1c0[] = {
+अटल स्थिर u16 b43_httab_0x1a_0x1c0[] = अणु
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -322,9 +323,9 @@ static const u16 b43_httab_0x1a_0x1c0[] = {
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x1b_0x1c0[] = {
+अटल स्थिर u16 b43_httab_0x1b_0x1c0[] = अणु
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -347,9 +348,9 @@ static const u16 b43_httab_0x1b_0x1c0[] = {
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x1c_0x1c0[] = {
+अटल स्थिर u16 b43_httab_0x1c_0x1c0[] = अणु
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
@@ -372,9 +373,9 @@ static const u16 b43_httab_0x1c_0x1c0[] = {
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
 	0x0000, 0x0000,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x1a_0x240[] = {
+अटल स्थिर u16 b43_httab_0x1a_0x240[] = अणु
 	0x0036, 0x0036, 0x0036, 0x0036, 0x0036, 0x0036,
 	0x0036, 0x0036, 0x0036, 0x0036, 0x0036, 0x0036,
 	0x0036, 0x002a, 0x002a, 0x002a, 0x002a, 0x002a,
@@ -397,9 +398,9 @@ static const u16 b43_httab_0x1a_0x240[] = {
 	0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6,
 	0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6,
 	0x01d6, 0x01d6,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x1b_0x240[] = {
+अटल स्थिर u16 b43_httab_0x1b_0x240[] = अणु
 	0x0036, 0x0036, 0x0036, 0x0036, 0x0036, 0x0036,
 	0x0036, 0x0036, 0x0036, 0x0036, 0x0036, 0x0036,
 	0x0036, 0x002a, 0x002a, 0x002a, 0x002a, 0x002a,
@@ -422,9 +423,9 @@ static const u16 b43_httab_0x1b_0x240[] = {
 	0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6,
 	0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6,
 	0x01d6, 0x01d6,
-};
+पूर्ण;
 
-static const u16 b43_httab_0x1c_0x240[] = {
+अटल स्थिर u16 b43_httab_0x1c_0x240[] = अणु
 	0x0036, 0x0036, 0x0036, 0x0036, 0x0036, 0x0036,
 	0x0036, 0x0036, 0x0036, 0x0036, 0x0036, 0x0036,
 	0x0036, 0x002a, 0x002a, 0x002a, 0x002a, 0x002a,
@@ -447,9 +448,9 @@ static const u16 b43_httab_0x1c_0x240[] = {
 	0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6,
 	0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6, 0x01d6,
 	0x01d6, 0x01d6,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x1f[] = {
+अटल स्थिर u32 b43_httab_0x1f[] = अणु
 	0x00000000, 0x00000000, 0x00016023, 0x00006028,
 	0x00034036, 0x0003402e, 0x0007203c, 0x0006e037,
 	0x00070030, 0x0009401f, 0x0009a00f, 0x000b600d,
@@ -466,9 +467,9 @@ static const u32 b43_httab_0x1f[] = {
 	0x01642fff, 0x0162afff, 0x01620fff, 0x0160cfff,
 	0x015f0fff, 0x015dafff, 0x015bcfff, 0x015bcfff,
 	0x015b4fff, 0x015acfff, 0x01590fff, 0x0156cfff,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x21[] = {
+अटल स्थिर u32 b43_httab_0x21[] = अणु
 	0x00000000, 0x00000000, 0x00016023, 0x00006028,
 	0x00034036, 0x0003402e, 0x0007203c, 0x0006e037,
 	0x00070030, 0x0009401f, 0x0009a00f, 0x000b600d,
@@ -485,9 +486,9 @@ static const u32 b43_httab_0x21[] = {
 	0x01642fff, 0x0162afff, 0x01620fff, 0x0160cfff,
 	0x015f0fff, 0x015dafff, 0x015bcfff, 0x015bcfff,
 	0x015b4fff, 0x015acfff, 0x01590fff, 0x0156cfff,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x23[] = {
+अटल स्थिर u32 b43_httab_0x23[] = अणु
 	0x00000000, 0x00000000, 0x00016023, 0x00006028,
 	0x00034036, 0x0003402e, 0x0007203c, 0x0006e037,
 	0x00070030, 0x0009401f, 0x0009a00f, 0x000b600d,
@@ -504,9 +505,9 @@ static const u32 b43_httab_0x23[] = {
 	0x01642fff, 0x0162afff, 0x01620fff, 0x0160cfff,
 	0x015f0fff, 0x015dafff, 0x015bcfff, 0x015bcfff,
 	0x015b4fff, 0x015acfff, 0x01590fff, 0x0156cfff,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x20[] = {
+अटल स्थिर u32 b43_httab_0x20[] = अणु
 	0x0b5e002d, 0x0ae2002f, 0x0a3b0032, 0x09a70035,
 	0x09220038, 0x08ab003b, 0x081f003f, 0x07a20043,
 	0x07340047, 0x06d2004b, 0x067a004f, 0x06170054,
@@ -523,9 +524,9 @@ static const u32 b43_httab_0x20[] = {
 	0x0093037a, 0x008b03af, 0x008303e6, 0x007c0422,
 	0x00750460, 0x006e04a3, 0x006804e9, 0x00620533,
 	0x005d0582, 0x005805d6, 0x0053062e, 0x004e068c,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x22[] = {
+अटल स्थिर u32 b43_httab_0x22[] = अणु
 	0x0b5e002d, 0x0ae2002f, 0x0a3b0032, 0x09a70035,
 	0x09220038, 0x08ab003b, 0x081f003f, 0x07a20043,
 	0x07340047, 0x06d2004b, 0x067a004f, 0x06170054,
@@ -542,9 +543,9 @@ static const u32 b43_httab_0x22[] = {
 	0x0093037a, 0x008b03af, 0x008303e6, 0x007c0422,
 	0x00750460, 0x006e04a3, 0x006804e9, 0x00620533,
 	0x005d0582, 0x005805d6, 0x0053062e, 0x004e068c,
-};
+पूर्ण;
 
-static const u32 b43_httab_0x24[] = {
+अटल स्थिर u32 b43_httab_0x24[] = अणु
 	0x0b5e002d, 0x0ae2002f, 0x0a3b0032, 0x09a70035,
 	0x09220038, 0x08ab003b, 0x081f003f, 0x07a20043,
 	0x07340047, 0x06d2004b, 0x067a004f, 0x06170054,
@@ -561,10 +562,10 @@ static const u32 b43_httab_0x24[] = {
 	0x0093037a, 0x008b03af, 0x008303e6, 0x007c0422,
 	0x00750460, 0x006e04a3, 0x006804e9, 0x00620533,
 	0x005d0582, 0x005805d6, 0x0053062e, 0x004e068c,
-};
+पूर्ण;
 
 /* Some late-init table */
-const u32 b43_httab_0x1a_0xc0_late[] = {
+स्थिर u32 b43_httab_0x1a_0xc0_late[] = अणु
 	0x10f90040, 0x10e10040, 0x10e1003c, 0x10c9003d,
 	0x10b9003c, 0x10a9003d, 0x10a1003c, 0x1099003b,
 	0x1091003b, 0x1089003a, 0x1081003a, 0x10790039,
@@ -597,202 +598,202 @@ const u32 b43_httab_0x1a_0xc0_late[] = {
 	0x10090002, 0x10090002, 0x10090002, 0x10090002,
 	0x10090002, 0x10090002, 0x10090001, 0x10090001,
 	0x10090001, 0x10090001, 0x10090001, 0x10090001,
-};
+पूर्ण;
 
 /**************************************************
  * R/W ops.
  **************************************************/
 
-u32 b43_httab_read(struct b43_wldev *dev, u32 offset)
-{
+u32 b43_httab_पढ़ो(काष्ठा b43_wldev *dev, u32 offset)
+अणु
 	u32 type, value;
 
 	type = offset & B43_HTTAB_TYPEMASK;
 	offset &= ~B43_HTTAB_TYPEMASK;
 	B43_WARN_ON(offset > 0xFFFF);
 
-	switch (type) {
-	case B43_HTTAB_8BIT:
-		b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
-		value = b43_phy_read(dev, B43_PHY_HT_TABLE_DATALO) & 0xFF;
-		break;
-	case B43_HTTAB_16BIT:
-		b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
-		value = b43_phy_read(dev, B43_PHY_HT_TABLE_DATALO);
-		break;
-	case B43_HTTAB_32BIT:
-		b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
-		value = b43_phy_read(dev, B43_PHY_HT_TABLE_DATAHI);
+	चयन (type) अणु
+	हाल B43_HTTAB_8BIT:
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
+		value = b43_phy_पढ़ो(dev, B43_PHY_HT_TABLE_DATALO) & 0xFF;
+		अवरोध;
+	हाल B43_HTTAB_16BIT:
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
+		value = b43_phy_पढ़ो(dev, B43_PHY_HT_TABLE_DATALO);
+		अवरोध;
+	हाल B43_HTTAB_32BIT:
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
+		value = b43_phy_पढ़ो(dev, B43_PHY_HT_TABLE_DATAHI);
 		value <<= 16;
-		value |= b43_phy_read(dev, B43_PHY_HT_TABLE_DATALO);
-		break;
-	default:
+		value |= b43_phy_पढ़ो(dev, B43_PHY_HT_TABLE_DATALO);
+		अवरोध;
+	शेष:
 		B43_WARN_ON(1);
 		value = 0;
-	}
+	पूर्ण
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-void b43_httab_read_bulk(struct b43_wldev *dev, u32 offset,
-			 unsigned int nr_elements, void *_data)
-{
+व्योम b43_httab_पढ़ो_bulk(काष्ठा b43_wldev *dev, u32 offset,
+			 अचिन्हित पूर्णांक nr_elements, व्योम *_data)
+अणु
 	u32 type;
 	u8 *data = _data;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	type = offset & B43_HTTAB_TYPEMASK;
 	offset &= ~B43_HTTAB_TYPEMASK;
 	B43_WARN_ON(offset > 0xFFFF);
 
-	b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
+	b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
 
-	for (i = 0; i < nr_elements; i++) {
-		switch (type) {
-		case B43_HTTAB_8BIT:
-			*data = b43_phy_read(dev, B43_PHY_HT_TABLE_DATALO) & 0xFF;
+	क्रम (i = 0; i < nr_elements; i++) अणु
+		चयन (type) अणु
+		हाल B43_HTTAB_8BIT:
+			*data = b43_phy_पढ़ो(dev, B43_PHY_HT_TABLE_DATALO) & 0xFF;
 			data++;
-			break;
-		case B43_HTTAB_16BIT:
-			*((u16 *)data) = b43_phy_read(dev, B43_PHY_HT_TABLE_DATALO);
+			अवरोध;
+		हाल B43_HTTAB_16BIT:
+			*((u16 *)data) = b43_phy_पढ़ो(dev, B43_PHY_HT_TABLE_DATALO);
 			data += 2;
-			break;
-		case B43_HTTAB_32BIT:
-			*((u32 *)data) = b43_phy_read(dev, B43_PHY_HT_TABLE_DATAHI);
+			अवरोध;
+		हाल B43_HTTAB_32BIT:
+			*((u32 *)data) = b43_phy_पढ़ो(dev, B43_PHY_HT_TABLE_DATAHI);
 			*((u32 *)data) <<= 16;
-			*((u32 *)data) |= b43_phy_read(dev, B43_PHY_HT_TABLE_DATALO);
+			*((u32 *)data) |= b43_phy_पढ़ो(dev, B43_PHY_HT_TABLE_DATALO);
 			data += 4;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			B43_WARN_ON(1);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void b43_httab_write(struct b43_wldev *dev, u32 offset, u32 value)
-{
+व्योम b43_httab_ग_लिखो(काष्ठा b43_wldev *dev, u32 offset, u32 value)
+अणु
 	u32 type;
 
 	type = offset & B43_HTTAB_TYPEMASK;
 	offset &= 0xFFFF;
 
-	switch (type) {
-	case B43_HTTAB_8BIT:
+	चयन (type) अणु
+	हाल B43_HTTAB_8BIT:
 		B43_WARN_ON(value & ~0xFF);
-		b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
-		b43_phy_write(dev, B43_PHY_HT_TABLE_DATALO, value);
-		break;
-	case B43_HTTAB_16BIT:
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATALO, value);
+		अवरोध;
+	हाल B43_HTTAB_16BIT:
 		B43_WARN_ON(value & ~0xFFFF);
-		b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
-		b43_phy_write(dev, B43_PHY_HT_TABLE_DATALO, value);
-		break;
-	case B43_HTTAB_32BIT:
-		b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
-		b43_phy_write(dev, B43_PHY_HT_TABLE_DATAHI, value >> 16);
-		b43_phy_write(dev, B43_PHY_HT_TABLE_DATALO, value & 0xFFFF);
-		break;
-	default:
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATALO, value);
+		अवरोध;
+	हाल B43_HTTAB_32BIT:
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATAHI, value >> 16);
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATALO, value & 0xFFFF);
+		अवरोध;
+	शेष:
 		B43_WARN_ON(1);
-	}
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-void b43_httab_write_few(struct b43_wldev *dev, u32 offset, size_t num, ...)
-{
-	va_list args;
+व्योम b43_httab_ग_लिखो_few(काष्ठा b43_wldev *dev, u32 offset, माप_प्रकार num, ...)
+अणु
+	बहु_सूची args;
 	u32 type, value;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	type = offset & B43_HTTAB_TYPEMASK;
 	offset &= 0xFFFF;
 
-	va_start(args, num);
-	switch (type) {
-	case B43_HTTAB_8BIT:
-		b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
-		for (i = 0; i < num; i++) {
-			value = va_arg(args, int);
+	बहु_शुरू(args, num);
+	चयन (type) अणु
+	हाल B43_HTTAB_8BIT:
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
+		क्रम (i = 0; i < num; i++) अणु
+			value = बहु_तर्क(args, पूर्णांक);
 			B43_WARN_ON(value & ~0xFF);
-			b43_phy_write(dev, B43_PHY_HT_TABLE_DATALO, value);
-		}
-		break;
-	case B43_HTTAB_16BIT:
-		b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
-		for (i = 0; i < num; i++) {
-			value = va_arg(args, int);
+			b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATALO, value);
+		पूर्ण
+		अवरोध;
+	हाल B43_HTTAB_16BIT:
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
+		क्रम (i = 0; i < num; i++) अणु
+			value = बहु_तर्क(args, पूर्णांक);
 			B43_WARN_ON(value & ~0xFFFF);
-			b43_phy_write(dev, B43_PHY_HT_TABLE_DATALO, value);
-		}
-		break;
-	case B43_HTTAB_32BIT:
-		b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
-		for (i = 0; i < num; i++) {
-			value = va_arg(args, int);
-			b43_phy_write(dev, B43_PHY_HT_TABLE_DATAHI,
+			b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATALO, value);
+		पूर्ण
+		अवरोध;
+	हाल B43_HTTAB_32BIT:
+		b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
+		क्रम (i = 0; i < num; i++) अणु
+			value = बहु_तर्क(args, पूर्णांक);
+			b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATAHI,
 				      value >> 16);
-			b43_phy_write(dev, B43_PHY_HT_TABLE_DATALO,
+			b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATALO,
 				      value & 0xFFFF);
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		B43_WARN_ON(1);
-	}
-	va_end(args);
+	पूर्ण
+	बहु_पूर्ण(args);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-void b43_httab_write_bulk(struct b43_wldev *dev, u32 offset,
-			  unsigned int nr_elements, const void *_data)
-{
+व्योम b43_httab_ग_लिखो_bulk(काष्ठा b43_wldev *dev, u32 offset,
+			  अचिन्हित पूर्णांक nr_elements, स्थिर व्योम *_data)
+अणु
 	u32 type, value;
-	const u8 *data = _data;
-	unsigned int i;
+	स्थिर u8 *data = _data;
+	अचिन्हित पूर्णांक i;
 
 	type = offset & B43_HTTAB_TYPEMASK;
 	offset &= ~B43_HTTAB_TYPEMASK;
 	B43_WARN_ON(offset > 0xFFFF);
 
-	b43_phy_write(dev, B43_PHY_HT_TABLE_ADDR, offset);
+	b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_ADDR, offset);
 
-	for (i = 0; i < nr_elements; i++) {
-		switch (type) {
-		case B43_HTTAB_8BIT:
+	क्रम (i = 0; i < nr_elements; i++) अणु
+		चयन (type) अणु
+		हाल B43_HTTAB_8BIT:
 			value = *data;
 			data++;
 			B43_WARN_ON(value & ~0xFF);
-			b43_phy_write(dev, B43_PHY_HT_TABLE_DATALO, value);
-			break;
-		case B43_HTTAB_16BIT:
+			b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATALO, value);
+			अवरोध;
+		हाल B43_HTTAB_16BIT:
 			value = *((u16 *)data);
 			data += 2;
 			B43_WARN_ON(value & ~0xFFFF);
-			b43_phy_write(dev, B43_PHY_HT_TABLE_DATALO, value);
-			break;
-		case B43_HTTAB_32BIT:
+			b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATALO, value);
+			अवरोध;
+		हाल B43_HTTAB_32BIT:
 			value = *((u32 *)data);
 			data += 4;
-			b43_phy_write(dev, B43_PHY_HT_TABLE_DATAHI, value >> 16);
-			b43_phy_write(dev, B43_PHY_HT_TABLE_DATALO,
+			b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATAHI, value >> 16);
+			b43_phy_ग_लिखो(dev, B43_PHY_HT_TABLE_DATALO,
 					value & 0xFFFF);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			B43_WARN_ON(1);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**************************************************
  * Tables ops.
  **************************************************/
 
-#define httab_upload(dev, offset, data) do { \
-		b43_httab_write_bulk(dev, offset, ARRAY_SIZE(data), data); \
-	} while (0)
-void b43_phy_ht_tables_init(struct b43_wldev *dev)
-{
+#घोषणा httab_upload(dev, offset, data) करो अणु \
+		b43_httab_ग_लिखो_bulk(dev, offset, ARRAY_SIZE(data), data); \
+	पूर्ण जबतक (0)
+व्योम b43_phy_ht_tables_init(काष्ठा b43_wldev *dev)
+अणु
 	BUILD_BUG_ON(ARRAY_SIZE(b43_httab_0x1a_0xc0_late) !=
 			B43_HTTAB_1A_C0_LATE_SIZE);
 
@@ -820,4 +821,4 @@ void b43_phy_ht_tables_init(struct b43_wldev *dev)
 	httab_upload(dev, B43_HTTAB32(0x20, 0), b43_httab_0x20);
 	httab_upload(dev, B43_HTTAB32(0x22, 0), b43_httab_0x22);
 	httab_upload(dev, B43_HTTAB32(0x24, 0), b43_httab_0x24);
-}
+पूर्ण

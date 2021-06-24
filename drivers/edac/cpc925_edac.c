@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * cpc925_edac.c, EDAC driver for IBM CPC925 Bridge and Memory Controller.
+ * cpc925_edac.c, EDAC driver क्रम IBM CPC925 Bridge and Memory Controller.
  *
  * Copyright (c) 2008 Wind River Systems, Inc.
  *
  * Authors:	Cao Qingtao <qingtao.cao@windriver.com>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/edac.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/gfp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/edac.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gfp.h>
 
-#include "edac_module.h"
+#समावेश "edac_module.h"
 
-#define CPC925_EDAC_REVISION	" Ver: 1.0.0"
-#define CPC925_EDAC_MOD_STR	"cpc925_edac"
+#घोषणा CPC925_EDAC_REVISION	" Ver: 1.0.0"
+#घोषणा CPC925_EDAC_MOD_STR	"cpc925_edac"
 
-#define cpc925_printk(level, fmt, arg...) \
-	edac_printk(level, "CPC925", fmt, ##arg)
+#घोषणा cpc925_prपूर्णांकk(level, fmt, arg...) \
+	edac_prपूर्णांकk(level, "CPC925", fmt, ##arg)
 
-#define cpc925_mc_printk(mci, level, fmt, arg...) \
-	edac_mc_chipset_printk(mci, level, "CPC925", fmt, ##arg)
+#घोषणा cpc925_mc_prपूर्णांकk(mci, level, fmt, arg...) \
+	edac_mc_chipset_prपूर्णांकk(mci, level, "CPC925", fmt, ##arg)
 
 /*
- * CPC925 registers are of 32 bits with bit0 defined at the
- * most significant bit and bit31 at that of least significant.
+ * CPC925 रेजिस्टरs are of 32 bits with bit0 defined at the
+ * most signअगरicant bit and bit31 at that of least signअगरicant.
  */
-#define CPC925_BITS_PER_REG	32
-#define CPC925_BIT(nr)		(1UL << (CPC925_BITS_PER_REG - 1 - nr))
+#घोषणा CPC925_BITS_PER_REG	32
+#घोषणा CPC925_BIT(nr)		(1UL << (CPC925_BITS_PER_REG - 1 - nr))
 
 /*
- * EDAC device names for the error detections of
+ * EDAC device names क्रम the error detections of
  * CPU Interface and Hypertransport Link.
  */
-#define CPC925_CPU_ERR_DEV	"cpu"
-#define CPC925_HT_LINK_DEV	"htlink"
+#घोषणा CPC925_CPU_ERR_DEV	"cpu"
+#घोषणा CPC925_HT_LINK_DEV	"htlink"
 
 /* Suppose DDR Refresh cycle is 15.6 microsecond */
-#define CPC925_REF_FREQ		0xFA69
-#define CPC925_SCRUB_BLOCK_SIZE 64	/* bytes */
-#define CPC925_NR_CSROWS	8
+#घोषणा CPC925_REF_FREQ		0xFA69
+#घोषणा CPC925_SCRUB_BLOCK_SIZE 64	/* bytes */
+#घोषणा CPC925_NR_CSROWS	8
 
 /*
- * All registers and bits definitions are taken from
+ * All रेजिस्टरs and bits definitions are taken from
  * "CPC925 Bridge and Memory Controller User Manual, SA14-2761-02".
  */
 
@@ -56,8 +57,8 @@
 /************************************************************
  *	Processor Interface Exception Mask Register (APIMASK)
  ************************************************************/
-#define REG_APIMASK_OFFSET	0x30070
-enum apimask_bits {
+#घोषणा REG_APIMASK_OFFSET	0x30070
+क्रमागत apimask_bits अणु
 	APIMASK_DART	= CPC925_BIT(0), /* DART Exception */
 	APIMASK_ADI0	= CPC925_BIT(1), /* Handshake Error on PI0_ADI */
 	APIMASK_ADI1	= CPC925_BIT(2), /* Handshake Error on PI1_ADI */
@@ -76,14 +77,14 @@ enum apimask_bits {
 			   APIMASK_ADRS1),
 	ECC_MASK_ENABLE = (APIMASK_ECC_UE_H | APIMASK_ECC_CE_H |
 			   APIMASK_ECC_UE_L | APIMASK_ECC_CE_L),
-};
-#define APIMASK_ADI(n)		CPC925_BIT(((n)+1))
+पूर्ण;
+#घोषणा APIMASK_ADI(n)		CPC925_BIT(((n)+1))
 
 /************************************************************
  *	Processor Interface Exception Register (APIEXCP)
  ************************************************************/
-#define REG_APIEXCP_OFFSET	0x30060
-enum apiexcp_bits {
+#घोषणा REG_APIEXCP_OFFSET	0x30060
+क्रमागत apiexcp_bits अणु
 	APIEXCP_DART	= CPC925_BIT(0), /* DART Exception */
 	APIEXCP_ADI0	= CPC925_BIT(1), /* Handshake Error on PI0_ADI */
 	APIEXCP_ADI1	= CPC925_BIT(2), /* Handshake Error on PI1_ADI */
@@ -103,105 +104,105 @@ enum apiexcp_bits {
 	UECC_EXCP_DETECTED = (APIEXCP_ECC_UE_H | APIEXCP_ECC_UE_L),
 	CECC_EXCP_DETECTED = (APIEXCP_ECC_CE_H | APIEXCP_ECC_CE_L),
 	ECC_EXCP_DETECTED = (UECC_EXCP_DETECTED | CECC_EXCP_DETECTED),
-};
+पूर्ण;
 
 /************************************************************
  *	Memory Bus Configuration Register (MBCR)
 ************************************************************/
-#define REG_MBCR_OFFSET		0x2190
-#define MBCR_64BITCFG_SHIFT	23
-#define MBCR_64BITCFG_MASK	(1UL << MBCR_64BITCFG_SHIFT)
-#define MBCR_64BITBUS_SHIFT	22
-#define MBCR_64BITBUS_MASK	(1UL << MBCR_64BITBUS_SHIFT)
+#घोषणा REG_MBCR_OFFSET		0x2190
+#घोषणा MBCR_64BITCFG_SHIFT	23
+#घोषणा MBCR_64BITCFG_MASK	(1UL << MBCR_64BITCFG_SHIFT)
+#घोषणा MBCR_64BITBUS_SHIFT	22
+#घोषणा MBCR_64BITBUS_MASK	(1UL << MBCR_64BITBUS_SHIFT)
 
 /************************************************************
  *	Memory Bank Mode Register (MBMR)
 ************************************************************/
-#define REG_MBMR_OFFSET		0x21C0
-#define MBMR_MODE_MAX_VALUE	0xF
-#define MBMR_MODE_SHIFT		25
-#define MBMR_MODE_MASK		(MBMR_MODE_MAX_VALUE << MBMR_MODE_SHIFT)
-#define MBMR_BBA_SHIFT		24
-#define MBMR_BBA_MASK		(1UL << MBMR_BBA_SHIFT)
+#घोषणा REG_MBMR_OFFSET		0x21C0
+#घोषणा MBMR_MODE_MAX_VALUE	0xF
+#घोषणा MBMR_MODE_SHIFT		25
+#घोषणा MBMR_MODE_MASK		(MBMR_MODE_MAX_VALUE << MBMR_MODE_SHIFT)
+#घोषणा MBMR_BBA_SHIFT		24
+#घोषणा MBMR_BBA_MASK		(1UL << MBMR_BBA_SHIFT)
 
 /************************************************************
  *	Memory Bank Boundary Address Register (MBBAR)
  ************************************************************/
-#define REG_MBBAR_OFFSET	0x21D0
-#define MBBAR_BBA_MAX_VALUE	0xFF
-#define MBBAR_BBA_SHIFT		24
-#define MBBAR_BBA_MASK		(MBBAR_BBA_MAX_VALUE << MBBAR_BBA_SHIFT)
+#घोषणा REG_MBBAR_OFFSET	0x21D0
+#घोषणा MBBAR_BBA_MAX_VALUE	0xFF
+#घोषणा MBBAR_BBA_SHIFT		24
+#घोषणा MBBAR_BBA_MASK		(MBBAR_BBA_MAX_VALUE << MBBAR_BBA_SHIFT)
 
 /************************************************************
  *	Memory Scrub Control Register (MSCR)
  ************************************************************/
-#define REG_MSCR_OFFSET		0x2400
-#define MSCR_SCRUB_MOD_MASK	0xC0000000 /* scrub_mod - bit0:1*/
-#define MSCR_BACKGR_SCRUB	0x40000000 /* 01 */
-#define MSCR_SI_SHIFT		16 	/* si - bit8:15*/
-#define MSCR_SI_MAX_VALUE	0xFF
-#define MSCR_SI_MASK		(MSCR_SI_MAX_VALUE << MSCR_SI_SHIFT)
+#घोषणा REG_MSCR_OFFSET		0x2400
+#घोषणा MSCR_SCRUB_MOD_MASK	0xC0000000 /* scrub_mod - bit0:1*/
+#घोषणा MSCR_BACKGR_SCRUB	0x40000000 /* 01 */
+#घोषणा MSCR_SI_SHIFT		16 	/* si - bit8:15*/
+#घोषणा MSCR_SI_MAX_VALUE	0xFF
+#घोषणा MSCR_SI_MASK		(MSCR_SI_MAX_VALUE << MSCR_SI_SHIFT)
 
 /************************************************************
  *	Memory Scrub Range Start Register (MSRSR)
  ************************************************************/
-#define REG_MSRSR_OFFSET	0x2410
+#घोषणा REG_MSRSR_OFFSET	0x2410
 
 /************************************************************
  *	Memory Scrub Range End Register (MSRER)
  ************************************************************/
-#define REG_MSRER_OFFSET	0x2420
+#घोषणा REG_MSRER_OFFSET	0x2420
 
 /************************************************************
  *	Memory Scrub Pattern Register (MSPR)
  ************************************************************/
-#define REG_MSPR_OFFSET		0x2430
+#घोषणा REG_MSPR_OFFSET		0x2430
 
 /************************************************************
  *	Memory Check Control Register (MCCR)
  ************************************************************/
-#define REG_MCCR_OFFSET		0x2440
-enum mccr_bits {
+#घोषणा REG_MCCR_OFFSET		0x2440
+क्रमागत mccr_bits अणु
 	MCCR_ECC_EN	= CPC925_BIT(0), /* ECC high and low check */
-};
+पूर्ण;
 
 /************************************************************
  *	Memory Check Range End Register (MCRER)
  ************************************************************/
-#define REG_MCRER_OFFSET	0x2450
+#घोषणा REG_MCRER_OFFSET	0x2450
 
 /************************************************************
  *	Memory Error Address Register (MEAR)
  ************************************************************/
-#define REG_MEAR_OFFSET		0x2460
-#define MEAR_BCNT_MAX_VALUE	0x3
-#define MEAR_BCNT_SHIFT		30
-#define MEAR_BCNT_MASK		(MEAR_BCNT_MAX_VALUE << MEAR_BCNT_SHIFT)
-#define MEAR_RANK_MAX_VALUE	0x7
-#define MEAR_RANK_SHIFT		27
-#define MEAR_RANK_MASK		(MEAR_RANK_MAX_VALUE << MEAR_RANK_SHIFT)
-#define MEAR_COL_MAX_VALUE	0x7FF
-#define MEAR_COL_SHIFT		16
-#define MEAR_COL_MASK		(MEAR_COL_MAX_VALUE << MEAR_COL_SHIFT)
-#define MEAR_BANK_MAX_VALUE	0x3
-#define MEAR_BANK_SHIFT		14
-#define MEAR_BANK_MASK		(MEAR_BANK_MAX_VALUE << MEAR_BANK_SHIFT)
-#define MEAR_ROW_MASK		0x00003FFF
+#घोषणा REG_MEAR_OFFSET		0x2460
+#घोषणा MEAR_BCNT_MAX_VALUE	0x3
+#घोषणा MEAR_BCNT_SHIFT		30
+#घोषणा MEAR_BCNT_MASK		(MEAR_BCNT_MAX_VALUE << MEAR_BCNT_SHIFT)
+#घोषणा MEAR_RANK_MAX_VALUE	0x7
+#घोषणा MEAR_RANK_SHIFT		27
+#घोषणा MEAR_RANK_MASK		(MEAR_RANK_MAX_VALUE << MEAR_RANK_SHIFT)
+#घोषणा MEAR_COL_MAX_VALUE	0x7FF
+#घोषणा MEAR_COL_SHIFT		16
+#घोषणा MEAR_COL_MASK		(MEAR_COL_MAX_VALUE << MEAR_COL_SHIFT)
+#घोषणा MEAR_BANK_MAX_VALUE	0x3
+#घोषणा MEAR_BANK_SHIFT		14
+#घोषणा MEAR_BANK_MASK		(MEAR_BANK_MAX_VALUE << MEAR_BANK_SHIFT)
+#घोषणा MEAR_ROW_MASK		0x00003FFF
 
 /************************************************************
  *	Memory Error Syndrome Register (MESR)
  ************************************************************/
-#define REG_MESR_OFFSET		0x2470
-#define MESR_ECC_SYN_H_MASK	0xFF00
-#define MESR_ECC_SYN_L_MASK	0x00FF
+#घोषणा REG_MESR_OFFSET		0x2470
+#घोषणा MESR_ECC_SYN_H_MASK	0xFF00
+#घोषणा MESR_ECC_SYN_L_MASK	0x00FF
 
 /************************************************************
  *	Memory Mode Control Register (MMCR)
  ************************************************************/
-#define REG_MMCR_OFFSET		0x2500
-enum mmcr_bits {
+#घोषणा REG_MMCR_OFFSET		0x2500
+क्रमागत mmcr_bits अणु
 	MMCR_REG_DIMM_MODE = CPC925_BIT(3),
-};
+पूर्ण;
 
 /*
  * HyperTransport Link Registers
@@ -209,9 +210,9 @@ enum mmcr_bits {
 /************************************************************
  *  Error Handling/Enumeration Scratch Pad Register (ERRCTRL)
  ************************************************************/
-#define REG_ERRCTRL_OFFSET	0x70140
-enum errctrl_bits {			 /* nonfatal interrupts for */
-	ERRCTRL_SERR_NF	= CPC925_BIT(0), /* system error */
+#घोषणा REG_ERRCTRL_OFFSET	0x70140
+क्रमागत errctrl_bits अणु			 /* nonfatal पूर्णांकerrupts क्रम */
+	ERRCTRL_SERR_NF	= CPC925_BIT(0), /* प्रणाली error */
 	ERRCTRL_CRC_NF	= CPC925_BIT(1), /* CRC error */
 	ERRCTRL_RSP_NF	= CPC925_BIT(2), /* Response error */
 	ERRCTRL_EOC_NF	= CPC925_BIT(3), /* End-Of-Chain error */
@@ -225,114 +226,114 @@ enum errctrl_bits {			 /* nonfatal interrupts for */
 			     ERRCTRL_RSP_NF | ERRCTRL_EOC_NF |
 			     ERRCTRL_OVF_NF | ERRCTRL_PROT_NF),
 	HT_ERRCTRL_DETECTED = (ERRCTRL_RSP_ERR | ERRCTRL_CHN_FAL),
-};
+पूर्ण;
 
 /************************************************************
  *  Link Configuration and Link Control Register (LINKCTRL)
  ************************************************************/
-#define REG_LINKCTRL_OFFSET	0x70110
-enum linkctrl_bits {
+#घोषणा REG_LINKCTRL_OFFSET	0x70110
+क्रमागत linkctrl_bits अणु
 	LINKCTRL_CRC_ERR	= (CPC925_BIT(22) | CPC925_BIT(23)),
 	LINKCTRL_LINK_FAIL	= CPC925_BIT(27),
 
 	HT_LINKCTRL_DETECTED	= (LINKCTRL_CRC_ERR | LINKCTRL_LINK_FAIL),
-};
+पूर्ण;
 
 /************************************************************
  *  Link FreqCap/Error/Freq/Revision ID Register (LINKERR)
  ************************************************************/
-#define REG_LINKERR_OFFSET	0x70120
-enum linkerr_bits {
+#घोषणा REG_LINKERR_OFFSET	0x70120
+क्रमागत linkerr_bits अणु
 	LINKERR_EOC_ERR		= CPC925_BIT(17), /* End-Of-Chain error */
 	LINKERR_OVF_ERR		= CPC925_BIT(18), /* Receive Buffer Overflow */
 	LINKERR_PROT_ERR	= CPC925_BIT(19), /* Protocol error */
 
 	HT_LINKERR_DETECTED	= (LINKERR_EOC_ERR | LINKERR_OVF_ERR |
 				   LINKERR_PROT_ERR),
-};
+पूर्ण;
 
 /************************************************************
  *	Bridge Control Register (BRGCTRL)
  ************************************************************/
-#define REG_BRGCTRL_OFFSET	0x70300
-enum brgctrl_bits {
+#घोषणा REG_BRGCTRL_OFFSET	0x70300
+क्रमागत brgctrl_bits अणु
 	BRGCTRL_DETSERR = CPC925_BIT(0), /* SERR on Secondary Bus */
 	BRGCTRL_SECBUSRESET = CPC925_BIT(9), /* Secondary Bus Reset */
-};
+पूर्ण;
 
-/* Private structure for edac memory controller */
-struct cpc925_mc_pdata {
-	void __iomem *vbase;
-	unsigned long total_mem;
-	const char *name;
-	int edac_idx;
-};
+/* Private काष्ठाure क्रम edac memory controller */
+काष्ठा cpc925_mc_pdata अणु
+	व्योम __iomem *vbase;
+	अचिन्हित दीर्घ total_mem;
+	स्थिर अक्षर *name;
+	पूर्णांक edac_idx;
+पूर्ण;
 
-/* Private structure for common edac device */
-struct cpc925_dev_info {
-	void __iomem *vbase;
-	struct platform_device *pdev;
-	char *ctl_name;
-	int edac_idx;
-	struct edac_device_ctl_info *edac_dev;
-	void (*init)(struct cpc925_dev_info *dev_info);
-	void (*exit)(struct cpc925_dev_info *dev_info);
-	void (*check)(struct edac_device_ctl_info *edac_dev);
-};
+/* Private काष्ठाure क्रम common edac device */
+काष्ठा cpc925_dev_info अणु
+	व्योम __iomem *vbase;
+	काष्ठा platक्रमm_device *pdev;
+	अक्षर *ctl_name;
+	पूर्णांक edac_idx;
+	काष्ठा edac_device_ctl_info *edac_dev;
+	व्योम (*init)(काष्ठा cpc925_dev_info *dev_info);
+	व्योम (*निकास)(काष्ठा cpc925_dev_info *dev_info);
+	व्योम (*check)(काष्ठा edac_device_ctl_info *edac_dev);
+पूर्ण;
 
 /* Get total memory size from Open Firmware DTB */
-static void get_total_mem(struct cpc925_mc_pdata *pdata)
-{
-	struct device_node *np = NULL;
-	const unsigned int *reg, *reg_end;
-	int len, sw, aw;
-	unsigned long start, size;
+अटल व्योम get_total_mem(काष्ठा cpc925_mc_pdata *pdata)
+अणु
+	काष्ठा device_node *np = शून्य;
+	स्थिर अचिन्हित पूर्णांक *reg, *reg_end;
+	पूर्णांक len, sw, aw;
+	अचिन्हित दीर्घ start, size;
 
-	np = of_find_node_by_type(NULL, "memory");
-	if (!np)
-		return;
+	np = of_find_node_by_type(शून्य, "memory");
+	अगर (!np)
+		वापस;
 
 	aw = of_n_addr_cells(np);
 	sw = of_n_size_cells(np);
-	reg = (const unsigned int *)of_get_property(np, "reg", &len);
+	reg = (स्थिर अचिन्हित पूर्णांक *)of_get_property(np, "reg", &len);
 	reg_end = reg + len/4;
 
 	pdata->total_mem = 0;
-	do {
-		start = of_read_number(reg, aw);
+	करो अणु
+		start = of_पढ़ो_number(reg, aw);
 		reg += aw;
-		size = of_read_number(reg, sw);
+		size = of_पढ़ो_number(reg, sw);
 		reg += sw;
 		edac_dbg(1, "start 0x%lx, size 0x%lx\n", start, size);
 		pdata->total_mem += size;
-	} while (reg < reg_end);
+	पूर्ण जबतक (reg < reg_end);
 
 	of_node_put(np);
 	edac_dbg(0, "total_mem 0x%lx\n", pdata->total_mem);
-}
+पूर्ण
 
-static void cpc925_init_csrows(struct mem_ctl_info *mci)
-{
-	struct cpc925_mc_pdata *pdata = mci->pvt_info;
-	struct csrow_info *csrow;
-	struct dimm_info *dimm;
-	enum dev_type dtype;
-	int index, j;
+अटल व्योम cpc925_init_csrows(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा cpc925_mc_pdata *pdata = mci->pvt_info;
+	काष्ठा csrow_info *csrow;
+	काष्ठा dimm_info *dimm;
+	क्रमागत dev_type dtype;
+	पूर्णांक index, j;
 	u32 mbmr, mbbar, bba, grain;
-	unsigned long row_size, nr_pages, last_nr_pages = 0;
+	अचिन्हित दीर्घ row_size, nr_pages, last_nr_pages = 0;
 
 	get_total_mem(pdata);
 
-	for (index = 0; index < mci->nr_csrows; index++) {
-		mbmr = __raw_readl(pdata->vbase + REG_MBMR_OFFSET +
+	क्रम (index = 0; index < mci->nr_csrows; index++) अणु
+		mbmr = __raw_पढ़ोl(pdata->vbase + REG_MBMR_OFFSET +
 				   0x20 * index);
-		mbbar = __raw_readl(pdata->vbase + REG_MBBAR_OFFSET +
+		mbbar = __raw_पढ़ोl(pdata->vbase + REG_MBBAR_OFFSET +
 				   0x20 + index);
 		bba = (((mbmr & MBMR_BBA_MASK) >> MBMR_BBA_SHIFT) << 8) |
 		       ((mbbar & MBBAR_BBA_MASK) >> MBBAR_BBA_SHIFT);
 
-		if (bba == 0)
-			continue; /* not populated */
+		अगर (bba == 0)
+			जारी; /* not populated */
 
 		csrow = mci->csrows[index];
 
@@ -342,81 +343,81 @@ static void cpc925_init_csrows(struct mem_ctl_info *mci)
 		csrow->last_page = csrow->first_page + nr_pages - 1;
 		last_nr_pages = csrow->last_page + 1;
 
-		switch (csrow->nr_channels) {
-		case 1: /* Single channel */
+		चयन (csrow->nr_channels) अणु
+		हाल 1: /* Single channel */
 			grain = 32; /* four-beat burst of 32 bytes */
-			break;
-		case 2: /* Dual channel */
-		default:
+			अवरोध;
+		हाल 2: /* Dual channel */
+		शेष:
 			grain = 64; /* four-beat burst of 64 bytes */
-			break;
-		}
-		switch ((mbmr & MBMR_MODE_MASK) >> MBMR_MODE_SHIFT) {
-		case 6: /* 0110, no way to differentiate X8 VS X16 */
-		case 5:	/* 0101 */
-		case 8: /* 1000 */
+			अवरोध;
+		पूर्ण
+		चयन ((mbmr & MBMR_MODE_MASK) >> MBMR_MODE_SHIFT) अणु
+		हाल 6: /* 0110, no way to dअगरferentiate X8 VS X16 */
+		हाल 5:	/* 0101 */
+		हाल 8: /* 1000 */
 			dtype = DEV_X16;
-			break;
-		case 7: /* 0111 */
-		case 9: /* 1001 */
+			अवरोध;
+		हाल 7: /* 0111 */
+		हाल 9: /* 1001 */
 			dtype = DEV_X8;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dtype = DEV_UNKNOWN;
-		break;
-		}
-		for (j = 0; j < csrow->nr_channels; j++) {
+		अवरोध;
+		पूर्ण
+		क्रम (j = 0; j < csrow->nr_channels; j++) अणु
 			dimm = csrow->channels[j]->dimm;
 			dimm->nr_pages = nr_pages / csrow->nr_channels;
 			dimm->mtype = MEM_RDDR;
 			dimm->edac_mode = EDAC_SECDED;
 			dimm->grain = grain;
 			dimm->dtype = dtype;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* Enable memory controller ECC detection */
-static void cpc925_mc_init(struct mem_ctl_info *mci)
-{
-	struct cpc925_mc_pdata *pdata = mci->pvt_info;
+अटल व्योम cpc925_mc_init(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा cpc925_mc_pdata *pdata = mci->pvt_info;
 	u32 apimask;
 	u32 mccr;
 
 	/* Enable various ECC error exceptions */
-	apimask = __raw_readl(pdata->vbase + REG_APIMASK_OFFSET);
-	if ((apimask & ECC_MASK_ENABLE) == 0) {
+	apimask = __raw_पढ़ोl(pdata->vbase + REG_APIMASK_OFFSET);
+	अगर ((apimask & ECC_MASK_ENABLE) == 0) अणु
 		apimask |= ECC_MASK_ENABLE;
-		__raw_writel(apimask, pdata->vbase + REG_APIMASK_OFFSET);
-	}
+		__raw_ग_लिखोl(apimask, pdata->vbase + REG_APIMASK_OFFSET);
+	पूर्ण
 
 	/* Enable ECC detection */
-	mccr = __raw_readl(pdata->vbase + REG_MCCR_OFFSET);
-	if ((mccr & MCCR_ECC_EN) == 0) {
+	mccr = __raw_पढ़ोl(pdata->vbase + REG_MCCR_OFFSET);
+	अगर ((mccr & MCCR_ECC_EN) == 0) अणु
 		mccr |= MCCR_ECC_EN;
-		__raw_writel(mccr, pdata->vbase + REG_MCCR_OFFSET);
-	}
-}
+		__raw_ग_लिखोl(mccr, pdata->vbase + REG_MCCR_OFFSET);
+	पूर्ण
+पूर्ण
 
 /* Disable memory controller ECC detection */
-static void cpc925_mc_exit(struct mem_ctl_info *mci)
-{
+अटल व्योम cpc925_mc_निकास(काष्ठा mem_ctl_info *mci)
+अणु
 	/*
 	 * WARNING:
 	 * We are supposed to clear the ECC error detection bits,
-	 * and it will be no problem to do so. However, once they
-	 * are cleared here if we want to re-install CPC925 EDAC
+	 * and it will be no problem to करो so. However, once they
+	 * are cleared here अगर we want to re-install CPC925 EDAC
 	 * module later, setting them up in cpc925_mc_init() will
 	 * trigger machine check exception.
 	 * Also, it's ok to leave ECC error detection bits enabled,
-	 * since they are reset to 1 by default or by boot loader.
+	 * since they are reset to 1 by शेष or by boot loader.
 	 */
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
- * Revert DDR column/row/bank addresses into page frame number and
+ * Revert DDR column/row/bank addresses पूर्णांकo page frame number and
  * offset in page.
  *
  * Suppose memory mode is 0x0111(128-bit mode, identical DIMM pairs),
@@ -432,13 +433,13 @@ static void cpc925_mc_exit(struct mem_ctl_info *mci)
  * RA	0   1   2   3   4   5   6   7   8   9   10   11   12
  * PA	36  35  34  48  47  46  45  40  41  42  39   38   37
  */
-static void cpc925_mc_get_pfn(struct mem_ctl_info *mci, u32 mear,
-		unsigned long *pfn, unsigned long *offset, int *csrow)
-{
+अटल व्योम cpc925_mc_get_pfn(काष्ठा mem_ctl_info *mci, u32 mear,
+		अचिन्हित दीर्घ *pfn, अचिन्हित दीर्घ *offset, पूर्णांक *csrow)
+अणु
 	u32 bcnt, rank, col, bank, row;
 	u32 c;
-	unsigned long pa;
-	int i;
+	अचिन्हित दीर्घ pa;
+	पूर्णांक i;
 
 	bcnt = (mear & MEAR_BCNT_MASK) >> MEAR_BCNT_SHIFT;
 	rank = (mear & MEAR_RANK_MASK) >> MEAR_RANK_SHIFT;
@@ -448,360 +449,360 @@ static void cpc925_mc_get_pfn(struct mem_ctl_info *mci, u32 mear,
 
 	*csrow = rank;
 
-#ifdef CONFIG_EDAC_DEBUG
-	if (mci->csrows[rank]->first_page == 0) {
-		cpc925_mc_printk(mci, KERN_ERR, "ECC occurs in a "
+#अगर_घोषित CONFIG_EDAC_DEBUG
+	अगर (mci->csrows[rank]->first_page == 0) अणु
+		cpc925_mc_prपूर्णांकk(mci, KERN_ERR, "ECC occurs in a "
 			"non-populated csrow, broken hardware?\n");
-		return;
-	}
-#endif
+		वापस;
+	पूर्ण
+#पूर्ण_अगर
 
 	/* Revert csrow number */
 	pa = mci->csrows[rank]->first_page << PAGE_SHIFT;
 
 	/* Revert column address */
 	col += bcnt;
-	for (i = 0; i < 11; i++) {
+	क्रम (i = 0; i < 11; i++) अणु
 		c = col & 0x1;
 		col >>= 1;
 		pa |= c << (14 - i);
-	}
+	पूर्ण
 
 	/* Revert bank address */
 	pa |= bank << 19;
 
 	/* Revert row address, in 4 steps */
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		c = row & 0x1;
 		row >>= 1;
 		pa |= c << (26 - i);
-	}
+	पूर्ण
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		c = row & 0x1;
 		row >>= 1;
 		pa |= c << (21 + i);
-	}
+	पूर्ण
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		c = row & 0x1;
 		row >>= 1;
 		pa |= c << (18 - i);
-	}
+	पूर्ण
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		c = row & 0x1;
 		row >>= 1;
 		pa |= c << (29 - i);
-	}
+	पूर्ण
 
 	*offset = pa & (PAGE_SIZE - 1);
 	*pfn = pa >> PAGE_SHIFT;
 
 	edac_dbg(0, "ECC physical address 0x%lx\n", pa);
-}
+पूर्ण
 
-static int cpc925_mc_find_channel(struct mem_ctl_info *mci, u16 syndrome)
-{
-	if ((syndrome & MESR_ECC_SYN_H_MASK) == 0)
-		return 0;
+अटल पूर्णांक cpc925_mc_find_channel(काष्ठा mem_ctl_info *mci, u16 syndrome)
+अणु
+	अगर ((syndrome & MESR_ECC_SYN_H_MASK) == 0)
+		वापस 0;
 
-	if ((syndrome & MESR_ECC_SYN_L_MASK) == 0)
-		return 1;
+	अगर ((syndrome & MESR_ECC_SYN_L_MASK) == 0)
+		वापस 1;
 
-	cpc925_mc_printk(mci, KERN_INFO, "Unexpected syndrome value: 0x%x\n",
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Unexpected syndrome value: 0x%x\n",
 			 syndrome);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Check memory controller registers for ECC errors */
-static void cpc925_mc_check(struct mem_ctl_info *mci)
-{
-	struct cpc925_mc_pdata *pdata = mci->pvt_info;
+/* Check memory controller रेजिस्टरs क्रम ECC errors */
+अटल व्योम cpc925_mc_check(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा cpc925_mc_pdata *pdata = mci->pvt_info;
 	u32 apiexcp;
 	u32 mear;
 	u32 mesr;
 	u16 syndrome;
-	unsigned long pfn = 0, offset = 0;
-	int csrow = 0, channel = 0;
+	अचिन्हित दीर्घ pfn = 0, offset = 0;
+	पूर्णांक csrow = 0, channel = 0;
 
-	/* APIEXCP is cleared when read */
-	apiexcp = __raw_readl(pdata->vbase + REG_APIEXCP_OFFSET);
-	if ((apiexcp & ECC_EXCP_DETECTED) == 0)
-		return;
+	/* APIEXCP is cleared when पढ़ो */
+	apiexcp = __raw_पढ़ोl(pdata->vbase + REG_APIEXCP_OFFSET);
+	अगर ((apiexcp & ECC_EXCP_DETECTED) == 0)
+		वापस;
 
-	mesr = __raw_readl(pdata->vbase + REG_MESR_OFFSET);
+	mesr = __raw_पढ़ोl(pdata->vbase + REG_MESR_OFFSET);
 	syndrome = mesr | (MESR_ECC_SYN_H_MASK | MESR_ECC_SYN_L_MASK);
 
-	mear = __raw_readl(pdata->vbase + REG_MEAR_OFFSET);
+	mear = __raw_पढ़ोl(pdata->vbase + REG_MEAR_OFFSET);
 
-	/* Revert column/row addresses into page frame number, etc */
+	/* Revert column/row addresses पूर्णांकo page frame number, etc */
 	cpc925_mc_get_pfn(mci, mear, &pfn, &offset, &csrow);
 
-	if (apiexcp & CECC_EXCP_DETECTED) {
-		cpc925_mc_printk(mci, KERN_INFO, "DRAM CECC Fault\n");
+	अगर (apiexcp & CECC_EXCP_DETECTED) अणु
+		cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "DRAM CECC Fault\n");
 		channel = cpc925_mc_find_channel(mci, syndrome);
 		edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 				     pfn, offset, syndrome,
 				     csrow, channel, -1,
 				     mci->ctl_name, "");
-	}
+	पूर्ण
 
-	if (apiexcp & UECC_EXCP_DETECTED) {
-		cpc925_mc_printk(mci, KERN_INFO, "DRAM UECC Fault\n");
+	अगर (apiexcp & UECC_EXCP_DETECTED) अणु
+		cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "DRAM UECC Fault\n");
 		edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 				     pfn, offset, 0,
 				     csrow, -1, -1,
 				     mci->ctl_name, "");
-	}
+	पूर्ण
 
-	cpc925_mc_printk(mci, KERN_INFO, "Dump registers:\n");
-	cpc925_mc_printk(mci, KERN_INFO, "APIMASK		0x%08x\n",
-		__raw_readl(pdata->vbase + REG_APIMASK_OFFSET));
-	cpc925_mc_printk(mci, KERN_INFO, "APIEXCP		0x%08x\n",
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Dump registers:\n");
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "APIMASK		0x%08x\n",
+		__raw_पढ़ोl(pdata->vbase + REG_APIMASK_OFFSET));
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "APIEXCP		0x%08x\n",
 		apiexcp);
-	cpc925_mc_printk(mci, KERN_INFO, "Mem Scrub Ctrl	0x%08x\n",
-		__raw_readl(pdata->vbase + REG_MSCR_OFFSET));
-	cpc925_mc_printk(mci, KERN_INFO, "Mem Scrub Rge Start	0x%08x\n",
-		__raw_readl(pdata->vbase + REG_MSRSR_OFFSET));
-	cpc925_mc_printk(mci, KERN_INFO, "Mem Scrub Rge End	0x%08x\n",
-		__raw_readl(pdata->vbase + REG_MSRER_OFFSET));
-	cpc925_mc_printk(mci, KERN_INFO, "Mem Scrub Pattern	0x%08x\n",
-		__raw_readl(pdata->vbase + REG_MSPR_OFFSET));
-	cpc925_mc_printk(mci, KERN_INFO, "Mem Chk Ctrl		0x%08x\n",
-		__raw_readl(pdata->vbase + REG_MCCR_OFFSET));
-	cpc925_mc_printk(mci, KERN_INFO, "Mem Chk Rge End	0x%08x\n",
-		__raw_readl(pdata->vbase + REG_MCRER_OFFSET));
-	cpc925_mc_printk(mci, KERN_INFO, "Mem Err Address	0x%08x\n",
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Mem Scrub Ctrl	0x%08x\n",
+		__raw_पढ़ोl(pdata->vbase + REG_MSCR_OFFSET));
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Mem Scrub Rge Start	0x%08x\n",
+		__raw_पढ़ोl(pdata->vbase + REG_MSRSR_OFFSET));
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Mem Scrub Rge End	0x%08x\n",
+		__raw_पढ़ोl(pdata->vbase + REG_MSRER_OFFSET));
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Mem Scrub Pattern	0x%08x\n",
+		__raw_पढ़ोl(pdata->vbase + REG_MSPR_OFFSET));
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Mem Chk Ctrl		0x%08x\n",
+		__raw_पढ़ोl(pdata->vbase + REG_MCCR_OFFSET));
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Mem Chk Rge End	0x%08x\n",
+		__raw_पढ़ोl(pdata->vbase + REG_MCRER_OFFSET));
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Mem Err Address	0x%08x\n",
 		mesr);
-	cpc925_mc_printk(mci, KERN_INFO, "Mem Err Syndrome	0x%08x\n",
+	cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Mem Err Syndrome	0x%08x\n",
 		syndrome);
-}
+पूर्ण
 
 /******************** CPU err device********************************/
-static u32 cpc925_cpu_mask_disabled(void)
-{
-	struct device_node *cpunode;
-	static u32 mask = 0;
+अटल u32 cpc925_cpu_mask_disabled(व्योम)
+अणु
+	काष्ठा device_node *cpunode;
+	अटल u32 mask = 0;
 
-	/* use cached value if available */
-	if (mask != 0)
-		return mask;
+	/* use cached value अगर available */
+	अगर (mask != 0)
+		वापस mask;
 
 	mask = APIMASK_ADI0 | APIMASK_ADI1;
 
-	for_each_of_cpu_node(cpunode) {
-		const u32 *reg = of_get_property(cpunode, "reg", NULL);
-		if (reg == NULL || *reg > 2) {
-			cpc925_printk(KERN_ERR, "Bad reg value at %pOF\n", cpunode);
-			continue;
-		}
+	क्रम_each_of_cpu_node(cpunode) अणु
+		स्थिर u32 *reg = of_get_property(cpunode, "reg", शून्य);
+		अगर (reg == शून्य || *reg > 2) अणु
+			cpc925_prपूर्णांकk(KERN_ERR, "Bad reg value at %pOF\n", cpunode);
+			जारी;
+		पूर्ण
 
 		mask &= ~APIMASK_ADI(*reg);
-	}
+	पूर्ण
 
-	if (mask != (APIMASK_ADI0 | APIMASK_ADI1)) {
+	अगर (mask != (APIMASK_ADI0 | APIMASK_ADI1)) अणु
 		/* We assume that each CPU sits on it's own PI and that
-		 * for present CPUs the reg property equals to the PI
-		 * interface id */
-		cpc925_printk(KERN_WARNING,
+		 * क्रम present CPUs the reg property equals to the PI
+		 * पूर्णांकerface id */
+		cpc925_prपूर्णांकk(KERN_WARNING,
 				"Assuming PI id is equal to CPU MPIC id!\n");
-	}
+	पूर्ण
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 /* Enable CPU Errors detection */
-static void cpc925_cpu_init(struct cpc925_dev_info *dev_info)
-{
+अटल व्योम cpc925_cpu_init(काष्ठा cpc925_dev_info *dev_info)
+अणु
 	u32 apimask;
 	u32 cpumask;
 
-	apimask = __raw_readl(dev_info->vbase + REG_APIMASK_OFFSET);
+	apimask = __raw_पढ़ोl(dev_info->vbase + REG_APIMASK_OFFSET);
 
 	cpumask = cpc925_cpu_mask_disabled();
-	if (apimask & cpumask) {
-		cpc925_printk(KERN_WARNING, "CPU(s) not present, "
+	अगर (apimask & cpumask) अणु
+		cpc925_prपूर्णांकk(KERN_WARNING, "CPU(s) not present, "
 				"but enabled in APIMASK, disabling\n");
 		apimask &= ~cpumask;
-	}
+	पूर्ण
 
-	if ((apimask & CPU_MASK_ENABLE) == 0)
+	अगर ((apimask & CPU_MASK_ENABLE) == 0)
 		apimask |= CPU_MASK_ENABLE;
 
-	__raw_writel(apimask, dev_info->vbase + REG_APIMASK_OFFSET);
-}
+	__raw_ग_लिखोl(apimask, dev_info->vbase + REG_APIMASK_OFFSET);
+पूर्ण
 
 /* Disable CPU Errors detection */
-static void cpc925_cpu_exit(struct cpc925_dev_info *dev_info)
-{
+अटल व्योम cpc925_cpu_निकास(काष्ठा cpc925_dev_info *dev_info)
+अणु
 	/*
 	 * WARNING:
 	 * We are supposed to clear the CPU error detection bits,
-	 * and it will be no problem to do so. However, once they
-	 * are cleared here if we want to re-install CPC925 EDAC
+	 * and it will be no problem to करो so. However, once they
+	 * are cleared here अगर we want to re-install CPC925 EDAC
 	 * module later, setting them up in cpc925_cpu_init() will
 	 * trigger machine check exception.
 	 * Also, it's ok to leave CPU error detection bits enabled,
-	 * since they are reset to 1 by default.
+	 * since they are reset to 1 by शेष.
 	 */
 
-	return;
-}
+	वापस;
+पूर्ण
 
-/* Check for CPU Errors */
-static void cpc925_cpu_check(struct edac_device_ctl_info *edac_dev)
-{
-	struct cpc925_dev_info *dev_info = edac_dev->pvt_info;
+/* Check क्रम CPU Errors */
+अटल व्योम cpc925_cpu_check(काष्ठा edac_device_ctl_info *edac_dev)
+अणु
+	काष्ठा cpc925_dev_info *dev_info = edac_dev->pvt_info;
 	u32 apiexcp;
 	u32 apimask;
 
-	/* APIEXCP is cleared when read */
-	apiexcp = __raw_readl(dev_info->vbase + REG_APIEXCP_OFFSET);
-	if ((apiexcp & CPU_EXCP_DETECTED) == 0)
-		return;
+	/* APIEXCP is cleared when पढ़ो */
+	apiexcp = __raw_पढ़ोl(dev_info->vbase + REG_APIEXCP_OFFSET);
+	अगर ((apiexcp & CPU_EXCP_DETECTED) == 0)
+		वापस;
 
-	if ((apiexcp & ~cpc925_cpu_mask_disabled()) == 0)
-		return;
+	अगर ((apiexcp & ~cpc925_cpu_mask_disabled()) == 0)
+		वापस;
 
-	apimask = __raw_readl(dev_info->vbase + REG_APIMASK_OFFSET);
-	cpc925_printk(KERN_INFO, "Processor Interface Fault\n"
+	apimask = __raw_पढ़ोl(dev_info->vbase + REG_APIMASK_OFFSET);
+	cpc925_prपूर्णांकk(KERN_INFO, "Processor Interface Fault\n"
 				 "Processor Interface register dump:\n");
-	cpc925_printk(KERN_INFO, "APIMASK		0x%08x\n", apimask);
-	cpc925_printk(KERN_INFO, "APIEXCP		0x%08x\n", apiexcp);
+	cpc925_prपूर्णांकk(KERN_INFO, "APIMASK		0x%08x\n", apimask);
+	cpc925_prपूर्णांकk(KERN_INFO, "APIEXCP		0x%08x\n", apiexcp);
 
 	edac_device_handle_ue(edac_dev, 0, 0, edac_dev->ctl_name);
-}
+पूर्ण
 
 /******************** HT Link err device****************************/
 /* Enable HyperTransport Link Error detection */
-static void cpc925_htlink_init(struct cpc925_dev_info *dev_info)
-{
+अटल व्योम cpc925_htlink_init(काष्ठा cpc925_dev_info *dev_info)
+अणु
 	u32 ht_errctrl;
 
-	ht_errctrl = __raw_readl(dev_info->vbase + REG_ERRCTRL_OFFSET);
-	if ((ht_errctrl & HT_ERRCTRL_ENABLE) == 0) {
+	ht_errctrl = __raw_पढ़ोl(dev_info->vbase + REG_ERRCTRL_OFFSET);
+	अगर ((ht_errctrl & HT_ERRCTRL_ENABLE) == 0) अणु
 		ht_errctrl |= HT_ERRCTRL_ENABLE;
-		__raw_writel(ht_errctrl, dev_info->vbase + REG_ERRCTRL_OFFSET);
-	}
-}
+		__raw_ग_लिखोl(ht_errctrl, dev_info->vbase + REG_ERRCTRL_OFFSET);
+	पूर्ण
+पूर्ण
 
 /* Disable HyperTransport Link Error detection */
-static void cpc925_htlink_exit(struct cpc925_dev_info *dev_info)
-{
+अटल व्योम cpc925_htlink_निकास(काष्ठा cpc925_dev_info *dev_info)
+अणु
 	u32 ht_errctrl;
 
-	ht_errctrl = __raw_readl(dev_info->vbase + REG_ERRCTRL_OFFSET);
+	ht_errctrl = __raw_पढ़ोl(dev_info->vbase + REG_ERRCTRL_OFFSET);
 	ht_errctrl &= ~HT_ERRCTRL_ENABLE;
-	__raw_writel(ht_errctrl, dev_info->vbase + REG_ERRCTRL_OFFSET);
-}
+	__raw_ग_लिखोl(ht_errctrl, dev_info->vbase + REG_ERRCTRL_OFFSET);
+पूर्ण
 
-/* Check for HyperTransport Link errors */
-static void cpc925_htlink_check(struct edac_device_ctl_info *edac_dev)
-{
-	struct cpc925_dev_info *dev_info = edac_dev->pvt_info;
-	u32 brgctrl = __raw_readl(dev_info->vbase + REG_BRGCTRL_OFFSET);
-	u32 linkctrl = __raw_readl(dev_info->vbase + REG_LINKCTRL_OFFSET);
-	u32 errctrl = __raw_readl(dev_info->vbase + REG_ERRCTRL_OFFSET);
-	u32 linkerr = __raw_readl(dev_info->vbase + REG_LINKERR_OFFSET);
+/* Check क्रम HyperTransport Link errors */
+अटल व्योम cpc925_htlink_check(काष्ठा edac_device_ctl_info *edac_dev)
+अणु
+	काष्ठा cpc925_dev_info *dev_info = edac_dev->pvt_info;
+	u32 brgctrl = __raw_पढ़ोl(dev_info->vbase + REG_BRGCTRL_OFFSET);
+	u32 linkctrl = __raw_पढ़ोl(dev_info->vbase + REG_LINKCTRL_OFFSET);
+	u32 errctrl = __raw_पढ़ोl(dev_info->vbase + REG_ERRCTRL_OFFSET);
+	u32 linkerr = __raw_पढ़ोl(dev_info->vbase + REG_LINKERR_OFFSET);
 
-	if (!((brgctrl & BRGCTRL_DETSERR) ||
+	अगर (!((brgctrl & BRGCTRL_DETSERR) ||
 	      (linkctrl & HT_LINKCTRL_DETECTED) ||
 	      (errctrl & HT_ERRCTRL_DETECTED) ||
 	      (linkerr & HT_LINKERR_DETECTED)))
-		return;
+		वापस;
 
-	cpc925_printk(KERN_INFO, "HT Link Fault\n"
+	cpc925_prपूर्णांकk(KERN_INFO, "HT Link Fault\n"
 				 "HT register dump:\n");
-	cpc925_printk(KERN_INFO, "Bridge Ctrl			0x%08x\n",
+	cpc925_prपूर्णांकk(KERN_INFO, "Bridge Ctrl			0x%08x\n",
 		      brgctrl);
-	cpc925_printk(KERN_INFO, "Link Config Ctrl		0x%08x\n",
+	cpc925_prपूर्णांकk(KERN_INFO, "Link Config Ctrl		0x%08x\n",
 		      linkctrl);
-	cpc925_printk(KERN_INFO, "Error Enum and Ctrl		0x%08x\n",
+	cpc925_prपूर्णांकk(KERN_INFO, "Error Enum and Ctrl		0x%08x\n",
 		      errctrl);
-	cpc925_printk(KERN_INFO, "Link Error			0x%08x\n",
+	cpc925_prपूर्णांकk(KERN_INFO, "Link Error			0x%08x\n",
 		      linkerr);
 
-	/* Clear by write 1 */
-	if (brgctrl & BRGCTRL_DETSERR)
-		__raw_writel(BRGCTRL_DETSERR,
+	/* Clear by ग_लिखो 1 */
+	अगर (brgctrl & BRGCTRL_DETSERR)
+		__raw_ग_लिखोl(BRGCTRL_DETSERR,
 				dev_info->vbase + REG_BRGCTRL_OFFSET);
 
-	if (linkctrl & HT_LINKCTRL_DETECTED)
-		__raw_writel(HT_LINKCTRL_DETECTED,
+	अगर (linkctrl & HT_LINKCTRL_DETECTED)
+		__raw_ग_लिखोl(HT_LINKCTRL_DETECTED,
 				dev_info->vbase + REG_LINKCTRL_OFFSET);
 
 	/* Initiate Secondary Bus Reset to clear the chain failure */
-	if (errctrl & ERRCTRL_CHN_FAL)
-		__raw_writel(BRGCTRL_SECBUSRESET,
+	अगर (errctrl & ERRCTRL_CHN_FAL)
+		__raw_ग_लिखोl(BRGCTRL_SECBUSRESET,
 				dev_info->vbase + REG_BRGCTRL_OFFSET);
 
-	if (errctrl & ERRCTRL_RSP_ERR)
-		__raw_writel(ERRCTRL_RSP_ERR,
+	अगर (errctrl & ERRCTRL_RSP_ERR)
+		__raw_ग_लिखोl(ERRCTRL_RSP_ERR,
 				dev_info->vbase + REG_ERRCTRL_OFFSET);
 
-	if (linkerr & HT_LINKERR_DETECTED)
-		__raw_writel(HT_LINKERR_DETECTED,
+	अगर (linkerr & HT_LINKERR_DETECTED)
+		__raw_ग_लिखोl(HT_LINKERR_DETECTED,
 				dev_info->vbase + REG_LINKERR_OFFSET);
 
 	edac_device_handle_ce(edac_dev, 0, 0, edac_dev->ctl_name);
-}
+पूर्ण
 
-static struct cpc925_dev_info cpc925_devs[] = {
-	{
+अटल काष्ठा cpc925_dev_info cpc925_devs[] = अणु
+	अणु
 	.ctl_name = CPC925_CPU_ERR_DEV,
 	.init = cpc925_cpu_init,
-	.exit = cpc925_cpu_exit,
+	.निकास = cpc925_cpu_निकास,
 	.check = cpc925_cpu_check,
-	},
-	{
+	पूर्ण,
+	अणु
 	.ctl_name = CPC925_HT_LINK_DEV,
 	.init = cpc925_htlink_init,
-	.exit = cpc925_htlink_exit,
+	.निकास = cpc925_htlink_निकास,
 	.check = cpc925_htlink_check,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 /*
  * Add CPU Err detection and HyperTransport Link Err detection
  * as common "edac_device", they have no corresponding device
- * nodes in the Open Firmware DTB and we have to add platform
- * devices for them. Also, they will share the MMIO with that
+ * nodes in the Open Firmware DTB and we have to add platक्रमm
+ * devices क्रम them. Also, they will share the MMIO with that
  * of memory controller.
  */
-static void cpc925_add_edac_devices(void __iomem *vbase)
-{
-	struct cpc925_dev_info *dev_info;
+अटल व्योम cpc925_add_edac_devices(व्योम __iomem *vbase)
+अणु
+	काष्ठा cpc925_dev_info *dev_info;
 
-	if (!vbase) {
-		cpc925_printk(KERN_ERR, "MMIO not established yet\n");
-		return;
-	}
+	अगर (!vbase) अणु
+		cpc925_prपूर्णांकk(KERN_ERR, "MMIO not established yet\n");
+		वापस;
+	पूर्ण
 
-	for (dev_info = &cpc925_devs[0]; dev_info->init; dev_info++) {
+	क्रम (dev_info = &cpc925_devs[0]; dev_info->init; dev_info++) अणु
 		dev_info->vbase = vbase;
-		dev_info->pdev = platform_device_register_simple(
-					dev_info->ctl_name, 0, NULL, 0);
-		if (IS_ERR(dev_info->pdev)) {
-			cpc925_printk(KERN_ERR,
+		dev_info->pdev = platक्रमm_device_रेजिस्टर_simple(
+					dev_info->ctl_name, 0, शून्य, 0);
+		अगर (IS_ERR(dev_info->pdev)) अणु
+			cpc925_prपूर्णांकk(KERN_ERR,
 				"Can't register platform device for %s\n",
 				dev_info->ctl_name);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * Don't have to allocate private structure but
+		 * Don't have to allocate निजी काष्ठाure but
 		 * make use of cpc925_devs[] instead.
 		 */
 		dev_info->edac_idx = edac_device_alloc_index();
 		dev_info->edac_dev =
 			edac_device_alloc_ctl_info(0, dev_info->ctl_name,
-				1, NULL, 0, 0, NULL, 0, dev_info->edac_idx);
-		if (!dev_info->edac_dev) {
-			cpc925_printk(KERN_ERR, "No memory for edac device\n");
-			goto err1;
-		}
+				1, शून्य, 0, 0, शून्य, 0, dev_info->edac_idx);
+		अगर (!dev_info->edac_dev) अणु
+			cpc925_prपूर्णांकk(KERN_ERR, "No memory for edac device\n");
+			जाओ err1;
+		पूर्ण
 
 		dev_info->edac_dev->pvt_info = dev_info;
 		dev_info->edac_dev->dev = &dev_info->pdev->dev;
@@ -809,139 +810,139 @@ static void cpc925_add_edac_devices(void __iomem *vbase)
 		dev_info->edac_dev->mod_name = CPC925_EDAC_MOD_STR;
 		dev_info->edac_dev->dev_name = dev_name(&dev_info->pdev->dev);
 
-		if (edac_op_state == EDAC_OPSTATE_POLL)
+		अगर (edac_op_state == EDAC_OPSTATE_POLL)
 			dev_info->edac_dev->edac_check = dev_info->check;
 
-		if (dev_info->init)
+		अगर (dev_info->init)
 			dev_info->init(dev_info);
 
-		if (edac_device_add_device(dev_info->edac_dev) > 0) {
-			cpc925_printk(KERN_ERR,
+		अगर (edac_device_add_device(dev_info->edac_dev) > 0) अणु
+			cpc925_prपूर्णांकk(KERN_ERR,
 				"Unable to add edac device for %s\n",
 				dev_info->ctl_name);
-			goto err2;
-		}
+			जाओ err2;
+		पूर्ण
 
 		edac_dbg(0, "Successfully added edac device for %s\n",
 			 dev_info->ctl_name);
 
-		continue;
+		जारी;
 
 err2:
-		if (dev_info->exit)
-			dev_info->exit(dev_info);
-		edac_device_free_ctl_info(dev_info->edac_dev);
+		अगर (dev_info->निकास)
+			dev_info->निकास(dev_info);
+		edac_device_मुक्त_ctl_info(dev_info->edac_dev);
 err1:
-		platform_device_unregister(dev_info->pdev);
-	}
-}
+		platक्रमm_device_unरेजिस्टर(dev_info->pdev);
+	पूर्ण
+पूर्ण
 
 /*
- * Delete the common "edac_device" for CPU Err Detection
+ * Delete the common "edac_device" क्रम CPU Err Detection
  * and HyperTransport Link Err Detection
  */
-static void cpc925_del_edac_devices(void)
-{
-	struct cpc925_dev_info *dev_info;
+अटल व्योम cpc925_del_edac_devices(व्योम)
+अणु
+	काष्ठा cpc925_dev_info *dev_info;
 
-	for (dev_info = &cpc925_devs[0]; dev_info->init; dev_info++) {
-		if (dev_info->edac_dev) {
+	क्रम (dev_info = &cpc925_devs[0]; dev_info->init; dev_info++) अणु
+		अगर (dev_info->edac_dev) अणु
 			edac_device_del_device(dev_info->edac_dev->dev);
-			edac_device_free_ctl_info(dev_info->edac_dev);
-			platform_device_unregister(dev_info->pdev);
-		}
+			edac_device_मुक्त_ctl_info(dev_info->edac_dev);
+			platक्रमm_device_unरेजिस्टर(dev_info->pdev);
+		पूर्ण
 
-		if (dev_info->exit)
-			dev_info->exit(dev_info);
+		अगर (dev_info->निकास)
+			dev_info->निकास(dev_info);
 
 		edac_dbg(0, "Successfully deleted edac device for %s\n",
 			 dev_info->ctl_name);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Convert current back-ground scrub rate into byte/sec bandwidth */
-static int cpc925_get_sdram_scrub_rate(struct mem_ctl_info *mci)
-{
-	struct cpc925_mc_pdata *pdata = mci->pvt_info;
-	int bw;
+/* Convert current back-ground scrub rate पूर्णांकo byte/sec bandwidth */
+अटल पूर्णांक cpc925_get_sdram_scrub_rate(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा cpc925_mc_pdata *pdata = mci->pvt_info;
+	पूर्णांक bw;
 	u32 mscr;
 	u8 si;
 
-	mscr = __raw_readl(pdata->vbase + REG_MSCR_OFFSET);
+	mscr = __raw_पढ़ोl(pdata->vbase + REG_MSCR_OFFSET);
 	si = (mscr & MSCR_SI_MASK) >> MSCR_SI_SHIFT;
 
 	edac_dbg(0, "Mem Scrub Ctrl Register 0x%x\n", mscr);
 
-	if (((mscr & MSCR_SCRUB_MOD_MASK) != MSCR_BACKGR_SCRUB) ||
-	    (si == 0)) {
-		cpc925_mc_printk(mci, KERN_INFO, "Scrub mode not enabled\n");
+	अगर (((mscr & MSCR_SCRUB_MOD_MASK) != MSCR_BACKGR_SCRUB) ||
+	    (si == 0)) अणु
+		cpc925_mc_prपूर्णांकk(mci, KERN_INFO, "Scrub mode not enabled\n");
 		bw = 0;
-	} else
+	पूर्ण अन्यथा
 		bw = CPC925_SCRUB_BLOCK_SIZE * 0xFA67 / si;
 
-	return bw;
-}
+	वापस bw;
+पूर्ण
 
-/* Return 0 for single channel; 1 for dual channel */
-static int cpc925_mc_get_channels(void __iomem *vbase)
-{
-	int dual = 0;
+/* Return 0 क्रम single channel; 1 क्रम dual channel */
+अटल पूर्णांक cpc925_mc_get_channels(व्योम __iomem *vbase)
+अणु
+	पूर्णांक dual = 0;
 	u32 mbcr;
 
-	mbcr = __raw_readl(vbase + REG_MBCR_OFFSET);
+	mbcr = __raw_पढ़ोl(vbase + REG_MBCR_OFFSET);
 
 	/*
 	 * Dual channel only when 128-bit wide physical bus
 	 * and 128-bit configuration.
 	 */
-	if (((mbcr & MBCR_64BITCFG_MASK) == 0) &&
+	अगर (((mbcr & MBCR_64BITCFG_MASK) == 0) &&
 	    ((mbcr & MBCR_64BITBUS_MASK) == 0))
 		dual = 1;
 
 	edac_dbg(0, "%s channel\n", (dual > 0) ? "Dual" : "Single");
 
-	return dual;
-}
+	वापस dual;
+पूर्ण
 
-static int cpc925_probe(struct platform_device *pdev)
-{
-	static int edac_mc_idx;
-	struct mem_ctl_info *mci;
-	struct edac_mc_layer layers[2];
-	void __iomem *vbase;
-	struct cpc925_mc_pdata *pdata;
-	struct resource *r;
-	int res = 0, nr_channels;
+अटल पूर्णांक cpc925_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अटल पूर्णांक edac_mc_idx;
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा edac_mc_layer layers[2];
+	व्योम __iomem *vbase;
+	काष्ठा cpc925_mc_pdata *pdata;
+	काष्ठा resource *r;
+	पूर्णांक res = 0, nr_channels;
 
 	edac_dbg(0, "%s platform device found!\n", pdev->name);
 
-	if (!devres_open_group(&pdev->dev, cpc925_probe, GFP_KERNEL)) {
+	अगर (!devres_खोलो_group(&pdev->dev, cpc925_probe, GFP_KERNEL)) अणु
 		res = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!r) {
-		cpc925_printk(KERN_ERR, "Unable to get resource\n");
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!r) अणु
+		cpc925_prपूर्णांकk(KERN_ERR, "Unable to get resource\n");
 		res = -ENOENT;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	if (!devm_request_mem_region(&pdev->dev,
+	अगर (!devm_request_mem_region(&pdev->dev,
 				     r->start,
 				     resource_size(r),
-				     pdev->name)) {
-		cpc925_printk(KERN_ERR, "Unable to request mem region\n");
+				     pdev->name)) अणु
+		cpc925_prपूर्णांकk(KERN_ERR, "Unable to request mem region\n");
 		res = -EBUSY;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
 	vbase = devm_ioremap(&pdev->dev, r->start, resource_size(r));
-	if (!vbase) {
-		cpc925_printk(KERN_ERR, "Unable to ioremap device\n");
+	अगर (!vbase) अणु
+		cpc925_prपूर्णांकk(KERN_ERR, "Unable to ioremap device\n");
 		res = -ENOMEM;
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
 	nr_channels = cpc925_mc_get_channels(vbase) + 1;
 
@@ -952,12 +953,12 @@ static int cpc925_probe(struct platform_device *pdev)
 	layers[1].size = nr_channels;
 	layers[1].is_virt_csrow = false;
 	mci = edac_mc_alloc(edac_mc_idx, ARRAY_SIZE(layers), layers,
-			    sizeof(struct cpc925_mc_pdata));
-	if (!mci) {
-		cpc925_printk(KERN_ERR, "No memory for mem_ctl_info\n");
+			    माप(काष्ठा cpc925_mc_pdata));
+	अगर (!mci) अणु
+		cpc925_prपूर्णांकk(KERN_ERR, "No memory for mem_ctl_info\n");
 		res = -ENOMEM;
-		goto err2;
-	}
+		जाओ err2;
+	पूर्ण
 
 	pdata = mci->pvt_info;
 	pdata->vbase = vbase;
@@ -965,7 +966,7 @@ static int cpc925_probe(struct platform_device *pdev)
 	pdata->name = pdev->name;
 
 	mci->pdev = &pdev->dev;
-	platform_set_drvdata(pdev, mci);
+	platक्रमm_set_drvdata(pdev, mci);
 	mci->dev_name = dev_name(&pdev->dev);
 	mci->mtype_cap = MEM_FLAG_RDDR | MEM_FLAG_DDR;
 	mci->edac_ctl_cap = EDAC_FLAG_NONE | EDAC_FLAG_SECDED;
@@ -973,23 +974,23 @@ static int cpc925_probe(struct platform_device *pdev)
 	mci->mod_name = CPC925_EDAC_MOD_STR;
 	mci->ctl_name = pdev->name;
 
-	if (edac_op_state == EDAC_OPSTATE_POLL)
+	अगर (edac_op_state == EDAC_OPSTATE_POLL)
 		mci->edac_check = cpc925_mc_check;
 
-	mci->ctl_page_to_phys = NULL;
+	mci->ctl_page_to_phys = शून्य;
 	mci->scrub_mode = SCRUB_SW_SRC;
-	mci->set_sdram_scrub_rate = NULL;
+	mci->set_sdram_scrub_rate = शून्य;
 	mci->get_sdram_scrub_rate = cpc925_get_sdram_scrub_rate;
 
 	cpc925_init_csrows(mci);
 
-	/* Setup memory controller registers */
+	/* Setup memory controller रेजिस्टरs */
 	cpc925_mc_init(mci);
 
-	if (edac_mc_add_mc(mci) > 0) {
-		cpc925_mc_printk(mci, KERN_ERR, "Failed edac_mc_add_mc()\n");
-		goto err3;
-	}
+	अगर (edac_mc_add_mc(mci) > 0) अणु
+		cpc925_mc_prपूर्णांकk(mci, KERN_ERR, "Failed edac_mc_add_mc()\n");
+		जाओ err3;
+	पूर्ण
 
 	cpc925_add_edac_devices(vbase);
 
@@ -997,70 +998,70 @@ static int cpc925_probe(struct platform_device *pdev)
 	edac_dbg(0, "success\n");
 
 	res = 0;
-	goto out;
+	जाओ out;
 
 err3:
-	cpc925_mc_exit(mci);
-	edac_mc_free(mci);
+	cpc925_mc_निकास(mci);
+	edac_mc_मुक्त(mci);
 err2:
 	devm_release_mem_region(&pdev->dev, r->start, resource_size(r));
 err1:
 	devres_release_group(&pdev->dev, cpc925_probe);
 out:
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int cpc925_remove(struct platform_device *pdev)
-{
-	struct mem_ctl_info *mci = platform_get_drvdata(pdev);
+अटल पूर्णांक cpc925_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mem_ctl_info *mci = platक्रमm_get_drvdata(pdev);
 
 	/*
-	 * Delete common edac devices before edac mc, because
-	 * the former share the MMIO of the latter.
+	 * Delete common edac devices beक्रमe edac mc, because
+	 * the क्रमmer share the MMIO of the latter.
 	 */
 	cpc925_del_edac_devices();
-	cpc925_mc_exit(mci);
+	cpc925_mc_निकास(mci);
 
 	edac_mc_del_mc(&pdev->dev);
-	edac_mc_free(mci);
+	edac_mc_मुक्त(mci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver cpc925_edac_driver = {
+अटल काष्ठा platक्रमm_driver cpc925_edac_driver = अणु
 	.probe = cpc925_probe,
-	.remove = cpc925_remove,
-	.driver = {
+	.हटाओ = cpc925_हटाओ,
+	.driver = अणु
 		   .name = "cpc925_edac",
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init cpc925_edac_init(void)
-{
-	int ret = 0;
+अटल पूर्णांक __init cpc925_edac_init(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	printk(KERN_INFO "IBM CPC925 EDAC driver " CPC925_EDAC_REVISION "\n");
-	printk(KERN_INFO "\t(c) 2008 Wind River Systems, Inc\n");
+	prपूर्णांकk(KERN_INFO "IBM CPC925 EDAC driver " CPC925_EDAC_REVISION "\n");
+	prपूर्णांकk(KERN_INFO "\t(c) 2008 Wind River Systems, Inc\n");
 
 	/* Only support POLL mode so far */
 	edac_op_state = EDAC_OPSTATE_POLL;
 
-	ret = platform_driver_register(&cpc925_edac_driver);
-	if (ret) {
-		printk(KERN_WARNING "Failed to register %s\n",
+	ret = platक्रमm_driver_रेजिस्टर(&cpc925_edac_driver);
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_WARNING "Failed to register %s\n",
 			CPC925_EDAC_MOD_STR);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit cpc925_edac_exit(void)
-{
-	platform_driver_unregister(&cpc925_edac_driver);
-}
+अटल व्योम __निकास cpc925_edac_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&cpc925_edac_driver);
+पूर्ण
 
 module_init(cpc925_edac_init);
-module_exit(cpc925_edac_exit);
+module_निकास(cpc925_edac_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Cao Qingtao <qingtao.cao@windriver.com>");

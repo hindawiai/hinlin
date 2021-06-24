@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
@@ -13,13 +14,13 @@
  *
  */
 
-#ifndef __RXTX_H__
-#define __RXTX_H__
+#अगर_अघोषित __RXTX_H__
+#घोषणा __RXTX_H__
 
-#include "device.h"
+#समावेश "device.h"
 
-#define DEFAULT_MSDU_LIFETIME_RES_64us	8000 /* 64us */
-#define DEFAULT_MGN_LIFETIME_RES_64us	125  /* 64us */
+#घोषणा DEFAULT_MSDU_LIFETIME_RES_64us	8000 /* 64us */
+#घोषणा DEFAULT_MGN_LIFETIME_RES_64us	125  /* 64us */
 
 
 /*---------------------  Export Definitions -------------------------*/
@@ -29,7 +30,7 @@
 /*---------------------  Export Functions  --------------------------*/
 
 /* MIC HDR data header */
-struct vnt_mic_hdr {
+काष्ठा vnt_mic_hdr अणु
 	u8 id;
 	u8 tx_priority;
 	u8 mic_addr2[ETH_ALEN];
@@ -43,79 +44,79 @@ struct vnt_mic_hdr {
 	__le16 seq_ctrl;
 	u8 addr4[ETH_ALEN];
 	u16 packing; /* packing to 48 bytes */
-} __packed;
+पूर्ण __packed;
 
 /* RsvTime buffer header */
-struct vnt_rrv_time_rts {
-	__le16 rts_rrv_time_ba;
-	__le16 rts_rrv_time_aa;
-	__le16 rts_rrv_time_bb;
+काष्ठा vnt_rrv_समय_rts अणु
+	__le16 rts_rrv_समय_ba;
+	__le16 rts_rrv_समय_aa;
+	__le16 rts_rrv_समय_bb;
 	u16 reserved;
-	__le16 rrv_time_b;
-	__le16 rrv_time_a;
-} __packed;
+	__le16 rrv_समय_b;
+	__le16 rrv_समय_a;
+पूर्ण __packed;
 
-struct vnt_rrv_time_cts {
-	__le16 cts_rrv_time_ba;
+काष्ठा vnt_rrv_समय_cts अणु
+	__le16 cts_rrv_समय_ba;
 	u16 reserved;
-	__le16 rrv_time_b;
-	__le16 rrv_time_a;
-} __packed;
+	__le16 rrv_समय_b;
+	__le16 rrv_समय_a;
+पूर्ण __packed;
 
-struct vnt_rrv_time_ab {
-	__le16 rts_rrv_time;
-	__le16 rrv_time;
-} __packed;
+काष्ठा vnt_rrv_समय_ab अणु
+	__le16 rts_rrv_समय;
+	__le16 rrv_समय;
+पूर्ण __packed;
 
 /* TX data header */
-struct vnt_tx_datahead_g {
-	struct vnt_phy_field b;
-	struct vnt_phy_field a;
+काष्ठा vnt_tx_datahead_g अणु
+	काष्ठा vnt_phy_field b;
+	काष्ठा vnt_phy_field a;
 	__le16 duration_b;
 	__le16 duration_a;
-	__le16 time_stamp_off_b;
-	__le16 time_stamp_off_a;
-} __packed;
+	__le16 समय_stamp_off_b;
+	__le16 समय_stamp_off_a;
+पूर्ण __packed;
 
-struct vnt_tx_datahead_g_fb {
-	struct vnt_phy_field b;
-	struct vnt_phy_field a;
+काष्ठा vnt_tx_datahead_g_fb अणु
+	काष्ठा vnt_phy_field b;
+	काष्ठा vnt_phy_field a;
 	__le16 duration_b;
 	__le16 duration_a;
 	__le16 duration_a_f0;
 	__le16 duration_a_f1;
-	__le16 time_stamp_off_b;
-	__le16 time_stamp_off_a;
-} __packed;
+	__le16 समय_stamp_off_b;
+	__le16 समय_stamp_off_a;
+पूर्ण __packed;
 
-struct vnt_tx_datahead_ab {
-	struct vnt_phy_field ab;
+काष्ठा vnt_tx_datahead_ab अणु
+	काष्ठा vnt_phy_field ab;
 	__le16 duration;
-	__le16 time_stamp_off;
-} __packed;
+	__le16 समय_stamp_off;
+पूर्ण __packed;
 
-struct vnt_tx_datahead_a_fb {
-	struct vnt_phy_field a;
+काष्ठा vnt_tx_datahead_a_fb अणु
+	काष्ठा vnt_phy_field a;
 	__le16 duration;
-	__le16 time_stamp_off;
+	__le16 समय_stamp_off;
 	__le16 duration_f0;
 	__le16 duration_f1;
-} __packed;
+पूर्ण __packed;
 
 /* RTS buffer header */
-struct vnt_rts_g {
-	struct vnt_phy_field b;
-	struct vnt_phy_field a;
+काष्ठा vnt_rts_g अणु
+	काष्ठा vnt_phy_field b;
+	काष्ठा vnt_phy_field a;
 	__le16 duration_ba;
 	__le16 duration_aa;
 	__le16 duration_bb;
 	u16 reserved;
-	struct ieee80211_rts data;
-} __packed __aligned(2);
+	काष्ठा ieee80211_rts data;
+पूर्ण __packed __aligned(2);
 
-struct vnt_rts_g_fb {
-	struct vnt_phy_field b;
-	struct vnt_phy_field a;
+काष्ठा vnt_rts_g_fb अणु
+	काष्ठा vnt_phy_field b;
+	काष्ठा vnt_phy_field a;
 	__le16 duration_ba;
 	__le16 duration_aa;
 	__le16 duration_bb;
@@ -124,64 +125,64 @@ struct vnt_rts_g_fb {
 	__le16 rts_duration_aa_f0;
 	__le16 rts_duration_ba_f1;
 	__le16 rts_duration_aa_f1;
-	struct ieee80211_rts data;
-} __packed __aligned(2);
+	काष्ठा ieee80211_rts data;
+पूर्ण __packed __aligned(2);
 
-struct vnt_rts_ab {
-	struct vnt_phy_field ab;
+काष्ठा vnt_rts_ab अणु
+	काष्ठा vnt_phy_field ab;
 	__le16 duration;
 	u16 reserved;
-	struct ieee80211_rts data;
-} __packed __aligned(2);
+	काष्ठा ieee80211_rts data;
+पूर्ण __packed __aligned(2);
 
-struct vnt_rts_a_fb {
-	struct vnt_phy_field a;
+काष्ठा vnt_rts_a_fb अणु
+	काष्ठा vnt_phy_field a;
 	__le16 duration;
 	u16 reserved;
 	__le16 rts_duration_f0;
 	__le16 rts_duration_f1;
-	struct ieee80211_rts data;
-} __packed __aligned(2);
+	काष्ठा ieee80211_rts data;
+पूर्ण __packed __aligned(2);
 
 /* CTS buffer header */
-struct vnt_cts {
-	struct vnt_phy_field b;
+काष्ठा vnt_cts अणु
+	काष्ठा vnt_phy_field b;
 	__le16 duration_ba;
 	u16 reserved;
-	struct ieee80211_cts data;
+	काष्ठा ieee80211_cts data;
 	u16 reserved2;
-} __packed __aligned(2);
+पूर्ण __packed __aligned(2);
 
-struct vnt_cts_fb {
-	struct vnt_phy_field b;
+काष्ठा vnt_cts_fb अणु
+	काष्ठा vnt_phy_field b;
 	__le16 duration_ba;
 	u16 reserved;
 	__le16 cts_duration_ba_f0;
 	__le16 cts_duration_ba_f1;
-	struct ieee80211_cts data;
+	काष्ठा ieee80211_cts data;
 	u16 reserved2;
-} __packed __aligned(2);
+पूर्ण __packed __aligned(2);
 
-struct vnt_tx_fifo_head {
+काष्ठा vnt_tx_fअगरo_head अणु
 	u8 tx_key[WLAN_KEY_LEN_CCMP];
-	__le16 fifo_ctl;
-	__le16 time_stamp;
+	__le16 fअगरo_ctl;
+	__le16 समय_stamp;
 	__le16 frag_ctl;
 	__le16 current_rate;
-} __packed;
+पूर्ण __packed;
 
-struct vnt_tx_short_buf_head {
-	__le16 fifo_ctl;
-	u16 time_stamp;
-	struct vnt_phy_field ab;
+काष्ठा vnt_tx_लघु_buf_head अणु
+	__le16 fअगरo_ctl;
+	u16 समय_stamp;
+	काष्ठा vnt_phy_field ab;
 	__le16 duration;
-	__le16 time_stamp_off;
-} __packed;
+	__le16 समय_stamp_off;
+पूर्ण __packed;
 
-int vnt_generate_fifo_header(struct vnt_private *priv, u32 dma_idx,
-			     struct vnt_tx_desc *head_td, struct sk_buff *skb);
-int vnt_beacon_make(struct vnt_private *priv, struct ieee80211_vif *vif);
-int vnt_beacon_enable(struct vnt_private *priv, struct ieee80211_vif *vif,
-		      struct ieee80211_bss_conf *conf);
+पूर्णांक vnt_generate_fअगरo_header(काष्ठा vnt_निजी *priv, u32 dma_idx,
+			     काष्ठा vnt_tx_desc *head_td, काष्ठा sk_buff *skb);
+पूर्णांक vnt_beacon_make(काष्ठा vnt_निजी *priv, काष्ठा ieee80211_vअगर *vअगर);
+पूर्णांक vnt_beacon_enable(काष्ठा vnt_निजी *priv, काष्ठा ieee80211_vअगर *vअगर,
+		      काष्ठा ieee80211_bss_conf *conf);
 
-#endif /* __RXTX_H__ */
+#पूर्ण_अगर /* __RXTX_H__ */

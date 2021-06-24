@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2007 Oracle.  All rights reserved.
  */
 
-#ifndef BTRFS_PRINT_TREE_H
-#define BTRFS_PRINT_TREE_H
+#अगर_अघोषित BTRFS_PRINT_TREE_H
+#घोषणा BTRFS_PRINT_TREE_H
 
 /* Buffer size to contain tree name and possibly additional data (offset) */
-#define BTRFS_ROOT_NAME_BUF_LEN				48
+#घोषणा BTRFS_ROOT_NAME_BUF_LEN				48
 
-void btrfs_print_leaf(struct extent_buffer *l);
-void btrfs_print_tree(struct extent_buffer *c, bool follow);
-const char *btrfs_root_name(const struct btrfs_key *key, char *buf);
+व्योम btrfs_prपूर्णांक_leaf(काष्ठा extent_buffer *l);
+व्योम btrfs_prपूर्णांक_tree(काष्ठा extent_buffer *c, bool follow);
+स्थिर अक्षर *btrfs_root_name(स्थिर काष्ठा btrfs_key *key, अक्षर *buf);
 
-#endif
+#पूर्ण_अगर

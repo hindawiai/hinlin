@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Arch specific extensions to struct device
+ * Arch specअगरic extensions to काष्ठा device
  */
-#ifndef _ASM_POWERPC_DEVICE_H
-#define _ASM_POWERPC_DEVICE_H
+#अगर_अघोषित _ASM_POWERPC_DEVICE_H
+#घोषणा _ASM_POWERPC_DEVICE_H
 
-struct device_node;
-#ifdef CONFIG_PPC64
-struct pci_dn;
-struct iommu_table;
-#endif
+काष्ठा device_node;
+#अगर_घोषित CONFIG_PPC64
+काष्ठा pci_dn;
+काष्ठा iommu_table;
+#पूर्ण_अगर
 
 /*
- * Arch extensions to struct device.
+ * Arch extensions to काष्ठा device.
  *
  * When adding fields, consider macio_add_one_device in
- * drivers/macintosh/macio_asic.c
+ * drivers/macपूर्णांकosh/macio_asic.c
  */
-struct dev_archdata {
+काष्ठा dev_archdata अणु
 	/*
-	 * These two used to be a union. However, with the hybrid ops we need
-	 * both so here we store both a DMA offset for direct mappings and
-	 * an iommu_table for remapped DMA.
+	 * These two used to be a जोड़. However, with the hybrid ops we need
+	 * both so here we store both a DMA offset क्रम direct mappings and
+	 * an iommu_table क्रम remapped DMA.
 	 */
 	dma_addr_t		dma_offset;
 
-#ifdef CONFIG_PPC64
-	struct iommu_table	*iommu_table_base;
-#endif
+#अगर_घोषित CONFIG_PPC64
+	काष्ठा iommu_table	*iommu_table_base;
+#पूर्ण_अगर
 
-#ifdef CONFIG_PPC64
-	struct pci_dn		*pci_data;
-#endif
-#ifdef CONFIG_EEH
-	struct eeh_dev		*edev;
-#endif
-#ifdef CONFIG_FAIL_IOMMU
-	int fail_iommu;
-#endif
-#ifdef CONFIG_CXL_BASE
-	struct cxl_context	*cxl_ctx;
-#endif
-#ifdef CONFIG_PCI_IOV
-	void *iov_data;
-#endif
-};
+#अगर_घोषित CONFIG_PPC64
+	काष्ठा pci_dn		*pci_data;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_EEH
+	काष्ठा eeh_dev		*edev;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FAIL_IOMMU
+	पूर्णांक fail_iommu;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_CXL_BASE
+	काष्ठा cxl_context	*cxl_ctx;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCI_IOV
+	व्योम *iov_data;
+#पूर्ण_अगर
+पूर्ण;
 
-struct pdev_archdata {
+काष्ठा pdev_archdata अणु
 	u64 dma_mask;
-};
+पूर्ण;
 
-#endif /* _ASM_POWERPC_DEVICE_H */
+#पूर्ण_अगर /* _ASM_POWERPC_DEVICE_H */

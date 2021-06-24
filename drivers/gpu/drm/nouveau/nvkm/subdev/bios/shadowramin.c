@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,104 +21,104 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-struct priv {
-	struct nvkm_bios *bios;
+काष्ठा priv अणु
+	काष्ठा nvkm_bios *bios;
 	u32 bar0;
-};
+पूर्ण;
 
-static u32
-pramin_read(void *data, u32 offset, u32 length, struct nvkm_bios *bios)
-{
-	struct nvkm_device *device = bios->subdev.device;
+अटल u32
+pramin_पढ़ो(व्योम *data, u32 offset, u32 length, काष्ठा nvkm_bios *bios)
+अणु
+	काष्ठा nvkm_device *device = bios->subdev.device;
 	u32 i;
-	if (offset + length <= 0x00100000) {
-		for (i = offset; i < offset + length; i += 4)
+	अगर (offset + length <= 0x00100000) अणु
+		क्रम (i = offset; i < offset + length; i += 4)
 			*(u32 *)&bios->data[i] = nvkm_rd32(device, 0x700000 + i);
-		return length;
-	}
-	return 0;
-}
+		वापस length;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void
-pramin_fini(void *data)
-{
-	struct priv *priv = data;
-	if (priv) {
-		struct nvkm_device *device = priv->bios->subdev.device;
+अटल व्योम
+pramin_fini(व्योम *data)
+अणु
+	काष्ठा priv *priv = data;
+	अगर (priv) अणु
+		काष्ठा nvkm_device *device = priv->bios->subdev.device;
 		nvkm_wr32(device, 0x001700, priv->bar0);
-		kfree(priv);
-	}
-}
+		kमुक्त(priv);
+	पूर्ण
+पूर्ण
 
-static void *
-pramin_init(struct nvkm_bios *bios, const char *name)
-{
-	struct nvkm_subdev *subdev = &bios->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct priv *priv = NULL;
+अटल व्योम *
+pramin_init(काष्ठा nvkm_bios *bios, स्थिर अक्षर *name)
+अणु
+	काष्ठा nvkm_subdev *subdev = &bios->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा priv *priv = शून्य;
 	u64 addr = 0;
 
 	/* PRAMIN always potentially available prior to nv50 */
-	if (device->card_type < NV_50)
-		return NULL;
+	अगर (device->card_type < NV_50)
+		वापस शून्य;
 
-	/* we can't get the bios image pointer without PDISP */
-	if (device->card_type >= GA100)
-		addr = device->chipset == 0x170; /*XXX: find the fuse reg for this */
-	else
-	if (device->card_type >= GM100)
+	/* we can't get the bios image poपूर्णांकer without PDISP */
+	अगर (device->card_type >= GA100)
+		addr = device->chipset == 0x170; /*XXX: find the fuse reg क्रम this */
+	अन्यथा
+	अगर (device->card_type >= GM100)
 		addr = nvkm_rd32(device, 0x021c04);
-	else
-	if (device->card_type >= NV_C0)
+	अन्यथा
+	अगर (device->card_type >= NV_C0)
 		addr = nvkm_rd32(device, 0x022500);
-	if (addr & 0x00000001) {
+	अगर (addr & 0x00000001) अणु
 		nvkm_debug(subdev, "... display disabled\n");
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
-	/* check that the window is enabled and in vram, particularly
-	 * important as we don't want to be touching vram on an
+	/* check that the winकरोw is enabled and in vram, particularly
+	 * important as we करोn't want to be touching vram on an
 	 * uninitialised board
 	 */
-	if (device->card_type >= GV100)
+	अगर (device->card_type >= GV100)
 		addr = nvkm_rd32(device, 0x625f04);
-	else
+	अन्यथा
 		addr = nvkm_rd32(device, 0x619f04);
-	if (!(addr & 0x00000008)) {
+	अगर (!(addr & 0x00000008)) अणु
 		nvkm_debug(subdev, "... not enabled\n");
-		return ERR_PTR(-ENODEV);
-	}
-	if ( (addr & 0x00000003) != 1) {
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
+	अगर ( (addr & 0x00000003) != 1) अणु
 		nvkm_debug(subdev, "... not in vram\n");
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
 	/* some alternate method inherited from xf86-video-nv... */
 	addr = (addr & 0xffffff00) << 8;
-	if (!addr) {
+	अगर (!addr) अणु
 		addr  = (u64)nvkm_rd32(device, 0x001700) << 16;
 		addr += 0xf0000;
-	}
+	पूर्ण
 
-	/* modify bar0 PRAMIN window to cover the bios image */
-	if (!(priv = kmalloc(sizeof(*priv), GFP_KERNEL))) {
+	/* modअगरy bar0 PRAMIN winकरोw to cover the bios image */
+	अगर (!(priv = kदो_स्मृति(माप(*priv), GFP_KERNEL))) अणु
 		nvkm_error(subdev, "... out of memory\n");
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	priv->bios = bios;
 	priv->bar0 = nvkm_rd32(device, 0x001700);
 	nvkm_wr32(device, 0x001700, addr >> 16);
-	return priv;
-}
+	वापस priv;
+पूर्ण
 
-const struct nvbios_source
-nvbios_ramin = {
+स्थिर काष्ठा nvbios_source
+nvbios_ramin = अणु
 	.name = "PRAMIN",
 	.init = pramin_init,
 	.fini = pramin_fini,
-	.read = pramin_read,
+	.पढ़ो = pramin_पढ़ो,
 	.rw = true,
-};
+पूर्ण;

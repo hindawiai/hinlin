@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * PPS core file
  *
- * Copyright (C) 2005-2009   Rodolfo Giometti <giometti@linux.it>
+ * Copyright (C) 2005-2009   Roकरोlfo Giometti <giometti@linux.it>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/uaccess.h>
-#include <linux/idr.h>
-#include <linux/mutex.h>
-#include <linux/cdev.h>
-#include <linux/poll.h>
-#include <linux/pps_kernel.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/pps_kernel.h>
+#समावेश <linux/slab.h>
 
-#include "kc.h"
+#समावेश "kc.h"
 
 /*
  * Local variables
  */
 
-static dev_t pps_devt;
-static struct class *pps_class;
+अटल dev_t pps_devt;
+अटल काष्ठा class *pps_class;
 
-static DEFINE_MUTEX(pps_idr_lock);
-static DEFINE_IDR(pps_idr);
+अटल DEFINE_MUTEX(pps_idr_lock);
+अटल DEFINE_IDR(pps_idr);
 
 /*
  * Char device methods
  */
 
-static __poll_t pps_cdev_poll(struct file *file, poll_table *wait)
-{
-	struct pps_device *pps = file->private_data;
+अटल __poll_t pps_cdev_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा pps_device *pps = file->निजी_data;
 
-	poll_wait(file, &pps->queue, wait);
+	poll_रुको(file, &pps->queue, रुको);
 
-	return EPOLLIN | EPOLLRDNORM;
-}
+	वापस EPOLLIN | EPOLLRDNORM;
+पूर्ण
 
-static int pps_cdev_fasync(int fd, struct file *file, int on)
-{
-	struct pps_device *pps = file->private_data;
-	return fasync_helper(fd, file, on, &pps->async_queue);
-}
+अटल पूर्णांक pps_cdev_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
+अणु
+	काष्ठा pps_device *pps = file->निजी_data;
+	वापस fasync_helper(fd, file, on, &pps->async_queue);
+पूर्ण
 
-static int pps_cdev_pps_fetch(struct pps_device *pps, struct pps_fdata *fdata)
-{
-	unsigned int ev = pps->last_ev;
-	int err = 0;
+अटल पूर्णांक pps_cdev_pps_fetch(काष्ठा pps_device *pps, काष्ठा pps_fdata *fdata)
+अणु
+	अचिन्हित पूर्णांक ev = pps->last_ev;
+	पूर्णांक err = 0;
 
-	/* Manage the timeout */
-	if (fdata->timeout.flags & PPS_TIME_INVALID)
-		err = wait_event_interruptible(pps->queue,
+	/* Manage the समयout */
+	अगर (fdata->समयout.flags & PPS_TIME_INVALID)
+		err = रुको_event_पूर्णांकerruptible(pps->queue,
 				ev != pps->last_ev);
-	else {
-		unsigned long ticks;
+	अन्यथा अणु
+		अचिन्हित दीर्घ ticks;
 
 		dev_dbg(pps->dev, "timeout %lld.%09d\n",
-				(long long) fdata->timeout.sec,
-				fdata->timeout.nsec);
-		ticks = fdata->timeout.sec * HZ;
-		ticks += fdata->timeout.nsec / (NSEC_PER_SEC / HZ);
+				(दीर्घ दीर्घ) fdata->समयout.sec,
+				fdata->समयout.nsec);
+		ticks = fdata->समयout.sec * HZ;
+		ticks += fdata->समयout.nsec / (NSEC_PER_SEC / HZ);
 
-		if (ticks != 0) {
-			err = wait_event_interruptible_timeout(
+		अगर (ticks != 0) अणु
+			err = रुको_event_पूर्णांकerruptible_समयout(
 					pps->queue,
 					ev != pps->last_ev,
 					ticks);
-			if (err == 0)
-				return -ETIMEDOUT;
-		}
-	}
+			अगर (err == 0)
+				वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	/* Check for pending signals */
-	if (err == -ERESTARTSYS) {
+	/* Check क्रम pending संकेतs */
+	अगर (err == -ERESTARTSYS) अणु
 		dev_dbg(pps->dev, "pending signal caught\n");
-		return -EINTR;
-	}
+		वापस -EINTR;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long pps_cdev_ioctl(struct file *file,
-		unsigned int cmd, unsigned long arg)
-{
-	struct pps_device *pps = file->private_data;
-	struct pps_kparams params;
-	void __user *uarg = (void __user *) arg;
-	int __user *iuarg = (int __user *) arg;
-	int err;
+अटल दीर्घ pps_cdev_ioctl(काष्ठा file *file,
+		अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा pps_device *pps = file->निजी_data;
+	काष्ठा pps_kparams params;
+	व्योम __user *uarg = (व्योम __user *) arg;
+	पूर्णांक __user *iuarg = (पूर्णांक __user *) arg;
+	पूर्णांक err;
 
-	switch (cmd) {
-	case PPS_GETPARAMS:
+	चयन (cmd) अणु
+	हाल PPS_GETPARAMS:
 		dev_dbg(pps->dev, "PPS_GETPARAMS\n");
 
 		spin_lock_irq(&pps->lock);
@@ -107,262 +108,262 @@ static long pps_cdev_ioctl(struct file *file,
 
 		spin_unlock_irq(&pps->lock);
 
-		err = copy_to_user(uarg, &params, sizeof(struct pps_kparams));
-		if (err)
-			return -EFAULT;
+		err = copy_to_user(uarg, &params, माप(काष्ठा pps_kparams));
+		अगर (err)
+			वापस -EFAULT;
 
-		break;
+		अवरोध;
 
-	case PPS_SETPARAMS:
+	हाल PPS_SETPARAMS:
 		dev_dbg(pps->dev, "PPS_SETPARAMS\n");
 
 		/* Check the capabilities */
-		if (!capable(CAP_SYS_TIME))
-			return -EPERM;
+		अगर (!capable(CAP_SYS_TIME))
+			वापस -EPERM;
 
-		err = copy_from_user(&params, uarg, sizeof(struct pps_kparams));
-		if (err)
-			return -EFAULT;
-		if (!(params.mode & (PPS_CAPTUREASSERT | PPS_CAPTURECLEAR))) {
+		err = copy_from_user(&params, uarg, माप(काष्ठा pps_kparams));
+		अगर (err)
+			वापस -EFAULT;
+		अगर (!(params.mode & (PPS_CAPTUREASSERT | PPS_CAPTURECLEAR))) अणु
 			dev_dbg(pps->dev, "capture mode unspecified (%x)\n",
 								params.mode);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* Check for supported capabilities */
-		if ((params.mode & ~pps->info.mode) != 0) {
+		/* Check क्रम supported capabilities */
+		अगर ((params.mode & ~pps->info.mode) != 0) अणु
 			dev_dbg(pps->dev, "unsupported capabilities (%x)\n",
 								params.mode);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		spin_lock_irq(&pps->lock);
 
 		/* Save the new parameters */
 		pps->params = params;
 
-		/* Restore the read only parameters */
-		if ((params.mode & (PPS_TSFMT_TSPEC | PPS_TSFMT_NTPFP)) == 0) {
-			/* section 3.3 of RFC 2783 interpreted */
+		/* Restore the पढ़ो only parameters */
+		अगर ((params.mode & (PPS_TSFMT_TSPEC | PPS_TSFMT_NTPFP)) == 0) अणु
+			/* section 3.3 of RFC 2783 पूर्णांकerpreted */
 			dev_dbg(pps->dev, "time format unspecified (%x)\n",
 								params.mode);
 			pps->params.mode |= PPS_TSFMT_TSPEC;
-		}
-		if (pps->info.mode & PPS_CANWAIT)
+		पूर्ण
+		अगर (pps->info.mode & PPS_CANWAIT)
 			pps->params.mode |= PPS_CANWAIT;
 		pps->params.api_version = PPS_API_VERS;
 
 		/*
-		 * Clear unused fields of pps_kparams to avoid leaking
+		 * Clear unused fields of pps_kparams to aव्योम leaking
 		 * uninitialized data of the PPS_SETPARAMS caller via
 		 * PPS_GETPARAMS
 		 */
-		pps->params.assert_off_tu.flags = 0;
+		pps->params.निश्चित_off_tu.flags = 0;
 		pps->params.clear_off_tu.flags = 0;
 
 		spin_unlock_irq(&pps->lock);
 
-		break;
+		अवरोध;
 
-	case PPS_GETCAP:
+	हाल PPS_GETCAP:
 		dev_dbg(pps->dev, "PPS_GETCAP\n");
 
 		err = put_user(pps->info.mode, iuarg);
-		if (err)
-			return -EFAULT;
+		अगर (err)
+			वापस -EFAULT;
 
-		break;
+		अवरोध;
 
-	case PPS_FETCH: {
-		struct pps_fdata fdata;
+	हाल PPS_FETCH: अणु
+		काष्ठा pps_fdata fdata;
 
 		dev_dbg(pps->dev, "PPS_FETCH\n");
 
-		err = copy_from_user(&fdata, uarg, sizeof(struct pps_fdata));
-		if (err)
-			return -EFAULT;
+		err = copy_from_user(&fdata, uarg, माप(काष्ठा pps_fdata));
+		अगर (err)
+			वापस -EFAULT;
 
 		err = pps_cdev_pps_fetch(pps, &fdata);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		/* Return the fetched timestamp */
+		/* Return the fetched बारtamp */
 		spin_lock_irq(&pps->lock);
 
-		fdata.info.assert_sequence = pps->assert_sequence;
+		fdata.info.निश्चित_sequence = pps->निश्चित_sequence;
 		fdata.info.clear_sequence = pps->clear_sequence;
-		fdata.info.assert_tu = pps->assert_tu;
+		fdata.info.निश्चित_tu = pps->निश्चित_tu;
 		fdata.info.clear_tu = pps->clear_tu;
 		fdata.info.current_mode = pps->current_mode;
 
 		spin_unlock_irq(&pps->lock);
 
-		err = copy_to_user(uarg, &fdata, sizeof(struct pps_fdata));
-		if (err)
-			return -EFAULT;
+		err = copy_to_user(uarg, &fdata, माप(काष्ठा pps_fdata));
+		अगर (err)
+			वापस -EFAULT;
 
-		break;
-	}
-	case PPS_KC_BIND: {
-		struct pps_bind_args bind_args;
+		अवरोध;
+	पूर्ण
+	हाल PPS_KC_BIND: अणु
+		काष्ठा pps_bind_args bind_args;
 
 		dev_dbg(pps->dev, "PPS_KC_BIND\n");
 
 		/* Check the capabilities */
-		if (!capable(CAP_SYS_TIME))
-			return -EPERM;
+		अगर (!capable(CAP_SYS_TIME))
+			वापस -EPERM;
 
-		if (copy_from_user(&bind_args, uarg,
-					sizeof(struct pps_bind_args)))
-			return -EFAULT;
+		अगर (copy_from_user(&bind_args, uarg,
+					माप(काष्ठा pps_bind_args)))
+			वापस -EFAULT;
 
-		/* Check for supported capabilities */
-		if ((bind_args.edge & ~pps->info.mode) != 0) {
+		/* Check क्रम supported capabilities */
+		अगर ((bind_args.edge & ~pps->info.mode) != 0) अणु
 			dev_err(pps->dev, "unsupported capabilities (%x)\n",
 					bind_args.edge);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* Validate parameters roughly */
-		if (bind_args.tsformat != PPS_TSFMT_TSPEC ||
+		अगर (bind_args.tsक्रमmat != PPS_TSFMT_TSPEC ||
 				(bind_args.edge & ~PPS_CAPTUREBOTH) != 0 ||
-				bind_args.consumer != PPS_KC_HARDPPS) {
+				bind_args.consumer != PPS_KC_HARDPPS) अणु
 			dev_err(pps->dev, "invalid kernel consumer bind"
 					" parameters (%x)\n", bind_args.edge);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		err = pps_kc_bind(pps, &bind_args);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
-		break;
-	}
-	default:
-		return -ENOTTY;
-	}
+		अवरोध;
+	पूर्ण
+	शेष:
+		वापस -ENOTTY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long pps_cdev_compat_ioctl(struct file *file,
-		unsigned int cmd, unsigned long arg)
-{
-	struct pps_device *pps = file->private_data;
-	void __user *uarg = (void __user *) arg;
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ pps_cdev_compat_ioctl(काष्ठा file *file,
+		अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा pps_device *pps = file->निजी_data;
+	व्योम __user *uarg = (व्योम __user *) arg;
 
-	cmd = _IOC(_IOC_DIR(cmd), _IOC_TYPE(cmd), _IOC_NR(cmd), sizeof(void *));
+	cmd = _IOC(_IOC_सूची(cmd), _IOC_TYPE(cmd), _IOC_NR(cmd), माप(व्योम *));
 
-	if (cmd == PPS_FETCH) {
-		struct pps_fdata_compat compat;
-		struct pps_fdata fdata;
-		int err;
+	अगर (cmd == PPS_FETCH) अणु
+		काष्ठा pps_fdata_compat compat;
+		काष्ठा pps_fdata fdata;
+		पूर्णांक err;
 
 		dev_dbg(pps->dev, "PPS_FETCH\n");
 
-		err = copy_from_user(&compat, uarg, sizeof(struct pps_fdata_compat));
-		if (err)
-			return -EFAULT;
+		err = copy_from_user(&compat, uarg, माप(काष्ठा pps_fdata_compat));
+		अगर (err)
+			वापस -EFAULT;
 
-		memcpy(&fdata.timeout, &compat.timeout,
-					sizeof(struct pps_ktime_compat));
+		स_नकल(&fdata.समयout, &compat.समयout,
+					माप(काष्ठा pps_kसमय_compat));
 
 		err = pps_cdev_pps_fetch(pps, &fdata);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		/* Return the fetched timestamp */
+		/* Return the fetched बारtamp */
 		spin_lock_irq(&pps->lock);
 
-		compat.info.assert_sequence = pps->assert_sequence;
+		compat.info.निश्चित_sequence = pps->निश्चित_sequence;
 		compat.info.clear_sequence = pps->clear_sequence;
 		compat.info.current_mode = pps->current_mode;
 
-		memcpy(&compat.info.assert_tu, &pps->assert_tu,
-				sizeof(struct pps_ktime_compat));
-		memcpy(&compat.info.clear_tu, &pps->clear_tu,
-				sizeof(struct pps_ktime_compat));
+		स_नकल(&compat.info.निश्चित_tu, &pps->निश्चित_tu,
+				माप(काष्ठा pps_kसमय_compat));
+		स_नकल(&compat.info.clear_tu, &pps->clear_tu,
+				माप(काष्ठा pps_kसमय_compat));
 
 		spin_unlock_irq(&pps->lock);
 
-		return copy_to_user(uarg, &compat,
-				sizeof(struct pps_fdata_compat)) ? -EFAULT : 0;
-	}
+		वापस copy_to_user(uarg, &compat,
+				माप(काष्ठा pps_fdata_compat)) ? -EFAULT : 0;
+	पूर्ण
 
-	return pps_cdev_ioctl(file, cmd, arg);
-}
-#else
-#define pps_cdev_compat_ioctl	NULL
-#endif
+	वापस pps_cdev_ioctl(file, cmd, arg);
+पूर्ण
+#अन्यथा
+#घोषणा pps_cdev_compat_ioctl	शून्य
+#पूर्ण_अगर
 
-static int pps_cdev_open(struct inode *inode, struct file *file)
-{
-	struct pps_device *pps = container_of(inode->i_cdev,
-						struct pps_device, cdev);
-	file->private_data = pps;
+अटल पूर्णांक pps_cdev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा pps_device *pps = container_of(inode->i_cdev,
+						काष्ठा pps_device, cdev);
+	file->निजी_data = pps;
 	kobject_get(&pps->dev->kobj);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pps_cdev_release(struct inode *inode, struct file *file)
-{
-	struct pps_device *pps = container_of(inode->i_cdev,
-						struct pps_device, cdev);
+अटल पूर्णांक pps_cdev_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा pps_device *pps = container_of(inode->i_cdev,
+						काष्ठा pps_device, cdev);
 	kobject_put(&pps->dev->kobj);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Char device stuff
  */
 
-static const struct file_operations pps_cdev_fops = {
+अटल स्थिर काष्ठा file_operations pps_cdev_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
 	.poll		= pps_cdev_poll,
 	.fasync		= pps_cdev_fasync,
 	.compat_ioctl	= pps_cdev_compat_ioctl,
 	.unlocked_ioctl	= pps_cdev_ioctl,
-	.open		= pps_cdev_open,
+	.खोलो		= pps_cdev_खोलो,
 	.release	= pps_cdev_release,
-};
+पूर्ण;
 
-static void pps_device_destruct(struct device *dev)
-{
-	struct pps_device *pps = dev_get_drvdata(dev);
+अटल व्योम pps_device_deकाष्ठा(काष्ठा device *dev)
+अणु
+	काष्ठा pps_device *pps = dev_get_drvdata(dev);
 
 	cdev_del(&pps->cdev);
 
-	/* Now we can release the ID for re-use */
+	/* Now we can release the ID क्रम re-use */
 	pr_debug("deallocating pps%d\n", pps->id);
 	mutex_lock(&pps_idr_lock);
-	idr_remove(&pps_idr, pps->id);
+	idr_हटाओ(&pps_idr, pps->id);
 	mutex_unlock(&pps_idr_lock);
 
-	kfree(dev);
-	kfree(pps);
-}
+	kमुक्त(dev);
+	kमुक्त(pps);
+पूर्ण
 
-int pps_register_cdev(struct pps_device *pps)
-{
-	int err;
+पूर्णांक pps_रेजिस्टर_cdev(काष्ठा pps_device *pps)
+अणु
+	पूर्णांक err;
 	dev_t devt;
 
 	mutex_lock(&pps_idr_lock);
 	/*
-	 * Get new ID for the new PPS source.  After idr_alloc() calling
-	 * the new source will be freely available into the kernel.
+	 * Get new ID क्रम the new PPS source.  After idr_alloc() calling
+	 * the new source will be मुक्तly available पूर्णांकo the kernel.
 	 */
 	err = idr_alloc(&pps_idr, pps, 0, PPS_MAX_SOURCES, GFP_KERNEL);
-	if (err < 0) {
-		if (err == -ENOSPC) {
+	अगर (err < 0) अणु
+		अगर (err == -ENOSPC) अणु
 			pr_err("%s: too many PPS sources in the system\n",
 			       pps->info.name);
 			err = -EBUSY;
-		}
-		goto out_unlock;
-	}
+		पूर्ण
+		जाओ out_unlock;
+	पूर्ण
 	pps->id = err;
 	mutex_unlock(&pps_idr_lock);
 
@@ -372,117 +373,117 @@ int pps_register_cdev(struct pps_device *pps)
 	pps->cdev.owner = pps->info.owner;
 
 	err = cdev_add(&pps->cdev, devt, 1);
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: failed to add char device %d:%d\n",
 				pps->info.name, MAJOR(pps_devt), pps->id);
-		goto free_idr;
-	}
+		जाओ मुक्त_idr;
+	पूर्ण
 	pps->dev = device_create(pps_class, pps->info.dev, devt, pps,
 							"pps%d", pps->id);
-	if (IS_ERR(pps->dev)) {
+	अगर (IS_ERR(pps->dev)) अणु
 		err = PTR_ERR(pps->dev);
-		goto del_cdev;
-	}
+		जाओ del_cdev;
+	पूर्ण
 
 	/* Override the release function with our own */
-	pps->dev->release = pps_device_destruct;
+	pps->dev->release = pps_device_deकाष्ठा;
 
 	pr_debug("source %s got cdev (%d:%d)\n", pps->info.name,
 			MAJOR(pps_devt), pps->id);
 
-	return 0;
+	वापस 0;
 
 del_cdev:
 	cdev_del(&pps->cdev);
 
-free_idr:
+मुक्त_idr:
 	mutex_lock(&pps_idr_lock);
-	idr_remove(&pps_idr, pps->id);
+	idr_हटाओ(&pps_idr, pps->id);
 out_unlock:
 	mutex_unlock(&pps_idr_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void pps_unregister_cdev(struct pps_device *pps)
-{
+व्योम pps_unरेजिस्टर_cdev(काष्ठा pps_device *pps)
+अणु
 	pr_debug("unregistering pps%d\n", pps->id);
-	pps->lookup_cookie = NULL;
+	pps->lookup_cookie = शून्य;
 	device_destroy(pps_class, pps->dev->devt);
-}
+पूर्ण
 
 /*
  * Look up a pps device by magic cookie.
- * The cookie is usually a pointer to some enclosing device, but this
- * code doesn't care; you should never be dereferencing it.
+ * The cookie is usually a poपूर्णांकer to some enclosing device, but this
+ * code करोesn't care; you should never be dereferencing it.
  *
  * This is a bit of a kludge that is currently used only by the PPS
  * serial line discipline.  It may need to be tweaked when a second user
  * is found.
  *
- * There is no function interface for setting the lookup_cookie field.
- * It's initialized to NULL when the pps device is created, and if a
+ * There is no function पूर्णांकerface क्रम setting the lookup_cookie field.
+ * It's initialized to शून्य when the pps device is created, and अगर a
  * client wants to use it, just fill it in afterward.
  *
- * The cookie is automatically set to NULL in pps_unregister_source()
- * so that it will not be used again, even if the pps device cannot
- * be removed from the idr due to pending references holding the minor
+ * The cookie is स्वतःmatically set to शून्य in pps_unरेजिस्टर_source()
+ * so that it will not be used again, even अगर the pps device cannot
+ * be हटाओd from the idr due to pending references holding the minor
  * number in use.
  */
-struct pps_device *pps_lookup_dev(void const *cookie)
-{
-	struct pps_device *pps;
-	unsigned id;
+काष्ठा pps_device *pps_lookup_dev(व्योम स्थिर *cookie)
+अणु
+	काष्ठा pps_device *pps;
+	अचिन्हित id;
 
-	rcu_read_lock();
-	idr_for_each_entry(&pps_idr, pps, id)
-		if (cookie == pps->lookup_cookie)
-			break;
-	rcu_read_unlock();
-	return pps;
-}
+	rcu_पढ़ो_lock();
+	idr_क्रम_each_entry(&pps_idr, pps, id)
+		अगर (cookie == pps->lookup_cookie)
+			अवरोध;
+	rcu_पढ़ो_unlock();
+	वापस pps;
+पूर्ण
 EXPORT_SYMBOL(pps_lookup_dev);
 
 /*
  * Module stuff
  */
 
-static void __exit pps_exit(void)
-{
+अटल व्योम __निकास pps_निकास(व्योम)
+अणु
 	class_destroy(pps_class);
-	unregister_chrdev_region(pps_devt, PPS_MAX_SOURCES);
-}
+	unरेजिस्टर_chrdev_region(pps_devt, PPS_MAX_SOURCES);
+पूर्ण
 
-static int __init pps_init(void)
-{
-	int err;
+अटल पूर्णांक __init pps_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	pps_class = class_create(THIS_MODULE, "pps");
-	if (IS_ERR(pps_class)) {
+	अगर (IS_ERR(pps_class)) अणु
 		pr_err("failed to allocate class\n");
-		return PTR_ERR(pps_class);
-	}
+		वापस PTR_ERR(pps_class);
+	पूर्ण
 	pps_class->dev_groups = pps_groups;
 
 	err = alloc_chrdev_region(&pps_devt, 0, PPS_MAX_SOURCES, "pps");
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_err("failed to allocate char device region\n");
-		goto remove_class;
-	}
+		जाओ हटाओ_class;
+	पूर्ण
 
 	pr_info("LinuxPPS API ver. %d registered\n", PPS_API_VERS);
 	pr_info("Software ver. %s - Copyright 2005-2007 Rodolfo Giometti "
 		"<giometti@linux.it>\n", PPS_VERSION);
 
-	return 0;
+	वापस 0;
 
-remove_class:
+हटाओ_class:
 	class_destroy(pps_class);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 subsys_initcall(pps_init);
-module_exit(pps_exit);
+module_निकास(pps_निकास);
 
 MODULE_AUTHOR("Rodolfo Giometti <giometti@linux.it>");
 MODULE_DESCRIPTION("LinuxPPS support (RFC 2783) - ver. " PPS_VERSION);

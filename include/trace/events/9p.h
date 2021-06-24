@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM 9p
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM 9p
 
-#if !defined(_TRACE_9P_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_9P_H
+#अगर !defined(_TRACE_9P_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_9P_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#define P9_MSG_T							\
+#घोषणा P9_MSG_T							\
 		EM( P9_TLERROR,		"P9_TLERROR" )			\
 		EM( P9_RLERROR,		"P9_RLERROR" )			\
 		EM( P9_TSTATFS,		"P9_TSTATFS" )			\
@@ -32,8 +33,8 @@
 		EM( P9_RXATTRWALK,	"P9_RXATTRWALK" )		\
 		EM( P9_TXATTRCREATE,	"P9_TXATTRCREATE" )		\
 		EM( P9_RXATTRCREATE,	"P9_RXATTRCREATE" )		\
-		EM( P9_TREADDIR,	"P9_TREADDIR" )			\
-		EM( P9_RREADDIR,	"P9_RREADDIR" )			\
+		EM( P9_TREADसूची,	"P9_TREADDIR" )			\
+		EM( P9_RREADसूची,	"P9_RREADDIR" )			\
 		EM( P9_TFSYNC,		"P9_TFSYNC" )			\
 		EM( P9_RFSYNC,		"P9_RFSYNC" )			\
 		EM( P9_TLOCK,		"P9_TLOCK" )			\
@@ -42,8 +43,8 @@
 		EM( P9_RGETLOCK,	"P9_RGETLOCK" )			\
 		EM( P9_TLINK,		"P9_TLINK" )			\
 		EM( P9_RLINK,		"P9_RLINK" )			\
-		EM( P9_TMKDIR,		"P9_TMKDIR" )			\
-		EM( P9_RMKDIR,		"P9_RMKDIR" )			\
+		EM( P9_TMKसूची,		"P9_TMKDIR" )			\
+		EM( P9_RMKसूची,		"P9_RMKDIR" )			\
 		EM( P9_TRENAMEAT,	"P9_TRENAMEAT" )		\
 		EM( P9_RRENAMEAT,	"P9_RRENAMEAT" )		\
 		EM( P9_TUNLINKAT,	"P9_TUNLINKAT" )		\
@@ -77,33 +78,33 @@
 		EM( P9_TWSTAT,		"P9_TWSTAT" )			\
 		EMe(P9_RWSTAT,		"P9_RWSTAT" )
 
-/* Define EM() to export the enums to userspace via TRACE_DEFINE_ENUM() */
-#undef EM
-#undef EMe
-#define EM(a, b)	TRACE_DEFINE_ENUM(a);
-#define EMe(a, b)	TRACE_DEFINE_ENUM(a);
+/* Define EM() to export the क्रमागतs to userspace via TRACE_DEFINE_ENUM() */
+#अघोषित EM
+#अघोषित EMe
+#घोषणा EM(a, b)	TRACE_DEFINE_ENUM(a);
+#घोषणा EMe(a, b)	TRACE_DEFINE_ENUM(a);
 
 P9_MSG_T
 
 /*
- * Now redefine the EM() and EMe() macros to map the enums to the strings
- * that will be printed in the output.
+ * Now redefine the EM() and EMe() macros to map the क्रमागतs to the strings
+ * that will be prपूर्णांकed in the output.
  */
-#undef EM
-#undef EMe
-#define EM(a, b)	{ a, b },
-#define EMe(a, b)	{ a, b }
+#अघोषित EM
+#अघोषित EMe
+#घोषणा EM(a, b)	अणु a, b पूर्ण,
+#घोषणा EMe(a, b)	अणु a, b पूर्ण
 
-#define show_9p_op(type)						\
-	__print_symbolic(type, P9_MSG_T)
+#घोषणा show_9p_op(type)						\
+	__prपूर्णांक_symbolic(type, P9_MSG_T)
 
 TRACE_EVENT(9p_client_req,
-	    TP_PROTO(struct p9_client *clnt, int8_t type, int tag),
+	    TP_PROTO(काष्ठा p9_client *clnt, पूर्णांक8_t type, पूर्णांक tag),
 
 	    TP_ARGS(clnt, type, tag),
 
 	    TP_STRUCT__entry(
-		    __field(    void *,		clnt			     )
+		    __field(    व्योम *,		clnt			     )
 		    __field(	__u8,		type			     )
 		    __field(	__u32,		tag			     )
 		    ),
@@ -114,18 +115,18 @@ TRACE_EVENT(9p_client_req,
 		    __entry->tag     =  tag;
 		    ),
 
-	    TP_printk("client %lu request %s tag  %d",
-		    (long)__entry->clnt, show_9p_op(__entry->type),
+	    TP_prपूर्णांकk("client %lu request %s tag  %d",
+		    (दीर्घ)__entry->clnt, show_9p_op(__entry->type),
 		    __entry->tag)
  );
 
 TRACE_EVENT(9p_client_res,
-	    TP_PROTO(struct p9_client *clnt, int8_t type, int tag, int err),
+	    TP_PROTO(काष्ठा p9_client *clnt, पूर्णांक8_t type, पूर्णांक tag, पूर्णांक err),
 
 	    TP_ARGS(clnt, type, tag, err),
 
 	    TP_STRUCT__entry(
-		    __field(    void *,		clnt			     )
+		    __field(    व्योम *,		clnt			     )
 		    __field(	__u8,		type			     )
 		    __field(	__u32,		tag			     )
 		    __field(	__u32,		err			     )
@@ -138,37 +139,37 @@ TRACE_EVENT(9p_client_res,
 		    __entry->err     =  err;
 		    ),
 
-	    TP_printk("client %lu response %s tag  %d err %d",
-		      (long)__entry->clnt, show_9p_op(__entry->type),
+	    TP_prपूर्णांकk("client %lu response %s tag  %d err %d",
+		      (दीर्घ)__entry->clnt, show_9p_op(__entry->type),
 		      __entry->tag, __entry->err)
 );
 
 /* dump 32 bytes of protocol data */
-#define P9_PROTO_DUMP_SZ 32
+#घोषणा P9_PROTO_DUMP_SZ 32
 TRACE_EVENT(9p_protocol_dump,
-	    TP_PROTO(struct p9_client *clnt, struct p9_fcall *pdu),
+	    TP_PROTO(काष्ठा p9_client *clnt, काष्ठा p9_fcall *pdu),
 
 	    TP_ARGS(clnt, pdu),
 
 	    TP_STRUCT__entry(
-		    __field(	void *,		clnt				)
+		    __field(	व्योम *,		clnt				)
 		    __field(	__u8,		type				)
 		    __field(	__u16,		tag				)
-		    __array(	unsigned char,	line,	P9_PROTO_DUMP_SZ	)
+		    __array(	अचिन्हित अक्षर,	line,	P9_PROTO_DUMP_SZ	)
 		    ),
 
 	    TP_fast_assign(
 		    __entry->clnt   =  clnt;
 		    __entry->type   =  pdu->id;
 		    __entry->tag    =  pdu->tag;
-		    memcpy(__entry->line, pdu->sdata, P9_PROTO_DUMP_SZ);
+		    स_नकल(__entry->line, pdu->sdata, P9_PROTO_DUMP_SZ);
 		    ),
-	    TP_printk("clnt %lu %s(tag = %d)\n%.3x: %16ph\n%.3x: %16ph\n",
-		      (unsigned long)__entry->clnt, show_9p_op(__entry->type),
+	    TP_prपूर्णांकk("clnt %lu %s(tag = %d)\n%.3x: %16ph\n%.3x: %16ph\n",
+		      (अचिन्हित दीर्घ)__entry->clnt, show_9p_op(__entry->type),
 		      __entry->tag, 0, __entry->line, 16, __entry->line + 16)
  );
 
-#endif /* _TRACE_9P_H */
+#पूर्ण_अगर /* _TRACE_9P_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

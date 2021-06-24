@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  arch/arm/mach-pxa/colibri-pxa300.c
  *
- *  Support for Toradex PXA300/310 based Colibri module
+ *  Support क्रम Toradex PXA300/310 based Colibri module
  *
  *  Daniel Mack <daniel@caiaq.de>
  *  Matthias Meier <matthias.j.meier@gmx.net>
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/gpio.h>
-#include <linux/interrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <asm/mach-types.h>
-#include <linux/sizes.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/irq.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <linux/sizes.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/irq.h>
 
-#include "pxa300.h"
-#include "colibri.h"
-#include <linux/platform_data/usb-ohci-pxa27x.h>
-#include <linux/platform_data/video-pxafb.h>
-#include <mach/audio.h>
+#समावेश "pxa300.h"
+#समावेश "colibri.h"
+#समावेश <linux/platक्रमm_data/usb-ohci-pxa27x.h>
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <mach/audपन.स>
 
-#include "generic.h"
-#include "devices.h"
+#समावेश "generic.h"
+#समावेश "devices.h"
 
 
-#ifdef CONFIG_MACH_COLIBRI_EVALBOARD
-static mfp_cfg_t colibri_pxa300_evalboard_pin_config[] __initdata = {
+#अगर_घोषित CONFIG_MACH_COLIBRI_EVALBOARD
+अटल mfp_cfg_t colibri_pxa300_evalboard_pin_config[] __initdata = अणु
 	/* MMC */
 	GPIO7_MMC1_CLK,
 	GPIO14_MMC1_CMD,
@@ -53,61 +54,61 @@ static mfp_cfg_t colibri_pxa300_evalboard_pin_config[] __initdata = {
 	/* I2C */
 	GPIO21_I2C_SCL,
 	GPIO22_I2C_SDA,
-};
-#else
-static mfp_cfg_t colibri_pxa300_evalboard_pin_config[] __initdata = {};
-#endif
+पूर्ण;
+#अन्यथा
+अटल mfp_cfg_t colibri_pxa300_evalboard_pin_config[] __initdata = अणुपूर्ण;
+#पूर्ण_अगर
 
-#if defined(CONFIG_AX88796)
-#define COLIBRI_ETH_IRQ_GPIO	mfp_to_gpio(GPIO26_GPIO)
+#अगर defined(CONFIG_AX88796)
+#घोषणा COLIBRI_ETH_IRQ_GPIO	mfp_to_gpio(GPIO26_GPIO)
 /*
  * Asix AX88796 Ethernet
  */
-static struct ax_plat_data colibri_asix_platdata = {
+अटल काष्ठा ax_plat_data colibri_asix_platdata = अणु
 	.flags		= 0, /* defined later */
 	.wordlength	= 2,
-};
+पूर्ण;
 
-static struct resource colibri_asix_resource[] = {
-	[0] = {
+अटल काष्ठा resource colibri_asix_resource[] = अणु
+	[0] = अणु
 		.start = PXA3xx_CS2_PHYS,
 		.end   = PXA3xx_CS2_PHYS + (0x20 * 2) - 1,
 		.flags = IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start = PXA_GPIO_TO_IRQ(COLIBRI_ETH_IRQ_GPIO),
 		.end   = PXA_GPIO_TO_IRQ(COLIBRI_ETH_IRQ_GPIO),
 		.flags = IORESOURCE_IRQ | IRQF_TRIGGER_FALLING,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct platform_device asix_device = {
+अटल काष्ठा platक्रमm_device asix_device = अणु
 	.name		= "ax88796",
 	.id		= 0,
 	.num_resources 	= ARRAY_SIZE(colibri_asix_resource),
 	.resource	= colibri_asix_resource,
-	.dev		= {
-		.platform_data = &colibri_asix_platdata
-	}
-};
+	.dev		= अणु
+		.platक्रमm_data = &colibri_asix_platdata
+	पूर्ण
+पूर्ण;
 
-static mfp_cfg_t colibri_pxa300_eth_pin_config[] __initdata = {
+अटल mfp_cfg_t colibri_pxa300_eth_pin_config[] __initdata = अणु
 	GPIO1_nCS2,			/* AX88796 chip select */
 	GPIO26_GPIO | MFP_PULL_HIGH	/* AX88796 IRQ */
-};
+पूर्ण;
 
-static void __init colibri_pxa300_init_eth(void)
-{
+अटल व्योम __init colibri_pxa300_init_eth(व्योम)
+अणु
 	colibri_pxa3xx_init_eth(&colibri_asix_platdata);
 	pxa3xx_mfp_config(ARRAY_AND_SIZE(colibri_pxa300_eth_pin_config));
-	platform_device_register(&asix_device);
-}
-#else
-static inline void __init colibri_pxa300_init_eth(void) {}
-#endif /* CONFIG_AX88796 */
+	platक्रमm_device_रेजिस्टर(&asix_device);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम __init colibri_pxa300_init_eth(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_AX88796 */
 
-#if defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
-static mfp_cfg_t colibri_pxa300_lcd_pin_config[] __initdata = {
+#अगर defined(CONFIG_FB_PXA) || defined(CONFIG_FB_PXA_MODULE)
+अटल mfp_cfg_t colibri_pxa300_lcd_pin_config[] __initdata = अणु
 	GPIO54_LCD_LDD_0,
 	GPIO55_LCD_LDD_1,
 	GPIO56_LCD_LDD_2,
@@ -132,42 +133,42 @@ static mfp_cfg_t colibri_pxa300_lcd_pin_config[] __initdata = {
 	GPIO74_LCD_PCLK,
 	GPIO75_LCD_BIAS,
 	GPIO76_LCD_VSYNC,
-};
+पूर्ण;
 
-static void __init colibri_pxa300_init_lcd(void)
-{
+अटल व्योम __init colibri_pxa300_init_lcd(व्योम)
+अणु
 	pxa3xx_mfp_config(ARRAY_AND_SIZE(colibri_pxa300_lcd_pin_config));
-}
+पूर्ण
 
-#else
-static inline void colibri_pxa300_init_lcd(void) {}
-#endif /* CONFIG_FB_PXA || CONFIG_FB_PXA_MODULE */
+#अन्यथा
+अटल अंतरभूत व्योम colibri_pxa300_init_lcd(व्योम) अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_FB_PXA || CONFIG_FB_PXA_MODULE */
 
-#if defined(CONFIG_SND_AC97_CODEC) || defined(CONFIG_SND_AC97_CODEC_MODULE)
-static mfp_cfg_t colibri_pxa310_ac97_pin_config[] __initdata = {
+#अगर defined(CONFIG_SND_AC97_CODEC) || defined(CONFIG_SND_AC97_CODEC_MODULE)
+अटल mfp_cfg_t colibri_pxa310_ac97_pin_config[] __initdata = अणु
 	GPIO24_AC97_SYSCLK,
 	GPIO23_AC97_nACRESET,
 	GPIO25_AC97_SDATA_IN_0,
 	GPIO27_AC97_SDATA_OUT,
 	GPIO28_AC97_SYNC,
 	GPIO29_AC97_BITCLK
-};
+पूर्ण;
 
-static inline void __init colibri_pxa310_init_ac97(void)
-{
+अटल अंतरभूत व्योम __init colibri_pxa310_init_ac97(व्योम)
+अणु
 	/* no AC97 codec on Colibri PXA300 */
-	if (!cpu_is_pxa310())
-		return;
+	अगर (!cpu_is_pxa310())
+		वापस;
 
 	pxa3xx_mfp_config(ARRAY_AND_SIZE(colibri_pxa310_ac97_pin_config));
-	pxa_set_ac97_info(NULL);
-}
-#else
-static inline void colibri_pxa310_init_ac97(void) {}
-#endif
+	pxa_set_ac97_info(शून्य);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम colibri_pxa310_init_ac97(व्योम) अणुपूर्ण
+#पूर्ण_अगर
 
-void __init colibri_pxa300_init(void)
-{
+व्योम __init colibri_pxa300_init(व्योम)
+अणु
 	colibri_pxa300_init_eth();
 	colibri_pxa3xx_init_nand();
 	colibri_pxa300_init_lcd();
@@ -177,7 +178,7 @@ void __init colibri_pxa300_init(void)
 	/* Evalboard init */
 	pxa3xx_mfp_config(ARRAY_AND_SIZE(colibri_pxa300_evalboard_pin_config));
 	colibri_evalboard_init();
-}
+पूर्ण
 
 MACHINE_START(COLIBRI300, "Toradex Colibri PXA300")
 	.atag_offset	= 0x100,
@@ -186,7 +187,7 @@ MACHINE_START(COLIBRI300, "Toradex Colibri PXA300")
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq	= pxa3xx_init_irq,
 	.handle_irq	= pxa3xx_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.restart	= pxa_restart,
 MACHINE_END
 

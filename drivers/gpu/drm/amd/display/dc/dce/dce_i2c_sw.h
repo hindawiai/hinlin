@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,35 +24,35 @@
  *
  */
 
-#ifndef __DCE_I2C_SW_H__
-#define __DCE_I2C_SW_H__
+#अगर_अघोषित __DCE_I2C_SW_H__
+#घोषणा __DCE_I2C_SW_H__
 
-enum {
+क्रमागत अणु
 	DCE_I2C_DEFAULT_I2C_SW_SPEED = 50,
 	I2C_SW_RETRIES = 10,
 	I2C_SW_TIMEOUT_DELAY = 3000,
-};
+पूर्ण;
 
-struct dce_i2c_sw {
-	struct ddc *ddc;
-	struct dc_context *ctx;
-	uint32_t clock_delay;
-	uint32_t speed;
-};
+काष्ठा dce_i2c_sw अणु
+	काष्ठा ddc *ddc;
+	काष्ठा dc_context *ctx;
+	uपूर्णांक32_t घड़ी_delay;
+	uपूर्णांक32_t speed;
+पूर्ण;
 
-void dce_i2c_sw_construct(
-	struct dce_i2c_sw *dce_i2c_sw,
-	struct dc_context *ctx);
+व्योम dce_i2c_sw_स्थिरruct(
+	काष्ठा dce_i2c_sw *dce_i2c_sw,
+	काष्ठा dc_context *ctx);
 
 bool dce_i2c_submit_command_sw(
-	struct resource_pool *pool,
-	struct ddc *ddc,
-	struct i2c_command *cmd,
-	struct dce_i2c_sw *dce_i2c_sw);
+	काष्ठा resource_pool *pool,
+	काष्ठा ddc *ddc,
+	काष्ठा i2c_command *cmd,
+	काष्ठा dce_i2c_sw *dce_i2c_sw);
 
 bool dce_i2c_engine_acquire_sw(
-	struct dce_i2c_sw *dce_i2c_sw,
-	struct ddc *ddc_handle);
+	काष्ठा dce_i2c_sw *dce_i2c_sw,
+	काष्ठा ddc *ddc_handle);
 
-#endif
+#पूर्ण_अगर
 

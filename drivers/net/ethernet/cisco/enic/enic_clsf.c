@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/if.h>
-#include <linux/if_ether.h>
-#include <linux/if_link.h>
-#include <linux/netdevice.h>
-#include <linux/in.h>
-#include <linux/types.h>
-#include <linux/skbuff.h>
-#include <net/flow_dissector.h>
-#include "enic_res.h"
-#include "enic_clsf.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/अगर.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_link.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/in.h>
+#समावेश <linux/types.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/flow_dissector.h>
+#समावेश "enic_res.h"
+#समावेश "enic_clsf.h"
 
 /* enic_addfltr_5t - Add ipv4 5tuple filter
- *	@enic: enic struct of vnic
+ *	@enic: enic काष्ठा of vnic
  *	@keys: flow_keys of ipv4 5tuple
  *	@rq: rq number to steer to
  *
- * This function returns filter_id(hardware_id) of the filter
- * added. In case of error it returns a negative number.
+ * This function वापसs filter_id(hardware_id) of the filter
+ * added. In हाल of error it वापसs a negative number.
  */
-int enic_addfltr_5t(struct enic *enic, struct flow_keys *keys, u16 rq)
-{
-	int res;
-	struct filter data;
+पूर्णांक enic_addfltr_5t(काष्ठा enic *enic, काष्ठा flow_keys *keys, u16 rq)
+अणु
+	पूर्णांक res;
+	काष्ठा filter data;
 
-	switch (keys->basic.ip_proto) {
-	case IPPROTO_TCP:
+	चयन (keys->basic.ip_proto) अणु
+	हाल IPPROTO_TCP:
 		data.u.ipv4.protocol = PROTO_TCP;
-		break;
-	case IPPROTO_UDP:
+		अवरोध;
+	हाल IPPROTO_UDP:
 		data.u.ipv4.protocol = PROTO_UDP;
-		break;
-	default:
-		return -EPROTONOSUPPORT;
-	}
+		अवरोध;
+	शेष:
+		वापस -EPROTONOSUPPORT;
+	पूर्ण
 
 	data.type = FILTER_IPV4_5TUPLE;
 	data.u.ipv4.src_addr = ntohl(keys->addrs.v4addrs.src);
@@ -42,245 +43,245 @@ int enic_addfltr_5t(struct enic *enic, struct flow_keys *keys, u16 rq)
 	data.u.ipv4.flags = FILTER_FIELDS_IPV4_5TUPLE;
 
 	spin_lock_bh(&enic->devcmd_lock);
-	res = vnic_dev_classifier(enic->vdev, CLSF_ADD, &rq, &data);
+	res = vnic_dev_classअगरier(enic->vdev, CLSF_ADD, &rq, &data);
 	spin_unlock_bh(&enic->devcmd_lock);
 	res = (res == 0) ? rq : res;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /* enic_delfltr - Delete clsf filter
- *	@enic: enic struct of vnic
+ *	@enic: enic काष्ठा of vnic
  *	@filter_id: filter_is(hardware_id) of filter to be deleted
  *
- * This function returns zero in case of success, negative number incase of
+ * This function वापसs zero in हाल of success, negative number inहाल of
  * error.
  */
-int enic_delfltr(struct enic *enic, u16 filter_id)
-{
-	int ret;
+पूर्णांक enic_delfltr(काष्ठा enic *enic, u16 filter_id)
+अणु
+	पूर्णांक ret;
 
 	spin_lock_bh(&enic->devcmd_lock);
-	ret = vnic_dev_classifier(enic->vdev, CLSF_DEL, &filter_id, NULL);
+	ret = vnic_dev_classअगरier(enic->vdev, CLSF_DEL, &filter_id, शून्य);
 	spin_unlock_bh(&enic->devcmd_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* enic_rfs_flw_tbl_init - initialize enic->rfs_h members
  *	@enic: enic data
  */
-void enic_rfs_flw_tbl_init(struct enic *enic)
-{
-	int i;
+व्योम enic_rfs_flw_tbl_init(काष्ठा enic *enic)
+अणु
+	पूर्णांक i;
 
 	spin_lock_init(&enic->rfs_h.lock);
-	for (i = 0; i <= ENIC_RFS_FLW_MASK; i++)
+	क्रम (i = 0; i <= ENIC_RFS_FLW_MASK; i++)
 		INIT_HLIST_HEAD(&enic->rfs_h.ht_head[i]);
 	enic->rfs_h.max = enic->config.num_arfs;
-	enic->rfs_h.free = enic->rfs_h.max;
+	enic->rfs_h.मुक्त = enic->rfs_h.max;
 	enic->rfs_h.toclean = 0;
-}
+पूर्ण
 
-void enic_rfs_flw_tbl_free(struct enic *enic)
-{
-	int i;
+व्योम enic_rfs_flw_tbl_मुक्त(काष्ठा enic *enic)
+अणु
+	पूर्णांक i;
 
-	enic_rfs_timer_stop(enic);
+	enic_rfs_समयr_stop(enic);
 	spin_lock_bh(&enic->rfs_h.lock);
-	for (i = 0; i < (1 << ENIC_RFS_FLW_BITSHIFT); i++) {
-		struct hlist_head *hhead;
-		struct hlist_node *tmp;
-		struct enic_rfs_fltr_node *n;
+	क्रम (i = 0; i < (1 << ENIC_RFS_FLW_BITSHIFT); i++) अणु
+		काष्ठा hlist_head *hhead;
+		काष्ठा hlist_node *पंचांगp;
+		काष्ठा enic_rfs_fltr_node *n;
 
 		hhead = &enic->rfs_h.ht_head[i];
-		hlist_for_each_entry_safe(n, tmp, hhead, node) {
+		hlist_क्रम_each_entry_safe(n, पंचांगp, hhead, node) अणु
 			enic_delfltr(enic, n->fltr_id);
 			hlist_del(&n->node);
-			kfree(n);
-			enic->rfs_h.free++;
-		}
-	}
+			kमुक्त(n);
+			enic->rfs_h.मुक्त++;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&enic->rfs_h.lock);
-}
+पूर्ण
 
-struct enic_rfs_fltr_node *htbl_fltr_search(struct enic *enic, u16 fltr_id)
-{
-	int i;
+काष्ठा enic_rfs_fltr_node *htbl_fltr_search(काष्ठा enic *enic, u16 fltr_id)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < (1 << ENIC_RFS_FLW_BITSHIFT); i++) {
-		struct hlist_head *hhead;
-		struct hlist_node *tmp;
-		struct enic_rfs_fltr_node *n;
+	क्रम (i = 0; i < (1 << ENIC_RFS_FLW_BITSHIFT); i++) अणु
+		काष्ठा hlist_head *hhead;
+		काष्ठा hlist_node *पंचांगp;
+		काष्ठा enic_rfs_fltr_node *n;
 
 		hhead = &enic->rfs_h.ht_head[i];
-		hlist_for_each_entry_safe(n, tmp, hhead, node)
-			if (n->fltr_id == fltr_id)
-				return n;
-	}
+		hlist_क्रम_each_entry_safe(n, पंचांगp, hhead, node)
+			अगर (n->fltr_id == fltr_id)
+				वापस n;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-#ifdef CONFIG_RFS_ACCEL
-void enic_flow_may_expire(struct timer_list *t)
-{
-	struct enic *enic = from_timer(enic, t, rfs_h.rfs_may_expire);
+#अगर_घोषित CONFIG_RFS_ACCEL
+व्योम enic_flow_may_expire(काष्ठा समयr_list *t)
+अणु
+	काष्ठा enic *enic = from_समयr(enic, t, rfs_h.rfs_may_expire);
 	bool res;
-	int j;
+	पूर्णांक j;
 
 	spin_lock_bh(&enic->rfs_h.lock);
-	for (j = 0; j < ENIC_CLSF_EXPIRE_COUNT; j++) {
-		struct hlist_head *hhead;
-		struct hlist_node *tmp;
-		struct enic_rfs_fltr_node *n;
+	क्रम (j = 0; j < ENIC_CLSF_EXPIRE_COUNT; j++) अणु
+		काष्ठा hlist_head *hhead;
+		काष्ठा hlist_node *पंचांगp;
+		काष्ठा enic_rfs_fltr_node *n;
 
 		hhead = &enic->rfs_h.ht_head[enic->rfs_h.toclean++];
-		hlist_for_each_entry_safe(n, tmp, hhead, node) {
+		hlist_क्रम_each_entry_safe(n, पंचांगp, hhead, node) अणु
 			res = rps_may_expire_flow(enic->netdev, n->rq_id,
 						  n->flow_id, n->fltr_id);
-			if (res) {
+			अगर (res) अणु
 				res = enic_delfltr(enic, n->fltr_id);
-				if (unlikely(res))
-					continue;
+				अगर (unlikely(res))
+					जारी;
 				hlist_del(&n->node);
-				kfree(n);
-				enic->rfs_h.free++;
-			}
-		}
-	}
+				kमुक्त(n);
+				enic->rfs_h.मुक्त++;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&enic->rfs_h.lock);
-	mod_timer(&enic->rfs_h.rfs_may_expire, jiffies + HZ/4);
-}
+	mod_समयr(&enic->rfs_h.rfs_may_expire, jअगरfies + HZ/4);
+पूर्ण
 
-static struct enic_rfs_fltr_node *htbl_key_search(struct hlist_head *h,
-						  struct flow_keys *k)
-{
-	struct enic_rfs_fltr_node *tpos;
+अटल काष्ठा enic_rfs_fltr_node *htbl_key_search(काष्ठा hlist_head *h,
+						  काष्ठा flow_keys *k)
+अणु
+	काष्ठा enic_rfs_fltr_node *tpos;
 
-	hlist_for_each_entry(tpos, h, node)
-		if (tpos->keys.addrs.v4addrs.src == k->addrs.v4addrs.src &&
+	hlist_क्रम_each_entry(tpos, h, node)
+		अगर (tpos->keys.addrs.v4addrs.src == k->addrs.v4addrs.src &&
 		    tpos->keys.addrs.v4addrs.dst == k->addrs.v4addrs.dst &&
 		    tpos->keys.ports.ports == k->ports.ports &&
 		    tpos->keys.basic.ip_proto == k->basic.ip_proto &&
 		    tpos->keys.basic.n_proto == k->basic.n_proto)
-			return tpos;
-	return NULL;
-}
+			वापस tpos;
+	वापस शून्य;
+पूर्ण
 
-int enic_rx_flow_steer(struct net_device *dev, const struct sk_buff *skb,
+पूर्णांक enic_rx_flow_steer(काष्ठा net_device *dev, स्थिर काष्ठा sk_buff *skb,
 		       u16 rxq_index, u32 flow_id)
-{
-	struct flow_keys keys;
-	struct enic_rfs_fltr_node *n;
-	struct enic *enic;
+अणु
+	काष्ठा flow_keys keys;
+	काष्ठा enic_rfs_fltr_node *n;
+	काष्ठा enic *enic;
 	u16 tbl_idx;
-	int res, i;
+	पूर्णांक res, i;
 
 	enic = netdev_priv(dev);
 	res = skb_flow_dissect_flow_keys(skb, &keys, 0);
-	if (!res || keys.basic.n_proto != htons(ETH_P_IP) ||
+	अगर (!res || keys.basic.n_proto != htons(ETH_P_IP) ||
 	    (keys.basic.ip_proto != IPPROTO_TCP &&
 	     keys.basic.ip_proto != IPPROTO_UDP))
-		return -EPROTONOSUPPORT;
+		वापस -EPROTONOSUPPORT;
 
 	tbl_idx = skb_get_hash_raw(skb) & ENIC_RFS_FLW_MASK;
 	spin_lock_bh(&enic->rfs_h.lock);
 	n = htbl_key_search(&enic->rfs_h.ht_head[tbl_idx], &keys);
 
-	if (n) { /* entry already present  */
-		if (rxq_index == n->rq_id) {
+	अगर (n) अणु /* entry alपढ़ोy present  */
+		अगर (rxq_index == n->rq_id) अणु
 			res = -EEXIST;
-			goto ret_unlock;
-		}
+			जाओ ret_unlock;
+		पूर्ण
 
-		/* desired rq changed for the flow, we need to delete
+		/* desired rq changed क्रम the flow, we need to delete
 		 * old fltr and add new one
 		 *
 		 * The moment we delete the fltr, the upcoming pkts
-		 * are put it default rq based on rss. When we add
+		 * are put it शेष rq based on rss. When we add
 		 * new filter, upcoming pkts are put in desired queue.
 		 * This could cause ooo pkts.
 		 *
 		 * Lets 1st try adding new fltr and then del old one.
 		 */
-		i = --enic->rfs_h.free;
+		i = --enic->rfs_h.मुक्त;
 		/* clsf tbl is full, we have to del old fltr first*/
-		if (unlikely(i < 0)) {
-			enic->rfs_h.free++;
+		अगर (unlikely(i < 0)) अणु
+			enic->rfs_h.मुक्त++;
 			res = enic_delfltr(enic, n->fltr_id);
-			if (unlikely(res < 0))
-				goto ret_unlock;
+			अगर (unlikely(res < 0))
+				जाओ ret_unlock;
 			res = enic_addfltr_5t(enic, &keys, rxq_index);
-			if (res < 0) {
+			अगर (res < 0) अणु
 				hlist_del(&n->node);
-				enic->rfs_h.free++;
-				goto ret_unlock;
-			}
+				enic->rfs_h.मुक्त++;
+				जाओ ret_unlock;
+			पूर्ण
 		/* add new fltr 1st then del old fltr */
-		} else {
-			int ret;
+		पूर्ण अन्यथा अणु
+			पूर्णांक ret;
 
 			res = enic_addfltr_5t(enic, &keys, rxq_index);
-			if (res < 0) {
-				enic->rfs_h.free++;
-				goto ret_unlock;
-			}
+			अगर (res < 0) अणु
+				enic->rfs_h.मुक्त++;
+				जाओ ret_unlock;
+			पूर्ण
 			ret = enic_delfltr(enic, n->fltr_id);
 			/* deleting old fltr failed. Add old fltr to list.
 			 * enic_flow_may_expire() will try to delete it later.
 			 */
-			if (unlikely(ret < 0)) {
-				struct enic_rfs_fltr_node *d;
-				struct hlist_head *head;
+			अगर (unlikely(ret < 0)) अणु
+				काष्ठा enic_rfs_fltr_node *d;
+				काष्ठा hlist_head *head;
 
 				head = &enic->rfs_h.ht_head[tbl_idx];
-				d = kmalloc(sizeof(*d), GFP_ATOMIC);
-				if (d) {
+				d = kदो_स्मृति(माप(*d), GFP_ATOMIC);
+				अगर (d) अणु
 					d->fltr_id = n->fltr_id;
 					INIT_HLIST_NODE(&d->node);
 					hlist_add_head(&d->node, head);
-				}
-			} else {
-				enic->rfs_h.free++;
-			}
-		}
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				enic->rfs_h.मुक्त++;
+			पूर्ण
+		पूर्ण
 		n->rq_id = rxq_index;
 		n->fltr_id = res;
 		n->flow_id = flow_id;
 	/* entry not present */
-	} else {
-		i = --enic->rfs_h.free;
-		if (i <= 0) {
-			enic->rfs_h.free++;
+	पूर्ण अन्यथा अणु
+		i = --enic->rfs_h.मुक्त;
+		अगर (i <= 0) अणु
+			enic->rfs_h.मुक्त++;
 			res = -EBUSY;
-			goto ret_unlock;
-		}
+			जाओ ret_unlock;
+		पूर्ण
 
-		n = kmalloc(sizeof(*n), GFP_ATOMIC);
-		if (!n) {
+		n = kदो_स्मृति(माप(*n), GFP_ATOMIC);
+		अगर (!n) अणु
 			res = -ENOMEM;
-			enic->rfs_h.free++;
-			goto ret_unlock;
-		}
+			enic->rfs_h.मुक्त++;
+			जाओ ret_unlock;
+		पूर्ण
 
 		res = enic_addfltr_5t(enic, &keys, rxq_index);
-		if (res < 0) {
-			kfree(n);
-			enic->rfs_h.free++;
-			goto ret_unlock;
-		}
+		अगर (res < 0) अणु
+			kमुक्त(n);
+			enic->rfs_h.मुक्त++;
+			जाओ ret_unlock;
+		पूर्ण
 		n->rq_id = rxq_index;
 		n->fltr_id = res;
 		n->flow_id = flow_id;
 		n->keys = keys;
 		INIT_HLIST_NODE(&n->node);
 		hlist_add_head(&n->node, &enic->rfs_h.ht_head[tbl_idx]);
-	}
+	पूर्ण
 
 ret_unlock:
 	spin_unlock_bh(&enic->rfs_h.lock);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-#endif /* CONFIG_RFS_ACCEL */
+#पूर्ण_अगर /* CONFIG_RFS_ACCEL */

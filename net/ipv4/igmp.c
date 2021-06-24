@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	Linux NET3:	Internet Group Management Protocol  [IGMP]
  *
@@ -14,365 +15,365 @@
  *
  *	Fixes:
  *
- *		Alan Cox	:	Added lots of __inline__ to optimise
+ *		Alan Cox	:	Added lots of __अंतरभूत__ to optimise
  *					the memory usage of all the tiny little
  *					functions.
  *		Alan Cox	:	Dumped the header building experiment.
- *		Alan Cox	:	Minor tweaks ready for multicast routing
+ *		Alan Cox	:	Minor tweaks पढ़ोy क्रम multicast routing
  *					and extended IGMP protocol.
- *		Alan Cox	:	Removed a load of inline directives. Gcc 2.5.8
- *					writes utterly bogus code otherwise (sigh)
+ *		Alan Cox	:	Removed a load of अंतरभूत directives. Gcc 2.5.8
+ *					ग_लिखोs utterly bogus code otherwise (sigh)
  *					fixed IGMP loopback to behave in the manner
  *					desired by mrouted, fixed the fact it has been
  *					broken since 1.3.6 and cleaned up a few minor
- *					points.
+ *					poपूर्णांकs.
  *
  *		Chih-Jen Chang	:	Tried to revise IGMP to Version 2
  *		Tsu-Sheng Tsao		E-mail: chihjenc@scf.usc.edu and tsusheng@scf.usc.edu
- *					The enhancements are mainly based on Steve Deering's
+ *					The enhancements are मुख्यly based on Steve Deering's
  * 					ipmulti-3.5 source code.
  *		Chih-Jen Chang	:	Added the igmp_get_mrouter_info and
  *		Tsu-Sheng Tsao		igmp_set_mrouter_info to keep track of
  *					the mrouted version on that device.
- *		Chih-Jen Chang	:	Added the max_resp_time parameter to
+ *		Chih-Jen Chang	:	Added the max_resp_समय parameter to
  *		Tsu-Sheng Tsao		igmp_heard_query(). Using this parameter
- *					to identify the multicast router version
- *					and do what the IGMP version 2 specified.
- *		Chih-Jen Chang	:	Added a timer to revert to IGMP V2 router
- *		Tsu-Sheng Tsao		if the specified time expired.
+ *					to identअगरy the multicast router version
+ *					and करो what the IGMP version 2 specअगरied.
+ *		Chih-Jen Chang	:	Added a समयr to revert to IGMP V2 router
+ *		Tsu-Sheng Tsao		अगर the specअगरied समय expired.
  *		Alan Cox	:	Stop IGMP from 0.0.0.0 being accepted.
  *		Alan Cox	:	Use GFP_ATOMIC in the right places.
- *		Christian Daudt :	igmp timer wasn't set for local group
+ *		Christian Daudt :	igmp समयr wasn't set क्रम local group
  *					memberships but was being deleted,
- *					which caused a "del_timer() called
- *					from %p with timer not initialized\n"
+ *					which caused a "del_समयr() called
+ *					from %p with समयr not initialized\न"
  *					message (960131).
- *		Christian Daudt :	removed del_timer from
- *					igmp_timer_expire function (960205).
+ *		Christian Daudt :	हटाओd del_समयr from
+ *					igmp_समयr_expire function (960205).
  *             Christian Daudt :       igmp_heard_report now only calls
- *                                     igmp_timer_expire if tm->running is
+ *                                     igmp_समयr_expire अगर पंचांग->running is
  *                                     true (960216).
  *		Malcolm Beattie :	ttl comparison wrong in igmp_rcv made
  *					igmp_heard_query never trigger. Expiry
  *					miscalculation fixed in igmp_heard_query
- *					and random() made to return unsigned to
- *					prevent negative expiry times.
+ *					and अक्रमom() made to वापस अचिन्हित to
+ *					prevent negative expiry बार.
  *		Alexey Kuznetsov:	Wrong group leaving behaviour, backport
  *					fix from pending 2.1.x patches.
  *		Alan Cox:		Forget to enable FDDI support earlier.
- *		Alexey Kuznetsov:	Fixed leaving groups on device down.
+ *		Alexey Kuznetsov:	Fixed leaving groups on device करोwn.
  *		Alexey Kuznetsov:	Accordance to igmp-v2-06 draft.
  *		David L Stevens:	IGMPv3 support, with help from
  *					Vinay Kulkarni
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/jiffies.h>
-#include <linux/string.h>
-#include <linux/socket.h>
-#include <linux/sockios.h>
-#include <linux/in.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/inetdevice.h>
-#include <linux/igmp.h>
-#include <linux/if_arp.h>
-#include <linux/rtnetlink.h>
-#include <linux/times.h>
-#include <linux/pkt_sched.h>
-#include <linux/byteorder/generic.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/socket.h>
+#समावेश <linux/sockios.h>
+#समावेश <linux/in.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/igmp.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/बार.h>
+#समावेश <linux/pkt_sched.h>
+#समावेश <linux/byteorder/generic.h>
 
-#include <net/net_namespace.h>
-#include <net/arp.h>
-#include <net/ip.h>
-#include <net/protocol.h>
-#include <net/route.h>
-#include <net/sock.h>
-#include <net/checksum.h>
-#include <net/inet_common.h>
-#include <linux/netfilter_ipv4.h>
-#ifdef CONFIG_IP_MROUTE
-#include <linux/mroute.h>
-#endif
-#ifdef CONFIG_PROC_FS
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#endif
+#समावेश <net/net_namespace.h>
+#समावेश <net/arp.h>
+#समावेश <net/ip.h>
+#समावेश <net/protocol.h>
+#समावेश <net/route.h>
+#समावेश <net/sock.h>
+#समावेश <net/checksum.h>
+#समावेश <net/inet_common.h>
+#समावेश <linux/netfilter_ipv4.h>
+#अगर_घोषित CONFIG_IP_MROUTE
+#समावेश <linux/mroute.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PROC_FS
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#पूर्ण_अगर
 
-#ifdef CONFIG_IP_MULTICAST
+#अगर_घोषित CONFIG_IP_MULTICAST
 /* Parameter names and values are taken from igmp-v2-06 draft */
 
-#define IGMP_QUERY_INTERVAL			(125*HZ)
-#define IGMP_QUERY_RESPONSE_INTERVAL		(10*HZ)
+#घोषणा IGMP_QUERY_INTERVAL			(125*HZ)
+#घोषणा IGMP_QUERY_RESPONSE_INTERVAL		(10*HZ)
 
-#define IGMP_INITIAL_REPORT_DELAY		(1)
+#घोषणा IGMP_INITIAL_REPORT_DELAY		(1)
 
 /* IGMP_INITIAL_REPORT_DELAY is not from IGMP specs!
  * IGMP specs require to report membership immediately after
  * joining a group, but we delay the first report by a
- * small interval. It seems more natural and still does not
+ * small पूर्णांकerval. It seems more natural and still करोes not
  * contradict to specs provided this delay is small enough.
  */
 
-#define IGMP_V1_SEEN(in_dev) \
+#घोषणा IGMP_V1_SEEN(in_dev) \
 	(IPV4_DEVCONF_ALL(dev_net(in_dev->dev), FORCE_IGMP_VERSION) == 1 || \
 	 IN_DEV_CONF_GET((in_dev), FORCE_IGMP_VERSION) == 1 || \
 	 ((in_dev)->mr_v1_seen && \
-	  time_before(jiffies, (in_dev)->mr_v1_seen)))
-#define IGMP_V2_SEEN(in_dev) \
+	  समय_beक्रमe(jअगरfies, (in_dev)->mr_v1_seen)))
+#घोषणा IGMP_V2_SEEN(in_dev) \
 	(IPV4_DEVCONF_ALL(dev_net(in_dev->dev), FORCE_IGMP_VERSION) == 2 || \
 	 IN_DEV_CONF_GET((in_dev), FORCE_IGMP_VERSION) == 2 || \
 	 ((in_dev)->mr_v2_seen && \
-	  time_before(jiffies, (in_dev)->mr_v2_seen)))
+	  समय_beक्रमe(jअगरfies, (in_dev)->mr_v2_seen)))
 
-static int unsolicited_report_interval(struct in_device *in_dev)
-{
-	int interval_ms, interval_jiffies;
+अटल पूर्णांक unsolicited_report_पूर्णांकerval(काष्ठा in_device *in_dev)
+अणु
+	पूर्णांक पूर्णांकerval_ms, पूर्णांकerval_jअगरfies;
 
-	if (IGMP_V1_SEEN(in_dev) || IGMP_V2_SEEN(in_dev))
-		interval_ms = IN_DEV_CONF_GET(
+	अगर (IGMP_V1_SEEN(in_dev) || IGMP_V2_SEEN(in_dev))
+		पूर्णांकerval_ms = IN_DEV_CONF_GET(
 			in_dev,
 			IGMPV2_UNSOLICITED_REPORT_INTERVAL);
-	else /* v3 */
-		interval_ms = IN_DEV_CONF_GET(
+	अन्यथा /* v3 */
+		पूर्णांकerval_ms = IN_DEV_CONF_GET(
 			in_dev,
 			IGMPV3_UNSOLICITED_REPORT_INTERVAL);
 
-	interval_jiffies = msecs_to_jiffies(interval_ms);
+	पूर्णांकerval_jअगरfies = msecs_to_jअगरfies(पूर्णांकerval_ms);
 
-	/* _timer functions can't handle a delay of 0 jiffies so ensure
-	 *  we always return a positive value.
+	/* _समयr functions can't handle a delay of 0 jअगरfies so ensure
+	 *  we always वापस a positive value.
 	 */
-	if (interval_jiffies <= 0)
-		interval_jiffies = 1;
-	return interval_jiffies;
-}
+	अगर (पूर्णांकerval_jअगरfies <= 0)
+		पूर्णांकerval_jअगरfies = 1;
+	वापस पूर्णांकerval_jअगरfies;
+पूर्ण
 
-static void igmpv3_add_delrec(struct in_device *in_dev, struct ip_mc_list *im,
+अटल व्योम igmpv3_add_delrec(काष्ठा in_device *in_dev, काष्ठा ip_mc_list *im,
 			      gfp_t gfp);
-static void igmpv3_del_delrec(struct in_device *in_dev, struct ip_mc_list *im);
-static void igmpv3_clear_delrec(struct in_device *in_dev);
-static int sf_setstate(struct ip_mc_list *pmc);
-static void sf_markstate(struct ip_mc_list *pmc);
-#endif
-static void ip_mc_clear_src(struct ip_mc_list *pmc);
-static int ip_mc_add_src(struct in_device *in_dev, __be32 *pmca, int sfmode,
-			 int sfcount, __be32 *psfsrc, int delta);
+अटल व्योम igmpv3_del_delrec(काष्ठा in_device *in_dev, काष्ठा ip_mc_list *im);
+अटल व्योम igmpv3_clear_delrec(काष्ठा in_device *in_dev);
+अटल पूर्णांक sf_setstate(काष्ठा ip_mc_list *pmc);
+अटल व्योम sf_markstate(काष्ठा ip_mc_list *pmc);
+#पूर्ण_अगर
+अटल व्योम ip_mc_clear_src(काष्ठा ip_mc_list *pmc);
+अटल पूर्णांक ip_mc_add_src(काष्ठा in_device *in_dev, __be32 *pmca, पूर्णांक sभ_शेषe,
+			 पूर्णांक sfcount, __be32 *psfsrc, पूर्णांक delta);
 
-static void ip_ma_put(struct ip_mc_list *im)
-{
-	if (refcount_dec_and_test(&im->refcnt)) {
-		in_dev_put(im->interface);
-		kfree_rcu(im, rcu);
-	}
-}
+अटल व्योम ip_ma_put(काष्ठा ip_mc_list *im)
+अणु
+	अगर (refcount_dec_and_test(&im->refcnt)) अणु
+		in_dev_put(im->पूर्णांकerface);
+		kमुक्त_rcu(im, rcu);
+	पूर्ण
+पूर्ण
 
-#define for_each_pmc_rcu(in_dev, pmc)				\
-	for (pmc = rcu_dereference(in_dev->mc_list);		\
-	     pmc != NULL;					\
+#घोषणा क्रम_each_pmc_rcu(in_dev, pmc)				\
+	क्रम (pmc = rcu_dereference(in_dev->mc_list);		\
+	     pmc != शून्य;					\
 	     pmc = rcu_dereference(pmc->next_rcu))
 
-#define for_each_pmc_rtnl(in_dev, pmc)				\
-	for (pmc = rtnl_dereference(in_dev->mc_list);		\
-	     pmc != NULL;					\
+#घोषणा क्रम_each_pmc_rtnl(in_dev, pmc)				\
+	क्रम (pmc = rtnl_dereference(in_dev->mc_list);		\
+	     pmc != शून्य;					\
 	     pmc = rtnl_dereference(pmc->next_rcu))
 
-static void ip_sf_list_clear_all(struct ip_sf_list *psf)
-{
-	struct ip_sf_list *next;
+अटल व्योम ip_sf_list_clear_all(काष्ठा ip_sf_list *psf)
+अणु
+	काष्ठा ip_sf_list *next;
 
-	while (psf) {
+	जबतक (psf) अणु
 		next = psf->sf_next;
-		kfree(psf);
+		kमुक्त(psf);
 		psf = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_IP_MULTICAST
+#अगर_घोषित CONFIG_IP_MULTICAST
 
 /*
  *	Timer management
  */
 
-static void igmp_stop_timer(struct ip_mc_list *im)
-{
+अटल व्योम igmp_stop_समयr(काष्ठा ip_mc_list *im)
+अणु
 	spin_lock_bh(&im->lock);
-	if (del_timer(&im->timer))
+	अगर (del_समयr(&im->समयr))
 		refcount_dec(&im->refcnt);
-	im->tm_running = 0;
+	im->पंचांग_running = 0;
 	im->reporter = 0;
 	im->unsolicit_count = 0;
 	spin_unlock_bh(&im->lock);
-}
+पूर्ण
 
 /* It must be called with locked im->lock */
-static void igmp_start_timer(struct ip_mc_list *im, int max_delay)
-{
-	int tv = prandom_u32() % max_delay;
+अटल व्योम igmp_start_समयr(काष्ठा ip_mc_list *im, पूर्णांक max_delay)
+अणु
+	पूर्णांक tv = pअक्रमom_u32() % max_delay;
 
-	im->tm_running = 1;
-	if (!mod_timer(&im->timer, jiffies+tv+2))
+	im->पंचांग_running = 1;
+	अगर (!mod_समयr(&im->समयr, jअगरfies+tv+2))
 		refcount_inc(&im->refcnt);
-}
+पूर्ण
 
-static void igmp_gq_start_timer(struct in_device *in_dev)
-{
-	int tv = prandom_u32() % in_dev->mr_maxdelay;
-	unsigned long exp = jiffies + tv + 2;
+अटल व्योम igmp_gq_start_समयr(काष्ठा in_device *in_dev)
+अणु
+	पूर्णांक tv = pअक्रमom_u32() % in_dev->mr_maxdelay;
+	अचिन्हित दीर्घ exp = jअगरfies + tv + 2;
 
-	if (in_dev->mr_gq_running &&
-	    time_after_eq(exp, (in_dev->mr_gq_timer).expires))
-		return;
+	अगर (in_dev->mr_gq_running &&
+	    समय_after_eq(exp, (in_dev->mr_gq_समयr).expires))
+		वापस;
 
 	in_dev->mr_gq_running = 1;
-	if (!mod_timer(&in_dev->mr_gq_timer, exp))
+	अगर (!mod_समयr(&in_dev->mr_gq_समयr, exp))
 		in_dev_hold(in_dev);
-}
+पूर्ण
 
-static void igmp_ifc_start_timer(struct in_device *in_dev, int delay)
-{
-	int tv = prandom_u32() % delay;
+अटल व्योम igmp_अगरc_start_समयr(काष्ठा in_device *in_dev, पूर्णांक delay)
+अणु
+	पूर्णांक tv = pअक्रमom_u32() % delay;
 
-	if (!mod_timer(&in_dev->mr_ifc_timer, jiffies+tv+2))
+	अगर (!mod_समयr(&in_dev->mr_अगरc_समयr, jअगरfies+tv+2))
 		in_dev_hold(in_dev);
-}
+पूर्ण
 
-static void igmp_mod_timer(struct ip_mc_list *im, int max_delay)
-{
+अटल व्योम igmp_mod_समयr(काष्ठा ip_mc_list *im, पूर्णांक max_delay)
+अणु
 	spin_lock_bh(&im->lock);
 	im->unsolicit_count = 0;
-	if (del_timer(&im->timer)) {
-		if ((long)(im->timer.expires-jiffies) < max_delay) {
-			add_timer(&im->timer);
-			im->tm_running = 1;
+	अगर (del_समयr(&im->समयr)) अणु
+		अगर ((दीर्घ)(im->समयr.expires-jअगरfies) < max_delay) अणु
+			add_समयr(&im->समयr);
+			im->पंचांग_running = 1;
 			spin_unlock_bh(&im->lock);
-			return;
-		}
+			वापस;
+		पूर्ण
 		refcount_dec(&im->refcnt);
-	}
-	igmp_start_timer(im, max_delay);
+	पूर्ण
+	igmp_start_समयr(im, max_delay);
 	spin_unlock_bh(&im->lock);
-}
+पूर्ण
 
 
 /*
  *	Send an IGMP report.
  */
 
-#define IGMP_SIZE (sizeof(struct igmphdr)+sizeof(struct iphdr)+4)
+#घोषणा IGMP_SIZE (माप(काष्ठा igmphdr)+माप(काष्ठा iphdr)+4)
 
 
-static int is_in(struct ip_mc_list *pmc, struct ip_sf_list *psf, int type,
-	int gdeleted, int sdeleted)
-{
-	switch (type) {
-	case IGMPV3_MODE_IS_INCLUDE:
-	case IGMPV3_MODE_IS_EXCLUDE:
-		if (gdeleted || sdeleted)
-			return 0;
-		if (!(pmc->gsquery && !psf->sf_gsresp)) {
-			if (pmc->sfmode == MCAST_INCLUDE)
-				return 1;
-			/* don't include if this source is excluded
+अटल पूर्णांक is_in(काष्ठा ip_mc_list *pmc, काष्ठा ip_sf_list *psf, पूर्णांक type,
+	पूर्णांक gdeleted, पूर्णांक sdeleted)
+अणु
+	चयन (type) अणु
+	हाल IGMPV3_MODE_IS_INCLUDE:
+	हाल IGMPV3_MODE_IS_EXCLUDE:
+		अगर (gdeleted || sdeleted)
+			वापस 0;
+		अगर (!(pmc->gsquery && !psf->sf_gsresp)) अणु
+			अगर (pmc->sभ_शेषe == MCAST_INCLUDE)
+				वापस 1;
+			/* करोn't include अगर this source is excluded
 			 * in all filters
 			 */
-			if (psf->sf_count[MCAST_INCLUDE])
-				return type == IGMPV3_MODE_IS_INCLUDE;
-			return pmc->sfcount[MCAST_EXCLUDE] ==
+			अगर (psf->sf_count[MCAST_INCLUDE])
+				वापस type == IGMPV3_MODE_IS_INCLUDE;
+			वापस pmc->sfcount[MCAST_EXCLUDE] ==
 				psf->sf_count[MCAST_EXCLUDE];
-		}
-		return 0;
-	case IGMPV3_CHANGE_TO_INCLUDE:
-		if (gdeleted || sdeleted)
-			return 0;
-		return psf->sf_count[MCAST_INCLUDE] != 0;
-	case IGMPV3_CHANGE_TO_EXCLUDE:
-		if (gdeleted || sdeleted)
-			return 0;
-		if (pmc->sfcount[MCAST_EXCLUDE] == 0 ||
+		पूर्ण
+		वापस 0;
+	हाल IGMPV3_CHANGE_TO_INCLUDE:
+		अगर (gdeleted || sdeleted)
+			वापस 0;
+		वापस psf->sf_count[MCAST_INCLUDE] != 0;
+	हाल IGMPV3_CHANGE_TO_EXCLUDE:
+		अगर (gdeleted || sdeleted)
+			वापस 0;
+		अगर (pmc->sfcount[MCAST_EXCLUDE] == 0 ||
 		    psf->sf_count[MCAST_INCLUDE])
-			return 0;
-		return pmc->sfcount[MCAST_EXCLUDE] ==
+			वापस 0;
+		वापस pmc->sfcount[MCAST_EXCLUDE] ==
 			psf->sf_count[MCAST_EXCLUDE];
-	case IGMPV3_ALLOW_NEW_SOURCES:
-		if (gdeleted || !psf->sf_crcount)
-			return 0;
-		return (pmc->sfmode == MCAST_INCLUDE) ^ sdeleted;
-	case IGMPV3_BLOCK_OLD_SOURCES:
-		if (pmc->sfmode == MCAST_INCLUDE)
-			return gdeleted || (psf->sf_crcount && sdeleted);
-		return psf->sf_crcount && !gdeleted && !sdeleted;
-	}
-	return 0;
-}
+	हाल IGMPV3_ALLOW_NEW_SOURCES:
+		अगर (gdeleted || !psf->sf_crcount)
+			वापस 0;
+		वापस (pmc->sभ_शेषe == MCAST_INCLUDE) ^ sdeleted;
+	हाल IGMPV3_BLOCK_OLD_SOURCES:
+		अगर (pmc->sभ_शेषe == MCAST_INCLUDE)
+			वापस gdeleted || (psf->sf_crcount && sdeleted);
+		वापस psf->sf_crcount && !gdeleted && !sdeleted;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int
-igmp_scount(struct ip_mc_list *pmc, int type, int gdeleted, int sdeleted)
-{
-	struct ip_sf_list *psf;
-	int scount = 0;
+अटल पूर्णांक
+igmp_scount(काष्ठा ip_mc_list *pmc, पूर्णांक type, पूर्णांक gdeleted, पूर्णांक sdeleted)
+अणु
+	काष्ठा ip_sf_list *psf;
+	पूर्णांक scount = 0;
 
-	for (psf = pmc->sources; psf; psf = psf->sf_next) {
-		if (!is_in(pmc, psf, type, gdeleted, sdeleted))
-			continue;
+	क्रम (psf = pmc->sources; psf; psf = psf->sf_next) अणु
+		अगर (!is_in(pmc, psf, type, gdeleted, sdeleted))
+			जारी;
 		scount++;
-	}
-	return scount;
-}
+	पूर्ण
+	वापस scount;
+पूर्ण
 
 /* source address selection per RFC 3376 section 4.2.13 */
-static __be32 igmpv3_get_srcaddr(struct net_device *dev,
-				 const struct flowi4 *fl4)
-{
-	struct in_device *in_dev = __in_dev_get_rcu(dev);
-	const struct in_ifaddr *ifa;
+अटल __be32 igmpv3_get_srcaddr(काष्ठा net_device *dev,
+				 स्थिर काष्ठा flowi4 *fl4)
+अणु
+	काष्ठा in_device *in_dev = __in_dev_get_rcu(dev);
+	स्थिर काष्ठा in_अगरaddr *अगरa;
 
-	if (!in_dev)
-		return htonl(INADDR_ANY);
+	अगर (!in_dev)
+		वापस htonl(INADDR_ANY);
 
-	in_dev_for_each_ifa_rcu(ifa, in_dev) {
-		if (fl4->saddr == ifa->ifa_local)
-			return fl4->saddr;
-	}
+	in_dev_क्रम_each_अगरa_rcu(अगरa, in_dev) अणु
+		अगर (fl4->saddr == अगरa->अगरa_local)
+			वापस fl4->saddr;
+	पूर्ण
 
-	return htonl(INADDR_ANY);
-}
+	वापस htonl(INADDR_ANY);
+पूर्ण
 
-static struct sk_buff *igmpv3_newpack(struct net_device *dev, unsigned int mtu)
-{
-	struct sk_buff *skb;
-	struct rtable *rt;
-	struct iphdr *pip;
-	struct igmpv3_report *pig;
-	struct net *net = dev_net(dev);
-	struct flowi4 fl4;
-	int hlen = LL_RESERVED_SPACE(dev);
-	int tlen = dev->needed_tailroom;
-	unsigned int size = mtu;
+अटल काष्ठा sk_buff *igmpv3_newpack(काष्ठा net_device *dev, अचिन्हित पूर्णांक mtu)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा rtable *rt;
+	काष्ठा iphdr *pip;
+	काष्ठा igmpv3_report *pig;
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा flowi4 fl4;
+	पूर्णांक hlen = LL_RESERVED_SPACE(dev);
+	पूर्णांक tlen = dev->needed_tailroom;
+	अचिन्हित पूर्णांक size = mtu;
 
-	while (1) {
+	जबतक (1) अणु
 		skb = alloc_skb(size + hlen + tlen,
 				GFP_ATOMIC | __GFP_NOWARN);
-		if (skb)
-			break;
+		अगर (skb)
+			अवरोध;
 		size >>= 1;
-		if (size < 256)
-			return NULL;
-	}
+		अगर (size < 256)
+			वापस शून्य;
+	पूर्ण
 	skb->priority = TC_PRIO_CONTROL;
 
-	rt = ip_route_output_ports(net, &fl4, NULL, IGMPV3_ALL_MCR, 0,
+	rt = ip_route_output_ports(net, &fl4, शून्य, IGMPV3_ALL_MCR, 0,
 				   0, 0,
-				   IPPROTO_IGMP, 0, dev->ifindex);
-	if (IS_ERR(rt)) {
-		kfree_skb(skb);
-		return NULL;
-	}
+				   IPPROTO_IGMP, 0, dev->अगरindex);
+	अगर (IS_ERR(rt)) अणु
+		kमुक्त_skb(skb);
+		वापस शून्य;
+	पूर्ण
 
 	skb_dst_set(skb, &rt->dst);
 	skb->dev = dev;
@@ -382,66 +383,66 @@ static struct sk_buff *igmpv3_newpack(struct net_device *dev, unsigned int mtu)
 
 	skb_reset_network_header(skb);
 	pip = ip_hdr(skb);
-	skb_put(skb, sizeof(struct iphdr) + 4);
+	skb_put(skb, माप(काष्ठा iphdr) + 4);
 
 	pip->version  = 4;
-	pip->ihl      = (sizeof(struct iphdr)+4)>>2;
+	pip->ihl      = (माप(काष्ठा iphdr)+4)>>2;
 	pip->tos      = 0xc0;
 	pip->frag_off = htons(IP_DF);
 	pip->ttl      = 1;
 	pip->daddr    = fl4.daddr;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	pip->saddr    = igmpv3_get_srcaddr(dev, &fl4);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	pip->protocol = IPPROTO_IGMP;
 	pip->tot_len  = 0;	/* filled in later */
-	ip_select_ident(net, skb, NULL);
+	ip_select_ident(net, skb, शून्य);
 	((u8 *)&pip[1])[0] = IPOPT_RA;
 	((u8 *)&pip[1])[1] = 4;
 	((u8 *)&pip[1])[2] = 0;
 	((u8 *)&pip[1])[3] = 0;
 
-	skb->transport_header = skb->network_header + sizeof(struct iphdr) + 4;
-	skb_put(skb, sizeof(*pig));
+	skb->transport_header = skb->network_header + माप(काष्ठा iphdr) + 4;
+	skb_put(skb, माप(*pig));
 	pig = igmpv3_report_hdr(skb);
 	pig->type = IGMPV3_HOST_MEMBERSHIP_REPORT;
 	pig->resv1 = 0;
 	pig->csum = 0;
 	pig->resv2 = 0;
 	pig->ngrec = 0;
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int igmpv3_sendpack(struct sk_buff *skb)
-{
-	struct igmphdr *pig = igmp_hdr(skb);
-	const int igmplen = skb_tail_pointer(skb) - skb_transport_header(skb);
+अटल पूर्णांक igmpv3_sendpack(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा igmphdr *pig = igmp_hdr(skb);
+	स्थिर पूर्णांक igmplen = skb_tail_poपूर्णांकer(skb) - skb_transport_header(skb);
 
 	pig->csum = ip_compute_csum(igmp_hdr(skb), igmplen);
 
-	return ip_local_out(dev_net(skb_dst(skb)->dev), skb->sk, skb);
-}
+	वापस ip_local_out(dev_net(skb_dst(skb)->dev), skb->sk, skb);
+पूर्ण
 
-static int grec_size(struct ip_mc_list *pmc, int type, int gdel, int sdel)
-{
-	return sizeof(struct igmpv3_grec) + 4*igmp_scount(pmc, type, gdel, sdel);
-}
+अटल पूर्णांक grec_size(काष्ठा ip_mc_list *pmc, पूर्णांक type, पूर्णांक gdel, पूर्णांक sdel)
+अणु
+	वापस माप(काष्ठा igmpv3_grec) + 4*igmp_scount(pmc, type, gdel, sdel);
+पूर्ण
 
-static struct sk_buff *add_grhead(struct sk_buff *skb, struct ip_mc_list *pmc,
-	int type, struct igmpv3_grec **ppgr, unsigned int mtu)
-{
-	struct net_device *dev = pmc->interface->dev;
-	struct igmpv3_report *pih;
-	struct igmpv3_grec *pgr;
+अटल काष्ठा sk_buff *add_grhead(काष्ठा sk_buff *skb, काष्ठा ip_mc_list *pmc,
+	पूर्णांक type, काष्ठा igmpv3_grec **ppgr, अचिन्हित पूर्णांक mtu)
+अणु
+	काष्ठा net_device *dev = pmc->पूर्णांकerface->dev;
+	काष्ठा igmpv3_report *pih;
+	काष्ठा igmpv3_grec *pgr;
 
-	if (!skb) {
+	अगर (!skb) अणु
 		skb = igmpv3_newpack(dev, mtu);
-		if (!skb)
-			return NULL;
-	}
-	pgr = skb_put(skb, sizeof(struct igmpv3_grec));
+		अगर (!skb)
+			वापस शून्य;
+	पूर्ण
+	pgr = skb_put(skb, माप(काष्ठा igmpv3_grec));
 	pgr->grec_type = type;
 	pgr->grec_auxwords = 0;
 	pgr->grec_nsrcs = 0;
@@ -449,30 +450,30 @@ static struct sk_buff *add_grhead(struct sk_buff *skb, struct ip_mc_list *pmc,
 	pih = igmpv3_report_hdr(skb);
 	pih->ngrec = htons(ntohs(pih->ngrec)+1);
 	*ppgr = pgr;
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-#define AVAILABLE(skb)	((skb) ? skb_availroom(skb) : 0)
+#घोषणा AVAILABLE(skb)	((skb) ? skb_availroom(skb) : 0)
 
-static struct sk_buff *add_grec(struct sk_buff *skb, struct ip_mc_list *pmc,
-	int type, int gdeleted, int sdeleted)
-{
-	struct net_device *dev = pmc->interface->dev;
-	struct net *net = dev_net(dev);
-	struct igmpv3_report *pih;
-	struct igmpv3_grec *pgr = NULL;
-	struct ip_sf_list *psf, *psf_next, *psf_prev, **psf_list;
-	int scount, stotal, first, isquery, truncate;
-	unsigned int mtu;
+अटल काष्ठा sk_buff *add_grec(काष्ठा sk_buff *skb, काष्ठा ip_mc_list *pmc,
+	पूर्णांक type, पूर्णांक gdeleted, पूर्णांक sdeleted)
+अणु
+	काष्ठा net_device *dev = pmc->पूर्णांकerface->dev;
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा igmpv3_report *pih;
+	काष्ठा igmpv3_grec *pgr = शून्य;
+	काष्ठा ip_sf_list *psf, *psf_next, *psf_prev, **psf_list;
+	पूर्णांक scount, stotal, first, isquery, truncate;
+	अचिन्हित पूर्णांक mtu;
 
-	if (pmc->multiaddr == IGMP_ALL_HOSTS)
-		return skb;
-	if (ipv4_is_local_multicast(pmc->multiaddr) && !net->ipv4.sysctl_igmp_llm_reports)
-		return skb;
+	अगर (pmc->multiaddr == IGMP_ALL_HOSTS)
+		वापस skb;
+	अगर (ipv4_is_local_multicast(pmc->multiaddr) && !net->ipv4.sysctl_igmp_llm_reports)
+		वापस skb;
 
 	mtu = READ_ONCE(dev->mtu);
-	if (mtu < IPV4_MIN_MTU)
-		return skb;
+	अगर (mtu < IPV4_MIN_MTU)
+		वापस skb;
 
 	isquery = type == IGMPV3_MODE_IS_INCLUDE ||
 		  type == IGMPV3_MODE_IS_EXCLUDE;
@@ -483,280 +484,280 @@ static struct sk_buff *add_grec(struct sk_buff *skb, struct ip_mc_list *pmc,
 
 	psf_list = sdeleted ? &pmc->tomb : &pmc->sources;
 
-	if (!*psf_list)
-		goto empty_source;
+	अगर (!*psf_list)
+		जाओ empty_source;
 
-	pih = skb ? igmpv3_report_hdr(skb) : NULL;
+	pih = skb ? igmpv3_report_hdr(skb) : शून्य;
 
-	/* EX and TO_EX get a fresh packet, if needed */
-	if (truncate) {
-		if (pih && pih->ngrec &&
-		    AVAILABLE(skb) < grec_size(pmc, type, gdeleted, sdeleted)) {
-			if (skb)
+	/* EX and TO_EX get a fresh packet, अगर needed */
+	अगर (truncate) अणु
+		अगर (pih && pih->ngrec &&
+		    AVAILABLE(skb) < grec_size(pmc, type, gdeleted, sdeleted)) अणु
+			अगर (skb)
 				igmpv3_sendpack(skb);
 			skb = igmpv3_newpack(dev, mtu);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	first = 1;
-	psf_prev = NULL;
-	for (psf = *psf_list; psf; psf = psf_next) {
+	psf_prev = शून्य;
+	क्रम (psf = *psf_list; psf; psf = psf_next) अणु
 		__be32 *psrc;
 
 		psf_next = psf->sf_next;
 
-		if (!is_in(pmc, psf, type, gdeleted, sdeleted)) {
+		अगर (!is_in(pmc, psf, type, gdeleted, sdeleted)) अणु
 			psf_prev = psf;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Based on RFC3376 5.1. Should not send source-list change
 		 * records when there is a filter mode change.
 		 */
-		if (((gdeleted && pmc->sfmode == MCAST_EXCLUDE) ||
+		अगर (((gdeleted && pmc->sभ_शेषe == MCAST_EXCLUDE) ||
 		     (!gdeleted && pmc->crcount)) &&
 		    (type == IGMPV3_ALLOW_NEW_SOURCES ||
 		     type == IGMPV3_BLOCK_OLD_SOURCES) && psf->sf_crcount)
-			goto decrease_sf_crcount;
+			जाओ decrease_sf_crcount;
 
 		/* clear marks on query responses */
-		if (isquery)
+		अगर (isquery)
 			psf->sf_gsresp = 0;
 
-		if (AVAILABLE(skb) < sizeof(__be32) +
-		    first*sizeof(struct igmpv3_grec)) {
-			if (truncate && !first)
-				break;	 /* truncate these */
-			if (pgr)
+		अगर (AVAILABLE(skb) < माप(__be32) +
+		    first*माप(काष्ठा igmpv3_grec)) अणु
+			अगर (truncate && !first)
+				अवरोध;	 /* truncate these */
+			अगर (pgr)
 				pgr->grec_nsrcs = htons(scount);
-			if (skb)
+			अगर (skb)
 				igmpv3_sendpack(skb);
 			skb = igmpv3_newpack(dev, mtu);
 			first = 1;
 			scount = 0;
-		}
-		if (first) {
+		पूर्ण
+		अगर (first) अणु
 			skb = add_grhead(skb, pmc, type, &pgr, mtu);
 			first = 0;
-		}
-		if (!skb)
-			return NULL;
-		psrc = skb_put(skb, sizeof(__be32));
+		पूर्ण
+		अगर (!skb)
+			वापस शून्य;
+		psrc = skb_put(skb, माप(__be32));
 		*psrc = psf->sf_inaddr;
 		scount++; stotal++;
-		if ((type == IGMPV3_ALLOW_NEW_SOURCES ||
-		     type == IGMPV3_BLOCK_OLD_SOURCES) && psf->sf_crcount) {
+		अगर ((type == IGMPV3_ALLOW_NEW_SOURCES ||
+		     type == IGMPV3_BLOCK_OLD_SOURCES) && psf->sf_crcount) अणु
 decrease_sf_crcount:
 			psf->sf_crcount--;
-			if ((sdeleted || gdeleted) && psf->sf_crcount == 0) {
-				if (psf_prev)
+			अगर ((sdeleted || gdeleted) && psf->sf_crcount == 0) अणु
+				अगर (psf_prev)
 					psf_prev->sf_next = psf->sf_next;
-				else
+				अन्यथा
 					*psf_list = psf->sf_next;
-				kfree(psf);
-				continue;
-			}
-		}
+				kमुक्त(psf);
+				जारी;
+			पूर्ण
+		पूर्ण
 		psf_prev = psf;
-	}
+	पूर्ण
 
 empty_source:
-	if (!stotal) {
-		if (type == IGMPV3_ALLOW_NEW_SOURCES ||
+	अगर (!stotal) अणु
+		अगर (type == IGMPV3_ALLOW_NEW_SOURCES ||
 		    type == IGMPV3_BLOCK_OLD_SOURCES)
-			return skb;
-		if (pmc->crcount || isquery) {
-			/* make sure we have room for group header */
-			if (skb && AVAILABLE(skb) < sizeof(struct igmpv3_grec)) {
+			वापस skb;
+		अगर (pmc->crcount || isquery) अणु
+			/* make sure we have room क्रम group header */
+			अगर (skb && AVAILABLE(skb) < माप(काष्ठा igmpv3_grec)) अणु
 				igmpv3_sendpack(skb);
-				skb = NULL; /* add_grhead will get a new one */
-			}
+				skb = शून्य; /* add_grhead will get a new one */
+			पूर्ण
 			skb = add_grhead(skb, pmc, type, &pgr, mtu);
-		}
-	}
-	if (pgr)
+		पूर्ण
+	पूर्ण
+	अगर (pgr)
 		pgr->grec_nsrcs = htons(scount);
 
-	if (isquery)
+	अगर (isquery)
 		pmc->gsquery = 0;	/* clear query state on report */
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int igmpv3_send_report(struct in_device *in_dev, struct ip_mc_list *pmc)
-{
-	struct sk_buff *skb = NULL;
-	struct net *net = dev_net(in_dev->dev);
-	int type;
+अटल पूर्णांक igmpv3_send_report(काष्ठा in_device *in_dev, काष्ठा ip_mc_list *pmc)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा net *net = dev_net(in_dev->dev);
+	पूर्णांक type;
 
-	if (!pmc) {
-		rcu_read_lock();
-		for_each_pmc_rcu(in_dev, pmc) {
-			if (pmc->multiaddr == IGMP_ALL_HOSTS)
-				continue;
-			if (ipv4_is_local_multicast(pmc->multiaddr) &&
+	अगर (!pmc) अणु
+		rcu_पढ़ो_lock();
+		क्रम_each_pmc_rcu(in_dev, pmc) अणु
+			अगर (pmc->multiaddr == IGMP_ALL_HOSTS)
+				जारी;
+			अगर (ipv4_is_local_multicast(pmc->multiaddr) &&
 			     !net->ipv4.sysctl_igmp_llm_reports)
-				continue;
+				जारी;
 			spin_lock_bh(&pmc->lock);
-			if (pmc->sfcount[MCAST_EXCLUDE])
+			अगर (pmc->sfcount[MCAST_EXCLUDE])
 				type = IGMPV3_MODE_IS_EXCLUDE;
-			else
+			अन्यथा
 				type = IGMPV3_MODE_IS_INCLUDE;
 			skb = add_grec(skb, pmc, type, 0, 0);
 			spin_unlock_bh(&pmc->lock);
-		}
-		rcu_read_unlock();
-	} else {
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण अन्यथा अणु
 		spin_lock_bh(&pmc->lock);
-		if (pmc->sfcount[MCAST_EXCLUDE])
+		अगर (pmc->sfcount[MCAST_EXCLUDE])
 			type = IGMPV3_MODE_IS_EXCLUDE;
-		else
+		अन्यथा
 			type = IGMPV3_MODE_IS_INCLUDE;
 		skb = add_grec(skb, pmc, type, 0, 0);
 		spin_unlock_bh(&pmc->lock);
-	}
-	if (!skb)
-		return 0;
-	return igmpv3_sendpack(skb);
-}
+	पूर्ण
+	अगर (!skb)
+		वापस 0;
+	वापस igmpv3_sendpack(skb);
+पूर्ण
 
 /*
- * remove zero-count source records from a source filter list
+ * हटाओ zero-count source records from a source filter list
  */
-static void igmpv3_clear_zeros(struct ip_sf_list **ppsf)
-{
-	struct ip_sf_list *psf_prev, *psf_next, *psf;
+अटल व्योम igmpv3_clear_zeros(काष्ठा ip_sf_list **ppsf)
+अणु
+	काष्ठा ip_sf_list *psf_prev, *psf_next, *psf;
 
-	psf_prev = NULL;
-	for (psf = *ppsf; psf; psf = psf_next) {
+	psf_prev = शून्य;
+	क्रम (psf = *ppsf; psf; psf = psf_next) अणु
 		psf_next = psf->sf_next;
-		if (psf->sf_crcount == 0) {
-			if (psf_prev)
+		अगर (psf->sf_crcount == 0) अणु
+			अगर (psf_prev)
 				psf_prev->sf_next = psf->sf_next;
-			else
+			अन्यथा
 				*ppsf = psf->sf_next;
-			kfree(psf);
-		} else
+			kमुक्त(psf);
+		पूर्ण अन्यथा
 			psf_prev = psf;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void kfree_pmc(struct ip_mc_list *pmc)
-{
+अटल व्योम kमुक्त_pmc(काष्ठा ip_mc_list *pmc)
+अणु
 	ip_sf_list_clear_all(pmc->sources);
 	ip_sf_list_clear_all(pmc->tomb);
-	kfree(pmc);
-}
+	kमुक्त(pmc);
+पूर्ण
 
-static void igmpv3_send_cr(struct in_device *in_dev)
-{
-	struct ip_mc_list *pmc, *pmc_prev, *pmc_next;
-	struct sk_buff *skb = NULL;
-	int type, dtype;
+अटल व्योम igmpv3_send_cr(काष्ठा in_device *in_dev)
+अणु
+	काष्ठा ip_mc_list *pmc, *pmc_prev, *pmc_next;
+	काष्ठा sk_buff *skb = शून्य;
+	पूर्णांक type, dtype;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	spin_lock_bh(&in_dev->mc_tomb_lock);
 
 	/* deleted MCA's */
-	pmc_prev = NULL;
-	for (pmc = in_dev->mc_tomb; pmc; pmc = pmc_next) {
+	pmc_prev = शून्य;
+	क्रम (pmc = in_dev->mc_tomb; pmc; pmc = pmc_next) अणु
 		pmc_next = pmc->next;
-		if (pmc->sfmode == MCAST_INCLUDE) {
+		अगर (pmc->sभ_शेषe == MCAST_INCLUDE) अणु
 			type = IGMPV3_BLOCK_OLD_SOURCES;
 			dtype = IGMPV3_BLOCK_OLD_SOURCES;
 			skb = add_grec(skb, pmc, type, 1, 0);
 			skb = add_grec(skb, pmc, dtype, 1, 1);
-		}
-		if (pmc->crcount) {
-			if (pmc->sfmode == MCAST_EXCLUDE) {
+		पूर्ण
+		अगर (pmc->crcount) अणु
+			अगर (pmc->sभ_शेषe == MCAST_EXCLUDE) अणु
 				type = IGMPV3_CHANGE_TO_INCLUDE;
 				skb = add_grec(skb, pmc, type, 1, 0);
-			}
+			पूर्ण
 			pmc->crcount--;
-			if (pmc->crcount == 0) {
+			अगर (pmc->crcount == 0) अणु
 				igmpv3_clear_zeros(&pmc->tomb);
 				igmpv3_clear_zeros(&pmc->sources);
-			}
-		}
-		if (pmc->crcount == 0 && !pmc->tomb && !pmc->sources) {
-			if (pmc_prev)
+			पूर्ण
+		पूर्ण
+		अगर (pmc->crcount == 0 && !pmc->tomb && !pmc->sources) अणु
+			अगर (pmc_prev)
 				pmc_prev->next = pmc_next;
-			else
+			अन्यथा
 				in_dev->mc_tomb = pmc_next;
-			in_dev_put(pmc->interface);
-			kfree_pmc(pmc);
-		} else
+			in_dev_put(pmc->पूर्णांकerface);
+			kमुक्त_pmc(pmc);
+		पूर्ण अन्यथा
 			pmc_prev = pmc;
-	}
+	पूर्ण
 	spin_unlock_bh(&in_dev->mc_tomb_lock);
 
 	/* change recs */
-	for_each_pmc_rcu(in_dev, pmc) {
+	क्रम_each_pmc_rcu(in_dev, pmc) अणु
 		spin_lock_bh(&pmc->lock);
-		if (pmc->sfcount[MCAST_EXCLUDE]) {
+		अगर (pmc->sfcount[MCAST_EXCLUDE]) अणु
 			type = IGMPV3_BLOCK_OLD_SOURCES;
 			dtype = IGMPV3_ALLOW_NEW_SOURCES;
-		} else {
+		पूर्ण अन्यथा अणु
 			type = IGMPV3_ALLOW_NEW_SOURCES;
 			dtype = IGMPV3_BLOCK_OLD_SOURCES;
-		}
+		पूर्ण
 		skb = add_grec(skb, pmc, type, 0, 0);
 		skb = add_grec(skb, pmc, dtype, 0, 1);	/* deleted sources */
 
 		/* filter mode changes */
-		if (pmc->crcount) {
-			if (pmc->sfmode == MCAST_EXCLUDE)
+		अगर (pmc->crcount) अणु
+			अगर (pmc->sभ_शेषe == MCAST_EXCLUDE)
 				type = IGMPV3_CHANGE_TO_EXCLUDE;
-			else
+			अन्यथा
 				type = IGMPV3_CHANGE_TO_INCLUDE;
 			skb = add_grec(skb, pmc, type, 0, 0);
 			pmc->crcount--;
-		}
+		पूर्ण
 		spin_unlock_bh(&pmc->lock);
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (!skb)
-		return;
-	(void) igmpv3_sendpack(skb);
-}
+	अगर (!skb)
+		वापस;
+	(व्योम) igmpv3_sendpack(skb);
+पूर्ण
 
-static int igmp_send_report(struct in_device *in_dev, struct ip_mc_list *pmc,
-	int type)
-{
-	struct sk_buff *skb;
-	struct iphdr *iph;
-	struct igmphdr *ih;
-	struct rtable *rt;
-	struct net_device *dev = in_dev->dev;
-	struct net *net = dev_net(dev);
+अटल पूर्णांक igmp_send_report(काष्ठा in_device *in_dev, काष्ठा ip_mc_list *pmc,
+	पूर्णांक type)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा iphdr *iph;
+	काष्ठा igmphdr *ih;
+	काष्ठा rtable *rt;
+	काष्ठा net_device *dev = in_dev->dev;
+	काष्ठा net *net = dev_net(dev);
 	__be32	group = pmc ? pmc->multiaddr : 0;
-	struct flowi4 fl4;
+	काष्ठा flowi4 fl4;
 	__be32	dst;
-	int hlen, tlen;
+	पूर्णांक hlen, tlen;
 
-	if (type == IGMPV3_HOST_MEMBERSHIP_REPORT)
-		return igmpv3_send_report(in_dev, pmc);
+	अगर (type == IGMPV3_HOST_MEMBERSHIP_REPORT)
+		वापस igmpv3_send_report(in_dev, pmc);
 
-	if (ipv4_is_local_multicast(group) && !net->ipv4.sysctl_igmp_llm_reports)
-		return 0;
+	अगर (ipv4_is_local_multicast(group) && !net->ipv4.sysctl_igmp_llm_reports)
+		वापस 0;
 
-	if (type == IGMP_HOST_LEAVE_MESSAGE)
+	अगर (type == IGMP_HOST_LEAVE_MESSAGE)
 		dst = IGMP_ALL_ROUTER;
-	else
+	अन्यथा
 		dst = group;
 
-	rt = ip_route_output_ports(net, &fl4, NULL, dst, 0,
+	rt = ip_route_output_ports(net, &fl4, शून्य, dst, 0,
 				   0, 0,
-				   IPPROTO_IGMP, 0, dev->ifindex);
-	if (IS_ERR(rt))
-		return -1;
+				   IPPROTO_IGMP, 0, dev->अगरindex);
+	अगर (IS_ERR(rt))
+		वापस -1;
 
 	hlen = LL_RESERVED_SPACE(dev);
 	tlen = dev->needed_tailroom;
 	skb = alloc_skb(IGMP_SIZE + hlen + tlen, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		ip_rt_put(rt);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	skb->priority = TC_PRIO_CONTROL;
 
 	skb_dst_set(skb, &rt->dst);
@@ -765,238 +766,238 @@ static int igmp_send_report(struct in_device *in_dev, struct ip_mc_list *pmc,
 
 	skb_reset_network_header(skb);
 	iph = ip_hdr(skb);
-	skb_put(skb, sizeof(struct iphdr) + 4);
+	skb_put(skb, माप(काष्ठा iphdr) + 4);
 
 	iph->version  = 4;
-	iph->ihl      = (sizeof(struct iphdr)+4)>>2;
+	iph->ihl      = (माप(काष्ठा iphdr)+4)>>2;
 	iph->tos      = 0xc0;
 	iph->frag_off = htons(IP_DF);
 	iph->ttl      = 1;
 	iph->daddr    = dst;
 	iph->saddr    = fl4.saddr;
 	iph->protocol = IPPROTO_IGMP;
-	ip_select_ident(net, skb, NULL);
+	ip_select_ident(net, skb, शून्य);
 	((u8 *)&iph[1])[0] = IPOPT_RA;
 	((u8 *)&iph[1])[1] = 4;
 	((u8 *)&iph[1])[2] = 0;
 	((u8 *)&iph[1])[3] = 0;
 
-	ih = skb_put(skb, sizeof(struct igmphdr));
+	ih = skb_put(skb, माप(काष्ठा igmphdr));
 	ih->type = type;
 	ih->code = 0;
 	ih->csum = 0;
 	ih->group = group;
-	ih->csum = ip_compute_csum((void *)ih, sizeof(struct igmphdr));
+	ih->csum = ip_compute_csum((व्योम *)ih, माप(काष्ठा igmphdr));
 
-	return ip_local_out(net, skb->sk, skb);
-}
+	वापस ip_local_out(net, skb->sk, skb);
+पूर्ण
 
-static void igmp_gq_timer_expire(struct timer_list *t)
-{
-	struct in_device *in_dev = from_timer(in_dev, t, mr_gq_timer);
+अटल व्योम igmp_gq_समयr_expire(काष्ठा समयr_list *t)
+अणु
+	काष्ठा in_device *in_dev = from_समयr(in_dev, t, mr_gq_समयr);
 
 	in_dev->mr_gq_running = 0;
-	igmpv3_send_report(in_dev, NULL);
+	igmpv3_send_report(in_dev, शून्य);
 	in_dev_put(in_dev);
-}
+पूर्ण
 
-static void igmp_ifc_timer_expire(struct timer_list *t)
-{
-	struct in_device *in_dev = from_timer(in_dev, t, mr_ifc_timer);
+अटल व्योम igmp_अगरc_समयr_expire(काष्ठा समयr_list *t)
+अणु
+	काष्ठा in_device *in_dev = from_समयr(in_dev, t, mr_अगरc_समयr);
 
 	igmpv3_send_cr(in_dev);
-	if (in_dev->mr_ifc_count) {
-		in_dev->mr_ifc_count--;
-		igmp_ifc_start_timer(in_dev,
-				     unsolicited_report_interval(in_dev));
-	}
+	अगर (in_dev->mr_अगरc_count) अणु
+		in_dev->mr_अगरc_count--;
+		igmp_अगरc_start_समयr(in_dev,
+				     unsolicited_report_पूर्णांकerval(in_dev));
+	पूर्ण
 	in_dev_put(in_dev);
-}
+पूर्ण
 
-static void igmp_ifc_event(struct in_device *in_dev)
-{
-	struct net *net = dev_net(in_dev->dev);
-	if (IGMP_V1_SEEN(in_dev) || IGMP_V2_SEEN(in_dev))
-		return;
-	in_dev->mr_ifc_count = in_dev->mr_qrv ?: net->ipv4.sysctl_igmp_qrv;
-	igmp_ifc_start_timer(in_dev, 1);
-}
+अटल व्योम igmp_अगरc_event(काष्ठा in_device *in_dev)
+अणु
+	काष्ठा net *net = dev_net(in_dev->dev);
+	अगर (IGMP_V1_SEEN(in_dev) || IGMP_V2_SEEN(in_dev))
+		वापस;
+	in_dev->mr_अगरc_count = in_dev->mr_qrv ?: net->ipv4.sysctl_igmp_qrv;
+	igmp_अगरc_start_समयr(in_dev, 1);
+पूर्ण
 
 
-static void igmp_timer_expire(struct timer_list *t)
-{
-	struct ip_mc_list *im = from_timer(im, t, timer);
-	struct in_device *in_dev = im->interface;
+अटल व्योम igmp_समयr_expire(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ip_mc_list *im = from_समयr(im, t, समयr);
+	काष्ठा in_device *in_dev = im->पूर्णांकerface;
 
 	spin_lock(&im->lock);
-	im->tm_running = 0;
+	im->पंचांग_running = 0;
 
-	if (im->unsolicit_count && --im->unsolicit_count)
-		igmp_start_timer(im, unsolicited_report_interval(in_dev));
+	अगर (im->unsolicit_count && --im->unsolicit_count)
+		igmp_start_समयr(im, unsolicited_report_पूर्णांकerval(in_dev));
 
 	im->reporter = 1;
 	spin_unlock(&im->lock);
 
-	if (IGMP_V1_SEEN(in_dev))
+	अगर (IGMP_V1_SEEN(in_dev))
 		igmp_send_report(in_dev, im, IGMP_HOST_MEMBERSHIP_REPORT);
-	else if (IGMP_V2_SEEN(in_dev))
+	अन्यथा अगर (IGMP_V2_SEEN(in_dev))
 		igmp_send_report(in_dev, im, IGMPV2_HOST_MEMBERSHIP_REPORT);
-	else
+	अन्यथा
 		igmp_send_report(in_dev, im, IGMPV3_HOST_MEMBERSHIP_REPORT);
 
 	ip_ma_put(im);
-}
+पूर्ण
 
 /* mark EXCLUDE-mode sources */
-static int igmp_xmarksources(struct ip_mc_list *pmc, int nsrcs, __be32 *srcs)
-{
-	struct ip_sf_list *psf;
-	int i, scount;
+अटल पूर्णांक igmp_xmarksources(काष्ठा ip_mc_list *pmc, पूर्णांक nsrcs, __be32 *srcs)
+अणु
+	काष्ठा ip_sf_list *psf;
+	पूर्णांक i, scount;
 
 	scount = 0;
-	for (psf = pmc->sources; psf; psf = psf->sf_next) {
-		if (scount == nsrcs)
-			break;
-		for (i = 0; i < nsrcs; i++) {
+	क्रम (psf = pmc->sources; psf; psf = psf->sf_next) अणु
+		अगर (scount == nsrcs)
+			अवरोध;
+		क्रम (i = 0; i < nsrcs; i++) अणु
 			/* skip inactive filters */
-			if (psf->sf_count[MCAST_INCLUDE] ||
+			अगर (psf->sf_count[MCAST_INCLUDE] ||
 			    pmc->sfcount[MCAST_EXCLUDE] !=
 			    psf->sf_count[MCAST_EXCLUDE])
-				break;
-			if (srcs[i] == psf->sf_inaddr) {
+				अवरोध;
+			अगर (srcs[i] == psf->sf_inaddr) अणु
 				scount++;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	pmc->gsquery = 0;
-	if (scount == nsrcs)	/* all sources excluded */
-		return 0;
-	return 1;
-}
+	अगर (scount == nsrcs)	/* all sources excluded */
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static int igmp_marksources(struct ip_mc_list *pmc, int nsrcs, __be32 *srcs)
-{
-	struct ip_sf_list *psf;
-	int i, scount;
+अटल पूर्णांक igmp_marksources(काष्ठा ip_mc_list *pmc, पूर्णांक nsrcs, __be32 *srcs)
+अणु
+	काष्ठा ip_sf_list *psf;
+	पूर्णांक i, scount;
 
-	if (pmc->sfmode == MCAST_EXCLUDE)
-		return igmp_xmarksources(pmc, nsrcs, srcs);
+	अगर (pmc->sभ_शेषe == MCAST_EXCLUDE)
+		वापस igmp_xmarksources(pmc, nsrcs, srcs);
 
 	/* mark INCLUDE-mode sources */
 	scount = 0;
-	for (psf = pmc->sources; psf; psf = psf->sf_next) {
-		if (scount == nsrcs)
-			break;
-		for (i = 0; i < nsrcs; i++)
-			if (srcs[i] == psf->sf_inaddr) {
+	क्रम (psf = pmc->sources; psf; psf = psf->sf_next) अणु
+		अगर (scount == nsrcs)
+			अवरोध;
+		क्रम (i = 0; i < nsrcs; i++)
+			अगर (srcs[i] == psf->sf_inaddr) अणु
 				psf->sf_gsresp = 1;
 				scount++;
-				break;
-			}
-	}
-	if (!scount) {
+				अवरोध;
+			पूर्ण
+	पूर्ण
+	अगर (!scount) अणु
 		pmc->gsquery = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	pmc->gsquery = 1;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* return true if packet was dropped */
-static bool igmp_heard_report(struct in_device *in_dev, __be32 group)
-{
-	struct ip_mc_list *im;
-	struct net *net = dev_net(in_dev->dev);
+/* वापस true अगर packet was dropped */
+अटल bool igmp_heard_report(काष्ठा in_device *in_dev, __be32 group)
+अणु
+	काष्ठा ip_mc_list *im;
+	काष्ठा net *net = dev_net(in_dev->dev);
 
-	/* Timers are only set for non-local groups */
+	/* Timers are only set क्रम non-local groups */
 
-	if (group == IGMP_ALL_HOSTS)
-		return false;
-	if (ipv4_is_local_multicast(group) && !net->ipv4.sysctl_igmp_llm_reports)
-		return false;
+	अगर (group == IGMP_ALL_HOSTS)
+		वापस false;
+	अगर (ipv4_is_local_multicast(group) && !net->ipv4.sysctl_igmp_llm_reports)
+		वापस false;
 
-	rcu_read_lock();
-	for_each_pmc_rcu(in_dev, im) {
-		if (im->multiaddr == group) {
-			igmp_stop_timer(im);
-			break;
-		}
-	}
-	rcu_read_unlock();
-	return false;
-}
+	rcu_पढ़ो_lock();
+	क्रम_each_pmc_rcu(in_dev, im) अणु
+		अगर (im->multiaddr == group) अणु
+			igmp_stop_समयr(im);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस false;
+पूर्ण
 
-/* return true if packet was dropped */
-static bool igmp_heard_query(struct in_device *in_dev, struct sk_buff *skb,
-	int len)
-{
-	struct igmphdr 		*ih = igmp_hdr(skb);
-	struct igmpv3_query *ih3 = igmpv3_query_hdr(skb);
-	struct ip_mc_list	*im;
+/* वापस true अगर packet was dropped */
+अटल bool igmp_heard_query(काष्ठा in_device *in_dev, काष्ठा sk_buff *skb,
+	पूर्णांक len)
+अणु
+	काष्ठा igmphdr 		*ih = igmp_hdr(skb);
+	काष्ठा igmpv3_query *ih3 = igmpv3_query_hdr(skb);
+	काष्ठा ip_mc_list	*im;
 	__be32			group = ih->group;
-	int			max_delay;
-	int			mark = 0;
-	struct net		*net = dev_net(in_dev->dev);
+	पूर्णांक			max_delay;
+	पूर्णांक			mark = 0;
+	काष्ठा net		*net = dev_net(in_dev->dev);
 
 
-	if (len == 8) {
-		if (ih->code == 0) {
+	अगर (len == 8) अणु
+		अगर (ih->code == 0) अणु
 			/* Alas, old v1 router presents here. */
 
 			max_delay = IGMP_QUERY_RESPONSE_INTERVAL;
-			in_dev->mr_v1_seen = jiffies +
+			in_dev->mr_v1_seen = jअगरfies +
 				(in_dev->mr_qrv * in_dev->mr_qi) +
 				in_dev->mr_qri;
 			group = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* v2 router present */
 			max_delay = ih->code*(HZ/IGMP_TIMER_SCALE);
-			in_dev->mr_v2_seen = jiffies +
+			in_dev->mr_v2_seen = jअगरfies +
 				(in_dev->mr_qrv * in_dev->mr_qi) +
 				in_dev->mr_qri;
-		}
-		/* cancel the interface change timer */
-		in_dev->mr_ifc_count = 0;
-		if (del_timer(&in_dev->mr_ifc_timer))
+		पूर्ण
+		/* cancel the पूर्णांकerface change समयr */
+		in_dev->mr_अगरc_count = 0;
+		अगर (del_समयr(&in_dev->mr_अगरc_समयr))
 			__in_dev_put(in_dev);
 		/* clear deleted report items */
 		igmpv3_clear_delrec(in_dev);
-	} else if (len < 12) {
-		return true;	/* ignore bogus packet; freed by caller */
-	} else if (IGMP_V1_SEEN(in_dev)) {
+	पूर्ण अन्यथा अगर (len < 12) अणु
+		वापस true;	/* ignore bogus packet; मुक्तd by caller */
+	पूर्ण अन्यथा अगर (IGMP_V1_SEEN(in_dev)) अणु
 		/* This is a v3 query with v1 queriers present */
 		max_delay = IGMP_QUERY_RESPONSE_INTERVAL;
 		group = 0;
-	} else if (IGMP_V2_SEEN(in_dev)) {
+	पूर्ण अन्यथा अगर (IGMP_V2_SEEN(in_dev)) अणु
 		/* this is a v3 query with v2 queriers present;
 		 * Interpretation of the max_delay code is problematic here.
-		 * A real v2 host would use ih_code directly, while v3 has a
-		 * different encoding. We use the v3 encoding as more likely
-		 * to be intended in a v3 query.
+		 * A real v2 host would use ih_code directly, जबतक v3 has a
+		 * dअगरferent encoding. We use the v3 encoding as more likely
+		 * to be पूर्णांकended in a v3 query.
 		 */
 		max_delay = IGMPV3_MRC(ih3->code)*(HZ/IGMP_TIMER_SCALE);
-		if (!max_delay)
+		अगर (!max_delay)
 			max_delay = 1;	/* can't mod w/ 0 */
-	} else { /* v3 */
-		if (!pskb_may_pull(skb, sizeof(struct igmpv3_query)))
-			return true;
+	पूर्ण अन्यथा अणु /* v3 */
+		अगर (!pskb_may_pull(skb, माप(काष्ठा igmpv3_query)))
+			वापस true;
 
 		ih3 = igmpv3_query_hdr(skb);
-		if (ih3->nsrcs) {
-			if (!pskb_may_pull(skb, sizeof(struct igmpv3_query)
-					   + ntohs(ih3->nsrcs)*sizeof(__be32)))
-				return true;
+		अगर (ih3->nsrcs) अणु
+			अगर (!pskb_may_pull(skb, माप(काष्ठा igmpv3_query)
+					   + ntohs(ih3->nsrcs)*माप(__be32)))
+				वापस true;
 			ih3 = igmpv3_query_hdr(skb);
-		}
+		पूर्ण
 
 		max_delay = IGMPV3_MRC(ih3->code)*(HZ/IGMP_TIMER_SCALE);
-		if (!max_delay)
+		अगर (!max_delay)
 			max_delay = 1;	/* can't mod w/ 0 */
 		in_dev->mr_maxdelay = max_delay;
 
 		/* RFC3376, 4.1.6. QRV and 4.1.7. QQIC, when the most recently
-		 * received value was zero, use the default or statically
+		 * received value was zero, use the शेष or अटलally
 		 * configured value.
 		 */
 		in_dev->mr_qrv = ih3->qrv ?: net->ipv4.sysctl_igmp_qrv;
@@ -1006,2074 +1007,2074 @@ static bool igmp_heard_query(struct in_device *in_dev, struct sk_buff *skb,
 		 * The number of seconds represented by the [Query Response
 		 * Interval] must be less than the [Query Interval].
 		 */
-		if (in_dev->mr_qri >= in_dev->mr_qi)
+		अगर (in_dev->mr_qri >= in_dev->mr_qi)
 			in_dev->mr_qri = (in_dev->mr_qi/HZ - 1)*HZ;
 
-		if (!group) { /* general query */
-			if (ih3->nsrcs)
-				return true;	/* no sources allowed */
-			igmp_gq_start_timer(in_dev);
-			return false;
-		}
-		/* mark sources to include, if group & source-specific */
+		अगर (!group) अणु /* general query */
+			अगर (ih3->nsrcs)
+				वापस true;	/* no sources allowed */
+			igmp_gq_start_समयr(in_dev);
+			वापस false;
+		पूर्ण
+		/* mark sources to include, अगर group & source-specअगरic */
 		mark = ih3->nsrcs != 0;
-	}
+	पूर्ण
 
 	/*
-	 * - Start the timers in all of our membership records
-	 *   that the query applies to for the interface on
-	 *   which the query arrived excl. those that belong
+	 * - Start the समयrs in all of our membership records
+	 *   that the query applies to क्रम the पूर्णांकerface on
+	 *   which the query arrived excl. those that beदीर्घ
 	 *   to a "local" group (224.0.0.X)
-	 * - For timers already running check if they need to
+	 * - For समयrs alपढ़ोy running check अगर they need to
 	 *   be reset.
 	 * - Use the igmp->igmp_code field as the maximum
 	 *   delay possible
 	 */
-	rcu_read_lock();
-	for_each_pmc_rcu(in_dev, im) {
-		int changed;
+	rcu_पढ़ो_lock();
+	क्रम_each_pmc_rcu(in_dev, im) अणु
+		पूर्णांक changed;
 
-		if (group && group != im->multiaddr)
-			continue;
-		if (im->multiaddr == IGMP_ALL_HOSTS)
-			continue;
-		if (ipv4_is_local_multicast(im->multiaddr) &&
+		अगर (group && group != im->multiaddr)
+			जारी;
+		अगर (im->multiaddr == IGMP_ALL_HOSTS)
+			जारी;
+		अगर (ipv4_is_local_multicast(im->multiaddr) &&
 		    !net->ipv4.sysctl_igmp_llm_reports)
-			continue;
+			जारी;
 		spin_lock_bh(&im->lock);
-		if (im->tm_running)
+		अगर (im->पंचांग_running)
 			im->gsquery = im->gsquery && mark;
-		else
+		अन्यथा
 			im->gsquery = mark;
 		changed = !im->gsquery ||
 			igmp_marksources(im, ntohs(ih3->nsrcs), ih3->srcs);
 		spin_unlock_bh(&im->lock);
-		if (changed)
-			igmp_mod_timer(im, max_delay);
-	}
-	rcu_read_unlock();
-	return false;
-}
+		अगर (changed)
+			igmp_mod_समयr(im, max_delay);
+	पूर्ण
+	rcu_पढ़ो_unlock();
+	वापस false;
+पूर्ण
 
-/* called in rcu_read_lock() section */
-int igmp_rcv(struct sk_buff *skb)
-{
+/* called in rcu_पढ़ो_lock() section */
+पूर्णांक igmp_rcv(काष्ठा sk_buff *skb)
+अणु
 	/* This basically follows the spec line by line -- see RFC1112 */
-	struct igmphdr *ih;
-	struct net_device *dev = skb->dev;
-	struct in_device *in_dev;
-	int len = skb->len;
+	काष्ठा igmphdr *ih;
+	काष्ठा net_device *dev = skb->dev;
+	काष्ठा in_device *in_dev;
+	पूर्णांक len = skb->len;
 	bool dropped = true;
 
-	if (netif_is_l3_master(dev)) {
-		dev = dev_get_by_index_rcu(dev_net(dev), IPCB(skb)->iif);
-		if (!dev)
-			goto drop;
-	}
+	अगर (netअगर_is_l3_master(dev)) अणु
+		dev = dev_get_by_index_rcu(dev_net(dev), IPCB(skb)->iअगर);
+		अगर (!dev)
+			जाओ drop;
+	पूर्ण
 
 	in_dev = __in_dev_get_rcu(dev);
-	if (!in_dev)
-		goto drop;
+	अगर (!in_dev)
+		जाओ drop;
 
-	if (!pskb_may_pull(skb, sizeof(struct igmphdr)))
-		goto drop;
+	अगर (!pskb_may_pull(skb, माप(काष्ठा igmphdr)))
+		जाओ drop;
 
-	if (skb_checksum_simple_validate(skb))
-		goto drop;
+	अगर (skb_checksum_simple_validate(skb))
+		जाओ drop;
 
 	ih = igmp_hdr(skb);
-	switch (ih->type) {
-	case IGMP_HOST_MEMBERSHIP_QUERY:
+	चयन (ih->type) अणु
+	हाल IGMP_HOST_MEMBERSHIP_QUERY:
 		dropped = igmp_heard_query(in_dev, skb, len);
-		break;
-	case IGMP_HOST_MEMBERSHIP_REPORT:
-	case IGMPV2_HOST_MEMBERSHIP_REPORT:
+		अवरोध;
+	हाल IGMP_HOST_MEMBERSHIP_REPORT:
+	हाल IGMPV2_HOST_MEMBERSHIP_REPORT:
 		/* Is it our report looped back? */
-		if (rt_is_output_route(skb_rtable(skb)))
-			break;
-		/* don't rely on MC router hearing unicast reports */
-		if (skb->pkt_type == PACKET_MULTICAST ||
+		अगर (rt_is_output_route(skb_rtable(skb)))
+			अवरोध;
+		/* करोn't rely on MC router hearing unicast reports */
+		अगर (skb->pkt_type == PACKET_MULTICAST ||
 		    skb->pkt_type == PACKET_BROADCAST)
 			dropped = igmp_heard_report(in_dev, ih->group);
-		break;
-	case IGMP_PIM:
-#ifdef CONFIG_IP_PIMSM_V1
-		return pim_rcv_v1(skb);
-#endif
-	case IGMPV3_HOST_MEMBERSHIP_REPORT:
-	case IGMP_DVMRP:
-	case IGMP_TRACE:
-	case IGMP_HOST_LEAVE_MESSAGE:
-	case IGMP_MTRACE:
-	case IGMP_MTRACE_RESP:
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	हाल IGMP_PIM:
+#अगर_घोषित CONFIG_IP_PIMSM_V1
+		वापस pim_rcv_v1(skb);
+#पूर्ण_अगर
+	हाल IGMPV3_HOST_MEMBERSHIP_REPORT:
+	हाल IGMP_DVMRP:
+	हाल IGMP_TRACE:
+	हाल IGMP_HOST_LEAVE_MESSAGE:
+	हाल IGMP_MTRACE:
+	हाल IGMP_MTRACE_RESP:
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 drop:
-	if (dropped)
-		kfree_skb(skb);
-	else
+	अगर (dropped)
+		kमुक्त_skb(skb);
+	अन्यथा
 		consume_skb(skb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 
 /*
  *	Add a filter to a device
  */
 
-static void ip_mc_filter_add(struct in_device *in_dev, __be32 addr)
-{
-	char buf[MAX_ADDR_LEN];
-	struct net_device *dev = in_dev->dev;
+अटल व्योम ip_mc_filter_add(काष्ठा in_device *in_dev, __be32 addr)
+अणु
+	अक्षर buf[MAX_ADDR_LEN];
+	काष्ठा net_device *dev = in_dev->dev;
 
-	/* Checking for IFF_MULTICAST here is WRONG-WRONG-WRONG.
+	/* Checking क्रम IFF_MULTICAST here is WRONG-WRONG-WRONG.
 	   We will get multicast token leakage, when IFF_MULTICAST
-	   is changed. This check should be done in ndo_set_rx_mode
+	   is changed. This check should be करोne in nकरो_set_rx_mode
 	   routine. Something sort of:
-	   if (dev->mc_list && dev->flags&IFF_MULTICAST) { do it; }
+	   अगर (dev->mc_list && dev->flags&IFF_MULTICAST) अणु करो it; पूर्ण
 	   --ANK
 	   */
-	if (arp_mc_map(addr, buf, dev, 0) == 0)
+	अगर (arp_mc_map(addr, buf, dev, 0) == 0)
 		dev_mc_add(dev, buf);
-}
+पूर्ण
 
 /*
  *	Remove a filter from a device
  */
 
-static void ip_mc_filter_del(struct in_device *in_dev, __be32 addr)
-{
-	char buf[MAX_ADDR_LEN];
-	struct net_device *dev = in_dev->dev;
+अटल व्योम ip_mc_filter_del(काष्ठा in_device *in_dev, __be32 addr)
+अणु
+	अक्षर buf[MAX_ADDR_LEN];
+	काष्ठा net_device *dev = in_dev->dev;
 
-	if (arp_mc_map(addr, buf, dev, 0) == 0)
+	अगर (arp_mc_map(addr, buf, dev, 0) == 0)
 		dev_mc_del(dev, buf);
-}
+पूर्ण
 
-#ifdef CONFIG_IP_MULTICAST
+#अगर_घोषित CONFIG_IP_MULTICAST
 /*
  * deleted ip_mc_list manipulation
  */
-static void igmpv3_add_delrec(struct in_device *in_dev, struct ip_mc_list *im,
+अटल व्योम igmpv3_add_delrec(काष्ठा in_device *in_dev, काष्ठा ip_mc_list *im,
 			      gfp_t gfp)
-{
-	struct ip_mc_list *pmc;
-	struct net *net = dev_net(in_dev->dev);
+अणु
+	काष्ठा ip_mc_list *pmc;
+	काष्ठा net *net = dev_net(in_dev->dev);
 
-	/* this is an "ip_mc_list" for convenience; only the fields below
+	/* this is an "ip_mc_list" क्रम convenience; only the fields below
 	 * are actually used. In particular, the refcnt and users are not
-	 * used for management of the delete list. Using the same structure
-	 * for deleted items allows change reports to use common code with
+	 * used क्रम management of the delete list. Using the same काष्ठाure
+	 * क्रम deleted items allows change reports to use common code with
 	 * non-deleted or query-response MCA's.
 	 */
-	pmc = kzalloc(sizeof(*pmc), gfp);
-	if (!pmc)
-		return;
+	pmc = kzalloc(माप(*pmc), gfp);
+	अगर (!pmc)
+		वापस;
 	spin_lock_init(&pmc->lock);
 	spin_lock_bh(&im->lock);
-	pmc->interface = im->interface;
+	pmc->पूर्णांकerface = im->पूर्णांकerface;
 	in_dev_hold(in_dev);
 	pmc->multiaddr = im->multiaddr;
 	pmc->crcount = in_dev->mr_qrv ?: net->ipv4.sysctl_igmp_qrv;
-	pmc->sfmode = im->sfmode;
-	if (pmc->sfmode == MCAST_INCLUDE) {
-		struct ip_sf_list *psf;
+	pmc->sभ_शेषe = im->sभ_शेषe;
+	अगर (pmc->sभ_शेषe == MCAST_INCLUDE) अणु
+		काष्ठा ip_sf_list *psf;
 
 		pmc->tomb = im->tomb;
 		pmc->sources = im->sources;
-		im->tomb = im->sources = NULL;
-		for (psf = pmc->sources; psf; psf = psf->sf_next)
+		im->tomb = im->sources = शून्य;
+		क्रम (psf = pmc->sources; psf; psf = psf->sf_next)
 			psf->sf_crcount = pmc->crcount;
-	}
+	पूर्ण
 	spin_unlock_bh(&im->lock);
 
 	spin_lock_bh(&in_dev->mc_tomb_lock);
 	pmc->next = in_dev->mc_tomb;
 	in_dev->mc_tomb = pmc;
 	spin_unlock_bh(&in_dev->mc_tomb_lock);
-}
+पूर्ण
 
 /*
  * restore ip_mc_list deleted records
  */
-static void igmpv3_del_delrec(struct in_device *in_dev, struct ip_mc_list *im)
-{
-	struct ip_mc_list *pmc, *pmc_prev;
-	struct ip_sf_list *psf;
-	struct net *net = dev_net(in_dev->dev);
+अटल व्योम igmpv3_del_delrec(काष्ठा in_device *in_dev, काष्ठा ip_mc_list *im)
+अणु
+	काष्ठा ip_mc_list *pmc, *pmc_prev;
+	काष्ठा ip_sf_list *psf;
+	काष्ठा net *net = dev_net(in_dev->dev);
 	__be32 multiaddr = im->multiaddr;
 
 	spin_lock_bh(&in_dev->mc_tomb_lock);
-	pmc_prev = NULL;
-	for (pmc = in_dev->mc_tomb; pmc; pmc = pmc->next) {
-		if (pmc->multiaddr == multiaddr)
-			break;
+	pmc_prev = शून्य;
+	क्रम (pmc = in_dev->mc_tomb; pmc; pmc = pmc->next) अणु
+		अगर (pmc->multiaddr == multiaddr)
+			अवरोध;
 		pmc_prev = pmc;
-	}
-	if (pmc) {
-		if (pmc_prev)
+	पूर्ण
+	अगर (pmc) अणु
+		अगर (pmc_prev)
 			pmc_prev->next = pmc->next;
-		else
+		अन्यथा
 			in_dev->mc_tomb = pmc->next;
-	}
+	पूर्ण
 	spin_unlock_bh(&in_dev->mc_tomb_lock);
 
 	spin_lock_bh(&im->lock);
-	if (pmc) {
-		im->interface = pmc->interface;
-		if (im->sfmode == MCAST_INCLUDE) {
+	अगर (pmc) अणु
+		im->पूर्णांकerface = pmc->पूर्णांकerface;
+		अगर (im->sभ_शेषe == MCAST_INCLUDE) अणु
 			swap(im->tomb, pmc->tomb);
 			swap(im->sources, pmc->sources);
-			for (psf = im->sources; psf; psf = psf->sf_next)
+			क्रम (psf = im->sources; psf; psf = psf->sf_next)
 				psf->sf_crcount = in_dev->mr_qrv ?: net->ipv4.sysctl_igmp_qrv;
-		} else {
+		पूर्ण अन्यथा अणु
 			im->crcount = in_dev->mr_qrv ?: net->ipv4.sysctl_igmp_qrv;
-		}
-		in_dev_put(pmc->interface);
-		kfree_pmc(pmc);
-	}
+		पूर्ण
+		in_dev_put(pmc->पूर्णांकerface);
+		kमुक्त_pmc(pmc);
+	पूर्ण
 	spin_unlock_bh(&im->lock);
-}
+पूर्ण
 
 /*
  * flush ip_mc_list deleted records
  */
-static void igmpv3_clear_delrec(struct in_device *in_dev)
-{
-	struct ip_mc_list *pmc, *nextpmc;
+अटल व्योम igmpv3_clear_delrec(काष्ठा in_device *in_dev)
+अणु
+	काष्ठा ip_mc_list *pmc, *nextpmc;
 
 	spin_lock_bh(&in_dev->mc_tomb_lock);
 	pmc = in_dev->mc_tomb;
-	in_dev->mc_tomb = NULL;
+	in_dev->mc_tomb = शून्य;
 	spin_unlock_bh(&in_dev->mc_tomb_lock);
 
-	for (; pmc; pmc = nextpmc) {
+	क्रम (; pmc; pmc = nextpmc) अणु
 		nextpmc = pmc->next;
 		ip_mc_clear_src(pmc);
-		in_dev_put(pmc->interface);
-		kfree_pmc(pmc);
-	}
+		in_dev_put(pmc->पूर्णांकerface);
+		kमुक्त_pmc(pmc);
+	पूर्ण
 	/* clear dead sources, too */
-	rcu_read_lock();
-	for_each_pmc_rcu(in_dev, pmc) {
-		struct ip_sf_list *psf;
+	rcu_पढ़ो_lock();
+	क्रम_each_pmc_rcu(in_dev, pmc) अणु
+		काष्ठा ip_sf_list *psf;
 
 		spin_lock_bh(&pmc->lock);
 		psf = pmc->tomb;
-		pmc->tomb = NULL;
+		pmc->tomb = शून्य;
 		spin_unlock_bh(&pmc->lock);
 		ip_sf_list_clear_all(psf);
-	}
-	rcu_read_unlock();
-}
-#endif
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
+#पूर्ण_अगर
 
-static void __igmp_group_dropped(struct ip_mc_list *im, gfp_t gfp)
-{
-	struct in_device *in_dev = im->interface;
-#ifdef CONFIG_IP_MULTICAST
-	struct net *net = dev_net(in_dev->dev);
-	int reporter;
-#endif
+अटल व्योम __igmp_group_dropped(काष्ठा ip_mc_list *im, gfp_t gfp)
+अणु
+	काष्ठा in_device *in_dev = im->पूर्णांकerface;
+#अगर_घोषित CONFIG_IP_MULTICAST
+	काष्ठा net *net = dev_net(in_dev->dev);
+	पूर्णांक reporter;
+#पूर्ण_अगर
 
-	if (im->loaded) {
+	अगर (im->loaded) अणु
 		im->loaded = 0;
 		ip_mc_filter_del(in_dev, im->multiaddr);
-	}
+	पूर्ण
 
-#ifdef CONFIG_IP_MULTICAST
-	if (im->multiaddr == IGMP_ALL_HOSTS)
-		return;
-	if (ipv4_is_local_multicast(im->multiaddr) && !net->ipv4.sysctl_igmp_llm_reports)
-		return;
+#अगर_घोषित CONFIG_IP_MULTICAST
+	अगर (im->multiaddr == IGMP_ALL_HOSTS)
+		वापस;
+	अगर (ipv4_is_local_multicast(im->multiaddr) && !net->ipv4.sysctl_igmp_llm_reports)
+		वापस;
 
 	reporter = im->reporter;
-	igmp_stop_timer(im);
+	igmp_stop_समयr(im);
 
-	if (!in_dev->dead) {
-		if (IGMP_V1_SEEN(in_dev))
-			return;
-		if (IGMP_V2_SEEN(in_dev)) {
-			if (reporter)
+	अगर (!in_dev->dead) अणु
+		अगर (IGMP_V1_SEEN(in_dev))
+			वापस;
+		अगर (IGMP_V2_SEEN(in_dev)) अणु
+			अगर (reporter)
 				igmp_send_report(in_dev, im, IGMP_HOST_LEAVE_MESSAGE);
-			return;
-		}
+			वापस;
+		पूर्ण
 		/* IGMPv3 */
 		igmpv3_add_delrec(in_dev, im, gfp);
 
-		igmp_ifc_event(in_dev);
-	}
-#endif
-}
+		igmp_अगरc_event(in_dev);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void igmp_group_dropped(struct ip_mc_list *im)
-{
+अटल व्योम igmp_group_dropped(काष्ठा ip_mc_list *im)
+अणु
 	__igmp_group_dropped(im, GFP_KERNEL);
-}
+पूर्ण
 
-static void igmp_group_added(struct ip_mc_list *im)
-{
-	struct in_device *in_dev = im->interface;
-#ifdef CONFIG_IP_MULTICAST
-	struct net *net = dev_net(in_dev->dev);
-#endif
+अटल व्योम igmp_group_added(काष्ठा ip_mc_list *im)
+अणु
+	काष्ठा in_device *in_dev = im->पूर्णांकerface;
+#अगर_घोषित CONFIG_IP_MULTICAST
+	काष्ठा net *net = dev_net(in_dev->dev);
+#पूर्ण_अगर
 
-	if (im->loaded == 0) {
+	अगर (im->loaded == 0) अणु
 		im->loaded = 1;
 		ip_mc_filter_add(in_dev, im->multiaddr);
-	}
+	पूर्ण
 
-#ifdef CONFIG_IP_MULTICAST
-	if (im->multiaddr == IGMP_ALL_HOSTS)
-		return;
-	if (ipv4_is_local_multicast(im->multiaddr) && !net->ipv4.sysctl_igmp_llm_reports)
-		return;
+#अगर_घोषित CONFIG_IP_MULTICAST
+	अगर (im->multiaddr == IGMP_ALL_HOSTS)
+		वापस;
+	अगर (ipv4_is_local_multicast(im->multiaddr) && !net->ipv4.sysctl_igmp_llm_reports)
+		वापस;
 
-	if (in_dev->dead)
-		return;
+	अगर (in_dev->dead)
+		वापस;
 
 	im->unsolicit_count = net->ipv4.sysctl_igmp_qrv;
-	if (IGMP_V1_SEEN(in_dev) || IGMP_V2_SEEN(in_dev)) {
+	अगर (IGMP_V1_SEEN(in_dev) || IGMP_V2_SEEN(in_dev)) अणु
 		spin_lock_bh(&im->lock);
-		igmp_start_timer(im, IGMP_INITIAL_REPORT_DELAY);
+		igmp_start_समयr(im, IGMP_INITIAL_REPORT_DELAY);
 		spin_unlock_bh(&im->lock);
-		return;
-	}
-	/* else, v3 */
+		वापस;
+	पूर्ण
+	/* अन्यथा, v3 */
 
-	/* Based on RFC3376 5.1, for newly added INCLUDE SSM, we should
+	/* Based on RFC3376 5.1, क्रम newly added INCLUDE SSM, we should
 	 * not send filter-mode change record as the mode should be from
 	 * IN() to IN(A).
 	 */
-	if (im->sfmode == MCAST_EXCLUDE)
+	अगर (im->sभ_शेषe == MCAST_EXCLUDE)
 		im->crcount = in_dev->mr_qrv ?: net->ipv4.sysctl_igmp_qrv;
 
-	igmp_ifc_event(in_dev);
-#endif
-}
+	igmp_अगरc_event(in_dev);
+#पूर्ण_अगर
+पूर्ण
 
 
 /*
  *	Multicast list managers
  */
 
-static u32 ip_mc_hash(const struct ip_mc_list *im)
-{
-	return hash_32((__force u32)im->multiaddr, MC_HASH_SZ_LOG);
-}
+अटल u32 ip_mc_hash(स्थिर काष्ठा ip_mc_list *im)
+अणु
+	वापस hash_32((__क्रमce u32)im->multiaddr, MC_HASH_SZ_LOG);
+पूर्ण
 
-static void ip_mc_hash_add(struct in_device *in_dev,
-			   struct ip_mc_list *im)
-{
-	struct ip_mc_list __rcu **mc_hash;
+अटल व्योम ip_mc_hash_add(काष्ठा in_device *in_dev,
+			   काष्ठा ip_mc_list *im)
+अणु
+	काष्ठा ip_mc_list __rcu **mc_hash;
 	u32 hash;
 
 	mc_hash = rtnl_dereference(in_dev->mc_hash);
-	if (mc_hash) {
+	अगर (mc_hash) अणु
 		hash = ip_mc_hash(im);
 		im->next_hash = mc_hash[hash];
-		rcu_assign_pointer(mc_hash[hash], im);
-		return;
-	}
+		rcu_assign_poपूर्णांकer(mc_hash[hash], im);
+		वापस;
+	पूर्ण
 
-	/* do not use a hash table for small number of items */
-	if (in_dev->mc_count < 4)
-		return;
+	/* करो not use a hash table क्रम small number of items */
+	अगर (in_dev->mc_count < 4)
+		वापस;
 
-	mc_hash = kzalloc(sizeof(struct ip_mc_list *) << MC_HASH_SZ_LOG,
+	mc_hash = kzalloc(माप(काष्ठा ip_mc_list *) << MC_HASH_SZ_LOG,
 			  GFP_KERNEL);
-	if (!mc_hash)
-		return;
+	अगर (!mc_hash)
+		वापस;
 
-	for_each_pmc_rtnl(in_dev, im) {
+	क्रम_each_pmc_rtnl(in_dev, im) अणु
 		hash = ip_mc_hash(im);
 		im->next_hash = mc_hash[hash];
 		RCU_INIT_POINTER(mc_hash[hash], im);
-	}
+	पूर्ण
 
-	rcu_assign_pointer(in_dev->mc_hash, mc_hash);
-}
+	rcu_assign_poपूर्णांकer(in_dev->mc_hash, mc_hash);
+पूर्ण
 
-static void ip_mc_hash_remove(struct in_device *in_dev,
-			      struct ip_mc_list *im)
-{
-	struct ip_mc_list __rcu **mc_hash = rtnl_dereference(in_dev->mc_hash);
-	struct ip_mc_list *aux;
+अटल व्योम ip_mc_hash_हटाओ(काष्ठा in_device *in_dev,
+			      काष्ठा ip_mc_list *im)
+अणु
+	काष्ठा ip_mc_list __rcu **mc_hash = rtnl_dereference(in_dev->mc_hash);
+	काष्ठा ip_mc_list *aux;
 
-	if (!mc_hash)
-		return;
+	अगर (!mc_hash)
+		वापस;
 	mc_hash += ip_mc_hash(im);
-	while ((aux = rtnl_dereference(*mc_hash)) != im)
+	जबतक ((aux = rtnl_dereference(*mc_hash)) != im)
 		mc_hash = &aux->next_hash;
 	*mc_hash = im->next_hash;
-}
+पूर्ण
 
 
 /*
  *	A socket has joined a multicast group on device dev.
  */
-static void ____ip_mc_inc_group(struct in_device *in_dev, __be32 addr,
-				unsigned int mode, gfp_t gfp)
-{
-	struct ip_mc_list *im;
+अटल व्योम ____ip_mc_inc_group(काष्ठा in_device *in_dev, __be32 addr,
+				अचिन्हित पूर्णांक mode, gfp_t gfp)
+अणु
+	काष्ठा ip_mc_list *im;
 
 	ASSERT_RTNL();
 
-	for_each_pmc_rtnl(in_dev, im) {
-		if (im->multiaddr == addr) {
+	क्रम_each_pmc_rtnl(in_dev, im) अणु
+		अगर (im->multiaddr == addr) अणु
 			im->users++;
-			ip_mc_add_src(in_dev, &addr, mode, 0, NULL, 0);
-			goto out;
-		}
-	}
+			ip_mc_add_src(in_dev, &addr, mode, 0, शून्य, 0);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	im = kzalloc(sizeof(*im), gfp);
-	if (!im)
-		goto out;
+	im = kzalloc(माप(*im), gfp);
+	अगर (!im)
+		जाओ out;
 
 	im->users = 1;
-	im->interface = in_dev;
+	im->पूर्णांकerface = in_dev;
 	in_dev_hold(in_dev);
 	im->multiaddr = addr;
 	/* initial mode is (EX, empty) */
-	im->sfmode = mode;
+	im->sभ_शेषe = mode;
 	im->sfcount[mode] = 1;
 	refcount_set(&im->refcnt, 1);
 	spin_lock_init(&im->lock);
-#ifdef CONFIG_IP_MULTICAST
-	timer_setup(&im->timer, igmp_timer_expire, 0);
-#endif
+#अगर_घोषित CONFIG_IP_MULTICAST
+	समयr_setup(&im->समयr, igmp_समयr_expire, 0);
+#पूर्ण_अगर
 
 	im->next_rcu = in_dev->mc_list;
 	in_dev->mc_count++;
-	rcu_assign_pointer(in_dev->mc_list, im);
+	rcu_assign_poपूर्णांकer(in_dev->mc_list, im);
 
 	ip_mc_hash_add(in_dev, im);
 
-#ifdef CONFIG_IP_MULTICAST
+#अगर_घोषित CONFIG_IP_MULTICAST
 	igmpv3_del_delrec(in_dev, im);
-#endif
+#पूर्ण_अगर
 	igmp_group_added(im);
-	if (!in_dev->dead)
+	अगर (!in_dev->dead)
 		ip_rt_multicast_event(in_dev);
 out:
-	return;
-}
+	वापस;
+पूर्ण
 
-void __ip_mc_inc_group(struct in_device *in_dev, __be32 addr, gfp_t gfp)
-{
+व्योम __ip_mc_inc_group(काष्ठा in_device *in_dev, __be32 addr, gfp_t gfp)
+अणु
 	____ip_mc_inc_group(in_dev, addr, MCAST_EXCLUDE, gfp);
-}
+पूर्ण
 EXPORT_SYMBOL(__ip_mc_inc_group);
 
-void ip_mc_inc_group(struct in_device *in_dev, __be32 addr)
-{
+व्योम ip_mc_inc_group(काष्ठा in_device *in_dev, __be32 addr)
+अणु
 	__ip_mc_inc_group(in_dev, addr, GFP_KERNEL);
-}
+पूर्ण
 EXPORT_SYMBOL(ip_mc_inc_group);
 
-static int ip_mc_check_iphdr(struct sk_buff *skb)
-{
-	const struct iphdr *iph;
-	unsigned int len;
-	unsigned int offset = skb_network_offset(skb) + sizeof(*iph);
+अटल पूर्णांक ip_mc_check_iphdr(काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा iphdr *iph;
+	अचिन्हित पूर्णांक len;
+	अचिन्हित पूर्णांक offset = skb_network_offset(skb) + माप(*iph);
 
-	if (!pskb_may_pull(skb, offset))
-		return -EINVAL;
-
-	iph = ip_hdr(skb);
-
-	if (iph->version != 4 || ip_hdrlen(skb) < sizeof(*iph))
-		return -EINVAL;
-
-	offset += ip_hdrlen(skb) - sizeof(*iph);
-
-	if (!pskb_may_pull(skb, offset))
-		return -EINVAL;
+	अगर (!pskb_may_pull(skb, offset))
+		वापस -EINVAL;
 
 	iph = ip_hdr(skb);
 
-	if (unlikely(ip_fast_csum((u8 *)iph, iph->ihl)))
-		return -EINVAL;
+	अगर (iph->version != 4 || ip_hdrlen(skb) < माप(*iph))
+		वापस -EINVAL;
+
+	offset += ip_hdrlen(skb) - माप(*iph);
+
+	अगर (!pskb_may_pull(skb, offset))
+		वापस -EINVAL;
+
+	iph = ip_hdr(skb);
+
+	अगर (unlikely(ip_fast_csum((u8 *)iph, iph->ihl)))
+		वापस -EINVAL;
 
 	len = skb_network_offset(skb) + ntohs(iph->tot_len);
-	if (skb->len < len || len < offset)
-		return -EINVAL;
+	अगर (skb->len < len || len < offset)
+		वापस -EINVAL;
 
 	skb_set_transport_header(skb, offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip_mc_check_igmp_reportv3(struct sk_buff *skb)
-{
-	unsigned int len = skb_transport_offset(skb);
+अटल पूर्णांक ip_mc_check_igmp_reportv3(काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक len = skb_transport_offset(skb);
 
-	len += sizeof(struct igmpv3_report);
+	len += माप(काष्ठा igmpv3_report);
 
-	return ip_mc_may_pull(skb, len) ? 0 : -EINVAL;
-}
+	वापस ip_mc_may_pull(skb, len) ? 0 : -EINVAL;
+पूर्ण
 
-static int ip_mc_check_igmp_query(struct sk_buff *skb)
-{
-	unsigned int transport_len = ip_transport_len(skb);
-	unsigned int len;
+अटल पूर्णांक ip_mc_check_igmp_query(काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक transport_len = ip_transport_len(skb);
+	अचिन्हित पूर्णांक len;
 
-	/* IGMPv{1,2}? */
-	if (transport_len != sizeof(struct igmphdr)) {
+	/* IGMPvअणु1,2पूर्ण? */
+	अगर (transport_len != माप(काष्ठा igmphdr)) अणु
 		/* or IGMPv3? */
-		if (transport_len < sizeof(struct igmpv3_query))
-			return -EINVAL;
+		अगर (transport_len < माप(काष्ठा igmpv3_query))
+			वापस -EINVAL;
 
-		len = skb_transport_offset(skb) + sizeof(struct igmpv3_query);
-		if (!ip_mc_may_pull(skb, len))
-			return -EINVAL;
-	}
+		len = skb_transport_offset(skb) + माप(काष्ठा igmpv3_query);
+		अगर (!ip_mc_may_pull(skb, len))
+			वापस -EINVAL;
+	पूर्ण
 
 	/* RFC2236+RFC3376 (IGMPv2+IGMPv3) require the multicast link layer
-	 * all-systems destination addresses (224.0.0.1) for general queries
+	 * all-प्रणालीs destination addresses (224.0.0.1) क्रम general queries
 	 */
-	if (!igmp_hdr(skb)->group &&
+	अगर (!igmp_hdr(skb)->group &&
 	    ip_hdr(skb)->daddr != htonl(INADDR_ALLHOSTS_GROUP))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ip_mc_check_igmp_msg(struct sk_buff *skb)
-{
-	switch (igmp_hdr(skb)->type) {
-	case IGMP_HOST_LEAVE_MESSAGE:
-	case IGMP_HOST_MEMBERSHIP_REPORT:
-	case IGMPV2_HOST_MEMBERSHIP_REPORT:
-		return 0;
-	case IGMPV3_HOST_MEMBERSHIP_REPORT:
-		return ip_mc_check_igmp_reportv3(skb);
-	case IGMP_HOST_MEMBERSHIP_QUERY:
-		return ip_mc_check_igmp_query(skb);
-	default:
-		return -ENOMSG;
-	}
-}
+अटल पूर्णांक ip_mc_check_igmp_msg(काष्ठा sk_buff *skb)
+अणु
+	चयन (igmp_hdr(skb)->type) अणु
+	हाल IGMP_HOST_LEAVE_MESSAGE:
+	हाल IGMP_HOST_MEMBERSHIP_REPORT:
+	हाल IGMPV2_HOST_MEMBERSHIP_REPORT:
+		वापस 0;
+	हाल IGMPV3_HOST_MEMBERSHIP_REPORT:
+		वापस ip_mc_check_igmp_reportv3(skb);
+	हाल IGMP_HOST_MEMBERSHIP_QUERY:
+		वापस ip_mc_check_igmp_query(skb);
+	शेष:
+		वापस -ENOMSG;
+	पूर्ण
+पूर्ण
 
-static __sum16 ip_mc_validate_checksum(struct sk_buff *skb)
-{
-	return skb_checksum_simple_validate(skb);
-}
+अटल __sum16 ip_mc_validate_checksum(काष्ठा sk_buff *skb)
+अणु
+	वापस skb_checksum_simple_validate(skb);
+पूर्ण
 
-static int ip_mc_check_igmp_csum(struct sk_buff *skb)
-{
-	unsigned int len = skb_transport_offset(skb) + sizeof(struct igmphdr);
-	unsigned int transport_len = ip_transport_len(skb);
-	struct sk_buff *skb_chk;
+अटल पूर्णांक ip_mc_check_igmp_csum(काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक len = skb_transport_offset(skb) + माप(काष्ठा igmphdr);
+	अचिन्हित पूर्णांक transport_len = ip_transport_len(skb);
+	काष्ठा sk_buff *skb_chk;
 
-	if (!ip_mc_may_pull(skb, len))
-		return -EINVAL;
+	अगर (!ip_mc_may_pull(skb, len))
+		वापस -EINVAL;
 
 	skb_chk = skb_checksum_trimmed(skb, transport_len,
 				       ip_mc_validate_checksum);
-	if (!skb_chk)
-		return -EINVAL;
+	अगर (!skb_chk)
+		वापस -EINVAL;
 
-	if (skb_chk != skb)
-		kfree_skb(skb_chk);
+	अगर (skb_chk != skb)
+		kमुक्त_skb(skb_chk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * ip_mc_check_igmp - checks whether this is a sane IGMP packet
  * @skb: the skb to validate
  *
  * Checks whether an IPv4 packet is a valid IGMP packet. If so sets
- * skb transport header accordingly and returns zero.
+ * skb transport header accordingly and वापसs zero.
  *
- * -EINVAL: A broken packet was detected, i.e. it violates some internet
+ * -EINVAL: A broken packet was detected, i.e. it violates some पूर्णांकernet
  *  standard
  * -ENOMSG: IP header validation succeeded but it is not an IGMP packet.
  * -ENOMEM: A memory allocation failure happened.
  *
- * Caller needs to set the skb network header and free any returned skb if it
- * differs from the provided skb.
+ * Caller needs to set the skb network header and मुक्त any वापसed skb अगर it
+ * dअगरfers from the provided skb.
  */
-int ip_mc_check_igmp(struct sk_buff *skb)
-{
-	int ret = ip_mc_check_iphdr(skb);
+पूर्णांक ip_mc_check_igmp(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret = ip_mc_check_iphdr(skb);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ip_hdr(skb)->protocol != IPPROTO_IGMP)
-		return -ENOMSG;
+	अगर (ip_hdr(skb)->protocol != IPPROTO_IGMP)
+		वापस -ENOMSG;
 
 	ret = ip_mc_check_igmp_csum(skb);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return ip_mc_check_igmp_msg(skb);
-}
+	वापस ip_mc_check_igmp_msg(skb);
+पूर्ण
 EXPORT_SYMBOL(ip_mc_check_igmp);
 
 /*
- *	Resend IGMP JOIN report; used by netdev notifier.
+ *	Resend IGMP JOIN report; used by netdev notअगरier.
  */
-static void ip_mc_rejoin_groups(struct in_device *in_dev)
-{
-#ifdef CONFIG_IP_MULTICAST
-	struct ip_mc_list *im;
-	int type;
-	struct net *net = dev_net(in_dev->dev);
+अटल व्योम ip_mc_rejoin_groups(काष्ठा in_device *in_dev)
+अणु
+#अगर_घोषित CONFIG_IP_MULTICAST
+	काष्ठा ip_mc_list *im;
+	पूर्णांक type;
+	काष्ठा net *net = dev_net(in_dev->dev);
 
 	ASSERT_RTNL();
 
-	for_each_pmc_rtnl(in_dev, im) {
-		if (im->multiaddr == IGMP_ALL_HOSTS)
-			continue;
-		if (ipv4_is_local_multicast(im->multiaddr) &&
+	क्रम_each_pmc_rtnl(in_dev, im) अणु
+		अगर (im->multiaddr == IGMP_ALL_HOSTS)
+			जारी;
+		अगर (ipv4_is_local_multicast(im->multiaddr) &&
 		    !net->ipv4.sysctl_igmp_llm_reports)
-			continue;
+			जारी;
 
-		/* a failover is happening and switches
-		 * must be notified immediately
+		/* a failover is happening and चयनes
+		 * must be notअगरied immediately
 		 */
-		if (IGMP_V1_SEEN(in_dev))
+		अगर (IGMP_V1_SEEN(in_dev))
 			type = IGMP_HOST_MEMBERSHIP_REPORT;
-		else if (IGMP_V2_SEEN(in_dev))
+		अन्यथा अगर (IGMP_V2_SEEN(in_dev))
 			type = IGMPV2_HOST_MEMBERSHIP_REPORT;
-		else
+		अन्यथा
 			type = IGMPV3_HOST_MEMBERSHIP_REPORT;
 		igmp_send_report(in_dev, im, type);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
 /*
  *	A socket has left a multicast group on device dev
  */
 
-void __ip_mc_dec_group(struct in_device *in_dev, __be32 addr, gfp_t gfp)
-{
-	struct ip_mc_list *i;
-	struct ip_mc_list __rcu **ip;
+व्योम __ip_mc_dec_group(काष्ठा in_device *in_dev, __be32 addr, gfp_t gfp)
+अणु
+	काष्ठा ip_mc_list *i;
+	काष्ठा ip_mc_list __rcu **ip;
 
 	ASSERT_RTNL();
 
-	for (ip = &in_dev->mc_list;
-	     (i = rtnl_dereference(*ip)) != NULL;
-	     ip = &i->next_rcu) {
-		if (i->multiaddr == addr) {
-			if (--i->users == 0) {
-				ip_mc_hash_remove(in_dev, i);
+	क्रम (ip = &in_dev->mc_list;
+	     (i = rtnl_dereference(*ip)) != शून्य;
+	     ip = &i->next_rcu) अणु
+		अगर (i->multiaddr == addr) अणु
+			अगर (--i->users == 0) अणु
+				ip_mc_hash_हटाओ(in_dev, i);
 				*ip = i->next_rcu;
 				in_dev->mc_count--;
 				__igmp_group_dropped(i, gfp);
 				ip_mc_clear_src(i);
 
-				if (!in_dev->dead)
+				अगर (!in_dev->dead)
 					ip_rt_multicast_event(in_dev);
 
 				ip_ma_put(i);
-				return;
-			}
-			break;
-		}
-	}
-}
+				वापस;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(__ip_mc_dec_group);
 
 /* Device changing type */
 
-void ip_mc_unmap(struct in_device *in_dev)
-{
-	struct ip_mc_list *pmc;
+व्योम ip_mc_unmap(काष्ठा in_device *in_dev)
+अणु
+	काष्ठा ip_mc_list *pmc;
 
 	ASSERT_RTNL();
 
-	for_each_pmc_rtnl(in_dev, pmc)
+	क्रम_each_pmc_rtnl(in_dev, pmc)
 		igmp_group_dropped(pmc);
-}
+पूर्ण
 
-void ip_mc_remap(struct in_device *in_dev)
-{
-	struct ip_mc_list *pmc;
+व्योम ip_mc_remap(काष्ठा in_device *in_dev)
+अणु
+	काष्ठा ip_mc_list *pmc;
 
 	ASSERT_RTNL();
 
-	for_each_pmc_rtnl(in_dev, pmc) {
-#ifdef CONFIG_IP_MULTICAST
+	क्रम_each_pmc_rtnl(in_dev, pmc) अणु
+#अगर_घोषित CONFIG_IP_MULTICAST
 		igmpv3_del_delrec(in_dev, pmc);
-#endif
+#पूर्ण_अगर
 		igmp_group_added(pmc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Device going down */
+/* Device going करोwn */
 
-void ip_mc_down(struct in_device *in_dev)
-{
-	struct ip_mc_list *pmc;
+व्योम ip_mc_करोwn(काष्ठा in_device *in_dev)
+अणु
+	काष्ठा ip_mc_list *pmc;
 
 	ASSERT_RTNL();
 
-	for_each_pmc_rtnl(in_dev, pmc)
+	क्रम_each_pmc_rtnl(in_dev, pmc)
 		igmp_group_dropped(pmc);
 
-#ifdef CONFIG_IP_MULTICAST
-	in_dev->mr_ifc_count = 0;
-	if (del_timer(&in_dev->mr_ifc_timer))
+#अगर_घोषित CONFIG_IP_MULTICAST
+	in_dev->mr_अगरc_count = 0;
+	अगर (del_समयr(&in_dev->mr_अगरc_समयr))
 		__in_dev_put(in_dev);
 	in_dev->mr_gq_running = 0;
-	if (del_timer(&in_dev->mr_gq_timer))
+	अगर (del_समयr(&in_dev->mr_gq_समयr))
 		__in_dev_put(in_dev);
-#endif
+#पूर्ण_अगर
 
 	ip_mc_dec_group(in_dev, IGMP_ALL_HOSTS);
-}
+पूर्ण
 
-#ifdef CONFIG_IP_MULTICAST
-static void ip_mc_reset(struct in_device *in_dev)
-{
-	struct net *net = dev_net(in_dev->dev);
+#अगर_घोषित CONFIG_IP_MULTICAST
+अटल व्योम ip_mc_reset(काष्ठा in_device *in_dev)
+अणु
+	काष्ठा net *net = dev_net(in_dev->dev);
 
 	in_dev->mr_qi = IGMP_QUERY_INTERVAL;
 	in_dev->mr_qri = IGMP_QUERY_RESPONSE_INTERVAL;
 	in_dev->mr_qrv = net->ipv4.sysctl_igmp_qrv;
-}
-#else
-static void ip_mc_reset(struct in_device *in_dev)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल व्योम ip_mc_reset(काष्ठा in_device *in_dev)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-void ip_mc_init_dev(struct in_device *in_dev)
-{
+व्योम ip_mc_init_dev(काष्ठा in_device *in_dev)
+अणु
 	ASSERT_RTNL();
 
-#ifdef CONFIG_IP_MULTICAST
-	timer_setup(&in_dev->mr_gq_timer, igmp_gq_timer_expire, 0);
-	timer_setup(&in_dev->mr_ifc_timer, igmp_ifc_timer_expire, 0);
-#endif
+#अगर_घोषित CONFIG_IP_MULTICAST
+	समयr_setup(&in_dev->mr_gq_समयr, igmp_gq_समयr_expire, 0);
+	समयr_setup(&in_dev->mr_अगरc_समयr, igmp_अगरc_समयr_expire, 0);
+#पूर्ण_अगर
 	ip_mc_reset(in_dev);
 
 	spin_lock_init(&in_dev->mc_tomb_lock);
-}
+पूर्ण
 
 /* Device going up */
 
-void ip_mc_up(struct in_device *in_dev)
-{
-	struct ip_mc_list *pmc;
+व्योम ip_mc_up(काष्ठा in_device *in_dev)
+अणु
+	काष्ठा ip_mc_list *pmc;
 
 	ASSERT_RTNL();
 
 	ip_mc_reset(in_dev);
 	ip_mc_inc_group(in_dev, IGMP_ALL_HOSTS);
 
-	for_each_pmc_rtnl(in_dev, pmc) {
-#ifdef CONFIG_IP_MULTICAST
+	क्रम_each_pmc_rtnl(in_dev, pmc) अणु
+#अगर_घोषित CONFIG_IP_MULTICAST
 		igmpv3_del_delrec(in_dev, pmc);
-#endif
+#पूर्ण_अगर
 		igmp_group_added(pmc);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	Device is about to be destroyed: clean up.
  */
 
-void ip_mc_destroy_dev(struct in_device *in_dev)
-{
-	struct ip_mc_list *i;
+व्योम ip_mc_destroy_dev(काष्ठा in_device *in_dev)
+अणु
+	काष्ठा ip_mc_list *i;
 
 	ASSERT_RTNL();
 
-	/* Deactivate timers */
-	ip_mc_down(in_dev);
-#ifdef CONFIG_IP_MULTICAST
+	/* Deactivate समयrs */
+	ip_mc_करोwn(in_dev);
+#अगर_घोषित CONFIG_IP_MULTICAST
 	igmpv3_clear_delrec(in_dev);
-#endif
+#पूर्ण_अगर
 
-	while ((i = rtnl_dereference(in_dev->mc_list)) != NULL) {
+	जबतक ((i = rtnl_dereference(in_dev->mc_list)) != शून्य) अणु
 		in_dev->mc_list = i->next_rcu;
 		in_dev->mc_count--;
 		ip_mc_clear_src(i);
 		ip_ma_put(i);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* RTNL is locked */
-static struct in_device *ip_mc_find_dev(struct net *net, struct ip_mreqn *imr)
-{
-	struct net_device *dev = NULL;
-	struct in_device *idev = NULL;
+अटल काष्ठा in_device *ip_mc_find_dev(काष्ठा net *net, काष्ठा ip_mreqn *imr)
+अणु
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा in_device *idev = शून्य;
 
-	if (imr->imr_ifindex) {
-		idev = inetdev_by_index(net, imr->imr_ifindex);
-		return idev;
-	}
-	if (imr->imr_address.s_addr) {
+	अगर (imr->imr_अगरindex) अणु
+		idev = inetdev_by_index(net, imr->imr_अगरindex);
+		वापस idev;
+	पूर्ण
+	अगर (imr->imr_address.s_addr) अणु
 		dev = __ip_dev_find(net, imr->imr_address.s_addr, false);
-		if (!dev)
-			return NULL;
-	}
+		अगर (!dev)
+			वापस शून्य;
+	पूर्ण
 
-	if (!dev) {
-		struct rtable *rt = ip_route_output(net,
+	अगर (!dev) अणु
+		काष्ठा rtable *rt = ip_route_output(net,
 						    imr->imr_multiaddr.s_addr,
 						    0, 0, 0);
-		if (!IS_ERR(rt)) {
+		अगर (!IS_ERR(rt)) अणु
 			dev = rt->dst.dev;
 			ip_rt_put(rt);
-		}
-	}
-	if (dev) {
-		imr->imr_ifindex = dev->ifindex;
+		पूर्ण
+	पूर्ण
+	अगर (dev) अणु
+		imr->imr_अगरindex = dev->अगरindex;
 		idev = __in_dev_get_rtnl(dev);
-	}
-	return idev;
-}
+	पूर्ण
+	वापस idev;
+पूर्ण
 
 /*
  *	Join a socket to a group
  */
 
-static int ip_mc_del1_src(struct ip_mc_list *pmc, int sfmode,
+अटल पूर्णांक ip_mc_del1_src(काष्ठा ip_mc_list *pmc, पूर्णांक sभ_शेषe,
 	__be32 *psfsrc)
-{
-	struct ip_sf_list *psf, *psf_prev;
-	int rv = 0;
+अणु
+	काष्ठा ip_sf_list *psf, *psf_prev;
+	पूर्णांक rv = 0;
 
-	psf_prev = NULL;
-	for (psf = pmc->sources; psf; psf = psf->sf_next) {
-		if (psf->sf_inaddr == *psfsrc)
-			break;
+	psf_prev = शून्य;
+	क्रम (psf = pmc->sources; psf; psf = psf->sf_next) अणु
+		अगर (psf->sf_inaddr == *psfsrc)
+			अवरोध;
 		psf_prev = psf;
-	}
-	if (!psf || psf->sf_count[sfmode] == 0) {
+	पूर्ण
+	अगर (!psf || psf->sf_count[sभ_शेषe] == 0) अणु
 		/* source filter not found, or count wrong =>  bug */
-		return -ESRCH;
-	}
-	psf->sf_count[sfmode]--;
-	if (psf->sf_count[sfmode] == 0) {
-		ip_rt_multicast_event(pmc->interface);
-	}
-	if (!psf->sf_count[MCAST_INCLUDE] && !psf->sf_count[MCAST_EXCLUDE]) {
-#ifdef CONFIG_IP_MULTICAST
-		struct in_device *in_dev = pmc->interface;
-		struct net *net = dev_net(in_dev->dev);
-#endif
+		वापस -ESRCH;
+	पूर्ण
+	psf->sf_count[sभ_शेषe]--;
+	अगर (psf->sf_count[sभ_शेषe] == 0) अणु
+		ip_rt_multicast_event(pmc->पूर्णांकerface);
+	पूर्ण
+	अगर (!psf->sf_count[MCAST_INCLUDE] && !psf->sf_count[MCAST_EXCLUDE]) अणु
+#अगर_घोषित CONFIG_IP_MULTICAST
+		काष्ठा in_device *in_dev = pmc->पूर्णांकerface;
+		काष्ठा net *net = dev_net(in_dev->dev);
+#पूर्ण_अगर
 
-		/* no more filters for this source */
-		if (psf_prev)
+		/* no more filters क्रम this source */
+		अगर (psf_prev)
 			psf_prev->sf_next = psf->sf_next;
-		else
+		अन्यथा
 			pmc->sources = psf->sf_next;
-#ifdef CONFIG_IP_MULTICAST
-		if (psf->sf_oldin &&
-		    !IGMP_V1_SEEN(in_dev) && !IGMP_V2_SEEN(in_dev)) {
+#अगर_घोषित CONFIG_IP_MULTICAST
+		अगर (psf->sf_oldin &&
+		    !IGMP_V1_SEEN(in_dev) && !IGMP_V2_SEEN(in_dev)) अणु
 			psf->sf_crcount = in_dev->mr_qrv ?: net->ipv4.sysctl_igmp_qrv;
 			psf->sf_next = pmc->tomb;
 			pmc->tomb = psf;
 			rv = 1;
-		} else
-#endif
-			kfree(psf);
-	}
-	return rv;
-}
+		पूर्ण अन्यथा
+#पूर्ण_अगर
+			kमुक्त(psf);
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-#ifndef CONFIG_IP_MULTICAST
-#define igmp_ifc_event(x)	do { } while (0)
-#endif
+#अगर_अघोषित CONFIG_IP_MULTICAST
+#घोषणा igmp_अगरc_event(x)	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static int ip_mc_del_src(struct in_device *in_dev, __be32 *pmca, int sfmode,
-			 int sfcount, __be32 *psfsrc, int delta)
-{
-	struct ip_mc_list *pmc;
-	int	changerec = 0;
-	int	i, err;
+अटल पूर्णांक ip_mc_del_src(काष्ठा in_device *in_dev, __be32 *pmca, पूर्णांक sभ_शेषe,
+			 पूर्णांक sfcount, __be32 *psfsrc, पूर्णांक delta)
+अणु
+	काष्ठा ip_mc_list *pmc;
+	पूर्णांक	changerec = 0;
+	पूर्णांक	i, err;
 
-	if (!in_dev)
-		return -ENODEV;
-	rcu_read_lock();
-	for_each_pmc_rcu(in_dev, pmc) {
-		if (*pmca == pmc->multiaddr)
-			break;
-	}
-	if (!pmc) {
+	अगर (!in_dev)
+		वापस -ENODEV;
+	rcu_पढ़ो_lock();
+	क्रम_each_pmc_rcu(in_dev, pmc) अणु
+		अगर (*pmca == pmc->multiaddr)
+			अवरोध;
+	पूर्ण
+	अगर (!pmc) अणु
 		/* MCA not found?? bug */
-		rcu_read_unlock();
-		return -ESRCH;
-	}
+		rcu_पढ़ो_unlock();
+		वापस -ESRCH;
+	पूर्ण
 	spin_lock_bh(&pmc->lock);
-	rcu_read_unlock();
-#ifdef CONFIG_IP_MULTICAST
+	rcu_पढ़ो_unlock();
+#अगर_घोषित CONFIG_IP_MULTICAST
 	sf_markstate(pmc);
-#endif
-	if (!delta) {
+#पूर्ण_अगर
+	अगर (!delta) अणु
 		err = -EINVAL;
-		if (!pmc->sfcount[sfmode])
-			goto out_unlock;
-		pmc->sfcount[sfmode]--;
-	}
+		अगर (!pmc->sfcount[sभ_शेषe])
+			जाओ out_unlock;
+		pmc->sfcount[sभ_शेषe]--;
+	पूर्ण
 	err = 0;
-	for (i = 0; i < sfcount; i++) {
-		int rv = ip_mc_del1_src(pmc, sfmode, &psfsrc[i]);
+	क्रम (i = 0; i < sfcount; i++) अणु
+		पूर्णांक rv = ip_mc_del1_src(pmc, sभ_शेषe, &psfsrc[i]);
 
 		changerec |= rv > 0;
-		if (!err && rv < 0)
+		अगर (!err && rv < 0)
 			err = rv;
-	}
-	if (pmc->sfmode == MCAST_EXCLUDE &&
+	पूर्ण
+	अगर (pmc->sभ_शेषe == MCAST_EXCLUDE &&
 	    pmc->sfcount[MCAST_EXCLUDE] == 0 &&
-	    pmc->sfcount[MCAST_INCLUDE]) {
-#ifdef CONFIG_IP_MULTICAST
-		struct ip_sf_list *psf;
-		struct net *net = dev_net(in_dev->dev);
-#endif
+	    pmc->sfcount[MCAST_INCLUDE]) अणु
+#अगर_घोषित CONFIG_IP_MULTICAST
+		काष्ठा ip_sf_list *psf;
+		काष्ठा net *net = dev_net(in_dev->dev);
+#पूर्ण_अगर
 
 		/* filter mode change */
-		pmc->sfmode = MCAST_INCLUDE;
-#ifdef CONFIG_IP_MULTICAST
+		pmc->sभ_शेषe = MCAST_INCLUDE;
+#अगर_घोषित CONFIG_IP_MULTICAST
 		pmc->crcount = in_dev->mr_qrv ?: net->ipv4.sysctl_igmp_qrv;
-		in_dev->mr_ifc_count = pmc->crcount;
-		for (psf = pmc->sources; psf; psf = psf->sf_next)
+		in_dev->mr_अगरc_count = pmc->crcount;
+		क्रम (psf = pmc->sources; psf; psf = psf->sf_next)
 			psf->sf_crcount = 0;
-		igmp_ifc_event(pmc->interface);
-	} else if (sf_setstate(pmc) || changerec) {
-		igmp_ifc_event(pmc->interface);
-#endif
-	}
+		igmp_अगरc_event(pmc->पूर्णांकerface);
+	पूर्ण अन्यथा अगर (sf_setstate(pmc) || changerec) अणु
+		igmp_अगरc_event(pmc->पूर्णांकerface);
+#पूर्ण_अगर
+	पूर्ण
 out_unlock:
 	spin_unlock_bh(&pmc->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Add multicast single-source filter to the interface list
+ * Add multicast single-source filter to the पूर्णांकerface list
  */
-static int ip_mc_add1_src(struct ip_mc_list *pmc, int sfmode,
+अटल पूर्णांक ip_mc_add1_src(काष्ठा ip_mc_list *pmc, पूर्णांक sभ_शेषe,
 	__be32 *psfsrc)
-{
-	struct ip_sf_list *psf, *psf_prev;
+अणु
+	काष्ठा ip_sf_list *psf, *psf_prev;
 
-	psf_prev = NULL;
-	for (psf = pmc->sources; psf; psf = psf->sf_next) {
-		if (psf->sf_inaddr == *psfsrc)
-			break;
+	psf_prev = शून्य;
+	क्रम (psf = pmc->sources; psf; psf = psf->sf_next) अणु
+		अगर (psf->sf_inaddr == *psfsrc)
+			अवरोध;
 		psf_prev = psf;
-	}
-	if (!psf) {
-		psf = kzalloc(sizeof(*psf), GFP_ATOMIC);
-		if (!psf)
-			return -ENOBUFS;
+	पूर्ण
+	अगर (!psf) अणु
+		psf = kzalloc(माप(*psf), GFP_ATOMIC);
+		अगर (!psf)
+			वापस -ENOBUFS;
 		psf->sf_inaddr = *psfsrc;
-		if (psf_prev) {
+		अगर (psf_prev) अणु
 			psf_prev->sf_next = psf;
-		} else
+		पूर्ण अन्यथा
 			pmc->sources = psf;
-	}
-	psf->sf_count[sfmode]++;
-	if (psf->sf_count[sfmode] == 1) {
-		ip_rt_multicast_event(pmc->interface);
-	}
-	return 0;
-}
+	पूर्ण
+	psf->sf_count[sभ_शेषe]++;
+	अगर (psf->sf_count[sभ_शेषe] == 1) अणु
+		ip_rt_multicast_event(pmc->पूर्णांकerface);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_IP_MULTICAST
-static void sf_markstate(struct ip_mc_list *pmc)
-{
-	struct ip_sf_list *psf;
-	int mca_xcount = pmc->sfcount[MCAST_EXCLUDE];
+#अगर_घोषित CONFIG_IP_MULTICAST
+अटल व्योम sf_markstate(काष्ठा ip_mc_list *pmc)
+अणु
+	काष्ठा ip_sf_list *psf;
+	पूर्णांक mca_xcount = pmc->sfcount[MCAST_EXCLUDE];
 
-	for (psf = pmc->sources; psf; psf = psf->sf_next)
-		if (pmc->sfcount[MCAST_EXCLUDE]) {
+	क्रम (psf = pmc->sources; psf; psf = psf->sf_next)
+		अगर (pmc->sfcount[MCAST_EXCLUDE]) अणु
 			psf->sf_oldin = mca_xcount ==
 				psf->sf_count[MCAST_EXCLUDE] &&
 				!psf->sf_count[MCAST_INCLUDE];
-		} else
+		पूर्ण अन्यथा
 			psf->sf_oldin = psf->sf_count[MCAST_INCLUDE] != 0;
-}
+पूर्ण
 
-static int sf_setstate(struct ip_mc_list *pmc)
-{
-	struct ip_sf_list *psf, *dpsf;
-	int mca_xcount = pmc->sfcount[MCAST_EXCLUDE];
-	int qrv = pmc->interface->mr_qrv;
-	int new_in, rv;
+अटल पूर्णांक sf_setstate(काष्ठा ip_mc_list *pmc)
+अणु
+	काष्ठा ip_sf_list *psf, *dpsf;
+	पूर्णांक mca_xcount = pmc->sfcount[MCAST_EXCLUDE];
+	पूर्णांक qrv = pmc->पूर्णांकerface->mr_qrv;
+	पूर्णांक new_in, rv;
 
 	rv = 0;
-	for (psf = pmc->sources; psf; psf = psf->sf_next) {
-		if (pmc->sfcount[MCAST_EXCLUDE]) {
+	क्रम (psf = pmc->sources; psf; psf = psf->sf_next) अणु
+		अगर (pmc->sfcount[MCAST_EXCLUDE]) अणु
 			new_in = mca_xcount == psf->sf_count[MCAST_EXCLUDE] &&
 				!psf->sf_count[MCAST_INCLUDE];
-		} else
+		पूर्ण अन्यथा
 			new_in = psf->sf_count[MCAST_INCLUDE] != 0;
-		if (new_in) {
-			if (!psf->sf_oldin) {
-				struct ip_sf_list *prev = NULL;
+		अगर (new_in) अणु
+			अगर (!psf->sf_oldin) अणु
+				काष्ठा ip_sf_list *prev = शून्य;
 
-				for (dpsf = pmc->tomb; dpsf; dpsf = dpsf->sf_next) {
-					if (dpsf->sf_inaddr == psf->sf_inaddr)
-						break;
+				क्रम (dpsf = pmc->tomb; dpsf; dpsf = dpsf->sf_next) अणु
+					अगर (dpsf->sf_inaddr == psf->sf_inaddr)
+						अवरोध;
 					prev = dpsf;
-				}
-				if (dpsf) {
-					if (prev)
+				पूर्ण
+				अगर (dpsf) अणु
+					अगर (prev)
 						prev->sf_next = dpsf->sf_next;
-					else
+					अन्यथा
 						pmc->tomb = dpsf->sf_next;
-					kfree(dpsf);
-				}
+					kमुक्त(dpsf);
+				पूर्ण
 				psf->sf_crcount = qrv;
 				rv++;
-			}
-		} else if (psf->sf_oldin) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (psf->sf_oldin) अणु
 
 			psf->sf_crcount = 0;
 			/*
-			 * add or update "delete" records if an active filter
+			 * add or update "delete" records अगर an active filter
 			 * is now inactive
 			 */
-			for (dpsf = pmc->tomb; dpsf; dpsf = dpsf->sf_next)
-				if (dpsf->sf_inaddr == psf->sf_inaddr)
-					break;
-			if (!dpsf) {
-				dpsf = kmalloc(sizeof(*dpsf), GFP_ATOMIC);
-				if (!dpsf)
-					continue;
+			क्रम (dpsf = pmc->tomb; dpsf; dpsf = dpsf->sf_next)
+				अगर (dpsf->sf_inaddr == psf->sf_inaddr)
+					अवरोध;
+			अगर (!dpsf) अणु
+				dpsf = kदो_स्मृति(माप(*dpsf), GFP_ATOMIC);
+				अगर (!dpsf)
+					जारी;
 				*dpsf = *psf;
 				/* pmc->lock held by callers */
 				dpsf->sf_next = pmc->tomb;
 				pmc->tomb = dpsf;
-			}
+			पूर्ण
 			dpsf->sf_crcount = qrv;
 			rv++;
-		}
-	}
-	return rv;
-}
-#endif
+		पूर्ण
+	पूर्ण
+	वापस rv;
+पूर्ण
+#पूर्ण_अगर
 
 /*
- * Add multicast source filter list to the interface list
+ * Add multicast source filter list to the पूर्णांकerface list
  */
-static int ip_mc_add_src(struct in_device *in_dev, __be32 *pmca, int sfmode,
-			 int sfcount, __be32 *psfsrc, int delta)
-{
-	struct ip_mc_list *pmc;
-	int	isexclude;
-	int	i, err;
+अटल पूर्णांक ip_mc_add_src(काष्ठा in_device *in_dev, __be32 *pmca, पूर्णांक sभ_शेषe,
+			 पूर्णांक sfcount, __be32 *psfsrc, पूर्णांक delta)
+अणु
+	काष्ठा ip_mc_list *pmc;
+	पूर्णांक	isexclude;
+	पूर्णांक	i, err;
 
-	if (!in_dev)
-		return -ENODEV;
-	rcu_read_lock();
-	for_each_pmc_rcu(in_dev, pmc) {
-		if (*pmca == pmc->multiaddr)
-			break;
-	}
-	if (!pmc) {
+	अगर (!in_dev)
+		वापस -ENODEV;
+	rcu_पढ़ो_lock();
+	क्रम_each_pmc_rcu(in_dev, pmc) अणु
+		अगर (*pmca == pmc->multiaddr)
+			अवरोध;
+	पूर्ण
+	अगर (!pmc) अणु
 		/* MCA not found?? bug */
-		rcu_read_unlock();
-		return -ESRCH;
-	}
+		rcu_पढ़ो_unlock();
+		वापस -ESRCH;
+	पूर्ण
 	spin_lock_bh(&pmc->lock);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-#ifdef CONFIG_IP_MULTICAST
+#अगर_घोषित CONFIG_IP_MULTICAST
 	sf_markstate(pmc);
-#endif
-	isexclude = pmc->sfmode == MCAST_EXCLUDE;
-	if (!delta)
-		pmc->sfcount[sfmode]++;
+#पूर्ण_अगर
+	isexclude = pmc->sभ_शेषe == MCAST_EXCLUDE;
+	अगर (!delta)
+		pmc->sfcount[sभ_शेषe]++;
 	err = 0;
-	for (i = 0; i < sfcount; i++) {
-		err = ip_mc_add1_src(pmc, sfmode, &psfsrc[i]);
-		if (err)
-			break;
-	}
-	if (err) {
-		int j;
+	क्रम (i = 0; i < sfcount; i++) अणु
+		err = ip_mc_add1_src(pmc, sभ_शेषe, &psfsrc[i]);
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	अगर (err) अणु
+		पूर्णांक j;
 
-		if (!delta)
-			pmc->sfcount[sfmode]--;
-		for (j = 0; j < i; j++)
-			(void) ip_mc_del1_src(pmc, sfmode, &psfsrc[j]);
-	} else if (isexclude != (pmc->sfcount[MCAST_EXCLUDE] != 0)) {
-#ifdef CONFIG_IP_MULTICAST
-		struct ip_sf_list *psf;
-		struct net *net = dev_net(pmc->interface->dev);
-		in_dev = pmc->interface;
-#endif
+		अगर (!delta)
+			pmc->sfcount[sभ_शेषe]--;
+		क्रम (j = 0; j < i; j++)
+			(व्योम) ip_mc_del1_src(pmc, sभ_शेषe, &psfsrc[j]);
+	पूर्ण अन्यथा अगर (isexclude != (pmc->sfcount[MCAST_EXCLUDE] != 0)) अणु
+#अगर_घोषित CONFIG_IP_MULTICAST
+		काष्ठा ip_sf_list *psf;
+		काष्ठा net *net = dev_net(pmc->पूर्णांकerface->dev);
+		in_dev = pmc->पूर्णांकerface;
+#पूर्ण_अगर
 
 		/* filter mode change */
-		if (pmc->sfcount[MCAST_EXCLUDE])
-			pmc->sfmode = MCAST_EXCLUDE;
-		else if (pmc->sfcount[MCAST_INCLUDE])
-			pmc->sfmode = MCAST_INCLUDE;
-#ifdef CONFIG_IP_MULTICAST
-		/* else no filters; keep old mode for reports */
+		अगर (pmc->sfcount[MCAST_EXCLUDE])
+			pmc->sभ_शेषe = MCAST_EXCLUDE;
+		अन्यथा अगर (pmc->sfcount[MCAST_INCLUDE])
+			pmc->sभ_शेषe = MCAST_INCLUDE;
+#अगर_घोषित CONFIG_IP_MULTICAST
+		/* अन्यथा no filters; keep old mode क्रम reports */
 
 		pmc->crcount = in_dev->mr_qrv ?: net->ipv4.sysctl_igmp_qrv;
-		in_dev->mr_ifc_count = pmc->crcount;
-		for (psf = pmc->sources; psf; psf = psf->sf_next)
+		in_dev->mr_अगरc_count = pmc->crcount;
+		क्रम (psf = pmc->sources; psf; psf = psf->sf_next)
 			psf->sf_crcount = 0;
-		igmp_ifc_event(in_dev);
-	} else if (sf_setstate(pmc)) {
-		igmp_ifc_event(in_dev);
-#endif
-	}
+		igmp_अगरc_event(in_dev);
+	पूर्ण अन्यथा अगर (sf_setstate(pmc)) अणु
+		igmp_अगरc_event(in_dev);
+#पूर्ण_अगर
+	पूर्ण
 	spin_unlock_bh(&pmc->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ip_mc_clear_src(struct ip_mc_list *pmc)
-{
-	struct ip_sf_list *tomb, *sources;
+अटल व्योम ip_mc_clear_src(काष्ठा ip_mc_list *pmc)
+अणु
+	काष्ठा ip_sf_list *tomb, *sources;
 
 	spin_lock_bh(&pmc->lock);
 	tomb = pmc->tomb;
-	pmc->tomb = NULL;
+	pmc->tomb = शून्य;
 	sources = pmc->sources;
-	pmc->sources = NULL;
-	pmc->sfmode = MCAST_EXCLUDE;
+	pmc->sources = शून्य;
+	pmc->sभ_शेषe = MCAST_EXCLUDE;
 	pmc->sfcount[MCAST_INCLUDE] = 0;
 	pmc->sfcount[MCAST_EXCLUDE] = 1;
 	spin_unlock_bh(&pmc->lock);
 
 	ip_sf_list_clear_all(tomb);
 	ip_sf_list_clear_all(sources);
-}
+पूर्ण
 
 /* Join a multicast group
  */
-static int __ip_mc_join_group(struct sock *sk, struct ip_mreqn *imr,
-			      unsigned int mode)
-{
+अटल पूर्णांक __ip_mc_join_group(काष्ठा sock *sk, काष्ठा ip_mreqn *imr,
+			      अचिन्हित पूर्णांक mode)
+अणु
 	__be32 addr = imr->imr_multiaddr.s_addr;
-	struct ip_mc_socklist *iml, *i;
-	struct in_device *in_dev;
-	struct inet_sock *inet = inet_sk(sk);
-	struct net *net = sock_net(sk);
-	int ifindex;
-	int count = 0;
-	int err;
+	काष्ठा ip_mc_socklist *iml, *i;
+	काष्ठा in_device *in_dev;
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा net *net = sock_net(sk);
+	पूर्णांक अगरindex;
+	पूर्णांक count = 0;
+	पूर्णांक err;
 
 	ASSERT_RTNL();
 
-	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
+	अगर (!ipv4_is_multicast(addr))
+		वापस -EINVAL;
 
 	in_dev = ip_mc_find_dev(net, imr);
 
-	if (!in_dev) {
+	अगर (!in_dev) अणु
 		err = -ENODEV;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	err = -EADDRINUSE;
-	ifindex = imr->imr_ifindex;
-	for_each_pmc_rtnl(inet, i) {
-		if (i->multi.imr_multiaddr.s_addr == addr &&
-		    i->multi.imr_ifindex == ifindex)
-			goto done;
+	अगरindex = imr->imr_अगरindex;
+	क्रम_each_pmc_rtnl(inet, i) अणु
+		अगर (i->multi.imr_multiaddr.s_addr == addr &&
+		    i->multi.imr_अगरindex == अगरindex)
+			जाओ करोne;
 		count++;
-	}
+	पूर्ण
 	err = -ENOBUFS;
-	if (count >= net->ipv4.sysctl_igmp_max_memberships)
-		goto done;
-	iml = sock_kmalloc(sk, sizeof(*iml), GFP_KERNEL);
-	if (!iml)
-		goto done;
+	अगर (count >= net->ipv4.sysctl_igmp_max_memberships)
+		जाओ करोne;
+	iml = sock_kदो_स्मृति(sk, माप(*iml), GFP_KERNEL);
+	अगर (!iml)
+		जाओ करोne;
 
-	memcpy(&iml->multi, imr, sizeof(*imr));
+	स_नकल(&iml->multi, imr, माप(*imr));
 	iml->next_rcu = inet->mc_list;
-	iml->sflist = NULL;
-	iml->sfmode = mode;
-	rcu_assign_pointer(inet->mc_list, iml);
+	iml->sflist = शून्य;
+	iml->sभ_शेषe = mode;
+	rcu_assign_poपूर्णांकer(inet->mc_list, iml);
 	____ip_mc_inc_group(in_dev, addr, mode, GFP_KERNEL);
 	err = 0;
-done:
-	return err;
-}
+करोne:
+	वापस err;
+पूर्ण
 
 /* Join ASM (Any-Source Multicast) group
  */
-int ip_mc_join_group(struct sock *sk, struct ip_mreqn *imr)
-{
-	return __ip_mc_join_group(sk, imr, MCAST_EXCLUDE);
-}
+पूर्णांक ip_mc_join_group(काष्ठा sock *sk, काष्ठा ip_mreqn *imr)
+अणु
+	वापस __ip_mc_join_group(sk, imr, MCAST_EXCLUDE);
+पूर्ण
 EXPORT_SYMBOL(ip_mc_join_group);
 
-/* Join SSM (Source-Specific Multicast) group
+/* Join SSM (Source-Specअगरic Multicast) group
  */
-int ip_mc_join_group_ssm(struct sock *sk, struct ip_mreqn *imr,
-			 unsigned int mode)
-{
-	return __ip_mc_join_group(sk, imr, mode);
-}
+पूर्णांक ip_mc_join_group_ssm(काष्ठा sock *sk, काष्ठा ip_mreqn *imr,
+			 अचिन्हित पूर्णांक mode)
+अणु
+	वापस __ip_mc_join_group(sk, imr, mode);
+पूर्ण
 
-static int ip_mc_leave_src(struct sock *sk, struct ip_mc_socklist *iml,
-			   struct in_device *in_dev)
-{
-	struct ip_sf_socklist *psf = rtnl_dereference(iml->sflist);
-	int err;
+अटल पूर्णांक ip_mc_leave_src(काष्ठा sock *sk, काष्ठा ip_mc_socklist *iml,
+			   काष्ठा in_device *in_dev)
+अणु
+	काष्ठा ip_sf_socklist *psf = rtnl_dereference(iml->sflist);
+	पूर्णांक err;
 
-	if (!psf) {
-		/* any-source empty exclude case */
-		return ip_mc_del_src(in_dev, &iml->multi.imr_multiaddr.s_addr,
-			iml->sfmode, 0, NULL, 0);
-	}
+	अगर (!psf) अणु
+		/* any-source empty exclude हाल */
+		वापस ip_mc_del_src(in_dev, &iml->multi.imr_multiaddr.s_addr,
+			iml->sभ_शेषe, 0, शून्य, 0);
+	पूर्ण
 	err = ip_mc_del_src(in_dev, &iml->multi.imr_multiaddr.s_addr,
-			iml->sfmode, psf->sl_count, psf->sl_addr, 0);
-	RCU_INIT_POINTER(iml->sflist, NULL);
-	/* decrease mem now to avoid the memleak warning */
+			iml->sभ_शेषe, psf->sl_count, psf->sl_addr, 0);
+	RCU_INIT_POINTER(iml->sflist, शून्य);
+	/* decrease mem now to aव्योम the memleak warning */
 	atomic_sub(IP_SFLSIZE(psf->sl_max), &sk->sk_omem_alloc);
-	kfree_rcu(psf, rcu);
-	return err;
-}
+	kमुक्त_rcu(psf, rcu);
+	वापस err;
+पूर्ण
 
-int ip_mc_leave_group(struct sock *sk, struct ip_mreqn *imr)
-{
-	struct inet_sock *inet = inet_sk(sk);
-	struct ip_mc_socklist *iml;
-	struct ip_mc_socklist __rcu **imlp;
-	struct in_device *in_dev;
-	struct net *net = sock_net(sk);
+पूर्णांक ip_mc_leave_group(काष्ठा sock *sk, काष्ठा ip_mreqn *imr)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ip_mc_socklist *iml;
+	काष्ठा ip_mc_socklist __rcu **imlp;
+	काष्ठा in_device *in_dev;
+	काष्ठा net *net = sock_net(sk);
 	__be32 group = imr->imr_multiaddr.s_addr;
-	u32 ifindex;
-	int ret = -EADDRNOTAVAIL;
+	u32 अगरindex;
+	पूर्णांक ret = -EADDRNOTAVAIL;
 
 	ASSERT_RTNL();
 
 	in_dev = ip_mc_find_dev(net, imr);
-	if (!imr->imr_ifindex && !imr->imr_address.s_addr && !in_dev) {
+	अगर (!imr->imr_अगरindex && !imr->imr_address.s_addr && !in_dev) अणु
 		ret = -ENODEV;
-		goto out;
-	}
-	ifindex = imr->imr_ifindex;
-	for (imlp = &inet->mc_list;
-	     (iml = rtnl_dereference(*imlp)) != NULL;
-	     imlp = &iml->next_rcu) {
-		if (iml->multi.imr_multiaddr.s_addr != group)
-			continue;
-		if (ifindex) {
-			if (iml->multi.imr_ifindex != ifindex)
-				continue;
-		} else if (imr->imr_address.s_addr && imr->imr_address.s_addr !=
+		जाओ out;
+	पूर्ण
+	अगरindex = imr->imr_अगरindex;
+	क्रम (imlp = &inet->mc_list;
+	     (iml = rtnl_dereference(*imlp)) != शून्य;
+	     imlp = &iml->next_rcu) अणु
+		अगर (iml->multi.imr_multiaddr.s_addr != group)
+			जारी;
+		अगर (अगरindex) अणु
+			अगर (iml->multi.imr_अगरindex != अगरindex)
+				जारी;
+		पूर्ण अन्यथा अगर (imr->imr_address.s_addr && imr->imr_address.s_addr !=
 				iml->multi.imr_address.s_addr)
-			continue;
+			जारी;
 
-		(void) ip_mc_leave_src(sk, iml, in_dev);
+		(व्योम) ip_mc_leave_src(sk, iml, in_dev);
 
 		*imlp = iml->next_rcu;
 
-		if (in_dev)
+		अगर (in_dev)
 			ip_mc_dec_group(in_dev, group);
 
-		/* decrease mem now to avoid the memleak warning */
-		atomic_sub(sizeof(*iml), &sk->sk_omem_alloc);
-		kfree_rcu(iml, rcu);
-		return 0;
-	}
+		/* decrease mem now to aव्योम the memleak warning */
+		atomic_sub(माप(*iml), &sk->sk_omem_alloc);
+		kमुक्त_rcu(iml, rcu);
+		वापस 0;
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(ip_mc_leave_group);
 
-int ip_mc_source(int add, int omode, struct sock *sk, struct
-	ip_mreq_source *mreqs, int ifindex)
-{
-	int err;
-	struct ip_mreqn imr;
+पूर्णांक ip_mc_source(पूर्णांक add, पूर्णांक omode, काष्ठा sock *sk, काष्ठा
+	ip_mreq_source *mreqs, पूर्णांक अगरindex)
+अणु
+	पूर्णांक err;
+	काष्ठा ip_mreqn imr;
 	__be32 addr = mreqs->imr_multiaddr;
-	struct ip_mc_socklist *pmc;
-	struct in_device *in_dev = NULL;
-	struct inet_sock *inet = inet_sk(sk);
-	struct ip_sf_socklist *psl;
-	struct net *net = sock_net(sk);
-	int leavegroup = 0;
-	int i, j, rv;
+	काष्ठा ip_mc_socklist *pmc;
+	काष्ठा in_device *in_dev = शून्य;
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ip_sf_socklist *psl;
+	काष्ठा net *net = sock_net(sk);
+	पूर्णांक leavegroup = 0;
+	पूर्णांक i, j, rv;
 
-	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
+	अगर (!ipv4_is_multicast(addr))
+		वापस -EINVAL;
 
 	ASSERT_RTNL();
 
 	imr.imr_multiaddr.s_addr = mreqs->imr_multiaddr;
-	imr.imr_address.s_addr = mreqs->imr_interface;
-	imr.imr_ifindex = ifindex;
+	imr.imr_address.s_addr = mreqs->imr_पूर्णांकerface;
+	imr.imr_अगरindex = अगरindex;
 	in_dev = ip_mc_find_dev(net, &imr);
 
-	if (!in_dev) {
+	अगर (!in_dev) अणु
 		err = -ENODEV;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	err = -EADDRNOTAVAIL;
 
-	for_each_pmc_rtnl(inet, pmc) {
-		if ((pmc->multi.imr_multiaddr.s_addr ==
+	क्रम_each_pmc_rtnl(inet, pmc) अणु
+		अगर ((pmc->multi.imr_multiaddr.s_addr ==
 		     imr.imr_multiaddr.s_addr) &&
-		    (pmc->multi.imr_ifindex == imr.imr_ifindex))
-			break;
-	}
-	if (!pmc) {		/* must have a prior join */
+		    (pmc->multi.imr_अगरindex == imr.imr_अगरindex))
+			अवरोध;
+	पूर्ण
+	अगर (!pmc) अणु		/* must have a prior join */
 		err = -EINVAL;
-		goto done;
-	}
-	/* if a source filter was set, must be the same mode as before */
-	if (pmc->sflist) {
-		if (pmc->sfmode != omode) {
+		जाओ करोne;
+	पूर्ण
+	/* अगर a source filter was set, must be the same mode as beक्रमe */
+	अगर (pmc->sflist) अणु
+		अगर (pmc->sभ_शेषe != omode) अणु
 			err = -EINVAL;
-			goto done;
-		}
-	} else if (pmc->sfmode != omode) {
-		/* allow mode switches for empty-set filters */
-		ip_mc_add_src(in_dev, &mreqs->imr_multiaddr, omode, 0, NULL, 0);
-		ip_mc_del_src(in_dev, &mreqs->imr_multiaddr, pmc->sfmode, 0,
-			NULL, 0);
-		pmc->sfmode = omode;
-	}
+			जाओ करोne;
+		पूर्ण
+	पूर्ण अन्यथा अगर (pmc->sभ_शेषe != omode) अणु
+		/* allow mode चयनes क्रम empty-set filters */
+		ip_mc_add_src(in_dev, &mreqs->imr_multiaddr, omode, 0, शून्य, 0);
+		ip_mc_del_src(in_dev, &mreqs->imr_multiaddr, pmc->sभ_शेषe, 0,
+			शून्य, 0);
+		pmc->sभ_शेषe = omode;
+	पूर्ण
 
 	psl = rtnl_dereference(pmc->sflist);
-	if (!add) {
-		if (!psl)
-			goto done;	/* err = -EADDRNOTAVAIL */
+	अगर (!add) अणु
+		अगर (!psl)
+			जाओ करोne;	/* err = -EADDRNOTAVAIL */
 		rv = !0;
-		for (i = 0; i < psl->sl_count; i++) {
-			rv = memcmp(&psl->sl_addr[i], &mreqs->imr_sourceaddr,
-				sizeof(__be32));
-			if (rv == 0)
-				break;
-		}
-		if (rv)		/* source not found */
-			goto done;	/* err = -EADDRNOTAVAIL */
+		क्रम (i = 0; i < psl->sl_count; i++) अणु
+			rv = स_भेद(&psl->sl_addr[i], &mreqs->imr_sourceaddr,
+				माप(__be32));
+			अगर (rv == 0)
+				अवरोध;
+		पूर्ण
+		अगर (rv)		/* source not found */
+			जाओ करोne;	/* err = -EADDRNOTAVAIL */
 
-		/* special case - (INCLUDE, empty) == LEAVE_GROUP */
-		if (psl->sl_count == 1 && omode == MCAST_INCLUDE) {
+		/* special हाल - (INCLUDE, empty) == LEAVE_GROUP */
+		अगर (psl->sl_count == 1 && omode == MCAST_INCLUDE) अणु
 			leavegroup = 1;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		/* update the interface filter */
+		/* update the पूर्णांकerface filter */
 		ip_mc_del_src(in_dev, &mreqs->imr_multiaddr, omode, 1,
 			&mreqs->imr_sourceaddr, 1);
 
-		for (j = i+1; j < psl->sl_count; j++)
+		क्रम (j = i+1; j < psl->sl_count; j++)
 			psl->sl_addr[j-1] = psl->sl_addr[j];
 		psl->sl_count--;
 		err = 0;
-		goto done;
-	}
-	/* else, add a new source to the filter */
+		जाओ करोne;
+	पूर्ण
+	/* अन्यथा, add a new source to the filter */
 
-	if (psl && psl->sl_count >= net->ipv4.sysctl_igmp_max_msf) {
+	अगर (psl && psl->sl_count >= net->ipv4.sysctl_igmp_max_msf) अणु
 		err = -ENOBUFS;
-		goto done;
-	}
-	if (!psl || psl->sl_count == psl->sl_max) {
-		struct ip_sf_socklist *newpsl;
-		int count = IP_SFBLOCK;
+		जाओ करोne;
+	पूर्ण
+	अगर (!psl || psl->sl_count == psl->sl_max) अणु
+		काष्ठा ip_sf_socklist *newpsl;
+		पूर्णांक count = IP_SFBLOCK;
 
-		if (psl)
+		अगर (psl)
 			count += psl->sl_max;
-		newpsl = sock_kmalloc(sk, IP_SFLSIZE(count), GFP_KERNEL);
-		if (!newpsl) {
+		newpsl = sock_kदो_स्मृति(sk, IP_SFLSIZE(count), GFP_KERNEL);
+		अगर (!newpsl) अणु
 			err = -ENOBUFS;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		newpsl->sl_max = count;
 		newpsl->sl_count = count - IP_SFBLOCK;
-		if (psl) {
-			for (i = 0; i < psl->sl_count; i++)
+		अगर (psl) अणु
+			क्रम (i = 0; i < psl->sl_count; i++)
 				newpsl->sl_addr[i] = psl->sl_addr[i];
-			/* decrease mem now to avoid the memleak warning */
+			/* decrease mem now to aव्योम the memleak warning */
 			atomic_sub(IP_SFLSIZE(psl->sl_max), &sk->sk_omem_alloc);
-			kfree_rcu(psl, rcu);
-		}
-		rcu_assign_pointer(pmc->sflist, newpsl);
+			kमुक्त_rcu(psl, rcu);
+		पूर्ण
+		rcu_assign_poपूर्णांकer(pmc->sflist, newpsl);
 		psl = newpsl;
-	}
-	rv = 1;	/* > 0 for insert logic below if sl_count is 0 */
-	for (i = 0; i < psl->sl_count; i++) {
-		rv = memcmp(&psl->sl_addr[i], &mreqs->imr_sourceaddr,
-			sizeof(__be32));
-		if (rv == 0)
-			break;
-	}
-	if (rv == 0)		/* address already there is an error */
-		goto done;
-	for (j = psl->sl_count-1; j >= i; j--)
+	पूर्ण
+	rv = 1;	/* > 0 क्रम insert logic below अगर sl_count is 0 */
+	क्रम (i = 0; i < psl->sl_count; i++) अणु
+		rv = स_भेद(&psl->sl_addr[i], &mreqs->imr_sourceaddr,
+			माप(__be32));
+		अगर (rv == 0)
+			अवरोध;
+	पूर्ण
+	अगर (rv == 0)		/* address alपढ़ोy there is an error */
+		जाओ करोne;
+	क्रम (j = psl->sl_count-1; j >= i; j--)
 		psl->sl_addr[j+1] = psl->sl_addr[j];
 	psl->sl_addr[i] = mreqs->imr_sourceaddr;
 	psl->sl_count++;
 	err = 0;
-	/* update the interface list */
+	/* update the पूर्णांकerface list */
 	ip_mc_add_src(in_dev, &mreqs->imr_multiaddr, omode, 1,
 		&mreqs->imr_sourceaddr, 1);
-done:
-	if (leavegroup)
+करोne:
+	अगर (leavegroup)
 		err = ip_mc_leave_group(sk, &imr);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ip_mc_msfilter(struct sock *sk, struct ip_msfilter *msf, int ifindex)
-{
-	int err = 0;
-	struct ip_mreqn	imr;
+पूर्णांक ip_mc_msfilter(काष्ठा sock *sk, काष्ठा ip_msfilter *msf, पूर्णांक अगरindex)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा ip_mreqn	imr;
 	__be32 addr = msf->imsf_multiaddr;
-	struct ip_mc_socklist *pmc;
-	struct in_device *in_dev;
-	struct inet_sock *inet = inet_sk(sk);
-	struct ip_sf_socklist *newpsl, *psl;
-	struct net *net = sock_net(sk);
-	int leavegroup = 0;
+	काष्ठा ip_mc_socklist *pmc;
+	काष्ठा in_device *in_dev;
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ip_sf_socklist *newpsl, *psl;
+	काष्ठा net *net = sock_net(sk);
+	पूर्णांक leavegroup = 0;
 
-	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
-	if (msf->imsf_fmode != MCAST_INCLUDE &&
-	    msf->imsf_fmode != MCAST_EXCLUDE)
-		return -EINVAL;
+	अगर (!ipv4_is_multicast(addr))
+		वापस -EINVAL;
+	अगर (msf->imsf_भ_शेषe != MCAST_INCLUDE &&
+	    msf->imsf_भ_शेषe != MCAST_EXCLUDE)
+		वापस -EINVAL;
 
 	ASSERT_RTNL();
 
 	imr.imr_multiaddr.s_addr = msf->imsf_multiaddr;
-	imr.imr_address.s_addr = msf->imsf_interface;
-	imr.imr_ifindex = ifindex;
+	imr.imr_address.s_addr = msf->imsf_पूर्णांकerface;
+	imr.imr_अगरindex = अगरindex;
 	in_dev = ip_mc_find_dev(net, &imr);
 
-	if (!in_dev) {
+	अगर (!in_dev) अणु
 		err = -ENODEV;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	/* special case - (INCLUDE, empty) == LEAVE_GROUP */
-	if (msf->imsf_fmode == MCAST_INCLUDE && msf->imsf_numsrc == 0) {
+	/* special हाल - (INCLUDE, empty) == LEAVE_GROUP */
+	अगर (msf->imsf_भ_शेषe == MCAST_INCLUDE && msf->imsf_numsrc == 0) अणु
 		leavegroup = 1;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	for_each_pmc_rtnl(inet, pmc) {
-		if (pmc->multi.imr_multiaddr.s_addr == msf->imsf_multiaddr &&
-		    pmc->multi.imr_ifindex == imr.imr_ifindex)
-			break;
-	}
-	if (!pmc) {		/* must have a prior join */
+	क्रम_each_pmc_rtnl(inet, pmc) अणु
+		अगर (pmc->multi.imr_multiaddr.s_addr == msf->imsf_multiaddr &&
+		    pmc->multi.imr_अगरindex == imr.imr_अगरindex)
+			अवरोध;
+	पूर्ण
+	अगर (!pmc) अणु		/* must have a prior join */
 		err = -EINVAL;
-		goto done;
-	}
-	if (msf->imsf_numsrc) {
-		newpsl = sock_kmalloc(sk, IP_SFLSIZE(msf->imsf_numsrc),
+		जाओ करोne;
+	पूर्ण
+	अगर (msf->imsf_numsrc) अणु
+		newpsl = sock_kदो_स्मृति(sk, IP_SFLSIZE(msf->imsf_numsrc),
 							   GFP_KERNEL);
-		if (!newpsl) {
+		अगर (!newpsl) अणु
 			err = -ENOBUFS;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		newpsl->sl_max = newpsl->sl_count = msf->imsf_numsrc;
-		memcpy(newpsl->sl_addr, msf->imsf_slist,
-			msf->imsf_numsrc * sizeof(msf->imsf_slist[0]));
+		स_नकल(newpsl->sl_addr, msf->imsf_slist,
+			msf->imsf_numsrc * माप(msf->imsf_slist[0]));
 		err = ip_mc_add_src(in_dev, &msf->imsf_multiaddr,
-			msf->imsf_fmode, newpsl->sl_count, newpsl->sl_addr, 0);
-		if (err) {
-			sock_kfree_s(sk, newpsl, IP_SFLSIZE(newpsl->sl_max));
-			goto done;
-		}
-	} else {
-		newpsl = NULL;
-		(void) ip_mc_add_src(in_dev, &msf->imsf_multiaddr,
-				     msf->imsf_fmode, 0, NULL, 0);
-	}
+			msf->imsf_भ_शेषe, newpsl->sl_count, newpsl->sl_addr, 0);
+		अगर (err) अणु
+			sock_kमुक्त_s(sk, newpsl, IP_SFLSIZE(newpsl->sl_max));
+			जाओ करोne;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		newpsl = शून्य;
+		(व्योम) ip_mc_add_src(in_dev, &msf->imsf_multiaddr,
+				     msf->imsf_भ_शेषe, 0, शून्य, 0);
+	पूर्ण
 	psl = rtnl_dereference(pmc->sflist);
-	if (psl) {
-		(void) ip_mc_del_src(in_dev, &msf->imsf_multiaddr, pmc->sfmode,
+	अगर (psl) अणु
+		(व्योम) ip_mc_del_src(in_dev, &msf->imsf_multiaddr, pmc->sभ_शेषe,
 			psl->sl_count, psl->sl_addr, 0);
-		/* decrease mem now to avoid the memleak warning */
+		/* decrease mem now to aव्योम the memleak warning */
 		atomic_sub(IP_SFLSIZE(psl->sl_max), &sk->sk_omem_alloc);
-		kfree_rcu(psl, rcu);
-	} else
-		(void) ip_mc_del_src(in_dev, &msf->imsf_multiaddr, pmc->sfmode,
-			0, NULL, 0);
-	rcu_assign_pointer(pmc->sflist, newpsl);
-	pmc->sfmode = msf->imsf_fmode;
+		kमुक्त_rcu(psl, rcu);
+	पूर्ण अन्यथा
+		(व्योम) ip_mc_del_src(in_dev, &msf->imsf_multiaddr, pmc->sभ_शेषe,
+			0, शून्य, 0);
+	rcu_assign_poपूर्णांकer(pmc->sflist, newpsl);
+	pmc->sभ_शेषe = msf->imsf_भ_शेषe;
 	err = 0;
-done:
-	if (leavegroup)
+करोne:
+	अगर (leavegroup)
 		err = ip_mc_leave_group(sk, &imr);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ip_mc_msfget(struct sock *sk, struct ip_msfilter *msf,
-	struct ip_msfilter __user *optval, int __user *optlen)
-{
-	int err, len, count, copycount;
-	struct ip_mreqn	imr;
+पूर्णांक ip_mc_msfget(काष्ठा sock *sk, काष्ठा ip_msfilter *msf,
+	काष्ठा ip_msfilter __user *optval, पूर्णांक __user *optlen)
+अणु
+	पूर्णांक err, len, count, copycount;
+	काष्ठा ip_mreqn	imr;
 	__be32 addr = msf->imsf_multiaddr;
-	struct ip_mc_socklist *pmc;
-	struct in_device *in_dev;
-	struct inet_sock *inet = inet_sk(sk);
-	struct ip_sf_socklist *psl;
-	struct net *net = sock_net(sk);
+	काष्ठा ip_mc_socklist *pmc;
+	काष्ठा in_device *in_dev;
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ip_sf_socklist *psl;
+	काष्ठा net *net = sock_net(sk);
 
 	ASSERT_RTNL();
 
-	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
+	अगर (!ipv4_is_multicast(addr))
+		वापस -EINVAL;
 
 	imr.imr_multiaddr.s_addr = msf->imsf_multiaddr;
-	imr.imr_address.s_addr = msf->imsf_interface;
-	imr.imr_ifindex = 0;
+	imr.imr_address.s_addr = msf->imsf_पूर्णांकerface;
+	imr.imr_अगरindex = 0;
 	in_dev = ip_mc_find_dev(net, &imr);
 
-	if (!in_dev) {
+	अगर (!in_dev) अणु
 		err = -ENODEV;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	err = -EADDRNOTAVAIL;
 
-	for_each_pmc_rtnl(inet, pmc) {
-		if (pmc->multi.imr_multiaddr.s_addr == msf->imsf_multiaddr &&
-		    pmc->multi.imr_ifindex == imr.imr_ifindex)
-			break;
-	}
-	if (!pmc)		/* must have a prior join */
-		goto done;
-	msf->imsf_fmode = pmc->sfmode;
+	क्रम_each_pmc_rtnl(inet, pmc) अणु
+		अगर (pmc->multi.imr_multiaddr.s_addr == msf->imsf_multiaddr &&
+		    pmc->multi.imr_अगरindex == imr.imr_अगरindex)
+			अवरोध;
+	पूर्ण
+	अगर (!pmc)		/* must have a prior join */
+		जाओ करोne;
+	msf->imsf_भ_शेषe = pmc->sभ_शेषe;
 	psl = rtnl_dereference(pmc->sflist);
-	if (!psl) {
+	अगर (!psl) अणु
 		len = 0;
 		count = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		count = psl->sl_count;
-	}
+	पूर्ण
 	copycount = count < msf->imsf_numsrc ? count : msf->imsf_numsrc;
-	len = copycount * sizeof(psl->sl_addr[0]);
+	len = copycount * माप(psl->sl_addr[0]);
 	msf->imsf_numsrc = count;
-	if (put_user(IP_MSFILTER_SIZE(copycount), optlen) ||
-	    copy_to_user(optval, msf, IP_MSFILTER_SIZE(0))) {
-		return -EFAULT;
-	}
-	if (len &&
+	अगर (put_user(IP_MSFILTER_SIZE(copycount), optlen) ||
+	    copy_to_user(optval, msf, IP_MSFILTER_SIZE(0))) अणु
+		वापस -EFAULT;
+	पूर्ण
+	अगर (len &&
 	    copy_to_user(&optval->imsf_slist[0], psl->sl_addr, len))
-		return -EFAULT;
-	return 0;
-done:
-	return err;
-}
+		वापस -EFAULT;
+	वापस 0;
+करोne:
+	वापस err;
+पूर्ण
 
-int ip_mc_gsfget(struct sock *sk, struct group_filter *gsf,
-	struct sockaddr_storage __user *p)
-{
-	int i, count, copycount;
-	struct sockaddr_in *psin;
+पूर्णांक ip_mc_gsfget(काष्ठा sock *sk, काष्ठा group_filter *gsf,
+	काष्ठा sockaddr_storage __user *p)
+अणु
+	पूर्णांक i, count, copycount;
+	काष्ठा sockaddr_in *psin;
 	__be32 addr;
-	struct ip_mc_socklist *pmc;
-	struct inet_sock *inet = inet_sk(sk);
-	struct ip_sf_socklist *psl;
+	काष्ठा ip_mc_socklist *pmc;
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ip_sf_socklist *psl;
 
 	ASSERT_RTNL();
 
-	psin = (struct sockaddr_in *)&gsf->gf_group;
-	if (psin->sin_family != AF_INET)
-		return -EINVAL;
+	psin = (काष्ठा sockaddr_in *)&gsf->gf_group;
+	अगर (psin->sin_family != AF_INET)
+		वापस -EINVAL;
 	addr = psin->sin_addr.s_addr;
-	if (!ipv4_is_multicast(addr))
-		return -EINVAL;
+	अगर (!ipv4_is_multicast(addr))
+		वापस -EINVAL;
 
-	for_each_pmc_rtnl(inet, pmc) {
-		if (pmc->multi.imr_multiaddr.s_addr == addr &&
-		    pmc->multi.imr_ifindex == gsf->gf_interface)
-			break;
-	}
-	if (!pmc)		/* must have a prior join */
-		return -EADDRNOTAVAIL;
-	gsf->gf_fmode = pmc->sfmode;
+	क्रम_each_pmc_rtnl(inet, pmc) अणु
+		अगर (pmc->multi.imr_multiaddr.s_addr == addr &&
+		    pmc->multi.imr_अगरindex == gsf->gf_पूर्णांकerface)
+			अवरोध;
+	पूर्ण
+	अगर (!pmc)		/* must have a prior join */
+		वापस -EADDRNOTAVAIL;
+	gsf->gf_भ_शेषe = pmc->sभ_शेषe;
 	psl = rtnl_dereference(pmc->sflist);
 	count = psl ? psl->sl_count : 0;
 	copycount = count < gsf->gf_numsrc ? count : gsf->gf_numsrc;
 	gsf->gf_numsrc = count;
-	for (i = 0; i < copycount; i++, p++) {
-		struct sockaddr_storage ss;
+	क्रम (i = 0; i < copycount; i++, p++) अणु
+		काष्ठा sockaddr_storage ss;
 
-		psin = (struct sockaddr_in *)&ss;
-		memset(&ss, 0, sizeof(ss));
+		psin = (काष्ठा sockaddr_in *)&ss;
+		स_रखो(&ss, 0, माप(ss));
 		psin->sin_family = AF_INET;
 		psin->sin_addr.s_addr = psl->sl_addr[i];
-		if (copy_to_user(p, &ss, sizeof(ss)))
-			return -EFAULT;
-	}
-	return 0;
-}
+		अगर (copy_to_user(p, &ss, माप(ss)))
+			वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * check if a multicast source filter allows delivery for a given <src,dst,intf>
+ * check अगर a multicast source filter allows delivery क्रम a given <src,dst,पूर्णांकf>
  */
-int ip_mc_sf_allow(struct sock *sk, __be32 loc_addr, __be32 rmt_addr,
-		   int dif, int sdif)
-{
-	struct inet_sock *inet = inet_sk(sk);
-	struct ip_mc_socklist *pmc;
-	struct ip_sf_socklist *psl;
-	int i;
-	int ret;
+पूर्णांक ip_mc_sf_allow(काष्ठा sock *sk, __be32 loc_addr, __be32 rmt_addr,
+		   पूर्णांक dअगर, पूर्णांक sdअगर)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ip_mc_socklist *pmc;
+	काष्ठा ip_sf_socklist *psl;
+	पूर्णांक i;
+	पूर्णांक ret;
 
 	ret = 1;
-	if (!ipv4_is_multicast(loc_addr))
-		goto out;
+	अगर (!ipv4_is_multicast(loc_addr))
+		जाओ out;
 
-	rcu_read_lock();
-	for_each_pmc_rcu(inet, pmc) {
-		if (pmc->multi.imr_multiaddr.s_addr == loc_addr &&
-		    (pmc->multi.imr_ifindex == dif ||
-		     (sdif && pmc->multi.imr_ifindex == sdif)))
-			break;
-	}
+	rcu_पढ़ो_lock();
+	क्रम_each_pmc_rcu(inet, pmc) अणु
+		अगर (pmc->multi.imr_multiaddr.s_addr == loc_addr &&
+		    (pmc->multi.imr_अगरindex == dअगर ||
+		     (sdअगर && pmc->multi.imr_अगरindex == sdअगर)))
+			अवरोध;
+	पूर्ण
 	ret = inet->mc_all;
-	if (!pmc)
-		goto unlock;
+	अगर (!pmc)
+		जाओ unlock;
 	psl = rcu_dereference(pmc->sflist);
-	ret = (pmc->sfmode == MCAST_EXCLUDE);
-	if (!psl)
-		goto unlock;
+	ret = (pmc->sभ_शेषe == MCAST_EXCLUDE);
+	अगर (!psl)
+		जाओ unlock;
 
-	for (i = 0; i < psl->sl_count; i++) {
-		if (psl->sl_addr[i] == rmt_addr)
-			break;
-	}
+	क्रम (i = 0; i < psl->sl_count; i++) अणु
+		अगर (psl->sl_addr[i] == rmt_addr)
+			अवरोध;
+	पूर्ण
 	ret = 0;
-	if (pmc->sfmode == MCAST_INCLUDE && i >= psl->sl_count)
-		goto unlock;
-	if (pmc->sfmode == MCAST_EXCLUDE && i < psl->sl_count)
-		goto unlock;
+	अगर (pmc->sभ_शेषe == MCAST_INCLUDE && i >= psl->sl_count)
+		जाओ unlock;
+	अगर (pmc->sभ_शेषe == MCAST_EXCLUDE && i < psl->sl_count)
+		जाओ unlock;
 	ret = 1;
 unlock:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  *	A socket is closing.
  */
 
-void ip_mc_drop_socket(struct sock *sk)
-{
-	struct inet_sock *inet = inet_sk(sk);
-	struct ip_mc_socklist *iml;
-	struct net *net = sock_net(sk);
+व्योम ip_mc_drop_socket(काष्ठा sock *sk)
+अणु
+	काष्ठा inet_sock *inet = inet_sk(sk);
+	काष्ठा ip_mc_socklist *iml;
+	काष्ठा net *net = sock_net(sk);
 
-	if (!inet->mc_list)
-		return;
+	अगर (!inet->mc_list)
+		वापस;
 
 	rtnl_lock();
-	while ((iml = rtnl_dereference(inet->mc_list)) != NULL) {
-		struct in_device *in_dev;
+	जबतक ((iml = rtnl_dereference(inet->mc_list)) != शून्य) अणु
+		काष्ठा in_device *in_dev;
 
 		inet->mc_list = iml->next_rcu;
-		in_dev = inetdev_by_index(net, iml->multi.imr_ifindex);
-		(void) ip_mc_leave_src(sk, iml, in_dev);
-		if (in_dev)
+		in_dev = inetdev_by_index(net, iml->multi.imr_अगरindex);
+		(व्योम) ip_mc_leave_src(sk, iml, in_dev);
+		अगर (in_dev)
 			ip_mc_dec_group(in_dev, iml->multi.imr_multiaddr.s_addr);
-		/* decrease mem now to avoid the memleak warning */
-		atomic_sub(sizeof(*iml), &sk->sk_omem_alloc);
-		kfree_rcu(iml, rcu);
-	}
+		/* decrease mem now to aव्योम the memleak warning */
+		atomic_sub(माप(*iml), &sk->sk_omem_alloc);
+		kमुक्त_rcu(iml, rcu);
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
-/* called with rcu_read_lock() */
-int ip_check_mc_rcu(struct in_device *in_dev, __be32 mc_addr, __be32 src_addr, u8 proto)
-{
-	struct ip_mc_list *im;
-	struct ip_mc_list __rcu **mc_hash;
-	struct ip_sf_list *psf;
-	int rv = 0;
+/* called with rcu_पढ़ो_lock() */
+पूर्णांक ip_check_mc_rcu(काष्ठा in_device *in_dev, __be32 mc_addr, __be32 src_addr, u8 proto)
+अणु
+	काष्ठा ip_mc_list *im;
+	काष्ठा ip_mc_list __rcu **mc_hash;
+	काष्ठा ip_sf_list *psf;
+	पूर्णांक rv = 0;
 
 	mc_hash = rcu_dereference(in_dev->mc_hash);
-	if (mc_hash) {
-		u32 hash = hash_32((__force u32)mc_addr, MC_HASH_SZ_LOG);
+	अगर (mc_hash) अणु
+		u32 hash = hash_32((__क्रमce u32)mc_addr, MC_HASH_SZ_LOG);
 
-		for (im = rcu_dereference(mc_hash[hash]);
-		     im != NULL;
-		     im = rcu_dereference(im->next_hash)) {
-			if (im->multiaddr == mc_addr)
-				break;
-		}
-	} else {
-		for_each_pmc_rcu(in_dev, im) {
-			if (im->multiaddr == mc_addr)
-				break;
-		}
-	}
-	if (im && proto == IPPROTO_IGMP) {
+		क्रम (im = rcu_dereference(mc_hash[hash]);
+		     im != शून्य;
+		     im = rcu_dereference(im->next_hash)) अणु
+			अगर (im->multiaddr == mc_addr)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम_each_pmc_rcu(in_dev, im) अणु
+			अगर (im->multiaddr == mc_addr)
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (im && proto == IPPROTO_IGMP) अणु
 		rv = 1;
-	} else if (im) {
-		if (src_addr) {
-			for (psf = im->sources; psf; psf = psf->sf_next) {
-				if (psf->sf_inaddr == src_addr)
-					break;
-			}
-			if (psf)
+	पूर्ण अन्यथा अगर (im) अणु
+		अगर (src_addr) अणु
+			क्रम (psf = im->sources; psf; psf = psf->sf_next) अणु
+				अगर (psf->sf_inaddr == src_addr)
+					अवरोध;
+			पूर्ण
+			अगर (psf)
 				rv = psf->sf_count[MCAST_INCLUDE] ||
 					psf->sf_count[MCAST_EXCLUDE] !=
 					im->sfcount[MCAST_EXCLUDE];
-			else
+			अन्यथा
 				rv = im->sfcount[MCAST_EXCLUDE] != 0;
-		} else
-			rv = 1; /* unspecified source; tentatively allow */
-	}
-	return rv;
-}
+		पूर्ण अन्यथा
+			rv = 1; /* unspecअगरied source; tentatively allow */
+	पूर्ण
+	वापस rv;
+पूर्ण
 
-#if defined(CONFIG_PROC_FS)
-struct igmp_mc_iter_state {
-	struct seq_net_private p;
-	struct net_device *dev;
-	struct in_device *in_dev;
-};
+#अगर defined(CONFIG_PROC_FS)
+काष्ठा igmp_mc_iter_state अणु
+	काष्ठा seq_net_निजी p;
+	काष्ठा net_device *dev;
+	काष्ठा in_device *in_dev;
+पूर्ण;
 
-#define	igmp_mc_seq_private(seq)	((struct igmp_mc_iter_state *)(seq)->private)
+#घोषणा	igmp_mc_seq_निजी(seq)	((काष्ठा igmp_mc_iter_state *)(seq)->निजी)
 
-static inline struct ip_mc_list *igmp_mc_get_first(struct seq_file *seq)
-{
-	struct net *net = seq_file_net(seq);
-	struct ip_mc_list *im = NULL;
-	struct igmp_mc_iter_state *state = igmp_mc_seq_private(seq);
+अटल अंतरभूत काष्ठा ip_mc_list *igmp_mc_get_first(काष्ठा seq_file *seq)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा ip_mc_list *im = शून्य;
+	काष्ठा igmp_mc_iter_state *state = igmp_mc_seq_निजी(seq);
 
-	state->in_dev = NULL;
-	for_each_netdev_rcu(net, state->dev) {
-		struct in_device *in_dev;
+	state->in_dev = शून्य;
+	क्रम_each_netdev_rcu(net, state->dev) अणु
+		काष्ठा in_device *in_dev;
 
 		in_dev = __in_dev_get_rcu(state->dev);
-		if (!in_dev)
-			continue;
+		अगर (!in_dev)
+			जारी;
 		im = rcu_dereference(in_dev->mc_list);
-		if (im) {
+		अगर (im) अणु
 			state->in_dev = in_dev;
-			break;
-		}
-	}
-	return im;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस im;
+पूर्ण
 
-static struct ip_mc_list *igmp_mc_get_next(struct seq_file *seq, struct ip_mc_list *im)
-{
-	struct igmp_mc_iter_state *state = igmp_mc_seq_private(seq);
+अटल काष्ठा ip_mc_list *igmp_mc_get_next(काष्ठा seq_file *seq, काष्ठा ip_mc_list *im)
+अणु
+	काष्ठा igmp_mc_iter_state *state = igmp_mc_seq_निजी(seq);
 
 	im = rcu_dereference(im->next_rcu);
-	while (!im) {
+	जबतक (!im) अणु
 		state->dev = next_net_device_rcu(state->dev);
-		if (!state->dev) {
-			state->in_dev = NULL;
-			break;
-		}
+		अगर (!state->dev) अणु
+			state->in_dev = शून्य;
+			अवरोध;
+		पूर्ण
 		state->in_dev = __in_dev_get_rcu(state->dev);
-		if (!state->in_dev)
-			continue;
+		अगर (!state->in_dev)
+			जारी;
 		im = rcu_dereference(state->in_dev->mc_list);
-	}
-	return im;
-}
+	पूर्ण
+	वापस im;
+पूर्ण
 
-static struct ip_mc_list *igmp_mc_get_idx(struct seq_file *seq, loff_t pos)
-{
-	struct ip_mc_list *im = igmp_mc_get_first(seq);
-	if (im)
-		while (pos && (im = igmp_mc_get_next(seq, im)) != NULL)
+अटल काष्ठा ip_mc_list *igmp_mc_get_idx(काष्ठा seq_file *seq, loff_t pos)
+अणु
+	काष्ठा ip_mc_list *im = igmp_mc_get_first(seq);
+	अगर (im)
+		जबतक (pos && (im = igmp_mc_get_next(seq, im)) != शून्य)
 			--pos;
-	return pos ? NULL : im;
-}
+	वापस pos ? शून्य : im;
+पूर्ण
 
-static void *igmp_mc_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *igmp_mc_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(rcu)
-{
-	rcu_read_lock();
-	return *pos ? igmp_mc_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
-}
+अणु
+	rcu_पढ़ो_lock();
+	वापस *pos ? igmp_mc_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
+पूर्ण
 
-static void *igmp_mc_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct ip_mc_list *im;
-	if (v == SEQ_START_TOKEN)
+अटल व्योम *igmp_mc_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा ip_mc_list *im;
+	अगर (v == SEQ_START_TOKEN)
 		im = igmp_mc_get_first(seq);
-	else
+	अन्यथा
 		im = igmp_mc_get_next(seq, v);
 	++*pos;
-	return im;
-}
+	वापस im;
+पूर्ण
 
-static void igmp_mc_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम igmp_mc_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(rcu)
-{
-	struct igmp_mc_iter_state *state = igmp_mc_seq_private(seq);
+अणु
+	काष्ठा igmp_mc_iter_state *state = igmp_mc_seq_निजी(seq);
 
-	state->in_dev = NULL;
-	state->dev = NULL;
-	rcu_read_unlock();
-}
+	state->in_dev = शून्य;
+	state->dev = शून्य;
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int igmp_mc_seq_show(struct seq_file *seq, void *v)
-{
-	if (v == SEQ_START_TOKEN)
-		seq_puts(seq,
+अटल पूर्णांक igmp_mc_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	अगर (v == SEQ_START_TOKEN)
+		seq_माला_दो(seq,
 			 "Idx\tDevice    : Count Querier\tGroup    Users Timer\tReporter\n");
-	else {
-		struct ip_mc_list *im = (struct ip_mc_list *)v;
-		struct igmp_mc_iter_state *state = igmp_mc_seq_private(seq);
-		char   *querier;
-		long delta;
+	अन्यथा अणु
+		काष्ठा ip_mc_list *im = (काष्ठा ip_mc_list *)v;
+		काष्ठा igmp_mc_iter_state *state = igmp_mc_seq_निजी(seq);
+		अक्षर   *querier;
+		दीर्घ delta;
 
-#ifdef CONFIG_IP_MULTICAST
+#अगर_घोषित CONFIG_IP_MULTICAST
 		querier = IGMP_V1_SEEN(state->in_dev) ? "V1" :
 			  IGMP_V2_SEEN(state->in_dev) ? "V2" :
 			  "V3";
-#else
+#अन्यथा
 		querier = "NONE";
-#endif
+#पूर्ण_अगर
 
-		if (rcu_access_pointer(state->in_dev->mc_list) == im) {
-			seq_printf(seq, "%d\t%-10s: %5d %7s\n",
-				   state->dev->ifindex, state->dev->name, state->in_dev->mc_count, querier);
-		}
+		अगर (rcu_access_poपूर्णांकer(state->in_dev->mc_list) == im) अणु
+			seq_म_लिखो(seq, "%d\t%-10s: %5d %7s\n",
+				   state->dev->अगरindex, state->dev->name, state->in_dev->mc_count, querier);
+		पूर्ण
 
-		delta = im->timer.expires - jiffies;
-		seq_printf(seq,
+		delta = im->समयr.expires - jअगरfies;
+		seq_म_लिखो(seq,
 			   "\t\t\t\t%08X %5d %d:%08lX\t\t%d\n",
 			   im->multiaddr, im->users,
-			   im->tm_running,
-			   im->tm_running ? jiffies_delta_to_clock_t(delta) : 0,
+			   im->पंचांग_running,
+			   im->पंचांग_running ? jअगरfies_delta_to_घड़ी_प्रकार(delta) : 0,
 			   im->reporter);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations igmp_mc_seq_ops = {
+अटल स्थिर काष्ठा seq_operations igmp_mc_seq_ops = अणु
 	.start	=	igmp_mc_seq_start,
 	.next	=	igmp_mc_seq_next,
 	.stop	=	igmp_mc_seq_stop,
 	.show	=	igmp_mc_seq_show,
-};
+पूर्ण;
 
-struct igmp_mcf_iter_state {
-	struct seq_net_private p;
-	struct net_device *dev;
-	struct in_device *idev;
-	struct ip_mc_list *im;
-};
+काष्ठा igmp_mcf_iter_state अणु
+	काष्ठा seq_net_निजी p;
+	काष्ठा net_device *dev;
+	काष्ठा in_device *idev;
+	काष्ठा ip_mc_list *im;
+पूर्ण;
 
-#define igmp_mcf_seq_private(seq)	((struct igmp_mcf_iter_state *)(seq)->private)
+#घोषणा igmp_mcf_seq_निजी(seq)	((काष्ठा igmp_mcf_iter_state *)(seq)->निजी)
 
-static inline struct ip_sf_list *igmp_mcf_get_first(struct seq_file *seq)
-{
-	struct net *net = seq_file_net(seq);
-	struct ip_sf_list *psf = NULL;
-	struct ip_mc_list *im = NULL;
-	struct igmp_mcf_iter_state *state = igmp_mcf_seq_private(seq);
+अटल अंतरभूत काष्ठा ip_sf_list *igmp_mcf_get_first(काष्ठा seq_file *seq)
+अणु
+	काष्ठा net *net = seq_file_net(seq);
+	काष्ठा ip_sf_list *psf = शून्य;
+	काष्ठा ip_mc_list *im = शून्य;
+	काष्ठा igmp_mcf_iter_state *state = igmp_mcf_seq_निजी(seq);
 
-	state->idev = NULL;
-	state->im = NULL;
-	for_each_netdev_rcu(net, state->dev) {
-		struct in_device *idev;
+	state->idev = शून्य;
+	state->im = शून्य;
+	क्रम_each_netdev_rcu(net, state->dev) अणु
+		काष्ठा in_device *idev;
 		idev = __in_dev_get_rcu(state->dev);
-		if (unlikely(!idev))
-			continue;
+		अगर (unlikely(!idev))
+			जारी;
 		im = rcu_dereference(idev->mc_list);
-		if (likely(im)) {
+		अगर (likely(im)) अणु
 			spin_lock_bh(&im->lock);
 			psf = im->sources;
-			if (likely(psf)) {
+			अगर (likely(psf)) अणु
 				state->im = im;
 				state->idev = idev;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			spin_unlock_bh(&im->lock);
-		}
-	}
-	return psf;
-}
+		पूर्ण
+	पूर्ण
+	वापस psf;
+पूर्ण
 
-static struct ip_sf_list *igmp_mcf_get_next(struct seq_file *seq, struct ip_sf_list *psf)
-{
-	struct igmp_mcf_iter_state *state = igmp_mcf_seq_private(seq);
+अटल काष्ठा ip_sf_list *igmp_mcf_get_next(काष्ठा seq_file *seq, काष्ठा ip_sf_list *psf)
+अणु
+	काष्ठा igmp_mcf_iter_state *state = igmp_mcf_seq_निजी(seq);
 
 	psf = psf->sf_next;
-	while (!psf) {
+	जबतक (!psf) अणु
 		spin_unlock_bh(&state->im->lock);
 		state->im = state->im->next;
-		while (!state->im) {
+		जबतक (!state->im) अणु
 			state->dev = next_net_device_rcu(state->dev);
-			if (!state->dev) {
-				state->idev = NULL;
-				goto out;
-			}
+			अगर (!state->dev) अणु
+				state->idev = शून्य;
+				जाओ out;
+			पूर्ण
 			state->idev = __in_dev_get_rcu(state->dev);
-			if (!state->idev)
-				continue;
+			अगर (!state->idev)
+				जारी;
 			state->im = rcu_dereference(state->idev->mc_list);
-		}
-		if (!state->im)
-			break;
+		पूर्ण
+		अगर (!state->im)
+			अवरोध;
 		spin_lock_bh(&state->im->lock);
 		psf = state->im->sources;
-	}
+	पूर्ण
 out:
-	return psf;
-}
+	वापस psf;
+पूर्ण
 
-static struct ip_sf_list *igmp_mcf_get_idx(struct seq_file *seq, loff_t pos)
-{
-	struct ip_sf_list *psf = igmp_mcf_get_first(seq);
-	if (psf)
-		while (pos && (psf = igmp_mcf_get_next(seq, psf)) != NULL)
+अटल काष्ठा ip_sf_list *igmp_mcf_get_idx(काष्ठा seq_file *seq, loff_t pos)
+अणु
+	काष्ठा ip_sf_list *psf = igmp_mcf_get_first(seq);
+	अगर (psf)
+		जबतक (pos && (psf = igmp_mcf_get_next(seq, psf)) != शून्य)
 			--pos;
-	return pos ? NULL : psf;
-}
+	वापस pos ? शून्य : psf;
+पूर्ण
 
-static void *igmp_mcf_seq_start(struct seq_file *seq, loff_t *pos)
+अटल व्योम *igmp_mcf_seq_start(काष्ठा seq_file *seq, loff_t *pos)
 	__acquires(rcu)
-{
-	rcu_read_lock();
-	return *pos ? igmp_mcf_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
-}
+अणु
+	rcu_पढ़ो_lock();
+	वापस *pos ? igmp_mcf_get_idx(seq, *pos - 1) : SEQ_START_TOKEN;
+पूर्ण
 
-static void *igmp_mcf_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct ip_sf_list *psf;
-	if (v == SEQ_START_TOKEN)
+अटल व्योम *igmp_mcf_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा ip_sf_list *psf;
+	अगर (v == SEQ_START_TOKEN)
 		psf = igmp_mcf_get_first(seq);
-	else
+	अन्यथा
 		psf = igmp_mcf_get_next(seq, v);
 	++*pos;
-	return psf;
-}
+	वापस psf;
+पूर्ण
 
-static void igmp_mcf_seq_stop(struct seq_file *seq, void *v)
+अटल व्योम igmp_mcf_seq_stop(काष्ठा seq_file *seq, व्योम *v)
 	__releases(rcu)
-{
-	struct igmp_mcf_iter_state *state = igmp_mcf_seq_private(seq);
-	if (likely(state->im)) {
+अणु
+	काष्ठा igmp_mcf_iter_state *state = igmp_mcf_seq_निजी(seq);
+	अगर (likely(state->im)) अणु
 		spin_unlock_bh(&state->im->lock);
-		state->im = NULL;
-	}
-	state->idev = NULL;
-	state->dev = NULL;
-	rcu_read_unlock();
-}
+		state->im = शून्य;
+	पूर्ण
+	state->idev = शून्य;
+	state->dev = शून्य;
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static int igmp_mcf_seq_show(struct seq_file *seq, void *v)
-{
-	struct ip_sf_list *psf = (struct ip_sf_list *)v;
-	struct igmp_mcf_iter_state *state = igmp_mcf_seq_private(seq);
+अटल पूर्णांक igmp_mcf_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा ip_sf_list *psf = (काष्ठा ip_sf_list *)v;
+	काष्ठा igmp_mcf_iter_state *state = igmp_mcf_seq_निजी(seq);
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq, "Idx Device        MCA        SRC    INC    EXC\n");
-	} else {
-		seq_printf(seq,
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(seq, "Idx Device        MCA        SRC    INC    EXC\n");
+	पूर्ण अन्यथा अणु
+		seq_म_लिखो(seq,
 			   "%3d %6.6s 0x%08x "
 			   "0x%08x %6lu %6lu\n",
-			   state->dev->ifindex, state->dev->name,
+			   state->dev->अगरindex, state->dev->name,
 			   ntohl(state->im->multiaddr),
 			   ntohl(psf->sf_inaddr),
 			   psf->sf_count[MCAST_INCLUDE],
 			   psf->sf_count[MCAST_EXCLUDE]);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations igmp_mcf_seq_ops = {
+अटल स्थिर काष्ठा seq_operations igmp_mcf_seq_ops = अणु
 	.start	=	igmp_mcf_seq_start,
 	.next	=	igmp_mcf_seq_next,
 	.stop	=	igmp_mcf_seq_stop,
 	.show	=	igmp_mcf_seq_show,
-};
+पूर्ण;
 
-static int __net_init igmp_net_init(struct net *net)
-{
-	struct proc_dir_entry *pde;
-	int err;
+अटल पूर्णांक __net_init igmp_net_init(काष्ठा net *net)
+अणु
+	काष्ठा proc_dir_entry *pde;
+	पूर्णांक err;
 
 	pde = proc_create_net("igmp", 0444, net->proc_net, &igmp_mc_seq_ops,
-			sizeof(struct igmp_mc_iter_state));
-	if (!pde)
-		goto out_igmp;
+			माप(काष्ठा igmp_mc_iter_state));
+	अगर (!pde)
+		जाओ out_igmp;
 	pde = proc_create_net("mcfilter", 0444, net->proc_net,
-			&igmp_mcf_seq_ops, sizeof(struct igmp_mcf_iter_state));
-	if (!pde)
-		goto out_mcfilter;
-	err = inet_ctl_sock_create(&net->ipv4.mc_autojoin_sk, AF_INET,
+			&igmp_mcf_seq_ops, माप(काष्ठा igmp_mcf_iter_state));
+	अगर (!pde)
+		जाओ out_mcfilter;
+	err = inet_ctl_sock_create(&net->ipv4.mc_स्वतःjoin_sk, AF_INET,
 				   SOCK_DGRAM, 0, net);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_err("Failed to initialize the IGMP autojoin socket (err %d)\n",
 		       err);
-		goto out_sock;
-	}
+		जाओ out_sock;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_sock:
-	remove_proc_entry("mcfilter", net->proc_net);
+	हटाओ_proc_entry("mcfilter", net->proc_net);
 out_mcfilter:
-	remove_proc_entry("igmp", net->proc_net);
+	हटाओ_proc_entry("igmp", net->proc_net);
 out_igmp:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void __net_exit igmp_net_exit(struct net *net)
-{
-	remove_proc_entry("mcfilter", net->proc_net);
-	remove_proc_entry("igmp", net->proc_net);
-	inet_ctl_sock_destroy(net->ipv4.mc_autojoin_sk);
-}
+अटल व्योम __net_निकास igmp_net_निकास(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("mcfilter", net->proc_net);
+	हटाओ_proc_entry("igmp", net->proc_net);
+	inet_ctl_sock_destroy(net->ipv4.mc_स्वतःjoin_sk);
+पूर्ण
 
-static struct pernet_operations igmp_net_ops = {
+अटल काष्ठा pernet_operations igmp_net_ops = अणु
 	.init = igmp_net_init,
-	.exit = igmp_net_exit,
-};
-#endif
+	.निकास = igmp_net_निकास,
+पूर्ण;
+#पूर्ण_अगर
 
-static int igmp_netdev_event(struct notifier_block *this,
-			     unsigned long event, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct in_device *in_dev;
+अटल पूर्णांक igmp_netdev_event(काष्ठा notअगरier_block *this,
+			     अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा in_device *in_dev;
 
-	switch (event) {
-	case NETDEV_RESEND_IGMP:
+	चयन (event) अणु
+	हाल NETDEV_RESEND_IGMP:
 		in_dev = __in_dev_get_rtnl(dev);
-		if (in_dev)
+		अगर (in_dev)
 			ip_mc_rejoin_groups(in_dev);
-		break;
-	default:
-		break;
-	}
-	return NOTIFY_DONE;
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static struct notifier_block igmp_notifier = {
-	.notifier_call = igmp_netdev_event,
-};
+अटल काष्ठा notअगरier_block igmp_notअगरier = अणु
+	.notअगरier_call = igmp_netdev_event,
+पूर्ण;
 
-int __init igmp_mc_init(void)
-{
-#if defined(CONFIG_PROC_FS)
-	int err;
+पूर्णांक __init igmp_mc_init(व्योम)
+अणु
+#अगर defined(CONFIG_PROC_FS)
+	पूर्णांक err;
 
-	err = register_pernet_subsys(&igmp_net_ops);
-	if (err)
-		return err;
-	err = register_netdevice_notifier(&igmp_notifier);
-	if (err)
-		goto reg_notif_fail;
-	return 0;
+	err = रेजिस्टर_pernet_subsys(&igmp_net_ops);
+	अगर (err)
+		वापस err;
+	err = रेजिस्टर_netdevice_notअगरier(&igmp_notअगरier);
+	अगर (err)
+		जाओ reg_notअगर_fail;
+	वापस 0;
 
-reg_notif_fail:
-	unregister_pernet_subsys(&igmp_net_ops);
-	return err;
-#else
-	return register_netdevice_notifier(&igmp_notifier);
-#endif
-}
+reg_notअगर_fail:
+	unरेजिस्टर_pernet_subsys(&igmp_net_ops);
+	वापस err;
+#अन्यथा
+	वापस रेजिस्टर_netdevice_notअगरier(&igmp_notअगरier);
+#पूर्ण_अगर
+पूर्ण

@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <signal.h>
-#include <unistd.h>
-#include <errno.h>
-#include <linux/types.h>
-#include <sys/wait.h>
-#include <sys/syscall.h>
-#include <sys/user.h>
-#include <sys/mman.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा _GNU_SOURCE
+#समावेश <मानकपन.स>
+#समावेश <संकेत.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <sys/syscall.h>
+#समावेश <sys/user.h>
+#समावेश <sys/mman.h>
 
-#include "linux/ptrace.h"
+#समावेश "linux/ptrace.h"
 
-static int sys_rt_sigqueueinfo(pid_t tgid, int sig, siginfo_t *uinfo)
-{
-	return syscall(SYS_rt_sigqueueinfo, tgid, sig, uinfo);
-}
+अटल पूर्णांक sys_rt_sigqueueinfo(pid_t tgid, पूर्णांक sig, siginfo_t *uinfo)
+अणु
+	वापस syscall(SYS_rt_sigqueueinfo, tgid, sig, uinfo);
+पूर्ण
 
-static int sys_rt_tgsigqueueinfo(pid_t tgid, pid_t tid,
-					int sig, siginfo_t *uinfo)
-{
-	return syscall(SYS_rt_tgsigqueueinfo, tgid, tid, sig, uinfo);
-}
+अटल पूर्णांक sys_rt_tgsigqueueinfo(pid_t tgid, pid_t tid,
+					पूर्णांक sig, siginfo_t *uinfo)
+अणु
+	वापस syscall(SYS_rt_tgsigqueueinfo, tgid, tid, sig, uinfo);
+पूर्ण
 
-static int sys_ptrace(int request, pid_t pid, void *addr, void *data)
-{
-	return syscall(SYS_ptrace, request, pid, addr, data);
-}
+अटल पूर्णांक sys_ptrace(पूर्णांक request, pid_t pid, व्योम *addr, व्योम *data)
+अणु
+	वापस syscall(SYS_ptrace, request, pid, addr, data);
+पूर्ण
 
-#define SIGNR 10
-#define TEST_SICODE_PRIV	-1
-#define TEST_SICODE_SHARE	-2
+#घोषणा SIGNR 10
+#घोषणा TEST_SICODE_PRIV	-1
+#घोषणा TEST_SICODE_SHARE	-2
 
-#ifndef PAGE_SIZE
-#define PAGE_SIZE sysconf(_SC_PAGESIZE)
-#endif
+#अगर_अघोषित PAGE_SIZE
+#घोषणा PAGE_SIZE sysconf(_SC_PAGESIZE)
+#पूर्ण_अगर
 
-#define err(fmt, ...)						\
-		fprintf(stderr,					\
+#घोषणा err(fmt, ...)						\
+		ख_लिखो(मानक_त्रुटि,					\
 			"Error (%s:%d): " fmt,			\
-			__FILE__, __LINE__, ##__VA_ARGS__)
+			__खाता__, __LINE__, ##__VA_ARGS__)
 
-static int check_error_paths(pid_t child)
-{
-	struct ptrace_peeksiginfo_args arg;
-	int ret, exit_code = -1;
-	void *addr_rw, *addr_ro;
+अटल पूर्णांक check_error_paths(pid_t child)
+अणु
+	काष्ठा ptrace_peeksiginfo_args arg;
+	पूर्णांक ret, निकास_code = -1;
+	व्योम *addr_rw, *addr_ro;
 
 	/*
-	 * Allocate two contiguous pages. The first one is for read-write,
-	 * another is for read-only.
+	 * Allocate two contiguous pages. The first one is क्रम पढ़ो-ग_लिखो,
+	 * another is क्रम पढ़ो-only.
 	 */
-	addr_rw = mmap(NULL, 2 * PAGE_SIZE, PROT_READ | PROT_WRITE,
+	addr_rw = mmap(शून्य, 2 * PAGE_SIZE, PROT_READ | PROT_WRITE,
 				MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-	if (addr_rw == MAP_FAILED) {
+	अगर (addr_rw == MAP_FAILED) अणु
 		err("mmap() failed: %m\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	addr_ro = mmap(addr_rw + PAGE_SIZE, PAGE_SIZE, PROT_READ,
 			MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
-	if (addr_ro == MAP_FAILED) {
+	अगर (addr_ro == MAP_FAILED) अणु
 		err("mmap() failed: %m\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	arg.nr = SIGNR;
 	arg.off = 0;
@@ -71,149 +72,149 @@ static int check_error_paths(pid_t child)
 	/* Unsupported flags */
 	arg.flags = ~0;
 	ret = sys_ptrace(PTRACE_PEEKSIGINFO, child, &arg, addr_rw);
-	if (ret != -1 || errno != EINVAL) {
+	अगर (ret != -1 || त्रुटि_सं != EINVAL) अणु
 		err("sys_ptrace() returns %d (expected -1),"
 				" errno %d (expected %d): %m\n",
-				ret, errno, EINVAL);
-		goto out;
-	}
+				ret, त्रुटि_सं, EINVAL);
+		जाओ out;
+	पूर्ण
 	arg.flags = 0;
 
-	/* A part of the buffer is read-only */
+	/* A part of the buffer is पढ़ो-only */
 	ret = sys_ptrace(PTRACE_PEEKSIGINFO, child, &arg,
-					addr_ro - sizeof(siginfo_t) * 2);
-	if (ret != 2) {
+					addr_ro - माप(siginfo_t) * 2);
+	अगर (ret != 2) अणु
 		err("sys_ptrace() returns %d (expected 2): %m\n", ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Read-only buffer */
 	ret = sys_ptrace(PTRACE_PEEKSIGINFO, child, &arg, addr_ro);
-	if (ret != -1 && errno != EFAULT) {
+	अगर (ret != -1 && त्रुटि_सं != EFAULT) अणु
 		err("sys_ptrace() returns %d (expected -1),"
 				" errno %d (expected %d): %m\n",
-				ret, errno, EFAULT);
-		goto out;
-	}
+				ret, त्रुटि_सं, EFAULT);
+		जाओ out;
+	पूर्ण
 
-	exit_code = 0;
+	निकास_code = 0;
 out:
 	munmap(addr_rw, 2 * PAGE_SIZE);
-	return exit_code;
-}
+	वापस निकास_code;
+पूर्ण
 
-int check_direct_path(pid_t child, int shared, int nr)
-{
-	struct ptrace_peeksiginfo_args arg = {.flags = 0, .nr = nr, .off = 0};
-	int i, j, ret, exit_code = -1;
+पूर्णांक check_direct_path(pid_t child, पूर्णांक shared, पूर्णांक nr)
+अणु
+	काष्ठा ptrace_peeksiginfo_args arg = अणु.flags = 0, .nr = nr, .off = 0पूर्ण;
+	पूर्णांक i, j, ret, निकास_code = -1;
 	siginfo_t siginfo[SIGNR];
-	int si_code;
+	पूर्णांक si_code;
 
-	if (shared == 1) {
+	अगर (shared == 1) अणु
 		arg.flags = PTRACE_PEEKSIGINFO_SHARED;
 		si_code = TEST_SICODE_SHARE;
-	} else {
+	पूर्ण अन्यथा अणु
 		arg.flags = 0;
 		si_code = TEST_SICODE_PRIV;
-	}
+	पूर्ण
 
-	for (i = 0; i < SIGNR; ) {
+	क्रम (i = 0; i < SIGNR; ) अणु
 		arg.off = i;
 		ret = sys_ptrace(PTRACE_PEEKSIGINFO, child, &arg, siginfo);
-		if (ret == -1) {
+		अगर (ret == -1) अणु
 			err("ptrace() failed: %m\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (ret == 0)
-			break;
+		अगर (ret == 0)
+			अवरोध;
 
-		for (j = 0; j < ret; j++, i++) {
-			if (siginfo[j].si_code == si_code &&
-			    siginfo[j].si_int == i)
-				continue;
+		क्रम (j = 0; j < ret; j++, i++) अणु
+			अगर (siginfo[j].si_code == si_code &&
+			    siginfo[j].si_पूर्णांक == i)
+				जारी;
 
 			err("%d: Wrong siginfo i=%d si_code=%d si_int=%d\n",
-			     shared, i, siginfo[j].si_code, siginfo[j].si_int);
-			goto out;
-		}
-	}
+			     shared, i, siginfo[j].si_code, siginfo[j].si_पूर्णांक);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (i != SIGNR) {
+	अगर (i != SIGNR) अणु
 		err("Only %d signals were read\n", i);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	exit_code = 0;
+	निकास_code = 0;
 out:
-	return exit_code;
-}
+	वापस निकास_code;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
 	siginfo_t siginfo[SIGNR];
-	int i, exit_code = 1;
+	पूर्णांक i, निकास_code = 1;
 	sigset_t blockmask;
 	pid_t child;
 
 	sigemptyset(&blockmask);
 	sigaddset(&blockmask, SIGRTMIN);
-	sigprocmask(SIG_BLOCK, &blockmask, NULL);
+	sigprocmask(SIG_BLOCK, &blockmask, शून्य);
 
-	child = fork();
-	if (child == -1) {
+	child = विभाजन();
+	अगर (child == -1) अणु
 		err("fork() failed: %m");
-		return 1;
-	} else if (child == 0) {
+		वापस 1;
+	पूर्ण अन्यथा अगर (child == 0) अणु
 		pid_t ppid = getppid();
-		while (1) {
-			if (ppid != getppid())
-				break;
+		जबतक (1) अणु
+			अगर (ppid != getppid())
+				अवरोध;
 			sleep(1);
-		}
-		return 1;
-	}
+		पूर्ण
+		वापस 1;
+	पूर्ण
 
-	/* Send signals in process-wide and per-thread queues */
-	for (i = 0; i < SIGNR; i++) {
+	/* Send संकेतs in process-wide and per-thपढ़ो queues */
+	क्रम (i = 0; i < SIGNR; i++) अणु
 		siginfo->si_code = TEST_SICODE_SHARE;
-		siginfo->si_int = i;
+		siginfo->si_पूर्णांक = i;
 		sys_rt_sigqueueinfo(child, SIGRTMIN, siginfo);
 
 		siginfo->si_code = TEST_SICODE_PRIV;
-		siginfo->si_int = i;
+		siginfo->si_पूर्णांक = i;
 		sys_rt_tgsigqueueinfo(child, child, SIGRTMIN, siginfo);
-	}
+	पूर्ण
 
-	if (sys_ptrace(PTRACE_ATTACH, child, NULL, NULL) == -1)
-		return 1;
+	अगर (sys_ptrace(PTRACE_ATTACH, child, शून्य, शून्य) == -1)
+		वापस 1;
 
-	waitpid(child, NULL, 0);
+	रुकोpid(child, शून्य, 0);
 
-	/* Dump signals one by one*/
-	if (check_direct_path(child, 0, 1))
-		goto out;
-	/* Dump all signals for one call */
-	if (check_direct_path(child, 0, SIGNR))
-		goto out;
+	/* Dump संकेतs one by one*/
+	अगर (check_direct_path(child, 0, 1))
+		जाओ out;
+	/* Dump all संकेतs क्रम one call */
+	अगर (check_direct_path(child, 0, SIGNR))
+		जाओ out;
 
 	/*
-	 * Dump signal from the process-wide queue.
-	 * The number of signals is not multible to the buffer size
+	 * Dump संकेत from the process-wide queue.
+	 * The number of संकेतs is not multible to the buffer size
 	 */
-	if (check_direct_path(child, 1, 3))
-		goto out;
+	अगर (check_direct_path(child, 1, 3))
+		जाओ out;
 
-	if (check_error_paths(child))
-		goto out;
+	अगर (check_error_paths(child))
+		जाओ out;
 
-	printf("PASS\n");
-	exit_code = 0;
+	म_लिखो("PASS\n");
+	निकास_code = 0;
 out:
-	if (sys_ptrace(PTRACE_KILL, child, NULL, NULL) == -1)
-		return 1;
+	अगर (sys_ptrace(PTRACE_KILL, child, शून्य, शून्य) == -1)
+		वापस 1;
 
-	waitpid(child, NULL, 0);
+	रुकोpid(child, शून्य, 0);
 
-	return exit_code;
-}
+	वापस निकास_code;
+पूर्ण

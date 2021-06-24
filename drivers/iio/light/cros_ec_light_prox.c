@@ -1,89 +1,90 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * cros_ec_light_prox - Driver for light and prox sensors behing CrosEC.
+ * cros_ec_light_prox - Driver क्रम light and prox sensors behing CrosEC.
  *
  * Copyright (C) 2017 Google, Inc
  */
 
-#include <linux/device.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/common/cros_ec_sensors_core.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/kfifo_buf.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/trigger_consumer.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_data/cros_ec_commands.h>
-#include <linux/platform_data/cros_ec_proto.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/common/cros_ec_sensors_core.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/kfअगरo_buf.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/trigger_consumer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
+#समावेश <linux/platक्रमm_data/cros_ec_proto.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
 /*
- * We only represent one entry for light or proximity. EC is merging different
- * light sensors to return the what the eye would see. For proximity, we
+ * We only represent one entry क्रम light or proximity. EC is merging dअगरferent
+ * light sensors to वापस the what the eye would see. For proximity, we
  * currently support only one light source.
  */
-#define CROS_EC_LIGHT_PROX_MAX_CHANNELS (1 + 1)
+#घोषणा CROS_EC_LIGHT_PROX_MAX_CHANNELS (1 + 1)
 
-/* State data for ec_sensors iio driver. */
-struct cros_ec_light_prox_state {
+/* State data क्रम ec_sensors iio driver. */
+काष्ठा cros_ec_light_prox_state अणु
 	/* Shared by all sensors */
-	struct cros_ec_sensors_core_state core;
+	काष्ठा cros_ec_sensors_core_state core;
 
-	struct iio_chan_spec channels[CROS_EC_LIGHT_PROX_MAX_CHANNELS];
-};
+	काष्ठा iio_chan_spec channels[CROS_EC_LIGHT_PROX_MAX_CHANNELS];
+पूर्ण;
 
-static int cros_ec_light_prox_read(struct iio_dev *indio_dev,
-				   struct iio_chan_spec const *chan,
-				   int *val, int *val2, long mask)
-{
-	struct cros_ec_light_prox_state *st = iio_priv(indio_dev);
+अटल पूर्णांक cros_ec_light_prox_पढ़ो(काष्ठा iio_dev *indio_dev,
+				   काष्ठा iio_chan_spec स्थिर *chan,
+				   पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा cros_ec_light_prox_state *st = iio_priv(indio_dev);
 	u16 data = 0;
 	s64 val64;
-	int ret;
-	int idx = chan->scan_index;
+	पूर्णांक ret;
+	पूर्णांक idx = chan->scan_index;
 
 	mutex_lock(&st->core.cmd_lock);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		if (chan->type == IIO_PROXIMITY) {
-			ret = cros_ec_sensors_read_cmd(indio_dev, 1 << idx,
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		अगर (chan->type == IIO_PROXIMITY) अणु
+			ret = cros_ec_sensors_पढ़ो_cmd(indio_dev, 1 << idx,
 						     (s16 *)&data);
-			if (ret)
-				break;
+			अगर (ret)
+				अवरोध;
 			*val = data;
 			ret = IIO_VAL_INT;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = -EINVAL;
-		}
-		break;
-	case IIO_CHAN_INFO_PROCESSED:
-		if (chan->type == IIO_LIGHT) {
-			ret = cros_ec_sensors_read_cmd(indio_dev, 1 << idx,
+		पूर्ण
+		अवरोध;
+	हाल IIO_CHAN_INFO_PROCESSED:
+		अगर (chan->type == IIO_LIGHT) अणु
+			ret = cros_ec_sensors_पढ़ो_cmd(indio_dev, 1 << idx,
 						     (s16 *)&data);
-			if (ret)
-				break;
+			अगर (ret)
+				अवरोध;
 			/*
 			 * The data coming from the light sensor is
 			 * pre-processed and represents the ambient light
-			 * illuminance reading expressed in lux.
+			 * illuminance पढ़ोing expressed in lux.
 			 */
 			*val = data;
 			ret = IIO_VAL_INT;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = -EINVAL;
-		}
-		break;
-	case IIO_CHAN_INFO_CALIBBIAS:
+		पूर्ण
+		अवरोध;
+	हाल IIO_CHAN_INFO_CALIBBIAS:
 		st->core.param.cmd = MOTIONSENSE_CMD_SENSOR_OFFSET;
 		st->core.param.sensor_offset.flags = 0;
 
 		ret = cros_ec_motion_send_host_cmd(&st->core, 0);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		/* Save values */
 		st->core.calib[0].offset =
@@ -91,10 +92,10 @@ static int cros_ec_light_prox_read(struct iio_dev *indio_dev,
 
 		*val = st->core.calib[idx].offset;
 		ret = IIO_VAL_INT;
-		break;
-	case IIO_CHAN_INFO_CALIBSCALE:
+		अवरोध;
+	हाल IIO_CHAN_INFO_CALIBSCALE:
 		/*
-		 * RANGE is used for calibration
+		 * RANGE is used क्रम calibration
 		 * scale is a number x.y, where x is coded on 16 bits,
 		 * y coded on 16 bits, between 0 and 9999.
 		 */
@@ -102,39 +103,39 @@ static int cros_ec_light_prox_read(struct iio_dev *indio_dev,
 		st->core.param.sensor_range.data = EC_MOTION_SENSE_NO_VALUE;
 
 		ret = cros_ec_motion_send_host_cmd(&st->core, 0);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		val64 = st->core.resp->sensor_range.ret;
 		*val = val64 >> 16;
 		*val2 = (val64 & 0xffff) * 100;
 		ret = IIO_VAL_INT_PLUS_MICRO;
-		break;
-	default:
-		ret = cros_ec_sensors_core_read(&st->core, chan, val, val2,
+		अवरोध;
+	शेष:
+		ret = cros_ec_sensors_core_पढ़ो(&st->core, chan, val, val2,
 						mask);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&st->core.cmd_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cros_ec_light_prox_write(struct iio_dev *indio_dev,
-			       struct iio_chan_spec const *chan,
-			       int val, int val2, long mask)
-{
-	struct cros_ec_light_prox_state *st = iio_priv(indio_dev);
-	int ret;
-	int idx = chan->scan_index;
+अटल पूर्णांक cros_ec_light_prox_ग_लिखो(काष्ठा iio_dev *indio_dev,
+			       काष्ठा iio_chan_spec स्थिर *chan,
+			       पूर्णांक val, पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा cros_ec_light_prox_state *st = iio_priv(indio_dev);
+	पूर्णांक ret;
+	पूर्णांक idx = chan->scan_index;
 
 	mutex_lock(&st->core.cmd_lock);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_CALIBBIAS:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_CALIBBIAS:
 		st->core.calib[idx].offset = val;
-		/* Send to EC for each axis, even if not complete */
+		/* Send to EC क्रम each axis, even अगर not complete */
 		st->core.param.cmd = MOTIONSENSE_CMD_SENSOR_OFFSET;
 		st->core.param.sensor_offset.flags = MOTION_SENSE_SET_OFFSET;
 		st->core.param.sensor_offset.offset[0] =
@@ -142,49 +143,49 @@ static int cros_ec_light_prox_write(struct iio_dev *indio_dev,
 		st->core.param.sensor_offset.temp =
 					EC_MOTION_SENSE_INVALID_CALIB_TEMP;
 		ret = cros_ec_motion_send_host_cmd(&st->core, 0);
-		break;
-	case IIO_CHAN_INFO_CALIBSCALE:
+		अवरोध;
+	हाल IIO_CHAN_INFO_CALIBSCALE:
 		st->core.param.cmd = MOTIONSENSE_CMD_SENSOR_RANGE;
 		st->core.curr_range = (val << 16) | (val2 / 100);
 		st->core.param.sensor_range.data = st->core.curr_range;
 		ret = cros_ec_motion_send_host_cmd(&st->core, 0);
-		if (ret == 0)
+		अगर (ret == 0)
 			st->core.range_updated = true;
-		break;
-	default:
-		ret = cros_ec_sensors_core_write(&st->core, chan, val, val2,
+		अवरोध;
+	शेष:
+		ret = cros_ec_sensors_core_ग_लिखो(&st->core, chan, val, val2,
 						 mask);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&st->core.cmd_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_info cros_ec_light_prox_info = {
-	.read_raw = &cros_ec_light_prox_read,
-	.write_raw = &cros_ec_light_prox_write,
-	.read_avail = &cros_ec_sensors_core_read_avail,
-};
+अटल स्थिर काष्ठा iio_info cros_ec_light_prox_info = अणु
+	.पढ़ो_raw = &cros_ec_light_prox_पढ़ो,
+	.ग_लिखो_raw = &cros_ec_light_prox_ग_लिखो,
+	.पढ़ो_avail = &cros_ec_sensors_core_पढ़ो_avail,
+पूर्ण;
 
-static int cros_ec_light_prox_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct iio_dev *indio_dev;
-	struct cros_ec_light_prox_state *state;
-	struct iio_chan_spec *channel;
-	int ret;
+अटल पूर्णांक cros_ec_light_prox_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा cros_ec_light_prox_state *state;
+	काष्ठा iio_chan_spec *channel;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(dev, sizeof(*state));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(dev, माप(*state));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	ret = cros_ec_sensors_core_init(pdev, indio_dev, true,
 					cros_ec_sensors_capture,
 					cros_ec_sensors_push_data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	indio_dev->info = &cros_ec_light_prox_info;
 	state = iio_priv(indio_dev);
@@ -199,31 +200,31 @@ static int cros_ec_light_prox_probe(struct platform_device *pdev)
 		BIT(IIO_CHAN_INFO_SAMP_FREQ);
 	channel->scan_type.realbits = CROS_EC_SENSOR_BITS;
 	channel->scan_type.storagebits = CROS_EC_SENSOR_BITS;
-	channel->scan_type.shift = 0;
+	channel->scan_type.shअगरt = 0;
 	channel->scan_index = 0;
 	channel->ext_info = cros_ec_sensors_ext_info;
 	channel->scan_type.sign = 'u';
 
-	/* Sensor specific */
-	switch (state->core.type) {
-	case MOTIONSENSE_TYPE_LIGHT:
+	/* Sensor specअगरic */
+	चयन (state->core.type) अणु
+	हाल MOTIONSENSE_TYPE_LIGHT:
 		channel->type = IIO_LIGHT;
 		channel->info_mask_separate =
 			BIT(IIO_CHAN_INFO_PROCESSED) |
 			BIT(IIO_CHAN_INFO_CALIBBIAS) |
 			BIT(IIO_CHAN_INFO_CALIBSCALE);
-		break;
-	case MOTIONSENSE_TYPE_PROX:
+		अवरोध;
+	हाल MOTIONSENSE_TYPE_PROX:
 		channel->type = IIO_PROXIMITY;
 		channel->info_mask_separate =
 			BIT(IIO_CHAN_INFO_RAW) |
 			BIT(IIO_CHAN_INFO_CALIBBIAS) |
 			BIT(IIO_CHAN_INFO_CALIBSCALE);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_warn(dev, "Unknown motion sensor\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Timestamp */
 	channel++;
@@ -238,31 +239,31 @@ static int cros_ec_light_prox_probe(struct platform_device *pdev)
 
 	indio_dev->num_channels = CROS_EC_LIGHT_PROX_MAX_CHANNELS;
 
-	state->core.read_ec_sensors_data = cros_ec_sensors_read_cmd;
+	state->core.पढ़ो_ec_sensors_data = cros_ec_sensors_पढ़ो_cmd;
 
-	return devm_iio_device_register(dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(dev, indio_dev);
+पूर्ण
 
-static const struct platform_device_id cros_ec_light_prox_ids[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id cros_ec_light_prox_ids[] = अणु
+	अणु
 		.name = "cros-ec-prox",
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "cros-ec-light",
-	},
-	{ /* sentinel */ }
-};
-MODULE_DEVICE_TABLE(platform, cros_ec_light_prox_ids);
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, cros_ec_light_prox_ids);
 
-static struct platform_driver cros_ec_light_prox_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cros_ec_light_prox_platक्रमm_driver = अणु
+	.driver = अणु
 		.name	= "cros-ec-light-prox",
 		.pm	= &cros_ec_sensors_pm_ops,
-	},
+	पूर्ण,
 	.probe		= cros_ec_light_prox_probe,
 	.id_table	= cros_ec_light_prox_ids,
-};
-module_platform_driver(cros_ec_light_prox_platform_driver);
+पूर्ण;
+module_platक्रमm_driver(cros_ec_light_prox_platक्रमm_driver);
 
 MODULE_DESCRIPTION("ChromeOS EC light/proximity sensors driver");
 MODULE_LICENSE("GPL v2");

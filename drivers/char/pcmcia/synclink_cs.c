@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * linux/drivers/char/pcmcia/synclink_cs.c
+ * linux/drivers/अक्षर/pcmcia/synclink_cs.c
  *
  * $Id: synclink_cs.c,v 4.34 2005/09/08 13:20:54 paulkf Exp $
  *
- * Device driver for Microgate SyncLink PC Card
+ * Device driver क्रम Microgate SyncLink PC Card
  * multiprotocol serial adapter.
  *
- * written by Paul Fulghum for Microgate Corporation
+ * written by Paul Fulghum क्रम Microgate Corporation
  * paulkf@microgate.com
  *
  * Microgate and SyncLink are trademarks of Microgate Corporation
@@ -16,8 +17,8 @@
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY सूचीECT,
+ * INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
@@ -26,153 +27,153 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define VERSION(ver,rel,seq) (((ver)<<16) | ((rel)<<8) | (seq))
-#if defined(__i386__)
-#  define BREAKPOINT() asm("   int $3");
-#else
-#  define BREAKPOINT() { }
-#endif
+#घोषणा VERSION(ver,rel,seq) (((ver)<<16) | ((rel)<<8) | (seq))
+#अगर defined(__i386__)
+#  define BREAKPOINT() यंत्र("   int $3");
+#अन्यथा
+#  define BREAKPOINT() अणु पूर्ण
+#पूर्ण_अगर
 
-#define MAX_DEVICE_COUNT 4
+#घोषणा MAX_DEVICE_COUNT 4
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/timer.h>
-#include <linux/time.h>
-#include <linux/interrupt.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/serial.h>
-#include <linux/major.h>
-#include <linux/string.h>
-#include <linux/fcntl.h>
-#include <linux/ptrace.h>
-#include <linux/ioport.h>
-#include <linux/mm.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
-#include <linux/netdevice.h>
-#include <linux/vmalloc.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/ioctl.h>
-#include <linux/synclink.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/major.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/synclink.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/dma.h>
-#include <linux/bitops.h>
-#include <asm/types.h>
-#include <linux/termios.h>
-#include <linux/workqueue.h>
-#include <linux/hdlc.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <linux/bitops.h>
+#समावेश <यंत्र/types.h>
+#समावेश <linux/termios.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/hdlc.h>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/cisreg.h>
-#include <pcmcia/ds.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/cisreg.h>
+#समावेश <pcmcia/ds.h>
 
-#if defined(CONFIG_HDLC) || (defined(CONFIG_HDLC_MODULE) && defined(CONFIG_SYNCLINK_CS_MODULE))
-#define SYNCLINK_GENERIC_HDLC 1
-#else
-#define SYNCLINK_GENERIC_HDLC 0
-#endif
+#अगर defined(CONFIG_HDLC) || (defined(CONFIG_HDLC_MODULE) && defined(CONFIG_SYNCLINK_CS_MODULE))
+#घोषणा SYNCLINK_GENERIC_HDLC 1
+#अन्यथा
+#घोषणा SYNCLINK_GENERIC_HDLC 0
+#पूर्ण_अगर
 
-#define GET_USER(error,value,addr) error = get_user(value,addr)
-#define COPY_FROM_USER(error,dest,src,size) error = copy_from_user(dest,src,size) ? -EFAULT : 0
-#define PUT_USER(error,value,addr) error = put_user(value,addr)
-#define COPY_TO_USER(error,dest,src,size) error = copy_to_user(dest,src,size) ? -EFAULT : 0
+#घोषणा GET_USER(error,value,addr) error = get_user(value,addr)
+#घोषणा COPY_FROM_USER(error,dest,src,size) error = copy_from_user(dest,src,size) ? -EFAULT : 0
+#घोषणा PUT_USER(error,value,addr) error = put_user(value,addr)
+#घोषणा COPY_TO_USER(error,dest,src,size) error = copy_to_user(dest,src,size) ? -EFAULT : 0
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-static MGSL_PARAMS default_params = {
-	MGSL_MODE_HDLC,			/* unsigned long mode */
-	0,				/* unsigned char loopback; */
-	HDLC_FLAG_UNDERRUN_ABORT15,	/* unsigned short flags; */
-	HDLC_ENCODING_NRZI_SPACE,	/* unsigned char encoding; */
-	0,				/* unsigned long clock_speed; */
-	0xff,				/* unsigned char addr_filter; */
-	HDLC_CRC_16_CCITT,		/* unsigned short crc_type; */
-	HDLC_PREAMBLE_LENGTH_8BITS,	/* unsigned char preamble_length; */
-	HDLC_PREAMBLE_PATTERN_NONE,	/* unsigned char preamble; */
-	9600,				/* unsigned long data_rate; */
-	8,				/* unsigned char data_bits; */
-	1,				/* unsigned char stop_bits; */
-	ASYNC_PARITY_NONE		/* unsigned char parity; */
-};
+अटल MGSL_PARAMS शेष_params = अणु
+	MGSL_MODE_HDLC,			/* अचिन्हित दीर्घ mode */
+	0,				/* अचिन्हित अक्षर loopback; */
+	HDLC_FLAG_UNDERRUN_ABORT15,	/* अचिन्हित लघु flags; */
+	HDLC_ENCODING_NRZI_SPACE,	/* अचिन्हित अक्षर encoding; */
+	0,				/* अचिन्हित दीर्घ घड़ी_speed; */
+	0xff,				/* अचिन्हित अक्षर addr_filter; */
+	HDLC_CRC_16_CCITT,		/* अचिन्हित लघु crc_type; */
+	HDLC_PREAMBLE_LENGTH_8BITS,	/* अचिन्हित अक्षर preamble_length; */
+	HDLC_PREAMBLE_PATTERN_NONE,	/* अचिन्हित अक्षर preamble; */
+	9600,				/* अचिन्हित दीर्घ data_rate; */
+	8,				/* अचिन्हित अक्षर data_bits; */
+	1,				/* अचिन्हित अक्षर stop_bits; */
+	ASYNC_PARITY_NONE		/* अचिन्हित अक्षर parity; */
+पूर्ण;
 
-typedef struct {
-	int count;
-	unsigned char status;
-	char data[1];
-} RXBUF;
+प्रकार काष्ठा अणु
+	पूर्णांक count;
+	अचिन्हित अक्षर status;
+	अक्षर data[1];
+पूर्ण RXBUF;
 
-/* The queue of BH actions to be performed */
+/* The queue of BH actions to be perक्रमmed */
 
-#define BH_RECEIVE  1
-#define BH_TRANSMIT 2
-#define BH_STATUS   4
+#घोषणा BH_RECEIVE  1
+#घोषणा BH_TRANSMIT 2
+#घोषणा BH_STATUS   4
 
-#define IO_PIN_SHUTDOWN_LIMIT 100
+#घोषणा IO_PIN_SHUTDOWN_LIMIT 100
 
-#define RELEVANT_IFLAG(iflag) (iflag & (IGNBRK|BRKINT|IGNPAR|PARMRK|INPCK))
+#घोषणा RELEVANT_IFLAG(अगरlag) (अगरlag & (IGNBRK|BRKINT|IGNPAR|PARMRK|INPCK))
 
-struct _input_signal_events {
-	int	ri_up;
-	int	ri_down;
-	int	dsr_up;
-	int	dsr_down;
-	int	dcd_up;
-	int	dcd_down;
-	int	cts_up;
-	int	cts_down;
-};
+काष्ठा _input_संकेत_events अणु
+	पूर्णांक	ri_up;
+	पूर्णांक	ri_करोwn;
+	पूर्णांक	dsr_up;
+	पूर्णांक	dsr_करोwn;
+	पूर्णांक	dcd_up;
+	पूर्णांक	dcd_करोwn;
+	पूर्णांक	cts_up;
+	पूर्णांक	cts_करोwn;
+पूर्ण;
 
 
 /*
- * Device instance data structure
+ * Device instance data काष्ठाure
  */
 
-typedef struct _mgslpc_info {
-	struct tty_port		port;
-	void *if_ptr;	/* General purpose pointer (used by SPPP) */
-	int			magic;
-	int			line;
+प्रकार काष्ठा _mgslpc_info अणु
+	काष्ठा tty_port		port;
+	व्योम *अगर_ptr;	/* General purpose poपूर्णांकer (used by SPPP) */
+	पूर्णांक			magic;
+	पूर्णांक			line;
 
-	struct mgsl_icount	icount;
+	काष्ठा mgsl_icount	icount;
 
-	int			timeout;
-	int			x_char;		/* xon/xoff character */
-	unsigned char		read_status_mask;
-	unsigned char		ignore_status_mask;
+	पूर्णांक			समयout;
+	पूर्णांक			x_अक्षर;		/* xon/xoff अक्षरacter */
+	अचिन्हित अक्षर		पढ़ो_status_mask;
+	अचिन्हित अक्षर		ignore_status_mask;
 
-	unsigned char *tx_buf;
-	int            tx_put;
-	int            tx_get;
-	int            tx_count;
+	अचिन्हित अक्षर *tx_buf;
+	पूर्णांक            tx_put;
+	पूर्णांक            tx_get;
+	पूर्णांक            tx_count;
 
 	/* circular list of fixed length rx buffers */
 
-	unsigned char  *rx_buf;        /* memory allocated for all rx buffers */
-	int            rx_buf_total_size; /* size of memory allocated for rx buffers */
-	int            rx_put;         /* index of next empty rx buffer */
-	int            rx_get;         /* index of next full rx buffer */
-	int            rx_buf_size;    /* size in bytes of single rx buffer */
-	int            rx_buf_count;   /* total number of rx buffers */
-	int            rx_frame_count; /* number of full rx buffers */
+	अचिन्हित अक्षर  *rx_buf;        /* memory allocated क्रम all rx buffers */
+	पूर्णांक            rx_buf_total_size; /* size of memory allocated क्रम rx buffers */
+	पूर्णांक            rx_put;         /* index of next empty rx buffer */
+	पूर्णांक            rx_get;         /* index of next full rx buffer */
+	पूर्णांक            rx_buf_size;    /* size in bytes of single rx buffer */
+	पूर्णांक            rx_buf_count;   /* total number of rx buffers */
+	पूर्णांक            rx_frame_count; /* number of full rx buffers */
 
-	wait_queue_head_t	status_event_wait_q;
-	wait_queue_head_t	event_wait_q;
-	struct timer_list	tx_timer;	/* HDLC transmit timeout timer */
-	struct _mgslpc_info	*next_device;	/* device list link */
+	रुको_queue_head_t	status_event_रुको_q;
+	रुको_queue_head_t	event_रुको_q;
+	काष्ठा समयr_list	tx_समयr;	/* HDLC transmit समयout समयr */
+	काष्ठा _mgslpc_info	*next_device;	/* device list link */
 
-	unsigned short imra_value;
-	unsigned short imrb_value;
-	unsigned char  pim_value;
+	अचिन्हित लघु imra_value;
+	अचिन्हित लघु imrb_value;
+	अचिन्हित अक्षर  pim_value;
 
 	spinlock_t lock;
-	struct work_struct task;		/* task structure for scheduling bh */
+	काष्ठा work_काष्ठा task;		/* task काष्ठाure क्रम scheduling bh */
 
 	u32 max_frame_size;
 
@@ -181,360 +182,360 @@ typedef struct _mgslpc_info {
 	bool bh_running;
 	bool bh_requested;
 
-	int dcd_chkcount; /* check counts to prevent */
-	int cts_chkcount; /* too many IRQs if a signal */
-	int dsr_chkcount; /* is floating */
-	int ri_chkcount;
+	पूर्णांक dcd_chkcount; /* check counts to prevent */
+	पूर्णांक cts_chkcount; /* too many IRQs अगर a संकेत */
+	पूर्णांक dsr_chkcount; /* is भग्नing */
+	पूर्णांक ri_chkcount;
 
 	bool rx_enabled;
 	bool rx_overflow;
 
 	bool tx_enabled;
 	bool tx_active;
-	bool tx_aborting;
+	bool tx_पातing;
 	u32 idle_mode;
 
-	int if_mode; /* serial interface selection (RS-232, v.35 etc) */
+	पूर्णांक अगर_mode; /* serial पूर्णांकerface selection (RS-232, v.35 etc) */
 
-	char device_name[25];		/* device instance name */
+	अक्षर device_name[25];		/* device instance name */
 
-	unsigned int io_base;	/* base I/O address of adapter */
-	unsigned int irq_level;
+	अचिन्हित पूर्णांक io_base;	/* base I/O address of adapter */
+	अचिन्हित पूर्णांक irq_level;
 
 	MGSL_PARAMS params;		/* communications parameters */
 
-	unsigned char serial_signals;	/* current serial signal states */
+	अचिन्हित अक्षर serial_संकेतs;	/* current serial संकेत states */
 
-	bool irq_occurred;		/* for diagnostics use */
-	char testing_irq;
-	unsigned int init_error;	/* startup error (DIAGS)	*/
+	bool irq_occurred;		/* क्रम diagnostics use */
+	अक्षर testing_irq;
+	अचिन्हित पूर्णांक init_error;	/* startup error (DIAGS)	*/
 
-	char *flag_buf;
-	bool drop_rts_on_tx_done;
+	अक्षर *flag_buf;
+	bool drop_rts_on_tx_करोne;
 
-	struct	_input_signal_events	input_signal_events;
+	काष्ठा	_input_संकेत_events	input_संकेत_events;
 
 	/* PCMCIA support */
-	struct pcmcia_device	*p_dev;
-	int		      stop;
+	काष्ठा pcmcia_device	*p_dev;
+	पूर्णांक		      stop;
 
 	/* SPPP/Cisco HDLC device parts */
-	int netcount;
+	पूर्णांक netcount;
 	spinlock_t netlock;
 
-#if SYNCLINK_GENERIC_HDLC
-	struct net_device *netdev;
-#endif
+#अगर SYNCLINK_GENERIC_HDLC
+	काष्ठा net_device *netdev;
+#पूर्ण_अगर
 
-} MGSLPC_INFO;
+पूर्ण MGSLPC_INFO;
 
-#define MGSLPC_MAGIC 0x5402
+#घोषणा MGSLPC_MAGIC 0x5402
 
 /*
  * The size of the serial xmit buffer is 1 page, or 4096 bytes
  */
-#define TXBUFSIZE 4096
+#घोषणा TXबफ_मानE 4096
 
 
-#define CHA     0x00   /* channel A offset */
-#define CHB     0x40   /* channel B offset */
+#घोषणा CHA     0x00   /* channel A offset */
+#घोषणा CHB     0x40   /* channel B offset */
 
 /*
- *  FIXME: PPC has PVR defined in asm/reg.h.  For now we just undef it.
+ *  FIXME: PPC has PVR defined in यंत्र/reg.h.  For now we just undef it.
  */
-#undef PVR
+#अघोषित PVR
 
-#define RXFIFO  0
-#define TXFIFO  0
-#define STAR    0x20
-#define CMDR    0x20
-#define RSTA    0x21
-#define PRE     0x21
-#define MODE    0x22
-#define TIMR    0x23
-#define XAD1    0x24
-#define XAD2    0x25
-#define RAH1    0x26
-#define RAH2    0x27
-#define DAFO    0x27
-#define RAL1    0x28
-#define RFC     0x28
-#define RHCR    0x29
-#define RAL2    0x29
-#define RBCL    0x2a
-#define XBCL    0x2a
-#define RBCH    0x2b
-#define XBCH    0x2b
-#define CCR0    0x2c
-#define CCR1    0x2d
-#define CCR2    0x2e
-#define CCR3    0x2f
-#define VSTR    0x34
-#define BGR     0x34
-#define RLCR    0x35
-#define AML     0x36
-#define AMH     0x37
-#define GIS     0x38
-#define IVA     0x38
-#define IPC     0x39
-#define ISR     0x3a
-#define IMR     0x3a
-#define PVR     0x3c
-#define PIS     0x3d
-#define PIM     0x3d
-#define PCR     0x3e
-#define CCR4    0x3f
+#घोषणा RXFIFO  0
+#घोषणा TXFIFO  0
+#घोषणा STAR    0x20
+#घोषणा CMDR    0x20
+#घोषणा RSTA    0x21
+#घोषणा PRE     0x21
+#घोषणा MODE    0x22
+#घोषणा TIMR    0x23
+#घोषणा XAD1    0x24
+#घोषणा XAD2    0x25
+#घोषणा RAH1    0x26
+#घोषणा RAH2    0x27
+#घोषणा DAFO    0x27
+#घोषणा RAL1    0x28
+#घोषणा RFC     0x28
+#घोषणा RHCR    0x29
+#घोषणा RAL2    0x29
+#घोषणा RBCL    0x2a
+#घोषणा XBCL    0x2a
+#घोषणा RBCH    0x2b
+#घोषणा XBCH    0x2b
+#घोषणा CCR0    0x2c
+#घोषणा CCR1    0x2d
+#घोषणा CCR2    0x2e
+#घोषणा CCR3    0x2f
+#घोषणा VSTR    0x34
+#घोषणा BGR     0x34
+#घोषणा RLCR    0x35
+#घोषणा AML     0x36
+#घोषणा AMH     0x37
+#घोषणा GIS     0x38
+#घोषणा IVA     0x38
+#घोषणा IPC     0x39
+#घोषणा ISR     0x3a
+#घोषणा IMR     0x3a
+#घोषणा PVR     0x3c
+#घोषणा PIS     0x3d
+#घोषणा PIM     0x3d
+#घोषणा PCR     0x3e
+#घोषणा CCR4    0x3f
 
 // IMR/ISR
 
-#define IRQ_BREAK_ON    BIT15   // rx break detected
-#define IRQ_DATAOVERRUN BIT14	// receive data overflow
-#define IRQ_ALLSENT     BIT13	// all sent
-#define IRQ_UNDERRUN    BIT12	// transmit data underrun
-#define IRQ_TIMER       BIT11	// timer interrupt
-#define IRQ_CTS         BIT10	// CTS status change
-#define IRQ_TXREPEAT    BIT9	// tx message repeat
-#define IRQ_TXFIFO      BIT8	// transmit pool ready
-#define IRQ_RXEOM       BIT7	// receive message end
-#define IRQ_EXITHUNT    BIT6	// receive frame start
-#define IRQ_RXTIME      BIT6    // rx char timeout
-#define IRQ_DCD         BIT2	// carrier detect status change
-#define IRQ_OVERRUN     BIT1	// receive frame overflow
-#define IRQ_RXFIFO      BIT0	// receive pool full
+#घोषणा IRQ_BREAK_ON    BIT15   // rx अवरोध detected
+#घोषणा IRQ_DATAOVERRUN BIT14	// receive data overflow
+#घोषणा IRQ_ALLSENT     BIT13	// all sent
+#घोषणा IRQ_UNDERRUN    BIT12	// transmit data underrun
+#घोषणा IRQ_TIMER       BIT11	// समयr पूर्णांकerrupt
+#घोषणा IRQ_CTS         BIT10	// CTS status change
+#घोषणा IRQ_TXREPEAT    BIT9	// tx message repeat
+#घोषणा IRQ_TXFIFO      BIT8	// transmit pool पढ़ोy
+#घोषणा IRQ_RXEOM       BIT7	// receive message end
+#घोषणा IRQ_EXITHUNT    BIT6	// receive frame start
+#घोषणा IRQ_RXTIME      BIT6    // rx अक्षर समयout
+#घोषणा IRQ_DCD         BIT2	// carrier detect status change
+#घोषणा IRQ_OVERRUN     BIT1	// receive frame overflow
+#घोषणा IRQ_RXFIFO      BIT0	// receive pool full
 
 // STAR
 
-#define XFW   BIT6		// transmit FIFO write enable
-#define CEC   BIT2		// command executing
-#define CTS   BIT1		// CTS state
+#घोषणा XFW   BIT6		// transmit FIFO ग_लिखो enable
+#घोषणा CEC   BIT2		// command executing
+#घोषणा CTS   BIT1		// CTS state
 
-#define PVR_DTR      BIT0
-#define PVR_DSR      BIT1
-#define PVR_RI       BIT2
-#define PVR_AUTOCTS  BIT3
-#define PVR_RS232    0x20   /* 0010b */
-#define PVR_V35      0xe0   /* 1110b */
-#define PVR_RS422    0x40   /* 0100b */
+#घोषणा PVR_DTR      BIT0
+#घोषणा PVR_DSR      BIT1
+#घोषणा PVR_RI       BIT2
+#घोषणा PVR_AUTOCTS  BIT3
+#घोषणा PVR_RS232    0x20   /* 0010b */
+#घोषणा PVR_V35      0xe0   /* 1110b */
+#घोषणा PVR_RS422    0x40   /* 0100b */
 
 /* Register access functions */
 
-#define write_reg(info, reg, val) outb((val),(info)->io_base + (reg))
-#define read_reg(info, reg) inb((info)->io_base + (reg))
+#घोषणा ग_लिखो_reg(info, reg, val) outb((val),(info)->io_base + (reg))
+#घोषणा पढ़ो_reg(info, reg) inb((info)->io_base + (reg))
 
-#define read_reg16(info, reg) inw((info)->io_base + (reg))
-#define write_reg16(info, reg, val) outw((val), (info)->io_base + (reg))
+#घोषणा पढ़ो_reg16(info, reg) inw((info)->io_base + (reg))
+#घोषणा ग_लिखो_reg16(info, reg, val) outw((val), (info)->io_base + (reg))
 
-#define set_reg_bits(info, reg, mask) \
-	write_reg(info, (reg), \
-		 (unsigned char) (read_reg(info, (reg)) | (mask)))
-#define clear_reg_bits(info, reg, mask) \
-	write_reg(info, (reg), \
-		 (unsigned char) (read_reg(info, (reg)) & ~(mask)))
+#घोषणा set_reg_bits(info, reg, mask) \
+	ग_लिखो_reg(info, (reg), \
+		 (अचिन्हित अक्षर) (पढ़ो_reg(info, (reg)) | (mask)))
+#घोषणा clear_reg_bits(info, reg, mask) \
+	ग_लिखो_reg(info, (reg), \
+		 (अचिन्हित अक्षर) (पढ़ो_reg(info, (reg)) & ~(mask)))
 /*
- * interrupt enable/disable routines
+ * पूर्णांकerrupt enable/disable routines
  */
-static void irq_disable(MGSLPC_INFO *info, unsigned char channel, unsigned short mask)
-{
-	if (channel == CHA) {
+अटल व्योम irq_disable(MGSLPC_INFO *info, अचिन्हित अक्षर channel, अचिन्हित लघु mask)
+अणु
+	अगर (channel == CHA) अणु
 		info->imra_value |= mask;
-		write_reg16(info, CHA + IMR, info->imra_value);
-	} else {
+		ग_लिखो_reg16(info, CHA + IMR, info->imra_value);
+	पूर्ण अन्यथा अणु
 		info->imrb_value |= mask;
-		write_reg16(info, CHB + IMR, info->imrb_value);
-	}
-}
-static void irq_enable(MGSLPC_INFO *info, unsigned char channel, unsigned short mask)
-{
-	if (channel == CHA) {
+		ग_लिखो_reg16(info, CHB + IMR, info->imrb_value);
+	पूर्ण
+पूर्ण
+अटल व्योम irq_enable(MGSLPC_INFO *info, अचिन्हित अक्षर channel, अचिन्हित लघु mask)
+अणु
+	अगर (channel == CHA) अणु
 		info->imra_value &= ~mask;
-		write_reg16(info, CHA + IMR, info->imra_value);
-	} else {
+		ग_लिखो_reg16(info, CHA + IMR, info->imra_value);
+	पूर्ण अन्यथा अणु
 		info->imrb_value &= ~mask;
-		write_reg16(info, CHB + IMR, info->imrb_value);
-	}
-}
+		ग_लिखो_reg16(info, CHB + IMR, info->imrb_value);
+	पूर्ण
+पूर्ण
 
-#define port_irq_disable(info, mask) \
-	{ info->pim_value |= (mask); write_reg(info, PIM, info->pim_value); }
+#घोषणा port_irq_disable(info, mask) \
+	अणु info->pim_value |= (mask); ग_लिखो_reg(info, PIM, info->pim_value); पूर्ण
 
-#define port_irq_enable(info, mask) \
-	{ info->pim_value &= ~(mask); write_reg(info, PIM, info->pim_value); }
+#घोषणा port_irq_enable(info, mask) \
+	अणु info->pim_value &= ~(mask); ग_लिखो_reg(info, PIM, info->pim_value); पूर्ण
 
-static void rx_start(MGSLPC_INFO *info);
-static void rx_stop(MGSLPC_INFO *info);
+अटल व्योम rx_start(MGSLPC_INFO *info);
+अटल व्योम rx_stop(MGSLPC_INFO *info);
 
-static void tx_start(MGSLPC_INFO *info, struct tty_struct *tty);
-static void tx_stop(MGSLPC_INFO *info);
-static void tx_set_idle(MGSLPC_INFO *info);
+अटल व्योम tx_start(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty);
+अटल व्योम tx_stop(MGSLPC_INFO *info);
+अटल व्योम tx_set_idle(MGSLPC_INFO *info);
 
-static void get_signals(MGSLPC_INFO *info);
-static void set_signals(MGSLPC_INFO *info);
+अटल व्योम get_संकेतs(MGSLPC_INFO *info);
+अटल व्योम set_संकेतs(MGSLPC_INFO *info);
 
-static void reset_device(MGSLPC_INFO *info);
+अटल व्योम reset_device(MGSLPC_INFO *info);
 
-static void hdlc_mode(MGSLPC_INFO *info);
-static void async_mode(MGSLPC_INFO *info);
+अटल व्योम hdlc_mode(MGSLPC_INFO *info);
+अटल व्योम async_mode(MGSLPC_INFO *info);
 
-static void tx_timeout(struct timer_list *t);
+अटल व्योम tx_समयout(काष्ठा समयr_list *t);
 
-static int carrier_raised(struct tty_port *port);
-static void dtr_rts(struct tty_port *port, int onoff);
+अटल पूर्णांक carrier_उठाओd(काष्ठा tty_port *port);
+अटल व्योम dtr_rts(काष्ठा tty_port *port, पूर्णांक onoff);
 
-#if SYNCLINK_GENERIC_HDLC
-#define dev_to_port(D) (dev_to_hdlc(D)->priv)
-static void hdlcdev_tx_done(MGSLPC_INFO *info);
-static void hdlcdev_rx(MGSLPC_INFO *info, char *buf, int size);
-static int  hdlcdev_init(MGSLPC_INFO *info);
-static void hdlcdev_exit(MGSLPC_INFO *info);
-#endif
+#अगर SYNCLINK_GENERIC_HDLC
+#घोषणा dev_to_port(D) (dev_to_hdlc(D)->priv)
+अटल व्योम hdlcdev_tx_करोne(MGSLPC_INFO *info);
+अटल व्योम hdlcdev_rx(MGSLPC_INFO *info, अक्षर *buf, पूर्णांक size);
+अटल पूर्णांक  hdlcdev_init(MGSLPC_INFO *info);
+अटल व्योम hdlcdev_निकास(MGSLPC_INFO *info);
+#पूर्ण_अगर
 
-static void trace_block(MGSLPC_INFO *info,const char* data, int count, int xmit);
+अटल व्योम trace_block(MGSLPC_INFO *info,स्थिर अक्षर* data, पूर्णांक count, पूर्णांक xmit);
 
-static bool register_test(MGSLPC_INFO *info);
-static bool irq_test(MGSLPC_INFO *info);
-static int adapter_test(MGSLPC_INFO *info);
+अटल bool रेजिस्टर_test(MGSLPC_INFO *info);
+अटल bool irq_test(MGSLPC_INFO *info);
+अटल पूर्णांक adapter_test(MGSLPC_INFO *info);
 
-static int claim_resources(MGSLPC_INFO *info);
-static void release_resources(MGSLPC_INFO *info);
-static int mgslpc_add_device(MGSLPC_INFO *info);
-static void mgslpc_remove_device(MGSLPC_INFO *info);
+अटल पूर्णांक claim_resources(MGSLPC_INFO *info);
+अटल व्योम release_resources(MGSLPC_INFO *info);
+अटल पूर्णांक mgslpc_add_device(MGSLPC_INFO *info);
+अटल व्योम mgslpc_हटाओ_device(MGSLPC_INFO *info);
 
-static bool rx_get_frame(MGSLPC_INFO *info, struct tty_struct *tty);
-static void rx_reset_buffers(MGSLPC_INFO *info);
-static int  rx_alloc_buffers(MGSLPC_INFO *info);
-static void rx_free_buffers(MGSLPC_INFO *info);
+अटल bool rx_get_frame(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty);
+अटल व्योम rx_reset_buffers(MGSLPC_INFO *info);
+अटल पूर्णांक  rx_alloc_buffers(MGSLPC_INFO *info);
+अटल व्योम rx_मुक्त_buffers(MGSLPC_INFO *info);
 
-static irqreturn_t mgslpc_isr(int irq, void *dev_id);
+अटल irqवापस_t mgslpc_isr(पूर्णांक irq, व्योम *dev_id);
 
 /*
- * Bottom half interrupt handlers
+ * Bottom half पूर्णांकerrupt handlers
  */
-static void bh_handler(struct work_struct *work);
-static void bh_transmit(MGSLPC_INFO *info, struct tty_struct *tty);
-static void bh_status(MGSLPC_INFO *info);
+अटल व्योम bh_handler(काष्ठा work_काष्ठा *work);
+अटल व्योम bh_transmit(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty);
+अटल व्योम bh_status(MGSLPC_INFO *info);
 
 /*
  * ioctl handlers
  */
-static int tiocmget(struct tty_struct *tty);
-static int tiocmset(struct tty_struct *tty,
-					unsigned int set, unsigned int clear);
-static int get_stats(MGSLPC_INFO *info, struct mgsl_icount __user *user_icount);
-static int get_params(MGSLPC_INFO *info, MGSL_PARAMS __user *user_params);
-static int set_params(MGSLPC_INFO *info, MGSL_PARAMS __user *new_params, struct tty_struct *tty);
-static int get_txidle(MGSLPC_INFO *info, int __user *idle_mode);
-static int set_txidle(MGSLPC_INFO *info, int idle_mode);
-static int set_txenable(MGSLPC_INFO *info, int enable, struct tty_struct *tty);
-static int tx_abort(MGSLPC_INFO *info);
-static int set_rxenable(MGSLPC_INFO *info, int enable);
-static int wait_events(MGSLPC_INFO *info, int __user *mask);
+अटल पूर्णांक tiocmget(काष्ठा tty_काष्ठा *tty);
+अटल पूर्णांक tiocmset(काष्ठा tty_काष्ठा *tty,
+					अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear);
+अटल पूर्णांक get_stats(MGSLPC_INFO *info, काष्ठा mgsl_icount __user *user_icount);
+अटल पूर्णांक get_params(MGSLPC_INFO *info, MGSL_PARAMS __user *user_params);
+अटल पूर्णांक set_params(MGSLPC_INFO *info, MGSL_PARAMS __user *new_params, काष्ठा tty_काष्ठा *tty);
+अटल पूर्णांक get_txidle(MGSLPC_INFO *info, पूर्णांक __user *idle_mode);
+अटल पूर्णांक set_txidle(MGSLPC_INFO *info, पूर्णांक idle_mode);
+अटल पूर्णांक set_txenable(MGSLPC_INFO *info, पूर्णांक enable, काष्ठा tty_काष्ठा *tty);
+अटल पूर्णांक tx_पात(MGSLPC_INFO *info);
+अटल पूर्णांक set_rxenable(MGSLPC_INFO *info, पूर्णांक enable);
+अटल पूर्णांक रुको_events(MGSLPC_INFO *info, पूर्णांक __user *mask);
 
-static MGSLPC_INFO *mgslpc_device_list = NULL;
-static int mgslpc_device_count = 0;
+अटल MGSLPC_INFO *mgslpc_device_list = शून्य;
+अटल पूर्णांक mgslpc_device_count = 0;
 
 /*
  * Set this param to non-zero to load eax with the
- * .text section address and breakpoint on module load.
- * This is useful for use with gdb and add-symbol-file command.
+ * .text section address and अवरोधpoपूर्णांक on module load.
+ * This is useful क्रम use with gdb and add-symbol-file command.
  */
-static bool break_on_load;
+अटल bool अवरोध_on_load;
 
 /*
- * Driver major number, defaults to zero to get auto
- * assigned major number. May be forced as module parameter.
+ * Driver major number, शेषs to zero to get स्वतः
+ * asचिन्हित major number. May be क्रमced as module parameter.
  */
-static int ttymajor=0;
+अटल पूर्णांक ttymajor=0;
 
-static int debug_level = 0;
-static int maxframe[MAX_DEVICE_COUNT] = {0,};
+अटल पूर्णांक debug_level = 0;
+अटल पूर्णांक maxframe[MAX_DEVICE_COUNT] = अणु0,पूर्ण;
 
-module_param(break_on_load, bool, 0);
-module_param(ttymajor, int, 0);
-module_param(debug_level, int, 0);
-module_param_array(maxframe, int, NULL, 0);
+module_param(अवरोध_on_load, bool, 0);
+module_param(ttymajor, पूर्णांक, 0);
+module_param(debug_level, पूर्णांक, 0);
+module_param_array(maxframe, पूर्णांक, शून्य, 0);
 
 MODULE_LICENSE("GPL");
 
-static char *driver_name = "SyncLink PC Card driver";
-static char *driver_version = "$Revision: 4.34 $";
+अटल अक्षर *driver_name = "SyncLink PC Card driver";
+अटल अक्षर *driver_version = "$Revision: 4.34 $";
 
-static struct tty_driver *serial_driver;
+अटल काष्ठा tty_driver *serial_driver;
 
-/* number of characters left in xmit buffer before we ask for more */
-#define WAKEUP_CHARS 256
+/* number of अक्षरacters left in xmit buffer beक्रमe we ask क्रम more */
+#घोषणा WAKEUP_CHARS 256
 
-static void mgslpc_change_params(MGSLPC_INFO *info, struct tty_struct *tty);
-static void mgslpc_wait_until_sent(struct tty_struct *tty, int timeout);
+अटल व्योम mgslpc_change_params(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty);
+अटल व्योम mgslpc_रुको_until_sent(काष्ठा tty_काष्ठा *tty, पूर्णांक समयout);
 
 /* PCMCIA prototypes */
 
-static int mgslpc_config(struct pcmcia_device *link);
-static void mgslpc_release(u_long arg);
-static void mgslpc_detach(struct pcmcia_device *p_dev);
+अटल पूर्णांक mgslpc_config(काष्ठा pcmcia_device *link);
+अटल व्योम mgslpc_release(u_दीर्घ arg);
+अटल व्योम mgslpc_detach(काष्ठा pcmcia_device *p_dev);
 
 /*
  * 1st function defined in .text section. Calling this function in
- * init_module() followed by a breakpoint allows a remote debugger
- * (gdb) to get the .text address for the add-symbol-file command.
+ * init_module() followed by a अवरोधpoपूर्णांक allows a remote debugger
+ * (gdb) to get the .text address क्रम the add-symbol-file command.
  * This allows remote debugging of dynamically loadable modules.
  */
-static void* mgslpc_get_text_ptr(void)
-{
-	return mgslpc_get_text_ptr;
-}
+अटल व्योम* mgslpc_get_text_ptr(व्योम)
+अणु
+	वापस mgslpc_get_text_ptr;
+पूर्ण
 
 /**
  * line discipline callback wrappers
  *
- * The wrappers maintain line discipline references
- * while calling into the line discipline.
+ * The wrappers मुख्यtain line discipline references
+ * जबतक calling पूर्णांकo the line discipline.
  *
  * ldisc_receive_buf  - pass receive data to line discipline
  */
 
-static void ldisc_receive_buf(struct tty_struct *tty,
-			      const __u8 *data, char *flags, int count)
-{
-	struct tty_ldisc *ld;
-	if (!tty)
-		return;
+अटल व्योम ldisc_receive_buf(काष्ठा tty_काष्ठा *tty,
+			      स्थिर __u8 *data, अक्षर *flags, पूर्णांक count)
+अणु
+	काष्ठा tty_ldisc *ld;
+	अगर (!tty)
+		वापस;
 	ld = tty_ldisc_ref(tty);
-	if (ld) {
-		if (ld->ops->receive_buf)
+	अगर (ld) अणु
+		अगर (ld->ops->receive_buf)
 			ld->ops->receive_buf(tty, data, flags, count);
 		tty_ldisc_deref(ld);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct tty_port_operations mgslpc_port_ops = {
-	.carrier_raised = carrier_raised,
+अटल स्थिर काष्ठा tty_port_operations mgslpc_port_ops = अणु
+	.carrier_उठाओd = carrier_उठाओd,
 	.dtr_rts = dtr_rts
-};
+पूर्ण;
 
-static int mgslpc_probe(struct pcmcia_device *link)
-{
+अटल पूर्णांक mgslpc_probe(काष्ठा pcmcia_device *link)
+अणु
 	MGSLPC_INFO *info;
-	int ret;
+	पूर्णांक ret;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("mgslpc_attach\n");
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("mgslpc_attach\n");
 
-	info = kzalloc(sizeof(MGSLPC_INFO), GFP_KERNEL);
-	if (!info) {
-		printk("Error can't allocate device instance data\n");
-		return -ENOMEM;
-	}
+	info = kzalloc(माप(MGSLPC_INFO), GFP_KERNEL);
+	अगर (!info) अणु
+		prपूर्णांकk("Error can't allocate device instance data\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	info->magic = MGSLPC_MAGIC;
 	tty_port_init(&info->port);
 	info->port.ops = &mgslpc_port_ops;
 	INIT_WORK(&info->task, bh_handler);
 	info->max_frame_size = 4096;
-	init_waitqueue_head(&info->status_event_wait_q);
-	init_waitqueue_head(&info->event_wait_q);
+	init_रुकोqueue_head(&info->status_event_रुको_q);
+	init_रुकोqueue_head(&info->event_रुको_q);
 	spin_lock_init(&info->lock);
 	spin_lock_init(&info->netlock);
-	memcpy(&info->params,&default_params,sizeof(MGSL_PARAMS));
+	स_नकल(&info->params,&शेष_params,माप(MGSL_PARAMS));
 	info->idle_mode = HDLC_TXIDLE_FLAGS;
 	info->imra_value = 0xffff;
 	info->imrb_value = 0xffff;
@@ -543,828 +544,828 @@ static int mgslpc_probe(struct pcmcia_device *link)
 	info->p_dev = link;
 	link->priv = info;
 
-	/* Initialize the struct pcmcia_device structure */
+	/* Initialize the काष्ठा pcmcia_device काष्ठाure */
 
 	ret = mgslpc_config(link);
-	if (ret != 0)
-		goto failed;
+	अगर (ret != 0)
+		जाओ failed;
 
 	ret = mgslpc_add_device(info);
-	if (ret != 0)
-		goto failed_release;
+	अगर (ret != 0)
+		जाओ failed_release;
 
-	return 0;
+	वापस 0;
 
 failed_release:
-	mgslpc_release((u_long)link);
+	mgslpc_release((u_दीर्घ)link);
 failed:
 	tty_port_destroy(&info->port);
-	kfree(info);
-	return ret;
-}
+	kमुक्त(info);
+	वापस ret;
+पूर्ण
 
 /* Card has been inserted.
  */
 
-static int mgslpc_ioprobe(struct pcmcia_device *p_dev, void *priv_data)
-{
-	return pcmcia_request_io(p_dev);
-}
+अटल पूर्णांक mgslpc_ioprobe(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
+अणु
+	वापस pcmcia_request_io(p_dev);
+पूर्ण
 
-static int mgslpc_config(struct pcmcia_device *link)
-{
+अटल पूर्णांक mgslpc_config(काष्ठा pcmcia_device *link)
+अणु
 	MGSLPC_INFO *info = link->priv;
-	int ret;
+	पूर्णांक ret;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("mgslpc_config(0x%p)\n", link);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("mgslpc_config(0x%p)\n", link);
 
 	link->config_flags |= CONF_ENABLE_IRQ | CONF_AUTO_SET_IO;
 
-	ret = pcmcia_loop_config(link, mgslpc_ioprobe, NULL);
-	if (ret != 0)
-		goto failed;
+	ret = pcmcia_loop_config(link, mgslpc_ioprobe, शून्य);
+	अगर (ret != 0)
+		जाओ failed;
 
 	link->config_index = 8;
 	link->config_regs = PRESENT_OPTION;
 
 	ret = pcmcia_request_irq(link, mgslpc_isr);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 	ret = pcmcia_enable_device(link);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 
 	info->io_base = link->resource[0]->start;
 	info->irq_level = link->irq;
-	return 0;
+	वापस 0;
 
 failed:
-	mgslpc_release((u_long)link);
-	return -ENODEV;
-}
+	mgslpc_release((u_दीर्घ)link);
+	वापस -ENODEV;
+पूर्ण
 
-/* Card has been removed.
- * Unregister device and release PCMCIA configuration.
- * If device is open, postpone until it is closed.
+/* Card has been हटाओd.
+ * Unरेजिस्टर device and release PCMCIA configuration.
+ * If device is खोलो, postpone until it is बंदd.
  */
-static void mgslpc_release(u_long arg)
-{
-	struct pcmcia_device *link = (struct pcmcia_device *)arg;
+अटल व्योम mgslpc_release(u_दीर्घ arg)
+अणु
+	काष्ठा pcmcia_device *link = (काष्ठा pcmcia_device *)arg;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("mgslpc_release(0x%p)\n", link);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("mgslpc_release(0x%p)\n", link);
 
 	pcmcia_disable_device(link);
-}
+पूर्ण
 
-static void mgslpc_detach(struct pcmcia_device *link)
-{
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("mgslpc_detach(0x%p)\n", link);
+अटल व्योम mgslpc_detach(काष्ठा pcmcia_device *link)
+अणु
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("mgslpc_detach(0x%p)\n", link);
 
 	((MGSLPC_INFO *)link->priv)->stop = 1;
-	mgslpc_release((u_long)link);
+	mgslpc_release((u_दीर्घ)link);
 
-	mgslpc_remove_device((MGSLPC_INFO *)link->priv);
-}
+	mgslpc_हटाओ_device((MGSLPC_INFO *)link->priv);
+पूर्ण
 
-static int mgslpc_suspend(struct pcmcia_device *link)
-{
+अटल पूर्णांक mgslpc_suspend(काष्ठा pcmcia_device *link)
+अणु
 	MGSLPC_INFO *info = link->priv;
 
 	info->stop = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mgslpc_resume(struct pcmcia_device *link)
-{
+अटल पूर्णांक mgslpc_resume(काष्ठा pcmcia_device *link)
+अणु
 	MGSLPC_INFO *info = link->priv;
 
 	info->stop = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static inline bool mgslpc_paranoia_check(MGSLPC_INFO *info,
-					char *name, const char *routine)
-{
-#ifdef MGSLPC_PARANOIA_CHECK
-	static const char *badmagic =
+अटल अंतरभूत bool mgslpc_paranoia_check(MGSLPC_INFO *info,
+					अक्षर *name, स्थिर अक्षर *routine)
+अणु
+#अगर_घोषित MGSLPC_PARANOIA_CHECK
+	अटल स्थिर अक्षर *badmagic =
 		"Warning: bad magic number for mgsl struct (%s) in %s\n";
-	static const char *badinfo =
+	अटल स्थिर अक्षर *badinfo =
 		"Warning: null mgslpc_info for (%s) in %s\n";
 
-	if (!info) {
-		printk(badinfo, name, routine);
-		return true;
-	}
-	if (info->magic != MGSLPC_MAGIC) {
-		printk(badmagic, name, routine);
-		return true;
-	}
-#else
-	if (!info)
-		return true;
-#endif
-	return false;
-}
+	अगर (!info) अणु
+		prपूर्णांकk(badinfo, name, routine);
+		वापस true;
+	पूर्ण
+	अगर (info->magic != MGSLPC_MAGIC) अणु
+		prपूर्णांकk(badmagic, name, routine);
+		वापस true;
+	पूर्ण
+#अन्यथा
+	अगर (!info)
+		वापस true;
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
 
-#define CMD_RXFIFO      BIT7	// release current rx FIFO
-#define CMD_RXRESET     BIT6	// receiver reset
-#define CMD_RXFIFO_READ BIT5
-#define CMD_START_TIMER BIT4
-#define CMD_TXFIFO      BIT3	// release current tx FIFO
-#define CMD_TXEOM       BIT1	// transmit end message
-#define CMD_TXRESET     BIT0	// transmit reset
+#घोषणा CMD_RXFIFO      BIT7	// release current rx FIFO
+#घोषणा CMD_RXRESET     BIT6	// receiver reset
+#घोषणा CMD_RXFIFO_READ BIT5
+#घोषणा CMD_START_TIMER BIT4
+#घोषणा CMD_TXFIFO      BIT3	// release current tx FIFO
+#घोषणा CMD_TXEOM       BIT1	// transmit end message
+#घोषणा CMD_TXRESET     BIT0	// transmit reset
 
-static bool wait_command_complete(MGSLPC_INFO *info, unsigned char channel)
-{
-	int i = 0;
-	/* wait for command completion */
-	while (read_reg(info, (unsigned char)(channel+STAR)) & BIT2) {
+अटल bool रुको_command_complete(MGSLPC_INFO *info, अचिन्हित अक्षर channel)
+अणु
+	पूर्णांक i = 0;
+	/* रुको क्रम command completion */
+	जबतक (पढ़ो_reg(info, (अचिन्हित अक्षर)(channel+STAR)) & BIT2) अणु
 		udelay(1);
-		if (i++ == 1000)
-			return false;
-	}
-	return true;
-}
+		अगर (i++ == 1000)
+			वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static void issue_command(MGSLPC_INFO *info, unsigned char channel, unsigned char cmd)
-{
-	wait_command_complete(info, channel);
-	write_reg(info, (unsigned char) (channel + CMDR), cmd);
-}
+अटल व्योम issue_command(MGSLPC_INFO *info, अचिन्हित अक्षर channel, अचिन्हित अक्षर cmd)
+अणु
+	रुको_command_complete(info, channel);
+	ग_लिखो_reg(info, (अचिन्हित अक्षर) (channel + CMDR), cmd);
+पूर्ण
 
-static void tx_pause(struct tty_struct *tty)
-{
+अटल व्योम tx_छोड़ो(काष्ठा tty_काष्ठा *tty)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (mgslpc_paranoia_check(info, tty->name, "tx_pause"))
-		return;
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("tx_pause(%s)\n", info->device_name);
+	अगर (mgslpc_paranoia_check(info, tty->name, "tx_pause"))
+		वापस;
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("tx_pause(%s)\n", info->device_name);
 
 	spin_lock_irqsave(&info->lock, flags);
-	if (info->tx_enabled)
+	अगर (info->tx_enabled)
 		tx_stop(info);
 	spin_unlock_irqrestore(&info->lock, flags);
-}
+पूर्ण
 
-static void tx_release(struct tty_struct *tty)
-{
+अटल व्योम tx_release(काष्ठा tty_काष्ठा *tty)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (mgslpc_paranoia_check(info, tty->name, "tx_release"))
-		return;
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("tx_release(%s)\n", info->device_name);
+	अगर (mgslpc_paranoia_check(info, tty->name, "tx_release"))
+		वापस;
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("tx_release(%s)\n", info->device_name);
 
 	spin_lock_irqsave(&info->lock, flags);
-	if (!info->tx_enabled)
+	अगर (!info->tx_enabled)
 		tx_start(info, tty);
 	spin_unlock_irqrestore(&info->lock, flags);
-}
+पूर्ण
 
-/* Return next bottom half action to perform.
- * or 0 if nothing to do.
+/* Return next bottom half action to perक्रमm.
+ * or 0 अगर nothing to करो.
  */
-static int bh_action(MGSLPC_INFO *info)
-{
-	unsigned long flags;
-	int rc = 0;
+अटल पूर्णांक bh_action(MGSLPC_INFO *info)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc = 0;
 
 	spin_lock_irqsave(&info->lock, flags);
 
-	if (info->pending_bh & BH_RECEIVE) {
+	अगर (info->pending_bh & BH_RECEIVE) अणु
 		info->pending_bh &= ~BH_RECEIVE;
 		rc = BH_RECEIVE;
-	} else if (info->pending_bh & BH_TRANSMIT) {
+	पूर्ण अन्यथा अगर (info->pending_bh & BH_TRANSMIT) अणु
 		info->pending_bh &= ~BH_TRANSMIT;
 		rc = BH_TRANSMIT;
-	} else if (info->pending_bh & BH_STATUS) {
+	पूर्ण अन्यथा अगर (info->pending_bh & BH_STATUS) अणु
 		info->pending_bh &= ~BH_STATUS;
 		rc = BH_STATUS;
-	}
+	पूर्ण
 
-	if (!rc) {
+	अगर (!rc) अणु
 		/* Mark BH routine as complete */
 		info->bh_running = false;
 		info->bh_requested = false;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void bh_handler(struct work_struct *work)
-{
+अटल व्योम bh_handler(काष्ठा work_काष्ठा *work)
+अणु
 	MGSLPC_INFO *info = container_of(work, MGSLPC_INFO, task);
-	struct tty_struct *tty;
-	int action;
+	काष्ठा tty_काष्ठा *tty;
+	पूर्णांक action;
 
-	if (debug_level >= DEBUG_LEVEL_BH)
-		printk("%s(%d):bh_handler(%s) entry\n",
-			__FILE__,__LINE__,info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_BH)
+		prपूर्णांकk("%s(%d):bh_handler(%s) entry\n",
+			__खाता__,__LINE__,info->device_name);
 
 	info->bh_running = true;
 	tty = tty_port_tty_get(&info->port);
 
-	while((action = bh_action(info)) != 0) {
+	जबतक((action = bh_action(info)) != 0) अणु
 
 		/* Process work item */
-		if (debug_level >= DEBUG_LEVEL_BH)
-			printk("%s(%d):bh_handler() work item action=%d\n",
-				__FILE__,__LINE__,action);
+		अगर (debug_level >= DEBUG_LEVEL_BH)
+			prपूर्णांकk("%s(%d):bh_handler() work item action=%d\n",
+				__खाता__,__LINE__,action);
 
-		switch (action) {
+		चयन (action) अणु
 
-		case BH_RECEIVE:
-			while(rx_get_frame(info, tty));
-			break;
-		case BH_TRANSMIT:
+		हाल BH_RECEIVE:
+			जबतक(rx_get_frame(info, tty));
+			अवरोध;
+		हाल BH_TRANSMIT:
 			bh_transmit(info, tty);
-			break;
-		case BH_STATUS:
+			अवरोध;
+		हाल BH_STATUS:
 			bh_status(info);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* unknown work item ID */
-			printk("Unknown work item ID=%08X!\n", action);
-			break;
-		}
-	}
+			prपूर्णांकk("Unknown work item ID=%08X!\n", action);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	tty_kref_put(tty);
-	if (debug_level >= DEBUG_LEVEL_BH)
-		printk("%s(%d):bh_handler(%s) exit\n",
-			__FILE__,__LINE__,info->device_name);
-}
+	अगर (debug_level >= DEBUG_LEVEL_BH)
+		prपूर्णांकk("%s(%d):bh_handler(%s) exit\n",
+			__खाता__,__LINE__,info->device_name);
+पूर्ण
 
-static void bh_transmit(MGSLPC_INFO *info, struct tty_struct *tty)
-{
-	if (debug_level >= DEBUG_LEVEL_BH)
-		printk("bh_transmit() entry on %s\n", info->device_name);
+अटल व्योम bh_transmit(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty)
+अणु
+	अगर (debug_level >= DEBUG_LEVEL_BH)
+		prपूर्णांकk("bh_transmit() entry on %s\n", info->device_name);
 
-	if (tty)
+	अगर (tty)
 		tty_wakeup(tty);
-}
+पूर्ण
 
-static void bh_status(MGSLPC_INFO *info)
-{
+अटल व्योम bh_status(MGSLPC_INFO *info)
+अणु
 	info->ri_chkcount = 0;
 	info->dsr_chkcount = 0;
 	info->dcd_chkcount = 0;
 	info->cts_chkcount = 0;
-}
+पूर्ण
 
 /* eom: non-zero = end of frame */
-static void rx_ready_hdlc(MGSLPC_INFO *info, int eom)
-{
-	unsigned char data[2];
-	unsigned char fifo_count, read_count, i;
+अटल व्योम rx_पढ़ोy_hdlc(MGSLPC_INFO *info, पूर्णांक eom)
+अणु
+	अचिन्हित अक्षर data[2];
+	अचिन्हित अक्षर fअगरo_count, पढ़ो_count, i;
 	RXBUF *buf = (RXBUF*)(info->rx_buf + (info->rx_put * info->rx_buf_size));
 
-	if (debug_level >= DEBUG_LEVEL_ISR)
-		printk("%s(%d):rx_ready_hdlc(eom=%d)\n", __FILE__, __LINE__, eom);
+	अगर (debug_level >= DEBUG_LEVEL_ISR)
+		prपूर्णांकk("%s(%d):rx_ready_hdlc(eom=%d)\n", __खाता__, __LINE__, eom);
 
-	if (!info->rx_enabled)
-		return;
+	अगर (!info->rx_enabled)
+		वापस;
 
-	if (info->rx_frame_count >= info->rx_buf_count) {
-		/* no more free buffers */
+	अगर (info->rx_frame_count >= info->rx_buf_count) अणु
+		/* no more मुक्त buffers */
 		issue_command(info, CHA, CMD_RXRESET);
 		info->pending_bh |= BH_RECEIVE;
 		info->rx_overflow = true;
 		info->icount.buf_overrun++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (eom) {
-		/* end of frame, get FIFO count from RBCL register */
-		fifo_count = (unsigned char)(read_reg(info, CHA+RBCL) & 0x1f);
-		if (fifo_count == 0)
-			fifo_count = 32;
-	} else
-		fifo_count = 32;
+	अगर (eom) अणु
+		/* end of frame, get FIFO count from RBCL रेजिस्टर */
+		fअगरo_count = (अचिन्हित अक्षर)(पढ़ो_reg(info, CHA+RBCL) & 0x1f);
+		अगर (fअगरo_count == 0)
+			fअगरo_count = 32;
+	पूर्ण अन्यथा
+		fअगरo_count = 32;
 
-	do {
-		if (fifo_count == 1) {
-			read_count = 1;
-			data[0] = read_reg(info, CHA + RXFIFO);
-		} else {
-			read_count = 2;
-			*((unsigned short *) data) = read_reg16(info, CHA + RXFIFO);
-		}
-		fifo_count -= read_count;
-		if (!fifo_count && eom)
-			buf->status = data[--read_count];
+	करो अणु
+		अगर (fअगरo_count == 1) अणु
+			पढ़ो_count = 1;
+			data[0] = पढ़ो_reg(info, CHA + RXFIFO);
+		पूर्ण अन्यथा अणु
+			पढ़ो_count = 2;
+			*((अचिन्हित लघु *) data) = पढ़ो_reg16(info, CHA + RXFIFO);
+		पूर्ण
+		fअगरo_count -= पढ़ो_count;
+		अगर (!fअगरo_count && eom)
+			buf->status = data[--पढ़ो_count];
 
-		for (i = 0; i < read_count; i++) {
-			if (buf->count >= info->max_frame_size) {
+		क्रम (i = 0; i < पढ़ो_count; i++) अणु
+			अगर (buf->count >= info->max_frame_size) अणु
 				/* frame too large, reset receiver and reset current buffer */
 				issue_command(info, CHA, CMD_RXRESET);
 				buf->count = 0;
-				return;
-			}
+				वापस;
+			पूर्ण
 			*(buf->data + buf->count) = data[i];
 			buf->count++;
-		}
-	} while (fifo_count);
+		पूर्ण
+	पूर्ण जबतक (fअगरo_count);
 
-	if (eom) {
+	अगर (eom) अणु
 		info->pending_bh |= BH_RECEIVE;
 		info->rx_frame_count++;
 		info->rx_put++;
-		if (info->rx_put >= info->rx_buf_count)
+		अगर (info->rx_put >= info->rx_buf_count)
 			info->rx_put = 0;
-	}
+	पूर्ण
 	issue_command(info, CHA, CMD_RXFIFO);
-}
+पूर्ण
 
-static void rx_ready_async(MGSLPC_INFO *info, int tcd)
-{
-	struct tty_port *port = &info->port;
-	unsigned char data, status, flag;
-	int fifo_count;
-	int work = 0;
-	struct mgsl_icount *icount = &info->icount;
+अटल व्योम rx_पढ़ोy_async(MGSLPC_INFO *info, पूर्णांक tcd)
+अणु
+	काष्ठा tty_port *port = &info->port;
+	अचिन्हित अक्षर data, status, flag;
+	पूर्णांक fअगरo_count;
+	पूर्णांक work = 0;
+	काष्ठा mgsl_icount *icount = &info->icount;
 
-	if (tcd) {
-		/* early termination, get FIFO count from RBCL register */
-		fifo_count = (unsigned char)(read_reg(info, CHA+RBCL) & 0x1f);
+	अगर (tcd) अणु
+		/* early termination, get FIFO count from RBCL रेजिस्टर */
+		fअगरo_count = (अचिन्हित अक्षर)(पढ़ो_reg(info, CHA+RBCL) & 0x1f);
 
-		/* Zero fifo count could mean 0 or 32 bytes available.
+		/* Zero fअगरo count could mean 0 or 32 bytes available.
 		 * If BIT5 of STAR is set then at least 1 byte is available.
 		 */
-		if (!fifo_count && (read_reg(info,CHA+STAR) & BIT5))
-			fifo_count = 32;
-	} else
-		fifo_count = 32;
+		अगर (!fअगरo_count && (पढ़ो_reg(info,CHA+STAR) & BIT5))
+			fअगरo_count = 32;
+	पूर्ण अन्यथा
+		fअगरo_count = 32;
 
-	tty_buffer_request_room(port, fifo_count);
+	tty_buffer_request_room(port, fअगरo_count);
 	/* Flush received async data to receive data buffer. */
-	while (fifo_count) {
-		data   = read_reg(info, CHA + RXFIFO);
-		status = read_reg(info, CHA + RXFIFO);
-		fifo_count -= 2;
+	जबतक (fअगरo_count) अणु
+		data   = पढ़ो_reg(info, CHA + RXFIFO);
+		status = पढ़ो_reg(info, CHA + RXFIFO);
+		fअगरo_count -= 2;
 
 		icount->rx++;
 		flag = TTY_NORMAL;
 
-		// if no frameing/crc error then save data
+		// अगर no frameing/crc error then save data
 		// BIT7:parity error
 		// BIT6:framing error
 
-		if (status & (BIT7 + BIT6)) {
-			if (status & BIT7)
+		अगर (status & (BIT7 + BIT6)) अणु
+			अगर (status & BIT7)
 				icount->parity++;
-			else
+			अन्यथा
 				icount->frame++;
 
-			/* discard char if tty control flags say so */
-			if (status & info->ignore_status_mask)
-				continue;
+			/* discard अक्षर अगर tty control flags say so */
+			अगर (status & info->ignore_status_mask)
+				जारी;
 
-			status &= info->read_status_mask;
+			status &= info->पढ़ो_status_mask;
 
-			if (status & BIT7)
+			अगर (status & BIT7)
 				flag = TTY_PARITY;
-			else if (status & BIT6)
+			अन्यथा अगर (status & BIT6)
 				flag = TTY_FRAME;
-		}
-		work += tty_insert_flip_char(port, data, flag);
-	}
+		पूर्ण
+		work += tty_insert_flip_अक्षर(port, data, flag);
+	पूर्ण
 	issue_command(info, CHA, CMD_RXFIFO);
 
-	if (debug_level >= DEBUG_LEVEL_ISR) {
-		printk("%s(%d):rx_ready_async",
-			__FILE__,__LINE__);
-		printk("%s(%d):rx=%d brk=%d parity=%d frame=%d overrun=%d\n",
-			__FILE__,__LINE__,icount->rx,icount->brk,
+	अगर (debug_level >= DEBUG_LEVEL_ISR) अणु
+		prपूर्णांकk("%s(%d):rx_ready_async",
+			__खाता__,__LINE__);
+		prपूर्णांकk("%s(%d):rx=%d brk=%d parity=%d frame=%d overrun=%d\n",
+			__खाता__,__LINE__,icount->rx,icount->brk,
 			icount->parity,icount->frame,icount->overrun);
-	}
+	पूर्ण
 
-	if (work)
+	अगर (work)
 		tty_flip_buffer_push(port);
-}
+पूर्ण
 
 
-static void tx_done(MGSLPC_INFO *info, struct tty_struct *tty)
-{
-	if (!info->tx_active)
-		return;
+अटल व्योम tx_करोne(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty)
+अणु
+	अगर (!info->tx_active)
+		वापस;
 
 	info->tx_active = false;
-	info->tx_aborting = false;
+	info->tx_पातing = false;
 
-	if (info->params.mode == MGSL_MODE_ASYNC)
-		return;
+	अगर (info->params.mode == MGSL_MODE_ASYNC)
+		वापस;
 
 	info->tx_count = info->tx_put = info->tx_get = 0;
-	del_timer(&info->tx_timer);
+	del_समयr(&info->tx_समयr);
 
-	if (info->drop_rts_on_tx_done) {
-		get_signals(info);
-		if (info->serial_signals & SerialSignal_RTS) {
-			info->serial_signals &= ~SerialSignal_RTS;
-			set_signals(info);
-		}
-		info->drop_rts_on_tx_done = false;
-	}
+	अगर (info->drop_rts_on_tx_करोne) अणु
+		get_संकेतs(info);
+		अगर (info->serial_संकेतs & SerialSignal_RTS) अणु
+			info->serial_संकेतs &= ~SerialSignal_RTS;
+			set_संकेतs(info);
+		पूर्ण
+		info->drop_rts_on_tx_करोne = false;
+	पूर्ण
 
-#if SYNCLINK_GENERIC_HDLC
-	if (info->netcount)
-		hdlcdev_tx_done(info);
-	else
-#endif
-	{
-		if (tty && (tty->stopped || tty->hw_stopped)) {
+#अगर SYNCLINK_GENERIC_HDLC
+	अगर (info->netcount)
+		hdlcdev_tx_करोne(info);
+	अन्यथा
+#पूर्ण_अगर
+	अणु
+		अगर (tty && (tty->stopped || tty->hw_stopped)) अणु
 			tx_stop(info);
-			return;
-		}
+			वापस;
+		पूर्ण
 		info->pending_bh |= BH_TRANSMIT;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void tx_ready(MGSLPC_INFO *info, struct tty_struct *tty)
-{
-	unsigned char fifo_count = 32;
-	int c;
+अटल व्योम tx_पढ़ोy(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित अक्षर fअगरo_count = 32;
+	पूर्णांक c;
 
-	if (debug_level >= DEBUG_LEVEL_ISR)
-		printk("%s(%d):tx_ready(%s)\n", __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_ISR)
+		prपूर्णांकk("%s(%d):tx_ready(%s)\n", __खाता__, __LINE__, info->device_name);
 
-	if (info->params.mode == MGSL_MODE_HDLC) {
-		if (!info->tx_active)
-			return;
-	} else {
-		if (tty && (tty->stopped || tty->hw_stopped)) {
+	अगर (info->params.mode == MGSL_MODE_HDLC) अणु
+		अगर (!info->tx_active)
+			वापस;
+	पूर्ण अन्यथा अणु
+		अगर (tty && (tty->stopped || tty->hw_stopped)) अणु
 			tx_stop(info);
-			return;
-		}
-		if (!info->tx_count)
+			वापस;
+		पूर्ण
+		अगर (!info->tx_count)
 			info->tx_active = false;
-	}
+	पूर्ण
 
-	if (!info->tx_count)
-		return;
+	अगर (!info->tx_count)
+		वापस;
 
-	while (info->tx_count && fifo_count) {
-		c = min(2, min_t(int, fifo_count, min(info->tx_count, TXBUFSIZE - info->tx_get)));
+	जबतक (info->tx_count && fअगरo_count) अणु
+		c = min(2, min_t(पूर्णांक, fअगरo_count, min(info->tx_count, TXबफ_मानE - info->tx_get)));
 
-		if (c == 1) {
-			write_reg(info, CHA + TXFIFO, *(info->tx_buf + info->tx_get));
-		} else {
-			write_reg16(info, CHA + TXFIFO,
-					  *((unsigned short*)(info->tx_buf + info->tx_get)));
-		}
+		अगर (c == 1) अणु
+			ग_लिखो_reg(info, CHA + TXFIFO, *(info->tx_buf + info->tx_get));
+		पूर्ण अन्यथा अणु
+			ग_लिखो_reg16(info, CHA + TXFIFO,
+					  *((अचिन्हित लघु*)(info->tx_buf + info->tx_get)));
+		पूर्ण
 		info->tx_count -= c;
-		info->tx_get = (info->tx_get + c) & (TXBUFSIZE - 1);
-		fifo_count -= c;
-	}
+		info->tx_get = (info->tx_get + c) & (TXबफ_मानE - 1);
+		fअगरo_count -= c;
+	पूर्ण
 
-	if (info->params.mode == MGSL_MODE_ASYNC) {
-		if (info->tx_count < WAKEUP_CHARS)
+	अगर (info->params.mode == MGSL_MODE_ASYNC) अणु
+		अगर (info->tx_count < WAKEUP_CHARS)
 			info->pending_bh |= BH_TRANSMIT;
 		issue_command(info, CHA, CMD_TXFIFO);
-	} else {
-		if (info->tx_count)
+	पूर्ण अन्यथा अणु
+		अगर (info->tx_count)
 			issue_command(info, CHA, CMD_TXFIFO);
-		else
+		अन्यथा
 			issue_command(info, CHA, CMD_TXFIFO + CMD_TXEOM);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cts_change(MGSLPC_INFO *info, struct tty_struct *tty)
-{
-	get_signals(info);
-	if ((info->cts_chkcount)++ >= IO_PIN_SHUTDOWN_LIMIT)
+अटल व्योम cts_change(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty)
+अणु
+	get_संकेतs(info);
+	अगर ((info->cts_chkcount)++ >= IO_PIN_SHUTDOWN_LIMIT)
 		irq_disable(info, CHB, IRQ_CTS);
 	info->icount.cts++;
-	if (info->serial_signals & SerialSignal_CTS)
-		info->input_signal_events.cts_up++;
-	else
-		info->input_signal_events.cts_down++;
-	wake_up_interruptible(&info->status_event_wait_q);
-	wake_up_interruptible(&info->event_wait_q);
+	अगर (info->serial_संकेतs & SerialSignal_CTS)
+		info->input_संकेत_events.cts_up++;
+	अन्यथा
+		info->input_संकेत_events.cts_करोwn++;
+	wake_up_पूर्णांकerruptible(&info->status_event_रुको_q);
+	wake_up_पूर्णांकerruptible(&info->event_रुको_q);
 
-	if (tty && tty_port_cts_enabled(&info->port)) {
-		if (tty->hw_stopped) {
-			if (info->serial_signals & SerialSignal_CTS) {
-				if (debug_level >= DEBUG_LEVEL_ISR)
-					printk("CTS tx start...");
+	अगर (tty && tty_port_cts_enabled(&info->port)) अणु
+		अगर (tty->hw_stopped) अणु
+			अगर (info->serial_संकेतs & SerialSignal_CTS) अणु
+				अगर (debug_level >= DEBUG_LEVEL_ISR)
+					prपूर्णांकk("CTS tx start...");
 				tty->hw_stopped = 0;
 				tx_start(info, tty);
 				info->pending_bh |= BH_TRANSMIT;
-				return;
-			}
-		} else {
-			if (!(info->serial_signals & SerialSignal_CTS)) {
-				if (debug_level >= DEBUG_LEVEL_ISR)
-					printk("CTS tx stop...");
+				वापस;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (!(info->serial_संकेतs & SerialSignal_CTS)) अणु
+				अगर (debug_level >= DEBUG_LEVEL_ISR)
+					prपूर्णांकk("CTS tx stop...");
 				tty->hw_stopped = 1;
 				tx_stop(info);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	info->pending_bh |= BH_STATUS;
-}
+पूर्ण
 
-static void dcd_change(MGSLPC_INFO *info, struct tty_struct *tty)
-{
-	get_signals(info);
-	if ((info->dcd_chkcount)++ >= IO_PIN_SHUTDOWN_LIMIT)
+अटल व्योम dcd_change(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty)
+अणु
+	get_संकेतs(info);
+	अगर ((info->dcd_chkcount)++ >= IO_PIN_SHUTDOWN_LIMIT)
 		irq_disable(info, CHB, IRQ_DCD);
 	info->icount.dcd++;
-	if (info->serial_signals & SerialSignal_DCD) {
-		info->input_signal_events.dcd_up++;
-	}
-	else
-		info->input_signal_events.dcd_down++;
-#if SYNCLINK_GENERIC_HDLC
-	if (info->netcount) {
-		if (info->serial_signals & SerialSignal_DCD)
-			netif_carrier_on(info->netdev);
-		else
-			netif_carrier_off(info->netdev);
-	}
-#endif
-	wake_up_interruptible(&info->status_event_wait_q);
-	wake_up_interruptible(&info->event_wait_q);
+	अगर (info->serial_संकेतs & SerialSignal_DCD) अणु
+		info->input_संकेत_events.dcd_up++;
+	पूर्ण
+	अन्यथा
+		info->input_संकेत_events.dcd_करोwn++;
+#अगर SYNCLINK_GENERIC_HDLC
+	अगर (info->netcount) अणु
+		अगर (info->serial_संकेतs & SerialSignal_DCD)
+			netअगर_carrier_on(info->netdev);
+		अन्यथा
+			netअगर_carrier_off(info->netdev);
+	पूर्ण
+#पूर्ण_अगर
+	wake_up_पूर्णांकerruptible(&info->status_event_रुको_q);
+	wake_up_पूर्णांकerruptible(&info->event_रुको_q);
 
-	if (tty_port_check_carrier(&info->port)) {
-		if (debug_level >= DEBUG_LEVEL_ISR)
-			printk("%s CD now %s...", info->device_name,
-			       (info->serial_signals & SerialSignal_DCD) ? "on" : "off");
-		if (info->serial_signals & SerialSignal_DCD)
-			wake_up_interruptible(&info->port.open_wait);
-		else {
-			if (debug_level >= DEBUG_LEVEL_ISR)
-				printk("doing serial hangup...");
-			if (tty)
+	अगर (tty_port_check_carrier(&info->port)) अणु
+		अगर (debug_level >= DEBUG_LEVEL_ISR)
+			prपूर्णांकk("%s CD now %s...", info->device_name,
+			       (info->serial_संकेतs & SerialSignal_DCD) ? "on" : "off");
+		अगर (info->serial_संकेतs & SerialSignal_DCD)
+			wake_up_पूर्णांकerruptible(&info->port.खोलो_रुको);
+		अन्यथा अणु
+			अगर (debug_level >= DEBUG_LEVEL_ISR)
+				prपूर्णांकk("doing serial hangup...");
+			अगर (tty)
 				tty_hangup(tty);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	info->pending_bh |= BH_STATUS;
-}
+पूर्ण
 
-static void dsr_change(MGSLPC_INFO *info)
-{
-	get_signals(info);
-	if ((info->dsr_chkcount)++ >= IO_PIN_SHUTDOWN_LIMIT)
+अटल व्योम dsr_change(MGSLPC_INFO *info)
+अणु
+	get_संकेतs(info);
+	अगर ((info->dsr_chkcount)++ >= IO_PIN_SHUTDOWN_LIMIT)
 		port_irq_disable(info, PVR_DSR);
 	info->icount.dsr++;
-	if (info->serial_signals & SerialSignal_DSR)
-		info->input_signal_events.dsr_up++;
-	else
-		info->input_signal_events.dsr_down++;
-	wake_up_interruptible(&info->status_event_wait_q);
-	wake_up_interruptible(&info->event_wait_q);
+	अगर (info->serial_संकेतs & SerialSignal_DSR)
+		info->input_संकेत_events.dsr_up++;
+	अन्यथा
+		info->input_संकेत_events.dsr_करोwn++;
+	wake_up_पूर्णांकerruptible(&info->status_event_रुको_q);
+	wake_up_पूर्णांकerruptible(&info->event_रुको_q);
 	info->pending_bh |= BH_STATUS;
-}
+पूर्ण
 
-static void ri_change(MGSLPC_INFO *info)
-{
-	get_signals(info);
-	if ((info->ri_chkcount)++ >= IO_PIN_SHUTDOWN_LIMIT)
+अटल व्योम ri_change(MGSLPC_INFO *info)
+अणु
+	get_संकेतs(info);
+	अगर ((info->ri_chkcount)++ >= IO_PIN_SHUTDOWN_LIMIT)
 		port_irq_disable(info, PVR_RI);
 	info->icount.rng++;
-	if (info->serial_signals & SerialSignal_RI)
-		info->input_signal_events.ri_up++;
-	else
-		info->input_signal_events.ri_down++;
-	wake_up_interruptible(&info->status_event_wait_q);
-	wake_up_interruptible(&info->event_wait_q);
+	अगर (info->serial_संकेतs & SerialSignal_RI)
+		info->input_संकेत_events.ri_up++;
+	अन्यथा
+		info->input_संकेत_events.ri_करोwn++;
+	wake_up_पूर्णांकerruptible(&info->status_event_रुको_q);
+	wake_up_पूर्णांकerruptible(&info->event_रुको_q);
 	info->pending_bh |= BH_STATUS;
-}
+पूर्ण
 
-/* Interrupt service routine entry point.
+/* Interrupt service routine entry poपूर्णांक.
  *
  * Arguments:
  *
- * irq     interrupt number that caused interrupt
- * dev_id  device ID supplied during interrupt registration
+ * irq     पूर्णांकerrupt number that caused पूर्णांकerrupt
+ * dev_id  device ID supplied during पूर्णांकerrupt registration
  */
-static irqreturn_t mgslpc_isr(int dummy, void *dev_id)
-{
+अटल irqवापस_t mgslpc_isr(पूर्णांक dummy, व्योम *dev_id)
+अणु
 	MGSLPC_INFO *info = dev_id;
-	struct tty_struct *tty;
-	unsigned short isr;
-	unsigned char gis, pis;
-	int count=0;
+	काष्ठा tty_काष्ठा *tty;
+	अचिन्हित लघु isr;
+	अचिन्हित अक्षर gis, pis;
+	पूर्णांक count=0;
 
-	if (debug_level >= DEBUG_LEVEL_ISR)
-		printk("mgslpc_isr(%d) entry.\n", info->irq_level);
+	अगर (debug_level >= DEBUG_LEVEL_ISR)
+		prपूर्णांकk("mgslpc_isr(%d) entry.\n", info->irq_level);
 
-	if (!(info->p_dev->_locked))
-		return IRQ_HANDLED;
+	अगर (!(info->p_dev->_locked))
+		वापस IRQ_HANDLED;
 
 	tty = tty_port_tty_get(&info->port);
 
 	spin_lock(&info->lock);
 
-	while ((gis = read_reg(info, CHA + GIS))) {
-		if (debug_level >= DEBUG_LEVEL_ISR)
-			printk("mgslpc_isr %s gis=%04X\n", info->device_name,gis);
+	जबतक ((gis = पढ़ो_reg(info, CHA + GIS))) अणु
+		अगर (debug_level >= DEBUG_LEVEL_ISR)
+			prपूर्णांकk("mgslpc_isr %s gis=%04X\n", info->device_name,gis);
 
-		if ((gis & 0x70) || count > 1000) {
-			printk("synclink_cs:hardware failed or ejected\n");
-			break;
-		}
+		अगर ((gis & 0x70) || count > 1000) अणु
+			prपूर्णांकk("synclink_cs:hardware failed or ejected\n");
+			अवरोध;
+		पूर्ण
 		count++;
 
-		if (gis & (BIT1 | BIT0)) {
-			isr = read_reg16(info, CHB + ISR);
-			if (isr & IRQ_DCD)
+		अगर (gis & (BIT1 | BIT0)) अणु
+			isr = पढ़ो_reg16(info, CHB + ISR);
+			अगर (isr & IRQ_DCD)
 				dcd_change(info, tty);
-			if (isr & IRQ_CTS)
+			अगर (isr & IRQ_CTS)
 				cts_change(info, tty);
-		}
-		if (gis & (BIT3 | BIT2))
-		{
-			isr = read_reg16(info, CHA + ISR);
-			if (isr & IRQ_TIMER) {
+		पूर्ण
+		अगर (gis & (BIT3 | BIT2))
+		अणु
+			isr = पढ़ो_reg16(info, CHA + ISR);
+			अगर (isr & IRQ_TIMER) अणु
 				info->irq_occurred = true;
 				irq_disable(info, CHA, IRQ_TIMER);
-			}
+			पूर्ण
 
 			/* receive IRQs */
-			if (isr & IRQ_EXITHUNT) {
-				info->icount.exithunt++;
-				wake_up_interruptible(&info->event_wait_q);
-			}
-			if (isr & IRQ_BREAK_ON) {
+			अगर (isr & IRQ_EXITHUNT) अणु
+				info->icount.निकासhunt++;
+				wake_up_पूर्णांकerruptible(&info->event_रुको_q);
+			पूर्ण
+			अगर (isr & IRQ_BREAK_ON) अणु
 				info->icount.brk++;
-				if (info->port.flags & ASYNC_SAK)
-					do_SAK(tty);
-			}
-			if (isr & IRQ_RXTIME) {
+				अगर (info->port.flags & ASYNC_SAK)
+					करो_SAK(tty);
+			पूर्ण
+			अगर (isr & IRQ_RXTIME) अणु
 				issue_command(info, CHA, CMD_RXFIFO_READ);
-			}
-			if (isr & (IRQ_RXEOM | IRQ_RXFIFO)) {
-				if (info->params.mode == MGSL_MODE_HDLC)
-					rx_ready_hdlc(info, isr & IRQ_RXEOM);
-				else
-					rx_ready_async(info, isr & IRQ_RXEOM);
-			}
+			पूर्ण
+			अगर (isr & (IRQ_RXEOM | IRQ_RXFIFO)) अणु
+				अगर (info->params.mode == MGSL_MODE_HDLC)
+					rx_पढ़ोy_hdlc(info, isr & IRQ_RXEOM);
+				अन्यथा
+					rx_पढ़ोy_async(info, isr & IRQ_RXEOM);
+			पूर्ण
 
 			/* transmit IRQs */
-			if (isr & IRQ_UNDERRUN) {
-				if (info->tx_aborting)
-					info->icount.txabort++;
-				else
+			अगर (isr & IRQ_UNDERRUN) अणु
+				अगर (info->tx_पातing)
+					info->icount.txपात++;
+				अन्यथा
 					info->icount.txunder++;
-				tx_done(info, tty);
-			}
-			else if (isr & IRQ_ALLSENT) {
+				tx_करोne(info, tty);
+			पूर्ण
+			अन्यथा अगर (isr & IRQ_ALLSENT) अणु
 				info->icount.txok++;
-				tx_done(info, tty);
-			}
-			else if (isr & IRQ_TXFIFO)
-				tx_ready(info, tty);
-		}
-		if (gis & BIT7) {
-			pis = read_reg(info, CHA + PIS);
-			if (pis & BIT1)
+				tx_करोne(info, tty);
+			पूर्ण
+			अन्यथा अगर (isr & IRQ_TXFIFO)
+				tx_पढ़ोy(info, tty);
+		पूर्ण
+		अगर (gis & BIT7) अणु
+			pis = पढ़ो_reg(info, CHA + PIS);
+			अगर (pis & BIT1)
 				dsr_change(info);
-			if (pis & BIT2)
+			अगर (pis & BIT2)
 				ri_change(info);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Request bottom half processing if there's something
-	 * for it to do and the bh is not already running
+	/* Request bottom half processing अगर there's something
+	 * क्रम it to करो and the bh is not alपढ़ोy running
 	 */
 
-	if (info->pending_bh && !info->bh_running && !info->bh_requested) {
-		if (debug_level >= DEBUG_LEVEL_ISR)
-			printk("%s(%d):%s queueing bh task.\n",
-				__FILE__,__LINE__,info->device_name);
+	अगर (info->pending_bh && !info->bh_running && !info->bh_requested) अणु
+		अगर (debug_level >= DEBUG_LEVEL_ISR)
+			prपूर्णांकk("%s(%d):%s queueing bh task.\n",
+				__खाता__,__LINE__,info->device_name);
 		schedule_work(&info->task);
 		info->bh_requested = true;
-	}
+	पूर्ण
 
 	spin_unlock(&info->lock);
 	tty_kref_put(tty);
 
-	if (debug_level >= DEBUG_LEVEL_ISR)
-		printk("%s(%d):mgslpc_isr(%d)exit.\n",
-		       __FILE__, __LINE__, info->irq_level);
+	अगर (debug_level >= DEBUG_LEVEL_ISR)
+		prपूर्णांकk("%s(%d):mgslpc_isr(%d)exit.\n",
+		       __खाता__, __LINE__, info->irq_level);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /* Initialize and start device.
  */
-static int startup(MGSLPC_INFO * info, struct tty_struct *tty)
-{
-	int retval = 0;
+अटल पूर्णांक startup(MGSLPC_INFO * info, काष्ठा tty_काष्ठा *tty)
+अणु
+	पूर्णांक retval = 0;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):startup(%s)\n", __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):startup(%s)\n", __खाता__, __LINE__, info->device_name);
 
-	if (tty_port_initialized(&info->port))
-		return 0;
+	अगर (tty_port_initialized(&info->port))
+		वापस 0;
 
-	if (!info->tx_buf) {
-		/* allocate a page of memory for a transmit buffer */
-		info->tx_buf = (unsigned char *)get_zeroed_page(GFP_KERNEL);
-		if (!info->tx_buf) {
-			printk(KERN_ERR"%s(%d):%s can't allocate transmit buffer\n",
-				__FILE__, __LINE__, info->device_name);
-			return -ENOMEM;
-		}
-	}
+	अगर (!info->tx_buf) अणु
+		/* allocate a page of memory क्रम a transmit buffer */
+		info->tx_buf = (अचिन्हित अक्षर *)get_zeroed_page(GFP_KERNEL);
+		अगर (!info->tx_buf) अणु
+			prपूर्णांकk(KERN_ERR"%s(%d):%s can't allocate transmit buffer\n",
+				__खाता__, __LINE__, info->device_name);
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	info->pending_bh = 0;
 
-	memset(&info->icount, 0, sizeof(info->icount));
+	स_रखो(&info->icount, 0, माप(info->icount));
 
-	timer_setup(&info->tx_timer, tx_timeout, 0);
+	समयr_setup(&info->tx_समयr, tx_समयout, 0);
 
 	/* Allocate and claim adapter resources */
 	retval = claim_resources(info);
 
-	/* perform existence check and diagnostics */
-	if (!retval)
+	/* perक्रमm existence check and diagnostics */
+	अगर (!retval)
 		retval = adapter_test(info);
 
-	if (retval) {
-		if (capable(CAP_SYS_ADMIN) && tty)
+	अगर (retval) अणु
+		अगर (capable(CAP_SYS_ADMIN) && tty)
 			set_bit(TTY_IO_ERROR, &tty->flags);
 		release_resources(info);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	/* program hardware for current parameters */
+	/* program hardware क्रम current parameters */
 	mgslpc_change_params(info, tty);
 
-	if (tty)
+	अगर (tty)
 		clear_bit(TTY_IO_ERROR, &tty->flags);
 
 	tty_port_set_initialized(&info->port, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Called by mgslpc_close() and mgslpc_hangup() to shutdown hardware
+/* Called by mgslpc_बंद() and mgslpc_hangup() to shutकरोwn hardware
  */
-static void shutdown(MGSLPC_INFO * info, struct tty_struct *tty)
-{
-	unsigned long flags;
+अटल व्योम shutकरोwn(MGSLPC_INFO * info, काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (!tty_port_initialized(&info->port))
-		return;
+	अगर (!tty_port_initialized(&info->port))
+		वापस;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_shutdown(%s)\n",
-			 __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_shutdown(%s)\n",
+			 __खाता__, __LINE__, info->device_name);
 
-	/* clear status wait queue because status changes */
-	/* can't happen after shutting down the hardware */
-	wake_up_interruptible(&info->status_event_wait_q);
-	wake_up_interruptible(&info->event_wait_q);
+	/* clear status रुको queue because status changes */
+	/* can't happen after shutting करोwn the hardware */
+	wake_up_पूर्णांकerruptible(&info->status_event_रुको_q);
+	wake_up_पूर्णांकerruptible(&info->event_रुको_q);
 
-	del_timer_sync(&info->tx_timer);
+	del_समयr_sync(&info->tx_समयr);
 
-	if (info->tx_buf) {
-		free_page((unsigned long) info->tx_buf);
-		info->tx_buf = NULL;
-	}
+	अगर (info->tx_buf) अणु
+		मुक्त_page((अचिन्हित दीर्घ) info->tx_buf);
+		info->tx_buf = शून्य;
+	पूर्ण
 
 	spin_lock_irqsave(&info->lock, flags);
 
 	rx_stop(info);
 	tx_stop(info);
 
-	/* TODO:disable interrupts instead of reset to preserve signal states */
+	/* TODO:disable पूर्णांकerrupts instead of reset to preserve संकेत states */
 	reset_device(info);
 
-	if (!tty || C_HUPCL(tty)) {
-		info->serial_signals &= ~(SerialSignal_RTS | SerialSignal_DTR);
-		set_signals(info);
-	}
+	अगर (!tty || C_HUPCL(tty)) अणु
+		info->serial_संकेतs &= ~(SerialSignal_RTS | SerialSignal_DTR);
+		set_संकेतs(info);
+	पूर्ण
 
 	spin_unlock_irqrestore(&info->lock, flags);
 
 	release_resources(info);
 
-	if (tty)
+	अगर (tty)
 		set_bit(TTY_IO_ERROR, &tty->flags);
 
 	tty_port_set_initialized(&info->port, 0);
-}
+पूर्ण
 
-static void mgslpc_program_hw(MGSLPC_INFO *info, struct tty_struct *tty)
-{
-	unsigned long flags;
+अटल व्योम mgslpc_program_hw(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&info->lock, flags);
 
@@ -1372,12 +1373,12 @@ static void mgslpc_program_hw(MGSLPC_INFO *info, struct tty_struct *tty)
 	tx_stop(info);
 	info->tx_count = info->tx_put = info->tx_get = 0;
 
-	if (info->params.mode == MGSL_MODE_HDLC || info->netcount)
+	अगर (info->params.mode == MGSL_MODE_HDLC || info->netcount)
 		hdlc_mode(info);
-	else
+	अन्यथा
 		async_mode(info);
 
-	set_signals(info);
+	set_संकेतs(info);
 
 	info->dcd_chkcount = 0;
 	info->cts_chkcount = 0;
@@ -1385,698 +1386,698 @@ static void mgslpc_program_hw(MGSLPC_INFO *info, struct tty_struct *tty)
 	info->dsr_chkcount = 0;
 
 	irq_enable(info, CHB, IRQ_DCD | IRQ_CTS);
-	port_irq_enable(info, (unsigned char) PVR_DSR | PVR_RI);
-	get_signals(info);
+	port_irq_enable(info, (अचिन्हित अक्षर) PVR_DSR | PVR_RI);
+	get_संकेतs(info);
 
-	if (info->netcount || (tty && C_CREAD(tty)))
+	अगर (info->netcount || (tty && C_CREAD(tty)))
 		rx_start(info);
 
 	spin_unlock_irqrestore(&info->lock, flags);
-}
+पूर्ण
 
 /* Reconfigure adapter based on new parameters
  */
-static void mgslpc_change_params(MGSLPC_INFO *info, struct tty_struct *tty)
-{
-	unsigned cflag;
-	int bits_per_char;
+अटल व्योम mgslpc_change_params(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित cflag;
+	पूर्णांक bits_per_अक्षर;
 
-	if (!tty)
-		return;
+	अगर (!tty)
+		वापस;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_change_params(%s)\n",
-			 __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_change_params(%s)\n",
+			 __खाता__, __LINE__, info->device_name);
 
 	cflag = tty->termios.c_cflag;
 
-	/* if B0 rate (hangup) specified then negate RTS and DTR */
-	/* otherwise assert RTS and DTR */
-	if (cflag & CBAUD)
-		info->serial_signals |= SerialSignal_RTS | SerialSignal_DTR;
-	else
-		info->serial_signals &= ~(SerialSignal_RTS | SerialSignal_DTR);
+	/* अगर B0 rate (hangup) specअगरied then negate RTS and DTR */
+	/* otherwise निश्चित RTS and DTR */
+	अगर (cflag & CBAUD)
+		info->serial_संकेतs |= SerialSignal_RTS | SerialSignal_DTR;
+	अन्यथा
+		info->serial_संकेतs &= ~(SerialSignal_RTS | SerialSignal_DTR);
 
 	/* byte size and parity */
 
-	switch (cflag & CSIZE) {
-	case CS5: info->params.data_bits = 5; break;
-	case CS6: info->params.data_bits = 6; break;
-	case CS7: info->params.data_bits = 7; break;
-	case CS8: info->params.data_bits = 8; break;
-	default:  info->params.data_bits = 7; break;
-	}
+	चयन (cflag & CSIZE) अणु
+	हाल CS5: info->params.data_bits = 5; अवरोध;
+	हाल CS6: info->params.data_bits = 6; अवरोध;
+	हाल CS7: info->params.data_bits = 7; अवरोध;
+	हाल CS8: info->params.data_bits = 8; अवरोध;
+	शेष:  info->params.data_bits = 7; अवरोध;
+	पूर्ण
 
-	if (cflag & CSTOPB)
+	अगर (cflag & CSTOPB)
 		info->params.stop_bits = 2;
-	else
+	अन्यथा
 		info->params.stop_bits = 1;
 
 	info->params.parity = ASYNC_PARITY_NONE;
-	if (cflag & PARENB) {
-		if (cflag & PARODD)
+	अगर (cflag & PARENB) अणु
+		अगर (cflag & PARODD)
 			info->params.parity = ASYNC_PARITY_ODD;
-		else
+		अन्यथा
 			info->params.parity = ASYNC_PARITY_EVEN;
-#ifdef CMSPAR
-		if (cflag & CMSPAR)
+#अगर_घोषित CMSPAR
+		अगर (cflag & CMSPAR)
 			info->params.parity = ASYNC_PARITY_SPACE;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	/* calculate number of jiffies to transmit a full
-	 * FIFO (32 bytes) at specified data rate
+	/* calculate number of jअगरfies to transmit a full
+	 * FIFO (32 bytes) at specअगरied data rate
 	 */
-	bits_per_char = info->params.data_bits +
+	bits_per_अक्षर = info->params.data_bits +
 			info->params.stop_bits + 1;
 
-	/* if port data rate is set to 460800 or less then
+	/* अगर port data rate is set to 460800 or less then
 	 * allow tty settings to override, otherwise keep the
 	 * current data rate.
 	 */
-	if (info->params.data_rate <= 460800) {
+	अगर (info->params.data_rate <= 460800) अणु
 		info->params.data_rate = tty_get_baud_rate(tty);
-	}
+	पूर्ण
 
-	if (info->params.data_rate) {
-		info->timeout = (32*HZ*bits_per_char) /
+	अगर (info->params.data_rate) अणु
+		info->समयout = (32*HZ*bits_per_अक्षर) /
 				info->params.data_rate;
-	}
-	info->timeout += HZ/50;		/* Add .02 seconds of slop */
+	पूर्ण
+	info->समयout += HZ/50;		/* Add .02 seconds of slop */
 
 	tty_port_set_cts_flow(&info->port, cflag & CRTSCTS);
 	tty_port_set_check_carrier(&info->port, ~cflag & CLOCAL);
 
 	/* process tty input control flags */
 
-	info->read_status_mask = 0;
-	if (I_INPCK(tty))
-		info->read_status_mask |= BIT7 | BIT6;
-	if (I_IGNPAR(tty))
+	info->पढ़ो_status_mask = 0;
+	अगर (I_INPCK(tty))
+		info->पढ़ो_status_mask |= BIT7 | BIT6;
+	अगर (I_IGNPAR(tty))
 		info->ignore_status_mask |= BIT7 | BIT6;
 
 	mgslpc_program_hw(info, tty);
-}
+पूर्ण
 
-/* Add a character to the transmit buffer
+/* Add a अक्षरacter to the transmit buffer
  */
-static int mgslpc_put_char(struct tty_struct *tty, unsigned char ch)
-{
+अटल पूर्णांक mgslpc_put_अक्षर(काष्ठा tty_काष्ठा *tty, अचिन्हित अक्षर ch)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO) {
-		printk("%s(%d):mgslpc_put_char(%d) on %s\n",
-			__FILE__, __LINE__, ch, info->device_name);
-	}
+	अगर (debug_level >= DEBUG_LEVEL_INFO) अणु
+		prपूर्णांकk("%s(%d):mgslpc_put_char(%d) on %s\n",
+			__खाता__, __LINE__, ch, info->device_name);
+	पूर्ण
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_put_char"))
-		return 0;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_put_char"))
+		वापस 0;
 
-	if (!info->tx_buf)
-		return 0;
+	अगर (!info->tx_buf)
+		वापस 0;
 
 	spin_lock_irqsave(&info->lock, flags);
 
-	if (info->params.mode == MGSL_MODE_ASYNC || !info->tx_active) {
-		if (info->tx_count < TXBUFSIZE - 1) {
+	अगर (info->params.mode == MGSL_MODE_ASYNC || !info->tx_active) अणु
+		अगर (info->tx_count < TXबफ_मानE - 1) अणु
 			info->tx_buf[info->tx_put++] = ch;
-			info->tx_put &= TXBUFSIZE-1;
+			info->tx_put &= TXबफ_मानE-1;
 			info->tx_count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&info->lock, flags);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-/* Enable transmitter so remaining characters in the
+/* Enable transmitter so reमुख्यing अक्षरacters in the
  * transmit buffer are sent.
  */
-static void mgslpc_flush_chars(struct tty_struct *tty)
-{
+अटल व्योम mgslpc_flush_अक्षरs(काष्ठा tty_काष्ठा *tty)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_flush_chars() entry on %s tx_count=%d\n",
-			__FILE__, __LINE__, info->device_name, info->tx_count);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_flush_chars() entry on %s tx_count=%d\n",
+			__खाता__, __LINE__, info->device_name, info->tx_count);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_flush_chars"))
-		return;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_flush_chars"))
+		वापस;
 
-	if (info->tx_count <= 0 || tty->stopped ||
+	अगर (info->tx_count <= 0 || tty->stopped ||
 	    tty->hw_stopped || !info->tx_buf)
-		return;
+		वापस;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_flush_chars() entry on %s starting transmitter\n",
-			__FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_flush_chars() entry on %s starting transmitter\n",
+			__खाता__, __LINE__, info->device_name);
 
 	spin_lock_irqsave(&info->lock, flags);
-	if (!info->tx_active)
+	अगर (!info->tx_active)
 		tx_start(info, tty);
 	spin_unlock_irqrestore(&info->lock, flags);
-}
+पूर्ण
 
 /* Send a block of data
  *
  * Arguments:
  *
- * tty        pointer to tty information structure
- * buf	      pointer to buffer containing send data
+ * tty        poपूर्णांकer to tty inक्रमmation काष्ठाure
+ * buf	      poपूर्णांकer to buffer containing send data
  * count      size of send data in bytes
  *
- * Returns: number of characters written
+ * Returns: number of अक्षरacters written
  */
-static int mgslpc_write(struct tty_struct * tty,
-			const unsigned char *buf, int count)
-{
-	int c, ret = 0;
+अटल पूर्णांक mgslpc_ग_लिखो(काष्ठा tty_काष्ठा * tty,
+			स्थिर अचिन्हित अक्षर *buf, पूर्णांक count)
+अणु
+	पूर्णांक c, ret = 0;
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_write(%s) count=%d\n",
-			__FILE__, __LINE__, info->device_name, count);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_write(%s) count=%d\n",
+			__खाता__, __LINE__, info->device_name, count);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_write") ||
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_write") ||
 		!info->tx_buf)
-		goto cleanup;
+		जाओ cleanup;
 
-	if (info->params.mode == MGSL_MODE_HDLC) {
-		if (count > TXBUFSIZE) {
+	अगर (info->params.mode == MGSL_MODE_HDLC) अणु
+		अगर (count > TXबफ_मानE) अणु
 			ret = -EIO;
-			goto cleanup;
-		}
-		if (info->tx_active)
-			goto cleanup;
-		else if (info->tx_count)
-			goto start;
-	}
+			जाओ cleanup;
+		पूर्ण
+		अगर (info->tx_active)
+			जाओ cleanup;
+		अन्यथा अगर (info->tx_count)
+			जाओ start;
+	पूर्ण
 
-	for (;;) {
+	क्रम (;;) अणु
 		c = min(count,
-			min(TXBUFSIZE - info->tx_count - 1,
-			    TXBUFSIZE - info->tx_put));
-		if (c <= 0)
-			break;
+			min(TXबफ_मानE - info->tx_count - 1,
+			    TXबफ_मानE - info->tx_put));
+		अगर (c <= 0)
+			अवरोध;
 
-		memcpy(info->tx_buf + info->tx_put, buf, c);
+		स_नकल(info->tx_buf + info->tx_put, buf, c);
 
 		spin_lock_irqsave(&info->lock, flags);
-		info->tx_put = (info->tx_put + c) & (TXBUFSIZE-1);
+		info->tx_put = (info->tx_put + c) & (TXबफ_मानE-1);
 		info->tx_count += c;
 		spin_unlock_irqrestore(&info->lock, flags);
 
 		buf += c;
 		count -= c;
 		ret += c;
-	}
+	पूर्ण
 start:
-	if (info->tx_count && !tty->stopped && !tty->hw_stopped) {
+	अगर (info->tx_count && !tty->stopped && !tty->hw_stopped) अणु
 		spin_lock_irqsave(&info->lock, flags);
-		if (!info->tx_active)
+		अगर (!info->tx_active)
 			tx_start(info, tty);
 		spin_unlock_irqrestore(&info->lock, flags);
-	}
+	पूर्ण
 cleanup:
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_write(%s) returning=%d\n",
-			__FILE__, __LINE__, info->device_name, ret);
-	return ret;
-}
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_write(%s) returning=%d\n",
+			__खाता__, __LINE__, info->device_name, ret);
+	वापस ret;
+पूर्ण
 
-/* Return the count of free bytes in transmit buffer
+/* Return the count of मुक्त bytes in transmit buffer
  */
-static int mgslpc_write_room(struct tty_struct *tty)
-{
+अटल पूर्णांक mgslpc_ग_लिखो_room(काष्ठा tty_काष्ठा *tty)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	int ret;
+	पूर्णांक ret;
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_write_room"))
-		return 0;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_write_room"))
+		वापस 0;
 
-	if (info->params.mode == MGSL_MODE_HDLC) {
+	अगर (info->params.mode == MGSL_MODE_HDLC) अणु
 		/* HDLC (frame oriented) mode */
-		if (info->tx_active)
-			return 0;
-		else
-			return HDLC_MAX_FRAME_SIZE;
-	} else {
-		ret = TXBUFSIZE - info->tx_count - 1;
-		if (ret < 0)
+		अगर (info->tx_active)
+			वापस 0;
+		अन्यथा
+			वापस HDLC_MAX_FRAME_SIZE;
+	पूर्ण अन्यथा अणु
+		ret = TXबफ_मानE - info->tx_count - 1;
+		अगर (ret < 0)
 			ret = 0;
-	}
+	पूर्ण
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_write_room(%s)=%d\n",
-			 __FILE__, __LINE__, info->device_name, ret);
-	return ret;
-}
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_write_room(%s)=%d\n",
+			 __खाता__, __LINE__, info->device_name, ret);
+	वापस ret;
+पूर्ण
 
 /* Return the count of bytes in transmit buffer
  */
-static int mgslpc_chars_in_buffer(struct tty_struct *tty)
-{
+अटल पूर्णांक mgslpc_अक्षरs_in_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	int rc;
+	पूर्णांक rc;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_chars_in_buffer(%s)\n",
-			 __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_chars_in_buffer(%s)\n",
+			 __खाता__, __LINE__, info->device_name);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_chars_in_buffer"))
-		return 0;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_chars_in_buffer"))
+		वापस 0;
 
-	if (info->params.mode == MGSL_MODE_HDLC)
+	अगर (info->params.mode == MGSL_MODE_HDLC)
 		rc = info->tx_active ? info->max_frame_size : 0;
-	else
+	अन्यथा
 		rc = info->tx_count;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_chars_in_buffer(%s)=%d\n",
-			 __FILE__, __LINE__, info->device_name, rc);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_chars_in_buffer(%s)=%d\n",
+			 __खाता__, __LINE__, info->device_name, rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Discard all data in the send buffer
  */
-static void mgslpc_flush_buffer(struct tty_struct *tty)
-{
+अटल व्योम mgslpc_flush_buffer(काष्ठा tty_काष्ठा *tty)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_flush_buffer(%s) entry\n",
-			 __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_flush_buffer(%s) entry\n",
+			 __खाता__, __LINE__, info->device_name);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_flush_buffer"))
-		return;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_flush_buffer"))
+		वापस;
 
 	spin_lock_irqsave(&info->lock, flags);
 	info->tx_count = info->tx_put = info->tx_get = 0;
-	del_timer(&info->tx_timer);
+	del_समयr(&info->tx_समयr);
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	wake_up_interruptible(&tty->write_wait);
+	wake_up_पूर्णांकerruptible(&tty->ग_लिखो_रुको);
 	tty_wakeup(tty);
-}
+पूर्ण
 
-/* Send a high-priority XON/XOFF character
+/* Send a high-priority XON/XOFF अक्षरacter
  */
-static void mgslpc_send_xchar(struct tty_struct *tty, char ch)
-{
+अटल व्योम mgslpc_send_xअक्षर(काष्ठा tty_काष्ठा *tty, अक्षर ch)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_send_xchar(%s,%d)\n",
-			 __FILE__, __LINE__, info->device_name, ch);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_send_xchar(%s,%d)\n",
+			 __खाता__, __LINE__, info->device_name, ch);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_send_xchar"))
-		return;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_send_xchar"))
+		वापस;
 
-	info->x_char = ch;
-	if (ch) {
+	info->x_अक्षर = ch;
+	अगर (ch) अणु
 		spin_lock_irqsave(&info->lock, flags);
-		if (!info->tx_enabled)
+		अगर (!info->tx_enabled)
 			tx_start(info, tty);
 		spin_unlock_irqrestore(&info->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Signal remote device to throttle send data (our receive data)
  */
-static void mgslpc_throttle(struct tty_struct * tty)
-{
+अटल व्योम mgslpc_throttle(काष्ठा tty_काष्ठा * tty)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_throttle(%s) entry\n",
-			 __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_throttle(%s) entry\n",
+			 __खाता__, __LINE__, info->device_name);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_throttle"))
-		return;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_throttle"))
+		वापस;
 
-	if (I_IXOFF(tty))
-		mgslpc_send_xchar(tty, STOP_CHAR(tty));
+	अगर (I_IXOFF(tty))
+		mgslpc_send_xअक्षर(tty, STOP_CHAR(tty));
 
-	if (C_CRTSCTS(tty)) {
+	अगर (C_CRTSCTS(tty)) अणु
 		spin_lock_irqsave(&info->lock, flags);
-		info->serial_signals &= ~SerialSignal_RTS;
-		set_signals(info);
+		info->serial_संकेतs &= ~SerialSignal_RTS;
+		set_संकेतs(info);
 		spin_unlock_irqrestore(&info->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Signal remote device to stop throttling send data (our receive data)
  */
-static void mgslpc_unthrottle(struct tty_struct * tty)
-{
+अटल व्योम mgslpc_unthrottle(काष्ठा tty_काष्ठा * tty)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_unthrottle(%s) entry\n",
-			 __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_unthrottle(%s) entry\n",
+			 __खाता__, __LINE__, info->device_name);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_unthrottle"))
-		return;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_unthrottle"))
+		वापस;
 
-	if (I_IXOFF(tty)) {
-		if (info->x_char)
-			info->x_char = 0;
-		else
-			mgslpc_send_xchar(tty, START_CHAR(tty));
-	}
+	अगर (I_IXOFF(tty)) अणु
+		अगर (info->x_अक्षर)
+			info->x_अक्षर = 0;
+		अन्यथा
+			mgslpc_send_xअक्षर(tty, START_CHAR(tty));
+	पूर्ण
 
-	if (C_CRTSCTS(tty)) {
+	अगर (C_CRTSCTS(tty)) अणु
 		spin_lock_irqsave(&info->lock, flags);
-		info->serial_signals |= SerialSignal_RTS;
-		set_signals(info);
+		info->serial_संकेतs |= SerialSignal_RTS;
+		set_संकेतs(info);
 		spin_unlock_irqrestore(&info->lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* get the current serial statistics
  */
-static int get_stats(MGSLPC_INFO * info, struct mgsl_icount __user *user_icount)
-{
-	int err;
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("get_params(%s)\n", info->device_name);
-	if (!user_icount) {
-		memset(&info->icount, 0, sizeof(info->icount));
-	} else {
-		COPY_TO_USER(err, user_icount, &info->icount, sizeof(struct mgsl_icount));
-		if (err)
-			return -EFAULT;
-	}
-	return 0;
-}
+अटल पूर्णांक get_stats(MGSLPC_INFO * info, काष्ठा mgsl_icount __user *user_icount)
+अणु
+	पूर्णांक err;
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("get_params(%s)\n", info->device_name);
+	अगर (!user_icount) अणु
+		स_रखो(&info->icount, 0, माप(info->icount));
+	पूर्ण अन्यथा अणु
+		COPY_TO_USER(err, user_icount, &info->icount, माप(काष्ठा mgsl_icount));
+		अगर (err)
+			वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* get the current serial parameters
  */
-static int get_params(MGSLPC_INFO * info, MGSL_PARAMS __user *user_params)
-{
-	int err;
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("get_params(%s)\n", info->device_name);
-	COPY_TO_USER(err,user_params, &info->params, sizeof(MGSL_PARAMS));
-	if (err)
-		return -EFAULT;
-	return 0;
-}
+अटल पूर्णांक get_params(MGSLPC_INFO * info, MGSL_PARAMS __user *user_params)
+अणु
+	पूर्णांक err;
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("get_params(%s)\n", info->device_name);
+	COPY_TO_USER(err,user_params, &info->params, माप(MGSL_PARAMS));
+	अगर (err)
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
 /* set the serial parameters
  *
  * Arguments:
  *
- *	info		pointer to device instance data
+ *	info		poपूर्णांकer to device instance data
  *	new_params	user buffer containing new serial params
  *
- * Returns:	0 if success, otherwise error code
+ * Returns:	0 अगर success, otherwise error code
  */
-static int set_params(MGSLPC_INFO * info, MGSL_PARAMS __user *new_params, struct tty_struct *tty)
-{
-	unsigned long flags;
-	MGSL_PARAMS tmp_params;
-	int err;
+अटल पूर्णांक set_params(MGSLPC_INFO * info, MGSL_PARAMS __user *new_params, काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित दीर्घ flags;
+	MGSL_PARAMS पंचांगp_params;
+	पूर्णांक err;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):set_params %s\n", __FILE__,__LINE__,
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):set_params %s\n", __खाता__,__LINE__,
 			info->device_name);
-	COPY_FROM_USER(err,&tmp_params, new_params, sizeof(MGSL_PARAMS));
-	if (err) {
-		if (debug_level >= DEBUG_LEVEL_INFO)
-			printk("%s(%d):set_params(%s) user buffer copy failed\n",
-				__FILE__, __LINE__, info->device_name);
-		return -EFAULT;
-	}
+	COPY_FROM_USER(err,&पंचांगp_params, new_params, माप(MGSL_PARAMS));
+	अगर (err) अणु
+		अगर (debug_level >= DEBUG_LEVEL_INFO)
+			prपूर्णांकk("%s(%d):set_params(%s) user buffer copy failed\n",
+				__खाता__, __LINE__, info->device_name);
+		वापस -EFAULT;
+	पूर्ण
 
 	spin_lock_irqsave(&info->lock, flags);
-	memcpy(&info->params,&tmp_params,sizeof(MGSL_PARAMS));
+	स_नकल(&info->params,&पंचांगp_params,माप(MGSL_PARAMS));
 	spin_unlock_irqrestore(&info->lock, flags);
 
 	mgslpc_change_params(info, tty);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_txidle(MGSLPC_INFO * info, int __user *idle_mode)
-{
-	int err;
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("get_txidle(%s)=%d\n", info->device_name, info->idle_mode);
-	COPY_TO_USER(err,idle_mode, &info->idle_mode, sizeof(int));
-	if (err)
-		return -EFAULT;
-	return 0;
-}
+अटल पूर्णांक get_txidle(MGSLPC_INFO * info, पूर्णांक __user *idle_mode)
+अणु
+	पूर्णांक err;
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("get_txidle(%s)=%d\n", info->device_name, info->idle_mode);
+	COPY_TO_USER(err,idle_mode, &info->idle_mode, माप(पूर्णांक));
+	अगर (err)
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int set_txidle(MGSLPC_INFO * info, int idle_mode)
-{
-	unsigned long flags;
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("set_txidle(%s,%d)\n", info->device_name, idle_mode);
+अटल पूर्णांक set_txidle(MGSLPC_INFO * info, पूर्णांक idle_mode)
+अणु
+	अचिन्हित दीर्घ flags;
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("set_txidle(%s,%d)\n", info->device_name, idle_mode);
 	spin_lock_irqsave(&info->lock, flags);
 	info->idle_mode = idle_mode;
 	tx_set_idle(info);
 	spin_unlock_irqrestore(&info->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_interface(MGSLPC_INFO * info, int __user *if_mode)
-{
-	int err;
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("get_interface(%s)=%d\n", info->device_name, info->if_mode);
-	COPY_TO_USER(err,if_mode, &info->if_mode, sizeof(int));
-	if (err)
-		return -EFAULT;
-	return 0;
-}
+अटल पूर्णांक get_पूर्णांकerface(MGSLPC_INFO * info, पूर्णांक __user *अगर_mode)
+अणु
+	पूर्णांक err;
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("get_interface(%s)=%d\n", info->device_name, info->अगर_mode);
+	COPY_TO_USER(err,अगर_mode, &info->अगर_mode, माप(पूर्णांक));
+	अगर (err)
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int set_interface(MGSLPC_INFO * info, int if_mode)
-{
-	unsigned long flags;
-	unsigned char val;
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("set_interface(%s,%d)\n", info->device_name, if_mode);
+अटल पूर्णांक set_पूर्णांकerface(MGSLPC_INFO * info, पूर्णांक अगर_mode)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर val;
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("set_interface(%s,%d)\n", info->device_name, अगर_mode);
 	spin_lock_irqsave(&info->lock, flags);
-	info->if_mode = if_mode;
+	info->अगर_mode = अगर_mode;
 
-	val = read_reg(info, PVR) & 0x0f;
-	switch (info->if_mode)
-	{
-	case MGSL_INTERFACE_RS232: val |= PVR_RS232; break;
-	case MGSL_INTERFACE_V35:   val |= PVR_V35;   break;
-	case MGSL_INTERFACE_RS422: val |= PVR_RS422; break;
-	}
-	write_reg(info, PVR, val);
+	val = पढ़ो_reg(info, PVR) & 0x0f;
+	चयन (info->अगर_mode)
+	अणु
+	हाल MGSL_INTERFACE_RS232: val |= PVR_RS232; अवरोध;
+	हाल MGSL_INTERFACE_V35:   val |= PVR_V35;   अवरोध;
+	हाल MGSL_INTERFACE_RS422: val |= PVR_RS422; अवरोध;
+	पूर्ण
+	ग_लिखो_reg(info, PVR, val);
 
 	spin_unlock_irqrestore(&info->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_txenable(MGSLPC_INFO * info, int enable, struct tty_struct *tty)
-{
-	unsigned long flags;
+अटल पूर्णांक set_txenable(MGSLPC_INFO * info, पूर्णांक enable, काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("set_txenable(%s,%d)\n", info->device_name, enable);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("set_txenable(%s,%d)\n", info->device_name, enable);
 
 	spin_lock_irqsave(&info->lock, flags);
-	if (enable) {
-		if (!info->tx_enabled)
+	अगर (enable) अणु
+		अगर (!info->tx_enabled)
 			tx_start(info, tty);
-	} else {
-		if (info->tx_enabled)
+	पूर्ण अन्यथा अणु
+		अगर (info->tx_enabled)
 			tx_stop(info);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&info->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tx_abort(MGSLPC_INFO * info)
-{
-	unsigned long flags;
+अटल पूर्णांक tx_पात(MGSLPC_INFO * info)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("tx_abort(%s)\n", info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("tx_abort(%s)\n", info->device_name);
 
 	spin_lock_irqsave(&info->lock, flags);
-	if (info->tx_active && info->tx_count &&
-	    info->params.mode == MGSL_MODE_HDLC) {
+	अगर (info->tx_active && info->tx_count &&
+	    info->params.mode == MGSL_MODE_HDLC) अणु
 		/* clear data count so FIFO is not filled on next IRQ.
-		 * This results in underrun and abort transmission.
+		 * This results in underrun and पात transmission.
 		 */
 		info->tx_count = info->tx_put = info->tx_get = 0;
-		info->tx_aborting = true;
-	}
+		info->tx_पातing = true;
+	पूर्ण
 	spin_unlock_irqrestore(&info->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int set_rxenable(MGSLPC_INFO * info, int enable)
-{
-	unsigned long flags;
+अटल पूर्णांक set_rxenable(MGSLPC_INFO * info, पूर्णांक enable)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("set_rxenable(%s,%d)\n", info->device_name, enable);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("set_rxenable(%s,%d)\n", info->device_name, enable);
 
 	spin_lock_irqsave(&info->lock, flags);
-	if (enable) {
-		if (!info->rx_enabled)
+	अगर (enable) अणु
+		अगर (!info->rx_enabled)
 			rx_start(info);
-	} else {
-		if (info->rx_enabled)
+	पूर्ण अन्यथा अणु
+		अगर (info->rx_enabled)
 			rx_stop(info);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&info->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* wait for specified event to occur
+/* रुको क्रम specअगरied event to occur
  *
- * Arguments:		info	pointer to device instance data
- *			mask	pointer to bitmask of events to wait for
- * Return Value:	0	if successful and bit mask updated with
+ * Arguments:		info	poपूर्णांकer to device instance data
+ *			mask	poपूर्णांकer to biपंचांगask of events to रुको क्रम
+ * Return Value:	0	अगर successful and bit mask updated with
  *				of events triggerred,
  *			otherwise error code
  */
-static int wait_events(MGSLPC_INFO * info, int __user *mask_ptr)
-{
-	unsigned long flags;
-	int s;
-	int rc=0;
-	struct mgsl_icount cprev, cnow;
-	int events;
-	int mask;
-	struct	_input_signal_events oldsigs, newsigs;
-	DECLARE_WAITQUEUE(wait, current);
+अटल पूर्णांक रुको_events(MGSLPC_INFO * info, पूर्णांक __user *mask_ptr)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक s;
+	पूर्णांक rc=0;
+	काष्ठा mgsl_icount cprev, cnow;
+	पूर्णांक events;
+	पूर्णांक mask;
+	काष्ठा	_input_संकेत_events oldsigs, newsigs;
+	DECLARE_WAITQUEUE(रुको, current);
 
-	COPY_FROM_USER(rc,&mask, mask_ptr, sizeof(int));
-	if (rc)
-		return  -EFAULT;
+	COPY_FROM_USER(rc,&mask, mask_ptr, माप(पूर्णांक));
+	अगर (rc)
+		वापस  -EFAULT;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("wait_events(%s,%d)\n", info->device_name, mask);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("wait_events(%s,%d)\n", info->device_name, mask);
 
 	spin_lock_irqsave(&info->lock, flags);
 
-	/* return immediately if state matches requested events */
-	get_signals(info);
-	s = info->serial_signals;
+	/* वापस immediately अगर state matches requested events */
+	get_संकेतs(info);
+	s = info->serial_संकेतs;
 	events = mask &
 		( ((s & SerialSignal_DSR) ? MgslEvent_DsrActive:MgslEvent_DsrInactive) +
 		  ((s & SerialSignal_DCD) ? MgslEvent_DcdActive:MgslEvent_DcdInactive) +
 		  ((s & SerialSignal_CTS) ? MgslEvent_CtsActive:MgslEvent_CtsInactive) +
 		  ((s & SerialSignal_RI)  ? MgslEvent_RiActive :MgslEvent_RiInactive) );
-	if (events) {
+	अगर (events) अणु
 		spin_unlock_irqrestore(&info->lock, flags);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* save current irq counts */
 	cprev = info->icount;
-	oldsigs = info->input_signal_events;
+	oldsigs = info->input_संकेत_events;
 
-	if ((info->params.mode == MGSL_MODE_HDLC) &&
+	अगर ((info->params.mode == MGSL_MODE_HDLC) &&
 	    (mask & MgslEvent_ExitHuntMode))
 		irq_enable(info, CHA, IRQ_EXITHUNT);
 
 	set_current_state(TASK_INTERRUPTIBLE);
-	add_wait_queue(&info->event_wait_q, &wait);
+	add_रुको_queue(&info->event_रुको_q, &रुको);
 
 	spin_unlock_irqrestore(&info->lock, flags);
 
 
-	for(;;) {
+	क्रम(;;) अणु
 		schedule();
-		if (signal_pending(current)) {
+		अगर (संकेत_pending(current)) अणु
 			rc = -ERESTARTSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* get current irq counts */
 		spin_lock_irqsave(&info->lock, flags);
 		cnow = info->icount;
-		newsigs = info->input_signal_events;
+		newsigs = info->input_संकेत_events;
 		set_current_state(TASK_INTERRUPTIBLE);
 		spin_unlock_irqrestore(&info->lock, flags);
 
-		/* if no change, wait aborted for some reason */
-		if (newsigs.dsr_up   == oldsigs.dsr_up   &&
-		    newsigs.dsr_down == oldsigs.dsr_down &&
+		/* अगर no change, रुको पातed क्रम some reason */
+		अगर (newsigs.dsr_up   == oldsigs.dsr_up   &&
+		    newsigs.dsr_करोwn == oldsigs.dsr_करोwn &&
 		    newsigs.dcd_up   == oldsigs.dcd_up   &&
-		    newsigs.dcd_down == oldsigs.dcd_down &&
+		    newsigs.dcd_करोwn == oldsigs.dcd_करोwn &&
 		    newsigs.cts_up   == oldsigs.cts_up   &&
-		    newsigs.cts_down == oldsigs.cts_down &&
+		    newsigs.cts_करोwn == oldsigs.cts_करोwn &&
 		    newsigs.ri_up    == oldsigs.ri_up    &&
-		    newsigs.ri_down  == oldsigs.ri_down  &&
-		    cnow.exithunt    == cprev.exithunt   &&
-		    cnow.rxidle      == cprev.rxidle) {
+		    newsigs.ri_करोwn  == oldsigs.ri_करोwn  &&
+		    cnow.निकासhunt    == cprev.निकासhunt   &&
+		    cnow.rxidle      == cprev.rxidle) अणु
 			rc = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		events = mask &
 			( (newsigs.dsr_up   != oldsigs.dsr_up   ? MgslEvent_DsrActive:0)   +
-			  (newsigs.dsr_down != oldsigs.dsr_down ? MgslEvent_DsrInactive:0) +
+			  (newsigs.dsr_करोwn != oldsigs.dsr_करोwn ? MgslEvent_DsrInactive:0) +
 			  (newsigs.dcd_up   != oldsigs.dcd_up   ? MgslEvent_DcdActive:0)   +
-			  (newsigs.dcd_down != oldsigs.dcd_down ? MgslEvent_DcdInactive:0) +
+			  (newsigs.dcd_करोwn != oldsigs.dcd_करोwn ? MgslEvent_DcdInactive:0) +
 			  (newsigs.cts_up   != oldsigs.cts_up   ? MgslEvent_CtsActive:0)   +
-			  (newsigs.cts_down != oldsigs.cts_down ? MgslEvent_CtsInactive:0) +
+			  (newsigs.cts_करोwn != oldsigs.cts_करोwn ? MgslEvent_CtsInactive:0) +
 			  (newsigs.ri_up    != oldsigs.ri_up    ? MgslEvent_RiActive:0)    +
-			  (newsigs.ri_down  != oldsigs.ri_down  ? MgslEvent_RiInactive:0)  +
-			  (cnow.exithunt    != cprev.exithunt   ? MgslEvent_ExitHuntMode:0) +
+			  (newsigs.ri_करोwn  != oldsigs.ri_करोwn  ? MgslEvent_RiInactive:0)  +
+			  (cnow.निकासhunt    != cprev.निकासhunt   ? MgslEvent_ExitHuntMode:0) +
 			  (cnow.rxidle      != cprev.rxidle     ? MgslEvent_IdleReceived:0) );
-		if (events)
-			break;
+		अगर (events)
+			अवरोध;
 
 		cprev = cnow;
 		oldsigs = newsigs;
-	}
+	पूर्ण
 
-	remove_wait_queue(&info->event_wait_q, &wait);
+	हटाओ_रुको_queue(&info->event_रुको_q, &रुको);
 	set_current_state(TASK_RUNNING);
 
-	if (mask & MgslEvent_ExitHuntMode) {
+	अगर (mask & MgslEvent_ExitHuntMode) अणु
 		spin_lock_irqsave(&info->lock, flags);
-		if (!waitqueue_active(&info->event_wait_q))
+		अगर (!रुकोqueue_active(&info->event_रुको_q))
 			irq_disable(info, CHA, IRQ_EXITHUNT);
 		spin_unlock_irqrestore(&info->lock, flags);
-	}
-exit:
-	if (rc == 0)
+	पूर्ण
+निकास:
+	अगर (rc == 0)
 		PUT_USER(rc, events, mask_ptr);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int modem_input_wait(MGSLPC_INFO *info,int arg)
-{
-	unsigned long flags;
-	int rc;
-	struct mgsl_icount cprev, cnow;
-	DECLARE_WAITQUEUE(wait, current);
+अटल पूर्णांक modem_input_रुको(MGSLPC_INFO *info,पूर्णांक arg)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक rc;
+	काष्ठा mgsl_icount cprev, cnow;
+	DECLARE_WAITQUEUE(रुको, current);
 
 	/* save current irq counts */
 	spin_lock_irqsave(&info->lock, flags);
 	cprev = info->icount;
-	add_wait_queue(&info->status_event_wait_q, &wait);
+	add_रुको_queue(&info->status_event_रुको_q, &रुको);
 	set_current_state(TASK_INTERRUPTIBLE);
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	for(;;) {
+	क्रम(;;) अणु
 		schedule();
-		if (signal_pending(current)) {
+		अगर (संकेत_pending(current)) अणु
 			rc = -ERESTARTSYS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* get new irq counts */
 		spin_lock_irqsave(&info->lock, flags);
@@ -2084,114 +2085,114 @@ static int modem_input_wait(MGSLPC_INFO *info,int arg)
 		set_current_state(TASK_INTERRUPTIBLE);
 		spin_unlock_irqrestore(&info->lock, flags);
 
-		/* if no change, wait aborted for some reason */
-		if (cnow.rng == cprev.rng && cnow.dsr == cprev.dsr &&
-		    cnow.dcd == cprev.dcd && cnow.cts == cprev.cts) {
+		/* अगर no change, रुको पातed क्रम some reason */
+		अगर (cnow.rng == cprev.rng && cnow.dsr == cprev.dsr &&
+		    cnow.dcd == cprev.dcd && cnow.cts == cprev.cts) अणु
 			rc = -EIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* check for change in caller specified modem input */
-		if ((arg & TIOCM_RNG && cnow.rng != cprev.rng) ||
+		/* check क्रम change in caller specअगरied modem input */
+		अगर ((arg & TIOCM_RNG && cnow.rng != cprev.rng) ||
 		    (arg & TIOCM_DSR && cnow.dsr != cprev.dsr) ||
 		    (arg & TIOCM_CD  && cnow.dcd != cprev.dcd) ||
-		    (arg & TIOCM_CTS && cnow.cts != cprev.cts)) {
+		    (arg & TIOCM_CTS && cnow.cts != cprev.cts)) अणु
 			rc = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		cprev = cnow;
-	}
-	remove_wait_queue(&info->status_event_wait_q, &wait);
+	पूर्ण
+	हटाओ_रुको_queue(&info->status_event_रुको_q, &रुको);
 	set_current_state(TASK_RUNNING);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* return the state of the serial control and status signals
+/* वापस the state of the serial control and status संकेतs
  */
-static int tiocmget(struct tty_struct *tty)
-{
+अटल पूर्णांक tiocmget(काष्ठा tty_काष्ठा *tty)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned int result;
-	unsigned long flags;
+	अचिन्हित पूर्णांक result;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&info->lock, flags);
-	get_signals(info);
+	get_संकेतs(info);
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	result = ((info->serial_signals & SerialSignal_RTS) ? TIOCM_RTS:0) +
-		((info->serial_signals & SerialSignal_DTR) ? TIOCM_DTR:0) +
-		((info->serial_signals & SerialSignal_DCD) ? TIOCM_CAR:0) +
-		((info->serial_signals & SerialSignal_RI)  ? TIOCM_RNG:0) +
-		((info->serial_signals & SerialSignal_DSR) ? TIOCM_DSR:0) +
-		((info->serial_signals & SerialSignal_CTS) ? TIOCM_CTS:0);
+	result = ((info->serial_संकेतs & SerialSignal_RTS) ? TIOCM_RTS:0) +
+		((info->serial_संकेतs & SerialSignal_DTR) ? TIOCM_DTR:0) +
+		((info->serial_संकेतs & SerialSignal_DCD) ? TIOCM_CAR:0) +
+		((info->serial_संकेतs & SerialSignal_RI)  ? TIOCM_RNG:0) +
+		((info->serial_संकेतs & SerialSignal_DSR) ? TIOCM_DSR:0) +
+		((info->serial_संकेतs & SerialSignal_CTS) ? TIOCM_CTS:0);
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):%s tiocmget() value=%08X\n",
-			 __FILE__, __LINE__, info->device_name, result);
-	return result;
-}
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):%s tiocmget() value=%08X\n",
+			 __खाता__, __LINE__, info->device_name, result);
+	वापस result;
+पूर्ण
 
-/* set modem control signals (DTR/RTS)
+/* set modem control संकेतs (DTR/RTS)
  */
-static int tiocmset(struct tty_struct *tty,
-		    unsigned int set, unsigned int clear)
-{
+अटल पूर्णांक tiocmset(काष्ठा tty_काष्ठा *tty,
+		    अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):%s tiocmset(%x,%x)\n",
-			__FILE__, __LINE__, info->device_name, set, clear);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):%s tiocmset(%x,%x)\n",
+			__खाता__, __LINE__, info->device_name, set, clear);
 
-	if (set & TIOCM_RTS)
-		info->serial_signals |= SerialSignal_RTS;
-	if (set & TIOCM_DTR)
-		info->serial_signals |= SerialSignal_DTR;
-	if (clear & TIOCM_RTS)
-		info->serial_signals &= ~SerialSignal_RTS;
-	if (clear & TIOCM_DTR)
-		info->serial_signals &= ~SerialSignal_DTR;
+	अगर (set & TIOCM_RTS)
+		info->serial_संकेतs |= SerialSignal_RTS;
+	अगर (set & TIOCM_DTR)
+		info->serial_संकेतs |= SerialSignal_DTR;
+	अगर (clear & TIOCM_RTS)
+		info->serial_संकेतs &= ~SerialSignal_RTS;
+	अगर (clear & TIOCM_DTR)
+		info->serial_संकेतs &= ~SerialSignal_DTR;
 
 	spin_lock_irqsave(&info->lock, flags);
-	set_signals(info);
+	set_संकेतs(info);
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set or clear transmit break condition
+/* Set or clear transmit अवरोध condition
  *
- * Arguments:		tty		pointer to tty instance data
- *			break_state	-1=set break condition, 0=clear
+ * Arguments:		tty		poपूर्णांकer to tty instance data
+ *			अवरोध_state	-1=set अवरोध condition, 0=clear
  */
-static int mgslpc_break(struct tty_struct *tty, int break_state)
-{
+अटल पूर्णांक mgslpc_अवरोध(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
+अणु
 	MGSLPC_INFO * info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_break(%s,%d)\n",
-			 __FILE__, __LINE__, info->device_name, break_state);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_break(%s,%d)\n",
+			 __खाता__, __LINE__, info->device_name, अवरोध_state);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_break"))
-		return -EINVAL;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_break"))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&info->lock, flags);
-	if (break_state == -1)
+	अगर (अवरोध_state == -1)
 		set_reg_bits(info, CHA+DAFO, BIT6);
-	else
+	अन्यथा
 		clear_reg_bits(info, CHA+DAFO, BIT6);
 	spin_unlock_irqrestore(&info->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mgslpc_get_icount(struct tty_struct *tty,
-				struct serial_icounter_struct *icount)
-{
+अटल पूर्णांक mgslpc_get_icount(काष्ठा tty_काष्ठा *tty,
+				काष्ठा serial_icounter_काष्ठा *icount)
+अणु
 	MGSLPC_INFO * info = (MGSLPC_INFO *)tty->driver_data;
-	struct mgsl_icount cnow;	/* kernel counter temps */
-	unsigned long flags;
+	काष्ठा mgsl_icount cnow;	/* kernel counter temps */
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&info->lock, flags);
 	cnow = info->icount;
@@ -2209,615 +2210,615 @@ static int mgslpc_get_icount(struct tty_struct *tty,
 	icount->brk = cnow.brk;
 	icount->buf_overrun = cnow.buf_overrun;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Service an IOCTL request
  *
  * Arguments:
  *
- *	tty	pointer to tty instance data
+ *	tty	poपूर्णांकer to tty instance data
  *	cmd	IOCTL command code
  *	arg	command argument/context
  *
- * Return Value:	0 if success, otherwise error code
+ * Return Value:	0 अगर success, otherwise error code
  */
-static int mgslpc_ioctl(struct tty_struct *tty,
-			unsigned int cmd, unsigned long arg)
-{
+अटल पूर्णांक mgslpc_ioctl(काष्ठा tty_काष्ठा *tty,
+			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
 	MGSLPC_INFO * info = (MGSLPC_INFO *)tty->driver_data;
-	void __user *argp = (void __user *)arg;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_ioctl %s cmd=%08X\n", __FILE__, __LINE__,
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_ioctl %s cmd=%08X\n", __खाता__, __LINE__,
 			info->device_name, cmd);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_ioctl"))
-		return -ENODEV;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_ioctl"))
+		वापस -ENODEV;
 
-	if (cmd != TIOCMIWAIT) {
-		if (tty_io_error(tty))
-		    return -EIO;
-	}
+	अगर (cmd != TIOCMIWAIT) अणु
+		अगर (tty_io_error(tty))
+		    वापस -EIO;
+	पूर्ण
 
-	switch (cmd) {
-	case MGSL_IOCGPARAMS:
-		return get_params(info, argp);
-	case MGSL_IOCSPARAMS:
-		return set_params(info, argp, tty);
-	case MGSL_IOCGTXIDLE:
-		return get_txidle(info, argp);
-	case MGSL_IOCSTXIDLE:
-		return set_txidle(info, (int)arg);
-	case MGSL_IOCGIF:
-		return get_interface(info, argp);
-	case MGSL_IOCSIF:
-		return set_interface(info,(int)arg);
-	case MGSL_IOCTXENABLE:
-		return set_txenable(info,(int)arg, tty);
-	case MGSL_IOCRXENABLE:
-		return set_rxenable(info,(int)arg);
-	case MGSL_IOCTXABORT:
-		return tx_abort(info);
-	case MGSL_IOCGSTATS:
-		return get_stats(info, argp);
-	case MGSL_IOCWAITEVENT:
-		return wait_events(info, argp);
-	case TIOCMIWAIT:
-		return modem_input_wait(info,(int)arg);
-	default:
-		return -ENOIOCTLCMD;
-	}
-	return 0;
-}
+	चयन (cmd) अणु
+	हाल MGSL_IOCGPARAMS:
+		वापस get_params(info, argp);
+	हाल MGSL_IOCSPARAMS:
+		वापस set_params(info, argp, tty);
+	हाल MGSL_IOCGTXIDLE:
+		वापस get_txidle(info, argp);
+	हाल MGSL_IOCSTXIDLE:
+		वापस set_txidle(info, (पूर्णांक)arg);
+	हाल MGSL_IOCGIF:
+		वापस get_पूर्णांकerface(info, argp);
+	हाल MGSL_IOCSIF:
+		वापस set_पूर्णांकerface(info,(पूर्णांक)arg);
+	हाल MGSL_IOCTXENABLE:
+		वापस set_txenable(info,(पूर्णांक)arg, tty);
+	हाल MGSL_IOCRXENABLE:
+		वापस set_rxenable(info,(पूर्णांक)arg);
+	हाल MGSL_IOCTXABORT:
+		वापस tx_पात(info);
+	हाल MGSL_IOCGSTATS:
+		वापस get_stats(info, argp);
+	हाल MGSL_IOCWAITEVENT:
+		वापस रुको_events(info, argp);
+	हाल TIOCMIWAIT:
+		वापस modem_input_रुको(info,(पूर्णांक)arg);
+	शेष:
+		वापस -ENOIOCTLCMD;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* Set new termios settings
  *
  * Arguments:
  *
- *	tty		pointer to tty structure
- *	termios		pointer to buffer to hold returned old termios
+ *	tty		poपूर्णांकer to tty काष्ठाure
+ *	termios		poपूर्णांकer to buffer to hold वापसed old termios
  */
-static void mgslpc_set_termios(struct tty_struct *tty, struct ktermios *old_termios)
-{
+अटल व्योम mgslpc_set_termios(काष्ठा tty_काष्ठा *tty, काष्ठा ktermios *old_termios)
+अणु
 	MGSLPC_INFO *info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_set_termios %s\n", __FILE__, __LINE__,
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_set_termios %s\n", __खाता__, __LINE__,
 			tty->driver->name);
 
-	/* just return if nothing has changed */
-	if ((tty->termios.c_cflag == old_termios->c_cflag)
-	    && (RELEVANT_IFLAG(tty->termios.c_iflag)
-		== RELEVANT_IFLAG(old_termios->c_iflag)))
-	  return;
+	/* just वापस अगर nothing has changed */
+	अगर ((tty->termios.c_cflag == old_termios->c_cflag)
+	    && (RELEVANT_IFLAG(tty->termios.c_अगरlag)
+		== RELEVANT_IFLAG(old_termios->c_अगरlag)))
+	  वापस;
 
 	mgslpc_change_params(info, tty);
 
 	/* Handle transition to B0 status */
-	if ((old_termios->c_cflag & CBAUD) && !C_BAUD(tty)) {
-		info->serial_signals &= ~(SerialSignal_RTS | SerialSignal_DTR);
+	अगर ((old_termios->c_cflag & CBAUD) && !C_BAUD(tty)) अणु
+		info->serial_संकेतs &= ~(SerialSignal_RTS | SerialSignal_DTR);
 		spin_lock_irqsave(&info->lock, flags);
-		set_signals(info);
+		set_संकेतs(info);
 		spin_unlock_irqrestore(&info->lock, flags);
-	}
+	पूर्ण
 
 	/* Handle transition away from B0 status */
-	if (!(old_termios->c_cflag & CBAUD) && C_BAUD(tty)) {
-		info->serial_signals |= SerialSignal_DTR;
-		if (!C_CRTSCTS(tty) || !tty_throttled(tty))
-			info->serial_signals |= SerialSignal_RTS;
+	अगर (!(old_termios->c_cflag & CBAUD) && C_BAUD(tty)) अणु
+		info->serial_संकेतs |= SerialSignal_DTR;
+		अगर (!C_CRTSCTS(tty) || !tty_throttled(tty))
+			info->serial_संकेतs |= SerialSignal_RTS;
 		spin_lock_irqsave(&info->lock, flags);
-		set_signals(info);
+		set_संकेतs(info);
 		spin_unlock_irqrestore(&info->lock, flags);
-	}
+	पूर्ण
 
 	/* Handle turning off CRTSCTS */
-	if (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(tty)) {
+	अगर (old_termios->c_cflag & CRTSCTS && !C_CRTSCTS(tty)) अणु
 		tty->hw_stopped = 0;
 		tx_release(tty);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void mgslpc_close(struct tty_struct *tty, struct file * filp)
-{
+अटल व्योम mgslpc_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा file * filp)
+अणु
 	MGSLPC_INFO * info = (MGSLPC_INFO *)tty->driver_data;
-	struct tty_port *port = &info->port;
+	काष्ठा tty_port *port = &info->port;
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_close"))
-		return;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_close"))
+		वापस;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_close(%s) entry, count=%d\n",
-			 __FILE__, __LINE__, info->device_name, port->count);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_close(%s) entry, count=%d\n",
+			 __खाता__, __LINE__, info->device_name, port->count);
 
-	if (tty_port_close_start(port, tty, filp) == 0)
-		goto cleanup;
+	अगर (tty_port_बंद_start(port, tty, filp) == 0)
+		जाओ cleanup;
 
-	if (tty_port_initialized(port))
-		mgslpc_wait_until_sent(tty, info->timeout);
+	अगर (tty_port_initialized(port))
+		mgslpc_रुको_until_sent(tty, info->समयout);
 
 	mgslpc_flush_buffer(tty);
 
 	tty_ldisc_flush(tty);
-	shutdown(info, tty);
+	shutकरोwn(info, tty);
 	
-	tty_port_close_end(port, tty);
-	tty_port_tty_set(port, NULL);
+	tty_port_बंद_end(port, tty);
+	tty_port_tty_set(port, शून्य);
 cleanup:
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_close(%s) exit, count=%d\n", __FILE__, __LINE__,
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_close(%s) exit, count=%d\n", __खाता__, __LINE__,
 			tty->driver->name, port->count);
-}
+पूर्ण
 
 /* Wait until the transmitter is empty.
  */
-static void mgslpc_wait_until_sent(struct tty_struct *tty, int timeout)
-{
+अटल व्योम mgslpc_रुको_until_sent(काष्ठा tty_काष्ठा *tty, पूर्णांक समयout)
+अणु
 	MGSLPC_INFO * info = (MGSLPC_INFO *)tty->driver_data;
-	unsigned long orig_jiffies, char_time;
+	अचिन्हित दीर्घ orig_jअगरfies, अक्षर_समय;
 
-	if (!info)
-		return;
+	अगर (!info)
+		वापस;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_wait_until_sent(%s) entry\n",
-			 __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_wait_until_sent(%s) entry\n",
+			 __खाता__, __LINE__, info->device_name);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_wait_until_sent"))
-		return;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_wait_until_sent"))
+		वापस;
 
-	if (!tty_port_initialized(&info->port))
-		goto exit;
+	अगर (!tty_port_initialized(&info->port))
+		जाओ निकास;
 
-	orig_jiffies = jiffies;
+	orig_jअगरfies = jअगरfies;
 
-	/* Set check interval to 1/5 of estimated time to
-	 * send a character, and make it at least 1. The check
-	 * interval should also be less than the timeout.
+	/* Set check पूर्णांकerval to 1/5 of estimated समय to
+	 * send a अक्षरacter, and make it at least 1. The check
+	 * पूर्णांकerval should also be less than the समयout.
 	 * Note: use tight timings here to satisfy the NIST-PCTS.
 	 */
 
-	if (info->params.data_rate) {
-	     	char_time = info->timeout/(32 * 5);
-		if (!char_time)
-			char_time++;
-	} else
-		char_time = 1;
+	अगर (info->params.data_rate) अणु
+	     	अक्षर_समय = info->समयout/(32 * 5);
+		अगर (!अक्षर_समय)
+			अक्षर_समय++;
+	पूर्ण अन्यथा
+		अक्षर_समय = 1;
 
-	if (timeout)
-		char_time = min_t(unsigned long, char_time, timeout);
+	अगर (समयout)
+		अक्षर_समय = min_t(अचिन्हित दीर्घ, अक्षर_समय, समयout);
 
-	if (info->params.mode == MGSL_MODE_HDLC) {
-		while (info->tx_active) {
-			msleep_interruptible(jiffies_to_msecs(char_time));
-			if (signal_pending(current))
-				break;
-			if (timeout && time_after(jiffies, orig_jiffies + timeout))
-				break;
-		}
-	} else {
-		while ((info->tx_count || info->tx_active) &&
-			info->tx_enabled) {
-			msleep_interruptible(jiffies_to_msecs(char_time));
-			if (signal_pending(current))
-				break;
-			if (timeout && time_after(jiffies, orig_jiffies + timeout))
-				break;
-		}
-	}
+	अगर (info->params.mode == MGSL_MODE_HDLC) अणु
+		जबतक (info->tx_active) अणु
+			msleep_पूर्णांकerruptible(jअगरfies_to_msecs(अक्षर_समय));
+			अगर (संकेत_pending(current))
+				अवरोध;
+			अगर (समयout && समय_after(jअगरfies, orig_jअगरfies + समयout))
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		जबतक ((info->tx_count || info->tx_active) &&
+			info->tx_enabled) अणु
+			msleep_पूर्णांकerruptible(jअगरfies_to_msecs(अक्षर_समय));
+			अगर (संकेत_pending(current))
+				अवरोध;
+			अगर (समयout && समय_after(jअगरfies, orig_jअगरfies + समयout))
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-exit:
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_wait_until_sent(%s) exit\n",
-			 __FILE__, __LINE__, info->device_name);
-}
+निकास:
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_wait_until_sent(%s) exit\n",
+			 __खाता__, __LINE__, info->device_name);
+पूर्ण
 
-/* Called by tty_hangup() when a hangup is signaled.
- * This is the same as closing all open files for the port.
+/* Called by tty_hangup() when a hangup is संकेतed.
+ * This is the same as closing all खोलो files क्रम the port.
  */
-static void mgslpc_hangup(struct tty_struct *tty)
-{
+अटल व्योम mgslpc_hangup(काष्ठा tty_काष्ठा *tty)
+अणु
 	MGSLPC_INFO * info = (MGSLPC_INFO *)tty->driver_data;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_hangup(%s)\n",
-			 __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_hangup(%s)\n",
+			 __खाता__, __LINE__, info->device_name);
 
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_hangup"))
-		return;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_hangup"))
+		वापस;
 
 	mgslpc_flush_buffer(tty);
-	shutdown(info, tty);
+	shutकरोwn(info, tty);
 	tty_port_hangup(&info->port);
-}
+पूर्ण
 
-static int carrier_raised(struct tty_port *port)
-{
+अटल पूर्णांक carrier_उठाओd(काष्ठा tty_port *port)
+अणु
 	MGSLPC_INFO *info = container_of(port, MGSLPC_INFO, port);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&info->lock, flags);
-	get_signals(info);
+	get_संकेतs(info);
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	if (info->serial_signals & SerialSignal_DCD)
-		return 1;
-	return 0;
-}
+	अगर (info->serial_संकेतs & SerialSignal_DCD)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static void dtr_rts(struct tty_port *port, int onoff)
-{
+अटल व्योम dtr_rts(काष्ठा tty_port *port, पूर्णांक onoff)
+अणु
 	MGSLPC_INFO *info = container_of(port, MGSLPC_INFO, port);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&info->lock, flags);
-	if (onoff)
-		info->serial_signals |= SerialSignal_RTS | SerialSignal_DTR;
-	else
-		info->serial_signals &= ~(SerialSignal_RTS | SerialSignal_DTR);
-	set_signals(info);
+	अगर (onoff)
+		info->serial_संकेतs |= SerialSignal_RTS | SerialSignal_DTR;
+	अन्यथा
+		info->serial_संकेतs &= ~(SerialSignal_RTS | SerialSignal_DTR);
+	set_संकेतs(info);
 	spin_unlock_irqrestore(&info->lock, flags);
-}
+पूर्ण
 
 
-static int mgslpc_open(struct tty_struct *tty, struct file * filp)
-{
+अटल पूर्णांक mgslpc_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा file * filp)
+अणु
 	MGSLPC_INFO	*info;
-	struct tty_port *port;
-	int		retval, line;
-	unsigned long	flags;
+	काष्ठा tty_port *port;
+	पूर्णांक		retval, line;
+	अचिन्हित दीर्घ	flags;
 
-	/* verify range of specified line number */
+	/* verअगरy range of specअगरied line number */
 	line = tty->index;
-	if (line >= mgslpc_device_count) {
-		printk("%s(%d):mgslpc_open with invalid line #%d.\n",
-			__FILE__, __LINE__, line);
-		return -ENODEV;
-	}
+	अगर (line >= mgslpc_device_count) अणु
+		prपूर्णांकk("%s(%d):mgslpc_open with invalid line #%d.\n",
+			__खाता__, __LINE__, line);
+		वापस -ENODEV;
+	पूर्ण
 
-	/* find the info structure for the specified line */
+	/* find the info काष्ठाure क्रम the specअगरied line */
 	info = mgslpc_device_list;
-	while(info && info->line != line)
+	जबतक(info && info->line != line)
 		info = info->next_device;
-	if (mgslpc_paranoia_check(info, tty->name, "mgslpc_open"))
-		return -ENODEV;
+	अगर (mgslpc_paranoia_check(info, tty->name, "mgslpc_open"))
+		वापस -ENODEV;
 
 	port = &info->port;
 	tty->driver_data = info;
 	tty_port_tty_set(port, tty);
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_open(%s), old ref count = %d\n",
-			 __FILE__, __LINE__, tty->driver->name, port->count);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_open(%s), old ref count = %d\n",
+			 __खाता__, __LINE__, tty->driver->name, port->count);
 
 	spin_lock_irqsave(&info->netlock, flags);
-	if (info->netcount) {
+	अगर (info->netcount) अणु
 		retval = -EBUSY;
 		spin_unlock_irqrestore(&info->netlock, flags);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 	spin_lock(&port->lock);
 	port->count++;
 	spin_unlock(&port->lock);
 	spin_unlock_irqrestore(&info->netlock, flags);
 
-	if (port->count == 1) {
-		/* 1st open on this device, init hardware */
+	अगर (port->count == 1) अणु
+		/* 1st खोलो on this device, init hardware */
 		retval = startup(info, tty);
-		if (retval < 0)
-			goto cleanup;
-	}
+		अगर (retval < 0)
+			जाओ cleanup;
+	पूर्ण
 
-	retval = tty_port_block_til_ready(&info->port, tty, filp);
-	if (retval) {
-		if (debug_level >= DEBUG_LEVEL_INFO)
-			printk("%s(%d):block_til_ready(%s) returned %d\n",
-				 __FILE__, __LINE__, info->device_name, retval);
-		goto cleanup;
-	}
+	retval = tty_port_block_til_पढ़ोy(&info->port, tty, filp);
+	अगर (retval) अणु
+		अगर (debug_level >= DEBUG_LEVEL_INFO)
+			prपूर्णांकk("%s(%d):block_til_ready(%s) returned %d\n",
+				 __खाता__, __LINE__, info->device_name, retval);
+		जाओ cleanup;
+	पूर्ण
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):mgslpc_open(%s) success\n",
-			 __FILE__, __LINE__, info->device_name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):mgslpc_open(%s) success\n",
+			 __खाता__, __LINE__, info->device_name);
 	retval = 0;
 
 cleanup:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
  * /proc fs routines....
  */
 
-static inline void line_info(struct seq_file *m, MGSLPC_INFO *info)
-{
-	char	stat_buf[30];
-	unsigned long flags;
+अटल अंतरभूत व्योम line_info(काष्ठा seq_file *m, MGSLPC_INFO *info)
+अणु
+	अक्षर	stat_buf[30];
+	अचिन्हित दीर्घ flags;
 
-	seq_printf(m, "%s:io:%04X irq:%d",
+	seq_म_लिखो(m, "%s:io:%04X irq:%d",
 		      info->device_name, info->io_base, info->irq_level);
 
-	/* output current serial signal states */
+	/* output current serial संकेत states */
 	spin_lock_irqsave(&info->lock, flags);
-	get_signals(info);
+	get_संकेतs(info);
 	spin_unlock_irqrestore(&info->lock, flags);
 
 	stat_buf[0] = 0;
 	stat_buf[1] = 0;
-	if (info->serial_signals & SerialSignal_RTS)
-		strcat(stat_buf, "|RTS");
-	if (info->serial_signals & SerialSignal_CTS)
-		strcat(stat_buf, "|CTS");
-	if (info->serial_signals & SerialSignal_DTR)
-		strcat(stat_buf, "|DTR");
-	if (info->serial_signals & SerialSignal_DSR)
-		strcat(stat_buf, "|DSR");
-	if (info->serial_signals & SerialSignal_DCD)
-		strcat(stat_buf, "|CD");
-	if (info->serial_signals & SerialSignal_RI)
-		strcat(stat_buf, "|RI");
+	अगर (info->serial_संकेतs & SerialSignal_RTS)
+		म_जोड़ो(stat_buf, "|RTS");
+	अगर (info->serial_संकेतs & SerialSignal_CTS)
+		म_जोड़ो(stat_buf, "|CTS");
+	अगर (info->serial_संकेतs & SerialSignal_DTR)
+		म_जोड़ो(stat_buf, "|DTR");
+	अगर (info->serial_संकेतs & SerialSignal_DSR)
+		म_जोड़ो(stat_buf, "|DSR");
+	अगर (info->serial_संकेतs & SerialSignal_DCD)
+		म_जोड़ो(stat_buf, "|CD");
+	अगर (info->serial_संकेतs & SerialSignal_RI)
+		म_जोड़ो(stat_buf, "|RI");
 
-	if (info->params.mode == MGSL_MODE_HDLC) {
-		seq_printf(m, " HDLC txok:%d rxok:%d",
+	अगर (info->params.mode == MGSL_MODE_HDLC) अणु
+		seq_म_लिखो(m, " HDLC txok:%d rxok:%d",
 			      info->icount.txok, info->icount.rxok);
-		if (info->icount.txunder)
-			seq_printf(m, " txunder:%d", info->icount.txunder);
-		if (info->icount.txabort)
-			seq_printf(m, " txabort:%d", info->icount.txabort);
-		if (info->icount.rxshort)
-			seq_printf(m, " rxshort:%d", info->icount.rxshort);
-		if (info->icount.rxlong)
-			seq_printf(m, " rxlong:%d", info->icount.rxlong);
-		if (info->icount.rxover)
-			seq_printf(m, " rxover:%d", info->icount.rxover);
-		if (info->icount.rxcrc)
-			seq_printf(m, " rxcrc:%d", info->icount.rxcrc);
-	} else {
-		seq_printf(m, " ASYNC tx:%d rx:%d",
+		अगर (info->icount.txunder)
+			seq_म_लिखो(m, " txunder:%d", info->icount.txunder);
+		अगर (info->icount.txपात)
+			seq_म_लिखो(m, " txabort:%d", info->icount.txपात);
+		अगर (info->icount.rxलघु)
+			seq_म_लिखो(m, " rxshort:%d", info->icount.rxलघु);
+		अगर (info->icount.rxदीर्घ)
+			seq_म_लिखो(m, " rxlong:%d", info->icount.rxदीर्घ);
+		अगर (info->icount.rxover)
+			seq_म_लिखो(m, " rxover:%d", info->icount.rxover);
+		अगर (info->icount.rxcrc)
+			seq_म_लिखो(m, " rxcrc:%d", info->icount.rxcrc);
+	पूर्ण अन्यथा अणु
+		seq_म_लिखो(m, " ASYNC tx:%d rx:%d",
 			      info->icount.tx, info->icount.rx);
-		if (info->icount.frame)
-			seq_printf(m, " fe:%d", info->icount.frame);
-		if (info->icount.parity)
-			seq_printf(m, " pe:%d", info->icount.parity);
-		if (info->icount.brk)
-			seq_printf(m, " brk:%d", info->icount.brk);
-		if (info->icount.overrun)
-			seq_printf(m, " oe:%d", info->icount.overrun);
-	}
+		अगर (info->icount.frame)
+			seq_म_लिखो(m, " fe:%d", info->icount.frame);
+		अगर (info->icount.parity)
+			seq_म_लिखो(m, " pe:%d", info->icount.parity);
+		अगर (info->icount.brk)
+			seq_म_लिखो(m, " brk:%d", info->icount.brk);
+		अगर (info->icount.overrun)
+			seq_म_लिखो(m, " oe:%d", info->icount.overrun);
+	पूर्ण
 
-	/* Append serial signal status to end */
-	seq_printf(m, " %s\n", stat_buf+1);
+	/* Append serial संकेत status to end */
+	seq_म_लिखो(m, " %s\n", stat_buf+1);
 
-	seq_printf(m, "txactive=%d bh_req=%d bh_run=%d pending_bh=%x\n",
+	seq_म_लिखो(m, "txactive=%d bh_req=%d bh_run=%d pending_bh=%x\n",
 		       info->tx_active,info->bh_requested,info->bh_running,
 		       info->pending_bh);
-}
+पूर्ण
 
-/* Called to print information about devices
+/* Called to prपूर्णांक inक्रमmation about devices
  */
-static int mgslpc_proc_show(struct seq_file *m, void *v)
-{
+अटल पूर्णांक mgslpc_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
 	MGSLPC_INFO *info;
 
-	seq_printf(m, "synclink driver:%s\n", driver_version);
+	seq_म_लिखो(m, "synclink driver:%s\n", driver_version);
 
 	info = mgslpc_device_list;
-	while (info) {
+	जबतक (info) अणु
 		line_info(m, info);
 		info = info->next_device;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int rx_alloc_buffers(MGSLPC_INFO *info)
-{
+अटल पूर्णांक rx_alloc_buffers(MGSLPC_INFO *info)
+अणु
 	/* each buffer has header and data */
-	info->rx_buf_size = sizeof(RXBUF) + info->max_frame_size;
+	info->rx_buf_size = माप(RXBUF) + info->max_frame_size;
 
-	/* calculate total allocation size for 8 buffers */
+	/* calculate total allocation size क्रम 8 buffers */
 	info->rx_buf_total_size = info->rx_buf_size * 8;
 
 	/* limit total allocated memory */
-	if (info->rx_buf_total_size > 0x10000)
+	अगर (info->rx_buf_total_size > 0x10000)
 		info->rx_buf_total_size = 0x10000;
 
 	/* calculate number of buffers */
 	info->rx_buf_count = info->rx_buf_total_size / info->rx_buf_size;
 
-	info->rx_buf = kmalloc(info->rx_buf_total_size, GFP_KERNEL);
-	if (info->rx_buf == NULL)
-		return -ENOMEM;
+	info->rx_buf = kदो_स्मृति(info->rx_buf_total_size, GFP_KERNEL);
+	अगर (info->rx_buf == शून्य)
+		वापस -ENOMEM;
 
-	/* unused flag buffer to satisfy receive_buf calling interface */
+	/* unused flag buffer to satisfy receive_buf calling पूर्णांकerface */
 	info->flag_buf = kzalloc(info->max_frame_size, GFP_KERNEL);
-	if (!info->flag_buf) {
-		kfree(info->rx_buf);
-		info->rx_buf = NULL;
-		return -ENOMEM;
-	}
+	अगर (!info->flag_buf) अणु
+		kमुक्त(info->rx_buf);
+		info->rx_buf = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 	
 	rx_reset_buffers(info);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rx_free_buffers(MGSLPC_INFO *info)
-{
-	kfree(info->rx_buf);
-	info->rx_buf = NULL;
-	kfree(info->flag_buf);
-	info->flag_buf = NULL;
-}
+अटल व्योम rx_मुक्त_buffers(MGSLPC_INFO *info)
+अणु
+	kमुक्त(info->rx_buf);
+	info->rx_buf = शून्य;
+	kमुक्त(info->flag_buf);
+	info->flag_buf = शून्य;
+पूर्ण
 
-static int claim_resources(MGSLPC_INFO *info)
-{
-	if (rx_alloc_buffers(info) < 0) {
-		printk("Can't allocate rx buffer %s\n", info->device_name);
+अटल पूर्णांक claim_resources(MGSLPC_INFO *info)
+अणु
+	अगर (rx_alloc_buffers(info) < 0) अणु
+		prपूर्णांकk("Can't allocate rx buffer %s\n", info->device_name);
 		release_resources(info);
-		return -ENODEV;
-	}
-	return 0;
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void release_resources(MGSLPC_INFO *info)
-{
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("release_resources(%s)\n", info->device_name);
-	rx_free_buffers(info);
-}
+अटल व्योम release_resources(MGSLPC_INFO *info)
+अणु
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("release_resources(%s)\n", info->device_name);
+	rx_मुक्त_buffers(info);
+पूर्ण
 
-/* Add the specified device instance data structure to the
+/* Add the specअगरied device instance data काष्ठाure to the
  * global linked list of devices and increment the device count.
  *
- * Arguments:		info	pointer to device instance data
+ * Arguments:		info	poपूर्णांकer to device instance data
  */
-static int mgslpc_add_device(MGSLPC_INFO *info)
-{
-	MGSLPC_INFO *current_dev = NULL;
-	struct device *tty_dev;
-	int ret;
+अटल पूर्णांक mgslpc_add_device(MGSLPC_INFO *info)
+अणु
+	MGSLPC_INFO *current_dev = शून्य;
+	काष्ठा device *tty_dev;
+	पूर्णांक ret;
 
-	info->next_device = NULL;
+	info->next_device = शून्य;
 	info->line = mgslpc_device_count;
-	sprintf(info->device_name,"ttySLP%d",info->line);
+	प्र_लिखो(info->device_name,"ttySLP%d",info->line);
 
-	if (info->line < MAX_DEVICE_COUNT) {
-		if (maxframe[info->line])
+	अगर (info->line < MAX_DEVICE_COUNT) अणु
+		अगर (maxframe[info->line])
 			info->max_frame_size = maxframe[info->line];
-	}
+	पूर्ण
 
 	mgslpc_device_count++;
 
-	if (!mgslpc_device_list)
+	अगर (!mgslpc_device_list)
 		mgslpc_device_list = info;
-	else {
+	अन्यथा अणु
 		current_dev = mgslpc_device_list;
-		while (current_dev->next_device)
+		जबतक (current_dev->next_device)
 			current_dev = current_dev->next_device;
 		current_dev->next_device = info;
-	}
+	पूर्ण
 
-	if (info->max_frame_size < 4096)
+	अगर (info->max_frame_size < 4096)
 		info->max_frame_size = 4096;
-	else if (info->max_frame_size > 65535)
+	अन्यथा अगर (info->max_frame_size > 65535)
 		info->max_frame_size = 65535;
 
-	printk("SyncLink PC Card %s:IO=%04X IRQ=%d\n",
+	prपूर्णांकk("SyncLink PC Card %s:IO=%04X IRQ=%d\n",
 		info->device_name, info->io_base, info->irq_level);
 
-#if SYNCLINK_GENERIC_HDLC
+#अगर SYNCLINK_GENERIC_HDLC
 	ret = hdlcdev_init(info);
-	if (ret != 0)
-		goto failed;
-#endif
+	अगर (ret != 0)
+		जाओ failed;
+#पूर्ण_अगर
 
-	tty_dev = tty_port_register_device(&info->port, serial_driver, info->line,
+	tty_dev = tty_port_रेजिस्टर_device(&info->port, serial_driver, info->line,
 			&info->p_dev->dev);
-	if (IS_ERR(tty_dev)) {
+	अगर (IS_ERR(tty_dev)) अणु
 		ret = PTR_ERR(tty_dev);
-#if SYNCLINK_GENERIC_HDLC
-		hdlcdev_exit(info);
-#endif
-		goto failed;
-	}
+#अगर SYNCLINK_GENERIC_HDLC
+		hdlcdev_निकास(info);
+#पूर्ण_अगर
+		जाओ failed;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 failed:
-	if (current_dev)
-		current_dev->next_device = NULL;
-	else
-		mgslpc_device_list = NULL;
+	अगर (current_dev)
+		current_dev->next_device = शून्य;
+	अन्यथा
+		mgslpc_device_list = शून्य;
 	mgslpc_device_count--;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void mgslpc_remove_device(MGSLPC_INFO *remove_info)
-{
+अटल व्योम mgslpc_हटाओ_device(MGSLPC_INFO *हटाओ_info)
+अणु
 	MGSLPC_INFO *info = mgslpc_device_list;
-	MGSLPC_INFO *last = NULL;
+	MGSLPC_INFO *last = शून्य;
 
-	while(info) {
-		if (info == remove_info) {
-			if (last)
+	जबतक(info) अणु
+		अगर (info == हटाओ_info) अणु
+			अगर (last)
 				last->next_device = info->next_device;
-			else
+			अन्यथा
 				mgslpc_device_list = info->next_device;
-			tty_unregister_device(serial_driver, info->line);
-#if SYNCLINK_GENERIC_HDLC
-			hdlcdev_exit(info);
-#endif
+			tty_unरेजिस्टर_device(serial_driver, info->line);
+#अगर SYNCLINK_GENERIC_HDLC
+			hdlcdev_निकास(info);
+#पूर्ण_अगर
 			release_resources(info);
 			tty_port_destroy(&info->port);
-			kfree(info);
+			kमुक्त(info);
 			mgslpc_device_count--;
-			return;
-		}
+			वापस;
+		पूर्ण
 		last = info;
 		info = info->next_device;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct pcmcia_device_id mgslpc_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id mgslpc_ids[] = अणु
 	PCMCIA_DEVICE_MANF_CARD(0x02c5, 0x0050),
-	PCMCIA_DEVICE_NULL
-};
+	PCMCIA_DEVICE_शून्य
+पूर्ण;
 MODULE_DEVICE_TABLE(pcmcia, mgslpc_ids);
 
-static struct pcmcia_driver mgslpc_driver = {
+अटल काष्ठा pcmcia_driver mgslpc_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= "synclink_cs",
 	.probe		= mgslpc_probe,
-	.remove		= mgslpc_detach,
+	.हटाओ		= mgslpc_detach,
 	.id_table	= mgslpc_ids,
 	.suspend	= mgslpc_suspend,
 	.resume		= mgslpc_resume,
-};
+पूर्ण;
 
-static const struct tty_operations mgslpc_ops = {
-	.open = mgslpc_open,
-	.close = mgslpc_close,
-	.write = mgslpc_write,
-	.put_char = mgslpc_put_char,
-	.flush_chars = mgslpc_flush_chars,
-	.write_room = mgslpc_write_room,
-	.chars_in_buffer = mgslpc_chars_in_buffer,
+अटल स्थिर काष्ठा tty_operations mgslpc_ops = अणु
+	.खोलो = mgslpc_खोलो,
+	.बंद = mgslpc_बंद,
+	.ग_लिखो = mgslpc_ग_लिखो,
+	.put_अक्षर = mgslpc_put_अक्षर,
+	.flush_अक्षरs = mgslpc_flush_अक्षरs,
+	.ग_लिखो_room = mgslpc_ग_लिखो_room,
+	.अक्षरs_in_buffer = mgslpc_अक्षरs_in_buffer,
 	.flush_buffer = mgslpc_flush_buffer,
 	.ioctl = mgslpc_ioctl,
 	.throttle = mgslpc_throttle,
 	.unthrottle = mgslpc_unthrottle,
-	.send_xchar = mgslpc_send_xchar,
-	.break_ctl = mgslpc_break,
-	.wait_until_sent = mgslpc_wait_until_sent,
+	.send_xअक्षर = mgslpc_send_xअक्षर,
+	.अवरोध_ctl = mgslpc_अवरोध,
+	.रुको_until_sent = mgslpc_रुको_until_sent,
 	.set_termios = mgslpc_set_termios,
-	.stop = tx_pause,
+	.stop = tx_छोड़ो,
 	.start = tx_release,
 	.hangup = mgslpc_hangup,
 	.tiocmget = tiocmget,
 	.tiocmset = tiocmset,
 	.get_icount = mgslpc_get_icount,
 	.proc_show = mgslpc_proc_show,
-};
+पूर्ण;
 
-static int __init synclink_cs_init(void)
-{
-	int rc;
+अटल पूर्णांक __init synclink_cs_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	if (break_on_load) {
+	अगर (अवरोध_on_load) अणु
 		mgslpc_get_text_ptr();
 		BREAKPOINT();
-	}
+	पूर्ण
 
 	serial_driver = tty_alloc_driver(MAX_DEVICE_COUNT,
 			TTY_DRIVER_REAL_RAW |
 			TTY_DRIVER_DYNAMIC_DEV);
-	if (IS_ERR(serial_driver)) {
+	अगर (IS_ERR(serial_driver)) अणु
 		rc = PTR_ERR(serial_driver);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* Initialize the tty_driver structure */
+	/* Initialize the tty_driver काष्ठाure */
 	serial_driver->driver_name = "synclink_cs";
 	serial_driver->name = "ttySLP";
 	serial_driver->major = ttymajor;
@@ -2829,84 +2830,84 @@ static int __init synclink_cs_init(void)
 	B9600 | CS8 | CREAD | HUPCL | CLOCAL;
 	tty_set_operations(serial_driver, &mgslpc_ops);
 
-	rc = tty_register_driver(serial_driver);
-	if (rc < 0) {
-		printk(KERN_ERR "%s(%d):Couldn't register serial driver\n",
-				__FILE__, __LINE__);
-		goto err_put_tty;
-	}
+	rc = tty_रेजिस्टर_driver(serial_driver);
+	अगर (rc < 0) अणु
+		prपूर्णांकk(KERN_ERR "%s(%d):Couldn't register serial driver\n",
+				__खाता__, __LINE__);
+		जाओ err_put_tty;
+	पूर्ण
 
-	rc = pcmcia_register_driver(&mgslpc_driver);
-	if (rc < 0)
-		goto err_unreg_tty;
+	rc = pcmcia_रेजिस्टर_driver(&mgslpc_driver);
+	अगर (rc < 0)
+		जाओ err_unreg_tty;
 
-	printk(KERN_INFO "%s %s, tty major#%d\n", driver_name, driver_version,
+	prपूर्णांकk(KERN_INFO "%s %s, tty major#%d\n", driver_name, driver_version,
 			serial_driver->major);
 
-	return 0;
+	वापस 0;
 err_unreg_tty:
-	tty_unregister_driver(serial_driver);
+	tty_unरेजिस्टर_driver(serial_driver);
 err_put_tty:
 	put_tty_driver(serial_driver);
 err:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit synclink_cs_exit(void)
-{
-	pcmcia_unregister_driver(&mgslpc_driver);
-	tty_unregister_driver(serial_driver);
+अटल व्योम __निकास synclink_cs_निकास(व्योम)
+अणु
+	pcmcia_unरेजिस्टर_driver(&mgslpc_driver);
+	tty_unरेजिस्टर_driver(serial_driver);
 	put_tty_driver(serial_driver);
-}
+पूर्ण
 
 module_init(synclink_cs_init);
-module_exit(synclink_cs_exit);
+module_निकास(synclink_cs_निकास);
 
-static void mgslpc_set_rate(MGSLPC_INFO *info, unsigned char channel, unsigned int rate)
-{
-	unsigned int M, N;
-	unsigned char val;
+अटल व्योम mgslpc_set_rate(MGSLPC_INFO *info, अचिन्हित अक्षर channel, अचिन्हित पूर्णांक rate)
+अणु
+	अचिन्हित पूर्णांक M, N;
+	अचिन्हित अक्षर val;
 
 	/* note:standard BRG mode is broken in V3.2 chip
 	 * so enhanced mode is always used
 	 */
 
-	if (rate) {
+	अगर (rate) अणु
 		N = 3686400 / rate;
-		if (!N)
+		अगर (!N)
 			N = 1;
 		N >>= 1;
-		for (M = 1; N > 64 && M < 16; M++)
+		क्रम (M = 1; N > 64 && M < 16; M++)
 			N >>= 1;
 		N--;
 
 		/* BGR[5..0] = N
 		 * BGR[9..6] = M
-		 * BGR[7..0] contained in BGR register
+		 * BGR[7..0] contained in BGR रेजिस्टर
 		 * BGR[9..8] contained in CCR2[7..6]
-		 * divisor = (N+1)*2^M
+		 * भागisor = (N+1)*2^M
 		 *
 		 * Note: M *must* not be zero (causes asymetric duty cycle)
 		 */
-		write_reg(info, (unsigned char) (channel + BGR),
-				  (unsigned char) ((M << 6) + N));
-		val = read_reg(info, (unsigned char) (channel + CCR2)) & 0x3f;
+		ग_लिखो_reg(info, (अचिन्हित अक्षर) (channel + BGR),
+				  (अचिन्हित अक्षर) ((M << 6) + N));
+		val = पढ़ो_reg(info, (अचिन्हित अक्षर) (channel + CCR2)) & 0x3f;
 		val |= ((M << 4) & 0xc0);
-		write_reg(info, (unsigned char) (channel + CCR2), val);
-	}
-}
+		ग_लिखो_reg(info, (अचिन्हित अक्षर) (channel + CCR2), val);
+	पूर्ण
+पूर्ण
 
-/* Enabled the AUX clock output at the specified frequency.
+/* Enabled the AUX घड़ी output at the specअगरied frequency.
  */
-static void enable_auxclk(MGSLPC_INFO *info)
-{
-	unsigned char val;
+अटल व्योम enable_auxclk(MGSLPC_INFO *info)
+अणु
+	अचिन्हित अक्षर val;
 
 	/* MODE
 	 *
 	 * 07..06  MDS[1..0] 10 = transparent HDLC mode
 	 * 05      ADM Address Mode, 0 = no addr recognition
-	 * 04      TMD Timer Mode, 0 = external
+	 * 04      TMD Timer Mode, 0 = बाह्यal
 	 * 03      RAC Receiver Active, 0 = inactive
 	 * 02      RTS 0=RTS active during xmit, 1=RTS always active
 	 * 01      TRS Timer Resolution, 1=512
@@ -2917,13 +2918,13 @@ static void enable_auxclk(MGSLPC_INFO *info)
 	val = 0x82;
 
 	/* channel B RTS is used to enable AUXCLK driver on SP505 */
-	if (info->params.mode == MGSL_MODE_HDLC && info->params.clock_speed)
+	अगर (info->params.mode == MGSL_MODE_HDLC && info->params.घड़ी_speed)
 		val |= BIT2;
-	write_reg(info, CHB + MODE, val);
+	ग_लिखो_reg(info, CHB + MODE, val);
 
 	/* CCR0
 	 *
-	 * 07      PU Power Up, 1=active, 0=power down
+	 * 07      PU Power Up, 1=active, 0=घातer करोwn
 	 * 06      MCE Master Clock Enable, 1=enabled
 	 * 05      Reserved, 0
 	 * 04..02  SC[2..0] Encoding
@@ -2931,7 +2932,7 @@ static void enable_auxclk(MGSLPC_INFO *info)
 	 *
 	 * 11000000
 	 */
-	write_reg(info, CHB + CCR0, 0xc0);
+	ग_लिखो_reg(info, CHB + CCR0, 0xc0);
 
 	/* CCR1
 	 *
@@ -2944,12 +2945,12 @@ static void enable_auxclk(MGSLPC_INFO *info)
 	 *
 	 * 0001 0111
 	 */
-	write_reg(info, CHB + CCR1, 0x17);
+	ग_लिखो_reg(info, CHB + CCR1, 0x17);
 
 	/* CCR2 (Channel B)
 	 *
 	 * 07..06  BGR[9..8] Baud rate bits 9..8
-	 * 05      BDF Baud rate divisor factor, 0=1, 1=BGR value
+	 * 05      BDF Baud rate भागisor factor, 0=1, 1=BGR value
 	 * 04      SSEL Clock source select, 1=submode b
 	 * 03      TOE 0=TxCLK is input, 1=TxCLK is output
 	 * 02      RWX Read/Write Exchange 0=disabled
@@ -2958,10 +2959,10 @@ static void enable_auxclk(MGSLPC_INFO *info)
 	 *
 	 * 0011 1000
 	 */
-	if (info->params.mode == MGSL_MODE_HDLC && info->params.clock_speed)
-		write_reg(info, CHB + CCR2, 0x38);
-	else
-		write_reg(info, CHB + CCR2, 0x30);
+	अगर (info->params.mode == MGSL_MODE_HDLC && info->params.घड़ी_speed)
+		ग_लिखो_reg(info, CHB + CCR2, 0x38);
+	अन्यथा
+		ग_लिखो_reg(info, CHB + CCR2, 0x30);
 
 	/* CCR4
 	 *
@@ -2974,80 +2975,80 @@ static void enable_auxclk(MGSLPC_INFO *info)
 	 *
 	 * 0101 0000
 	 */
-	write_reg(info, CHB + CCR4, 0x50);
+	ग_लिखो_reg(info, CHB + CCR4, 0x50);
 
-	/* if auxclk not enabled, set internal BRG so
+	/* अगर auxclk not enabled, set पूर्णांकernal BRG so
 	 * CTS transitions can be detected (requires TxC)
 	 */
-	if (info->params.mode == MGSL_MODE_HDLC && info->params.clock_speed)
-		mgslpc_set_rate(info, CHB, info->params.clock_speed);
-	else
+	अगर (info->params.mode == MGSL_MODE_HDLC && info->params.घड़ी_speed)
+		mgslpc_set_rate(info, CHB, info->params.घड़ी_speed);
+	अन्यथा
 		mgslpc_set_rate(info, CHB, 921600);
-}
+पूर्ण
 
-static void loopback_enable(MGSLPC_INFO *info)
-{
-	unsigned char val;
+अटल व्योम loopback_enable(MGSLPC_INFO *info)
+अणु
+	अचिन्हित अक्षर val;
 
-	/* CCR1:02..00  CM[2..0] Clock Mode = 111 (clock mode 7) */
-	val = read_reg(info, CHA + CCR1) | (BIT2 | BIT1 | BIT0);
-	write_reg(info, CHA + CCR1, val);
+	/* CCR1:02..00  CM[2..0] Clock Mode = 111 (घड़ी mode 7) */
+	val = पढ़ो_reg(info, CHA + CCR1) | (BIT2 | BIT1 | BIT0);
+	ग_लिखो_reg(info, CHA + CCR1, val);
 
 	/* CCR2:04 SSEL Clock source select, 1=submode b */
-	val = read_reg(info, CHA + CCR2) | (BIT4 | BIT5);
-	write_reg(info, CHA + CCR2, val);
+	val = पढ़ो_reg(info, CHA + CCR2) | (BIT4 | BIT5);
+	ग_लिखो_reg(info, CHA + CCR2, val);
 
-	/* set LinkSpeed if available, otherwise default to 2Mbps */
-	if (info->params.clock_speed)
-		mgslpc_set_rate(info, CHA, info->params.clock_speed);
-	else
+	/* set LinkSpeed अगर available, otherwise शेष to 2Mbps */
+	अगर (info->params.घड़ी_speed)
+		mgslpc_set_rate(info, CHA, info->params.घड़ी_speed);
+	अन्यथा
 		mgslpc_set_rate(info, CHA, 1843200);
 
 	/* MODE:00 TLP Test Loop, 1=loopback enabled */
-	val = read_reg(info, CHA + MODE) | BIT0;
-	write_reg(info, CHA + MODE, val);
-}
+	val = पढ़ो_reg(info, CHA + MODE) | BIT0;
+	ग_लिखो_reg(info, CHA + MODE, val);
+पूर्ण
 
-static void hdlc_mode(MGSLPC_INFO *info)
-{
-	unsigned char val;
-	unsigned char clkmode, clksubmode;
+अटल व्योम hdlc_mode(MGSLPC_INFO *info)
+अणु
+	अचिन्हित अक्षर val;
+	अचिन्हित अक्षर clkmode, clksubmode;
 
-	/* disable all interrupts */
+	/* disable all पूर्णांकerrupts */
 	irq_disable(info, CHA, 0xffff);
 	irq_disable(info, CHB, 0xffff);
 	port_irq_disable(info, 0xff);
 
-	/* assume clock mode 0a, rcv=RxC xmt=TxC */
+	/* assume घड़ी mode 0a, rcv=RxC xmt=TxC */
 	clkmode = clksubmode = 0;
-	if (info->params.flags & HDLC_FLAG_RXC_DPLL
-	    && info->params.flags & HDLC_FLAG_TXC_DPLL) {
-		/* clock mode 7a, rcv = DPLL, xmt = DPLL */
+	अगर (info->params.flags & HDLC_FLAG_RXC_DPLL
+	    && info->params.flags & HDLC_FLAG_TXC_DPLL) अणु
+		/* घड़ी mode 7a, rcv = DPLL, xmt = DPLL */
 		clkmode = 7;
-	} else if (info->params.flags & HDLC_FLAG_RXC_BRG
-		 && info->params.flags & HDLC_FLAG_TXC_BRG) {
-		/* clock mode 7b, rcv = BRG, xmt = BRG */
+	पूर्ण अन्यथा अगर (info->params.flags & HDLC_FLAG_RXC_BRG
+		 && info->params.flags & HDLC_FLAG_TXC_BRG) अणु
+		/* घड़ी mode 7b, rcv = BRG, xmt = BRG */
 		clkmode = 7;
 		clksubmode = 1;
-	} else if (info->params.flags & HDLC_FLAG_RXC_DPLL) {
-		if (info->params.flags & HDLC_FLAG_TXC_BRG) {
-			/* clock mode 6b, rcv = DPLL, xmt = BRG/16 */
+	पूर्ण अन्यथा अगर (info->params.flags & HDLC_FLAG_RXC_DPLL) अणु
+		अगर (info->params.flags & HDLC_FLAG_TXC_BRG) अणु
+			/* घड़ी mode 6b, rcv = DPLL, xmt = BRG/16 */
 			clkmode = 6;
 			clksubmode = 1;
-		} else {
-			/* clock mode 6a, rcv = DPLL, xmt = TxC */
+		पूर्ण अन्यथा अणु
+			/* घड़ी mode 6a, rcv = DPLL, xmt = TxC */
 			clkmode = 6;
-		}
-	} else if (info->params.flags & HDLC_FLAG_TXC_BRG) {
-		/* clock mode 0b, rcv = RxC, xmt = BRG */
+		पूर्ण
+	पूर्ण अन्यथा अगर (info->params.flags & HDLC_FLAG_TXC_BRG) अणु
+		/* घड़ी mode 0b, rcv = RxC, xmt = BRG */
 		clksubmode = 1;
-	}
+	पूर्ण
 
 	/* MODE
 	 *
 	 * 07..06  MDS[1..0] 10 = transparent HDLC mode
 	 * 05      ADM Address Mode, 0 = no addr recognition
-	 * 04      TMD Timer Mode, 0 = external
+	 * 04      TMD Timer Mode, 0 = बाह्यal
 	 * 03      RAC Receiver Active, 0 = inactive
 	 * 02      RTS 0=RTS active during xmit, 1=RTS always active
 	 * 01      TRS Timer Resolution, 1=512
@@ -3056,17 +3057,17 @@ static void hdlc_mode(MGSLPC_INFO *info)
 	 * 1000 0010
 	 */
 	val = 0x82;
-	if (info->params.loopback)
+	अगर (info->params.loopback)
 		val |= BIT0;
 
 	/* preserve RTS state */
-	if (info->serial_signals & SerialSignal_RTS)
+	अगर (info->serial_संकेतs & SerialSignal_RTS)
 		val |= BIT2;
-	write_reg(info, CHA + MODE, val);
+	ग_लिखो_reg(info, CHA + MODE, val);
 
 	/* CCR0
 	 *
-	 * 07      PU Power Up, 1=active, 0=power down
+	 * 07      PU Power Up, 1=active, 0=घातer करोwn
 	 * 06      MCE Master Clock Enable, 1=enabled
 	 * 05      Reserved, 0
 	 * 04..02  SC[2..0] Encoding
@@ -3075,22 +3076,22 @@ static void hdlc_mode(MGSLPC_INFO *info)
 	 * 11000000
 	 */
 	val = 0xc0;
-	switch (info->params.encoding)
-	{
-	case HDLC_ENCODING_NRZI:
+	चयन (info->params.encoding)
+	अणु
+	हाल HDLC_ENCODING_NRZI:
 		val |= BIT3;
-		break;
-	case HDLC_ENCODING_BIPHASE_SPACE:
+		अवरोध;
+	हाल HDLC_ENCODING_BIPHASE_SPACE:
 		val |= BIT4;
-		break;		// FM0
-	case HDLC_ENCODING_BIPHASE_MARK:
+		अवरोध;		// FM0
+	हाल HDLC_ENCODING_BIPHASE_MARK:
 		val |= BIT4 | BIT2;
-		break;		// FM1
-	case HDLC_ENCODING_BIPHASE_LEVEL:
+		अवरोध;		// FM1
+	हाल HDLC_ENCODING_BIPHASE_LEVEL:
 		val |= BIT4 | BIT3;
-		break;		// Manchester
-	}
-	write_reg(info, CHA + CCR0, val);
+		अवरोध;		// Manchester
+	पूर्ण
+	ग_लिखो_reg(info, CHA + CCR0, val);
 
 	/* CCR1
 	 *
@@ -3104,12 +3105,12 @@ static void hdlc_mode(MGSLPC_INFO *info)
 	 * 0001 0000
 	 */
 	val = 0x10 + clkmode;
-	write_reg(info, CHA + CCR1, val);
+	ग_लिखो_reg(info, CHA + CCR1, val);
 
 	/* CCR2
 	 *
 	 * 07..06  BGR[9..8] Baud rate bits 9..8
-	 * 05      BDF Baud rate divisor factor, 0=1, 1=BGR value
+	 * 05      BDF Baud rate भागisor factor, 0=1, 1=BGR value
 	 * 04      SSEL Clock source select, 1=submode b
 	 * 03      TOE 0=TxCLK is input, 0=TxCLK is input
 	 * 02      RWX Read/Write Exchange 0=disabled
@@ -3119,16 +3120,16 @@ static void hdlc_mode(MGSLPC_INFO *info)
 	 * 0000 0000
 	 */
 	val = 0x00;
-	if (clkmode == 2 || clkmode == 3 || clkmode == 6
+	अगर (clkmode == 2 || clkmode == 3 || clkmode == 6
 	    || clkmode == 7 || (clkmode == 0 && clksubmode == 1))
 		val |= BIT5;
-	if (clksubmode)
+	अगर (clksubmode)
 		val |= BIT4;
-	if (info->params.crc_type == HDLC_CRC_32_CCITT)
+	अगर (info->params.crc_type == HDLC_CRC_32_CCITT)
 		val |= BIT1;
-	if (info->params.encoding == HDLC_ENCODING_NRZB)
+	अगर (info->params.encoding == HDLC_ENCODING_NRZB)
 		val |= BIT0;
-	write_reg(info, CHA + CCR2, val);
+	ग_लिखो_reg(info, CHA + CCR2, val);
 
 	/* CCR3
 	 *
@@ -3138,39 +3139,39 @@ static void hdlc_mode(MGSLPC_INFO *info)
 	 * 03      CRL CRC Reset Level, 0=FFFF
 	 * 02      RCRC Rx CRC 0=On 1=Off
 	 * 01      TCRC Tx CRC 0=On 1=Off
-	 * 00      PSD DPLL Phase Shift Disable
+	 * 00      PSD DPLL Phase Shअगरt Disable
 	 *
 	 * 0000 0000
 	 */
 	val = 0x00;
-	if (info->params.crc_type == HDLC_CRC_NONE)
+	अगर (info->params.crc_type == HDLC_CRC_NONE)
 		val |= BIT2 | BIT1;
-	if (info->params.preamble != HDLC_PREAMBLE_PATTERN_NONE)
+	अगर (info->params.preamble != HDLC_PREAMBLE_PATTERN_NONE)
 		val |= BIT5;
-	switch (info->params.preamble_length)
-	{
-	case HDLC_PREAMBLE_LENGTH_16BITS:
+	चयन (info->params.preamble_length)
+	अणु
+	हाल HDLC_PREAMBLE_LENGTH_16BITS:
 		val |= BIT6;
-		break;
-	case HDLC_PREAMBLE_LENGTH_32BITS:
+		अवरोध;
+	हाल HDLC_PREAMBLE_LENGTH_32BITS:
 		val |= BIT6;
-		break;
-	case HDLC_PREAMBLE_LENGTH_64BITS:
+		अवरोध;
+	हाल HDLC_PREAMBLE_LENGTH_64BITS:
 		val |= BIT7 | BIT6;
-		break;
-	}
-	write_reg(info, CHA + CCR3, val);
+		अवरोध;
+	पूर्ण
+	ग_लिखो_reg(info, CHA + CCR3, val);
 
 	/* PRE - Preamble pattern */
 	val = 0;
-	switch (info->params.preamble)
-	{
-	case HDLC_PREAMBLE_PATTERN_FLAGS: val = 0x7e; break;
-	case HDLC_PREAMBLE_PATTERN_10:    val = 0xaa; break;
-	case HDLC_PREAMBLE_PATTERN_01:    val = 0x55; break;
-	case HDLC_PREAMBLE_PATTERN_ONES:  val = 0xff; break;
-	}
-	write_reg(info, CHA + PRE, val);
+	चयन (info->params.preamble)
+	अणु
+	हाल HDLC_PREAMBLE_PATTERN_FLAGS: val = 0x7e; अवरोध;
+	हाल HDLC_PREAMBLE_PATTERN_10:    val = 0xaa; अवरोध;
+	हाल HDLC_PREAMBLE_PATTERN_01:    val = 0x55; अवरोध;
+	हाल HDLC_PREAMBLE_PATTERN_ONES:  val = 0xff; अवरोध;
+	पूर्ण
+	ग_लिखो_reg(info, CHA + PRE, val);
 
 	/* CCR4
 	 *
@@ -3184,22 +3185,22 @@ static void hdlc_mode(MGSLPC_INFO *info)
 	 * 0101 0000
 	 */
 	val = 0x50;
-	write_reg(info, CHA + CCR4, val);
-	if (info->params.flags & HDLC_FLAG_RXC_DPLL)
-		mgslpc_set_rate(info, CHA, info->params.clock_speed * 16);
-	else
-		mgslpc_set_rate(info, CHA, info->params.clock_speed);
+	ग_लिखो_reg(info, CHA + CCR4, val);
+	अगर (info->params.flags & HDLC_FLAG_RXC_DPLL)
+		mgslpc_set_rate(info, CHA, info->params.घड़ी_speed * 16);
+	अन्यथा
+		mgslpc_set_rate(info, CHA, info->params.घड़ी_speed);
 
-	/* RLCR Receive length check register
+	/* RLCR Receive length check रेजिस्टर
 	 *
 	 * 7     1=enable receive length check
 	 * 6..0  Max frame length = (RL + 1) * 32
 	 */
-	write_reg(info, CHA + RLCR, 0);
+	ग_लिखो_reg(info, CHA + RLCR, 0);
 
 	/* XBCH Transmit Byte Count High
 	 *
-	 * 07      DMA mode, 0 = interrupt driven
+	 * 07      DMA mode, 0 = पूर्णांकerrupt driven
 	 * 06      NRM, 0=ABM (ignored)
 	 * 05      CAS Carrier Auto Start
 	 * 04      XC Transmit Continuously (ignored)
@@ -3208,64 +3209,64 @@ static void hdlc_mode(MGSLPC_INFO *info)
 	 * 0000 0000
 	 */
 	val = 0x00;
-	if (info->params.flags & HDLC_FLAG_AUTO_DCD)
+	अगर (info->params.flags & HDLC_FLAG_AUTO_DCD)
 		val |= BIT5;
-	write_reg(info, CHA + XBCH, val);
+	ग_लिखो_reg(info, CHA + XBCH, val);
 	enable_auxclk(info);
-	if (info->params.loopback || info->testing_irq)
+	अगर (info->params.loopback || info->testing_irq)
 		loopback_enable(info);
-	if (info->params.flags & HDLC_FLAG_AUTO_CTS)
-	{
+	अगर (info->params.flags & HDLC_FLAG_AUTO_CTS)
+	अणु
 		irq_enable(info, CHB, IRQ_CTS);
 		/* PVR[3] 1=AUTO CTS active */
 		set_reg_bits(info, CHA + PVR, BIT3);
-	} else
+	पूर्ण अन्यथा
 		clear_reg_bits(info, CHA + PVR, BIT3);
 
 	irq_enable(info, CHA,
 			 IRQ_RXEOM | IRQ_RXFIFO | IRQ_ALLSENT |
 			 IRQ_UNDERRUN | IRQ_TXFIFO);
 	issue_command(info, CHA, CMD_TXRESET + CMD_RXRESET);
-	wait_command_complete(info, CHA);
-	read_reg16(info, CHA + ISR);	/* clear pending IRQs */
+	रुको_command_complete(info, CHA);
+	पढ़ो_reg16(info, CHA + ISR);	/* clear pending IRQs */
 
-	/* Master clock mode enabled above to allow reset commands
-	 * to complete even if no data clocks are present.
+	/* Master घड़ी mode enabled above to allow reset commands
+	 * to complete even अगर no data घड़ीs are present.
 	 *
-	 * Disable master clock mode for normal communications because
+	 * Disable master घड़ी mode क्रम normal communications because
 	 * V3.2 of the ESCC2 has a bug that prevents the transmit all sent
-	 * IRQ when in master clock mode.
+	 * IRQ when in master घड़ी mode.
 	 *
-	 * Leave master clock mode enabled for IRQ test because the
-	 * timer IRQ used by the test can only happen in master clock mode.
+	 * Leave master घड़ी mode enabled क्रम IRQ test because the
+	 * समयr IRQ used by the test can only happen in master घड़ी mode.
 	 */
-	if (!info->testing_irq)
+	अगर (!info->testing_irq)
 		clear_reg_bits(info, CHA + CCR0, BIT6);
 
 	tx_set_idle(info);
 
 	tx_stop(info);
 	rx_stop(info);
-}
+पूर्ण
 
-static void rx_stop(MGSLPC_INFO *info)
-{
-	if (debug_level >= DEBUG_LEVEL_ISR)
-		printk("%s(%d):rx_stop(%s)\n",
-			 __FILE__, __LINE__, info->device_name);
+अटल व्योम rx_stop(MGSLPC_INFO *info)
+अणु
+	अगर (debug_level >= DEBUG_LEVEL_ISR)
+		prपूर्णांकk("%s(%d):rx_stop(%s)\n",
+			 __खाता__, __LINE__, info->device_name);
 
 	/* MODE:03 RAC Receiver Active, 0=inactive */
 	clear_reg_bits(info, CHA + MODE, BIT3);
 
 	info->rx_enabled = false;
 	info->rx_overflow = false;
-}
+पूर्ण
 
-static void rx_start(MGSLPC_INFO *info)
-{
-	if (debug_level >= DEBUG_LEVEL_ISR)
-		printk("%s(%d):rx_start(%s)\n",
-			 __FILE__, __LINE__, info->device_name);
+अटल व्योम rx_start(MGSLPC_INFO *info)
+अणु
+	अगर (debug_level >= DEBUG_LEVEL_ISR)
+		prपूर्णांकk("%s(%d):rx_start(%s)\n",
+			 __खाता__, __LINE__, info->device_name);
 
 	rx_reset_buffers(info);
 	info->rx_enabled = false;
@@ -3275,76 +3276,76 @@ static void rx_start(MGSLPC_INFO *info)
 	set_reg_bits(info, CHA + MODE, BIT3);
 
 	info->rx_enabled = true;
-}
+पूर्ण
 
-static void tx_start(MGSLPC_INFO *info, struct tty_struct *tty)
-{
-	if (debug_level >= DEBUG_LEVEL_ISR)
-		printk("%s(%d):tx_start(%s)\n",
-			 __FILE__, __LINE__, info->device_name);
+अटल व्योम tx_start(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty)
+अणु
+	अगर (debug_level >= DEBUG_LEVEL_ISR)
+		prपूर्णांकk("%s(%d):tx_start(%s)\n",
+			 __खाता__, __LINE__, info->device_name);
 
-	if (info->tx_count) {
-		/* If auto RTS enabled and RTS is inactive, then assert */
+	अगर (info->tx_count) अणु
+		/* If स्वतः RTS enabled and RTS is inactive, then निश्चित */
 		/* RTS and set a flag indicating that the driver should */
 		/* negate RTS when the transmission completes. */
-		info->drop_rts_on_tx_done = false;
+		info->drop_rts_on_tx_करोne = false;
 
-		if (info->params.flags & HDLC_FLAG_AUTO_RTS) {
-			get_signals(info);
-			if (!(info->serial_signals & SerialSignal_RTS)) {
-				info->serial_signals |= SerialSignal_RTS;
-				set_signals(info);
-				info->drop_rts_on_tx_done = true;
-			}
-		}
+		अगर (info->params.flags & HDLC_FLAG_AUTO_RTS) अणु
+			get_संकेतs(info);
+			अगर (!(info->serial_संकेतs & SerialSignal_RTS)) अणु
+				info->serial_संकेतs |= SerialSignal_RTS;
+				set_संकेतs(info);
+				info->drop_rts_on_tx_करोne = true;
+			पूर्ण
+		पूर्ण
 
-		if (info->params.mode == MGSL_MODE_ASYNC) {
-			if (!info->tx_active) {
+		अगर (info->params.mode == MGSL_MODE_ASYNC) अणु
+			अगर (!info->tx_active) अणु
 				info->tx_active = true;
-				tx_ready(info, tty);
-			}
-		} else {
+				tx_पढ़ोy(info, tty);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			info->tx_active = true;
-			tx_ready(info, tty);
-			mod_timer(&info->tx_timer, jiffies +
-					msecs_to_jiffies(5000));
-		}
-	}
+			tx_पढ़ोy(info, tty);
+			mod_समयr(&info->tx_समयr, jअगरfies +
+					msecs_to_jअगरfies(5000));
+		पूर्ण
+	पूर्ण
 
-	if (!info->tx_enabled)
+	अगर (!info->tx_enabled)
 		info->tx_enabled = true;
-}
+पूर्ण
 
-static void tx_stop(MGSLPC_INFO *info)
-{
-	if (debug_level >= DEBUG_LEVEL_ISR)
-		printk("%s(%d):tx_stop(%s)\n",
-			 __FILE__, __LINE__, info->device_name);
+अटल व्योम tx_stop(MGSLPC_INFO *info)
+अणु
+	अगर (debug_level >= DEBUG_LEVEL_ISR)
+		prपूर्णांकk("%s(%d):tx_stop(%s)\n",
+			 __खाता__, __LINE__, info->device_name);
 
-	del_timer(&info->tx_timer);
+	del_समयr(&info->tx_समयr);
 
 	info->tx_enabled = false;
 	info->tx_active = false;
-}
+पूर्ण
 
-/* Reset the adapter to a known state and prepare it for further use.
+/* Reset the adapter to a known state and prepare it क्रम further use.
  */
-static void reset_device(MGSLPC_INFO *info)
-{
-	/* power up both channels (set BIT7) */
-	write_reg(info, CHA + CCR0, 0x80);
-	write_reg(info, CHB + CCR0, 0x80);
-	write_reg(info, CHA + MODE, 0);
-	write_reg(info, CHB + MODE, 0);
+अटल व्योम reset_device(MGSLPC_INFO *info)
+अणु
+	/* घातer up both channels (set BIT7) */
+	ग_लिखो_reg(info, CHA + CCR0, 0x80);
+	ग_लिखो_reg(info, CHB + CCR0, 0x80);
+	ग_लिखो_reg(info, CHA + MODE, 0);
+	ग_लिखो_reg(info, CHB + MODE, 0);
 
-	/* disable all interrupts */
+	/* disable all पूर्णांकerrupts */
 	irq_disable(info, CHA, 0xffff);
 	irq_disable(info, CHB, 0xffff);
 	port_irq_disable(info, 0xff);
 
 	/* PCR Port Configuration Register
 	 *
-	 * 07..04  DEC[3..0] Serial I/F select outputs
+	 * 07..04  DEC[3..0] Serial I/F select outमाला_दो
 	 * 03      output, 1=AUTO CTS control enabled
 	 * 02      RI Ring Indicator input 0=active
 	 * 01      DSR input 0=active
@@ -3352,7 +3353,7 @@ static void reset_device(MGSLPC_INFO *info)
 	 *
 	 * 0000 0110
 	 */
-	write_reg(info, PCR, 0x06);
+	ग_लिखो_reg(info, PCR, 0x06);
 
 	/* PVR Port Value Register
 	 *
@@ -3364,11 +3365,11 @@ static void reset_device(MGSLPC_INFO *info)
 	 *
 	 * 0000 0001
 	 */
-//	write_reg(info, PVR, PVR_DTR);
+//	ग_लिखो_reg(info, PVR, PVR_DTR);
 
 	/* IPC Interrupt Port Configuration
 	 *
-	 * 07      VIS 1=Masked interrupts visible
+	 * 07      VIS 1=Masked पूर्णांकerrupts visible
 	 * 06..05  Reserved, 0
 	 * 04..03  SLA Slave address, 00 ignored
 	 * 02      CASM Cascading Mode, 1=daisy chain
@@ -3376,14 +3377,14 @@ static void reset_device(MGSLPC_INFO *info)
 	 *
 	 * 0000 0101
 	 */
-	write_reg(info, IPC, 0x05);
-}
+	ग_लिखो_reg(info, IPC, 0x05);
+पूर्ण
 
-static void async_mode(MGSLPC_INFO *info)
-{
-	unsigned char val;
+अटल व्योम async_mode(MGSLPC_INFO *info)
+अणु
+	अचिन्हित अक्षर val;
 
-	/* disable all interrupts */
+	/* disable all पूर्णांकerrupts */
 	irq_disable(info, CHA, 0xffff);
 	irq_disable(info, CHB, 0xffff);
 	port_irq_disable(info, 0xff);
@@ -3402,17 +3403,17 @@ static void async_mode(MGSLPC_INFO *info)
 	 * 0000 0110
 	 */
 	val = 0x06;
-	if (info->params.loopback)
+	अगर (info->params.loopback)
 		val |= BIT0;
 
 	/* preserve RTS state */
-	if (!(info->serial_signals & SerialSignal_RTS))
+	अगर (!(info->serial_संकेतs & SerialSignal_RTS))
 		val |= BIT6;
-	write_reg(info, CHA + MODE, val);
+	ग_लिखो_reg(info, CHA + MODE, val);
 
 	/* CCR0
 	 *
-	 * 07      PU Power Up, 1=active, 0=power down
+	 * 07      PU Power Up, 1=active, 0=घातer करोwn
 	 * 06      MCE Master Clock Enable, 1=enabled
 	 * 05      Reserved, 0
 	 * 04..02  SC[2..0] Encoding, 000=NRZ
@@ -3420,7 +3421,7 @@ static void async_mode(MGSLPC_INFO *info)
 	 *
 	 * 1000 0011
 	 */
-	write_reg(info, CHA + CCR0, 0x83);
+	ग_लिखो_reg(info, CHA + CCR0, 0x83);
 
 	/* CCR1
 	 *
@@ -3431,12 +3432,12 @@ static void async_mode(MGSLPC_INFO *info)
 	 *
 	 * 0001 1111
 	 */
-	write_reg(info, CHA + CCR1, 0x1f);
+	ग_लिखो_reg(info, CHA + CCR1, 0x1f);
 
 	/* CCR2 (channel A)
 	 *
 	 * 07..06  BGR[9..8] Baud rate bits 9..8
-	 * 05      BDF Baud rate divisor factor, 0=1, 1=BGR value
+	 * 05      BDF Baud rate भागisor factor, 0=1, 1=BGR value
 	 * 04      SSEL Clock source select, 1=submode b
 	 * 03      TOE 0=TxCLK is input, 0=TxCLK is input
 	 * 02      RWX Read/Write Exchange 0=disabled
@@ -3445,16 +3446,16 @@ static void async_mode(MGSLPC_INFO *info)
 	 *
 	 * 0001 0000
 	 */
-	write_reg(info, CHA + CCR2, 0x10);
+	ग_लिखो_reg(info, CHA + CCR2, 0x10);
 
 	/* CCR3
 	 *
 	 * 07..01  Reserved, 0
-	 * 00      PSD DPLL Phase Shift Disable
+	 * 00      PSD DPLL Phase Shअगरt Disable
 	 *
 	 * 0000 0000
 	 */
-	write_reg(info, CHA + CCR3, 0);
+	ग_लिखो_reg(info, CHA + CCR3, 0);
 
 	/* CCR4
 	 *
@@ -3466,13 +3467,13 @@ static void async_mode(MGSLPC_INFO *info)
 	 *
 	 * 0101 0000
 	 */
-	write_reg(info, CHA + CCR4, 0x50);
+	ग_लिखो_reg(info, CHA + CCR4, 0x50);
 	mgslpc_set_rate(info, CHA, info->params.data_rate * 16);
 
 	/* DAFO Data Format
 	 *
 	 * 07      Reserved, 0
-	 * 06      XBRK transmit break, 0=normal operation
+	 * 06      XBRK transmit अवरोध, 0=normal operation
 	 * 05      Stop bits (0=1, 1=2)
 	 * 04..03  PAR[1..0] Parity (01=odd, 10=even)
 	 * 02      PAREN Parity Enable
@@ -3480,19 +3481,19 @@ static void async_mode(MGSLPC_INFO *info)
 	 *
 	 */
 	val = 0x00;
-	if (info->params.data_bits != 8)
+	अगर (info->params.data_bits != 8)
 		val |= BIT0;	/* 7 bits */
-	if (info->params.stop_bits != 1)
+	अगर (info->params.stop_bits != 1)
 		val |= BIT5;
-	if (info->params.parity != ASYNC_PARITY_NONE)
-	{
+	अगर (info->params.parity != ASYNC_PARITY_NONE)
+	अणु
 		val |= BIT2;	/* Parity enable */
-		if (info->params.parity == ASYNC_PARITY_ODD)
+		अगर (info->params.parity == ASYNC_PARITY_ODD)
 			val |= BIT3;
-		else
+		अन्यथा
 			val |= BIT4;
-	}
-	write_reg(info, CHA + DAFO, val);
+	पूर्ण
+	ग_लिखो_reg(info, CHA + DAFO, val);
 
 	/* RFC Rx FIFO Control
 	 *
@@ -3506,17 +3507,17 @@ static void async_mode(MGSLPC_INFO *info)
 	 *
 	 * 0101 1100
 	 */
-	write_reg(info, CHA + RFC, 0x5c);
+	ग_लिखो_reg(info, CHA + RFC, 0x5c);
 
-	/* RLCR Receive length check register
+	/* RLCR Receive length check रेजिस्टर
 	 *
 	 * Max frame length = (RL + 1) * 32
 	 */
-	write_reg(info, CHA + RLCR, 0);
+	ग_लिखो_reg(info, CHA + RLCR, 0);
 
 	/* XBCH Transmit Byte Count High
 	 *
-	 * 07      DMA mode, 0 = interrupt driven
+	 * 07      DMA mode, 0 = पूर्णांकerrupt driven
 	 * 06      NRM, 0=ABM (ignored)
 	 * 05      CAS Carrier Auto Start
 	 * 04      XC Transmit Continuously (ignored)
@@ -3525,117 +3526,117 @@ static void async_mode(MGSLPC_INFO *info)
 	 * 0000 0000
 	 */
 	val = 0x00;
-	if (info->params.flags & HDLC_FLAG_AUTO_DCD)
+	अगर (info->params.flags & HDLC_FLAG_AUTO_DCD)
 		val |= BIT5;
-	write_reg(info, CHA + XBCH, val);
-	if (info->params.flags & HDLC_FLAG_AUTO_CTS)
+	ग_लिखो_reg(info, CHA + XBCH, val);
+	अगर (info->params.flags & HDLC_FLAG_AUTO_CTS)
 		irq_enable(info, CHA, IRQ_CTS);
 
 	/* MODE:03 RAC Receiver Active, 1=active */
 	set_reg_bits(info, CHA + MODE, BIT3);
 	enable_auxclk(info);
-	if (info->params.flags & HDLC_FLAG_AUTO_CTS) {
+	अगर (info->params.flags & HDLC_FLAG_AUTO_CTS) अणु
 		irq_enable(info, CHB, IRQ_CTS);
 		/* PVR[3] 1=AUTO CTS active */
 		set_reg_bits(info, CHA + PVR, BIT3);
-	} else
+	पूर्ण अन्यथा
 		clear_reg_bits(info, CHA + PVR, BIT3);
 	irq_enable(info, CHA,
 			  IRQ_RXEOM | IRQ_RXFIFO | IRQ_BREAK_ON | IRQ_RXTIME |
 			  IRQ_ALLSENT | IRQ_TXFIFO);
 	issue_command(info, CHA, CMD_TXRESET + CMD_RXRESET);
-	wait_command_complete(info, CHA);
-	read_reg16(info, CHA + ISR);	/* clear pending IRQs */
-}
+	रुको_command_complete(info, CHA);
+	पढ़ो_reg16(info, CHA + ISR);	/* clear pending IRQs */
+पूर्ण
 
-/* Set the HDLC idle mode for the transmitter.
+/* Set the HDLC idle mode क्रम the transmitter.
  */
-static void tx_set_idle(MGSLPC_INFO *info)
-{
+अटल व्योम tx_set_idle(MGSLPC_INFO *info)
+अणु
 	/* Note: ESCC2 only supports flags and one idle modes */
-	if (info->idle_mode == HDLC_TXIDLE_FLAGS)
+	अगर (info->idle_mode == HDLC_TXIDLE_FLAGS)
 		set_reg_bits(info, CHA + CCR1, BIT3);
-	else
+	अन्यथा
 		clear_reg_bits(info, CHA + CCR1, BIT3);
-}
+पूर्ण
 
-/* get state of the V24 status (input) signals.
+/* get state of the V24 status (input) संकेतs.
  */
-static void get_signals(MGSLPC_INFO *info)
-{
-	unsigned char status = 0;
+अटल व्योम get_संकेतs(MGSLPC_INFO *info)
+अणु
+	अचिन्हित अक्षर status = 0;
 
 	/* preserve RTS and DTR */
-	info->serial_signals &= SerialSignal_RTS | SerialSignal_DTR;
+	info->serial_संकेतs &= SerialSignal_RTS | SerialSignal_DTR;
 
-	if (read_reg(info, CHB + VSTR) & BIT7)
-		info->serial_signals |= SerialSignal_DCD;
-	if (read_reg(info, CHB + STAR) & BIT1)
-		info->serial_signals |= SerialSignal_CTS;
+	अगर (पढ़ो_reg(info, CHB + VSTR) & BIT7)
+		info->serial_संकेतs |= SerialSignal_DCD;
+	अगर (पढ़ो_reg(info, CHB + STAR) & BIT1)
+		info->serial_संकेतs |= SerialSignal_CTS;
 
-	status = read_reg(info, CHA + PVR);
-	if (!(status & PVR_RI))
-		info->serial_signals |= SerialSignal_RI;
-	if (!(status & PVR_DSR))
-		info->serial_signals |= SerialSignal_DSR;
-}
+	status = पढ़ो_reg(info, CHA + PVR);
+	अगर (!(status & PVR_RI))
+		info->serial_संकेतs |= SerialSignal_RI;
+	अगर (!(status & PVR_DSR))
+		info->serial_संकेतs |= SerialSignal_DSR;
+पूर्ण
 
 /* Set the state of RTS and DTR based on contents of
- * serial_signals member of device extension.
+ * serial_संकेतs member of device extension.
  */
-static void set_signals(MGSLPC_INFO *info)
-{
-	unsigned char val;
+अटल व्योम set_संकेतs(MGSLPC_INFO *info)
+अणु
+	अचिन्हित अक्षर val;
 
-	val = read_reg(info, CHA + MODE);
-	if (info->params.mode == MGSL_MODE_ASYNC) {
-		if (info->serial_signals & SerialSignal_RTS)
+	val = पढ़ो_reg(info, CHA + MODE);
+	अगर (info->params.mode == MGSL_MODE_ASYNC) अणु
+		अगर (info->serial_संकेतs & SerialSignal_RTS)
 			val &= ~BIT6;
-		else
+		अन्यथा
 			val |= BIT6;
-	} else {
-		if (info->serial_signals & SerialSignal_RTS)
+	पूर्ण अन्यथा अणु
+		अगर (info->serial_संकेतs & SerialSignal_RTS)
 			val |= BIT2;
-		else
+		अन्यथा
 			val &= ~BIT2;
-	}
-	write_reg(info, CHA + MODE, val);
+	पूर्ण
+	ग_लिखो_reg(info, CHA + MODE, val);
 
-	if (info->serial_signals & SerialSignal_DTR)
+	अगर (info->serial_संकेतs & SerialSignal_DTR)
 		clear_reg_bits(info, CHA + PVR, PVR_DTR);
-	else
+	अन्यथा
 		set_reg_bits(info, CHA + PVR, PVR_DTR);
-}
+पूर्ण
 
-static void rx_reset_buffers(MGSLPC_INFO *info)
-{
+अटल व्योम rx_reset_buffers(MGSLPC_INFO *info)
+अणु
 	RXBUF *buf;
-	int i;
+	पूर्णांक i;
 
 	info->rx_put = 0;
 	info->rx_get = 0;
 	info->rx_frame_count = 0;
-	for (i=0 ; i < info->rx_buf_count ; i++) {
+	क्रम (i=0 ; i < info->rx_buf_count ; i++) अणु
 		buf = (RXBUF*)(info->rx_buf + (i * info->rx_buf_size));
 		buf->status = buf->count = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Attempt to return a received HDLC frame
- * Only frames received without errors are returned.
+/* Attempt to वापस a received HDLC frame
+ * Only frames received without errors are वापसed.
  *
- * Returns true if frame returned, otherwise false
+ * Returns true अगर frame वापसed, otherwise false
  */
-static bool rx_get_frame(MGSLPC_INFO *info, struct tty_struct *tty)
-{
-	unsigned short status;
+अटल bool rx_get_frame(MGSLPC_INFO *info, काष्ठा tty_काष्ठा *tty)
+अणु
+	अचिन्हित लघु status;
 	RXBUF *buf;
-	unsigned int framesize = 0;
-	unsigned long flags;
-	bool return_frame = false;
+	अचिन्हित पूर्णांक framesize = 0;
+	अचिन्हित दीर्घ flags;
+	bool वापस_frame = false;
 
-	if (info->rx_frame_count == 0)
-		return false;
+	अगर (info->rx_frame_count == 0)
+		वापस false;
 
 	buf = (RXBUF*)(info->rx_buf + (info->rx_get * info->rx_buf_size));
 
@@ -3644,102 +3645,102 @@ static bool rx_get_frame(MGSLPC_INFO *info, struct tty_struct *tty)
 	/* 07  VFR  1=valid frame
 	 * 06  RDO  1=data overrun
 	 * 05  CRC  1=OK, 0=error
-	 * 04  RAB  1=frame aborted
+	 * 04  RAB  1=frame पातed
 	 */
-	if ((status & 0xf0) != 0xA0) {
-		if (!(status & BIT7) || (status & BIT4))
-			info->icount.rxabort++;
-		else if (status & BIT6)
+	अगर ((status & 0xf0) != 0xA0) अणु
+		अगर (!(status & BIT7) || (status & BIT4))
+			info->icount.rxपात++;
+		अन्यथा अगर (status & BIT6)
 			info->icount.rxover++;
-		else if (!(status & BIT5)) {
+		अन्यथा अगर (!(status & BIT5)) अणु
 			info->icount.rxcrc++;
-			if (info->params.crc_type & HDLC_CRC_RETURN_EX)
-				return_frame = true;
-		}
+			अगर (info->params.crc_type & HDLC_CRC_RETURN_EX)
+				वापस_frame = true;
+		पूर्ण
 		framesize = 0;
-#if SYNCLINK_GENERIC_HDLC
-		{
+#अगर SYNCLINK_GENERIC_HDLC
+		अणु
 			info->netdev->stats.rx_errors++;
 			info->netdev->stats.rx_frame_errors++;
-		}
-#endif
-	} else
-		return_frame = true;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण अन्यथा
+		वापस_frame = true;
 
-	if (return_frame)
+	अगर (वापस_frame)
 		framesize = buf->count;
 
-	if (debug_level >= DEBUG_LEVEL_BH)
-		printk("%s(%d):rx_get_frame(%s) status=%04X size=%d\n",
-			__FILE__, __LINE__, info->device_name, status, framesize);
+	अगर (debug_level >= DEBUG_LEVEL_BH)
+		prपूर्णांकk("%s(%d):rx_get_frame(%s) status=%04X size=%d\n",
+			__खाता__, __LINE__, info->device_name, status, framesize);
 
-	if (debug_level >= DEBUG_LEVEL_DATA)
+	अगर (debug_level >= DEBUG_LEVEL_DATA)
 		trace_block(info, buf->data, framesize, 0);
 
-	if (framesize) {
-		if ((info->params.crc_type & HDLC_CRC_RETURN_EX &&
+	अगर (framesize) अणु
+		अगर ((info->params.crc_type & HDLC_CRC_RETURN_EX &&
 		      framesize+1 > info->max_frame_size) ||
 		    framesize > info->max_frame_size)
-			info->icount.rxlong++;
-		else {
-			if (status & BIT5)
+			info->icount.rxदीर्घ++;
+		अन्यथा अणु
+			अगर (status & BIT5)
 				info->icount.rxok++;
 
-			if (info->params.crc_type & HDLC_CRC_RETURN_EX) {
+			अगर (info->params.crc_type & HDLC_CRC_RETURN_EX) अणु
 				*(buf->data + framesize) = status & BIT5 ? RX_OK:RX_CRC_ERROR;
 				++framesize;
-			}
+			पूर्ण
 
-#if SYNCLINK_GENERIC_HDLC
-			if (info->netcount)
+#अगर SYNCLINK_GENERIC_HDLC
+			अगर (info->netcount)
 				hdlcdev_rx(info, buf->data, framesize);
-			else
-#endif
+			अन्यथा
+#पूर्ण_अगर
 				ldisc_receive_buf(tty, buf->data, info->flag_buf, framesize);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	spin_lock_irqsave(&info->lock, flags);
 	buf->status = buf->count = 0;
 	info->rx_frame_count--;
 	info->rx_get++;
-	if (info->rx_get >= info->rx_buf_count)
+	अगर (info->rx_get >= info->rx_buf_count)
 		info->rx_get = 0;
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool register_test(MGSLPC_INFO *info)
-{
-	static unsigned char patterns[] =
-	    { 0x00, 0xff, 0xaa, 0x55, 0x69, 0x96, 0x0f };
-	static unsigned int count = ARRAY_SIZE(patterns);
-	unsigned int i;
+अटल bool रेजिस्टर_test(MGSLPC_INFO *info)
+अणु
+	अटल अचिन्हित अक्षर patterns[] =
+	    अणु 0x00, 0xff, 0xaa, 0x55, 0x69, 0x96, 0x0f पूर्ण;
+	अटल अचिन्हित पूर्णांक count = ARRAY_SIZE(patterns);
+	अचिन्हित पूर्णांक i;
 	bool rc = true;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&info->lock, flags);
 	reset_device(info);
 
-	for (i = 0; i < count; i++) {
-		write_reg(info, XAD1, patterns[i]);
-		write_reg(info, XAD2, patterns[(i + 1) % count]);
-		if ((read_reg(info, XAD1) != patterns[i]) ||
-		    (read_reg(info, XAD2) != patterns[(i + 1) % count])) {
+	क्रम (i = 0; i < count; i++) अणु
+		ग_लिखो_reg(info, XAD1, patterns[i]);
+		ग_लिखो_reg(info, XAD2, patterns[(i + 1) % count]);
+		अगर ((पढ़ो_reg(info, XAD1) != patterns[i]) ||
+		    (पढ़ो_reg(info, XAD2) != patterns[(i + 1) % count])) अणु
 			rc = false;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&info->lock, flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static bool irq_test(MGSLPC_INFO *info)
-{
-	unsigned long end_time;
-	unsigned long flags;
+अटल bool irq_test(MGSLPC_INFO *info)
+अणु
+	अचिन्हित दीर्घ end_समय;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&info->lock, flags);
 	reset_device(info);
@@ -3752,15 +3753,15 @@ static bool irq_test(MGSLPC_INFO *info)
 	/* init hdlc mode */
 
 	irq_enable(info, CHA, IRQ_TIMER);
-	write_reg(info, CHA + TIMR, 0);	/* 512 cycles */
+	ग_लिखो_reg(info, CHA + TIMR, 0);	/* 512 cycles */
 	issue_command(info, CHA, CMD_START_TIMER);
 
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	end_time=100;
-	while(end_time-- && !info->irq_occurred) {
-		msleep_interruptible(10);
-	}
+	end_समय=100;
+	जबतक(end_समय-- && !info->irq_occurred) अणु
+		msleep_पूर्णांकerruptible(10);
+	पूर्ण
 
 	info->testing_irq = false;
 
@@ -3768,168 +3769,168 @@ static bool irq_test(MGSLPC_INFO *info)
 	reset_device(info);
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	return info->irq_occurred;
-}
+	वापस info->irq_occurred;
+पूर्ण
 
-static int adapter_test(MGSLPC_INFO *info)
-{
-	if (!register_test(info)) {
+अटल पूर्णांक adapter_test(MGSLPC_INFO *info)
+अणु
+	अगर (!रेजिस्टर_test(info)) अणु
 		info->init_error = DiagStatus_AddressFailure;
-		printk("%s(%d):Register test failure for device %s Addr=%04X\n",
-			__FILE__, __LINE__, info->device_name, (unsigned short)(info->io_base));
-		return -ENODEV;
-	}
+		prपूर्णांकk("%s(%d):Register test failure for device %s Addr=%04X\n",
+			__खाता__, __LINE__, info->device_name, (अचिन्हित लघु)(info->io_base));
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!irq_test(info)) {
+	अगर (!irq_test(info)) अणु
 		info->init_error = DiagStatus_IrqFailure;
-		printk("%s(%d):Interrupt test failure for device %s IRQ=%d\n",
-			__FILE__, __LINE__, info->device_name, (unsigned short)(info->irq_level));
-		return -ENODEV;
-	}
+		prपूर्णांकk("%s(%d):Interrupt test failure for device %s IRQ=%d\n",
+			__खाता__, __LINE__, info->device_name, (अचिन्हित लघु)(info->irq_level));
+		वापस -ENODEV;
+	पूर्ण
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):device %s passed diagnostics\n",
-			__FILE__, __LINE__, info->device_name);
-	return 0;
-}
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):device %s passed diagnostics\n",
+			__खाता__, __LINE__, info->device_name);
+	वापस 0;
+पूर्ण
 
-static void trace_block(MGSLPC_INFO *info,const char* data, int count, int xmit)
-{
-	int i;
-	int linecount;
-	if (xmit)
-		printk("%s tx data:\n", info->device_name);
-	else
-		printk("%s rx data:\n", info->device_name);
+अटल व्योम trace_block(MGSLPC_INFO *info,स्थिर अक्षर* data, पूर्णांक count, पूर्णांक xmit)
+अणु
+	पूर्णांक i;
+	पूर्णांक linecount;
+	अगर (xmit)
+		prपूर्णांकk("%s tx data:\n", info->device_name);
+	अन्यथा
+		prपूर्णांकk("%s rx data:\n", info->device_name);
 
-	while(count) {
-		if (count > 16)
+	जबतक(count) अणु
+		अगर (count > 16)
 			linecount = 16;
-		else
+		अन्यथा
 			linecount = count;
 
-		for(i=0;i<linecount;i++)
-			printk("%02X ", (unsigned char)data[i]);
-		for(;i<17;i++)
-			printk("   ");
-		for(i=0;i<linecount;i++) {
-			if (data[i]>=040 && data[i]<=0176)
-				printk("%c", data[i]);
-			else
-				printk(".");
-		}
-		printk("\n");
+		क्रम(i=0;i<linecount;i++)
+			prपूर्णांकk("%02X ", (अचिन्हित अक्षर)data[i]);
+		क्रम(;i<17;i++)
+			prपूर्णांकk("   ");
+		क्रम(i=0;i<linecount;i++) अणु
+			अगर (data[i]>=040 && data[i]<=0176)
+				prपूर्णांकk("%c", data[i]);
+			अन्यथा
+				prपूर्णांकk(".");
+		पूर्ण
+		prपूर्णांकk("\n");
 
 		data  += linecount;
 		count -= linecount;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* HDLC frame time out
- * update stats and do tx completion processing
+/* HDLC frame समय out
+ * update stats and करो tx completion processing
  */
-static void tx_timeout(struct timer_list *t)
-{
-	MGSLPC_INFO *info = from_timer(info, t, tx_timer);
-	unsigned long flags;
+अटल व्योम tx_समयout(काष्ठा समयr_list *t)
+अणु
+	MGSLPC_INFO *info = from_समयr(info, t, tx_समयr);
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s(%d):tx_timeout(%s)\n",
-			__FILE__, __LINE__, info->device_name);
-	if (info->tx_active &&
-	    info->params.mode == MGSL_MODE_HDLC) {
-		info->icount.txtimeout++;
-	}
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s(%d):tx_timeout(%s)\n",
+			__खाता__, __LINE__, info->device_name);
+	अगर (info->tx_active &&
+	    info->params.mode == MGSL_MODE_HDLC) अणु
+		info->icount.txसमयout++;
+	पूर्ण
 	spin_lock_irqsave(&info->lock, flags);
 	info->tx_active = false;
 	info->tx_count = info->tx_put = info->tx_get = 0;
 
 	spin_unlock_irqrestore(&info->lock, flags);
 
-#if SYNCLINK_GENERIC_HDLC
-	if (info->netcount)
-		hdlcdev_tx_done(info);
-	else
-#endif
-	{
-		struct tty_struct *tty = tty_port_tty_get(&info->port);
+#अगर SYNCLINK_GENERIC_HDLC
+	अगर (info->netcount)
+		hdlcdev_tx_करोne(info);
+	अन्यथा
+#पूर्ण_अगर
+	अणु
+		काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&info->port);
 		bh_transmit(info, tty);
 		tty_kref_put(tty);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if SYNCLINK_GENERIC_HDLC
+#अगर SYNCLINK_GENERIC_HDLC
 
 /**
  * called by generic HDLC layer when protocol selected (PPP, frame relay, etc.)
  * set encoding and frame check sequence (FCS) options
  *
- * dev       pointer to network device structure
+ * dev       poपूर्णांकer to network device काष्ठाure
  * encoding  serial encoding setting
  * parity    FCS setting
  *
- * returns 0 if success, otherwise error code
+ * वापसs 0 अगर success, otherwise error code
  */
-static int hdlcdev_attach(struct net_device *dev, unsigned short encoding,
-			  unsigned short parity)
-{
+अटल पूर्णांक hdlcdev_attach(काष्ठा net_device *dev, अचिन्हित लघु encoding,
+			  अचिन्हित लघु parity)
+अणु
 	MGSLPC_INFO *info = dev_to_port(dev);
-	struct tty_struct *tty;
-	unsigned char  new_encoding;
-	unsigned short new_crctype;
+	काष्ठा tty_काष्ठा *tty;
+	अचिन्हित अक्षर  new_encoding;
+	अचिन्हित लघु new_crctype;
 
-	/* return error if TTY interface open */
-	if (info->port.count)
-		return -EBUSY;
+	/* वापस error अगर TTY पूर्णांकerface खोलो */
+	अगर (info->port.count)
+		वापस -EBUSY;
 
-	switch (encoding)
-	{
-	case ENCODING_NRZ:        new_encoding = HDLC_ENCODING_NRZ; break;
-	case ENCODING_NRZI:       new_encoding = HDLC_ENCODING_NRZI_SPACE; break;
-	case ENCODING_FM_MARK:    new_encoding = HDLC_ENCODING_BIPHASE_MARK; break;
-	case ENCODING_FM_SPACE:   new_encoding = HDLC_ENCODING_BIPHASE_SPACE; break;
-	case ENCODING_MANCHESTER: new_encoding = HDLC_ENCODING_BIPHASE_LEVEL; break;
-	default: return -EINVAL;
-	}
+	चयन (encoding)
+	अणु
+	हाल ENCODING_NRZ:        new_encoding = HDLC_ENCODING_NRZ; अवरोध;
+	हाल ENCODING_NRZI:       new_encoding = HDLC_ENCODING_NRZI_SPACE; अवरोध;
+	हाल ENCODING_FM_MARK:    new_encoding = HDLC_ENCODING_BIPHASE_MARK; अवरोध;
+	हाल ENCODING_FM_SPACE:   new_encoding = HDLC_ENCODING_BIPHASE_SPACE; अवरोध;
+	हाल ENCODING_MANCHESTER: new_encoding = HDLC_ENCODING_BIPHASE_LEVEL; अवरोध;
+	शेष: वापस -EINVAL;
+	पूर्ण
 
-	switch (parity)
-	{
-	case PARITY_NONE:            new_crctype = HDLC_CRC_NONE; break;
-	case PARITY_CRC16_PR1_CCITT: new_crctype = HDLC_CRC_16_CCITT; break;
-	case PARITY_CRC32_PR1_CCITT: new_crctype = HDLC_CRC_32_CCITT; break;
-	default: return -EINVAL;
-	}
+	चयन (parity)
+	अणु
+	हाल PARITY_NONE:            new_crctype = HDLC_CRC_NONE; अवरोध;
+	हाल PARITY_CRC16_PR1_CCITT: new_crctype = HDLC_CRC_16_CCITT; अवरोध;
+	हाल PARITY_CRC32_PR1_CCITT: new_crctype = HDLC_CRC_32_CCITT; अवरोध;
+	शेष: वापस -EINVAL;
+	पूर्ण
 
 	info->params.encoding = new_encoding;
 	info->params.crc_type = new_crctype;
 
-	/* if network interface up, reprogram hardware */
-	if (info->netcount) {
+	/* अगर network पूर्णांकerface up, reprogram hardware */
+	अगर (info->netcount) अणु
 		tty = tty_port_tty_get(&info->port);
 		mgslpc_program_hw(info, tty);
 		tty_kref_put(tty);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * called by generic HDLC layer to send frame
  *
  * skb  socket buffer containing HDLC frame
- * dev  pointer to network device structure
+ * dev  poपूर्णांकer to network device काष्ठाure
  */
-static netdev_tx_t hdlcdev_xmit(struct sk_buff *skb,
-				      struct net_device *dev)
-{
+अटल netdev_tx_t hdlcdev_xmit(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *dev)
+अणु
 	MGSLPC_INFO *info = dev_to_port(dev);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk(KERN_INFO "%s:hdlc_xmit(%s)\n", __FILE__, dev->name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk(KERN_INFO "%s:hdlc_xmit(%s)\n", __खाता__, dev->name);
 
 	/* stop sending until this frame completes */
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
 	/* copy data to device buffers */
 	skb_copy_from_linear_data(skb, info->tx_buf, skb->len);
@@ -3940,199 +3941,199 @@ static netdev_tx_t hdlcdev_xmit(struct sk_buff *skb,
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += skb->len;
 
-	/* done with socket buffer, so free it */
-	dev_kfree_skb(skb);
+	/* करोne with socket buffer, so मुक्त it */
+	dev_kमुक्त_skb(skb);
 
-	/* save start time for transmit timeout detection */
-	netif_trans_update(dev);
+	/* save start समय क्रम transmit समयout detection */
+	netअगर_trans_update(dev);
 
-	/* start hardware transmitter if necessary */
+	/* start hardware transmitter अगर necessary */
 	spin_lock_irqsave(&info->lock, flags);
-	if (!info->tx_active) {
-		struct tty_struct *tty = tty_port_tty_get(&info->port);
+	अगर (!info->tx_active) अणु
+		काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&info->port);
 		tx_start(info, tty);
 		tty_kref_put(tty);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 /**
- * called by network layer when interface enabled
+ * called by network layer when पूर्णांकerface enabled
  * claim resources and initialize hardware
  *
- * dev  pointer to network device structure
+ * dev  poपूर्णांकer to network device काष्ठाure
  *
- * returns 0 if success, otherwise error code
+ * वापसs 0 अगर success, otherwise error code
  */
-static int hdlcdev_open(struct net_device *dev)
-{
+अटल पूर्णांक hdlcdev_खोलो(काष्ठा net_device *dev)
+अणु
 	MGSLPC_INFO *info = dev_to_port(dev);
-	struct tty_struct *tty;
-	int rc;
-	unsigned long flags;
+	काष्ठा tty_काष्ठा *tty;
+	पूर्णांक rc;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s:hdlcdev_open(%s)\n", __FILE__, dev->name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s:hdlcdev_open(%s)\n", __खाता__, dev->name);
 
-	/* generic HDLC layer open processing */
-	rc = hdlc_open(dev);
-	if (rc != 0)
-		return rc;
+	/* generic HDLC layer खोलो processing */
+	rc = hdlc_खोलो(dev);
+	अगर (rc != 0)
+		वापस rc;
 
-	/* arbitrate between network and tty opens */
+	/* arbitrate between network and tty खोलोs */
 	spin_lock_irqsave(&info->netlock, flags);
-	if (info->port.count != 0 || info->netcount != 0) {
-		printk(KERN_WARNING "%s: hdlc_open returning busy\n", dev->name);
+	अगर (info->port.count != 0 || info->netcount != 0) अणु
+		prपूर्णांकk(KERN_WARNING "%s: hdlc_open returning busy\n", dev->name);
 		spin_unlock_irqrestore(&info->netlock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	info->netcount=1;
 	spin_unlock_irqrestore(&info->netlock, flags);
 
 	tty = tty_port_tty_get(&info->port);
 	/* claim resources and init adapter */
 	rc = startup(info, tty);
-	if (rc != 0) {
+	अगर (rc != 0) अणु
 		tty_kref_put(tty);
 		spin_lock_irqsave(&info->netlock, flags);
 		info->netcount=0;
 		spin_unlock_irqrestore(&info->netlock, flags);
-		return rc;
-	}
-	/* assert RTS and DTR, apply hardware settings */
-	info->serial_signals |= SerialSignal_RTS | SerialSignal_DTR;
+		वापस rc;
+	पूर्ण
+	/* निश्चित RTS and DTR, apply hardware settings */
+	info->serial_संकेतs |= SerialSignal_RTS | SerialSignal_DTR;
 	mgslpc_program_hw(info, tty);
 	tty_kref_put(tty);
 
 	/* enable network layer transmit */
-	netif_trans_update(dev);
-	netif_start_queue(dev);
+	netअगर_trans_update(dev);
+	netअगर_start_queue(dev);
 
-	/* inform generic HDLC layer of current DCD status */
+	/* inक्रमm generic HDLC layer of current DCD status */
 	spin_lock_irqsave(&info->lock, flags);
-	get_signals(info);
+	get_संकेतs(info);
 	spin_unlock_irqrestore(&info->lock, flags);
-	if (info->serial_signals & SerialSignal_DCD)
-		netif_carrier_on(dev);
-	else
-		netif_carrier_off(dev);
-	return 0;
-}
+	अगर (info->serial_संकेतs & SerialSignal_DCD)
+		netअगर_carrier_on(dev);
+	अन्यथा
+		netअगर_carrier_off(dev);
+	वापस 0;
+पूर्ण
 
 /**
- * called by network layer when interface is disabled
- * shutdown hardware and release resources
+ * called by network layer when पूर्णांकerface is disabled
+ * shutकरोwn hardware and release resources
  *
- * dev  pointer to network device structure
+ * dev  poपूर्णांकer to network device काष्ठाure
  *
- * returns 0 if success, otherwise error code
+ * वापसs 0 अगर success, otherwise error code
  */
-static int hdlcdev_close(struct net_device *dev)
-{
+अटल पूर्णांक hdlcdev_बंद(काष्ठा net_device *dev)
+अणु
 	MGSLPC_INFO *info = dev_to_port(dev);
-	struct tty_struct *tty = tty_port_tty_get(&info->port);
-	unsigned long flags;
+	काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&info->port);
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s:hdlcdev_close(%s)\n", __FILE__, dev->name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s:hdlcdev_close(%s)\n", __खाता__, dev->name);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
-	/* shutdown adapter and release resources */
-	shutdown(info, tty);
+	/* shutकरोwn adapter and release resources */
+	shutकरोwn(info, tty);
 	tty_kref_put(tty);
-	hdlc_close(dev);
+	hdlc_बंद(dev);
 
 	spin_lock_irqsave(&info->netlock, flags);
 	info->netcount=0;
 	spin_unlock_irqrestore(&info->netlock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * called by network layer to process IOCTL call to network device
  *
- * dev  pointer to network device structure
- * ifr  pointer to network interface request structure
+ * dev  poपूर्णांकer to network device काष्ठाure
+ * अगरr  poपूर्णांकer to network पूर्णांकerface request काष्ठाure
  * cmd  IOCTL command code
  *
- * returns 0 if success, otherwise error code
+ * वापसs 0 अगर success, otherwise error code
  */
-static int hdlcdev_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	const size_t size = sizeof(sync_serial_settings);
+अटल पूर्णांक hdlcdev_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	स्थिर माप_प्रकार size = माप(sync_serial_settings);
 	sync_serial_settings new_line;
-	sync_serial_settings __user *line = ifr->ifr_settings.ifs_ifsu.sync;
+	sync_serial_settings __user *line = अगरr->अगरr_settings.अगरs_अगरsu.sync;
 	MGSLPC_INFO *info = dev_to_port(dev);
-	unsigned int flags;
+	अचिन्हित पूर्णांक flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("%s:hdlcdev_ioctl(%s)\n", __FILE__, dev->name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("%s:hdlcdev_ioctl(%s)\n", __खाता__, dev->name);
 
-	/* return error if TTY interface open */
-	if (info->port.count)
-		return -EBUSY;
+	/* वापस error अगर TTY पूर्णांकerface खोलो */
+	अगर (info->port.count)
+		वापस -EBUSY;
 
-	if (cmd != SIOCWANDEV)
-		return hdlc_ioctl(dev, ifr, cmd);
+	अगर (cmd != SIOCWANDEV)
+		वापस hdlc_ioctl(dev, अगरr, cmd);
 
-	memset(&new_line, 0, size);
+	स_रखो(&new_line, 0, size);
 
-	switch(ifr->ifr_settings.type) {
-	case IF_GET_IFACE: /* return current sync_serial_settings */
+	चयन(अगरr->अगरr_settings.type) अणु
+	हाल IF_GET_IFACE: /* वापस current sync_serial_settings */
 
-		ifr->ifr_settings.type = IF_IFACE_SYNC_SERIAL;
-		if (ifr->ifr_settings.size < size) {
-			ifr->ifr_settings.size = size; /* data size wanted */
-			return -ENOBUFS;
-		}
+		अगरr->अगरr_settings.type = IF_IFACE_SYNC_SERIAL;
+		अगर (अगरr->अगरr_settings.size < size) अणु
+			अगरr->अगरr_settings.size = size; /* data size wanted */
+			वापस -ENOBUFS;
+		पूर्ण
 
 		flags = info->params.flags & (HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_RXC_DPLL |
 					      HDLC_FLAG_RXC_BRG    | HDLC_FLAG_RXC_TXCPIN |
 					      HDLC_FLAG_TXC_TXCPIN | HDLC_FLAG_TXC_DPLL |
 					      HDLC_FLAG_TXC_BRG    | HDLC_FLAG_TXC_RXCPIN);
 
-		switch (flags){
-		case (HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_TXCPIN): new_line.clock_type = CLOCK_EXT; break;
-		case (HDLC_FLAG_RXC_BRG    | HDLC_FLAG_TXC_BRG):    new_line.clock_type = CLOCK_INT; break;
-		case (HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_BRG):    new_line.clock_type = CLOCK_TXINT; break;
-		case (HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_RXCPIN): new_line.clock_type = CLOCK_TXFROMRX; break;
-		default: new_line.clock_type = CLOCK_DEFAULT;
-		}
+		चयन (flags)अणु
+		हाल (HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_TXCPIN): new_line.घड़ी_प्रकारype = CLOCK_EXT; अवरोध;
+		हाल (HDLC_FLAG_RXC_BRG    | HDLC_FLAG_TXC_BRG):    new_line.घड़ी_प्रकारype = CLOCK_INT; अवरोध;
+		हाल (HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_BRG):    new_line.घड़ी_प्रकारype = CLOCK_TXINT; अवरोध;
+		हाल (HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_RXCPIN): new_line.घड़ी_प्रकारype = CLOCK_TXFROMRX; अवरोध;
+		शेष: new_line.घड़ी_प्रकारype = CLOCK_DEFAULT;
+		पूर्ण
 
-		new_line.clock_rate = info->params.clock_speed;
+		new_line.घड़ी_rate = info->params.घड़ी_speed;
 		new_line.loopback   = info->params.loopback ? 1:0;
 
-		if (copy_to_user(line, &new_line, size))
-			return -EFAULT;
-		return 0;
+		अगर (copy_to_user(line, &new_line, size))
+			वापस -EFAULT;
+		वापस 0;
 
-	case IF_IFACE_SYNC_SERIAL: /* set sync_serial_settings */
+	हाल IF_IFACE_SYNC_SERIAL: /* set sync_serial_settings */
 
-		if(!capable(CAP_NET_ADMIN))
-			return -EPERM;
-		if (copy_from_user(&new_line, line, size))
-			return -EFAULT;
+		अगर(!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
+		अगर (copy_from_user(&new_line, line, size))
+			वापस -EFAULT;
 
-		switch (new_line.clock_type)
-		{
-		case CLOCK_EXT:      flags = HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_TXCPIN; break;
-		case CLOCK_TXFROMRX: flags = HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_RXCPIN; break;
-		case CLOCK_INT:      flags = HDLC_FLAG_RXC_BRG    | HDLC_FLAG_TXC_BRG;    break;
-		case CLOCK_TXINT:    flags = HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_BRG;    break;
-		case CLOCK_DEFAULT:  flags = info->params.flags &
+		चयन (new_line.घड़ी_प्रकारype)
+		अणु
+		हाल CLOCK_EXT:      flags = HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_TXCPIN; अवरोध;
+		हाल CLOCK_TXFROMRX: flags = HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_RXCPIN; अवरोध;
+		हाल CLOCK_INT:      flags = HDLC_FLAG_RXC_BRG    | HDLC_FLAG_TXC_BRG;    अवरोध;
+		हाल CLOCK_TXINT:    flags = HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_TXC_BRG;    अवरोध;
+		हाल CLOCK_DEFAULT:  flags = info->params.flags &
 					     (HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_RXC_DPLL |
 					      HDLC_FLAG_RXC_BRG    | HDLC_FLAG_RXC_TXCPIN |
 					      HDLC_FLAG_TXC_TXCPIN | HDLC_FLAG_TXC_DPLL |
-					      HDLC_FLAG_TXC_BRG    | HDLC_FLAG_TXC_RXCPIN); break;
-		default: return -EINVAL;
-		}
+					      HDLC_FLAG_TXC_BRG    | HDLC_FLAG_TXC_RXCPIN); अवरोध;
+		शेष: वापस -EINVAL;
+		पूर्ण
 
-		if (new_line.loopback != 0 && new_line.loopback != 1)
-			return -EINVAL;
+		अगर (new_line.loopback != 0 && new_line.loopback != 1)
+			वापस -EINVAL;
 
 		info->params.flags &= ~(HDLC_FLAG_RXC_RXCPIN | HDLC_FLAG_RXC_DPLL |
 					HDLC_FLAG_RXC_BRG    | HDLC_FLAG_RXC_TXCPIN |
@@ -4142,80 +4143,80 @@ static int hdlcdev_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 
 		info->params.loopback = new_line.loopback;
 
-		if (flags & (HDLC_FLAG_RXC_BRG | HDLC_FLAG_TXC_BRG))
-			info->params.clock_speed = new_line.clock_rate;
-		else
-			info->params.clock_speed = 0;
+		अगर (flags & (HDLC_FLAG_RXC_BRG | HDLC_FLAG_TXC_BRG))
+			info->params.घड़ी_speed = new_line.घड़ी_rate;
+		अन्यथा
+			info->params.घड़ी_speed = 0;
 
-		/* if network interface up, reprogram hardware */
-		if (info->netcount) {
-			struct tty_struct *tty = tty_port_tty_get(&info->port);
+		/* अगर network पूर्णांकerface up, reprogram hardware */
+		अगर (info->netcount) अणु
+			काष्ठा tty_काष्ठा *tty = tty_port_tty_get(&info->port);
 			mgslpc_program_hw(info, tty);
 			tty_kref_put(tty);
-		}
-		return 0;
+		पूर्ण
+		वापस 0;
 
-	default:
-		return hdlc_ioctl(dev, ifr, cmd);
-	}
-}
+	शेष:
+		वापस hdlc_ioctl(dev, अगरr, cmd);
+	पूर्ण
+पूर्ण
 
 /**
- * called by network layer when transmit timeout is detected
+ * called by network layer when transmit समयout is detected
  *
- * dev  pointer to network device structure
+ * dev  poपूर्णांकer to network device काष्ठाure
  */
-static void hdlcdev_tx_timeout(struct net_device *dev, unsigned int txqueue)
-{
+अटल व्योम hdlcdev_tx_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
+अणु
 	MGSLPC_INFO *info = dev_to_port(dev);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("hdlcdev_tx_timeout(%s)\n", dev->name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("hdlcdev_tx_timeout(%s)\n", dev->name);
 
 	dev->stats.tx_errors++;
-	dev->stats.tx_aborted_errors++;
+	dev->stats.tx_पातed_errors++;
 
 	spin_lock_irqsave(&info->lock, flags);
 	tx_stop(info);
 	spin_unlock_irqrestore(&info->lock, flags);
 
-	netif_wake_queue(dev);
-}
+	netअगर_wake_queue(dev);
+पूर्ण
 
 /**
  * called by device driver when transmit completes
- * reenable network layer transmit if stopped
+ * reenable network layer transmit अगर stopped
  *
- * info  pointer to device instance information
+ * info  poपूर्णांकer to device instance inक्रमmation
  */
-static void hdlcdev_tx_done(MGSLPC_INFO *info)
-{
-	if (netif_queue_stopped(info->netdev))
-		netif_wake_queue(info->netdev);
-}
+अटल व्योम hdlcdev_tx_करोne(MGSLPC_INFO *info)
+अणु
+	अगर (netअगर_queue_stopped(info->netdev))
+		netअगर_wake_queue(info->netdev);
+पूर्ण
 
 /**
  * called by device driver when frame received
  * pass frame to network layer
  *
- * info  pointer to device instance information
- * buf   pointer to buffer contianing frame data
+ * info  poपूर्णांकer to device instance inक्रमmation
+ * buf   poपूर्णांकer to buffer contianing frame data
  * size  count of data bytes in buf
  */
-static void hdlcdev_rx(MGSLPC_INFO *info, char *buf, int size)
-{
-	struct sk_buff *skb = dev_alloc_skb(size);
-	struct net_device *dev = info->netdev;
+अटल व्योम hdlcdev_rx(MGSLPC_INFO *info, अक्षर *buf, पूर्णांक size)
+अणु
+	काष्ठा sk_buff *skb = dev_alloc_skb(size);
+	काष्ठा net_device *dev = info->netdev;
 
-	if (debug_level >= DEBUG_LEVEL_INFO)
-		printk("hdlcdev_rx(%s)\n", dev->name);
+	अगर (debug_level >= DEBUG_LEVEL_INFO)
+		prपूर्णांकk("hdlcdev_rx(%s)\n", dev->name);
 
-	if (skb == NULL) {
-		printk(KERN_NOTICE "%s: can't alloc skb, dropping packet\n", dev->name);
+	अगर (skb == शून्य) अणु
+		prपूर्णांकk(KERN_NOTICE "%s: can't alloc skb, dropping packet\n", dev->name);
 		dev->stats.rx_dropped++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	skb_put_data(skb, buf, size);
 
@@ -4224,46 +4225,46 @@ static void hdlcdev_rx(MGSLPC_INFO *info, char *buf, int size)
 	dev->stats.rx_packets++;
 	dev->stats.rx_bytes += size;
 
-	netif_rx(skb);
-}
+	netअगर_rx(skb);
+पूर्ण
 
-static const struct net_device_ops hdlcdev_ops = {
-	.ndo_open       = hdlcdev_open,
-	.ndo_stop       = hdlcdev_close,
-	.ndo_start_xmit = hdlc_start_xmit,
-	.ndo_do_ioctl   = hdlcdev_ioctl,
-	.ndo_tx_timeout = hdlcdev_tx_timeout,
-};
+अटल स्थिर काष्ठा net_device_ops hdlcdev_ops = अणु
+	.nकरो_खोलो       = hdlcdev_खोलो,
+	.nकरो_stop       = hdlcdev_बंद,
+	.nकरो_start_xmit = hdlc_start_xmit,
+	.nकरो_करो_ioctl   = hdlcdev_ioctl,
+	.nकरो_tx_समयout = hdlcdev_tx_समयout,
+पूर्ण;
 
 /**
  * called by device driver when adding device instance
- * do generic HDLC initialization
+ * करो generic HDLC initialization
  *
- * info  pointer to device instance information
+ * info  poपूर्णांकer to device instance inक्रमmation
  *
- * returns 0 if success, otherwise error code
+ * वापसs 0 अगर success, otherwise error code
  */
-static int hdlcdev_init(MGSLPC_INFO *info)
-{
-	int rc;
-	struct net_device *dev;
+अटल पूर्णांक hdlcdev_init(MGSLPC_INFO *info)
+अणु
+	पूर्णांक rc;
+	काष्ठा net_device *dev;
 	hdlc_device *hdlc;
 
 	/* allocate and initialize network and HDLC layer objects */
 
 	dev = alloc_hdlcdev(info);
-	if (dev == NULL) {
-		printk(KERN_ERR "%s:hdlc device allocation failure\n", __FILE__);
-		return -ENOMEM;
-	}
+	अगर (dev == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "%s:hdlc device allocation failure\n", __खाता__);
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* for network layer reporting purposes only */
+	/* क्रम network layer reporting purposes only */
 	dev->base_addr = info->io_base;
 	dev->irq       = info->irq_level;
 
 	/* network layer callbacks and settings */
 	dev->netdev_ops	    = &hdlcdev_ops;
-	dev->watchdog_timeo = 10 * HZ;
+	dev->watchकरोg_समयo = 10 * HZ;
 	dev->tx_queue_len   = 50;
 
 	/* generic HDLC layer callbacks and settings */
@@ -4271,30 +4272,30 @@ static int hdlcdev_init(MGSLPC_INFO *info)
 	hdlc->attach = hdlcdev_attach;
 	hdlc->xmit   = hdlcdev_xmit;
 
-	/* register objects with HDLC layer */
-	rc = register_hdlc_device(dev);
-	if (rc) {
-		printk(KERN_WARNING "%s:unable to register hdlc device\n", __FILE__);
-		free_netdev(dev);
-		return rc;
-	}
+	/* रेजिस्टर objects with HDLC layer */
+	rc = रेजिस्टर_hdlc_device(dev);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_WARNING "%s:unable to register hdlc device\n", __खाता__);
+		मुक्त_netdev(dev);
+		वापस rc;
+	पूर्ण
 
 	info->netdev = dev;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * called by device driver when removing device instance
- * do generic HDLC cleanup
+ * करो generic HDLC cleanup
  *
- * info  pointer to device instance information
+ * info  poपूर्णांकer to device instance inक्रमmation
  */
-static void hdlcdev_exit(MGSLPC_INFO *info)
-{
-	unregister_hdlc_device(info->netdev);
-	free_netdev(info->netdev);
-	info->netdev = NULL;
-}
+अटल व्योम hdlcdev_निकास(MGSLPC_INFO *info)
+अणु
+	unरेजिस्टर_hdlc_device(info->netdev);
+	मुक्त_netdev(info->netdev);
+	info->netdev = शून्य;
+पूर्ण
 
-#endif /* CONFIG_HDLC */
+#पूर्ण_अगर /* CONFIG_HDLC */
 

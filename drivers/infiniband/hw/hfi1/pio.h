@@ -1,43 +1,44 @@
-#ifndef _PIO_H
-#define _PIO_H
+<शैली गुरु>
+#अगर_अघोषित _PIO_H
+#घोषणा _PIO_H
 /*
  * Copyright(c) 2015-2017 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary form must reproduce the above copyright
+ *  - Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
+ *    the करोcumentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived
+ *    from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -48,144 +49,144 @@
  */
 
 /* send context types */
-#define SC_KERNEL 0
-#define SC_VL15   1
-#define SC_ACK    2
-#define SC_USER   3	/* must be the last one: it may take all left */
-#define SC_MAX    4	/* count of send context types */
+#घोषणा SC_KERNEL 0
+#घोषणा SC_VL15   1
+#घोषणा SC_ACK    2
+#घोषणा SC_USER   3	/* must be the last one: it may take all left */
+#घोषणा SC_MAX    4	/* count of send context types */
 
 /* invalid send context index */
-#define INVALID_SCI 0xff
+#घोषणा INVALID_SCI 0xff
 
 /* PIO buffer release callback function */
-typedef void (*pio_release_cb)(void *arg, int code);
+प्रकार व्योम (*pio_release_cb)(व्योम *arg, पूर्णांक code);
 
 /* PIO release codes - in bits, as there could more than one that apply */
-#define PRC_OK		0	/* no known error */
-#define PRC_STATUS_ERR	0x01	/* credit return due to status error */
-#define PRC_PBC		0x02	/* credit return due to PBC */
-#define PRC_THRESHOLD	0x04	/* credit return due to threshold */
-#define PRC_FILL_ERR	0x08	/* credit return due fill error */
-#define PRC_FORCE	0x10	/* credit return due credit force */
-#define PRC_SC_DISABLE	0x20	/* clean-up after a context disable */
+#घोषणा PRC_OK		0	/* no known error */
+#घोषणा PRC_STATUS_ERR	0x01	/* credit वापस due to status error */
+#घोषणा PRC_PBC		0x02	/* credit वापस due to PBC */
+#घोषणा PRC_THRESHOLD	0x04	/* credit वापस due to threshold */
+#घोषणा PRC_FILL_ERR	0x08	/* credit वापस due fill error */
+#घोषणा PRC_FORCE	0x10	/* credit वापस due credit क्रमce */
+#घोषणा PRC_SC_DISABLE	0x20	/* clean-up after a context disable */
 
 /* byte helper */
-union mix {
+जोड़ mix अणु
 	u64 val64;
 	u32 val32[2];
 	u8  val8[8];
-};
+पूर्ण;
 
 /* an allocated PIO buffer */
-struct pio_buf {
-	struct send_context *sc;/* back pointer to owning send context */
+काष्ठा pio_buf अणु
+	काष्ठा send_context *sc;/* back poपूर्णांकer to owning send context */
 	pio_release_cb cb;	/* called when the buffer is released */
-	void *arg;		/* argument for cb */
-	void __iomem *start;	/* buffer start address */
-	void __iomem *end;	/* context end address */
-	unsigned long sent_at;	/* buffer is sent when <= free */
-	union mix carry;	/* pending unwritten bytes */
+	व्योम *arg;		/* argument क्रम cb */
+	व्योम __iomem *start;	/* buffer start address */
+	व्योम __iomem *end;	/* context end address */
+	अचिन्हित दीर्घ sent_at;	/* buffer is sent when <= मुक्त */
+	जोड़ mix carry;	/* pending unwritten bytes */
 	u16 qw_written;		/* QW written so far */
 	u8 carry_bytes;	/* number of valid bytes in carry */
-};
+पूर्ण;
 
 /* cache line aligned pio buffer array */
-union pio_shadow_ring {
-	struct pio_buf pbuf;
-} ____cacheline_aligned;
+जोड़ pio_shaकरोw_ring अणु
+	काष्ठा pio_buf pbuf;
+पूर्ण ____cacheline_aligned;
 
 /* per-NUMA send context */
-struct send_context {
-	/* read-only after init */
-	struct hfi1_devdata *dd;		/* device */
-	union pio_shadow_ring *sr;	/* shadow ring */
-	void __iomem *base_addr;	/* start of PIO memory */
+काष्ठा send_context अणु
+	/* पढ़ो-only after init */
+	काष्ठा hfi1_devdata *dd;		/* device */
+	जोड़ pio_shaकरोw_ring *sr;	/* shaकरोw ring */
+	व्योम __iomem *base_addr;	/* start of PIO memory */
 	u32 __percpu *buffers_allocated;/* count of buffers allocated */
 	u32 size;			/* context size, in bytes */
 
-	int node;			/* context home node */
-	u32 sr_size;			/* size of the shadow ring */
+	पूर्णांक node;			/* context home node */
+	u32 sr_size;			/* size of the shaकरोw ring */
 	u16 flags;			/* flags */
 	u8  type;			/* context type */
 	u8  sw_index;			/* software index number */
 	u8  hw_context;			/* hardware context number */
-	u8  group;			/* credit return group */
+	u8  group;			/* credit वापस group */
 
 	/* allocator fields */
 	spinlock_t alloc_lock ____cacheline_aligned_in_smp;
-	u32 sr_head;			/* shadow ring head */
-	unsigned long fill;		/* official alloc count */
-	unsigned long alloc_free;	/* copy of free (less cache thrash) */
+	u32 sr_head;			/* shaकरोw ring head */
+	अचिन्हित दीर्घ fill;		/* official alloc count */
+	अचिन्हित दीर्घ alloc_मुक्त;	/* copy of मुक्त (less cache thrash) */
 	u32 fill_wrap;			/* tracks fill within ring */
 	u32 credits;			/* number of blocks in context */
 	/* adding a new field here would make it part of this cacheline */
 
 	/* releaser fields */
 	spinlock_t release_lock ____cacheline_aligned_in_smp;
-	u32 sr_tail;			/* shadow ring tail */
-	unsigned long free;		/* official free count */
-	volatile __le64 *hw_free;	/* HW free counter */
-	/* list for PIO waiters */
-	struct list_head piowait  ____cacheline_aligned_in_smp;
-	seqlock_t waitlock;
+	u32 sr_tail;			/* shaकरोw ring tail */
+	अचिन्हित दीर्घ मुक्त;		/* official मुक्त count */
+	अस्थिर __le64 *hw_मुक्त;	/* HW मुक्त counter */
+	/* list क्रम PIO रुकोers */
+	काष्ठा list_head pioरुको  ____cacheline_aligned_in_smp;
+	seqlock_t रुकोlock;
 
 	spinlock_t credit_ctrl_lock ____cacheline_aligned_in_smp;
-	u32 credit_intr_count;		/* count of credit intr users */
-	u64 credit_ctrl;		/* cache for credit control */
-	wait_queue_head_t halt_wait;    /* wait until kernel sees interrupt */
-	struct work_struct halt_work;	/* halted context work queue entry */
-};
+	u32 credit_पूर्णांकr_count;		/* count of credit पूर्णांकr users */
+	u64 credit_ctrl;		/* cache क्रम credit control */
+	रुको_queue_head_t halt_रुको;    /* रुको until kernel sees पूर्णांकerrupt */
+	काष्ठा work_काष्ठा halt_work;	/* halted context work queue entry */
+पूर्ण;
 
 /* send context flags */
-#define SCF_ENABLED 0x01
-#define SCF_IN_FREE 0x02
-#define SCF_HALTED  0x04
-#define SCF_FROZEN  0x08
-#define SCF_LINK_DOWN 0x10
+#घोषणा SCF_ENABLED 0x01
+#घोषणा SCF_IN_FREE 0x02
+#घोषणा SCF_HALTED  0x04
+#घोषणा SCF_FROZEN  0x08
+#घोषणा SCF_LINK_DOWN 0x10
 
-struct send_context_info {
-	struct send_context *sc;	/* allocated working context */
+काष्ठा send_context_info अणु
+	काष्ठा send_context *sc;	/* allocated working context */
 	u16 allocated;			/* has this been allocated? */
 	u16 type;			/* context type */
 	u16 base;			/* base in PIO array */
 	u16 credits;			/* size in PIO array */
-};
+पूर्ण;
 
-/* DMA credit return, index is always (context & 0x7) */
-struct credit_return {
-	volatile __le64 cr[8];
-};
+/* DMA credit वापस, index is always (context & 0x7) */
+काष्ठा credit_वापस अणु
+	अस्थिर __le64 cr[8];
+पूर्ण;
 
-/* NUMA indexed credit return array */
-struct credit_return_base {
-	struct credit_return *va;
+/* NUMA indexed credit वापस array */
+काष्ठा credit_वापस_base अणु
+	काष्ठा credit_वापस *va;
 	dma_addr_t dma;
-};
+पूर्ण;
 
 /* send context configuration sizes (one per type) */
-struct sc_config_sizes {
-	short int size;
-	short int count;
-};
+काष्ठा sc_config_sizes अणु
+	लघु पूर्णांक size;
+	लघु पूर्णांक count;
+पूर्ण;
 
 /*
- * The diagram below details the relationship of the mapping structures
+ * The diagram below details the relationship of the mapping काष्ठाures
  *
- * Since the mapping now allows for non-uniform send contexts per vl, the
- * number of send contexts for a vl is either the vl_scontexts[vl] or
+ * Since the mapping now allows क्रम non-unअगरorm send contexts per vl, the
+ * number of send contexts क्रम a vl is either the vl_scontexts[vl] or
  * a computation based on num_kernel_send_contexts/num_vls:
  *
  * For example:
  * nactual = vl_scontexts ? vl_scontexts[vl] : num_kernel_send_contexts/num_vls
  *
- * n = roundup to next highest power of 2 using nactual
+ * n = roundup to next highest घातer of 2 using nactual
  *
- * In the case where there are num_kernel_send_contexts/num_vls doesn't divide
- * evenly, the extras are added from the last vl downward.
+ * In the हाल where there are num_kernel_send_contexts/num_vls करोesn't भागide
+ * evenly, the extras are added from the last vl करोwnward.
  *
- * For the case where n > nactual, the send contexts are assigned
+ * For the हाल where n > nactual, the send contexts are asचिन्हित
  * in a round robin fashion wrapping back to the first send context
- * for a particular vl.
+ * क्रम a particular vl.
  *
  *               dd->pio_map
  *                    |                                   pio_map_elem[0]
@@ -230,108 +231,108 @@ struct sc_config_sizes {
  */
 
 /* Initial number of send contexts per VL */
-#define INIT_SC_PER_VL 2
+#घोषणा INIT_SC_PER_VL 2
 
 /*
- * struct pio_map_elem - mapping for a vl
+ * काष्ठा pio_map_elem - mapping क्रम a vl
  * @mask - selector mask
- * @ksc - array of kernel send contexts for this vl
+ * @ksc - array of kernel send contexts क्रम this vl
  *
  * The mask is used to "mod" the selector to
- * produce index into the trailing array of
+ * produce index पूर्णांकo the trailing array of
  * kscs
  */
-struct pio_map_elem {
+काष्ठा pio_map_elem अणु
 	u32 mask;
-	struct send_context *ksc[];
-};
+	काष्ठा send_context *ksc[];
+पूर्ण;
 
 /*
- * struct pio_vl_map - mapping for a vl
- * @list - rcu head for free callback
+ * काष्ठा pio_vl_map - mapping क्रम a vl
+ * @list - rcu head क्रम मुक्त callback
  * @mask - vl mask to "mod" the vl to produce an index to map array
  * @actual_vls - number of vls
- * @vls - numbers of vls rounded to next power of 2
+ * @vls - numbers of vls rounded to next घातer of 2
  * @map - array of pio_map_elem entries
  *
- * This is the parent mapping structure. The trailing members of the
- * struct point to pio_map_elem entries, which in turn point to an
- * array of kscs for that vl.
+ * This is the parent mapping काष्ठाure. The trailing members of the
+ * काष्ठा poपूर्णांक to pio_map_elem entries, which in turn poपूर्णांक to an
+ * array of kscs क्रम that vl.
  */
-struct pio_vl_map {
-	struct rcu_head list;
+काष्ठा pio_vl_map अणु
+	काष्ठा rcu_head list;
 	u32 mask;
 	u8 actual_vls;
 	u8 vls;
-	struct pio_map_elem *map[];
-};
+	काष्ठा pio_map_elem *map[];
+पूर्ण;
 
-int pio_map_init(struct hfi1_devdata *dd, u8 port, u8 num_vls,
+पूर्णांक pio_map_init(काष्ठा hfi1_devdata *dd, u8 port, u8 num_vls,
 		 u8 *vl_scontexts);
-void free_pio_map(struct hfi1_devdata *dd);
-struct send_context *pio_select_send_context_vl(struct hfi1_devdata *dd,
+व्योम मुक्त_pio_map(काष्ठा hfi1_devdata *dd);
+काष्ठा send_context *pio_select_send_context_vl(काष्ठा hfi1_devdata *dd,
 						u32 selector, u8 vl);
-struct send_context *pio_select_send_context_sc(struct hfi1_devdata *dd,
+काष्ठा send_context *pio_select_send_context_sc(काष्ठा hfi1_devdata *dd,
 						u32 selector, u8 sc5);
 
 /* send context functions */
-int init_credit_return(struct hfi1_devdata *dd);
-void free_credit_return(struct hfi1_devdata *dd);
-int init_sc_pools_and_sizes(struct hfi1_devdata *dd);
-int init_send_contexts(struct hfi1_devdata *dd);
-int init_credit_return(struct hfi1_devdata *dd);
-int init_pervl_scs(struct hfi1_devdata *dd);
-struct send_context *sc_alloc(struct hfi1_devdata *dd, int type,
-			      uint hdrqentsize, int numa);
-void sc_free(struct send_context *sc);
-int sc_enable(struct send_context *sc);
-void sc_disable(struct send_context *sc);
-int sc_restart(struct send_context *sc);
-void sc_return_credits(struct send_context *sc);
-void sc_flush(struct send_context *sc);
-void sc_drop(struct send_context *sc);
-void sc_stop(struct send_context *sc, int bit);
-struct pio_buf *sc_buffer_alloc(struct send_context *sc, u32 dw_len,
-				pio_release_cb cb, void *arg);
-void sc_release_update(struct send_context *sc);
-void sc_return_credits(struct send_context *sc);
-void sc_group_release_update(struct hfi1_devdata *dd, u32 hw_context);
-void sc_add_credit_return_intr(struct send_context *sc);
-void sc_del_credit_return_intr(struct send_context *sc);
-void sc_set_cr_threshold(struct send_context *sc, u32 new_threshold);
-u32 sc_percent_to_threshold(struct send_context *sc, u32 percent);
-u32 sc_mtu_to_threshold(struct send_context *sc, u32 mtu, u32 hdrqentsize);
-void hfi1_sc_wantpiobuf_intr(struct send_context *sc, u32 needint);
-void sc_wait(struct hfi1_devdata *dd);
-void set_pio_integrity(struct send_context *sc);
+पूर्णांक init_credit_वापस(काष्ठा hfi1_devdata *dd);
+व्योम मुक्त_credit_वापस(काष्ठा hfi1_devdata *dd);
+पूर्णांक init_sc_pools_and_sizes(काष्ठा hfi1_devdata *dd);
+पूर्णांक init_send_contexts(काष्ठा hfi1_devdata *dd);
+पूर्णांक init_credit_वापस(काष्ठा hfi1_devdata *dd);
+पूर्णांक init_pervl_scs(काष्ठा hfi1_devdata *dd);
+काष्ठा send_context *sc_alloc(काष्ठा hfi1_devdata *dd, पूर्णांक type,
+			      uपूर्णांक hdrqentsize, पूर्णांक numa);
+व्योम sc_मुक्त(काष्ठा send_context *sc);
+पूर्णांक sc_enable(काष्ठा send_context *sc);
+व्योम sc_disable(काष्ठा send_context *sc);
+पूर्णांक sc_restart(काष्ठा send_context *sc);
+व्योम sc_वापस_credits(काष्ठा send_context *sc);
+व्योम sc_flush(काष्ठा send_context *sc);
+व्योम sc_drop(काष्ठा send_context *sc);
+व्योम sc_stop(काष्ठा send_context *sc, पूर्णांक bit);
+काष्ठा pio_buf *sc_buffer_alloc(काष्ठा send_context *sc, u32 dw_len,
+				pio_release_cb cb, व्योम *arg);
+व्योम sc_release_update(काष्ठा send_context *sc);
+व्योम sc_वापस_credits(काष्ठा send_context *sc);
+व्योम sc_group_release_update(काष्ठा hfi1_devdata *dd, u32 hw_context);
+व्योम sc_add_credit_वापस_पूर्णांकr(काष्ठा send_context *sc);
+व्योम sc_del_credit_वापस_पूर्णांकr(काष्ठा send_context *sc);
+व्योम sc_set_cr_threshold(काष्ठा send_context *sc, u32 new_threshold);
+u32 sc_percent_to_threshold(काष्ठा send_context *sc, u32 percent);
+u32 sc_mtu_to_threshold(काष्ठा send_context *sc, u32 mtu, u32 hdrqentsize);
+व्योम hfi1_sc_wantpiobuf_पूर्णांकr(काष्ठा send_context *sc, u32 needपूर्णांक);
+व्योम sc_रुको(काष्ठा hfi1_devdata *dd);
+व्योम set_pio_पूर्णांकegrity(काष्ठा send_context *sc);
 
 /* support functions */
-void pio_reset_all(struct hfi1_devdata *dd);
-void pio_freeze(struct hfi1_devdata *dd);
-void pio_kernel_unfreeze(struct hfi1_devdata *dd);
-void pio_kernel_linkup(struct hfi1_devdata *dd);
+व्योम pio_reset_all(काष्ठा hfi1_devdata *dd);
+व्योम pio_मुक्तze(काष्ठा hfi1_devdata *dd);
+व्योम pio_kernel_unमुक्तze(काष्ठा hfi1_devdata *dd);
+व्योम pio_kernel_linkup(काष्ठा hfi1_devdata *dd);
 
 /* global PIO send control operations */
-#define PSC_GLOBAL_ENABLE 0
-#define PSC_GLOBAL_DISABLE 1
-#define PSC_GLOBAL_VLARB_ENABLE 2
-#define PSC_GLOBAL_VLARB_DISABLE 3
-#define PSC_CM_RESET 4
-#define PSC_DATA_VL_ENABLE 5
-#define PSC_DATA_VL_DISABLE 6
+#घोषणा PSC_GLOBAL_ENABLE 0
+#घोषणा PSC_GLOBAL_DISABLE 1
+#घोषणा PSC_GLOBAL_VLARB_ENABLE 2
+#घोषणा PSC_GLOBAL_VLARB_DISABLE 3
+#घोषणा PSC_CM_RESET 4
+#घोषणा PSC_DATA_VL_ENABLE 5
+#घोषणा PSC_DATA_VL_DISABLE 6
 
-void __cm_reset(struct hfi1_devdata *dd, u64 sendctrl);
-void pio_send_control(struct hfi1_devdata *dd, int op);
+व्योम __cm_reset(काष्ठा hfi1_devdata *dd, u64 sendctrl);
+व्योम pio_send_control(काष्ठा hfi1_devdata *dd, पूर्णांक op);
 
 /* PIO copy routines */
-void pio_copy(struct hfi1_devdata *dd, struct pio_buf *pbuf, u64 pbc,
-	      const void *from, size_t count);
-void seg_pio_copy_start(struct pio_buf *pbuf, u64 pbc,
-			const void *from, size_t nbytes);
-void seg_pio_copy_mid(struct pio_buf *pbuf, const void *from, size_t nbytes);
-void seg_pio_copy_end(struct pio_buf *pbuf);
+व्योम pio_copy(काष्ठा hfi1_devdata *dd, काष्ठा pio_buf *pbuf, u64 pbc,
+	      स्थिर व्योम *from, माप_प्रकार count);
+व्योम seg_pio_copy_start(काष्ठा pio_buf *pbuf, u64 pbc,
+			स्थिर व्योम *from, माप_प्रकार nbytes);
+व्योम seg_pio_copy_mid(काष्ठा pio_buf *pbuf, स्थिर व्योम *from, माप_प्रकार nbytes);
+व्योम seg_pio_copy_end(काष्ठा pio_buf *pbuf);
 
-void seqfile_dump_sci(struct seq_file *s, u32 i,
-		      struct send_context_info *sci);
+व्योम seqfile_dump_sci(काष्ठा seq_file *s, u32 i,
+		      काष्ठा send_context_info *sci);
 
-#endif /* _PIO_H */
+#पूर्ण_अगर /* _PIO_H */

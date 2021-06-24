@@ -1,143 +1,144 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/platform_device.h>
-#include <linux/module.h>
-#include <linux/pm_clock.h>
-#include <linux/pm_runtime.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pm_घड़ी.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regmap.h>
 
-#include <dt-bindings/clock/qcom,mss-sc7180.h>
+#समावेश <dt-bindings/घड़ी/qcom,mss-sc7180.h>
 
-#include "clk-regmap.h"
-#include "clk-branch.h"
-#include "common.h"
+#समावेश "clk-regmap.h"
+#समावेश "clk-branch.h"
+#समावेश "common.h"
 
-static struct clk_branch mss_axi_nav_clk = {
+अटल काष्ठा clk_branch mss_axi_nav_clk = अणु
 	.halt_reg = 0x20bc,
 	.halt_check = BRANCH_HALT,
-	.clkr = {
+	.clkr = अणु
 		.enable_reg = 0x20bc,
 		.enable_mask = BIT(0),
-		.hw.init = &(struct clk_init_data){
+		.hw.init = &(काष्ठा clk_init_data)अणु
 			.name = "mss_axi_nav_clk",
-			.parent_data = &(const struct clk_parent_data){
+			.parent_data = &(स्थिर काष्ठा clk_parent_data)अणु
 				.fw_name = "gcc_mss_nav_axi",
-			},
+			पूर्ण,
 			.num_parents = 1,
 			.ops = &clk_branch2_ops,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct clk_branch mss_axi_crypto_clk = {
+अटल काष्ठा clk_branch mss_axi_crypto_clk = अणु
 	.halt_reg = 0x20cc,
 	.halt_check = BRANCH_HALT,
-	.clkr = {
+	.clkr = अणु
 		.enable_reg = 0x20cc,
 		.enable_mask = BIT(0),
-		.hw.init = &(struct clk_init_data){
+		.hw.init = &(काष्ठा clk_init_data)अणु
 			.name = "mss_axi_crypto_clk",
-			.parent_data = &(const struct clk_parent_data){
+			.parent_data = &(स्थिर काष्ठा clk_parent_data)अणु
 				.fw_name = "gcc_mss_mfab_axis",
-			},
+			पूर्ण,
 			.num_parents = 1,
 			.ops = &clk_branch2_ops,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static const struct regmap_config mss_regmap_config = {
+अटल स्थिर काष्ठा regmap_config mss_regmap_config = अणु
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
 	.fast_io	= true,
-	.max_register	= 0x41aa0cc,
-};
+	.max_रेजिस्टर	= 0x41aa0cc,
+पूर्ण;
 
-static struct clk_regmap *mss_sc7180_clocks[] = {
+अटल काष्ठा clk_regmap *mss_sc7180_घड़ीs[] = अणु
 	[MSS_AXI_CRYPTO_CLK] = &mss_axi_crypto_clk.clkr,
 	[MSS_AXI_NAV_CLK] = &mss_axi_nav_clk.clkr,
-};
+पूर्ण;
 
-static const struct qcom_cc_desc mss_sc7180_desc = {
+अटल स्थिर काष्ठा qcom_cc_desc mss_sc7180_desc = अणु
 	.config = &mss_regmap_config,
-	.clks = mss_sc7180_clocks,
-	.num_clks = ARRAY_SIZE(mss_sc7180_clocks),
-};
+	.clks = mss_sc7180_घड़ीs,
+	.num_clks = ARRAY_SIZE(mss_sc7180_घड़ीs),
+पूर्ण;
 
-static int mss_sc7180_probe(struct platform_device *pdev)
-{
-	int ret;
+अटल पूर्णांक mss_sc7180_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret;
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 	ret = pm_clk_create(&pdev->dev);
-	if (ret)
-		goto disable_pm_runtime;
+	अगर (ret)
+		जाओ disable_pm_runसमय;
 
 	ret = pm_clk_add(&pdev->dev, "cfg_ahb");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to acquire iface clock\n");
-		goto destroy_pm_clk;
-	}
+		जाओ destroy_pm_clk;
+	पूर्ण
 
 	ret = qcom_cc_probe(pdev, &mss_sc7180_desc);
-	if (ret < 0)
-		goto destroy_pm_clk;
+	अगर (ret < 0)
+		जाओ destroy_pm_clk;
 
-	return 0;
+	वापस 0;
 
 destroy_pm_clk:
 	pm_clk_destroy(&pdev->dev);
 
-disable_pm_runtime:
-	pm_runtime_disable(&pdev->dev);
+disable_pm_runसमय:
+	pm_runसमय_disable(&pdev->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mss_sc7180_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक mss_sc7180_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	pm_clk_destroy(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops mss_sc7180_pm_ops = {
-	SET_RUNTIME_PM_OPS(pm_clk_suspend, pm_clk_resume, NULL)
-};
+अटल स्थिर काष्ठा dev_pm_ops mss_sc7180_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(pm_clk_suspend, pm_clk_resume, शून्य)
+पूर्ण;
 
-static const struct of_device_id mss_sc7180_match_table[] = {
-	{ .compatible = "qcom,sc7180-mss" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id mss_sc7180_match_table[] = अणु
+	अणु .compatible = "qcom,sc7180-mss" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mss_sc7180_match_table);
 
-static struct platform_driver mss_sc7180_driver = {
+अटल काष्ठा platक्रमm_driver mss_sc7180_driver = अणु
 	.probe		= mss_sc7180_probe,
-	.remove		= mss_sc7180_remove,
-	.driver		= {
+	.हटाओ		= mss_sc7180_हटाओ,
+	.driver		= अणु
 		.name		= "sc7180-mss",
 		.of_match_table = mss_sc7180_match_table,
 		.pm = &mss_sc7180_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init mss_sc7180_init(void)
-{
-	return platform_driver_register(&mss_sc7180_driver);
-}
+अटल पूर्णांक __init mss_sc7180_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&mss_sc7180_driver);
+पूर्ण
 subsys_initcall(mss_sc7180_init);
 
-static void __exit mss_sc7180_exit(void)
-{
-	platform_driver_unregister(&mss_sc7180_driver);
-}
-module_exit(mss_sc7180_exit);
+अटल व्योम __निकास mss_sc7180_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&mss_sc7180_driver);
+पूर्ण
+module_निकास(mss_sc7180_निकास);
 
 MODULE_DESCRIPTION("QTI MSS SC7180 Driver");
 MODULE_LICENSE("GPL v2");

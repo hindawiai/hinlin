@@ -1,152 +1,153 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *		INETPEER - A storage for permanent information about peers
+ *		INETPEER - A storage क्रम permanent inक्रमmation about peers
  *
  *  Authors:	Andrey V. Savochkin <saw@msu.ru>
  */
 
-#ifndef _NET_INETPEER_H
-#define _NET_INETPEER_H
+#अगर_अघोषित _NET_INETPEER_H
+#घोषणा _NET_INETPEER_H
 
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/jiffies.h>
-#include <linux/spinlock.h>
-#include <linux/rtnetlink.h>
-#include <net/ipv6.h>
-#include <linux/atomic.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/atomic.h>
 
-/* IPv4 address key for cache lookups */
-struct ipv4_addr_key {
+/* IPv4 address key क्रम cache lookups */
+काष्ठा ipv4_addr_key अणु
 	__be32	addr;
-	int	vif;
-};
+	पूर्णांक	vअगर;
+पूर्ण;
 
-#define INETPEER_MAXKEYSZ   (sizeof(struct in6_addr) / sizeof(u32))
+#घोषणा INETPEER_MAXKEYSZ   (माप(काष्ठा in6_addr) / माप(u32))
 
-struct inetpeer_addr {
-	union {
-		struct ipv4_addr_key	a4;
-		struct in6_addr		a6;
+काष्ठा inetpeer_addr अणु
+	जोड़ अणु
+		काष्ठा ipv4_addr_key	a4;
+		काष्ठा in6_addr		a6;
 		u32			key[INETPEER_MAXKEYSZ];
-	};
+	पूर्ण;
 	__u16				family;
-};
+पूर्ण;
 
-struct inet_peer {
-	struct rb_node		rb_node;
-	struct inetpeer_addr	daddr;
+काष्ठा inet_peer अणु
+	काष्ठा rb_node		rb_node;
+	काष्ठा inetpeer_addr	daddr;
 
 	u32			metrics[RTAX_MAX];
-	u32			rate_tokens;	/* rate limiting for ICMP */
+	u32			rate_tokens;	/* rate limiting क्रम ICMP */
 	u32			n_redirects;
-	unsigned long		rate_last;
+	अचिन्हित दीर्घ		rate_last;
 	/*
-	 * Once inet_peer is queued for deletion (refcnt == 0), following field
+	 * Once inet_peer is queued क्रम deletion (refcnt == 0), following field
 	 * is not available: rid
 	 * We can share memory with rcu_head to help keep inet_peer small.
 	 */
-	union {
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
 			atomic_t			rid;		/* Frag reception counter */
-		};
-		struct rcu_head         rcu;
-	};
+		पूर्ण;
+		काष्ठा rcu_head         rcu;
+	पूर्ण;
 
 	/* following fields might be frequently dirtied */
-	__u32			dtime;	/* the time of last use of not referenced entries */
+	__u32			dसमय;	/* the समय of last use of not referenced entries */
 	refcount_t		refcnt;
-};
+पूर्ण;
 
-struct inet_peer_base {
-	struct rb_root		rb_root;
+काष्ठा inet_peer_base अणु
+	काष्ठा rb_root		rb_root;
 	seqlock_t		lock;
-	int			total;
-};
+	पूर्णांक			total;
+पूर्ण;
 
-void inet_peer_base_init(struct inet_peer_base *);
+व्योम inet_peer_base_init(काष्ठा inet_peer_base *);
 
-void inet_initpeers(void) __init;
+व्योम inet_initpeers(व्योम) __init;
 
-#define INETPEER_METRICS_NEW	(~(u32) 0)
+#घोषणा INETPEER_METRICS_NEW	(~(u32) 0)
 
-static inline void inetpeer_set_addr_v4(struct inetpeer_addr *iaddr, __be32 ip)
-{
+अटल अंतरभूत व्योम inetpeer_set_addr_v4(काष्ठा inetpeer_addr *iaddr, __be32 ip)
+अणु
 	iaddr->a4.addr = ip;
-	iaddr->a4.vif = 0;
+	iaddr->a4.vअगर = 0;
 	iaddr->family = AF_INET;
-}
+पूर्ण
 
-static inline __be32 inetpeer_get_addr_v4(struct inetpeer_addr *iaddr)
-{
-	return iaddr->a4.addr;
-}
+अटल अंतरभूत __be32 inetpeer_get_addr_v4(काष्ठा inetpeer_addr *iaddr)
+अणु
+	वापस iaddr->a4.addr;
+पूर्ण
 
-static inline void inetpeer_set_addr_v6(struct inetpeer_addr *iaddr,
-					struct in6_addr *in6)
-{
+अटल अंतरभूत व्योम inetpeer_set_addr_v6(काष्ठा inetpeer_addr *iaddr,
+					काष्ठा in6_addr *in6)
+अणु
 	iaddr->a6 = *in6;
 	iaddr->family = AF_INET6;
-}
+पूर्ण
 
-static inline struct in6_addr *inetpeer_get_addr_v6(struct inetpeer_addr *iaddr)
-{
-	return &iaddr->a6;
-}
+अटल अंतरभूत काष्ठा in6_addr *inetpeer_get_addr_v6(काष्ठा inetpeer_addr *iaddr)
+अणु
+	वापस &iaddr->a6;
+पूर्ण
 
 /* can be called with or without local BH being disabled */
-struct inet_peer *inet_getpeer(struct inet_peer_base *base,
-			       const struct inetpeer_addr *daddr,
-			       int create);
+काष्ठा inet_peer *inet_getpeer(काष्ठा inet_peer_base *base,
+			       स्थिर काष्ठा inetpeer_addr *daddr,
+			       पूर्णांक create);
 
-static inline struct inet_peer *inet_getpeer_v4(struct inet_peer_base *base,
+अटल अंतरभूत काष्ठा inet_peer *inet_getpeer_v4(काष्ठा inet_peer_base *base,
 						__be32 v4daddr,
-						int vif, int create)
-{
-	struct inetpeer_addr daddr;
+						पूर्णांक vअगर, पूर्णांक create)
+अणु
+	काष्ठा inetpeer_addr daddr;
 
 	daddr.a4.addr = v4daddr;
-	daddr.a4.vif = vif;
+	daddr.a4.vअगर = vअगर;
 	daddr.family = AF_INET;
-	return inet_getpeer(base, &daddr, create);
-}
+	वापस inet_getpeer(base, &daddr, create);
+पूर्ण
 
-static inline struct inet_peer *inet_getpeer_v6(struct inet_peer_base *base,
-						const struct in6_addr *v6daddr,
-						int create)
-{
-	struct inetpeer_addr daddr;
+अटल अंतरभूत काष्ठा inet_peer *inet_getpeer_v6(काष्ठा inet_peer_base *base,
+						स्थिर काष्ठा in6_addr *v6daddr,
+						पूर्णांक create)
+अणु
+	काष्ठा inetpeer_addr daddr;
 
 	daddr.a6 = *v6daddr;
 	daddr.family = AF_INET6;
-	return inet_getpeer(base, &daddr, create);
-}
+	वापस inet_getpeer(base, &daddr, create);
+पूर्ण
 
-static inline int inetpeer_addr_cmp(const struct inetpeer_addr *a,
-				    const struct inetpeer_addr *b)
-{
-	int i, n;
+अटल अंतरभूत पूर्णांक inetpeer_addr_cmp(स्थिर काष्ठा inetpeer_addr *a,
+				    स्थिर काष्ठा inetpeer_addr *b)
+अणु
+	पूर्णांक i, n;
 
-	if (a->family == AF_INET)
-		n = sizeof(a->a4) / sizeof(u32);
-	else
-		n = sizeof(a->a6) / sizeof(u32);
+	अगर (a->family == AF_INET)
+		n = माप(a->a4) / माप(u32);
+	अन्यथा
+		n = माप(a->a6) / माप(u32);
 
-	for (i = 0; i < n; i++) {
-		if (a->key[i] == b->key[i])
-			continue;
-		if (a->key[i] < b->key[i])
-			return -1;
-		return 1;
-	}
+	क्रम (i = 0; i < n; i++) अणु
+		अगर (a->key[i] == b->key[i])
+			जारी;
+		अगर (a->key[i] < b->key[i])
+			वापस -1;
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* can be called from BH context or outside */
-void inet_putpeer(struct inet_peer *p);
-bool inet_peer_xrlim_allow(struct inet_peer *peer, int timeout);
+व्योम inet_putpeer(काष्ठा inet_peer *p);
+bool inet_peer_xrlim_allow(काष्ठा inet_peer *peer, पूर्णांक समयout);
 
-void inetpeer_invalidate_tree(struct inet_peer_base *);
+व्योम inetpeer_invalidate_tree(काष्ठा inet_peer_base *);
 
-#endif /* _NET_INETPEER_H */
+#पूर्ण_अगर /* _NET_INETPEER_H */

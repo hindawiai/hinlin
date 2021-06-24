@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Greybus bundles
  *
@@ -6,247 +7,247 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
-#include <linux/greybus.h>
-#include "greybus_trace.h"
+#समावेश <linux/greybus.h>
+#समावेश "greybus_trace.h"
 
-static ssize_t bundle_class_show(struct device *dev,
-				 struct device_attribute *attr, char *buf)
-{
-	struct gb_bundle *bundle = to_gb_bundle(dev);
+अटल sमाप_प्रकार bundle_class_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
 
-	return sprintf(buf, "0x%02x\n", bundle->class);
-}
-static DEVICE_ATTR_RO(bundle_class);
+	वापस प्र_लिखो(buf, "0x%02x\n", bundle->class);
+पूर्ण
+अटल DEVICE_ATTR_RO(bundle_class);
 
-static ssize_t bundle_id_show(struct device *dev,
-			      struct device_attribute *attr, char *buf)
-{
-	struct gb_bundle *bundle = to_gb_bundle(dev);
+अटल sमाप_प्रकार bundle_id_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
 
-	return sprintf(buf, "%u\n", bundle->id);
-}
-static DEVICE_ATTR_RO(bundle_id);
+	वापस प्र_लिखो(buf, "%u\n", bundle->id);
+पूर्ण
+अटल DEVICE_ATTR_RO(bundle_id);
 
-static ssize_t state_show(struct device *dev, struct device_attribute *attr,
-			  char *buf)
-{
-	struct gb_bundle *bundle = to_gb_bundle(dev);
+अटल sमाप_प्रकार state_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
 
-	if (!bundle->state)
-		return sprintf(buf, "\n");
+	अगर (!bundle->state)
+		वापस प्र_लिखो(buf, "\n");
 
-	return sprintf(buf, "%s\n", bundle->state);
-}
+	वापस प्र_लिखो(buf, "%s\n", bundle->state);
+पूर्ण
 
-static ssize_t state_store(struct device *dev, struct device_attribute *attr,
-			   const char *buf, size_t size)
-{
-	struct gb_bundle *bundle = to_gb_bundle(dev);
+अटल sमाप_प्रकार state_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
 
-	kfree(bundle->state);
+	kमुक्त(bundle->state);
 	bundle->state = kstrdup(buf, GFP_KERNEL);
-	if (!bundle->state)
-		return -ENOMEM;
+	अगर (!bundle->state)
+		वापस -ENOMEM;
 
 	/* Tell userspace that the file contents changed */
-	sysfs_notify(&bundle->dev.kobj, NULL, "state");
+	sysfs_notअगरy(&bundle->dev.kobj, शून्य, "state");
 
-	return size;
-}
-static DEVICE_ATTR_RW(state);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(state);
 
-static struct attribute *bundle_attrs[] = {
+अटल काष्ठा attribute *bundle_attrs[] = अणु
 	&dev_attr_bundle_class.attr,
 	&dev_attr_bundle_id.attr,
 	&dev_attr_state.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 ATTRIBUTE_GROUPS(bundle);
 
-static struct gb_bundle *gb_bundle_find(struct gb_interface *intf,
+अटल काष्ठा gb_bundle *gb_bundle_find(काष्ठा gb_पूर्णांकerface *पूर्णांकf,
 					u8 bundle_id)
-{
-	struct gb_bundle *bundle;
+अणु
+	काष्ठा gb_bundle *bundle;
 
-	list_for_each_entry(bundle, &intf->bundles, links) {
-		if (bundle->id == bundle_id)
-			return bundle;
-	}
+	list_क्रम_each_entry(bundle, &पूर्णांकf->bundles, links) अणु
+		अगर (bundle->id == bundle_id)
+			वापस bundle;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void gb_bundle_release(struct device *dev)
-{
-	struct gb_bundle *bundle = to_gb_bundle(dev);
+अटल व्योम gb_bundle_release(काष्ठा device *dev)
+अणु
+	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
 
 	trace_gb_bundle_release(bundle);
 
-	kfree(bundle->state);
-	kfree(bundle->cport_desc);
-	kfree(bundle);
-}
+	kमुक्त(bundle->state);
+	kमुक्त(bundle->cport_desc);
+	kमुक्त(bundle);
+पूर्ण
 
-#ifdef CONFIG_PM
-static void gb_bundle_disable_all_connections(struct gb_bundle *bundle)
-{
-	struct gb_connection *connection;
+#अगर_घोषित CONFIG_PM
+अटल व्योम gb_bundle_disable_all_connections(काष्ठा gb_bundle *bundle)
+अणु
+	काष्ठा gb_connection *connection;
 
-	list_for_each_entry(connection, &bundle->connections, bundle_links)
+	list_क्रम_each_entry(connection, &bundle->connections, bundle_links)
 		gb_connection_disable(connection);
-}
+पूर्ण
 
-static void gb_bundle_enable_all_connections(struct gb_bundle *bundle)
-{
-	struct gb_connection *connection;
+अटल व्योम gb_bundle_enable_all_connections(काष्ठा gb_bundle *bundle)
+अणु
+	काष्ठा gb_connection *connection;
 
-	list_for_each_entry(connection, &bundle->connections, bundle_links)
+	list_क्रम_each_entry(connection, &bundle->connections, bundle_links)
 		gb_connection_enable(connection);
-}
+पूर्ण
 
-static int gb_bundle_suspend(struct device *dev)
-{
-	struct gb_bundle *bundle = to_gb_bundle(dev);
-	const struct dev_pm_ops *pm = dev->driver->pm;
-	int ret;
+अटल पूर्णांक gb_bundle_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
+	स्थिर काष्ठा dev_pm_ops *pm = dev->driver->pm;
+	पूर्णांक ret;
 
-	if (pm && pm->runtime_suspend) {
-		ret = pm->runtime_suspend(&bundle->dev);
-		if (ret)
-			return ret;
-	} else {
+	अगर (pm && pm->runसमय_suspend) अणु
+		ret = pm->runसमय_suspend(&bundle->dev);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		gb_bundle_disable_all_connections(bundle);
-	}
+	पूर्ण
 
-	ret = gb_control_bundle_suspend(bundle->intf->control, bundle->id);
-	if (ret) {
-		if (pm && pm->runtime_resume)
-			ret = pm->runtime_resume(dev);
-		else
+	ret = gb_control_bundle_suspend(bundle->पूर्णांकf->control, bundle->id);
+	अगर (ret) अणु
+		अगर (pm && pm->runसमय_resume)
+			ret = pm->runसमय_resume(dev);
+		अन्यथा
 			gb_bundle_enable_all_connections(bundle);
 
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_bundle_resume(struct device *dev)
-{
-	struct gb_bundle *bundle = to_gb_bundle(dev);
-	const struct dev_pm_ops *pm = dev->driver->pm;
-	int ret;
+अटल पूर्णांक gb_bundle_resume(काष्ठा device *dev)
+अणु
+	काष्ठा gb_bundle *bundle = to_gb_bundle(dev);
+	स्थिर काष्ठा dev_pm_ops *pm = dev->driver->pm;
+	पूर्णांक ret;
 
-	ret = gb_control_bundle_resume(bundle->intf->control, bundle->id);
-	if (ret)
-		return ret;
+	ret = gb_control_bundle_resume(bundle->पूर्णांकf->control, bundle->id);
+	अगर (ret)
+		वापस ret;
 
-	if (pm && pm->runtime_resume) {
-		ret = pm->runtime_resume(dev);
-		if (ret)
-			return ret;
-	} else {
+	अगर (pm && pm->runसमय_resume) अणु
+		ret = pm->runसमय_resume(dev);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		gb_bundle_enable_all_connections(bundle);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gb_bundle_idle(struct device *dev)
-{
-	pm_runtime_mark_last_busy(dev);
-	pm_request_autosuspend(dev);
+अटल पूर्णांक gb_bundle_idle(काष्ठा device *dev)
+अणु
+	pm_runसमय_mark_last_busy(dev);
+	pm_request_स्वतःsuspend(dev);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops gb_bundle_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops gb_bundle_pm_ops = अणु
 	SET_RUNTIME_PM_OPS(gb_bundle_suspend, gb_bundle_resume, gb_bundle_idle)
-};
+पूर्ण;
 
-struct device_type greybus_bundle_type = {
+काष्ठा device_type greybus_bundle_type = अणु
 	.name =		"greybus_bundle",
 	.release =	gb_bundle_release,
 	.pm =		&gb_bundle_pm_ops,
-};
+पूर्ण;
 
 /*
- * Create a gb_bundle structure to represent a discovered
- * bundle.  Returns a pointer to the new bundle or a null
- * pointer if a failure occurs due to memory exhaustion.
+ * Create a gb_bundle काष्ठाure to represent a discovered
+ * bundle.  Returns a poपूर्णांकer to the new bundle or a null
+ * poपूर्णांकer अगर a failure occurs due to memory exhaustion.
  */
-struct gb_bundle *gb_bundle_create(struct gb_interface *intf, u8 bundle_id,
+काष्ठा gb_bundle *gb_bundle_create(काष्ठा gb_पूर्णांकerface *पूर्णांकf, u8 bundle_id,
 				   u8 class)
-{
-	struct gb_bundle *bundle;
+अणु
+	काष्ठा gb_bundle *bundle;
 
-	if (bundle_id == BUNDLE_ID_NONE) {
-		dev_err(&intf->dev, "can't use bundle id %u\n", bundle_id);
-		return NULL;
-	}
+	अगर (bundle_id == BUNDLE_ID_NONE) अणु
+		dev_err(&पूर्णांकf->dev, "can't use bundle id %u\n", bundle_id);
+		वापस शून्य;
+	पूर्ण
 
 	/*
 	 * Reject any attempt to reuse a bundle id.  We initialize
 	 * these serially, so there's no need to worry about keeping
-	 * the interface bundle list locked here.
+	 * the पूर्णांकerface bundle list locked here.
 	 */
-	if (gb_bundle_find(intf, bundle_id)) {
-		dev_err(&intf->dev, "duplicate bundle id %u\n", bundle_id);
-		return NULL;
-	}
+	अगर (gb_bundle_find(पूर्णांकf, bundle_id)) अणु
+		dev_err(&पूर्णांकf->dev, "duplicate bundle id %u\n", bundle_id);
+		वापस शून्य;
+	पूर्ण
 
-	bundle = kzalloc(sizeof(*bundle), GFP_KERNEL);
-	if (!bundle)
-		return NULL;
+	bundle = kzalloc(माप(*bundle), GFP_KERNEL);
+	अगर (!bundle)
+		वापस शून्य;
 
-	bundle->intf = intf;
+	bundle->पूर्णांकf = पूर्णांकf;
 	bundle->id = bundle_id;
 	bundle->class = class;
 	INIT_LIST_HEAD(&bundle->connections);
 
-	bundle->dev.parent = &intf->dev;
+	bundle->dev.parent = &पूर्णांकf->dev;
 	bundle->dev.bus = &greybus_bus_type;
 	bundle->dev.type = &greybus_bundle_type;
 	bundle->dev.groups = bundle_groups;
-	bundle->dev.dma_mask = intf->dev.dma_mask;
+	bundle->dev.dma_mask = पूर्णांकf->dev.dma_mask;
 	device_initialize(&bundle->dev);
-	dev_set_name(&bundle->dev, "%s.%d", dev_name(&intf->dev), bundle_id);
+	dev_set_name(&bundle->dev, "%s.%d", dev_name(&पूर्णांकf->dev), bundle_id);
 
-	list_add(&bundle->links, &intf->bundles);
+	list_add(&bundle->links, &पूर्णांकf->bundles);
 
 	trace_gb_bundle_create(bundle);
 
-	return bundle;
-}
+	वापस bundle;
+पूर्ण
 
-int gb_bundle_add(struct gb_bundle *bundle)
-{
-	int ret;
+पूर्णांक gb_bundle_add(काष्ठा gb_bundle *bundle)
+अणु
+	पूर्णांक ret;
 
 	ret = device_add(&bundle->dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&bundle->dev, "failed to register bundle: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	trace_gb_bundle_add(bundle);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Tear down a previously set up bundle.
+ * Tear करोwn a previously set up bundle.
  */
-void gb_bundle_destroy(struct gb_bundle *bundle)
-{
+व्योम gb_bundle_destroy(काष्ठा gb_bundle *bundle)
+अणु
 	trace_gb_bundle_destroy(bundle);
 
-	if (device_is_registered(&bundle->dev))
+	अगर (device_is_रेजिस्टरed(&bundle->dev))
 		device_del(&bundle->dev);
 
 	list_del(&bundle->links);
 
 	put_device(&bundle->dev);
-}
+पूर्ण

@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_OPROXY_H__
-#define __NVKM_OPROXY_H__
-#define nvkm_oproxy(p) container_of((p), struct nvkm_oproxy, base)
-#include <core/object.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_OPROXY_H__
+#घोषणा __NVKM_OPROXY_H__
+#घोषणा nvkm_oproxy(p) container_of((p), काष्ठा nvkm_oproxy, base)
+#समावेश <core/object.h>
 
-struct nvkm_oproxy {
-	const struct nvkm_oproxy_func *func;
-	struct nvkm_object base;
-	struct nvkm_object *object;
-};
+काष्ठा nvkm_oproxy अणु
+	स्थिर काष्ठा nvkm_oproxy_func *func;
+	काष्ठा nvkm_object base;
+	काष्ठा nvkm_object *object;
+पूर्ण;
 
-struct nvkm_oproxy_func {
-	void (*dtor[2])(struct nvkm_oproxy *);
-	int  (*init[2])(struct nvkm_oproxy *);
-	int  (*fini[2])(struct nvkm_oproxy *, bool suspend);
-};
+काष्ठा nvkm_oproxy_func अणु
+	व्योम (*dtor[2])(काष्ठा nvkm_oproxy *);
+	पूर्णांक  (*init[2])(काष्ठा nvkm_oproxy *);
+	पूर्णांक  (*fini[2])(काष्ठा nvkm_oproxy *, bool suspend);
+पूर्ण;
 
-void nvkm_oproxy_ctor(const struct nvkm_oproxy_func *,
-		      const struct nvkm_oclass *, struct nvkm_oproxy *);
-int  nvkm_oproxy_new_(const struct nvkm_oproxy_func *,
-		      const struct nvkm_oclass *, struct nvkm_oproxy **);
-#endif
+व्योम nvkm_oproxy_ctor(स्थिर काष्ठा nvkm_oproxy_func *,
+		      स्थिर काष्ठा nvkm_oclass *, काष्ठा nvkm_oproxy *);
+पूर्णांक  nvkm_oproxy_new_(स्थिर काष्ठा nvkm_oproxy_func *,
+		      स्थिर काष्ठा nvkm_oclass *, काष्ठा nvkm_oproxy **);
+#पूर्ण_अगर

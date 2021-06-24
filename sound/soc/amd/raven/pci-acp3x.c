@@ -1,187 +1,188 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // AMD ACP PCI Driver
 //
 //Copyright 2016 Advanced Micro Devices, Inc.
 
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/pm_runtime.h>
-#include <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/delay.h>
 
-#include "acp3x.h"
+#समावेश "acp3x.h"
 
-struct acp3x_dev_data {
-	void __iomem *acp3x_base;
+काष्ठा acp3x_dev_data अणु
+	व्योम __iomem *acp3x_base;
 	bool acp3x_audio_mode;
-	struct resource *res;
-	struct platform_device *pdev[ACP3x_DEVS];
+	काष्ठा resource *res;
+	काष्ठा platक्रमm_device *pdev[ACP3x_DEVS];
 	u32 pme_en;
-};
+पूर्ण;
 
-static int acp3x_power_on(struct acp3x_dev_data *adata)
-{
-	void __iomem *acp3x_base = adata->acp3x_base;
+अटल पूर्णांक acp3x_घातer_on(काष्ठा acp3x_dev_data *adata)
+अणु
+	व्योम __iomem *acp3x_base = adata->acp3x_base;
 	u32 val;
-	int timeout;
+	पूर्णांक समयout;
 
-	val = rv_readl(acp3x_base + mmACP_PGFSM_STATUS);
+	val = rv_पढ़ोl(acp3x_base + mmACP_PGFSM_STATUS);
 
-	if (val == 0)
-		return val;
+	अगर (val == 0)
+		वापस val;
 
-	if (!((val & ACP_PGFSM_STATUS_MASK) ==
+	अगर (!((val & ACP_PGFSM_STATUS_MASK) ==
 				ACP_POWER_ON_IN_PROGRESS))
-		rv_writel(ACP_PGFSM_CNTL_POWER_ON_MASK,
+		rv_ग_लिखोl(ACP_PGFSM_CNTL_POWER_ON_MASK,
 			acp3x_base + mmACP_PGFSM_CONTROL);
-	timeout = 0;
-	while (++timeout < 500) {
-		val = rv_readl(acp3x_base + mmACP_PGFSM_STATUS);
-		if (!val) {
-			/* ACP power On clears PME_EN.
+	समयout = 0;
+	जबतक (++समयout < 500) अणु
+		val = rv_पढ़ोl(acp3x_base + mmACP_PGFSM_STATUS);
+		अगर (!val) अणु
+			/* ACP घातer On clears PME_EN.
 			 * Restore the value to its prior state
 			 */
-			rv_writel(adata->pme_en, acp3x_base + mmACP_PME_EN);
-			return 0;
-		}
+			rv_ग_लिखोl(adata->pme_en, acp3x_base + mmACP_PME_EN);
+			वापस 0;
+		पूर्ण
 		udelay(1);
-	}
-	return -ETIMEDOUT;
-}
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int acp3x_reset(void __iomem *acp3x_base)
-{
+अटल पूर्णांक acp3x_reset(व्योम __iomem *acp3x_base)
+अणु
 	u32 val;
-	int timeout;
+	पूर्णांक समयout;
 
-	rv_writel(1, acp3x_base + mmACP_SOFT_RESET);
-	timeout = 0;
-	while (++timeout < 500) {
-		val = rv_readl(acp3x_base + mmACP_SOFT_RESET);
-		if (val & ACP3x_SOFT_RESET__SoftResetAudDone_MASK)
-			break;
+	rv_ग_लिखोl(1, acp3x_base + mmACP_SOFT_RESET);
+	समयout = 0;
+	जबतक (++समयout < 500) अणु
+		val = rv_पढ़ोl(acp3x_base + mmACP_SOFT_RESET);
+		अगर (val & ACP3x_SOFT_RESET__SoftResetAudDone_MASK)
+			अवरोध;
 		cpu_relax();
-	}
-	rv_writel(0, acp3x_base + mmACP_SOFT_RESET);
-	timeout = 0;
-	while (++timeout < 500) {
-		val = rv_readl(acp3x_base + mmACP_SOFT_RESET);
-		if (!val)
-			return 0;
+	पूर्ण
+	rv_ग_लिखोl(0, acp3x_base + mmACP_SOFT_RESET);
+	समयout = 0;
+	जबतक (++समयout < 500) अणु
+		val = rv_पढ़ोl(acp3x_base + mmACP_SOFT_RESET);
+		अगर (!val)
+			वापस 0;
 		cpu_relax();
-	}
-	return -ETIMEDOUT;
-}
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static void acp3x_enable_interrupts(void __iomem *acp_base)
-{
-	rv_writel(0x01, acp_base + mmACP_EXTERNAL_INTR_ENB);
-}
+अटल व्योम acp3x_enable_पूर्णांकerrupts(व्योम __iomem *acp_base)
+अणु
+	rv_ग_लिखोl(0x01, acp_base + mmACP_EXTERNAL_INTR_ENB);
+पूर्ण
 
-static void acp3x_disable_interrupts(void __iomem *acp_base)
-{
-	rv_writel(ACP_EXT_INTR_STAT_CLEAR_MASK, acp_base +
+अटल व्योम acp3x_disable_पूर्णांकerrupts(व्योम __iomem *acp_base)
+अणु
+	rv_ग_लिखोl(ACP_EXT_INTR_STAT_CLEAR_MASK, acp_base +
 		  mmACP_EXTERNAL_INTR_STAT);
-	rv_writel(0x00, acp_base + mmACP_EXTERNAL_INTR_CNTL);
-	rv_writel(0x00, acp_base + mmACP_EXTERNAL_INTR_ENB);
-}
+	rv_ग_लिखोl(0x00, acp_base + mmACP_EXTERNAL_INTR_CNTL);
+	rv_ग_लिखोl(0x00, acp_base + mmACP_EXTERNAL_INTR_ENB);
+पूर्ण
 
-static int acp3x_init(struct acp3x_dev_data *adata)
-{
-	void __iomem *acp3x_base = adata->acp3x_base;
-	int ret;
+अटल पूर्णांक acp3x_init(काष्ठा acp3x_dev_data *adata)
+अणु
+	व्योम __iomem *acp3x_base = adata->acp3x_base;
+	पूर्णांक ret;
 
-	/* power on */
-	ret = acp3x_power_on(adata);
-	if (ret) {
+	/* घातer on */
+	ret = acp3x_घातer_on(adata);
+	अगर (ret) अणु
 		pr_err("ACP3x power on failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	/* Reset */
 	ret = acp3x_reset(acp3x_base);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("ACP3x reset failed\n");
-		return ret;
-	}
-	acp3x_enable_interrupts(acp3x_base);
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	acp3x_enable_पूर्णांकerrupts(acp3x_base);
+	वापस 0;
+पूर्ण
 
-static int acp3x_deinit(void __iomem *acp3x_base)
-{
-	int ret;
+अटल पूर्णांक acp3x_deinit(व्योम __iomem *acp3x_base)
+अणु
+	पूर्णांक ret;
 
-	acp3x_disable_interrupts(acp3x_base);
+	acp3x_disable_पूर्णांकerrupts(acp3x_base);
 	/* Reset */
 	ret = acp3x_reset(acp3x_base);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("ACP3x reset failed\n");
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int snd_acp3x_probe(struct pci_dev *pci,
-			   const struct pci_device_id *pci_id)
-{
-	struct acp3x_dev_data *adata;
-	struct platform_device_info pdevinfo[ACP3x_DEVS];
-	unsigned int irqflags;
-	int ret, i;
+अटल पूर्णांक snd_acp3x_probe(काष्ठा pci_dev *pci,
+			   स्थिर काष्ठा pci_device_id *pci_id)
+अणु
+	काष्ठा acp3x_dev_data *adata;
+	काष्ठा platक्रमm_device_info pdevinfo[ACP3x_DEVS];
+	अचिन्हित पूर्णांक irqflags;
+	पूर्णांक ret, i;
 	u32 addr, val;
 
 	/* Raven device detection */
-	if (pci->revision != 0x00)
-		return -ENODEV;
+	अगर (pci->revision != 0x00)
+		वापस -ENODEV;
 
-	if (pci_enable_device(pci)) {
+	अगर (pci_enable_device(pci)) अणु
 		dev_err(&pci->dev, "pci_enable_device failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ret = pci_request_regions(pci, "AMD ACP3x audio");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pci->dev, "pci_request_regions failed\n");
-		goto disable_pci;
-	}
+		जाओ disable_pci;
+	पूर्ण
 
-	adata = devm_kzalloc(&pci->dev, sizeof(struct acp3x_dev_data),
+	adata = devm_kzalloc(&pci->dev, माप(काष्ठा acp3x_dev_data),
 			     GFP_KERNEL);
-	if (!adata) {
+	अगर (!adata) अणु
 		ret = -ENOMEM;
-		goto release_regions;
-	}
+		जाओ release_regions;
+	पूर्ण
 
 	irqflags = IRQF_SHARED;
 
 	addr = pci_resource_start(pci, 0);
 	adata->acp3x_base = devm_ioremap(&pci->dev, addr,
 					pci_resource_len(pci, 0));
-	if (!adata->acp3x_base) {
+	अगर (!adata->acp3x_base) अणु
 		ret = -ENOMEM;
-		goto release_regions;
-	}
+		जाओ release_regions;
+	पूर्ण
 	pci_set_master(pci);
 	pci_set_drvdata(pci, adata);
 	/* Save ACP_PME_EN state */
-	adata->pme_en = rv_readl(adata->acp3x_base + mmACP_PME_EN);
+	adata->pme_en = rv_पढ़ोl(adata->acp3x_base + mmACP_PME_EN);
 	ret = acp3x_init(adata);
-	if (ret)
-		goto release_regions;
+	अगर (ret)
+		जाओ release_regions;
 
-	val = rv_readl(adata->acp3x_base + mmACP_I2S_PIN_CONFIG);
-	switch (val) {
-	case I2S_MODE:
+	val = rv_पढ़ोl(adata->acp3x_base + mmACP_I2S_PIN_CONFIG);
+	चयन (val) अणु
+	हाल I2S_MODE:
 		adata->res = devm_kzalloc(&pci->dev,
-					  sizeof(struct resource) * 4,
+					  माप(काष्ठा resource) * 4,
 					  GFP_KERNEL);
-		if (!adata->res) {
+		अगर (!adata->res) अणु
 			ret = -ENOMEM;
-			goto de_init;
-		}
+			जाओ de_init;
+		पूर्ण
 
 		adata->res[0].name = "acp3x_i2s_iomem";
 		adata->res[0].flags = IORESOURCE_MEM;
@@ -205,14 +206,14 @@ static int snd_acp3x_probe(struct pci_dev *pci,
 
 		adata->acp3x_audio_mode = ACP3x_I2S_MODE;
 
-		memset(&pdevinfo, 0, sizeof(pdevinfo));
+		स_रखो(&pdevinfo, 0, माप(pdevinfo));
 		pdevinfo[0].name = "acp3x_rv_i2s_dma";
 		pdevinfo[0].id = 0;
 		pdevinfo[0].parent = &pci->dev;
 		pdevinfo[0].num_res = 4;
 		pdevinfo[0].res = &adata->res[0];
 		pdevinfo[0].data = &irqflags;
-		pdevinfo[0].size_data = sizeof(irqflags);
+		pdevinfo[0].size_data = माप(irqflags);
 
 		pdevinfo[1].name = "acp3x_i2s_playcap";
 		pdevinfo[1].id = 0;
@@ -231,113 +232,113 @@ static int snd_acp3x_probe(struct pci_dev *pci,
 		pdevinfo[3].parent = &pci->dev;
 		pdevinfo[3].num_res = 1;
 		pdevinfo[3].res = &adata->res[2];
-		for (i = 0; i < ACP3x_DEVS; i++) {
+		क्रम (i = 0; i < ACP3x_DEVS; i++) अणु
 			adata->pdev[i] =
-				platform_device_register_full(&pdevinfo[i]);
-			if (IS_ERR(adata->pdev[i])) {
+				platक्रमm_device_रेजिस्टर_full(&pdevinfo[i]);
+			अगर (IS_ERR(adata->pdev[i])) अणु
 				dev_err(&pci->dev, "cannot register %s device\n",
 					pdevinfo[i].name);
 				ret = PTR_ERR(adata->pdev[i]);
-				goto unregister_devs;
-			}
-		}
-		break;
-	default:
+				जाओ unरेजिस्टर_devs;
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_info(&pci->dev, "ACP audio mode : %d\n", val);
-		break;
-	}
-	pm_runtime_set_autosuspend_delay(&pci->dev, 2000);
-	pm_runtime_use_autosuspend(&pci->dev);
-	pm_runtime_put_noidle(&pci->dev);
-	pm_runtime_allow(&pci->dev);
-	return 0;
+		अवरोध;
+	पूर्ण
+	pm_runसमय_set_स्वतःsuspend_delay(&pci->dev, 2000);
+	pm_runसमय_use_स्वतःsuspend(&pci->dev);
+	pm_runसमय_put_noidle(&pci->dev);
+	pm_runसमय_allow(&pci->dev);
+	वापस 0;
 
-unregister_devs:
-	if (val == I2S_MODE)
-		for (i = 0; i < ACP3x_DEVS; i++)
-			platform_device_unregister(adata->pdev[i]);
+unरेजिस्टर_devs:
+	अगर (val == I2S_MODE)
+		क्रम (i = 0; i < ACP3x_DEVS; i++)
+			platक्रमm_device_unरेजिस्टर(adata->pdev[i]);
 de_init:
-	if (acp3x_deinit(adata->acp3x_base))
+	अगर (acp3x_deinit(adata->acp3x_base))
 		dev_err(&pci->dev, "ACP de-init failed\n");
 release_regions:
 	pci_release_regions(pci);
 disable_pci:
 	pci_disable_device(pci);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int snd_acp3x_suspend(struct device *dev)
-{
-	int ret;
-	struct acp3x_dev_data *adata;
+अटल पूर्णांक snd_acp3x_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा acp3x_dev_data *adata;
 
 	adata = dev_get_drvdata(dev);
 	ret = acp3x_deinit(adata->acp3x_base);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "ACP de-init failed\n");
-	else
+	अन्यथा
 		dev_dbg(dev, "ACP de-initialized\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_acp3x_resume(struct device *dev)
-{
-	int ret;
-	struct acp3x_dev_data *adata;
+अटल पूर्णांक snd_acp3x_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा acp3x_dev_data *adata;
 
 	adata = dev_get_drvdata(dev);
 	ret = acp3x_init(adata);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "ACP init failed\n");
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops acp3x_pm = {
-	.runtime_suspend = snd_acp3x_suspend,
-	.runtime_resume =  snd_acp3x_resume,
+अटल स्थिर काष्ठा dev_pm_ops acp3x_pm = अणु
+	.runसमय_suspend = snd_acp3x_suspend,
+	.runसमय_resume =  snd_acp3x_resume,
 	.resume =	snd_acp3x_resume,
-};
+पूर्ण;
 
-static void snd_acp3x_remove(struct pci_dev *pci)
-{
-	struct acp3x_dev_data *adata;
-	int i, ret;
+अटल व्योम snd_acp3x_हटाओ(काष्ठा pci_dev *pci)
+अणु
+	काष्ठा acp3x_dev_data *adata;
+	पूर्णांक i, ret;
 
 	adata = pci_get_drvdata(pci);
-	if (adata->acp3x_audio_mode == ACP3x_I2S_MODE) {
-		for (i = 0; i < ACP3x_DEVS; i++)
-			platform_device_unregister(adata->pdev[i]);
-	}
+	अगर (adata->acp3x_audio_mode == ACP3x_I2S_MODE) अणु
+		क्रम (i = 0; i < ACP3x_DEVS; i++)
+			platक्रमm_device_unरेजिस्टर(adata->pdev[i]);
+	पूर्ण
 	ret = acp3x_deinit(adata->acp3x_base);
-	if (ret)
+	अगर (ret)
 		dev_err(&pci->dev, "ACP de-init failed\n");
-	pm_runtime_forbid(&pci->dev);
-	pm_runtime_get_noresume(&pci->dev);
+	pm_runसमय_क्रमbid(&pci->dev);
+	pm_runसमय_get_noresume(&pci->dev);
 	pci_release_regions(pci);
 	pci_disable_device(pci);
-}
+पूर्ण
 
-static const struct pci_device_id snd_acp3x_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_AMD, 0x15e2),
+अटल स्थिर काष्ठा pci_device_id snd_acp3x_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_AMD, 0x15e2),
 	.class = PCI_CLASS_MULTIMEDIA_OTHER << 8,
-	.class_mask = 0xffffff },
-	{ 0, },
-};
+	.class_mask = 0xffffff पूर्ण,
+	अणु 0, पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, snd_acp3x_ids);
 
-static struct pci_driver acp3x_driver  = {
+अटल काष्ठा pci_driver acp3x_driver  = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = snd_acp3x_ids,
 	.probe = snd_acp3x_probe,
-	.remove = snd_acp3x_remove,
-	.driver = {
+	.हटाओ = snd_acp3x_हटाओ,
+	.driver = अणु
 		.pm = &acp3x_pm,
-	}
-};
+	पूर्ण
+पूर्ण;
 
 module_pci_driver(acp3x_driver);
 

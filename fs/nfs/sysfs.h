@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2019 Hammerspace Inc
  */
 
-#ifndef __NFS_SYSFS_H
-#define __NFS_SYSFS_H
+#अगर_अघोषित __NFS_SYSFS_H
+#घोषणा __NFS_SYSFS_H
 
-#define CONTAINER_ID_MAXLEN (64)
+#घोषणा CONTAINER_ID_MAXLEN (64)
 
-struct nfs_netns_client {
-	struct kobject kobject;
-	struct net *net;
-	const char __rcu *identifier;
-};
+काष्ठा nfs_netns_client अणु
+	काष्ठा kobject kobject;
+	काष्ठा net *net;
+	स्थिर अक्षर __rcu *identअगरier;
+पूर्ण;
 
-extern struct kobject *nfs_client_kobj;
+बाह्य काष्ठा kobject *nfs_client_kobj;
 
-extern int nfs_sysfs_init(void);
-extern void nfs_sysfs_exit(void);
+बाह्य पूर्णांक nfs_sysfs_init(व्योम);
+बाह्य व्योम nfs_sysfs_निकास(व्योम);
 
-void nfs_netns_sysfs_setup(struct nfs_net *netns, struct net *net);
-void nfs_netns_sysfs_destroy(struct nfs_net *netns);
+व्योम nfs_netns_sysfs_setup(काष्ठा nfs_net *netns, काष्ठा net *net);
+व्योम nfs_netns_sysfs_destroy(काष्ठा nfs_net *netns);
 
-#endif
+#पूर्ण_अगर

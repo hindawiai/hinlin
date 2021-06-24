@@ -1,49 +1,50 @@
+<शैली गुरु>
 /*
- * Broadcom specific AMBA
+ * Broadcom specअगरic AMBA
  * ChipCommon parallel flash
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include "bcma_private.h"
+#समावेश "bcma_private.h"
 
-#include <linux/bcma/bcma.h>
-#include <linux/mtd/physmap.h>
-#include <linux/platform_device.h>
+#समावेश <linux/bcma/bcma.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/platक्रमm_device.h>
 
-static const char * const part_probes[] = { "bcm47xxpart", NULL };
+अटल स्थिर अक्षर * स्थिर part_probes[] = अणु "bcm47xxpart", शून्य पूर्ण;
 
-static struct physmap_flash_data bcma_pflash_data = {
+अटल काष्ठा physmap_flash_data bcma_pflash_data = अणु
 	.part_probe_types	= part_probes,
-};
+पूर्ण;
 
-static struct resource bcma_pflash_resource = {
+अटल काष्ठा resource bcma_pflash_resource = अणु
 	.name	= "bcma_pflash",
 	.flags  = IORESOURCE_MEM,
-};
+पूर्ण;
 
-struct platform_device bcma_pflash_dev = {
+काष्ठा platक्रमm_device bcma_pflash_dev = अणु
 	.name		= "physmap-flash",
-	.dev		= {
-		.platform_data  = &bcma_pflash_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data  = &bcma_pflash_data,
+	पूर्ण,
 	.resource	= &bcma_pflash_resource,
 	.num_resources	= 1,
-};
+पूर्ण;
 
-int bcma_pflash_init(struct bcma_drv_cc *cc)
-{
-	struct bcma_pflash *pflash = &cc->pflash;
+पूर्णांक bcma_pflash_init(काष्ठा bcma_drv_cc *cc)
+अणु
+	काष्ठा bcma_pflash *pflash = &cc->pflash;
 
 	pflash->present = true;
 
-	if (!(bcma_read32(cc->core, BCMA_CC_FLASH_CFG) & BCMA_CC_FLASH_CFG_DS))
+	अगर (!(bcma_पढ़ो32(cc->core, BCMA_CC_FLASH_CFG) & BCMA_CC_FLASH_CFG_DS))
 		bcma_pflash_data.width = 1;
-	else
+	अन्यथा
 		bcma_pflash_data.width = 2;
 
 	bcma_pflash_resource.start = BCMA_SOC_FLASH2;
 	bcma_pflash_resource.end = BCMA_SOC_FLASH2 + BCMA_SOC_FLASH2_SZ;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

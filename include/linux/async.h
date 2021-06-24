@@ -1,121 +1,122 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * async.h: Asynchronous function calls for boot performance
+ * async.h: Asynchronous function calls क्रम boot perक्रमmance
  *
  * (C) Copyright 2009 Intel Corporation
- * Author: Arjan van de Ven <arjan@linux.intel.com>
+ * Author: Arjan van de Ven <arjan@linux.पूर्णांकel.com>
  */
-#ifndef __ASYNC_H__
-#define __ASYNC_H__
+#अगर_अघोषित __ASYNC_H__
+#घोषणा __ASYNC_H__
 
-#include <linux/types.h>
-#include <linux/list.h>
-#include <linux/numa.h>
-#include <linux/device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/list.h>
+#समावेश <linux/numa.h>
+#समावेश <linux/device.h>
 
-typedef u64 async_cookie_t;
-typedef void (*async_func_t) (void *data, async_cookie_t cookie);
-struct async_domain {
-	struct list_head pending;
-	unsigned registered:1;
-};
+प्रकार u64 async_cookie_t;
+प्रकार व्योम (*async_func_t) (व्योम *data, async_cookie_t cookie);
+काष्ठा async_करोमुख्य अणु
+	काष्ठा list_head pending;
+	अचिन्हित रेजिस्टरed:1;
+पूर्ण;
 
 /*
- * domain participates in global async_synchronize_full
+ * करोमुख्य participates in global async_synchronize_full
  */
-#define ASYNC_DOMAIN(_name) \
-	struct async_domain _name = { .pending = LIST_HEAD_INIT(_name.pending),	\
-				      .registered = 1 }
+#घोषणा ASYNC_DOMAIN(_name) \
+	काष्ठा async_करोमुख्य _name = अणु .pending = LIST_HEAD_INIT(_name.pending),	\
+				      .रेजिस्टरed = 1 पूर्ण
 
 /*
- * domain is free to go out of scope as soon as all pending work is
- * complete, this domain does not participate in async_synchronize_full
+ * करोमुख्य is मुक्त to go out of scope as soon as all pending work is
+ * complete, this करोमुख्य करोes not participate in async_synchronize_full
  */
-#define ASYNC_DOMAIN_EXCLUSIVE(_name) \
-	struct async_domain _name = { .pending = LIST_HEAD_INIT(_name.pending), \
-				      .registered = 0 }
+#घोषणा ASYNC_DOMAIN_EXCLUSIVE(_name) \
+	काष्ठा async_करोमुख्य _name = अणु .pending = LIST_HEAD_INIT(_name.pending), \
+				      .रेजिस्टरed = 0 पूर्ण
 
-async_cookie_t async_schedule_node(async_func_t func, void *data,
-				   int node);
-async_cookie_t async_schedule_node_domain(async_func_t func, void *data,
-					  int node,
-					  struct async_domain *domain);
+async_cookie_t async_schedule_node(async_func_t func, व्योम *data,
+				   पूर्णांक node);
+async_cookie_t async_schedule_node_करोमुख्य(async_func_t func, व्योम *data,
+					  पूर्णांक node,
+					  काष्ठा async_करोमुख्य *करोमुख्य);
 
 /**
- * async_schedule - schedule a function for asynchronous execution
+ * async_schedule - schedule a function क्रम asynchronous execution
  * @func: function to execute asynchronously
- * @data: data pointer to pass to the function
+ * @data: data poपूर्णांकer to pass to the function
  *
- * Returns an async_cookie_t that may be used for checkpointing later.
+ * Returns an async_cookie_t that may be used क्रम checkpoपूर्णांकing later.
  * Note: This function may be called from atomic or non-atomic contexts.
  */
-static inline async_cookie_t async_schedule(async_func_t func, void *data)
-{
-	return async_schedule_node(func, data, NUMA_NO_NODE);
-}
+अटल अंतरभूत async_cookie_t async_schedule(async_func_t func, व्योम *data)
+अणु
+	वापस async_schedule_node(func, data, NUMA_NO_NODE);
+पूर्ण
 
 /**
- * async_schedule_domain - schedule a function for asynchronous execution within a certain domain
+ * async_schedule_करोमुख्य - schedule a function क्रम asynchronous execution within a certain करोमुख्य
  * @func: function to execute asynchronously
- * @data: data pointer to pass to the function
- * @domain: the domain
+ * @data: data poपूर्णांकer to pass to the function
+ * @करोमुख्य: the करोमुख्य
  *
- * Returns an async_cookie_t that may be used for checkpointing later.
- * @domain may be used in the async_synchronize_*_domain() functions to
- * wait within a certain synchronization domain rather than globally.
+ * Returns an async_cookie_t that may be used क्रम checkpoपूर्णांकing later.
+ * @करोमुख्य may be used in the async_synchronize_*_करोमुख्य() functions to
+ * रुको within a certain synchronization करोमुख्य rather than globally.
  * Note: This function may be called from atomic or non-atomic contexts.
  */
-static inline async_cookie_t
-async_schedule_domain(async_func_t func, void *data,
-		      struct async_domain *domain)
-{
-	return async_schedule_node_domain(func, data, NUMA_NO_NODE, domain);
-}
+अटल अंतरभूत async_cookie_t
+async_schedule_करोमुख्य(async_func_t func, व्योम *data,
+		      काष्ठा async_करोमुख्य *करोमुख्य)
+अणु
+	वापस async_schedule_node_करोमुख्य(func, data, NUMA_NO_NODE, करोमुख्य);
+पूर्ण
 
 /**
- * async_schedule_dev - A device specific version of async_schedule
+ * async_schedule_dev - A device specअगरic version of async_schedule
  * @func: function to execute asynchronously
  * @dev: device argument to be passed to function
  *
- * Returns an async_cookie_t that may be used for checkpointing later.
- * @dev is used as both the argument for the function and to provide NUMA
- * context for where to run the function. By doing this we can try to
- * provide for the best possible outcome by operating on the device on the
- * CPUs closest to the device.
+ * Returns an async_cookie_t that may be used क्रम checkpoपूर्णांकing later.
+ * @dev is used as both the argument क्रम the function and to provide NUMA
+ * context क्रम where to run the function. By करोing this we can try to
+ * provide क्रम the best possible outcome by operating on the device on the
+ * CPUs बंदst to the device.
  * Note: This function may be called from atomic or non-atomic contexts.
  */
-static inline async_cookie_t
-async_schedule_dev(async_func_t func, struct device *dev)
-{
-	return async_schedule_node(func, dev, dev_to_node(dev));
-}
+अटल अंतरभूत async_cookie_t
+async_schedule_dev(async_func_t func, काष्ठा device *dev)
+अणु
+	वापस async_schedule_node(func, dev, dev_to_node(dev));
+पूर्ण
 
 /**
- * async_schedule_dev_domain - A device specific version of async_schedule_domain
+ * async_schedule_dev_करोमुख्य - A device specअगरic version of async_schedule_करोमुख्य
  * @func: function to execute asynchronously
  * @dev: device argument to be passed to function
- * @domain: the domain
+ * @करोमुख्य: the करोमुख्य
  *
- * Returns an async_cookie_t that may be used for checkpointing later.
- * @dev is used as both the argument for the function and to provide NUMA
- * context for where to run the function. By doing this we can try to
- * provide for the best possible outcome by operating on the device on the
- * CPUs closest to the device.
- * @domain may be used in the async_synchronize_*_domain() functions to
- * wait within a certain synchronization domain rather than globally.
+ * Returns an async_cookie_t that may be used क्रम checkpoपूर्णांकing later.
+ * @dev is used as both the argument क्रम the function and to provide NUMA
+ * context क्रम where to run the function. By करोing this we can try to
+ * provide क्रम the best possible outcome by operating on the device on the
+ * CPUs बंदst to the device.
+ * @करोमुख्य may be used in the async_synchronize_*_करोमुख्य() functions to
+ * रुको within a certain synchronization करोमुख्य rather than globally.
  * Note: This function may be called from atomic or non-atomic contexts.
  */
-static inline async_cookie_t
-async_schedule_dev_domain(async_func_t func, struct device *dev,
-			  struct async_domain *domain)
-{
-	return async_schedule_node_domain(func, dev, dev_to_node(dev), domain);
-}
+अटल अंतरभूत async_cookie_t
+async_schedule_dev_करोमुख्य(async_func_t func, काष्ठा device *dev,
+			  काष्ठा async_करोमुख्य *करोमुख्य)
+अणु
+	वापस async_schedule_node_करोमुख्य(func, dev, dev_to_node(dev), करोमुख्य);
+पूर्ण
 
-extern void async_synchronize_full(void);
-extern void async_synchronize_full_domain(struct async_domain *domain);
-extern void async_synchronize_cookie(async_cookie_t cookie);
-extern void async_synchronize_cookie_domain(async_cookie_t cookie,
-					    struct async_domain *domain);
-extern bool current_is_async(void);
-#endif
+बाह्य व्योम async_synchronize_full(व्योम);
+बाह्य व्योम async_synchronize_full_करोमुख्य(काष्ठा async_करोमुख्य *करोमुख्य);
+बाह्य व्योम async_synchronize_cookie(async_cookie_t cookie);
+बाह्य व्योम async_synchronize_cookie_करोमुख्य(async_cookie_t cookie,
+					    काष्ठा async_करोमुख्य *करोमुख्य);
+बाह्य bool current_is_async(व्योम);
+#पूर्ण_अगर

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -21,36 +22,36 @@
  * SOFTWARE.
  */
 
-#ifndef _INTEL_GVT_H_
-#define _INTEL_GVT_H_
+#अगर_अघोषित _INTEL_GVT_H_
+#घोषणा _INTEL_GVT_H_
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
-#ifdef CONFIG_DRM_I915_GVT
-int intel_gvt_init(struct drm_i915_private *dev_priv);
-void intel_gvt_driver_remove(struct drm_i915_private *dev_priv);
-int intel_gvt_init_device(struct drm_i915_private *dev_priv);
-void intel_gvt_clean_device(struct drm_i915_private *dev_priv);
-int intel_gvt_init_host(void);
-void intel_gvt_sanitize_options(struct drm_i915_private *dev_priv);
-void intel_gvt_resume(struct drm_i915_private *dev_priv);
-#else
-static inline int intel_gvt_init(struct drm_i915_private *dev_priv)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_DRM_I915_GVT
+पूर्णांक पूर्णांकel_gvt_init(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_gvt_driver_हटाओ(काष्ठा drm_i915_निजी *dev_priv);
+पूर्णांक पूर्णांकel_gvt_init_device(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_gvt_clean_device(काष्ठा drm_i915_निजी *dev_priv);
+पूर्णांक पूर्णांकel_gvt_init_host(व्योम);
+व्योम पूर्णांकel_gvt_sanitize_options(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_gvt_resume(काष्ठा drm_i915_निजी *dev_priv);
+#अन्यथा
+अटल अंतरभूत पूर्णांक पूर्णांकel_gvt_init(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void intel_gvt_driver_remove(struct drm_i915_private *dev_priv)
-{
-}
+अटल अंतरभूत व्योम पूर्णांकel_gvt_driver_हटाओ(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+पूर्ण
 
-static inline void intel_gvt_sanitize_options(struct drm_i915_private *dev_priv)
-{
-}
+अटल अंतरभूत व्योम पूर्णांकel_gvt_sanitize_options(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+पूर्ण
 
-static inline void intel_gvt_resume(struct drm_i915_private *dev_priv)
-{
-}
-#endif
+अटल अंतरभूत व्योम पूर्णांकel_gvt_resume(काष्ठा drm_i915_निजी *dev_priv)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _INTEL_GVT_H_ */
+#पूर्ण_अगर /* _INTEL_GVT_H_ */

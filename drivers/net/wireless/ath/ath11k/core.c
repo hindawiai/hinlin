@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: BSD-3-Clause-Clear
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause-Clear
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/remoteproc.h>
-#include <linux/firmware.h>
-#include <linux/of.h>
-#include "core.h"
-#include "dp_tx.h"
-#include "dp_rx.h"
-#include "debug.h"
-#include "hif.h"
-#include "wow.h"
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/remoteproc.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/of.h>
+#समावेश "core.h"
+#समावेश "dp_tx.h"
+#समावेश "dp_rx.h"
+#समावेश "debug.h"
+#समावेश "hif.h"
+#समावेश "wow.h"
 
-unsigned int ath11k_debug_mask;
+अचिन्हित पूर्णांक ath11k_debug_mask;
 EXPORT_SYMBOL(ath11k_debug_mask);
-module_param_named(debug_mask, ath11k_debug_mask, uint, 0644);
+module_param_named(debug_mask, ath11k_debug_mask, uपूर्णांक, 0644);
 MODULE_PARM_DESC(debug_mask, "Debugging mask");
 
-static unsigned int ath11k_crypto_mode;
-module_param_named(crypto_mode, ath11k_crypto_mode, uint, 0644);
+अटल अचिन्हित पूर्णांक ath11k_crypto_mode;
+module_param_named(crypto_mode, ath11k_crypto_mode, uपूर्णांक, 0644);
 MODULE_PARM_DESC(crypto_mode, "crypto mode: 0-hardware, 1-software");
 
-/* frame mode values are mapped as per enum ath11k_hw_txrx_mode */
-unsigned int ath11k_frame_mode = ATH11K_HW_TXRX_NATIVE_WIFI;
-module_param_named(frame_mode, ath11k_frame_mode, uint, 0644);
+/* frame mode values are mapped as per क्रमागत ath11k_hw_txrx_mode */
+अचिन्हित पूर्णांक ath11k_frame_mode = ATH11K_HW_TXRX_NATIVE_WIFI;
+module_param_named(frame_mode, ath11k_frame_mode, uपूर्णांक, 0644);
 MODULE_PARM_DESC(frame_mode,
 		 "Datapath frame mode (0: raw, 1: native wifi (default), 2: ethernet)");
 
-static const struct ath11k_hw_params ath11k_hw_params[] = {
-	{
+अटल स्थिर काष्ठा ath11k_hw_params ath11k_hw_params[] = अणु
+	अणु
 		.hw_rev = ATH11K_HW_IPQ8074,
 		.name = "ipq8074 hw2.0",
-		.fw = {
+		.fw = अणु
 			.dir = "IPQ8074/hw2.0",
 			.board_size = 256 * 1024,
 			.cal_size = 256 * 1024,
-		},
+		पूर्ण,
 		.max_radios = 3,
 		.bdf_addr = 0x4B0C0000,
 		.hw_ops = &ipq8074_ops,
 		.ring_mask = &ath11k_hw_ring_mask_ipq8074,
-		.internal_sleep_clock = false,
+		.पूर्णांकernal_sleep_घड़ी = false,
 		.regs = &ipq8074_regs,
 		.qmi_service_ins_id = ATH11K_QMI_WLFW_SERVICE_INS_ID_V01_IPQ8074,
 		.host_ce_config = ath11k_host_ce_config_ipq8074,
@@ -61,29 +62,29 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.tcl_0_only = false,
 		.spectral_fft_sz = 2,
 
-		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
+		.पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
 					BIT(NL80211_IFTYPE_AP) |
 					BIT(NL80211_IFTYPE_MESH_POINT),
 		.supports_monitor = true,
-		.supports_shadow_regs = false,
+		.supports_shaकरोw_regs = false,
 		.idle_ps = false,
 		.cold_boot_calib = true,
 		.supports_suspend = false,
-		.hal_desc_sz = sizeof(struct hal_rx_desc_ipq8074),
-	},
-	{
+		.hal_desc_sz = माप(काष्ठा hal_rx_desc_ipq8074),
+	पूर्ण,
+	अणु
 		.hw_rev = ATH11K_HW_IPQ6018_HW10,
 		.name = "ipq6018 hw1.0",
-		.fw = {
+		.fw = अणु
 			.dir = "IPQ6018/hw1.0",
 			.board_size = 256 * 1024,
 			.cal_size = 256 * 1024,
-		},
+		पूर्ण,
 		.max_radios = 2,
 		.bdf_addr = 0x4ABC0000,
 		.hw_ops = &ipq6018_ops,
 		.ring_mask = &ath11k_hw_ring_mask_ipq8074,
-		.internal_sleep_clock = false,
+		.पूर्णांकernal_sleep_घड़ी = false,
 		.regs = &ipq8074_regs,
 		.qmi_service_ins_id = ATH11K_QMI_WLFW_SERVICE_INS_ID_V01_IPQ8074,
 		.host_ce_config = ath11k_host_ce_config_ipq8074,
@@ -101,29 +102,29 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.tcl_0_only = false,
 		.spectral_fft_sz = 4,
 
-		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
+		.पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
 					BIT(NL80211_IFTYPE_AP) |
 					BIT(NL80211_IFTYPE_MESH_POINT),
 		.supports_monitor = true,
-		.supports_shadow_regs = false,
+		.supports_shaकरोw_regs = false,
 		.idle_ps = false,
 		.cold_boot_calib = true,
 		.supports_suspend = false,
-		.hal_desc_sz = sizeof(struct hal_rx_desc_ipq8074),
-	},
-	{
+		.hal_desc_sz = माप(काष्ठा hal_rx_desc_ipq8074),
+	पूर्ण,
+	अणु
 		.name = "qca6390 hw2.0",
 		.hw_rev = ATH11K_HW_QCA6390_HW20,
-		.fw = {
+		.fw = अणु
 			.dir = "QCA6390/hw2.0",
 			.board_size = 256 * 1024,
 			.cal_size = 256 * 1024,
-		},
+		पूर्ण,
 		.max_radios = 3,
 		.bdf_addr = 0x4B0C0000,
 		.hw_ops = &qca6390_ops,
 		.ring_mask = &ath11k_hw_ring_mask_qca6390,
-		.internal_sleep_clock = true,
+		.पूर्णांकernal_sleep_घड़ी = true,
 		.regs = &qca6390_regs,
 		.qmi_service_ins_id = ATH11K_QMI_WLFW_SERVICE_INS_ID_V01_QCA6390,
 		.host_ce_config = ath11k_host_ce_config_qca6390,
@@ -141,29 +142,29 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.tcl_0_only = true,
 		.spectral_fft_sz = 0,
 
-		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
+		.पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
 					BIT(NL80211_IFTYPE_AP),
 		.supports_monitor = false,
-		.supports_shadow_regs = true,
+		.supports_shaकरोw_regs = true,
 		.idle_ps = true,
 		.cold_boot_calib = false,
 		.supports_suspend = true,
-		.hal_desc_sz = sizeof(struct hal_rx_desc_ipq8074),
-	},
-	{
+		.hal_desc_sz = माप(काष्ठा hal_rx_desc_ipq8074),
+	पूर्ण,
+	अणु
 		.name = "qcn9074 hw1.0",
 		.hw_rev = ATH11K_HW_QCN9074_HW10,
-		.fw = {
+		.fw = अणु
 			.dir = "QCN9074/hw1.0",
 			.board_size = 256 * 1024,
 			.cal_size = 256 * 1024,
-		},
+		पूर्ण,
 		.max_radios = 1,
 		.single_pdev_only = false,
 		.qmi_service_ins_id = ATH11K_QMI_WLFW_SERVICE_INS_ID_V01_QCN9074,
 		.hw_ops = &qcn9074_ops,
 		.ring_mask = &ath11k_hw_ring_mask_qcn9074,
-		.internal_sleep_clock = false,
+		.पूर्णांकernal_sleep_घड़ी = false,
 		.regs = &qcn9074_regs,
 		.host_ce_config = ath11k_host_ce_config_qcn9074,
 		.ce_count = 6,
@@ -177,225 +178,225 @@ static const struct ath11k_hw_params ath11k_hw_params[] = {
 		.vdev_start_delay = false,
 		.htt_peer_map_v2 = true,
 		.tcl_0_only = false,
-		.interface_modes = BIT(NL80211_IFTYPE_STATION) |
+		.पूर्णांकerface_modes = BIT(NL80211_IFTYPE_STATION) |
 					BIT(NL80211_IFTYPE_AP) |
 					BIT(NL80211_IFTYPE_MESH_POINT),
 		.supports_monitor = true,
-		.supports_shadow_regs = false,
+		.supports_shaकरोw_regs = false,
 		.idle_ps = false,
 		.cold_boot_calib = false,
 		.supports_suspend = false,
-		.hal_desc_sz = sizeof(struct hal_rx_desc_qcn9074),
-	},
-};
+		.hal_desc_sz = माप(काष्ठा hal_rx_desc_qcn9074),
+	पूर्ण,
+पूर्ण;
 
-int ath11k_core_suspend(struct ath11k_base *ab)
-{
-	int ret;
+पूर्णांक ath11k_core_suspend(काष्ठा ath11k_base *ab)
+अणु
+	पूर्णांक ret;
 
-	if (!ab->hw_params.supports_suspend)
-		return -EOPNOTSUPP;
+	अगर (!ab->hw_params.supports_suspend)
+		वापस -EOPNOTSUPP;
 
-	/* TODO: there can frames in queues so for now add delay as a hack.
-	 * Need to implement to handle and remove this delay.
+	/* TODO: there can frames in queues so क्रम now add delay as a hack.
+	 * Need to implement to handle and हटाओ this delay.
 	 */
 	msleep(500);
 
 	ret = ath11k_dp_rx_pktlog_stop(ab, true);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_warn(ab, "failed to stop dp rx (and timer) pktlog during suspend: %d\n",
 			    ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ath11k_wow_enable(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_warn(ab, "failed to enable wow during suspend: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ath11k_dp_rx_pktlog_stop(ab, false);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_warn(ab, "failed to stop dp rx pktlog during suspend: %d\n",
 			    ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ath11k_ce_stop_shadow_timers(ab);
-	ath11k_dp_stop_shadow_timers(ab);
+	ath11k_ce_stop_shaकरोw_समयrs(ab);
+	ath11k_dp_stop_shaकरोw_समयrs(ab);
 
-	ath11k_hif_irq_disable(ab);
-	ath11k_hif_ce_irq_disable(ab);
+	ath11k_hअगर_irq_disable(ab);
+	ath11k_hअगर_ce_irq_disable(ab);
 
-	ret = ath11k_hif_suspend(ab);
-	if (ret) {
+	ret = ath11k_hअगर_suspend(ab);
+	अगर (ret) अणु
 		ath11k_warn(ab, "failed to suspend hif: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ath11k_core_suspend);
 
-int ath11k_core_resume(struct ath11k_base *ab)
-{
-	int ret;
+पूर्णांक ath11k_core_resume(काष्ठा ath11k_base *ab)
+अणु
+	पूर्णांक ret;
 
-	if (!ab->hw_params.supports_suspend)
-		return -EOPNOTSUPP;
+	अगर (!ab->hw_params.supports_suspend)
+		वापस -EOPNOTSUPP;
 
-	ret = ath11k_hif_resume(ab);
-	if (ret) {
+	ret = ath11k_hअगर_resume(ab);
+	अगर (ret) अणु
 		ath11k_warn(ab, "failed to resume hif during resume: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ath11k_hif_ce_irq_enable(ab);
-	ath11k_hif_irq_enable(ab);
+	ath11k_hअगर_ce_irq_enable(ab);
+	ath11k_hअगर_irq_enable(ab);
 
 	ret = ath11k_dp_rx_pktlog_start(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_warn(ab, "failed to start rx pktlog during resume: %d\n",
 			    ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ath11k_wow_wakeup(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_warn(ab, "failed to wakeup wow during resume: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ath11k_core_resume);
 
-int ath11k_core_check_dt(struct ath11k_base *ab)
-{
-	size_t max_len = sizeof(ab->qmi.target.bdf_ext);
-	const char *variant = NULL;
-	struct device_node *node;
+पूर्णांक ath11k_core_check_dt(काष्ठा ath11k_base *ab)
+अणु
+	माप_प्रकार max_len = माप(ab->qmi.target.bdf_ext);
+	स्थिर अक्षर *variant = शून्य;
+	काष्ठा device_node *node;
 
 	node = ab->dev->of_node;
-	if (!node)
-		return -ENOENT;
+	अगर (!node)
+		वापस -ENOENT;
 
-	of_property_read_string(node, "qcom,ath11k-calibration-variant",
+	of_property_पढ़ो_string(node, "qcom,ath11k-calibration-variant",
 				&variant);
-	if (!variant)
-		return -ENODATA;
+	अगर (!variant)
+		वापस -ENODATA;
 
-	if (strscpy(ab->qmi.target.bdf_ext, variant, max_len) < 0)
+	अगर (strscpy(ab->qmi.target.bdf_ext, variant, max_len) < 0)
 		ath11k_dbg(ab, ATH11K_DBG_BOOT,
 			   "bdf variant string is longer than the buffer can accommodate (variant: %s)\n",
 			    variant);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ath11k_core_create_board_name(struct ath11k_base *ab, char *name,
-					 size_t name_len)
-{
-	/* strlen(',variant=') + strlen(ab->qmi.target.bdf_ext) */
-	char variant[9 + ATH11K_QMI_BDF_EXT_STR_LENGTH] = { 0 };
+अटल पूर्णांक ath11k_core_create_board_name(काष्ठा ath11k_base *ab, अक्षर *name,
+					 माप_प्रकार name_len)
+अणु
+	/* म_माप(',variant=') + म_माप(ab->qmi.target.bdf_ext) */
+	अक्षर variant[9 + ATH11K_QMI_BDF_EXT_STR_LENGTH] = अणु 0 पूर्ण;
 
-	if (ab->qmi.target.bdf_ext[0] != '\0')
-		scnprintf(variant, sizeof(variant), ",variant=%s",
+	अगर (ab->qmi.target.bdf_ext[0] != '\0')
+		scnम_लिखो(variant, माप(variant), ",variant=%s",
 			  ab->qmi.target.bdf_ext);
 
-	scnprintf(name, name_len,
+	scnम_लिखो(name, name_len,
 		  "bus=%s,qmi-chip-id=%d,qmi-board-id=%d%s",
-		  ath11k_bus_str(ab->hif.bus),
+		  ath11k_bus_str(ab->hअगर.bus),
 		  ab->qmi.target.chip_id,
 		  ab->qmi.target.board_id, variant);
 
 	ath11k_dbg(ab, ATH11K_DBG_BOOT, "boot using board name '%s'\n", name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct firmware *ath11k_core_firmware_request(struct ath11k_base *ab,
-						    const char *file)
-{
-	const struct firmware *fw;
-	char path[100];
-	int ret;
+स्थिर काष्ठा firmware *ath11k_core_firmware_request(काष्ठा ath11k_base *ab,
+						    स्थिर अक्षर *file)
+अणु
+	स्थिर काष्ठा firmware *fw;
+	अक्षर path[100];
+	पूर्णांक ret;
 
-	if (file == NULL)
-		return ERR_PTR(-ENOENT);
+	अगर (file == शून्य)
+		वापस ERR_PTR(-ENOENT);
 
-	ath11k_core_create_firmware_path(ab, file, path, sizeof(path));
+	ath11k_core_create_firmware_path(ab, file, path, माप(path));
 
 	ret = firmware_request_nowarn(&fw, path, ab->dev);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	ath11k_dbg(ab, ATH11K_DBG_BOOT, "boot firmware request %s size %zu\n",
 		   path, fw->size);
 
-	return fw;
-}
+	वापस fw;
+पूर्ण
 
-void ath11k_core_free_bdf(struct ath11k_base *ab, struct ath11k_board_data *bd)
-{
-	if (!IS_ERR(bd->fw))
+व्योम ath11k_core_मुक्त_bdf(काष्ठा ath11k_base *ab, काष्ठा ath11k_board_data *bd)
+अणु
+	अगर (!IS_ERR(bd->fw))
 		release_firmware(bd->fw);
 
-	memset(bd, 0, sizeof(*bd));
-}
+	स_रखो(bd, 0, माप(*bd));
+पूर्ण
 
-static int ath11k_core_parse_bd_ie_board(struct ath11k_base *ab,
-					 struct ath11k_board_data *bd,
-					 const void *buf, size_t buf_len,
-					 const char *boardname,
-					 int bd_ie_type)
-{
-	const struct ath11k_fw_ie *hdr;
+अटल पूर्णांक ath11k_core_parse_bd_ie_board(काष्ठा ath11k_base *ab,
+					 काष्ठा ath11k_board_data *bd,
+					 स्थिर व्योम *buf, माप_प्रकार buf_len,
+					 स्थिर अक्षर *boardname,
+					 पूर्णांक bd_ie_type)
+अणु
+	स्थिर काष्ठा ath11k_fw_ie *hdr;
 	bool name_match_found;
-	int ret, board_ie_id;
-	size_t board_ie_len;
-	const void *board_ie_data;
+	पूर्णांक ret, board_ie_id;
+	माप_प्रकार board_ie_len;
+	स्थिर व्योम *board_ie_data;
 
 	name_match_found = false;
 
 	/* go through ATH11K_BD_IE_BOARD_ elements */
-	while (buf_len > sizeof(struct ath11k_fw_ie)) {
+	जबतक (buf_len > माप(काष्ठा ath11k_fw_ie)) अणु
 		hdr = buf;
 		board_ie_id = le32_to_cpu(hdr->id);
 		board_ie_len = le32_to_cpu(hdr->len);
 		board_ie_data = hdr->data;
 
-		buf_len -= sizeof(*hdr);
-		buf += sizeof(*hdr);
+		buf_len -= माप(*hdr);
+		buf += माप(*hdr);
 
-		if (buf_len < ALIGN(board_ie_len, 4)) {
+		अगर (buf_len < ALIGN(board_ie_len, 4)) अणु
 			ath11k_err(ab, "invalid ATH11K_BD_IE_BOARD length: %zu < %zu\n",
 				   buf_len, ALIGN(board_ie_len, 4));
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		switch (board_ie_id) {
-		case ATH11K_BD_IE_BOARD_NAME:
+		चयन (board_ie_id) अणु
+		हाल ATH11K_BD_IE_BOARD_NAME:
 			ath11k_dbg_dump(ab, ATH11K_DBG_BOOT, "board name", "",
 					board_ie_data, board_ie_len);
 
-			if (board_ie_len != strlen(boardname))
-				break;
+			अगर (board_ie_len != म_माप(boardname))
+				अवरोध;
 
-			ret = memcmp(board_ie_data, boardname, strlen(boardname));
-			if (ret)
-				break;
+			ret = स_भेद(board_ie_data, boardname, म_माप(boardname));
+			अगर (ret)
+				अवरोध;
 
 			name_match_found = true;
 			ath11k_dbg(ab, ATH11K_DBG_BOOT,
 				   "boot found match for name '%s'",
 				   boardname);
-			break;
-		case ATH11K_BD_IE_BOARD_DATA:
-			if (!name_match_found)
+			अवरोध;
+		हाल ATH11K_BD_IE_BOARD_DATA:
+			अगर (!name_match_found)
 				/* no match found */
-				break;
+				अवरोध;
 
 			ath11k_dbg(ab, ATH11K_DBG_BOOT,
 				   "boot found board data for '%s'", boardname);
@@ -404,654 +405,654 @@ static int ath11k_core_parse_bd_ie_board(struct ath11k_base *ab,
 			bd->len = board_ie_len;
 
 			ret = 0;
-			goto out;
-		default:
+			जाओ out;
+		शेष:
 			ath11k_warn(ab, "unknown ATH11K_BD_IE_BOARD found: %d\n",
 				    board_ie_id);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* jump over the padding */
 		board_ie_len = ALIGN(board_ie_len, 4);
 
 		buf_len -= board_ie_len;
 		buf += board_ie_len;
-	}
+	पूर्ण
 
 	/* no match found */
 	ret = -ENOENT;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath11k_core_fetch_board_data_api_n(struct ath11k_base *ab,
-					      struct ath11k_board_data *bd,
-					      const char *boardname)
-{
-	size_t len, magic_len;
-	const u8 *data;
-	char *filename, filepath[100];
-	size_t ie_len;
-	struct ath11k_fw_ie *hdr;
-	int ret, ie_id;
+अटल पूर्णांक ath11k_core_fetch_board_data_api_n(काष्ठा ath11k_base *ab,
+					      काष्ठा ath11k_board_data *bd,
+					      स्थिर अक्षर *boardname)
+अणु
+	माप_प्रकार len, magic_len;
+	स्थिर u8 *data;
+	अक्षर *filename, filepath[100];
+	माप_प्रकार ie_len;
+	काष्ठा ath11k_fw_ie *hdr;
+	पूर्णांक ret, ie_id;
 
-	filename = ATH11K_BOARD_API2_FILE;
+	filename = ATH11K_BOARD_API2_खाता;
 
-	if (!bd->fw)
+	अगर (!bd->fw)
 		bd->fw = ath11k_core_firmware_request(ab, filename);
 
-	if (IS_ERR(bd->fw))
-		return PTR_ERR(bd->fw);
+	अगर (IS_ERR(bd->fw))
+		वापस PTR_ERR(bd->fw);
 
 	data = bd->fw->data;
 	len = bd->fw->size;
 
 	ath11k_core_create_firmware_path(ab, filename,
-					 filepath, sizeof(filepath));
+					 filepath, माप(filepath));
 
 	/* magic has extra null byte padded */
-	magic_len = strlen(ATH11K_BOARD_MAGIC) + 1;
-	if (len < magic_len) {
+	magic_len = म_माप(ATH11K_BOARD_MAGIC) + 1;
+	अगर (len < magic_len) अणु
 		ath11k_err(ab, "failed to find magic value in %s, file too short: %zu\n",
 			   filepath, len);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (memcmp(data, ATH11K_BOARD_MAGIC, magic_len)) {
+	अगर (स_भेद(data, ATH11K_BOARD_MAGIC, magic_len)) अणु
 		ath11k_err(ab, "found invalid board magic\n");
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* magic is padded to 4 bytes */
 	magic_len = ALIGN(magic_len, 4);
-	if (len < magic_len) {
+	अगर (len < magic_len) अणु
 		ath11k_err(ab, "failed: %s too small to contain board data, len: %zu\n",
 			   filepath, len);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	data += magic_len;
 	len -= magic_len;
 
-	while (len > sizeof(struct ath11k_fw_ie)) {
-		hdr = (struct ath11k_fw_ie *)data;
+	जबतक (len > माप(काष्ठा ath11k_fw_ie)) अणु
+		hdr = (काष्ठा ath11k_fw_ie *)data;
 		ie_id = le32_to_cpu(hdr->id);
 		ie_len = le32_to_cpu(hdr->len);
 
-		len -= sizeof(*hdr);
+		len -= माप(*hdr);
 		data = hdr->data;
 
-		if (len < ALIGN(ie_len, 4)) {
+		अगर (len < ALIGN(ie_len, 4)) अणु
 			ath11k_err(ab, "invalid length for board ie_id %d ie_len %zu len %zu\n",
 				   ie_id, ie_len, len);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (ie_id) {
-		case ATH11K_BD_IE_BOARD:
+		चयन (ie_id) अणु
+		हाल ATH11K_BD_IE_BOARD:
 			ret = ath11k_core_parse_bd_ie_board(ab, bd, data,
 							    ie_len,
 							    boardname,
 							    ATH11K_BD_IE_BOARD);
-			if (ret == -ENOENT)
-				/* no match found, continue */
-				break;
-			else if (ret)
+			अगर (ret == -ENOENT)
+				/* no match found, जारी */
+				अवरोध;
+			अन्यथा अगर (ret)
 				/* there was an error, bail out */
-				goto err;
+				जाओ err;
 			/* either found or error, so stop searching */
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* jump over the padding */
 		ie_len = ALIGN(ie_len, 4);
 
 		len -= ie_len;
 		data += ie_len;
-	}
+	पूर्ण
 
 out:
-	if (!bd->data || !bd->len) {
+	अगर (!bd->data || !bd->len) अणु
 		ath11k_err(ab,
 			   "failed to fetch board data for %s from %s\n",
 			   boardname, filepath);
 		ret = -ENODATA;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	ath11k_core_free_bdf(ab, bd);
-	return ret;
-}
+	ath11k_core_मुक्त_bdf(ab, bd);
+	वापस ret;
+पूर्ण
 
-static int ath11k_core_fetch_board_data_api_1(struct ath11k_base *ab,
-					      struct ath11k_board_data *bd)
-{
-	bd->fw = ath11k_core_firmware_request(ab, ATH11K_DEFAULT_BOARD_FILE);
-	if (IS_ERR(bd->fw))
-		return PTR_ERR(bd->fw);
+अटल पूर्णांक ath11k_core_fetch_board_data_api_1(काष्ठा ath11k_base *ab,
+					      काष्ठा ath11k_board_data *bd)
+अणु
+	bd->fw = ath11k_core_firmware_request(ab, ATH11K_DEFAULT_BOARD_खाता);
+	अगर (IS_ERR(bd->fw))
+		वापस PTR_ERR(bd->fw);
 
 	bd->data = bd->fw->data;
 	bd->len = bd->fw->size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define BOARD_NAME_SIZE 100
-int ath11k_core_fetch_bdf(struct ath11k_base *ab, struct ath11k_board_data *bd)
-{
-	char boardname[BOARD_NAME_SIZE];
-	int ret;
+#घोषणा BOARD_NAME_SIZE 100
+पूर्णांक ath11k_core_fetch_bdf(काष्ठा ath11k_base *ab, काष्ठा ath11k_board_data *bd)
+अणु
+	अक्षर boardname[BOARD_NAME_SIZE];
+	पूर्णांक ret;
 
 	ret = ath11k_core_create_board_name(ab, boardname, BOARD_NAME_SIZE);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to create board name: %d", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ab->bd_api = 2;
 	ret = ath11k_core_fetch_board_data_api_n(ab, bd, boardname);
-	if (!ret)
-		goto success;
+	अगर (!ret)
+		जाओ success;
 
 	ab->bd_api = 1;
 	ret = ath11k_core_fetch_board_data_api_1(ab, bd);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to fetch board-2.bin or board.bin from %s\n",
 			   ab->hw_params.fw.dir);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 success:
 	ath11k_dbg(ab, ATH11K_DBG_BOOT, "using board api %d\n", ab->bd_api);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ath11k_core_stop(struct ath11k_base *ab)
-{
-	if (!test_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags))
+अटल व्योम ath11k_core_stop(काष्ठा ath11k_base *ab)
+अणु
+	अगर (!test_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags))
 		ath11k_qmi_firmware_stop(ab);
 
-	ath11k_hif_stop(ab);
+	ath11k_hअगर_stop(ab);
 	ath11k_wmi_detach(ab);
 	ath11k_dp_pdev_reo_cleanup(ab);
 
 	/* De-Init of components as needed */
-}
+पूर्ण
 
-static int ath11k_core_soc_create(struct ath11k_base *ab)
-{
-	int ret;
+अटल पूर्णांक ath11k_core_soc_create(काष्ठा ath11k_base *ab)
+अणु
+	पूर्णांक ret;
 
 	ret = ath11k_qmi_init_service(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to initialize qmi :%d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ath11k_debugfs_soc_create(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to create ath11k debugfs\n");
-		goto err_qmi_deinit;
-	}
+		जाओ err_qmi_deinit;
+	पूर्ण
 
-	ret = ath11k_hif_power_up(ab);
-	if (ret) {
+	ret = ath11k_hअगर_घातer_up(ab);
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to power up :%d\n", ret);
-		goto err_debugfs_reg;
-	}
+		जाओ err_debugfs_reg;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_debugfs_reg:
 	ath11k_debugfs_soc_destroy(ab);
 err_qmi_deinit:
 	ath11k_qmi_deinit_service(ab);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ath11k_core_soc_destroy(struct ath11k_base *ab)
-{
+अटल व्योम ath11k_core_soc_destroy(काष्ठा ath11k_base *ab)
+अणु
 	ath11k_debugfs_soc_destroy(ab);
-	ath11k_dp_free(ab);
-	ath11k_reg_free(ab);
+	ath11k_dp_मुक्त(ab);
+	ath11k_reg_मुक्त(ab);
 	ath11k_qmi_deinit_service(ab);
-}
+पूर्ण
 
-static int ath11k_core_pdev_create(struct ath11k_base *ab)
-{
-	int ret;
+अटल पूर्णांक ath11k_core_pdev_create(काष्ठा ath11k_base *ab)
+अणु
+	पूर्णांक ret;
 
 	ret = ath11k_debugfs_pdev_create(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to create core pdev debugfs: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = ath11k_mac_register(ab);
-	if (ret) {
+	ret = ath11k_mac_रेजिस्टर(ab);
+	अगर (ret) अणु
 		ath11k_err(ab, "failed register the radio with mac80211: %d\n", ret);
-		goto err_pdev_debug;
-	}
+		जाओ err_pdev_debug;
+	पूर्ण
 
 	ret = ath11k_dp_pdev_alloc(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to attach DP pdev: %d\n", ret);
-		goto err_mac_unregister;
-	}
+		जाओ err_mac_unरेजिस्टर;
+	पूर्ण
 
-	ret = ath11k_thermal_register(ab);
-	if (ret) {
+	ret = ath11k_thermal_रेजिस्टर(ab);
+	अगर (ret) अणु
 		ath11k_err(ab, "could not register thermal device: %d\n",
 			   ret);
-		goto err_dp_pdev_free;
-	}
+		जाओ err_dp_pdev_मुक्त;
+	पूर्ण
 
 	ret = ath11k_spectral_init(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to init spectral %d\n", ret);
-		goto err_thermal_unregister;
-	}
+		जाओ err_thermal_unरेजिस्टर;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_thermal_unregister:
-	ath11k_thermal_unregister(ab);
-err_dp_pdev_free:
-	ath11k_dp_pdev_free(ab);
-err_mac_unregister:
-	ath11k_mac_unregister(ab);
+err_thermal_unरेजिस्टर:
+	ath11k_thermal_unरेजिस्टर(ab);
+err_dp_pdev_मुक्त:
+	ath11k_dp_pdev_मुक्त(ab);
+err_mac_unरेजिस्टर:
+	ath11k_mac_unरेजिस्टर(ab);
 err_pdev_debug:
 	ath11k_debugfs_pdev_destroy(ab);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ath11k_core_pdev_destroy(struct ath11k_base *ab)
-{
+अटल व्योम ath11k_core_pdev_destroy(काष्ठा ath11k_base *ab)
+अणु
 	ath11k_spectral_deinit(ab);
-	ath11k_thermal_unregister(ab);
-	ath11k_mac_unregister(ab);
-	ath11k_hif_irq_disable(ab);
-	ath11k_dp_pdev_free(ab);
+	ath11k_thermal_unरेजिस्टर(ab);
+	ath11k_mac_unरेजिस्टर(ab);
+	ath11k_hअगर_irq_disable(ab);
+	ath11k_dp_pdev_मुक्त(ab);
 	ath11k_debugfs_pdev_destroy(ab);
-}
+पूर्ण
 
-static int ath11k_core_start(struct ath11k_base *ab,
-			     enum ath11k_firmware_mode mode)
-{
-	int ret;
+अटल पूर्णांक ath11k_core_start(काष्ठा ath11k_base *ab,
+			     क्रमागत ath11k_firmware_mode mode)
+अणु
+	पूर्णांक ret;
 
 	ret = ath11k_qmi_firmware_start(ab, mode);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to attach wmi: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ath11k_wmi_attach(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to attach wmi: %d\n", ret);
-		goto err_firmware_stop;
-	}
+		जाओ err_firmware_stop;
+	पूर्ण
 
 	ret = ath11k_htc_init(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to init htc: %d\n", ret);
-		goto err_wmi_detach;
-	}
+		जाओ err_wmi_detach;
+	पूर्ण
 
-	ret = ath11k_hif_start(ab);
-	if (ret) {
+	ret = ath11k_hअगर_start(ab);
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to start HIF: %d\n", ret);
-		goto err_wmi_detach;
-	}
+		जाओ err_wmi_detach;
+	पूर्ण
 
-	ret = ath11k_htc_wait_target(&ab->htc);
-	if (ret) {
+	ret = ath11k_htc_रुको_target(&ab->htc);
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to connect to HTC: %d\n", ret);
-		goto err_hif_stop;
-	}
+		जाओ err_hअगर_stop;
+	पूर्ण
 
 	ret = ath11k_dp_htt_connect(&ab->dp);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to connect to HTT: %d\n", ret);
-		goto err_hif_stop;
-	}
+		जाओ err_hअगर_stop;
+	पूर्ण
 
 	ret = ath11k_wmi_connect(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to connect wmi: %d\n", ret);
-		goto err_hif_stop;
-	}
+		जाओ err_hअगर_stop;
+	पूर्ण
 
 	ret = ath11k_htc_start(&ab->htc);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to start HTC: %d\n", ret);
-		goto err_hif_stop;
-	}
+		जाओ err_hअगर_stop;
+	पूर्ण
 
-	ret = ath11k_wmi_wait_for_service_ready(ab);
-	if (ret) {
+	ret = ath11k_wmi_रुको_क्रम_service_पढ़ोy(ab);
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to receive wmi service ready event: %d\n",
 			   ret);
-		goto err_hif_stop;
-	}
+		जाओ err_hअगर_stop;
+	पूर्ण
 
 	ret = ath11k_mac_allocate(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to create new hw device with mac80211 :%d\n",
 			   ret);
-		goto err_hif_stop;
-	}
+		जाओ err_hअगर_stop;
+	पूर्ण
 
 	ath11k_dp_pdev_pre_alloc(ab);
 
 	ret = ath11k_dp_pdev_reo_setup(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to initialize reo destination rings: %d\n", ret);
-		goto err_mac_destroy;
-	}
+		जाओ err_mac_destroy;
+	पूर्ण
 
 	ret = ath11k_wmi_cmd_init(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to send wmi init cmd: %d\n", ret);
-		goto err_reo_cleanup;
-	}
+		जाओ err_reo_cleanup;
+	पूर्ण
 
-	ret = ath11k_wmi_wait_for_unified_ready(ab);
-	if (ret) {
+	ret = ath11k_wmi_रुको_क्रम_unअगरied_पढ़ोy(ab);
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to receive wmi unified ready event: %d\n",
 			   ret);
-		goto err_reo_cleanup;
-	}
+		जाओ err_reo_cleanup;
+	पूर्ण
 
 	/* put hardware to DBS mode */
-	if (ab->hw_params.single_pdev_only) {
+	अगर (ab->hw_params.single_pdev_only) अणु
 		ret = ath11k_wmi_set_hw_mode(ab, WMI_HOST_HW_MODE_DBS);
-		if (ret) {
+		अगर (ret) अणु
 			ath11k_err(ab, "failed to send dbs mode: %d\n", ret);
-			goto err_hif_stop;
-		}
-	}
+			जाओ err_hअगर_stop;
+		पूर्ण
+	पूर्ण
 
 	ret = ath11k_dp_tx_htt_h2t_ver_req_msg(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to send htt version request message: %d\n",
 			   ret);
-		goto err_reo_cleanup;
-	}
+		जाओ err_reo_cleanup;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_reo_cleanup:
 	ath11k_dp_pdev_reo_cleanup(ab);
 err_mac_destroy:
 	ath11k_mac_destroy(ab);
-err_hif_stop:
-	ath11k_hif_stop(ab);
+err_hअगर_stop:
+	ath11k_hअगर_stop(ab);
 err_wmi_detach:
 	ath11k_wmi_detach(ab);
 err_firmware_stop:
 	ath11k_qmi_firmware_stop(ab);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ath11k_core_qmi_firmware_ready(struct ath11k_base *ab)
-{
-	int ret;
+पूर्णांक ath11k_core_qmi_firmware_पढ़ोy(काष्ठा ath11k_base *ab)
+अणु
+	पूर्णांक ret;
 
 	ret = ath11k_ce_init_pipes(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to initialize CE: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ath11k_dp_alloc(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to init DP: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	switch (ath11k_crypto_mode) {
-	case ATH11K_CRYPT_MODE_SW:
+	चयन (ath11k_crypto_mode) अणु
+	हाल ATH11K_CRYPT_MODE_SW:
 		set_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, &ab->dev_flags);
 		set_bit(ATH11K_FLAG_RAW_MODE, &ab->dev_flags);
-		break;
-	case ATH11K_CRYPT_MODE_HW:
+		अवरोध;
+	हाल ATH11K_CRYPT_MODE_HW:
 		clear_bit(ATH11K_FLAG_HW_CRYPTO_DISABLED, &ab->dev_flags);
 		clear_bit(ATH11K_FLAG_RAW_MODE, &ab->dev_flags);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ath11k_info(ab, "invalid crypto_mode: %d\n", ath11k_crypto_mode);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ath11k_frame_mode == ATH11K_HW_TXRX_RAW)
+	अगर (ath11k_frame_mode == ATH11K_HW_TXRX_RAW)
 		set_bit(ATH11K_FLAG_RAW_MODE, &ab->dev_flags);
 
 	mutex_lock(&ab->core_lock);
 	ret = ath11k_core_start(ab, ATH11K_FIRMWARE_MODE_NORMAL);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to start core: %d\n", ret);
-		goto err_dp_free;
-	}
+		जाओ err_dp_मुक्त;
+	पूर्ण
 
 	ret = ath11k_core_pdev_create(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to create pdev core: %d\n", ret);
-		goto err_core_stop;
-	}
-	ath11k_hif_irq_enable(ab);
+		जाओ err_core_stop;
+	पूर्ण
+	ath11k_hअगर_irq_enable(ab);
 	mutex_unlock(&ab->core_lock);
 
-	return 0;
+	वापस 0;
 
 err_core_stop:
 	ath11k_core_stop(ab);
 	ath11k_mac_destroy(ab);
-err_dp_free:
-	ath11k_dp_free(ab);
+err_dp_मुक्त:
+	ath11k_dp_मुक्त(ab);
 	mutex_unlock(&ab->core_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ath11k_core_reconfigure_on_crash(struct ath11k_base *ab)
-{
-	int ret;
+अटल पूर्णांक ath11k_core_reconfigure_on_crash(काष्ठा ath11k_base *ab)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&ab->core_lock);
-	ath11k_thermal_unregister(ab);
-	ath11k_hif_irq_disable(ab);
-	ath11k_dp_pdev_free(ab);
+	ath11k_thermal_unरेजिस्टर(ab);
+	ath11k_hअगर_irq_disable(ab);
+	ath11k_dp_pdev_मुक्त(ab);
 	ath11k_spectral_deinit(ab);
-	ath11k_hif_stop(ab);
+	ath11k_hअगर_stop(ab);
 	ath11k_wmi_detach(ab);
 	ath11k_dp_pdev_reo_cleanup(ab);
 	mutex_unlock(&ab->core_lock);
 
-	ath11k_dp_free(ab);
+	ath11k_dp_मुक्त(ab);
 	ath11k_hal_srng_deinit(ab);
 
-	ab->free_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
+	ab->मुक्त_vdev_map = (1LL << (ab->num_radios * TARGET_NUM_VDEVS)) - 1;
 
 	ret = ath11k_hal_srng_init(ab);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	clear_bit(ATH11K_FLAG_CRASH_FLUSH, &ab->dev_flags);
 
-	ret = ath11k_core_qmi_firmware_ready(ab);
-	if (ret)
-		goto err_hal_srng_deinit;
+	ret = ath11k_core_qmi_firmware_पढ़ोy(ab);
+	अगर (ret)
+		जाओ err_hal_srng_deinit;
 
 	clear_bit(ATH11K_FLAG_RECOVERY, &ab->dev_flags);
 
-	return 0;
+	वापस 0;
 
 err_hal_srng_deinit:
 	ath11k_hal_srng_deinit(ab);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void ath11k_core_halt(struct ath11k *ar)
-{
-	struct ath11k_base *ab = ar->ab;
+व्योम ath11k_core_halt(काष्ठा ath11k *ar)
+अणु
+	काष्ठा ath11k_base *ab = ar->ab;
 
-	lockdep_assert_held(&ar->conf_mutex);
+	lockdep_निश्चित_held(&ar->conf_mutex);
 
 	ar->num_created_vdevs = 0;
 	ar->allocated_vdev_map = 0;
 
 	ath11k_mac_scan_finish(ar);
 	ath11k_mac_peer_cleanup_all(ar);
-	cancel_delayed_work_sync(&ar->scan.timeout);
+	cancel_delayed_work_sync(&ar->scan.समयout);
 	cancel_work_sync(&ar->regd_update_work);
 
-	rcu_assign_pointer(ab->pdevs_active[ar->pdev_idx], NULL);
+	rcu_assign_poपूर्णांकer(ab->pdevs_active[ar->pdev_idx], शून्य);
 	synchronize_rcu();
-	INIT_LIST_HEAD(&ar->arvifs);
+	INIT_LIST_HEAD(&ar->arvअगरs);
 	idr_init(&ar->txmgmt_idr);
-}
+पूर्ण
 
-static void ath11k_core_restart(struct work_struct *work)
-{
-	struct ath11k_base *ab = container_of(work, struct ath11k_base, restart_work);
-	struct ath11k *ar;
-	struct ath11k_pdev *pdev;
-	int i, ret = 0;
+अटल व्योम ath11k_core_restart(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ath11k_base *ab = container_of(work, काष्ठा ath11k_base, restart_work);
+	काष्ठा ath11k *ar;
+	काष्ठा ath11k_pdev *pdev;
+	पूर्णांक i, ret = 0;
 
 	spin_lock_bh(&ab->base_lock);
 	ab->stats.fw_crash_counter++;
 	spin_unlock_bh(&ab->base_lock);
 
-	for (i = 0; i < ab->num_radios; i++) {
+	क्रम (i = 0; i < ab->num_radios; i++) अणु
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
-		if (!ar || ar->state == ATH11K_STATE_OFF)
-			continue;
+		अगर (!ar || ar->state == ATH11K_STATE_OFF)
+			जारी;
 
 		ieee80211_stop_queues(ar->hw);
 		ath11k_mac_drain_tx(ar);
 		complete(&ar->scan.started);
 		complete(&ar->scan.completed);
-		complete(&ar->peer_assoc_done);
-		complete(&ar->peer_delete_done);
-		complete(&ar->install_key_done);
-		complete(&ar->vdev_setup_done);
-		complete(&ar->vdev_delete_done);
-		complete(&ar->bss_survey_done);
+		complete(&ar->peer_assoc_करोne);
+		complete(&ar->peer_delete_करोne);
+		complete(&ar->install_key_करोne);
+		complete(&ar->vdev_setup_करोne);
+		complete(&ar->vdev_delete_करोne);
+		complete(&ar->bss_survey_करोne);
 		complete(&ar->thermal.wmi_sync);
 
-		wake_up(&ar->dp.tx_empty_waitq);
-		idr_for_each(&ar->txmgmt_idr,
-			     ath11k_mac_tx_mgmt_pending_free, ar);
+		wake_up(&ar->dp.tx_empty_रुकोq);
+		idr_क्रम_each(&ar->txmgmt_idr,
+			     ath11k_mac_tx_mgmt_pending_मुक्त, ar);
 		idr_destroy(&ar->txmgmt_idr);
-	}
+	पूर्ण
 
 	wake_up(&ab->wmi_ab.tx_credits_wq);
 	wake_up(&ab->peer_mapping_wq);
 
 	ret = ath11k_core_reconfigure_on_crash(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to reconfigure driver on crash recovery\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < ab->num_radios; i++) {
+	क्रम (i = 0; i < ab->num_radios; i++) अणु
 		pdev = &ab->pdevs[i];
 		ar = pdev->ar;
-		if (!ar || ar->state == ATH11K_STATE_OFF)
-			continue;
+		अगर (!ar || ar->state == ATH11K_STATE_OFF)
+			जारी;
 
 		mutex_lock(&ar->conf_mutex);
 
-		switch (ar->state) {
-		case ATH11K_STATE_ON:
+		चयन (ar->state) अणु
+		हाल ATH11K_STATE_ON:
 			ar->state = ATH11K_STATE_RESTARTING;
 			ath11k_core_halt(ar);
 			ieee80211_restart_hw(ar->hw);
-			break;
-		case ATH11K_STATE_OFF:
+			अवरोध;
+		हाल ATH11K_STATE_OFF:
 			ath11k_warn(ab,
 				    "cannot restart radio %d that hasn't been started\n",
 				    i);
-			break;
-		case ATH11K_STATE_RESTARTING:
-			break;
-		case ATH11K_STATE_RESTARTED:
+			अवरोध;
+		हाल ATH11K_STATE_RESTARTING:
+			अवरोध;
+		हाल ATH11K_STATE_RESTARTED:
 			ar->state = ATH11K_STATE_WEDGED;
 			fallthrough;
-		case ATH11K_STATE_WEDGED:
+		हाल ATH11K_STATE_WEDGED:
 			ath11k_warn(ab,
 				    "device is wedged, will not restart radio %d\n", i);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&ar->conf_mutex);
-	}
+	पूर्ण
 	complete(&ab->driver_recovery);
-}
+पूर्ण
 
-static int ath11k_init_hw_params(struct ath11k_base *ab)
-{
-	const struct ath11k_hw_params *hw_params = NULL;
-	int i;
+अटल पूर्णांक ath11k_init_hw_params(काष्ठा ath11k_base *ab)
+अणु
+	स्थिर काष्ठा ath11k_hw_params *hw_params = शून्य;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ath11k_hw_params); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(ath11k_hw_params); i++) अणु
 		hw_params = &ath11k_hw_params[i];
 
-		if (hw_params->hw_rev == ab->hw_rev)
-			break;
-	}
+		अगर (hw_params->hw_rev == ab->hw_rev)
+			अवरोध;
+	पूर्ण
 
-	if (i == ARRAY_SIZE(ath11k_hw_params)) {
+	अगर (i == ARRAY_SIZE(ath11k_hw_params)) अणु
 		ath11k_err(ab, "Unsupported hardware version: 0x%x\n", ab->hw_rev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ab->hw_params = *hw_params;
 
 	ath11k_info(ab, "%s\n", ab->hw_params.name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ath11k_core_pre_init(struct ath11k_base *ab)
-{
-	int ret;
+पूर्णांक ath11k_core_pre_init(काष्ठा ath11k_base *ab)
+अणु
+	पूर्णांक ret;
 
 	ret = ath11k_init_hw_params(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to get hw params: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ath11k_core_pre_init);
 
-int ath11k_core_init(struct ath11k_base *ab)
-{
-	int ret;
+पूर्णांक ath11k_core_init(काष्ठा ath11k_base *ab)
+अणु
+	पूर्णांक ret;
 
 	ret = ath11k_core_soc_create(ab);
-	if (ret) {
+	अगर (ret) अणु
 		ath11k_err(ab, "failed to create soc core: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ath11k_core_init);
 
-void ath11k_core_deinit(struct ath11k_base *ab)
-{
+व्योम ath11k_core_deinit(काष्ठा ath11k_base *ab)
+अणु
 	mutex_lock(&ab->core_lock);
 
 	ath11k_core_pdev_destroy(ab);
@@ -1059,56 +1060,56 @@ void ath11k_core_deinit(struct ath11k_base *ab)
 
 	mutex_unlock(&ab->core_lock);
 
-	ath11k_hif_power_down(ab);
+	ath11k_hअगर_घातer_करोwn(ab);
 	ath11k_mac_destroy(ab);
 	ath11k_core_soc_destroy(ab);
-}
+पूर्ण
 EXPORT_SYMBOL(ath11k_core_deinit);
 
-void ath11k_core_free(struct ath11k_base *ab)
-{
-	kfree(ab);
-}
-EXPORT_SYMBOL(ath11k_core_free);
+व्योम ath11k_core_मुक्त(काष्ठा ath11k_base *ab)
+अणु
+	kमुक्त(ab);
+पूर्ण
+EXPORT_SYMBOL(ath11k_core_मुक्त);
 
-struct ath11k_base *ath11k_core_alloc(struct device *dev, size_t priv_size,
-				      enum ath11k_bus bus,
-				      const struct ath11k_bus_params *bus_params)
-{
-	struct ath11k_base *ab;
+काष्ठा ath11k_base *ath11k_core_alloc(काष्ठा device *dev, माप_प्रकार priv_size,
+				      क्रमागत ath11k_bus bus,
+				      स्थिर काष्ठा ath11k_bus_params *bus_params)
+अणु
+	काष्ठा ath11k_base *ab;
 
-	ab = kzalloc(sizeof(*ab) + priv_size, GFP_KERNEL);
-	if (!ab)
-		return NULL;
+	ab = kzalloc(माप(*ab) + priv_size, GFP_KERNEL);
+	अगर (!ab)
+		वापस शून्य;
 
 	init_completion(&ab->driver_recovery);
 
-	ab->workqueue = create_singlethread_workqueue("ath11k_wq");
-	if (!ab->workqueue)
-		goto err_sc_free;
+	ab->workqueue = create_singlethपढ़ो_workqueue("ath11k_wq");
+	अगर (!ab->workqueue)
+		जाओ err_sc_मुक्त;
 
 	mutex_init(&ab->core_lock);
 	spin_lock_init(&ab->base_lock);
 
 	INIT_LIST_HEAD(&ab->peers);
-	init_waitqueue_head(&ab->peer_mapping_wq);
-	init_waitqueue_head(&ab->wmi_ab.tx_credits_wq);
-	init_waitqueue_head(&ab->qmi.cold_boot_waitq);
+	init_रुकोqueue_head(&ab->peer_mapping_wq);
+	init_रुकोqueue_head(&ab->wmi_ab.tx_credits_wq);
+	init_रुकोqueue_head(&ab->qmi.cold_boot_रुकोq);
 	INIT_WORK(&ab->restart_work, ath11k_core_restart);
-	timer_setup(&ab->rx_replenish_retry, ath11k_ce_rx_replenish_retry, 0);
+	समयr_setup(&ab->rx_replenish_retry, ath11k_ce_rx_replenish_retry, 0);
 	init_completion(&ab->htc_suspend);
 	init_completion(&ab->wow.wakeup_completed);
 
 	ab->dev = dev;
 	ab->bus_params = *bus_params;
-	ab->hif.bus = bus;
+	ab->hअगर.bus = bus;
 
-	return ab;
+	वापस ab;
 
-err_sc_free:
-	kfree(ab);
-	return NULL;
-}
+err_sc_मुक्त:
+	kमुक्त(ab);
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(ath11k_core_alloc);
 
 MODULE_DESCRIPTION("Core module for Qualcomm Atheros 802.11ax wireless LAN cards.");

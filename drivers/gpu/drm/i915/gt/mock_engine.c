@@ -1,187 +1,188 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#include "gem/i915_gem_context.h"
-#include "gt/intel_ring.h"
+#समावेश "gem/i915_gem_context.h"
+#समावेश "gt/intel_ring.h"
 
-#include "i915_drv.h"
-#include "intel_context.h"
-#include "intel_engine_pm.h"
+#समावेश "i915_drv.h"
+#समावेश "intel_context.h"
+#समावेश "intel_engine_pm.h"
 
-#include "mock_engine.h"
-#include "selftests/mock_request.h"
+#समावेश "mock_engine.h"
+#समावेश "selftests/mock_request.h"
 
-static int mock_timeline_pin(struct intel_timeline *tl)
-{
-	int err;
+अटल पूर्णांक mock_समयline_pin(काष्ठा पूर्णांकel_समयline *tl)
+अणु
+	पूर्णांक err;
 
-	if (WARN_ON(!i915_gem_object_trylock(tl->hwsp_ggtt->obj)))
-		return -EBUSY;
+	अगर (WARN_ON(!i915_gem_object_trylock(tl->hwsp_ggtt->obj)))
+		वापस -EBUSY;
 
-	err = intel_timeline_pin_map(tl);
+	err = पूर्णांकel_समयline_pin_map(tl);
 	i915_gem_object_unlock(tl->hwsp_ggtt->obj);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	atomic_inc(&tl->pin_count);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mock_timeline_unpin(struct intel_timeline *tl)
-{
-	GEM_BUG_ON(!atomic_read(&tl->pin_count));
+अटल व्योम mock_समयline_unpin(काष्ठा पूर्णांकel_समयline *tl)
+अणु
+	GEM_BUG_ON(!atomic_पढ़ो(&tl->pin_count));
 	atomic_dec(&tl->pin_count);
-}
+पूर्ण
 
-static struct intel_ring *mock_ring(struct intel_engine_cs *engine)
-{
-	const unsigned long sz = PAGE_SIZE / 2;
-	struct intel_ring *ring;
+अटल काष्ठा पूर्णांकel_ring *mock_ring(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	स्थिर अचिन्हित दीर्घ sz = PAGE_SIZE / 2;
+	काष्ठा पूर्णांकel_ring *ring;
 
-	ring = kzalloc(sizeof(*ring) + sz, GFP_KERNEL);
-	if (!ring)
-		return NULL;
+	ring = kzalloc(माप(*ring) + sz, GFP_KERNEL);
+	अगर (!ring)
+		वापस शून्य;
 
 	kref_init(&ring->ref);
 	ring->size = sz;
 	ring->effective_size = sz;
-	ring->vaddr = (void *)(ring + 1);
+	ring->vaddr = (व्योम *)(ring + 1);
 	atomic_set(&ring->pin_count, 1);
 
 	ring->vma = i915_vma_alloc();
-	if (!ring->vma) {
-		kfree(ring);
-		return NULL;
-	}
-	i915_active_init(&ring->vma->active, NULL, NULL);
+	अगर (!ring->vma) अणु
+		kमुक्त(ring);
+		वापस शून्य;
+	पूर्ण
+	i915_active_init(&ring->vma->active, शून्य, शून्य);
 	__set_bit(I915_VMA_GGTT_BIT, __i915_vma_flags(ring->vma));
 	__set_bit(DRM_MM_NODE_ALLOCATED_BIT, &ring->vma->node.flags);
 	ring->vma->node.size = sz;
 
-	intel_ring_update_space(ring);
+	पूर्णांकel_ring_update_space(ring);
 
-	return ring;
-}
+	वापस ring;
+पूर्ण
 
-static void mock_ring_free(struct intel_ring *ring)
-{
+अटल व्योम mock_ring_मुक्त(काष्ठा पूर्णांकel_ring *ring)
+अणु
 	i915_active_fini(&ring->vma->active);
-	i915_vma_free(ring->vma);
+	i915_vma_मुक्त(ring->vma);
 
-	kfree(ring);
-}
+	kमुक्त(ring);
+पूर्ण
 
-static struct i915_request *first_request(struct mock_engine *engine)
-{
-	return list_first_entry_or_null(&engine->hw_queue,
-					struct i915_request,
+अटल काष्ठा i915_request *first_request(काष्ठा mock_engine *engine)
+अणु
+	वापस list_first_entry_or_null(&engine->hw_queue,
+					काष्ठा i915_request,
 					mock.link);
-}
+पूर्ण
 
-static void advance(struct i915_request *request)
-{
+अटल व्योम advance(काष्ठा i915_request *request)
+अणु
 	list_del_init(&request->mock.link);
 	i915_request_mark_complete(request);
 	GEM_BUG_ON(!i915_request_completed(request));
 
-	intel_engine_signal_breadcrumbs(request->engine);
-}
+	पूर्णांकel_engine_संकेत_bपढ़ोcrumbs(request->engine);
+पूर्ण
 
-static void hw_delay_complete(struct timer_list *t)
-{
-	struct mock_engine *engine = from_timer(engine, t, hw_delay);
-	struct i915_request *request;
-	unsigned long flags;
+अटल व्योम hw_delay_complete(काष्ठा समयr_list *t)
+अणु
+	काष्ठा mock_engine *engine = from_समयr(engine, t, hw_delay);
+	काष्ठा i915_request *request;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&engine->hw_lock, flags);
 
 	/* Timer fired, first request is complete */
 	request = first_request(engine);
-	if (request)
+	अगर (request)
 		advance(request);
 
 	/*
-	 * Also immediately signal any subsequent 0-delay requests, but
-	 * requeue the timer for the next delayed request.
+	 * Also immediately संकेत any subsequent 0-delay requests, but
+	 * requeue the समयr क्रम the next delayed request.
 	 */
-	while ((request = first_request(engine))) {
-		if (request->mock.delay) {
-			mod_timer(&engine->hw_delay,
-				  jiffies + request->mock.delay);
-			break;
-		}
+	जबतक ((request = first_request(engine))) अणु
+		अगर (request->mock.delay) अणु
+			mod_समयr(&engine->hw_delay,
+				  jअगरfies + request->mock.delay);
+			अवरोध;
+		पूर्ण
 
 		advance(request);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&engine->hw_lock, flags);
-}
+पूर्ण
 
-static void mock_context_unpin(struct intel_context *ce)
-{
-}
+अटल व्योम mock_context_unpin(काष्ठा पूर्णांकel_context *ce)
+अणु
+पूर्ण
 
-static void mock_context_post_unpin(struct intel_context *ce)
-{
-}
+अटल व्योम mock_context_post_unpin(काष्ठा पूर्णांकel_context *ce)
+अणु
+पूर्ण
 
-static void mock_context_destroy(struct kref *ref)
-{
-	struct intel_context *ce = container_of(ref, typeof(*ce), ref);
+अटल व्योम mock_context_destroy(काष्ठा kref *ref)
+अणु
+	काष्ठा पूर्णांकel_context *ce = container_of(ref, typeof(*ce), ref);
 
-	GEM_BUG_ON(intel_context_is_pinned(ce));
+	GEM_BUG_ON(पूर्णांकel_context_is_pinned(ce));
 
-	if (test_bit(CONTEXT_ALLOC_BIT, &ce->flags)) {
-		mock_ring_free(ce->ring);
-		mock_timeline_unpin(ce->timeline);
-	}
+	अगर (test_bit(CONTEXT_ALLOC_BIT, &ce->flags)) अणु
+		mock_ring_मुक्त(ce->ring);
+		mock_समयline_unpin(ce->समयline);
+	पूर्ण
 
-	intel_context_fini(ce);
-	intel_context_free(ce);
-}
+	पूर्णांकel_context_fini(ce);
+	पूर्णांकel_context_मुक्त(ce);
+पूर्ण
 
-static int mock_context_alloc(struct intel_context *ce)
-{
-	int err;
+अटल पूर्णांक mock_context_alloc(काष्ठा पूर्णांकel_context *ce)
+अणु
+	पूर्णांक err;
 
 	ce->ring = mock_ring(ce->engine);
-	if (!ce->ring)
-		return -ENOMEM;
+	अगर (!ce->ring)
+		वापस -ENOMEM;
 
-	ce->timeline = intel_timeline_create(ce->engine->gt);
-	if (IS_ERR(ce->timeline)) {
-		kfree(ce->engine);
-		return PTR_ERR(ce->timeline);
-	}
+	ce->समयline = पूर्णांकel_समयline_create(ce->engine->gt);
+	अगर (IS_ERR(ce->समयline)) अणु
+		kमुक्त(ce->engine);
+		वापस PTR_ERR(ce->समयline);
+	पूर्ण
 
-	err = mock_timeline_pin(ce->timeline);
-	if (err) {
-		intel_timeline_put(ce->timeline);
-		ce->timeline = NULL;
-		return err;
-	}
+	err = mock_समयline_pin(ce->समयline);
+	अगर (err) अणु
+		पूर्णांकel_समयline_put(ce->समयline);
+		ce->समयline = शून्य;
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mock_context_pre_pin(struct intel_context *ce,
-				struct i915_gem_ww_ctx *ww, void **unused)
-{
-	return 0;
-}
+अटल पूर्णांक mock_context_pre_pin(काष्ठा पूर्णांकel_context *ce,
+				काष्ठा i915_gem_ww_ctx *ww, व्योम **unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static int mock_context_pin(struct intel_context *ce, void *unused)
-{
-	return 0;
-}
+अटल पूर्णांक mock_context_pin(काष्ठा पूर्णांकel_context *ce, व्योम *unused)
+अणु
+	वापस 0;
+पूर्ण
 
-static void mock_context_reset(struct intel_context *ce)
-{
-}
+अटल व्योम mock_context_reset(काष्ठा पूर्णांकel_context *ce)
+अणु
+पूर्ण
 
-static const struct intel_context_ops mock_context_ops = {
+अटल स्थिर काष्ठा पूर्णांकel_context_ops mock_context_ops = अणु
 	.alloc = mock_context_alloc,
 
 	.pre_pin = mock_context_pre_pin,
@@ -189,140 +190,140 @@ static const struct intel_context_ops mock_context_ops = {
 	.unpin = mock_context_unpin,
 	.post_unpin = mock_context_post_unpin,
 
-	.enter = intel_context_enter_engine,
-	.exit = intel_context_exit_engine,
+	.enter = पूर्णांकel_context_enter_engine,
+	.निकास = पूर्णांकel_context_निकास_engine,
 
 	.reset = mock_context_reset,
 	.destroy = mock_context_destroy,
-};
+पूर्ण;
 
-static int mock_request_alloc(struct i915_request *request)
-{
+अटल पूर्णांक mock_request_alloc(काष्ठा i915_request *request)
+अणु
 	INIT_LIST_HEAD(&request->mock.link);
 	request->mock.delay = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mock_emit_flush(struct i915_request *request,
-			   unsigned int flags)
-{
-	return 0;
-}
+अटल पूर्णांक mock_emit_flush(काष्ठा i915_request *request,
+			   अचिन्हित पूर्णांक flags)
+अणु
+	वापस 0;
+पूर्ण
 
-static u32 *mock_emit_breadcrumb(struct i915_request *request, u32 *cs)
-{
-	return cs;
-}
+अटल u32 *mock_emit_bपढ़ोcrumb(काष्ठा i915_request *request, u32 *cs)
+अणु
+	वापस cs;
+पूर्ण
 
-static void mock_submit_request(struct i915_request *request)
-{
-	struct mock_engine *engine =
+अटल व्योम mock_submit_request(काष्ठा i915_request *request)
+अणु
+	काष्ठा mock_engine *engine =
 		container_of(request->engine, typeof(*engine), base);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	i915_request_submit(request);
 
 	spin_lock_irqsave(&engine->hw_lock, flags);
 	list_add_tail(&request->mock.link, &engine->hw_queue);
-	if (list_is_first(&request->mock.link, &engine->hw_queue)) {
-		if (request->mock.delay)
-			mod_timer(&engine->hw_delay,
-				  jiffies + request->mock.delay);
-		else
+	अगर (list_is_first(&request->mock.link, &engine->hw_queue)) अणु
+		अगर (request->mock.delay)
+			mod_समयr(&engine->hw_delay,
+				  jअगरfies + request->mock.delay);
+		अन्यथा
 			advance(request);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&engine->hw_lock, flags);
-}
+पूर्ण
 
-static void mock_reset_prepare(struct intel_engine_cs *engine)
-{
-}
+अटल व्योम mock_reset_prepare(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+पूर्ण
 
-static void mock_reset_rewind(struct intel_engine_cs *engine, bool stalled)
-{
+अटल व्योम mock_reset_शुरुआत(काष्ठा पूर्णांकel_engine_cs *engine, bool stalled)
+अणु
 	GEM_BUG_ON(stalled);
-}
+पूर्ण
 
-static void mock_reset_cancel(struct intel_engine_cs *engine)
-{
-	struct mock_engine *mock =
+अटल व्योम mock_reset_cancel(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा mock_engine *mock =
 		container_of(engine, typeof(*mock), base);
-	struct i915_request *rq;
-	unsigned long flags;
+	काष्ठा i915_request *rq;
+	अचिन्हित दीर्घ flags;
 
-	del_timer_sync(&mock->hw_delay);
+	del_समयr_sync(&mock->hw_delay);
 
 	spin_lock_irqsave(&engine->active.lock, flags);
 
 	/* Mark all submitted requests as skipped. */
-	list_for_each_entry(rq, &engine->active.requests, sched.link)
+	list_क्रम_each_entry(rq, &engine->active.requests, sched.link)
 		i915_request_put(i915_request_mark_eio(rq));
-	intel_engine_signal_breadcrumbs(engine);
+	पूर्णांकel_engine_संकेत_bपढ़ोcrumbs(engine);
 
 	/* Cancel and submit all pending requests. */
-	list_for_each_entry(rq, &mock->hw_queue, mock.link) {
-		if (i915_request_mark_eio(rq)) {
+	list_क्रम_each_entry(rq, &mock->hw_queue, mock.link) अणु
+		अगर (i915_request_mark_eio(rq)) अणु
 			__i915_request_submit(rq);
 			i915_request_put(rq);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	INIT_LIST_HEAD(&mock->hw_queue);
 
 	spin_unlock_irqrestore(&engine->active.lock, flags);
-}
+पूर्ण
 
-static void mock_reset_finish(struct intel_engine_cs *engine)
-{
-}
+अटल व्योम mock_reset_finish(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+पूर्ण
 
-static void mock_engine_release(struct intel_engine_cs *engine)
-{
-	struct mock_engine *mock =
+अटल व्योम mock_engine_release(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा mock_engine *mock =
 		container_of(engine, typeof(*mock), base);
 
-	GEM_BUG_ON(timer_pending(&mock->hw_delay));
+	GEM_BUG_ON(समयr_pending(&mock->hw_delay));
 
-	intel_breadcrumbs_free(engine->breadcrumbs);
+	पूर्णांकel_bपढ़ोcrumbs_मुक्त(engine->bपढ़ोcrumbs);
 
-	intel_context_unpin(engine->kernel_context);
-	intel_context_put(engine->kernel_context);
+	पूर्णांकel_context_unpin(engine->kernel_context);
+	पूर्णांकel_context_put(engine->kernel_context);
 
-	intel_engine_fini_retire(engine);
-}
+	पूर्णांकel_engine_fini_retire(engine);
+पूर्ण
 
-struct intel_engine_cs *mock_engine(struct drm_i915_private *i915,
-				    const char *name,
-				    int id)
-{
-	struct mock_engine *engine;
+काष्ठा पूर्णांकel_engine_cs *mock_engine(काष्ठा drm_i915_निजी *i915,
+				    स्थिर अक्षर *name,
+				    पूर्णांक id)
+अणु
+	काष्ठा mock_engine *engine;
 
 	GEM_BUG_ON(id >= I915_NUM_ENGINES);
 	GEM_BUG_ON(!i915->gt.uncore);
 
-	engine = kzalloc(sizeof(*engine) + PAGE_SIZE, GFP_KERNEL);
-	if (!engine)
-		return NULL;
+	engine = kzalloc(माप(*engine) + PAGE_SIZE, GFP_KERNEL);
+	अगर (!engine)
+		वापस शून्य;
 
-	/* minimal engine setup for requests */
+	/* minimal engine setup क्रम requests */
 	engine->base.i915 = i915;
 	engine->base.gt = &i915->gt;
 	engine->base.uncore = i915->gt.uncore;
-	snprintf(engine->base.name, sizeof(engine->base.name), "%s", name);
+	snम_लिखो(engine->base.name, माप(engine->base.name), "%s", name);
 	engine->base.id = id;
 	engine->base.mask = BIT(id);
 	engine->base.legacy_idx = INVALID_ENGINE;
 	engine->base.instance = id;
-	engine->base.status_page.addr = (void *)(engine + 1);
+	engine->base.status_page.addr = (व्योम *)(engine + 1);
 
 	engine->base.cops = &mock_context_ops;
 	engine->base.request_alloc = mock_request_alloc;
 	engine->base.emit_flush = mock_emit_flush;
-	engine->base.emit_fini_breadcrumb = mock_emit_breadcrumb;
+	engine->base.emit_fini_bपढ़ोcrumb = mock_emit_bपढ़ोcrumb;
 	engine->base.submit_request = mock_submit_request;
 
 	engine->base.reset.prepare = mock_reset_prepare;
-	engine->base.reset.rewind = mock_reset_rewind;
+	engine->base.reset.शुरुआत = mock_reset_शुरुआत;
 	engine->base.reset.cancel = mock_reset_cancel;
 	engine->base.reset.finish = mock_reset_finish;
 
@@ -333,56 +334,56 @@ struct intel_engine_cs *mock_engine(struct drm_i915_private *i915,
 
 	/* fake hw queue */
 	spin_lock_init(&engine->hw_lock);
-	timer_setup(&engine->hw_delay, hw_delay_complete, 0);
+	समयr_setup(&engine->hw_delay, hw_delay_complete, 0);
 	INIT_LIST_HEAD(&engine->hw_queue);
 
-	intel_engine_add_user(&engine->base);
+	पूर्णांकel_engine_add_user(&engine->base);
 
-	return &engine->base;
-}
+	वापस &engine->base;
+पूर्ण
 
-int mock_engine_init(struct intel_engine_cs *engine)
-{
-	struct intel_context *ce;
+पूर्णांक mock_engine_init(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_context *ce;
 
-	intel_engine_init_active(engine, ENGINE_MOCK);
-	intel_engine_init_execlists(engine);
-	intel_engine_init__pm(engine);
-	intel_engine_init_retire(engine);
+	पूर्णांकel_engine_init_active(engine, ENGINE_MOCK);
+	पूर्णांकel_engine_init_execlists(engine);
+	पूर्णांकel_engine_init__pm(engine);
+	पूर्णांकel_engine_init_retire(engine);
 
-	engine->breadcrumbs = intel_breadcrumbs_create(NULL);
-	if (!engine->breadcrumbs)
-		return -ENOMEM;
+	engine->bपढ़ोcrumbs = पूर्णांकel_bपढ़ोcrumbs_create(शून्य);
+	अगर (!engine->bपढ़ोcrumbs)
+		वापस -ENOMEM;
 
 	ce = create_kernel_context(engine);
-	if (IS_ERR(ce))
-		goto err_breadcrumbs;
+	अगर (IS_ERR(ce))
+		जाओ err_bपढ़ोcrumbs;
 
 	/* We insist the kernel context is using the status_page */
-	engine->status_page.vma = ce->timeline->hwsp_ggtt;
+	engine->status_page.vma = ce->समयline->hwsp_ggtt;
 
 	engine->kernel_context = ce;
-	return 0;
+	वापस 0;
 
-err_breadcrumbs:
-	intel_breadcrumbs_free(engine->breadcrumbs);
-	return -ENOMEM;
-}
+err_bपढ़ोcrumbs:
+	पूर्णांकel_bपढ़ोcrumbs_मुक्त(engine->bपढ़ोcrumbs);
+	वापस -ENOMEM;
+पूर्ण
 
-void mock_engine_flush(struct intel_engine_cs *engine)
-{
-	struct mock_engine *mock =
+व्योम mock_engine_flush(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा mock_engine *mock =
 		container_of(engine, typeof(*mock), base);
-	struct i915_request *request, *rn;
+	काष्ठा i915_request *request, *rn;
 
-	del_timer_sync(&mock->hw_delay);
+	del_समयr_sync(&mock->hw_delay);
 
 	spin_lock_irq(&mock->hw_lock);
-	list_for_each_entry_safe(request, rn, &mock->hw_queue, mock.link)
+	list_क्रम_each_entry_safe(request, rn, &mock->hw_queue, mock.link)
 		advance(request);
 	spin_unlock_irq(&mock->hw_lock);
-}
+पूर्ण
 
-void mock_engine_reset(struct intel_engine_cs *engine)
-{
-}
+व्योम mock_engine_reset(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+पूर्ण

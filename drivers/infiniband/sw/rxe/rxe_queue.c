@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 /*
  * Copyright (c) 2016 Mellanox Technologies Ltd. All rights reserved.
  * Copyright (c) 2015 System Fabric Works, Inc. All rights reserved.
  */
 
-#include <linux/vmalloc.h>
-#include "rxe.h"
-#include "rxe_loc.h"
-#include "rxe_queue.h"
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश "rxe.h"
+#समावेश "rxe_loc.h"
+#समावेश "rxe_queue.h"
 
-int do_mmap_info(struct rxe_dev *rxe, struct mminfo __user *outbuf,
-		 struct ib_udata *udata, struct rxe_queue_buf *buf,
-		 size_t buf_size, struct rxe_mmap_info **ip_p)
-{
-	int err;
-	struct rxe_mmap_info *ip = NULL;
+पूर्णांक करो_mmap_info(काष्ठा rxe_dev *rxe, काष्ठा mminfo __user *outbuf,
+		 काष्ठा ib_udata *udata, काष्ठा rxe_queue_buf *buf,
+		 माप_प्रकार buf_size, काष्ठा rxe_mmap_info **ip_p)
+अणु
+	पूर्णांक err;
+	काष्ठा rxe_mmap_info *ip = शून्य;
 
-	if (outbuf) {
+	अगर (outbuf) अणु
 		ip = rxe_create_mmap_info(rxe, buf_size, udata, buf);
-		if (IS_ERR(ip)) {
+		अगर (IS_ERR(ip)) अणु
 			err = PTR_ERR(ip);
-			goto err1;
-		}
+			जाओ err1;
+		पूर्ण
 
-		if (copy_to_user(outbuf, &ip->info, sizeof(ip->info))) {
+		अगर (copy_to_user(outbuf, &ip->info, माप(ip->info))) अणु
 			err = -EFAULT;
-			goto err2;
-		}
+			जाओ err2;
+		पूर्ण
 
 		spin_lock_bh(&rxe->pending_lock);
 		list_add(&ip->pending_mmaps, &rxe->pending_mmaps);
 		spin_unlock_bh(&rxe->pending_lock);
-	}
+	पूर्ण
 
 	*ip_p = ip;
 
-	return 0;
+	वापस 0;
 
 err2:
-	kfree(ip);
+	kमुक्त(ip);
 err1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-inline void rxe_queue_reset(struct rxe_queue *q)
-{
+अंतरभूत व्योम rxe_queue_reset(काष्ठा rxe_queue *q)
+अणु
 	/* queue is comprised from header and the memory
 	 * of the actual queue. See "struct rxe_queue_buf" in rxe_queue.h
 	 * reset only the queue itself and not the management header
 	 */
-	memset(q->buf->data, 0, q->buf_size - sizeof(struct rxe_queue_buf));
-}
+	स_रखो(q->buf->data, 0, q->buf_size - माप(काष्ठा rxe_queue_buf));
+पूर्ण
 
-struct rxe_queue *rxe_queue_init(struct rxe_dev *rxe,
-				 int *num_elem,
-				 unsigned int elem_size)
-{
-	struct rxe_queue *q;
-	size_t buf_size;
-	unsigned int num_slots;
+काष्ठा rxe_queue *rxe_queue_init(काष्ठा rxe_dev *rxe,
+				 पूर्णांक *num_elem,
+				 अचिन्हित पूर्णांक elem_size)
+अणु
+	काष्ठा rxe_queue *q;
+	माप_प्रकार buf_size;
+	अचिन्हित पूर्णांक num_slots;
 
-	/* num_elem == 0 is allowed, but uninteresting */
-	if (*num_elem < 0)
-		goto err1;
+	/* num_elem == 0 is allowed, but unपूर्णांकeresting */
+	अगर (*num_elem < 0)
+		जाओ err1;
 
-	q = kmalloc(sizeof(*q), GFP_KERNEL);
-	if (!q)
-		goto err1;
+	q = kदो_स्मृति(माप(*q), GFP_KERNEL);
+	अगर (!q)
+		जाओ err1;
 
 	q->rxe = rxe;
 
 	/* used in resize, only need to copy used part of queue */
 	q->elem_size = elem_size;
 
-	/* pad element up to at least a cacheline and always a power of 2 */
-	if (elem_size < cache_line_size())
+	/* pad element up to at least a cacheline and always a घातer of 2 */
+	अगर (elem_size < cache_line_size())
 		elem_size = cache_line_size();
-	elem_size = roundup_pow_of_two(elem_size);
+	elem_size = roundup_घात_of_two(elem_size);
 
 	q->log2_elem_size = order_base_2(elem_size);
 
 	num_slots = *num_elem + 1;
-	num_slots = roundup_pow_of_two(num_slots);
+	num_slots = roundup_घात_of_two(num_slots);
 	q->index_mask = num_slots - 1;
 
-	buf_size = sizeof(struct rxe_queue_buf) + num_slots * elem_size;
+	buf_size = माप(काष्ठा rxe_queue_buf) + num_slots * elem_size;
 
-	q->buf = vmalloc_user(buf_size);
-	if (!q->buf)
-		goto err2;
+	q->buf = vदो_स्मृति_user(buf_size);
+	अगर (!q->buf)
+		जाओ err2;
 
 	q->buf->log2_elem_size = q->log2_elem_size;
 	q->buf->index_mask = q->index_mask;
@@ -96,87 +97,87 @@ struct rxe_queue *rxe_queue_init(struct rxe_dev *rxe,
 	q->buf_size = buf_size;
 
 	*num_elem = num_slots - 1;
-	return q;
+	वापस q;
 
 err2:
-	kfree(q);
+	kमुक्त(q);
 err1:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* copies elements from original q to new q and then swaps the contents of the
- * two q headers. This is so that if anyone is holding a pointer to q it will
+ * two q headers. This is so that अगर anyone is holding a poपूर्णांकer to q it will
  * still work
  */
-static int resize_finish(struct rxe_queue *q, struct rxe_queue *new_q,
-			 unsigned int num_elem)
-{
-	if (!queue_empty(q) && (num_elem < queue_count(q)))
-		return -EINVAL;
+अटल पूर्णांक resize_finish(काष्ठा rxe_queue *q, काष्ठा rxe_queue *new_q,
+			 अचिन्हित पूर्णांक num_elem)
+अणु
+	अगर (!queue_empty(q) && (num_elem < queue_count(q)))
+		वापस -EINVAL;
 
-	while (!queue_empty(q)) {
-		memcpy(producer_addr(new_q), consumer_addr(q),
+	जबतक (!queue_empty(q)) अणु
+		स_नकल(producer_addr(new_q), consumer_addr(q),
 		       new_q->elem_size);
 		advance_producer(new_q);
 		advance_consumer(q);
-	}
+	पूर्ण
 
 	swap(*q, *new_q);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rxe_queue_resize(struct rxe_queue *q, unsigned int *num_elem_p,
-		     unsigned int elem_size, struct ib_udata *udata,
-		     struct mminfo __user *outbuf, spinlock_t *producer_lock,
+पूर्णांक rxe_queue_resize(काष्ठा rxe_queue *q, अचिन्हित पूर्णांक *num_elem_p,
+		     अचिन्हित पूर्णांक elem_size, काष्ठा ib_udata *udata,
+		     काष्ठा mminfo __user *outbuf, spinlock_t *producer_lock,
 		     spinlock_t *consumer_lock)
-{
-	struct rxe_queue *new_q;
-	unsigned int num_elem = *num_elem_p;
-	int err;
-	unsigned long flags = 0, flags1;
+अणु
+	काष्ठा rxe_queue *new_q;
+	अचिन्हित पूर्णांक num_elem = *num_elem_p;
+	पूर्णांक err;
+	अचिन्हित दीर्घ flags = 0, flags1;
 
 	new_q = rxe_queue_init(q->rxe, &num_elem, elem_size);
-	if (!new_q)
-		return -ENOMEM;
+	अगर (!new_q)
+		वापस -ENOMEM;
 
-	err = do_mmap_info(new_q->rxe, outbuf, udata, new_q->buf,
+	err = करो_mmap_info(new_q->rxe, outbuf, udata, new_q->buf,
 			   new_q->buf_size, &new_q->ip);
-	if (err) {
-		vfree(new_q->buf);
-		kfree(new_q);
-		goto err1;
-	}
+	अगर (err) अणु
+		vमुक्त(new_q->buf);
+		kमुक्त(new_q);
+		जाओ err1;
+	पूर्ण
 
 	spin_lock_irqsave(consumer_lock, flags1);
 
-	if (producer_lock) {
+	अगर (producer_lock) अणु
 		spin_lock_irqsave(producer_lock, flags);
 		err = resize_finish(q, new_q, num_elem);
 		spin_unlock_irqrestore(producer_lock, flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = resize_finish(q, new_q, num_elem);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(consumer_lock, flags1);
 
 	rxe_queue_cleanup(new_q);	/* new/old dep on err */
-	if (err)
-		goto err1;
+	अगर (err)
+		जाओ err1;
 
 	*num_elem_p = num_elem;
-	return 0;
+	वापस 0;
 
 err1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void rxe_queue_cleanup(struct rxe_queue *q)
-{
-	if (q->ip)
+व्योम rxe_queue_cleanup(काष्ठा rxe_queue *q)
+अणु
+	अगर (q->ip)
 		kref_put(&q->ip->ref, rxe_mmap_release);
-	else
-		vfree(q->buf);
+	अन्यथा
+		vमुक्त(q->buf);
 
-	kfree(q);
-}
+	kमुक्त(q);
+पूर्ण

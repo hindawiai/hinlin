@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Copyright 2016-2019 HabanaLabs, Ltd.
+ * Copyright 2016-2019 HabanaLअसल, Ltd.
  * All Rights Reserved.
  */
 
-#include "habanalabs.h"
+#समावेश "habanalabs.h"
 
-#include <linux/slab.h>
+#समावेश <linux/slab.h>
 
-int hl_asid_init(struct hl_device *hdev)
-{
-	hdev->asid_bitmap = kcalloc(BITS_TO_LONGS(hdev->asic_prop.max_asid),
-					sizeof(*hdev->asid_bitmap), GFP_KERNEL);
-	if (!hdev->asid_bitmap)
-		return -ENOMEM;
+पूर्णांक hl_asid_init(काष्ठा hl_device *hdev)
+अणु
+	hdev->asid_biपंचांगap = kसुस्मृति(BITS_TO_LONGS(hdev->asic_prop.max_asid),
+					माप(*hdev->asid_biपंचांगap), GFP_KERNEL);
+	अगर (!hdev->asid_biपंचांगap)
+		वापस -ENOMEM;
 
 	mutex_init(&hdev->asid_mutex);
 
-	/* ASID 0 is reserved for the kernel driver and device CPU */
-	set_bit(0, hdev->asid_bitmap);
+	/* ASID 0 is reserved क्रम the kernel driver and device CPU */
+	set_bit(0, hdev->asid_biपंचांगap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void hl_asid_fini(struct hl_device *hdev)
-{
+व्योम hl_asid_fini(काष्ठा hl_device *hdev)
+अणु
 	mutex_destroy(&hdev->asid_mutex);
-	kfree(hdev->asid_bitmap);
-}
+	kमुक्त(hdev->asid_biपंचांगap);
+पूर्ण
 
-unsigned long hl_asid_alloc(struct hl_device *hdev)
-{
-	unsigned long found;
+अचिन्हित दीर्घ hl_asid_alloc(काष्ठा hl_device *hdev)
+अणु
+	अचिन्हित दीर्घ found;
 
 	mutex_lock(&hdev->asid_mutex);
 
-	found = find_first_zero_bit(hdev->asid_bitmap,
+	found = find_first_zero_bit(hdev->asid_biपंचांगap,
 					hdev->asic_prop.max_asid);
-	if (found == hdev->asic_prop.max_asid)
+	अगर (found == hdev->asic_prop.max_asid)
 		found = 0;
-	else
-		set_bit(found, hdev->asid_bitmap);
+	अन्यथा
+		set_bit(found, hdev->asid_biपंचांगap);
 
 	mutex_unlock(&hdev->asid_mutex);
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-void hl_asid_free(struct hl_device *hdev, unsigned long asid)
-{
-	if (asid == HL_KERNEL_ASID_ID || asid >= hdev->asic_prop.max_asid) {
+व्योम hl_asid_मुक्त(काष्ठा hl_device *hdev, अचिन्हित दीर्घ asid)
+अणु
+	अगर (asid == HL_KERNEL_ASID_ID || asid >= hdev->asic_prop.max_asid) अणु
 		dev_crit(hdev->dev, "Invalid ASID %lu", asid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	clear_bit(asid, hdev->asid_bitmap);
-}
+	clear_bit(asid, hdev->asid_biपंचांगap);
+पूर्ण

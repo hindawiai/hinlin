@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _FALLOC_H_
-#define _FALLOC_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _FALLOC_H_
+#घोषणा _FALLOC_H_
 
-#include <uapi/linux/falloc.h>
+#समावेश <uapi/linux/fभाग.स>
 
 
 /*
- * Space reservation ioctls and argument structure
- * are designed to be compatible with the legacy XFS ioctls.
+ * Space reservation ioctls and argument काष्ठाure
+ * are deचिन्हित to be compatible with the legacy XFS ioctls.
  */
-struct space_resv {
+काष्ठा space_resv अणु
 	__s16		l_type;
 	__s16		l_whence;
 	__s64		l_start;
@@ -17,15 +18,15 @@ struct space_resv {
 	__s32		l_sysid;
 	__u32		l_pid;
 	__s32		l_pad[4];	/* reserved area */
-};
+पूर्ण;
 
-#define FS_IOC_RESVSP		_IOW('X', 40, struct space_resv)
-#define FS_IOC_UNRESVSP		_IOW('X', 41, struct space_resv)
-#define FS_IOC_RESVSP64		_IOW('X', 42, struct space_resv)
-#define FS_IOC_UNRESVSP64	_IOW('X', 43, struct space_resv)
-#define FS_IOC_ZERO_RANGE	_IOW('X', 57, struct space_resv)
+#घोषणा FS_IOC_RESVSP		_IOW('X', 40, काष्ठा space_resv)
+#घोषणा FS_IOC_UNRESVSP		_IOW('X', 41, काष्ठा space_resv)
+#घोषणा FS_IOC_RESVSP64		_IOW('X', 42, काष्ठा space_resv)
+#घोषणा FS_IOC_UNRESVSP64	_IOW('X', 43, काष्ठा space_resv)
+#घोषणा FS_IOC_ZERO_RANGE	_IOW('X', 57, काष्ठा space_resv)
 
-#define	FALLOC_FL_SUPPORTED_MASK	(FALLOC_FL_KEEP_SIZE |		\
+#घोषणा	FALLOC_FL_SUPPORTED_MASK	(FALLOC_FL_KEEP_SIZE |		\
 					 FALLOC_FL_PUNCH_HOLE |		\
 					 FALLOC_FL_COLLAPSE_RANGE |	\
 					 FALLOC_FL_ZERO_RANGE |		\
@@ -33,8 +34,8 @@ struct space_resv {
 					 FALLOC_FL_UNSHARE_RANGE)
 
 /* on ia32 l_start is on a 32-bit boundary */
-#if defined(CONFIG_X86_64)
-struct space_resv_32 {
+#अगर defined(CONFIG_X86_64)
+काष्ठा space_resv_32 अणु
 	__s16		l_type;
 	__s16		l_whence;
 	__s64		l_start	__attribute__((packed));
@@ -43,14 +44,14 @@ struct space_resv_32 {
 	__s32		l_sysid;
 	__u32		l_pid;
 	__s32		l_pad[4];	/* reserve area */
-};
+पूर्ण;
 
-#define FS_IOC_RESVSP_32	_IOW ('X', 40, struct space_resv_32)
-#define FS_IOC_UNRESVSP_32	_IOW ('X', 41, struct space_resv_32)
-#define FS_IOC_RESVSP64_32	_IOW ('X', 42, struct space_resv_32)
-#define FS_IOC_UNRESVSP64_32	_IOW ('X', 43, struct space_resv_32)
-#define FS_IOC_ZERO_RANGE_32	_IOW ('X', 57, struct space_resv_32)
+#घोषणा FS_IOC_RESVSP_32	_IOW ('X', 40, काष्ठा space_resv_32)
+#घोषणा FS_IOC_UNRESVSP_32	_IOW ('X', 41, काष्ठा space_resv_32)
+#घोषणा FS_IOC_RESVSP64_32	_IOW ('X', 42, काष्ठा space_resv_32)
+#घोषणा FS_IOC_UNRESVSP64_32	_IOW ('X', 43, काष्ठा space_resv_32)
+#घोषणा FS_IOC_ZERO_RANGE_32	_IOW ('X', 57, काष्ठा space_resv_32)
 
-#endif
+#पूर्ण_अगर
 
-#endif /* _FALLOC_H_ */
+#पूर्ण_अगर /* _FALLOC_H_ */

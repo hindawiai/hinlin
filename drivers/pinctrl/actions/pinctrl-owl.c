@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * OWL SoC's Pinctrl driver
  *
@@ -9,199 +10,199 @@
  * Author: Manivannan Sadhasivam <manivannan.sadhasivam@linaro.org>
  */
 
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
 
-#include "../core.h"
-#include "../pinctrl-utils.h"
-#include "pinctrl-owl.h"
+#समावेश "../core.h"
+#समावेश "../pinctrl-utils.h"
+#समावेश "pinctrl-owl.h"
 
 /**
- * struct owl_pinctrl - pinctrl state of the device
+ * काष्ठा owl_pinctrl - pinctrl state of the device
  * @dev: device handle
  * @pctrldev: pinctrl handle
  * @chip: gpio chip
- * @lock: spinlock to protect registers
- * @clk: clock control
+ * @lock: spinlock to protect रेजिस्टरs
+ * @clk: घड़ी control
  * @soc: reference to soc_data
- * @base: pinctrl register base address
- * @irq_chip: IRQ chip information
- * @num_irq: number of possible interrupts
- * @irq: interrupt numbers
+ * @base: pinctrl रेजिस्टर base address
+ * @irq_chip: IRQ chip inक्रमmation
+ * @num_irq: number of possible पूर्णांकerrupts
+ * @irq: पूर्णांकerrupt numbers
  */
-struct owl_pinctrl {
-	struct device *dev;
-	struct pinctrl_dev *pctrldev;
-	struct gpio_chip chip;
+काष्ठा owl_pinctrl अणु
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctrldev;
+	काष्ठा gpio_chip chip;
 	raw_spinlock_t lock;
-	struct clk *clk;
-	const struct owl_pinctrl_soc_data *soc;
-	void __iomem *base;
-	struct irq_chip irq_chip;
-	unsigned int num_irq;
-	unsigned int *irq;
-};
+	काष्ठा clk *clk;
+	स्थिर काष्ठा owl_pinctrl_soc_data *soc;
+	व्योम __iomem *base;
+	काष्ठा irq_chip irq_chip;
+	अचिन्हित पूर्णांक num_irq;
+	अचिन्हित पूर्णांक *irq;
+पूर्ण;
 
-static void owl_update_bits(void __iomem *base, u32 mask, u32 val)
-{
+अटल व्योम owl_update_bits(व्योम __iomem *base, u32 mask, u32 val)
+अणु
 	u32 reg_val;
 
-	reg_val = readl_relaxed(base);
+	reg_val = पढ़ोl_relaxed(base);
 
 	reg_val = (reg_val & ~mask) | (val & mask);
 
-	writel_relaxed(reg_val, base);
-}
+	ग_लिखोl_relaxed(reg_val, base);
+पूर्ण
 
-static u32 owl_read_field(struct owl_pinctrl *pctrl, u32 reg,
+अटल u32 owl_पढ़ो_field(काष्ठा owl_pinctrl *pctrl, u32 reg,
 				u32 bit, u32 width)
-{
-	u32 tmp, mask;
+अणु
+	u32 पंचांगp, mask;
 
-	tmp = readl_relaxed(pctrl->base + reg);
+	पंचांगp = पढ़ोl_relaxed(pctrl->base + reg);
 	mask = (1 << width) - 1;
 
-	return (tmp >> bit) & mask;
-}
+	वापस (पंचांगp >> bit) & mask;
+पूर्ण
 
-static void owl_write_field(struct owl_pinctrl *pctrl, u32 reg, u32 arg,
+अटल व्योम owl_ग_लिखो_field(काष्ठा owl_pinctrl *pctrl, u32 reg, u32 arg,
 				u32 bit, u32 width)
-{
+अणु
 	u32 mask;
 
 	mask = (1 << width) - 1;
 	mask = mask << bit;
 
 	owl_update_bits(pctrl->base + reg, mask, (arg << bit));
-}
+पूर्ण
 
-static int owl_get_groups_count(struct pinctrl_dev *pctrldev)
-{
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+अटल पूर्णांक owl_get_groups_count(काष्ठा pinctrl_dev *pctrldev)
+अणु
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
 
-	return pctrl->soc->ngroups;
-}
+	वापस pctrl->soc->ngroups;
+पूर्ण
 
-static const char *owl_get_group_name(struct pinctrl_dev *pctrldev,
-				unsigned int group)
-{
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+अटल स्थिर अक्षर *owl_get_group_name(काष्ठा pinctrl_dev *pctrldev,
+				अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
 
-	return pctrl->soc->groups[group].name;
-}
+	वापस pctrl->soc->groups[group].name;
+पूर्ण
 
-static int owl_get_group_pins(struct pinctrl_dev *pctrldev,
-				unsigned int group,
-				const unsigned int **pins,
-				unsigned int *num_pins)
-{
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+अटल पूर्णांक owl_get_group_pins(काष्ठा pinctrl_dev *pctrldev,
+				अचिन्हित पूर्णांक group,
+				स्थिर अचिन्हित पूर्णांक **pins,
+				अचिन्हित पूर्णांक *num_pins)
+अणु
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
 
 	*pins = pctrl->soc->groups[group].pads;
 	*num_pins = pctrl->soc->groups[group].npads;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void owl_pin_dbg_show(struct pinctrl_dev *pctrldev,
-				struct seq_file *s,
-				unsigned int offset)
-{
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+अटल व्योम owl_pin_dbg_show(काष्ठा pinctrl_dev *pctrldev,
+				काष्ठा seq_file *s,
+				अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
 
-	seq_printf(s, "%s", dev_name(pctrl->dev));
-}
+	seq_म_लिखो(s, "%s", dev_name(pctrl->dev));
+पूर्ण
 
-static const struct pinctrl_ops owl_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops owl_pinctrl_ops = अणु
 	.get_groups_count = owl_get_groups_count,
 	.get_group_name = owl_get_group_name,
 	.get_group_pins = owl_get_group_pins,
 	.pin_dbg_show = owl_pin_dbg_show,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_all,
-	.dt_free_map = pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+पूर्ण;
 
-static int owl_get_funcs_count(struct pinctrl_dev *pctrldev)
-{
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+अटल पूर्णांक owl_get_funcs_count(काष्ठा pinctrl_dev *pctrldev)
+अणु
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
 
-	return pctrl->soc->nfunctions;
-}
+	वापस pctrl->soc->nfunctions;
+पूर्ण
 
-static const char *owl_get_func_name(struct pinctrl_dev *pctrldev,
-				unsigned int function)
-{
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+अटल स्थिर अक्षर *owl_get_func_name(काष्ठा pinctrl_dev *pctrldev,
+				अचिन्हित पूर्णांक function)
+अणु
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
 
-	return pctrl->soc->functions[function].name;
-}
+	वापस pctrl->soc->functions[function].name;
+पूर्ण
 
-static int owl_get_func_groups(struct pinctrl_dev *pctrldev,
-				unsigned int function,
-				const char * const **groups,
-				unsigned int * const num_groups)
-{
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+अटल पूर्णांक owl_get_func_groups(काष्ठा pinctrl_dev *pctrldev,
+				अचिन्हित पूर्णांक function,
+				स्थिर अक्षर * स्थिर **groups,
+				अचिन्हित पूर्णांक * स्थिर num_groups)
+अणु
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
 
 	*groups = pctrl->soc->functions[function].groups;
 	*num_groups = pctrl->soc->functions[function].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int get_group_mfp_mask_val(const struct owl_pingroup *g,
-				int function,
+अटल अंतरभूत पूर्णांक get_group_mfp_mask_val(स्थिर काष्ठा owl_pingroup *g,
+				पूर्णांक function,
 				u32 *mask,
 				u32 *val)
-{
-	int id;
+अणु
+	पूर्णांक id;
 	u32 option_num;
 	u32 option_mask;
 
-	for (id = 0; id < g->nfuncs; id++) {
-		if (g->funcs[id] == function)
-			break;
-	}
-	if (WARN_ON(id == g->nfuncs))
-		return -EINVAL;
+	क्रम (id = 0; id < g->nfuncs; id++) अणु
+		अगर (g->funcs[id] == function)
+			अवरोध;
+	पूर्ण
+	अगर (WARN_ON(id == g->nfuncs))
+		वापस -EINVAL;
 
 	option_num = (1 << g->mfpctl_width);
-	if (id > option_num)
+	अगर (id > option_num)
 		id -= option_num;
 
 	option_mask = option_num - 1;
-	*mask = (option_mask  << g->mfpctl_shift);
-	*val = (id << g->mfpctl_shift);
+	*mask = (option_mask  << g->mfpctl_shअगरt);
+	*val = (id << g->mfpctl_shअगरt);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_set_mux(struct pinctrl_dev *pctrldev,
-				unsigned int function,
-				unsigned int group)
-{
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
-	const struct owl_pingroup *g;
-	unsigned long flags;
+अटल पूर्णांक owl_set_mux(काष्ठा pinctrl_dev *pctrldev,
+				अचिन्हित पूर्णांक function,
+				अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+	स्थिर काष्ठा owl_pingroup *g;
+	अचिन्हित दीर्घ flags;
 	u32 val, mask;
 
 	g = &pctrl->soc->groups[group];
 
-	if (get_group_mfp_mask_val(g, function, &mask, &val))
-		return -EINVAL;
+	अगर (get_group_mfp_mask_val(g, function, &mask, &val))
+		वापस -EINVAL;
 
 	raw_spin_lock_irqsave(&pctrl->lock, flags);
 
@@ -209,338 +210,338 @@ static int owl_set_mux(struct pinctrl_dev *pctrldev,
 
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops owl_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops owl_pinmux_ops = अणु
 	.get_functions_count = owl_get_funcs_count,
 	.get_function_name = owl_get_func_name,
 	.get_function_groups = owl_get_func_groups,
 	.set_mux = owl_set_mux,
-};
+पूर्ण;
 
-static int owl_pad_pinconf_reg(const struct owl_padinfo *info,
-				unsigned int param,
+अटल पूर्णांक owl_pad_pinconf_reg(स्थिर काष्ठा owl_padinfo *info,
+				अचिन्हित पूर्णांक param,
 				u32 *reg,
 				u32 *bit,
 				u32 *width)
-{
-	switch (param) {
-	case PIN_CONFIG_BIAS_BUS_HOLD:
-	case PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (!info->pullctl)
-			return -EINVAL;
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_BUS_HOLD:
+	हाल PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (!info->pullctl)
+			वापस -EINVAL;
 		*reg = info->pullctl->reg;
-		*bit = info->pullctl->shift;
+		*bit = info->pullctl->shअगरt;
 		*width = info->pullctl->width;
-		break;
-	case PIN_CONFIG_INPUT_SCHMITT_ENABLE:
-		if (!info->st)
-			return -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_SCHMITT_ENABLE:
+		अगर (!info->st)
+			वापस -EINVAL;
 		*reg = info->st->reg;
-		*bit = info->st->shift;
+		*bit = info->st->shअगरt;
 		*width = info->st->width;
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_pin_config_get(struct pinctrl_dev *pctrldev,
-				unsigned int pin,
-				unsigned long *config)
-{
-	int ret = 0;
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
-	const struct owl_padinfo *info;
-	unsigned int param = pinconf_to_config_param(*config);
+अटल पूर्णांक owl_pin_config_get(काष्ठा pinctrl_dev *pctrldev,
+				अचिन्हित पूर्णांक pin,
+				अचिन्हित दीर्घ *config)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+	स्थिर काष्ठा owl_padinfo *info;
+	अचिन्हित पूर्णांक param = pinconf_to_config_param(*config);
 	u32 reg, bit, width, arg;
 
 	info = &pctrl->soc->padinfo[pin];
 
 	ret = owl_pad_pinconf_reg(info, param, &reg, &bit, &width);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	arg = owl_read_field(pctrl, reg, bit, width);
+	arg = owl_पढ़ो_field(pctrl, reg, bit, width);
 
-	if (!pctrl->soc->padctl_val2arg)
-		return -ENOTSUPP;
+	अगर (!pctrl->soc->padctl_val2arg)
+		वापस -ENOTSUPP;
 
 	ret = pctrl->soc->padctl_val2arg(info, param, &arg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int owl_pin_config_set(struct pinctrl_dev *pctrldev,
-				unsigned int pin,
-				unsigned long *configs,
-				unsigned int num_configs)
-{
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
-	const struct owl_padinfo *info;
-	unsigned long flags;
-	unsigned int param;
+अटल पूर्णांक owl_pin_config_set(काष्ठा pinctrl_dev *pctrldev,
+				अचिन्हित पूर्णांक pin,
+				अचिन्हित दीर्घ *configs,
+				अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+	स्थिर काष्ठा owl_padinfo *info;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक param;
 	u32 reg, bit, width, arg;
-	int ret = 0, i;
+	पूर्णांक ret = 0, i;
 
 	info = &pctrl->soc->padinfo[pin];
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
 		ret = owl_pad_pinconf_reg(info, param, &reg, &bit, &width);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (!pctrl->soc->padctl_arg2val)
-			return -ENOTSUPP;
+		अगर (!pctrl->soc->padctl_arg2val)
+			वापस -ENOTSUPP;
 
 		ret = pctrl->soc->padctl_arg2val(info, param, &arg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		raw_spin_lock_irqsave(&pctrl->lock, flags);
 
-		owl_write_field(pctrl, reg, arg, bit, width);
+		owl_ग_लिखो_field(pctrl, reg, arg, bit, width);
 
 		raw_spin_unlock_irqrestore(&pctrl->lock, flags);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int owl_group_pinconf_reg(const struct owl_pingroup *g,
-				unsigned int param,
+अटल पूर्णांक owl_group_pinconf_reg(स्थिर काष्ठा owl_pingroup *g,
+				अचिन्हित पूर्णांक param,
 				u32 *reg,
 				u32 *bit,
 				u32 *width)
-{
-	switch (param) {
-	case PIN_CONFIG_DRIVE_STRENGTH:
-		if (g->drv_reg < 0)
-			return -EINVAL;
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
+		अगर (g->drv_reg < 0)
+			वापस -EINVAL;
 		*reg = g->drv_reg;
-		*bit = g->drv_shift;
+		*bit = g->drv_shअगरt;
 		*width = g->drv_width;
-		break;
-	case PIN_CONFIG_SLEW_RATE:
-		if (g->sr_reg < 0)
-			return -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_SLEW_RATE:
+		अगर (g->sr_reg < 0)
+			वापस -EINVAL;
 		*reg = g->sr_reg;
-		*bit = g->sr_shift;
+		*bit = g->sr_shअगरt;
 		*width = g->sr_width;
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_group_pinconf_arg2val(const struct owl_pingroup *g,
-				unsigned int param,
+अटल पूर्णांक owl_group_pinconf_arg2val(स्थिर काष्ठा owl_pingroup *g,
+				अचिन्हित पूर्णांक param,
 				u32 *arg)
-{
-	switch (param) {
-	case PIN_CONFIG_DRIVE_STRENGTH:
-		switch (*arg) {
-		case 2:
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
+		चयन (*arg) अणु
+		हाल 2:
 			*arg = OWL_PINCONF_DRV_2MA;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			*arg = OWL_PINCONF_DRV_4MA;
-			break;
-		case 8:
+			अवरोध;
+		हाल 8:
 			*arg = OWL_PINCONF_DRV_8MA;
-			break;
-		case 12:
+			अवरोध;
+		हाल 12:
 			*arg = OWL_PINCONF_DRV_12MA;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case PIN_CONFIG_SLEW_RATE:
-		if (*arg)
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल PIN_CONFIG_SLEW_RATE:
+		अगर (*arg)
 			*arg = OWL_PINCONF_SLEW_FAST;
-		else
+		अन्यथा
 			*arg = OWL_PINCONF_SLEW_SLOW;
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_group_pinconf_val2arg(const struct owl_pingroup *g,
-				unsigned int param,
+अटल पूर्णांक owl_group_pinconf_val2arg(स्थिर काष्ठा owl_pingroup *g,
+				अचिन्हित पूर्णांक param,
 				u32 *arg)
-{
-	switch (param) {
-	case PIN_CONFIG_DRIVE_STRENGTH:
-		switch (*arg) {
-		case OWL_PINCONF_DRV_2MA:
+अणु
+	चयन (param) अणु
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
+		चयन (*arg) अणु
+		हाल OWL_PINCONF_DRV_2MA:
 			*arg = 2;
-			break;
-		case OWL_PINCONF_DRV_4MA:
+			अवरोध;
+		हाल OWL_PINCONF_DRV_4MA:
 			*arg = 4;
-			break;
-		case OWL_PINCONF_DRV_8MA:
+			अवरोध;
+		हाल OWL_PINCONF_DRV_8MA:
 			*arg = 8;
-			break;
-		case OWL_PINCONF_DRV_12MA:
+			अवरोध;
+		हाल OWL_PINCONF_DRV_12MA:
 			*arg = 12;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	case PIN_CONFIG_SLEW_RATE:
-		if (*arg)
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल PIN_CONFIG_SLEW_RATE:
+		अगर (*arg)
 			*arg = 1;
-		else
+		अन्यथा
 			*arg = 0;
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_group_config_get(struct pinctrl_dev *pctrldev,
-				unsigned int group,
-				unsigned long *config)
-{
-	const struct owl_pingroup *g;
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
-	unsigned int param = pinconf_to_config_param(*config);
+अटल पूर्णांक owl_group_config_get(काष्ठा pinctrl_dev *pctrldev,
+				अचिन्हित पूर्णांक group,
+				अचिन्हित दीर्घ *config)
+अणु
+	स्थिर काष्ठा owl_pingroup *g;
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+	अचिन्हित पूर्णांक param = pinconf_to_config_param(*config);
 	u32 reg, bit, width, arg;
-	int ret;
+	पूर्णांक ret;
 
 	g = &pctrl->soc->groups[group];
 
 	ret = owl_group_pinconf_reg(g, param, &reg, &bit, &width);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	arg = owl_read_field(pctrl, reg, bit, width);
+	arg = owl_पढ़ो_field(pctrl, reg, bit, width);
 
 	ret = owl_group_pinconf_val2arg(g, param, &arg);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int owl_group_config_set(struct pinctrl_dev *pctrldev,
-				unsigned int group,
-				unsigned long *configs,
-				unsigned int num_configs)
-{
-	const struct owl_pingroup *g;
-	struct owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
-	unsigned long flags;
-	unsigned int param;
+अटल पूर्णांक owl_group_config_set(काष्ठा pinctrl_dev *pctrldev,
+				अचिन्हित पूर्णांक group,
+				अचिन्हित दीर्घ *configs,
+				अचिन्हित पूर्णांक num_configs)
+अणु
+	स्थिर काष्ठा owl_pingroup *g;
+	काष्ठा owl_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctrldev);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक param;
 	u32 reg, bit, width, arg;
-	int ret, i;
+	पूर्णांक ret, i;
 
 	g = &pctrl->soc->groups[group];
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
 		ret = owl_group_pinconf_reg(g, param, &reg, &bit, &width);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ret = owl_group_pinconf_arg2val(g, param, &arg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		/* Update register */
+		/* Update रेजिस्टर */
 		raw_spin_lock_irqsave(&pctrl->lock, flags);
 
-		owl_write_field(pctrl, reg, arg, bit, width);
+		owl_ग_लिखो_field(pctrl, reg, arg, bit, width);
 
 		raw_spin_unlock_irqrestore(&pctrl->lock, flags);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops owl_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops owl_pinconf_ops = अणु
 	.is_generic = true,
 	.pin_config_get = owl_pin_config_get,
 	.pin_config_set = owl_pin_config_set,
 	.pin_config_group_get = owl_group_config_get,
 	.pin_config_group_set = owl_group_config_set,
-};
+पूर्ण;
 
-static struct pinctrl_desc owl_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc owl_pinctrl_desc = अणु
 	.pctlops = &owl_pinctrl_ops,
 	.pmxops = &owl_pinmux_ops,
 	.confops = &owl_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct owl_gpio_port *
-owl_gpio_get_port(struct owl_pinctrl *pctrl, unsigned int *pin)
-{
-	unsigned int start = 0, i;
+अटल स्थिर काष्ठा owl_gpio_port *
+owl_gpio_get_port(काष्ठा owl_pinctrl *pctrl, अचिन्हित पूर्णांक *pin)
+अणु
+	अचिन्हित पूर्णांक start = 0, i;
 
-	for (i = 0; i < pctrl->soc->nports; i++) {
-		const struct owl_gpio_port *port = &pctrl->soc->ports[i];
+	क्रम (i = 0; i < pctrl->soc->nports; i++) अणु
+		स्थिर काष्ठा owl_gpio_port *port = &pctrl->soc->ports[i];
 
-		if (*pin >= start && *pin < start + port->pins) {
+		अगर (*pin >= start && *pin < start + port->pins) अणु
 			*pin -= start;
-			return port;
-		}
+			वापस port;
+		पूर्ण
 
 		start += port->pins;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void owl_gpio_update_reg(void __iomem *base, unsigned int pin, int flag)
-{
+अटल व्योम owl_gpio_update_reg(व्योम __iomem *base, अचिन्हित पूर्णांक pin, पूर्णांक flag)
+अणु
 	u32 val;
 
-	val = readl_relaxed(base);
+	val = पढ़ोl_relaxed(base);
 
-	if (flag)
+	अगर (flag)
 		val |= BIT(pin);
-	else
+	अन्यथा
 		val &= ~BIT(pin);
 
-	writel_relaxed(val, base);
-}
+	ग_लिखोl_relaxed(val, base);
+पूर्ण
 
-static int owl_gpio_request(struct gpio_chip *chip, unsigned int offset)
-{
-	struct owl_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
+अटल पूर्णांक owl_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(chip);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
 
 	port = owl_gpio_get_port(pctrl, &offset);
-	if (WARN_ON(port == NULL))
-		return -ENODEV;
+	अगर (WARN_ON(port == शून्य))
+		वापस -ENODEV;
 
 	gpio_base = pctrl->base + port->offset;
 
@@ -552,19 +553,19 @@ static int owl_gpio_request(struct gpio_chip *chip, unsigned int offset)
 	owl_gpio_update_reg(gpio_base + port->outen, offset, true);
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void owl_gpio_free(struct gpio_chip *chip, unsigned int offset)
-{
-	struct owl_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
+अटल व्योम owl_gpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(chip);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
 
 	port = owl_gpio_get_port(pctrl, &offset);
-	if (WARN_ON(port == NULL))
-		return;
+	अगर (WARN_ON(port == शून्य))
+		वापस;
 
 	gpio_base = pctrl->base + port->offset;
 
@@ -575,57 +576,57 @@ static void owl_gpio_free(struct gpio_chip *chip, unsigned int offset)
 	/* disable gpio input */
 	owl_gpio_update_reg(gpio_base + port->inen, offset, false);
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
-}
+पूर्ण
 
-static int owl_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct owl_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
+अटल पूर्णांक owl_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(chip);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	port = owl_gpio_get_port(pctrl, &offset);
-	if (WARN_ON(port == NULL))
-		return -ENODEV;
+	अगर (WARN_ON(port == शून्य))
+		वापस -ENODEV;
 
 	gpio_base = pctrl->base + port->offset;
 
 	raw_spin_lock_irqsave(&pctrl->lock, flags);
-	val = readl_relaxed(gpio_base + port->dat);
+	val = पढ़ोl_relaxed(gpio_base + port->dat);
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
 
-	return !!(val & BIT(offset));
-}
+	वापस !!(val & BIT(offset));
+पूर्ण
 
-static void owl_gpio_set(struct gpio_chip *chip, unsigned int offset, int value)
-{
-	struct owl_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
+अटल व्योम owl_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(chip);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
 
 	port = owl_gpio_get_port(pctrl, &offset);
-	if (WARN_ON(port == NULL))
-		return;
+	अगर (WARN_ON(port == शून्य))
+		वापस;
 
 	gpio_base = pctrl->base + port->offset;
 
 	raw_spin_lock_irqsave(&pctrl->lock, flags);
 	owl_gpio_update_reg(gpio_base + port->dat, offset, value);
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
-}
+पूर्ण
 
-static int owl_gpio_direction_input(struct gpio_chip *chip, unsigned int offset)
-{
-	struct owl_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
+अटल पूर्णांक owl_gpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(chip);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
 
 	port = owl_gpio_get_port(pctrl, &offset);
-	if (WARN_ON(port == NULL))
-		return -ENODEV;
+	अगर (WARN_ON(port == शून्य))
+		वापस -ENODEV;
 
 	gpio_base = pctrl->base + port->offset;
 
@@ -634,20 +635,20 @@ static int owl_gpio_direction_input(struct gpio_chip *chip, unsigned int offset)
 	owl_gpio_update_reg(gpio_base + port->inen, offset, true);
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int owl_gpio_direction_output(struct gpio_chip *chip,
-				unsigned int offset, int value)
-{
-	struct owl_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
+अटल पूर्णांक owl_gpio_direction_output(काष्ठा gpio_chip *chip,
+				अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(chip);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
 
 	port = owl_gpio_get_port(pctrl, &offset);
-	if (WARN_ON(port == NULL))
-		return -ENODEV;
+	अगर (WARN_ON(port == शून्य))
+		वापस -ENODEV;
 
 	gpio_base = pctrl->base + port->offset;
 
@@ -657,217 +658,217 @@ static int owl_gpio_direction_output(struct gpio_chip *chip,
 	owl_gpio_update_reg(gpio_base + port->dat, offset, value);
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void irq_set_type(struct owl_pinctrl *pctrl, int gpio, unsigned int type)
-{
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
-	unsigned int offset, value, irq_type = 0;
+अटल व्योम irq_set_type(काष्ठा owl_pinctrl *pctrl, पूर्णांक gpio, अचिन्हित पूर्णांक type)
+अणु
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक offset, value, irq_type = 0;
 
-	switch (type) {
-	case IRQ_TYPE_EDGE_BOTH:
+	चयन (type) अणु
+	हाल IRQ_TYPE_EDGE_BOTH:
 		/*
-		 * Since the hardware doesn't support interrupts on both edges,
+		 * Since the hardware करोesn't support पूर्णांकerrupts on both edges,
 		 * emulate it in the software by setting the single edge
-		 * interrupt and switching to the opposite edge while ACKing
-		 * the interrupt
+		 * पूर्णांकerrupt and चयनing to the opposite edge जबतक ACKing
+		 * the पूर्णांकerrupt
 		 */
-		if (owl_gpio_get(&pctrl->chip, gpio))
+		अगर (owl_gpio_get(&pctrl->chip, gpio))
 			irq_type = OWL_GPIO_INT_EDGE_FALLING;
-		else
+		अन्यथा
 			irq_type = OWL_GPIO_INT_EDGE_RISING;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_RISING:
+	हाल IRQ_TYPE_EDGE_RISING:
 		irq_type = OWL_GPIO_INT_EDGE_RISING;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_EDGE_FALLING:
+	हाल IRQ_TYPE_EDGE_FALLING:
 		irq_type = OWL_GPIO_INT_EDGE_FALLING;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_HIGH:
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		irq_type = OWL_GPIO_INT_LEVEL_HIGH;
-		break;
+		अवरोध;
 
-	case IRQ_TYPE_LEVEL_LOW:
+	हाल IRQ_TYPE_LEVEL_LOW:
 		irq_type = OWL_GPIO_INT_LEVEL_LOW;
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	port = owl_gpio_get_port(pctrl, &gpio);
-	if (WARN_ON(port == NULL))
-		return;
+	अगर (WARN_ON(port == शून्य))
+		वापस;
 
 	gpio_base = pctrl->base + port->offset;
 
 	raw_spin_lock_irqsave(&pctrl->lock, flags);
 
 	offset = (gpio < 16) ? 4 : 0;
-	value = readl_relaxed(gpio_base + port->intc_type + offset);
+	value = पढ़ोl_relaxed(gpio_base + port->पूर्णांकc_type + offset);
 	value &= ~(OWL_GPIO_INT_MASK << ((gpio % 16) * 2));
 	value |= irq_type << ((gpio % 16) * 2);
-	writel_relaxed(value, gpio_base + port->intc_type + offset);
+	ग_लिखोl_relaxed(value, gpio_base + port->पूर्णांकc_type + offset);
 
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
-}
+पूर्ण
 
-static void owl_gpio_irq_mask(struct irq_data *data)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
-	struct owl_pinctrl *pctrl = gpiochip_get_data(gc);
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
-	unsigned int gpio = data->hwirq;
+अटल व्योम owl_gpio_irq_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(data);
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(gc);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक gpio = data->hwirq;
 	u32 val;
 
 	port = owl_gpio_get_port(pctrl, &gpio);
-	if (WARN_ON(port == NULL))
-		return;
+	अगर (WARN_ON(port == शून्य))
+		वापस;
 
 	gpio_base = pctrl->base + port->offset;
 
 	raw_spin_lock_irqsave(&pctrl->lock, flags);
 
-	owl_gpio_update_reg(gpio_base + port->intc_msk, gpio, false);
+	owl_gpio_update_reg(gpio_base + port->पूर्णांकc_msk, gpio, false);
 
-	/* disable port interrupt if no interrupt pending bit is active */
-	val = readl_relaxed(gpio_base + port->intc_msk);
-	if (val == 0)
-		owl_gpio_update_reg(gpio_base + port->intc_ctl,
+	/* disable port पूर्णांकerrupt अगर no पूर्णांकerrupt pending bit is active */
+	val = पढ़ोl_relaxed(gpio_base + port->पूर्णांकc_msk);
+	अगर (val == 0)
+		owl_gpio_update_reg(gpio_base + port->पूर्णांकc_ctl,
 					OWL_GPIO_CTLR_ENABLE + port->shared_ctl_offset * 5, false);
 
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
-}
+पूर्ण
 
-static void owl_gpio_irq_unmask(struct irq_data *data)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
-	struct owl_pinctrl *pctrl = gpiochip_get_data(gc);
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
-	unsigned int gpio = data->hwirq;
+अटल व्योम owl_gpio_irq_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(data);
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(gc);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक gpio = data->hwirq;
 	u32 value;
 
 	port = owl_gpio_get_port(pctrl, &gpio);
-	if (WARN_ON(port == NULL))
-		return;
+	अगर (WARN_ON(port == शून्य))
+		वापस;
 
 	gpio_base = pctrl->base + port->offset;
 	raw_spin_lock_irqsave(&pctrl->lock, flags);
 
-	/* enable port interrupt */
-	value = readl_relaxed(gpio_base + port->intc_ctl);
+	/* enable port पूर्णांकerrupt */
+	value = पढ़ोl_relaxed(gpio_base + port->पूर्णांकc_ctl);
 	value |= ((BIT(OWL_GPIO_CTLR_ENABLE) | BIT(OWL_GPIO_CTLR_SAMPLE_CLK_24M))
 			<< port->shared_ctl_offset * 5);
-	writel_relaxed(value, gpio_base + port->intc_ctl);
+	ग_लिखोl_relaxed(value, gpio_base + port->पूर्णांकc_ctl);
 
-	/* enable GPIO interrupt */
-	owl_gpio_update_reg(gpio_base + port->intc_msk, gpio, true);
+	/* enable GPIO पूर्णांकerrupt */
+	owl_gpio_update_reg(gpio_base + port->पूर्णांकc_msk, gpio, true);
 
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
-}
+पूर्ण
 
-static void owl_gpio_irq_ack(struct irq_data *data)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
-	struct owl_pinctrl *pctrl = gpiochip_get_data(gc);
-	const struct owl_gpio_port *port;
-	void __iomem *gpio_base;
-	unsigned long flags;
-	unsigned int gpio = data->hwirq;
+अटल व्योम owl_gpio_irq_ack(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(data);
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(gc);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *gpio_base;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक gpio = data->hwirq;
 
 	/*
-	 * Switch the interrupt edge to the opposite edge of the interrupt
-	 * which got triggered for the case of emulating both edges
+	 * Switch the पूर्णांकerrupt edge to the opposite edge of the पूर्णांकerrupt
+	 * which got triggered क्रम the हाल of emulating both edges
 	 */
-	if (irqd_get_trigger_type(data) == IRQ_TYPE_EDGE_BOTH) {
-		if (owl_gpio_get(gc, gpio))
+	अगर (irqd_get_trigger_type(data) == IRQ_TYPE_EDGE_BOTH) अणु
+		अगर (owl_gpio_get(gc, gpio))
 			irq_set_type(pctrl, gpio, IRQ_TYPE_EDGE_FALLING);
-		else
+		अन्यथा
 			irq_set_type(pctrl, gpio, IRQ_TYPE_EDGE_RISING);
-	}
+	पूर्ण
 
 	port = owl_gpio_get_port(pctrl, &gpio);
-	if (WARN_ON(port == NULL))
-		return;
+	अगर (WARN_ON(port == शून्य))
+		वापस;
 
 	gpio_base = pctrl->base + port->offset;
 
 	raw_spin_lock_irqsave(&pctrl->lock, flags);
 
-	owl_gpio_update_reg(gpio_base + port->intc_ctl,
+	owl_gpio_update_reg(gpio_base + port->पूर्णांकc_ctl,
 				OWL_GPIO_CTLR_PENDING + port->shared_ctl_offset * 5, true);
 
 	raw_spin_unlock_irqrestore(&pctrl->lock, flags);
-}
+पूर्ण
 
-static int owl_gpio_irq_set_type(struct irq_data *data, unsigned int type)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(data);
-	struct owl_pinctrl *pctrl = gpiochip_get_data(gc);
+अटल पूर्णांक owl_gpio_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(data);
+	काष्ठा owl_pinctrl *pctrl = gpiochip_get_data(gc);
 
-	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
+	अगर (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
 		irq_set_handler_locked(data, handle_level_irq);
-	else
+	अन्यथा
 		irq_set_handler_locked(data, handle_edge_irq);
 
 	irq_set_type(pctrl, data->hwirq, type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void owl_gpio_irq_handler(struct irq_desc *desc)
-{
-	struct owl_pinctrl *pctrl = irq_desc_get_handler_data(desc);
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct irq_domain *domain = pctrl->chip.irq.domain;
-	unsigned int parent = irq_desc_get_irq(desc);
-	const struct owl_gpio_port *port;
-	void __iomem *base;
-	unsigned int pin, irq, offset = 0, i;
-	unsigned long pending_irq;
+अटल व्योम owl_gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा owl_pinctrl *pctrl = irq_desc_get_handler_data(desc);
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा irq_करोमुख्य *करोमुख्य = pctrl->chip.irq.करोमुख्य;
+	अचिन्हित पूर्णांक parent = irq_desc_get_irq(desc);
+	स्थिर काष्ठा owl_gpio_port *port;
+	व्योम __iomem *base;
+	अचिन्हित पूर्णांक pin, irq, offset = 0, i;
+	अचिन्हित दीर्घ pending_irq;
 
 	chained_irq_enter(chip, desc);
 
-	for (i = 0; i < pctrl->soc->nports; i++) {
+	क्रम (i = 0; i < pctrl->soc->nports; i++) अणु
 		port = &pctrl->soc->ports[i];
 		base = pctrl->base + port->offset;
 
 		/* skip ports that are not associated with this irq */
-		if (parent != pctrl->irq[i])
-			goto skip;
+		अगर (parent != pctrl->irq[i])
+			जाओ skip;
 
-		pending_irq = readl_relaxed(base + port->intc_pd);
+		pending_irq = पढ़ोl_relaxed(base + port->पूर्णांकc_pd);
 
-		for_each_set_bit(pin, &pending_irq, port->pins) {
-			irq = irq_find_mapping(domain, offset + pin);
+		क्रम_each_set_bit(pin, &pending_irq, port->pins) अणु
+			irq = irq_find_mapping(करोमुख्य, offset + pin);
 			generic_handle_irq(irq);
 
-			/* clear pending interrupt */
-			owl_gpio_update_reg(base + port->intc_pd, pin, true);
-		}
+			/* clear pending पूर्णांकerrupt */
+			owl_gpio_update_reg(base + port->पूर्णांकc_pd, pin, true);
+		पूर्ण
 
 skip:
 		offset += port->pins;
-	}
+	पूर्ण
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-static int owl_gpio_init(struct owl_pinctrl *pctrl)
-{
-	struct gpio_chip *chip;
-	struct gpio_irq_chip *gpio_irq;
-	int ret, i, j, offset;
+अटल पूर्णांक owl_gpio_init(काष्ठा owl_pinctrl *pctrl)
+अणु
+	काष्ठा gpio_chip *chip;
+	काष्ठा gpio_irq_chip *gpio_irq;
+	पूर्णांक ret, i, j, offset;
 
 	chip = &pctrl->chip;
 	chip->base = -1;
@@ -886,61 +887,61 @@ static int owl_gpio_init(struct owl_pinctrl *pctrl)
 	gpio_irq = &chip->irq;
 	gpio_irq->chip = &pctrl->irq_chip;
 	gpio_irq->handler = handle_simple_irq;
-	gpio_irq->default_type = IRQ_TYPE_NONE;
+	gpio_irq->शेष_type = IRQ_TYPE_NONE;
 	gpio_irq->parent_handler = owl_gpio_irq_handler;
 	gpio_irq->parent_handler_data = pctrl;
 	gpio_irq->num_parents = pctrl->num_irq;
 	gpio_irq->parents = pctrl->irq;
 
-	gpio_irq->map = devm_kcalloc(pctrl->dev, chip->ngpio,
-				sizeof(*gpio_irq->map), GFP_KERNEL);
-	if (!gpio_irq->map)
-		return -ENOMEM;
+	gpio_irq->map = devm_kसुस्मृति(pctrl->dev, chip->ngpio,
+				माप(*gpio_irq->map), GFP_KERNEL);
+	अगर (!gpio_irq->map)
+		वापस -ENOMEM;
 
-	for (i = 0, offset = 0; i < pctrl->soc->nports; i++) {
-		const struct owl_gpio_port *port = &pctrl->soc->ports[i];
+	क्रम (i = 0, offset = 0; i < pctrl->soc->nports; i++) अणु
+		स्थिर काष्ठा owl_gpio_port *port = &pctrl->soc->ports[i];
 
-		for (j = 0; j < port->pins; j++)
+		क्रम (j = 0; j < port->pins; j++)
 			gpio_irq->map[offset + j] = gpio_irq->parents[i];
 
 		offset += port->pins;
-	}
+	पूर्ण
 
 	ret = gpiochip_add_data(&pctrl->chip, pctrl);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(pctrl->dev, "failed to register gpiochip\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int owl_pinctrl_probe(struct platform_device *pdev,
-				struct owl_pinctrl_soc_data *soc_data)
-{
-	struct owl_pinctrl *pctrl;
-	int ret, i;
+पूर्णांक owl_pinctrl_probe(काष्ठा platक्रमm_device *pdev,
+				काष्ठा owl_pinctrl_soc_data *soc_data)
+अणु
+	काष्ठा owl_pinctrl *pctrl;
+	पूर्णांक ret, i;
 
-	pctrl = devm_kzalloc(&pdev->dev, sizeof(*pctrl), GFP_KERNEL);
-	if (!pctrl)
-		return -ENOMEM;
+	pctrl = devm_kzalloc(&pdev->dev, माप(*pctrl), GFP_KERNEL);
+	अगर (!pctrl)
+		वापस -ENOMEM;
 
-	pctrl->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(pctrl->base))
-		return PTR_ERR(pctrl->base);
+	pctrl->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(pctrl->base))
+		वापस PTR_ERR(pctrl->base);
 
-	/* enable GPIO/MFP clock */
-	pctrl->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(pctrl->clk)) {
+	/* enable GPIO/MFP घड़ी */
+	pctrl->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(pctrl->clk)) अणु
 		dev_err(&pdev->dev, "no clock defined\n");
-		return PTR_ERR(pctrl->clk);
-	}
+		वापस PTR_ERR(pctrl->clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(pctrl->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "clk enable failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	raw_spin_lock_init(&pctrl->lock);
 
@@ -953,49 +954,49 @@ int owl_pinctrl_probe(struct platform_device *pdev,
 	pctrl->chip.get = owl_gpio_get;
 	pctrl->chip.set = owl_gpio_set;
 	pctrl->chip.request = owl_gpio_request;
-	pctrl->chip.free = owl_gpio_free;
+	pctrl->chip.मुक्त = owl_gpio_मुक्त;
 
 	pctrl->soc = soc_data;
 	pctrl->dev = &pdev->dev;
 
-	pctrl->pctrldev = devm_pinctrl_register(&pdev->dev,
+	pctrl->pctrldev = devm_pinctrl_रेजिस्टर(&pdev->dev,
 					&owl_pinctrl_desc, pctrl);
-	if (IS_ERR(pctrl->pctrldev)) {
+	अगर (IS_ERR(pctrl->pctrldev)) अणु
 		dev_err(&pdev->dev, "could not register Actions OWL pinmux driver\n");
 		ret = PTR_ERR(pctrl->pctrldev);
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
-	ret = platform_irq_count(pdev);
-	if (ret < 0)
-		goto err_exit;
+	ret = platक्रमm_irq_count(pdev);
+	अगर (ret < 0)
+		जाओ err_निकास;
 
 	pctrl->num_irq = ret;
 
-	pctrl->irq = devm_kcalloc(&pdev->dev, pctrl->num_irq,
-					sizeof(*pctrl->irq), GFP_KERNEL);
-	if (!pctrl->irq) {
+	pctrl->irq = devm_kसुस्मृति(&pdev->dev, pctrl->num_irq,
+					माप(*pctrl->irq), GFP_KERNEL);
+	अगर (!pctrl->irq) अणु
 		ret = -ENOMEM;
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
-	for (i = 0; i < pctrl->num_irq ; i++) {
-		ret = platform_get_irq(pdev, i);
-		if (ret < 0)
-			goto err_exit;
+	क्रम (i = 0; i < pctrl->num_irq ; i++) अणु
+		ret = platक्रमm_get_irq(pdev, i);
+		अगर (ret < 0)
+			जाओ err_निकास;
 		pctrl->irq[i] = ret;
-	}
+	पूर्ण
 
 	ret = owl_gpio_init(pctrl);
-	if (ret)
-		goto err_exit;
+	अगर (ret)
+		जाओ err_निकास;
 
-	platform_set_drvdata(pdev, pctrl);
+	platक्रमm_set_drvdata(pdev, pctrl);
 
-	return 0;
+	वापस 0;
 
-err_exit:
+err_निकास:
 	clk_disable_unprepare(pctrl->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

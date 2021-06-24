@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * JZ4740 ECC controller driver
  *
@@ -7,99 +8,99 @@
  * based on jz4740-nand.c
  */
 
-#include <linux/bitops.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "ingenic_ecc.h"
+#समावेश "ingenic_ecc.h"
 
-#define JZ_REG_NAND_ECC_CTRL	0x00
-#define JZ_REG_NAND_DATA	0x04
-#define JZ_REG_NAND_PAR0	0x08
-#define JZ_REG_NAND_PAR1	0x0C
-#define JZ_REG_NAND_PAR2	0x10
-#define JZ_REG_NAND_IRQ_STAT	0x14
-#define JZ_REG_NAND_IRQ_CTRL	0x18
-#define JZ_REG_NAND_ERR(x)	(0x1C + ((x) << 2))
+#घोषणा JZ_REG_न_अंकD_ECC_CTRL	0x00
+#घोषणा JZ_REG_न_अंकD_DATA	0x04
+#घोषणा JZ_REG_न_अंकD_PAR0	0x08
+#घोषणा JZ_REG_न_अंकD_PAR1	0x0C
+#घोषणा JZ_REG_न_अंकD_PAR2	0x10
+#घोषणा JZ_REG_न_अंकD_IRQ_STAT	0x14
+#घोषणा JZ_REG_न_अंकD_IRQ_CTRL	0x18
+#घोषणा JZ_REG_न_अंकD_ERR(x)	(0x1C + ((x) << 2))
 
-#define JZ_NAND_ECC_CTRL_PAR_READY	BIT(4)
-#define JZ_NAND_ECC_CTRL_ENCODING	BIT(3)
-#define JZ_NAND_ECC_CTRL_RS		BIT(2)
-#define JZ_NAND_ECC_CTRL_RESET		BIT(1)
-#define JZ_NAND_ECC_CTRL_ENABLE		BIT(0)
+#घोषणा JZ_न_अंकD_ECC_CTRL_PAR_READY	BIT(4)
+#घोषणा JZ_न_अंकD_ECC_CTRL_ENCODING	BIT(3)
+#घोषणा JZ_न_अंकD_ECC_CTRL_RS		BIT(2)
+#घोषणा JZ_न_अंकD_ECC_CTRL_RESET		BIT(1)
+#घोषणा JZ_न_अंकD_ECC_CTRL_ENABLE		BIT(0)
 
-#define JZ_NAND_STATUS_ERR_COUNT	(BIT(31) | BIT(30) | BIT(29))
-#define JZ_NAND_STATUS_PAD_FINISH	BIT(4)
-#define JZ_NAND_STATUS_DEC_FINISH	BIT(3)
-#define JZ_NAND_STATUS_ENC_FINISH	BIT(2)
-#define JZ_NAND_STATUS_UNCOR_ERROR	BIT(1)
-#define JZ_NAND_STATUS_ERROR		BIT(0)
+#घोषणा JZ_न_अंकD_STATUS_ERR_COUNT	(BIT(31) | BIT(30) | BIT(29))
+#घोषणा JZ_न_अंकD_STATUS_PAD_FINISH	BIT(4)
+#घोषणा JZ_न_अंकD_STATUS_DEC_FINISH	BIT(3)
+#घोषणा JZ_न_अंकD_STATUS_ENC_FINISH	BIT(2)
+#घोषणा JZ_न_अंकD_STATUS_UNCOR_ERROR	BIT(1)
+#घोषणा JZ_न_अंकD_STATUS_ERROR		BIT(0)
 
-static const uint8_t empty_block_ecc[] = {
+अटल स्थिर uपूर्णांक8_t empty_block_ecc[] = अणु
 	0xcd, 0x9d, 0x90, 0x58, 0xf4, 0x8b, 0xff, 0xb7, 0x6f
-};
+पूर्ण;
 
-static void jz4740_ecc_reset(struct ingenic_ecc *ecc, bool calc_ecc)
-{
-	uint32_t reg;
+अटल व्योम jz4740_ecc_reset(काष्ठा ingenic_ecc *ecc, bool calc_ecc)
+अणु
+	uपूर्णांक32_t reg;
 
-	/* Clear interrupt status */
-	writel(0, ecc->base + JZ_REG_NAND_IRQ_STAT);
+	/* Clear पूर्णांकerrupt status */
+	ग_लिखोl(0, ecc->base + JZ_REG_न_अंकD_IRQ_STAT);
 
 	/* Initialize and enable ECC hardware */
-	reg = readl(ecc->base + JZ_REG_NAND_ECC_CTRL);
-	reg |= JZ_NAND_ECC_CTRL_RESET;
-	reg |= JZ_NAND_ECC_CTRL_ENABLE;
-	reg |= JZ_NAND_ECC_CTRL_RS;
-	if (calc_ecc) /* calculate ECC from data */
-		reg |= JZ_NAND_ECC_CTRL_ENCODING;
-	else /* correct data from ECC */
-		reg &= ~JZ_NAND_ECC_CTRL_ENCODING;
+	reg = पढ़ोl(ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
+	reg |= JZ_न_अंकD_ECC_CTRL_RESET;
+	reg |= JZ_न_अंकD_ECC_CTRL_ENABLE;
+	reg |= JZ_न_अंकD_ECC_CTRL_RS;
+	अगर (calc_ecc) /* calculate ECC from data */
+		reg |= JZ_न_अंकD_ECC_CTRL_ENCODING;
+	अन्यथा /* correct data from ECC */
+		reg &= ~JZ_न_अंकD_ECC_CTRL_ENCODING;
 
-	writel(reg, ecc->base + JZ_REG_NAND_ECC_CTRL);
-}
+	ग_लिखोl(reg, ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
+पूर्ण
 
-static int jz4740_ecc_calculate(struct ingenic_ecc *ecc,
-				struct ingenic_ecc_params *params,
-				const u8 *buf, u8 *ecc_code)
-{
-	uint32_t reg, status;
-	unsigned int timeout = 1000;
-	int i;
+अटल पूर्णांक jz4740_ecc_calculate(काष्ठा ingenic_ecc *ecc,
+				काष्ठा ingenic_ecc_params *params,
+				स्थिर u8 *buf, u8 *ecc_code)
+अणु
+	uपूर्णांक32_t reg, status;
+	अचिन्हित पूर्णांक समयout = 1000;
+	पूर्णांक i;
 
 	jz4740_ecc_reset(ecc, true);
 
-	do {
-		status = readl(ecc->base + JZ_REG_NAND_IRQ_STAT);
-	} while (!(status & JZ_NAND_STATUS_ENC_FINISH) && --timeout);
+	करो अणु
+		status = पढ़ोl(ecc->base + JZ_REG_न_अंकD_IRQ_STAT);
+	पूर्ण जबतक (!(status & JZ_न_अंकD_STATUS_ENC_FINISH) && --समयout);
 
-	if (timeout == 0)
-		return -ETIMEDOUT;
+	अगर (समयout == 0)
+		वापस -ETIMEDOUT;
 
-	reg = readl(ecc->base + JZ_REG_NAND_ECC_CTRL);
-	reg &= ~JZ_NAND_ECC_CTRL_ENABLE;
-	writel(reg, ecc->base + JZ_REG_NAND_ECC_CTRL);
+	reg = पढ़ोl(ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
+	reg &= ~JZ_न_अंकD_ECC_CTRL_ENABLE;
+	ग_लिखोl(reg, ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
 
-	for (i = 0; i < params->bytes; ++i)
-		ecc_code[i] = readb(ecc->base + JZ_REG_NAND_PAR0 + i);
+	क्रम (i = 0; i < params->bytes; ++i)
+		ecc_code[i] = पढ़ोb(ecc->base + JZ_REG_न_अंकD_PAR0 + i);
 
 	/*
-	 * If the written data is completely 0xff, we also want to write 0xff as
-	 * ECC, otherwise we will get in trouble when doing subpage writes.
+	 * If the written data is completely 0xff, we also want to ग_लिखो 0xff as
+	 * ECC, otherwise we will get in trouble when करोing subpage ग_लिखोs.
 	 */
-	if (memcmp(ecc_code, empty_block_ecc, sizeof(empty_block_ecc)) == 0)
-		memset(ecc_code, 0xff, sizeof(empty_block_ecc));
+	अगर (स_भेद(ecc_code, empty_block_ecc, माप(empty_block_ecc)) == 0)
+		स_रखो(ecc_code, 0xff, माप(empty_block_ecc));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void jz_nand_correct_data(uint8_t *buf, int index, int mask)
-{
-	int offset = index & 0x7;
-	uint16_t data;
+अटल व्योम jz_nand_correct_data(uपूर्णांक8_t *buf, पूर्णांक index, पूर्णांक mask)
+अणु
+	पूर्णांक offset = index & 0x7;
+	uपूर्णांक16_t data;
 
 	index += (index >> 3);
 
@@ -112,85 +113,85 @@ static void jz_nand_correct_data(uint8_t *buf, int index, int mask)
 
 	buf[index] = data & 0xff;
 	buf[index + 1] = (data >> 8) & 0xff;
-}
+पूर्ण
 
-static int jz4740_ecc_correct(struct ingenic_ecc *ecc,
-			      struct ingenic_ecc_params *params,
+अटल पूर्णांक jz4740_ecc_correct(काष्ठा ingenic_ecc *ecc,
+			      काष्ठा ingenic_ecc_params *params,
 			      u8 *buf, u8 *ecc_code)
-{
-	int i, error_count, index;
-	uint32_t reg, status, error;
-	unsigned int timeout = 1000;
+अणु
+	पूर्णांक i, error_count, index;
+	uपूर्णांक32_t reg, status, error;
+	अचिन्हित पूर्णांक समयout = 1000;
 
 	jz4740_ecc_reset(ecc, false);
 
-	for (i = 0; i < params->bytes; ++i)
-		writeb(ecc_code[i], ecc->base + JZ_REG_NAND_PAR0 + i);
+	क्रम (i = 0; i < params->bytes; ++i)
+		ग_लिखोb(ecc_code[i], ecc->base + JZ_REG_न_अंकD_PAR0 + i);
 
-	reg = readl(ecc->base + JZ_REG_NAND_ECC_CTRL);
-	reg |= JZ_NAND_ECC_CTRL_PAR_READY;
-	writel(reg, ecc->base + JZ_REG_NAND_ECC_CTRL);
+	reg = पढ़ोl(ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
+	reg |= JZ_न_अंकD_ECC_CTRL_PAR_READY;
+	ग_लिखोl(reg, ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
 
-	do {
-		status = readl(ecc->base + JZ_REG_NAND_IRQ_STAT);
-	} while (!(status & JZ_NAND_STATUS_DEC_FINISH) && --timeout);
+	करो अणु
+		status = पढ़ोl(ecc->base + JZ_REG_न_अंकD_IRQ_STAT);
+	पूर्ण जबतक (!(status & JZ_न_अंकD_STATUS_DEC_FINISH) && --समयout);
 
-	if (timeout == 0)
-		return -ETIMEDOUT;
+	अगर (समयout == 0)
+		वापस -ETIMEDOUT;
 
-	reg = readl(ecc->base + JZ_REG_NAND_ECC_CTRL);
-	reg &= ~JZ_NAND_ECC_CTRL_ENABLE;
-	writel(reg, ecc->base + JZ_REG_NAND_ECC_CTRL);
+	reg = पढ़ोl(ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
+	reg &= ~JZ_न_अंकD_ECC_CTRL_ENABLE;
+	ग_लिखोl(reg, ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
 
-	if (status & JZ_NAND_STATUS_ERROR) {
-		if (status & JZ_NAND_STATUS_UNCOR_ERROR)
-			return -EBADMSG;
+	अगर (status & JZ_न_अंकD_STATUS_ERROR) अणु
+		अगर (status & JZ_न_अंकD_STATUS_UNCOR_ERROR)
+			वापस -EBADMSG;
 
-		error_count = (status & JZ_NAND_STATUS_ERR_COUNT) >> 29;
+		error_count = (status & JZ_न_अंकD_STATUS_ERR_COUNT) >> 29;
 
-		for (i = 0; i < error_count; ++i) {
-			error = readl(ecc->base + JZ_REG_NAND_ERR(i));
+		क्रम (i = 0; i < error_count; ++i) अणु
+			error = पढ़ोl(ecc->base + JZ_REG_न_अंकD_ERR(i));
 			index = ((error >> 16) & 0x1ff) - 1;
-			if (index >= 0 && index < params->size)
+			अगर (index >= 0 && index < params->size)
 				jz_nand_correct_data(buf, index, error & 0x1ff);
-		}
+		पूर्ण
 
-		return error_count;
-	}
+		वापस error_count;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void jz4740_ecc_disable(struct ingenic_ecc *ecc)
-{
+अटल व्योम jz4740_ecc_disable(काष्ठा ingenic_ecc *ecc)
+अणु
 	u32 reg;
 
-	writel(0, ecc->base + JZ_REG_NAND_IRQ_STAT);
-	reg = readl(ecc->base + JZ_REG_NAND_ECC_CTRL);
-	reg &= ~JZ_NAND_ECC_CTRL_ENABLE;
-	writel(reg, ecc->base + JZ_REG_NAND_ECC_CTRL);
-}
+	ग_लिखोl(0, ecc->base + JZ_REG_न_अंकD_IRQ_STAT);
+	reg = पढ़ोl(ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
+	reg &= ~JZ_न_अंकD_ECC_CTRL_ENABLE;
+	ग_लिखोl(reg, ecc->base + JZ_REG_न_अंकD_ECC_CTRL);
+पूर्ण
 
-static const struct ingenic_ecc_ops jz4740_ecc_ops = {
+अटल स्थिर काष्ठा ingenic_ecc_ops jz4740_ecc_ops = अणु
 	.disable = jz4740_ecc_disable,
 	.calculate = jz4740_ecc_calculate,
 	.correct = jz4740_ecc_correct,
-};
+पूर्ण;
 
-static const struct of_device_id jz4740_ecc_dt_match[] = {
-	{ .compatible = "ingenic,jz4740-ecc", .data = &jz4740_ecc_ops },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id jz4740_ecc_dt_match[] = अणु
+	अणु .compatible = "ingenic,jz4740-ecc", .data = &jz4740_ecc_ops पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, jz4740_ecc_dt_match);
 
-static struct platform_driver jz4740_ecc_driver = {
+अटल काष्ठा platक्रमm_driver jz4740_ecc_driver = अणु
 	.probe		= ingenic_ecc_probe,
-	.driver	= {
+	.driver	= अणु
 		.name	= "jz4740-ecc",
 		.of_match_table = jz4740_ecc_dt_match,
-	},
-};
-module_platform_driver(jz4740_ecc_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(jz4740_ecc_driver);
 
 MODULE_AUTHOR("Paul Cercueil <paul@crapouillou.net>");
 MODULE_DESCRIPTION("Ingenic JZ4740 ECC controller driver");

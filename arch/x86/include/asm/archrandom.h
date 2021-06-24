@@ -1,101 +1,102 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of the Linux kernel.
  *
  * Copyright (c) 2011-2014, Intel Corporation
- * Authors: Fenghua Yu <fenghua.yu@intel.com>,
- *          H. Peter Anvin <hpa@linux.intel.com>
+ * Authors: Fenghua Yu <fenghua.yu@पूर्णांकel.com>,
+ *          H. Peter Anvin <hpa@linux.पूर्णांकel.com>
  */
 
-#ifndef ASM_X86_ARCHRANDOM_H
-#define ASM_X86_ARCHRANDOM_H
+#अगर_अघोषित ASM_X86_ARCHRANDOM_H
+#घोषणा ASM_X86_ARCHRANDOM_H
 
-#include <asm/processor.h>
-#include <asm/cpufeature.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/cpufeature.h>
 
-#define RDRAND_RETRY_LOOPS	10
+#घोषणा RDRAND_RETRY_LOOPS	10
 
 /* Unconditional execution of RDRAND and RDSEED */
 
-static inline bool __must_check rdrand_long(unsigned long *v)
-{
+अटल अंतरभूत bool __must_check rdअक्रम_दीर्घ(अचिन्हित दीर्घ *v)
+अणु
 	bool ok;
-	unsigned int retry = RDRAND_RETRY_LOOPS;
-	do {
-		asm volatile("rdrand %[out]"
+	अचिन्हित पूर्णांक retry = RDRAND_RETRY_LOOPS;
+	करो अणु
+		यंत्र अस्थिर("rdrand %[out]"
 			     CC_SET(c)
 			     : CC_OUT(c) (ok), [out] "=r" (*v));
-		if (ok)
-			return true;
-	} while (--retry);
-	return false;
-}
+		अगर (ok)
+			वापस true;
+	पूर्ण जबतक (--retry);
+	वापस false;
+पूर्ण
 
-static inline bool __must_check rdrand_int(unsigned int *v)
-{
+अटल अंतरभूत bool __must_check rdअक्रम_पूर्णांक(अचिन्हित पूर्णांक *v)
+अणु
 	bool ok;
-	unsigned int retry = RDRAND_RETRY_LOOPS;
-	do {
-		asm volatile("rdrand %[out]"
+	अचिन्हित पूर्णांक retry = RDRAND_RETRY_LOOPS;
+	करो अणु
+		यंत्र अस्थिर("rdrand %[out]"
 			     CC_SET(c)
 			     : CC_OUT(c) (ok), [out] "=r" (*v));
-		if (ok)
-			return true;
-	} while (--retry);
-	return false;
-}
+		अगर (ok)
+			वापस true;
+	पूर्ण जबतक (--retry);
+	वापस false;
+पूर्ण
 
-static inline bool __must_check rdseed_long(unsigned long *v)
-{
+अटल अंतरभूत bool __must_check rdseed_दीर्घ(अचिन्हित दीर्घ *v)
+अणु
 	bool ok;
-	asm volatile("rdseed %[out]"
+	यंत्र अस्थिर("rdseed %[out]"
 		     CC_SET(c)
 		     : CC_OUT(c) (ok), [out] "=r" (*v));
-	return ok;
-}
+	वापस ok;
+पूर्ण
 
-static inline bool __must_check rdseed_int(unsigned int *v)
-{
+अटल अंतरभूत bool __must_check rdseed_पूर्णांक(अचिन्हित पूर्णांक *v)
+अणु
 	bool ok;
-	asm volatile("rdseed %[out]"
+	यंत्र अस्थिर("rdseed %[out]"
 		     CC_SET(c)
 		     : CC_OUT(c) (ok), [out] "=r" (*v));
-	return ok;
-}
+	वापस ok;
+पूर्ण
 
 /*
- * These are the generic interfaces; they must not be declared if the
- * stubs in <linux/random.h> are to be invoked,
+ * These are the generic पूर्णांकerfaces; they must not be declared अगर the
+ * stubs in <linux/अक्रमom.h> are to be invoked,
  * i.e. CONFIG_ARCH_RANDOM is not defined.
  */
-#ifdef CONFIG_ARCH_RANDOM
+#अगर_घोषित CONFIG_ARCH_RANDOM
 
-static inline bool __must_check arch_get_random_long(unsigned long *v)
-{
-	return static_cpu_has(X86_FEATURE_RDRAND) ? rdrand_long(v) : false;
-}
+अटल अंतरभूत bool __must_check arch_get_अक्रमom_दीर्घ(अचिन्हित दीर्घ *v)
+अणु
+	वापस अटल_cpu_has(X86_FEATURE_RDRAND) ? rdअक्रम_दीर्घ(v) : false;
+पूर्ण
 
-static inline bool __must_check arch_get_random_int(unsigned int *v)
-{
-	return static_cpu_has(X86_FEATURE_RDRAND) ? rdrand_int(v) : false;
-}
+अटल अंतरभूत bool __must_check arch_get_अक्रमom_पूर्णांक(अचिन्हित पूर्णांक *v)
+अणु
+	वापस अटल_cpu_has(X86_FEATURE_RDRAND) ? rdअक्रम_पूर्णांक(v) : false;
+पूर्ण
 
-static inline bool __must_check arch_get_random_seed_long(unsigned long *v)
-{
-	return static_cpu_has(X86_FEATURE_RDSEED) ? rdseed_long(v) : false;
-}
+अटल अंतरभूत bool __must_check arch_get_अक्रमom_seed_दीर्घ(अचिन्हित दीर्घ *v)
+अणु
+	वापस अटल_cpu_has(X86_FEATURE_RDSEED) ? rdseed_दीर्घ(v) : false;
+पूर्ण
 
-static inline bool __must_check arch_get_random_seed_int(unsigned int *v)
-{
-	return static_cpu_has(X86_FEATURE_RDSEED) ? rdseed_int(v) : false;
-}
+अटल अंतरभूत bool __must_check arch_get_अक्रमom_seed_पूर्णांक(अचिन्हित पूर्णांक *v)
+अणु
+	वापस अटल_cpu_has(X86_FEATURE_RDSEED) ? rdseed_पूर्णांक(v) : false;
+पूर्ण
 
-extern void x86_init_rdrand(struct cpuinfo_x86 *c);
+बाह्य व्योम x86_init_rdअक्रम(काष्ठा cpuinfo_x86 *c);
 
-#else  /* !CONFIG_ARCH_RANDOM */
+#अन्यथा  /* !CONFIG_ARCH_RANDOM */
 
-static inline void x86_init_rdrand(struct cpuinfo_x86 *c) { }
+अटल अंतरभूत व्योम x86_init_rdअक्रम(काष्ठा cpuinfo_x86 *c) अणु पूर्ण
 
-#endif  /* !CONFIG_ARCH_RANDOM */
+#पूर्ण_अगर  /* !CONFIG_ARCH_RANDOM */
 
-#endif /* ASM_X86_ARCHRANDOM_H */
+#पूर्ण_अगर /* ASM_X86_ARCHRANDOM_H */

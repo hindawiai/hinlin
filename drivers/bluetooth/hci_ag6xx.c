@@ -1,242 +1,243 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
- *  Bluetooth HCI UART driver for Intel/AG6xx devices
+ *  Bluetooth HCI UART driver क्रम Intel/AG6xx devices
  *
  *  Copyright (C) 2016  Intel Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/tty.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/tty.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
 
-#include "hci_uart.h"
-#include "btintel.h"
+#समावेश "hci_uart.h"
+#समावेश "btintel.h"
 
-struct ag6xx_data {
-	struct sk_buff *rx_skb;
-	struct sk_buff_head txq;
-};
+काष्ठा ag6xx_data अणु
+	काष्ठा sk_buff *rx_skb;
+	काष्ठा sk_buff_head txq;
+पूर्ण;
 
-struct pbn_entry {
+काष्ठा pbn_entry अणु
 	__le32 addr;
 	__le32 plen;
 	__u8 data[];
-} __packed;
+पूर्ण __packed;
 
-static int ag6xx_open(struct hci_uart *hu)
-{
-	struct ag6xx_data *ag6xx;
+अटल पूर्णांक ag6xx_खोलो(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा ag6xx_data *ag6xx;
 
 	BT_DBG("hu %p", hu);
 
-	ag6xx = kzalloc(sizeof(*ag6xx), GFP_KERNEL);
-	if (!ag6xx)
-		return -ENOMEM;
+	ag6xx = kzalloc(माप(*ag6xx), GFP_KERNEL);
+	अगर (!ag6xx)
+		वापस -ENOMEM;
 
 	skb_queue_head_init(&ag6xx->txq);
 
 	hu->priv = ag6xx;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ag6xx_close(struct hci_uart *hu)
-{
-	struct ag6xx_data *ag6xx = hu->priv;
-
-	BT_DBG("hu %p", hu);
-
-	skb_queue_purge(&ag6xx->txq);
-	kfree_skb(ag6xx->rx_skb);
-	kfree(ag6xx);
-
-	hu->priv = NULL;
-	return 0;
-}
-
-static int ag6xx_flush(struct hci_uart *hu)
-{
-	struct ag6xx_data *ag6xx = hu->priv;
+अटल पूर्णांक ag6xx_बंद(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा ag6xx_data *ag6xx = hu->priv;
 
 	BT_DBG("hu %p", hu);
 
 	skb_queue_purge(&ag6xx->txq);
-	return 0;
-}
+	kमुक्त_skb(ag6xx->rx_skb);
+	kमुक्त(ag6xx);
 
-static struct sk_buff *ag6xx_dequeue(struct hci_uart *hu)
-{
-	struct ag6xx_data *ag6xx = hu->priv;
-	struct sk_buff *skb;
+	hu->priv = शून्य;
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक ag6xx_flush(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा ag6xx_data *ag6xx = hu->priv;
+
+	BT_DBG("hu %p", hu);
+
+	skb_queue_purge(&ag6xx->txq);
+	वापस 0;
+पूर्ण
+
+अटल काष्ठा sk_buff *ag6xx_dequeue(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा ag6xx_data *ag6xx = hu->priv;
+	काष्ठा sk_buff *skb;
 
 	skb = skb_dequeue(&ag6xx->txq);
-	if (!skb)
-		return skb;
+	अगर (!skb)
+		वापस skb;
 
 	/* Prepend skb with frame type */
-	memcpy(skb_push(skb, 1), &bt_cb(skb)->pkt_type, 1);
-	return skb;
-}
+	स_नकल(skb_push(skb, 1), &bt_cb(skb)->pkt_type, 1);
+	वापस skb;
+पूर्ण
 
-static int ag6xx_enqueue(struct hci_uart *hu, struct sk_buff *skb)
-{
-	struct ag6xx_data *ag6xx = hu->priv;
+अटल पूर्णांक ag6xx_enqueue(काष्ठा hci_uart *hu, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ag6xx_data *ag6xx = hu->priv;
 
 	skb_queue_tail(&ag6xx->txq, skb);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct h4_recv_pkt ag6xx_recv_pkts[] = {
-	{ H4_RECV_ACL,    .recv = hci_recv_frame   },
-	{ H4_RECV_SCO,    .recv = hci_recv_frame   },
-	{ H4_RECV_EVENT,  .recv = hci_recv_frame   },
-};
+अटल स्थिर काष्ठा h4_recv_pkt ag6xx_recv_pkts[] = अणु
+	अणु H4_RECV_ACL,    .recv = hci_recv_frame   पूर्ण,
+	अणु H4_RECV_SCO,    .recv = hci_recv_frame   पूर्ण,
+	अणु H4_RECV_EVENT,  .recv = hci_recv_frame   पूर्ण,
+पूर्ण;
 
-static int ag6xx_recv(struct hci_uart *hu, const void *data, int count)
-{
-	struct ag6xx_data *ag6xx = hu->priv;
+अटल पूर्णांक ag6xx_recv(काष्ठा hci_uart *hu, स्थिर व्योम *data, पूर्णांक count)
+अणु
+	काष्ठा ag6xx_data *ag6xx = hu->priv;
 
-	if (!test_bit(HCI_UART_REGISTERED, &hu->flags))
-		return -EUNATCH;
+	अगर (!test_bit(HCI_UART_REGISTERED, &hu->flags))
+		वापस -EUNATCH;
 
 	ag6xx->rx_skb = h4_recv_buf(hu->hdev, ag6xx->rx_skb, data, count,
 				    ag6xx_recv_pkts,
 				    ARRAY_SIZE(ag6xx_recv_pkts));
-	if (IS_ERR(ag6xx->rx_skb)) {
-		int err = PTR_ERR(ag6xx->rx_skb);
+	अगर (IS_ERR(ag6xx->rx_skb)) अणु
+		पूर्णांक err = PTR_ERR(ag6xx->rx_skb);
 		bt_dev_err(hu->hdev, "Frame reassembly failed (%d)", err);
-		ag6xx->rx_skb = NULL;
-		return err;
-	}
+		ag6xx->rx_skb = शून्य;
+		वापस err;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int intel_mem_write(struct hci_dev *hdev, u32 addr, u32 plen,
-			   const void *data)
-{
-	/* Can write a maximum of 247 bytes per HCI command.
-	 * HCI cmd Header (3), Intel mem write header (6), data (247).
+अटल पूर्णांक पूर्णांकel_mem_ग_लिखो(काष्ठा hci_dev *hdev, u32 addr, u32 plen,
+			   स्थिर व्योम *data)
+अणु
+	/* Can ग_लिखो a maximum of 247 bytes per HCI command.
+	 * HCI cmd Header (3), Intel mem ग_लिखो header (6), data (247).
 	 */
-	while (plen > 0) {
-		struct sk_buff *skb;
+	जबतक (plen > 0) अणु
+		काष्ठा sk_buff *skb;
 		u8 cmd_param[253], fragment_len = (plen > 247) ? 247 : plen;
 		__le32 leaddr = cpu_to_le32(addr);
 
-		memcpy(cmd_param, &leaddr, 4);
+		स_नकल(cmd_param, &leaddr, 4);
 		cmd_param[4] = 0;
 		cmd_param[5] = fragment_len;
-		memcpy(cmd_param + 6, data, fragment_len);
+		स_नकल(cmd_param + 6, data, fragment_len);
 
 		skb = __hci_cmd_sync(hdev, 0xfc8e, fragment_len + 6, cmd_param,
 				     HCI_INIT_TIMEOUT);
-		if (IS_ERR(skb))
-			return PTR_ERR(skb);
-		kfree_skb(skb);
+		अगर (IS_ERR(skb))
+			वापस PTR_ERR(skb);
+		kमुक्त_skb(skb);
 
 		plen -= fragment_len;
 		data += fragment_len;
 		addr += fragment_len;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ag6xx_setup(struct hci_uart *hu)
-{
-	struct hci_dev *hdev = hu->hdev;
-	struct sk_buff *skb;
-	struct intel_version ver;
-	const struct firmware *fw;
-	const u8 *fw_ptr;
-	char fwname[64];
+अटल पूर्णांक ag6xx_setup(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा hci_dev *hdev = hu->hdev;
+	काष्ठा sk_buff *skb;
+	काष्ठा पूर्णांकel_version ver;
+	स्थिर काष्ठा firmware *fw;
+	स्थिर u8 *fw_ptr;
+	अक्षर fwname[64];
 	bool patched = false;
-	int err;
+	पूर्णांक err;
 
-	hu->hdev->set_diag = btintel_set_diag;
-	hu->hdev->set_bdaddr = btintel_set_bdaddr;
+	hu->hdev->set_diag = btपूर्णांकel_set_diag;
+	hu->hdev->set_bdaddr = btपूर्णांकel_set_bdaddr;
 
-	err = btintel_enter_mfg(hdev);
-	if (err)
-		return err;
+	err = btपूर्णांकel_enter_mfg(hdev);
+	अगर (err)
+		वापस err;
 
-	err = btintel_read_version(hdev, &ver);
-	if (err)
-		return err;
+	err = btपूर्णांकel_पढ़ो_version(hdev, &ver);
+	अगर (err)
+		वापस err;
 
-	btintel_version_info(hdev, &ver);
+	btपूर्णांकel_version_info(hdev, &ver);
 
-	/* The hardware platform number has a fixed value of 0x37 and
-	 * for now only accept this single value.
+	/* The hardware platक्रमm number has a fixed value of 0x37 and
+	 * क्रम now only accept this single value.
 	 */
-	if (ver.hw_platform != 0x37) {
+	अगर (ver.hw_platक्रमm != 0x37) अणु
 		bt_dev_err(hdev, "Unsupported Intel hardware platform: 0x%X",
-			   ver.hw_platform);
-		return -EINVAL;
-	}
+			   ver.hw_platक्रमm);
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Only the hardware variant iBT 2.1 (AG6XX) is supported by this
 	 * firmware setup method.
 	 */
-	if (ver.hw_variant != 0x0a) {
+	अगर (ver.hw_variant != 0x0a) अणु
 		bt_dev_err(hdev, "Unsupported Intel hardware variant: 0x%x",
 			   ver.hw_variant);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	snprintf(fwname, sizeof(fwname), "intel/ibt-hw-%x.%x.bddata",
-		 ver.hw_platform, ver.hw_variant);
+	snम_लिखो(fwname, माप(fwname), "intel/ibt-hw-%x.%x.bddata",
+		 ver.hw_platक्रमm, ver.hw_variant);
 
 	err = request_firmware(&fw, fwname, &hdev->dev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		bt_dev_err(hdev, "Failed to open Intel bddata file: %s (%d)",
 			   fwname, err);
-		goto patch;
-	}
+		जाओ patch;
+	पूर्ण
 	fw_ptr = fw->data;
 
 	bt_dev_info(hdev, "Applying bddata (%s)", fwname);
 
 	skb = __hci_cmd_sync_ev(hdev, 0xfc2f, fw->size, fw->data,
 				HCI_EV_CMD_STATUS, HCI_CMD_TIMEOUT);
-	if (IS_ERR(skb)) {
+	अगर (IS_ERR(skb)) अणु
 		bt_dev_err(hdev, "Applying bddata failed (%ld)", PTR_ERR(skb));
 		release_firmware(fw);
-		return PTR_ERR(skb);
-	}
-	kfree_skb(skb);
+		वापस PTR_ERR(skb);
+	पूर्ण
+	kमुक्त_skb(skb);
 
 	release_firmware(fw);
 
 patch:
 	/* If there is no applied patch, fw_patch_num is always 0x00. In other
-	 * cases, current firmware is already patched. No need to patch it.
+	 * हालs, current firmware is alपढ़ोy patched. No need to patch it.
 	 */
-	if (ver.fw_patch_num) {
+	अगर (ver.fw_patch_num) अणु
 		bt_dev_info(hdev, "Device is already patched. patch num: %02x",
 			    ver.fw_patch_num);
 		patched = true;
-		goto complete;
-	}
+		जाओ complete;
+	पूर्ण
 
-	snprintf(fwname, sizeof(fwname),
+	snम_लिखो(fwname, माप(fwname),
 		 "intel/ibt-hw-%x.%x.%x-fw-%x.%x.%x.%x.%x.pbn",
-		 ver.hw_platform, ver.hw_variant, ver.hw_revision,
+		 ver.hw_platक्रमm, ver.hw_variant, ver.hw_revision,
 		 ver.fw_variant,  ver.fw_revision, ver.fw_build_num,
 		 ver.fw_build_ww, ver.fw_build_yy);
 
 	err = request_firmware(&fw, fwname, &hdev->dev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		bt_dev_err(hdev, "Failed to open Intel patch file: %s(%d)",
 			   fwname, err);
-		goto complete;
-	}
+		जाओ complete;
+	पूर्ण
 	fw_ptr = fw->data;
 
 	bt_dev_info(hdev, "Patching firmware file (%s)", fwname);
@@ -251,72 +252,72 @@ patch:
 	 *
 	 * PBN file is terminated by a patch entry whose address is 0xffffffff.
 	 */
-	while (fw->size > fw_ptr - fw->data) {
-		struct pbn_entry *pbn = (void *)fw_ptr;
+	जबतक (fw->size > fw_ptr - fw->data) अणु
+		काष्ठा pbn_entry *pbn = (व्योम *)fw_ptr;
 		u32 addr, plen;
 
-		if (pbn->addr == 0xffffffff) {
+		अगर (pbn->addr == 0xffffffff) अणु
 			bt_dev_info(hdev, "Patching complete");
 			patched = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		addr = le32_to_cpu(pbn->addr);
 		plen = le32_to_cpu(pbn->plen);
 
-		if (fw->data + fw->size <= pbn->data + plen) {
+		अगर (fw->data + fw->size <= pbn->data + plen) अणु
 			bt_dev_info(hdev, "Invalid patch len (%d)", plen);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		bt_dev_info(hdev, "Patching %td/%zu", (fw_ptr - fw->data),
 			    fw->size);
 
-		err = intel_mem_write(hdev, addr, plen, pbn->data);
-		if (err) {
+		err = पूर्णांकel_mem_ग_लिखो(hdev, addr, plen, pbn->data);
+		अगर (err) अणु
 			bt_dev_err(hdev, "Patching failed");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		fw_ptr = pbn->data + plen;
-	}
+	पूर्ण
 
 	release_firmware(fw);
 
 complete:
 	/* Exit manufacturing mode and reset */
-	err = btintel_exit_mfg(hdev, true, patched);
-	if (err)
-		return err;
+	err = btपूर्णांकel_निकास_mfg(hdev, true, patched);
+	अगर (err)
+		वापस err;
 
-	/* Set the event mask for Intel specific vendor events. This enables
+	/* Set the event mask क्रम Intel specअगरic venकरोr events. This enables
 	 * a few extra events that are useful during general operation.
 	 */
-	btintel_set_event_mask_mfg(hdev, false);
+	btपूर्णांकel_set_event_mask_mfg(hdev, false);
 
-	btintel_check_bdaddr(hdev);
-	return 0;
-}
+	btपूर्णांकel_check_bdaddr(hdev);
+	वापस 0;
+पूर्ण
 
-static const struct hci_uart_proto ag6xx_proto = {
+अटल स्थिर काष्ठा hci_uart_proto ag6xx_proto = अणु
 	.id		= HCI_UART_AG6XX,
 	.name		= "AG6XX",
 	.manufacturer	= 2,
-	.open		= ag6xx_open,
-	.close		= ag6xx_close,
+	.खोलो		= ag6xx_खोलो,
+	.बंद		= ag6xx_बंद,
 	.flush		= ag6xx_flush,
 	.setup		= ag6xx_setup,
 	.recv		= ag6xx_recv,
 	.enqueue	= ag6xx_enqueue,
 	.dequeue	= ag6xx_dequeue,
-};
+पूर्ण;
 
-int __init ag6xx_init(void)
-{
-	return hci_uart_register_proto(&ag6xx_proto);
-}
+पूर्णांक __init ag6xx_init(व्योम)
+अणु
+	वापस hci_uart_रेजिस्टर_proto(&ag6xx_proto);
+पूर्ण
 
-int __exit ag6xx_deinit(void)
-{
-	return hci_uart_unregister_proto(&ag6xx_proto);
-}
+पूर्णांक __निकास ag6xx_deinit(व्योम)
+अणु
+	वापस hci_uart_unरेजिस्टर_proto(&ag6xx_proto);
+पूर्ण

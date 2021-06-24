@@ -1,249 +1,250 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/arch/arm/mm/nommu.c
  *
  * ARM uCLinux supporting functions.
  */
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/pagemap.h>
-#include <linux/io.h>
-#include <linux/memblock.h>
-#include <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/memblock.h>
+#समावेश <linux/kernel.h>
 
-#include <asm/cacheflush.h>
-#include <asm/cp15.h>
-#include <asm/sections.h>
-#include <asm/page.h>
-#include <asm/setup.h>
-#include <asm/traps.h>
-#include <asm/mach/arch.h>
-#include <asm/cputype.h>
-#include <asm/mpu.h>
-#include <asm/procinfo.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/mpu.h>
+#समावेश <यंत्र/procinfo.h>
 
-#include "mm.h"
+#समावेश "mm.h"
 
-unsigned long vectors_base;
+अचिन्हित दीर्घ vectors_base;
 
-#ifdef CONFIG_ARM_MPU
-struct mpu_rgn_info mpu_rgn_info;
-#endif
+#अगर_घोषित CONFIG_ARM_MPU
+काष्ठा mpu_rgn_info mpu_rgn_info;
+#पूर्ण_अगर
 
-#ifdef CONFIG_CPU_CP15
-#ifdef CONFIG_CPU_HIGH_VECTOR
-unsigned long setup_vectors_base(void)
-{
-	unsigned long reg = get_cr();
+#अगर_घोषित CONFIG_CPU_CP15
+#अगर_घोषित CONFIG_CPU_HIGH_VECTOR
+अचिन्हित दीर्घ setup_vectors_base(व्योम)
+अणु
+	अचिन्हित दीर्घ reg = get_cr();
 
 	set_cr(reg | CR_V);
-	return 0xffff0000;
-}
-#else /* CONFIG_CPU_HIGH_VECTOR */
+	वापस 0xffff0000;
+पूर्ण
+#अन्यथा /* CONFIG_CPU_HIGH_VECTOR */
 /* Write exception base address to VBAR */
-static inline void set_vbar(unsigned long val)
-{
-	asm("mcr p15, 0, %0, c12, c0, 0" : : "r" (val) : "cc");
-}
+अटल अंतरभूत व्योम set_vbar(अचिन्हित दीर्घ val)
+अणु
+	यंत्र("mcr p15, 0, %0, c12, c0, 0" : : "r" (val) : "cc");
+पूर्ण
 
 /*
  * Security extensions, bits[7:4], permitted values,
  * 0b0000 - not implemented, 0b0001/0b0010 - implemented
  */
-static inline bool security_extensions_enabled(void)
-{
-	/* Check CPUID Identification Scheme before ID_PFR1 read */
-	if ((read_cpuid_id() & 0x000f0000) == 0x000f0000)
-		return cpuid_feature_extract(CPUID_EXT_PFR1, 4) ||
+अटल अंतरभूत bool security_extensions_enabled(व्योम)
+अणु
+	/* Check CPUID Identअगरication Scheme beक्रमe ID_PFR1 पढ़ो */
+	अगर ((पढ़ो_cpuid_id() & 0x000f0000) == 0x000f0000)
+		वापस cpuid_feature_extract(CPUID_EXT_PFR1, 4) ||
 			cpuid_feature_extract(CPUID_EXT_PFR1, 20);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long setup_vectors_base(void)
-{
-	unsigned long base = 0, reg = get_cr();
+अचिन्हित दीर्घ setup_vectors_base(व्योम)
+अणु
+	अचिन्हित दीर्घ base = 0, reg = get_cr();
 
 	set_cr(reg & ~CR_V);
-	if (security_extensions_enabled()) {
-		if (IS_ENABLED(CONFIG_REMAP_VECTORS_TO_RAM))
+	अगर (security_extensions_enabled()) अणु
+		अगर (IS_ENABLED(CONFIG_REMAP_VECTORS_TO_RAM))
 			base = CONFIG_DRAM_BASE;
 		set_vbar(base);
-	} else if (IS_ENABLED(CONFIG_REMAP_VECTORS_TO_RAM)) {
-		if (CONFIG_DRAM_BASE != 0)
+	पूर्ण अन्यथा अगर (IS_ENABLED(CONFIG_REMAP_VECTORS_TO_RAM)) अणु
+		अगर (CONFIG_DRAM_BASE != 0)
 			pr_err("Security extensions not enabled, vectors cannot be remapped to RAM, vectors base will be 0x00000000\n");
-	}
+	पूर्ण
 
-	return base;
-}
-#endif /* CONFIG_CPU_HIGH_VECTOR */
-#endif /* CONFIG_CPU_CP15 */
+	वापस base;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_CPU_HIGH_VECTOR */
+#पूर्ण_अगर /* CONFIG_CPU_CP15 */
 
-void __init arm_mm_memblock_reserve(void)
-{
-#ifndef CONFIG_CPU_V7M
+व्योम __init arm_mm_memblock_reserve(व्योम)
+अणु
+#अगर_अघोषित CONFIG_CPU_V7M
 	vectors_base = IS_ENABLED(CONFIG_CPU_CP15) ? setup_vectors_base() : 0;
 	/*
 	 * Register the exception vector page.
 	 * some architectures which the DRAM is the exception vector to trap,
-	 * alloc_page breaks with error, although it is not NULL, but "0."
+	 * alloc_page अवरोधs with error, although it is not शून्य, but "0."
 	 */
 	memblock_reserve(vectors_base, 2 * PAGE_SIZE);
-#else /* ifndef CONFIG_CPU_V7M */
+#अन्यथा /* अगरndef CONFIG_CPU_V7M */
 	/*
 	 * There is no dedicated vector page on V7-M. So nothing needs to be
 	 * reserved here.
 	 */
-#endif
+#पूर्ण_अगर
 	/*
-	 * In any case, always ensure address 0 is never used as many things
-	 * get very confused if 0 is returned as a legitimate address.
+	 * In any हाल, always ensure address 0 is never used as many things
+	 * get very confused अगर 0 is वापसed as a legitimate address.
 	 */
 	memblock_reserve(0, 1);
-}
+पूर्ण
 
-static void __init adjust_lowmem_bounds_mpu(void)
-{
-	unsigned long pmsa = read_cpuid_ext(CPUID_EXT_MMFR0) & MMFR0_PMSA;
+अटल व्योम __init adjust_lowmem_bounds_mpu(व्योम)
+अणु
+	अचिन्हित दीर्घ pmsa = पढ़ो_cpuid_ext(CPUID_EXT_MMFR0) & MMFR0_PMSA;
 
-	switch (pmsa) {
-	case MMFR0_PMSAv7:
+	चयन (pmsa) अणु
+	हाल MMFR0_PMSAv7:
 		pmsav7_adjust_lowmem_bounds();
-		break;
-	case MMFR0_PMSAv8:
+		अवरोध;
+	हाल MMFR0_PMSAv8:
 		pmsav8_adjust_lowmem_bounds();
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void __init mpu_setup(void)
-{
-	unsigned long pmsa = read_cpuid_ext(CPUID_EXT_MMFR0) & MMFR0_PMSA;
+अटल व्योम __init mpu_setup(व्योम)
+अणु
+	अचिन्हित दीर्घ pmsa = पढ़ो_cpuid_ext(CPUID_EXT_MMFR0) & MMFR0_PMSA;
 
-	switch (pmsa) {
-	case MMFR0_PMSAv7:
+	चयन (pmsa) अणु
+	हाल MMFR0_PMSAv7:
 		pmsav7_setup();
-		break;
-	case MMFR0_PMSAv8:
+		अवरोध;
+	हाल MMFR0_PMSAv8:
 		pmsav8_setup();
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void __init adjust_lowmem_bounds(void)
-{
+व्योम __init adjust_lowmem_bounds(व्योम)
+अणु
 	phys_addr_t end;
 	adjust_lowmem_bounds_mpu();
 	end = memblock_end_of_DRAM();
 	high_memory = __va(end - 1) + 1;
 	memblock_set_current_limit(end);
-}
+पूर्ण
 
 /*
  * paging_init() sets up the page tables, initialises the zone memory
  * maps, and sets up the zero page, bad page and bad page tables.
  */
-void __init paging_init(const struct machine_desc *mdesc)
-{
-	early_trap_init((void *)vectors_base);
+व्योम __init paging_init(स्थिर काष्ठा machine_desc *mdesc)
+अणु
+	early_trap_init((व्योम *)vectors_base);
 	mpu_setup();
-	bootmem_init();
-}
+	booपंचांगem_init();
+पूर्ण
 
 /*
- * We don't need to do anything here for nommu machines.
+ * We करोn't need to करो anything here क्रम nommu machines.
  */
-void setup_mm_for_reboot(void)
-{
-}
+व्योम setup_mm_क्रम_reboot(व्योम)
+अणु
+पूर्ण
 
-void flush_dcache_page(struct page *page)
-{
+व्योम flush_dcache_page(काष्ठा page *page)
+अणु
 	__cpuc_flush_dcache_area(page_address(page), PAGE_SIZE);
-}
+पूर्ण
 EXPORT_SYMBOL(flush_dcache_page);
 
-void flush_kernel_dcache_page(struct page *page)
-{
+व्योम flush_kernel_dcache_page(काष्ठा page *page)
+अणु
 	__cpuc_flush_dcache_area(page_address(page), PAGE_SIZE);
-}
+पूर्ण
 EXPORT_SYMBOL(flush_kernel_dcache_page);
 
-void copy_to_user_page(struct vm_area_struct *vma, struct page *page,
-		       unsigned long uaddr, void *dst, const void *src,
-		       unsigned long len)
-{
-	memcpy(dst, src, len);
-	if (vma->vm_flags & VM_EXEC)
+व्योम copy_to_user_page(काष्ठा vm_area_काष्ठा *vma, काष्ठा page *page,
+		       अचिन्हित दीर्घ uaddr, व्योम *dst, स्थिर व्योम *src,
+		       अचिन्हित दीर्घ len)
+अणु
+	स_नकल(dst, src, len);
+	अगर (vma->vm_flags & VM_EXEC)
 		__cpuc_coherent_user_range(uaddr, uaddr + len);
-}
+पूर्ण
 
-void __iomem *__arm_ioremap_pfn(unsigned long pfn, unsigned long offset,
-				size_t size, unsigned int mtype)
-{
-	if (pfn >= (0x100000000ULL >> PAGE_SHIFT))
-		return NULL;
-	return (void __iomem *) (offset + (pfn << PAGE_SHIFT));
-}
+व्योम __iomem *__arm_ioremap_pfn(अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ offset,
+				माप_प्रकार size, अचिन्हित पूर्णांक mtype)
+अणु
+	अगर (pfn >= (0x100000000ULL >> PAGE_SHIFT))
+		वापस शून्य;
+	वापस (व्योम __iomem *) (offset + (pfn << PAGE_SHIFT));
+पूर्ण
 EXPORT_SYMBOL(__arm_ioremap_pfn);
 
-void __iomem *__arm_ioremap_caller(phys_addr_t phys_addr, size_t size,
-				   unsigned int mtype, void *caller)
-{
-	return (void __iomem *)phys_addr;
-}
+व्योम __iomem *__arm_ioremap_caller(phys_addr_t phys_addr, माप_प्रकार size,
+				   अचिन्हित पूर्णांक mtype, व्योम *caller)
+अणु
+	वापस (व्योम __iomem *)phys_addr;
+पूर्ण
 
-void __iomem * (*arch_ioremap_caller)(phys_addr_t, size_t, unsigned int, void *);
+व्योम __iomem * (*arch_ioremap_caller)(phys_addr_t, माप_प्रकार, अचिन्हित पूर्णांक, व्योम *);
 
-void __iomem *ioremap(resource_size_t res_cookie, size_t size)
-{
-	return __arm_ioremap_caller(res_cookie, size, MT_DEVICE,
-				    __builtin_return_address(0));
-}
+व्योम __iomem *ioremap(resource_माप_प्रकार res_cookie, माप_प्रकार size)
+अणु
+	वापस __arm_ioremap_caller(res_cookie, size, MT_DEVICE,
+				    __builtin_वापस_address(0));
+पूर्ण
 EXPORT_SYMBOL(ioremap);
 
-void __iomem *ioremap_cache(resource_size_t res_cookie, size_t size)
-{
-	return __arm_ioremap_caller(res_cookie, size, MT_DEVICE_CACHED,
-				    __builtin_return_address(0));
-}
+व्योम __iomem *ioremap_cache(resource_माप_प्रकार res_cookie, माप_प्रकार size)
+अणु
+	वापस __arm_ioremap_caller(res_cookie, size, MT_DEVICE_CACHED,
+				    __builtin_वापस_address(0));
+पूर्ण
 EXPORT_SYMBOL(ioremap_cache);
 
-void __iomem *ioremap_wc(resource_size_t res_cookie, size_t size)
-{
-	return __arm_ioremap_caller(res_cookie, size, MT_DEVICE_WC,
-				    __builtin_return_address(0));
-}
+व्योम __iomem *ioremap_wc(resource_माप_प्रकार res_cookie, माप_प्रकार size)
+अणु
+	वापस __arm_ioremap_caller(res_cookie, size, MT_DEVICE_WC,
+				    __builtin_वापस_address(0));
+पूर्ण
 EXPORT_SYMBOL(ioremap_wc);
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach/map.h>
 
-void __iomem *pci_remap_cfgspace(resource_size_t res_cookie, size_t size)
-{
-	return arch_ioremap_caller(res_cookie, size, MT_UNCACHED,
-				   __builtin_return_address(0));
-}
+व्योम __iomem *pci_remap_cfgspace(resource_माप_प्रकार res_cookie, माप_प्रकार size)
+अणु
+	वापस arch_ioremap_caller(res_cookie, size, MT_UNCACHED,
+				   __builtin_वापस_address(0));
+पूर्ण
 EXPORT_SYMBOL_GPL(pci_remap_cfgspace);
-#endif
+#पूर्ण_अगर
 
-void *arch_memremap_wb(phys_addr_t phys_addr, size_t size)
-{
-	return (void *)phys_addr;
-}
+व्योम *arch_memremap_wb(phys_addr_t phys_addr, माप_प्रकार size)
+अणु
+	वापस (व्योम *)phys_addr;
+पूर्ण
 
-void __iounmap(volatile void __iomem *addr)
-{
-}
+व्योम __iounmap(अस्थिर व्योम __iomem *addr)
+अणु
+पूर्ण
 EXPORT_SYMBOL(__iounmap);
 
-void (*arch_iounmap)(volatile void __iomem *);
+व्योम (*arch_iounmap)(अस्थिर व्योम __iomem *);
 
-void iounmap(volatile void __iomem *addr)
-{
-}
+व्योम iounmap(अस्थिर व्योम __iomem *addr)
+अणु
+पूर्ण
 EXPORT_SYMBOL(iounmap);

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* mpihelp-mul.c  -  MPI helper functions
  * Copyright (C) 1994, 1996, 1998, 1999,
  *               2000 Free Software Foundation, Inc.
@@ -7,67 +8,67 @@
  *
  * Note: This code is heavily based on the GNU MP Library.
  *	 Actually it's the same code with only minor changes in the
- *	 way the data is stored; this is to support the abstraction
+ *	 way the data is stored; this is to support the असलtraction
  *	 of an optional secure memory allocation which may be used
- *	 to avoid revealing of sensitive data due to paging etc.
+ *	 to aव्योम revealing of sensitive data due to paging etc.
  *	 The GNU MP Library itself is published under the LGPL;
  *	 however I decided to publish this code under the plain GPL.
  */
 
-#include <linux/string.h>
-#include "mpi-internal.h"
-#include "longlong.h"
+#समावेश <linux/माला.स>
+#समावेश "mpi-internal.h"
+#समावेश "longlong.h"
 
-#define MPN_MUL_N_RECURSE(prodp, up, vp, size, tspace)		\
-	do {							\
-		if ((size) < KARATSUBA_THRESHOLD)		\
-			mul_n_basecase(prodp, up, vp, size);	\
-		else						\
+#घोषणा MPN_MUL_N_RECURSE(prodp, up, vp, size, tspace)		\
+	करो अणु							\
+		अगर ((size) < KARATSUBA_THRESHOLD)		\
+			mul_n_baseहाल(prodp, up, vp, size);	\
+		अन्यथा						\
 			mul_n(prodp, up, vp, size, tspace);	\
-	} while (0);
+	पूर्ण जबतक (0);
 
-#define MPN_SQR_N_RECURSE(prodp, up, size, tspace)		\
-	do {							\
-		if ((size) < KARATSUBA_THRESHOLD)		\
-			mpih_sqr_n_basecase(prodp, up, size);	\
-		else						\
+#घोषणा MPN_SQR_N_RECURSE(prodp, up, size, tspace)		\
+	करो अणु							\
+		अगर ((size) < KARATSUBA_THRESHOLD)		\
+			mpih_sqr_n_baseहाल(prodp, up, size);	\
+		अन्यथा						\
 			mpih_sqr_n(prodp, up, size, tspace);	\
-	} while (0);
+	पूर्ण जबतक (0);
 
-/* Multiply the natural numbers u (pointed to by UP) and v (pointed to by VP),
+/* Multiply the natural numbers u (poपूर्णांकed to by UP) and v (poपूर्णांकed to by VP),
  * both with SIZE limbs, and store the result at PRODP.  2 * SIZE limbs are
- * always stored.  Return the most significant limb.
+ * always stored.  Return the most signअगरicant limb.
  *
- * Argument constraints:
+ * Argument स्थिरraपूर्णांकs:
  * 1. PRODP != UP and PRODP != VP, i.e. the destination
  *    must be distinct from the multiplier and the multiplicand.
  *
  *
- * Handle simple cases with traditional multiplication.
+ * Handle simple हालs with traditional multiplication.
  *
  * This is the most critical code of multiplication.  All multiplies rely
  * on this, both small and huge.  Small ones arrive here immediately.  Huge
- * ones arrive here as this is the base case for Karatsuba's recursive
+ * ones arrive here as this is the base हाल क्रम Karatsuba's recursive
  * algorithm below.
  */
 
-static mpi_limb_t
-mul_n_basecase(mpi_ptr_t prodp, mpi_ptr_t up, mpi_ptr_t vp, mpi_size_t size)
-{
-	mpi_size_t i;
+अटल mpi_limb_t
+mul_n_baseहाल(mpi_ptr_t prodp, mpi_ptr_t up, mpi_ptr_t vp, mpi_माप_प्रकार size)
+अणु
+	mpi_माप_प्रकार i;
 	mpi_limb_t cy;
 	mpi_limb_t v_limb;
 
 	/* Multiply by the first limb in V separately, as the result can be
-	 * stored (not added) to PROD.  We also avoid a loop for zeroing.  */
+	 * stored (not added) to PROD.  We also aव्योम a loop क्रम zeroing.  */
 	v_limb = vp[0];
-	if (v_limb <= 1) {
-		if (v_limb == 1)
+	अगर (v_limb <= 1) अणु
+		अगर (v_limb == 1)
 			MPN_COPY(prodp, up, size);
-		else
+		अन्यथा
 			MPN_ZERO(prodp, size);
 		cy = 0;
-	} else
+	पूर्ण अन्यथा
 		cy = mpihelp_mul_1(prodp, up, size, v_limb);
 
 	prodp[size] = cy;
@@ -75,38 +76,38 @@ mul_n_basecase(mpi_ptr_t prodp, mpi_ptr_t up, mpi_ptr_t vp, mpi_size_t size)
 
 	/* For each iteration in the outer loop, multiply one limb from
 	 * U with one limb from V, and add it to PROD.  */
-	for (i = 1; i < size; i++) {
+	क्रम (i = 1; i < size; i++) अणु
 		v_limb = vp[i];
-		if (v_limb <= 1) {
+		अगर (v_limb <= 1) अणु
 			cy = 0;
-			if (v_limb == 1)
+			अगर (v_limb == 1)
 				cy = mpihelp_add_n(prodp, prodp, up, size);
-		} else
+		पूर्ण अन्यथा
 			cy = mpihelp_addmul_1(prodp, up, size, v_limb);
 
 		prodp[size] = cy;
 		prodp++;
-	}
+	पूर्ण
 
-	return cy;
-}
+	वापस cy;
+पूर्ण
 
-static void
+अटल व्योम
 mul_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_ptr_t vp,
-		mpi_size_t size, mpi_ptr_t tspace)
-{
-	if (size & 1) {
-		/* The size is odd, and the code below doesn't handle that.
-		 * Multiply the least significant (size - 1) limbs with a recursive
-		 * call, and handle the most significant limb of S1 and S2
+		mpi_माप_प्रकार size, mpi_ptr_t tspace)
+अणु
+	अगर (size & 1) अणु
+		/* The size is odd, and the code below करोesn't handle that.
+		 * Multiply the least signअगरicant (size - 1) limbs with a recursive
+		 * call, and handle the most signअगरicant limb of S1 and S2
 		 * separately.
-		 * A slightly faster way to do this would be to make the Karatsuba
-		 * code below behave as if the size were even, and let it check for
+		 * A slightly faster way to करो this would be to make the Karatsuba
+		 * code below behave as अगर the size were even, and let it check क्रम
 		 * odd size in the end.  I.e., in essence move this code to the end.
 		 * Doing so would save us a recursive call, and potentially make the
 		 * stack grow a lot less.
 		 */
-		mpi_size_t esize = size - 1;	/* even size */
+		mpi_माप_प्रकार esize = size - 1;	/* even size */
 		mpi_limb_t cy_limb;
 
 		MPN_MUL_N_RECURSE(prodp, up, vp, esize, tspace);
@@ -114,8 +115,8 @@ mul_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_ptr_t vp,
 		prodp[esize + esize] = cy_limb;
 		cy_limb = mpihelp_addmul_1(prodp + esize, vp, size, up[esize]);
 		prodp[esize + size] = cy_limb;
-	} else {
-		/* Anatolij Alekseevich Karatsuba's divide-and-conquer algorithm.
+	पूर्ण अन्यथा अणु
+		/* Anम_से_दij Alekseevich Karatsuba's भागide-and-conquer algorithm.
 		 *
 		 * Split U in two pieces, U1 and U0, such that
 		 * U = U0 + U1*(B**n),
@@ -130,9 +131,9 @@ mul_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_ptr_t vp,
 		 *
 		 * Where B = 2**BITS_PER_MP_LIMB.
 		 */
-		mpi_size_t hsize = size >> 1;
+		mpi_माप_प्रकार hsize = size >> 1;
 		mpi_limb_t cy;
-		int negflg;
+		पूर्णांक negflg;
 
 		/* Product H.      ________________  ________________
 		 *                |_____U1 x V1____||____U0 x V0_____|
@@ -145,21 +146,21 @@ mul_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_ptr_t vp,
 		/* Product M.      ________________
 		 *                |_(U1-U0)(V0-V1)_|
 		 */
-		if (mpihelp_cmp(up + hsize, up, hsize) >= 0) {
+		अगर (mpihelp_cmp(up + hsize, up, hsize) >= 0) अणु
 			mpihelp_sub_n(prodp, up + hsize, up, hsize);
 			negflg = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			mpihelp_sub_n(prodp, up, up + hsize, hsize);
 			negflg = 1;
-		}
-		if (mpihelp_cmp(vp + hsize, vp, hsize) >= 0) {
+		पूर्ण
+		अगर (mpihelp_cmp(vp + hsize, vp, hsize) >= 0) अणु
 			mpihelp_sub_n(prodp + hsize, vp + hsize, vp, hsize);
 			negflg ^= 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			mpihelp_sub_n(prodp + hsize, vp, vp + hsize, hsize);
 			/* No change of NEGFLG.  */
-		}
-		/* Read temporary operands from low part of PROD.
+		पूर्ण
+		/* Read temporary opeअक्रमs from low part of PROD.
 		 * Put result in low part of TSPACE using upper part of TSPACE
 		 * as new TSPACE.
 		 */
@@ -171,19 +172,19 @@ mul_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_ptr_t vp,
 		cy = mpihelp_add_n(prodp + size, prodp + size,
 				   prodp + size + hsize, hsize);
 
-		/* Add product M (if NEGFLG M is a negative number) */
-		if (negflg)
+		/* Add product M (अगर NEGFLG M is a negative number) */
+		अगर (negflg)
 			cy -=
 			    mpihelp_sub_n(prodp + hsize, prodp + hsize, tspace,
 					  size);
-		else
+		अन्यथा
 			cy +=
 			    mpihelp_add_n(prodp + hsize, prodp + hsize, tspace,
 					  size);
 
 		/* Product L.      ________________  ________________
 		 *                |________________||____U0 x V0_____|
-		 * Read temporary operands from low part of PROD.
+		 * Read temporary opeअक्रमs from low part of PROD.
 		 * Put result in low part of TSPACE using upper part of TSPACE
 		 * as new TSPACE.
 		 */
@@ -192,34 +193,34 @@ mul_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_ptr_t vp,
 		/* Add/copy Product L (twice) */
 
 		cy += mpihelp_add_n(prodp + hsize, prodp + hsize, tspace, size);
-		if (cy)
+		अगर (cy)
 			mpihelp_add_1(prodp + hsize + size,
 				      prodp + hsize + size, hsize, cy);
 
 		MPN_COPY(prodp, tspace, hsize);
 		cy = mpihelp_add_n(prodp + hsize, prodp + hsize, tspace + hsize,
 				   hsize);
-		if (cy)
+		अगर (cy)
 			mpihelp_add_1(prodp + size, prodp + size, size, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void mpih_sqr_n_basecase(mpi_ptr_t prodp, mpi_ptr_t up, mpi_size_t size)
-{
-	mpi_size_t i;
+व्योम mpih_sqr_n_baseहाल(mpi_ptr_t prodp, mpi_ptr_t up, mpi_माप_प्रकार size)
+अणु
+	mpi_माप_प्रकार i;
 	mpi_limb_t cy_limb;
 	mpi_limb_t v_limb;
 
 	/* Multiply by the first limb in V separately, as the result can be
-	 * stored (not added) to PROD.  We also avoid a loop for zeroing.  */
+	 * stored (not added) to PROD.  We also aव्योम a loop क्रम zeroing.  */
 	v_limb = up[0];
-	if (v_limb <= 1) {
-		if (v_limb == 1)
+	अगर (v_limb <= 1) अणु
+		अगर (v_limb == 1)
 			MPN_COPY(prodp, up, size);
-		else
+		अन्यथा
 			MPN_ZERO(prodp, size);
 		cy_limb = 0;
-	} else
+	पूर्ण अन्यथा
 		cy_limb = mpihelp_mul_1(prodp, up, size, v_limb);
 
 	prodp[size] = cy_limb;
@@ -227,35 +228,35 @@ void mpih_sqr_n_basecase(mpi_ptr_t prodp, mpi_ptr_t up, mpi_size_t size)
 
 	/* For each iteration in the outer loop, multiply one limb from
 	 * U with one limb from V, and add it to PROD.  */
-	for (i = 1; i < size; i++) {
+	क्रम (i = 1; i < size; i++) अणु
 		v_limb = up[i];
-		if (v_limb <= 1) {
+		अगर (v_limb <= 1) अणु
 			cy_limb = 0;
-			if (v_limb == 1)
+			अगर (v_limb == 1)
 				cy_limb = mpihelp_add_n(prodp, prodp, up, size);
-		} else
+		पूर्ण अन्यथा
 			cy_limb = mpihelp_addmul_1(prodp, up, size, v_limb);
 
 		prodp[size] = cy_limb;
 		prodp++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void
-mpih_sqr_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_size_t size, mpi_ptr_t tspace)
-{
-	if (size & 1) {
-		/* The size is odd, and the code below doesn't handle that.
-		 * Multiply the least significant (size - 1) limbs with a recursive
-		 * call, and handle the most significant limb of S1 and S2
+व्योम
+mpih_sqr_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_माप_प्रकार size, mpi_ptr_t tspace)
+अणु
+	अगर (size & 1) अणु
+		/* The size is odd, and the code below करोesn't handle that.
+		 * Multiply the least signअगरicant (size - 1) limbs with a recursive
+		 * call, and handle the most signअगरicant limb of S1 and S2
 		 * separately.
-		 * A slightly faster way to do this would be to make the Karatsuba
-		 * code below behave as if the size were even, and let it check for
+		 * A slightly faster way to करो this would be to make the Karatsuba
+		 * code below behave as अगर the size were even, and let it check क्रम
 		 * odd size in the end.  I.e., in essence move this code to the end.
 		 * Doing so would save us a recursive call, and potentially make the
 		 * stack grow a lot less.
 		 */
-		mpi_size_t esize = size - 1;	/* even size */
+		mpi_माप_प्रकार esize = size - 1;	/* even size */
 		mpi_limb_t cy_limb;
 
 		MPN_SQR_N_RECURSE(prodp, up, esize, tspace);
@@ -264,8 +265,8 @@ mpih_sqr_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_size_t size, mpi_ptr_t tspace)
 		cy_limb = mpihelp_addmul_1(prodp + esize, up, size, up[esize]);
 
 		prodp[esize + size] = cy_limb;
-	} else {
-		mpi_size_t hsize = size >> 1;
+	पूर्ण अन्यथा अणु
+		mpi_माप_प्रकार hsize = size >> 1;
 		mpi_limb_t cy;
 
 		/* Product H.      ________________  ________________
@@ -278,12 +279,12 @@ mpih_sqr_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_size_t size, mpi_ptr_t tspace)
 		/* Product M.      ________________
 		 *                |_(U1-U0)(U0-U1)_|
 		 */
-		if (mpihelp_cmp(up + hsize, up, hsize) >= 0)
+		अगर (mpihelp_cmp(up + hsize, up, hsize) >= 0)
 			mpihelp_sub_n(prodp, up + hsize, up, hsize);
-		else
+		अन्यथा
 			mpihelp_sub_n(prodp, up, up + hsize, hsize);
 
-		/* Read temporary operands from low part of PROD.
+		/* Read temporary opeअक्रमs from low part of PROD.
 		 * Put result in low part of TSPACE using upper part of TSPACE
 		 * as new TSPACE.  */
 		MPN_SQR_N_RECURSE(tspace, prodp, hsize, tspace + size);
@@ -293,92 +294,92 @@ mpih_sqr_n(mpi_ptr_t prodp, mpi_ptr_t up, mpi_size_t size, mpi_ptr_t tspace)
 		cy = mpihelp_add_n(prodp + size, prodp + size,
 				   prodp + size + hsize, hsize);
 
-		/* Add product M (if NEGFLG M is a negative number).  */
+		/* Add product M (अगर NEGFLG M is a negative number).  */
 		cy -= mpihelp_sub_n(prodp + hsize, prodp + hsize, tspace, size);
 
 		/* Product L.      ________________  ________________
 		 *                |________________||____U0 x U0_____|
-		 * Read temporary operands from low part of PROD.
+		 * Read temporary opeअक्रमs from low part of PROD.
 		 * Put result in low part of TSPACE using upper part of TSPACE
 		 * as new TSPACE.  */
 		MPN_SQR_N_RECURSE(tspace, up, hsize, tspace + size);
 
 		/* Add/copy Product L (twice).  */
 		cy += mpihelp_add_n(prodp + hsize, prodp + hsize, tspace, size);
-		if (cy)
+		अगर (cy)
 			mpihelp_add_1(prodp + hsize + size,
 				      prodp + hsize + size, hsize, cy);
 
 		MPN_COPY(prodp, tspace, hsize);
 		cy = mpihelp_add_n(prodp + hsize, prodp + hsize, tspace + hsize,
 				   hsize);
-		if (cy)
+		अगर (cy)
 			mpihelp_add_1(prodp + size, prodp + size, size, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-void mpihelp_mul_n(mpi_ptr_t prodp,
-		mpi_ptr_t up, mpi_ptr_t vp, mpi_size_t size)
-{
-	if (up == vp) {
-		if (size < KARATSUBA_THRESHOLD)
-			mpih_sqr_n_basecase(prodp, up, size);
-		else {
+व्योम mpihelp_mul_n(mpi_ptr_t prodp,
+		mpi_ptr_t up, mpi_ptr_t vp, mpi_माप_प्रकार size)
+अणु
+	अगर (up == vp) अणु
+		अगर (size < KARATSUBA_THRESHOLD)
+			mpih_sqr_n_baseहाल(prodp, up, size);
+		अन्यथा अणु
 			mpi_ptr_t tspace;
 			tspace = mpi_alloc_limb_space(2 * size);
 			mpih_sqr_n(prodp, up, size, tspace);
-			mpi_free_limb_space(tspace);
-		}
-	} else {
-		if (size < KARATSUBA_THRESHOLD)
-			mul_n_basecase(prodp, up, vp, size);
-		else {
+			mpi_मुक्त_limb_space(tspace);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (size < KARATSUBA_THRESHOLD)
+			mul_n_baseहाल(prodp, up, vp, size);
+		अन्यथा अणु
 			mpi_ptr_t tspace;
 			tspace = mpi_alloc_limb_space(2 * size);
 			mul_n(prodp, up, vp, size, tspace);
-			mpi_free_limb_space(tspace);
-		}
-	}
-}
+			mpi_मुक्त_limb_space(tspace);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int
-mpihelp_mul_karatsuba_case(mpi_ptr_t prodp,
-			   mpi_ptr_t up, mpi_size_t usize,
-			   mpi_ptr_t vp, mpi_size_t vsize,
-			   struct karatsuba_ctx *ctx)
-{
+पूर्णांक
+mpihelp_mul_karatsuba_हाल(mpi_ptr_t prodp,
+			   mpi_ptr_t up, mpi_माप_प्रकार usize,
+			   mpi_ptr_t vp, mpi_माप_प्रकार vsize,
+			   काष्ठा karatsuba_ctx *ctx)
+अणु
 	mpi_limb_t cy;
 
-	if (!ctx->tspace || ctx->tspace_size < vsize) {
-		if (ctx->tspace)
-			mpi_free_limb_space(ctx->tspace);
+	अगर (!ctx->tspace || ctx->tspace_size < vsize) अणु
+		अगर (ctx->tspace)
+			mpi_मुक्त_limb_space(ctx->tspace);
 		ctx->tspace = mpi_alloc_limb_space(2 * vsize);
-		if (!ctx->tspace)
-			return -ENOMEM;
+		अगर (!ctx->tspace)
+			वापस -ENOMEM;
 		ctx->tspace_size = vsize;
-	}
+	पूर्ण
 
 	MPN_MUL_N_RECURSE(prodp, up, vp, vsize, ctx->tspace);
 
 	prodp += vsize;
 	up += vsize;
 	usize -= vsize;
-	if (usize >= vsize) {
-		if (!ctx->tp || ctx->tp_size < vsize) {
-			if (ctx->tp)
-				mpi_free_limb_space(ctx->tp);
+	अगर (usize >= vsize) अणु
+		अगर (!ctx->tp || ctx->tp_size < vsize) अणु
+			अगर (ctx->tp)
+				mpi_मुक्त_limb_space(ctx->tp);
 			ctx->tp = mpi_alloc_limb_space(2 * vsize);
-			if (!ctx->tp) {
-				if (ctx->tspace)
-					mpi_free_limb_space(ctx->tspace);
-				ctx->tspace = NULL;
-				return -ENOMEM;
-			}
+			अगर (!ctx->tp) अणु
+				अगर (ctx->tspace)
+					mpi_मुक्त_limb_space(ctx->tspace);
+				ctx->tspace = शून्य;
+				वापस -ENOMEM;
+			पूर्ण
 			ctx->tp_size = vsize;
-		}
+		पूर्ण
 
-		do {
+		करो अणु
 			MPN_MUL_N_RECURSE(ctx->tp, up, vp, vsize, ctx->tspace);
 			cy = mpihelp_add_n(prodp, prodp, ctx->tp, vsize);
 			mpihelp_add_1(prodp + vsize, ctx->tp + vsize, vsize,
@@ -386,95 +387,95 @@ mpihelp_mul_karatsuba_case(mpi_ptr_t prodp,
 			prodp += vsize;
 			up += vsize;
 			usize -= vsize;
-		} while (usize >= vsize);
-	}
+		पूर्ण जबतक (usize >= vsize);
+	पूर्ण
 
-	if (usize) {
-		if (usize < KARATSUBA_THRESHOLD) {
-			mpi_limb_t tmp;
-			if (mpihelp_mul(ctx->tspace, vp, vsize, up, usize, &tmp)
+	अगर (usize) अणु
+		अगर (usize < KARATSUBA_THRESHOLD) अणु
+			mpi_limb_t पंचांगp;
+			अगर (mpihelp_mul(ctx->tspace, vp, vsize, up, usize, &पंचांगp)
 			    < 0)
-				return -ENOMEM;
-		} else {
-			if (!ctx->next) {
-				ctx->next = kzalloc(sizeof *ctx, GFP_KERNEL);
-				if (!ctx->next)
-					return -ENOMEM;
-			}
-			if (mpihelp_mul_karatsuba_case(ctx->tspace,
+				वापस -ENOMEM;
+		पूर्ण अन्यथा अणु
+			अगर (!ctx->next) अणु
+				ctx->next = kzalloc(माप *ctx, GFP_KERNEL);
+				अगर (!ctx->next)
+					वापस -ENOMEM;
+			पूर्ण
+			अगर (mpihelp_mul_karatsuba_हाल(ctx->tspace,
 						       vp, vsize,
 						       up, usize,
 						       ctx->next) < 0)
-				return -ENOMEM;
-		}
+				वापस -ENOMEM;
+		पूर्ण
 
 		cy = mpihelp_add_n(prodp, prodp, ctx->tspace, vsize);
 		mpihelp_add_1(prodp + vsize, ctx->tspace + vsize, usize, cy);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mpihelp_release_karatsuba_ctx(struct karatsuba_ctx *ctx)
-{
-	struct karatsuba_ctx *ctx2;
+व्योम mpihelp_release_karatsuba_ctx(काष्ठा karatsuba_ctx *ctx)
+अणु
+	काष्ठा karatsuba_ctx *ctx2;
 
-	if (ctx->tp)
-		mpi_free_limb_space(ctx->tp);
-	if (ctx->tspace)
-		mpi_free_limb_space(ctx->tspace);
-	for (ctx = ctx->next; ctx; ctx = ctx2) {
+	अगर (ctx->tp)
+		mpi_मुक्त_limb_space(ctx->tp);
+	अगर (ctx->tspace)
+		mpi_मुक्त_limb_space(ctx->tspace);
+	क्रम (ctx = ctx->next; ctx; ctx = ctx2) अणु
 		ctx2 = ctx->next;
-		if (ctx->tp)
-			mpi_free_limb_space(ctx->tp);
-		if (ctx->tspace)
-			mpi_free_limb_space(ctx->tspace);
-		kfree(ctx);
-	}
-}
+		अगर (ctx->tp)
+			mpi_मुक्त_limb_space(ctx->tp);
+		अगर (ctx->tspace)
+			mpi_मुक्त_limb_space(ctx->tspace);
+		kमुक्त(ctx);
+	पूर्ण
+पूर्ण
 
-/* Multiply the natural numbers u (pointed to by UP, with USIZE limbs)
- * and v (pointed to by VP, with VSIZE limbs), and store the result at
- * PRODP.  USIZE + VSIZE limbs are always stored, but if the input
- * operands are normalized.  Return the most significant limb of the
+/* Multiply the natural numbers u (poपूर्णांकed to by UP, with USIZE limbs)
+ * and v (poपूर्णांकed to by VP, with VSIZE limbs), and store the result at
+ * PRODP.  USIZE + VSIZE limbs are always stored, but अगर the input
+ * opeअक्रमs are normalized.  Return the most signअगरicant limb of the
  * result.
  *
- * NOTE: The space pointed to by PRODP is overwritten before finished
+ * NOTE: The space poपूर्णांकed to by PRODP is overwritten beक्रमe finished
  * with U and V, so overlap is an error.
  *
- * Argument constraints:
+ * Argument स्थिरraपूर्णांकs:
  * 1. USIZE >= VSIZE.
  * 2. PRODP != UP and PRODP != VP, i.e. the destination
  *    must be distinct from the multiplier and the multiplicand.
  */
 
-int
-mpihelp_mul(mpi_ptr_t prodp, mpi_ptr_t up, mpi_size_t usize,
-	    mpi_ptr_t vp, mpi_size_t vsize, mpi_limb_t *_result)
-{
+पूर्णांक
+mpihelp_mul(mpi_ptr_t prodp, mpi_ptr_t up, mpi_माप_प्रकार usize,
+	    mpi_ptr_t vp, mpi_माप_प्रकार vsize, mpi_limb_t *_result)
+अणु
 	mpi_ptr_t prod_endp = prodp + usize + vsize - 1;
 	mpi_limb_t cy;
-	struct karatsuba_ctx ctx;
+	काष्ठा karatsuba_ctx ctx;
 
-	if (vsize < KARATSUBA_THRESHOLD) {
-		mpi_size_t i;
+	अगर (vsize < KARATSUBA_THRESHOLD) अणु
+		mpi_माप_प्रकार i;
 		mpi_limb_t v_limb;
 
-		if (!vsize) {
+		अगर (!vsize) अणु
 			*_result = 0;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/* Multiply by the first limb in V separately, as the result can be
-		 * stored (not added) to PROD.  We also avoid a loop for zeroing.  */
+		 * stored (not added) to PROD.  We also aव्योम a loop क्रम zeroing.  */
 		v_limb = vp[0];
-		if (v_limb <= 1) {
-			if (v_limb == 1)
+		अगर (v_limb <= 1) अणु
+			अगर (v_limb == 1)
 				MPN_COPY(prodp, up, usize);
-			else
+			अन्यथा
 				MPN_ZERO(prodp, usize);
 			cy = 0;
-		} else
+		पूर्ण अन्यथा
 			cy = mpihelp_mul_1(prodp, up, usize, v_limb);
 
 		prodp[usize] = cy;
@@ -482,28 +483,28 @@ mpihelp_mul(mpi_ptr_t prodp, mpi_ptr_t up, mpi_size_t usize,
 
 		/* For each iteration in the outer loop, multiply one limb from
 		 * U with one limb from V, and add it to PROD.  */
-		for (i = 1; i < vsize; i++) {
+		क्रम (i = 1; i < vsize; i++) अणु
 			v_limb = vp[i];
-			if (v_limb <= 1) {
+			अगर (v_limb <= 1) अणु
 				cy = 0;
-				if (v_limb == 1)
+				अगर (v_limb == 1)
 					cy = mpihelp_add_n(prodp, prodp, up,
 							   usize);
-			} else
+			पूर्ण अन्यथा
 				cy = mpihelp_addmul_1(prodp, up, usize, v_limb);
 
 			prodp[usize] = cy;
 			prodp++;
-		}
+		पूर्ण
 
 		*_result = cy;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	memset(&ctx, 0, sizeof ctx);
-	if (mpihelp_mul_karatsuba_case(prodp, up, usize, vp, vsize, &ctx) < 0)
-		return -ENOMEM;
+	स_रखो(&ctx, 0, माप ctx);
+	अगर (mpihelp_mul_karatsuba_हाल(prodp, up, usize, vp, vsize, &ctx) < 0)
+		वापस -ENOMEM;
 	mpihelp_release_karatsuba_ctx(&ctx);
 	*_result = *prod_endp;
-	return 0;
-}
+	वापस 0;
+पूर्ण

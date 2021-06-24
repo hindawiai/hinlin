@@ -1,148 +1,149 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2008 ARM Limited
- * Copyright (C) 2014 Regents of the University of California
+ * Copyright (C) 2014 Regents of the University of Calअगरornia
  */
 
-#include <linux/export.h>
-#include <linux/kallsyms.h>
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/task_stack.h>
-#include <linux/stacktrace.h>
-#include <linux/ftrace.h>
+#समावेश <linux/export.h>
+#समावेश <linux/kallsyms.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/ftrace.h>
 
-#include <asm/stacktrace.h>
+#समावेश <यंत्र/stacktrace.h>
 
-register unsigned long sp_in_global __asm__("sp");
+रेजिस्टर अचिन्हित दीर्घ sp_in_global __यंत्र__("sp");
 
-#ifdef CONFIG_FRAME_POINTER
+#अगर_घोषित CONFIG_FRAME_POINTER
 
-void notrace walk_stackframe(struct task_struct *task, struct pt_regs *regs,
-			     bool (*fn)(void *, unsigned long), void *arg)
-{
-	unsigned long fp, sp, pc;
+व्योम notrace walk_stackframe(काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs,
+			     bool (*fn)(व्योम *, अचिन्हित दीर्घ), व्योम *arg)
+अणु
+	अचिन्हित दीर्घ fp, sp, pc;
 
-	if (regs) {
-		fp = frame_pointer(regs);
-		sp = user_stack_pointer(regs);
-		pc = instruction_pointer(regs);
-	} else if (task == current) {
-		fp = (unsigned long)__builtin_frame_address(1);
-		sp = (unsigned long)__builtin_frame_address(0);
-		pc = (unsigned long)__builtin_return_address(0);
-	} else {
-		/* task blocked in __switch_to */
-		fp = task->thread.s[0];
-		sp = task->thread.sp;
-		pc = task->thread.ra;
-	}
+	अगर (regs) अणु
+		fp = frame_poपूर्णांकer(regs);
+		sp = user_stack_poपूर्णांकer(regs);
+		pc = inकाष्ठाion_poपूर्णांकer(regs);
+	पूर्ण अन्यथा अगर (task == current) अणु
+		fp = (अचिन्हित दीर्घ)__builtin_frame_address(1);
+		sp = (अचिन्हित दीर्घ)__builtin_frame_address(0);
+		pc = (अचिन्हित दीर्घ)__builtin_वापस_address(0);
+	पूर्ण अन्यथा अणु
+		/* task blocked in __चयन_to */
+		fp = task->thपढ़ो.s[0];
+		sp = task->thपढ़ो.sp;
+		pc = task->thपढ़ो.ra;
+	पूर्ण
 
-	for (;;) {
-		unsigned long low, high;
-		struct stackframe *frame;
+	क्रम (;;) अणु
+		अचिन्हित दीर्घ low, high;
+		काष्ठा stackframe *frame;
 
-		if (unlikely(!__kernel_text_address(pc) || !fn(arg, pc)))
-			break;
+		अगर (unlikely(!__kernel_text_address(pc) || !fn(arg, pc)))
+			अवरोध;
 
-		/* Validate frame pointer */
-		low = sp + sizeof(struct stackframe);
+		/* Validate frame poपूर्णांकer */
+		low = sp + माप(काष्ठा stackframe);
 		high = ALIGN(sp, THREAD_SIZE);
-		if (unlikely(fp < low || fp > high || fp & 0x7))
-			break;
+		अगर (unlikely(fp < low || fp > high || fp & 0x7))
+			अवरोध;
 		/* Unwind stack frame */
-		frame = (struct stackframe *)fp - 1;
+		frame = (काष्ठा stackframe *)fp - 1;
 		sp = fp;
-		if (regs && (regs->epc == pc) && (frame->fp & 0x7)) {
+		अगर (regs && (regs->epc == pc) && (frame->fp & 0x7)) अणु
 			fp = frame->ra;
 			pc = regs->ra;
-		} else {
+		पूर्ण अन्यथा अणु
 			fp = frame->fp;
-			pc = ftrace_graph_ret_addr(current, NULL, frame->ra,
-						   (unsigned long *)(fp - 8));
-		}
+			pc = ftrace_graph_ret_addr(current, शून्य, frame->ra,
+						   (अचिन्हित दीर्घ *)(fp - 8));
+		पूर्ण
 
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else /* !CONFIG_FRAME_POINTER */
+#अन्यथा /* !CONFIG_FRAME_POINTER */
 
-void notrace walk_stackframe(struct task_struct *task,
-	struct pt_regs *regs, bool (*fn)(void *, unsigned long), void *arg)
-{
-	unsigned long sp, pc;
-	unsigned long *ksp;
+व्योम notrace walk_stackframe(काष्ठा task_काष्ठा *task,
+	काष्ठा pt_regs *regs, bool (*fn)(व्योम *, अचिन्हित दीर्घ), व्योम *arg)
+अणु
+	अचिन्हित दीर्घ sp, pc;
+	अचिन्हित दीर्घ *ksp;
 
-	if (regs) {
-		sp = user_stack_pointer(regs);
-		pc = instruction_pointer(regs);
-	} else if (task == NULL || task == current) {
+	अगर (regs) अणु
+		sp = user_stack_poपूर्णांकer(regs);
+		pc = inकाष्ठाion_poपूर्णांकer(regs);
+	पूर्ण अन्यथा अगर (task == शून्य || task == current) अणु
 		sp = sp_in_global;
-		pc = (unsigned long)walk_stackframe;
-	} else {
-		/* task blocked in __switch_to */
-		sp = task->thread.sp;
-		pc = task->thread.ra;
-	}
+		pc = (अचिन्हित दीर्घ)walk_stackframe;
+	पूर्ण अन्यथा अणु
+		/* task blocked in __चयन_to */
+		sp = task->thपढ़ो.sp;
+		pc = task->thपढ़ो.ra;
+	पूर्ण
 
-	if (unlikely(sp & 0x7))
-		return;
+	अगर (unlikely(sp & 0x7))
+		वापस;
 
-	ksp = (unsigned long *)sp;
-	while (!kstack_end(ksp)) {
-		if (__kernel_text_address(pc) && unlikely(!fn(arg, pc)))
-			break;
+	ksp = (अचिन्हित दीर्घ *)sp;
+	जबतक (!kstack_end(ksp)) अणु
+		अगर (__kernel_text_address(pc) && unlikely(!fn(arg, pc)))
+			अवरोध;
 		pc = (*ksp++) - 0x4;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif /* CONFIG_FRAME_POINTER */
+#पूर्ण_अगर /* CONFIG_FRAME_POINTER */
 
-static bool print_trace_address(void *arg, unsigned long pc)
-{
-	const char *loglvl = arg;
+अटल bool prपूर्णांक_trace_address(व्योम *arg, अचिन्हित दीर्घ pc)
+अणु
+	स्थिर अक्षर *loglvl = arg;
 
-	print_ip_sym(loglvl, pc);
-	return true;
-}
+	prपूर्णांक_ip_sym(loglvl, pc);
+	वापस true;
+पूर्ण
 
-noinline void dump_backtrace(struct pt_regs *regs, struct task_struct *task,
-		    const char *loglvl)
-{
-	walk_stackframe(task, regs, print_trace_address, (void *)loglvl);
-}
+noअंतरभूत व्योम dump_backtrace(काष्ठा pt_regs *regs, काष्ठा task_काष्ठा *task,
+		    स्थिर अक्षर *loglvl)
+अणु
+	walk_stackframe(task, regs, prपूर्णांक_trace_address, (व्योम *)loglvl);
+पूर्ण
 
-void show_stack(struct task_struct *task, unsigned long *sp, const char *loglvl)
-{
+व्योम show_stack(काष्ठा task_काष्ठा *task, अचिन्हित दीर्घ *sp, स्थिर अक्षर *loglvl)
+अणु
 	pr_cont("%sCall Trace:\n", loglvl);
-	dump_backtrace(NULL, task, loglvl);
-}
+	dump_backtrace(शून्य, task, loglvl);
+पूर्ण
 
-static bool save_wchan(void *arg, unsigned long pc)
-{
-	if (!in_sched_functions(pc)) {
-		unsigned long *p = arg;
+अटल bool save_wchan(व्योम *arg, अचिन्हित दीर्घ pc)
+अणु
+	अगर (!in_sched_functions(pc)) अणु
+		अचिन्हित दीर्घ *p = arg;
 		*p = pc;
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-unsigned long get_wchan(struct task_struct *task)
-{
-	unsigned long pc = 0;
+अचिन्हित दीर्घ get_wchan(काष्ठा task_काष्ठा *task)
+अणु
+	अचिन्हित दीर्घ pc = 0;
 
-	if (likely(task && task != current && task->state != TASK_RUNNING))
-		walk_stackframe(task, NULL, save_wchan, &pc);
-	return pc;
-}
+	अगर (likely(task && task != current && task->state != TASK_RUNNING))
+		walk_stackframe(task, शून्य, save_wchan, &pc);
+	वापस pc;
+पूर्ण
 
-#ifdef CONFIG_STACKTRACE
+#अगर_घोषित CONFIG_STACKTRACE
 
-noinline void arch_stack_walk(stack_trace_consume_fn consume_entry, void *cookie,
-		     struct task_struct *task, struct pt_regs *regs)
-{
+noअंतरभूत व्योम arch_stack_walk(stack_trace_consume_fn consume_entry, व्योम *cookie,
+		     काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
+अणु
 	walk_stackframe(task, regs, consume_entry, cookie);
-}
+पूर्ण
 
-#endif /* CONFIG_STACKTRACE */
+#पूर्ण_अगर /* CONFIG_STACKTRACE */

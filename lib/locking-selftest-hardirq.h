@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef IRQ_DISABLE
-#undef IRQ_ENABLE
-#undef IRQ_ENTER
-#undef IRQ_EXIT
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित IRQ_DISABLE
+#अघोषित IRQ_ENABLE
+#अघोषित IRQ_ENTER
+#अघोषित IRQ_EXIT
 
-#define IRQ_ENABLE		HARDIRQ_ENABLE
-#define IRQ_DISABLE		HARDIRQ_DISABLE
-#define IRQ_ENTER		HARDIRQ_ENTER
-#define IRQ_EXIT		HARDIRQ_EXIT
+#घोषणा IRQ_ENABLE		HARसूचीQ_ENABLE
+#घोषणा IRQ_DISABLE		HARसूचीQ_DISABLE
+#घोषणा IRQ_ENTER		HARसूचीQ_ENTER
+#घोषणा IRQ_EXIT		HARसूचीQ_EXIT

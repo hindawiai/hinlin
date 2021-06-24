@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright 2015 Freescale Semiconductor, Inc.
  *
  * Freescale DCU drm device driver
  */
 
-#ifndef __FSL_DCU_DRM_CONNECTOR_H__
-#define __FSL_DCU_DRM_CONNECTOR_H__
+#अगर_अघोषित __FSL_DCU_DRM_CONNECTOR_H__
+#घोषणा __FSL_DCU_DRM_CONNECTOR_H__
 
-struct fsl_dcu_drm_connector {
-	struct drm_connector base;
-	struct drm_encoder *encoder;
-	struct drm_panel *panel;
-};
+काष्ठा fsl_dcu_drm_connector अणु
+	काष्ठा drm_connector base;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा drm_panel *panel;
+पूर्ण;
 
-static inline struct fsl_dcu_drm_connector *
-to_fsl_dcu_connector(struct drm_connector *con)
-{
-	return con ? container_of(con, struct fsl_dcu_drm_connector, base)
-		     : NULL;
-}
+अटल अंतरभूत काष्ठा fsl_dcu_drm_connector *
+to_fsl_dcu_connector(काष्ठा drm_connector *con)
+अणु
+	वापस con ? container_of(con, काष्ठा fsl_dcu_drm_connector, base)
+		     : शून्य;
+पूर्ण
 
-int fsl_dcu_drm_encoder_create(struct fsl_dcu_drm_device *fsl_dev,
-			       struct drm_crtc *crtc);
-int fsl_dcu_create_outputs(struct fsl_dcu_drm_device *fsl_dev);
+पूर्णांक fsl_dcu_drm_encoder_create(काष्ठा fsl_dcu_drm_device *fsl_dev,
+			       काष्ठा drm_crtc *crtc);
+पूर्णांक fsl_dcu_create_outमाला_दो(काष्ठा fsl_dcu_drm_device *fsl_dev);
 
-#endif /* __FSL_DCU_DRM_CONNECTOR_H__ */
+#पूर्ण_अगर /* __FSL_DCU_DRM_CONNECTOR_H__ */

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * drivers/media/video/tvp514x.h
  *
@@ -13,24 +14,24 @@
  *     Karicheri Muralidharan <m-karicheri2@ti.com>
  */
 
-#ifndef _TVP514X_H
-#define _TVP514X_H
+#अगर_अघोषित _TVP514X_H
+#घोषणा _TVP514X_H
 
 /*
  * Other macros
  */
-#define TVP514X_MODULE_NAME		"tvp514x"
+#घोषणा TVP514X_MODULE_NAME		"tvp514x"
 
-#define TVP514X_XCLK_BT656		(27000000)
+#घोषणा TVP514X_XCLK_BT656		(27000000)
 
-/* Number of pixels and number of lines per frame for different standards */
-#define NTSC_NUM_ACTIVE_PIXELS		(720)
-#define NTSC_NUM_ACTIVE_LINES		(480)
-#define PAL_NUM_ACTIVE_PIXELS		(720)
-#define PAL_NUM_ACTIVE_LINES		(576)
+/* Number of pixels and number of lines per frame क्रम dअगरferent standards */
+#घोषणा NTSC_NUM_ACTIVE_PIXELS		(720)
+#घोषणा NTSC_NUM_ACTIVE_LINES		(480)
+#घोषणा PAL_NUM_ACTIVE_PIXELS		(720)
+#घोषणा PAL_NUM_ACTIVE_LINES		(576)
 
-/* enum for different decoder input pin configuration */
-enum tvp514x_input {
+/* क्रमागत क्रम dअगरferent decoder input pin configuration */
+क्रमागत tvp514x_input अणु
 	/*
 	 * CVBS input selection
 	 */
@@ -60,32 +61,32 @@ enum tvp514x_input {
 	INPUT_SVIDEO_VI4A_VI3B,
 	INPUT_SVIDEO_VI4A_VI3C,
 
-	/* Need to add entries for
+	/* Need to add entries क्रम
 	 * RGB, YPbPr and SCART.
 	 */
 	INPUT_INVALID
-};
+पूर्ण;
 
-/* enum for output format supported. */
-enum tvp514x_output {
+/* क्रमागत क्रम output क्रमmat supported. */
+क्रमागत tvp514x_output अणु
 	OUTPUT_10BIT_422_EMBEDDED_SYNC = 0,
 	OUTPUT_20BIT_422_SEPERATE_SYNC,
 	OUTPUT_10BIT_422_SEPERATE_SYNC = 3,
 	OUTPUT_INVALID
-};
+पूर्ण;
 
 /**
- * struct tvp514x_platform_data - Platform data values and access functions.
- * @clk_polarity: Clock polarity of the current interface.
- * @hs_polarity: HSYNC Polarity configuration for current interface.
- * @vs_polarity: VSYNC Polarity configuration for current interface.
+ * काष्ठा tvp514x_platक्रमm_data - Platक्रमm data values and access functions.
+ * @clk_polarity: Clock polarity of the current पूर्णांकerface.
+ * @hs_polarity: HSYNC Polarity configuration क्रम current पूर्णांकerface.
+ * @vs_polarity: VSYNC Polarity configuration क्रम current पूर्णांकerface.
  */
-struct tvp514x_platform_data {
+काष्ठा tvp514x_platक्रमm_data अणु
 	/* Interface control params */
 	bool clk_polarity;
 	bool hs_polarity;
 	bool vs_polarity;
-};
+पूर्ण;
 
 
-#endif				/* ifndef _TVP514X_H */
+#पूर्ण_अगर				/* अगरndef _TVP514X_H */

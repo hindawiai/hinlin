@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef MIGRATE_MODE_H_INCLUDED
-#define MIGRATE_MODE_H_INCLUDED
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित MIGRATE_MODE_H_INCLUDED
+#घोषणा MIGRATE_MODE_H_INCLUDED
 /*
  * MIGRATE_ASYNC means never block
  * MIGRATE_SYNC_LIGHT in the current implementation means to allow blocking
- *	on most operations but not ->writepage as the potential stall time
- *	is too significant
+ *	on most operations but not ->ग_लिखोpage as the potential stall समय
+ *	is too signअगरicant
  * MIGRATE_SYNC will block when migrating pages
  * MIGRATE_SYNC_NO_COPY will block when migrating pages but will not copy pages
  *	with the CPU. Instead, page copy happens outside the migratepage()
  *	callback and is likely using a DMA engine. See migrate_vma() and HMM
- *	(mm/hmm.c) for users of this mode.
+ *	(mm/hmm.c) क्रम users of this mode.
  */
-enum migrate_mode {
+क्रमागत migrate_mode अणु
 	MIGRATE_ASYNC,
 	MIGRATE_SYNC_LIGHT,
 	MIGRATE_SYNC,
 	MIGRATE_SYNC_NO_COPY,
-};
+पूर्ण;
 
-#endif		/* MIGRATE_MODE_H_INCLUDED */
+#पूर्ण_अगर		/* MIGRATE_MODE_H_INCLUDED */

@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * IOMMU debugfs core infrastructure
+ * IOMMU debugfs core infraकाष्ठाure
  *
  * Copyright (C) 2018 Advanced Micro Devices, Inc.
  *
  * Author: Gary R Hook <gary.hook@amd.com>
  */
 
-#include <linux/pci.h>
-#include <linux/iommu.h>
-#include <linux/debugfs.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/debugfs.h>
 
-struct dentry *iommu_debugfs_dir;
+काष्ठा dentry *iommu_debugfs_dir;
 EXPORT_SYMBOL_GPL(iommu_debugfs_dir);
 
 /**
  * iommu_debugfs_setup - create the top-level iommu directory in debugfs
  *
- * Provide base enablement for using debugfs to expose internal data of an
+ * Provide base enablement क्रम using debugfs to expose पूर्णांकernal data of an
  * IOMMU driver. When called, this function creates the
  * /sys/kernel/debug/iommu directory.
  *
- * Emit a strong warning at boot time to indicate that this feature is
+ * Emit a strong warning at boot समय to indicate that this feature is
  * enabled.
  *
  * This function is called from iommu_init; drivers may then use
- * iommu_debugfs_dir to instantiate a vendor-specific directory to be used
- * to expose internal data.
+ * iommu_debugfs_dir to instantiate a venकरोr-specअगरic directory to be used
+ * to expose पूर्णांकernal data.
  */
-void iommu_debugfs_setup(void)
-{
-	if (!iommu_debugfs_dir) {
-		iommu_debugfs_dir = debugfs_create_dir("iommu", NULL);
+व्योम iommu_debugfs_setup(व्योम)
+अणु
+	अगर (!iommu_debugfs_dir) अणु
+		iommu_debugfs_dir = debugfs_create_dir("iommu", शून्य);
 		pr_warn("\n");
 		pr_warn("*************************************************************\n");
 		pr_warn("**     NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE    **\n");
@@ -47,5 +48,5 @@ void iommu_debugfs_setup(void)
 		pr_warn("**                                                         **\n");
 		pr_warn("**     NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE NOTICE    **\n");
 		pr_warn("*************************************************************\n");
-	}
-}
+	पूर्ण
+पूर्ण

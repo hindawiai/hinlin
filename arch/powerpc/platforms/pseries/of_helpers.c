@@ -1,97 +1,98 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/string.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <asm/prom.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/माला.स>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <यंत्र/prom.h>
 
-#include "of_helpers.h"
+#समावेश "of_helpers.h"
 
 /**
- * pseries_of_derive_parent - basically like dirname(1)
+ * pseries_of_derive_parent - basically like स_नाम(1)
  * @path:  the full_name of a node to be added to the tree
  *
  * Returns the node which should be the parent of the node
- * described by path.  E.g., for path = "/foo/bar", returns
+ * described by path.  E.g., क्रम path = "/foo/bar", वापसs
  * the node with full_name = "/foo".
  */
-struct device_node *pseries_of_derive_parent(const char *path)
-{
-	struct device_node *parent;
-	char *parent_path = "/";
-	const char *tail;
+काष्ठा device_node *pseries_of_derive_parent(स्थिर अक्षर *path)
+अणु
+	काष्ठा device_node *parent;
+	अक्षर *parent_path = "/";
+	स्थिर अक्षर *tail;
 
-	/* We do not want the trailing '/' character */
+	/* We करो not want the trailing '/' अक्षरacter */
 	tail = kbasename(path) - 1;
 
-	/* reject if path is "/" */
-	if (!strcmp(path, "/"))
-		return ERR_PTR(-EINVAL);
+	/* reject अगर path is "/" */
+	अगर (!म_भेद(path, "/"))
+		वापस ERR_PTR(-EINVAL);
 
-	if (tail > path) {
+	अगर (tail > path) अणु
 		parent_path = kstrndup(path, tail - path, GFP_KERNEL);
-		if (!parent_path)
-			return ERR_PTR(-ENOMEM);
-	}
+		अगर (!parent_path)
+			वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	parent = of_find_node_by_path(parent_path);
-	if (strcmp(parent_path, "/"))
-		kfree(parent_path);
-	return parent ? parent : ERR_PTR(-EINVAL);
-}
+	अगर (म_भेद(parent_path, "/"))
+		kमुक्त(parent_path);
+	वापस parent ? parent : ERR_PTR(-EINVAL);
+पूर्ण
 
 
 /* Helper Routines to convert between drc_index to cpu numbers */
 
-int of_read_drc_info_cell(struct property **prop, const __be32 **curval,
-			struct of_drc_info *data)
-{
-	const char *p = (char *)(*curval);
-	const __be32 *p2;
+पूर्णांक of_पढ़ो_drc_info_cell(काष्ठा property **prop, स्थिर __be32 **curval,
+			काष्ठा of_drc_info *data)
+अणु
+	स्थिर अक्षर *p = (अक्षर *)(*curval);
+	स्थिर __be32 *p2;
 
-	if (!data)
-		return -EINVAL;
+	अगर (!data)
+		वापस -EINVAL;
 
 	/* Get drc-type:encode-string */
-	data->drc_type = (char *)p;
+	data->drc_type = (अक्षर *)p;
 	p = of_prop_next_string(*prop, p);
-	if (!p)
-		return -EINVAL;
+	अगर (!p)
+		वापस -EINVAL;
 
 	/* Get drc-name-prefix:encode-string */
-	data->drc_name_prefix = (char *)p;
+	data->drc_name_prefix = (अक्षर *)p;
 	p = of_prop_next_string(*prop, p);
-	if (!p)
-		return -EINVAL;
+	अगर (!p)
+		वापस -EINVAL;
 
-	/* Get drc-index-start:encode-int */
-	p2 = (const __be32 *)p;
+	/* Get drc-index-start:encode-पूर्णांक */
+	p2 = (स्थिर __be32 *)p;
 	data->drc_index_start = be32_to_cpu(*p2);
 
-	/* Get drc-name-suffix-start:encode-int */
+	/* Get drc-name-suffix-start:encode-पूर्णांक */
 	p2 = of_prop_next_u32(*prop, p2, &data->drc_name_suffix_start);
-	if (!p2)
-		return -EINVAL;
+	अगर (!p2)
+		वापस -EINVAL;
 
-	/* Get number-sequential-elements:encode-int */
+	/* Get number-sequential-elements:encode-पूर्णांक */
 	p2 = of_prop_next_u32(*prop, p2, &data->num_sequential_elems);
-	if (!p2)
-		return -EINVAL;
+	अगर (!p2)
+		वापस -EINVAL;
 
-	/* Get sequential-increment:encode-int */
+	/* Get sequential-increment:encode-पूर्णांक */
 	p2 = of_prop_next_u32(*prop, p2, &data->sequential_inc);
-	if (!p2)
-		return -EINVAL;
+	अगर (!p2)
+		वापस -EINVAL;
 
-	/* Get drc-power-domain:encode-int */
-	p2 = of_prop_next_u32(*prop, p2, &data->drc_power_domain);
-	if (!p2)
-		return -EINVAL;
+	/* Get drc-घातer-करोमुख्य:encode-पूर्णांक */
+	p2 = of_prop_next_u32(*prop, p2, &data->drc_घातer_करोमुख्य);
+	अगर (!p2)
+		वापस -EINVAL;
 
 	/* Should now know end of current entry */
-	(*curval) = (void *)(++p2);
+	(*curval) = (व्योम *)(++p2);
 	data->last_drc_index = data->drc_index_start +
 		((data->num_sequential_elems - 1) * data->sequential_inc);
 
-	return 0;
-}
-EXPORT_SYMBOL(of_read_drc_info_cell);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(of_पढ़ो_drc_info_cell);

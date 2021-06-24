@@ -1,678 +1,679 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2013 Broadcom Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
 
-/* Hardware register offsets and field defintions */
-#define CS_OFFSET				0x00000020
-#define CS_ACK_SHIFT				3
-#define CS_ACK_MASK				0x00000008
-#define CS_ACK_CMD_GEN_START			0x00000000
-#define CS_ACK_CMD_GEN_RESTART			0x00000001
-#define CS_CMD_SHIFT				1
-#define CS_CMD_CMD_NO_ACTION			0x00000000
-#define CS_CMD_CMD_START_RESTART		0x00000001
-#define CS_CMD_CMD_STOP				0x00000002
-#define CS_EN_SHIFT				0
-#define CS_EN_CMD_ENABLE_BSC			0x00000001
+/* Hardware रेजिस्टर offsets and field defपूर्णांकions */
+#घोषणा CS_OFFSET				0x00000020
+#घोषणा CS_ACK_SHIFT				3
+#घोषणा CS_ACK_MASK				0x00000008
+#घोषणा CS_ACK_CMD_GEN_START			0x00000000
+#घोषणा CS_ACK_CMD_GEN_RESTART			0x00000001
+#घोषणा CS_CMD_SHIFT				1
+#घोषणा CS_CMD_CMD_NO_ACTION			0x00000000
+#घोषणा CS_CMD_CMD_START_RESTART		0x00000001
+#घोषणा CS_CMD_CMD_STOP				0x00000002
+#घोषणा CS_EN_SHIFT				0
+#घोषणा CS_EN_CMD_ENABLE_BSC			0x00000001
 
-#define TIM_OFFSET				0x00000024
-#define TIM_PRESCALE_SHIFT			6
-#define TIM_P_SHIFT				3
-#define TIM_NO_DIV_SHIFT			2
-#define TIM_DIV_SHIFT				0
+#घोषणा TIM_OFFSET				0x00000024
+#घोषणा TIM_PRESCALE_SHIFT			6
+#घोषणा TIM_P_SHIFT				3
+#घोषणा TIM_NO_DIV_SHIFT			2
+#घोषणा TIM_DIV_SHIFT				0
 
-#define DAT_OFFSET				0x00000028
+#घोषणा DAT_OFFSET				0x00000028
 
-#define TOUT_OFFSET				0x0000002c
+#घोषणा TOUT_OFFSET				0x0000002c
 
-#define TXFCR_OFFSET				0x0000003c
-#define TXFCR_FIFO_FLUSH_MASK			0x00000080
-#define TXFCR_FIFO_EN_MASK			0x00000040
+#घोषणा TXFCR_OFFSET				0x0000003c
+#घोषणा TXFCR_FIFO_FLUSH_MASK			0x00000080
+#घोषणा TXFCR_FIFO_EN_MASK			0x00000040
 
-#define IER_OFFSET				0x00000044
-#define IER_READ_COMPLETE_INT_MASK		0x00000010
-#define IER_I2C_INT_EN_MASK			0x00000008
-#define IER_FIFO_INT_EN_MASK			0x00000002
-#define IER_NOACK_EN_MASK			0x00000001
+#घोषणा IER_OFFSET				0x00000044
+#घोषणा IER_READ_COMPLETE_INT_MASK		0x00000010
+#घोषणा IER_I2C_INT_EN_MASK			0x00000008
+#घोषणा IER_FIFO_INT_EN_MASK			0x00000002
+#घोषणा IER_NOACK_EN_MASK			0x00000001
 
-#define ISR_OFFSET				0x00000048
-#define ISR_RESERVED_MASK			0xffffff60
-#define ISR_CMDBUSY_MASK			0x00000080
-#define ISR_READ_COMPLETE_MASK			0x00000010
-#define ISR_SES_DONE_MASK			0x00000008
-#define ISR_ERR_MASK				0x00000004
-#define ISR_TXFIFOEMPTY_MASK			0x00000002
-#define ISR_NOACK_MASK				0x00000001
+#घोषणा ISR_OFFSET				0x00000048
+#घोषणा ISR_RESERVED_MASK			0xffffff60
+#घोषणा ISR_CMDBUSY_MASK			0x00000080
+#घोषणा ISR_READ_COMPLETE_MASK			0x00000010
+#घोषणा ISR_SES_DONE_MASK			0x00000008
+#घोषणा ISR_ERR_MASK				0x00000004
+#घोषणा ISR_TXFIFOEMPTY_MASK			0x00000002
+#घोषणा ISR_NOACK_MASK				0x00000001
 
-#define CLKEN_OFFSET				0x0000004C
-#define CLKEN_AUTOSENSE_OFF_MASK		0x00000080
-#define CLKEN_M_SHIFT				4
-#define CLKEN_N_SHIFT				1
-#define CLKEN_CLKEN_MASK			0x00000001
+#घोषणा CLKEN_OFFSET				0x0000004C
+#घोषणा CLKEN_AUTOSENSE_OFF_MASK		0x00000080
+#घोषणा CLKEN_M_SHIFT				4
+#घोषणा CLKEN_N_SHIFT				1
+#घोषणा CLKEN_CLKEN_MASK			0x00000001
 
-#define FIFO_STATUS_OFFSET			0x00000054
-#define FIFO_STATUS_RXFIFO_EMPTY_MASK		0x00000004
-#define FIFO_STATUS_TXFIFO_EMPTY_MASK		0x00000010
+#घोषणा FIFO_STATUS_OFFSET			0x00000054
+#घोषणा FIFO_STATUS_RXFIFO_EMPTY_MASK		0x00000004
+#घोषणा FIFO_STATUS_TXFIFO_EMPTY_MASK		0x00000010
 
-#define HSTIM_OFFSET				0x00000058
-#define HSTIM_HS_MODE_MASK			0x00008000
-#define HSTIM_HS_HOLD_SHIFT			10
-#define HSTIM_HS_HIGH_PHASE_SHIFT		5
-#define HSTIM_HS_SETUP_SHIFT			0
+#घोषणा HSTIM_OFFSET				0x00000058
+#घोषणा HSTIM_HS_MODE_MASK			0x00008000
+#घोषणा HSTIM_HS_HOLD_SHIFT			10
+#घोषणा HSTIM_HS_HIGH_PHASE_SHIFT		5
+#घोषणा HSTIM_HS_SETUP_SHIFT			0
 
-#define PADCTL_OFFSET				0x0000005c
-#define PADCTL_PAD_OUT_EN_MASK			0x00000004
+#घोषणा PADCTL_OFFSET				0x0000005c
+#घोषणा PADCTL_PAD_OUT_EN_MASK			0x00000004
 
-#define RXFCR_OFFSET				0x00000068
-#define RXFCR_NACK_EN_SHIFT			7
-#define RXFCR_READ_COUNT_SHIFT			0
-#define RXFIFORDOUT_OFFSET			0x0000006c
+#घोषणा RXFCR_OFFSET				0x00000068
+#घोषणा RXFCR_NACK_EN_SHIFT			7
+#घोषणा RXFCR_READ_COUNT_SHIFT			0
+#घोषणा RXFIFORDOUT_OFFSET			0x0000006c
 
-/* Locally used constants */
-#define MAX_RX_FIFO_SIZE		64U /* bytes */
-#define MAX_TX_FIFO_SIZE		64U /* bytes */
+/* Locally used स्थिरants */
+#घोषणा MAX_RX_FIFO_SIZE		64U /* bytes */
+#घोषणा MAX_TX_FIFO_SIZE		64U /* bytes */
 
-#define STD_EXT_CLK_FREQ		13000000UL
-#define HS_EXT_CLK_FREQ			104000000UL
+#घोषणा STD_EXT_CLK_FREQ		13000000UL
+#घोषणा HS_EXT_CLK_FREQ			104000000UL
 
-#define MASTERCODE			0x08 /* Mastercodes are 0000_1xxxb */
+#घोषणा MASTERCODE			0x08 /* Mastercodes are 0000_1xxxb */
 
-#define I2C_TIMEOUT			100 /* msecs */
+#घोषणा I2C_TIMEOUT			100 /* msecs */
 
 /* Operations that can be commanded to the controller */
-enum bcm_kona_cmd_t {
+क्रमागत bcm_kona_cmd_t अणु
 	BCM_CMD_NOACTION = 0,
 	BCM_CMD_START,
 	BCM_CMD_RESTART,
 	BCM_CMD_STOP,
-};
+पूर्ण;
 
-enum bus_speed_index {
+क्रमागत bus_speed_index अणु
 	BCM_SPD_100K = 0,
 	BCM_SPD_400K,
 	BCM_SPD_1MHZ,
-};
+पूर्ण;
 
-enum hs_bus_speed_index {
+क्रमागत hs_bus_speed_index अणु
 	BCM_SPD_3P4MHZ = 0,
-};
+पूर्ण;
 
-/* Internal divider settings for standard mode, fast mode and fast mode plus */
-struct bus_speed_cfg {
-	uint8_t time_m;		/* Number of cycles for setup time */
-	uint8_t time_n;		/* Number of cycles for hold time */
-	uint8_t prescale;	/* Prescale divider */
-	uint8_t time_p;		/* Timing coefficient */
-	uint8_t no_div;		/* Disable clock divider */
-	uint8_t time_div;	/* Post-prescale divider */
-};
+/* Internal भागider settings क्रम standard mode, fast mode and fast mode plus */
+काष्ठा bus_speed_cfg अणु
+	uपूर्णांक8_t समय_m;		/* Number of cycles क्रम setup समय */
+	uपूर्णांक8_t समय_n;		/* Number of cycles क्रम hold समय */
+	uपूर्णांक8_t prescale;	/* Prescale भागider */
+	uपूर्णांक8_t समय_p;		/* Timing coefficient */
+	uपूर्णांक8_t no_भाग;		/* Disable घड़ी भागider */
+	uपूर्णांक8_t समय_भाग;	/* Post-prescale भागider */
+पूर्ण;
 
-/* Internal divider settings for high-speed mode */
-struct hs_bus_speed_cfg {
-	uint8_t hs_hold;	/* Number of clock cycles SCL stays low until
+/* Internal भागider settings क्रम high-speed mode */
+काष्ठा hs_bus_speed_cfg अणु
+	uपूर्णांक8_t hs_hold;	/* Number of घड़ी cycles SCL stays low until
 				   the end of bit period */
-	uint8_t hs_high_phase;	/* Number of clock cycles SCL stays high
-				   before it falls */
-	uint8_t hs_setup;	/* Number of clock cycles SCL stays low
-				   before it rises  */
-	uint8_t prescale;	/* Prescale divider */
-	uint8_t time_p;		/* Timing coefficient */
-	uint8_t no_div;		/* Disable clock divider */
-	uint8_t time_div;	/* Post-prescale divider */
-};
+	uपूर्णांक8_t hs_high_phase;	/* Number of घड़ी cycles SCL stays high
+				   beक्रमe it falls */
+	uपूर्णांक8_t hs_setup;	/* Number of घड़ी cycles SCL stays low
+				   beक्रमe it rises  */
+	uपूर्णांक8_t prescale;	/* Prescale भागider */
+	uपूर्णांक8_t समय_p;		/* Timing coefficient */
+	uपूर्णांक8_t no_भाग;		/* Disable घड़ी भागider */
+	uपूर्णांक8_t समय_भाग;	/* Post-prescale भागider */
+पूर्ण;
 
-static const struct bus_speed_cfg std_cfg_table[] = {
-	[BCM_SPD_100K] = {0x01, 0x01, 0x03, 0x06, 0x00, 0x02},
-	[BCM_SPD_400K] = {0x05, 0x01, 0x03, 0x05, 0x01, 0x02},
-	[BCM_SPD_1MHZ] = {0x01, 0x01, 0x03, 0x01, 0x01, 0x03},
-};
+अटल स्थिर काष्ठा bus_speed_cfg std_cfg_table[] = अणु
+	[BCM_SPD_100K] = अणु0x01, 0x01, 0x03, 0x06, 0x00, 0x02पूर्ण,
+	[BCM_SPD_400K] = अणु0x05, 0x01, 0x03, 0x05, 0x01, 0x02पूर्ण,
+	[BCM_SPD_1MHZ] = अणु0x01, 0x01, 0x03, 0x01, 0x01, 0x03पूर्ण,
+पूर्ण;
 
-static const struct hs_bus_speed_cfg hs_cfg_table[] = {
-	[BCM_SPD_3P4MHZ] = {0x01, 0x08, 0x14, 0x00, 0x06, 0x01, 0x00},
-};
+अटल स्थिर काष्ठा hs_bus_speed_cfg hs_cfg_table[] = अणु
+	[BCM_SPD_3P4MHZ] = अणु0x01, 0x08, 0x14, 0x00, 0x06, 0x01, 0x00पूर्ण,
+पूर्ण;
 
-struct bcm_kona_i2c_dev {
-	struct device *device;
+काष्ठा bcm_kona_i2c_dev अणु
+	काष्ठा device *device;
 
-	void __iomem *base;
-	int irq;
-	struct clk *external_clk;
+	व्योम __iomem *base;
+	पूर्णांक irq;
+	काष्ठा clk *बाह्यal_clk;
 
-	struct i2c_adapter adapter;
+	काष्ठा i2c_adapter adapter;
 
-	struct completion done;
+	काष्ठा completion करोne;
 
-	const struct bus_speed_cfg *std_cfg;
-	const struct hs_bus_speed_cfg *hs_cfg;
-};
+	स्थिर काष्ठा bus_speed_cfg *std_cfg;
+	स्थिर काष्ठा hs_bus_speed_cfg *hs_cfg;
+पूर्ण;
 
-static void bcm_kona_i2c_send_cmd_to_ctrl(struct bcm_kona_i2c_dev *dev,
-					  enum bcm_kona_cmd_t cmd)
-{
+अटल व्योम bcm_kona_i2c_send_cmd_to_ctrl(काष्ठा bcm_kona_i2c_dev *dev,
+					  क्रमागत bcm_kona_cmd_t cmd)
+अणु
 	dev_dbg(dev->device, "%s, %d\n", __func__, cmd);
 
-	switch (cmd) {
-	case BCM_CMD_NOACTION:
-		writel((CS_CMD_CMD_NO_ACTION << CS_CMD_SHIFT) |
+	चयन (cmd) अणु
+	हाल BCM_CMD_NOACTION:
+		ग_लिखोl((CS_CMD_CMD_NO_ACTION << CS_CMD_SHIFT) |
 		       (CS_EN_CMD_ENABLE_BSC << CS_EN_SHIFT),
 		       dev->base + CS_OFFSET);
-		break;
+		अवरोध;
 
-	case BCM_CMD_START:
-		writel((CS_ACK_CMD_GEN_START << CS_ACK_SHIFT) |
+	हाल BCM_CMD_START:
+		ग_लिखोl((CS_ACK_CMD_GEN_START << CS_ACK_SHIFT) |
 		       (CS_CMD_CMD_START_RESTART << CS_CMD_SHIFT) |
 		       (CS_EN_CMD_ENABLE_BSC << CS_EN_SHIFT),
 		       dev->base + CS_OFFSET);
-		break;
+		अवरोध;
 
-	case BCM_CMD_RESTART:
-		writel((CS_ACK_CMD_GEN_RESTART << CS_ACK_SHIFT) |
+	हाल BCM_CMD_RESTART:
+		ग_लिखोl((CS_ACK_CMD_GEN_RESTART << CS_ACK_SHIFT) |
 		       (CS_CMD_CMD_START_RESTART << CS_CMD_SHIFT) |
 		       (CS_EN_CMD_ENABLE_BSC << CS_EN_SHIFT),
 		       dev->base + CS_OFFSET);
-		break;
+		अवरोध;
 
-	case BCM_CMD_STOP:
-		writel((CS_CMD_CMD_STOP << CS_CMD_SHIFT) |
+	हाल BCM_CMD_STOP:
+		ग_लिखोl((CS_CMD_CMD_STOP << CS_CMD_SHIFT) |
 		       (CS_EN_CMD_ENABLE_BSC << CS_EN_SHIFT),
 		       dev->base + CS_OFFSET);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(dev->device, "Unknown command %d\n", cmd);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bcm_kona_i2c_enable_clock(struct bcm_kona_i2c_dev *dev)
-{
-	writel(readl(dev->base + CLKEN_OFFSET) | CLKEN_CLKEN_MASK,
+अटल व्योम bcm_kona_i2c_enable_घड़ी(काष्ठा bcm_kona_i2c_dev *dev)
+अणु
+	ग_लिखोl(पढ़ोl(dev->base + CLKEN_OFFSET) | CLKEN_CLKEN_MASK,
 	       dev->base + CLKEN_OFFSET);
-}
+पूर्ण
 
-static void bcm_kona_i2c_disable_clock(struct bcm_kona_i2c_dev *dev)
-{
-	writel(readl(dev->base + CLKEN_OFFSET) & ~CLKEN_CLKEN_MASK,
+अटल व्योम bcm_kona_i2c_disable_घड़ी(काष्ठा bcm_kona_i2c_dev *dev)
+अणु
+	ग_लिखोl(पढ़ोl(dev->base + CLKEN_OFFSET) & ~CLKEN_CLKEN_MASK,
 	       dev->base + CLKEN_OFFSET);
-}
+पूर्ण
 
-static irqreturn_t bcm_kona_i2c_isr(int irq, void *devid)
-{
-	struct bcm_kona_i2c_dev *dev = devid;
-	uint32_t status = readl(dev->base + ISR_OFFSET);
+अटल irqवापस_t bcm_kona_i2c_isr(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा bcm_kona_i2c_dev *dev = devid;
+	uपूर्णांक32_t status = पढ़ोl(dev->base + ISR_OFFSET);
 
-	if ((status & ~ISR_RESERVED_MASK) == 0)
-		return IRQ_NONE;
+	अगर ((status & ~ISR_RESERVED_MASK) == 0)
+		वापस IRQ_NONE;
 
 	/* Must flush the TX FIFO when NAK detected */
-	if (status & ISR_NOACK_MASK)
-		writel(TXFCR_FIFO_FLUSH_MASK | TXFCR_FIFO_EN_MASK,
+	अगर (status & ISR_NOACK_MASK)
+		ग_लिखोl(TXFCR_FIFO_FLUSH_MASK | TXFCR_FIFO_EN_MASK,
 		       dev->base + TXFCR_OFFSET);
 
-	writel(status & ~ISR_RESERVED_MASK, dev->base + ISR_OFFSET);
-	complete(&dev->done);
+	ग_लिखोl(status & ~ISR_RESERVED_MASK, dev->base + ISR_OFFSET);
+	complete(&dev->करोne);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-/* Wait for ISR_CMDBUSY_MASK to go low before writing to CS, DAT, or RCD */
-static int bcm_kona_i2c_wait_if_busy(struct bcm_kona_i2c_dev *dev)
-{
-	unsigned long timeout = jiffies + msecs_to_jiffies(I2C_TIMEOUT);
+/* Wait क्रम ISR_CMDBUSY_MASK to go low beक्रमe writing to CS, DAT, or RCD */
+अटल पूर्णांक bcm_kona_i2c_रुको_अगर_busy(काष्ठा bcm_kona_i2c_dev *dev)
+अणु
+	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(I2C_TIMEOUT);
 
-	while (readl(dev->base + ISR_OFFSET) & ISR_CMDBUSY_MASK)
-		if (time_after(jiffies, timeout)) {
+	जबतक (पढ़ोl(dev->base + ISR_OFFSET) & ISR_CMDBUSY_MASK)
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_err(dev->device, "CMDBUSY timeout\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Send command to I2C bus */
-static int bcm_kona_send_i2c_cmd(struct bcm_kona_i2c_dev *dev,
-				 enum bcm_kona_cmd_t cmd)
-{
-	int rc;
-	unsigned long time_left = msecs_to_jiffies(I2C_TIMEOUT);
+अटल पूर्णांक bcm_kona_send_i2c_cmd(काष्ठा bcm_kona_i2c_dev *dev,
+				 क्रमागत bcm_kona_cmd_t cmd)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ समय_left = msecs_to_jअगरfies(I2C_TIMEOUT);
 
-	/* Make sure the hardware is ready */
-	rc = bcm_kona_i2c_wait_if_busy(dev);
-	if (rc < 0)
-		return rc;
+	/* Make sure the hardware is पढ़ोy */
+	rc = bcm_kona_i2c_रुको_अगर_busy(dev);
+	अगर (rc < 0)
+		वापस rc;
 
-	/* Unmask the session done interrupt */
-	writel(IER_I2C_INT_EN_MASK, dev->base + IER_OFFSET);
+	/* Unmask the session करोne पूर्णांकerrupt */
+	ग_लिखोl(IER_I2C_INT_EN_MASK, dev->base + IER_OFFSET);
 
-	/* Mark as incomplete before sending the command */
-	reinit_completion(&dev->done);
+	/* Mark as incomplete beक्रमe sending the command */
+	reinit_completion(&dev->करोne);
 
 	/* Send the command */
 	bcm_kona_i2c_send_cmd_to_ctrl(dev, cmd);
 
-	/* Wait for transaction to finish or timeout */
-	time_left = wait_for_completion_timeout(&dev->done, time_left);
+	/* Wait क्रम transaction to finish or समयout */
+	समय_left = रुको_क्रम_completion_समयout(&dev->करोne, समय_left);
 
-	/* Mask all interrupts */
-	writel(0, dev->base + IER_OFFSET);
+	/* Mask all पूर्णांकerrupts */
+	ग_लिखोl(0, dev->base + IER_OFFSET);
 
-	if (!time_left) {
+	अगर (!समय_left) अणु
 		dev_err(dev->device, "controller timed out\n");
 		rc = -ETIMEDOUT;
-	}
+	पूर्ण
 
 	/* Clear command */
 	bcm_kona_i2c_send_cmd_to_ctrl(dev, BCM_CMD_NOACTION);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Read a single RX FIFO worth of data from the i2c bus */
-static int bcm_kona_i2c_read_fifo_single(struct bcm_kona_i2c_dev *dev,
-					 uint8_t *buf, unsigned int len,
-					 unsigned int last_byte_nak)
-{
-	unsigned long time_left = msecs_to_jiffies(I2C_TIMEOUT);
+अटल पूर्णांक bcm_kona_i2c_पढ़ो_fअगरo_single(काष्ठा bcm_kona_i2c_dev *dev,
+					 uपूर्णांक8_t *buf, अचिन्हित पूर्णांक len,
+					 अचिन्हित पूर्णांक last_byte_nak)
+अणु
+	अचिन्हित दीर्घ समय_left = msecs_to_jअगरfies(I2C_TIMEOUT);
 
-	/* Mark as incomplete before starting the RX FIFO */
-	reinit_completion(&dev->done);
+	/* Mark as incomplete beक्रमe starting the RX FIFO */
+	reinit_completion(&dev->करोne);
 
-	/* Unmask the read complete interrupt */
-	writel(IER_READ_COMPLETE_INT_MASK, dev->base + IER_OFFSET);
+	/* Unmask the पढ़ो complete पूर्णांकerrupt */
+	ग_लिखोl(IER_READ_COMPLETE_INT_MASK, dev->base + IER_OFFSET);
 
 	/* Start the RX FIFO */
-	writel((last_byte_nak << RXFCR_NACK_EN_SHIFT) |
+	ग_लिखोl((last_byte_nak << RXFCR_NACK_EN_SHIFT) |
 	       (len << RXFCR_READ_COUNT_SHIFT),
 		dev->base + RXFCR_OFFSET);
 
-	/* Wait for FIFO read to complete */
-	time_left = wait_for_completion_timeout(&dev->done, time_left);
+	/* Wait क्रम FIFO पढ़ो to complete */
+	समय_left = रुको_क्रम_completion_समयout(&dev->करोne, समय_left);
 
-	/* Mask all interrupts */
-	writel(0, dev->base + IER_OFFSET);
+	/* Mask all पूर्णांकerrupts */
+	ग_लिखोl(0, dev->base + IER_OFFSET);
 
-	if (!time_left) {
+	अगर (!समय_left) अणु
 		dev_err(dev->device, "RX FIFO time out\n");
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
 	/* Read data from FIFO */
-	for (; len > 0; len--, buf++)
-		*buf = readl(dev->base + RXFIFORDOUT_OFFSET);
+	क्रम (; len > 0; len--, buf++)
+		*buf = पढ़ोl(dev->base + RXFIFORDOUT_OFFSET);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Read any amount of data using the RX FIFO from the i2c bus */
-static int bcm_kona_i2c_read_fifo(struct bcm_kona_i2c_dev *dev,
-				  struct i2c_msg *msg)
-{
-	unsigned int bytes_to_read = MAX_RX_FIFO_SIZE;
-	unsigned int last_byte_nak = 0;
-	unsigned int bytes_read = 0;
-	int rc;
+अटल पूर्णांक bcm_kona_i2c_पढ़ो_fअगरo(काष्ठा bcm_kona_i2c_dev *dev,
+				  काष्ठा i2c_msg *msg)
+अणु
+	अचिन्हित पूर्णांक bytes_to_पढ़ो = MAX_RX_FIFO_SIZE;
+	अचिन्हित पूर्णांक last_byte_nak = 0;
+	अचिन्हित पूर्णांक bytes_पढ़ो = 0;
+	पूर्णांक rc;
 
-	uint8_t *tmp_buf = msg->buf;
+	uपूर्णांक8_t *पंचांगp_buf = msg->buf;
 
-	while (bytes_read < msg->len) {
-		if (msg->len - bytes_read <= MAX_RX_FIFO_SIZE) {
+	जबतक (bytes_पढ़ो < msg->len) अणु
+		अगर (msg->len - bytes_पढ़ो <= MAX_RX_FIFO_SIZE) अणु
 			last_byte_nak = 1; /* NAK last byte of transfer */
-			bytes_to_read = msg->len - bytes_read;
-		}
+			bytes_to_पढ़ो = msg->len - bytes_पढ़ो;
+		पूर्ण
 
-		rc = bcm_kona_i2c_read_fifo_single(dev, tmp_buf, bytes_to_read,
+		rc = bcm_kona_i2c_पढ़ो_fअगरo_single(dev, पंचांगp_buf, bytes_to_पढ़ो,
 						   last_byte_nak);
-		if (rc < 0)
-			return -EREMOTEIO;
+		अगर (rc < 0)
+			वापस -EREMOTEIO;
 
-		bytes_read += bytes_to_read;
-		tmp_buf += bytes_to_read;
-	}
+		bytes_पढ़ो += bytes_to_पढ़ो;
+		पंचांगp_buf += bytes_to_पढ़ो;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Write a single byte of data to the i2c bus */
-static int bcm_kona_i2c_write_byte(struct bcm_kona_i2c_dev *dev, uint8_t data,
-				   unsigned int nak_expected)
-{
-	int rc;
-	unsigned long time_left = msecs_to_jiffies(I2C_TIMEOUT);
-	unsigned int nak_received;
+अटल पूर्णांक bcm_kona_i2c_ग_लिखो_byte(काष्ठा bcm_kona_i2c_dev *dev, uपूर्णांक8_t data,
+				   अचिन्हित पूर्णांक nak_expected)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ समय_left = msecs_to_jअगरfies(I2C_TIMEOUT);
+	अचिन्हित पूर्णांक nak_received;
 
-	/* Make sure the hardware is ready */
-	rc = bcm_kona_i2c_wait_if_busy(dev);
-	if (rc < 0)
-		return rc;
+	/* Make sure the hardware is पढ़ोy */
+	rc = bcm_kona_i2c_रुको_अगर_busy(dev);
+	अगर (rc < 0)
+		वापस rc;
 
-	/* Clear pending session done interrupt */
-	writel(ISR_SES_DONE_MASK, dev->base + ISR_OFFSET);
+	/* Clear pending session करोne पूर्णांकerrupt */
+	ग_लिखोl(ISR_SES_DONE_MASK, dev->base + ISR_OFFSET);
 
-	/* Unmask the session done interrupt */
-	writel(IER_I2C_INT_EN_MASK, dev->base + IER_OFFSET);
+	/* Unmask the session करोne पूर्णांकerrupt */
+	ग_लिखोl(IER_I2C_INT_EN_MASK, dev->base + IER_OFFSET);
 
-	/* Mark as incomplete before sending the data */
-	reinit_completion(&dev->done);
+	/* Mark as incomplete beक्रमe sending the data */
+	reinit_completion(&dev->करोne);
 
 	/* Send one byte of data */
-	writel(data, dev->base + DAT_OFFSET);
+	ग_लिखोl(data, dev->base + DAT_OFFSET);
 
-	/* Wait for byte to be written */
-	time_left = wait_for_completion_timeout(&dev->done, time_left);
+	/* Wait क्रम byte to be written */
+	समय_left = रुको_क्रम_completion_समयout(&dev->करोne, समय_left);
 
-	/* Mask all interrupts */
-	writel(0, dev->base + IER_OFFSET);
+	/* Mask all पूर्णांकerrupts */
+	ग_लिखोl(0, dev->base + IER_OFFSET);
 
-	if (!time_left) {
+	अगर (!समय_left) अणु
 		dev_dbg(dev->device, "controller timed out\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	nak_received = readl(dev->base + CS_OFFSET) & CS_ACK_MASK ? 1 : 0;
+	nak_received = पढ़ोl(dev->base + CS_OFFSET) & CS_ACK_MASK ? 1 : 0;
 
-	if (nak_received ^ nak_expected) {
+	अगर (nak_received ^ nak_expected) अणु
 		dev_dbg(dev->device, "unexpected NAK/ACK\n");
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Write a single TX FIFO worth of data to the i2c bus */
-static int bcm_kona_i2c_write_fifo_single(struct bcm_kona_i2c_dev *dev,
-					  uint8_t *buf, unsigned int len)
-{
-	int k;
-	unsigned long time_left = msecs_to_jiffies(I2C_TIMEOUT);
-	unsigned int fifo_status;
+अटल पूर्णांक bcm_kona_i2c_ग_लिखो_fअगरo_single(काष्ठा bcm_kona_i2c_dev *dev,
+					  uपूर्णांक8_t *buf, अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक k;
+	अचिन्हित दीर्घ समय_left = msecs_to_jअगरfies(I2C_TIMEOUT);
+	अचिन्हित पूर्णांक fअगरo_status;
 
-	/* Mark as incomplete before sending data to the TX FIFO */
-	reinit_completion(&dev->done);
+	/* Mark as incomplete beक्रमe sending data to the TX FIFO */
+	reinit_completion(&dev->करोne);
 
-	/* Unmask the fifo empty and nak interrupt */
-	writel(IER_FIFO_INT_EN_MASK | IER_NOACK_EN_MASK,
+	/* Unmask the fअगरo empty and nak पूर्णांकerrupt */
+	ग_लिखोl(IER_FIFO_INT_EN_MASK | IER_NOACK_EN_MASK,
 	       dev->base + IER_OFFSET);
 
-	/* Disable IRQ to load a FIFO worth of data without interruption */
+	/* Disable IRQ to load a FIFO worth of data without पूर्णांकerruption */
 	disable_irq(dev->irq);
 
-	/* Write data into FIFO */
-	for (k = 0; k < len; k++)
-		writel(buf[k], (dev->base + DAT_OFFSET));
+	/* Write data पूर्णांकo FIFO */
+	क्रम (k = 0; k < len; k++)
+		ग_लिखोl(buf[k], (dev->base + DAT_OFFSET));
 
 	/* Enable IRQ now that data has been loaded */
 	enable_irq(dev->irq);
 
-	/* Wait for FIFO to empty */
-	do {
-		time_left = wait_for_completion_timeout(&dev->done, time_left);
-		fifo_status = readl(dev->base + FIFO_STATUS_OFFSET);
-	} while (time_left && !(fifo_status & FIFO_STATUS_TXFIFO_EMPTY_MASK));
+	/* Wait क्रम FIFO to empty */
+	करो अणु
+		समय_left = रुको_क्रम_completion_समयout(&dev->करोne, समय_left);
+		fअगरo_status = पढ़ोl(dev->base + FIFO_STATUS_OFFSET);
+	पूर्ण जबतक (समय_left && !(fअगरo_status & FIFO_STATUS_TXFIFO_EMPTY_MASK));
 
-	/* Mask all interrupts */
-	writel(0, dev->base + IER_OFFSET);
+	/* Mask all पूर्णांकerrupts */
+	ग_लिखोl(0, dev->base + IER_OFFSET);
 
-	/* Check if there was a NAK */
-	if (readl(dev->base + CS_OFFSET) & CS_ACK_MASK) {
+	/* Check अगर there was a NAK */
+	अगर (पढ़ोl(dev->base + CS_OFFSET) & CS_ACK_MASK) अणु
 		dev_err(dev->device, "unexpected NAK\n");
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	/* Check if a timeout occured */
-	if (!time_left) {
+	/* Check अगर a समयout occured */
+	अगर (!समय_left) अणु
 		dev_err(dev->device, "completion timed out\n");
-		return -EREMOTEIO;
-	}
+		वापस -EREMOTEIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /* Write any amount of data using TX FIFO to the i2c bus */
-static int bcm_kona_i2c_write_fifo(struct bcm_kona_i2c_dev *dev,
-				   struct i2c_msg *msg)
-{
-	unsigned int bytes_to_write = MAX_TX_FIFO_SIZE;
-	unsigned int bytes_written = 0;
-	int rc;
+अटल पूर्णांक bcm_kona_i2c_ग_लिखो_fअगरo(काष्ठा bcm_kona_i2c_dev *dev,
+				   काष्ठा i2c_msg *msg)
+अणु
+	अचिन्हित पूर्णांक bytes_to_ग_लिखो = MAX_TX_FIFO_SIZE;
+	अचिन्हित पूर्णांक bytes_written = 0;
+	पूर्णांक rc;
 
-	uint8_t *tmp_buf = msg->buf;
+	uपूर्णांक8_t *पंचांगp_buf = msg->buf;
 
-	while (bytes_written < msg->len) {
-		if (msg->len - bytes_written <= MAX_TX_FIFO_SIZE)
-			bytes_to_write = msg->len - bytes_written;
+	जबतक (bytes_written < msg->len) अणु
+		अगर (msg->len - bytes_written <= MAX_TX_FIFO_SIZE)
+			bytes_to_ग_लिखो = msg->len - bytes_written;
 
-		rc = bcm_kona_i2c_write_fifo_single(dev, tmp_buf,
-						    bytes_to_write);
-		if (rc < 0)
-			return -EREMOTEIO;
+		rc = bcm_kona_i2c_ग_लिखो_fअगरo_single(dev, पंचांगp_buf,
+						    bytes_to_ग_लिखो);
+		अगर (rc < 0)
+			वापस -EREMOTEIO;
 
-		bytes_written += bytes_to_write;
-		tmp_buf += bytes_to_write;
-	}
+		bytes_written += bytes_to_ग_लिखो;
+		पंचांगp_buf += bytes_to_ग_लिखो;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Send i2c address */
-static int bcm_kona_i2c_do_addr(struct bcm_kona_i2c_dev *dev,
-				     struct i2c_msg *msg)
-{
-	unsigned char addr;
+अटल पूर्णांक bcm_kona_i2c_करो_addr(काष्ठा bcm_kona_i2c_dev *dev,
+				     काष्ठा i2c_msg *msg)
+अणु
+	अचिन्हित अक्षर addr;
 
-	if (msg->flags & I2C_M_TEN) {
+	अगर (msg->flags & I2C_M_TEN) अणु
 		/* First byte is 11110XX0 where XX is upper 2 bits */
 		addr = 0xF0 | ((msg->addr & 0x300) >> 7);
-		if (bcm_kona_i2c_write_byte(dev, addr, 0) < 0)
-			return -EREMOTEIO;
+		अगर (bcm_kona_i2c_ग_लिखो_byte(dev, addr, 0) < 0)
+			वापस -EREMOTEIO;
 
-		/* Second byte is the remaining 8 bits */
+		/* Second byte is the reमुख्यing 8 bits */
 		addr = msg->addr & 0xFF;
-		if (bcm_kona_i2c_write_byte(dev, addr, 0) < 0)
-			return -EREMOTEIO;
+		अगर (bcm_kona_i2c_ग_लिखो_byte(dev, addr, 0) < 0)
+			वापस -EREMOTEIO;
 
-		if (msg->flags & I2C_M_RD) {
-			/* For read, send restart command */
-			if (bcm_kona_send_i2c_cmd(dev, BCM_CMD_RESTART) < 0)
-				return -EREMOTEIO;
+		अगर (msg->flags & I2C_M_RD) अणु
+			/* For पढ़ो, send restart command */
+			अगर (bcm_kona_send_i2c_cmd(dev, BCM_CMD_RESTART) < 0)
+				वापस -EREMOTEIO;
 
-			/* Then re-send the first byte with the read bit set */
+			/* Then re-send the first byte with the पढ़ो bit set */
 			addr = 0xF0 | ((msg->addr & 0x300) >> 7) | 0x01;
-			if (bcm_kona_i2c_write_byte(dev, addr, 0) < 0)
-				return -EREMOTEIO;
-		}
-	} else {
+			अगर (bcm_kona_i2c_ग_लिखो_byte(dev, addr, 0) < 0)
+				वापस -EREMOTEIO;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		addr = i2c_8bit_addr_from_msg(msg);
 
-		if (bcm_kona_i2c_write_byte(dev, addr, 0) < 0)
-			return -EREMOTEIO;
-	}
+		अगर (bcm_kona_i2c_ग_लिखो_byte(dev, addr, 0) < 0)
+			वापस -EREMOTEIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bcm_kona_i2c_enable_autosense(struct bcm_kona_i2c_dev *dev)
-{
-	writel(readl(dev->base + CLKEN_OFFSET) & ~CLKEN_AUTOSENSE_OFF_MASK,
+अटल व्योम bcm_kona_i2c_enable_स्वतःsense(काष्ठा bcm_kona_i2c_dev *dev)
+अणु
+	ग_लिखोl(पढ़ोl(dev->base + CLKEN_OFFSET) & ~CLKEN_AUTOSENSE_OFF_MASK,
 	       dev->base + CLKEN_OFFSET);
-}
+पूर्ण
 
-static void bcm_kona_i2c_config_timing(struct bcm_kona_i2c_dev *dev)
-{
-	writel(readl(dev->base + HSTIM_OFFSET) & ~HSTIM_HS_MODE_MASK,
+अटल व्योम bcm_kona_i2c_config_timing(काष्ठा bcm_kona_i2c_dev *dev)
+अणु
+	ग_लिखोl(पढ़ोl(dev->base + HSTIM_OFFSET) & ~HSTIM_HS_MODE_MASK,
 	       dev->base + HSTIM_OFFSET);
 
-	writel((dev->std_cfg->prescale << TIM_PRESCALE_SHIFT) |
-	       (dev->std_cfg->time_p << TIM_P_SHIFT) |
-	       (dev->std_cfg->no_div << TIM_NO_DIV_SHIFT) |
-	       (dev->std_cfg->time_div	<< TIM_DIV_SHIFT),
+	ग_लिखोl((dev->std_cfg->prescale << TIM_PRESCALE_SHIFT) |
+	       (dev->std_cfg->समय_p << TIM_P_SHIFT) |
+	       (dev->std_cfg->no_भाग << TIM_NO_DIV_SHIFT) |
+	       (dev->std_cfg->समय_भाग	<< TIM_DIV_SHIFT),
 	       dev->base + TIM_OFFSET);
 
-	writel((dev->std_cfg->time_m << CLKEN_M_SHIFT) |
-	       (dev->std_cfg->time_n << CLKEN_N_SHIFT) |
+	ग_लिखोl((dev->std_cfg->समय_m << CLKEN_M_SHIFT) |
+	       (dev->std_cfg->समय_n << CLKEN_N_SHIFT) |
 	       CLKEN_CLKEN_MASK,
 	       dev->base + CLKEN_OFFSET);
-}
+पूर्ण
 
-static void bcm_kona_i2c_config_timing_hs(struct bcm_kona_i2c_dev *dev)
-{
-	writel((dev->hs_cfg->prescale << TIM_PRESCALE_SHIFT) |
-	       (dev->hs_cfg->time_p << TIM_P_SHIFT) |
-	       (dev->hs_cfg->no_div << TIM_NO_DIV_SHIFT) |
-	       (dev->hs_cfg->time_div << TIM_DIV_SHIFT),
+अटल व्योम bcm_kona_i2c_config_timing_hs(काष्ठा bcm_kona_i2c_dev *dev)
+अणु
+	ग_लिखोl((dev->hs_cfg->prescale << TIM_PRESCALE_SHIFT) |
+	       (dev->hs_cfg->समय_p << TIM_P_SHIFT) |
+	       (dev->hs_cfg->no_भाग << TIM_NO_DIV_SHIFT) |
+	       (dev->hs_cfg->समय_भाग << TIM_DIV_SHIFT),
 	       dev->base + TIM_OFFSET);
 
-	writel((dev->hs_cfg->hs_hold << HSTIM_HS_HOLD_SHIFT) |
+	ग_लिखोl((dev->hs_cfg->hs_hold << HSTIM_HS_HOLD_SHIFT) |
 	       (dev->hs_cfg->hs_high_phase << HSTIM_HS_HIGH_PHASE_SHIFT) |
 	       (dev->hs_cfg->hs_setup << HSTIM_HS_SETUP_SHIFT),
 	       dev->base + HSTIM_OFFSET);
 
-	writel(readl(dev->base + HSTIM_OFFSET) | HSTIM_HS_MODE_MASK,
+	ग_लिखोl(पढ़ोl(dev->base + HSTIM_OFFSET) | HSTIM_HS_MODE_MASK,
 	       dev->base + HSTIM_OFFSET);
-}
+पूर्ण
 
-static int bcm_kona_i2c_switch_to_hs(struct bcm_kona_i2c_dev *dev)
-{
-	int rc;
+अटल पूर्णांक bcm_kona_i2c_चयन_to_hs(काष्ठा bcm_kona_i2c_dev *dev)
+अणु
+	पूर्णांक rc;
 
 	/* Send mastercode at standard speed */
-	rc = bcm_kona_i2c_write_byte(dev, MASTERCODE, 1);
-	if (rc < 0) {
+	rc = bcm_kona_i2c_ग_लिखो_byte(dev, MASTERCODE, 1);
+	अगर (rc < 0) अणु
 		pr_err("High speed handshake failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Configure external clock to higher frequency */
-	rc = clk_set_rate(dev->external_clk, HS_EXT_CLK_FREQ);
-	if (rc) {
+	/* Configure बाह्यal घड़ी to higher frequency */
+	rc = clk_set_rate(dev->बाह्यal_clk, HS_EXT_CLK_FREQ);
+	अगर (rc) अणु
 		dev_err(dev->device, "%s: clk_set_rate returned %d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Reconfigure internal dividers */
+	/* Reconfigure पूर्णांकernal भागiders */
 	bcm_kona_i2c_config_timing_hs(dev);
 
 	/* Send a restart command */
 	rc = bcm_kona_send_i2c_cmd(dev, BCM_CMD_RESTART);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(dev->device, "High speed restart command failed\n");
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bcm_kona_i2c_switch_to_std(struct bcm_kona_i2c_dev *dev)
-{
-	int rc;
+अटल पूर्णांक bcm_kona_i2c_चयन_to_std(काष्ठा bcm_kona_i2c_dev *dev)
+अणु
+	पूर्णांक rc;
 
-	/* Reconfigure internal dividers */
+	/* Reconfigure पूर्णांकernal भागiders */
 	bcm_kona_i2c_config_timing(dev);
 
-	/* Configure external clock to lower frequency */
-	rc = clk_set_rate(dev->external_clk, STD_EXT_CLK_FREQ);
-	if (rc) {
+	/* Configure बाह्यal घड़ी to lower frequency */
+	rc = clk_set_rate(dev->बाह्यal_clk, STD_EXT_CLK_FREQ);
+	अगर (rc) अणु
 		dev_err(dev->device, "%s: clk_set_rate returned %d\n",
 			__func__, rc);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* Master transfer function */
-static int bcm_kona_i2c_xfer(struct i2c_adapter *adapter,
-			     struct i2c_msg msgs[], int num)
-{
-	struct bcm_kona_i2c_dev *dev = i2c_get_adapdata(adapter);
-	struct i2c_msg *pmsg;
-	int rc = 0;
-	int i;
+अटल पूर्णांक bcm_kona_i2c_xfer(काष्ठा i2c_adapter *adapter,
+			     काष्ठा i2c_msg msgs[], पूर्णांक num)
+अणु
+	काष्ठा bcm_kona_i2c_dev *dev = i2c_get_adapdata(adapter);
+	काष्ठा i2c_msg *pmsg;
+	पूर्णांक rc = 0;
+	पूर्णांक i;
 
-	rc = clk_prepare_enable(dev->external_clk);
-	if (rc) {
+	rc = clk_prepare_enable(dev->बाह्यal_clk);
+	अगर (rc) अणु
 		dev_err(dev->device, "%s: peri clock enable failed. err %d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* Enable pad output */
-	writel(0, dev->base + PADCTL_OFFSET);
+	ग_लिखोl(0, dev->base + PADCTL_OFFSET);
 
-	/* Enable internal clocks */
-	bcm_kona_i2c_enable_clock(dev);
+	/* Enable पूर्णांकernal घड़ीs */
+	bcm_kona_i2c_enable_घड़ी(dev);
 
 	/* Send start command */
 	rc = bcm_kona_send_i2c_cmd(dev, BCM_CMD_START);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(dev->device, "Start command failed rc = %d\n", rc);
-		goto xfer_disable_pad;
-	}
+		जाओ xfer_disable_pad;
+	पूर्ण
 
-	/* Switch to high speed if applicable */
-	if (dev->hs_cfg) {
-		rc = bcm_kona_i2c_switch_to_hs(dev);
-		if (rc < 0)
-			goto xfer_send_stop;
-	}
+	/* Switch to high speed अगर applicable */
+	अगर (dev->hs_cfg) अणु
+		rc = bcm_kona_i2c_चयन_to_hs(dev);
+		अगर (rc < 0)
+			जाओ xfer_send_stop;
+	पूर्ण
 
 	/* Loop through all messages */
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		pmsg = &msgs[i];
 
-		/* Send restart for subsequent messages */
-		if ((i != 0) && ((pmsg->flags & I2C_M_NOSTART) == 0)) {
+		/* Send restart क्रम subsequent messages */
+		अगर ((i != 0) && ((pmsg->flags & I2C_M_NOSTART) == 0)) अणु
 			rc = bcm_kona_send_i2c_cmd(dev, BCM_CMD_RESTART);
-			if (rc < 0) {
+			अगर (rc < 0) अणु
 				dev_err(dev->device,
 					"restart cmd failed rc = %d\n", rc);
-				goto xfer_send_stop;
-			}
-		}
+				जाओ xfer_send_stop;
+			पूर्ण
+		पूर्ण
 
 		/* Send slave address */
-		if (!(pmsg->flags & I2C_M_NOSTART)) {
-			rc = bcm_kona_i2c_do_addr(dev, pmsg);
-			if (rc < 0) {
+		अगर (!(pmsg->flags & I2C_M_NOSTART)) अणु
+			rc = bcm_kona_i2c_करो_addr(dev, pmsg);
+			अगर (rc < 0) अणु
 				dev_err(dev->device,
 					"NAK from addr %2.2x msg#%d rc = %d\n",
 					pmsg->addr, i, rc);
-				goto xfer_send_stop;
-			}
-		}
+				जाओ xfer_send_stop;
+			पूर्ण
+		पूर्ण
 
-		/* Perform data transfer */
-		if (pmsg->flags & I2C_M_RD) {
-			rc = bcm_kona_i2c_read_fifo(dev, pmsg);
-			if (rc < 0) {
+		/* Perक्रमm data transfer */
+		अगर (pmsg->flags & I2C_M_RD) अणु
+			rc = bcm_kona_i2c_पढ़ो_fअगरo(dev, pmsg);
+			अगर (rc < 0) अणु
 				dev_err(dev->device, "read failure\n");
-				goto xfer_send_stop;
-			}
-		} else {
-			rc = bcm_kona_i2c_write_fifo(dev, pmsg);
-			if (rc < 0) {
+				जाओ xfer_send_stop;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			rc = bcm_kona_i2c_ग_लिखो_fअगरo(dev, pmsg);
+			अगर (rc < 0) अणु
 				dev_err(dev->device, "write failure");
-				goto xfer_send_stop;
-			}
-		}
-	}
+				जाओ xfer_send_stop;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	rc = num;
 
@@ -680,137 +681,137 @@ xfer_send_stop:
 	/* Send a STOP command */
 	bcm_kona_send_i2c_cmd(dev, BCM_CMD_STOP);
 
-	/* Return from high speed if applicable */
-	if (dev->hs_cfg) {
-		int hs_rc = bcm_kona_i2c_switch_to_std(dev);
+	/* Return from high speed अगर applicable */
+	अगर (dev->hs_cfg) अणु
+		पूर्णांक hs_rc = bcm_kona_i2c_चयन_to_std(dev);
 
-		if (hs_rc)
+		अगर (hs_rc)
 			rc = hs_rc;
-	}
+	पूर्ण
 
 xfer_disable_pad:
 	/* Disable pad output */
-	writel(PADCTL_PAD_OUT_EN_MASK, dev->base + PADCTL_OFFSET);
+	ग_लिखोl(PADCTL_PAD_OUT_EN_MASK, dev->base + PADCTL_OFFSET);
 
-	/* Stop internal clock */
-	bcm_kona_i2c_disable_clock(dev);
+	/* Stop पूर्णांकernal घड़ी */
+	bcm_kona_i2c_disable_घड़ी(dev);
 
-	clk_disable_unprepare(dev->external_clk);
+	clk_disable_unprepare(dev->बाह्यal_clk);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static uint32_t bcm_kona_i2c_functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_10BIT_ADDR |
+अटल uपूर्णांक32_t bcm_kona_i2c_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_10BIT_ADDR |
 	    I2C_FUNC_NOSTART;
-}
+पूर्ण
 
-static const struct i2c_algorithm bcm_algo = {
+अटल स्थिर काष्ठा i2c_algorithm bcm_algo = अणु
 	.master_xfer = bcm_kona_i2c_xfer,
 	.functionality = bcm_kona_i2c_functionality,
-};
+पूर्ण;
 
-static int bcm_kona_i2c_assign_bus_speed(struct bcm_kona_i2c_dev *dev)
-{
-	unsigned int bus_speed;
-	int ret = of_property_read_u32(dev->device->of_node, "clock-frequency",
+अटल पूर्णांक bcm_kona_i2c_assign_bus_speed(काष्ठा bcm_kona_i2c_dev *dev)
+अणु
+	अचिन्हित पूर्णांक bus_speed;
+	पूर्णांक ret = of_property_पढ़ो_u32(dev->device->of_node, "clock-frequency",
 				       &bus_speed);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev->device, "missing clock-frequency property\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	switch (bus_speed) {
-	case I2C_MAX_STANDARD_MODE_FREQ:
+	चयन (bus_speed) अणु
+	हाल I2C_MAX_STANDARD_MODE_FREQ:
 		dev->std_cfg = &std_cfg_table[BCM_SPD_100K];
-		break;
-	case I2C_MAX_FAST_MODE_FREQ:
+		अवरोध;
+	हाल I2C_MAX_FAST_MODE_FREQ:
 		dev->std_cfg = &std_cfg_table[BCM_SPD_400K];
-		break;
-	case I2C_MAX_FAST_MODE_PLUS_FREQ:
+		अवरोध;
+	हाल I2C_MAX_FAST_MODE_PLUS_FREQ:
 		dev->std_cfg = &std_cfg_table[BCM_SPD_1MHZ];
-		break;
-	case I2C_MAX_HIGH_SPEED_MODE_FREQ:
+		अवरोध;
+	हाल I2C_MAX_HIGH_SPEED_MODE_FREQ:
 		/* Send mastercode at 100k */
 		dev->std_cfg = &std_cfg_table[BCM_SPD_100K];
 		dev->hs_cfg = &hs_cfg_table[BCM_SPD_3P4MHZ];
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("%d hz bus speed not supported\n", bus_speed);
 		pr_err("Valid speeds are 100khz, 400khz, 1mhz, and 3.4mhz\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_kona_i2c_probe(struct platform_device *pdev)
-{
-	int rc = 0;
-	struct bcm_kona_i2c_dev *dev;
-	struct i2c_adapter *adap;
+अटल पूर्णांक bcm_kona_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा bcm_kona_i2c_dev *dev;
+	काष्ठा i2c_adapter *adap;
 
-	/* Allocate memory for private data structure */
-	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	/* Allocate memory क्रम निजी data काष्ठाure */
+	dev = devm_kzalloc(&pdev->dev, माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 	dev->device = &pdev->dev;
-	init_completion(&dev->done);
+	init_completion(&dev->करोne);
 
-	/* Map hardware registers */
-	dev->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(dev->base))
-		return -ENOMEM;
+	/* Map hardware रेजिस्टरs */
+	dev->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(dev->base))
+		वापस -ENOMEM;
 
-	/* Get and enable external clock */
-	dev->external_clk = devm_clk_get(dev->device, NULL);
-	if (IS_ERR(dev->external_clk)) {
+	/* Get and enable बाह्यal घड़ी */
+	dev->बाह्यal_clk = devm_clk_get(dev->device, शून्य);
+	अगर (IS_ERR(dev->बाह्यal_clk)) अणु
 		dev_err(dev->device, "couldn't get clock\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	rc = clk_set_rate(dev->external_clk, STD_EXT_CLK_FREQ);
-	if (rc) {
+	rc = clk_set_rate(dev->बाह्यal_clk, STD_EXT_CLK_FREQ);
+	अगर (rc) अणु
 		dev_err(dev->device, "%s: clk_set_rate returned %d\n",
 			__func__, rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = clk_prepare_enable(dev->external_clk);
-	if (rc) {
+	rc = clk_prepare_enable(dev->बाह्यal_clk);
+	अगर (rc) अणु
 		dev_err(dev->device, "couldn't enable clock\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* Parse bus speed */
 	rc = bcm_kona_i2c_assign_bus_speed(dev);
-	if (rc)
-		goto probe_disable_clk;
+	अगर (rc)
+		जाओ probe_disable_clk;
 
-	/* Enable internal clocks */
-	bcm_kona_i2c_enable_clock(dev);
+	/* Enable पूर्णांकernal घड़ीs */
+	bcm_kona_i2c_enable_घड़ी(dev);
 
-	/* Configure internal dividers */
+	/* Configure पूर्णांकernal भागiders */
 	bcm_kona_i2c_config_timing(dev);
 
-	/* Disable timeout */
-	writel(0, dev->base + TOUT_OFFSET);
+	/* Disable समयout */
+	ग_लिखोl(0, dev->base + TOUT_OFFSET);
 
-	/* Enable autosense */
-	bcm_kona_i2c_enable_autosense(dev);
+	/* Enable स्वतःsense */
+	bcm_kona_i2c_enable_स्वतःsense(dev);
 
 	/* Enable TX FIFO */
-	writel(TXFCR_FIFO_FLUSH_MASK | TXFCR_FIFO_EN_MASK,
+	ग_लिखोl(TXFCR_FIFO_FLUSH_MASK | TXFCR_FIFO_EN_MASK,
 	       dev->base + TXFCR_OFFSET);
 
-	/* Mask all interrupts */
-	writel(0, dev->base + IER_OFFSET);
+	/* Mask all पूर्णांकerrupts */
+	ग_लिखोl(0, dev->base + IER_OFFSET);
 
-	/* Clear all pending interrupts */
-	writel(ISR_CMDBUSY_MASK |
+	/* Clear all pending पूर्णांकerrupts */
+	ग_लिखोl(ISR_CMDBUSY_MASK |
 	       ISR_READ_COMPLETE_MASK |
 	       ISR_SES_DONE_MASK |
 	       ISR_ERR_MASK |
@@ -818,81 +819,81 @@ static int bcm_kona_i2c_probe(struct platform_device *pdev)
 	       ISR_NOACK_MASK,
 	       dev->base + ISR_OFFSET);
 
-	/* Get the interrupt number */
-	dev->irq = platform_get_irq(pdev, 0);
-	if (dev->irq < 0) {
+	/* Get the पूर्णांकerrupt number */
+	dev->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (dev->irq < 0) अणु
 		rc = dev->irq;
-		goto probe_disable_clk;
-	}
+		जाओ probe_disable_clk;
+	पूर्ण
 
-	/* register the ISR handler */
+	/* रेजिस्टर the ISR handler */
 	rc = devm_request_irq(&pdev->dev, dev->irq, bcm_kona_i2c_isr,
 			      IRQF_SHARED, pdev->name, dev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(dev->device, "failed to request irq %i\n", dev->irq);
-		goto probe_disable_clk;
-	}
+		जाओ probe_disable_clk;
+	पूर्ण
 
 	/* Enable the controller but leave it idle */
 	bcm_kona_i2c_send_cmd_to_ctrl(dev, BCM_CMD_NOACTION);
 
 	/* Disable pad output */
-	writel(PADCTL_PAD_OUT_EN_MASK, dev->base + PADCTL_OFFSET);
+	ग_लिखोl(PADCTL_PAD_OUT_EN_MASK, dev->base + PADCTL_OFFSET);
 
-	/* Disable internal clock */
-	bcm_kona_i2c_disable_clock(dev);
+	/* Disable पूर्णांकernal घड़ी */
+	bcm_kona_i2c_disable_घड़ी(dev);
 
-	/* Disable external clock */
-	clk_disable_unprepare(dev->external_clk);
+	/* Disable बाह्यal घड़ी */
+	clk_disable_unprepare(dev->बाह्यal_clk);
 
 	/* Add the i2c adapter */
 	adap = &dev->adapter;
 	i2c_set_adapdata(adap, dev);
 	adap->owner = THIS_MODULE;
-	strlcpy(adap->name, "Broadcom I2C adapter", sizeof(adap->name));
+	strlcpy(adap->name, "Broadcom I2C adapter", माप(adap->name));
 	adap->algo = &bcm_algo;
 	adap->dev.parent = &pdev->dev;
 	adap->dev.of_node = pdev->dev.of_node;
 
 	rc = i2c_add_adapter(adap);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	dev_info(dev->device, "device registered successfully\n");
 
-	return 0;
+	वापस 0;
 
 probe_disable_clk:
-	bcm_kona_i2c_disable_clock(dev);
-	clk_disable_unprepare(dev->external_clk);
+	bcm_kona_i2c_disable_घड़ी(dev);
+	clk_disable_unprepare(dev->बाह्यal_clk);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int bcm_kona_i2c_remove(struct platform_device *pdev)
-{
-	struct bcm_kona_i2c_dev *dev = platform_get_drvdata(pdev);
+अटल पूर्णांक bcm_kona_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm_kona_i2c_dev *dev = platक्रमm_get_drvdata(pdev);
 
 	i2c_del_adapter(&dev->adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id bcm_kona_i2c_of_match[] = {
-	{.compatible = "brcm,kona-i2c",},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id bcm_kona_i2c_of_match[] = अणु
+	अणु.compatible = "brcm,kona-i2c",पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcm_kona_i2c_of_match);
 
-static struct platform_driver bcm_kona_i2c_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver bcm_kona_i2c_driver = अणु
+	.driver = अणु
 		   .name = "bcm-kona-i2c",
 		   .of_match_table = bcm_kona_i2c_of_match,
-		   },
+		   पूर्ण,
 	.probe = bcm_kona_i2c_probe,
-	.remove = bcm_kona_i2c_remove,
-};
-module_platform_driver(bcm_kona_i2c_driver);
+	.हटाओ = bcm_kona_i2c_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(bcm_kona_i2c_driver);
 
 MODULE_AUTHOR("Tim Kryger <tkryger@broadcom.com>");
 MODULE_DESCRIPTION("Broadcom Kona I2C Driver");

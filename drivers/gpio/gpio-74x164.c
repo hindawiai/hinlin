@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  74Hx164 - Generic serial-in/parallel-out 8-bits shift register GPIO driver
+ *  74Hx164 - Generic serial-in/parallel-out 8-bits shअगरt रेजिस्टर GPIO driver
  *
- *  Copyright (C) 2010 Gabor Juhos <juhosg@openwrt.org>
+ *  Copyright (C) 2010 Gabor Juhos <juhosg@खोलोwrt.org>
  *  Copyright (C) 2010 Miguel Gaio <miguel.gaio@efixo.com>
  */
 
-#include <linux/bitops.h>
-#include <linux/gpio/consumer.h>
-#include <linux/gpio/driver.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/property.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/property.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
 
-#define GEN_74X164_NUMBER_GPIOS	8
+#घोषणा GEN_74X164_NUMBER_GPIOS	8
 
-struct gen_74x164_chip {
-	struct gpio_chip	gpio_chip;
-	struct mutex		lock;
-	struct gpio_desc	*gpiod_oe;
-	u32			registers;
+काष्ठा gen_74x164_chip अणु
+	काष्ठा gpio_chip	gpio_chip;
+	काष्ठा mutex		lock;
+	काष्ठा gpio_desc	*gpiod_oe;
+	u32			रेजिस्टरs;
 	/*
-	 * Since the registers are chained, every byte sent will make
-	 * the previous byte shift to the next register in the
+	 * Since the रेजिस्टरs are chained, every byte sent will make
+	 * the previous byte shअगरt to the next रेजिस्टर in the
 	 * chain. Thus, the first byte sent will end up in the last
-	 * register at the end of the transfer. So, to have a logical
+	 * रेजिस्टर at the end of the transfer. So, to have a logical
 	 * numbering, store the bytes in reverse order.
 	 */
 	u8			buffer[];
-};
+पूर्ण;
 
-static int __gen_74x164_write_config(struct gen_74x164_chip *chip)
-{
-	return spi_write(to_spi_device(chip->gpio_chip.parent), chip->buffer,
-			 chip->registers);
-}
+अटल पूर्णांक __gen_74x164_ग_लिखो_config(काष्ठा gen_74x164_chip *chip)
+अणु
+	वापस spi_ग_लिखो(to_spi_device(chip->gpio_chip.parent), chip->buffer,
+			 chip->रेजिस्टरs);
+पूर्ण
 
-static int gen_74x164_get_value(struct gpio_chip *gc, unsigned offset)
-{
-	struct gen_74x164_chip *chip = gpiochip_get_data(gc);
-	u8 bank = chip->registers - 1 - offset / 8;
+अटल पूर्णांक gen_74x164_get_value(काष्ठा gpio_chip *gc, अचिन्हित offset)
+अणु
+	काष्ठा gen_74x164_chip *chip = gpiochip_get_data(gc);
+	u8 bank = chip->रेजिस्टरs - 1 - offset / 8;
 	u8 pin = offset % 8;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&chip->lock);
 	ret = (chip->buffer[bank] >> pin) & 0x1;
 	mutex_unlock(&chip->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void gen_74x164_set_value(struct gpio_chip *gc,
-		unsigned offset, int val)
-{
-	struct gen_74x164_chip *chip = gpiochip_get_data(gc);
-	u8 bank = chip->registers - 1 - offset / 8;
+अटल व्योम gen_74x164_set_value(काष्ठा gpio_chip *gc,
+		अचिन्हित offset, पूर्णांक val)
+अणु
+	काष्ठा gen_74x164_chip *chip = gpiochip_get_data(gc);
+	u8 bank = chip->रेजिस्टरs - 1 - offset / 8;
 	u8 pin = offset % 8;
 
 	mutex_lock(&chip->lock);
-	if (val)
+	अगर (val)
 		chip->buffer[bank] |= (1 << pin);
-	else
+	अन्यथा
 		chip->buffer[bank] &= ~(1 << pin);
 
-	__gen_74x164_write_config(chip);
+	__gen_74x164_ग_लिखो_config(chip);
 	mutex_unlock(&chip->lock);
-}
+पूर्ण
 
-static void gen_74x164_set_multiple(struct gpio_chip *gc, unsigned long *mask,
-				    unsigned long *bits)
-{
-	struct gen_74x164_chip *chip = gpiochip_get_data(gc);
-	unsigned long offset;
-	unsigned long bankmask;
-	size_t bank;
-	unsigned long bitmask;
+अटल व्योम gen_74x164_set_multiple(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ *mask,
+				    अचिन्हित दीर्घ *bits)
+अणु
+	काष्ठा gen_74x164_chip *chip = gpiochip_get_data(gc);
+	अचिन्हित दीर्घ offset;
+	अचिन्हित दीर्घ bankmask;
+	माप_प्रकार bank;
+	अचिन्हित दीर्घ biपंचांगask;
 
 	mutex_lock(&chip->lock);
-	for_each_set_clump8(offset, bankmask, mask, chip->registers * 8) {
-		bank = chip->registers - 1 - offset / 8;
-		bitmask = bitmap_get_value8(bits, offset) & bankmask;
+	क्रम_each_set_clump8(offset, bankmask, mask, chip->रेजिस्टरs * 8) अणु
+		bank = chip->रेजिस्टरs - 1 - offset / 8;
+		biपंचांगask = biपंचांगap_get_value8(bits, offset) & bankmask;
 
 		chip->buffer[bank] &= ~bankmask;
-		chip->buffer[bank] |= bitmask;
-	}
-	__gen_74x164_write_config(chip);
+		chip->buffer[bank] |= biपंचांगask;
+	पूर्ण
+	__gen_74x164_ग_लिखो_config(chip);
 	mutex_unlock(&chip->lock);
-}
+पूर्ण
 
-static int gen_74x164_direction_output(struct gpio_chip *gc,
-		unsigned offset, int val)
-{
+अटल पूर्णांक gen_74x164_direction_output(काष्ठा gpio_chip *gc,
+		अचिन्हित offset, पूर्णांक val)
+अणु
 	gen_74x164_set_value(gc, offset, val);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gen_74x164_probe(struct spi_device *spi)
-{
-	struct gen_74x164_chip *chip;
+अटल पूर्णांक gen_74x164_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा gen_74x164_chip *chip;
 	u32 nregs;
-	int ret;
+	पूर्णांक ret;
 
 	/*
-	 * bits_per_word cannot be configured in platform data
+	 * bits_per_word cannot be configured in platक्रमm data
 	 */
 	spi->bits_per_word = 8;
 
 	ret = spi_setup(spi);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = device_property_read_u32(&spi->dev, "registers-number", &nregs);
-	if (ret) {
+	ret = device_property_पढ़ो_u32(&spi->dev, "registers-number", &nregs);
+	अगर (ret) अणु
 		dev_err(&spi->dev, "Missing 'registers-number' property.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	chip = devm_kzalloc(&spi->dev, sizeof(*chip) + nregs, GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(&spi->dev, माप(*chip) + nregs, GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	chip->gpiod_oe = devm_gpiod_get_optional(&spi->dev, "enable",
 						 GPIOD_OUT_LOW);
-	if (IS_ERR(chip->gpiod_oe))
-		return PTR_ERR(chip->gpiod_oe);
+	अगर (IS_ERR(chip->gpiod_oe))
+		वापस PTR_ERR(chip->gpiod_oe);
 
 	gpiod_set_value_cansleep(chip->gpiod_oe, 1);
 
@@ -138,8 +139,8 @@ static int gen_74x164_probe(struct spi_device *spi)
 	chip->gpio_chip.set_multiple = gen_74x164_set_multiple;
 	chip->gpio_chip.base = -1;
 
-	chip->registers = nregs;
-	chip->gpio_chip.ngpio = GEN_74X164_NUMBER_GPIOS * chip->registers;
+	chip->रेजिस्टरs = nregs;
+	chip->gpio_chip.ngpio = GEN_74X164_NUMBER_GPIOS * chip->रेजिस्टरs;
 
 	chip->gpio_chip.can_sleep = true;
 	chip->gpio_chip.parent = &spi->dev;
@@ -147,48 +148,48 @@ static int gen_74x164_probe(struct spi_device *spi)
 
 	mutex_init(&chip->lock);
 
-	ret = __gen_74x164_write_config(chip);
-	if (ret) {
+	ret = __gen_74x164_ग_लिखो_config(chip);
+	अगर (ret) अणु
 		dev_err(&spi->dev, "Failed writing: %d\n", ret);
-		goto exit_destroy;
-	}
+		जाओ निकास_destroy;
+	पूर्ण
 
 	ret = gpiochip_add_data(&chip->gpio_chip, chip);
-	if (!ret)
-		return 0;
+	अगर (!ret)
+		वापस 0;
 
-exit_destroy:
+निकास_destroy:
 	mutex_destroy(&chip->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gen_74x164_remove(struct spi_device *spi)
-{
-	struct gen_74x164_chip *chip = spi_get_drvdata(spi);
+अटल पूर्णांक gen_74x164_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा gen_74x164_chip *chip = spi_get_drvdata(spi);
 
 	gpiod_set_value_cansleep(chip->gpiod_oe, 0);
-	gpiochip_remove(&chip->gpio_chip);
+	gpiochip_हटाओ(&chip->gpio_chip);
 	mutex_destroy(&chip->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id gen_74x164_dt_ids[] = {
-	{ .compatible = "fairchild,74hc595" },
-	{ .compatible = "nxp,74lvc594" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id gen_74x164_dt_ids[] = अणु
+	अणु .compatible = "fairchild,74hc595" पूर्ण,
+	अणु .compatible = "nxp,74lvc594" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, gen_74x164_dt_ids);
 
-static struct spi_driver gen_74x164_driver = {
-	.driver = {
+अटल काष्ठा spi_driver gen_74x164_driver = अणु
+	.driver = अणु
 		.name		= "74x164",
 		.of_match_table	= gen_74x164_dt_ids,
-	},
+	पूर्ण,
 	.probe		= gen_74x164_probe,
-	.remove		= gen_74x164_remove,
-};
+	.हटाओ		= gen_74x164_हटाओ,
+पूर्ण;
 module_spi_driver(gen_74x164_driver);
 
 MODULE_AUTHOR("Gabor Juhos <juhosg@openwrt.org>");

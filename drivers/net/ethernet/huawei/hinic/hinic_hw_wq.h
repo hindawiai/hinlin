@@ -1,111 +1,112 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Huawei HiNIC PCI Express Linux driver
  * Copyright(c) 2017 Huawei Technologies Co., Ltd
  */
 
-#ifndef HINIC_HW_WQ_H
-#define HINIC_HW_WQ_H
+#अगर_अघोषित HINIC_HW_WQ_H
+#घोषणा HINIC_HW_WQ_H
 
-#include <linux/types.h>
-#include <linux/semaphore.h>
-#include <linux/atomic.h>
+#समावेश <linux/types.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/atomic.h>
 
-#include "hinic_hw_if.h"
-#include "hinic_hw_wqe.h"
+#समावेश "hinic_hw_if.h"
+#समावेश "hinic_hw_wqe.h"
 
-struct hinic_free_block {
-	int     page_idx;
-	int     block_idx;
-};
+काष्ठा hinic_मुक्त_block अणु
+	पूर्णांक     page_idx;
+	पूर्णांक     block_idx;
+पूर्ण;
 
-struct hinic_wq {
-	struct hinic_hwif       *hwif;
+काष्ठा hinic_wq अणु
+	काष्ठा hinic_hwअगर       *hwअगर;
 
-	int             page_idx;
-	int             block_idx;
+	पूर्णांक             page_idx;
+	पूर्णांक             block_idx;
 
 	u16             wqebb_size;
 	u32             wq_page_size;
 	u16             q_depth;
 	u16             max_wqe_size;
 	u16             num_wqebbs_per_page;
-	u16		wqebbs_per_page_shift;
-	u16		wqebb_size_shift;
+	u16		wqebbs_per_page_shअगरt;
+	u16		wqebb_size_shअगरt;
 	/* The addresses are 64 bit in the HW */
 	u64             block_paddr;
-	void            **shadow_block_vaddr;
+	व्योम            **shaकरोw_block_vaddr;
 	u64             *block_vaddr;
 
-	int             num_q_pages;
-	u8              *shadow_wqe;
-	u16             *shadow_idx;
+	पूर्णांक             num_q_pages;
+	u8              *shaकरोw_wqe;
+	u16             *shaकरोw_idx;
 
 	atomic_t        cons_idx;
 	atomic_t        prod_idx;
 	atomic_t        delta;
 	u16             mask;
-};
+पूर्ण;
 
-struct hinic_wqs {
-	struct hinic_hwif       *hwif;
-	int                     num_pages;
+काष्ठा hinic_wqs अणु
+	काष्ठा hinic_hwअगर       *hwअगर;
+	पूर्णांक                     num_pages;
 
 	/* The addresses are 64 bit in the HW */
 	u64                     *page_paddr;
 	u64                     **page_vaddr;
-	void                    ***shadow_page_vaddr;
+	व्योम                    ***shaकरोw_page_vaddr;
 
-	struct hinic_free_block *free_blocks;
-	int                     alloc_blk_pos;
-	int                     return_blk_pos;
-	int                     num_free_blks;
+	काष्ठा hinic_मुक्त_block *मुक्त_blocks;
+	पूर्णांक                     alloc_blk_pos;
+	पूर्णांक                     वापस_blk_pos;
+	पूर्णांक                     num_मुक्त_blks;
 
-	/* Lock for getting a free block from the WQ set */
-	struct semaphore        alloc_blocks_lock;
-};
+	/* Lock क्रम getting a मुक्त block from the WQ set */
+	काष्ठा semaphore        alloc_blocks_lock;
+पूर्ण;
 
-struct hinic_cmdq_pages {
+काष्ठा hinic_cmdq_pages अणु
 	/* The addresses are 64 bit in the HW */
 	u64                     page_paddr;
 	u64                     *page_vaddr;
-	void                    **shadow_page_vaddr;
+	व्योम                    **shaकरोw_page_vaddr;
 
-	struct hinic_hwif       *hwif;
-};
+	काष्ठा hinic_hwअगर       *hwअगर;
+पूर्ण;
 
-int hinic_wqs_cmdq_alloc(struct hinic_cmdq_pages *cmdq_pages,
-			 struct hinic_wq *wq, struct hinic_hwif *hwif,
-			 int cmdq_blocks, u16 wqebb_size, u32 wq_page_size,
+पूर्णांक hinic_wqs_cmdq_alloc(काष्ठा hinic_cmdq_pages *cmdq_pages,
+			 काष्ठा hinic_wq *wq, काष्ठा hinic_hwअगर *hwअगर,
+			 पूर्णांक cmdq_blocks, u16 wqebb_size, u32 wq_page_size,
 			 u16 q_depth, u16 max_wqe_size);
 
-void hinic_wqs_cmdq_free(struct hinic_cmdq_pages *cmdq_pages,
-			 struct hinic_wq *wq, int cmdq_blocks);
+व्योम hinic_wqs_cmdq_मुक्त(काष्ठा hinic_cmdq_pages *cmdq_pages,
+			 काष्ठा hinic_wq *wq, पूर्णांक cmdq_blocks);
 
-int hinic_wqs_alloc(struct hinic_wqs *wqs, int num_wqs,
-		    struct hinic_hwif *hwif);
+पूर्णांक hinic_wqs_alloc(काष्ठा hinic_wqs *wqs, पूर्णांक num_wqs,
+		    काष्ठा hinic_hwअगर *hwअगर);
 
-void hinic_wqs_free(struct hinic_wqs *wqs);
+व्योम hinic_wqs_मुक्त(काष्ठा hinic_wqs *wqs);
 
-int hinic_wq_allocate(struct hinic_wqs *wqs, struct hinic_wq *wq,
+पूर्णांक hinic_wq_allocate(काष्ठा hinic_wqs *wqs, काष्ठा hinic_wq *wq,
 		      u16 wqebb_size, u32 wq_page_size, u16 q_depth,
 		      u16 max_wqe_size);
 
-void hinic_wq_free(struct hinic_wqs *wqs, struct hinic_wq *wq);
+व्योम hinic_wq_मुक्त(काष्ठा hinic_wqs *wqs, काष्ठा hinic_wq *wq);
 
-struct hinic_hw_wqe *hinic_get_wqe(struct hinic_wq *wq, unsigned int wqe_size,
+काष्ठा hinic_hw_wqe *hinic_get_wqe(काष्ठा hinic_wq *wq, अचिन्हित पूर्णांक wqe_size,
 				   u16 *prod_idx);
 
-void hinic_return_wqe(struct hinic_wq *wq, unsigned int wqe_size);
+व्योम hinic_वापस_wqe(काष्ठा hinic_wq *wq, अचिन्हित पूर्णांक wqe_size);
 
-void hinic_put_wqe(struct hinic_wq *wq, unsigned int wqe_size);
+व्योम hinic_put_wqe(काष्ठा hinic_wq *wq, अचिन्हित पूर्णांक wqe_size);
 
-struct hinic_hw_wqe *hinic_read_wqe(struct hinic_wq *wq, unsigned int wqe_size,
+काष्ठा hinic_hw_wqe *hinic_पढ़ो_wqe(काष्ठा hinic_wq *wq, अचिन्हित पूर्णांक wqe_size,
 				    u16 *cons_idx);
 
-struct hinic_hw_wqe *hinic_read_wqe_direct(struct hinic_wq *wq, u16 cons_idx);
+काष्ठा hinic_hw_wqe *hinic_पढ़ो_wqe_direct(काष्ठा hinic_wq *wq, u16 cons_idx);
 
-void hinic_write_wqe(struct hinic_wq *wq, struct hinic_hw_wqe *wqe,
-		     unsigned int wqe_size);
+व्योम hinic_ग_लिखो_wqe(काष्ठा hinic_wq *wq, काष्ठा hinic_hw_wqe *wqe,
+		     अचिन्हित पूर्णांक wqe_size);
 
-#endif
+#पूर्ण_अगर

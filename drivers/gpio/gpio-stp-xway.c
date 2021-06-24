@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  *  Copyright (C) 2012 John Crispin <john@phrozen.org>
  */
 
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/of_platform.h>
-#include <linux/mutex.h>
-#include <linux/gpio/driver.h>
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
 
 /*
  * The Serial To Parallel (STP) is found on MIPS based Lantiq socs. It is a
- * peripheral controller used to drive external shift register cascades. At most
+ * peripheral controller used to drive बाह्यal shअगरt रेजिस्टर cascades. At most
  * 3 groups of 8 bits can be driven. The hardware is able to allow the DSL modem
- * to drive the 2 LSBs of the cascade automatically.
+ * to drive the 2 LSBs of the cascade स्वतःmatically.
  */
 
-/* control register 0 */
-#define XWAY_STP_CON0		0x00
-/* control register 1 */
-#define XWAY_STP_CON1		0x04
-/* data register 0 */
-#define XWAY_STP_CPU0		0x08
-/* data register 1 */
-#define XWAY_STP_CPU1		0x0C
-/* access register */
-#define XWAY_STP_AR		0x10
+/* control रेजिस्टर 0 */
+#घोषणा XWAY_STP_CON0		0x00
+/* control रेजिस्टर 1 */
+#घोषणा XWAY_STP_CON1		0x04
+/* data रेजिस्टर 0 */
+#घोषणा XWAY_STP_CPU0		0x08
+/* data रेजिस्टर 1 */
+#घोषणा XWAY_STP_CPU1		0x0C
+/* access रेजिस्टर */
+#घोषणा XWAY_STP_AR		0x10
 
 /* software or hardware update select bit */
-#define XWAY_STP_CON_SWU	BIT(31)
+#घोषणा XWAY_STP_CON_SWU	BIT(31)
 
-/* automatic update rates */
-#define XWAY_STP_2HZ		0
-#define XWAY_STP_4HZ		BIT(23)
-#define XWAY_STP_8HZ		BIT(24)
-#define XWAY_STP_10HZ		(BIT(24) | BIT(23))
-#define XWAY_STP_SPEED_MASK	(BIT(23) | BIT(24) | BIT(25) | BIT(26) | BIT(27))
+/* स्वतःmatic update rates */
+#घोषणा XWAY_STP_2HZ		0
+#घोषणा XWAY_STP_4HZ		BIT(23)
+#घोषणा XWAY_STP_8HZ		BIT(24)
+#घोषणा XWAY_STP_10HZ		(BIT(24) | BIT(23))
+#घोषणा XWAY_STP_SPEED_MASK	(BIT(23) | BIT(24) | BIT(25) | BIT(26) | BIT(27))
 
-#define XWAY_STP_FPIS_VALUE	BIT(21)
-#define XWAY_STP_FPIS_MASK	(BIT(20) | BIT(21))
+#घोषणा XWAY_STP_FPIS_VALUE	BIT(21)
+#घोषणा XWAY_STP_FPIS_MASK	(BIT(20) | BIT(21))
 
-/* clock source for automatic update */
-#define XWAY_STP_UPD_FPI	BIT(31)
-#define XWAY_STP_UPD_MASK	(BIT(31) | BIT(30))
+/* घड़ी source क्रम स्वतःmatic update */
+#घोषणा XWAY_STP_UPD_FPI	BIT(31)
+#घोषणा XWAY_STP_UPD_MASK	(BIT(31) | BIT(30))
 
 /* let the adsl core drive the 2 LSBs */
-#define XWAY_STP_ADSL_SHIFT	24
-#define XWAY_STP_ADSL_MASK	0x3
+#घोषणा XWAY_STP_ADSL_SHIFT	24
+#घोषणा XWAY_STP_ADSL_MASK	0x3
 
 /* 2 groups of 3 bits can be driven by the phys */
-#define XWAY_STP_PHY_MASK	0x7
-#define XWAY_STP_PHY1_SHIFT	27
-#define XWAY_STP_PHY2_SHIFT	3
-#define XWAY_STP_PHY3_SHIFT	6
-#define XWAY_STP_PHY4_SHIFT	15
+#घोषणा XWAY_STP_PHY_MASK	0x7
+#घोषणा XWAY_STP_PHY1_SHIFT	27
+#घोषणा XWAY_STP_PHY2_SHIFT	3
+#घोषणा XWAY_STP_PHY3_SHIFT	6
+#घोषणा XWAY_STP_PHY4_SHIFT	15
 
 /* STP has 3 groups of 8 bits */
-#define XWAY_STP_GROUP0		BIT(0)
-#define XWAY_STP_GROUP1		BIT(1)
-#define XWAY_STP_GROUP2		BIT(2)
-#define XWAY_STP_GROUP_MASK	(0x7)
+#घोषणा XWAY_STP_GROUP0		BIT(0)
+#घोषणा XWAY_STP_GROUP1		BIT(1)
+#घोषणा XWAY_STP_GROUP2		BIT(2)
+#घोषणा XWAY_STP_GROUP_MASK	(0x7)
 
 /* Edge configuration bits */
-#define XWAY_STP_FALLING	BIT(26)
-#define XWAY_STP_EDGE_MASK	BIT(26)
+#घोषणा XWAY_STP_FALLING	BIT(26)
+#घोषणा XWAY_STP_EDGE_MASK	BIT(26)
 
-#define xway_stp_r32(m, reg)		__raw_readl(m + reg)
-#define xway_stp_w32(m, val, reg)	__raw_writel(val, m + reg)
-#define xway_stp_w32_mask(m, clear, set, reg) \
+#घोषणा xway_stp_r32(m, reg)		__raw_पढ़ोl(m + reg)
+#घोषणा xway_stp_w32(m, val, reg)	__raw_ग_लिखोl(val, m + reg)
+#घोषणा xway_stp_w32_mask(m, clear, set, reg) \
 		xway_stp_w32(m, (xway_stp_r32(m, reg) & ~(clear)) | (set), reg)
 
-struct xway_stp {
-	struct gpio_chip gc;
-	void __iomem *virt;
-	u32 edge;	/* rising or falling edge triggered shift register */
-	u32 shadow;	/* shadow the shift registers state */
+काष्ठा xway_stp अणु
+	काष्ठा gpio_chip gc;
+	व्योम __iomem *virt;
+	u32 edge;	/* rising or falling edge triggered shअगरt रेजिस्टर */
+	u32 shaकरोw;	/* shaकरोw the shअगरt रेजिस्टरs state */
 	u8 groups;	/* we can drive 1-3 groups of 8bit each */
 	u8 dsl;		/* the 2 LSBs can be driven by the dsl core */
 	u8 phy1;	/* 3 bits can be driven by phy1 */
@@ -88,91 +89,91 @@ struct xway_stp {
 	u8 phy3;	/* 3 bits can be driven by phy3 */
 	u8 phy4;	/* 3 bits can be driven by phy4 */
 	u8 reserved;	/* mask out the hw driven bits in gpio_request */
-};
+पूर्ण;
 
 /**
  * xway_stp_get() - gpio_chip->get - get gpios.
- * @gc:     Pointer to gpio_chip device structure.
- * @gpio:   GPIO signal number.
+ * @gc:     Poपूर्णांकer to gpio_chip device काष्ठाure.
+ * @gpio:   GPIO संकेत number.
  *
- * Gets the shadow value.
+ * Gets the shaकरोw value.
  */
-static int xway_stp_get(struct gpio_chip *gc, unsigned int gpio)
-{
-	struct xway_stp *chip = gpiochip_get_data(gc);
+अटल पूर्णांक xway_stp_get(काष्ठा gpio_chip *gc, अचिन्हित पूर्णांक gpio)
+अणु
+	काष्ठा xway_stp *chip = gpiochip_get_data(gc);
 
-	return (xway_stp_r32(chip->virt, XWAY_STP_CPU0) & BIT(gpio));
-}
+	वापस (xway_stp_r32(chip->virt, XWAY_STP_CPU0) & BIT(gpio));
+पूर्ण
 
 /**
  * xway_stp_set() - gpio_chip->set - set gpios.
- * @gc:     Pointer to gpio_chip device structure.
- * @gpio:   GPIO signal number.
- * @val:    Value to be written to specified signal.
+ * @gc:     Poपूर्णांकer to gpio_chip device काष्ठाure.
+ * @gpio:   GPIO संकेत number.
+ * @val:    Value to be written to specअगरied संकेत.
  *
- * Set the shadow value and call ltq_ebu_apply.
+ * Set the shaकरोw value and call ltq_ebu_apply.
  */
-static void xway_stp_set(struct gpio_chip *gc, unsigned gpio, int val)
-{
-	struct xway_stp *chip = gpiochip_get_data(gc);
+अटल व्योम xway_stp_set(काष्ठा gpio_chip *gc, अचिन्हित gpio, पूर्णांक val)
+अणु
+	काष्ठा xway_stp *chip = gpiochip_get_data(gc);
 
-	if (val)
-		chip->shadow |= BIT(gpio);
-	else
-		chip->shadow &= ~BIT(gpio);
-	xway_stp_w32(chip->virt, chip->shadow, XWAY_STP_CPU0);
-	if (!chip->reserved)
+	अगर (val)
+		chip->shaकरोw |= BIT(gpio);
+	अन्यथा
+		chip->shaकरोw &= ~BIT(gpio);
+	xway_stp_w32(chip->virt, chip->shaकरोw, XWAY_STP_CPU0);
+	अगर (!chip->reserved)
 		xway_stp_w32_mask(chip->virt, 0, XWAY_STP_CON_SWU, XWAY_STP_CON0);
-}
+पूर्ण
 
 /**
  * xway_stp_dir_out() - gpio_chip->dir_out - set gpio direction.
- * @gc:     Pointer to gpio_chip device structure.
- * @gpio:   GPIO signal number.
- * @val:    Value to be written to specified signal.
+ * @gc:     Poपूर्णांकer to gpio_chip device काष्ठाure.
+ * @gpio:   GPIO संकेत number.
+ * @val:    Value to be written to specअगरied संकेत.
  *
- * Same as xway_stp_set, always returns 0.
+ * Same as xway_stp_set, always वापसs 0.
  */
-static int xway_stp_dir_out(struct gpio_chip *gc, unsigned gpio, int val)
-{
+अटल पूर्णांक xway_stp_dir_out(काष्ठा gpio_chip *gc, अचिन्हित gpio, पूर्णांक val)
+अणु
 	xway_stp_set(gc, gpio, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * xway_stp_request() - gpio_chip->request
- * @gc:     Pointer to gpio_chip device structure.
- * @gpio:   GPIO signal number.
+ * @gc:     Poपूर्णांकer to gpio_chip device काष्ठाure.
+ * @gpio:   GPIO संकेत number.
  *
  * We mask out the HW driven pins
  */
-static int xway_stp_request(struct gpio_chip *gc, unsigned gpio)
-{
-	struct xway_stp *chip = gpiochip_get_data(gc);
+अटल पूर्णांक xway_stp_request(काष्ठा gpio_chip *gc, अचिन्हित gpio)
+अणु
+	काष्ठा xway_stp *chip = gpiochip_get_data(gc);
 
-	if ((gpio < 8) && (chip->reserved & BIT(gpio))) {
+	अगर ((gpio < 8) && (chip->reserved & BIT(gpio))) अणु
 		dev_err(gc->parent, "GPIO %d is driven by hardware\n", gpio);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * xway_stp_hw_init() - Configure the STP unit and enable the clock gate
- * @chip: Pointer to the xway_stp chip structure
+ * xway_stp_hw_init() - Configure the STP unit and enable the घड़ी gate
+ * @chip: Poपूर्णांकer to the xway_stp chip काष्ठाure
  */
-static void xway_stp_hw_init(struct xway_stp *chip)
-{
-	/* sane defaults */
+अटल व्योम xway_stp_hw_init(काष्ठा xway_stp *chip)
+अणु
+	/* sane शेषs */
 	xway_stp_w32(chip->virt, 0, XWAY_STP_AR);
 	xway_stp_w32(chip->virt, 0, XWAY_STP_CPU0);
 	xway_stp_w32(chip->virt, 0, XWAY_STP_CPU1);
 	xway_stp_w32(chip->virt, XWAY_STP_CON_SWU, XWAY_STP_CON0);
 	xway_stp_w32(chip->virt, 0, XWAY_STP_CON1);
 
-	/* apply edge trigger settings for the shift register */
+	/* apply edge trigger settings क्रम the shअगरt रेजिस्टर */
 	xway_stp_w32_mask(chip->virt, XWAY_STP_EDGE_MASK,
 				chip->edge, XWAY_STP_CON0);
 
@@ -196,53 +197,53 @@ static void xway_stp_hw_init(struct xway_stp *chip)
 			chip->phy2 << XWAY_STP_PHY2_SHIFT,
 			XWAY_STP_CON1);
 
-	if (of_machine_is_compatible("lantiq,grx390")
-	    || of_machine_is_compatible("lantiq,ar10")) {
+	अगर (of_machine_is_compatible("lantiq,grx390")
+	    || of_machine_is_compatible("lantiq,ar10")) अणु
 		xway_stp_w32_mask(chip->virt,
 				XWAY_STP_PHY_MASK << XWAY_STP_PHY3_SHIFT,
 				chip->phy3 << XWAY_STP_PHY3_SHIFT,
 				XWAY_STP_CON1);
-	}
+	पूर्ण
 
-	if (of_machine_is_compatible("lantiq,grx390")) {
+	अगर (of_machine_is_compatible("lantiq,grx390")) अणु
 		xway_stp_w32_mask(chip->virt,
 				XWAY_STP_PHY_MASK << XWAY_STP_PHY4_SHIFT,
 				chip->phy4 << XWAY_STP_PHY4_SHIFT,
 				XWAY_STP_CON1);
-	}
+	पूर्ण
 
 	/* mask out the hw driven bits in gpio_request */
 	chip->reserved = (chip->phy4 << 11) | (chip->phy3 << 8) | (chip->phy2 << 5)
 		| (chip->phy1 << 2) | chip->dsl;
 
 	/*
-	 * if we have pins that are driven by hw, we need to tell the stp what
-	 * clock to use as a timer.
+	 * अगर we have pins that are driven by hw, we need to tell the stp what
+	 * घड़ी to use as a समयr.
 	 */
-	if (chip->reserved) {
+	अगर (chip->reserved) अणु
 		xway_stp_w32_mask(chip->virt, XWAY_STP_UPD_MASK,
 			XWAY_STP_UPD_FPI, XWAY_STP_CON1);
 		xway_stp_w32_mask(chip->virt, XWAY_STP_SPEED_MASK,
 			XWAY_STP_10HZ, XWAY_STP_CON1);
 		xway_stp_w32_mask(chip->virt, XWAY_STP_FPIS_MASK,
 			XWAY_STP_FPIS_VALUE, XWAY_STP_CON1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int xway_stp_probe(struct platform_device *pdev)
-{
-	u32 shadow, groups, dsl, phy;
-	struct xway_stp *chip;
-	struct clk *clk;
-	int ret = 0;
+अटल पूर्णांक xway_stp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	u32 shaकरोw, groups, dsl, phy;
+	काष्ठा xway_stp *chip;
+	काष्ठा clk *clk;
+	पूर्णांक ret = 0;
 
-	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	chip = devm_kzalloc(&pdev->dev, माप(*chip), GFP_KERNEL);
+	अगर (!chip)
+		वापस -ENOMEM;
 
-	chip->virt = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(chip->virt))
-		return PTR_ERR(chip->virt);
+	chip->virt = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(chip->virt))
+		वापस PTR_ERR(chip->virt);
 
 	chip->gc.parent = &pdev->dev;
 	chip->gc.label = "stp-xway";
@@ -253,88 +254,88 @@ static int xway_stp_probe(struct platform_device *pdev)
 	chip->gc.base = -1;
 	chip->gc.owner = THIS_MODULE;
 
-	/* store the shadow value if one was passed by the devicetree */
-	if (!of_property_read_u32(pdev->dev.of_node, "lantiq,shadow", &shadow))
-		chip->shadow = shadow;
+	/* store the shaकरोw value अगर one was passed by the devicetree */
+	अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "lantiq,shadow", &shaकरोw))
+		chip->shaकरोw = shaकरोw;
 
 	/* find out which gpio groups should be enabled */
-	if (!of_property_read_u32(pdev->dev.of_node, "lantiq,groups", &groups))
+	अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "lantiq,groups", &groups))
 		chip->groups = groups & XWAY_STP_GROUP_MASK;
-	else
+	अन्यथा
 		chip->groups = XWAY_STP_GROUP0;
 	chip->gc.ngpio = fls(chip->groups) * 8;
 
 	/* find out which gpios are controlled by the dsl core */
-	if (!of_property_read_u32(pdev->dev.of_node, "lantiq,dsl", &dsl))
+	अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "lantiq,dsl", &dsl))
 		chip->dsl = dsl & XWAY_STP_ADSL_MASK;
 
 	/* find out which gpios are controlled by the phys */
-	if (of_machine_is_compatible("lantiq,ar9") ||
+	अगर (of_machine_is_compatible("lantiq,ar9") ||
 			of_machine_is_compatible("lantiq,gr9") ||
 			of_machine_is_compatible("lantiq,vr9") ||
 			of_machine_is_compatible("lantiq,ar10") ||
-			of_machine_is_compatible("lantiq,grx390")) {
-		if (!of_property_read_u32(pdev->dev.of_node, "lantiq,phy1", &phy))
+			of_machine_is_compatible("lantiq,grx390")) अणु
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "lantiq,phy1", &phy))
 			chip->phy1 = phy & XWAY_STP_PHY_MASK;
-		if (!of_property_read_u32(pdev->dev.of_node, "lantiq,phy2", &phy))
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "lantiq,phy2", &phy))
 			chip->phy2 = phy & XWAY_STP_PHY_MASK;
-	}
+	पूर्ण
 
-	if (of_machine_is_compatible("lantiq,ar10") ||
-			of_machine_is_compatible("lantiq,grx390")) {
-		if (!of_property_read_u32(pdev->dev.of_node, "lantiq,phy3", &phy))
+	अगर (of_machine_is_compatible("lantiq,ar10") ||
+			of_machine_is_compatible("lantiq,grx390")) अणु
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "lantiq,phy3", &phy))
 			chip->phy3 = phy & XWAY_STP_PHY_MASK;
-	}
+	पूर्ण
 
-	if (of_machine_is_compatible("lantiq,grx390")) {
-		if (!of_property_read_u32(pdev->dev.of_node, "lantiq,phy4", &phy))
+	अगर (of_machine_is_compatible("lantiq,grx390")) अणु
+		अगर (!of_property_पढ़ो_u32(pdev->dev.of_node, "lantiq,phy4", &phy))
 			chip->phy4 = phy & XWAY_STP_PHY_MASK;
-	}
+	पूर्ण
 
-	/* check which edge trigger we should use, default to a falling edge */
-	if (!of_find_property(pdev->dev.of_node, "lantiq,rising", NULL))
+	/* check which edge trigger we should use, शेष to a falling edge */
+	अगर (!of_find_property(pdev->dev.of_node, "lantiq,rising", शून्य))
 		chip->edge = XWAY_STP_FALLING;
 
-	clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(clk)) {
+	clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(clk)) अणु
 		dev_err(&pdev->dev, "Failed to get clock\n");
-		return PTR_ERR(clk);
-	}
+		वापस PTR_ERR(clk);
+	पूर्ण
 
 	ret = clk_prepare_enable(clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	xway_stp_hw_init(chip);
 
 	ret = devm_gpiochip_add_data(&pdev->dev, &chip->gc, chip);
-	if (ret) {
+	अगर (ret) अणु
 		clk_disable_unprepare(clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_info(&pdev->dev, "Init done\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id xway_stp_match[] = {
-	{ .compatible = "lantiq,gpio-stp-xway" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id xway_stp_match[] = अणु
+	अणु .compatible = "lantiq,gpio-stp-xway" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, xway_stp_match);
 
-static struct platform_driver xway_stp_driver = {
+अटल काष्ठा platक्रमm_driver xway_stp_driver = अणु
 	.probe = xway_stp_probe,
-	.driver = {
+	.driver = अणु
 		.name = "gpio-stp-xway",
 		.of_match_table = xway_stp_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init xway_stp_init(void)
-{
-	return platform_driver_register(&xway_stp_driver);
-}
+अटल पूर्णांक __init xway_stp_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&xway_stp_driver);
+पूर्ण
 
 subsys_initcall(xway_stp_init);

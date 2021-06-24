@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,29 +24,29 @@
  *
  */
 
-#ifndef __DC_DIO_STREAM_ENCODER_DCN30_H__
-#define __DC_DIO_STREAM_ENCODER_DCN30_H__
+#अगर_अघोषित __DC_DIO_STREAM_ENCODER_DCN30_H__
+#घोषणा __DC_DIO_STREAM_ENCODER_DCN30_H__
 
-#include "dcn30/dcn30_vpg.h"
-#include "dcn30/dcn30_afmt.h"
-#include "stream_encoder.h"
-#include "dcn20/dcn20_stream_encoder.h"
+#समावेश "dcn30/dcn30_vpg.h"
+#समावेश "dcn30/dcn30_afmt.h"
+#समावेश "stream_encoder.h"
+#समावेश "dcn20/dcn20_stream_encoder.h"
 
 /* Register bit field name change */
-#define RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_GATE_DIS__SHIFT                                        0x8
-#define RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_EN__SHIFT                                              0x9
-#define RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_CLOCK_ON__SHIFT                                        0xa
-#define DPCSTX0_DPCSTX_TX_CNTL__DPCS_TX_DATA_SWAP__SHIFT                                                      0xe
-#define DPCSTX0_DPCSTX_TX_CNTL__DPCS_TX_DATA_ORDER_INVERT__SHIFT                                              0xf
+#घोषणा RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_GATE_DIS__SHIFT                                        0x8
+#घोषणा RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_EN__SHIFT                                              0x9
+#घोषणा RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_CLOCK_ON__SHIFT                                        0xa
+#घोषणा DPCSTX0_DPCSTX_TX_CNTL__DPCS_TX_DATA_SWAP__SHIFT                                                      0xe
+#घोषणा DPCSTX0_DPCSTX_TX_CNTL__DPCS_TX_DATA_ORDER_INVERT__SHIFT                                              0xf
 
-#define RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_GATE_DIS_MASK                                          0x00000100L
-#define RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_EN_MASK                                                0x00000200L
-#define RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_CLOCK_ON_MASK                                          0x00000400L
-#define DPCSTX0_DPCSTX_TX_CNTL__DPCS_TX_DATA_SWAP_MASK                                                        0x00004000L
-#define DPCSTX0_DPCSTX_TX_CNTL__DPCS_TX_DATA_ORDER_INVERT_MASK                                                0x00008000L
+#घोषणा RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_GATE_DIS_MASK                                          0x00000100L
+#घोषणा RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_EN_MASK                                                0x00000200L
+#घोषणा RDPCSTX0_RDPCSTX_CLOCK_CNTL__RDPCS_SYMCLK_DIV2_CLOCK_ON_MASK                                          0x00000400L
+#घोषणा DPCSTX0_DPCSTX_TX_CNTL__DPCS_TX_DATA_SWAP_MASK                                                        0x00004000L
+#घोषणा DPCSTX0_DPCSTX_TX_CNTL__DPCS_TX_DATA_ORDER_INVERT_MASK                                                0x00008000L
 
 
-#define SE_DCN3_REG_LIST(id)\
+#घोषणा SE_DCN3_REG_LIST(id)\
 	SRI(AFMT_CNTL, DIG, id), \
 	SRI(DIG_FE_CNTL, DIG, id), \
 	SRI(HDMI_CONTROL, DIG, id), \
@@ -107,7 +108,7 @@
 	SRI(DIG_CLOCK_PATTERN, DIG, id)
 
 
-#define SE_COMMON_MASK_SH_LIST_DCN30_BASE(mask_sh)\
+#घोषणा SE_COMMON_MASK_SH_LIST_DCN30_BASE(mask_sh)\
 	SE_SF(DP0_DP_PIXEL_FORMAT, DP_PIXEL_ENCODING, mask_sh),\
 	SE_SF(DP0_DP_PIXEL_FORMAT, DP_COMPONENT_DEPTH, mask_sh),\
 	SE_SF(DIG0_HDMI_CONTROL, HDMI_PACKET_GEN_VERSION, mask_sh),\
@@ -115,10 +116,10 @@
 	SE_SF(DIG0_HDMI_CONTROL, HDMI_DEEP_COLOR_ENABLE, mask_sh),\
 	SE_SF(DIG0_HDMI_CONTROL, HDMI_DEEP_COLOR_DEPTH, mask_sh),\
 	SE_SF(DIG0_HDMI_CONTROL, HDMI_DATA_SCRAMBLE_EN, mask_sh),\
-	SE_SF(DIG0_HDMI_CONTROL, HDMI_NO_EXTRA_NULL_PACKET_FILLED, mask_sh),\
+	SE_SF(DIG0_HDMI_CONTROL, HDMI_NO_EXTRA_शून्य_PACKET_FILLED, mask_sh),\
 	SE_SF(DIG0_HDMI_VBI_PACKET_CONTROL, HDMI_GC_CONT, mask_sh),\
 	SE_SF(DIG0_HDMI_VBI_PACKET_CONTROL, HDMI_GC_SEND, mask_sh),\
-	SE_SF(DIG0_HDMI_VBI_PACKET_CONTROL, HDMI_NULL_SEND, mask_sh),\
+	SE_SF(DIG0_HDMI_VBI_PACKET_CONTROL, HDMI_शून्य_SEND, mask_sh),\
 	SE_SF(DIG0_HDMI_INFOFRAME_CONTROL0, HDMI_AUDIO_INFO_SEND, mask_sh),\
 	SE_SF(DIG0_HDMI_INFOFRAME_CONTROL1, HDMI_AUDIO_INFO_LINE, mask_sh),\
 	SE_SF(DIG0_HDMI_GC, HDMI_GC_AVMUTE, mask_sh),\
@@ -253,18 +254,18 @@
 	SE_SF(DP0_DP_SEC_FRAMING4, DP_SST_SDP_SPLITTING, mask_sh),\
 	SE_SF(DIG0_DIG_CLOCK_PATTERN, DIG_CLOCK_PATTERN, mask_sh)
 
-#define SE_COMMON_MASK_SH_LIST_DCN30(mask_sh)\
+#घोषणा SE_COMMON_MASK_SH_LIST_DCN30(mask_sh)\
 	SE_COMMON_MASK_SH_LIST_DCN30_BASE(mask_sh)
 
-void dcn30_dio_stream_encoder_construct(
-	struct dcn10_stream_encoder *enc1,
-	struct dc_context *ctx,
-	struct dc_bios *bp,
-	enum engine_id eng_id,
-	struct vpg *vpg,
-	struct afmt *afmt,
-	const struct dcn10_stream_enc_registers *regs,
-	const struct dcn10_stream_encoder_shift *se_shift,
-	const struct dcn10_stream_encoder_mask *se_mask);
+व्योम dcn30_dio_stream_encoder_स्थिरruct(
+	काष्ठा dcn10_stream_encoder *enc1,
+	काष्ठा dc_context *ctx,
+	काष्ठा dc_bios *bp,
+	क्रमागत engine_id eng_id,
+	काष्ठा vpg *vpg,
+	काष्ठा afmt *afmt,
+	स्थिर काष्ठा dcn10_stream_enc_रेजिस्टरs *regs,
+	स्थिर काष्ठा dcn10_stream_encoder_shअगरt *se_shअगरt,
+	स्थिर काष्ठा dcn10_stream_encoder_mask *se_mask);
 
-#endif /* __DC_DIO_STREAM_ENCODER_DCN30_H__ */
+#पूर्ण_अगर /* __DC_DIO_STREAM_ENCODER_DCN30_H__ */

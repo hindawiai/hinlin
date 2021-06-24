@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/types.h>
-#include <linux/kconfig.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/security.h>
-#include <linux/highmem.h>
-#include <linux/umh.h>
-#include <linux/sysctl.h>
-#include <linux/vmalloc.h>
-#include <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kconfig.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/security.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/umh.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/module.h>
 
-#include "fallback.h"
-#include "firmware.h"
+#समावेश "fallback.h"
+#समावेश "firmware.h"
 
 /*
  * firmware fallback mechanism
@@ -20,213 +21,213 @@
 
 MODULE_IMPORT_NS(FIRMWARE_LOADER_PRIVATE);
 
-extern struct firmware_fallback_config fw_fallback_config;
+बाह्य काष्ठा firmware_fallback_config fw_fallback_config;
 
-/* These getters are vetted to use int properly */
-static inline int __firmware_loading_timeout(void)
-{
-	return fw_fallback_config.loading_timeout;
-}
+/* These getters are vetted to use पूर्णांक properly */
+अटल अंतरभूत पूर्णांक __firmware_loading_समयout(व्योम)
+अणु
+	वापस fw_fallback_config.loading_समयout;
+पूर्ण
 
-/* These setters are vetted to use int properly */
-static void __fw_fallback_set_timeout(int timeout)
-{
-	fw_fallback_config.loading_timeout = timeout;
-}
+/* These setters are vetted to use पूर्णांक properly */
+अटल व्योम __fw_fallback_set_समयout(पूर्णांक समयout)
+अणु
+	fw_fallback_config.loading_समयout = समयout;
+पूर्ण
 
 /*
- * use small loading timeout for caching devices' firmware because all these
- * firmware images have been loaded successfully at lease once, also system is
- * ready for completing firmware loading now. The maximum size of firmware in
+ * use small loading समयout क्रम caching devices' firmware because all these
+ * firmware images have been loaded successfully at lease once, also प्रणाली is
+ * पढ़ोy क्रम completing firmware loading now. The maximum size of firmware in
  * current distributions is about 2M bytes, so 10 secs should be enough.
  */
-void fw_fallback_set_cache_timeout(void)
-{
-	fw_fallback_config.old_timeout = __firmware_loading_timeout();
-	__fw_fallback_set_timeout(10);
-}
+व्योम fw_fallback_set_cache_समयout(व्योम)
+अणु
+	fw_fallback_config.old_समयout = __firmware_loading_समयout();
+	__fw_fallback_set_समयout(10);
+पूर्ण
 
-/* Restores the timeout to the value last configured during normal operation */
-void fw_fallback_set_default_timeout(void)
-{
-	__fw_fallback_set_timeout(fw_fallback_config.old_timeout);
-}
+/* Restores the समयout to the value last configured during normal operation */
+व्योम fw_fallback_set_शेष_समयout(व्योम)
+अणु
+	__fw_fallback_set_समयout(fw_fallback_config.old_समयout);
+पूर्ण
 
-static long firmware_loading_timeout(void)
-{
-	return __firmware_loading_timeout() > 0 ?
-		__firmware_loading_timeout() * HZ : MAX_JIFFY_OFFSET;
-}
+अटल दीर्घ firmware_loading_समयout(व्योम)
+अणु
+	वापस __firmware_loading_समयout() > 0 ?
+		__firmware_loading_समयout() * HZ : MAX_JIFFY_OFFSET;
+पूर्ण
 
-static inline bool fw_sysfs_done(struct fw_priv *fw_priv)
-{
-	return __fw_state_check(fw_priv, FW_STATUS_DONE);
-}
+अटल अंतरभूत bool fw_sysfs_करोne(काष्ठा fw_priv *fw_priv)
+अणु
+	वापस __fw_state_check(fw_priv, FW_STATUS_DONE);
+पूर्ण
 
-static inline bool fw_sysfs_loading(struct fw_priv *fw_priv)
-{
-	return __fw_state_check(fw_priv, FW_STATUS_LOADING);
-}
+अटल अंतरभूत bool fw_sysfs_loading(काष्ठा fw_priv *fw_priv)
+अणु
+	वापस __fw_state_check(fw_priv, FW_STATUS_LOADING);
+पूर्ण
 
-static inline int fw_sysfs_wait_timeout(struct fw_priv *fw_priv,  long timeout)
-{
-	return __fw_state_wait_common(fw_priv, timeout);
-}
+अटल अंतरभूत पूर्णांक fw_sysfs_रुको_समयout(काष्ठा fw_priv *fw_priv,  दीर्घ समयout)
+अणु
+	वापस __fw_state_रुको_common(fw_priv, समयout);
+पूर्ण
 
-struct fw_sysfs {
-	bool nowait;
-	struct device dev;
-	struct fw_priv *fw_priv;
-	struct firmware *fw;
-};
+काष्ठा fw_sysfs अणु
+	bool noरुको;
+	काष्ठा device dev;
+	काष्ठा fw_priv *fw_priv;
+	काष्ठा firmware *fw;
+पूर्ण;
 
-static struct fw_sysfs *to_fw_sysfs(struct device *dev)
-{
-	return container_of(dev, struct fw_sysfs, dev);
-}
+अटल काष्ठा fw_sysfs *to_fw_sysfs(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा fw_sysfs, dev);
+पूर्ण
 
-static void __fw_load_abort(struct fw_priv *fw_priv)
-{
+अटल व्योम __fw_load_पात(काष्ठा fw_priv *fw_priv)
+अणु
 	/*
-	 * There is a small window in which user can write to 'loading'
-	 * between loading done and disappearance of 'loading'
+	 * There is a small winकरोw in which user can ग_लिखो to 'loading'
+	 * between loading करोne and disappearance of 'loading'
 	 */
-	if (fw_sysfs_done(fw_priv))
-		return;
+	अगर (fw_sysfs_करोne(fw_priv))
+		वापस;
 
 	list_del_init(&fw_priv->pending_list);
-	fw_state_aborted(fw_priv);
-}
+	fw_state_पातed(fw_priv);
+पूर्ण
 
-static void fw_load_abort(struct fw_sysfs *fw_sysfs)
-{
-	struct fw_priv *fw_priv = fw_sysfs->fw_priv;
+अटल व्योम fw_load_पात(काष्ठा fw_sysfs *fw_sysfs)
+अणु
+	काष्ठा fw_priv *fw_priv = fw_sysfs->fw_priv;
 
-	__fw_load_abort(fw_priv);
-}
+	__fw_load_पात(fw_priv);
+पूर्ण
 
-static LIST_HEAD(pending_fw_head);
+अटल LIST_HEAD(pending_fw_head);
 
-void kill_pending_fw_fallback_reqs(bool only_kill_custom)
-{
-	struct fw_priv *fw_priv;
-	struct fw_priv *next;
+व्योम समाप्त_pending_fw_fallback_reqs(bool only_समाप्त_custom)
+अणु
+	काष्ठा fw_priv *fw_priv;
+	काष्ठा fw_priv *next;
 
 	mutex_lock(&fw_lock);
-	list_for_each_entry_safe(fw_priv, next, &pending_fw_head,
-				 pending_list) {
-		if (!fw_priv->need_uevent || !only_kill_custom)
-			 __fw_load_abort(fw_priv);
-	}
+	list_क्रम_each_entry_safe(fw_priv, next, &pending_fw_head,
+				 pending_list) अणु
+		अगर (!fw_priv->need_uevent || !only_समाप्त_custom)
+			 __fw_load_पात(fw_priv);
+	पूर्ण
 	mutex_unlock(&fw_lock);
-}
+पूर्ण
 
-static ssize_t timeout_show(struct class *class, struct class_attribute *attr,
-			    char *buf)
-{
-	return sysfs_emit(buf, "%d\n", __firmware_loading_timeout());
-}
+अटल sमाप_प्रकार समयout_show(काष्ठा class *class, काष्ठा class_attribute *attr,
+			    अक्षर *buf)
+अणु
+	वापस sysfs_emit(buf, "%d\n", __firmware_loading_समयout());
+पूर्ण
 
 /**
- * timeout_store() - set number of seconds to wait for firmware
- * @class: device class pointer
- * @attr: device attribute pointer
- * @buf: buffer to scan for timeout value
+ * समयout_store() - set number of seconds to रुको क्रम firmware
+ * @class: device class poपूर्णांकer
+ * @attr: device attribute poपूर्णांकer
+ * @buf: buffer to scan क्रम समयout value
  * @count: number of bytes in @buf
  *
- *	Sets the number of seconds to wait for the firmware.  Once
- *	this expires an error will be returned to the driver and no
+ *	Sets the number of seconds to रुको क्रम the firmware.  Once
+ *	this expires an error will be वापसed to the driver and no
  *	firmware will be provided.
  *
  *	Note: zero means 'wait forever'.
  **/
-static ssize_t timeout_store(struct class *class, struct class_attribute *attr,
-			     const char *buf, size_t count)
-{
-	int tmp_loading_timeout = simple_strtol(buf, NULL, 10);
+अटल sमाप_प्रकार समयout_store(काष्ठा class *class, काष्ठा class_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक पंचांगp_loading_समयout = simple_म_से_दीर्घ(buf, शून्य, 10);
 
-	if (tmp_loading_timeout < 0)
-		tmp_loading_timeout = 0;
+	अगर (पंचांगp_loading_समयout < 0)
+		पंचांगp_loading_समयout = 0;
 
-	__fw_fallback_set_timeout(tmp_loading_timeout);
+	__fw_fallback_set_समयout(पंचांगp_loading_समयout);
 
-	return count;
-}
-static CLASS_ATTR_RW(timeout);
+	वापस count;
+पूर्ण
+अटल CLASS_ATTR_RW(समयout);
 
-static struct attribute *firmware_class_attrs[] = {
-	&class_attr_timeout.attr,
-	NULL,
-};
+अटल काष्ठा attribute *firmware_class_attrs[] = अणु
+	&class_attr_समयout.attr,
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(firmware_class);
 
-static void fw_dev_release(struct device *dev)
-{
-	struct fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
+अटल व्योम fw_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
 
-	kfree(fw_sysfs);
-}
+	kमुक्त(fw_sysfs);
+पूर्ण
 
-static int do_firmware_uevent(struct fw_sysfs *fw_sysfs, struct kobj_uevent_env *env)
-{
-	if (add_uevent_var(env, "FIRMWARE=%s", fw_sysfs->fw_priv->fw_name))
-		return -ENOMEM;
-	if (add_uevent_var(env, "TIMEOUT=%i", __firmware_loading_timeout()))
-		return -ENOMEM;
-	if (add_uevent_var(env, "ASYNC=%d", fw_sysfs->nowait))
-		return -ENOMEM;
+अटल पूर्णांक करो_firmware_uevent(काष्ठा fw_sysfs *fw_sysfs, काष्ठा kobj_uevent_env *env)
+अणु
+	अगर (add_uevent_var(env, "FIRMWARE=%s", fw_sysfs->fw_priv->fw_name))
+		वापस -ENOMEM;
+	अगर (add_uevent_var(env, "TIMEOUT=%i", __firmware_loading_समयout()))
+		वापस -ENOMEM;
+	अगर (add_uevent_var(env, "ASYNC=%d", fw_sysfs->noरुको))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int firmware_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
-	int err = 0;
+अटल पूर्णांक firmware_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
+	पूर्णांक err = 0;
 
 	mutex_lock(&fw_lock);
-	if (fw_sysfs->fw_priv)
-		err = do_firmware_uevent(fw_sysfs, env);
+	अगर (fw_sysfs->fw_priv)
+		err = करो_firmware_uevent(fw_sysfs, env);
 	mutex_unlock(&fw_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct class firmware_class = {
+अटल काष्ठा class firmware_class = अणु
 	.name		= "firmware",
 	.class_groups	= firmware_class_groups,
 	.dev_uevent	= firmware_uevent,
 	.dev_release	= fw_dev_release,
-};
+पूर्ण;
 
-int register_sysfs_loader(void)
-{
-	return class_register(&firmware_class);
-}
+पूर्णांक रेजिस्टर_sysfs_loader(व्योम)
+अणु
+	वापस class_रेजिस्टर(&firmware_class);
+पूर्ण
 
-void unregister_sysfs_loader(void)
-{
-	class_unregister(&firmware_class);
-}
+व्योम unरेजिस्टर_sysfs_loader(व्योम)
+अणु
+	class_unरेजिस्टर(&firmware_class);
+पूर्ण
 
-static ssize_t firmware_loading_show(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
-	int loading = 0;
+अटल sमाप_प्रकार firmware_loading_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
+	पूर्णांक loading = 0;
 
 	mutex_lock(&fw_lock);
-	if (fw_sysfs->fw_priv)
+	अगर (fw_sysfs->fw_priv)
 		loading = fw_sysfs_loading(fw_sysfs->fw_priv);
 	mutex_unlock(&fw_lock);
 
-	return sysfs_emit(buf, "%d\n", loading);
-}
+	वापस sysfs_emit(buf, "%d\n", loading);
+पूर्ण
 
 /**
  * firmware_loading_store() - set value in the 'loading' control file
- * @dev: device pointer
- * @attr: device attribute pointer
- * @buf: buffer to scan for loading control value
+ * @dev: device poपूर्णांकer
+ * @attr: device attribute poपूर्णांकer
+ * @buf: buffer to scan क्रम loading control value
  * @count: number of bytes in @buf
  *
  *	The relevant values are:
@@ -235,31 +236,31 @@ static ssize_t firmware_loading_show(struct device *dev,
  *	 0: Conclude the load and hand the data to the driver code.
  *	-1: Conclude the load with an error and discard any written data.
  **/
-static ssize_t firmware_loading_store(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t count)
-{
-	struct fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
-	struct fw_priv *fw_priv;
-	ssize_t written = count;
-	int loading = simple_strtol(buf, NULL, 10);
+अटल sमाप_प्रकार firmware_loading_store(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
+	काष्ठा fw_priv *fw_priv;
+	sमाप_प्रकार written = count;
+	पूर्णांक loading = simple_म_से_दीर्घ(buf, शून्य, 10);
 
 	mutex_lock(&fw_lock);
 	fw_priv = fw_sysfs->fw_priv;
-	if (fw_state_is_aborted(fw_priv))
-		goto out;
+	अगर (fw_state_is_पातed(fw_priv))
+		जाओ out;
 
-	switch (loading) {
-	case 1:
+	चयन (loading) अणु
+	हाल 1:
 		/* discarding any previous partial load */
-		if (!fw_sysfs_done(fw_priv)) {
-			fw_free_paged_buf(fw_priv);
+		अगर (!fw_sysfs_करोne(fw_priv)) अणु
+			fw_मुक्त_paged_buf(fw_priv);
 			fw_state_start(fw_priv);
-		}
-		break;
-	case 0:
-		if (fw_sysfs_loading(fw_priv)) {
-			int rc;
+		पूर्ण
+		अवरोध;
+	हाल 0:
+		अगर (fw_sysfs_loading(fw_priv)) अणु
+			पूर्णांक rc;
 
 			/*
 			 * Several loading requests may be pending on
@@ -268,213 +269,213 @@ static ssize_t firmware_loading_store(struct device *dev,
 			 * is completed.
 			 * */
 			rc = fw_map_paged_buf(fw_priv);
-			if (rc)
+			अगर (rc)
 				dev_err(dev, "%s: map pages failed\n",
 					__func__);
-			else
+			अन्यथा
 				rc = security_kernel_post_load_data(fw_priv->data,
 						fw_priv->size,
 						LOADING_FIRMWARE, "blob");
 
 			/*
-			 * Same logic as fw_load_abort, only the DONE bit
+			 * Same logic as fw_load_पात, only the DONE bit
 			 * is ignored and we set ABORT only on failure.
 			 */
 			list_del_init(&fw_priv->pending_list);
-			if (rc) {
-				fw_state_aborted(fw_priv);
+			अगर (rc) अणु
+				fw_state_पातed(fw_priv);
 				written = rc;
-			} else {
-				fw_state_done(fw_priv);
-			}
-			break;
-		}
+			पूर्ण अन्यथा अणु
+				fw_state_करोne(fw_priv);
+			पूर्ण
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		dev_err(dev, "%s: unexpected value (%d)\n", __func__, loading);
 		fallthrough;
-	case -1:
-		fw_load_abort(fw_sysfs);
-		break;
-	}
+	हाल -1:
+		fw_load_पात(fw_sysfs);
+		अवरोध;
+	पूर्ण
 out:
 	mutex_unlock(&fw_lock);
-	return written;
-}
+	वापस written;
+पूर्ण
 
-static DEVICE_ATTR(loading, 0644, firmware_loading_show, firmware_loading_store);
+अटल DEVICE_ATTR(loading, 0644, firmware_loading_show, firmware_loading_store);
 
-static void firmware_rw_data(struct fw_priv *fw_priv, char *buffer,
-			   loff_t offset, size_t count, bool read)
-{
-	if (read)
-		memcpy(buffer, fw_priv->data + offset, count);
-	else
-		memcpy(fw_priv->data + offset, buffer, count);
-}
+अटल व्योम firmware_rw_data(काष्ठा fw_priv *fw_priv, अक्षर *buffer,
+			   loff_t offset, माप_प्रकार count, bool पढ़ो)
+अणु
+	अगर (पढ़ो)
+		स_नकल(buffer, fw_priv->data + offset, count);
+	अन्यथा
+		स_नकल(fw_priv->data + offset, buffer, count);
+पूर्ण
 
-static void firmware_rw(struct fw_priv *fw_priv, char *buffer,
-			loff_t offset, size_t count, bool read)
-{
-	while (count) {
-		void *page_data;
-		int page_nr = offset >> PAGE_SHIFT;
-		int page_ofs = offset & (PAGE_SIZE-1);
-		int page_cnt = min_t(size_t, PAGE_SIZE - page_ofs, count);
+अटल व्योम firmware_rw(काष्ठा fw_priv *fw_priv, अक्षर *buffer,
+			loff_t offset, माप_प्रकार count, bool पढ़ो)
+अणु
+	जबतक (count) अणु
+		व्योम *page_data;
+		पूर्णांक page_nr = offset >> PAGE_SHIFT;
+		पूर्णांक page_ofs = offset & (PAGE_SIZE-1);
+		पूर्णांक page_cnt = min_t(माप_प्रकार, PAGE_SIZE - page_ofs, count);
 
 		page_data = kmap(fw_priv->pages[page_nr]);
 
-		if (read)
-			memcpy(buffer, page_data + page_ofs, page_cnt);
-		else
-			memcpy(page_data + page_ofs, buffer, page_cnt);
+		अगर (पढ़ो)
+			स_नकल(buffer, page_data + page_ofs, page_cnt);
+		अन्यथा
+			स_नकल(page_data + page_ofs, buffer, page_cnt);
 
 		kunmap(fw_priv->pages[page_nr]);
 		buffer += page_cnt;
 		offset += page_cnt;
 		count -= page_cnt;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static ssize_t firmware_data_read(struct file *filp, struct kobject *kobj,
-				  struct bin_attribute *bin_attr,
-				  char *buffer, loff_t offset, size_t count)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
-	struct fw_priv *fw_priv;
-	ssize_t ret_count;
+अटल sमाप_प्रकार firmware_data_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
+				  काष्ठा bin_attribute *bin_attr,
+				  अक्षर *buffer, loff_t offset, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
+	काष्ठा fw_priv *fw_priv;
+	sमाप_प्रकार ret_count;
 
 	mutex_lock(&fw_lock);
 	fw_priv = fw_sysfs->fw_priv;
-	if (!fw_priv || fw_sysfs_done(fw_priv)) {
+	अगर (!fw_priv || fw_sysfs_करोne(fw_priv)) अणु
 		ret_count = -ENODEV;
-		goto out;
-	}
-	if (offset > fw_priv->size) {
+		जाओ out;
+	पूर्ण
+	अगर (offset > fw_priv->size) अणु
 		ret_count = 0;
-		goto out;
-	}
-	if (count > fw_priv->size - offset)
+		जाओ out;
+	पूर्ण
+	अगर (count > fw_priv->size - offset)
 		count = fw_priv->size - offset;
 
 	ret_count = count;
 
-	if (fw_priv->data)
+	अगर (fw_priv->data)
 		firmware_rw_data(fw_priv, buffer, offset, count, true);
-	else
+	अन्यथा
 		firmware_rw(fw_priv, buffer, offset, count, true);
 
 out:
 	mutex_unlock(&fw_lock);
-	return ret_count;
-}
+	वापस ret_count;
+पूर्ण
 
-static int fw_realloc_pages(struct fw_sysfs *fw_sysfs, int min_size)
-{
-	int err;
+अटल पूर्णांक fw_पुनः_स्मृति_pages(काष्ठा fw_sysfs *fw_sysfs, पूर्णांक min_size)
+अणु
+	पूर्णांक err;
 
 	err = fw_grow_paged_buf(fw_sysfs->fw_priv,
 				PAGE_ALIGN(min_size) >> PAGE_SHIFT);
-	if (err)
-		fw_load_abort(fw_sysfs);
-	return err;
-}
+	अगर (err)
+		fw_load_पात(fw_sysfs);
+	वापस err;
+पूर्ण
 
 /**
- * firmware_data_write() - write method for firmware
- * @filp: open sysfs file
- * @kobj: kobject for the device
- * @bin_attr: bin_attr structure
+ * firmware_data_ग_लिखो() - ग_लिखो method क्रम firmware
+ * @filp: खोलो sysfs file
+ * @kobj: kobject क्रम the device
+ * @bin_attr: bin_attr काष्ठाure
  * @buffer: buffer being written
- * @offset: buffer offset for write in total data store area
+ * @offset: buffer offset क्रम ग_लिखो in total data store area
  * @count: buffer size
  *
  *	Data written to the 'data' attribute will be later handed to
  *	the driver as a firmware image.
  **/
-static ssize_t firmware_data_write(struct file *filp, struct kobject *kobj,
-				   struct bin_attribute *bin_attr,
-				   char *buffer, loff_t offset, size_t count)
-{
-	struct device *dev = kobj_to_dev(kobj);
-	struct fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
-	struct fw_priv *fw_priv;
-	ssize_t retval;
+अटल sमाप_प्रकार firmware_data_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
+				   काष्ठा bin_attribute *bin_attr,
+				   अक्षर *buffer, loff_t offset, माप_प्रकार count)
+अणु
+	काष्ठा device *dev = kobj_to_dev(kobj);
+	काष्ठा fw_sysfs *fw_sysfs = to_fw_sysfs(dev);
+	काष्ठा fw_priv *fw_priv;
+	sमाप_प्रकार retval;
 
-	if (!capable(CAP_SYS_RAWIO))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_RAWIO))
+		वापस -EPERM;
 
 	mutex_lock(&fw_lock);
 	fw_priv = fw_sysfs->fw_priv;
-	if (!fw_priv || fw_sysfs_done(fw_priv)) {
+	अगर (!fw_priv || fw_sysfs_करोne(fw_priv)) अणु
 		retval = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (fw_priv->data) {
-		if (offset + count > fw_priv->allocated_size) {
+	अगर (fw_priv->data) अणु
+		अगर (offset + count > fw_priv->allocated_size) अणु
 			retval = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		firmware_rw_data(fw_priv, buffer, offset, count, false);
 		retval = count;
-	} else {
-		retval = fw_realloc_pages(fw_sysfs, offset + count);
-		if (retval)
-			goto out;
+	पूर्ण अन्यथा अणु
+		retval = fw_पुनः_स्मृति_pages(fw_sysfs, offset + count);
+		अगर (retval)
+			जाओ out;
 
 		retval = count;
 		firmware_rw(fw_priv, buffer, offset, count, false);
-	}
+	पूर्ण
 
-	fw_priv->size = max_t(size_t, offset + count, fw_priv->size);
+	fw_priv->size = max_t(माप_प्रकार, offset + count, fw_priv->size);
 out:
 	mutex_unlock(&fw_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static struct bin_attribute firmware_attr_data = {
-	.attr = { .name = "data", .mode = 0644 },
+अटल काष्ठा bin_attribute firmware_attr_data = अणु
+	.attr = अणु .name = "data", .mode = 0644 पूर्ण,
 	.size = 0,
-	.read = firmware_data_read,
-	.write = firmware_data_write,
-};
+	.पढ़ो = firmware_data_पढ़ो,
+	.ग_लिखो = firmware_data_ग_लिखो,
+पूर्ण;
 
-static struct attribute *fw_dev_attrs[] = {
+अटल काष्ठा attribute *fw_dev_attrs[] = अणु
 	&dev_attr_loading.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct bin_attribute *fw_dev_bin_attrs[] = {
+अटल काष्ठा bin_attribute *fw_dev_bin_attrs[] = अणु
 	&firmware_attr_data,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group fw_dev_attr_group = {
+अटल स्थिर काष्ठा attribute_group fw_dev_attr_group = अणु
 	.attrs = fw_dev_attrs,
 	.bin_attrs = fw_dev_bin_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *fw_dev_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *fw_dev_attr_groups[] = अणु
 	&fw_dev_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct fw_sysfs *
-fw_create_instance(struct firmware *firmware, const char *fw_name,
-		   struct device *device, u32 opt_flags)
-{
-	struct fw_sysfs *fw_sysfs;
-	struct device *f_dev;
+अटल काष्ठा fw_sysfs *
+fw_create_instance(काष्ठा firmware *firmware, स्थिर अक्षर *fw_name,
+		   काष्ठा device *device, u32 opt_flags)
+अणु
+	काष्ठा fw_sysfs *fw_sysfs;
+	काष्ठा device *f_dev;
 
-	fw_sysfs = kzalloc(sizeof(*fw_sysfs), GFP_KERNEL);
-	if (!fw_sysfs) {
+	fw_sysfs = kzalloc(माप(*fw_sysfs), GFP_KERNEL);
+	अगर (!fw_sysfs) अणु
 		fw_sysfs = ERR_PTR(-ENOMEM);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	fw_sysfs->nowait = !!(opt_flags & FW_OPT_NOWAIT);
+	fw_sysfs->noरुको = !!(opt_flags & FW_OPT_NOWAIT);
 	fw_sysfs->fw = firmware;
 	f_dev = &fw_sysfs->dev;
 
@@ -483,176 +484,176 @@ fw_create_instance(struct firmware *firmware, const char *fw_name,
 	f_dev->parent = device;
 	f_dev->class = &firmware_class;
 	f_dev->groups = fw_dev_attr_groups;
-exit:
-	return fw_sysfs;
-}
+निकास:
+	वापस fw_sysfs;
+पूर्ण
 
 /**
  * fw_load_sysfs_fallback() - load a firmware via the sysfs fallback mechanism
- * @fw_sysfs: firmware sysfs information for the firmware to load
- * @timeout: timeout to wait for the load
+ * @fw_sysfs: firmware sysfs inक्रमmation क्रम the firmware to load
+ * @समयout: समयout to रुको क्रम the load
  *
- * In charge of constructing a sysfs fallback interface for firmware loading.
+ * In अक्षरge of स्थिरructing a sysfs fallback पूर्णांकerface क्रम firmware loading.
  **/
-static int fw_load_sysfs_fallback(struct fw_sysfs *fw_sysfs, long timeout)
-{
-	int retval = 0;
-	struct device *f_dev = &fw_sysfs->dev;
-	struct fw_priv *fw_priv = fw_sysfs->fw_priv;
+अटल पूर्णांक fw_load_sysfs_fallback(काष्ठा fw_sysfs *fw_sysfs, दीर्घ समयout)
+अणु
+	पूर्णांक retval = 0;
+	काष्ठा device *f_dev = &fw_sysfs->dev;
+	काष्ठा fw_priv *fw_priv = fw_sysfs->fw_priv;
 
 	/* fall back on userspace loading */
-	if (!fw_priv->data)
+	अगर (!fw_priv->data)
 		fw_priv->is_paged_buf = true;
 
 	dev_set_uevent_suppress(f_dev, true);
 
 	retval = device_add(f_dev);
-	if (retval) {
+	अगर (retval) अणु
 		dev_err(f_dev, "%s: device_register failed\n", __func__);
-		goto err_put_dev;
-	}
+		जाओ err_put_dev;
+	पूर्ण
 
 	mutex_lock(&fw_lock);
 	list_add(&fw_priv->pending_list, &pending_fw_head);
 	mutex_unlock(&fw_lock);
 
-	if (fw_priv->opt_flags & FW_OPT_UEVENT) {
+	अगर (fw_priv->opt_flags & FW_OPT_UEVENT) अणु
 		fw_priv->need_uevent = true;
 		dev_set_uevent_suppress(f_dev, false);
 		dev_dbg(f_dev, "firmware: requesting %s\n", fw_priv->fw_name);
 		kobject_uevent(&fw_sysfs->dev.kobj, KOBJ_ADD);
-	} else {
-		timeout = MAX_JIFFY_OFFSET;
-	}
+	पूर्ण अन्यथा अणु
+		समयout = MAX_JIFFY_OFFSET;
+	पूर्ण
 
-	retval = fw_sysfs_wait_timeout(fw_priv, timeout);
-	if (retval < 0 && retval != -ENOENT) {
+	retval = fw_sysfs_रुको_समयout(fw_priv, समयout);
+	अगर (retval < 0 && retval != -ENOENT) अणु
 		mutex_lock(&fw_lock);
-		fw_load_abort(fw_sysfs);
+		fw_load_पात(fw_sysfs);
 		mutex_unlock(&fw_lock);
-	}
+	पूर्ण
 
-	if (fw_state_is_aborted(fw_priv)) {
-		if (retval == -ERESTARTSYS)
+	अगर (fw_state_is_पातed(fw_priv)) अणु
+		अगर (retval == -ERESTARTSYS)
 			retval = -EINTR;
-		else
+		अन्यथा
 			retval = -EAGAIN;
-	} else if (fw_priv->is_paged_buf && !fw_priv->data)
+	पूर्ण अन्यथा अगर (fw_priv->is_paged_buf && !fw_priv->data)
 		retval = -ENOMEM;
 
 	device_del(f_dev);
 err_put_dev:
 	put_device(f_dev);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int fw_load_from_user_helper(struct firmware *firmware,
-				    const char *name, struct device *device,
+अटल पूर्णांक fw_load_from_user_helper(काष्ठा firmware *firmware,
+				    स्थिर अक्षर *name, काष्ठा device *device,
 				    u32 opt_flags)
-{
-	struct fw_sysfs *fw_sysfs;
-	long timeout;
-	int ret;
+अणु
+	काष्ठा fw_sysfs *fw_sysfs;
+	दीर्घ समयout;
+	पूर्णांक ret;
 
-	timeout = firmware_loading_timeout();
-	if (opt_flags & FW_OPT_NOWAIT) {
-		timeout = usermodehelper_read_lock_wait(timeout);
-		if (!timeout) {
+	समयout = firmware_loading_समयout();
+	अगर (opt_flags & FW_OPT_NOWAIT) अणु
+		समयout = usermodehelper_पढ़ो_lock_रुको(समयout);
+		अगर (!समयout) अणु
 			dev_dbg(device, "firmware: %s loading timed out\n",
 				name);
-			return -EBUSY;
-		}
-	} else {
-		ret = usermodehelper_read_trylock();
-		if (WARN_ON(ret)) {
+			वापस -EBUSY;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ret = usermodehelper_पढ़ो_trylock();
+		अगर (WARN_ON(ret)) अणु
 			dev_err(device, "firmware: %s will not be loaded\n",
 				name);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	fw_sysfs = fw_create_instance(firmware, name, device, opt_flags);
-	if (IS_ERR(fw_sysfs)) {
+	अगर (IS_ERR(fw_sysfs)) अणु
 		ret = PTR_ERR(fw_sysfs);
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
 	fw_sysfs->fw_priv = firmware->priv;
-	ret = fw_load_sysfs_fallback(fw_sysfs, timeout);
+	ret = fw_load_sysfs_fallback(fw_sysfs, समयout);
 
-	if (!ret)
+	अगर (!ret)
 		ret = assign_fw(firmware, device);
 
 out_unlock:
-	usermodehelper_read_unlock();
+	usermodehelper_पढ़ो_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool fw_force_sysfs_fallback(u32 opt_flags)
-{
-	if (fw_fallback_config.force_sysfs_fallback)
-		return true;
-	if (!(opt_flags & FW_OPT_USERHELPER))
-		return false;
-	return true;
-}
+अटल bool fw_क्रमce_sysfs_fallback(u32 opt_flags)
+अणु
+	अगर (fw_fallback_config.क्रमce_sysfs_fallback)
+		वापस true;
+	अगर (!(opt_flags & FW_OPT_USERHELPER))
+		वापस false;
+	वापस true;
+पूर्ण
 
-static bool fw_run_sysfs_fallback(u32 opt_flags)
-{
-	int ret;
+अटल bool fw_run_sysfs_fallback(u32 opt_flags)
+अणु
+	पूर्णांक ret;
 
-	if (fw_fallback_config.ignore_sysfs_fallback) {
+	अगर (fw_fallback_config.ignore_sysfs_fallback) अणु
 		pr_info_once("Ignoring firmware sysfs fallback due to sysctl knob\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if ((opt_flags & FW_OPT_NOFALLBACK_SYSFS))
-		return false;
+	अगर ((opt_flags & FW_OPT_NOFALLBACK_SYSFS))
+		वापस false;
 
 	/* Also permit LSMs and IMA to fail firmware sysfs fallback */
 	ret = security_kernel_load_data(LOADING_FIRMWARE, true);
-	if (ret < 0)
-		return false;
+	अगर (ret < 0)
+		वापस false;
 
-	return fw_force_sysfs_fallback(opt_flags);
-}
+	वापस fw_क्रमce_sysfs_fallback(opt_flags);
+पूर्ण
 
 /**
  * firmware_fallback_sysfs() - use the fallback mechanism to find firmware
- * @fw: pointer to firmware image
- * @name: name of firmware file to look for
- * @device: device for which firmware is being loaded
+ * @fw: poपूर्णांकer to firmware image
+ * @name: name of firmware file to look क्रम
+ * @device: device क्रम which firmware is being loaded
  * @opt_flags: options to control firmware loading behaviour, as defined by
- *	       &enum fw_opt
- * @ret: return value from direct lookup which triggered the fallback mechanism
+ *	       &क्रमागत fw_opt
+ * @ret: वापस value from direct lookup which triggered the fallback mechanism
  *
- * This function is called if direct lookup for the firmware failed, it enables
+ * This function is called अगर direct lookup क्रम the firmware failed, it enables
  * a fallback mechanism through userspace by exposing a sysfs loading
- * interface. Userspace is in charge of loading the firmware through the sysfs
- * loading interface. This sysfs fallback mechanism may be disabled completely
- * on a system by setting the proc sysctl value ignore_sysfs_fallback to true.
- * If this is false we check if the internal API caller set the
- * @FW_OPT_NOFALLBACK_SYSFS flag, if so it would also disable the fallback
- * mechanism. A system may want to enforce the sysfs fallback mechanism at all
- * times, it can do this by setting ignore_sysfs_fallback to false and
- * force_sysfs_fallback to true.
- * Enabling force_sysfs_fallback is functionally equivalent to build a kernel
+ * पूर्णांकerface. Userspace is in अक्षरge of loading the firmware through the sysfs
+ * loading पूर्णांकerface. This sysfs fallback mechanism may be disabled completely
+ * on a प्रणाली by setting the proc sysctl value ignore_sysfs_fallback to true.
+ * If this is false we check अगर the पूर्णांकernal API caller set the
+ * @FW_OPT_NOFALLBACK_SYSFS flag, अगर so it would also disable the fallback
+ * mechanism. A प्रणाली may want to enक्रमce the sysfs fallback mechanism at all
+ * बार, it can करो this by setting ignore_sysfs_fallback to false and
+ * क्रमce_sysfs_fallback to true.
+ * Enabling क्रमce_sysfs_fallback is functionally equivalent to build a kernel
  * with CONFIG_FW_LOADER_USER_HELPER_FALLBACK.
  **/
-int firmware_fallback_sysfs(struct firmware *fw, const char *name,
-			    struct device *device,
+पूर्णांक firmware_fallback_sysfs(काष्ठा firmware *fw, स्थिर अक्षर *name,
+			    काष्ठा device *device,
 			    u32 opt_flags,
-			    int ret)
-{
-	if (!fw_run_sysfs_fallback(opt_flags))
-		return ret;
+			    पूर्णांक ret)
+अणु
+	अगर (!fw_run_sysfs_fallback(opt_flags))
+		वापस ret;
 
-	if (!(opt_flags & FW_OPT_NO_WARN))
+	अगर (!(opt_flags & FW_OPT_NO_WARN))
 		dev_warn(device, "Falling back to sysfs fallback for: %s\n",
 				 name);
-	else
+	अन्यथा
 		dev_dbg(device, "Falling back to sysfs fallback for: %s\n",
 				name);
-	return fw_load_from_user_helper(fw, name, device, opt_flags);
-}
+	वापस fw_load_from_user_helper(fw, name, device, opt_flags);
+पूर्ण

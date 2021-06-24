@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Perf PMU sysfs events attributes for available CPU-measurement counters
+ * Perf PMU sysfs events attributes क्रम available CPU-measurement counters
  *
  */
 
-#include <linux/slab.h>
-#include <linux/perf_event.h>
-#include <asm/cpu_mf.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/perf_event.h>
+#समावेश <यंत्र/cpu_mf.h>
 
 
 /* BEGIN: CPUM_CF COUNTER DEFINITIONS =================================== */
 
 CPUMF_EVENT_ATTR(cf_fvn1, CPU_CYCLES, 0x0000);
 CPUMF_EVENT_ATTR(cf_fvn1, INSTRUCTIONS, 0x0001);
-CPUMF_EVENT_ATTR(cf_fvn1, L1I_DIR_WRITES, 0x0002);
+CPUMF_EVENT_ATTR(cf_fvn1, L1I_सूची_WRITES, 0x0002);
 CPUMF_EVENT_ATTR(cf_fvn1, L1I_PENALTY_CYCLES, 0x0003);
 CPUMF_EVENT_ATTR(cf_fvn1, PROBLEM_STATE_CPU_CYCLES, 0x0020);
 CPUMF_EVENT_ATTR(cf_fvn1, PROBLEM_STATE_INSTRUCTIONS, 0x0021);
-CPUMF_EVENT_ATTR(cf_fvn1, PROBLEM_STATE_L1I_DIR_WRITES, 0x0022);
+CPUMF_EVENT_ATTR(cf_fvn1, PROBLEM_STATE_L1I_सूची_WRITES, 0x0022);
 CPUMF_EVENT_ATTR(cf_fvn1, PROBLEM_STATE_L1I_PENALTY_CYCLES, 0x0023);
-CPUMF_EVENT_ATTR(cf_fvn1, PROBLEM_STATE_L1D_DIR_WRITES, 0x0024);
+CPUMF_EVENT_ATTR(cf_fvn1, PROBLEM_STATE_L1D_सूची_WRITES, 0x0024);
 CPUMF_EVENT_ATTR(cf_fvn1, PROBLEM_STATE_L1D_PENALTY_CYCLES, 0x0025);
-CPUMF_EVENT_ATTR(cf_fvn1, L1D_DIR_WRITES, 0x0004);
+CPUMF_EVENT_ATTR(cf_fvn1, L1D_सूची_WRITES, 0x0004);
 CPUMF_EVENT_ATTR(cf_fvn1, L1D_PENALTY_CYCLES, 0x0005);
 CPUMF_EVENT_ATTR(cf_fvn3, CPU_CYCLES, 0x0000);
 CPUMF_EVENT_ATTR(cf_fvn3, INSTRUCTIONS, 0x0001);
-CPUMF_EVENT_ATTR(cf_fvn3, L1I_DIR_WRITES, 0x0002);
+CPUMF_EVENT_ATTR(cf_fvn3, L1I_सूची_WRITES, 0x0002);
 CPUMF_EVENT_ATTR(cf_fvn3, L1I_PENALTY_CYCLES, 0x0003);
 CPUMF_EVENT_ATTR(cf_fvn3, PROBLEM_STATE_CPU_CYCLES, 0x0020);
 CPUMF_EVENT_ATTR(cf_fvn3, PROBLEM_STATE_INSTRUCTIONS, 0x0021);
-CPUMF_EVENT_ATTR(cf_fvn3, L1D_DIR_WRITES, 0x0004);
+CPUMF_EVENT_ATTR(cf_fvn3, L1D_सूची_WRITES, 0x0004);
 CPUMF_EVENT_ATTR(cf_fvn3, L1D_PENALTY_CYCLES, 0x0005);
 CPUMF_EVENT_ATTR(cf_svn_12345, PRNG_FUNCTIONS, 0x0040);
 CPUMF_EVENT_ATTR(cf_svn_12345, PRNG_CYCLES, 0x0041);
@@ -296,35 +297,35 @@ CPUMF_EVENT_ATTR(cf_z15, DFLT_CCFINISH, 0x00109);
 CPUMF_EVENT_ATTR(cf_z15, MT_DIAG_CYCLES_ONE_THR_ACTIVE, 0x01c0);
 CPUMF_EVENT_ATTR(cf_z15, MT_DIAG_CYCLES_TWO_THR_ACTIVE, 0x01c1);
 
-static struct attribute *cpumcf_fvn1_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_fvn1_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_fvn1, CPU_CYCLES),
 	CPUMF_EVENT_PTR(cf_fvn1, INSTRUCTIONS),
-	CPUMF_EVENT_PTR(cf_fvn1, L1I_DIR_WRITES),
+	CPUMF_EVENT_PTR(cf_fvn1, L1I_सूची_WRITES),
 	CPUMF_EVENT_PTR(cf_fvn1, L1I_PENALTY_CYCLES),
 	CPUMF_EVENT_PTR(cf_fvn1, PROBLEM_STATE_CPU_CYCLES),
 	CPUMF_EVENT_PTR(cf_fvn1, PROBLEM_STATE_INSTRUCTIONS),
-	CPUMF_EVENT_PTR(cf_fvn1, PROBLEM_STATE_L1I_DIR_WRITES),
+	CPUMF_EVENT_PTR(cf_fvn1, PROBLEM_STATE_L1I_सूची_WRITES),
 	CPUMF_EVENT_PTR(cf_fvn1, PROBLEM_STATE_L1I_PENALTY_CYCLES),
-	CPUMF_EVENT_PTR(cf_fvn1, PROBLEM_STATE_L1D_DIR_WRITES),
+	CPUMF_EVENT_PTR(cf_fvn1, PROBLEM_STATE_L1D_सूची_WRITES),
 	CPUMF_EVENT_PTR(cf_fvn1, PROBLEM_STATE_L1D_PENALTY_CYCLES),
-	CPUMF_EVENT_PTR(cf_fvn1, L1D_DIR_WRITES),
+	CPUMF_EVENT_PTR(cf_fvn1, L1D_सूची_WRITES),
 	CPUMF_EVENT_PTR(cf_fvn1, L1D_PENALTY_CYCLES),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumcf_fvn3_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_fvn3_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_fvn3, CPU_CYCLES),
 	CPUMF_EVENT_PTR(cf_fvn3, INSTRUCTIONS),
-	CPUMF_EVENT_PTR(cf_fvn3, L1I_DIR_WRITES),
+	CPUMF_EVENT_PTR(cf_fvn3, L1I_सूची_WRITES),
 	CPUMF_EVENT_PTR(cf_fvn3, L1I_PENALTY_CYCLES),
 	CPUMF_EVENT_PTR(cf_fvn3, PROBLEM_STATE_CPU_CYCLES),
 	CPUMF_EVENT_PTR(cf_fvn3, PROBLEM_STATE_INSTRUCTIONS),
-	CPUMF_EVENT_PTR(cf_fvn3, L1D_DIR_WRITES),
+	CPUMF_EVENT_PTR(cf_fvn3, L1D_सूची_WRITES),
 	CPUMF_EVENT_PTR(cf_fvn3, L1D_PENALTY_CYCLES),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumcf_svn_12345_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_svn_12345_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_svn_12345, PRNG_FUNCTIONS),
 	CPUMF_EVENT_PTR(cf_svn_12345, PRNG_CYCLES),
 	CPUMF_EVENT_PTR(cf_svn_12345, PRNG_BLOCKED_FUNCTIONS),
@@ -341,10 +342,10 @@ static struct attribute *cpumcf_svn_12345_pmu_event_attr[] __initdata = {
 	CPUMF_EVENT_PTR(cf_svn_12345, AES_CYCLES),
 	CPUMF_EVENT_PTR(cf_svn_12345, AES_BLOCKED_FUNCTIONS),
 	CPUMF_EVENT_PTR(cf_svn_12345, AES_BLOCKED_CYCLES),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumcf_svn_6_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_svn_6_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_svn_12345, PRNG_FUNCTIONS),
 	CPUMF_EVENT_PTR(cf_svn_12345, PRNG_CYCLES),
 	CPUMF_EVENT_PTR(cf_svn_12345, PRNG_BLOCKED_FUNCTIONS),
@@ -365,10 +366,10 @@ static struct attribute *cpumcf_svn_6_pmu_event_attr[] __initdata = {
 	CPUMF_EVENT_PTR(cf_svn_6, ECC_CYCLES_COUNT),
 	CPUMF_EVENT_PTR(cf_svn_6, ECC_BLOCKED_FUNCTION_COUNT),
 	CPUMF_EVENT_PTR(cf_svn_6, ECC_BLOCKED_CYCLES_COUNT),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumcf_z10_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_z10_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_z10, L1I_L2_SOURCED_WRITES),
 	CPUMF_EVENT_PTR(cf_z10, L1D_L2_SOURCED_WRITES),
 	CPUMF_EVENT_PTR(cf_z10, L1I_L3_LOCAL_WRITES),
@@ -387,10 +388,10 @@ static struct attribute *cpumcf_z10_pmu_event_attr[] __initdata = {
 	CPUMF_EVENT_PTR(cf_z10, ITLB1_MISSES),
 	CPUMF_EVENT_PTR(cf_z10, DTLB1_MISSES),
 	CPUMF_EVENT_PTR(cf_z10, L2C_STORES_SENT),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumcf_z196_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_z196_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_z196, L1D_L2_SOURCED_WRITES),
 	CPUMF_EVENT_PTR(cf_z196, L1I_L2_SOURCED_WRITES),
 	CPUMF_EVENT_PTR(cf_z196, DTLB1_MISSES),
@@ -415,10 +416,10 @@ static struct attribute *cpumcf_z196_pmu_event_attr[] __initdata = {
 	CPUMF_EVENT_PTR(cf_z196, L1D_OFFCHIP_L3_SOURCED_WRITES),
 	CPUMF_EVENT_PTR(cf_z196, L1I_ONCHIP_L3_SOURCED_WRITES),
 	CPUMF_EVENT_PTR(cf_z196, L1I_OFFCHIP_L3_SOURCED_WRITES),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumcf_zec12_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_zec12_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_zec12, DTLB1_MISSES),
 	CPUMF_EVENT_PTR(cf_zec12, ITLB1_MISSES),
 	CPUMF_EVENT_PTR(cf_zec12, L1D_L2I_SOURCED_WRITES),
@@ -454,10 +455,10 @@ static struct attribute *cpumcf_zec12_pmu_event_attr[] __initdata = {
 	CPUMF_EVENT_PTR(cf_zec12, TX_NC_TABORT),
 	CPUMF_EVENT_PTR(cf_zec12, TX_C_TABORT_NO_SPECIAL),
 	CPUMF_EVENT_PTR(cf_zec12, TX_C_TABORT_SPECIAL),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumcf_z13_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_z13_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_z13, L1D_RO_EXCL_WRITES),
 	CPUMF_EVENT_PTR(cf_z13, DTLB1_WRITES),
 	CPUMF_EVENT_PTR(cf_z13, DTLB1_MISSES),
@@ -514,10 +515,10 @@ static struct attribute *cpumcf_z13_pmu_event_attr[] __initdata = {
 	CPUMF_EVENT_PTR(cf_z13, TX_C_TABORT_SPECIAL),
 	CPUMF_EVENT_PTR(cf_z13, MT_DIAG_CYCLES_ONE_THR_ACTIVE),
 	CPUMF_EVENT_PTR(cf_z13, MT_DIAG_CYCLES_TWO_THR_ACTIVE),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumcf_z14_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_z14_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_z14, L1D_RO_EXCL_WRITES),
 	CPUMF_EVENT_PTR(cf_z14, DTLB2_WRITES),
 	CPUMF_EVENT_PTR(cf_z14, DTLB2_MISSES),
@@ -571,10 +572,10 @@ static struct attribute *cpumcf_z14_pmu_event_attr[] __initdata = {
 	CPUMF_EVENT_PTR(cf_z14, TX_C_TABORT_SPECIAL),
 	CPUMF_EVENT_PTR(cf_z14, MT_DIAG_CYCLES_ONE_THR_ACTIVE),
 	CPUMF_EVENT_PTR(cf_z14, MT_DIAG_CYCLES_TWO_THR_ACTIVE),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct attribute *cpumcf_z15_pmu_event_attr[] __initdata = {
+अटल काष्ठा attribute *cpumcf_z15_pmu_event_attr[] __initdata = अणु
 	CPUMF_EVENT_PTR(cf_z15, L1D_RO_EXCL_WRITES),
 	CPUMF_EVENT_PTR(cf_z15, DTLB2_WRITES),
 	CPUMF_EVENT_PTR(cf_z15, DTLB2_MISSES),
@@ -632,130 +633,130 @@ static struct attribute *cpumcf_z15_pmu_event_attr[] __initdata = {
 	CPUMF_EVENT_PTR(cf_z15, DFLT_CCFINISH),
 	CPUMF_EVENT_PTR(cf_z15, MT_DIAG_CYCLES_ONE_THR_ACTIVE),
 	CPUMF_EVENT_PTR(cf_z15, MT_DIAG_CYCLES_TWO_THR_ACTIVE),
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /* END: CPUM_CF COUNTER DEFINITIONS ===================================== */
 
-static struct attribute_group cpumcf_pmu_events_group = {
+अटल काष्ठा attribute_group cpumcf_pmu_events_group = अणु
 	.name = "events",
-};
+पूर्ण;
 
 PMU_FORMAT_ATTR(event, "config:0-63");
 
-static struct attribute *cpumcf_pmu_format_attr[] = {
-	&format_attr_event.attr,
-	NULL,
-};
+अटल काष्ठा attribute *cpumcf_pmu_क्रमmat_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	शून्य,
+पूर्ण;
 
-static struct attribute_group cpumcf_pmu_format_group = {
+अटल काष्ठा attribute_group cpumcf_pmu_क्रमmat_group = अणु
 	.name = "format",
-	.attrs = cpumcf_pmu_format_attr,
-};
+	.attrs = cpumcf_pmu_क्रमmat_attr,
+पूर्ण;
 
-static const struct attribute_group *cpumcf_pmu_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *cpumcf_pmu_attr_groups[] = अणु
 	&cpumcf_pmu_events_group,
-	&cpumcf_pmu_format_group,
-	NULL,
-};
+	&cpumcf_pmu_क्रमmat_group,
+	शून्य,
+पूर्ण;
 
 
-static __init struct attribute **merge_attr(struct attribute **a,
-					    struct attribute **b,
-					    struct attribute **c)
-{
-	struct attribute **new;
-	int j, i;
+अटल __init काष्ठा attribute **merge_attr(काष्ठा attribute **a,
+					    काष्ठा attribute **b,
+					    काष्ठा attribute **c)
+अणु
+	काष्ठा attribute **new;
+	पूर्णांक j, i;
 
-	for (j = 0; a[j]; j++)
+	क्रम (j = 0; a[j]; j++)
 		;
-	for (i = 0; b[i]; i++)
+	क्रम (i = 0; b[i]; i++)
 		j++;
-	for (i = 0; c[i]; i++)
+	क्रम (i = 0; c[i]; i++)
 		j++;
 	j++;
 
-	new = kmalloc_array(j, sizeof(struct attribute *), GFP_KERNEL);
-	if (!new)
-		return NULL;
+	new = kदो_स्मृति_array(j, माप(काष्ठा attribute *), GFP_KERNEL);
+	अगर (!new)
+		वापस शून्य;
 	j = 0;
-	for (i = 0; a[i]; i++)
+	क्रम (i = 0; a[i]; i++)
 		new[j++] = a[i];
-	for (i = 0; b[i]; i++)
+	क्रम (i = 0; b[i]; i++)
 		new[j++] = b[i];
-	for (i = 0; c[i]; i++)
+	क्रम (i = 0; c[i]; i++)
 		new[j++] = c[i];
-	new[j] = NULL;
+	new[j] = शून्य;
 
-	return new;
-}
+	वापस new;
+पूर्ण
 
-__init const struct attribute_group **cpumf_cf_event_group(void)
-{
-	struct attribute **combined, **model, **cfvn, **csvn;
-	struct attribute *none[] = { NULL };
-	struct cpumf_ctr_info ci;
-	struct cpuid cpu_id;
+__init स्थिर काष्ठा attribute_group **cpumf_cf_event_group(व्योम)
+अणु
+	काष्ठा attribute **combined, **model, **cfvn, **csvn;
+	काष्ठा attribute *none[] = अणु शून्य पूर्ण;
+	काष्ठा cpumf_ctr_info ci;
+	काष्ठा cpuid cpu_id;
 
 	/* Determine generic counters set(s) */
 	qctri(&ci);
-	switch (ci.cfvn) {
-	case 1:
+	चयन (ci.cfvn) अणु
+	हाल 1:
 		cfvn = cpumcf_fvn1_pmu_event_attr;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		cfvn = cpumcf_fvn3_pmu_event_attr;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		cfvn = none;
-	}
+	पूर्ण
 
-	/* Determine version specific crypto set */
-	switch (ci.csvn) {
-	case 1 ... 5:
+	/* Determine version specअगरic crypto set */
+	चयन (ci.csvn) अणु
+	हाल 1 ... 5:
 		csvn = cpumcf_svn_12345_pmu_event_attr;
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		csvn = cpumcf_svn_6_pmu_event_attr;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		csvn = none;
-	}
+	पूर्ण
 
-	/* Determine model-specific counter set(s) */
+	/* Determine model-specअगरic counter set(s) */
 	get_cpu_id(&cpu_id);
-	switch (cpu_id.machine) {
-	case 0x2097:
-	case 0x2098:
+	चयन (cpu_id.machine) अणु
+	हाल 0x2097:
+	हाल 0x2098:
 		model = cpumcf_z10_pmu_event_attr;
-		break;
-	case 0x2817:
-	case 0x2818:
+		अवरोध;
+	हाल 0x2817:
+	हाल 0x2818:
 		model = cpumcf_z196_pmu_event_attr;
-		break;
-	case 0x2827:
-	case 0x2828:
+		अवरोध;
+	हाल 0x2827:
+	हाल 0x2828:
 		model = cpumcf_zec12_pmu_event_attr;
-		break;
-	case 0x2964:
-	case 0x2965:
+		अवरोध;
+	हाल 0x2964:
+	हाल 0x2965:
 		model = cpumcf_z13_pmu_event_attr;
-		break;
-	case 0x3906:
-	case 0x3907:
+		अवरोध;
+	हाल 0x3906:
+	हाल 0x3907:
 		model = cpumcf_z14_pmu_event_attr;
-		break;
-	case 0x8561:
-	case 0x8562:
+		अवरोध;
+	हाल 0x8561:
+	हाल 0x8562:
 		model = cpumcf_z15_pmu_event_attr;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		model = none;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	combined = merge_attr(cfvn, csvn, model);
-	if (combined)
+	अगर (combined)
 		cpumcf_pmu_events_group.attrs = combined;
-	return cpumcf_pmu_attr_groups;
-}
+	वापस cpumcf_pmu_attr_groups;
+पूर्ण

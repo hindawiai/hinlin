@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  Amiga Linux/m68k and Linux/PPC Zorro NS8390 Ethernet Driver
  *
@@ -5,13 +6,13 @@
  *
  *  ---------------------------------------------------------------------------
  *
- *  This program is based on all the other NE2000 drivers for Linux
+ *  This program is based on all the other NE2000 drivers क्रम Linux
  *
  *  ---------------------------------------------------------------------------
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of the Linux
- *  distribution for more details.
+ *  License.  See the file COPYING in the मुख्य directory of the Linux
+ *  distribution क्रम more details.
  *
  *  ---------------------------------------------------------------------------
  *
@@ -19,352 +20,352 @@
  *  Ethernet Controllers.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/zorro.h>
-#include <linux/jiffies.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/zorro.h>
+#समावेश <linux/jअगरfies.h>
 
-#include <asm/irq.h>
-#include <asm/amigaints.h>
-#include <asm/amigahw.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/amigaपूर्णांकs.h>
+#समावेश <यंत्र/amigahw.h>
 
-#define EI_SHIFT(x)		(ei_local->reg_offset[x])
-#define ei_inb(port)		in_8(port)
-#define ei_outb(val, port)	out_8(port, val)
-#define ei_inb_p(port)		in_8(port)
-#define ei_outb_p(val, port)	out_8(port, val)
+#घोषणा EI_SHIFT(x)		(ei_local->reg_offset[x])
+#घोषणा ei_inb(port)		in_8(port)
+#घोषणा ei_outb(val, port)	out_8(port, val)
+#घोषणा ei_inb_p(port)		in_8(port)
+#घोषणा ei_outb_p(val, port)	out_8(port, val)
 
-static const char version[] =
+अटल स्थिर अक्षर version[] =
 	"8390.c:v1.10cvs 9/23/94 Donald Becker (becker@cesdis.gsfc.nasa.gov)\n";
 
-#include "lib8390.c"
+#समावेश "lib8390.c"
 
-#define DRV_NAME	"zorro8390"
+#घोषणा DRV_NAME	"zorro8390"
 
-#define NE_BASE		(dev->base_addr)
-#define NE_CMD		(0x00 * 2)
-#define NE_DATAPORT	(0x10 * 2)	/* NatSemi-defined port window offset */
-#define NE_RESET	(0x1f * 2)	/* Issue a read to reset,
-					 * a write to clear. */
-#define NE_IO_EXTENT	(0x20 * 2)
+#घोषणा NE_BASE		(dev->base_addr)
+#घोषणा NE_CMD		(0x00 * 2)
+#घोषणा NE_DATAPORT	(0x10 * 2)	/* NatSemi-defined port winकरोw offset */
+#घोषणा NE_RESET	(0x1f * 2)	/* Issue a पढ़ो to reset,
+					 * a ग_लिखो to clear. */
+#घोषणा NE_IO_EXTENT	(0x20 * 2)
 
-#define NE_EN0_ISR	(0x07 * 2)
-#define NE_EN0_DCFG	(0x0e * 2)
+#घोषणा NE_EN0_ISR	(0x07 * 2)
+#घोषणा NE_EN0_DCFG	(0x0e * 2)
 
-#define NE_EN0_RSARLO	(0x08 * 2)
-#define NE_EN0_RSARHI	(0x09 * 2)
-#define NE_EN0_RCNTLO	(0x0a * 2)
-#define NE_EN0_RXCR	(0x0c * 2)
-#define NE_EN0_TXCR	(0x0d * 2)
-#define NE_EN0_RCNTHI	(0x0b * 2)
-#define NE_EN0_IMR	(0x0f * 2)
+#घोषणा NE_EN0_RSARLO	(0x08 * 2)
+#घोषणा NE_EN0_RSARHI	(0x09 * 2)
+#घोषणा NE_EN0_RCNTLO	(0x0a * 2)
+#घोषणा NE_EN0_RXCR	(0x0c * 2)
+#घोषणा NE_EN0_TXCR	(0x0d * 2)
+#घोषणा NE_EN0_RCNTHI	(0x0b * 2)
+#घोषणा NE_EN0_IMR	(0x0f * 2)
 
-#define NESM_START_PG	0x40	/* First page of TX buffer */
-#define NESM_STOP_PG	0x80	/* Last page +1 of RX ring */
+#घोषणा NESM_START_PG	0x40	/* First page of TX buffer */
+#घोषणा NESM_STOP_PG	0x80	/* Last page +1 of RX ring */
 
-#define WORDSWAP(a)	((((a) >> 8) & 0xff) | ((a) << 8))
+#घोषणा WORDSWAP(a)	((((a) >> 8) & 0xff) | ((a) << 8))
 
-static struct card_info {
+अटल काष्ठा card_info अणु
 	zorro_id id;
-	const char *name;
-	unsigned int offset;
-} cards[] = {
-	{ ZORRO_PROD_VILLAGE_TRONIC_ARIADNE2, "Ariadne II", 0x0600 },
-	{ ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF, "X-Surf", 0x8600 },
-};
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक offset;
+पूर्ण cards[] = अणु
+	अणु ZORRO_PROD_VILLAGE_TRONIC_ARIADNE2, "Ariadne II", 0x0600 पूर्ण,
+	अणु ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF, "X-Surf", 0x8600 पूर्ण,
+पूर्ण;
 
-/* Hard reset the card.  This used to pause for the same period that a
+/* Hard reset the card.  This used to छोड़ो क्रम the same period that a
  * 8390 reset command required, but that shouldn't be necessary.
  */
-static void zorro8390_reset_8390(struct net_device *dev)
-{
-	unsigned long reset_start_time = jiffies;
-	struct ei_device *ei_local = netdev_priv(dev);
+अटल व्योम zorro8390_reset_8390(काष्ठा net_device *dev)
+अणु
+	अचिन्हित दीर्घ reset_start_समय = jअगरfies;
+	काष्ठा ei_device *ei_local = netdev_priv(dev);
 
-	netif_dbg(ei_local, hw, dev, "resetting - t=%ld...\n", jiffies);
+	netअगर_dbg(ei_local, hw, dev, "resetting - t=%ld...\n", jअगरfies);
 
-	z_writeb(z_readb(NE_BASE + NE_RESET), NE_BASE + NE_RESET);
+	z_ग_लिखोb(z_पढ़ोb(NE_BASE + NE_RESET), NE_BASE + NE_RESET);
 
 	ei_status.txing = 0;
-	ei_status.dmaing = 0;
+	ei_status.dमुख्यg = 0;
 
 	/* This check _should_not_ be necessary, omit eventually. */
-	while ((z_readb(NE_BASE + NE_EN0_ISR) & ENISR_RESET) == 0)
-		if (time_after(jiffies, reset_start_time + 2 * HZ / 100)) {
+	जबतक ((z_पढ़ोb(NE_BASE + NE_EN0_ISR) & ENISR_RESET) == 0)
+		अगर (समय_after(jअगरfies, reset_start_समय + 2 * HZ / 100)) अणु
 			netdev_warn(dev, "%s: did not complete\n", __func__);
-			break;
-		}
-	z_writeb(ENISR_RESET, NE_BASE + NE_EN0_ISR);	/* Ack intr */
-}
+			अवरोध;
+		पूर्ण
+	z_ग_लिखोb(ENISR_RESET, NE_BASE + NE_EN0_ISR);	/* Ack पूर्णांकr */
+पूर्ण
 
-/* Grab the 8390 specific header. Similar to the block_input routine, but
- * we don't need to be concerned with ring wrap as the header will be at
+/* Grab the 8390 specअगरic header. Similar to the block_input routine, but
+ * we करोn't need to be concerned with ring wrap as the header will be at
  * the start of a page, so we optimize accordingly.
  */
-static void zorro8390_get_8390_hdr(struct net_device *dev,
-				   struct e8390_pkt_hdr *hdr, int ring_page)
-{
-	int nic_base = dev->base_addr;
-	int cnt;
-	short *ptrs;
+अटल व्योम zorro8390_get_8390_hdr(काष्ठा net_device *dev,
+				   काष्ठा e8390_pkt_hdr *hdr, पूर्णांक ring_page)
+अणु
+	पूर्णांक nic_base = dev->base_addr;
+	पूर्णांक cnt;
+	लघु *ptrs;
 
 	/* This *shouldn't* happen.
-	 * If it does, it's the last thing you'll see
+	 * If it करोes, it's the last thing you'll see
 	 */
-	if (ei_status.dmaing) {
+	अगर (ei_status.dमुख्यg) अणु
 		netdev_warn(dev,
 			    "%s: DMAing conflict [DMAstat:%d][irqlock:%d]\n",
-			    __func__, ei_status.dmaing, ei_status.irqlock);
-		return;
-	}
+			    __func__, ei_status.dमुख्यg, ei_status.irqlock);
+		वापस;
+	पूर्ण
 
-	ei_status.dmaing |= 0x01;
-	z_writeb(E8390_NODMA + E8390_PAGE0 + E8390_START, nic_base + NE_CMD);
-	z_writeb(ENISR_RDC, nic_base + NE_EN0_ISR);
-	z_writeb(sizeof(struct e8390_pkt_hdr), nic_base + NE_EN0_RCNTLO);
-	z_writeb(0, nic_base + NE_EN0_RCNTHI);
-	z_writeb(0, nic_base + NE_EN0_RSARLO);		/* On page boundary */
-	z_writeb(ring_page, nic_base + NE_EN0_RSARHI);
-	z_writeb(E8390_RREAD+E8390_START, nic_base + NE_CMD);
+	ei_status.dमुख्यg |= 0x01;
+	z_ग_लिखोb(E8390_NODMA + E8390_PAGE0 + E8390_START, nic_base + NE_CMD);
+	z_ग_लिखोb(ENISR_RDC, nic_base + NE_EN0_ISR);
+	z_ग_लिखोb(माप(काष्ठा e8390_pkt_hdr), nic_base + NE_EN0_RCNTLO);
+	z_ग_लिखोb(0, nic_base + NE_EN0_RCNTHI);
+	z_ग_लिखोb(0, nic_base + NE_EN0_RSARLO);		/* On page boundary */
+	z_ग_लिखोb(ring_page, nic_base + NE_EN0_RSARHI);
+	z_ग_लिखोb(E8390_RREAD+E8390_START, nic_base + NE_CMD);
 
-	ptrs = (short *)hdr;
-	for (cnt = 0; cnt < sizeof(struct e8390_pkt_hdr) >> 1; cnt++)
-		*ptrs++ = z_readw(NE_BASE + NE_DATAPORT);
+	ptrs = (लघु *)hdr;
+	क्रम (cnt = 0; cnt < माप(काष्ठा e8390_pkt_hdr) >> 1; cnt++)
+		*ptrs++ = z_पढ़ोw(NE_BASE + NE_DATAPORT);
 
-	z_writeb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack intr */
+	z_ग_लिखोb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack पूर्णांकr */
 
 	hdr->count = WORDSWAP(hdr->count);
 
-	ei_status.dmaing &= ~0x01;
-}
+	ei_status.dमुख्यg &= ~0x01;
+पूर्ण
 
 /* Block input and output, similar to the Crynwr packet driver.
  * If you are porting to a new ethercard, look at the packet driver source
- * for hints. The NEx000 doesn't share the on-board packet memory --
+ * क्रम hपूर्णांकs. The NEx000 करोesn't share the on-board packet memory --
  * you have to put the packet out through the "remote DMA" dataport
- * using z_writeb.
+ * using z_ग_लिखोb.
  */
-static void zorro8390_block_input(struct net_device *dev, int count,
-				  struct sk_buff *skb, int ring_offset)
-{
-	int nic_base = dev->base_addr;
-	char *buf = skb->data;
-	short *ptrs;
-	int cnt;
+अटल व्योम zorro8390_block_input(काष्ठा net_device *dev, पूर्णांक count,
+				  काष्ठा sk_buff *skb, पूर्णांक ring_offset)
+अणु
+	पूर्णांक nic_base = dev->base_addr;
+	अक्षर *buf = skb->data;
+	लघु *ptrs;
+	पूर्णांक cnt;
 
 	/* This *shouldn't* happen.
-	 * If it does, it's the last thing you'll see
+	 * If it करोes, it's the last thing you'll see
 	 */
-	if (ei_status.dmaing) {
+	अगर (ei_status.dमुख्यg) अणु
 		netdev_err(dev, "%s: DMAing conflict [DMAstat:%d][irqlock:%d]\n",
-			   __func__, ei_status.dmaing, ei_status.irqlock);
-		return;
-	}
-	ei_status.dmaing |= 0x01;
-	z_writeb(E8390_NODMA + E8390_PAGE0 + E8390_START, nic_base + NE_CMD);
-	z_writeb(ENISR_RDC, nic_base + NE_EN0_ISR);
-	z_writeb(count & 0xff, nic_base + NE_EN0_RCNTLO);
-	z_writeb(count >> 8, nic_base + NE_EN0_RCNTHI);
-	z_writeb(ring_offset & 0xff, nic_base + NE_EN0_RSARLO);
-	z_writeb(ring_offset >> 8, nic_base + NE_EN0_RSARHI);
-	z_writeb(E8390_RREAD+E8390_START, nic_base + NE_CMD);
-	ptrs = (short *)buf;
-	for (cnt = 0; cnt < count >> 1; cnt++)
-		*ptrs++ = z_readw(NE_BASE + NE_DATAPORT);
-	if (count & 0x01)
-		buf[count - 1] = z_readb(NE_BASE + NE_DATAPORT);
+			   __func__, ei_status.dमुख्यg, ei_status.irqlock);
+		वापस;
+	पूर्ण
+	ei_status.dमुख्यg |= 0x01;
+	z_ग_लिखोb(E8390_NODMA + E8390_PAGE0 + E8390_START, nic_base + NE_CMD);
+	z_ग_लिखोb(ENISR_RDC, nic_base + NE_EN0_ISR);
+	z_ग_लिखोb(count & 0xff, nic_base + NE_EN0_RCNTLO);
+	z_ग_लिखोb(count >> 8, nic_base + NE_EN0_RCNTHI);
+	z_ग_लिखोb(ring_offset & 0xff, nic_base + NE_EN0_RSARLO);
+	z_ग_लिखोb(ring_offset >> 8, nic_base + NE_EN0_RSARHI);
+	z_ग_लिखोb(E8390_RREAD+E8390_START, nic_base + NE_CMD);
+	ptrs = (लघु *)buf;
+	क्रम (cnt = 0; cnt < count >> 1; cnt++)
+		*ptrs++ = z_पढ़ोw(NE_BASE + NE_DATAPORT);
+	अगर (count & 0x01)
+		buf[count - 1] = z_पढ़ोb(NE_BASE + NE_DATAPORT);
 
-	z_writeb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack intr */
-	ei_status.dmaing &= ~0x01;
-}
+	z_ग_लिखोb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack पूर्णांकr */
+	ei_status.dमुख्यg &= ~0x01;
+पूर्ण
 
-static void zorro8390_block_output(struct net_device *dev, int count,
-				   const unsigned char *buf,
-				   const int start_page)
-{
-	int nic_base = NE_BASE;
-	unsigned long dma_start;
-	short *ptrs;
-	int cnt;
+अटल व्योम zorro8390_block_output(काष्ठा net_device *dev, पूर्णांक count,
+				   स्थिर अचिन्हित अक्षर *buf,
+				   स्थिर पूर्णांक start_page)
+अणु
+	पूर्णांक nic_base = NE_BASE;
+	अचिन्हित दीर्घ dma_start;
+	लघु *ptrs;
+	पूर्णांक cnt;
 
-	/* Round the count up for word writes.  Do we need to do this?
+	/* Round the count up क्रम word ग_लिखोs.  Do we need to करो this?
 	 * What effect will an odd byte count have on the 8390?
 	 * I should check someday.
 	 */
-	if (count & 0x01)
+	अगर (count & 0x01)
 		count++;
 
 	/* This *shouldn't* happen.
-	 * If it does, it's the last thing you'll see
+	 * If it करोes, it's the last thing you'll see
 	 */
-	if (ei_status.dmaing) {
+	अगर (ei_status.dमुख्यg) अणु
 		netdev_err(dev, "%s: DMAing conflict [DMAstat:%d][irqlock:%d]\n",
-			   __func__, ei_status.dmaing, ei_status.irqlock);
-		return;
-	}
-	ei_status.dmaing |= 0x01;
-	/* We should already be in page 0, but to be safe... */
-	z_writeb(E8390_PAGE0+E8390_START+E8390_NODMA, nic_base + NE_CMD);
+			   __func__, ei_status.dमुख्यg, ei_status.irqlock);
+		वापस;
+	पूर्ण
+	ei_status.dमुख्यg |= 0x01;
+	/* We should alपढ़ोy be in page 0, but to be safe... */
+	z_ग_लिखोb(E8390_PAGE0+E8390_START+E8390_NODMA, nic_base + NE_CMD);
 
-	z_writeb(ENISR_RDC, nic_base + NE_EN0_ISR);
+	z_ग_लिखोb(ENISR_RDC, nic_base + NE_EN0_ISR);
 
 	/* Now the normal output. */
-	z_writeb(count & 0xff, nic_base + NE_EN0_RCNTLO);
-	z_writeb(count >> 8,   nic_base + NE_EN0_RCNTHI);
-	z_writeb(0x00, nic_base + NE_EN0_RSARLO);
-	z_writeb(start_page, nic_base + NE_EN0_RSARHI);
+	z_ग_लिखोb(count & 0xff, nic_base + NE_EN0_RCNTLO);
+	z_ग_लिखोb(count >> 8,   nic_base + NE_EN0_RCNTHI);
+	z_ग_लिखोb(0x00, nic_base + NE_EN0_RSARLO);
+	z_ग_लिखोb(start_page, nic_base + NE_EN0_RSARHI);
 
-	z_writeb(E8390_RWRITE + E8390_START, nic_base + NE_CMD);
-	ptrs = (short *)buf;
-	for (cnt = 0; cnt < count >> 1; cnt++)
-		z_writew(*ptrs++, NE_BASE + NE_DATAPORT);
+	z_ग_लिखोb(E8390_RWRITE + E8390_START, nic_base + NE_CMD);
+	ptrs = (लघु *)buf;
+	क्रम (cnt = 0; cnt < count >> 1; cnt++)
+		z_ग_लिखोw(*ptrs++, NE_BASE + NE_DATAPORT);
 
-	dma_start = jiffies;
+	dma_start = jअगरfies;
 
-	while ((z_readb(NE_BASE + NE_EN0_ISR) & ENISR_RDC) == 0)
-		if (time_after(jiffies, dma_start + 2 * HZ / 100)) {
+	जबतक ((z_पढ़ोb(NE_BASE + NE_EN0_ISR) & ENISR_RDC) == 0)
+		अगर (समय_after(jअगरfies, dma_start + 2 * HZ / 100)) अणु
 					/* 20ms */
 			netdev_warn(dev, "timeout waiting for Tx RDC\n");
 			zorro8390_reset_8390(dev);
 			__NS8390_init(dev, 1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	z_writeb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack intr */
-	ei_status.dmaing &= ~0x01;
-}
+	z_ग_लिखोb(ENISR_RDC, nic_base + NE_EN0_ISR);	/* Ack पूर्णांकr */
+	ei_status.dमुख्यg &= ~0x01;
+पूर्ण
 
-static int zorro8390_open(struct net_device *dev)
-{
-	__ei_open(dev);
-	return 0;
-}
+अटल पूर्णांक zorro8390_खोलो(काष्ठा net_device *dev)
+अणु
+	__ei_खोलो(dev);
+	वापस 0;
+पूर्ण
 
-static int zorro8390_close(struct net_device *dev)
-{
-	struct ei_device *ei_local = netdev_priv(dev);
+अटल पूर्णांक zorro8390_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा ei_device *ei_local = netdev_priv(dev);
 
-	netif_dbg(ei_local, ifdown, dev, "Shutting down ethercard\n");
-	__ei_close(dev);
-	return 0;
-}
+	netअगर_dbg(ei_local, अगरकरोwn, dev, "Shutting down ethercard\n");
+	__ei_बंद(dev);
+	वापस 0;
+पूर्ण
 
-static void zorro8390_remove_one(struct zorro_dev *z)
-{
-	struct net_device *dev = zorro_get_drvdata(z);
+अटल व्योम zorro8390_हटाओ_one(काष्ठा zorro_dev *z)
+अणु
+	काष्ठा net_device *dev = zorro_get_drvdata(z);
 
-	unregister_netdev(dev);
-	free_irq(IRQ_AMIGA_PORTS, dev);
+	unरेजिस्टर_netdev(dev);
+	मुक्त_irq(IRQ_AMIGA_PORTS, dev);
 	release_mem_region(ZTWO_PADDR(dev->base_addr), NE_IO_EXTENT * 2);
-	free_netdev(dev);
-}
+	मुक्त_netdev(dev);
+पूर्ण
 
-static struct zorro_device_id zorro8390_zorro_tbl[] = {
-	{ ZORRO_PROD_VILLAGE_TRONIC_ARIADNE2, },
-	{ ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF, },
-	{ 0 }
-};
+अटल काष्ठा zorro_device_id zorro8390_zorro_tbl[] = अणु
+	अणु ZORRO_PROD_VILLAGE_TRONIC_ARIADNE2, पूर्ण,
+	अणु ZORRO_PROD_INDIVIDUAL_COMPUTERS_X_SURF, पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(zorro, zorro8390_zorro_tbl);
 
-static const struct net_device_ops zorro8390_netdev_ops = {
-	.ndo_open		= zorro8390_open,
-	.ndo_stop		= zorro8390_close,
-	.ndo_start_xmit		= __ei_start_xmit,
-	.ndo_tx_timeout		= __ei_tx_timeout,
-	.ndo_get_stats		= __ei_get_stats,
-	.ndo_set_rx_mode	= __ei_set_multicast_list,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= __ei_poll,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops zorro8390_netdev_ops = अणु
+	.nकरो_खोलो		= zorro8390_खोलो,
+	.nकरो_stop		= zorro8390_बंद,
+	.nकरो_start_xmit		= __ei_start_xmit,
+	.nकरो_tx_समयout		= __ei_tx_समयout,
+	.nकरो_get_stats		= __ei_get_stats,
+	.nकरो_set_rx_mode	= __ei_set_multicast_list,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	= __ei_poll,
+#पूर्ण_अगर
+पूर्ण;
 
-static int zorro8390_init(struct net_device *dev, unsigned long board,
-			  const char *name, void __iomem *ioaddr)
-{
-	int i;
-	int err;
-	unsigned char SA_prom[32];
-	int start_page, stop_page;
-	static u32 zorro8390_offsets[16] = {
+अटल पूर्णांक zorro8390_init(काष्ठा net_device *dev, अचिन्हित दीर्घ board,
+			  स्थिर अक्षर *name, व्योम __iomem *ioaddr)
+अणु
+	पूर्णांक i;
+	पूर्णांक err;
+	अचिन्हित अक्षर SA_prom[32];
+	पूर्णांक start_page, stop_page;
+	अटल u32 zorro8390_offsets[16] = अणु
 		0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e,
 		0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e,
-	};
+	पूर्ण;
 
 	/* Reset card. Who knows what dain-bramaged state it was left in. */
-	{
-		unsigned long reset_start_time = jiffies;
+	अणु
+		अचिन्हित दीर्घ reset_start_समय = jअगरfies;
 
-		z_writeb(z_readb(ioaddr + NE_RESET), ioaddr + NE_RESET);
+		z_ग_लिखोb(z_पढ़ोb(ioaddr + NE_RESET), ioaddr + NE_RESET);
 
-		while ((z_readb(ioaddr + NE_EN0_ISR) & ENISR_RESET) == 0)
-			if (time_after(jiffies,
-				       reset_start_time + 2 * HZ / 100)) {
+		जबतक ((z_पढ़ोb(ioaddr + NE_EN0_ISR) & ENISR_RESET) == 0)
+			अगर (समय_after(jअगरfies,
+				       reset_start_समय + 2 * HZ / 100)) अणु
 				netdev_warn(dev, "not found (no reset ack)\n");
-				return -ENODEV;
-			}
+				वापस -ENODEV;
+			पूर्ण
 
-		z_writeb(0xff, ioaddr + NE_EN0_ISR);	/* Ack all intr. */
-	}
+		z_ग_लिखोb(0xff, ioaddr + NE_EN0_ISR);	/* Ack all पूर्णांकr. */
+	पूर्ण
 
 	/* Read the 16 bytes of station address PROM.
-	 * We must first initialize registers,
-	 * similar to NS8390_init(eifdev, 0).
-	 * We can't reliably read the SAPROM address without this.
+	 * We must first initialize रेजिस्टरs,
+	 * similar to NS8390_init(eअगरdev, 0).
+	 * We can't reliably पढ़ो the SAPROM address without this.
 	 * (I learned the hard way!).
 	 */
-	{
-		static const struct {
+	अणु
+		अटल स्थिर काष्ठा अणु
 			u32 value;
 			u32 offset;
-		} program_seq[] = {
-			{E8390_NODMA + E8390_PAGE0 + E8390_STOP, NE_CMD},
+		पूर्ण program_seq[] = अणु
+			अणुE8390_NODMA + E8390_PAGE0 + E8390_STOP, NE_CMDपूर्ण,
 						/* Select page 0 */
-			{0x48,	NE_EN0_DCFG},	/* 0x48: Set byte-wide access */
-			{0x00,	NE_EN0_RCNTLO},	/* Clear the count regs */
-			{0x00,	NE_EN0_RCNTHI},
-			{0x00,	NE_EN0_IMR},	/* Mask completion irq */
-			{0xFF,	NE_EN0_ISR},
-			{E8390_RXOFF, NE_EN0_RXCR}, /* 0x20 Set to monitor */
-			{E8390_TXOFF, NE_EN0_TXCR}, /* 0x02 and loopback mode */
-			{32,	NE_EN0_RCNTLO},
-			{0x00,	NE_EN0_RCNTHI},
-			{0x00,	NE_EN0_RSARLO},	/* DMA starting at 0x0000 */
-			{0x00,	NE_EN0_RSARHI},
-			{E8390_RREAD + E8390_START, NE_CMD},
-		};
-		for (i = 0; i < ARRAY_SIZE(program_seq); i++)
-			z_writeb(program_seq[i].value,
+			अणु0x48,	NE_EN0_DCFGपूर्ण,	/* 0x48: Set byte-wide access */
+			अणु0x00,	NE_EN0_RCNTLOपूर्ण,	/* Clear the count regs */
+			अणु0x00,	NE_EN0_RCNTHIपूर्ण,
+			अणु0x00,	NE_EN0_IMRपूर्ण,	/* Mask completion irq */
+			अणु0xFF,	NE_EN0_ISRपूर्ण,
+			अणुE8390_RXOFF, NE_EN0_RXCRपूर्ण, /* 0x20 Set to monitor */
+			अणुE8390_TXOFF, NE_EN0_TXCRपूर्ण, /* 0x02 and loopback mode */
+			अणु32,	NE_EN0_RCNTLOपूर्ण,
+			अणु0x00,	NE_EN0_RCNTHIपूर्ण,
+			अणु0x00,	NE_EN0_RSARLOपूर्ण,	/* DMA starting at 0x0000 */
+			अणु0x00,	NE_EN0_RSARHIपूर्ण,
+			अणुE8390_RREAD + E8390_START, NE_CMDपूर्ण,
+		पूर्ण;
+		क्रम (i = 0; i < ARRAY_SIZE(program_seq); i++)
+			z_ग_लिखोb(program_seq[i].value,
 				 ioaddr + program_seq[i].offset);
-	}
-	for (i = 0; i < 16; i++) {
-		SA_prom[i] = z_readb(ioaddr + NE_DATAPORT);
-		(void)z_readb(ioaddr + NE_DATAPORT);
-	}
+	पूर्ण
+	क्रम (i = 0; i < 16; i++) अणु
+		SA_prom[i] = z_पढ़ोb(ioaddr + NE_DATAPORT);
+		(व्योम)z_पढ़ोb(ioaddr + NE_DATAPORT);
+	पूर्ण
 
-	/* We must set the 8390 for word mode. */
-	z_writeb(0x49, ioaddr + NE_EN0_DCFG);
+	/* We must set the 8390 क्रम word mode. */
+	z_ग_लिखोb(0x49, ioaddr + NE_EN0_DCFG);
 	start_page = NESM_START_PG;
 	stop_page = NESM_STOP_PG;
 
-	dev->base_addr = (unsigned long)ioaddr;
+	dev->base_addr = (अचिन्हित दीर्घ)ioaddr;
 	dev->irq = IRQ_AMIGA_PORTS;
 
 	/* Install the Interrupt handler */
-	i = request_irq(IRQ_AMIGA_PORTS, __ei_interrupt,
+	i = request_irq(IRQ_AMIGA_PORTS, __ei_पूर्णांकerrupt,
 			IRQF_SHARED, DRV_NAME, dev);
-	if (i)
-		return i;
+	अगर (i)
+		वापस i;
 
-	for (i = 0; i < ETH_ALEN; i++)
+	क्रम (i = 0; i < ETH_ALEN; i++)
 		dev->dev_addr[i] = SA_prom[i];
 
 	pr_debug("Found ethernet address: %pM\n", dev->dev_addr);
@@ -385,68 +386,68 @@ static int zorro8390_init(struct net_device *dev, unsigned long board,
 	dev->netdev_ops = &zorro8390_netdev_ops;
 	__NS8390_init(dev, 0);
 
-	err = register_netdev(dev);
-	if (err) {
-		free_irq(IRQ_AMIGA_PORTS, dev);
-		return err;
-	}
+	err = रेजिस्टर_netdev(dev);
+	अगर (err) अणु
+		मुक्त_irq(IRQ_AMIGA_PORTS, dev);
+		वापस err;
+	पूर्ण
 
 	netdev_info(dev, "%s at 0x%08lx, Ethernet Address %pM\n",
 		    name, board, dev->dev_addr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zorro8390_init_one(struct zorro_dev *z,
-			      const struct zorro_device_id *ent)
-{
-	struct net_device *dev;
-	unsigned long board, ioaddr;
-	int err, i;
+अटल पूर्णांक zorro8390_init_one(काष्ठा zorro_dev *z,
+			      स्थिर काष्ठा zorro_device_id *ent)
+अणु
+	काष्ठा net_device *dev;
+	अचिन्हित दीर्घ board, ioaddr;
+	पूर्णांक err, i;
 
-	for (i = ARRAY_SIZE(cards) - 1; i >= 0; i--)
-		if (z->id == cards[i].id)
-			break;
-	if (i < 0)
-		return -ENODEV;
+	क्रम (i = ARRAY_SIZE(cards) - 1; i >= 0; i--)
+		अगर (z->id == cards[i].id)
+			अवरोध;
+	अगर (i < 0)
+		वापस -ENODEV;
 
 	board = z->resource.start;
 	ioaddr = board + cards[i].offset;
 	dev = ____alloc_ei_netdev(0);
-	if (!dev)
-		return -ENOMEM;
-	if (!request_mem_region(ioaddr, NE_IO_EXTENT * 2, DRV_NAME)) {
-		free_netdev(dev);
-		return -EBUSY;
-	}
+	अगर (!dev)
+		वापस -ENOMEM;
+	अगर (!request_mem_region(ioaddr, NE_IO_EXTENT * 2, DRV_NAME)) अणु
+		मुक्त_netdev(dev);
+		वापस -EBUSY;
+	पूर्ण
 	err = zorro8390_init(dev, board, cards[i].name, ZTWO_VADDR(ioaddr));
-	if (err) {
+	अगर (err) अणु
 		release_mem_region(ioaddr, NE_IO_EXTENT * 2);
-		free_netdev(dev);
-		return err;
-	}
+		मुक्त_netdev(dev);
+		वापस err;
+	पूर्ण
 	zorro_set_drvdata(z, dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct zorro_driver zorro8390_driver = {
+अटल काष्ठा zorro_driver zorro8390_driver = अणु
 	.name		= "zorro8390",
 	.id_table	= zorro8390_zorro_tbl,
 	.probe		= zorro8390_init_one,
-	.remove		= zorro8390_remove_one,
-};
+	.हटाओ		= zorro8390_हटाओ_one,
+पूर्ण;
 
-static int __init zorro8390_init_module(void)
-{
-	return zorro_register_driver(&zorro8390_driver);
-}
+अटल पूर्णांक __init zorro8390_init_module(व्योम)
+अणु
+	वापस zorro_रेजिस्टर_driver(&zorro8390_driver);
+पूर्ण
 
-static void __exit zorro8390_cleanup_module(void)
-{
-	zorro_unregister_driver(&zorro8390_driver);
-}
+अटल व्योम __निकास zorro8390_cleanup_module(व्योम)
+अणु
+	zorro_unरेजिस्टर_driver(&zorro8390_driver);
+पूर्ण
 
 module_init(zorro8390_init_module);
-module_exit(zorro8390_cleanup_module);
+module_निकास(zorro8390_cleanup_module);
 
 MODULE_LICENSE("GPL");

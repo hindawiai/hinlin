@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/kmod.h>
-#include <linux/sched.h>
-#include <linux/interrupt.h>
-#include <linux/tty.h>
-#include <linux/tty_driver.h>
-#include <linux/file.h>
-#include <linux/mm.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/poll.h>
-#include <linux/proc_fs.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/wait.h>
-#include <linux/bitops.h>
-#include <linux/seq_file.h>
-#include <linux/uaccess.h>
-#include <linux/ratelimit.h>
-#include "tty.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kmod.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_driver.h>
+#समावेश <linux/file.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/ratelimit.h>
+#समावेश "tty.h"
 
-#undef LDISC_DEBUG_HANGUP
+#अघोषित LDISC_DEBUG_HANGUP
 
-#ifdef LDISC_DEBUG_HANGUP
-#define tty_ldisc_debug(tty, f, args...)	tty_debug(tty, f, ##args)
-#else
-#define tty_ldisc_debug(tty, f, args...)
-#endif
+#अगर_घोषित LDISC_DEBUG_HANGUP
+#घोषणा tty_ldisc_debug(tty, f, args...)	tty_debug(tty, f, ##args)
+#अन्यथा
+#घोषणा tty_ldisc_debug(tty, f, args...)
+#पूर्ण_अगर
 
-/* lockdep nested classes for tty->ldisc_sem */
-enum {
+/* lockdep nested classes क्रम tty->ldisc_sem */
+क्रमागत अणु
 	LDISC_SEM_NORMAL,
 	LDISC_SEM_OTHER,
-};
+पूर्ण;
 
 
 /*
  *	This guards the refcounted line discipline lists. The lock
  *	must be taken with irqs off because there are hangup path
- *	callers who will do ldisc lookups and cannot sleep.
+ *	callers who will करो ldisc lookups and cannot sleep.
  */
 
-static DEFINE_RAW_SPINLOCK(tty_ldiscs_lock);
+अटल DEFINE_RAW_SPINLOCK(tty_ldiscs_lock);
 /* Line disc dispatch table */
-static struct tty_ldisc_ops *tty_ldiscs[NR_LDISCS];
+अटल काष्ठा tty_ldisc_ops *tty_ldiscs[NR_LDISCS];
 
 /**
- *	tty_register_ldisc	-	install a line discipline
+ *	tty_रेजिस्टर_ldisc	-	install a line discipline
  *	@disc: ldisc number
- *	@new_ldisc: pointer to the ldisc object
+ *	@new_ldisc: poपूर्णांकer to the ldisc object
  *
- *	Installs a new line discipline into the kernel. The discipline
+ *	Installs a new line discipline पूर्णांकo the kernel. The discipline
  *	is set up as unreferenced and then made available to the kernel
- *	from this point onwards.
+ *	from this poपूर्णांक onwards.
  *
  *	Locking:
  *		takes tty_ldiscs_lock to guard against ldisc races
  */
 
-int tty_register_ldisc(int disc, struct tty_ldisc_ops *new_ldisc)
-{
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक tty_रेजिस्टर_ldisc(पूर्णांक disc, काष्ठा tty_ldisc_ops *new_ldisc)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (disc < N_TTY || disc >= NR_LDISCS)
-		return -EINVAL;
+	अगर (disc < N_TTY || disc >= NR_LDISCS)
+		वापस -EINVAL;
 
 	raw_spin_lock_irqsave(&tty_ldiscs_lock, flags);
 	tty_ldiscs[disc] = new_ldisc;
@@ -73,12 +74,12 @@ int tty_register_ldisc(int disc, struct tty_ldisc_ops *new_ldisc)
 	new_ldisc->refcount = 0;
 	raw_spin_unlock_irqrestore(&tty_ldiscs_lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL(tty_register_ldisc);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(tty_रेजिस्टर_ldisc);
 
 /**
- *	tty_unregister_ldisc	-	unload a line discipline
+ *	tty_unरेजिस्टर_ldisc	-	unload a line discipline
  *	@disc: ldisc number
  *
  *	Remove a line discipline from the kernel providing it is not
@@ -88,55 +89,55 @@ EXPORT_SYMBOL(tty_register_ldisc);
  *		takes tty_ldiscs_lock to guard against ldisc races
  */
 
-int tty_unregister_ldisc(int disc)
-{
-	unsigned long flags;
-	int ret = 0;
+पूर्णांक tty_unरेजिस्टर_ldisc(पूर्णांक disc)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	if (disc < N_TTY || disc >= NR_LDISCS)
-		return -EINVAL;
+	अगर (disc < N_TTY || disc >= NR_LDISCS)
+		वापस -EINVAL;
 
 	raw_spin_lock_irqsave(&tty_ldiscs_lock, flags);
-	if (tty_ldiscs[disc]->refcount)
+	अगर (tty_ldiscs[disc]->refcount)
 		ret = -EBUSY;
-	else
-		tty_ldiscs[disc] = NULL;
+	अन्यथा
+		tty_ldiscs[disc] = शून्य;
 	raw_spin_unlock_irqrestore(&tty_ldiscs_lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL(tty_unregister_ldisc);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(tty_unरेजिस्टर_ldisc);
 
-static struct tty_ldisc_ops *get_ldops(int disc)
-{
-	unsigned long flags;
-	struct tty_ldisc_ops *ldops, *ret;
+अटल काष्ठा tty_ldisc_ops *get_lकरोps(पूर्णांक disc)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा tty_ldisc_ops *lकरोps, *ret;
 
 	raw_spin_lock_irqsave(&tty_ldiscs_lock, flags);
 	ret = ERR_PTR(-EINVAL);
-	ldops = tty_ldiscs[disc];
-	if (ldops) {
+	lकरोps = tty_ldiscs[disc];
+	अगर (lकरोps) अणु
 		ret = ERR_PTR(-EAGAIN);
-		if (try_module_get(ldops->owner)) {
-			ldops->refcount++;
-			ret = ldops;
-		}
-	}
+		अगर (try_module_get(lकरोps->owner)) अणु
+			lकरोps->refcount++;
+			ret = lकरोps;
+		पूर्ण
+	पूर्ण
 	raw_spin_unlock_irqrestore(&tty_ldiscs_lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void put_ldops(struct tty_ldisc_ops *ldops)
-{
-	unsigned long flags;
+अटल व्योम put_lकरोps(काष्ठा tty_ldisc_ops *lकरोps)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&tty_ldiscs_lock, flags);
-	ldops->refcount--;
-	module_put(ldops->owner);
+	lकरोps->refcount--;
+	module_put(lकरोps->owner);
 	raw_spin_unlock_irqrestore(&tty_ldiscs_lock, flags);
-}
+पूर्ण
 
-static int tty_ldisc_autoload = IS_BUILTIN(CONFIG_LDISC_AUTOLOAD);
+अटल पूर्णांक tty_ldisc_स्वतःload = IS_BUILTIN(CONFIG_LDISC_AUTOLOAD);
 /**
  *	tty_ldisc_get		-	take a reference to an ldisc
  *	@tty: tty device
@@ -145,402 +146,402 @@ static int tty_ldisc_autoload = IS_BUILTIN(CONFIG_LDISC_AUTOLOAD);
  *	Takes a reference to a line discipline. Deals with refcounts and
  *	module locking counts.
  *
- *	Returns: -EINVAL if the discipline index is not [N_TTY..NR_LDISCS] or
- *			 if the discipline is not registered
- *		 -EAGAIN if request_module() failed to load or register the
+ *	Returns: -EINVAL अगर the discipline index is not [N_TTY..NR_LDISCS] or
+ *			 अगर the discipline is not रेजिस्टरed
+ *		 -EAGAIN अगर request_module() failed to load or रेजिस्टर the
  *			 discipline
- *		 -ENOMEM if allocation failure
+ *		 -ENOMEM अगर allocation failure
  *
- *		 Otherwise, returns a pointer to the discipline and bumps the
+ *		 Otherwise, वापसs a poपूर्णांकer to the discipline and bumps the
  *		 ref count
  *
  *	Locking:
  *		takes tty_ldiscs_lock to guard against ldisc races
  */
 
-static struct tty_ldisc *tty_ldisc_get(struct tty_struct *tty, int disc)
-{
-	struct tty_ldisc *ld;
-	struct tty_ldisc_ops *ldops;
+अटल काष्ठा tty_ldisc *tty_ldisc_get(काष्ठा tty_काष्ठा *tty, पूर्णांक disc)
+अणु
+	काष्ठा tty_ldisc *ld;
+	काष्ठा tty_ldisc_ops *lकरोps;
 
-	if (disc < N_TTY || disc >= NR_LDISCS)
-		return ERR_PTR(-EINVAL);
+	अगर (disc < N_TTY || disc >= NR_LDISCS)
+		वापस ERR_PTR(-EINVAL);
 
 	/*
 	 * Get the ldisc ops - we may need to request them to be loaded
 	 * dynamically and try again.
 	 */
-	ldops = get_ldops(disc);
-	if (IS_ERR(ldops)) {
-		if (!capable(CAP_SYS_MODULE) && !tty_ldisc_autoload)
-			return ERR_PTR(-EPERM);
+	lकरोps = get_lकरोps(disc);
+	अगर (IS_ERR(lकरोps)) अणु
+		अगर (!capable(CAP_SYS_MODULE) && !tty_ldisc_स्वतःload)
+			वापस ERR_PTR(-EPERM);
 		request_module("tty-ldisc-%d", disc);
-		ldops = get_ldops(disc);
-		if (IS_ERR(ldops))
-			return ERR_CAST(ldops);
-	}
+		lकरोps = get_lकरोps(disc);
+		अगर (IS_ERR(lकरोps))
+			वापस ERR_CAST(lकरोps);
+	पूर्ण
 
 	/*
 	 * There is no way to handle allocation failure of only 16 bytes.
-	 * Let's simplify error handling and save more memory.
+	 * Let's simplअगरy error handling and save more memory.
 	 */
-	ld = kmalloc(sizeof(struct tty_ldisc), GFP_KERNEL | __GFP_NOFAIL);
-	ld->ops = ldops;
+	ld = kदो_स्मृति(माप(काष्ठा tty_ldisc), GFP_KERNEL | __GFP_NOFAIL);
+	ld->ops = lकरोps;
 	ld->tty = tty;
 
-	return ld;
-}
+	वापस ld;
+पूर्ण
 
 /*
  *	tty_ldisc_put		-	release the ldisc
  *
  *	Complement of tty_ldisc_get().
  */
-static void tty_ldisc_put(struct tty_ldisc *ld)
-{
-	if (WARN_ON_ONCE(!ld))
-		return;
+अटल व्योम tty_ldisc_put(काष्ठा tty_ldisc *ld)
+अणु
+	अगर (WARN_ON_ONCE(!ld))
+		वापस;
 
-	put_ldops(ld->ops);
-	kfree(ld);
-}
+	put_lकरोps(ld->ops);
+	kमुक्त(ld);
+पूर्ण
 
-static void *tty_ldiscs_seq_start(struct seq_file *m, loff_t *pos)
-{
-	return (*pos < NR_LDISCS) ? pos : NULL;
-}
+अटल व्योम *tty_ldiscs_seq_start(काष्ठा seq_file *m, loff_t *pos)
+अणु
+	वापस (*pos < NR_LDISCS) ? pos : शून्य;
+पूर्ण
 
-static void *tty_ldiscs_seq_next(struct seq_file *m, void *v, loff_t *pos)
-{
+अटल व्योम *tty_ldiscs_seq_next(काष्ठा seq_file *m, व्योम *v, loff_t *pos)
+अणु
 	(*pos)++;
-	return (*pos < NR_LDISCS) ? pos : NULL;
-}
+	वापस (*pos < NR_LDISCS) ? pos : शून्य;
+पूर्ण
 
-static void tty_ldiscs_seq_stop(struct seq_file *m, void *v)
-{
-}
+अटल व्योम tty_ldiscs_seq_stop(काष्ठा seq_file *m, व्योम *v)
+अणु
+पूर्ण
 
-static int tty_ldiscs_seq_show(struct seq_file *m, void *v)
-{
-	int i = *(loff_t *)v;
-	struct tty_ldisc_ops *ldops;
+अटल पूर्णांक tty_ldiscs_seq_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	पूर्णांक i = *(loff_t *)v;
+	काष्ठा tty_ldisc_ops *lकरोps;
 
-	ldops = get_ldops(i);
-	if (IS_ERR(ldops))
-		return 0;
-	seq_printf(m, "%-10s %2d\n", ldops->name ? ldops->name : "???", i);
-	put_ldops(ldops);
-	return 0;
-}
+	lकरोps = get_lकरोps(i);
+	अगर (IS_ERR(lकरोps))
+		वापस 0;
+	seq_म_लिखो(m, "%-10s %2d\n", lकरोps->name ? lकरोps->name : "???", i);
+	put_lकरोps(lकरोps);
+	वापस 0;
+पूर्ण
 
-const struct seq_operations tty_ldiscs_seq_ops = {
+स्थिर काष्ठा seq_operations tty_ldiscs_seq_ops = अणु
 	.start	= tty_ldiscs_seq_start,
 	.next	= tty_ldiscs_seq_next,
 	.stop	= tty_ldiscs_seq_stop,
 	.show	= tty_ldiscs_seq_show,
-};
+पूर्ण;
 
 /**
- *	tty_ldisc_ref_wait	-	wait for the tty ldisc
+ *	tty_ldisc_ref_रुको	-	रुको क्रम the tty ldisc
  *	@tty: tty device
  *
- *	Dereference the line discipline for the terminal and take a
+ *	Dereference the line discipline क्रम the terminal and take a
  *	reference to it. If the line discipline is in flux then
- *	wait patiently until it changes.
+ *	रुको patiently until it changes.
  *
- *	Returns: NULL if the tty has been hungup and not re-opened with
+ *	Returns: शून्य अगर the tty has been hungup and not re-खोलोed with
  *		 a new file descriptor, otherwise valid ldisc reference
  *
- *	Note 1: Must not be called from an IRQ/timer context. The caller
+ *	Note 1: Must not be called from an IRQ/समयr context. The caller
  *	must also be careful not to hold other locks that will deadlock
  *	against a discipline change, such as an existing ldisc reference
- *	(which we check for)
+ *	(which we check क्रम)
  *
- *	Note 2: a file_operations routine (read/poll/write) should use this
- *	function to wait for any ldisc lifetime events to finish.
+ *	Note 2: a file_operations routine (पढ़ो/poll/ग_लिखो) should use this
+ *	function to रुको क्रम any ldisc lअगरeसमय events to finish.
  */
 
-struct tty_ldisc *tty_ldisc_ref_wait(struct tty_struct *tty)
-{
-	struct tty_ldisc *ld;
+काष्ठा tty_ldisc *tty_ldisc_ref_रुको(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा tty_ldisc *ld;
 
-	ldsem_down_read(&tty->ldisc_sem, MAX_SCHEDULE_TIMEOUT);
+	ldsem_करोwn_पढ़ो(&tty->ldisc_sem, MAX_SCHEDULE_TIMEOUT);
 	ld = tty->ldisc;
-	if (!ld)
-		ldsem_up_read(&tty->ldisc_sem);
-	return ld;
-}
-EXPORT_SYMBOL_GPL(tty_ldisc_ref_wait);
+	अगर (!ld)
+		ldsem_up_पढ़ो(&tty->ldisc_sem);
+	वापस ld;
+पूर्ण
+EXPORT_SYMBOL_GPL(tty_ldisc_ref_रुको);
 
 /**
  *	tty_ldisc_ref		-	get the tty ldisc
  *	@tty: tty device
  *
- *	Dereference the line discipline for the terminal and take a
+ *	Dereference the line discipline क्रम the terminal and take a
  *	reference to it. If the line discipline is in flux then
- *	return NULL. Can be called from IRQ and timer functions.
+ *	वापस शून्य. Can be called from IRQ and समयr functions.
  */
 
-struct tty_ldisc *tty_ldisc_ref(struct tty_struct *tty)
-{
-	struct tty_ldisc *ld = NULL;
+काष्ठा tty_ldisc *tty_ldisc_ref(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा tty_ldisc *ld = शून्य;
 
-	if (ldsem_down_read_trylock(&tty->ldisc_sem)) {
+	अगर (ldsem_करोwn_पढ़ो_trylock(&tty->ldisc_sem)) अणु
 		ld = tty->ldisc;
-		if (!ld)
-			ldsem_up_read(&tty->ldisc_sem);
-	}
-	return ld;
-}
+		अगर (!ld)
+			ldsem_up_पढ़ो(&tty->ldisc_sem);
+	पूर्ण
+	वापस ld;
+पूर्ण
 EXPORT_SYMBOL_GPL(tty_ldisc_ref);
 
 /**
- *	tty_ldisc_deref		-	free a tty ldisc reference
- *	@ld: reference to free up
+ *	tty_ldisc_deref		-	मुक्त a tty ldisc reference
+ *	@ld: reference to मुक्त up
  *
- *	Undoes the effect of tty_ldisc_ref or tty_ldisc_ref_wait. May
+ *	Unकरोes the effect of tty_ldisc_ref or tty_ldisc_ref_रुको. May
  *	be called in IRQ context.
  */
 
-void tty_ldisc_deref(struct tty_ldisc *ld)
-{
-	ldsem_up_read(&ld->tty->ldisc_sem);
-}
+व्योम tty_ldisc_deref(काष्ठा tty_ldisc *ld)
+अणु
+	ldsem_up_पढ़ो(&ld->tty->ldisc_sem);
+पूर्ण
 EXPORT_SYMBOL_GPL(tty_ldisc_deref);
 
 
-static inline int
-__tty_ldisc_lock(struct tty_struct *tty, unsigned long timeout)
-{
-	return ldsem_down_write(&tty->ldisc_sem, timeout);
-}
+अटल अंतरभूत पूर्णांक
+__tty_ldisc_lock(काष्ठा tty_काष्ठा *tty, अचिन्हित दीर्घ समयout)
+अणु
+	वापस ldsem_करोwn_ग_लिखो(&tty->ldisc_sem, समयout);
+पूर्ण
 
-static inline int
-__tty_ldisc_lock_nested(struct tty_struct *tty, unsigned long timeout)
-{
-	return ldsem_down_write_nested(&tty->ldisc_sem,
-				       LDISC_SEM_OTHER, timeout);
-}
+अटल अंतरभूत पूर्णांक
+__tty_ldisc_lock_nested(काष्ठा tty_काष्ठा *tty, अचिन्हित दीर्घ समयout)
+अणु
+	वापस ldsem_करोwn_ग_लिखो_nested(&tty->ldisc_sem,
+				       LDISC_SEM_OTHER, समयout);
+पूर्ण
 
-static inline void __tty_ldisc_unlock(struct tty_struct *tty)
-{
-	ldsem_up_write(&tty->ldisc_sem);
-}
+अटल अंतरभूत व्योम __tty_ldisc_unlock(काष्ठा tty_काष्ठा *tty)
+अणु
+	ldsem_up_ग_लिखो(&tty->ldisc_sem);
+पूर्ण
 
-int tty_ldisc_lock(struct tty_struct *tty, unsigned long timeout)
-{
-	int ret;
+पूर्णांक tty_ldisc_lock(काष्ठा tty_काष्ठा *tty, अचिन्हित दीर्घ समयout)
+अणु
+	पूर्णांक ret;
 
-	/* Kindly asking blocked readers to release the read side */
+	/* Kindly asking blocked पढ़ोers to release the पढ़ो side */
 	set_bit(TTY_LDISC_CHANGING, &tty->flags);
-	wake_up_interruptible_all(&tty->read_wait);
-	wake_up_interruptible_all(&tty->write_wait);
+	wake_up_पूर्णांकerruptible_all(&tty->पढ़ो_रुको);
+	wake_up_पूर्णांकerruptible_all(&tty->ग_लिखो_रुको);
 
-	ret = __tty_ldisc_lock(tty, timeout);
-	if (!ret)
-		return -EBUSY;
+	ret = __tty_ldisc_lock(tty, समयout);
+	अगर (!ret)
+		वापस -EBUSY;
 	set_bit(TTY_LDISC_HALTED, &tty->flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void tty_ldisc_unlock(struct tty_struct *tty)
-{
+व्योम tty_ldisc_unlock(काष्ठा tty_काष्ठा *tty)
+अणु
 	clear_bit(TTY_LDISC_HALTED, &tty->flags);
-	/* Can be cleared here - ldisc_unlock will wake up writers firstly */
+	/* Can be cleared here - ldisc_unlock will wake up ग_लिखोrs firstly */
 	clear_bit(TTY_LDISC_CHANGING, &tty->flags);
 	__tty_ldisc_unlock(tty);
-}
+पूर्ण
 
-static int
-tty_ldisc_lock_pair_timeout(struct tty_struct *tty, struct tty_struct *tty2,
-			    unsigned long timeout)
-{
-	int ret;
+अटल पूर्णांक
+tty_ldisc_lock_pair_समयout(काष्ठा tty_काष्ठा *tty, काष्ठा tty_काष्ठा *tty2,
+			    अचिन्हित दीर्घ समयout)
+अणु
+	पूर्णांक ret;
 
-	if (tty < tty2) {
-		ret = __tty_ldisc_lock(tty, timeout);
-		if (ret) {
-			ret = __tty_ldisc_lock_nested(tty2, timeout);
-			if (!ret)
+	अगर (tty < tty2) अणु
+		ret = __tty_ldisc_lock(tty, समयout);
+		अगर (ret) अणु
+			ret = __tty_ldisc_lock_nested(tty2, समयout);
+			अगर (!ret)
 				__tty_ldisc_unlock(tty);
-		}
-	} else {
-		/* if this is possible, it has lots of implications */
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* अगर this is possible, it has lots of implications */
 		WARN_ON_ONCE(tty == tty2);
-		if (tty2 && tty != tty2) {
-			ret = __tty_ldisc_lock(tty2, timeout);
-			if (ret) {
-				ret = __tty_ldisc_lock_nested(tty, timeout);
-				if (!ret)
+		अगर (tty2 && tty != tty2) अणु
+			ret = __tty_ldisc_lock(tty2, समयout);
+			अगर (ret) अणु
+				ret = __tty_ldisc_lock_nested(tty, समयout);
+				अगर (!ret)
 					__tty_ldisc_unlock(tty2);
-			}
-		} else
-			ret = __tty_ldisc_lock(tty, timeout);
-	}
+			पूर्ण
+		पूर्ण अन्यथा
+			ret = __tty_ldisc_lock(tty, समयout);
+	पूर्ण
 
-	if (!ret)
-		return -EBUSY;
+	अगर (!ret)
+		वापस -EBUSY;
 
 	set_bit(TTY_LDISC_HALTED, &tty->flags);
-	if (tty2)
+	अगर (tty2)
 		set_bit(TTY_LDISC_HALTED, &tty2->flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tty_ldisc_lock_pair(struct tty_struct *tty, struct tty_struct *tty2)
-{
-	tty_ldisc_lock_pair_timeout(tty, tty2, MAX_SCHEDULE_TIMEOUT);
-}
+अटल व्योम tty_ldisc_lock_pair(काष्ठा tty_काष्ठा *tty, काष्ठा tty_काष्ठा *tty2)
+अणु
+	tty_ldisc_lock_pair_समयout(tty, tty2, MAX_SCHEDULE_TIMEOUT);
+पूर्ण
 
-static void tty_ldisc_unlock_pair(struct tty_struct *tty,
-				  struct tty_struct *tty2)
-{
+अटल व्योम tty_ldisc_unlock_pair(काष्ठा tty_काष्ठा *tty,
+				  काष्ठा tty_काष्ठा *tty2)
+अणु
 	__tty_ldisc_unlock(tty);
-	if (tty2)
+	अगर (tty2)
 		__tty_ldisc_unlock(tty2);
-}
+पूर्ण
 
 /**
  *	tty_ldisc_flush	-	flush line discipline queue
  *	@tty: tty
  *
- *	Flush the line discipline queue (if any) and the tty flip buffers
- *	for this tty.
+ *	Flush the line discipline queue (अगर any) and the tty flip buffers
+ *	क्रम this tty.
  */
 
-void tty_ldisc_flush(struct tty_struct *tty)
-{
-	struct tty_ldisc *ld = tty_ldisc_ref(tty);
+व्योम tty_ldisc_flush(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा tty_ldisc *ld = tty_ldisc_ref(tty);
 
 	tty_buffer_flush(tty, ld);
-	if (ld)
+	अगर (ld)
 		tty_ldisc_deref(ld);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(tty_ldisc_flush);
 
 /**
  *	tty_set_termios_ldisc		-	set ldisc field
- *	@tty: tty structure
+ *	@tty: tty काष्ठाure
  *	@disc: line discipline number
  *
- *	This is probably overkill for real world processors but
- *	they are not on hot paths so a little discipline won't do
+ *	This is probably overसमाप्त क्रम real world processors but
+ *	they are not on hot paths so a little discipline won't करो
  *	any harm.
  *
- *	The line discipline-related tty_struct fields are reset to
- *	prevent the ldisc driver from re-using stale information for
+ *	The line discipline-related tty_काष्ठा fields are reset to
+ *	prevent the ldisc driver from re-using stale inक्रमmation क्रम
  *	the new ldisc instance.
  *
  *	Locking: takes termios_rwsem
  */
 
-static void tty_set_termios_ldisc(struct tty_struct *tty, int disc)
-{
-	down_write(&tty->termios_rwsem);
+अटल व्योम tty_set_termios_ldisc(काष्ठा tty_काष्ठा *tty, पूर्णांक disc)
+अणु
+	करोwn_ग_लिखो(&tty->termios_rwsem);
 	tty->termios.c_line = disc;
-	up_write(&tty->termios_rwsem);
+	up_ग_लिखो(&tty->termios_rwsem);
 
-	tty->disc_data = NULL;
+	tty->disc_data = शून्य;
 	tty->receive_room = 0;
-}
+पूर्ण
 
 /**
- *	tty_ldisc_open		-	open a line discipline
- *	@tty: tty we are opening the ldisc on
- *	@ld: discipline to open
+ *	tty_ldisc_खोलो		-	खोलो a line discipline
+ *	@tty: tty we are खोलोing the ldisc on
+ *	@ld: discipline to खोलो
  *
- *	A helper opening method. Also a convenient debugging and check
- *	point.
+ *	A helper खोलोing method. Also a convenient debugging and check
+ *	poपूर्णांक.
  *
- *	Locking: always called with BTM already held.
+ *	Locking: always called with BTM alपढ़ोy held.
  */
 
-static int tty_ldisc_open(struct tty_struct *tty, struct tty_ldisc *ld)
-{
+अटल पूर्णांक tty_ldisc_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा tty_ldisc *ld)
+अणु
 	WARN_ON(test_and_set_bit(TTY_LDISC_OPEN, &tty->flags));
-	if (ld->ops->open) {
-		int ret;
+	अगर (ld->ops->खोलो) अणु
+		पूर्णांक ret;
 		/* BTM here locks versus a hangup event */
-		ret = ld->ops->open(tty);
-		if (ret)
+		ret = ld->ops->खोलो(tty);
+		अगर (ret)
 			clear_bit(TTY_LDISC_OPEN, &tty->flags);
 
 		tty_ldisc_debug(tty, "%p: opened\n", ld);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- *	tty_ldisc_close		-	close a line discipline
- *	@tty: tty we are opening the ldisc on
- *	@ld: discipline to close
+ *	tty_ldisc_बंद		-	बंद a line discipline
+ *	@tty: tty we are खोलोing the ldisc on
+ *	@ld: discipline to बंद
  *
- *	A helper close method. Also a convenient debugging and check
- *	point.
+ *	A helper बंद method. Also a convenient debugging and check
+ *	poपूर्णांक.
  */
 
-static void tty_ldisc_close(struct tty_struct *tty, struct tty_ldisc *ld)
-{
-	lockdep_assert_held_write(&tty->ldisc_sem);
+अटल व्योम tty_ldisc_बंद(काष्ठा tty_काष्ठा *tty, काष्ठा tty_ldisc *ld)
+अणु
+	lockdep_निश्चित_held_ग_लिखो(&tty->ldisc_sem);
 	WARN_ON(!test_bit(TTY_LDISC_OPEN, &tty->flags));
 	clear_bit(TTY_LDISC_OPEN, &tty->flags);
-	if (ld->ops->close)
-		ld->ops->close(tty);
+	अगर (ld->ops->बंद)
+		ld->ops->बंद(tty);
 	tty_ldisc_debug(tty, "%p: closed\n", ld);
-}
+पूर्ण
 
 /**
- *	tty_ldisc_failto	-	helper for ldisc failback
- *	@tty: tty to open the ldisc on
+ *	tty_ldisc_failto	-	helper क्रम ldisc failback
+ *	@tty: tty to खोलो the ldisc on
  *	@ld: ldisc we are trying to fail back to
  *
- *	Helper to try and recover a tty when switching back to the old
+ *	Helper to try and recover a tty when चयनing back to the old
  *	ldisc fails and we need something attached.
  */
 
-static int tty_ldisc_failto(struct tty_struct *tty, int ld)
-{
-	struct tty_ldisc *disc = tty_ldisc_get(tty, ld);
-	int r;
+अटल पूर्णांक tty_ldisc_failto(काष्ठा tty_काष्ठा *tty, पूर्णांक ld)
+अणु
+	काष्ठा tty_ldisc *disc = tty_ldisc_get(tty, ld);
+	पूर्णांक r;
 
-	lockdep_assert_held_write(&tty->ldisc_sem);
-	if (IS_ERR(disc))
-		return PTR_ERR(disc);
+	lockdep_निश्चित_held_ग_लिखो(&tty->ldisc_sem);
+	अगर (IS_ERR(disc))
+		वापस PTR_ERR(disc);
 	tty->ldisc = disc;
 	tty_set_termios_ldisc(tty, ld);
-	r = tty_ldisc_open(tty, disc);
-	if (r < 0)
+	r = tty_ldisc_खोलो(tty, disc);
+	अगर (r < 0)
 		tty_ldisc_put(disc);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /**
- *	tty_ldisc_restore	-	helper for tty ldisc change
+ *	tty_ldisc_restore	-	helper क्रम tty ldisc change
  *	@tty: tty to recover
  *	@old: previous ldisc
  *
  *	Restore the previous line discipline or N_TTY when a line discipline
- *	change fails due to an open error
+ *	change fails due to an खोलो error
  */
 
-static void tty_ldisc_restore(struct tty_struct *tty, struct tty_ldisc *old)
-{
+अटल व्योम tty_ldisc_restore(काष्ठा tty_काष्ठा *tty, काष्ठा tty_ldisc *old)
+अणु
 	/* There is an outstanding reference here so this is safe */
-	if (tty_ldisc_failto(tty, old->ops->num) < 0) {
-		const char *name = tty_name(tty);
+	अगर (tty_ldisc_failto(tty, old->ops->num) < 0) अणु
+		स्थिर अक्षर *name = tty_name(tty);
 
 		pr_warn("Falling back ldisc for %s.\n", name);
 		/*
 		 * The traditional behaviour is to fall back to N_TTY, we
-		 * want to avoid falling back to N_NULL unless we have no
-		 * choice to avoid the risk of breaking anything
+		 * want to aव्योम falling back to N_शून्य unless we have no
+		 * choice to aव्योम the risk of अवरोधing anything
 		 */
-		if (tty_ldisc_failto(tty, N_TTY) < 0 &&
-		    tty_ldisc_failto(tty, N_NULL) < 0)
+		अगर (tty_ldisc_failto(tty, N_TTY) < 0 &&
+		    tty_ldisc_failto(tty, N_शून्य) < 0)
 			panic("Couldn't open N_NULL ldisc for %s.", name);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  *	tty_set_ldisc		-	set line discipline
@@ -550,65 +551,65 @@ static void tty_ldisc_restore(struct tty_struct *tty, struct tty_ldisc *old)
  *	Set the discipline of a tty line. Must be called from a process
  *	context. The ldisc change logic has to protect itself against any
  *	overlapping ldisc change (including on the other end of pty pairs),
- *	the close of one side of a tty/pty pair, and eventually hangup.
+ *	the बंद of one side of a tty/pty pair, and eventually hangup.
  */
 
-int tty_set_ldisc(struct tty_struct *tty, int disc)
-{
-	int retval;
-	struct tty_ldisc *old_ldisc, *new_ldisc;
+पूर्णांक tty_set_ldisc(काष्ठा tty_काष्ठा *tty, पूर्णांक disc)
+अणु
+	पूर्णांक retval;
+	काष्ठा tty_ldisc *old_ldisc, *new_ldisc;
 
 	new_ldisc = tty_ldisc_get(tty, disc);
-	if (IS_ERR(new_ldisc))
-		return PTR_ERR(new_ldisc);
+	अगर (IS_ERR(new_ldisc))
+		वापस PTR_ERR(new_ldisc);
 
 	tty_lock(tty);
 	retval = tty_ldisc_lock(tty, 5 * HZ);
-	if (retval)
-		goto err;
+	अगर (retval)
+		जाओ err;
 
-	if (!tty->ldisc) {
+	अगर (!tty->ldisc) अणु
 		retval = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Check the no-op case */
-	if (tty->ldisc->ops->num == disc)
-		goto out;
+	/* Check the no-op हाल */
+	अगर (tty->ldisc->ops->num == disc)
+		जाओ out;
 
-	if (test_bit(TTY_HUPPED, &tty->flags)) {
+	अगर (test_bit(TTY_HUPPED, &tty->flags)) अणु
 		/* We were raced by hangup */
 		retval = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	old_ldisc = tty->ldisc;
 
-	/* Shutdown the old discipline. */
-	tty_ldisc_close(tty, old_ldisc);
+	/* Shutकरोwn the old discipline. */
+	tty_ldisc_बंद(tty, old_ldisc);
 
 	/* Now set up the new line discipline. */
 	tty->ldisc = new_ldisc;
 	tty_set_termios_ldisc(tty, disc);
 
-	retval = tty_ldisc_open(tty, new_ldisc);
-	if (retval < 0) {
-		/* Back to the old one or N_TTY if we can't */
+	retval = tty_ldisc_खोलो(tty, new_ldisc);
+	अगर (retval < 0) अणु
+		/* Back to the old one or N_TTY अगर we can't */
 		tty_ldisc_put(new_ldisc);
 		tty_ldisc_restore(tty, old_ldisc);
-	}
+	पूर्ण
 
-	if (tty->ldisc->ops->num != old_ldisc->ops->num && tty->ops->set_ldisc) {
-		down_read(&tty->termios_rwsem);
+	अगर (tty->ldisc->ops->num != old_ldisc->ops->num && tty->ops->set_ldisc) अणु
+		करोwn_पढ़ो(&tty->termios_rwsem);
 		tty->ops->set_ldisc(tty);
-		up_read(&tty->termios_rwsem);
-	}
+		up_पढ़ो(&tty->termios_rwsem);
+	पूर्ण
 
 	/*
-	 * At this point we hold a reference to the new ldisc and a
+	 * At this poपूर्णांक we hold a reference to the new ldisc and a
 	 * reference to the old ldisc, or we hold two references to
-	 * the old ldisc (if it was restored as part of error cleanup
-	 * above). In either case, releasing a single reference from
+	 * the old ldisc (अगर it was restored as part of error cleanup
+	 * above). In either हाल, releasing a single reference from
 	 * the old ldisc is correct.
 	 */
 	new_ldisc = old_ldisc;
@@ -616,52 +617,52 @@ out:
 	tty_ldisc_unlock(tty);
 
 	/*
-	 * Restart the work queue in case no characters kick it off. Safe if
-	 * already running
+	 * Restart the work queue in हाल no अक्षरacters kick it off. Safe अगर
+	 * alपढ़ोy running
 	 */
 	tty_buffer_restart_work(tty->port);
 err:
 	tty_ldisc_put(new_ldisc);	/* drop the extra reference */
 	tty_unlock(tty);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL_GPL(tty_set_ldisc);
 
 /**
- *	tty_ldisc_kill	-	teardown ldisc
+ *	tty_ldisc_समाप्त	-	tearकरोwn ldisc
  *	@tty: tty being released
  *
- *	Perform final close of the ldisc and reset tty->ldisc
+ *	Perक्रमm final बंद of the ldisc and reset tty->ldisc
  */
-static void tty_ldisc_kill(struct tty_struct *tty)
-{
-	lockdep_assert_held_write(&tty->ldisc_sem);
-	if (!tty->ldisc)
-		return;
+अटल व्योम tty_ldisc_समाप्त(काष्ठा tty_काष्ठा *tty)
+अणु
+	lockdep_निश्चित_held_ग_लिखो(&tty->ldisc_sem);
+	अगर (!tty->ldisc)
+		वापस;
 	/*
-	 * Now kill off the ldisc
+	 * Now समाप्त off the ldisc
 	 */
-	tty_ldisc_close(tty, tty->ldisc);
+	tty_ldisc_बंद(tty, tty->ldisc);
 	tty_ldisc_put(tty->ldisc);
-	/* Force an oops if we mess this up */
-	tty->ldisc = NULL;
-}
+	/* Force an oops अगर we mess this up */
+	tty->ldisc = शून्य;
+पूर्ण
 
 /**
  *	tty_reset_termios	-	reset terminal state
  *	@tty: tty to reset
  *
- *	Restore a terminal to the driver default state.
+ *	Restore a terminal to the driver शेष state.
  */
 
-static void tty_reset_termios(struct tty_struct *tty)
-{
-	down_write(&tty->termios_rwsem);
+अटल व्योम tty_reset_termios(काष्ठा tty_काष्ठा *tty)
+अणु
+	करोwn_ग_लिखो(&tty->termios_rwsem);
 	tty->termios = tty->driver->init_termios;
 	tty->termios.c_ispeed = tty_termios_input_baud_rate(&tty->termios);
 	tty->termios.c_ospeed = tty_termios_baud_rate(&tty->termios);
-	up_write(&tty->termios_rwsem);
-}
+	up_ग_लिखो(&tty->termios_rwsem);
+पूर्ण
 
 
 /**
@@ -670,41 +671,41 @@ static void tty_reset_termios(struct tty_struct *tty)
  *	@disc: line discipline to reinitialize
  *
  *	Completely reinitialize the line discipline state, by closing the
- *	current instance, if there is one, and opening a new instance. If
- *	an error occurs opening the new non-N_TTY instance, the instance
- *	is dropped and tty->ldisc reset to NULL. The caller can then retry
+ *	current instance, अगर there is one, and खोलोing a new instance. If
+ *	an error occurs खोलोing the new non-N_TTY instance, the instance
+ *	is dropped and tty->ldisc reset to शून्य. The caller can then retry
  *	with N_TTY instead.
  *
- *	Returns 0 if successful, otherwise error code < 0
+ *	Returns 0 अगर successful, otherwise error code < 0
  */
 
-int tty_ldisc_reinit(struct tty_struct *tty, int disc)
-{
-	struct tty_ldisc *ld;
-	int retval;
+पूर्णांक tty_ldisc_reinit(काष्ठा tty_काष्ठा *tty, पूर्णांक disc)
+अणु
+	काष्ठा tty_ldisc *ld;
+	पूर्णांक retval;
 
-	lockdep_assert_held_write(&tty->ldisc_sem);
+	lockdep_निश्चित_held_ग_लिखो(&tty->ldisc_sem);
 	ld = tty_ldisc_get(tty, disc);
-	if (IS_ERR(ld)) {
+	अगर (IS_ERR(ld)) अणु
 		BUG_ON(disc == N_TTY);
-		return PTR_ERR(ld);
-	}
+		वापस PTR_ERR(ld);
+	पूर्ण
 
-	if (tty->ldisc) {
-		tty_ldisc_close(tty, tty->ldisc);
+	अगर (tty->ldisc) अणु
+		tty_ldisc_बंद(tty, tty->ldisc);
 		tty_ldisc_put(tty->ldisc);
-	}
+	पूर्ण
 
-	/* switch the line discipline */
+	/* चयन the line discipline */
 	tty->ldisc = ld;
 	tty_set_termios_ldisc(tty, disc);
-	retval = tty_ldisc_open(tty, tty->ldisc);
-	if (retval) {
+	retval = tty_ldisc_खोलो(tty, tty->ldisc);
+	अगर (retval) अणु
 		tty_ldisc_put(tty->ldisc);
-		tty->ldisc = NULL;
-	}
-	return retval;
-}
+		tty->ldisc = शून्य;
+	पूर्ण
+	वापस retval;
+पूर्ण
 
 /**
  *	tty_ldisc_hangup		-	hangup ldisc reset
@@ -712,188 +713,188 @@ int tty_ldisc_reinit(struct tty_struct *tty, int disc)
  *	@reinit: whether to re-initialise the tty
  *
  *	Some tty devices reset their termios when they receive a hangup
- *	event. In that situation we must also switch back to N_TTY properly
- *	before we reset the termios data.
+ *	event. In that situation we must also चयन back to N_TTY properly
+ *	beक्रमe we reset the termios data.
  *
  *	Locking: We can take the ldisc mutex as the rest of the code is
- *	careful to allow for this.
+ *	careful to allow क्रम this.
  *
- *	In the pty pair case this occurs in the close() path of the
+ *	In the pty pair हाल this occurs in the बंद() path of the
  *	tty itself so we must be careful about locking rules.
  */
 
-void tty_ldisc_hangup(struct tty_struct *tty, bool reinit)
-{
-	struct tty_ldisc *ld;
+व्योम tty_ldisc_hangup(काष्ठा tty_काष्ठा *tty, bool reinit)
+अणु
+	काष्ठा tty_ldisc *ld;
 
 	tty_ldisc_debug(tty, "%p: hangup\n", tty->ldisc);
 
 	ld = tty_ldisc_ref(tty);
-	if (ld != NULL) {
-		if (ld->ops->flush_buffer)
+	अगर (ld != शून्य) अणु
+		अगर (ld->ops->flush_buffer)
 			ld->ops->flush_buffer(tty);
 		tty_driver_flush_buffer(tty);
-		if ((test_bit(TTY_DO_WRITE_WAKEUP, &tty->flags)) &&
-		    ld->ops->write_wakeup)
-			ld->ops->write_wakeup(tty);
-		if (ld->ops->hangup)
+		अगर ((test_bit(TTY_DO_WRITE_WAKEUP, &tty->flags)) &&
+		    ld->ops->ग_लिखो_wakeup)
+			ld->ops->ग_लिखो_wakeup(tty);
+		अगर (ld->ops->hangup)
 			ld->ops->hangup(tty);
 		tty_ldisc_deref(ld);
-	}
+	पूर्ण
 
-	wake_up_interruptible_poll(&tty->write_wait, EPOLLOUT);
-	wake_up_interruptible_poll(&tty->read_wait, EPOLLIN);
+	wake_up_पूर्णांकerruptible_poll(&tty->ग_लिखो_रुको, EPOLLOUT);
+	wake_up_पूर्णांकerruptible_poll(&tty->पढ़ो_रुको, EPOLLIN);
 
 	/*
-	 * Shutdown the current line discipline, and reset it to
-	 * N_TTY if need be.
+	 * Shutकरोwn the current line discipline, and reset it to
+	 * N_TTY अगर need be.
 	 *
-	 * Avoid racing set_ldisc or tty_ldisc_release
+	 * Aव्योम racing set_ldisc or tty_ldisc_release
 	 */
 	tty_ldisc_lock(tty, MAX_SCHEDULE_TIMEOUT);
 
-	if (tty->driver->flags & TTY_DRIVER_RESET_TERMIOS)
+	अगर (tty->driver->flags & TTY_DRIVER_RESET_TERMIOS)
 		tty_reset_termios(tty);
 
-	if (tty->ldisc) {
-		if (reinit) {
-			if (tty_ldisc_reinit(tty, tty->termios.c_line) < 0 &&
+	अगर (tty->ldisc) अणु
+		अगर (reinit) अणु
+			अगर (tty_ldisc_reinit(tty, tty->termios.c_line) < 0 &&
 			    tty_ldisc_reinit(tty, N_TTY) < 0)
-				WARN_ON(tty_ldisc_reinit(tty, N_NULL) < 0);
-		} else
-			tty_ldisc_kill(tty);
-	}
+				WARN_ON(tty_ldisc_reinit(tty, N_शून्य) < 0);
+		पूर्ण अन्यथा
+			tty_ldisc_समाप्त(tty);
+	पूर्ण
 	tty_ldisc_unlock(tty);
-}
+पूर्ण
 
 /**
- *	tty_ldisc_setup			-	open line discipline
- *	@tty: tty being shut down
- *	@o_tty: pair tty for pty/tty pairs
+ *	tty_ldisc_setup			-	खोलो line discipline
+ *	@tty: tty being shut करोwn
+ *	@o_tty: pair tty क्रम pty/tty pairs
  *
- *	Called during the initial open of a tty/pty pair in order to set up the
+ *	Called during the initial खोलो of a tty/pty pair in order to set up the
  *	line disciplines and bind them to the tty. This has no locking issues
  *	as the device isn't yet active.
  */
 
-int tty_ldisc_setup(struct tty_struct *tty, struct tty_struct *o_tty)
-{
-	int retval = tty_ldisc_open(tty, tty->ldisc);
+पूर्णांक tty_ldisc_setup(काष्ठा tty_काष्ठा *tty, काष्ठा tty_काष्ठा *o_tty)
+अणु
+	पूर्णांक retval = tty_ldisc_खोलो(tty, tty->ldisc);
 
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	if (o_tty) {
+	अगर (o_tty) अणु
 		/*
 		 * Called without o_tty->ldisc_sem held, as o_tty has been
 		 * just allocated and no one has a reference to it.
 		 */
-		retval = tty_ldisc_open(o_tty, o_tty->ldisc);
-		if (retval) {
-			tty_ldisc_close(tty, tty->ldisc);
-			return retval;
-		}
-	}
-	return 0;
-}
+		retval = tty_ldisc_खोलो(o_tty, o_tty->ldisc);
+		अगर (retval) अणु
+			tty_ldisc_बंद(tty, tty->ldisc);
+			वापस retval;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  *	tty_ldisc_release		-	release line discipline
- *	@tty: tty being shut down (or one end of pty pair)
+ *	@tty: tty being shut करोwn (or one end of pty pair)
  *
- *	Called during the final close of a tty or a pty pair in order to shut
- *	down the line discpline layer. On exit, each tty's ldisc is NULL.
+ *	Called during the final बंद of a tty or a pty pair in order to shut
+ *	करोwn the line discpline layer. On निकास, each tty's ldisc is शून्य.
  */
 
-void tty_ldisc_release(struct tty_struct *tty)
-{
-	struct tty_struct *o_tty = tty->link;
+व्योम tty_ldisc_release(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा tty_काष्ठा *o_tty = tty->link;
 
 	/*
-	 * Shutdown this line discipline. As this is the final close,
-	 * it does not race with the set_ldisc code path.
+	 * Shutकरोwn this line discipline. As this is the final बंद,
+	 * it करोes not race with the set_ldisc code path.
 	 */
 
 	tty_ldisc_lock_pair(tty, o_tty);
-	tty_ldisc_kill(tty);
-	if (o_tty)
-		tty_ldisc_kill(o_tty);
+	tty_ldisc_समाप्त(tty);
+	अगर (o_tty)
+		tty_ldisc_समाप्त(o_tty);
 	tty_ldisc_unlock_pair(tty, o_tty);
 
 	/*
-	 * And the memory resources remaining (buffers, termios) will be
+	 * And the memory resources reमुख्यing (buffers, termios) will be
 	 * disposed of when the kref hits zero
 	 */
 
 	tty_ldisc_debug(tty, "released\n");
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(tty_ldisc_release);
 
 /**
- *	tty_ldisc_init		-	ldisc setup for new tty
+ *	tty_ldisc_init		-	ldisc setup क्रम new tty
  *	@tty: tty being allocated
  *
- *	Set up the line discipline objects for a newly allocated tty. Note that
- *	the tty structure is not completely set up when this call is made.
+ *	Set up the line discipline objects क्रम a newly allocated tty. Note that
+ *	the tty काष्ठाure is not completely set up when this call is made.
  */
 
-int tty_ldisc_init(struct tty_struct *tty)
-{
-	struct tty_ldisc *ld = tty_ldisc_get(tty, N_TTY);
+पूर्णांक tty_ldisc_init(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा tty_ldisc *ld = tty_ldisc_get(tty, N_TTY);
 
-	if (IS_ERR(ld))
-		return PTR_ERR(ld);
+	अगर (IS_ERR(ld))
+		वापस PTR_ERR(ld);
 	tty->ldisc = ld;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *	tty_ldisc_deinit	-	ldisc cleanup for new tty
+ *	tty_ldisc_deinit	-	ldisc cleanup क्रम new tty
  *	@tty: tty that was allocated recently
  *
- *	The tty structure must not becompletely set up (tty_ldisc_setup) when
+ *	The tty काष्ठाure must not becompletely set up (tty_ldisc_setup) when
  *      this call is made.
  */
-void tty_ldisc_deinit(struct tty_struct *tty)
-{
+व्योम tty_ldisc_deinit(काष्ठा tty_काष्ठा *tty)
+अणु
 	/* no ldisc_sem, tty is being destroyed */
-	if (tty->ldisc)
+	अगर (tty->ldisc)
 		tty_ldisc_put(tty->ldisc);
-	tty->ldisc = NULL;
-}
+	tty->ldisc = शून्य;
+पूर्ण
 
-static struct ctl_table tty_table[] = {
-	{
+अटल काष्ठा ctl_table tty_table[] = अणु
+	अणु
 		.procname	= "ldisc_autoload",
-		.data		= &tty_ldisc_autoload,
-		.maxlen		= sizeof(tty_ldisc_autoload),
+		.data		= &tty_ldisc_स्वतःload,
+		.maxlen		= माप(tty_ldisc_स्वतःload),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
+		.proc_handler	= proc_करोपूर्णांकvec,
 		.extra1		= SYSCTL_ZERO,
 		.extra2		= SYSCTL_ONE,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table tty_dir_table[] = {
-	{
+अटल काष्ठा ctl_table tty_dir_table[] = अणु
+	अणु
 		.procname	= "tty",
 		.mode		= 0555,
 		.child		= tty_table,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct ctl_table tty_root_table[] = {
-	{
+अटल काष्ठा ctl_table tty_root_table[] = अणु
+	अणु
 		.procname	= "dev",
 		.mode		= 0555,
 		.child		= tty_dir_table,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-void tty_sysctl_init(void)
-{
-	register_sysctl_table(tty_root_table);
-}
+व्योम tty_sysctl_init(व्योम)
+अणु
+	रेजिस्टर_sysctl_table(tty_root_table);
+पूर्ण

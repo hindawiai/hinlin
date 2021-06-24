@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,164 +16,164 @@
  * SOFTWARE.
  */
 
-#include <linux/errno.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
 
-#include <linux/interrupt.h>
-#include <linux/workqueue.h>
-#include <linux/spinlock.h>
-#include <linux/mempool.h>
-#include <scsi/scsi_tcq.h>
-#include <linux/ctype.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mempool.h>
+#समावेश <scsi/scsi_tcq.h>
+#समावेश <linux/प्रकार.स>
 
-#include "snic_io.h"
-#include "snic.h"
-#include "cq_enet_desc.h"
-#include "snic_fwint.h"
+#समावेश "snic_io.h"
+#समावेश "snic.h"
+#समावेश "cq_enet_desc.h"
+#समावेश "snic_fwint.h"
 
 /*
  * snic_handle_link : Handles link flaps.
  */
-void
-snic_handle_link(struct work_struct *work)
-{
-	struct snic *snic = container_of(work, struct snic, link_work);
+व्योम
+snic_handle_link(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा snic *snic = container_of(work, काष्ठा snic, link_work);
 
-	if (snic->config.xpt_type == SNIC_DAS)
-		return;
+	अगर (snic->config.xpt_type == SNIC_DAS)
+		वापस;
 
 	snic->link_status = svnic_dev_link_status(snic->vdev);
-	snic->link_down_cnt = svnic_dev_link_down_cnt(snic->vdev);
+	snic->link_करोwn_cnt = svnic_dev_link_करोwn_cnt(snic->vdev);
 	SNIC_HOST_INFO(snic->shost, "Link Event: Link %s.\n",
 		       ((snic->link_status) ? "Up" : "Down"));
 
 	SNIC_ASSERT_NOT_IMPL(1);
-}
+पूर्ण
 
 
 /*
- * snic_ver_enc : Encodes version str to int
- * version string is similar to netmask string
+ * snic_ver_enc : Encodes version str to पूर्णांक
+ * version string is similar to neपंचांगask string
  */
-static int
-snic_ver_enc(const char *s)
-{
-	int v[4] = {0};
-	int  i = 0, x = 0;
-	char c;
-	const char *p = s;
+अटल पूर्णांक
+snic_ver_enc(स्थिर अक्षर *s)
+अणु
+	पूर्णांक v[4] = अणु0पूर्ण;
+	पूर्णांक  i = 0, x = 0;
+	अक्षर c;
+	स्थिर अक्षर *p = s;
 
 	/* validate version string */
-	if ((strlen(s) > 15) || (strlen(s) < 7))
-		goto end;
+	अगर ((म_माप(s) > 15) || (म_माप(s) < 7))
+		जाओ end;
 
-	while ((c = *p++)) {
-		if (c == '.') {
+	जबतक ((c = *p++)) अणु
+		अगर (c == '.') अणु
 			i++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (i > 3 || !isdigit(c))
-			goto end;
+		अगर (i > 3 || !है_अंक(c))
+			जाओ end;
 
 		v[i] = v[i] * 10 + (c - '0');
-	}
+	पूर्ण
 
 	/* validate sub version numbers */
-	for (i = 3; i >= 0; i--)
-		if (v[i] > 0xff)
-			goto end;
+	क्रम (i = 3; i >= 0; i--)
+		अगर (v[i] > 0xff)
+			जाओ end;
 
 	x |= (v[0] << 24) | v[1] << 16 | v[2] << 8 | v[3];
 
 end:
-	if (x == 0) {
+	अगर (x == 0) अणु
 		SNIC_ERR("Invalid version string [%s].\n", s);
 
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return x;
-} /* end of snic_ver_enc */
+	वापस x;
+पूर्ण /* end of snic_ver_enc */
 
 /*
  * snic_qeueue_exch_ver_req :
  *
- * Queues Exchange Version Request, to communicate host information
- * in return, it gets firmware version details
+ * Queues Exchange Version Request, to communicate host inक्रमmation
+ * in वापस, it माला_लो firmware version details
  */
-int
-snic_queue_exch_ver_req(struct snic *snic)
-{
-	struct snic_req_info *rqi = NULL;
-	struct snic_host_req *req = NULL;
+पूर्णांक
+snic_queue_exch_ver_req(काष्ठा snic *snic)
+अणु
+	काष्ठा snic_req_info *rqi = शून्य;
+	काष्ठा snic_host_req *req = शून्य;
 	u32 ver = 0;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	SNIC_HOST_INFO(snic->shost, "Exch Ver Req Preparing...\n");
 
 	rqi = snic_req_init(snic, 0);
-	if (!rqi) {
+	अगर (!rqi) अणु
 		SNIC_HOST_ERR(snic->shost,
 			      "Queuing Exch Ver Req failed, err = %d\n",
 			      ret);
 
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	req = rqi_to_req(rqi);
 
 	/* Initialize snic_host_req */
 	snic_io_hdr_enc(&req->hdr, SNIC_REQ_EXCH_VER, 0, SCSI_NO_TAG,
-			snic->config.hid, 0, (ulong)rqi);
+			snic->config.hid, 0, (uदीर्घ)rqi);
 	ver = snic_ver_enc(SNIC_DRV_VERSION);
 	req->u.exch_ver.drvr_ver = cpu_to_le32(ver);
 	req->u.exch_ver.os_type = cpu_to_le32(SNIC_OS_LINUX);
 
 	snic_handle_untagged_req(snic, rqi);
 
-	ret = snic_queue_wq_desc(snic, req, sizeof(*req));
-	if (ret) {
+	ret = snic_queue_wq_desc(snic, req, माप(*req));
+	अगर (ret) अणु
 		snic_release_untagged_req(snic, rqi);
 		SNIC_HOST_ERR(snic->shost,
 			      "Queuing Exch Ver Req failed, err = %d\n",
 			      ret);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	SNIC_HOST_INFO(snic->shost, "Exch Ver Req is issued. ret = %d\n", ret);
 
 error:
-	return ret;
-} /* end of snic_queue_exch_ver_req */
+	वापस ret;
+पूर्ण /* end of snic_queue_exch_ver_req */
 
 /*
  * snic_io_exch_ver_cmpl_handler
  */
-void
-snic_io_exch_ver_cmpl_handler(struct snic *snic, struct snic_fw_req *fwreq)
-{
-	struct snic_req_info *rqi = NULL;
-	struct snic_exch_ver_rsp *exv_cmpl = &fwreq->u.exch_ver_cmpl;
+व्योम
+snic_io_exch_ver_cmpl_handler(काष्ठा snic *snic, काष्ठा snic_fw_req *fwreq)
+अणु
+	काष्ठा snic_req_info *rqi = शून्य;
+	काष्ठा snic_exch_ver_rsp *exv_cmpl = &fwreq->u.exch_ver_cmpl;
 	u8 typ, hdr_stat;
 	u32 cmnd_id, hid, max_sgs;
-	ulong ctx = 0;
-	unsigned long flags;
+	uदीर्घ ctx = 0;
+	अचिन्हित दीर्घ flags;
 
 	SNIC_HOST_INFO(snic->shost, "Exch Ver Compl Received.\n");
 	snic_io_hdr_dec(&fwreq->hdr, &typ, &hdr_stat, &cmnd_id, &hid, &ctx);
 	SNIC_BUG_ON(snic->config.hid != hid);
-	rqi = (struct snic_req_info *) ctx;
+	rqi = (काष्ठा snic_req_info *) ctx;
 
-	if (hdr_stat) {
+	अगर (hdr_stat) अणु
 		SNIC_HOST_ERR(snic->shost,
 			      "Exch Ver Completed w/ err status %d\n",
 			      hdr_stat);
 
-		goto exch_cmpl_end;
-	}
+		जाओ exch_cmpl_end;
+	पूर्ण
 
 	spin_lock_irqsave(&snic->snic_lock, flags);
 	snic->fwinfo.fw_ver = le32_to_cpu(exv_cmpl->version);
@@ -181,7 +182,7 @@ snic_io_exch_ver_cmpl_handler(struct snic *snic, struct snic_fw_req *fwreq)
 	snic->fwinfo.max_sgs_per_cmd = le32_to_cpu(exv_cmpl->max_sgs_per_cmd);
 	snic->fwinfo.max_io_sz = le32_to_cpu(exv_cmpl->max_io_sz);
 	snic->fwinfo.max_tgts = le32_to_cpu(exv_cmpl->max_tgts);
-	snic->fwinfo.io_tmo = le16_to_cpu(exv_cmpl->io_timeout);
+	snic->fwinfo.io_पंचांगo = le16_to_cpu(exv_cmpl->io_समयout);
 
 	SNIC_HOST_INFO(snic->shost,
 		       "vers %u hid %u max_concur_ios %u max_sgs_per_cmd %u max_io_sz %u max_tgts %u fw tmo %u\n",
@@ -191,7 +192,7 @@ snic_io_exch_ver_cmpl_handler(struct snic *snic, struct snic_fw_req *fwreq)
 		       snic->fwinfo.max_sgs_per_cmd,
 		       snic->fwinfo.max_io_sz,
 		       snic->fwinfo.max_tgts,
-		       snic->fwinfo.io_tmo);
+		       snic->fwinfo.io_पंचांगo);
 
 	SNIC_HOST_INFO(snic->shost,
 		       "HBA Capabilities = 0x%x\n",
@@ -199,23 +200,23 @@ snic_io_exch_ver_cmpl_handler(struct snic *snic, struct snic_fw_req *fwreq)
 
 	/* Updating SGList size */
 	max_sgs = snic->fwinfo.max_sgs_per_cmd;
-	if (max_sgs && max_sgs < SNIC_MAX_SG_DESC_CNT) {
+	अगर (max_sgs && max_sgs < SNIC_MAX_SG_DESC_CNT) अणु
 		snic->shost->sg_tablesize = max_sgs;
 		SNIC_HOST_INFO(snic->shost, "Max SGs set to %d\n",
 			       snic->shost->sg_tablesize);
-	} else if (max_sgs > snic->shost->sg_tablesize) {
+	पूर्ण अन्यथा अगर (max_sgs > snic->shost->sg_tablesize) अणु
 		SNIC_HOST_INFO(snic->shost,
 			       "Target type %d Supports Larger Max SGList %d than driver's Max SG List %d.\n",
 			       snic->config.xpt_type, max_sgs,
 			       snic->shost->sg_tablesize);
-	}
+	पूर्ण
 
-	if (snic->shost->can_queue > snic->fwinfo.max_concur_ios)
+	अगर (snic->shost->can_queue > snic->fwinfo.max_concur_ios)
 		snic->shost->can_queue = snic->fwinfo.max_concur_ios;
 
 	snic->shost->max_sectors = snic->fwinfo.max_io_sz >> 9;
-	if (snic->fwinfo.wait)
-		complete(snic->fwinfo.wait);
+	अगर (snic->fwinfo.रुको)
+		complete(snic->fwinfo.रुको);
 
 	spin_unlock_irqrestore(&snic->snic_lock, flags);
 
@@ -223,52 +224,52 @@ exch_cmpl_end:
 	snic_release_untagged_req(snic, rqi);
 
 	SNIC_HOST_INFO(snic->shost, "Exch_cmpl Done, hdr_stat %d.\n", hdr_stat);
-} /* end of snic_io_exch_ver_cmpl_handler */
+पूर्ण /* end of snic_io_exch_ver_cmpl_handler */
 
 /*
  * snic_get_conf
  *
  * Synchronous call, and Retrieves snic params.
  */
-int
-snic_get_conf(struct snic *snic)
-{
-	DECLARE_COMPLETION_ONSTACK(wait);
-	unsigned long flags;
-	int ret;
-	int nr_retries = 3;
+पूर्णांक
+snic_get_conf(काष्ठा snic *snic)
+अणु
+	DECLARE_COMPLETION_ONSTACK(रुको);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
+	पूर्णांक nr_retries = 3;
 
 	SNIC_HOST_INFO(snic->shost, "Retrieving snic params.\n");
 	spin_lock_irqsave(&snic->snic_lock, flags);
-	memset(&snic->fwinfo, 0, sizeof(snic->fwinfo));
-	snic->fwinfo.wait = &wait;
+	स_रखो(&snic->fwinfo, 0, माप(snic->fwinfo));
+	snic->fwinfo.रुको = &रुको;
 	spin_unlock_irqrestore(&snic->snic_lock, flags);
 
 	/* Additional delay to handle HW Resource initialization. */
 	msleep(50);
 
 	/*
-	 * Exch ver req can be ignored by FW, if HW Resource initialization
+	 * Exch ver req can be ignored by FW, अगर HW Resource initialization
 	 * is in progress, Hence retry.
 	 */
-	do {
+	करो अणु
 		ret = snic_queue_exch_ver_req(snic);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		wait_for_completion_timeout(&wait, msecs_to_jiffies(2000));
+		रुको_क्रम_completion_समयout(&रुको, msecs_to_jअगरfies(2000));
 		spin_lock_irqsave(&snic->snic_lock, flags);
 		ret = (snic->fwinfo.fw_ver != 0) ? 0 : -ETIMEDOUT;
-		if (ret)
+		अगर (ret)
 			SNIC_HOST_ERR(snic->shost,
 				      "Failed to retrieve snic params,\n");
 
-		/* Unset fwinfo.wait, on success or on last retry */
-		if (ret == 0 || nr_retries == 1)
-			snic->fwinfo.wait = NULL;
+		/* Unset fwinfo.रुको, on success or on last retry */
+		अगर (ret == 0 || nr_retries == 1)
+			snic->fwinfo.रुको = शून्य;
 
 		spin_unlock_irqrestore(&snic->snic_lock, flags);
-	} while (ret && --nr_retries);
+	पूर्ण जबतक (ret && --nr_retries);
 
-	return ret;
-} /* end of snic_get_info */
+	वापस ret;
+पूर्ण /* end of snic_get_info */

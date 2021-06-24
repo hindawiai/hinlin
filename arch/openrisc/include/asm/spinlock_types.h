@@ -1,7 +1,8 @@
-#ifndef _ASM_OPENRISC_SPINLOCK_TYPES_H
-#define _ASM_OPENRISC_SPINLOCK_TYPES_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_OPENRISC_SPINLOCK_TYPES_H
+#घोषणा _ASM_OPENRISC_SPINLOCK_TYPES_H
 
-#include <asm/qspinlock_types.h>
-#include <asm/qrwlock_types.h>
+#समावेश <यंत्र/qspinlock_types.h>
+#समावेश <यंत्र/qrwlock_types.h>
 
-#endif /* _ASM_OPENRISC_SPINLOCK_TYPES_H */
+#पूर्ण_अगर /* _ASM_OPENRISC_SPINLOCK_TYPES_H */

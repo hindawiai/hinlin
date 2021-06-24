@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *  Zorro Driver Services
  *
@@ -6,172 +7,172 @@
  *  Loosely based on drivers/pci/pci-driver.c
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of this archive
- *  for more details.
+ *  License.  See the file COPYING in the मुख्य directory of this archive
+ *  क्रम more details.
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/zorro.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/zorro.h>
 
-#include "zorro.h"
+#समावेश "zorro.h"
 
 
     /**
-     *  zorro_match_device - Tell if a Zorro device structure has a matching
-     *                       Zorro device id structure
-     *  @ids: array of Zorro device id structures to search in
-     *  @dev: the Zorro device structure to match against
+     *  zorro_match_device - Tell अगर a Zorro device काष्ठाure has a matching
+     *                       Zorro device id काष्ठाure
+     *  @ids: array of Zorro device id काष्ठाures to search in
+     *  @dev: the Zorro device काष्ठाure to match against
      *
      *  Used by a driver to check whether a Zorro device present in the
-     *  system is in its list of supported devices. Returns the matching
-     *  zorro_device_id structure or %NULL if there is no match.
+     *  प्रणाली is in its list of supported devices. Returns the matching
+     *  zorro_device_id काष्ठाure or %शून्य अगर there is no match.
      */
 
-static const struct zorro_device_id *
-zorro_match_device(const struct zorro_device_id *ids,
-		   const struct zorro_dev *z)
-{
-	while (ids->id) {
-		if (ids->id == ZORRO_WILDCARD || ids->id == z->id)
-			return ids;
+अटल स्थिर काष्ठा zorro_device_id *
+zorro_match_device(स्थिर काष्ठा zorro_device_id *ids,
+		   स्थिर काष्ठा zorro_dev *z)
+अणु
+	जबतक (ids->id) अणु
+		अगर (ids->id == ZORRO_WILDCARD || ids->id == z->id)
+			वापस ids;
 		ids++;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 
-static int zorro_device_probe(struct device *dev)
-{
-	int error = 0;
-	struct zorro_driver *drv = to_zorro_driver(dev->driver);
-	struct zorro_dev *z = to_zorro_dev(dev);
+अटल पूर्णांक zorro_device_probe(काष्ठा device *dev)
+अणु
+	पूर्णांक error = 0;
+	काष्ठा zorro_driver *drv = to_zorro_driver(dev->driver);
+	काष्ठा zorro_dev *z = to_zorro_dev(dev);
 
-	if (!z->driver && drv->probe) {
-		const struct zorro_device_id *id;
+	अगर (!z->driver && drv->probe) अणु
+		स्थिर काष्ठा zorro_device_id *id;
 
 		id = zorro_match_device(drv->id_table, z);
-		if (id)
+		अगर (id)
 			error = drv->probe(z, id);
-		if (error >= 0) {
+		अगर (error >= 0) अणु
 			z->driver = drv;
 			error = 0;
-		}
-	}
-	return error;
-}
+		पूर्ण
+	पूर्ण
+	वापस error;
+पूर्ण
 
 
-static int zorro_device_remove(struct device *dev)
-{
-	struct zorro_dev *z = to_zorro_dev(dev);
-	struct zorro_driver *drv = to_zorro_driver(dev->driver);
+अटल पूर्णांक zorro_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा zorro_dev *z = to_zorro_dev(dev);
+	काष्ठा zorro_driver *drv = to_zorro_driver(dev->driver);
 
-	if (drv) {
-		if (drv->remove)
-			drv->remove(z);
-		z->driver = NULL;
-	}
-	return 0;
-}
+	अगर (drv) अणु
+		अगर (drv->हटाओ)
+			drv->हटाओ(z);
+		z->driver = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
     /**
-     *  zorro_register_driver - register a new Zorro driver
-     *  @drv: the driver structure to register
+     *  zorro_रेजिस्टर_driver - रेजिस्टर a new Zorro driver
+     *  @drv: the driver काष्ठाure to रेजिस्टर
      *
-     *  Adds the driver structure to the list of registered drivers
+     *  Adds the driver काष्ठाure to the list of रेजिस्टरed drivers
      *  Returns zero or a negative error value.
      */
 
-int zorro_register_driver(struct zorro_driver *drv)
-{
+पूर्णांक zorro_रेजिस्टर_driver(काष्ठा zorro_driver *drv)
+अणु
 	/* initialize common driver fields */
 	drv->driver.name = drv->name;
 	drv->driver.bus = &zorro_bus_type;
 
-	/* register with core */
-	return driver_register(&drv->driver);
-}
-EXPORT_SYMBOL(zorro_register_driver);
+	/* रेजिस्टर with core */
+	वापस driver_रेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(zorro_रेजिस्टर_driver);
 
 
     /**
-     *  zorro_unregister_driver - unregister a zorro driver
-     *  @drv: the driver structure to unregister
+     *  zorro_unरेजिस्टर_driver - unरेजिस्टर a zorro driver
+     *  @drv: the driver काष्ठाure to unरेजिस्टर
      *
-     *  Deletes the driver structure from the list of registered Zorro drivers,
-     *  gives it a chance to clean up by calling its remove() function for
-     *  each device it was responsible for, and marks those devices as
+     *  Deletes the driver काष्ठाure from the list of रेजिस्टरed Zorro drivers,
+     *  gives it a chance to clean up by calling its हटाओ() function क्रम
+     *  each device it was responsible क्रम, and marks those devices as
      *  driverless.
      */
 
-void zorro_unregister_driver(struct zorro_driver *drv)
-{
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL(zorro_unregister_driver);
+व्योम zorro_unरेजिस्टर_driver(काष्ठा zorro_driver *drv)
+अणु
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(zorro_unरेजिस्टर_driver);
 
 
     /**
-     *  zorro_bus_match - Tell if a Zorro device structure has a matching Zorro
-     *                    device id structure
-     *  @ids: array of Zorro device id structures to search in
-     *  @dev: the Zorro device structure to match against
+     *  zorro_bus_match - Tell अगर a Zorro device काष्ठाure has a matching Zorro
+     *                    device id काष्ठाure
+     *  @ids: array of Zorro device id काष्ठाures to search in
+     *  @dev: the Zorro device काष्ठाure to match against
      *
      *  Used by the driver core to check whether a Zorro device present in the
-     *  system is in a driver's list of supported devices.  Returns 1 if
-     *  supported, and 0 if there is no match.
+     *  प्रणाली is in a driver's list of supported devices.  Returns 1 अगर
+     *  supported, and 0 अगर there is no match.
      */
 
-static int zorro_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct zorro_dev *z = to_zorro_dev(dev);
-	struct zorro_driver *zorro_drv = to_zorro_driver(drv);
-	const struct zorro_device_id *ids = zorro_drv->id_table;
+अटल पूर्णांक zorro_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा zorro_dev *z = to_zorro_dev(dev);
+	काष्ठा zorro_driver *zorro_drv = to_zorro_driver(drv);
+	स्थिर काष्ठा zorro_device_id *ids = zorro_drv->id_table;
 
-	if (!ids)
-		return 0;
+	अगर (!ids)
+		वापस 0;
 
-	return !!zorro_match_device(ids, z);
-}
+	वापस !!zorro_match_device(ids, z);
+पूर्ण
 
-static int zorro_uevent(struct device *dev, struct kobj_uevent_env *env)
-{
-	struct zorro_dev *z;
+अटल पूर्णांक zorro_uevent(काष्ठा device *dev, काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा zorro_dev *z;
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	z = to_zorro_dev(dev);
-	if (!z)
-		return -ENODEV;
+	अगर (!z)
+		वापस -ENODEV;
 
-	if (add_uevent_var(env, "ZORRO_ID=%08X", z->id) ||
+	अगर (add_uevent_var(env, "ZORRO_ID=%08X", z->id) ||
 	    add_uevent_var(env, "ZORRO_SLOT_NAME=%s", dev_name(dev)) ||
 	    add_uevent_var(env, "ZORRO_SLOT_ADDR=%04X", z->slotaddr) ||
 	    add_uevent_var(env, "MODALIAS=" ZORRO_DEVICE_MODALIAS_FMT, z->id))
-		return -ENOMEM;
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct bus_type zorro_bus_type = {
+काष्ठा bus_type zorro_bus_type = अणु
 	.name		= "zorro",
 	.dev_name	= "zorro",
 	.dev_groups	= zorro_device_attribute_groups,
 	.match		= zorro_bus_match,
 	.uevent		= zorro_uevent,
 	.probe		= zorro_device_probe,
-	.remove		= zorro_device_remove,
-};
+	.हटाओ		= zorro_device_हटाओ,
+पूर्ण;
 EXPORT_SYMBOL(zorro_bus_type);
 
 
-static int __init zorro_driver_init(void)
-{
-	return bus_register(&zorro_bus_type);
-}
+अटल पूर्णांक __init zorro_driver_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&zorro_bus_type);
+पूर्ण
 
 postcore_initcall(zorro_driver_init);
 

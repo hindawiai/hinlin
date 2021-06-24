@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Intel 82443BX/GX (440BX/GX chipset) Memory Controller EDAC kernel
  * module (C) 2006 Tim Small
@@ -6,143 +7,143 @@
  * Public License.
  *
  * Written by Tim Small <tim@buttersideup.com>, based on work by Linux
- * Networx, Thayne Harbaugh, Dan Hollis <goemon at anime dot net> and
+ * Networx, Thayne Harbaugh, Dan Hollis <goemon at anime करोt net> and
  * others.
  *
  * 440GX fix by Jason Uhlenkott <juhlenko@akamai.com>.
  *
  * Written with reference to 82443BX Host Bridge Datasheet:
- * http://download.intel.com/design/chipsets/datashts/29063301.pdf
- * references to this document given in [].
+ * http://करोwnload.पूर्णांकel.com/design/chipsets/datashts/29063301.pdf
+ * references to this करोcument given in [].
  *
- * This module doesn't support the 440LX, but it may be possible to
- * make it do so (the 440LX's register definitions are different, but
+ * This module करोesn't support the 440LX, but it may be possible to
+ * make it करो so (the 440LX's रेजिस्टर definitions are dअगरferent, but
  * not completely so - I haven't studied them in enough detail to know
  * how easy this would be).
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
 
-#include <linux/pci.h>
-#include <linux/pci_ids.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_ids.h>
 
 
-#include <linux/edac.h>
-#include "edac_module.h"
+#समावेश <linux/edac.h>
+#समावेश "edac_module.h"
 
-#define EDAC_MOD_STR    "i82443bxgx_edac"
+#घोषणा EDAC_MOD_STR    "i82443bxgx_edac"
 
-/* The 82443BX supports SDRAM, or EDO (EDO for mobile only), "Memory
+/* The 82443BX supports SDRAM, or EDO (EDO क्रम mobile only), "Memory
  * Size: 8 MB to 512 MB (1GB with Registered DIMMs) with eight memory
  * rows" "The 82443BX supports multiple-bit error detection and
  * single-bit error correction when ECC mode is enabled and
  * single/multi-bit error detection when correction is disabled.
- * During writes to the DRAM, the 82443BX generates ECC for the data
- * on a QWord basis. Partial QWord writes require a read-modify-write
+ * During ग_लिखोs to the DRAM, the 82443BX generates ECC क्रम the data
+ * on a QWord basis. Partial QWord ग_लिखोs require a पढ़ो-modअगरy-ग_लिखो
  * cycle when ECC is enabled."
 */
 
 /* "Additionally, the 82443BX ensures that the data is corrected in
- * main memory so that accumulation of errors is prevented. Another
- * error within the same QWord would result in a double-bit error
+ * मुख्य memory so that accumulation of errors is prevented. Another
+ * error within the same QWord would result in a द्विगुन-bit error
  * which is unrecoverable. This is known as hardware scrubbing since
- * it requires no software intervention to correct the data in memory."
+ * it requires no software पूर्णांकervention to correct the data in memory."
  */
 
 /* [Also see page 100 (section 4.3), "DRAM Interface"]
  * [Also see page 112 (section 4.6.1.4), ECC]
  */
 
-#define I82443BXGX_NR_CSROWS 8
-#define I82443BXGX_NR_CHANS  1
-#define I82443BXGX_NR_DIMMS  4
+#घोषणा I82443BXGX_NR_CSROWS 8
+#घोषणा I82443BXGX_NR_CHANS  1
+#घोषणा I82443BXGX_NR_DIMMS  4
 
 /* 82443 PCI Device 0 */
-#define I82443BXGX_NBXCFG 0x50	/* 32bit register starting at this PCI
+#घोषणा I82443BXGX_NBXCFG 0x50	/* 32bit रेजिस्टर starting at this PCI
 				 * config space offset */
-#define I82443BXGX_NBXCFG_OFFSET_NON_ECCROW 24	/* Array of bits, zero if
+#घोषणा I82443BXGX_NBXCFG_OFFSET_NON_ECCROW 24	/* Array of bits, zero अगर
 						 * row is non-ECC */
-#define I82443BXGX_NBXCFG_OFFSET_DRAM_FREQ 12	/* 2 bits,00=100MHz,10=66 MHz */
+#घोषणा I82443BXGX_NBXCFG_OFFSET_DRAM_FREQ 12	/* 2 bits,00=100MHz,10=66 MHz */
 
-#define I82443BXGX_NBXCFG_OFFSET_DRAM_INTEGRITY 7	/* 2 bits:       */
-#define I82443BXGX_NBXCFG_INTEGRITY_NONE   0x0	/* 00 = Non-ECC */
-#define I82443BXGX_NBXCFG_INTEGRITY_EC     0x1	/* 01 = EC (only) */
-#define I82443BXGX_NBXCFG_INTEGRITY_ECC    0x2	/* 10 = ECC */
-#define I82443BXGX_NBXCFG_INTEGRITY_SCRUB  0x3	/* 11 = ECC + HW Scrub */
+#घोषणा I82443BXGX_NBXCFG_OFFSET_DRAM_INTEGRITY 7	/* 2 bits:       */
+#घोषणा I82443BXGX_NBXCFG_INTEGRITY_NONE   0x0	/* 00 = Non-ECC */
+#घोषणा I82443BXGX_NBXCFG_INTEGRITY_EC     0x1	/* 01 = EC (only) */
+#घोषणा I82443BXGX_NBXCFG_INTEGRITY_ECC    0x2	/* 10 = ECC */
+#घोषणा I82443BXGX_NBXCFG_INTEGRITY_SCRUB  0x3	/* 11 = ECC + HW Scrub */
 
-#define I82443BXGX_NBXCFG_OFFSET_ECC_DIAG_ENABLE  6
+#घोषणा I82443BXGX_NBXCFG_OFFSET_ECC_DIAG_ENABLE  6
 
 /* 82443 PCI Device 0 */
-#define I82443BXGX_EAP   0x80	/* 32bit register starting at this PCI
+#घोषणा I82443BXGX_EAP   0x80	/* 32bit रेजिस्टर starting at this PCI
 				 * config space offset, Error Address
-				 * Pointer Register */
-#define I82443BXGX_EAP_OFFSET_EAP  12	/* High 20 bits of error address */
-#define I82443BXGX_EAP_OFFSET_MBE  BIT(1)	/* Err at EAP was multi-bit (W1TC) */
-#define I82443BXGX_EAP_OFFSET_SBE  BIT(0)	/* Err at EAP was single-bit (W1TC) */
+				 * Poपूर्णांकer Register */
+#घोषणा I82443BXGX_EAP_OFFSET_EAP  12	/* High 20 bits of error address */
+#घोषणा I82443BXGX_EAP_OFFSET_MBE  BIT(1)	/* Err at EAP was multi-bit (W1TC) */
+#घोषणा I82443BXGX_EAP_OFFSET_SBE  BIT(0)	/* Err at EAP was single-bit (W1TC) */
 
-#define I82443BXGX_ERRCMD  0x90	/* 8bit register starting at this PCI
+#घोषणा I82443BXGX_ERRCMD  0x90	/* 8bit रेजिस्टर starting at this PCI
 				 * config space offset. */
-#define I82443BXGX_ERRCMD_OFFSET_SERR_ON_MBE BIT(1)	/* 1 = enable */
-#define I82443BXGX_ERRCMD_OFFSET_SERR_ON_SBE BIT(0)	/* 1 = enable */
+#घोषणा I82443BXGX_ERRCMD_OFFSET_SERR_ON_MBE BIT(1)	/* 1 = enable */
+#घोषणा I82443BXGX_ERRCMD_OFFSET_SERR_ON_SBE BIT(0)	/* 1 = enable */
 
-#define I82443BXGX_ERRSTS  0x91	/* 16bit register starting at this PCI
+#घोषणा I82443BXGX_ERRSTS  0x91	/* 16bit रेजिस्टर starting at this PCI
 				 * config space offset. */
-#define I82443BXGX_ERRSTS_OFFSET_MBFRE 5	/* 3 bits - first err row multibit */
-#define I82443BXGX_ERRSTS_OFFSET_MEF   BIT(4)	/* 1 = MBE occurred */
-#define I82443BXGX_ERRSTS_OFFSET_SBFRE 1	/* 3 bits - first err row singlebit */
-#define I82443BXGX_ERRSTS_OFFSET_SEF   BIT(0)	/* 1 = SBE occurred */
+#घोषणा I82443BXGX_ERRSTS_OFFSET_MBFRE 5	/* 3 bits - first err row multibit */
+#घोषणा I82443BXGX_ERRSTS_OFFSET_MEF   BIT(4)	/* 1 = MBE occurred */
+#घोषणा I82443BXGX_ERRSTS_OFFSET_SBFRE 1	/* 3 bits - first err row singlebit */
+#घोषणा I82443BXGX_ERRSTS_OFFSET_SEF   BIT(0)	/* 1 = SBE occurred */
 
-#define I82443BXGX_DRAMC 0x57	/* 8bit register starting at this PCI
+#घोषणा I82443BXGX_DRAMC 0x57	/* 8bit रेजिस्टर starting at this PCI
 				 * config space offset. */
-#define I82443BXGX_DRAMC_OFFSET_DT 3	/* 2 bits, DRAM Type */
-#define I82443BXGX_DRAMC_DRAM_IS_EDO 0	/* 00 = EDO */
-#define I82443BXGX_DRAMC_DRAM_IS_SDRAM 1	/* 01 = SDRAM */
-#define I82443BXGX_DRAMC_DRAM_IS_RSDRAM 2	/* 10 = Registered SDRAM */
+#घोषणा I82443BXGX_DRAMC_OFFSET_DT 3	/* 2 bits, DRAM Type */
+#घोषणा I82443BXGX_DRAMC_DRAM_IS_EDO 0	/* 00 = EDO */
+#घोषणा I82443BXGX_DRAMC_DRAM_IS_SDRAM 1	/* 01 = SDRAM */
+#घोषणा I82443BXGX_DRAMC_DRAM_IS_RSDRAM 2	/* 10 = Registered SDRAM */
 
-#define I82443BXGX_DRB 0x60	/* 8x 8bit registers starting at this PCI
+#घोषणा I82443BXGX_DRB 0x60	/* 8x 8bit रेजिस्टरs starting at this PCI
 				 * config space offset. */
 
-/* FIXME - don't poll when ECC disabled? */
+/* FIXME - करोn't poll when ECC disabled? */
 
-struct i82443bxgx_edacmc_error_info {
+काष्ठा i82443bxgx_edacmc_error_info अणु
 	u32 eap;
-};
+पूर्ण;
 
-static struct edac_pci_ctl_info *i82443bxgx_pci;
+अटल काष्ठा edac_pci_ctl_info *i82443bxgx_pci;
 
-static struct pci_dev *mci_pdev;	/* init dev: in case that AGP code has
-					 * already registered driver
+अटल काष्ठा pci_dev *mci_pdev;	/* init dev: in हाल that AGP code has
+					 * alपढ़ोy रेजिस्टरed driver
 					 */
 
-static int i82443bxgx_registered = 1;
+अटल पूर्णांक i82443bxgx_रेजिस्टरed = 1;
 
-static void i82443bxgx_edacmc_get_error_info(struct mem_ctl_info *mci,
-				struct i82443bxgx_edacmc_error_info
+अटल व्योम i82443bxgx_edacmc_get_error_info(काष्ठा mem_ctl_info *mci,
+				काष्ठा i82443bxgx_edacmc_error_info
 				*info)
-{
-	struct pci_dev *pdev;
+अणु
+	काष्ठा pci_dev *pdev;
 	pdev = to_pci_dev(mci->pdev);
-	pci_read_config_dword(pdev, I82443BXGX_EAP, &info->eap);
-	if (info->eap & I82443BXGX_EAP_OFFSET_SBE)
+	pci_पढ़ो_config_dword(pdev, I82443BXGX_EAP, &info->eap);
+	अगर (info->eap & I82443BXGX_EAP_OFFSET_SBE)
 		/* Clear error to allow next error to be reported [p.61] */
-		pci_write_bits32(pdev, I82443BXGX_EAP,
+		pci_ग_लिखो_bits32(pdev, I82443BXGX_EAP,
 				 I82443BXGX_EAP_OFFSET_SBE,
 				 I82443BXGX_EAP_OFFSET_SBE);
 
-	if (info->eap & I82443BXGX_EAP_OFFSET_MBE)
+	अगर (info->eap & I82443BXGX_EAP_OFFSET_MBE)
 		/* Clear error to allow next error to be reported [p.61] */
-		pci_write_bits32(pdev, I82443BXGX_EAP,
+		pci_ग_लिखो_bits32(pdev, I82443BXGX_EAP,
 				 I82443BXGX_EAP_OFFSET_MBE,
 				 I82443BXGX_EAP_OFFSET_MBE);
-}
+पूर्ण
 
-static int i82443bxgx_edacmc_process_error_info(struct mem_ctl_info *mci,
-						struct
+अटल पूर्णांक i82443bxgx_edacmc_process_error_info(काष्ठा mem_ctl_info *mci,
+						काष्ठा
 						i82443bxgx_edacmc_error_info
-						*info, int handle_errors)
-{
-	int error_found = 0;
+						*info, पूर्णांक handle_errors)
+अणु
+	पूर्णांक error_found = 0;
 	u32 eapaddr, page, pageoffset;
 
 	/* bits 30:12 hold the 4kb block in which the error occurred
@@ -151,53 +152,53 @@ static int i82443bxgx_edacmc_process_error_info(struct mem_ctl_info *mci,
 	page = eapaddr >> PAGE_SHIFT;
 	pageoffset = eapaddr - (page << PAGE_SHIFT);
 
-	if (info->eap & I82443BXGX_EAP_OFFSET_SBE) {
+	अगर (info->eap & I82443BXGX_EAP_OFFSET_SBE) अणु
 		error_found = 1;
-		if (handle_errors)
+		अगर (handle_errors)
 			edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 					     page, pageoffset, 0,
 					     edac_mc_find_csrow_by_page(mci, page),
 					     0, -1, mci->ctl_name, "");
-	}
+	पूर्ण
 
-	if (info->eap & I82443BXGX_EAP_OFFSET_MBE) {
+	अगर (info->eap & I82443BXGX_EAP_OFFSET_MBE) अणु
 		error_found = 1;
-		if (handle_errors)
+		अगर (handle_errors)
 			edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 					     page, pageoffset, 0,
 					     edac_mc_find_csrow_by_page(mci, page),
 					     0, -1, mci->ctl_name, "");
-	}
+	पूर्ण
 
-	return error_found;
-}
+	वापस error_found;
+पूर्ण
 
-static void i82443bxgx_edacmc_check(struct mem_ctl_info *mci)
-{
-	struct i82443bxgx_edacmc_error_info info;
+अटल व्योम i82443bxgx_edacmc_check(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा i82443bxgx_edacmc_error_info info;
 
 	i82443bxgx_edacmc_get_error_info(mci, &info);
 	i82443bxgx_edacmc_process_error_info(mci, &info, 1);
-}
+पूर्ण
 
-static void i82443bxgx_init_csrows(struct mem_ctl_info *mci,
-				struct pci_dev *pdev,
-				enum edac_type edac_mode,
-				enum mem_type mtype)
-{
-	struct csrow_info *csrow;
-	struct dimm_info *dimm;
-	int index;
+अटल व्योम i82443bxgx_init_csrows(काष्ठा mem_ctl_info *mci,
+				काष्ठा pci_dev *pdev,
+				क्रमागत edac_type edac_mode,
+				क्रमागत mem_type mtype)
+अणु
+	काष्ठा csrow_info *csrow;
+	काष्ठा dimm_info *dimm;
+	पूर्णांक index;
 	u8 drbar, dramc;
 	u32 row_base, row_high_limit, row_high_limit_last;
 
-	pci_read_config_byte(pdev, I82443BXGX_DRAMC, &dramc);
+	pci_पढ़ो_config_byte(pdev, I82443BXGX_DRAMC, &dramc);
 	row_high_limit_last = 0;
-	for (index = 0; index < mci->nr_csrows; index++) {
+	क्रम (index = 0; index < mci->nr_csrows; index++) अणु
 		csrow = mci->csrows[index];
 		dimm = csrow->channels[0]->dimm;
 
-		pci_read_config_byte(pdev, I82443BXGX_DRB + index, &drbar);
+		pci_पढ़ो_config_byte(pdev, I82443BXGX_DRB + index, &drbar);
 		edac_dbg(1, "MC%d: Row=%d DRB = %#0x\n",
 			 mci->mc_idx, index, drbar);
 		row_high_limit = ((u32) drbar << 23);
@@ -207,12 +208,12 @@ static void i82443bxgx_init_csrows(struct mem_ctl_info *mci,
 			 row_high_limit_last);
 
 		/* 440GX goes to 2GB, represented with a DRB of 0. */
-		if (row_high_limit_last && !row_high_limit)
+		अगर (row_high_limit_last && !row_high_limit)
 			row_high_limit = 1UL << 31;
 
 		/* This row is empty [p.49] */
-		if (row_high_limit == row_high_limit_last)
-			continue;
+		अगर (row_high_limit == row_high_limit_last)
+			जारी;
 		row_base = row_high_limit_last;
 		csrow->first_page = row_base >> PAGE_SHIFT;
 		csrow->last_page = (row_high_limit >> PAGE_SHIFT) - 1;
@@ -220,30 +221,30 @@ static void i82443bxgx_init_csrows(struct mem_ctl_info *mci,
 		/* EAP reports in 4kilobyte granularity [61] */
 		dimm->grain = 1 << 12;
 		dimm->mtype = mtype;
-		/* I don't think 440BX can tell you device type? FIXME? */
+		/* I करोn't think 440BX can tell you device type? FIXME? */
 		dimm->dtype = DEV_UNKNOWN;
 		/* Mode is global to all rows on 440BX */
 		dimm->edac_mode = edac_mode;
 		row_high_limit_last = row_high_limit;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int i82443bxgx_edacmc_probe1(struct pci_dev *pdev, int dev_idx)
-{
-	struct mem_ctl_info *mci;
-	struct edac_mc_layer layers[2];
+अटल पूर्णांक i82443bxgx_edacmc_probe1(काष्ठा pci_dev *pdev, पूर्णांक dev_idx)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा edac_mc_layer layers[2];
 	u8 dramc;
 	u32 nbxcfg, ecc_mode;
-	enum mem_type mtype;
-	enum edac_type edac_mode;
+	क्रमागत mem_type mtype;
+	क्रमागत edac_type edac_mode;
 
 	edac_dbg(0, "MC:\n");
 
-	/* Something is really hosed if PCI config space reads from
+	/* Something is really hosed अगर PCI config space पढ़ोs from
 	 * the MC aren't working.
 	 */
-	if (pci_read_config_dword(pdev, I82443BXGX_NBXCFG, &nbxcfg))
-		return -EIO;
+	अगर (pci_पढ़ो_config_dword(pdev, I82443BXGX_NBXCFG, &nbxcfg))
+		वापस -EIO;
 
 	layers[0].type = EDAC_MC_LAYER_CHIP_SELECT;
 	layers[0].size = I82443BXGX_NR_CSROWS;
@@ -252,65 +253,65 @@ static int i82443bxgx_edacmc_probe1(struct pci_dev *pdev, int dev_idx)
 	layers[1].size = I82443BXGX_NR_CHANS;
 	layers[1].is_virt_csrow = false;
 	mci = edac_mc_alloc(0, ARRAY_SIZE(layers), layers, 0);
-	if (mci == NULL)
-		return -ENOMEM;
+	अगर (mci == शून्य)
+		वापस -ENOMEM;
 
 	edac_dbg(0, "MC: mci = %p\n", mci);
 	mci->pdev = &pdev->dev;
 	mci->mtype_cap = MEM_FLAG_EDO | MEM_FLAG_SDR | MEM_FLAG_RDR;
 	mci->edac_ctl_cap = EDAC_FLAG_NONE | EDAC_FLAG_EC | EDAC_FLAG_SECDED;
-	pci_read_config_byte(pdev, I82443BXGX_DRAMC, &dramc);
-	switch ((dramc >> I82443BXGX_DRAMC_OFFSET_DT) & (BIT(0) | BIT(1))) {
-	case I82443BXGX_DRAMC_DRAM_IS_EDO:
+	pci_पढ़ो_config_byte(pdev, I82443BXGX_DRAMC, &dramc);
+	चयन ((dramc >> I82443BXGX_DRAMC_OFFSET_DT) & (BIT(0) | BIT(1))) अणु
+	हाल I82443BXGX_DRAMC_DRAM_IS_EDO:
 		mtype = MEM_EDO;
-		break;
-	case I82443BXGX_DRAMC_DRAM_IS_SDRAM:
+		अवरोध;
+	हाल I82443BXGX_DRAMC_DRAM_IS_SDRAM:
 		mtype = MEM_SDR;
-		break;
-	case I82443BXGX_DRAMC_DRAM_IS_RSDRAM:
+		अवरोध;
+	हाल I82443BXGX_DRAMC_DRAM_IS_RSDRAM:
 		mtype = MEM_RDR;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		edac_dbg(0, "Unknown/reserved DRAM type value in DRAMC register!\n");
 		mtype = -MEM_UNKNOWN;
-	}
+	पूर्ण
 
-	if ((mtype == MEM_SDR) || (mtype == MEM_RDR))
+	अगर ((mtype == MEM_SDR) || (mtype == MEM_RDR))
 		mci->edac_cap = mci->edac_ctl_cap;
-	else
+	अन्यथा
 		mci->edac_cap = EDAC_FLAG_NONE;
 
 	mci->scrub_cap = SCRUB_FLAG_HW_SRC;
-	pci_read_config_dword(pdev, I82443BXGX_NBXCFG, &nbxcfg);
+	pci_पढ़ो_config_dword(pdev, I82443BXGX_NBXCFG, &nbxcfg);
 	ecc_mode = ((nbxcfg >> I82443BXGX_NBXCFG_OFFSET_DRAM_INTEGRITY) &
 		(BIT(0) | BIT(1)));
 
 	mci->scrub_mode = (ecc_mode == I82443BXGX_NBXCFG_INTEGRITY_SCRUB)
 		? SCRUB_HW_SRC : SCRUB_NONE;
 
-	switch (ecc_mode) {
-	case I82443BXGX_NBXCFG_INTEGRITY_NONE:
+	चयन (ecc_mode) अणु
+	हाल I82443BXGX_NBXCFG_INTEGRITY_NONE:
 		edac_mode = EDAC_NONE;
-		break;
-	case I82443BXGX_NBXCFG_INTEGRITY_EC:
+		अवरोध;
+	हाल I82443BXGX_NBXCFG_INTEGRITY_EC:
 		edac_mode = EDAC_EC;
-		break;
-	case I82443BXGX_NBXCFG_INTEGRITY_ECC:
-	case I82443BXGX_NBXCFG_INTEGRITY_SCRUB:
+		अवरोध;
+	हाल I82443BXGX_NBXCFG_INTEGRITY_ECC:
+	हाल I82443BXGX_NBXCFG_INTEGRITY_SCRUB:
 		edac_mode = EDAC_SECDED;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		edac_dbg(0, "Unknown/reserved ECC state in NBXCFG register!\n");
 		edac_mode = EDAC_UNKNOWN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	i82443bxgx_init_csrows(mci, pdev, edac_mode, mtype);
 
-	/* Many BIOSes don't clear error flags on boot, so do this
+	/* Many BIOSes करोn't clear error flags on boot, so करो this
 	 * here, or we get "phantom" errors occurring at module-load
-	 * time. */
-	pci_write_bits32(pdev, I82443BXGX_EAP,
+	 * समय. */
+	pci_ग_लिखो_bits32(pdev, I82443BXGX_EAP,
 			(I82443BXGX_EAP_OFFSET_SBE |
 				I82443BXGX_EAP_OFFSET_MBE),
 			(I82443BXGX_EAP_OFFSET_SBE |
@@ -320,143 +321,143 @@ static int i82443bxgx_edacmc_probe1(struct pci_dev *pdev, int dev_idx)
 	mci->ctl_name = "I82443BXGX";
 	mci->dev_name = pci_name(pdev);
 	mci->edac_check = i82443bxgx_edacmc_check;
-	mci->ctl_page_to_phys = NULL;
+	mci->ctl_page_to_phys = शून्य;
 
-	if (edac_mc_add_mc(mci)) {
+	अगर (edac_mc_add_mc(mci)) अणु
 		edac_dbg(3, "failed edac_mc_add_mc()\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	/* allocating generic PCI control info */
 	i82443bxgx_pci = edac_pci_create_generic_ctl(&pdev->dev, EDAC_MOD_STR);
-	if (!i82443bxgx_pci) {
-		printk(KERN_WARNING
+	अगर (!i82443bxgx_pci) अणु
+		prपूर्णांकk(KERN_WARNING
 			"%s(): Unable to create PCI control\n",
 			__func__);
-		printk(KERN_WARNING
+		prपूर्णांकk(KERN_WARNING
 			"%s(): PCI error report via EDAC not setup\n",
 			__func__);
-	}
+	पूर्ण
 
 	edac_dbg(3, "MC: success\n");
-	return 0;
+	वापस 0;
 
 fail:
-	edac_mc_free(mci);
-	return -ENODEV;
-}
+	edac_mc_मुक्त(mci);
+	वापस -ENODEV;
+पूर्ण
 
-/* returns count (>= 0), or negative on error */
-static int i82443bxgx_edacmc_init_one(struct pci_dev *pdev,
-				      const struct pci_device_id *ent)
-{
-	int rc;
+/* वापसs count (>= 0), or negative on error */
+अटल पूर्णांक i82443bxgx_edacmc_init_one(काष्ठा pci_dev *pdev,
+				      स्थिर काष्ठा pci_device_id *ent)
+अणु
+	पूर्णांक rc;
 
 	edac_dbg(0, "MC:\n");
 
-	/* don't need to call pci_enable_device() */
+	/* करोn't need to call pci_enable_device() */
 	rc = i82443bxgx_edacmc_probe1(pdev, ent->driver_data);
 
-	if (mci_pdev == NULL)
+	अगर (mci_pdev == शून्य)
 		mci_pdev = pci_dev_get(pdev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void i82443bxgx_edacmc_remove_one(struct pci_dev *pdev)
-{
-	struct mem_ctl_info *mci;
+अटल व्योम i82443bxgx_edacmc_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा mem_ctl_info *mci;
 
 	edac_dbg(0, "\n");
 
-	if (i82443bxgx_pci)
+	अगर (i82443bxgx_pci)
 		edac_pci_release_generic_ctl(i82443bxgx_pci);
 
-	if ((mci = edac_mc_del_mc(&pdev->dev)) == NULL)
-		return;
+	अगर ((mci = edac_mc_del_mc(&pdev->dev)) == शून्य)
+		वापस;
 
-	edac_mc_free(mci);
-}
+	edac_mc_मुक्त(mci);
+पूर्ण
 
-static const struct pci_device_id i82443bxgx_pci_tbl[] = {
-	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82443BX_0)},
-	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82443BX_2)},
-	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82443GX_0)},
-	{PCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82443GX_2)},
-	{0,}			/* 0 terminated list. */
-};
+अटल स्थिर काष्ठा pci_device_id i82443bxgx_pci_tbl[] = अणु
+	अणुPCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82443BX_0)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82443BX_2)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82443GX_0)पूर्ण,
+	अणुPCI_DEVICE(PCI_VENDOR_ID_INTEL, PCI_DEVICE_ID_INTEL_82443GX_2)पूर्ण,
+	अणु0,पूर्ण			/* 0 terminated list. */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, i82443bxgx_pci_tbl);
 
-static struct pci_driver i82443bxgx_edacmc_driver = {
+अटल काष्ठा pci_driver i82443bxgx_edacmc_driver = अणु
 	.name = EDAC_MOD_STR,
 	.probe = i82443bxgx_edacmc_init_one,
-	.remove = i82443bxgx_edacmc_remove_one,
+	.हटाओ = i82443bxgx_edacmc_हटाओ_one,
 	.id_table = i82443bxgx_pci_tbl,
-};
+पूर्ण;
 
-static int __init i82443bxgx_edacmc_init(void)
-{
-	int pci_rc;
-       /* Ensure that the OPSTATE is set correctly for POLL or NMI */
+अटल पूर्णांक __init i82443bxgx_edacmc_init(व्योम)
+अणु
+	पूर्णांक pci_rc;
+       /* Ensure that the OPSTATE is set correctly क्रम POLL or NMI */
        opstate_init();
 
-	pci_rc = pci_register_driver(&i82443bxgx_edacmc_driver);
-	if (pci_rc < 0)
-		goto fail0;
+	pci_rc = pci_रेजिस्टर_driver(&i82443bxgx_edacmc_driver);
+	अगर (pci_rc < 0)
+		जाओ fail0;
 
-	if (mci_pdev == NULL) {
-		const struct pci_device_id *id = &i82443bxgx_pci_tbl[0];
-		int i = 0;
-		i82443bxgx_registered = 0;
+	अगर (mci_pdev == शून्य) अणु
+		स्थिर काष्ठा pci_device_id *id = &i82443bxgx_pci_tbl[0];
+		पूर्णांक i = 0;
+		i82443bxgx_रेजिस्टरed = 0;
 
-		while (mci_pdev == NULL && id->vendor != 0) {
-			mci_pdev = pci_get_device(id->vendor,
-					id->device, NULL);
+		जबतक (mci_pdev == शून्य && id->venकरोr != 0) अणु
+			mci_pdev = pci_get_device(id->venकरोr,
+					id->device, शून्य);
 			i++;
 			id = &i82443bxgx_pci_tbl[i];
-		}
-		if (!mci_pdev) {
+		पूर्ण
+		अगर (!mci_pdev) अणु
 			edac_dbg(0, "i82443bxgx pci_get_device fail\n");
 			pci_rc = -ENODEV;
-			goto fail1;
-		}
+			जाओ fail1;
+		पूर्ण
 
 		pci_rc = i82443bxgx_edacmc_init_one(mci_pdev, i82443bxgx_pci_tbl);
 
-		if (pci_rc < 0) {
+		अगर (pci_rc < 0) अणु
 			edac_dbg(0, "i82443bxgx init fail\n");
 			pci_rc = -ENODEV;
-			goto fail1;
-		}
-	}
+			जाओ fail1;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 fail1:
-	pci_unregister_driver(&i82443bxgx_edacmc_driver);
+	pci_unरेजिस्टर_driver(&i82443bxgx_edacmc_driver);
 
 fail0:
 	pci_dev_put(mci_pdev);
-	return pci_rc;
-}
+	वापस pci_rc;
+पूर्ण
 
-static void __exit i82443bxgx_edacmc_exit(void)
-{
-	pci_unregister_driver(&i82443bxgx_edacmc_driver);
+अटल व्योम __निकास i82443bxgx_edacmc_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&i82443bxgx_edacmc_driver);
 
-	if (!i82443bxgx_registered)
-		i82443bxgx_edacmc_remove_one(mci_pdev);
+	अगर (!i82443bxgx_रेजिस्टरed)
+		i82443bxgx_edacmc_हटाओ_one(mci_pdev);
 
 	pci_dev_put(mci_pdev);
-}
+पूर्ण
 
 module_init(i82443bxgx_edacmc_init);
-module_exit(i82443bxgx_edacmc_exit);
+module_निकास(i82443bxgx_edacmc_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Tim Small <tim@buttersideup.com> - WPAD");
 MODULE_DESCRIPTION("EDAC MC support for Intel 82443BX/GX memory controllers");
 
-module_param(edac_op_state, int, 0444);
+module_param(edac_op_state, पूर्णांक, 0444);
 MODULE_PARM_DESC(edac_op_state, "EDAC Error Reporting state: 0=Poll,1=NMI");

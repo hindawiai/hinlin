@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * rt5677-spi.h  --  RT5677 ALSA SoC audio codec driver
  *
@@ -6,28 +7,28 @@
  * Author: Oder Chiou <oder_chiou@realtek.com>
  */
 
-#ifndef __RT5677_SPI_H__
-#define __RT5677_SPI_H__
+#अगर_अघोषित __RT5677_SPI_H__
+#घोषणा __RT5677_SPI_H__
 
-#if IS_ENABLED(CONFIG_SND_SOC_RT5677_SPI)
-int rt5677_spi_read(u32 addr, void *rxbuf, size_t len);
-int rt5677_spi_write(u32 addr, const void *txbuf, size_t len);
-int rt5677_spi_write_firmware(u32 addr, const struct firmware *fw);
-void rt5677_spi_hotword_detected(void);
-#else
-static inline int rt5677_spi_read(u32 addr, void *rxbuf, size_t len)
-{
-	return -EINVAL;
-}
-static inline int rt5677_spi_write(u32 addr, const void *txbuf, size_t len)
-{
-	return -EINVAL;
-}
-static inline int rt5677_spi_write_firmware(u32 addr, const struct firmware *fw)
-{
-	return -EINVAL;
-}
-static inline void rt5677_spi_hotword_detected(void){}
-#endif
+#अगर IS_ENABLED(CONFIG_SND_SOC_RT5677_SPI)
+पूर्णांक rt5677_spi_पढ़ो(u32 addr, व्योम *rxbuf, माप_प्रकार len);
+पूर्णांक rt5677_spi_ग_लिखो(u32 addr, स्थिर व्योम *txbuf, माप_प्रकार len);
+पूर्णांक rt5677_spi_ग_लिखो_firmware(u32 addr, स्थिर काष्ठा firmware *fw);
+व्योम rt5677_spi_hotword_detected(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक rt5677_spi_पढ़ो(u32 addr, व्योम *rxbuf, माप_प्रकार len)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक rt5677_spi_ग_लिखो(u32 addr, स्थिर व्योम *txbuf, माप_प्रकार len)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत पूर्णांक rt5677_spi_ग_लिखो_firmware(u32 addr, स्थिर काष्ठा firmware *fw)
+अणु
+	वापस -EINVAL;
+पूर्ण
+अटल अंतरभूत व्योम rt5677_spi_hotword_detected(व्योम)अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* __RT5677_SPI_H__ */
+#पूर्ण_अगर /* __RT5677_SPI_H__ */

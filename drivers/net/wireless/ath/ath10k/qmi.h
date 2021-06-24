@@ -1,122 +1,123 @@
-/* SPDX-License-Identifier: ISC */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: ISC */
 /*
  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  */
-#ifndef _ATH10K_QMI_H_
-#define _ATH10K_QMI_H_
+#अगर_अघोषित _ATH10K_QMI_H_
+#घोषणा _ATH10K_QMI_H_
 
-#include <linux/soc/qcom/qmi.h>
-#include <linux/qrtr.h>
-#include "qmi_wlfw_v01.h"
+#समावेश <linux/soc/qcom/qmi.h>
+#समावेश <linux/qrtr.h>
+#समावेश "qmi_wlfw_v01.h"
 
-#define MAX_NUM_MEMORY_REGIONS			2
-#define MAX_TIMESTAMP_LEN			32
-#define MAX_BUILD_ID_LEN			128
-#define MAX_NUM_CAL_V01			5
+#घोषणा MAX_NUM_MEMORY_REGIONS			2
+#घोषणा MAX_TIMESTAMP_LEN			32
+#घोषणा MAX_BUILD_ID_LEN			128
+#घोषणा MAX_NUM_CAL_V01			5
 
-enum ath10k_qmi_driver_event_type {
+क्रमागत ath10k_qmi_driver_event_type अणु
 	ATH10K_QMI_EVENT_SERVER_ARRIVE,
 	ATH10K_QMI_EVENT_SERVER_EXIT,
 	ATH10K_QMI_EVENT_FW_READY_IND,
 	ATH10K_QMI_EVENT_FW_DOWN_IND,
 	ATH10K_QMI_EVENT_MSA_READY_IND,
 	ATH10K_QMI_EVENT_MAX,
-};
+पूर्ण;
 
-struct ath10k_msa_mem_info {
+काष्ठा ath10k_msa_mem_info अणु
 	phys_addr_t addr;
 	u32 size;
 	bool secure;
-};
+पूर्ण;
 
-struct ath10k_qmi_chip_info {
+काष्ठा ath10k_qmi_chip_info अणु
 	u32 chip_id;
 	u32 chip_family;
-};
+पूर्ण;
 
-struct ath10k_qmi_board_info {
+काष्ठा ath10k_qmi_board_info अणु
 	u32 board_id;
-};
+पूर्ण;
 
-struct ath10k_qmi_soc_info {
+काष्ठा ath10k_qmi_soc_info अणु
 	u32 soc_id;
-};
+पूर्ण;
 
-struct ath10k_qmi_cal_data {
+काष्ठा ath10k_qmi_cal_data अणु
 	u32 cal_id;
 	u32 total_size;
 	u8 *data;
-};
+पूर्ण;
 
-struct ath10k_tgt_pipe_cfg {
+काष्ठा ath10k_tgt_pipe_cfg अणु
 	__le32 pipe_num;
 	__le32 pipe_dir;
 	__le32 nentries;
 	__le32 nbytes_max;
 	__le32 flags;
 	__le32 reserved;
-};
+पूर्ण;
 
-struct ath10k_svc_pipe_cfg {
+काष्ठा ath10k_svc_pipe_cfg अणु
 	__le32 service_id;
 	__le32 pipe_dir;
 	__le32 pipe_num;
-};
+पूर्ण;
 
-struct ath10k_shadow_reg_cfg {
+काष्ठा ath10k_shaकरोw_reg_cfg अणु
 	__le16 ce_id;
 	__le16 reg_offset;
-};
+पूर्ण;
 
-struct ath10k_qmi_wlan_enable_cfg {
+काष्ठा ath10k_qmi_wlan_enable_cfg अणु
 	u32 num_ce_tgt_cfg;
-	struct ath10k_tgt_pipe_cfg *ce_tgt_cfg;
+	काष्ठा ath10k_tgt_pipe_cfg *ce_tgt_cfg;
 	u32 num_ce_svc_pipe_cfg;
-	struct ath10k_svc_pipe_cfg *ce_svc_cfg;
-	u32 num_shadow_reg_cfg;
-	struct ath10k_shadow_reg_cfg *shadow_reg_cfg;
-};
+	काष्ठा ath10k_svc_pipe_cfg *ce_svc_cfg;
+	u32 num_shaकरोw_reg_cfg;
+	काष्ठा ath10k_shaकरोw_reg_cfg *shaकरोw_reg_cfg;
+पूर्ण;
 
-struct ath10k_qmi_driver_event {
-	struct list_head list;
-	enum ath10k_qmi_driver_event_type type;
-	void *data;
-};
+काष्ठा ath10k_qmi_driver_event अणु
+	काष्ठा list_head list;
+	क्रमागत ath10k_qmi_driver_event_type type;
+	व्योम *data;
+पूर्ण;
 
-enum ath10k_qmi_state {
+क्रमागत ath10k_qmi_state अणु
 	ATH10K_QMI_STATE_INIT_DONE,
 	ATH10K_QMI_STATE_DEINIT,
-};
+पूर्ण;
 
-struct ath10k_qmi {
-	struct ath10k *ar;
-	struct qmi_handle qmi_hdl;
-	struct sockaddr_qrtr sq;
-	struct work_struct event_work;
-	struct workqueue_struct *event_wq;
-	struct list_head event_list;
-	spinlock_t event_lock; /* spinlock for qmi event list */
+काष्ठा ath10k_qmi अणु
+	काष्ठा ath10k *ar;
+	काष्ठा qmi_handle qmi_hdl;
+	काष्ठा sockaddr_qrtr sq;
+	काष्ठा work_काष्ठा event_work;
+	काष्ठा workqueue_काष्ठा *event_wq;
+	काष्ठा list_head event_list;
+	spinlock_t event_lock; /* spinlock क्रम qmi event list */
 	u32 nr_mem_region;
-	struct ath10k_msa_mem_info mem_region[MAX_NUM_MEMORY_REGIONS];
-	struct ath10k_qmi_chip_info chip_info;
-	struct ath10k_qmi_board_info board_info;
-	struct ath10k_qmi_soc_info soc_info;
-	char fw_build_id[MAX_BUILD_ID_LEN + 1];
+	काष्ठा ath10k_msa_mem_info mem_region[MAX_NUM_MEMORY_REGIONS];
+	काष्ठा ath10k_qmi_chip_info chip_info;
+	काष्ठा ath10k_qmi_board_info board_info;
+	काष्ठा ath10k_qmi_soc_info soc_info;
+	अक्षर fw_build_id[MAX_BUILD_ID_LEN + 1];
 	u32 fw_version;
-	bool fw_ready;
-	char fw_build_timestamp[MAX_TIMESTAMP_LEN + 1];
-	struct ath10k_qmi_cal_data cal_data[MAX_NUM_CAL_V01];
+	bool fw_पढ़ोy;
+	अक्षर fw_build_बारtamp[MAX_TIMESTAMP_LEN + 1];
+	काष्ठा ath10k_qmi_cal_data cal_data[MAX_NUM_CAL_V01];
 	bool msa_fixed_perm;
-	enum ath10k_qmi_state state;
-};
+	क्रमागत ath10k_qmi_state state;
+पूर्ण;
 
-int ath10k_qmi_wlan_enable(struct ath10k *ar,
-			   struct ath10k_qmi_wlan_enable_cfg *config,
-			   enum wlfw_driver_mode_enum_v01 mode,
-			   const char *version);
-int ath10k_qmi_wlan_disable(struct ath10k *ar);
-int ath10k_qmi_init(struct ath10k *ar, u32 msa_size);
-int ath10k_qmi_deinit(struct ath10k *ar);
-int ath10k_qmi_set_fw_log_mode(struct ath10k *ar, u8 fw_log_mode);
+पूर्णांक ath10k_qmi_wlan_enable(काष्ठा ath10k *ar,
+			   काष्ठा ath10k_qmi_wlan_enable_cfg *config,
+			   क्रमागत wlfw_driver_mode_क्रमागत_v01 mode,
+			   स्थिर अक्षर *version);
+पूर्णांक ath10k_qmi_wlan_disable(काष्ठा ath10k *ar);
+पूर्णांक ath10k_qmi_init(काष्ठा ath10k *ar, u32 msa_size);
+पूर्णांक ath10k_qmi_deinit(काष्ठा ath10k *ar);
+पूर्णांक ath10k_qmi_set_fw_log_mode(काष्ठा ath10k *ar, u8 fw_log_mode);
 
-#endif /* ATH10K_QMI_H */
+#पूर्ण_अगर /* ATH10K_QMI_H */

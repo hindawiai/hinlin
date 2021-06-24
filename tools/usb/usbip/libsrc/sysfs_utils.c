@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <त्रुटिसं.स>
 
-#include "sysfs_utils.h"
-#include "usbip_common.h"
+#समावेश "sysfs_utils.h"
+#समावेश "usbip_common.h"
 
-int write_sysfs_attribute(const char *attr_path, const char *new_value,
-			  size_t len)
-{
-	int fd;
-	int length;
+पूर्णांक ग_लिखो_sysfs_attribute(स्थिर अक्षर *attr_path, स्थिर अक्षर *new_value,
+			  माप_प्रकार len)
+अणु
+	पूर्णांक fd;
+	पूर्णांक length;
 
-	fd = open(attr_path, O_WRONLY);
-	if (fd < 0) {
+	fd = खोलो(attr_path, O_WRONLY);
+	अगर (fd < 0) अणु
 		dbg("error opening attribute %s", attr_path);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	length = write(fd, new_value, len);
-	if (length < 0) {
+	length = ग_लिखो(fd, new_value, len);
+	अगर (length < 0) अणु
 		dbg("error writing to attribute %s", attr_path);
-		close(fd);
-		return -1;
-	}
+		बंद(fd);
+		वापस -1;
+	पूर्ण
 
-	close(fd);
+	बंद(fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

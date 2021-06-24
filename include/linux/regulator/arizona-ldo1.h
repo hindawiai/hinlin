@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Platform data for Arizona LDO1 regulator
+ * Platक्रमm data क्रम Arizona LDO1 regulator
  *
  * Copyright 2017 Cirrus Logic
  */
 
-#ifndef ARIZONA_LDO1_H
-#define ARIZONA_LDO1_H
+#अगर_अघोषित ARIZONA_LDO1_H
+#घोषणा ARIZONA_LDO1_H
 
-struct regulator_init_data;
+काष्ठा regulator_init_data;
 
-struct arizona_ldo1_pdata {
-	/** Regulator configuration for LDO1 */
-	const struct regulator_init_data *init_data;
-};
+काष्ठा arizona_lकरो1_pdata अणु
+	/** Regulator configuration क्रम LDO1 */
+	स्थिर काष्ठा regulator_init_data *init_data;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_CONFIG_H
-#define __PERF_CONFIG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_CONFIG_H
+#घोषणा __PERF_CONFIG_H
 
-#include <stdbool.h>
-#include <linux/list.h>
+#समावेश <stdbool.h>
+#समावेश <linux/list.h>
 
-struct perf_config_item {
-	char *name;
-	char *value;
-	bool from_system_config;
-	struct list_head node;
-};
+काष्ठा perf_config_item अणु
+	अक्षर *name;
+	अक्षर *value;
+	bool from_प्रणाली_config;
+	काष्ठा list_head node;
+पूर्ण;
 
-struct perf_config_section {
-	char *name;
-	struct list_head items;
-	bool from_system_config;
-	struct list_head node;
-};
+काष्ठा perf_config_section अणु
+	अक्षर *name;
+	काष्ठा list_head items;
+	bool from_प्रणाली_config;
+	काष्ठा list_head node;
+पूर्ण;
 
-struct perf_config_set {
-	struct list_head sections;
-};
+काष्ठा perf_config_set अणु
+	काष्ठा list_head sections;
+पूर्ण;
 
-extern const char *config_exclusive_filename;
+बाह्य स्थिर अक्षर *config_exclusive_filename;
 
-typedef int (*config_fn_t)(const char *, const char *, void *);
+प्रकार पूर्णांक (*config_fn_t)(स्थिर अक्षर *, स्थिर अक्षर *, व्योम *);
 
-int perf_default_config(const char *, const char *, void *);
-int perf_config(config_fn_t fn, void *);
-int perf_config_set(struct perf_config_set *set,
-		    config_fn_t fn, void *data);
-int perf_config_int(int *dest, const char *, const char *);
-int perf_config_u8(u8 *dest, const char *name, const char *value);
-int perf_config_u64(u64 *dest, const char *, const char *);
-int perf_config_bool(const char *, const char *);
-int config_error_nonbool(const char *);
-const char *perf_etc_perfconfig(void);
-const char *perf_home_perfconfig(void);
-int perf_config_system(void);
-int perf_config_global(void);
+पूर्णांक perf_शेष_config(स्थिर अक्षर *, स्थिर अक्षर *, व्योम *);
+पूर्णांक perf_config(config_fn_t fn, व्योम *);
+पूर्णांक perf_config_set(काष्ठा perf_config_set *set,
+		    config_fn_t fn, व्योम *data);
+पूर्णांक perf_config_पूर्णांक(पूर्णांक *dest, स्थिर अक्षर *, स्थिर अक्षर *);
+पूर्णांक perf_config_u8(u8 *dest, स्थिर अक्षर *name, स्थिर अक्षर *value);
+पूर्णांक perf_config_u64(u64 *dest, स्थिर अक्षर *, स्थिर अक्षर *);
+पूर्णांक perf_config_bool(स्थिर अक्षर *, स्थिर अक्षर *);
+पूर्णांक config_error_nonbool(स्थिर अक्षर *);
+स्थिर अक्षर *perf_etc_perfconfig(व्योम);
+स्थिर अक्षर *perf_home_perfconfig(व्योम);
+पूर्णांक perf_config_प्रणाली(व्योम);
+पूर्णांक perf_config_global(व्योम);
 
-struct perf_config_set *perf_config_set__new(void);
-struct perf_config_set *perf_config_set__load_file(const char *file);
-void perf_config_set__delete(struct perf_config_set *set);
-int perf_config_set__collect(struct perf_config_set *set, const char *file_name,
-			     const char *var, const char *value);
-void perf_config__exit(void);
-void perf_config__refresh(void);
+काष्ठा perf_config_set *perf_config_set__new(व्योम);
+काष्ठा perf_config_set *perf_config_set__load_file(स्थिर अक्षर *file);
+व्योम perf_config_set__delete(काष्ठा perf_config_set *set);
+पूर्णांक perf_config_set__collect(काष्ठा perf_config_set *set, स्थिर अक्षर *file_name,
+			     स्थिर अक्षर *var, स्थिर अक्षर *value);
+व्योम perf_config__निकास(व्योम);
+व्योम perf_config__refresh(व्योम);
 
 /**
- * perf_config_sections__for_each - iterate thru all the sections
+ * perf_config_sections__क्रम_each - iterate thru all the sections
  * @list: list_head instance to iterate
- * @section: struct perf_config_section iterator
+ * @section: काष्ठा perf_config_section iterator
  */
-#define perf_config_sections__for_each_entry(list, section)	\
-        list_for_each_entry(section, list, node)
+#घोषणा perf_config_sections__क्रम_each_entry(list, section)	\
+        list_क्रम_each_entry(section, list, node)
 
 /**
- * perf_config_items__for_each - iterate thru all the items
+ * perf_config_items__क्रम_each - iterate thru all the items
  * @list: list_head instance to iterate
- * @item: struct perf_config_item iterator
+ * @item: काष्ठा perf_config_item iterator
  */
-#define perf_config_items__for_each_entry(list, item)	\
-        list_for_each_entry(item, list, node)
+#घोषणा perf_config_items__क्रम_each_entry(list, item)	\
+        list_क्रम_each_entry(item, list, node)
 
 /**
- * perf_config_set__for_each - iterate thru all the config section-item pairs
+ * perf_config_set__क्रम_each - iterate thru all the config section-item pairs
  * @set: evlist instance to iterate
- * @section: struct perf_config_section iterator
- * @item: struct perf_config_item iterator
+ * @section: काष्ठा perf_config_section iterator
+ * @item: काष्ठा perf_config_item iterator
  */
-#define perf_config_set__for_each_entry(set, section, item)			\
-	perf_config_sections__for_each_entry(&set->sections, section)		\
-	perf_config_items__for_each_entry(&section->items, item)
+#घोषणा perf_config_set__क्रम_each_entry(set, section, item)			\
+	perf_config_sections__क्रम_each_entry(&set->sections, section)		\
+	perf_config_items__क्रम_each_entry(&section->items, item)
 
-#endif /* __PERF_CONFIG_H */
+#पूर्ण_अगर /* __PERF_CONFIG_H */

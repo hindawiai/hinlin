@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,54 +20,54 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include "priv.h"
+#समावेश "priv.h"
 
-#include <subdev/acr.h>
+#समावेश <subdev/acr.h>
 
-#include <nvfw/flcn.h>
-#include <nvfw/pmu.h>
+#समावेश <nvfw/flcn.h>
+#समावेश <nvfw/pmu.h>
 
-static int
-gp10b_pmu_acr_bootstrap_multiple_falcons_cb(void *priv,
-					    struct nvfw_falcon_msg *hdr)
-{
-	struct nv_pmu_acr_bootstrap_multiple_falcons_msg *msg =
+अटल पूर्णांक
+gp10b_pmu_acr_bootstrap_multiple_falcons_cb(व्योम *priv,
+					    काष्ठा nvfw_falcon_msg *hdr)
+अणु
+	काष्ठा nv_pmu_acr_bootstrap_multiple_falcons_msg *msg =
 		container_of(hdr, typeof(*msg), msg.hdr);
-	return msg->falcon_mask;
-}
-static int
-gp10b_pmu_acr_bootstrap_multiple_falcons(struct nvkm_falcon *falcon, u32 mask)
-{
-	struct nvkm_pmu *pmu = container_of(falcon, typeof(*pmu), falcon);
-	struct nv_pmu_acr_bootstrap_multiple_falcons_cmd cmd = {
+	वापस msg->falcon_mask;
+पूर्ण
+अटल पूर्णांक
+gp10b_pmu_acr_bootstrap_multiple_falcons(काष्ठा nvkm_falcon *falcon, u32 mask)
+अणु
+	काष्ठा nvkm_pmu *pmu = container_of(falcon, typeof(*pmu), falcon);
+	काष्ठा nv_pmu_acr_bootstrap_multiple_falcons_cmd cmd = अणु
 		.cmd.hdr.unit_id = NV_PMU_UNIT_ACR,
-		.cmd.hdr.size = sizeof(cmd),
+		.cmd.hdr.size = माप(cmd),
 		.cmd.cmd_type = NV_PMU_ACR_CMD_BOOTSTRAP_MULTIPLE_FALCONS,
 		.flags = NV_PMU_ACR_BOOTSTRAP_MULTIPLE_FALCONS_FLAGS_RESET_YES,
 		.falcon_mask = mask,
 		.wpr_lo = 0, /*XXX*/
 		.wpr_hi = 0, /*XXX*/
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
 	ret = nvkm_falcon_cmdq_send(pmu->hpq, &cmd.cmd.hdr,
 				    gp10b_pmu_acr_bootstrap_multiple_falcons_cb,
-				    &pmu->subdev, msecs_to_jiffies(1000));
-	if (ret >= 0) {
-		if (ret != cmd.falcon_mask)
+				    &pmu->subdev, msecs_to_jअगरfies(1000));
+	अगर (ret >= 0) अणु
+		अगर (ret != cmd.falcon_mask)
 			ret = -EIO;
-		else
+		अन्यथा
 			ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_acr_lsf_func
-gp10b_pmu_acr = {
+अटल स्थिर काष्ठा nvkm_acr_lsf_func
+gp10b_pmu_acr = अणु
 	.flags = NVKM_ACR_LSF_DMACTL_REQ_CTX,
-	.bld_size = sizeof(struct loader_config),
-	.bld_write = gm20b_pmu_acr_bld_write,
+	.bld_size = माप(काष्ठा loader_config),
+	.bld_ग_लिखो = gm20b_pmu_acr_bld_ग_लिखो,
 	.bld_patch = gm20b_pmu_acr_bld_patch,
 	.boot = gm20b_pmu_acr_boot,
 	.bootstrap_falcons = BIT_ULL(NVKM_ACR_LSF_PMU) |
@@ -74,33 +75,33 @@ gp10b_pmu_acr = {
 			     BIT_ULL(NVKM_ACR_LSF_GPCCS),
 	.bootstrap_falcon = gm20b_pmu_acr_bootstrap_falcon,
 	.bootstrap_multiple_falcons = gp10b_pmu_acr_bootstrap_multiple_falcons,
-};
+पूर्ण;
 
-static const struct nvkm_pmu_func
-gp10b_pmu = {
+अटल स्थिर काष्ठा nvkm_pmu_func
+gp10b_pmu = अणु
 	.flcn = &gt215_pmu_flcn,
 	.enabled = gf100_pmu_enabled,
-	.intr = gt215_pmu_intr,
+	.पूर्णांकr = gt215_pmu_पूर्णांकr,
 	.recv = gm20b_pmu_recv,
-	.initmsg = gm20b_pmu_initmsg,
-};
+	.iniपंचांगsg = gm20b_pmu_iniपंचांगsg,
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
+#अगर IS_ENABLED(CONFIG_ARCH_TEGRA_210_SOC)
 MODULE_FIRMWARE("nvidia/gp10b/pmu/desc.bin");
 MODULE_FIRMWARE("nvidia/gp10b/pmu/image.bin");
 MODULE_FIRMWARE("nvidia/gp10b/pmu/sig.bin");
-#endif
+#पूर्ण_अगर
 
-static const struct nvkm_pmu_fwif
-gp10b_pmu_fwif[] = {
-	{  0, gm20b_pmu_load, &gp10b_pmu, &gp10b_pmu_acr },
-	{ -1, gm200_pmu_nofw, &gp10b_pmu },
-	{}
-};
+अटल स्थिर काष्ठा nvkm_pmu_fwअगर
+gp10b_pmu_fwअगर[] = अणु
+	अणु  0, gm20b_pmu_load, &gp10b_pmu, &gp10b_pmu_acr पूर्ण,
+	अणु -1, gm200_pmu_nofw, &gp10b_pmu पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-int
-gp10b_pmu_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_pmu **ppmu)
-{
-	return nvkm_pmu_new_(gp10b_pmu_fwif, device, type, inst, ppmu);
-}
+पूर्णांक
+gp10b_pmu_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_pmu **ppmu)
+अणु
+	वापस nvkm_pmu_new_(gp10b_pmu_fwअगर, device, type, inst, ppmu);
+पूर्ण

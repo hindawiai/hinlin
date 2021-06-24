@@ -1,44 +1,45 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1992 - 1997 Silicon Graphics, Inc.
  */
-#ifndef __ASM_SN_INTR_H
-#define __ASM_SN_INTR_H
+#अगर_अघोषित __ASM_SN_INTR_H
+#घोषणा __ASM_SN_INTR_H
 
 /*
- * Macros to manipulate the interrupt register on the calling hub chip.
+ * Macros to manipulate the पूर्णांकerrupt रेजिस्टर on the calling hub chip.
  */
 
-#define LOCAL_HUB_SEND_INTR(level)				\
+#घोषणा LOCAL_HUB_SEND_INTR(level)				\
 	LOCAL_HUB_S(PI_INT_PEND_MOD, (0x100 | (level)))
-#define REMOTE_HUB_SEND_INTR(hub, level)			\
+#घोषणा REMOTE_HUB_SEND_INTR(hub, level)			\
 	REMOTE_HUB_S((hub), PI_INT_PEND_MOD, (0x100 | (level)))
 
 /*
- * When clearing the interrupt, make sure this clear does make it
- * to the hub. Otherwise we could end up losing interrupts.
- * We do an uncached load of the int_pend0 register to ensure this.
+ * When clearing the पूर्णांकerrupt, make sure this clear करोes make it
+ * to the hub. Otherwise we could end up losing पूर्णांकerrupts.
+ * We करो an uncached load of the पूर्णांक_pend0 रेजिस्टर to ensure this.
  */
 
-#define LOCAL_HUB_CLR_INTR(level)				\
-do {								\
+#घोषणा LOCAL_HUB_CLR_INTR(level)				\
+करो अणु								\
 	LOCAL_HUB_S(PI_INT_PEND_MOD, (level));			\
 	LOCAL_HUB_L(PI_INT_PEND0);				\
-} while (0);
+पूर्ण जबतक (0);
 
-#define REMOTE_HUB_CLR_INTR(hub, level)				\
-do {								\
+#घोषणा REMOTE_HUB_CLR_INTR(hub, level)				\
+करो अणु								\
 	nasid_t	 __hub = (hub);					\
 								\
 	REMOTE_HUB_S(__hub, PI_INT_PEND_MOD, (level));		\
 	REMOTE_HUB_L(__hub, PI_INT_PEND0);			\
-} while (0);
+पूर्ण जबतक (0);
 
 /*
- * Hard-coded interrupt levels:
+ * Hard-coded पूर्णांकerrupt levels:
  */
 
 /*
@@ -60,53 +61,53 @@ do {								\
 /*
  * INT_PEND0 bits determined by hardware:
  */
-#define RESERVED_INTR		 0	/* What is this bit? */
-#define GFX_INTR_A		 1
-#define GFX_INTR_B		 2
-#define PG_MIG_INTR		 3
-#define UART_INTR		 4
-#define CC_PEND_A		 5
-#define CC_PEND_B		 6
+#घोषणा RESERVED_INTR		 0	/* What is this bit? */
+#घोषणा GFX_INTR_A		 1
+#घोषणा GFX_INTR_B		 2
+#घोषणा PG_MIG_INTR		 3
+#घोषणा UART_INTR		 4
+#घोषणा CC_PEND_A		 5
+#घोषणा CC_PEND_B		 6
 
 /*
- * INT_PEND0 used by the kernel for itself ...
+ * INT_PEND0 used by the kernel क्रम itself ...
  */
-#define CPU_RESCHED_A_IRQ	 7
-#define CPU_RESCHED_B_IRQ	 8
-#define CPU_CALL_A_IRQ		 9
-#define CPU_CALL_B_IRQ		10
+#घोषणा CPU_RESCHED_A_IRQ	 7
+#घोषणा CPU_RESCHED_B_IRQ	 8
+#घोषणा CPU_CALL_A_IRQ		 9
+#घोषणा CPU_CALL_B_IRQ		10
 
 /*
  * INT_PEND1 hard-coded bits:
  */
-#define NI_BRDCAST_ERR_A	39
-#define NI_BRDCAST_ERR_B	40
+#घोषणा NI_BRDCAST_ERR_A	39
+#घोषणा NI_BRDCAST_ERR_B	40
 
-#define LLP_PFAIL_INTR_A	41	/* see ml/SN/SN0/sysctlr.c */
-#define LLP_PFAIL_INTR_B	42
+#घोषणा LLP_PFAIL_INTR_A	41	/* see ml/SN/SN0/sysctlr.c */
+#घोषणा LLP_PFAIL_INTR_B	42
 
-#define TLB_INTR_A		43	/* used for tlb flush random */
-#define TLB_INTR_B		44
+#घोषणा TLB_INTR_A		43	/* used क्रम tlb flush अक्रमom */
+#घोषणा TLB_INTR_B		44
 
-#define IP27_INTR_0		45	/* Reserved for PROM use */
-#define IP27_INTR_1		46	/* do not use in Kernel */
-#define IP27_INTR_2		47
-#define IP27_INTR_3		48
-#define IP27_INTR_4		49
-#define IP27_INTR_5		50
-#define IP27_INTR_6		51
-#define IP27_INTR_7		52
+#घोषणा IP27_INTR_0		45	/* Reserved क्रम PROM use */
+#घोषणा IP27_INTR_1		46	/* करो not use in Kernel */
+#घोषणा IP27_INTR_2		47
+#घोषणा IP27_INTR_3		48
+#घोषणा IP27_INTR_4		49
+#घोषणा IP27_INTR_5		50
+#घोषणा IP27_INTR_6		51
+#घोषणा IP27_INTR_7		52
 
-#define BRIDGE_ERROR_INTR	53	/* Setup by PROM to catch	*/
+#घोषणा BRIDGE_ERROR_INTR	53	/* Setup by PROM to catch	*/
 					/* Bridge Errors */
-#define DEBUG_INTR_A		54
-#define DEBUG_INTR_B		55	/* Used by symmon to stop all cpus */
-#define IO_ERROR_INTR		57	/* Setup by PROM */
-#define CLK_ERR_INTR		58
-#define COR_ERR_INTR_A		59
-#define COR_ERR_INTR_B		60
-#define MD_COR_ERR_INTR		61
-#define NI_ERROR_INTR		62
-#define MSC_PANIC_INTR		63
+#घोषणा DEBUG_INTR_A		54
+#घोषणा DEBUG_INTR_B		55	/* Used by symmon to stop all cpus */
+#घोषणा IO_ERROR_INTR		57	/* Setup by PROM */
+#घोषणा CLK_ERR_INTR		58
+#घोषणा COR_ERR_INTR_A		59
+#घोषणा COR_ERR_INTR_B		60
+#घोषणा MD_COR_ERR_INTR		61
+#घोषणा NI_ERROR_INTR		62
+#घोषणा MSC_PANIC_INTR		63
 
-#endif /* __ASM_SN_INTR_H */
+#पूर्ण_अगर /* __ASM_SN_INTR_H */

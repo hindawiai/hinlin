@@ -1,46 +1,47 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 
 /*
- * Xen para-virtual sound device
+ * Xen para-भव sound device
  *
  * Copyright (C) 2016-2018 EPAM Systems Inc.
  *
  * Author: Oleksandr Andrushchenko <oleksandr_andrushchenko@epam.com>
  */
 
-#ifndef __XEN_SND_FRONT_CFG_H
-#define __XEN_SND_FRONT_CFG_H
+#अगर_अघोषित __XEN_SND_FRONT_CFG_H
+#घोषणा __XEN_SND_FRONT_CFG_H
 
-#include <sound/core.h>
-#include <sound/pcm.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
 
-struct xen_snd_front_info;
+काष्ठा xen_snd_front_info;
 
-struct xen_front_cfg_stream {
-	int index;
-	char *xenstore_path;
-	struct snd_pcm_hardware pcm_hw;
-};
+काष्ठा xen_front_cfg_stream अणु
+	पूर्णांक index;
+	अक्षर *xenstore_path;
+	काष्ठा snd_pcm_hardware pcm_hw;
+पूर्ण;
 
-struct xen_front_cfg_pcm_instance {
-	char name[80];
-	int device_id;
-	struct snd_pcm_hardware pcm_hw;
-	int  num_streams_pb;
-	struct xen_front_cfg_stream *streams_pb;
-	int  num_streams_cap;
-	struct xen_front_cfg_stream *streams_cap;
-};
+काष्ठा xen_front_cfg_pcm_instance अणु
+	अक्षर name[80];
+	पूर्णांक device_id;
+	काष्ठा snd_pcm_hardware pcm_hw;
+	पूर्णांक  num_streams_pb;
+	काष्ठा xen_front_cfg_stream *streams_pb;
+	पूर्णांक  num_streams_cap;
+	काष्ठा xen_front_cfg_stream *streams_cap;
+पूर्ण;
 
-struct xen_front_cfg_card {
-	char name_short[32];
-	char name_long[80];
-	struct snd_pcm_hardware pcm_hw;
-	int num_pcm_instances;
-	struct xen_front_cfg_pcm_instance *pcm_instances;
-};
+काष्ठा xen_front_cfg_card अणु
+	अक्षर name_लघु[32];
+	अक्षर name_दीर्घ[80];
+	काष्ठा snd_pcm_hardware pcm_hw;
+	पूर्णांक num_pcm_instances;
+	काष्ठा xen_front_cfg_pcm_instance *pcm_instances;
+पूर्ण;
 
-int xen_snd_front_cfg_card(struct xen_snd_front_info *front_info,
-			   int *stream_cnt);
+पूर्णांक xen_snd_front_cfg_card(काष्ठा xen_snd_front_info *front_info,
+			   पूर्णांक *stream_cnt);
 
-#endif /* __XEN_SND_FRONT_CFG_H */
+#पूर्ण_अगर /* __XEN_SND_FRONT_CFG_H */

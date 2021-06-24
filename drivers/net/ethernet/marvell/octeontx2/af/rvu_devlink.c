@@ -1,1421 +1,1422 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Marvell OcteonTx2 RVU Devlink
  *
  * Copyright (C) 2020 Marvell.
  *
  */
 
-#include<linux/bitfield.h>
+#समावेश<linux/bitfield.h>
 
-#include "rvu.h"
-#include "rvu_reg.h"
-#include "rvu_struct.h"
+#समावेश "rvu.h"
+#समावेश "rvu_reg.h"
+#समावेश "rvu_struct.h"
 
-#define DRV_NAME "octeontx2-af"
+#घोषणा DRV_NAME "octeontx2-af"
 
-static int rvu_report_pair_start(struct devlink_fmsg *fmsg, const char *name)
-{
-	int err;
+अटल पूर्णांक rvu_report_pair_start(काष्ठा devlink_fmsg *fmsg, स्थिर अक्षर *name)
+अणु
+	पूर्णांक err;
 
 	err = devlink_fmsg_pair_nest_start(fmsg, name);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return  devlink_fmsg_obj_nest_start(fmsg);
-}
+	वापस  devlink_fmsg_obj_nest_start(fmsg);
+पूर्ण
 
-static int rvu_report_pair_end(struct devlink_fmsg *fmsg)
-{
-	int err;
+अटल पूर्णांक rvu_report_pair_end(काष्ठा devlink_fmsg *fmsg)
+अणु
+	पूर्णांक err;
 
 	err = devlink_fmsg_obj_nest_end(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return devlink_fmsg_pair_nest_end(fmsg);
-}
+	वापस devlink_fmsg_pair_nest_end(fmsg);
+पूर्ण
 
-static bool rvu_common_request_irq(struct rvu *rvu, int offset,
-				   const char *name, irq_handler_t fn)
-{
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	int rc;
+अटल bool rvu_common_request_irq(काष्ठा rvu *rvu, पूर्णांक offset,
+				   स्थिर अक्षर *name, irq_handler_t fn)
+अणु
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	पूर्णांक rc;
 
-	sprintf(&rvu->irq_name[offset * NAME_SIZE], name);
+	प्र_लिखो(&rvu->irq_name[offset * NAME_SIZE], name);
 	rc = request_irq(pci_irq_vector(rvu->pdev, offset), fn, 0,
 			 &rvu->irq_name[offset * NAME_SIZE], rvu_dl);
-	if (rc)
+	अगर (rc)
 		dev_warn(rvu->dev, "Failed to register %s irq\n", name);
-	else
+	अन्यथा
 		rvu->irq_allocated[offset] = true;
 
-	return rvu->irq_allocated[offset];
-}
+	वापस rvu->irq_allocated[offset];
+पूर्ण
 
-static void rvu_nix_intr_work(struct work_struct *work)
-{
-	struct rvu_nix_health_reporters *rvu_nix_health_reporter;
+अटल व्योम rvu_nix_पूर्णांकr_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rvu_nix_health_reporters *rvu_nix_health_reporter;
 
-	rvu_nix_health_reporter = container_of(work, struct rvu_nix_health_reporters, intr_work);
-	devlink_health_report(rvu_nix_health_reporter->rvu_hw_nix_intr_reporter,
+	rvu_nix_health_reporter = container_of(work, काष्ठा rvu_nix_health_reporters, पूर्णांकr_work);
+	devlink_health_report(rvu_nix_health_reporter->rvu_hw_nix_पूर्णांकr_reporter,
 			      "NIX_AF_RVU Error",
 			      rvu_nix_health_reporter->nix_event_ctx);
-}
+पूर्ण
 
-static irqreturn_t rvu_nix_af_rvu_intr_handler(int irq, void *rvu_irq)
-{
-	struct rvu_nix_event_ctx *nix_event_context;
-	struct rvu_devlink *rvu_dl = rvu_irq;
-	struct rvu *rvu;
-	int blkaddr;
-	u64 intr;
+अटल irqवापस_t rvu_nix_af_rvu_पूर्णांकr_handler(पूर्णांक irq, व्योम *rvu_irq)
+अणु
+	काष्ठा rvu_nix_event_ctx *nix_event_context;
+	काष्ठा rvu_devlink *rvu_dl = rvu_irq;
+	काष्ठा rvu *rvu;
+	पूर्णांक blkaddr;
+	u64 पूर्णांकr;
 
 	rvu = rvu_dl->rvu;
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return IRQ_NONE;
+	अगर (blkaddr < 0)
+		वापस IRQ_NONE;
 
 	nix_event_context = rvu_dl->rvu_nix_health_reporter->nix_event_ctx;
-	intr = rvu_read64(rvu, blkaddr, NIX_AF_RVU_INT);
-	nix_event_context->nix_af_rvu_int = intr;
+	पूर्णांकr = rvu_पढ़ो64(rvu, blkaddr, NIX_AF_RVU_INT);
+	nix_event_context->nix_af_rvu_पूर्णांक = पूर्णांकr;
 
-	/* Clear interrupts */
-	rvu_write64(rvu, blkaddr, NIX_AF_RVU_INT, intr);
-	rvu_write64(rvu, blkaddr, NIX_AF_RVU_INT_ENA_W1C, ~0ULL);
-	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_nix_health_reporter->intr_work);
+	/* Clear पूर्णांकerrupts */
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RVU_INT, पूर्णांकr);
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RVU_INT_ENA_W1C, ~0ULL);
+	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_nix_health_reporter->पूर्णांकr_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rvu_nix_gen_work(struct work_struct *work)
-{
-	struct rvu_nix_health_reporters *rvu_nix_health_reporter;
+अटल व्योम rvu_nix_gen_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rvu_nix_health_reporters *rvu_nix_health_reporter;
 
-	rvu_nix_health_reporter = container_of(work, struct rvu_nix_health_reporters, gen_work);
+	rvu_nix_health_reporter = container_of(work, काष्ठा rvu_nix_health_reporters, gen_work);
 	devlink_health_report(rvu_nix_health_reporter->rvu_hw_nix_gen_reporter,
 			      "NIX_AF_GEN Error",
 			      rvu_nix_health_reporter->nix_event_ctx);
-}
+पूर्ण
 
-static irqreturn_t rvu_nix_af_rvu_gen_handler(int irq, void *rvu_irq)
-{
-	struct rvu_nix_event_ctx *nix_event_context;
-	struct rvu_devlink *rvu_dl = rvu_irq;
-	struct rvu *rvu;
-	int blkaddr;
-	u64 intr;
+अटल irqवापस_t rvu_nix_af_rvu_gen_handler(पूर्णांक irq, व्योम *rvu_irq)
+अणु
+	काष्ठा rvu_nix_event_ctx *nix_event_context;
+	काष्ठा rvu_devlink *rvu_dl = rvu_irq;
+	काष्ठा rvu *rvu;
+	पूर्णांक blkaddr;
+	u64 पूर्णांकr;
 
 	rvu = rvu_dl->rvu;
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return IRQ_NONE;
+	अगर (blkaddr < 0)
+		वापस IRQ_NONE;
 
 	nix_event_context = rvu_dl->rvu_nix_health_reporter->nix_event_ctx;
-	intr = rvu_read64(rvu, blkaddr, NIX_AF_GEN_INT);
-	nix_event_context->nix_af_rvu_gen = intr;
+	पूर्णांकr = rvu_पढ़ो64(rvu, blkaddr, NIX_AF_GEN_INT);
+	nix_event_context->nix_af_rvu_gen = पूर्णांकr;
 
-	/* Clear interrupts */
-	rvu_write64(rvu, blkaddr, NIX_AF_GEN_INT, intr);
-	rvu_write64(rvu, blkaddr, NIX_AF_GEN_INT_ENA_W1C, ~0ULL);
+	/* Clear पूर्णांकerrupts */
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_GEN_INT, पूर्णांकr);
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_GEN_INT_ENA_W1C, ~0ULL);
 	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_nix_health_reporter->gen_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rvu_nix_err_work(struct work_struct *work)
-{
-	struct rvu_nix_health_reporters *rvu_nix_health_reporter;
+अटल व्योम rvu_nix_err_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rvu_nix_health_reporters *rvu_nix_health_reporter;
 
-	rvu_nix_health_reporter = container_of(work, struct rvu_nix_health_reporters, err_work);
+	rvu_nix_health_reporter = container_of(work, काष्ठा rvu_nix_health_reporters, err_work);
 	devlink_health_report(rvu_nix_health_reporter->rvu_hw_nix_err_reporter,
 			      "NIX_AF_ERR Error",
 			      rvu_nix_health_reporter->nix_event_ctx);
-}
+पूर्ण
 
-static irqreturn_t rvu_nix_af_rvu_err_handler(int irq, void *rvu_irq)
-{
-	struct rvu_nix_event_ctx *nix_event_context;
-	struct rvu_devlink *rvu_dl = rvu_irq;
-	struct rvu *rvu;
-	int blkaddr;
-	u64 intr;
+अटल irqवापस_t rvu_nix_af_rvu_err_handler(पूर्णांक irq, व्योम *rvu_irq)
+अणु
+	काष्ठा rvu_nix_event_ctx *nix_event_context;
+	काष्ठा rvu_devlink *rvu_dl = rvu_irq;
+	काष्ठा rvu *rvu;
+	पूर्णांक blkaddr;
+	u64 पूर्णांकr;
 
 	rvu = rvu_dl->rvu;
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return IRQ_NONE;
+	अगर (blkaddr < 0)
+		वापस IRQ_NONE;
 
 	nix_event_context = rvu_dl->rvu_nix_health_reporter->nix_event_ctx;
-	intr = rvu_read64(rvu, blkaddr, NIX_AF_ERR_INT);
-	nix_event_context->nix_af_rvu_err = intr;
+	पूर्णांकr = rvu_पढ़ो64(rvu, blkaddr, NIX_AF_ERR_INT);
+	nix_event_context->nix_af_rvu_err = पूर्णांकr;
 
-	/* Clear interrupts */
-	rvu_write64(rvu, blkaddr, NIX_AF_ERR_INT, intr);
-	rvu_write64(rvu, blkaddr, NIX_AF_ERR_INT_ENA_W1C, ~0ULL);
+	/* Clear पूर्णांकerrupts */
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_ERR_INT, पूर्णांकr);
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_ERR_INT_ENA_W1C, ~0ULL);
 	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_nix_health_reporter->err_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rvu_nix_ras_work(struct work_struct *work)
-{
-	struct rvu_nix_health_reporters *rvu_nix_health_reporter;
+अटल व्योम rvu_nix_ras_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rvu_nix_health_reporters *rvu_nix_health_reporter;
 
-	rvu_nix_health_reporter = container_of(work, struct rvu_nix_health_reporters, ras_work);
+	rvu_nix_health_reporter = container_of(work, काष्ठा rvu_nix_health_reporters, ras_work);
 	devlink_health_report(rvu_nix_health_reporter->rvu_hw_nix_ras_reporter,
 			      "NIX_AF_RAS Error",
 			      rvu_nix_health_reporter->nix_event_ctx);
-}
+पूर्ण
 
-static irqreturn_t rvu_nix_af_rvu_ras_handler(int irq, void *rvu_irq)
-{
-	struct rvu_nix_event_ctx *nix_event_context;
-	struct rvu_devlink *rvu_dl = rvu_irq;
-	struct rvu *rvu;
-	int blkaddr;
-	u64 intr;
+अटल irqवापस_t rvu_nix_af_rvu_ras_handler(पूर्णांक irq, व्योम *rvu_irq)
+अणु
+	काष्ठा rvu_nix_event_ctx *nix_event_context;
+	काष्ठा rvu_devlink *rvu_dl = rvu_irq;
+	काष्ठा rvu *rvu;
+	पूर्णांक blkaddr;
+	u64 पूर्णांकr;
 
 	rvu = rvu_dl->rvu;
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return IRQ_NONE;
+	अगर (blkaddr < 0)
+		वापस IRQ_NONE;
 
 	nix_event_context = rvu_dl->rvu_nix_health_reporter->nix_event_ctx;
-	intr = rvu_read64(rvu, blkaddr, NIX_AF_ERR_INT);
-	nix_event_context->nix_af_rvu_ras = intr;
+	पूर्णांकr = rvu_पढ़ो64(rvu, blkaddr, NIX_AF_ERR_INT);
+	nix_event_context->nix_af_rvu_ras = पूर्णांकr;
 
-	/* Clear interrupts */
-	rvu_write64(rvu, blkaddr, NIX_AF_RAS, intr);
-	rvu_write64(rvu, blkaddr, NIX_AF_RAS_ENA_W1C, ~0ULL);
+	/* Clear पूर्णांकerrupts */
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RAS, पूर्णांकr);
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RAS_ENA_W1C, ~0ULL);
 	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_nix_health_reporter->ras_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rvu_nix_unregister_interrupts(struct rvu *rvu)
-{
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	int offs, i, blkaddr;
+अटल व्योम rvu_nix_unरेजिस्टर_पूर्णांकerrupts(काष्ठा rvu *rvu)
+अणु
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	पूर्णांक offs, i, blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return;
+	अगर (blkaddr < 0)
+		वापस;
 
-	offs = rvu_read64(rvu, blkaddr, NIX_PRIV_AF_INT_CFG) & 0x3ff;
-	if (!offs)
-		return;
+	offs = rvu_पढ़ो64(rvu, blkaddr, NIX_PRIV_AF_INT_CFG) & 0x3ff;
+	अगर (!offs)
+		वापस;
 
-	rvu_write64(rvu, blkaddr, NIX_AF_RVU_INT_ENA_W1C, ~0ULL);
-	rvu_write64(rvu, blkaddr, NIX_AF_GEN_INT_ENA_W1C, ~0ULL);
-	rvu_write64(rvu, blkaddr, NIX_AF_ERR_INT_ENA_W1C, ~0ULL);
-	rvu_write64(rvu, blkaddr, NIX_AF_RAS_ENA_W1C, ~0ULL);
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RVU_INT_ENA_W1C, ~0ULL);
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_GEN_INT_ENA_W1C, ~0ULL);
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_ERR_INT_ENA_W1C, ~0ULL);
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RAS_ENA_W1C, ~0ULL);
 
-	if (rvu->irq_allocated[offs + NIX_AF_INT_VEC_RVU]) {
-		free_irq(pci_irq_vector(rvu->pdev, offs + NIX_AF_INT_VEC_RVU),
+	अगर (rvu->irq_allocated[offs + NIX_AF_INT_VEC_RVU]) अणु
+		मुक्त_irq(pci_irq_vector(rvu->pdev, offs + NIX_AF_INT_VEC_RVU),
 			 rvu_dl);
 		rvu->irq_allocated[offs + NIX_AF_INT_VEC_RVU] = false;
-	}
+	पूर्ण
 
-	for (i = NIX_AF_INT_VEC_AF_ERR; i < NIX_AF_INT_VEC_CNT; i++)
-		if (rvu->irq_allocated[offs + i]) {
-			free_irq(pci_irq_vector(rvu->pdev, offs + i), rvu_dl);
+	क्रम (i = NIX_AF_INT_VEC_AF_ERR; i < NIX_AF_INT_VEC_CNT; i++)
+		अगर (rvu->irq_allocated[offs + i]) अणु
+			मुक्त_irq(pci_irq_vector(rvu->pdev, offs + i), rvu_dl);
 			rvu->irq_allocated[offs + i] = false;
-		}
-}
+		पूर्ण
+पूर्ण
 
-static int rvu_nix_register_interrupts(struct rvu *rvu)
-{
-	int blkaddr, base;
+अटल पूर्णांक rvu_nix_रेजिस्टर_पूर्णांकerrupts(काष्ठा rvu *rvu)
+अणु
+	पूर्णांक blkaddr, base;
 	bool rc;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
 	/* Get NIX AF MSIX vectors offset. */
-	base = rvu_read64(rvu, blkaddr, NIX_PRIV_AF_INT_CFG) & 0x3ff;
-	if (!base) {
+	base = rvu_पढ़ो64(rvu, blkaddr, NIX_PRIV_AF_INT_CFG) & 0x3ff;
+	अगर (!base) अणु
 		dev_warn(rvu->dev,
 			 "Failed to get NIX%d NIX_AF_INT vector offsets\n",
 			 blkaddr - BLKADDR_NIX0);
-		return 0;
-	}
-	/* Register and enable NIX_AF_RVU_INT interrupt */
+		वापस 0;
+	पूर्ण
+	/* Register and enable NIX_AF_RVU_INT पूर्णांकerrupt */
 	rc = rvu_common_request_irq(rvu, base +  NIX_AF_INT_VEC_RVU,
 				    "NIX_AF_RVU_INT",
-				    rvu_nix_af_rvu_intr_handler);
-	if (!rc)
-		goto err;
-	rvu_write64(rvu, blkaddr, NIX_AF_RVU_INT_ENA_W1S, ~0ULL);
+				    rvu_nix_af_rvu_पूर्णांकr_handler);
+	अगर (!rc)
+		जाओ err;
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RVU_INT_ENA_W1S, ~0ULL);
 
-	/* Register and enable NIX_AF_GEN_INT interrupt */
+	/* Register and enable NIX_AF_GEN_INT पूर्णांकerrupt */
 	rc = rvu_common_request_irq(rvu, base +  NIX_AF_INT_VEC_GEN,
 				    "NIX_AF_GEN_INT",
 				    rvu_nix_af_rvu_gen_handler);
-	if (!rc)
-		goto err;
-	rvu_write64(rvu, blkaddr, NIX_AF_GEN_INT_ENA_W1S, ~0ULL);
+	अगर (!rc)
+		जाओ err;
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_GEN_INT_ENA_W1S, ~0ULL);
 
-	/* Register and enable NIX_AF_ERR_INT interrupt */
+	/* Register and enable NIX_AF_ERR_INT पूर्णांकerrupt */
 	rc = rvu_common_request_irq(rvu, base + NIX_AF_INT_VEC_AF_ERR,
 				    "NIX_AF_ERR_INT",
 				    rvu_nix_af_rvu_err_handler);
-	if (!rc)
-		goto err;
-	rvu_write64(rvu, blkaddr, NIX_AF_ERR_INT_ENA_W1S, ~0ULL);
+	अगर (!rc)
+		जाओ err;
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_ERR_INT_ENA_W1S, ~0ULL);
 
-	/* Register and enable NIX_AF_RAS interrupt */
+	/* Register and enable NIX_AF_RAS पूर्णांकerrupt */
 	rc = rvu_common_request_irq(rvu, base + NIX_AF_INT_VEC_POISON,
 				    "NIX_AF_RAS",
 				    rvu_nix_af_rvu_ras_handler);
-	if (!rc)
-		goto err;
-	rvu_write64(rvu, blkaddr, NIX_AF_RAS_ENA_W1S, ~0ULL);
+	अगर (!rc)
+		जाओ err;
+	rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RAS_ENA_W1S, ~0ULL);
 
-	return 0;
+	वापस 0;
 err:
-	rvu_nix_unregister_interrupts(rvu);
-	return rc;
-}
+	rvu_nix_unरेजिस्टर_पूर्णांकerrupts(rvu);
+	वापस rc;
+पूर्ण
 
-static int rvu_nix_report_show(struct devlink_fmsg *fmsg, void *ctx,
-			       enum nix_af_rvu_health health_reporter)
-{
-	struct rvu_nix_event_ctx *nix_event_context;
-	u64 intr_val;
-	int err;
+अटल पूर्णांक rvu_nix_report_show(काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+			       क्रमागत nix_af_rvu_health health_reporter)
+अणु
+	काष्ठा rvu_nix_event_ctx *nix_event_context;
+	u64 पूर्णांकr_val;
+	पूर्णांक err;
 
 	nix_event_context = ctx;
-	switch (health_reporter) {
-	case NIX_AF_RVU_INTR:
-		intr_val = nix_event_context->nix_af_rvu_int;
+	चयन (health_reporter) अणु
+	हाल NIX_AF_RVU_INTR:
+		पूर्णांकr_val = nix_event_context->nix_af_rvu_पूर्णांक;
 		err = rvu_report_pair_start(fmsg, "NIX_AF_RVU");
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u64_pair_put(fmsg, "\tNIX RVU Interrupt Reg ",
-						nix_event_context->nix_af_rvu_int);
-		if (err)
-			return err;
-		if (intr_val & BIT_ULL(0)) {
+						nix_event_context->nix_af_rvu_पूर्णांक);
+		अगर (err)
+			वापस err;
+		अगर (पूर्णांकr_val & BIT_ULL(0)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tUnmap Slot Error");
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 		err = rvu_report_pair_end(fmsg);
-		if (err)
-			return err;
-		break;
-	case NIX_AF_RVU_GEN:
-		intr_val = nix_event_context->nix_af_rvu_gen;
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल NIX_AF_RVU_GEN:
+		पूर्णांकr_val = nix_event_context->nix_af_rvu_gen;
 		err = rvu_report_pair_start(fmsg, "NIX_AF_GENERAL");
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u64_pair_put(fmsg, "\tNIX General Interrupt Reg ",
 						nix_event_context->nix_af_rvu_gen);
-		if (err)
-			return err;
-		if (intr_val & BIT_ULL(0)) {
+		अगर (err)
+			वापस err;
+		अगर (पूर्णांकr_val & BIT_ULL(0)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tRx multicast pkt drop");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(1)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(1)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tRx mirror pkt drop");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(4)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(4)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tSMQ flush done");
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 		err = rvu_report_pair_end(fmsg);
-		if (err)
-			return err;
-		break;
-	case NIX_AF_RVU_ERR:
-		intr_val = nix_event_context->nix_af_rvu_err;
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल NIX_AF_RVU_ERR:
+		पूर्णांकr_val = nix_event_context->nix_af_rvu_err;
 		err = rvu_report_pair_start(fmsg, "NIX_AF_ERR");
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u64_pair_put(fmsg, "\tNIX Error Interrupt Reg ",
 						nix_event_context->nix_af_rvu_err);
-		if (err)
-			return err;
-		if (intr_val & BIT_ULL(14)) {
+		अगर (err)
+			वापस err;
+		अगर (पूर्णांकr_val & BIT_ULL(14)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFault on NIX_AQ_INST_S read");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(13)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(13)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFault on NIX_AQ_RES_S write");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(12)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(12)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tAQ Doorbell Error");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(6)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(6)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tRx on unmapped PF_FUNC");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(5)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(5)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tRx multicast replication error");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(4)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(4)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFault on NIX_RX_MCE_S read");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(3)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(3)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFault on multicast WQE read");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(2)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(2)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFault on mirror WQE read");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(1)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(1)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFault on mirror pkt write");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(0)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(0)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFault on multicast pkt write");
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 		err = rvu_report_pair_end(fmsg);
-		if (err)
-			return err;
-		break;
-	case NIX_AF_RVU_RAS:
-		intr_val = nix_event_context->nix_af_rvu_err;
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल NIX_AF_RVU_RAS:
+		पूर्णांकr_val = nix_event_context->nix_af_rvu_err;
 		err = rvu_report_pair_start(fmsg, "NIX_AF_RAS");
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u64_pair_put(fmsg, "\tNIX RAS Interrupt Reg ",
 						nix_event_context->nix_af_rvu_err);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_string_put(fmsg, "\n\tPoison Data on:");
-		if (err)
-			return err;
-		if (intr_val & BIT_ULL(34)) {
+		अगर (err)
+			वापस err;
+		अगर (पूर्णांकr_val & BIT_ULL(34)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX_AQ_INST_S");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(33)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(33)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX_AQ_RES_S");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(32)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(32)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tHW ctx");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(4)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(4)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tPacket from mirror buffer");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(3)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(3)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tPacket from multicast buffer");
 
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(2)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(2)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tWQE read from mirror buffer");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(1)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(1)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tWQE read from multicast buffer");
-			if (err)
-				return err;
-		}
-		if (intr_val & BIT_ULL(0)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (पूर्णांकr_val & BIT_ULL(0)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX_RX_MCE_S read");
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 		err = rvu_report_pair_end(fmsg);
-		if (err)
-			return err;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अगर (err)
+			वापस err;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rvu_hw_nix_intr_dump(struct devlink_health_reporter *reporter,
-				struct devlink_fmsg *fmsg, void *ctx,
-				struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	struct rvu_nix_event_ctx *nix_ctx;
+अटल पूर्णांक rvu_hw_nix_पूर्णांकr_dump(काष्ठा devlink_health_reporter *reporter,
+				काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+				काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	काष्ठा rvu_nix_event_ctx *nix_ctx;
 
 	nix_ctx = rvu_dl->rvu_nix_health_reporter->nix_event_ctx;
 
-	return ctx ? rvu_nix_report_show(fmsg, ctx, NIX_AF_RVU_INTR) :
+	वापस ctx ? rvu_nix_report_show(fmsg, ctx, NIX_AF_RVU_INTR) :
 		     rvu_nix_report_show(fmsg, nix_ctx, NIX_AF_RVU_INTR);
-}
+पूर्ण
 
-static int rvu_hw_nix_intr_recover(struct devlink_health_reporter *reporter,
-				   void *ctx, struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_nix_event_ctx *nix_event_ctx = ctx;
-	int blkaddr;
+अटल पूर्णांक rvu_hw_nix_पूर्णांकr_recover(काष्ठा devlink_health_reporter *reporter,
+				   व्योम *ctx, काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_nix_event_ctx *nix_event_ctx = ctx;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
-	if (nix_event_ctx->nix_af_rvu_int)
-		rvu_write64(rvu, blkaddr, NIX_AF_RVU_INT_ENA_W1S, ~0ULL);
+	अगर (nix_event_ctx->nix_af_rvu_पूर्णांक)
+		rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RVU_INT_ENA_W1S, ~0ULL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rvu_hw_nix_gen_dump(struct devlink_health_reporter *reporter,
-			       struct devlink_fmsg *fmsg, void *ctx,
-			       struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	struct rvu_nix_event_ctx *nix_ctx;
+अटल पूर्णांक rvu_hw_nix_gen_dump(काष्ठा devlink_health_reporter *reporter,
+			       काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+			       काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	काष्ठा rvu_nix_event_ctx *nix_ctx;
 
 	nix_ctx = rvu_dl->rvu_nix_health_reporter->nix_event_ctx;
 
-	return ctx ? rvu_nix_report_show(fmsg, ctx, NIX_AF_RVU_GEN) :
+	वापस ctx ? rvu_nix_report_show(fmsg, ctx, NIX_AF_RVU_GEN) :
 		     rvu_nix_report_show(fmsg, nix_ctx, NIX_AF_RVU_GEN);
-}
+पूर्ण
 
-static int rvu_hw_nix_gen_recover(struct devlink_health_reporter *reporter,
-				  void *ctx, struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_nix_event_ctx *nix_event_ctx = ctx;
-	int blkaddr;
+अटल पूर्णांक rvu_hw_nix_gen_recover(काष्ठा devlink_health_reporter *reporter,
+				  व्योम *ctx, काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_nix_event_ctx *nix_event_ctx = ctx;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
-	if (nix_event_ctx->nix_af_rvu_gen)
-		rvu_write64(rvu, blkaddr, NIX_AF_GEN_INT_ENA_W1S, ~0ULL);
+	अगर (nix_event_ctx->nix_af_rvu_gen)
+		rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_GEN_INT_ENA_W1S, ~0ULL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rvu_hw_nix_err_dump(struct devlink_health_reporter *reporter,
-			       struct devlink_fmsg *fmsg, void *ctx,
-			       struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	struct rvu_nix_event_ctx *nix_ctx;
+अटल पूर्णांक rvu_hw_nix_err_dump(काष्ठा devlink_health_reporter *reporter,
+			       काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+			       काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	काष्ठा rvu_nix_event_ctx *nix_ctx;
 
 	nix_ctx = rvu_dl->rvu_nix_health_reporter->nix_event_ctx;
 
-	return ctx ? rvu_nix_report_show(fmsg, ctx, NIX_AF_RVU_ERR) :
+	वापस ctx ? rvu_nix_report_show(fmsg, ctx, NIX_AF_RVU_ERR) :
 		     rvu_nix_report_show(fmsg, nix_ctx, NIX_AF_RVU_ERR);
-}
+पूर्ण
 
-static int rvu_hw_nix_err_recover(struct devlink_health_reporter *reporter,
-				  void *ctx, struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_nix_event_ctx *nix_event_ctx = ctx;
-	int blkaddr;
+अटल पूर्णांक rvu_hw_nix_err_recover(काष्ठा devlink_health_reporter *reporter,
+				  व्योम *ctx, काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_nix_event_ctx *nix_event_ctx = ctx;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
-	if (nix_event_ctx->nix_af_rvu_err)
-		rvu_write64(rvu, blkaddr, NIX_AF_ERR_INT_ENA_W1S, ~0ULL);
+	अगर (nix_event_ctx->nix_af_rvu_err)
+		rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_ERR_INT_ENA_W1S, ~0ULL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rvu_hw_nix_ras_dump(struct devlink_health_reporter *reporter,
-			       struct devlink_fmsg *fmsg, void *ctx,
-			       struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	struct rvu_nix_event_ctx *nix_ctx;
+अटल पूर्णांक rvu_hw_nix_ras_dump(काष्ठा devlink_health_reporter *reporter,
+			       काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+			       काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	काष्ठा rvu_nix_event_ctx *nix_ctx;
 
 	nix_ctx = rvu_dl->rvu_nix_health_reporter->nix_event_ctx;
 
-	return ctx ? rvu_nix_report_show(fmsg, ctx, NIX_AF_RVU_RAS) :
+	वापस ctx ? rvu_nix_report_show(fmsg, ctx, NIX_AF_RVU_RAS) :
 		     rvu_nix_report_show(fmsg, nix_ctx, NIX_AF_RVU_RAS);
-}
+पूर्ण
 
-static int rvu_hw_nix_ras_recover(struct devlink_health_reporter *reporter,
-				  void *ctx, struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_nix_event_ctx *nix_event_ctx = ctx;
-	int blkaddr;
+अटल पूर्णांक rvu_hw_nix_ras_recover(काष्ठा devlink_health_reporter *reporter,
+				  व्योम *ctx, काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_nix_event_ctx *nix_event_ctx = ctx;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NIX, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
-	if (nix_event_ctx->nix_af_rvu_int)
-		rvu_write64(rvu, blkaddr, NIX_AF_RAS_ENA_W1S, ~0ULL);
+	अगर (nix_event_ctx->nix_af_rvu_पूर्णांक)
+		rvu_ग_लिखो64(rvu, blkaddr, NIX_AF_RAS_ENA_W1S, ~0ULL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-RVU_REPORTERS(hw_nix_intr);
+RVU_REPORTERS(hw_nix_पूर्णांकr);
 RVU_REPORTERS(hw_nix_gen);
 RVU_REPORTERS(hw_nix_err);
 RVU_REPORTERS(hw_nix_ras);
 
-static void rvu_nix_health_reporters_destroy(struct rvu_devlink *rvu_dl);
+अटल व्योम rvu_nix_health_reporters_destroy(काष्ठा rvu_devlink *rvu_dl);
 
-static int rvu_nix_register_reporters(struct rvu_devlink *rvu_dl)
-{
-	struct rvu_nix_health_reporters *rvu_reporters;
-	struct rvu_nix_event_ctx *nix_event_context;
-	struct rvu *rvu = rvu_dl->rvu;
+अटल पूर्णांक rvu_nix_रेजिस्टर_reporters(काष्ठा rvu_devlink *rvu_dl)
+अणु
+	काष्ठा rvu_nix_health_reporters *rvu_reporters;
+	काष्ठा rvu_nix_event_ctx *nix_event_context;
+	काष्ठा rvu *rvu = rvu_dl->rvu;
 
-	rvu_reporters = kzalloc(sizeof(*rvu_reporters), GFP_KERNEL);
-	if (!rvu_reporters)
-		return -ENOMEM;
+	rvu_reporters = kzalloc(माप(*rvu_reporters), GFP_KERNEL);
+	अगर (!rvu_reporters)
+		वापस -ENOMEM;
 
 	rvu_dl->rvu_nix_health_reporter = rvu_reporters;
-	nix_event_context = kzalloc(sizeof(*nix_event_context), GFP_KERNEL);
-	if (!nix_event_context)
-		return -ENOMEM;
+	nix_event_context = kzalloc(माप(*nix_event_context), GFP_KERNEL);
+	अगर (!nix_event_context)
+		वापस -ENOMEM;
 
 	rvu_reporters->nix_event_ctx = nix_event_context;
-	rvu_reporters->rvu_hw_nix_intr_reporter =
-		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_nix_intr_reporter_ops, 0, rvu);
-	if (IS_ERR(rvu_reporters->rvu_hw_nix_intr_reporter)) {
+	rvu_reporters->rvu_hw_nix_पूर्णांकr_reporter =
+		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_nix_पूर्णांकr_reporter_ops, 0, rvu);
+	अगर (IS_ERR(rvu_reporters->rvu_hw_nix_पूर्णांकr_reporter)) अणु
 		dev_warn(rvu->dev, "Failed to create hw_nix_intr reporter, err=%ld\n",
-			 PTR_ERR(rvu_reporters->rvu_hw_nix_intr_reporter));
-		return PTR_ERR(rvu_reporters->rvu_hw_nix_intr_reporter);
-	}
+			 PTR_ERR(rvu_reporters->rvu_hw_nix_पूर्णांकr_reporter));
+		वापस PTR_ERR(rvu_reporters->rvu_hw_nix_पूर्णांकr_reporter);
+	पूर्ण
 
 	rvu_reporters->rvu_hw_nix_gen_reporter =
 		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_nix_gen_reporter_ops, 0, rvu);
-	if (IS_ERR(rvu_reporters->rvu_hw_nix_gen_reporter)) {
+	अगर (IS_ERR(rvu_reporters->rvu_hw_nix_gen_reporter)) अणु
 		dev_warn(rvu->dev, "Failed to create hw_nix_gen reporter, err=%ld\n",
 			 PTR_ERR(rvu_reporters->rvu_hw_nix_gen_reporter));
-		return PTR_ERR(rvu_reporters->rvu_hw_nix_gen_reporter);
-	}
+		वापस PTR_ERR(rvu_reporters->rvu_hw_nix_gen_reporter);
+	पूर्ण
 
 	rvu_reporters->rvu_hw_nix_err_reporter =
 		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_nix_err_reporter_ops, 0, rvu);
-	if (IS_ERR(rvu_reporters->rvu_hw_nix_err_reporter)) {
+	अगर (IS_ERR(rvu_reporters->rvu_hw_nix_err_reporter)) अणु
 		dev_warn(rvu->dev, "Failed to create hw_nix_err reporter, err=%ld\n",
 			 PTR_ERR(rvu_reporters->rvu_hw_nix_err_reporter));
-		return PTR_ERR(rvu_reporters->rvu_hw_nix_err_reporter);
-	}
+		वापस PTR_ERR(rvu_reporters->rvu_hw_nix_err_reporter);
+	पूर्ण
 
 	rvu_reporters->rvu_hw_nix_ras_reporter =
 		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_nix_ras_reporter_ops, 0, rvu);
-	if (IS_ERR(rvu_reporters->rvu_hw_nix_ras_reporter)) {
+	अगर (IS_ERR(rvu_reporters->rvu_hw_nix_ras_reporter)) अणु
 		dev_warn(rvu->dev, "Failed to create hw_nix_ras reporter, err=%ld\n",
 			 PTR_ERR(rvu_reporters->rvu_hw_nix_ras_reporter));
-		return PTR_ERR(rvu_reporters->rvu_hw_nix_ras_reporter);
-	}
+		वापस PTR_ERR(rvu_reporters->rvu_hw_nix_ras_reporter);
+	पूर्ण
 
 	rvu_dl->devlink_wq = create_workqueue("rvu_devlink_wq");
-	if (!rvu_dl->devlink_wq)
-		goto err;
+	अगर (!rvu_dl->devlink_wq)
+		जाओ err;
 
-	INIT_WORK(&rvu_reporters->intr_work, rvu_nix_intr_work);
+	INIT_WORK(&rvu_reporters->पूर्णांकr_work, rvu_nix_पूर्णांकr_work);
 	INIT_WORK(&rvu_reporters->gen_work, rvu_nix_gen_work);
 	INIT_WORK(&rvu_reporters->err_work, rvu_nix_err_work);
 	INIT_WORK(&rvu_reporters->ras_work, rvu_nix_ras_work);
 
-	return 0;
+	वापस 0;
 err:
 	rvu_nix_health_reporters_destroy(rvu_dl);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int rvu_nix_health_reporters_create(struct rvu_devlink *rvu_dl)
-{
-	struct rvu *rvu = rvu_dl->rvu;
-	int err;
+अटल पूर्णांक rvu_nix_health_reporters_create(काष्ठा rvu_devlink *rvu_dl)
+अणु
+	काष्ठा rvu *rvu = rvu_dl->rvu;
+	पूर्णांक err;
 
-	err = rvu_nix_register_reporters(rvu_dl);
-	if (err) {
+	err = rvu_nix_रेजिस्टर_reporters(rvu_dl);
+	अगर (err) अणु
 		dev_warn(rvu->dev, "Failed to create nix reporter, err =%d\n",
 			 err);
-		return err;
-	}
-	rvu_nix_register_interrupts(rvu);
+		वापस err;
+	पूर्ण
+	rvu_nix_रेजिस्टर_पूर्णांकerrupts(rvu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rvu_nix_health_reporters_destroy(struct rvu_devlink *rvu_dl)
-{
-	struct rvu_nix_health_reporters *nix_reporters;
-	struct rvu *rvu = rvu_dl->rvu;
+अटल व्योम rvu_nix_health_reporters_destroy(काष्ठा rvu_devlink *rvu_dl)
+अणु
+	काष्ठा rvu_nix_health_reporters *nix_reporters;
+	काष्ठा rvu *rvu = rvu_dl->rvu;
 
 	nix_reporters = rvu_dl->rvu_nix_health_reporter;
 
-	if (!nix_reporters->rvu_hw_nix_ras_reporter)
-		return;
-	if (!IS_ERR_OR_NULL(nix_reporters->rvu_hw_nix_intr_reporter))
-		devlink_health_reporter_destroy(nix_reporters->rvu_hw_nix_intr_reporter);
+	अगर (!nix_reporters->rvu_hw_nix_ras_reporter)
+		वापस;
+	अगर (!IS_ERR_OR_शून्य(nix_reporters->rvu_hw_nix_पूर्णांकr_reporter))
+		devlink_health_reporter_destroy(nix_reporters->rvu_hw_nix_पूर्णांकr_reporter);
 
-	if (!IS_ERR_OR_NULL(nix_reporters->rvu_hw_nix_gen_reporter))
+	अगर (!IS_ERR_OR_शून्य(nix_reporters->rvu_hw_nix_gen_reporter))
 		devlink_health_reporter_destroy(nix_reporters->rvu_hw_nix_gen_reporter);
 
-	if (!IS_ERR_OR_NULL(nix_reporters->rvu_hw_nix_err_reporter))
+	अगर (!IS_ERR_OR_शून्य(nix_reporters->rvu_hw_nix_err_reporter))
 		devlink_health_reporter_destroy(nix_reporters->rvu_hw_nix_err_reporter);
 
-	if (!IS_ERR_OR_NULL(nix_reporters->rvu_hw_nix_ras_reporter))
+	अगर (!IS_ERR_OR_शून्य(nix_reporters->rvu_hw_nix_ras_reporter))
 		devlink_health_reporter_destroy(nix_reporters->rvu_hw_nix_ras_reporter);
 
-	rvu_nix_unregister_interrupts(rvu);
-	kfree(rvu_dl->rvu_nix_health_reporter->nix_event_ctx);
-	kfree(rvu_dl->rvu_nix_health_reporter);
-}
+	rvu_nix_unरेजिस्टर_पूर्णांकerrupts(rvu);
+	kमुक्त(rvu_dl->rvu_nix_health_reporter->nix_event_ctx);
+	kमुक्त(rvu_dl->rvu_nix_health_reporter);
+पूर्ण
 
-static void rvu_npa_intr_work(struct work_struct *work)
-{
-	struct rvu_npa_health_reporters *rvu_npa_health_reporter;
+अटल व्योम rvu_npa_पूर्णांकr_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rvu_npa_health_reporters *rvu_npa_health_reporter;
 
-	rvu_npa_health_reporter = container_of(work, struct rvu_npa_health_reporters, intr_work);
-	devlink_health_report(rvu_npa_health_reporter->rvu_hw_npa_intr_reporter,
+	rvu_npa_health_reporter = container_of(work, काष्ठा rvu_npa_health_reporters, पूर्णांकr_work);
+	devlink_health_report(rvu_npa_health_reporter->rvu_hw_npa_पूर्णांकr_reporter,
 			      "NPA_AF_RVU Error",
 			      rvu_npa_health_reporter->npa_event_ctx);
-}
+पूर्ण
 
-static irqreturn_t rvu_npa_af_rvu_intr_handler(int irq, void *rvu_irq)
-{
-	struct rvu_npa_event_ctx *npa_event_context;
-	struct rvu_devlink *rvu_dl = rvu_irq;
-	struct rvu *rvu;
-	int blkaddr;
-	u64 intr;
+अटल irqवापस_t rvu_npa_af_rvu_पूर्णांकr_handler(पूर्णांक irq, व्योम *rvu_irq)
+अणु
+	काष्ठा rvu_npa_event_ctx *npa_event_context;
+	काष्ठा rvu_devlink *rvu_dl = rvu_irq;
+	काष्ठा rvu *rvu;
+	पूर्णांक blkaddr;
+	u64 पूर्णांकr;
 
 	rvu = rvu_dl->rvu;
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return IRQ_NONE;
+	अगर (blkaddr < 0)
+		वापस IRQ_NONE;
 
 	npa_event_context = rvu_dl->rvu_npa_health_reporter->npa_event_ctx;
-	intr = rvu_read64(rvu, blkaddr, NPA_AF_RVU_INT);
-	npa_event_context->npa_af_rvu_int = intr;
+	पूर्णांकr = rvu_पढ़ो64(rvu, blkaddr, NPA_AF_RVU_INT);
+	npa_event_context->npa_af_rvu_पूर्णांक = पूर्णांकr;
 
-	/* Clear interrupts */
-	rvu_write64(rvu, blkaddr, NPA_AF_RVU_INT, intr);
-	rvu_write64(rvu, blkaddr, NPA_AF_RVU_INT_ENA_W1C, ~0ULL);
-	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_npa_health_reporter->intr_work);
+	/* Clear पूर्णांकerrupts */
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RVU_INT, पूर्णांकr);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RVU_INT_ENA_W1C, ~0ULL);
+	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_npa_health_reporter->पूर्णांकr_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rvu_npa_gen_work(struct work_struct *work)
-{
-	struct rvu_npa_health_reporters *rvu_npa_health_reporter;
+अटल व्योम rvu_npa_gen_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rvu_npa_health_reporters *rvu_npa_health_reporter;
 
-	rvu_npa_health_reporter = container_of(work, struct rvu_npa_health_reporters, gen_work);
+	rvu_npa_health_reporter = container_of(work, काष्ठा rvu_npa_health_reporters, gen_work);
 	devlink_health_report(rvu_npa_health_reporter->rvu_hw_npa_gen_reporter,
 			      "NPA_AF_GEN Error",
 			      rvu_npa_health_reporter->npa_event_ctx);
-}
+पूर्ण
 
-static irqreturn_t rvu_npa_af_gen_intr_handler(int irq, void *rvu_irq)
-{
-	struct rvu_npa_event_ctx *npa_event_context;
-	struct rvu_devlink *rvu_dl = rvu_irq;
-	struct rvu *rvu;
-	int blkaddr;
-	u64 intr;
+अटल irqवापस_t rvu_npa_af_gen_पूर्णांकr_handler(पूर्णांक irq, व्योम *rvu_irq)
+अणु
+	काष्ठा rvu_npa_event_ctx *npa_event_context;
+	काष्ठा rvu_devlink *rvu_dl = rvu_irq;
+	काष्ठा rvu *rvu;
+	पूर्णांक blkaddr;
+	u64 पूर्णांकr;
 
 	rvu = rvu_dl->rvu;
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return IRQ_NONE;
+	अगर (blkaddr < 0)
+		वापस IRQ_NONE;
 
 	npa_event_context = rvu_dl->rvu_npa_health_reporter->npa_event_ctx;
-	intr = rvu_read64(rvu, blkaddr, NPA_AF_GEN_INT);
-	npa_event_context->npa_af_rvu_gen = intr;
+	पूर्णांकr = rvu_पढ़ो64(rvu, blkaddr, NPA_AF_GEN_INT);
+	npa_event_context->npa_af_rvu_gen = पूर्णांकr;
 
-	/* Clear interrupts */
-	rvu_write64(rvu, blkaddr, NPA_AF_GEN_INT, intr);
-	rvu_write64(rvu, blkaddr, NPA_AF_GEN_INT_ENA_W1C, ~0ULL);
+	/* Clear पूर्णांकerrupts */
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_GEN_INT, पूर्णांकr);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_GEN_INT_ENA_W1C, ~0ULL);
 	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_npa_health_reporter->gen_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rvu_npa_err_work(struct work_struct *work)
-{
-	struct rvu_npa_health_reporters *rvu_npa_health_reporter;
+अटल व्योम rvu_npa_err_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rvu_npa_health_reporters *rvu_npa_health_reporter;
 
-	rvu_npa_health_reporter = container_of(work, struct rvu_npa_health_reporters, err_work);
+	rvu_npa_health_reporter = container_of(work, काष्ठा rvu_npa_health_reporters, err_work);
 	devlink_health_report(rvu_npa_health_reporter->rvu_hw_npa_err_reporter,
 			      "NPA_AF_ERR Error",
 			      rvu_npa_health_reporter->npa_event_ctx);
-}
+पूर्ण
 
-static irqreturn_t rvu_npa_af_err_intr_handler(int irq, void *rvu_irq)
-{
-	struct rvu_npa_event_ctx *npa_event_context;
-	struct rvu_devlink *rvu_dl = rvu_irq;
-	struct rvu *rvu;
-	int blkaddr;
-	u64 intr;
+अटल irqवापस_t rvu_npa_af_err_पूर्णांकr_handler(पूर्णांक irq, व्योम *rvu_irq)
+अणु
+	काष्ठा rvu_npa_event_ctx *npa_event_context;
+	काष्ठा rvu_devlink *rvu_dl = rvu_irq;
+	काष्ठा rvu *rvu;
+	पूर्णांक blkaddr;
+	u64 पूर्णांकr;
 
 	rvu = rvu_dl->rvu;
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return IRQ_NONE;
+	अगर (blkaddr < 0)
+		वापस IRQ_NONE;
 	npa_event_context = rvu_dl->rvu_npa_health_reporter->npa_event_ctx;
-	intr = rvu_read64(rvu, blkaddr, NPA_AF_ERR_INT);
-	npa_event_context->npa_af_rvu_err = intr;
+	पूर्णांकr = rvu_पढ़ो64(rvu, blkaddr, NPA_AF_ERR_INT);
+	npa_event_context->npa_af_rvu_err = पूर्णांकr;
 
-	/* Clear interrupts */
-	rvu_write64(rvu, blkaddr, NPA_AF_ERR_INT, intr);
-	rvu_write64(rvu, blkaddr, NPA_AF_ERR_INT_ENA_W1C, ~0ULL);
+	/* Clear पूर्णांकerrupts */
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_ERR_INT, पूर्णांकr);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_ERR_INT_ENA_W1C, ~0ULL);
 	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_npa_health_reporter->err_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rvu_npa_ras_work(struct work_struct *work)
-{
-	struct rvu_npa_health_reporters *rvu_npa_health_reporter;
+अटल व्योम rvu_npa_ras_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rvu_npa_health_reporters *rvu_npa_health_reporter;
 
-	rvu_npa_health_reporter = container_of(work, struct rvu_npa_health_reporters, ras_work);
+	rvu_npa_health_reporter = container_of(work, काष्ठा rvu_npa_health_reporters, ras_work);
 	devlink_health_report(rvu_npa_health_reporter->rvu_hw_npa_ras_reporter,
 			      "HW NPA_AF_RAS Error reported",
 			      rvu_npa_health_reporter->npa_event_ctx);
-}
+पूर्ण
 
-static irqreturn_t rvu_npa_af_ras_intr_handler(int irq, void *rvu_irq)
-{
-	struct rvu_npa_event_ctx *npa_event_context;
-	struct rvu_devlink *rvu_dl = rvu_irq;
-	struct rvu *rvu;
-	int blkaddr;
-	u64 intr;
+अटल irqवापस_t rvu_npa_af_ras_पूर्णांकr_handler(पूर्णांक irq, व्योम *rvu_irq)
+अणु
+	काष्ठा rvu_npa_event_ctx *npa_event_context;
+	काष्ठा rvu_devlink *rvu_dl = rvu_irq;
+	काष्ठा rvu *rvu;
+	पूर्णांक blkaddr;
+	u64 पूर्णांकr;
 
 	rvu = rvu_dl->rvu;
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return IRQ_NONE;
+	अगर (blkaddr < 0)
+		वापस IRQ_NONE;
 
 	npa_event_context = rvu_dl->rvu_npa_health_reporter->npa_event_ctx;
-	intr = rvu_read64(rvu, blkaddr, NPA_AF_RAS);
-	npa_event_context->npa_af_rvu_ras = intr;
+	पूर्णांकr = rvu_पढ़ो64(rvu, blkaddr, NPA_AF_RAS);
+	npa_event_context->npa_af_rvu_ras = पूर्णांकr;
 
-	/* Clear interrupts */
-	rvu_write64(rvu, blkaddr, NPA_AF_RAS, intr);
-	rvu_write64(rvu, blkaddr, NPA_AF_RAS_ENA_W1C, ~0ULL);
+	/* Clear पूर्णांकerrupts */
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RAS, पूर्णांकr);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RAS_ENA_W1C, ~0ULL);
 	queue_work(rvu_dl->devlink_wq, &rvu_dl->rvu_npa_health_reporter->ras_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rvu_npa_unregister_interrupts(struct rvu *rvu)
-{
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	int i, offs, blkaddr;
+अटल व्योम rvu_npa_unरेजिस्टर_पूर्णांकerrupts(काष्ठा rvu *rvu)
+अणु
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	पूर्णांक i, offs, blkaddr;
 	u64 reg;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return;
+	अगर (blkaddr < 0)
+		वापस;
 
-	reg = rvu_read64(rvu, blkaddr, NPA_PRIV_AF_INT_CFG);
+	reg = rvu_पढ़ो64(rvu, blkaddr, NPA_PRIV_AF_INT_CFG);
 	offs = reg & 0x3FF;
 
-	rvu_write64(rvu, blkaddr, NPA_AF_RVU_INT_ENA_W1C, ~0ULL);
-	rvu_write64(rvu, blkaddr, NPA_AF_GEN_INT_ENA_W1C, ~0ULL);
-	rvu_write64(rvu, blkaddr, NPA_AF_ERR_INT_ENA_W1C, ~0ULL);
-	rvu_write64(rvu, blkaddr, NPA_AF_RAS_ENA_W1C, ~0ULL);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RVU_INT_ENA_W1C, ~0ULL);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_GEN_INT_ENA_W1C, ~0ULL);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_ERR_INT_ENA_W1C, ~0ULL);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RAS_ENA_W1C, ~0ULL);
 
-	for (i = 0; i < NPA_AF_INT_VEC_CNT; i++)
-		if (rvu->irq_allocated[offs + i]) {
-			free_irq(pci_irq_vector(rvu->pdev, offs + i), rvu_dl);
+	क्रम (i = 0; i < NPA_AF_INT_VEC_CNT; i++)
+		अगर (rvu->irq_allocated[offs + i]) अणु
+			मुक्त_irq(pci_irq_vector(rvu->pdev, offs + i), rvu_dl);
 			rvu->irq_allocated[offs + i] = false;
-		}
-}
+		पूर्ण
+पूर्ण
 
-static int rvu_npa_register_interrupts(struct rvu *rvu)
-{
-	int blkaddr, base;
+अटल पूर्णांक rvu_npa_रेजिस्टर_पूर्णांकerrupts(काष्ठा rvu *rvu)
+अणु
+	पूर्णांक blkaddr, base;
 	bool rc;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
 	/* Get NPA AF MSIX vectors offset. */
-	base = rvu_read64(rvu, blkaddr, NPA_PRIV_AF_INT_CFG) & 0x3ff;
-	if (!base) {
+	base = rvu_पढ़ो64(rvu, blkaddr, NPA_PRIV_AF_INT_CFG) & 0x3ff;
+	अगर (!base) अणु
 		dev_warn(rvu->dev,
 			 "Failed to get NPA_AF_INT vector offsets\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Register and enable NPA_AF_RVU_INT interrupt */
+	/* Register and enable NPA_AF_RVU_INT पूर्णांकerrupt */
 	rc = rvu_common_request_irq(rvu, base +  NPA_AF_INT_VEC_RVU,
 				    "NPA_AF_RVU_INT",
-				    rvu_npa_af_rvu_intr_handler);
-	if (!rc)
-		goto err;
-	rvu_write64(rvu, blkaddr, NPA_AF_RVU_INT_ENA_W1S, ~0ULL);
+				    rvu_npa_af_rvu_पूर्णांकr_handler);
+	अगर (!rc)
+		जाओ err;
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RVU_INT_ENA_W1S, ~0ULL);
 
-	/* Register and enable NPA_AF_GEN_INT interrupt */
+	/* Register and enable NPA_AF_GEN_INT पूर्णांकerrupt */
 	rc = rvu_common_request_irq(rvu, base + NPA_AF_INT_VEC_GEN,
 				    "NPA_AF_RVU_GEN",
-				    rvu_npa_af_gen_intr_handler);
-	if (!rc)
-		goto err;
-	rvu_write64(rvu, blkaddr, NPA_AF_GEN_INT_ENA_W1S, ~0ULL);
+				    rvu_npa_af_gen_पूर्णांकr_handler);
+	अगर (!rc)
+		जाओ err;
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_GEN_INT_ENA_W1S, ~0ULL);
 
-	/* Register and enable NPA_AF_ERR_INT interrupt */
+	/* Register and enable NPA_AF_ERR_INT पूर्णांकerrupt */
 	rc = rvu_common_request_irq(rvu, base + NPA_AF_INT_VEC_AF_ERR,
 				    "NPA_AF_ERR_INT",
-				    rvu_npa_af_err_intr_handler);
-	if (!rc)
-		goto err;
-	rvu_write64(rvu, blkaddr, NPA_AF_ERR_INT_ENA_W1S, ~0ULL);
+				    rvu_npa_af_err_पूर्णांकr_handler);
+	अगर (!rc)
+		जाओ err;
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_ERR_INT_ENA_W1S, ~0ULL);
 
-	/* Register and enable NPA_AF_RAS interrupt */
+	/* Register and enable NPA_AF_RAS पूर्णांकerrupt */
 	rc = rvu_common_request_irq(rvu, base + NPA_AF_INT_VEC_POISON,
 				    "NPA_AF_RAS",
-				    rvu_npa_af_ras_intr_handler);
-	if (!rc)
-		goto err;
-	rvu_write64(rvu, blkaddr, NPA_AF_RAS_ENA_W1S, ~0ULL);
+				    rvu_npa_af_ras_पूर्णांकr_handler);
+	अगर (!rc)
+		जाओ err;
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RAS_ENA_W1S, ~0ULL);
 
-	return 0;
+	वापस 0;
 err:
-	rvu_npa_unregister_interrupts(rvu);
-	return rc;
-}
+	rvu_npa_unरेजिस्टर_पूर्णांकerrupts(rvu);
+	वापस rc;
+पूर्ण
 
-static int rvu_npa_report_show(struct devlink_fmsg *fmsg, void *ctx,
-			       enum npa_af_rvu_health health_reporter)
-{
-	struct rvu_npa_event_ctx *npa_event_context;
-	unsigned int alloc_dis, free_dis;
-	u64 intr_val;
-	int err;
+अटल पूर्णांक rvu_npa_report_show(काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+			       क्रमागत npa_af_rvu_health health_reporter)
+अणु
+	काष्ठा rvu_npa_event_ctx *npa_event_context;
+	अचिन्हित पूर्णांक alloc_dis, मुक्त_dis;
+	u64 पूर्णांकr_val;
+	पूर्णांक err;
 
 	npa_event_context = ctx;
-	switch (health_reporter) {
-	case NPA_AF_RVU_GEN:
-		intr_val = npa_event_context->npa_af_rvu_gen;
+	चयन (health_reporter) अणु
+	हाल NPA_AF_RVU_GEN:
+		पूर्णांकr_val = npa_event_context->npa_af_rvu_gen;
 		err = rvu_report_pair_start(fmsg, "NPA_AF_GENERAL");
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u64_pair_put(fmsg, "\tNPA General Interrupt Reg ",
 						npa_event_context->npa_af_rvu_gen);
-		if (err)
-			return err;
-		if (intr_val & BIT_ULL(32)) {
+		अगर (err)
+			वापस err;
+		अगर (पूर्णांकr_val & BIT_ULL(32)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tUnmap PF Error");
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		free_dis = FIELD_GET(GENMASK(15, 0), intr_val);
-		if (free_dis & BIT(NPA_INPQ_NIX0_RX)) {
+		मुक्त_dis = FIELD_GET(GENMASK(15, 0), पूर्णांकr_val);
+		अगर (मुक्त_dis & BIT(NPA_INPQ_NIX0_RX)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX0: free disabled RX");
-			if (err)
-				return err;
-		}
-		if (free_dis & BIT(NPA_INPQ_NIX0_TX)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (मुक्त_dis & BIT(NPA_INPQ_NIX0_TX)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX0:free disabled TX");
-			if (err)
-				return err;
-		}
-		if (free_dis & BIT(NPA_INPQ_NIX1_RX)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (मुक्त_dis & BIT(NPA_INPQ_NIX1_RX)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX1: free disabled RX");
-			if (err)
-				return err;
-		}
-		if (free_dis & BIT(NPA_INPQ_NIX1_TX)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (मुक्त_dis & BIT(NPA_INPQ_NIX1_TX)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX1:free disabled TX");
-			if (err)
-				return err;
-		}
-		if (free_dis & BIT(NPA_INPQ_SSO)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (मुक्त_dis & BIT(NPA_INPQ_SSO)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFree Disabled for SSO");
-			if (err)
-				return err;
-		}
-		if (free_dis & BIT(NPA_INPQ_TIM)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (मुक्त_dis & BIT(NPA_INPQ_TIM)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFree Disabled for TIM");
-			if (err)
-				return err;
-		}
-		if (free_dis & BIT(NPA_INPQ_DPI)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (मुक्त_dis & BIT(NPA_INPQ_DPI)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFree Disabled for DPI");
-			if (err)
-				return err;
-		}
-		if (free_dis & BIT(NPA_INPQ_AURA_OP)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (मुक्त_dis & BIT(NPA_INPQ_AURA_OP)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFree Disabled for AURA");
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		alloc_dis = FIELD_GET(GENMASK(31, 16), intr_val);
-		if (alloc_dis & BIT(NPA_INPQ_NIX0_RX)) {
+		alloc_dis = FIELD_GET(GENMASK(31, 16), पूर्णांकr_val);
+		अगर (alloc_dis & BIT(NPA_INPQ_NIX0_RX)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX0: alloc disabled RX");
-			if (err)
-				return err;
-		}
-		if (alloc_dis & BIT(NPA_INPQ_NIX0_TX)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (alloc_dis & BIT(NPA_INPQ_NIX0_TX)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX0:alloc disabled TX");
-			if (err)
-				return err;
-		}
-		if (alloc_dis & BIT(NPA_INPQ_NIX1_RX)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (alloc_dis & BIT(NPA_INPQ_NIX1_RX)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX1: alloc disabled RX");
-			if (err)
-				return err;
-		}
-		if (alloc_dis & BIT(NPA_INPQ_NIX1_TX)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (alloc_dis & BIT(NPA_INPQ_NIX1_TX)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tNIX1:alloc disabled TX");
-			if (err)
-				return err;
-		}
-		if (alloc_dis & BIT(NPA_INPQ_SSO)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (alloc_dis & BIT(NPA_INPQ_SSO)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tAlloc Disabled for SSO");
-			if (err)
-				return err;
-		}
-		if (alloc_dis & BIT(NPA_INPQ_TIM)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (alloc_dis & BIT(NPA_INPQ_TIM)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tAlloc Disabled for TIM");
-			if (err)
-				return err;
-		}
-		if (alloc_dis & BIT(NPA_INPQ_DPI)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (alloc_dis & BIT(NPA_INPQ_DPI)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tAlloc Disabled for DPI");
-			if (err)
-				return err;
-		}
-		if (alloc_dis & BIT(NPA_INPQ_AURA_OP)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (alloc_dis & BIT(NPA_INPQ_AURA_OP)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tAlloc Disabled for AURA");
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 		err = rvu_report_pair_end(fmsg);
-		if (err)
-			return err;
-		break;
-	case NPA_AF_RVU_ERR:
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल NPA_AF_RVU_ERR:
 		err = rvu_report_pair_start(fmsg, "NPA_AF_ERR");
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u64_pair_put(fmsg, "\tNPA Error Interrupt Reg ",
 						npa_event_context->npa_af_rvu_err);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
-		if (npa_event_context->npa_af_rvu_err & BIT_ULL(14)) {
+		अगर (npa_event_context->npa_af_rvu_err & BIT_ULL(14)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFault on NPA_AQ_INST_S read");
-			if (err)
-				return err;
-		}
-		if (npa_event_context->npa_af_rvu_err & BIT_ULL(13)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (npa_event_context->npa_af_rvu_err & BIT_ULL(13)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tFault on NPA_AQ_RES_S write");
-			if (err)
-				return err;
-		}
-		if (npa_event_context->npa_af_rvu_err & BIT_ULL(12)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (npa_event_context->npa_af_rvu_err & BIT_ULL(12)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tAQ Doorbell Error");
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 		err = rvu_report_pair_end(fmsg);
-		if (err)
-			return err;
-		break;
-	case NPA_AF_RVU_RAS:
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल NPA_AF_RVU_RAS:
 		err = rvu_report_pair_start(fmsg, "NPA_AF_RVU_RAS");
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u64_pair_put(fmsg, "\tNPA RAS Interrupt Reg ",
 						npa_event_context->npa_af_rvu_ras);
-		if (err)
-			return err;
-		if (npa_event_context->npa_af_rvu_ras & BIT_ULL(34)) {
+		अगर (err)
+			वापस err;
+		अगर (npa_event_context->npa_af_rvu_ras & BIT_ULL(34)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tPoison data on NPA_AQ_INST_S");
-			if (err)
-				return err;
-		}
-		if (npa_event_context->npa_af_rvu_ras & BIT_ULL(33)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (npa_event_context->npa_af_rvu_ras & BIT_ULL(33)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tPoison data on NPA_AQ_RES_S");
-			if (err)
-				return err;
-		}
-		if (npa_event_context->npa_af_rvu_ras & BIT_ULL(32)) {
+			अगर (err)
+				वापस err;
+		पूर्ण
+		अगर (npa_event_context->npa_af_rvu_ras & BIT_ULL(32)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tPoison data on HW context");
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 		err = rvu_report_pair_end(fmsg);
-		if (err)
-			return err;
-		break;
-	case NPA_AF_RVU_INTR:
+		अगर (err)
+			वापस err;
+		अवरोध;
+	हाल NPA_AF_RVU_INTR:
 		err = rvu_report_pair_start(fmsg, "NPA_AF_RVU");
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u64_pair_put(fmsg, "\tNPA RVU Interrupt Reg ",
-						npa_event_context->npa_af_rvu_int);
-		if (err)
-			return err;
-		if (npa_event_context->npa_af_rvu_int & BIT_ULL(0)) {
+						npa_event_context->npa_af_rvu_पूर्णांक);
+		अगर (err)
+			वापस err;
+		अगर (npa_event_context->npa_af_rvu_पूर्णांक & BIT_ULL(0)) अणु
 			err = devlink_fmsg_string_put(fmsg, "\n\tUnmap Slot Error");
-			if (err)
-				return err;
-		}
-		return rvu_report_pair_end(fmsg);
-	default:
-		return -EINVAL;
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+		वापस rvu_report_pair_end(fmsg);
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rvu_hw_npa_intr_dump(struct devlink_health_reporter *reporter,
-				struct devlink_fmsg *fmsg, void *ctx,
-				struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	struct rvu_npa_event_ctx *npa_ctx;
+अटल पूर्णांक rvu_hw_npa_पूर्णांकr_dump(काष्ठा devlink_health_reporter *reporter,
+				काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+				काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	काष्ठा rvu_npa_event_ctx *npa_ctx;
 
 	npa_ctx = rvu_dl->rvu_npa_health_reporter->npa_event_ctx;
 
-	return ctx ? rvu_npa_report_show(fmsg, ctx, NPA_AF_RVU_INTR) :
+	वापस ctx ? rvu_npa_report_show(fmsg, ctx, NPA_AF_RVU_INTR) :
 		     rvu_npa_report_show(fmsg, npa_ctx, NPA_AF_RVU_INTR);
-}
+पूर्ण
 
-static int rvu_hw_npa_intr_recover(struct devlink_health_reporter *reporter,
-				   void *ctx, struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_npa_event_ctx *npa_event_ctx = ctx;
-	int blkaddr;
+अटल पूर्णांक rvu_hw_npa_पूर्णांकr_recover(काष्ठा devlink_health_reporter *reporter,
+				   व्योम *ctx, काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_npa_event_ctx *npa_event_ctx = ctx;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
-	if (npa_event_ctx->npa_af_rvu_int)
-		rvu_write64(rvu, blkaddr, NPA_AF_RVU_INT_ENA_W1S, ~0ULL);
+	अगर (npa_event_ctx->npa_af_rvu_पूर्णांक)
+		rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RVU_INT_ENA_W1S, ~0ULL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rvu_hw_npa_gen_dump(struct devlink_health_reporter *reporter,
-			       struct devlink_fmsg *fmsg, void *ctx,
-			       struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	struct rvu_npa_event_ctx *npa_ctx;
+अटल पूर्णांक rvu_hw_npa_gen_dump(काष्ठा devlink_health_reporter *reporter,
+			       काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+			       काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	काष्ठा rvu_npa_event_ctx *npa_ctx;
 
 	npa_ctx = rvu_dl->rvu_npa_health_reporter->npa_event_ctx;
 
-	return ctx ? rvu_npa_report_show(fmsg, ctx, NPA_AF_RVU_GEN) :
+	वापस ctx ? rvu_npa_report_show(fmsg, ctx, NPA_AF_RVU_GEN) :
 		     rvu_npa_report_show(fmsg, npa_ctx, NPA_AF_RVU_GEN);
-}
+पूर्ण
 
-static int rvu_hw_npa_gen_recover(struct devlink_health_reporter *reporter,
-				  void *ctx, struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_npa_event_ctx *npa_event_ctx = ctx;
-	int blkaddr;
+अटल पूर्णांक rvu_hw_npa_gen_recover(काष्ठा devlink_health_reporter *reporter,
+				  व्योम *ctx, काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_npa_event_ctx *npa_event_ctx = ctx;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
-	if (npa_event_ctx->npa_af_rvu_gen)
-		rvu_write64(rvu, blkaddr, NPA_AF_GEN_INT_ENA_W1S, ~0ULL);
+	अगर (npa_event_ctx->npa_af_rvu_gen)
+		rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_GEN_INT_ENA_W1S, ~0ULL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rvu_hw_npa_err_dump(struct devlink_health_reporter *reporter,
-			       struct devlink_fmsg *fmsg, void *ctx,
-			       struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	struct rvu_npa_event_ctx *npa_ctx;
+अटल पूर्णांक rvu_hw_npa_err_dump(काष्ठा devlink_health_reporter *reporter,
+			       काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+			       काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	काष्ठा rvu_npa_event_ctx *npa_ctx;
 
 	npa_ctx = rvu_dl->rvu_npa_health_reporter->npa_event_ctx;
 
-	return ctx ? rvu_npa_report_show(fmsg, ctx, NPA_AF_RVU_ERR) :
+	वापस ctx ? rvu_npa_report_show(fmsg, ctx, NPA_AF_RVU_ERR) :
 		     rvu_npa_report_show(fmsg, npa_ctx, NPA_AF_RVU_ERR);
-}
+पूर्ण
 
-static int rvu_hw_npa_err_recover(struct devlink_health_reporter *reporter,
-				  void *ctx, struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_npa_event_ctx *npa_event_ctx = ctx;
-	int blkaddr;
+अटल पूर्णांक rvu_hw_npa_err_recover(काष्ठा devlink_health_reporter *reporter,
+				  व्योम *ctx, काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_npa_event_ctx *npa_event_ctx = ctx;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
-	if (npa_event_ctx->npa_af_rvu_err)
-		rvu_write64(rvu, blkaddr, NPA_AF_ERR_INT_ENA_W1S, ~0ULL);
+	अगर (npa_event_ctx->npa_af_rvu_err)
+		rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_ERR_INT_ENA_W1S, ~0ULL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rvu_hw_npa_ras_dump(struct devlink_health_reporter *reporter,
-			       struct devlink_fmsg *fmsg, void *ctx,
-			       struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	struct rvu_npa_event_ctx *npa_ctx;
+अटल पूर्णांक rvu_hw_npa_ras_dump(काष्ठा devlink_health_reporter *reporter,
+			       काष्ठा devlink_fmsg *fmsg, व्योम *ctx,
+			       काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	काष्ठा rvu_npa_event_ctx *npa_ctx;
 
 	npa_ctx = rvu_dl->rvu_npa_health_reporter->npa_event_ctx;
 
-	return ctx ? rvu_npa_report_show(fmsg, ctx, NPA_AF_RVU_RAS) :
+	वापस ctx ? rvu_npa_report_show(fmsg, ctx, NPA_AF_RVU_RAS) :
 		     rvu_npa_report_show(fmsg, npa_ctx, NPA_AF_RVU_RAS);
-}
+पूर्ण
 
-static int rvu_hw_npa_ras_recover(struct devlink_health_reporter *reporter,
-				  void *ctx, struct netlink_ext_ack *netlink_extack)
-{
-	struct rvu *rvu = devlink_health_reporter_priv(reporter);
-	struct rvu_npa_event_ctx *npa_event_ctx = ctx;
-	int blkaddr;
+अटल पूर्णांक rvu_hw_npa_ras_recover(काष्ठा devlink_health_reporter *reporter,
+				  व्योम *ctx, काष्ठा netlink_ext_ack *netlink_extack)
+अणु
+	काष्ठा rvu *rvu = devlink_health_reporter_priv(reporter);
+	काष्ठा rvu_npa_event_ctx *npa_event_ctx = ctx;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return blkaddr;
+	अगर (blkaddr < 0)
+		वापस blkaddr;
 
-	if (npa_event_ctx->npa_af_rvu_ras)
-		rvu_write64(rvu, blkaddr, NPA_AF_RAS_ENA_W1S, ~0ULL);
+	अगर (npa_event_ctx->npa_af_rvu_ras)
+		rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_RAS_ENA_W1S, ~0ULL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-RVU_REPORTERS(hw_npa_intr);
+RVU_REPORTERS(hw_npa_पूर्णांकr);
 RVU_REPORTERS(hw_npa_gen);
 RVU_REPORTERS(hw_npa_err);
 RVU_REPORTERS(hw_npa_ras);
 
-static void rvu_npa_health_reporters_destroy(struct rvu_devlink *rvu_dl);
+अटल व्योम rvu_npa_health_reporters_destroy(काष्ठा rvu_devlink *rvu_dl);
 
-static int rvu_npa_register_reporters(struct rvu_devlink *rvu_dl)
-{
-	struct rvu_npa_health_reporters *rvu_reporters;
-	struct rvu_npa_event_ctx *npa_event_context;
-	struct rvu *rvu = rvu_dl->rvu;
+अटल पूर्णांक rvu_npa_रेजिस्टर_reporters(काष्ठा rvu_devlink *rvu_dl)
+अणु
+	काष्ठा rvu_npa_health_reporters *rvu_reporters;
+	काष्ठा rvu_npa_event_ctx *npa_event_context;
+	काष्ठा rvu *rvu = rvu_dl->rvu;
 
-	rvu_reporters = kzalloc(sizeof(*rvu_reporters), GFP_KERNEL);
-	if (!rvu_reporters)
-		return -ENOMEM;
+	rvu_reporters = kzalloc(माप(*rvu_reporters), GFP_KERNEL);
+	अगर (!rvu_reporters)
+		वापस -ENOMEM;
 
 	rvu_dl->rvu_npa_health_reporter = rvu_reporters;
-	npa_event_context = kzalloc(sizeof(*npa_event_context), GFP_KERNEL);
-	if (!npa_event_context)
-		return -ENOMEM;
+	npa_event_context = kzalloc(माप(*npa_event_context), GFP_KERNEL);
+	अगर (!npa_event_context)
+		वापस -ENOMEM;
 
 	rvu_reporters->npa_event_ctx = npa_event_context;
-	rvu_reporters->rvu_hw_npa_intr_reporter =
-		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_npa_intr_reporter_ops, 0, rvu);
-	if (IS_ERR(rvu_reporters->rvu_hw_npa_intr_reporter)) {
+	rvu_reporters->rvu_hw_npa_पूर्णांकr_reporter =
+		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_npa_पूर्णांकr_reporter_ops, 0, rvu);
+	अगर (IS_ERR(rvu_reporters->rvu_hw_npa_पूर्णांकr_reporter)) अणु
 		dev_warn(rvu->dev, "Failed to create hw_npa_intr reporter, err=%ld\n",
-			 PTR_ERR(rvu_reporters->rvu_hw_npa_intr_reporter));
-		return PTR_ERR(rvu_reporters->rvu_hw_npa_intr_reporter);
-	}
+			 PTR_ERR(rvu_reporters->rvu_hw_npa_पूर्णांकr_reporter));
+		वापस PTR_ERR(rvu_reporters->rvu_hw_npa_पूर्णांकr_reporter);
+	पूर्ण
 
 	rvu_reporters->rvu_hw_npa_gen_reporter =
 		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_npa_gen_reporter_ops, 0, rvu);
-	if (IS_ERR(rvu_reporters->rvu_hw_npa_gen_reporter)) {
+	अगर (IS_ERR(rvu_reporters->rvu_hw_npa_gen_reporter)) अणु
 		dev_warn(rvu->dev, "Failed to create hw_npa_gen reporter, err=%ld\n",
 			 PTR_ERR(rvu_reporters->rvu_hw_npa_gen_reporter));
-		return PTR_ERR(rvu_reporters->rvu_hw_npa_gen_reporter);
-	}
+		वापस PTR_ERR(rvu_reporters->rvu_hw_npa_gen_reporter);
+	पूर्ण
 
 	rvu_reporters->rvu_hw_npa_err_reporter =
 		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_npa_err_reporter_ops, 0, rvu);
-	if (IS_ERR(rvu_reporters->rvu_hw_npa_err_reporter)) {
+	अगर (IS_ERR(rvu_reporters->rvu_hw_npa_err_reporter)) अणु
 		dev_warn(rvu->dev, "Failed to create hw_npa_err reporter, err=%ld\n",
 			 PTR_ERR(rvu_reporters->rvu_hw_npa_err_reporter));
-		return PTR_ERR(rvu_reporters->rvu_hw_npa_err_reporter);
-	}
+		वापस PTR_ERR(rvu_reporters->rvu_hw_npa_err_reporter);
+	पूर्ण
 
 	rvu_reporters->rvu_hw_npa_ras_reporter =
 		devlink_health_reporter_create(rvu_dl->dl, &rvu_hw_npa_ras_reporter_ops, 0, rvu);
-	if (IS_ERR(rvu_reporters->rvu_hw_npa_ras_reporter)) {
+	अगर (IS_ERR(rvu_reporters->rvu_hw_npa_ras_reporter)) अणु
 		dev_warn(rvu->dev, "Failed to create hw_npa_ras reporter, err=%ld\n",
 			 PTR_ERR(rvu_reporters->rvu_hw_npa_ras_reporter));
-		return PTR_ERR(rvu_reporters->rvu_hw_npa_ras_reporter);
-	}
+		वापस PTR_ERR(rvu_reporters->rvu_hw_npa_ras_reporter);
+	पूर्ण
 
 	rvu_dl->devlink_wq = create_workqueue("rvu_devlink_wq");
-	if (!rvu_dl->devlink_wq)
-		goto err;
+	अगर (!rvu_dl->devlink_wq)
+		जाओ err;
 
-	INIT_WORK(&rvu_reporters->intr_work, rvu_npa_intr_work);
+	INIT_WORK(&rvu_reporters->पूर्णांकr_work, rvu_npa_पूर्णांकr_work);
 	INIT_WORK(&rvu_reporters->err_work, rvu_npa_err_work);
 	INIT_WORK(&rvu_reporters->gen_work, rvu_npa_gen_work);
 	INIT_WORK(&rvu_reporters->ras_work, rvu_npa_ras_work);
 
-	return 0;
+	वापस 0;
 err:
 	rvu_npa_health_reporters_destroy(rvu_dl);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int rvu_npa_health_reporters_create(struct rvu_devlink *rvu_dl)
-{
-	struct rvu *rvu = rvu_dl->rvu;
-	int err;
+अटल पूर्णांक rvu_npa_health_reporters_create(काष्ठा rvu_devlink *rvu_dl)
+अणु
+	काष्ठा rvu *rvu = rvu_dl->rvu;
+	पूर्णांक err;
 
-	err = rvu_npa_register_reporters(rvu_dl);
-	if (err) {
+	err = rvu_npa_रेजिस्टर_reporters(rvu_dl);
+	अगर (err) अणु
 		dev_warn(rvu->dev, "Failed to create npa reporter, err =%d\n",
 			 err);
-		return err;
-	}
-	rvu_npa_register_interrupts(rvu);
+		वापस err;
+	पूर्ण
+	rvu_npa_रेजिस्टर_पूर्णांकerrupts(rvu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rvu_npa_health_reporters_destroy(struct rvu_devlink *rvu_dl)
-{
-	struct rvu_npa_health_reporters *npa_reporters;
-	struct rvu *rvu = rvu_dl->rvu;
+अटल व्योम rvu_npa_health_reporters_destroy(काष्ठा rvu_devlink *rvu_dl)
+अणु
+	काष्ठा rvu_npa_health_reporters *npa_reporters;
+	काष्ठा rvu *rvu = rvu_dl->rvu;
 
 	npa_reporters = rvu_dl->rvu_npa_health_reporter;
 
-	if (!npa_reporters->rvu_hw_npa_ras_reporter)
-		return;
-	if (!IS_ERR_OR_NULL(npa_reporters->rvu_hw_npa_intr_reporter))
-		devlink_health_reporter_destroy(npa_reporters->rvu_hw_npa_intr_reporter);
+	अगर (!npa_reporters->rvu_hw_npa_ras_reporter)
+		वापस;
+	अगर (!IS_ERR_OR_शून्य(npa_reporters->rvu_hw_npa_पूर्णांकr_reporter))
+		devlink_health_reporter_destroy(npa_reporters->rvu_hw_npa_पूर्णांकr_reporter);
 
-	if (!IS_ERR_OR_NULL(npa_reporters->rvu_hw_npa_gen_reporter))
+	अगर (!IS_ERR_OR_शून्य(npa_reporters->rvu_hw_npa_gen_reporter))
 		devlink_health_reporter_destroy(npa_reporters->rvu_hw_npa_gen_reporter);
 
-	if (!IS_ERR_OR_NULL(npa_reporters->rvu_hw_npa_err_reporter))
+	अगर (!IS_ERR_OR_शून्य(npa_reporters->rvu_hw_npa_err_reporter))
 		devlink_health_reporter_destroy(npa_reporters->rvu_hw_npa_err_reporter);
 
-	if (!IS_ERR_OR_NULL(npa_reporters->rvu_hw_npa_ras_reporter))
+	अगर (!IS_ERR_OR_शून्य(npa_reporters->rvu_hw_npa_ras_reporter))
 		devlink_health_reporter_destroy(npa_reporters->rvu_hw_npa_ras_reporter);
 
-	rvu_npa_unregister_interrupts(rvu);
-	kfree(rvu_dl->rvu_npa_health_reporter->npa_event_ctx);
-	kfree(rvu_dl->rvu_npa_health_reporter);
-}
+	rvu_npa_unरेजिस्टर_पूर्णांकerrupts(rvu);
+	kमुक्त(rvu_dl->rvu_npa_health_reporter->npa_event_ctx);
+	kमुक्त(rvu_dl->rvu_npa_health_reporter);
+पूर्ण
 
-static int rvu_health_reporters_create(struct rvu *rvu)
-{
-	struct rvu_devlink *rvu_dl;
-	int err;
+अटल पूर्णांक rvu_health_reporters_create(काष्ठा rvu *rvu)
+अणु
+	काष्ठा rvu_devlink *rvu_dl;
+	पूर्णांक err;
 
 	rvu_dl = rvu->rvu_dl;
 	err = rvu_npa_health_reporters_create(rvu_dl);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return rvu_nix_health_reporters_create(rvu_dl);
-}
+	वापस rvu_nix_health_reporters_create(rvu_dl);
+पूर्ण
 
-static void rvu_health_reporters_destroy(struct rvu *rvu)
-{
-	struct rvu_devlink *rvu_dl;
+अटल व्योम rvu_health_reporters_destroy(काष्ठा rvu *rvu)
+अणु
+	काष्ठा rvu_devlink *rvu_dl;
 
-	if (!rvu->rvu_dl)
-		return;
+	अगर (!rvu->rvu_dl)
+		वापस;
 
 	rvu_dl = rvu->rvu_dl;
 	rvu_npa_health_reporters_destroy(rvu_dl);
 	rvu_nix_health_reporters_destroy(rvu_dl);
-}
+पूर्ण
 
-static int rvu_devlink_info_get(struct devlink *devlink, struct devlink_info_req *req,
-				struct netlink_ext_ack *extack)
-{
-	return devlink_info_driver_name_put(req, DRV_NAME);
-}
+अटल पूर्णांक rvu_devlink_info_get(काष्ठा devlink *devlink, काष्ठा devlink_info_req *req,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस devlink_info_driver_name_put(req, DRV_NAME);
+पूर्ण
 
-static const struct devlink_ops rvu_devlink_ops = {
+अटल स्थिर काष्ठा devlink_ops rvu_devlink_ops = अणु
 	.info_get = rvu_devlink_info_get,
-};
+पूर्ण;
 
-int rvu_register_dl(struct rvu *rvu)
-{
-	struct rvu_devlink *rvu_dl;
-	struct devlink *dl;
-	int err;
+पूर्णांक rvu_रेजिस्टर_dl(काष्ठा rvu *rvu)
+अणु
+	काष्ठा rvu_devlink *rvu_dl;
+	काष्ठा devlink *dl;
+	पूर्णांक err;
 
-	rvu_dl = kzalloc(sizeof(*rvu_dl), GFP_KERNEL);
-	if (!rvu_dl)
-		return -ENOMEM;
+	rvu_dl = kzalloc(माप(*rvu_dl), GFP_KERNEL);
+	अगर (!rvu_dl)
+		वापस -ENOMEM;
 
-	dl = devlink_alloc(&rvu_devlink_ops, sizeof(struct rvu_devlink));
-	if (!dl) {
+	dl = devlink_alloc(&rvu_devlink_ops, माप(काष्ठा rvu_devlink));
+	अगर (!dl) अणु
 		dev_warn(rvu->dev, "devlink_alloc failed\n");
-		kfree(rvu_dl);
-		return -ENOMEM;
-	}
+		kमुक्त(rvu_dl);
+		वापस -ENOMEM;
+	पूर्ण
 
-	err = devlink_register(dl, rvu->dev);
-	if (err) {
+	err = devlink_रेजिस्टर(dl, rvu->dev);
+	अगर (err) अणु
 		dev_err(rvu->dev, "devlink register failed with error %d\n", err);
-		devlink_free(dl);
-		kfree(rvu_dl);
-		return err;
-	}
+		devlink_मुक्त(dl);
+		kमुक्त(rvu_dl);
+		वापस err;
+	पूर्ण
 
 	rvu_dl->dl = dl;
 	rvu_dl->rvu = rvu;
 	rvu->rvu_dl = rvu_dl;
 
-	return rvu_health_reporters_create(rvu);
-}
+	वापस rvu_health_reporters_create(rvu);
+पूर्ण
 
-void rvu_unregister_dl(struct rvu *rvu)
-{
-	struct rvu_devlink *rvu_dl = rvu->rvu_dl;
-	struct devlink *dl = rvu_dl->dl;
+व्योम rvu_unरेजिस्टर_dl(काष्ठा rvu *rvu)
+अणु
+	काष्ठा rvu_devlink *rvu_dl = rvu->rvu_dl;
+	काष्ठा devlink *dl = rvu_dl->dl;
 
-	if (!dl)
-		return;
+	अगर (!dl)
+		वापस;
 
 	rvu_health_reporters_destroy(rvu);
-	devlink_unregister(dl);
-	devlink_free(dl);
-	kfree(rvu_dl);
-}
+	devlink_unरेजिस्टर(dl);
+	devlink_मुक्त(dl);
+	kमुक्त(rvu_dl);
+पूर्ण

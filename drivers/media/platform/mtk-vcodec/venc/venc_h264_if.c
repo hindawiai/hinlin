@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2016 MediaTek Inc.
  * Author: Jungchang Tsao <jungchang.tsao@mediatek.com>
@@ -6,38 +7,38 @@
  *         PoChun Lin <pochun.lin@mediatek.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
 
-#include "../mtk_vcodec_drv.h"
-#include "../mtk_vcodec_util.h"
-#include "../mtk_vcodec_intr.h"
-#include "../mtk_vcodec_enc.h"
-#include "../mtk_vcodec_enc_pm.h"
-#include "../venc_drv_base.h"
-#include "../venc_ipi_msg.h"
-#include "../venc_vpu_if.h"
+#समावेश "../mtk_vcodec_drv.h"
+#समावेश "../mtk_vcodec_util.h"
+#समावेश "../mtk_vcodec_intr.h"
+#समावेश "../mtk_vcodec_enc.h"
+#समावेश "../mtk_vcodec_enc_pm.h"
+#समावेश "../venc_drv_base.h"
+#समावेश "../venc_ipi_msg.h"
+#समावेश "../venc_vpu_if.h"
 
-static const char h264_filler_marker[] = {0x0, 0x0, 0x0, 0x1, 0xc};
+अटल स्थिर अक्षर h264_filler_marker[] = अणु0x0, 0x0, 0x0, 0x1, 0xcपूर्ण;
 
-#define H264_FILLER_MARKER_SIZE ARRAY_SIZE(h264_filler_marker)
-#define VENC_PIC_BITSTREAM_BYTE_CNT 0x0098
+#घोषणा H264_FILLER_MARKER_SIZE ARRAY_SIZE(h264_filler_marker)
+#घोषणा VENC_PIC_BITSTREAM_BYTE_CNT 0x0098
 
 /*
- * enum venc_h264_frame_type - h264 encoder output bitstream frame type
+ * क्रमागत venc_h264_frame_type - h264 encoder output bitstream frame type
  */
-enum venc_h264_frame_type {
+क्रमागत venc_h264_frame_type अणु
 	VENC_H264_IDR_FRM,
 	VENC_H264_I_FRM,
 	VENC_H264_P_FRM,
 	VENC_H264_B_FRM,
-};
+पूर्ण;
 
 /*
- * enum venc_h264_vpu_work_buf - h264 encoder buffer index
+ * क्रमागत venc_h264_vpu_work_buf - h264 encoder buffer index
  */
-enum venc_h264_vpu_work_buf {
+क्रमागत venc_h264_vpu_work_buf अणु
 	VENC_H264_VPU_WORK_BUF_RC_INFO,
 	VENC_H264_VPU_WORK_BUF_RC_CODE,
 	VENC_H264_VPU_WORK_BUF_REC_LUMA,
@@ -48,38 +49,38 @@ enum venc_h264_vpu_work_buf {
 	VENC_H264_VPU_WORK_BUF_MV_INFO_2,
 	VENC_H264_VPU_WORK_BUF_SKIP_FRAME,
 	VENC_H264_VPU_WORK_BUF_MAX,
-};
+पूर्ण;
 
 /*
- * enum venc_h264_bs_mode - for bs_mode argument in h264_enc_vpu_encode
+ * क्रमागत venc_h264_bs_mode - क्रम bs_mode argument in h264_enc_vpu_encode
  */
-enum venc_h264_bs_mode {
+क्रमागत venc_h264_bs_mode अणु
 	H264_BS_MODE_SPS,
 	H264_BS_MODE_PPS,
 	H264_BS_MODE_FRAME,
-};
+पूर्ण;
 
 /*
- * struct venc_h264_vpu_config - Structure for h264 encoder configuration
- *                               AP-W/R : AP is writer/reader on this item
- *                               VPU-W/R: VPU is write/reader on this item
+ * काष्ठा venc_h264_vpu_config - Structure क्रम h264 encoder configuration
+ *                               AP-W/R : AP is ग_लिखोr/पढ़ोer on this item
+ *                               VPU-W/R: VPU is ग_लिखो/पढ़ोer on this item
  * @input_fourcc: input fourcc
  * @bitrate: target bitrate (in bps)
  * @pic_w: picture width. Picture size is visible stream resolution, in pixels,
- *         to be used for display purposes; must be smaller or equal to buffer
+ *         to be used क्रम display purposes; must be smaller or equal to buffer
  *         size.
  * @pic_h: picture height
  * @buf_w: buffer width. Buffer size is stream resolution in pixels aligned to
  *         hardware requirements.
  * @buf_h: buffer height
  * @gop_size: group of picture size (idr frame)
- * @intra_period: intra frame period
+ * @पूर्णांकra_period: पूर्णांकra frame period
  * @framerate: frame rate in fps
- * @profile: as specified in standard
- * @level: as specified in standard
+ * @profile: as specअगरied in standard
+ * @level: as specअगरied in standard
  * @wfd: WFD mode 1:on, 0:off
  */
-struct venc_h264_vpu_config {
+काष्ठा venc_h264_vpu_config अणु
 	u32 input_fourcc;
 	u32 bitrate;
 	u32 pic_w;
@@ -87,217 +88,217 @@ struct venc_h264_vpu_config {
 	u32 buf_w;
 	u32 buf_h;
 	u32 gop_size;
-	u32 intra_period;
+	u32 पूर्णांकra_period;
 	u32 framerate;
 	u32 profile;
 	u32 level;
 	u32 wfd;
-};
+पूर्ण;
 
 /*
- * struct venc_h264_vpu_buf - Structure for buffer information
- *                            AP-W/R : AP is writer/reader on this item
- *                            VPU-W/R: VPU is write/reader on this item
- * @iova: IO virtual address
+ * काष्ठा venc_h264_vpu_buf - Structure क्रम buffer inक्रमmation
+ *                            AP-W/R : AP is ग_लिखोr/पढ़ोer on this item
+ *                            VPU-W/R: VPU is ग_लिखो/पढ़ोer on this item
+ * @iova: IO भव address
  * @vpua: VPU side memory addr which is used by RC_CODE
  * @size: buffer size (in bytes)
  */
-struct venc_h264_vpu_buf {
+काष्ठा venc_h264_vpu_buf अणु
 	u32 iova;
 	u32 vpua;
 	u32 size;
-};
+पूर्ण;
 
 /*
- * struct venc_h264_vsi - Structure for VPU driver control and info share
- *                        AP-W/R : AP is writer/reader on this item
- *                        VPU-W/R: VPU is write/reader on this item
- * This structure is allocated in VPU side and shared to AP side.
+ * काष्ठा venc_h264_vsi - Structure क्रम VPU driver control and info share
+ *                        AP-W/R : AP is ग_लिखोr/पढ़ोer on this item
+ *                        VPU-W/R: VPU is ग_लिखो/पढ़ोer on this item
+ * This काष्ठाure is allocated in VPU side and shared to AP side.
  * @config: h264 encoder configuration
- * @work_bufs: working buffer information in VPU side
- * The work_bufs here is for storing the 'size' info shared to AP side.
- * The similar item in struct venc_h264_inst is for memory allocation
+ * @work_bufs: working buffer inक्रमmation in VPU side
+ * The work_bufs here is क्रम storing the 'size' info shared to AP side.
+ * The similar item in काष्ठा venc_h264_inst is क्रम memory allocation
  * in AP side. The AP driver will copy the 'size' from here to the one in
- * struct mtk_vcodec_mem, then invoke mtk_vcodec_mem_alloc to allocate
- * the buffer. After that, bypass the 'dma_addr' to the 'iova' field here for
- * register setting in VPU side.
+ * काष्ठा mtk_vcodec_mem, then invoke mtk_vcodec_mem_alloc to allocate
+ * the buffer. After that, bypass the 'dma_addr' to the 'iova' field here क्रम
+ * रेजिस्टर setting in VPU side.
  */
-struct venc_h264_vsi {
-	struct venc_h264_vpu_config config;
-	struct venc_h264_vpu_buf work_bufs[VENC_H264_VPU_WORK_BUF_MAX];
-};
+काष्ठा venc_h264_vsi अणु
+	काष्ठा venc_h264_vpu_config config;
+	काष्ठा venc_h264_vpu_buf work_bufs[VENC_H264_VPU_WORK_BUF_MAX];
+पूर्ण;
 
 /*
- * struct venc_h264_inst - h264 encoder AP driver instance
- * @hw_base: h264 encoder hardware register base
+ * काष्ठा venc_h264_inst - h264 encoder AP driver instance
+ * @hw_base: h264 encoder hardware रेजिस्टर base
  * @work_bufs: working buffer
  * @pps_buf: buffer to store the pps bitstream
  * @work_buf_allocated: working buffer allocated flag
  * @frm_cnt: encoded frame count
  * @prepend_hdr: when the v4l2 layer send VENC_SET_PARAM_PREPEND_HEADER cmd
- *  through h264_enc_set_param interface, it will set this flag and prepend the
+ *  through h264_enc_set_param पूर्णांकerface, it will set this flag and prepend the
  *  sps/pps in h264_enc_encode function.
- * @vpu_inst: VPU instance to exchange information between AP and VPU
- * @vsi: driver structure allocated by VPU side and shared to AP side for
+ * @vpu_inst: VPU instance to exchange inक्रमmation between AP and VPU
+ * @vsi: driver काष्ठाure allocated by VPU side and shared to AP side क्रम
  *	 control and info share
- * @ctx: context for v4l2 layer integration
+ * @ctx: context क्रम v4l2 layer पूर्णांकegration
  */
-struct venc_h264_inst {
-	void __iomem *hw_base;
-	struct mtk_vcodec_mem work_bufs[VENC_H264_VPU_WORK_BUF_MAX];
-	struct mtk_vcodec_mem pps_buf;
+काष्ठा venc_h264_inst अणु
+	व्योम __iomem *hw_base;
+	काष्ठा mtk_vcodec_mem work_bufs[VENC_H264_VPU_WORK_BUF_MAX];
+	काष्ठा mtk_vcodec_mem pps_buf;
 	bool work_buf_allocated;
-	unsigned int frm_cnt;
-	unsigned int skip_frm_cnt;
-	unsigned int prepend_hdr;
-	struct venc_vpu_inst vpu_inst;
-	struct venc_h264_vsi *vsi;
-	struct mtk_vcodec_ctx *ctx;
-};
+	अचिन्हित पूर्णांक frm_cnt;
+	अचिन्हित पूर्णांक skip_frm_cnt;
+	अचिन्हित पूर्णांक prepend_hdr;
+	काष्ठा venc_vpu_inst vpu_inst;
+	काष्ठा venc_h264_vsi *vsi;
+	काष्ठा mtk_vcodec_ctx *ctx;
+पूर्ण;
 
-static inline u32 h264_read_reg(struct venc_h264_inst *inst, u32 addr)
-{
-	return readl(inst->hw_base + addr);
-}
+अटल अंतरभूत u32 h264_पढ़ो_reg(काष्ठा venc_h264_inst *inst, u32 addr)
+अणु
+	वापस पढ़ोl(inst->hw_base + addr);
+पूर्ण
 
-static unsigned int h264_get_profile(struct venc_h264_inst *inst,
-				     unsigned int profile)
-{
-	switch (profile) {
-	case V4L2_MPEG_VIDEO_H264_PROFILE_BASELINE:
-		return 66;
-	case V4L2_MPEG_VIDEO_H264_PROFILE_MAIN:
-		return 77;
-	case V4L2_MPEG_VIDEO_H264_PROFILE_HIGH:
-		return 100;
-	case V4L2_MPEG_VIDEO_H264_PROFILE_CONSTRAINED_BASELINE:
+अटल अचिन्हित पूर्णांक h264_get_profile(काष्ठा venc_h264_inst *inst,
+				     अचिन्हित पूर्णांक profile)
+अणु
+	चयन (profile) अणु
+	हाल V4L2_MPEG_VIDEO_H264_PROखाता_BASELINE:
+		वापस 66;
+	हाल V4L2_MPEG_VIDEO_H264_PROखाता_MAIN:
+		वापस 77;
+	हाल V4L2_MPEG_VIDEO_H264_PROखाता_HIGH:
+		वापस 100;
+	हाल V4L2_MPEG_VIDEO_H264_PROखाता_CONSTRAINED_BASELINE:
 		mtk_vcodec_err(inst, "unsupported CONSTRAINED_BASELINE");
-		return 0;
-	case V4L2_MPEG_VIDEO_H264_PROFILE_EXTENDED:
+		वापस 0;
+	हाल V4L2_MPEG_VIDEO_H264_PROखाता_EXTENDED:
 		mtk_vcodec_err(inst, "unsupported EXTENDED");
-		return 0;
-	default:
+		वापस 0;
+	शेष:
 		mtk_vcodec_debug(inst, "unsupported profile %d", profile);
-		return 100;
-	}
-}
+		वापस 100;
+	पूर्ण
+पूर्ण
 
-static unsigned int h264_get_level(struct venc_h264_inst *inst,
-				   unsigned int level)
-{
-	switch (level) {
-	case V4L2_MPEG_VIDEO_H264_LEVEL_1B:
+अटल अचिन्हित पूर्णांक h264_get_level(काष्ठा venc_h264_inst *inst,
+				   अचिन्हित पूर्णांक level)
+अणु
+	चयन (level) अणु
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_1B:
 		mtk_vcodec_err(inst, "unsupported 1B");
-		return 0;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_1_0:
-		return 10;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_1_1:
-		return 11;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_1_2:
-		return 12;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_1_3:
-		return 13;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_2_0:
-		return 20;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_2_1:
-		return 21;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_2_2:
-		return 22;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_3_0:
-		return 30;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_3_1:
-		return 31;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_3_2:
-		return 32;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_4_0:
-		return 40;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_4_1:
-		return 41;
-	case V4L2_MPEG_VIDEO_H264_LEVEL_4_2:
-		return 42;
-	default:
+		वापस 0;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_1_0:
+		वापस 10;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_1_1:
+		वापस 11;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_1_2:
+		वापस 12;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_1_3:
+		वापस 13;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_2_0:
+		वापस 20;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_2_1:
+		वापस 21;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_2_2:
+		वापस 22;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_3_0:
+		वापस 30;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_3_1:
+		वापस 31;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_3_2:
+		वापस 32;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_4_0:
+		वापस 40;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_4_1:
+		वापस 41;
+	हाल V4L2_MPEG_VIDEO_H264_LEVEL_4_2:
+		वापस 42;
+	शेष:
 		mtk_vcodec_debug(inst, "unsupported level %d", level);
-		return 31;
-	}
-}
+		वापस 31;
+	पूर्ण
+पूर्ण
 
-static void h264_enc_free_work_buf(struct venc_h264_inst *inst)
-{
-	int i;
+अटल व्योम h264_enc_मुक्त_work_buf(काष्ठा venc_h264_inst *inst)
+अणु
+	पूर्णांक i;
 
 	mtk_vcodec_debug_enter(inst);
 
 	/* Except the SKIP_FRAME buffers,
-	 * other buffers need to be freed by AP.
+	 * other buffers need to be मुक्तd by AP.
 	 */
-	for (i = 0; i < VENC_H264_VPU_WORK_BUF_MAX; i++) {
-		if (i != VENC_H264_VPU_WORK_BUF_SKIP_FRAME)
-			mtk_vcodec_mem_free(inst->ctx, &inst->work_bufs[i]);
-	}
+	क्रम (i = 0; i < VENC_H264_VPU_WORK_BUF_MAX; i++) अणु
+		अगर (i != VENC_H264_VPU_WORK_BUF_SKIP_FRAME)
+			mtk_vcodec_mem_मुक्त(inst->ctx, &inst->work_bufs[i]);
+	पूर्ण
 
-	mtk_vcodec_mem_free(inst->ctx, &inst->pps_buf);
+	mtk_vcodec_mem_मुक्त(inst->ctx, &inst->pps_buf);
 
 	mtk_vcodec_debug_leave(inst);
-}
+पूर्ण
 
-static int h264_enc_alloc_work_buf(struct venc_h264_inst *inst)
-{
-	int i;
-	int ret = 0;
-	struct venc_h264_vpu_buf *wb = inst->vsi->work_bufs;
+अटल पूर्णांक h264_enc_alloc_work_buf(काष्ठा venc_h264_inst *inst)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret = 0;
+	काष्ठा venc_h264_vpu_buf *wb = inst->vsi->work_bufs;
 
 	mtk_vcodec_debug_enter(inst);
 
-	for (i = 0; i < VENC_H264_VPU_WORK_BUF_MAX; i++) {
+	क्रम (i = 0; i < VENC_H264_VPU_WORK_BUF_MAX; i++) अणु
 		/*
-		 * This 'wb' structure is set by VPU side and shared to AP for
-		 * buffer allocation and IO virtual addr mapping. For most of
+		 * This 'wb' काष्ठाure is set by VPU side and shared to AP क्रम
+		 * buffer allocation and IO भव addr mapping. For most of
 		 * the buffers, AP will allocate the buffer according to 'size'
-		 * field and store the IO virtual addr in 'iova' field. There
+		 * field and store the IO भव addr in 'iova' field. There
 		 * are two exceptions:
 		 * (1) RC_CODE buffer, it's pre-allocated in the VPU side, and
 		 * save the VPU addr in the 'vpua' field. The AP will translate
-		 * the VPU addr to the corresponding IO virtual addr and store
-		 * in 'iova' field for reg setting in VPU side.
+		 * the VPU addr to the corresponding IO भव addr and store
+		 * in 'iova' field क्रम reg setting in VPU side.
 		 * (2) SKIP_FRAME buffer, it's pre-allocated in the VPU side,
 		 * and save the VPU addr in the 'vpua' field. The AP will
-		 * translate the VPU addr to the corresponding AP side virtual
-		 * address and do some memcpy access to move to bitstream buffer
-		 * assigned by v4l2 layer.
+		 * translate the VPU addr to the corresponding AP side भव
+		 * address and करो some स_नकल access to move to bitstream buffer
+		 * asचिन्हित by v4l2 layer.
 		 */
 		inst->work_bufs[i].size = wb[i].size;
-		if (i == VENC_H264_VPU_WORK_BUF_SKIP_FRAME) {
-			struct mtk_vcodec_fw *handler;
+		अगर (i == VENC_H264_VPU_WORK_BUF_SKIP_FRAME) अणु
+			काष्ठा mtk_vcodec_fw *handler;
 
 			handler = inst->vpu_inst.ctx->dev->fw_handler;
 			inst->work_bufs[i].va =
 				mtk_vcodec_fw_map_dm_addr(handler, wb[i].vpua);
 			inst->work_bufs[i].dma_addr = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = mtk_vcodec_mem_alloc(inst->ctx,
 						   &inst->work_bufs[i]);
-			if (ret) {
+			अगर (ret) अणु
 				mtk_vcodec_err(inst,
 					       "cannot allocate buf %d", i);
-				goto err_alloc;
-			}
+				जाओ err_alloc;
+			पूर्ण
 			/*
 			 * This RC_CODE is pre-allocated by VPU and saved in VPU
-			 * addr. So we need use memcpy to copy RC_CODE from VPU
-			 * addr into IO virtual addr in 'iova' field for reg
+			 * addr. So we need use स_नकल to copy RC_CODE from VPU
+			 * addr पूर्णांकo IO भव addr in 'iova' field क्रम reg
 			 * setting in VPU side.
 			 */
-			if (i == VENC_H264_VPU_WORK_BUF_RC_CODE) {
-				struct mtk_vcodec_fw *handler;
-				void *tmp_va;
+			अगर (i == VENC_H264_VPU_WORK_BUF_RC_CODE) अणु
+				काष्ठा mtk_vcodec_fw *handler;
+				व्योम *पंचांगp_va;
 
 				handler = inst->vpu_inst.ctx->dev->fw_handler;
-				tmp_va = mtk_vcodec_fw_map_dm_addr(handler,
+				पंचांगp_va = mtk_vcodec_fw_map_dm_addr(handler,
 								   wb[i].vpua);
-				memcpy(inst->work_bufs[i].va, tmp_va,
+				स_नकल(inst->work_bufs[i].va, पंचांगp_va,
 				       wb[i].size);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		wb[i].iova = inst->work_bufs[i].dma_addr;
 
 		mtk_vcodec_debug(inst,
@@ -305,139 +306,139 @@ static int h264_enc_alloc_work_buf(struct venc_h264_inst *inst)
 				 i, inst->work_bufs[i].va,
 				 &inst->work_bufs[i].dma_addr,
 				 inst->work_bufs[i].size);
-	}
+	पूर्ण
 
 	/* the pps_buf is used by AP side only */
 	inst->pps_buf.size = 128;
 	ret = mtk_vcodec_mem_alloc(inst->ctx, &inst->pps_buf);
-	if (ret) {
+	अगर (ret) अणु
 		mtk_vcodec_err(inst, "cannot allocate pps_buf");
-		goto err_alloc;
-	}
+		जाओ err_alloc;
+	पूर्ण
 
 	mtk_vcodec_debug_leave(inst);
 
-	return ret;
+	वापस ret;
 
 err_alloc:
-	h264_enc_free_work_buf(inst);
+	h264_enc_मुक्त_work_buf(inst);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int h264_enc_wait_venc_done(struct venc_h264_inst *inst)
-{
-	unsigned int irq_status = 0;
-	struct mtk_vcodec_ctx *ctx = (struct mtk_vcodec_ctx *)inst->ctx;
+अटल अचिन्हित पूर्णांक h264_enc_रुको_venc_करोne(काष्ठा venc_h264_inst *inst)
+अणु
+	अचिन्हित पूर्णांक irq_status = 0;
+	काष्ठा mtk_vcodec_ctx *ctx = (काष्ठा mtk_vcodec_ctx *)inst->ctx;
 
-	if (!mtk_vcodec_wait_for_done_ctx(ctx, MTK_INST_IRQ_RECEIVED,
-					  WAIT_INTR_TIMEOUT_MS)) {
+	अगर (!mtk_vcodec_रुको_क्रम_करोne_ctx(ctx, MTK_INST_IRQ_RECEIVED,
+					  WAIT_INTR_TIMEOUT_MS)) अणु
 		irq_status = ctx->irq_status;
 		mtk_vcodec_debug(inst, "irq_status %x <-", irq_status);
-	}
-	return irq_status;
-}
+	पूर्ण
+	वापस irq_status;
+पूर्ण
 
-static int h264_frame_type(struct venc_h264_inst *inst)
-{
-	if ((inst->vsi->config.gop_size != 0 &&
+अटल पूर्णांक h264_frame_type(काष्ठा venc_h264_inst *inst)
+अणु
+	अगर ((inst->vsi->config.gop_size != 0 &&
 	     (inst->frm_cnt % inst->vsi->config.gop_size) == 0) ||
-	    (inst->frm_cnt == 0 && inst->vsi->config.gop_size == 0)) {
+	    (inst->frm_cnt == 0 && inst->vsi->config.gop_size == 0)) अणु
 		/* IDR frame */
-		return VENC_H264_IDR_FRM;
-	} else if ((inst->vsi->config.intra_period != 0 &&
-		    (inst->frm_cnt % inst->vsi->config.intra_period) == 0) ||
-		   (inst->frm_cnt == 0 && inst->vsi->config.intra_period == 0)) {
+		वापस VENC_H264_IDR_FRM;
+	पूर्ण अन्यथा अगर ((inst->vsi->config.पूर्णांकra_period != 0 &&
+		    (inst->frm_cnt % inst->vsi->config.पूर्णांकra_period) == 0) ||
+		   (inst->frm_cnt == 0 && inst->vsi->config.पूर्णांकra_period == 0)) अणु
 		/* I frame */
-		return VENC_H264_I_FRM;
-	} else {
-		return VENC_H264_P_FRM;  /* Note: B frames are not supported */
-	}
-}
-static int h264_encode_sps(struct venc_h264_inst *inst,
-			   struct mtk_vcodec_mem *bs_buf,
-			   unsigned int *bs_size)
-{
-	int ret = 0;
-	unsigned int irq_status;
+		वापस VENC_H264_I_FRM;
+	पूर्ण अन्यथा अणु
+		वापस VENC_H264_P_FRM;  /* Note: B frames are not supported */
+	पूर्ण
+पूर्ण
+अटल पूर्णांक h264_encode_sps(काष्ठा venc_h264_inst *inst,
+			   काष्ठा mtk_vcodec_mem *bs_buf,
+			   अचिन्हित पूर्णांक *bs_size)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक irq_status;
 
 	mtk_vcodec_debug_enter(inst);
 
-	ret = vpu_enc_encode(&inst->vpu_inst, H264_BS_MODE_SPS, NULL,
-			     bs_buf, bs_size, NULL);
-	if (ret)
-		return ret;
+	ret = vpu_enc_encode(&inst->vpu_inst, H264_BS_MODE_SPS, शून्य,
+			     bs_buf, bs_size, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	irq_status = h264_enc_wait_venc_done(inst);
-	if (irq_status != MTK_VENC_IRQ_STATUS_SPS) {
+	irq_status = h264_enc_रुको_venc_करोne(inst);
+	अगर (irq_status != MTK_VENC_IRQ_STATUS_SPS) अणु
 		mtk_vcodec_err(inst, "expect irq status %d",
 			       MTK_VENC_IRQ_STATUS_SPS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	*bs_size = h264_read_reg(inst, VENC_PIC_BITSTREAM_BYTE_CNT);
+	*bs_size = h264_पढ़ो_reg(inst, VENC_PIC_BITSTREAM_BYTE_CNT);
 	mtk_vcodec_debug(inst, "bs size %d <-", *bs_size);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int h264_encode_pps(struct venc_h264_inst *inst,
-			   struct mtk_vcodec_mem *bs_buf,
-			   unsigned int *bs_size)
-{
-	int ret = 0;
-	unsigned int irq_status;
+अटल पूर्णांक h264_encode_pps(काष्ठा venc_h264_inst *inst,
+			   काष्ठा mtk_vcodec_mem *bs_buf,
+			   अचिन्हित पूर्णांक *bs_size)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक irq_status;
 
 	mtk_vcodec_debug_enter(inst);
 
-	ret = vpu_enc_encode(&inst->vpu_inst, H264_BS_MODE_PPS, NULL,
-			     bs_buf, bs_size, NULL);
-	if (ret)
-		return ret;
+	ret = vpu_enc_encode(&inst->vpu_inst, H264_BS_MODE_PPS, शून्य,
+			     bs_buf, bs_size, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	irq_status = h264_enc_wait_venc_done(inst);
-	if (irq_status != MTK_VENC_IRQ_STATUS_PPS) {
+	irq_status = h264_enc_रुको_venc_करोne(inst);
+	अगर (irq_status != MTK_VENC_IRQ_STATUS_PPS) अणु
 		mtk_vcodec_err(inst, "expect irq status %d",
 			       MTK_VENC_IRQ_STATUS_PPS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	*bs_size = h264_read_reg(inst, VENC_PIC_BITSTREAM_BYTE_CNT);
+	*bs_size = h264_पढ़ो_reg(inst, VENC_PIC_BITSTREAM_BYTE_CNT);
 	mtk_vcodec_debug(inst, "bs size %d <-", *bs_size);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int h264_encode_header(struct venc_h264_inst *inst,
-			      struct mtk_vcodec_mem *bs_buf,
-			      unsigned int *bs_size)
-{
-	int ret = 0;
-	unsigned int bs_size_sps;
-	unsigned int bs_size_pps;
+अटल पूर्णांक h264_encode_header(काष्ठा venc_h264_inst *inst,
+			      काष्ठा mtk_vcodec_mem *bs_buf,
+			      अचिन्हित पूर्णांक *bs_size)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक bs_size_sps;
+	अचिन्हित पूर्णांक bs_size_pps;
 
 	ret = h264_encode_sps(inst, bs_buf, &bs_size_sps);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = h264_encode_pps(inst, &inst->pps_buf, &bs_size_pps);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memcpy(bs_buf->va + bs_size_sps, inst->pps_buf.va, bs_size_pps);
+	स_नकल(bs_buf->va + bs_size_sps, inst->pps_buf.va, bs_size_pps);
 	*bs_size = bs_size_sps + bs_size_pps;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int h264_encode_frame(struct venc_h264_inst *inst,
-			     struct venc_frm_buf *frm_buf,
-			     struct mtk_vcodec_mem *bs_buf,
-			     unsigned int *bs_size)
-{
-	int ret = 0;
-	unsigned int irq_status;
-	struct venc_frame_info frame_info;
+अटल पूर्णांक h264_encode_frame(काष्ठा venc_h264_inst *inst,
+			     काष्ठा venc_frm_buf *frm_buf,
+			     काष्ठा mtk_vcodec_mem *bs_buf,
+			     अचिन्हित पूर्णांक *bs_size)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित पूर्णांक irq_status;
+	काष्ठा venc_frame_info frame_info;
 
 	mtk_vcodec_debug_enter(inst);
 	mtk_vcodec_debug(inst, "frm_cnt = %d\n ", inst->frm_cnt);
@@ -449,63 +450,63 @@ static int h264_encode_frame(struct venc_h264_inst *inst,
 			 frame_info.frm_type);
 	ret = vpu_enc_encode(&inst->vpu_inst, H264_BS_MODE_FRAME, frm_buf,
 			     bs_buf, bs_size, &frame_info);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * skip frame case: The skip frame buffer is composed by vpu side only,
-	 * it does not trigger the hw, so skip the wait interrupt operation.
+	 * skip frame हाल: The skip frame buffer is composed by vpu side only,
+	 * it करोes not trigger the hw, so skip the रुको पूर्णांकerrupt operation.
 	 */
-	if (inst->vpu_inst.state == VEN_IPI_MSG_ENC_STATE_SKIP) {
+	अगर (inst->vpu_inst.state == VEN_IPI_MSG_ENC_STATE_SKIP) अणु
 		*bs_size = inst->vpu_inst.bs_size;
-		memcpy(bs_buf->va,
+		स_नकल(bs_buf->va,
 		       inst->work_bufs[VENC_H264_VPU_WORK_BUF_SKIP_FRAME].va,
 		       *bs_size);
 		++inst->frm_cnt;
 		++inst->skip_frm_cnt;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	irq_status = h264_enc_wait_venc_done(inst);
-	if (irq_status != MTK_VENC_IRQ_STATUS_FRM) {
+	irq_status = h264_enc_रुको_venc_करोne(inst);
+	अगर (irq_status != MTK_VENC_IRQ_STATUS_FRM) अणु
 		mtk_vcodec_err(inst, "irq_status=%d failed", irq_status);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	*bs_size = h264_read_reg(inst, VENC_PIC_BITSTREAM_BYTE_CNT);
+	*bs_size = h264_पढ़ो_reg(inst, VENC_PIC_BITSTREAM_BYTE_CNT);
 
 	++inst->frm_cnt;
 	mtk_vcodec_debug(inst, "frm %d bs_size %d key_frm %d <-",
 			 inst->frm_cnt, *bs_size, inst->vpu_inst.is_key_frm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void h264_encode_filler(struct venc_h264_inst *inst, void *buf,
-			       int size)
-{
-	unsigned char *p = buf;
+अटल व्योम h264_encode_filler(काष्ठा venc_h264_inst *inst, व्योम *buf,
+			       पूर्णांक size)
+अणु
+	अचिन्हित अक्षर *p = buf;
 
-	if (size < H264_FILLER_MARKER_SIZE) {
+	अगर (size < H264_FILLER_MARKER_SIZE) अणु
 		mtk_vcodec_err(inst, "filler size too small %d", size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	memcpy(p, h264_filler_marker, ARRAY_SIZE(h264_filler_marker));
+	स_नकल(p, h264_filler_marker, ARRAY_SIZE(h264_filler_marker));
 	size -= H264_FILLER_MARKER_SIZE;
 	p += H264_FILLER_MARKER_SIZE;
-	memset(p, 0xff, size);
-}
+	स_रखो(p, 0xff, size);
+पूर्ण
 
-static int h264_enc_init(struct mtk_vcodec_ctx *ctx)
-{
-	const bool is_ext = MTK_ENC_CTX_IS_EXT(ctx);
-	int ret = 0;
-	struct venc_h264_inst *inst;
+अटल पूर्णांक h264_enc_init(काष्ठा mtk_vcodec_ctx *ctx)
+अणु
+	स्थिर bool is_ext = MTK_ENC_CTX_IS_EXT(ctx);
+	पूर्णांक ret = 0;
+	काष्ठा venc_h264_inst *inst;
 
-	inst = kzalloc(sizeof(*inst), GFP_KERNEL);
-	if (!inst)
-		return -ENOMEM;
+	inst = kzalloc(माप(*inst), GFP_KERNEL);
+	अगर (!inst)
+		वापस -ENOMEM;
 
 	inst->ctx = ctx;
 	inst->vpu_inst.ctx = ctx;
@@ -516,87 +517,87 @@ static int h264_enc_init(struct mtk_vcodec_ctx *ctx)
 
 	ret = vpu_enc_init(&inst->vpu_inst);
 
-	inst->vsi = (struct venc_h264_vsi *)inst->vpu_inst.vsi;
+	inst->vsi = (काष्ठा venc_h264_vsi *)inst->vpu_inst.vsi;
 
 	mtk_vcodec_debug_leave(inst);
 
-	if (ret)
-		kfree(inst);
-	else
+	अगर (ret)
+		kमुक्त(inst);
+	अन्यथा
 		ctx->drv_handle = inst;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int h264_enc_encode(void *handle,
-			   enum venc_start_opt opt,
-			   struct venc_frm_buf *frm_buf,
-			   struct mtk_vcodec_mem *bs_buf,
-			   struct venc_done_result *result)
-{
-	int ret = 0;
-	struct venc_h264_inst *inst = (struct venc_h264_inst *)handle;
-	struct mtk_vcodec_ctx *ctx = inst->ctx;
+अटल पूर्णांक h264_enc_encode(व्योम *handle,
+			   क्रमागत venc_start_opt opt,
+			   काष्ठा venc_frm_buf *frm_buf,
+			   काष्ठा mtk_vcodec_mem *bs_buf,
+			   काष्ठा venc_करोne_result *result)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा venc_h264_inst *inst = (काष्ठा venc_h264_inst *)handle;
+	काष्ठा mtk_vcodec_ctx *ctx = inst->ctx;
 
 	mtk_vcodec_debug(inst, "opt %d ->", opt);
 
 	enable_irq(ctx->dev->enc_irq);
 
-	switch (opt) {
-	case VENC_START_OPT_ENCODE_SEQUENCE_HEADER: {
-		unsigned int bs_size_hdr;
+	चयन (opt) अणु
+	हाल VENC_START_OPT_ENCODE_SEQUENCE_HEADER: अणु
+		अचिन्हित पूर्णांक bs_size_hdr;
 
 		ret = h264_encode_header(inst, bs_buf, &bs_size_hdr);
-		if (ret)
-			goto encode_err;
+		अगर (ret)
+			जाओ encode_err;
 
 		result->bs_size = bs_size_hdr;
 		result->is_key_frm = false;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	case VENC_START_OPT_ENCODE_FRAME: {
-		int hdr_sz;
-		int hdr_sz_ext;
-		int filler_sz = 0;
-		const int bs_alignment = 128;
-		struct mtk_vcodec_mem tmp_bs_buf;
-		unsigned int bs_size_hdr;
-		unsigned int bs_size_frm;
+	हाल VENC_START_OPT_ENCODE_FRAME: अणु
+		पूर्णांक hdr_sz;
+		पूर्णांक hdr_sz_ext;
+		पूर्णांक filler_sz = 0;
+		स्थिर पूर्णांक bs_alignment = 128;
+		काष्ठा mtk_vcodec_mem पंचांगp_bs_buf;
+		अचिन्हित पूर्णांक bs_size_hdr;
+		अचिन्हित पूर्णांक bs_size_frm;
 
-		if (!inst->prepend_hdr) {
+		अगर (!inst->prepend_hdr) अणु
 			ret = h264_encode_frame(inst, frm_buf, bs_buf,
 						&result->bs_size);
-			if (ret)
-				goto encode_err;
+			अगर (ret)
+				जाओ encode_err;
 			result->is_key_frm = inst->vpu_inst.is_key_frm;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		mtk_vcodec_debug(inst, "h264_encode_frame prepend SPS/PPS");
 
 		ret = h264_encode_header(inst, bs_buf, &bs_size_hdr);
-		if (ret)
-			goto encode_err;
+		अगर (ret)
+			जाओ encode_err;
 
 		hdr_sz = bs_size_hdr;
 		hdr_sz_ext = (hdr_sz & (bs_alignment - 1));
-		if (hdr_sz_ext) {
+		अगर (hdr_sz_ext) अणु
 			filler_sz = bs_alignment - hdr_sz_ext;
-			if (hdr_sz_ext + H264_FILLER_MARKER_SIZE > bs_alignment)
+			अगर (hdr_sz_ext + H264_FILLER_MARKER_SIZE > bs_alignment)
 				filler_sz += bs_alignment;
 			h264_encode_filler(inst, bs_buf->va + hdr_sz,
 					   filler_sz);
-		}
+		पूर्ण
 
-		tmp_bs_buf.va = bs_buf->va + hdr_sz + filler_sz;
-		tmp_bs_buf.dma_addr = bs_buf->dma_addr + hdr_sz + filler_sz;
-		tmp_bs_buf.size = bs_buf->size - (hdr_sz + filler_sz);
+		पंचांगp_bs_buf.va = bs_buf->va + hdr_sz + filler_sz;
+		पंचांगp_bs_buf.dma_addr = bs_buf->dma_addr + hdr_sz + filler_sz;
+		पंचांगp_bs_buf.size = bs_buf->size - (hdr_sz + filler_sz);
 
-		ret = h264_encode_frame(inst, frm_buf, &tmp_bs_buf,
+		ret = h264_encode_frame(inst, frm_buf, &पंचांगp_bs_buf,
 					&bs_size_frm);
-		if (ret)
-			goto encode_err;
+		अगर (ret)
+			जाओ encode_err;
 
 		result->bs_size = hdr_sz + filler_sz + bs_size_frm;
 
@@ -606,34 +607,34 @@ static int h264_enc_encode(void *handle,
 
 		inst->prepend_hdr = 0;
 		result->is_key_frm = inst->vpu_inst.is_key_frm;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	default:
+	शेष:
 		mtk_vcodec_err(inst, "venc_start_opt %d not supported", opt);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 encode_err:
 
 	disable_irq(ctx->dev->enc_irq);
 	mtk_vcodec_debug(inst, "opt %d <-", opt);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int h264_enc_set_param(void *handle,
-			      enum venc_set_param_type type,
-			      struct venc_enc_param *enc_prm)
-{
-	int ret = 0;
-	struct venc_h264_inst *inst = (struct venc_h264_inst *)handle;
+अटल पूर्णांक h264_enc_set_param(व्योम *handle,
+			      क्रमागत venc_set_param_type type,
+			      काष्ठा venc_enc_param *enc_prm)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा venc_h264_inst *inst = (काष्ठा venc_h264_inst *)handle;
 
 	mtk_vcodec_debug(inst, "->type=%d", type);
 
-	switch (type) {
-	case VENC_SET_PARAM_ENC:
+	चयन (type) अणु
+	हाल VENC_SET_PARAM_ENC:
 		inst->vsi->config.input_fourcc = enc_prm->input_yuv_fmt;
 		inst->vsi->config.bitrate = enc_prm->bitrate;
 		inst->vsi->config.pic_w = enc_prm->width;
@@ -642,66 +643,66 @@ static int h264_enc_set_param(void *handle,
 		inst->vsi->config.buf_h = enc_prm->buf_height;
 		inst->vsi->config.gop_size = enc_prm->gop_size;
 		inst->vsi->config.framerate = enc_prm->frm_rate;
-		inst->vsi->config.intra_period = enc_prm->intra_period;
+		inst->vsi->config.पूर्णांकra_period = enc_prm->पूर्णांकra_period;
 		inst->vsi->config.profile =
 			h264_get_profile(inst, enc_prm->h264_profile);
 		inst->vsi->config.level =
 			h264_get_level(inst, enc_prm->h264_level);
 		inst->vsi->config.wfd = 0;
 		ret = vpu_enc_set_param(&inst->vpu_inst, type, enc_prm);
-		if (ret)
-			break;
-		if (inst->work_buf_allocated) {
-			h264_enc_free_work_buf(inst);
+		अगर (ret)
+			अवरोध;
+		अगर (inst->work_buf_allocated) अणु
+			h264_enc_मुक्त_work_buf(inst);
 			inst->work_buf_allocated = false;
-		}
+		पूर्ण
 		ret = h264_enc_alloc_work_buf(inst);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 		inst->work_buf_allocated = true;
-		break;
+		अवरोध;
 
-	case VENC_SET_PARAM_PREPEND_HEADER:
+	हाल VENC_SET_PARAM_PREPEND_HEADER:
 		inst->prepend_hdr = 1;
 		mtk_vcodec_debug(inst, "set prepend header mode");
-		break;
-	case VENC_SET_PARAM_FORCE_INTRA:
-	case VENC_SET_PARAM_GOP_SIZE:
-	case VENC_SET_PARAM_INTRA_PERIOD:
+		अवरोध;
+	हाल VENC_SET_PARAM_FORCE_INTRA:
+	हाल VENC_SET_PARAM_GOP_SIZE:
+	हाल VENC_SET_PARAM_INTRA_PERIOD:
 		inst->frm_cnt = 0;
 		inst->skip_frm_cnt = 0;
 		fallthrough;
-	default:
+	शेष:
 		ret = vpu_enc_set_param(&inst->vpu_inst, type, enc_prm);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mtk_vcodec_debug_leave(inst);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int h264_enc_deinit(void *handle)
-{
-	int ret = 0;
-	struct venc_h264_inst *inst = (struct venc_h264_inst *)handle;
+अटल पूर्णांक h264_enc_deinit(व्योम *handle)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा venc_h264_inst *inst = (काष्ठा venc_h264_inst *)handle;
 
 	mtk_vcodec_debug_enter(inst);
 
 	ret = vpu_enc_deinit(&inst->vpu_inst);
 
-	if (inst->work_buf_allocated)
-		h264_enc_free_work_buf(inst);
+	अगर (inst->work_buf_allocated)
+		h264_enc_मुक्त_work_buf(inst);
 
 	mtk_vcodec_debug_leave(inst);
-	kfree(inst);
+	kमुक्त(inst);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct venc_common_if venc_h264_if = {
+स्थिर काष्ठा venc_common_अगर venc_h264_अगर = अणु
 	.init = h264_enc_init,
 	.encode = h264_enc_encode,
 	.set_param = h264_enc_set_param,
 	.deinit = h264_enc_deinit,
-};
+पूर्ण;

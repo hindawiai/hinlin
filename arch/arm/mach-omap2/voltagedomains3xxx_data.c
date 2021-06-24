@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * OMAP3 voltage domain data
+ * OMAP3 voltage करोमुख्य data
  *
  * Copyright (C) 2007, 2010 Texas Instruments, Inc.
  * Rajendra Nayak <rnayak@ti.com>
@@ -11,121 +12,121 @@
  * Kalle Jokiniemi
  * Paul Walmsley
  */
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
 
-#include "soc.h"
-#include "common.h"
-#include "prm-regbits-34xx.h"
-#include "omap_opp_data.h"
-#include "voltage.h"
-#include "vc.h"
-#include "vp.h"
+#समावेश "soc.h"
+#समावेश "common.h"
+#समावेश "prm-regbits-34xx.h"
+#समावेश "omap_opp_data.h"
+#समावेश "voltage.h"
+#समावेश "vc.h"
+#समावेश "vp.h"
 
 /*
  * VDD data
  */
 
-/* OMAP3-common voltagedomain data */
+/* OMAP3-common voltageकरोमुख्य data */
 
-static struct voltagedomain omap3_voltdm_wkup = {
+अटल काष्ठा voltageकरोमुख्य omap3_voltdm_wkup = अणु
 	.name = "wakeup",
-};
+पूर्ण;
 
-/* 34xx/36xx voltagedomain data */
+/* 34xx/36xx voltageकरोमुख्य data */
 
-static const struct omap_vfsm_instance omap3_vdd1_vfsm = {
+अटल स्थिर काष्ठा omap_vfsm_instance omap3_vdd1_vfsm = अणु
 	.voltsetup_reg = OMAP3_PRM_VOLTSETUP1_OFFSET,
 	.voltsetup_mask = OMAP3430_SETUP_TIME1_MASK,
-};
+पूर्ण;
 
-static const struct omap_vfsm_instance omap3_vdd2_vfsm = {
+अटल स्थिर काष्ठा omap_vfsm_instance omap3_vdd2_vfsm = अणु
 	.voltsetup_reg = OMAP3_PRM_VOLTSETUP1_OFFSET,
 	.voltsetup_mask = OMAP3430_SETUP_TIME2_MASK,
-};
+पूर्ण;
 
-static struct voltagedomain omap3_voltdm_mpu = {
+अटल काष्ठा voltageकरोमुख्य omap3_voltdm_mpu = अणु
 	.name = "mpu_iva",
 	.scalable = true,
-	.read = omap3_prm_vcvp_read,
-	.write = omap3_prm_vcvp_write,
+	.पढ़ो = omap3_prm_vcvp_पढ़ो,
+	.ग_लिखो = omap3_prm_vcvp_ग_लिखो,
 	.rmw = omap3_prm_vcvp_rmw,
 	.vc = &omap3_vc_mpu,
 	.vfsm = &omap3_vdd1_vfsm,
 	.vp = &omap3_vp_mpu,
-};
+पूर्ण;
 
-static struct voltagedomain omap3_voltdm_core = {
+अटल काष्ठा voltageकरोमुख्य omap3_voltdm_core = अणु
 	.name = "core",
 	.scalable = true,
-	.read = omap3_prm_vcvp_read,
-	.write = omap3_prm_vcvp_write,
+	.पढ़ो = omap3_prm_vcvp_पढ़ो,
+	.ग_लिखो = omap3_prm_vcvp_ग_लिखो,
 	.rmw = omap3_prm_vcvp_rmw,
 	.vc = &omap3_vc_core,
 	.vfsm = &omap3_vdd2_vfsm,
 	.vp = &omap3_vp_core,
-};
+पूर्ण;
 
-static struct voltagedomain *voltagedomains_omap3[] __initdata = {
+अटल काष्ठा voltageकरोमुख्य *voltageकरोमुख्यs_omap3[] __initdata = अणु
 	&omap3_voltdm_mpu,
 	&omap3_voltdm_core,
 	&omap3_voltdm_wkup,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* AM35xx voltagedomain data */
+/* AM35xx voltageकरोमुख्य data */
 
-static struct voltagedomain am35xx_voltdm_mpu = {
+अटल काष्ठा voltageकरोमुख्य am35xx_voltdm_mpu = अणु
 	.name = "mpu_iva",
-};
+पूर्ण;
 
-static struct voltagedomain am35xx_voltdm_core = {
+अटल काष्ठा voltageकरोमुख्य am35xx_voltdm_core = अणु
 	.name = "core",
-};
+पूर्ण;
 
-static struct voltagedomain *voltagedomains_am35xx[] __initdata = {
+अटल काष्ठा voltageकरोमुख्य *voltageकरोमुख्यs_am35xx[] __initdata = अणु
 	&am35xx_voltdm_mpu,
 	&am35xx_voltdm_core,
 	&omap3_voltdm_wkup,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 
-static const char *const sys_clk_name __initconst = "sys_ck";
+अटल स्थिर अक्षर *स्थिर sys_clk_name __initस्थिर = "sys_ck";
 
-void __init omap3xxx_voltagedomains_init(void)
-{
-	struct voltagedomain *voltdm;
-	struct voltagedomain **voltdms;
-	int i;
+व्योम __init omap3xxx_voltageकरोमुख्यs_init(व्योम)
+अणु
+	काष्ठा voltageकरोमुख्य *voltdm;
+	काष्ठा voltageकरोमुख्य **voltdms;
+	पूर्णांक i;
 
 	/*
 	 * XXX Will depend on the process, validation, and binning
-	 * for the currently-running IC
+	 * क्रम the currently-running IC
 	 */
-#ifdef CONFIG_PM_OPP
-	if (cpu_is_omap3630()) {
+#अगर_घोषित CONFIG_PM_OPP
+	अगर (cpu_is_omap3630()) अणु
 		omap3_voltdm_mpu.volt_data = omap36xx_vddmpu_volt_data;
 		omap3_voltdm_core.volt_data = omap36xx_vddcore_volt_data;
-	} else {
+	पूर्ण अन्यथा अणु
 		omap3_voltdm_mpu.volt_data = omap34xx_vddmpu_volt_data;
 		omap3_voltdm_core.volt_data = omap34xx_vddcore_volt_data;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	omap3_voltdm_mpu.vp_param = &omap3_mpu_vp_data;
 	omap3_voltdm_core.vp_param = &omap3_core_vp_data;
 	omap3_voltdm_mpu.vc_param = &omap3_mpu_vc_data;
 	omap3_voltdm_core.vc_param = &omap3_core_vc_data;
 
-	if (soc_is_am35xx())
-		voltdms = voltagedomains_am35xx;
-	else
-		voltdms = voltagedomains_omap3;
+	अगर (soc_is_am35xx())
+		voltdms = voltageकरोमुख्यs_am35xx;
+	अन्यथा
+		voltdms = voltageकरोमुख्यs_omap3;
 
-	for (i = 0; voltdm = voltdms[i], voltdm; i++)
+	क्रम (i = 0; voltdm = voltdms[i], voltdm; i++)
 		voltdm->sys_clk.name = sys_clk_name;
 
 	voltdm_init(voltdms);
-};
+पूर्ण;

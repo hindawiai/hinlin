@@ -1,138 +1,139 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2013 ARM Limited
  */
 
-#include <linux/amba/sp810.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
+#समावेश <linux/amba/sp810.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
 
-#define to_clk_sp810_timerclken(_hw) \
-		container_of(_hw, struct clk_sp810_timerclken, hw)
+#घोषणा to_clk_sp810_समयrclken(_hw) \
+		container_of(_hw, काष्ठा clk_sp810_समयrclken, hw)
 
-struct clk_sp810;
+काष्ठा clk_sp810;
 
-struct clk_sp810_timerclken {
-	struct clk_hw hw;
-	struct clk *clk;
-	struct clk_sp810 *sp810;
-	int channel;
-};
+काष्ठा clk_sp810_समयrclken अणु
+	काष्ठा clk_hw hw;
+	काष्ठा clk *clk;
+	काष्ठा clk_sp810 *sp810;
+	पूर्णांक channel;
+पूर्ण;
 
-struct clk_sp810 {
-	struct device_node *node;
-	void __iomem *base;
+काष्ठा clk_sp810 अणु
+	काष्ठा device_node *node;
+	व्योम __iomem *base;
 	spinlock_t lock;
-	struct clk_sp810_timerclken timerclken[4];
-};
+	काष्ठा clk_sp810_समयrclken समयrclken[4];
+पूर्ण;
 
-static u8 clk_sp810_timerclken_get_parent(struct clk_hw *hw)
-{
-	struct clk_sp810_timerclken *timerclken = to_clk_sp810_timerclken(hw);
-	u32 val = readl(timerclken->sp810->base + SCCTRL);
+अटल u8 clk_sp810_समयrclken_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_sp810_समयrclken *समयrclken = to_clk_sp810_समयrclken(hw);
+	u32 val = पढ़ोl(समयrclken->sp810->base + SCCTRL);
 
-	return !!(val & (1 << SCCTRL_TIMERENnSEL_SHIFT(timerclken->channel)));
-}
+	वापस !!(val & (1 << SCCTRL_TIMERENnSEL_SHIFT(समयrclken->channel)));
+पूर्ण
 
-static int clk_sp810_timerclken_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct clk_sp810_timerclken *timerclken = to_clk_sp810_timerclken(hw);
-	struct clk_sp810 *sp810 = timerclken->sp810;
-	u32 val, shift = SCCTRL_TIMERENnSEL_SHIFT(timerclken->channel);
-	unsigned long flags = 0;
+अटल पूर्णांक clk_sp810_समयrclken_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा clk_sp810_समयrclken *समयrclken = to_clk_sp810_समयrclken(hw);
+	काष्ठा clk_sp810 *sp810 = समयrclken->sp810;
+	u32 val, shअगरt = SCCTRL_TIMERENnSEL_SHIFT(समयrclken->channel);
+	अचिन्हित दीर्घ flags = 0;
 
-	if (WARN_ON(index > 1))
-		return -EINVAL;
+	अगर (WARN_ON(index > 1))
+		वापस -EINVAL;
 
 	spin_lock_irqsave(&sp810->lock, flags);
 
-	val = readl(sp810->base + SCCTRL);
-	val &= ~(1 << shift);
-	val |= index << shift;
-	writel(val, sp810->base + SCCTRL);
+	val = पढ़ोl(sp810->base + SCCTRL);
+	val &= ~(1 << shअगरt);
+	val |= index << shअगरt;
+	ग_लिखोl(val, sp810->base + SCCTRL);
 
 	spin_unlock_irqrestore(&sp810->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_sp810_timerclken_ops = {
-	.get_parent = clk_sp810_timerclken_get_parent,
-	.set_parent = clk_sp810_timerclken_set_parent,
-};
+अटल स्थिर काष्ठा clk_ops clk_sp810_समयrclken_ops = अणु
+	.get_parent = clk_sp810_समयrclken_get_parent,
+	.set_parent = clk_sp810_समयrclken_set_parent,
+पूर्ण;
 
-static struct clk *clk_sp810_timerclken_of_get(struct of_phandle_args *clkspec,
-		void *data)
-{
-	struct clk_sp810 *sp810 = data;
+अटल काष्ठा clk *clk_sp810_समयrclken_of_get(काष्ठा of_phandle_args *clkspec,
+		व्योम *data)
+अणु
+	काष्ठा clk_sp810 *sp810 = data;
 
-	if (WARN_ON(clkspec->args_count != 1 ||
-		    clkspec->args[0] >=	ARRAY_SIZE(sp810->timerclken)))
-		return NULL;
+	अगर (WARN_ON(clkspec->args_count != 1 ||
+		    clkspec->args[0] >=	ARRAY_SIZE(sp810->समयrclken)))
+		वापस शून्य;
 
-	return sp810->timerclken[clkspec->args[0]].clk;
-}
+	वापस sp810->समयrclken[clkspec->args[0]].clk;
+पूर्ण
 
-static void __init clk_sp810_of_setup(struct device_node *node)
-{
-	struct clk_sp810 *sp810 = kzalloc(sizeof(*sp810), GFP_KERNEL);
-	const char *parent_names[2];
-	int num = ARRAY_SIZE(parent_names);
-	char name[12];
-	struct clk_init_data init;
-	static int instance;
-	int i;
+अटल व्योम __init clk_sp810_of_setup(काष्ठा device_node *node)
+अणु
+	काष्ठा clk_sp810 *sp810 = kzalloc(माप(*sp810), GFP_KERNEL);
+	स्थिर अक्षर *parent_names[2];
+	पूर्णांक num = ARRAY_SIZE(parent_names);
+	अक्षर name[12];
+	काष्ठा clk_init_data init;
+	अटल पूर्णांक instance;
+	पूर्णांक i;
 	bool deprecated;
 
-	if (!sp810)
-		return;
+	अगर (!sp810)
+		वापस;
 
-	if (of_clk_parent_fill(node, parent_names, num) != num) {
+	अगर (of_clk_parent_fill(node, parent_names, num) != num) अणु
 		pr_warn("Failed to obtain parent clocks for SP810!\n");
-		kfree(sp810);
-		return;
-	}
+		kमुक्त(sp810);
+		वापस;
+	पूर्ण
 
 	sp810->node = node;
 	sp810->base = of_iomap(node, 0);
 	spin_lock_init(&sp810->lock);
 
 	init.name = name;
-	init.ops = &clk_sp810_timerclken_ops;
+	init.ops = &clk_sp810_समयrclken_ops;
 	init.flags = 0;
 	init.parent_names = parent_names;
 	init.num_parents = num;
 
-	deprecated = !of_find_property(node, "assigned-clock-parents", NULL);
+	deprecated = !of_find_property(node, "assigned-clock-parents", शून्य);
 
-	for (i = 0; i < ARRAY_SIZE(sp810->timerclken); i++) {
-		snprintf(name, sizeof(name), "sp810_%d_%d", instance, i);
+	क्रम (i = 0; i < ARRAY_SIZE(sp810->समयrclken); i++) अणु
+		snम_लिखो(name, माप(name), "sp810_%d_%d", instance, i);
 
-		sp810->timerclken[i].sp810 = sp810;
-		sp810->timerclken[i].channel = i;
-		sp810->timerclken[i].hw.init = &init;
+		sp810->समयrclken[i].sp810 = sp810;
+		sp810->समयrclken[i].channel = i;
+		sp810->समयrclken[i].hw.init = &init;
 
 		/*
-		 * If DT isn't setting the parent, force it to be
-		 * the 1 MHz clock without going through the framework.
-		 * We do this before clk_register() so that it can determine
+		 * If DT isn't setting the parent, क्रमce it to be
+		 * the 1 MHz घड़ी without going through the framework.
+		 * We करो this beक्रमe clk_रेजिस्टर() so that it can determine
 		 * the parent and setup the tree properly.
 		 */
-		if (deprecated)
-			init.ops->set_parent(&sp810->timerclken[i].hw, 1);
+		अगर (deprecated)
+			init.ops->set_parent(&sp810->समयrclken[i].hw, 1);
 
-		sp810->timerclken[i].clk = clk_register(NULL,
-				&sp810->timerclken[i].hw);
-		WARN_ON(IS_ERR(sp810->timerclken[i].clk));
-	}
+		sp810->समयrclken[i].clk = clk_रेजिस्टर(शून्य,
+				&sp810->समयrclken[i].hw);
+		WARN_ON(IS_ERR(sp810->समयrclken[i].clk));
+	पूर्ण
 
-	of_clk_add_provider(node, clk_sp810_timerclken_of_get, sp810);
+	of_clk_add_provider(node, clk_sp810_समयrclken_of_get, sp810);
 	instance++;
-}
+पूर्ण
 CLK_OF_DECLARE(sp810, "arm,sp810", clk_sp810_of_setup);

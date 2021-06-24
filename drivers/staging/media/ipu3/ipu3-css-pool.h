@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2018 Intel Corporation */
 
-#ifndef __IPU3_UTIL_H
-#define __IPU3_UTIL_H
+#अगर_अघोषित __IPU3_UTIL_H
+#घोषणा __IPU3_UTIL_H
 
-struct device;
-struct imgu_device;
+काष्ठा device;
+काष्ठा imgu_device;
 
-#define IPU3_CSS_POOL_SIZE		4
+#घोषणा IPU3_CSS_POOL_SIZE		4
 
 /**
- * struct imgu_css_map - store DMA mapping info for buffer
+ * काष्ठा imgu_css_map - store DMA mapping info क्रम buffer
  *
  * @size:		size of the buffer in bytes.
- * @vaddr:		kernel virtual address.
+ * @vaddr:		kernel भव address.
  * @daddr:		iova dma address to access IPU3.
  */
-struct imgu_css_map {
-	size_t size;
-	void *vaddr;
+काष्ठा imgu_css_map अणु
+	माप_प्रकार size;
+	व्योम *vaddr;
 	dma_addr_t daddr;
-	struct page **pages;
-};
+	काष्ठा page **pages;
+पूर्ण;
 
 /**
- * struct imgu_css_pool - circular buffer pool definition
+ * काष्ठा imgu_css_pool - circular buffer pool definition
  *
  * @entry:		array with IPU3_CSS_POOL_SIZE elements.
- * @entry.param:	a &struct imgu_css_map for storing the mem mapping.
- * @entry.valid:	used to mark if the entry has valid data.
- * @last:		write pointer, initialized to IPU3_CSS_POOL_SIZE.
+ * @entry.param:	a &काष्ठा imgu_css_map क्रम storing the mem mapping.
+ * @entry.valid:	used to mark अगर the entry has valid data.
+ * @last:		ग_लिखो poपूर्णांकer, initialized to IPU3_CSS_POOL_SIZE.
  */
-struct imgu_css_pool {
-	struct {
-		struct imgu_css_map param;
+काष्ठा imgu_css_pool अणु
+	काष्ठा अणु
+		काष्ठा imgu_css_map param;
 		bool valid;
-	} entry[IPU3_CSS_POOL_SIZE];
+	पूर्ण entry[IPU3_CSS_POOL_SIZE];
 	u32 last;
-};
+पूर्ण;
 
-int imgu_css_dma_buffer_resize(struct imgu_device *imgu,
-			       struct imgu_css_map *map, size_t size);
-void imgu_css_pool_cleanup(struct imgu_device *imgu,
-			   struct imgu_css_pool *pool);
-int imgu_css_pool_init(struct imgu_device *imgu, struct imgu_css_pool *pool,
-		       size_t size);
-void imgu_css_pool_get(struct imgu_css_pool *pool);
-void imgu_css_pool_put(struct imgu_css_pool *pool);
-const struct imgu_css_map *imgu_css_pool_last(struct imgu_css_pool *pool,
+पूर्णांक imgu_css_dma_buffer_resize(काष्ठा imgu_device *imgu,
+			       काष्ठा imgu_css_map *map, माप_प्रकार size);
+व्योम imgu_css_pool_cleanup(काष्ठा imgu_device *imgu,
+			   काष्ठा imgu_css_pool *pool);
+पूर्णांक imgu_css_pool_init(काष्ठा imgu_device *imgu, काष्ठा imgu_css_pool *pool,
+		       माप_प्रकार size);
+व्योम imgu_css_pool_get(काष्ठा imgu_css_pool *pool);
+व्योम imgu_css_pool_put(काष्ठा imgu_css_pool *pool);
+स्थिर काष्ठा imgu_css_map *imgu_css_pool_last(काष्ठा imgu_css_pool *pool,
 					      u32 last);
 
-#endif
+#पूर्ण_अगर

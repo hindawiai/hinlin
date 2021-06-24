@@ -1,230 +1,231 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2003-2020, Intel Corporation. All rights reserved.
  * Intel Management Engine Interface (Intel MEI) Linux driver
  */
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#include <linux/kthread.h>
-#include <linux/interrupt.h>
-#include <linux/pm_runtime.h>
-#include <linux/sizes.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/sizes.h>
 
-#include "mei_dev.h"
-#include "hbm.h"
+#समावेश "mei_dev.h"
+#समावेश "hbm.h"
 
-#include "hw-me.h"
-#include "hw-me-regs.h"
+#समावेश "hw-me.h"
+#समावेश "hw-me-regs.h"
 
-#include "mei-trace.h"
+#समावेश "mei-trace.h"
 
 /**
- * mei_me_reg_read - Reads 32bit data from the mei device
+ * mei_me_reg_पढ़ो - Reads 32bit data from the mei device
  *
- * @hw: the me hardware structure
- * @offset: offset from which to read the data
+ * @hw: the me hardware काष्ठाure
+ * @offset: offset from which to पढ़ो the data
  *
- * Return: register value (u32)
+ * Return: रेजिस्टर value (u32)
  */
-static inline u32 mei_me_reg_read(const struct mei_me_hw *hw,
-			       unsigned long offset)
-{
-	return ioread32(hw->mem_addr + offset);
-}
+अटल अंतरभूत u32 mei_me_reg_पढ़ो(स्थिर काष्ठा mei_me_hw *hw,
+			       अचिन्हित दीर्घ offset)
+अणु
+	वापस ioपढ़ो32(hw->mem_addr + offset);
+पूर्ण
 
 
 /**
- * mei_me_reg_write - Writes 32bit data to the mei device
+ * mei_me_reg_ग_लिखो - Writes 32bit data to the mei device
  *
- * @hw: the me hardware structure
- * @offset: offset from which to write the data
- * @value: register value to write (u32)
+ * @hw: the me hardware काष्ठाure
+ * @offset: offset from which to ग_लिखो the data
+ * @value: रेजिस्टर value to ग_लिखो (u32)
  */
-static inline void mei_me_reg_write(const struct mei_me_hw *hw,
-				 unsigned long offset, u32 value)
-{
-	iowrite32(value, hw->mem_addr + offset);
-}
+अटल अंतरभूत व्योम mei_me_reg_ग_लिखो(स्थिर काष्ठा mei_me_hw *hw,
+				 अचिन्हित दीर्घ offset, u32 value)
+अणु
+	ioग_लिखो32(value, hw->mem_addr + offset);
+पूर्ण
 
 /**
- * mei_me_mecbrw_read - Reads 32bit data from ME circular buffer
- *  read window register
+ * mei_me_mecbrw_पढ़ो - Reads 32bit data from ME circular buffer
+ *  पढ़ो winकरोw रेजिस्टर
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: ME_CB_RW register value (u32)
+ * Return: ME_CB_RW रेजिस्टर value (u32)
  */
-static inline u32 mei_me_mecbrw_read(const struct mei_device *dev)
-{
-	return mei_me_reg_read(to_me_hw(dev), ME_CB_RW);
-}
+अटल अंतरभूत u32 mei_me_mecbrw_पढ़ो(स्थिर काष्ठा mei_device *dev)
+अणु
+	वापस mei_me_reg_पढ़ो(to_me_hw(dev), ME_CB_RW);
+पूर्ण
 
 /**
- * mei_me_hcbww_write - write 32bit data to the host circular buffer
+ * mei_me_hcbww_ग_लिखो - ग_लिखो 32bit data to the host circular buffer
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @data: 32bit data to be written to the host circular buffer
  */
-static inline void mei_me_hcbww_write(struct mei_device *dev, u32 data)
-{
-	mei_me_reg_write(to_me_hw(dev), H_CB_WW, data);
-}
+अटल अंतरभूत व्योम mei_me_hcbww_ग_लिखो(काष्ठा mei_device *dev, u32 data)
+अणु
+	mei_me_reg_ग_लिखो(to_me_hw(dev), H_CB_WW, data);
+पूर्ण
 
 /**
- * mei_me_mecsr_read - Reads 32bit data from the ME CSR
+ * mei_me_mecsr_पढ़ो - Reads 32bit data from the ME CSR
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: ME_CSR_HA register value (u32)
+ * Return: ME_CSR_HA रेजिस्टर value (u32)
  */
-static inline u32 mei_me_mecsr_read(const struct mei_device *dev)
-{
+अटल अंतरभूत u32 mei_me_mecsr_पढ़ो(स्थिर काष्ठा mei_device *dev)
+अणु
 	u32 reg;
 
-	reg = mei_me_reg_read(to_me_hw(dev), ME_CSR_HA);
-	trace_mei_reg_read(dev->dev, "ME_CSR_HA", ME_CSR_HA, reg);
+	reg = mei_me_reg_पढ़ो(to_me_hw(dev), ME_CSR_HA);
+	trace_mei_reg_पढ़ो(dev->dev, "ME_CSR_HA", ME_CSR_HA, reg);
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
 /**
- * mei_hcsr_read - Reads 32bit data from the host CSR
+ * mei_hcsr_पढ़ो - Reads 32bit data from the host CSR
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: H_CSR register value (u32)
+ * Return: H_CSR रेजिस्टर value (u32)
  */
-static inline u32 mei_hcsr_read(const struct mei_device *dev)
-{
+अटल अंतरभूत u32 mei_hcsr_पढ़ो(स्थिर काष्ठा mei_device *dev)
+अणु
 	u32 reg;
 
-	reg = mei_me_reg_read(to_me_hw(dev), H_CSR);
-	trace_mei_reg_read(dev->dev, "H_CSR", H_CSR, reg);
+	reg = mei_me_reg_पढ़ो(to_me_hw(dev), H_CSR);
+	trace_mei_reg_पढ़ो(dev->dev, "H_CSR", H_CSR, reg);
 
-	return reg;
-}
-
-/**
- * mei_hcsr_write - writes H_CSR register to the mei device
- *
- * @dev: the device structure
- * @reg: new register value
- */
-static inline void mei_hcsr_write(struct mei_device *dev, u32 reg)
-{
-	trace_mei_reg_write(dev->dev, "H_CSR", H_CSR, reg);
-	mei_me_reg_write(to_me_hw(dev), H_CSR, reg);
-}
+	वापस reg;
+पूर्ण
 
 /**
- * mei_hcsr_set - writes H_CSR register to the mei device,
- * and ignores the H_IS bit for it is write-one-to-zero.
+ * mei_hcsr_ग_लिखो - ग_लिखोs H_CSR रेजिस्टर to the mei device
  *
- * @dev: the device structure
- * @reg: new register value
+ * @dev: the device काष्ठाure
+ * @reg: new रेजिस्टर value
  */
-static inline void mei_hcsr_set(struct mei_device *dev, u32 reg)
-{
+अटल अंतरभूत व्योम mei_hcsr_ग_लिखो(काष्ठा mei_device *dev, u32 reg)
+अणु
+	trace_mei_reg_ग_लिखो(dev->dev, "H_CSR", H_CSR, reg);
+	mei_me_reg_ग_लिखो(to_me_hw(dev), H_CSR, reg);
+पूर्ण
+
+/**
+ * mei_hcsr_set - ग_लिखोs H_CSR रेजिस्टर to the mei device,
+ * and ignores the H_IS bit क्रम it is ग_लिखो-one-to-zero.
+ *
+ * @dev: the device काष्ठाure
+ * @reg: new रेजिस्टर value
+ */
+अटल अंतरभूत व्योम mei_hcsr_set(काष्ठा mei_device *dev, u32 reg)
+अणु
 	reg &= ~H_CSR_IS_MASK;
-	mei_hcsr_write(dev, reg);
-}
+	mei_hcsr_ग_लिखो(dev, reg);
+पूर्ण
 
 /**
- * mei_hcsr_set_hig - set host interrupt (set H_IG)
+ * mei_hcsr_set_hig - set host पूर्णांकerrupt (set H_IG)
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static inline void mei_hcsr_set_hig(struct mei_device *dev)
-{
+अटल अंतरभूत व्योम mei_hcsr_set_hig(काष्ठा mei_device *dev)
+अणु
 	u32 hcsr;
 
-	hcsr = mei_hcsr_read(dev) | H_IG;
+	hcsr = mei_hcsr_पढ़ो(dev) | H_IG;
 	mei_hcsr_set(dev, hcsr);
-}
+पूर्ण
 
 /**
- * mei_me_d0i3c_read - Reads 32bit data from the D0I3C register
+ * mei_me_d0i3c_पढ़ो - Reads 32bit data from the D0I3C रेजिस्टर
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: H_D0I3C register value (u32)
+ * Return: H_D0I3C रेजिस्टर value (u32)
  */
-static inline u32 mei_me_d0i3c_read(const struct mei_device *dev)
-{
+अटल अंतरभूत u32 mei_me_d0i3c_पढ़ो(स्थिर काष्ठा mei_device *dev)
+अणु
 	u32 reg;
 
-	reg = mei_me_reg_read(to_me_hw(dev), H_D0I3C);
-	trace_mei_reg_read(dev->dev, "H_D0I3C", H_D0I3C, reg);
+	reg = mei_me_reg_पढ़ो(to_me_hw(dev), H_D0I3C);
+	trace_mei_reg_पढ़ो(dev->dev, "H_D0I3C", H_D0I3C, reg);
 
-	return reg;
-}
+	वापस reg;
+पूर्ण
 
 /**
- * mei_me_d0i3c_write - writes H_D0I3C register to device
+ * mei_me_d0i3c_ग_लिखो - ग_लिखोs H_D0I3C रेजिस्टर to device
  *
- * @dev: the device structure
- * @reg: new register value
+ * @dev: the device काष्ठाure
+ * @reg: new रेजिस्टर value
  */
-static inline void mei_me_d0i3c_write(struct mei_device *dev, u32 reg)
-{
-	trace_mei_reg_write(dev->dev, "H_D0I3C", H_D0I3C, reg);
-	mei_me_reg_write(to_me_hw(dev), H_D0I3C, reg);
-}
+अटल अंतरभूत व्योम mei_me_d0i3c_ग_लिखो(काष्ठा mei_device *dev, u32 reg)
+अणु
+	trace_mei_reg_ग_लिखो(dev->dev, "H_D0I3C", H_D0I3C, reg);
+	mei_me_reg_ग_लिखो(to_me_hw(dev), H_D0I3C, reg);
+पूर्ण
 
 /**
- * mei_me_trc_status - read trc status register
+ * mei_me_trc_status - पढ़ो trc status रेजिस्टर
  *
  * @dev: mei device
- * @trc: trc status register value
+ * @trc: trc status रेजिस्टर value
  *
  * Return: 0 on success, error otherwise
  */
-static int mei_me_trc_status(struct mei_device *dev, u32 *trc)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल पूर्णांक mei_me_trc_status(काष्ठा mei_device *dev, u32 *trc)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 
-	if (!hw->cfg->hw_trc_supported)
-		return -EOPNOTSUPP;
+	अगर (!hw->cfg->hw_trc_supported)
+		वापस -EOPNOTSUPP;
 
-	*trc = mei_me_reg_read(hw, ME_TRC);
-	trace_mei_reg_read(dev->dev, "ME_TRC", ME_TRC, *trc);
+	*trc = mei_me_reg_पढ़ो(hw, ME_TRC);
+	trace_mei_reg_पढ़ो(dev->dev, "ME_TRC", ME_TRC, *trc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_me_fw_status - read fw status register from pci config space
+ * mei_me_fw_status - पढ़ो fw status रेजिस्टर from pci config space
  *
  * @dev: mei device
- * @fw_status: fw status register values
+ * @fw_status: fw status रेजिस्टर values
  *
  * Return: 0 on success, error otherwise
  */
-static int mei_me_fw_status(struct mei_device *dev,
-			    struct mei_fw_status *fw_status)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
-	const struct mei_fw_status *fw_src = &hw->cfg->fw_status;
-	int ret;
-	int i;
+अटल पूर्णांक mei_me_fw_status(काष्ठा mei_device *dev,
+			    काष्ठा mei_fw_status *fw_status)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
+	स्थिर काष्ठा mei_fw_status *fw_src = &hw->cfg->fw_status;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (!fw_status || !hw->read_fws)
-		return -EINVAL;
+	अगर (!fw_status || !hw->पढ़ो_fws)
+		वापस -EINVAL;
 
 	fw_status->count = fw_src->count;
-	for (i = 0; i < fw_src->count && i < MEI_FW_STATUS_MAX; i++) {
-		ret = hw->read_fws(dev, fw_src->status[i],
+	क्रम (i = 0; i < fw_src->count && i < MEI_FW_STATUS_MAX; i++) अणु
+		ret = hw->पढ़ो_fws(dev, fw_src->status[i],
 				   &fw_status->status[i]);
-		trace_mei_pci_cfg_read(dev->dev, "PCI_CFG_HFS_X",
+		trace_mei_pci_cfg_पढ़ो(dev->dev, "PCI_CFG_HFS_X",
 				       fw_src->status[i],
 				       fw_status->status[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * mei_me_hw_config - configure hw dependent settings
@@ -232,183 +233,183 @@ static int mei_me_fw_status(struct mei_device *dev,
  * @dev: mei device
  *
  * Return:
- *  * -EINVAL when read_fws is not set
+ *  * -EINVAL when पढ़ो_fws is not set
  *  * 0 on success
  *
  */
-static int mei_me_hw_config(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल पूर्णांक mei_me_hw_config(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 	u32 hcsr, reg;
 
-	if (WARN_ON(!hw->read_fws))
-		return -EINVAL;
+	अगर (WARN_ON(!hw->पढ़ो_fws))
+		वापस -EINVAL;
 
-	/* Doesn't change in runtime */
-	hcsr = mei_hcsr_read(dev);
+	/* Doesn't change in runसमय */
+	hcsr = mei_hcsr_पढ़ो(dev);
 	hw->hbuf_depth = (hcsr & H_CBD) >> 24;
 
 	reg = 0;
-	hw->read_fws(dev, PCI_CFG_HFS_1, &reg);
-	trace_mei_pci_cfg_read(dev->dev, "PCI_CFG_HFS_1", PCI_CFG_HFS_1, reg);
+	hw->पढ़ो_fws(dev, PCI_CFG_HFS_1, &reg);
+	trace_mei_pci_cfg_पढ़ो(dev->dev, "PCI_CFG_HFS_1", PCI_CFG_HFS_1, reg);
 	hw->d0i3_supported =
 		((reg & PCI_CFG_HFS_1_D0I3_MSK) == PCI_CFG_HFS_1_D0I3_MSK);
 
 	hw->pg_state = MEI_PG_OFF;
-	if (hw->d0i3_supported) {
-		reg = mei_me_d0i3c_read(dev);
-		if (reg & H_D0I3C_I3)
+	अगर (hw->d0i3_supported) अणु
+		reg = mei_me_d0i3c_पढ़ो(dev);
+		अगर (reg & H_D0I3C_I3)
 			hw->pg_state = MEI_PG_ON;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_me_pg_state  - translate internal pg state
- *   to the mei power gating state
+ * mei_me_pg_state  - translate पूर्णांकernal pg state
+ *   to the mei घातer gating state
  *
  * @dev:  mei device
  *
- * Return: MEI_PG_OFF if aliveness is on and MEI_PG_ON otherwise
+ * Return: MEI_PG_OFF अगर aliveness is on and MEI_PG_ON otherwise
  */
-static inline enum mei_pg_state mei_me_pg_state(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल अंतरभूत क्रमागत mei_pg_state mei_me_pg_state(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 
-	return hw->pg_state;
-}
+	वापस hw->pg_state;
+पूर्ण
 
-static inline u32 me_intr_src(u32 hcsr)
-{
-	return hcsr & H_CSR_IS_MASK;
-}
+अटल अंतरभूत u32 me_पूर्णांकr_src(u32 hcsr)
+अणु
+	वापस hcsr & H_CSR_IS_MASK;
+पूर्ण
 
 /**
- * me_intr_disable - disables mei device interrupts
- *      using supplied hcsr register value.
+ * me_पूर्णांकr_disable - disables mei device पूर्णांकerrupts
+ *      using supplied hcsr रेजिस्टर value.
  *
- * @dev: the device structure
- * @hcsr: supplied hcsr register value
+ * @dev: the device काष्ठाure
+ * @hcsr: supplied hcsr रेजिस्टर value
  */
-static inline void me_intr_disable(struct mei_device *dev, u32 hcsr)
-{
+अटल अंतरभूत व्योम me_पूर्णांकr_disable(काष्ठा mei_device *dev, u32 hcsr)
+अणु
 	hcsr &= ~H_CSR_IE_MASK;
 	mei_hcsr_set(dev, hcsr);
-}
+पूर्ण
 
 /**
- * me_intr_clear - clear and stop interrupts
+ * me_पूर्णांकr_clear - clear and stop पूर्णांकerrupts
  *
- * @dev: the device structure
- * @hcsr: supplied hcsr register value
+ * @dev: the device काष्ठाure
+ * @hcsr: supplied hcsr रेजिस्टर value
  */
-static inline void me_intr_clear(struct mei_device *dev, u32 hcsr)
-{
-	if (me_intr_src(hcsr))
-		mei_hcsr_write(dev, hcsr);
-}
+अटल अंतरभूत व्योम me_पूर्णांकr_clear(काष्ठा mei_device *dev, u32 hcsr)
+अणु
+	अगर (me_पूर्णांकr_src(hcsr))
+		mei_hcsr_ग_लिखो(dev, hcsr);
+पूर्ण
 
 /**
- * mei_me_intr_clear - clear and stop interrupts
+ * mei_me_पूर्णांकr_clear - clear and stop पूर्णांकerrupts
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_me_intr_clear(struct mei_device *dev)
-{
-	u32 hcsr = mei_hcsr_read(dev);
+अटल व्योम mei_me_पूर्णांकr_clear(काष्ठा mei_device *dev)
+अणु
+	u32 hcsr = mei_hcsr_पढ़ो(dev);
 
-	me_intr_clear(dev, hcsr);
-}
+	me_पूर्णांकr_clear(dev, hcsr);
+पूर्ण
 /**
- * mei_me_intr_enable - enables mei device interrupts
+ * mei_me_पूर्णांकr_enable - enables mei device पूर्णांकerrupts
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_me_intr_enable(struct mei_device *dev)
-{
-	u32 hcsr = mei_hcsr_read(dev);
+अटल व्योम mei_me_पूर्णांकr_enable(काष्ठा mei_device *dev)
+अणु
+	u32 hcsr = mei_hcsr_पढ़ो(dev);
 
 	hcsr |= H_CSR_IE_MASK;
 	mei_hcsr_set(dev, hcsr);
-}
+पूर्ण
 
 /**
- * mei_me_intr_disable - disables mei device interrupts
+ * mei_me_पूर्णांकr_disable - disables mei device पूर्णांकerrupts
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_me_intr_disable(struct mei_device *dev)
-{
-	u32 hcsr = mei_hcsr_read(dev);
+अटल व्योम mei_me_पूर्णांकr_disable(काष्ठा mei_device *dev)
+अणु
+	u32 hcsr = mei_hcsr_पढ़ो(dev);
 
-	me_intr_disable(dev, hcsr);
-}
+	me_पूर्णांकr_disable(dev, hcsr);
+पूर्ण
 
 /**
- * mei_me_synchronize_irq - wait for pending IRQ handlers
+ * mei_me_synchronize_irq - रुको क्रम pending IRQ handlers
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_me_synchronize_irq(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल व्योम mei_me_synchronize_irq(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 
 	synchronize_irq(hw->irq);
-}
+पूर्ण
 
 /**
  * mei_me_hw_reset_release - release device from the reset
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_me_hw_reset_release(struct mei_device *dev)
-{
-	u32 hcsr = mei_hcsr_read(dev);
+अटल व्योम mei_me_hw_reset_release(काष्ठा mei_device *dev)
+अणु
+	u32 hcsr = mei_hcsr_पढ़ो(dev);
 
 	hcsr |= H_IG;
 	hcsr &= ~H_RST;
 	mei_hcsr_set(dev, hcsr);
-}
+पूर्ण
 
 /**
- * mei_me_host_set_ready - enable device
+ * mei_me_host_set_पढ़ोy - enable device
  *
  * @dev: mei device
  */
-static void mei_me_host_set_ready(struct mei_device *dev)
-{
-	u32 hcsr = mei_hcsr_read(dev);
+अटल व्योम mei_me_host_set_पढ़ोy(काष्ठा mei_device *dev)
+अणु
+	u32 hcsr = mei_hcsr_पढ़ो(dev);
 
 	hcsr |= H_CSR_IE_MASK | H_IG | H_RDY;
 	mei_hcsr_set(dev, hcsr);
-}
+पूर्ण
 
 /**
- * mei_me_host_is_ready - check whether the host has turned ready
+ * mei_me_host_is_पढ़ोy - check whether the host has turned पढ़ोy
  *
  * @dev: mei device
  * Return: bool
  */
-static bool mei_me_host_is_ready(struct mei_device *dev)
-{
-	u32 hcsr = mei_hcsr_read(dev);
+अटल bool mei_me_host_is_पढ़ोy(काष्ठा mei_device *dev)
+अणु
+	u32 hcsr = mei_hcsr_पढ़ो(dev);
 
-	return (hcsr & H_RDY) == H_RDY;
-}
+	वापस (hcsr & H_RDY) == H_RDY;
+पूर्ण
 
 /**
- * mei_me_hw_is_ready - check whether the me(hw) has turned ready
+ * mei_me_hw_is_पढ़ोy - check whether the me(hw) has turned पढ़ोy
  *
  * @dev: mei device
  * Return: bool
  */
-static bool mei_me_hw_is_ready(struct mei_device *dev)
-{
-	u32 mecsr = mei_me_mecsr_read(dev);
+अटल bool mei_me_hw_is_पढ़ोy(काष्ठा mei_device *dev)
+अणु
+	u32 mecsr = mei_me_mecsr_पढ़ो(dev);
 
-	return (mecsr & ME_RDY_HRA) == ME_RDY_HRA;
-}
+	वापस (mecsr & ME_RDY_HRA) == ME_RDY_HRA;
+पूर्ण
 
 /**
  * mei_me_hw_is_resetting - check whether the me(hw) is in reset
@@ -416,36 +417,36 @@ static bool mei_me_hw_is_ready(struct mei_device *dev)
  * @dev: mei device
  * Return: bool
  */
-static bool mei_me_hw_is_resetting(struct mei_device *dev)
-{
-	u32 mecsr = mei_me_mecsr_read(dev);
+अटल bool mei_me_hw_is_resetting(काष्ठा mei_device *dev)
+अणु
+	u32 mecsr = mei_me_mecsr_पढ़ो(dev);
 
-	return (mecsr & ME_RST_HRA) == ME_RST_HRA;
-}
+	वापस (mecsr & ME_RST_HRA) == ME_RST_HRA;
+पूर्ण
 
 /**
- * mei_me_hw_ready_wait - wait until the me(hw) has turned ready
- *  or timeout is reached
+ * mei_me_hw_पढ़ोy_रुको - रुको until the me(hw) has turned पढ़ोy
+ *  or समयout is reached
  *
  * @dev: mei device
  * Return: 0 on success, error otherwise
  */
-static int mei_me_hw_ready_wait(struct mei_device *dev)
-{
+अटल पूर्णांक mei_me_hw_पढ़ोy_रुको(काष्ठा mei_device *dev)
+अणु
 	mutex_unlock(&dev->device_lock);
-	wait_event_timeout(dev->wait_hw_ready,
-			dev->recvd_hw_ready,
-			mei_secs_to_jiffies(MEI_HW_READY_TIMEOUT));
+	रुको_event_समयout(dev->रुको_hw_पढ़ोy,
+			dev->recvd_hw_पढ़ोy,
+			mei_secs_to_jअगरfies(MEI_HW_READY_TIMEOUT));
 	mutex_lock(&dev->device_lock);
-	if (!dev->recvd_hw_ready) {
+	अगर (!dev->recvd_hw_पढ़ोy) अणु
 		dev_err(dev->dev, "wait hw ready failed\n");
-		return -ETIME;
-	}
+		वापस -ETIME;
+	पूर्ण
 
 	mei_me_hw_reset_release(dev);
-	dev->recvd_hw_ready = false;
-	return 0;
-}
+	dev->recvd_hw_पढ़ोy = false;
+	वापस 0;
+पूर्ण
 
 /**
  * mei_me_hw_start - hw start routine
@@ -453,365 +454,365 @@ static int mei_me_hw_ready_wait(struct mei_device *dev)
  * @dev: mei device
  * Return: 0 on success, error otherwise
  */
-static int mei_me_hw_start(struct mei_device *dev)
-{
-	int ret = mei_me_hw_ready_wait(dev);
+अटल पूर्णांक mei_me_hw_start(काष्ठा mei_device *dev)
+अणु
+	पूर्णांक ret = mei_me_hw_पढ़ोy_रुको(dev);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	dev_dbg(dev->dev, "hw is ready\n");
 
-	mei_me_host_set_ready(dev);
-	return ret;
-}
+	mei_me_host_set_पढ़ोy(dev);
+	वापस ret;
+पूर्ण
 
 
 /**
- * mei_hbuf_filled_slots - gets number of device filled buffer slots
+ * mei_hbuf_filled_slots - माला_लो number of device filled buffer slots
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: number of filled slots
  */
-static unsigned char mei_hbuf_filled_slots(struct mei_device *dev)
-{
+अटल अचिन्हित अक्षर mei_hbuf_filled_slots(काष्ठा mei_device *dev)
+अणु
 	u32 hcsr;
-	char read_ptr, write_ptr;
+	अक्षर पढ़ो_ptr, ग_लिखो_ptr;
 
-	hcsr = mei_hcsr_read(dev);
+	hcsr = mei_hcsr_पढ़ो(dev);
 
-	read_ptr = (char) ((hcsr & H_CBRP) >> 8);
-	write_ptr = (char) ((hcsr & H_CBWP) >> 16);
+	पढ़ो_ptr = (अक्षर) ((hcsr & H_CBRP) >> 8);
+	ग_लिखो_ptr = (अक्षर) ((hcsr & H_CBWP) >> 16);
 
-	return (unsigned char) (write_ptr - read_ptr);
-}
-
-/**
- * mei_me_hbuf_is_empty - checks if host buffer is empty.
- *
- * @dev: the device structure
- *
- * Return: true if empty, false - otherwise.
- */
-static bool mei_me_hbuf_is_empty(struct mei_device *dev)
-{
-	return mei_hbuf_filled_slots(dev) == 0;
-}
+	वापस (अचिन्हित अक्षर) (ग_लिखो_ptr - पढ़ो_ptr);
+पूर्ण
 
 /**
- * mei_me_hbuf_empty_slots - counts write empty slots.
+ * mei_me_hbuf_is_empty - checks अगर host buffer is empty.
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: -EOVERFLOW if overflow, otherwise empty slots count
+ * Return: true अगर empty, false - otherwise.
  */
-static int mei_me_hbuf_empty_slots(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
-	unsigned char filled_slots, empty_slots;
+अटल bool mei_me_hbuf_is_empty(काष्ठा mei_device *dev)
+अणु
+	वापस mei_hbuf_filled_slots(dev) == 0;
+पूर्ण
+
+/**
+ * mei_me_hbuf_empty_slots - counts ग_लिखो empty slots.
+ *
+ * @dev: the device काष्ठाure
+ *
+ * Return: -EOVERFLOW अगर overflow, otherwise empty slots count
+ */
+अटल पूर्णांक mei_me_hbuf_empty_slots(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
+	अचिन्हित अक्षर filled_slots, empty_slots;
 
 	filled_slots = mei_hbuf_filled_slots(dev);
 	empty_slots = hw->hbuf_depth - filled_slots;
 
-	/* check for overflow */
-	if (filled_slots > hw->hbuf_depth)
-		return -EOVERFLOW;
+	/* check क्रम overflow */
+	अगर (filled_slots > hw->hbuf_depth)
+		वापस -EOVERFLOW;
 
-	return empty_slots;
-}
+	वापस empty_slots;
+पूर्ण
 
 /**
- * mei_me_hbuf_depth - returns depth of the hw buffer.
+ * mei_me_hbuf_depth - वापसs depth of the hw buffer.
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: size of hw buffer in slots
  */
-static u32 mei_me_hbuf_depth(const struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल u32 mei_me_hbuf_depth(स्थिर काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 
-	return hw->hbuf_depth;
-}
+	वापस hw->hbuf_depth;
+पूर्ण
 
 /**
- * mei_me_hbuf_write - writes a message to host hw buffer.
+ * mei_me_hbuf_ग_लिखो - ग_लिखोs a message to host hw buffer.
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @hdr: header of message
  * @hdr_len: header length in bytes: must be multiplication of a slot (4bytes)
  * @data: payload
  * @data_len: payload length in bytes
  *
- * Return: 0 if success, < 0 - otherwise.
+ * Return: 0 अगर success, < 0 - otherwise.
  */
-static int mei_me_hbuf_write(struct mei_device *dev,
-			     const void *hdr, size_t hdr_len,
-			     const void *data, size_t data_len)
-{
-	unsigned long rem;
-	unsigned long i;
-	const u32 *reg_buf;
+अटल पूर्णांक mei_me_hbuf_ग_लिखो(काष्ठा mei_device *dev,
+			     स्थिर व्योम *hdr, माप_प्रकार hdr_len,
+			     स्थिर व्योम *data, माप_प्रकार data_len)
+अणु
+	अचिन्हित दीर्घ rem;
+	अचिन्हित दीर्घ i;
+	स्थिर u32 *reg_buf;
 	u32 dw_cnt;
-	int empty_slots;
+	पूर्णांक empty_slots;
 
-	if (WARN_ON(!hdr || !data || hdr_len & 0x3))
-		return -EINVAL;
+	अगर (WARN_ON(!hdr || !data || hdr_len & 0x3))
+		वापस -EINVAL;
 
-	dev_dbg(dev->dev, MEI_HDR_FMT, MEI_HDR_PRM((struct mei_msg_hdr *)hdr));
+	dev_dbg(dev->dev, MEI_HDR_FMT, MEI_HDR_PRM((काष्ठा mei_msg_hdr *)hdr));
 
 	empty_slots = mei_hbuf_empty_slots(dev);
 	dev_dbg(dev->dev, "empty slots = %hu.\n", empty_slots);
 
-	if (empty_slots < 0)
-		return -EOVERFLOW;
+	अगर (empty_slots < 0)
+		वापस -EOVERFLOW;
 
 	dw_cnt = mei_data2slots(hdr_len + data_len);
-	if (dw_cnt > (u32)empty_slots)
-		return -EMSGSIZE;
+	अगर (dw_cnt > (u32)empty_slots)
+		वापस -EMSGSIZE;
 
 	reg_buf = hdr;
-	for (i = 0; i < hdr_len / MEI_SLOT_SIZE; i++)
-		mei_me_hcbww_write(dev, reg_buf[i]);
+	क्रम (i = 0; i < hdr_len / MEI_SLOT_SIZE; i++)
+		mei_me_hcbww_ग_लिखो(dev, reg_buf[i]);
 
 	reg_buf = data;
-	for (i = 0; i < data_len / MEI_SLOT_SIZE; i++)
-		mei_me_hcbww_write(dev, reg_buf[i]);
+	क्रम (i = 0; i < data_len / MEI_SLOT_SIZE; i++)
+		mei_me_hcbww_ग_लिखो(dev, reg_buf[i]);
 
 	rem = data_len & 0x3;
-	if (rem > 0) {
+	अगर (rem > 0) अणु
 		u32 reg = 0;
 
-		memcpy(&reg, (const u8 *)data + data_len - rem, rem);
-		mei_me_hcbww_write(dev, reg);
-	}
+		स_नकल(&reg, (स्थिर u8 *)data + data_len - rem, rem);
+		mei_me_hcbww_ग_लिखो(dev, reg);
+	पूर्ण
 
 	mei_hcsr_set_hig(dev);
-	if (!mei_me_hw_is_ready(dev))
-		return -EIO;
+	अगर (!mei_me_hw_is_पढ़ोy(dev))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_me_count_full_read_slots - counts read full slots.
+ * mei_me_count_full_पढ़ो_slots - counts पढ़ो full slots.
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: -EOVERFLOW if overflow, otherwise filled slots count
+ * Return: -EOVERFLOW अगर overflow, otherwise filled slots count
  */
-static int mei_me_count_full_read_slots(struct mei_device *dev)
-{
+अटल पूर्णांक mei_me_count_full_पढ़ो_slots(काष्ठा mei_device *dev)
+अणु
 	u32 me_csr;
-	char read_ptr, write_ptr;
-	unsigned char buffer_depth, filled_slots;
+	अक्षर पढ़ो_ptr, ग_लिखो_ptr;
+	अचिन्हित अक्षर buffer_depth, filled_slots;
 
-	me_csr = mei_me_mecsr_read(dev);
-	buffer_depth = (unsigned char)((me_csr & ME_CBD_HRA) >> 24);
-	read_ptr = (char) ((me_csr & ME_CBRP_HRA) >> 8);
-	write_ptr = (char) ((me_csr & ME_CBWP_HRA) >> 16);
-	filled_slots = (unsigned char) (write_ptr - read_ptr);
+	me_csr = mei_me_mecsr_पढ़ो(dev);
+	buffer_depth = (अचिन्हित अक्षर)((me_csr & ME_CBD_HRA) >> 24);
+	पढ़ो_ptr = (अक्षर) ((me_csr & ME_CBRP_HRA) >> 8);
+	ग_लिखो_ptr = (अक्षर) ((me_csr & ME_CBWP_HRA) >> 16);
+	filled_slots = (अचिन्हित अक्षर) (ग_लिखो_ptr - पढ़ो_ptr);
 
-	/* check for overflow */
-	if (filled_slots > buffer_depth)
-		return -EOVERFLOW;
+	/* check क्रम overflow */
+	अगर (filled_slots > buffer_depth)
+		वापस -EOVERFLOW;
 
 	dev_dbg(dev->dev, "filled_slots =%08x\n", filled_slots);
-	return (int)filled_slots;
-}
+	वापस (पूर्णांक)filled_slots;
+पूर्ण
 
 /**
- * mei_me_read_slots - reads a message from mei device.
+ * mei_me_पढ़ो_slots - पढ़ोs a message from mei device.
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  * @buffer: message buffer will be written
- * @buffer_length: message size will be read
+ * @buffer_length: message size will be पढ़ो
  *
  * Return: always 0
  */
-static int mei_me_read_slots(struct mei_device *dev, unsigned char *buffer,
-			     unsigned long buffer_length)
-{
+अटल पूर्णांक mei_me_पढ़ो_slots(काष्ठा mei_device *dev, अचिन्हित अक्षर *buffer,
+			     अचिन्हित दीर्घ buffer_length)
+अणु
 	u32 *reg_buf = (u32 *)buffer;
 
-	for (; buffer_length >= MEI_SLOT_SIZE; buffer_length -= MEI_SLOT_SIZE)
-		*reg_buf++ = mei_me_mecbrw_read(dev);
+	क्रम (; buffer_length >= MEI_SLOT_SIZE; buffer_length -= MEI_SLOT_SIZE)
+		*reg_buf++ = mei_me_mecbrw_पढ़ो(dev);
 
-	if (buffer_length > 0) {
-		u32 reg = mei_me_mecbrw_read(dev);
+	अगर (buffer_length > 0) अणु
+		u32 reg = mei_me_mecbrw_पढ़ो(dev);
 
-		memcpy(reg_buf, &reg, buffer_length);
-	}
+		स_नकल(reg_buf, &reg, buffer_length);
+	पूर्ण
 
 	mei_hcsr_set_hig(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_me_pg_set - write pg enter register
+ * mei_me_pg_set - ग_लिखो pg enter रेजिस्टर
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_me_pg_set(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल व्योम mei_me_pg_set(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 	u32 reg;
 
-	reg = mei_me_reg_read(hw, H_HPG_CSR);
-	trace_mei_reg_read(dev->dev, "H_HPG_CSR", H_HPG_CSR, reg);
+	reg = mei_me_reg_पढ़ो(hw, H_HPG_CSR);
+	trace_mei_reg_पढ़ो(dev->dev, "H_HPG_CSR", H_HPG_CSR, reg);
 
 	reg |= H_HPG_CSR_PGI;
 
-	trace_mei_reg_write(dev->dev, "H_HPG_CSR", H_HPG_CSR, reg);
-	mei_me_reg_write(hw, H_HPG_CSR, reg);
-}
+	trace_mei_reg_ग_लिखो(dev->dev, "H_HPG_CSR", H_HPG_CSR, reg);
+	mei_me_reg_ग_लिखो(hw, H_HPG_CSR, reg);
+पूर्ण
 
 /**
- * mei_me_pg_unset - write pg exit register
+ * mei_me_pg_unset - ग_लिखो pg निकास रेजिस्टर
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_me_pg_unset(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल व्योम mei_me_pg_unset(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 	u32 reg;
 
-	reg = mei_me_reg_read(hw, H_HPG_CSR);
-	trace_mei_reg_read(dev->dev, "H_HPG_CSR", H_HPG_CSR, reg);
+	reg = mei_me_reg_पढ़ो(hw, H_HPG_CSR);
+	trace_mei_reg_पढ़ो(dev->dev, "H_HPG_CSR", H_HPG_CSR, reg);
 
 	WARN(!(reg & H_HPG_CSR_PGI), "PGI is not set\n");
 
 	reg |= H_HPG_CSR_PGIHEXR;
 
-	trace_mei_reg_write(dev->dev, "H_HPG_CSR", H_HPG_CSR, reg);
-	mei_me_reg_write(hw, H_HPG_CSR, reg);
-}
+	trace_mei_reg_ग_लिखो(dev->dev, "H_HPG_CSR", H_HPG_CSR, reg);
+	mei_me_reg_ग_लिखो(hw, H_HPG_CSR, reg);
+पूर्ण
 
 /**
- * mei_me_pg_legacy_enter_sync - perform legacy pg entry procedure
+ * mei_me_pg_legacy_enter_sync - perक्रमm legacy pg entry procedure
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: 0 on success an error code otherwise
  */
-static int mei_me_pg_legacy_enter_sync(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
-	unsigned long timeout = mei_secs_to_jiffies(MEI_PGI_TIMEOUT);
-	int ret;
+अटल पूर्णांक mei_me_pg_legacy_enter_sync(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
+	अचिन्हित दीर्घ समयout = mei_secs_to_jअगरfies(MEI_PGI_TIMEOUT);
+	पूर्णांक ret;
 
 	dev->pg_event = MEI_PG_EVENT_WAIT;
 
 	ret = mei_hbm_pg(dev, MEI_PG_ISOLATION_ENTRY_REQ_CMD);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_unlock(&dev->device_lock);
-	wait_event_timeout(dev->wait_pg,
-		dev->pg_event == MEI_PG_EVENT_RECEIVED, timeout);
+	रुको_event_समयout(dev->रुको_pg,
+		dev->pg_event == MEI_PG_EVENT_RECEIVED, समयout);
 	mutex_lock(&dev->device_lock);
 
-	if (dev->pg_event == MEI_PG_EVENT_RECEIVED) {
+	अगर (dev->pg_event == MEI_PG_EVENT_RECEIVED) अणु
 		mei_me_pg_set(dev);
 		ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -ETIME;
-	}
+	पूर्ण
 
 	dev->pg_event = MEI_PG_EVENT_IDLE;
 	hw->pg_state = MEI_PG_ON;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mei_me_pg_legacy_exit_sync - perform legacy pg exit procedure
+ * mei_me_pg_legacy_निकास_sync - perक्रमm legacy pg निकास procedure
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: 0 on success an error code otherwise
  */
-static int mei_me_pg_legacy_exit_sync(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
-	unsigned long timeout = mei_secs_to_jiffies(MEI_PGI_TIMEOUT);
-	int ret;
+अटल पूर्णांक mei_me_pg_legacy_निकास_sync(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
+	अचिन्हित दीर्घ समयout = mei_secs_to_jअगरfies(MEI_PGI_TIMEOUT);
+	पूर्णांक ret;
 
-	if (dev->pg_event == MEI_PG_EVENT_RECEIVED)
-		goto reply;
+	अगर (dev->pg_event == MEI_PG_EVENT_RECEIVED)
+		जाओ reply;
 
 	dev->pg_event = MEI_PG_EVENT_WAIT;
 
 	mei_me_pg_unset(dev);
 
 	mutex_unlock(&dev->device_lock);
-	wait_event_timeout(dev->wait_pg,
-		dev->pg_event == MEI_PG_EVENT_RECEIVED, timeout);
+	रुको_event_समयout(dev->रुको_pg,
+		dev->pg_event == MEI_PG_EVENT_RECEIVED, समयout);
 	mutex_lock(&dev->device_lock);
 
 reply:
-	if (dev->pg_event != MEI_PG_EVENT_RECEIVED) {
+	अगर (dev->pg_event != MEI_PG_EVENT_RECEIVED) अणु
 		ret = -ETIME;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dev->pg_event = MEI_PG_EVENT_INTR_WAIT;
 	ret = mei_hbm_pg(dev, MEI_PG_ISOLATION_EXIT_RES_CMD);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_unlock(&dev->device_lock);
-	wait_event_timeout(dev->wait_pg,
-		dev->pg_event == MEI_PG_EVENT_INTR_RECEIVED, timeout);
+	रुको_event_समयout(dev->रुको_pg,
+		dev->pg_event == MEI_PG_EVENT_INTR_RECEIVED, समयout);
 	mutex_lock(&dev->device_lock);
 
-	if (dev->pg_event == MEI_PG_EVENT_INTR_RECEIVED)
+	अगर (dev->pg_event == MEI_PG_EVENT_INTR_RECEIVED)
 		ret = 0;
-	else
+	अन्यथा
 		ret = -ETIME;
 
 out:
 	dev->pg_event = MEI_PG_EVENT_IDLE;
 	hw->pg_state = MEI_PG_OFF;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * mei_me_pg_in_transition - is device now in pg transition
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: true if in pg transition, false otherwise
+ * Return: true अगर in pg transition, false otherwise
  */
-static bool mei_me_pg_in_transition(struct mei_device *dev)
-{
-	return dev->pg_event >= MEI_PG_EVENT_WAIT &&
+अटल bool mei_me_pg_in_transition(काष्ठा mei_device *dev)
+अणु
+	वापस dev->pg_event >= MEI_PG_EVENT_WAIT &&
 	       dev->pg_event <= MEI_PG_EVENT_INTR_WAIT;
-}
+पूर्ण
 
 /**
- * mei_me_pg_is_enabled - detect if PG is supported by HW
+ * mei_me_pg_is_enabled - detect अगर PG is supported by HW
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: true is pg supported, false otherwise
  */
-static bool mei_me_pg_is_enabled(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
-	u32 reg = mei_me_mecsr_read(dev);
+अटल bool mei_me_pg_is_enabled(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
+	u32 reg = mei_me_mecsr_पढ़ो(dev);
 
-	if (hw->d0i3_supported)
-		return true;
+	अगर (hw->d0i3_supported)
+		वापस true;
 
-	if ((reg & ME_PGIC_HRA) == 0)
-		goto notsupported;
+	अगर ((reg & ME_PGIC_HRA) == 0)
+		जाओ notsupported;
 
-	if (!dev->hbm_f_pg_supported)
-		goto notsupported;
+	अगर (!dev->hbm_f_pg_supported)
+		जाओ notsupported;
 
-	return true;
+	वापस true;
 
 notsupported:
 	dev_dbg(dev->dev, "pg: not supported: d0i3 = %d HGP = %d hbm version %d.%d ?= %d.%d\n",
@@ -822,114 +823,114 @@ notsupported:
 		HBM_MAJOR_VERSION_PGI,
 		HBM_MINOR_VERSION_PGI);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * mei_me_d0i3_set - write d0i3 register bit on mei device.
+ * mei_me_d0i3_set - ग_लिखो d0i3 रेजिस्टर bit on mei device.
  *
- * @dev: the device structure
- * @intr: ask for interrupt
+ * @dev: the device काष्ठाure
+ * @पूर्णांकr: ask क्रम पूर्णांकerrupt
  *
- * Return: D0I3C register value
+ * Return: D0I3C रेजिस्टर value
  */
-static u32 mei_me_d0i3_set(struct mei_device *dev, bool intr)
-{
-	u32 reg = mei_me_d0i3c_read(dev);
+अटल u32 mei_me_d0i3_set(काष्ठा mei_device *dev, bool पूर्णांकr)
+अणु
+	u32 reg = mei_me_d0i3c_पढ़ो(dev);
 
 	reg |= H_D0I3C_I3;
-	if (intr)
+	अगर (पूर्णांकr)
 		reg |= H_D0I3C_IR;
-	else
+	अन्यथा
 		reg &= ~H_D0I3C_IR;
-	mei_me_d0i3c_write(dev, reg);
-	/* read it to ensure HW consistency */
-	reg = mei_me_d0i3c_read(dev);
-	return reg;
-}
+	mei_me_d0i3c_ग_लिखो(dev, reg);
+	/* पढ़ो it to ensure HW consistency */
+	reg = mei_me_d0i3c_पढ़ो(dev);
+	वापस reg;
+पूर्ण
 
 /**
- * mei_me_d0i3_unset - clean d0i3 register bit on mei device.
+ * mei_me_d0i3_unset - clean d0i3 रेजिस्टर bit on mei device.
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
- * Return: D0I3C register value
+ * Return: D0I3C रेजिस्टर value
  */
-static u32 mei_me_d0i3_unset(struct mei_device *dev)
-{
-	u32 reg = mei_me_d0i3c_read(dev);
+अटल u32 mei_me_d0i3_unset(काष्ठा mei_device *dev)
+अणु
+	u32 reg = mei_me_d0i3c_पढ़ो(dev);
 
 	reg &= ~H_D0I3C_I3;
 	reg |= H_D0I3C_IR;
-	mei_me_d0i3c_write(dev, reg);
-	/* read it to ensure HW consistency */
-	reg = mei_me_d0i3c_read(dev);
-	return reg;
-}
+	mei_me_d0i3c_ग_लिखो(dev, reg);
+	/* पढ़ो it to ensure HW consistency */
+	reg = mei_me_d0i3c_पढ़ो(dev);
+	वापस reg;
+पूर्ण
 
 /**
- * mei_me_d0i3_enter_sync - perform d0i3 entry procedure
+ * mei_me_d0i3_enter_sync - perक्रमm d0i3 entry procedure
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: 0 on success an error code otherwise
  */
-static int mei_me_d0i3_enter_sync(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
-	unsigned long d0i3_timeout = mei_secs_to_jiffies(MEI_D0I3_TIMEOUT);
-	unsigned long pgi_timeout = mei_secs_to_jiffies(MEI_PGI_TIMEOUT);
-	int ret;
+अटल पूर्णांक mei_me_d0i3_enter_sync(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
+	अचिन्हित दीर्घ d0i3_समयout = mei_secs_to_jअगरfies(MEI_D0I3_TIMEOUT);
+	अचिन्हित दीर्घ pgi_समयout = mei_secs_to_jअगरfies(MEI_PGI_TIMEOUT);
+	पूर्णांक ret;
 	u32 reg;
 
-	reg = mei_me_d0i3c_read(dev);
-	if (reg & H_D0I3C_I3) {
-		/* we are in d0i3, nothing to do */
+	reg = mei_me_d0i3c_पढ़ो(dev);
+	अगर (reg & H_D0I3C_I3) अणु
+		/* we are in d0i3, nothing to करो */
 		dev_dbg(dev->dev, "d0i3 set not needed\n");
 		ret = 0;
-		goto on;
-	}
+		जाओ on;
+	पूर्ण
 
 	/* PGI entry procedure */
 	dev->pg_event = MEI_PG_EVENT_WAIT;
 
 	ret = mei_hbm_pg(dev, MEI_PG_ISOLATION_ENTRY_REQ_CMD);
-	if (ret)
+	अगर (ret)
 		/* FIXME: should we reset here? */
-		goto out;
+		जाओ out;
 
 	mutex_unlock(&dev->device_lock);
-	wait_event_timeout(dev->wait_pg,
-		dev->pg_event == MEI_PG_EVENT_RECEIVED, pgi_timeout);
+	रुको_event_समयout(dev->रुको_pg,
+		dev->pg_event == MEI_PG_EVENT_RECEIVED, pgi_समयout);
 	mutex_lock(&dev->device_lock);
 
-	if (dev->pg_event != MEI_PG_EVENT_RECEIVED) {
+	अगर (dev->pg_event != MEI_PG_EVENT_RECEIVED) अणु
 		ret = -ETIME;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	/* end PGI entry procedure */
 
 	dev->pg_event = MEI_PG_EVENT_INTR_WAIT;
 
 	reg = mei_me_d0i3_set(dev, true);
-	if (!(reg & H_D0I3C_CIP)) {
+	अगर (!(reg & H_D0I3C_CIP)) अणु
 		dev_dbg(dev->dev, "d0i3 enter wait not needed\n");
 		ret = 0;
-		goto on;
-	}
+		जाओ on;
+	पूर्ण
 
 	mutex_unlock(&dev->device_lock);
-	wait_event_timeout(dev->wait_pg,
-		dev->pg_event == MEI_PG_EVENT_INTR_RECEIVED, d0i3_timeout);
+	रुको_event_समयout(dev->रुको_pg,
+		dev->pg_event == MEI_PG_EVENT_INTR_RECEIVED, d0i3_समयout);
 	mutex_lock(&dev->device_lock);
 
-	if (dev->pg_event != MEI_PG_EVENT_INTR_RECEIVED) {
-		reg = mei_me_d0i3c_read(dev);
-		if (!(reg & H_D0I3C_I3)) {
+	अगर (dev->pg_event != MEI_PG_EVENT_INTR_RECEIVED) अणु
+		reg = mei_me_d0i3c_पढ़ो(dev);
+		अगर (!(reg & H_D0I3C_I3)) अणु
 			ret = -ETIME;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 on:
@@ -937,82 +938,82 @@ on:
 out:
 	dev->pg_event = MEI_PG_EVENT_IDLE;
 	dev_dbg(dev->dev, "d0i3 enter ret = %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mei_me_d0i3_enter - perform d0i3 entry procedure
+ * mei_me_d0i3_enter - perक्रमm d0i3 entry procedure
  *   no hbm PG handshake
- *   no waiting for confirmation; runs with interrupts
+ *   no रुकोing क्रम confirmation; runs with पूर्णांकerrupts
  *   disabled
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: 0 on success an error code otherwise
  */
-static int mei_me_d0i3_enter(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल पूर्णांक mei_me_d0i3_enter(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 	u32 reg;
 
-	reg = mei_me_d0i3c_read(dev);
-	if (reg & H_D0I3C_I3) {
-		/* we are in d0i3, nothing to do */
+	reg = mei_me_d0i3c_पढ़ो(dev);
+	अगर (reg & H_D0I3C_I3) अणु
+		/* we are in d0i3, nothing to करो */
 		dev_dbg(dev->dev, "already d0i3 : set not needed\n");
-		goto on;
-	}
+		जाओ on;
+	पूर्ण
 
 	mei_me_d0i3_set(dev, false);
 on:
 	hw->pg_state = MEI_PG_ON;
 	dev->pg_event = MEI_PG_EVENT_IDLE;
 	dev_dbg(dev->dev, "d0i3 enter\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * mei_me_d0i3_exit_sync - perform d0i3 exit procedure
+ * mei_me_d0i3_निकास_sync - perक्रमm d0i3 निकास procedure
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: 0 on success an error code otherwise
  */
-static int mei_me_d0i3_exit_sync(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
-	unsigned long timeout = mei_secs_to_jiffies(MEI_D0I3_TIMEOUT);
-	int ret;
+अटल पूर्णांक mei_me_d0i3_निकास_sync(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
+	अचिन्हित दीर्घ समयout = mei_secs_to_jअगरfies(MEI_D0I3_TIMEOUT);
+	पूर्णांक ret;
 	u32 reg;
 
 	dev->pg_event = MEI_PG_EVENT_INTR_WAIT;
 
-	reg = mei_me_d0i3c_read(dev);
-	if (!(reg & H_D0I3C_I3)) {
-		/* we are not in d0i3, nothing to do */
+	reg = mei_me_d0i3c_पढ़ो(dev);
+	अगर (!(reg & H_D0I3C_I3)) अणु
+		/* we are not in d0i3, nothing to करो */
 		dev_dbg(dev->dev, "d0i3 exit not needed\n");
 		ret = 0;
-		goto off;
-	}
+		जाओ off;
+	पूर्ण
 
 	reg = mei_me_d0i3_unset(dev);
-	if (!(reg & H_D0I3C_CIP)) {
+	अगर (!(reg & H_D0I3C_CIP)) अणु
 		dev_dbg(dev->dev, "d0i3 exit wait not needed\n");
 		ret = 0;
-		goto off;
-	}
+		जाओ off;
+	पूर्ण
 
 	mutex_unlock(&dev->device_lock);
-	wait_event_timeout(dev->wait_pg,
-		dev->pg_event == MEI_PG_EVENT_INTR_RECEIVED, timeout);
+	रुको_event_समयout(dev->रुको_pg,
+		dev->pg_event == MEI_PG_EVENT_INTR_RECEIVED, समयout);
 	mutex_lock(&dev->device_lock);
 
-	if (dev->pg_event != MEI_PG_EVENT_INTR_RECEIVED) {
-		reg = mei_me_d0i3c_read(dev);
-		if (reg & H_D0I3C_I3) {
+	अगर (dev->pg_event != MEI_PG_EVENT_INTR_RECEIVED) अणु
+		reg = mei_me_d0i3c_पढ़ो(dev);
+		अगर (reg & H_D0I3C_I3) अणु
 			ret = -ETIME;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	ret = 0;
 off:
@@ -1021,315 +1022,315 @@ out:
 	dev->pg_event = MEI_PG_EVENT_IDLE;
 
 	dev_dbg(dev->dev, "d0i3 exit ret = %d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * mei_me_pg_legacy_intr - perform legacy pg processing
- *			   in interrupt thread handler
+ * mei_me_pg_legacy_पूर्णांकr - perक्रमm legacy pg processing
+ *			   in पूर्णांकerrupt thपढ़ो handler
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  */
-static void mei_me_pg_legacy_intr(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल व्योम mei_me_pg_legacy_पूर्णांकr(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 
-	if (dev->pg_event != MEI_PG_EVENT_INTR_WAIT)
-		return;
+	अगर (dev->pg_event != MEI_PG_EVENT_INTR_WAIT)
+		वापस;
 
 	dev->pg_event = MEI_PG_EVENT_INTR_RECEIVED;
 	hw->pg_state = MEI_PG_OFF;
-	if (waitqueue_active(&dev->wait_pg))
-		wake_up(&dev->wait_pg);
-}
+	अगर (रुकोqueue_active(&dev->रुको_pg))
+		wake_up(&dev->रुको_pg);
+पूर्ण
 
 /**
- * mei_me_d0i3_intr - perform d0i3 processing in interrupt thread handler
+ * mei_me_d0i3_पूर्णांकr - perक्रमm d0i3 processing in पूर्णांकerrupt thपढ़ो handler
  *
- * @dev: the device structure
- * @intr_source: interrupt source
+ * @dev: the device काष्ठाure
+ * @पूर्णांकr_source: पूर्णांकerrupt source
  */
-static void mei_me_d0i3_intr(struct mei_device *dev, u32 intr_source)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल व्योम mei_me_d0i3_पूर्णांकr(काष्ठा mei_device *dev, u32 पूर्णांकr_source)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 
-	if (dev->pg_event == MEI_PG_EVENT_INTR_WAIT &&
-	    (intr_source & H_D0I3C_IS)) {
+	अगर (dev->pg_event == MEI_PG_EVENT_INTR_WAIT &&
+	    (पूर्णांकr_source & H_D0I3C_IS)) अणु
 		dev->pg_event = MEI_PG_EVENT_INTR_RECEIVED;
-		if (hw->pg_state == MEI_PG_ON) {
+		अगर (hw->pg_state == MEI_PG_ON) अणु
 			hw->pg_state = MEI_PG_OFF;
-			if (dev->hbm_state != MEI_HBM_IDLE) {
+			अगर (dev->hbm_state != MEI_HBM_IDLE) अणु
 				/*
-				 * force H_RDY because it could be
+				 * क्रमce H_RDY because it could be
 				 * wiped off during PG
 				 */
 				dev_dbg(dev->dev, "d0i3 set host ready\n");
-				mei_me_host_set_ready(dev);
-			}
-		} else {
+				mei_me_host_set_पढ़ोy(dev);
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			hw->pg_state = MEI_PG_ON;
-		}
+		पूर्ण
 
-		wake_up(&dev->wait_pg);
-	}
+		wake_up(&dev->रुको_pg);
+	पूर्ण
 
-	if (hw->pg_state == MEI_PG_ON && (intr_source & H_IS)) {
+	अगर (hw->pg_state == MEI_PG_ON && (पूर्णांकr_source & H_IS)) अणु
 		/*
 		 * HW sent some data and we are in D0i3, so
-		 * we got here because of HW initiated exit from D0i3.
-		 * Start runtime pm resume sequence to exit low power state.
+		 * we got here because of HW initiated निकास from D0i3.
+		 * Start runसमय pm resume sequence to निकास low घातer state.
 		 */
 		dev_dbg(dev->dev, "d0i3 want resume\n");
 		mei_hbm_pg_resume(dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * mei_me_pg_intr - perform pg processing in interrupt thread handler
+ * mei_me_pg_पूर्णांकr - perक्रमm pg processing in पूर्णांकerrupt thपढ़ो handler
  *
- * @dev: the device structure
- * @intr_source: interrupt source
+ * @dev: the device काष्ठाure
+ * @पूर्णांकr_source: पूर्णांकerrupt source
  */
-static void mei_me_pg_intr(struct mei_device *dev, u32 intr_source)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+अटल व्योम mei_me_pg_पूर्णांकr(काष्ठा mei_device *dev, u32 पूर्णांकr_source)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 
-	if (hw->d0i3_supported)
-		mei_me_d0i3_intr(dev, intr_source);
-	else
-		mei_me_pg_legacy_intr(dev);
-}
+	अगर (hw->d0i3_supported)
+		mei_me_d0i3_पूर्णांकr(dev, पूर्णांकr_source);
+	अन्यथा
+		mei_me_pg_legacy_पूर्णांकr(dev);
+पूर्ण
 
 /**
- * mei_me_pg_enter_sync - perform runtime pm entry procedure
+ * mei_me_pg_enter_sync - perक्रमm runसमय pm entry procedure
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: 0 on success an error code otherwise
  */
-int mei_me_pg_enter_sync(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+पूर्णांक mei_me_pg_enter_sync(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 
-	if (hw->d0i3_supported)
-		return mei_me_d0i3_enter_sync(dev);
-	else
-		return mei_me_pg_legacy_enter_sync(dev);
-}
+	अगर (hw->d0i3_supported)
+		वापस mei_me_d0i3_enter_sync(dev);
+	अन्यथा
+		वापस mei_me_pg_legacy_enter_sync(dev);
+पूर्ण
 
 /**
- * mei_me_pg_exit_sync - perform runtime pm exit procedure
+ * mei_me_pg_निकास_sync - perक्रमm runसमय pm निकास procedure
  *
- * @dev: the device structure
+ * @dev: the device काष्ठाure
  *
  * Return: 0 on success an error code otherwise
  */
-int mei_me_pg_exit_sync(struct mei_device *dev)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
+पूर्णांक mei_me_pg_निकास_sync(काष्ठा mei_device *dev)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
 
-	if (hw->d0i3_supported)
-		return mei_me_d0i3_exit_sync(dev);
-	else
-		return mei_me_pg_legacy_exit_sync(dev);
-}
+	अगर (hw->d0i3_supported)
+		वापस mei_me_d0i3_निकास_sync(dev);
+	अन्यथा
+		वापस mei_me_pg_legacy_निकास_sync(dev);
+पूर्ण
 
 /**
- * mei_me_hw_reset - resets fw via mei csr register.
+ * mei_me_hw_reset - resets fw via mei csr रेजिस्टर.
  *
- * @dev: the device structure
- * @intr_enable: if interrupt should be enabled after reset.
+ * @dev: the device काष्ठाure
+ * @पूर्णांकr_enable: अगर पूर्णांकerrupt should be enabled after reset.
  *
  * Return: 0 on success an error code otherwise
  */
-static int mei_me_hw_reset(struct mei_device *dev, bool intr_enable)
-{
-	struct mei_me_hw *hw = to_me_hw(dev);
-	int ret;
+अटल पूर्णांक mei_me_hw_reset(काष्ठा mei_device *dev, bool पूर्णांकr_enable)
+अणु
+	काष्ठा mei_me_hw *hw = to_me_hw(dev);
+	पूर्णांक ret;
 	u32 hcsr;
 
-	if (intr_enable) {
-		mei_me_intr_enable(dev);
-		if (hw->d0i3_supported) {
-			ret = mei_me_d0i3_exit_sync(dev);
-			if (ret)
-				return ret;
-		}
-	}
+	अगर (पूर्णांकr_enable) अणु
+		mei_me_पूर्णांकr_enable(dev);
+		अगर (hw->d0i3_supported) अणु
+			ret = mei_me_d0i3_निकास_sync(dev);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	pm_runtime_set_active(dev->dev);
+	pm_runसमय_set_active(dev->dev);
 
-	hcsr = mei_hcsr_read(dev);
-	/* H_RST may be found lit before reset is started,
-	 * for example if preceding reset flow hasn't completed.
-	 * In that case asserting H_RST will be ignored, therefore
+	hcsr = mei_hcsr_पढ़ो(dev);
+	/* H_RST may be found lit beक्रमe reset is started,
+	 * क्रम example अगर preceding reset flow hasn't completed.
+	 * In that हाल निश्चितing H_RST will be ignored, thereक्रमe
 	 * we need to clean H_RST bit to start a successful reset sequence.
 	 */
-	if ((hcsr & H_RST) == H_RST) {
+	अगर ((hcsr & H_RST) == H_RST) अणु
 		dev_warn(dev->dev, "H_RST is set = 0x%08X", hcsr);
 		hcsr &= ~H_RST;
 		mei_hcsr_set(dev, hcsr);
-		hcsr = mei_hcsr_read(dev);
-	}
+		hcsr = mei_hcsr_पढ़ो(dev);
+	पूर्ण
 
 	hcsr |= H_RST | H_IG | H_CSR_IS_MASK;
 
-	if (!intr_enable)
+	अगर (!पूर्णांकr_enable)
 		hcsr &= ~H_CSR_IE_MASK;
 
-	dev->recvd_hw_ready = false;
-	mei_hcsr_write(dev, hcsr);
+	dev->recvd_hw_पढ़ोy = false;
+	mei_hcsr_ग_लिखो(dev, hcsr);
 
 	/*
-	 * Host reads the H_CSR once to ensure that the
-	 * posted write to H_CSR completes.
+	 * Host पढ़ोs the H_CSR once to ensure that the
+	 * posted ग_लिखो to H_CSR completes.
 	 */
-	hcsr = mei_hcsr_read(dev);
+	hcsr = mei_hcsr_पढ़ो(dev);
 
-	if ((hcsr & H_RST) == 0)
+	अगर ((hcsr & H_RST) == 0)
 		dev_warn(dev->dev, "H_RST is not set = 0x%08X", hcsr);
 
-	if ((hcsr & H_RDY) == H_RDY)
+	अगर ((hcsr & H_RDY) == H_RDY)
 		dev_warn(dev->dev, "H_RDY is not cleared 0x%08X", hcsr);
 
-	if (!intr_enable) {
+	अगर (!पूर्णांकr_enable) अणु
 		mei_me_hw_reset_release(dev);
-		if (hw->d0i3_supported) {
+		अगर (hw->d0i3_supported) अणु
 			ret = mei_me_d0i3_enter(dev);
-			if (ret)
-				return ret;
-		}
-	}
-	return 0;
-}
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * mei_me_irq_quick_handler - The ISR of the MEI device
  *
  * @irq: The irq number
- * @dev_id: pointer to the device structure
+ * @dev_id: poपूर्णांकer to the device काष्ठाure
  *
- * Return: irqreturn_t
+ * Return: irqवापस_t
  */
-irqreturn_t mei_me_irq_quick_handler(int irq, void *dev_id)
-{
-	struct mei_device *dev = (struct mei_device *)dev_id;
+irqवापस_t mei_me_irq_quick_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mei_device *dev = (काष्ठा mei_device *)dev_id;
 	u32 hcsr;
 
-	hcsr = mei_hcsr_read(dev);
-	if (!me_intr_src(hcsr))
-		return IRQ_NONE;
+	hcsr = mei_hcsr_पढ़ो(dev);
+	अगर (!me_पूर्णांकr_src(hcsr))
+		वापस IRQ_NONE;
 
-	dev_dbg(dev->dev, "interrupt source 0x%08X\n", me_intr_src(hcsr));
+	dev_dbg(dev->dev, "interrupt source 0x%08X\n", me_पूर्णांकr_src(hcsr));
 
-	/* disable interrupts on device */
-	me_intr_disable(dev, hcsr);
-	return IRQ_WAKE_THREAD;
-}
+	/* disable पूर्णांकerrupts on device */
+	me_पूर्णांकr_disable(dev, hcsr);
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
 /**
- * mei_me_irq_thread_handler - function called after ISR to handle the interrupt
+ * mei_me_irq_thपढ़ो_handler - function called after ISR to handle the पूर्णांकerrupt
  * processing.
  *
  * @irq: The irq number
- * @dev_id: pointer to the device structure
+ * @dev_id: poपूर्णांकer to the device काष्ठाure
  *
- * Return: irqreturn_t
+ * Return: irqवापस_t
  *
  */
-irqreturn_t mei_me_irq_thread_handler(int irq, void *dev_id)
-{
-	struct mei_device *dev = (struct mei_device *) dev_id;
-	struct list_head cmpl_list;
+irqवापस_t mei_me_irq_thपढ़ो_handler(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mei_device *dev = (काष्ठा mei_device *) dev_id;
+	काष्ठा list_head cmpl_list;
 	s32 slots;
 	u32 hcsr;
-	int rets = 0;
+	पूर्णांक rets = 0;
 
 	dev_dbg(dev->dev, "function called after ISR to handle the interrupt processing.\n");
 	/* initialize our complete list */
 	mutex_lock(&dev->device_lock);
 
-	hcsr = mei_hcsr_read(dev);
-	me_intr_clear(dev, hcsr);
+	hcsr = mei_hcsr_पढ़ो(dev);
+	me_पूर्णांकr_clear(dev, hcsr);
 
 	INIT_LIST_HEAD(&cmpl_list);
 
-	/* check if ME wants a reset */
-	if (!mei_hw_is_ready(dev) && dev->dev_state != MEI_DEV_RESETTING) {
+	/* check अगर ME wants a reset */
+	अगर (!mei_hw_is_पढ़ोy(dev) && dev->dev_state != MEI_DEV_RESETTING) अणु
 		dev_warn(dev->dev, "FW not ready: resetting.\n");
 		schedule_work(&dev->reset_work);
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	if (mei_me_hw_is_resetting(dev))
+	अगर (mei_me_hw_is_resetting(dev))
 		mei_hcsr_set_hig(dev);
 
-	mei_me_pg_intr(dev, me_intr_src(hcsr));
+	mei_me_pg_पूर्णांकr(dev, me_पूर्णांकr_src(hcsr));
 
-	/*  check if we need to start the dev */
-	if (!mei_host_is_ready(dev)) {
-		if (mei_hw_is_ready(dev)) {
+	/*  check अगर we need to start the dev */
+	अगर (!mei_host_is_पढ़ोy(dev)) अणु
+		अगर (mei_hw_is_पढ़ोy(dev)) अणु
 			dev_dbg(dev->dev, "we need to start the dev.\n");
-			dev->recvd_hw_ready = true;
-			wake_up(&dev->wait_hw_ready);
-		} else {
+			dev->recvd_hw_पढ़ोy = true;
+			wake_up(&dev->रुको_hw_पढ़ोy);
+		पूर्ण अन्यथा अणु
 			dev_dbg(dev->dev, "Spurious Interrupt\n");
-		}
-		goto end;
-	}
-	/* check slots available for reading */
-	slots = mei_count_full_read_slots(dev);
-	while (slots > 0) {
+		पूर्ण
+		जाओ end;
+	पूर्ण
+	/* check slots available क्रम पढ़ोing */
+	slots = mei_count_full_पढ़ो_slots(dev);
+	जबतक (slots > 0) अणु
 		dev_dbg(dev->dev, "slots to read = %08x\n", slots);
-		rets = mei_irq_read_handler(dev, &cmpl_list, &slots);
-		/* There is a race between ME write and interrupt delivery:
+		rets = mei_irq_पढ़ो_handler(dev, &cmpl_list, &slots);
+		/* There is a race between ME ग_लिखो and पूर्णांकerrupt delivery:
 		 * Not all data is always available immediately after the
-		 * interrupt, so try to read again on the next interrupt.
+		 * पूर्णांकerrupt, so try to पढ़ो again on the next पूर्णांकerrupt.
 		 */
-		if (rets == -ENODATA)
-			break;
+		अगर (rets == -ENODATA)
+			अवरोध;
 
-		if (rets &&
+		अगर (rets &&
 		    (dev->dev_state != MEI_DEV_RESETTING &&
-		     dev->dev_state != MEI_DEV_POWER_DOWN)) {
+		     dev->dev_state != MEI_DEV_POWER_DOWN)) अणु
 			dev_err(dev->dev, "mei_irq_read_handler ret = %d.\n",
 						rets);
 			schedule_work(&dev->reset_work);
-			goto end;
-		}
-	}
+			जाओ end;
+		पूर्ण
+	पूर्ण
 
-	dev->hbuf_is_ready = mei_hbuf_is_ready(dev);
+	dev->hbuf_is_पढ़ोy = mei_hbuf_is_पढ़ोy(dev);
 
 	/*
-	 * During PG handshake only allowed write is the replay to the
-	 * PG exit message, so block calling write function
-	 * if the pg event is in PG handshake
+	 * During PG handshake only allowed ग_लिखो is the replay to the
+	 * PG निकास message, so block calling ग_लिखो function
+	 * अगर the pg event is in PG handshake
 	 */
-	if (dev->pg_event != MEI_PG_EVENT_WAIT &&
-	    dev->pg_event != MEI_PG_EVENT_RECEIVED) {
-		rets = mei_irq_write_handler(dev, &cmpl_list);
-		dev->hbuf_is_ready = mei_hbuf_is_ready(dev);
-	}
+	अगर (dev->pg_event != MEI_PG_EVENT_WAIT &&
+	    dev->pg_event != MEI_PG_EVENT_RECEIVED) अणु
+		rets = mei_irq_ग_लिखो_handler(dev, &cmpl_list);
+		dev->hbuf_is_पढ़ोy = mei_hbuf_is_पढ़ोy(dev);
+	पूर्ण
 
 	mei_irq_compl_handler(dev, &cmpl_list);
 
 end:
 	dev_dbg(dev->dev, "interrupt thread end ret = %d\n", rets);
-	mei_me_intr_enable(dev);
+	mei_me_पूर्णांकr_enable(dev);
 	mutex_unlock(&dev->device_lock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const struct mei_hw_ops mei_me_hw_ops = {
+अटल स्थिर काष्ठा mei_hw_ops mei_me_hw_ops = अणु
 
 	.trc_status = mei_me_trc_status,
 	.fw_status = mei_me_fw_status,
 	.pg_state  = mei_me_pg_state,
 
-	.host_is_ready = mei_me_host_is_ready,
+	.host_is_पढ़ोy = mei_me_host_is_पढ़ोy,
 
-	.hw_is_ready = mei_me_hw_is_ready,
+	.hw_is_पढ़ोy = mei_me_hw_is_पढ़ोy,
 	.hw_reset = mei_me_hw_reset,
 	.hw_config = mei_me_hw_config,
 	.hw_start = mei_me_hw_start,
@@ -1337,121 +1338,121 @@ static const struct mei_hw_ops mei_me_hw_ops = {
 	.pg_in_transition = mei_me_pg_in_transition,
 	.pg_is_enabled = mei_me_pg_is_enabled,
 
-	.intr_clear = mei_me_intr_clear,
-	.intr_enable = mei_me_intr_enable,
-	.intr_disable = mei_me_intr_disable,
+	.पूर्णांकr_clear = mei_me_पूर्णांकr_clear,
+	.पूर्णांकr_enable = mei_me_पूर्णांकr_enable,
+	.पूर्णांकr_disable = mei_me_पूर्णांकr_disable,
 	.synchronize_irq = mei_me_synchronize_irq,
 
-	.hbuf_free_slots = mei_me_hbuf_empty_slots,
-	.hbuf_is_ready = mei_me_hbuf_is_empty,
+	.hbuf_मुक्त_slots = mei_me_hbuf_empty_slots,
+	.hbuf_is_पढ़ोy = mei_me_hbuf_is_empty,
 	.hbuf_depth = mei_me_hbuf_depth,
 
-	.write = mei_me_hbuf_write,
+	.ग_लिखो = mei_me_hbuf_ग_लिखो,
 
-	.rdbuf_full_slots = mei_me_count_full_read_slots,
-	.read_hdr = mei_me_mecbrw_read,
-	.read = mei_me_read_slots
-};
+	.rdbuf_full_slots = mei_me_count_full_पढ़ो_slots,
+	.पढ़ो_hdr = mei_me_mecbrw_पढ़ो,
+	.पढ़ो = mei_me_पढ़ो_slots
+पूर्ण;
 
 /**
- * mei_me_fw_type_nm() - check for nm sku
+ * mei_me_fw_type_nm() - check क्रम nm sku
  *
- * Read ME FW Status register to check for the Node Manager (NM) Firmware.
- * The NM FW is only signaled in PCI function 0.
+ * Read ME FW Status रेजिस्टर to check क्रम the Node Manager (NM) Firmware.
+ * The NM FW is only संकेतed in PCI function 0.
  * __Note__: Deprecated by PCH8 and newer.
  *
  * @pdev: pci device
  *
- * Return: true in case of NM firmware
+ * Return: true in हाल of NM firmware
  */
-static bool mei_me_fw_type_nm(const struct pci_dev *pdev)
-{
+अटल bool mei_me_fw_type_nm(स्थिर काष्ठा pci_dev *pdev)
+अणु
 	u32 reg;
-	unsigned int devfn;
+	अचिन्हित पूर्णांक devfn;
 
 	devfn = PCI_DEVFN(PCI_SLOT(pdev->devfn), 0);
-	pci_bus_read_config_dword(pdev->bus, devfn, PCI_CFG_HFS_2, &reg);
-	trace_mei_pci_cfg_read(&pdev->dev, "PCI_CFG_HFS_2", PCI_CFG_HFS_2, reg);
-	/* make sure that bit 9 (NM) is up and bit 10 (DM) is down */
-	return (reg & 0x600) == 0x200;
-}
+	pci_bus_पढ़ो_config_dword(pdev->bus, devfn, PCI_CFG_HFS_2, &reg);
+	trace_mei_pci_cfg_पढ़ो(&pdev->dev, "PCI_CFG_HFS_2", PCI_CFG_HFS_2, reg);
+	/* make sure that bit 9 (NM) is up and bit 10 (DM) is करोwn */
+	वापस (reg & 0x600) == 0x200;
+पूर्ण
 
-#define MEI_CFG_FW_NM                           \
+#घोषणा MEI_CFG_FW_NM                           \
 	.quirk_probe = mei_me_fw_type_nm
 
 /**
- * mei_me_fw_sku_sps_4() - check for sps 4.0 sku
+ * mei_me_fw_sku_sps_4() - check क्रम sps 4.0 sku
  *
- * Read ME FW Status register to check for SPS Firmware.
- * The SPS FW is only signaled in the PCI function 0.
+ * Read ME FW Status रेजिस्टर to check क्रम SPS Firmware.
+ * The SPS FW is only संकेतed in the PCI function 0.
  * __Note__: Deprecated by SPS 5.0 and newer.
  *
  * @pdev: pci device
  *
- * Return: true in case of SPS firmware
+ * Return: true in हाल of SPS firmware
  */
-static bool mei_me_fw_type_sps_4(const struct pci_dev *pdev)
-{
+अटल bool mei_me_fw_type_sps_4(स्थिर काष्ठा pci_dev *pdev)
+अणु
 	u32 reg;
-	unsigned int devfn;
+	अचिन्हित पूर्णांक devfn;
 
 	devfn = PCI_DEVFN(PCI_SLOT(pdev->devfn), 0);
-	pci_bus_read_config_dword(pdev->bus, devfn, PCI_CFG_HFS_1, &reg);
-	trace_mei_pci_cfg_read(&pdev->dev, "PCI_CFG_HFS_1", PCI_CFG_HFS_1, reg);
-	return (reg & PCI_CFG_HFS_1_OPMODE_MSK) == PCI_CFG_HFS_1_OPMODE_SPS;
-}
+	pci_bus_पढ़ो_config_dword(pdev->bus, devfn, PCI_CFG_HFS_1, &reg);
+	trace_mei_pci_cfg_पढ़ो(&pdev->dev, "PCI_CFG_HFS_1", PCI_CFG_HFS_1, reg);
+	वापस (reg & PCI_CFG_HFS_1_OPMODE_MSK) == PCI_CFG_HFS_1_OPMODE_SPS;
+पूर्ण
 
-#define MEI_CFG_FW_SPS_4                          \
+#घोषणा MEI_CFG_FW_SPS_4                          \
 	.quirk_probe = mei_me_fw_type_sps_4
 
 /**
- * mei_me_fw_sku_sps() - check for sps sku
+ * mei_me_fw_sku_sps() - check क्रम sps sku
  *
- * Read ME FW Status register to check for SPS Firmware.
- * The SPS FW is only signaled in pci function 0
+ * Read ME FW Status रेजिस्टर to check क्रम SPS Firmware.
+ * The SPS FW is only संकेतed in pci function 0
  *
  * @pdev: pci device
  *
- * Return: true in case of SPS firmware
+ * Return: true in हाल of SPS firmware
  */
-static bool mei_me_fw_type_sps(const struct pci_dev *pdev)
-{
+अटल bool mei_me_fw_type_sps(स्थिर काष्ठा pci_dev *pdev)
+अणु
 	u32 reg;
 	u32 fw_type;
-	unsigned int devfn;
+	अचिन्हित पूर्णांक devfn;
 
 	devfn = PCI_DEVFN(PCI_SLOT(pdev->devfn), 0);
-	pci_bus_read_config_dword(pdev->bus, devfn, PCI_CFG_HFS_3, &reg);
-	trace_mei_pci_cfg_read(&pdev->dev, "PCI_CFG_HFS_3", PCI_CFG_HFS_3, reg);
+	pci_bus_पढ़ो_config_dword(pdev->bus, devfn, PCI_CFG_HFS_3, &reg);
+	trace_mei_pci_cfg_पढ़ो(&pdev->dev, "PCI_CFG_HFS_3", PCI_CFG_HFS_3, reg);
 	fw_type = (reg & PCI_CFG_HFS_3_FW_SKU_MSK);
 
 	dev_dbg(&pdev->dev, "fw type is %d\n", fw_type);
 
-	return fw_type == PCI_CFG_HFS_3_FW_SKU_SPS;
-}
+	वापस fw_type == PCI_CFG_HFS_3_FW_SKU_SPS;
+पूर्ण
 
-#define MEI_CFG_KIND_ITOUCH                     \
+#घोषणा MEI_CFG_KIND_ITOUCH                     \
 	.kind = "itouch"
 
-#define MEI_CFG_FW_SPS                          \
+#घोषणा MEI_CFG_FW_SPS                          \
 	.quirk_probe = mei_me_fw_type_sps
 
-#define MEI_CFG_FW_VER_SUPP                     \
+#घोषणा MEI_CFG_FW_VER_SUPP                     \
 	.fw_ver_supported = 1
 
-#define MEI_CFG_ICH_HFS                      \
+#घोषणा MEI_CFG_ICH_HFS                      \
 	.fw_status.count = 0
 
-#define MEI_CFG_ICH10_HFS                        \
+#घोषणा MEI_CFG_ICH10_HFS                        \
 	.fw_status.count = 1,                   \
 	.fw_status.status[0] = PCI_CFG_HFS_1
 
-#define MEI_CFG_PCH_HFS                         \
+#घोषणा MEI_CFG_PCH_HFS                         \
 	.fw_status.count = 2,                   \
 	.fw_status.status[0] = PCI_CFG_HFS_1,   \
 	.fw_status.status[1] = PCI_CFG_HFS_2
 
-#define MEI_CFG_PCH8_HFS                        \
+#घोषणा MEI_CFG_PCH8_HFS                        \
 	.fw_status.count = 6,                   \
 	.fw_status.status[0] = PCI_CFG_HFS_1,   \
 	.fw_status.status[1] = PCI_CFG_HFS_2,   \
@@ -1460,117 +1461,117 @@ static bool mei_me_fw_type_sps(const struct pci_dev *pdev)
 	.fw_status.status[4] = PCI_CFG_HFS_5,   \
 	.fw_status.status[5] = PCI_CFG_HFS_6
 
-#define MEI_CFG_DMA_128 \
+#घोषणा MEI_CFG_DMA_128 \
 	.dma_size[DMA_DSCR_HOST] = SZ_128K, \
 	.dma_size[DMA_DSCR_DEVICE] = SZ_128K, \
 	.dma_size[DMA_DSCR_CTRL] = PAGE_SIZE
 
-#define MEI_CFG_TRC \
+#घोषणा MEI_CFG_TRC \
 	.hw_trc_supported = 1
 
 /* ICH Legacy devices */
-static const struct mei_cfg mei_me_ich_cfg = {
+अटल स्थिर काष्ठा mei_cfg mei_me_ich_cfg = अणु
 	MEI_CFG_ICH_HFS,
-};
+पूर्ण;
 
 /* ICH devices */
-static const struct mei_cfg mei_me_ich10_cfg = {
+अटल स्थिर काष्ठा mei_cfg mei_me_ich10_cfg = अणु
 	MEI_CFG_ICH10_HFS,
-};
+पूर्ण;
 
 /* PCH6 devices */
-static const struct mei_cfg mei_me_pch6_cfg = {
+अटल स्थिर काष्ठा mei_cfg mei_me_pch6_cfg = अणु
 	MEI_CFG_PCH_HFS,
-};
+पूर्ण;
 
 /* PCH7 devices */
-static const struct mei_cfg mei_me_pch7_cfg = {
+अटल स्थिर काष्ठा mei_cfg mei_me_pch7_cfg = अणु
 	MEI_CFG_PCH_HFS,
 	MEI_CFG_FW_VER_SUPP,
-};
+पूर्ण;
 
-/* PCH Cougar Point and Patsburg with quirk for Node Manager exclusion */
-static const struct mei_cfg mei_me_pch_cpt_pbg_cfg = {
+/* PCH Cougar Poपूर्णांक and Patsburg with quirk क्रम Node Manager exclusion */
+अटल स्थिर काष्ठा mei_cfg mei_me_pch_cpt_pbg_cfg = अणु
 	MEI_CFG_PCH_HFS,
 	MEI_CFG_FW_VER_SUPP,
 	MEI_CFG_FW_NM,
-};
+पूर्ण;
 
-/* PCH8 Lynx Point and newer devices */
-static const struct mei_cfg mei_me_pch8_cfg = {
+/* PCH8 Lynx Poपूर्णांक and newer devices */
+अटल स्थिर काष्ठा mei_cfg mei_me_pch8_cfg = अणु
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
-};
+पूर्ण;
 
-/* PCH8 Lynx Point and newer devices - iTouch */
-static const struct mei_cfg mei_me_pch8_itouch_cfg = {
+/* PCH8 Lynx Poपूर्णांक and newer devices - iTouch */
+अटल स्थिर काष्ठा mei_cfg mei_me_pch8_itouch_cfg = अणु
 	MEI_CFG_KIND_ITOUCH,
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
-};
+पूर्ण;
 
-/* PCH8 Lynx Point with quirk for SPS Firmware exclusion */
-static const struct mei_cfg mei_me_pch8_sps_4_cfg = {
+/* PCH8 Lynx Poपूर्णांक with quirk क्रम SPS Firmware exclusion */
+अटल स्थिर काष्ठा mei_cfg mei_me_pch8_sps_4_cfg = अणु
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
 	MEI_CFG_FW_SPS_4,
-};
+पूर्ण;
 
-/* LBG with quirk for SPS (4.0) Firmware exclusion */
-static const struct mei_cfg mei_me_pch12_sps_4_cfg = {
+/* LBG with quirk क्रम SPS (4.0) Firmware exclusion */
+अटल स्थिर काष्ठा mei_cfg mei_me_pch12_sps_4_cfg = अणु
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
 	MEI_CFG_FW_SPS_4,
-};
+पूर्ण;
 
 /* Cannon Lake and newer devices */
-static const struct mei_cfg mei_me_pch12_cfg = {
+अटल स्थिर काष्ठा mei_cfg mei_me_pch12_cfg = अणु
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
 	MEI_CFG_DMA_128,
-};
+पूर्ण;
 
-/* Cannon Lake with quirk for SPS 5.0 and newer Firmware exclusion */
-static const struct mei_cfg mei_me_pch12_sps_cfg = {
+/* Cannon Lake with quirk क्रम SPS 5.0 and newer Firmware exclusion */
+अटल स्थिर काष्ठा mei_cfg mei_me_pch12_sps_cfg = अणु
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
 	MEI_CFG_DMA_128,
 	MEI_CFG_FW_SPS,
-};
+पूर्ण;
 
-/* Cannon Lake itouch with quirk for SPS 5.0 and newer Firmware exclusion
+/* Cannon Lake itouch with quirk क्रम SPS 5.0 and newer Firmware exclusion
  * w/o DMA support.
  */
-static const struct mei_cfg mei_me_pch12_itouch_sps_cfg = {
+अटल स्थिर काष्ठा mei_cfg mei_me_pch12_itouch_sps_cfg = अणु
 	MEI_CFG_KIND_ITOUCH,
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
 	MEI_CFG_FW_SPS,
-};
+पूर्ण;
 
 /* Tiger Lake and newer devices */
-static const struct mei_cfg mei_me_pch15_cfg = {
+अटल स्थिर काष्ठा mei_cfg mei_me_pch15_cfg = अणु
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
 	MEI_CFG_DMA_128,
 	MEI_CFG_TRC,
-};
+पूर्ण;
 
-/* Tiger Lake with quirk for SPS 5.0 and newer Firmware exclusion */
-static const struct mei_cfg mei_me_pch15_sps_cfg = {
+/* Tiger Lake with quirk क्रम SPS 5.0 and newer Firmware exclusion */
+अटल स्थिर काष्ठा mei_cfg mei_me_pch15_sps_cfg = अणु
 	MEI_CFG_PCH8_HFS,
 	MEI_CFG_FW_VER_SUPP,
 	MEI_CFG_DMA_128,
 	MEI_CFG_TRC,
 	MEI_CFG_FW_SPS,
-};
+पूर्ण;
 
 /*
- * mei_cfg_list - A list of platform platform specific configurations.
- * Note: has to be synchronized with  enum mei_cfg_idx.
+ * mei_cfg_list - A list of platक्रमm platक्रमm specअगरic configurations.
+ * Note: has to be synchronized with  क्रमागत mei_cfg_idx.
  */
-static const struct mei_cfg *const mei_cfg_list[] = {
-	[MEI_ME_UNDEF_CFG] = NULL,
+अटल स्थिर काष्ठा mei_cfg *स्थिर mei_cfg_list[] = अणु
+	[MEI_ME_UNDEF_CFG] = शून्य,
 	[MEI_ME_ICH_CFG] = &mei_me_ich_cfg,
 	[MEI_ME_ICH10_CFG] = &mei_me_ich10_cfg,
 	[MEI_ME_PCH6_CFG] = &mei_me_pch6_cfg,
@@ -1585,40 +1586,40 @@ static const struct mei_cfg *const mei_cfg_list[] = {
 	[MEI_ME_PCH12_SPS_ITOUCH_CFG] = &mei_me_pch12_itouch_sps_cfg,
 	[MEI_ME_PCH15_CFG] = &mei_me_pch15_cfg,
 	[MEI_ME_PCH15_SPS_CFG] = &mei_me_pch15_sps_cfg,
-};
+पूर्ण;
 
-const struct mei_cfg *mei_me_get_cfg(kernel_ulong_t idx)
-{
+स्थिर काष्ठा mei_cfg *mei_me_get_cfg(kernel_uदीर्घ_t idx)
+अणु
 	BUILD_BUG_ON(ARRAY_SIZE(mei_cfg_list) != MEI_ME_NUM_CFG);
 
-	if (idx >= MEI_ME_NUM_CFG)
-		return NULL;
+	अगर (idx >= MEI_ME_NUM_CFG)
+		वापस शून्य;
 
-	return mei_cfg_list[idx];
-};
+	वापस mei_cfg_list[idx];
+पूर्ण;
 
 /**
- * mei_me_dev_init - allocates and initializes the mei device structure
+ * mei_me_dev_init - allocates and initializes the mei device काष्ठाure
  *
- * @parent: device associated with physical device (pci/platform)
+ * @parent: device associated with physical device (pci/platक्रमm)
  * @cfg: per device generation config
  *
- * Return: The mei_device pointer on success, NULL on failure.
+ * Return: The mei_device poपूर्णांकer on success, शून्य on failure.
  */
-struct mei_device *mei_me_dev_init(struct device *parent,
-				   const struct mei_cfg *cfg)
-{
-	struct mei_device *dev;
-	struct mei_me_hw *hw;
-	int i;
+काष्ठा mei_device *mei_me_dev_init(काष्ठा device *parent,
+				   स्थिर काष्ठा mei_cfg *cfg)
+अणु
+	काष्ठा mei_device *dev;
+	काष्ठा mei_me_hw *hw;
+	पूर्णांक i;
 
-	dev = devm_kzalloc(parent, sizeof(*dev) + sizeof(*hw), GFP_KERNEL);
-	if (!dev)
-		return NULL;
+	dev = devm_kzalloc(parent, माप(*dev) + माप(*hw), GFP_KERNEL);
+	अगर (!dev)
+		वापस शून्य;
 
 	hw = to_me_hw(dev);
 
-	for (i = 0; i < DMA_DSCR_NUM; i++)
+	क्रम (i = 0; i < DMA_DSCR_NUM; i++)
 		dev->dr_dscr[i].size = cfg->dma_size[i];
 
 	mei_device_init(dev, parent, &mei_me_hw_ops);
@@ -1628,6 +1629,6 @@ struct mei_device *mei_me_dev_init(struct device *parent,
 
 	dev->kind = cfg->kind;
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 

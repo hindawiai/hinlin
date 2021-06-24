@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Tracepoint header for the s390 Common I/O layer (CIO)
+ * Tracepoपूर्णांक header क्रम the s390 Common I/O layer (CIO)
  *
  * Copyright IBM Corp. 2015
  * Author(s): Peter Oberparleiter <oberpar@linux.vnet.ibm.com>
  */
 
-#include <linux/kernel.h>
-#include <asm/crw.h>
-#include <uapi/asm/chpid.h>
-#include <uapi/asm/schid.h>
-#include "cio.h"
-#include "orb.h"
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/crw.h>
+#समावेश <uapi/यंत्र/chpid.h>
+#समावेश <uapi/यंत्र/schid.h>
+#समावेश "cio.h"
+#समावेश "orb.h"
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM s390
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM s390
 
-#if !defined(_TRACE_S390_CIO_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_S390_CIO_H
+#अगर !defined(_TRACE_S390_CIO_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_S390_CIO_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 DECLARE_EVENT_CLASS(s390_class_schib,
-	TP_PROTO(struct subchannel_id schid, struct schib *schib, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, काष्ठा schib *schib, पूर्णांक cc),
 	TP_ARGS(schid, schib, cc),
 	TP_STRUCT__entry(
 		__field(u8, cssid)
 		__field(u8, ssid)
 		__field(u16, schno)
 		__field(u16, devno)
-		__field_struct(struct schib, schib)
+		__field_काष्ठा(काष्ठा schib, schib)
 		__field(u8, pmcw_ena)
 		__field(u8, pmcw_st)
 		__field(u8, pmcw_dnv)
@@ -41,7 +42,7 @@ DECLARE_EVENT_CLASS(s390_class_schib,
 		__field(u8, pmcw_pam)
 		__field(u8, pmcw_pom)
 		__field(u64, pmcw_chpid)
-		__field(int, cc)
+		__field(पूर्णांक, cc)
 	),
 	TP_fast_assign(
 		__entry->cssid = schid.cssid;
@@ -59,10 +60,10 @@ DECLARE_EVENT_CLASS(s390_class_schib,
 		__entry->pmcw_pim = schib->pmcw.pim;
 		__entry->pmcw_pam = schib->pmcw.pam;
 		__entry->pmcw_pom = schib->pmcw.pom;
-		memcpy(&__entry->pmcw_chpid, &schib->pmcw.chpid, 8);
+		स_नकल(&__entry->pmcw_chpid, &schib->pmcw.chpid, 8);
 		__entry->cc = cc;
 	),
-	TP_printk("schid=%x.%x.%04x cc=%d ena=%d st=%d dnv=%d dev=%04x "
+	TP_prपूर्णांकk("schid=%x.%x.%04x cc=%d ena=%d st=%d dnv=%d dev=%04x "
 		  "lpm=0x%02x pnom=0x%02x lpum=0x%02x pim=0x%02x pam=0x%02x "
 		  "pom=0x%02x chpids=%016llx",
 		  __entry->cssid, __entry->ssid, __entry->schno, __entry->cc,
@@ -76,41 +77,41 @@ DECLARE_EVENT_CLASS(s390_class_schib,
 );
 
 /**
- * s390_cio_stsch -  Store Subchannel instruction (STSCH) was performed
+ * s390_cio_stsch -  Store Subchannel inकाष्ठाion (STSCH) was perक्रमmed
  * @schid: Subchannel ID
- * @schib: Subchannel-Information block
+ * @schib: Subchannel-Inक्रमmation block
  * @cc: Condition code
  */
 DEFINE_EVENT(s390_class_schib, s390_cio_stsch,
-	TP_PROTO(struct subchannel_id schid, struct schib *schib, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, काष्ठा schib *schib, पूर्णांक cc),
 	TP_ARGS(schid, schib, cc)
 );
 
 /**
- * s390_cio_msch -  Modify Subchannel instruction (MSCH) was performed
+ * s390_cio_msch -  Modअगरy Subchannel inकाष्ठाion (MSCH) was perक्रमmed
  * @schid: Subchannel ID
- * @schib: Subchannel-Information block
+ * @schib: Subchannel-Inक्रमmation block
  * @cc: Condition code
  */
 DEFINE_EVENT(s390_class_schib, s390_cio_msch,
-	TP_PROTO(struct subchannel_id schid, struct schib *schib, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, काष्ठा schib *schib, पूर्णांक cc),
 	TP_ARGS(schid, schib, cc)
 );
 
 /**
- * s390_cio_tsch - Test Subchannel instruction (TSCH) was performed
+ * s390_cio_tsch - Test Subchannel inकाष्ठाion (TSCH) was perक्रमmed
  * @schid: Subchannel ID
  * @irb: Interruption-Response Block
  * @cc: Condition code
  */
 TRACE_EVENT(s390_cio_tsch,
-	TP_PROTO(struct subchannel_id schid, struct irb *irb, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, काष्ठा irb *irb, पूर्णांक cc),
 	TP_ARGS(schid, irb, cc),
 	TP_STRUCT__entry(
 		__field(u8, cssid)
 		__field(u8, ssid)
 		__field(u16, schno)
-		__field_struct(struct irb, irb)
+		__field_काष्ठा(काष्ठा irb, irb)
 		__field(u8, scsw_dcc)
 		__field(u8, scsw_pno)
 		__field(u8, scsw_fctl)
@@ -118,7 +119,7 @@ TRACE_EVENT(s390_cio_tsch,
 		__field(u8, scsw_stctl)
 		__field(u8, scsw_dstat)
 		__field(u8, scsw_cstat)
-		__field(int, cc)
+		__field(पूर्णांक, cc)
 	),
 	TP_fast_assign(
 		__entry->cssid = schid.cssid;
@@ -134,7 +135,7 @@ TRACE_EVENT(s390_cio_tsch,
 		__entry->scsw_cstat = scsw_cstat(&irb->scsw);
 		__entry->cc = cc;
 	),
-	TP_printk("schid=%x.%x.%04x cc=%d dcc=%d pno=%d fctl=0x%x actl=0x%x "
+	TP_prपूर्णांकk("schid=%x.%x.%04x cc=%d dcc=%d pno=%d fctl=0x%x actl=0x%x "
 		  "stctl=0x%x dstat=0x%x cstat=0x%x",
 		  __entry->cssid, __entry->ssid, __entry->schno, __entry->cc,
 		  __entry->scsw_dcc, __entry->scsw_pno,
@@ -145,16 +146,16 @@ TRACE_EVENT(s390_cio_tsch,
 );
 
 /**
- * s390_cio_tpi - Test Pending Interruption instruction (TPI) was performed
- * @addr: Address of the I/O interruption code or %NULL
+ * s390_cio_tpi - Test Pending Interruption inकाष्ठाion (TPI) was perक्रमmed
+ * @addr: Address of the I/O पूर्णांकerruption code or %शून्य
  * @cc: Condition code
  */
 TRACE_EVENT(s390_cio_tpi,
-	TP_PROTO(struct tpi_info *addr, int cc),
+	TP_PROTO(काष्ठा tpi_info *addr, पूर्णांक cc),
 	TP_ARGS(addr, cc),
 	TP_STRUCT__entry(
-		__field(int, cc)
-		__field_struct(struct tpi_info, tpi_info)
+		__field(पूर्णांक, cc)
+		__field_काष्ठा(काष्ठा tpi_info, tpi_info)
 		__field(u8, cssid)
 		__field(u8, ssid)
 		__field(u16, schno)
@@ -164,14 +165,14 @@ TRACE_EVENT(s390_cio_tpi,
 	),
 	TP_fast_assign(
 		__entry->cc = cc;
-		if (cc != 0)
-			memset(&__entry->tpi_info, 0, sizeof(struct tpi_info));
-		else if (addr)
+		अगर (cc != 0)
+			स_रखो(&__entry->tpi_info, 0, माप(काष्ठा tpi_info));
+		अन्यथा अगर (addr)
 			__entry->tpi_info = *addr;
-		else {
-			memcpy(&__entry->tpi_info, &S390_lowcore.subchannel_id,
-			       sizeof(struct tpi_info));
-		}
+		अन्यथा अणु
+			स_नकल(&__entry->tpi_info, &S390_lowcore.subchannel_id,
+			       माप(काष्ठा tpi_info));
+		पूर्ण
 		__entry->cssid = __entry->tpi_info.schid.cssid;
 		__entry->ssid = __entry->tpi_info.schid.ssid;
 		__entry->schno = __entry->tpi_info.schid.sch_no;
@@ -179,7 +180,7 @@ TRACE_EVENT(s390_cio_tpi,
 		__entry->isc = __entry->tpi_info.isc;
 		__entry->type = __entry->tpi_info.type;
 	),
-	TP_printk("schid=%x.%x.%04x cc=%d a=%d isc=%d type=%d",
+	TP_prपूर्णांकk("schid=%x.%x.%04x cc=%d a=%d isc=%d type=%d",
 		  __entry->cssid, __entry->ssid, __entry->schno, __entry->cc,
 		  __entry->adapter_IO, __entry->isc,
 		  __entry->type
@@ -187,20 +188,20 @@ TRACE_EVENT(s390_cio_tpi,
 );
 
 /**
- * s390_cio_ssch - Start Subchannel instruction (SSCH) was performed
+ * s390_cio_ssch - Start Subchannel inकाष्ठाion (SSCH) was perक्रमmed
  * @schid: Subchannel ID
  * @orb: Operation-Request Block
  * @cc: Condition code
  */
 TRACE_EVENT(s390_cio_ssch,
-	TP_PROTO(struct subchannel_id schid, union orb *orb, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, जोड़ orb *orb, पूर्णांक cc),
 	TP_ARGS(schid, orb, cc),
 	TP_STRUCT__entry(
 		__field(u8, cssid)
 		__field(u8, ssid)
 		__field(u16, schno)
-		__field_struct(union orb, orb)
-		__field(int, cc)
+		__field_काष्ठा(जोड़ orb, orb)
+		__field(पूर्णांक, cc)
 	),
 	TP_fast_assign(
 		__entry->cssid = schid.cssid;
@@ -209,19 +210,19 @@ TRACE_EVENT(s390_cio_ssch,
 		__entry->orb = *orb;
 		__entry->cc = cc;
 	),
-	TP_printk("schid=%x.%x.%04x cc=%d", __entry->cssid, __entry->ssid,
+	TP_prपूर्णांकk("schid=%x.%x.%04x cc=%d", __entry->cssid, __entry->ssid,
 		  __entry->schno, __entry->cc
 	)
 );
 
 DECLARE_EVENT_CLASS(s390_class_schid,
-	TP_PROTO(struct subchannel_id schid, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, पूर्णांक cc),
 	TP_ARGS(schid, cc),
 	TP_STRUCT__entry(
 		__field(u8, cssid)
 		__field(u8, ssid)
 		__field(u16, schno)
-		__field(int, cc)
+		__field(पूर्णांक, cc)
 	),
 	TP_fast_assign(
 		__entry->cssid = schid.cssid;
@@ -229,64 +230,64 @@ DECLARE_EVENT_CLASS(s390_class_schid,
 		__entry->schno = schid.sch_no;
 		__entry->cc = cc;
 	),
-	TP_printk("schid=%x.%x.%04x cc=%d", __entry->cssid, __entry->ssid,
+	TP_prपूर्णांकk("schid=%x.%x.%04x cc=%d", __entry->cssid, __entry->ssid,
 		  __entry->schno, __entry->cc
 	)
 );
 
 /**
- * s390_cio_csch - Clear Subchannel instruction (CSCH) was performed
+ * s390_cio_csch - Clear Subchannel inकाष्ठाion (CSCH) was perक्रमmed
  * @schid: Subchannel ID
  * @cc: Condition code
  */
 DEFINE_EVENT(s390_class_schid, s390_cio_csch,
-	TP_PROTO(struct subchannel_id schid, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, पूर्णांक cc),
 	TP_ARGS(schid, cc)
 );
 
 /**
- * s390_cio_hsch - Halt Subchannel instruction (HSCH) was performed
+ * s390_cio_hsch - Halt Subchannel inकाष्ठाion (HSCH) was perक्रमmed
  * @schid: Subchannel ID
  * @cc: Condition code
  */
 DEFINE_EVENT(s390_class_schid, s390_cio_hsch,
-	TP_PROTO(struct subchannel_id schid, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, पूर्णांक cc),
 	TP_ARGS(schid, cc)
 );
 
 /**
- * s390_cio_xsch - Cancel Subchannel instruction (XSCH) was performed
+ * s390_cio_xsch - Cancel Subchannel inकाष्ठाion (XSCH) was perक्रमmed
  * @schid: Subchannel ID
  * @cc: Condition code
  */
 DEFINE_EVENT(s390_class_schid, s390_cio_xsch,
-	TP_PROTO(struct subchannel_id schid, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, पूर्णांक cc),
 	TP_ARGS(schid, cc)
 );
 
 /**
- * s390_cio_rsch - Resume Subchannel instruction (RSCH) was performed
+ * s390_cio_rsch - Resume Subchannel inकाष्ठाion (RSCH) was perक्रमmed
  * @schid: Subchannel ID
  * @cc: Condition code
  */
 DEFINE_EVENT(s390_class_schid, s390_cio_rsch,
-	TP_PROTO(struct subchannel_id schid, int cc),
+	TP_PROTO(काष्ठा subchannel_id schid, पूर्णांक cc),
 	TP_ARGS(schid, cc)
 );
 
-#define CHSC_MAX_REQUEST_LEN		64
-#define CHSC_MAX_RESPONSE_LEN		64
+#घोषणा CHSC_MAX_REQUEST_LEN		64
+#घोषणा CHSC_MAX_RESPONSE_LEN		64
 
 /**
- * s390_cio_chsc - Channel Subsystem Call (CHSC) instruction was performed
+ * s390_cio_chsc - Channel Subप्रणाली Call (CHSC) inकाष्ठाion was perक्रमmed
  * @chsc: CHSC block
  * @cc: Condition code
  */
 TRACE_EVENT(s390_cio_chsc,
-	TP_PROTO(struct chsc_header *chsc, int cc),
+	TP_PROTO(काष्ठा chsc_header *chsc, पूर्णांक cc),
 	TP_ARGS(chsc, cc),
 	TP_STRUCT__entry(
-		__field(int, cc)
+		__field(पूर्णांक, cc)
 		__field(u16, code)
 		__field(u16, rcode)
 		__array(u8, request, CHSC_MAX_REQUEST_LEN)
@@ -295,26 +296,26 @@ TRACE_EVENT(s390_cio_chsc,
 	TP_fast_assign(
 		__entry->cc = cc;
 		__entry->code = chsc->code;
-		memcpy(&entry->request, chsc,
+		स_नकल(&entry->request, chsc,
 		       min_t(u16, chsc->length, CHSC_MAX_REQUEST_LEN));
-		chsc = (struct chsc_header *) ((char *) chsc + chsc->length);
+		chsc = (काष्ठा chsc_header *) ((अक्षर *) chsc + chsc->length);
 		__entry->rcode = chsc->code;
-		memcpy(&entry->response, chsc,
+		स_नकल(&entry->response, chsc,
 		       min_t(u16, chsc->length, CHSC_MAX_RESPONSE_LEN));
 	),
-	TP_printk("code=0x%04x cc=%d rcode=0x%04x", __entry->code,
+	TP_prपूर्णांकk("code=0x%04x cc=%d rcode=0x%04x", __entry->code,
 		  __entry->cc, __entry->rcode)
 );
 
 /**
- * s390_cio_interrupt - An I/O interrupt occurred
- * @tpi_info: Address of the I/O interruption code
+ * s390_cio_पूर्णांकerrupt - An I/O पूर्णांकerrupt occurred
+ * @tpi_info: Address of the I/O पूर्णांकerruption code
  */
-TRACE_EVENT(s390_cio_interrupt,
-	TP_PROTO(struct tpi_info *tpi_info),
+TRACE_EVENT(s390_cio_पूर्णांकerrupt,
+	TP_PROTO(काष्ठा tpi_info *tpi_info),
 	TP_ARGS(tpi_info),
 	TP_STRUCT__entry(
-		__field_struct(struct tpi_info, tpi_info)
+		__field_काष्ठा(काष्ठा tpi_info, tpi_info)
 		__field(u8, cssid)
 		__field(u8, ssid)
 		__field(u16, schno)
@@ -329,41 +330,41 @@ TRACE_EVENT(s390_cio_interrupt,
 		__entry->isc = tpi_info->isc;
 		__entry->type = tpi_info->type;
 	),
-	TP_printk("schid=%x.%x.%04x isc=%d type=%d",
+	TP_prपूर्णांकk("schid=%x.%x.%04x isc=%d type=%d",
 		  __entry->cssid, __entry->ssid, __entry->schno,
 		  __entry->isc, __entry->type
 	)
 );
 
 /**
- * s390_cio_adapter_int - An adapter interrupt occurred
- * @tpi_info: Address of the I/O interruption code
+ * s390_cio_adapter_पूर्णांक - An adapter पूर्णांकerrupt occurred
+ * @tpi_info: Address of the I/O पूर्णांकerruption code
  */
-TRACE_EVENT(s390_cio_adapter_int,
-	TP_PROTO(struct tpi_info *tpi_info),
+TRACE_EVENT(s390_cio_adapter_पूर्णांक,
+	TP_PROTO(काष्ठा tpi_info *tpi_info),
 	TP_ARGS(tpi_info),
 	TP_STRUCT__entry(
-		__field_struct(struct tpi_info, tpi_info)
+		__field_काष्ठा(काष्ठा tpi_info, tpi_info)
 		__field(u8, isc)
 	),
 	TP_fast_assign(
 		__entry->tpi_info = *tpi_info;
 		__entry->isc = tpi_info->isc;
 	),
-	TP_printk("isc=%d", __entry->isc)
+	TP_prपूर्णांकk("isc=%d", __entry->isc)
 );
 
 /**
- * s390_cio_stcrw - Store Channel Report Word (STCRW) was performed
+ * s390_cio_stcrw - Store Channel Report Word (STCRW) was perक्रमmed
  * @crw: Channel Report Word
  * @cc: Condition code
  */
 TRACE_EVENT(s390_cio_stcrw,
-	TP_PROTO(struct crw *crw, int cc),
+	TP_PROTO(काष्ठा crw *crw, पूर्णांक cc),
 	TP_ARGS(crw, cc),
 	TP_STRUCT__entry(
-		__field_struct(struct crw, crw)
-		__field(int, cc)
+		__field_काष्ठा(काष्ठा crw, crw)
+		__field(पूर्णांक, cc)
 		__field(u8, slct)
 		__field(u8, oflw)
 		__field(u8, chn)
@@ -383,7 +384,7 @@ TRACE_EVENT(s390_cio_stcrw,
 		__entry->erc = crw->erc;
 		__entry->rsid = crw->rsid;
 	),
-	TP_printk("cc=%d slct=%d oflw=%d chn=%d rsc=%d anc=%d erc=0x%x "
+	TP_prपूर्णांकk("cc=%d slct=%d oflw=%d chn=%d rsc=%d anc=%d erc=0x%x "
 		  "rsid=0x%x",
 		  __entry->cc, __entry->slct, __entry->oflw,
 		  __entry->chn, __entry->rsc,  __entry->anc,
@@ -391,13 +392,13 @@ TRACE_EVENT(s390_cio_stcrw,
 	)
 );
 
-#endif /* _TRACE_S390_CIO_H */
+#पूर्ण_अगर /* _TRACE_S390_CIO_H */
 
 /* This part must be outside protection */
-#undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
+#अघोषित TRACE_INCLUDE_PATH
+#घोषणा TRACE_INCLUDE_PATH .
 
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE trace
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता trace
 
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

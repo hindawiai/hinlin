@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  Copyright (c) 1999 by Uros Bizjak <uros@kss-loka.si>
  *                        Takashi Iwai <tiwai@suse.de>
  *
  *  SB16ASP/AWE32 CSP control
  */
-#ifndef __SOUND_SB16_CSP_H
-#define __SOUND_SB16_CSP_H
+#अगर_अघोषित __SOUND_SB16_CSP_H
+#घोषणा __SOUND_SB16_CSP_H
 
-#include <sound/sb.h>
-#include <sound/hwdep.h>
-#include <linux/firmware.h>
-#include <uapi/sound/sb16_csp.h>
+#समावेश <sound/sb.h>
+#समावेश <sound/hwdep.h>
+#समावेश <linux/firmware.h>
+#समावेश <uapi/sound/sb16_csp.h>
 
-struct snd_sb_csp;
+काष्ठा snd_sb_csp;
 
-/* indices for the known CSP programs */
-enum {
+/* indices क्रम the known CSP programs */
+क्रमागत अणु
 	CSP_PROGRAM_MULAW,
 	CSP_PROGRAM_ALAW,
 	CSP_PROGRAM_ADPCM_INIT,
@@ -24,53 +25,53 @@ enum {
 	CSP_PROGRAM_ADPCM_CAPTURE,
 
 	CSP_PROGRAM_COUNT
-};
+पूर्ण;
 
 /*
- * CSP operators
+ * CSP चालकs
  */
-struct snd_sb_csp_ops {
-	int (*csp_use) (struct snd_sb_csp * p);
-	int (*csp_unuse) (struct snd_sb_csp * p);
-	int (*csp_autoload) (struct snd_sb_csp * p, snd_pcm_format_t pcm_sfmt, int play_rec_mode);
-	int (*csp_start) (struct snd_sb_csp * p, int sample_width, int channels);
-	int (*csp_stop) (struct snd_sb_csp * p);
-	int (*csp_qsound_transfer) (struct snd_sb_csp * p);
-};
+काष्ठा snd_sb_csp_ops अणु
+	पूर्णांक (*csp_use) (काष्ठा snd_sb_csp * p);
+	पूर्णांक (*csp_unuse) (काष्ठा snd_sb_csp * p);
+	पूर्णांक (*csp_स्वतःload) (काष्ठा snd_sb_csp * p, snd_pcm_क्रमmat_t pcm_sfmt, पूर्णांक play_rec_mode);
+	पूर्णांक (*csp_start) (काष्ठा snd_sb_csp * p, पूर्णांक sample_width, पूर्णांक channels);
+	पूर्णांक (*csp_stop) (काष्ठा snd_sb_csp * p);
+	पूर्णांक (*csp_qsound_transfer) (काष्ठा snd_sb_csp * p);
+पूर्ण;
 
 /*
- * CSP private data
+ * CSP निजी data
  */
-struct snd_sb_csp {
-	struct snd_sb *chip;		/* SB16 DSP */
-	int used;		/* usage flag - exclusive */
-	char codec_name[16];	/* name of codec */
-	unsigned short func_nr;	/* function number */
-	unsigned int acc_format;	/* accepted PCM formats */
-	int acc_channels;	/* accepted channels */
-	int acc_width;		/* accepted sample width */
-	int acc_rates;		/* accepted sample rates */
-	int mode;		/* MODE */
-	int run_channels;	/* current CSP channels */
-	int run_width;		/* current sample width */
-	int version;		/* CSP version (0x10 - 0x1f) */
-	int running;		/* running state */
+काष्ठा snd_sb_csp अणु
+	काष्ठा snd_sb *chip;		/* SB16 DSP */
+	पूर्णांक used;		/* usage flag - exclusive */
+	अक्षर codec_name[16];	/* name of codec */
+	अचिन्हित लघु func_nr;	/* function number */
+	अचिन्हित पूर्णांक acc_क्रमmat;	/* accepted PCM क्रमmats */
+	पूर्णांक acc_channels;	/* accepted channels */
+	पूर्णांक acc_width;		/* accepted sample width */
+	पूर्णांक acc_rates;		/* accepted sample rates */
+	पूर्णांक mode;		/* MODE */
+	पूर्णांक run_channels;	/* current CSP channels */
+	पूर्णांक run_width;		/* current sample width */
+	पूर्णांक version;		/* CSP version (0x10 - 0x1f) */
+	पूर्णांक running;		/* running state */
 
-	struct snd_sb_csp_ops ops;	/* operators */
+	काष्ठा snd_sb_csp_ops ops;	/* चालकs */
 
 	spinlock_t q_lock;	/* locking */
-	int q_enabled;		/* enabled flag */
-	int qpos_left;		/* left position */
-	int qpos_right;		/* right position */
-	int qpos_changed;	/* position changed flag */
+	पूर्णांक q_enabled;		/* enabled flag */
+	पूर्णांक qpos_left;		/* left position */
+	पूर्णांक qpos_right;		/* right position */
+	पूर्णांक qpos_changed;	/* position changed flag */
 
-	struct snd_kcontrol *qsound_switch;
-	struct snd_kcontrol *qsound_space;
+	काष्ठा snd_kcontrol *qsound_चयन;
+	काष्ठा snd_kcontrol *qsound_space;
 
-	struct mutex access_mutex;	/* locking */
+	काष्ठा mutex access_mutex;	/* locking */
 
-	const struct firmware *csp_programs[CSP_PROGRAM_COUNT];
-};
+	स्थिर काष्ठा firmware *csp_programs[CSP_PROGRAM_COUNT];
+पूर्ण;
 
-int snd_sb_csp_new(struct snd_sb *chip, int device, struct snd_hwdep ** rhwdep);
-#endif /* __SOUND_SB16_CSP */
+पूर्णांक snd_sb_csp_new(काष्ठा snd_sb *chip, पूर्णांक device, काष्ठा snd_hwdep ** rhwdep);
+#पूर्ण_अगर /* __SOUND_SB16_CSP */

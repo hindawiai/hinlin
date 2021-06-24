@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) STMicroelectronics SA 2017
  *
@@ -6,65 +7,65 @@
  *          Yannick Fertre <yannick.fertre@st.com>
  */
 
-#ifndef __DW_MIPI_DSI__
-#define __DW_MIPI_DSI__
+#अगर_अघोषित __DW_MIPI_DSI__
+#घोषणा __DW_MIPI_DSI__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include <drm/drm_modes.h>
+#समावेश <drm/drm_modes.h>
 
-struct drm_display_mode;
-struct drm_encoder;
-struct dw_mipi_dsi;
-struct mipi_dsi_device;
-struct platform_device;
+काष्ठा drm_display_mode;
+काष्ठा drm_encoder;
+काष्ठा dw_mipi_dsi;
+काष्ठा mipi_dsi_device;
+काष्ठा platक्रमm_device;
 
-struct dw_mipi_dsi_dphy_timing {
+काष्ठा dw_mipi_dsi_dphy_timing अणु
 	u16 data_hs2lp;
 	u16 data_lp2hs;
 	u16 clk_hs2lp;
 	u16 clk_lp2hs;
-};
+पूर्ण;
 
-struct dw_mipi_dsi_phy_ops {
-	int (*init)(void *priv_data);
-	void (*power_on)(void *priv_data);
-	void (*power_off)(void *priv_data);
-	int (*get_lane_mbps)(void *priv_data,
-			     const struct drm_display_mode *mode,
-			     unsigned long mode_flags, u32 lanes, u32 format,
-			     unsigned int *lane_mbps);
-	int (*get_timing)(void *priv_data, unsigned int lane_mbps,
-			  struct dw_mipi_dsi_dphy_timing *timing);
-	int (*get_esc_clk_rate)(void *priv_data, unsigned int *esc_clk_rate);
-};
+काष्ठा dw_mipi_dsi_phy_ops अणु
+	पूर्णांक (*init)(व्योम *priv_data);
+	व्योम (*घातer_on)(व्योम *priv_data);
+	व्योम (*घातer_off)(व्योम *priv_data);
+	पूर्णांक (*get_lane_mbps)(व्योम *priv_data,
+			     स्थिर काष्ठा drm_display_mode *mode,
+			     अचिन्हित दीर्घ mode_flags, u32 lanes, u32 क्रमmat,
+			     अचिन्हित पूर्णांक *lane_mbps);
+	पूर्णांक (*get_timing)(व्योम *priv_data, अचिन्हित पूर्णांक lane_mbps,
+			  काष्ठा dw_mipi_dsi_dphy_timing *timing);
+	पूर्णांक (*get_esc_clk_rate)(व्योम *priv_data, अचिन्हित पूर्णांक *esc_clk_rate);
+पूर्ण;
 
-struct dw_mipi_dsi_host_ops {
-	int (*attach)(void *priv_data,
-		      struct mipi_dsi_device *dsi);
-	int (*detach)(void *priv_data,
-		      struct mipi_dsi_device *dsi);
-};
+काष्ठा dw_mipi_dsi_host_ops अणु
+	पूर्णांक (*attach)(व्योम *priv_data,
+		      काष्ठा mipi_dsi_device *dsi);
+	पूर्णांक (*detach)(व्योम *priv_data,
+		      काष्ठा mipi_dsi_device *dsi);
+पूर्ण;
 
-struct dw_mipi_dsi_plat_data {
-	void __iomem *base;
-	unsigned int max_data_lanes;
+काष्ठा dw_mipi_dsi_plat_data अणु
+	व्योम __iomem *base;
+	अचिन्हित पूर्णांक max_data_lanes;
 
-	enum drm_mode_status (*mode_valid)(void *priv_data,
-					   const struct drm_display_mode *mode);
+	क्रमागत drm_mode_status (*mode_valid)(व्योम *priv_data,
+					   स्थिर काष्ठा drm_display_mode *mode);
 
-	const struct dw_mipi_dsi_phy_ops *phy_ops;
-	const struct dw_mipi_dsi_host_ops *host_ops;
+	स्थिर काष्ठा dw_mipi_dsi_phy_ops *phy_ops;
+	स्थिर काष्ठा dw_mipi_dsi_host_ops *host_ops;
 
-	void *priv_data;
-};
+	व्योम *priv_data;
+पूर्ण;
 
-struct dw_mipi_dsi *dw_mipi_dsi_probe(struct platform_device *pdev,
-				      const struct dw_mipi_dsi_plat_data
+काष्ठा dw_mipi_dsi *dw_mipi_dsi_probe(काष्ठा platक्रमm_device *pdev,
+				      स्थिर काष्ठा dw_mipi_dsi_plat_data
 				      *plat_data);
-void dw_mipi_dsi_remove(struct dw_mipi_dsi *dsi);
-int dw_mipi_dsi_bind(struct dw_mipi_dsi *dsi, struct drm_encoder *encoder);
-void dw_mipi_dsi_unbind(struct dw_mipi_dsi *dsi);
-void dw_mipi_dsi_set_slave(struct dw_mipi_dsi *dsi, struct dw_mipi_dsi *slave);
+व्योम dw_mipi_dsi_हटाओ(काष्ठा dw_mipi_dsi *dsi);
+पूर्णांक dw_mipi_dsi_bind(काष्ठा dw_mipi_dsi *dsi, काष्ठा drm_encoder *encoder);
+व्योम dw_mipi_dsi_unbind(काष्ठा dw_mipi_dsi *dsi);
+व्योम dw_mipi_dsi_set_slave(काष्ठा dw_mipi_dsi *dsi, काष्ठा dw_mipi_dsi *slave);
 
-#endif /* __DW_MIPI_DSI__ */
+#पूर्ण_अगर /* __DW_MIPI_DSI__ */

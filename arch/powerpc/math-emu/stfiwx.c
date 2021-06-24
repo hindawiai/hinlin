@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-int
-stfiwx(u32 *frS, void *ea)
-{
-#ifdef DEBUG
-	printk("%s: %p %p\n", __func__, frS, ea);
-#endif
+पूर्णांक
+stfiwx(u32 *frS, व्योम *ea)
+अणु
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: %p %p\n", __func__, frS, ea);
+#पूर्ण_अगर
 
-	if (copy_to_user(ea, &frS[1], sizeof(frS[1])))
-		return -EFAULT;
+	अगर (copy_to_user(ea, &frS[1], माप(frS[1])))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

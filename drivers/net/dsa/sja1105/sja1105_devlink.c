@@ -1,255 +1,256 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2018-2019, Vladimir Oltean <olteanv@gmail.com>
  * Copyright 2020 NXP Semiconductors
  */
-#include "sja1105.h"
+#समावेश "sja1105.h"
 
-/* Since devlink regions have a fixed size and the static config has a variable
- * size, we need to calculate the maximum possible static config size by
+/* Since devlink regions have a fixed size and the अटल config has a variable
+ * size, we need to calculate the maximum possible अटल config size by
  * creating a dummy config with all table entries populated to the max, and get
- * its packed length. This is done dynamically as opposed to simply hardcoding
- * a number, since currently not all static config tables are implemented, so
- * we are avoiding a possible code desynchronization.
+ * its packed length. This is करोne dynamically as opposed to simply hardcoding
+ * a number, since currently not all अटल config tables are implemented, so
+ * we are aव्योमing a possible code desynchronization.
  */
-static size_t sja1105_static_config_get_max_size(struct sja1105_private *priv)
-{
-	struct sja1105_static_config config;
-	enum sja1105_blk_idx blk_idx;
-	int rc;
+अटल माप_प्रकार sja1105_अटल_config_get_max_size(काष्ठा sja1105_निजी *priv)
+अणु
+	काष्ठा sja1105_अटल_config config;
+	क्रमागत sja1105_blk_idx blk_idx;
+	पूर्णांक rc;
 
-	rc = sja1105_static_config_init(&config,
-					priv->info->static_ops,
+	rc = sja1105_अटल_config_init(&config,
+					priv->info->अटल_ops,
 					priv->info->device_id);
-	if (rc)
-		return 0;
+	अगर (rc)
+		वापस 0;
 
-	for (blk_idx = 0; blk_idx < BLK_IDX_MAX; blk_idx++) {
-		struct sja1105_table *table = &config.tables[blk_idx];
+	क्रम (blk_idx = 0; blk_idx < BLK_IDX_MAX; blk_idx++) अणु
+		काष्ठा sja1105_table *table = &config.tables[blk_idx];
 
 		table->entry_count = table->ops->max_entry_count;
-	}
+	पूर्ण
 
-	return sja1105_static_config_get_length(&config);
-}
+	वापस sja1105_अटल_config_get_length(&config);
+पूर्ण
 
-static int
-sja1105_region_static_config_snapshot(struct devlink *dl,
-				      const struct devlink_region_ops *ops,
-				      struct netlink_ext_ack *extack,
+अटल पूर्णांक
+sja1105_region_अटल_config_snapshot(काष्ठा devlink *dl,
+				      स्थिर काष्ठा devlink_region_ops *ops,
+				      काष्ठा netlink_ext_ack *extack,
 				      u8 **data)
-{
-	struct dsa_switch *ds = dsa_devlink_to_ds(dl);
-	struct sja1105_private *priv = ds->priv;
-	size_t max_len, len;
+अणु
+	काष्ठा dsa_चयन *ds = dsa_devlink_to_ds(dl);
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	माप_प्रकार max_len, len;
 
-	len = sja1105_static_config_get_length(&priv->static_config);
-	max_len = sja1105_static_config_get_max_size(priv);
+	len = sja1105_अटल_config_get_length(&priv->अटल_config);
+	max_len = sja1105_अटल_config_get_max_size(priv);
 
-	*data = kcalloc(max_len, sizeof(u8), GFP_KERNEL);
-	if (!*data)
-		return -ENOMEM;
+	*data = kसुस्मृति(max_len, माप(u8), GFP_KERNEL);
+	अगर (!*data)
+		वापस -ENOMEM;
 
-	return static_config_buf_prepare_for_upload(priv, *data, len);
-}
+	वापस अटल_config_buf_prepare_क्रम_upload(priv, *data, len);
+पूर्ण
 
-static struct devlink_region_ops sja1105_region_static_config_ops = {
+अटल काष्ठा devlink_region_ops sja1105_region_अटल_config_ops = अणु
 	.name = "static-config",
-	.snapshot = sja1105_region_static_config_snapshot,
-	.destructor = kfree,
-};
+	.snapshot = sja1105_region_अटल_config_snapshot,
+	.deकाष्ठाor = kमुक्त,
+पूर्ण;
 
-enum sja1105_region_id {
+क्रमागत sja1105_region_id अणु
 	SJA1105_REGION_STATIC_CONFIG = 0,
-};
+पूर्ण;
 
-struct sja1105_region {
-	const struct devlink_region_ops *ops;
-	size_t (*get_size)(struct sja1105_private *priv);
-};
+काष्ठा sja1105_region अणु
+	स्थिर काष्ठा devlink_region_ops *ops;
+	माप_प्रकार (*get_size)(काष्ठा sja1105_निजी *priv);
+पूर्ण;
 
-static struct sja1105_region sja1105_regions[] = {
-	[SJA1105_REGION_STATIC_CONFIG] = {
-		.ops = &sja1105_region_static_config_ops,
-		.get_size = sja1105_static_config_get_max_size,
-	},
-};
+अटल काष्ठा sja1105_region sja1105_regions[] = अणु
+	[SJA1105_REGION_STATIC_CONFIG] = अणु
+		.ops = &sja1105_region_अटल_config_ops,
+		.get_size = sja1105_अटल_config_get_max_size,
+	पूर्ण,
+पूर्ण;
 
-static int sja1105_setup_devlink_regions(struct dsa_switch *ds)
-{
-	int i, num_regions = ARRAY_SIZE(sja1105_regions);
-	struct sja1105_private *priv = ds->priv;
-	const struct devlink_region_ops *ops;
-	struct devlink_region *region;
+अटल पूर्णांक sja1105_setup_devlink_regions(काष्ठा dsa_चयन *ds)
+अणु
+	पूर्णांक i, num_regions = ARRAY_SIZE(sja1105_regions);
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	स्थिर काष्ठा devlink_region_ops *ops;
+	काष्ठा devlink_region *region;
 	u64 size;
 
-	priv->regions = kcalloc(num_regions, sizeof(struct devlink_region *),
+	priv->regions = kसुस्मृति(num_regions, माप(काष्ठा devlink_region *),
 				GFP_KERNEL);
-	if (!priv->regions)
-		return -ENOMEM;
+	अगर (!priv->regions)
+		वापस -ENOMEM;
 
-	for (i = 0; i < num_regions; i++) {
+	क्रम (i = 0; i < num_regions; i++) अणु
 		size = sja1105_regions[i].get_size(priv);
 		ops = sja1105_regions[i].ops;
 
 		region = dsa_devlink_region_create(ds, ops, 1, size);
-		if (IS_ERR(region)) {
-			while (i-- >= 0)
+		अगर (IS_ERR(region)) अणु
+			जबतक (i-- >= 0)
 				dsa_devlink_region_destroy(priv->regions[i]);
-			return PTR_ERR(region);
-		}
+			वापस PTR_ERR(region);
+		पूर्ण
 
 		priv->regions[i] = region;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sja1105_teardown_devlink_regions(struct dsa_switch *ds)
-{
-	int i, num_regions = ARRAY_SIZE(sja1105_regions);
-	struct sja1105_private *priv = ds->priv;
+अटल व्योम sja1105_tearकरोwn_devlink_regions(काष्ठा dsa_चयन *ds)
+अणु
+	पूर्णांक i, num_regions = ARRAY_SIZE(sja1105_regions);
+	काष्ठा sja1105_निजी *priv = ds->priv;
 
-	for (i = 0; i < num_regions; i++)
+	क्रम (i = 0; i < num_regions; i++)
 		dsa_devlink_region_destroy(priv->regions[i]);
 
-	kfree(priv->regions);
-}
+	kमुक्त(priv->regions);
+पूर्ण
 
-static int sja1105_best_effort_vlan_filtering_get(struct sja1105_private *priv,
+अटल पूर्णांक sja1105_best_efक्रमt_vlan_filtering_get(काष्ठा sja1105_निजी *priv,
 						  bool *be_vlan)
-{
-	*be_vlan = priv->best_effort_vlan_filtering;
+अणु
+	*be_vlan = priv->best_efक्रमt_vlan_filtering;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sja1105_best_effort_vlan_filtering_set(struct sja1105_private *priv,
+अटल पूर्णांक sja1105_best_efक्रमt_vlan_filtering_set(काष्ठा sja1105_निजी *priv,
 						  bool be_vlan)
-{
-	struct dsa_switch *ds = priv->ds;
+अणु
+	काष्ठा dsa_चयन *ds = priv->ds;
 	bool vlan_filtering;
-	int port;
-	int rc;
+	पूर्णांक port;
+	पूर्णांक rc;
 
-	priv->best_effort_vlan_filtering = be_vlan;
+	priv->best_efक्रमt_vlan_filtering = be_vlan;
 
 	rtnl_lock();
-	for (port = 0; port < ds->num_ports; port++) {
-		struct dsa_port *dp;
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		काष्ठा dsa_port *dp;
 
-		if (!dsa_is_user_port(ds, port))
-			continue;
+		अगर (!dsa_is_user_port(ds, port))
+			जारी;
 
 		dp = dsa_to_port(ds, port);
 		vlan_filtering = dsa_port_is_vlan_filtering(dp);
 
-		rc = sja1105_vlan_filtering(ds, port, vlan_filtering, NULL);
-		if (rc)
-			break;
-	}
+		rc = sja1105_vlan_filtering(ds, port, vlan_filtering, शून्य);
+		अगर (rc)
+			अवरोध;
+	पूर्ण
 	rtnl_unlock();
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-enum sja1105_devlink_param_id {
+क्रमागत sja1105_devlink_param_id अणु
 	SJA1105_DEVLINK_PARAM_ID_BASE = DEVLINK_PARAM_GENERIC_ID_MAX,
 	SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING,
-};
+पूर्ण;
 
-int sja1105_devlink_param_get(struct dsa_switch *ds, u32 id,
-			      struct devlink_param_gset_ctx *ctx)
-{
-	struct sja1105_private *priv = ds->priv;
-	int err;
+पूर्णांक sja1105_devlink_param_get(काष्ठा dsa_चयन *ds, u32 id,
+			      काष्ठा devlink_param_gset_ctx *ctx)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक err;
 
-	switch (id) {
-	case SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING:
-		err = sja1105_best_effort_vlan_filtering_get(priv,
+	चयन (id) अणु
+	हाल SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING:
+		err = sja1105_best_efक्रमt_vlan_filtering_get(priv,
 							     &ctx->val.vbool);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int sja1105_devlink_param_set(struct dsa_switch *ds, u32 id,
-			      struct devlink_param_gset_ctx *ctx)
-{
-	struct sja1105_private *priv = ds->priv;
-	int err;
+पूर्णांक sja1105_devlink_param_set(काष्ठा dsa_चयन *ds, u32 id,
+			      काष्ठा devlink_param_gset_ctx *ctx)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक err;
 
-	switch (id) {
-	case SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING:
-		err = sja1105_best_effort_vlan_filtering_set(priv,
+	चयन (id) अणु
+	हाल SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING:
+		err = sja1105_best_efक्रमt_vlan_filtering_set(priv,
 							     ctx->val.vbool);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EOPNOTSUPP;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct devlink_param sja1105_devlink_params[] = {
+अटल स्थिर काष्ठा devlink_param sja1105_devlink_params[] = अणु
 	DSA_DEVLINK_PARAM_DRIVER(SJA1105_DEVLINK_PARAM_ID_BEST_EFFORT_VLAN_FILTERING,
 				 "best_effort_vlan_filtering",
 				 DEVLINK_PARAM_TYPE_BOOL,
 				 BIT(DEVLINK_PARAM_CMODE_RUNTIME)),
-};
+पूर्ण;
 
-static int sja1105_setup_devlink_params(struct dsa_switch *ds)
-{
-	return dsa_devlink_params_register(ds, sja1105_devlink_params,
+अटल पूर्णांक sja1105_setup_devlink_params(काष्ठा dsa_चयन *ds)
+अणु
+	वापस dsa_devlink_params_रेजिस्टर(ds, sja1105_devlink_params,
 					   ARRAY_SIZE(sja1105_devlink_params));
-}
+पूर्ण
 
-static void sja1105_teardown_devlink_params(struct dsa_switch *ds)
-{
-	dsa_devlink_params_unregister(ds, sja1105_devlink_params,
+अटल व्योम sja1105_tearकरोwn_devlink_params(काष्ठा dsa_चयन *ds)
+अणु
+	dsa_devlink_params_unरेजिस्टर(ds, sja1105_devlink_params,
 				      ARRAY_SIZE(sja1105_devlink_params));
-}
+पूर्ण
 
-int sja1105_devlink_info_get(struct dsa_switch *ds,
-			     struct devlink_info_req *req,
-			     struct netlink_ext_ack *extack)
-{
-	struct sja1105_private *priv = ds->priv;
-	int rc;
+पूर्णांक sja1105_devlink_info_get(काष्ठा dsa_चयन *ds,
+			     काष्ठा devlink_info_req *req,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा sja1105_निजी *priv = ds->priv;
+	पूर्णांक rc;
 
 	rc = devlink_info_driver_name_put(req, "sja1105");
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = devlink_info_version_fixed_put(req,
 					    DEVLINK_INFO_VERSION_GENERIC_ASIC_ID,
 					    priv->info->name);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int sja1105_devlink_setup(struct dsa_switch *ds)
-{
-	int rc;
+पूर्णांक sja1105_devlink_setup(काष्ठा dsa_चयन *ds)
+अणु
+	पूर्णांक rc;
 
 	rc = sja1105_setup_devlink_params(ds);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = sja1105_setup_devlink_regions(ds);
-	if (rc < 0) {
-		sja1105_teardown_devlink_params(ds);
-		return rc;
-	}
+	अगर (rc < 0) अणु
+		sja1105_tearकरोwn_devlink_params(ds);
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void sja1105_devlink_teardown(struct dsa_switch *ds)
-{
-	sja1105_teardown_devlink_params(ds);
-	sja1105_teardown_devlink_regions(ds);
-}
+व्योम sja1105_devlink_tearकरोwn(काष्ठा dsa_चयन *ds)
+अणु
+	sja1105_tearकरोwn_devlink_params(ds);
+	sja1105_tearकरोwn_devlink_regions(ds);
+पूर्ण

@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: LGPL-2.1
-// Copyright (C) 2018, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
+<शैली गुरु>
+// SPDX-License-Identअगरier: LGPL-2.1
+// Copyright (C) 2018, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
 
-#include "trace/beauty/beauty.h"
+#समावेश "trace/beauty/beauty.h"
 
-static size_t renameat2__scnprintf_flags(unsigned long flags, char *bf, size_t size, bool show_prefix)
-{
-#include "trace/beauty/generated/rename_flags_array.c"
-       static DEFINE_STRARRAY(rename_flags, "RENAME_");
+अटल माप_प्रकार नामat2__scnम_लिखो_flags(अचिन्हित दीर्घ flags, अक्षर *bf, माप_प्रकार size, bool show_prefix)
+अणु
+#समावेश "trace/beauty/generated/rename_flags_array.c"
+       अटल DEFINE_STRARRAY(नाम_flags, "RENAME_");
 
-       return strarray__scnprintf_flags(&strarray__rename_flags, bf, size, show_prefix, flags);
-}
+       वापस strarray__scnम_लिखो_flags(&strarray__नाम_flags, bf, size, show_prefix, flags);
+पूर्ण
 
-size_t syscall_arg__scnprintf_renameat2_flags(char *bf, size_t size, struct syscall_arg *arg)
-{
-	unsigned long flags = arg->val;
-	return renameat2__scnprintf_flags(flags, bf, size, arg->show_string_prefix);
-}
+माप_प्रकार syscall_arg__scnम_लिखो_नामat2_flags(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
+अणु
+	अचिन्हित दीर्घ flags = arg->val;
+	वापस नामat2__scnम_लिखो_flags(flags, bf, size, arg->show_string_prefix);
+पूर्ण

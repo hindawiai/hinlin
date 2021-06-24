@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LIBPERF_INTERNAL_LIB_H
-#define __LIBPERF_INTERNAL_LIB_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LIBPERF_INTERNAL_LIB_H
+#घोषणा __LIBPERF_INTERNAL_LIB_H
 
-#include <sys/types.h>
+#समावेश <sys/types.h>
 
-extern unsigned int page_size;
+बाह्य अचिन्हित पूर्णांक page_size;
 
-ssize_t readn(int fd, void *buf, size_t n);
-ssize_t writen(int fd, const void *buf, size_t n);
+sमाप_प्रकार पढ़ोn(पूर्णांक fd, व्योम *buf, माप_प्रकार n);
+sमाप_प्रकार ग_लिखोn(पूर्णांक fd, स्थिर व्योम *buf, माप_प्रकार n);
 
-#endif /* __LIBPERF_INTERNAL_CPUMAP_H */
+#पूर्ण_अगर /* __LIBPERF_INTERNAL_CPUMAP_H */

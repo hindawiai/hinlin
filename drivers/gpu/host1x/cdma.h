@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Tegra host1x Command DMA
  *
  * Copyright (c) 2010-2013, NVIDIA Corporation.
  */
 
-#ifndef __HOST1X_CDMA_H
-#define __HOST1X_CDMA_H
+#अगर_अघोषित __HOST1X_CDMA_H
+#घोषणा __HOST1X_CDMA_H
 
-#include <linux/sched.h>
-#include <linux/completion.h>
-#include <linux/list.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/list.h>
 
-struct host1x_syncpt;
-struct host1x_userctx_timeout;
-struct host1x_job;
+काष्ठा host1x_syncpt;
+काष्ठा host1x_userctx_समयout;
+काष्ठा host1x_job;
 
 /*
  * cdma
  *
- * This is in charge of a host command DMA channel.
- * Sends ops to a push buffer, and takes responsibility for unpinning
- * (& possibly freeing) of memory after those ops have completed.
+ * This is in अक्षरge of a host command DMA channel.
+ * Sends ops to a push buffer, and takes responsibility क्रम unpinning
+ * (& possibly मुक्तing) of memory after those ops have completed.
  * Producer:
  *	begin
  *		push - send ops to the push buffer
@@ -30,63 +31,63 @@ struct host1x_job;
  *	update - call to update sync queue and push buffer, unpin memory
  */
 
-struct push_buffer {
-	void *mapped;			/* mapped pushbuffer memory */
+काष्ठा push_buffer अणु
+	व्योम *mapped;			/* mapped pushbuffer memory */
 	dma_addr_t dma;			/* device address of pushbuffer */
 	dma_addr_t phys;		/* physical address of pushbuffer */
 	u32 fence;			/* index we've written */
-	u32 pos;			/* index to write to */
+	u32 pos;			/* index to ग_लिखो to */
 	u32 size;
 	u32 alloc_size;
-};
+पूर्ण;
 
-struct buffer_timeout {
-	struct delayed_work wq;		/* work queue */
-	bool initialized;		/* timer one-time setup flag */
-	struct host1x_syncpt *syncpt;	/* buffer completion syncpt */
+काष्ठा buffer_समयout अणु
+	काष्ठा delayed_work wq;		/* work queue */
+	bool initialized;		/* समयr one-समय setup flag */
+	काष्ठा host1x_syncpt *syncpt;	/* buffer completion syncpt */
 	u32 syncpt_val;			/* syncpt value when completed */
-	ktime_t start_ktime;		/* starting time */
-	/* context timeout information */
-	struct host1x_client *client;
-};
+	kसमय_प्रकार start_kसमय;		/* starting समय */
+	/* context समयout inक्रमmation */
+	काष्ठा host1x_client *client;
+पूर्ण;
 
-enum cdma_event {
-	CDMA_EVENT_NONE,		/* not waiting for any event */
-	CDMA_EVENT_SYNC_QUEUE_EMPTY,	/* wait for empty sync queue */
-	CDMA_EVENT_PUSH_BUFFER_SPACE	/* wait for space in push buffer */
-};
+क्रमागत cdma_event अणु
+	CDMA_EVENT_NONE,		/* not रुकोing क्रम any event */
+	CDMA_EVENT_SYNC_QUEUE_EMPTY,	/* रुको क्रम empty sync queue */
+	CDMA_EVENT_PUSH_BUFFER_SPACE	/* रुको क्रम space in push buffer */
+पूर्ण;
 
-struct host1x_cdma {
-	struct mutex lock;		/* controls access to shared state */
-	struct completion complete;	/* signalled when event occurs */
-	enum cdma_event event;		/* event that complete is waiting for */
-	unsigned int slots_used;	/* pb slots used in current submit */
-	unsigned int slots_free;	/* pb slots free in current submit */
-	unsigned int first_get;		/* DMAGET value, where submit begins */
-	unsigned int last_pos;		/* last value written to DMAPUT */
-	struct push_buffer push_buffer;	/* channel's push buffer */
-	struct list_head sync_queue;	/* job queue */
-	struct buffer_timeout timeout;	/* channel's timeout state/wq */
+काष्ठा host1x_cdma अणु
+	काष्ठा mutex lock;		/* controls access to shared state */
+	काष्ठा completion complete;	/* संकेतled when event occurs */
+	क्रमागत cdma_event event;		/* event that complete is रुकोing क्रम */
+	अचिन्हित पूर्णांक slots_used;	/* pb slots used in current submit */
+	अचिन्हित पूर्णांक slots_मुक्त;	/* pb slots मुक्त in current submit */
+	अचिन्हित पूर्णांक first_get;		/* DMAGET value, where submit begins */
+	अचिन्हित पूर्णांक last_pos;		/* last value written to DMAPUT */
+	काष्ठा push_buffer push_buffer;	/* channel's push buffer */
+	काष्ठा list_head sync_queue;	/* job queue */
+	काष्ठा buffer_समयout समयout;	/* channel's समयout state/wq */
 	bool running;
-	bool torndown;
-};
+	bool tornकरोwn;
+पूर्ण;
 
-#define cdma_to_channel(cdma) container_of(cdma, struct host1x_channel, cdma)
-#define cdma_to_host1x(cdma) dev_get_drvdata(cdma_to_channel(cdma)->dev->parent)
-#define pb_to_cdma(pb) container_of(pb, struct host1x_cdma, push_buffer)
+#घोषणा cdma_to_channel(cdma) container_of(cdma, काष्ठा host1x_channel, cdma)
+#घोषणा cdma_to_host1x(cdma) dev_get_drvdata(cdma_to_channel(cdma)->dev->parent)
+#घोषणा pb_to_cdma(pb) container_of(pb, काष्ठा host1x_cdma, push_buffer)
 
-int host1x_cdma_init(struct host1x_cdma *cdma);
-int host1x_cdma_deinit(struct host1x_cdma *cdma);
-int host1x_cdma_begin(struct host1x_cdma *cdma, struct host1x_job *job);
-void host1x_cdma_push(struct host1x_cdma *cdma, u32 op1, u32 op2);
-void host1x_cdma_push_wide(struct host1x_cdma *cdma, u32 op1, u32 op2,
+पूर्णांक host1x_cdma_init(काष्ठा host1x_cdma *cdma);
+पूर्णांक host1x_cdma_deinit(काष्ठा host1x_cdma *cdma);
+पूर्णांक host1x_cdma_begin(काष्ठा host1x_cdma *cdma, काष्ठा host1x_job *job);
+व्योम host1x_cdma_push(काष्ठा host1x_cdma *cdma, u32 op1, u32 op2);
+व्योम host1x_cdma_push_wide(काष्ठा host1x_cdma *cdma, u32 op1, u32 op2,
 			   u32 op3, u32 op4);
-void host1x_cdma_end(struct host1x_cdma *cdma, struct host1x_job *job);
-void host1x_cdma_update(struct host1x_cdma *cdma);
-void host1x_cdma_peek(struct host1x_cdma *cdma, u32 dmaget, int slot,
+व्योम host1x_cdma_end(काष्ठा host1x_cdma *cdma, काष्ठा host1x_job *job);
+व्योम host1x_cdma_update(काष्ठा host1x_cdma *cdma);
+व्योम host1x_cdma_peek(काष्ठा host1x_cdma *cdma, u32 dmaget, पूर्णांक slot,
 		      u32 *out);
-unsigned int host1x_cdma_wait_locked(struct host1x_cdma *cdma,
-				     enum cdma_event event);
-void host1x_cdma_update_sync_queue(struct host1x_cdma *cdma,
-				   struct device *dev);
-#endif
+अचिन्हित पूर्णांक host1x_cdma_रुको_locked(काष्ठा host1x_cdma *cdma,
+				     क्रमागत cdma_event event);
+व्योम host1x_cdma_update_sync_queue(काष्ठा host1x_cdma *cdma,
+				   काष्ठा device *dev);
+#पूर्ण_अगर

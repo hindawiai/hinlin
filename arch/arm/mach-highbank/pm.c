@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2011 Calxeda, Inc.
  */
 
-#include <linux/cpu_pm.h>
-#include <linux/init.h>
-#include <linux/psci.h>
-#include <linux/suspend.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/psci.h>
+#समावेश <linux/suspend.h>
 
-#include <asm/suspend.h>
+#समावेश <यंत्र/suspend.h>
 
-#include <uapi/linux/psci.h>
+#समावेश <uapi/linux/psci.h>
 
-#define HIGHBANK_SUSPEND_PARAM \
+#घोषणा HIGHBANK_SUSPEND_PARAM \
 	((0 << PSCI_0_2_POWER_STATE_ID_SHIFT) | \
 	 (1 << PSCI_0_2_POWER_STATE_AFFL_SHIFT) | \
 	 (PSCI_POWER_STATE_TYPE_POWER_DOWN << PSCI_0_2_POWER_STATE_TYPE_SHIFT))
 
-static int highbank_suspend_finish(unsigned long val)
-{
-	return psci_ops.cpu_suspend(HIGHBANK_SUSPEND_PARAM, __pa(cpu_resume));
-}
+अटल पूर्णांक highbank_suspend_finish(अचिन्हित दीर्घ val)
+अणु
+	वापस psci_ops.cpu_suspend(HIGHBANK_SUSPEND_PARAM, __pa(cpu_resume));
+पूर्ण
 
-static int highbank_pm_enter(suspend_state_t state)
-{
+अटल पूर्णांक highbank_pm_enter(suspend_state_t state)
+अणु
 	cpu_pm_enter();
 	cpu_cluster_pm_enter();
 
 	cpu_suspend(0, highbank_suspend_finish);
 
-	cpu_cluster_pm_exit();
-	cpu_pm_exit();
+	cpu_cluster_pm_निकास();
+	cpu_pm_निकास();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_suspend_ops highbank_pm_ops = {
+अटल स्थिर काष्ठा platक्रमm_suspend_ops highbank_pm_ops = अणु
 	.enter = highbank_pm_enter,
 	.valid = suspend_valid_only_mem,
-};
+पूर्ण;
 
-void __init highbank_pm_init(void)
-{
-	if (!psci_ops.cpu_suspend)
-		return;
+व्योम __init highbank_pm_init(व्योम)
+अणु
+	अगर (!psci_ops.cpu_suspend)
+		वापस;
 
 	suspend_set_ops(&highbank_pm_ops);
-}
+पूर्ण

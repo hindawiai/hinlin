@@ -1,556 +1,557 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /*
- * MTK NAND Flash controller driver.
+ * MTK न_अंकD Flash controller driver.
  * Copyright (C) 2016 MediaTek Inc.
  * Authors:	Xiaolei Li		<xiaolei.li@mediatek.com>
  *		Jorge Ramirez-Ortiz	<jorge.ramirez-ortiz@linaro.org>
  */
 
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/mtd.h>
-#include <linux/module.h>
-#include <linux/iopoll.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include "mtk_ecc.h"
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/module.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश "mtk_ecc.h"
 
-/* NAND controller register definition */
-#define NFI_CNFG		(0x00)
-#define		CNFG_AHB		BIT(0)
-#define		CNFG_READ_EN		BIT(1)
-#define		CNFG_DMA_BURST_EN	BIT(2)
-#define		CNFG_BYTE_RW		BIT(6)
-#define		CNFG_HW_ECC_EN		BIT(8)
-#define		CNFG_AUTO_FMT_EN	BIT(9)
-#define		CNFG_OP_CUST		(6 << 12)
-#define NFI_PAGEFMT		(0x04)
-#define		PAGEFMT_FDM_ECC_SHIFT	(12)
-#define		PAGEFMT_FDM_SHIFT	(8)
-#define		PAGEFMT_SEC_SEL_512	BIT(2)
-#define		PAGEFMT_512_2K		(0)
-#define		PAGEFMT_2K_4K		(1)
-#define		PAGEFMT_4K_8K		(2)
-#define		PAGEFMT_8K_16K		(3)
+/* न_अंकD controller रेजिस्टर definition */
+#घोषणा NFI_CNFG		(0x00)
+#घोषणा		CNFG_AHB		BIT(0)
+#घोषणा		CNFG_READ_EN		BIT(1)
+#घोषणा		CNFG_DMA_BURST_EN	BIT(2)
+#घोषणा		CNFG_BYTE_RW		BIT(6)
+#घोषणा		CNFG_HW_ECC_EN		BIT(8)
+#घोषणा		CNFG_AUTO_FMT_EN	BIT(9)
+#घोषणा		CNFG_OP_CUST		(6 << 12)
+#घोषणा NFI_PAGEFMT		(0x04)
+#घोषणा		PAGEFMT_FDM_ECC_SHIFT	(12)
+#घोषणा		PAGEFMT_FDM_SHIFT	(8)
+#घोषणा		PAGEFMT_SEC_SEL_512	BIT(2)
+#घोषणा		PAGEFMT_512_2K		(0)
+#घोषणा		PAGEFMT_2K_4K		(1)
+#घोषणा		PAGEFMT_4K_8K		(2)
+#घोषणा		PAGEFMT_8K_16K		(3)
 /* NFI control */
-#define NFI_CON			(0x08)
-#define		CON_FIFO_FLUSH		BIT(0)
-#define		CON_NFI_RST		BIT(1)
-#define		CON_BRD			BIT(8)  /* burst  read */
-#define		CON_BWR			BIT(9)	/* burst  write */
-#define		CON_SEC_SHIFT		(12)
-/* Timming control register */
-#define NFI_ACCCON		(0x0C)
-#define NFI_INTR_EN		(0x10)
-#define		INTR_AHB_DONE_EN	BIT(6)
-#define NFI_INTR_STA		(0x14)
-#define NFI_CMD			(0x20)
-#define NFI_ADDRNOB		(0x30)
-#define NFI_COLADDR		(0x34)
-#define NFI_ROWADDR		(0x38)
-#define NFI_STRDATA		(0x40)
-#define		STAR_EN			(1)
-#define		STAR_DE			(0)
-#define NFI_CNRNB		(0x44)
-#define NFI_DATAW		(0x50)
-#define NFI_DATAR		(0x54)
-#define NFI_PIO_DIRDY		(0x58)
-#define		PIO_DI_RDY		(0x01)
-#define NFI_STA			(0x60)
-#define		STA_CMD			BIT(0)
-#define		STA_ADDR		BIT(1)
-#define		STA_BUSY		BIT(8)
-#define		STA_EMP_PAGE		BIT(12)
-#define		NFI_FSM_CUSTDATA	(0xe << 16)
-#define		NFI_FSM_MASK		(0xf << 16)
-#define NFI_ADDRCNTR		(0x70)
-#define		CNTR_MASK		GENMASK(16, 12)
-#define		ADDRCNTR_SEC_SHIFT	(12)
-#define		ADDRCNTR_SEC(val) \
+#घोषणा NFI_CON			(0x08)
+#घोषणा		CON_FIFO_FLUSH		BIT(0)
+#घोषणा		CON_NFI_RST		BIT(1)
+#घोषणा		CON_BRD			BIT(8)  /* burst  पढ़ो */
+#घोषणा		CON_BWR			BIT(9)	/* burst  ग_लिखो */
+#घोषणा		CON_SEC_SHIFT		(12)
+/* Timming control रेजिस्टर */
+#घोषणा NFI_ACCCON		(0x0C)
+#घोषणा NFI_INTR_EN		(0x10)
+#घोषणा		INTR_AHB_DONE_EN	BIT(6)
+#घोषणा NFI_INTR_STA		(0x14)
+#घोषणा NFI_CMD			(0x20)
+#घोषणा NFI_ADDRNOB		(0x30)
+#घोषणा NFI_COLADDR		(0x34)
+#घोषणा NFI_ROWADDR		(0x38)
+#घोषणा NFI_STRDATA		(0x40)
+#घोषणा		STAR_EN			(1)
+#घोषणा		STAR_DE			(0)
+#घोषणा NFI_CNRNB		(0x44)
+#घोषणा NFI_DATAW		(0x50)
+#घोषणा NFI_DATAR		(0x54)
+#घोषणा NFI_PIO_सूचीDY		(0x58)
+#घोषणा		PIO_DI_RDY		(0x01)
+#घोषणा NFI_STA			(0x60)
+#घोषणा		STA_CMD			BIT(0)
+#घोषणा		STA_ADDR		BIT(1)
+#घोषणा		STA_BUSY		BIT(8)
+#घोषणा		STA_EMP_PAGE		BIT(12)
+#घोषणा		NFI_FSM_CUSTDATA	(0xe << 16)
+#घोषणा		NFI_FSM_MASK		(0xf << 16)
+#घोषणा NFI_ADDRCNTR		(0x70)
+#घोषणा		CNTR_MASK		GENMASK(16, 12)
+#घोषणा		ADDRCNTR_SEC_SHIFT	(12)
+#घोषणा		ADDRCNTR_SEC(val) \
 		(((val) & CNTR_MASK) >> ADDRCNTR_SEC_SHIFT)
-#define NFI_STRADDR		(0x80)
-#define NFI_BYTELEN		(0x84)
-#define NFI_CSEL		(0x90)
-#define NFI_FDML(x)		(0xA0 + (x) * sizeof(u32) * 2)
-#define NFI_FDMM(x)		(0xA4 + (x) * sizeof(u32) * 2)
-#define NFI_FDM_MAX_SIZE	(8)
-#define NFI_FDM_MIN_SIZE	(1)
-#define NFI_DEBUG_CON1		(0x220)
-#define		STROBE_MASK		GENMASK(4, 3)
-#define		STROBE_SHIFT		(3)
-#define		MAX_STROBE_DLY		(3)
-#define NFI_MASTER_STA		(0x224)
-#define		MASTER_STA_MASK		(0x0FFF)
-#define NFI_EMPTY_THRESH	(0x23C)
+#घोषणा NFI_STRADDR		(0x80)
+#घोषणा NFI_BYTELEN		(0x84)
+#घोषणा NFI_CSEL		(0x90)
+#घोषणा NFI_FDML(x)		(0xA0 + (x) * माप(u32) * 2)
+#घोषणा NFI_FDMM(x)		(0xA4 + (x) * माप(u32) * 2)
+#घोषणा NFI_FDM_MAX_SIZE	(8)
+#घोषणा NFI_FDM_MIN_SIZE	(1)
+#घोषणा NFI_DEBUG_CON1		(0x220)
+#घोषणा		STROBE_MASK		GENMASK(4, 3)
+#घोषणा		STROBE_SHIFT		(3)
+#घोषणा		MAX_STROBE_DLY		(3)
+#घोषणा NFI_MASTER_STA		(0x224)
+#घोषणा		MASTER_STA_MASK		(0x0FFF)
+#घोषणा NFI_EMPTY_THRESH	(0x23C)
 
-#define MTK_NAME		"mtk-nand"
-#define KB(x)			((x) * 1024UL)
-#define MB(x)			(KB(x) * 1024UL)
+#घोषणा MTK_NAME		"mtk-nand"
+#घोषणा KB(x)			((x) * 1024UL)
+#घोषणा MB(x)			(KB(x) * 1024UL)
 
-#define MTK_TIMEOUT		(500000)
-#define MTK_RESET_TIMEOUT	(1000000)
-#define MTK_NAND_MAX_NSELS	(2)
-#define MTK_NFC_MIN_SPARE	(16)
-#define ACCTIMING(tpoecs, tprecs, tc2r, tw2r, twh, twst, trlt) \
+#घोषणा MTK_TIMEOUT		(500000)
+#घोषणा MTK_RESET_TIMEOUT	(1000000)
+#घोषणा MTK_न_अंकD_MAX_NSELS	(2)
+#घोषणा MTK_NFC_MIN_SPARE	(16)
+#घोषणा ACCTIMING(tpoecs, tprecs, tc2r, tw2r, twh, twst, trlt) \
 	((tpoecs) << 28 | (tprecs) << 22 | (tc2r) << 16 | \
 	(tw2r) << 12 | (twh) << 8 | (twst) << 4 | (trlt))
 
-struct mtk_nfc_caps {
-	const u8 *spare_size;
+काष्ठा mtk_nfc_caps अणु
+	स्थिर u8 *spare_size;
 	u8 num_spare_size;
-	u8 pageformat_spare_shift;
-	u8 nfi_clk_div;
+	u8 pageक्रमmat_spare_shअगरt;
+	u8 nfi_clk_भाग;
 	u8 max_sector;
 	u32 max_sector_size;
-};
+पूर्ण;
 
-struct mtk_nfc_bad_mark_ctl {
-	void (*bm_swap)(struct mtd_info *, u8 *buf, int raw);
+काष्ठा mtk_nfc_bad_mark_ctl अणु
+	व्योम (*bm_swap)(काष्ठा mtd_info *, u8 *buf, पूर्णांक raw);
 	u32 sec;
 	u32 pos;
-};
+पूर्ण;
 
 /*
- * FDM: region used to store free OOB data
+ * FDM: region used to store मुक्त OOB data
  */
-struct mtk_nfc_fdm {
+काष्ठा mtk_nfc_fdm अणु
 	u32 reg_size;
 	u32 ecc_size;
-};
+पूर्ण;
 
-struct mtk_nfc_nand_chip {
-	struct list_head node;
-	struct nand_chip nand;
+काष्ठा mtk_nfc_nand_chip अणु
+	काष्ठा list_head node;
+	काष्ठा nand_chip nand;
 
-	struct mtk_nfc_bad_mark_ctl bad_mark;
-	struct mtk_nfc_fdm fdm;
+	काष्ठा mtk_nfc_bad_mark_ctl bad_mark;
+	काष्ठा mtk_nfc_fdm fdm;
 	u32 spare_per_sector;
 
-	int nsels;
+	पूर्णांक nsels;
 	u8 sels[];
 	/* nothing after this field */
-};
+पूर्ण;
 
-struct mtk_nfc_clk {
-	struct clk *nfi_clk;
-	struct clk *pad_clk;
-};
+काष्ठा mtk_nfc_clk अणु
+	काष्ठा clk *nfi_clk;
+	काष्ठा clk *pad_clk;
+पूर्ण;
 
-struct mtk_nfc {
-	struct nand_controller controller;
-	struct mtk_ecc_config ecc_cfg;
-	struct mtk_nfc_clk clk;
-	struct mtk_ecc *ecc;
+काष्ठा mtk_nfc अणु
+	काष्ठा nand_controller controller;
+	काष्ठा mtk_ecc_config ecc_cfg;
+	काष्ठा mtk_nfc_clk clk;
+	काष्ठा mtk_ecc *ecc;
 
-	struct device *dev;
-	const struct mtk_nfc_caps *caps;
-	void __iomem *regs;
+	काष्ठा device *dev;
+	स्थिर काष्ठा mtk_nfc_caps *caps;
+	व्योम __iomem *regs;
 
-	struct completion done;
-	struct list_head chips;
+	काष्ठा completion करोne;
+	काष्ठा list_head chips;
 
 	u8 *buffer;
 
-	unsigned long assigned_cs;
-};
+	अचिन्हित दीर्घ asचिन्हित_cs;
+पूर्ण;
 
 /*
  * supported spare size of each IP.
  * order should be the same with the spare size bitfiled defination of
- * register NFI_PAGEFMT.
+ * रेजिस्टर NFI_PAGEFMT.
  */
-static const u8 spare_size_mt2701[] = {
+अटल स्थिर u8 spare_size_mt2701[] = अणु
 	16, 26, 27, 28, 32, 36, 40, 44,	48, 49, 50, 51, 52, 62, 63, 64
-};
+पूर्ण;
 
-static const u8 spare_size_mt2712[] = {
+अटल स्थिर u8 spare_size_mt2712[] = अणु
 	16, 26, 27, 28, 32, 36, 40, 44, 48, 49, 50, 51, 52, 62, 61, 63, 64, 67,
 	74
-};
+पूर्ण;
 
-static const u8 spare_size_mt7622[] = {
+अटल स्थिर u8 spare_size_mt7622[] = अणु
 	16, 26, 27, 28
-};
+पूर्ण;
 
-static inline struct mtk_nfc_nand_chip *to_mtk_nand(struct nand_chip *nand)
-{
-	return container_of(nand, struct mtk_nfc_nand_chip, nand);
-}
+अटल अंतरभूत काष्ठा mtk_nfc_nand_chip *to_mtk_nand(काष्ठा nand_chip *nand)
+अणु
+	वापस container_of(nand, काष्ठा mtk_nfc_nand_chip, nand);
+पूर्ण
 
-static inline u8 *data_ptr(struct nand_chip *chip, const u8 *p, int i)
-{
-	return (u8 *)p + i * chip->ecc.size;
-}
+अटल अंतरभूत u8 *data_ptr(काष्ठा nand_chip *chip, स्थिर u8 *p, पूर्णांक i)
+अणु
+	वापस (u8 *)p + i * chip->ecc.size;
+पूर्ण
 
-static inline u8 *oob_ptr(struct nand_chip *chip, int i)
-{
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+अटल अंतरभूत u8 *oob_ptr(काष्ठा nand_chip *chip, पूर्णांक i)
+अणु
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
 	u8 *poi;
 
-	/* map the sector's FDM data to free oob:
+	/* map the sector's FDM data to मुक्त oob:
 	 * the beginning of the oob area stores the FDM data of bad mark sectors
 	 */
 
-	if (i < mtk_nand->bad_mark.sec)
+	अगर (i < mtk_nand->bad_mark.sec)
 		poi = chip->oob_poi + (i + 1) * mtk_nand->fdm.reg_size;
-	else if (i == mtk_nand->bad_mark.sec)
+	अन्यथा अगर (i == mtk_nand->bad_mark.sec)
 		poi = chip->oob_poi;
-	else
+	अन्यथा
 		poi = chip->oob_poi + i * mtk_nand->fdm.reg_size;
 
-	return poi;
-}
+	वापस poi;
+पूर्ण
 
-static inline int mtk_data_len(struct nand_chip *chip)
-{
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+अटल अंतरभूत पूर्णांक mtk_data_len(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
 
-	return chip->ecc.size + mtk_nand->spare_per_sector;
-}
+	वापस chip->ecc.size + mtk_nand->spare_per_sector;
+पूर्ण
 
-static inline u8 *mtk_data_ptr(struct nand_chip *chip,  int i)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
+अटल अंतरभूत u8 *mtk_data_ptr(काष्ठा nand_chip *chip,  पूर्णांक i)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
 
-	return nfc->buffer + i * mtk_data_len(chip);
-}
+	वापस nfc->buffer + i * mtk_data_len(chip);
+पूर्ण
 
-static inline u8 *mtk_oob_ptr(struct nand_chip *chip, int i)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
+अटल अंतरभूत u8 *mtk_oob_ptr(काष्ठा nand_chip *chip, पूर्णांक i)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
 
-	return nfc->buffer + i * mtk_data_len(chip) + chip->ecc.size;
-}
+	वापस nfc->buffer + i * mtk_data_len(chip) + chip->ecc.size;
+पूर्ण
 
-static inline void nfi_writel(struct mtk_nfc *nfc, u32 val, u32 reg)
-{
-	writel(val, nfc->regs + reg);
-}
+अटल अंतरभूत व्योम nfi_ग_लिखोl(काष्ठा mtk_nfc *nfc, u32 val, u32 reg)
+अणु
+	ग_लिखोl(val, nfc->regs + reg);
+पूर्ण
 
-static inline void nfi_writew(struct mtk_nfc *nfc, u16 val, u32 reg)
-{
-	writew(val, nfc->regs + reg);
-}
+अटल अंतरभूत व्योम nfi_ग_लिखोw(काष्ठा mtk_nfc *nfc, u16 val, u32 reg)
+अणु
+	ग_लिखोw(val, nfc->regs + reg);
+पूर्ण
 
-static inline void nfi_writeb(struct mtk_nfc *nfc, u8 val, u32 reg)
-{
-	writeb(val, nfc->regs + reg);
-}
+अटल अंतरभूत व्योम nfi_ग_लिखोb(काष्ठा mtk_nfc *nfc, u8 val, u32 reg)
+अणु
+	ग_लिखोb(val, nfc->regs + reg);
+पूर्ण
 
-static inline u32 nfi_readl(struct mtk_nfc *nfc, u32 reg)
-{
-	return readl_relaxed(nfc->regs + reg);
-}
+अटल अंतरभूत u32 nfi_पढ़ोl(काष्ठा mtk_nfc *nfc, u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(nfc->regs + reg);
+पूर्ण
 
-static inline u16 nfi_readw(struct mtk_nfc *nfc, u32 reg)
-{
-	return readw_relaxed(nfc->regs + reg);
-}
+अटल अंतरभूत u16 nfi_पढ़ोw(काष्ठा mtk_nfc *nfc, u32 reg)
+अणु
+	वापस पढ़ोw_relaxed(nfc->regs + reg);
+पूर्ण
 
-static inline u8 nfi_readb(struct mtk_nfc *nfc, u32 reg)
-{
-	return readb_relaxed(nfc->regs + reg);
-}
+अटल अंतरभूत u8 nfi_पढ़ोb(काष्ठा mtk_nfc *nfc, u32 reg)
+अणु
+	वापस पढ़ोb_relaxed(nfc->regs + reg);
+पूर्ण
 
-static void mtk_nfc_hw_reset(struct mtk_nfc *nfc)
-{
-	struct device *dev = nfc->dev;
+अटल व्योम mtk_nfc_hw_reset(काष्ठा mtk_nfc *nfc)
+अणु
+	काष्ठा device *dev = nfc->dev;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	/* reset all registers and force the NFI master to terminate */
-	nfi_writel(nfc, CON_FIFO_FLUSH | CON_NFI_RST, NFI_CON);
+	/* reset all रेजिस्टरs and क्रमce the NFI master to terminate */
+	nfi_ग_लिखोl(nfc, CON_FIFO_FLUSH | CON_NFI_RST, NFI_CON);
 
-	/* wait for the master to finish the last transaction */
-	ret = readl_poll_timeout(nfc->regs + NFI_MASTER_STA, val,
+	/* रुको क्रम the master to finish the last transaction */
+	ret = पढ़ोl_poll_समयout(nfc->regs + NFI_MASTER_STA, val,
 				 !(val & MASTER_STA_MASK), 50,
 				 MTK_RESET_TIMEOUT);
-	if (ret)
+	अगर (ret)
 		dev_warn(dev, "master active in reset [0x%x] = 0x%x\n",
 			 NFI_MASTER_STA, val);
 
-	/* ensure any status register affected by the NFI master is reset */
-	nfi_writel(nfc, CON_FIFO_FLUSH | CON_NFI_RST, NFI_CON);
-	nfi_writew(nfc, STAR_DE, NFI_STRDATA);
-}
+	/* ensure any status रेजिस्टर affected by the NFI master is reset */
+	nfi_ग_लिखोl(nfc, CON_FIFO_FLUSH | CON_NFI_RST, NFI_CON);
+	nfi_ग_लिखोw(nfc, STAR_DE, NFI_STRDATA);
+पूर्ण
 
-static int mtk_nfc_send_command(struct mtk_nfc *nfc, u8 command)
-{
-	struct device *dev = nfc->dev;
+अटल पूर्णांक mtk_nfc_send_command(काष्ठा mtk_nfc *nfc, u8 command)
+अणु
+	काष्ठा device *dev = nfc->dev;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	nfi_writel(nfc, command, NFI_CMD);
+	nfi_ग_लिखोl(nfc, command, NFI_CMD);
 
-	ret = readl_poll_timeout_atomic(nfc->regs + NFI_STA, val,
+	ret = पढ़ोl_poll_समयout_atomic(nfc->regs + NFI_STA, val,
 					!(val & STA_CMD), 10,  MTK_TIMEOUT);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(dev, "nfi core timed out entering command mode\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nfc_send_address(struct mtk_nfc *nfc, int addr)
-{
-	struct device *dev = nfc->dev;
+अटल पूर्णांक mtk_nfc_send_address(काष्ठा mtk_nfc *nfc, पूर्णांक addr)
+अणु
+	काष्ठा device *dev = nfc->dev;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	nfi_writel(nfc, addr, NFI_COLADDR);
-	nfi_writel(nfc, 0, NFI_ROWADDR);
-	nfi_writew(nfc, 1, NFI_ADDRNOB);
+	nfi_ग_लिखोl(nfc, addr, NFI_COLADDR);
+	nfi_ग_लिखोl(nfc, 0, NFI_ROWADDR);
+	nfi_ग_लिखोw(nfc, 1, NFI_ADDRNOB);
 
-	ret = readl_poll_timeout_atomic(nfc->regs + NFI_STA, val,
+	ret = पढ़ोl_poll_समयout_atomic(nfc->regs + NFI_STA, val,
 					!(val & STA_ADDR), 10, MTK_TIMEOUT);
-	if (ret) {
+	अगर (ret) अणु
 		dev_warn(dev, "nfi core timed out entering address mode\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nfc_hw_runtime_config(struct mtd_info *mtd)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
+अटल पूर्णांक mtk_nfc_hw_runसमय_config(काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
 	u32 fmt, spare, i;
 
-	if (!mtd->writesize)
-		return 0;
+	अगर (!mtd->ग_लिखोsize)
+		वापस 0;
 
 	spare = mtk_nand->spare_per_sector;
 
-	switch (mtd->writesize) {
-	case 512:
+	चयन (mtd->ग_लिखोsize) अणु
+	हाल 512:
 		fmt = PAGEFMT_512_2K | PAGEFMT_SEC_SEL_512;
-		break;
-	case KB(2):
-		if (chip->ecc.size == 512)
+		अवरोध;
+	हाल KB(2):
+		अगर (chip->ecc.size == 512)
 			fmt = PAGEFMT_2K_4K | PAGEFMT_SEC_SEL_512;
-		else
+		अन्यथा
 			fmt = PAGEFMT_512_2K;
-		break;
-	case KB(4):
-		if (chip->ecc.size == 512)
+		अवरोध;
+	हाल KB(4):
+		अगर (chip->ecc.size == 512)
 			fmt = PAGEFMT_4K_8K | PAGEFMT_SEC_SEL_512;
-		else
+		अन्यथा
 			fmt = PAGEFMT_2K_4K;
-		break;
-	case KB(8):
-		if (chip->ecc.size == 512)
+		अवरोध;
+	हाल KB(8):
+		अगर (chip->ecc.size == 512)
 			fmt = PAGEFMT_8K_16K | PAGEFMT_SEC_SEL_512;
-		else
+		अन्यथा
 			fmt = PAGEFMT_4K_8K;
-		break;
-	case KB(16):
+		अवरोध;
+	हाल KB(16):
 		fmt = PAGEFMT_8K_16K;
-		break;
-	default:
-		dev_err(nfc->dev, "invalid page len: %d\n", mtd->writesize);
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		dev_err(nfc->dev, "invalid page len: %d\n", mtd->ग_लिखोsize);
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * the hardware will double the value for this eccsize, so we need to
+	 * the hardware will द्विगुन the value क्रम this eccsize, so we need to
 	 * halve it
 	 */
-	if (chip->ecc.size == 1024)
+	अगर (chip->ecc.size == 1024)
 		spare >>= 1;
 
-	for (i = 0; i < nfc->caps->num_spare_size; i++) {
-		if (nfc->caps->spare_size[i] == spare)
-			break;
-	}
+	क्रम (i = 0; i < nfc->caps->num_spare_size; i++) अणु
+		अगर (nfc->caps->spare_size[i] == spare)
+			अवरोध;
+	पूर्ण
 
-	if (i == nfc->caps->num_spare_size) {
+	अगर (i == nfc->caps->num_spare_size) अणु
 		dev_err(nfc->dev, "invalid spare size %d\n", spare);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	fmt |= i << nfc->caps->pageformat_spare_shift;
+	fmt |= i << nfc->caps->pageक्रमmat_spare_shअगरt;
 
 	fmt |= mtk_nand->fdm.reg_size << PAGEFMT_FDM_SHIFT;
 	fmt |= mtk_nand->fdm.ecc_size << PAGEFMT_FDM_ECC_SHIFT;
-	nfi_writel(nfc, fmt, NFI_PAGEFMT);
+	nfi_ग_लिखोl(nfc, fmt, NFI_PAGEFMT);
 
 	nfc->ecc_cfg.strength = chip->ecc.strength;
 	nfc->ecc_cfg.len = chip->ecc.size + mtk_nand->fdm.ecc_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void mtk_nfc_wait_ioready(struct mtk_nfc *nfc)
-{
-	int rc;
+अटल अंतरभूत व्योम mtk_nfc_रुको_ioपढ़ोy(काष्ठा mtk_nfc *nfc)
+अणु
+	पूर्णांक rc;
 	u8 val;
 
-	rc = readb_poll_timeout_atomic(nfc->regs + NFI_PIO_DIRDY, val,
+	rc = पढ़ोb_poll_समयout_atomic(nfc->regs + NFI_PIO_सूचीDY, val,
 				       val & PIO_DI_RDY, 10, MTK_TIMEOUT);
-	if (rc < 0)
+	अगर (rc < 0)
 		dev_err(nfc->dev, "data not ready\n");
-}
+पूर्ण
 
-static inline u8 mtk_nfc_read_byte(struct nand_chip *chip)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
+अटल अंतरभूत u8 mtk_nfc_पढ़ो_byte(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
 	u32 reg;
 
-	/* after each byte read, the NFI_STA reg is reset by the hardware */
-	reg = nfi_readl(nfc, NFI_STA) & NFI_FSM_MASK;
-	if (reg != NFI_FSM_CUSTDATA) {
-		reg = nfi_readw(nfc, NFI_CNFG);
+	/* after each byte पढ़ो, the NFI_STA reg is reset by the hardware */
+	reg = nfi_पढ़ोl(nfc, NFI_STA) & NFI_FSM_MASK;
+	अगर (reg != NFI_FSM_CUSTDATA) अणु
+		reg = nfi_पढ़ोw(nfc, NFI_CNFG);
 		reg |= CNFG_BYTE_RW | CNFG_READ_EN;
-		nfi_writew(nfc, reg, NFI_CNFG);
+		nfi_ग_लिखोw(nfc, reg, NFI_CNFG);
 
 		/*
-		 * set to max sector to allow the HW to continue reading over
+		 * set to max sector to allow the HW to जारी पढ़ोing over
 		 * unaligned accesses
 		 */
 		reg = (nfc->caps->max_sector << CON_SEC_SHIFT) | CON_BRD;
-		nfi_writel(nfc, reg, NFI_CON);
+		nfi_ग_लिखोl(nfc, reg, NFI_CON);
 
 		/* trigger to fetch data */
-		nfi_writew(nfc, STAR_EN, NFI_STRDATA);
-	}
+		nfi_ग_लिखोw(nfc, STAR_EN, NFI_STRDATA);
+	पूर्ण
 
-	mtk_nfc_wait_ioready(nfc);
+	mtk_nfc_रुको_ioपढ़ोy(nfc);
 
-	return nfi_readb(nfc, NFI_DATAR);
-}
+	वापस nfi_पढ़ोb(nfc, NFI_DATAR);
+पूर्ण
 
-static void mtk_nfc_read_buf(struct nand_chip *chip, u8 *buf, int len)
-{
-	int i;
+अटल व्योम mtk_nfc_पढ़ो_buf(काष्ठा nand_chip *chip, u8 *buf, पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++)
-		buf[i] = mtk_nfc_read_byte(chip);
-}
+	क्रम (i = 0; i < len; i++)
+		buf[i] = mtk_nfc_पढ़ो_byte(chip);
+पूर्ण
 
-static void mtk_nfc_write_byte(struct nand_chip *chip, u8 byte)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
+अटल व्योम mtk_nfc_ग_लिखो_byte(काष्ठा nand_chip *chip, u8 byte)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
 	u32 reg;
 
-	reg = nfi_readl(nfc, NFI_STA) & NFI_FSM_MASK;
+	reg = nfi_पढ़ोl(nfc, NFI_STA) & NFI_FSM_MASK;
 
-	if (reg != NFI_FSM_CUSTDATA) {
-		reg = nfi_readw(nfc, NFI_CNFG) | CNFG_BYTE_RW;
-		nfi_writew(nfc, reg, NFI_CNFG);
+	अगर (reg != NFI_FSM_CUSTDATA) अणु
+		reg = nfi_पढ़ोw(nfc, NFI_CNFG) | CNFG_BYTE_RW;
+		nfi_ग_लिखोw(nfc, reg, NFI_CNFG);
 
 		reg = nfc->caps->max_sector << CON_SEC_SHIFT | CON_BWR;
-		nfi_writel(nfc, reg, NFI_CON);
+		nfi_ग_लिखोl(nfc, reg, NFI_CON);
 
-		nfi_writew(nfc, STAR_EN, NFI_STRDATA);
-	}
+		nfi_ग_लिखोw(nfc, STAR_EN, NFI_STRDATA);
+	पूर्ण
 
-	mtk_nfc_wait_ioready(nfc);
-	nfi_writeb(nfc, byte, NFI_DATAW);
-}
+	mtk_nfc_रुको_ioपढ़ोy(nfc);
+	nfi_ग_लिखोb(nfc, byte, NFI_DATAW);
+पूर्ण
 
-static void mtk_nfc_write_buf(struct nand_chip *chip, const u8 *buf, int len)
-{
-	int i;
+अटल व्योम mtk_nfc_ग_लिखो_buf(काष्ठा nand_chip *chip, स्थिर u8 *buf, पूर्णांक len)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++)
-		mtk_nfc_write_byte(chip, buf[i]);
-}
+	क्रम (i = 0; i < len; i++)
+		mtk_nfc_ग_लिखो_byte(chip, buf[i]);
+पूर्ण
 
-static int mtk_nfc_exec_instr(struct nand_chip *chip,
-			      const struct nand_op_instr *instr)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	unsigned int i;
+अटल पूर्णांक mtk_nfc_exec_instr(काष्ठा nand_chip *chip,
+			      स्थिर काष्ठा nand_op_instr *instr)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	अचिन्हित पूर्णांक i;
 	u32 status;
 
-	switch (instr->type) {
-	case NAND_OP_CMD_INSTR:
+	चयन (instr->type) अणु
+	हाल न_अंकD_OP_CMD_INSTR:
 		mtk_nfc_send_command(nfc, instr->ctx.cmd.opcode);
-		return 0;
-	case NAND_OP_ADDR_INSTR:
-		for (i = 0; i < instr->ctx.addr.naddrs; i++)
+		वापस 0;
+	हाल न_अंकD_OP_ADDR_INSTR:
+		क्रम (i = 0; i < instr->ctx.addr.naddrs; i++)
 			mtk_nfc_send_address(nfc, instr->ctx.addr.addrs[i]);
-		return 0;
-	case NAND_OP_DATA_IN_INSTR:
-		mtk_nfc_read_buf(chip, instr->ctx.data.buf.in,
+		वापस 0;
+	हाल न_अंकD_OP_DATA_IN_INSTR:
+		mtk_nfc_पढ़ो_buf(chip, instr->ctx.data.buf.in,
 				 instr->ctx.data.len);
-		return 0;
-	case NAND_OP_DATA_OUT_INSTR:
-		mtk_nfc_write_buf(chip, instr->ctx.data.buf.out,
+		वापस 0;
+	हाल न_अंकD_OP_DATA_OUT_INSTR:
+		mtk_nfc_ग_लिखो_buf(chip, instr->ctx.data.buf.out,
 				  instr->ctx.data.len);
-		return 0;
-	case NAND_OP_WAITRDY_INSTR:
-		return readl_poll_timeout(nfc->regs + NFI_STA, status,
+		वापस 0;
+	हाल न_अंकD_OP_WAITRDY_INSTR:
+		वापस पढ़ोl_poll_समयout(nfc->regs + NFI_STA, status,
 					  !(status & STA_BUSY), 20,
-					  instr->ctx.waitrdy.timeout_ms * 1000);
-	default:
-		break;
-	}
+					  instr->ctx.रुकोrdy.समयout_ms * 1000);
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void mtk_nfc_select_target(struct nand_chip *nand, unsigned int cs)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(nand);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(nand);
+अटल व्योम mtk_nfc_select_target(काष्ठा nand_chip *nand, अचिन्हित पूर्णांक cs)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(nand);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(nand);
 
-	mtk_nfc_hw_runtime_config(nand_to_mtd(nand));
+	mtk_nfc_hw_runसमय_config(nand_to_mtd(nand));
 
-	nfi_writel(nfc, mtk_nand->sels[cs], NFI_CSEL);
-}
+	nfi_ग_लिखोl(nfc, mtk_nand->sels[cs], NFI_CSEL);
+पूर्ण
 
-static int mtk_nfc_exec_op(struct nand_chip *chip,
-			   const struct nand_operation *op,
+अटल पूर्णांक mtk_nfc_exec_op(काष्ठा nand_chip *chip,
+			   स्थिर काष्ठा nand_operation *op,
 			   bool check_only)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	unsigned int i;
-	int ret = 0;
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	if (check_only)
-		return 0;
+	अगर (check_only)
+		वापस 0;
 
 	mtk_nfc_hw_reset(nfc);
-	nfi_writew(nfc, CNFG_OP_CUST, NFI_CNFG);
+	nfi_ग_लिखोw(nfc, CNFG_OP_CUST, NFI_CNFG);
 	mtk_nfc_select_target(chip, op->cs);
 
-	for (i = 0; i < op->ninstrs; i++) {
+	क्रम (i = 0; i < op->ninstrs; i++) अणु
 		ret = mtk_nfc_exec_instr(chip, &op->instrs[i]);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nfc_setup_interface(struct nand_chip *chip, int csline,
-				   const struct nand_interface_config *conf)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	const struct nand_sdr_timings *timings;
+अटल पूर्णांक mtk_nfc_setup_पूर्णांकerface(काष्ठा nand_chip *chip, पूर्णांक csline,
+				   स्थिर काष्ठा nand_पूर्णांकerface_config *conf)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	स्थिर काष्ठा nand_sdr_timings *timings;
 	u32 rate, tpoecs, tprecs, tc2r, tw2r, twh, twst = 0, trlt = 0;
 	u32 temp, tsel = 0;
 
 	timings = nand_get_sdr_timings(conf);
-	if (IS_ERR(timings))
-		return -ENOTSUPP;
+	अगर (IS_ERR(timings))
+		वापस -ENOTSUPP;
 
-	if (csline == NAND_DATA_IFACE_CHECK_ONLY)
-		return 0;
+	अगर (csline == न_अंकD_DATA_IFACE_CHECK_ONLY)
+		वापस 0;
 
 	rate = clk_get_rate(nfc->clk.nfi_clk);
-	/* There is a frequency divider in some IPs */
-	rate /= nfc->caps->nfi_clk_div;
+	/* There is a frequency भागider in some IPs */
+	rate /= nfc->caps->nfi_clk_भाग;
 
-	/* turn clock rate into KHZ */
+	/* turn घड़ी rate पूर्णांकo KHZ */
 	rate /= 1000;
 
 	tpoecs = max(timings->tALH_min, timings->tCLH_min) / 1000;
@@ -561,7 +562,7 @@ static int mtk_nfc_setup_interface(struct nand_chip *chip, int csline,
 	tprecs = DIV_ROUND_UP(tprecs * rate, 1000000);
 	tprecs &= 0x3f;
 
-	/* sdr interface has no tCR which means CE# low to RE# low */
+	/* sdr पूर्णांकerface has no tCR which means CE# low to RE# low */
 	tc2r = 0;
 
 	tw2r = timings->tWHR_min / 1000;
@@ -573,387 +574,387 @@ static int mtk_nfc_setup_interface(struct nand_chip *chip, int csline,
 	twh = DIV_ROUND_UP(twh * rate, 1000000) - 1;
 	twh &= 0xf;
 
-	/* Calculate real WE#/RE# hold time in nanosecond */
+	/* Calculate real WE#/RE# hold समय in nanosecond */
 	temp = (twh + 1) * 1000000 / rate;
 	/* nanosecond to picosecond */
 	temp *= 1000;
 
 	/*
-	 * WE# low level time should be expaned to meet WE# pulse time
-	 * and WE# cycle time at the same time.
+	 * WE# low level समय should be expaned to meet WE# pulse समय
+	 * and WE# cycle समय at the same समय.
 	 */
-	if (temp < timings->tWC_min)
+	अगर (temp < timings->tWC_min)
 		twst = timings->tWC_min - temp;
 	twst = max(timings->tWP_min, twst) / 1000;
 	twst = DIV_ROUND_UP(twst * rate, 1000000) - 1;
 	twst &= 0xf;
 
 	/*
-	 * RE# low level time should be expaned to meet RE# pulse time
-	 * and RE# cycle time at the same time.
+	 * RE# low level समय should be expaned to meet RE# pulse समय
+	 * and RE# cycle समय at the same समय.
 	 */
-	if (temp < timings->tRC_min)
+	अगर (temp < timings->tRC_min)
 		trlt = timings->tRC_min - temp;
 	trlt = max(trlt, timings->tRP_min) / 1000;
 	trlt = DIV_ROUND_UP(trlt * rate, 1000000) - 1;
 	trlt &= 0xf;
 
-	/* Calculate RE# pulse time in nanosecond. */
+	/* Calculate RE# pulse समय in nanosecond. */
 	temp = (trlt + 1) * 1000000 / rate;
 	/* nanosecond to picosecond */
 	temp *= 1000;
 	/*
-	 * If RE# access time is bigger than RE# pulse time,
+	 * If RE# access समय is bigger than RE# pulse समय,
 	 * delay sampling data timing.
 	 */
-	if (temp < timings->tREA_max) {
+	अगर (temp < timings->tREA_max) अणु
 		tsel = timings->tREA_max / 1000;
 		tsel = DIV_ROUND_UP(tsel * rate, 1000000);
 		tsel -= (trlt + 1);
-		if (tsel > MAX_STROBE_DLY) {
+		अगर (tsel > MAX_STROBE_DLY) अणु
 			trlt += tsel - MAX_STROBE_DLY;
 			tsel = MAX_STROBE_DLY;
-		}
-	}
-	temp = nfi_readl(nfc, NFI_DEBUG_CON1);
+		पूर्ण
+	पूर्ण
+	temp = nfi_पढ़ोl(nfc, NFI_DEBUG_CON1);
 	temp &= ~STROBE_MASK;
 	temp |= tsel << STROBE_SHIFT;
-	nfi_writel(nfc, temp, NFI_DEBUG_CON1);
+	nfi_ग_लिखोl(nfc, temp, NFI_DEBUG_CON1);
 
 	/*
-	 * ACCON: access timing control register
+	 * ACCON: access timing control रेजिस्टर
 	 * -------------------------------------
-	 * 31:28: tpoecs, minimum required time for CS post pulling down after
+	 * 31:28: tpoecs, minimum required समय क्रम CS post pulling करोwn after
 	 *        accessing the device
-	 * 27:22: tprecs, minimum required time for CS pre pulling down before
+	 * 27:22: tprecs, minimum required समय क्रम CS pre pulling करोwn beक्रमe
 	 *        accessing the device
-	 * 21:16: tc2r, minimum required time from NCEB low to NREB low
-	 * 15:12: tw2r, minimum required time from NWEB high to NREB low.
-	 * 11:08: twh, write enable hold time
-	 * 07:04: twst, write wait states
-	 * 03:00: trlt, read wait states
+	 * 21:16: tc2r, minimum required समय from NCEB low to NREB low
+	 * 15:12: tw2r, minimum required समय from NWEB high to NREB low.
+	 * 11:08: twh, ग_लिखो enable hold समय
+	 * 07:04: twst, ग_लिखो रुको states
+	 * 03:00: trlt, पढ़ो रुको states
 	 */
 	trlt = ACCTIMING(tpoecs, tprecs, tc2r, tw2r, twh, twst, trlt);
-	nfi_writel(nfc, trlt, NFI_ACCCON);
+	nfi_ग_लिखोl(nfc, trlt, NFI_ACCCON);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nfc_sector_encode(struct nand_chip *chip, u8 *data)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	int size = chip->ecc.size + mtk_nand->fdm.reg_size;
+अटल पूर्णांक mtk_nfc_sector_encode(काष्ठा nand_chip *chip, u8 *data)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	पूर्णांक size = chip->ecc.size + mtk_nand->fdm.reg_size;
 
 	nfc->ecc_cfg.mode = ECC_DMA_MODE;
 	nfc->ecc_cfg.op = ECC_ENCODE;
 
-	return mtk_ecc_encode(nfc->ecc, &nfc->ecc_cfg, data, size);
-}
+	वापस mtk_ecc_encode(nfc->ecc, &nfc->ecc_cfg, data, size);
+पूर्ण
 
-static void mtk_nfc_no_bad_mark_swap(struct mtd_info *a, u8 *b, int c)
-{
+अटल व्योम mtk_nfc_no_bad_mark_swap(काष्ठा mtd_info *a, u8 *b, पूर्णांक c)
+अणु
 	/* nop */
-}
+पूर्ण
 
-static void mtk_nfc_bad_mark_swap(struct mtd_info *mtd, u8 *buf, int raw)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct mtk_nfc_nand_chip *nand = to_mtk_nand(chip);
+अटल व्योम mtk_nfc_bad_mark_swap(काष्ठा mtd_info *mtd, u8 *buf, पूर्णांक raw)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा mtk_nfc_nand_chip *nand = to_mtk_nand(chip);
 	u32 bad_pos = nand->bad_mark.pos;
 
-	if (raw)
+	अगर (raw)
 		bad_pos += nand->bad_mark.sec * mtk_data_len(chip);
-	else
+	अन्यथा
 		bad_pos += nand->bad_mark.sec * chip->ecc.size;
 
 	swap(chip->oob_poi[0], buf[bad_pos]);
-}
+पूर्ण
 
-static int mtk_nfc_format_subpage(struct mtd_info *mtd, u32 offset,
-				  u32 len, const u8 *buf)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_fdm *fdm = &mtk_nand->fdm;
+अटल पूर्णांक mtk_nfc_क्रमmat_subpage(काष्ठा mtd_info *mtd, u32 offset,
+				  u32 len, स्थिर u8 *buf)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_fdm *fdm = &mtk_nand->fdm;
 	u32 start, end;
-	int i, ret;
+	पूर्णांक i, ret;
 
 	start = offset / chip->ecc.size;
 	end = DIV_ROUND_UP(offset + len, chip->ecc.size);
 
-	memset(nfc->buffer, 0xff, mtd->writesize + mtd->oobsize);
-	for (i = 0; i < chip->ecc.steps; i++) {
-		memcpy(mtk_data_ptr(chip, i), data_ptr(chip, buf, i),
+	स_रखो(nfc->buffer, 0xff, mtd->ग_लिखोsize + mtd->oobsize);
+	क्रम (i = 0; i < chip->ecc.steps; i++) अणु
+		स_नकल(mtk_data_ptr(chip, i), data_ptr(chip, buf, i),
 		       chip->ecc.size);
 
-		if (start > i || i >= end)
-			continue;
+		अगर (start > i || i >= end)
+			जारी;
 
-		if (i == mtk_nand->bad_mark.sec)
+		अगर (i == mtk_nand->bad_mark.sec)
 			mtk_nand->bad_mark.bm_swap(mtd, nfc->buffer, 1);
 
-		memcpy(mtk_oob_ptr(chip, i), oob_ptr(chip, i), fdm->reg_size);
+		स_नकल(mtk_oob_ptr(chip, i), oob_ptr(chip, i), fdm->reg_size);
 
 		/* program the CRC back to the OOB */
 		ret = mtk_nfc_sector_encode(chip, mtk_data_ptr(chip, i));
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_nfc_format_page(struct mtd_info *mtd, const u8 *buf)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_fdm *fdm = &mtk_nand->fdm;
+अटल व्योम mtk_nfc_क्रमmat_page(काष्ठा mtd_info *mtd, स्थिर u8 *buf)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_fdm *fdm = &mtk_nand->fdm;
 	u32 i;
 
-	memset(nfc->buffer, 0xff, mtd->writesize + mtd->oobsize);
-	for (i = 0; i < chip->ecc.steps; i++) {
-		if (buf)
-			memcpy(mtk_data_ptr(chip, i), data_ptr(chip, buf, i),
+	स_रखो(nfc->buffer, 0xff, mtd->ग_लिखोsize + mtd->oobsize);
+	क्रम (i = 0; i < chip->ecc.steps; i++) अणु
+		अगर (buf)
+			स_नकल(mtk_data_ptr(chip, i), data_ptr(chip, buf, i),
 			       chip->ecc.size);
 
-		if (i == mtk_nand->bad_mark.sec)
+		अगर (i == mtk_nand->bad_mark.sec)
 			mtk_nand->bad_mark.bm_swap(mtd, nfc->buffer, 1);
 
-		memcpy(mtk_oob_ptr(chip, i), oob_ptr(chip, i), fdm->reg_size);
-	}
-}
+		स_नकल(mtk_oob_ptr(chip, i), oob_ptr(chip, i), fdm->reg_size);
+	पूर्ण
+पूर्ण
 
-static inline void mtk_nfc_read_fdm(struct nand_chip *chip, u32 start,
+अटल अंतरभूत व्योम mtk_nfc_पढ़ो_fdm(काष्ठा nand_chip *chip, u32 start,
 				    u32 sectors)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	struct mtk_nfc_fdm *fdm = &mtk_nand->fdm;
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	काष्ठा mtk_nfc_fdm *fdm = &mtk_nand->fdm;
 	u32 vall, valm;
 	u8 *oobptr;
-	int i, j;
+	पूर्णांक i, j;
 
-	for (i = 0; i < sectors; i++) {
+	क्रम (i = 0; i < sectors; i++) अणु
 		oobptr = oob_ptr(chip, start + i);
-		vall = nfi_readl(nfc, NFI_FDML(i));
-		valm = nfi_readl(nfc, NFI_FDMM(i));
+		vall = nfi_पढ़ोl(nfc, NFI_FDML(i));
+		valm = nfi_पढ़ोl(nfc, NFI_FDMM(i));
 
-		for (j = 0; j < fdm->reg_size; j++)
+		क्रम (j = 0; j < fdm->reg_size; j++)
 			oobptr[j] = (j >= 4 ? valm : vall) >> ((j % 4) * 8);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void mtk_nfc_write_fdm(struct nand_chip *chip)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	struct mtk_nfc_fdm *fdm = &mtk_nand->fdm;
+अटल अंतरभूत व्योम mtk_nfc_ग_लिखो_fdm(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	काष्ठा mtk_nfc_fdm *fdm = &mtk_nand->fdm;
 	u32 vall, valm;
 	u8 *oobptr;
-	int i, j;
+	पूर्णांक i, j;
 
-	for (i = 0; i < chip->ecc.steps; i++) {
+	क्रम (i = 0; i < chip->ecc.steps; i++) अणु
 		oobptr = oob_ptr(chip, i);
 		vall = 0;
 		valm = 0;
-		for (j = 0; j < 8; j++) {
-			if (j < 4)
+		क्रम (j = 0; j < 8; j++) अणु
+			अगर (j < 4)
 				vall |= (j < fdm->reg_size ? oobptr[j] : 0xff)
 						<< (j * 8);
-			else
+			अन्यथा
 				valm |= (j < fdm->reg_size ? oobptr[j] : 0xff)
 						<< ((j - 4) * 8);
-		}
-		nfi_writel(nfc, vall, NFI_FDML(i));
-		nfi_writel(nfc, valm, NFI_FDMM(i));
-	}
-}
+		पूर्ण
+		nfi_ग_लिखोl(nfc, vall, NFI_FDML(i));
+		nfi_ग_लिखोl(nfc, valm, NFI_FDMM(i));
+	पूर्ण
+पूर्ण
 
-static int mtk_nfc_do_write_page(struct mtd_info *mtd, struct nand_chip *chip,
-				 const u8 *buf, int page, int len)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct device *dev = nfc->dev;
+अटल पूर्णांक mtk_nfc_करो_ग_लिखो_page(काष्ठा mtd_info *mtd, काष्ठा nand_chip *chip,
+				 स्थिर u8 *buf, पूर्णांक page, पूर्णांक len)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा device *dev = nfc->dev;
 	dma_addr_t addr;
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
-	addr = dma_map_single(dev, (void *)buf, len, DMA_TO_DEVICE);
+	addr = dma_map_single(dev, (व्योम *)buf, len, DMA_TO_DEVICE);
 	ret = dma_mapping_error(nfc->dev, addr);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(nfc->dev, "dma mapping error\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	reg = nfi_readw(nfc, NFI_CNFG) | CNFG_AHB | CNFG_DMA_BURST_EN;
-	nfi_writew(nfc, reg, NFI_CNFG);
+	reg = nfi_पढ़ोw(nfc, NFI_CNFG) | CNFG_AHB | CNFG_DMA_BURST_EN;
+	nfi_ग_लिखोw(nfc, reg, NFI_CNFG);
 
-	nfi_writel(nfc, chip->ecc.steps << CON_SEC_SHIFT, NFI_CON);
-	nfi_writel(nfc, lower_32_bits(addr), NFI_STRADDR);
-	nfi_writew(nfc, INTR_AHB_DONE_EN, NFI_INTR_EN);
+	nfi_ग_लिखोl(nfc, chip->ecc.steps << CON_SEC_SHIFT, NFI_CON);
+	nfi_ग_लिखोl(nfc, lower_32_bits(addr), NFI_STRADDR);
+	nfi_ग_लिखोw(nfc, INTR_AHB_DONE_EN, NFI_INTR_EN);
 
-	init_completion(&nfc->done);
+	init_completion(&nfc->करोne);
 
-	reg = nfi_readl(nfc, NFI_CON) | CON_BWR;
-	nfi_writel(nfc, reg, NFI_CON);
-	nfi_writew(nfc, STAR_EN, NFI_STRDATA);
+	reg = nfi_पढ़ोl(nfc, NFI_CON) | CON_BWR;
+	nfi_ग_लिखोl(nfc, reg, NFI_CON);
+	nfi_ग_लिखोw(nfc, STAR_EN, NFI_STRDATA);
 
-	ret = wait_for_completion_timeout(&nfc->done, msecs_to_jiffies(500));
-	if (!ret) {
+	ret = रुको_क्रम_completion_समयout(&nfc->करोne, msecs_to_jअगरfies(500));
+	अगर (!ret) अणु
 		dev_err(dev, "program ahb done timeout\n");
-		nfi_writew(nfc, 0, NFI_INTR_EN);
+		nfi_ग_लिखोw(nfc, 0, NFI_INTR_EN);
 		ret = -ETIMEDOUT;
-		goto timeout;
-	}
+		जाओ समयout;
+	पूर्ण
 
-	ret = readl_poll_timeout_atomic(nfc->regs + NFI_ADDRCNTR, reg,
+	ret = पढ़ोl_poll_समयout_atomic(nfc->regs + NFI_ADDRCNTR, reg,
 					ADDRCNTR_SEC(reg) >= chip->ecc.steps,
 					10, MTK_TIMEOUT);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "hwecc write timeout\n");
 
-timeout:
+समयout:
 
 	dma_unmap_single(nfc->dev, addr, len, DMA_TO_DEVICE);
-	nfi_writel(nfc, 0, NFI_CON);
+	nfi_ग_लिखोl(nfc, 0, NFI_CON);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nfc_write_page(struct mtd_info *mtd, struct nand_chip *chip,
-			      const u8 *buf, int page, int raw)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	size_t len;
-	const u8 *bufpoi;
+अटल पूर्णांक mtk_nfc_ग_लिखो_page(काष्ठा mtd_info *mtd, काष्ठा nand_chip *chip,
+			      स्थिर u8 *buf, पूर्णांक page, पूर्णांक raw)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	माप_प्रकार len;
+	स्थिर u8 *bufpoi;
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
 	mtk_nfc_select_target(chip, chip->cur_cs);
-	nand_prog_page_begin_op(chip, page, 0, NULL, 0);
+	nand_prog_page_begin_op(chip, page, 0, शून्य, 0);
 
-	if (!raw) {
-		/* OOB => FDM: from register,  ECC: from HW */
-		reg = nfi_readw(nfc, NFI_CNFG) | CNFG_AUTO_FMT_EN;
-		nfi_writew(nfc, reg | CNFG_HW_ECC_EN, NFI_CNFG);
+	अगर (!raw) अणु
+		/* OOB => FDM: from रेजिस्टर,  ECC: from HW */
+		reg = nfi_पढ़ोw(nfc, NFI_CNFG) | CNFG_AUTO_FMT_EN;
+		nfi_ग_लिखोw(nfc, reg | CNFG_HW_ECC_EN, NFI_CNFG);
 
 		nfc->ecc_cfg.op = ECC_ENCODE;
 		nfc->ecc_cfg.mode = ECC_NFI_MODE;
 		ret = mtk_ecc_enable(nfc->ecc, &nfc->ecc_cfg);
-		if (ret) {
+		अगर (ret) अणु
 			/* clear NFI config */
-			reg = nfi_readw(nfc, NFI_CNFG);
+			reg = nfi_पढ़ोw(nfc, NFI_CNFG);
 			reg &= ~(CNFG_AUTO_FMT_EN | CNFG_HW_ECC_EN);
-			nfi_writew(nfc, reg, NFI_CNFG);
+			nfi_ग_लिखोw(nfc, reg, NFI_CNFG);
 
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		memcpy(nfc->buffer, buf, mtd->writesize);
+		स_नकल(nfc->buffer, buf, mtd->ग_लिखोsize);
 		mtk_nand->bad_mark.bm_swap(mtd, nfc->buffer, raw);
 		bufpoi = nfc->buffer;
 
-		/* write OOB into the FDM registers (OOB area in MTK NAND) */
-		mtk_nfc_write_fdm(chip);
-	} else {
+		/* ग_लिखो OOB पूर्णांकo the FDM रेजिस्टरs (OOB area in MTK न_अंकD) */
+		mtk_nfc_ग_लिखो_fdm(chip);
+	पूर्ण अन्यथा अणु
 		bufpoi = buf;
-	}
+	पूर्ण
 
-	len = mtd->writesize + (raw ? mtd->oobsize : 0);
-	ret = mtk_nfc_do_write_page(mtd, chip, bufpoi, page, len);
+	len = mtd->ग_लिखोsize + (raw ? mtd->oobsize : 0);
+	ret = mtk_nfc_करो_ग_लिखो_page(mtd, chip, bufpoi, page, len);
 
-	if (!raw)
+	अगर (!raw)
 		mtk_ecc_disable(nfc->ecc);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return nand_prog_page_end_op(chip);
-}
+	वापस nand_prog_page_end_op(chip);
+पूर्ण
 
-static int mtk_nfc_write_page_hwecc(struct nand_chip *chip, const u8 *buf,
-				    int oob_on, int page)
-{
-	return mtk_nfc_write_page(nand_to_mtd(chip), chip, buf, page, 0);
-}
+अटल पूर्णांक mtk_nfc_ग_लिखो_page_hwecc(काष्ठा nand_chip *chip, स्थिर u8 *buf,
+				    पूर्णांक oob_on, पूर्णांक page)
+अणु
+	वापस mtk_nfc_ग_लिखो_page(nand_to_mtd(chip), chip, buf, page, 0);
+पूर्ण
 
-static int mtk_nfc_write_page_raw(struct nand_chip *chip, const u8 *buf,
-				  int oob_on, int pg)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
+अटल पूर्णांक mtk_nfc_ग_लिखो_page_raw(काष्ठा nand_chip *chip, स्थिर u8 *buf,
+				  पूर्णांक oob_on, पूर्णांक pg)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
 
-	mtk_nfc_format_page(mtd, buf);
-	return mtk_nfc_write_page(mtd, chip, nfc->buffer, pg, 1);
-}
+	mtk_nfc_क्रमmat_page(mtd, buf);
+	वापस mtk_nfc_ग_लिखो_page(mtd, chip, nfc->buffer, pg, 1);
+पूर्ण
 
-static int mtk_nfc_write_subpage_hwecc(struct nand_chip *chip, u32 offset,
-				       u32 data_len, const u8 *buf,
-				       int oob_on, int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	int ret;
+अटल पूर्णांक mtk_nfc_ग_लिखो_subpage_hwecc(काष्ठा nand_chip *chip, u32 offset,
+				       u32 data_len, स्थिर u8 *buf,
+				       पूर्णांक oob_on, पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	पूर्णांक ret;
 
-	ret = mtk_nfc_format_subpage(mtd, offset, data_len, buf);
-	if (ret < 0)
-		return ret;
+	ret = mtk_nfc_क्रमmat_subpage(mtd, offset, data_len, buf);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* use the data in the private buffer (now with FDM and CRC) */
-	return mtk_nfc_write_page(mtd, chip, nfc->buffer, page, 1);
-}
+	/* use the data in the निजी buffer (now with FDM and CRC) */
+	वापस mtk_nfc_ग_लिखो_page(mtd, chip, nfc->buffer, page, 1);
+पूर्ण
 
-static int mtk_nfc_write_oob_std(struct nand_chip *chip, int page)
-{
-	return mtk_nfc_write_page_raw(chip, NULL, 1, page);
-}
+अटल पूर्णांक mtk_nfc_ग_लिखो_oob_std(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	वापस mtk_nfc_ग_लिखो_page_raw(chip, शून्य, 1, page);
+पूर्ण
 
-static int mtk_nfc_update_ecc_stats(struct mtd_info *mtd, u8 *buf, u32 start,
+अटल पूर्णांक mtk_nfc_update_ecc_stats(काष्ठा mtd_info *mtd, u8 *buf, u32 start,
 				    u32 sectors)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	struct mtk_ecc_stats stats;
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	काष्ठा mtk_ecc_stats stats;
 	u32 reg_size = mtk_nand->fdm.reg_size;
-	int rc, i;
+	पूर्णांक rc, i;
 
-	rc = nfi_readl(nfc, NFI_STA) & STA_EMP_PAGE;
-	if (rc) {
-		memset(buf, 0xff, sectors * chip->ecc.size);
-		for (i = 0; i < sectors; i++)
-			memset(oob_ptr(chip, start + i), 0xff, reg_size);
-		return 0;
-	}
+	rc = nfi_पढ़ोl(nfc, NFI_STA) & STA_EMP_PAGE;
+	अगर (rc) अणु
+		स_रखो(buf, 0xff, sectors * chip->ecc.size);
+		क्रम (i = 0; i < sectors; i++)
+			स_रखो(oob_ptr(chip, start + i), 0xff, reg_size);
+		वापस 0;
+	पूर्ण
 
 	mtk_ecc_get_stats(nfc->ecc, &stats, sectors);
 	mtd->ecc_stats.corrected += stats.corrected;
 	mtd->ecc_stats.failed += stats.failed;
 
-	return stats.bitflips;
-}
+	वापस stats.bitflips;
+पूर्ण
 
-static int mtk_nfc_read_subpage(struct mtd_info *mtd, struct nand_chip *chip,
-				u32 data_offs, u32 readlen,
-				u8 *bufpoi, int page, int raw)
-{
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+अटल पूर्णांक mtk_nfc_पढ़ो_subpage(काष्ठा mtd_info *mtd, काष्ठा nand_chip *chip,
+				u32 data_offs, u32 पढ़ोlen,
+				u8 *bufpoi, पूर्णांक page, पूर्णांक raw)
+अणु
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
 	u32 spare = mtk_nand->spare_per_sector;
 	u32 column, sectors, start, end, reg;
 	dma_addr_t addr;
-	int bitflips = 0;
-	size_t len;
+	पूर्णांक bitflips = 0;
+	माप_प्रकार len;
 	u8 *buf;
-	int rc;
+	पूर्णांक rc;
 
 	mtk_nfc_select_target(chip, chip->cur_cs);
 	start = data_offs / chip->ecc.size;
-	end = DIV_ROUND_UP(data_offs + readlen, chip->ecc.size);
+	end = DIV_ROUND_UP(data_offs + पढ़ोlen, chip->ecc.size);
 
 	sectors = end - start;
 	column = start * (chip->ecc.size + spare);
@@ -961,312 +962,312 @@ static int mtk_nfc_read_subpage(struct mtd_info *mtd, struct nand_chip *chip,
 	len = sectors * chip->ecc.size + (raw ? sectors * spare : 0);
 	buf = bufpoi + start * chip->ecc.size;
 
-	nand_read_page_op(chip, page, column, NULL, 0);
+	nand_पढ़ो_page_op(chip, page, column, शून्य, 0);
 
 	addr = dma_map_single(nfc->dev, buf, len, DMA_FROM_DEVICE);
 	rc = dma_mapping_error(nfc->dev, addr);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(nfc->dev, "dma mapping error\n");
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	reg = nfi_readw(nfc, NFI_CNFG);
+	reg = nfi_पढ़ोw(nfc, NFI_CNFG);
 	reg |= CNFG_READ_EN | CNFG_DMA_BURST_EN | CNFG_AHB;
-	if (!raw) {
+	अगर (!raw) अणु
 		reg |= CNFG_AUTO_FMT_EN | CNFG_HW_ECC_EN;
-		nfi_writew(nfc, reg, NFI_CNFG);
+		nfi_ग_लिखोw(nfc, reg, NFI_CNFG);
 
 		nfc->ecc_cfg.mode = ECC_NFI_MODE;
 		nfc->ecc_cfg.sectors = sectors;
 		nfc->ecc_cfg.op = ECC_DECODE;
 		rc = mtk_ecc_enable(nfc->ecc, &nfc->ecc_cfg);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(nfc->dev, "ecc enable\n");
 			/* clear NFI_CNFG */
 			reg &= ~(CNFG_DMA_BURST_EN | CNFG_AHB | CNFG_READ_EN |
 				CNFG_AUTO_FMT_EN | CNFG_HW_ECC_EN);
-			nfi_writew(nfc, reg, NFI_CNFG);
+			nfi_ग_लिखोw(nfc, reg, NFI_CNFG);
 			dma_unmap_single(nfc->dev, addr, len, DMA_FROM_DEVICE);
 
-			return rc;
-		}
-	} else {
-		nfi_writew(nfc, reg, NFI_CNFG);
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		nfi_ग_लिखोw(nfc, reg, NFI_CNFG);
+	पूर्ण
 
-	nfi_writel(nfc, sectors << CON_SEC_SHIFT, NFI_CON);
-	nfi_writew(nfc, INTR_AHB_DONE_EN, NFI_INTR_EN);
-	nfi_writel(nfc, lower_32_bits(addr), NFI_STRADDR);
+	nfi_ग_लिखोl(nfc, sectors << CON_SEC_SHIFT, NFI_CON);
+	nfi_ग_लिखोw(nfc, INTR_AHB_DONE_EN, NFI_INTR_EN);
+	nfi_ग_लिखोl(nfc, lower_32_bits(addr), NFI_STRADDR);
 
-	init_completion(&nfc->done);
-	reg = nfi_readl(nfc, NFI_CON) | CON_BRD;
-	nfi_writel(nfc, reg, NFI_CON);
-	nfi_writew(nfc, STAR_EN, NFI_STRDATA);
+	init_completion(&nfc->करोne);
+	reg = nfi_पढ़ोl(nfc, NFI_CON) | CON_BRD;
+	nfi_ग_लिखोl(nfc, reg, NFI_CON);
+	nfi_ग_लिखोw(nfc, STAR_EN, NFI_STRDATA);
 
-	rc = wait_for_completion_timeout(&nfc->done, msecs_to_jiffies(500));
-	if (!rc)
+	rc = रुको_क्रम_completion_समयout(&nfc->करोne, msecs_to_jअगरfies(500));
+	अगर (!rc)
 		dev_warn(nfc->dev, "read ahb/dma done timeout\n");
 
-	rc = readl_poll_timeout_atomic(nfc->regs + NFI_BYTELEN, reg,
+	rc = पढ़ोl_poll_समयout_atomic(nfc->regs + NFI_BYTELEN, reg,
 				       ADDRCNTR_SEC(reg) >= sectors, 10,
 				       MTK_TIMEOUT);
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		dev_err(nfc->dev, "subpage done timeout\n");
 		bitflips = -EIO;
-	} else if (!raw) {
-		rc = mtk_ecc_wait_done(nfc->ecc, ECC_DECODE);
+	पूर्ण अन्यथा अगर (!raw) अणु
+		rc = mtk_ecc_रुको_करोne(nfc->ecc, ECC_DECODE);
 		bitflips = rc < 0 ? -ETIMEDOUT :
 			mtk_nfc_update_ecc_stats(mtd, buf, start, sectors);
-		mtk_nfc_read_fdm(chip, start, sectors);
-	}
+		mtk_nfc_पढ़ो_fdm(chip, start, sectors);
+	पूर्ण
 
 	dma_unmap_single(nfc->dev, addr, len, DMA_FROM_DEVICE);
 
-	if (raw)
-		goto done;
+	अगर (raw)
+		जाओ करोne;
 
 	mtk_ecc_disable(nfc->ecc);
 
-	if (clamp(mtk_nand->bad_mark.sec, start, end) == mtk_nand->bad_mark.sec)
+	अगर (clamp(mtk_nand->bad_mark.sec, start, end) == mtk_nand->bad_mark.sec)
 		mtk_nand->bad_mark.bm_swap(mtd, bufpoi, raw);
-done:
-	nfi_writel(nfc, 0, NFI_CON);
+करोne:
+	nfi_ग_लिखोl(nfc, 0, NFI_CON);
 
-	return bitflips;
-}
+	वापस bitflips;
+पूर्ण
 
-static int mtk_nfc_read_subpage_hwecc(struct nand_chip *chip, u32 off,
-				      u32 len, u8 *p, int pg)
-{
-	return mtk_nfc_read_subpage(nand_to_mtd(chip), chip, off, len, p, pg,
+अटल पूर्णांक mtk_nfc_पढ़ो_subpage_hwecc(काष्ठा nand_chip *chip, u32 off,
+				      u32 len, u8 *p, पूर्णांक pg)
+अणु
+	वापस mtk_nfc_पढ़ो_subpage(nand_to_mtd(chip), chip, off, len, p, pg,
 				    0);
-}
+पूर्ण
 
-static int mtk_nfc_read_page_hwecc(struct nand_chip *chip, u8 *p, int oob_on,
-				   int pg)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
+अटल पूर्णांक mtk_nfc_पढ़ो_page_hwecc(काष्ठा nand_chip *chip, u8 *p, पूर्णांक oob_on,
+				   पूर्णांक pg)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
 
-	return mtk_nfc_read_subpage(mtd, chip, 0, mtd->writesize, p, pg, 0);
-}
+	वापस mtk_nfc_पढ़ो_subpage(mtd, chip, 0, mtd->ग_लिखोsize, p, pg, 0);
+पूर्ण
 
-static int mtk_nfc_read_page_raw(struct nand_chip *chip, u8 *buf, int oob_on,
-				 int page)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_fdm *fdm = &mtk_nand->fdm;
-	int i, ret;
+अटल पूर्णांक mtk_nfc_पढ़ो_page_raw(काष्ठा nand_chip *chip, u8 *buf, पूर्णांक oob_on,
+				 पूर्णांक page)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_fdm *fdm = &mtk_nand->fdm;
+	पूर्णांक i, ret;
 
-	memset(nfc->buffer, 0xff, mtd->writesize + mtd->oobsize);
-	ret = mtk_nfc_read_subpage(mtd, chip, 0, mtd->writesize, nfc->buffer,
+	स_रखो(nfc->buffer, 0xff, mtd->ग_लिखोsize + mtd->oobsize);
+	ret = mtk_nfc_पढ़ो_subpage(mtd, chip, 0, mtd->ग_लिखोsize, nfc->buffer,
 				   page, 1);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	for (i = 0; i < chip->ecc.steps; i++) {
-		memcpy(oob_ptr(chip, i), mtk_oob_ptr(chip, i), fdm->reg_size);
+	क्रम (i = 0; i < chip->ecc.steps; i++) अणु
+		स_नकल(oob_ptr(chip, i), mtk_oob_ptr(chip, i), fdm->reg_size);
 
-		if (i == mtk_nand->bad_mark.sec)
+		अगर (i == mtk_nand->bad_mark.sec)
 			mtk_nand->bad_mark.bm_swap(mtd, nfc->buffer, 1);
 
-		if (buf)
-			memcpy(data_ptr(chip, buf, i), mtk_data_ptr(chip, i),
+		अगर (buf)
+			स_नकल(data_ptr(chip, buf, i), mtk_data_ptr(chip, i),
 			       chip->ecc.size);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nfc_read_oob_std(struct nand_chip *chip, int page)
-{
-	return mtk_nfc_read_page_raw(chip, NULL, 1, page);
-}
+अटल पूर्णांक mtk_nfc_पढ़ो_oob_std(काष्ठा nand_chip *chip, पूर्णांक page)
+अणु
+	वापस mtk_nfc_पढ़ो_page_raw(chip, शून्य, 1, page);
+पूर्ण
 
-static inline void mtk_nfc_hw_init(struct mtk_nfc *nfc)
-{
+अटल अंतरभूत व्योम mtk_nfc_hw_init(काष्ठा mtk_nfc *nfc)
+अणु
 	/*
-	 * CNRNB: nand ready/busy register
+	 * CNRNB: nand पढ़ोy/busy रेजिस्टर
 	 * -------------------------------
-	 * 7:4: timeout register for polling the NAND busy/ready signal
-	 * 0  : poll the status of the busy/ready signal after [7:4]*16 cycles.
+	 * 7:4: समयout रेजिस्टर क्रम polling the न_अंकD busy/पढ़ोy संकेत
+	 * 0  : poll the status of the busy/पढ़ोy संकेत after [7:4]*16 cycles.
 	 */
-	nfi_writew(nfc, 0xf1, NFI_CNRNB);
-	nfi_writel(nfc, PAGEFMT_8K_16K, NFI_PAGEFMT);
+	nfi_ग_लिखोw(nfc, 0xf1, NFI_CNRNB);
+	nfi_ग_लिखोl(nfc, PAGEFMT_8K_16K, NFI_PAGEFMT);
 
 	mtk_nfc_hw_reset(nfc);
 
-	nfi_readl(nfc, NFI_INTR_STA);
-	nfi_writel(nfc, 0, NFI_INTR_EN);
-}
+	nfi_पढ़ोl(nfc, NFI_INTR_STA);
+	nfi_ग_लिखोl(nfc, 0, NFI_INTR_EN);
+पूर्ण
 
-static irqreturn_t mtk_nfc_irq(int irq, void *id)
-{
-	struct mtk_nfc *nfc = id;
+अटल irqवापस_t mtk_nfc_irq(पूर्णांक irq, व्योम *id)
+अणु
+	काष्ठा mtk_nfc *nfc = id;
 	u16 sta, ien;
 
-	sta = nfi_readw(nfc, NFI_INTR_STA);
-	ien = nfi_readw(nfc, NFI_INTR_EN);
+	sta = nfi_पढ़ोw(nfc, NFI_INTR_STA);
+	ien = nfi_पढ़ोw(nfc, NFI_INTR_EN);
 
-	if (!(sta & ien))
-		return IRQ_NONE;
+	अगर (!(sta & ien))
+		वापस IRQ_NONE;
 
-	nfi_writew(nfc, ~sta & ien, NFI_INTR_EN);
-	complete(&nfc->done);
+	nfi_ग_लिखोw(nfc, ~sta & ien, NFI_INTR_EN);
+	complete(&nfc->करोne);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int mtk_nfc_enable_clk(struct device *dev, struct mtk_nfc_clk *clk)
-{
-	int ret;
+अटल पूर्णांक mtk_nfc_enable_clk(काष्ठा device *dev, काष्ठा mtk_nfc_clk *clk)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(clk->nfi_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable nfi clk\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(clk->pad_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to enable pad clk\n");
 		clk_disable_unprepare(clk->nfi_clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mtk_nfc_disable_clk(struct mtk_nfc_clk *clk)
-{
+अटल व्योम mtk_nfc_disable_clk(काष्ठा mtk_nfc_clk *clk)
+अणु
 	clk_disable_unprepare(clk->nfi_clk);
 	clk_disable_unprepare(clk->pad_clk);
-}
+पूर्ण
 
-static int mtk_nfc_ooblayout_free(struct mtd_info *mtd, int section,
-				  struct mtd_oob_region *oob_region)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	struct mtk_nfc_fdm *fdm = &mtk_nand->fdm;
+अटल पूर्णांक mtk_nfc_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
+				  काष्ठा mtd_oob_region *oob_region)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	काष्ठा mtk_nfc_fdm *fdm = &mtk_nand->fdm;
 	u32 eccsteps;
 
-	eccsteps = mtd->writesize / chip->ecc.size;
+	eccsteps = mtd->ग_लिखोsize / chip->ecc.size;
 
-	if (section >= eccsteps)
-		return -ERANGE;
+	अगर (section >= eccsteps)
+		वापस -दुस्फल;
 
 	oob_region->length = fdm->reg_size - fdm->ecc_size;
 	oob_region->offset = section * fdm->reg_size + fdm->ecc_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nfc_ooblayout_ecc(struct mtd_info *mtd, int section,
-				 struct mtd_oob_region *oob_region)
-{
-	struct nand_chip *chip = mtd_to_nand(mtd);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+अटल पूर्णांक mtk_nfc_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
+				 काष्ठा mtd_oob_region *oob_region)
+अणु
+	काष्ठा nand_chip *chip = mtd_to_nand(mtd);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
 	u32 eccsteps;
 
-	if (section)
-		return -ERANGE;
+	अगर (section)
+		वापस -दुस्फल;
 
-	eccsteps = mtd->writesize / chip->ecc.size;
+	eccsteps = mtd->ग_लिखोsize / chip->ecc.size;
 	oob_region->offset = mtk_nand->fdm.reg_size * eccsteps;
 	oob_region->length = mtd->oobsize - oob_region->offset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtd_ooblayout_ops mtk_nfc_ooblayout_ops = {
-	.free = mtk_nfc_ooblayout_free,
+अटल स्थिर काष्ठा mtd_ooblayout_ops mtk_nfc_ooblayout_ops = अणु
+	.मुक्त = mtk_nfc_ooblayout_मुक्त,
 	.ecc = mtk_nfc_ooblayout_ecc,
-};
+पूर्ण;
 
-static void mtk_nfc_set_fdm(struct mtk_nfc_fdm *fdm, struct mtd_info *mtd)
-{
-	struct nand_chip *nand = mtd_to_nand(mtd);
-	struct mtk_nfc_nand_chip *chip = to_mtk_nand(nand);
-	struct mtk_nfc *nfc = nand_get_controller_data(nand);
+अटल व्योम mtk_nfc_set_fdm(काष्ठा mtk_nfc_fdm *fdm, काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा nand_chip *nand = mtd_to_nand(mtd);
+	काष्ठा mtk_nfc_nand_chip *chip = to_mtk_nand(nand);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(nand);
 	u32 ecc_bytes;
 
 	ecc_bytes = DIV_ROUND_UP(nand->ecc.strength *
 				 mtk_ecc_get_parity_bits(nfc->ecc), 8);
 
 	fdm->reg_size = chip->spare_per_sector - ecc_bytes;
-	if (fdm->reg_size > NFI_FDM_MAX_SIZE)
+	अगर (fdm->reg_size > NFI_FDM_MAX_SIZE)
 		fdm->reg_size = NFI_FDM_MAX_SIZE;
 
 	/* bad block mark storage */
 	fdm->ecc_size = 1;
-}
+पूर्ण
 
-static void mtk_nfc_set_bad_mark_ctl(struct mtk_nfc_bad_mark_ctl *bm_ctl,
-				     struct mtd_info *mtd)
-{
-	struct nand_chip *nand = mtd_to_nand(mtd);
+अटल व्योम mtk_nfc_set_bad_mark_ctl(काष्ठा mtk_nfc_bad_mark_ctl *bm_ctl,
+				     काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा nand_chip *nand = mtd_to_nand(mtd);
 
-	if (mtd->writesize == 512) {
+	अगर (mtd->ग_लिखोsize == 512) अणु
 		bm_ctl->bm_swap = mtk_nfc_no_bad_mark_swap;
-	} else {
+	पूर्ण अन्यथा अणु
 		bm_ctl->bm_swap = mtk_nfc_bad_mark_swap;
-		bm_ctl->sec = mtd->writesize / mtk_data_len(nand);
-		bm_ctl->pos = mtd->writesize % mtk_data_len(nand);
-	}
-}
+		bm_ctl->sec = mtd->ग_लिखोsize / mtk_data_len(nand);
+		bm_ctl->pos = mtd->ग_लिखोsize % mtk_data_len(nand);
+	पूर्ण
+पूर्ण
 
-static int mtk_nfc_set_spare_per_sector(u32 *sps, struct mtd_info *mtd)
-{
-	struct nand_chip *nand = mtd_to_nand(mtd);
-	struct mtk_nfc *nfc = nand_get_controller_data(nand);
-	const u8 *spare = nfc->caps->spare_size;
-	u32 eccsteps, i, closest_spare = 0;
+अटल पूर्णांक mtk_nfc_set_spare_per_sector(u32 *sps, काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा nand_chip *nand = mtd_to_nand(mtd);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(nand);
+	स्थिर u8 *spare = nfc->caps->spare_size;
+	u32 eccsteps, i, बंदst_spare = 0;
 
-	eccsteps = mtd->writesize / nand->ecc.size;
+	eccsteps = mtd->ग_लिखोsize / nand->ecc.size;
 	*sps = mtd->oobsize / eccsteps;
 
-	if (nand->ecc.size == 1024)
+	अगर (nand->ecc.size == 1024)
 		*sps >>= 1;
 
-	if (*sps < MTK_NFC_MIN_SPARE)
-		return -EINVAL;
+	अगर (*sps < MTK_NFC_MIN_SPARE)
+		वापस -EINVAL;
 
-	for (i = 0; i < nfc->caps->num_spare_size; i++) {
-		if (*sps >= spare[i] && spare[i] >= spare[closest_spare]) {
-			closest_spare = i;
-			if (*sps == spare[i])
-				break;
-		}
-	}
+	क्रम (i = 0; i < nfc->caps->num_spare_size; i++) अणु
+		अगर (*sps >= spare[i] && spare[i] >= spare[बंदst_spare]) अणु
+			बंदst_spare = i;
+			अगर (*sps == spare[i])
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	*sps = spare[closest_spare];
+	*sps = spare[बंदst_spare];
 
-	if (nand->ecc.size == 1024)
+	अगर (nand->ecc.size == 1024)
 		*sps <<= 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nfc_ecc_init(struct device *dev, struct mtd_info *mtd)
-{
-	struct nand_chip *nand = mtd_to_nand(mtd);
-	const struct nand_ecc_props *requirements =
+अटल पूर्णांक mtk_nfc_ecc_init(काष्ठा device *dev, काष्ठा mtd_info *mtd)
+अणु
+	काष्ठा nand_chip *nand = mtd_to_nand(mtd);
+	स्थिर काष्ठा nand_ecc_props *requirements =
 		nanddev_get_ecc_requirements(&nand->base);
-	struct mtk_nfc *nfc = nand_get_controller_data(nand);
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(nand);
 	u32 spare;
-	int free, ret;
+	पूर्णांक मुक्त, ret;
 
 	/* support only ecc hw mode */
-	if (nand->ecc.engine_type != NAND_ECC_ENGINE_TYPE_ON_HOST) {
+	अगर (nand->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_ON_HOST) अणु
 		dev_err(dev, "ecc.engine_type not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* if optional dt settings not present */
-	if (!nand->ecc.size || !nand->ecc.strength) {
+	/* अगर optional dt settings not present */
+	अगर (!nand->ecc.size || !nand->ecc.strength) अणु
 		/* use datasheet requirements */
 		nand->ecc.strength = requirements->strength;
 		nand->ecc.size = requirements->step_size;
@@ -1275,139 +1276,139 @@ static int mtk_nfc_ecc_init(struct device *dev, struct mtd_info *mtd)
 		 * align eccstrength and eccsize
 		 * this controller only supports 512 and 1024 sizes
 		 */
-		if (nand->ecc.size < 1024) {
-			if (mtd->writesize > 512 &&
-			    nfc->caps->max_sector_size > 512) {
+		अगर (nand->ecc.size < 1024) अणु
+			अगर (mtd->ग_लिखोsize > 512 &&
+			    nfc->caps->max_sector_size > 512) अणु
 				nand->ecc.size = 1024;
 				nand->ecc.strength <<= 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				nand->ecc.size = 512;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			nand->ecc.size = 1024;
-		}
+		पूर्ण
 
 		ret = mtk_nfc_set_spare_per_sector(&spare, mtd);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/* calculate oob bytes except ecc parity data */
-		free = (nand->ecc.strength * mtk_ecc_get_parity_bits(nfc->ecc)
+		मुक्त = (nand->ecc.strength * mtk_ecc_get_parity_bits(nfc->ecc)
 			+ 7) >> 3;
-		free = spare - free;
+		मुक्त = spare - मुक्त;
 
 		/*
-		 * enhance ecc strength if oob left is bigger than max FDM size
-		 * or reduce ecc strength if oob size is not enough for ecc
+		 * enhance ecc strength अगर oob left is bigger than max FDM size
+		 * or reduce ecc strength अगर oob size is not enough क्रम ecc
 		 * parity data.
 		 */
-		if (free > NFI_FDM_MAX_SIZE) {
+		अगर (मुक्त > NFI_FDM_MAX_SIZE) अणु
 			spare -= NFI_FDM_MAX_SIZE;
 			nand->ecc.strength = (spare << 3) /
 					     mtk_ecc_get_parity_bits(nfc->ecc);
-		} else if (free < 0) {
+		पूर्ण अन्यथा अगर (मुक्त < 0) अणु
 			spare -= NFI_FDM_MIN_SIZE;
 			nand->ecc.strength = (spare << 3) /
 					     mtk_ecc_get_parity_bits(nfc->ecc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mtk_ecc_adjust_strength(nfc->ecc, &nand->ecc.strength);
 
 	dev_info(dev, "eccsize %d eccstrength %d\n",
 		 nand->ecc.size, nand->ecc.strength);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nfc_attach_chip(struct nand_chip *chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct device *dev = mtd->dev.parent;
-	struct mtk_nfc *nfc = nand_get_controller_data(chip);
-	struct mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
-	int len;
-	int ret;
+अटल पूर्णांक mtk_nfc_attach_chip(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा device *dev = mtd->dev.parent;
+	काष्ठा mtk_nfc *nfc = nand_get_controller_data(chip);
+	काष्ठा mtk_nfc_nand_chip *mtk_nand = to_mtk_nand(chip);
+	पूर्णांक len;
+	पूर्णांक ret;
 
-	if (chip->options & NAND_BUSWIDTH_16) {
+	अगर (chip->options & न_अंकD_BUSWIDTH_16) अणु
 		dev_err(dev, "16bits buswidth not supported");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* store bbt magic in page, cause OOB is not protected */
-	if (chip->bbt_options & NAND_BBT_USE_FLASH)
-		chip->bbt_options |= NAND_BBT_NO_OOB;
+	/* store bbt magic in page, cause OOB is not रक्षित */
+	अगर (chip->bbt_options & न_अंकD_BBT_USE_FLASH)
+		chip->bbt_options |= न_अंकD_BBT_NO_OOB;
 
 	ret = mtk_nfc_ecc_init(dev, mtd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = mtk_nfc_set_spare_per_sector(&mtk_nand->spare_per_sector, mtd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mtk_nfc_set_fdm(&mtk_nand->fdm, mtd);
 	mtk_nfc_set_bad_mark_ctl(&mtk_nand->bad_mark, mtd);
 
-	len = mtd->writesize + mtd->oobsize;
+	len = mtd->ग_लिखोsize + mtd->oobsize;
 	nfc->buffer = devm_kzalloc(dev, len, GFP_KERNEL);
-	if (!nfc->buffer)
-		return  -ENOMEM;
+	अगर (!nfc->buffer)
+		वापस  -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nand_controller_ops mtk_nfc_controller_ops = {
+अटल स्थिर काष्ठा nand_controller_ops mtk_nfc_controller_ops = अणु
 	.attach_chip = mtk_nfc_attach_chip,
-	.setup_interface = mtk_nfc_setup_interface,
+	.setup_पूर्णांकerface = mtk_nfc_setup_पूर्णांकerface,
 	.exec_op = mtk_nfc_exec_op,
-};
+पूर्ण;
 
-static int mtk_nfc_nand_chip_init(struct device *dev, struct mtk_nfc *nfc,
-				  struct device_node *np)
-{
-	struct mtk_nfc_nand_chip *chip;
-	struct nand_chip *nand;
-	struct mtd_info *mtd;
-	int nsels;
-	u32 tmp;
-	int ret;
-	int i;
+अटल पूर्णांक mtk_nfc_nand_chip_init(काष्ठा device *dev, काष्ठा mtk_nfc *nfc,
+				  काष्ठा device_node *np)
+अणु
+	काष्ठा mtk_nfc_nand_chip *chip;
+	काष्ठा nand_chip *nand;
+	काष्ठा mtd_info *mtd;
+	पूर्णांक nsels;
+	u32 पंचांगp;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (!of_get_property(np, "reg", &nsels))
-		return -ENODEV;
+	अगर (!of_get_property(np, "reg", &nsels))
+		वापस -ENODEV;
 
-	nsels /= sizeof(u32);
-	if (!nsels || nsels > MTK_NAND_MAX_NSELS) {
+	nsels /= माप(u32);
+	अगर (!nsels || nsels > MTK_न_अंकD_MAX_NSELS) अणु
 		dev_err(dev, "invalid reg property size %d\n", nsels);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	chip = devm_kzalloc(dev, sizeof(*chip) + nsels * sizeof(u8),
+	chip = devm_kzalloc(dev, माप(*chip) + nsels * माप(u8),
 			    GFP_KERNEL);
-	if (!chip)
-		return -ENOMEM;
+	अगर (!chip)
+		वापस -ENOMEM;
 
 	chip->nsels = nsels;
-	for (i = 0; i < nsels; i++) {
-		ret = of_property_read_u32_index(np, "reg", i, &tmp);
-		if (ret) {
+	क्रम (i = 0; i < nsels; i++) अणु
+		ret = of_property_पढ़ो_u32_index(np, "reg", i, &पंचांगp);
+		अगर (ret) अणु
 			dev_err(dev, "reg property failure : %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (tmp >= MTK_NAND_MAX_NSELS) {
-			dev_err(dev, "invalid CS: %u\n", tmp);
-			return -EINVAL;
-		}
+		अगर (पंचांगp >= MTK_न_अंकD_MAX_NSELS) अणु
+			dev_err(dev, "invalid CS: %u\n", पंचांगp);
+			वापस -EINVAL;
+		पूर्ण
 
-		if (test_and_set_bit(tmp, &nfc->assigned_cs)) {
-			dev_err(dev, "CS %u already assigned\n", tmp);
-			return -EINVAL;
-		}
+		अगर (test_and_set_bit(पंचांगp, &nfc->asचिन्हित_cs)) अणु
+			dev_err(dev, "CS %u already assigned\n", पंचांगp);
+			वापस -EINVAL;
+		पूर्ण
 
-		chip->sels[i] = tmp;
-	}
+		chip->sels[i] = पंचांगp;
+	पूर्ण
 
 	nand = &chip->nand;
 	nand->controller = &nfc->controller;
@@ -1415,22 +1416,22 @@ static int mtk_nfc_nand_chip_init(struct device *dev, struct mtk_nfc *nfc,
 	nand_set_flash_node(nand, np);
 	nand_set_controller_data(nand, nfc);
 
-	nand->options |= NAND_USES_DMA | NAND_SUBPAGE_READ;
+	nand->options |= न_अंकD_USES_DMA | न_अंकD_SUBPAGE_READ;
 
-	/* set default mode in case dt entry is missing */
-	nand->ecc.engine_type = NAND_ECC_ENGINE_TYPE_ON_HOST;
+	/* set शेष mode in हाल dt entry is missing */
+	nand->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_ON_HOST;
 
-	nand->ecc.write_subpage = mtk_nfc_write_subpage_hwecc;
-	nand->ecc.write_page_raw = mtk_nfc_write_page_raw;
-	nand->ecc.write_page = mtk_nfc_write_page_hwecc;
-	nand->ecc.write_oob_raw = mtk_nfc_write_oob_std;
-	nand->ecc.write_oob = mtk_nfc_write_oob_std;
+	nand->ecc.ग_लिखो_subpage = mtk_nfc_ग_लिखो_subpage_hwecc;
+	nand->ecc.ग_लिखो_page_raw = mtk_nfc_ग_लिखो_page_raw;
+	nand->ecc.ग_लिखो_page = mtk_nfc_ग_लिखो_page_hwecc;
+	nand->ecc.ग_लिखो_oob_raw = mtk_nfc_ग_लिखो_oob_std;
+	nand->ecc.ग_लिखो_oob = mtk_nfc_ग_लिखो_oob_std;
 
-	nand->ecc.read_subpage = mtk_nfc_read_subpage_hwecc;
-	nand->ecc.read_page_raw = mtk_nfc_read_page_raw;
-	nand->ecc.read_page = mtk_nfc_read_page_hwecc;
-	nand->ecc.read_oob_raw = mtk_nfc_read_oob_std;
-	nand->ecc.read_oob = mtk_nfc_read_oob_std;
+	nand->ecc.पढ़ो_subpage = mtk_nfc_पढ़ो_subpage_hwecc;
+	nand->ecc.पढ़ो_page_raw = mtk_nfc_पढ़ो_page_raw;
+	nand->ecc.पढ़ो_page = mtk_nfc_पढ़ो_page_hwecc;
+	nand->ecc.पढ़ो_oob_raw = mtk_nfc_पढ़ो_oob_std;
+	nand->ecc.पढ़ो_oob = mtk_nfc_पढ़ो_oob_std;
 
 	mtd = nand_to_mtd(nand);
 	mtd->owner = THIS_MODULE;
@@ -1441,158 +1442,158 @@ static int mtk_nfc_nand_chip_init(struct device *dev, struct mtk_nfc *nfc,
 	mtk_nfc_hw_init(nfc);
 
 	ret = nand_scan(nand, nsels);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = mtd_device_register(mtd, NULL, 0);
-	if (ret) {
+	ret = mtd_device_रेजिस्टर(mtd, शून्य, 0);
+	अगर (ret) अणु
 		dev_err(dev, "mtd parse partition error\n");
 		nand_cleanup(nand);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	list_add_tail(&chip->node, &nfc->chips);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nfc_nand_chips_init(struct device *dev, struct mtk_nfc *nfc)
-{
-	struct device_node *np = dev->of_node;
-	struct device_node *nand_np;
-	int ret;
+अटल पूर्णांक mtk_nfc_nand_chips_init(काष्ठा device *dev, काष्ठा mtk_nfc *nfc)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा device_node *nand_np;
+	पूर्णांक ret;
 
-	for_each_child_of_node(np, nand_np) {
+	क्रम_each_child_of_node(np, nand_np) अणु
 		ret = mtk_nfc_nand_chip_init(dev, nfc, nand_np);
-		if (ret) {
+		अगर (ret) अणु
 			of_node_put(nand_np);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct mtk_nfc_caps mtk_nfc_caps_mt2701 = {
+अटल स्थिर काष्ठा mtk_nfc_caps mtk_nfc_caps_mt2701 = अणु
 	.spare_size = spare_size_mt2701,
 	.num_spare_size = 16,
-	.pageformat_spare_shift = 4,
-	.nfi_clk_div = 1,
+	.pageक्रमmat_spare_shअगरt = 4,
+	.nfi_clk_भाग = 1,
 	.max_sector = 16,
 	.max_sector_size = 1024,
-};
+पूर्ण;
 
-static const struct mtk_nfc_caps mtk_nfc_caps_mt2712 = {
+अटल स्थिर काष्ठा mtk_nfc_caps mtk_nfc_caps_mt2712 = अणु
 	.spare_size = spare_size_mt2712,
 	.num_spare_size = 19,
-	.pageformat_spare_shift = 16,
-	.nfi_clk_div = 2,
+	.pageक्रमmat_spare_shअगरt = 16,
+	.nfi_clk_भाग = 2,
 	.max_sector = 16,
 	.max_sector_size = 1024,
-};
+पूर्ण;
 
-static const struct mtk_nfc_caps mtk_nfc_caps_mt7622 = {
+अटल स्थिर काष्ठा mtk_nfc_caps mtk_nfc_caps_mt7622 = अणु
 	.spare_size = spare_size_mt7622,
 	.num_spare_size = 4,
-	.pageformat_spare_shift = 4,
-	.nfi_clk_div = 1,
+	.pageक्रमmat_spare_shअगरt = 4,
+	.nfi_clk_भाग = 1,
 	.max_sector = 8,
 	.max_sector_size = 512,
-};
+पूर्ण;
 
-static const struct of_device_id mtk_nfc_id_table[] = {
-	{
+अटल स्थिर काष्ठा of_device_id mtk_nfc_id_table[] = अणु
+	अणु
 		.compatible = "mediatek,mt2701-nfc",
 		.data = &mtk_nfc_caps_mt2701,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt2712-nfc",
 		.data = &mtk_nfc_caps_mt2712,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt7622-nfc",
 		.data = &mtk_nfc_caps_mt7622,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, mtk_nfc_id_table);
 
-static int mtk_nfc_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct mtk_nfc *nfc;
-	struct resource *res;
-	int ret, irq;
+अटल पूर्णांक mtk_nfc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा mtk_nfc *nfc;
+	काष्ठा resource *res;
+	पूर्णांक ret, irq;
 
-	nfc = devm_kzalloc(dev, sizeof(*nfc), GFP_KERNEL);
-	if (!nfc)
-		return -ENOMEM;
+	nfc = devm_kzalloc(dev, माप(*nfc), GFP_KERNEL);
+	अगर (!nfc)
+		वापस -ENOMEM;
 
 	nand_controller_init(&nfc->controller);
 	INIT_LIST_HEAD(&nfc->chips);
 	nfc->controller.ops = &mtk_nfc_controller_ops;
 
-	/* probe defer if not ready */
+	/* probe defer अगर not पढ़ोy */
 	nfc->ecc = of_mtk_ecc_get(np);
-	if (IS_ERR(nfc->ecc))
-		return PTR_ERR(nfc->ecc);
-	else if (!nfc->ecc)
-		return -ENODEV;
+	अगर (IS_ERR(nfc->ecc))
+		वापस PTR_ERR(nfc->ecc);
+	अन्यथा अगर (!nfc->ecc)
+		वापस -ENODEV;
 
 	nfc->caps = of_device_get_match_data(dev);
 	nfc->dev = dev;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	nfc->regs = devm_ioremap_resource(dev, res);
-	if (IS_ERR(nfc->regs)) {
+	अगर (IS_ERR(nfc->regs)) अणु
 		ret = PTR_ERR(nfc->regs);
-		goto release_ecc;
-	}
+		जाओ release_ecc;
+	पूर्ण
 
 	nfc->clk.nfi_clk = devm_clk_get(dev, "nfi_clk");
-	if (IS_ERR(nfc->clk.nfi_clk)) {
+	अगर (IS_ERR(nfc->clk.nfi_clk)) अणु
 		dev_err(dev, "no clk\n");
 		ret = PTR_ERR(nfc->clk.nfi_clk);
-		goto release_ecc;
-	}
+		जाओ release_ecc;
+	पूर्ण
 
 	nfc->clk.pad_clk = devm_clk_get(dev, "pad_clk");
-	if (IS_ERR(nfc->clk.pad_clk)) {
+	अगर (IS_ERR(nfc->clk.pad_clk)) अणु
 		dev_err(dev, "no pad clk\n");
 		ret = PTR_ERR(nfc->clk.pad_clk);
-		goto release_ecc;
-	}
+		जाओ release_ecc;
+	पूर्ण
 
 	ret = mtk_nfc_enable_clk(dev, &nfc->clk);
-	if (ret)
-		goto release_ecc;
+	अगर (ret)
+		जाओ release_ecc;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0) {
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0) अणु
 		ret = -EINVAL;
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
 	ret = devm_request_irq(dev, irq, mtk_nfc_irq, 0x0, "mtk-nand", nfc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to request nfi irq\n");
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
 	ret = dma_set_mask(dev, DMA_BIT_MASK(32));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to set dma mask\n");
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
-	platform_set_drvdata(pdev, nfc);
+	platक्रमm_set_drvdata(pdev, nfc);
 
 	ret = mtk_nfc_nand_chips_init(dev, nfc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to init nand chips\n");
-		goto clk_disable;
-	}
+		जाओ clk_disable;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 clk_disable:
 	mtk_nfc_disable_clk(&nfc->clk);
@@ -1600,82 +1601,82 @@ clk_disable:
 release_ecc:
 	mtk_ecc_release(nfc->ecc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mtk_nfc_remove(struct platform_device *pdev)
-{
-	struct mtk_nfc *nfc = platform_get_drvdata(pdev);
-	struct mtk_nfc_nand_chip *mtk_chip;
-	struct nand_chip *chip;
-	int ret;
+अटल पूर्णांक mtk_nfc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mtk_nfc *nfc = platक्रमm_get_drvdata(pdev);
+	काष्ठा mtk_nfc_nand_chip *mtk_chip;
+	काष्ठा nand_chip *chip;
+	पूर्णांक ret;
 
-	while (!list_empty(&nfc->chips)) {
+	जबतक (!list_empty(&nfc->chips)) अणु
 		mtk_chip = list_first_entry(&nfc->chips,
-					    struct mtk_nfc_nand_chip, node);
+					    काष्ठा mtk_nfc_nand_chip, node);
 		chip = &mtk_chip->nand;
-		ret = mtd_device_unregister(nand_to_mtd(chip));
+		ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
 		WARN_ON(ret);
 		nand_cleanup(chip);
 		list_del(&mtk_chip->node);
-	}
+	पूर्ण
 
 	mtk_ecc_release(nfc->ecc);
 	mtk_nfc_disable_clk(&nfc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int mtk_nfc_suspend(struct device *dev)
-{
-	struct mtk_nfc *nfc = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक mtk_nfc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_nfc *nfc = dev_get_drvdata(dev);
 
 	mtk_nfc_disable_clk(&nfc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mtk_nfc_resume(struct device *dev)
-{
-	struct mtk_nfc *nfc = dev_get_drvdata(dev);
-	struct mtk_nfc_nand_chip *chip;
-	struct nand_chip *nand;
-	int ret;
+अटल पूर्णांक mtk_nfc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा mtk_nfc *nfc = dev_get_drvdata(dev);
+	काष्ठा mtk_nfc_nand_chip *chip;
+	काष्ठा nand_chip *nand;
+	पूर्णांक ret;
 	u32 i;
 
 	udelay(200);
 
 	ret = mtk_nfc_enable_clk(dev, &nfc->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* reset NAND chip if VCC was powered off */
-	list_for_each_entry(chip, &nfc->chips, node) {
+	/* reset न_अंकD chip अगर VCC was घातered off */
+	list_क्रम_each_entry(chip, &nfc->chips, node) अणु
 		nand = &chip->nand;
-		for (i = 0; i < chip->nsels; i++)
+		क्रम (i = 0; i < chip->nsels; i++)
 			nand_reset(nand, i);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(mtk_nfc_pm_ops, mtk_nfc_suspend, mtk_nfc_resume);
-#endif
+अटल SIMPLE_DEV_PM_OPS(mtk_nfc_pm_ops, mtk_nfc_suspend, mtk_nfc_resume);
+#पूर्ण_अगर
 
-static struct platform_driver mtk_nfc_driver = {
+अटल काष्ठा platक्रमm_driver mtk_nfc_driver = अणु
 	.probe  = mtk_nfc_probe,
-	.remove = mtk_nfc_remove,
-	.driver = {
+	.हटाओ = mtk_nfc_हटाओ,
+	.driver = अणु
 		.name  = MTK_NAME,
 		.of_match_table = mtk_nfc_id_table,
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 		.pm = &mtk_nfc_pm_ops,
-#endif
-	},
-};
+#पूर्ण_अगर
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(mtk_nfc_driver);
+module_platक्रमm_driver(mtk_nfc_driver);
 
 MODULE_LICENSE("Dual MIT/GPL");
 MODULE_AUTHOR("Xiaolei Li <xiaolei.li@mediatek.com>");

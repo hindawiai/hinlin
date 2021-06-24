@@ -1,267 +1,268 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 
 /*
- * Driver for watchdog aspect of for Zodiac Inflight Innovations RAVE
+ * Driver क्रम watchकरोg aspect of क्रम Zodiac Inflight Innovations RAVE
  * Supervisory Processor(SP) MCU
  *
  * Copyright (C) 2017 Zodiac Inflight Innovation
  *
  */
 
-#include <linux/delay.h>
-#include <linux/kernel.h>
-#include <linux/mfd/rave-sp.h>
-#include <linux/module.h>
-#include <linux/nvmem-consumer.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/reboot.h>
-#include <linux/slab.h>
-#include <linux/watchdog.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/rave-sp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/nvmem-consumer.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/watchकरोg.h>
 
-enum {
+क्रमागत अणु
 	RAVE_SP_RESET_BYTE = 1,
 	RAVE_SP_RESET_REASON_NORMAL = 0,
 	RAVE_SP_RESET_DELAY_MS = 500,
-};
+पूर्ण;
 
 /**
- * struct rave_sp_wdt_variant - RAVE SP watchdog variant
+ * काष्ठा rave_sp_wdt_variant - RAVE SP watchकरोg variant
  *
- * @max_timeout:	Largest possible watchdog timeout setting
- * @min_timeout:	Smallest possible watchdog timeout setting
+ * @max_समयout:	Largest possible watchकरोg समयout setting
+ * @min_समयout:	Smallest possible watchकरोg समयout setting
  *
  * @configure:		Function to send configuration command
  * @restart:		Function to send "restart" command
  */
-struct rave_sp_wdt_variant {
-	unsigned int max_timeout;
-	unsigned int min_timeout;
+काष्ठा rave_sp_wdt_variant अणु
+	अचिन्हित पूर्णांक max_समयout;
+	अचिन्हित पूर्णांक min_समयout;
 
-	int (*configure)(struct watchdog_device *, bool);
-	int (*restart)(struct watchdog_device *);
-};
+	पूर्णांक (*configure)(काष्ठा watchकरोg_device *, bool);
+	पूर्णांक (*restart)(काष्ठा watchकरोg_device *);
+पूर्ण;
 
 /**
- * struct rave_sp_wdt - RAVE SP watchdog
+ * काष्ठा rave_sp_wdt - RAVE SP watchकरोg
  *
- * @wdd:		Underlying watchdog device
- * @sp:			Pointer to parent RAVE SP device
- * @variant:		Device specific variant information
- * @reboot_notifier:	Reboot notifier implementing machine reset
+ * @wdd:		Underlying watchकरोg device
+ * @sp:			Poपूर्णांकer to parent RAVE SP device
+ * @variant:		Device specअगरic variant inक्रमmation
+ * @reboot_notअगरier:	Reboot notअगरier implementing machine reset
  */
-struct rave_sp_wdt {
-	struct watchdog_device wdd;
-	struct rave_sp *sp;
-	const struct rave_sp_wdt_variant *variant;
-	struct notifier_block reboot_notifier;
-};
+काष्ठा rave_sp_wdt अणु
+	काष्ठा watchकरोg_device wdd;
+	काष्ठा rave_sp *sp;
+	स्थिर काष्ठा rave_sp_wdt_variant *variant;
+	काष्ठा notअगरier_block reboot_notअगरier;
+पूर्ण;
 
-static struct rave_sp_wdt *to_rave_sp_wdt(struct watchdog_device *wdd)
-{
-	return container_of(wdd, struct rave_sp_wdt, wdd);
-}
+अटल काष्ठा rave_sp_wdt *to_rave_sp_wdt(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस container_of(wdd, काष्ठा rave_sp_wdt, wdd);
+पूर्ण
 
-static int rave_sp_wdt_exec(struct watchdog_device *wdd, void *data,
-			    size_t data_size)
-{
-	return rave_sp_exec(to_rave_sp_wdt(wdd)->sp,
-			    data, data_size, NULL, 0);
-}
+अटल पूर्णांक rave_sp_wdt_exec(काष्ठा watchकरोg_device *wdd, व्योम *data,
+			    माप_प्रकार data_size)
+अणु
+	वापस rave_sp_exec(to_rave_sp_wdt(wdd)->sp,
+			    data, data_size, शून्य, 0);
+पूर्ण
 
-static int rave_sp_wdt_legacy_configure(struct watchdog_device *wdd, bool on)
-{
-	u8 cmd[] = {
+अटल पूर्णांक rave_sp_wdt_legacy_configure(काष्ठा watchकरोg_device *wdd, bool on)
+अणु
+	u8 cmd[] = अणु
 		[0] = RAVE_SP_CMD_SW_WDT,
 		[1] = 0,
 		[2] = 0,
 		[3] = on,
-		[4] = on ? wdd->timeout : 0,
-	};
+		[4] = on ? wdd->समयout : 0,
+	पूर्ण;
 
-	return rave_sp_wdt_exec(wdd, cmd, sizeof(cmd));
-}
+	वापस rave_sp_wdt_exec(wdd, cmd, माप(cmd));
+पूर्ण
 
-static int rave_sp_wdt_rdu_configure(struct watchdog_device *wdd, bool on)
-{
-	u8 cmd[] = {
+अटल पूर्णांक rave_sp_wdt_rdu_configure(काष्ठा watchकरोg_device *wdd, bool on)
+अणु
+	u8 cmd[] = अणु
 		[0] = RAVE_SP_CMD_SW_WDT,
 		[1] = 0,
 		[2] = on,
-		[3] = (u8)wdd->timeout,
-		[4] = (u8)(wdd->timeout >> 8),
-	};
+		[3] = (u8)wdd->समयout,
+		[4] = (u8)(wdd->समयout >> 8),
+	पूर्ण;
 
-	return rave_sp_wdt_exec(wdd, cmd, sizeof(cmd));
-}
+	वापस rave_sp_wdt_exec(wdd, cmd, माप(cmd));
+पूर्ण
 
 /**
- * rave_sp_wdt_configure - Configure watchdog device
+ * rave_sp_wdt_configure - Configure watchकरोg device
  *
  * @wdd:	Device to configure
- * @on:		Desired state of the watchdog timer (ON/OFF)
+ * @on:		Desired state of the watchकरोg समयr (ON/OFF)
  *
- * This function configures two aspects of the watchdog timer:
+ * This function configures two aspects of the watchकरोg समयr:
  *
  *  - Wheither it is ON or OFF
- *  - Its timeout duration
+ *  - Its समयout duration
  *
- * with first aspect specified via function argument and second via
+ * with first aspect specअगरied via function argument and second via
  * the value of 'wdd->timeout'.
  */
-static int rave_sp_wdt_configure(struct watchdog_device *wdd, bool on)
-{
-	return to_rave_sp_wdt(wdd)->variant->configure(wdd, on);
-}
+अटल पूर्णांक rave_sp_wdt_configure(काष्ठा watchकरोg_device *wdd, bool on)
+अणु
+	वापस to_rave_sp_wdt(wdd)->variant->configure(wdd, on);
+पूर्ण
 
-static int rave_sp_wdt_legacy_restart(struct watchdog_device *wdd)
-{
-	u8 cmd[] = {
+अटल पूर्णांक rave_sp_wdt_legacy_restart(काष्ठा watchकरोg_device *wdd)
+अणु
+	u8 cmd[] = अणु
 		[0] = RAVE_SP_CMD_RESET,
 		[1] = 0,
 		[2] = RAVE_SP_RESET_BYTE
-	};
+	पूर्ण;
 
-	return rave_sp_wdt_exec(wdd, cmd, sizeof(cmd));
-}
+	वापस rave_sp_wdt_exec(wdd, cmd, माप(cmd));
+पूर्ण
 
-static int rave_sp_wdt_rdu_restart(struct watchdog_device *wdd)
-{
-	u8 cmd[] = {
+अटल पूर्णांक rave_sp_wdt_rdu_restart(काष्ठा watchकरोg_device *wdd)
+अणु
+	u8 cmd[] = अणु
 		[0] = RAVE_SP_CMD_RESET,
 		[1] = 0,
 		[2] = RAVE_SP_RESET_BYTE,
 		[3] = RAVE_SP_RESET_REASON_NORMAL
-	};
+	पूर्ण;
 
-	return rave_sp_wdt_exec(wdd, cmd, sizeof(cmd));
-}
+	वापस rave_sp_wdt_exec(wdd, cmd, माप(cmd));
+पूर्ण
 
-static int rave_sp_wdt_reboot_notifier(struct notifier_block *nb,
-				       unsigned long action, void *data)
-{
+अटल पूर्णांक rave_sp_wdt_reboot_notअगरier(काष्ठा notअगरier_block *nb,
+				       अचिन्हित दीर्घ action, व्योम *data)
+अणु
 	/*
 	 * Restart handler is called in atomic context which means we
-	 * can't communicate to SP via UART. Luckily for use SP will
-	 * wait 500ms before actually resetting us, so we ask it to do
-	 * so here and let the rest of the system go on wrapping
+	 * can't communicate to SP via UART. Luckily क्रम use SP will
+	 * रुको 500ms beक्रमe actually resetting us, so we ask it to करो
+	 * so here and let the rest of the प्रणाली go on wrapping
 	 * things up.
 	 */
-	if (action == SYS_DOWN || action == SYS_HALT) {
-		struct rave_sp_wdt *sp_wd =
-			container_of(nb, struct rave_sp_wdt, reboot_notifier);
+	अगर (action == SYS_DOWN || action == SYS_HALT) अणु
+		काष्ठा rave_sp_wdt *sp_wd =
+			container_of(nb, काष्ठा rave_sp_wdt, reboot_notअगरier);
 
-		const int ret = sp_wd->variant->restart(&sp_wd->wdd);
+		स्थिर पूर्णांक ret = sp_wd->variant->restart(&sp_wd->wdd);
 
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_err(sp_wd->wdd.parent,
 				"Failed to issue restart command (%d)", ret);
-		return NOTIFY_OK;
-	}
+		वापस NOTIFY_OK;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int rave_sp_wdt_restart(struct watchdog_device *wdd,
-			       unsigned long action, void *data)
-{
+अटल पूर्णांक rave_sp_wdt_restart(काष्ठा watchकरोg_device *wdd,
+			       अचिन्हित दीर्घ action, व्योम *data)
+अणु
 	/*
-	 * The actual work was done by reboot notifier above. SP
-	 * firmware waits 500 ms before issuing reset, so let's hang
-	 * here for twice that delay and hopefuly we'd never reach
-	 * the return statement.
+	 * The actual work was करोne by reboot notअगरier above. SP
+	 * firmware रुकोs 500 ms beक्रमe issuing reset, so let's hang
+	 * here क्रम twice that delay and hopefuly we'd never reach
+	 * the वापस statement.
 	 */
 	mdelay(2 * RAVE_SP_RESET_DELAY_MS);
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int rave_sp_wdt_start(struct watchdog_device *wdd)
-{
-	int ret;
+अटल पूर्णांक rave_sp_wdt_start(काष्ठा watchकरोg_device *wdd)
+अणु
+	पूर्णांक ret;
 
 	ret = rave_sp_wdt_configure(wdd, true);
-	if (!ret)
+	अगर (!ret)
 		set_bit(WDOG_HW_RUNNING, &wdd->status);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rave_sp_wdt_stop(struct watchdog_device *wdd)
-{
-	return rave_sp_wdt_configure(wdd, false);
-}
+अटल पूर्णांक rave_sp_wdt_stop(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस rave_sp_wdt_configure(wdd, false);
+पूर्ण
 
-static int rave_sp_wdt_set_timeout(struct watchdog_device *wdd,
-				   unsigned int timeout)
-{
-	wdd->timeout = timeout;
+अटल पूर्णांक rave_sp_wdt_set_समयout(काष्ठा watchकरोg_device *wdd,
+				   अचिन्हित पूर्णांक समयout)
+अणु
+	wdd->समयout = समयout;
 
-	return rave_sp_wdt_configure(wdd, watchdog_active(wdd));
-}
+	वापस rave_sp_wdt_configure(wdd, watchकरोg_active(wdd));
+पूर्ण
 
-static int rave_sp_wdt_ping(struct watchdog_device *wdd)
-{
-	u8 cmd[] = {
+अटल पूर्णांक rave_sp_wdt_ping(काष्ठा watchकरोg_device *wdd)
+अणु
+	u8 cmd[] = अणु
 		[0] = RAVE_SP_CMD_PET_WDT,
 		[1] = 0,
-	};
+	पूर्ण;
 
-	return rave_sp_wdt_exec(wdd, cmd, sizeof(cmd));
-}
+	वापस rave_sp_wdt_exec(wdd, cmd, माप(cmd));
+पूर्ण
 
-static const struct watchdog_info rave_sp_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info rave_sp_wdt_info = अणु
 	.options = WDIOF_SETTIMEOUT | WDIOF_KEEPALIVEPING | WDIOF_MAGICCLOSE,
 	.identity = "RAVE SP Watchdog",
-};
+पूर्ण;
 
-static const struct watchdog_ops rave_sp_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops rave_sp_wdt_ops = अणु
 	.owner = THIS_MODULE,
 	.start = rave_sp_wdt_start,
 	.stop = rave_sp_wdt_stop,
 	.ping = rave_sp_wdt_ping,
-	.set_timeout = rave_sp_wdt_set_timeout,
+	.set_समयout = rave_sp_wdt_set_समयout,
 	.restart = rave_sp_wdt_restart,
-};
+पूर्ण;
 
-static const struct rave_sp_wdt_variant rave_sp_wdt_legacy = {
-	.max_timeout = 255,
-	.min_timeout = 1,
+अटल स्थिर काष्ठा rave_sp_wdt_variant rave_sp_wdt_legacy = अणु
+	.max_समयout = 255,
+	.min_समयout = 1,
 	.configure = rave_sp_wdt_legacy_configure,
 	.restart   = rave_sp_wdt_legacy_restart,
-};
+पूर्ण;
 
-static const struct rave_sp_wdt_variant rave_sp_wdt_rdu = {
-	.max_timeout = 180,
-	.min_timeout = 60,
+अटल स्थिर काष्ठा rave_sp_wdt_variant rave_sp_wdt_rdu = अणु
+	.max_समयout = 180,
+	.min_समयout = 60,
 	.configure = rave_sp_wdt_rdu_configure,
 	.restart   = rave_sp_wdt_rdu_restart,
-};
+पूर्ण;
 
-static const struct of_device_id rave_sp_wdt_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id rave_sp_wdt_of_match[] = अणु
+	अणु
 		.compatible = "zii,rave-sp-watchdog-legacy",
 		.data = &rave_sp_wdt_legacy,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "zii,rave-sp-watchdog",
 		.data = &rave_sp_wdt_rdu,
-	},
-	{ /* sentinel */ }
-};
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static int rave_sp_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct watchdog_device *wdd;
-	struct rave_sp_wdt *sp_wd;
-	struct nvmem_cell *cell;
-	__le16 timeout = 0;
-	int ret;
+अटल पूर्णांक rave_sp_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा watchकरोg_device *wdd;
+	काष्ठा rave_sp_wdt *sp_wd;
+	काष्ठा nvmem_cell *cell;
+	__le16 समयout = 0;
+	पूर्णांक ret;
 
-	sp_wd = devm_kzalloc(dev, sizeof(*sp_wd), GFP_KERNEL);
-	if (!sp_wd)
-		return -ENOMEM;
+	sp_wd = devm_kzalloc(dev, माप(*sp_wd), GFP_KERNEL);
+	अगर (!sp_wd)
+		वापस -ENOMEM;
 
 	sp_wd->variant = of_device_get_match_data(dev);
 	sp_wd->sp      = dev_get_drvdata(dev->parent);
@@ -270,62 +271,62 @@ static int rave_sp_wdt_probe(struct platform_device *pdev)
 	wdd->parent      = dev;
 	wdd->info        = &rave_sp_wdt_info;
 	wdd->ops         = &rave_sp_wdt_ops;
-	wdd->min_timeout = sp_wd->variant->min_timeout;
-	wdd->max_timeout = sp_wd->variant->max_timeout;
+	wdd->min_समयout = sp_wd->variant->min_समयout;
+	wdd->max_समयout = sp_wd->variant->max_समयout;
 	wdd->status      = WATCHDOG_NOWAYOUT_INIT_STATUS;
-	wdd->timeout     = 60;
+	wdd->समयout     = 60;
 
 	cell = nvmem_cell_get(dev, "wdt-timeout");
-	if (!IS_ERR(cell)) {
-		size_t len;
-		void *value = nvmem_cell_read(cell, &len);
+	अगर (!IS_ERR(cell)) अणु
+		माप_प्रकार len;
+		व्योम *value = nvmem_cell_पढ़ो(cell, &len);
 
-		if (!IS_ERR(value)) {
-			memcpy(&timeout, value, min(len, sizeof(timeout)));
-			kfree(value);
-		}
+		अगर (!IS_ERR(value)) अणु
+			स_नकल(&समयout, value, min(len, माप(समयout)));
+			kमुक्त(value);
+		पूर्ण
 		nvmem_cell_put(cell);
-	}
-	watchdog_init_timeout(wdd, le16_to_cpu(timeout), dev);
-	watchdog_set_restart_priority(wdd, 255);
-	watchdog_stop_on_unregister(wdd);
+	पूर्ण
+	watchकरोg_init_समयout(wdd, le16_to_cpu(समयout), dev);
+	watchकरोg_set_restart_priority(wdd, 255);
+	watchकरोg_stop_on_unरेजिस्टर(wdd);
 
-	sp_wd->reboot_notifier.notifier_call = rave_sp_wdt_reboot_notifier;
-	ret = devm_register_reboot_notifier(dev, &sp_wd->reboot_notifier);
-	if (ret) {
+	sp_wd->reboot_notअगरier.notअगरier_call = rave_sp_wdt_reboot_notअगरier;
+	ret = devm_रेजिस्टर_reboot_notअगरier(dev, &sp_wd->reboot_notअगरier);
+	अगर (ret) अणु
 		dev_err(dev, "Failed to register reboot notifier\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * We don't know if watchdog is running now. To be sure, let's
-	 * start it and depend on watchdog core to ping it
+	 * We करोn't know if watchdog is running now. To be sure, let's
+	 * start it and depend on watchकरोg core to ping it
 	 */
-	wdd->max_hw_heartbeat_ms = wdd->max_timeout * 1000;
+	wdd->max_hw_heartbeat_ms = wdd->max_समयout * 1000;
 	ret = rave_sp_wdt_start(wdd);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Watchdog didn't start\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_watchdog_register_device(dev, wdd);
-	if (ret) {
+	ret = devm_watchकरोg_रेजिस्टर_device(dev, wdd);
+	अगर (ret) अणु
 		rave_sp_wdt_stop(wdd);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver rave_sp_wdt_driver = {
+अटल काष्ठा platक्रमm_driver rave_sp_wdt_driver = अणु
 	.probe = rave_sp_wdt_probe,
-	.driver = {
+	.driver = अणु
 		.name = KBUILD_MODNAME,
 		.of_match_table = rave_sp_wdt_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(rave_sp_wdt_driver);
+module_platक्रमm_driver(rave_sp_wdt_driver);
 
 MODULE_DEVICE_TABLE(of, rave_sp_wdt_of_match);
 MODULE_LICENSE("GPL");

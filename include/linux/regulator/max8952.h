@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * max8952.h - Voltage regulation for the Maxim 8952
+ * max8952.h - Voltage regulation क्रम the Maxim 8952
  *
  *  Copyright (C) 2010 Samsung Electrnoics
  *  MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
-#ifndef REGULATOR_MAX8952
-#define REGULATOR_MAX8952
+#अगर_अघोषित REGULATOR_MAX8952
+#घोषणा REGULATOR_MAX8952
 
-#include <linux/regulator/machine.h>
+#समावेश <linux/regulator/machine.h>
 
-enum {
+क्रमागत अणु
 	MAX8952_DVS_MODE0,
 	MAX8952_DVS_MODE1,
 	MAX8952_DVS_MODE2,
 	MAX8952_DVS_MODE3,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MAX8952_DVS_770mV = 0,
 	MAX8952_DVS_780mV,
 	MAX8952_DVS_790mV,
@@ -83,15 +84,15 @@ enum {
 	MAX8952_DVS_1380mV,
 	MAX8952_DVS_1390mV,
 	MAX8952_DVS_1400mV,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MAX8952_SYNC_FREQ_26MHZ, /* Default */
 	MAX8952_SYNC_FREQ_13MHZ,
 	MAX8952_SYNC_FREQ_19_2MHZ,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MAX8952_RAMP_32mV_us = 0, /* Default */
 	MAX8952_RAMP_16mV_us,
 	MAX8952_RAMP_8mV_us,
@@ -100,19 +101,19 @@ enum {
 	MAX8952_RAMP_1mV_us,
 	MAX8952_RAMP_0_5mV_us,
 	MAX8952_RAMP_0_25mV_us,
-};
+पूर्ण;
 
-#define MAX8952_NUM_DVS_MODE	4
+#घोषणा MAX8952_NUM_DVS_MODE	4
 
-struct max8952_platform_data {
-	u32 default_mode;
+काष्ठा max8952_platक्रमm_data अणु
+	u32 शेष_mode;
 	u32 dvs_mode[MAX8952_NUM_DVS_MODE]; /* MAX8952_DVS_MODEx_XXXXmV */
 
 	u32 sync_freq;
 	u32 ramp_speed;
 
-	struct regulator_init_data *reg_data;
-};
+	काष्ठा regulator_init_data *reg_data;
+पूर्ण;
 
 
-#endif /* REGULATOR_MAX8952 */
+#पूर्ण_अगर /* REGULATOR_MAX8952 */

@@ -1,226 +1,227 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * arch/arm/probes/kprobes/actions-thumb.c
  *
  * Copyright (C) 2011 Jon Medhurst <tixy@yxit.co.uk>.
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/ptrace.h>
-#include <linux/kprobes.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/kprobes.h>
 
-#include "../decode-thumb.h"
-#include "core.h"
-#include "checkers.h"
+#समावेश "../decode-thumb.h"
+#समावेश "core.h"
+#समावेश "checkers.h"
 
 /* These emulation encodings are functionally equivalent... */
-#define t32_emulate_rd8rn16rm0ra12_noflags \
+#घोषणा t32_emulate_rd8rn16rm0ra12_noflags \
 		t32_emulate_rdlo12rdhi8rn16rm0_noflags
 
 /* t32 thumb actions */
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_simulate_table_branch(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long pc = regs->ARM_pc;
-	int rn = (insn >> 16) & 0xf;
-	int rm = insn & 0xf;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = regs->ARM_pc;
+	पूर्णांक rn = (insn >> 16) & 0xf;
+	पूर्णांक rm = insn & 0xf;
 
-	unsigned long rnv = (rn == 15) ? pc : regs->uregs[rn];
-	unsigned long rmv = regs->uregs[rm];
-	unsigned int halfwords;
+	अचिन्हित दीर्घ rnv = (rn == 15) ? pc : regs->uregs[rn];
+	अचिन्हित दीर्घ rmv = regs->uregs[rm];
+	अचिन्हित पूर्णांक halfwords;
 
-	if (insn & 0x10) /* TBH */
+	अगर (insn & 0x10) /* TBH */
 		halfwords = ((u16 *)rnv)[rmv];
-	else /* TBB */
+	अन्यथा /* TBB */
 		halfwords = ((u8 *)rnv)[rmv];
 
 	regs->ARM_pc = pc + 2 * halfwords;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_simulate_mrs(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	int rd = (insn >> 8) & 0xf;
-	unsigned long mask = 0xf8ff03df; /* Mask out execution state */
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक rd = (insn >> 8) & 0xf;
+	अचिन्हित दीर्घ mask = 0xf8ff03df; /* Mask out execution state */
 	regs->uregs[rd] = regs->ARM_cpsr & mask;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_simulate_cond_branch(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long pc = regs->ARM_pc;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = regs->ARM_pc;
 
-	long offset = insn & 0x7ff;		/* imm11 */
+	दीर्घ offset = insn & 0x7ff;		/* imm11 */
 	offset += (insn & 0x003f0000) >> 5;	/* imm6 */
 	offset += (insn & 0x00002000) << 4;	/* J1 */
 	offset += (insn & 0x00000800) << 7;	/* J2 */
 	offset -= (insn & 0x04000000) >> 7;	/* Apply sign bit */
 
 	regs->ARM_pc = pc + (offset * 2);
-}
+पूर्ण
 
-static enum probes_insn __kprobes
-t32_decode_cond_branch(probes_opcode_t insn, struct arch_probes_insn *asi,
-		const struct decode_header *d)
-{
-	int cc = (insn >> 22) & 0xf;
+अटल क्रमागत probes_insn __kprobes
+t32_decode_cond_branch(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+		स्थिर काष्ठा decode_header *d)
+अणु
+	पूर्णांक cc = (insn >> 22) & 0xf;
 	asi->insn_check_cc = probes_condition_checks[cc];
 	asi->insn_handler = t32_simulate_cond_branch;
-	return INSN_GOOD_NO_SLOT;
-}
+	वापस INSN_GOOD_NO_SLOT;
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_simulate_branch(probes_opcode_t insn,
-		    struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long pc = regs->ARM_pc;
+		    काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = regs->ARM_pc;
 
-	long offset = insn & 0x7ff;		/* imm11 */
+	दीर्घ offset = insn & 0x7ff;		/* imm11 */
 	offset += (insn & 0x03ff0000) >> 5;	/* imm10 */
 	offset += (insn & 0x00002000) << 9;	/* J1 */
 	offset += (insn & 0x00000800) << 10;	/* J2 */
-	if (insn & 0x04000000)
+	अगर (insn & 0x04000000)
 		offset -= 0x00800000; /* Apply sign bit */
-	else
+	अन्यथा
 		offset ^= 0x00600000; /* Invert J1 and J2 */
 
-	if (insn & (1 << 14)) {
+	अगर (insn & (1 << 14)) अणु
 		/* BL or BLX */
 		regs->ARM_lr = regs->ARM_pc | 1;
-		if (!(insn & (1 << 12))) {
-			/* BLX so switch to ARM mode */
+		अगर (!(insn & (1 << 12))) अणु
+			/* BLX so चयन to ARM mode */
 			regs->ARM_cpsr &= ~PSR_T_BIT;
 			pc &= ~3;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	regs->ARM_pc = pc + (offset * 2);
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_simulate_ldr_literal(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long addr = regs->ARM_pc & ~3;
-	int rt = (insn >> 12) & 0xf;
-	unsigned long rtv;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ addr = regs->ARM_pc & ~3;
+	पूर्णांक rt = (insn >> 12) & 0xf;
+	अचिन्हित दीर्घ rtv;
 
-	long offset = insn & 0xfff;
-	if (insn & 0x00800000)
+	दीर्घ offset = insn & 0xfff;
+	अगर (insn & 0x00800000)
 		addr += offset;
-	else
+	अन्यथा
 		addr -= offset;
 
-	if (insn & 0x00400000) {
+	अगर (insn & 0x00400000) अणु
 		/* LDR */
-		rtv = *(unsigned long *)addr;
-		if (rt == 15) {
-			bx_write_pc(rtv, regs);
-			return;
-		}
-	} else if (insn & 0x00200000) {
+		rtv = *(अचिन्हित दीर्घ *)addr;
+		अगर (rt == 15) अणु
+			bx_ग_लिखो_pc(rtv, regs);
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अगर (insn & 0x00200000) अणु
 		/* LDRH */
-		if (insn & 0x01000000)
+		अगर (insn & 0x01000000)
 			rtv = *(s16 *)addr;
-		else
+		अन्यथा
 			rtv = *(u16 *)addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* LDRB */
-		if (insn & 0x01000000)
+		अगर (insn & 0x01000000)
 			rtv = *(s8 *)addr;
-		else
+		अन्यथा
 			rtv = *(u8 *)addr;
-	}
+	पूर्ण
 
 	regs->uregs[rt] = rtv;
-}
+पूर्ण
 
-static enum probes_insn __kprobes
-t32_decode_ldmstm(probes_opcode_t insn, struct arch_probes_insn *asi,
-		const struct decode_header *d)
-{
-	enum probes_insn ret = kprobe_decode_ldmstm(insn, asi, d);
+अटल क्रमागत probes_insn __kprobes
+t32_decode_ldmsपंचांग(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+		स्थिर काष्ठा decode_header *d)
+अणु
+	क्रमागत probes_insn ret = kprobe_decode_ldmsपंचांग(insn, asi, d);
 
-	/* Fixup modified instruction to have halfwords in correct order...*/
+	/* Fixup modअगरied inकाष्ठाion to have halfwords in correct order...*/
 	insn = __mem_to_opcode_arm(asi->insn[0]);
 	((u16 *)asi->insn)[0] = __opcode_to_mem_thumb16(insn >> 16);
 	((u16 *)asi->insn)[1] = __opcode_to_mem_thumb16(insn & 0xffff);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_emulate_ldrdstrd(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long pc = regs->ARM_pc & ~3;
-	int rt1 = (insn >> 12) & 0xf;
-	int rt2 = (insn >> 8) & 0xf;
-	int rn = (insn >> 16) & 0xf;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = regs->ARM_pc & ~3;
+	पूर्णांक rt1 = (insn >> 12) & 0xf;
+	पूर्णांक rt2 = (insn >> 8) & 0xf;
+	पूर्णांक rn = (insn >> 16) & 0xf;
 
-	register unsigned long rt1v asm("r0") = regs->uregs[rt1];
-	register unsigned long rt2v asm("r1") = regs->uregs[rt2];
-	register unsigned long rnv asm("r2") = (rn == 15) ? pc
+	रेजिस्टर अचिन्हित दीर्घ rt1v यंत्र("r0") = regs->uregs[rt1];
+	रेजिस्टर अचिन्हित दीर्घ rt2v यंत्र("r1") = regs->uregs[rt2];
+	रेजिस्टर अचिन्हित दीर्घ rnv यंत्र("r2") = (rn == 15) ? pc
 							  : regs->uregs[rn];
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"blx    %[fn]"
 		: "=r" (rt1v), "=r" (rt2v), "=r" (rnv)
 		: "0" (rt1v), "1" (rt2v), "2" (rnv), [fn] "r" (asi->insn_fn)
 		: "lr", "memory", "cc"
 	);
 
-	if (rn != 15)
-		regs->uregs[rn] = rnv; /* Writeback base register */
+	अगर (rn != 15)
+		regs->uregs[rn] = rnv; /* Writeback base रेजिस्टर */
 	regs->uregs[rt1] = rt1v;
 	regs->uregs[rt2] = rt2v;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_emulate_ldrstr(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	int rt = (insn >> 12) & 0xf;
-	int rn = (insn >> 16) & 0xf;
-	int rm = insn & 0xf;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक rt = (insn >> 12) & 0xf;
+	पूर्णांक rn = (insn >> 16) & 0xf;
+	पूर्णांक rm = insn & 0xf;
 
-	register unsigned long rtv asm("r0") = regs->uregs[rt];
-	register unsigned long rnv asm("r2") = regs->uregs[rn];
-	register unsigned long rmv asm("r3") = regs->uregs[rm];
+	रेजिस्टर अचिन्हित दीर्घ rtv यंत्र("r0") = regs->uregs[rt];
+	रेजिस्टर अचिन्हित दीर्घ rnv यंत्र("r2") = regs->uregs[rn];
+	रेजिस्टर अचिन्हित दीर्घ rmv यंत्र("r3") = regs->uregs[rm];
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"blx    %[fn]"
 		: "=r" (rtv), "=r" (rnv)
 		: "0" (rtv), "1" (rnv), "r" (rmv), [fn] "r" (asi->insn_fn)
 		: "lr", "memory", "cc"
 	);
 
-	regs->uregs[rn] = rnv; /* Writeback base register */
-	if (rt == 15) /* Can't be true for a STR as they aren't allowed */
-		bx_write_pc(rtv, regs);
-	else
+	regs->uregs[rn] = rnv; /* Writeback base रेजिस्टर */
+	अगर (rt == 15) /* Can't be true for a STR as they aren't allowed */
+		bx_ग_लिखो_pc(rtv, regs);
+	अन्यथा
 		regs->uregs[rt] = rtv;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_emulate_rd8rn16rm0_rwflags(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	int rd = (insn >> 8) & 0xf;
-	int rn = (insn >> 16) & 0xf;
-	int rm = insn & 0xf;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक rd = (insn >> 8) & 0xf;
+	पूर्णांक rn = (insn >> 16) & 0xf;
+	पूर्णांक rm = insn & 0xf;
 
-	register unsigned long rdv asm("r1") = regs->uregs[rd];
-	register unsigned long rnv asm("r2") = regs->uregs[rn];
-	register unsigned long rmv asm("r3") = regs->uregs[rm];
-	unsigned long cpsr = regs->ARM_cpsr;
+	रेजिस्टर अचिन्हित दीर्घ rdv यंत्र("r1") = regs->uregs[rd];
+	रेजिस्टर अचिन्हित दीर्घ rnv यंत्र("r2") = regs->uregs[rn];
+	रेजिस्टर अचिन्हित दीर्घ rmv यंत्र("r3") = regs->uregs[rm];
+	अचिन्हित दीर्घ cpsr = regs->ARM_cpsr;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"msr	cpsr_fs, %[cpsr]	\n\t"
 		"blx    %[fn]			\n\t"
 		"mrs	%[cpsr], cpsr		\n\t"
@@ -232,19 +233,19 @@ t32_emulate_rd8rn16rm0_rwflags(probes_opcode_t insn,
 
 	regs->uregs[rd] = rdv;
 	regs->ARM_cpsr = (regs->ARM_cpsr & ~APSR_MASK) | (cpsr & APSR_MASK);
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_emulate_rd8pc16_noflags(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long pc = regs->ARM_pc;
-	int rd = (insn >> 8) & 0xf;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = regs->ARM_pc;
+	पूर्णांक rd = (insn >> 8) & 0xf;
 
-	register unsigned long rdv asm("r1") = regs->uregs[rd];
-	register unsigned long rnv asm("r2") = pc & ~3;
+	रेजिस्टर अचिन्हित दीर्घ rdv यंत्र("r1") = regs->uregs[rd];
+	रेजिस्टर अचिन्हित दीर्घ rnv यंत्र("r2") = pc & ~3;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"blx    %[fn]"
 		: "=r" (rdv)
 		: "0" (rdv), "r" (rnv), [fn] "r" (asi->insn_fn)
@@ -252,19 +253,19 @@ t32_emulate_rd8pc16_noflags(probes_opcode_t insn,
 	);
 
 	regs->uregs[rd] = rdv;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_emulate_rd8rn16_noflags(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	int rd = (insn >> 8) & 0xf;
-	int rn = (insn >> 16) & 0xf;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक rd = (insn >> 8) & 0xf;
+	पूर्णांक rn = (insn >> 16) & 0xf;
 
-	register unsigned long rdv asm("r1") = regs->uregs[rd];
-	register unsigned long rnv asm("r2") = regs->uregs[rn];
+	रेजिस्टर अचिन्हित दीर्घ rdv यंत्र("r1") = regs->uregs[rd];
+	रेजिस्टर अचिन्हित दीर्घ rnv यंत्र("r2") = regs->uregs[rn];
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"blx    %[fn]"
 		: "=r" (rdv)
 		: "0" (rdv), "r" (rnv), [fn] "r" (asi->insn_fn)
@@ -272,24 +273,24 @@ t32_emulate_rd8rn16_noflags(probes_opcode_t insn,
 	);
 
 	regs->uregs[rd] = rdv;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t32_emulate_rdlo12rdhi8rn16rm0_noflags(probes_opcode_t insn,
-		struct arch_probes_insn *asi,
-		struct pt_regs *regs)
-{
-	int rdlo = (insn >> 12) & 0xf;
-	int rdhi = (insn >> 8) & 0xf;
-	int rn = (insn >> 16) & 0xf;
-	int rm = insn & 0xf;
+		काष्ठा arch_probes_insn *asi,
+		काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक rdlo = (insn >> 12) & 0xf;
+	पूर्णांक rdhi = (insn >> 8) & 0xf;
+	पूर्णांक rn = (insn >> 16) & 0xf;
+	पूर्णांक rm = insn & 0xf;
 
-	register unsigned long rdlov asm("r0") = regs->uregs[rdlo];
-	register unsigned long rdhiv asm("r1") = regs->uregs[rdhi];
-	register unsigned long rnv asm("r2") = regs->uregs[rn];
-	register unsigned long rmv asm("r3") = regs->uregs[rm];
+	रेजिस्टर अचिन्हित दीर्घ rdlov यंत्र("r0") = regs->uregs[rdlo];
+	रेजिस्टर अचिन्हित दीर्घ rdhiv यंत्र("r1") = regs->uregs[rdhi];
+	रेजिस्टर अचिन्हित दीर्घ rnv यंत्र("r2") = regs->uregs[rn];
+	रेजिस्टर अचिन्हित दीर्घ rmv यंत्र("r3") = regs->uregs[rm];
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"blx    %[fn]"
 		: "=r" (rdlov), "=r" (rdhiv)
 		: "0" (rdlov), "1" (rdhiv), "r" (rnv), "r" (rmv),
@@ -299,153 +300,153 @@ t32_emulate_rdlo12rdhi8rn16rm0_noflags(probes_opcode_t insn,
 
 	regs->uregs[rdlo] = rdlov;
 	regs->uregs[rdhi] = rdhiv;
-}
+पूर्ण
 /* t16 thumb actions */
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_simulate_bxblx(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long pc = regs->ARM_pc + 2;
-	int rm = (insn >> 3) & 0xf;
-	unsigned long rmv = (rm == 15) ? pc : regs->uregs[rm];
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = regs->ARM_pc + 2;
+	पूर्णांक rm = (insn >> 3) & 0xf;
+	अचिन्हित दीर्घ rmv = (rm == 15) ? pc : regs->uregs[rm];
 
-	if (insn & (1 << 7)) /* BLX ? */
+	अगर (insn & (1 << 7)) /* BLX ? */
 		regs->ARM_lr = regs->ARM_pc | 1;
 
-	bx_write_pc(rmv, regs);
-}
+	bx_ग_लिखो_pc(rmv, regs);
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_simulate_ldr_literal(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long *base = (unsigned long *)((regs->ARM_pc + 2) & ~3);
-	long index = insn & 0xff;
-	int rt = (insn >> 8) & 0x7;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ *base = (अचिन्हित दीर्घ *)((regs->ARM_pc + 2) & ~3);
+	दीर्घ index = insn & 0xff;
+	पूर्णांक rt = (insn >> 8) & 0x7;
 	regs->uregs[rt] = base[index];
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_simulate_ldrstr_sp_relative(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long* base = (unsigned long *)regs->ARM_sp;
-	long index = insn & 0xff;
-	int rt = (insn >> 8) & 0x7;
-	if (insn & 0x800) /* LDR */
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ* base = (अचिन्हित दीर्घ *)regs->ARM_sp;
+	दीर्घ index = insn & 0xff;
+	पूर्णांक rt = (insn >> 8) & 0x7;
+	अगर (insn & 0x800) /* LDR */
 		regs->uregs[rt] = base[index];
-	else /* STR */
+	अन्यथा /* STR */
 		base[index] = regs->uregs[rt];
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_simulate_reladr(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long base = (insn & 0x800) ? regs->ARM_sp
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ base = (insn & 0x800) ? regs->ARM_sp
 					    : ((regs->ARM_pc + 2) & ~3);
-	long offset = insn & 0xff;
-	int rt = (insn >> 8) & 0x7;
+	दीर्घ offset = insn & 0xff;
+	पूर्णांक rt = (insn >> 8) & 0x7;
 	regs->uregs[rt] = base + offset * 4;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_simulate_add_sp_imm(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	long imm = insn & 0x7f;
-	if (insn & 0x80) /* SUB */
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	दीर्घ imm = insn & 0x7f;
+	अगर (insn & 0x80) /* SUB */
 		regs->ARM_sp -= imm * 4;
-	else /* ADD */
+	अन्यथा /* ADD */
 		regs->ARM_sp += imm * 4;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_simulate_cbz(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	int rn = insn & 0x7;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक rn = insn & 0x7;
 	probes_opcode_t nonzero = regs->uregs[rn] ? insn : ~insn;
-	if (nonzero & 0x800) {
-		long i = insn & 0x200;
-		long imm5 = insn & 0xf8;
-		unsigned long pc = regs->ARM_pc + 2;
+	अगर (nonzero & 0x800) अणु
+		दीर्घ i = insn & 0x200;
+		दीर्घ imm5 = insn & 0xf8;
+		अचिन्हित दीर्घ pc = regs->ARM_pc + 2;
 		regs->ARM_pc = pc + (i >> 3) + (imm5 >> 2);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_simulate_it(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
 	/*
-	 * The 8 IT state bits are split into two parts in CPSR:
+	 * The 8 IT state bits are split पूर्णांकo two parts in CPSR:
 	 *	ITSTATE<1:0> are in CPSR<26:25>
 	 *	ITSTATE<7:2> are in CPSR<15:10>
 	 * The new IT state is in the lower byte of insn.
 	 */
-	unsigned long cpsr = regs->ARM_cpsr;
+	अचिन्हित दीर्घ cpsr = regs->ARM_cpsr;
 	cpsr &= ~PSR_IT_MASK;
 	cpsr |= (insn & 0xfc) << 8;
 	cpsr |= (insn & 0x03) << 25;
 	regs->ARM_cpsr = cpsr;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_singlestep_it(probes_opcode_t insn,
-		  struct arch_probes_insn *asi, struct pt_regs *regs)
-{
+		  काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
 	regs->ARM_pc += 2;
 	t16_simulate_it(insn, asi, regs);
-}
+पूर्ण
 
-static enum probes_insn __kprobes
-t16_decode_it(probes_opcode_t insn, struct arch_probes_insn *asi,
-		const struct decode_header *d)
-{
+अटल क्रमागत probes_insn __kprobes
+t16_decode_it(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+		स्थिर काष्ठा decode_header *d)
+अणु
 	asi->insn_singlestep = t16_singlestep_it;
-	return INSN_GOOD_NO_SLOT;
-}
+	वापस INSN_GOOD_NO_SLOT;
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_simulate_cond_branch(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long pc = regs->ARM_pc + 2;
-	long offset = insn & 0x7f;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = regs->ARM_pc + 2;
+	दीर्घ offset = insn & 0x7f;
 	offset -= insn & 0x80; /* Apply sign bit */
 	regs->ARM_pc = pc + (offset * 2);
-}
+पूर्ण
 
-static enum probes_insn __kprobes
-t16_decode_cond_branch(probes_opcode_t insn, struct arch_probes_insn *asi,
-		const struct decode_header *d)
-{
-	int cc = (insn >> 8) & 0xf;
+अटल क्रमागत probes_insn __kprobes
+t16_decode_cond_branch(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+		स्थिर काष्ठा decode_header *d)
+अणु
+	पूर्णांक cc = (insn >> 8) & 0xf;
 	asi->insn_check_cc = probes_condition_checks[cc];
 	asi->insn_handler = t16_simulate_cond_branch;
-	return INSN_GOOD_NO_SLOT;
-}
+	वापस INSN_GOOD_NO_SLOT;
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_simulate_branch(probes_opcode_t insn,
-		   struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long pc = regs->ARM_pc + 2;
-	long offset = insn & 0x3ff;
+		   काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = regs->ARM_pc + 2;
+	दीर्घ offset = insn & 0x3ff;
 	offset -= insn & 0x400; /* Apply sign bit */
 	regs->ARM_pc = pc + (offset * 2);
-}
+पूर्ण
 
-static unsigned long __kprobes
+अटल अचिन्हित दीर्घ __kprobes
 t16_emulate_loregs(probes_opcode_t insn,
-		   struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long oldcpsr = regs->ARM_cpsr;
-	unsigned long newcpsr;
+		   काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ oldcpsr = regs->ARM_cpsr;
+	अचिन्हित दीर्घ newcpsr;
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"msr	cpsr_fs, %[oldcpsr]	\n\t"
 		"ldmia	%[regs], {r0-r7}	\n\t"
 		"blx	%[fn]			\n\t"
@@ -458,41 +459,41 @@ t16_emulate_loregs(probes_opcode_t insn,
 		  "lr", "memory", "cc"
 		);
 
-	return (oldcpsr & ~APSR_MASK) | (newcpsr & APSR_MASK);
-}
+	वापस (oldcpsr & ~APSR_MASK) | (newcpsr & APSR_MASK);
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_emulate_loregs_rwflags(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
 	regs->ARM_cpsr = t16_emulate_loregs(insn, asi, regs);
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_emulate_loregs_noitrwflags(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long cpsr = t16_emulate_loregs(insn, asi, regs);
-	if (!in_it_block(cpsr))
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ cpsr = t16_emulate_loregs(insn, asi, regs);
+	अगर (!in_it_block(cpsr))
 		regs->ARM_cpsr = cpsr;
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_emulate_hiregs(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	unsigned long pc = regs->ARM_pc + 2;
-	int rdn = (insn & 0x7) | ((insn & 0x80) >> 4);
-	int rm = (insn >> 3) & 0xf;
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ pc = regs->ARM_pc + 2;
+	पूर्णांक rdn = (insn & 0x7) | ((insn & 0x80) >> 4);
+	पूर्णांक rm = (insn >> 3) & 0xf;
 
-	register unsigned long rdnv asm("r1");
-	register unsigned long rmv asm("r0");
-	unsigned long cpsr = regs->ARM_cpsr;
+	रेजिस्टर अचिन्हित दीर्घ rdnv यंत्र("r1");
+	रेजिस्टर अचिन्हित दीर्घ rmv यंत्र("r0");
+	अचिन्हित दीर्घ cpsr = regs->ARM_cpsr;
 
 	rdnv = (rdn == 15) ? pc : regs->uregs[rdn];
 	rmv = (rm == 15) ? pc : regs->uregs[rm];
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"msr	cpsr_fs, %[cpsr]	\n\t"
 		"blx    %[fn]			\n\t"
 		"mrs	%[cpsr], cpsr		\n\t"
@@ -501,29 +502,29 @@ t16_emulate_hiregs(probes_opcode_t insn,
 		: "lr", "memory", "cc"
 	);
 
-	if (rdn == 15)
+	अगर (rdn == 15)
 		rdnv &= ~1;
 
 	regs->uregs[rdn] = rdnv;
 	regs->ARM_cpsr = (regs->ARM_cpsr & ~APSR_MASK) | (cpsr & APSR_MASK);
-}
+पूर्ण
 
-static enum probes_insn __kprobes
-t16_decode_hiregs(probes_opcode_t insn, struct arch_probes_insn *asi,
-		const struct decode_header *d)
-{
+अटल क्रमागत probes_insn __kprobes
+t16_decode_hiregs(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+		स्थिर काष्ठा decode_header *d)
+अणु
 	insn &= ~0x00ff;
 	insn |= 0x001; /* Set Rdn = R1 and Rm = R0 */
 	((u16 *)asi->insn)[0] = __opcode_to_mem_thumb16(insn);
 	asi->insn_handler = t16_emulate_hiregs;
-	return INSN_GOOD;
-}
+	वापस INSN_GOOD;
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_emulate_push(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	__asm__ __volatile__ (
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	__यंत्र__ __अस्थिर__ (
 		"ldr	r9, [%[regs], #13*4]	\n\t"
 		"ldr	r8, [%[regs], #14*4]	\n\t"
 		"ldmia	%[regs], {r0-r7}	\n\t"
@@ -534,30 +535,30 @@ t16_emulate_push(probes_opcode_t insn,
 		: "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9",
 		  "lr", "memory", "cc"
 		);
-}
+पूर्ण
 
-static enum probes_insn __kprobes
-t16_decode_push(probes_opcode_t insn, struct arch_probes_insn *asi,
-		const struct decode_header *d)
-{
+अटल क्रमागत probes_insn __kprobes
+t16_decode_push(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+		स्थिर काष्ठा decode_header *d)
+अणु
 	/*
 	 * To simulate a PUSH we use a Thumb-2 "STMDB R9!, {registers}"
-	 * and call it with R9=SP and LR in the register list represented
+	 * and call it with R9=SP and LR in the रेजिस्टर list represented
 	 * by R8.
 	 */
-	/* 1st half STMDB R9!,{} */
+	/* 1st half STMDB R9!,अणुपूर्ण */
 	((u16 *)asi->insn)[0] = __opcode_to_mem_thumb16(0xe929);
-	/* 2nd half (register list) */
+	/* 2nd half (रेजिस्टर list) */
 	((u16 *)asi->insn)[1] = __opcode_to_mem_thumb16(insn & 0x1ff);
 	asi->insn_handler = t16_emulate_push;
-	return INSN_GOOD;
-}
+	वापस INSN_GOOD;
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_emulate_pop_nopc(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	__asm__ __volatile__ (
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	__यंत्र__ __अस्थिर__ (
 		"ldr	r9, [%[regs], #13*4]	\n\t"
 		"ldmia	%[regs], {r0-r7}	\n\t"
 		"blx	%[fn]			\n\t"
@@ -568,15 +569,15 @@ t16_emulate_pop_nopc(probes_opcode_t insn,
 		: "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r9",
 		  "lr", "memory", "cc"
 		);
-}
+पूर्ण
 
-static void __kprobes
+अटल व्योम __kprobes
 t16_emulate_pop_pc(probes_opcode_t insn,
-		struct arch_probes_insn *asi, struct pt_regs *regs)
-{
-	register unsigned long pc asm("r8");
+		काष्ठा arch_probes_insn *asi, काष्ठा pt_regs *regs)
+अणु
+	रेजिस्टर अचिन्हित दीर्घ pc यंत्र("r8");
 
-	__asm__ __volatile__ (
+	__यंत्र__ __अस्थिर__ (
 		"ldr	r9, [%[regs], #13*4]	\n\t"
 		"ldmia	%[regs], {r0-r7}	\n\t"
 		"blx	%[fn]			\n\t"
@@ -588,80 +589,80 @@ t16_emulate_pop_pc(probes_opcode_t insn,
 		  "lr", "memory", "cc"
 		);
 
-	bx_write_pc(pc, regs);
-}
+	bx_ग_लिखो_pc(pc, regs);
+पूर्ण
 
-static enum probes_insn __kprobes
-t16_decode_pop(probes_opcode_t insn, struct arch_probes_insn *asi,
-		const struct decode_header *d)
-{
+अटल क्रमागत probes_insn __kprobes
+t16_decode_pop(probes_opcode_t insn, काष्ठा arch_probes_insn *asi,
+		स्थिर काष्ठा decode_header *d)
+अणु
 	/*
 	 * To simulate a POP we use a Thumb-2 "LDMDB R9!, {registers}"
-	 * and call it with R9=SP and PC in the register list represented
+	 * and call it with R9=SP and PC in the रेजिस्टर list represented
 	 * by R8.
 	 */
-	/* 1st half LDMIA R9!,{} */
+	/* 1st half LDMIA R9!,अणुपूर्ण */
 	((u16 *)asi->insn)[0] = __opcode_to_mem_thumb16(0xe8b9);
-	/* 2nd half (register list) */
+	/* 2nd half (रेजिस्टर list) */
 	((u16 *)asi->insn)[1] = __opcode_to_mem_thumb16(insn & 0x1ff);
 	asi->insn_handler = insn & 0x100 ? t16_emulate_pop_pc
 					 : t16_emulate_pop_nopc;
-	return INSN_GOOD;
-}
+	वापस INSN_GOOD;
+पूर्ण
 
-const union decode_action kprobes_t16_actions[NUM_PROBES_T16_ACTIONS] = {
-	[PROBES_T16_ADD_SP] = {.handler = t16_simulate_add_sp_imm},
-	[PROBES_T16_CBZ] = {.handler = t16_simulate_cbz},
-	[PROBES_T16_SIGN_EXTEND] = {.handler = t16_emulate_loregs_rwflags},
-	[PROBES_T16_PUSH] = {.decoder = t16_decode_push},
-	[PROBES_T16_POP] = {.decoder = t16_decode_pop},
-	[PROBES_T16_SEV] = {.handler = probes_emulate_none},
-	[PROBES_T16_WFE] = {.handler = probes_simulate_nop},
-	[PROBES_T16_IT] = {.decoder = t16_decode_it},
-	[PROBES_T16_CMP] = {.handler = t16_emulate_loregs_rwflags},
-	[PROBES_T16_ADDSUB] = {.handler = t16_emulate_loregs_noitrwflags},
-	[PROBES_T16_LOGICAL] = {.handler = t16_emulate_loregs_noitrwflags},
-	[PROBES_T16_LDR_LIT] = {.handler = t16_simulate_ldr_literal},
-	[PROBES_T16_BLX] = {.handler = t16_simulate_bxblx},
-	[PROBES_T16_HIREGOPS] = {.decoder = t16_decode_hiregs},
-	[PROBES_T16_LDRHSTRH] = {.handler = t16_emulate_loregs_rwflags},
-	[PROBES_T16_LDRSTR] = {.handler = t16_simulate_ldrstr_sp_relative},
-	[PROBES_T16_ADR] = {.handler = t16_simulate_reladr},
-	[PROBES_T16_LDMSTM] = {.handler = t16_emulate_loregs_rwflags},
-	[PROBES_T16_BRANCH_COND] = {.decoder = t16_decode_cond_branch},
-	[PROBES_T16_BRANCH] = {.handler = t16_simulate_branch},
-};
+स्थिर जोड़ decode_action kprobes_t16_actions[NUM_PROBES_T16_ACTIONS] = अणु
+	[PROBES_T16_ADD_SP] = अणु.handler = t16_simulate_add_sp_immपूर्ण,
+	[PROBES_T16_CBZ] = अणु.handler = t16_simulate_cbzपूर्ण,
+	[PROBES_T16_SIGN_EXTEND] = अणु.handler = t16_emulate_loregs_rwflagsपूर्ण,
+	[PROBES_T16_PUSH] = अणु.decoder = t16_decode_pushपूर्ण,
+	[PROBES_T16_POP] = अणु.decoder = t16_decode_popपूर्ण,
+	[PROBES_T16_SEV] = अणु.handler = probes_emulate_noneपूर्ण,
+	[PROBES_T16_WFE] = अणु.handler = probes_simulate_nopपूर्ण,
+	[PROBES_T16_IT] = अणु.decoder = t16_decode_itपूर्ण,
+	[PROBES_T16_CMP] = अणु.handler = t16_emulate_loregs_rwflagsपूर्ण,
+	[PROBES_T16_ADDSUB] = अणु.handler = t16_emulate_loregs_noitrwflagsपूर्ण,
+	[PROBES_T16_LOGICAL] = अणु.handler = t16_emulate_loregs_noitrwflagsपूर्ण,
+	[PROBES_T16_LDR_LIT] = अणु.handler = t16_simulate_ldr_literalपूर्ण,
+	[PROBES_T16_BLX] = अणु.handler = t16_simulate_bxblxपूर्ण,
+	[PROBES_T16_HIREGOPS] = अणु.decoder = t16_decode_hiregsपूर्ण,
+	[PROBES_T16_LDRHSTRH] = अणु.handler = t16_emulate_loregs_rwflagsपूर्ण,
+	[PROBES_T16_LDRSTR] = अणु.handler = t16_simulate_ldrstr_sp_relativeपूर्ण,
+	[PROBES_T16_ADR] = अणु.handler = t16_simulate_reladrपूर्ण,
+	[PROBES_T16_LDMSTM] = अणु.handler = t16_emulate_loregs_rwflagsपूर्ण,
+	[PROBES_T16_BRANCH_COND] = अणु.decoder = t16_decode_cond_branchपूर्ण,
+	[PROBES_T16_BRANCH] = अणु.handler = t16_simulate_branchपूर्ण,
+पूर्ण;
 
-const union decode_action kprobes_t32_actions[NUM_PROBES_T32_ACTIONS] = {
-	[PROBES_T32_LDMSTM] = {.decoder = t32_decode_ldmstm},
-	[PROBES_T32_LDRDSTRD] = {.handler = t32_emulate_ldrdstrd},
-	[PROBES_T32_TABLE_BRANCH] = {.handler = t32_simulate_table_branch},
-	[PROBES_T32_TST] = {.handler = t32_emulate_rd8rn16rm0_rwflags},
-	[PROBES_T32_MOV] = {.handler = t32_emulate_rd8rn16rm0_rwflags},
-	[PROBES_T32_ADDSUB] = {.handler = t32_emulate_rd8rn16rm0_rwflags},
-	[PROBES_T32_LOGICAL] = {.handler = t32_emulate_rd8rn16rm0_rwflags},
-	[PROBES_T32_CMP] = {.handler = t32_emulate_rd8rn16rm0_rwflags},
-	[PROBES_T32_ADDWSUBW_PC] = {.handler = t32_emulate_rd8pc16_noflags,},
-	[PROBES_T32_ADDWSUBW] = {.handler = t32_emulate_rd8rn16_noflags},
-	[PROBES_T32_MOVW] = {.handler = t32_emulate_rd8rn16_noflags},
-	[PROBES_T32_SAT] = {.handler = t32_emulate_rd8rn16rm0_rwflags},
-	[PROBES_T32_BITFIELD] = {.handler = t32_emulate_rd8rn16_noflags},
-	[PROBES_T32_SEV] = {.handler = probes_emulate_none},
-	[PROBES_T32_WFE] = {.handler = probes_simulate_nop},
-	[PROBES_T32_MRS] = {.handler = t32_simulate_mrs},
-	[PROBES_T32_BRANCH_COND] = {.decoder = t32_decode_cond_branch},
-	[PROBES_T32_BRANCH] = {.handler = t32_simulate_branch},
-	[PROBES_T32_PLDI] = {.handler = probes_simulate_nop},
-	[PROBES_T32_LDR_LIT] = {.handler = t32_simulate_ldr_literal},
-	[PROBES_T32_LDRSTR] = {.handler = t32_emulate_ldrstr},
-	[PROBES_T32_SIGN_EXTEND] = {.handler = t32_emulate_rd8rn16rm0_rwflags},
-	[PROBES_T32_MEDIA] = {.handler = t32_emulate_rd8rn16rm0_rwflags},
-	[PROBES_T32_REVERSE] = {.handler = t32_emulate_rd8rn16_noflags},
-	[PROBES_T32_MUL_ADD] = {.handler = t32_emulate_rd8rn16rm0_rwflags},
-	[PROBES_T32_MUL_ADD2] = {.handler = t32_emulate_rd8rn16rm0ra12_noflags},
-	[PROBES_T32_MUL_ADD_LONG] = {
-		.handler = t32_emulate_rdlo12rdhi8rn16rm0_noflags},
-};
+स्थिर जोड़ decode_action kprobes_t32_actions[NUM_PROBES_T32_ACTIONS] = अणु
+	[PROBES_T32_LDMSTM] = अणु.decoder = t32_decode_ldmsपंचांगपूर्ण,
+	[PROBES_T32_LDRDSTRD] = अणु.handler = t32_emulate_ldrdstrdपूर्ण,
+	[PROBES_T32_TABLE_BRANCH] = अणु.handler = t32_simulate_table_branchपूर्ण,
+	[PROBES_T32_TST] = अणु.handler = t32_emulate_rd8rn16rm0_rwflagsपूर्ण,
+	[PROBES_T32_MOV] = अणु.handler = t32_emulate_rd8rn16rm0_rwflagsपूर्ण,
+	[PROBES_T32_ADDSUB] = अणु.handler = t32_emulate_rd8rn16rm0_rwflagsपूर्ण,
+	[PROBES_T32_LOGICAL] = अणु.handler = t32_emulate_rd8rn16rm0_rwflagsपूर्ण,
+	[PROBES_T32_CMP] = अणु.handler = t32_emulate_rd8rn16rm0_rwflagsपूर्ण,
+	[PROBES_T32_ADDWSUBW_PC] = अणु.handler = t32_emulate_rd8pc16_noflags,पूर्ण,
+	[PROBES_T32_ADDWSUBW] = अणु.handler = t32_emulate_rd8rn16_noflagsपूर्ण,
+	[PROBES_T32_MOVW] = अणु.handler = t32_emulate_rd8rn16_noflagsपूर्ण,
+	[PROBES_T32_SAT] = अणु.handler = t32_emulate_rd8rn16rm0_rwflagsपूर्ण,
+	[PROBES_T32_BITFIELD] = अणु.handler = t32_emulate_rd8rn16_noflagsपूर्ण,
+	[PROBES_T32_SEV] = अणु.handler = probes_emulate_noneपूर्ण,
+	[PROBES_T32_WFE] = अणु.handler = probes_simulate_nopपूर्ण,
+	[PROBES_T32_MRS] = अणु.handler = t32_simulate_mrsपूर्ण,
+	[PROBES_T32_BRANCH_COND] = अणु.decoder = t32_decode_cond_branchपूर्ण,
+	[PROBES_T32_BRANCH] = अणु.handler = t32_simulate_branchपूर्ण,
+	[PROBES_T32_PLDI] = अणु.handler = probes_simulate_nopपूर्ण,
+	[PROBES_T32_LDR_LIT] = अणु.handler = t32_simulate_ldr_literalपूर्ण,
+	[PROBES_T32_LDRSTR] = अणु.handler = t32_emulate_ldrstrपूर्ण,
+	[PROBES_T32_SIGN_EXTEND] = अणु.handler = t32_emulate_rd8rn16rm0_rwflagsपूर्ण,
+	[PROBES_T32_MEDIA] = अणु.handler = t32_emulate_rd8rn16rm0_rwflagsपूर्ण,
+	[PROBES_T32_REVERSE] = अणु.handler = t32_emulate_rd8rn16_noflagsपूर्ण,
+	[PROBES_T32_MUL_ADD] = अणु.handler = t32_emulate_rd8rn16rm0_rwflagsपूर्ण,
+	[PROBES_T32_MUL_ADD2] = अणु.handler = t32_emulate_rd8rn16rm0ra12_noflagsपूर्ण,
+	[PROBES_T32_MUL_ADD_LONG] = अणु
+		.handler = t32_emulate_rdlo12rdhi8rn16rm0_noflagsपूर्ण,
+पूर्ण;
 
-const struct decode_checker *kprobes_t32_checkers[] = {t32_stack_checker, NULL};
-const struct decode_checker *kprobes_t16_checkers[] = {t16_stack_checker, NULL};
+स्थिर काष्ठा decode_checker *kprobes_t32_checkers[] = अणुt32_stack_checker, शून्यपूर्ण;
+स्थिर काष्ठा decode_checker *kprobes_t16_checkers[] = अणुt16_stack_checker, शून्यपूर्ण;

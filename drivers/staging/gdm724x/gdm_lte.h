@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2012 GCT Semiconductor, Inc. All rights reserved. */
 
-#ifndef _GDM_LTE_H_
-#define _GDM_LTE_H_
+#अगर_अघोषित _GDM_LTE_H_
+#घोषणा _GDM_LTE_H_
 
-#include <linux/netdevice.h>
-#include <linux/types.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/types.h>
 
-#include "gdm_endian.h"
+#समावेश "gdm_endian.h"
 
-#define MAX_NIC_TYPE		4
-#define MAX_RX_SUBMIT_COUNT	3
-#define DRIVER_VERSION		"3.7.17.0"
+#घोषणा MAX_NIC_TYPE		4
+#घोषणा MAX_RX_SUBMIT_COUNT	3
+#घोषणा DRIVER_VERSION		"3.7.17.0"
 
-enum TX_ERROR_CODE {
+क्रमागत TX_ERROR_CODE अणु
 	TX_NO_ERROR = 0,
 	TX_NO_DEV,
 	TX_NO_SPC,
 	TX_NO_BUFFER,
-};
+पूर्ण;
 
-enum CALLBACK_CONTEXT {
+क्रमागत CALLBACK_CONTEXT अणु
 	KERNEL_THREAD = 0,
 	USB_COMPLETE,
-};
+पूर्ण;
 
-struct pdn_table {
+काष्ठा pdn_table अणु
 	u8 activate;
 	u32 dft_eps_id;
 	u32 nic_type;
-} __packed;
+पूर्ण __packed;
 
-struct nic;
+काष्ठा nic;
 
-struct phy_dev {
-	void	*priv_dev;
-	struct net_device *dev[MAX_NIC_TYPE];
-	int	(*send_hci_func)(void *priv_dev, void *data, int len,
-				 void (*cb)(void *cb_data), void *cb_data);
-	int	(*send_sdu_func)(void *priv_dev, void *data, int len,
-				 unsigned int dft_eps_id, unsigned int eps_id,
-				 void (*cb)(void *cb_data), void *cb_data,
-				 int dev_idx, int nic_type);
-	int	(*rcv_func)(void *priv_dev,
-			    int (*cb)(void *cb_data, void *data, int len,
-				      int context),
-			    void *cb_data, int context);
-	u8 (*get_endian)(void *priv_dev);
-};
+काष्ठा phy_dev अणु
+	व्योम	*priv_dev;
+	काष्ठा net_device *dev[MAX_NIC_TYPE];
+	पूर्णांक	(*send_hci_func)(व्योम *priv_dev, व्योम *data, पूर्णांक len,
+				 व्योम (*cb)(व्योम *cb_data), व्योम *cb_data);
+	पूर्णांक	(*send_sdu_func)(व्योम *priv_dev, व्योम *data, पूर्णांक len,
+				 अचिन्हित पूर्णांक dft_eps_id, अचिन्हित पूर्णांक eps_id,
+				 व्योम (*cb)(व्योम *cb_data), व्योम *cb_data,
+				 पूर्णांक dev_idx, पूर्णांक nic_type);
+	पूर्णांक	(*rcv_func)(व्योम *priv_dev,
+			    पूर्णांक (*cb)(व्योम *cb_data, व्योम *data, पूर्णांक len,
+				      पूर्णांक context),
+			    व्योम *cb_data, पूर्णांक context);
+	u8 (*get_endian)(व्योम *priv_dev);
+पूर्ण;
 
-struct nic {
-	struct net_device *netdev;
-	struct phy_dev *phy_dev;
-	struct net_device_stats stats;
-	struct pdn_table pdn_table;
+काष्ठा nic अणु
+	काष्ठा net_device *netdev;
+	काष्ठा phy_dev *phy_dev;
+	काष्ठा net_device_stats stats;
+	काष्ठा pdn_table pdn_table;
 	u8 dest_mac_addr[ETH_ALEN];
 	u8 src_mac_addr[ETH_ALEN];
 	u32 nic_id;
 	u16 vlan_id;
-};
+पूर्ण;
 
-int gdm_lte_event_init(void);
-void gdm_lte_event_exit(void);
+पूर्णांक gdm_lte_event_init(व्योम);
+व्योम gdm_lte_event_निकास(व्योम);
 
-void start_rx_proc(struct phy_dev *phy_dev);
-int register_lte_device(struct phy_dev *phy_dev, struct device *dev,
+व्योम start_rx_proc(काष्ठा phy_dev *phy_dev);
+पूर्णांक रेजिस्टर_lte_device(काष्ठा phy_dev *phy_dev, काष्ठा device *dev,
 			u8 *mac_address);
-void unregister_lte_device(struct phy_dev *phy_dev);
+व्योम unरेजिस्टर_lte_device(काष्ठा phy_dev *phy_dev);
 
-#endif /* _GDM_LTE_H_ */
+#पूर्ण_अगर /* _GDM_LTE_H_ */

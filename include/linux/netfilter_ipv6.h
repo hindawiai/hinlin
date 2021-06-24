@@ -1,209 +1,210 @@
-/* IPv6-specific defines for netfilter. 
+<शैली गुरु>
+/* IPv6-specअगरic defines क्रम netfilter. 
  * (C)1998 Rusty Russell -- This code is GPL.
  * (C)1999 David Jeffery
  *   this header was blatantly ripped from netfilter_ipv4.h
- *   it's amazing what adding a bunch of 6s can do =8^)
+ *   it's amazing what adding a bunch of 6s can करो =8^)
  */
-#ifndef __LINUX_IP6_NETFILTER_H
-#define __LINUX_IP6_NETFILTER_H
+#अगर_अघोषित __LINUX_IP6_NETFILTER_H
+#घोषणा __LINUX_IP6_NETFILTER_H
 
-#include <uapi/linux/netfilter_ipv6.h>
-#include <net/tcp.h>
+#समावेश <uapi/linux/netfilter_ipv6.h>
+#समावेश <net/tcp.h>
 
-/* Check for an extension */
-static inline int
+/* Check क्रम an extension */
+अटल अंतरभूत पूर्णांक
 nf_ip6_ext_hdr(u8 nexthdr)
-{	return (nexthdr == IPPROTO_HOPOPTS) ||
+अणु	वापस (nexthdr == IPPROTO_HOPOPTS) ||
 	       (nexthdr == IPPROTO_ROUTING) ||
 	       (nexthdr == IPPROTO_FRAGMENT) ||
 	       (nexthdr == IPPROTO_ESP) ||
 	       (nexthdr == IPPROTO_AH) ||
 	       (nexthdr == IPPROTO_NONE) ||
 	       (nexthdr == IPPROTO_DSTOPTS);
-}
+पूर्ण
 
-/* Extra routing may needed on local out, as the QUEUE target never returns
+/* Extra routing may needed on local out, as the QUEUE target never वापसs
  * control to the table.
  */
-struct ip6_rt_info {
-	struct in6_addr daddr;
-	struct in6_addr saddr;
-	u_int32_t mark;
-};
+काष्ठा ip6_rt_info अणु
+	काष्ठा in6_addr daddr;
+	काष्ठा in6_addr saddr;
+	u_पूर्णांक32_t mark;
+पूर्ण;
 
-struct nf_queue_entry;
-struct nf_bridge_frag_data;
+काष्ठा nf_queue_entry;
+काष्ठा nf_bridge_frag_data;
 
 /*
- * Hook functions for ipv6 to allow xt_* modules to be built-in even
- * if IPv6 is a module.
+ * Hook functions क्रम ipv6 to allow xt_* modules to be built-in even
+ * अगर IPv6 is a module.
  */
-struct nf_ipv6_ops {
-#if IS_MODULE(CONFIG_IPV6)
-	int (*chk_addr)(struct net *net, const struct in6_addr *addr,
-			const struct net_device *dev, int strict);
-	int (*route_me_harder)(struct net *net, struct sock *sk, struct sk_buff *skb);
-	int (*dev_get_saddr)(struct net *net, const struct net_device *dev,
-		       const struct in6_addr *daddr, unsigned int srcprefs,
-		       struct in6_addr *saddr);
-	int (*route)(struct net *net, struct dst_entry **dst, struct flowi *fl,
+काष्ठा nf_ipv6_ops अणु
+#अगर IS_MODULE(CONFIG_IPV6)
+	पूर्णांक (*chk_addr)(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
+			स्थिर काष्ठा net_device *dev, पूर्णांक strict);
+	पूर्णांक (*route_me_harder)(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb);
+	पूर्णांक (*dev_get_saddr)(काष्ठा net *net, स्थिर काष्ठा net_device *dev,
+		       स्थिर काष्ठा in6_addr *daddr, अचिन्हित पूर्णांक srcprefs,
+		       काष्ठा in6_addr *saddr);
+	पूर्णांक (*route)(काष्ठा net *net, काष्ठा dst_entry **dst, काष्ठा flowi *fl,
 		     bool strict);
-	u32 (*cookie_init_sequence)(const struct ipv6hdr *iph,
-				    const struct tcphdr *th, u16 *mssp);
-	int (*cookie_v6_check)(const struct ipv6hdr *iph,
-			       const struct tcphdr *th, __u32 cookie);
-#endif
-	void (*route_input)(struct sk_buff *skb);
-	int (*fragment)(struct net *net, struct sock *sk, struct sk_buff *skb,
-			int (*output)(struct net *, struct sock *, struct sk_buff *));
-	int (*reroute)(struct sk_buff *skb, const struct nf_queue_entry *entry);
-#if IS_MODULE(CONFIG_IPV6)
-	int (*br_fragment)(struct net *net, struct sock *sk,
-			   struct sk_buff *skb,
-			   struct nf_bridge_frag_data *data,
-			   int (*output)(struct net *, struct sock *sk,
-					 const struct nf_bridge_frag_data *data,
-					 struct sk_buff *));
-#endif
-};
+	u32 (*cookie_init_sequence)(स्थिर काष्ठा ipv6hdr *iph,
+				    स्थिर काष्ठा tcphdr *th, u16 *mssp);
+	पूर्णांक (*cookie_v6_check)(स्थिर काष्ठा ipv6hdr *iph,
+			       स्थिर काष्ठा tcphdr *th, __u32 cookie);
+#पूर्ण_अगर
+	व्योम (*route_input)(काष्ठा sk_buff *skb);
+	पूर्णांक (*fragment)(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb,
+			पूर्णांक (*output)(काष्ठा net *, काष्ठा sock *, काष्ठा sk_buff *));
+	पूर्णांक (*reroute)(काष्ठा sk_buff *skb, स्थिर काष्ठा nf_queue_entry *entry);
+#अगर IS_MODULE(CONFIG_IPV6)
+	पूर्णांक (*br_fragment)(काष्ठा net *net, काष्ठा sock *sk,
+			   काष्ठा sk_buff *skb,
+			   काष्ठा nf_bridge_frag_data *data,
+			   पूर्णांक (*output)(काष्ठा net *, काष्ठा sock *sk,
+					 स्थिर काष्ठा nf_bridge_frag_data *data,
+					 काष्ठा sk_buff *));
+#पूर्ण_अगर
+पूर्ण;
 
-#ifdef CONFIG_NETFILTER
-#include <net/addrconf.h>
+#अगर_घोषित CONFIG_NETFILTER
+#समावेश <net/addrconf.h>
 
-extern const struct nf_ipv6_ops __rcu *nf_ipv6_ops;
-static inline const struct nf_ipv6_ops *nf_get_ipv6_ops(void)
-{
-	return rcu_dereference(nf_ipv6_ops);
-}
+बाह्य स्थिर काष्ठा nf_ipv6_ops __rcu *nf_ipv6_ops;
+अटल अंतरभूत स्थिर काष्ठा nf_ipv6_ops *nf_get_ipv6_ops(व्योम)
+अणु
+	वापस rcu_dereference(nf_ipv6_ops);
+पूर्ण
 
-static inline int nf_ipv6_chk_addr(struct net *net, const struct in6_addr *addr,
-				   const struct net_device *dev, int strict)
-{
-#if IS_MODULE(CONFIG_IPV6)
-	const struct nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
+अटल अंतरभूत पूर्णांक nf_ipv6_chk_addr(काष्ठा net *net, स्थिर काष्ठा in6_addr *addr,
+				   स्थिर काष्ठा net_device *dev, पूर्णांक strict)
+अणु
+#अगर IS_MODULE(CONFIG_IPV6)
+	स्थिर काष्ठा nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
 
-	if (!v6_ops)
-		return 1;
+	अगर (!v6_ops)
+		वापस 1;
 
-	return v6_ops->chk_addr(net, addr, dev, strict);
-#elif IS_BUILTIN(CONFIG_IPV6)
-	return ipv6_chk_addr(net, addr, dev, strict);
-#else
-	return 1;
-#endif
-}
+	वापस v6_ops->chk_addr(net, addr, dev, strict);
+#या_अगर IS_BUILTIN(CONFIG_IPV6)
+	वापस ipv6_chk_addr(net, addr, dev, strict);
+#अन्यथा
+	वापस 1;
+#पूर्ण_अगर
+पूर्ण
 
-int __nf_ip6_route(struct net *net, struct dst_entry **dst,
-			       struct flowi *fl, bool strict);
+पूर्णांक __nf_ip6_route(काष्ठा net *net, काष्ठा dst_entry **dst,
+			       काष्ठा flowi *fl, bool strict);
 
-static inline int nf_ip6_route(struct net *net, struct dst_entry **dst,
-			       struct flowi *fl, bool strict)
-{
-#if IS_MODULE(CONFIG_IPV6)
-	const struct nf_ipv6_ops *v6ops = nf_get_ipv6_ops();
+अटल अंतरभूत पूर्णांक nf_ip6_route(काष्ठा net *net, काष्ठा dst_entry **dst,
+			       काष्ठा flowi *fl, bool strict)
+अणु
+#अगर IS_MODULE(CONFIG_IPV6)
+	स्थिर काष्ठा nf_ipv6_ops *v6ops = nf_get_ipv6_ops();
 
-	if (v6ops)
-		return v6ops->route(net, dst, fl, strict);
+	अगर (v6ops)
+		वापस v6ops->route(net, dst, fl, strict);
 
-	return -EHOSTUNREACH;
-#endif
-#if IS_BUILTIN(CONFIG_IPV6)
-	return __nf_ip6_route(net, dst, fl, strict);
-#else
-	return -EHOSTUNREACH;
-#endif
-}
+	वापस -EHOSTUNREACH;
+#पूर्ण_अगर
+#अगर IS_BUILTIN(CONFIG_IPV6)
+	वापस __nf_ip6_route(net, dst, fl, strict);
+#अन्यथा
+	वापस -EHOSTUNREACH;
+#पूर्ण_अगर
+पूर्ण
 
-#include <net/netfilter/ipv6/nf_defrag_ipv6.h>
+#समावेश <net/netfilter/ipv6/nf_defrag_ipv6.h>
 
-int br_ip6_fragment(struct net *net, struct sock *sk, struct sk_buff *skb,
-		    struct nf_bridge_frag_data *data,
-		    int (*output)(struct net *, struct sock *sk,
-				  const struct nf_bridge_frag_data *data,
-				  struct sk_buff *));
+पूर्णांक br_ip6_fragment(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb,
+		    काष्ठा nf_bridge_frag_data *data,
+		    पूर्णांक (*output)(काष्ठा net *, काष्ठा sock *sk,
+				  स्थिर काष्ठा nf_bridge_frag_data *data,
+				  काष्ठा sk_buff *));
 
-static inline int nf_br_ip6_fragment(struct net *net, struct sock *sk,
-				     struct sk_buff *skb,
-				     struct nf_bridge_frag_data *data,
-				     int (*output)(struct net *, struct sock *sk,
-						   const struct nf_bridge_frag_data *data,
-						   struct sk_buff *))
-{
-#if IS_MODULE(CONFIG_IPV6)
-	const struct nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
+अटल अंतरभूत पूर्णांक nf_br_ip6_fragment(काष्ठा net *net, काष्ठा sock *sk,
+				     काष्ठा sk_buff *skb,
+				     काष्ठा nf_bridge_frag_data *data,
+				     पूर्णांक (*output)(काष्ठा net *, काष्ठा sock *sk,
+						   स्थिर काष्ठा nf_bridge_frag_data *data,
+						   काष्ठा sk_buff *))
+अणु
+#अगर IS_MODULE(CONFIG_IPV6)
+	स्थिर काष्ठा nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
 
-	if (!v6_ops)
-		return 1;
+	अगर (!v6_ops)
+		वापस 1;
 
-	return v6_ops->br_fragment(net, sk, skb, data, output);
-#elif IS_BUILTIN(CONFIG_IPV6)
-	return br_ip6_fragment(net, sk, skb, data, output);
-#else
-	return 1;
-#endif
-}
+	वापस v6_ops->br_fragment(net, sk, skb, data, output);
+#या_अगर IS_BUILTIN(CONFIG_IPV6)
+	वापस br_ip6_fragment(net, sk, skb, data, output);
+#अन्यथा
+	वापस 1;
+#पूर्ण_अगर
+पूर्ण
 
-int ip6_route_me_harder(struct net *net, struct sock *sk, struct sk_buff *skb);
+पूर्णांक ip6_route_me_harder(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb);
 
-static inline int nf_ip6_route_me_harder(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-#if IS_MODULE(CONFIG_IPV6)
-	const struct nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
+अटल अंतरभूत पूर्णांक nf_ip6_route_me_harder(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+#अगर IS_MODULE(CONFIG_IPV6)
+	स्थिर काष्ठा nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
 
-	if (!v6_ops)
-		return -EHOSTUNREACH;
+	अगर (!v6_ops)
+		वापस -EHOSTUNREACH;
 
-	return v6_ops->route_me_harder(net, sk, skb);
-#elif IS_BUILTIN(CONFIG_IPV6)
-	return ip6_route_me_harder(net, sk, skb);
-#else
-	return -EHOSTUNREACH;
-#endif
-}
+	वापस v6_ops->route_me_harder(net, sk, skb);
+#या_अगर IS_BUILTIN(CONFIG_IPV6)
+	वापस ip6_route_me_harder(net, sk, skb);
+#अन्यथा
+	वापस -EHOSTUNREACH;
+#पूर्ण_अगर
+पूर्ण
 
-static inline u32 nf_ipv6_cookie_init_sequence(const struct ipv6hdr *iph,
-					       const struct tcphdr *th,
+अटल अंतरभूत u32 nf_ipv6_cookie_init_sequence(स्थिर काष्ठा ipv6hdr *iph,
+					       स्थिर काष्ठा tcphdr *th,
 					       u16 *mssp)
-{
-#if IS_ENABLED(CONFIG_SYN_COOKIES)
-#if IS_MODULE(CONFIG_IPV6)
-	const struct nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
+अणु
+#अगर IS_ENABLED(CONFIG_SYN_COOKIES)
+#अगर IS_MODULE(CONFIG_IPV6)
+	स्थिर काष्ठा nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
 
-	if (v6_ops)
-		return v6_ops->cookie_init_sequence(iph, th, mssp);
-#elif IS_BUILTIN(CONFIG_IPV6)
-	return __cookie_v6_init_sequence(iph, th, mssp);
-#endif
-#endif
-	return 0;
-}
+	अगर (v6_ops)
+		वापस v6_ops->cookie_init_sequence(iph, th, mssp);
+#या_अगर IS_BUILTIN(CONFIG_IPV6)
+	वापस __cookie_v6_init_sequence(iph, th, mssp);
+#पूर्ण_अगर
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static inline int nf_cookie_v6_check(const struct ipv6hdr *iph,
-				     const struct tcphdr *th, __u32 cookie)
-{
-#if IS_ENABLED(CONFIG_SYN_COOKIES)
-#if IS_MODULE(CONFIG_IPV6)
-	const struct nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
+अटल अंतरभूत पूर्णांक nf_cookie_v6_check(स्थिर काष्ठा ipv6hdr *iph,
+				     स्थिर काष्ठा tcphdr *th, __u32 cookie)
+अणु
+#अगर IS_ENABLED(CONFIG_SYN_COOKIES)
+#अगर IS_MODULE(CONFIG_IPV6)
+	स्थिर काष्ठा nf_ipv6_ops *v6_ops = nf_get_ipv6_ops();
 
-	if (v6_ops)
-		return v6_ops->cookie_v6_check(iph, th, cookie);
-#elif IS_BUILTIN(CONFIG_IPV6)
-	return __cookie_v6_check(iph, th, cookie);
-#endif
-#endif
-	return 0;
-}
+	अगर (v6_ops)
+		वापस v6_ops->cookie_v6_check(iph, th, cookie);
+#या_अगर IS_BUILTIN(CONFIG_IPV6)
+	वापस __cookie_v6_check(iph, th, cookie);
+#पूर्ण_अगर
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-__sum16 nf_ip6_checksum(struct sk_buff *skb, unsigned int hook,
-			unsigned int dataoff, u_int8_t protocol);
+__sum16 nf_ip6_checksum(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक hook,
+			अचिन्हित पूर्णांक dataoff, u_पूर्णांक8_t protocol);
 
-int ipv6_netfilter_init(void);
-void ipv6_netfilter_fini(void);
+पूर्णांक ipv6_netfilter_init(व्योम);
+व्योम ipv6_netfilter_fini(व्योम);
 
-#else /* CONFIG_NETFILTER */
-static inline int ipv6_netfilter_init(void) { return 0; }
-static inline void ipv6_netfilter_fini(void) { return; }
-static inline const struct nf_ipv6_ops *nf_get_ipv6_ops(void) { return NULL; }
-#endif /* CONFIG_NETFILTER */
+#अन्यथा /* CONFIG_NETFILTER */
+अटल अंतरभूत पूर्णांक ipv6_netfilter_init(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम ipv6_netfilter_fini(व्योम) अणु वापस; पूर्ण
+अटल अंतरभूत स्थिर काष्ठा nf_ipv6_ops *nf_get_ipv6_ops(व्योम) अणु वापस शून्य; पूर्ण
+#पूर्ण_अगर /* CONFIG_NETFILTER */
 
-#endif /*__LINUX_IP6_NETFILTER_H*/
+#पूर्ण_अगर /*__LINUX_IP6_NETFILTER_H*/

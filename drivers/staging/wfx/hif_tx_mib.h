@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Implementation of host-to-chip MIBs of WFxxx Split Mac (WSM) API.
  *
@@ -6,44 +7,44 @@
  * Copyright (c) 2010, ST-Ericsson
  * Copyright (C) 2010, ST-Ericsson SA
  */
-#ifndef WFX_HIF_TX_MIB_H
-#define WFX_HIF_TX_MIB_H
+#अगर_अघोषित WFX_HIF_TX_MIB_H
+#घोषणा WFX_HIF_TX_MIB_H
 
-struct wfx_vif;
-struct sk_buff;
+काष्ठा wfx_vअगर;
+काष्ठा sk_buff;
 
-int hif_set_output_power(struct wfx_vif *wvif, int val);
-int hif_set_beacon_wakeup_period(struct wfx_vif *wvif,
-				 unsigned int dtim_interval,
-				 unsigned int listen_interval);
-int hif_set_rcpi_rssi_threshold(struct wfx_vif *wvif,
-				int rssi_thold, int rssi_hyst);
-int hif_get_counters_table(struct wfx_dev *wdev, int vif_id,
-			   struct hif_mib_extended_count_table *arg);
-int hif_set_macaddr(struct wfx_vif *wvif, u8 *mac);
-int hif_set_rx_filter(struct wfx_vif *wvif,
+पूर्णांक hअगर_set_output_घातer(काष्ठा wfx_vअगर *wvअगर, पूर्णांक val);
+पूर्णांक hअगर_set_beacon_wakeup_period(काष्ठा wfx_vअगर *wvअगर,
+				 अचिन्हित पूर्णांक dtim_पूर्णांकerval,
+				 अचिन्हित पूर्णांक listen_पूर्णांकerval);
+पूर्णांक hअगर_set_rcpi_rssi_threshold(काष्ठा wfx_vअगर *wvअगर,
+				पूर्णांक rssi_thold, पूर्णांक rssi_hyst);
+पूर्णांक hअगर_get_counters_table(काष्ठा wfx_dev *wdev, पूर्णांक vअगर_id,
+			   काष्ठा hअगर_mib_extended_count_table *arg);
+पूर्णांक hअगर_set_macaddr(काष्ठा wfx_vअगर *wvअगर, u8 *mac);
+पूर्णांक hअगर_set_rx_filter(काष्ठा wfx_vअगर *wvअगर,
 		      bool filter_bssid, bool fwd_probe_req);
-int hif_set_beacon_filter_table(struct wfx_vif *wvif, int tbl_len,
-				const struct hif_ie_table_entry *tbl);
-int hif_beacon_filter_control(struct wfx_vif *wvif,
-			      int enable, int beacon_count);
-int hif_set_operational_mode(struct wfx_dev *wdev, enum hif_op_power_mode mode);
-int hif_set_template_frame(struct wfx_vif *wvif, struct sk_buff *skb,
-			   u8 frame_type, int init_rate);
-int hif_set_mfp(struct wfx_vif *wvif, bool capable, bool required);
-int hif_set_block_ack_policy(struct wfx_vif *wvif,
+पूर्णांक hअगर_set_beacon_filter_table(काष्ठा wfx_vअगर *wvअगर, पूर्णांक tbl_len,
+				स्थिर काष्ठा hअगर_ie_table_entry *tbl);
+पूर्णांक hअगर_beacon_filter_control(काष्ठा wfx_vअगर *wvअगर,
+			      पूर्णांक enable, पूर्णांक beacon_count);
+पूर्णांक hअगर_set_operational_mode(काष्ठा wfx_dev *wdev, क्रमागत hअगर_op_घातer_mode mode);
+पूर्णांक hअगर_set_ढाँचा_frame(काष्ठा wfx_vअगर *wvअगर, काष्ठा sk_buff *skb,
+			   u8 frame_type, पूर्णांक init_rate);
+पूर्णांक hअगर_set_mfp(काष्ठा wfx_vअगर *wvअगर, bool capable, bool required);
+पूर्णांक hअगर_set_block_ack_policy(काष्ठा wfx_vअगर *wvअगर,
 			     u8 tx_tid_policy, u8 rx_tid_policy);
-int hif_set_association_mode(struct wfx_vif *wvif, int ampdu_density,
-			     bool greenfield, bool short_preamble);
-int hif_set_tx_rate_retry_policy(struct wfx_vif *wvif,
-				 int policy_index, u8 *rates);
-int hif_keep_alive_period(struct wfx_vif *wvif, int period);
-int hif_set_arp_ipv4_filter(struct wfx_vif *wvif, int idx, __be32 *addr);
-int hif_use_multi_tx_conf(struct wfx_dev *wdev, bool enable);
-int hif_set_uapsd_info(struct wfx_vif *wvif, unsigned long val);
-int hif_erp_use_protection(struct wfx_vif *wvif, bool enable);
-int hif_slot_time(struct wfx_vif *wvif, int val);
-int hif_wep_default_key_id(struct wfx_vif *wvif, int val);
-int hif_rts_threshold(struct wfx_vif *wvif, int val);
+पूर्णांक hअगर_set_association_mode(काष्ठा wfx_vअगर *wvअगर, पूर्णांक ampdu_density,
+			     bool greenfield, bool लघु_preamble);
+पूर्णांक hअगर_set_tx_rate_retry_policy(काष्ठा wfx_vअगर *wvअगर,
+				 पूर्णांक policy_index, u8 *rates);
+पूर्णांक hअगर_keep_alive_period(काष्ठा wfx_vअगर *wvअगर, पूर्णांक period);
+पूर्णांक hअगर_set_arp_ipv4_filter(काष्ठा wfx_vअगर *wvअगर, पूर्णांक idx, __be32 *addr);
+पूर्णांक hअगर_use_multi_tx_conf(काष्ठा wfx_dev *wdev, bool enable);
+पूर्णांक hअगर_set_uapsd_info(काष्ठा wfx_vअगर *wvअगर, अचिन्हित दीर्घ val);
+पूर्णांक hअगर_erp_use_protection(काष्ठा wfx_vअगर *wvअगर, bool enable);
+पूर्णांक hअगर_slot_समय(काष्ठा wfx_vअगर *wvअगर, पूर्णांक val);
+पूर्णांक hअगर_wep_शेष_key_id(काष्ठा wfx_vअगर *wvअगर, पूर्णांक val);
+पूर्णांक hअगर_rts_threshold(काष्ठा wfx_vअगर *wvअगर, पूर्णांक val);
 
-#endif
+#पूर्ण_अगर

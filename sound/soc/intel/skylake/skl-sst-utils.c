@@ -1,68 +1,69 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  skl-sst-utils.c - SKL sst utils functions
  *
  *  Copyright (C) 2016 Intel Corp
  */
 
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/uuid.h>
-#include "../common/sst-dsp.h"
-#include "../common/sst-dsp-priv.h"
-#include "skl.h"
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uuid.h>
+#समावेश "../common/sst-dsp.h"
+#समावेश "../common/sst-dsp-priv.h"
+#समावेश "skl.h"
 
-#define DEFAULT_HASH_SHA256_LEN 32
+#घोषणा DEFAULT_HASH_SHA256_LEN 32
 
-/* FW Extended Manifest Header id = $AE1 */
-#define SKL_EXT_MANIFEST_HEADER_MAGIC   0x31454124
+/* FW Extended Manअगरest Header id = $AE1 */
+#घोषणा SKL_EXT_MANIFEST_HEADER_MAGIC   0x31454124
 
-union seg_flags {
+जोड़ seg_flags अणु
 	u32 ul;
-	struct {
+	काष्ठा अणु
 		u32 contents : 1;
 		u32 alloc    : 1;
 		u32 load     : 1;
-		u32 read_only : 1;
+		u32 पढ़ो_only : 1;
 		u32 code     : 1;
 		u32 data     : 1;
 		u32 _rsvd0   : 2;
 		u32 type     : 4;
 		u32 _rsvd1   : 4;
 		u32 length   : 16;
-	} r;
-} __packed;
+	पूर्ण r;
+पूर्ण __packed;
 
-struct segment_desc {
-	union seg_flags flags;
+काष्ठा segment_desc अणु
+	जोड़ seg_flags flags;
 	u32 v_base_addr;
 	u32 file_offset;
-};
+पूर्ण;
 
-struct module_type {
+काष्ठा module_type अणु
 	u32 load_type  : 4;
-	u32 auto_start : 1;
-	u32 domain_ll  : 1;
-	u32 domain_dp  : 1;
+	u32 स्वतः_start : 1;
+	u32 करोमुख्य_ll  : 1;
+	u32 करोमुख्य_dp  : 1;
 	u32 rsvd       : 25;
-} __packed;
+पूर्ण __packed;
 
-struct adsp_module_entry {
-	u32 struct_id;
+काष्ठा adsp_module_entry अणु
+	u32 काष्ठा_id;
 	u8  name[8];
 	u8  uuid[16];
-	struct module_type type;
+	काष्ठा module_type type;
 	u8  hash1[DEFAULT_HASH_SHA256_LEN];
-	u32 entry_point;
+	u32 entry_poपूर्णांक;
 	u16 cfg_offset;
 	u16 cfg_count;
 	u32 affinity_mask;
 	u16 instance_max_count;
 	u16 instance_bss_size;
-	struct segment_desc segments[3];
-} __packed;
+	काष्ठा segment_desc segments[3];
+पूर्ण __packed;
 
-struct adsp_fw_hdr {
+काष्ठा adsp_fw_hdr अणु
 	u32 id;
 	u32 len;
 	u8  name[8];
@@ -77,348 +78,348 @@ struct adsp_fw_hdr {
 	u32 hw_buf_base;
 	u32 hw_buf_length;
 	u32 load_offset;
-} __packed;
+पूर्ण __packed;
 
-struct skl_ext_manifest_hdr {
+काष्ठा skl_ext_manअगरest_hdr अणु
 	u32 id;
 	u32 len;
 	u16 version_major;
 	u16 version_minor;
 	u32 entries;
-};
+पूर्ण;
 
-static int skl_get_pvtid_map(struct uuid_module *module, int instance_id)
-{
-	int pvt_id;
+अटल पूर्णांक skl_get_pvtid_map(काष्ठा uuid_module *module, पूर्णांक instance_id)
+अणु
+	पूर्णांक pvt_id;
 
-	for (pvt_id = 0; pvt_id < module->max_instance; pvt_id++) {
-		if (module->instance_id[pvt_id] == instance_id)
-			return pvt_id;
-	}
-	return -EINVAL;
-}
+	क्रम (pvt_id = 0; pvt_id < module->max_instance; pvt_id++) अणु
+		अगर (module->instance_id[pvt_id] == instance_id)
+			वापस pvt_id;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-int skl_get_pvt_instance_id_map(struct skl_dev *skl,
-				int module_id, int instance_id)
-{
-	struct uuid_module *module;
+पूर्णांक skl_get_pvt_instance_id_map(काष्ठा skl_dev *skl,
+				पूर्णांक module_id, पूर्णांक instance_id)
+अणु
+	काष्ठा uuid_module *module;
 
-	list_for_each_entry(module, &skl->uuid_list, list) {
-		if (module->id == module_id)
-			return skl_get_pvtid_map(module, instance_id);
-	}
+	list_क्रम_each_entry(module, &skl->uuid_list, list) अणु
+		अगर (module->id == module_id)
+			वापस skl_get_pvtid_map(module, instance_id);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(skl_get_pvt_instance_id_map);
 
-static inline int skl_getid_32(struct uuid_module *module, u64 *val,
-				int word1_mask, int word2_mask)
-{
-	int index, max_inst, pvt_id;
+अटल अंतरभूत पूर्णांक skl_getid_32(काष्ठा uuid_module *module, u64 *val,
+				पूर्णांक word1_mask, पूर्णांक word2_mask)
+अणु
+	पूर्णांक index, max_inst, pvt_id;
 	u32 mask_val;
 
 	max_inst =  module->max_instance;
 	mask_val = (u32)(*val >> word1_mask);
 
-	if (mask_val != 0xffffffff) {
+	अगर (mask_val != 0xffffffff) अणु
 		index = ffz(mask_val);
 		pvt_id = index + word1_mask + word2_mask;
-		if (pvt_id <= (max_inst - 1)) {
+		अगर (pvt_id <= (max_inst - 1)) अणु
 			*val |= 1ULL << (index + word1_mask);
-			return pvt_id;
-		}
-	}
+			वापस pvt_id;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static inline int skl_pvtid_128(struct uuid_module *module)
-{
-	int j, i, word1_mask, word2_mask = 0, pvt_id;
+अटल अंतरभूत पूर्णांक skl_pvtid_128(काष्ठा uuid_module *module)
+अणु
+	पूर्णांक j, i, word1_mask, word2_mask = 0, pvt_id;
 
-	for (j = 0; j < MAX_INSTANCE_BUFF; j++) {
+	क्रम (j = 0; j < MAX_INSTANCE_BUFF; j++) अणु
 		word1_mask = 0;
 
-		for (i = 0; i < 2; i++) {
+		क्रम (i = 0; i < 2; i++) अणु
 			pvt_id = skl_getid_32(module, &module->pvt_id[j],
 						word1_mask, word2_mask);
-			if (pvt_id >= 0)
-				return pvt_id;
+			अगर (pvt_id >= 0)
+				वापस pvt_id;
 
 			word1_mask += 32;
-			if ((word1_mask + word2_mask) >= module->max_instance)
-				return -EINVAL;
-		}
+			अगर ((word1_mask + word2_mask) >= module->max_instance)
+				वापस -EINVAL;
+		पूर्ण
 
 		word2_mask += 64;
-		if (word2_mask >= module->max_instance)
-			return -EINVAL;
-	}
+		अगर (word2_mask >= module->max_instance)
+			वापस -EINVAL;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
- * skl_get_pvt_id: generate a private id for use as module id
+ * skl_get_pvt_id: generate a निजी id क्रम use as module id
  *
  * @skl: driver context
  * @uuid_mod: module's uuid
  * @instance_id: module's instance id
  *
- * This generates a 128 bit private unique id for a module TYPE so that
+ * This generates a 128 bit निजी unique id क्रम a module TYPE so that
  * module instance is unique
  */
-int skl_get_pvt_id(struct skl_dev *skl, guid_t *uuid_mod, int instance_id)
-{
-	struct uuid_module *module;
-	int pvt_id;
+पूर्णांक skl_get_pvt_id(काष्ठा skl_dev *skl, guid_t *uuid_mod, पूर्णांक instance_id)
+अणु
+	काष्ठा uuid_module *module;
+	पूर्णांक pvt_id;
 
-	list_for_each_entry(module, &skl->uuid_list, list) {
-		if (guid_equal(uuid_mod, &module->uuid)) {
+	list_क्रम_each_entry(module, &skl->uuid_list, list) अणु
+		अगर (guid_equal(uuid_mod, &module->uuid)) अणु
 
 			pvt_id = skl_pvtid_128(module);
-			if (pvt_id >= 0) {
+			अगर (pvt_id >= 0) अणु
 				module->instance_id[pvt_id] = instance_id;
 
-				return pvt_id;
-			}
-		}
-	}
+				वापस pvt_id;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(skl_get_pvt_id);
 
 /**
- * skl_put_pvt_id: free up the private id allocated
+ * skl_put_pvt_id: मुक्त up the निजी id allocated
  *
  * @skl: driver context
  * @uuid_mod: module's uuid
  * @pvt_id: module pvt id
  *
- * This frees a 128 bit private unique id previously generated
+ * This मुक्तs a 128 bit निजी unique id previously generated
  */
-int skl_put_pvt_id(struct skl_dev *skl, guid_t *uuid_mod, int *pvt_id)
-{
-	int i;
-	struct uuid_module *module;
+पूर्णांक skl_put_pvt_id(काष्ठा skl_dev *skl, guid_t *uuid_mod, पूर्णांक *pvt_id)
+अणु
+	पूर्णांक i;
+	काष्ठा uuid_module *module;
 
-	list_for_each_entry(module, &skl->uuid_list, list) {
-		if (guid_equal(uuid_mod, &module->uuid)) {
+	list_क्रम_each_entry(module, &skl->uuid_list, list) अणु
+		अगर (guid_equal(uuid_mod, &module->uuid)) अणु
 
-			if (*pvt_id != 0)
+			अगर (*pvt_id != 0)
 				i = (*pvt_id) / 64;
-			else
+			अन्यथा
 				i = 0;
 
 			module->pvt_id[i] &= ~(1 << (*pvt_id));
 			*pvt_id = -1;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(skl_put_pvt_id);
 
 /*
  * Parse the firmware binary to get the UUID, module id
  * and loadable flags
  */
-int snd_skl_parse_uuids(struct sst_dsp *ctx, const struct firmware *fw,
-			unsigned int offset, int index)
-{
-	struct adsp_fw_hdr *adsp_hdr;
-	struct adsp_module_entry *mod_entry;
-	int i, num_entry, size;
-	const char *buf;
-	struct skl_dev *skl = ctx->thread_context;
-	struct uuid_module *module;
-	struct firmware stripped_fw;
-	unsigned int safe_file;
-	int ret;
+पूर्णांक snd_skl_parse_uuids(काष्ठा sst_dsp *ctx, स्थिर काष्ठा firmware *fw,
+			अचिन्हित पूर्णांक offset, पूर्णांक index)
+अणु
+	काष्ठा adsp_fw_hdr *adsp_hdr;
+	काष्ठा adsp_module_entry *mod_entry;
+	पूर्णांक i, num_entry, size;
+	स्थिर अक्षर *buf;
+	काष्ठा skl_dev *skl = ctx->thपढ़ो_context;
+	काष्ठा uuid_module *module;
+	काष्ठा firmware stripped_fw;
+	अचिन्हित पूर्णांक safe_file;
+	पूर्णांक ret;
 
-	/* Get the FW pointer to derive ADSP header */
+	/* Get the FW poपूर्णांकer to derive ADSP header */
 	stripped_fw.data = fw->data;
 	stripped_fw.size = fw->size;
 
-	skl_dsp_strip_extended_manifest(&stripped_fw);
+	skl_dsp_strip_extended_manअगरest(&stripped_fw);
 
 	buf = stripped_fw.data;
 
-	/* check if we have enough space in file to move to header */
-	safe_file = sizeof(*adsp_hdr) + offset;
-	if (stripped_fw.size <= safe_file) {
+	/* check अगर we have enough space in file to move to header */
+	safe_file = माप(*adsp_hdr) + offset;
+	अगर (stripped_fw.size <= safe_file) अणु
 		dev_err(ctx->dev, "Small fw file size, No space for hdr\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	adsp_hdr = (struct adsp_fw_hdr *)(buf + offset);
+	adsp_hdr = (काष्ठा adsp_fw_hdr *)(buf + offset);
 
 	/* check 1st module entry is in file */
-	safe_file += adsp_hdr->len + sizeof(*mod_entry);
-	if (stripped_fw.size <= safe_file) {
+	safe_file += adsp_hdr->len + माप(*mod_entry);
+	अगर (stripped_fw.size <= safe_file) अणु
 		dev_err(ctx->dev, "Small fw file size, No module entry\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	mod_entry = (struct adsp_module_entry *)(buf + offset + adsp_hdr->len);
+	mod_entry = (काष्ठा adsp_module_entry *)(buf + offset + adsp_hdr->len);
 
 	num_entry = adsp_hdr->num_modules;
 
 	/* check all entries are in file */
-	safe_file += num_entry * sizeof(*mod_entry);
-	if (stripped_fw.size <= safe_file) {
+	safe_file += num_entry * माप(*mod_entry);
+	अगर (stripped_fw.size <= safe_file) अणु
 		dev_err(ctx->dev, "Small fw file size, No modules\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 
 	/*
-	 * Read the UUID(GUID) from FW Manifest.
+	 * Read the UUID(GUID) from FW Manअगरest.
 	 *
-	 * The 16 byte UUID format is: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX
+	 * The 16 byte UUID क्रमmat is: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXX
 	 * Populate the UUID table to store module_id and loadable flags
-	 * for the module.
+	 * क्रम the module.
 	 */
 
-	for (i = 0; i < num_entry; i++, mod_entry++) {
-		module = kzalloc(sizeof(*module), GFP_KERNEL);
-		if (!module) {
+	क्रम (i = 0; i < num_entry; i++, mod_entry++) अणु
+		module = kzalloc(माप(*module), GFP_KERNEL);
+		अगर (!module) अणु
 			ret = -ENOMEM;
-			goto free_uuid_list;
-		}
+			जाओ मुक्त_uuid_list;
+		पूर्ण
 
 		import_guid(&module->uuid, mod_entry->uuid);
 
 		module->id = (i | (index << 12));
 		module->is_loadable = mod_entry->type.load_type;
 		module->max_instance = mod_entry->instance_max_count;
-		size = sizeof(int) * mod_entry->instance_max_count;
+		size = माप(पूर्णांक) * mod_entry->instance_max_count;
 		module->instance_id = devm_kzalloc(ctx->dev, size, GFP_KERNEL);
-		if (!module->instance_id) {
+		अगर (!module->instance_id) अणु
 			ret = -ENOMEM;
-			goto free_uuid_list;
-		}
+			जाओ मुक्त_uuid_list;
+		पूर्ण
 
 		list_add_tail(&module->list, &skl->uuid_list);
 
 		dev_dbg(ctx->dev,
 			"Adding uuid :%pUL   mod id: %d  Loadable: %d\n",
 			&module->uuid, module->id, module->is_loadable);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_uuid_list:
-	skl_freeup_uuid_list(skl);
-	return ret;
-}
+मुक्त_uuid_list:
+	skl_मुक्तup_uuid_list(skl);
+	वापस ret;
+पूर्ण
 
-void skl_freeup_uuid_list(struct skl_dev *skl)
-{
-	struct uuid_module *uuid, *_uuid;
+व्योम skl_मुक्तup_uuid_list(काष्ठा skl_dev *skl)
+अणु
+	काष्ठा uuid_module *uuid, *_uuid;
 
-	list_for_each_entry_safe(uuid, _uuid, &skl->uuid_list, list) {
+	list_क्रम_each_entry_safe(uuid, _uuid, &skl->uuid_list, list) अणु
 		list_del(&uuid->list);
-		kfree(uuid);
-	}
-}
+		kमुक्त(uuid);
+	पूर्ण
+पूर्ण
 
 /*
- * some firmware binary contains some extended manifest. This needs
- * to be stripped in that case before we load and use that image.
+ * some firmware binary contains some extended manअगरest. This needs
+ * to be stripped in that हाल beक्रमe we load and use that image.
  *
- * Get the module id for the module by checking
- * the table for the UUID for the module
+ * Get the module id क्रम the module by checking
+ * the table क्रम the UUID क्रम the module
  */
-int skl_dsp_strip_extended_manifest(struct firmware *fw)
-{
-	struct skl_ext_manifest_hdr *hdr;
+पूर्णांक skl_dsp_strip_extended_manअगरest(काष्ठा firmware *fw)
+अणु
+	काष्ठा skl_ext_manअगरest_hdr *hdr;
 
-	/* check if fw file is greater than header we are looking */
-	if (fw->size < sizeof(hdr)) {
+	/* check अगर fw file is greater than header we are looking */
+	अगर (fw->size < माप(hdr)) अणु
 		pr_err("%s: Firmware file small, no hdr\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	hdr = (struct skl_ext_manifest_hdr *)fw->data;
+	hdr = (काष्ठा skl_ext_manअगरest_hdr *)fw->data;
 
-	if (hdr->id == SKL_EXT_MANIFEST_HEADER_MAGIC) {
+	अगर (hdr->id == SKL_EXT_MANIFEST_HEADER_MAGIC) अणु
 		fw->size -= hdr->len;
 		fw->data += hdr->len;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int skl_sst_ctx_init(struct device *dev, int irq, const char *fw_name,
-	struct skl_dsp_loader_ops dsp_ops, struct skl_dev **dsp,
-	struct sst_dsp_device *skl_dev)
-{
-	struct skl_dev *skl = *dsp;
-	struct sst_dsp *sst;
+पूर्णांक skl_sst_ctx_init(काष्ठा device *dev, पूर्णांक irq, स्थिर अक्षर *fw_name,
+	काष्ठा skl_dsp_loader_ops dsp_ops, काष्ठा skl_dev **dsp,
+	काष्ठा sst_dsp_device *skl_dev)
+अणु
+	काष्ठा skl_dev *skl = *dsp;
+	काष्ठा sst_dsp *sst;
 
 	skl->dev = dev;
-	skl_dev->thread_context = skl;
+	skl_dev->thपढ़ो_context = skl;
 	INIT_LIST_HEAD(&skl->uuid_list);
 	skl->dsp = skl_dsp_ctx_init(dev, skl_dev, irq);
-	if (!skl->dsp) {
+	अगर (!skl->dsp) अणु
 		dev_err(skl->dev, "%s: no device\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	sst = skl->dsp;
 	sst->fw_name = fw_name;
 	sst->dsp_ops = dsp_ops;
-	init_waitqueue_head(&skl->mod_load_wait);
+	init_रुकोqueue_head(&skl->mod_load_रुको);
 	INIT_LIST_HEAD(&sst->module_list);
 
 	skl->is_first_boot = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int skl_prepare_lib_load(struct skl_dev *skl, struct skl_lib_info *linfo,
-		struct firmware *stripped_fw,
-		unsigned int hdr_offset, int index)
-{
-	int ret;
-	struct sst_dsp *dsp = skl->dsp;
+पूर्णांक skl_prepare_lib_load(काष्ठा skl_dev *skl, काष्ठा skl_lib_info *linfo,
+		काष्ठा firmware *stripped_fw,
+		अचिन्हित पूर्णांक hdr_offset, पूर्णांक index)
+अणु
+	पूर्णांक ret;
+	काष्ठा sst_dsp *dsp = skl->dsp;
 
-	if (linfo->fw == NULL) {
+	अगर (linfo->fw == शून्य) अणु
 		ret = request_firmware(&linfo->fw, linfo->name,
 					skl->dev);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(skl->dev, "Request lib %s failed:%d\n",
 				linfo->name, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (skl->is_first_boot) {
+	अगर (skl->is_first_boot) अणु
 		ret = snd_skl_parse_uuids(dsp, linfo->fw, hdr_offset, index);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
 	stripped_fw->data = linfo->fw->data;
 	stripped_fw->size = linfo->fw->size;
-	skl_dsp_strip_extended_manifest(stripped_fw);
+	skl_dsp_strip_extended_manअगरest(stripped_fw);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void skl_release_library(struct skl_lib_info *linfo, int lib_count)
-{
-	int i;
+व्योम skl_release_library(काष्ठा skl_lib_info *linfo, पूर्णांक lib_count)
+अणु
+	पूर्णांक i;
 
 	/* library indices start from 1 to N. 0 represents base FW */
-	for (i = 1; i < lib_count; i++) {
-		if (linfo[i].fw) {
+	क्रम (i = 1; i < lib_count; i++) अणु
+		अगर (linfo[i].fw) अणु
 			release_firmware(linfo[i].fw);
-			linfo[i].fw = NULL;
-		}
-	}
-}
+			linfo[i].fw = शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /****************************************************************************\
 * 
 *  File Name      atomfirmwareid.h
@@ -6,10 +7,10 @@
 *
 *  Copyright 2016 Advanced Micro Devices, Inc.
 *
-* Permission is hereby granted, free of charge, to any person obtaining a copy of this software 
-* and associated documentation files (the "Software"), to deal in the Software without restriction,
-* including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
-* and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+* Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy of this software 
+* and associated करोcumentation files (the "Software"), to deal in the Software without restriction,
+* including without limitation the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+* and/or sell copies of the Software, and to permit persons to whom the Software is furnished to करो so,
 * subject to the following conditions:
 *
 * The above copyright notice and this permission notice shall be included in all copies or substantial
@@ -25,11 +26,11 @@
 *
 \****************************************************************************/
 
-#ifndef _ATOMFIRMWAREID_H_
-#define _ATOMFIRMWAREID_H_
+#अगर_अघोषित _ATOMFIRMWAREID_H_
+#घोषणा _ATOMFIRMWAREID_H_
 
-enum atom_master_data_table_id
-{
+क्रमागत atom_master_data_table_id
+अणु
     VBIOS_DATA_TBL_ID__UTILITY_PIPELINE,
     VBIOS_DATA_TBL_ID__MULTIMEDIA_INF,
     VBIOS_DATA_TBL_ID__FIRMWARE_INF,
@@ -40,7 +41,7 @@ enum atom_master_data_table_id
     VBIOS_DATA_TBL_ID__GFX_INF,
     VBIOS_DATA_TBL_ID__POWER_PLAY_INF,
     VBIOS_DATA_TBL_ID__DISPLAY_OBJECT_INF,
-    VBIOS_DATA_TBL_ID__INDIRECT_IO_ACCESS,
+    VBIOS_DATA_TBL_ID__INसूचीECT_IO_ACCESS,
     VBIOS_DATA_TBL_ID__UMC_INF,
     VBIOS_DATA_TBL_ID__DCE_INF,
     VBIOS_DATA_TBL_ID__VRAM_INF,
@@ -49,10 +50,10 @@ enum atom_master_data_table_id
     VBIOS_DATA_TBL_ID__VOLTAGE_OBJ_INF,
 
     VBIOS_DATA_TBL_ID__UNDEFINED,
-};
+पूर्ण;
 
-enum atom_master_command_table_id
-{
+क्रमागत atom_master_command_table_id
+अणु
     VBIOS_CMD_TBL_ID__ASIC_INIT,
     VBIOS_CMD_TBL_ID__DIGX_ENCODER_CONTROL,
     VBIOS_CMD_TBL_ID__SET_ENGINE_CLOCK,
@@ -78,9 +79,9 @@ enum atom_master_command_table_id
     VBIOS_CMD_TBL_ID__GET_VOLTAGE_INF,
 
     VBIOS_CMD_TBL_ID__UNDEFINED,
-};
+पूर्ण;
 
 
 
-#endif  /* _ATOMFIRMWAREID_H_  */
-/* ### EOF ### */
+#पूर्ण_अगर  /* _ATOMFIRMWAREID_H_  */
+/* ### खातापूर्ण ### */

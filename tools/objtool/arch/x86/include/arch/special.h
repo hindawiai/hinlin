@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _X86_ARCH_SPECIAL_H
-#define _X86_ARCH_SPECIAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _X86_ARCH_SPECIAL_H
+#घोषणा _X86_ARCH_SPECIAL_H
 
-#define EX_ENTRY_SIZE		12
-#define EX_ORIG_OFFSET		0
-#define EX_NEW_OFFSET		4
+#घोषणा EX_ENTRY_SIZE		12
+#घोषणा EX_ORIG_OFFSET		0
+#घोषणा EX_NEW_OFFSET		4
 
-#define JUMP_ENTRY_SIZE		16
-#define JUMP_ORIG_OFFSET	0
-#define JUMP_NEW_OFFSET		4
+#घोषणा JUMP_ENTRY_SIZE		16
+#घोषणा JUMP_ORIG_OFFSET	0
+#घोषणा JUMP_NEW_OFFSET		4
 
-#define ALT_ENTRY_SIZE		12
-#define ALT_ORIG_OFFSET		0
-#define ALT_NEW_OFFSET		4
-#define ALT_FEATURE_OFFSET	8
-#define ALT_ORIG_LEN_OFFSET	10
-#define ALT_NEW_LEN_OFFSET	11
+#घोषणा ALT_ENTRY_SIZE		12
+#घोषणा ALT_ORIG_OFFSET		0
+#घोषणा ALT_NEW_OFFSET		4
+#घोषणा ALT_FEATURE_OFFSET	8
+#घोषणा ALT_ORIG_LEN_OFFSET	10
+#घोषणा ALT_NEW_LEN_OFFSET	11
 
-#endif /* _X86_ARCH_SPECIAL_H */
+#पूर्ण_अगर /* _X86_ARCH_SPECIAL_H */

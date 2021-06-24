@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2010 Red Hat, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_sb.h"
-#include "xfs_mount.h"
-#include "xfs_btree.h"
-#include "xfs_alloc_btree.h"
-#include "xfs_alloc.h"
-#include "xfs_discard.h"
-#include "xfs_error.h"
-#include "xfs_extent_busy.h"
-#include "xfs_trace.h"
-#include "xfs_log.h"
+#समावेश "xfs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_sb.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_btree.h"
+#समावेश "xfs_alloc_btree.h"
+#समावेश "xfs_alloc.h"
+#समावेश "xfs_discard.h"
+#समावेश "xfs_error.h"
+#समावेश "xfs_extent_busy.h"
+#समावेश "xfs_trace.h"
+#समावेश "xfs_log.h"
 
-STATIC int
+STATIC पूर्णांक
 xfs_trim_extents(
-	struct xfs_mount	*mp,
+	काष्ठा xfs_mount	*mp,
 	xfs_agnumber_t		agno,
 	xfs_daddr_t		start,
 	xfs_daddr_t		end,
 	xfs_daddr_t		minlen,
-	uint64_t		*blocks_trimmed)
-{
-	struct block_device	*bdev = mp->m_ddev_targp->bt_bdev;
-	struct xfs_btree_cur	*cur;
-	struct xfs_buf		*agbp;
-	struct xfs_agf		*agf;
-	struct xfs_perag	*pag;
-	int			error;
-	int			i;
+	uपूर्णांक64_t		*blocks_trimmed)
+अणु
+	काष्ठा block_device	*bdev = mp->m_ddev_targp->bt_bdev;
+	काष्ठा xfs_btree_cur	*cur;
+	काष्ठा xfs_buf		*agbp;
+	काष्ठा xfs_agf		*agf;
+	काष्ठा xfs_perag	*pag;
+	पूर्णांक			error;
+	पूर्णांक			i;
 
 	pag = xfs_perag_get(mp, agno);
 
 	/*
-	 * Force out the log.  This means any transactions that might have freed
-	 * space before we take the AGF buffer lock are now on disk, and the
-	 * volatile disk cache is flushed.
+	 * Force out the log.  This means any transactions that might have मुक्तd
+	 * space beक्रमe we take the AGF buffer lock are now on disk, and the
+	 * अस्थिर disk cache is flushed.
 	 */
-	xfs_log_force(mp, XFS_LOG_SYNC);
+	xfs_log_क्रमce(mp, XFS_LOG_SYNC);
 
-	error = xfs_alloc_read_agf(mp, NULL, agno, 0, &agbp);
-	if (error)
-		goto out_put_perag;
+	error = xfs_alloc_पढ़ो_agf(mp, शून्य, agno, 0, &agbp);
+	अगर (error)
+		जाओ out_put_perag;
 	agf = agbp->b_addr;
 
-	cur = xfs_allocbt_init_cursor(mp, NULL, agbp, agno, XFS_BTNUM_CNT);
+	cur = xfs_allocbt_init_cursor(mp, शून्य, agbp, agno, XFS_BTNUM_CNT);
 
 	/*
-	 * Look up the longest btree in the AGF and start with it.
+	 * Look up the दीर्घest btree in the AGF and start with it.
 	 */
-	error = xfs_alloc_lookup_ge(cur, 0, be32_to_cpu(agf->agf_longest), &i);
-	if (error)
-		goto out_del_cursor;
+	error = xfs_alloc_lookup_ge(cur, 0, be32_to_cpu(agf->agf_दीर्घest), &i);
+	अगर (error)
+		जाओ out_del_cursor;
 
 	/*
-	 * Loop until we are done with all extents that are large
+	 * Loop until we are करोne with all extents that are large
 	 * enough to be worth discarding.
 	 */
-	while (i) {
+	जबतक (i) अणु
 		xfs_agblock_t	fbno;
 		xfs_extlen_t	flen;
 		xfs_daddr_t	dbno;
 		xfs_extlen_t	dlen;
 
 		error = xfs_alloc_get_rec(cur, &fbno, &flen, &i);
-		if (error)
-			goto out_del_cursor;
-		if (XFS_IS_CORRUPT(mp, i != 1)) {
+		अगर (error)
+			जाओ out_del_cursor;
+		अगर (XFS_IS_CORRUPT(mp, i != 1)) अणु
 			error = -EFSCORRUPTED;
-			goto out_del_cursor;
-		}
-		ASSERT(flen <= be32_to_cpu(agf->agf_longest));
+			जाओ out_del_cursor;
+		पूर्ण
+		ASSERT(flen <= be32_to_cpu(agf->agf_दीर्घest));
 
 		/*
-		 * use daddr format for all range/len calculations as that is
-		 * the format the range/len variables are supplied in by
+		 * use daddr क्रमmat क्रम all range/len calculations as that is
+		 * the क्रमmat the range/len variables are supplied in by
 		 * userspace.
 		 */
 		dbno = XFS_AGB_TO_DADDR(mp, agno, fbno);
@@ -89,130 +90,130 @@ xfs_trim_extents(
 		/*
 		 * Too small?  Give up.
 		 */
-		if (dlen < minlen) {
+		अगर (dlen < minlen) अणु
 			trace_xfs_discard_toosmall(mp, agno, fbno, flen);
-			goto out_del_cursor;
-		}
+			जाओ out_del_cursor;
+		पूर्ण
 
 		/*
 		 * If the extent is entirely outside of the range we are
 		 * supposed to discard skip it.  Do not bother to trim
-		 * down partially overlapping ranges for now.
+		 * करोwn partially overlapping ranges क्रम now.
 		 */
-		if (dbno + dlen < start || dbno > end) {
+		अगर (dbno + dlen < start || dbno > end) अणु
 			trace_xfs_discard_exclude(mp, agno, fbno, flen);
-			goto next_extent;
-		}
+			जाओ next_extent;
+		पूर्ण
 
 		/*
 		 * If any blocks in the range are still busy, skip the
-		 * discard and try again the next time.
+		 * discard and try again the next समय.
 		 */
-		if (xfs_extent_busy_search(mp, agno, fbno, flen)) {
+		अगर (xfs_extent_busy_search(mp, agno, fbno, flen)) अणु
 			trace_xfs_discard_busy(mp, agno, fbno, flen);
-			goto next_extent;
-		}
+			जाओ next_extent;
+		पूर्ण
 
 		trace_xfs_discard_extent(mp, agno, fbno, flen);
 		error = blkdev_issue_discard(bdev, dbno, dlen, GFP_NOFS, 0);
-		if (error)
-			goto out_del_cursor;
+		अगर (error)
+			जाओ out_del_cursor;
 		*blocks_trimmed += flen;
 
 next_extent:
 		error = xfs_btree_decrement(cur, 0, &i);
-		if (error)
-			goto out_del_cursor;
+		अगर (error)
+			जाओ out_del_cursor;
 
-		if (fatal_signal_pending(current)) {
+		अगर (fatal_संकेत_pending(current)) अणु
 			error = -ERESTARTSYS;
-			goto out_del_cursor;
-		}
-	}
+			जाओ out_del_cursor;
+		पूर्ण
+	पूर्ण
 
 out_del_cursor:
 	xfs_btree_del_cursor(cur, error);
-	xfs_buf_relse(agbp);
+	xfs_buf_rअन्यथा(agbp);
 out_put_perag:
 	xfs_perag_put(pag);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- * trim a range of the filesystem.
+ * trim a range of the fileप्रणाली.
  *
- * Note: the parameters passed from userspace are byte ranges into the
- * filesystem which does not match to the format we use for filesystem block
- * addressing. FSB addressing is sparse (AGNO|AGBNO), while the incoming format
+ * Note: the parameters passed from userspace are byte ranges पूर्णांकo the
+ * fileप्रणाली which करोes not match to the क्रमmat we use क्रम fileप्रणाली block
+ * addressing. FSB addressing is sparse (AGNO|AGBNO), जबतक the incoming क्रमmat
  * is a linear address range. Hence we need to use DADDR based conversions and
- * comparisons for determining the correct offset and regions to trim.
+ * comparisons क्रम determining the correct offset and regions to trim.
  */
-int
+पूर्णांक
 xfs_ioc_trim(
-	struct xfs_mount		*mp,
-	struct fstrim_range __user	*urange)
-{
-	struct request_queue	*q = bdev_get_queue(mp->m_ddev_targp->bt_bdev);
-	unsigned int		granularity = q->limits.discard_granularity;
-	struct fstrim_range	range;
+	काष्ठा xfs_mount		*mp,
+	काष्ठा fstrim_range __user	*urange)
+अणु
+	काष्ठा request_queue	*q = bdev_get_queue(mp->m_ddev_targp->bt_bdev);
+	अचिन्हित पूर्णांक		granularity = q->limits.discard_granularity;
+	काष्ठा fstrim_range	range;
 	xfs_daddr_t		start, end, minlen;
 	xfs_agnumber_t		start_agno, end_agno, agno;
-	uint64_t		blocks_trimmed = 0;
-	int			error, last_error = 0;
+	uपूर्णांक64_t		blocks_trimmed = 0;
+	पूर्णांक			error, last_error = 0;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
-	if (!blk_queue_discard(q))
-		return -EOPNOTSUPP;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
+	अगर (!blk_queue_discard(q))
+		वापस -EOPNOTSUPP;
 
 	/*
 	 * We haven't recovered the log, so we cannot use our bnobt-guided
 	 * storage zapping commands.
 	 */
-	if (mp->m_flags & XFS_MOUNT_NORECOVERY)
-		return -EROFS;
+	अगर (mp->m_flags & XFS_MOUNT_NORECOVERY)
+		वापस -EROFS;
 
-	if (copy_from_user(&range, urange, sizeof(range)))
-		return -EFAULT;
+	अगर (copy_from_user(&range, urange, माप(range)))
+		वापस -EFAULT;
 
 	range.minlen = max_t(u64, granularity, range.minlen);
 	minlen = BTOBB(range.minlen);
 	/*
-	 * Truncating down the len isn't actually quite correct, but using
-	 * BBTOB would mean we trivially get overflows for values
-	 * of ULLONG_MAX or slightly lower.  And ULLONG_MAX is the default
-	 * used by the fstrim application.  In the end it really doesn't
-	 * matter as trimming blocks is an advisory interface.
+	 * Truncating करोwn the len isn't actually quite correct, but using
+	 * BBTOB would mean we trivially get overflows क्रम values
+	 * of ULदीर्घ_उच्च or slightly lower.  And ULदीर्घ_उच्च is the शेष
+	 * used by the fstrim application.  In the end it really करोesn't
+	 * matter as trimming blocks is an advisory पूर्णांकerface.
 	 */
-	if (range.start >= XFS_FSB_TO_B(mp, mp->m_sb.sb_dblocks) ||
+	अगर (range.start >= XFS_FSB_TO_B(mp, mp->m_sb.sb_dblocks) ||
 	    range.minlen > XFS_FSB_TO_B(mp, mp->m_ag_max_usable) ||
 	    range.len < mp->m_sb.sb_blocksize)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	start = BTOBB(range.start);
 	end = start + BTOBBT(range.len) - 1;
 
-	if (end > XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks) - 1)
+	अगर (end > XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks) - 1)
 		end = XFS_FSB_TO_BB(mp, mp->m_sb.sb_dblocks)- 1;
 
 	start_agno = xfs_daddr_to_agno(mp, start);
 	end_agno = xfs_daddr_to_agno(mp, end);
 
-	for (agno = start_agno; agno <= end_agno; agno++) {
+	क्रम (agno = start_agno; agno <= end_agno; agno++) अणु
 		error = xfs_trim_extents(mp, agno, start, end, minlen,
 					  &blocks_trimmed);
-		if (error) {
+		अगर (error) अणु
 			last_error = error;
-			if (error == -ERESTARTSYS)
-				break;
-		}
-	}
+			अगर (error == -ERESTARTSYS)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (last_error)
-		return last_error;
+	अगर (last_error)
+		वापस last_error;
 
 	range.len = XFS_FSB_TO_B(mp, blocks_trimmed);
-	if (copy_to_user(urange, &range, sizeof(range)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(urange, &range, माप(range)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण

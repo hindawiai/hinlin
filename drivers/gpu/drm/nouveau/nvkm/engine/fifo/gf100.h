@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __GF100_FIFO_H__
-#define __GF100_FIFO_H__
-#define gf100_fifo(p) container_of((p), struct gf100_fifo, base)
-#include "priv.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __GF100_FIFO_H__
+#घोषणा __GF100_FIFO_H__
+#घोषणा gf100_fअगरo(p) container_of((p), काष्ठा gf100_fअगरo, base)
+#समावेश "priv.h"
 
-#include <subdev/mmu.h>
+#समावेश <subdev/mmu.h>
 
-struct gf100_fifo_chan;
-struct gf100_fifo {
-	struct nvkm_fifo base;
+काष्ठा gf100_fअगरo_chan;
+काष्ठा gf100_fअगरo अणु
+	काष्ठा nvkm_fअगरo base;
 
-	struct list_head chan;
+	काष्ठा list_head chan;
 
-	struct {
-		struct work_struct work;
+	काष्ठा अणु
+		काष्ठा work_काष्ठा work;
 		u64 mask;
-	} recover;
+	पूर्ण recover;
 
-	int pbdma_nr;
+	पूर्णांक pbdma_nr;
 
-	struct {
-		struct nvkm_memory *mem[2];
-		int active;
-		wait_queue_head_t wait;
-	} runlist;
+	काष्ठा अणु
+		काष्ठा nvkm_memory *mem[2];
+		पूर्णांक active;
+		रुको_queue_head_t रुको;
+	पूर्ण runlist;
 
-	struct {
-		struct nvkm_memory *mem;
-		struct nvkm_vma *bar;
-	} user;
-};
+	काष्ठा अणु
+		काष्ठा nvkm_memory *mem;
+		काष्ठा nvkm_vma *bar;
+	पूर्ण user;
+पूर्ण;
 
-void gf100_fifo_intr_engine(struct gf100_fifo *);
-void gf100_fifo_runlist_insert(struct gf100_fifo *, struct gf100_fifo_chan *);
-void gf100_fifo_runlist_remove(struct gf100_fifo *, struct gf100_fifo_chan *);
-void gf100_fifo_runlist_commit(struct gf100_fifo *);
-#endif
+व्योम gf100_fअगरo_पूर्णांकr_engine(काष्ठा gf100_fअगरo *);
+व्योम gf100_fअगरo_runlist_insert(काष्ठा gf100_fअगरo *, काष्ठा gf100_fअगरo_chan *);
+व्योम gf100_fअगरo_runlist_हटाओ(काष्ठा gf100_fअगरo *, काष्ठा gf100_fअगरo_chan *);
+व्योम gf100_fअगरo_runlist_commit(काष्ठा gf100_fअगरo *);
+#पूर्ण_अगर

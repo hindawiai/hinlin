@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * RDMA Network Block Driver
  *
@@ -6,78 +7,78 @@
  * Copyright (c) 2018 - 2019 1&1 IONOS Cloud GmbH. All rights reserved.
  * Copyright (c) 2019 - 2020 1&1 IONOS SE. All rights reserved.
  */
-#ifndef RNBD_SRV_DEV_H
-#define RNBD_SRV_DEV_H
+#अगर_अघोषित RNBD_SRV_DEV_H
+#घोषणा RNBD_SRV_DEV_H
 
-#include <linux/fs.h>
-#include "rnbd-proto.h"
+#समावेश <linux/fs.h>
+#समावेश "rnbd-proto.h"
 
-struct rnbd_dev {
-	struct block_device	*bdev;
-	struct bio_set		*ibd_bio_set;
-	fmode_t			blk_open_flags;
-	char			name[BDEVNAME_SIZE];
-};
+काष्ठा rnbd_dev अणु
+	काष्ठा block_device	*bdev;
+	काष्ठा bio_set		*ibd_bio_set;
+	भ_शेषe_t			blk_खोलो_flags;
+	अक्षर			name[BDEVNAME_SIZE];
+पूर्ण;
 
-struct rnbd_dev_blk_io {
-	struct rnbd_dev *dev;
-	void		 *priv;
-	/* have to be last member for front_pad usage of bioset_init */
-	struct bio	bio;
-};
+काष्ठा rnbd_dev_blk_io अणु
+	काष्ठा rnbd_dev *dev;
+	व्योम		 *priv;
+	/* have to be last member क्रम front_pad usage of bioset_init */
+	काष्ठा bio	bio;
+पूर्ण;
 
 /**
- * rnbd_dev_open() - Open a device
- * @flags:	open flags
+ * rnbd_dev_खोलो() - Open a device
+ * @flags:	खोलो flags
  * @bs:		bio_set to use during block io,
  */
-struct rnbd_dev *rnbd_dev_open(const char *path, fmode_t flags,
-			       struct bio_set *bs);
+काष्ठा rnbd_dev *rnbd_dev_खोलो(स्थिर अक्षर *path, भ_शेषe_t flags,
+			       काष्ठा bio_set *bs);
 
 /**
- * rnbd_dev_close() - Close a device
+ * rnbd_dev_बंद() - Close a device
  */
-void rnbd_dev_close(struct rnbd_dev *dev);
+व्योम rnbd_dev_बंद(काष्ठा rnbd_dev *dev);
 
-void rnbd_endio(void *priv, int error);
+व्योम rnbd_endio(व्योम *priv, पूर्णांक error);
 
-void rnbd_dev_bi_end_io(struct bio *bio);
+व्योम rnbd_dev_bi_end_io(काष्ठा bio *bio);
 
-struct bio *rnbd_bio_map_kern(void *data, struct bio_set *bs,
-			      unsigned int len, gfp_t gfp_mask);
+काष्ठा bio *rnbd_bio_map_kern(व्योम *data, काष्ठा bio_set *bs,
+			      अचिन्हित पूर्णांक len, gfp_t gfp_mask);
 
-static inline int rnbd_dev_get_max_segs(const struct rnbd_dev *dev)
-{
-	return queue_max_segments(bdev_get_queue(dev->bdev));
-}
+अटल अंतरभूत पूर्णांक rnbd_dev_get_max_segs(स्थिर काष्ठा rnbd_dev *dev)
+अणु
+	वापस queue_max_segments(bdev_get_queue(dev->bdev));
+पूर्ण
 
-static inline int rnbd_dev_get_max_hw_sects(const struct rnbd_dev *dev)
-{
-	return queue_max_hw_sectors(bdev_get_queue(dev->bdev));
-}
+अटल अंतरभूत पूर्णांक rnbd_dev_get_max_hw_sects(स्थिर काष्ठा rnbd_dev *dev)
+अणु
+	वापस queue_max_hw_sectors(bdev_get_queue(dev->bdev));
+पूर्ण
 
-static inline int rnbd_dev_get_secure_discard(const struct rnbd_dev *dev)
-{
-	return blk_queue_secure_erase(bdev_get_queue(dev->bdev));
-}
+अटल अंतरभूत पूर्णांक rnbd_dev_get_secure_discard(स्थिर काष्ठा rnbd_dev *dev)
+अणु
+	वापस blk_queue_secure_erase(bdev_get_queue(dev->bdev));
+पूर्ण
 
-static inline int rnbd_dev_get_max_discard_sects(const struct rnbd_dev *dev)
-{
-	if (!blk_queue_discard(bdev_get_queue(dev->bdev)))
-		return 0;
+अटल अंतरभूत पूर्णांक rnbd_dev_get_max_discard_sects(स्थिर काष्ठा rnbd_dev *dev)
+अणु
+	अगर (!blk_queue_discard(bdev_get_queue(dev->bdev)))
+		वापस 0;
 
-	return blk_queue_get_max_sectors(bdev_get_queue(dev->bdev),
+	वापस blk_queue_get_max_sectors(bdev_get_queue(dev->bdev),
 					 REQ_OP_DISCARD);
-}
+पूर्ण
 
-static inline int rnbd_dev_get_discard_granularity(const struct rnbd_dev *dev)
-{
-	return bdev_get_queue(dev->bdev)->limits.discard_granularity;
-}
+अटल अंतरभूत पूर्णांक rnbd_dev_get_discard_granularity(स्थिर काष्ठा rnbd_dev *dev)
+अणु
+	वापस bdev_get_queue(dev->bdev)->limits.discard_granularity;
+पूर्ण
 
-static inline int rnbd_dev_get_discard_alignment(const struct rnbd_dev *dev)
-{
-	return bdev_get_queue(dev->bdev)->limits.discard_alignment;
-}
+अटल अंतरभूत पूर्णांक rnbd_dev_get_discard_alignment(स्थिर काष्ठा rnbd_dev *dev)
+अणु
+	वापस bdev_get_queue(dev->bdev)->limits.discard_alignment;
+पूर्ण
 
-#endif /* RNBD_SRV_DEV_H */
+#पूर्ण_अगर /* RNBD_SRV_DEV_H */

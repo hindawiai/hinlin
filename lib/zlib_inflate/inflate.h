@@ -1,7 +1,8 @@
-#ifndef INFLATE_H
-#define INFLATE_H
+<शैली गुरु>
+#अगर_अघोषित INFLATE_H
+#घोषणा INFLATE_H
 
-/* inflate.h -- internal inflate state definition
+/* inflate.h -- पूर्णांकernal inflate state definition
  * Copyright (C) 1995-2004 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
@@ -11,46 +12,46 @@
    subject to change. Applications should only use zlib.h.
  */
 
-#include "inftrees.h"
+#समावेश "inftrees.h"
 
 /* Possible inflate modes between inflate() calls */
-typedef enum {
-    HEAD,       /* i: waiting for magic header */
-    FLAGS,      /* i: waiting for method and flags (gzip) */
-    TIME,       /* i: waiting for modification time (gzip) */
-    OS,         /* i: waiting for extra flags and operating system (gzip) */
-    EXLEN,      /* i: waiting for extra length (gzip) */
-    EXTRA,      /* i: waiting for extra bytes (gzip) */
-    NAME,       /* i: waiting for end of file name (gzip) */
-    COMMENT,    /* i: waiting for end of comment (gzip) */
-    HCRC,       /* i: waiting for header crc (gzip) */
-    DICTID,     /* i: waiting for dictionary check value */
-    DICT,       /* waiting for inflateSetDictionary() call */
-        TYPE,       /* i: waiting for type bits, including last-flag bit */
-        TYPEDO,     /* i: same, but skip check to exit inflate on new block */
-        STORED,     /* i: waiting for stored size (length and complement) */
-        COPY,       /* i/o: waiting for input or output to copy stored block */
-        TABLE,      /* i: waiting for dynamic block table lengths */
-        LENLENS,    /* i: waiting for code length code lengths */
-        CODELENS,   /* i: waiting for length/lit and distance code lengths */
-            LEN,        /* i: waiting for length/lit code */
-            LENEXT,     /* i: waiting for length extra bits */
-            DIST,       /* i: waiting for distance code */
-            DISTEXT,    /* i: waiting for distance extra bits */
-            MATCH,      /* o: waiting for output space to copy string */
-            LIT,        /* o: waiting for output space to write literal */
-    CHECK,      /* i: waiting for 32-bit check value */
-    LENGTH,     /* i: waiting for 32-bit length (gzip) */
-    DONE,       /* finished check, done -- remain here until reset */
-    BAD,        /* got a data error -- remain here until reset */
-    MEM,        /* got an inflate() memory error -- remain here until reset */
-    SYNC        /* looking for synchronization bytes to restart inflate() */
-} inflate_mode;
+प्रकार क्रमागत अणु
+    HEAD,       /* i: रुकोing क्रम magic header */
+    FLAGS,      /* i: रुकोing क्रम method and flags (gzip) */
+    TIME,       /* i: रुकोing क्रम modअगरication समय (gzip) */
+    OS,         /* i: रुकोing क्रम extra flags and operating प्रणाली (gzip) */
+    EXLEN,      /* i: रुकोing क्रम extra length (gzip) */
+    EXTRA,      /* i: रुकोing क्रम extra bytes (gzip) */
+    NAME,       /* i: रुकोing क्रम end of file name (gzip) */
+    COMMENT,    /* i: रुकोing क्रम end of comment (gzip) */
+    HCRC,       /* i: रुकोing क्रम header crc (gzip) */
+    DICTID,     /* i: रुकोing क्रम dictionary check value */
+    DICT,       /* रुकोing क्रम inflateSetDictionary() call */
+        TYPE,       /* i: रुकोing क्रम type bits, including last-flag bit */
+        TYPEDO,     /* i: same, but skip check to निकास inflate on new block */
+        STORED,     /* i: रुकोing क्रम stored size (length and complement) */
+        COPY,       /* i/o: रुकोing क्रम input or output to copy stored block */
+        TABLE,      /* i: रुकोing क्रम dynamic block table lengths */
+        LENLENS,    /* i: रुकोing क्रम code length code lengths */
+        CODELENS,   /* i: रुकोing क्रम length/lit and distance code lengths */
+            LEN,        /* i: रुकोing क्रम length/lit code */
+            LENEXT,     /* i: रुकोing क्रम length extra bits */
+            DIST,       /* i: रुकोing क्रम distance code */
+            DISTEXT,    /* i: रुकोing क्रम distance extra bits */
+            MATCH,      /* o: रुकोing क्रम output space to copy string */
+            LIT,        /* o: रुकोing क्रम output space to ग_लिखो literal */
+    CHECK,      /* i: रुकोing क्रम 32-bit check value */
+    LENGTH,     /* i: रुकोing क्रम 32-bit length (gzip) */
+    DONE,       /* finished check, करोne -- reमुख्य here until reset */
+    BAD,        /* got a data error -- reमुख्य here until reset */
+    MEM,        /* got an inflate() memory error -- reमुख्य here until reset */
+    SYNC        /* looking क्रम synchronization bytes to restart inflate() */
+पूर्ण inflate_mode;
 
 /*
     State transitions between above modes -
 
-    (most modes can go to the BAD or MEM mode -- not shown for clarity)
+    (most modes can go to the BAD or MEM mode -- not shown क्रम clarity)
 
     Process header:
         HEAD -> (gzip) or (zlib)
@@ -70,50 +71,50 @@ typedef enum {
         CHECK -> LENGTH -> DONE
  */
 
-/* state maintained between inflate() calls.  Approximately 7K bytes. */
-struct inflate_state {
+/* state मुख्यtained between inflate() calls.  Approximately 7K bytes. */
+काष्ठा inflate_state अणु
     inflate_mode mode;          /* current inflate mode */
-    int last;                   /* true if processing last block */
-    int wrap;                   /* bit 0 true for zlib, bit 1 true for gzip */
-    int havedict;               /* true if dictionary provided */
-    int flags;                  /* gzip header method and flags (0 if zlib) */
-    unsigned dmax;              /* zlib header max distance (INFLATE_STRICT) */
-    unsigned long check;        /* protected copy of check value */
-    unsigned long total;        /* protected copy of output count */
- /*   gz_headerp head; */           /* where to save gzip header information */
-        /* sliding window */
-    unsigned wbits;             /* log base 2 of requested window size */
-    unsigned wsize;             /* window size or zero if not using window */
-    unsigned whave;             /* valid bytes in the window */
-    unsigned write;             /* window write index */
-    unsigned char *window;  /* allocated sliding window, if needed */
+    पूर्णांक last;                   /* true अगर processing last block */
+    पूर्णांक wrap;                   /* bit 0 true क्रम zlib, bit 1 true क्रम gzip */
+    पूर्णांक havedict;               /* true अगर dictionary provided */
+    पूर्णांक flags;                  /* gzip header method and flags (0 अगर zlib) */
+    अचिन्हित dmax;              /* zlib header max distance (INFLATE_STRICT) */
+    अचिन्हित दीर्घ check;        /* रक्षित copy of check value */
+    अचिन्हित दीर्घ total;        /* रक्षित copy of output count */
+ /*   gz_headerp head; */           /* where to save gzip header inक्रमmation */
+        /* sliding winकरोw */
+    अचिन्हित wbits;             /* log base 2 of requested winकरोw size */
+    अचिन्हित wsize;             /* winकरोw size or zero अगर not using winकरोw */
+    अचिन्हित whave;             /* valid bytes in the winकरोw */
+    अचिन्हित ग_लिखो;             /* winकरोw ग_लिखो index */
+    अचिन्हित अक्षर *winकरोw;  /* allocated sliding winकरोw, अगर needed */
         /* bit accumulator */
-    unsigned long hold;         /* input bit accumulator */
-    unsigned bits;              /* number of bits in "in" */
-        /* for string and stored block copying */
-    unsigned length;            /* literal or length of data to copy */
-    unsigned offset;            /* distance back to copy string from */
-        /* for table and code decoding */
-    unsigned extra;             /* extra bits needed */
+    अचिन्हित दीर्घ hold;         /* input bit accumulator */
+    अचिन्हित bits;              /* number of bits in "in" */
+        /* क्रम string and stored block copying */
+    अचिन्हित length;            /* literal or length of data to copy */
+    अचिन्हित offset;            /* distance back to copy string from */
+        /* क्रम table and code decoding */
+    अचिन्हित extra;             /* extra bits needed */
         /* fixed and dynamic code tables */
-    code const *lencode;    /* starting table for length/literal codes */
-    code const *distcode;   /* starting table for distance codes */
-    unsigned lenbits;           /* index bits for lencode */
-    unsigned distbits;          /* index bits for distcode */
+    code स्थिर *lencode;    /* starting table क्रम length/literal codes */
+    code स्थिर *distcode;   /* starting table क्रम distance codes */
+    अचिन्हित lenbits;           /* index bits क्रम lencode */
+    अचिन्हित distbits;          /* index bits क्रम distcode */
         /* dynamic table building */
-    unsigned ncode;             /* number of code length code lengths */
-    unsigned nlen;              /* number of length code lengths */
-    unsigned ndist;             /* number of distance code lengths */
-    unsigned have;              /* number of code lengths in lens[] */
+    अचिन्हित ncode;             /* number of code length code lengths */
+    अचिन्हित nlen;              /* number of length code lengths */
+    अचिन्हित ndist;             /* number of distance code lengths */
+    अचिन्हित have;              /* number of code lengths in lens[] */
     code *next;             /* next available space in codes[] */
-    unsigned short lens[320];   /* temporary storage for code lengths */
-    unsigned short work[288];   /* work area for code table building */
-    code codes[ENOUGH];         /* space for code tables */
-};
+    अचिन्हित लघु lens[320];   /* temporary storage क्रम code lengths */
+    अचिन्हित लघु work[288];   /* work area क्रम code table building */
+    code codes[ENOUGH];         /* space क्रम code tables */
+पूर्ण;
 
 /* Reverse the bytes in a 32-bit value */
-#define REVERSE(q) \
+#घोषणा REVERSE(q) \
     ((((q) >> 24) & 0xff) + (((q) >> 8) & 0xff00) + \
      (((q) & 0xff00) << 8) + (((q) & 0xff) << 24))
 
-#endif
+#पूर्ण_अगर

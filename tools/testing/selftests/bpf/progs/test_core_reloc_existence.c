@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Facebook
 
-#include <linux/bpf.h>
-#include <stdint.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_core_read.h>
+#समावेश <linux/bpf.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_core_पढ़ो.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct {
-	char in[256];
-	char out[256];
-} data = {};
+काष्ठा अणु
+	अक्षर in[256];
+	अक्षर out[256];
+पूर्ण data = अणुपूर्ण;
 
-struct core_reloc_existence_output {
-	int a_exists;
-	int a_value;
-	int b_exists;
-	int b_value;
-	int c_exists;
-	int c_value;
-	int arr_exists;
-	int arr_value;
-	int s_exists;
-	int s_value;
-};
+काष्ठा core_reloc_existence_output अणु
+	पूर्णांक a_exists;
+	पूर्णांक a_value;
+	पूर्णांक b_exists;
+	पूर्णांक b_value;
+	पूर्णांक c_exists;
+	पूर्णांक c_value;
+	पूर्णांक arr_exists;
+	पूर्णांक arr_value;
+	पूर्णांक s_exists;
+	पूर्णांक s_value;
+पूर्ण;
 
-struct core_reloc_existence {
-	struct {
-		int x;
-	} s;
-	int arr[1];
-	int a;
-	struct {
-		int b;
-	};
-	int c;
-};
+काष्ठा core_reloc_existence अणु
+	काष्ठा अणु
+		पूर्णांक x;
+	पूर्ण s;
+	पूर्णांक arr[1];
+	पूर्णांक a;
+	काष्ठा अणु
+		पूर्णांक b;
+	पूर्ण;
+	पूर्णांक c;
+पूर्ण;
 
 SEC("raw_tracepoint/sys_enter")
-int test_core_existence(void *ctx)
-{
-	struct core_reloc_existence *in = (void *)&data.in;
-	struct core_reloc_existence_output *out = (void *)&data.out;
+पूर्णांक test_core_existence(व्योम *ctx)
+अणु
+	काष्ठा core_reloc_existence *in = (व्योम *)&data.in;
+	काष्ठा core_reloc_existence_output *out = (व्योम *)&data.out;
 
 	out->a_exists = bpf_core_field_exists(in->a);
-	if (bpf_core_field_exists(in->a))
+	अगर (bpf_core_field_exists(in->a))
 		out->a_value = BPF_CORE_READ(in, a);
-	else
+	अन्यथा
 		out->a_value = 0xff000001u;
 
 	out->b_exists = bpf_core_field_exists(in->b);
-	if (bpf_core_field_exists(in->b))
+	अगर (bpf_core_field_exists(in->b))
 		out->b_value = BPF_CORE_READ(in, b);
-	else
+	अन्यथा
 		out->b_value = 0xff000002u;
 
 	out->c_exists = bpf_core_field_exists(in->c);
-	if (bpf_core_field_exists(in->c))
+	अगर (bpf_core_field_exists(in->c))
 		out->c_value = BPF_CORE_READ(in, c);
-	else
+	अन्यथा
 		out->c_value = 0xff000003u;
 
 	out->arr_exists = bpf_core_field_exists(in->arr);
-	if (bpf_core_field_exists(in->arr))
+	अगर (bpf_core_field_exists(in->arr))
 		out->arr_value = BPF_CORE_READ(in, arr[0]);
-	else
+	अन्यथा
 		out->arr_value = 0xff000004u;
 
 	out->s_exists = bpf_core_field_exists(in->s);
-	if (bpf_core_field_exists(in->s))
+	अगर (bpf_core_field_exists(in->s))
 		out->s_value = BPF_CORE_READ(in, s.x);
-	else
+	अन्यथा
 		out->s_value = 0xff000005u;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

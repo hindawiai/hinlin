@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2009 IBM Corporation
  * Author: Mimi Zohar <zohar@us.ibm.com>
  */
 
-#ifndef _LINUX_INTEGRITY_H
-#define _LINUX_INTEGRITY_H
+#अगर_अघोषित _LINUX_INTEGRITY_H
+#घोषणा _LINUX_INTEGRITY_H
 
-#include <linux/fs.h>
+#समावेश <linux/fs.h>
 
-enum integrity_status {
+क्रमागत पूर्णांकegrity_status अणु
 	INTEGRITY_PASS = 0,
 	INTEGRITY_PASS_IMMUTABLE,
 	INTEGRITY_FAIL,
 	INTEGRITY_NOLABEL,
 	INTEGRITY_NOXATTRS,
 	INTEGRITY_UNKNOWN,
-};
+पूर्ण;
 
-/* List of EVM protected security xattrs */
-#ifdef CONFIG_INTEGRITY
-extern struct integrity_iint_cache *integrity_inode_get(struct inode *inode);
-extern void integrity_inode_free(struct inode *inode);
-extern void __init integrity_load_keys(void);
+/* List of EVM रक्षित security xattrs */
+#अगर_घोषित CONFIG_INTEGRITY
+बाह्य काष्ठा पूर्णांकegrity_iपूर्णांक_cache *पूर्णांकegrity_inode_get(काष्ठा inode *inode);
+बाह्य व्योम पूर्णांकegrity_inode_मुक्त(काष्ठा inode *inode);
+बाह्य व्योम __init पूर्णांकegrity_load_keys(व्योम);
 
-#else
-static inline struct integrity_iint_cache *
-				integrity_inode_get(struct inode *inode)
-{
-	return NULL;
-}
+#अन्यथा
+अटल अंतरभूत काष्ठा पूर्णांकegrity_iपूर्णांक_cache *
+				पूर्णांकegrity_inode_get(काष्ठा inode *inode)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void integrity_inode_free(struct inode *inode)
-{
-	return;
-}
+अटल अंतरभूत व्योम पूर्णांकegrity_inode_मुक्त(काष्ठा inode *inode)
+अणु
+	वापस;
+पूर्ण
 
-static inline void integrity_load_keys(void)
-{
-}
-#endif /* CONFIG_INTEGRITY */
+अटल अंतरभूत व्योम पूर्णांकegrity_load_keys(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_INTEGRITY */
 
-#ifdef CONFIG_INTEGRITY_ASYMMETRIC_KEYS
+#अगर_घोषित CONFIG_INTEGRITY_ASYMMETRIC_KEYS
 
-extern int integrity_kernel_module_request(char *kmod_name);
+बाह्य पूर्णांक पूर्णांकegrity_kernel_module_request(अक्षर *kmod_name);
 
-#else
+#अन्यथा
 
-static inline int integrity_kernel_module_request(char *kmod_name)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक पूर्णांकegrity_kernel_module_request(अक्षर *kmod_name)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_INTEGRITY_ASYMMETRIC_KEYS */
+#पूर्ण_अगर /* CONFIG_INTEGRITY_ASYMMETRIC_KEYS */
 
-#endif /* _LINUX_INTEGRITY_H */
+#पूर्ण_अगर /* _LINUX_INTEGRITY_H */

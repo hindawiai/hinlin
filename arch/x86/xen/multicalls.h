@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XEN_MULTICALLS_H
-#define _XEN_MULTICALLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XEN_MULTICALLS_H
+#घोषणा _XEN_MULTICALLS_H
 
-#include <trace/events/xen.h>
+#समावेश <trace/events/xen.h>
 
-#include "xen-ops.h"
+#समावेश "xen-ops.h"
 
 /* Multicalls */
-struct multicall_space
-{
-	struct multicall_entry *mc;
-	void *args;
-};
+काष्ठा multicall_space
+अणु
+	काष्ठा multicall_entry *mc;
+	व्योम *args;
+पूर्ण;
 
-/* Allocate room for a multicall and its args */
-struct multicall_space __xen_mc_entry(size_t args);
+/* Allocate room क्रम a multicall and its args */
+काष्ठा multicall_space __xen_mc_entry(माप_प्रकार args);
 
-DECLARE_PER_CPU(unsigned long, xen_mc_irq_flags);
+DECLARE_PER_CPU(अचिन्हित दीर्घ, xen_mc_irq_flags);
 
 /* Call to start a batch of multiple __xen_mc_entry()s.  Must be
    paired with xen_mc_issue() */
-static inline void xen_mc_batch(void)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम xen_mc_batch(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	/* need to disable interrupts until this entry is complete */
+	/* need to disable पूर्णांकerrupts until this entry is complete */
 	local_irq_save(flags);
 	trace_xen_mc_batch(paravirt_get_lazy_mode());
-	__this_cpu_write(xen_mc_irq_flags, flags);
-}
+	__this_cpu_ग_लिखो(xen_mc_irq_flags, flags);
+पूर्ण
 
-static inline struct multicall_space xen_mc_entry(size_t args)
-{
+अटल अंतरभूत काष्ठा multicall_space xen_mc_entry(माप_प्रकार args)
+अणु
 	xen_mc_batch();
-	return __xen_mc_entry(args);
-}
+	वापस __xen_mc_entry(args);
+पूर्ण
 
 /* Flush all pending multicalls */
-void xen_mc_flush(void);
+व्योम xen_mc_flush(व्योम);
 
-/* Issue a multicall if we're not in a lazy mode */
-static inline void xen_mc_issue(unsigned mode)
-{
+/* Issue a multicall अगर we're not in a lazy mode */
+अटल अंतरभूत व्योम xen_mc_issue(अचिन्हित mode)
+अणु
 	trace_xen_mc_issue(mode);
 
-	if ((paravirt_get_lazy_mode() & mode) == 0)
+	अगर ((paravirt_get_lazy_mode() & mode) == 0)
 		xen_mc_flush();
 
 	/* restore flags saved in xen_mc_batch */
-	local_irq_restore(this_cpu_read(xen_mc_irq_flags));
-}
+	local_irq_restore(this_cpu_पढ़ो(xen_mc_irq_flags));
+पूर्ण
 
 /* Set up a callback to be called when the current batch is flushed */
-void xen_mc_callback(void (*fn)(void *), void *data);
+व्योम xen_mc_callback(व्योम (*fn)(व्योम *), व्योम *data);
 
 /*
  * Try to extend the arguments of the previous multicall command.  The
- * previous command's op must match.  If it does, then it attempts to
+ * previous command's op must match.  If it करोes, then it attempts to
  * extend the argument space allocated to the multicall entry by
  * arg_size bytes.
  *
- * The returned multicall_space will return with mc pointing to the
- * command on success, or NULL on failure, and args pointing to the
+ * The वापसed multicall_space will वापस with mc poपूर्णांकing to the
+ * command on success, or शून्य on failure, and args poपूर्णांकing to the
  * newly allocated space.
  */
-struct multicall_space xen_mc_extend_args(unsigned long op, size_t arg_size);
+काष्ठा multicall_space xen_mc_extend_args(अचिन्हित दीर्घ op, माप_प्रकार arg_size);
 
-#endif /* _XEN_MULTICALLS_H */
+#पूर्ण_अगर /* _XEN_MULTICALLS_H */

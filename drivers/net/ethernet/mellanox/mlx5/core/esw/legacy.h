@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2021 Mellanox Technologies Ltd */
 
-#ifndef __MLX5_ESW_LEGACY_H__
-#define __MLX5_ESW_LEGACY_H__
+#अगर_अघोषित __MLX5_ESW_LEGACY_H__
+#घोषणा __MLX5_ESW_LEGACY_H__
 
-#define MLX5_LEGACY_SRIOV_VPORT_EVENTS (MLX5_VPORT_UC_ADDR_CHANGE | \
+#घोषणा MLX5_LEGACY_SRIOV_VPORT_EVENTS (MLX5_VPORT_UC_ADDR_CHANGE | \
 					MLX5_VPORT_MC_ADDR_CHANGE | \
 					MLX5_VPORT_PROMISC_CHANGE)
 
-struct mlx5_eswitch;
+काष्ठा mlx5_eचयन;
 
-int esw_legacy_enable(struct mlx5_eswitch *esw);
-void esw_legacy_disable(struct mlx5_eswitch *esw);
+पूर्णांक esw_legacy_enable(काष्ठा mlx5_eचयन *esw);
+व्योम esw_legacy_disable(काष्ठा mlx5_eचयन *esw);
 
-int esw_legacy_vport_acl_setup(struct mlx5_eswitch *esw, struct mlx5_vport *vport);
-void esw_legacy_vport_acl_cleanup(struct mlx5_eswitch *esw, struct mlx5_vport *vport);
+पूर्णांक esw_legacy_vport_acl_setup(काष्ठा mlx5_eचयन *esw, काष्ठा mlx5_vport *vport);
+व्योम esw_legacy_vport_acl_cleanup(काष्ठा mlx5_eचयन *esw, काष्ठा mlx5_vport *vport);
 
-int mlx5_esw_query_vport_drop_stats(struct mlx5_core_dev *dev,
-				    struct mlx5_vport *vport,
-				    struct mlx5_vport_drop_stats *stats);
-#endif
+पूर्णांक mlx5_esw_query_vport_drop_stats(काष्ठा mlx5_core_dev *dev,
+				    काष्ठा mlx5_vport *vport,
+				    काष्ठा mlx5_vport_drop_stats *stats);
+#पूर्ण_अगर

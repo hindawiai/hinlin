@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/soft-fp.h>
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/soft-fp.h>
 
-int
-mtfsf(unsigned int FM, u32 *frB)
-{
+पूर्णांक
+mtfsf(अचिन्हित पूर्णांक FM, u32 *frB)
+अणु
 	u32 mask;
 	u32 fpscr;
 
-	if (likely(FM == 1))
+	अगर (likely(FM == 1))
 		mask = 0x0f;
-	else if (likely(FM == 0xff))
+	अन्यथा अगर (likely(FM == 0xff))
 		mask = ~0;
-	else {
+	अन्यथा अणु
 		mask = ((FM & 1) |
 				((FM << 3) & 0x10) |
 				((FM << 6) & 0x100) |
@@ -25,28 +26,28 @@ mtfsf(unsigned int FM, u32 *frB)
 				((FM << 15) & 0x100000) |
 				((FM << 18) & 0x1000000) |
 				((FM << 21) & 0x10000000)) * 15;
-	}
+	पूर्ण
 
 	fpscr = ((__FPU_FPSCR & ~mask) | (frB[1] & mask)) &
 		~(FPSCR_VX | FPSCR_FEX | 0x800);
 
-	if (fpscr & (FPSCR_VXSNAN | FPSCR_VXISI | FPSCR_VXIDI |
+	अगर (fpscr & (FPSCR_VXSन_अंक | FPSCR_VXISI | FPSCR_VXIDI |
 		     FPSCR_VXZDZ | FPSCR_VXIMZ | FPSCR_VXVC |
 		     FPSCR_VXSOFT | FPSCR_VXSQRT | FPSCR_VXCVI))
 		fpscr |= FPSCR_VX;
 
 	/* The bit order of exception enables and exception status
-	 * is the same. Simply shift and mask to check for enabled
+	 * is the same. Simply shअगरt and mask to check क्रम enabled
 	 * exceptions.
 	 */
-	if (fpscr & (fpscr >> 22) &  0xf8)
+	अगर (fpscr & (fpscr >> 22) &  0xf8)
 		fpscr |= FPSCR_FEX;
 
 	__FPU_FPSCR = fpscr;
 
-#ifdef DEBUG
-	printk("%s: %02x %p: %08lx\n", __func__, FM, frB, __FPU_FPSCR);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: %02x %p: %08lx\n", __func__, FM, frB, __FPU_FPSCR);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

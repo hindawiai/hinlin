@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may do so under either license.
+ * redistributing this file, you may करो so under either license.
  *
  * GPL LICENSE SUMMARY
  *
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St - Fifth Floor, Boston, MA 02110-1301 USA.
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin St - Fअगरth Floor, Boston, MA 02110-1301 USA.
  * The full GNU General Public License is included in this distribution
  * in the file called LICENSE.GPL.
  *
@@ -26,25 +27,25 @@
  * Copyright(c) 2008 - 2011 Intel Corporation. All rights reserved.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  *
  *   * Redistributions of source code must retain the above copyright
  *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above copyright
+ *   * Redistributions in binary क्रमm must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in
- *     the documentation and/or other materials provided with the
+ *     the करोcumentation and/or other materials provided with the
  *     distribution.
  *   * Neither the name of Intel Corporation nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
+ *     contributors may be used to enकरोrse or promote products derived
+ *     from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -53,58 +54,58 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __ISCI_H__
-#define __ISCI_H__
+#अगर_अघोषित __ISCI_H__
+#घोषणा __ISCI_H__
 
-#include <linux/interrupt.h>
-#include <linux/types.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/types.h>
 
-#define DRV_NAME "isci"
-#define SCI_PCI_BAR_COUNT 2
-#define SCI_NUM_MSI_X_INT 2
-#define SCI_SMU_BAR       0
-#define SCI_SMU_BAR_SIZE  (16*1024)
-#define SCI_SCU_BAR       1
-#define SCI_SCU_BAR_SIZE  (4*1024*1024)
-#define SCI_IO_SPACE_BAR0 2
-#define SCI_IO_SPACE_BAR1 3
-#define ISCI_CAN_QUEUE_VAL 250 /* < SCI_MAX_IO_REQUESTS ? */
-#define SCIC_CONTROLLER_STOP_TIMEOUT 5000
+#घोषणा DRV_NAME "isci"
+#घोषणा SCI_PCI_BAR_COUNT 2
+#घोषणा SCI_NUM_MSI_X_INT 2
+#घोषणा SCI_SMU_BAR       0
+#घोषणा SCI_SMU_BAR_SIZE  (16*1024)
+#घोषणा SCI_SCU_BAR       1
+#घोषणा SCI_SCU_BAR_SIZE  (4*1024*1024)
+#घोषणा SCI_IO_SPACE_BAR0 2
+#घोषणा SCI_IO_SPACE_BAR1 3
+#घोषणा ISCI_CAN_QUEUE_VAL 250 /* < SCI_MAX_IO_REQUESTS ? */
+#घोषणा SCIC_CONTROLLER_STOP_TIMEOUT 5000
 
-#define SCI_CONTROLLER_INVALID_IO_TAG 0xFFFF
+#घोषणा SCI_CONTROLLER_INVALID_IO_TAG 0xFFFF
 
-#define SCI_MAX_PHYS  (4UL)
-#define SCI_MAX_PORTS SCI_MAX_PHYS
-#define SCI_MAX_SMP_PHYS  (384) /* not silicon constrained */
-#define SCI_MAX_REMOTE_DEVICES (256UL)
-#define SCI_MAX_IO_REQUESTS (256UL)
-#define SCI_MAX_SEQ (16)
-#define SCI_MAX_MSIX_MESSAGES  (2)
-#define SCI_MAX_SCATTER_GATHER_ELEMENTS 130 /* not silicon constrained */
-#define SCI_MAX_CONTROLLERS 2
-#define SCI_MAX_DOMAINS  SCI_MAX_PORTS
+#घोषणा SCI_MAX_PHYS  (4UL)
+#घोषणा SCI_MAX_PORTS SCI_MAX_PHYS
+#घोषणा SCI_MAX_SMP_PHYS  (384) /* not silicon स्थिरrained */
+#घोषणा SCI_MAX_REMOTE_DEVICES (256UL)
+#घोषणा SCI_MAX_IO_REQUESTS (256UL)
+#घोषणा SCI_MAX_SEQ (16)
+#घोषणा SCI_MAX_MSIX_MESSAGES  (2)
+#घोषणा SCI_MAX_SCATTER_GATHER_ELEMENTS 130 /* not silicon स्थिरrained */
+#घोषणा SCI_MAX_CONTROLLERS 2
+#घोषणा SCI_MAX_DOMAINS  SCI_MAX_PORTS
 
-#define SCU_MAX_CRITICAL_NOTIFICATIONS    (384)
-#define SCU_MAX_EVENTS_SHIFT		  (7)
-#define SCU_MAX_EVENTS                    (1 << SCU_MAX_EVENTS_SHIFT)
-#define SCU_MAX_UNSOLICITED_FRAMES        (128)
-#define SCU_MAX_COMPLETION_QUEUE_SCRATCH  (128)
-#define SCU_MAX_COMPLETION_QUEUE_ENTRIES  (SCU_MAX_CRITICAL_NOTIFICATIONS \
+#घोषणा SCU_MAX_CRITICAL_NOTIFICATIONS    (384)
+#घोषणा SCU_MAX_EVENTS_SHIFT		  (7)
+#घोषणा SCU_MAX_EVENTS                    (1 << SCU_MAX_EVENTS_SHIFT)
+#घोषणा SCU_MAX_UNSOLICITED_FRAMES        (128)
+#घोषणा SCU_MAX_COMPLETION_QUEUE_SCRATCH  (128)
+#घोषणा SCU_MAX_COMPLETION_QUEUE_ENTRIES  (SCU_MAX_CRITICAL_NOTIFICATIONS \
 					   + SCU_MAX_EVENTS \
 					   + SCU_MAX_UNSOLICITED_FRAMES	\
 					   + SCI_MAX_IO_REQUESTS \
 					   + SCU_MAX_COMPLETION_QUEUE_SCRATCH)
-#define SCU_MAX_COMPLETION_QUEUE_SHIFT	  (ilog2(SCU_MAX_COMPLETION_QUEUE_ENTRIES))
+#घोषणा SCU_MAX_COMPLETION_QUEUE_SHIFT	  (ilog2(SCU_MAX_COMPLETION_QUEUE_ENTRIES))
 
-#define SCU_ABSOLUTE_MAX_UNSOLICITED_FRAMES (4096)
-#define SCU_UNSOLICITED_FRAME_BUFFER_SIZE   (1024U)
-#define SCU_INVALID_FRAME_INDEX             (0xFFFF)
+#घोषणा SCU_ABSOLUTE_MAX_UNSOLICITED_FRAMES (4096)
+#घोषणा SCU_UNSOLICITED_FRAME_BUFFER_SIZE   (1024U)
+#घोषणा SCU_INVALID_FRAME_INDEX             (0xFFFF)
 
-#define SCU_IO_REQUEST_MAX_SGE_SIZE         (0x00FFFFFF)
-#define SCU_IO_REQUEST_MAX_TRANSFER_LENGTH  (0x00FFFFFF)
+#घोषणा SCU_IO_REQUEST_MAX_SGE_SIZE         (0x00FFFFFF)
+#घोषणा SCU_IO_REQUEST_MAX_TRANSFER_LENGTH  (0x00FFFFFF)
 
-static inline void check_sizes(void)
-{
+अटल अंतरभूत व्योम check_sizes(व्योम)
+अणु
 	BUILD_BUG_ON_NOT_POWER_OF_2(SCU_MAX_EVENTS);
 	BUILD_BUG_ON(SCU_MAX_UNSOLICITED_FRAMES <= 8);
 	BUILD_BUG_ON_NOT_POWER_OF_2(SCU_MAX_UNSOLICITED_FRAMES);
@@ -112,15 +113,15 @@ static inline void check_sizes(void)
 	BUILD_BUG_ON(SCU_MAX_UNSOLICITED_FRAMES > SCU_ABSOLUTE_MAX_UNSOLICITED_FRAMES);
 	BUILD_BUG_ON_NOT_POWER_OF_2(SCI_MAX_IO_REQUESTS);
 	BUILD_BUG_ON_NOT_POWER_OF_2(SCI_MAX_SEQ);
-}
+पूर्ण
 
 /**
- * enum sci_status - This is the general return status enumeration for non-IO,
- *    non-task management related SCI interface methods.
+ * क्रमागत sci_status - This is the general वापस status क्रमागतeration क्रम non-IO,
+ *    non-task management related SCI पूर्णांकerface methods.
  *
  *
  */
-enum sci_status {
+क्रमागत sci_status अणु
 	/**
 	 * This member indicates successful completion.
 	 */
@@ -128,31 +129,31 @@ enum sci_status {
 
 	/**
 	 * This value indicates that the calling method completed successfully,
-	 * but that the IO may have completed before having it's start method
-	 * invoked.  This occurs during SAT translation for requests that do
-	 * not require an IO to the target or for any other requests that may
+	 * but that the IO may have completed beक्रमe having it's start method
+	 * invoked.  This occurs during SAT translation क्रम requests that करो
+	 * not require an IO to the target or क्रम any other requests that may
 	 * be completed without having to submit IO.
 	 */
 	SCI_SUCCESS_IO_COMPLETE_BEFORE_START,
 
 	/**
-	 *  This Value indicates that the SCU hardware returned an early response
-	 *  because the io request specified more data than is returned by the
+	 *  This Value indicates that the SCU hardware वापसed an early response
+	 *  because the io request specअगरied more data than is वापसed by the
 	 *  target device (mode pages, inquiry data, etc.). The completion routine
-	 *  will handle this case to get the actual number of bytes transferred.
+	 *  will handle this हाल to get the actual number of bytes transferred.
 	 */
 	SCI_SUCCESS_IO_DONE_EARLY,
 
 	/**
-	 * This member indicates that the object for which a state change is
-	 * being requested is already in said state.
+	 * This member indicates that the object क्रम which a state change is
+	 * being requested is alपढ़ोy in said state.
 	 */
 	SCI_WARNING_ALREADY_IN_STATE,
 
 	/**
-	 * This member indicates interrupt coalescence timer may cause SAS
-	 * specification compliance issues (i.e. SMP target mode response
-	 * frames must be returned within 1.9 milliseconds).
+	 * This member indicates पूर्णांकerrupt coalescence समयr may cause SAS
+	 * specअगरication compliance issues (i.e. SMP target mode response
+	 * frames must be वापसed within 1.9 milliseconds).
 	 */
 	SCI_WARNING_TIMER_CONFLICT,
 
@@ -170,7 +171,7 @@ enum sci_status {
 	/**
 	 * This member indicates that the SCI implementation is unable to complete
 	 * an operation due to a critical flaw the prevents any further operation
-	 * (i.e. an invalid pointer).
+	 * (i.e. an invalid poपूर्णांकer).
 	 */
 	SCI_FATAL_ERROR,
 
@@ -188,7 +189,7 @@ enum sci_status {
 
 	/**
 	 * This member indicates the calling function failed, because the
-	 * controller object required for the operation can't be located.
+	 * controller object required क्रम the operation can't be located.
 	 */
 	SCI_FAILURE_CONTROLLER_NOT_FOUND,
 
@@ -206,7 +207,7 @@ enum sci_status {
 
 	/**
 	 * This member indicates the calling function failed, because the
-	 * requested configuration of SAS Phys into SAS Ports is not supported.
+	 * requested configuration of SAS Phys पूर्णांकo SAS Ports is not supported.
 	 */
 	SCI_FAILURE_UNSUPPORTED_PORT_CONFIGURATION,
 
@@ -219,13 +220,13 @@ enum sci_status {
 
 	/**
 	 * This member indicates the calling function failed, because the
-	 * requested information type is not supported by the SCI implementation.
+	 * requested inक्रमmation type is not supported by the SCI implementation.
 	 */
 	SCI_FAILURE_UNSUPPORTED_INFORMATION_TYPE,
 
 	/**
 	 * This member indicates the calling function failed, because the
-	 * device already exists.
+	 * device alपढ़ोy exists.
 	 */
 	SCI_FAILURE_DEVICE_EXISTS,
 
@@ -237,25 +238,25 @@ enum sci_status {
 
 	/**
 	 * This member indicates the calling function failed, because the
-	 * requested information type is not supported by the SCI implementation.
+	 * requested inक्रमmation type is not supported by the SCI implementation.
 	 */
 	SCI_FAILURE_UNSUPPORTED_INFORMATION_FIELD,
 
 	/**
 	 * This member indicates the calling function failed, because the SCI
-	 * implementation does not support the supplied time limit.
+	 * implementation करोes not support the supplied समय limit.
 	 */
 	SCI_FAILURE_UNSUPPORTED_TIME_LIMIT,
 
 	/**
 	 * This member indicates the calling method failed, because the SCI
-	 * implementation does not contain the specified Phy.
+	 * implementation करोes not contain the specअगरied Phy.
 	 */
 	SCI_FAILURE_INVALID_PHY,
 
 	/**
 	 * This member indicates the calling method failed, because the SCI
-	 * implementation does not contain the specified Port.
+	 * implementation करोes not contain the specअगरied Port.
 	 */
 	SCI_FAILURE_INVALID_PORT,
 
@@ -273,7 +274,7 @@ enum sci_status {
 
 	/**
 	 * This member indicates the calling method failed, because the SCI
-	 * implementation does not contain the specified remote device.
+	 * implementation करोes not contain the specअगरied remote device.
 	 */
 	SCI_FAILURE_INVALID_REMOTE_DEVICE,
 
@@ -285,7 +286,7 @@ enum sci_status {
 
 	/**
 	 * This member indicates the calling method failed, because the SCI
-	 * implementation does not contain or support the specified IO tag.
+	 * implementation करोes not contain or support the specअगरied IO tag.
 	 */
 	SCI_FAILURE_INVALID_IO_TAG,
 
@@ -297,9 +298,9 @@ enum sci_status {
 
 	/**
 	 * This member indicates that the operation failed, the failure is
-	 * controller implementation specific, and the response data associated
-	 * with the request is not valid.  You can query for the controller
-	 * specific error information via sci_controller_get_request_status()
+	 * controller implementation specअगरic, and the response data associated
+	 * with the request is not valid.  You can query क्रम the controller
+	 * specअगरic error inक्रमmation via sci_controller_get_request_status()
 	 */
 	SCI_FAILURE_CONTROLLER_SPECIFIC_IO_ERR,
 
@@ -311,7 +312,7 @@ enum sci_status {
 
 	/**
 	 * This member indicates that the operation failed and the associated
-	 * request requires a SCSI abort task to be sent to the target.
+	 * request requires a SCSI पात task to be sent to the target.
 	 */
 	SCI_FAILURE_IO_REQUIRES_SCSI_ABORT,
 
@@ -328,14 +329,14 @@ enum sci_status {
 	SCI_FAILURE_INVALID_ASSOCIATION,
 
 	/**
-	 * This member indicates that the operation failed, because a timeout
+	 * This member indicates that the operation failed, because a समयout
 	 * occurred.
 	 */
 	SCI_FAILURE_TIMEOUT,
 
 	/**
 	 * This member indicates that the operation failed, because the user
-	 * specified a value that is either invalid or not supported.
+	 * specअगरied a value that is either invalid or not supported.
 	 */
 	SCI_FAILURE_INVALID_PARAMETER_VALUE,
 
@@ -371,7 +372,7 @@ enum sci_status {
 	 * This member indicates the calling method was partly successful.
 	 * Mostly, this status is used when a LUN_RESET issued to an expander attached
 	 * STP device in READY NCQ substate needs to have RNC suspended/resumed
-	 * before posting TC.
+	 * beक्रमe posting TC.
 	 */
 	SCI_FAILURE_RESET_DEVICE_PARTIAL_SUCCESS,
 
@@ -389,24 +390,24 @@ enum sci_status {
 
 	/**
 	 * This value indicates that an unsupported PCI device ID has been
-	 * specified.  This indicates that attempts to invoke
+	 * specअगरied.  This indicates that attempts to invoke
 	 * sci_library_allocate_controller() will fail.
 	 */
 	SCI_FAILURE_UNSUPPORTED_PCI_DEVICE_ID
 
-};
+पूर्ण;
 
 /**
- * enum sci_io_status - This enumeration depicts all of the possible IO
- *    completion status values.  Each value in this enumeration maps directly
- *    to a value in the enum sci_status enumeration.  Please refer to that
- *    enumeration for detailed comments concerning what the status represents.
+ * क्रमागत sci_io_status - This क्रमागतeration depicts all of the possible IO
+ *    completion status values.  Each value in this क्रमागतeration maps directly
+ *    to a value in the क्रमागत sci_status क्रमागतeration.  Please refer to that
+ *    क्रमागतeration क्रम detailed comments concerning what the status represents.
  *
  * Add the API to retrieve the SCU status from the core. Check to see that the
  * following status are properly handled: - SCI_IO_FAILURE_UNSUPPORTED_PROTOCOL
  * - SCI_IO_FAILURE_INVALID_IO_TAG
  */
-enum sci_io_status {
+क्रमागत sci_io_status अणु
 	SCI_IO_SUCCESS                         = SCI_SUCCESS,
 	SCI_IO_FAILURE                         = SCI_FAILURE,
 	SCI_IO_SUCCESS_COMPLETE_BEFORE_START   = SCI_SUCCESS_IO_COMPLETE_BEFORE_START,
@@ -427,17 +428,17 @@ enum sci_io_status {
 	SCI_IO_FAILURE_RETRY_REQUIRED      = SCI_FAILURE_RETRY_REQUIRED,
 	SCI_IO_FAILURE_RETRY_LIMIT_REACHED = SCI_FAILURE_RETRY_LIMIT_REACHED,
 	SCI_IO_FAILURE_INVALID_REMOTE_DEVICE = SCI_FAILURE_INVALID_REMOTE_DEVICE
-};
+पूर्ण;
 
 /**
- * enum sci_task_status - This enumeration depicts all of the possible task
- *    completion status values.  Each value in this enumeration maps directly
- *    to a value in the enum sci_status enumeration.  Please refer to that
- *    enumeration for detailed comments concerning what the status represents.
+ * क्रमागत sci_task_status - This क्रमागतeration depicts all of the possible task
+ *    completion status values.  Each value in this क्रमागतeration maps directly
+ *    to a value in the क्रमागत sci_status क्रमागतeration.  Please refer to that
+ *    क्रमागतeration क्रम detailed comments concerning what the status represents.
  *
  * Check to see that the following status are properly handled:
  */
-enum sci_task_status {
+क्रमागत sci_task_status अणु
 	SCI_TASK_SUCCESS                         = SCI_SUCCESS,
 	SCI_TASK_FAILURE                         = SCI_FAILURE,
 	SCI_TASK_FAILURE_INVALID_STATE           = SCI_FAILURE_INVALID_STATE,
@@ -452,86 +453,86 @@ enum sci_task_status {
 	SCI_TASK_FAILURE_REMOTE_DEVICE_RESET_REQUIRED = SCI_FAILURE_REMOTE_DEVICE_RESET_REQUIRED,
 	SCI_TASK_FAILURE_RESET_DEVICE_PARTIAL_SUCCESS = SCI_FAILURE_RESET_DEVICE_PARTIAL_SUCCESS
 
-};
+पूर्ण;
 
 /**
- * sci_swab32_cpy - convert between scsi and scu-hardware byte format
+ * sci_swab32_cpy - convert between scsi and scu-hardware byte क्रमmat
  * @dest: receive the 4-byte endian swapped version of src
  * @src: word aligned source buffer
  *
- * scu hardware handles SSP/SMP control, response, and unidentified
+ * scu hardware handles SSP/SMP control, response, and unidentअगरied
  * frames in "big endian dword" order.  Regardless of host endian this
  * is always a swab32()-per-dword conversion of the standard definition,
  * i.e. single byte fields swapped and multi-byte fields in little-
  * endian
  */
-static inline void sci_swab32_cpy(void *_dest, void *_src, ssize_t word_cnt)
-{
+अटल अंतरभूत व्योम sci_swab32_cpy(व्योम *_dest, व्योम *_src, sमाप_प्रकार word_cnt)
+अणु
 	u32 *dest = _dest, *src = _src;
 
-	while (--word_cnt >= 0)
+	जबतक (--word_cnt >= 0)
 		dest[word_cnt] = swab32(src[word_cnt]);
-}
+पूर्ण
 
-extern unsigned char no_outbound_task_to;
-extern u16 ssp_max_occ_to;
-extern u16 stp_max_occ_to;
-extern u16 ssp_inactive_to;
-extern u16 stp_inactive_to;
-extern unsigned char phy_gen;
-extern unsigned char max_concurr_spinup;
-extern uint cable_selection_override;
+बाह्य अचिन्हित अक्षर no_outbound_task_to;
+बाह्य u16 ssp_max_occ_to;
+बाह्य u16 stp_max_occ_to;
+बाह्य u16 ssp_inactive_to;
+बाह्य u16 stp_inactive_to;
+बाह्य अचिन्हित अक्षर phy_gen;
+बाह्य अचिन्हित अक्षर max_concurr_spinup;
+बाह्य uपूर्णांक cable_selection_override;
 
-irqreturn_t isci_msix_isr(int vec, void *data);
-irqreturn_t isci_intx_isr(int vec, void *data);
-irqreturn_t isci_error_isr(int vec, void *data);
+irqवापस_t isci_msix_isr(पूर्णांक vec, व्योम *data);
+irqवापस_t isci_पूर्णांकx_isr(पूर्णांक vec, व्योम *data);
+irqवापस_t isci_error_isr(पूर्णांक vec, व्योम *data);
 
 /*
- * Each timer is associated with a cancellation flag that is set when
- * del_timer() is called and checked in the timer callback function. This
- * is needed since del_timer_sync() cannot be called with sci_lock held.
- * For deinit however, del_timer_sync() is used without holding the lock.
+ * Each समयr is associated with a cancellation flag that is set when
+ * del_समयr() is called and checked in the समयr callback function. This
+ * is needed since del_समयr_sync() cannot be called with sci_lock held.
+ * For deinit however, del_समयr_sync() is used without holding the lock.
  */
-struct sci_timer {
-	struct timer_list	timer;
+काष्ठा sci_समयr अणु
+	काष्ठा समयr_list	समयr;
 	bool			cancel;
-};
+पूर्ण;
 
-static inline
-void sci_init_timer(struct sci_timer *tmr, void (*fn)(struct timer_list *t))
-{
-	tmr->cancel = false;
-	timer_setup(&tmr->timer, fn, 0);
-}
+अटल अंतरभूत
+व्योम sci_init_समयr(काष्ठा sci_समयr *पंचांगr, व्योम (*fn)(काष्ठा समयr_list *t))
+अणु
+	पंचांगr->cancel = false;
+	समयr_setup(&पंचांगr->समयr, fn, 0);
+पूर्ण
 
-static inline void sci_mod_timer(struct sci_timer *tmr, unsigned long msec)
-{
-	tmr->cancel = false;
-	mod_timer(&tmr->timer, jiffies + msecs_to_jiffies(msec));
-}
+अटल अंतरभूत व्योम sci_mod_समयr(काष्ठा sci_समयr *पंचांगr, अचिन्हित दीर्घ msec)
+अणु
+	पंचांगr->cancel = false;
+	mod_समयr(&पंचांगr->समयr, jअगरfies + msecs_to_jअगरfies(msec));
+पूर्ण
 
-static inline void sci_del_timer(struct sci_timer *tmr)
-{
-	tmr->cancel = true;
-	del_timer(&tmr->timer);
-}
+अटल अंतरभूत व्योम sci_del_समयr(काष्ठा sci_समयr *पंचांगr)
+अणु
+	पंचांगr->cancel = true;
+	del_समयr(&पंचांगr->समयr);
+पूर्ण
 
-struct sci_base_state_machine {
-	const struct sci_base_state *state_table;
+काष्ठा sci_base_state_machine अणु
+	स्थिर काष्ठा sci_base_state *state_table;
 	u32 initial_state_id;
 	u32 current_state_id;
 	u32 previous_state_id;
-};
+पूर्ण;
 
-typedef void (*sci_state_transition_t)(struct sci_base_state_machine *sm);
+प्रकार व्योम (*sci_state_transition_t)(काष्ठा sci_base_state_machine *sm);
 
-struct sci_base_state {
+काष्ठा sci_base_state अणु
 	sci_state_transition_t enter_state;	/* Called on state entry */
-	sci_state_transition_t exit_state;	/* Called on state exit */
-};
+	sci_state_transition_t निकास_state;	/* Called on state निकास */
+पूर्ण;
 
-extern void sci_init_sm(struct sci_base_state_machine *sm,
-			const struct sci_base_state *state_table,
+बाह्य व्योम sci_init_sm(काष्ठा sci_base_state_machine *sm,
+			स्थिर काष्ठा sci_base_state *state_table,
 			u32 initial_state);
-extern void sci_change_state(struct sci_base_state_machine *sm, u32 next_state);
-#endif  /* __ISCI_H__ */
+बाह्य व्योम sci_change_state(काष्ठा sci_base_state_machine *sm, u32 next_state);
+#पूर्ण_अगर  /* __ISCI_H__ */

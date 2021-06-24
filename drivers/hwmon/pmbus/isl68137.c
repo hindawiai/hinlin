@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Hardware monitoring driver for Renesas Digital Multiphase Voltage Regulators
+ * Hardware monitoring driver क्रम Renesas Digital Multiphase Voltage Regulators
  *
  * Copyright (c) 2017 Google Inc
  * Copyright (c) 2020 Renesas Electronics America
  *
  */
 
-#include <linux/err.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/sysfs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sysfs.h>
 
-#include "pmbus.h"
+#समावेश "pmbus.h"
 
-#define ISL68137_VOUT_AVS	0x30
-#define RAA_DMPVR2_READ_VMON	0xc8
+#घोषणा ISL68137_VOUT_AVS	0x30
+#घोषणा RAA_DMPVR2_READ_VMON	0xc8
 
-enum chips {
+क्रमागत chips अणु
 	isl68137,
 	isl68220,
 	isl68221,
@@ -61,131 +62,131 @@ enum chips {
 	raa228228,
 	raa229001,
 	raa229004,
-};
+पूर्ण;
 
-enum variants {
+क्रमागत variants अणु
 	raa_dmpvr1_2rail,
 	raa_dmpvr2_1rail,
 	raa_dmpvr2_2rail,
 	raa_dmpvr2_2rail_nontc,
 	raa_dmpvr2_3rail,
 	raa_dmpvr2_hv,
-};
+पूर्ण;
 
-static const struct i2c_device_id raa_dmpvr_id[];
+अटल स्थिर काष्ठा i2c_device_id raa_dmpvr_id[];
 
-static ssize_t isl68137_avs_enable_show_page(struct i2c_client *client,
-					     int page,
-					     char *buf)
-{
-	int val = pmbus_read_byte_data(client, page, PMBUS_OPERATION);
+अटल sमाप_प्रकार isl68137_avs_enable_show_page(काष्ठा i2c_client *client,
+					     पूर्णांक page,
+					     अक्षर *buf)
+अणु
+	पूर्णांक val = pmbus_पढ़ो_byte_data(client, page, PMBUS_OPERATION);
 
-	return sprintf(buf, "%d\n",
+	वापस प्र_लिखो(buf, "%d\n",
 		       (val & ISL68137_VOUT_AVS) == ISL68137_VOUT_AVS ? 1 : 0);
-}
+पूर्ण
 
-static ssize_t isl68137_avs_enable_store_page(struct i2c_client *client,
-					      int page,
-					      const char *buf, size_t count)
-{
-	int rc, op_val;
+अटल sमाप_प्रकार isl68137_avs_enable_store_page(काष्ठा i2c_client *client,
+					      पूर्णांक page,
+					      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक rc, op_val;
 	bool result;
 
 	rc = kstrtobool(buf, &result);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	op_val = result ? ISL68137_VOUT_AVS : 0;
 
 	/*
-	 * Writes to VOUT setpoint over AVSBus will persist after the VRM is
-	 * switched to PMBus control. Switching back to AVSBus control
-	 * restores this persisted setpoint rather than re-initializing to
-	 * PMBus VOUT_COMMAND. Writing VOUT_COMMAND first over PMBus before
+	 * Writes to VOUT setpoपूर्णांक over AVSBus will persist after the VRM is
+	 * चयनed to PMBus control. Switching back to AVSBus control
+	 * restores this persisted setpoपूर्णांक rather than re-initializing to
+	 * PMBus VOUT_COMMAND. Writing VOUT_COMMAND first over PMBus beक्रमe
 	 * enabling AVS control is the workaround.
 	 */
-	if (op_val == ISL68137_VOUT_AVS) {
-		rc = pmbus_read_word_data(client, page, 0xff,
+	अगर (op_val == ISL68137_VOUT_AVS) अणु
+		rc = pmbus_पढ़ो_word_data(client, page, 0xff,
 					  PMBUS_VOUT_COMMAND);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 
-		rc = pmbus_write_word_data(client, page, PMBUS_VOUT_COMMAND,
+		rc = pmbus_ग_लिखो_word_data(client, page, PMBUS_VOUT_COMMAND,
 					   rc);
-		if (rc < 0)
-			return rc;
-	}
+		अगर (rc < 0)
+			वापस rc;
+	पूर्ण
 
 	rc = pmbus_update_byte_data(client, page, PMBUS_OPERATION,
 				    ISL68137_VOUT_AVS, op_val);
 
-	return (rc < 0) ? rc : count;
-}
+	वापस (rc < 0) ? rc : count;
+पूर्ण
 
-static ssize_t isl68137_avs_enable_show(struct device *dev,
-					struct device_attribute *devattr,
-					char *buf)
-{
-	struct i2c_client *client = to_i2c_client(dev->parent);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+अटल sमाप_प्रकार isl68137_avs_enable_show(काष्ठा device *dev,
+					काष्ठा device_attribute *devattr,
+					अक्षर *buf)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev->parent);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
 
-	return isl68137_avs_enable_show_page(client, attr->index, buf);
-}
+	वापस isl68137_avs_enable_show_page(client, attr->index, buf);
+पूर्ण
 
-static ssize_t isl68137_avs_enable_store(struct device *dev,
-				struct device_attribute *devattr,
-				const char *buf, size_t count)
-{
-	struct i2c_client *client = to_i2c_client(dev->parent);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
+अटल sमाप_प्रकार isl68137_avs_enable_store(काष्ठा device *dev,
+				काष्ठा device_attribute *devattr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा i2c_client *client = to_i2c_client(dev->parent);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(devattr);
 
-	return isl68137_avs_enable_store_page(client, attr->index, buf, count);
-}
+	वापस isl68137_avs_enable_store_page(client, attr->index, buf, count);
+पूर्ण
 
-static SENSOR_DEVICE_ATTR_RW(avs0_enable, isl68137_avs_enable, 0);
-static SENSOR_DEVICE_ATTR_RW(avs1_enable, isl68137_avs_enable, 1);
+अटल SENSOR_DEVICE_ATTR_RW(avs0_enable, isl68137_avs_enable, 0);
+अटल SENSOR_DEVICE_ATTR_RW(avs1_enable, isl68137_avs_enable, 1);
 
-static struct attribute *enable_attrs[] = {
+अटल काष्ठा attribute *enable_attrs[] = अणु
 	&sensor_dev_attr_avs0_enable.dev_attr.attr,
 	&sensor_dev_attr_avs1_enable.dev_attr.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group enable_group = {
+अटल स्थिर काष्ठा attribute_group enable_group = अणु
 	.attrs = enable_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group *isl68137_attribute_groups[] = {
+अटल स्थिर काष्ठा attribute_group *isl68137_attribute_groups[] = अणु
 	&enable_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static int raa_dmpvr2_read_word_data(struct i2c_client *client, int page,
-				     int phase, int reg)
-{
-	int ret;
+अटल पूर्णांक raa_dmpvr2_पढ़ो_word_data(काष्ठा i2c_client *client, पूर्णांक page,
+				     पूर्णांक phase, पूर्णांक reg)
+अणु
+	पूर्णांक ret;
 
-	switch (reg) {
-	case PMBUS_VIRT_READ_VMON:
-		ret = pmbus_read_word_data(client, page, phase,
+	चयन (reg) अणु
+	हाल PMBUS_VIRT_READ_VMON:
+		ret = pmbus_पढ़ो_word_data(client, page, phase,
 					   RAA_DMPVR2_READ_VMON);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -ENODATA;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct pmbus_driver_info raa_dmpvr_info = {
+अटल काष्ठा pmbus_driver_info raa_dmpvr_info = अणु
 	.pages = 3,
-	.format[PSC_VOLTAGE_IN] = direct,
-	.format[PSC_VOLTAGE_OUT] = direct,
-	.format[PSC_CURRENT_IN] = direct,
-	.format[PSC_CURRENT_OUT] = direct,
-	.format[PSC_POWER] = direct,
-	.format[PSC_TEMPERATURE] = direct,
+	.क्रमmat[PSC_VOLTAGE_IN] = direct,
+	.क्रमmat[PSC_VOLTAGE_OUT] = direct,
+	.क्रमmat[PSC_CURRENT_IN] = direct,
+	.क्रमmat[PSC_CURRENT_OUT] = direct,
+	.क्रमmat[PSC_POWER] = direct,
+	.क्रमmat[PSC_TEMPERATURE] = direct,
 	.m[PSC_VOLTAGE_IN] = 1,
 	.b[PSC_VOLTAGE_IN] = 0,
 	.R[PSC_VOLTAGE_IN] = 2,
@@ -218,19 +219,19 @@ static struct pmbus_driver_info raa_dmpvr_info = {
 	    | PMBUS_HAVE_TEMP | PMBUS_HAVE_TEMP3 | PMBUS_HAVE_STATUS_TEMP
 	    | PMBUS_HAVE_VOUT | PMBUS_HAVE_STATUS_VOUT | PMBUS_HAVE_IOUT
 	    | PMBUS_HAVE_STATUS_IOUT | PMBUS_HAVE_POUT,
-};
+पूर्ण;
 
-static int isl68137_probe(struct i2c_client *client)
-{
-	struct pmbus_driver_info *info;
+अटल पूर्णांक isl68137_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा pmbus_driver_info *info;
 
-	info = devm_kzalloc(&client->dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
-	memcpy(info, &raa_dmpvr_info, sizeof(*info));
+	info = devm_kzalloc(&client->dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
+	स_नकल(info, &raa_dmpvr_info, माप(*info));
 
-	switch (i2c_match_id(raa_dmpvr_id, client)->driver_data) {
-	case raa_dmpvr1_2rail:
+	चयन (i2c_match_id(raa_dmpvr_id, client)->driver_data) अणु
+	हाल raa_dmpvr1_2rail:
 		info->pages = 2;
 		info->R[PSC_VOLTAGE_IN] = 3;
 		info->func[0] &= ~PMBUS_HAVE_VMON;
@@ -238,23 +239,23 @@ static int isl68137_probe(struct i2c_client *client)
 		    | PMBUS_HAVE_IOUT | PMBUS_HAVE_STATUS_IOUT
 		    | PMBUS_HAVE_POUT;
 		info->groups = isl68137_attribute_groups;
-		break;
-	case raa_dmpvr2_1rail:
+		अवरोध;
+	हाल raa_dmpvr2_1rail:
 		info->pages = 1;
-		info->read_word_data = raa_dmpvr2_read_word_data;
-		break;
-	case raa_dmpvr2_2rail_nontc:
+		info->पढ़ो_word_data = raa_dmpvr2_पढ़ो_word_data;
+		अवरोध;
+	हाल raa_dmpvr2_2rail_nontc:
 		info->func[0] &= ~PMBUS_HAVE_TEMP3;
 		info->func[1] &= ~PMBUS_HAVE_TEMP3;
 		fallthrough;
-	case raa_dmpvr2_2rail:
+	हाल raa_dmpvr2_2rail:
 		info->pages = 2;
-		info->read_word_data = raa_dmpvr2_read_word_data;
-		break;
-	case raa_dmpvr2_3rail:
-		info->read_word_data = raa_dmpvr2_read_word_data;
-		break;
-	case raa_dmpvr2_hv:
+		info->पढ़ो_word_data = raa_dmpvr2_पढ़ो_word_data;
+		अवरोध;
+	हाल raa_dmpvr2_3rail:
+		info->पढ़ो_word_data = raa_dmpvr2_पढ़ो_word_data;
+		अवरोध;
+	हाल raa_dmpvr2_hv:
 		info->pages = 1;
 		info->R[PSC_VOLTAGE_IN] = 1;
 		info->m[PSC_VOLTAGE_OUT] = 2;
@@ -262,70 +263,70 @@ static int isl68137_probe(struct i2c_client *client)
 		info->m[PSC_CURRENT_IN] = 2;
 		info->m[PSC_POWER] = 2;
 		info->R[PSC_POWER] = -1;
-		info->read_word_data = raa_dmpvr2_read_word_data;
-		break;
-	default:
-		return -ENODEV;
-	}
+		info->पढ़ो_word_data = raa_dmpvr2_पढ़ो_word_data;
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
-	return pmbus_do_probe(client, info);
-}
+	वापस pmbus_करो_probe(client, info);
+पूर्ण
 
-static const struct i2c_device_id raa_dmpvr_id[] = {
-	{"isl68137", raa_dmpvr1_2rail},
-	{"isl68220", raa_dmpvr2_2rail},
-	{"isl68221", raa_dmpvr2_3rail},
-	{"isl68222", raa_dmpvr2_2rail},
-	{"isl68223", raa_dmpvr2_2rail},
-	{"isl68224", raa_dmpvr2_3rail},
-	{"isl68225", raa_dmpvr2_2rail},
-	{"isl68226", raa_dmpvr2_3rail},
-	{"isl68227", raa_dmpvr2_1rail},
-	{"isl68229", raa_dmpvr2_3rail},
-	{"isl68233", raa_dmpvr2_2rail},
-	{"isl68239", raa_dmpvr2_3rail},
+अटल स्थिर काष्ठा i2c_device_id raa_dmpvr_id[] = अणु
+	अणु"isl68137", raa_dmpvr1_2railपूर्ण,
+	अणु"isl68220", raa_dmpvr2_2railपूर्ण,
+	अणु"isl68221", raa_dmpvr2_3railपूर्ण,
+	अणु"isl68222", raa_dmpvr2_2railपूर्ण,
+	अणु"isl68223", raa_dmpvr2_2railपूर्ण,
+	अणु"isl68224", raa_dmpvr2_3railपूर्ण,
+	अणु"isl68225", raa_dmpvr2_2railपूर्ण,
+	अणु"isl68226", raa_dmpvr2_3railपूर्ण,
+	अणु"isl68227", raa_dmpvr2_1railपूर्ण,
+	अणु"isl68229", raa_dmpvr2_3railपूर्ण,
+	अणु"isl68233", raa_dmpvr2_2railपूर्ण,
+	अणु"isl68239", raa_dmpvr2_3railपूर्ण,
 
-	{"isl69222", raa_dmpvr2_2rail},
-	{"isl69223", raa_dmpvr2_3rail},
-	{"isl69224", raa_dmpvr2_2rail},
-	{"isl69225", raa_dmpvr2_2rail},
-	{"isl69227", raa_dmpvr2_3rail},
-	{"isl69228", raa_dmpvr2_3rail},
-	{"isl69234", raa_dmpvr2_2rail},
-	{"isl69236", raa_dmpvr2_2rail},
-	{"isl69239", raa_dmpvr2_3rail},
-	{"isl69242", raa_dmpvr2_2rail},
-	{"isl69243", raa_dmpvr2_1rail},
-	{"isl69247", raa_dmpvr2_2rail},
-	{"isl69248", raa_dmpvr2_2rail},
-	{"isl69254", raa_dmpvr2_2rail},
-	{"isl69255", raa_dmpvr2_2rail},
-	{"isl69256", raa_dmpvr2_2rail},
-	{"isl69259", raa_dmpvr2_2rail},
-	{"isl69260", raa_dmpvr2_2rail},
-	{"isl69268", raa_dmpvr2_2rail},
-	{"isl69269", raa_dmpvr2_3rail},
-	{"isl69298", raa_dmpvr2_2rail},
+	अणु"isl69222", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69223", raa_dmpvr2_3railपूर्ण,
+	अणु"isl69224", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69225", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69227", raa_dmpvr2_3railपूर्ण,
+	अणु"isl69228", raa_dmpvr2_3railपूर्ण,
+	अणु"isl69234", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69236", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69239", raa_dmpvr2_3railपूर्ण,
+	अणु"isl69242", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69243", raa_dmpvr2_1railपूर्ण,
+	अणु"isl69247", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69248", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69254", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69255", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69256", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69259", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69260", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69268", raa_dmpvr2_2railपूर्ण,
+	अणु"isl69269", raa_dmpvr2_3railपूर्ण,
+	अणु"isl69298", raa_dmpvr2_2railपूर्ण,
 
-	{"raa228000", raa_dmpvr2_hv},
-	{"raa228004", raa_dmpvr2_hv},
-	{"raa228006", raa_dmpvr2_hv},
-	{"raa228228", raa_dmpvr2_2rail_nontc},
-	{"raa229001", raa_dmpvr2_2rail},
-	{"raa229004", raa_dmpvr2_2rail},
-	{}
-};
+	अणु"raa228000", raa_dmpvr2_hvपूर्ण,
+	अणु"raa228004", raa_dmpvr2_hvपूर्ण,
+	अणु"raa228006", raa_dmpvr2_hvपूर्ण,
+	अणु"raa228228", raa_dmpvr2_2rail_nontcपूर्ण,
+	अणु"raa229001", raa_dmpvr2_2railपूर्ण,
+	अणु"raa229004", raa_dmpvr2_2railपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, raa_dmpvr_id);
 
 /* This is the driver that will be inserted */
-static struct i2c_driver isl68137_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver isl68137_driver = अणु
+	.driver = अणु
 		   .name = "isl68137",
-		   },
+		   पूर्ण,
 	.probe_new = isl68137_probe,
 	.id_table = raa_dmpvr_id,
-};
+पूर्ण;
 
 module_i2c_driver(isl68137_driver);
 

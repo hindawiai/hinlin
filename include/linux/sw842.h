@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SW842_H__
-#define __SW842_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SW842_H__
+#घोषणा __SW842_H__
 
-#define SW842_MEM_COMPRESS	(0xf000)
+#घोषणा SW842_MEM_COMPRESS	(0xf000)
 
-int sw842_compress(const u8 *src, unsigned int srclen,
-		   u8 *dst, unsigned int *destlen, void *wmem);
+पूर्णांक sw842_compress(स्थिर u8 *src, अचिन्हित पूर्णांक srclen,
+		   u8 *dst, अचिन्हित पूर्णांक *destlen, व्योम *wmem);
 
-int sw842_decompress(const u8 *src, unsigned int srclen,
-		     u8 *dst, unsigned int *destlen);
+पूर्णांक sw842_decompress(स्थिर u8 *src, अचिन्हित पूर्णांक srclen,
+		     u8 *dst, अचिन्हित पूर्णांक *destlen);
 
-#endif
+#पूर्ण_अगर

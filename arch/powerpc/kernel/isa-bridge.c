@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Routines for tracking a legacy ISA bridge
+ * Routines क्रम tracking a legacy ISA bridge
  *
  * Copyrigh 2007 Benjamin Herrenschmidt <benh@kernel.crashing.org>, IBM Corp.
  *
  * Some bits and pieces moved over from pci_64.c
  *
- * Copyrigh 2003 Anton Blanchard <anton@au.ibm.com>, IBM Corp.
+ * Copyrigh 2003 Anton Blanअक्षरd <anton@au.ibm.com>, IBM Corp.
  */
 
-#define DEBUG
+#घोषणा DEBUG
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/string.h>
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/notifier.h>
-#include <linux/vmalloc.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include <asm/processor.h>
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/pci-bridge.h>
-#include <asm/machdep.h>
-#include <asm/ppc-pci.h>
-#include <asm/isa-bridge.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/pci-bridge.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/ppc-pci.h>
+#समावेश <यंत्र/isa-bridge.h>
 
-unsigned long isa_io_base;	/* NULL if no ISA bus */
+अचिन्हित दीर्घ isa_io_base;	/* शून्य अगर no ISA bus */
 EXPORT_SYMBOL(isa_io_base);
 
 /* Cached ISA bridge dev. */
-static struct device_node *isa_bridge_devnode;
-struct pci_dev *isa_bridge_pcidev;
+अटल काष्ठा device_node *isa_bridge_devnode;
+काष्ठा pci_dev *isa_bridge_pcidev;
 EXPORT_SYMBOL_GPL(isa_bridge_pcidev);
 
-#define ISA_SPACE_MASK 0x1
-#define ISA_SPACE_IO 0x1
+#घोषणा ISA_SPACE_MASK 0x1
+#घोषणा ISA_SPACE_IO 0x1
 
-static void remap_isa_base(phys_addr_t pa, unsigned long size)
-{
+अटल व्योम remap_isa_base(phys_addr_t pa, अचिन्हित दीर्घ size)
+अणु
 	WARN_ON_ONCE(ISA_IO_BASE & ~PAGE_MASK);
 	WARN_ON_ONCE(pa & ~PAGE_MASK);
 	WARN_ON_ONCE(size & ~PAGE_MASK);
 
-	if (slab_is_available()) {
-		if (ioremap_page_range(ISA_IO_BASE, ISA_IO_BASE + size, pa,
+	अगर (slab_is_available()) अणु
+		अगर (ioremap_page_range(ISA_IO_BASE, ISA_IO_BASE + size, pa,
 				pgprot_noncached(PAGE_KERNEL)))
 			vunmap_range(ISA_IO_BASE, ISA_IO_BASE + size);
-	} else {
+	पूर्ण अन्यथा अणु
 		early_ioremap_range(ISA_IO_BASE, pa, size,
 				pgprot_noncached(PAGE_KERNEL));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pci_process_ISA_OF_ranges(struct device_node *isa_node,
-				      unsigned long phb_io_base_phys)
-{
-	/* We should get some saner parsing here and remove these structs */
-	struct pci_address {
+अटल व्योम pci_process_ISA_OF_ranges(काष्ठा device_node *isa_node,
+				      अचिन्हित दीर्घ phb_io_base_phys)
+अणु
+	/* We should get some saner parsing here and हटाओ these काष्ठाs */
+	काष्ठा pci_address अणु
 		u32 a_hi;
 		u32 a_mid;
 		u32 a_lo;
-	};
+	पूर्ण;
 
-	struct isa_address {
+	काष्ठा isa_address अणु
 		u32 a_hi;
 		u32 a_lo;
-	};
+	पूर्ण;
 
-	struct isa_range {
-		struct isa_address isa_addr;
-		struct pci_address pci_addr;
-		unsigned int size;
-	};
+	काष्ठा isa_range अणु
+		काष्ठा isa_address isa_addr;
+		काष्ठा pci_address pci_addr;
+		अचिन्हित पूर्णांक size;
+	पूर्ण;
 
-	const struct isa_range *range;
-	unsigned long pci_addr;
-	unsigned int isa_addr;
-	unsigned int size;
-	int rlen = 0;
+	स्थिर काष्ठा isa_range *range;
+	अचिन्हित दीर्घ pci_addr;
+	अचिन्हित पूर्णांक isa_addr;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक rlen = 0;
 
 	range = of_get_property(isa_node, "ranges", &rlen);
-	if (range == NULL || (rlen < sizeof(struct isa_range)))
-		goto inval_range;
+	अगर (range == शून्य || (rlen < माप(काष्ठा isa_range)))
+		जाओ inval_range;
 
 	/* From "ISA Binding to 1275"
 	 * The ranges property is laid out as an array of elements,
@@ -94,79 +95,79 @@ static void pci_process_ISA_OF_ranges(struct device_node *isa_node,
 	 *			(size depending on dev->n_addr_cells)
 	 *   cell 5:		the size of the range
 	 */
-	if ((range->isa_addr.a_hi & ISA_SPACE_MASK) != ISA_SPACE_IO) {
+	अगर ((range->isa_addr.a_hi & ISA_SPACE_MASK) != ISA_SPACE_IO) अणु
 		range++;
-		rlen -= sizeof(struct isa_range);
-		if (rlen < sizeof(struct isa_range))
-			goto inval_range;
-	}
-	if ((range->isa_addr.a_hi & ISA_SPACE_MASK) != ISA_SPACE_IO)
-		goto inval_range;
+		rlen -= माप(काष्ठा isa_range);
+		अगर (rlen < माप(काष्ठा isa_range))
+			जाओ inval_range;
+	पूर्ण
+	अगर ((range->isa_addr.a_hi & ISA_SPACE_MASK) != ISA_SPACE_IO)
+		जाओ inval_range;
 
 	isa_addr = range->isa_addr.a_lo;
-	pci_addr = (unsigned long) range->pci_addr.a_mid << 32 |
+	pci_addr = (अचिन्हित दीर्घ) range->pci_addr.a_mid << 32 |
 		range->pci_addr.a_lo;
 
 	/* Assume these are both zero. Note: We could fix that and
-	 * do a proper parsing instead ... oh well, that will do for
-	 * now as nobody uses fancy mappings for ISA bridges
+	 * करो a proper parsing instead ... oh well, that will करो क्रम
+	 * now as nobody uses fancy mappings क्रम ISA bridges
 	 */
-	if ((pci_addr != 0) || (isa_addr != 0)) {
-		printk(KERN_ERR "unexpected isa to pci mapping: %s\n",
+	अगर ((pci_addr != 0) || (isa_addr != 0)) अणु
+		prपूर्णांकk(KERN_ERR "unexpected isa to pci mapping: %s\n",
 		       __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Align size and make sure it's cropped to 64K */
 	size = PAGE_ALIGN(range->size);
-	if (size > 0x10000)
+	अगर (size > 0x10000)
 		size = 0x10000;
 
 	remap_isa_base(phb_io_base_phys, size);
-	return;
+	वापस;
 
 inval_range:
-	printk(KERN_ERR "no ISA IO ranges or unexpected isa range, "
+	prपूर्णांकk(KERN_ERR "no ISA IO ranges or unexpected isa range, "
 	       "mapping 64k\n");
 	remap_isa_base(phb_io_base_phys, 0x10000);
-}
+पूर्ण
 
 
 /**
- * isa_bridge_find_early - Find and map the ISA IO space early before
- *                         main PCI discovery. This is optionally called by
+ * isa_bridge_find_early - Find and map the ISA IO space early beक्रमe
+ *                         मुख्य PCI discovery. This is optionally called by
  *                         the arch code when adding PCI PHBs to get early
  *                         access to ISA IO ports
  */
-void __init isa_bridge_find_early(struct pci_controller *hose)
-{
-	struct device_node *np, *parent = NULL, *tmp;
+व्योम __init isa_bridge_find_early(काष्ठा pci_controller *hose)
+अणु
+	काष्ठा device_node *np, *parent = शून्य, *पंचांगp;
 
-	/* If we already have an ISA bridge, bail off */
-	if (isa_bridge_devnode != NULL)
-		return;
+	/* If we alपढ़ोy have an ISA bridge, bail off */
+	अगर (isa_bridge_devnode != शून्य)
+		वापस;
 
-	/* For each "isa" node in the system. Note : we do a search by
-	 * type and not by name. It might be better to do by name but that's
-	 * what the code used to do and I don't want to break too much at
-	 * once. We can look into changing that separately
+	/* For each "isa" node in the प्रणाली. Note : we करो a search by
+	 * type and not by name. It might be better to करो by name but that's
+	 * what the code used to करो and I करोn't want to अवरोध too much at
+	 * once. We can look पूर्णांकo changing that separately
 	 */
-	for_each_node_by_type(np, "isa") {
-		/* Look for our hose being a parent */
-		for (parent = of_get_parent(np); parent;) {
-			if (parent == hose->dn) {
+	क्रम_each_node_by_type(np, "isa") अणु
+		/* Look क्रम our hose being a parent */
+		क्रम (parent = of_get_parent(np); parent;) अणु
+			अगर (parent == hose->dn) अणु
 				of_node_put(parent);
-				break;
-			}
-			tmp = parent;
+				अवरोध;
+			पूर्ण
+			पंचांगp = parent;
 			parent = of_get_parent(parent);
-			of_node_put(tmp);
-		}
-		if (parent != NULL)
-			break;
-	}
-	if (np == NULL)
-		return;
+			of_node_put(पंचांगp);
+		पूर्ण
+		अगर (parent != शून्य)
+			अवरोध;
+	पूर्ण
+	अगर (np == शून्य)
+		वापस;
 	isa_bridge_devnode = np;
 
 	/* Now parse the "ranges" property and setup the ISA mapping */
@@ -176,85 +177,85 @@ void __init isa_bridge_find_early(struct pci_controller *hose)
 	isa_io_base = ISA_IO_BASE;
 
 	pr_debug("ISA bridge (early) is %pOF\n", np);
-}
+पूर्ण
 
 /**
- * isa_bridge_find_early - Find and map the ISA IO space early before
- *                         main PCI discovery. This is optionally called by
+ * isa_bridge_find_early - Find and map the ISA IO space early beक्रमe
+ *                         मुख्य PCI discovery. This is optionally called by
  *                         the arch code when adding PCI PHBs to get early
  *                         access to ISA IO ports
  */
-void __init isa_bridge_init_non_pci(struct device_node *np)
-{
-	const __be32 *ranges, *pbasep = NULL;
-	int rlen, i, rs;
+व्योम __init isa_bridge_init_non_pci(काष्ठा device_node *np)
+अणु
+	स्थिर __be32 *ranges, *pbasep = शून्य;
+	पूर्णांक rlen, i, rs;
 	u32 na, ns, pna;
 	u64 cbase, pbase, size = 0;
 
-	/* If we already have an ISA bridge, bail off */
-	if (isa_bridge_devnode != NULL)
-		return;
+	/* If we alपढ़ोy have an ISA bridge, bail off */
+	अगर (isa_bridge_devnode != शून्य)
+		वापस;
 
 	pna = of_n_addr_cells(np);
-	if (of_property_read_u32(np, "#address-cells", &na) ||
-	    of_property_read_u32(np, "#size-cells", &ns)) {
+	अगर (of_property_पढ़ो_u32(np, "#address-cells", &na) ||
+	    of_property_पढ़ो_u32(np, "#size-cells", &ns)) अणु
 		pr_warn("ISA: Non-PCI bridge %pOF is missing address format\n",
 			np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Check it's a supported address format */
-	if (na != 2 || ns != 1) {
+	/* Check it's a supported address क्रमmat */
+	अगर (na != 2 || ns != 1) अणु
 		pr_warn("ISA: Non-PCI bridge %pOF has unsupported address format\n",
 			np);
-		return;
-	}
+		वापस;
+	पूर्ण
 	rs = na + ns + pna;
 
 	/* Grab the ranges property */
 	ranges = of_get_property(np, "ranges", &rlen);
-	if (ranges == NULL || rlen < rs) {
+	अगर (ranges == शून्य || rlen < rs) अणु
 		pr_warn("ISA: Non-PCI bridge %pOF has absent or invalid ranges\n",
 			np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Parse it. We are only looking for IO space */
-	for (i = 0; (i + rs - 1) < rlen; i += rs) {
-		if (be32_to_cpup(ranges + i) != 1)
-			continue;
+	/* Parse it. We are only looking क्रम IO space */
+	क्रम (i = 0; (i + rs - 1) < rlen; i += rs) अणु
+		अगर (be32_to_cpup(ranges + i) != 1)
+			जारी;
 		cbase = be32_to_cpup(ranges + i + 1);
-		size = of_read_number(ranges + i + na + pna, ns);
+		size = of_पढ़ो_number(ranges + i + na + pna, ns);
 		pbasep = ranges + i + na;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Got something ? */
-	if (!size || !pbasep) {
+	अगर (!size || !pbasep) अणु
 		pr_warn("ISA: Non-PCI bridge %pOF has no usable IO range\n",
 			np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Align size and make sure it's cropped to 64K */
 	size = PAGE_ALIGN(size);
-	if (size > 0x10000)
+	अगर (size > 0x10000)
 		size = 0x10000;
 
 	/* Map pbase */
 	pbase = of_translate_address(np, pbasep);
-	if (pbase == OF_BAD_ADDR) {
+	अगर (pbase == OF_BAD_ADDR) अणु
 		pr_warn("ISA: Non-PCI bridge %pOF failed to translate IO base\n",
 			np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* We need page alignment */
-	if ((cbase & ~PAGE_MASK) || (pbase & ~PAGE_MASK)) {
+	अगर ((cbase & ~PAGE_MASK) || (pbase & ~PAGE_MASK)) अणु
 		pr_warn("ISA: Non-PCI bridge %pOF has non aligned IO range\n",
 			np);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Got it */
 	isa_bridge_devnode = np;
@@ -266,16 +267,16 @@ void __init isa_bridge_init_non_pci(struct device_node *np)
 	remap_isa_base(pbase, size);
 
 	pr_debug("ISA: Non-PCI bridge is %pOF\n", np);
-}
+पूर्ण
 
 /**
  * isa_bridge_find_late - Find and map the ISA IO space upon discovery of
  *                        a new ISA bridge
  */
-static void isa_bridge_find_late(struct pci_dev *pdev,
-				 struct device_node *devnode)
-{
-	struct pci_controller *hose = pci_bus_to_host(pdev->bus);
+अटल व्योम isa_bridge_find_late(काष्ठा pci_dev *pdev,
+				 काष्ठा device_node *devnode)
+अणु
+	काष्ठा pci_controller *hose = pci_bus_to_host(pdev->bus);
 
 	/* Store ISA device node and PCI device */
 	isa_bridge_devnode = of_node_get(devnode);
@@ -289,79 +290,79 @@ static void isa_bridge_find_late(struct pci_dev *pdev,
 
 	pr_debug("ISA bridge (late) is %pOF on %s\n",
 		 devnode, pci_name(pdev));
-}
+पूर्ण
 
 /**
- * isa_bridge_remove - Remove/unmap an ISA bridge
+ * isa_bridge_हटाओ - Remove/unmap an ISA bridge
  */
-static void isa_bridge_remove(void)
-{
+अटल व्योम isa_bridge_हटाओ(व्योम)
+अणु
 	pr_debug("ISA bridge removed !\n");
 
 	/* Clear the global ISA io base to indicate that we have no more
-	 * ISA bridge. Note that drivers don't quite handle that, though
-	 * we should probably do something about it. But do we ever really
-	 * have ISA bridges being removed on machines using legacy devices ?
+	 * ISA bridge. Note that drivers करोn't quite handle that, though
+	 * we should probably करो something about it. But करो we ever really
+	 * have ISA bridges being हटाओd on machines using legacy devices ?
 	 */
 	isa_io_base = ISA_IO_BASE;
 
 	/* Clear references to the bridge */
 	of_node_put(isa_bridge_devnode);
-	isa_bridge_devnode = NULL;
-	isa_bridge_pcidev = NULL;
+	isa_bridge_devnode = शून्य;
+	isa_bridge_pcidev = शून्य;
 
 	/* Unmap the ISA area */
 	vunmap_range(ISA_IO_BASE, ISA_IO_BASE + 0x10000);
-}
+पूर्ण
 
 /**
- * isa_bridge_notify - Get notified of PCI devices addition/removal
+ * isa_bridge_notअगरy - Get notअगरied of PCI devices addition/removal
  */
-static int isa_bridge_notify(struct notifier_block *nb, unsigned long action,
-			     void *data)
-{
-	struct device *dev = data;
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct device_node *devnode = pci_device_to_OF_node(pdev);
+अटल पूर्णांक isa_bridge_notअगरy(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ action,
+			     व्योम *data)
+अणु
+	काष्ठा device *dev = data;
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा device_node *devnode = pci_device_to_OF_node(pdev);
 
-	switch(action) {
-	case BUS_NOTIFY_ADD_DEVICE:
-		/* Check if we have an early ISA device, without PCI dev */
-		if (isa_bridge_devnode && isa_bridge_devnode == devnode &&
-		    !isa_bridge_pcidev) {
+	चयन(action) अणु
+	हाल BUS_NOTIFY_ADD_DEVICE:
+		/* Check अगर we have an early ISA device, without PCI dev */
+		अगर (isa_bridge_devnode && isa_bridge_devnode == devnode &&
+		    !isa_bridge_pcidev) अणु
 			pr_debug("ISA bridge PCI attached: %s\n",
 				 pci_name(pdev));
 			isa_bridge_pcidev = pdev;
-		}
+		पूर्ण
 
-		/* Check if we have no ISA device, and this happens to be one,
-		 * register it as such if it has an OF device
+		/* Check अगर we have no ISA device, and this happens to be one,
+		 * रेजिस्टर it as such अगर it has an OF device
 		 */
-		if (!isa_bridge_devnode && of_node_is_type(devnode, "isa"))
+		अगर (!isa_bridge_devnode && of_node_is_type(devnode, "isa"))
 			isa_bridge_find_late(pdev, devnode);
 
-		return 0;
-	case BUS_NOTIFY_DEL_DEVICE:
-		/* Check if this our existing ISA device */
-		if (pdev == isa_bridge_pcidev ||
+		वापस 0;
+	हाल BUS_NOTIFY_DEL_DEVICE:
+		/* Check अगर this our existing ISA device */
+		अगर (pdev == isa_bridge_pcidev ||
 		    (devnode && devnode == isa_bridge_devnode))
-			isa_bridge_remove();
-		return 0;
-	}
-	return 0;
-}
+			isa_bridge_हटाओ();
+		वापस 0;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct notifier_block isa_bridge_notifier = {
-	.notifier_call = isa_bridge_notify
-};
+अटल काष्ठा notअगरier_block isa_bridge_notअगरier = अणु
+	.notअगरier_call = isa_bridge_notअगरy
+पूर्ण;
 
 /**
- * isa_bridge_init - register to be notified of ISA bridge addition/removal
+ * isa_bridge_init - रेजिस्टर to be notअगरied of ISA bridge addition/removal
  *
  */
-static int __init isa_bridge_init(void)
-{
-	bus_register_notifier(&pci_bus_type, &isa_bridge_notifier);
-	return 0;
-}
+अटल पूर्णांक __init isa_bridge_init(व्योम)
+अणु
+	bus_रेजिस्टर_notअगरier(&pci_bus_type, &isa_bridge_notअगरier);
+	वापस 0;
+पूर्ण
 arch_initcall(isa_bridge_init);

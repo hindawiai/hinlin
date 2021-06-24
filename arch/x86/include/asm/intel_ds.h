@@ -1,37 +1,38 @@
-#ifndef _ASM_INTEL_DS_H
-#define _ASM_INTEL_DS_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_INTEL_DS_H
+#घोषणा _ASM_INTEL_DS_H
 
-#include <linux/percpu-defs.h>
+#समावेश <linux/percpu-defs.h>
 
-#define BTS_BUFFER_SIZE		(PAGE_SIZE << 4)
-#define PEBS_BUFFER_SIZE	(PAGE_SIZE << 4)
+#घोषणा BTS_BUFFER_SIZE		(PAGE_SIZE << 4)
+#घोषणा PEBS_BUFFER_SIZE	(PAGE_SIZE << 4)
 
 /* The maximal number of PEBS events: */
-#define MAX_PEBS_EVENTS		8
-#define MAX_FIXED_PEBS_EVENTS	4
+#घोषणा MAX_PEBS_EVENTS		8
+#घोषणा MAX_FIXED_PEBS_EVENTS	4
 
 /*
  * A debug store configuration.
  *
  * We only support architectures that use 64bit fields.
  */
-struct debug_store {
+काष्ठा debug_store अणु
 	u64	bts_buffer_base;
 	u64	bts_index;
-	u64	bts_absolute_maximum;
-	u64	bts_interrupt_threshold;
+	u64	bts_असलolute_maximum;
+	u64	bts_पूर्णांकerrupt_threshold;
 	u64	pebs_buffer_base;
 	u64	pebs_index;
-	u64	pebs_absolute_maximum;
-	u64	pebs_interrupt_threshold;
+	u64	pebs_असलolute_maximum;
+	u64	pebs_पूर्णांकerrupt_threshold;
 	u64	pebs_event_reset[MAX_PEBS_EVENTS + MAX_FIXED_PEBS_EVENTS];
-} __aligned(PAGE_SIZE);
+पूर्ण __aligned(PAGE_SIZE);
 
-DECLARE_PER_CPU_PAGE_ALIGNED(struct debug_store, cpu_debug_store);
+DECLARE_PER_CPU_PAGE_ALIGNED(काष्ठा debug_store, cpu_debug_store);
 
-struct debug_store_buffers {
-	char	bts_buffer[BTS_BUFFER_SIZE];
-	char	pebs_buffer[PEBS_BUFFER_SIZE];
-};
+काष्ठा debug_store_buffers अणु
+	अक्षर	bts_buffer[BTS_BUFFER_SIZE];
+	अक्षर	pebs_buffer[PEBS_BUFFER_SIZE];
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

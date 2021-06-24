@@ -1,62 +1,63 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for Allwinner sun4i Pulse Width Modulation Controller
+ * Driver क्रम Allwinner sun4i Pulse Width Modulation Controller
  *
- * Copyright (C) 2014 Alexandre Belloni <alexandre.belloni@free-electrons.com>
+ * Copyright (C) 2014 Alexandre Belloni <alexandre.belloni@मुक्त-electrons.com>
  *
  * Limitations:
- * - When outputing the source clock directly, the PWM logic will be bypassed
+ * - When outputing the source घड़ी directly, the PWM logic will be bypassed
  *   and the currently running period is not guaranteed to be completed
  */
 
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/jiffies.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pwm.h>
-#include <linux/reset.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/time.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/समय.स>
 
-#define PWM_CTRL_REG		0x0
+#घोषणा PWM_CTRL_REG		0x0
 
-#define PWM_CH_PRD_BASE		0x4
-#define PWM_CH_PRD_OFFSET	0x4
-#define PWM_CH_PRD(ch)		(PWM_CH_PRD_BASE + PWM_CH_PRD_OFFSET * (ch))
+#घोषणा PWM_CH_PRD_BASE		0x4
+#घोषणा PWM_CH_PRD_OFFSET	0x4
+#घोषणा PWM_CH_PRD(ch)		(PWM_CH_PRD_BASE + PWM_CH_PRD_OFFSET * (ch))
 
-#define PWMCH_OFFSET		15
-#define PWM_PRESCAL_MASK	GENMASK(3, 0)
-#define PWM_PRESCAL_OFF		0
-#define PWM_EN			BIT(4)
-#define PWM_ACT_STATE		BIT(5)
-#define PWM_CLK_GATING		BIT(6)
-#define PWM_MODE		BIT(7)
-#define PWM_PULSE		BIT(8)
-#define PWM_BYPASS		BIT(9)
+#घोषणा PWMCH_OFFSET		15
+#घोषणा PWM_PRESCAL_MASK	GENMASK(3, 0)
+#घोषणा PWM_PRESCAL_OFF		0
+#घोषणा PWM_EN			BIT(4)
+#घोषणा PWM_ACT_STATE		BIT(5)
+#घोषणा PWM_CLK_GATING		BIT(6)
+#घोषणा PWM_MODE		BIT(7)
+#घोषणा PWM_PULSE		BIT(8)
+#घोषणा PWM_BYPASS		BIT(9)
 
-#define PWM_RDY_BASE		28
-#define PWM_RDY_OFFSET		1
-#define PWM_RDY(ch)		BIT(PWM_RDY_BASE + PWM_RDY_OFFSET * (ch))
+#घोषणा PWM_RDY_BASE		28
+#घोषणा PWM_RDY_OFFSET		1
+#घोषणा PWM_RDY(ch)		BIT(PWM_RDY_BASE + PWM_RDY_OFFSET * (ch))
 
-#define PWM_PRD(prd)		(((prd) - 1) << 16)
-#define PWM_PRD_MASK		GENMASK(15, 0)
+#घोषणा PWM_PRD(prd)		(((prd) - 1) << 16)
+#घोषणा PWM_PRD_MASK		GENMASK(15, 0)
 
-#define PWM_DTY_MASK		GENMASK(15, 0)
+#घोषणा PWM_DTY_MASK		GENMASK(15, 0)
 
-#define PWM_REG_PRD(reg)	((((reg) >> 16) & PWM_PRD_MASK) + 1)
-#define PWM_REG_DTY(reg)	((reg) & PWM_DTY_MASK)
-#define PWM_REG_PRESCAL(reg, chan)	(((reg) >> ((chan) * PWMCH_OFFSET)) & PWM_PRESCAL_MASK)
+#घोषणा PWM_REG_PRD(reg)	((((reg) >> 16) & PWM_PRD_MASK) + 1)
+#घोषणा PWM_REG_DTY(reg)	((reg) & PWM_DTY_MASK)
+#घोषणा PWM_REG_PRESCAL(reg, chan)	(((reg) >> ((chan) * PWMCH_OFFSET)) & PWM_PRESCAL_MASK)
 
-#define BIT_CH(bit, chan)	((bit) << ((chan) * PWMCH_OFFSET))
+#घोषणा BIT_CH(bit, chan)	((bit) << ((chan) * PWMCH_OFFSET))
 
-static const u32 prescaler_table[] = {
+अटल स्थिर u32 prescaler_table[] = अणु
 	120,
 	180,
 	240,
@@ -73,105 +74,105 @@ static const u32 prescaler_table[] = {
 	0,
 	0,
 	0, /* Actually 1 but tested separately */
-};
+पूर्ण;
 
-struct sun4i_pwm_data {
+काष्ठा sun4i_pwm_data अणु
 	bool has_prescaler_bypass;
 	bool has_direct_mod_clk_output;
-	unsigned int npwm;
-};
+	अचिन्हित पूर्णांक npwm;
+पूर्ण;
 
-struct sun4i_pwm_chip {
-	struct pwm_chip chip;
-	struct clk *bus_clk;
-	struct clk *clk;
-	struct reset_control *rst;
-	void __iomem *base;
+काष्ठा sun4i_pwm_chip अणु
+	काष्ठा pwm_chip chip;
+	काष्ठा clk *bus_clk;
+	काष्ठा clk *clk;
+	काष्ठा reset_control *rst;
+	व्योम __iomem *base;
 	spinlock_t ctrl_lock;
-	const struct sun4i_pwm_data *data;
-	unsigned long next_period[2];
-};
+	स्थिर काष्ठा sun4i_pwm_data *data;
+	अचिन्हित दीर्घ next_period[2];
+पूर्ण;
 
-static inline struct sun4i_pwm_chip *to_sun4i_pwm_chip(struct pwm_chip *chip)
-{
-	return container_of(chip, struct sun4i_pwm_chip, chip);
-}
+अटल अंतरभूत काष्ठा sun4i_pwm_chip *to_sun4i_pwm_chip(काष्ठा pwm_chip *chip)
+अणु
+	वापस container_of(chip, काष्ठा sun4i_pwm_chip, chip);
+पूर्ण
 
-static inline u32 sun4i_pwm_readl(struct sun4i_pwm_chip *chip,
-				  unsigned long offset)
-{
-	return readl(chip->base + offset);
-}
+अटल अंतरभूत u32 sun4i_pwm_पढ़ोl(काष्ठा sun4i_pwm_chip *chip,
+				  अचिन्हित दीर्घ offset)
+अणु
+	वापस पढ़ोl(chip->base + offset);
+पूर्ण
 
-static inline void sun4i_pwm_writel(struct sun4i_pwm_chip *chip,
-				    u32 val, unsigned long offset)
-{
-	writel(val, chip->base + offset);
-}
+अटल अंतरभूत व्योम sun4i_pwm_ग_लिखोl(काष्ठा sun4i_pwm_chip *chip,
+				    u32 val, अचिन्हित दीर्घ offset)
+अणु
+	ग_लिखोl(val, chip->base + offset);
+पूर्ण
 
-static void sun4i_pwm_get_state(struct pwm_chip *chip,
-				struct pwm_device *pwm,
-				struct pwm_state *state)
-{
-	struct sun4i_pwm_chip *sun4i_pwm = to_sun4i_pwm_chip(chip);
-	u64 clk_rate, tmp;
+अटल व्योम sun4i_pwm_get_state(काष्ठा pwm_chip *chip,
+				काष्ठा pwm_device *pwm,
+				काष्ठा pwm_state *state)
+अणु
+	काष्ठा sun4i_pwm_chip *sun4i_pwm = to_sun4i_pwm_chip(chip);
+	u64 clk_rate, पंचांगp;
 	u32 val;
-	unsigned int prescaler;
+	अचिन्हित पूर्णांक prescaler;
 
 	clk_rate = clk_get_rate(sun4i_pwm->clk);
 
-	val = sun4i_pwm_readl(sun4i_pwm, PWM_CTRL_REG);
+	val = sun4i_pwm_पढ़ोl(sun4i_pwm, PWM_CTRL_REG);
 
 	/*
-	 * PWM chapter in H6 manual has a diagram which explains that if bypass
+	 * PWM chapter in H6 manual has a diagram which explains that अगर bypass
 	 * bit is set, no other setting has any meaning. Even more, experiment
-	 * proved that also enable bit is ignored in this case.
+	 * proved that also enable bit is ignored in this हाल.
 	 */
-	if ((val & BIT_CH(PWM_BYPASS, pwm->hwpwm)) &&
-	    sun4i_pwm->data->has_direct_mod_clk_output) {
+	अगर ((val & BIT_CH(PWM_BYPASS, pwm->hwpwm)) &&
+	    sun4i_pwm->data->has_direct_mod_clk_output) अणु
 		state->period = DIV_ROUND_UP_ULL(NSEC_PER_SEC, clk_rate);
 		state->duty_cycle = DIV_ROUND_UP_ULL(state->period, 2);
 		state->polarity = PWM_POLARITY_NORMAL;
 		state->enabled = true;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if ((PWM_REG_PRESCAL(val, pwm->hwpwm) == PWM_PRESCAL_MASK) &&
+	अगर ((PWM_REG_PRESCAL(val, pwm->hwpwm) == PWM_PRESCAL_MASK) &&
 	    sun4i_pwm->data->has_prescaler_bypass)
 		prescaler = 1;
-	else
+	अन्यथा
 		prescaler = prescaler_table[PWM_REG_PRESCAL(val, pwm->hwpwm)];
 
-	if (prescaler == 0)
-		return;
+	अगर (prescaler == 0)
+		वापस;
 
-	if (val & BIT_CH(PWM_ACT_STATE, pwm->hwpwm))
+	अगर (val & BIT_CH(PWM_ACT_STATE, pwm->hwpwm))
 		state->polarity = PWM_POLARITY_NORMAL;
-	else
+	अन्यथा
 		state->polarity = PWM_POLARITY_INVERSED;
 
-	if ((val & BIT_CH(PWM_CLK_GATING | PWM_EN, pwm->hwpwm)) ==
+	अगर ((val & BIT_CH(PWM_CLK_GATING | PWM_EN, pwm->hwpwm)) ==
 	    BIT_CH(PWM_CLK_GATING | PWM_EN, pwm->hwpwm))
 		state->enabled = true;
-	else
+	अन्यथा
 		state->enabled = false;
 
-	val = sun4i_pwm_readl(sun4i_pwm, PWM_CH_PRD(pwm->hwpwm));
+	val = sun4i_pwm_पढ़ोl(sun4i_pwm, PWM_CH_PRD(pwm->hwpwm));
 
-	tmp = (u64)prescaler * NSEC_PER_SEC * PWM_REG_DTY(val);
-	state->duty_cycle = DIV_ROUND_CLOSEST_ULL(tmp, clk_rate);
+	पंचांगp = (u64)prescaler * NSEC_PER_SEC * PWM_REG_DTY(val);
+	state->duty_cycle = DIV_ROUND_CLOSEST_ULL(पंचांगp, clk_rate);
 
-	tmp = (u64)prescaler * NSEC_PER_SEC * PWM_REG_PRD(val);
-	state->period = DIV_ROUND_CLOSEST_ULL(tmp, clk_rate);
-}
+	पंचांगp = (u64)prescaler * NSEC_PER_SEC * PWM_REG_PRD(val);
+	state->period = DIV_ROUND_CLOSEST_ULL(पंचांगp, clk_rate);
+पूर्ण
 
-static int sun4i_pwm_calculate(struct sun4i_pwm_chip *sun4i_pwm,
-			       const struct pwm_state *state,
-			       u32 *dty, u32 *prd, unsigned int *prsclr,
+अटल पूर्णांक sun4i_pwm_calculate(काष्ठा sun4i_pwm_chip *sun4i_pwm,
+			       स्थिर काष्ठा pwm_state *state,
+			       u32 *dty, u32 *prd, अचिन्हित पूर्णांक *prsclr,
 			       bool *bypass)
-{
-	u64 clk_rate, div = 0;
-	unsigned int prescaler = 0;
+अणु
+	u64 clk_rate, भाग = 0;
+	अचिन्हित पूर्णांक prescaler = 0;
 
 	clk_rate = clk_get_rate(sun4i_pwm->clk);
 
@@ -181,281 +182,281 @@ static int sun4i_pwm_calculate(struct sun4i_pwm_chip *sun4i_pwm,
 		  (state->period * clk_rate < 2 * NSEC_PER_SEC) &&
 		  (state->duty_cycle * clk_rate * 2 >= NSEC_PER_SEC);
 
-	/* Skip calculation of other parameters if we bypass them */
-	if (*bypass)
-		return 0;
+	/* Skip calculation of other parameters अगर we bypass them */
+	अगर (*bypass)
+		वापस 0;
 
-	if (sun4i_pwm->data->has_prescaler_bypass) {
+	अगर (sun4i_pwm->data->has_prescaler_bypass) अणु
 		/* First, test without any prescaler when available */
 		prescaler = PWM_PRESCAL_MASK;
 		/*
-		 * When not using any prescaler, the clock period in nanoseconds
-		 * is not an integer so round it half up instead of
+		 * When not using any prescaler, the घड़ी period in nanoseconds
+		 * is not an पूर्णांकeger so round it half up instead of
 		 * truncating to get less surprising values.
 		 */
-		div = clk_rate * state->period + NSEC_PER_SEC / 2;
-		do_div(div, NSEC_PER_SEC);
-		if (div - 1 > PWM_PRD_MASK)
+		भाग = clk_rate * state->period + NSEC_PER_SEC / 2;
+		करो_भाग(भाग, NSEC_PER_SEC);
+		अगर (भाग - 1 > PWM_PRD_MASK)
 			prescaler = 0;
-	}
+	पूर्ण
 
-	if (prescaler == 0) {
-		/* Go up from the first divider */
-		for (prescaler = 0; prescaler < PWM_PRESCAL_MASK; prescaler++) {
-			unsigned int pval = prescaler_table[prescaler];
+	अगर (prescaler == 0) अणु
+		/* Go up from the first भागider */
+		क्रम (prescaler = 0; prescaler < PWM_PRESCAL_MASK; prescaler++) अणु
+			अचिन्हित पूर्णांक pval = prescaler_table[prescaler];
 
-			if (!pval)
-				continue;
+			अगर (!pval)
+				जारी;
 
-			div = clk_rate;
-			do_div(div, pval);
-			div = div * state->period;
-			do_div(div, NSEC_PER_SEC);
-			if (div - 1 <= PWM_PRD_MASK)
-				break;
-		}
+			भाग = clk_rate;
+			करो_भाग(भाग, pval);
+			भाग = भाग * state->period;
+			करो_भाग(भाग, NSEC_PER_SEC);
+			अगर (भाग - 1 <= PWM_PRD_MASK)
+				अवरोध;
+		पूर्ण
 
-		if (div - 1 > PWM_PRD_MASK)
-			return -EINVAL;
-	}
+		अगर (भाग - 1 > PWM_PRD_MASK)
+			वापस -EINVAL;
+	पूर्ण
 
-	*prd = div;
-	div *= state->duty_cycle;
-	do_div(div, state->period);
-	*dty = div;
+	*prd = भाग;
+	भाग *= state->duty_cycle;
+	करो_भाग(भाग, state->period);
+	*dty = भाग;
 	*prsclr = prescaler;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_pwm_apply(struct pwm_chip *chip, struct pwm_device *pwm,
-			   const struct pwm_state *state)
-{
-	struct sun4i_pwm_chip *sun4i_pwm = to_sun4i_pwm_chip(chip);
-	struct pwm_state cstate;
+अटल पूर्णांक sun4i_pwm_apply(काष्ठा pwm_chip *chip, काष्ठा pwm_device *pwm,
+			   स्थिर काष्ठा pwm_state *state)
+अणु
+	काष्ठा sun4i_pwm_chip *sun4i_pwm = to_sun4i_pwm_chip(chip);
+	काष्ठा pwm_state cstate;
 	u32 ctrl, duty = 0, period = 0, val;
-	int ret;
-	unsigned int delay_us, prescaler = 0;
-	unsigned long now;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक delay_us, prescaler = 0;
+	अचिन्हित दीर्घ now;
 	bool bypass;
 
 	pwm_get_state(pwm, &cstate);
 
-	if (!cstate.enabled) {
+	अगर (!cstate.enabled) अणु
 		ret = clk_prepare_enable(sun4i_pwm->clk);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(chip->dev, "failed to enable PWM clock\n");
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	ret = sun4i_pwm_calculate(sun4i_pwm, state, &duty, &period, &prescaler,
 				  &bypass);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(chip->dev, "period exceeds the maximum value\n");
-		if (!cstate.enabled)
+		अगर (!cstate.enabled)
 			clk_disable_unprepare(sun4i_pwm->clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	spin_lock(&sun4i_pwm->ctrl_lock);
-	ctrl = sun4i_pwm_readl(sun4i_pwm, PWM_CTRL_REG);
+	ctrl = sun4i_pwm_पढ़ोl(sun4i_pwm, PWM_CTRL_REG);
 
-	if (sun4i_pwm->data->has_direct_mod_clk_output) {
-		if (bypass) {
+	अगर (sun4i_pwm->data->has_direct_mod_clk_output) अणु
+		अगर (bypass) अणु
 			ctrl |= BIT_CH(PWM_BYPASS, pwm->hwpwm);
 			/* We can skip other parameter */
-			sun4i_pwm_writel(sun4i_pwm, ctrl, PWM_CTRL_REG);
+			sun4i_pwm_ग_लिखोl(sun4i_pwm, ctrl, PWM_CTRL_REG);
 			spin_unlock(&sun4i_pwm->ctrl_lock);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		ctrl &= ~BIT_CH(PWM_BYPASS, pwm->hwpwm);
-	}
+	पूर्ण
 
-	if (PWM_REG_PRESCAL(ctrl, pwm->hwpwm) != prescaler) {
-		/* Prescaler changed, the clock has to be gated */
+	अगर (PWM_REG_PRESCAL(ctrl, pwm->hwpwm) != prescaler) अणु
+		/* Prescaler changed, the घड़ी has to be gated */
 		ctrl &= ~BIT_CH(PWM_CLK_GATING, pwm->hwpwm);
-		sun4i_pwm_writel(sun4i_pwm, ctrl, PWM_CTRL_REG);
+		sun4i_pwm_ग_लिखोl(sun4i_pwm, ctrl, PWM_CTRL_REG);
 
 		ctrl &= ~BIT_CH(PWM_PRESCAL_MASK, pwm->hwpwm);
 		ctrl |= BIT_CH(prescaler, pwm->hwpwm);
-	}
+	पूर्ण
 
 	val = (duty & PWM_DTY_MASK) | PWM_PRD(period);
-	sun4i_pwm_writel(sun4i_pwm, val, PWM_CH_PRD(pwm->hwpwm));
-	sun4i_pwm->next_period[pwm->hwpwm] = jiffies +
-		nsecs_to_jiffies(cstate.period + 1000);
+	sun4i_pwm_ग_लिखोl(sun4i_pwm, val, PWM_CH_PRD(pwm->hwpwm));
+	sun4i_pwm->next_period[pwm->hwpwm] = jअगरfies +
+		nsecs_to_jअगरfies(cstate.period + 1000);
 
-	if (state->polarity != PWM_POLARITY_NORMAL)
+	अगर (state->polarity != PWM_POLARITY_NORMAL)
 		ctrl &= ~BIT_CH(PWM_ACT_STATE, pwm->hwpwm);
-	else
+	अन्यथा
 		ctrl |= BIT_CH(PWM_ACT_STATE, pwm->hwpwm);
 
 	ctrl |= BIT_CH(PWM_CLK_GATING, pwm->hwpwm);
 
-	if (state->enabled)
+	अगर (state->enabled)
 		ctrl |= BIT_CH(PWM_EN, pwm->hwpwm);
 
-	sun4i_pwm_writel(sun4i_pwm, ctrl, PWM_CTRL_REG);
+	sun4i_pwm_ग_लिखोl(sun4i_pwm, ctrl, PWM_CTRL_REG);
 
 	spin_unlock(&sun4i_pwm->ctrl_lock);
 
-	if (state->enabled)
-		return 0;
+	अगर (state->enabled)
+		वापस 0;
 
-	/* We need a full period to elapse before disabling the channel. */
-	now = jiffies;
-	if (time_before(now, sun4i_pwm->next_period[pwm->hwpwm])) {
-		delay_us = jiffies_to_usecs(sun4i_pwm->next_period[pwm->hwpwm] -
+	/* We need a full period to elapse beक्रमe disabling the channel. */
+	now = jअगरfies;
+	अगर (समय_beक्रमe(now, sun4i_pwm->next_period[pwm->hwpwm])) अणु
+		delay_us = jअगरfies_to_usecs(sun4i_pwm->next_period[pwm->hwpwm] -
 					   now);
-		if ((delay_us / 500) > MAX_UDELAY_MS)
+		अगर ((delay_us / 500) > MAX_UDELAY_MS)
 			msleep(delay_us / 1000 + 1);
-		else
+		अन्यथा
 			usleep_range(delay_us, delay_us * 2);
-	}
+	पूर्ण
 
 	spin_lock(&sun4i_pwm->ctrl_lock);
-	ctrl = sun4i_pwm_readl(sun4i_pwm, PWM_CTRL_REG);
+	ctrl = sun4i_pwm_पढ़ोl(sun4i_pwm, PWM_CTRL_REG);
 	ctrl &= ~BIT_CH(PWM_CLK_GATING, pwm->hwpwm);
 	ctrl &= ~BIT_CH(PWM_EN, pwm->hwpwm);
-	sun4i_pwm_writel(sun4i_pwm, ctrl, PWM_CTRL_REG);
+	sun4i_pwm_ग_लिखोl(sun4i_pwm, ctrl, PWM_CTRL_REG);
 	spin_unlock(&sun4i_pwm->ctrl_lock);
 
 	clk_disable_unprepare(sun4i_pwm->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pwm_ops sun4i_pwm_ops = {
+अटल स्थिर काष्ठा pwm_ops sun4i_pwm_ops = अणु
 	.apply = sun4i_pwm_apply,
 	.get_state = sun4i_pwm_get_state,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static const struct sun4i_pwm_data sun4i_pwm_dual_nobypass = {
+अटल स्थिर काष्ठा sun4i_pwm_data sun4i_pwm_dual_nobypass = अणु
 	.has_prescaler_bypass = false,
 	.npwm = 2,
-};
+पूर्ण;
 
-static const struct sun4i_pwm_data sun4i_pwm_dual_bypass = {
+अटल स्थिर काष्ठा sun4i_pwm_data sun4i_pwm_dual_bypass = अणु
 	.has_prescaler_bypass = true,
 	.npwm = 2,
-};
+पूर्ण;
 
-static const struct sun4i_pwm_data sun4i_pwm_single_bypass = {
+अटल स्थिर काष्ठा sun4i_pwm_data sun4i_pwm_single_bypass = अणु
 	.has_prescaler_bypass = true,
 	.npwm = 1,
-};
+पूर्ण;
 
-static const struct sun4i_pwm_data sun50i_a64_pwm_data = {
+अटल स्थिर काष्ठा sun4i_pwm_data sun50i_a64_pwm_data = अणु
 	.has_prescaler_bypass = true,
 	.has_direct_mod_clk_output = true,
 	.npwm = 1,
-};
+पूर्ण;
 
-static const struct sun4i_pwm_data sun50i_h6_pwm_data = {
+अटल स्थिर काष्ठा sun4i_pwm_data sun50i_h6_pwm_data = अणु
 	.has_prescaler_bypass = true,
 	.has_direct_mod_clk_output = true,
 	.npwm = 2,
-};
+पूर्ण;
 
-static const struct of_device_id sun4i_pwm_dt_ids[] = {
-	{
+अटल स्थिर काष्ठा of_device_id sun4i_pwm_dt_ids[] = अणु
+	अणु
 		.compatible = "allwinner,sun4i-a10-pwm",
 		.data = &sun4i_pwm_dual_nobypass,
-	}, {
+	पूर्ण, अणु
 		.compatible = "allwinner,sun5i-a10s-pwm",
 		.data = &sun4i_pwm_dual_bypass,
-	}, {
+	पूर्ण, अणु
 		.compatible = "allwinner,sun5i-a13-pwm",
 		.data = &sun4i_pwm_single_bypass,
-	}, {
+	पूर्ण, अणु
 		.compatible = "allwinner,sun7i-a20-pwm",
 		.data = &sun4i_pwm_dual_bypass,
-	}, {
+	पूर्ण, अणु
 		.compatible = "allwinner,sun8i-h3-pwm",
 		.data = &sun4i_pwm_single_bypass,
-	}, {
+	पूर्ण, अणु
 		.compatible = "allwinner,sun50i-a64-pwm",
 		.data = &sun50i_a64_pwm_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "allwinner,sun50i-h6-pwm",
 		.data = &sun50i_h6_pwm_data,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	},
-};
+	पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sun4i_pwm_dt_ids);
 
-static int sun4i_pwm_probe(struct platform_device *pdev)
-{
-	struct sun4i_pwm_chip *pwm;
-	int ret;
+अटल पूर्णांक sun4i_pwm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sun4i_pwm_chip *pwm;
+	पूर्णांक ret;
 
-	pwm = devm_kzalloc(&pdev->dev, sizeof(*pwm), GFP_KERNEL);
-	if (!pwm)
-		return -ENOMEM;
+	pwm = devm_kzalloc(&pdev->dev, माप(*pwm), GFP_KERNEL);
+	अगर (!pwm)
+		वापस -ENOMEM;
 
 	pwm->data = of_device_get_match_data(&pdev->dev);
-	if (!pwm->data)
-		return -ENODEV;
+	अगर (!pwm->data)
+		वापस -ENODEV;
 
-	pwm->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(pwm->base))
-		return PTR_ERR(pwm->base);
+	pwm->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(pwm->base))
+		वापस PTR_ERR(pwm->base);
 
 	/*
-	 * All hardware variants need a source clock that is divided and
-	 * then feeds the counter that defines the output wave form. In the
-	 * device tree this clock is either unnamed or called "mod".
-	 * Some variants (e.g. H6) need another clock to access the
-	 * hardware registers; this is called "bus".
-	 * So we request "mod" first (and ignore the corner case that a
-	 * parent provides a "mod" clock while the right one would be the
-	 * unnamed one of the PWM device) and if this is not found we fall
-	 * back to the first clock of the PWM.
+	 * All hardware variants need a source घड़ी that is भागided and
+	 * then feeds the counter that defines the output wave क्रमm. In the
+	 * device tree this घड़ी is either unnamed or called "mod".
+	 * Some variants (e.g. H6) need another घड़ी to access the
+	 * hardware रेजिस्टरs; this is called "bus".
+	 * So we request "mod" first (and ignore the corner हाल that a
+	 * parent provides a "mod" घड़ी जबतक the right one would be the
+	 * unnamed one of the PWM device) and अगर this is not found we fall
+	 * back to the first घड़ी of the PWM.
 	 */
 	pwm->clk = devm_clk_get_optional(&pdev->dev, "mod");
-	if (IS_ERR(pwm->clk))
-		return dev_err_probe(&pdev->dev, PTR_ERR(pwm->clk),
+	अगर (IS_ERR(pwm->clk))
+		वापस dev_err_probe(&pdev->dev, PTR_ERR(pwm->clk),
 				     "get mod clock failed\n");
 
-	if (!pwm->clk) {
-		pwm->clk = devm_clk_get(&pdev->dev, NULL);
-		if (IS_ERR(pwm->clk))
-			return dev_err_probe(&pdev->dev, PTR_ERR(pwm->clk),
+	अगर (!pwm->clk) अणु
+		pwm->clk = devm_clk_get(&pdev->dev, शून्य);
+		अगर (IS_ERR(pwm->clk))
+			वापस dev_err_probe(&pdev->dev, PTR_ERR(pwm->clk),
 					     "get unnamed clock failed\n");
-	}
+	पूर्ण
 
 	pwm->bus_clk = devm_clk_get_optional(&pdev->dev, "bus");
-	if (IS_ERR(pwm->bus_clk))
-		return dev_err_probe(&pdev->dev, PTR_ERR(pwm->bus_clk),
+	अगर (IS_ERR(pwm->bus_clk))
+		वापस dev_err_probe(&pdev->dev, PTR_ERR(pwm->bus_clk),
 				     "get bus clock failed\n");
 
-	pwm->rst = devm_reset_control_get_optional_shared(&pdev->dev, NULL);
-	if (IS_ERR(pwm->rst))
-		return dev_err_probe(&pdev->dev, PTR_ERR(pwm->rst),
+	pwm->rst = devm_reset_control_get_optional_shared(&pdev->dev, शून्य);
+	अगर (IS_ERR(pwm->rst))
+		वापस dev_err_probe(&pdev->dev, PTR_ERR(pwm->rst),
 				     "get reset failed\n");
 
-	/* Deassert reset */
-	ret = reset_control_deassert(pwm->rst);
-	if (ret) {
+	/* Deनिश्चित reset */
+	ret = reset_control_deनिश्चित(pwm->rst);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "cannot deassert reset control: %pe\n",
 			ERR_PTR(ret));
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * We're keeping the bus clock on for the sake of simplicity.
-	 * Actually it only needs to be on for hardware register accesses.
+	 * We're keeping the bus घड़ी on क्रम the sake of simplicity.
+	 * Actually it only needs to be on क्रम hardware रेजिस्टर accesses.
 	 */
 	ret = clk_prepare_enable(pwm->bus_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "cannot prepare and enable bus_clk %pe\n",
 			ERR_PTR(ret));
-		goto err_bus;
-	}
+		जाओ err_bus;
+	पूर्ण
 
 	pwm->chip.dev = &pdev->dev;
 	pwm->chip.ops = &sun4i_pwm_ops;
@@ -466,47 +467,47 @@ static int sun4i_pwm_probe(struct platform_device *pdev)
 	spin_lock_init(&pwm->ctrl_lock);
 
 	ret = pwmchip_add(&pwm->chip);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to add PWM chip: %d\n", ret);
-		goto err_pwm_add;
-	}
+		जाओ err_pwm_add;
+	पूर्ण
 
-	platform_set_drvdata(pdev, pwm);
+	platक्रमm_set_drvdata(pdev, pwm);
 
-	return 0;
+	वापस 0;
 
 err_pwm_add:
 	clk_disable_unprepare(pwm->bus_clk);
 err_bus:
-	reset_control_assert(pwm->rst);
+	reset_control_निश्चित(pwm->rst);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sun4i_pwm_remove(struct platform_device *pdev)
-{
-	struct sun4i_pwm_chip *pwm = platform_get_drvdata(pdev);
-	int ret;
+अटल पूर्णांक sun4i_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sun4i_pwm_chip *pwm = platक्रमm_get_drvdata(pdev);
+	पूर्णांक ret;
 
-	ret = pwmchip_remove(&pwm->chip);
-	if (ret)
-		return ret;
+	ret = pwmchip_हटाओ(&pwm->chip);
+	अगर (ret)
+		वापस ret;
 
 	clk_disable_unprepare(pwm->bus_clk);
-	reset_control_assert(pwm->rst);
+	reset_control_निश्चित(pwm->rst);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver sun4i_pwm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sun4i_pwm_driver = अणु
+	.driver = अणु
 		.name = "sun4i-pwm",
 		.of_match_table = sun4i_pwm_dt_ids,
-	},
+	पूर्ण,
 	.probe = sun4i_pwm_probe,
-	.remove = sun4i_pwm_remove,
-};
-module_platform_driver(sun4i_pwm_driver);
+	.हटाओ = sun4i_pwm_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(sun4i_pwm_driver);
 
 MODULE_ALIAS("platform:sun4i-pwm");
 MODULE_AUTHOR("Alexandre Belloni <alexandre.belloni@free-electrons.com>");

@@ -1,254 +1,255 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_DAX_H
-#define _LINUX_DAX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_DAX_H
+#घोषणा _LINUX_DAX_H
 
-#include <linux/fs.h>
-#include <linux/mm.h>
-#include <linux/radix-tree.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/radix-tree.h>
 
-/* Flag for synchronous flush */
-#define DAXDEV_F_SYNC (1UL << 0)
+/* Flag क्रम synchronous flush */
+#घोषणा DAXDEV_F_SYNC (1UL << 0)
 
-typedef unsigned long dax_entry_t;
+प्रकार अचिन्हित दीर्घ dax_entry_t;
 
-struct iomap_ops;
-struct iomap;
-struct dax_device;
-struct dax_operations {
+काष्ठा iomap_ops;
+काष्ठा iomap;
+काष्ठा dax_device;
+काष्ठा dax_operations अणु
 	/*
 	 * direct_access: translate a device-relative
-	 * logical-page-offset into an absolute physical pfn. Return the
-	 * number of pages available for DAX at that pfn.
+	 * logical-page-offset पूर्णांकo an असलolute physical pfn. Return the
+	 * number of pages available क्रम DAX at that pfn.
 	 */
-	long (*direct_access)(struct dax_device *, pgoff_t, long,
-			void **, pfn_t *);
+	दीर्घ (*direct_access)(काष्ठा dax_device *, pgoff_t, दीर्घ,
+			व्योम **, pfn_t *);
 	/*
 	 * Validate whether this device is usable as an fsdax backing
 	 * device.
 	 */
-	bool (*dax_supported)(struct dax_device *, struct block_device *, int,
+	bool (*dax_supported)(काष्ठा dax_device *, काष्ठा block_device *, पूर्णांक,
 			sector_t, sector_t);
-	/* copy_from_iter: required operation for fs-dax direct-i/o */
-	size_t (*copy_from_iter)(struct dax_device *, pgoff_t, void *, size_t,
-			struct iov_iter *);
-	/* copy_to_iter: required operation for fs-dax direct-i/o */
-	size_t (*copy_to_iter)(struct dax_device *, pgoff_t, void *, size_t,
-			struct iov_iter *);
+	/* copy_from_iter: required operation क्रम fs-dax direct-i/o */
+	माप_प्रकार (*copy_from_iter)(काष्ठा dax_device *, pgoff_t, व्योम *, माप_प्रकार,
+			काष्ठा iov_iter *);
+	/* copy_to_iter: required operation क्रम fs-dax direct-i/o */
+	माप_प्रकार (*copy_to_iter)(काष्ठा dax_device *, pgoff_t, व्योम *, माप_प्रकार,
+			काष्ठा iov_iter *);
 	/* zero_page_range: required operation. Zero page range   */
-	int (*zero_page_range)(struct dax_device *, pgoff_t, size_t);
-};
+	पूर्णांक (*zero_page_range)(काष्ठा dax_device *, pgoff_t, माप_प्रकार);
+पूर्ण;
 
-extern struct attribute_group dax_attribute_group;
+बाह्य काष्ठा attribute_group dax_attribute_group;
 
-#if IS_ENABLED(CONFIG_DAX)
-struct dax_device *dax_get_by_host(const char *host);
-struct dax_device *alloc_dax(void *private, const char *host,
-		const struct dax_operations *ops, unsigned long flags);
-void put_dax(struct dax_device *dax_dev);
-void kill_dax(struct dax_device *dax_dev);
-void dax_write_cache(struct dax_device *dax_dev, bool wc);
-bool dax_write_cache_enabled(struct dax_device *dax_dev);
-bool __dax_synchronous(struct dax_device *dax_dev);
-static inline bool dax_synchronous(struct dax_device *dax_dev)
-{
-	return  __dax_synchronous(dax_dev);
-}
-void __set_dax_synchronous(struct dax_device *dax_dev);
-static inline void set_dax_synchronous(struct dax_device *dax_dev)
-{
+#अगर IS_ENABLED(CONFIG_DAX)
+काष्ठा dax_device *dax_get_by_host(स्थिर अक्षर *host);
+काष्ठा dax_device *alloc_dax(व्योम *निजी, स्थिर अक्षर *host,
+		स्थिर काष्ठा dax_operations *ops, अचिन्हित दीर्घ flags);
+व्योम put_dax(काष्ठा dax_device *dax_dev);
+व्योम समाप्त_dax(काष्ठा dax_device *dax_dev);
+व्योम dax_ग_लिखो_cache(काष्ठा dax_device *dax_dev, bool wc);
+bool dax_ग_लिखो_cache_enabled(काष्ठा dax_device *dax_dev);
+bool __dax_synchronous(काष्ठा dax_device *dax_dev);
+अटल अंतरभूत bool dax_synchronous(काष्ठा dax_device *dax_dev)
+अणु
+	वापस  __dax_synchronous(dax_dev);
+पूर्ण
+व्योम __set_dax_synchronous(काष्ठा dax_device *dax_dev);
+अटल अंतरभूत व्योम set_dax_synchronous(काष्ठा dax_device *dax_dev)
+अणु
 	__set_dax_synchronous(dax_dev);
-}
-bool dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
-		int blocksize, sector_t start, sector_t len);
+पूर्ण
+bool dax_supported(काष्ठा dax_device *dax_dev, काष्ठा block_device *bdev,
+		पूर्णांक blocksize, sector_t start, sector_t len);
 /*
- * Check if given mapping is supported by the file / underlying device.
+ * Check अगर given mapping is supported by the file / underlying device.
  */
-static inline bool daxdev_mapping_supported(struct vm_area_struct *vma,
-					     struct dax_device *dax_dev)
-{
-	if (!(vma->vm_flags & VM_SYNC))
-		return true;
-	if (!IS_DAX(file_inode(vma->vm_file)))
-		return false;
-	return dax_synchronous(dax_dev);
-}
-#else
-static inline struct dax_device *dax_get_by_host(const char *host)
-{
-	return NULL;
-}
-static inline struct dax_device *alloc_dax(void *private, const char *host,
-		const struct dax_operations *ops, unsigned long flags)
-{
+अटल अंतरभूत bool daxdev_mapping_supported(काष्ठा vm_area_काष्ठा *vma,
+					     काष्ठा dax_device *dax_dev)
+अणु
+	अगर (!(vma->vm_flags & VM_SYNC))
+		वापस true;
+	अगर (!IS_DAX(file_inode(vma->vm_file)))
+		वापस false;
+	वापस dax_synchronous(dax_dev);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत काष्ठा dax_device *dax_get_by_host(स्थिर अक्षर *host)
+अणु
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत काष्ठा dax_device *alloc_dax(व्योम *निजी, स्थिर अक्षर *host,
+		स्थिर काष्ठा dax_operations *ops, अचिन्हित दीर्घ flags)
+अणु
 	/*
-	 * Callers should check IS_ENABLED(CONFIG_DAX) to know if this
-	 * NULL is an error or expected.
+	 * Callers should check IS_ENABLED(CONFIG_DAX) to know अगर this
+	 * शून्य is an error or expected.
 	 */
-	return NULL;
-}
-static inline void put_dax(struct dax_device *dax_dev)
-{
-}
-static inline void kill_dax(struct dax_device *dax_dev)
-{
-}
-static inline void dax_write_cache(struct dax_device *dax_dev, bool wc)
-{
-}
-static inline bool dax_write_cache_enabled(struct dax_device *dax_dev)
-{
-	return false;
-}
-static inline bool dax_synchronous(struct dax_device *dax_dev)
-{
-	return true;
-}
-static inline void set_dax_synchronous(struct dax_device *dax_dev)
-{
-}
-static inline bool dax_supported(struct dax_device *dax_dev,
-		struct block_device *bdev, int blocksize, sector_t start,
+	वापस शून्य;
+पूर्ण
+अटल अंतरभूत व्योम put_dax(काष्ठा dax_device *dax_dev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम समाप्त_dax(काष्ठा dax_device *dax_dev)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम dax_ग_लिखो_cache(काष्ठा dax_device *dax_dev, bool wc)
+अणु
+पूर्ण
+अटल अंतरभूत bool dax_ग_लिखो_cache_enabled(काष्ठा dax_device *dax_dev)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत bool dax_synchronous(काष्ठा dax_device *dax_dev)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत व्योम set_dax_synchronous(काष्ठा dax_device *dax_dev)
+अणु
+पूर्ण
+अटल अंतरभूत bool dax_supported(काष्ठा dax_device *dax_dev,
+		काष्ठा block_device *bdev, पूर्णांक blocksize, sector_t start,
 		sector_t len)
-{
-	return false;
-}
-static inline bool daxdev_mapping_supported(struct vm_area_struct *vma,
-				struct dax_device *dax_dev)
-{
-	return !(vma->vm_flags & VM_SYNC);
-}
-#endif
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत bool daxdev_mapping_supported(काष्ठा vm_area_काष्ठा *vma,
+				काष्ठा dax_device *dax_dev)
+अणु
+	वापस !(vma->vm_flags & VM_SYNC);
+पूर्ण
+#पूर्ण_अगर
 
-struct writeback_control;
-int bdev_dax_pgoff(struct block_device *, sector_t, size_t, pgoff_t *pgoff);
-#if IS_ENABLED(CONFIG_FS_DAX)
-bool __bdev_dax_supported(struct block_device *bdev, int blocksize);
-static inline bool bdev_dax_supported(struct block_device *bdev, int blocksize)
-{
-	return __bdev_dax_supported(bdev, blocksize);
-}
+काष्ठा ग_लिखोback_control;
+पूर्णांक bdev_dax_pgoff(काष्ठा block_device *, sector_t, माप_प्रकार, pgoff_t *pgoff);
+#अगर IS_ENABLED(CONFIG_FS_DAX)
+bool __bdev_dax_supported(काष्ठा block_device *bdev, पूर्णांक blocksize);
+अटल अंतरभूत bool bdev_dax_supported(काष्ठा block_device *bdev, पूर्णांक blocksize)
+अणु
+	वापस __bdev_dax_supported(bdev, blocksize);
+पूर्ण
 
-bool __generic_fsdax_supported(struct dax_device *dax_dev,
-		struct block_device *bdev, int blocksize, sector_t start,
+bool __generic_fsdax_supported(काष्ठा dax_device *dax_dev,
+		काष्ठा block_device *bdev, पूर्णांक blocksize, sector_t start,
 		sector_t sectors);
-static inline bool generic_fsdax_supported(struct dax_device *dax_dev,
-		struct block_device *bdev, int blocksize, sector_t start,
+अटल अंतरभूत bool generic_fsdax_supported(काष्ठा dax_device *dax_dev,
+		काष्ठा block_device *bdev, पूर्णांक blocksize, sector_t start,
 		sector_t sectors)
-{
-	return __generic_fsdax_supported(dax_dev, bdev, blocksize, start,
+अणु
+	वापस __generic_fsdax_supported(dax_dev, bdev, blocksize, start,
 			sectors);
-}
+पूर्ण
 
-static inline void fs_put_dax(struct dax_device *dax_dev)
-{
+अटल अंतरभूत व्योम fs_put_dax(काष्ठा dax_device *dax_dev)
+अणु
 	put_dax(dax_dev);
-}
+पूर्ण
 
-struct dax_device *fs_dax_get_by_bdev(struct block_device *bdev);
-int dax_writeback_mapping_range(struct address_space *mapping,
-		struct dax_device *dax_dev, struct writeback_control *wbc);
+काष्ठा dax_device *fs_dax_get_by_bdev(काष्ठा block_device *bdev);
+पूर्णांक dax_ग_लिखोback_mapping_range(काष्ठा address_space *mapping,
+		काष्ठा dax_device *dax_dev, काष्ठा ग_लिखोback_control *wbc);
 
-struct page *dax_layout_busy_page(struct address_space *mapping);
-struct page *dax_layout_busy_page_range(struct address_space *mapping, loff_t start, loff_t end);
-dax_entry_t dax_lock_page(struct page *page);
-void dax_unlock_page(struct page *page, dax_entry_t cookie);
-#else
-static inline bool bdev_dax_supported(struct block_device *bdev,
-		int blocksize)
-{
-	return false;
-}
+काष्ठा page *dax_layout_busy_page(काष्ठा address_space *mapping);
+काष्ठा page *dax_layout_busy_page_range(काष्ठा address_space *mapping, loff_t start, loff_t end);
+dax_entry_t dax_lock_page(काष्ठा page *page);
+व्योम dax_unlock_page(काष्ठा page *page, dax_entry_t cookie);
+#अन्यथा
+अटल अंतरभूत bool bdev_dax_supported(काष्ठा block_device *bdev,
+		पूर्णांक blocksize)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool generic_fsdax_supported(struct dax_device *dax_dev,
-		struct block_device *bdev, int blocksize, sector_t start,
+अटल अंतरभूत bool generic_fsdax_supported(काष्ठा dax_device *dax_dev,
+		काष्ठा block_device *bdev, पूर्णांक blocksize, sector_t start,
 		sector_t sectors)
-{
-	return false;
-}
+अणु
+	वापस false;
+पूर्ण
 
-static inline void fs_put_dax(struct dax_device *dax_dev)
-{
-}
+अटल अंतरभूत व्योम fs_put_dax(काष्ठा dax_device *dax_dev)
+अणु
+पूर्ण
 
-static inline struct dax_device *fs_dax_get_by_bdev(struct block_device *bdev)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा dax_device *fs_dax_get_by_bdev(काष्ठा block_device *bdev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct page *dax_layout_busy_page(struct address_space *mapping)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा page *dax_layout_busy_page(काष्ठा address_space *mapping)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct page *dax_layout_busy_page_range(struct address_space *mapping, pgoff_t start, pgoff_t nr_pages)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा page *dax_layout_busy_page_range(काष्ठा address_space *mapping, pgoff_t start, pgoff_t nr_pages)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int dax_writeback_mapping_range(struct address_space *mapping,
-		struct dax_device *dax_dev, struct writeback_control *wbc)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक dax_ग_लिखोback_mapping_range(काष्ठा address_space *mapping,
+		काष्ठा dax_device *dax_dev, काष्ठा ग_लिखोback_control *wbc)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline dax_entry_t dax_lock_page(struct page *page)
-{
-	if (IS_DAX(page->mapping->host))
-		return ~0UL;
-	return 0;
-}
+अटल अंतरभूत dax_entry_t dax_lock_page(काष्ठा page *page)
+अणु
+	अगर (IS_DAX(page->mapping->host))
+		वापस ~0UL;
+	वापस 0;
+पूर्ण
 
-static inline void dax_unlock_page(struct page *page, dax_entry_t cookie)
-{
-}
-#endif
+अटल अंतरभूत व्योम dax_unlock_page(काष्ठा page *page, dax_entry_t cookie)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_DAX)
-int dax_read_lock(void);
-void dax_read_unlock(int id);
-#else
-static inline int dax_read_lock(void)
-{
-	return 0;
-}
+#अगर IS_ENABLED(CONFIG_DAX)
+पूर्णांक dax_पढ़ो_lock(व्योम);
+व्योम dax_पढ़ो_unlock(पूर्णांक id);
+#अन्यथा
+अटल अंतरभूत पूर्णांक dax_पढ़ो_lock(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void dax_read_unlock(int id)
-{
-}
-#endif /* CONFIG_DAX */
-bool dax_alive(struct dax_device *dax_dev);
-void *dax_get_private(struct dax_device *dax_dev);
-long dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff, long nr_pages,
-		void **kaddr, pfn_t *pfn);
-size_t dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
-		size_t bytes, struct iov_iter *i);
-size_t dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff, void *addr,
-		size_t bytes, struct iov_iter *i);
-int dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
-			size_t nr_pages);
-void dax_flush(struct dax_device *dax_dev, void *addr, size_t size);
+अटल अंतरभूत व्योम dax_पढ़ो_unlock(पूर्णांक id)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_DAX */
+bool dax_alive(काष्ठा dax_device *dax_dev);
+व्योम *dax_get_निजी(काष्ठा dax_device *dax_dev);
+दीर्घ dax_direct_access(काष्ठा dax_device *dax_dev, pgoff_t pgoff, दीर्घ nr_pages,
+		व्योम **kaddr, pfn_t *pfn);
+माप_प्रकार dax_copy_from_iter(काष्ठा dax_device *dax_dev, pgoff_t pgoff, व्योम *addr,
+		माप_प्रकार bytes, काष्ठा iov_iter *i);
+माप_प्रकार dax_copy_to_iter(काष्ठा dax_device *dax_dev, pgoff_t pgoff, व्योम *addr,
+		माप_प्रकार bytes, काष्ठा iov_iter *i);
+पूर्णांक dax_zero_page_range(काष्ठा dax_device *dax_dev, pgoff_t pgoff,
+			माप_प्रकार nr_pages);
+व्योम dax_flush(काष्ठा dax_device *dax_dev, व्योम *addr, माप_प्रकार size);
 
-ssize_t dax_iomap_rw(struct kiocb *iocb, struct iov_iter *iter,
-		const struct iomap_ops *ops);
-vm_fault_t dax_iomap_fault(struct vm_fault *vmf, enum page_entry_size pe_size,
-		    pfn_t *pfnp, int *errp, const struct iomap_ops *ops);
-vm_fault_t dax_finish_sync_fault(struct vm_fault *vmf,
-		enum page_entry_size pe_size, pfn_t pfn);
-int dax_delete_mapping_entry(struct address_space *mapping, pgoff_t index);
-int dax_invalidate_mapping_entry_sync(struct address_space *mapping,
+sमाप_प्रकार dax_iomap_rw(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter,
+		स्थिर काष्ठा iomap_ops *ops);
+vm_fault_t dax_iomap_fault(काष्ठा vm_fault *vmf, क्रमागत page_entry_size pe_size,
+		    pfn_t *pfnp, पूर्णांक *errp, स्थिर काष्ठा iomap_ops *ops);
+vm_fault_t dax_finish_sync_fault(काष्ठा vm_fault *vmf,
+		क्रमागत page_entry_size pe_size, pfn_t pfn);
+पूर्णांक dax_delete_mapping_entry(काष्ठा address_space *mapping, pgoff_t index);
+पूर्णांक dax_invalidate_mapping_entry_sync(काष्ठा address_space *mapping,
 				      pgoff_t index);
-s64 dax_iomap_zero(loff_t pos, u64 length, struct iomap *iomap);
-static inline bool dax_mapping(struct address_space *mapping)
-{
-	return mapping->host && IS_DAX(mapping->host);
-}
+s64 dax_iomap_zero(loff_t pos, u64 length, काष्ठा iomap *iomap);
+अटल अंतरभूत bool dax_mapping(काष्ठा address_space *mapping)
+अणु
+	वापस mapping->host && IS_DAX(mapping->host);
+पूर्ण
 
-#ifdef CONFIG_DEV_DAX_HMEM_DEVICES
-void hmem_register_device(int target_nid, struct resource *r);
-#else
-static inline void hmem_register_device(int target_nid, struct resource *r)
-{
-}
-#endif
+#अगर_घोषित CONFIG_DEV_DAX_HMEM_DEVICES
+व्योम hmem_रेजिस्टर_device(पूर्णांक target_nid, काष्ठा resource *r);
+#अन्यथा
+अटल अंतरभूत व्योम hmem_रेजिस्टर_device(पूर्णांक target_nid, काष्ठा resource *r)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * drivers/video/cirrusfb.c - driver for Cirrus Logic chipsets
+ * drivers/video/cirrusfb.c - driver क्रम Cirrus Logic chipsets
  *
  * Copyright 1999-2001 Jeff Garzik <jgarzik@pobox.com>
  *
  * Contributors (thanks, all!)
  *
  *	David Eger:
- *	Overhaul for Linux 2.6
+ *	Overhaul क्रम Linux 2.6
  *
  *      Jeff Rugen:
  *      Major contributions;  Motorola PowerStack (PPC and PCI) support,
@@ -29,32 +30,32 @@
  * Format this code with GNU indent '-kr -i8 -pcs' options.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  *
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/delay.h>
-#include <linux/fb.h>
-#include <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
 
-#ifdef CONFIG_ZORRO
-#include <linux/zorro.h>
-#endif
-#ifdef CONFIG_PCI
-#include <linux/pci.h>
-#endif
-#ifdef CONFIG_AMIGA
-#include <asm/amigahw.h>
-#endif
+#अगर_घोषित CONFIG_ZORRO
+#समावेश <linux/zorro.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCI
+#समावेश <linux/pci.h>
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_AMIGA
+#समावेश <यंत्र/amigahw.h>
+#पूर्ण_अगर
 
-#include <video/vga.h>
-#include <video/cirrus.h>
+#समावेश <video/vga.h>
+#समावेश <video/cirrus.h>
 
 /*****************************************************************
  *
@@ -62,30 +63,30 @@
  *
  */
 
-/* disable runtime assertions? */
-/* #define CIRRUSFB_NDEBUG */
+/* disable runसमय निश्चितions? */
+/* #घोषणा CIRRUSFB_न_संशोधन */
 
-/* debugging assertions */
-#ifndef CIRRUSFB_NDEBUG
-#define assert(expr) \
-	if (!(expr)) { \
-		printk("Assertion failed! %s,%s,%s,line=%d\n", \
-		#expr, __FILE__, __func__, __LINE__); \
-	}
-#else
-#define assert(expr)
-#endif
+/* debugging निश्चितions */
+#अगर_अघोषित CIRRUSFB_न_संशोधन
+#घोषणा निश्चित(expr) \
+	अगर (!(expr)) अणु \
+		prपूर्णांकk("Assertion failed! %s,%s,%s,line=%d\n", \
+		#expr, __खाता__, __func__, __LINE__); \
+	पूर्ण
+#अन्यथा
+#घोषणा निश्चित(expr)
+#पूर्ण_अगर
 
-#define MB_ (1024 * 1024)
+#घोषणा MB_ (1024 * 1024)
 
 /*****************************************************************
  *
- * chipset information
+ * chipset inक्रमmation
  *
  */
 
 /* board types */
-enum cirrus_board {
+क्रमागत cirrus_board अणु
 	BT_NONE = 0,
 	BT_SD64,	/* GD5434 */
 	BT_PICCOLO,	/* GD5426 */
@@ -96,42 +97,42 @@ enum cirrus_board {
 	BT_GD5480,
 	BT_LAGUNA,	/* GD5462/64 */
 	BT_LAGUNAB,	/* GD5465 */
-};
+पूर्ण;
 
 /*
- * per-board-type information, used for enumerating and abstracting
- * chip-specific information
- * NOTE: MUST be in the same order as enum cirrus_board in order to
+ * per-board-type inक्रमmation, used क्रम क्रमागतerating and असलtracting
+ * chip-specअगरic inक्रमmation
+ * NOTE: MUST be in the same order as क्रमागत cirrus_board in order to
  * use direct indexing on this array
  * NOTE: '__initdata' cannot be used as some of this info
- * is required at runtime.  Maybe separate into an init-only and
- * a run-time table?
+ * is required at runसमय.  Maybe separate पूर्णांकo an init-only and
+ * a run-समय table?
  */
-static const struct cirrusfb_board_info_rec {
-	char *name;		/* ASCII name of chipset */
-	long maxclock[5];		/* maximum video clock */
-	/* for  1/4bpp, 8bpp 15/16bpp, 24bpp, 32bpp - numbers from xorg code */
+अटल स्थिर काष्ठा cirrusfb_board_info_rec अणु
+	अक्षर *name;		/* ASCII name of chipset */
+	दीर्घ maxघड़ी[5];		/* maximum video घड़ी */
+	/* क्रम  1/4bpp, 8bpp 15/16bpp, 24bpp, 32bpp - numbers from xorg code */
 	bool init_sr07 : 1; /* init SR07 during init_vgachip() */
-	bool init_sr1f : 1; /* write SR1F during init_vgachip() */
-	/* construct bit 19 of screen start address */
+	bool init_sr1f : 1; /* ग_लिखो SR1F during init_vgachip() */
+	/* स्थिरruct bit 19 of screen start address */
 	bool scrn_start_bit19 : 1;
 
-	/* initial SR07 value, then for each mode */
-	unsigned char sr07;
-	unsigned char sr07_1bpp;
-	unsigned char sr07_1bpp_mux;
-	unsigned char sr07_8bpp;
-	unsigned char sr07_8bpp_mux;
+	/* initial SR07 value, then क्रम each mode */
+	अचिन्हित अक्षर sr07;
+	अचिन्हित अक्षर sr07_1bpp;
+	अचिन्हित अक्षर sr07_1bpp_mux;
+	अचिन्हित अक्षर sr07_8bpp;
+	अचिन्हित अक्षर sr07_8bpp_mux;
 
-	unsigned char sr1f;	/* SR1F VGA initial register value */
-} cirrusfb_board_info[] = {
-	[BT_SD64] = {
+	अचिन्हित अक्षर sr1f;	/* SR1F VGA initial रेजिस्टर value */
+पूर्ण cirrusfb_board_info[] = अणु
+	[BT_SD64] = अणु
 		.name			= "CL SD64",
-		.maxclock		= {
+		.maxघड़ी		= अणु
 			/* guess */
-			/* the SD64/P4 have a higher max. videoclock */
+			/* the SD64/P4 have a higher max. videoघड़ी */
 			135100, 135100, 85500, 85500, 0
-		},
+		पूर्ण,
 		.init_sr07		= true,
 		.init_sr1f		= true,
 		.scrn_start_bit19	= true,
@@ -141,13 +142,13 @@ static const struct cirrusfb_board_info_rec {
 		.sr07_8bpp		= 0xF1,
 		.sr07_8bpp_mux		= 0xF7,
 		.sr1f			= 0x1E
-	},
-	[BT_PICCOLO] = {
+	पूर्ण,
+	[BT_PICCOLO] = अणु
 		.name			= "CL Piccolo",
-		.maxclock		= {
+		.maxघड़ी		= अणु
 			/* guess */
 			90000, 90000, 90000, 90000, 90000
-		},
+		पूर्ण,
 		.init_sr07		= true,
 		.init_sr1f		= true,
 		.scrn_start_bit19	= false,
@@ -155,13 +156,13 @@ static const struct cirrusfb_board_info_rec {
 		.sr07_1bpp		= 0x80,
 		.sr07_8bpp		= 0x81,
 		.sr1f			= 0x22
-	},
-	[BT_PICASSO] = {
+	पूर्ण,
+	[BT_PICASSO] = अणु
 		.name			= "CL Picasso",
-		.maxclock		= {
+		.maxघड़ी		= अणु
 			/* guess */
 			90000, 90000, 90000, 90000, 90000
-		},
+		पूर्ण,
 		.init_sr07		= true,
 		.init_sr1f		= true,
 		.scrn_start_bit19	= false,
@@ -169,13 +170,13 @@ static const struct cirrusfb_board_info_rec {
 		.sr07_1bpp		= 0x20,
 		.sr07_8bpp		= 0x21,
 		.sr1f			= 0x22
-	},
-	[BT_SPECTRUM] = {
+	पूर्ण,
+	[BT_SPECTRUM] = अणु
 		.name			= "CL Spectrum",
-		.maxclock		= {
+		.maxघड़ी		= अणु
 			/* guess */
 			90000, 90000, 90000, 90000, 90000
-		},
+		पूर्ण,
 		.init_sr07		= true,
 		.init_sr1f		= true,
 		.scrn_start_bit19	= false,
@@ -183,12 +184,12 @@ static const struct cirrusfb_board_info_rec {
 		.sr07_1bpp		= 0x80,
 		.sr07_8bpp		= 0x81,
 		.sr1f			= 0x22
-	},
-	[BT_PICASSO4] = {
+	पूर्ण,
+	[BT_PICASSO4] = अणु
 		.name			= "CL Picasso4",
-		.maxclock		= {
+		.maxघड़ी		= अणु
 			135100, 135100, 85500, 85500, 0
-		},
+		पूर्ण,
 		.init_sr07		= true,
 		.init_sr1f		= false,
 		.scrn_start_bit19	= true,
@@ -198,13 +199,13 @@ static const struct cirrusfb_board_info_rec {
 		.sr07_8bpp		= 0xA1,
 		.sr07_8bpp_mux		= 0xA7,
 		.sr1f			= 0
-	},
-	[BT_ALPINE] = {
+	पूर्ण,
+	[BT_ALPINE] = अणु
 		.name			= "CL Alpine",
-		.maxclock		= {
-			/* for the GD5430.  GD5446 can do more... */
+		.maxघड़ी		= अणु
+			/* क्रम the GD5430.  GD5446 can करो more... */
 			85500, 85500, 50000, 28500, 0
-		},
+		पूर्ण,
 		.init_sr07		= true,
 		.init_sr1f		= true,
 		.scrn_start_bit19	= true,
@@ -214,12 +215,12 @@ static const struct cirrusfb_board_info_rec {
 		.sr07_8bpp		= 0xA1,
 		.sr07_8bpp_mux		= 0xA7,
 		.sr1f			= 0x1C
-	},
-	[BT_GD5480] = {
+	पूर्ण,
+	[BT_GD5480] = अणु
 		.name			= "CL GD5480",
-		.maxclock		= {
+		.maxघड़ी		= अणु
 			135100, 200000, 200000, 135100, 135100
-		},
+		पूर्ण,
 		.init_sr07		= true,
 		.init_sr1f		= true,
 		.scrn_start_bit19	= true,
@@ -227,34 +228,34 @@ static const struct cirrusfb_board_info_rec {
 		.sr07_1bpp		= 0x11,
 		.sr07_8bpp		= 0x11,
 		.sr1f			= 0x1C
-	},
-	[BT_LAGUNA] = {
+	पूर्ण,
+	[BT_LAGUNA] = अणु
 		.name			= "CL Laguna",
-		.maxclock		= {
+		.maxघड़ी		= अणु
 			/* taken from X11 code */
 			170000, 170000, 170000, 170000, 135100,
-		},
+		पूर्ण,
 		.init_sr07		= false,
 		.init_sr1f		= false,
 		.scrn_start_bit19	= true,
-	},
-	[BT_LAGUNAB] = {
+	पूर्ण,
+	[BT_LAGUNAB] = अणु
 		.name			= "CL Laguna AGP",
-		.maxclock		= {
+		.maxघड़ी		= अणु
 			/* taken from X11 code */
 			170000, 250000, 170000, 170000, 135100,
-		},
+		पूर्ण,
 		.init_sr07		= false,
 		.init_sr1f		= false,
 		.scrn_start_bit19	= true,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-#ifdef CONFIG_PCI
-#define CHIP(id, btype) \
-	{ PCI_VENDOR_ID_CIRRUS, id, PCI_ANY_ID, PCI_ANY_ID, 0, 0, (btype) }
+#अगर_घोषित CONFIG_PCI
+#घोषणा CHIP(id, btype) \
+	अणु PCI_VENDOR_ID_CIRRUS, id, PCI_ANY_ID, PCI_ANY_ID, 0, 0, (btype) पूर्ण
 
-static struct pci_device_id cirrusfb_pci_table[] = {
+अटल काष्ठा pci_device_id cirrusfb_pci_table[] = अणु
 	CHIP(PCI_DEVICE_ID_CIRRUS_5436, BT_ALPINE),
 	CHIP(PCI_DEVICE_ID_CIRRUS_5434_8, BT_SD64),
 	CHIP(PCI_DEVICE_ID_CIRRUS_5434_4, BT_SD64),
@@ -266,340 +267,340 @@ static struct pci_device_id cirrusfb_pci_table[] = {
 	CHIP(PCI_DEVICE_ID_CIRRUS_5462, BT_LAGUNA), /* CL Laguna */
 	CHIP(PCI_DEVICE_ID_CIRRUS_5464, BT_LAGUNA), /* CL Laguna 3D */
 	CHIP(PCI_DEVICE_ID_CIRRUS_5465, BT_LAGUNAB), /* CL Laguna 3DA*/
-	{ 0, }
-};
+	अणु 0, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, cirrusfb_pci_table);
-#undef CHIP
-#endif /* CONFIG_PCI */
+#अघोषित CHIP
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#ifdef CONFIG_ZORRO
-struct zorrocl {
-	enum cirrus_board type;	/* Board type */
-	u32 regoffset;		/* Offset of registers in first Zorro device */
+#अगर_घोषित CONFIG_ZORRO
+काष्ठा zorrocl अणु
+	क्रमागत cirrus_board type;	/* Board type */
+	u32 regoffset;		/* Offset of रेजिस्टरs in first Zorro device */
 	u32 ramsize;		/* Size of video RAM in first Zorro device */
-				/* If zero, use autoprobe on RAM device */
+				/* If zero, use स्वतःprobe on RAM device */
 	u32 ramoffset;		/* Offset of video RAM in first Zorro device */
 	zorro_id ramid;		/* Zorro ID of RAM device */
 	zorro_id ramid2;	/* Zorro ID of optional second RAM device */
-};
+पूर्ण;
 
-static const struct zorrocl zcl_sd64 = {
+अटल स्थिर काष्ठा zorrocl zcl_sd64 = अणु
 	.type		= BT_SD64,
 	.ramid		= ZORRO_PROD_HELFRICH_SD64_RAM,
-};
+पूर्ण;
 
-static const struct zorrocl zcl_piccolo = {
+अटल स्थिर काष्ठा zorrocl zcl_piccolo = अणु
 	.type		= BT_PICCOLO,
 	.ramid		= ZORRO_PROD_HELFRICH_PICCOLO_RAM,
-};
+पूर्ण;
 
-static const struct zorrocl zcl_picasso = {
+अटल स्थिर काष्ठा zorrocl zcl_picasso = अणु
 	.type		= BT_PICASSO,
 	.ramid		= ZORRO_PROD_VILLAGE_TRONIC_PICASSO_II_II_PLUS_RAM,
-};
+पूर्ण;
 
-static const struct zorrocl zcl_spectrum = {
+अटल स्थिर काष्ठा zorrocl zcl_spectrum = अणु
 	.type		= BT_SPECTRUM,
 	.ramid		= ZORRO_PROD_GVP_EGS_28_24_SPECTRUM_RAM,
-};
+पूर्ण;
 
-static const struct zorrocl zcl_picasso4_z3 = {
+अटल स्थिर काष्ठा zorrocl zcl_picasso4_z3 = अणु
 	.type		= BT_PICASSO4,
 	.regoffset	= 0x00600000,
 	.ramsize	= 4 * MB_,
-	.ramoffset	= 0x01000000,	/* 0x02000000 for 64 MiB boards */
-};
+	.ramoffset	= 0x01000000,	/* 0x02000000 क्रम 64 MiB boards */
+पूर्ण;
 
-static const struct zorrocl zcl_picasso4_z2 = {
+अटल स्थिर काष्ठा zorrocl zcl_picasso4_z2 = अणु
 	.type		= BT_PICASSO4,
 	.regoffset	= 0x10000,
 	.ramid		= ZORRO_PROD_VILLAGE_TRONIC_PICASSO_IV_Z2_RAM1,
 	.ramid2		= ZORRO_PROD_VILLAGE_TRONIC_PICASSO_IV_Z2_RAM2,
-};
+पूर्ण;
 
 
-static const struct zorro_device_id cirrusfb_zorro_table[] = {
-	{
+अटल स्थिर काष्ठा zorro_device_id cirrusfb_zorro_table[] = अणु
+	अणु
 		.id		= ZORRO_PROD_HELFRICH_SD64_REG,
-		.driver_data	= (unsigned long)&zcl_sd64,
-	}, {
+		.driver_data	= (अचिन्हित दीर्घ)&zcl_sd64,
+	पूर्ण, अणु
 		.id		= ZORRO_PROD_HELFRICH_PICCOLO_REG,
-		.driver_data	= (unsigned long)&zcl_piccolo,
-	}, {
+		.driver_data	= (अचिन्हित दीर्घ)&zcl_piccolo,
+	पूर्ण, अणु
 		.id	= ZORRO_PROD_VILLAGE_TRONIC_PICASSO_II_II_PLUS_REG,
-		.driver_data	= (unsigned long)&zcl_picasso,
-	}, {
+		.driver_data	= (अचिन्हित दीर्घ)&zcl_picasso,
+	पूर्ण, अणु
 		.id		= ZORRO_PROD_GVP_EGS_28_24_SPECTRUM_REG,
-		.driver_data	= (unsigned long)&zcl_spectrum,
-	}, {
+		.driver_data	= (अचिन्हित दीर्घ)&zcl_spectrum,
+	पूर्ण, अणु
 		.id		= ZORRO_PROD_VILLAGE_TRONIC_PICASSO_IV_Z3,
-		.driver_data	= (unsigned long)&zcl_picasso4_z3,
-	}, {
+		.driver_data	= (अचिन्हित दीर्घ)&zcl_picasso4_z3,
+	पूर्ण, अणु
 		.id		= ZORRO_PROD_VILLAGE_TRONIC_PICASSO_IV_Z2_REG,
-		.driver_data	= (unsigned long)&zcl_picasso4_z2,
-	},
-	{ 0 }
-};
+		.driver_data	= (अचिन्हित दीर्घ)&zcl_picasso4_z2,
+	पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(zorro, cirrusfb_zorro_table);
-#endif /* CONFIG_ZORRO */
+#पूर्ण_अगर /* CONFIG_ZORRO */
 
-#ifdef CIRRUSFB_DEBUG
-enum cirrusfb_dbg_reg_class {
+#अगर_घोषित CIRRUSFB_DEBUG
+क्रमागत cirrusfb_dbg_reg_class अणु
 	CRT,
 	SEQ
-};
-#endif		/* CIRRUSFB_DEBUG */
+पूर्ण;
+#पूर्ण_अगर		/* CIRRUSFB_DEBUG */
 
 /* info about board */
-struct cirrusfb_info {
+काष्ठा cirrusfb_info अणु
 	u8 __iomem *regbase;
 	u8 __iomem *laguna_mmio;
-	enum cirrus_board btype;
-	unsigned char SFR;	/* Shadow of special function register */
+	क्रमागत cirrus_board btype;
+	अचिन्हित अक्षर SFR;	/* Shaकरोw of special function रेजिस्टर */
 
-	int multiplexing;
-	int doubleVCLK;
-	int blank_mode;
-	u32 pseudo_palette[16];
+	पूर्णांक multiplexing;
+	पूर्णांक द्विगुनVCLK;
+	पूर्णांक blank_mode;
+	u32 pseuकरो_palette[16];
 
-	void (*unmap)(struct fb_info *info);
-};
+	व्योम (*unmap)(काष्ठा fb_info *info);
+पूर्ण;
 
-static bool noaccel;
-static char *mode_option = "640x480@60";
+अटल bool noaccel;
+अटल अक्षर *mode_option = "640x480@60";
 
 /****************************************************************************/
 /**** BEGIN PROTOTYPES ******************************************************/
 
 /*--- Interface used by the world ------------------------------------------*/
-static int cirrusfb_pan_display(struct fb_var_screeninfo *var,
-				struct fb_info *info);
+अटल पूर्णांक cirrusfb_pan_display(काष्ठा fb_var_screeninfo *var,
+				काष्ठा fb_info *info);
 
 /*--- Internal routines ----------------------------------------------------*/
-static void init_vgachip(struct fb_info *info);
-static void switch_monitor(struct cirrusfb_info *cinfo, int on);
-static void WGen(const struct cirrusfb_info *cinfo,
-		 int regnum, unsigned char val);
-static unsigned char RGen(const struct cirrusfb_info *cinfo, int regnum);
-static void AttrOn(const struct cirrusfb_info *cinfo);
-static void WHDR(const struct cirrusfb_info *cinfo, unsigned char val);
-static void WSFR(struct cirrusfb_info *cinfo, unsigned char val);
-static void WSFR2(struct cirrusfb_info *cinfo, unsigned char val);
-static void WClut(struct cirrusfb_info *cinfo, unsigned char regnum,
-		  unsigned char red, unsigned char green, unsigned char blue);
-#if 0
-static void RClut(struct cirrusfb_info *cinfo, unsigned char regnum,
-		  unsigned char *red, unsigned char *green,
-		  unsigned char *blue);
-#endif
-static void cirrusfb_WaitBLT(u8 __iomem *regbase);
-static void cirrusfb_BitBLT(u8 __iomem *regbase, int bits_per_pixel,
-			    u_short curx, u_short cury,
-			    u_short destx, u_short desty,
-			    u_short width, u_short height,
-			    u_short line_length);
-static void cirrusfb_RectFill(u8 __iomem *regbase, int bits_per_pixel,
-			      u_short x, u_short y,
-			      u_short width, u_short height,
+अटल व्योम init_vgachip(काष्ठा fb_info *info);
+अटल व्योम चयन_monitor(काष्ठा cirrusfb_info *cinfo, पूर्णांक on);
+अटल व्योम WGen(स्थिर काष्ठा cirrusfb_info *cinfo,
+		 पूर्णांक regnum, अचिन्हित अक्षर val);
+अटल अचिन्हित अक्षर RGen(स्थिर काष्ठा cirrusfb_info *cinfo, पूर्णांक regnum);
+अटल व्योम AttrOn(स्थिर काष्ठा cirrusfb_info *cinfo);
+अटल व्योम WHDR(स्थिर काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर val);
+अटल व्योम WSFR(काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर val);
+अटल व्योम WSFR2(काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर val);
+अटल व्योम WClut(काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर regnum,
+		  अचिन्हित अक्षर red, अचिन्हित अक्षर green, अचिन्हित अक्षर blue);
+#अगर 0
+अटल व्योम RClut(काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर regnum,
+		  अचिन्हित अक्षर *red, अचिन्हित अक्षर *green,
+		  अचिन्हित अक्षर *blue);
+#पूर्ण_अगर
+अटल व्योम cirrusfb_WaitBLT(u8 __iomem *regbase);
+अटल व्योम cirrusfb_BitBLT(u8 __iomem *regbase, पूर्णांक bits_per_pixel,
+			    u_लघु curx, u_लघु cury,
+			    u_लघु destx, u_लघु desty,
+			    u_लघु width, u_लघु height,
+			    u_लघु line_length);
+अटल व्योम cirrusfb_RectFill(u8 __iomem *regbase, पूर्णांक bits_per_pixel,
+			      u_लघु x, u_लघु y,
+			      u_लघु width, u_लघु height,
 			      u32 fg_color, u32 bg_color,
-			      u_short line_length, u_char blitmode);
+			      u_लघु line_length, u_अक्षर bliपंचांगode);
 
-static void bestclock(long freq, int *nom, int *den, int *div);
+अटल व्योम bestघड़ी(दीर्घ freq, पूर्णांक *nom, पूर्णांक *den, पूर्णांक *भाग);
 
-#ifdef CIRRUSFB_DEBUG
-static void cirrusfb_dbg_reg_dump(struct fb_info *info, caddr_t regbase);
-static void cirrusfb_dbg_print_regs(struct fb_info *info,
+#अगर_घोषित CIRRUSFB_DEBUG
+अटल व्योम cirrusfb_dbg_reg_dump(काष्ठा fb_info *info, caddr_t regbase);
+अटल व्योम cirrusfb_dbg_prपूर्णांक_regs(काष्ठा fb_info *info,
 				    caddr_t regbase,
-				    enum cirrusfb_dbg_reg_class reg_class, ...);
-#endif /* CIRRUSFB_DEBUG */
+				    क्रमागत cirrusfb_dbg_reg_class reg_class, ...);
+#पूर्ण_अगर /* CIRRUSFB_DEBUG */
 
 /*** END   PROTOTYPES ********************************************************/
 /*****************************************************************************/
 /*** BEGIN Interface Used by the World ***************************************/
 
-static inline int is_laguna(const struct cirrusfb_info *cinfo)
-{
-	return cinfo->btype == BT_LAGUNA || cinfo->btype == BT_LAGUNAB;
-}
+अटल अंतरभूत पूर्णांक is_laguna(स्थिर काष्ठा cirrusfb_info *cinfo)
+अणु
+	वापस cinfo->btype == BT_LAGUNA || cinfo->btype == BT_LAGUNAB;
+पूर्ण
 
-static int opencount;
+अटल पूर्णांक खोलोcount;
 
 /*--- Open /dev/fbx ---------------------------------------------------------*/
-static int cirrusfb_open(struct fb_info *info, int user)
-{
-	if (opencount++ == 0)
-		switch_monitor(info->par, 1);
-	return 0;
-}
+अटल पूर्णांक cirrusfb_खोलो(काष्ठा fb_info *info, पूर्णांक user)
+अणु
+	अगर (खोलोcount++ == 0)
+		चयन_monitor(info->par, 1);
+	वापस 0;
+पूर्ण
 
 /*--- Close /dev/fbx --------------------------------------------------------*/
-static int cirrusfb_release(struct fb_info *info, int user)
-{
-	if (--opencount == 0)
-		switch_monitor(info->par, 0);
-	return 0;
-}
+अटल पूर्णांक cirrusfb_release(काष्ठा fb_info *info, पूर्णांक user)
+अणु
+	अगर (--खोलोcount == 0)
+		चयन_monitor(info->par, 0);
+	वापस 0;
+पूर्ण
 
 /**** END   Interface used by the World *************************************/
 /****************************************************************************/
-/**** BEGIN Hardware specific Routines **************************************/
+/**** BEGIN Hardware specअगरic Routines **************************************/
 
-/* Check if the MCLK is not a better clock source */
-static int cirrusfb_check_mclk(struct fb_info *info, long freq)
-{
-	struct cirrusfb_info *cinfo = info->par;
-	long mclk = vga_rseq(cinfo->regbase, CL_SEQR1F) & 0x3f;
+/* Check अगर the MCLK is not a better घड़ी source */
+अटल पूर्णांक cirrusfb_check_mclk(काष्ठा fb_info *info, दीर्घ freq)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	दीर्घ mclk = vga_rseq(cinfo->regbase, CL_SEQR1F) & 0x3f;
 
 	/* Read MCLK value */
 	mclk = (14318 * mclk) >> 3;
 	dev_dbg(info->device, "Read MCLK of %ld kHz\n", mclk);
 
-	/* Determine if we should use MCLK instead of VCLK, and if so, what we
-	 * should divide it by to get VCLK
+	/* Determine अगर we should use MCLK instead of VCLK, and अगर so, what we
+	 * should भागide it by to get VCLK
 	 */
 
-	if (abs(freq - mclk) < 250) {
+	अगर (असल(freq - mclk) < 250) अणु
 		dev_dbg(info->device, "Using VCLK = MCLK\n");
-		return 1;
-	} else if (abs(freq - (mclk / 2)) < 250) {
+		वापस 1;
+	पूर्ण अन्यथा अगर (असल(freq - (mclk / 2)) < 250) अणु
 		dev_dbg(info->device, "Using VCLK = MCLK/2\n");
-		return 2;
-	}
+		वापस 2;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cirrusfb_check_pixclock(const struct fb_var_screeninfo *var,
-				   struct fb_info *info)
-{
-	long freq;
-	long maxclock;
-	struct cirrusfb_info *cinfo = info->par;
-	unsigned maxclockidx = var->bits_per_pixel >> 3;
+अटल पूर्णांक cirrusfb_check_pixघड़ी(स्थिर काष्ठा fb_var_screeninfo *var,
+				   काष्ठा fb_info *info)
+अणु
+	दीर्घ freq;
+	दीर्घ maxघड़ी;
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	अचिन्हित maxघड़ीidx = var->bits_per_pixel >> 3;
 
 	/* convert from ps to kHz */
-	freq = PICOS2KHZ(var->pixclock);
+	freq = PICOS2KHZ(var->pixघड़ी);
 
 	dev_dbg(info->device, "desired pixclock: %ld kHz\n", freq);
 
-	maxclock = cirrusfb_board_info[cinfo->btype].maxclock[maxclockidx];
+	maxघड़ी = cirrusfb_board_info[cinfo->btype].maxघड़ी[maxघड़ीidx];
 	cinfo->multiplexing = 0;
 
 	/* If the frequency is greater than we can support, we might be able
-	 * to use multiplexing for the video mode */
-	if (freq > maxclock) {
+	 * to use multiplexing क्रम the video mode */
+	अगर (freq > maxघड़ी) अणु
 		dev_err(info->device,
 			"Frequency greater than maxclock (%ld kHz)\n",
-			maxclock);
-		return -EINVAL;
-	}
+			maxघड़ी);
+		वापस -EINVAL;
+	पूर्ण
 	/*
-	 * Additional constraint: 8bpp uses DAC clock doubling to allow maximum
-	 * pixel clock
+	 * Additional स्थिरraपूर्णांक: 8bpp uses DAC घड़ी करोubling to allow maximum
+	 * pixel घड़ी
 	 */
-	if (var->bits_per_pixel == 8) {
-		switch (cinfo->btype) {
-		case BT_ALPINE:
-		case BT_SD64:
-		case BT_PICASSO4:
-			if (freq > 85500)
+	अगर (var->bits_per_pixel == 8) अणु
+		चयन (cinfo->btype) अणु
+		हाल BT_ALPINE:
+		हाल BT_SD64:
+		हाल BT_PICASSO4:
+			अगर (freq > 85500)
 				cinfo->multiplexing = 1;
-			break;
-		case BT_GD5480:
-			if (freq > 135100)
+			अवरोध;
+		हाल BT_GD5480:
+			अगर (freq > 135100)
 				cinfo->multiplexing = 1;
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* If we have a 1MB 5434, we need to put ourselves in a mode where
-	 * the VCLK is double the pixel clock. */
-	cinfo->doubleVCLK = 0;
-	if (cinfo->btype == BT_SD64 && info->fix.smem_len <= MB_ &&
-	    var->bits_per_pixel == 16) {
-		cinfo->doubleVCLK = 1;
-	}
+	 * the VCLK is द्विगुन the pixel घड़ी. */
+	cinfo->द्विगुनVCLK = 0;
+	अगर (cinfo->btype == BT_SD64 && info->fix.smem_len <= MB_ &&
+	    var->bits_per_pixel == 16) अणु
+		cinfo->द्विगुनVCLK = 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cirrusfb_check_var(struct fb_var_screeninfo *var,
-			      struct fb_info *info)
-{
-	int yres;
+अटल पूर्णांक cirrusfb_check_var(काष्ठा fb_var_screeninfo *var,
+			      काष्ठा fb_info *info)
+अणु
+	पूर्णांक yres;
 	/* memory size in pixels */
-	unsigned int pixels;
-	struct cirrusfb_info *cinfo = info->par;
+	अचिन्हित पूर्णांक pixels;
+	काष्ठा cirrusfb_info *cinfo = info->par;
 
-	switch (var->bits_per_pixel) {
-	case 1:
+	चयन (var->bits_per_pixel) अणु
+	हाल 1:
 		var->red.offset = 0;
 		var->red.length = 1;
 		var->green = var->red;
 		var->blue = var->red;
-		break;
+		अवरोध;
 
-	case 8:
+	हाल 8:
 		var->red.offset = 0;
 		var->red.length = 8;
 		var->green = var->red;
 		var->blue = var->red;
-		break;
+		अवरोध;
 
-	case 16:
+	हाल 16:
 		var->red.offset = 11;
 		var->green.offset = 5;
 		var->blue.offset = 0;
 		var->red.length = 5;
 		var->green.length = 6;
 		var->blue.length = 5;
-		break;
+		अवरोध;
 
-	case 24:
+	हाल 24:
 		var->red.offset = 16;
 		var->green.offset = 8;
 		var->blue.offset = 0;
 		var->red.length = 8;
 		var->green.length = 8;
 		var->blue.length = 8;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_dbg(info->device,
 			"Unsupported bpp size: %d\n", var->bits_per_pixel);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pixels = info->screen_size * 8 / var->bits_per_pixel;
-	if (var->xres_virtual < var->xres)
-		var->xres_virtual = var->xres;
-	/* use highest possible virtual resolution */
-	if (var->yres_virtual == -1) {
-		var->yres_virtual = pixels / var->xres_virtual;
+	अगर (var->xres_भव < var->xres)
+		var->xres_भव = var->xres;
+	/* use highest possible भव resolution */
+	अगर (var->yres_भव == -1) अणु
+		var->yres_भव = pixels / var->xres_भव;
 
 		dev_info(info->device,
 			 "virtual resolution set to maximum of %dx%d\n",
-			 var->xres_virtual, var->yres_virtual);
-	}
-	if (var->yres_virtual < var->yres)
-		var->yres_virtual = var->yres;
+			 var->xres_भव, var->yres_भव);
+	पूर्ण
+	अगर (var->yres_भव < var->yres)
+		var->yres_भव = var->yres;
 
-	if (var->xres_virtual * var->yres_virtual > pixels) {
+	अगर (var->xres_भव * var->yres_भव > pixels) अणु
 		dev_err(info->device, "mode %dx%dx%d rejected... "
 		      "virtual resolution too high to fit into video memory!\n",
-			var->xres_virtual, var->yres_virtual,
+			var->xres_भव, var->yres_भव,
 			var->bits_per_pixel);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* truncate xoffset and yoffset to maximum if too high */
-	if (var->xoffset > var->xres_virtual - var->xres)
-		var->xoffset = var->xres_virtual - var->xres - 1;
-	if (var->yoffset > var->yres_virtual - var->yres)
-		var->yoffset = var->yres_virtual - var->yres - 1;
+	/* truncate xoffset and yoffset to maximum अगर too high */
+	अगर (var->xoffset > var->xres_भव - var->xres)
+		var->xoffset = var->xres_भव - var->xres - 1;
+	अगर (var->yoffset > var->yres_भव - var->yres)
+		var->yoffset = var->yres_भव - var->yres - 1;
 
 	var->red.msb_right =
 	    var->green.msb_right =
@@ -609,87 +610,87 @@ static int cirrusfb_check_var(struct fb_var_screeninfo *var,
 	    var->transp.msb_right = 0;
 
 	yres = var->yres;
-	if (var->vmode & FB_VMODE_DOUBLE)
+	अगर (var->vmode & FB_VMODE_DOUBLE)
 		yres *= 2;
-	else if (var->vmode & FB_VMODE_INTERLACED)
+	अन्यथा अगर (var->vmode & FB_VMODE_INTERLACED)
 		yres = (yres + 1) / 2;
 
-	if (yres >= 1280) {
+	अगर (yres >= 1280) अणु
 		dev_err(info->device, "ERROR: VerticalTotal >= 1280; "
 			"special treatment required! (TODO)\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cirrusfb_check_pixclock(var, info))
-		return -EINVAL;
+	अगर (cirrusfb_check_pixघड़ी(var, info))
+		वापस -EINVAL;
 
-	if (!is_laguna(cinfo))
+	अगर (!is_laguna(cinfo))
 		var->accel_flags = FB_ACCELF_TEXT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cirrusfb_set_mclk_as_source(const struct fb_info *info, int div)
-{
-	struct cirrusfb_info *cinfo = info->par;
-	unsigned char old1f, old1e;
+अटल व्योम cirrusfb_set_mclk_as_source(स्थिर काष्ठा fb_info *info, पूर्णांक भाग)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	अचिन्हित अक्षर old1f, old1e;
 
-	assert(cinfo != NULL);
+	निश्चित(cinfo != शून्य);
 	old1f = vga_rseq(cinfo->regbase, CL_SEQR1F) & ~0x40;
 
-	if (div) {
+	अगर (भाग) अणु
 		dev_dbg(info->device, "Set %s as pixclock source.\n",
-			(div == 2) ? "MCLK/2" : "MCLK");
+			(भाग == 2) ? "MCLK/2" : "MCLK");
 		old1f |= 0x40;
 		old1e = vga_rseq(cinfo->regbase, CL_SEQR1E) & ~0x1;
-		if (div == 2)
+		अगर (भाग == 2)
 			old1e |= 1;
 
 		vga_wseq(cinfo->regbase, CL_SEQR1E, old1e);
-	}
+	पूर्ण
 	vga_wseq(cinfo->regbase, CL_SEQR1F, old1f);
-}
+पूर्ण
 
 /*************************************************************************
 	cirrusfb_set_par_foo()
 
-	actually writes the values for a new video mode into the hardware,
+	actually ग_लिखोs the values क्रम a new video mode पूर्णांकo the hardware,
 **************************************************************************/
-static int cirrusfb_set_par_foo(struct fb_info *info)
-{
-	struct cirrusfb_info *cinfo = info->par;
-	struct fb_var_screeninfo *var = &info->var;
+अटल पूर्णांक cirrusfb_set_par_foo(काष्ठा fb_info *info)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	काष्ठा fb_var_screeninfo *var = &info->var;
 	u8 __iomem *regbase = cinfo->regbase;
-	unsigned char tmp;
-	int pitch;
-	const struct cirrusfb_board_info_rec *bi;
-	int hdispend, hsyncstart, hsyncend, htotal;
-	int yres, vdispend, vsyncstart, vsyncend, vtotal;
-	long freq;
-	int nom, den, div;
-	unsigned int control = 0, format = 0, threshold = 0;
+	अचिन्हित अक्षर पंचांगp;
+	पूर्णांक pitch;
+	स्थिर काष्ठा cirrusfb_board_info_rec *bi;
+	पूर्णांक hdispend, hsyncstart, hsyncend, htotal;
+	पूर्णांक yres, vdispend, vsyncstart, vsyncend, vtotal;
+	दीर्घ freq;
+	पूर्णांक nom, den, भाग;
+	अचिन्हित पूर्णांक control = 0, क्रमmat = 0, threshold = 0;
 
 	dev_dbg(info->device, "Requested mode: %dx%dx%d\n",
 	       var->xres, var->yres, var->bits_per_pixel);
 
-	switch (var->bits_per_pixel) {
-	case 1:
-		info->fix.line_length = var->xres_virtual / 8;
+	चयन (var->bits_per_pixel) अणु
+	हाल 1:
+		info->fix.line_length = var->xres_भव / 8;
 		info->fix.visual = FB_VISUAL_MONO10;
-		break;
+		अवरोध;
 
-	case 8:
-		info->fix.line_length = var->xres_virtual;
+	हाल 8:
+		info->fix.line_length = var->xres_भव;
 		info->fix.visual = FB_VISUAL_PSEUDOCOLOR;
-		break;
+		अवरोध;
 
-	case 16:
-	case 24:
-		info->fix.line_length = var->xres_virtual *
+	हाल 16:
+	हाल 24:
+		info->fix.line_length = var->xres_भव *
 					var->bits_per_pixel >> 3;
 		info->fix.visual = FB_VISUAL_TRUECOLOR;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 
 	init_vgachip(info);
@@ -708,46 +709,46 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	vsyncend = vsyncstart + var->vsync_len;
 	vtotal = vsyncend + var->upper_margin;
 
-	if (var->vmode & FB_VMODE_DOUBLE) {
+	अगर (var->vmode & FB_VMODE_DOUBLE) अणु
 		vdispend *= 2;
 		vsyncstart *= 2;
 		vsyncend *= 2;
 		vtotal *= 2;
-	} else if (var->vmode & FB_VMODE_INTERLACED) {
+	पूर्ण अन्यथा अगर (var->vmode & FB_VMODE_INTERLACED) अणु
 		vdispend = (vdispend + 1) / 2;
 		vsyncstart = (vsyncstart + 1) / 2;
 		vsyncend = (vsyncend + 1) / 2;
 		vtotal = (vtotal + 1) / 2;
-	}
+	पूर्ण
 	yres = vdispend;
-	if (yres >= 1024) {
+	अगर (yres >= 1024) अणु
 		vtotal /= 2;
 		vsyncstart /= 2;
 		vsyncend /= 2;
 		vdispend /= 2;
-	}
+	पूर्ण
 
 	vdispend -= 1;
 	vsyncstart -= 1;
 	vsyncend -= 1;
 	vtotal -= 2;
 
-	if (cinfo->multiplexing) {
+	अगर (cinfo->multiplexing) अणु
 		htotal /= 2;
 		hsyncstart /= 2;
 		hsyncend /= 2;
 		hdispend /= 2;
-	}
+	पूर्ण
 
 	htotal -= 5;
 	hdispend -= 1;
 	hsyncstart += 1;
 	hsyncend += 1;
 
-	/* unlock register VGA_CRTC_H_TOTAL..CRT7 */
+	/* unlock रेजिस्टर VGA_CRTC_H_TOTAL..CRT7 */
 	vga_wcrt(regbase, VGA_CRTC_V_SYNC_END, 0x20);	/* previously: 0x00) */
 
-	/* if debugging is enabled, all parameters get output before writing */
+	/* अगर debugging is enabled, all parameters get output beक्रमe writing */
 	dev_dbg(info->device, "CRT0: %d\n", htotal);
 	vga_wcrt(regbase, VGA_CRTC_H_TOTAL, htotal);
 
@@ -757,7 +758,7 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	dev_dbg(info->device, "CRT2: %d\n", var->xres / 8);
 	vga_wcrt(regbase, VGA_CRTC_H_BLANK_START, var->xres / 8);
 
-	/*  + 128: Compatible read */
+	/*  + 128: Compatible पढ़ो */
 	dev_dbg(info->device, "CRT3: 128+%d\n", (htotal + 5) % 32);
 	vga_wcrt(regbase, VGA_CRTC_H_BLANK_END,
 		 128 + ((htotal + 5) % 32));
@@ -765,40 +766,40 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	dev_dbg(info->device, "CRT4: %d\n", hsyncstart);
 	vga_wcrt(regbase, VGA_CRTC_H_SYNC_START, hsyncstart);
 
-	tmp = hsyncend % 32;
-	if ((htotal + 5) & 32)
-		tmp += 128;
-	dev_dbg(info->device, "CRT5: %d\n", tmp);
-	vga_wcrt(regbase, VGA_CRTC_H_SYNC_END, tmp);
+	पंचांगp = hsyncend % 32;
+	अगर ((htotal + 5) & 32)
+		पंचांगp += 128;
+	dev_dbg(info->device, "CRT5: %d\n", पंचांगp);
+	vga_wcrt(regbase, VGA_CRTC_H_SYNC_END, पंचांगp);
 
 	dev_dbg(info->device, "CRT6: %d\n", vtotal & 0xff);
 	vga_wcrt(regbase, VGA_CRTC_V_TOTAL, vtotal & 0xff);
 
-	tmp = 16;		/* LineCompare bit #9 */
-	if (vtotal & 256)
-		tmp |= 1;
-	if (vdispend & 256)
-		tmp |= 2;
-	if (vsyncstart & 256)
-		tmp |= 4;
-	if ((vdispend + 1) & 256)
-		tmp |= 8;
-	if (vtotal & 512)
-		tmp |= 32;
-	if (vdispend & 512)
-		tmp |= 64;
-	if (vsyncstart & 512)
-		tmp |= 128;
-	dev_dbg(info->device, "CRT7: %d\n", tmp);
-	vga_wcrt(regbase, VGA_CRTC_OVERFLOW, tmp);
+	पंचांगp = 16;		/* LineCompare bit #9 */
+	अगर (vtotal & 256)
+		पंचांगp |= 1;
+	अगर (vdispend & 256)
+		पंचांगp |= 2;
+	अगर (vsyncstart & 256)
+		पंचांगp |= 4;
+	अगर ((vdispend + 1) & 256)
+		पंचांगp |= 8;
+	अगर (vtotal & 512)
+		पंचांगp |= 32;
+	अगर (vdispend & 512)
+		पंचांगp |= 64;
+	अगर (vsyncstart & 512)
+		पंचांगp |= 128;
+	dev_dbg(info->device, "CRT7: %d\n", पंचांगp);
+	vga_wcrt(regbase, VGA_CRTC_OVERFLOW, पंचांगp);
 
-	tmp = 0x40;		/* LineCompare bit #8 */
-	if ((vdispend + 1) & 512)
-		tmp |= 0x20;
-	if (var->vmode & FB_VMODE_DOUBLE)
-		tmp |= 0x80;
-	dev_dbg(info->device, "CRT9: %d\n", tmp);
-	vga_wcrt(regbase, VGA_CRTC_MAX_SCAN, tmp);
+	पंचांगp = 0x40;		/* LineCompare bit #8 */
+	अगर ((vdispend + 1) & 512)
+		पंचांगp |= 0x20;
+	अगर (var->vmode & FB_VMODE_DOUBLE)
+		पंचांगp |= 0x80;
+	dev_dbg(info->device, "CRT9: %d\n", पंचांगp);
+	vga_wcrt(regbase, VGA_CRTC_MAX_SCAN, पंचांगp);
 
 	dev_dbg(info->device, "CRT10: %d\n", vsyncstart & 0xff);
 	vga_wcrt(regbase, VGA_CRTC_V_SYNC_START, vsyncstart & 0xff);
@@ -818,112 +819,112 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	dev_dbg(info->device, "CRT18: 0xff\n");
 	vga_wcrt(regbase, VGA_CRTC_LINE_COMPARE, 0xff);
 
-	tmp = 0;
-	if (var->vmode & FB_VMODE_INTERLACED)
-		tmp |= 1;
-	if ((htotal + 5) & 64)
-		tmp |= 16;
-	if ((htotal + 5) & 128)
-		tmp |= 32;
-	if (vtotal & 256)
-		tmp |= 64;
-	if (vtotal & 512)
-		tmp |= 128;
+	पंचांगp = 0;
+	अगर (var->vmode & FB_VMODE_INTERLACED)
+		पंचांगp |= 1;
+	अगर ((htotal + 5) & 64)
+		पंचांगp |= 16;
+	अगर ((htotal + 5) & 128)
+		पंचांगp |= 32;
+	अगर (vtotal & 256)
+		पंचांगp |= 64;
+	अगर (vtotal & 512)
+		पंचांगp |= 128;
 
-	dev_dbg(info->device, "CRT1a: %d\n", tmp);
-	vga_wcrt(regbase, CL_CRT1A, tmp);
+	dev_dbg(info->device, "CRT1a: %d\n", पंचांगp);
+	vga_wcrt(regbase, CL_CRT1A, पंचांगp);
 
-	freq = PICOS2KHZ(var->pixclock);
-	if (var->bits_per_pixel == 24)
-		if (cinfo->btype == BT_ALPINE || cinfo->btype == BT_SD64)
+	freq = PICOS2KHZ(var->pixघड़ी);
+	अगर (var->bits_per_pixel == 24)
+		अगर (cinfo->btype == BT_ALPINE || cinfo->btype == BT_SD64)
 			freq *= 3;
-	if (cinfo->multiplexing)
+	अगर (cinfo->multiplexing)
 		freq /= 2;
-	if (cinfo->doubleVCLK)
+	अगर (cinfo->द्विगुनVCLK)
 		freq *= 2;
 
-	bestclock(freq, &nom, &den, &div);
+	bestघड़ी(freq, &nom, &den, &भाग);
 
 	dev_dbg(info->device, "VCLK freq: %ld kHz  nom: %d  den: %d  div: %d\n",
-		freq, nom, den, div);
+		freq, nom, den, भाग);
 
 	/* set VCLK0 */
 	/* hardware RefClock: 14.31818 MHz */
-	/* formula: VClk = (OSC * N) / (D * (1+P)) */
+	/* क्रमmula: VClk = (OSC * N) / (D * (1+P)) */
 	/* Example: VClk = (14.31818 * 91) / (23 * (1+1)) = 28.325 MHz */
 
-	if (cinfo->btype == BT_ALPINE || cinfo->btype == BT_PICASSO4 ||
-	    cinfo->btype == BT_SD64) {
-		/* if freq is close to mclk or mclk/2 select mclk
-		 * as clock source
+	अगर (cinfo->btype == BT_ALPINE || cinfo->btype == BT_PICASSO4 ||
+	    cinfo->btype == BT_SD64) अणु
+		/* अगर freq is बंद to mclk or mclk/2 select mclk
+		 * as घड़ी source
 		 */
-		int divMCLK = cirrusfb_check_mclk(info, freq);
-		if (divMCLK)
+		पूर्णांक भागMCLK = cirrusfb_check_mclk(info, freq);
+		अगर (भागMCLK)
 			nom = 0;
-		cirrusfb_set_mclk_as_source(info, divMCLK);
-	}
-	if (is_laguna(cinfo)) {
-		long pcifc = fb_readl(cinfo->laguna_mmio + 0x3fc);
-		unsigned char tile = fb_readb(cinfo->laguna_mmio + 0x407);
-		unsigned short tile_control;
+		cirrusfb_set_mclk_as_source(info, भागMCLK);
+	पूर्ण
+	अगर (is_laguna(cinfo)) अणु
+		दीर्घ pcअगरc = fb_पढ़ोl(cinfo->laguna_mmio + 0x3fc);
+		अचिन्हित अक्षर tile = fb_पढ़ोb(cinfo->laguna_mmio + 0x407);
+		अचिन्हित लघु tile_control;
 
-		if (cinfo->btype == BT_LAGUNAB) {
-			tile_control = fb_readw(cinfo->laguna_mmio + 0x2c4);
+		अगर (cinfo->btype == BT_LAGUNAB) अणु
+			tile_control = fb_पढ़ोw(cinfo->laguna_mmio + 0x2c4);
 			tile_control &= ~0x80;
-			fb_writew(tile_control, cinfo->laguna_mmio + 0x2c4);
-		}
+			fb_ग_लिखोw(tile_control, cinfo->laguna_mmio + 0x2c4);
+		पूर्ण
 
-		fb_writel(pcifc | 0x10000000l, cinfo->laguna_mmio + 0x3fc);
-		fb_writeb(tile & 0x3f, cinfo->laguna_mmio + 0x407);
-		control = fb_readw(cinfo->laguna_mmio + 0x402);
-		threshold = fb_readw(cinfo->laguna_mmio + 0xea);
+		fb_ग_लिखोl(pcअगरc | 0x10000000l, cinfo->laguna_mmio + 0x3fc);
+		fb_ग_लिखोb(tile & 0x3f, cinfo->laguna_mmio + 0x407);
+		control = fb_पढ़ोw(cinfo->laguna_mmio + 0x402);
+		threshold = fb_पढ़ोw(cinfo->laguna_mmio + 0xea);
 		control &= ~0x6800;
-		format = 0;
+		क्रमmat = 0;
 		threshold &= 0xffc0 & 0x3fbf;
-	}
-	if (nom) {
-		tmp = den << 1;
-		if (div != 0)
-			tmp |= 1;
+	पूर्ण
+	अगर (nom) अणु
+		पंचांगp = den << 1;
+		अगर (भाग != 0)
+			पंचांगp |= 1;
 		/* 6 bit denom; ONLY 5434!!! (bugged me 10 days) */
-		if ((cinfo->btype == BT_SD64) ||
+		अगर ((cinfo->btype == BT_SD64) ||
 		    (cinfo->btype == BT_ALPINE) ||
 		    (cinfo->btype == BT_GD5480))
-			tmp |= 0x80;
+			पंचांगp |= 0x80;
 
-		/* Laguna chipset has reversed clock registers */
-		if (is_laguna(cinfo)) {
-			vga_wseq(regbase, CL_SEQRE, tmp);
+		/* Laguna chipset has reversed घड़ी रेजिस्टरs */
+		अगर (is_laguna(cinfo)) अणु
+			vga_wseq(regbase, CL_SEQRE, पंचांगp);
 			vga_wseq(regbase, CL_SEQR1E, nom);
-		} else {
+		पूर्ण अन्यथा अणु
 			vga_wseq(regbase, CL_SEQRE, nom);
-			vga_wseq(regbase, CL_SEQR1E, tmp);
-		}
-	}
+			vga_wseq(regbase, CL_SEQR1E, पंचांगp);
+		पूर्ण
+	पूर्ण
 
-	if (yres >= 1024)
+	अगर (yres >= 1024)
 		/* 1280x1024 */
 		vga_wcrt(regbase, VGA_CRTC_MODE, 0xc7);
-	else
+	अन्यथा
 		/* mode control: VGA_CRTC_START_HI enable, ROTATE(?), 16bit
 		 * address wrap, no compat. */
 		vga_wcrt(regbase, VGA_CRTC_MODE, 0xc3);
 
-	/* don't know if it would hurt to also program this if no interlaced */
+	/* करोn't know अगर it would hurt to also program this अगर no पूर्णांकerlaced */
 	/* mode is used, but I feel better this way.. :-) */
-	if (var->vmode & FB_VMODE_INTERLACED)
+	अगर (var->vmode & FB_VMODE_INTERLACED)
 		vga_wcrt(regbase, VGA_CRTC_REGS, htotal / 2);
-	else
-		vga_wcrt(regbase, VGA_CRTC_REGS, 0x00);	/* interlace control */
+	अन्यथा
+		vga_wcrt(regbase, VGA_CRTC_REGS, 0x00);	/* पूर्णांकerlace control */
 
 	/* adjust horizontal/vertical sync type (low/high), use VCLK3 */
-	/* enable display memory & CRTC I/O address for color mode */
-	tmp = 0x03 | 0xc;
-	if (var->sync & FB_SYNC_HOR_HIGH_ACT)
-		tmp |= 0x40;
-	if (var->sync & FB_SYNC_VERT_HIGH_ACT)
-		tmp |= 0x80;
-	WGen(cinfo, VGA_MIS_W, tmp);
+	/* enable display memory & CRTC I/O address क्रम color mode */
+	पंचांगp = 0x03 | 0xc;
+	अगर (var->sync & FB_SYNC_HOR_HIGH_ACT)
+		पंचांगp |= 0x40;
+	अगर (var->sync & FB_SYNC_VERT_HIGH_ACT)
+		पंचांगp |= 0x80;
+	WGen(cinfo, VGA_MIS_W, पंचांगp);
 
 	/* text cursor on and start line */
 	vga_wcrt(regbase, VGA_CRTC_CURSOR_START, 0);
@@ -936,77 +937,77 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	 *
 	 */
 
-	/* programming for different color depths */
-	if (var->bits_per_pixel == 1) {
+	/* programming क्रम dअगरferent color depths */
+	अगर (var->bits_per_pixel == 1) अणु
 		dev_dbg(info->device, "preparing for 1 bit deep display\n");
-		vga_wgfx(regbase, VGA_GFX_MODE, 0);	/* mode register */
+		vga_wgfx(regbase, VGA_GFX_MODE, 0);	/* mode रेजिस्टर */
 
 		/* SR07 */
-		switch (cinfo->btype) {
-		case BT_SD64:
-		case BT_PICCOLO:
-		case BT_PICASSO:
-		case BT_SPECTRUM:
-		case BT_PICASSO4:
-		case BT_ALPINE:
-		case BT_GD5480:
+		चयन (cinfo->btype) अणु
+		हाल BT_SD64:
+		हाल BT_PICCOLO:
+		हाल BT_PICASSO:
+		हाल BT_SPECTRUM:
+		हाल BT_PICASSO4:
+		हाल BT_ALPINE:
+		हाल BT_GD5480:
 			vga_wseq(regbase, CL_SEQR7,
 				 cinfo->multiplexing ?
 					bi->sr07_1bpp_mux : bi->sr07_1bpp);
-			break;
+			अवरोध;
 
-		case BT_LAGUNA:
-		case BT_LAGUNAB:
+		हाल BT_LAGUNA:
+		हाल BT_LAGUNAB:
 			vga_wseq(regbase, CL_SEQR7,
 				vga_rseq(regbase, CL_SEQR7) & ~0x01);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_warn(info->device, "unknown Board\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Extended Sequencer Mode */
-		switch (cinfo->btype) {
+		चयन (cinfo->btype) अणु
 
-		case BT_PICCOLO:
-		case BT_SPECTRUM:
-			/* evtl d0 bei 1 bit? avoid FIFO underruns..? */
+		हाल BT_PICCOLO:
+		हाल BT_SPECTRUM:
+			/* evtl d0 bei 1 bit? aव्योम FIFO underruns..? */
 			vga_wseq(regbase, CL_SEQRF, 0xb0);
-			break;
+			अवरोध;
 
-		case BT_PICASSO:
-			/* ## vorher d0 avoid FIFO underruns..? */
+		हाल BT_PICASSO:
+			/* ## vorher d0 aव्योम FIFO underruns..? */
 			vga_wseq(regbase, CL_SEQRF, 0xd0);
-			break;
+			अवरोध;
 
-		case BT_SD64:
-		case BT_PICASSO4:
-		case BT_ALPINE:
-		case BT_GD5480:
-		case BT_LAGUNA:
-		case BT_LAGUNAB:
-			/* do nothing */
-			break;
+		हाल BT_SD64:
+		हाल BT_PICASSO4:
+		हाल BT_ALPINE:
+		हाल BT_GD5480:
+		हाल BT_LAGUNA:
+		हाल BT_LAGUNAB:
+			/* करो nothing */
+			अवरोध;
 
-		default:
+		शेष:
 			dev_warn(info->device, "unknown Board\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* pixel mask: pass-through for first plane */
+		/* pixel mask: pass-through क्रम first plane */
 		WGen(cinfo, VGA_PEL_MSK, 0x01);
-		if (cinfo->multiplexing)
+		अगर (cinfo->multiplexing)
 			/* hidden dac reg: 1280x1024 */
 			WHDR(cinfo, 0x4a);
-		else
+		अन्यथा
 			/* hidden dac: nothing */
 			WHDR(cinfo, 0);
 		/* memory mode: odd/even, ext. memory */
 		vga_wseq(regbase, VGA_SEQ_MEMORY_MODE, 0x06);
-		/* plane mask: only write to first plane */
+		/* plane mask: only ग_लिखो to first plane */
 		vga_wseq(regbase, VGA_SEQ_PLANE_WRITE, 0x01);
-	}
+	पूर्ण
 
 	/******************************************************
 	 *
@@ -1014,68 +1015,68 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	 *
 	 */
 
-	else if (var->bits_per_pixel == 8) {
+	अन्यथा अगर (var->bits_per_pixel == 8) अणु
 		dev_dbg(info->device, "preparing for 8 bit deep display\n");
-		switch (cinfo->btype) {
-		case BT_SD64:
-		case BT_PICCOLO:
-		case BT_PICASSO:
-		case BT_SPECTRUM:
-		case BT_PICASSO4:
-		case BT_ALPINE:
-		case BT_GD5480:
+		चयन (cinfo->btype) अणु
+		हाल BT_SD64:
+		हाल BT_PICCOLO:
+		हाल BT_PICASSO:
+		हाल BT_SPECTRUM:
+		हाल BT_PICASSO4:
+		हाल BT_ALPINE:
+		हाल BT_GD5480:
 			vga_wseq(regbase, CL_SEQR7,
 				  cinfo->multiplexing ?
 					bi->sr07_8bpp_mux : bi->sr07_8bpp);
-			break;
+			अवरोध;
 
-		case BT_LAGUNA:
-		case BT_LAGUNAB:
+		हाल BT_LAGUNA:
+		हाल BT_LAGUNAB:
 			vga_wseq(regbase, CL_SEQR7,
 				vga_rseq(regbase, CL_SEQR7) | 0x01);
 			threshold |= 0x10;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_warn(info->device, "unknown Board\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (cinfo->btype) {
-		case BT_PICCOLO:
-		case BT_PICASSO:
-		case BT_SPECTRUM:
-			/* Fast Page-Mode writes */
+		चयन (cinfo->btype) अणु
+		हाल BT_PICCOLO:
+		हाल BT_PICASSO:
+		हाल BT_SPECTRUM:
+			/* Fast Page-Mode ग_लिखोs */
 			vga_wseq(regbase, CL_SEQRF, 0xb0);
-			break;
+			अवरोध;
 
-		case BT_PICASSO4:
-#ifdef CONFIG_ZORRO
+		हाल BT_PICASSO4:
+#अगर_घोषित CONFIG_ZORRO
 			/* ### INCOMPLETE!! */
 			vga_wseq(regbase, CL_SEQRF, 0xb8);
-#endif
-		case BT_ALPINE:
-		case BT_SD64:
-		case BT_GD5480:
-		case BT_LAGUNA:
-		case BT_LAGUNAB:
-			/* do nothing */
-			break;
+#पूर्ण_अगर
+		हाल BT_ALPINE:
+		हाल BT_SD64:
+		हाल BT_GD5480:
+		हाल BT_LAGUNA:
+		हाल BT_LAGUNAB:
+			/* करो nothing */
+			अवरोध;
 
-		default:
+		शेष:
 			dev_warn(info->device, "unknown board\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* mode register: 256 color mode */
+		/* mode रेजिस्टर: 256 color mode */
 		vga_wgfx(regbase, VGA_GFX_MODE, 64);
-		if (cinfo->multiplexing)
+		अगर (cinfo->multiplexing)
 			/* hidden dac reg: 1280x1024 */
 			WHDR(cinfo, 0x4a);
-		else
+		अन्यथा
 			/* hidden dac: nothing */
 			WHDR(cinfo, 0);
-	}
+	पूर्ण
 
 	/******************************************************
 	 *
@@ -1083,58 +1084,58 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	 *
 	 */
 
-	else if (var->bits_per_pixel == 16) {
+	अन्यथा अगर (var->bits_per_pixel == 16) अणु
 		dev_dbg(info->device, "preparing for 16 bit deep display\n");
-		switch (cinfo->btype) {
-		case BT_PICCOLO:
-		case BT_SPECTRUM:
+		चयन (cinfo->btype) अणु
+		हाल BT_PICCOLO:
+		हाल BT_SPECTRUM:
 			vga_wseq(regbase, CL_SEQR7, 0x87);
-			/* Fast Page-Mode writes */
+			/* Fast Page-Mode ग_लिखोs */
 			vga_wseq(regbase, CL_SEQRF, 0xb0);
-			break;
+			अवरोध;
 
-		case BT_PICASSO:
+		हाल BT_PICASSO:
 			vga_wseq(regbase, CL_SEQR7, 0x27);
-			/* Fast Page-Mode writes */
+			/* Fast Page-Mode ग_लिखोs */
 			vga_wseq(regbase, CL_SEQRF, 0xb0);
-			break;
+			अवरोध;
 
-		case BT_SD64:
-		case BT_PICASSO4:
-		case BT_ALPINE:
+		हाल BT_SD64:
+		हाल BT_PICASSO4:
+		हाल BT_ALPINE:
 			/* Extended Sequencer Mode: 256c col. mode */
 			vga_wseq(regbase, CL_SEQR7,
-					cinfo->doubleVCLK ? 0xa3 : 0xa7);
-			break;
+					cinfo->द्विगुनVCLK ? 0xa3 : 0xa7);
+			अवरोध;
 
-		case BT_GD5480:
+		हाल BT_GD5480:
 			vga_wseq(regbase, CL_SEQR7, 0x17);
-			/* We already set SRF and SR1F */
-			break;
+			/* We alपढ़ोy set SRF and SR1F */
+			अवरोध;
 
-		case BT_LAGUNA:
-		case BT_LAGUNAB:
+		हाल BT_LAGUNA:
+		हाल BT_LAGUNAB:
 			vga_wseq(regbase, CL_SEQR7,
 				vga_rseq(regbase, CL_SEQR7) & ~0x01);
 			control |= 0x2000;
-			format |= 0x1400;
+			क्रमmat |= 0x1400;
 			threshold |= 0x10;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_warn(info->device, "unknown Board\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* mode register: 256 color mode */
+		/* mode रेजिस्टर: 256 color mode */
 		vga_wgfx(regbase, VGA_GFX_MODE, 64);
-#ifdef CONFIG_PCI
-		WHDR(cinfo, cinfo->doubleVCLK ? 0xe1 : 0xc1);
-#elif defined(CONFIG_ZORRO)
+#अगर_घोषित CONFIG_PCI
+		WHDR(cinfo, cinfo->द्विगुनVCLK ? 0xe1 : 0xc1);
+#या_अगर defined(CONFIG_ZORRO)
 		/* FIXME: CONFIG_PCI and CONFIG_ZORRO may be defined both */
 		WHDR(cinfo, 0xa0);	/* hidden dac reg: nothing special */
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	/******************************************************
 	 *
@@ -1142,53 +1143,53 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	 *
 	 */
 
-	else if (var->bits_per_pixel == 24) {
+	अन्यथा अगर (var->bits_per_pixel == 24) अणु
 		dev_dbg(info->device, "preparing for 24 bit deep display\n");
-		switch (cinfo->btype) {
-		case BT_PICCOLO:
-		case BT_SPECTRUM:
+		चयन (cinfo->btype) अणु
+		हाल BT_PICCOLO:
+		हाल BT_SPECTRUM:
 			vga_wseq(regbase, CL_SEQR7, 0x85);
-			/* Fast Page-Mode writes */
+			/* Fast Page-Mode ग_लिखोs */
 			vga_wseq(regbase, CL_SEQRF, 0xb0);
-			break;
+			अवरोध;
 
-		case BT_PICASSO:
+		हाल BT_PICASSO:
 			vga_wseq(regbase, CL_SEQR7, 0x25);
-			/* Fast Page-Mode writes */
+			/* Fast Page-Mode ग_लिखोs */
 			vga_wseq(regbase, CL_SEQRF, 0xb0);
-			break;
+			अवरोध;
 
-		case BT_SD64:
-		case BT_PICASSO4:
-		case BT_ALPINE:
+		हाल BT_SD64:
+		हाल BT_PICASSO4:
+		हाल BT_ALPINE:
 			/* Extended Sequencer Mode: 256c col. mode */
 			vga_wseq(regbase, CL_SEQR7, 0xa5);
-			break;
+			अवरोध;
 
-		case BT_GD5480:
+		हाल BT_GD5480:
 			vga_wseq(regbase, CL_SEQR7, 0x15);
-			/* We already set SRF and SR1F */
-			break;
+			/* We alपढ़ोy set SRF and SR1F */
+			अवरोध;
 
-		case BT_LAGUNA:
-		case BT_LAGUNAB:
+		हाल BT_LAGUNA:
+		हाल BT_LAGUNAB:
 			vga_wseq(regbase, CL_SEQR7,
 				vga_rseq(regbase, CL_SEQR7) & ~0x01);
 			control |= 0x4000;
-			format |= 0x2400;
+			क्रमmat |= 0x2400;
 			threshold |= 0x20;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_warn(info->device, "unknown Board\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* mode register: 256 color mode */
+		/* mode रेजिस्टर: 256 color mode */
 		vga_wgfx(regbase, VGA_GFX_MODE, 64);
 		/* hidden dac reg: 8-8-8 mode (24 or 32) */
 		WHDR(cinfo, 0xc5);
-	}
+	पूर्ण
 
 	/******************************************************
 	 *
@@ -1196,42 +1197,42 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	 *
 	 */
 
-	else
+	अन्यथा
 		dev_err(info->device,
 			"What's this? requested color depth == %d.\n",
 			var->bits_per_pixel);
 
 	pitch = info->fix.line_length >> 3;
 	vga_wcrt(regbase, VGA_CRTC_OFFSET, pitch & 0xff);
-	tmp = 0x22;
-	if (pitch & 0x100)
-		tmp |= 0x10;	/* offset overflow bit */
+	पंचांगp = 0x22;
+	अगर (pitch & 0x100)
+		पंचांगp |= 0x10;	/* offset overflow bit */
 
 	/* screen start addr #16-18, fastpagemode cycles */
-	vga_wcrt(regbase, CL_CRT1B, tmp);
+	vga_wcrt(regbase, CL_CRT1B, पंचांगp);
 
 	/* screen start address bit 19 */
-	if (cirrusfb_board_info[cinfo->btype].scrn_start_bit19)
+	अगर (cirrusfb_board_info[cinfo->btype].scrn_start_bit19)
 		vga_wcrt(regbase, CL_CRT1D, (pitch >> 9) & 1);
 
-	if (is_laguna(cinfo)) {
-		tmp = 0;
-		if ((htotal + 5) & 256)
-			tmp |= 128;
-		if (hdispend & 256)
-			tmp |= 64;
-		if (hsyncstart & 256)
-			tmp |= 48;
-		if (vtotal & 1024)
-			tmp |= 8;
-		if (vdispend & 1024)
-			tmp |= 4;
-		if (vsyncstart & 1024)
-			tmp |= 3;
+	अगर (is_laguna(cinfo)) अणु
+		पंचांगp = 0;
+		अगर ((htotal + 5) & 256)
+			पंचांगp |= 128;
+		अगर (hdispend & 256)
+			पंचांगp |= 64;
+		अगर (hsyncstart & 256)
+			पंचांगp |= 48;
+		अगर (vtotal & 1024)
+			पंचांगp |= 8;
+		अगर (vdispend & 1024)
+			पंचांगp |= 4;
+		अगर (vsyncstart & 1024)
+			पंचांगp |= 3;
 
-		vga_wcrt(regbase, CL_CRT1E, tmp);
-		dev_dbg(info->device, "CRT1e: %d\n", tmp);
-	}
+		vga_wcrt(regbase, CL_CRT1E, पंचांगp);
+		dev_dbg(info->device, "CRT1e: %d\n", पंचांगp);
+	पूर्ण
 
 	/* pixel panning */
 	vga_wattr(regbase, CL_AR33, 0);
@@ -1240,321 +1241,321 @@ static int cirrusfb_set_par_foo(struct fb_info *info)
 	/* From SetOffset(): Turn on VideoEnable bit in Attribute controller */
 	AttrOn(cinfo);
 
-	if (is_laguna(cinfo)) {
+	अगर (is_laguna(cinfo)) अणु
 		/* no tiles */
-		fb_writew(control | 0x1000, cinfo->laguna_mmio + 0x402);
-		fb_writew(format, cinfo->laguna_mmio + 0xc0);
-		fb_writew(threshold, cinfo->laguna_mmio + 0xea);
-	}
+		fb_ग_लिखोw(control | 0x1000, cinfo->laguna_mmio + 0x402);
+		fb_ग_लिखोw(क्रमmat, cinfo->laguna_mmio + 0xc0);
+		fb_ग_लिखोw(threshold, cinfo->laguna_mmio + 0xea);
+	पूर्ण
 	/* finally, turn on everything - turn off "FullBandwidth" bit */
 	/* also, set "DotClock%2" bit where requested */
-	tmp = 0x01;
+	पंचांगp = 0x01;
 
 /*** FB_VMODE_CLOCK_HALVE in linux/fb.h not defined anymore ?
-    if (var->vmode & FB_VMODE_CLOCK_HALVE)
-	tmp |= 0x08;
+    अगर (var->vmode & FB_VMODE_CLOCK_HALVE)
+	पंचांगp |= 0x08;
 */
 
-	vga_wseq(regbase, VGA_SEQ_CLOCK_MODE, tmp);
-	dev_dbg(info->device, "CL_SEQR1: %d\n", tmp);
+	vga_wseq(regbase, VGA_SEQ_CLOCK_MODE, पंचांगp);
+	dev_dbg(info->device, "CL_SEQR1: %d\n", पंचांगp);
 
-#ifdef CIRRUSFB_DEBUG
-	cirrusfb_dbg_reg_dump(info, NULL);
-#endif
+#अगर_घोषित CIRRUSFB_DEBUG
+	cirrusfb_dbg_reg_dump(info, शून्य);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* for some reason incomprehensible to me, cirrusfb requires that you write
- * the registers twice for the settings to take..grr. -dte */
-static int cirrusfb_set_par(struct fb_info *info)
-{
+/* क्रम some reason incomprehensible to me, cirrusfb requires that you ग_लिखो
+ * the रेजिस्टरs twice क्रम the settings to take..grr. -dte */
+अटल पूर्णांक cirrusfb_set_par(काष्ठा fb_info *info)
+अणु
 	cirrusfb_set_par_foo(info);
-	return cirrusfb_set_par_foo(info);
-}
+	वापस cirrusfb_set_par_foo(info);
+पूर्ण
 
-static int cirrusfb_setcolreg(unsigned regno, unsigned red, unsigned green,
-			      unsigned blue, unsigned transp,
-			      struct fb_info *info)
-{
-	struct cirrusfb_info *cinfo = info->par;
+अटल पूर्णांक cirrusfb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+			      अचिन्हित blue, अचिन्हित transp,
+			      काष्ठा fb_info *info)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
 
-	if (regno > 255)
-		return -EINVAL;
+	अगर (regno > 255)
+		वापस -EINVAL;
 
-	if (info->fix.visual == FB_VISUAL_TRUECOLOR) {
+	अगर (info->fix.visual == FB_VISUAL_TRUECOLOR) अणु
 		u32 v;
 		red >>= (16 - info->var.red.length);
 		green >>= (16 - info->var.green.length);
 		blue >>= (16 - info->var.blue.length);
 
-		if (regno >= 16)
-			return 1;
+		अगर (regno >= 16)
+			वापस 1;
 		v = (red << info->var.red.offset) |
 		    (green << info->var.green.offset) |
 		    (blue << info->var.blue.offset);
 
-		cinfo->pseudo_palette[regno] = v;
-		return 0;
-	}
+		cinfo->pseuकरो_palette[regno] = v;
+		वापस 0;
+	पूर्ण
 
-	if (info->var.bits_per_pixel == 8)
+	अगर (info->var.bits_per_pixel == 8)
 		WClut(cinfo, regno, red >> 10, green >> 10, blue >> 10);
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
 /*************************************************************************
 	cirrusfb_pan_display()
 
-	performs display panning - provided hardware permits this
+	perक्रमms display panning - provided hardware permits this
 **************************************************************************/
-static int cirrusfb_pan_display(struct fb_var_screeninfo *var,
-				struct fb_info *info)
-{
-	int xoffset;
-	unsigned long base;
-	unsigned char tmp, xpix;
-	struct cirrusfb_info *cinfo = info->par;
+अटल पूर्णांक cirrusfb_pan_display(काष्ठा fb_var_screeninfo *var,
+				काष्ठा fb_info *info)
+अणु
+	पूर्णांक xoffset;
+	अचिन्हित दीर्घ base;
+	अचिन्हित अक्षर पंचांगp, xpix;
+	काष्ठा cirrusfb_info *cinfo = info->par;
 
-	/* no range checks for xoffset and yoffset,   */
-	/* as fb_pan_display has already done this */
-	if (var->vmode & FB_VMODE_YWRAP)
-		return -EINVAL;
+	/* no range checks क्रम xoffset and yoffset,   */
+	/* as fb_pan_display has alपढ़ोy करोne this */
+	अगर (var->vmode & FB_VMODE_YWRAP)
+		वापस -EINVAL;
 
 	xoffset = var->xoffset * info->var.bits_per_pixel / 8;
 
 	base = var->yoffset * info->fix.line_length + xoffset;
 
-	if (info->var.bits_per_pixel == 1) {
-		/* base is already correct */
-		xpix = (unsigned char) (var->xoffset % 8);
-	} else {
+	अगर (info->var.bits_per_pixel == 1) अणु
+		/* base is alपढ़ोy correct */
+		xpix = (अचिन्हित अक्षर) (var->xoffset % 8);
+	पूर्ण अन्यथा अणु
 		base /= 4;
-		xpix = (unsigned char) ((xoffset % 4) * 2);
-	}
+		xpix = (अचिन्हित अक्षर) ((xoffset % 4) * 2);
+	पूर्ण
 
-	if (!is_laguna(cinfo))
+	अगर (!is_laguna(cinfo))
 		cirrusfb_WaitBLT(cinfo->regbase);
 
 	/* lower 8 + 8 bits of screen start address */
 	vga_wcrt(cinfo->regbase, VGA_CRTC_START_LO, base & 0xff);
 	vga_wcrt(cinfo->regbase, VGA_CRTC_START_HI, (base >> 8) & 0xff);
 
-	/* 0xf2 is %11110010, exclude tmp bits */
-	tmp = vga_rcrt(cinfo->regbase, CL_CRT1B) & 0xf2;
-	/* construct bits 16, 17 and 18 of screen start address */
-	if (base & 0x10000)
-		tmp |= 0x01;
-	if (base & 0x20000)
-		tmp |= 0x04;
-	if (base & 0x40000)
-		tmp |= 0x08;
+	/* 0xf2 is %11110010, exclude पंचांगp bits */
+	पंचांगp = vga_rcrt(cinfo->regbase, CL_CRT1B) & 0xf2;
+	/* स्थिरruct bits 16, 17 and 18 of screen start address */
+	अगर (base & 0x10000)
+		पंचांगp |= 0x01;
+	अगर (base & 0x20000)
+		पंचांगp |= 0x04;
+	अगर (base & 0x40000)
+		पंचांगp |= 0x08;
 
-	vga_wcrt(cinfo->regbase, CL_CRT1B, tmp);
+	vga_wcrt(cinfo->regbase, CL_CRT1B, पंचांगp);
 
-	/* construct bit 19 of screen start address */
-	if (cirrusfb_board_info[cinfo->btype].scrn_start_bit19) {
-		tmp = vga_rcrt(cinfo->regbase, CL_CRT1D);
-		if (is_laguna(cinfo))
-			tmp = (tmp & ~0x18) | ((base >> 16) & 0x18);
-		else
-			tmp = (tmp & ~0x80) | ((base >> 12) & 0x80);
-		vga_wcrt(cinfo->regbase, CL_CRT1D, tmp);
-	}
+	/* स्थिरruct bit 19 of screen start address */
+	अगर (cirrusfb_board_info[cinfo->btype].scrn_start_bit19) अणु
+		पंचांगp = vga_rcrt(cinfo->regbase, CL_CRT1D);
+		अगर (is_laguna(cinfo))
+			पंचांगp = (पंचांगp & ~0x18) | ((base >> 16) & 0x18);
+		अन्यथा
+			पंचांगp = (पंचांगp & ~0x80) | ((base >> 12) & 0x80);
+		vga_wcrt(cinfo->regbase, CL_CRT1D, पंचांगp);
+	पूर्ण
 
-	/* write pixel panning value to AR33; this does not quite work in 8bpp
+	/* ग_लिखो pixel panning value to AR33; this करोes not quite work in 8bpp
 	 *
 	 * ### Piccolo..? Will this work?
 	 */
-	if (info->var.bits_per_pixel == 1)
+	अगर (info->var.bits_per_pixel == 1)
 		vga_wattr(cinfo->regbase, CL_AR33, xpix);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cirrusfb_blank(int blank_mode, struct fb_info *info)
-{
+अटल पूर्णांक cirrusfb_blank(पूर्णांक blank_mode, काष्ठा fb_info *info)
+अणु
 	/*
-	 * Blank the screen if blank_mode != 0, else unblank. If blank == NULL
+	 * Blank the screen अगर blank_mode != 0, अन्यथा unblank. If blank == शून्य
 	 * then the caller blanks by setting the CLUT (Color Look Up Table)
-	 * to all black. Return 0 if blanking succeeded, != 0 if un-/blanking
-	 * failed due to e.g. a video mode which doesn't support it.
-	 * Implements VESA suspend and powerdown modes on hardware that
+	 * to all black. Return 0 अगर blanking succeeded, != 0 अगर un-/blanking
+	 * failed due to e.g. a video mode which करोesn't support it.
+	 * Implements VESA suspend and घातerकरोwn modes on hardware that
 	 * supports disabling hsync/vsync:
 	 *   blank_mode == 2: suspend vsync
 	 *   blank_mode == 3: suspend hsync
-	 *   blank_mode == 4: powerdown
+	 *   blank_mode == 4: घातerकरोwn
 	 */
-	unsigned char val;
-	struct cirrusfb_info *cinfo = info->par;
-	int current_mode = cinfo->blank_mode;
+	अचिन्हित अक्षर val;
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	पूर्णांक current_mode = cinfo->blank_mode;
 
 	dev_dbg(info->device, "ENTER, blank mode = %d\n", blank_mode);
 
-	if (info->state != FBINFO_STATE_RUNNING ||
-	    current_mode == blank_mode) {
+	अगर (info->state != FBINFO_STATE_RUNNING ||
+	    current_mode == blank_mode) अणु
 		dev_dbg(info->device, "EXIT, returning 0\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Undo current */
-	if (current_mode == FB_BLANK_NORMAL ||
+	/* Unकरो current */
+	अगर (current_mode == FB_BLANK_NORMAL ||
 	    current_mode == FB_BLANK_UNBLANK)
 		/* clear "FullBandwidth" bit */
 		val = 0;
-	else
+	अन्यथा
 		/* set "FullBandwidth" bit */
 		val = 0x20;
 
 	val |= vga_rseq(cinfo->regbase, VGA_SEQ_CLOCK_MODE) & 0xdf;
 	vga_wseq(cinfo->regbase, VGA_SEQ_CLOCK_MODE, val);
 
-	switch (blank_mode) {
-	case FB_BLANK_UNBLANK:
-	case FB_BLANK_NORMAL:
+	चयन (blank_mode) अणु
+	हाल FB_BLANK_UNBLANK:
+	हाल FB_BLANK_NORMAL:
 		val = 0x00;
-		break;
-	case FB_BLANK_VSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_VSYNC_SUSPEND:
 		val = 0x04;
-		break;
-	case FB_BLANK_HSYNC_SUSPEND:
+		अवरोध;
+	हाल FB_BLANK_HSYNC_SUSPEND:
 		val = 0x02;
-		break;
-	case FB_BLANK_POWERDOWN:
+		अवरोध;
+	हाल FB_BLANK_POWERDOWN:
 		val = 0x06;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(info->device, "EXIT, returning 1\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	vga_wgfx(cinfo->regbase, CL_GRE, val);
 
 	cinfo->blank_mode = blank_mode;
 	dev_dbg(info->device, "EXIT, returning 0\n");
 
-	/* Let fbcon do a soft blank for us */
-	return (blank_mode == FB_BLANK_NORMAL) ? 1 : 0;
-}
+	/* Let fbcon करो a soft blank क्रम us */
+	वापस (blank_mode == FB_BLANK_NORMAL) ? 1 : 0;
+पूर्ण
 
-/**** END   Hardware specific Routines **************************************/
+/**** END   Hardware specअगरic Routines **************************************/
 /****************************************************************************/
 /**** BEGIN Internal Routines ***********************************************/
 
-static void init_vgachip(struct fb_info *info)
-{
-	struct cirrusfb_info *cinfo = info->par;
-	const struct cirrusfb_board_info_rec *bi;
+अटल व्योम init_vgachip(काष्ठा fb_info *info)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	स्थिर काष्ठा cirrusfb_board_info_rec *bi;
 
-	assert(cinfo != NULL);
+	निश्चित(cinfo != शून्य);
 
 	bi = &cirrusfb_board_info[cinfo->btype];
 
 	/* reset board globally */
-	switch (cinfo->btype) {
-	case BT_PICCOLO:
+	चयन (cinfo->btype) अणु
+	हाल BT_PICCOLO:
 		WSFR(cinfo, 0x01);
 		udelay(500);
 		WSFR(cinfo, 0x51);
 		udelay(500);
-		break;
-	case BT_PICASSO:
+		अवरोध;
+	हाल BT_PICASSO:
 		WSFR2(cinfo, 0xff);
 		udelay(500);
-		break;
-	case BT_SD64:
-	case BT_SPECTRUM:
+		अवरोध;
+	हाल BT_SD64:
+	हाल BT_SPECTRUM:
 		WSFR(cinfo, 0x1f);
 		udelay(500);
 		WSFR(cinfo, 0x4f);
 		udelay(500);
-		break;
-	case BT_PICASSO4:
+		अवरोध;
+	हाल BT_PICASSO4:
 		/* disable flickerfixer */
 		vga_wcrt(cinfo->regbase, CL_CRT51, 0x00);
 		mdelay(100);
 		/* mode */
 		vga_wgfx(cinfo->regbase, CL_GR31, 0x00);
 		fallthrough;
-	case BT_GD5480:
+	हाल BT_GD5480:
 		/* from Klaus' NetBSD driver: */
 		vga_wgfx(cinfo->regbase, CL_GR2F, 0x00);
 		fallthrough;
-	case BT_ALPINE:
-		/* put blitter into 542x compat */
+	हाल BT_ALPINE:
+		/* put blitter पूर्णांकo 542x compat */
 		vga_wgfx(cinfo->regbase, CL_GR33, 0x00);
-		break;
+		अवरोध;
 
-	case BT_LAGUNA:
-	case BT_LAGUNAB:
-		/* Nothing to do to reset the board. */
-		break;
+	हाल BT_LAGUNA:
+	हाल BT_LAGUNAB:
+		/* Nothing to करो to reset the board. */
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(info->device, "Warning: Unknown board type\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* make sure RAM size set by this point */
-	assert(info->screen_size > 0);
+	/* make sure RAM size set by this poपूर्णांक */
+	निश्चित(info->screen_size > 0);
 
 	/* the P4 is not fully initialized here; I rely on it having been */
-	/* inited under AmigaOS already, which seems to work just fine    */
-	/* (Klaus advised to do it this way)			      */
+	/* inited under AmigaOS alपढ़ोy, which seems to work just fine    */
+	/* (Klaus advised to करो it this way)			      */
 
-	if (cinfo->btype != BT_PICASSO4) {
+	अगर (cinfo->btype != BT_PICASSO4) अणु
 		WGen(cinfo, CL_VSSM, 0x10);	/* EGS: 0x16 */
 		WGen(cinfo, CL_POS102, 0x01);
 		WGen(cinfo, CL_VSSM, 0x08);	/* EGS: 0x0e */
 
-		if (cinfo->btype != BT_SD64)
+		अगर (cinfo->btype != BT_SD64)
 			WGen(cinfo, CL_VSSM2, 0x01);
 
 		/* reset sequencer logic */
 		vga_wseq(cinfo->regbase, VGA_SEQ_RESET, 0x03);
 
-		/* FullBandwidth (video off) and 8/9 dot clock */
+		/* FullBandwidth (video off) and 8/9 करोt घड़ी */
 		vga_wseq(cinfo->regbase, VGA_SEQ_CLOCK_MODE, 0x21);
 
-		/* "magic cookie" - doesn't make any sense to me.. */
+		/* "magic cookie" - करोesn't make any sense to me.. */
 /*      vga_wgfx(cinfo->regbase, CL_GRA, 0xce);   */
-		/* unlock all extension registers */
+		/* unlock all extension रेजिस्टरs */
 		vga_wseq(cinfo->regbase, CL_SEQR6, 0x12);
 
-		switch (cinfo->btype) {
-		case BT_GD5480:
+		चयन (cinfo->btype) अणु
+		हाल BT_GD5480:
 			vga_wseq(cinfo->regbase, CL_SEQRF, 0x98);
-			break;
-		case BT_ALPINE:
-		case BT_LAGUNA:
-		case BT_LAGUNAB:
-			break;
-		case BT_SD64:
-#ifdef CONFIG_ZORRO
+			अवरोध;
+		हाल BT_ALPINE:
+		हाल BT_LAGUNA:
+		हाल BT_LAGUNAB:
+			अवरोध;
+		हाल BT_SD64:
+#अगर_घोषित CONFIG_ZORRO
 			vga_wseq(cinfo->regbase, CL_SEQRF, 0xb8);
-#endif
-			break;
-		default:
+#पूर्ण_अगर
+			अवरोध;
+		शेष:
 			vga_wseq(cinfo->regbase, CL_SEQR16, 0x0f);
 			vga_wseq(cinfo->regbase, CL_SEQRF, 0xb0);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	/* plane mask: nothing */
 	vga_wseq(cinfo->regbase, VGA_SEQ_PLANE_WRITE, 0xff);
-	/* character map select: doesn't even matter in gx mode */
+	/* अक्षरacter map select: करोesn't even matter in gx mode */
 	vga_wseq(cinfo->regbase, VGA_SEQ_CHARACTER_MAP, 0x00);
 	/* memory mode: chain4, ext. memory */
 	vga_wseq(cinfo->regbase, VGA_SEQ_MEMORY_MODE, 0x0a);
 
-	/* controller-internal base address of video memory */
-	if (bi->init_sr07)
+	/* controller-पूर्णांकernal base address of video memory */
+	अगर (bi->init_sr07)
 		vga_wseq(cinfo->regbase, CL_SEQR7, bi->sr07);
 
 	/*  vga_wseq(cinfo->regbase, CL_SEQR8, 0x00); */
-	/* EEPROM control: shouldn't be necessary to write to this at all.. */
+	/* EEPROM control: shouldn't be necessary to ग_लिखो to this at all.. */
 
 	/* graphics cursor X position (incomplete; position gives rem. 3 bits */
 	vga_wseq(cinfo->regbase, CL_SEQR10, 0x00);
@@ -1566,12 +1567,12 @@ static void init_vgachip(struct fb_info *info)
 	vga_wseq(cinfo->regbase, CL_SEQR13, 0x00);
 
 	/* writing these on a P4 might give problems..  */
-	if (cinfo->btype != BT_PICASSO4) {
-		/* configuration readback and ext. color */
+	अगर (cinfo->btype != BT_PICASSO4) अणु
+		/* configuration पढ़ोback and ext. color */
 		vga_wseq(cinfo->regbase, CL_SEQR17, 0x00);
 		/* signature generator */
 		vga_wseq(cinfo->regbase, CL_SEQR18, 0x02);
-	}
+	पूर्ण
 
 	/* Screen A preset row scan: none */
 	vga_wcrt(cinfo->regbase, VGA_CRTC_PRESET_ROW, 0x00);
@@ -1586,11 +1587,11 @@ static void init_vgachip(struct fb_info *info)
 
 	/* Underline Row scanline: - */
 	vga_wcrt(cinfo->regbase, VGA_CRTC_UNDERLINE, 0x00);
-	/* ### add 0x40 for text modes with > 30 MHz pixclock */
+	/* ### add 0x40 क्रम text modes with > 30 MHz pixघड़ी */
 	/* ext. display controls: ext.adr. wrap */
 	vga_wcrt(cinfo->regbase, CL_CRT1B, 0x02);
 
-	/* Set/Reset registers: - */
+	/* Set/Reset रेजिस्टरs: - */
 	vga_wgfx(cinfo->regbase, VGA_GFX_SR_VALUE, 0x00);
 	/* Set/Reset enable: - */
 	vga_wgfx(cinfo->regbase, VGA_GFX_SR_ENABLE, 0x00);
@@ -1600,7 +1601,7 @@ static void init_vgachip(struct fb_info *info)
 	vga_wgfx(cinfo->regbase, VGA_GFX_DATA_ROTATE, 0x00);
 	/* Read Map Select: - */
 	vga_wgfx(cinfo->regbase, VGA_GFX_PLANE_READ, 0x00);
-	/* Mode: conf. for 16/4/2 color mode, no odd/even, read/write mode 0 */
+	/* Mode: conf. क्रम 16/4/2 color mode, no odd/even, पढ़ो/ग_लिखो mode 0 */
 	vga_wgfx(cinfo->regbase, VGA_GFX_MODE, 0x00);
 	/* Miscellaneous: memory map base address, graphics mode */
 	vga_wgfx(cinfo->regbase, VGA_GFX_MISC, 0x01);
@@ -1609,11 +1610,11 @@ static void init_vgachip(struct fb_info *info)
 	/* Bit Mask: no mask at all */
 	vga_wgfx(cinfo->regbase, VGA_GFX_BIT_MASK, 0xff);
 
-	if (cinfo->btype == BT_ALPINE || cinfo->btype == BT_SD64 ||
+	अगर (cinfo->btype == BT_ALPINE || cinfo->btype == BT_SD64 ||
 	    is_laguna(cinfo))
-		/* (5434 can't have bit 3 set for bitblt) */
+		/* (5434 can't have bit 3 set क्रम bitblt) */
 		vga_wgfx(cinfo->regbase, CL_GRB, 0x20);
-	else
+	अन्यथा
 	/* Graphics controller mode extensions: finer granularity,
 	 * 8byte data latches
 	 */
@@ -1626,7 +1627,7 @@ static void init_vgachip(struct fb_info *info)
 	/*  vga_wgfx (cinfo->regbase, CL_GR10, 0x00); */
 	/*  vga_wgfx (cinfo->regbase, CL_GR11, 0x00); */
 
-	/* Attribute Controller palette registers: "identity mapping" */
+	/* Attribute Controller palette रेजिस्टरs: "identity mapping" */
 	vga_wattr(cinfo->regbase, VGA_ATC_PALETTE0, 0x00);
 	vga_wattr(cinfo->regbase, VGA_ATC_PALETTE1, 0x01);
 	vga_wattr(cinfo->regbase, VGA_ATC_PALETTE2, 0x02);
@@ -1661,101 +1662,101 @@ static void init_vgachip(struct fb_info *info)
 	vga_wgfx(cinfo->regbase, CL_GR31, 0x00);
 
 	/* misc... */
-	WHDR(cinfo, 0);	/* Hidden DAC register: - */
-	return;
-}
+	WHDR(cinfo, 0);	/* Hidden DAC रेजिस्टर: - */
+	वापस;
+पूर्ण
 
-static void switch_monitor(struct cirrusfb_info *cinfo, int on)
-{
-#ifdef CONFIG_ZORRO /* only works on Zorro boards */
-	static int IsOn = 0;	/* XXX not ok for multiple boards */
+अटल व्योम चयन_monitor(काष्ठा cirrusfb_info *cinfo, पूर्णांक on)
+अणु
+#अगर_घोषित CONFIG_ZORRO /* only works on Zorro boards */
+	अटल पूर्णांक IsOn = 0;	/* XXX not ok क्रम multiple boards */
 
-	if (cinfo->btype == BT_PICASSO4)
-		return;		/* nothing to switch */
-	if (cinfo->btype == BT_ALPINE)
-		return;		/* nothing to switch */
-	if (cinfo->btype == BT_GD5480)
-		return;		/* nothing to switch */
-	if (cinfo->btype == BT_PICASSO) {
-		if ((on && !IsOn) || (!on && IsOn))
+	अगर (cinfo->btype == BT_PICASSO4)
+		वापस;		/* nothing to चयन */
+	अगर (cinfo->btype == BT_ALPINE)
+		वापस;		/* nothing to चयन */
+	अगर (cinfo->btype == BT_GD5480)
+		वापस;		/* nothing to चयन */
+	अगर (cinfo->btype == BT_PICASSO) अणु
+		अगर ((on && !IsOn) || (!on && IsOn))
 			WSFR(cinfo, 0xff);
-		return;
-	}
-	if (on) {
-		switch (cinfo->btype) {
-		case BT_SD64:
+		वापस;
+	पूर्ण
+	अगर (on) अणु
+		चयन (cinfo->btype) अणु
+		हाल BT_SD64:
 			WSFR(cinfo, cinfo->SFR | 0x21);
-			break;
-		case BT_PICCOLO:
+			अवरोध;
+		हाल BT_PICCOLO:
 			WSFR(cinfo, cinfo->SFR | 0x28);
-			break;
-		case BT_SPECTRUM:
+			अवरोध;
+		हाल BT_SPECTRUM:
 			WSFR(cinfo, 0x6f);
-			break;
-		default: /* do nothing */ break;
-		}
-	} else {
-		switch (cinfo->btype) {
-		case BT_SD64:
+			अवरोध;
+		शेष: /* करो nothing */ अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (cinfo->btype) अणु
+		हाल BT_SD64:
 			WSFR(cinfo, cinfo->SFR & 0xde);
-			break;
-		case BT_PICCOLO:
+			अवरोध;
+		हाल BT_PICCOLO:
 			WSFR(cinfo, cinfo->SFR & 0xd7);
-			break;
-		case BT_SPECTRUM:
+			अवरोध;
+		हाल BT_SPECTRUM:
 			WSFR(cinfo, 0x4f);
-			break;
-		default: /* do nothing */
-			break;
-		}
-	}
-#endif /* CONFIG_ZORRO */
-}
+			अवरोध;
+		शेष: /* करो nothing */
+			अवरोध;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_ZORRO */
+पूर्ण
 
 /******************************************/
 /* Linux 2.6-style  accelerated functions */
 /******************************************/
 
-static int cirrusfb_sync(struct fb_info *info)
-{
-	struct cirrusfb_info *cinfo = info->par;
+अटल पूर्णांक cirrusfb_sync(काष्ठा fb_info *info)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
 
-	if (!is_laguna(cinfo)) {
-		while (vga_rgfx(cinfo->regbase, CL_GR31) & 0x03)
+	अगर (!is_laguna(cinfo)) अणु
+		जबतक (vga_rgfx(cinfo->regbase, CL_GR31) & 0x03)
 			cpu_relax();
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void cirrusfb_fillrect(struct fb_info *info,
-			      const struct fb_fillrect *region)
-{
-	struct fb_fillrect modded;
-	int vxres, vyres;
-	struct cirrusfb_info *cinfo = info->par;
-	int m = info->var.bits_per_pixel;
+अटल व्योम cirrusfb_fillrect(काष्ठा fb_info *info,
+			      स्थिर काष्ठा fb_fillrect *region)
+अणु
+	काष्ठा fb_fillrect modded;
+	पूर्णांक vxres, vyres;
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	पूर्णांक m = info->var.bits_per_pixel;
 	u32 color = (info->fix.visual == FB_VISUAL_TRUECOLOR) ?
-		cinfo->pseudo_palette[region->color] : region->color;
+		cinfo->pseuकरो_palette[region->color] : region->color;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return;
-	if (info->flags & FBINFO_HWACCEL_DISABLED) {
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस;
+	अगर (info->flags & FBINFO_HWACCEL_DISABLED) अणु
 		cfb_fillrect(info, region);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	vxres = info->var.xres_virtual;
-	vyres = info->var.yres_virtual;
+	vxres = info->var.xres_भव;
+	vyres = info->var.yres_भव;
 
-	memcpy(&modded, region, sizeof(struct fb_fillrect));
+	स_नकल(&modded, region, माप(काष्ठा fb_fillrect));
 
-	if (!modded.width || !modded.height ||
+	अगर (!modded.width || !modded.height ||
 	   modded.dx >= vxres || modded.dy >= vyres)
-		return;
+		वापस;
 
-	if (modded.dx + modded.width  > vxres)
+	अगर (modded.dx + modded.width  > vxres)
 		modded.width  = vxres - modded.dx;
-	if (modded.dy + modded.height > vyres)
+	अगर (modded.dy + modded.height > vyres)
 		modded.height = vyres - modded.dy;
 
 	cirrusfb_RectFill(cinfo->regbase,
@@ -1764,39 +1765,39 @@ static void cirrusfb_fillrect(struct fb_info *info,
 			  (region->width * m) / 8, region->height,
 			  color, color,
 			  info->fix.line_length, 0x40);
-}
+पूर्ण
 
-static void cirrusfb_copyarea(struct fb_info *info,
-			      const struct fb_copyarea *area)
-{
-	struct fb_copyarea modded;
+अटल व्योम cirrusfb_copyarea(काष्ठा fb_info *info,
+			      स्थिर काष्ठा fb_copyarea *area)
+अणु
+	काष्ठा fb_copyarea modded;
 	u32 vxres, vyres;
-	struct cirrusfb_info *cinfo = info->par;
-	int m = info->var.bits_per_pixel;
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	पूर्णांक m = info->var.bits_per_pixel;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return;
-	if (info->flags & FBINFO_HWACCEL_DISABLED) {
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस;
+	अगर (info->flags & FBINFO_HWACCEL_DISABLED) अणु
 		cfb_copyarea(info, area);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	vxres = info->var.xres_virtual;
-	vyres = info->var.yres_virtual;
-	memcpy(&modded, area, sizeof(struct fb_copyarea));
+	vxres = info->var.xres_भव;
+	vyres = info->var.yres_भव;
+	स_नकल(&modded, area, माप(काष्ठा fb_copyarea));
 
-	if (!modded.width || !modded.height ||
+	अगर (!modded.width || !modded.height ||
 	   modded.sx >= vxres || modded.sy >= vyres ||
 	   modded.dx >= vxres || modded.dy >= vyres)
-		return;
+		वापस;
 
-	if (modded.sx + modded.width > vxres)
+	अगर (modded.sx + modded.width > vxres)
 		modded.width = vxres - modded.sx;
-	if (modded.dx + modded.width > vxres)
+	अगर (modded.dx + modded.width > vxres)
 		modded.width = vxres - modded.dx;
-	if (modded.sy + modded.height > vyres)
+	अगर (modded.sy + modded.height > vyres)
 		modded.height = vyres - modded.sy;
-	if (modded.dy + modded.height > vyres)
+	अगर (modded.dy + modded.height > vyres)
 		modded.height = vyres - modded.dy;
 
 	cirrusfb_BitBLT(cinfo->regbase, info->var.bits_per_pixel,
@@ -1805,35 +1806,35 @@ static void cirrusfb_copyarea(struct fb_info *info,
 			(area->width * m) / 8, area->height,
 			info->fix.line_length);
 
-}
+पूर्ण
 
-static void cirrusfb_imageblit(struct fb_info *info,
-			       const struct fb_image *image)
-{
-	struct cirrusfb_info *cinfo = info->par;
-	unsigned char op = (info->var.bits_per_pixel == 24) ? 0xc : 0x4;
+अटल व्योम cirrusfb_imageblit(काष्ठा fb_info *info,
+			       स्थिर काष्ठा fb_image *image)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	अचिन्हित अक्षर op = (info->var.bits_per_pixel == 24) ? 0xc : 0x4;
 
-	if (info->state != FBINFO_STATE_RUNNING)
-		return;
-	/* Alpine/SD64 does not work at 24bpp ??? */
-	if (info->flags & FBINFO_HWACCEL_DISABLED || image->depth != 1)
+	अगर (info->state != FBINFO_STATE_RUNNING)
+		वापस;
+	/* Alpine/SD64 करोes not work at 24bpp ??? */
+	अगर (info->flags & FBINFO_HWACCEL_DISABLED || image->depth != 1)
 		cfb_imageblit(info, image);
-	else if ((cinfo->btype == BT_ALPINE || cinfo->btype == BT_SD64) &&
+	अन्यथा अगर ((cinfo->btype == BT_ALPINE || cinfo->btype == BT_SD64) &&
 		  op == 0xc)
 		cfb_imageblit(info, image);
-	else {
-		unsigned size = ((image->width + 7) >> 3) * image->height;
-		int m = info->var.bits_per_pixel;
+	अन्यथा अणु
+		अचिन्हित size = ((image->width + 7) >> 3) * image->height;
+		पूर्णांक m = info->var.bits_per_pixel;
 		u32 fg, bg;
 
-		if (info->var.bits_per_pixel == 8) {
+		अगर (info->var.bits_per_pixel == 8) अणु
 			fg = image->fg_color;
 			bg = image->bg_color;
-		} else {
-			fg = ((u32 *)(info->pseudo_palette))[image->fg_color];
-			bg = ((u32 *)(info->pseudo_palette))[image->bg_color];
-		}
-		if (info->var.bits_per_pixel == 24) {
+		पूर्ण अन्यथा अणु
+			fg = ((u32 *)(info->pseuकरो_palette))[image->fg_color];
+			bg = ((u32 *)(info->pseuकरो_palette))[image->bg_color];
+		पूर्ण
+		अगर (info->var.bits_per_pixel == 24) अणु
 			/* clear background first */
 			cirrusfb_RectFill(cinfo->regbase,
 					  info->var.bits_per_pixel,
@@ -1842,123 +1843,123 @@ static void cirrusfb_imageblit(struct fb_info *info,
 					  image->height,
 					  bg, bg,
 					  info->fix.line_length, 0x40);
-		}
+		पूर्ण
 		cirrusfb_RectFill(cinfo->regbase,
 				  info->var.bits_per_pixel,
 				  (image->dx * m) / 8, image->dy,
 				  (image->width * m) / 8, image->height,
 				  fg, bg,
 				  info->fix.line_length, op);
-		memcpy(info->screen_base, image->data, size);
-	}
-}
+		स_नकल(info->screen_base, image->data, size);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PCI
-static int release_io_ports;
+#अगर_घोषित CONFIG_PCI
+अटल पूर्णांक release_io_ports;
 
 /* Pulled the logic from XFree86 Cirrus driver to get the memory size,
- * based on the DRAM bandwidth bit and DRAM bank switching bit.  This
+ * based on the DRAM bandwidth bit and DRAM bank चयनing bit.  This
  * works with 1MB, 2MB and 4MB configurations (which the Motorola boards
  * seem to have. */
-static unsigned int cirrusfb_get_memsize(struct fb_info *info,
+अटल अचिन्हित पूर्णांक cirrusfb_get_memsize(काष्ठा fb_info *info,
 					 u8 __iomem *regbase)
-{
-	unsigned long mem;
-	struct cirrusfb_info *cinfo = info->par;
+अणु
+	अचिन्हित दीर्घ mem;
+	काष्ठा cirrusfb_info *cinfo = info->par;
 
-	if (is_laguna(cinfo)) {
-		unsigned char SR14 = vga_rseq(regbase, CL_SEQR14);
+	अगर (is_laguna(cinfo)) अणु
+		अचिन्हित अक्षर SR14 = vga_rseq(regbase, CL_SEQR14);
 
 		mem = ((SR14 & 7) + 1) << 20;
-	} else {
-		unsigned char SRF = vga_rseq(regbase, CL_SEQRF);
-		switch ((SRF & 0x18)) {
-		case 0x08:
+	पूर्ण अन्यथा अणु
+		अचिन्हित अक्षर SRF = vga_rseq(regbase, CL_SEQRF);
+		चयन ((SRF & 0x18)) अणु
+		हाल 0x08:
 			mem = 512 * 1024;
-			break;
-		case 0x10:
+			अवरोध;
+		हाल 0x10:
 			mem = 1024 * 1024;
-			break;
+			अवरोध;
 		/* 64-bit DRAM data bus width; assume 2MB.
 		 * Also indicates 2MB memory on the 5430.
 		 */
-		case 0x18:
+		हाल 0x18:
 			mem = 2048 * 1024;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_warn(info->device, "Unknown memory size!\n");
 			mem = 1024 * 1024;
-		}
-		/* If DRAM bank switching is enabled, there must be
+		पूर्ण
+		/* If DRAM bank चयनing is enabled, there must be
 		 * twice as much memory installed. (4MB on the 5434)
 		 */
-		if (cinfo->btype != BT_ALPINE && (SRF & 0x80) != 0)
+		अगर (cinfo->btype != BT_ALPINE && (SRF & 0x80) != 0)
 			mem *= 2;
-	}
+	पूर्ण
 
 	/* TODO: Handling of GD5446/5480 (see XF86 sources ...) */
-	return mem;
-}
+	वापस mem;
+पूर्ण
 
-static void get_pci_addrs(const struct pci_dev *pdev,
-			  unsigned long *display, unsigned long *registers)
-{
-	assert(pdev != NULL);
-	assert(display != NULL);
-	assert(registers != NULL);
+अटल व्योम get_pci_addrs(स्थिर काष्ठा pci_dev *pdev,
+			  अचिन्हित दीर्घ *display, अचिन्हित दीर्घ *रेजिस्टरs)
+अणु
+	निश्चित(pdev != शून्य);
+	निश्चित(display != शून्य);
+	निश्चित(रेजिस्टरs != शून्य);
 
 	*display = 0;
-	*registers = 0;
+	*रेजिस्टरs = 0;
 
-	/* This is a best-guess for now */
+	/* This is a best-guess क्रम now */
 
-	if (pci_resource_flags(pdev, 0) & IORESOURCE_IO) {
+	अगर (pci_resource_flags(pdev, 0) & IORESOURCE_IO) अणु
 		*display = pci_resource_start(pdev, 1);
-		*registers = pci_resource_start(pdev, 0);
-	} else {
+		*रेजिस्टरs = pci_resource_start(pdev, 0);
+	पूर्ण अन्यथा अणु
 		*display = pci_resource_start(pdev, 0);
-		*registers = pci_resource_start(pdev, 1);
-	}
+		*रेजिस्टरs = pci_resource_start(pdev, 1);
+	पूर्ण
 
-	assert(*display != 0);
-}
+	निश्चित(*display != 0);
+पूर्ण
 
-static void cirrusfb_pci_unmap(struct fb_info *info)
-{
-	struct pci_dev *pdev = to_pci_dev(info->device);
-	struct cirrusfb_info *cinfo = info->par;
+अटल व्योम cirrusfb_pci_unmap(काष्ठा fb_info *info)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(info->device);
+	काष्ठा cirrusfb_info *cinfo = info->par;
 
-	if (cinfo->laguna_mmio == NULL)
+	अगर (cinfo->laguna_mmio == शून्य)
 		iounmap(cinfo->laguna_mmio);
 	iounmap(info->screen_base);
-#if 0 /* if system didn't claim this region, we would... */
+#अगर 0 /* अगर प्रणाली didn't claim this region, we would... */
 	release_mem_region(0xA0000, 65535);
-#endif
-	if (release_io_ports)
+#पूर्ण_अगर
+	अगर (release_io_ports)
 		release_region(0x3C0, 32);
 	pci_release_regions(pdev);
-}
-#endif /* CONFIG_PCI */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#ifdef CONFIG_ZORRO
-static void cirrusfb_zorro_unmap(struct fb_info *info)
-{
-	struct cirrusfb_info *cinfo = info->par;
-	struct zorro_dev *zdev = to_zorro_dev(info->device);
+#अगर_घोषित CONFIG_ZORRO
+अटल व्योम cirrusfb_zorro_unmap(काष्ठा fb_info *info)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	काष्ठा zorro_dev *zdev = to_zorro_dev(info->device);
 
-	if (info->fix.smem_start > 16 * MB_)
+	अगर (info->fix.smem_start > 16 * MB_)
 		iounmap(info->screen_base);
-	if (info->fix.mmio_start > 16 * MB_)
+	अगर (info->fix.mmio_start > 16 * MB_)
 		iounmap(cinfo->regbase);
 
 	zorro_release_device(zdev);
-}
-#endif /* CONFIG_ZORRO */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ZORRO */
 
 /* function table of the above functions */
-static const struct fb_ops cirrusfb_ops = {
+अटल स्थिर काष्ठा fb_ops cirrusfb_ops = अणु
 	.owner		= THIS_MODULE,
-	.fb_open	= cirrusfb_open,
+	.fb_खोलो	= cirrusfb_खोलो,
 	.fb_release	= cirrusfb_release,
 	.fb_setcolreg	= cirrusfb_setcolreg,
 	.fb_check_var	= cirrusfb_check_var,
@@ -1969,148 +1970,148 @@ static const struct fb_ops cirrusfb_ops = {
 	.fb_copyarea	= cirrusfb_copyarea,
 	.fb_sync	= cirrusfb_sync,
 	.fb_imageblit	= cirrusfb_imageblit,
-};
+पूर्ण;
 
-static int cirrusfb_set_fbinfo(struct fb_info *info)
-{
-	struct cirrusfb_info *cinfo = info->par;
-	struct fb_var_screeninfo *var = &info->var;
+अटल पूर्णांक cirrusfb_set_fbinfo(काष्ठा fb_info *info)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	काष्ठा fb_var_screeninfo *var = &info->var;
 
-	info->pseudo_palette = cinfo->pseudo_palette;
+	info->pseuकरो_palette = cinfo->pseuकरो_palette;
 	info->flags = FBINFO_DEFAULT
 		    | FBINFO_HWACCEL_XPAN
 		    | FBINFO_HWACCEL_YPAN
 		    | FBINFO_HWACCEL_FILLRECT
 		    | FBINFO_HWACCEL_IMAGEBLIT
 		    | FBINFO_HWACCEL_COPYAREA;
-	if (noaccel || is_laguna(cinfo)) {
+	अगर (noaccel || is_laguna(cinfo)) अणु
 		info->flags |= FBINFO_HWACCEL_DISABLED;
 		info->fix.accel = FB_ACCEL_NONE;
-	} else
+	पूर्ण अन्यथा
 		info->fix.accel = FB_ACCEL_CIRRUS_ALPINE;
 
 	info->fbops = &cirrusfb_ops;
 
-	if (cinfo->btype == BT_GD5480) {
-		if (var->bits_per_pixel == 16)
+	अगर (cinfo->btype == BT_GD5480) अणु
+		अगर (var->bits_per_pixel == 16)
 			info->screen_base += 1 * MB_;
-		if (var->bits_per_pixel == 32)
+		अगर (var->bits_per_pixel == 32)
 			info->screen_base += 2 * MB_;
-	}
+	पूर्ण
 
 	/* Fill fix common fields */
 	strlcpy(info->fix.id, cirrusfb_board_info[cinfo->btype].name,
-		sizeof(info->fix.id));
+		माप(info->fix.id));
 
 	/* monochrome: only 1 memory plane */
 	/* 8 bit and above: Use whole memory area */
 	info->fix.smem_len   = info->screen_size;
-	if (var->bits_per_pixel == 1)
+	अगर (var->bits_per_pixel == 1)
 		info->fix.smem_len /= 4;
 	info->fix.type_aux   = 0;
 	info->fix.xpanstep   = 1;
 	info->fix.ypanstep   = 1;
 	info->fix.ywrapstep  = 0;
 
-	/* FIXME: map region at 0xB8000 if available, fill in here */
+	/* FIXME: map region at 0xB8000 अगर available, fill in here */
 	info->fix.mmio_len   = 0;
 
 	fb_alloc_cmap(&info->cmap, 256, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cirrusfb_register(struct fb_info *info)
-{
-	struct cirrusfb_info *cinfo = info->par;
-	int err;
+अटल पूर्णांक cirrusfb_रेजिस्टर(काष्ठा fb_info *info)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
+	पूर्णांक err;
 
 	/* sanity checks */
-	assert(cinfo->btype != BT_NONE);
+	निश्चित(cinfo->btype != BT_NONE);
 
 	/* set all the vital stuff */
 	cirrusfb_set_fbinfo(info);
 
 	dev_dbg(info->device, "(RAM start set to: 0x%p)\n", info->screen_base);
 
-	err = fb_find_mode(&info->var, info, mode_option, NULL, 0, NULL, 8);
-	if (!err) {
+	err = fb_find_mode(&info->var, info, mode_option, शून्य, 0, शून्य, 8);
+	अगर (!err) अणु
 		dev_dbg(info->device, "wrong initial video mode\n");
 		err = -EINVAL;
-		goto err_dealloc_cmap;
-	}
+		जाओ err_dealloc_cmap;
+	पूर्ण
 
 	info->var.activate = FB_ACTIVATE_NOW;
 
 	err = cirrusfb_check_var(&info->var, info);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		/* should never happen */
 		dev_dbg(info->device,
 			"choking on default var... umm, no good.\n");
-		goto err_dealloc_cmap;
-	}
+		जाओ err_dealloc_cmap;
+	पूर्ण
 
-	err = register_framebuffer(info);
-	if (err < 0) {
+	err = रेजिस्टर_framebuffer(info);
+	अगर (err < 0) अणु
 		dev_err(info->device,
 			"could not register fb device; err = %d!\n", err);
-		goto err_dealloc_cmap;
-	}
+		जाओ err_dealloc_cmap;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_dealloc_cmap:
 	fb_dealloc_cmap(&info->cmap);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void cirrusfb_cleanup(struct fb_info *info)
-{
-	struct cirrusfb_info *cinfo = info->par;
+अटल व्योम cirrusfb_cleanup(काष्ठा fb_info *info)
+अणु
+	काष्ठा cirrusfb_info *cinfo = info->par;
 
-	switch_monitor(cinfo, 0);
-	unregister_framebuffer(info);
+	चयन_monitor(cinfo, 0);
+	unरेजिस्टर_framebuffer(info);
 	fb_dealloc_cmap(&info->cmap);
 	dev_dbg(info->device, "Framebuffer unregistered\n");
 	cinfo->unmap(info);
 	framebuffer_release(info);
-}
+पूर्ण
 
-#ifdef CONFIG_PCI
-static int cirrusfb_pci_register(struct pci_dev *pdev,
-				 const struct pci_device_id *ent)
-{
-	struct cirrusfb_info *cinfo;
-	struct fb_info *info;
-	unsigned long board_addr, board_size;
-	int ret;
+#अगर_घोषित CONFIG_PCI
+अटल पूर्णांक cirrusfb_pci_रेजिस्टर(काष्ठा pci_dev *pdev,
+				 स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा cirrusfb_info *cinfo;
+	काष्ठा fb_info *info;
+	अचिन्हित दीर्घ board_addr, board_size;
+	पूर्णांक ret;
 
 	ret = pci_enable_device(pdev);
-	if (ret < 0) {
-		printk(KERN_ERR "cirrusfb: Cannot enable PCI device\n");
-		goto err_out;
-	}
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR "cirrusfb: Cannot enable PCI device\n");
+		जाओ err_out;
+	पूर्ण
 
-	info = framebuffer_alloc(sizeof(struct cirrusfb_info), &pdev->dev);
-	if (!info) {
+	info = framebuffer_alloc(माप(काष्ठा cirrusfb_info), &pdev->dev);
+	अगर (!info) अणु
 		ret = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	cinfo = info->par;
-	cinfo->btype = (enum cirrus_board) ent->driver_data;
+	cinfo->btype = (क्रमागत cirrus_board) ent->driver_data;
 
 	dev_dbg(info->device,
 		" Found PCI device, base address 0 is 0x%Lx, btype set to %d\n",
-		(unsigned long long)pdev->resource[0].start,  cinfo->btype);
+		(अचिन्हित दीर्घ दीर्घ)pdev->resource[0].start,  cinfo->btype);
 	dev_dbg(info->device, " base address 1 is 0x%Lx\n",
-		(unsigned long long)pdev->resource[1].start);
+		(अचिन्हित दीर्घ दीर्घ)pdev->resource[1].start);
 
 	dev_dbg(info->device,
 		"Attempt to get PCI info for Cirrus Graphics Card\n");
 	get_pci_addrs(pdev, &board_addr, &info->fix.mmio_start);
-	/* FIXME: this forces VGA.  alternatives? */
-	cinfo->regbase = NULL;
+	/* FIXME: this क्रमces VGA.  alternatives? */
+	cinfo->regbase = शून्य;
 	cinfo->laguna_mmio = ioremap(info->fix.mmio_start, 0x1000);
 
 	dev_dbg(info->device, "Board address: 0x%lx, register address: 0x%lx\n",
@@ -2120,27 +2121,27 @@ static int cirrusfb_pci_register(struct pci_dev *pdev,
 		32 * MB_ : cirrusfb_get_memsize(info, cinfo->regbase);
 
 	ret = pci_request_regions(pdev, "cirrusfb");
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(info->device, "cannot reserve region 0x%lx, abort\n",
 			board_addr);
-		goto err_release_fb;
-	}
-#if 0 /* if the system didn't claim this region, we would... */
-	if (!request_mem_region(0xA0000, 65535, "cirrusfb")) {
+		जाओ err_release_fb;
+	पूर्ण
+#अगर 0 /* अगर the प्रणाली didn't claim this region, we would... */
+	अगर (!request_mem_region(0xA0000, 65535, "cirrusfb")) अणु
 		dev_err(info->device, "cannot reserve region 0x%lx, abort\n",
 			0xA0000L);
 		ret = -EBUSY;
-		goto err_release_regions;
-	}
-#endif
-	if (request_region(0x3C0, 32, "cirrusfb"))
+		जाओ err_release_regions;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (request_region(0x3C0, 32, "cirrusfb"))
 		release_io_ports = 1;
 
 	info->screen_base = ioremap(board_addr, board_size);
-	if (!info->screen_base) {
+	अगर (!info->screen_base) अणु
 		ret = -EIO;
-		goto err_release_legacy;
-	}
+		जाओ err_release_legacy;
+	पूर्ण
 
 	info->fix.smem_start = board_addr;
 	info->screen_size = board_size;
@@ -2151,104 +2152,104 @@ static int cirrusfb_pci_register(struct pci_dev *pdev,
 		 info->screen_size >> 10, board_addr);
 	pci_set_drvdata(pdev, info);
 
-	ret = cirrusfb_register(info);
-	if (!ret)
-		return 0;
+	ret = cirrusfb_रेजिस्टर(info);
+	अगर (!ret)
+		वापस 0;
 
 	iounmap(info->screen_base);
 err_release_legacy:
-	if (release_io_ports)
+	अगर (release_io_ports)
 		release_region(0x3C0, 32);
-#if 0
+#अगर 0
 	release_mem_region(0xA0000, 65535);
 err_release_regions:
-#endif
+#पूर्ण_अगर
 	pci_release_regions(pdev);
 err_release_fb:
-	if (cinfo->laguna_mmio != NULL)
+	अगर (cinfo->laguna_mmio != शून्य)
 		iounmap(cinfo->laguna_mmio);
 	framebuffer_release(info);
 err_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cirrusfb_pci_unregister(struct pci_dev *pdev)
-{
-	struct fb_info *info = pci_get_drvdata(pdev);
+अटल व्योम cirrusfb_pci_unरेजिस्टर(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा fb_info *info = pci_get_drvdata(pdev);
 
 	cirrusfb_cleanup(info);
-}
+पूर्ण
 
-static struct pci_driver cirrusfb_pci_driver = {
+अटल काष्ठा pci_driver cirrusfb_pci_driver = अणु
 	.name		= "cirrusfb",
 	.id_table	= cirrusfb_pci_table,
-	.probe		= cirrusfb_pci_register,
-	.remove		= cirrusfb_pci_unregister,
-#ifdef CONFIG_PM
-#if 0
+	.probe		= cirrusfb_pci_रेजिस्टर,
+	.हटाओ		= cirrusfb_pci_unरेजिस्टर,
+#अगर_घोषित CONFIG_PM
+#अगर 0
 	.suspend	= cirrusfb_pci_suspend,
 	.resume		= cirrusfb_pci_resume,
-#endif
-#endif
-};
-#endif /* CONFIG_PCI */
+#पूर्ण_अगर
+#पूर्ण_अगर
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_PCI */
 
-#ifdef CONFIG_ZORRO
-static int cirrusfb_zorro_register(struct zorro_dev *z,
-				   const struct zorro_device_id *ent)
-{
-	struct fb_info *info;
-	int error;
-	const struct zorrocl *zcl;
-	enum cirrus_board btype;
-	unsigned long regbase, ramsize, rambase;
-	struct cirrusfb_info *cinfo;
+#अगर_घोषित CONFIG_ZORRO
+अटल पूर्णांक cirrusfb_zorro_रेजिस्टर(काष्ठा zorro_dev *z,
+				   स्थिर काष्ठा zorro_device_id *ent)
+अणु
+	काष्ठा fb_info *info;
+	पूर्णांक error;
+	स्थिर काष्ठा zorrocl *zcl;
+	क्रमागत cirrus_board btype;
+	अचिन्हित दीर्घ regbase, ramsize, rambase;
+	काष्ठा cirrusfb_info *cinfo;
 
-	info = framebuffer_alloc(sizeof(struct cirrusfb_info), &z->dev);
-	if (!info)
-		return -ENOMEM;
+	info = framebuffer_alloc(माप(काष्ठा cirrusfb_info), &z->dev);
+	अगर (!info)
+		वापस -ENOMEM;
 
-	zcl = (const struct zorrocl *)ent->driver_data;
+	zcl = (स्थिर काष्ठा zorrocl *)ent->driver_data;
 	btype = zcl->type;
 	regbase = zorro_resource_start(z) + zcl->regoffset;
 	ramsize = zcl->ramsize;
-	if (ramsize) {
+	अगर (ramsize) अणु
 		rambase = zorro_resource_start(z) + zcl->ramoffset;
-		if (zorro_resource_len(z) == 64 * MB_) {
-			/* Quirk for 64 MiB Picasso IV */
+		अगर (zorro_resource_len(z) == 64 * MB_) अणु
+			/* Quirk क्रम 64 MiB Picasso IV */
 			rambase += zcl->ramoffset;
-		}
-	} else {
-		struct zorro_dev *ram = zorro_find_device(zcl->ramid, NULL);
-		if (!ram || !zorro_resource_len(ram)) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा zorro_dev *ram = zorro_find_device(zcl->ramid, शून्य);
+		अगर (!ram || !zorro_resource_len(ram)) अणु
 			dev_err(info->device, "No video RAM found\n");
 			error = -ENODEV;
-			goto err_release_fb;
-		}
+			जाओ err_release_fb;
+		पूर्ण
 		rambase = zorro_resource_start(ram);
 		ramsize = zorro_resource_len(ram);
-		if (zcl->ramid2 &&
-		    (ram = zorro_find_device(zcl->ramid2, NULL))) {
-			if (zorro_resource_start(ram) != rambase + ramsize) {
+		अगर (zcl->ramid2 &&
+		    (ram = zorro_find_device(zcl->ramid2, शून्य))) अणु
+			अगर (zorro_resource_start(ram) != rambase + ramsize) अणु
 				dev_warn(info->device,
 					 "Skipping non-contiguous RAM at %pR\n",
 					 &ram->resource);
-			} else {
+			पूर्ण अन्यथा अणु
 				ramsize += zorro_resource_len(ram);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	dev_info(info->device,
 		 "%s board detected, REG at 0x%lx, %lu MiB RAM at 0x%lx\n",
 		 cirrusfb_board_info[btype].name, regbase, ramsize / MB_,
 		 rambase);
 
-	if (!zorro_request_device(z, "cirrusfb")) {
+	अगर (!zorro_request_device(z, "cirrusfb")) अणु
 		dev_err(info->device, "Cannot reserve %pR\n", &z->resource);
 		error = -EBUSY;
-		goto err_release_fb;
-	}
+		जाओ err_release_fb;
+	पूर्ण
 
 	cinfo = info->par;
 	cinfo->btype = btype;
@@ -2256,21 +2257,21 @@ static int cirrusfb_zorro_register(struct zorro_dev *z,
 	info->fix.mmio_start = regbase;
 	cinfo->regbase = regbase > 16 * MB_ ? ioremap(regbase, 64 * 1024)
 					    : ZTWO_VADDR(regbase);
-	if (!cinfo->regbase) {
+	अगर (!cinfo->regbase) अणु
 		dev_err(info->device, "Cannot map registers\n");
 		error = -EIO;
-		goto err_release_dev;
-	}
+		जाओ err_release_dev;
+	पूर्ण
 
 	info->fix.smem_start = rambase;
 	info->screen_size = ramsize;
 	info->screen_base = rambase > 16 * MB_ ? ioremap(rambase, ramsize)
 					       : ZTWO_VADDR(rambase);
-	if (!info->screen_base) {
+	अगर (!info->screen_base) अणु
 		dev_err(info->device, "Cannot map video RAM\n");
 		error = -EIO;
-		goto err_unmap_reg;
-	}
+		जाओ err_unmap_reg;
+	पूर्ण
 
 	cinfo->unmap = cirrusfb_zorro_unmap;
 
@@ -2279,72 +2280,72 @@ static int cirrusfb_zorro_register(struct zorro_dev *z,
 		 ramsize / MB_, rambase);
 
 	/* MCLK select etc. */
-	if (cirrusfb_board_info[btype].init_sr1f)
+	अगर (cirrusfb_board_info[btype].init_sr1f)
 		vga_wseq(cinfo->regbase, CL_SEQR1F,
 			 cirrusfb_board_info[btype].sr1f);
 
-	error = cirrusfb_register(info);
-	if (error) {
+	error = cirrusfb_रेजिस्टर(info);
+	अगर (error) अणु
 		dev_err(info->device, "Failed to register device, error %d\n",
 			error);
-		goto err_unmap_ram;
-	}
+		जाओ err_unmap_ram;
+	पूर्ण
 
 	zorro_set_drvdata(z, info);
-	return 0;
+	वापस 0;
 
 err_unmap_ram:
-	if (rambase > 16 * MB_)
+	अगर (rambase > 16 * MB_)
 		iounmap(info->screen_base);
 
 err_unmap_reg:
-	if (regbase > 16 * MB_)
+	अगर (regbase > 16 * MB_)
 		iounmap(cinfo->regbase);
 err_release_dev:
 	zorro_release_device(z);
 err_release_fb:
 	framebuffer_release(info);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-void cirrusfb_zorro_unregister(struct zorro_dev *z)
-{
-	struct fb_info *info = zorro_get_drvdata(z);
+व्योम cirrusfb_zorro_unरेजिस्टर(काष्ठा zorro_dev *z)
+अणु
+	काष्ठा fb_info *info = zorro_get_drvdata(z);
 
 	cirrusfb_cleanup(info);
-	zorro_set_drvdata(z, NULL);
-}
+	zorro_set_drvdata(z, शून्य);
+पूर्ण
 
-static struct zorro_driver cirrusfb_zorro_driver = {
+अटल काष्ठा zorro_driver cirrusfb_zorro_driver = अणु
 	.name		= "cirrusfb",
 	.id_table	= cirrusfb_zorro_table,
-	.probe		= cirrusfb_zorro_register,
-	.remove		= cirrusfb_zorro_unregister,
-};
-#endif /* CONFIG_ZORRO */
+	.probe		= cirrusfb_zorro_रेजिस्टर,
+	.हटाओ		= cirrusfb_zorro_unरेजिस्टर,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_ZORRO */
 
-#ifndef MODULE
-static int __init cirrusfb_setup(char *options)
-{
-	char *this_opt;
+#अगर_अघोषित MODULE
+अटल पूर्णांक __init cirrusfb_setup(अक्षर *options)
+अणु
+	अक्षर *this_opt;
 
-	if (!options || !*options)
-		return 0;
+	अगर (!options || !*options)
+		वापस 0;
 
-	while ((this_opt = strsep(&options, ",")) != NULL) {
-		if (!*this_opt)
-			continue;
+	जबतक ((this_opt = strsep(&options, ",")) != शून्य) अणु
+		अगर (!*this_opt)
+			जारी;
 
-		if (!strcmp(this_opt, "noaccel"))
+		अगर (!म_भेद(this_opt, "noaccel"))
 			noaccel = 1;
-		else if (!strncmp(this_opt, "mode:", 5))
+		अन्यथा अगर (!म_भेदन(this_opt, "mode:", 5))
 			mode_option = this_opt + 5;
-		else
+		अन्यथा
 			mode_option = this_opt;
-	}
-	return 0;
-}
-#endif
+	पूर्ण
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
     /*
      *  Modularization
@@ -2354,127 +2355,127 @@ MODULE_AUTHOR("Copyright 1999,2000 Jeff Garzik <jgarzik@pobox.com>");
 MODULE_DESCRIPTION("Accelerated FBDev driver for Cirrus Logic chips");
 MODULE_LICENSE("GPL");
 
-static int __init cirrusfb_init(void)
-{
-	int error = 0;
+अटल पूर्णांक __init cirrusfb_init(व्योम)
+अणु
+	पूर्णांक error = 0;
 
-#ifndef MODULE
-	char *option = NULL;
+#अगर_अघोषित MODULE
+	अक्षर *option = शून्य;
 
-	if (fb_get_options("cirrusfb", &option))
-		return -ENODEV;
+	अगर (fb_get_options("cirrusfb", &option))
+		वापस -ENODEV;
 	cirrusfb_setup(option);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ZORRO
-	error |= zorro_register_driver(&cirrusfb_zorro_driver);
-#endif
-#ifdef CONFIG_PCI
-	error |= pci_register_driver(&cirrusfb_pci_driver);
-#endif
-	return error;
-}
+#अगर_घोषित CONFIG_ZORRO
+	error |= zorro_रेजिस्टर_driver(&cirrusfb_zorro_driver);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_PCI
+	error |= pci_रेजिस्टर_driver(&cirrusfb_pci_driver);
+#पूर्ण_अगर
+	वापस error;
+पूर्ण
 
-static void __exit cirrusfb_exit(void)
-{
-#ifdef CONFIG_PCI
-	pci_unregister_driver(&cirrusfb_pci_driver);
-#endif
-#ifdef CONFIG_ZORRO
-	zorro_unregister_driver(&cirrusfb_zorro_driver);
-#endif
-}
+अटल व्योम __निकास cirrusfb_निकास(व्योम)
+अणु
+#अगर_घोषित CONFIG_PCI
+	pci_unरेजिस्टर_driver(&cirrusfb_pci_driver);
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_ZORRO
+	zorro_unरेजिस्टर_driver(&cirrusfb_zorro_driver);
+#पूर्ण_अगर
+पूर्ण
 
 module_init(cirrusfb_init);
 
-module_param(mode_option, charp, 0);
+module_param(mode_option, अक्षरp, 0);
 MODULE_PARM_DESC(mode_option, "Initial video mode e.g. '648x480-8@60'");
 module_param(noaccel, bool, 0);
 MODULE_PARM_DESC(noaccel, "Disable acceleration");
 
-#ifdef MODULE
-module_exit(cirrusfb_exit);
-#endif
+#अगर_घोषित MODULE
+module_निकास(cirrusfb_निकास);
+#पूर्ण_अगर
 
 /**********************************************************************/
-/* about the following functions - I have used the same names for the */
-/* functions as Markus Wild did in his Retina driver for NetBSD as    */
-/* they just made sense for this purpose. Apart from that, I wrote    */
+/* about the following functions - I have used the same names क्रम the */
+/* functions as Markus Wild did in his Retina driver क्रम NetBSD as    */
+/* they just made sense क्रम this purpose. Apart from that, I wrote    */
 /* these functions myself.					    */
 /**********************************************************************/
 
-/*** WGen() - write into one of the external/general registers ***/
-static void WGen(const struct cirrusfb_info *cinfo,
-		  int regnum, unsigned char val)
-{
-	unsigned long regofs = 0;
+/*** WGen() - ग_लिखो पूर्णांकo one of the बाह्यal/general रेजिस्टरs ***/
+अटल व्योम WGen(स्थिर काष्ठा cirrusfb_info *cinfo,
+		  पूर्णांक regnum, अचिन्हित अक्षर val)
+अणु
+	अचिन्हित दीर्घ regofs = 0;
 
-	if (cinfo->btype == BT_PICASSO) {
-		/* Picasso II specific hack */
-/*	      if (regnum == VGA_PEL_IR || regnum == VGA_PEL_D ||
+	अगर (cinfo->btype == BT_PICASSO) अणु
+		/* Picasso II specअगरic hack */
+/*	      अगर (regnum == VGA_PEL_IR || regnum == VGA_PEL_D ||
 		  regnum == CL_VSSM2) */
-		if (regnum == VGA_PEL_IR || regnum == VGA_PEL_D)
+		अगर (regnum == VGA_PEL_IR || regnum == VGA_PEL_D)
 			regofs = 0xfff;
-	}
+	पूर्ण
 
 	vga_w(cinfo->regbase, regofs + regnum, val);
-}
+पूर्ण
 
-/*** RGen() - read out one of the external/general registers ***/
-static unsigned char RGen(const struct cirrusfb_info *cinfo, int regnum)
-{
-	unsigned long regofs = 0;
+/*** RGen() - पढ़ो out one of the बाह्यal/general रेजिस्टरs ***/
+अटल अचिन्हित अक्षर RGen(स्थिर काष्ठा cirrusfb_info *cinfo, पूर्णांक regnum)
+अणु
+	अचिन्हित दीर्घ regofs = 0;
 
-	if (cinfo->btype == BT_PICASSO) {
-		/* Picasso II specific hack */
-/*	      if (regnum == VGA_PEL_IR || regnum == VGA_PEL_D ||
+	अगर (cinfo->btype == BT_PICASSO) अणु
+		/* Picasso II specअगरic hack */
+/*	      अगर (regnum == VGA_PEL_IR || regnum == VGA_PEL_D ||
 		  regnum == CL_VSSM2) */
-		if (regnum == VGA_PEL_IR || regnum == VGA_PEL_D)
+		अगर (regnum == VGA_PEL_IR || regnum == VGA_PEL_D)
 			regofs = 0xfff;
-	}
+	पूर्ण
 
-	return vga_r(cinfo->regbase, regofs + regnum);
-}
+	वापस vga_r(cinfo->regbase, regofs + regnum);
+पूर्ण
 
-/*** AttrOn() - turn on VideoEnable for Attribute controller ***/
-static void AttrOn(const struct cirrusfb_info *cinfo)
-{
-	assert(cinfo != NULL);
+/*** AttrOn() - turn on VideoEnable क्रम Attribute controller ***/
+अटल व्योम AttrOn(स्थिर काष्ठा cirrusfb_info *cinfo)
+अणु
+	निश्चित(cinfo != शून्य);
 
-	if (vga_rcrt(cinfo->regbase, CL_CRT24) & 0x80) {
-		/* if we're just in "write value" mode, write back the */
-		/* same value as before to not modify anything */
+	अगर (vga_rcrt(cinfo->regbase, CL_CRT24) & 0x80) अणु
+		/* अगर we're just in "write value" mode, ग_लिखो back the */
+		/* same value as beक्रमe to not modअगरy anything */
 		vga_w(cinfo->regbase, VGA_ATT_IW,
 		      vga_r(cinfo->regbase, VGA_ATT_R));
-	}
+	पूर्ण
 	/* turn on video bit */
 /*      vga_w(cinfo->regbase, VGA_ATT_IW, 0x20); */
 	vga_w(cinfo->regbase, VGA_ATT_IW, 0x33);
 
-	/* dummy write on Reg0 to be on "write index" mode next time */
+	/* dummy ग_लिखो on Reg0 to be on "write index" mode next समय */
 	vga_w(cinfo->regbase, VGA_ATT_IW, 0x00);
-}
+पूर्ण
 
-/*** WHDR() - write into the Hidden DAC register ***/
-/* as the HDR is the only extension register that requires special treatment
- * (the other extension registers are accessible just like the "ordinary"
- * registers of their functional group) here is a specialized routine for
+/*** WHDR() - ग_लिखो पूर्णांकo the Hidden DAC रेजिस्टर ***/
+/* as the HDR is the only extension रेजिस्टर that requires special treaपंचांगent
+ * (the other extension रेजिस्टरs are accessible just like the "ordinary"
+ * रेजिस्टरs of their functional group) here is a specialized routine क्रम
  * accessing the HDR
  */
-static void WHDR(const struct cirrusfb_info *cinfo, unsigned char val)
-{
-	if (is_laguna(cinfo))
-		return;
-	if (cinfo->btype == BT_PICASSO) {
-		/* Klaus' hint for correct access to HDR on some boards */
-		/* first write 0 to pixel mask (3c6) */
+अटल व्योम WHDR(स्थिर काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर val)
+अणु
+	अगर (is_laguna(cinfo))
+		वापस;
+	अगर (cinfo->btype == BT_PICASSO) अणु
+		/* Klaus' hपूर्णांक क्रम correct access to HDR on some boards */
+		/* first ग_लिखो 0 to pixel mask (3c6) */
 		WGen(cinfo, VGA_PEL_MSK, 0x00);
 		udelay(200);
-		/* next read dummy from pixel address (3c8) */
+		/* next पढ़ो dummy from pixel address (3c8) */
 		RGen(cinfo, VGA_PEL_IW);
 		udelay(200);
-	}
-	/* now do the usual stuff to access the HDR */
+	पूर्ण
+	/* now करो the usual stuff to access the HDR */
 
 	RGen(cinfo, VGA_PEL_MSK);
 	udelay(200);
@@ -2488,7 +2489,7 @@ static void WHDR(const struct cirrusfb_info *cinfo, unsigned char val)
 	WGen(cinfo, VGA_PEL_MSK, val);
 	udelay(200);
 
-	if (cinfo->btype == BT_PICASSO) {
+	अगर (cinfo->btype == BT_PICASSO) अणु
 		/* now first reset HDR access counter */
 		RGen(cinfo, VGA_PEL_IW);
 		udelay(200);
@@ -2497,105 +2498,105 @@ static void WHDR(const struct cirrusfb_info *cinfo, unsigned char val)
 		/* ## is this mask always 0xff? */
 		WGen(cinfo, VGA_PEL_MSK, 0xff);
 		udelay(200);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/*** WSFR() - write to the "special function register" (SFR) ***/
-static void WSFR(struct cirrusfb_info *cinfo, unsigned char val)
-{
-#ifdef CONFIG_ZORRO
-	assert(cinfo->regbase != NULL);
+/*** WSFR() - ग_लिखो to the "special function register" (SFR) ***/
+अटल व्योम WSFR(काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर val)
+अणु
+#अगर_घोषित CONFIG_ZORRO
+	निश्चित(cinfo->regbase != शून्य);
 	cinfo->SFR = val;
-	z_writeb(val, cinfo->regbase + 0x8000);
-#endif
-}
+	z_ग_लिखोb(val, cinfo->regbase + 0x8000);
+#पूर्ण_अगर
+पूर्ण
 
-/* The Picasso has a second register for switching the monitor bit */
-static void WSFR2(struct cirrusfb_info *cinfo, unsigned char val)
-{
-#ifdef CONFIG_ZORRO
-	/* writing an arbitrary value to this one causes the monitor switcher */
+/* The Picasso has a second रेजिस्टर क्रम चयनing the monitor bit */
+अटल व्योम WSFR2(काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर val)
+अणु
+#अगर_घोषित CONFIG_ZORRO
+	/* writing an arbitrary value to this one causes the monitor चयनer */
 	/* to flip to Amiga display */
-	assert(cinfo->regbase != NULL);
+	निश्चित(cinfo->regbase != शून्य);
 	cinfo->SFR = val;
-	z_writeb(val, cinfo->regbase + 0x9000);
-#endif
-}
+	z_ग_लिखोb(val, cinfo->regbase + 0x9000);
+#पूर्ण_अगर
+पूर्ण
 
 /*** WClut - set CLUT entry (range: 0..63) ***/
-static void WClut(struct cirrusfb_info *cinfo, unsigned char regnum, unsigned char red,
-	    unsigned char green, unsigned char blue)
-{
-	unsigned int data = VGA_PEL_D;
+अटल व्योम WClut(काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर regnum, अचिन्हित अक्षर red,
+	    अचिन्हित अक्षर green, अचिन्हित अक्षर blue)
+अणु
+	अचिन्हित पूर्णांक data = VGA_PEL_D;
 
-	/* address write mode register is not translated.. */
+	/* address ग_लिखो mode रेजिस्टर is not translated.. */
 	vga_w(cinfo->regbase, VGA_PEL_IW, regnum);
 
-	if (cinfo->btype == BT_PICASSO || cinfo->btype == BT_PICASSO4 ||
+	अगर (cinfo->btype == BT_PICASSO || cinfo->btype == BT_PICASSO4 ||
 	    cinfo->btype == BT_ALPINE || cinfo->btype == BT_GD5480 ||
-	    cinfo->btype == BT_SD64 || is_laguna(cinfo)) {
-		/* but DAC data register IS, at least for Picasso II */
-		if (cinfo->btype == BT_PICASSO)
+	    cinfo->btype == BT_SD64 || is_laguna(cinfo)) अणु
+		/* but DAC data रेजिस्टर IS, at least क्रम Picasso II */
+		अगर (cinfo->btype == BT_PICASSO)
 			data += 0xfff;
 		vga_w(cinfo->regbase, data, red);
 		vga_w(cinfo->regbase, data, green);
 		vga_w(cinfo->regbase, data, blue);
-	} else {
+	पूर्ण अन्यथा अणु
 		vga_w(cinfo->regbase, data, blue);
 		vga_w(cinfo->regbase, data, green);
 		vga_w(cinfo->regbase, data, red);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if 0
-/*** RClut - read CLUT entry (range 0..63) ***/
-static void RClut(struct cirrusfb_info *cinfo, unsigned char regnum, unsigned char *red,
-	    unsigned char *green, unsigned char *blue)
-{
-	unsigned int data = VGA_PEL_D;
+#अगर 0
+/*** RClut - पढ़ो CLUT entry (range 0..63) ***/
+अटल व्योम RClut(काष्ठा cirrusfb_info *cinfo, अचिन्हित अक्षर regnum, अचिन्हित अक्षर *red,
+	    अचिन्हित अक्षर *green, अचिन्हित अक्षर *blue)
+अणु
+	अचिन्हित पूर्णांक data = VGA_PEL_D;
 
 	vga_w(cinfo->regbase, VGA_PEL_IR, regnum);
 
-	if (cinfo->btype == BT_PICASSO || cinfo->btype == BT_PICASSO4 ||
-	    cinfo->btype == BT_ALPINE || cinfo->btype == BT_GD5480) {
-		if (cinfo->btype == BT_PICASSO)
+	अगर (cinfo->btype == BT_PICASSO || cinfo->btype == BT_PICASSO4 ||
+	    cinfo->btype == BT_ALPINE || cinfo->btype == BT_GD5480) अणु
+		अगर (cinfo->btype == BT_PICASSO)
 			data += 0xfff;
 		*red = vga_r(cinfo->regbase, data);
 		*green = vga_r(cinfo->regbase, data);
 		*blue = vga_r(cinfo->regbase, data);
-	} else {
+	पूर्ण अन्यथा अणु
 		*blue = vga_r(cinfo->regbase, data);
 		*green = vga_r(cinfo->regbase, data);
 		*red = vga_r(cinfo->regbase, data);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /*******************************************************************
 	cirrusfb_WaitBLT()
 
-	Wait for the BitBLT engine to complete a possible earlier job
+	Wait क्रम the BitBLT engine to complete a possible earlier job
 *********************************************************************/
 
-/* FIXME: use interrupts instead */
-static void cirrusfb_WaitBLT(u8 __iomem *regbase)
-{
-	while (vga_rgfx(regbase, CL_GR31) & 0x08)
+/* FIXME: use पूर्णांकerrupts instead */
+अटल व्योम cirrusfb_WaitBLT(u8 __iomem *regbase)
+अणु
+	जबतक (vga_rgfx(regbase, CL_GR31) & 0x08)
 		cpu_relax();
-}
+पूर्ण
 
 /*******************************************************************
 	cirrusfb_BitBLT()
 
-	perform accelerated "scrolling"
+	perक्रमm accelerated "scrolling"
 ********************************************************************/
 
-static void cirrusfb_set_blitter(u8 __iomem *regbase,
-			    u_short nwidth, u_short nheight,
-			    u_long nsrc, u_long ndest,
-			    u_short bltmode, u_short line_length)
+अटल व्योम cirrusfb_set_blitter(u8 __iomem *regbase,
+			    u_लघु nwidth, u_लघु nheight,
+			    u_दीर्घ nsrc, u_दीर्घ ndest,
+			    u_लघु blपंचांगode, u_लघु line_length)
 
-{
+अणु
 	/* pitch: set to line_length */
 	/* dest pitch low */
 	vga_wgfx(regbase, CL_GR24, line_length & 0xff);
@@ -2620,174 +2621,174 @@ static void cirrusfb_set_blitter(u8 __iomem *regbase,
 
 	/* BLT destination */
 	/* BLT dest low */
-	vga_wgfx(regbase, CL_GR28, (u_char) (ndest & 0xff));
+	vga_wgfx(regbase, CL_GR28, (u_अक्षर) (ndest & 0xff));
 	/* BLT dest mid */
-	vga_wgfx(regbase, CL_GR29, (u_char) (ndest >> 8));
+	vga_wgfx(regbase, CL_GR29, (u_अक्षर) (ndest >> 8));
 	/* BLT dest hi */
-	vga_wgfx(regbase, CL_GR2A, (u_char) (ndest >> 16));
+	vga_wgfx(regbase, CL_GR2A, (u_अक्षर) (ndest >> 16));
 
 	/* BLT source */
 	/* BLT src low */
-	vga_wgfx(regbase, CL_GR2C, (u_char) (nsrc & 0xff));
+	vga_wgfx(regbase, CL_GR2C, (u_अक्षर) (nsrc & 0xff));
 	/* BLT src mid */
-	vga_wgfx(regbase, CL_GR2D, (u_char) (nsrc >> 8));
+	vga_wgfx(regbase, CL_GR2D, (u_अक्षर) (nsrc >> 8));
 	/* BLT src hi */
-	vga_wgfx(regbase, CL_GR2E, (u_char) (nsrc >> 16));
+	vga_wgfx(regbase, CL_GR2E, (u_अक्षर) (nsrc >> 16));
 
 	/* BLT mode */
-	vga_wgfx(regbase, CL_GR30, bltmode);	/* BLT mode */
+	vga_wgfx(regbase, CL_GR30, blपंचांगode);	/* BLT mode */
 
 	/* BLT ROP: SrcCopy */
 	vga_wgfx(regbase, CL_GR32, 0x0d);	/* BLT ROP */
 
 	/* and finally: GO! */
 	vga_wgfx(regbase, CL_GR31, 0x02);	/* BLT Start/status */
-}
+पूर्ण
 
 /*******************************************************************
 	cirrusfb_BitBLT()
 
-	perform accelerated "scrolling"
+	perक्रमm accelerated "scrolling"
 ********************************************************************/
 
-static void cirrusfb_BitBLT(u8 __iomem *regbase, int bits_per_pixel,
-			    u_short curx, u_short cury,
-			    u_short destx, u_short desty,
-			    u_short width, u_short height,
-			    u_short line_length)
-{
-	u_short nwidth = width - 1;
-	u_short nheight = height - 1;
-	u_long nsrc, ndest;
-	u_char bltmode;
+अटल व्योम cirrusfb_BitBLT(u8 __iomem *regbase, पूर्णांक bits_per_pixel,
+			    u_लघु curx, u_लघु cury,
+			    u_लघु destx, u_लघु desty,
+			    u_लघु width, u_लघु height,
+			    u_लघु line_length)
+अणु
+	u_लघु nwidth = width - 1;
+	u_लघु nheight = height - 1;
+	u_दीर्घ nsrc, ndest;
+	u_अक्षर blपंचांगode;
 
-	bltmode = 0x00;
-	/* if source adr < dest addr, do the Blt backwards */
-	if (cury <= desty) {
-		if (cury == desty) {
-			/* if src and dest are on the same line, check x */
-			if (curx < destx)
-				bltmode |= 0x01;
-		} else
-			bltmode |= 0x01;
-	}
-	/* standard case: forward blitting */
+	blपंचांगode = 0x00;
+	/* अगर source adr < dest addr, करो the Blt backwards */
+	अगर (cury <= desty) अणु
+		अगर (cury == desty) अणु
+			/* अगर src and dest are on the same line, check x */
+			अगर (curx < destx)
+				blपंचांगode |= 0x01;
+		पूर्ण अन्यथा
+			blपंचांगode |= 0x01;
+	पूर्ण
+	/* standard हाल: क्रमward blitting */
 	nsrc = (cury * line_length) + curx;
 	ndest = (desty * line_length) + destx;
-	if (bltmode) {
+	अगर (blपंचांगode) अणु
 		/* this means start addresses are at the end,
 		 * counting backwards
 		 */
 		nsrc += nheight * line_length + nwidth;
 		ndest += nheight * line_length + nwidth;
-	}
+	पूर्ण
 
 	cirrusfb_WaitBLT(regbase);
 
 	cirrusfb_set_blitter(regbase, nwidth, nheight,
-			    nsrc, ndest, bltmode, line_length);
-}
+			    nsrc, ndest, blपंचांगode, line_length);
+पूर्ण
 
 /*******************************************************************
 	cirrusfb_RectFill()
 
-	perform accelerated rectangle fill
+	perक्रमm accelerated rectangle fill
 ********************************************************************/
 
-static void cirrusfb_RectFill(u8 __iomem *regbase, int bits_per_pixel,
-		     u_short x, u_short y, u_short width, u_short height,
-		     u32 fg_color, u32 bg_color, u_short line_length,
-		     u_char blitmode)
-{
-	u_long ndest = (y * line_length) + x;
-	u_char op;
+अटल व्योम cirrusfb_RectFill(u8 __iomem *regbase, पूर्णांक bits_per_pixel,
+		     u_लघु x, u_लघु y, u_लघु width, u_लघु height,
+		     u32 fg_color, u32 bg_color, u_लघु line_length,
+		     u_अक्षर bliपंचांगode)
+अणु
+	u_दीर्घ ndest = (y * line_length) + x;
+	u_अक्षर op;
 
 	cirrusfb_WaitBLT(regbase);
 
 	/* This is a ColorExpand Blt, using the */
-	/* same color for foreground and background */
+	/* same color क्रम क्रमeground and background */
 	vga_wgfx(regbase, VGA_GFX_SR_VALUE, bg_color);
 	vga_wgfx(regbase, VGA_GFX_SR_ENABLE, fg_color);
 
 	op = 0x80;
-	if (bits_per_pixel >= 16) {
+	अगर (bits_per_pixel >= 16) अणु
 		vga_wgfx(regbase, CL_GR10, bg_color >> 8);
 		vga_wgfx(regbase, CL_GR11, fg_color >> 8);
 		op = 0x90;
-	}
-	if (bits_per_pixel >= 24) {
+	पूर्ण
+	अगर (bits_per_pixel >= 24) अणु
 		vga_wgfx(regbase, CL_GR12, bg_color >> 16);
 		vga_wgfx(regbase, CL_GR13, fg_color >> 16);
 		op = 0xa0;
-	}
-	if (bits_per_pixel == 32) {
+	पूर्ण
+	अगर (bits_per_pixel == 32) अणु
 		vga_wgfx(regbase, CL_GR14, bg_color >> 24);
 		vga_wgfx(regbase, CL_GR15, fg_color >> 24);
 		op = 0xb0;
-	}
+	पूर्ण
 	cirrusfb_set_blitter(regbase, width - 1, height - 1,
-			    0, ndest, op | blitmode, line_length);
-}
+			    0, ndest, op | bliपंचांगode, line_length);
+पूर्ण
 
 /**************************************************************************
- * bestclock() - determine closest possible clock lower(?) than the
- * desired pixel clock
+ * bestघड़ी() - determine बंदst possible घड़ी lower(?) than the
+ * desired pixel घड़ी
  **************************************************************************/
-static void bestclock(long freq, int *nom, int *den, int *div)
-{
-	int n, d;
-	long h, diff;
+अटल व्योम bestघड़ी(दीर्घ freq, पूर्णांक *nom, पूर्णांक *den, पूर्णांक *भाग)
+अणु
+	पूर्णांक n, d;
+	दीर्घ h, dअगरf;
 
-	assert(nom != NULL);
-	assert(den != NULL);
-	assert(div != NULL);
+	निश्चित(nom != शून्य);
+	निश्चित(den != शून्य);
+	निश्चित(भाग != शून्य);
 
 	*nom = 0;
 	*den = 0;
-	*div = 0;
+	*भाग = 0;
 
-	if (freq < 8000)
+	अगर (freq < 8000)
 		freq = 8000;
 
-	diff = freq;
+	dअगरf = freq;
 
-	for (n = 32; n < 128; n++) {
-		int s = 0;
+	क्रम (n = 32; n < 128; n++) अणु
+		पूर्णांक s = 0;
 
 		d = (14318 * n) / freq;
-		if ((d >= 7) && (d <= 63)) {
-			int temp = d;
+		अगर ((d >= 7) && (d <= 63)) अणु
+			पूर्णांक temp = d;
 
-			if (temp > 31) {
+			अगर (temp > 31) अणु
 				s = 1;
 				temp >>= 1;
-			}
+			पूर्ण
 			h = ((14318 * n) / temp) >> s;
 			h = h > freq ? h - freq : freq - h;
-			if (h < diff) {
-				diff = h;
+			अगर (h < dअगरf) अणु
+				dअगरf = h;
 				*nom = n;
 				*den = temp;
-				*div = s;
-			}
-		}
+				*भाग = s;
+			पूर्ण
+		पूर्ण
 		d++;
-		if ((d >= 7) && (d <= 63)) {
-			if (d > 31) {
+		अगर ((d >= 7) && (d <= 63)) अणु
+			अगर (d > 31) अणु
 				s = 1;
 				d >>= 1;
-			}
+			पूर्ण
 			h = ((14318 * n) / d) >> s;
 			h = h > freq ? h - freq : freq - h;
-			if (h < diff) {
-				diff = h;
+			अगर (h < dअगरf) अणु
+				dअगरf = h;
 				*nom = n;
 				*den = d;
-				*div = s;
-			}
-		}
-	}
-}
+				*भाग = s;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* -------------------------------------------------------------------------
  *
@@ -2796,70 +2797,70 @@ static void bestclock(long freq, int *nom, int *den, int *div)
  * -------------------------------------------------------------------------
  */
 
-#ifdef CIRRUSFB_DEBUG
+#अगर_घोषित CIRRUSFB_DEBUG
 
 /*
- * cirrusfb_dbg_print_regs
- * @regbase: If using newmmio, the newmmio base address, otherwise %NULL
- * @reg_class: type of registers to read: %CRT, or %SEQ
+ * cirrusfb_dbg_prपूर्णांक_regs
+ * @regbase: If using newmmio, the newmmio base address, otherwise %शून्य
+ * @reg_class: type of रेजिस्टरs to पढ़ो: %CRT, or %SEQ
  *
  * DESCRIPTION:
- * Dumps the given list of VGA CRTC registers.  If @base is %NULL,
- * old-style I/O ports are queried for information, otherwise MMIO is
- * used at the given @base address to query the information.
+ * Dumps the given list of VGA CRTC रेजिस्टरs.  If @base is %शून्य,
+ * old-style I/O ports are queried क्रम inक्रमmation, otherwise MMIO is
+ * used at the given @base address to query the inक्रमmation.
  */
 
-static void cirrusfb_dbg_print_regs(struct fb_info *info,
+अटल व्योम cirrusfb_dbg_prपूर्णांक_regs(काष्ठा fb_info *info,
 				    caddr_t regbase,
-				    enum cirrusfb_dbg_reg_class reg_class, ...)
-{
-	va_list list;
-	unsigned char val = 0;
-	unsigned reg;
-	char *name;
+				    क्रमागत cirrusfb_dbg_reg_class reg_class, ...)
+अणु
+	बहु_सूची list;
+	अचिन्हित अक्षर val = 0;
+	अचिन्हित reg;
+	अक्षर *name;
 
-	va_start(list, reg_class);
+	बहु_शुरू(list, reg_class);
 
-	name = va_arg(list, char *);
-	while (name != NULL) {
-		reg = va_arg(list, int);
+	name = बहु_तर्क(list, अक्षर *);
+	जबतक (name != शून्य) अणु
+		reg = बहु_तर्क(list, पूर्णांक);
 
-		switch (reg_class) {
-		case CRT:
-			val = vga_rcrt(regbase, (unsigned char) reg);
-			break;
-		case SEQ:
-			val = vga_rseq(regbase, (unsigned char) reg);
-			break;
-		default:
+		चयन (reg_class) अणु
+		हाल CRT:
+			val = vga_rcrt(regbase, (अचिन्हित अक्षर) reg);
+			अवरोध;
+		हाल SEQ:
+			val = vga_rseq(regbase, (अचिन्हित अक्षर) reg);
+			अवरोध;
+		शेष:
 			/* should never occur */
-			assert(false);
-			break;
-		}
+			निश्चित(false);
+			अवरोध;
+		पूर्ण
 
 		dev_dbg(info->device, "%8s = 0x%02X\n", name, val);
 
-		name = va_arg(list, char *);
-	}
+		name = बहु_तर्क(list, अक्षर *);
+	पूर्ण
 
-	va_end(list);
-}
+	बहु_पूर्ण(list);
+पूर्ण
 
 /*
  * cirrusfb_dbg_reg_dump
- * @base: If using newmmio, the newmmio base address, otherwise %NULL
+ * @base: If using newmmio, the newmmio base address, otherwise %शून्य
  *
  * DESCRIPTION:
- * Dumps a list of interesting VGA and CIRRUSFB registers.  If @base is %NULL,
- * old-style I/O ports are queried for information, otherwise MMIO is
- * used at the given @base address to query the information.
+ * Dumps a list of पूर्णांकeresting VGA and CIRRUSFB रेजिस्टरs.  If @base is %शून्य,
+ * old-style I/O ports are queried क्रम inक्रमmation, otherwise MMIO is
+ * used at the given @base address to query the inक्रमmation.
  */
 
-static void cirrusfb_dbg_reg_dump(struct fb_info *info, caddr_t regbase)
-{
+अटल व्योम cirrusfb_dbg_reg_dump(काष्ठा fb_info *info, caddr_t regbase)
+अणु
 	dev_dbg(info->device, "VGA CRTC register dump:\n");
 
-	cirrusfb_dbg_print_regs(info, regbase, CRT,
+	cirrusfb_dbg_prपूर्णांक_regs(info, regbase, CRT,
 			   "CR00", 0x00,
 			   "CR01", 0x01,
 			   "CR02", 0x02,
@@ -2907,13 +2908,13 @@ static void cirrusfb_dbg_reg_dump(struct fb_info *info, caddr_t regbase)
 			   "CR3D", 0x3D,
 			   "CR3E", 0x3E,
 			   "CR3F", 0x3F,
-			   NULL);
+			   शून्य);
 
 	dev_dbg(info->device, "\n");
 
 	dev_dbg(info->device, "VGA SEQ register dump:\n");
 
-	cirrusfb_dbg_print_regs(info, regbase, SEQ,
+	cirrusfb_dbg_prपूर्णांक_regs(info, regbase, SEQ,
 			   "SR00", 0x00,
 			   "SR01", 0x01,
 			   "SR02", 0x02,
@@ -2940,10 +2941,10 @@ static void cirrusfb_dbg_reg_dump(struct fb_info *info, caddr_t regbase)
 			   "SR1D", 0x1D,
 			   "SR1E", 0x1E,
 			   "SR1F", 0x1F,
-			   NULL);
+			   शून्य);
 
 	dev_dbg(info->device, "\n");
-}
+पूर्ण
 
-#endif				/* CIRRUSFB_DEBUG */
+#पूर्ण_अगर				/* CIRRUSFB_DEBUG */
 

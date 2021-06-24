@@ -1,143 +1,144 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2008-2011 Atheros Communications Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "common.h"
+#समावेश "common.h"
 
-static ssize_t read_file_modal_eeprom(struct file *file, char __user *user_buf,
-				      size_t count, loff_t *ppos)
-{
-	struct ath_hw *ah = file->private_data;
+अटल sमाप_प्रकार पढ़ो_file_modal_eeprom(काष्ठा file *file, अक्षर __user *user_buf,
+				      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ath_hw *ah = file->निजी_data;
 	u32 len = 0, size = 6000;
-	char *buf;
-	size_t retval;
+	अक्षर *buf;
+	माप_प्रकार retval;
 
 	buf = kzalloc(size, GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
 	len = ah->eep_ops->dump_eeprom(ah, false, buf, len, size);
 
-	retval = simple_read_from_buffer(user_buf, count, ppos, buf, len);
-	kfree(buf);
+	retval = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+	kमुक्त(buf);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static const struct file_operations fops_modal_eeprom = {
-	.read = read_file_modal_eeprom,
-	.open = simple_open,
+अटल स्थिर काष्ठा file_operations fops_modal_eeprom = अणु
+	.पढ़ो = पढ़ो_file_modal_eeprom,
+	.खोलो = simple_खोलो,
 	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
+	.llseek = शेष_llseek,
+पूर्ण;
 
 
-void ath9k_cmn_debug_modal_eeprom(struct dentry *debugfs_phy,
-				  struct ath_hw *ah)
-{
+व्योम ath9k_cmn_debug_modal_eeprom(काष्ठा dentry *debugfs_phy,
+				  काष्ठा ath_hw *ah)
+अणु
 	debugfs_create_file("modal_eeprom", 0400, debugfs_phy, ah,
 			    &fops_modal_eeprom);
-}
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_debug_modal_eeprom);
 
-static ssize_t read_file_base_eeprom(struct file *file, char __user *user_buf,
-				     size_t count, loff_t *ppos)
-{
-	struct ath_hw *ah = file->private_data;
+अटल sमाप_प्रकार पढ़ो_file_base_eeprom(काष्ठा file *file, अक्षर __user *user_buf,
+				     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा ath_hw *ah = file->निजी_data;
 	u32 len = 0, size = 1500;
-	ssize_t retval = 0;
-	char *buf;
+	sमाप_प्रकार retval = 0;
+	अक्षर *buf;
 
 	buf = kzalloc(size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	len = ah->eep_ops->dump_eeprom(ah, true, buf, len, size);
 
-	retval = simple_read_from_buffer(user_buf, count, ppos, buf, len);
-	kfree(buf);
+	retval = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+	kमुक्त(buf);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static const struct file_operations fops_base_eeprom = {
-	.read = read_file_base_eeprom,
-	.open = simple_open,
+अटल स्थिर काष्ठा file_operations fops_base_eeprom = अणु
+	.पढ़ो = पढ़ो_file_base_eeprom,
+	.खोलो = simple_खोलो,
 	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
+	.llseek = शेष_llseek,
+पूर्ण;
 
-void ath9k_cmn_debug_base_eeprom(struct dentry *debugfs_phy,
-				 struct ath_hw *ah)
-{
+व्योम ath9k_cmn_debug_base_eeprom(काष्ठा dentry *debugfs_phy,
+				 काष्ठा ath_hw *ah)
+अणु
 	debugfs_create_file("base_eeprom", 0400, debugfs_phy, ah,
 			    &fops_base_eeprom);
-}
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_debug_base_eeprom);
 
-void ath9k_cmn_debug_stat_rx(struct ath_rx_stats *rxstats,
-			     struct ath_rx_status *rs)
-{
-#define RX_PHY_ERR_INC(c) rxstats->phy_err_stats[c]++
-#define RX_CMN_STAT_INC(c) (rxstats->c++)
+व्योम ath9k_cmn_debug_stat_rx(काष्ठा ath_rx_stats *rxstats,
+			     काष्ठा ath_rx_status *rs)
+अणु
+#घोषणा RX_PHY_ERR_INC(c) rxstats->phy_err_stats[c]++
+#घोषणा RX_CMN_STAT_INC(c) (rxstats->c++)
 
 	RX_CMN_STAT_INC(rx_pkts_all);
 	rxstats->rx_bytes_all += rs->rs_datalen;
 
-	if (rs->rs_status & ATH9K_RXERR_CRC)
+	अगर (rs->rs_status & ATH9K_RXERR_CRC)
 		RX_CMN_STAT_INC(crc_err);
-	if (rs->rs_status & ATH9K_RXERR_DECRYPT)
+	अगर (rs->rs_status & ATH9K_RXERR_DECRYPT)
 		RX_CMN_STAT_INC(decrypt_crc_err);
-	if (rs->rs_status & ATH9K_RXERR_MIC)
+	अगर (rs->rs_status & ATH9K_RXERR_MIC)
 		RX_CMN_STAT_INC(mic_err);
-	if (rs->rs_status & ATH9K_RX_DELIM_CRC_PRE)
+	अगर (rs->rs_status & ATH9K_RX_DELIM_CRC_PRE)
 		RX_CMN_STAT_INC(pre_delim_crc_err);
-	if (rs->rs_status & ATH9K_RX_DELIM_CRC_POST)
+	अगर (rs->rs_status & ATH9K_RX_DELIM_CRC_POST)
 		RX_CMN_STAT_INC(post_delim_crc_err);
-	if (rs->rs_status & ATH9K_RX_DECRYPT_BUSY)
+	अगर (rs->rs_status & ATH9K_RX_DECRYPT_BUSY)
 		RX_CMN_STAT_INC(decrypt_busy_err);
 
-	if (rs->rs_status & ATH9K_RXERR_PHY) {
+	अगर (rs->rs_status & ATH9K_RXERR_PHY) अणु
 		RX_CMN_STAT_INC(phy_err);
-		if (rs->rs_phyerr < ATH9K_PHYERR_MAX)
+		अगर (rs->rs_phyerr < ATH9K_PHYERR_MAX)
 			RX_PHY_ERR_INC(rs->rs_phyerr);
-	}
+	पूर्ण
 
-#undef RX_CMN_STAT_INC
-#undef RX_PHY_ERR_INC
-}
+#अघोषित RX_CMN_STAT_INC
+#अघोषित RX_PHY_ERR_INC
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_debug_stat_rx);
 
-static ssize_t read_file_recv(struct file *file, char __user *user_buf,
-			      size_t count, loff_t *ppos)
-{
-#define RXS_ERR(s, e)					\
-	do {						\
-		len += scnprintf(buf + len, size - len,	\
+अटल sमाप_प्रकार पढ़ो_file_recv(काष्ठा file *file, अक्षर __user *user_buf,
+			      माप_प्रकार count, loff_t *ppos)
+अणु
+#घोषणा RXS_ERR(s, e)					\
+	करो अणु						\
+		len += scnम_लिखो(buf + len, size - len,	\
 				 "%18s : %10u\n", s,	\
 				 rxstats->e);		\
-	} while (0)
+	पूर्ण जबतक (0)
 
-	struct ath_rx_stats *rxstats = file->private_data;
-	char *buf;
-	unsigned int len = 0, size = 1600;
-	ssize_t retval = 0;
+	काष्ठा ath_rx_stats *rxstats = file->निजी_data;
+	अक्षर *buf;
+	अचिन्हित पूर्णांक len = 0, size = 1600;
+	sमाप_प्रकार retval = 0;
 
 	buf = kzalloc(size, GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
 	RXS_ERR("PKTS-ALL", rx_pkts_all);
 	RXS_ERR("BYTES-ALL", rx_bytes_all);
@@ -159,46 +160,46 @@ static ssize_t read_file_recv(struct file *file, char __user *user_buf,
 	RXS_ERR("RATE-ERR", rx_rate_err);
 	RXS_ERR("TOO-MANY-FRAGS", rx_too_many_frags_err);
 
-	if (len > size)
+	अगर (len > size)
 		len = size;
 
-	retval = simple_read_from_buffer(user_buf, count, ppos, buf, len);
-	kfree(buf);
+	retval = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+	kमुक्त(buf);
 
-	return retval;
+	वापस retval;
 
-#undef RXS_ERR
-}
+#अघोषित RXS_ERR
+पूर्ण
 
-static const struct file_operations fops_recv = {
-	.read = read_file_recv,
-	.open = simple_open,
+अटल स्थिर काष्ठा file_operations fops_recv = अणु
+	.पढ़ो = पढ़ो_file_recv,
+	.खोलो = simple_खोलो,
 	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
+	.llseek = शेष_llseek,
+पूर्ण;
 
-void ath9k_cmn_debug_recv(struct dentry *debugfs_phy,
-			  struct ath_rx_stats *rxstats)
-{
+व्योम ath9k_cmn_debug_recv(काष्ठा dentry *debugfs_phy,
+			  काष्ठा ath_rx_stats *rxstats)
+अणु
 	debugfs_create_file("recv", 0400, debugfs_phy, rxstats, &fops_recv);
-}
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_debug_recv);
 
-static ssize_t read_file_phy_err(struct file *file, char __user *user_buf,
-				 size_t count, loff_t *ppos)
-{
-#define PHY_ERR(s, p) \
-	len += scnprintf(buf + len, size - len, "%22s : %10u\n", s, \
+अटल sमाप_प्रकार पढ़ो_file_phy_err(काष्ठा file *file, अक्षर __user *user_buf,
+				 माप_प्रकार count, loff_t *ppos)
+अणु
+#घोषणा PHY_ERR(s, p) \
+	len += scnम_लिखो(buf + len, size - len, "%22s : %10u\n", s, \
 			 rxstats->phy_err_stats[p])
 
-	struct ath_rx_stats *rxstats = file->private_data;
-	char *buf;
-	unsigned int len = 0, size = 1600;
-	ssize_t retval = 0;
+	काष्ठा ath_rx_stats *rxstats = file->निजी_data;
+	अक्षर *buf;
+	अचिन्हित पूर्णांक len = 0, size = 1600;
+	sमाप_प्रकार retval = 0;
 
 	buf = kzalloc(size, GFP_KERNEL);
-	if (buf == NULL)
-		return -ENOMEM;
+	अगर (buf == शून्य)
+		वापस -ENOMEM;
 
 	PHY_ERR("UNDERRUN ERR", ATH9K_PHYERR_UNDERRUN);
 	PHY_ERR("TIMING ERR", ATH9K_PHYERR_TIMING);
@@ -235,28 +236,28 @@ static ssize_t read_file_phy_err(struct file *file, char __user *user_buf,
 	PHY_ERR("GREEN-FIELD ERR", ATH9K_PHYERR_GREEN_FIELD);
 	PHY_ERR("SPECTRAL ERR", ATH9K_PHYERR_SPECTRAL);
 
-	if (len > size)
+	अगर (len > size)
 		len = size;
 
-	retval = simple_read_from_buffer(user_buf, count, ppos, buf, len);
-	kfree(buf);
+	retval = simple_पढ़ो_from_buffer(user_buf, count, ppos, buf, len);
+	kमुक्त(buf);
 
-	return retval;
+	वापस retval;
 
-#undef PHY_ERR
-}
+#अघोषित PHY_ERR
+पूर्ण
 
-static const struct file_operations fops_phy_err = {
-	.read = read_file_phy_err,
-	.open = simple_open,
+अटल स्थिर काष्ठा file_operations fops_phy_err = अणु
+	.पढ़ो = पढ़ो_file_phy_err,
+	.खोलो = simple_खोलो,
 	.owner = THIS_MODULE,
-	.llseek = default_llseek,
-};
+	.llseek = शेष_llseek,
+पूर्ण;
 
-void ath9k_cmn_debug_phy_err(struct dentry *debugfs_phy,
-			     struct ath_rx_stats *rxstats)
-{
+व्योम ath9k_cmn_debug_phy_err(काष्ठा dentry *debugfs_phy,
+			     काष्ठा ath_rx_stats *rxstats)
+अणु
 	debugfs_create_file("phy_err", 0400, debugfs_phy, rxstats,
 			    &fops_phy_err);
-}
+पूर्ण
 EXPORT_SYMBOL(ath9k_cmn_debug_phy_err);

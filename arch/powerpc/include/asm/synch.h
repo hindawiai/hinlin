@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_SYNCH_H 
-#define _ASM_POWERPC_SYNCH_H 
-#ifdef __KERNEL__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_SYNCH_H 
+#घोषणा _ASM_POWERPC_SYNCH_H 
+#अगर_घोषित __KERNEL__
 
-#include <asm/cputable.h>
-#include <asm/feature-fixups.h>
-#include <asm/ppc-opcode.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/feature-fixups.h>
+#समावेश <यंत्र/ppc-opcode.h>
 
-#ifndef __ASSEMBLY__
-extern unsigned int __start___lwsync_fixup, __stop___lwsync_fixup;
-extern void do_lwsync_fixups(unsigned long value, void *fixup_start,
-			     void *fixup_end);
+#अगर_अघोषित __ASSEMBLY__
+बाह्य अचिन्हित पूर्णांक __start___lwsync_fixup, __stop___lwsync_fixup;
+बाह्य व्योम करो_lwsync_fixups(अचिन्हित दीर्घ value, व्योम *fixup_start,
+			     व्योम *fixup_end);
 
-static inline void eieio(void)
-{
-	__asm__ __volatile__ ("eieio" : : : "memory");
-}
+अटल अंतरभूत व्योम eieio(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__ ("eieio" : : : "memory");
+पूर्ण
 
-static inline void isync(void)
-{
-	__asm__ __volatile__ ("isync" : : : "memory");
-}
+अटल अंतरभूत व्योम isync(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__ ("isync" : : : "memory");
+पूर्ण
 
-static inline void ppc_after_tlbiel_barrier(void)
-{
-	asm volatile("ptesync": : :"memory");
+अटल अंतरभूत व्योम ppc_after_tlbiel_barrier(व्योम)
+अणु
+	यंत्र अस्थिर("ptesync": : :"memory");
 	/*
-	 * POWER9, POWER10 need a cp_abort after tlbiel to ensure the copy is
-	 * invalidated correctly. If this is not done, the paste can take data
-	 * from the physical address that was translated at copy time.
+	 * POWER9, POWER10 need a cp_पात after tlbiel to ensure the copy is
+	 * invalidated correctly. If this is not करोne, the paste can take data
+	 * from the physical address that was translated at copy समय.
 	 *
-	 * POWER9 in practice does not need this, because address spaces with
-	 * accelerators mapped will use tlbie (which does invalidate the copy)
+	 * POWER9 in practice करोes not need this, because address spaces with
+	 * accelerators mapped will use tlbie (which करोes invalidate the copy)
 	 * to invalidate translations. It's not possible to limit POWER10 this
 	 * way due to local copy-paste.
 	 */
-	asm volatile(ASM_FTR_IFSET(PPC_CP_ABORT, "", %0) : : "i" (CPU_FTR_ARCH_31) : "memory");
-}
-#endif /* __ASSEMBLY__ */
+	यंत्र अस्थिर(ASM_FTR_IFSET(PPC_CP_ABORT, "", %0) : : "i" (CPU_FTR_ARCH_31) : "memory");
+पूर्ण
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#if defined(__powerpc64__)
+#अगर defined(__घातerpc64__)
 #    define LWSYNC	lwsync
-#elif defined(CONFIG_E500)
+#या_अगर defined(CONFIG_E500)
 #    define LWSYNC					\
 	START_LWSYNC_SECTION(96);			\
 	sync;						\
 	MAKE_LWSYNC_SECTION_ENTRY(96, __lwsync_fixup);
-#else
+#अन्यथा
 #    define LWSYNC	sync
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_SMP
-#define __PPC_ACQUIRE_BARRIER				\
+#अगर_घोषित CONFIG_SMP
+#घोषणा __PPC_ACQUIRE_BARRIER				\
 	START_LWSYNC_SECTION(97);			\
 	isync;						\
 	MAKE_LWSYNC_SECTION_ENTRY(97, __lwsync_fixup);
-#define PPC_ACQUIRE_BARRIER	 "\n" stringify_in_c(__PPC_ACQUIRE_BARRIER)
-#define PPC_RELEASE_BARRIER	 stringify_in_c(LWSYNC) "\n"
-#define PPC_ATOMIC_ENTRY_BARRIER "\n" stringify_in_c(sync) "\n"
-#define PPC_ATOMIC_EXIT_BARRIER	 "\n" stringify_in_c(sync) "\n"
-#else
-#define PPC_ACQUIRE_BARRIER
-#define PPC_RELEASE_BARRIER
-#define PPC_ATOMIC_ENTRY_BARRIER
-#define PPC_ATOMIC_EXIT_BARRIER
-#endif
+#घोषणा PPC_ACQUIRE_BARRIER	 "\n" stringअगरy_in_c(__PPC_ACQUIRE_BARRIER)
+#घोषणा PPC_RELEASE_BARRIER	 stringअगरy_in_c(LWSYNC) "\n"
+#घोषणा PPC_ATOMIC_ENTRY_BARRIER "\n" stringअगरy_in_c(sync) "\n"
+#घोषणा PPC_ATOMIC_EXIT_BARRIER	 "\n" stringअगरy_in_c(sync) "\n"
+#अन्यथा
+#घोषणा PPC_ACQUIRE_BARRIER
+#घोषणा PPC_RELEASE_BARRIER
+#घोषणा PPC_ATOMIC_ENTRY_BARRIER
+#घोषणा PPC_ATOMIC_EXIT_BARRIER
+#पूर्ण_अगर
 
-#endif /* __KERNEL__ */
-#endif	/* _ASM_POWERPC_SYNCH_H */
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर	/* _ASM_POWERPC_SYNCH_H */

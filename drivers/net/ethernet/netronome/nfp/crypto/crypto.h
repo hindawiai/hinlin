@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause) */
 /* Copyright (C) 2019 Netronome Systems, Inc. */
 
-#ifndef NFP_CRYPTO_H
-#define NFP_CRYPTO_H 1
+#अगर_अघोषित NFP_CRYPTO_H
+#घोषणा NFP_CRYPTO_H 1
 
-struct net_device;
-struct nfp_net;
-struct nfp_net_tls_resync_req;
+काष्ठा net_device;
+काष्ठा nfp_net;
+काष्ठा nfp_net_tls_resync_req;
 
-struct nfp_net_tls_offload_ctx {
+काष्ठा nfp_net_tls_offload_ctx अणु
 	__be32 fw_handle[2];
 
 	u8 rx_end[0];
-	/* Tx only fields follow - Rx side does not have enough driver state
+	/* Tx only fields follow - Rx side करोes not have enough driver state
 	 * to fit these
 	 */
 
 	u32 next_seq;
-};
+पूर्ण;
 
-#ifdef CONFIG_TLS_DEVICE
-int nfp_net_tls_init(struct nfp_net *nn);
-int nfp_net_tls_rx_resync_req(struct net_device *netdev,
-			      struct nfp_net_tls_resync_req *req,
-			      void *pkt, unsigned int pkt_len);
-#else
-static inline int nfp_net_tls_init(struct nfp_net *nn)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_TLS_DEVICE
+पूर्णांक nfp_net_tls_init(काष्ठा nfp_net *nn);
+पूर्णांक nfp_net_tls_rx_resync_req(काष्ठा net_device *netdev,
+			      काष्ठा nfp_net_tls_resync_req *req,
+			      व्योम *pkt, अचिन्हित पूर्णांक pkt_len);
+#अन्यथा
+अटल अंतरभूत पूर्णांक nfp_net_tls_init(काष्ठा nfp_net *nn)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int
-nfp_net_tls_rx_resync_req(struct net_device *netdev,
-			  struct nfp_net_tls_resync_req *req,
-			  void *pkt, unsigned int pkt_len)
-{
-	return -EOPNOTSUPP;
-}
-#endif
+अटल अंतरभूत पूर्णांक
+nfp_net_tls_rx_resync_req(काष्ठा net_device *netdev,
+			  काष्ठा nfp_net_tls_resync_req *req,
+			  व्योम *pkt, अचिन्हित पूर्णांक pkt_len)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

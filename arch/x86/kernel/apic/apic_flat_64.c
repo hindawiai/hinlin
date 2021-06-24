@@ -1,130 +1,131 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright 2004 James Cleverdon, IBM.
+ * Copyright 2004 James Cleverकरोn, IBM.
  *
  * Flat APIC subarch code.
  *
- * Hacked for x86-64 by James Cleverdon from i386 architecture code by
+ * Hacked क्रम x86-64 by James Cleverकरोn from i386 architecture code by
  * Martin Bligh, Andi Kleen, James Bottomley, John Stultz, and
- * James Cleverdon.
+ * James Cleverकरोn.
  */
-#include <linux/cpumask.h>
-#include <linux/export.h>
-#include <linux/acpi.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/export.h>
+#समावेश <linux/acpi.h>
 
-#include <asm/jailhouse_para.h>
-#include <asm/apic.h>
+#समावेश <यंत्र/jailhouse_para.h>
+#समावेश <यंत्र/apic.h>
 
-#include "local.h"
+#समावेश "local.h"
 
-static struct apic apic_physflat;
-static struct apic apic_flat;
+अटल काष्ठा apic apic_physflat;
+अटल काष्ठा apic apic_flat;
 
-struct apic *apic __ro_after_init = &apic_flat;
+काष्ठा apic *apic __ro_after_init = &apic_flat;
 EXPORT_SYMBOL_GPL(apic);
 
-static int flat_acpi_madt_oem_check(char *oem_id, char *oem_table_id)
-{
-	return 1;
-}
+अटल पूर्णांक flat_acpi_madt_oem_check(अक्षर *oem_id, अक्षर *oem_table_id)
+अणु
+	वापस 1;
+पूर्ण
 
 /*
  * Set up the logical destination ID.
  *
- * Intel recommends to set DFR, LDR and TPR before enabling
+ * Intel recommends to set DFR, LDR and TPR beक्रमe enabling
  * an APIC.  See e.g. "AP-388 82489DX User's Manual" (Intel
- * document number 292116).  So here it goes...
+ * करोcument number 292116).  So here it goes...
  */
-void flat_init_apic_ldr(void)
-{
-	unsigned long val;
-	unsigned long num, id;
+व्योम flat_init_apic_ldr(व्योम)
+अणु
+	अचिन्हित दीर्घ val;
+	अचिन्हित दीर्घ num, id;
 
 	num = smp_processor_id();
 	id = 1UL << num;
-	apic_write(APIC_DFR, APIC_DFR_FLAT);
-	val = apic_read(APIC_LDR) & ~APIC_LDR_MASK;
+	apic_ग_लिखो(APIC_DFR, APIC_DFR_FLAT);
+	val = apic_पढ़ो(APIC_LDR) & ~APIC_LDR_MASK;
 	val |= SET_APIC_LOGICAL_ID(id);
-	apic_write(APIC_LDR, val);
-}
+	apic_ग_लिखो(APIC_LDR, val);
+पूर्ण
 
-static void _flat_send_IPI_mask(unsigned long mask, int vector)
-{
-	unsigned long flags;
+अटल व्योम _flat_send_IPI_mask(अचिन्हित दीर्घ mask, पूर्णांक vector)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	__default_send_IPI_dest_field(mask, vector, APIC_DEST_LOGICAL);
+	__शेष_send_IPI_dest_field(mask, vector, APIC_DEST_LOGICAL);
 	local_irq_restore(flags);
-}
+पूर्ण
 
-static void flat_send_IPI_mask(const struct cpumask *cpumask, int vector)
-{
-	unsigned long mask = cpumask_bits(cpumask)[0];
+अटल व्योम flat_send_IPI_mask(स्थिर काष्ठा cpumask *cpumask, पूर्णांक vector)
+अणु
+	अचिन्हित दीर्घ mask = cpumask_bits(cpumask)[0];
 
 	_flat_send_IPI_mask(mask, vector);
-}
+पूर्ण
 
-static void
-flat_send_IPI_mask_allbutself(const struct cpumask *cpumask, int vector)
-{
-	unsigned long mask = cpumask_bits(cpumask)[0];
-	int cpu = smp_processor_id();
+अटल व्योम
+flat_send_IPI_mask_allbutself(स्थिर काष्ठा cpumask *cpumask, पूर्णांक vector)
+अणु
+	अचिन्हित दीर्घ mask = cpumask_bits(cpumask)[0];
+	पूर्णांक cpu = smp_processor_id();
 
-	if (cpu < BITS_PER_LONG)
+	अगर (cpu < BITS_PER_LONG)
 		__clear_bit(cpu, &mask);
 
 	_flat_send_IPI_mask(mask, vector);
-}
+पूर्ण
 
-static unsigned int flat_get_apic_id(unsigned long x)
-{
-	return (x >> 24) & 0xFF;
-}
+अटल अचिन्हित पूर्णांक flat_get_apic_id(अचिन्हित दीर्घ x)
+अणु
+	वापस (x >> 24) & 0xFF;
+पूर्ण
 
-static u32 set_apic_id(unsigned int id)
-{
-	return (id & 0xFF) << 24;
-}
+अटल u32 set_apic_id(अचिन्हित पूर्णांक id)
+अणु
+	वापस (id & 0xFF) << 24;
+पूर्ण
 
-static unsigned int read_xapic_id(void)
-{
-	return flat_get_apic_id(apic_read(APIC_ID));
-}
+अटल अचिन्हित पूर्णांक पढ़ो_xapic_id(व्योम)
+अणु
+	वापस flat_get_apic_id(apic_पढ़ो(APIC_ID));
+पूर्ण
 
-static int flat_apic_id_registered(void)
-{
-	return physid_isset(read_xapic_id(), phys_cpu_present_map);
-}
+अटल पूर्णांक flat_apic_id_रेजिस्टरed(व्योम)
+अणु
+	वापस physid_isset(पढ़ो_xapic_id(), phys_cpu_present_map);
+पूर्ण
 
-static int flat_phys_pkg_id(int initial_apic_id, int index_msb)
-{
-	return initial_apic_id >> index_msb;
-}
+अटल पूर्णांक flat_phys_pkg_id(पूर्णांक initial_apic_id, पूर्णांक index_msb)
+अणु
+	वापस initial_apic_id >> index_msb;
+पूर्ण
 
-static int flat_probe(void)
-{
-	return 1;
-}
+अटल पूर्णांक flat_probe(व्योम)
+अणु
+	वापस 1;
+पूर्ण
 
-static struct apic apic_flat __ro_after_init = {
+अटल काष्ठा apic apic_flat __ro_after_init = अणु
 	.name				= "flat",
 	.probe				= flat_probe,
 	.acpi_madt_oem_check		= flat_acpi_madt_oem_check,
-	.apic_id_valid			= default_apic_id_valid,
-	.apic_id_registered		= flat_apic_id_registered,
+	.apic_id_valid			= शेष_apic_id_valid,
+	.apic_id_रेजिस्टरed		= flat_apic_id_रेजिस्टरed,
 
 	.delivery_mode			= APIC_DELIVERY_MODE_FIXED,
 	.dest_mode_logical		= true,
 
 	.disable_esr			= 0,
 
-	.check_apicid_used		= NULL,
+	.check_apicid_used		= शून्य,
 	.init_apic_ldr			= flat_init_apic_ldr,
-	.ioapic_phys_id_map		= NULL,
-	.setup_apic_routing		= NULL,
-	.cpu_present_to_apicid		= default_cpu_present_to_apicid,
-	.apicid_to_cpu_present		= NULL,
-	.check_phys_apicid_present	= default_check_phys_apicid_present,
+	.ioapic_phys_id_map		= शून्य,
+	.setup_apic_routing		= शून्य,
+	.cpu_present_to_apicid		= शेष_cpu_present_to_apicid,
+	.apicid_to_cpu_present		= शून्य,
+	.check_phys_apicid_present	= शेष_check_phys_apicid_present,
 	.phys_pkg_id			= flat_phys_pkg_id,
 
 	.get_apic_id			= flat_get_apic_id,
@@ -132,116 +133,116 @@ static struct apic apic_flat __ro_after_init = {
 
 	.calc_dest_apicid		= apic_flat_calc_apicid,
 
-	.send_IPI			= default_send_IPI_single,
+	.send_IPI			= शेष_send_IPI_single,
 	.send_IPI_mask			= flat_send_IPI_mask,
 	.send_IPI_mask_allbutself	= flat_send_IPI_mask_allbutself,
-	.send_IPI_allbutself		= default_send_IPI_allbutself,
-	.send_IPI_all			= default_send_IPI_all,
-	.send_IPI_self			= default_send_IPI_self,
+	.send_IPI_allbutself		= शेष_send_IPI_allbutself,
+	.send_IPI_all			= शेष_send_IPI_all,
+	.send_IPI_self			= शेष_send_IPI_self,
 
-	.inquire_remote_apic		= default_inquire_remote_apic,
+	.inquire_remote_apic		= शेष_inquire_remote_apic,
 
-	.read				= native_apic_mem_read,
-	.write				= native_apic_mem_write,
-	.eoi_write			= native_apic_mem_write,
-	.icr_read			= native_apic_icr_read,
-	.icr_write			= native_apic_icr_write,
-	.wait_icr_idle			= native_apic_wait_icr_idle,
-	.safe_wait_icr_idle		= native_safe_apic_wait_icr_idle,
-};
+	.पढ़ो				= native_apic_mem_पढ़ो,
+	.ग_लिखो				= native_apic_mem_ग_लिखो,
+	.eoi_ग_लिखो			= native_apic_mem_ग_लिखो,
+	.icr_पढ़ो			= native_apic_icr_पढ़ो,
+	.icr_ग_लिखो			= native_apic_icr_ग_लिखो,
+	.रुको_icr_idle			= native_apic_रुको_icr_idle,
+	.safe_रुको_icr_idle		= native_safe_apic_रुको_icr_idle,
+पूर्ण;
 
 /*
- * Physflat mode is used when there are more than 8 CPUs on a system.
- * We cannot use logical delivery in this case because the mask
+ * Physflat mode is used when there are more than 8 CPUs on a प्रणाली.
+ * We cannot use logical delivery in this हाल because the mask
  * overflows, so use physical mode.
  */
-static int physflat_acpi_madt_oem_check(char *oem_id, char *oem_table_id)
-{
-#ifdef CONFIG_ACPI
+अटल पूर्णांक physflat_acpi_madt_oem_check(अक्षर *oem_id, अक्षर *oem_table_id)
+अणु
+#अगर_घोषित CONFIG_ACPI
 	/*
 	 * Quirk: some x86_64 machines can only use physical APIC mode
 	 * regardless of how many processors are present (x86_64 ES7000
 	 * is an example).
 	 */
-	if (acpi_gbl_FADT.header.revision >= FADT2_REVISION_ID &&
-		(acpi_gbl_FADT.flags & ACPI_FADT_APIC_PHYSICAL)) {
-		printk(KERN_DEBUG "system APIC only can use physical flat");
-		return 1;
-	}
+	अगर (acpi_gbl_FADT.header.revision >= FADT2_REVISION_ID &&
+		(acpi_gbl_FADT.flags & ACPI_FADT_APIC_PHYSICAL)) अणु
+		prपूर्णांकk(KERN_DEBUG "system APIC only can use physical flat");
+		वापस 1;
+	पूर्ण
 
-	if (!strncmp(oem_id, "IBM", 3) && !strncmp(oem_table_id, "EXA", 3)) {
-		printk(KERN_DEBUG "IBM Summit detected, will use apic physical");
-		return 1;
-	}
-#endif
+	अगर (!म_भेदन(oem_id, "IBM", 3) && !म_भेदन(oem_table_id, "EXA", 3)) अणु
+		prपूर्णांकk(KERN_DEBUG "IBM Summit detected, will use apic physical");
+		वापस 1;
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void physflat_init_apic_ldr(void)
-{
+अटल व्योम physflat_init_apic_ldr(व्योम)
+अणु
 	/*
 	 * LDR and DFR are not involved in physflat mode, rather:
 	 * "In physical destination mode, the destination processor is
-	 * specified by its local APIC ID [...]." (Intel SDM, 10.6.2.1)
+	 * specअगरied by its local APIC ID [...]." (Intel SDM, 10.6.2.1)
 	 */
-}
+पूर्ण
 
-static int physflat_probe(void)
-{
-	if (apic == &apic_physflat || num_possible_cpus() > 8 ||
+अटल पूर्णांक physflat_probe(व्योम)
+अणु
+	अगर (apic == &apic_physflat || num_possible_cpus() > 8 ||
 	    jailhouse_paravirt())
-		return 1;
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct apic apic_physflat __ro_after_init = {
+अटल काष्ठा apic apic_physflat __ro_after_init = अणु
 
 	.name				= "physical flat",
 	.probe				= physflat_probe,
 	.acpi_madt_oem_check		= physflat_acpi_madt_oem_check,
-	.apic_id_valid			= default_apic_id_valid,
-	.apic_id_registered		= flat_apic_id_registered,
+	.apic_id_valid			= शेष_apic_id_valid,
+	.apic_id_रेजिस्टरed		= flat_apic_id_रेजिस्टरed,
 
 	.delivery_mode			= APIC_DELIVERY_MODE_FIXED,
 	.dest_mode_logical		= false,
 
 	.disable_esr			= 0,
 
-	.check_apicid_used		= NULL,
+	.check_apicid_used		= शून्य,
 	.init_apic_ldr			= physflat_init_apic_ldr,
-	.ioapic_phys_id_map		= NULL,
-	.setup_apic_routing		= NULL,
-	.cpu_present_to_apicid		= default_cpu_present_to_apicid,
-	.apicid_to_cpu_present		= NULL,
-	.check_phys_apicid_present	= default_check_phys_apicid_present,
+	.ioapic_phys_id_map		= शून्य,
+	.setup_apic_routing		= शून्य,
+	.cpu_present_to_apicid		= शेष_cpu_present_to_apicid,
+	.apicid_to_cpu_present		= शून्य,
+	.check_phys_apicid_present	= शेष_check_phys_apicid_present,
 	.phys_pkg_id			= flat_phys_pkg_id,
 
 	.get_apic_id			= flat_get_apic_id,
 	.set_apic_id			= set_apic_id,
 
-	.calc_dest_apicid		= apic_default_calc_apicid,
+	.calc_dest_apicid		= apic_शेष_calc_apicid,
 
-	.send_IPI			= default_send_IPI_single_phys,
-	.send_IPI_mask			= default_send_IPI_mask_sequence_phys,
-	.send_IPI_mask_allbutself	= default_send_IPI_mask_allbutself_phys,
-	.send_IPI_allbutself		= default_send_IPI_allbutself,
-	.send_IPI_all			= default_send_IPI_all,
-	.send_IPI_self			= default_send_IPI_self,
+	.send_IPI			= शेष_send_IPI_single_phys,
+	.send_IPI_mask			= शेष_send_IPI_mask_sequence_phys,
+	.send_IPI_mask_allbutself	= शेष_send_IPI_mask_allbutself_phys,
+	.send_IPI_allbutself		= शेष_send_IPI_allbutself,
+	.send_IPI_all			= शेष_send_IPI_all,
+	.send_IPI_self			= शेष_send_IPI_self,
 
-	.inquire_remote_apic		= default_inquire_remote_apic,
+	.inquire_remote_apic		= शेष_inquire_remote_apic,
 
-	.read				= native_apic_mem_read,
-	.write				= native_apic_mem_write,
-	.eoi_write			= native_apic_mem_write,
-	.icr_read			= native_apic_icr_read,
-	.icr_write			= native_apic_icr_write,
-	.wait_icr_idle			= native_apic_wait_icr_idle,
-	.safe_wait_icr_idle		= native_safe_apic_wait_icr_idle,
-};
+	.पढ़ो				= native_apic_mem_पढ़ो,
+	.ग_लिखो				= native_apic_mem_ग_लिखो,
+	.eoi_ग_लिखो			= native_apic_mem_ग_लिखो,
+	.icr_पढ़ो			= native_apic_icr_पढ़ो,
+	.icr_ग_लिखो			= native_apic_icr_ग_लिखो,
+	.रुको_icr_idle			= native_apic_रुको_icr_idle,
+	.safe_रुको_icr_idle		= native_safe_apic_रुको_icr_idle,
+पूर्ण;
 
 /*
- * We need to check for physflat first, so this order is important.
+ * We need to check क्रम physflat first, so this order is important.
  */
 apic_drivers(apic_physflat, apic_flat);

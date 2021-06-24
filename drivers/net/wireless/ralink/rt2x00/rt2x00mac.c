@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 	Copyright (C) 2004 - 2009 Ivo van Doorn <IvDoorn@gmail.com>
 	<http://rt2x00.serialmonkey.com>
@@ -10,57 +11,57 @@
 	Abstract: rt2x00 generic mac80211 routines.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "rt2x00.h"
-#include "rt2x00lib.h"
+#समावेश "rt2x00.h"
+#समावेश "rt2x00lib.h"
 
-static int rt2x00mac_tx_rts_cts(struct rt2x00_dev *rt2x00dev,
-				struct data_queue *queue,
-				struct sk_buff *frag_skb)
-{
-	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(frag_skb);
-	struct ieee80211_tx_info *rts_info;
-	struct sk_buff *skb;
-	unsigned int data_length;
-	int retval = 0;
+अटल पूर्णांक rt2x00mac_tx_rts_cts(काष्ठा rt2x00_dev *rt2x00dev,
+				काष्ठा data_queue *queue,
+				काष्ठा sk_buff *frag_skb)
+अणु
+	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(frag_skb);
+	काष्ठा ieee80211_tx_info *rts_info;
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक data_length;
+	पूर्णांक retval = 0;
 
-	if (tx_info->control.rates[0].flags & IEEE80211_TX_RC_USE_CTS_PROTECT)
-		data_length = sizeof(struct ieee80211_cts);
-	else
-		data_length = sizeof(struct ieee80211_rts);
+	अगर (tx_info->control.rates[0].flags & IEEE80211_TX_RC_USE_CTS_PROTECT)
+		data_length = माप(काष्ठा ieee80211_cts);
+	अन्यथा
+		data_length = माप(काष्ठा ieee80211_rts);
 
 	skb = dev_alloc_skb(data_length + rt2x00dev->hw->extra_tx_headroom);
-	if (unlikely(!skb)) {
+	अगर (unlikely(!skb)) अणु
 		rt2x00_warn(rt2x00dev, "Failed to create RTS/CTS frame\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	skb_reserve(skb, rt2x00dev->hw->extra_tx_headroom);
 	skb_put(skb, data_length);
 
 	/*
-	 * Copy TX information over from original frame to
+	 * Copy TX inक्रमmation over from original frame to
 	 * RTS/CTS frame. Note that we set the no encryption flag
-	 * since we don't want this frame to be encrypted.
-	 * RTS frames should be acked, while CTS-to-self frames
-	 * should not. The ready for TX flag is cleared to prevent
-	 * it being automatically send when the descriptor is
+	 * since we करोn't want this frame to be encrypted.
+	 * RTS frames should be acked, जबतक CTS-to-self frames
+	 * should not. The पढ़ोy क्रम TX flag is cleared to prevent
+	 * it being स्वतःmatically send when the descriptor is
 	 * written to the hardware.
 	 */
-	memcpy(skb->cb, frag_skb->cb, sizeof(skb->cb));
+	स_नकल(skb->cb, frag_skb->cb, माप(skb->cb));
 	rts_info = IEEE80211_SKB_CB(skb);
 	rts_info->control.rates[0].flags &= ~IEEE80211_TX_RC_USE_RTS_CTS;
 	rts_info->control.rates[0].flags &= ~IEEE80211_TX_RC_USE_CTS_PROTECT;
 
-	if (tx_info->control.rates[0].flags & IEEE80211_TX_RC_USE_CTS_PROTECT)
+	अगर (tx_info->control.rates[0].flags & IEEE80211_TX_RC_USE_CTS_PROTECT)
 		rts_info->flags |= IEEE80211_TX_CTL_NO_ACK;
-	else
+	अन्यथा
 		rts_info->flags &= ~IEEE80211_TX_CTL_NO_ACK;
 
 	/* Disable hardware encryption */
-	rts_info->control.hw_key = NULL;
+	rts_info->control.hw_key = शून्य;
 
 	/*
 	 * RTS/CTS frame should use the length of the frame plus any
@@ -68,259 +69,259 @@ static int rt2x00mac_tx_rts_cts(struct rt2x00_dev *rt2x00dev,
 	 */
 	data_length += rt2x00crypto_tx_overhead(rt2x00dev, skb);
 
-	if (tx_info->control.rates[0].flags & IEEE80211_TX_RC_USE_CTS_PROTECT)
-		ieee80211_ctstoself_get(rt2x00dev->hw, tx_info->control.vif,
+	अगर (tx_info->control.rates[0].flags & IEEE80211_TX_RC_USE_CTS_PROTECT)
+		ieee80211_ctstoself_get(rt2x00dev->hw, tx_info->control.vअगर,
 					frag_skb->data, data_length, tx_info,
-					(struct ieee80211_cts *)(skb->data));
-	else
-		ieee80211_rts_get(rt2x00dev->hw, tx_info->control.vif,
+					(काष्ठा ieee80211_cts *)(skb->data));
+	अन्यथा
+		ieee80211_rts_get(rt2x00dev->hw, tx_info->control.vअगर,
 				  frag_skb->data, data_length, tx_info,
-				  (struct ieee80211_rts *)(skb->data));
+				  (काष्ठा ieee80211_rts *)(skb->data));
 
-	retval = rt2x00queue_write_tx_frame(queue, skb, NULL, true);
-	if (retval) {
-		dev_kfree_skb_any(skb);
+	retval = rt2x00queue_ग_लिखो_tx_frame(queue, skb, शून्य, true);
+	अगर (retval) अणु
+		dev_kमुक्त_skb_any(skb);
 		rt2x00_warn(rt2x00dev, "Failed to send RTS/CTS frame\n");
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-void rt2x00mac_tx(struct ieee80211_hw *hw,
-		  struct ieee80211_tx_control *control,
-		  struct sk_buff *skb)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-	enum data_queue_qid qid = skb_get_queue_mapping(skb);
-	struct data_queue *queue = NULL;
+व्योम rt2x00mac_tx(काष्ठा ieee80211_hw *hw,
+		  काष्ठा ieee80211_tx_control *control,
+		  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+	क्रमागत data_queue_qid qid = skb_get_queue_mapping(skb);
+	काष्ठा data_queue *queue = शून्य;
 
 	/*
-	 * Mac80211 might be calling this function while we are trying
-	 * to remove the device or perhaps suspending it.
+	 * Mac80211 might be calling this function जबतक we are trying
+	 * to हटाओ the device or perhaps suspending it.
 	 * Note that we can only stop the TX queues inside the TX path
 	 * due to possible race conditions in mac80211.
 	 */
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
-		goto exit_free_skb;
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
+		जाओ निकास_मुक्त_skb;
 
 	/*
-	 * Use the ATIM queue if appropriate and present.
+	 * Use the ATIM queue अगर appropriate and present.
 	 */
-	if (tx_info->flags & IEEE80211_TX_CTL_SEND_AFTER_DTIM &&
+	अगर (tx_info->flags & IEEE80211_TX_CTL_SEND_AFTER_DTIM &&
 	    rt2x00_has_cap_flag(rt2x00dev, REQUIRE_ATIM_QUEUE))
 		qid = QID_ATIM;
 
 	queue = rt2x00queue_get_tx_queue(rt2x00dev, qid);
-	if (unlikely(!queue)) {
+	अगर (unlikely(!queue)) अणु
 		rt2x00_err(rt2x00dev,
 			   "Attempt to send packet over invalid queue %d\n"
 			   "Please file bug report to %s\n", qid, DRV_PROJECT);
-		goto exit_free_skb;
-	}
+		जाओ निकास_मुक्त_skb;
+	पूर्ण
 
 	/*
 	 * If CTS/RTS is required. create and queue that frame first.
 	 * Make sure we have at least enough entries available to send
 	 * this CTS/RTS frame as well as the data frame.
 	 * Note that when the driver has set the set_rts_threshold()
-	 * callback function it doesn't need software generation of
+	 * callback function it करोesn't need software generation of
 	 * either RTS or CTS-to-self frame and handles everything
 	 * inside the hardware.
 	 */
-	if (!rt2x00dev->ops->hw->set_rts_threshold &&
+	अगर (!rt2x00dev->ops->hw->set_rts_threshold &&
 	    (tx_info->control.rates[0].flags & (IEEE80211_TX_RC_USE_RTS_CTS |
-						IEEE80211_TX_RC_USE_CTS_PROTECT))) {
-		if (rt2x00queue_available(queue) <= 1) {
+						IEEE80211_TX_RC_USE_CTS_PROTECT))) अणु
+		अगर (rt2x00queue_available(queue) <= 1) अणु
 			/*
-			 * Recheck for full queue under lock to avoid race
-			 * conditions with rt2x00lib_txdone().
+			 * Recheck क्रम full queue under lock to aव्योम race
+			 * conditions with rt2x00lib_txकरोne().
 			 */
 			spin_lock(&queue->tx_lock);
-			if (rt2x00queue_threshold(queue))
-				rt2x00queue_pause_queue(queue);
+			अगर (rt2x00queue_threshold(queue))
+				rt2x00queue_छोड़ो_queue(queue);
 			spin_unlock(&queue->tx_lock);
 
-			goto exit_free_skb;
-		}
+			जाओ निकास_मुक्त_skb;
+		पूर्ण
 
-		if (rt2x00mac_tx_rts_cts(rt2x00dev, queue, skb))
-			goto exit_free_skb;
-	}
+		अगर (rt2x00mac_tx_rts_cts(rt2x00dev, queue, skb))
+			जाओ निकास_मुक्त_skb;
+	पूर्ण
 
-	if (unlikely(rt2x00queue_write_tx_frame(queue, skb, control->sta, false)))
-		goto exit_free_skb;
+	अगर (unlikely(rt2x00queue_ग_लिखो_tx_frame(queue, skb, control->sta, false)))
+		जाओ निकास_मुक्त_skb;
 
-	return;
+	वापस;
 
- exit_free_skb:
-	ieee80211_free_txskb(hw, skb);
-}
+ निकास_मुक्त_skb:
+	ieee80211_मुक्त_txskb(hw, skb);
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_tx);
 
-int rt2x00mac_start(struct ieee80211_hw *hw)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+पूर्णांक rt2x00mac_start(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
-		return 0;
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
+		वापस 0;
 
-	if (test_bit(DEVICE_STATE_STARTED, &rt2x00dev->flags)) {
+	अगर (test_bit(DEVICE_STATE_STARTED, &rt2x00dev->flags)) अणु
 		/*
-		 * This is special case for ieee80211_restart_hw(), otherwise
-		 * mac80211 never call start() two times in row without stop();
+		 * This is special हाल क्रम ieee80211_restart_hw(), otherwise
+		 * mac80211 never call start() two बार in row without stop();
 		 */
 		set_bit(DEVICE_STATE_RESET, &rt2x00dev->flags);
 		rt2x00dev->ops->lib->pre_reset_hw(rt2x00dev);
 		rt2x00lib_stop(rt2x00dev);
-	}
-	return rt2x00lib_start(rt2x00dev);
-}
+	पूर्ण
+	वापस rt2x00lib_start(rt2x00dev);
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_start);
 
-void rt2x00mac_stop(struct ieee80211_hw *hw)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+व्योम rt2x00mac_stop(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
-		return;
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
+		वापस;
 
 	rt2x00lib_stop(rt2x00dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_stop);
 
-void
-rt2x00mac_reconfig_complete(struct ieee80211_hw *hw,
-			    enum ieee80211_reconfig_type reconfig_type)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+व्योम
+rt2x00mac_reconfig_complete(काष्ठा ieee80211_hw *hw,
+			    क्रमागत ieee80211_reconfig_type reconfig_type)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 
-	if (reconfig_type == IEEE80211_RECONFIG_TYPE_RESTART)
+	अगर (reconfig_type == IEEE80211_RECONFIG_TYPE_RESTART)
 		clear_bit(DEVICE_STATE_RESET, &rt2x00dev->flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_reconfig_complete);
 
-int rt2x00mac_add_interface(struct ieee80211_hw *hw,
-			    struct ieee80211_vif *vif)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct rt2x00_intf *intf = vif_to_intf(vif);
-	struct data_queue *queue = rt2x00dev->bcn;
-	struct queue_entry *entry = NULL;
-	unsigned int i;
+पूर्णांक rt2x00mac_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+			    काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा rt2x00_पूर्णांकf *पूर्णांकf = vअगर_to_पूर्णांकf(vअगर);
+	काष्ठा data_queue *queue = rt2x00dev->bcn;
+	काष्ठा queue_entry *entry = शून्य;
+	अचिन्हित पूर्णांक i;
 
 	/*
-	 * Don't allow interfaces to be added
+	 * Don't allow पूर्णांकerfaces to be added
 	 * the device has disappeared.
 	 */
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags) ||
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags) ||
 	    !test_bit(DEVICE_STATE_STARTED, &rt2x00dev->flags))
-		return -ENODEV;
+		वापस -ENODEV;
 
 	/*
-	 * Loop through all beacon queues to find a free
+	 * Loop through all beacon queues to find a मुक्त
 	 * entry. Since there are as much beacon entries
-	 * as the maximum interfaces, this search shouldn't
+	 * as the maximum पूर्णांकerfaces, this search shouldn't
 	 * fail.
 	 */
-	for (i = 0; i < queue->limit; i++) {
+	क्रम (i = 0; i < queue->limit; i++) अणु
 		entry = &queue->entries[i];
-		if (!test_and_set_bit(ENTRY_BCN_ASSIGNED, &entry->flags))
-			break;
-	}
+		अगर (!test_and_set_bit(ENTRY_BCN_ASSIGNED, &entry->flags))
+			अवरोध;
+	पूर्ण
 
-	if (unlikely(i == queue->limit))
-		return -ENOBUFS;
+	अगर (unlikely(i == queue->limit))
+		वापस -ENOBUFS;
 
 	/*
-	 * We are now absolutely sure the interface can be created,
-	 * increase interface count and start initialization.
+	 * We are now असलolutely sure the पूर्णांकerface can be created,
+	 * increase पूर्णांकerface count and start initialization.
 	 */
 
-	if (vif->type == NL80211_IFTYPE_AP)
-		rt2x00dev->intf_ap_count++;
-	else
-		rt2x00dev->intf_sta_count++;
+	अगर (vअगर->type == NL80211_IFTYPE_AP)
+		rt2x00dev->पूर्णांकf_ap_count++;
+	अन्यथा
+		rt2x00dev->पूर्णांकf_sta_count++;
 
-	mutex_init(&intf->beacon_skb_mutex);
-	intf->beacon = entry;
+	mutex_init(&पूर्णांकf->beacon_skb_mutex);
+	पूर्णांकf->beacon = entry;
 
 	/*
 	 * The MAC address must be configured after the device
 	 * has been initialized. Otherwise the device can reset
-	 * the MAC registers.
+	 * the MAC रेजिस्टरs.
 	 * The BSSID address must only be configured in AP mode,
-	 * however we should not send an empty BSSID address for
-	 * STA interfaces at this time, since this can cause
+	 * however we should not send an empty BSSID address क्रम
+	 * STA पूर्णांकerfaces at this समय, since this can cause
 	 * invalid behavior in the device.
 	 */
-	rt2x00lib_config_intf(rt2x00dev, intf, vif->type,
-			      vif->addr, NULL);
+	rt2x00lib_config_पूर्णांकf(rt2x00dev, पूर्णांकf, vअगर->type,
+			      vअगर->addr, शून्य);
 
 	/*
-	 * Some filters depend on the current working mode. We can force
+	 * Some filters depend on the current working mode. We can क्रमce
 	 * an update during the next configure_filter() run by mac80211 by
 	 * resetting the current packet_filter state.
 	 */
 	rt2x00dev->packet_filter = 0;
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(rt2x00mac_add_interface);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(rt2x00mac_add_पूर्णांकerface);
 
-void rt2x00mac_remove_interface(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct rt2x00_intf *intf = vif_to_intf(vif);
+व्योम rt2x00mac_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा rt2x00_पूर्णांकf *पूर्णांकf = vअगर_to_पूर्णांकf(vअगर);
 
 	/*
-	 * Don't allow interfaces to be remove while
+	 * Don't allow पूर्णांकerfaces to be हटाओ जबतक
 	 * either the device has disappeared or when
-	 * no interface is present.
+	 * no पूर्णांकerface is present.
 	 */
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags) ||
-	    (vif->type == NL80211_IFTYPE_AP && !rt2x00dev->intf_ap_count) ||
-	    (vif->type != NL80211_IFTYPE_AP && !rt2x00dev->intf_sta_count))
-		return;
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags) ||
+	    (vअगर->type == NL80211_IFTYPE_AP && !rt2x00dev->पूर्णांकf_ap_count) ||
+	    (vअगर->type != NL80211_IFTYPE_AP && !rt2x00dev->पूर्णांकf_sta_count))
+		वापस;
 
-	if (vif->type == NL80211_IFTYPE_AP)
-		rt2x00dev->intf_ap_count--;
-	else
-		rt2x00dev->intf_sta_count--;
+	अगर (vअगर->type == NL80211_IFTYPE_AP)
+		rt2x00dev->पूर्णांकf_ap_count--;
+	अन्यथा
+		rt2x00dev->पूर्णांकf_sta_count--;
 
 	/*
-	 * Release beacon entry so it is available for
-	 * new interfaces again.
+	 * Release beacon entry so it is available क्रम
+	 * new पूर्णांकerfaces again.
 	 */
-	clear_bit(ENTRY_BCN_ASSIGNED, &intf->beacon->flags);
+	clear_bit(ENTRY_BCN_ASSIGNED, &पूर्णांकf->beacon->flags);
 
 	/*
-	 * Make sure the bssid and mac address registers
+	 * Make sure the bssid and mac address रेजिस्टरs
 	 * are cleared to prevent false ACKing of frames.
 	 */
-	rt2x00lib_config_intf(rt2x00dev, intf,
-			      NL80211_IFTYPE_UNSPECIFIED, NULL, NULL);
-}
-EXPORT_SYMBOL_GPL(rt2x00mac_remove_interface);
+	rt2x00lib_config_पूर्णांकf(rt2x00dev, पूर्णांकf,
+			      NL80211_IFTYPE_UNSPECIFIED, शून्य, शून्य);
+पूर्ण
+EXPORT_SYMBOL_GPL(rt2x00mac_हटाओ_पूर्णांकerface);
 
-int rt2x00mac_config(struct ieee80211_hw *hw, u32 changed)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct ieee80211_conf *conf = &hw->conf;
+पूर्णांक rt2x00mac_config(काष्ठा ieee80211_hw *hw, u32 changed)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा ieee80211_conf *conf = &hw->conf;
 
 	/*
-	 * mac80211 might be calling this function while we are trying
-	 * to remove the device or perhaps suspending it.
+	 * mac80211 might be calling this function जबतक we are trying
+	 * to हटाओ the device or perhaps suspending it.
 	 */
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
-		return 0;
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
+		वापस 0;
 
 	/*
 	 * Some configuration parameters (e.g. channel and antenna values) can
-	 * only be set when the radio is enabled, but do require the RX to
+	 * only be set when the radio is enabled, but करो require the RX to
 	 * be off. During this period we should keep link tuning enabled,
-	 * if for any reason the link tuner must be reset, this will be
+	 * अगर क्रम any reason the link tuner must be reset, this will be
 	 * handled by rt2x00lib_config().
 	 */
 	rt2x00queue_stop_queue(rt2x00dev->rx);
@@ -336,28 +337,28 @@ int rt2x00mac_config(struct ieee80211_hw *hw, u32 changed)
 
 	/*
 	 * After the radio has been enabled we need to configure
-	 * the antenna to the default settings. rt2x00lib_config_antenna()
-	 * should determine if any action should be taken based on
-	 * checking if diversity has been enabled or no antenna changes
+	 * the antenna to the शेष settings. rt2x00lib_config_antenna()
+	 * should determine अगर any action should be taken based on
+	 * checking अगर भागersity has been enabled or no antenna changes
 	 * have been made since the last configuration change.
 	 */
-	rt2x00lib_config_antenna(rt2x00dev, rt2x00dev->default_ant);
+	rt2x00lib_config_antenna(rt2x00dev, rt2x00dev->शेष_ant);
 
 	mutex_unlock(&rt2x00dev->conf_mutex);
 
 	/* Turn RX back on */
 	rt2x00queue_start_queue(rt2x00dev->rx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_config);
 
-void rt2x00mac_configure_filter(struct ieee80211_hw *hw,
-				unsigned int changed_flags,
-				unsigned int *total_flags,
+व्योम rt2x00mac_configure_filter(काष्ठा ieee80211_hw *hw,
+				अचिन्हित पूर्णांक changed_flags,
+				अचिन्हित पूर्णांक *total_flags,
 				u64 multicast)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 
 	/*
 	 * Mask off any flags we are going to ignore
@@ -373,137 +374,137 @@ void rt2x00mac_configure_filter(struct ieee80211_hw *hw,
 
 	/*
 	 * Apply some rules to the filters:
-	 * - Some filters imply different filters to be set.
+	 * - Some filters imply dअगरferent filters to be set.
 	 * - Some things we can't filter out at all.
-	 * - Multicast filter seems to kill broadcast traffic so never use it.
+	 * - Multicast filter seems to समाप्त broadcast traffic so never use it.
 	 */
 	*total_flags |= FIF_ALLMULTI;
 
 	/*
-	 * If the device has a single filter for all control frames,
+	 * If the device has a single filter क्रम all control frames,
 	 * FIF_CONTROL and FIF_PSPOLL flags imply each other.
-	 * And if the device has more than one filter for control frames
-	 * of different types, but has no a separate filter for PS Poll frames,
+	 * And अगर the device has more than one filter क्रम control frames
+	 * of dअगरferent types, but has no a separate filter क्रम PS Poll frames,
 	 * FIF_CONTROL flag implies FIF_PSPOLL.
 	 */
-	if (!rt2x00_has_cap_control_filters(rt2x00dev)) {
-		if (*total_flags & FIF_CONTROL || *total_flags & FIF_PSPOLL)
+	अगर (!rt2x00_has_cap_control_filters(rt2x00dev)) अणु
+		अगर (*total_flags & FIF_CONTROL || *total_flags & FIF_PSPOLL)
 			*total_flags |= FIF_CONTROL | FIF_PSPOLL;
-	}
-	if (!rt2x00_has_cap_control_filter_pspoll(rt2x00dev)) {
-		if (*total_flags & FIF_CONTROL)
+	पूर्ण
+	अगर (!rt2x00_has_cap_control_filter_pspoll(rt2x00dev)) अणु
+		अगर (*total_flags & FIF_CONTROL)
 			*total_flags |= FIF_PSPOLL;
-	}
+	पूर्ण
 
 	rt2x00dev->packet_filter = *total_flags;
 
 	rt2x00dev->ops->lib->config_filter(rt2x00dev, *total_flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_configure_filter);
 
-static void rt2x00mac_set_tim_iter(void *data, u8 *mac,
-				   struct ieee80211_vif *vif)
-{
-	struct rt2x00_intf *intf = vif_to_intf(vif);
+अटल व्योम rt2x00mac_set_tim_iter(व्योम *data, u8 *mac,
+				   काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rt2x00_पूर्णांकf *पूर्णांकf = vअगर_to_पूर्णांकf(vअगर);
 
-	if (vif->type != NL80211_IFTYPE_AP &&
-	    vif->type != NL80211_IFTYPE_ADHOC &&
-	    vif->type != NL80211_IFTYPE_MESH_POINT)
-		return;
+	अगर (vअगर->type != NL80211_IFTYPE_AP &&
+	    vअगर->type != NL80211_IFTYPE_ADHOC &&
+	    vअगर->type != NL80211_IFTYPE_MESH_POINT)
+		वापस;
 
-	set_bit(DELAYED_UPDATE_BEACON, &intf->delayed_flags);
-}
+	set_bit(DELAYED_UPDATE_BEACON, &पूर्णांकf->delayed_flags);
+पूर्ण
 
-int rt2x00mac_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
+पूर्णांक rt2x00mac_set_tim(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_sta *sta,
 		      bool set)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 
-	if (!test_bit(DEVICE_STATE_ENABLED_RADIO, &rt2x00dev->flags))
-		return 0;
+	अगर (!test_bit(DEVICE_STATE_ENABLED_RADIO, &rt2x00dev->flags))
+		वापस 0;
 
-	ieee80211_iterate_active_interfaces_atomic(
+	ieee80211_iterate_active_पूर्णांकerfaces_atomic(
 		rt2x00dev->hw, IEEE80211_IFACE_ITER_RESUME_ALL,
 		rt2x00mac_set_tim_iter, rt2x00dev);
 
-	/* queue work to upodate the beacon template */
-	ieee80211_queue_work(rt2x00dev->hw, &rt2x00dev->intf_work);
-	return 0;
-}
+	/* queue work to upodate the beacon ढाँचा */
+	ieee80211_queue_work(rt2x00dev->hw, &rt2x00dev->पूर्णांकf_work);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_set_tim);
 
-#ifdef CONFIG_RT2X00_LIB_CRYPTO
-static void memcpy_tkip(struct rt2x00lib_crypto *crypto, u8 *key, u8 key_len)
-{
-	if (key_len > NL80211_TKIP_DATA_OFFSET_ENCR_KEY)
-		memcpy(crypto->key,
+#अगर_घोषित CONFIG_RT2X00_LIB_CRYPTO
+अटल व्योम स_नकल_tkip(काष्ठा rt2x00lib_crypto *crypto, u8 *key, u8 key_len)
+अणु
+	अगर (key_len > NL80211_TKIP_DATA_OFFSET_ENCR_KEY)
+		स_नकल(crypto->key,
 		       &key[NL80211_TKIP_DATA_OFFSET_ENCR_KEY],
-		       sizeof(crypto->key));
+		       माप(crypto->key));
 
-	if (key_len > NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY)
-		memcpy(crypto->tx_mic,
+	अगर (key_len > NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY)
+		स_नकल(crypto->tx_mic,
 		       &key[NL80211_TKIP_DATA_OFFSET_TX_MIC_KEY],
-		       sizeof(crypto->tx_mic));
+		       माप(crypto->tx_mic));
 
-	if (key_len > NL80211_TKIP_DATA_OFFSET_RX_MIC_KEY)
-		memcpy(crypto->rx_mic,
+	अगर (key_len > NL80211_TKIP_DATA_OFFSET_RX_MIC_KEY)
+		स_नकल(crypto->rx_mic,
 		       &key[NL80211_TKIP_DATA_OFFSET_RX_MIC_KEY],
-		       sizeof(crypto->rx_mic));
-}
+		       माप(crypto->rx_mic));
+पूर्ण
 
-int rt2x00mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
-		      struct ieee80211_vif *vif, struct ieee80211_sta *sta,
-		      struct ieee80211_key_conf *key)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	int (*set_key) (struct rt2x00_dev *rt2x00dev,
-			struct rt2x00lib_crypto *crypto,
-			struct ieee80211_key_conf *key);
-	struct rt2x00lib_crypto crypto;
-	static const u8 bcast_addr[ETH_ALEN] =
-		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, };
-	struct rt2x00_sta *sta_priv = NULL;
+पूर्णांक rt2x00mac_set_key(काष्ठा ieee80211_hw *hw, क्रमागत set_key_cmd cmd,
+		      काष्ठा ieee80211_vअगर *vअगर, काष्ठा ieee80211_sta *sta,
+		      काष्ठा ieee80211_key_conf *key)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	पूर्णांक (*set_key) (काष्ठा rt2x00_dev *rt2x00dev,
+			काष्ठा rt2x00lib_crypto *crypto,
+			काष्ठा ieee80211_key_conf *key);
+	काष्ठा rt2x00lib_crypto crypto;
+	अटल स्थिर u8 bcast_addr[ETH_ALEN] =
+		अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, पूर्ण;
+	काष्ठा rt2x00_sta *sta_priv = शून्य;
 
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
-		return 0;
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
+		वापस 0;
 
-	/* The hardware can't do MFP */
-	if (!rt2x00_has_cap_hw_crypto(rt2x00dev) || (sta && sta->mfp))
-		return -EOPNOTSUPP;
+	/* The hardware can't करो MFP */
+	अगर (!rt2x00_has_cap_hw_crypto(rt2x00dev) || (sta && sta->mfp))
+		वापस -EOPNOTSUPP;
 
 	/*
-	 * To support IBSS RSN, don't program group keys in IBSS, the
+	 * To support IBSS RSN, करोn't program group keys in IBSS, the
 	 * hardware will then not attempt to decrypt the frames.
 	 */
-	if (vif->type == NL80211_IFTYPE_ADHOC &&
+	अगर (vअगर->type == NL80211_IFTYPE_ADHOC &&
 	    !(key->flags & IEEE80211_KEY_FLAG_PAIRWISE))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (key->keylen > 32)
-		return -ENOSPC;
+	अगर (key->keylen > 32)
+		वापस -ENOSPC;
 
-	memset(&crypto, 0, sizeof(crypto));
+	स_रखो(&crypto, 0, माप(crypto));
 
-	crypto.bssidx = rt2x00lib_get_bssidx(rt2x00dev, vif);
+	crypto.bssidx = rt2x00lib_get_bssidx(rt2x00dev, vअगर);
 	crypto.cipher = rt2x00crypto_key_to_cipher(key);
-	if (crypto.cipher == CIPHER_NONE)
-		return -EOPNOTSUPP;
-	if (crypto.cipher == CIPHER_TKIP && rt2x00_is_usb(rt2x00dev))
-		return -EOPNOTSUPP;
+	अगर (crypto.cipher == CIPHER_NONE)
+		वापस -EOPNOTSUPP;
+	अगर (crypto.cipher == CIPHER_TKIP && rt2x00_is_usb(rt2x00dev))
+		वापस -EOPNOTSUPP;
 
 	crypto.cmd = cmd;
 
-	if (sta) {
+	अगर (sta) अणु
 		crypto.address = sta->addr;
 		sta_priv = sta_to_rt2x00_sta(sta);
 		crypto.wcid = sta_priv->wcid;
-	} else
+	पूर्ण अन्यथा
 		crypto.address = bcast_addr;
 
-	if (crypto.cipher == CIPHER_TKIP)
-		memcpy_tkip(&crypto, &key->key[0], key->keylen);
-	else
-		memcpy(crypto.key, &key->key[0], key->keylen);
+	अगर (crypto.cipher == CIPHER_TKIP)
+		स_नकल_tkip(&crypto, &key->key[0], key->keylen);
+	अन्यथा
+		स_नकल(crypto.key, &key->key[0], key->keylen);
 	/*
 	 * Each BSS has a maximum of 4 shared keys.
 	 * Shared key index values:
@@ -516,251 +517,251 @@ int rt2x00mac_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	 *	...
 	 * Both pairwise as shared key indeces are determined by
 	 * driver. This is required because the hardware requires
-	 * keys to be assigned in correct order (When key 1 is
+	 * keys to be asचिन्हित in correct order (When key 1 is
 	 * provided but key 0 is not, then the key is not found
 	 * by the hardware during RX).
 	 */
-	if (cmd == SET_KEY)
+	अगर (cmd == SET_KEY)
 		key->hw_key_idx = 0;
 
-	if (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
+	अगर (key->flags & IEEE80211_KEY_FLAG_PAIRWISE)
 		set_key = rt2x00dev->ops->lib->config_pairwise_key;
-	else
+	अन्यथा
 		set_key = rt2x00dev->ops->lib->config_shared_key;
 
-	if (!set_key)
-		return -EOPNOTSUPP;
+	अगर (!set_key)
+		वापस -EOPNOTSUPP;
 
-	return set_key(rt2x00dev, &crypto, key);
-}
+	वापस set_key(rt2x00dev, &crypto, key);
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_set_key);
-#endif /* CONFIG_RT2X00_LIB_CRYPTO */
+#पूर्ण_अगर /* CONFIG_RT2X00_LIB_CRYPTO */
 
-void rt2x00mac_sw_scan_start(struct ieee80211_hw *hw,
-			     struct ieee80211_vif *vif,
-			     const u8 *mac_addr)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+व्योम rt2x00mac_sw_scan_start(काष्ठा ieee80211_hw *hw,
+			     काष्ठा ieee80211_vअगर *vअगर,
+			     स्थिर u8 *mac_addr)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 	set_bit(DEVICE_STATE_SCANNING, &rt2x00dev->flags);
 	rt2x00link_stop_tuner(rt2x00dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_sw_scan_start);
 
-void rt2x00mac_sw_scan_complete(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+व्योम rt2x00mac_sw_scan_complete(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 	clear_bit(DEVICE_STATE_SCANNING, &rt2x00dev->flags);
 	rt2x00link_start_tuner(rt2x00dev);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_sw_scan_complete);
 
-int rt2x00mac_get_stats(struct ieee80211_hw *hw,
-			struct ieee80211_low_level_stats *stats)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
+पूर्णांक rt2x00mac_get_stats(काष्ठा ieee80211_hw *hw,
+			काष्ठा ieee80211_low_level_stats *stats)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
 
 	/*
-	 * The dot11ACKFailureCount, dot11RTSFailureCount and
-	 * dot11RTSSuccessCount are updated in interrupt time.
-	 * dot11FCSErrorCount is updated in the link tuner.
+	 * The करोt11ACKFailureCount, करोt11RTSFailureCount and
+	 * करोt11RTSSuccessCount are updated in पूर्णांकerrupt समय.
+	 * करोt11FCSErrorCount is updated in the link tuner.
 	 */
-	memcpy(stats, &rt2x00dev->low_level_stats, sizeof(*stats));
+	स_नकल(stats, &rt2x00dev->low_level_stats, माप(*stats));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_get_stats);
 
-void rt2x00mac_bss_info_changed(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif,
-				struct ieee80211_bss_conf *bss_conf,
+व्योम rt2x00mac_bss_info_changed(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर,
+				काष्ठा ieee80211_bss_conf *bss_conf,
 				u32 changes)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct rt2x00_intf *intf = vif_to_intf(vif);
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा rt2x00_पूर्णांकf *पूर्णांकf = vअगर_to_पूर्णांकf(vअगर);
 
 	/*
-	 * mac80211 might be calling this function while we are trying
-	 * to remove the device or perhaps suspending it.
+	 * mac80211 might be calling this function जबतक we are trying
+	 * to हटाओ the device or perhaps suspending it.
 	 */
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
-		return;
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
+		वापस;
 
 	/*
 	 * Update the BSSID.
 	 */
-	if (changes & BSS_CHANGED_BSSID)
-		rt2x00lib_config_intf(rt2x00dev, intf, vif->type, NULL,
+	अगर (changes & BSS_CHANGED_BSSID)
+		rt2x00lib_config_पूर्णांकf(rt2x00dev, पूर्णांकf, vअगर->type, शून्य,
 				      bss_conf->bssid);
 
 	/*
 	 * Start/stop beaconing.
 	 */
-	if (changes & BSS_CHANGED_BEACON_ENABLED) {
-		mutex_lock(&intf->beacon_skb_mutex);
-		if (!bss_conf->enable_beacon && intf->enable_beacon) {
-			rt2x00dev->intf_beaconing--;
-			intf->enable_beacon = false;
+	अगर (changes & BSS_CHANGED_BEACON_ENABLED) अणु
+		mutex_lock(&पूर्णांकf->beacon_skb_mutex);
+		अगर (!bss_conf->enable_beacon && पूर्णांकf->enable_beacon) अणु
+			rt2x00dev->पूर्णांकf_beaconing--;
+			पूर्णांकf->enable_beacon = false;
 
-			if (rt2x00dev->intf_beaconing == 0) {
+			अगर (rt2x00dev->पूर्णांकf_beaconing == 0) अणु
 				/*
-				 * Last beaconing interface disabled
+				 * Last beaconing पूर्णांकerface disabled
 				 * -> stop beacon queue.
 				 */
 				rt2x00queue_stop_queue(rt2x00dev->bcn);
-			}
+			पूर्ण
 			/*
-			 * Clear beacon in the H/W for this vif. This is needed
-			 * to disable beaconing on this particular interface
-			 * and keep it running on other interfaces.
+			 * Clear beacon in the H/W क्रम this vअगर. This is needed
+			 * to disable beaconing on this particular पूर्णांकerface
+			 * and keep it running on other पूर्णांकerfaces.
 			 */
-			rt2x00queue_clear_beacon(rt2x00dev, vif);
-		} else if (bss_conf->enable_beacon && !intf->enable_beacon) {
-			rt2x00dev->intf_beaconing++;
-			intf->enable_beacon = true;
+			rt2x00queue_clear_beacon(rt2x00dev, vअगर);
+		पूर्ण अन्यथा अगर (bss_conf->enable_beacon && !पूर्णांकf->enable_beacon) अणु
+			rt2x00dev->पूर्णांकf_beaconing++;
+			पूर्णांकf->enable_beacon = true;
 			/*
 			 * Upload beacon to the H/W. This is only required on
 			 * USB devices. PCI devices fetch beacons periodically.
 			 */
-			if (rt2x00_is_usb(rt2x00dev))
-				rt2x00queue_update_beacon(rt2x00dev, vif);
+			अगर (rt2x00_is_usb(rt2x00dev))
+				rt2x00queue_update_beacon(rt2x00dev, vअगर);
 
-			if (rt2x00dev->intf_beaconing == 1) {
+			अगर (rt2x00dev->पूर्णांकf_beaconing == 1) अणु
 				/*
-				 * First beaconing interface enabled
+				 * First beaconing पूर्णांकerface enabled
 				 * -> start beacon queue.
 				 */
 				rt2x00queue_start_queue(rt2x00dev->bcn);
-			}
-		}
-		mutex_unlock(&intf->beacon_skb_mutex);
-	}
+			पूर्ण
+		पूर्ण
+		mutex_unlock(&पूर्णांकf->beacon_skb_mutex);
+	पूर्ण
 
 	/*
 	 * When the association status has changed we must reset the link
-	 * tuner counter. This is because some drivers determine if they
-	 * should perform link tuning based on the number of seconds
-	 * while associated or not associated.
+	 * tuner counter. This is because some drivers determine अगर they
+	 * should perक्रमm link tuning based on the number of seconds
+	 * जबतक associated or not associated.
 	 */
-	if (changes & BSS_CHANGED_ASSOC) {
+	अगर (changes & BSS_CHANGED_ASSOC) अणु
 		rt2x00dev->link.count = 0;
 
-		if (bss_conf->assoc)
-			rt2x00dev->intf_associated++;
-		else
-			rt2x00dev->intf_associated--;
+		अगर (bss_conf->assoc)
+			rt2x00dev->पूर्णांकf_associated++;
+		अन्यथा
+			rt2x00dev->पूर्णांकf_associated--;
 
-		rt2x00leds_led_assoc(rt2x00dev, !!rt2x00dev->intf_associated);
-	}
+		rt2x00leds_led_assoc(rt2x00dev, !!rt2x00dev->पूर्णांकf_associated);
+	पूर्ण
 
 	/*
-	 * When the erp information has changed, we should perform
-	 * additional configuration steps. For all other changes we are done.
+	 * When the erp inक्रमmation has changed, we should perक्रमm
+	 * additional configuration steps. For all other changes we are करोne.
 	 */
-	if (changes & (BSS_CHANGED_ERP_CTS_PROT | BSS_CHANGED_ERP_PREAMBLE |
+	अगर (changes & (BSS_CHANGED_ERP_CTS_PROT | BSS_CHANGED_ERP_PREAMBLE |
 		       BSS_CHANGED_ERP_SLOT | BSS_CHANGED_BASIC_RATES |
 		       BSS_CHANGED_BEACON_INT | BSS_CHANGED_HT))
-		rt2x00lib_config_erp(rt2x00dev, intf, bss_conf, changes);
-}
+		rt2x00lib_config_erp(rt2x00dev, पूर्णांकf, bss_conf, changes);
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_bss_info_changed);
 
-int rt2x00mac_conf_tx(struct ieee80211_hw *hw,
-		      struct ieee80211_vif *vif, u16 queue_idx,
-		      const struct ieee80211_tx_queue_params *params)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct data_queue *queue;
+पूर्णांक rt2x00mac_conf_tx(काष्ठा ieee80211_hw *hw,
+		      काष्ठा ieee80211_vअगर *vअगर, u16 queue_idx,
+		      स्थिर काष्ठा ieee80211_tx_queue_params *params)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा data_queue *queue;
 
 	queue = rt2x00queue_get_tx_queue(rt2x00dev, queue_idx);
-	if (unlikely(!queue))
-		return -EINVAL;
+	अगर (unlikely(!queue))
+		वापस -EINVAL;
 
 	/*
 	 * The passed variables are stored as real value ((2^n)-1).
-	 * Ralink registers require to know the bit number 'n'.
+	 * Ralink रेजिस्टरs require to know the bit number 'n'.
 	 */
-	if (params->cw_min > 0)
+	अगर (params->cw_min > 0)
 		queue->cw_min = fls(params->cw_min);
-	else
+	अन्यथा
 		queue->cw_min = 5; /* cw_min: 2^5 = 32. */
 
-	if (params->cw_max > 0)
+	अगर (params->cw_max > 0)
 		queue->cw_max = fls(params->cw_max);
-	else
+	अन्यथा
 		queue->cw_max = 10; /* cw_min: 2^10 = 1024. */
 
-	queue->aifs = params->aifs;
+	queue->aअगरs = params->aअगरs;
 	queue->txop = params->txop;
 
 	rt2x00_dbg(rt2x00dev,
 		   "Configured TX queue %d - CWmin: %d, CWmax: %d, Aifs: %d, TXop: %d\n",
-		   queue_idx, queue->cw_min, queue->cw_max, queue->aifs,
+		   queue_idx, queue->cw_min, queue->cw_max, queue->aअगरs,
 		   queue->txop);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_conf_tx);
 
-void rt2x00mac_rfkill_poll(struct ieee80211_hw *hw)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	bool active = !!rt2x00dev->ops->lib->rfkill_poll(rt2x00dev);
+व्योम rt2x00mac_rfसमाप्त_poll(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	bool active = !!rt2x00dev->ops->lib->rfसमाप्त_poll(rt2x00dev);
 
-	wiphy_rfkill_set_hw_state(hw->wiphy, !active);
-}
-EXPORT_SYMBOL_GPL(rt2x00mac_rfkill_poll);
+	wiphy_rfसमाप्त_set_hw_state(hw->wiphy, !active);
+पूर्ण
+EXPORT_SYMBOL_GPL(rt2x00mac_rfसमाप्त_poll);
 
-void rt2x00mac_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+व्योम rt2x00mac_flush(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
 		     u32 queues, bool drop)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct data_queue *queue;
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा data_queue *queue;
 
-	if (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
-		return;
+	अगर (!test_bit(DEVICE_STATE_PRESENT, &rt2x00dev->flags))
+		वापस;
 
 	set_bit(DEVICE_STATE_FLUSHING, &rt2x00dev->flags);
 
-	tx_queue_for_each(rt2x00dev, queue)
+	tx_queue_क्रम_each(rt2x00dev, queue)
 		rt2x00queue_flush_queue(queue, drop);
 
 	clear_bit(DEVICE_STATE_FLUSHING, &rt2x00dev->flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_flush);
 
-int rt2x00mac_set_antenna(struct ieee80211_hw *hw, u32 tx_ant, u32 rx_ant)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct link_ant *ant = &rt2x00dev->link.ant;
-	struct antenna_setup *def = &rt2x00dev->default_ant;
-	struct antenna_setup setup;
+पूर्णांक rt2x00mac_set_antenna(काष्ठा ieee80211_hw *hw, u32 tx_ant, u32 rx_ant)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा link_ant *ant = &rt2x00dev->link.ant;
+	काष्ठा antenna_setup *def = &rt2x00dev->शेष_ant;
+	काष्ठा antenna_setup setup;
 
 	// The antenna value is not supposed to be 0,
 	// or exceed the maximum number of antenna's.
-	if (!tx_ant || (tx_ant & ~3) || !rx_ant || (rx_ant & ~3))
-		return -EINVAL;
+	अगर (!tx_ant || (tx_ant & ~3) || !rx_ant || (rx_ant & ~3))
+		वापस -EINVAL;
 
 	// When the client tried to configure the antenna to or from
-	// diversity mode, we must reset the default antenna as well
-	// as that controls the diversity switch.
-	if (ant->flags & ANTENNA_TX_DIVERSITY && tx_ant != 3)
+	// भागersity mode, we must reset the शेष antenna as well
+	// as that controls the भागersity चयन.
+	अगर (ant->flags & ANTENNA_TX_DIVERSITY && tx_ant != 3)
 		ant->flags &= ~ANTENNA_TX_DIVERSITY;
-	if (ant->flags & ANTENNA_RX_DIVERSITY && rx_ant != 3)
+	अगर (ant->flags & ANTENNA_RX_DIVERSITY && rx_ant != 3)
 		ant->flags &= ~ANTENNA_RX_DIVERSITY;
 
-	// If diversity is being enabled, check if we need hardware
-	// or software diversity. In the latter case, reset the value,
+	// If भागersity is being enabled, check अगर we need hardware
+	// or software भागersity. In the latter हाल, reset the value,
 	// and make sure we update the antenna flags to have the
-	// link tuner pick up the diversity tuning.
-	if (tx_ant == 3 && def->tx == ANTENNA_SW_DIVERSITY) {
+	// link tuner pick up the भागersity tuning.
+	अगर (tx_ant == 3 && def->tx == ANTENNA_SW_DIVERSITY) अणु
 		tx_ant = ANTENNA_SW_DIVERSITY;
 		ant->flags |= ANTENNA_TX_DIVERSITY;
-	}
+	पूर्ण
 
-	if (rx_ant == 3 && def->rx == ANTENNA_SW_DIVERSITY) {
+	अगर (rx_ant == 3 && def->rx == ANTENNA_SW_DIVERSITY) अणु
 		rx_ant = ANTENNA_SW_DIVERSITY;
 		ant->flags |= ANTENNA_RX_DIVERSITY;
-	}
+	पूर्ण
 
 	setup.tx = tx_ant;
 	setup.rx = rx_ant;
@@ -769,58 +770,58 @@ int rt2x00mac_set_antenna(struct ieee80211_hw *hw, u32 tx_ant, u32 rx_ant)
 
 	rt2x00lib_config_antenna(rt2x00dev, setup);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_set_antenna);
 
-int rt2x00mac_get_antenna(struct ieee80211_hw *hw, u32 *tx_ant, u32 *rx_ant)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct link_ant *ant = &rt2x00dev->link.ant;
-	struct antenna_setup *active = &rt2x00dev->link.ant.active;
+पूर्णांक rt2x00mac_get_antenna(काष्ठा ieee80211_hw *hw, u32 *tx_ant, u32 *rx_ant)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा link_ant *ant = &rt2x00dev->link.ant;
+	काष्ठा antenna_setup *active = &rt2x00dev->link.ant.active;
 
-	// When software diversity is active, we must report this to the
+	// When software भागersity is active, we must report this to the
 	// client and not the current active antenna state.
-	if (ant->flags & ANTENNA_TX_DIVERSITY)
+	अगर (ant->flags & ANTENNA_TX_DIVERSITY)
 		*tx_ant = ANTENNA_HW_DIVERSITY;
-	else
+	अन्यथा
 		*tx_ant = active->tx;
 
-	if (ant->flags & ANTENNA_RX_DIVERSITY)
+	अगर (ant->flags & ANTENNA_RX_DIVERSITY)
 		*rx_ant = ANTENNA_HW_DIVERSITY;
-	else
+	अन्यथा
 		*rx_ant = active->rx;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_get_antenna);
 
-void rt2x00mac_get_ringparam(struct ieee80211_hw *hw,
+व्योम rt2x00mac_get_ringparam(काष्ठा ieee80211_hw *hw,
 			     u32 *tx, u32 *tx_max, u32 *rx, u32 *rx_max)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct data_queue *queue;
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा data_queue *queue;
 
-	tx_queue_for_each(rt2x00dev, queue) {
+	tx_queue_क्रम_each(rt2x00dev, queue) अणु
 		*tx += queue->length;
 		*tx_max += queue->limit;
-	}
+	पूर्ण
 
 	*rx = rt2x00dev->rx->length;
 	*rx_max = rt2x00dev->rx->limit;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_get_ringparam);
 
-bool rt2x00mac_tx_frames_pending(struct ieee80211_hw *hw)
-{
-	struct rt2x00_dev *rt2x00dev = hw->priv;
-	struct data_queue *queue;
+bool rt2x00mac_tx_frames_pending(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rt2x00_dev *rt2x00dev = hw->priv;
+	काष्ठा data_queue *queue;
 
-	tx_queue_for_each(rt2x00dev, queue) {
-		if (!rt2x00queue_empty(queue))
-			return true;
-	}
+	tx_queue_क्रम_each(rt2x00dev, queue) अणु
+		अगर (!rt2x00queue_empty(queue))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(rt2x00mac_tx_frames_pending);

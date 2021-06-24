@@ -1,34 +1,35 @@
+<शैली गुरु>
 /*
- * algif_rng: User-space interface for random number generators
+ * algअगर_rng: User-space पूर्णांकerface क्रम अक्रमom number generators
  *
- * This file provides the user-space API for random number generators.
+ * This file provides the user-space API क्रम अक्रमom number generators.
  *
  * Copyright (C) 2014, Stephan Mueller <smueller@chronox.de>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, and the entire permission notice in its entirety,
  *    including the disclaimer of warranties.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior
+ *    करोcumentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to enकरोrse or promote
+ *    products derived from this software without specअगरic prior
  *    written permission.
  *
  * ALTERNATIVELY, this product may be distributed under the terms of
- * the GNU General Public License, in which case the provisions of the GPL2
+ * the GNU General Public License, in which हाल the provisions of the GPL2
  * are required INSTEAD OF the above restrictions.  (This clause is
- * necessary due to a potential bad interaction between the GPL and
+ * necessary due to a potential bad पूर्णांकeraction between the GPL and
  * the restrictions contained in a BSD-style copyright.)
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, ALL OF
  * WHICH ARE HEREBY DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
  * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
  * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -38,130 +39,130 @@
  * DAMAGE.
  */
 
-#include <linux/capability.h>
-#include <linux/module.h>
-#include <crypto/rng.h>
-#include <linux/random.h>
-#include <crypto/if_alg.h>
-#include <linux/net.h>
-#include <net/sock.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/module.h>
+#समावेश <crypto/rng.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <crypto/अगर_alg.h>
+#समावेश <linux/net.h>
+#समावेश <net/sock.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Stephan Mueller <smueller@chronox.de>");
 MODULE_DESCRIPTION("User-space interface for random number generators");
 
-struct rng_ctx {
-#define MAXSIZE 128
-	unsigned int len;
-	struct crypto_rng *drng;
+काष्ठा rng_ctx अणु
+#घोषणा MAXSIZE 128
+	अचिन्हित पूर्णांक len;
+	काष्ठा crypto_rng *drng;
 	u8 *addtl;
-	size_t addtl_len;
-};
+	माप_प्रकार addtl_len;
+पूर्ण;
 
-struct rng_parent_ctx {
-	struct crypto_rng *drng;
+काष्ठा rng_parent_ctx अणु
+	काष्ठा crypto_rng *drng;
 	u8 *entropy;
-};
+पूर्ण;
 
-static void rng_reset_addtl(struct rng_ctx *ctx)
-{
-	kfree_sensitive(ctx->addtl);
-	ctx->addtl = NULL;
+अटल व्योम rng_reset_addtl(काष्ठा rng_ctx *ctx)
+अणु
+	kमुक्त_sensitive(ctx->addtl);
+	ctx->addtl = शून्य;
 	ctx->addtl_len = 0;
-}
+पूर्ण
 
-static int _rng_recvmsg(struct crypto_rng *drng, struct msghdr *msg, size_t len,
-			u8 *addtl, size_t addtl_len)
-{
-	int err = 0;
-	int genlen = 0;
+अटल पूर्णांक _rng_recvmsg(काष्ठा crypto_rng *drng, काष्ठा msghdr *msg, माप_प्रकार len,
+			u8 *addtl, माप_प्रकार addtl_len)
+अणु
+	पूर्णांक err = 0;
+	पूर्णांक genlen = 0;
 	u8 result[MAXSIZE];
 
-	if (len == 0)
-		return 0;
-	if (len > MAXSIZE)
+	अगर (len == 0)
+		वापस 0;
+	अगर (len > MAXSIZE)
 		len = MAXSIZE;
 
 	/*
 	 * although not strictly needed, this is a precaution against coding
 	 * errors
 	 */
-	memset(result, 0, len);
+	स_रखो(result, 0, len);
 
 	/*
-	 * The enforcement of a proper seeding of an RNG is done within an
-	 * RNG implementation. Some RNGs (DRBG, krng) do not need specific
-	 * seeding as they automatically seed. The X9.31 DRNG will return
-	 * an error if it was not seeded properly.
+	 * The enक्रमcement of a proper seeding of an RNG is करोne within an
+	 * RNG implementation. Some RNGs (DRBG, krng) करो not need specअगरic
+	 * seeding as they स्वतःmatically seed. The X9.31 DRNG will वापस
+	 * an error अगर it was not seeded properly.
 	 */
 	genlen = crypto_rng_generate(drng, addtl, addtl_len, result, len);
-	if (genlen < 0)
-		return genlen;
+	अगर (genlen < 0)
+		वापस genlen;
 
-	err = memcpy_to_msg(msg, result, len);
+	err = स_नकल_to_msg(msg, result, len);
 	memzero_explicit(result, len);
 
-	return err ? err : len;
-}
+	वापस err ? err : len;
+पूर्ण
 
-static int rng_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
-		       int flags)
-{
-	struct sock *sk = sock->sk;
-	struct alg_sock *ask = alg_sk(sk);
-	struct rng_ctx *ctx = ask->private;
+अटल पूर्णांक rng_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len,
+		       पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा rng_ctx *ctx = ask->निजी;
 
-	return _rng_recvmsg(ctx->drng, msg, len, NULL, 0);
-}
+	वापस _rng_recvmsg(ctx->drng, msg, len, शून्य, 0);
+पूर्ण
 
-static int rng_test_recvmsg(struct socket *sock, struct msghdr *msg, size_t len,
-			    int flags)
-{
-	struct sock *sk = sock->sk;
-	struct alg_sock *ask = alg_sk(sk);
-	struct rng_ctx *ctx = ask->private;
-	int ret;
+अटल पूर्णांक rng_test_recvmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len,
+			    पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा rng_ctx *ctx = ask->निजी;
+	पूर्णांक ret;
 
 	lock_sock(sock->sk);
 	ret = _rng_recvmsg(ctx->drng, msg, len, ctx->addtl, ctx->addtl_len);
 	rng_reset_addtl(ctx);
 	release_sock(sock->sk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rng_test_sendmsg(struct socket *sock, struct msghdr *msg, size_t len)
-{
-	int err;
-	struct alg_sock *ask = alg_sk(sock->sk);
-	struct rng_ctx *ctx = ask->private;
+अटल पूर्णांक rng_test_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg, माप_प्रकार len)
+अणु
+	पूर्णांक err;
+	काष्ठा alg_sock *ask = alg_sk(sock->sk);
+	काष्ठा rng_ctx *ctx = ask->निजी;
 
 	lock_sock(sock->sk);
-	if (len > MAXSIZE) {
+	अगर (len > MAXSIZE) अणु
 		err = -EMSGSIZE;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	rng_reset_addtl(ctx);
-	ctx->addtl = kmalloc(len, GFP_KERNEL);
-	if (!ctx->addtl) {
+	ctx->addtl = kदो_स्मृति(len, GFP_KERNEL);
+	अगर (!ctx->addtl) अणु
 		err = -ENOMEM;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	err = memcpy_from_msg(ctx->addtl, msg, len);
-	if (err) {
+	err = स_नकल_from_msg(ctx->addtl, msg, len);
+	अगर (err) अणु
 		rng_reset_addtl(ctx);
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 	ctx->addtl_len = len;
 
 unlock:
 	release_sock(sock->sk);
-	return err ? err : len;
-}
+	वापस err ? err : len;
+पूर्ण
 
-static struct proto_ops algif_rng_ops = {
+अटल काष्ठा proto_ops algअगर_rng_ops = अणु
 	.family		=	PF_ALG,
 
 	.connect	=	sock_no_connect,
@@ -169,7 +170,7 @@ static struct proto_ops algif_rng_ops = {
 	.getname	=	sock_no_getname,
 	.ioctl		=	sock_no_ioctl,
 	.listen		=	sock_no_listen,
-	.shutdown	=	sock_no_shutdown,
+	.shutकरोwn	=	sock_no_shutकरोwn,
 	.mmap		=	sock_no_mmap,
 	.bind		=	sock_no_bind,
 	.accept		=	sock_no_accept,
@@ -178,9 +179,9 @@ static struct proto_ops algif_rng_ops = {
 
 	.release	=	af_alg_release,
 	.recvmsg	=	rng_recvmsg,
-};
+पूर्ण;
 
-static struct proto_ops __maybe_unused algif_rng_test_ops = {
+अटल काष्ठा proto_ops __maybe_unused algअगर_rng_test_ops = अणु
 	.family		=	PF_ALG,
 
 	.connect	=	sock_no_connect,
@@ -188,7 +189,7 @@ static struct proto_ops __maybe_unused algif_rng_test_ops = {
 	.getname	=	sock_no_getname,
 	.ioctl		=	sock_no_ioctl,
 	.listen		=	sock_no_listen,
-	.shutdown	=	sock_no_shutdown,
+	.shutकरोwn	=	sock_no_shutकरोwn,
 	.mmap		=	sock_no_mmap,
 	.bind		=	sock_no_bind,
 	.accept		=	sock_no_accept,
@@ -197,146 +198,146 @@ static struct proto_ops __maybe_unused algif_rng_test_ops = {
 	.release	=	af_alg_release,
 	.recvmsg	=	rng_test_recvmsg,
 	.sendmsg	=	rng_test_sendmsg,
-};
+पूर्ण;
 
-static void *rng_bind(const char *name, u32 type, u32 mask)
-{
-	struct rng_parent_ctx *pctx;
-	struct crypto_rng *rng;
+अटल व्योम *rng_bind(स्थिर अक्षर *name, u32 type, u32 mask)
+अणु
+	काष्ठा rng_parent_ctx *pctx;
+	काष्ठा crypto_rng *rng;
 
-	pctx = kzalloc(sizeof(*pctx), GFP_KERNEL);
-	if (!pctx)
-		return ERR_PTR(-ENOMEM);
+	pctx = kzalloc(माप(*pctx), GFP_KERNEL);
+	अगर (!pctx)
+		वापस ERR_PTR(-ENOMEM);
 
 	rng = crypto_alloc_rng(name, type, mask);
-	if (IS_ERR(rng)) {
-		kfree(pctx);
-		return ERR_CAST(rng);
-	}
+	अगर (IS_ERR(rng)) अणु
+		kमुक्त(pctx);
+		वापस ERR_CAST(rng);
+	पूर्ण
 
 	pctx->drng = rng;
-	return pctx;
-}
+	वापस pctx;
+पूर्ण
 
-static void rng_release(void *private)
-{
-	struct rng_parent_ctx *pctx = private;
+अटल व्योम rng_release(व्योम *निजी)
+अणु
+	काष्ठा rng_parent_ctx *pctx = निजी;
 
-	if (unlikely(!pctx))
-		return;
-	crypto_free_rng(pctx->drng);
-	kfree_sensitive(pctx->entropy);
-	kfree_sensitive(pctx);
-}
+	अगर (unlikely(!pctx))
+		वापस;
+	crypto_मुक्त_rng(pctx->drng);
+	kमुक्त_sensitive(pctx->entropy);
+	kमुक्त_sensitive(pctx);
+पूर्ण
 
-static void rng_sock_destruct(struct sock *sk)
-{
-	struct alg_sock *ask = alg_sk(sk);
-	struct rng_ctx *ctx = ask->private;
+अटल व्योम rng_sock_deकाष्ठा(काष्ठा sock *sk)
+अणु
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	काष्ठा rng_ctx *ctx = ask->निजी;
 
 	rng_reset_addtl(ctx);
-	sock_kfree_s(sk, ctx, ctx->len);
+	sock_kमुक्त_s(sk, ctx, ctx->len);
 	af_alg_release_parent(sk);
-}
+पूर्ण
 
-static int rng_accept_parent(void *private, struct sock *sk)
-{
-	struct rng_ctx *ctx;
-	struct rng_parent_ctx *pctx = private;
-	struct alg_sock *ask = alg_sk(sk);
-	unsigned int len = sizeof(*ctx);
+अटल पूर्णांक rng_accept_parent(व्योम *निजी, काष्ठा sock *sk)
+अणु
+	काष्ठा rng_ctx *ctx;
+	काष्ठा rng_parent_ctx *pctx = निजी;
+	काष्ठा alg_sock *ask = alg_sk(sk);
+	अचिन्हित पूर्णांक len = माप(*ctx);
 
-	ctx = sock_kmalloc(sk, len, GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = sock_kदो_स्मृति(sk, len, GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->len = len;
-	ctx->addtl = NULL;
+	ctx->addtl = शून्य;
 	ctx->addtl_len = 0;
 
 	/*
-	 * No seeding done at that point -- if multiple accepts are
-	 * done on one RNG instance, each resulting FD points to the same
+	 * No seeding करोne at that poपूर्णांक -- अगर multiple accepts are
+	 * करोne on one RNG instance, each resulting FD poपूर्णांकs to the same
 	 * state of the RNG.
 	 */
 
 	ctx->drng = pctx->drng;
-	ask->private = ctx;
-	sk->sk_destruct = rng_sock_destruct;
+	ask->निजी = ctx;
+	sk->sk_deकाष्ठा = rng_sock_deकाष्ठा;
 
 	/*
-	 * Non NULL pctx->entropy means that CAVP test has been initiated on
-	 * this socket, replace proto_ops algif_rng_ops with algif_rng_test_ops.
+	 * Non शून्य pctx->entropy means that CAVP test has been initiated on
+	 * this socket, replace proto_ops algअगर_rng_ops with algअगर_rng_test_ops.
 	 */
-	if (IS_ENABLED(CONFIG_CRYPTO_USER_API_RNG_CAVP) && pctx->entropy)
-		sk->sk_socket->ops = &algif_rng_test_ops;
+	अगर (IS_ENABLED(CONFIG_CRYPTO_USER_API_RNG_CAVP) && pctx->entropy)
+		sk->sk_socket->ops = &algअगर_rng_test_ops;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rng_setkey(void *private, const u8 *seed, unsigned int seedlen)
-{
-	struct rng_parent_ctx *pctx = private;
+अटल पूर्णांक rng_setkey(व्योम *निजी, स्थिर u8 *seed, अचिन्हित पूर्णांक seedlen)
+अणु
+	काष्ठा rng_parent_ctx *pctx = निजी;
 	/*
-	 * Check whether seedlen is of sufficient size is done in RNG
+	 * Check whether seedlen is of sufficient size is करोne in RNG
 	 * implementations.
 	 */
-	return crypto_rng_reset(pctx->drng, seed, seedlen);
-}
+	वापस crypto_rng_reset(pctx->drng, seed, seedlen);
+पूर्ण
 
-static int __maybe_unused rng_setentropy(void *private, sockptr_t entropy,
-					 unsigned int len)
-{
-	struct rng_parent_ctx *pctx = private;
-	u8 *kentropy = NULL;
+अटल पूर्णांक __maybe_unused rng_setentropy(व्योम *निजी, sockptr_t entropy,
+					 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा rng_parent_ctx *pctx = निजी;
+	u8 *kentropy = शून्य;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
 
-	if (pctx->entropy)
-		return -EINVAL;
+	अगर (pctx->entropy)
+		वापस -EINVAL;
 
-	if (len > MAXSIZE)
-		return -EMSGSIZE;
+	अगर (len > MAXSIZE)
+		वापस -EMSGSIZE;
 
-	if (len) {
+	अगर (len) अणु
 		kentropy = memdup_sockptr(entropy, len);
-		if (IS_ERR(kentropy))
-			return PTR_ERR(kentropy);
-	}
+		अगर (IS_ERR(kentropy))
+			वापस PTR_ERR(kentropy);
+	पूर्ण
 
 	crypto_rng_alg(pctx->drng)->set_ent(pctx->drng, kentropy, len);
 	/*
-	 * Since rng doesn't perform any memory management for the entropy
-	 * buffer, save kentropy pointer to pctx now to free it after use.
+	 * Since rng करोesn't perक्रमm any memory management क्रम the entropy
+	 * buffer, save kentropy poपूर्णांकer to pctx now to मुक्त it after use.
 	 */
 	pctx->entropy = kentropy;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct af_alg_type algif_type_rng = {
+अटल स्थिर काष्ठा af_alg_type algअगर_type_rng = अणु
 	.bind		=	rng_bind,
 	.release	=	rng_release,
 	.accept		=	rng_accept_parent,
 	.setkey		=	rng_setkey,
-#ifdef CONFIG_CRYPTO_USER_API_RNG_CAVP
+#अगर_घोषित CONFIG_CRYPTO_USER_API_RNG_CAVP
 	.setentropy	=	rng_setentropy,
-#endif
-	.ops		=	&algif_rng_ops,
+#पूर्ण_अगर
+	.ops		=	&algअगर_rng_ops,
 	.name		=	"rng",
 	.owner		=	THIS_MODULE
-};
+पूर्ण;
 
-static int __init rng_init(void)
-{
-	return af_alg_register_type(&algif_type_rng);
-}
+अटल पूर्णांक __init rng_init(व्योम)
+अणु
+	वापस af_alg_रेजिस्टर_type(&algअगर_type_rng);
+पूर्ण
 
-static void __exit rng_exit(void)
-{
-	int err = af_alg_unregister_type(&algif_type_rng);
+अटल व्योम __निकास rng_निकास(व्योम)
+अणु
+	पूर्णांक err = af_alg_unरेजिस्टर_type(&algअगर_type_rng);
 	BUG_ON(err);
-}
+पूर्ण
 
 module_init(rng_init);
-module_exit(rng_exit);
+module_निकास(rng_निकास);

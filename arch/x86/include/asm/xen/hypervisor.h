@@ -1,21 +1,22 @@
+<शैली गुरु>
 /******************************************************************************
  * hypervisor.h
  *
- * Linux-specific hypervisor handling.
+ * Linux-specअगरic hypervisor handling.
  *
  * Copyright (c) 2002-2004, K A Fraser
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -30,36 +31,36 @@
  * IN THE SOFTWARE.
  */
 
-#ifndef _ASM_X86_XEN_HYPERVISOR_H
-#define _ASM_X86_XEN_HYPERVISOR_H
+#अगर_अघोषित _ASM_X86_XEN_HYPERVISOR_H
+#घोषणा _ASM_X86_XEN_HYPERVISOR_H
 
-extern struct shared_info *HYPERVISOR_shared_info;
-extern struct start_info *xen_start_info;
+बाह्य काष्ठा shared_info *HYPERVISOR_shared_info;
+बाह्य काष्ठा start_info *xen_start_info;
 
-#include <asm/processor.h>
+#समावेश <यंत्र/processor.h>
 
-static inline uint32_t xen_cpuid_base(void)
-{
-	return hypervisor_cpuid_base("XenVMMXenVMM", 2);
-}
+अटल अंतरभूत uपूर्णांक32_t xen_cpuid_base(व्योम)
+अणु
+	वापस hypervisor_cpuid_base("XenVMMXenVMM", 2);
+पूर्ण
 
-#ifdef CONFIG_XEN
-extern bool __init xen_hvm_need_lapic(void);
+#अगर_घोषित CONFIG_XEN
+बाह्य bool __init xen_hvm_need_lapic(व्योम);
 
-static inline bool __init xen_x2apic_para_available(void)
-{
-	return xen_hvm_need_lapic();
-}
-#else
-static inline bool __init xen_x2apic_para_available(void)
-{
-	return (xen_cpuid_base() != 0);
-}
-#endif
+अटल अंतरभूत bool __init xen_x2apic_para_available(व्योम)
+अणु
+	वापस xen_hvm_need_lapic();
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool __init xen_x2apic_para_available(व्योम)
+अणु
+	वापस (xen_cpuid_base() != 0);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_HOTPLUG_CPU
-void xen_arch_register_cpu(int num);
-void xen_arch_unregister_cpu(int num);
-#endif
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+व्योम xen_arch_रेजिस्टर_cpu(पूर्णांक num);
+व्योम xen_arch_unरेजिस्टर_cpu(पूर्णांक num);
+#पूर्ण_अगर
 
-#endif /* _ASM_X86_XEN_HYPERVISOR_H */
+#पूर्ण_अगर /* _ASM_X86_XEN_HYPERVISOR_H */

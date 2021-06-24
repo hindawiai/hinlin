@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,73 +24,73 @@
  *
  */
 
-#include "dm_services.h"
-#include "conversion.h"
+#समावेश "dm_services.h"
+#समावेश "conversion.h"
 
-#define DIVIDER 10000
+#घोषणा DIVIDER 10000
 
 /* S2D13 value in [-3.00...0.9999] */
-#define S2D13_MIN (-3 * DIVIDER)
-#define S2D13_MAX (3 * DIVIDER)
+#घोषणा S2D13_MIN (-3 * DIVIDER)
+#घोषणा S2D13_MAX (3 * DIVIDER)
 
-uint16_t fixed_point_to_int_frac(
-	struct fixed31_32 arg,
-	uint8_t integer_bits,
-	uint8_t fractional_bits)
-{
-	int32_t numerator;
-	int32_t divisor = 1 << fractional_bits;
+uपूर्णांक16_t fixed_poपूर्णांक_to_पूर्णांक_frac(
+	काष्ठा fixed31_32 arg,
+	uपूर्णांक8_t पूर्णांकeger_bits,
+	uपूर्णांक8_t fractional_bits)
+अणु
+	पूर्णांक32_t numerator;
+	पूर्णांक32_t भागisor = 1 << fractional_bits;
 
-	uint16_t result;
+	uपूर्णांक16_t result;
 
-	uint16_t d = (uint16_t)dc_fixpt_floor(
-		dc_fixpt_abs(
+	uपूर्णांक16_t d = (uपूर्णांक16_t)dc_fixpt_न्यूनमान(
+		dc_fixpt_असल(
 			arg));
 
-	if (d <= (uint16_t)(1 << integer_bits) - (1 / (uint16_t)divisor))
-		numerator = (uint16_t)dc_fixpt_round(
-			dc_fixpt_mul_int(
+	अगर (d <= (uपूर्णांक16_t)(1 << पूर्णांकeger_bits) - (1 / (uपूर्णांक16_t)भागisor))
+		numerator = (uपूर्णांक16_t)dc_fixpt_round(
+			dc_fixpt_mul_पूर्णांक(
 				arg,
-				divisor));
-	else {
-		numerator = dc_fixpt_floor(
+				भागisor));
+	अन्यथा अणु
+		numerator = dc_fixpt_न्यूनमान(
 			dc_fixpt_sub(
-				dc_fixpt_from_int(
-					1LL << integer_bits),
+				dc_fixpt_from_पूर्णांक(
+					1LL << पूर्णांकeger_bits),
 				dc_fixpt_recip(
-					dc_fixpt_from_int(
-						divisor))));
-	}
+					dc_fixpt_from_पूर्णांक(
+						भागisor))));
+	पूर्ण
 
-	if (numerator >= 0)
-		result = (uint16_t)numerator;
-	else
-		result = (uint16_t)(
-		(1 << (integer_bits + fractional_bits + 1)) + numerator);
+	अगर (numerator >= 0)
+		result = (uपूर्णांक16_t)numerator;
+	अन्यथा
+		result = (uपूर्णांक16_t)(
+		(1 << (पूर्णांकeger_bits + fractional_bits + 1)) + numerator);
 
-	if ((result != 0) && dc_fixpt_lt(
+	अगर ((result != 0) && dc_fixpt_lt(
 		arg, dc_fixpt_zero))
-		result |= 1 << (integer_bits + fractional_bits);
+		result |= 1 << (पूर्णांकeger_bits + fractional_bits);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 /*
- * convert_float_matrix - This converts a double into HW register spec defined format S2D13.
+ * convert_भग्न_matrix - This converts a द्विगुन पूर्णांकo HW रेजिस्टर spec defined क्रमmat S2D13.
  */
-void convert_float_matrix(
-	uint16_t *matrix,
-	struct fixed31_32 *flt,
-	uint32_t buffer_size)
-{
-	const struct fixed31_32 min_2_13 =
+व्योम convert_भग्न_matrix(
+	uपूर्णांक16_t *matrix,
+	काष्ठा fixed31_32 *flt,
+	uपूर्णांक32_t buffer_size)
+अणु
+	स्थिर काष्ठा fixed31_32 min_2_13 =
 		dc_fixpt_from_fraction(S2D13_MIN, DIVIDER);
-	const struct fixed31_32 max_2_13 =
+	स्थिर काष्ठा fixed31_32 max_2_13 =
 		dc_fixpt_from_fraction(S2D13_MAX, DIVIDER);
-	uint32_t i;
+	uपूर्णांक32_t i;
 
-	for (i = 0; i < buffer_size; ++i) {
-		uint32_t reg_value =
-				fixed_point_to_int_frac(
+	क्रम (i = 0; i < buffer_size; ++i) अणु
+		uपूर्णांक32_t reg_value =
+				fixed_poपूर्णांक_to_पूर्णांक_frac(
 					dc_fixpt_clamp(
 						flt[i],
 						min_2_13,
@@ -97,6 +98,6 @@ void convert_float_matrix(
 						2,
 						13);
 
-		matrix[i] = (uint16_t)reg_value;
-	}
-}
+		matrix[i] = (uपूर्णांक16_t)reg_value;
+	पूर्ण
+पूर्ण

@@ -1,38 +1,39 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (C) 2005-2017 Andes Technology Corporation
 
-#include <linux/compiler.h>
-#include <linux/of_address.h>
-#include <linux/of_fdt.h>
-#include <linux/of_platform.h>
-#include <asm/l2_cache.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <यंत्र/l2_cache.h>
 
-void __iomem *atl2c_base;
-static const struct of_device_id atl2c_ids[] __initconst = {
-	{.compatible = "andestech,atl2c",},
-	{}
-};
+व्योम __iomem *atl2c_base;
+अटल स्थिर काष्ठा of_device_id atl2c_ids[] __initस्थिर = अणु
+	अणु.compatible = "andestech,atl2c",पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int __init atl2c_of_init(void)
-{
-	struct device_node *np;
-	struct resource res;
-	unsigned long tmp = 0;
-	unsigned long l2set, l2way, l2clsz;
+अटल पूर्णांक __init atl2c_of_init(व्योम)
+अणु
+	काष्ठा device_node *np;
+	काष्ठा resource res;
+	अचिन्हित दीर्घ पंचांगp = 0;
+	अचिन्हित दीर्घ l2set, l2way, l2clsz;
 
-	if (!(__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskL2C))
-		return -ENODEV;
+	अगर (!(__nds32__mfsr(NDS32_SR_MSC_CFG) & MSC_CFG_mskL2C))
+		वापस -ENODEV;
 
-	np = of_find_matching_node(NULL, atl2c_ids);
-	if (!np)
-		return -ENODEV;
+	np = of_find_matching_node(शून्य, atl2c_ids);
+	अगर (!np)
+		वापस -ENODEV;
 
-	if (of_address_to_resource(np, 0, &res))
-		return -ENODEV;
+	अगर (of_address_to_resource(np, 0, &res))
+		वापस -ENODEV;
 
 	atl2c_base = ioremap(res.start, resource_size(&res));
-	if (!atl2c_base)
-		return -ENOMEM;
+	अगर (!atl2c_base)
+		वापस -ENOMEM;
 
 	l2set =
 	    64 << ((L2C_R_REG(L2_CA_CONF_OFF) & L2_CA_CONF_mskL2SET) >>
@@ -47,19 +48,19 @@ static int __init atl2c_of_init(void)
 	pr_info("L2:%luKB/%luS/%luW/%luB\n",
 		l2set * l2way * l2clsz / 1024, l2set, l2way, l2clsz);
 
-	tmp = L2C_R_REG(L2CC_PROT_OFF);
-	tmp &= ~L2CC_PROT_mskMRWEN;
-	L2C_W_REG(L2CC_PROT_OFF, tmp);
+	पंचांगp = L2C_R_REG(L2CC_PROT_OFF);
+	पंचांगp &= ~L2CC_PROT_mskMRWEN;
+	L2C_W_REG(L2CC_PROT_OFF, पंचांगp);
 
-	tmp = L2C_R_REG(L2CC_SETUP_OFF);
-	tmp &= ~L2CC_SETUP_mskPART;
-	L2C_W_REG(L2CC_SETUP_OFF, tmp);
+	पंचांगp = L2C_R_REG(L2CC_SETUP_OFF);
+	पंचांगp &= ~L2CC_SETUP_mskPART;
+	L2C_W_REG(L2CC_SETUP_OFF, पंचांगp);
 
-	tmp = L2C_R_REG(L2CC_CTRL_OFF);
-	tmp |= L2CC_CTRL_mskEN;
-	L2C_W_REG(L2CC_CTRL_OFF, tmp);
+	पंचांगp = L2C_R_REG(L2CC_CTRL_OFF);
+	पंचांगp |= L2CC_CTRL_mskEN;
+	L2C_W_REG(L2CC_CTRL_OFF, पंचांगp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(atl2c_of_init);

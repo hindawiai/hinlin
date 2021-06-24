@@ -1,54 +1,55 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Simple synchronous userspace interface to SPI devices
+ * Simple synchronous userspace पूर्णांकerface to SPI devices
  *
  * Copyright (C) 2006 SWAPP
  *	Andrea Paterniani <a.paterniani@swapp-eng.it>
- * Copyright (C) 2007 David Brownell (simplification, cleanup)
+ * Copyright (C) 2007 David Brownell (simplअगरication, cleanup)
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/ioctl.h>
-#include <linux/fs.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/list.h>
-#include <linux/errno.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/compat.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/acpi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/list.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/acpi.h>
 
-#include <linux/spi/spi.h>
-#include <linux/spi/spidev.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/spidev.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
 
 /*
  * This supports access to SPI devices using normal userspace I/O calls.
- * Note that while traditional UNIX/POSIX I/O semantics are half duplex,
+ * Note that जबतक traditional UNIX/POSIX I/O semantics are half duplex,
  * and often mask message boundaries, full SPI support requires full duplex
- * transfers.  There are several kinds of internal message boundaries to
+ * transfers.  There are several kinds of पूर्णांकernal message boundaries to
  * handle chipselect management and other protocol options.
  *
- * SPI has a character major number assigned.  We allocate minor numbers
- * dynamically using a bitmask.  You must use hotplug tools, such as udev
+ * SPI has a अक्षरacter major number asचिन्हित.  We allocate minor numbers
+ * dynamically using a biपंचांगask.  You must use hotplug tools, such as udev
  * (or mdev with busybox) to create and destroy the /dev/spidevB.C device
  * nodes, since there is no fixed association of minor numbers with any
  * particular SPI bus or device.
  */
-#define SPIDEV_MAJOR			153	/* assigned */
-#define N_SPI_MINORS			32	/* ... up to 256 */
+#घोषणा SPIDEV_MAJOR			153	/* asचिन्हित */
+#घोषणा N_SPI_MINORS			32	/* ... up to 256 */
 
-static DECLARE_BITMAP(minors, N_SPI_MINORS);
+अटल DECLARE_BITMAP(minors, N_SPI_MINORS);
 
 
-/* Bit masks for spi_device.mode management.  Note that incorrect
- * settings for some settings can cause *lots* of trouble for other
+/* Bit masks क्रम spi_device.mode management.  Note that incorrect
+ * settings क्रम some settings can cause *lots* of trouble क्रम other
  * devices on a shared bus:
  *
  *  - CS_HIGH ... this device will be active when it shouldn't be
@@ -59,160 +60,160 @@ static DECLARE_BITMAP(minors, N_SPI_MINORS);
  *
  * REVISIT should changing those flags be privileged?
  */
-#define SPI_MODE_MASK		(SPI_CPHA | SPI_CPOL | SPI_CS_HIGH \
+#घोषणा SPI_MODE_MASK		(SPI_CPHA | SPI_CPOL | SPI_CS_HIGH \
 				| SPI_LSB_FIRST | SPI_3WIRE | SPI_LOOP \
 				| SPI_NO_CS | SPI_READY | SPI_TX_DUAL \
 				| SPI_TX_QUAD | SPI_TX_OCTAL | SPI_RX_DUAL \
 				| SPI_RX_QUAD | SPI_RX_OCTAL)
 
-struct spidev_data {
+काष्ठा spidev_data अणु
 	dev_t			devt;
 	spinlock_t		spi_lock;
-	struct spi_device	*spi;
-	struct list_head	device_entry;
+	काष्ठा spi_device	*spi;
+	काष्ठा list_head	device_entry;
 
-	/* TX/RX buffers are NULL unless this device is open (users > 0) */
-	struct mutex		buf_lock;
-	unsigned		users;
+	/* TX/RX buffers are शून्य unless this device is खोलो (users > 0) */
+	काष्ठा mutex		buf_lock;
+	अचिन्हित		users;
 	u8			*tx_buffer;
 	u8			*rx_buffer;
 	u32			speed_hz;
-};
+पूर्ण;
 
-static LIST_HEAD(device_list);
-static DEFINE_MUTEX(device_list_lock);
+अटल LIST_HEAD(device_list);
+अटल DEFINE_MUTEX(device_list_lock);
 
-static unsigned bufsiz = 4096;
-module_param(bufsiz, uint, S_IRUGO);
+अटल अचिन्हित bufsiz = 4096;
+module_param(bufsiz, uपूर्णांक, S_IRUGO);
 MODULE_PARM_DESC(bufsiz, "data bytes in biggest supported SPI message");
 
 /*-------------------------------------------------------------------------*/
 
-static ssize_t
-spidev_sync(struct spidev_data *spidev, struct spi_message *message)
-{
-	int status;
-	struct spi_device *spi;
+अटल sमाप_प्रकार
+spidev_sync(काष्ठा spidev_data *spidev, काष्ठा spi_message *message)
+अणु
+	पूर्णांक status;
+	काष्ठा spi_device *spi;
 
 	spin_lock_irq(&spidev->spi_lock);
 	spi = spidev->spi;
 	spin_unlock_irq(&spidev->spi_lock);
 
-	if (spi == NULL)
+	अगर (spi == शून्य)
 		status = -ESHUTDOWN;
-	else
+	अन्यथा
 		status = spi_sync(spi, message);
 
-	if (status == 0)
+	अगर (status == 0)
 		status = message->actual_length;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline ssize_t
-spidev_sync_write(struct spidev_data *spidev, size_t len)
-{
-	struct spi_transfer	t = {
+अटल अंतरभूत sमाप_प्रकार
+spidev_sync_ग_लिखो(काष्ठा spidev_data *spidev, माप_प्रकार len)
+अणु
+	काष्ठा spi_transfer	t = अणु
 			.tx_buf		= spidev->tx_buffer,
 			.len		= len,
 			.speed_hz	= spidev->speed_hz,
-		};
-	struct spi_message	m;
+		पूर्ण;
+	काष्ठा spi_message	m;
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
-	return spidev_sync(spidev, &m);
-}
+	वापस spidev_sync(spidev, &m);
+पूर्ण
 
-static inline ssize_t
-spidev_sync_read(struct spidev_data *spidev, size_t len)
-{
-	struct spi_transfer	t = {
+अटल अंतरभूत sमाप_प्रकार
+spidev_sync_पढ़ो(काष्ठा spidev_data *spidev, माप_प्रकार len)
+अणु
+	काष्ठा spi_transfer	t = अणु
 			.rx_buf		= spidev->rx_buffer,
 			.len		= len,
 			.speed_hz	= spidev->speed_hz,
-		};
-	struct spi_message	m;
+		पूर्ण;
+	काष्ठा spi_message	m;
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
-	return spidev_sync(spidev, &m);
-}
+	वापस spidev_sync(spidev, &m);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /* Read-only message with current device setup */
-static ssize_t
-spidev_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
-{
-	struct spidev_data	*spidev;
-	ssize_t			status;
+अटल sमाप_प्रकार
+spidev_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार count, loff_t *f_pos)
+अणु
+	काष्ठा spidev_data	*spidev;
+	sमाप_प्रकार			status;
 
 	/* chipselect only toggles at start or end of operation */
-	if (count > bufsiz)
-		return -EMSGSIZE;
+	अगर (count > bufsiz)
+		वापस -EMSGSIZE;
 
-	spidev = filp->private_data;
+	spidev = filp->निजी_data;
 
 	mutex_lock(&spidev->buf_lock);
-	status = spidev_sync_read(spidev, count);
-	if (status > 0) {
-		unsigned long	missing;
+	status = spidev_sync_पढ़ो(spidev, count);
+	अगर (status > 0) अणु
+		अचिन्हित दीर्घ	missing;
 
 		missing = copy_to_user(buf, spidev->rx_buffer, status);
-		if (missing == status)
+		अगर (missing == status)
 			status = -EFAULT;
-		else
+		अन्यथा
 			status = status - missing;
-	}
+	पूर्ण
 	mutex_unlock(&spidev->buf_lock);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /* Write-only message with current device setup */
-static ssize_t
-spidev_write(struct file *filp, const char __user *buf,
-		size_t count, loff_t *f_pos)
-{
-	struct spidev_data	*spidev;
-	ssize_t			status;
-	unsigned long		missing;
+अटल sमाप_प्रकार
+spidev_ग_लिखो(काष्ठा file *filp, स्थिर अक्षर __user *buf,
+		माप_प्रकार count, loff_t *f_pos)
+अणु
+	काष्ठा spidev_data	*spidev;
+	sमाप_प्रकार			status;
+	अचिन्हित दीर्घ		missing;
 
 	/* chipselect only toggles at start or end of operation */
-	if (count > bufsiz)
-		return -EMSGSIZE;
+	अगर (count > bufsiz)
+		वापस -EMSGSIZE;
 
-	spidev = filp->private_data;
+	spidev = filp->निजी_data;
 
 	mutex_lock(&spidev->buf_lock);
 	missing = copy_from_user(spidev->tx_buffer, buf, count);
-	if (missing == 0)
-		status = spidev_sync_write(spidev, count);
-	else
+	अगर (missing == 0)
+		status = spidev_sync_ग_लिखो(spidev, count);
+	अन्यथा
 		status = -EFAULT;
 	mutex_unlock(&spidev->buf_lock);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int spidev_message(struct spidev_data *spidev,
-		struct spi_ioc_transfer *u_xfers, unsigned n_xfers)
-{
-	struct spi_message	msg;
-	struct spi_transfer	*k_xfers;
-	struct spi_transfer	*k_tmp;
-	struct spi_ioc_transfer *u_tmp;
-	unsigned		n, total, tx_total, rx_total;
+अटल पूर्णांक spidev_message(काष्ठा spidev_data *spidev,
+		काष्ठा spi_ioc_transfer *u_xfers, अचिन्हित n_xfers)
+अणु
+	काष्ठा spi_message	msg;
+	काष्ठा spi_transfer	*k_xfers;
+	काष्ठा spi_transfer	*k_पंचांगp;
+	काष्ठा spi_ioc_transfer *u_पंचांगp;
+	अचिन्हित		n, total, tx_total, rx_total;
 	u8			*tx_buf, *rx_buf;
-	int			status = -EFAULT;
+	पूर्णांक			status = -EFAULT;
 
 	spi_message_init(&msg);
-	k_xfers = kcalloc(n_xfers, sizeof(*k_tmp), GFP_KERNEL);
-	if (k_xfers == NULL)
-		return -ENOMEM;
+	k_xfers = kसुस्मृति(n_xfers, माप(*k_पंचांगp), GFP_KERNEL);
+	अगर (k_xfers == शून्य)
+		वापस -ENOMEM;
 
-	/* Construct spi_message, copying any tx data to bounce buffer.
+	/* Conकाष्ठा spi_message, copying any tx data to bounce buffer.
 	 * We walk the array of user-provided transfers, using each one
 	 * to initialize a kernel version of the same transfer.
 	 */
@@ -221,521 +222,521 @@ static int spidev_message(struct spidev_data *spidev,
 	total = 0;
 	tx_total = 0;
 	rx_total = 0;
-	for (n = n_xfers, k_tmp = k_xfers, u_tmp = u_xfers;
+	क्रम (n = n_xfers, k_पंचांगp = k_xfers, u_पंचांगp = u_xfers;
 			n;
-			n--, k_tmp++, u_tmp++) {
+			n--, k_पंचांगp++, u_पंचांगp++) अणु
 		/* Ensure that also following allocations from rx_buf/tx_buf will meet
 		 * DMA alignment requirements.
 		 */
-		unsigned int len_aligned = ALIGN(u_tmp->len, ARCH_KMALLOC_MINALIGN);
+		अचिन्हित पूर्णांक len_aligned = ALIGN(u_पंचांगp->len, ARCH_KMALLOC_MINALIGN);
 
-		k_tmp->len = u_tmp->len;
+		k_पंचांगp->len = u_पंचांगp->len;
 
-		total += k_tmp->len;
-		/* Since the function returns the total length of transfers
-		 * on success, restrict the total to positive int values to
-		 * avoid the return value looking like an error.  Also check
-		 * each transfer length to avoid arithmetic overflow.
+		total += k_पंचांगp->len;
+		/* Since the function वापसs the total length of transfers
+		 * on success, restrict the total to positive पूर्णांक values to
+		 * aव्योम the वापस value looking like an error.  Also check
+		 * each transfer length to aव्योम arithmetic overflow.
 		 */
-		if (total > INT_MAX || k_tmp->len > INT_MAX) {
+		अगर (total > पूर्णांक_उच्च || k_पंचांगp->len > पूर्णांक_उच्च) अणु
 			status = -EMSGSIZE;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (u_tmp->rx_buf) {
+		अगर (u_पंचांगp->rx_buf) अणु
 			/* this transfer needs space in RX bounce buffer */
 			rx_total += len_aligned;
-			if (rx_total > bufsiz) {
+			अगर (rx_total > bufsiz) अणु
 				status = -EMSGSIZE;
-				goto done;
-			}
-			k_tmp->rx_buf = rx_buf;
+				जाओ करोne;
+			पूर्ण
+			k_पंचांगp->rx_buf = rx_buf;
 			rx_buf += len_aligned;
-		}
-		if (u_tmp->tx_buf) {
+		पूर्ण
+		अगर (u_पंचांगp->tx_buf) अणु
 			/* this transfer needs space in TX bounce buffer */
 			tx_total += len_aligned;
-			if (tx_total > bufsiz) {
+			अगर (tx_total > bufsiz) अणु
 				status = -EMSGSIZE;
-				goto done;
-			}
-			k_tmp->tx_buf = tx_buf;
-			if (copy_from_user(tx_buf, (const u8 __user *)
-						(uintptr_t) u_tmp->tx_buf,
-					u_tmp->len))
-				goto done;
+				जाओ करोne;
+			पूर्ण
+			k_पंचांगp->tx_buf = tx_buf;
+			अगर (copy_from_user(tx_buf, (स्थिर u8 __user *)
+						(uपूर्णांकptr_t) u_पंचांगp->tx_buf,
+					u_पंचांगp->len))
+				जाओ करोne;
 			tx_buf += len_aligned;
-		}
+		पूर्ण
 
-		k_tmp->cs_change = !!u_tmp->cs_change;
-		k_tmp->tx_nbits = u_tmp->tx_nbits;
-		k_tmp->rx_nbits = u_tmp->rx_nbits;
-		k_tmp->bits_per_word = u_tmp->bits_per_word;
-		k_tmp->delay.value = u_tmp->delay_usecs;
-		k_tmp->delay.unit = SPI_DELAY_UNIT_USECS;
-		k_tmp->speed_hz = u_tmp->speed_hz;
-		k_tmp->word_delay.value = u_tmp->word_delay_usecs;
-		k_tmp->word_delay.unit = SPI_DELAY_UNIT_USECS;
-		if (!k_tmp->speed_hz)
-			k_tmp->speed_hz = spidev->speed_hz;
-#ifdef VERBOSE
+		k_पंचांगp->cs_change = !!u_पंचांगp->cs_change;
+		k_पंचांगp->tx_nbits = u_पंचांगp->tx_nbits;
+		k_पंचांगp->rx_nbits = u_पंचांगp->rx_nbits;
+		k_पंचांगp->bits_per_word = u_पंचांगp->bits_per_word;
+		k_पंचांगp->delay.value = u_पंचांगp->delay_usecs;
+		k_पंचांगp->delay.unit = SPI_DELAY_UNIT_USECS;
+		k_पंचांगp->speed_hz = u_पंचांगp->speed_hz;
+		k_पंचांगp->word_delay.value = u_पंचांगp->word_delay_usecs;
+		k_पंचांगp->word_delay.unit = SPI_DELAY_UNIT_USECS;
+		अगर (!k_पंचांगp->speed_hz)
+			k_पंचांगp->speed_hz = spidev->speed_hz;
+#अगर_घोषित VERBOSE
 		dev_dbg(&spidev->spi->dev,
 			"  xfer len %u %s%s%s%dbits %u usec %u usec %uHz\n",
-			k_tmp->len,
-			k_tmp->rx_buf ? "rx " : "",
-			k_tmp->tx_buf ? "tx " : "",
-			k_tmp->cs_change ? "cs " : "",
-			k_tmp->bits_per_word ? : spidev->spi->bits_per_word,
-			k_tmp->delay.value,
-			k_tmp->word_delay.value,
-			k_tmp->speed_hz ? : spidev->spi->max_speed_hz);
-#endif
-		spi_message_add_tail(k_tmp, &msg);
-	}
+			k_पंचांगp->len,
+			k_पंचांगp->rx_buf ? "rx " : "",
+			k_पंचांगp->tx_buf ? "tx " : "",
+			k_पंचांगp->cs_change ? "cs " : "",
+			k_पंचांगp->bits_per_word ? : spidev->spi->bits_per_word,
+			k_पंचांगp->delay.value,
+			k_पंचांगp->word_delay.value,
+			k_पंचांगp->speed_hz ? : spidev->spi->max_speed_hz);
+#पूर्ण_अगर
+		spi_message_add_tail(k_पंचांगp, &msg);
+	पूर्ण
 
 	status = spidev_sync(spidev, &msg);
-	if (status < 0)
-		goto done;
+	अगर (status < 0)
+		जाओ करोne;
 
 	/* copy any rx data out of bounce buffer */
-	for (n = n_xfers, k_tmp = k_xfers, u_tmp = u_xfers;
+	क्रम (n = n_xfers, k_पंचांगp = k_xfers, u_पंचांगp = u_xfers;
 			n;
-			n--, k_tmp++, u_tmp++) {
-		if (u_tmp->rx_buf) {
-			if (copy_to_user((u8 __user *)
-					(uintptr_t) u_tmp->rx_buf, k_tmp->rx_buf,
-					u_tmp->len)) {
+			n--, k_पंचांगp++, u_पंचांगp++) अणु
+		अगर (u_पंचांगp->rx_buf) अणु
+			अगर (copy_to_user((u8 __user *)
+					(uपूर्णांकptr_t) u_पंचांगp->rx_buf, k_पंचांगp->rx_buf,
+					u_पंचांगp->len)) अणु
 				status = -EFAULT;
-				goto done;
-			}
-		}
-	}
+				जाओ करोne;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 	status = total;
 
-done:
-	kfree(k_xfers);
-	return status;
-}
+करोne:
+	kमुक्त(k_xfers);
+	वापस status;
+पूर्ण
 
-static struct spi_ioc_transfer *
-spidev_get_ioc_message(unsigned int cmd, struct spi_ioc_transfer __user *u_ioc,
-		unsigned *n_ioc)
-{
-	u32	tmp;
+अटल काष्ठा spi_ioc_transfer *
+spidev_get_ioc_message(अचिन्हित पूर्णांक cmd, काष्ठा spi_ioc_transfer __user *u_ioc,
+		अचिन्हित *n_ioc)
+अणु
+	u32	पंचांगp;
 
 	/* Check type, command number and direction */
-	if (_IOC_TYPE(cmd) != SPI_IOC_MAGIC
+	अगर (_IOC_TYPE(cmd) != SPI_IOC_MAGIC
 			|| _IOC_NR(cmd) != _IOC_NR(SPI_IOC_MESSAGE(0))
-			|| _IOC_DIR(cmd) != _IOC_WRITE)
-		return ERR_PTR(-ENOTTY);
+			|| _IOC_सूची(cmd) != _IOC_WRITE)
+		वापस ERR_PTR(-ENOTTY);
 
-	tmp = _IOC_SIZE(cmd);
-	if ((tmp % sizeof(struct spi_ioc_transfer)) != 0)
-		return ERR_PTR(-EINVAL);
-	*n_ioc = tmp / sizeof(struct spi_ioc_transfer);
-	if (*n_ioc == 0)
-		return NULL;
+	पंचांगp = _IOC_SIZE(cmd);
+	अगर ((पंचांगp % माप(काष्ठा spi_ioc_transfer)) != 0)
+		वापस ERR_PTR(-EINVAL);
+	*n_ioc = पंचांगp / माप(काष्ठा spi_ioc_transfer);
+	अगर (*n_ioc == 0)
+		वापस शून्य;
 
-	/* copy into scratch area */
-	return memdup_user(u_ioc, tmp);
-}
+	/* copy पूर्णांकo scratch area */
+	वापस memdup_user(u_ioc, पंचांगp);
+पूर्ण
 
-static long
-spidev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	int			retval = 0;
-	struct spidev_data	*spidev;
-	struct spi_device	*spi;
-	u32			tmp;
-	unsigned		n_ioc;
-	struct spi_ioc_transfer	*ioc;
+अटल दीर्घ
+spidev_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक			retval = 0;
+	काष्ठा spidev_data	*spidev;
+	काष्ठा spi_device	*spi;
+	u32			पंचांगp;
+	अचिन्हित		n_ioc;
+	काष्ठा spi_ioc_transfer	*ioc;
 
 	/* Check type and command number */
-	if (_IOC_TYPE(cmd) != SPI_IOC_MAGIC)
-		return -ENOTTY;
+	अगर (_IOC_TYPE(cmd) != SPI_IOC_MAGIC)
+		वापस -ENOTTY;
 
-	/* guard against device removal before, or while,
+	/* guard against device removal beक्रमe, or जबतक,
 	 * we issue this ioctl.
 	 */
-	spidev = filp->private_data;
+	spidev = filp->निजी_data;
 	spin_lock_irq(&spidev->spi_lock);
 	spi = spi_dev_get(spidev->spi);
 	spin_unlock_irq(&spidev->spi_lock);
 
-	if (spi == NULL)
-		return -ESHUTDOWN;
+	अगर (spi == शून्य)
+		वापस -ESHUTDOWN;
 
-	/* use the buffer lock here for triple duty:
+	/* use the buffer lock here क्रम triple duty:
 	 *  - prevent I/O (from us) so calling spi_setup() is safe;
 	 *  - prevent concurrent SPI_IOC_WR_* from morphing
-	 *    data fields while SPI_IOC_RD_* reads them;
+	 *    data fields जबतक SPI_IOC_RD_* पढ़ोs them;
 	 *  - SPI_IOC_MESSAGE needs the buffer locked "normally".
 	 */
 	mutex_lock(&spidev->buf_lock);
 
-	switch (cmd) {
-	/* read requests */
-	case SPI_IOC_RD_MODE:
+	चयन (cmd) अणु
+	/* पढ़ो requests */
+	हाल SPI_IOC_RD_MODE:
 		retval = put_user(spi->mode & SPI_MODE_MASK,
 					(__u8 __user *)arg);
-		break;
-	case SPI_IOC_RD_MODE32:
+		अवरोध;
+	हाल SPI_IOC_RD_MODE32:
 		retval = put_user(spi->mode & SPI_MODE_MASK,
 					(__u32 __user *)arg);
-		break;
-	case SPI_IOC_RD_LSB_FIRST:
+		अवरोध;
+	हाल SPI_IOC_RD_LSB_FIRST:
 		retval = put_user((spi->mode & SPI_LSB_FIRST) ?  1 : 0,
 					(__u8 __user *)arg);
-		break;
-	case SPI_IOC_RD_BITS_PER_WORD:
+		अवरोध;
+	हाल SPI_IOC_RD_BITS_PER_WORD:
 		retval = put_user(spi->bits_per_word, (__u8 __user *)arg);
-		break;
-	case SPI_IOC_RD_MAX_SPEED_HZ:
+		अवरोध;
+	हाल SPI_IOC_RD_MAX_SPEED_HZ:
 		retval = put_user(spidev->speed_hz, (__u32 __user *)arg);
-		break;
+		अवरोध;
 
-	/* write requests */
-	case SPI_IOC_WR_MODE:
-	case SPI_IOC_WR_MODE32:
-		if (cmd == SPI_IOC_WR_MODE)
-			retval = get_user(tmp, (u8 __user *)arg);
-		else
-			retval = get_user(tmp, (u32 __user *)arg);
-		if (retval == 0) {
-			struct spi_controller *ctlr = spi->controller;
+	/* ग_लिखो requests */
+	हाल SPI_IOC_WR_MODE:
+	हाल SPI_IOC_WR_MODE32:
+		अगर (cmd == SPI_IOC_WR_MODE)
+			retval = get_user(पंचांगp, (u8 __user *)arg);
+		अन्यथा
+			retval = get_user(पंचांगp, (u32 __user *)arg);
+		अगर (retval == 0) अणु
+			काष्ठा spi_controller *ctlr = spi->controller;
 			u32	save = spi->mode;
 
-			if (tmp & ~SPI_MODE_MASK) {
+			अगर (पंचांगp & ~SPI_MODE_MASK) अणु
 				retval = -EINVAL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if (ctlr->use_gpio_descriptors && ctlr->cs_gpiods &&
+			अगर (ctlr->use_gpio_descriptors && ctlr->cs_gpiods &&
 			    ctlr->cs_gpiods[spi->chip_select])
-				tmp |= SPI_CS_HIGH;
+				पंचांगp |= SPI_CS_HIGH;
 
-			tmp |= spi->mode & ~SPI_MODE_MASK;
-			spi->mode = (u16)tmp;
+			पंचांगp |= spi->mode & ~SPI_MODE_MASK;
+			spi->mode = (u16)पंचांगp;
 			retval = spi_setup(spi);
-			if (retval < 0)
+			अगर (retval < 0)
 				spi->mode = save;
-			else
-				dev_dbg(&spi->dev, "spi mode %x\n", tmp);
-		}
-		break;
-	case SPI_IOC_WR_LSB_FIRST:
-		retval = get_user(tmp, (__u8 __user *)arg);
-		if (retval == 0) {
+			अन्यथा
+				dev_dbg(&spi->dev, "spi mode %x\n", पंचांगp);
+		पूर्ण
+		अवरोध;
+	हाल SPI_IOC_WR_LSB_FIRST:
+		retval = get_user(पंचांगp, (__u8 __user *)arg);
+		अगर (retval == 0) अणु
 			u32	save = spi->mode;
 
-			if (tmp)
+			अगर (पंचांगp)
 				spi->mode |= SPI_LSB_FIRST;
-			else
+			अन्यथा
 				spi->mode &= ~SPI_LSB_FIRST;
 			retval = spi_setup(spi);
-			if (retval < 0)
+			अगर (retval < 0)
 				spi->mode = save;
-			else
+			अन्यथा
 				dev_dbg(&spi->dev, "%csb first\n",
-						tmp ? 'l' : 'm');
-		}
-		break;
-	case SPI_IOC_WR_BITS_PER_WORD:
-		retval = get_user(tmp, (__u8 __user *)arg);
-		if (retval == 0) {
+						पंचांगp ? 'l' : 'm');
+		पूर्ण
+		अवरोध;
+	हाल SPI_IOC_WR_BITS_PER_WORD:
+		retval = get_user(पंचांगp, (__u8 __user *)arg);
+		अगर (retval == 0) अणु
 			u8	save = spi->bits_per_word;
 
-			spi->bits_per_word = tmp;
+			spi->bits_per_word = पंचांगp;
 			retval = spi_setup(spi);
-			if (retval < 0)
+			अगर (retval < 0)
 				spi->bits_per_word = save;
-			else
-				dev_dbg(&spi->dev, "%d bits per word\n", tmp);
-		}
-		break;
-	case SPI_IOC_WR_MAX_SPEED_HZ:
-		retval = get_user(tmp, (__u32 __user *)arg);
-		if (retval == 0) {
+			अन्यथा
+				dev_dbg(&spi->dev, "%d bits per word\n", पंचांगp);
+		पूर्ण
+		अवरोध;
+	हाल SPI_IOC_WR_MAX_SPEED_HZ:
+		retval = get_user(पंचांगp, (__u32 __user *)arg);
+		अगर (retval == 0) अणु
 			u32	save = spi->max_speed_hz;
 
-			spi->max_speed_hz = tmp;
+			spi->max_speed_hz = पंचांगp;
 			retval = spi_setup(spi);
-			if (retval == 0) {
-				spidev->speed_hz = tmp;
+			अगर (retval == 0) अणु
+				spidev->speed_hz = पंचांगp;
 				dev_dbg(&spi->dev, "%d Hz (max)\n",
 					spidev->speed_hz);
-			}
+			पूर्ण
 			spi->max_speed_hz = save;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		/* segmented and/or full-duplex I/O request */
-		/* Check message and copy into scratch area */
+		/* Check message and copy पूर्णांकo scratch area */
 		ioc = spidev_get_ioc_message(cmd,
-				(struct spi_ioc_transfer __user *)arg, &n_ioc);
-		if (IS_ERR(ioc)) {
+				(काष्ठा spi_ioc_transfer __user *)arg, &n_ioc);
+		अगर (IS_ERR(ioc)) अणु
 			retval = PTR_ERR(ioc);
-			break;
-		}
-		if (!ioc)
-			break;	/* n_ioc is also 0 */
+			अवरोध;
+		पूर्ण
+		अगर (!ioc)
+			अवरोध;	/* n_ioc is also 0 */
 
 		/* translate to spi_message, execute */
 		retval = spidev_message(spidev, ioc, n_ioc);
-		kfree(ioc);
-		break;
-	}
+		kमुक्त(ioc);
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&spidev->buf_lock);
 	spi_dev_put(spi);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long
-spidev_compat_ioc_message(struct file *filp, unsigned int cmd,
-		unsigned long arg)
-{
-	struct spi_ioc_transfer __user	*u_ioc;
-	int				retval = 0;
-	struct spidev_data		*spidev;
-	struct spi_device		*spi;
-	unsigned			n_ioc, n;
-	struct spi_ioc_transfer		*ioc;
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ
+spidev_compat_ioc_message(काष्ठा file *filp, अचिन्हित पूर्णांक cmd,
+		अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा spi_ioc_transfer __user	*u_ioc;
+	पूर्णांक				retval = 0;
+	काष्ठा spidev_data		*spidev;
+	काष्ठा spi_device		*spi;
+	अचिन्हित			n_ioc, n;
+	काष्ठा spi_ioc_transfer		*ioc;
 
-	u_ioc = (struct spi_ioc_transfer __user *) compat_ptr(arg);
+	u_ioc = (काष्ठा spi_ioc_transfer __user *) compat_ptr(arg);
 
-	/* guard against device removal before, or while,
+	/* guard against device removal beक्रमe, or जबतक,
 	 * we issue this ioctl.
 	 */
-	spidev = filp->private_data;
+	spidev = filp->निजी_data;
 	spin_lock_irq(&spidev->spi_lock);
 	spi = spi_dev_get(spidev->spi);
 	spin_unlock_irq(&spidev->spi_lock);
 
-	if (spi == NULL)
-		return -ESHUTDOWN;
+	अगर (spi == शून्य)
+		वापस -ESHUTDOWN;
 
 	/* SPI_IOC_MESSAGE needs the buffer locked "normally" */
 	mutex_lock(&spidev->buf_lock);
 
-	/* Check message and copy into scratch area */
+	/* Check message and copy पूर्णांकo scratch area */
 	ioc = spidev_get_ioc_message(cmd, u_ioc, &n_ioc);
-	if (IS_ERR(ioc)) {
+	अगर (IS_ERR(ioc)) अणु
 		retval = PTR_ERR(ioc);
-		goto done;
-	}
-	if (!ioc)
-		goto done;	/* n_ioc is also 0 */
+		जाओ करोne;
+	पूर्ण
+	अगर (!ioc)
+		जाओ करोne;	/* n_ioc is also 0 */
 
-	/* Convert buffer pointers */
-	for (n = 0; n < n_ioc; n++) {
-		ioc[n].rx_buf = (uintptr_t) compat_ptr(ioc[n].rx_buf);
-		ioc[n].tx_buf = (uintptr_t) compat_ptr(ioc[n].tx_buf);
-	}
+	/* Convert buffer poपूर्णांकers */
+	क्रम (n = 0; n < n_ioc; n++) अणु
+		ioc[n].rx_buf = (uपूर्णांकptr_t) compat_ptr(ioc[n].rx_buf);
+		ioc[n].tx_buf = (uपूर्णांकptr_t) compat_ptr(ioc[n].tx_buf);
+	पूर्ण
 
 	/* translate to spi_message, execute */
 	retval = spidev_message(spidev, ioc, n_ioc);
-	kfree(ioc);
+	kमुक्त(ioc);
 
-done:
+करोne:
 	mutex_unlock(&spidev->buf_lock);
 	spi_dev_put(spi);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static long
-spidev_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	if (_IOC_TYPE(cmd) == SPI_IOC_MAGIC
+अटल दीर्घ
+spidev_compat_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	अगर (_IOC_TYPE(cmd) == SPI_IOC_MAGIC
 			&& _IOC_NR(cmd) == _IOC_NR(SPI_IOC_MESSAGE(0))
-			&& _IOC_DIR(cmd) == _IOC_WRITE)
-		return spidev_compat_ioc_message(filp, cmd, arg);
+			&& _IOC_सूची(cmd) == _IOC_WRITE)
+		वापस spidev_compat_ioc_message(filp, cmd, arg);
 
-	return spidev_ioctl(filp, cmd, (unsigned long)compat_ptr(arg));
-}
-#else
-#define spidev_compat_ioctl NULL
-#endif /* CONFIG_COMPAT */
+	वापस spidev_ioctl(filp, cmd, (अचिन्हित दीर्घ)compat_ptr(arg));
+पूर्ण
+#अन्यथा
+#घोषणा spidev_compat_ioctl शून्य
+#पूर्ण_अगर /* CONFIG_COMPAT */
 
-static int spidev_open(struct inode *inode, struct file *filp)
-{
-	struct spidev_data	*spidev;
-	int			status = -ENXIO;
+अटल पूर्णांक spidev_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा spidev_data	*spidev;
+	पूर्णांक			status = -ENXIO;
 
 	mutex_lock(&device_list_lock);
 
-	list_for_each_entry(spidev, &device_list, device_entry) {
-		if (spidev->devt == inode->i_rdev) {
+	list_क्रम_each_entry(spidev, &device_list, device_entry) अणु
+		अगर (spidev->devt == inode->i_rdev) अणु
 			status = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (status) {
+	अगर (status) अणु
 		pr_debug("spidev: nothing for minor %d\n", iminor(inode));
-		goto err_find_dev;
-	}
+		जाओ err_find_dev;
+	पूर्ण
 
-	if (!spidev->tx_buffer) {
-		spidev->tx_buffer = kmalloc(bufsiz, GFP_KERNEL);
-		if (!spidev->tx_buffer) {
+	अगर (!spidev->tx_buffer) अणु
+		spidev->tx_buffer = kदो_स्मृति(bufsiz, GFP_KERNEL);
+		अगर (!spidev->tx_buffer) अणु
 			dev_dbg(&spidev->spi->dev, "open/ENOMEM\n");
 			status = -ENOMEM;
-			goto err_find_dev;
-		}
-	}
+			जाओ err_find_dev;
+		पूर्ण
+	पूर्ण
 
-	if (!spidev->rx_buffer) {
-		spidev->rx_buffer = kmalloc(bufsiz, GFP_KERNEL);
-		if (!spidev->rx_buffer) {
+	अगर (!spidev->rx_buffer) अणु
+		spidev->rx_buffer = kदो_स्मृति(bufsiz, GFP_KERNEL);
+		अगर (!spidev->rx_buffer) अणु
 			dev_dbg(&spidev->spi->dev, "open/ENOMEM\n");
 			status = -ENOMEM;
-			goto err_alloc_rx_buf;
-		}
-	}
+			जाओ err_alloc_rx_buf;
+		पूर्ण
+	पूर्ण
 
 	spidev->users++;
-	filp->private_data = spidev;
-	stream_open(inode, filp);
+	filp->निजी_data = spidev;
+	stream_खोलो(inode, filp);
 
 	mutex_unlock(&device_list_lock);
-	return 0;
+	वापस 0;
 
 err_alloc_rx_buf:
-	kfree(spidev->tx_buffer);
-	spidev->tx_buffer = NULL;
+	kमुक्त(spidev->tx_buffer);
+	spidev->tx_buffer = शून्य;
 err_find_dev:
 	mutex_unlock(&device_list_lock);
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int spidev_release(struct inode *inode, struct file *filp)
-{
-	struct spidev_data	*spidev;
-	int			dofree;
+अटल पूर्णांक spidev_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	काष्ठा spidev_data	*spidev;
+	पूर्णांक			करोमुक्त;
 
 	mutex_lock(&device_list_lock);
-	spidev = filp->private_data;
-	filp->private_data = NULL;
+	spidev = filp->निजी_data;
+	filp->निजी_data = शून्य;
 
 	spin_lock_irq(&spidev->spi_lock);
 	/* ... after we unbound from the underlying device? */
-	dofree = (spidev->spi == NULL);
+	करोमुक्त = (spidev->spi == शून्य);
 	spin_unlock_irq(&spidev->spi_lock);
 
-	/* last close? */
+	/* last बंद? */
 	spidev->users--;
-	if (!spidev->users) {
+	अगर (!spidev->users) अणु
 
-		kfree(spidev->tx_buffer);
-		spidev->tx_buffer = NULL;
+		kमुक्त(spidev->tx_buffer);
+		spidev->tx_buffer = शून्य;
 
-		kfree(spidev->rx_buffer);
-		spidev->rx_buffer = NULL;
+		kमुक्त(spidev->rx_buffer);
+		spidev->rx_buffer = शून्य;
 
-		if (dofree)
-			kfree(spidev);
-		else
+		अगर (करोमुक्त)
+			kमुक्त(spidev);
+		अन्यथा
 			spidev->speed_hz = spidev->spi->max_speed_hz;
-	}
-#ifdef CONFIG_SPI_SLAVE
-	if (!dofree)
-		spi_slave_abort(spidev->spi);
-#endif
+	पूर्ण
+#अगर_घोषित CONFIG_SPI_SLAVE
+	अगर (!करोमुक्त)
+		spi_slave_पात(spidev->spi);
+#पूर्ण_अगर
 	mutex_unlock(&device_list_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations spidev_fops = {
+अटल स्थिर काष्ठा file_operations spidev_fops = अणु
 	.owner =	THIS_MODULE,
-	/* REVISIT switch to aio primitives, so that userspace
-	 * gets more complete API coverage.  It'll simplify things
-	 * too, except for the locking.
+	/* REVISIT चयन to aio primitives, so that userspace
+	 * माला_लो more complete API coverage.  It'll simplअगरy things
+	 * too, except क्रम the locking.
 	 */
-	.write =	spidev_write,
-	.read =		spidev_read,
+	.ग_लिखो =	spidev_ग_लिखो,
+	.पढ़ो =		spidev_पढ़ो,
 	.unlocked_ioctl = spidev_ioctl,
 	.compat_ioctl = spidev_compat_ioctl,
-	.open =		spidev_open,
+	.खोलो =		spidev_खोलो,
 	.release =	spidev_release,
 	.llseek =	no_llseek,
-};
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-/* The main reason to have this class is to make mdev/udev create the
- * /dev/spidevB.C character device nodes exposing our userspace API.
- * It also simplifies memory management.
+/* The मुख्य reason to have this class is to make mdev/udev create the
+ * /dev/spidevB.C अक्षरacter device nodes exposing our userspace API.
+ * It also simplअगरies memory management.
  */
 
-static struct class *spidev_class;
+अटल काष्ठा class *spidev_class;
 
-#ifdef CONFIG_OF
-static const struct of_device_id spidev_dt_ids[] = {
-	{ .compatible = "rohm,dh2228fv" },
-	{ .compatible = "lineartechnology,ltc2488" },
-	{ .compatible = "ge,achc" },
-	{ .compatible = "semtech,sx1301" },
-	{ .compatible = "lwn,bk4" },
-	{ .compatible = "dh,dhcom-board" },
-	{ .compatible = "menlo,m53cpld" },
-	{ .compatible = "cisco,spi-petra" },
-	{ .compatible = "micron,spi-authenta" },
-	{},
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id spidev_dt_ids[] = अणु
+	अणु .compatible = "rohm,dh2228fv" पूर्ण,
+	अणु .compatible = "lineartechnology,ltc2488" पूर्ण,
+	अणु .compatible = "ge,achc" पूर्ण,
+	अणु .compatible = "semtech,sx1301" पूर्ण,
+	अणु .compatible = "lwn,bk4" पूर्ण,
+	अणु .compatible = "dh,dhcom-board" पूर्ण,
+	अणु .compatible = "menlo,m53cpld" पूर्ण,
+	अणु .compatible = "cisco,spi-petra" पूर्ण,
+	अणु .compatible = "micron,spi-authenta" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, spidev_dt_ids);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
+#अगर_घोषित CONFIG_ACPI
 
-/* Dummy SPI devices not to be used in production systems */
-#define SPIDEV_ACPI_DUMMY	1
+/* Dummy SPI devices not to be used in production प्रणालीs */
+#घोषणा SPIDEV_ACPI_DUMMY	1
 
-static const struct acpi_device_id spidev_acpi_ids[] = {
+अटल स्थिर काष्ठा acpi_device_id spidev_acpi_ids[] = अणु
 	/*
-	 * The ACPI SPT000* devices are only meant for development and
+	 * The ACPI SPT000* devices are only meant क्रम development and
 	 * testing. Systems used in production should have a proper ACPI
 	 * description of the connected peripheral and they should also use
 	 * a proper driver instead of poking directly to the SPI bus.
 	 */
-	{ "SPT0001", SPIDEV_ACPI_DUMMY },
-	{ "SPT0002", SPIDEV_ACPI_DUMMY },
-	{ "SPT0003", SPIDEV_ACPI_DUMMY },
-	{},
-};
+	अणु "SPT0001", SPIDEV_ACPI_DUMMY पूर्ण,
+	अणु "SPT0002", SPIDEV_ACPI_DUMMY पूर्ण,
+	अणु "SPT0003", SPIDEV_ACPI_DUMMY पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, spidev_acpi_ids);
 
-static void spidev_probe_acpi(struct spi_device *spi)
-{
-	const struct acpi_device_id *id;
+अटल व्योम spidev_probe_acpi(काष्ठा spi_device *spi)
+अणु
+	स्थिर काष्ठा acpi_device_id *id;
 
-	if (!has_acpi_companion(&spi->dev))
-		return;
+	अगर (!has_acpi_companion(&spi->dev))
+		वापस;
 
 	id = acpi_match_device(spidev_acpi_ids, &spi->dev);
-	if (WARN_ON(!id))
-		return;
+	अगर (WARN_ON(!id))
+		वापस;
 
-	if (id->driver_data == SPIDEV_ACPI_DUMMY)
+	अगर (id->driver_data == SPIDEV_ACPI_DUMMY)
 		dev_warn(&spi->dev, "do not use this driver in production systems!\n");
-}
-#else
-static inline void spidev_probe_acpi(struct spi_device *spi) {}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम spidev_probe_acpi(काष्ठा spi_device *spi) अणुपूर्ण
+#पूर्ण_अगर
 
 /*-------------------------------------------------------------------------*/
 
-static int spidev_probe(struct spi_device *spi)
-{
-	struct spidev_data	*spidev;
-	int			status;
-	unsigned long		minor;
+अटल पूर्णांक spidev_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा spidev_data	*spidev;
+	पूर्णांक			status;
+	अचिन्हित दीर्घ		minor;
 
 	/*
-	 * spidev should never be referenced in DT without a specific
+	 * spidev should never be referenced in DT without a specअगरic
 	 * compatible string, it is a Linux implementation thing
 	 * rather than a description of the hardware.
 	 */
@@ -746,9 +747,9 @@ static int spidev_probe(struct spi_device *spi)
 	spidev_probe_acpi(spi);
 
 	/* Allocate driver data */
-	spidev = kzalloc(sizeof(*spidev), GFP_KERNEL);
-	if (!spidev)
-		return -ENOMEM;
+	spidev = kzalloc(माप(*spidev), GFP_KERNEL);
+	अगर (!spidev)
+		वापस -ENOMEM;
 
 	/* Initialize the driver data */
 	spidev->spi = spi;
@@ -758,112 +759,112 @@ static int spidev_probe(struct spi_device *spi)
 	INIT_LIST_HEAD(&spidev->device_entry);
 
 	/* If we can allocate a minor number, hook up this device.
-	 * Reusing minors is fine so long as udev or mdev is working.
+	 * Reusing minors is fine so दीर्घ as udev or mdev is working.
 	 */
 	mutex_lock(&device_list_lock);
 	minor = find_first_zero_bit(minors, N_SPI_MINORS);
-	if (minor < N_SPI_MINORS) {
-		struct device *dev;
+	अगर (minor < N_SPI_MINORS) अणु
+		काष्ठा device *dev;
 
 		spidev->devt = MKDEV(SPIDEV_MAJOR, minor);
 		dev = device_create(spidev_class, &spi->dev, spidev->devt,
 				    spidev, "spidev%d.%d",
 				    spi->master->bus_num, spi->chip_select);
 		status = PTR_ERR_OR_ZERO(dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(&spi->dev, "no minor number available!\n");
 		status = -ENODEV;
-	}
-	if (status == 0) {
+	पूर्ण
+	अगर (status == 0) अणु
 		set_bit(minor, minors);
 		list_add(&spidev->device_entry, &device_list);
-	}
+	पूर्ण
 	mutex_unlock(&device_list_lock);
 
 	spidev->speed_hz = spi->max_speed_hz;
 
-	if (status == 0)
+	अगर (status == 0)
 		spi_set_drvdata(spi, spidev);
-	else
-		kfree(spidev);
+	अन्यथा
+		kमुक्त(spidev);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int spidev_remove(struct spi_device *spi)
-{
-	struct spidev_data	*spidev = spi_get_drvdata(spi);
+अटल पूर्णांक spidev_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा spidev_data	*spidev = spi_get_drvdata(spi);
 
-	/* prevent new opens */
+	/* prevent new खोलोs */
 	mutex_lock(&device_list_lock);
-	/* make sure ops on existing fds can abort cleanly */
+	/* make sure ops on existing fds can पात cleanly */
 	spin_lock_irq(&spidev->spi_lock);
-	spidev->spi = NULL;
+	spidev->spi = शून्य;
 	spin_unlock_irq(&spidev->spi_lock);
 
 	list_del(&spidev->device_entry);
 	device_destroy(spidev_class, spidev->devt);
 	clear_bit(MINOR(spidev->devt), minors);
-	if (spidev->users == 0)
-		kfree(spidev);
+	अगर (spidev->users == 0)
+		kमुक्त(spidev);
 	mutex_unlock(&device_list_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct spi_driver spidev_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver spidev_spi_driver = अणु
+	.driver = अणु
 		.name =		"spidev",
 		.of_match_table = of_match_ptr(spidev_dt_ids),
 		.acpi_match_table = ACPI_PTR(spidev_acpi_ids),
-	},
+	पूर्ण,
 	.probe =	spidev_probe,
-	.remove =	spidev_remove,
+	.हटाओ =	spidev_हटाओ,
 
 	/* NOTE:  suspend/resume methods are not necessary here.
-	 * We don't do anything except pass the requests to/from
+	 * We करोn't करो anything except pass the requests to/from
 	 * the underlying controller.  The refrigerator handles
 	 * most issues; the controller driver handles the rest.
 	 */
-};
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-static int __init spidev_init(void)
-{
-	int status;
+अटल पूर्णांक __init spidev_init(व्योम)
+अणु
+	पूर्णांक status;
 
-	/* Claim our 256 reserved device numbers.  Then register a class
-	 * that will key udev/mdev to add/remove /dev nodes.  Last, register
+	/* Claim our 256 reserved device numbers.  Then रेजिस्टर a class
+	 * that will key udev/mdev to add/हटाओ /dev nodes.  Last, रेजिस्टर
 	 * the driver which manages those device numbers.
 	 */
 	BUILD_BUG_ON(N_SPI_MINORS > 256);
-	status = register_chrdev(SPIDEV_MAJOR, "spi", &spidev_fops);
-	if (status < 0)
-		return status;
+	status = रेजिस्टर_chrdev(SPIDEV_MAJOR, "spi", &spidev_fops);
+	अगर (status < 0)
+		वापस status;
 
 	spidev_class = class_create(THIS_MODULE, "spidev");
-	if (IS_ERR(spidev_class)) {
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver.driver.name);
-		return PTR_ERR(spidev_class);
-	}
+	अगर (IS_ERR(spidev_class)) अणु
+		unरेजिस्टर_chrdev(SPIDEV_MAJOR, spidev_spi_driver.driver.name);
+		वापस PTR_ERR(spidev_class);
+	पूर्ण
 
-	status = spi_register_driver(&spidev_spi_driver);
-	if (status < 0) {
+	status = spi_रेजिस्टर_driver(&spidev_spi_driver);
+	अगर (status < 0) अणु
 		class_destroy(spidev_class);
-		unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver.driver.name);
-	}
-	return status;
-}
+		unरेजिस्टर_chrdev(SPIDEV_MAJOR, spidev_spi_driver.driver.name);
+	पूर्ण
+	वापस status;
+पूर्ण
 module_init(spidev_init);
 
-static void __exit spidev_exit(void)
-{
-	spi_unregister_driver(&spidev_spi_driver);
+अटल व्योम __निकास spidev_निकास(व्योम)
+अणु
+	spi_unरेजिस्टर_driver(&spidev_spi_driver);
 	class_destroy(spidev_class);
-	unregister_chrdev(SPIDEV_MAJOR, spidev_spi_driver.driver.name);
-}
-module_exit(spidev_exit);
+	unरेजिस्टर_chrdev(SPIDEV_MAJOR, spidev_spi_driver.driver.name);
+पूर्ण
+module_निकास(spidev_निकास);
 
 MODULE_AUTHOR("Andrea Paterniani, <a.paterniani@swapp-eng.it>");
 MODULE_DESCRIPTION("User mode SPI device interface");

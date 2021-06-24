@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Copyright 2010 Cisco Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -16,18 +17,18 @@
  *
  */
 
-#ifndef _VNIC_VIC_H_
-#define _VNIC_VIC_H_
+#अगर_अघोषित _VNIC_VIC_H_
+#घोषणा _VNIC_VIC_H_
 
-/* Note: All integer fields in NETWORK byte order */
+/* Note: All पूर्णांकeger fields in NETWORK byte order */
 
-/* Note: String field lengths include null char */
+/* Note: String field lengths include null अक्षर */
 
-#define VIC_PROVINFO_CISCO_OUI		{ 0x00, 0x00, 0x0c }
-#define VIC_PROVINFO_GENERIC_TYPE		0x4
+#घोषणा VIC_PROVINFO_CISCO_OUI		अणु 0x00, 0x00, 0x0c पूर्ण
+#घोषणा VIC_PROVINFO_GENERIC_TYPE		0x4
 
-enum vic_generic_prov_tlv_type {
-	VIC_GENERIC_PROV_TLV_PORT_PROFILE_NAME_STR = 0,
+क्रमागत vic_generic_prov_tlv_type अणु
+	VIC_GENERIC_PROV_TLV_PORT_PROखाता_NAME_STR = 0,
 	VIC_GENERIC_PROV_TLV_CLIENT_MAC_ADDR = 1,
 	VIC_GENERIC_PROV_TLV_CLIENT_NAME_STR = 2,
 	VIC_GENERIC_PROV_TLV_CLUSTER_PORT_NAME_STR = 3,
@@ -40,44 +41,44 @@ enum vic_generic_prov_tlv_type {
 	VIC_GENERIC_PROV_TLV_OS_TYPE = 11,
 	VIC_GENERIC_PROV_TLV_OS_VENDOR = 12,
 	VIC_GENERIC_PROV_TLV_CLIENT_TYPE = 15,
-};
+पूर्ण;
 
-enum vic_generic_prov_os_type {
+क्रमागत vic_generic_prov_os_type अणु
 	VIC_GENERIC_PROV_OS_TYPE_UNKNOWN = 0,
 	VIC_GENERIC_PROV_OS_TYPE_ESX = 1,
 	VIC_GENERIC_PROV_OS_TYPE_LINUX = 2,
 	VIC_GENERIC_PROV_OS_TYPE_WINDOWS = 3,
 	VIC_GENERIC_PROV_OS_TYPE_SOLARIS = 4,
-};
+पूर्ण;
 
-struct vic_provinfo {
+काष्ठा vic_provinfo अणु
 	u8 oui[3];		/* OUI of data provider */
-	u8 type;		/* provider-specific type */
+	u8 type;		/* provider-specअगरic type */
 	u32 length;		/* length of data below */
 	u32 num_tlvs;		/* number of tlvs */
-	struct vic_provinfo_tlv {
+	काष्ठा vic_provinfo_tlv अणु
 		u16 type;
 		u16 length;
 		u8 value[0];
-	} tlv[];
-} __packed;
+	पूर्ण tlv[];
+पूर्ण __packed;
 
-#define VIC_PROVINFO_ADD_TLV(vp, tlvtype, tlvlen, data) \
-	do { \
+#घोषणा VIC_PROVINFO_ADD_TLV(vp, tlvtype, tlvlen, data) \
+	करो अणु \
 		err = vic_provinfo_add_tlv(vp, tlvtype, tlvlen, data); \
-		if (err) \
-			goto add_tlv_failure; \
-	} while (0)
+		अगर (err) \
+			जाओ add_tlv_failure; \
+	पूर्ण जबतक (0)
 
-#define VIC_PROVINFO_MAX_DATA		1385
-#define VIC_PROVINFO_MAX_TLV_DATA (VIC_PROVINFO_MAX_DATA - \
-	sizeof(struct vic_provinfo))
+#घोषणा VIC_PROVINFO_MAX_DATA		1385
+#घोषणा VIC_PROVINFO_MAX_TLV_DATA (VIC_PROVINFO_MAX_DATA - \
+	माप(काष्ठा vic_provinfo))
 
-struct vic_provinfo *vic_provinfo_alloc(gfp_t flags, const u8 *oui,
-	const u8 type);
-void vic_provinfo_free(struct vic_provinfo *vp);
-int vic_provinfo_add_tlv(struct vic_provinfo *vp, u16 type, u16 length,
-	const void *value);
-size_t vic_provinfo_size(struct vic_provinfo *vp);
+काष्ठा vic_provinfo *vic_provinfo_alloc(gfp_t flags, स्थिर u8 *oui,
+	स्थिर u8 type);
+व्योम vic_provinfo_मुक्त(काष्ठा vic_provinfo *vp);
+पूर्णांक vic_provinfo_add_tlv(काष्ठा vic_provinfo *vp, u16 type, u16 length,
+	स्थिर व्योम *value);
+माप_प्रकार vic_provinfo_size(काष्ठा vic_provinfo *vp);
 
-#endif	/* _VNIC_VIC_H_ */
+#पूर्ण_अगर	/* _VNIC_VIC_H_ */

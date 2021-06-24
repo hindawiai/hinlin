@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/regset.h>
+#समावेश <linux/regset.h>
 
-#include <asm/switch_to.h>
+#समावेश <यंत्र/चयन_to.h>
 
-#include "ptrace-decl.h"
-
-/*
- * Regardless of transactions, 'fp_state' holds the current running
- * value of all FPR registers and 'ckfp_state' holds the last checkpointed
- * value of all FPR registers for the current transaction.
- *
- * Userspace interface buffer layout:
- *
- * struct data {
- *	u64	fpr[32];
- *	u64	fpscr;
- * };
- */
-int fpr_get(struct task_struct *target, const struct user_regset *regset,
-	    struct membuf to)
-{
-#ifdef CONFIG_PPC_FPU_REGS
-	BUILD_BUG_ON(offsetof(struct thread_fp_state, fpscr) !=
-		     offsetof(struct thread_fp_state, fpr[32]));
-
-	flush_fp_to_thread(target);
-
-	return membuf_write(&to, &target->thread.fp_state, 33 * sizeof(u64));
-#else
-	return membuf_write(&to, &empty_zero_page, 33 * sizeof(u64));
-#endif
-}
+#समावेश "ptrace-decl.h"
 
 /*
  * Regardless of transactions, 'fp_state' holds the current running
- * value of all FPR registers and 'ckfp_state' holds the last checkpointed
- * value of all FPR registers for the current transaction.
+ * value of all FPR रेजिस्टरs and 'ckfp_state' holds the last checkpoपूर्णांकed
+ * value of all FPR रेजिस्टरs क्रम the current transaction.
  *
- * Userspace interface buffer layout:
+ * Userspace पूर्णांकerface buffer layout:
  *
- * struct data {
+ * काष्ठा data अणु
  *	u64	fpr[32];
  *	u64	fpscr;
- * };
+ * पूर्ण;
+ */
+पूर्णांक fpr_get(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	    काष्ठा membuf to)
+अणु
+#अगर_घोषित CONFIG_PPC_FPU_REGS
+	BUILD_BUG_ON(दुरत्व(काष्ठा thपढ़ो_fp_state, fpscr) !=
+		     दुरत्व(काष्ठा thपढ़ो_fp_state, fpr[32]));
+
+	flush_fp_to_thपढ़ो(target);
+
+	वापस membuf_ग_लिखो(&to, &target->thपढ़ो.fp_state, 33 * माप(u64));
+#अन्यथा
+	वापस membuf_ग_लिखो(&to, &empty_zero_page, 33 * माप(u64));
+#पूर्ण_अगर
+पूर्ण
+
+/*
+ * Regardless of transactions, 'fp_state' holds the current running
+ * value of all FPR रेजिस्टरs and 'ckfp_state' holds the last checkpoपूर्णांकed
+ * value of all FPR रेजिस्टरs क्रम the current transaction.
+ *
+ * Userspace पूर्णांकerface buffer layout:
+ *
+ * काष्ठा data अणु
+ *	u64	fpr[32];
+ *	u64	fpscr;
+ * पूर्ण;
  *
  */
-int fpr_set(struct task_struct *target, const struct user_regset *regset,
-	    unsigned int pos, unsigned int count,
-	    const void *kbuf, const void __user *ubuf)
-{
-#ifdef CONFIG_PPC_FPU_REGS
-	BUILD_BUG_ON(offsetof(struct thread_fp_state, fpscr) !=
-		     offsetof(struct thread_fp_state, fpr[32]));
+पूर्णांक fpr_set(काष्ठा task_काष्ठा *target, स्थिर काष्ठा user_regset *regset,
+	    अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+	    स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+#अगर_घोषित CONFIG_PPC_FPU_REGS
+	BUILD_BUG_ON(दुरत्व(काष्ठा thपढ़ो_fp_state, fpscr) !=
+		     दुरत्व(काष्ठा thपढ़ो_fp_state, fpr[32]));
 
-	flush_fp_to_thread(target);
+	flush_fp_to_thपढ़ो(target);
 
-	return user_regset_copyin(&pos, &count, &kbuf, &ubuf,
-				  &target->thread.fp_state, 0, -1);
-#else
-	return 0;
-#endif
-}
+	वापस user_regset_copyin(&pos, &count, &kbuf, &ubuf,
+				  &target->thपढ़ो.fp_state, 0, -1);
+#अन्यथा
+	वापस 0;
+#पूर्ण_अगर
+पूर्ण

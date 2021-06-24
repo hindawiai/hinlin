@@ -1,137 +1,138 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <errno.h>
-#include <pcap.h>
-#include <string.h>
-#include <asm/types.h>
-#include <net_user.h>
-#include "pcap_user.h"
-#include <um_malloc.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <pcap.h>
+#समावेश <माला.स>
+#समावेश <यंत्र/types.h>
+#समावेश <net_user.h>
+#समावेश "pcap_user.h"
+#समावेश <um_दो_स्मृति.h>
 
-#define PCAP_FD(p) (*(int *)(p))
+#घोषणा PCAP_FD(p) (*(पूर्णांक *)(p))
 
-static int pcap_user_init(void *data, void *dev)
-{
-	struct pcap_data *pri = data;
+अटल पूर्णांक pcap_user_init(व्योम *data, व्योम *dev)
+अणु
+	काष्ठा pcap_data *pri = data;
 	pcap_t *p;
-	char errors[PCAP_ERRBUF_SIZE];
+	अक्षर errors[PCAP_ERRBUF_SIZE];
 
-	p = pcap_open_live(pri->host_if, ETH_MAX_PACKET + ETH_HEADER_OTHER,
+	p = pcap_खोलो_live(pri->host_अगर, ETH_MAX_PACKET + ETH_HEADER_OTHER,
 			   pri->promisc, 0, errors);
-	if (p == NULL) {
-		printk(UM_KERN_ERR "pcap_user_init : pcap_open_live failed - "
+	अगर (p == शून्य) अणु
+		prपूर्णांकk(UM_KERN_ERR "pcap_user_init : pcap_open_live failed - "
 		       "'%s'\n", errors);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pri->dev = dev;
 	pri->pcap = p;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcap_user_open(void *data)
-{
-	struct pcap_data *pri = data;
-	__u32 netmask;
-	int err;
+अटल पूर्णांक pcap_user_खोलो(व्योम *data)
+अणु
+	काष्ठा pcap_data *pri = data;
+	__u32 neपंचांगask;
+	पूर्णांक err;
 
-	if (pri->pcap == NULL)
-		return -ENODEV;
+	अगर (pri->pcap == शून्य)
+		वापस -ENODEV;
 
-	if (pri->filter != NULL) {
-		err = dev_netmask(pri->dev, &netmask);
-		if (err < 0) {
-			printk(UM_KERN_ERR "pcap_user_open : dev_netmask failed\n");
-			return -EIO;
-		}
+	अगर (pri->filter != शून्य) अणु
+		err = dev_neपंचांगask(pri->dev, &neपंचांगask);
+		अगर (err < 0) अणु
+			prपूर्णांकk(UM_KERN_ERR "pcap_user_open : dev_netmask failed\n");
+			वापस -EIO;
+		पूर्ण
 
-		pri->compiled = uml_kmalloc(sizeof(struct bpf_program),
+		pri->compiled = uml_kदो_स्मृति(माप(काष्ठा bpf_program),
 					UM_GFP_KERNEL);
-		if (pri->compiled == NULL) {
-			printk(UM_KERN_ERR "pcap_user_open : kmalloc failed\n");
-			return -ENOMEM;
-		}
+		अगर (pri->compiled == शून्य) अणु
+			prपूर्णांकk(UM_KERN_ERR "pcap_user_open : kmalloc failed\n");
+			वापस -ENOMEM;
+		पूर्ण
 
 		err = pcap_compile(pri->pcap,
-				   (struct bpf_program *) pri->compiled,
-				   pri->filter, pri->optimize, netmask);
-		if (err < 0) {
-			printk(UM_KERN_ERR "pcap_user_open : pcap_compile failed - "
+				   (काष्ठा bpf_program *) pri->compiled,
+				   pri->filter, pri->optimize, neपंचांगask);
+		अगर (err < 0) अणु
+			prपूर्णांकk(UM_KERN_ERR "pcap_user_open : pcap_compile failed - "
 			       "'%s'\n", pcap_geterr(pri->pcap));
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		err = pcap_setfilter(pri->pcap, pri->compiled);
-		if (err < 0) {
-			printk(UM_KERN_ERR "pcap_user_open : pcap_setfilter "
+		अगर (err < 0) अणु
+			prपूर्णांकk(UM_KERN_ERR "pcap_user_open : pcap_setfilter "
 			       "failed - '%s'\n", pcap_geterr(pri->pcap));
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	return PCAP_FD(pri->pcap);
+	वापस PCAP_FD(pri->pcap);
 
  out:
-	kfree(pri->compiled);
-	return -EIO;
-}
+	kमुक्त(pri->compiled);
+	वापस -EIO;
+पूर्ण
 
-static void pcap_remove(void *data)
-{
-	struct pcap_data *pri = data;
+अटल व्योम pcap_हटाओ(व्योम *data)
+अणु
+	काष्ठा pcap_data *pri = data;
 
-	if (pri->compiled != NULL)
-		pcap_freecode(pri->compiled);
+	अगर (pri->compiled != शून्य)
+		pcap_मुक्तcode(pri->compiled);
 
-	if (pri->pcap != NULL)
-		pcap_close(pri->pcap);
-}
+	अगर (pri->pcap != शून्य)
+		pcap_बंद(pri->pcap);
+पूर्ण
 
-struct pcap_handler_data {
-	char *buffer;
-	int len;
-};
+काष्ठा pcap_handler_data अणु
+	अक्षर *buffer;
+	पूर्णांक len;
+पूर्ण;
 
-static void handler(u_char *data, const struct pcap_pkthdr *header,
-		    const u_char *packet)
-{
-	int len;
+अटल व्योम handler(u_अक्षर *data, स्थिर काष्ठा pcap_pkthdr *header,
+		    स्थिर u_अक्षर *packet)
+अणु
+	पूर्णांक len;
 
-	struct pcap_handler_data *hdata = (struct pcap_handler_data *) data;
+	काष्ठा pcap_handler_data *hdata = (काष्ठा pcap_handler_data *) data;
 
 	len = hdata->len < header->caplen ? hdata->len : header->caplen;
-	memcpy(hdata->buffer, packet, len);
+	स_नकल(hdata->buffer, packet, len);
 	hdata->len = len;
-}
+पूर्ण
 
-int pcap_user_read(int fd, void *buffer, int len, struct pcap_data *pri)
-{
-	struct pcap_handler_data hdata = ((struct pcap_handler_data)
-		                          { .buffer  	= buffer,
-					    .len 	= len });
-	int n;
+पूर्णांक pcap_user_पढ़ो(पूर्णांक fd, व्योम *buffer, पूर्णांक len, काष्ठा pcap_data *pri)
+अणु
+	काष्ठा pcap_handler_data hdata = ((काष्ठा pcap_handler_data)
+		                          अणु .buffer  	= buffer,
+					    .len 	= len पूर्ण);
+	पूर्णांक n;
 
-	n = pcap_dispatch(pri->pcap, 1, handler, (u_char *) &hdata);
-	if (n < 0) {
-		printk(UM_KERN_ERR "pcap_dispatch failed - %s\n",
+	n = pcap_dispatch(pri->pcap, 1, handler, (u_अक्षर *) &hdata);
+	अगर (n < 0) अणु
+		prपूर्णांकk(UM_KERN_ERR "pcap_dispatch failed - %s\n",
 		       pcap_geterr(pri->pcap));
-		return -EIO;
-	}
-	else if (n == 0)
-		return 0;
-	return hdata.len;
-}
+		वापस -EIO;
+	पूर्ण
+	अन्यथा अगर (n == 0)
+		वापस 0;
+	वापस hdata.len;
+पूर्ण
 
-const struct net_user_info pcap_user_info = {
+स्थिर काष्ठा net_user_info pcap_user_info = अणु
 	.init		= pcap_user_init,
-	.open		= pcap_user_open,
-	.close	 	= NULL,
-	.remove	 	= pcap_remove,
-	.add_address	= NULL,
-	.delete_address = NULL,
+	.खोलो		= pcap_user_खोलो,
+	.बंद	 	= शून्य,
+	.हटाओ	 	= pcap_हटाओ,
+	.add_address	= शून्य,
+	.delete_address = शून्य,
 	.mtu		= ETH_MAX_PACKET,
 	.max_packet	= ETH_MAX_PACKET + ETH_HEADER_OTHER,
-};
+पूर्ण;

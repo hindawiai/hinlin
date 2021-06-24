@@ -1,255 +1,256 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   pata_pcmcia.c - PCMCIA PATA controller driver.
  *   Copyright 2005-2006 Red Hat Inc, all rights reserved.
  *   PCMCIA ident update Copyright 2006 Marcin Juszkiewicz
- *						<openembedded@hrw.one.pl>
+ *						<खोलोembedded@hrw.one.pl>
  *
  *   Heavily based upon ide-cs.c
  *   The initial developer of the original code is David A. Hinds
- *   <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
+ *   <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
  *   are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <scsi/scsi_host.h>
-#include <linux/ata.h>
-#include <linux/libata.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <linux/ata.h>
+#समावेश <linux/libata.h>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ds.h>
-#include <pcmcia/cisreg.h>
-#include <pcmcia/ciscode.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ds.h>
+#समावेश <pcmcia/cisreg.h>
+#समावेश <pcmcia/ciscode.h>
 
 
-#define DRV_NAME "pata_pcmcia"
-#define DRV_VERSION "0.3.5"
+#घोषणा DRV_NAME "pata_pcmcia"
+#घोषणा DRV_VERSION "0.3.5"
 
 /**
- *	pcmcia_set_mode	-	PCMCIA specific mode setup
+ *	pcmcia_set_mode	-	PCMCIA specअगरic mode setup
  *	@link: link
- *	@r_failed_dev: Return pointer for failed device
+ *	@r_failed_dev: Return poपूर्णांकer क्रम failed device
  *
- *	Perform the tuning and setup of the devices and timings, which
- *	for PCMCIA is the same as any other controller. We wrap it however
+ *	Perक्रमm the tuning and setup of the devices and timings, which
+ *	क्रम PCMCIA is the same as any other controller. We wrap it however
  *	as we need to spot hardware with incorrect or missing master/slave
  *	decode, which alas is embarrassingly common in the PC world
  */
 
-static int pcmcia_set_mode(struct ata_link *link, struct ata_device **r_failed_dev)
-{
-	struct ata_device *master = &link->device[0];
-	struct ata_device *slave = &link->device[1];
+अटल पूर्णांक pcmcia_set_mode(काष्ठा ata_link *link, काष्ठा ata_device **r_failed_dev)
+अणु
+	काष्ठा ata_device *master = &link->device[0];
+	काष्ठा ata_device *slave = &link->device[1];
 
-	if (!ata_dev_enabled(master) || !ata_dev_enabled(slave))
-		return ata_do_set_mode(link, r_failed_dev);
+	अगर (!ata_dev_enabled(master) || !ata_dev_enabled(slave))
+		वापस ata_करो_set_mode(link, r_failed_dev);
 
-	if (memcmp(master->id + ATA_ID_FW_REV,  slave->id + ATA_ID_FW_REV,
-			   ATA_ID_FW_REV_LEN + ATA_ID_PROD_LEN) == 0) {
+	अगर (स_भेद(master->id + ATA_ID_FW_REV,  slave->id + ATA_ID_FW_REV,
+			   ATA_ID_FW_REV_LEN + ATA_ID_PROD_LEN) == 0) अणु
 		/* Suspicious match, but could be two cards from
-		   the same vendor - check serial */
-		if (memcmp(master->id + ATA_ID_SERNO, slave->id + ATA_ID_SERNO,
-			   ATA_ID_SERNO_LEN) == 0 && master->id[ATA_ID_SERNO] >> 8) {
+		   the same venकरोr - check serial */
+		अगर (स_भेद(master->id + ATA_ID_SERNO, slave->id + ATA_ID_SERNO,
+			   ATA_ID_SERNO_LEN) == 0 && master->id[ATA_ID_SERNO] >> 8) अणु
 			ata_dev_warn(slave, "is a ghost device, ignoring\n");
 			ata_dev_disable(slave);
-		}
-	}
-	return ata_do_set_mode(link, r_failed_dev);
-}
+		पूर्ण
+	पूर्ण
+	वापस ata_करो_set_mode(link, r_failed_dev);
+पूर्ण
 
 /**
- *	pcmcia_set_mode_8bit	-	PCMCIA specific mode setup
+ *	pcmcia_set_mode_8bit	-	PCMCIA specअगरic mode setup
  *	@link: link
- *	@r_failed_dev: Return pointer for failed device
+ *	@r_failed_dev: Return poपूर्णांकer क्रम failed device
  *
- *	For the simple emulated 8bit stuff the less we do the better.
+ *	For the simple emulated 8bit stuff the less we करो the better.
  */
 
-static int pcmcia_set_mode_8bit(struct ata_link *link,
-				struct ata_device **r_failed_dev)
-{
-	return 0;
-}
+अटल पूर्णांक pcmcia_set_mode_8bit(काष्ठा ata_link *link,
+				काष्ठा ata_device **r_failed_dev)
+अणु
+	वापस 0;
+पूर्ण
 
 /**
  *	ata_data_xfer_8bit	 -	Transfer data by 8bit PIO
  *	@qc: queued command
  *	@buf: data buffer
  *	@buflen: buffer length
- *	@rw: read/write
+ *	@rw: पढ़ो/ग_लिखो
  *
- *	Transfer data from/to the device data register by 8 bit PIO.
+ *	Transfer data from/to the device data रेजिस्टर by 8 bit PIO.
  *
  *	LOCKING:
  *	Inherited from caller.
  */
 
-static unsigned int ata_data_xfer_8bit(struct ata_queued_cmd *qc,
-				unsigned char *buf, unsigned int buflen, int rw)
-{
-	struct ata_port *ap = qc->dev->link->ap;
+अटल अचिन्हित पूर्णांक ata_data_xfer_8bit(काष्ठा ata_queued_cmd *qc,
+				अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक buflen, पूर्णांक rw)
+अणु
+	काष्ठा ata_port *ap = qc->dev->link->ap;
 
-	if (rw == READ)
-		ioread8_rep(ap->ioaddr.data_addr, buf, buflen);
-	else
-		iowrite8_rep(ap->ioaddr.data_addr, buf, buflen);
+	अगर (rw == READ)
+		ioपढ़ो8_rep(ap->ioaddr.data_addr, buf, buflen);
+	अन्यथा
+		ioग_लिखो8_rep(ap->ioaddr.data_addr, buf, buflen);
 
-	return buflen;
-}
+	वापस buflen;
+पूर्ण
 
 /**
- *	pcmcia_8bit_drain_fifo - Stock FIFO drain logic for SFF controllers
+ *	pcmcia_8bit_drain_fअगरo - Stock FIFO drain logic क्रम SFF controllers
  *	@qc: command
  *
  *	Drain the FIFO and device of any stuck data following a command
- *	failing to complete. In some cases this is necessary before a
+ *	failing to complete. In some हालs this is necessary beक्रमe a
  *	reset will recover the device.
  *
  */
 
-static void pcmcia_8bit_drain_fifo(struct ata_queued_cmd *qc)
-{
-	int count;
-	struct ata_port *ap;
+अटल व्योम pcmcia_8bit_drain_fअगरo(काष्ठा ata_queued_cmd *qc)
+अणु
+	पूर्णांक count;
+	काष्ठा ata_port *ap;
 
 	/* We only need to flush incoming data when a command was running */
-	if (qc == NULL || qc->dma_dir == DMA_TO_DEVICE)
-		return;
+	अगर (qc == शून्य || qc->dma_dir == DMA_TO_DEVICE)
+		वापस;
 
 	ap = qc->ap;
 
-	/* Drain up to 64K of data before we give up this recovery method */
-	for (count = 0; (ap->ops->sff_check_status(ap) & ATA_DRQ)
+	/* Drain up to 64K of data beक्रमe we give up this recovery method */
+	क्रम (count = 0; (ap->ops->sff_check_status(ap) & ATA_DRQ)
 							&& count++ < 65536;)
-		ioread8(ap->ioaddr.data_addr);
+		ioपढ़ो8(ap->ioaddr.data_addr);
 
-	if (count)
+	अगर (count)
 		ata_port_warn(ap, "drained %d bytes to clear DRQ\n", count);
 
-}
+पूर्ण
 
-static struct scsi_host_template pcmcia_sht = {
+अटल काष्ठा scsi_host_ढाँचा pcmcia_sht = अणु
 	ATA_PIO_SHT(DRV_NAME),
-};
+पूर्ण;
 
-static struct ata_port_operations pcmcia_port_ops = {
+अटल काष्ठा ata_port_operations pcmcia_port_ops = अणु
 	.inherits	= &ata_sff_port_ops,
 	.sff_data_xfer	= ata_sff_data_xfer32,
 	.cable_detect	= ata_cable_40wire,
 	.set_mode	= pcmcia_set_mode,
-};
+पूर्ण;
 
-static struct ata_port_operations pcmcia_8bit_port_ops = {
+अटल काष्ठा ata_port_operations pcmcia_8bit_port_ops = अणु
 	.inherits	= &ata_sff_port_ops,
 	.sff_data_xfer	= ata_data_xfer_8bit,
 	.cable_detect	= ata_cable_40wire,
 	.set_mode	= pcmcia_set_mode_8bit,
-	.sff_drain_fifo	= pcmcia_8bit_drain_fifo,
-};
+	.sff_drain_fअगरo	= pcmcia_8bit_drain_fअगरo,
+पूर्ण;
 
 
-static int pcmcia_check_one_config(struct pcmcia_device *pdev, void *priv_data)
-{
-	int *is_kme = priv_data;
+अटल पूर्णांक pcmcia_check_one_config(काष्ठा pcmcia_device *pdev, व्योम *priv_data)
+अणु
+	पूर्णांक *is_kme = priv_data;
 
-	if ((pdev->resource[0]->flags & IO_DATA_PATH_WIDTH)
-	    != IO_DATA_PATH_WIDTH_8) {
+	अगर ((pdev->resource[0]->flags & IO_DATA_PATH_WIDTH)
+	    != IO_DATA_PATH_WIDTH_8) अणु
 		pdev->resource[0]->flags &= ~IO_DATA_PATH_WIDTH;
 		pdev->resource[0]->flags |= IO_DATA_PATH_WIDTH_AUTO;
-	}
+	पूर्ण
 	pdev->resource[1]->flags &= ~IO_DATA_PATH_WIDTH;
 	pdev->resource[1]->flags |= IO_DATA_PATH_WIDTH_8;
 
-	if (pdev->resource[1]->end) {
+	अगर (pdev->resource[1]->end) अणु
 		pdev->resource[0]->end = 8;
 		pdev->resource[1]->end = (*is_kme) ? 2 : 1;
-	} else {
-		if (pdev->resource[0]->end < 16)
-			return -ENODEV;
-	}
+	पूर्ण अन्यथा अणु
+		अगर (pdev->resource[0]->end < 16)
+			वापस -ENODEV;
+	पूर्ण
 
-	return pcmcia_request_io(pdev);
-}
+	वापस pcmcia_request_io(pdev);
+पूर्ण
 
 /**
- *	pcmcia_init_one		-	attach a PCMCIA interface
+ *	pcmcia_init_one		-	attach a PCMCIA पूर्णांकerface
  *	@pdev: pcmcia device
  *
- *	Register a PCMCIA IDE interface. Such interfaces are PIO 0 and
+ *	Register a PCMCIA IDE पूर्णांकerface. Such पूर्णांकerfaces are PIO 0 and
  *	shared IRQ.
  */
 
-static int pcmcia_init_one(struct pcmcia_device *pdev)
-{
-	struct ata_host *host;
-	struct ata_port *ap;
-	int is_kme = 0, ret = -ENOMEM, p;
-	unsigned long io_base, ctl_base;
-	void __iomem *io_addr, *ctl_addr;
-	int n_ports = 1;
-	struct ata_port_operations *ops = &pcmcia_port_ops;
+अटल पूर्णांक pcmcia_init_one(काष्ठा pcmcia_device *pdev)
+अणु
+	काष्ठा ata_host *host;
+	काष्ठा ata_port *ap;
+	पूर्णांक is_kme = 0, ret = -ENOMEM, p;
+	अचिन्हित दीर्घ io_base, ctl_base;
+	व्योम __iomem *io_addr, *ctl_addr;
+	पूर्णांक n_ports = 1;
+	काष्ठा ata_port_operations *ops = &pcmcia_port_ops;
 
 	/* Set up attributes in order to probe card and get resources */
 	pdev->config_flags |= CONF_ENABLE_IRQ | CONF_AUTO_SET_IO |
 		CONF_AUTO_SET_VPP | CONF_AUTO_CHECK_VCC;
 
-	/* See if we have a manufacturer identifier. Use it to set is_kme for
-	   vendor quirks */
+	/* See अगर we have a manufacturer identअगरier. Use it to set is_kme क्रम
+	   venकरोr quirks */
 	is_kme = ((pdev->manf_id == MANFID_KME) &&
 		  ((pdev->card_id == PRODID_KME_KXLC005_A) ||
 		   (pdev->card_id == PRODID_KME_KXLC005_B)));
 
-	if (pcmcia_loop_config(pdev, pcmcia_check_one_config, &is_kme)) {
+	अगर (pcmcia_loop_config(pdev, pcmcia_check_one_config, &is_kme)) अणु
 		pdev->config_flags &= ~CONF_AUTO_CHECK_VCC;
-		if (pcmcia_loop_config(pdev, pcmcia_check_one_config, &is_kme))
-			goto failed; /* No suitable config found */
-	}
+		अगर (pcmcia_loop_config(pdev, pcmcia_check_one_config, &is_kme))
+			जाओ failed; /* No suitable config found */
+	पूर्ण
 	io_base = pdev->resource[0]->start;
-	if (pdev->resource[1]->end)
+	अगर (pdev->resource[1]->end)
 		ctl_base = pdev->resource[1]->start;
-	else
+	अन्यथा
 		ctl_base = pdev->resource[0]->start + 0x0e;
 
-	if (!pdev->irq)
-		goto failed;
+	अगर (!pdev->irq)
+		जाओ failed;
 
 	ret = pcmcia_enable_device(pdev);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 
 	/* iomap */
 	ret = -ENOMEM;
 	io_addr = devm_ioport_map(&pdev->dev, io_base, 8);
 	ctl_addr = devm_ioport_map(&pdev->dev, ctl_base, 1);
-	if (!io_addr || !ctl_addr)
-		goto failed;
+	अगर (!io_addr || !ctl_addr)
+		जाओ failed;
 
-	/* Success. Disable the IRQ nIEN line, do quirks */
-	iowrite8(0x02, ctl_addr);
-	if (is_kme)
-		iowrite8(0x81, ctl_addr + 0x01);
+	/* Success. Disable the IRQ nIEN line, करो quirks */
+	ioग_लिखो8(0x02, ctl_addr);
+	अगर (is_kme)
+		ioग_लिखो8(0x81, ctl_addr + 0x01);
 
 	/* FIXME: Could be more ports at base + 0x10 but we only deal with
 	   one right now */
-	if (resource_size(pdev->resource[0]) >= 0x20)
+	अगर (resource_size(pdev->resource[0]) >= 0x20)
 		n_ports = 2;
 
-	if (pdev->manf_id == 0x0097 && pdev->card_id == 0x1620)
+	अगर (pdev->manf_id == 0x0097 && pdev->card_id == 0x1620)
 		ops = &pcmcia_8bit_port_ops;
 	/*
-	 *	Having done the PCMCIA plumbing the ATA side is relatively
+	 *	Having करोne the PCMCIA plumbing the ATA side is relatively
 	 *	sane.
 	 */
 	ret = -ENOMEM;
 	host = ata_host_alloc(&pdev->dev, n_ports);
-	if (!host)
-		goto failed;
+	अगर (!host)
+		जाओ failed;
 
-	for (p = 0; p < n_ports; p++) {
+	क्रम (p = 0; p < n_ports; p++) अणु
 		ap = host->ports[p];
 
 		ap->ops = ops;
@@ -261,41 +262,41 @@ static int pcmcia_init_one(struct pcmcia_device *pdev)
 		ata_sff_std_ports(&ap->ioaddr);
 
 		ata_port_desc(ap, "cmd 0x%lx ctl 0x%lx", io_base, ctl_base);
-	}
+	पूर्ण
 
 	/* activate */
-	ret = ata_host_activate(host, pdev->irq, ata_sff_interrupt,
+	ret = ata_host_activate(host, pdev->irq, ata_sff_पूर्णांकerrupt,
 				IRQF_SHARED, &pcmcia_sht);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 
 	pdev->priv = host;
-	return 0;
+	वापस 0;
 
 failed:
 	pcmcia_disable_device(pdev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- *	pcmcia_remove_one	-	unplug an pcmcia interface
+ *	pcmcia_हटाओ_one	-	unplug an pcmcia पूर्णांकerface
  *	@pdev: pcmcia device
  *
- *	A PCMCIA ATA device has been unplugged. Perform the needed
- *	cleanup. Also called on module unload for any active devices.
+ *	A PCMCIA ATA device has been unplugged. Perक्रमm the needed
+ *	cleanup. Also called on module unload क्रम any active devices.
  */
 
-static void pcmcia_remove_one(struct pcmcia_device *pdev)
-{
-	struct ata_host *host = pdev->priv;
+अटल व्योम pcmcia_हटाओ_one(काष्ठा pcmcia_device *pdev)
+अणु
+	काष्ठा ata_host *host = pdev->priv;
 
-	if (host)
+	अगर (host)
 		ata_host_detach(host);
 
 	pcmcia_disable_device(pdev);
-}
+पूर्ण
 
-static const struct pcmcia_device_id pcmcia_devices[] = {
+अटल स्थिर काष्ठा pcmcia_device_id pcmcia_devices[] = अणु
 	PCMCIA_DEVICE_FUNC_ID(4),
 	PCMCIA_DEVICE_MANF_CARD(0x0000, 0x0000),	/* Corsair */
 	PCMCIA_DEVICE_MANF_CARD(0x0007, 0x0000),	/* Hitachi */
@@ -362,18 +363,18 @@ static const struct pcmcia_device_id pcmcia_devices[] = {
 	PCMCIA_DEVICE_PROD_ID12("STI", "Flash 5.0", 0xbf2df18d, 0x8cb57a0e),
 	PCMCIA_MFC_DEVICE_PROD_ID12(1, "SanDisk", "ConnectPlus", 0x7a954bd9, 0x74be00c6),
 	PCMCIA_DEVICE_PROD_ID2("Flash Card", 0x5a362506),
-	PCMCIA_DEVICE_NULL,
-};
+	PCMCIA_DEVICE_शून्य,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pcmcia, pcmcia_devices);
 
-static struct pcmcia_driver pcmcia_driver = {
+अटल काष्ठा pcmcia_driver pcmcia_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= DRV_NAME,
 	.id_table	= pcmcia_devices,
 	.probe		= pcmcia_init_one,
-	.remove		= pcmcia_remove_one,
-};
+	.हटाओ		= pcmcia_हटाओ_one,
+पूर्ण;
 module_pcmcia_driver(pcmcia_driver);
 
 MODULE_AUTHOR("Alan Cox");

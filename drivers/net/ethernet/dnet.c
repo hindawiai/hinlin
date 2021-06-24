@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Dave DNET Ethernet Controller driver
  *
  * Copyright (C) 2008 Dave S.r.l. <www.dave.eu>
  * Copyright (C) 2009 Ilya Yanok, Emcraft Systems Ltd, <yanok@emcraft.com>
  */
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/dma-mapping.h>
-#include <linux/platform_device.h>
-#include <linux/phy.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/phy.h>
 
-#include "dnet.h"
+#समावेश "dnet.h"
 
-#undef DEBUG
+#अघोषित DEBUG
 
-/* function for reading internal MAC register */
-static u16 dnet_readw_mac(struct dnet *bp, u16 reg)
-{
-	u16 data_read;
+/* function क्रम पढ़ोing पूर्णांकernal MAC रेजिस्टर */
+अटल u16 dnet_पढ़ोw_mac(काष्ठा dnet *bp, u16 reg)
+अणु
+	u16 data_पढ़ो;
 
-	/* issue a read */
-	dnet_writel(bp, reg, MACREG_ADDR);
+	/* issue a पढ़ो */
+	dnet_ग_लिखोl(bp, reg, MACREG_ADDR);
 
-	/* since a read/write op to the MAC is very slow,
-	 * we must wait before reading the data */
+	/* since a पढ़ो/ग_लिखो op to the MAC is very slow,
+	 * we must रुको beक्रमe पढ़ोing the data */
 	ndelay(500);
 
-	/* read data read from the MAC register */
-	data_read = dnet_readl(bp, MACREG_DATA);
+	/* पढ़ो data पढ़ो from the MAC रेजिस्टर */
+	data_पढ़ो = dnet_पढ़ोl(bp, MACREG_DATA);
 
-	/* all done */
-	return data_read;
-}
+	/* all करोne */
+	वापस data_पढ़ो;
+पूर्ण
 
-/* function for writing internal MAC register */
-static void dnet_writew_mac(struct dnet *bp, u16 reg, u16 val)
-{
-	/* load data to write */
-	dnet_writel(bp, val, MACREG_DATA);
+/* function क्रम writing पूर्णांकernal MAC रेजिस्टर */
+अटल व्योम dnet_ग_लिखोw_mac(काष्ठा dnet *bp, u16 reg, u16 val)
+अणु
+	/* load data to ग_लिखो */
+	dnet_ग_लिखोl(bp, val, MACREG_DATA);
 
-	/* issue a write */
-	dnet_writel(bp, reg | DNET_INTERNAL_WRITE, MACREG_ADDR);
+	/* issue a ग_लिखो */
+	dnet_ग_लिखोl(bp, reg | DNET_INTERNAL_WRITE, MACREG_ADDR);
 
-	/* since a read/write op to the MAC is very slow,
-	 * we must wait before exiting */
+	/* since a पढ़ो/ग_लिखो op to the MAC is very slow,
+	 * we must रुको beक्रमe निकासing */
 	ndelay(500);
-}
+पूर्ण
 
-static void __dnet_set_hwaddr(struct dnet *bp)
-{
-	u16 tmp;
+अटल व्योम __dnet_set_hwaddr(काष्ठा dnet *bp)
+अणु
+	u16 पंचांगp;
 
-	tmp = be16_to_cpup((__be16 *)bp->dev->dev_addr);
-	dnet_writew_mac(bp, DNET_INTERNAL_MAC_ADDR_0_REG, tmp);
-	tmp = be16_to_cpup((__be16 *)(bp->dev->dev_addr + 2));
-	dnet_writew_mac(bp, DNET_INTERNAL_MAC_ADDR_1_REG, tmp);
-	tmp = be16_to_cpup((__be16 *)(bp->dev->dev_addr + 4));
-	dnet_writew_mac(bp, DNET_INTERNAL_MAC_ADDR_2_REG, tmp);
-}
+	पंचांगp = be16_to_cpup((__be16 *)bp->dev->dev_addr);
+	dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_MAC_ADDR_0_REG, पंचांगp);
+	पंचांगp = be16_to_cpup((__be16 *)(bp->dev->dev_addr + 2));
+	dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_MAC_ADDR_1_REG, पंचांगp);
+	पंचांगp = be16_to_cpup((__be16 *)(bp->dev->dev_addr + 4));
+	dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_MAC_ADDR_2_REG, पंचांगp);
+पूर्ण
 
-static void dnet_get_hwaddr(struct dnet *bp)
-{
-	u16 tmp;
+अटल व्योम dnet_get_hwaddr(काष्ठा dnet *bp)
+अणु
+	u16 पंचांगp;
 	u8 addr[6];
 
 	/*
-	 * from MAC docs:
-	 * "Note that the MAC address is stored in the registers in Hexadecimal
-	 * form. For example, to set the MAC Address to: AC-DE-48-00-00-80
+	 * from MAC करोcs:
+	 * "Note that the MAC address is stored in the रेजिस्टरs in Hexadecimal
+	 * क्रमm. For example, to set the MAC Address to: AC-DE-48-00-00-80
 	 * would require writing 0xAC (octet 0) to address 0x0B (high byte of
 	 * Mac_addr[15:0]), 0xDE (octet 1) to address 0x0A (Low byte of
 	 * Mac_addr[15:0]), 0x48 (octet 2) to address 0x0D (high byte of
@@ -85,515 +86,515 @@ static void dnet_get_hwaddr(struct dnet *bp)
 	 * Mac_addr[15:0]), and 0x80 (octet 5) to address * 0x0E (Low byte of
 	 * Mac_addr[15:0]).
 	 */
-	tmp = dnet_readw_mac(bp, DNET_INTERNAL_MAC_ADDR_0_REG);
-	*((__be16 *)addr) = cpu_to_be16(tmp);
-	tmp = dnet_readw_mac(bp, DNET_INTERNAL_MAC_ADDR_1_REG);
-	*((__be16 *)(addr + 2)) = cpu_to_be16(tmp);
-	tmp = dnet_readw_mac(bp, DNET_INTERNAL_MAC_ADDR_2_REG);
-	*((__be16 *)(addr + 4)) = cpu_to_be16(tmp);
+	पंचांगp = dnet_पढ़ोw_mac(bp, DNET_INTERNAL_MAC_ADDR_0_REG);
+	*((__be16 *)addr) = cpu_to_be16(पंचांगp);
+	पंचांगp = dnet_पढ़ोw_mac(bp, DNET_INTERNAL_MAC_ADDR_1_REG);
+	*((__be16 *)(addr + 2)) = cpu_to_be16(पंचांगp);
+	पंचांगp = dnet_पढ़ोw_mac(bp, DNET_INTERNAL_MAC_ADDR_2_REG);
+	*((__be16 *)(addr + 4)) = cpu_to_be16(पंचांगp);
 
-	if (is_valid_ether_addr(addr))
-		memcpy(bp->dev->dev_addr, addr, sizeof(addr));
-}
+	अगर (is_valid_ether_addr(addr))
+		स_नकल(bp->dev->dev_addr, addr, माप(addr));
+पूर्ण
 
-static int dnet_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
-{
-	struct dnet *bp = bus->priv;
+अटल पूर्णांक dnet_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum)
+अणु
+	काष्ठा dnet *bp = bus->priv;
 	u16 value;
 
-	while (!(dnet_readw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG)
+	जबतक (!(dnet_पढ़ोw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG)
 				& DNET_INTERNAL_GMII_MNG_CMD_FIN))
 		cpu_relax();
 
-	/* only 5 bits allowed for phy-addr and reg_offset */
+	/* only 5 bits allowed क्रम phy-addr and reg_offset */
 	mii_id &= 0x1f;
 	regnum &= 0x1f;
 
-	/* prepare reg_value for a read */
+	/* prepare reg_value क्रम a पढ़ो */
 	value = (mii_id << 8);
 	value |= regnum;
 
-	/* write control word */
-	dnet_writew_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG, value);
+	/* ग_लिखो control word */
+	dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG, value);
 
-	/* wait for end of transfer */
-	while (!(dnet_readw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG)
+	/* रुको क्रम end of transfer */
+	जबतक (!(dnet_पढ़ोw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG)
 				& DNET_INTERNAL_GMII_MNG_CMD_FIN))
 		cpu_relax();
 
-	value = dnet_readw_mac(bp, DNET_INTERNAL_GMII_MNG_DAT_REG);
+	value = dnet_पढ़ोw_mac(bp, DNET_INTERNAL_GMII_MNG_DAT_REG);
 
 	pr_debug("mdio_read %02x:%02x <- %04x\n", mii_id, regnum, value);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static int dnet_mdio_write(struct mii_bus *bus, int mii_id, int regnum,
+अटल पूर्णांक dnet_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum,
 			   u16 value)
-{
-	struct dnet *bp = bus->priv;
-	u16 tmp;
+अणु
+	काष्ठा dnet *bp = bus->priv;
+	u16 पंचांगp;
 
 	pr_debug("mdio_write %02x:%02x <- %04x\n", mii_id, regnum, value);
 
-	while (!(dnet_readw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG)
+	जबतक (!(dnet_पढ़ोw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG)
 				& DNET_INTERNAL_GMII_MNG_CMD_FIN))
 		cpu_relax();
 
-	/* prepare for a write operation */
-	tmp = (1 << 13);
+	/* prepare क्रम a ग_लिखो operation */
+	पंचांगp = (1 << 13);
 
-	/* only 5 bits allowed for phy-addr and reg_offset */
+	/* only 5 bits allowed क्रम phy-addr and reg_offset */
 	mii_id &= 0x1f;
 	regnum &= 0x1f;
 
 	/* only 16 bits on data */
 	value &= 0xffff;
 
-	/* prepare reg_value for a write */
-	tmp |= (mii_id << 8);
-	tmp |= regnum;
+	/* prepare reg_value क्रम a ग_लिखो */
+	पंचांगp |= (mii_id << 8);
+	पंचांगp |= regnum;
 
-	/* write data to write first */
-	dnet_writew_mac(bp, DNET_INTERNAL_GMII_MNG_DAT_REG, value);
+	/* ग_लिखो data to ग_लिखो first */
+	dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_GMII_MNG_DAT_REG, value);
 
-	/* write control word */
-	dnet_writew_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG, tmp);
+	/* ग_लिखो control word */
+	dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG, पंचांगp);
 
-	while (!(dnet_readw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG)
+	जबतक (!(dnet_पढ़ोw_mac(bp, DNET_INTERNAL_GMII_MNG_CTL_REG)
 				& DNET_INTERNAL_GMII_MNG_CMD_FIN))
 		cpu_relax();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dnet_handle_link_change(struct net_device *dev)
-{
-	struct dnet *bp = netdev_priv(dev);
-	struct phy_device *phydev = dev->phydev;
-	unsigned long flags;
+अटल व्योम dnet_handle_link_change(काष्ठा net_device *dev)
+अणु
+	काष्ठा dnet *bp = netdev_priv(dev);
+	काष्ठा phy_device *phydev = dev->phydev;
+	अचिन्हित दीर्घ flags;
 	u32 mode_reg, ctl_reg;
 
-	int status_change = 0;
+	पूर्णांक status_change = 0;
 
 	spin_lock_irqsave(&bp->lock, flags);
 
-	mode_reg = dnet_readw_mac(bp, DNET_INTERNAL_MODE_REG);
-	ctl_reg = dnet_readw_mac(bp, DNET_INTERNAL_RXTX_CONTROL_REG);
+	mode_reg = dnet_पढ़ोw_mac(bp, DNET_INTERNAL_MODE_REG);
+	ctl_reg = dnet_पढ़ोw_mac(bp, DNET_INTERNAL_RXTX_CONTROL_REG);
 
-	if (phydev->link) {
-		if (bp->duplex != phydev->duplex) {
-			if (phydev->duplex)
+	अगर (phydev->link) अणु
+		अगर (bp->duplex != phydev->duplex) अणु
+			अगर (phydev->duplex)
 				ctl_reg &=
 				    ~(DNET_INTERNAL_RXTX_CONTROL_ENABLEHALFDUP);
-			else
+			अन्यथा
 				ctl_reg |=
 				    DNET_INTERNAL_RXTX_CONTROL_ENABLEHALFDUP;
 
 			bp->duplex = phydev->duplex;
 			status_change = 1;
-		}
+		पूर्ण
 
-		if (bp->speed != phydev->speed) {
+		अगर (bp->speed != phydev->speed) अणु
 			status_change = 1;
-			switch (phydev->speed) {
-			case 1000:
+			चयन (phydev->speed) अणु
+			हाल 1000:
 				mode_reg |= DNET_INTERNAL_MODE_GBITEN;
-				break;
-			case 100:
-			case 10:
+				अवरोध;
+			हाल 100:
+			हाल 10:
 				mode_reg &= ~DNET_INTERNAL_MODE_GBITEN;
-				break;
-			default:
-				printk(KERN_WARNING
+				अवरोध;
+			शेष:
+				prपूर्णांकk(KERN_WARNING
 				       "%s: Ack!  Speed (%d) is not "
 				       "10/100/1000!\n", dev->name,
 				       phydev->speed);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			bp->speed = phydev->speed;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (phydev->link != bp->link) {
-		if (phydev->link) {
+	अगर (phydev->link != bp->link) अणु
+		अगर (phydev->link) अणु
 			mode_reg |=
 			    (DNET_INTERNAL_MODE_RXEN | DNET_INTERNAL_MODE_TXEN);
-		} else {
+		पूर्ण अन्यथा अणु
 			mode_reg &=
 			    ~(DNET_INTERNAL_MODE_RXEN |
 			      DNET_INTERNAL_MODE_TXEN);
 			bp->speed = 0;
 			bp->duplex = -1;
-		}
+		पूर्ण
 		bp->link = phydev->link;
 
 		status_change = 1;
-	}
+	पूर्ण
 
-	if (status_change) {
-		dnet_writew_mac(bp, DNET_INTERNAL_RXTX_CONTROL_REG, ctl_reg);
-		dnet_writew_mac(bp, DNET_INTERNAL_MODE_REG, mode_reg);
-	}
+	अगर (status_change) अणु
+		dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_RXTX_CONTROL_REG, ctl_reg);
+		dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_MODE_REG, mode_reg);
+	पूर्ण
 
 	spin_unlock_irqrestore(&bp->lock, flags);
 
-	if (status_change) {
-		if (phydev->link)
-			printk(KERN_INFO "%s: link up (%d/%s)\n",
+	अगर (status_change) अणु
+		अगर (phydev->link)
+			prपूर्णांकk(KERN_INFO "%s: link up (%d/%s)\n",
 			       dev->name, phydev->speed,
 			       DUPLEX_FULL == phydev->duplex ? "Full" : "Half");
-		else
-			printk(KERN_INFO "%s: link down\n", dev->name);
-	}
-}
+		अन्यथा
+			prपूर्णांकk(KERN_INFO "%s: link down\n", dev->name);
+	पूर्ण
+पूर्ण
 
-static int dnet_mii_probe(struct net_device *dev)
-{
-	struct dnet *bp = netdev_priv(dev);
-	struct phy_device *phydev = NULL;
+अटल पूर्णांक dnet_mii_probe(काष्ठा net_device *dev)
+अणु
+	काष्ठा dnet *bp = netdev_priv(dev);
+	काष्ठा phy_device *phydev = शून्य;
 
 	/* find the first phy */
 	phydev = phy_find_first(bp->mii_bus);
 
-	if (!phydev) {
-		printk(KERN_ERR "%s: no PHY found\n", dev->name);
-		return -ENODEV;
-	}
+	अगर (!phydev) अणु
+		prपूर्णांकk(KERN_ERR "%s: no PHY found\n", dev->name);
+		वापस -ENODEV;
+	पूर्ण
 
 	/* TODO : add pin_irq */
 
 	/* attach the mac to the phy */
-	if (bp->capabilities & DNET_HAS_RMII) {
+	अगर (bp->capabilities & DNET_HAS_RMII) अणु
 		phydev = phy_connect(dev, phydev_name(phydev),
 				     &dnet_handle_link_change,
 				     PHY_INTERFACE_MODE_RMII);
-	} else {
+	पूर्ण अन्यथा अणु
 		phydev = phy_connect(dev, phydev_name(phydev),
 				     &dnet_handle_link_change,
 				     PHY_INTERFACE_MODE_MII);
-	}
+	पूर्ण
 
-	if (IS_ERR(phydev)) {
-		printk(KERN_ERR "%s: Could not attach to PHY\n", dev->name);
-		return PTR_ERR(phydev);
-	}
+	अगर (IS_ERR(phydev)) अणु
+		prपूर्णांकk(KERN_ERR "%s: Could not attach to PHY\n", dev->name);
+		वापस PTR_ERR(phydev);
+	पूर्ण
 
 	/* mask with MAC supported features */
-	if (bp->capabilities & DNET_HAS_GIGABIT)
+	अगर (bp->capabilities & DNET_HAS_GIGABIT)
 		phy_set_max_speed(phydev, SPEED_1000);
-	else
+	अन्यथा
 		phy_set_max_speed(phydev, SPEED_100);
 
-	phy_support_asym_pause(phydev);
+	phy_support_asym_छोड़ो(phydev);
 
 	bp->link = 0;
 	bp->speed = 0;
 	bp->duplex = -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dnet_mii_init(struct dnet *bp)
-{
-	int err;
+अटल पूर्णांक dnet_mii_init(काष्ठा dnet *bp)
+अणु
+	पूर्णांक err;
 
 	bp->mii_bus = mdiobus_alloc();
-	if (bp->mii_bus == NULL)
-		return -ENOMEM;
+	अगर (bp->mii_bus == शून्य)
+		वापस -ENOMEM;
 
 	bp->mii_bus->name = "dnet_mii_bus";
-	bp->mii_bus->read = &dnet_mdio_read;
-	bp->mii_bus->write = &dnet_mdio_write;
+	bp->mii_bus->पढ़ो = &dnet_mdio_पढ़ो;
+	bp->mii_bus->ग_लिखो = &dnet_mdio_ग_लिखो;
 
-	snprintf(bp->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
+	snम_लिखो(bp->mii_bus->id, MII_BUS_ID_SIZE, "%s-%x",
 		bp->pdev->name, bp->pdev->id);
 
 	bp->mii_bus->priv = bp;
 
-	if (mdiobus_register(bp->mii_bus)) {
+	अगर (mdiobus_रेजिस्टर(bp->mii_bus)) अणु
 		err = -ENXIO;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	if (dnet_mii_probe(bp->dev) != 0) {
+	अगर (dnet_mii_probe(bp->dev) != 0) अणु
 		err = -ENXIO;
-		goto err_out_unregister_bus;
-	}
+		जाओ err_out_unरेजिस्टर_bus;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_out_unregister_bus:
-	mdiobus_unregister(bp->mii_bus);
+err_out_unरेजिस्टर_bus:
+	mdiobus_unरेजिस्टर(bp->mii_bus);
 err_out:
-	mdiobus_free(bp->mii_bus);
-	return err;
-}
+	mdiobus_मुक्त(bp->mii_bus);
+	वापस err;
+पूर्ण
 
 /* For Neptune board: LINK1000 as Link LED and TX as activity LED */
-static int dnet_phy_marvell_fixup(struct phy_device *phydev)
-{
-	return phy_write(phydev, 0x18, 0x4148);
-}
+अटल पूर्णांक dnet_phy_marvell_fixup(काष्ठा phy_device *phydev)
+अणु
+	वापस phy_ग_लिखो(phydev, 0x18, 0x4148);
+पूर्ण
 
-static void dnet_update_stats(struct dnet *bp)
-{
+अटल व्योम dnet_update_stats(काष्ठा dnet *bp)
+अणु
 	u32 __iomem *reg = bp->regs + DNET_RX_PKT_IGNR_CNT;
 	u32 *p = &bp->hw_stats.rx_pkt_ignr;
 	u32 *end = &bp->hw_stats.rx_byte + 1;
 
-	WARN_ON((unsigned long)(end - p - 1) !=
+	WARN_ON((अचिन्हित दीर्घ)(end - p - 1) !=
 		(DNET_RX_BYTE_CNT - DNET_RX_PKT_IGNR_CNT) / 4);
 
-	for (; p < end; p++, reg++)
-		*p += readl(reg);
+	क्रम (; p < end; p++, reg++)
+		*p += पढ़ोl(reg);
 
 	reg = bp->regs + DNET_TX_UNICAST_CNT;
 	p = &bp->hw_stats.tx_unicast;
 	end = &bp->hw_stats.tx_byte + 1;
 
-	WARN_ON((unsigned long)(end - p - 1) !=
+	WARN_ON((अचिन्हित दीर्घ)(end - p - 1) !=
 		(DNET_TX_BYTE_CNT - DNET_TX_UNICAST_CNT) / 4);
 
-	for (; p < end; p++, reg++)
-		*p += readl(reg);
-}
+	क्रम (; p < end; p++, reg++)
+		*p += पढ़ोl(reg);
+पूर्ण
 
-static int dnet_poll(struct napi_struct *napi, int budget)
-{
-	struct dnet *bp = container_of(napi, struct dnet, napi);
-	struct net_device *dev = bp->dev;
-	int npackets = 0;
-	unsigned int pkt_len;
-	struct sk_buff *skb;
-	unsigned int *data_ptr;
-	u32 int_enable;
+अटल पूर्णांक dnet_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा dnet *bp = container_of(napi, काष्ठा dnet, napi);
+	काष्ठा net_device *dev = bp->dev;
+	पूर्णांक npackets = 0;
+	अचिन्हित पूर्णांक pkt_len;
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक *data_ptr;
+	u32 पूर्णांक_enable;
 	u32 cmd_word;
-	int i;
+	पूर्णांक i;
 
-	while (npackets < budget) {
+	जबतक (npackets < budget) अणु
 		/*
-		 * break out of while loop if there are no more
-		 * packets waiting
+		 * अवरोध out of जबतक loop अगर there are no more
+		 * packets रुकोing
 		 */
-		if (!(dnet_readl(bp, RX_FIFO_WCNT) >> 16))
-			break;
+		अगर (!(dnet_पढ़ोl(bp, RX_FIFO_WCNT) >> 16))
+			अवरोध;
 
-		cmd_word = dnet_readl(bp, RX_LEN_FIFO);
+		cmd_word = dnet_पढ़ोl(bp, RX_LEN_FIFO);
 		pkt_len = cmd_word & 0xFFFF;
 
-		if (cmd_word & 0xDF180000)
-			printk(KERN_ERR "%s packet receive error %x\n",
+		अगर (cmd_word & 0xDF180000)
+			prपूर्णांकk(KERN_ERR "%s packet receive error %x\n",
 			       __func__, cmd_word);
 
 		skb = netdev_alloc_skb(dev, pkt_len + 5);
-		if (skb != NULL) {
+		अगर (skb != शून्य) अणु
 			/* Align IP on 16 byte boundaries */
 			skb_reserve(skb, 2);
 			/*
-			 * 'skb_put()' points to the start of sk_buff
+			 * 'skb_put()' poपूर्णांकs to the start of sk_buff
 			 * data area.
 			 */
 			data_ptr = skb_put(skb, pkt_len);
-			for (i = 0; i < (pkt_len + 3) >> 2; i++)
-				*data_ptr++ = dnet_readl(bp, RX_DATA_FIFO);
+			क्रम (i = 0; i < (pkt_len + 3) >> 2; i++)
+				*data_ptr++ = dnet_पढ़ोl(bp, RX_DATA_FIFO);
 			skb->protocol = eth_type_trans(skb, dev);
-			netif_receive_skb(skb);
+			netअगर_receive_skb(skb);
 			npackets++;
-		} else
-			printk(KERN_NOTICE
+		पूर्ण अन्यथा
+			prपूर्णांकk(KERN_NOTICE
 			       "%s: No memory to allocate a sk_buff of "
 			       "size %u.\n", dev->name, pkt_len);
-	}
+	पूर्ण
 
-	if (npackets < budget) {
+	अगर (npackets < budget) अणु
 		/* We processed all packets available.  Tell NAPI it can
-		 * stop polling then re-enable rx interrupts.
+		 * stop polling then re-enable rx पूर्णांकerrupts.
 		 */
-		napi_complete_done(napi, npackets);
-		int_enable = dnet_readl(bp, INTR_ENB);
-		int_enable |= DNET_INTR_SRC_RX_CMDFIFOAF;
-		dnet_writel(bp, int_enable, INTR_ENB);
-	}
+		napi_complete_करोne(napi, npackets);
+		पूर्णांक_enable = dnet_पढ़ोl(bp, INTR_ENB);
+		पूर्णांक_enable |= DNET_INTR_SRC_RX_CMDFIFOAF;
+		dnet_ग_लिखोl(bp, पूर्णांक_enable, INTR_ENB);
+	पूर्ण
 
-	return npackets;
-}
+	वापस npackets;
+पूर्ण
 
-static irqreturn_t dnet_interrupt(int irq, void *dev_id)
-{
-	struct net_device *dev = dev_id;
-	struct dnet *bp = netdev_priv(dev);
-	u32 int_src, int_enable, int_current;
-	unsigned long flags;
-	unsigned int handled = 0;
+अटल irqवापस_t dnet_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा net_device *dev = dev_id;
+	काष्ठा dnet *bp = netdev_priv(dev);
+	u32 पूर्णांक_src, पूर्णांक_enable, पूर्णांक_current;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक handled = 0;
 
 	spin_lock_irqsave(&bp->lock, flags);
 
-	/* read and clear the DNET irq (clear on read) */
-	int_src = dnet_readl(bp, INTR_SRC);
-	int_enable = dnet_readl(bp, INTR_ENB);
-	int_current = int_src & int_enable;
+	/* पढ़ो and clear the DNET irq (clear on पढ़ो) */
+	पूर्णांक_src = dnet_पढ़ोl(bp, INTR_SRC);
+	पूर्णांक_enable = dnet_पढ़ोl(bp, INTR_ENB);
+	पूर्णांक_current = पूर्णांक_src & पूर्णांक_enable;
 
-	/* restart the queue if we had stopped it for TX fifo almost full */
-	if (int_current & DNET_INTR_SRC_TX_FIFOAE) {
-		int_enable = dnet_readl(bp, INTR_ENB);
-		int_enable &= ~DNET_INTR_ENB_TX_FIFOAE;
-		dnet_writel(bp, int_enable, INTR_ENB);
-		netif_wake_queue(dev);
+	/* restart the queue अगर we had stopped it क्रम TX fअगरo almost full */
+	अगर (पूर्णांक_current & DNET_INTR_SRC_TX_FIFOAE) अणु
+		पूर्णांक_enable = dnet_पढ़ोl(bp, INTR_ENB);
+		पूर्णांक_enable &= ~DNET_INTR_ENB_TX_FIFOAE;
+		dnet_ग_लिखोl(bp, पूर्णांक_enable, INTR_ENB);
+		netअगर_wake_queue(dev);
 		handled = 1;
-	}
+	पूर्ण
 
 	/* RX FIFO error checking */
-	if (int_current &
-	    (DNET_INTR_SRC_RX_CMDFIFOFF | DNET_INTR_SRC_RX_DATAFIFOFF)) {
-		printk(KERN_ERR "%s: RX fifo error %x, irq %x\n", __func__,
-		       dnet_readl(bp, RX_STATUS), int_current);
+	अगर (पूर्णांक_current &
+	    (DNET_INTR_SRC_RX_CMDFIFOFF | DNET_INTR_SRC_RX_DATAFIFOFF)) अणु
+		prपूर्णांकk(KERN_ERR "%s: RX fifo error %x, irq %x\n", __func__,
+		       dnet_पढ़ोl(bp, RX_STATUS), पूर्णांक_current);
 		/* we can only flush the RX FIFOs */
-		dnet_writel(bp, DNET_SYS_CTL_RXFIFOFLUSH, SYS_CTL);
+		dnet_ग_लिखोl(bp, DNET_SYS_CTL_RXFIFOFLUSH, SYS_CTL);
 		ndelay(500);
-		dnet_writel(bp, 0, SYS_CTL);
+		dnet_ग_लिखोl(bp, 0, SYS_CTL);
 		handled = 1;
-	}
+	पूर्ण
 
 	/* TX FIFO error checking */
-	if (int_current &
-	    (DNET_INTR_SRC_TX_FIFOFULL | DNET_INTR_SRC_TX_DISCFRM)) {
-		printk(KERN_ERR "%s: TX fifo error %x, irq %x\n", __func__,
-		       dnet_readl(bp, TX_STATUS), int_current);
+	अगर (पूर्णांक_current &
+	    (DNET_INTR_SRC_TX_FIFOFULL | DNET_INTR_SRC_TX_DISCFRM)) अणु
+		prपूर्णांकk(KERN_ERR "%s: TX fifo error %x, irq %x\n", __func__,
+		       dnet_पढ़ोl(bp, TX_STATUS), पूर्णांक_current);
 		/* we can only flush the TX FIFOs */
-		dnet_writel(bp, DNET_SYS_CTL_TXFIFOFLUSH, SYS_CTL);
+		dnet_ग_लिखोl(bp, DNET_SYS_CTL_TXFIFOFLUSH, SYS_CTL);
 		ndelay(500);
-		dnet_writel(bp, 0, SYS_CTL);
+		dnet_ग_लिखोl(bp, 0, SYS_CTL);
 		handled = 1;
-	}
+	पूर्ण
 
-	if (int_current & DNET_INTR_SRC_RX_CMDFIFOAF) {
-		if (napi_schedule_prep(&bp->napi)) {
+	अगर (पूर्णांक_current & DNET_INTR_SRC_RX_CMDFIFOAF) अणु
+		अगर (napi_schedule_prep(&bp->napi)) अणु
 			/*
-			 * There's no point taking any more interrupts
+			 * There's no poपूर्णांक taking any more पूर्णांकerrupts
 			 * until we have processed the buffers
 			 */
-			/* Disable Rx interrupts and schedule NAPI poll */
-			int_enable = dnet_readl(bp, INTR_ENB);
-			int_enable &= ~DNET_INTR_SRC_RX_CMDFIFOAF;
-			dnet_writel(bp, int_enable, INTR_ENB);
+			/* Disable Rx पूर्णांकerrupts and schedule NAPI poll */
+			पूर्णांक_enable = dnet_पढ़ोl(bp, INTR_ENB);
+			पूर्णांक_enable &= ~DNET_INTR_SRC_RX_CMDFIFOAF;
+			dnet_ग_लिखोl(bp, पूर्णांक_enable, INTR_ENB);
 			__napi_schedule(&bp->napi);
-		}
+		पूर्ण
 		handled = 1;
-	}
+	पूर्ण
 
-	if (!handled)
-		pr_debug("%s: irq %x remains\n", __func__, int_current);
+	अगर (!handled)
+		pr_debug("%s: irq %x remains\n", __func__, पूर्णांक_current);
 
 	spin_unlock_irqrestore(&bp->lock, flags);
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-#ifdef DEBUG
-static inline void dnet_print_skb(struct sk_buff *skb)
-{
-	int k;
-	printk(KERN_DEBUG PFX "data:");
-	for (k = 0; k < skb->len; k++)
-		printk(" %02x", (unsigned int)skb->data[k]);
-	printk("\n");
-}
-#else
-#define dnet_print_skb(skb)	do {} while (0)
-#endif
+#अगर_घोषित DEBUG
+अटल अंतरभूत व्योम dnet_prपूर्णांक_skb(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक k;
+	prपूर्णांकk(KERN_DEBUG PFX "data:");
+	क्रम (k = 0; k < skb->len; k++)
+		prपूर्णांकk(" %02x", (अचिन्हित पूर्णांक)skb->data[k]);
+	prपूर्णांकk("\n");
+पूर्ण
+#अन्यथा
+#घोषणा dnet_prपूर्णांक_skb(skb)	करो अणुपूर्ण जबतक (0)
+#पूर्ण_अगर
 
-static netdev_tx_t dnet_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
+अटल netdev_tx_t dnet_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
 
-	struct dnet *bp = netdev_priv(dev);
-	unsigned int i, tx_cmd, wrsz;
-	unsigned long flags;
-	unsigned int *bufp;
+	काष्ठा dnet *bp = netdev_priv(dev);
+	अचिन्हित पूर्णांक i, tx_cmd, wrsz;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक *bufp;
 	u32 irq_enable;
 
-	dnet_readl(bp, TX_STATUS);
+	dnet_पढ़ोl(bp, TX_STATUS);
 
 	pr_debug("start_xmit: len %u head %p data %p\n",
 	       skb->len, skb->head, skb->data);
-	dnet_print_skb(skb);
+	dnet_prपूर्णांक_skb(skb);
 
 	spin_lock_irqsave(&bp->lock, flags);
 
-	dnet_readl(bp, TX_STATUS);
+	dnet_पढ़ोl(bp, TX_STATUS);
 
-	bufp = (unsigned int *)(((unsigned long) skb->data) & ~0x3UL);
+	bufp = (अचिन्हित पूर्णांक *)(((अचिन्हित दीर्घ) skb->data) & ~0x3UL);
 	wrsz = (u32) skb->len + 3;
-	wrsz += ((unsigned long) skb->data) & 0x3;
+	wrsz += ((अचिन्हित दीर्घ) skb->data) & 0x3;
 	wrsz >>= 2;
-	tx_cmd = ((((unsigned long)(skb->data)) & 0x03) << 16) | (u32) skb->len;
+	tx_cmd = ((((अचिन्हित दीर्घ)(skb->data)) & 0x03) << 16) | (u32) skb->len;
 
-	/* check if there is enough room for the current frame */
-	if (wrsz < (DNET_FIFO_SIZE - dnet_readl(bp, TX_FIFO_WCNT))) {
-		for (i = 0; i < wrsz; i++)
-			dnet_writel(bp, *bufp++, TX_DATA_FIFO);
+	/* check अगर there is enough room क्रम the current frame */
+	अगर (wrsz < (DNET_FIFO_SIZE - dnet_पढ़ोl(bp, TX_FIFO_WCNT))) अणु
+		क्रम (i = 0; i < wrsz; i++)
+			dnet_ग_लिखोl(bp, *bufp++, TX_DATA_FIFO);
 
 		/*
-		 * inform MAC that a packet's written and ready to be
+		 * inक्रमm MAC that a packet's written and पढ़ोy to be
 		 * shipped out
 		 */
-		dnet_writel(bp, tx_cmd, TX_LEN_FIFO);
-	}
+		dnet_ग_लिखोl(bp, tx_cmd, TX_LEN_FIFO);
+	पूर्ण
 
-	if (dnet_readl(bp, TX_FIFO_WCNT) > DNET_FIFO_TX_DATA_AF_TH) {
-		netif_stop_queue(dev);
-		dnet_readl(bp, INTR_SRC);
-		irq_enable = dnet_readl(bp, INTR_ENB);
+	अगर (dnet_पढ़ोl(bp, TX_FIFO_WCNT) > DNET_FIFO_TX_DATA_AF_TH) अणु
+		netअगर_stop_queue(dev);
+		dnet_पढ़ोl(bp, INTR_SRC);
+		irq_enable = dnet_पढ़ोl(bp, INTR_ENB);
 		irq_enable |= DNET_INTR_ENB_TX_FIFOAE;
-		dnet_writel(bp, irq_enable, INTR_ENB);
-	}
+		dnet_ग_लिखोl(bp, irq_enable, INTR_ENB);
+	पूर्ण
 
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 
-	/* free the buffer */
-	dev_kfree_skb(skb);
+	/* मुक्त the buffer */
+	dev_kमुक्त_skb(skb);
 
 	spin_unlock_irqrestore(&bp->lock, flags);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void dnet_reset_hw(struct dnet *bp)
-{
+अटल व्योम dnet_reset_hw(काष्ठा dnet *bp)
+अणु
 	/* put ts_mac in IDLE state i.e. disable rx/tx */
-	dnet_writew_mac(bp, DNET_INTERNAL_MODE_REG, DNET_INTERNAL_MODE_FCEN);
+	dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_MODE_REG, DNET_INTERNAL_MODE_FCEN);
 
 	/*
 	 * RX FIFO almost full threshold: only cmd FIFO almost full is
-	 * implemented for RX side
+	 * implemented क्रम RX side
 	 */
-	dnet_writel(bp, DNET_FIFO_RX_CMD_AF_TH, RX_FIFO_TH);
+	dnet_ग_लिखोl(bp, DNET_FIFO_RX_CMD_AF_TH, RX_FIFO_TH);
 	/*
 	 * TX FIFO almost empty threshold: only data FIFO almost empty
-	 * is implemented for TX side
+	 * is implemented क्रम TX side
 	 */
-	dnet_writel(bp, DNET_FIFO_TX_DATA_AE_TH, TX_FIFO_TH);
+	dnet_ग_लिखोl(bp, DNET_FIFO_TX_DATA_AE_TH, TX_FIFO_TH);
 
-	/* flush rx/tx fifos */
-	dnet_writel(bp, DNET_SYS_CTL_RXFIFOFLUSH | DNET_SYS_CTL_TXFIFOFLUSH,
+	/* flush rx/tx fअगरos */
+	dnet_ग_लिखोl(bp, DNET_SYS_CTL_RXFIFOFLUSH | DNET_SYS_CTL_TXFIFOFLUSH,
 			SYS_CTL);
 	msleep(1);
-	dnet_writel(bp, 0, SYS_CTL);
-}
+	dnet_ग_लिखोl(bp, 0, SYS_CTL);
+पूर्ण
 
-static void dnet_init_hw(struct dnet *bp)
-{
+अटल व्योम dnet_init_hw(काष्ठा dnet *bp)
+अणु
 	u32 config;
 
 	dnet_reset_hw(bp);
 	__dnet_set_hwaddr(bp);
 
-	config = dnet_readw_mac(bp, DNET_INTERNAL_RXTX_CONTROL_REG);
+	config = dnet_पढ़ोw_mac(bp, DNET_INTERNAL_RXTX_CONTROL_REG);
 
-	if (bp->dev->flags & IFF_PROMISC)
+	अगर (bp->dev->flags & IFF_PROMISC)
 		/* Copy All Frames */
 		config |= DNET_INTERNAL_RXTX_CONTROL_ENPROMISC;
-	if (!(bp->dev->flags & IFF_BROADCAST))
+	अगर (!(bp->dev->flags & IFF_BROADCAST))
 		/* No BroadCast */
 		config |= DNET_INTERNAL_RXTX_CONTROL_RXMULTICAST;
 
@@ -602,26 +603,26 @@ static void dnet_init_hw(struct dnet *bp)
 	    DNET_INTERNAL_RXTX_CONTROL_DROPCONTROL |
 	    DNET_INTERNAL_RXTX_CONTROL_DISCFXFCS;
 
-	dnet_writew_mac(bp, DNET_INTERNAL_RXTX_CONTROL_REG, config);
+	dnet_ग_लिखोw_mac(bp, DNET_INTERNAL_RXTX_CONTROL_REG, config);
 
-	/* clear irq before enabling them */
-	config = dnet_readl(bp, INTR_SRC);
+	/* clear irq beक्रमe enabling them */
+	config = dnet_पढ़ोl(bp, INTR_SRC);
 
-	/* enable RX/TX interrupt, recv packet ready interrupt */
-	dnet_writel(bp, DNET_INTR_ENB_GLOBAL_ENABLE | DNET_INTR_ENB_RX_SUMMARY |
+	/* enable RX/TX पूर्णांकerrupt, recv packet पढ़ोy पूर्णांकerrupt */
+	dnet_ग_लिखोl(bp, DNET_INTR_ENB_GLOBAL_ENABLE | DNET_INTR_ENB_RX_SUMMARY |
 			DNET_INTR_ENB_TX_SUMMARY | DNET_INTR_ENB_RX_FIFOERR |
 			DNET_INTR_ENB_RX_ERROR | DNET_INTR_ENB_RX_FIFOFULL |
 			DNET_INTR_ENB_TX_FIFOFULL | DNET_INTR_ENB_TX_DISCFRM |
 			DNET_INTR_ENB_RX_PKTRDY, INTR_ENB);
-}
+पूर्ण
 
-static int dnet_open(struct net_device *dev)
-{
-	struct dnet *bp = netdev_priv(dev);
+अटल पूर्णांक dnet_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा dnet *bp = netdev_priv(dev);
 
-	/* if the phy is not yet register, retry later */
-	if (!dev->phydev)
-		return -EAGAIN;
+	/* अगर the phy is not yet रेजिस्टर, retry later */
+	अगर (!dev->phydev)
+		वापस -EAGAIN;
 
 	napi_enable(&bp->napi);
 	dnet_init_hw(bp);
@@ -631,29 +632,29 @@ static int dnet_open(struct net_device *dev)
 	/* schedule a link state check */
 	phy_start(dev->phydev);
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dnet_close(struct net_device *dev)
-{
-	struct dnet *bp = netdev_priv(dev);
+अटल पूर्णांक dnet_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा dnet *bp = netdev_priv(dev);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	napi_disable(&bp->napi);
 
-	if (dev->phydev)
+	अगर (dev->phydev)
 		phy_stop(dev->phydev);
 
 	dnet_reset_hw(bp);
-	netif_carrier_off(dev);
+	netअगर_carrier_off(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void dnet_print_pretty_hwstats(struct dnet_stats *hwstat)
-{
+अटल अंतरभूत व्योम dnet_prपूर्णांक_pretty_hwstats(काष्ठा dnet_stats *hwstat)
+अणु
 	pr_debug("%s\n", __func__);
 	pr_debug("----------------------------- RX statistics "
 		 "-------------------------------\n");
@@ -665,7 +666,7 @@ static inline void dnet_print_pretty_hwstats(struct dnet_stats *hwstat)
 	pr_debug("RX_CRC_ERR_CNT %-8x\n", hwstat->rx_crc_err);
 	pr_debug("RX_OK_PKT_CNT %-8x\n", hwstat->rx_ok_pkt);
 	pr_debug("RX_CTL_FRM_CNT %-8x\n", hwstat->rx_ctl_frm);
-	pr_debug("RX_PAUSE_FRM_CNT %-8x\n", hwstat->rx_pause_frm);
+	pr_debug("RX_PAUSE_FRM_CNT %-8x\n", hwstat->rx_छोड़ो_frm);
 	pr_debug("RX_MULTICAST_CNT %-8x\n", hwstat->rx_multicast);
 	pr_debug("RX_BROADCAST_CNT %-8x\n", hwstat->rx_broadcast);
 	pr_debug("RX_VLAN_TAG_CNT %-8x\n", hwstat->rx_vlan_tag);
@@ -676,26 +677,26 @@ static inline void dnet_print_pretty_hwstats(struct dnet_stats *hwstat)
 	pr_debug("----------------------------- TX statistics "
 		 "-------------------------------\n");
 	pr_debug("TX_UNICAST_CNT %-8x\n", hwstat->tx_unicast);
-	pr_debug("TX_PAUSE_FRM_CNT %-8x\n", hwstat->tx_pause_frm);
+	pr_debug("TX_PAUSE_FRM_CNT %-8x\n", hwstat->tx_छोड़ो_frm);
 	pr_debug("TX_MULTICAST_CNT %-8x\n", hwstat->tx_multicast);
 	pr_debug("TX_BRDCAST_CNT %-8x\n", hwstat->tx_brdcast);
 	pr_debug("TX_VLAN_TAG_CNT %-8x\n", hwstat->tx_vlan_tag);
 	pr_debug("TX_BAD_FCS_CNT %-8x\n", hwstat->tx_bad_fcs);
 	pr_debug("TX_JUMBO_CNT %-8x\n", hwstat->tx_jumbo);
 	pr_debug("TX_BYTE_CNT %-8x\n", hwstat->tx_byte);
-}
+पूर्ण
 
-static struct net_device_stats *dnet_get_stats(struct net_device *dev)
-{
+अटल काष्ठा net_device_stats *dnet_get_stats(काष्ठा net_device *dev)
+अणु
 
-	struct dnet *bp = netdev_priv(dev);
-	struct net_device_stats *nstat = &dev->stats;
-	struct dnet_stats *hwstat = &bp->hw_stats;
+	काष्ठा dnet *bp = netdev_priv(dev);
+	काष्ठा net_device_stats *nstat = &dev->stats;
+	काष्ठा dnet_stats *hwstat = &bp->hw_stats;
 
-	/* read stats from hardware */
+	/* पढ़ो stats from hardware */
 	dnet_update_stats(bp);
 
-	/* Convert HW stats into netdevice stats */
+	/* Convert HW stats पूर्णांकo netdevice stats */
 	nstat->rx_errors = (hwstat->rx_len_chk_err +
 			    hwstat->rx_lng_frm + hwstat->rx_shrt_frm +
 			    /* ignore IGP violation error
@@ -717,111 +718,111 @@ static struct net_device_stats *dnet_get_stats(struct net_device *dev)
 	nstat->multicast = hwstat->rx_multicast;
 	nstat->rx_missed_errors = hwstat->rx_pkt_ignr;
 
-	dnet_print_pretty_hwstats(hwstat);
+	dnet_prपूर्णांक_pretty_hwstats(hwstat);
 
-	return nstat;
-}
+	वापस nstat;
+पूर्ण
 
-static void dnet_get_drvinfo(struct net_device *dev,
-			     struct ethtool_drvinfo *info)
-{
-	strlcpy(info->driver, DRV_NAME, sizeof(info->driver));
-	strlcpy(info->bus_info, "0", sizeof(info->bus_info));
-}
+अटल व्योम dnet_get_drvinfo(काष्ठा net_device *dev,
+			     काष्ठा ethtool_drvinfo *info)
+अणु
+	strlcpy(info->driver, DRV_NAME, माप(info->driver));
+	strlcpy(info->bus_info, "0", माप(info->bus_info));
+पूर्ण
 
-static const struct ethtool_ops dnet_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops dnet_ethtool_ops = अणु
 	.get_drvinfo		= dnet_get_drvinfo,
 	.get_link		= ethtool_op_get_link,
 	.get_ts_info		= ethtool_op_get_ts_info,
 	.get_link_ksettings     = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings     = phy_ethtool_set_link_ksettings,
-};
+पूर्ण;
 
-static const struct net_device_ops dnet_netdev_ops = {
-	.ndo_open		= dnet_open,
-	.ndo_stop		= dnet_close,
-	.ndo_get_stats		= dnet_get_stats,
-	.ndo_start_xmit		= dnet_start_xmit,
-	.ndo_do_ioctl		= phy_do_ioctl_running,
-	.ndo_set_mac_address	= eth_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops dnet_netdev_ops = अणु
+	.nकरो_खोलो		= dnet_खोलो,
+	.nकरो_stop		= dnet_बंद,
+	.nकरो_get_stats		= dnet_get_stats,
+	.nकरो_start_xmit		= dnet_start_xmit,
+	.nकरो_करो_ioctl		= phy_करो_ioctl_running,
+	.nकरो_set_mac_address	= eth_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+पूर्ण;
 
-static int dnet_probe(struct platform_device *pdev)
-{
-	struct resource *res;
-	struct net_device *dev;
-	struct dnet *bp;
-	struct phy_device *phydev;
-	int err;
-	unsigned int irq;
+अटल पूर्णांक dnet_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res;
+	काष्ठा net_device *dev;
+	काष्ठा dnet *bp;
+	काष्ठा phy_device *phydev;
+	पूर्णांक err;
+	अचिन्हित पूर्णांक irq;
 
-	irq = platform_get_irq(pdev, 0);
+	irq = platक्रमm_get_irq(pdev, 0);
 
-	dev = alloc_etherdev(sizeof(*bp));
-	if (!dev)
-		return -ENOMEM;
+	dev = alloc_etherdev(माप(*bp));
+	अगर (!dev)
+		वापस -ENOMEM;
 
-	/* TODO: Actually, we have some interesting features... */
+	/* TODO: Actually, we have some पूर्णांकeresting features... */
 	dev->features |= 0;
 
 	bp = netdev_priv(dev);
 	bp->dev = dev;
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 	SET_NETDEV_DEV(dev, &pdev->dev);
 
 	spin_lock_init(&bp->lock);
 
-	bp->regs = devm_platform_get_and_ioremap_resource(pdev, 0, &res);
-	if (IS_ERR(bp->regs)) {
+	bp->regs = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, &res);
+	अगर (IS_ERR(bp->regs)) अणु
 		err = PTR_ERR(bp->regs);
-		goto err_out_free_dev;
-	}
+		जाओ err_out_मुक्त_dev;
+	पूर्ण
 
 	dev->irq = irq;
-	err = request_irq(dev->irq, dnet_interrupt, 0, DRV_NAME, dev);
-	if (err) {
+	err = request_irq(dev->irq, dnet_पूर्णांकerrupt, 0, DRV_NAME, dev);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Unable to request IRQ %d (error %d)\n",
 		       irq, err);
-		goto err_out_free_dev;
-	}
+		जाओ err_out_मुक्त_dev;
+	पूर्ण
 
 	dev->netdev_ops = &dnet_netdev_ops;
-	netif_napi_add(dev, &bp->napi, dnet_poll, 64);
+	netअगर_napi_add(dev, &bp->napi, dnet_poll, 64);
 	dev->ethtool_ops = &dnet_ethtool_ops;
 
-	dev->base_addr = (unsigned long)bp->regs;
+	dev->base_addr = (अचिन्हित दीर्घ)bp->regs;
 
-	bp->capabilities = dnet_readl(bp, VERCAPS) & DNET_CAPS_MASK;
+	bp->capabilities = dnet_पढ़ोl(bp, VERCAPS) & DNET_CAPS_MASK;
 
 	dnet_get_hwaddr(bp);
 
-	if (!is_valid_ether_addr(dev->dev_addr)) {
-		/* choose a random ethernet address */
-		eth_hw_addr_random(dev);
+	अगर (!is_valid_ether_addr(dev->dev_addr)) अणु
+		/* choose a अक्रमom ethernet address */
+		eth_hw_addr_अक्रमom(dev);
 		__dnet_set_hwaddr(bp);
-	}
+	पूर्ण
 
-	err = register_netdev(dev);
-	if (err) {
+	err = रेजिस्टर_netdev(dev);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Cannot register net device, aborting.\n");
-		goto err_out_free_irq;
-	}
+		जाओ err_out_मुक्त_irq;
+	पूर्ण
 
-	/* register the PHY board fixup (for Marvell 88E1111) */
-	err = phy_register_fixup_for_uid(0x01410cc0, 0xfffffff0,
+	/* रेजिस्टर the PHY board fixup (क्रम Marvell 88E1111) */
+	err = phy_रेजिस्टर_fixup_क्रम_uid(0x01410cc0, 0xfffffff0,
 					 dnet_phy_marvell_fixup);
 	/* we can live without it, so just issue a warning */
-	if (err)
+	अगर (err)
 		dev_warn(&pdev->dev, "Cannot register PHY board fixup.\n");
 
 	err = dnet_mii_init(bp);
-	if (err)
-		goto err_out_unregister_netdev;
+	अगर (err)
+		जाओ err_out_unरेजिस्टर_netdev;
 
 	dev_info(&pdev->dev, "Dave DNET at 0x%p (0x%08x) irq %d %pM\n",
-	       bp->regs, (unsigned int)res->start, dev->irq, dev->dev_addr);
+	       bp->regs, (अचिन्हित पूर्णांक)res->start, dev->irq, dev->dev_addr);
 	dev_info(&pdev->dev, "has %smdio, %sirq, %sgigabit, %sdma\n",
 	       (bp->capabilities & DNET_HAS_MDIO) ? "" : "no ",
 	       (bp->capabilities & DNET_HAS_IRQ) ? "" : "no ",
@@ -830,48 +831,48 @@ static int dnet_probe(struct platform_device *pdev)
 	phydev = dev->phydev;
 	phy_attached_info(phydev);
 
-	return 0;
+	वापस 0;
 
-err_out_unregister_netdev:
-	unregister_netdev(dev);
-err_out_free_irq:
-	free_irq(dev->irq, dev);
-err_out_free_dev:
-	free_netdev(dev);
-	return err;
-}
+err_out_unरेजिस्टर_netdev:
+	unरेजिस्टर_netdev(dev);
+err_out_मुक्त_irq:
+	मुक्त_irq(dev->irq, dev);
+err_out_मुक्त_dev:
+	मुक्त_netdev(dev);
+	वापस err;
+पूर्ण
 
-static int dnet_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक dnet_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 
-	struct net_device *dev;
-	struct dnet *bp;
+	काष्ठा net_device *dev;
+	काष्ठा dnet *bp;
 
-	dev = platform_get_drvdata(pdev);
+	dev = platक्रमm_get_drvdata(pdev);
 
-	if (dev) {
+	अगर (dev) अणु
 		bp = netdev_priv(dev);
-		if (dev->phydev)
+		अगर (dev->phydev)
 			phy_disconnect(dev->phydev);
-		mdiobus_unregister(bp->mii_bus);
-		mdiobus_free(bp->mii_bus);
-		unregister_netdev(dev);
-		free_irq(dev->irq, dev);
-		free_netdev(dev);
-	}
+		mdiobus_unरेजिस्टर(bp->mii_bus);
+		mdiobus_मुक्त(bp->mii_bus);
+		unरेजिस्टर_netdev(dev);
+		मुक्त_irq(dev->irq, dev);
+		मुक्त_netdev(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver dnet_driver = {
+अटल काष्ठा platक्रमm_driver dnet_driver = अणु
 	.probe		= dnet_probe,
-	.remove		= dnet_remove,
-	.driver		= {
+	.हटाओ		= dnet_हटाओ,
+	.driver		= अणु
 		.name		= "dnet",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(dnet_driver);
+module_platक्रमm_driver(dnet_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Dave DNET Ethernet driver");

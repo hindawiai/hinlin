@@ -1,34 +1,35 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2018 Red Hat, Inc.
  * All rights reserved.
  */
 
-#ifndef __LIBXFS_AG_H
-#define __LIBXFS_AG_H 1
+#अगर_अघोषित __LIBXFS_AG_H
+#घोषणा __LIBXFS_AG_H 1
 
-struct xfs_mount;
-struct xfs_trans;
+काष्ठा xfs_mount;
+काष्ठा xfs_trans;
 
-struct aghdr_init_data {
+काष्ठा aghdr_init_data अणु
 	/* per ag data */
 	xfs_agblock_t		agno;		/* ag to init */
 	xfs_extlen_t		agsize;		/* new AG size */
-	struct list_head	buffer_list;	/* buffer writeback list */
-	xfs_rfsblock_t		nfree;		/* cumulative new free space */
+	काष्ठा list_head	buffer_list;	/* buffer ग_लिखोback list */
+	xfs_rfsblock_t		nमुक्त;		/* cumulative new मुक्त space */
 
 	/* per header data */
 	xfs_daddr_t		daddr;		/* header location */
-	size_t			numblks;	/* size of header */
+	माप_प्रकार			numblks;	/* size of header */
 	xfs_btnum_t		type;		/* type of btree root block */
-};
+पूर्ण;
 
-int xfs_ag_init_headers(struct xfs_mount *mp, struct aghdr_init_data *id);
-int xfs_ag_shrink_space(struct xfs_mount *mp, struct xfs_trans **tpp,
+पूर्णांक xfs_ag_init_headers(काष्ठा xfs_mount *mp, काष्ठा aghdr_init_data *id);
+पूर्णांक xfs_ag_shrink_space(काष्ठा xfs_mount *mp, काष्ठा xfs_trans **tpp,
 			xfs_agnumber_t agno, xfs_extlen_t delta);
-int xfs_ag_extend_space(struct xfs_mount *mp, struct xfs_trans *tp,
-			struct aghdr_init_data *id, xfs_extlen_t len);
-int xfs_ag_get_geometry(struct xfs_mount *mp, xfs_agnumber_t agno,
-			struct xfs_ag_geometry *ageo);
+पूर्णांक xfs_ag_extend_space(काष्ठा xfs_mount *mp, काष्ठा xfs_trans *tp,
+			काष्ठा aghdr_init_data *id, xfs_extlen_t len);
+पूर्णांक xfs_ag_get_geometry(काष्ठा xfs_mount *mp, xfs_agnumber_t agno,
+			काष्ठा xfs_ag_geometry *ageo);
 
-#endif /* __LIBXFS_AG_H */
+#पूर्ण_अगर /* __LIBXFS_AG_H */

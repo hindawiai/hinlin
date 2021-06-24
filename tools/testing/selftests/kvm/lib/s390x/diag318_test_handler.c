@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Test handler for the s390x DIAGNOSE 0x0318 instruction.
+ * Test handler क्रम the s390x DIAGNOSE 0x0318 inकाष्ठाion.
  *
  * Copyright (C) 2020, IBM
  */
 
-#include "test_util.h"
-#include "kvm_util.h"
+#समावेश "test_util.h"
+#समावेश "kvm_util.h"
 
-#define VCPU_ID	6
+#घोषणा VCPU_ID	6
 
-#define ICPT_INSTRUCTION	0x04
-#define IPA0_DIAG		0x8300
+#घोषणा ICPT_INSTRUCTION	0x04
+#घोषणा IPA0_DIAG		0x8300
 
-static void guest_code(void)
-{
-	uint64_t diag318_info = 0x12345678;
+अटल व्योम guest_code(व्योम)
+अणु
+	uपूर्णांक64_t diag318_info = 0x12345678;
 
-	asm volatile ("diag %0,0,0x318\n" : : "d" (diag318_info));
-}
+	यंत्र अस्थिर ("diag %0,0,0x318\n" : : "d" (diag318_info));
+पूर्ण
 
 /*
- * The DIAGNOSE 0x0318 instruction call must be handled via userspace. As such,
- * we create an ad-hoc VM here to handle the instruction then extract the
- * necessary data. It is up to the caller to decide what to do with that data.
+ * The DIAGNOSE 0x0318 inकाष्ठाion call must be handled via userspace. As such,
+ * we create an ad-hoc VM here to handle the inकाष्ठाion then extract the
+ * necessary data. It is up to the caller to decide what to करो with that data.
  */
-static uint64_t diag318_handler(void)
-{
-	struct kvm_vm *vm;
-	struct kvm_run *run;
-	uint64_t reg;
-	uint64_t diag318_info;
+अटल uपूर्णांक64_t diag318_handler(व्योम)
+अणु
+	काष्ठा kvm_vm *vm;
+	काष्ठा kvm_run *run;
+	uपूर्णांक64_t reg;
+	uपूर्णांक64_t diag318_info;
 
-	vm = vm_create_default(VCPU_ID, 0, guest_code);
+	vm = vm_create_शेष(VCPU_ID, 0, guest_code);
 	vcpu_run(vm, VCPU_ID);
 	run = vcpu_state(vm, VCPU_ID);
 
-	TEST_ASSERT(run->exit_reason == KVM_EXIT_S390_SIEIC,
+	TEST_ASSERT(run->निकास_reason == KVM_EXIT_S390_SIEIC,
 		    "DIAGNOSE 0x0318 instruction was not intercepted");
 	TEST_ASSERT(run->s390_sieic.icptcode == ICPT_INSTRUCTION,
 		    "Unexpected intercept code: 0x%x", run->s390_sieic.icptcode);
@@ -48,35 +49,35 @@ static uint64_t diag318_handler(void)
 
 	TEST_ASSERT(diag318_info != 0, "DIAGNOSE 0x0318 info not set");
 
-	kvm_vm_free(vm);
+	kvm_vm_मुक्त(vm);
 
-	return diag318_info;
-}
+	वापस diag318_info;
+पूर्ण
 
-uint64_t get_diag318_info(void)
-{
-	static uint64_t diag318_info;
-	static bool printed_skip;
+uपूर्णांक64_t get_diag318_info(व्योम)
+अणु
+	अटल uपूर्णांक64_t diag318_info;
+	अटल bool prपूर्णांकed_skip;
 
 	/*
-	 * If KVM does not support diag318, then return 0 to
-	 * ensure tests do not break.
+	 * If KVM करोes not support diag318, then वापस 0 to
+	 * ensure tests करो not अवरोध.
 	 */
-	if (!kvm_check_cap(KVM_CAP_S390_DIAG318)) {
-		if (!printed_skip) {
-			fprintf(stdout, "KVM_CAP_S390_DIAG318 not supported. "
+	अगर (!kvm_check_cap(KVM_CAP_S390_DIAG318)) अणु
+		अगर (!prपूर्णांकed_skip) अणु
+			ख_लिखो(मानक_निकास, "KVM_CAP_S390_DIAG318 not supported. "
 				"Skipping diag318 test.\n");
-			printed_skip = true;
-		}
-		return 0;
-	}
+			prपूर्णांकed_skip = true;
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * If a test has previously requested the diag318 info,
-	 * then don't bother spinning up a temporary VM again.
+	 * then करोn't bother spinning up a temporary VM again.
 	 */
-	if (!diag318_info)
+	अगर (!diag318_info)
 		diag318_info = diag318_handler();
 
-	return diag318_info;
-}
+	वापस diag318_info;
+पूर्ण

@@ -1,149 +1,150 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_POWERPC_ASM_PROTOTYPES_H
-#define _ASM_POWERPC_ASM_PROTOTYPES_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_POWERPC_ASM_PROTOTYPES_H
+#घोषणा _ASM_POWERPC_ASM_PROTOTYPES_H
 /*
- * This file is for prototypes of C functions that are only called
- * from asm, and any associated variables.
+ * This file is क्रम prototypes of C functions that are only called
+ * from यंत्र, and any associated variables.
  *
  * Copyright 2016, Daniel Axtens, IBM Corporation.
  */
 
-#include <linux/threads.h>
-#include <asm/cacheflush.h>
-#include <asm/checksum.h>
-#include <linux/uaccess.h>
-#include <asm/epapr_hcalls.h>
-#include <asm/dcr.h>
-#include <asm/mmu_context.h>
-#include <asm/ultravisor-api.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/checksum.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/epapr_hcalls.h>
+#समावेश <यंत्र/dcr.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/ultravisor-api.h>
 
-#include <uapi/asm/ucontext.h>
+#समावेश <uapi/यंत्र/ucontext.h>
 
 /* SMP */
-extern struct task_struct *current_set[NR_CPUS];
-extern struct task_struct *secondary_current;
-void start_secondary(void *unused);
+बाह्य काष्ठा task_काष्ठा *current_set[NR_CPUS];
+बाह्य काष्ठा task_काष्ठा *secondary_current;
+व्योम start_secondary(व्योम *unused);
 
 /* kexec */
-struct paca_struct;
-struct kimage;
-extern struct paca_struct kexec_paca;
-void kexec_copy_flush(struct kimage *image);
+काष्ठा paca_काष्ठा;
+काष्ठा kimage;
+बाह्य काष्ठा paca_काष्ठा kexec_paca;
+व्योम kexec_copy_flush(काष्ठा kimage *image);
 
 /* pseries hcall tracing */
-extern struct static_key hcall_tracepoint_key;
-void __trace_hcall_entry(unsigned long opcode, unsigned long *args);
-void __trace_hcall_exit(long opcode, long retval, unsigned long *retbuf);
+बाह्य काष्ठा अटल_key hcall_tracepoपूर्णांक_key;
+व्योम __trace_hcall_entry(अचिन्हित दीर्घ opcode, अचिन्हित दीर्घ *args);
+व्योम __trace_hcall_निकास(दीर्घ opcode, दीर्घ retval, अचिन्हित दीर्घ *retbuf);
 
 /* Ultravisor */
-#if defined(CONFIG_PPC_POWERNV) || defined(CONFIG_PPC_SVM)
-long ucall_norets(unsigned long opcode, ...);
-#else
-static inline long ucall_norets(unsigned long opcode, ...)
-{
-	return U_NOT_AVAILABLE;
-}
-#endif
+#अगर defined(CONFIG_PPC_POWERNV) || defined(CONFIG_PPC_SVM)
+दीर्घ ucall_norets(अचिन्हित दीर्घ opcode, ...);
+#अन्यथा
+अटल अंतरभूत दीर्घ ucall_norets(अचिन्हित दीर्घ opcode, ...)
+अणु
+	वापस U_NOT_AVAILABLE;
+पूर्ण
+#पूर्ण_अगर
 
 /* OPAL */
-int64_t __opal_call(int64_t a0, int64_t a1, int64_t a2, int64_t a3,
-		    int64_t a4, int64_t a5, int64_t a6, int64_t a7,
-		    int64_t opcode, uint64_t msr);
+पूर्णांक64_t __opal_call(पूर्णांक64_t a0, पूर्णांक64_t a1, पूर्णांक64_t a2, पूर्णांक64_t a3,
+		    पूर्णांक64_t a4, पूर्णांक64_t a5, पूर्णांक64_t a6, पूर्णांक64_t a7,
+		    पूर्णांक64_t opcode, uपूर्णांक64_t msr);
 
 /* VMX copying */
-int enter_vmx_usercopy(void);
-int exit_vmx_usercopy(void);
-int enter_vmx_ops(void);
-void *exit_vmx_ops(void *dest);
+पूर्णांक enter_vmx_usercopy(व्योम);
+पूर्णांक निकास_vmx_usercopy(व्योम);
+पूर्णांक enter_vmx_ops(व्योम);
+व्योम *निकास_vmx_ops(व्योम *dest);
 
-/* signals, syscalls and interrupts */
-long sys_swapcontext(struct ucontext __user *old_ctx,
-		    struct ucontext __user *new_ctx,
-		    long ctx_size);
-#ifdef CONFIG_PPC32
-long sys_debug_setcontext(struct ucontext __user *ctx,
-			  int ndbg, struct sig_dbg_op __user *dbg);
-int
-ppc_select(int n, fd_set __user *inp, fd_set __user *outp, fd_set __user *exp,
-	   struct __kernel_old_timeval __user *tvp);
-unsigned long __init early_init(unsigned long dt_ptr);
-void __init machine_init(u64 dt_ptr);
-#endif
-long system_call_exception(long r3, long r4, long r5, long r6, long r7, long r8, unsigned long r0, struct pt_regs *regs);
-notrace unsigned long syscall_exit_prepare(unsigned long r3, struct pt_regs *regs, long scv);
-notrace unsigned long interrupt_exit_user_prepare(struct pt_regs *regs, unsigned long msr);
-notrace unsigned long interrupt_exit_kernel_prepare(struct pt_regs *regs, unsigned long msr);
+/* संकेतs, syscalls and पूर्णांकerrupts */
+दीर्घ sys_swapcontext(काष्ठा ucontext __user *old_ctx,
+		    काष्ठा ucontext __user *new_ctx,
+		    दीर्घ ctx_size);
+#अगर_घोषित CONFIG_PPC32
+दीर्घ sys_debug_setcontext(काष्ठा ucontext __user *ctx,
+			  पूर्णांक ndbg, काष्ठा sig_dbg_op __user *dbg);
+पूर्णांक
+ppc_select(पूर्णांक n, fd_set __user *inp, fd_set __user *outp, fd_set __user *exp,
+	   काष्ठा __kernel_old_समयval __user *tvp);
+अचिन्हित दीर्घ __init early_init(अचिन्हित दीर्घ dt_ptr);
+व्योम __init machine_init(u64 dt_ptr);
+#पूर्ण_अगर
+दीर्घ प्रणाली_call_exception(दीर्घ r3, दीर्घ r4, दीर्घ r5, दीर्घ r6, दीर्घ r7, दीर्घ r8, अचिन्हित दीर्घ r0, काष्ठा pt_regs *regs);
+notrace अचिन्हित दीर्घ syscall_निकास_prepare(अचिन्हित दीर्घ r3, काष्ठा pt_regs *regs, दीर्घ scv);
+notrace अचिन्हित दीर्घ पूर्णांकerrupt_निकास_user_prepare(काष्ठा pt_regs *regs, अचिन्हित दीर्घ msr);
+notrace अचिन्हित दीर्घ पूर्णांकerrupt_निकास_kernel_prepare(काष्ठा pt_regs *regs, अचिन्हित दीर्घ msr);
 
-long ppc_fadvise64_64(int fd, int advice, u32 offset_high, u32 offset_low,
+दीर्घ ppc_fadvise64_64(पूर्णांक fd, पूर्णांक advice, u32 offset_high, u32 offset_low,
 		      u32 len_high, u32 len_low);
-long sys_switch_endian(void);
+दीर्घ sys_चयन_endian(व्योम);
 
 /* prom_init (OpenFirmware) */
-unsigned long __init prom_init(unsigned long r3, unsigned long r4,
-			       unsigned long pp,
-			       unsigned long r6, unsigned long r7,
-			       unsigned long kbase);
+अचिन्हित दीर्घ __init prom_init(अचिन्हित दीर्घ r3, अचिन्हित दीर्घ r4,
+			       अचिन्हित दीर्घ pp,
+			       अचिन्हित दीर्घ r6, अचिन्हित दीर्घ r7,
+			       अचिन्हित दीर्घ kbase);
 
 /* setup */
-void __init early_setup(unsigned long dt_ptr);
-void early_setup_secondary(void);
+व्योम __init early_setup(अचिन्हित दीर्घ dt_ptr);
+व्योम early_setup_secondary(व्योम);
 
-/* misc runtime */
-extern u64 __bswapdi2(u64);
-extern s64 __lshrdi3(s64, int);
-extern s64 __ashldi3(s64, int);
-extern s64 __ashrdi3(s64, int);
-extern int __cmpdi2(s64, s64);
-extern int __ucmpdi2(u64, u64);
+/* misc runसमय */
+बाह्य u64 __bswapdi2(u64);
+बाह्य s64 __lshrdi3(s64, पूर्णांक);
+बाह्य s64 __ashldi3(s64, पूर्णांक);
+बाह्य s64 __ashrdi3(s64, पूर्णांक);
+बाह्य पूर्णांक __cmpdi2(s64, s64);
+बाह्य पूर्णांक __ucmpdi2(u64, u64);
 
 /* tracing */
-void _mcount(void);
-unsigned long prepare_ftrace_return(unsigned long parent, unsigned long ip,
-						unsigned long sp);
+व्योम _mcount(व्योम);
+अचिन्हित दीर्घ prepare_ftrace_वापस(अचिन्हित दीर्घ parent, अचिन्हित दीर्घ ip,
+						अचिन्हित दीर्घ sp);
 
-void pnv_power9_force_smt4_catch(void);
-void pnv_power9_force_smt4_release(void);
+व्योम pnv_घातer9_क्रमce_smt4_catch(व्योम);
+व्योम pnv_घातer9_क्रमce_smt4_release(व्योम);
 
 /* Transaction memory related */
-void tm_enable(void);
-void tm_disable(void);
-void tm_abort(uint8_t cause);
+व्योम पंचांग_enable(व्योम);
+व्योम पंचांग_disable(व्योम);
+व्योम पंचांग_पात(uपूर्णांक8_t cause);
 
-struct kvm_vcpu;
-void _kvmppc_restore_tm_pr(struct kvm_vcpu *vcpu, u64 guest_msr);
-void _kvmppc_save_tm_pr(struct kvm_vcpu *vcpu, u64 guest_msr);
+काष्ठा kvm_vcpu;
+व्योम _kvmppc_restore_पंचांग_pr(काष्ठा kvm_vcpu *vcpu, u64 guest_msr);
+व्योम _kvmppc_save_पंचांग_pr(काष्ठा kvm_vcpu *vcpu, u64 guest_msr);
 
 /* Patch sites */
-extern s32 patch__call_flush_branch_caches1;
-extern s32 patch__call_flush_branch_caches2;
-extern s32 patch__call_flush_branch_caches3;
-extern s32 patch__flush_count_cache_return;
-extern s32 patch__flush_link_stack_return;
-extern s32 patch__call_kvm_flush_link_stack;
-extern s32 patch__memset_nocache, patch__memcpy_nocache;
+बाह्य s32 patch__call_flush_branch_caches1;
+बाह्य s32 patch__call_flush_branch_caches2;
+बाह्य s32 patch__call_flush_branch_caches3;
+बाह्य s32 patch__flush_count_cache_वापस;
+बाह्य s32 patch__flush_link_stack_वापस;
+बाह्य s32 patch__call_kvm_flush_link_stack;
+बाह्य s32 patch__स_रखो_nocache, patch__स_नकल_nocache;
 
-extern long flush_branch_caches;
-extern long kvm_flush_link_stack;
+बाह्य दीर्घ flush_branch_caches;
+बाह्य दीर्घ kvm_flush_link_stack;
 
-#ifdef CONFIG_PPC_TRANSACTIONAL_MEM
-void kvmppc_save_tm_hv(struct kvm_vcpu *vcpu, u64 msr, bool preserve_nv);
-void kvmppc_restore_tm_hv(struct kvm_vcpu *vcpu, u64 msr, bool preserve_nv);
-#else
-static inline void kvmppc_save_tm_hv(struct kvm_vcpu *vcpu, u64 msr,
-				     bool preserve_nv) { }
-static inline void kvmppc_restore_tm_hv(struct kvm_vcpu *vcpu, u64 msr,
-					bool preserve_nv) { }
-#endif /* CONFIG_PPC_TRANSACTIONAL_MEM */
+#अगर_घोषित CONFIG_PPC_TRANSACTIONAL_MEM
+व्योम kvmppc_save_पंचांग_hv(काष्ठा kvm_vcpu *vcpu, u64 msr, bool preserve_nv);
+व्योम kvmppc_restore_पंचांग_hv(काष्ठा kvm_vcpu *vcpu, u64 msr, bool preserve_nv);
+#अन्यथा
+अटल अंतरभूत व्योम kvmppc_save_पंचांग_hv(काष्ठा kvm_vcpu *vcpu, u64 msr,
+				     bool preserve_nv) अणु पूर्ण
+अटल अंतरभूत व्योम kvmppc_restore_पंचांग_hv(काष्ठा kvm_vcpu *vcpu, u64 msr,
+					bool preserve_nv) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_TRANSACTIONAL_MEM */
 
-void kvmhv_save_host_pmu(void);
-void kvmhv_load_host_pmu(void);
-void kvmhv_save_guest_pmu(struct kvm_vcpu *vcpu, bool pmu_in_use);
-void kvmhv_load_guest_pmu(struct kvm_vcpu *vcpu);
+व्योम kvmhv_save_host_pmu(व्योम);
+व्योम kvmhv_load_host_pmu(व्योम);
+व्योम kvmhv_save_guest_pmu(काष्ठा kvm_vcpu *vcpu, bool pmu_in_use);
+व्योम kvmhv_load_guest_pmu(काष्ठा kvm_vcpu *vcpu);
 
-int __kvmhv_vcpu_entry_p9(struct kvm_vcpu *vcpu);
+पूर्णांक __kvmhv_vcpu_entry_p9(काष्ठा kvm_vcpu *vcpu);
 
-long kvmppc_h_set_dabr(struct kvm_vcpu *vcpu, unsigned long dabr);
-long kvmppc_h_set_xdabr(struct kvm_vcpu *vcpu, unsigned long dabr,
-			unsigned long dabrx);
+दीर्घ kvmppc_h_set_dabr(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ dabr);
+दीर्घ kvmppc_h_set_xdabr(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ dabr,
+			अचिन्हित दीर्घ dabrx);
 
-#endif /* _ASM_POWERPC_ASM_PROTOTYPES_H */
+#पूर्ण_अगर /* _ASM_POWERPC_ASM_PROTOTYPES_H */

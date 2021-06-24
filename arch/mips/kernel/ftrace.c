@@ -1,131 +1,132 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Code for replacing ftrace calls with jumps.
+ * Code क्रम replacing ftrace calls with jumps.
  *
  * Copyright (C) 2007-2008 Steven Rostedt <srostedt@redhat.com>
  * Copyright (C) 2009, 2010 DSLab, Lanzhou University, China
  * Author: Wu Zhangjin <wuzhangjin@gmail.com>
  *
- * Thanks goes to Steven Rostedt for writing the original x86 version.
+ * Thanks goes to Steven Rostedt क्रम writing the original x86 version.
  */
 
-#include <linux/uaccess.h>
-#include <linux/init.h>
-#include <linux/ftrace.h>
-#include <linux/syscalls.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ftrace.h>
+#समावेश <linux/syscalls.h>
 
-#include <asm/asm.h>
-#include <asm/asm-offsets.h>
-#include <asm/cacheflush.h>
-#include <asm/syscall.h>
-#include <asm/uasm.h>
-#include <asm/unistd.h>
+#समावेश <यंत्र/यंत्र.h>
+#समावेश <यंत्र/यंत्र-offsets.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/syscall.h>
+#समावेश <यंत्र/uयंत्र.h>
+#समावेश <यंत्र/unistd.h>
 
-#include <asm-generic/sections.h>
+#समावेश <यंत्र-generic/sections.h>
 
-#if defined(KBUILD_MCOUNT_RA_ADDRESS) && defined(CONFIG_32BIT)
-#define MCOUNT_OFFSET_INSNS 5
-#else
-#define MCOUNT_OFFSET_INSNS 4
-#endif
+#अगर defined(KBUILD_MCOUNT_RA_ADDRESS) && defined(CONFIG_32BIT)
+#घोषणा MCOUNT_OFFSET_INSNS 5
+#अन्यथा
+#घोषणा MCOUNT_OFFSET_INSNS 4
+#पूर्ण_अगर
 
-#ifdef CONFIG_DYNAMIC_FTRACE
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
 
-/* Arch override because MIPS doesn't need to run this from stop_machine() */
-void arch_ftrace_update_code(int command)
-{
-	ftrace_modify_all_code(command);
-}
+/* Arch override because MIPS करोesn't need to run this from stop_machine() */
+व्योम arch_ftrace_update_code(पूर्णांक command)
+अणु
+	ftrace_modअगरy_all_code(command);
+पूर्ण
 
-#define JAL 0x0c000000		/* jump & link: ip --> ra, jump to target */
-#define ADDR_MASK 0x03ffffff	/*  op_code|addr : 31...26|25 ....0 */
-#define JUMP_RANGE_MASK ((1UL << 28) - 1)
+#घोषणा JAL 0x0c000000		/* jump & link: ip --> ra, jump to target */
+#घोषणा ADDR_MASK 0x03ffffff	/*  op_code|addr : 31...26|25 ....0 */
+#घोषणा JUMP_RANGE_MASK ((1UL << 28) - 1)
 
-#define INSN_NOP 0x00000000	/* nop */
-#define INSN_JAL(addr)	\
-	((unsigned int)(JAL | (((addr) >> 2) & ADDR_MASK)))
+#घोषणा INSN_NOP 0x00000000	/* nop */
+#घोषणा INSN_JAL(addr)	\
+	((अचिन्हित पूर्णांक)(JAL | (((addr) >> 2) & ADDR_MASK)))
 
-static unsigned int insn_jal_ftrace_caller __read_mostly;
-static unsigned int insn_la_mcount[2] __read_mostly;
-static unsigned int insn_j_ftrace_graph_caller __maybe_unused __read_mostly;
+अटल अचिन्हित पूर्णांक insn_jal_ftrace_caller __पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक insn_la_mcount[2] __पढ़ो_mostly;
+अटल अचिन्हित पूर्णांक insn_j_ftrace_graph_caller __maybe_unused __पढ़ो_mostly;
 
-static inline void ftrace_dyn_arch_init_insns(void)
-{
+अटल अंतरभूत व्योम ftrace_dyn_arch_init_insns(व्योम)
+अणु
 	u32 *buf;
-	unsigned int v1;
+	अचिन्हित पूर्णांक v1;
 
 	/* la v1, _mcount */
 	v1 = 3;
 	buf = (u32 *)&insn_la_mcount[0];
 	UASM_i_LA(&buf, v1, MCOUNT_ADDR);
 
-	/* jal (ftrace_caller + 8), jump over the first two instruction */
+	/* jal (ftrace_caller + 8), jump over the first two inकाष्ठाion */
 	buf = (u32 *)&insn_jal_ftrace_caller;
-	uasm_i_jal(&buf, (FTRACE_ADDR + 8) & JUMP_RANGE_MASK);
+	uयंत्र_i_jal(&buf, (FTRACE_ADDR + 8) & JUMP_RANGE_MASK);
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
 	/* j ftrace_graph_caller */
 	buf = (u32 *)&insn_j_ftrace_graph_caller;
-	uasm_i_j(&buf, (unsigned long)ftrace_graph_caller & JUMP_RANGE_MASK);
-#endif
-}
+	uयंत्र_i_j(&buf, (अचिन्हित दीर्घ)ftrace_graph_caller & JUMP_RANGE_MASK);
+#पूर्ण_अगर
+पूर्ण
 
-static int ftrace_modify_code(unsigned long ip, unsigned int new_code)
-{
-	int faulted;
+अटल पूर्णांक ftrace_modअगरy_code(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक new_code)
+अणु
+	पूर्णांक faulted;
 
-	/* *(unsigned int *)ip = new_code; */
+	/* *(अचिन्हित पूर्णांक *)ip = new_code; */
 	safe_store_code(new_code, ip, faulted);
 
-	if (unlikely(faulted))
-		return -EFAULT;
+	अगर (unlikely(faulted))
+		वापस -EFAULT;
 
 	flush_icache_range(ip, ip + 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifndef CONFIG_64BIT
-static int ftrace_modify_code_2(unsigned long ip, unsigned int new_code1,
-				unsigned int new_code2)
-{
-	int faulted;
+#अगर_अघोषित CONFIG_64BIT
+अटल पूर्णांक ftrace_modअगरy_code_2(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक new_code1,
+				अचिन्हित पूर्णांक new_code2)
+अणु
+	पूर्णांक faulted;
 
 	safe_store_code(new_code1, ip, faulted);
-	if (unlikely(faulted))
-		return -EFAULT;
+	अगर (unlikely(faulted))
+		वापस -EFAULT;
 
 	ip += 4;
 	safe_store_code(new_code2, ip, faulted);
-	if (unlikely(faulted))
-		return -EFAULT;
+	अगर (unlikely(faulted))
+		वापस -EFAULT;
 
 	ip -= 4;
 	flush_icache_range(ip, ip + 8);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ftrace_modify_code_2r(unsigned long ip, unsigned int new_code1,
-				 unsigned int new_code2)
-{
-	int faulted;
+अटल पूर्णांक ftrace_modअगरy_code_2r(अचिन्हित दीर्घ ip, अचिन्हित पूर्णांक new_code1,
+				 अचिन्हित पूर्णांक new_code2)
+अणु
+	पूर्णांक faulted;
 
 	ip += 4;
 	safe_store_code(new_code2, ip, faulted);
-	if (unlikely(faulted))
-		return -EFAULT;
+	अगर (unlikely(faulted))
+		वापस -EFAULT;
 
 	ip -= 4;
 	safe_store_code(new_code1, ip, faulted);
-	if (unlikely(faulted))
-		return -EFAULT;
+	अगर (unlikely(faulted))
+		वापस -EFAULT;
 
 	flush_icache_range(ip, ip + 8);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * The details about the calling site of mcount on MIPS
@@ -146,7 +147,7 @@ static int ftrace_modify_code_2r(unsigned long ip, unsigned int new_code1,
  * move $12, ra_address
  * jalr v1
  *  sub sp, sp, 8
- *				    1: offset = 5 instructions
+ *				    1: offset = 5 inकाष्ठाions
  * 2.2 For the Other situations
  *
  * lui v1, hi_16bit_of_mcount	     --> b 1f (0x10000004)
@@ -154,249 +155,249 @@ static int ftrace_modify_code_2r(unsigned long ip, unsigned int new_code1,
  * move at, ra
  * jalr v1
  *  nop | move $12, ra_address | sub sp, sp, 8
- *				    1: offset = 4 instructions
+ *				    1: offset = 4 inकाष्ठाions
  */
 
-#define INSN_B_1F (0x10000000 | MCOUNT_OFFSET_INSNS)
+#घोषणा INSN_B_1F (0x10000000 | MCOUNT_OFFSET_INSNS)
 
-int ftrace_make_nop(struct module *mod,
-		    struct dyn_ftrace *rec, unsigned long addr)
-{
-	unsigned int new;
-	unsigned long ip = rec->ip;
+पूर्णांक ftrace_make_nop(काष्ठा module *mod,
+		    काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
+अणु
+	अचिन्हित पूर्णांक new;
+	अचिन्हित दीर्घ ip = rec->ip;
 
 	/*
-	 * If ip is in kernel space, no long call, otherwise, long call is
+	 * If ip is in kernel space, no दीर्घ call, otherwise, दीर्घ call is
 	 * needed.
 	 */
 	new = core_kernel_text(ip) ? INSN_NOP : INSN_B_1F;
-#ifdef CONFIG_64BIT
-	return ftrace_modify_code(ip, new);
-#else
+#अगर_घोषित CONFIG_64BIT
+	वापस ftrace_modअगरy_code(ip, new);
+#अन्यथा
 	/*
-	 * On 32 bit MIPS platforms, gcc adds a stack adjust
-	 * instruction in the delay slot after the branch to
-	 * mcount and expects mcount to restore the sp on return.
-	 * This is based on a legacy API and does nothing but
-	 * waste instructions so it's being removed at runtime.
+	 * On 32 bit MIPS platक्रमms, gcc adds a stack adjust
+	 * inकाष्ठाion in the delay slot after the branch to
+	 * mcount and expects mcount to restore the sp on वापस.
+	 * This is based on a legacy API and करोes nothing but
+	 * waste inकाष्ठाions so it's being हटाओd at runसमय.
 	 */
-	return ftrace_modify_code_2(ip, new, INSN_NOP);
-#endif
-}
+	वापस ftrace_modअगरy_code_2(ip, new, INSN_NOP);
+#पूर्ण_अगर
+पूर्ण
 
-int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
-{
-	unsigned int new;
-	unsigned long ip = rec->ip;
+पूर्णांक ftrace_make_call(काष्ठा dyn_ftrace *rec, अचिन्हित दीर्घ addr)
+अणु
+	अचिन्हित पूर्णांक new;
+	अचिन्हित दीर्घ ip = rec->ip;
 
 	new = core_kernel_text(ip) ? insn_jal_ftrace_caller : insn_la_mcount[0];
 
-#ifdef CONFIG_64BIT
-	return ftrace_modify_code(ip, new);
-#else
-	return ftrace_modify_code_2r(ip, new, core_kernel_text(ip) ?
+#अगर_घोषित CONFIG_64BIT
+	वापस ftrace_modअगरy_code(ip, new);
+#अन्यथा
+	वापस ftrace_modअगरy_code_2r(ip, new, core_kernel_text(ip) ?
 						INSN_NOP : insn_la_mcount[1]);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#define FTRACE_CALL_IP ((unsigned long)(&ftrace_call))
+#घोषणा FTRACE_CALL_IP ((अचिन्हित दीर्घ)(&ftrace_call))
 
-int ftrace_update_ftrace_func(ftrace_func_t func)
-{
-	unsigned int new;
+पूर्णांक ftrace_update_ftrace_func(ftrace_func_t func)
+अणु
+	अचिन्हित पूर्णांक new;
 
-	new = INSN_JAL((unsigned long)func);
+	new = INSN_JAL((अचिन्हित दीर्घ)func);
 
-	return ftrace_modify_code(FTRACE_CALL_IP, new);
-}
+	वापस ftrace_modअगरy_code(FTRACE_CALL_IP, new);
+पूर्ण
 
-int __init ftrace_dyn_arch_init(void)
-{
-	/* Encode the instructions when booting */
+पूर्णांक __init ftrace_dyn_arch_init(व्योम)
+अणु
+	/* Encode the inकाष्ठाions when booting */
 	ftrace_dyn_arch_init_insns();
 
 	/* Remove "b ftrace_stub" to ensure ftrace_caller() is executed */
-	ftrace_modify_code(MCOUNT_ADDR, INSN_NOP);
+	ftrace_modअगरy_code(MCOUNT_ADDR, INSN_NOP);
 
-	return 0;
-}
-#endif	/* CONFIG_DYNAMIC_FTRACE */
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_DYNAMIC_FTRACE */
 
-#ifdef CONFIG_FUNCTION_GRAPH_TRACER
+#अगर_घोषित CONFIG_FUNCTION_GRAPH_TRACER
 
-#ifdef CONFIG_DYNAMIC_FTRACE
+#अगर_घोषित CONFIG_DYNAMIC_FTRACE
 
-extern void ftrace_graph_call(void);
-#define FTRACE_GRAPH_CALL_IP	((unsigned long)(&ftrace_graph_call))
+बाह्य व्योम ftrace_graph_call(व्योम);
+#घोषणा FTRACE_GRAPH_CALL_IP	((अचिन्हित दीर्घ)(&ftrace_graph_call))
 
-int ftrace_enable_ftrace_graph_caller(void)
-{
-	return ftrace_modify_code(FTRACE_GRAPH_CALL_IP,
+पूर्णांक ftrace_enable_ftrace_graph_caller(व्योम)
+अणु
+	वापस ftrace_modअगरy_code(FTRACE_GRAPH_CALL_IP,
 			insn_j_ftrace_graph_caller);
-}
+पूर्ण
 
-int ftrace_disable_ftrace_graph_caller(void)
-{
-	return ftrace_modify_code(FTRACE_GRAPH_CALL_IP, INSN_NOP);
-}
+पूर्णांक ftrace_disable_ftrace_graph_caller(व्योम)
+अणु
+	वापस ftrace_modअगरy_code(FTRACE_GRAPH_CALL_IP, INSN_NOP);
+पूर्ण
 
-#endif	/* CONFIG_DYNAMIC_FTRACE */
+#पूर्ण_अगर	/* CONFIG_DYNAMIC_FTRACE */
 
-#ifndef KBUILD_MCOUNT_RA_ADDRESS
+#अगर_अघोषित KBUILD_MCOUNT_RA_ADDRESS
 
-#define S_RA_SP (0xafbf << 16)	/* s{d,w} ra, offset(sp) */
-#define S_R_SP	(0xafb0 << 16)	/* s{d,w} R, offset(sp) */
-#define OFFSET_MASK	0xffff	/* stack offset range: 0 ~ PT_SIZE */
+#घोषणा S_RA_SP (0xafbf << 16)	/* sअणुd,wपूर्ण ra, offset(sp) */
+#घोषणा S_R_SP	(0xafb0 << 16)	/* sअणुd,wपूर्ण R, offset(sp) */
+#घोषणा OFFSET_MASK	0xffff	/* stack offset range: 0 ~ PT_SIZE */
 
-unsigned long ftrace_get_parent_ra_addr(unsigned long self_ra, unsigned long
-		old_parent_ra, unsigned long parent_ra_addr, unsigned long fp)
-{
-	unsigned long sp, ip, tmp;
-	unsigned int code;
-	int faulted;
+अचिन्हित दीर्घ ftrace_get_parent_ra_addr(अचिन्हित दीर्घ self_ra, अचिन्हित दीर्घ
+		old_parent_ra, अचिन्हित दीर्घ parent_ra_addr, अचिन्हित दीर्घ fp)
+अणु
+	अचिन्हित दीर्घ sp, ip, पंचांगp;
+	अचिन्हित पूर्णांक code;
+	पूर्णांक faulted;
 
 	/*
-	 * For module, move the ip from the return address after the
-	 * instruction "lui v1, hi_16bit_of_mcount"(offset is 24), but for
-	 * kernel, move after the instruction "move ra, at"(offset is 16)
+	 * For module, move the ip from the वापस address after the
+	 * inकाष्ठाion "lui v1, hi_16bit_of_mcount"(offset is 24), but क्रम
+	 * kernel, move after the inकाष्ठाion "move ra, at"(offset is 16)
 	 */
 	ip = self_ra - (core_kernel_text(self_ra) ? 16 : 24);
 
 	/*
-	 * search the text until finding the non-store instruction or "s{d,w}
-	 * ra, offset(sp)" instruction
+	 * search the text until finding the non-store inकाष्ठाion or "sअणुd,wपूर्ण
+	 * ra, offset(sp)" inकाष्ठाion
 	 */
-	do {
-		/* get the code at "ip": code = *(unsigned int *)ip; */
+	करो अणु
+		/* get the code at "ip": code = *(अचिन्हित पूर्णांक *)ip; */
 		safe_load_code(code, ip, faulted);
 
-		if (unlikely(faulted))
-			return 0;
+		अगर (unlikely(faulted))
+			वापस 0;
 		/*
-		 * If we hit the non-store instruction before finding where the
-		 * ra is stored, then this is a leaf function and it does not
+		 * If we hit the non-store inकाष्ठाion beक्रमe finding where the
+		 * ra is stored, then this is a leaf function and it करोes not
 		 * store the ra on the stack
 		 */
-		if ((code & S_R_SP) != S_R_SP)
-			return parent_ra_addr;
+		अगर ((code & S_R_SP) != S_R_SP)
+			वापस parent_ra_addr;
 
-		/* Move to the next instruction */
+		/* Move to the next inकाष्ठाion */
 		ip -= 4;
-	} while ((code & S_RA_SP) != S_RA_SP);
+	पूर्ण जबतक ((code & S_RA_SP) != S_RA_SP);
 
 	sp = fp + (code & OFFSET_MASK);
 
-	/* tmp = *(unsigned long *)sp; */
-	safe_load_stack(tmp, sp, faulted);
-	if (unlikely(faulted))
-		return 0;
+	/* पंचांगp = *(अचिन्हित दीर्घ *)sp; */
+	safe_load_stack(पंचांगp, sp, faulted);
+	अगर (unlikely(faulted))
+		वापस 0;
 
-	if (tmp == old_parent_ra)
-		return sp;
-	return 0;
-}
+	अगर (पंचांगp == old_parent_ra)
+		वापस sp;
+	वापस 0;
+पूर्ण
 
-#endif	/* !KBUILD_MCOUNT_RA_ADDRESS */
+#पूर्ण_अगर	/* !KBUILD_MCOUNT_RA_ADDRESS */
 
 /*
- * Hook the return address and push it in the stack of return addrs
- * in current thread info.
+ * Hook the वापस address and push it in the stack of वापस addrs
+ * in current thपढ़ो info.
  */
-void prepare_ftrace_return(unsigned long *parent_ra_addr, unsigned long self_ra,
-			   unsigned long fp)
-{
-	unsigned long old_parent_ra;
-	unsigned long return_hooker = (unsigned long)
-	    &return_to_handler;
-	int faulted, insns;
+व्योम prepare_ftrace_वापस(अचिन्हित दीर्घ *parent_ra_addr, अचिन्हित दीर्घ self_ra,
+			   अचिन्हित दीर्घ fp)
+अणु
+	अचिन्हित दीर्घ old_parent_ra;
+	अचिन्हित दीर्घ वापस_hooker = (अचिन्हित दीर्घ)
+	    &वापस_to_handler;
+	पूर्णांक faulted, insns;
 
-	if (unlikely(ftrace_graph_is_dead()))
-		return;
+	अगर (unlikely(ftrace_graph_is_dead()))
+		वापस;
 
-	if (unlikely(atomic_read(&current->tracing_graph_pause)))
-		return;
+	अगर (unlikely(atomic_पढ़ो(&current->tracing_graph_छोड़ो)))
+		वापस;
 
 	/*
-	 * "parent_ra_addr" is the stack address where the return address of
+	 * "parent_ra_addr" is the stack address where the वापस address of
 	 * the caller of _mcount is saved.
 	 *
-	 * If gcc < 4.5, a leaf function does not save the return address
+	 * If gcc < 4.5, a leaf function करोes not save the वापस address
 	 * in the stack address, so we "emulate" one in _mcount's stack space,
 	 * and hijack it directly.
-	 * For a non-leaf function, it does save the return address to its own
+	 * For a non-leaf function, it करोes save the वापस address to its own
 	 * stack space, so we can not hijack it directly, but need to find the
-	 * real stack address, which is done by ftrace_get_parent_addr().
+	 * real stack address, which is करोne by ftrace_get_parent_addr().
 	 *
-	 * If gcc >= 4.5, with the new -mmcount-ra-address option, for a
-	 * non-leaf function, the location of the return address will be saved
-	 * to $12 for us.
-	 * For a leaf function, it just puts a zero into $12, so we handle
+	 * If gcc >= 4.5, with the new -mmcount-ra-address option, क्रम a
+	 * non-leaf function, the location of the वापस address will be saved
+	 * to $12 क्रम us.
+	 * For a leaf function, it just माला_दो a zero पूर्णांकo $12, so we handle
 	 * it in ftrace_graph_caller() of mcount.S.
 	 */
 
 	/* old_parent_ra = *parent_ra_addr; */
 	safe_load_stack(old_parent_ra, parent_ra_addr, faulted);
-	if (unlikely(faulted))
-		goto out;
-#ifndef KBUILD_MCOUNT_RA_ADDRESS
-	parent_ra_addr = (unsigned long *)ftrace_get_parent_ra_addr(self_ra,
-			old_parent_ra, (unsigned long)parent_ra_addr, fp);
+	अगर (unlikely(faulted))
+		जाओ out;
+#अगर_अघोषित KBUILD_MCOUNT_RA_ADDRESS
+	parent_ra_addr = (अचिन्हित दीर्घ *)ftrace_get_parent_ra_addr(self_ra,
+			old_parent_ra, (अचिन्हित दीर्घ)parent_ra_addr, fp);
 	/*
 	 * If fails when getting the stack address of the non-leaf function's
-	 * ra, stop function graph tracer and return
+	 * ra, stop function graph tracer and वापस
 	 */
-	if (parent_ra_addr == NULL)
-		goto out;
-#endif
-	/* *parent_ra_addr = return_hooker; */
-	safe_store_stack(return_hooker, parent_ra_addr, faulted);
-	if (unlikely(faulted))
-		goto out;
+	अगर (parent_ra_addr == शून्य)
+		जाओ out;
+#पूर्ण_अगर
+	/* *parent_ra_addr = वापस_hooker; */
+	safe_store_stack(वापस_hooker, parent_ra_addr, faulted);
+	अगर (unlikely(faulted))
+		जाओ out;
 
 	/*
 	 * Get the recorded ip of the current mcount calling site in the
 	 * __mcount_loc section, which will be used to filter the function
-	 * entries configured through the tracing/set_graph_function interface.
+	 * entries configured through the tracing/set_graph_function पूर्णांकerface.
 	 */
 
 	insns = core_kernel_text(self_ra) ? 2 : MCOUNT_OFFSET_INSNS + 1;
 	self_ra -= (MCOUNT_INSN_SIZE * insns);
 
-	if (function_graph_enter(old_parent_ra, self_ra, fp, NULL))
+	अगर (function_graph_enter(old_parent_ra, self_ra, fp, शून्य))
 		*parent_ra_addr = old_parent_ra;
-	return;
+	वापस;
 out:
 	ftrace_graph_stop();
 	WARN_ON(1);
-}
-#endif	/* CONFIG_FUNCTION_GRAPH_TRACER */
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_FUNCTION_GRAPH_TRACER */
 
-#ifdef CONFIG_FTRACE_SYSCALLS
+#अगर_घोषित CONFIG_FTRACE_SYSCALLS
 
-#ifdef CONFIG_32BIT
-unsigned long __init arch_syscall_addr(int nr)
-{
-	return (unsigned long)sys_call_table[nr - __NR_O32_Linux];
-}
-#endif
+#अगर_घोषित CONFIG_32BIT
+अचिन्हित दीर्घ __init arch_syscall_addr(पूर्णांक nr)
+अणु
+	वापस (अचिन्हित दीर्घ)sys_call_table[nr - __NR_O32_Linux];
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 
-unsigned long __init arch_syscall_addr(int nr)
-{
-#ifdef CONFIG_MIPS32_N32
-	if (nr >= __NR_N32_Linux && nr < __NR_N32_Linux + __NR_N32_Linux_syscalls)
-		return (unsigned long)sysn32_call_table[nr - __NR_N32_Linux];
-#endif
-	if (nr >= __NR_64_Linux  && nr < __NR_64_Linux + __NR_64_Linux_syscalls)
-		return (unsigned long)sys_call_table[nr - __NR_64_Linux];
-#ifdef CONFIG_MIPS32_O32
-	if (nr >= __NR_O32_Linux && nr < __NR_O32_Linux + __NR_O32_Linux_syscalls)
-		return (unsigned long)sys32_call_table[nr - __NR_O32_Linux];
-#endif
+अचिन्हित दीर्घ __init arch_syscall_addr(पूर्णांक nr)
+अणु
+#अगर_घोषित CONFIG_MIPS32_N32
+	अगर (nr >= __NR_N32_Linux && nr < __NR_N32_Linux + __NR_N32_Linux_syscalls)
+		वापस (अचिन्हित दीर्घ)sysn32_call_table[nr - __NR_N32_Linux];
+#पूर्ण_अगर
+	अगर (nr >= __NR_64_Linux  && nr < __NR_64_Linux + __NR_64_Linux_syscalls)
+		वापस (अचिन्हित दीर्घ)sys_call_table[nr - __NR_64_Linux];
+#अगर_घोषित CONFIG_MIPS32_O32
+	अगर (nr >= __NR_O32_Linux && nr < __NR_O32_Linux + __NR_O32_Linux_syscalls)
+		वापस (अचिन्हित दीर्घ)sys32_call_table[nr - __NR_O32_Linux];
+#पूर्ण_अगर
 
-	return (unsigned long) &sys_ni_syscall;
-}
-#endif
+	वापस (अचिन्हित दीर्घ) &sys_ni_syscall;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* CONFIG_FTRACE_SYSCALLS */
+#पूर्ण_अगर /* CONFIG_FTRACE_SYSCALLS */

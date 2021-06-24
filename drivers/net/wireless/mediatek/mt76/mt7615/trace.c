@@ -1,12 +1,13 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 /*
  * Copyright (C) 2019 Lorenzo Bianconi <lorenzo@kernel.org>
  */
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#ifndef __CHECKER__
-#define CREATE_TRACE_POINTS
-#include "mt7615_trace.h"
+#अगर_अघोषित __CHECKER__
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "mt7615_trace.h"
 
-#endif
+#पूर्ण_अगर

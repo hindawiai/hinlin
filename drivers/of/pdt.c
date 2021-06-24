@@ -1,155 +1,156 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* pdt.c: OF PROM device tree support code.
  *
  * Paul Mackerras	August 1996.
  * Copyright (C) 1996-2005 Paul Mackerras.
  *
- *  Adapted for 64bit PowerPC by Dave Engebretsen and Peter Bergner.
- *    {engebret|bergner}@us.ibm.com
+ *  Adapted क्रम 64bit PowerPC by Dave Engebretsen and Peter Bergner.
+ *    अणुengebret|bergnerपूर्ण@us.ibm.com
  *
- *  Adapted for sparc by David S. Miller davem@davemloft.net
- *  Adapted for multiple architectures by Andres Salomon <dilinger@queued.net>
+ *  Adapted क्रम sparc by David S. Miller davem@davemloft.net
+ *  Adapted क्रम multiple architectures by Andres Salomon <dilinger@queued.net>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/of.h>
-#include <linux/of_pdt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_pdt.h>
 
-static struct of_pdt_ops *of_pdt_prom_ops __initdata;
+अटल काष्ठा of_pdt_ops *of_pdt_prom_ops __initdata;
 
-#if defined(CONFIG_SPARC)
-unsigned int of_pdt_unique_id __initdata;
+#अगर defined(CONFIG_SPARC)
+अचिन्हित पूर्णांक of_pdt_unique_id __initdata;
 
-#define of_pdt_incr_unique_id(p) do { \
+#घोषणा of_pdt_incr_unique_id(p) करो अणु \
 	(p)->unique_id = of_pdt_unique_id++; \
-} while (0)
+पूर्ण जबतक (0)
 
-static char * __init of_pdt_build_full_name(struct device_node *dp)
-{
-	return build_path_component(dp);
-}
+अटल अक्षर * __init of_pdt_build_full_name(काष्ठा device_node *dp)
+अणु
+	वापस build_path_component(dp);
+पूर्ण
 
-#else /* CONFIG_SPARC */
+#अन्यथा /* CONFIG_SPARC */
 
-static inline void of_pdt_incr_unique_id(void *p) { }
-static inline void irq_trans_init(struct device_node *dp) { }
+अटल अंतरभूत व्योम of_pdt_incr_unique_id(व्योम *p) अणु पूर्ण
+अटल अंतरभूत व्योम irq_trans_init(काष्ठा device_node *dp) अणु पूर्ण
 
-static char * __init of_pdt_build_full_name(struct device_node *dp)
-{
-	static int failsafe_id = 0; /* for generating unique names on failure */
-	const char *name;
-	char path[256];
-	char *buf;
-	int len;
+अटल अक्षर * __init of_pdt_build_full_name(काष्ठा device_node *dp)
+अणु
+	अटल पूर्णांक failsafe_id = 0; /* क्रम generating unique names on failure */
+	स्थिर अक्षर *name;
+	अक्षर path[256];
+	अक्षर *buf;
+	पूर्णांक len;
 
-	if (!of_pdt_prom_ops->pkg2path(dp->phandle, path, sizeof(path), &len)) {
+	अगर (!of_pdt_prom_ops->pkg2path(dp->phandle, path, माप(path), &len)) अणु
 		name = kbasename(path);
-		buf = prom_early_alloc(strlen(name) + 1);
-		strcpy(buf, name);
-		return buf;
-	}
+		buf = prom_early_alloc(म_माप(name) + 1);
+		म_नकल(buf, name);
+		वापस buf;
+	पूर्ण
 
 	name = of_get_property(dp, "name", &len);
 	buf = prom_early_alloc(len + 16);
-	sprintf(buf, "%s@unknown%i", name, failsafe_id++);
+	प्र_लिखो(buf, "%s@unknown%i", name, failsafe_id++);
 	pr_err("%s: pkg2path failed; assigning %s\n", __func__, buf);
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-#endif /* !CONFIG_SPARC */
+#पूर्ण_अगर /* !CONFIG_SPARC */
 
-static struct property * __init of_pdt_build_one_prop(phandle node, char *prev,
-					       char *special_name,
-					       void *special_val,
-					       int special_len)
-{
-	static struct property *tmp = NULL;
-	struct property *p;
-	int err;
+अटल काष्ठा property * __init of_pdt_build_one_prop(phandle node, अक्षर *prev,
+					       अक्षर *special_name,
+					       व्योम *special_val,
+					       पूर्णांक special_len)
+अणु
+	अटल काष्ठा property *पंचांगp = शून्य;
+	काष्ठा property *p;
+	पूर्णांक err;
 
-	if (tmp) {
-		p = tmp;
-		memset(p, 0, sizeof(*p) + 32);
-		tmp = NULL;
-	} else {
-		p = prom_early_alloc(sizeof(struct property) + 32);
+	अगर (पंचांगp) अणु
+		p = पंचांगp;
+		स_रखो(p, 0, माप(*p) + 32);
+		पंचांगp = शून्य;
+	पूर्ण अन्यथा अणु
+		p = prom_early_alloc(माप(काष्ठा property) + 32);
 		of_pdt_incr_unique_id(p);
-	}
+	पूर्ण
 
-	p->name = (char *) (p + 1);
-	if (special_name) {
-		strcpy(p->name, special_name);
+	p->name = (अक्षर *) (p + 1);
+	अगर (special_name) अणु
+		म_नकल(p->name, special_name);
 		p->length = special_len;
 		p->value = prom_early_alloc(special_len);
-		memcpy(p->value, special_val, special_len);
-	} else {
+		स_नकल(p->value, special_val, special_len);
+	पूर्ण अन्यथा अणु
 		err = of_pdt_prom_ops->nextprop(node, prev, p->name);
-		if (err) {
-			tmp = p;
-			return NULL;
-		}
+		अगर (err) अणु
+			पंचांगp = p;
+			वापस शून्य;
+		पूर्ण
 		p->length = of_pdt_prom_ops->getproplen(node, p->name);
-		if (p->length <= 0) {
+		अगर (p->length <= 0) अणु
 			p->length = 0;
-		} else {
-			int len;
+		पूर्ण अन्यथा अणु
+			पूर्णांक len;
 
 			p->value = prom_early_alloc(p->length + 1);
 			len = of_pdt_prom_ops->getproperty(node, p->name,
 					p->value, p->length);
-			if (len <= 0)
+			अगर (len <= 0)
 				p->length = 0;
-			((unsigned char *)p->value)[p->length] = '\0';
-		}
-	}
-	return p;
-}
+			((अचिन्हित अक्षर *)p->value)[p->length] = '\0';
+		पूर्ण
+	पूर्ण
+	वापस p;
+पूर्ण
 
-static struct property * __init of_pdt_build_prop_list(phandle node)
-{
-	struct property *head, *tail;
+अटल काष्ठा property * __init of_pdt_build_prop_list(phandle node)
+अणु
+	काष्ठा property *head, *tail;
 
-	head = tail = of_pdt_build_one_prop(node, NULL,
-				     ".node", &node, sizeof(node));
+	head = tail = of_pdt_build_one_prop(node, शून्य,
+				     ".node", &node, माप(node));
 
-	tail->next = of_pdt_build_one_prop(node, NULL, NULL, NULL, 0);
+	tail->next = of_pdt_build_one_prop(node, शून्य, शून्य, शून्य, 0);
 	tail = tail->next;
-	while(tail) {
+	जबतक(tail) अणु
 		tail->next = of_pdt_build_one_prop(node, tail->name,
-					    NULL, NULL, 0);
+					    शून्य, शून्य, 0);
 		tail = tail->next;
-	}
+	पूर्ण
 
-	return head;
-}
+	वापस head;
+पूर्ण
 
-static char * __init of_pdt_get_one_property(phandle node, const char *name)
-{
-	char *buf = "<NULL>";
-	int len;
+अटल अक्षर * __init of_pdt_get_one_property(phandle node, स्थिर अक्षर *name)
+अणु
+	अक्षर *buf = "<NULL>";
+	पूर्णांक len;
 
 	len = of_pdt_prom_ops->getproplen(node, name);
-	if (len > 0) {
+	अगर (len > 0) अणु
 		buf = prom_early_alloc(len);
 		len = of_pdt_prom_ops->getproperty(node, name, buf, len);
-	}
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static struct device_node * __init of_pdt_create_node(phandle node,
-						    struct device_node *parent)
-{
-	struct device_node *dp;
+अटल काष्ठा device_node * __init of_pdt_create_node(phandle node,
+						    काष्ठा device_node *parent)
+अणु
+	काष्ठा device_node *dp;
 
-	if (!node)
-		return NULL;
+	अगर (!node)
+		वापस शून्य;
 
-	dp = prom_early_alloc(sizeof(*dp));
+	dp = prom_early_alloc(माप(*dp));
 	of_node_init(dp);
 	of_pdt_incr_unique_id(dp);
 	dp->parent = parent;
@@ -163,51 +164,51 @@ static struct device_node * __init of_pdt_create_node(phandle node,
 
 	irq_trans_init(dp);
 
-	return dp;
-}
+	वापस dp;
+पूर्ण
 
-static struct device_node * __init of_pdt_build_tree(struct device_node *parent,
+अटल काष्ठा device_node * __init of_pdt_build_tree(काष्ठा device_node *parent,
 						   phandle node)
-{
-	struct device_node *ret = NULL, *prev_sibling = NULL;
-	struct device_node *dp;
+अणु
+	काष्ठा device_node *ret = शून्य, *prev_sibling = शून्य;
+	काष्ठा device_node *dp;
 
-	while (1) {
+	जबतक (1) अणु
 		dp = of_pdt_create_node(node, parent);
-		if (!dp)
-			break;
+		अगर (!dp)
+			अवरोध;
 
-		if (prev_sibling)
+		अगर (prev_sibling)
 			prev_sibling->sibling = dp;
 
-		if (!ret)
+		अगर (!ret)
 			ret = dp;
 		prev_sibling = dp;
 
-		dp->child = of_pdt_build_tree(dp, of_pdt_prom_ops->getchild(node));
+		dp->child = of_pdt_build_tree(dp, of_pdt_prom_ops->अ_लोhild(node));
 
-		node = of_pdt_prom_ops->getsibling(node);
-	}
+		node = of_pdt_prom_ops->माला_लोibling(node);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void * __init kernel_tree_alloc(u64 size, u64 align)
-{
-	return prom_early_alloc(size);
-}
+अटल व्योम * __init kernel_tree_alloc(u64 size, u64 align)
+अणु
+	वापस prom_early_alloc(size);
+पूर्ण
 
-void __init of_pdt_build_devicetree(phandle root_node, struct of_pdt_ops *ops)
-{
+व्योम __init of_pdt_build_devicetree(phandle root_node, काष्ठा of_pdt_ops *ops)
+अणु
 	BUG_ON(!ops);
 	of_pdt_prom_ops = ops;
 
-	of_root = of_pdt_create_node(root_node, NULL);
+	of_root = of_pdt_create_node(root_node, शून्य);
 	of_root->full_name = "/";
 
 	of_root->child = of_pdt_build_tree(of_root,
-				of_pdt_prom_ops->getchild(of_root->phandle));
+				of_pdt_prom_ops->अ_लोhild(of_root->phandle));
 
-	/* Get pointer to "/chosen" and "/aliases" nodes for use everywhere */
+	/* Get poपूर्णांकer to "/chosen" and "/aliases" nodes क्रम use everywhere */
 	of_alias_scan(kernel_tree_alloc);
-}
+पूर्ण

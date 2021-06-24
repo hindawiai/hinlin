@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**********************************************************
  * Copyright 2012-2015 VMware, Inc.
  *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person
+ * obtaining a copy of this software and associated करोcumentation
  * files (the "Software"), to deal in the Software without
  * restriction, including without limitation the rights to use, copy,
- * modify, merge, publish, distribute, sublicense, and/or sell copies
+ * modअगरy, merge, publish, distribute, sublicense, and/or sell copies
  * of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
@@ -27,119 +28,119 @@
 /*
  * svga3d_types.h --
  *
- *       SVGA 3d hardware definitions for basic types
+ *       SVGA 3d hardware definitions क्रम basic types
  */
 
-#ifndef _SVGA3D_TYPES_H_
-#define _SVGA3D_TYPES_H_
+#अगर_अघोषित _SVGA3D_TYPES_H_
+#घोषणा _SVGA3D_TYPES_H_
 
-#define INCLUDE_ALLOW_MODULE
-#define INCLUDE_ALLOW_USERLEVEL
-#define INCLUDE_ALLOW_VMCORE
+#घोषणा INCLUDE_ALLOW_MODULE
+#घोषणा INCLUDE_ALLOW_USERLEVEL
+#घोषणा INCLUDE_ALLOW_VMCORE
 
-#include "includeCheck.h"
+#समावेश "includeCheck.h"
 
 /*
  * Generic Types
  */
 
-#define SVGA3D_INVALID_ID         ((uint32)-1)
+#घोषणा SVGA3D_INVALID_ID         ((uपूर्णांक32)-1)
 
-typedef uint8 SVGABool8;   /* 8-bit Bool definition */
-typedef uint32 SVGA3dBool; /* 32-bit Bool definition */
-typedef uint32 SVGA3dColor; /* a, r, g, b */
+प्रकार uपूर्णांक8 SVGABool8;   /* 8-bit Bool definition */
+प्रकार uपूर्णांक32 SVGA3dBool; /* 32-bit Bool definition */
+प्रकार uपूर्णांक32 SVGA3dColor; /* a, r, g, b */
 
-typedef uint32 SVGA3dSurfaceId;
+प्रकार uपूर्णांक32 SVGA3dSurfaceId;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 numerator;
-   uint32 denominator;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 numerator;
+   uपूर्णांक32 denominator;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dFraction64;
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCopyRect {
-   uint32               x;
-   uint32               y;
-   uint32               w;
-   uint32               h;
-   uint32               srcx;
-   uint32               srcy;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCopyRect अणु
+   uपूर्णांक32               x;
+   uपूर्णांक32               y;
+   uपूर्णांक32               w;
+   uपूर्णांक32               h;
+   uपूर्णांक32               srcx;
+   uपूर्णांक32               srcy;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCopyRect;
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dCopyBox {
-   uint32               x;
-   uint32               y;
-   uint32               z;
-   uint32               w;
-   uint32               h;
-   uint32               d;
-   uint32               srcx;
-   uint32               srcy;
-   uint32               srcz;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dCopyBox अणु
+   uपूर्णांक32               x;
+   uपूर्णांक32               y;
+   uपूर्णांक32               z;
+   uपूर्णांक32               w;
+   uपूर्णांक32               h;
+   uपूर्णांक32               d;
+   uपूर्णांक32               srcx;
+   uपूर्णांक32               srcy;
+   uपूर्णांक32               srcz;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dCopyBox;
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dRect {
-   uint32               x;
-   uint32               y;
-   uint32               w;
-   uint32               h;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dRect अणु
+   uपूर्णांक32               x;
+   uपूर्णांक32               y;
+   uपूर्णांक32               w;
+   uपूर्णांक32               h;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dRect;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               x;
-   uint32               y;
-   uint32               z;
-   uint32               w;
-   uint32               h;
-   uint32               d;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               x;
+   uपूर्णांक32               y;
+   uपूर्णांक32               z;
+   uपूर्णांक32               w;
+   uपूर्णांक32               h;
+   uपूर्णांक32               d;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dBox;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   int32                x;
-   int32                y;
-   int32                z;
-   int32                w;
-   int32                h;
-   int32                d;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   पूर्णांक32                x;
+   पूर्णांक32                y;
+   पूर्णांक32                z;
+   पूर्णांक32                w;
+   पूर्णांक32                h;
+   पूर्णांक32                d;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dSignedBox;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               x;
-   uint32               y;
-   uint32               z;
-}
-#include "vmware_pack_end.h"
-SVGA3dPoint;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               x;
+   uपूर्णांक32               y;
+   uपूर्णांक32               z;
+पूर्ण
+#समावेश "vmware_pack_end.h"
+SVGA3dPoपूर्णांक;
 
 /*
- * Surface formats.
+ * Surface क्रमmats.
  */
-typedef enum SVGA3dSurfaceFormat {
+प्रकार क्रमागत SVGA3dSurfaceFormat अणु
    SVGA3D_FORMAT_INVALID               = 0,
 
    SVGA3D_X8R8G8B8                     = 1,
@@ -157,10 +158,10 @@ typedef enum SVGA3dSurfaceFormat {
    SVGA3D_Z_D24S8                      = 9,
    SVGA3D_Z_D15S1                      = 10,
 
-   SVGA3D_LUMINANCE8                   = 11,
-   SVGA3D_LUMINANCE4_ALPHA4            = 12,
-   SVGA3D_LUMINANCE16                  = 13,
-   SVGA3D_LUMINANCE8_ALPHA8            = 14,
+   SVGA3D_LUMIन_अंकCE8                   = 11,
+   SVGA3D_LUMIन_अंकCE4_ALPHA4            = 12,
+   SVGA3D_LUMIन_अंकCE16                  = 13,
+   SVGA3D_LUMIन_अंकCE8_ALPHA8            = 14,
 
    SVGA3D_DXT1                         = 15,
    SVGA3D_DXT2                         = 16,
@@ -173,23 +174,23 @@ typedef enum SVGA3dSurfaceFormat {
    SVGA3D_BUMPX8L8V8U8                 = 22,
    SVGA3D_FORMAT_DEAD1                 = 23,
 
-   SVGA3D_ARGB_S10E5                   = 24,   /* 16-bit floating-point ARGB */
-   SVGA3D_ARGB_S23E8                   = 25,   /* 32-bit floating-point ARGB */
+   SVGA3D_ARGB_S10E5                   = 24,   /* 16-bit भग्नing-poपूर्णांक ARGB */
+   SVGA3D_ARGB_S23E8                   = 25,   /* 32-bit भग्नing-poपूर्णांक ARGB */
 
    SVGA3D_A2R10G10B10                  = 26,
 
-   /* signed formats */
+   /* चिन्हित क्रमmats */
    SVGA3D_V8U8                         = 27,
    SVGA3D_Q8W8V8U8                     = 28,
    SVGA3D_CxV8U8                       = 29,
 
-   /* mixed formats */
+   /* mixed क्रमmats */
    SVGA3D_X8L8V8U8                     = 30,
    SVGA3D_A2W10V10U10                  = 31,
 
    SVGA3D_ALPHA8                       = 32,
 
-   /* Single- and dual-component floating point formats */
+   /* Single- and dual-component भग्नing poपूर्णांक क्रमmats */
    SVGA3D_R_S10E5                      = 33,
    SVGA3D_R_S23E8                      = 34,
    SVGA3D_RG_S10E5                     = 35,
@@ -204,11 +205,11 @@ typedef enum SVGA3dSurfaceFormat {
    SVGA3D_G16R16                       = 40,
    SVGA3D_A16B16G16R16                 = 41,
 
-   /* Packed Video formats */
+   /* Packed Video क्रमmats */
    SVGA3D_UYVY                         = 42,
    SVGA3D_YUY2                         = 43,
 
-   /* Planar video formats */
+   /* Planar video क्रमmats */
    SVGA3D_NV12                         = 44,
 
    SVGA3D_FORMAT_DEAD2                 = 45,
@@ -275,10 +276,10 @@ typedef enum SVGA3dSurfaceFormat {
    SVGA3D_BC3_TYPELESS                 = 105,
    SVGA3D_BC3_UNORM_SRGB               = 106,
    SVGA3D_BC4_TYPELESS                 = 107,
-   SVGA3D_ATI1                         = 108,   /* DX9-specific BC4_UNORM */
+   SVGA3D_ATI1                         = 108,   /* DX9-specअगरic BC4_UNORM */
    SVGA3D_BC4_SNORM                    = 109,
    SVGA3D_BC5_TYPELESS                 = 110,
-   SVGA3D_ATI2                         = 111,   /* DX9-specific BC5_UNORM */
+   SVGA3D_ATI2                         = 111,   /* DX9-specअगरic BC5_UNORM */
    SVGA3D_BC5_SNORM                    = 112,
    SVGA3D_R10G10B10_XR_BIAS_A2_UNORM   = 113,
    SVGA3D_B8G8R8A8_TYPELESS            = 114,
@@ -286,12 +287,12 @@ typedef enum SVGA3dSurfaceFormat {
    SVGA3D_B8G8R8X8_TYPELESS            = 116,
    SVGA3D_B8G8R8X8_UNORM_SRGB          = 117,
 
-   /* Advanced depth formats. */
+   /* Advanced depth क्रमmats. */
    SVGA3D_Z_DF16                       = 118,
    SVGA3D_Z_DF24                       = 119,
    SVGA3D_Z_D24S8_INT                  = 120,
 
-   /* Planar video formats. */
+   /* Planar video क्रमmats. */
    SVGA3D_YV12                         = 121,
 
    SVGA3D_R32G32B32A32_FLOAT           = 122,
@@ -319,7 +320,7 @@ typedef enum SVGA3dSurfaceFormat {
    SVGA3D_BC5_UNORM                    = 144,
    SVGA3D_B4G4R4A4_UNORM               = 145,
    
-   /* DX11 compressed formats */
+   /* DX11 compressed क्रमmats */
    SVGA3D_BC6H_TYPELESS                = 146,
    SVGA3D_BC6H_UF16                    = 147,
    SVGA3D_BC6H_SF16                    = 148,
@@ -327,130 +328,130 @@ typedef enum SVGA3dSurfaceFormat {
    SVGA3D_BC7_UNORM                    = 150,
    SVGA3D_BC7_UNORM_SRGB               = 151,
 
-   /* Video format with alpha */
+   /* Video क्रमmat with alpha */
    SVGA3D_AYUV                         = 152,
 
    SVGA3D_FORMAT_MAX
-} SVGA3dSurfaceFormat;
+पूर्ण SVGA3dSurfaceFormat;
 
 /*
  * SVGA3d Surface Flags --
  */
-#define SVGA3D_SURFACE_CUBEMAP                (1 << 0)
+#घोषणा SVGA3D_SURFACE_CUBEMAP                (1 << 0)
 
 /*
- * HINT flags are not enforced by the device but are useful for
- * performance.
+ * HINT flags are not enक्रमced by the device but are useful क्रम
+ * perक्रमmance.
  */
-#define SVGA3D_SURFACE_HINT_STATIC            (CONST64U(1) << 1)
-#define SVGA3D_SURFACE_HINT_DYNAMIC           (CONST64U(1) << 2)
-#define SVGA3D_SURFACE_HINT_INDEXBUFFER       (CONST64U(1) << 3)
-#define SVGA3D_SURFACE_HINT_VERTEXBUFFER      (CONST64U(1) << 4)
-#define SVGA3D_SURFACE_HINT_TEXTURE           (CONST64U(1) << 5)
-#define SVGA3D_SURFACE_HINT_RENDERTARGET      (CONST64U(1) << 6)
-#define SVGA3D_SURFACE_HINT_DEPTHSTENCIL      (CONST64U(1) << 7)
-#define SVGA3D_SURFACE_HINT_WRITEONLY         (CONST64U(1) << 8)
-#define SVGA3D_SURFACE_DEAD2                  (CONST64U(1) << 9)
-#define SVGA3D_SURFACE_AUTOGENMIPMAPS         (CONST64U(1) << 10)
+#घोषणा SVGA3D_SURFACE_HINT_STATIC            (CONST64U(1) << 1)
+#घोषणा SVGA3D_SURFACE_HINT_DYNAMIC           (CONST64U(1) << 2)
+#घोषणा SVGA3D_SURFACE_HINT_INDEXBUFFER       (CONST64U(1) << 3)
+#घोषणा SVGA3D_SURFACE_HINT_VERTEXBUFFER      (CONST64U(1) << 4)
+#घोषणा SVGA3D_SURFACE_HINT_TEXTURE           (CONST64U(1) << 5)
+#घोषणा SVGA3D_SURFACE_HINT_RENDERTARGET      (CONST64U(1) << 6)
+#घोषणा SVGA3D_SURFACE_HINT_DEPTHSTENCIL      (CONST64U(1) << 7)
+#घोषणा SVGA3D_SURFACE_HINT_WRITEONLY         (CONST64U(1) << 8)
+#घोषणा SVGA3D_SURFACE_DEAD2                  (CONST64U(1) << 9)
+#घोषणा SVGA3D_SURFACE_AUTOGENMIPMAPS         (CONST64U(1) << 10)
 
-#define SVGA3D_SURFACE_DEAD1                  (CONST64U(1) << 11)
+#घोषणा SVGA3D_SURFACE_DEAD1                  (CONST64U(1) << 11)
 
 /*
- * Is this surface using a base-level pitch for it's mob backing?
+ * Is this surface using a base-level pitch क्रम it's mob backing?
  *
- * This flag is not intended to be set by guest-drivers, but is instead
- * set by the device when the surface is bound to a mob with a specified
+ * This flag is not पूर्णांकended to be set by guest-drivers, but is instead
+ * set by the device when the surface is bound to a mob with a specअगरied
  * pitch.
  */
-#define SVGA3D_SURFACE_MOB_PITCH              (CONST64U(1) << 12)
+#घोषणा SVGA3D_SURFACE_MOB_PITCH              (CONST64U(1) << 12)
 
-#define SVGA3D_SURFACE_INACTIVE               (CONST64U(1) << 13)
-#define SVGA3D_SURFACE_HINT_RT_LOCKABLE       (CONST64U(1) << 14)
-#define SVGA3D_SURFACE_VOLUME                 (CONST64U(1) << 15)
+#घोषणा SVGA3D_SURFACE_INACTIVE               (CONST64U(1) << 13)
+#घोषणा SVGA3D_SURFACE_HINT_RT_LOCKABLE       (CONST64U(1) << 14)
+#घोषणा SVGA3D_SURFACE_VOLUME                 (CONST64U(1) << 15)
 
 /*
  * Required to be set on a surface to bind it to a screen target.
  */
-#define SVGA3D_SURFACE_SCREENTARGET           (CONST64U(1) << 16)
+#घोषणा SVGA3D_SURFACE_SCREENTARGET           (CONST64U(1) << 16)
 
 /*
  * Align images in the guest-backing mob to 16-bytes.
  */
-#define SVGA3D_SURFACE_ALIGN16                (CONST64U(1) << 17)
+#घोषणा SVGA3D_SURFACE_ALIGN16                (CONST64U(1) << 17)
 
-#define SVGA3D_SURFACE_1D                     (CONST64U(1) << 18)
-#define SVGA3D_SURFACE_ARRAY                  (CONST64U(1) << 19)
+#घोषणा SVGA3D_SURFACE_1D                     (CONST64U(1) << 18)
+#घोषणा SVGA3D_SURFACE_ARRAY                  (CONST64U(1) << 19)
 
 /*
  * Bind flags.
- * These are enforced for any surface defined with DefineGBSurface_v2.
+ * These are enक्रमced क्रम any surface defined with DefineGBSurface_v2.
  */
-#define SVGA3D_SURFACE_BIND_VERTEX_BUFFER     (CONST64U(1) << 20)
-#define SVGA3D_SURFACE_BIND_INDEX_BUFFER      (CONST64U(1) << 21)
-#define SVGA3D_SURFACE_BIND_CONSTANT_BUFFER   (CONST64U(1) << 22)
-#define SVGA3D_SURFACE_BIND_SHADER_RESOURCE   (CONST64U(1) << 23)
-#define SVGA3D_SURFACE_BIND_RENDER_TARGET     (CONST64U(1) << 24)
-#define SVGA3D_SURFACE_BIND_DEPTH_STENCIL     (CONST64U(1) << 25)
-#define SVGA3D_SURFACE_BIND_STREAM_OUTPUT     (CONST64U(1) << 26)
+#घोषणा SVGA3D_SURFACE_BIND_VERTEX_BUFFER     (CONST64U(1) << 20)
+#घोषणा SVGA3D_SURFACE_BIND_INDEX_BUFFER      (CONST64U(1) << 21)
+#घोषणा SVGA3D_SURFACE_BIND_CONSTANT_BUFFER   (CONST64U(1) << 22)
+#घोषणा SVGA3D_SURFACE_BIND_SHADER_RESOURCE   (CONST64U(1) << 23)
+#घोषणा SVGA3D_SURFACE_BIND_RENDER_TARGET     (CONST64U(1) << 24)
+#घोषणा SVGA3D_SURFACE_BIND_DEPTH_STENCIL     (CONST64U(1) << 25)
+#घोषणा SVGA3D_SURFACE_BIND_STREAM_OUTPUT     (CONST64U(1) << 26)
 
 /*
  * The STAGING flags notes that the surface will not be used directly by the
- * drawing pipeline, i.e. that it will not be bound to any bind point.
+ * drawing pipeline, i.e. that it will not be bound to any bind poपूर्णांक.
  * Staging surfaces may be used by copy operations to move data in and out
  * of other surfaces.  No bind flags may be set on surfaces with this flag.
  *
- * The HINT_INDIRECT_UPDATE flag suggests that the surface will receive
+ * The HINT_INसूचीECT_UPDATE flag suggests that the surface will receive
  * updates indirectly, i.e. the surface will not be updated directly, but
  * will receive copies from staging surfaces.
  */
-#define SVGA3D_SURFACE_STAGING_UPLOAD         (CONST64U(1) << 27)
-#define SVGA3D_SURFACE_STAGING_DOWNLOAD       (CONST64U(1) << 28)
-#define SVGA3D_SURFACE_HINT_INDIRECT_UPDATE   (CONST64U(1) << 29)
+#घोषणा SVGA3D_SURFACE_STAGING_UPLOAD         (CONST64U(1) << 27)
+#घोषणा SVGA3D_SURFACE_STAGING_DOWNLOAD       (CONST64U(1) << 28)
+#घोषणा SVGA3D_SURFACE_HINT_INसूचीECT_UPDATE   (CONST64U(1) << 29)
 
 /*
  * Setting this flag allow this surface to be used with the
- * SVGA_3D_CMD_DX_TRANSFER_FROM_BUFFER command.  It is only valid for
+ * SVGA_3D_CMD_DX_TRANSFER_FROM_BUFFER command.  It is only valid क्रम
  * buffer surfaces, and no bind flags are allowed to be set on surfaces
  * with this flag except SVGA3D_SURFACE_TRANSFER_TO_BUFFER.
  */
-#define SVGA3D_SURFACE_TRANSFER_FROM_BUFFER   (CONST64U(1) << 30)
+#घोषणा SVGA3D_SURFACE_TRANSFER_FROM_BUFFER   (CONST64U(1) << 30)
 
 /*
- * Reserved for video operations.
+ * Reserved क्रम video operations.
  */
-#define SVGA3D_SURFACE_RESERVED1              (CONST64U(1) << 31)
+#घोषणा SVGA3D_SURFACE_RESERVED1              (CONST64U(1) << 31)
 
 /*
- * Specifies that a surface is multisample, and therefore requires the full
+ * Specअगरies that a surface is multisample, and thereक्रमe requires the full
  * mob-backing to store all the samples.
  */
-#define SVGA3D_SURFACE_MULTISAMPLE            (CONST64U(1) << 32)
+#घोषणा SVGA3D_SURFACE_MULTISAMPLE            (CONST64U(1) << 32)
 
 /*
- * Specified that the surface is allowed to be bound to a UAView.
+ * Specअगरied that the surface is allowed to be bound to a UAView.
  */
-#define SVGA3D_SURFACE_BIND_UAVIEW            (CONST64U(1) << 33)
+#घोषणा SVGA3D_SURFACE_BIND_UAVIEW            (CONST64U(1) << 33)
 
 /*
  * Setting this flag allow this surface to be used with the
- * SVGA_3D_CMD_DX_TRANSFER_TO_BUFFER command.  It is only valid for
+ * SVGA_3D_CMD_DX_TRANSFER_TO_BUFFER command.  It is only valid क्रम
  * buffer surfaces, and no bind flags are allowed to be set on surfaces
  * with this flag except SVGA3D_SURFACE_TRANSFER_FROM_BUFFER.
  */
-#define SVGA3D_SURFACE_TRANSFER_TO_BUFFER     (CONST64U(1) << 34)
+#घोषणा SVGA3D_SURFACE_TRANSFER_TO_BUFFER     (CONST64U(1) << 34)
 
-#define SVGA3D_SURFACE_BIND_LOGICOPS          (CONST64U(1) << 35)
+#घोषणा SVGA3D_SURFACE_BIND_LOGICOPS          (CONST64U(1) << 35)
 
 /*
- * Optional flags for use with SVGA3D_SURFACE_BIND_UAVIEW
+ * Optional flags क्रम use with SVGA3D_SURFACE_BIND_UAVIEW
  */
-#define SVGA3D_SURFACE_BIND_RAW_VIEWS         (CONST64U(1) << 36)
-#define SVGA3D_SURFACE_BUFFER_STRUCTURED      (CONST64U(1) << 37)
+#घोषणा SVGA3D_SURFACE_BIND_RAW_VIEWS         (CONST64U(1) << 36)
+#घोषणा SVGA3D_SURFACE_BUFFER_STRUCTURED      (CONST64U(1) << 37)
 
-#define SVGA3D_SURFACE_DRAWINDIRECT_ARGS      (CONST64U(1) << 38)
-#define SVGA3D_SURFACE_RESOURCE_CLAMP         (CONST64U(1) << 39)
+#घोषणा SVGA3D_SURFACE_DRAWINसूचीECT_ARGS      (CONST64U(1) << 38)
+#घोषणा SVGA3D_SURFACE_RESOURCE_CLAMP         (CONST64U(1) << 39)
 
-#define SVGA3D_SURFACE_FLAG_MAX               (CONST64U(1) << 40)
+#घोषणा SVGA3D_SURFACE_FLAG_MAX               (CONST64U(1) << 40)
 
 /*
  * Surface flags types:
@@ -459,14 +460,14 @@ typedef enum SVGA3dSurfaceFormat {
  * SVGA3dSurface2Flags:  Upper 32-bits of flags.
  * SVGA3dSurfaceAllFlags: Full 64-bits of flags.
  */
-typedef uint32 SVGA3dSurface1Flags;
-typedef uint32 SVGA3dSurface2Flags;
-typedef uint64 SVGA3dSurfaceAllFlags;
+प्रकार uपूर्णांक32 SVGA3dSurface1Flags;
+प्रकार uपूर्णांक32 SVGA3dSurface2Flags;
+प्रकार uपूर्णांक64 SVGA3dSurfaceAllFlags;
 
-#define SVGA3D_SURFACE_FLAGS1_MASK ((uint64_t)MAX_UINT32)
-#define SVGA3D_SURFACE_FLAGS2_MASK (MAX_UINT64 & ~SVGA3D_SURFACE_FLAGS1_MASK)
+#घोषणा SVGA3D_SURFACE_FLAGS1_MASK ((uपूर्णांक64_t)MAX_UINT32)
+#घोषणा SVGA3D_SURFACE_FLAGS2_MASK (MAX_UINT64 & ~SVGA3D_SURFACE_FLAGS1_MASK)
 
-#define SVGA3D_SURFACE_HB_DISALLOWED_MASK        \
+#घोषणा SVGA3D_SURFACE_HB_DISALLOWED_MASK        \
         (  SVGA3D_SURFACE_MOB_PITCH    |         \
            SVGA3D_SURFACE_SCREENTARGET |         \
            SVGA3D_SURFACE_ALIGN16 |              \
@@ -474,7 +475,7 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_BIND_STREAM_OUTPUT |   \
            SVGA3D_SURFACE_STAGING_UPLOAD |       \
            SVGA3D_SURFACE_STAGING_DOWNLOAD |     \
-           SVGA3D_SURFACE_HINT_INDIRECT_UPDATE | \
+           SVGA3D_SURFACE_HINT_INसूचीECT_UPDATE | \
            SVGA3D_SURFACE_TRANSFER_FROM_BUFFER | \
            SVGA3D_SURFACE_RESERVED1 |             \
            SVGA3D_SURFACE_MULTISAMPLE |          \
@@ -483,17 +484,17 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_BIND_LOGICOPS |        \
            SVGA3D_SURFACE_BIND_RAW_VIEWS |       \
            SVGA3D_SURFACE_BUFFER_STRUCTURED |    \
-           SVGA3D_SURFACE_DRAWINDIRECT_ARGS |    \
+           SVGA3D_SURFACE_DRAWINसूचीECT_ARGS |    \
            SVGA3D_SURFACE_RESOURCE_CLAMP         \
         )
 
-#define SVGA3D_SURFACE_HB_PRESENT_DISALLOWED_MASK   \
+#घोषणा SVGA3D_SURFACE_HB_PRESENT_DISALLOWED_MASK   \
        (   SVGA3D_SURFACE_1D |                      \
            SVGA3D_SURFACE_RESERVED1 |                \
            SVGA3D_SURFACE_MULTISAMPLE               \
         )
 
-#define SVGA3D_SURFACE_2D_DISALLOWED_MASK           \
+#घोषणा SVGA3D_SURFACE_2D_DISALLOWED_MASK           \
         (  SVGA3D_SURFACE_CUBEMAP |                 \
            SVGA3D_SURFACE_AUTOGENMIPMAPS |          \
            SVGA3D_SURFACE_VOLUME |                  \
@@ -510,11 +511,11 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_TRANSFER_TO_BUFFER |      \
            SVGA3D_SURFACE_BIND_RAW_VIEWS |          \
            SVGA3D_SURFACE_BUFFER_STRUCTURED |       \
-           SVGA3D_SURFACE_DRAWINDIRECT_ARGS |       \
+           SVGA3D_SURFACE_DRAWINसूचीECT_ARGS |       \
            SVGA3D_SURFACE_RESOURCE_CLAMP            \
         )
 
-#define SVGA3D_SURFACE_BASICOPS_DISALLOWED_MASK     \
+#घोषणा SVGA3D_SURFACE_BASICOPS_DISALLOWED_MASK     \
         (  SVGA3D_SURFACE_CUBEMAP |                 \
            SVGA3D_SURFACE_AUTOGENMIPMAPS |          \
            SVGA3D_SURFACE_VOLUME |                  \
@@ -523,7 +524,7 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_MULTISAMPLE               \
         )
 
-#define SVGA3D_SURFACE_SCREENTARGET_DISALLOWED_MASK \
+#घोषणा SVGA3D_SURFACE_SCREENTARGET_DISALLOWED_MASK \
         (  SVGA3D_SURFACE_CUBEMAP |                 \
            SVGA3D_SURFACE_AUTOGENMIPMAPS |          \
            SVGA3D_SURFACE_VOLUME |                  \
@@ -536,7 +537,7 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_INACTIVE |                \
            SVGA3D_SURFACE_STAGING_UPLOAD |          \
            SVGA3D_SURFACE_STAGING_DOWNLOAD |        \
-           SVGA3D_SURFACE_HINT_INDIRECT_UPDATE |    \
+           SVGA3D_SURFACE_HINT_INसूचीECT_UPDATE |    \
            SVGA3D_SURFACE_TRANSFER_FROM_BUFFER |    \
            SVGA3D_SURFACE_RESERVED1 |                \
            SVGA3D_SURFACE_MULTISAMPLE |             \
@@ -544,11 +545,11 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_TRANSFER_TO_BUFFER |      \
            SVGA3D_SURFACE_BIND_RAW_VIEWS |          \
            SVGA3D_SURFACE_BUFFER_STRUCTURED |       \
-           SVGA3D_SURFACE_DRAWINDIRECT_ARGS |       \
+           SVGA3D_SURFACE_DRAWINसूचीECT_ARGS |       \
            SVGA3D_SURFACE_RESOURCE_CLAMP            \
         )
 
-#define SVGA3D_SURFACE_BUFFER_DISALLOWED_MASK       \
+#घोषणा SVGA3D_SURFACE_BUFFER_DISALLOWED_MASK       \
         (  SVGA3D_SURFACE_CUBEMAP |                 \
            SVGA3D_SURFACE_AUTOGENMIPMAPS |          \
            SVGA3D_SURFACE_VOLUME |                  \
@@ -560,7 +561,7 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_RESOURCE_CLAMP            \
         )
 
-#define SVGA3D_SURFACE_MULTISAMPLE_DISALLOWED_MASK  \
+#घोषणा SVGA3D_SURFACE_MULTISAMPLE_DISALLOWED_MASK  \
         (  SVGA3D_SURFACE_CUBEMAP |                 \
            SVGA3D_SURFACE_AUTOGENMIPMAPS |          \
            SVGA3D_SURFACE_VOLUME |                  \
@@ -574,10 +575,10 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_BIND_LOGICOPS |           \
            SVGA3D_SURFACE_BIND_RAW_VIEWS |          \
            SVGA3D_SURFACE_BUFFER_STRUCTURED |       \
-           SVGA3D_SURFACE_DRAWINDIRECT_ARGS         \
+           SVGA3D_SURFACE_DRAWINसूचीECT_ARGS         \
         )
 
-#define SVGA3D_SURFACE_DX_ONLY_MASK              \
+#घोषणा SVGA3D_SURFACE_DX_ONLY_MASK              \
         (  SVGA3D_SURFACE_BIND_STREAM_OUTPUT |   \
            SVGA3D_SURFACE_STAGING_UPLOAD |       \
            SVGA3D_SURFACE_STAGING_DOWNLOAD |     \
@@ -585,12 +586,12 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_TRANSFER_TO_BUFFER     \
         )
 
-#define SVGA3D_SURFACE_STAGING_MASK             \
+#घोषणा SVGA3D_SURFACE_STAGING_MASK             \
         (  SVGA3D_SURFACE_STAGING_UPLOAD |      \
            SVGA3D_SURFACE_STAGING_DOWNLOAD      \
         )
 
-#define SVGA3D_SURFACE_BIND_MASK                  \
+#घोषणा SVGA3D_SURFACE_BIND_MASK                  \
         (  SVGA3D_SURFACE_BIND_VERTEX_BUFFER   |  \
            SVGA3D_SURFACE_BIND_INDEX_BUFFER    |  \
            SVGA3D_SURFACE_BIND_CONSTANT_BUFFER |  \
@@ -603,7 +604,7 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_BIND_RAW_VIEWS          \
         )
 
-#define SVGA3D_SURFACE_VADECODE_DISALLOWED_MASK     \
+#घोषणा SVGA3D_SURFACE_VADECODE_DISALLOWED_MASK     \
         (  SVGA3D_SURFACE_CUBEMAP |                 \
            SVGA3D_SURFACE_HINT_STATIC |             \
            SVGA3D_SURFACE_HINT_DYNAMIC |            \
@@ -629,7 +630,7 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_INACTIVE |                \
            SVGA3D_SURFACE_STAGING_UPLOAD |          \
            SVGA3D_SURFACE_STAGING_DOWNLOAD |        \
-           SVGA3D_SURFACE_HINT_INDIRECT_UPDATE |    \
+           SVGA3D_SURFACE_HINT_INसूचीECT_UPDATE |    \
            SVGA3D_SURFACE_TRANSFER_FROM_BUFFER  |   \
            SVGA3D_SURFACE_MULTISAMPLE |             \
            SVGA3D_SURFACE_BIND_UAVIEW |             \
@@ -637,11 +638,11 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_BIND_LOGICOPS |           \
            SVGA3D_SURFACE_BIND_RAW_VIEWS |          \
            SVGA3D_SURFACE_BUFFER_STRUCTURED |       \
-           SVGA3D_SURFACE_DRAWINDIRECT_ARGS |       \
+           SVGA3D_SURFACE_DRAWINसूचीECT_ARGS |       \
            SVGA3D_SURFACE_RESOURCE_CLAMP            \
         )
 
-#define SVGA3D_SURFACE_VAPROCESSFRAME_OUTPUT_DISALLOWED_MASK     \
+#घोषणा SVGA3D_SURFACE_VAPROCESSFRAME_OUTPUT_DISALLOWED_MASK     \
         (  SVGA3D_SURFACE_HINT_INDEXBUFFER |                     \
            SVGA3D_SURFACE_HINT_VERTEXBUFFER |                    \
            SVGA3D_SURFACE_HINT_DEPTHSTENCIL |                    \
@@ -664,11 +665,11 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_BIND_LOGICOPS |                        \
            SVGA3D_SURFACE_BIND_RAW_VIEWS |                       \
            SVGA3D_SURFACE_BUFFER_STRUCTURED |                    \
-           SVGA3D_SURFACE_DRAWINDIRECT_ARGS |                    \
+           SVGA3D_SURFACE_DRAWINसूचीECT_ARGS |                    \
            SVGA3D_SURFACE_RESOURCE_CLAMP         \
         )
 
-#define SVGA3D_SURFACE_VAPROCESSFRAME_INPUT_DISALLOWED_MASK     \
+#घोषणा SVGA3D_SURFACE_VAPROCESSFRAME_INPUT_DISALLOWED_MASK     \
         ( SVGA3D_SURFACE_CUBEMAP |                              \
           SVGA3D_SURFACE_HINT_INDEXBUFFER |                     \
           SVGA3D_SURFACE_HINT_VERTEXBUFFER |                    \
@@ -691,11 +692,11 @@ typedef uint64 SVGA3dSurfaceAllFlags;
           SVGA3D_SURFACE_BIND_LOGICOPS |                        \
           SVGA3D_SURFACE_BIND_RAW_VIEWS |                       \
           SVGA3D_SURFACE_BUFFER_STRUCTURED |                    \
-          SVGA3D_SURFACE_DRAWINDIRECT_ARGS |                    \
+          SVGA3D_SURFACE_DRAWINसूचीECT_ARGS |                    \
           SVGA3D_SURFACE_RESOURCE_CLAMP                         \
         )
 
-#define SVGA3D_SURFACE_LOGICOPS_DISALLOWED_MASK     \
+#घोषणा SVGA3D_SURFACE_LOGICOPS_DISALLOWED_MASK     \
         (  SVGA3D_SURFACE_CUBEMAP |                 \
            SVGA3D_SURFACE_DEAD2 |                   \
            SVGA3D_SURFACE_AUTOGENMIPMAPS |          \
@@ -713,20 +714,20 @@ typedef uint64 SVGA3dSurfaceAllFlags;
            SVGA3D_SURFACE_TRANSFER_TO_BUFFER |      \
            SVGA3D_SURFACE_BIND_RAW_VIEWS |          \
            SVGA3D_SURFACE_BUFFER_STRUCTURED |       \
-           SVGA3D_SURFACE_DRAWINDIRECT_ARGS |       \
+           SVGA3D_SURFACE_DRAWINसूचीECT_ARGS |       \
            SVGA3D_SURFACE_RESOURCE_CLAMP            \
         )
 
-#define SVGA3D_BUFFER_STRUCTURED_STRIDE_MAX 2048
+#घोषणा SVGA3D_BUFFER_STRUCTURED_STRIDE_MAX 2048
 
 
 /*
  * These are really the D3DFORMAT_OP defines from the wdk. We need
- * them so that we can query the host for what the supported surface
+ * them so that we can query the host क्रम what the supported surface
  * operations are (when we're using the D3D backend, in particular),
  * and so we can send those operations to the guest.
  */
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3DFORMAT_OP_TEXTURE                               = 0x00000001,
    SVGA3DFORMAT_OP_VOLUMETEXTURE                         = 0x00000002,
    SVGA3DFORMAT_OP_CUBETEXTURE                           = 0x00000004,
@@ -736,101 +737,101 @@ typedef enum {
    SVGA3DFORMAT_OP_ZSTENCIL_WITH_ARBITRARY_COLOR_DEPTH   = 0x00000080,
 
 /*
- * This format can be used as a render target if the current display mode
- * is the same depth if the alpha channel is ignored. e.g. if the device
+ * This क्रमmat can be used as a render target अगर the current display mode
+ * is the same depth अगर the alpha channel is ignored. e.g. अगर the device
  * can render to A8R8G8B8 when the display mode is X8R8G8B8, then the
- * format op list entry for A8R8G8B8 should have this cap.
+ * क्रमmat op list entry क्रम A8R8G8B8 should have this cap.
  */
    SVGA3DFORMAT_OP_SAME_FORMAT_UP_TO_ALPHA_RENDERTARGET  = 0x00000100,
 
 /*
- * This format contains DirectDraw support (including Flip).  This flag
- * should not to be set on alpha formats.
+ * This क्रमmat contains DirectDraw support (including Flip).  This flag
+ * should not to be set on alpha क्रमmats.
  */
    SVGA3DFORMAT_OP_DISPLAYMODE                           = 0x00000400,
 
 /*
- * The rasterizer can support some level of Direct3D support in this format
- * and implies that the driver can create a Context in this mode (for some
- * render target format).  When this flag is set, the SVGA3DFORMAT_OP_DISPLAYMODE
+ * The rasterizer can support some level of Direct3D support in this क्रमmat
+ * and implies that the driver can create a Context in this mode (क्रम some
+ * render target क्रमmat).  When this flag is set, the SVGA3DFORMAT_OP_DISPLAYMODE
  * flag must also be set.
  */
    SVGA3DFORMAT_OP_3DACCELERATION                        = 0x00000800,
 
 /*
- * This is set for a private format when the driver has put the bpp in
- * the structure.
+ * This is set क्रम a निजी क्रमmat when the driver has put the bpp in
+ * the काष्ठाure.
  */
    SVGA3DFORMAT_OP_PIXELSIZE                             = 0x00001000,
 
 /*
- * Indicates that this format can be converted to any RGB format for which
- * SVGA3DFORMAT_OP_MEMBEROFGROUP_ARGB is specified.
+ * Indicates that this क्रमmat can be converted to any RGB क्रमmat क्रम which
+ * SVGA3DFORMAT_OP_MEMBEROFGROUP_ARGB is specअगरied.
  */
    SVGA3DFORMAT_OP_CONVERT_TO_ARGB                       = 0x00002000,
 
 /*
- * Indicates that this format can be used to create offscreen plain surfaces.
+ * Indicates that this क्रमmat can be used to create offscreen plain surfaces.
  */
    SVGA3DFORMAT_OP_OFFSCREENPLAIN                        = 0x00004000,
 
 /*
- * Indicated that this format can be read as an SRGB texture (meaning that the
+ * Indicated that this क्रमmat can be पढ़ो as an SRGB texture (meaning that the
  * sampler will linearize the looked up data).
  */
    SVGA3DFORMAT_OP_SRGBREAD                              = 0x00008000,
 
 /*
- * Indicates that this format can be used in the bumpmap instructions.
+ * Indicates that this क्रमmat can be used in the bumpmap inकाष्ठाions.
  */
    SVGA3DFORMAT_OP_BUMPMAP                               = 0x00010000,
 
 /*
- * Indicates that this format can be sampled by the displacement map sampler.
+ * Indicates that this क्रमmat can be sampled by the displacement map sampler.
  */
    SVGA3DFORMAT_OP_DMAP                                  = 0x00020000,
 
 /*
- * Indicates that this format cannot be used with texture filtering.
+ * Indicates that this क्रमmat cannot be used with texture filtering.
  */
    SVGA3DFORMAT_OP_NOFILTER                              = 0x00040000,
 
 /*
- * Indicates that format conversions are supported to this RGB format if
- * SVGA3DFORMAT_OP_CONVERT_TO_ARGB is specified in the source format.
+ * Indicates that क्रमmat conversions are supported to this RGB क्रमmat अगर
+ * SVGA3DFORMAT_OP_CONVERT_TO_ARGB is specअगरied in the source क्रमmat.
  */
    SVGA3DFORMAT_OP_MEMBEROFGROUP_ARGB                    = 0x00080000,
 
 /*
- * Indicated that this format can be written as an SRGB target
- * (meaning that the pixel pipe will DE-linearize data on output to format)
+ * Indicated that this क्रमmat can be written as an SRGB target
+ * (meaning that the pixel pipe will DE-linearize data on output to क्रमmat)
  */
    SVGA3DFORMAT_OP_SRGBWRITE                             = 0x00100000,
 
 /*
- * Indicates that this format cannot be used with alpha blending.
+ * Indicates that this क्रमmat cannot be used with alpha blending.
  */
    SVGA3DFORMAT_OP_NOALPHABLEND                          = 0x00200000,
 
 /*
- * Indicates that the device can auto-generated sublevels for resources
- * of this format.
+ * Indicates that the device can स्वतः-generated sublevels क्रम resources
+ * of this क्रमmat.
  */
    SVGA3DFORMAT_OP_AUTOGENMIPMAP                         = 0x00400000,
 
 /*
- * Indicates that this format can be used by vertex texture sampler.
+ * Indicates that this क्रमmat can be used by vertex texture sampler.
  */
    SVGA3DFORMAT_OP_VERTEXTEXTURE                         = 0x00800000,
 
 /*
- * Indicates that this format supports neither texture coordinate
+ * Indicates that this क्रमmat supports neither texture coordinate
  * wrap modes, nor mipmapping.
  */
    SVGA3DFORMAT_OP_NOTEXCOORDWRAPNORMIP                  = 0x01000000
-} SVGA3dFormatOp;
+पूर्ण SVGA3dFormatOp;
 
-#define SVGA3D_FORMAT_POSITIVE                             \
+#घोषणा SVGA3D_FORMAT_POSITIVE                             \
    (SVGA3DFORMAT_OP_TEXTURE                              | \
     SVGA3DFORMAT_OP_VOLUMETEXTURE                        | \
     SVGA3DFORMAT_OP_CUBETEXTURE                          | \
@@ -852,52 +853,52 @@ typedef enum {
     SVGA3DFORMAT_OP_AUTOGENMIPMAP                        | \
     SVGA3DFORMAT_OP_VERTEXTEXTURE)
 
-#define SVGA3D_FORMAT_NEGATIVE               \
+#घोषणा SVGA3D_FORMAT_NEGATIVE               \
    (SVGA3DFORMAT_OP_NOFILTER               | \
     SVGA3DFORMAT_OP_NOALPHABLEND           | \
     SVGA3DFORMAT_OP_NOTEXCOORDWRAPNORMIP)
 
 /*
- * This structure is a conversion of SVGA3DFORMAT_OP_*
+ * This काष्ठाure is a conversion of SVGA3DFORMAT_OP_*
  * Entries must be located at the same position.
  */
-typedef union {
-   uint32 value;
-   struct {
-      uint32 texture : 1;
-      uint32 volumeTexture : 1;
-      uint32 cubeTexture : 1;
-      uint32 offscreenRenderTarget : 1;
-      uint32 sameFormatRenderTarget : 1;
-      uint32 unknown1 : 1;
-      uint32 zStencil : 1;
-      uint32 zStencilArbitraryDepth : 1;
-      uint32 sameFormatUpToAlpha : 1;
-      uint32 unknown2 : 1;
-      uint32 displayMode : 1;
-      uint32 acceleration3d : 1;
-      uint32 pixelSize : 1;
-      uint32 convertToARGB : 1;
-      uint32 offscreenPlain : 1;
-      uint32 sRGBRead : 1;
-      uint32 bumpMap : 1;
-      uint32 dmap : 1;
-      uint32 noFilter : 1;
-      uint32 memberOfGroupARGB : 1;
-      uint32 sRGBWrite : 1;
-      uint32 noAlphaBlend : 1;
-      uint32 autoGenMipMap : 1;
-      uint32 vertexTexture : 1;
-      uint32 noTexCoordWrapNorMip : 1;
-   };
-} SVGA3dSurfaceFormatCaps;
+प्रकार जोड़ अणु
+   uपूर्णांक32 value;
+   काष्ठा अणु
+      uपूर्णांक32 texture : 1;
+      uपूर्णांक32 volumeTexture : 1;
+      uपूर्णांक32 cubeTexture : 1;
+      uपूर्णांक32 offscreenRenderTarget : 1;
+      uपूर्णांक32 sameFormatRenderTarget : 1;
+      uपूर्णांक32 unknown1 : 1;
+      uपूर्णांक32 zStencil : 1;
+      uपूर्णांक32 zStencilArbitraryDepth : 1;
+      uपूर्णांक32 sameFormatUpToAlpha : 1;
+      uपूर्णांक32 unknown2 : 1;
+      uपूर्णांक32 displayMode : 1;
+      uपूर्णांक32 acceleration3d : 1;
+      uपूर्णांक32 pixelSize : 1;
+      uपूर्णांक32 convertToARGB : 1;
+      uपूर्णांक32 offscreenPlain : 1;
+      uपूर्णांक32 sRGBRead : 1;
+      uपूर्णांक32 bumpMap : 1;
+      uपूर्णांक32 dmap : 1;
+      uपूर्णांक32 noFilter : 1;
+      uपूर्णांक32 memberOfGroupARGB : 1;
+      uपूर्णांक32 sRGBWrite : 1;
+      uपूर्णांक32 noAlphaBlend : 1;
+      uपूर्णांक32 स्वतःGenMipMap : 1;
+      uपूर्णांक32 vertexTexture : 1;
+      uपूर्णांक32 noTexCoordWrapNorMip : 1;
+   पूर्ण;
+पूर्ण SVGA3dSurfaceFormatCaps;
 
 /*
  * SVGA_3D_CMD_SETRENDERSTATE Types.  All value types
- * must fit in a uint32.
+ * must fit in a uपूर्णांक32.
  */
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_RS_INVALID                   = 0,
    SVGA3D_RS_MIN                       = 1,
    SVGA3D_RS_ZENABLE                   = 1,     /* SVGA3dBool */
@@ -912,18 +913,18 @@ typedef enum {
    SVGA3D_RS_NORMALIZENORMALS          = 10,    /* SVGA3dBool */
    SVGA3D_RS_POINTSPRITEENABLE         = 11,    /* SVGA3dBool */
    SVGA3D_RS_POINTSCALEENABLE          = 12,    /* SVGA3dBool */
-   SVGA3D_RS_STENCILREF                = 13,    /* uint32 */
-   SVGA3D_RS_STENCILMASK               = 14,    /* uint32 */
-   SVGA3D_RS_STENCILWRITEMASK          = 15,    /* uint32 */
-   SVGA3D_RS_FOGSTART                  = 16,    /* float */
-   SVGA3D_RS_FOGEND                    = 17,    /* float */
-   SVGA3D_RS_FOGDENSITY                = 18,    /* float */
-   SVGA3D_RS_POINTSIZE                 = 19,    /* float */
-   SVGA3D_RS_POINTSIZEMIN              = 20,    /* float */
-   SVGA3D_RS_POINTSIZEMAX              = 21,    /* float */
-   SVGA3D_RS_POINTSCALE_A              = 22,    /* float */
-   SVGA3D_RS_POINTSCALE_B              = 23,    /* float */
-   SVGA3D_RS_POINTSCALE_C              = 24,    /* float */
+   SVGA3D_RS_STENCILREF                = 13,    /* uपूर्णांक32 */
+   SVGA3D_RS_STENCILMASK               = 14,    /* uपूर्णांक32 */
+   SVGA3D_RS_STENCILWRITEMASK          = 15,    /* uपूर्णांक32 */
+   SVGA3D_RS_FOGSTART                  = 16,    /* भग्न */
+   SVGA3D_RS_FOGEND                    = 17,    /* भग्न */
+   SVGA3D_RS_FOGDENSITY                = 18,    /* भग्न */
+   SVGA3D_RS_POINTSIZE                 = 19,    /* भग्न */
+   SVGA3D_RS_POINTSIZEMIN              = 20,    /* भग्न */
+   SVGA3D_RS_POINTSIZEMAX              = 21,    /* भग्न */
+   SVGA3D_RS_POINTSCALE_A              = 22,    /* भग्न */
+   SVGA3D_RS_POINTSCALE_B              = 23,    /* भग्न */
+   SVGA3D_RS_POINTSCALE_C              = 24,    /* भग्न */
    SVGA3D_RS_FOGCOLOR                  = 25,    /* SVGA3dColor */
    SVGA3D_RS_AMBIENT                   = 26,    /* SVGA3dColor */
    SVGA3D_RS_CLIPPLANEENABLE           = 27,    /* SVGA3dClipPlanes */
@@ -941,10 +942,10 @@ typedef enum {
    SVGA3D_RS_STENCILFAIL               = 39,    /* SVGA3dStencilOp */
    SVGA3D_RS_STENCILZFAIL              = 40,    /* SVGA3dStencilOp */
    SVGA3D_RS_STENCILPASS               = 41,    /* SVGA3dStencilOp */
-   SVGA3D_RS_ALPHAREF                  = 42,    /* float (0.0 .. 1.0) */
+   SVGA3D_RS_ALPHAREF                  = 42,    /* भग्न (0.0 .. 1.0) */
    SVGA3D_RS_FRONTWINDING              = 43,    /* SVGA3dFrontWinding */
    SVGA3D_RS_COORDINATETYPE            = 44,    /* SVGA3dCoordinateType */
-   SVGA3D_RS_ZBIAS                     = 45,    /* float */
+   SVGA3D_RS_ZBIAS                     = 45,    /* भग्न */
    SVGA3D_RS_RANGEFOGENABLE            = 46,    /* SVGA3dBool */
    SVGA3D_RS_COLORWRITEENABLE          = 47,    /* SVGA3dColorMask */
    SVGA3D_RS_VERTEXMATERIALENABLE      = 48,    /* SVGA3dBool */
@@ -962,20 +963,20 @@ typedef enum {
    SVGA3D_RS_CCWSTENCILZFAIL           = 60,    /* SVGA3dStencilOp */
    SVGA3D_RS_CCWSTENCILPASS            = 61,    /* SVGA3dStencilOp */
    SVGA3D_RS_VERTEXBLEND               = 62,    /* SVGA3dVertexBlendFlags */
-   SVGA3D_RS_SLOPESCALEDEPTHBIAS       = 63,    /* float */
-   SVGA3D_RS_DEPTHBIAS                 = 64,    /* float */
+   SVGA3D_RS_SLOPESCALEDEPTHBIAS       = 63,    /* भग्न */
+   SVGA3D_RS_DEPTHBIAS                 = 64,    /* भग्न */
 
 
    /*
     * Output Gamma Level
     *
     * Output gamma effects the gamma curve of colors that are output from the
-    * rendering pipeline.  A value of 1.0 specifies a linear color space. If the
+    * rendering pipeline.  A value of 1.0 specअगरies a linear color space. If the
     * value is <= 0.0, gamma correction is ignored and linear color space is
     * used.
     */
 
-   SVGA3D_RS_OUTPUTGAMMA               = 65,    /* float */
+   SVGA3D_RS_OUTPUTGAMMA               = 65,    /* भग्न */
    SVGA3D_RS_ZVISIBLE                  = 66,    /* SVGA3dBool */
    SVGA3D_RS_LASTPIXEL                 = 67,    /* SVGA3dBool */
    SVGA3D_RS_CLIPPING                  = 68,    /* SVGA3dBool */
@@ -996,9 +997,9 @@ typedef enum {
    SVGA3D_RS_WRAP14                    = 83,    /* SVGA3dWrapFlags */
    SVGA3D_RS_WRAP15                    = 84,    /* SVGA3dWrapFlags */
    SVGA3D_RS_MULTISAMPLEANTIALIAS      = 85,    /* SVGA3dBool */
-   SVGA3D_RS_MULTISAMPLEMASK           = 86,    /* uint32 */
+   SVGA3D_RS_MULTISAMPLEMASK           = 86,    /* uपूर्णांक32 */
    SVGA3D_RS_INDEXEDVERTEXBLENDENABLE  = 87,    /* SVGA3dBool */
-   SVGA3D_RS_TWEENFACTOR               = 88,    /* float */
+   SVGA3D_RS_TWEENFACTOR               = 88,    /* भग्न */
    SVGA3D_RS_ANTIALIASEDLINEENABLE     = 89,    /* SVGA3dBool */
    SVGA3D_RS_COLORWRITEENABLE1         = 90,    /* SVGA3dColorMask */
    SVGA3D_RS_COLORWRITEENABLE2         = 91,    /* SVGA3dColorMask */
@@ -1008,67 +1009,67 @@ typedef enum {
    SVGA3D_RS_DSTBLENDALPHA             = 95,    /* SVGA3dBlendOp */
    SVGA3D_RS_BLENDEQUATIONALPHA        = 96,    /* SVGA3dBlendEquation */
    SVGA3D_RS_TRANSPARENCYANTIALIAS     = 97,    /* SVGA3dTransparencyAntialiasType */
-   SVGA3D_RS_LINEWIDTH                 = 98,    /* float */
+   SVGA3D_RS_LINEWIDTH                 = 98,    /* भग्न */
    SVGA3D_RS_MAX
-} SVGA3dRenderStateName;
+पूर्ण SVGA3dRenderStateName;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_TRANSPARENCYANTIALIAS_NORMAL            = 0,
    SVGA3D_TRANSPARENCYANTIALIAS_ALPHATOCOVERAGE   = 1,
    SVGA3D_TRANSPARENCYANTIALIAS_SUPERSAMPLE       = 2,
    SVGA3D_TRANSPARENCYANTIALIAS_MAX
-} SVGA3dTransparencyAntialiasType;
+पूर्ण SVGA3dTransparencyAntialiasType;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_VERTEXMATERIAL_NONE     = 0,    /* Use the value in the current material */
-   SVGA3D_VERTEXMATERIAL_DIFFUSE  = 1,    /* Use the value in the diffuse component */
+   SVGA3D_VERTEXMATERIAL_DIFFUSE  = 1,    /* Use the value in the dअगरfuse component */
    SVGA3D_VERTEXMATERIAL_SPECULAR = 2,    /* Use the value in the specular component */
    SVGA3D_VERTEXMATERIAL_MAX      = 3,
-} SVGA3dVertexMaterial;
+पूर्ण SVGA3dVertexMaterial;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_FILLMODE_INVALID = 0,
    SVGA3D_FILLMODE_MIN     = 1,
    SVGA3D_FILLMODE_POINT   = 1,
    SVGA3D_FILLMODE_LINE    = 2,
    SVGA3D_FILLMODE_FILL    = 3,
    SVGA3D_FILLMODE_MAX
-} SVGA3dFillModeType;
+पूर्ण SVGA3dFillModeType;
 
 
-typedef
-#include "vmware_pack_begin.h"
-union {
-   struct {
-      uint16   mode;       /* SVGA3dFillModeType */
-      uint16   face;       /* SVGA3dFace */
-   };
-   uint32 uintValue;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+जोड़ अणु
+   काष्ठा अणु
+      uपूर्णांक16   mode;       /* SVGA3dFillModeType */
+      uपूर्णांक16   face;       /* SVGA3dFace */
+   पूर्ण;
+   uपूर्णांक32 uपूर्णांकValue;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dFillMode;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_SHADEMODE_INVALID = 0,
    SVGA3D_SHADEMODE_FLAT    = 1,
    SVGA3D_SHADEMODE_SMOOTH  = 2,
    SVGA3D_SHADEMODE_PHONG   = 3,     /* Not supported */
    SVGA3D_SHADEMODE_MAX
-} SVGA3dShadeMode;
+पूर्ण SVGA3dShadeMode;
 
-typedef
-#include "vmware_pack_begin.h"
-union {
-   struct {
-      uint16 repeat;
-      uint16 pattern;
-   };
-   uint32 uintValue;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+जोड़ अणु
+   काष्ठा अणु
+      uपूर्णांक16 repeat;
+      uपूर्णांक16 pattern;
+   पूर्ण;
+   uपूर्णांक32 uपूर्णांकValue;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dLinePattern;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_BLENDOP_INVALID             = 0,
    SVGA3D_BLENDOP_MIN                 = 1,
    SVGA3D_BLENDOP_ZERO                = 1,
@@ -1091,9 +1092,9 @@ typedef enum {
    SVGA3D_BLENDOP_BLENDFACTORALPHA    = 18,
    SVGA3D_BLENDOP_INVBLENDFACTORALPHA = 19,
    SVGA3D_BLENDOP_MAX
-} SVGA3dBlendOp;
+पूर्ण SVGA3dBlendOp;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_BLENDEQ_INVALID            = 0,
    SVGA3D_BLENDEQ_MIN                = 1,
    SVGA3D_BLENDEQ_ADD                = 1,
@@ -1102,9 +1103,9 @@ typedef enum {
    SVGA3D_BLENDEQ_MINIMUM            = 4,
    SVGA3D_BLENDEQ_MAXIMUM            = 5,
    SVGA3D_BLENDEQ_MAX
-} SVGA3dBlendEquation;
+पूर्ण SVGA3dBlendEquation;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_DX11_LOGICOP_MIN           = 0,
    SVGA3D_DX11_LOGICOP_CLEAR         = 0,
    SVGA3D_DX11_LOGICOP_SET           = 1,
@@ -1113,7 +1114,7 @@ typedef enum {
    SVGA3D_DX11_LOGICOP_NOOP          = 4,
    SVGA3D_DX11_LOGICOP_INVERT        = 5,
    SVGA3D_DX11_LOGICOP_AND           = 6,
-   SVGA3D_DX11_LOGICOP_NAND          = 7,
+   SVGA3D_DX11_LOGICOP_न_अंकD          = 7,
    SVGA3D_DX11_LOGICOP_OR            = 8,
    SVGA3D_DX11_LOGICOP_NOR           = 9,
    SVGA3D_DX11_LOGICOP_XOR           = 10,
@@ -1123,16 +1124,16 @@ typedef enum {
    SVGA3D_DX11_LOGICOP_OR_REVERSE    = 14,
    SVGA3D_DX11_LOGICOP_OR_INVERTED   = 15,
    SVGA3D_DX11_LOGICOP_MAX
-} SVGA3dDX11LogicOp;
+पूर्ण SVGA3dDX11LogicOp;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_FRONTWINDING_INVALID = 0,
    SVGA3D_FRONTWINDING_CW      = 1,
    SVGA3D_FRONTWINDING_CCW     = 2,
    SVGA3D_FRONTWINDING_MAX
-} SVGA3dFrontWinding;
+पूर्ण SVGA3dFrontWinding;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_FACE_INVALID  = 0,
    SVGA3D_FACE_NONE     = 1,
    SVGA3D_FACE_MIN      = 1,
@@ -1140,13 +1141,13 @@ typedef enum {
    SVGA3D_FACE_BACK     = 3,
    SVGA3D_FACE_FRONT_BACK = 4,
    SVGA3D_FACE_MAX
-} SVGA3dFace;
+पूर्ण SVGA3dFace;
 
 /*
  * The order and the values should not be changed
  */
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_CMP_INVALID              = 0,
    SVGA3D_CMP_NEVER                = 1,
    SVGA3D_CMP_LESS                 = 2,
@@ -1157,45 +1158,45 @@ typedef enum {
    SVGA3D_CMP_GREATEREQUAL         = 7,
    SVGA3D_CMP_ALWAYS               = 8,
    SVGA3D_CMP_MAX
-} SVGA3dCmpFunc;
+पूर्ण SVGA3dCmpFunc;
 
 /*
- * SVGA3D_FOGFUNC_* specifies the fog equation, or PER_VERTEX which allows
- * the fog factor to be specified in the alpha component of the specular
+ * SVGA3D_FOGFUNC_* specअगरies the fog equation, or PER_VERTEX which allows
+ * the fog factor to be specअगरied in the alpha component of the specular
  * (a.k.a. secondary) vertex color.
  */
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_FOGFUNC_INVALID          = 0,
    SVGA3D_FOGFUNC_EXP              = 1,
    SVGA3D_FOGFUNC_EXP2             = 2,
    SVGA3D_FOGFUNC_LINEAR           = 3,
    SVGA3D_FOGFUNC_PER_VERTEX       = 4
-} SVGA3dFogFunction;
+पूर्ण SVGA3dFogFunction;
 
 /*
- * SVGA3D_FOGTYPE_* specifies if fog factors are computed on a per-vertex
+ * SVGA3D_FOGTYPE_* specअगरies अगर fog factors are computed on a per-vertex
  * or per-pixel basis.
  */
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_FOGTYPE_INVALID          = 0,
    SVGA3D_FOGTYPE_VERTEX           = 1,
    SVGA3D_FOGTYPE_PIXEL            = 2,
    SVGA3D_FOGTYPE_MAX              = 3
-} SVGA3dFogType;
+पूर्ण SVGA3dFogType;
 
 /*
  * SVGA3D_FOGBASE_* selects depth or range-based fog. Depth-based fog is
  * computed using the eye Z value of each pixel (or vertex), whereas range-
  * based fog is computed using the actual distance (range) to the eye.
  */
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_FOGBASE_INVALID          = 0,
    SVGA3D_FOGBASE_DEPTHBASED       = 1,
    SVGA3D_FOGBASE_RANGEBASED       = 2,
    SVGA3D_FOGBASE_MAX              = 3
-} SVGA3dFogBase;
+पूर्ण SVGA3dFogBase;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_STENCILOP_INVALID        = 0,
    SVGA3D_STENCILOP_MIN            = 1,
    SVGA3D_STENCILOP_KEEP           = 1,
@@ -1207,31 +1208,31 @@ typedef enum {
    SVGA3D_STENCILOP_INCR           = 7,
    SVGA3D_STENCILOP_DECR           = 8,
    SVGA3D_STENCILOP_MAX
-} SVGA3dStencilOp;
+पूर्ण SVGA3dStencilOp;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_CLIPPLANE_0              = (1 << 0),
    SVGA3D_CLIPPLANE_1              = (1 << 1),
    SVGA3D_CLIPPLANE_2              = (1 << 2),
    SVGA3D_CLIPPLANE_3              = (1 << 3),
    SVGA3D_CLIPPLANE_4              = (1 << 4),
    SVGA3D_CLIPPLANE_5              = (1 << 5),
-} SVGA3dClipPlanes;
+पूर्ण SVGA3dClipPlanes;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_CLEAR_COLOR              = 0x1,
    SVGA3D_CLEAR_DEPTH              = 0x2,
    SVGA3D_CLEAR_STENCIL            = 0x4,
 
    /*
-    * Hint only, must be used together with SVGA3D_CLEAR_COLOR. If
+    * Hपूर्णांक only, must be used together with SVGA3D_CLEAR_COLOR. If
     * SVGA3D_CLEAR_DEPTH or SVGA3D_CLEAR_STENCIL bit is set, this
     * bit will be ignored.
     */
    SVGA3D_CLEAR_COLORFILL          = 0x8
-} SVGA3dClearFlag;
+पूर्ण SVGA3dClearFlag;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_RT_DEPTH                 = 0,
    SVGA3D_RT_MIN                   = 0,
    SVGA3D_RT_STENCIL               = 1,
@@ -1244,47 +1245,47 @@ typedef enum {
    SVGA3D_RT_COLOR6                = 8,
    SVGA3D_RT_COLOR7                = 9,
    SVGA3D_RT_MAX,
-   SVGA3D_RT_INVALID               = ((uint32)-1),
-} SVGA3dRenderTargetType;
+   SVGA3D_RT_INVALID               = ((uपूर्णांक32)-1),
+पूर्ण SVGA3dRenderTargetType;
 
-#define SVGA3D_MAX_RT_COLOR (SVGA3D_RT_COLOR7 - SVGA3D_RT_COLOR0 + 1)
+#घोषणा SVGA3D_MAX_RT_COLOR (SVGA3D_RT_COLOR7 - SVGA3D_RT_COLOR0 + 1)
 
-typedef
-#include "vmware_pack_begin.h"
-union {
-   struct {
-      uint32  red   : 1;
-      uint32  green : 1;
-      uint32  blue  : 1;
-      uint32  alpha : 1;
-   };
-   uint32 uintValue;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+जोड़ अणु
+   काष्ठा अणु
+      uपूर्णांक32  red   : 1;
+      uपूर्णांक32  green : 1;
+      uपूर्णांक32  blue  : 1;
+      uपूर्णांक32  alpha : 1;
+   पूर्ण;
+   uपूर्णांक32 uपूर्णांकValue;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dColorMask;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_VBLEND_DISABLE            = 0,
    SVGA3D_VBLEND_1WEIGHT            = 1,
    SVGA3D_VBLEND_2WEIGHT            = 2,
    SVGA3D_VBLEND_3WEIGHT            = 3,
    SVGA3D_VBLEND_MAX                = 4,
-} SVGA3dVertexBlendFlags;
+पूर्ण SVGA3dVertexBlendFlags;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_WRAPCOORD_0   = 1 << 0,
    SVGA3D_WRAPCOORD_1   = 1 << 1,
    SVGA3D_WRAPCOORD_2   = 1 << 2,
    SVGA3D_WRAPCOORD_3   = 1 << 3,
    SVGA3D_WRAPCOORD_ALL = 0xF,
-} SVGA3dWrapFlags;
+पूर्ण SVGA3dWrapFlags;
 
 /*
  * SVGA_3D_CMD_TEXTURESTATE Types.  All value types
- * must fit in a uint32.
+ * must fit in a uपूर्णांक32.
  */
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_TS_INVALID                    = 0,
    SVGA3D_TS_MIN                        = 1,
    SVGA3D_TS_BIND_TEXTURE               = 1,    /* SVGA3dSurfaceId */
@@ -1300,16 +1301,16 @@ typedef enum {
    SVGA3D_TS_MAGFILTER                  = 11,   /* SVGA3dTextureFilter */
    SVGA3D_TS_MINFILTER                  = 12,   /* SVGA3dTextureFilter */
    SVGA3D_TS_BORDERCOLOR                = 13,   /* SVGA3dColor */
-   SVGA3D_TS_TEXCOORDINDEX              = 14,   /* uint32 */
-   SVGA3D_TS_TEXTURETRANSFORMFLAGS      = 15,   /* SVGA3dTexTransformFlags */
+   SVGA3D_TS_TEXCOORDINDEX              = 14,   /* uपूर्णांक32 */
+   SVGA3D_TS_TEXTURETRANSFORMFLAGS      = 15,   /* SVGA3dTexTransक्रमmFlags */
    SVGA3D_TS_TEXCOORDGEN                = 16,   /* SVGA3dTextureCoordGen */
-   SVGA3D_TS_BUMPENVMAT00               = 17,   /* float */
-   SVGA3D_TS_BUMPENVMAT01               = 18,   /* float */
-   SVGA3D_TS_BUMPENVMAT10               = 19,   /* float */
-   SVGA3D_TS_BUMPENVMAT11               = 20,   /* float */
-   SVGA3D_TS_TEXTURE_MIPMAP_LEVEL       = 21,   /* uint32 */
-   SVGA3D_TS_TEXTURE_LOD_BIAS           = 22,   /* float */
-   SVGA3D_TS_TEXTURE_ANISOTROPIC_LEVEL  = 23,   /* uint32 */
+   SVGA3D_TS_BUMPENVMAT00               = 17,   /* भग्न */
+   SVGA3D_TS_BUMPENVMAT01               = 18,   /* भग्न */
+   SVGA3D_TS_BUMPENVMAT10               = 19,   /* भग्न */
+   SVGA3D_TS_BUMPENVMAT11               = 20,   /* भग्न */
+   SVGA3D_TS_TEXTURE_MIPMAP_LEVEL       = 21,   /* uपूर्णांक32 */
+   SVGA3D_TS_TEXTURE_LOD_BIAS           = 22,   /* भग्न */
+   SVGA3D_TS_TEXTURE_ANISOTROPIC_LEVEL  = 23,   /* uपूर्णांक32 */
    SVGA3D_TS_ADDRESSW                   = 24,   /* SVGA3dTextureAddress */
 
 
@@ -1321,19 +1322,19 @@ typedef enum {
     * gamma value is ignored and a linear space is used.
     */
 
-   SVGA3D_TS_GAMMA                      = 25,   /* float */
-   SVGA3D_TS_BUMPENVLSCALE              = 26,   /* float */
-   SVGA3D_TS_BUMPENVLOFFSET             = 27,   /* float */
+   SVGA3D_TS_GAMMA                      = 25,   /* भग्न */
+   SVGA3D_TS_BUMPENVLSCALE              = 26,   /* भग्न */
+   SVGA3D_TS_BUMPENVLOFFSET             = 27,   /* भग्न */
    SVGA3D_TS_COLORARG0                  = 28,   /* SVGA3dTextureArgData */
    SVGA3D_TS_ALPHAARG0                  = 29,   /* SVGA3dTextureArgData */
-   SVGA3D_TS_PREGB_MAX                  = 30,   /* Max value before GBObjects */
+   SVGA3D_TS_PREGB_MAX                  = 30,   /* Max value beक्रमe GBObjects */
    SVGA3D_TS_CONSTANT                   = 30,   /* SVGA3dColor */
    SVGA3D_TS_COLOR_KEY_ENABLE           = 31,   /* SVGA3dBool */
    SVGA3D_TS_COLOR_KEY                  = 32,   /* SVGA3dColor */
    SVGA3D_TS_MAX
-} SVGA3dTextureStateName;
+पूर्ण SVGA3dTextureStateName;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_TC_INVALID                   = 0,
    SVGA3D_TC_DISABLE                   = 1,
    SVGA3D_TC_SELECTARG1                = 2,
@@ -1358,15 +1359,15 @@ typedef enum {
    SVGA3D_TC_MODULATECOLOR_ADDALPHA    = 21,
    SVGA3D_TC_MODULATEINVALPHA_ADDCOLOR = 22,
    SVGA3D_TC_MODULATEINVCOLOR_ADDALPHA = 23,
-   SVGA3D_TC_BUMPENVMAPLUMINANCE       = 24,
+   SVGA3D_TC_BUMPENVMAPLUMIन_अंकCE       = 24,
    SVGA3D_TC_MULTIPLYADD               = 25,
    SVGA3D_TC_LERP                      = 26,
    SVGA3D_TC_MAX
-} SVGA3dTextureCombiner;
+पूर्ण SVGA3dTextureCombiner;
 
-#define SVGA3D_TC_CAP_BIT(svga3d_tc_op) (svga3d_tc_op ? (1 << (svga3d_tc_op - 1)) : 0)
+#घोषणा SVGA3D_TC_CAP_BIT(svga3d_tc_op) (svga3d_tc_op ? (1 << (svga3d_tc_op - 1)) : 0)
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_TEX_ADDRESS_INVALID    = 0,
    SVGA3D_TEX_ADDRESS_MIN        = 1,
    SVGA3D_TEX_ADDRESS_WRAP       = 1,
@@ -1376,13 +1377,13 @@ typedef enum {
    SVGA3D_TEX_ADDRESS_MIRRORONCE = 5,
    SVGA3D_TEX_ADDRESS_EDGE       = 6,
    SVGA3D_TEX_ADDRESS_MAX
-} SVGA3dTextureAddress;
+पूर्ण SVGA3dTextureAddress;
 
 /*
- * SVGA3D_TEX_FILTER_NONE as the minification filter means mipmapping is
- * disabled, and the rasterizer should use the magnification filter instead.
+ * SVGA3D_TEX_FILTER_NONE as the minअगरication filter means mipmapping is
+ * disabled, and the rasterizer should use the magnअगरication filter instead.
  */
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_TEX_FILTER_NONE           = 0,
    SVGA3D_TEX_FILTER_MIN            = 0,
    SVGA3D_TEX_FILTER_NEAREST        = 1,
@@ -1393,30 +1394,30 @@ typedef enum {
    SVGA3D_TEX_FILTER_PYRAMIDALQUAD  = 6, /* Not currently implemented */
    SVGA3D_TEX_FILTER_GAUSSIANQUAD   = 7, /* Not currently implemented */
    SVGA3D_TEX_FILTER_MAX
-} SVGA3dTextureFilter;
+पूर्ण SVGA3dTextureFilter;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_TEX_TRANSFORM_OFF    = 0,
    SVGA3D_TEX_TRANSFORM_S      = (1 << 0),
    SVGA3D_TEX_TRANSFORM_T      = (1 << 1),
    SVGA3D_TEX_TRANSFORM_R      = (1 << 2),
    SVGA3D_TEX_TRANSFORM_Q      = (1 << 3),
    SVGA3D_TEX_PROJECTED        = (1 << 15),
-} SVGA3dTexTransformFlags;
+पूर्ण SVGA3dTexTransक्रमmFlags;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_TEXCOORD_GEN_OFF              = 0,
    SVGA3D_TEXCOORD_GEN_EYE_POSITION     = 1,
    SVGA3D_TEXCOORD_GEN_EYE_NORMAL       = 2,
    SVGA3D_TEXCOORD_GEN_REFLECTIONVECTOR = 3,
    SVGA3D_TEXCOORD_GEN_SPHERE           = 4,
    SVGA3D_TEXCOORD_GEN_MAX
-} SVGA3dTextureCoordGen;
+पूर्ण SVGA3dTextureCoordGen;
 
 /*
- * Texture argument constants for texture combiner
+ * Texture argument स्थिरants क्रम texture combiner
  */
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_TA_INVALID    = 0,
    SVGA3D_TA_TFACTOR    = 1,
    SVGA3D_TA_PREVIOUS   = 2,
@@ -1425,29 +1426,29 @@ typedef enum {
    SVGA3D_TA_SPECULAR   = 5,
    SVGA3D_TA_CONSTANT   = 6,
    SVGA3D_TA_MAX
-} SVGA3dTextureArgData;
+पूर्ण SVGA3dTextureArgData;
 
-#define SVGA3D_TM_MASK_LEN 4
+#घोषणा SVGA3D_TM_MASK_LEN 4
 
-/* Modifiers for texture argument constants defined above. */
-typedef enum {
+/* Modअगरiers क्रम texture argument स्थिरants defined above. */
+प्रकार क्रमागत अणु
    SVGA3D_TM_NONE       = 0,
    SVGA3D_TM_ALPHA      = (1 << SVGA3D_TM_MASK_LEN),
    SVGA3D_TM_ONE_MINUS  = (2 << SVGA3D_TM_MASK_LEN),
-} SVGA3dTextureArgModifier;
+पूर्ण SVGA3dTextureArgModअगरier;
 
 /*
  * Vertex declarations
  *
  * Notes:
  *
- * SVGA3D_DECLUSAGE_POSITIONT is for pre-transformed vertices. If you
+ * SVGA3D_DECLUSAGE_POSITIONT is क्रम pre-transक्रमmed vertices. If you
  * draw with any POSITIONT vertex arrays, the programmable vertex
- * pipeline will be implicitly disabled. Drawing will take place as if
+ * pipeline will be implicitly disabled. Drawing will take place as अगर
  * no vertex shader was bound.
  */
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_DECLUSAGE_POSITION     = 0,
    SVGA3D_DECLUSAGE_BLENDWEIGHT,
    SVGA3D_DECLUSAGE_BLENDINDICES,
@@ -1463,9 +1464,9 @@ typedef enum {
    SVGA3D_DECLUSAGE_DEPTH,
    SVGA3D_DECLUSAGE_SAMPLE,
    SVGA3D_DECLUSAGE_MAX
-} SVGA3dDeclUsage;
+पूर्ण SVGA3dDeclUsage;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_DECLMETHOD_DEFAULT     = 0,
    SVGA3D_DECLMETHOD_PARTIALU,
    SVGA3D_DECLMETHOD_PARTIALV,
@@ -1474,9 +1475,9 @@ typedef enum {
    SVGA3D_DECLMETHOD_LOOKUP,           /* Lookup a displacement map */
    SVGA3D_DECLMETHOD_LOOKUPPRESAMPLED, /* Lookup a pre-sampled displacement */
                                        /* map */
-} SVGA3dDeclMethod;
+पूर्ण SVGA3dDeclMethod;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_DECLTYPE_FLOAT1        =  0,
    SVGA3D_DECLTYPE_FLOAT2        =  1,
    SVGA3D_DECLTYPE_FLOAT3        =  2,
@@ -1495,37 +1496,37 @@ typedef enum {
    SVGA3D_DECLTYPE_FLOAT16_2     = 15,
    SVGA3D_DECLTYPE_FLOAT16_4     = 16,
    SVGA3D_DECLTYPE_MAX,
-} SVGA3dDeclType;
+पूर्ण SVGA3dDeclType;
 
 /*
- * This structure is used for the divisor for geometry instancing;
+ * This काष्ठाure is used क्रम the भागisor क्रम geometry instancing;
  * it's a direct translation of the Direct3D equivalent.
  */
-typedef union {
-   struct {
+प्रकार जोड़ अणु
+   काष्ठा अणु
       /*
        * For index data, this number represents the number of instances to draw.
        * For instance data, this number represents the number of
        * instances/vertex in this stream
        */
-      uint32 count : 30;
+      uपूर्णांक32 count : 30;
 
       /*
-       * This is 1 if this is supposed to be the data that is repeated for
+       * This is 1 अगर this is supposed to be the data that is repeated क्रम
        * every instance.
        */
-      uint32 indexedData : 1;
+      uपूर्णांक32 indexedData : 1;
 
       /*
-       * This is 1 if this is supposed to be the per-instance data.
+       * This is 1 अगर this is supposed to be the per-instance data.
        */
-      uint32 instanceData : 1;
-   };
+      uपूर्णांक32 instanceData : 1;
+   पूर्ण;
 
-   uint32 value;
-} SVGA3dVertexDivisor;
+   uपूर्णांक32 value;
+पूर्ण SVGA3dVertexDivisor;
 
-typedef enum {
+प्रकार क्रमागत अणु
    /*
     * SVGA3D_PRIMITIVE_INVALID is a valid primitive type.
     *
@@ -1579,16 +1580,16 @@ typedef enum {
    SVGA3D_PRIMITIVE_31_CONTROL_POINT_PATCH      = 41,
    SVGA3D_PRIMITIVE_32_CONTROL_POINT_PATCH      = 42,
    SVGA3D_PRIMITIVE_MAX                         = 43
-} SVGA3dPrimitiveType;
+पूर्ण SVGA3dPrimitiveType;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_COORDINATE_INVALID                   = 0,
    SVGA3D_COORDINATE_LEFTHANDED                = 1,
    SVGA3D_COORDINATE_RIGHTHANDED               = 2,
    SVGA3D_COORDINATE_MAX
-} SVGA3dCoordinateType;
+पूर्ण SVGA3dCoordinateType;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_TRANSFORM_INVALID                     = 0,
    SVGA3D_TRANSFORM_WORLD                       = 1,
    SVGA3D_TRANSFORM_MIN                         = 1,
@@ -1606,28 +1607,28 @@ typedef enum {
    SVGA3D_TRANSFORM_WORLD2                      = 13,
    SVGA3D_TRANSFORM_WORLD3                      = 14,
    SVGA3D_TRANSFORM_MAX
-} SVGA3dTransformType;
+पूर्ण SVGA3dTransक्रमmType;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_LIGHTTYPE_INVALID                     = 0,
    SVGA3D_LIGHTTYPE_MIN                         = 1,
    SVGA3D_LIGHTTYPE_POINT                       = 1,
    SVGA3D_LIGHTTYPE_SPOT1                       = 2, /* 1-cone, in degrees */
    SVGA3D_LIGHTTYPE_SPOT2                       = 3, /* 2-cone, in radians */
-   SVGA3D_LIGHTTYPE_DIRECTIONAL                 = 4,
+   SVGA3D_LIGHTTYPE_सूचीECTIONAL                 = 4,
    SVGA3D_LIGHTTYPE_MAX
-} SVGA3dLightType;
+पूर्ण SVGA3dLightType;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_CUBEFACE_POSX                         = 0,
    SVGA3D_CUBEFACE_NEGX                         = 1,
    SVGA3D_CUBEFACE_POSY                         = 2,
    SVGA3D_CUBEFACE_NEGY                         = 3,
    SVGA3D_CUBEFACE_POSZ                         = 4,
    SVGA3D_CUBEFACE_NEGZ                         = 5,
-} SVGA3dCubeFace;
+पूर्ण SVGA3dCubeFace;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_SHADERTYPE_INVALID                    = 0,
    SVGA3D_SHADERTYPE_MIN                        = 1,
    SVGA3D_SHADERTYPE_VS                         = 1,
@@ -1639,40 +1640,40 @@ typedef enum {
    SVGA3D_SHADERTYPE_DS                         = 5,
    SVGA3D_SHADERTYPE_CS                         = 6,
    SVGA3D_SHADERTYPE_MAX                        = 7
-} SVGA3dShaderType;
+पूर्ण SVGA3dShaderType;
 
-#define SVGA3D_NUM_SHADERTYPE_PREDX \
+#घोषणा SVGA3D_NUM_SHADERTYPE_PREDX \
    (SVGA3D_SHADERTYPE_PREDX_MAX - SVGA3D_SHADERTYPE_MIN)
 
-#define SVGA3D_NUM_SHADERTYPE_DX10 \
+#घोषणा SVGA3D_NUM_SHADERTYPE_DX10 \
    (SVGA3D_SHADERTYPE_DX10_MAX - SVGA3D_SHADERTYPE_MIN)
 
-#define SVGA3D_NUM_SHADERTYPE \
+#घोषणा SVGA3D_NUM_SHADERTYPE \
    (SVGA3D_SHADERTYPE_MAX - SVGA3D_SHADERTYPE_MIN)
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_CONST_TYPE_MIN                        = 0,
    SVGA3D_CONST_TYPE_FLOAT                      = 0,
    SVGA3D_CONST_TYPE_INT                        = 1,
    SVGA3D_CONST_TYPE_BOOL                       = 2,
    SVGA3D_CONST_TYPE_MAX                        = 3,
-} SVGA3dShaderConstType;
+पूर्ण SVGA3dShaderConstType;
 
 /*
- * Register limits for shader consts.
+ * Register limits क्रम shader स्थिरs.
  */
-#define SVGA3D_CONSTREG_MAX            256
-#define SVGA3D_CONSTINTREG_MAX         16
-#define SVGA3D_CONSTBOOLREG_MAX        16
+#घोषणा SVGA3D_CONSTREG_MAX            256
+#घोषणा SVGA3D_CONSTINTREG_MAX         16
+#घोषणा SVGA3D_CONSTBOOLREG_MAX        16
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_STRETCH_BLT_POINT                     = 0,
    SVGA3D_STRETCH_BLT_LINEAR                    = 1,
    SVGA3D_STRETCH_BLT_MAX
-} SVGA3dStretchBltMode;
+पूर्ण SVGA3dStretchBltMode;
 
-typedef enum {
-   SVGA3D_QUERYTYPE_INVALID                     = ((uint8)-1),
+प्रकार क्रमागत अणु
+   SVGA3D_QUERYTYPE_INVALID                     = ((uपूर्णांक8)-1),
    SVGA3D_QUERYTYPE_MIN                         = 0,
    SVGA3D_QUERYTYPE_OCCLUSION                   = 0,
    SVGA3D_QUERYTYPE_TIMESTAMP                   = 1,
@@ -1692,208 +1693,208 @@ typedef enum {
    SVGA3D_QUERYTYPE_SOP_STREAM2                 = 14,
    SVGA3D_QUERYTYPE_SOP_STREAM3                 = 15,
    SVGA3D_QUERYTYPE_MAX
-} SVGA3dQueryType;
+पूर्ण SVGA3dQueryType;
 
-typedef uint8 SVGA3dQueryTypeUint8;
+प्रकार uपूर्णांक8 SVGA3dQueryTypeUपूर्णांक8;
 
-#define SVGA3D_NUM_QUERYTYPE  (SVGA3D_QUERYTYPE_MAX - SVGA3D_QUERYTYPE_MIN)
+#घोषणा SVGA3D_NUM_QUERYTYPE  (SVGA3D_QUERYTYPE_MAX - SVGA3D_QUERYTYPE_MIN)
 
 /*
  * This is the maximum number of queries per context that can be active
  * simultaneously between a beginQuery and endQuery.
  */
-#define SVGA3D_MAX_QUERY 64
+#घोषणा SVGA3D_MAX_QUERY 64
 
 /*
- * Query result buffer formats
+ * Query result buffer क्रमmats
  */
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 samplesRendered;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 samplesRendered;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGADXOcclusionQueryResult;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 passed;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 passed;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGADXEventQueryResult;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint64 timestamp;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक64 बारtamp;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGADXTimestampQueryResult;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint64 realFrequency;
-   uint32 disjoint;
-}
-#include "vmware_pack_end.h"
-SVGADXTimestampDisjointQueryResult;
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक64 realFrequency;
+   uपूर्णांक32 disjoपूर्णांक;
+पूर्ण
+#समावेश "vmware_pack_end.h"
+SVGADXTimestampDisjoपूर्णांकQueryResult;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint64 inputAssemblyVertices;
-   uint64 inputAssemblyPrimitives;
-   uint64 vertexShaderInvocations;
-   uint64 geometryShaderInvocations;
-   uint64 geometryShaderPrimitives;
-   uint64 clipperInvocations;
-   uint64 clipperPrimitives;
-   uint64 pixelShaderInvocations;
-   uint64 hullShaderInvocations;
-   uint64 domainShaderInvocations;
-   uint64 computeShaderInvocations;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक64 inputAssemblyVertices;
+   uपूर्णांक64 inputAssemblyPrimitives;
+   uपूर्णांक64 vertexShaderInvocations;
+   uपूर्णांक64 geometryShaderInvocations;
+   uपूर्णांक64 geometryShaderPrimitives;
+   uपूर्णांक64 clipperInvocations;
+   uपूर्णांक64 clipperPrimitives;
+   uपूर्णांक64 pixelShaderInvocations;
+   uपूर्णांक64 hullShaderInvocations;
+   uपूर्णांक64 करोमुख्यShaderInvocations;
+   uपूर्णांक64 computeShaderInvocations;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGADXPipelineStatisticsQueryResult;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 anySamplesRendered;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 anySamplesRendered;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGADXOcclusionPredicateQueryResult;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint64 numPrimitivesWritten;
-   uint64 numPrimitivesRequired;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक64 numPrimitivesWritten;
+   uपूर्णांक64 numPrimitivesRequired;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGADXStreamOutStatisticsQueryResult;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32 overflowed;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32 overflowed;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGADXStreamOutPredicateQueryResult;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint64 samplesRendered;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक64 samplesRendered;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGADXOcclusion64QueryResult;
 
 /*
- * SVGADXQueryResultUnion is not intended for use in the protocol, but is
+ * SVGADXQueryResultUnion is not पूर्णांकended क्रम use in the protocol, but is
  * very helpful when working with queries generically.
  */
-typedef
-#include "vmware_pack_begin.h"
-union SVGADXQueryResultUnion {
+प्रकार
+#समावेश "vmware_pack_begin.h"
+जोड़ SVGADXQueryResultUnion अणु
    SVGADXOcclusionQueryResult occ;
    SVGADXEventQueryResult event;
    SVGADXTimestampQueryResult ts;
-   SVGADXTimestampDisjointQueryResult tsDisjoint;
+   SVGADXTimestampDisjoपूर्णांकQueryResult tsDisjoपूर्णांक;
    SVGADXPipelineStatisticsQueryResult pipelineStats;
    SVGADXOcclusionPredicateQueryResult occPred;
    SVGADXStreamOutStatisticsQueryResult soStats;
    SVGADXStreamOutPredicateQueryResult soPred;
    SVGADXOcclusion64QueryResult occ64;
-}
-#include "vmware_pack_end.h"
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGADXQueryResultUnion;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_QUERYSTATE_PENDING     = 0,      /* Query is not finished yet */
    SVGA3D_QUERYSTATE_SUCCEEDED   = 1,      /* Completed successfully */
    SVGA3D_QUERYSTATE_FAILED      = 2,      /* Completed unsuccessfully */
    SVGA3D_QUERYSTATE_NEW         = 3,      /* Never submitted (guest only) */
-} SVGA3dQueryState;
+पूर्ण SVGA3dQueryState;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA3D_WRITE_HOST_VRAM        = 1,
    SVGA3D_READ_HOST_VRAM         = 2,
-} SVGA3dTransferType;
+पूर्ण SVGA3dTransferType;
 
-#define SVGA3D_LOGICOP_INVALID  0
-#define SVGA3D_LOGICOP_MIN      1
-#define SVGA3D_LOGICOP_COPY     1
-#define SVGA3D_LOGICOP_NOT      2
-#define SVGA3D_LOGICOP_AND      3
-#define SVGA3D_LOGICOP_OR       4
-#define SVGA3D_LOGICOP_XOR      5
-#define SVGA3D_LOGICOP_NXOR     6
-#define SVGA3D_LOGICOP_ROP3     7
-#define SVGA3D_LOGICOP_MAX      8
+#घोषणा SVGA3D_LOGICOP_INVALID  0
+#घोषणा SVGA3D_LOGICOP_MIN      1
+#घोषणा SVGA3D_LOGICOP_COPY     1
+#घोषणा SVGA3D_LOGICOP_NOT      2
+#घोषणा SVGA3D_LOGICOP_AND      3
+#घोषणा SVGA3D_LOGICOP_OR       4
+#घोषणा SVGA3D_LOGICOP_XOR      5
+#घोषणा SVGA3D_LOGICOP_NXOR     6
+#घोषणा SVGA3D_LOGICOP_ROP3     7
+#घोषणा SVGA3D_LOGICOP_MAX      8
 
-typedef uint16 SVGA3dLogicOp;
+प्रकार uपूर्णांक16 SVGA3dLogicOp;
 
-#define SVGA3D_LOGICOP_ROP3_INVALID ((uint16) -1)
-#define SVGA3D_LOGICOP_ROP3_MIN     0
-#define SVGA3D_LOGICOP_ROP3_MAX     256
+#घोषणा SVGA3D_LOGICOP_ROP3_INVALID ((uपूर्णांक16) -1)
+#घोषणा SVGA3D_LOGICOP_ROP3_MIN     0
+#घोषणा SVGA3D_LOGICOP_ROP3_MAX     256
 
-typedef uint16 SVGA3dLogicOpRop3;
+प्रकार uपूर्णांक16 SVGA3dLogicOpRop3;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   union {
-      struct {
-         uint16  function;       // SVGA3dFogFunction
-         uint8   type;           // SVGA3dFogType
-         uint8   base;           // SVGA3dFogBase
-      };
-      uint32     uintValue;
-   };
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   जोड़ अणु
+      काष्ठा अणु
+         uपूर्णांक16  function;       // SVGA3dFogFunction
+         uपूर्णांक8   type;           // SVGA3dFogType
+         uपूर्णांक8   base;           // SVGA3dFogBase
+      पूर्ण;
+      uपूर्णांक32     uपूर्णांकValue;
+   पूर्ण;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dFogMode;
 
 /*
- * Uniquely identify one image (a 1D/2D/3D array) from a surface. This
+ * Uniquely identअगरy one image (a 1D/2D/3D array) from a surface. This
  * is a surface ID as well as face/mipmap indices.
  */
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dSurfaceImageId {
-   uint32 sid;
-   uint32 face;
-   uint32 mipmap;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dSurfaceImageId अणु
+   uपूर्णांक32 sid;
+   uपूर्णांक32 face;
+   uपूर्णांक32 mipmap;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dSurfaceImageId;
 
-typedef
-#include "vmware_pack_begin.h"
-struct SVGA3dSubSurfaceId {
-   uint32 sid;
-   uint32 subResourceId;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा SVGA3dSubSurfaceId अणु
+   uपूर्णांक32 sid;
+   uपूर्णांक32 subResourceId;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dSubSurfaceId;
 
-typedef
-#include "vmware_pack_begin.h"
-struct {
-   uint32               width;
-   uint32               height;
-   uint32               depth;
-}
-#include "vmware_pack_end.h"
+प्रकार
+#समावेश "vmware_pack_begin.h"
+काष्ठा अणु
+   uपूर्णांक32               width;
+   uपूर्णांक32               height;
+   uपूर्णांक32               depth;
+पूर्ण
+#समावेश "vmware_pack_end.h"
 SVGA3dSize;
 
 /*
  * Guest-backed objects definitions.
  */
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA_OTABLE_MOB             = 0,
    SVGA_OTABLE_MIN             = 0,
    SVGA_OTABLE_SURFACE         = 1,
@@ -1911,13 +1912,13 @@ typedef enum {
 
    /*
     * Additions to this table need to be tied to HW-version features and
-    * checkpointed accordingly.
+    * checkpoपूर्णांकed accordingly.
     */
    SVGA_OTABLE_DEVEL_MAX       = 8,
    SVGA_OTABLE_MAX             = 8
-} SVGAOTableType;
+पूर्ण SVGAOTableType;
 
-typedef enum {
+प्रकार क्रमागत अणु
    SVGA_COTABLE_MIN             = 0,
    SVGA_COTABLE_RTVIEW          = 0,
    SVGA_COTABLE_DSVIEW          = 1,
@@ -1933,14 +1934,14 @@ typedef enum {
    SVGA_COTABLE_DX10_MAX        = 11,
    SVGA_COTABLE_UAVIEW          = 11,
    SVGA_COTABLE_MAX             = 12,
-} SVGACOTableType;
+पूर्ण SVGACOTableType;
 
 /*
  * The largest size (number of entries) allowed in a COTable.
  */
-#define SVGA_COTABLE_MAX_IDS (MAX_UINT16 - 2)
+#घोषणा SVGA_COTABLE_MAX_IDS (MAX_UINT16 - 2)
 
-typedef enum SVGAMobFormat {
+प्रकार क्रमागत SVGAMobFormat अणु
    SVGA3D_MOBFMT_INVALID     = SVGA3D_INVALID_ID,
    SVGA3D_MOBFMT_PTDEPTH_0   = 0,
    SVGA3D_MOBFMT_MIN         = 0,
@@ -1955,46 +1956,46 @@ typedef enum SVGAMobFormat {
    SVGA3D_MOBFMT_MAX,
 
    /*
-    * This isn't actually used by the guest, but is a mob-format used
-    * internally by the SVGA device (and is therefore not binary compatible).
+    * This isn't actually used by the guest, but is a mob-क्रमmat used
+    * पूर्णांकernally by the SVGA device (and is thereक्रमe not binary compatible).
     */
    SVGA3D_MOBFMT_HB,
-} SVGAMobFormat;
+पूर्ण SVGAMobFormat;
 
-#define SVGA3D_MOB_EMPTY_BASE 1
+#घोषणा SVGA3D_MOB_EMPTY_BASE 1
 
 /*
  * Multisample pattern types.
  */
 
-typedef enum SVGA3dMSPattern {
+प्रकार क्रमागत SVGA3dMSPattern अणु
    SVGA3D_MS_PATTERN_NONE     = 0,
    SVGA3D_MS_PATTERN_MIN      = 0,
    SVGA3D_MS_PATTERN_STANDARD = 1,
    SVGA3D_MS_PATTERN_CENTER   = 2,
    SVGA3D_MS_PATTERN_MAX      = 3,
-} SVGA3dMSPattern;
+पूर्ण SVGA3dMSPattern;
 
 /*
- * Precision settings for each sample.
+ * Precision settings क्रम each sample.
  */
 
-typedef enum SVGA3dMSQualityLevel {
+प्रकार क्रमागत SVGA3dMSQualityLevel अणु
    SVGA3D_MS_QUALITY_NONE = 0,
    SVGA3D_MS_QUALITY_MIN  = 0,
    SVGA3D_MS_QUALITY_FULL = 1,
    SVGA3D_MS_QUALITY_MAX  = 2,
-} SVGA3dMSQualityLevel;
+पूर्ण SVGA3dMSQualityLevel;
 
 /*
  * Screen Target Update Flags
  */
 
-typedef enum SVGA3dFrameUpdateType {
+प्रकार क्रमागत SVGA3dFrameUpdateType अणु
    SVGA3D_FRAME_END     = 0,
    SVGA3D_FRAME_PARTIAL = 1,
    SVGA3D_FRAME_UNKNOWN = 2,
    SVGA3D_FRAME_MAX     = 3,
-} SVGA3dFrameUpdateType;
+पूर्ण SVGA3dFrameUpdateType;
 
-#endif /* _SVGA3D_TYPES_H_ */
+#पूर्ण_अगर /* _SVGA3D_TYPES_H_ */

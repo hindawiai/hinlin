@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Linux driver for System z and s390 unit record devices
- * (z/VM virtual punch, reader, printer)
+ * Linux driver क्रम System z and s390 unit record devices
+ * (z/VM भव punch, पढ़ोer, prपूर्णांकer)
  *
  * Copyright IBM Corp. 2001, 2009
  * Authors: Malcolm Beattie <beattiem@uk.ibm.com>
@@ -9,674 +10,674 @@
  *	    Frank Munzert <munzert@de.ibm.com>
  */
 
-#define KMSG_COMPONENT "vmur"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "vmur"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/cdev.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
-#include <linux/uaccess.h>
-#include <asm/cio.h>
-#include <asm/ccwdev.h>
-#include <asm/debug.h>
-#include <asm/diag.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/cपन.स>
+#समावेश <यंत्र/ccwdev.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/diag.h>
 
-#include "vmur.h"
+#समावेश "vmur.h"
 
 /*
  * Driver overview
  *
- * Unit record device support is implemented as a character device driver.
- * We can fit at least 16 bits into a device minor number and use the
- * simple method of mapping a character device number with minor abcd
+ * Unit record device support is implemented as a अक्षरacter device driver.
+ * We can fit at least 16 bits पूर्णांकo a device minor number and use the
+ * simple method of mapping a अक्षरacter device number with minor abcd
  * to the unit record device with devno abcd.
- * I/O to virtual unit record devices is handled as follows:
+ * I/O to भव unit record devices is handled as follows:
  * Reads: Diagnose code 0x14 (input spool file manipulation)
- * is used to read spool data page-wise.
+ * is used to पढ़ो spool data page-wise.
  * Writes: The CCW used is WRITE_CCW_CMD (0x01). The device's record length
- * is available by reading sysfs attr reclen. Each write() to the device
- * must specify an integral multiple (maximal 511) of reclen.
+ * is available by पढ़ोing sysfs attr reclen. Each ग_लिखो() to the device
+ * must specअगरy an पूर्णांकegral multiple (maximal 511) of reclen.
  */
 
-static char ur_banner[] = "z/VM virtual unit record device driver";
+अटल अक्षर ur_banner[] = "z/VM virtual unit record device driver";
 
 MODULE_AUTHOR("IBM Corporation");
 MODULE_DESCRIPTION("s390 z/VM virtual unit record device driver");
 MODULE_LICENSE("GPL");
 
-static dev_t ur_first_dev_maj_min;
-static struct class *vmur_class;
-static struct debug_info *vmur_dbf;
+अटल dev_t ur_first_dev_maj_min;
+अटल काष्ठा class *vmur_class;
+अटल काष्ठा debug_info *vmur_dbf;
 
-/* We put the device's record length (for writes) in the driver_info field */
-static struct ccw_device_id ur_ids[] = {
-	{ CCWDEV_CU_DI(READER_PUNCH_DEVTYPE, 80) },
-	{ CCWDEV_CU_DI(PRINTER_DEVTYPE, 132) },
-	{ /* end of list */ }
-};
+/* We put the device's record length (क्रम ग_लिखोs) in the driver_info field */
+अटल काष्ठा ccw_device_id ur_ids[] = अणु
+	अणु CCWDEV_CU_DI(READER_PUNCH_DEVTYPE, 80) पूर्ण,
+	अणु CCWDEV_CU_DI(PRINTER_DEVTYPE, 132) पूर्ण,
+	अणु /* end of list */ पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(ccw, ur_ids);
 
-static int ur_probe(struct ccw_device *cdev);
-static void ur_remove(struct ccw_device *cdev);
-static int ur_set_online(struct ccw_device *cdev);
-static int ur_set_offline(struct ccw_device *cdev);
+अटल पूर्णांक ur_probe(काष्ठा ccw_device *cdev);
+अटल व्योम ur_हटाओ(काष्ठा ccw_device *cdev);
+अटल पूर्णांक ur_set_online(काष्ठा ccw_device *cdev);
+अटल पूर्णांक ur_set_offline(काष्ठा ccw_device *cdev);
 
-static struct ccw_driver ur_driver = {
-	.driver = {
+अटल काष्ठा ccw_driver ur_driver = अणु
+	.driver = अणु
 		.name	= "vmur",
 		.owner	= THIS_MODULE,
-	},
+	पूर्ण,
 	.ids		= ur_ids,
 	.probe		= ur_probe,
-	.remove		= ur_remove,
+	.हटाओ		= ur_हटाओ,
 	.set_online	= ur_set_online,
 	.set_offline	= ur_set_offline,
-	.int_class	= IRQIO_VMR,
-};
+	.पूर्णांक_class	= IRQIO_VMR,
+पूर्ण;
 
-static DEFINE_MUTEX(vmur_mutex);
+अटल DEFINE_MUTEX(vmur_mutex);
 
 /*
- * Allocation, freeing, getting and putting of urdev structures
+ * Allocation, मुक्तing, getting and putting of urdev काष्ठाures
  *
  * Each ur device (urd) contains a reference to its corresponding ccw device
- * (cdev) using the urd->cdev pointer. Each ccw device has a reference to the
- * ur device using dev_get_drvdata(&cdev->dev) pointer.
+ * (cdev) using the urd->cdev poपूर्णांकer. Each ccw device has a reference to the
+ * ur device using dev_get_drvdata(&cdev->dev) poपूर्णांकer.
  *
  * urd references:
- * - ur_probe gets a urd reference, ur_remove drops the reference
+ * - ur_probe माला_लो a urd reference, ur_हटाओ drops the reference
  *   dev_get_drvdata(&cdev->dev)
- * - ur_open gets a urd reference, ur_release drops the reference
+ * - ur_खोलो माला_लो a urd reference, ur_release drops the reference
  *   (urf->urd)
  *
  * cdev references:
  * - urdev_alloc get a cdev reference (urd->cdev)
- * - urdev_free drops the cdev reference (urd->cdev)
+ * - urdev_मुक्त drops the cdev reference (urd->cdev)
  *
- * Setting and clearing of dev_get_drvdata(&cdev->dev) is protected by the ccwdev lock
+ * Setting and clearing of dev_get_drvdata(&cdev->dev) is रक्षित by the ccwdev lock
  */
-static struct urdev *urdev_alloc(struct ccw_device *cdev)
-{
-	struct urdev *urd;
+अटल काष्ठा urdev *urdev_alloc(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा urdev *urd;
 
-	urd = kzalloc(sizeof(struct urdev), GFP_KERNEL);
-	if (!urd)
-		return NULL;
+	urd = kzalloc(माप(काष्ठा urdev), GFP_KERNEL);
+	अगर (!urd)
+		वापस शून्य;
 	urd->reclen = cdev->id.driver_info;
 	ccw_device_get_id(cdev, &urd->dev_id);
 	mutex_init(&urd->io_mutex);
-	init_waitqueue_head(&urd->wait);
-	spin_lock_init(&urd->open_lock);
+	init_रुकोqueue_head(&urd->रुको);
+	spin_lock_init(&urd->खोलो_lock);
 	refcount_set(&urd->ref_count,  1);
 	urd->cdev = cdev;
 	get_device(&cdev->dev);
-	return urd;
-}
+	वापस urd;
+पूर्ण
 
-static void urdev_free(struct urdev *urd)
-{
+अटल व्योम urdev_मुक्त(काष्ठा urdev *urd)
+अणु
 	TRACE("urdev_free: %p\n", urd);
-	if (urd->cdev)
+	अगर (urd->cdev)
 		put_device(&urd->cdev->dev);
-	kfree(urd);
-}
+	kमुक्त(urd);
+पूर्ण
 
-static void urdev_get(struct urdev *urd)
-{
+अटल व्योम urdev_get(काष्ठा urdev *urd)
+अणु
 	refcount_inc(&urd->ref_count);
-}
+पूर्ण
 
-static struct urdev *urdev_get_from_cdev(struct ccw_device *cdev)
-{
-	struct urdev *urd;
-	unsigned long flags;
+अटल काष्ठा urdev *urdev_get_from_cdev(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा urdev *urd;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	urd = dev_get_drvdata(&cdev->dev);
-	if (urd)
+	अगर (urd)
 		urdev_get(urd);
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
-	return urd;
-}
+	वापस urd;
+पूर्ण
 
-static struct urdev *urdev_get_from_devno(u16 devno)
-{
-	char bus_id[16];
-	struct ccw_device *cdev;
-	struct urdev *urd;
+अटल काष्ठा urdev *urdev_get_from_devno(u16 devno)
+अणु
+	अक्षर bus_id[16];
+	काष्ठा ccw_device *cdev;
+	काष्ठा urdev *urd;
 
-	sprintf(bus_id, "0.0.%04x", devno);
+	प्र_लिखो(bus_id, "0.0.%04x", devno);
 	cdev = get_ccwdev_by_busid(&ur_driver, bus_id);
-	if (!cdev)
-		return NULL;
+	अगर (!cdev)
+		वापस शून्य;
 	urd = urdev_get_from_cdev(cdev);
 	put_device(&cdev->dev);
-	return urd;
-}
+	वापस urd;
+पूर्ण
 
-static void urdev_put(struct urdev *urd)
-{
-	if (refcount_dec_and_test(&urd->ref_count))
-		urdev_free(urd);
-}
+अटल व्योम urdev_put(काष्ठा urdev *urd)
+अणु
+	अगर (refcount_dec_and_test(&urd->ref_count))
+		urdev_मुक्त(urd);
+पूर्ण
 
 /*
- * Low-level functions to do I/O to a ur device.
+ * Low-level functions to करो I/O to a ur device.
  *     alloc_chan_prog
- *     free_chan_prog
- *     do_ur_io
- *     ur_int_handler
+ *     मुक्त_chan_prog
+ *     करो_ur_io
+ *     ur_पूर्णांक_handler
  *
  * alloc_chan_prog allocates and builds the channel program
- * free_chan_prog frees memory of the channel program
+ * मुक्त_chan_prog मुक्तs memory of the channel program
  *
- * do_ur_io issues the channel program to the device and blocks waiting
- * on a completion event it publishes at urd->io_done. The function
+ * करो_ur_io issues the channel program to the device and blocks रुकोing
+ * on a completion event it publishes at urd->io_करोne. The function
  * serialises itself on the device's mutex so that only one I/O
- * is issued at a time (and that I/O is synchronous).
+ * is issued at a समय (and that I/O is synchronous).
  *
- * ur_int_handler catches the "I/O done" interrupt, writes the
- * subchannel status word into the scsw member of the urdev structure
- * and complete()s the io_done to wake the waiting do_ur_io.
+ * ur_पूर्णांक_handler catches the "I/O done" पूर्णांकerrupt, ग_लिखोs the
+ * subchannel status word पूर्णांकo the scsw member of the urdev काष्ठाure
+ * and complete()s the io_करोne to wake the रुकोing करो_ur_io.
  *
- * The caller of do_ur_io is responsible for kfree()ing the channel program
- * address pointer that alloc_chan_prog returned.
+ * The caller of करो_ur_io is responsible क्रम kमुक्त()ing the channel program
+ * address poपूर्णांकer that alloc_chan_prog वापसed.
  */
 
-static void free_chan_prog(struct ccw1 *cpa)
-{
-	struct ccw1 *ptr = cpa;
+अटल व्योम मुक्त_chan_prog(काष्ठा ccw1 *cpa)
+अणु
+	काष्ठा ccw1 *ptr = cpa;
 
-	while (ptr->cda) {
-		kfree((void *)(addr_t) ptr->cda);
+	जबतक (ptr->cda) अणु
+		kमुक्त((व्योम *)(addr_t) ptr->cda);
 		ptr++;
-	}
-	kfree(cpa);
-}
+	पूर्ण
+	kमुक्त(cpa);
+पूर्ण
 
 /*
  * alloc_chan_prog
- * The channel program we use is write commands chained together
+ * The channel program we use is ग_लिखो commands chained together
  * with a final NOP CCW command-chained on (which ensures that CE and DE
- * are presented together in a single interrupt instead of as separate
- * interrupts unless an incorrect length indication kicks in first). The
+ * are presented together in a single पूर्णांकerrupt instead of as separate
+ * पूर्णांकerrupts unless an incorrect length indication kicks in first). The
  * data length in each CCW is reclen.
  */
-static struct ccw1 *alloc_chan_prog(const char __user *ubuf, int rec_count,
-				    int reclen)
-{
-	struct ccw1 *cpa;
-	void *kbuf;
-	int i;
+अटल काष्ठा ccw1 *alloc_chan_prog(स्थिर अक्षर __user *ubuf, पूर्णांक rec_count,
+				    पूर्णांक reclen)
+अणु
+	काष्ठा ccw1 *cpa;
+	व्योम *kbuf;
+	पूर्णांक i;
 
 	TRACE("alloc_chan_prog(%p, %i, %i)\n", ubuf, rec_count, reclen);
 
 	/*
-	 * We chain a NOP onto the writes to force CE+DE together.
-	 * That means we allocate room for CCWs to cover count/reclen
+	 * We chain a NOP onto the ग_लिखोs to क्रमce CE+DE together.
+	 * That means we allocate room क्रम CCWs to cover count/reclen
 	 * records plus a NOP.
 	 */
-	cpa = kcalloc(rec_count + 1, sizeof(struct ccw1),
+	cpa = kसुस्मृति(rec_count + 1, माप(काष्ठा ccw1),
 		      GFP_KERNEL | GFP_DMA);
-	if (!cpa)
-		return ERR_PTR(-ENOMEM);
+	अगर (!cpa)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (i = 0; i < rec_count; i++) {
+	क्रम (i = 0; i < rec_count; i++) अणु
 		cpa[i].cmd_code = WRITE_CCW_CMD;
 		cpa[i].flags = CCW_FLAG_CC | CCW_FLAG_SLI;
 		cpa[i].count = reclen;
-		kbuf = kmalloc(reclen, GFP_KERNEL | GFP_DMA);
-		if (!kbuf) {
-			free_chan_prog(cpa);
-			return ERR_PTR(-ENOMEM);
-		}
+		kbuf = kदो_स्मृति(reclen, GFP_KERNEL | GFP_DMA);
+		अगर (!kbuf) अणु
+			मुक्त_chan_prog(cpa);
+			वापस ERR_PTR(-ENOMEM);
+		पूर्ण
 		cpa[i].cda = (u32)(addr_t) kbuf;
-		if (copy_from_user(kbuf, ubuf, reclen)) {
-			free_chan_prog(cpa);
-			return ERR_PTR(-EFAULT);
-		}
+		अगर (copy_from_user(kbuf, ubuf, reclen)) अणु
+			मुक्त_chan_prog(cpa);
+			वापस ERR_PTR(-EFAULT);
+		पूर्ण
 		ubuf += reclen;
-	}
-	/* The following NOP CCW forces CE+DE to be presented together */
+	पूर्ण
+	/* The following NOP CCW क्रमces CE+DE to be presented together */
 	cpa[i].cmd_code = CCW_CMD_NOOP;
-	return cpa;
-}
+	वापस cpa;
+पूर्ण
 
-static int do_ur_io(struct urdev *urd, struct ccw1 *cpa)
-{
-	int rc;
-	struct ccw_device *cdev = urd->cdev;
+अटल पूर्णांक करो_ur_io(काष्ठा urdev *urd, काष्ठा ccw1 *cpa)
+अणु
+	पूर्णांक rc;
+	काष्ठा ccw_device *cdev = urd->cdev;
 	DECLARE_COMPLETION_ONSTACK(event);
 
 	TRACE("do_ur_io: cpa=%p\n", cpa);
 
-	rc = mutex_lock_interruptible(&urd->io_mutex);
-	if (rc)
-		return rc;
+	rc = mutex_lock_पूर्णांकerruptible(&urd->io_mutex);
+	अगर (rc)
+		वापस rc;
 
-	urd->io_done = &event;
+	urd->io_करोne = &event;
 
 	spin_lock_irq(get_ccwdev_lock(cdev));
 	rc = ccw_device_start(cdev, cpa, 1, 0, 0);
 	spin_unlock_irq(get_ccwdev_lock(cdev));
 
 	TRACE("do_ur_io: ccw_device_start returned %d\n", rc);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	wait_for_completion(&event);
+	रुको_क्रम_completion(&event);
 	TRACE("do_ur_io: I/O complete\n");
 	rc = 0;
 
 out:
 	mutex_unlock(&urd->io_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
- * ur interrupt handler, called from the ccw_device layer
+ * ur पूर्णांकerrupt handler, called from the ccw_device layer
  */
-static void ur_int_handler(struct ccw_device *cdev, unsigned long intparm,
-			   struct irb *irb)
-{
-	struct urdev *urd;
+अटल व्योम ur_पूर्णांक_handler(काष्ठा ccw_device *cdev, अचिन्हित दीर्घ पूर्णांकparm,
+			   काष्ठा irb *irb)
+अणु
+	काष्ठा urdev *urd;
 
-	if (!IS_ERR(irb)) {
+	अगर (!IS_ERR(irb)) अणु
 		TRACE("ur_int_handler: intparm=0x%lx cstat=%02x dstat=%02x res=%u\n",
-		      intparm, irb->scsw.cmd.cstat, irb->scsw.cmd.dstat,
+		      पूर्णांकparm, irb->scsw.cmd.cstat, irb->scsw.cmd.dstat,
 		      irb->scsw.cmd.count);
-	}
-	if (!intparm) {
+	पूर्ण
+	अगर (!पूर्णांकparm) अणु
 		TRACE("ur_int_handler: unsolicited interrupt\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	urd = dev_get_drvdata(&cdev->dev);
 	BUG_ON(!urd);
-	/* On special conditions irb is an error pointer */
-	if (IS_ERR(irb))
+	/* On special conditions irb is an error poपूर्णांकer */
+	अगर (IS_ERR(irb))
 		urd->io_request_rc = PTR_ERR(irb);
-	else if (irb->scsw.cmd.dstat == (DEV_STAT_CHN_END | DEV_STAT_DEV_END))
+	अन्यथा अगर (irb->scsw.cmd.dstat == (DEV_STAT_CHN_END | DEV_STAT_DEV_END))
 		urd->io_request_rc = 0;
-	else
+	अन्यथा
 		urd->io_request_rc = -EIO;
 
-	complete(urd->io_done);
-}
+	complete(urd->io_करोne);
+पूर्ण
 
 /*
- * reclen sysfs attribute - The record length to be used for write CCWs
+ * reclen sysfs attribute - The record length to be used क्रम ग_लिखो CCWs
  */
-static ssize_t ur_attr_reclen_show(struct device *dev,
-				   struct device_attribute *attr, char *buf)
-{
-	struct urdev *urd;
-	int rc;
+अटल sमाप_प्रकार ur_attr_reclen_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा urdev *urd;
+	पूर्णांक rc;
 
 	urd = urdev_get_from_cdev(to_ccwdev(dev));
-	if (!urd)
-		return -ENODEV;
-	rc = sprintf(buf, "%zu\n", urd->reclen);
+	अगर (!urd)
+		वापस -ENODEV;
+	rc = प्र_लिखो(buf, "%zu\n", urd->reclen);
 	urdev_put(urd);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static DEVICE_ATTR(reclen, 0444, ur_attr_reclen_show, NULL);
+अटल DEVICE_ATTR(reclen, 0444, ur_attr_reclen_show, शून्य);
 
-static int ur_create_attributes(struct device *dev)
-{
-	return device_create_file(dev, &dev_attr_reclen);
-}
+अटल पूर्णांक ur_create_attributes(काष्ठा device *dev)
+अणु
+	वापस device_create_file(dev, &dev_attr_reclen);
+पूर्ण
 
-static void ur_remove_attributes(struct device *dev)
-{
-	device_remove_file(dev, &dev_attr_reclen);
-}
+अटल व्योम ur_हटाओ_attributes(काष्ठा device *dev)
+अणु
+	device_हटाओ_file(dev, &dev_attr_reclen);
+पूर्ण
 
 /*
- * diagnose code 0x210 - retrieve device information
+ * diagnose code 0x210 - retrieve device inक्रमmation
  * cc=0  normal completion, we have a real device
  * cc=1  CP paging error
- * cc=2  The virtual device exists, but is not associated with a real device
- * cc=3  Invalid device address, or the virtual device does not exist
+ * cc=2  The भव device exists, but is not associated with a real device
+ * cc=3  Invalid device address, or the भव device करोes not exist
  */
-static int get_urd_class(struct urdev *urd)
-{
-	static struct diag210 ur_diag210;
-	int cc;
+अटल पूर्णांक get_urd_class(काष्ठा urdev *urd)
+अणु
+	अटल काष्ठा diag210 ur_diag210;
+	पूर्णांक cc;
 
 	ur_diag210.vrdcdvno = urd->dev_id.devno;
-	ur_diag210.vrdclen = sizeof(struct diag210);
+	ur_diag210.vrdclen = माप(काष्ठा diag210);
 
 	cc = diag210(&ur_diag210);
-	switch (cc) {
-	case 0:
-		return -EOPNOTSUPP;
-	case 2:
-		return ur_diag210.vrdcvcla; /* virtual device class */
-	case 3:
-		return -ENODEV;
-	default:
-		return -EIO;
-	}
-}
+	चयन (cc) अणु
+	हाल 0:
+		वापस -EOPNOTSUPP;
+	हाल 2:
+		वापस ur_diag210.vrdcvcla; /* भव device class */
+	हाल 3:
+		वापस -ENODEV;
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
 /*
- * Allocation and freeing of urfile structures
+ * Allocation and मुक्तing of urfile काष्ठाures
  */
-static struct urfile *urfile_alloc(struct urdev *urd)
-{
-	struct urfile *urf;
+अटल काष्ठा urfile *urfile_alloc(काष्ठा urdev *urd)
+अणु
+	काष्ठा urfile *urf;
 
-	urf = kzalloc(sizeof(struct urfile), GFP_KERNEL);
-	if (!urf)
-		return NULL;
+	urf = kzalloc(माप(काष्ठा urfile), GFP_KERNEL);
+	अगर (!urf)
+		वापस शून्य;
 	urf->urd = urd;
 
 	TRACE("urfile_alloc: urd=%p urf=%p rl=%zu\n", urd, urf,
 	      urf->dev_reclen);
 
-	return urf;
-}
+	वापस urf;
+पूर्ण
 
-static void urfile_free(struct urfile *urf)
-{
+अटल व्योम urfile_मुक्त(काष्ठा urfile *urf)
+अणु
 	TRACE("urfile_free: urf=%p urd=%p\n", urf, urf->urd);
-	kfree(urf);
-}
+	kमुक्त(urf);
+पूर्ण
 
 /*
- * The fops implementation of the character device driver
+ * The fops implementation of the अक्षरacter device driver
  */
-static ssize_t do_write(struct urdev *urd, const char __user *udata,
-			size_t count, size_t reclen, loff_t *ppos)
-{
-	struct ccw1 *cpa;
-	int rc;
+अटल sमाप_प्रकार करो_ग_लिखो(काष्ठा urdev *urd, स्थिर अक्षर __user *udata,
+			माप_प्रकार count, माप_प्रकार reclen, loff_t *ppos)
+अणु
+	काष्ठा ccw1 *cpa;
+	पूर्णांक rc;
 
 	cpa = alloc_chan_prog(udata, count / reclen, reclen);
-	if (IS_ERR(cpa))
-		return PTR_ERR(cpa);
+	अगर (IS_ERR(cpa))
+		वापस PTR_ERR(cpa);
 
-	rc = do_ur_io(urd, cpa);
-	if (rc)
-		goto fail_kfree_cpa;
+	rc = करो_ur_io(urd, cpa);
+	अगर (rc)
+		जाओ fail_kमुक्त_cpa;
 
-	if (urd->io_request_rc) {
+	अगर (urd->io_request_rc) अणु
 		rc = urd->io_request_rc;
-		goto fail_kfree_cpa;
-	}
+		जाओ fail_kमुक्त_cpa;
+	पूर्ण
 	*ppos += count;
 	rc = count;
 
-fail_kfree_cpa:
-	free_chan_prog(cpa);
-	return rc;
-}
+fail_kमुक्त_cpa:
+	मुक्त_chan_prog(cpa);
+	वापस rc;
+पूर्ण
 
-static ssize_t ur_write(struct file *file, const char __user *udata,
-			size_t count, loff_t *ppos)
-{
-	struct urfile *urf = file->private_data;
+अटल sमाप_प्रकार ur_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *udata,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा urfile *urf = file->निजी_data;
 
 	TRACE("ur_write: count=%zu\n", count);
 
-	if (count == 0)
-		return 0;
+	अगर (count == 0)
+		वापस 0;
 
-	if (count % urf->dev_reclen)
-		return -EINVAL;	/* count must be a multiple of reclen */
+	अगर (count % urf->dev_reclen)
+		वापस -EINVAL;	/* count must be a multiple of reclen */
 
-	if (count > urf->dev_reclen * MAX_RECS_PER_IO)
+	अगर (count > urf->dev_reclen * MAX_RECS_PER_IO)
 		count = urf->dev_reclen * MAX_RECS_PER_IO;
 
-	return do_write(urf->urd, udata, count, urf->dev_reclen, ppos);
-}
+	वापस करो_ग_लिखो(urf->urd, udata, count, urf->dev_reclen, ppos);
+पूर्ण
 
 /*
  * diagnose code 0x14 subcode 0x0028 - position spool file to designated
  *				       record
  * cc=0  normal completion
- * cc=2  no file active on the virtual reader or device not ready
- * cc=3  record specified is beyond EOF
+ * cc=2  no file active on the भव पढ़ोer or device not पढ़ोy
+ * cc=3  record specअगरied is beyond खातापूर्ण
  */
-static int diag_position_to_record(int devno, int record)
-{
-	int cc;
+अटल पूर्णांक diag_position_to_record(पूर्णांक devno, पूर्णांक record)
+अणु
+	पूर्णांक cc;
 
 	cc = diag14(record, devno, 0x28);
-	switch (cc) {
-	case 0:
-		return 0;
-	case 2:
-		return -ENOMEDIUM;
-	case 3:
-		return -ENODATA; /* position beyond end of file */
-	default:
-		return -EIO;
-	}
-}
+	चयन (cc) अणु
+	हाल 0:
+		वापस 0;
+	हाल 2:
+		वापस -ENOMEDIUM;
+	हाल 3:
+		वापस -ENODATA; /* position beyond end of file */
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
 /*
- * diagnose code 0x14 subcode 0x0000 - read next spool file buffer
+ * diagnose code 0x14 subcode 0x0000 - पढ़ो next spool file buffer
  * cc=0  normal completion
- * cc=1  EOF reached
- * cc=2  no file active on the virtual reader, and no file eligible
- * cc=3  file already active on the virtual reader or specified virtual
- *	 reader does not exist or is not a reader
+ * cc=1  खातापूर्ण reached
+ * cc=2  no file active on the भव पढ़ोer, and no file eligible
+ * cc=3  file alपढ़ोy active on the भव पढ़ोer or specअगरied भव
+ *	 पढ़ोer करोes not exist or is not a पढ़ोer
  */
-static int diag_read_file(int devno, char *buf)
-{
-	int cc;
+अटल पूर्णांक diag_पढ़ो_file(पूर्णांक devno, अक्षर *buf)
+अणु
+	पूर्णांक cc;
 
-	cc = diag14((unsigned long) buf, devno, 0x00);
-	switch (cc) {
-	case 0:
-		return 0;
-	case 1:
-		return -ENODATA;
-	case 2:
-		return -ENOMEDIUM;
-	default:
-		return -EIO;
-	}
-}
+	cc = diag14((अचिन्हित दीर्घ) buf, devno, 0x00);
+	चयन (cc) अणु
+	हाल 0:
+		वापस 0;
+	हाल 1:
+		वापस -ENODATA;
+	हाल 2:
+		वापस -ENOMEDIUM;
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-static ssize_t diag14_read(struct file *file, char __user *ubuf, size_t count,
+अटल sमाप_प्रकार diag14_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf, माप_प्रकार count,
 			   loff_t *offs)
-{
-	size_t len, copied, res;
-	char *buf;
-	int rc;
+अणु
+	माप_प्रकार len, copied, res;
+	अक्षर *buf;
+	पूर्णांक rc;
 	u16 reclen;
-	struct urdev *urd;
+	काष्ठा urdev *urd;
 
-	urd = ((struct urfile *) file->private_data)->urd;
-	reclen = ((struct urfile *) file->private_data)->file_reclen;
+	urd = ((काष्ठा urfile *) file->निजी_data)->urd;
+	reclen = ((काष्ठा urfile *) file->निजी_data)->file_reclen;
 
 	rc = diag_position_to_record(urd->dev_id.devno, *offs / PAGE_SIZE + 1);
-	if (rc == -ENODATA)
-		return 0;
-	if (rc)
-		return rc;
+	अगर (rc == -ENODATA)
+		वापस 0;
+	अगर (rc)
+		वापस rc;
 
-	len = min((size_t) PAGE_SIZE, count);
-	buf = (char *) __get_free_page(GFP_KERNEL | GFP_DMA);
-	if (!buf)
-		return -ENOMEM;
+	len = min((माप_प्रकार) PAGE_SIZE, count);
+	buf = (अक्षर *) __get_मुक्त_page(GFP_KERNEL | GFP_DMA);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	copied = 0;
-	res = (size_t) (*offs % PAGE_SIZE);
-	do {
-		rc = diag_read_file(urd->dev_id.devno, buf);
-		if (rc == -ENODATA) {
-			break;
-		}
-		if (rc)
-			goto fail;
-		if (reclen && (copied == 0) && (*offs < PAGE_SIZE))
-			*((u16 *) &buf[FILE_RECLEN_OFFSET]) = reclen;
+	res = (माप_प्रकार) (*offs % PAGE_SIZE);
+	करो अणु
+		rc = diag_पढ़ो_file(urd->dev_id.devno, buf);
+		अगर (rc == -ENODATA) अणु
+			अवरोध;
+		पूर्ण
+		अगर (rc)
+			जाओ fail;
+		अगर (reclen && (copied == 0) && (*offs < PAGE_SIZE))
+			*((u16 *) &buf[खाता_RECLEN_OFFSET]) = reclen;
 		len = min(count - copied, PAGE_SIZE - res);
-		if (copy_to_user(ubuf + copied, buf + res, len)) {
+		अगर (copy_to_user(ubuf + copied, buf + res, len)) अणु
 			rc = -EFAULT;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		res = 0;
 		copied += len;
-	} while (copied != count);
+	पूर्ण जबतक (copied != count);
 
 	*offs += copied;
 	rc = copied;
 fail:
-	free_page((unsigned long) buf);
-	return rc;
-}
+	मुक्त_page((अचिन्हित दीर्घ) buf);
+	वापस rc;
+पूर्ण
 
-static ssize_t ur_read(struct file *file, char __user *ubuf, size_t count,
+अटल sमाप_प्रकार ur_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf, माप_प्रकार count,
 		       loff_t *offs)
-{
-	struct urdev *urd;
-	int rc;
+अणु
+	काष्ठा urdev *urd;
+	पूर्णांक rc;
 
-	TRACE("ur_read: count=%zu ppos=%li\n", count, (unsigned long) *offs);
+	TRACE("ur_read: count=%zu ppos=%li\n", count, (अचिन्हित दीर्घ) *offs);
 
-	if (count == 0)
-		return 0;
+	अगर (count == 0)
+		वापस 0;
 
-	urd = ((struct urfile *) file->private_data)->urd;
-	rc = mutex_lock_interruptible(&urd->io_mutex);
-	if (rc)
-		return rc;
-	rc = diag14_read(file, ubuf, count, offs);
+	urd = ((काष्ठा urfile *) file->निजी_data)->urd;
+	rc = mutex_lock_पूर्णांकerruptible(&urd->io_mutex);
+	अगर (rc)
+		वापस rc;
+	rc = diag14_पढ़ो(file, ubuf, count, offs);
 	mutex_unlock(&urd->io_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * diagnose code 0x14 subcode 0x0fff - retrieve next file descriptor
  * cc=0  normal completion
- * cc=1  no files on reader queue or no subsequent file
- * cc=2  spid specified is invalid
+ * cc=1  no files on पढ़ोer queue or no subsequent file
+ * cc=2  spid specअगरied is invalid
  */
-static int diag_read_next_file_info(struct file_control_block *buf, int spid)
-{
-	int cc;
+अटल पूर्णांक diag_पढ़ो_next_file_info(काष्ठा file_control_block *buf, पूर्णांक spid)
+अणु
+	पूर्णांक cc;
 
-	cc = diag14((unsigned long) buf, spid, 0xfff);
-	switch (cc) {
-	case 0:
-		return 0;
-	default:
-		return -ENODATA;
-	}
-}
+	cc = diag14((अचिन्हित दीर्घ) buf, spid, 0xfff);
+	चयन (cc) अणु
+	हाल 0:
+		वापस 0;
+	शेष:
+		वापस -ENODATA;
+	पूर्ण
+पूर्ण
 
-static int verify_uri_device(struct urdev *urd)
-{
-	struct file_control_block *fcb;
-	char *buf;
-	int rc;
+अटल पूर्णांक verअगरy_uri_device(काष्ठा urdev *urd)
+अणु
+	काष्ठा file_control_block *fcb;
+	अक्षर *buf;
+	पूर्णांक rc;
 
-	fcb = kmalloc(sizeof(*fcb), GFP_KERNEL | GFP_DMA);
-	if (!fcb)
-		return -ENOMEM;
+	fcb = kदो_स्मृति(माप(*fcb), GFP_KERNEL | GFP_DMA);
+	अगर (!fcb)
+		वापस -ENOMEM;
 
-	/* check for empty reader device (beginning of chain) */
-	rc = diag_read_next_file_info(fcb, 0);
-	if (rc)
-		goto fail_free_fcb;
+	/* check क्रम empty पढ़ोer device (beginning of chain) */
+	rc = diag_पढ़ो_next_file_info(fcb, 0);
+	अगर (rc)
+		जाओ fail_मुक्त_fcb;
 
-	/* if file is in hold status, we do not read it */
-	if (fcb->file_stat & (FLG_SYSTEM_HOLD | FLG_USER_HOLD)) {
+	/* अगर file is in hold status, we करो not पढ़ो it */
+	अगर (fcb->file_stat & (FLG_SYSTEM_HOLD | FLG_USER_HOLD)) अणु
 		rc = -EPERM;
-		goto fail_free_fcb;
-	}
+		जाओ fail_मुक्त_fcb;
+	पूर्ण
 
-	/* open file on virtual reader	*/
-	buf = (char *) __get_free_page(GFP_KERNEL | GFP_DMA);
-	if (!buf) {
+	/* खोलो file on भव पढ़ोer	*/
+	buf = (अक्षर *) __get_मुक्त_page(GFP_KERNEL | GFP_DMA);
+	अगर (!buf) अणु
 		rc = -ENOMEM;
-		goto fail_free_fcb;
-	}
-	rc = diag_read_file(urd->dev_id.devno, buf);
-	if ((rc != 0) && (rc != -ENODATA)) /* EOF does not hurt */
-		goto fail_free_buf;
+		जाओ fail_मुक्त_fcb;
+	पूर्ण
+	rc = diag_पढ़ो_file(urd->dev_id.devno, buf);
+	अगर ((rc != 0) && (rc != -ENODATA)) /* खातापूर्ण करोes not hurt */
+		जाओ fail_मुक्त_buf;
 
-	/* check if the file on top of the queue is open now */
-	rc = diag_read_next_file_info(fcb, 0);
-	if (rc)
-		goto fail_free_buf;
-	if (!(fcb->file_stat & FLG_IN_USE)) {
-		rc = -EMFILE;
-		goto fail_free_buf;
-	}
+	/* check अगर the file on top of the queue is खोलो now */
+	rc = diag_पढ़ो_next_file_info(fcb, 0);
+	अगर (rc)
+		जाओ fail_मुक्त_buf;
+	अगर (!(fcb->file_stat & FLG_IN_USE)) अणु
+		rc = -EMखाता;
+		जाओ fail_मुक्त_buf;
+	पूर्ण
 	rc = 0;
 
-fail_free_buf:
-	free_page((unsigned long) buf);
-fail_free_fcb:
-	kfree(fcb);
-	return rc;
-}
+fail_मुक्त_buf:
+	मुक्त_page((अचिन्हित दीर्घ) buf);
+fail_मुक्त_fcb:
+	kमुक्त(fcb);
+	वापस rc;
+पूर्ण
 
-static int verify_device(struct urdev *urd)
-{
-	switch (urd->class) {
-	case DEV_CLASS_UR_O:
-		return 0; /* no check needed here */
-	case DEV_CLASS_UR_I:
-		return verify_uri_device(urd);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक verअगरy_device(काष्ठा urdev *urd)
+अणु
+	चयन (urd->class) अणु
+	हाल DEV_CLASS_UR_O:
+		वापस 0; /* no check needed here */
+	हाल DEV_CLASS_UR_I:
+		वापस verअगरy_uri_device(urd);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int get_uri_file_reclen(struct urdev *urd)
-{
-	struct file_control_block *fcb;
-	int rc;
+अटल पूर्णांक get_uri_file_reclen(काष्ठा urdev *urd)
+अणु
+	काष्ठा file_control_block *fcb;
+	पूर्णांक rc;
 
-	fcb = kmalloc(sizeof(*fcb), GFP_KERNEL | GFP_DMA);
-	if (!fcb)
-		return -ENOMEM;
-	rc = diag_read_next_file_info(fcb, 0);
-	if (rc)
-		goto fail_free;
-	if (fcb->file_stat & FLG_CP_DUMP)
+	fcb = kदो_स्मृति(माप(*fcb), GFP_KERNEL | GFP_DMA);
+	अगर (!fcb)
+		वापस -ENOMEM;
+	rc = diag_पढ़ो_next_file_info(fcb, 0);
+	अगर (rc)
+		जाओ fail_मुक्त;
+	अगर (fcb->file_stat & FLG_CP_DUMP)
 		rc = 0;
-	else
+	अन्यथा
 		rc = fcb->rec_len;
 
-fail_free:
-	kfree(fcb);
-	return rc;
-}
+fail_मुक्त:
+	kमुक्त(fcb);
+	वापस rc;
+पूर्ण
 
-static int get_file_reclen(struct urdev *urd)
-{
-	switch (urd->class) {
-	case DEV_CLASS_UR_O:
-		return 0;
-	case DEV_CLASS_UR_I:
-		return get_uri_file_reclen(urd);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक get_file_reclen(काष्ठा urdev *urd)
+अणु
+	चयन (urd->class) अणु
+	हाल DEV_CLASS_UR_O:
+		वापस 0;
+	हाल DEV_CLASS_UR_I:
+		वापस get_uri_file_reclen(urd);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int ur_open(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक ur_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	u16 devno;
-	struct urdev *urd;
-	struct urfile *urf;
-	unsigned short accmode;
-	int rc;
+	काष्ठा urdev *urd;
+	काष्ठा urfile *urf;
+	अचिन्हित लघु accmode;
+	पूर्णांक rc;
 
 	accmode = file->f_flags & O_ACCMODE;
 
-	if (accmode == O_RDWR)
-		return -EACCES;
+	अगर (accmode == O_RDWR)
+		वापस -EACCES;
 	/*
 	 * We treat the minor number as the devno of the ur device
 	 * to find in the driver tree.
@@ -684,351 +685,351 @@ static int ur_open(struct inode *inode, struct file *file)
 	devno = iminor(file_inode(file));
 
 	urd = urdev_get_from_devno(devno);
-	if (!urd) {
+	अगर (!urd) अणु
 		rc = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	spin_lock(&urd->open_lock);
-	while (urd->open_flag) {
-		spin_unlock(&urd->open_lock);
-		if (file->f_flags & O_NONBLOCK) {
+	spin_lock(&urd->खोलो_lock);
+	जबतक (urd->खोलो_flag) अणु
+		spin_unlock(&urd->खोलो_lock);
+		अगर (file->f_flags & O_NONBLOCK) अणु
 			rc = -EBUSY;
-			goto fail_put;
-		}
-		if (wait_event_interruptible(urd->wait, urd->open_flag == 0)) {
+			जाओ fail_put;
+		पूर्ण
+		अगर (रुको_event_पूर्णांकerruptible(urd->रुको, urd->खोलो_flag == 0)) अणु
 			rc = -ERESTARTSYS;
-			goto fail_put;
-		}
-		spin_lock(&urd->open_lock);
-	}
-	urd->open_flag++;
-	spin_unlock(&urd->open_lock);
+			जाओ fail_put;
+		पूर्ण
+		spin_lock(&urd->खोलो_lock);
+	पूर्ण
+	urd->खोलो_flag++;
+	spin_unlock(&urd->खोलो_lock);
 
 	TRACE("ur_open\n");
 
-	if (((accmode == O_RDONLY) && (urd->class != DEV_CLASS_UR_I)) ||
-	    ((accmode == O_WRONLY) && (urd->class != DEV_CLASS_UR_O))) {
+	अगर (((accmode == O_RDONLY) && (urd->class != DEV_CLASS_UR_I)) ||
+	    ((accmode == O_WRONLY) && (urd->class != DEV_CLASS_UR_O))) अणु
 		TRACE("ur_open: unsupported dev class (%d)\n", urd->class);
 		rc = -EACCES;
-		goto fail_unlock;
-	}
+		जाओ fail_unlock;
+	पूर्ण
 
-	rc = verify_device(urd);
-	if (rc)
-		goto fail_unlock;
+	rc = verअगरy_device(urd);
+	अगर (rc)
+		जाओ fail_unlock;
 
 	urf = urfile_alloc(urd);
-	if (!urf) {
+	अगर (!urf) अणु
 		rc = -ENOMEM;
-		goto fail_unlock;
-	}
+		जाओ fail_unlock;
+	पूर्ण
 
 	urf->dev_reclen = urd->reclen;
 	rc = get_file_reclen(urd);
-	if (rc < 0)
-		goto fail_urfile_free;
+	अगर (rc < 0)
+		जाओ fail_urfile_मुक्त;
 	urf->file_reclen = rc;
-	file->private_data = urf;
-	return 0;
+	file->निजी_data = urf;
+	वापस 0;
 
-fail_urfile_free:
-	urfile_free(urf);
+fail_urfile_मुक्त:
+	urfile_मुक्त(urf);
 fail_unlock:
-	spin_lock(&urd->open_lock);
-	urd->open_flag--;
-	spin_unlock(&urd->open_lock);
+	spin_lock(&urd->खोलो_lock);
+	urd->खोलो_flag--;
+	spin_unlock(&urd->खोलो_lock);
 fail_put:
 	urdev_put(urd);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ur_release(struct inode *inode, struct file *file)
-{
-	struct urfile *urf = file->private_data;
+अटल पूर्णांक ur_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा urfile *urf = file->निजी_data;
 
 	TRACE("ur_release\n");
-	spin_lock(&urf->urd->open_lock);
-	urf->urd->open_flag--;
-	spin_unlock(&urf->urd->open_lock);
-	wake_up_interruptible(&urf->urd->wait);
+	spin_lock(&urf->urd->खोलो_lock);
+	urf->urd->खोलो_flag--;
+	spin_unlock(&urf->urd->खोलो_lock);
+	wake_up_पूर्णांकerruptible(&urf->urd->रुको);
 	urdev_put(urf->urd);
-	urfile_free(urf);
-	return 0;
-}
+	urfile_मुक्त(urf);
+	वापस 0;
+पूर्ण
 
-static loff_t ur_llseek(struct file *file, loff_t offset, int whence)
-{
-	if ((file->f_flags & O_ACCMODE) != O_RDONLY)
-		return -ESPIPE; /* seek allowed only for reader */
-	if (offset % PAGE_SIZE)
-		return -ESPIPE; /* only multiples of 4K allowed */
-	return no_seek_end_llseek(file, offset, whence);
-}
+अटल loff_t ur_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	अगर ((file->f_flags & O_ACCMODE) != O_RDONLY)
+		वापस -ESPIPE; /* seek allowed only क्रम पढ़ोer */
+	अगर (offset % PAGE_SIZE)
+		वापस -ESPIPE; /* only multiples of 4K allowed */
+	वापस no_seek_end_llseek(file, offset, whence);
+पूर्ण
 
-static const struct file_operations ur_fops = {
+अटल स्थिर काष्ठा file_operations ur_fops = अणु
 	.owner	 = THIS_MODULE,
-	.open	 = ur_open,
+	.खोलो	 = ur_खोलो,
 	.release = ur_release,
-	.read	 = ur_read,
-	.write	 = ur_write,
+	.पढ़ो	 = ur_पढ़ो,
+	.ग_लिखो	 = ur_ग_लिखो,
 	.llseek  = ur_llseek,
-};
+पूर्ण;
 
 /*
- * ccw_device infrastructure:
- *     ur_probe creates the struct urdev (with refcount = 1), the device
- *     attributes, sets up the interrupt handler and validates the virtual
+ * ccw_device infraकाष्ठाure:
+ *     ur_probe creates the काष्ठा urdev (with refcount = 1), the device
+ *     attributes, sets up the पूर्णांकerrupt handler and validates the भव
  *     unit record device.
- *     ur_remove removes the device attributes and drops the reference to
- *     struct urdev.
+ *     ur_हटाओ हटाओs the device attributes and drops the reference to
+ *     काष्ठा urdev.
  *
- *     ur_probe, ur_remove, ur_set_online and ur_set_offline are serialized
+ *     ur_probe, ur_हटाओ, ur_set_online and ur_set_offline are serialized
  *     by the vmur_mutex lock.
  *
- *     urd->char_device is used as indication that the online function has
+ *     urd->अक्षर_device is used as indication that the online function has
  *     been completed successfully.
  */
-static int ur_probe(struct ccw_device *cdev)
-{
-	struct urdev *urd;
-	int rc;
+अटल पूर्णांक ur_probe(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा urdev *urd;
+	पूर्णांक rc;
 
 	TRACE("ur_probe: cdev=%p\n", cdev);
 
 	mutex_lock(&vmur_mutex);
 	urd = urdev_alloc(cdev);
-	if (!urd) {
+	अगर (!urd) अणु
 		rc = -ENOMEM;
-		goto fail_unlock;
-	}
+		जाओ fail_unlock;
+	पूर्ण
 
 	rc = ur_create_attributes(&cdev->dev);
-	if (rc) {
+	अगर (rc) अणु
 		rc = -ENOMEM;
-		goto fail_urdev_put;
-	}
-	cdev->handler = ur_int_handler;
+		जाओ fail_urdev_put;
+	पूर्ण
+	cdev->handler = ur_पूर्णांक_handler;
 
-	/* validate virtual unit record device */
+	/* validate भव unit record device */
 	urd->class = get_urd_class(urd);
-	if (urd->class < 0) {
+	अगर (urd->class < 0) अणु
 		rc = urd->class;
-		goto fail_remove_attr;
-	}
-	if ((urd->class != DEV_CLASS_UR_I) && (urd->class != DEV_CLASS_UR_O)) {
+		जाओ fail_हटाओ_attr;
+	पूर्ण
+	अगर ((urd->class != DEV_CLASS_UR_I) && (urd->class != DEV_CLASS_UR_O)) अणु
 		rc = -EOPNOTSUPP;
-		goto fail_remove_attr;
-	}
+		जाओ fail_हटाओ_attr;
+	पूर्ण
 	spin_lock_irq(get_ccwdev_lock(cdev));
 	dev_set_drvdata(&cdev->dev, urd);
 	spin_unlock_irq(get_ccwdev_lock(cdev));
 
 	mutex_unlock(&vmur_mutex);
-	return 0;
+	वापस 0;
 
-fail_remove_attr:
-	ur_remove_attributes(&cdev->dev);
+fail_हटाओ_attr:
+	ur_हटाओ_attributes(&cdev->dev);
 fail_urdev_put:
 	urdev_put(urd);
 fail_unlock:
 	mutex_unlock(&vmur_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ur_set_online(struct ccw_device *cdev)
-{
-	struct urdev *urd;
-	int minor, major, rc;
-	char node_id[16];
+अटल पूर्णांक ur_set_online(काष्ठा ccw_device *cdev)
+अणु
+	काष्ठा urdev *urd;
+	पूर्णांक minor, major, rc;
+	अक्षर node_id[16];
 
 	TRACE("ur_set_online: cdev=%p\n", cdev);
 
 	mutex_lock(&vmur_mutex);
 	urd = urdev_get_from_cdev(cdev);
-	if (!urd) {
-		/* ur_remove already deleted our urd */
+	अगर (!urd) अणु
+		/* ur_हटाओ alपढ़ोy deleted our urd */
 		rc = -ENODEV;
-		goto fail_unlock;
-	}
+		जाओ fail_unlock;
+	पूर्ण
 
-	if (urd->char_device) {
+	अगर (urd->अक्षर_device) अणु
 		/* Another ur_set_online was faster */
 		rc = -EBUSY;
-		goto fail_urdev_put;
-	}
+		जाओ fail_urdev_put;
+	पूर्ण
 
 	minor = urd->dev_id.devno;
 	major = MAJOR(ur_first_dev_maj_min);
 
-	urd->char_device = cdev_alloc();
-	if (!urd->char_device) {
+	urd->अक्षर_device = cdev_alloc();
+	अगर (!urd->अक्षर_device) अणु
 		rc = -ENOMEM;
-		goto fail_urdev_put;
-	}
+		जाओ fail_urdev_put;
+	पूर्ण
 
-	urd->char_device->ops = &ur_fops;
-	urd->char_device->owner = ur_fops.owner;
+	urd->अक्षर_device->ops = &ur_fops;
+	urd->अक्षर_device->owner = ur_fops.owner;
 
-	rc = cdev_add(urd->char_device, MKDEV(major, minor), 1);
-	if (rc)
-		goto fail_free_cdev;
-	if (urd->cdev->id.cu_type == READER_PUNCH_DEVTYPE) {
-		if (urd->class == DEV_CLASS_UR_I)
-			sprintf(node_id, "vmrdr-%s", dev_name(&cdev->dev));
-		if (urd->class == DEV_CLASS_UR_O)
-			sprintf(node_id, "vmpun-%s", dev_name(&cdev->dev));
-	} else if (urd->cdev->id.cu_type == PRINTER_DEVTYPE) {
-		sprintf(node_id, "vmprt-%s", dev_name(&cdev->dev));
-	} else {
+	rc = cdev_add(urd->अक्षर_device, MKDEV(major, minor), 1);
+	अगर (rc)
+		जाओ fail_मुक्त_cdev;
+	अगर (urd->cdev->id.cu_type == READER_PUNCH_DEVTYPE) अणु
+		अगर (urd->class == DEV_CLASS_UR_I)
+			प्र_लिखो(node_id, "vmrdr-%s", dev_name(&cdev->dev));
+		अगर (urd->class == DEV_CLASS_UR_O)
+			प्र_लिखो(node_id, "vmpun-%s", dev_name(&cdev->dev));
+	पूर्ण अन्यथा अगर (urd->cdev->id.cu_type == PRINTER_DEVTYPE) अणु
+		प्र_लिखो(node_id, "vmprt-%s", dev_name(&cdev->dev));
+	पूर्ण अन्यथा अणु
 		rc = -EOPNOTSUPP;
-		goto fail_free_cdev;
-	}
+		जाओ fail_मुक्त_cdev;
+	पूर्ण
 
 	urd->device = device_create(vmur_class, &cdev->dev,
-				    urd->char_device->dev, NULL, "%s", node_id);
-	if (IS_ERR(urd->device)) {
+				    urd->अक्षर_device->dev, शून्य, "%s", node_id);
+	अगर (IS_ERR(urd->device)) अणु
 		rc = PTR_ERR(urd->device);
 		TRACE("ur_set_online: device_create rc=%d\n", rc);
-		goto fail_free_cdev;
-	}
+		जाओ fail_मुक्त_cdev;
+	पूर्ण
 	urdev_put(urd);
 	mutex_unlock(&vmur_mutex);
-	return 0;
+	वापस 0;
 
-fail_free_cdev:
-	cdev_del(urd->char_device);
-	urd->char_device = NULL;
+fail_मुक्त_cdev:
+	cdev_del(urd->अक्षर_device);
+	urd->अक्षर_device = शून्य;
 fail_urdev_put:
 	urdev_put(urd);
 fail_unlock:
 	mutex_unlock(&vmur_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ur_set_offline_force(struct ccw_device *cdev, int force)
-{
-	struct urdev *urd;
-	int rc;
+अटल पूर्णांक ur_set_offline_क्रमce(काष्ठा ccw_device *cdev, पूर्णांक क्रमce)
+अणु
+	काष्ठा urdev *urd;
+	पूर्णांक rc;
 
 	TRACE("ur_set_offline: cdev=%p\n", cdev);
 	urd = urdev_get_from_cdev(cdev);
-	if (!urd)
-		/* ur_remove already deleted our urd */
-		return -ENODEV;
-	if (!urd->char_device) {
+	अगर (!urd)
+		/* ur_हटाओ alपढ़ोy deleted our urd */
+		वापस -ENODEV;
+	अगर (!urd->अक्षर_device) अणु
 		/* Another ur_set_offline was faster */
 		rc = -EBUSY;
-		goto fail_urdev_put;
-	}
-	if (!force && (refcount_read(&urd->ref_count) > 2)) {
-		/* There is still a user of urd (e.g. ur_open) */
+		जाओ fail_urdev_put;
+	पूर्ण
+	अगर (!क्रमce && (refcount_पढ़ो(&urd->ref_count) > 2)) अणु
+		/* There is still a user of urd (e.g. ur_खोलो) */
 		TRACE("ur_set_offline: BUSY\n");
 		rc = -EBUSY;
-		goto fail_urdev_put;
-	}
-	device_destroy(vmur_class, urd->char_device->dev);
-	cdev_del(urd->char_device);
-	urd->char_device = NULL;
+		जाओ fail_urdev_put;
+	पूर्ण
+	device_destroy(vmur_class, urd->अक्षर_device->dev);
+	cdev_del(urd->अक्षर_device);
+	urd->अक्षर_device = शून्य;
 	rc = 0;
 
 fail_urdev_put:
 	urdev_put(urd);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ur_set_offline(struct ccw_device *cdev)
-{
-	int rc;
+अटल पूर्णांक ur_set_offline(काष्ठा ccw_device *cdev)
+अणु
+	पूर्णांक rc;
 
 	mutex_lock(&vmur_mutex);
-	rc = ur_set_offline_force(cdev, 0);
+	rc = ur_set_offline_क्रमce(cdev, 0);
 	mutex_unlock(&vmur_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void ur_remove(struct ccw_device *cdev)
-{
-	unsigned long flags;
+अटल व्योम ur_हटाओ(काष्ठा ccw_device *cdev)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	TRACE("ur_remove\n");
 
 	mutex_lock(&vmur_mutex);
 
-	if (cdev->online)
-		ur_set_offline_force(cdev, 1);
-	ur_remove_attributes(&cdev->dev);
+	अगर (cdev->online)
+		ur_set_offline_क्रमce(cdev, 1);
+	ur_हटाओ_attributes(&cdev->dev);
 
 	spin_lock_irqsave(get_ccwdev_lock(cdev), flags);
 	urdev_put(dev_get_drvdata(&cdev->dev));
-	dev_set_drvdata(&cdev->dev, NULL);
+	dev_set_drvdata(&cdev->dev, शून्य);
 	spin_unlock_irqrestore(get_ccwdev_lock(cdev), flags);
 
 	mutex_unlock(&vmur_mutex);
-}
+पूर्ण
 
 /*
  * Module initialisation and cleanup
  */
-static int __init ur_init(void)
-{
-	int rc;
+अटल पूर्णांक __init ur_init(व्योम)
+अणु
+	पूर्णांक rc;
 	dev_t dev;
 
-	if (!MACHINE_IS_VM) {
+	अगर (!MACHINE_IS_VM) अणु
 		pr_err("The %s cannot be loaded without z/VM\n",
 		       ur_banner);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	vmur_dbf = debug_register("vmur", 4, 1, 4 * sizeof(long));
-	if (!vmur_dbf)
-		return -ENOMEM;
-	rc = debug_register_view(vmur_dbf, &debug_sprintf_view);
-	if (rc)
-		goto fail_free_dbf;
+	vmur_dbf = debug_रेजिस्टर("vmur", 4, 1, 4 * माप(दीर्घ));
+	अगर (!vmur_dbf)
+		वापस -ENOMEM;
+	rc = debug_रेजिस्टर_view(vmur_dbf, &debug_प्र_लिखो_view);
+	अगर (rc)
+		जाओ fail_मुक्त_dbf;
 
 	debug_set_level(vmur_dbf, 6);
 
 	vmur_class = class_create(THIS_MODULE, "vmur");
-	if (IS_ERR(vmur_class)) {
+	अगर (IS_ERR(vmur_class)) अणु
 		rc = PTR_ERR(vmur_class);
-		goto fail_free_dbf;
-	}
+		जाओ fail_मुक्त_dbf;
+	पूर्ण
 
-	rc = ccw_driver_register(&ur_driver);
-	if (rc)
-		goto fail_class_destroy;
+	rc = ccw_driver_रेजिस्टर(&ur_driver);
+	अगर (rc)
+		जाओ fail_class_destroy;
 
 	rc = alloc_chrdev_region(&dev, 0, NUM_MINORS, "vmur");
-	if (rc) {
+	अगर (rc) अणु
 		pr_err("Kernel function alloc_chrdev_region failed with "
 		       "error code %d\n", rc);
-		goto fail_unregister_driver;
-	}
+		जाओ fail_unरेजिस्टर_driver;
+	पूर्ण
 	ur_first_dev_maj_min = MKDEV(MAJOR(dev), 0);
 
 	pr_info("%s loaded.\n", ur_banner);
-	return 0;
+	वापस 0;
 
-fail_unregister_driver:
-	ccw_driver_unregister(&ur_driver);
+fail_unरेजिस्टर_driver:
+	ccw_driver_unरेजिस्टर(&ur_driver);
 fail_class_destroy:
 	class_destroy(vmur_class);
-fail_free_dbf:
-	debug_unregister(vmur_dbf);
-	return rc;
-}
+fail_मुक्त_dbf:
+	debug_unरेजिस्टर(vmur_dbf);
+	वापस rc;
+पूर्ण
 
-static void __exit ur_exit(void)
-{
-	unregister_chrdev_region(ur_first_dev_maj_min, NUM_MINORS);
-	ccw_driver_unregister(&ur_driver);
+अटल व्योम __निकास ur_निकास(व्योम)
+अणु
+	unरेजिस्टर_chrdev_region(ur_first_dev_maj_min, NUM_MINORS);
+	ccw_driver_unरेजिस्टर(&ur_driver);
 	class_destroy(vmur_class);
-	debug_unregister(vmur_dbf);
+	debug_unरेजिस्टर(vmur_dbf);
 	pr_info("%s unloaded.\n", ur_banner);
-}
+पूर्ण
 
 module_init(ur_init);
-module_exit(ur_exit);
+module_निकास(ur_निकास);

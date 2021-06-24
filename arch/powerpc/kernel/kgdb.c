@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * PowerPC backend to the KGDB stub.
  *
@@ -14,214 +15,214 @@
  * kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/kgdb.h>
-#include <linux/smp.h>
-#include <linux/signal.h>
-#include <linux/ptrace.h>
-#include <linux/kdebug.h>
-#include <asm/current.h>
-#include <asm/processor.h>
-#include <asm/machdep.h>
-#include <asm/debug.h>
-#include <asm/code-patching.h>
-#include <linux/slab.h>
-#include <asm/inst.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kgdb.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/kdebug.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/code-patching.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/inst.h>
 
 /*
  * This table contains the mapping between PowerPC hardware trap types, and
- * signals, which are primarily what GDB understands.  GDB and the kernel
- * don't always agree on values, so we use constants taken from gdb-6.2.
+ * संकेतs, which are primarily what GDB understands.  GDB and the kernel
+ * करोn't always agree on values, so we use स्थिरants taken from gdb-6.2.
  */
-static struct hard_trap_info
-{
-	unsigned int tt;		/* Trap type code for powerpc */
-	unsigned char signo;		/* Signal that we map this trap into */
-} hard_trap_info[] = {
-	{ 0x0100, 0x02 /* SIGINT */  },		/* system reset */
-	{ 0x0200, 0x0b /* SIGSEGV */ },		/* machine check */
-	{ 0x0300, 0x0b /* SIGSEGV */ },		/* data access */
-	{ 0x0400, 0x0b /* SIGSEGV */ },		/* instruction access */
-	{ 0x0500, 0x02 /* SIGINT */  },		/* external interrupt */
-	{ 0x0600, 0x0a /* SIGBUS */  },		/* alignment */
-	{ 0x0700, 0x05 /* SIGTRAP */ },		/* program check */
-	{ 0x0800, 0x08 /* SIGFPE */  },		/* fp unavailable */
-	{ 0x0900, 0x0e /* SIGALRM */ },		/* decrementer */
-	{ 0x0c00, 0x14 /* SIGCHLD */ },		/* system call */
-#if defined(CONFIG_40x) || defined(CONFIG_BOOKE)
-	{ 0x2002, 0x05 /* SIGTRAP */ },		/* debug */
-#if defined(CONFIG_FSL_BOOKE)
-	{ 0x2010, 0x08 /* SIGFPE */  },		/* spe unavailable */
-	{ 0x2020, 0x08 /* SIGFPE */  },		/* spe unavailable */
-	{ 0x2030, 0x08 /* SIGFPE */  },		/* spe fp data */
-	{ 0x2040, 0x08 /* SIGFPE */  },		/* spe fp data */
-	{ 0x2050, 0x08 /* SIGFPE */  },		/* spe fp round */
-	{ 0x2060, 0x0e /* SIGILL */  },		/* performance monitor */
-	{ 0x2900, 0x08 /* SIGFPE */  },		/* apu unavailable */
-	{ 0x3100, 0x0e /* SIGALRM */ },		/* fixed interval timer */
-	{ 0x3200, 0x02 /* SIGINT */  }, 	/* watchdog */
-#else /* ! CONFIG_FSL_BOOKE */
-	{ 0x1000, 0x0e /* SIGALRM */ },		/* prog interval timer */
-	{ 0x1010, 0x0e /* SIGALRM */ },		/* fixed interval timer */
-	{ 0x1020, 0x02 /* SIGINT */  }, 	/* watchdog */
-	{ 0x2010, 0x08 /* SIGFPE */  },		/* fp unavailable */
-	{ 0x2020, 0x08 /* SIGFPE */  },		/* ap unavailable */
-#endif
-#else /* ! (defined(CONFIG_40x) || defined(CONFIG_BOOKE)) */
-	{ 0x0d00, 0x05 /* SIGTRAP */ },		/* single-step */
-#if defined(CONFIG_PPC_8xx)
-	{ 0x1000, 0x04 /* SIGILL */  },		/* software emulation */
-#else /* ! CONFIG_PPC_8xx */
-	{ 0x0f00, 0x04 /* SIGILL */  },		/* performance monitor */
-	{ 0x0f20, 0x08 /* SIGFPE */  },		/* altivec unavailable */
-	{ 0x1300, 0x05 /* SIGTRAP */ }, 	/* instruction address break */
-#if defined(CONFIG_PPC64)
-	{ 0x1200, 0x05 /* SIGILL */  },		/* system error */
-	{ 0x1500, 0x04 /* SIGILL */  },		/* soft patch */
-	{ 0x1600, 0x04 /* SIGILL */  },		/* maintenance */
-	{ 0x1700, 0x08 /* SIGFPE */  },		/* altivec assist */
-	{ 0x1800, 0x04 /* SIGILL */  },		/* thermal */
-#else /* ! CONFIG_PPC64 */
-	{ 0x1400, 0x02 /* SIGINT */  },		/* SMI */
-	{ 0x1600, 0x08 /* SIGFPE */  },		/* altivec assist */
-	{ 0x1700, 0x04 /* SIGILL */  },		/* TAU */
-	{ 0x2000, 0x05 /* SIGTRAP */ },		/* run mode */
-#endif
-#endif
-#endif
-	{ 0x0000, 0x00 }			/* Must be last */
-};
+अटल काष्ठा hard_trap_info
+अणु
+	अचिन्हित पूर्णांक tt;		/* Trap type code क्रम घातerpc */
+	अचिन्हित अक्षर signo;		/* Signal that we map this trap पूर्णांकo */
+पूर्ण hard_trap_info[] = अणु
+	अणु 0x0100, 0x02 /* संक_विघ्न */  पूर्ण,		/* प्रणाली reset */
+	अणु 0x0200, 0x0b /* संक_अंश */ पूर्ण,		/* machine check */
+	अणु 0x0300, 0x0b /* संक_अंश */ पूर्ण,		/* data access */
+	अणु 0x0400, 0x0b /* संक_अंश */ पूर्ण,		/* inकाष्ठाion access */
+	अणु 0x0500, 0x02 /* संक_विघ्न */  पूर्ण,		/* बाह्यal पूर्णांकerrupt */
+	अणु 0x0600, 0x0a /* SIGBUS */  पूर्ण,		/* alignment */
+	अणु 0x0700, 0x05 /* SIGTRAP */ पूर्ण,		/* program check */
+	अणु 0x0800, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* fp unavailable */
+	अणु 0x0900, 0x0e /* SIGALRM */ पूर्ण,		/* decrementer */
+	अणु 0x0c00, 0x14 /* SIGCHLD */ पूर्ण,		/* प्रणाली call */
+#अगर defined(CONFIG_40x) || defined(CONFIG_BOOKE)
+	अणु 0x2002, 0x05 /* SIGTRAP */ पूर्ण,		/* debug */
+#अगर defined(CONFIG_FSL_BOOKE)
+	अणु 0x2010, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* spe unavailable */
+	अणु 0x2020, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* spe unavailable */
+	अणु 0x2030, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* spe fp data */
+	अणु 0x2040, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* spe fp data */
+	अणु 0x2050, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* spe fp round */
+	अणु 0x2060, 0x0e /* संक_अवैध */  पूर्ण,		/* perक्रमmance monitor */
+	अणु 0x2900, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* apu unavailable */
+	अणु 0x3100, 0x0e /* SIGALRM */ पूर्ण,		/* fixed पूर्णांकerval समयr */
+	अणु 0x3200, 0x02 /* संक_विघ्न */  पूर्ण, 	/* watchकरोg */
+#अन्यथा /* ! CONFIG_FSL_BOOKE */
+	अणु 0x1000, 0x0e /* SIGALRM */ पूर्ण,		/* prog पूर्णांकerval समयr */
+	अणु 0x1010, 0x0e /* SIGALRM */ पूर्ण,		/* fixed पूर्णांकerval समयr */
+	अणु 0x1020, 0x02 /* संक_विघ्न */  पूर्ण, 	/* watchकरोg */
+	अणु 0x2010, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* fp unavailable */
+	अणु 0x2020, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* ap unavailable */
+#पूर्ण_अगर
+#अन्यथा /* ! (defined(CONFIG_40x) || defined(CONFIG_BOOKE)) */
+	अणु 0x0d00, 0x05 /* SIGTRAP */ पूर्ण,		/* single-step */
+#अगर defined(CONFIG_PPC_8xx)
+	अणु 0x1000, 0x04 /* संक_अवैध */  पूर्ण,		/* software emulation */
+#अन्यथा /* ! CONFIG_PPC_8xx */
+	अणु 0x0f00, 0x04 /* संक_अवैध */  पूर्ण,		/* perक्रमmance monitor */
+	अणु 0x0f20, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* altivec unavailable */
+	अणु 0x1300, 0x05 /* SIGTRAP */ पूर्ण, 	/* inकाष्ठाion address अवरोध */
+#अगर defined(CONFIG_PPC64)
+	अणु 0x1200, 0x05 /* संक_अवैध */  पूर्ण,		/* प्रणाली error */
+	अणु 0x1500, 0x04 /* संक_अवैध */  पूर्ण,		/* soft patch */
+	अणु 0x1600, 0x04 /* संक_अवैध */  पूर्ण,		/* मुख्यtenance */
+	अणु 0x1700, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* altivec assist */
+	अणु 0x1800, 0x04 /* संक_अवैध */  पूर्ण,		/* thermal */
+#अन्यथा /* ! CONFIG_PPC64 */
+	अणु 0x1400, 0x02 /* संक_विघ्न */  पूर्ण,		/* SMI */
+	अणु 0x1600, 0x08 /* संक_भ_त्रुटि */  पूर्ण,		/* altivec assist */
+	अणु 0x1700, 0x04 /* संक_अवैध */  पूर्ण,		/* TAU */
+	अणु 0x2000, 0x05 /* SIGTRAP */ पूर्ण,		/* run mode */
+#पूर्ण_अगर
+#पूर्ण_अगर
+#पूर्ण_अगर
+	अणु 0x0000, 0x00 पूर्ण			/* Must be last */
+पूर्ण;
 
-static int computeSignal(unsigned int tt)
-{
-	struct hard_trap_info *ht;
+अटल पूर्णांक computeSignal(अचिन्हित पूर्णांक tt)
+अणु
+	काष्ठा hard_trap_info *ht;
 
-	for (ht = hard_trap_info; ht->tt && ht->signo; ht++)
-		if (ht->tt == tt)
-			return ht->signo;
+	क्रम (ht = hard_trap_info; ht->tt && ht->signo; ht++)
+		अगर (ht->tt == tt)
+			वापस ht->signo;
 
-	return SIGHUP;		/* default for things we don't know about */
-}
+	वापस SIGHUP;		/* शेष क्रम things we करोn't know about */
+पूर्ण
 
 /**
  *
  *	kgdb_skipexception - Bail out of KGDB when we've been triggered.
  *	@exception: Exception vector number
- *	@regs: Current &struct pt_regs.
+ *	@regs: Current &काष्ठा pt_regs.
  *
- *	On some architectures we need to skip a breakpoint exception when
- *	it occurs after a breakpoint has been removed.
+ *	On some architectures we need to skip a अवरोधpoपूर्णांक exception when
+ *	it occurs after a अवरोधpoपूर्णांक has been हटाओd.
  *
  */
-int kgdb_skipexception(int exception, struct pt_regs *regs)
-{
-	return kgdb_isremovedbreak(regs->nip);
-}
+पूर्णांक kgdb_skipexception(पूर्णांक exception, काष्ठा pt_regs *regs)
+अणु
+	वापस kgdb_isहटाओdअवरोध(regs->nip);
+पूर्ण
 
-static int kgdb_debugger_ipi(struct pt_regs *regs)
-{
+अटल पूर्णांक kgdb_debugger_ipi(काष्ठा pt_regs *regs)
+अणु
 	kgdb_nmicallback(raw_smp_processor_id(), regs);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_SMP
-void kgdb_roundup_cpus(void)
-{
-	smp_send_debugger_break();
-}
-#endif
+#अगर_घोषित CONFIG_SMP
+व्योम kgdb_roundup_cpus(व्योम)
+अणु
+	smp_send_debugger_अवरोध();
+पूर्ण
+#पूर्ण_अगर
 
 /* KGDB functions to use existing PowerPC64 hooks. */
-static int kgdb_debugger(struct pt_regs *regs)
-{
-	return !kgdb_handle_exception(1, computeSignal(TRAP(regs)),
+अटल पूर्णांक kgdb_debugger(काष्ठा pt_regs *regs)
+अणु
+	वापस !kgdb_handle_exception(1, computeSignal(TRAP(regs)),
 				      DIE_OOPS, regs);
-}
+पूर्ण
 
-static int kgdb_handle_breakpoint(struct pt_regs *regs)
-{
-	if (user_mode(regs))
-		return 0;
+अटल पूर्णांक kgdb_handle_अवरोधpoपूर्णांक(काष्ठा pt_regs *regs)
+अणु
+	अगर (user_mode(regs))
+		वापस 0;
 
-	if (kgdb_handle_exception(1, SIGTRAP, 0, regs) != 0)
-		return 0;
+	अगर (kgdb_handle_exception(1, SIGTRAP, 0, regs) != 0)
+		वापस 0;
 
-	if (*(u32 *)regs->nip == BREAK_INSTR)
+	अगर (*(u32 *)regs->nip == BREAK_INSTR)
 		regs->nip += BREAK_INSTR_SIZE;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int kgdb_singlestep(struct pt_regs *regs)
-{
-	if (user_mode(regs))
-		return 0;
+अटल पूर्णांक kgdb_singlestep(काष्ठा pt_regs *regs)
+अणु
+	अगर (user_mode(regs))
+		वापस 0;
 
 	kgdb_handle_exception(0, SIGTRAP, 0, regs);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int kgdb_iabr_match(struct pt_regs *regs)
-{
-	if (user_mode(regs))
-		return 0;
+अटल पूर्णांक kgdb_iabr_match(काष्ठा pt_regs *regs)
+अणु
+	अगर (user_mode(regs))
+		वापस 0;
 
-	if (kgdb_handle_exception(0, computeSignal(TRAP(regs)), 0, regs) != 0)
-		return 0;
-	return 1;
-}
+	अगर (kgdb_handle_exception(0, computeSignal(TRAP(regs)), 0, regs) != 0)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-static int kgdb_break_match(struct pt_regs *regs)
-{
-	if (user_mode(regs))
-		return 0;
+अटल पूर्णांक kgdb_अवरोध_match(काष्ठा pt_regs *regs)
+अणु
+	अगर (user_mode(regs))
+		वापस 0;
 
-	if (kgdb_handle_exception(0, computeSignal(TRAP(regs)), 0, regs) != 0)
-		return 0;
-	return 1;
-}
+	अगर (kgdb_handle_exception(0, computeSignal(TRAP(regs)), 0, regs) != 0)
+		वापस 0;
+	वापस 1;
+पूर्ण
 
-#define PACK64(ptr, src) do { *(ptr++) = (src); } while (0)
+#घोषणा PACK64(ptr, src) करो अणु *(ptr++) = (src); पूर्ण जबतक (0)
 
-#define PACK32(ptr, src) do {          \
+#घोषणा PACK32(ptr, src) करो अणु          \
 	u32 *ptr32;                   \
 	ptr32 = (u32 *)ptr;           \
 	*(ptr32++) = (src);           \
-	ptr = (unsigned long *)ptr32; \
-	} while (0)
+	ptr = (अचिन्हित दीर्घ *)ptr32; \
+	पूर्ण जबतक (0)
 
-void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
-{
-	struct pt_regs *regs = (struct pt_regs *)(p->thread.ksp +
+व्योम sleeping_thपढ़ो_to_gdb_regs(अचिन्हित दीर्घ *gdb_regs, काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा pt_regs *regs = (काष्ठा pt_regs *)(p->thपढ़ो.ksp +
 						  STACK_FRAME_OVERHEAD);
-	unsigned long *ptr = gdb_regs;
-	int reg;
+	अचिन्हित दीर्घ *ptr = gdb_regs;
+	पूर्णांक reg;
 
-	memset(gdb_regs, 0, NUMREGBYTES);
+	स_रखो(gdb_regs, 0, NUMREGBYTES);
 
 	/* Regs GPR0-2 */
-	for (reg = 0; reg < 3; reg++)
+	क्रम (reg = 0; reg < 3; reg++)
 		PACK64(ptr, regs->gpr[reg]);
 
 	/* Regs GPR3-13 are caller saved, not in regs->gpr[] */
 	ptr += 11;
 
 	/* Regs GPR14-31 */
-	for (reg = 14; reg < 32; reg++)
+	क्रम (reg = 14; reg < 32; reg++)
 		PACK64(ptr, regs->gpr[reg]);
 
-#ifdef CONFIG_FSL_BOOKE
-#ifdef CONFIG_SPE
-	for (reg = 0; reg < 32; reg++)
-		PACK64(ptr, p->thread.evr[reg]);
-#else
+#अगर_घोषित CONFIG_FSL_BOOKE
+#अगर_घोषित CONFIG_SPE
+	क्रम (reg = 0; reg < 32; reg++)
+		PACK64(ptr, p->thपढ़ो.evr[reg]);
+#अन्यथा
 	ptr += 32;
-#endif
-#else
-	/* fp registers not used by kernel, leave zero */
-	ptr += 32 * 8 / sizeof(long);
-#endif
+#पूर्ण_अगर
+#अन्यथा
+	/* fp रेजिस्टरs not used by kernel, leave zero */
+	ptr += 32 * 8 / माप(दीर्घ);
+#पूर्ण_अगर
 
 	PACK64(ptr, regs->nip);
 	PACK64(ptr, regs->msr);
@@ -230,269 +231,269 @@ void sleeping_thread_to_gdb_regs(unsigned long *gdb_regs, struct task_struct *p)
 	PACK64(ptr, regs->ctr);
 	PACK32(ptr, regs->xer);
 
-	BUG_ON((unsigned long)ptr >
-	       (unsigned long)(((void *)gdb_regs) + NUMREGBYTES));
-}
+	BUG_ON((अचिन्हित दीर्घ)ptr >
+	       (अचिन्हित दीर्घ)(((व्योम *)gdb_regs) + NUMREGBYTES));
+पूर्ण
 
-#define GDB_SIZEOF_REG sizeof(unsigned long)
-#define GDB_SIZEOF_REG_U32 sizeof(u32)
+#घोषणा GDB_SIZखातापूर्ण_REG माप(अचिन्हित दीर्घ)
+#घोषणा GDB_SIZखातापूर्ण_REG_U32 माप(u32)
 
-#ifdef CONFIG_FSL_BOOKE
-#define GDB_SIZEOF_FLOAT_REG sizeof(unsigned long)
-#else
-#define GDB_SIZEOF_FLOAT_REG sizeof(u64)
-#endif
+#अगर_घोषित CONFIG_FSL_BOOKE
+#घोषणा GDB_SIZखातापूर्ण_FLOAT_REG माप(अचिन्हित दीर्घ)
+#अन्यथा
+#घोषणा GDB_SIZखातापूर्ण_FLOAT_REG माप(u64)
+#पूर्ण_अगर
 
-struct dbg_reg_def_t dbg_reg_def[DBG_MAX_REG_NUM] =
-{
-	{ "r0", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[0]) },
-	{ "r1", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[1]) },
-	{ "r2", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[2]) },
-	{ "r3", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[3]) },
-	{ "r4", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[4]) },
-	{ "r5", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[5]) },
-	{ "r6", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[6]) },
-	{ "r7", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[7]) },
-	{ "r8", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[8]) },
-	{ "r9", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[9]) },
-	{ "r10", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[10]) },
-	{ "r11", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[11]) },
-	{ "r12", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[12]) },
-	{ "r13", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[13]) },
-	{ "r14", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[14]) },
-	{ "r15", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[15]) },
-	{ "r16", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[16]) },
-	{ "r17", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[17]) },
-	{ "r18", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[18]) },
-	{ "r19", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[19]) },
-	{ "r20", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[20]) },
-	{ "r21", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[21]) },
-	{ "r22", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[22]) },
-	{ "r23", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[23]) },
-	{ "r24", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[24]) },
-	{ "r25", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[25]) },
-	{ "r26", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[26]) },
-	{ "r27", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[27]) },
-	{ "r28", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[28]) },
-	{ "r29", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[29]) },
-	{ "r30", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[30]) },
-	{ "r31", GDB_SIZEOF_REG, offsetof(struct pt_regs, gpr[31]) },
+काष्ठा dbg_reg_def_t dbg_reg_def[DBG_MAX_REG_NUM] =
+अणु
+	अणु "r0", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[0]) पूर्ण,
+	अणु "r1", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[1]) पूर्ण,
+	अणु "r2", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[2]) पूर्ण,
+	अणु "r3", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[3]) पूर्ण,
+	अणु "r4", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[4]) पूर्ण,
+	अणु "r5", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[5]) पूर्ण,
+	अणु "r6", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[6]) पूर्ण,
+	अणु "r7", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[7]) पूर्ण,
+	अणु "r8", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[8]) पूर्ण,
+	अणु "r9", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[9]) पूर्ण,
+	अणु "r10", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[10]) पूर्ण,
+	अणु "r11", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[11]) पूर्ण,
+	अणु "r12", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[12]) पूर्ण,
+	अणु "r13", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[13]) पूर्ण,
+	अणु "r14", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[14]) पूर्ण,
+	अणु "r15", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[15]) पूर्ण,
+	अणु "r16", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[16]) पूर्ण,
+	अणु "r17", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[17]) पूर्ण,
+	अणु "r18", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[18]) पूर्ण,
+	अणु "r19", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[19]) पूर्ण,
+	अणु "r20", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[20]) पूर्ण,
+	अणु "r21", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[21]) पूर्ण,
+	अणु "r22", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[22]) पूर्ण,
+	अणु "r23", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[23]) पूर्ण,
+	अणु "r24", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[24]) पूर्ण,
+	अणु "r25", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[25]) पूर्ण,
+	अणु "r26", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[26]) पूर्ण,
+	अणु "r27", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[27]) पूर्ण,
+	अणु "r28", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[28]) पूर्ण,
+	अणु "r29", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[29]) पूर्ण,
+	अणु "r30", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[30]) पूर्ण,
+	अणु "r31", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, gpr[31]) पूर्ण,
 
-	{ "f0", GDB_SIZEOF_FLOAT_REG, 0 },
-	{ "f1", GDB_SIZEOF_FLOAT_REG, 1 },
-	{ "f2", GDB_SIZEOF_FLOAT_REG, 2 },
-	{ "f3", GDB_SIZEOF_FLOAT_REG, 3 },
-	{ "f4", GDB_SIZEOF_FLOAT_REG, 4 },
-	{ "f5", GDB_SIZEOF_FLOAT_REG, 5 },
-	{ "f6", GDB_SIZEOF_FLOAT_REG, 6 },
-	{ "f7", GDB_SIZEOF_FLOAT_REG, 7 },
-	{ "f8", GDB_SIZEOF_FLOAT_REG, 8 },
-	{ "f9", GDB_SIZEOF_FLOAT_REG, 9 },
-	{ "f10", GDB_SIZEOF_FLOAT_REG, 10 },
-	{ "f11", GDB_SIZEOF_FLOAT_REG, 11 },
-	{ "f12", GDB_SIZEOF_FLOAT_REG, 12 },
-	{ "f13", GDB_SIZEOF_FLOAT_REG, 13 },
-	{ "f14", GDB_SIZEOF_FLOAT_REG, 14 },
-	{ "f15", GDB_SIZEOF_FLOAT_REG, 15 },
-	{ "f16", GDB_SIZEOF_FLOAT_REG, 16 },
-	{ "f17", GDB_SIZEOF_FLOAT_REG, 17 },
-	{ "f18", GDB_SIZEOF_FLOAT_REG, 18 },
-	{ "f19", GDB_SIZEOF_FLOAT_REG, 19 },
-	{ "f20", GDB_SIZEOF_FLOAT_REG, 20 },
-	{ "f21", GDB_SIZEOF_FLOAT_REG, 21 },
-	{ "f22", GDB_SIZEOF_FLOAT_REG, 22 },
-	{ "f23", GDB_SIZEOF_FLOAT_REG, 23 },
-	{ "f24", GDB_SIZEOF_FLOAT_REG, 24 },
-	{ "f25", GDB_SIZEOF_FLOAT_REG, 25 },
-	{ "f26", GDB_SIZEOF_FLOAT_REG, 26 },
-	{ "f27", GDB_SIZEOF_FLOAT_REG, 27 },
-	{ "f28", GDB_SIZEOF_FLOAT_REG, 28 },
-	{ "f29", GDB_SIZEOF_FLOAT_REG, 29 },
-	{ "f30", GDB_SIZEOF_FLOAT_REG, 30 },
-	{ "f31", GDB_SIZEOF_FLOAT_REG, 31 },
+	अणु "f0", GDB_SIZखातापूर्ण_FLOAT_REG, 0 पूर्ण,
+	अणु "f1", GDB_SIZखातापूर्ण_FLOAT_REG, 1 पूर्ण,
+	अणु "f2", GDB_SIZखातापूर्ण_FLOAT_REG, 2 पूर्ण,
+	अणु "f3", GDB_SIZखातापूर्ण_FLOAT_REG, 3 पूर्ण,
+	अणु "f4", GDB_SIZखातापूर्ण_FLOAT_REG, 4 पूर्ण,
+	अणु "f5", GDB_SIZखातापूर्ण_FLOAT_REG, 5 पूर्ण,
+	अणु "f6", GDB_SIZखातापूर्ण_FLOAT_REG, 6 पूर्ण,
+	अणु "f7", GDB_SIZखातापूर्ण_FLOAT_REG, 7 पूर्ण,
+	अणु "f8", GDB_SIZखातापूर्ण_FLOAT_REG, 8 पूर्ण,
+	अणु "f9", GDB_SIZखातापूर्ण_FLOAT_REG, 9 पूर्ण,
+	अणु "f10", GDB_SIZखातापूर्ण_FLOAT_REG, 10 पूर्ण,
+	अणु "f11", GDB_SIZखातापूर्ण_FLOAT_REG, 11 पूर्ण,
+	अणु "f12", GDB_SIZखातापूर्ण_FLOAT_REG, 12 पूर्ण,
+	अणु "f13", GDB_SIZखातापूर्ण_FLOAT_REG, 13 पूर्ण,
+	अणु "f14", GDB_SIZखातापूर्ण_FLOAT_REG, 14 पूर्ण,
+	अणु "f15", GDB_SIZखातापूर्ण_FLOAT_REG, 15 पूर्ण,
+	अणु "f16", GDB_SIZखातापूर्ण_FLOAT_REG, 16 पूर्ण,
+	अणु "f17", GDB_SIZखातापूर्ण_FLOAT_REG, 17 पूर्ण,
+	अणु "f18", GDB_SIZखातापूर्ण_FLOAT_REG, 18 पूर्ण,
+	अणु "f19", GDB_SIZखातापूर्ण_FLOAT_REG, 19 पूर्ण,
+	अणु "f20", GDB_SIZखातापूर्ण_FLOAT_REG, 20 पूर्ण,
+	अणु "f21", GDB_SIZखातापूर्ण_FLOAT_REG, 21 पूर्ण,
+	अणु "f22", GDB_SIZखातापूर्ण_FLOAT_REG, 22 पूर्ण,
+	अणु "f23", GDB_SIZखातापूर्ण_FLOAT_REG, 23 पूर्ण,
+	अणु "f24", GDB_SIZखातापूर्ण_FLOAT_REG, 24 पूर्ण,
+	अणु "f25", GDB_SIZखातापूर्ण_FLOAT_REG, 25 पूर्ण,
+	अणु "f26", GDB_SIZखातापूर्ण_FLOAT_REG, 26 पूर्ण,
+	अणु "f27", GDB_SIZखातापूर्ण_FLOAT_REG, 27 पूर्ण,
+	अणु "f28", GDB_SIZखातापूर्ण_FLOAT_REG, 28 पूर्ण,
+	अणु "f29", GDB_SIZखातापूर्ण_FLOAT_REG, 29 पूर्ण,
+	अणु "f30", GDB_SIZखातापूर्ण_FLOAT_REG, 30 पूर्ण,
+	अणु "f31", GDB_SIZखातापूर्ण_FLOAT_REG, 31 पूर्ण,
 
-	{ "pc", GDB_SIZEOF_REG, offsetof(struct pt_regs, nip) },
-	{ "msr", GDB_SIZEOF_REG, offsetof(struct pt_regs, msr) },
-	{ "cr", GDB_SIZEOF_REG_U32, offsetof(struct pt_regs, ccr) },
-	{ "lr", GDB_SIZEOF_REG, offsetof(struct pt_regs, link) },
-	{ "ctr", GDB_SIZEOF_REG_U32, offsetof(struct pt_regs, ctr) },
-	{ "xer", GDB_SIZEOF_REG, offsetof(struct pt_regs, xer) },
-};
+	अणु "pc", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, nip) पूर्ण,
+	अणु "msr", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, msr) पूर्ण,
+	अणु "cr", GDB_SIZखातापूर्ण_REG_U32, दुरत्व(काष्ठा pt_regs, ccr) पूर्ण,
+	अणु "lr", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, link) पूर्ण,
+	अणु "ctr", GDB_SIZखातापूर्ण_REG_U32, दुरत्व(काष्ठा pt_regs, ctr) पूर्ण,
+	अणु "xer", GDB_SIZखातापूर्ण_REG, दुरत्व(काष्ठा pt_regs, xer) पूर्ण,
+पूर्ण;
 
-char *dbg_get_reg(int regno, void *mem, struct pt_regs *regs)
-{
-	if (regno >= DBG_MAX_REG_NUM || regno < 0)
-		return NULL;
+अक्षर *dbg_get_reg(पूर्णांक regno, व्योम *mem, काष्ठा pt_regs *regs)
+अणु
+	अगर (regno >= DBG_MAX_REG_NUM || regno < 0)
+		वापस शून्य;
 
-	if (regno < 32 || regno >= 64)
-		/* First 0 -> 31 gpr registers*/
-		/* pc, msr, ls... registers 64 -> 69 */
-		memcpy(mem, (void *)regs + dbg_reg_def[regno].offset,
+	अगर (regno < 32 || regno >= 64)
+		/* First 0 -> 31 gpr रेजिस्टरs*/
+		/* pc, msr, ls... रेजिस्टरs 64 -> 69 */
+		स_नकल(mem, (व्योम *)regs + dbg_reg_def[regno].offset,
 				dbg_reg_def[regno].size);
 
-	if (regno >= 32 && regno < 64) {
-		/* FP registers 32 -> 63 */
-#if defined(CONFIG_FSL_BOOKE) && defined(CONFIG_SPE)
-		if (current)
-			memcpy(mem, &current->thread.evr[regno-32],
+	अगर (regno >= 32 && regno < 64) अणु
+		/* FP रेजिस्टरs 32 -> 63 */
+#अगर defined(CONFIG_FSL_BOOKE) && defined(CONFIG_SPE)
+		अगर (current)
+			स_नकल(mem, &current->thपढ़ो.evr[regno-32],
 					dbg_reg_def[regno].size);
-#else
-		/* fp registers not used by kernel, leave zero */
-		memset(mem, 0, dbg_reg_def[regno].size);
-#endif
-	}
+#अन्यथा
+		/* fp रेजिस्टरs not used by kernel, leave zero */
+		स_रखो(mem, 0, dbg_reg_def[regno].size);
+#पूर्ण_अगर
+	पूर्ण
 
-	return dbg_reg_def[regno].name;
-}
+	वापस dbg_reg_def[regno].name;
+पूर्ण
 
-int dbg_set_reg(int regno, void *mem, struct pt_regs *regs)
-{
-	if (regno >= DBG_MAX_REG_NUM || regno < 0)
-		return -EINVAL;
+पूर्णांक dbg_set_reg(पूर्णांक regno, व्योम *mem, काष्ठा pt_regs *regs)
+अणु
+	अगर (regno >= DBG_MAX_REG_NUM || regno < 0)
+		वापस -EINVAL;
 
-	if (regno < 32 || regno >= 64)
-		/* First 0 -> 31 gpr registers*/
-		/* pc, msr, ls... registers 64 -> 69 */
-		memcpy((void *)regs + dbg_reg_def[regno].offset, mem,
+	अगर (regno < 32 || regno >= 64)
+		/* First 0 -> 31 gpr रेजिस्टरs*/
+		/* pc, msr, ls... रेजिस्टरs 64 -> 69 */
+		स_नकल((व्योम *)regs + dbg_reg_def[regno].offset, mem,
 				dbg_reg_def[regno].size);
 
-	if (regno >= 32 && regno < 64) {
-		/* FP registers 32 -> 63 */
-#if defined(CONFIG_FSL_BOOKE) && defined(CONFIG_SPE)
-		memcpy(&current->thread.evr[regno-32], mem,
+	अगर (regno >= 32 && regno < 64) अणु
+		/* FP रेजिस्टरs 32 -> 63 */
+#अगर defined(CONFIG_FSL_BOOKE) && defined(CONFIG_SPE)
+		स_नकल(&current->thपढ़ो.evr[regno-32], mem,
 				dbg_reg_def[regno].size);
-#else
-		/* fp registers not used by kernel, leave zero */
-		return 0;
-#endif
-	}
+#अन्यथा
+		/* fp रेजिस्टरs not used by kernel, leave zero */
+		वापस 0;
+#पूर्ण_अगर
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kgdb_arch_set_pc(struct pt_regs *regs, unsigned long pc)
-{
+व्योम kgdb_arch_set_pc(काष्ठा pt_regs *regs, अचिन्हित दीर्घ pc)
+अणु
 	regs->nip = pc;
-}
+पूर्ण
 
 /*
- * This function does PowerPC specific processing for interfacing to gdb.
+ * This function करोes PowerPC specअगरic processing क्रम पूर्णांकerfacing to gdb.
  */
-int kgdb_arch_handle_exception(int vector, int signo, int err_code,
-			       char *remcom_in_buffer, char *remcom_out_buffer,
-			       struct pt_regs *linux_regs)
-{
-	char *ptr = &remcom_in_buffer[1];
-	unsigned long addr;
+पूर्णांक kgdb_arch_handle_exception(पूर्णांक vector, पूर्णांक signo, पूर्णांक err_code,
+			       अक्षर *remcom_in_buffer, अक्षर *remcom_out_buffer,
+			       काष्ठा pt_regs *linux_regs)
+अणु
+	अक्षर *ptr = &remcom_in_buffer[1];
+	अचिन्हित दीर्घ addr;
 
-	switch (remcom_in_buffer[0]) {
+	चयन (remcom_in_buffer[0]) अणु
 		/*
-		 * sAA..AA   Step one instruction from AA..AA
-		 * This will return an error to gdb ..
+		 * sAA..AA   Step one inकाष्ठाion from AA..AA
+		 * This will वापस an error to gdb ..
 		 */
-	case 's':
-	case 'c':
+	हाल 's':
+	हाल 'c':
 		/* handle the optional parameter */
-		if (kgdb_hex2long(&ptr, &addr))
+		अगर (kgdb_hex2दीर्घ(&ptr, &addr))
 			linux_regs->nip = addr;
 
-		atomic_set(&kgdb_cpu_doing_single_step, -1);
-		/* set the trace bit if we're stepping */
-		if (remcom_in_buffer[0] == 's') {
-#ifdef CONFIG_PPC_ADV_DEBUG_REGS
+		atomic_set(&kgdb_cpu_करोing_single_step, -1);
+		/* set the trace bit अगर we're stepping */
+		अगर (remcom_in_buffer[0] == 's') अणु
+#अगर_घोषित CONFIG_PPC_ADV_DEBUG_REGS
 			mtspr(SPRN_DBCR0,
 			      mfspr(SPRN_DBCR0) | DBCR0_IC | DBCR0_IDM);
 			linux_regs->msr |= MSR_DE;
-#else
+#अन्यथा
 			linux_regs->msr |= MSR_SE;
-#endif
-			atomic_set(&kgdb_cpu_doing_single_step,
+#पूर्ण_अगर
+			atomic_set(&kgdb_cpu_करोing_single_step,
 				   raw_smp_processor_id());
-		}
-		return 0;
-	}
+		पूर्ण
+		वापस 0;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int kgdb_arch_set_breakpoint(struct kgdb_bkpt *bpt)
-{
-	int err;
-	unsigned int instr;
-	struct ppc_inst *addr = (struct ppc_inst *)bpt->bpt_addr;
+पूर्णांक kgdb_arch_set_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक instr;
+	काष्ठा ppc_inst *addr = (काष्ठा ppc_inst *)bpt->bpt_addr;
 
-	err = get_kernel_nofault(instr, (unsigned *) addr);
-	if (err)
-		return err;
+	err = get_kernel_nofault(instr, (अचिन्हित *) addr);
+	अगर (err)
+		वापस err;
 
-	err = patch_instruction(addr, ppc_inst(BREAK_INSTR));
-	if (err)
-		return -EFAULT;
+	err = patch_inकाष्ठाion(addr, ppc_inst(BREAK_INSTR));
+	अगर (err)
+		वापस -EFAULT;
 
-	*(unsigned int *)bpt->saved_instr = instr;
+	*(अचिन्हित पूर्णांक *)bpt->saved_instr = instr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int kgdb_arch_remove_breakpoint(struct kgdb_bkpt *bpt)
-{
-	int err;
-	unsigned int instr = *(unsigned int *)bpt->saved_instr;
-	struct ppc_inst *addr = (struct ppc_inst *)bpt->bpt_addr;
+पूर्णांक kgdb_arch_हटाओ_अवरोधpoपूर्णांक(काष्ठा kgdb_bkpt *bpt)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक instr = *(अचिन्हित पूर्णांक *)bpt->saved_instr;
+	काष्ठा ppc_inst *addr = (काष्ठा ppc_inst *)bpt->bpt_addr;
 
-	err = patch_instruction(addr, ppc_inst(instr));
-	if (err)
-		return -EFAULT;
+	err = patch_inकाष्ठाion(addr, ppc_inst(instr));
+	अगर (err)
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Global data
  */
-const struct kgdb_arch arch_kgdb_ops;
+स्थिर काष्ठा kgdb_arch arch_kgdb_ops;
 
-static int kgdb_not_implemented(struct pt_regs *regs)
-{
-	return 0;
-}
+अटल पूर्णांक kgdb_not_implemented(काष्ठा pt_regs *regs)
+अणु
+	वापस 0;
+पूर्ण
 
-static void *old__debugger_ipi;
-static void *old__debugger;
-static void *old__debugger_bpt;
-static void *old__debugger_sstep;
-static void *old__debugger_iabr_match;
-static void *old__debugger_break_match;
-static void *old__debugger_fault_handler;
+अटल व्योम *old__debugger_ipi;
+अटल व्योम *old__debugger;
+अटल व्योम *old__debugger_bpt;
+अटल व्योम *old__debugger_sstep;
+अटल व्योम *old__debugger_iabr_match;
+अटल व्योम *old__debugger_अवरोध_match;
+अटल व्योम *old__debugger_fault_handler;
 
-int kgdb_arch_init(void)
-{
+पूर्णांक kgdb_arch_init(व्योम)
+अणु
 	old__debugger_ipi = __debugger_ipi;
 	old__debugger = __debugger;
 	old__debugger_bpt = __debugger_bpt;
 	old__debugger_sstep = __debugger_sstep;
 	old__debugger_iabr_match = __debugger_iabr_match;
-	old__debugger_break_match = __debugger_break_match;
+	old__debugger_अवरोध_match = __debugger_अवरोध_match;
 	old__debugger_fault_handler = __debugger_fault_handler;
 
 	__debugger_ipi = kgdb_debugger_ipi;
 	__debugger = kgdb_debugger;
-	__debugger_bpt = kgdb_handle_breakpoint;
+	__debugger_bpt = kgdb_handle_अवरोधpoपूर्णांक;
 	__debugger_sstep = kgdb_singlestep;
 	__debugger_iabr_match = kgdb_iabr_match;
-	__debugger_break_match = kgdb_break_match;
+	__debugger_अवरोध_match = kgdb_अवरोध_match;
 	__debugger_fault_handler = kgdb_not_implemented;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void kgdb_arch_exit(void)
-{
+व्योम kgdb_arch_निकास(व्योम)
+अणु
 	__debugger_ipi = old__debugger_ipi;
 	__debugger = old__debugger;
 	__debugger_bpt = old__debugger_bpt;
 	__debugger_sstep = old__debugger_sstep;
 	__debugger_iabr_match = old__debugger_iabr_match;
-	__debugger_break_match = old__debugger_break_match;
+	__debugger_अवरोध_match = old__debugger_अवरोध_match;
 	__debugger_fault_handler = old__debugger_fault_handler;
-}
+पूर्ण

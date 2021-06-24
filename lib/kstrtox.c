@@ -1,406 +1,407 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Convert integer string representation to an integer.
- * If an integer doesn't fit into specified type, -E is returned.
+ * Convert पूर्णांकeger string representation to an पूर्णांकeger.
+ * If an पूर्णांकeger करोesn't fit पूर्णांकo specअगरied type, -E is वापसed.
  *
  * Integer starts with optional sign.
- * kstrtou*() functions do not accept sign "-".
+ * kstrtou*() functions करो not accept sign "-".
  *
- * Radix 0 means autodetection: leading "0x" implies radix 16,
+ * Radix 0 means स्वतःdetection: leading "0x" implies radix 16,
  * leading "0" implies radix 8, otherwise radix is 10.
- * Autodetection hints work after optional sign, but not before.
+ * Autodetection hपूर्णांकs work after optional sign, but not beक्रमe.
  *
- * If -E is returned, result is not touched.
+ * If -E is वापसed, result is not touched.
  */
-#include <linux/ctype.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/math64.h>
-#include <linux/export.h>
-#include <linux/types.h>
-#include <linux/uaccess.h>
-#include "kstrtox.h"
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/math64.h>
+#समावेश <linux/export.h>
+#समावेश <linux/types.h>
+#समावेश <linux/uaccess.h>
+#समावेश "kstrtox.h"
 
-const char *_parse_integer_fixup_radix(const char *s, unsigned int *base)
-{
-	if (*base == 0) {
-		if (s[0] == '0') {
-			if (_tolower(s[1]) == 'x' && isxdigit(s[2]))
+स्थिर अक्षर *_parse_पूर्णांकeger_fixup_radix(स्थिर अक्षर *s, अचिन्हित पूर्णांक *base)
+अणु
+	अगर (*base == 0) अणु
+		अगर (s[0] == '0') अणु
+			अगर (_छोटे(s[1]) == 'x' && है_षष्ठादशक(s[2]))
 				*base = 16;
-			else
+			अन्यथा
 				*base = 8;
-		} else
+		पूर्ण अन्यथा
 			*base = 10;
-	}
-	if (*base == 16 && s[0] == '0' && _tolower(s[1]) == 'x')
+	पूर्ण
+	अगर (*base == 16 && s[0] == '0' && _tolower(s[1]) == 'x')
 		s += 2;
-	return s;
-}
+	वापस s;
+पूर्ण
 
 /*
- * Convert non-negative integer string representation in explicitly given radix
- * to an integer.
- * Return number of characters consumed maybe or-ed with overflow bit.
- * If overflow occurs, result integer (incorrect) is still returned.
+ * Convert non-negative पूर्णांकeger string representation in explicitly given radix
+ * to an पूर्णांकeger.
+ * Return number of अक्षरacters consumed maybe or-ed with overflow bit.
+ * If overflow occurs, result पूर्णांकeger (incorrect) is still वापसed.
  *
  * Don't you dare use this function.
  */
-unsigned int _parse_integer(const char *s, unsigned int base, unsigned long long *p)
-{
-	unsigned long long res;
-	unsigned int rv;
+अचिन्हित पूर्णांक _parse_पूर्णांकeger(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ दीर्घ *p)
+अणु
+	अचिन्हित दीर्घ दीर्घ res;
+	अचिन्हित पूर्णांक rv;
 
 	res = 0;
 	rv = 0;
-	while (1) {
-		unsigned int c = *s;
-		unsigned int lc = c | 0x20; /* don't tolower() this line */
-		unsigned int val;
+	जबतक (1) अणु
+		अचिन्हित पूर्णांक c = *s;
+		अचिन्हित पूर्णांक lc = c | 0x20; /* करोn't छोटे() this line */
+		अचिन्हित पूर्णांक val;
 
-		if ('0' <= c && c <= '9')
+		अगर ('0' <= c && c <= '9')
 			val = c - '0';
-		else if ('a' <= lc && lc <= 'f')
+		अन्यथा अगर ('a' <= lc && lc <= 'f')
 			val = lc - 'a' + 10;
-		else
-			break;
+		अन्यथा
+			अवरोध;
 
-		if (val >= base)
-			break;
+		अगर (val >= base)
+			अवरोध;
 		/*
-		 * Check for overflow only if we are within range of
+		 * Check क्रम overflow only अगर we are within range of
 		 * it in the max base we support (16)
 		 */
-		if (unlikely(res & (~0ull << 60))) {
-			if (res > div_u64(ULLONG_MAX - val, base))
+		अगर (unlikely(res & (~0ull << 60))) अणु
+			अगर (res > भाग_u64(ULदीर्घ_उच्च - val, base))
 				rv |= KSTRTOX_OVERFLOW;
-		}
+		पूर्ण
 		res = res * base + val;
 		rv++;
 		s++;
-	}
+	पूर्ण
 	*p = res;
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int _kstrtoull(const char *s, unsigned int base, unsigned long long *res)
-{
-	unsigned long long _res;
-	unsigned int rv;
+अटल पूर्णांक _kम_से_अदीर्घl(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ दीर्घ *res)
+अणु
+	अचिन्हित दीर्घ दीर्घ _res;
+	अचिन्हित पूर्णांक rv;
 
-	s = _parse_integer_fixup_radix(s, &base);
-	rv = _parse_integer(s, base, &_res);
-	if (rv & KSTRTOX_OVERFLOW)
-		return -ERANGE;
-	if (rv == 0)
-		return -EINVAL;
+	s = _parse_पूर्णांकeger_fixup_radix(s, &base);
+	rv = _parse_पूर्णांकeger(s, base, &_res);
+	अगर (rv & KSTRTOX_OVERFLOW)
+		वापस -दुस्फल;
+	अगर (rv == 0)
+		वापस -EINVAL;
 	s += rv;
-	if (*s == '\n')
+	अगर (*s == '\n')
 		s++;
-	if (*s)
-		return -EINVAL;
+	अगर (*s)
+		वापस -EINVAL;
 	*res = _res;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * kstrtoull - convert a string to an unsigned long long
+ * kम_से_अदीर्घl - convert a string to an अचिन्हित दीर्घ दीर्घ
  * @s: The start of the string. The string must be null-terminated, and may also
- *  include a single newline before its terminating null. The first character
+ *  include a single newline beक्रमe its terminating null. The first अक्षरacter
  *  may also be a plus sign, but not a minus sign.
  * @base: The number base to use. The maximum supported base is 16. If base is
- *  given as 0, then the base of the string is automatically detected with the
+ *  given as 0, then the base of the string is स्वतःmatically detected with the
  *  conventional semantics - If it begins with 0x the number will be parsed as a
- *  hexadecimal (case insensitive), if it otherwise begins with 0, it will be
+ *  hexadecimal (हाल insensitive), अगर it otherwise begins with 0, it will be
  *  parsed as an octal number. Otherwise it will be parsed as a decimal.
- * @res: Where to write the result of the conversion on success.
+ * @res: Where to ग_लिखो the result of the conversion on success.
  *
- * Returns 0 on success, -ERANGE on overflow and -EINVAL on parsing error.
- * Preferred over simple_strtoull(). Return code must be checked.
+ * Returns 0 on success, -दुस्फल on overflow and -EINVAL on parsing error.
+ * Preferred over simple_म_से_अदीर्घl(). Return code must be checked.
  */
-int kstrtoull(const char *s, unsigned int base, unsigned long long *res)
-{
-	if (s[0] == '+')
+पूर्णांक kम_से_अदीर्घl(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ दीर्घ *res)
+अणु
+	अगर (s[0] == '+')
 		s++;
-	return _kstrtoull(s, base, res);
-}
-EXPORT_SYMBOL(kstrtoull);
+	वापस _kम_से_अदीर्घl(s, base, res);
+पूर्ण
+EXPORT_SYMBOL(kम_से_अदीर्घl);
 
 /**
- * kstrtoll - convert a string to a long long
+ * kम_से_दीर्घl - convert a string to a दीर्घ दीर्घ
  * @s: The start of the string. The string must be null-terminated, and may also
- *  include a single newline before its terminating null. The first character
+ *  include a single newline beक्रमe its terminating null. The first अक्षरacter
  *  may also be a plus sign or a minus sign.
  * @base: The number base to use. The maximum supported base is 16. If base is
- *  given as 0, then the base of the string is automatically detected with the
+ *  given as 0, then the base of the string is स्वतःmatically detected with the
  *  conventional semantics - If it begins with 0x the number will be parsed as a
- *  hexadecimal (case insensitive), if it otherwise begins with 0, it will be
+ *  hexadecimal (हाल insensitive), अगर it otherwise begins with 0, it will be
  *  parsed as an octal number. Otherwise it will be parsed as a decimal.
- * @res: Where to write the result of the conversion on success.
+ * @res: Where to ग_लिखो the result of the conversion on success.
  *
- * Returns 0 on success, -ERANGE on overflow and -EINVAL on parsing error.
- * Preferred over simple_strtoll(). Return code must be checked.
+ * Returns 0 on success, -दुस्फल on overflow and -EINVAL on parsing error.
+ * Preferred over simple_म_से_दीर्घl(). Return code must be checked.
  */
-int kstrtoll(const char *s, unsigned int base, long long *res)
-{
-	unsigned long long tmp;
-	int rv;
+पूर्णांक kम_से_दीर्घl(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, दीर्घ दीर्घ *res)
+अणु
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	पूर्णांक rv;
 
-	if (s[0] == '-') {
-		rv = _kstrtoull(s + 1, base, &tmp);
-		if (rv < 0)
-			return rv;
-		if ((long long)-tmp > 0)
-			return -ERANGE;
-		*res = -tmp;
-	} else {
-		rv = kstrtoull(s, base, &tmp);
-		if (rv < 0)
-			return rv;
-		if ((long long)tmp < 0)
-			return -ERANGE;
-		*res = tmp;
-	}
-	return 0;
-}
-EXPORT_SYMBOL(kstrtoll);
+	अगर (s[0] == '-') अणु
+		rv = _kम_से_अदीर्घl(s + 1, base, &पंचांगp);
+		अगर (rv < 0)
+			वापस rv;
+		अगर ((दीर्घ दीर्घ)-पंचांगp > 0)
+			वापस -दुस्फल;
+		*res = -पंचांगp;
+	पूर्ण अन्यथा अणु
+		rv = kम_से_अदीर्घl(s, base, &पंचांगp);
+		अगर (rv < 0)
+			वापस rv;
+		अगर ((दीर्घ दीर्घ)पंचांगp < 0)
+			वापस -दुस्फल;
+		*res = पंचांगp;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(kम_से_दीर्घl);
 
-/* Internal, do not use. */
-int _kstrtoul(const char *s, unsigned int base, unsigned long *res)
-{
-	unsigned long long tmp;
-	int rv;
+/* Internal, करो not use. */
+पूर्णांक _kम_से_अदीर्घ(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित दीर्घ *res)
+अणु
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	पूर्णांक rv;
 
-	rv = kstrtoull(s, base, &tmp);
-	if (rv < 0)
-		return rv;
-	if (tmp != (unsigned long)tmp)
-		return -ERANGE;
-	*res = tmp;
-	return 0;
-}
-EXPORT_SYMBOL(_kstrtoul);
+	rv = kम_से_अदीर्घl(s, base, &पंचांगp);
+	अगर (rv < 0)
+		वापस rv;
+	अगर (पंचांगp != (अचिन्हित दीर्घ)पंचांगp)
+		वापस -दुस्फल;
+	*res = पंचांगp;
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(_kम_से_अदीर्घ);
 
-/* Internal, do not use. */
-int _kstrtol(const char *s, unsigned int base, long *res)
-{
-	long long tmp;
-	int rv;
+/* Internal, करो not use. */
+पूर्णांक _kम_से_दीर्घ(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, दीर्घ *res)
+अणु
+	दीर्घ दीर्घ पंचांगp;
+	पूर्णांक rv;
 
-	rv = kstrtoll(s, base, &tmp);
-	if (rv < 0)
-		return rv;
-	if (tmp != (long)tmp)
-		return -ERANGE;
-	*res = tmp;
-	return 0;
-}
-EXPORT_SYMBOL(_kstrtol);
+	rv = kम_से_दीर्घl(s, base, &पंचांगp);
+	अगर (rv < 0)
+		वापस rv;
+	अगर (पंचांगp != (दीर्घ)पंचांगp)
+		वापस -दुस्फल;
+	*res = पंचांगp;
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(_kम_से_दीर्घ);
 
 /**
- * kstrtouint - convert a string to an unsigned int
+ * kstrtouपूर्णांक - convert a string to an अचिन्हित पूर्णांक
  * @s: The start of the string. The string must be null-terminated, and may also
- *  include a single newline before its terminating null. The first character
+ *  include a single newline beक्रमe its terminating null. The first अक्षरacter
  *  may also be a plus sign, but not a minus sign.
  * @base: The number base to use. The maximum supported base is 16. If base is
- *  given as 0, then the base of the string is automatically detected with the
+ *  given as 0, then the base of the string is स्वतःmatically detected with the
  *  conventional semantics - If it begins with 0x the number will be parsed as a
- *  hexadecimal (case insensitive), if it otherwise begins with 0, it will be
+ *  hexadecimal (हाल insensitive), अगर it otherwise begins with 0, it will be
  *  parsed as an octal number. Otherwise it will be parsed as a decimal.
- * @res: Where to write the result of the conversion on success.
+ * @res: Where to ग_लिखो the result of the conversion on success.
  *
- * Returns 0 on success, -ERANGE on overflow and -EINVAL on parsing error.
- * Preferred over simple_strtoul(). Return code must be checked.
+ * Returns 0 on success, -दुस्फल on overflow and -EINVAL on parsing error.
+ * Preferred over simple_म_से_अदीर्घ(). Return code must be checked.
  */
-int kstrtouint(const char *s, unsigned int base, unsigned int *res)
-{
-	unsigned long long tmp;
-	int rv;
+पूर्णांक kstrtouपूर्णांक(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, अचिन्हित पूर्णांक *res)
+अणु
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	पूर्णांक rv;
 
-	rv = kstrtoull(s, base, &tmp);
-	if (rv < 0)
-		return rv;
-	if (tmp != (unsigned int)tmp)
-		return -ERANGE;
-	*res = tmp;
-	return 0;
-}
-EXPORT_SYMBOL(kstrtouint);
+	rv = kम_से_अदीर्घl(s, base, &पंचांगp);
+	अगर (rv < 0)
+		वापस rv;
+	अगर (पंचांगp != (अचिन्हित पूर्णांक)पंचांगp)
+		वापस -दुस्फल;
+	*res = पंचांगp;
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(kstrtouपूर्णांक);
 
 /**
- * kstrtoint - convert a string to an int
+ * kstrtoपूर्णांक - convert a string to an पूर्णांक
  * @s: The start of the string. The string must be null-terminated, and may also
- *  include a single newline before its terminating null. The first character
+ *  include a single newline beक्रमe its terminating null. The first अक्षरacter
  *  may also be a plus sign or a minus sign.
  * @base: The number base to use. The maximum supported base is 16. If base is
- *  given as 0, then the base of the string is automatically detected with the
+ *  given as 0, then the base of the string is स्वतःmatically detected with the
  *  conventional semantics - If it begins with 0x the number will be parsed as a
- *  hexadecimal (case insensitive), if it otherwise begins with 0, it will be
+ *  hexadecimal (हाल insensitive), अगर it otherwise begins with 0, it will be
  *  parsed as an octal number. Otherwise it will be parsed as a decimal.
- * @res: Where to write the result of the conversion on success.
+ * @res: Where to ग_लिखो the result of the conversion on success.
  *
- * Returns 0 on success, -ERANGE on overflow and -EINVAL on parsing error.
- * Preferred over simple_strtol(). Return code must be checked.
+ * Returns 0 on success, -दुस्फल on overflow and -EINVAL on parsing error.
+ * Preferred over simple_म_से_दीर्घ(). Return code must be checked.
  */
-int kstrtoint(const char *s, unsigned int base, int *res)
-{
-	long long tmp;
-	int rv;
+पूर्णांक kstrtoपूर्णांक(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, पूर्णांक *res)
+अणु
+	दीर्घ दीर्घ पंचांगp;
+	पूर्णांक rv;
 
-	rv = kstrtoll(s, base, &tmp);
-	if (rv < 0)
-		return rv;
-	if (tmp != (int)tmp)
-		return -ERANGE;
-	*res = tmp;
-	return 0;
-}
-EXPORT_SYMBOL(kstrtoint);
+	rv = kम_से_दीर्घl(s, base, &पंचांगp);
+	अगर (rv < 0)
+		वापस rv;
+	अगर (पंचांगp != (पूर्णांक)पंचांगp)
+		वापस -दुस्फल;
+	*res = पंचांगp;
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(kstrtoपूर्णांक);
 
-int kstrtou16(const char *s, unsigned int base, u16 *res)
-{
-	unsigned long long tmp;
-	int rv;
+पूर्णांक kstrtou16(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, u16 *res)
+अणु
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	पूर्णांक rv;
 
-	rv = kstrtoull(s, base, &tmp);
-	if (rv < 0)
-		return rv;
-	if (tmp != (u16)tmp)
-		return -ERANGE;
-	*res = tmp;
-	return 0;
-}
+	rv = kम_से_अदीर्घl(s, base, &पंचांगp);
+	अगर (rv < 0)
+		वापस rv;
+	अगर (पंचांगp != (u16)पंचांगp)
+		वापस -दुस्फल;
+	*res = पंचांगp;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(kstrtou16);
 
-int kstrtos16(const char *s, unsigned int base, s16 *res)
-{
-	long long tmp;
-	int rv;
+पूर्णांक kstrtos16(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, s16 *res)
+अणु
+	दीर्घ दीर्घ पंचांगp;
+	पूर्णांक rv;
 
-	rv = kstrtoll(s, base, &tmp);
-	if (rv < 0)
-		return rv;
-	if (tmp != (s16)tmp)
-		return -ERANGE;
-	*res = tmp;
-	return 0;
-}
+	rv = kम_से_दीर्घl(s, base, &पंचांगp);
+	अगर (rv < 0)
+		वापस rv;
+	अगर (पंचांगp != (s16)पंचांगp)
+		वापस -दुस्फल;
+	*res = पंचांगp;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(kstrtos16);
 
-int kstrtou8(const char *s, unsigned int base, u8 *res)
-{
-	unsigned long long tmp;
-	int rv;
+पूर्णांक kstrtou8(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, u8 *res)
+अणु
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	पूर्णांक rv;
 
-	rv = kstrtoull(s, base, &tmp);
-	if (rv < 0)
-		return rv;
-	if (tmp != (u8)tmp)
-		return -ERANGE;
-	*res = tmp;
-	return 0;
-}
+	rv = kम_से_अदीर्घl(s, base, &पंचांगp);
+	अगर (rv < 0)
+		वापस rv;
+	अगर (पंचांगp != (u8)पंचांगp)
+		वापस -दुस्फल;
+	*res = पंचांगp;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(kstrtou8);
 
-int kstrtos8(const char *s, unsigned int base, s8 *res)
-{
-	long long tmp;
-	int rv;
+पूर्णांक kstrtos8(स्थिर अक्षर *s, अचिन्हित पूर्णांक base, s8 *res)
+अणु
+	दीर्घ दीर्घ पंचांगp;
+	पूर्णांक rv;
 
-	rv = kstrtoll(s, base, &tmp);
-	if (rv < 0)
-		return rv;
-	if (tmp != (s8)tmp)
-		return -ERANGE;
-	*res = tmp;
-	return 0;
-}
+	rv = kम_से_दीर्घl(s, base, &पंचांगp);
+	अगर (rv < 0)
+		वापस rv;
+	अगर (पंचांगp != (s8)पंचांगp)
+		वापस -दुस्फल;
+	*res = पंचांगp;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(kstrtos8);
 
 /**
- * kstrtobool - convert common user inputs into boolean values
+ * kstrtobool - convert common user inमाला_दो पूर्णांकo boolean values
  * @s: input string
  * @res: result
  *
- * This routine returns 0 iff the first character is one of 'Yy1Nn0', or
- * [oO][NnFf] for "on" and "off". Otherwise it will return -EINVAL.  Value
- * pointed to by res is updated upon finding a match.
+ * This routine वापसs 0 अगरf the first अक्षरacter is one of 'Yy1Nn0', or
+ * [oO][NnFf] क्रम "on" and "off". Otherwise it will वापस -EINVAL.  Value
+ * poपूर्णांकed to by res is updated upon finding a match.
  */
-int kstrtobool(const char *s, bool *res)
-{
-	if (!s)
-		return -EINVAL;
+पूर्णांक kstrtobool(स्थिर अक्षर *s, bool *res)
+अणु
+	अगर (!s)
+		वापस -EINVAL;
 
-	switch (s[0]) {
-	case 'y':
-	case 'Y':
-	case '1':
+	चयन (s[0]) अणु
+	हाल 'y':
+	हाल 'Y':
+	हाल '1':
 		*res = true;
-		return 0;
-	case 'n':
-	case 'N':
-	case '0':
+		वापस 0;
+	हाल 'n':
+	हाल 'N':
+	हाल '0':
 		*res = false;
-		return 0;
-	case 'o':
-	case 'O':
-		switch (s[1]) {
-		case 'n':
-		case 'N':
+		वापस 0;
+	हाल 'o':
+	हाल 'O':
+		चयन (s[1]) अणु
+		हाल 'n':
+		हाल 'N':
 			*res = true;
-			return 0;
-		case 'f':
-		case 'F':
+			वापस 0;
+		हाल 'f':
+		हाल 'F':
 			*res = false;
-			return 0;
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
+			वापस 0;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL(kstrtobool);
 
 /*
- * Since "base" would be a nonsense argument, this open-codes the
+ * Since "base" would be a nonsense argument, this खोलो-codes the
  * _from_user helper instead of using the helper macro below.
  */
-int kstrtobool_from_user(const char __user *s, size_t count, bool *res)
-{
-	/* Longest string needed to differentiate, newline, terminator */
-	char buf[4];
+पूर्णांक kstrtobool_from_user(स्थिर अक्षर __user *s, माप_प्रकार count, bool *res)
+अणु
+	/* Longest string needed to dअगरferentiate, newline, terminator */
+	अक्षर buf[4];
 
-	count = min(count, sizeof(buf) - 1);
-	if (copy_from_user(buf, s, count))
-		return -EFAULT;
+	count = min(count, माप(buf) - 1);
+	अगर (copy_from_user(buf, s, count))
+		वापस -EFAULT;
 	buf[count] = '\0';
-	return kstrtobool(buf, res);
-}
+	वापस kstrtobool(buf, res);
+पूर्ण
 EXPORT_SYMBOL(kstrtobool_from_user);
 
-#define kstrto_from_user(f, g, type)					\
-int f(const char __user *s, size_t count, unsigned int base, type *res)	\
-{									\
+#घोषणा kstrto_from_user(f, g, type)					\
+पूर्णांक f(स्थिर अक्षर __user *s, माप_प्रकार count, अचिन्हित पूर्णांक base, type *res)	\
+अणु									\
 	/* sign, base 2 representation, newline, terminator */		\
-	char buf[1 + sizeof(type) * 8 + 1 + 1];				\
+	अक्षर buf[1 + माप(type) * 8 + 1 + 1];				\
 									\
-	count = min(count, sizeof(buf) - 1);				\
-	if (copy_from_user(buf, s, count))				\
-		return -EFAULT;						\
+	count = min(count, माप(buf) - 1);				\
+	अगर (copy_from_user(buf, s, count))				\
+		वापस -EFAULT;						\
 	buf[count] = '\0';						\
-	return g(buf, base, res);					\
-}									\
+	वापस g(buf, base, res);					\
+पूर्ण									\
 EXPORT_SYMBOL(f)
 
-kstrto_from_user(kstrtoull_from_user,	kstrtoull,	unsigned long long);
-kstrto_from_user(kstrtoll_from_user,	kstrtoll,	long long);
-kstrto_from_user(kstrtoul_from_user,	kstrtoul,	unsigned long);
-kstrto_from_user(kstrtol_from_user,	kstrtol,	long);
-kstrto_from_user(kstrtouint_from_user,	kstrtouint,	unsigned int);
-kstrto_from_user(kstrtoint_from_user,	kstrtoint,	int);
+kstrto_from_user(kम_से_अदीर्घl_from_user,	kम_से_अदीर्घl,	अचिन्हित दीर्घ दीर्घ);
+kstrto_from_user(kम_से_दीर्घl_from_user,	kम_से_दीर्घl,	दीर्घ दीर्घ);
+kstrto_from_user(kम_से_अदीर्घ_from_user,	kम_से_अदीर्घ,	अचिन्हित दीर्घ);
+kstrto_from_user(kम_से_दीर्घ_from_user,	kम_से_दीर्घ,	दीर्घ);
+kstrto_from_user(kstrtouपूर्णांक_from_user,	kstrtouपूर्णांक,	अचिन्हित पूर्णांक);
+kstrto_from_user(kstrtoपूर्णांक_from_user,	kstrtoपूर्णांक,	पूर्णांक);
 kstrto_from_user(kstrtou16_from_user,	kstrtou16,	u16);
 kstrto_from_user(kstrtos16_from_user,	kstrtos16,	s16);
 kstrto_from_user(kstrtou8_from_user,	kstrtou8,	u8);

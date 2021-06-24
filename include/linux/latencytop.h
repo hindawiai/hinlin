@@ -1,57 +1,58 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * latencytop.h: Infrastructure for displaying latency
+ * latencytop.h: Infraकाष्ठाure क्रम displaying latency
  *
  * (C) Copyright 2008 Intel Corporation
- * Author: Arjan van de Ven <arjan@linux.intel.com>
+ * Author: Arjan van de Ven <arjan@linux.पूर्णांकel.com>
  *
  */
 
-#ifndef _INCLUDE_GUARD_LATENCYTOP_H_
-#define _INCLUDE_GUARD_LATENCYTOP_H_
+#अगर_अघोषित _INCLUDE_GUARD_LATENCYTOP_H_
+#घोषणा _INCLUDE_GUARD_LATENCYTOP_H_
 
-#include <linux/compiler.h>
-struct task_struct;
+#समावेश <linux/compiler.h>
+काष्ठा task_काष्ठा;
 
-#ifdef CONFIG_LATENCYTOP
+#अगर_घोषित CONFIG_LATENCYTOP
 
-#define LT_SAVECOUNT		32
-#define LT_BACKTRACEDEPTH	12
+#घोषणा LT_SAVECOUNT		32
+#घोषणा LT_BACKTRACEDEPTH	12
 
-struct latency_record {
-	unsigned long	backtrace[LT_BACKTRACEDEPTH];
-	unsigned int	count;
-	unsigned long	time;
-	unsigned long	max;
-};
+काष्ठा latency_record अणु
+	अचिन्हित दीर्घ	backtrace[LT_BACKTRACEDEPTH];
+	अचिन्हित पूर्णांक	count;
+	अचिन्हित दीर्घ	समय;
+	अचिन्हित दीर्घ	max;
+पूर्ण;
 
 
 
-extern int latencytop_enabled;
-void __account_scheduler_latency(struct task_struct *task, int usecs, int inter);
-static inline void
-account_scheduler_latency(struct task_struct *task, int usecs, int inter)
-{
-	if (unlikely(latencytop_enabled))
-		__account_scheduler_latency(task, usecs, inter);
-}
+बाह्य पूर्णांक latencytop_enabled;
+व्योम __account_scheduler_latency(काष्ठा task_काष्ठा *task, पूर्णांक usecs, पूर्णांक पूर्णांकer);
+अटल अंतरभूत व्योम
+account_scheduler_latency(काष्ठा task_काष्ठा *task, पूर्णांक usecs, पूर्णांक पूर्णांकer)
+अणु
+	अगर (unlikely(latencytop_enabled))
+		__account_scheduler_latency(task, usecs, पूर्णांकer);
+पूर्ण
 
-void clear_tsk_latency_tracing(struct task_struct *p);
+व्योम clear_tsk_latency_tracing(काष्ठा task_काष्ठा *p);
 
-int sysctl_latencytop(struct ctl_table *table, int write, void *buffer,
-		size_t *lenp, loff_t *ppos);
+पूर्णांक sysctl_latencytop(काष्ठा ctl_table *table, पूर्णांक ग_लिखो, व्योम *buffer,
+		माप_प्रकार *lenp, loff_t *ppos);
 
-#else
+#अन्यथा
 
-static inline void
-account_scheduler_latency(struct task_struct *task, int usecs, int inter)
-{
-}
+अटल अंतरभूत व्योम
+account_scheduler_latency(काष्ठा task_काष्ठा *task, पूर्णांक usecs, पूर्णांक पूर्णांकer)
+अणु
+पूर्ण
 
-static inline void clear_tsk_latency_tracing(struct task_struct *p)
-{
-}
+अटल अंतरभूत व्योम clear_tsk_latency_tracing(काष्ठा task_काष्ठा *p)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

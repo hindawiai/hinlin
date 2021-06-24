@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * ff-stream.c - a part of driver for RME Fireface series
+ * ff-stream.c - a part of driver क्रम RME Fireface series
  *
  * Copyright (c) 2015-2017 Takashi Sakamoto
  */
 
-#include "ff.h"
+#समावेश "ff.h"
 
-#define CALLBACK_TIMEOUT_MS	200
+#घोषणा CALLBACK_TIMEOUT_MS	200
 
-int snd_ff_stream_get_multiplier_mode(enum cip_sfc sfc,
-				      enum snd_ff_stream_mode *mode)
-{
-	static const enum snd_ff_stream_mode modes[] = {
+पूर्णांक snd_ff_stream_get_multiplier_mode(क्रमागत cip_sfc sfc,
+				      क्रमागत snd_ff_stream_mode *mode)
+अणु
+	अटल स्थिर क्रमागत snd_ff_stream_mode modes[] = अणु
 		[CIP_SFC_32000] = SND_FF_STREAM_MODE_LOW,
 		[CIP_SFC_44100] = SND_FF_STREAM_MODE_LOW,
 		[CIP_SFC_48000] = SND_FF_STREAM_MODE_LOW,
@@ -20,265 +21,265 @@ int snd_ff_stream_get_multiplier_mode(enum cip_sfc sfc,
 		[CIP_SFC_96000] = SND_FF_STREAM_MODE_MID,
 		[CIP_SFC_176400] = SND_FF_STREAM_MODE_HIGH,
 		[CIP_SFC_192000] = SND_FF_STREAM_MODE_HIGH,
-	};
+	पूर्ण;
 
-	if (sfc >= CIP_SFC_COUNT)
-		return -EINVAL;
+	अगर (sfc >= CIP_SFC_COUNT)
+		वापस -EINVAL;
 
 	*mode = modes[sfc];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void finish_session(struct snd_ff *ff)
-{
+अटल अंतरभूत व्योम finish_session(काष्ठा snd_ff *ff)
+अणु
 	ff->spec->protocol->finish_session(ff);
-	ff->spec->protocol->switch_fetching_mode(ff, false);
-}
+	ff->spec->protocol->चयन_fetching_mode(ff, false);
+पूर्ण
 
-static int init_stream(struct snd_ff *ff, struct amdtp_stream *s)
-{
-	struct fw_iso_resources *resources;
-	enum amdtp_stream_direction dir;
-	int err;
+अटल पूर्णांक init_stream(काष्ठा snd_ff *ff, काष्ठा amdtp_stream *s)
+अणु
+	काष्ठा fw_iso_resources *resources;
+	क्रमागत amdtp_stream_direction dir;
+	पूर्णांक err;
 
-	if (s == &ff->tx_stream) {
+	अगर (s == &ff->tx_stream) अणु
 		resources = &ff->tx_resources;
 		dir = AMDTP_IN_STREAM;
-	} else {
+	पूर्ण अन्यथा अणु
 		resources = &ff->rx_resources;
 		dir = AMDTP_OUT_STREAM;
-	}
+	पूर्ण
 
 	err = fw_iso_resources_init(resources, ff->unit);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = amdtp_ff_init(s, ff->unit, dir);
-	if (err < 0)
+	अगर (err < 0)
 		fw_iso_resources_destroy(resources);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void destroy_stream(struct snd_ff *ff, struct amdtp_stream *s)
-{
+अटल व्योम destroy_stream(काष्ठा snd_ff *ff, काष्ठा amdtp_stream *s)
+अणु
 	amdtp_stream_destroy(s);
 
-	if (s == &ff->tx_stream)
+	अगर (s == &ff->tx_stream)
 		fw_iso_resources_destroy(&ff->tx_resources);
-	else
+	अन्यथा
 		fw_iso_resources_destroy(&ff->rx_resources);
-}
+पूर्ण
 
-int snd_ff_stream_init_duplex(struct snd_ff *ff)
-{
-	int err;
+पूर्णांक snd_ff_stream_init_duplex(काष्ठा snd_ff *ff)
+अणु
+	पूर्णांक err;
 
 	err = init_stream(ff, &ff->rx_stream);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = init_stream(ff, &ff->tx_stream);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		destroy_stream(ff, &ff->rx_stream);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = amdtp_domain_init(&ff->domain);
-	if (err < 0) {
+	err = amdtp_करोमुख्य_init(&ff->करोमुख्य);
+	अगर (err < 0) अणु
 		destroy_stream(ff, &ff->rx_stream);
 		destroy_stream(ff, &ff->tx_stream);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * This function should be called before starting streams or after stopping
+ * This function should be called beक्रमe starting streams or after stopping
  * streams.
  */
-void snd_ff_stream_destroy_duplex(struct snd_ff *ff)
-{
-	amdtp_domain_destroy(&ff->domain);
+व्योम snd_ff_stream_destroy_duplex(काष्ठा snd_ff *ff)
+अणु
+	amdtp_करोमुख्य_destroy(&ff->करोमुख्य);
 
 	destroy_stream(ff, &ff->rx_stream);
 	destroy_stream(ff, &ff->tx_stream);
-}
+पूर्ण
 
-int snd_ff_stream_reserve_duplex(struct snd_ff *ff, unsigned int rate,
-				 unsigned int frames_per_period,
-				 unsigned int frames_per_buffer)
-{
-	unsigned int curr_rate;
-	enum snd_ff_clock_src src;
-	int err;
+पूर्णांक snd_ff_stream_reserve_duplex(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक rate,
+				 अचिन्हित पूर्णांक frames_per_period,
+				 अचिन्हित पूर्णांक frames_per_buffer)
+अणु
+	अचिन्हित पूर्णांक curr_rate;
+	क्रमागत snd_ff_घड़ी_src src;
+	पूर्णांक err;
 
-	err = ff->spec->protocol->get_clock(ff, &curr_rate, &src);
-	if (err < 0)
-		return err;
+	err = ff->spec->protocol->get_घड़ी(ff, &curr_rate, &src);
+	अगर (err < 0)
+		वापस err;
 
-	if (ff->substreams_counter == 0 || curr_rate != rate) {
-		enum snd_ff_stream_mode mode;
-		int i;
+	अगर (ff->substreams_counter == 0 || curr_rate != rate) अणु
+		क्रमागत snd_ff_stream_mode mode;
+		पूर्णांक i;
 
-		amdtp_domain_stop(&ff->domain);
+		amdtp_करोमुख्य_stop(&ff->करोमुख्य);
 		finish_session(ff);
 
-		fw_iso_resources_free(&ff->tx_resources);
-		fw_iso_resources_free(&ff->rx_resources);
+		fw_iso_resources_मुक्त(&ff->tx_resources);
+		fw_iso_resources_मुक्त(&ff->rx_resources);
 
-		for (i = 0; i < CIP_SFC_COUNT; ++i) {
-			if (amdtp_rate_table[i] == rate)
-				break;
-		}
-		if (i >= CIP_SFC_COUNT)
-			return -EINVAL;
+		क्रम (i = 0; i < CIP_SFC_COUNT; ++i) अणु
+			अगर (amdtp_rate_table[i] == rate)
+				अवरोध;
+		पूर्ण
+		अगर (i >= CIP_SFC_COUNT)
+			वापस -EINVAL;
 
 		err = snd_ff_stream_get_multiplier_mode(i, &mode);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = amdtp_ff_set_parameters(&ff->tx_stream, rate,
 					ff->spec->pcm_capture_channels[mode]);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = amdtp_ff_set_parameters(&ff->rx_stream, rate,
 					ff->spec->pcm_playback_channels[mode]);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = ff->spec->protocol->allocate_resources(ff, rate);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
-		err = amdtp_domain_set_events_per_period(&ff->domain,
+		err = amdtp_करोमुख्य_set_events_per_period(&ff->करोमुख्य,
 					frames_per_period, frames_per_buffer);
-		if (err < 0) {
-			fw_iso_resources_free(&ff->tx_resources);
-			fw_iso_resources_free(&ff->rx_resources);
-			return err;
-		}
-	}
+		अगर (err < 0) अणु
+			fw_iso_resources_मुक्त(&ff->tx_resources);
+			fw_iso_resources_मुक्त(&ff->rx_resources);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_ff_stream_start_duplex(struct snd_ff *ff, unsigned int rate)
-{
-	int err;
+पूर्णांक snd_ff_stream_start_duplex(काष्ठा snd_ff *ff, अचिन्हित पूर्णांक rate)
+अणु
+	पूर्णांक err;
 
-	if (ff->substreams_counter == 0)
-		return 0;
+	अगर (ff->substreams_counter == 0)
+		वापस 0;
 
-	if (amdtp_streaming_error(&ff->tx_stream) ||
-	    amdtp_streaming_error(&ff->rx_stream)) {
-		amdtp_domain_stop(&ff->domain);
+	अगर (amdtp_streaming_error(&ff->tx_stream) ||
+	    amdtp_streaming_error(&ff->rx_stream)) अणु
+		amdtp_करोमुख्य_stop(&ff->करोमुख्य);
 		finish_session(ff);
-	}
+	पूर्ण
 
 	/*
-	 * Regardless of current source of clock signal, drivers transfer some
+	 * Regardless of current source of घड़ी संकेत, drivers transfer some
 	 * packets. Then, the device transfers packets.
 	 */
-	if (!amdtp_stream_running(&ff->rx_stream)) {
-		int spd = fw_parent_device(ff->unit)->max_speed;
+	अगर (!amdtp_stream_running(&ff->rx_stream)) अणु
+		पूर्णांक spd = fw_parent_device(ff->unit)->max_speed;
 
 		err = ff->spec->protocol->begin_session(ff, rate);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = amdtp_domain_add_stream(&ff->domain, &ff->rx_stream,
+		err = amdtp_करोमुख्य_add_stream(&ff->करोमुख्य, &ff->rx_stream,
 					      ff->rx_resources.channel, spd);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = amdtp_domain_add_stream(&ff->domain, &ff->tx_stream,
+		err = amdtp_करोमुख्य_add_stream(&ff->करोमुख्य, &ff->tx_stream,
 					      ff->tx_resources.channel, spd);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = amdtp_domain_start(&ff->domain, 0);
-		if (err < 0)
-			goto error;
+		err = amdtp_करोमुख्य_start(&ff->करोमुख्य, 0);
+		अगर (err < 0)
+			जाओ error;
 
-		if (!amdtp_stream_wait_callback(&ff->rx_stream,
+		अगर (!amdtp_stream_रुको_callback(&ff->rx_stream,
 						CALLBACK_TIMEOUT_MS) ||
-		    !amdtp_stream_wait_callback(&ff->tx_stream,
-						CALLBACK_TIMEOUT_MS)) {
+		    !amdtp_stream_रुको_callback(&ff->tx_stream,
+						CALLBACK_TIMEOUT_MS)) अणु
 			err = -ETIMEDOUT;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		err = ff->spec->protocol->switch_fetching_mode(ff, true);
-		if (err < 0)
-			goto error;
-	}
+		err = ff->spec->protocol->चयन_fetching_mode(ff, true);
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error:
-	amdtp_domain_stop(&ff->domain);
+	amdtp_करोमुख्य_stop(&ff->करोमुख्य);
 	finish_session(ff);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void snd_ff_stream_stop_duplex(struct snd_ff *ff)
-{
-	if (ff->substreams_counter == 0) {
-		amdtp_domain_stop(&ff->domain);
+व्योम snd_ff_stream_stop_duplex(काष्ठा snd_ff *ff)
+अणु
+	अगर (ff->substreams_counter == 0) अणु
+		amdtp_करोमुख्य_stop(&ff->करोमुख्य);
 		finish_session(ff);
 
-		fw_iso_resources_free(&ff->tx_resources);
-		fw_iso_resources_free(&ff->rx_resources);
-	}
-}
+		fw_iso_resources_मुक्त(&ff->tx_resources);
+		fw_iso_resources_मुक्त(&ff->rx_resources);
+	पूर्ण
+पूर्ण
 
-void snd_ff_stream_update_duplex(struct snd_ff *ff)
-{
-	amdtp_domain_stop(&ff->domain);
+व्योम snd_ff_stream_update_duplex(काष्ठा snd_ff *ff)
+अणु
+	amdtp_करोमुख्य_stop(&ff->करोमुख्य);
 
-	// The device discontinue to transfer packets.
-	amdtp_stream_pcm_abort(&ff->tx_stream);
-	amdtp_stream_pcm_abort(&ff->rx_stream);
-}
+	// The device disजारी to transfer packets.
+	amdtp_stream_pcm_पात(&ff->tx_stream);
+	amdtp_stream_pcm_पात(&ff->rx_stream);
+पूर्ण
 
-void snd_ff_stream_lock_changed(struct snd_ff *ff)
-{
+व्योम snd_ff_stream_lock_changed(काष्ठा snd_ff *ff)
+अणु
 	ff->dev_lock_changed = true;
-	wake_up(&ff->hwdep_wait);
-}
+	wake_up(&ff->hwdep_रुको);
+पूर्ण
 
-int snd_ff_stream_lock_try(struct snd_ff *ff)
-{
-	int err;
+पूर्णांक snd_ff_stream_lock_try(काष्ठा snd_ff *ff)
+अणु
+	पूर्णांक err;
 
 	spin_lock_irq(&ff->lock);
 
 	/* user land lock this */
-	if (ff->dev_lock_count < 0) {
+	अगर (ff->dev_lock_count < 0) अणु
 		err = -EBUSY;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	/* this is the first time */
-	if (ff->dev_lock_count++ == 0)
+	/* this is the first समय */
+	अगर (ff->dev_lock_count++ == 0)
 		snd_ff_stream_lock_changed(ff);
 	err = 0;
 end:
 	spin_unlock_irq(&ff->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void snd_ff_stream_lock_release(struct snd_ff *ff)
-{
+व्योम snd_ff_stream_lock_release(काष्ठा snd_ff *ff)
+अणु
 	spin_lock_irq(&ff->lock);
 
-	if (WARN_ON(ff->dev_lock_count <= 0))
-		goto end;
-	if (--ff->dev_lock_count == 0)
+	अगर (WARN_ON(ff->dev_lock_count <= 0))
+		जाओ end;
+	अगर (--ff->dev_lock_count == 0)
 		snd_ff_stream_lock_changed(ff);
 end:
 	spin_unlock_irq(&ff->lock);
-}
+पूर्ण

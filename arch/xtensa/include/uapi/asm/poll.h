@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * include/asm-xtensa/poll.h
+ * include/यंत्र-xtensa/poll.h
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file "COPYING" in the main directory of
- * this archive for more details.
+ * Public License.  See the file "COPYING" in the मुख्य directory of
+ * this archive क्रम more details.
  *
  * Copyright (C) 2001 - 2005 Tensilica Inc.
  */
 
-#ifndef _XTENSA_POLL_H
-#define _XTENSA_POLL_H
+#अगर_अघोषित _XTENSA_POLL_H
+#घोषणा _XTENSA_POLL_H
 
-#define POLLWRNORM	POLLOUT
-#define POLLWRBAND	0x0100
-#define POLLREMOVE	0x0800
+#घोषणा POLLWRNORM	POLLOUT
+#घोषणा POLLWRBAND	0x0100
+#घोषणा POLLREMOVE	0x0800
 
-#include <asm-generic/poll.h>
+#समावेश <यंत्र-generic/poll.h>
 
-#endif /* _XTENSA_POLL_H */
+#पूर्ण_अगर /* _XTENSA_POLL_H */

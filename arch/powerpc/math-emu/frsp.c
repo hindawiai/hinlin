@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/soft-fp.h>
-#include <math-emu/double.h>
-#include <math-emu/single.h>
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/soft-fp.h>
+#समावेश <math-emu/द्विगुन.h>
+#समावेश <math-emu/single.h>
 
-int
-frsp(void *frD, void *frB)
-{
+पूर्णांक
+frsp(व्योम *frD, व्योम *frB)
+अणु
 	FP_DECL_D(B);
 	FP_DECL_EX;
 
-#ifdef DEBUG
-	printk("%s: D %p, B %p\n", __func__, frD, frB);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: D %p, B %p\n", __func__, frD, frB);
+#पूर्ण_अगर
 
 	FP_UNPACK_DP(B, frB);
 
-#ifdef DEBUG
-	printk("B: %ld %lu %lu %ld (%ld)\n", B_s, B_f1, B_f0, B_e, B_c);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("B: %ld %lu %lu %ld (%ld)\n", B_s, B_f1, B_f0, B_e, B_c);
+#पूर्ण_अगर
 
 	__FP_PACK_DS(frD, B);
 
-	return FP_CUR_EXCEPTIONS;
-}
+	वापस FP_CUR_EXCEPTIONS;
+पूर्ण

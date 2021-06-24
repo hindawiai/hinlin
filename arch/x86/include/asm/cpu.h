@@ -1,75 +1,76 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_CPU_H
-#define _ASM_X86_CPU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_CPU_H
+#घोषणा _ASM_X86_CPU_H
 
-#include <linux/device.h>
-#include <linux/cpu.h>
-#include <linux/topology.h>
-#include <linux/nodemask.h>
-#include <linux/percpu.h>
+#समावेश <linux/device.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/topology.h>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/percpu.h>
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-extern void prefill_possible_map(void);
+बाह्य व्योम prefill_possible_map(व्योम);
 
-#else /* CONFIG_SMP */
+#अन्यथा /* CONFIG_SMP */
 
-static inline void prefill_possible_map(void) {}
+अटल अंतरभूत व्योम prefill_possible_map(व्योम) अणुपूर्ण
 
-#define cpu_physical_id(cpu)			boot_cpu_physical_apicid
-#define cpu_acpi_id(cpu)			0
-#define safe_smp_processor_id()			0
+#घोषणा cpu_physical_id(cpu)			boot_cpu_physical_apicid
+#घोषणा cpu_acpi_id(cpu)			0
+#घोषणा safe_smp_processor_id()			0
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-struct x86_cpu {
-	struct cpu cpu;
-};
+काष्ठा x86_cpu अणु
+	काष्ठा cpu cpu;
+पूर्ण;
 
-#ifdef CONFIG_HOTPLUG_CPU
-extern int arch_register_cpu(int num);
-extern void arch_unregister_cpu(int);
-extern void start_cpu0(void);
-#ifdef CONFIG_DEBUG_HOTPLUG_CPU0
-extern int _debug_hotplug_cpu(int cpu, int action);
-#endif
-#endif
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+बाह्य पूर्णांक arch_रेजिस्टर_cpu(पूर्णांक num);
+बाह्य व्योम arch_unरेजिस्टर_cpu(पूर्णांक);
+बाह्य व्योम start_cpu0(व्योम);
+#अगर_घोषित CONFIG_DEBUG_HOTPLUG_CPU0
+बाह्य पूर्णांक _debug_hotplug_cpu(पूर्णांक cpu, पूर्णांक action);
+#पूर्ण_अगर
+#पूर्ण_अगर
 
-int mwait_usable(const struct cpuinfo_x86 *);
+पूर्णांक mरुको_usable(स्थिर काष्ठा cpuinfo_x86 *);
 
-unsigned int x86_family(unsigned int sig);
-unsigned int x86_model(unsigned int sig);
-unsigned int x86_stepping(unsigned int sig);
-#ifdef CONFIG_CPU_SUP_INTEL
-extern void __init sld_setup(struct cpuinfo_x86 *c);
-extern void switch_to_sld(unsigned long tifn);
-extern bool handle_user_split_lock(struct pt_regs *regs, long error_code);
-extern bool handle_guest_split_lock(unsigned long ip);
-extern void handle_bus_lock(struct pt_regs *regs);
-u8 get_this_hybrid_cpu_type(void);
-#else
-static inline void __init sld_setup(struct cpuinfo_x86 *c) {}
-static inline void switch_to_sld(unsigned long tifn) {}
-static inline bool handle_user_split_lock(struct pt_regs *regs, long error_code)
-{
-	return false;
-}
+अचिन्हित पूर्णांक x86_family(अचिन्हित पूर्णांक sig);
+अचिन्हित पूर्णांक x86_model(अचिन्हित पूर्णांक sig);
+अचिन्हित पूर्णांक x86_stepping(अचिन्हित पूर्णांक sig);
+#अगर_घोषित CONFIG_CPU_SUP_INTEL
+बाह्य व्योम __init sld_setup(काष्ठा cpuinfo_x86 *c);
+बाह्य व्योम चयन_to_sld(अचिन्हित दीर्घ tअगरn);
+बाह्य bool handle_user_split_lock(काष्ठा pt_regs *regs, दीर्घ error_code);
+बाह्य bool handle_guest_split_lock(अचिन्हित दीर्घ ip);
+बाह्य व्योम handle_bus_lock(काष्ठा pt_regs *regs);
+u8 get_this_hybrid_cpu_type(व्योम);
+#अन्यथा
+अटल अंतरभूत व्योम __init sld_setup(काष्ठा cpuinfo_x86 *c) अणुपूर्ण
+अटल अंतरभूत व्योम चयन_to_sld(अचिन्हित दीर्घ tअगरn) अणुपूर्ण
+अटल अंतरभूत bool handle_user_split_lock(काष्ठा pt_regs *regs, दीर्घ error_code)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool handle_guest_split_lock(unsigned long ip)
-{
-	return false;
-}
+अटल अंतरभूत bool handle_guest_split_lock(अचिन्हित दीर्घ ip)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void handle_bus_lock(struct pt_regs *regs) {}
+अटल अंतरभूत व्योम handle_bus_lock(काष्ठा pt_regs *regs) अणुपूर्ण
 
-static inline u8 get_this_hybrid_cpu_type(void)
-{
-	return 0;
-}
-#endif
-#ifdef CONFIG_IA32_FEAT_CTL
-void init_ia32_feat_ctl(struct cpuinfo_x86 *c);
-#else
-static inline void init_ia32_feat_ctl(struct cpuinfo_x86 *c) {}
-#endif
-#endif /* _ASM_X86_CPU_H */
+अटल अंतरभूत u8 get_this_hybrid_cpu_type(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_IA32_FEAT_CTL
+व्योम init_ia32_feat_ctl(काष्ठा cpuinfo_x86 *c);
+#अन्यथा
+अटल अंतरभूत व्योम init_ia32_feat_ctl(काष्ठा cpuinfo_x86 *c) अणुपूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर /* _ASM_X86_CPU_H */

@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
-#ifndef __DRIVERS_INTERCONNECT_QCOM_BCM_VOTER_H__
-#define __DRIVERS_INTERCONNECT_QCOM_BCM_VOTER_H__
+#अगर_अघोषित __DRIVERS_INTERCONNECT_QCOM_BCM_VOTER_H__
+#घोषणा __DRIVERS_INTERCONNECT_QCOM_BCM_VOTER_H__
 
-#include <soc/qcom/cmd-db.h>
-#include <soc/qcom/rpmh.h>
-#include <soc/qcom/tcs.h>
+#समावेश <soc/qcom/cmd-db.h>
+#समावेश <soc/qcom/rpmh.h>
+#समावेश <soc/qcom/tcs.h>
 
-#include "icc-rpmh.h"
+#समावेश "icc-rpmh.h"
 
-#define DEFINE_QBCM(_name, _bcmname, _keepalive, ...)			       \
-static struct qcom_icc_bcm _name = {					       \
+#घोषणा DEFINE_QBCM(_name, _bcmname, _keepalive, ...)			       \
+अटल काष्ठा qcom_icc_bcm _name = अणु					       \
 	.name = _bcmname,						       \
 	.keepalive = _keepalive,					       \
-	.num_nodes = ARRAY_SIZE(((struct qcom_icc_node *[]){ __VA_ARGS__ })),  \
-	.nodes = { __VA_ARGS__ },					       \
-}
+	.num_nodes = ARRAY_SIZE(((काष्ठा qcom_icc_node *[])अणु __VA_ARGS__ पूर्ण)),  \
+	.nodes = अणु __VA_ARGS__ पूर्ण,					       \
+पूर्ण
 
-struct bcm_voter *of_bcm_voter_get(struct device *dev, const char *name);
-void qcom_icc_bcm_voter_add(struct bcm_voter *voter, struct qcom_icc_bcm *bcm);
-int qcom_icc_bcm_voter_commit(struct bcm_voter *voter);
+काष्ठा bcm_voter *of_bcm_voter_get(काष्ठा device *dev, स्थिर अक्षर *name);
+व्योम qcom_icc_bcm_voter_add(काष्ठा bcm_voter *voter, काष्ठा qcom_icc_bcm *bcm);
+पूर्णांक qcom_icc_bcm_voter_commit(काष्ठा bcm_voter *voter);
 
-#endif
+#पूर्ण_अगर

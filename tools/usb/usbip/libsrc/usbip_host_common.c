@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2015-2016 Samsung Electronics
  *               Igor Kotrasinski <i.kotrasinsk@samsung.com>
@@ -9,193 +10,193 @@
  *               2005-2007 Takahiro Hirofuchi
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
 
-#include <errno.h>
-#include <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
 
-#include <libudev.h>
+#समावेश <libudev.h>
 
-#include "usbip_common.h"
-#include "usbip_host_common.h"
-#include "list.h"
-#include "sysfs_utils.h"
+#समावेश "usbip_common.h"
+#समावेश "usbip_host_common.h"
+#समावेश "list.h"
+#समावेश "sysfs_utils.h"
 
-extern struct udev *udev_context;
+बाह्य काष्ठा udev *udev_context;
 
-static int32_t read_attr_usbip_status(struct usbip_usb_device *udev)
-{
-	char status_attr_path[SYSFS_PATH_MAX];
-	int size;
-	int fd;
-	int length;
-	char status[2] = { 0 };
-	int value = 0;
+अटल पूर्णांक32_t पढ़ो_attr_usbip_status(काष्ठा usbip_usb_device *udev)
+अणु
+	अक्षर status_attr_path[SYSFS_PATH_MAX];
+	पूर्णांक size;
+	पूर्णांक fd;
+	पूर्णांक length;
+	अक्षर status[2] = अणु 0 पूर्ण;
+	पूर्णांक value = 0;
 
-	size = snprintf(status_attr_path, sizeof(status_attr_path),
+	size = snम_लिखो(status_attr_path, माप(status_attr_path),
 			"%s/usbip_status", udev->path);
-	if (size < 0 || (unsigned int)size >= sizeof(status_attr_path)) {
+	अगर (size < 0 || (अचिन्हित पूर्णांक)size >= माप(status_attr_path)) अणु
 		err("usbip_status path length %i >= %lu or < 0", size,
-		    (long unsigned)sizeof(status_attr_path));
-		return -1;
-	}
+		    (दीर्घ अचिन्हित)माप(status_attr_path));
+		वापस -1;
+	पूर्ण
 
 
-	fd = open(status_attr_path, O_RDONLY);
-	if (fd < 0) {
+	fd = खोलो(status_attr_path, O_RDONLY);
+	अगर (fd < 0) अणु
 		err("error opening attribute %s", status_attr_path);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	length = read(fd, status, 1);
-	if (length < 0) {
+	length = पढ़ो(fd, status, 1);
+	अगर (length < 0) अणु
 		err("error reading attribute %s", status_attr_path);
-		close(fd);
-		return -1;
-	}
+		बंद(fd);
+		वापस -1;
+	पूर्ण
 
-	value = atoi(status);
-	close(fd);
-	return value;
-}
+	value = म_से_प(status);
+	बंद(fd);
+	वापस value;
+पूर्ण
 
-static
-struct usbip_exported_device *usbip_exported_device_new(
-		struct usbip_host_driver *hdriver, const char *sdevpath)
-{
-	struct usbip_exported_device *edev = NULL;
-	struct usbip_exported_device *edev_old;
-	size_t size;
-	int i;
+अटल
+काष्ठा usbip_exported_device *usbip_exported_device_new(
+		काष्ठा usbip_host_driver *hdriver, स्थिर अक्षर *sdevpath)
+अणु
+	काष्ठा usbip_exported_device *edev = शून्य;
+	काष्ठा usbip_exported_device *edev_old;
+	माप_प्रकार size;
+	पूर्णांक i;
 
-	edev = calloc(1, sizeof(struct usbip_exported_device));
+	edev = सुस्मृति(1, माप(काष्ठा usbip_exported_device));
 
 	edev->sudev =
 		udev_device_new_from_syspath(udev_context, sdevpath);
-	if (!edev->sudev) {
+	अगर (!edev->sudev) अणु
 		err("udev_device_new_from_syspath: %s", sdevpath);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (hdriver->ops.read_device(edev->sudev, &edev->udev) < 0)
-		goto err;
+	अगर (hdriver->ops.पढ़ो_device(edev->sudev, &edev->udev) < 0)
+		जाओ err;
 
-	edev->status = read_attr_usbip_status(&edev->udev);
-	if (edev->status < 0)
-		goto err;
+	edev->status = पढ़ो_attr_usbip_status(&edev->udev);
+	अगर (edev->status < 0)
+		जाओ err;
 
-	/* reallocate buffer to include usb interface data */
-	size = sizeof(struct usbip_exported_device) +
-		edev->udev.bNumInterfaces * sizeof(struct usbip_usb_interface);
+	/* पुनः_स्मृतिate buffer to include usb पूर्णांकerface data */
+	size = माप(काष्ठा usbip_exported_device) +
+		edev->udev.bNumInterfaces * माप(काष्ठा usbip_usb_पूर्णांकerface);
 
 	edev_old = edev;
-	edev = realloc(edev, size);
-	if (!edev) {
+	edev = पुनः_स्मृति(edev, size);
+	अगर (!edev) अणु
 		edev = edev_old;
 		dbg("realloc failed");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	for (i = 0; i < edev->udev.bNumInterfaces; i++) {
-		/* vudc does not support reading interfaces */
-		if (!hdriver->ops.read_interface)
-			break;
-		hdriver->ops.read_interface(&edev->udev, i, &edev->uinf[i]);
-	}
+	क्रम (i = 0; i < edev->udev.bNumInterfaces; i++) अणु
+		/* vudc करोes not support पढ़ोing पूर्णांकerfaces */
+		अगर (!hdriver->ops.पढ़ो_पूर्णांकerface)
+			अवरोध;
+		hdriver->ops.पढ़ो_पूर्णांकerface(&edev->udev, i, &edev->uinf[i]);
+	पूर्ण
 
-	return edev;
+	वापस edev;
 err:
-	if (edev->sudev)
+	अगर (edev->sudev)
 		udev_device_unref(edev->sudev);
-	if (edev)
-		free(edev);
+	अगर (edev)
+		मुक्त(edev);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static int refresh_exported_devices(struct usbip_host_driver *hdriver)
-{
-	struct usbip_exported_device *edev;
-	struct udev_enumerate *enumerate;
-	struct udev_list_entry *devices, *dev_list_entry;
-	struct udev_device *dev;
-	const char *path;
+अटल पूर्णांक refresh_exported_devices(काष्ठा usbip_host_driver *hdriver)
+अणु
+	काष्ठा usbip_exported_device *edev;
+	काष्ठा udev_क्रमागतerate *क्रमागतerate;
+	काष्ठा udev_list_entry *devices, *dev_list_entry;
+	काष्ठा udev_device *dev;
+	स्थिर अक्षर *path;
 
-	enumerate = udev_enumerate_new(udev_context);
-	udev_enumerate_add_match_subsystem(enumerate, hdriver->udev_subsystem);
-	udev_enumerate_scan_devices(enumerate);
+	क्रमागतerate = udev_क्रमागतerate_new(udev_context);
+	udev_क्रमागतerate_add_match_subप्रणाली(क्रमागतerate, hdriver->udev_subप्रणाली);
+	udev_क्रमागतerate_scan_devices(क्रमागतerate);
 
-	devices = udev_enumerate_get_list_entry(enumerate);
+	devices = udev_क्रमागतerate_get_list_entry(क्रमागतerate);
 
-	udev_list_entry_foreach(dev_list_entry, devices) {
+	udev_list_entry_क्रमeach(dev_list_entry, devices) अणु
 		path = udev_list_entry_get_name(dev_list_entry);
 		dev = udev_device_new_from_syspath(udev_context,
 						   path);
-		if (dev == NULL)
-			continue;
+		अगर (dev == शून्य)
+			जारी;
 
 		/* Check whether device uses usbip driver. */
-		if (hdriver->ops.is_my_device(dev)) {
+		अगर (hdriver->ops.is_my_device(dev)) अणु
 			edev = usbip_exported_device_new(hdriver, path);
-			if (!edev) {
+			अगर (!edev) अणु
 				dbg("usbip_exported_device_new failed");
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			list_add(&edev->node, &hdriver->edev_list);
 			hdriver->ndevs++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void usbip_exported_device_destroy(struct list_head *devs)
-{
-	struct list_head *i, *tmp;
-	struct usbip_exported_device *edev;
+अटल व्योम usbip_exported_device_destroy(काष्ठा list_head *devs)
+अणु
+	काष्ठा list_head *i, *पंचांगp;
+	काष्ठा usbip_exported_device *edev;
 
-	list_for_each_safe(i, tmp, devs) {
-		edev = list_entry(i, struct usbip_exported_device, node);
+	list_क्रम_each_safe(i, पंचांगp, devs) अणु
+		edev = list_entry(i, काष्ठा usbip_exported_device, node);
 		list_del(i);
-		free(edev);
-	}
-}
+		मुक्त(edev);
+	पूर्ण
+पूर्ण
 
-int usbip_generic_driver_open(struct usbip_host_driver *hdriver)
-{
-	int rc;
+पूर्णांक usbip_generic_driver_खोलो(काष्ठा usbip_host_driver *hdriver)
+अणु
+	पूर्णांक rc;
 
 	udev_context = udev_new();
-	if (!udev_context) {
+	अगर (!udev_context) अणु
 		err("udev_new failed");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	rc = refresh_exported_devices(hdriver);
-	if (rc < 0)
-		goto err;
-	return 0;
+	अगर (rc < 0)
+		जाओ err;
+	वापस 0;
 err:
 	udev_unref(udev_context);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-void usbip_generic_driver_close(struct usbip_host_driver *hdriver)
-{
-	if (!hdriver)
-		return;
+व्योम usbip_generic_driver_बंद(काष्ठा usbip_host_driver *hdriver)
+अणु
+	अगर (!hdriver)
+		वापस;
 
 	usbip_exported_device_destroy(&hdriver->edev_list);
 
 	udev_unref(udev_context);
-}
+पूर्ण
 
-int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver)
-{
-	int rc;
+पूर्णांक usbip_generic_refresh_device_list(काष्ठा usbip_host_driver *hdriver)
+अणु
+	पूर्णांक rc;
 
 	usbip_exported_device_destroy(&hdriver->edev_list);
 
@@ -203,80 +204,80 @@ int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver)
 	INIT_LIST_HEAD(&hdriver->edev_list);
 
 	rc = refresh_exported_devices(hdriver);
-	if (rc < 0)
-		return -1;
+	अगर (rc < 0)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int usbip_export_device(struct usbip_exported_device *edev, int sockfd)
-{
-	char attr_name[] = "usbip_sockfd";
-	char sockfd_attr_path[SYSFS_PATH_MAX];
-	int size;
-	char sockfd_buff[30];
-	int ret;
+पूर्णांक usbip_export_device(काष्ठा usbip_exported_device *edev, पूर्णांक sockfd)
+अणु
+	अक्षर attr_name[] = "usbip_sockfd";
+	अक्षर sockfd_attr_path[SYSFS_PATH_MAX];
+	पूर्णांक size;
+	अक्षर sockfd_buff[30];
+	पूर्णांक ret;
 
-	if (edev->status != SDEV_ST_AVAILABLE) {
+	अगर (edev->status != SDEV_ST_AVAILABLE) अणु
 		dbg("device not available: %s", edev->udev.busid);
-		switch (edev->status) {
-		case SDEV_ST_ERROR:
+		चयन (edev->status) अणु
+		हाल SDEV_ST_ERROR:
 			dbg("status SDEV_ST_ERROR");
 			ret = ST_DEV_ERR;
-			break;
-		case SDEV_ST_USED:
+			अवरोध;
+		हाल SDEV_ST_USED:
 			dbg("status SDEV_ST_USED");
 			ret = ST_DEV_BUSY;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dbg("status unknown: 0x%x", edev->status);
 			ret = -1;
-		}
-		return ret;
-	}
+		पूर्ण
+		वापस ret;
+	पूर्ण
 
-	/* only the first interface is true */
-	size = snprintf(sockfd_attr_path, sizeof(sockfd_attr_path), "%s/%s",
+	/* only the first पूर्णांकerface is true */
+	size = snम_लिखो(sockfd_attr_path, माप(sockfd_attr_path), "%s/%s",
 			edev->udev.path, attr_name);
-	if (size < 0 || (unsigned int)size >= sizeof(sockfd_attr_path)) {
+	अगर (size < 0 || (अचिन्हित पूर्णांक)size >= माप(sockfd_attr_path)) अणु
 		err("exported device path length %i >= %lu or < 0", size,
-		    (long unsigned)sizeof(sockfd_attr_path));
-		return -1;
-	}
+		    (दीर्घ अचिन्हित)माप(sockfd_attr_path));
+		वापस -1;
+	पूर्ण
 
-	size = snprintf(sockfd_buff, sizeof(sockfd_buff), "%d\n", sockfd);
-	if (size < 0 || (unsigned int)size >= sizeof(sockfd_buff)) {
+	size = snम_लिखो(sockfd_buff, माप(sockfd_buff), "%d\n", sockfd);
+	अगर (size < 0 || (अचिन्हित पूर्णांक)size >= माप(sockfd_buff)) अणु
 		err("socket length %i >= %lu or < 0", size,
-		    (long unsigned)sizeof(sockfd_buff));
-		return -1;
-	}
+		    (दीर्घ अचिन्हित)माप(sockfd_buff));
+		वापस -1;
+	पूर्ण
 
-	ret = write_sysfs_attribute(sockfd_attr_path, sockfd_buff,
-				    strlen(sockfd_buff));
-	if (ret < 0) {
+	ret = ग_लिखो_sysfs_attribute(sockfd_attr_path, sockfd_buff,
+				    म_माप(sockfd_buff));
+	अगर (ret < 0) अणु
 		err("write_sysfs_attribute failed: sockfd %s to %s",
 		    sockfd_buff, sockfd_attr_path);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	info("connect: %s", edev->udev.busid);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct usbip_exported_device *usbip_generic_get_device(
-		struct usbip_host_driver *hdriver, int num)
-{
-	struct list_head *i;
-	struct usbip_exported_device *edev;
-	int cnt = 0;
+काष्ठा usbip_exported_device *usbip_generic_get_device(
+		काष्ठा usbip_host_driver *hdriver, पूर्णांक num)
+अणु
+	काष्ठा list_head *i;
+	काष्ठा usbip_exported_device *edev;
+	पूर्णांक cnt = 0;
 
-	list_for_each(i, &hdriver->edev_list) {
-		edev = list_entry(i, struct usbip_exported_device, node);
-		if (num == cnt)
-			return edev;
+	list_क्रम_each(i, &hdriver->edev_list) अणु
+		edev = list_entry(i, काष्ठा usbip_exported_device, node);
+		अगर (num == cnt)
+			वापस edev;
 		cnt++;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

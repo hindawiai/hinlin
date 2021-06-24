@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
 * Filename: config.c
 *
@@ -8,94 +9,94 @@
 * (C) Copyright 2013 IBM Corporation
 */
 
-#include <linux/types.h>
-#include <linux/crc32.h>
-#include <linux/swab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/swab.h>
 
-#include "rsxx_priv.h"
-#include "rsxx_cfg.h"
+#समावेश "rsxx_priv.h"
+#समावेश "rsxx_cfg.h"
 
-static void initialize_config(struct rsxx_card_cfg *cfg)
-{
+अटल व्योम initialize_config(काष्ठा rsxx_card_cfg *cfg)
+अणु
 	cfg->hdr.version = RSXX_CFG_VERSION;
 
 	cfg->data.block_size        = RSXX_HW_BLK_SIZE;
 	cfg->data.stripe_size       = RSXX_HW_BLK_SIZE;
-	cfg->data.vendor_id         = RSXX_VENDOR_ID_IBM;
+	cfg->data.venकरोr_id         = RSXX_VENDOR_ID_IBM;
 	cfg->data.cache_order       = (-1);
-	cfg->data.intr_coal.mode    = RSXX_INTR_COAL_DISABLED;
-	cfg->data.intr_coal.count   = 0;
-	cfg->data.intr_coal.latency = 0;
-}
+	cfg->data.पूर्णांकr_coal.mode    = RSXX_INTR_COAL_DISABLED;
+	cfg->data.पूर्णांकr_coal.count   = 0;
+	cfg->data.पूर्णांकr_coal.latency = 0;
+पूर्ण
 
-static u32 config_data_crc32(struct rsxx_card_cfg *cfg)
-{
+अटल u32 config_data_crc32(काष्ठा rsxx_card_cfg *cfg)
+अणु
 	/*
 	 * Return the compliment of the CRC to ensure compatibility
 	 * (i.e. this is how early rsxx drivers did it.)
 	 */
 
-	return ~crc32(~0, &cfg->data, sizeof(cfg->data));
-}
+	वापस ~crc32(~0, &cfg->data, माप(cfg->data));
+पूर्ण
 
 
 /*----------------- Config Byte Swap Functions -------------------*/
-static void config_hdr_be_to_cpu(struct card_cfg_hdr *hdr)
-{
-	hdr->version = be32_to_cpu((__force __be32) hdr->version);
-	hdr->crc     = be32_to_cpu((__force __be32) hdr->crc);
-}
+अटल व्योम config_hdr_be_to_cpu(काष्ठा card_cfg_hdr *hdr)
+अणु
+	hdr->version = be32_to_cpu((__क्रमce __be32) hdr->version);
+	hdr->crc     = be32_to_cpu((__क्रमce __be32) hdr->crc);
+पूर्ण
 
-static void config_hdr_cpu_to_be(struct card_cfg_hdr *hdr)
-{
-	hdr->version = (__force u32) cpu_to_be32(hdr->version);
-	hdr->crc     = (__force u32) cpu_to_be32(hdr->crc);
-}
+अटल व्योम config_hdr_cpu_to_be(काष्ठा card_cfg_hdr *hdr)
+अणु
+	hdr->version = (__क्रमce u32) cpu_to_be32(hdr->version);
+	hdr->crc     = (__क्रमce u32) cpu_to_be32(hdr->crc);
+पूर्ण
 
-static void config_data_swab(struct rsxx_card_cfg *cfg)
-{
+अटल व्योम config_data_swab(काष्ठा rsxx_card_cfg *cfg)
+अणु
 	u32 *data = (u32 *) &cfg->data;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < (sizeof(cfg->data) / 4); i++)
+	क्रम (i = 0; i < (माप(cfg->data) / 4); i++)
 		data[i] = swab32(data[i]);
-}
+पूर्ण
 
-static void config_data_le_to_cpu(struct rsxx_card_cfg *cfg)
-{
+अटल व्योम config_data_le_to_cpu(काष्ठा rsxx_card_cfg *cfg)
+अणु
 	u32 *data = (u32 *) &cfg->data;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < (sizeof(cfg->data) / 4); i++)
-		data[i] = le32_to_cpu((__force __le32) data[i]);
-}
+	क्रम (i = 0; i < (माप(cfg->data) / 4); i++)
+		data[i] = le32_to_cpu((__क्रमce __le32) data[i]);
+पूर्ण
 
-static void config_data_cpu_to_le(struct rsxx_card_cfg *cfg)
-{
+अटल व्योम config_data_cpu_to_le(काष्ठा rsxx_card_cfg *cfg)
+अणु
 	u32 *data = (u32 *) &cfg->data;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < (sizeof(cfg->data) / 4); i++)
-		data[i] = (__force u32) cpu_to_le32(data[i]);
-}
+	क्रम (i = 0; i < (माप(cfg->data) / 4); i++)
+		data[i] = (__क्रमce u32) cpu_to_le32(data[i]);
+पूर्ण
 
 
 /*----------------- Config Operations ------------------*/
-static int rsxx_save_config(struct rsxx_cardinfo *card)
-{
-	struct rsxx_card_cfg cfg;
-	int st;
+अटल पूर्णांक rsxx_save_config(काष्ठा rsxx_cardinfo *card)
+अणु
+	काष्ठा rsxx_card_cfg cfg;
+	पूर्णांक st;
 
-	memcpy(&cfg, &card->config, sizeof(cfg));
+	स_नकल(&cfg, &card->config, माप(cfg));
 
-	if (unlikely(cfg.hdr.version != RSXX_CFG_VERSION)) {
+	अगर (unlikely(cfg.hdr.version != RSXX_CFG_VERSION)) अणु
 		dev_err(CARD_TO_DEV(card),
 			"Cannot save config with invalid version %d\n",
 			cfg.hdr.version);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Convert data to little endian for the CRC calculation. */
+	/* Convert data to little endian क्रम the CRC calculation. */
 	config_data_cpu_to_le(&cfg);
 
 	cfg.hdr.crc = config_data_crc32(&cfg);
@@ -107,53 +108,53 @@ static int rsxx_save_config(struct rsxx_cardinfo *card)
 	config_data_swab(&cfg);
 	config_hdr_cpu_to_be(&cfg.hdr);
 
-	st = rsxx_creg_write(card, CREG_ADD_CONFIG, sizeof(cfg), &cfg, 1);
-	if (st)
-		return st;
+	st = rsxx_creg_ग_लिखो(card, CREG_ADD_CONFIG, माप(cfg), &cfg, 1);
+	अगर (st)
+		वापस st;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rsxx_load_config(struct rsxx_cardinfo *card)
-{
-	int st;
+पूर्णांक rsxx_load_config(काष्ठा rsxx_cardinfo *card)
+अणु
+	पूर्णांक st;
 	u32 crc;
 
-	st = rsxx_creg_read(card, CREG_ADD_CONFIG, sizeof(card->config),
+	st = rsxx_creg_पढ़ो(card, CREG_ADD_CONFIG, माप(card->config),
 				&card->config, 1);
-	if (st) {
+	अगर (st) अणु
 		dev_err(CARD_TO_DEV(card),
 			"Failed reading card config.\n");
-		return st;
-	}
+		वापस st;
+	पूर्ण
 
 	config_hdr_be_to_cpu(&card->config.hdr);
 
-	if (card->config.hdr.version == RSXX_CFG_VERSION) {
+	अगर (card->config.hdr.version == RSXX_CFG_VERSION) अणु
 		/*
 		 * We calculate the CRC with the data in little endian, because
-		 * early drivers did not take big endian CPUs into account.
+		 * early drivers did not take big endian CPUs पूर्णांकo account.
 		 * The data is always stored in big endian, so we need to byte
-		 * swap it before calculating the CRC.
+		 * swap it beक्रमe calculating the CRC.
 		 */
 
 		config_data_swab(&card->config);
 
 		/* Check the CRC */
 		crc = config_data_crc32(&card->config);
-		if (crc != card->config.hdr.crc) {
+		अगर (crc != card->config.hdr.crc) अणु
 			dev_err(CARD_TO_DEV(card),
 				"Config corruption detected!\n");
 			dev_info(CARD_TO_DEV(card),
 				"CRC (sb x%08x is x%08x)\n",
 				card->config.hdr.crc, crc);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
 		/* Convert the data to CPU byteorder */
 		config_data_le_to_cpu(&card->config);
 
-	} else if (card->config.hdr.version != 0) {
+	पूर्ण अन्यथा अगर (card->config.hdr.version != 0) अणु
 		dev_err(CARD_TO_DEV(card),
 			"Invalid config version %d.\n",
 			card->config.hdr.version);
@@ -161,15 +162,15 @@ int rsxx_load_config(struct rsxx_cardinfo *card)
 		 * Config version changes require special handling from the
 		 * user
 		 */
-		return -EINVAL;
-	} else {
+		वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		dev_info(CARD_TO_DEV(card),
 			"Initializing card configuration.\n");
 		initialize_config(&card->config);
 		st = rsxx_save_config(card);
-		if (st)
-			return st;
-	}
+		अगर (st)
+			वापस st;
+	पूर्ण
 
 	card->config_valid = 1;
 
@@ -182,16 +183,16 @@ int rsxx_load_config(struct rsxx_cardinfo *card)
 	dev_dbg(CARD_TO_DEV(card), "stripe_size: x%08x\n",
 		card->config.data.stripe_size);
 	dev_dbg(CARD_TO_DEV(card), "vendor_id:   x%08x\n",
-		card->config.data.vendor_id);
+		card->config.data.venकरोr_id);
 	dev_dbg(CARD_TO_DEV(card), "cache_order: x%08x\n",
 		card->config.data.cache_order);
 	dev_dbg(CARD_TO_DEV(card), "mode:        x%08x\n",
-		card->config.data.intr_coal.mode);
+		card->config.data.पूर्णांकr_coal.mode);
 	dev_dbg(CARD_TO_DEV(card), "count:       x%08x\n",
-		card->config.data.intr_coal.count);
+		card->config.data.पूर्णांकr_coal.count);
 	dev_dbg(CARD_TO_DEV(card), "latency:     x%08x\n",
-		 card->config.data.intr_coal.latency);
+		 card->config.data.पूर्णांकr_coal.latency);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

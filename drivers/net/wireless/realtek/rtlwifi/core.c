@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#include "wifi.h"
-#include "core.h"
-#include "cam.h"
-#include "base.h"
-#include "ps.h"
-#include "pwrseqcmd.h"
+#समावेश "wifi.h"
+#समावेश "core.h"
+#समावेश "cam.h"
+#समावेश "base.h"
+#समावेश "ps.h"
+#समावेश "pwrseqcmd.h"
 
-#include "btcoexist/rtl_btc.h"
-#include <linux/firmware.h>
-#include <linux/export.h>
-#include <net/cfg80211.h>
+#समावेश "btcoexist/rtl_btc.h"
+#समावेश <linux/firmware.h>
+#समावेश <linux/export.h>
+#समावेश <net/cfg80211.h>
 
-u8 channel5g[CHANNEL_MAX_NUMBER_5G] = {
+u8 channel5g[CHANNEL_MAX_NUMBER_5G] = अणु
 	36, 38, 40, 42, 44, 46, 48,		/* Band 1 */
 	52, 54, 56, 58, 60, 62, 64,		/* Band 2 */
 	100, 102, 104, 106, 108, 110, 112,	/* Band 3 */
@@ -21,426 +22,426 @@ u8 channel5g[CHANNEL_MAX_NUMBER_5G] = {
 	132, 134, 136, 138, 140, 142, 144,	/* Band 3 */
 	149, 151, 153, 155, 157, 159, 161,	/* Band 4 */
 	165, 167, 169, 171, 173, 175, 177	/* Band 4 */
-};
+पूर्ण;
 EXPORT_SYMBOL(channel5g);
 
-u8 channel5g_80m[CHANNEL_MAX_NUMBER_5G_80M] = {
+u8 channel5g_80m[CHANNEL_MAX_NUMBER_5G_80M] = अणु
 	42, 58, 106, 122, 138, 155, 171
-};
+पूर्ण;
 EXPORT_SYMBOL(channel5g_80m);
 
-void rtl_addr_delay(u32 addr)
-{
-	if (addr == 0xfe)
+व्योम rtl_addr_delay(u32 addr)
+अणु
+	अगर (addr == 0xfe)
 		mdelay(50);
-	else if (addr == 0xfd)
+	अन्यथा अगर (addr == 0xfd)
 		msleep(5);
-	else if (addr == 0xfc)
+	अन्यथा अगर (addr == 0xfc)
 		msleep(1);
-	else if (addr == 0xfb)
+	अन्यथा अगर (addr == 0xfb)
 		usleep_range(50, 100);
-	else if (addr == 0xfa)
+	अन्यथा अगर (addr == 0xfa)
 		usleep_range(5, 10);
-	else if (addr == 0xf9)
+	अन्यथा अगर (addr == 0xf9)
 		usleep_range(1, 2);
-}
+पूर्ण
 EXPORT_SYMBOL(rtl_addr_delay);
 
-void rtl_rfreg_delay(struct ieee80211_hw *hw, enum radio_path rfpath, u32 addr,
+व्योम rtl_rfreg_delay(काष्ठा ieee80211_hw *hw, क्रमागत radio_path rfpath, u32 addr,
 		     u32 mask, u32 data)
-{
-	if (addr >= 0xf9 && addr <= 0xfe) {
+अणु
+	अगर (addr >= 0xf9 && addr <= 0xfe) अणु
 		rtl_addr_delay(addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		rtl_set_rfreg(hw, rfpath, addr, mask, data);
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(rtl_rfreg_delay);
 
-void rtl_bb_delay(struct ieee80211_hw *hw, u32 addr, u32 data)
-{
-	if (addr >= 0xf9 && addr <= 0xfe) {
+व्योम rtl_bb_delay(काष्ठा ieee80211_hw *hw, u32 addr, u32 data)
+अणु
+	अगर (addr >= 0xf9 && addr <= 0xfe) अणु
 		rtl_addr_delay(addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		rtl_set_bbreg(hw, addr, MASKDWORD, data);
 		udelay(1);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(rtl_bb_delay);
 
-static void rtl_fw_do_work(const struct firmware *firmware, void *context,
+अटल व्योम rtl_fw_करो_work(स्थिर काष्ठा firmware *firmware, व्योम *context,
 			   bool is_wow)
-{
-	struct ieee80211_hw *hw = context;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	int err;
+अणु
+	काष्ठा ieee80211_hw *hw = context;
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	पूर्णांक err;
 
 	rtl_dbg(rtlpriv, COMP_ERR, DBG_LOUD,
 		"Firmware callback routine entered!\n");
-	if (!firmware) {
-		if (rtlpriv->cfg->alt_fw_name) {
+	अगर (!firmware) अणु
+		अगर (rtlpriv->cfg->alt_fw_name) अणु
 			err = request_firmware(&firmware,
 					       rtlpriv->cfg->alt_fw_name,
 					       rtlpriv->io.dev);
 			pr_info("Loading alternative firmware %s\n",
 				rtlpriv->cfg->alt_fw_name);
-			if (!err)
-				goto found_alt;
-		}
+			अगर (!err)
+				जाओ found_alt;
+		पूर्ण
 		pr_err("Selected firmware is not available\n");
 		rtlpriv->max_fw_size = 0;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 found_alt:
-	if (firmware->size > rtlpriv->max_fw_size) {
+	अगर (firmware->size > rtlpriv->max_fw_size) अणु
 		pr_err("Firmware is too big!\n");
 		release_firmware(firmware);
-		goto exit;
-	}
-	if (!is_wow) {
-		memcpy(rtlpriv->rtlhal.pfirmware, firmware->data,
+		जाओ निकास;
+	पूर्ण
+	अगर (!is_wow) अणु
+		स_नकल(rtlpriv->rtlhal.pfirmware, firmware->data,
 		       firmware->size);
 		rtlpriv->rtlhal.fwsize = firmware->size;
-	} else {
-		memcpy(rtlpriv->rtlhal.wowlan_firmware, firmware->data,
+	पूर्ण अन्यथा अणु
+		स_नकल(rtlpriv->rtlhal.wowlan_firmware, firmware->data,
 		       firmware->size);
 		rtlpriv->rtlhal.wowlan_fwsize = firmware->size;
-	}
+	पूर्ण
 	release_firmware(firmware);
 
-exit:
+निकास:
 	complete(&rtlpriv->firmware_loading_complete);
-}
+पूर्ण
 
-void rtl_fw_cb(const struct firmware *firmware, void *context)
-{
-	rtl_fw_do_work(firmware, context, false);
-}
+व्योम rtl_fw_cb(स्थिर काष्ठा firmware *firmware, व्योम *context)
+अणु
+	rtl_fw_करो_work(firmware, context, false);
+पूर्ण
 EXPORT_SYMBOL(rtl_fw_cb);
 
-void rtl_wowlan_fw_cb(const struct firmware *firmware, void *context)
-{
-	rtl_fw_do_work(firmware, context, true);
-}
+व्योम rtl_wowlan_fw_cb(स्थिर काष्ठा firmware *firmware, व्योम *context)
+अणु
+	rtl_fw_करो_work(firmware, context, true);
+पूर्ण
 EXPORT_SYMBOL(rtl_wowlan_fw_cb);
 
-/*mutex for start & stop is must here. */
-static int rtl_op_start(struct ieee80211_hw *hw)
-{
-	int err = 0;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+/*mutex क्रम start & stop is must here. */
+अटल पूर्णांक rtl_op_start(काष्ठा ieee80211_hw *hw)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 
-	if (!is_hal_stop(rtlhal))
-		return 0;
-	if (!test_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status))
-		return 0;
+	अगर (!is_hal_stop(rtlhal))
+		वापस 0;
+	अगर (!test_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status))
+		वापस 0;
 	mutex_lock(&rtlpriv->locks.conf_mutex);
-	err = rtlpriv->intf_ops->adapter_start(hw);
-	if (!err)
-		rtl_watch_dog_timer_callback(&rtlpriv->works.watchdog_timer);
+	err = rtlpriv->पूर्णांकf_ops->adapter_start(hw);
+	अगर (!err)
+		rtl_watch_करोg_समयr_callback(&rtlpriv->works.watchकरोg_समयr);
 	mutex_unlock(&rtlpriv->locks.conf_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rtl_op_stop(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+अटल व्योम rtl_op_stop(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
 	bool support_remote_wakeup = false;
 
-	if (is_hal_stop(rtlhal))
-		return;
+	अगर (is_hal_stop(rtlhal))
+		वापस;
 
 	rtlpriv->cfg->ops->get_hw_reg(hw, HAL_DEF_WOWLAN,
 				      (u8 *)(&support_remote_wakeup));
-	/* here is must, because adhoc do stop and start,
+	/* here is must, because adhoc करो stop and start,
 	 * but stop with RFOFF may cause something wrong,
 	 * like adhoc TP
 	 */
-	if (unlikely(ppsc->rfpwr_state == ERFOFF))
+	अगर (unlikely(ppsc->rfpwr_state == ERFOFF))
 		rtl_ips_nic_on(hw);
 
 	mutex_lock(&rtlpriv->locks.conf_mutex);
-	/* if wowlan supported, DON'T clear connected info */
-	if (!(support_remote_wakeup &&
-	      rtlhal->enter_pnp_sleep)) {
+	/* अगर wowlan supported, DON'T clear connected info */
+	अगर (!(support_remote_wakeup &&
+	      rtlhal->enter_pnp_sleep)) अणु
 		mac->link_state = MAC80211_NOLINK;
 		eth_zero_addr(mac->bssid);
-		mac->vendor = PEER_UNKNOWN;
+		mac->venकरोr = PEER_UNKNOWN;
 
 		/* reset sec info */
 		rtl_cam_reset_sec_info(hw);
 
 		rtl_deinit_deferred_work(hw, false);
-	}
-	rtlpriv->intf_ops->adapter_stop(hw);
+	पूर्ण
+	rtlpriv->पूर्णांकf_ops->adapter_stop(hw);
 
 	mutex_unlock(&rtlpriv->locks.conf_mutex);
-}
+पूर्ण
 
-static void rtl_op_tx(struct ieee80211_hw *hw,
-		      struct ieee80211_tx_control *control,
-		      struct sk_buff *skb)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	struct rtl_tcb_desc tcb_desc;
+अटल व्योम rtl_op_tx(काष्ठा ieee80211_hw *hw,
+		      काष्ठा ieee80211_tx_control *control,
+		      काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	काष्ठा rtl_tcb_desc tcb_desc;
 
-	memset(&tcb_desc, 0, sizeof(struct rtl_tcb_desc));
+	स_रखो(&tcb_desc, 0, माप(काष्ठा rtl_tcb_desc));
 
-	if (unlikely(is_hal_stop(rtlhal) || ppsc->rfpwr_state != ERFON))
-		goto err_free;
+	अगर (unlikely(is_hal_stop(rtlhal) || ppsc->rfpwr_state != ERFON))
+		जाओ err_मुक्त;
 
-	if (!test_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status))
-		goto err_free;
+	अगर (!test_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status))
+		जाओ err_मुक्त;
 
-	if (!rtlpriv->intf_ops->waitq_insert(hw, control->sta, skb))
-		rtlpriv->intf_ops->adapter_tx(hw, control->sta, skb, &tcb_desc);
-	return;
+	अगर (!rtlpriv->पूर्णांकf_ops->रुकोq_insert(hw, control->sta, skb))
+		rtlpriv->पूर्णांकf_ops->adapter_tx(hw, control->sta, skb, &tcb_desc);
+	वापस;
 
-err_free:
-	dev_kfree_skb_any(skb);
-}
+err_मुक्त:
+	dev_kमुक्त_skb_any(skb);
+पूर्ण
 
-static int rtl_op_add_interface(struct ieee80211_hw *hw,
-		struct ieee80211_vif *vif)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	int err = 0;
+अटल पूर्णांक rtl_op_add_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+		काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	पूर्णांक err = 0;
 	u8 retry_limit = 0x30;
 
-	if (mac->vif) {
+	अगर (mac->vअगर) अणु
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
-			"vif has been set!! mac->vif = 0x%p\n", mac->vif);
-		return -EOPNOTSUPP;
-	}
+			"vif has been set!! mac->vif = 0x%p\n", mac->vअगर);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER;
+	vअगर->driver_flags |= IEEE80211_VIF_BEACON_FILTER;
 
 	rtl_ips_nic_on(hw);
 
 	mutex_lock(&rtlpriv->locks.conf_mutex);
-	switch (ieee80211_vif_type_p2p(vif)) {
-	case NL80211_IFTYPE_P2P_CLIENT:
+	चयन (ieee80211_vअगर_type_p2p(vअगर)) अणु
+	हाल NL80211_IFTYPE_P2P_CLIENT:
 		mac->p2p = P2P_ROLE_CLIENT;
 		fallthrough;
-	case NL80211_IFTYPE_STATION:
-		if (mac->beacon_enabled == 1) {
+	हाल NL80211_IFTYPE_STATION:
+		अगर (mac->beacon_enabled == 1) अणु
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 				"NL80211_IFTYPE_STATION\n");
 			mac->beacon_enabled = 0;
-			rtlpriv->cfg->ops->update_interrupt_mask(hw, 0,
+			rtlpriv->cfg->ops->update_पूर्णांकerrupt_mask(hw, 0,
 					rtlpriv->cfg->maps[RTL_IBSS_INT_MASKS]);
-		}
-		break;
-	case NL80211_IFTYPE_ADHOC:
+		पूर्ण
+		अवरोध;
+	हाल NL80211_IFTYPE_ADHOC:
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 			"NL80211_IFTYPE_ADHOC\n");
 
 		mac->link_state = MAC80211_LINKED;
 		rtlpriv->cfg->ops->set_bcn_reg(hw);
-		if (rtlpriv->rtlhal.current_bandtype == BAND_ON_2_4G)
+		अगर (rtlpriv->rtlhal.current_bandtype == BAND_ON_2_4G)
 			mac->basic_rates = 0xfff;
-		else
+		अन्यथा
 			mac->basic_rates = 0xff0;
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_BASIC_RATE,
 				(u8 *)(&mac->basic_rates));
 
 		retry_limit = 0x07;
-		break;
-	case NL80211_IFTYPE_P2P_GO:
+		अवरोध;
+	हाल NL80211_IFTYPE_P2P_GO:
 		mac->p2p = P2P_ROLE_GO;
 		fallthrough;
-	case NL80211_IFTYPE_AP:
+	हाल NL80211_IFTYPE_AP:
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 			"NL80211_IFTYPE_AP\n");
 
 		mac->link_state = MAC80211_LINKED;
 		rtlpriv->cfg->ops->set_bcn_reg(hw);
-		if (rtlpriv->rtlhal.current_bandtype == BAND_ON_2_4G)
+		अगर (rtlpriv->rtlhal.current_bandtype == BAND_ON_2_4G)
 			mac->basic_rates = 0xfff;
-		else
+		अन्यथा
 			mac->basic_rates = 0xff0;
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_BASIC_RATE,
 					      (u8 *)(&mac->basic_rates));
 
 		retry_limit = 0x07;
-		break;
-	case NL80211_IFTYPE_MESH_POINT:
+		अवरोध;
+	हाल NL80211_IFTYPE_MESH_POINT:
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 			"NL80211_IFTYPE_MESH_POINT\n");
 
 		mac->link_state = MAC80211_LINKED;
 		rtlpriv->cfg->ops->set_bcn_reg(hw);
-		if (rtlpriv->rtlhal.current_bandtype == BAND_ON_2_4G)
+		अगर (rtlpriv->rtlhal.current_bandtype == BAND_ON_2_4G)
 			mac->basic_rates = 0xfff;
-		else
+		अन्यथा
 			mac->basic_rates = 0xff0;
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_BASIC_RATE,
 				(u8 *)(&mac->basic_rates));
 
 		retry_limit = 0x07;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("operation mode %d is not supported!\n",
-		       vif->type);
+		       vअगर->type);
 		err = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (mac->p2p) {
+	अगर (mac->p2p) अणु
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
-			"p2p role %x\n", vif->type);
-		mac->basic_rates = 0xff0;/*disable cck rate for p2p*/
+			"p2p role %x\n", vअगर->type);
+		mac->basic_rates = 0xff0;/*disable cck rate क्रम p2p*/
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_BASIC_RATE,
 				(u8 *)(&mac->basic_rates));
-	}
-	mac->vif = vif;
-	mac->opmode = vif->type;
-	rtlpriv->cfg->ops->set_network_type(hw, vif->type);
-	memcpy(mac->mac_addr, vif->addr, ETH_ALEN);
+	पूर्ण
+	mac->vअगर = vअगर;
+	mac->opmode = vअगर->type;
+	rtlpriv->cfg->ops->set_network_type(hw, vअगर->type);
+	स_नकल(mac->mac_addr, vअगर->addr, ETH_ALEN);
 	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_ETHER_ADDR, mac->mac_addr);
 
-	mac->retry_long = retry_limit;
-	mac->retry_short = retry_limit;
+	mac->retry_दीर्घ = retry_limit;
+	mac->retry_लघु = retry_limit;
 	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_RETRY_LIMIT,
 			(u8 *)(&retry_limit));
 out:
 	mutex_unlock(&rtlpriv->locks.conf_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rtl_op_remove_interface(struct ieee80211_hw *hw,
-		struct ieee80211_vif *vif)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+अटल व्योम rtl_op_हटाओ_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+		काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
 
 	mutex_lock(&rtlpriv->locks.conf_mutex);
 
 	/* Free beacon resources */
-	if (vif->type == NL80211_IFTYPE_AP ||
-	    vif->type == NL80211_IFTYPE_ADHOC ||
-	    vif->type == NL80211_IFTYPE_MESH_POINT) {
-		if (mac->beacon_enabled == 1) {
+	अगर (vअगर->type == NL80211_IFTYPE_AP ||
+	    vअगर->type == NL80211_IFTYPE_ADHOC ||
+	    vअगर->type == NL80211_IFTYPE_MESH_POINT) अणु
+		अगर (mac->beacon_enabled == 1) अणु
 			mac->beacon_enabled = 0;
-			rtlpriv->cfg->ops->update_interrupt_mask(hw, 0,
+			rtlpriv->cfg->ops->update_पूर्णांकerrupt_mask(hw, 0,
 					rtlpriv->cfg->maps[RTL_IBSS_INT_MASKS]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 *Note: We assume NL80211_IFTYPE_UNSPECIFIED as
-	 *NO LINK for our hardware.
+	 *NO LINK क्रम our hardware.
 	 */
 	mac->p2p = 0;
-	mac->vif = NULL;
+	mac->vअगर = शून्य;
 	mac->link_state = MAC80211_NOLINK;
 	eth_zero_addr(mac->bssid);
-	mac->vendor = PEER_UNKNOWN;
+	mac->venकरोr = PEER_UNKNOWN;
 	mac->opmode = NL80211_IFTYPE_UNSPECIFIED;
 	rtlpriv->cfg->ops->set_network_type(hw, mac->opmode);
 
 	mutex_unlock(&rtlpriv->locks.conf_mutex);
-}
+पूर्ण
 
-static int rtl_op_change_interface(struct ieee80211_hw *hw,
-				   struct ieee80211_vif *vif,
-				   enum nl80211_iftype new_type, bool p2p)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	int ret;
+अटल पूर्णांक rtl_op_change_पूर्णांकerface(काष्ठा ieee80211_hw *hw,
+				   काष्ठा ieee80211_vअगर *vअगर,
+				   क्रमागत nl80211_अगरtype new_type, bool p2p)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	पूर्णांक ret;
 
-	rtl_op_remove_interface(hw, vif);
+	rtl_op_हटाओ_पूर्णांकerface(hw, vअगर);
 
-	vif->type = new_type;
-	vif->p2p = p2p;
-	ret = rtl_op_add_interface(hw, vif);
+	vअगर->type = new_type;
+	vअगर->p2p = p2p;
+	ret = rtl_op_add_पूर्णांकerface(hw, vअगर);
 	rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 		"p2p  %x\n", p2p);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_PM
-static u16 crc16_ccitt(u8 data, u16 crc)
-{
-	u8 shift_in, data_bit, crc_bit11, crc_bit4, crc_bit15;
+#अगर_घोषित CONFIG_PM
+अटल u16 crc16_ccitt(u8 data, u16 crc)
+अणु
+	u8 shअगरt_in, data_bit, crc_bit11, crc_bit4, crc_bit15;
 	u8 i;
 	u16 result;
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		crc_bit15 = ((crc & BIT(15)) ? 1 : 0);
 		data_bit  = (data & (BIT(0) << i) ? 1 : 0);
-		shift_in = crc_bit15 ^ data_bit;
+		shअगरt_in = crc_bit15 ^ data_bit;
 
 		result = crc << 1;
-		if (shift_in == 0)
+		अगर (shअगरt_in == 0)
 			result &= (~BIT(0));
-		else
+		अन्यथा
 			result |= BIT(0);
 
-		crc_bit11 = ((crc & BIT(11)) ? 1 : 0) ^ shift_in;
-		if (crc_bit11 == 0)
+		crc_bit11 = ((crc & BIT(11)) ? 1 : 0) ^ shअगरt_in;
+		अगर (crc_bit11 == 0)
 			result &= (~BIT(12));
-		else
+		अन्यथा
 			result |= BIT(12);
 
-		crc_bit4 = ((crc & BIT(4)) ? 1 : 0) ^ shift_in;
-		if (crc_bit4 == 0)
+		crc_bit4 = ((crc & BIT(4)) ? 1 : 0) ^ shअगरt_in;
+		अगर (crc_bit4 == 0)
 			result &= (~BIT(5));
-		else
+		अन्यथा
 			result |= BIT(5);
 
 		crc = result;
-	}
+	पूर्ण
 
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-static u16 _calculate_wol_pattern_crc(u8 *pattern, u16 len)
-{
+अटल u16 _calculate_wol_pattern_crc(u8 *pattern, u16 len)
+अणु
 	u16 crc = 0xffff;
 	u32 i;
 
-	for (i = 0; i < len; i++)
+	क्रम (i = 0; i < len; i++)
 		crc = crc16_ccitt(pattern[i], crc);
 
 	crc = ~crc;
 
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-static void _rtl_add_wowlan_patterns(struct ieee80211_hw *hw,
-				     struct cfg80211_wowlan *wow)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = &rtlpriv->mac80211;
-	struct cfg80211_pkt_pattern *patterns = wow->patterns;
-	struct rtl_wow_pattern rtl_pattern;
-	const u8 *pattern_os, *mask_os;
-	u8 mask[MAX_WOL_BIT_MASK_SIZE] = {0};
-	u8 content[MAX_WOL_PATTERN_SIZE] = {0};
-	u8 broadcast_addr[6] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-	u8 multicast_addr1[2] = {0x33, 0x33};
-	u8 multicast_addr2[3] = {0x01, 0x00, 0x5e};
+अटल व्योम _rtl_add_wowlan_patterns(काष्ठा ieee80211_hw *hw,
+				     काष्ठा cfg80211_wowlan *wow)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = &rtlpriv->mac80211;
+	काष्ठा cfg80211_pkt_pattern *patterns = wow->patterns;
+	काष्ठा rtl_wow_pattern rtl_pattern;
+	स्थिर u8 *pattern_os, *mask_os;
+	u8 mask[MAX_WOL_BIT_MASK_SIZE] = अणु0पूर्ण;
+	u8 content[MAX_WOL_PATTERN_SIZE] = अणु0पूर्ण;
+	u8 broadcast_addr[6] = अणु0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण;
+	u8 multicast_addr1[2] = अणु0x33, 0x33पूर्ण;
+	u8 multicast_addr2[3] = अणु0x01, 0x00, 0x5eपूर्ण;
 	u8 i, mask_len;
 	u16 j, len;
 
-	for (i = 0; i < wow->n_patterns; i++) {
-		memset(&rtl_pattern, 0, sizeof(struct rtl_wow_pattern));
-		memset(mask, 0, MAX_WOL_BIT_MASK_SIZE);
-		if (patterns[i].pattern_len < 0 ||
-		    patterns[i].pattern_len > MAX_WOL_PATTERN_SIZE) {
+	क्रम (i = 0; i < wow->n_patterns; i++) अणु
+		स_रखो(&rtl_pattern, 0, माप(काष्ठा rtl_wow_pattern));
+		स_रखो(mask, 0, MAX_WOL_BIT_MASK_SIZE);
+		अगर (patterns[i].pattern_len < 0 ||
+		    patterns[i].pattern_len > MAX_WOL_PATTERN_SIZE) अणु
 			rtl_dbg(rtlpriv, COMP_POWER, DBG_WARNING,
 				"Pattern[%d] is too long\n", i);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		pattern_os = patterns[i].pattern;
 		mask_len = DIV_ROUND_UP(patterns[i].pattern_len, 8);
 		mask_os = patterns[i].mask;
@@ -450,17 +451,17 @@ static void _rtl_add_wowlan_patterns(struct ieee80211_hw *hw,
 		RT_PRINT_DATA(rtlpriv, COMP_POWER, DBG_TRACE,
 			      "mask content\n", mask_os, mask_len);
 		/* 1. unicast? multicast? or broadcast? */
-		if (memcmp(pattern_os, broadcast_addr, 6) == 0)
+		अगर (स_भेद(pattern_os, broadcast_addr, 6) == 0)
 			rtl_pattern.type = BROADCAST_PATTERN;
-		else if (memcmp(pattern_os, multicast_addr1, 2) == 0 ||
-			 memcmp(pattern_os, multicast_addr2, 3) == 0)
+		अन्यथा अगर (स_भेद(pattern_os, multicast_addr1, 2) == 0 ||
+			 स_भेद(pattern_os, multicast_addr2, 3) == 0)
 			rtl_pattern.type = MULTICAST_PATTERN;
-		else if  (memcmp(pattern_os, mac->mac_addr, 6) == 0)
+		अन्यथा अगर  (स_भेद(pattern_os, mac->mac_addr, 6) == 0)
 			rtl_pattern.type = UNICAST_PATTERN;
-		else
+		अन्यथा
 			rtl_pattern.type = UNKNOWN_TYPE;
 
-		/* 2. translate mask_from_os to mask_for_hw */
+		/* 2. translate mask_from_os to mask_क्रम_hw */
 
 /******************************************************************************
  * pattern from OS uses 'ethenet frame', like this:
@@ -477,41 +478,41 @@ static void _rtl_add_wowlan_patterns(struct ieee80211_hw *hw,
 	| 802.11 MAC Header |       LLC     | IP Header | TCP Packet | FCS |
 			    | Others | Tpye |
 
- * Therefore, we need translate mask_from_OS to mask_to_hw.
- * We should left-shift mask by 6 bits, then set the new bit[0~5] = 0,
+ * Thereक्रमe, we need translate mask_from_OS to mask_to_hw.
+ * We should left-shअगरt mask by 6 bits, then set the new bit[0~5] = 0,
  * because new mask[0~5] means 'SA', but our HW packet begins from LLC,
- * bit[0~5] corresponds to first 6 Bytes in LLC, they just don't match.
+ * bit[0~5] corresponds to first 6 Bytes in LLC, they just करोn't match.
  ******************************************************************************/
 
-		/* Shift 6 bits */
-		for (j = 0; j < mask_len - 1; j++) {
+		/* Shअगरt 6 bits */
+		क्रम (j = 0; j < mask_len - 1; j++) अणु
 			mask[j] = mask_os[j] >> 6;
 			mask[j] |= (mask_os[j + 1] & 0x3F) << 2;
-		}
+		पूर्ण
 		mask[j] = (mask_os[j] >> 6) & 0x3F;
 		/* Set bit 0-5 to zero */
 		mask[0] &= 0xC0;
 
 		RT_PRINT_DATA(rtlpriv, COMP_POWER, DBG_TRACE,
 			      "mask to hw\n", mask, mask_len);
-		for (j = 0; j < (MAX_WOL_BIT_MASK_SIZE + 1) / 4; j++) {
+		क्रम (j = 0; j < (MAX_WOL_BIT_MASK_SIZE + 1) / 4; j++) अणु
 			rtl_pattern.mask[j] = mask[j * 4];
 			rtl_pattern.mask[j] |= (mask[j * 4 + 1] << 8);
 			rtl_pattern.mask[j] |= (mask[j * 4 + 2] << 16);
 			rtl_pattern.mask[j] |= (mask[j * 4 + 3] << 24);
-		}
+		पूर्ण
 
 		/* To get the wake up pattern from the mask.
-		 * We do not count first 12 bits which means
+		 * We करो not count first 12 bits which means
 		 * DA[6] and SA[6] in the pattern to match HW design.
 		 */
 		len = 0;
-		for (j = 12; j < patterns[i].pattern_len; j++) {
-			if ((mask_os[j / 8] >> (j % 8)) & 0x01) {
+		क्रम (j = 12; j < patterns[i].pattern_len; j++) अणु
+			अगर ((mask_os[j / 8] >> (j % 8)) & 0x01) अणु
 				content[len] = pattern_os[j];
 				len++;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		RT_PRINT_DATA(rtlpriv, COMP_POWER, DBG_TRACE,
 			      "pattern to hw\n", content, len);
@@ -520,27 +521,27 @@ static void _rtl_add_wowlan_patterns(struct ieee80211_hw *hw,
 		rtl_dbg(rtlpriv, COMP_POWER, DBG_TRACE,
 			"CRC_Remainder = 0x%x\n", rtl_pattern.crc);
 
-		/* 4. write crc & mask_for_hw to hw */
+		/* 4. ग_लिखो crc & mask_क्रम_hw to hw */
 		rtlpriv->cfg->ops->add_wowlan_pattern(hw, &rtl_pattern, i);
-	}
-	rtl_write_byte(rtlpriv, 0x698, wow->n_patterns);
-}
+	पूर्ण
+	rtl_ग_लिखो_byte(rtlpriv, 0x698, wow->n_patterns);
+पूर्ण
 
-static int rtl_op_suspend(struct ieee80211_hw *hw,
-			  struct cfg80211_wowlan *wow)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtlpriv);
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+अटल पूर्णांक rtl_op_suspend(काष्ठा ieee80211_hw *hw,
+			  काष्ठा cfg80211_wowlan *wow)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtlpriv);
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
 
 	rtl_dbg(rtlpriv, COMP_POWER, DBG_DMESG, "\n");
-	if (WARN_ON(!wow))
-		return -EINVAL;
+	अगर (WARN_ON(!wow))
+		वापस -EINVAL;
 
 	/* to resolve s4 can not wake up*/
-	rtlhal->last_suspend_sec = ktime_get_real_seconds();
+	rtlhal->last_suspend_sec = kसमय_get_real_seconds();
 
-	if ((ppsc->wo_wlan_mode & WAKE_ON_PATTERN_MATCH) && wow->n_patterns)
+	अगर ((ppsc->wo_wlan_mode & WAKE_ON_PATTERN_MATCH) && wow->n_patterns)
 		_rtl_add_wowlan_patterns(hw, wow);
 
 	rtlhal->driver_is_goingto_unload = true;
@@ -549,15 +550,15 @@ static int rtl_op_suspend(struct ieee80211_hw *hw,
 	rtl_lps_leave(hw, true);
 	rtl_op_stop(hw);
 	device_set_wakeup_enable(wiphy_dev(hw->wiphy), true);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtl_op_resume(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtlpriv);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	time64_t now;
+अटल पूर्णांक rtl_op_resume(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtlpriv);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	समय64_t now;
 
 	rtl_dbg(rtlpriv, COMP_POWER, DBG_DMESG, "\n");
 	rtlhal->driver_is_goingto_unload = false;
@@ -565,122 +566,122 @@ static int rtl_op_resume(struct ieee80211_hw *hw)
 	rtlhal->wake_from_pnp_sleep = true;
 
 	/* to resolve s4 can not wake up*/
-	now = ktime_get_real_seconds();
-	if (now - rtlhal->last_suspend_sec < 5)
-		return -1;
+	now = kसमय_get_real_seconds();
+	अगर (now - rtlhal->last_suspend_sec < 5)
+		वापस -1;
 
 	rtl_op_start(hw);
 	device_set_wakeup_enable(wiphy_dev(hw->wiphy), false);
-	ieee80211_resume_disconnect(mac->vif);
+	ieee80211_resume_disconnect(mac->vअगर);
 	rtlhal->wake_from_pnp_sleep = false;
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int rtl_op_config(struct ieee80211_hw *hw, u32 changed)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_phy *rtlphy = &(rtlpriv->phy);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	struct ieee80211_conf *conf = &hw->conf;
+अटल पूर्णांक rtl_op_config(काष्ठा ieee80211_hw *hw, u32 changed)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_phy *rtlphy = &(rtlpriv->phy);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	काष्ठा ieee80211_conf *conf = &hw->conf;
 
-	if (mac->skip_scan)
-		return 1;
+	अगर (mac->skip_scan)
+		वापस 1;
 
 	mutex_lock(&rtlpriv->locks.conf_mutex);
-	if (changed & IEEE80211_CONF_CHANGE_LISTEN_INTERVAL) {	/* BIT(2)*/
+	अगर (changed & IEEE80211_CONF_CHANGE_LISTEN_INTERVAL) अणु	/* BIT(2)*/
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 			"IEEE80211_CONF_CHANGE_LISTEN_INTERVAL\n");
-	}
+	पूर्ण
 
 	/*For IPS */
-	if (changed & IEEE80211_CONF_CHANGE_IDLE) {
-		if (hw->conf.flags & IEEE80211_CONF_IDLE)
+	अगर (changed & IEEE80211_CONF_CHANGE_IDLE) अणु
+		अगर (hw->conf.flags & IEEE80211_CONF_IDLE)
 			rtl_ips_nic_off(hw);
-		else
+		अन्यथा
 			rtl_ips_nic_on(hw);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 *although rfoff may not cause by ips, but we will
-		 *check the reason in set_rf_power_state function
+		 *check the reason in set_rf_घातer_state function
 		 */
-		if (unlikely(ppsc->rfpwr_state == ERFOFF))
+		अगर (unlikely(ppsc->rfpwr_state == ERFOFF))
 			rtl_ips_nic_on(hw);
-	}
+	पूर्ण
 
 	/*For LPS */
-	if ((changed & IEEE80211_CONF_CHANGE_PS) &&
-	    rtlpriv->psc.swctrl_lps && !rtlpriv->psc.fwctrl_lps) {
+	अगर ((changed & IEEE80211_CONF_CHANGE_PS) &&
+	    rtlpriv->psc.swctrl_lps && !rtlpriv->psc.fwctrl_lps) अणु
 		cancel_delayed_work(&rtlpriv->works.ps_work);
 		cancel_delayed_work(&rtlpriv->works.ps_rfon_wq);
-		if (conf->flags & IEEE80211_CONF_PS) {
+		अगर (conf->flags & IEEE80211_CONF_PS) अणु
 			rtlpriv->psc.sw_ps_enabled = true;
 			/* sleep here is must, or we may recv the beacon and
-			 * cause mac80211 into wrong ps state, this will cause
-			 * power save nullfunc send fail, and further cause
+			 * cause mac80211 पूर्णांकo wrong ps state, this will cause
+			 * घातer save nullfunc send fail, and further cause
 			 * pkt loss, So sleep must quickly but not immediatly
 			 * because that will cause nullfunc send by mac80211
 			 * fail, and cause pkt loss, we have tested that 5mA
 			 * is worked very well */
-			if (!rtlpriv->psc.multi_buffered)
+			अगर (!rtlpriv->psc.multi_buffered)
 				queue_delayed_work(rtlpriv->works.rtl_wq,
 						   &rtlpriv->works.ps_work,
 						   MSECS(5));
-		} else {
+		पूर्ण अन्यथा अणु
 			rtl_swlps_rf_awake(hw);
 			rtlpriv->psc.sw_ps_enabled = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (changed & IEEE80211_CONF_CHANGE_RETRY_LIMITS) {
+	अगर (changed & IEEE80211_CONF_CHANGE_RETRY_LIMITS) अणु
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 			"IEEE80211_CONF_CHANGE_RETRY_LIMITS %x\n",
-			hw->conf.long_frame_max_tx_count);
+			hw->conf.दीर्घ_frame_max_tx_count);
 		/* brought up everything changes (changed == ~0) indicates first
-		 * open, so use our default value instead of that of wiphy.
+		 * खोलो, so use our शेष value instead of that of wiphy.
 		 */
-		if (changed != ~0) {
-			mac->retry_long = hw->conf.long_frame_max_tx_count;
-			mac->retry_short = hw->conf.long_frame_max_tx_count;
+		अगर (changed != ~0) अणु
+			mac->retry_दीर्घ = hw->conf.दीर्घ_frame_max_tx_count;
+			mac->retry_लघु = hw->conf.दीर्घ_frame_max_tx_count;
 			rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_RETRY_LIMIT,
-				(u8 *)(&hw->conf.long_frame_max_tx_count));
-		}
-	}
+				(u8 *)(&hw->conf.दीर्घ_frame_max_tx_count));
+		पूर्ण
+	पूर्ण
 
-	if (changed & IEEE80211_CONF_CHANGE_CHANNEL &&
-	    !rtlpriv->proximity.proxim_on) {
-		struct ieee80211_channel *channel = hw->conf.chandef.chan;
-		enum nl80211_chan_width width = hw->conf.chandef.width;
-		enum nl80211_channel_type channel_type = NL80211_CHAN_NO_HT;
+	अगर (changed & IEEE80211_CONF_CHANGE_CHANNEL &&
+	    !rtlpriv->proximity.proxim_on) अणु
+		काष्ठा ieee80211_channel *channel = hw->conf.chandef.chan;
+		क्रमागत nl80211_chan_width width = hw->conf.chandef.width;
+		क्रमागत nl80211_channel_type channel_type = NL80211_CHAN_NO_HT;
 		u8 wide_chan = (u8) channel->hw_value;
 
-		/* channel_type is for 20&40M */
-		if (width < NL80211_CHAN_WIDTH_80)
+		/* channel_type is क्रम 20&40M */
+		अगर (width < NL80211_CHAN_WIDTH_80)
 			channel_type =
 				cfg80211_get_chandef_type(&hw->conf.chandef);
-		if (mac->act_scanning)
+		अगर (mac->act_scanning)
 			mac->n_channels++;
 
-		if (rtlpriv->dm.supp_phymode_switch &&
+		अगर (rtlpriv->dm.supp_phymode_चयन &&
 			mac->link_state < MAC80211_LINKED &&
-			!mac->act_scanning) {
-			if (rtlpriv->cfg->ops->chk_switch_dmdp)
-				rtlpriv->cfg->ops->chk_switch_dmdp(hw);
-		}
+			!mac->act_scanning) अणु
+			अगर (rtlpriv->cfg->ops->chk_चयन_dmdp)
+				rtlpriv->cfg->ops->chk_चयन_dmdp(hw);
+		पूर्ण
 
 		/*
 		 *because we should back channel to
 		 *current_network.chan in in scanning,
-		 *So if set_chan == current_network.chan
+		 *So अगर set_chan == current_network.chan
 		 *we should set it.
 		 *because mac80211 tell us wrong bw40
-		 *info for cisco1253 bw20, so we modify
+		 *info क्रम cisco1253 bw20, so we modअगरy
 		 *it here based on UPPER & LOWER
 		 */
 
-		if (width >= NL80211_CHAN_WIDTH_80) {
-			if (width == NL80211_CHAN_WIDTH_80) {
+		अगर (width >= NL80211_CHAN_WIDTH_80) अणु
+			अगर (width == NL80211_CHAN_WIDTH_80) अणु
 				u32 center = hw->conf.chandef.center_freq1;
 				u32 primary =
 				(u32)hw->conf.chandef.chan->center_freq;
@@ -689,40 +690,40 @@ static int rtl_op_config(struct ieee80211_hw *hw, u32 changed)
 					HT_CHANNEL_WIDTH_80;
 				mac->bw_80 = true;
 				mac->bw_40 = true;
-				if (center > primary) {
+				अगर (center > primary) अणु
 					mac->cur_80_prime_sc =
 					PRIME_CHNL_OFFSET_LOWER;
-					if (center - primary == 10) {
+					अगर (center - primary == 10) अणु
 						mac->cur_40_prime_sc =
 						PRIME_CHNL_OFFSET_UPPER;
 
 						wide_chan += 2;
-					} else if (center - primary == 30) {
+					पूर्ण अन्यथा अगर (center - primary == 30) अणु
 						mac->cur_40_prime_sc =
 						PRIME_CHNL_OFFSET_LOWER;
 
 						wide_chan += 6;
-					}
-				} else {
+					पूर्ण
+				पूर्ण अन्यथा अणु
 					mac->cur_80_prime_sc =
 					PRIME_CHNL_OFFSET_UPPER;
-					if (primary - center == 10) {
+					अगर (primary - center == 10) अणु
 						mac->cur_40_prime_sc =
 						PRIME_CHNL_OFFSET_LOWER;
 
 						wide_chan -= 2;
-					} else if (primary - center == 30) {
+					पूर्ण अन्यथा अगर (primary - center == 30) अणु
 						mac->cur_40_prime_sc =
 						PRIME_CHNL_OFFSET_UPPER;
 
 						wide_chan -= 6;
-					}
-				}
-			}
-		} else {
-			switch (channel_type) {
-			case NL80211_CHAN_HT20:
-			case NL80211_CHAN_NO_HT:
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			चयन (channel_type) अणु
+			हाल NL80211_CHAN_HT20:
+			हाल NL80211_CHAN_NO_HT:
 					/* SC */
 					mac->cur_40_prime_sc =
 						PRIME_CHNL_OFFSET_DONT_CARE;
@@ -730,8 +731,8 @@ static int rtl_op_config(struct ieee80211_hw *hw, u32 changed)
 						HT_CHANNEL_WIDTH_20;
 					mac->bw_40 = false;
 					mac->bw_80 = false;
-					break;
-			case NL80211_CHAN_HT40MINUS:
+					अवरोध;
+			हाल NL80211_CHAN_HT40MINUS:
 					/* SC */
 					mac->cur_40_prime_sc =
 						PRIME_CHNL_OFFSET_UPPER;
@@ -743,8 +744,8 @@ static int rtl_op_config(struct ieee80211_hw *hw, u32 changed)
 					/*wide channel */
 					wide_chan -= 2;
 
-					break;
-			case NL80211_CHAN_HT40PLUS:
+					अवरोध;
+			हाल NL80211_CHAN_HT40PLUS:
 					/* SC */
 					mac->cur_40_prime_sc =
 						PRIME_CHNL_OFFSET_LOWER;
@@ -756,351 +757,351 @@ static int rtl_op_config(struct ieee80211_hw *hw, u32 changed)
 					/*wide channel */
 					wide_chan += 2;
 
-					break;
-			default:
+					अवरोध;
+			शेष:
 					mac->bw_40 = false;
 					mac->bw_80 = false;
 					pr_err("switch case %#x not processed\n",
 					       channel_type);
-					break;
-			}
-		}
+					अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (wide_chan <= 0)
+		अगर (wide_chan <= 0)
 			wide_chan = 1;
 
-		/* In scanning, when before we offchannel we may send a ps=1
+		/* In scanning, when beक्रमe we offchannel we may send a ps=1
 		 * null to AP, and then we may send a ps = 0 null to AP quickly,
 		 * but first null may have caused AP to put lots of packet to
-		 * hw tx buffer. These packets must be tx'd before we go off
-		 * channel so we must delay more time to let AP flush these
-		 * packets before going offchannel, or dis-association or
+		 * hw tx buffer. These packets must be tx'd beक्रमe we go off
+		 * channel so we must delay more समय to let AP flush these
+		 * packets beक्रमe going offchannel, or dis-association or
 		 * delete BA will be caused by AP
 		 */
-		if (rtlpriv->mac80211.offchan_delay) {
+		अगर (rtlpriv->mac80211.offchan_delay) अणु
 			rtlpriv->mac80211.offchan_delay = false;
 			mdelay(50);
-		}
+		पूर्ण
 
 		rtlphy->current_channel = wide_chan;
 
-		rtlpriv->cfg->ops->switch_channel(hw);
+		rtlpriv->cfg->ops->चयन_channel(hw);
 		rtlpriv->cfg->ops->set_channel_access(hw);
 		rtlpriv->cfg->ops->set_bw_mode(hw, channel_type);
-	}
+	पूर्ण
 
 	mutex_unlock(&rtlpriv->locks.conf_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtl_op_configure_filter(struct ieee80211_hw *hw,
-				    unsigned int changed_flags,
-				    unsigned int *new_flags, u64 multicast)
-{
+अटल व्योम rtl_op_configure_filter(काष्ठा ieee80211_hw *hw,
+				    अचिन्हित पूर्णांक changed_flags,
+				    अचिन्हित पूर्णांक *new_flags, u64 multicast)
+अणु
 	bool update_rcr = false;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
 
 	*new_flags &= RTL_SUPPORTED_FILTERS;
-	if (0 == changed_flags)
-		return;
+	अगर (0 == changed_flags)
+		वापस;
 
 	/*TODO: we disable broadcast now, so enable here */
-	if (changed_flags & FIF_ALLMULTI) {
-		if (*new_flags & FIF_ALLMULTI) {
+	अगर (changed_flags & FIF_ALLMULTI) अणु
+		अगर (*new_flags & FIF_ALLMULTI) अणु
 			mac->rx_conf |= rtlpriv->cfg->maps[MAC_RCR_AM] |
 			    rtlpriv->cfg->maps[MAC_RCR_AB];
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 				"Enable receive multicast frame\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			mac->rx_conf &= ~(rtlpriv->cfg->maps[MAC_RCR_AM] |
 					  rtlpriv->cfg->maps[MAC_RCR_AB]);
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 				"Disable receive multicast frame\n");
-		}
+		पूर्ण
 		update_rcr = true;
-	}
+	पूर्ण
 
-	if (changed_flags & FIF_FCSFAIL) {
-		if (*new_flags & FIF_FCSFAIL) {
+	अगर (changed_flags & FIF_FCSFAIL) अणु
+		अगर (*new_flags & FIF_FCSFAIL) अणु
 			mac->rx_conf |= rtlpriv->cfg->maps[MAC_RCR_ACRC32];
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 				"Enable receive FCS error frame\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			mac->rx_conf &= ~rtlpriv->cfg->maps[MAC_RCR_ACRC32];
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 				"Disable receive FCS error frame\n");
-		}
-		if (!update_rcr)
+		पूर्ण
+		अगर (!update_rcr)
 			update_rcr = true;
-	}
+	पूर्ण
 
-	/* if ssid not set to hw don't check bssid
-	 * here just used for linked scanning, & linked
+	/* अगर ssid not set to hw करोn't check bssid
+	 * here just used क्रम linked scanning, & linked
 	 * and nolink check bssid is set in set network_type
 	 */
-	if (changed_flags & FIF_BCN_PRBRESP_PROMISC &&
-	    mac->link_state >= MAC80211_LINKED) {
-		if (mac->opmode != NL80211_IFTYPE_AP &&
-		    mac->opmode != NL80211_IFTYPE_MESH_POINT) {
-			if (*new_flags & FIF_BCN_PRBRESP_PROMISC)
+	अगर (changed_flags & FIF_BCN_PRBRESP_PROMISC &&
+	    mac->link_state >= MAC80211_LINKED) अणु
+		अगर (mac->opmode != NL80211_IFTYPE_AP &&
+		    mac->opmode != NL80211_IFTYPE_MESH_POINT) अणु
+			अगर (*new_flags & FIF_BCN_PRBRESP_PROMISC)
 				rtlpriv->cfg->ops->set_chk_bssid(hw, false);
-			else
+			अन्यथा
 				rtlpriv->cfg->ops->set_chk_bssid(hw, true);
-			if (update_rcr)
+			अगर (update_rcr)
 				update_rcr = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (changed_flags & FIF_CONTROL) {
-		if (*new_flags & FIF_CONTROL) {
+	अगर (changed_flags & FIF_CONTROL) अणु
+		अगर (*new_flags & FIF_CONTROL) अणु
 			mac->rx_conf |= rtlpriv->cfg->maps[MAC_RCR_ACF];
 
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 				"Enable receive control frame.\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			mac->rx_conf &= ~rtlpriv->cfg->maps[MAC_RCR_ACF];
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 				"Disable receive control frame.\n");
-		}
-		if (!update_rcr)
+		पूर्ण
+		अगर (!update_rcr)
 			update_rcr = true;
-	}
+	पूर्ण
 
-	if (changed_flags & FIF_OTHER_BSS) {
-		if (*new_flags & FIF_OTHER_BSS) {
+	अगर (changed_flags & FIF_OTHER_BSS) अणु
+		अगर (*new_flags & FIF_OTHER_BSS) अणु
 			mac->rx_conf |= rtlpriv->cfg->maps[MAC_RCR_AAP];
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 				"Enable receive other BSS's frame.\n");
-		} else {
+		पूर्ण अन्यथा अणु
 			mac->rx_conf &= ~rtlpriv->cfg->maps[MAC_RCR_AAP];
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 				"Disable receive other BSS's frame.\n");
-		}
-		if (!update_rcr)
+		पूर्ण
+		अगर (!update_rcr)
 			update_rcr = true;
-	}
+	पूर्ण
 
-	if (update_rcr)
+	अगर (update_rcr)
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_RCR,
 					      (u8 *)(&mac->rx_conf));
-}
+पूर्ण
 
-static int rtl_op_sta_add(struct ieee80211_hw *hw,
-			 struct ieee80211_vif *vif,
-			 struct ieee80211_sta *sta)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_sta_info *sta_entry;
+अटल पूर्णांक rtl_op_sta_add(काष्ठा ieee80211_hw *hw,
+			 काष्ठा ieee80211_vअगर *vअगर,
+			 काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_sta_info *sta_entry;
 
-	if (sta) {
-		sta_entry = (struct rtl_sta_info *)sta->drv_priv;
+	अगर (sta) अणु
+		sta_entry = (काष्ठा rtl_sta_info *)sta->drv_priv;
 		spin_lock_bh(&rtlpriv->locks.entry_list_lock);
 		list_add_tail(&sta_entry->list, &rtlpriv->entry_list);
 		spin_unlock_bh(&rtlpriv->locks.entry_list_lock);
-		if (rtlhal->current_bandtype == BAND_ON_2_4G) {
+		अगर (rtlhal->current_bandtype == BAND_ON_2_4G) अणु
 			sta_entry->wireless_mode = WIRELESS_MODE_G;
-			if (sta->supp_rates[0] <= 0xf)
+			अगर (sta->supp_rates[0] <= 0xf)
 				sta_entry->wireless_mode = WIRELESS_MODE_B;
-			if (sta->ht_cap.ht_supported)
+			अगर (sta->ht_cap.ht_supported)
 				sta_entry->wireless_mode = WIRELESS_MODE_N_24G;
 
-			if (vif->type == NL80211_IFTYPE_ADHOC)
+			अगर (vअगर->type == NL80211_IFTYPE_ADHOC)
 				sta_entry->wireless_mode = WIRELESS_MODE_G;
-		} else if (rtlhal->current_bandtype == BAND_ON_5G) {
+		पूर्ण अन्यथा अगर (rtlhal->current_bandtype == BAND_ON_5G) अणु
 			sta_entry->wireless_mode = WIRELESS_MODE_A;
-			if (sta->ht_cap.ht_supported)
+			अगर (sta->ht_cap.ht_supported)
 				sta_entry->wireless_mode = WIRELESS_MODE_N_5G;
-			if (sta->vht_cap.vht_supported)
+			अगर (sta->vht_cap.vht_supported)
 				sta_entry->wireless_mode = WIRELESS_MODE_AC_5G;
 
-			if (vif->type == NL80211_IFTYPE_ADHOC)
+			अगर (vअगर->type == NL80211_IFTYPE_ADHOC)
 				sta_entry->wireless_mode = WIRELESS_MODE_A;
-		}
-		/*disable cck rate for p2p*/
-		if (mac->p2p)
+		पूर्ण
+		/*disable cck rate क्रम p2p*/
+		अगर (mac->p2p)
 			sta->supp_rates[0] &= 0xfffffff0;
 
-		memcpy(sta_entry->mac_addr, sta->addr, ETH_ALEN);
+		स_नकल(sta_entry->mac_addr, sta->addr, ETH_ALEN);
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_DMESG,
 			"Add sta addr is %pM\n", sta->addr);
 		rtlpriv->cfg->ops->update_rate_tbl(hw, sta, 0, true);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rtl_op_sta_remove(struct ieee80211_hw *hw,
-				struct ieee80211_vif *vif,
-				struct ieee80211_sta *sta)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_sta_info *sta_entry;
+अटल पूर्णांक rtl_op_sta_हटाओ(काष्ठा ieee80211_hw *hw,
+				काष्ठा ieee80211_vअगर *vअगर,
+				काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_sta_info *sta_entry;
 
-	if (sta) {
+	अगर (sta) अणु
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_DMESG,
 			"Remove sta addr is %pM\n", sta->addr);
-		sta_entry = (struct rtl_sta_info *)sta->drv_priv;
+		sta_entry = (काष्ठा rtl_sta_info *)sta->drv_priv;
 		sta_entry->wireless_mode = 0;
 		sta_entry->ratr_index = 0;
 		spin_lock_bh(&rtlpriv->locks.entry_list_lock);
 		list_del(&sta_entry->list);
 		spin_unlock_bh(&rtlpriv->locks.entry_list_lock);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int _rtl_get_hal_qnum(u16 queue)
-{
-	int qnum;
+अटल पूर्णांक _rtl_get_hal_qnum(u16 queue)
+अणु
+	पूर्णांक qnum;
 
-	switch (queue) {
-	case 0:
+	चयन (queue) अणु
+	हाल 0:
 		qnum = AC3_VO;
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		qnum = AC2_VI;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		qnum = AC0_BE;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		qnum = AC1_BK;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		qnum = AC0_BE;
-		break;
-	}
-	return qnum;
-}
+		अवरोध;
+	पूर्ण
+	वापस qnum;
+पूर्ण
 
 /*
- *for mac80211 VO = 0, VI = 1, BE = 2, BK = 3
- *for rtl819x  BE = 0, BK = 1, VI = 2, VO = 3
+ *क्रम mac80211 VO = 0, VI = 1, BE = 2, BK = 3
+ *क्रम rtl819x  BE = 0, BK = 1, VI = 2, VO = 3
  */
-static int rtl_op_conf_tx(struct ieee80211_hw *hw,
-			  struct ieee80211_vif *vif, u16 queue,
-			  const struct ieee80211_tx_queue_params *param)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	int aci;
+अटल पूर्णांक rtl_op_conf_tx(काष्ठा ieee80211_hw *hw,
+			  काष्ठा ieee80211_vअगर *vअगर, u16 queue,
+			  स्थिर काष्ठा ieee80211_tx_queue_params *param)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	पूर्णांक aci;
 
-	if (queue >= AC_MAX) {
+	अगर (queue >= AC_MAX) अणु
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 			"queue number %d is incorrect!\n", queue);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	aci = _rtl_get_hal_qnum(queue);
-	mac->ac[aci].aifs = param->aifs;
+	mac->ac[aci].aअगरs = param->aअगरs;
 	mac->ac[aci].cw_min = cpu_to_le16(param->cw_min);
 	mac->ac[aci].cw_max = cpu_to_le16(param->cw_max);
 	mac->ac[aci].tx_op = cpu_to_le16(param->txop);
-	memcpy(&mac->edca_param[aci], param, sizeof(*param));
+	स_नकल(&mac->edca_param[aci], param, माप(*param));
 	rtlpriv->cfg->ops->set_qos(hw, aci);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void send_beacon_frame(struct ieee80211_hw *hw,
-			      struct ieee80211_vif *vif)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct sk_buff *skb = ieee80211_beacon_get(hw, vif);
-	struct rtl_tcb_desc tcb_desc;
+अटल व्योम send_beacon_frame(काष्ठा ieee80211_hw *hw,
+			      काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा sk_buff *skb = ieee80211_beacon_get(hw, vअगर);
+	काष्ठा rtl_tcb_desc tcb_desc;
 
-	if (skb) {
-		memset(&tcb_desc, 0, sizeof(struct rtl_tcb_desc));
-		rtlpriv->intf_ops->adapter_tx(hw, NULL, skb, &tcb_desc);
-	}
-}
+	अगर (skb) अणु
+		स_रखो(&tcb_desc, 0, माप(काष्ठा rtl_tcb_desc));
+		rtlpriv->पूर्णांकf_ops->adapter_tx(hw, शून्य, skb, &tcb_desc);
+	पूर्ण
+पूर्ण
 
-void rtl_update_beacon_work_callback(struct work_struct *work)
-{
-	struct rtl_works *rtlworks =
-	    container_of(work, struct rtl_works, update_beacon_work);
-	struct ieee80211_hw *hw = rtlworks->hw;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct ieee80211_vif *vif = rtlpriv->mac80211.vif;
+व्योम rtl_update_beacon_work_callback(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtl_works *rtlworks =
+	    container_of(work, काष्ठा rtl_works, update_beacon_work);
+	काष्ठा ieee80211_hw *hw = rtlworks->hw;
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा ieee80211_vअगर *vअगर = rtlpriv->mac80211.vअगर;
 
-	if (!vif) {
+	अगर (!vअगर) अणु
 		WARN_ONCE(true, "no vif to update beacon\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&rtlpriv->locks.conf_mutex);
-	send_beacon_frame(hw, vif);
+	send_beacon_frame(hw, vअगर);
 	mutex_unlock(&rtlpriv->locks.conf_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rtl_update_beacon_work_callback);
 
-static void rtl_op_bss_info_changed(struct ieee80211_hw *hw,
-				    struct ieee80211_vif *vif,
-				    struct ieee80211_bss_conf *bss_conf,
+अटल व्योम rtl_op_bss_info_changed(काष्ठा ieee80211_hw *hw,
+				    काष्ठा ieee80211_vअगर *vअगर,
+				    काष्ठा ieee80211_bss_conf *bss_conf,
 				    u32 changed)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtlpriv);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtlpriv);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
 
 	mutex_lock(&rtlpriv->locks.conf_mutex);
-	if (vif->type == NL80211_IFTYPE_ADHOC ||
-	    vif->type == NL80211_IFTYPE_AP ||
-	    vif->type == NL80211_IFTYPE_MESH_POINT) {
-		if (changed & BSS_CHANGED_BEACON ||
+	अगर (vअगर->type == NL80211_IFTYPE_ADHOC ||
+	    vअगर->type == NL80211_IFTYPE_AP ||
+	    vअगर->type == NL80211_IFTYPE_MESH_POINT) अणु
+		अगर (changed & BSS_CHANGED_BEACON ||
 		    (changed & BSS_CHANGED_BEACON_ENABLED &&
-		     bss_conf->enable_beacon)) {
-			if (mac->beacon_enabled == 0) {
+		     bss_conf->enable_beacon)) अणु
+			अगर (mac->beacon_enabled == 0) अणु
 				rtl_dbg(rtlpriv, COMP_MAC80211, DBG_DMESG,
 					"BSS_CHANGED_BEACON_ENABLED\n");
 
-				/*start hw beacon interrupt. */
+				/*start hw beacon पूर्णांकerrupt. */
 				/*rtlpriv->cfg->ops->set_bcn_reg(hw); */
 				mac->beacon_enabled = 1;
-				rtlpriv->cfg->ops->update_interrupt_mask(hw,
+				rtlpriv->cfg->ops->update_पूर्णांकerrupt_mask(hw,
 						rtlpriv->cfg->maps
 						[RTL_IBSS_INT_MASKS], 0);
 
-				if (rtlpriv->cfg->ops->linked_set_reg)
+				अगर (rtlpriv->cfg->ops->linked_set_reg)
 					rtlpriv->cfg->ops->linked_set_reg(hw);
-				send_beacon_frame(hw, vif);
-			}
-		}
-		if ((changed & BSS_CHANGED_BEACON_ENABLED &&
-		    !bss_conf->enable_beacon)) {
-			if (mac->beacon_enabled == 1) {
+				send_beacon_frame(hw, vअगर);
+			पूर्ण
+		पूर्ण
+		अगर ((changed & BSS_CHANGED_BEACON_ENABLED &&
+		    !bss_conf->enable_beacon)) अणु
+			अगर (mac->beacon_enabled == 1) अणु
 				rtl_dbg(rtlpriv, COMP_MAC80211, DBG_DMESG,
 					"ADHOC DISABLE BEACON\n");
 
 				mac->beacon_enabled = 0;
-				rtlpriv->cfg->ops->update_interrupt_mask(hw, 0,
+				rtlpriv->cfg->ops->update_पूर्णांकerrupt_mask(hw, 0,
 						rtlpriv->cfg->maps
 						[RTL_IBSS_INT_MASKS]);
-			}
-		}
-		if (changed & BSS_CHANGED_BEACON_INT) {
+			पूर्ण
+		पूर्ण
+		अगर (changed & BSS_CHANGED_BEACON_INT) अणु
 			rtl_dbg(rtlpriv, COMP_BEACON, DBG_TRACE,
 				"BSS_CHANGED_BEACON_INT\n");
-			mac->beacon_interval = bss_conf->beacon_int;
-			rtlpriv->cfg->ops->set_bcn_intv(hw);
-		}
-	}
+			mac->beacon_पूर्णांकerval = bss_conf->beacon_पूर्णांक;
+			rtlpriv->cfg->ops->set_bcn_पूर्णांकv(hw);
+		पूर्ण
+	पूर्ण
 
-	/*TODO: reference to enum ieee80211_bss_change */
-	if (changed & BSS_CHANGED_ASSOC) {
+	/*TODO: reference to क्रमागत ieee80211_bss_change */
+	अगर (changed & BSS_CHANGED_ASSOC) अणु
 		u8 mstatus;
 
-		if (bss_conf->assoc) {
-			struct ieee80211_sta *sta = NULL;
+		अगर (bss_conf->assoc) अणु
+			काष्ठा ieee80211_sta *sta = शून्य;
 			u8 keep_alive = 10;
 
 			mstatus = RT_MEDIA_CONNECT;
 			/* we should reset all sec info & cam
-			 * before set cam after linked, we should not
+			 * beक्रमe set cam after linked, we should not
 			 * reset in disassoc, that will cause tkip->wep
 			 * fail because some flag will be wrong */
 			/* reset sec info */
@@ -1112,98 +1113,98 @@ static void rtl_op_bss_info_changed(struct ieee80211_hw *hw,
 			mac->link_state = MAC80211_LINKED;
 			mac->cnt_after_linked = 0;
 			mac->assoc_id = bss_conf->aid;
-			memcpy(mac->bssid, bss_conf->bssid, ETH_ALEN);
+			स_नकल(mac->bssid, bss_conf->bssid, ETH_ALEN);
 
-			if (rtlpriv->cfg->ops->linked_set_reg)
+			अगर (rtlpriv->cfg->ops->linked_set_reg)
 				rtlpriv->cfg->ops->linked_set_reg(hw);
 
-			rcu_read_lock();
-			sta = ieee80211_find_sta(vif, (u8 *)bss_conf->bssid);
-			if (!sta) {
-				rcu_read_unlock();
-				goto out;
-			}
+			rcu_पढ़ो_lock();
+			sta = ieee80211_find_sta(vअगर, (u8 *)bss_conf->bssid);
+			अगर (!sta) अणु
+				rcu_पढ़ो_unlock();
+				जाओ out;
+			पूर्ण
 			rtl_dbg(rtlpriv, COMP_EASY_CONCURRENT, DBG_LOUD,
 				"send PS STATIC frame\n");
-			if (rtlpriv->dm.supp_phymode_switch) {
-				if (sta->ht_cap.ht_supported)
+			अगर (rtlpriv->dm.supp_phymode_चयन) अणु
+				अगर (sta->ht_cap.ht_supported)
 					rtl_send_smps_action(hw, sta,
 							IEEE80211_SMPS_STATIC);
-			}
+			पूर्ण
 
-			if (rtlhal->current_bandtype == BAND_ON_5G) {
+			अगर (rtlhal->current_bandtype == BAND_ON_5G) अणु
 				mac->mode = WIRELESS_MODE_A;
-			} else {
-				if (sta->supp_rates[0] <= 0xf)
+			पूर्ण अन्यथा अणु
+				अगर (sta->supp_rates[0] <= 0xf)
 					mac->mode = WIRELESS_MODE_B;
-				else
+				अन्यथा
 					mac->mode = WIRELESS_MODE_G;
-			}
+			पूर्ण
 
-			if (sta->ht_cap.ht_supported) {
-				if (rtlhal->current_bandtype == BAND_ON_2_4G)
+			अगर (sta->ht_cap.ht_supported) अणु
+				अगर (rtlhal->current_bandtype == BAND_ON_2_4G)
 					mac->mode = WIRELESS_MODE_N_24G;
-				else
+				अन्यथा
 					mac->mode = WIRELESS_MODE_N_5G;
-			}
+			पूर्ण
 
-			if (sta->vht_cap.vht_supported) {
-				if (rtlhal->current_bandtype == BAND_ON_5G)
+			अगर (sta->vht_cap.vht_supported) अणु
+				अगर (rtlhal->current_bandtype == BAND_ON_5G)
 					mac->mode = WIRELESS_MODE_AC_5G;
-				else
+				अन्यथा
 					mac->mode = WIRELESS_MODE_AC_24G;
-			}
+			पूर्ण
 
-			if (vif->type == NL80211_IFTYPE_STATION)
+			अगर (vअगर->type == NL80211_IFTYPE_STATION)
 				rtlpriv->cfg->ops->update_rate_tbl(hw, sta, 0,
 								   true);
-			rcu_read_unlock();
+			rcu_पढ़ो_unlock();
 
-			/* to avoid AP Disassociation caused by inactivity */
+			/* to aव्योम AP Disassociation caused by inactivity */
 			rtlpriv->cfg->ops->set_hw_reg(hw,
 						      HW_VAR_KEEP_ALIVE,
 						      (u8 *)(&keep_alive));
 
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_DMESG,
 				"BSS_CHANGED_ASSOC\n");
-		} else {
-			struct cfg80211_bss *bss = NULL;
+		पूर्ण अन्यथा अणु
+			काष्ठा cfg80211_bss *bss = शून्य;
 
 			mstatus = RT_MEDIA_DISCONNECT;
 
-			if (mac->link_state == MAC80211_LINKED)
+			अगर (mac->link_state == MAC80211_LINKED)
 				rtl_lps_leave(hw, true);
-			if (ppsc->p2p_ps_info.p2p_ps_mode > P2P_PS_NONE)
+			अगर (ppsc->p2p_ps_info.p2p_ps_mode > P2P_PS_NONE)
 				rtl_p2p_ps_cmd(hw, P2P_PS_DISABLE);
 			mac->link_state = MAC80211_NOLINK;
 
-			bss = cfg80211_get_bss(hw->wiphy, NULL,
-					       (u8 *)mac->bssid, NULL, 0,
+			bss = cfg80211_get_bss(hw->wiphy, शून्य,
+					       (u8 *)mac->bssid, शून्य, 0,
 					       IEEE80211_BSS_TYPE_ESS,
 					       IEEE80211_PRIVACY_OFF);
 
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_DMESG,
 				"bssid = %pMF\n", mac->bssid);
 
-			if (bss) {
+			अगर (bss) अणु
 				cfg80211_unlink_bss(hw->wiphy, bss);
 				cfg80211_put_bss(hw->wiphy, bss);
 				rtl_dbg(rtlpriv, COMP_MAC80211, DBG_DMESG,
 					"cfg80211_unlink !!\n");
-			}
+			पूर्ण
 
 			eth_zero_addr(mac->bssid);
-			mac->vendor = PEER_UNKNOWN;
+			mac->venकरोr = PEER_UNKNOWN;
 			mac->mode = 0;
 
-			if (rtlpriv->dm.supp_phymode_switch) {
-				if (rtlpriv->cfg->ops->chk_switch_dmdp)
-					rtlpriv->cfg->ops->chk_switch_dmdp(hw);
-			}
+			अगर (rtlpriv->dm.supp_phymode_चयन) अणु
+				अगर (rtlpriv->cfg->ops->chk_चयन_dmdp)
+					rtlpriv->cfg->ops->chk_चयन_dmdp(hw);
+			पूर्ण
 			rtl_dbg(rtlpriv, COMP_MAC80211, DBG_DMESG,
 				"BSS_CHANGED_UN_ASSOC\n");
-		}
-		rtlpriv->cfg->ops->set_network_type(hw, vif->type);
+		पूर्ण
+		rtlpriv->cfg->ops->set_network_type(hw, vअगर->type);
 		/* For FW LPS:
 		 * To tell firmware we have connected or disconnected
 		 */
@@ -1213,59 +1214,59 @@ static void rtl_op_bss_info_changed(struct ieee80211_hw *hw,
 		ppsc->report_linked = (mstatus == RT_MEDIA_CONNECT) ?
 				      true : false;
 
-		if (rtlpriv->cfg->ops->get_btc_status())
-			rtlpriv->btcoexist.btc_ops->btc_mediastatus_notify(
+		अगर (rtlpriv->cfg->ops->get_btc_status())
+			rtlpriv->btcoexist.btc_ops->btc_mediastatus_notअगरy(
 							rtlpriv, mstatus);
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ERP_CTS_PROT) {
+	अगर (changed & BSS_CHANGED_ERP_CTS_PROT) अणु
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_TRACE,
 			"BSS_CHANGED_ERP_CTS_PROT\n");
 		mac->use_cts_protect = bss_conf->use_cts_prot;
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ERP_PREAMBLE) {
+	अगर (changed & BSS_CHANGED_ERP_PREAMBLE) अणु
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD,
 			"BSS_CHANGED_ERP_PREAMBLE use short preamble:%x\n",
-			  bss_conf->use_short_preamble);
+			  bss_conf->use_लघु_preamble);
 
-		mac->short_preamble = bss_conf->use_short_preamble;
+		mac->लघु_preamble = bss_conf->use_लघु_preamble;
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_ACK_PREAMBLE,
-					      (u8 *)(&mac->short_preamble));
-	}
+					      (u8 *)(&mac->लघु_preamble));
+	पूर्ण
 
-	if (changed & BSS_CHANGED_ERP_SLOT) {
+	अगर (changed & BSS_CHANGED_ERP_SLOT) अणु
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_TRACE,
 			"BSS_CHANGED_ERP_SLOT\n");
 
-		if (bss_conf->use_short_slot)
-			mac->slot_time = RTL_SLOT_TIME_9;
-		else
-			mac->slot_time = RTL_SLOT_TIME_20;
+		अगर (bss_conf->use_लघु_slot)
+			mac->slot_समय = RTL_SLOT_TIME_9;
+		अन्यथा
+			mac->slot_समय = RTL_SLOT_TIME_20;
 
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_SLOT_TIME,
-					      (u8 *)(&mac->slot_time));
-	}
+					      (u8 *)(&mac->slot_समय));
+	पूर्ण
 
-	if (changed & BSS_CHANGED_HT) {
-		struct ieee80211_sta *sta = NULL;
+	अगर (changed & BSS_CHANGED_HT) अणु
+		काष्ठा ieee80211_sta *sta = शून्य;
 
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_TRACE,
 			"BSS_CHANGED_HT\n");
 
-		rcu_read_lock();
-		sta = ieee80211_find_sta(vif, (u8 *)bss_conf->bssid);
-		if (sta) {
-			if (sta->ht_cap.ampdu_density >
+		rcu_पढ़ो_lock();
+		sta = ieee80211_find_sta(vअगर, (u8 *)bss_conf->bssid);
+		अगर (sta) अणु
+			अगर (sta->ht_cap.ampdu_density >
 			    mac->current_ampdu_density)
 				mac->current_ampdu_density =
 				    sta->ht_cap.ampdu_density;
-			if (sta->ht_cap.ampdu_factor <
+			अगर (sta->ht_cap.ampdu_factor <
 			    mac->current_ampdu_factor)
 				mac->current_ampdu_factor =
 				    sta->ht_cap.ampdu_factor;
-		}
-		rcu_read_unlock();
+		पूर्ण
+		rcu_पढ़ो_unlock();
 
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_SHORTGI_DENSITY,
 					      (u8 *)(&mac->max_mss_density));
@@ -1273,11 +1274,11 @@ static void rtl_op_bss_info_changed(struct ieee80211_hw *hw,
 					      &mac->current_ampdu_factor);
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_AMPDU_MIN_SPACE,
 					      &mac->current_ampdu_density);
-	}
+	पूर्ण
 
-	if (changed & BSS_CHANGED_BSSID) {
+	अगर (changed & BSS_CHANGED_BSSID) अणु
 		u32 basic_rates;
-		struct ieee80211_sta *sta = NULL;
+		काष्ठा ieee80211_sta *sta = शून्य;
 
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_BSSID,
 					      (u8 *)bss_conf->bssid);
@@ -1285,208 +1286,208 @@ static void rtl_op_bss_info_changed(struct ieee80211_hw *hw,
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_DMESG,
 			"bssid: %pM\n", bss_conf->bssid);
 
-		mac->vendor = PEER_UNKNOWN;
-		memcpy(mac->bssid, bss_conf->bssid, ETH_ALEN);
+		mac->venकरोr = PEER_UNKNOWN;
+		स_नकल(mac->bssid, bss_conf->bssid, ETH_ALEN);
 
-		rcu_read_lock();
-		sta = ieee80211_find_sta(vif, (u8 *)bss_conf->bssid);
-		if (!sta) {
-			rcu_read_unlock();
-			goto out;
-		}
+		rcu_पढ़ो_lock();
+		sta = ieee80211_find_sta(vअगर, (u8 *)bss_conf->bssid);
+		अगर (!sta) अणु
+			rcu_पढ़ो_unlock();
+			जाओ out;
+		पूर्ण
 
-		if (rtlhal->current_bandtype == BAND_ON_5G) {
+		अगर (rtlhal->current_bandtype == BAND_ON_5G) अणु
 			mac->mode = WIRELESS_MODE_A;
-		} else {
-			if (sta->supp_rates[0] <= 0xf)
+		पूर्ण अन्यथा अणु
+			अगर (sta->supp_rates[0] <= 0xf)
 				mac->mode = WIRELESS_MODE_B;
-			else
+			अन्यथा
 				mac->mode = WIRELESS_MODE_G;
-		}
+		पूर्ण
 
-		if (sta->ht_cap.ht_supported) {
-			if (rtlhal->current_bandtype == BAND_ON_2_4G)
+		अगर (sta->ht_cap.ht_supported) अणु
+			अगर (rtlhal->current_bandtype == BAND_ON_2_4G)
 				mac->mode = WIRELESS_MODE_N_24G;
-			else
+			अन्यथा
 				mac->mode = WIRELESS_MODE_N_5G;
-		}
+		पूर्ण
 
-		if (sta->vht_cap.vht_supported) {
-			if (rtlhal->current_bandtype == BAND_ON_5G)
+		अगर (sta->vht_cap.vht_supported) अणु
+			अगर (rtlhal->current_bandtype == BAND_ON_5G)
 				mac->mode = WIRELESS_MODE_AC_5G;
-			else
+			अन्यथा
 				mac->mode = WIRELESS_MODE_AC_24G;
-		}
+		पूर्ण
 
 		/* just station need it, because ibss & ap mode will
-		 * set in sta_add, and will be NULL here */
-		if (vif->type == NL80211_IFTYPE_STATION) {
-			struct rtl_sta_info *sta_entry;
+		 * set in sta_add, and will be शून्य here */
+		अगर (vअगर->type == NL80211_IFTYPE_STATION) अणु
+			काष्ठा rtl_sta_info *sta_entry;
 
-			sta_entry = (struct rtl_sta_info *)sta->drv_priv;
+			sta_entry = (काष्ठा rtl_sta_info *)sta->drv_priv;
 			sta_entry->wireless_mode = mac->mode;
-		}
+		पूर्ण
 
-		if (sta->ht_cap.ht_supported) {
+		अगर (sta->ht_cap.ht_supported) अणु
 			mac->ht_enable = true;
 
 			/*
-			 * for cisco 1252 bw20 it's wrong
-			 * if (ht_cap & IEEE80211_HT_CAP_SUP_WIDTH_20_40) {
+			 * क्रम cisco 1252 bw20 it's wrong
+			 * अगर (ht_cap & IEEE80211_HT_CAP_SUP_WIDTH_20_40) अणु
 			 *	mac->bw_40 = true;
-			 * }
+			 * पूर्ण
 			 * */
-		}
+		पूर्ण
 
-		if (sta->vht_cap.vht_supported)
+		अगर (sta->vht_cap.vht_supported)
 			mac->vht_enable = true;
 
-		if (changed & BSS_CHANGED_BASIC_RATES) {
-			/* for 5G must << RATE_6M_INDEX = 4,
+		अगर (changed & BSS_CHANGED_BASIC_RATES) अणु
+			/* क्रम 5G must << RATE_6M_INDEX = 4,
 			 * because 5G have no cck rate*/
-			if (rtlhal->current_bandtype == BAND_ON_5G)
+			अगर (rtlhal->current_bandtype == BAND_ON_5G)
 				basic_rates = sta->supp_rates[1] << 4;
-			else
+			अन्यथा
 				basic_rates = sta->supp_rates[0];
 
 			mac->basic_rates = basic_rates;
 			rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_BASIC_RATE,
 					(u8 *)(&basic_rates));
-		}
-		rcu_read_unlock();
-	}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 out:
 	mutex_unlock(&rtlpriv->locks.conf_mutex);
-}
+पूर्ण
 
-static u64 rtl_op_get_tsf(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल u64 rtl_op_get_tsf(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u64 tsf;
 
 	rtlpriv->cfg->ops->get_hw_reg(hw, HW_VAR_CORRECT_TSF, (u8 *)(&tsf));
-	return tsf;
-}
+	वापस tsf;
+पूर्ण
 
-static void rtl_op_set_tsf(struct ieee80211_hw *hw,
-			   struct ieee80211_vif *vif, u64 tsf)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+अटल व्योम rtl_op_set_tsf(काष्ठा ieee80211_hw *hw,
+			   काष्ठा ieee80211_vअगर *vअगर, u64 tsf)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
 	u8 bibss = (mac->opmode == NL80211_IFTYPE_ADHOC) ? 1 : 0;
 
 	mac->tsf = tsf;
 	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_CORRECT_TSF, (u8 *)(&bibss));
-}
+पूर्ण
 
-static void rtl_op_reset_tsf(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	u8 tmp = 0;
+अटल व्योम rtl_op_reset_tsf(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	u8 पंचांगp = 0;
 
-	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_DUAL_TSF_RST, (u8 *)(&tmp));
-}
+	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_DUAL_TSF_RST, (u8 *)(&पंचांगp));
+पूर्ण
 
-static void rtl_op_sta_notify(struct ieee80211_hw *hw,
-			      struct ieee80211_vif *vif,
-			      enum sta_notify_cmd cmd,
-			      struct ieee80211_sta *sta)
-{
-	switch (cmd) {
-	case STA_NOTIFY_SLEEP:
-		break;
-	case STA_NOTIFY_AWAKE:
-		break;
-	default:
-		break;
-	}
-}
+अटल व्योम rtl_op_sta_notअगरy(काष्ठा ieee80211_hw *hw,
+			      काष्ठा ieee80211_vअगर *vअगर,
+			      क्रमागत sta_notअगरy_cmd cmd,
+			      काष्ठा ieee80211_sta *sta)
+अणु
+	चयन (cmd) अणु
+	हाल STA_NOTIFY_SLEEP:
+		अवरोध;
+	हाल STA_NOTIFY_AWAKE:
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int rtl_op_ampdu_action(struct ieee80211_hw *hw,
-			       struct ieee80211_vif *vif,
-			       struct ieee80211_ampdu_params *params)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct ieee80211_sta *sta = params->sta;
-	enum ieee80211_ampdu_mlme_action action = params->action;
+अटल पूर्णांक rtl_op_ampdu_action(काष्ठा ieee80211_hw *hw,
+			       काष्ठा ieee80211_vअगर *vअगर,
+			       काष्ठा ieee80211_ampdu_params *params)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा ieee80211_sta *sta = params->sta;
+	क्रमागत ieee80211_ampdu_mlme_action action = params->action;
 	u16 tid = params->tid;
 	u16 *ssn = &params->ssn;
 
-	switch (action) {
-	case IEEE80211_AMPDU_TX_START:
+	चयन (action) अणु
+	हाल IEEE80211_AMPDU_TX_START:
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_TRACE,
 			"IEEE80211_AMPDU_TX_START: TID:%d\n", tid);
-		return rtl_tx_agg_start(hw, vif, sta, tid, ssn);
-	case IEEE80211_AMPDU_TX_STOP_CONT:
-	case IEEE80211_AMPDU_TX_STOP_FLUSH:
-	case IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
+		वापस rtl_tx_agg_start(hw, vअगर, sta, tid, ssn);
+	हाल IEEE80211_AMPDU_TX_STOP_CONT:
+	हाल IEEE80211_AMPDU_TX_STOP_FLUSH:
+	हाल IEEE80211_AMPDU_TX_STOP_FLUSH_CONT:
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_TRACE,
 			"IEEE80211_AMPDU_TX_STOP: TID:%d\n", tid);
-		return rtl_tx_agg_stop(hw, vif, sta, tid);
-	case IEEE80211_AMPDU_TX_OPERATIONAL:
+		वापस rtl_tx_agg_stop(hw, vअगर, sta, tid);
+	हाल IEEE80211_AMPDU_TX_OPERATIONAL:
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_TRACE,
 			"IEEE80211_AMPDU_TX_OPERATIONAL:TID:%d\n", tid);
 		rtl_tx_agg_oper(hw, sta, tid);
-		break;
-	case IEEE80211_AMPDU_RX_START:
+		अवरोध;
+	हाल IEEE80211_AMPDU_RX_START:
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_TRACE,
 			"IEEE80211_AMPDU_RX_START:TID:%d\n", tid);
-		return rtl_rx_agg_start(hw, sta, tid);
-	case IEEE80211_AMPDU_RX_STOP:
+		वापस rtl_rx_agg_start(hw, sta, tid);
+	हाल IEEE80211_AMPDU_RX_STOP:
 		rtl_dbg(rtlpriv, COMP_MAC80211, DBG_TRACE,
 			"IEEE80211_AMPDU_RX_STOP:TID:%d\n", tid);
-		return rtl_rx_agg_stop(hw, sta, tid);
-	default:
+		वापस rtl_rx_agg_stop(hw, sta, tid);
+	शेष:
 		pr_err("IEEE80211_AMPDU_ERR!!!!:\n");
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void rtl_op_sw_scan_start(struct ieee80211_hw *hw,
-				 struct ieee80211_vif *vif,
-				 const u8 *mac_addr)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+अटल व्योम rtl_op_sw_scan_start(काष्ठा ieee80211_hw *hw,
+				 काष्ठा ieee80211_vअगर *vअगर,
+				 स्थिर u8 *mac_addr)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
 
 	rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD, "\n");
 	mac->act_scanning = true;
-	if (rtlpriv->link_info.higher_busytraffic) {
+	अगर (rtlpriv->link_info.higher_busytraffic) अणु
 		mac->skip_scan = true;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (rtlpriv->cfg->ops->get_btc_status())
-		rtlpriv->btcoexist.btc_ops->btc_scan_notify(rtlpriv, 1);
-	else if (rtlpriv->btcoexist.btc_ops)
-		rtlpriv->btcoexist.btc_ops->btc_scan_notify_wifi_only(rtlpriv,
+	अगर (rtlpriv->cfg->ops->get_btc_status())
+		rtlpriv->btcoexist.btc_ops->btc_scan_notअगरy(rtlpriv, 1);
+	अन्यथा अगर (rtlpriv->btcoexist.btc_ops)
+		rtlpriv->btcoexist.btc_ops->btc_scan_notअगरy_wअगरi_only(rtlpriv,
 								      1);
 
-	if (rtlpriv->dm.supp_phymode_switch) {
-		if (rtlpriv->cfg->ops->chk_switch_dmdp)
-			rtlpriv->cfg->ops->chk_switch_dmdp(hw);
-	}
+	अगर (rtlpriv->dm.supp_phymode_चयन) अणु
+		अगर (rtlpriv->cfg->ops->chk_चयन_dmdp)
+			rtlpriv->cfg->ops->chk_चयन_dmdp(hw);
+	पूर्ण
 
-	if (mac->link_state == MAC80211_LINKED) {
+	अगर (mac->link_state == MAC80211_LINKED) अणु
 		rtl_lps_leave(hw, true);
 		mac->link_state = MAC80211_LINKED_SCANNING;
-	} else {
+	पूर्ण अन्यथा अणु
 		rtl_ips_nic_on(hw);
-	}
+	पूर्ण
 
 	/* Dul mac */
-	rtlpriv->rtlhal.load_imrandiqk_setting_for2g = false;
+	rtlpriv->rtlhal.load_imअक्रमiqk_setting_क्रम2g = false;
 
 	rtlpriv->cfg->ops->led_control(hw, LED_CTL_SITE_SURVEY);
 	rtlpriv->cfg->ops->scan_operation_backup(hw, SCAN_OPT_BACKUP_BAND0);
-}
+पूर्ण
 
-static void rtl_op_sw_scan_complete(struct ieee80211_hw *hw,
-				    struct ieee80211_vif *vif)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
+अटल व्योम rtl_op_sw_scan_complete(काष्ठा ieee80211_hw *hw,
+				    काष्ठा ieee80211_vअगर *vअगर)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
 
 	rtl_dbg(rtlpriv, COMP_MAC80211, DBG_LOUD, "\n");
 	mac->act_scanning = false;
@@ -1494,59 +1495,59 @@ static void rtl_op_sw_scan_complete(struct ieee80211_hw *hw,
 
 	rtlpriv->btcoexist.btc_info.ap_num = rtlpriv->scan_list.num;
 
-	if (rtlpriv->link_info.higher_busytraffic)
-		return;
+	अगर (rtlpriv->link_info.higher_busytraffic)
+		वापस;
 
 	/* p2p will use 1/6/11 to scan */
-	if (mac->n_channels == 3)
+	अगर (mac->n_channels == 3)
 		mac->p2p_in_use = true;
-	else
+	अन्यथा
 		mac->p2p_in_use = false;
 	mac->n_channels = 0;
 	/* Dul mac */
-	rtlpriv->rtlhal.load_imrandiqk_setting_for2g = false;
+	rtlpriv->rtlhal.load_imअक्रमiqk_setting_क्रम2g = false;
 
-	if (mac->link_state == MAC80211_LINKED_SCANNING) {
+	अगर (mac->link_state == MAC80211_LINKED_SCANNING) अणु
 		mac->link_state = MAC80211_LINKED;
-		if (mac->opmode == NL80211_IFTYPE_STATION) {
+		अगर (mac->opmode == NL80211_IFTYPE_STATION) अणु
 			/* fix fwlps issue */
 			rtlpriv->cfg->ops->set_network_type(hw, mac->opmode);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rtlpriv->cfg->ops->scan_operation_backup(hw, SCAN_OPT_RESTORE);
-	if (rtlpriv->cfg->ops->get_btc_status())
-		rtlpriv->btcoexist.btc_ops->btc_scan_notify(rtlpriv, 0);
-	else if (rtlpriv->btcoexist.btc_ops)
-		rtlpriv->btcoexist.btc_ops->btc_scan_notify_wifi_only(rtlpriv,
+	अगर (rtlpriv->cfg->ops->get_btc_status())
+		rtlpriv->btcoexist.btc_ops->btc_scan_notअगरy(rtlpriv, 0);
+	अन्यथा अगर (rtlpriv->btcoexist.btc_ops)
+		rtlpriv->btcoexist.btc_ops->btc_scan_notअगरy_wअगरi_only(rtlpriv,
 								      0);
-}
+पूर्ण
 
-static int rtl_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
-			  struct ieee80211_vif *vif, struct ieee80211_sta *sta,
-			  struct ieee80211_key_conf *key)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल पूर्णांक rtl_op_set_key(काष्ठा ieee80211_hw *hw, क्रमागत set_key_cmd cmd,
+			  काष्ठा ieee80211_vअगर *vअगर, काष्ठा ieee80211_sta *sta,
+			  काष्ठा ieee80211_key_conf *key)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u8 key_type = NO_ENCRYPTION;
 	u8 key_idx;
 	bool group_key = false;
 	bool wep_only = false;
-	int err = 0;
+	पूर्णांक err = 0;
 	u8 mac_addr[ETH_ALEN];
-	u8 bcast_addr[ETH_ALEN] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+	u8 bcast_addr[ETH_ALEN] = अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff पूर्ण;
 
 	rtlpriv->btcoexist.btc_info.in_4way = false;
 
-	if (rtlpriv->cfg->mod_params->sw_crypto || rtlpriv->sec.use_sw_sec) {
+	अगर (rtlpriv->cfg->mod_params->sw_crypto || rtlpriv->sec.use_sw_sec) अणु
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 			"not open hw encryption\n");
-		return -ENOSPC;	/*User disabled HW-crypto */
-	}
-	/* To support IBSS, use sw-crypto for GTK */
-	if ((vif->type == NL80211_IFTYPE_ADHOC ||
-	     vif->type == NL80211_IFTYPE_MESH_POINT) &&
+		वापस -ENOSPC;	/*User disabled HW-crypto */
+	पूर्ण
+	/* To support IBSS, use sw-crypto क्रम GTK */
+	अगर ((vअगर->type == NL80211_IFTYPE_ADHOC ||
+	     vअगर->type == NL80211_IFTYPE_MESH_POINT) &&
 	    !(key->flags & IEEE80211_KEY_FLAG_PAIRWISE))
-		return -ENOSPC;
+		वापस -ENOSPC;
 	rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 		"%s hardware based encryption for keyidx: %d, mac: %pM\n",
 		cmd == SET_KEY ? "Using" : "Disabling", key->keyidx,
@@ -1556,25 +1557,25 @@ static int rtl_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	mutex_lock(&rtlpriv->locks.conf_mutex);
 	/* <1> get encryption alg */
 
-	switch (key->cipher) {
-	case WLAN_CIPHER_SUITE_WEP40:
+	चयन (key->cipher) अणु
+	हाल WLAN_CIPHER_SUITE_WEP40:
 		key_type = WEP40_ENCRYPTION;
 		rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG, "alg:WEP40\n");
-		break;
-	case WLAN_CIPHER_SUITE_WEP104:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_WEP104:
 		rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG, "alg:WEP104\n");
 		key_type = WEP104_ENCRYPTION;
-		break;
-	case WLAN_CIPHER_SUITE_TKIP:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_TKIP:
 		key_type = TKIP_ENCRYPTION;
 		rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG, "alg:TKIP\n");
-		break;
-	case WLAN_CIPHER_SUITE_CCMP:
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_CCMP:
 		key_type = AESCCMP_ENCRYPTION;
 		rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG, "alg:CCMP\n");
-		break;
-	case WLAN_CIPHER_SUITE_AES_CMAC:
-		/* HW don't support CMAC encryption,
+		अवरोध;
+	हाल WLAN_CIPHER_SUITE_AES_CMAC:
+		/* HW करोn't support CMAC encryption,
 		 * use software CMAC encryption
 		 */
 		key_type = AESCMAC_ENCRYPTION;
@@ -1582,45 +1583,45 @@ static int rtl_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 			"HW don't support CMAC encryption, use software CMAC encryption\n");
 		err = -EOPNOTSUPP;
-		goto out_unlock;
-	default:
+		जाओ out_unlock;
+	शेष:
 		pr_err("alg_err:%x!!!!:\n", key->cipher);
-		goto out_unlock;
-	}
-	if (key_type == WEP40_ENCRYPTION ||
+		जाओ out_unlock;
+	पूर्ण
+	अगर (key_type == WEP40_ENCRYPTION ||
 	   key_type == WEP104_ENCRYPTION ||
-	   vif->type == NL80211_IFTYPE_ADHOC)
-		rtlpriv->sec.use_defaultkey = true;
+	   vअगर->type == NL80211_IFTYPE_ADHOC)
+		rtlpriv->sec.use_शेषkey = true;
 
 	/* <2> get key_idx */
 	key_idx = (u8) (key->keyidx);
-	if (key_idx > 3)
-		goto out_unlock;
-	/* <3> if pairwise key enable_hw_sec */
+	अगर (key_idx > 3)
+		जाओ out_unlock;
+	/* <3> अगर pairwise key enable_hw_sec */
 	group_key = !(key->flags & IEEE80211_KEY_FLAG_PAIRWISE);
 
 	/* wep always be group key, but there are two conditions:
-	 * 1) wep only: is just for wep enc, in this condition
+	 * 1) wep only: is just क्रम wep enc, in this condition
 	 * rtlpriv->sec.pairwise_enc_algorithm == NO_ENCRYPTION
 	 * will be true & enable_hw_sec will be set when wep
 	 * ke setting.
 	 * 2) wep(group) + AES(pairwise): some AP like cisco
 	 * may use it, in this condition enable_hw_sec will not
 	 * be set when wep key setting */
-	/* we must reset sec_info after lingked before set key,
+	/* we must reset sec_info after lingked beक्रमe set key,
 	 * or some flag will be wrong*/
-	if (vif->type == NL80211_IFTYPE_AP ||
-		vif->type == NL80211_IFTYPE_MESH_POINT) {
-		if (!group_key || key_type == WEP40_ENCRYPTION ||
-			key_type == WEP104_ENCRYPTION) {
-			if (group_key)
+	अगर (vअगर->type == NL80211_IFTYPE_AP ||
+		vअगर->type == NL80211_IFTYPE_MESH_POINT) अणु
+		अगर (!group_key || key_type == WEP40_ENCRYPTION ||
+			key_type == WEP104_ENCRYPTION) अणु
+			अगर (group_key)
 				wep_only = true;
 			rtlpriv->cfg->ops->enable_hw_sec(hw);
-		}
-	} else {
-		if (!group_key || vif->type == NL80211_IFTYPE_ADHOC ||
-		    rtlpriv->sec.pairwise_enc_algorithm == NO_ENCRYPTION) {
-			if (rtlpriv->sec.pairwise_enc_algorithm ==
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (!group_key || vअगर->type == NL80211_IFTYPE_ADHOC ||
+		    rtlpriv->sec.pairwise_enc_algorithm == NO_ENCRYPTION) अणु
+			अगर (rtlpriv->sec.pairwise_enc_algorithm ==
 			    NO_ENCRYPTION &&
 			   (key_type == WEP40_ENCRYPTION ||
 			    key_type == WEP104_ENCRYPTION))
@@ -1630,165 +1631,165 @@ static int rtl_op_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 				"set enable_hw_sec, key_type:%x(OPEN:0 WEP40:1 TKIP:2 AES:4 WEP104:5)\n",
 				key_type);
 			rtlpriv->cfg->ops->enable_hw_sec(hw);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* <4> set key based on cmd */
-	switch (cmd) {
-	case SET_KEY:
-		if (wep_only) {
+	चयन (cmd) अणु
+	हाल SET_KEY:
+		अगर (wep_only) अणु
 			rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 				"set WEP(group/pairwise) key\n");
-			/* Pairwise key with an assigned MAC address. */
+			/* Pairwise key with an asचिन्हित MAC address. */
 			rtlpriv->sec.pairwise_enc_algorithm = key_type;
 			rtlpriv->sec.group_enc_algorithm = key_type;
 			/*set local buf about wep key. */
-			memcpy(rtlpriv->sec.key_buf[key_idx],
+			स_नकल(rtlpriv->sec.key_buf[key_idx],
 			       key->key, key->keylen);
 			rtlpriv->sec.key_len[key_idx] = key->keylen;
 			eth_zero_addr(mac_addr);
-		} else if (group_key) {	/* group key */
+		पूर्ण अन्यथा अगर (group_key) अणु	/* group key */
 			rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 				"set group key\n");
 			/* group key */
 			rtlpriv->sec.group_enc_algorithm = key_type;
 			/*set local buf about group key. */
-			memcpy(rtlpriv->sec.key_buf[key_idx],
+			स_नकल(rtlpriv->sec.key_buf[key_idx],
 			       key->key, key->keylen);
 			rtlpriv->sec.key_len[key_idx] = key->keylen;
-			memcpy(mac_addr, bcast_addr, ETH_ALEN);
-		} else {	/* pairwise key */
+			स_नकल(mac_addr, bcast_addr, ETH_ALEN);
+		पूर्ण अन्यथा अणु	/* pairwise key */
 			rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 				"set pairwise key\n");
-			if (!sta) {
+			अगर (!sta) अणु
 				WARN_ONCE(true,
 					  "rtlwifi: pairwise key without mac_addr\n");
 
 				err = -EOPNOTSUPP;
-				goto out_unlock;
-			}
-			/* Pairwise key with an assigned MAC address. */
+				जाओ out_unlock;
+			पूर्ण
+			/* Pairwise key with an asचिन्हित MAC address. */
 			rtlpriv->sec.pairwise_enc_algorithm = key_type;
 			/*set local buf about pairwise key. */
-			memcpy(rtlpriv->sec.key_buf[PAIRWISE_KEYIDX],
+			स_नकल(rtlpriv->sec.key_buf[PAIRWISE_KEYIDX],
 			       key->key, key->keylen);
 			rtlpriv->sec.key_len[PAIRWISE_KEYIDX] = key->keylen;
 			rtlpriv->sec.pairwise_key =
 			    rtlpriv->sec.key_buf[PAIRWISE_KEYIDX];
-			memcpy(mac_addr, sta->addr, ETH_ALEN);
-		}
+			स_नकल(mac_addr, sta->addr, ETH_ALEN);
+		पूर्ण
 		rtlpriv->cfg->ops->set_key(hw, key_idx, mac_addr,
 					   group_key, key_type, wep_only,
 					   false);
-		/* <5> tell mac80211 do something: */
+		/* <5> tell mac80211 करो something: */
 		/*must use sw generate IV, or can not work !!!!. */
 		key->flags |= IEEE80211_KEY_FLAG_GENERATE_IV;
 		key->hw_key_idx = key_idx;
-		if (key_type == TKIP_ENCRYPTION)
+		अगर (key_type == TKIP_ENCRYPTION)
 			key->flags |= IEEE80211_KEY_FLAG_GENERATE_MMIC;
-		/*use software CCMP encryption for management frames (MFP) */
-		if (key_type == AESCCMP_ENCRYPTION)
+		/*use software CCMP encryption क्रम management frames (MFP) */
+		अगर (key_type == AESCCMP_ENCRYPTION)
 			key->flags |= IEEE80211_KEY_FLAG_SW_MGMT_TX;
-		break;
-	case DISABLE_KEY:
+		अवरोध;
+	हाल DISABLE_KEY:
 		rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 			"disable key delete one entry\n");
 		/*set local buf about wep key. */
-		if (vif->type == NL80211_IFTYPE_AP ||
-			vif->type == NL80211_IFTYPE_MESH_POINT) {
-			if (sta)
+		अगर (vअगर->type == NL80211_IFTYPE_AP ||
+			vअगर->type == NL80211_IFTYPE_MESH_POINT) अणु
+			अगर (sta)
 				rtl_cam_del_entry(hw, sta->addr);
-		}
-		memset(rtlpriv->sec.key_buf[key_idx], 0, key->keylen);
+		पूर्ण
+		स_रखो(rtlpriv->sec.key_buf[key_idx], 0, key->keylen);
 		rtlpriv->sec.key_len[key_idx] = 0;
 		eth_zero_addr(mac_addr);
 		/*
 		 *mac80211 will delete entrys one by one,
-		 *so don't use rtl_cam_reset_all_entry
+		 *so करोn't use rtl_cam_reset_all_entry
 		 *or clear all entry here.
 		 */
-		rtl_wait_tx_report_acked(hw, 500); /* wait 500ms for TX ack */
+		rtl_रुको_tx_report_acked(hw, 500); /* रुको 500ms क्रम TX ack */
 
 		rtl_cam_delete_one_entry(hw, mac_addr, key_idx);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("cmd_err:%x!!!!:\n", cmd);
-	}
+	पूर्ण
 out_unlock:
 	mutex_unlock(&rtlpriv->locks.conf_mutex);
 	rtlpriv->sec.being_setkey = false;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rtl_op_rfkill_poll(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल व्योम rtl_op_rfसमाप्त_poll(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
 	bool radio_state;
 	bool blocked;
 	u8 valid = 0;
 
-	if (!test_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status))
-		return;
+	अगर (!test_bit(RTL_STATUS_INTERFACE_START, &rtlpriv->status))
+		वापस;
 
 	mutex_lock(&rtlpriv->locks.conf_mutex);
 
-	/*if Radio On return true here */
+	/*अगर Radio On वापस true here */
 	radio_state = rtlpriv->cfg->ops->radio_onoff_checking(hw, &valid);
 
-	if (valid) {
-		if (unlikely(radio_state != rtlpriv->rfkill.rfkill_state)) {
-			rtlpriv->rfkill.rfkill_state = radio_state;
+	अगर (valid) अणु
+		अगर (unlikely(radio_state != rtlpriv->rfसमाप्त.rfसमाप्त_state)) अणु
+			rtlpriv->rfसमाप्त.rfसमाप्त_state = radio_state;
 
 			rtl_dbg(rtlpriv, COMP_RF, DBG_DMESG,
 				"wireless radio switch turned %s\n",
 				radio_state ? "on" : "off");
 
-			blocked = !rtlpriv->rfkill.rfkill_state;
-			wiphy_rfkill_set_hw_state(hw->wiphy, blocked);
-		}
-	}
+			blocked = !rtlpriv->rfसमाप्त.rfसमाप्त_state;
+			wiphy_rfसमाप्त_set_hw_state(hw->wiphy, blocked);
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&rtlpriv->locks.conf_mutex);
-}
+पूर्ण
 
 /* this function is called by mac80211 to flush tx buffer
- * before switch channle or power save, or tx buffer packet
+ * beक्रमe चयन channle or घातer save, or tx buffer packet
  * maybe send after offchannel or rf sleep, this may cause
  * dis-association by AP */
-static void rtl_op_flush(struct ieee80211_hw *hw,
-			 struct ieee80211_vif *vif,
+अटल व्योम rtl_op_flush(काष्ठा ieee80211_hw *hw,
+			 काष्ठा ieee80211_vअगर *vअगर,
 			 u32 queues,
 			 bool drop)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
-	if (rtlpriv->intf_ops->flush)
-		rtlpriv->intf_ops->flush(hw, queues, drop);
-}
+	अगर (rtlpriv->पूर्णांकf_ops->flush)
+		rtlpriv->पूर्णांकf_ops->flush(hw, queues, drop);
+पूर्ण
 
-static int rtl_op_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
+अटल पूर्णांक rtl_op_set_tim(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_sta *sta,
 			  bool set)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 
-	if (rtlhal->hw_type == HARDWARE_TYPE_RTL8192CU)
+	अगर (rtlhal->hw_type == HARDWARE_TYPE_RTL8192CU)
 		schedule_work(&rtlpriv->works.update_beacon_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*	Description:
  *		This routine deals with the Power Configuration CMD
- *		 parsing for RTL8723/RTL8188E Series IC.
+ *		 parsing क्रम RTL8723/RTL8188E Series IC.
  *	Assumption:
- *		We should follow specific format that was released from HW SD.
+ *		We should follow specअगरic क्रमmat that was released from HW SD.
  */
-bool rtl_hal_pwrseqcmdparsing(struct rtl_priv *rtlpriv, u8 cut_version,
-			      u8 faversion, u8 interface_type,
-			      struct wlan_pwr_cfg pwrcfgcmd[])
-{
-	struct wlan_pwr_cfg cfg_cmd;
+bool rtl_hal_pwrseqcmdparsing(काष्ठा rtl_priv *rtlpriv, u8 cut_version,
+			      u8 faversion, u8 पूर्णांकerface_type,
+			      काष्ठा wlan_pwr_cfg pwrcfgcmd[])
+अणु
+	काष्ठा wlan_pwr_cfg cfg_cmd;
 	bool polling_bit = false;
 	u32 ary_idx = 0;
 	u8 value = 0;
@@ -1796,7 +1797,7 @@ bool rtl_hal_pwrseqcmdparsing(struct rtl_priv *rtlpriv, u8 cut_version,
 	u32 polling_count = 0;
 	u32 max_polling_cnt = 5000;
 
-	do {
+	करो अणु
 		cfg_cmd = pwrcfgcmd[ary_idx];
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 			"%s: offset(%#x),cut_msk(%#x), famsk(%#x), interface_msk(%#x), base(%#x), cmd(%#x), msk(%#x), value(%#x)\n",
@@ -1808,90 +1809,90 @@ bool rtl_hal_pwrseqcmdparsing(struct rtl_priv *rtlpriv, u8 cut_version,
 			GET_PWR_CFG_BASE(cfg_cmd), GET_PWR_CFG_CMD(cfg_cmd),
 			GET_PWR_CFG_MASK(cfg_cmd), GET_PWR_CFG_VALUE(cfg_cmd));
 
-		if ((GET_PWR_CFG_FAB_MASK(cfg_cmd)&faversion) &&
+		अगर ((GET_PWR_CFG_FAB_MASK(cfg_cmd)&faversion) &&
 		    (GET_PWR_CFG_CUT_MASK(cfg_cmd)&cut_version) &&
-		    (GET_PWR_CFG_INTF_MASK(cfg_cmd)&interface_type)) {
-			switch (GET_PWR_CFG_CMD(cfg_cmd)) {
-			case PWR_CMD_READ:
+		    (GET_PWR_CFG_INTF_MASK(cfg_cmd)&पूर्णांकerface_type)) अणु
+			चयन (GET_PWR_CFG_CMD(cfg_cmd)) अणु
+			हाल PWR_CMD_READ:
 				rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 					"rtl_hal_pwrseqcmdparsing(): PWR_CMD_READ\n");
-				break;
-			case PWR_CMD_WRITE:
+				अवरोध;
+			हाल PWR_CMD_WRITE:
 				rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 					"%s(): PWR_CMD_WRITE\n", __func__);
 				offset = GET_PWR_CFG_OFFSET(cfg_cmd);
 
-				/*Read the value from system register*/
-				value = rtl_read_byte(rtlpriv, offset);
+				/*Read the value from प्रणाली रेजिस्टर*/
+				value = rtl_पढ़ो_byte(rtlpriv, offset);
 				value &= (~(GET_PWR_CFG_MASK(cfg_cmd)));
 				value |= (GET_PWR_CFG_VALUE(cfg_cmd) &
 					  GET_PWR_CFG_MASK(cfg_cmd));
 
-				/*Write the value back to system register*/
-				rtl_write_byte(rtlpriv, offset, value);
-				break;
-			case PWR_CMD_POLLING:
+				/*Write the value back to प्रणाली रेजिस्टर*/
+				rtl_ग_लिखो_byte(rtlpriv, offset, value);
+				अवरोध;
+			हाल PWR_CMD_POLLING:
 				rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 					"rtl_hal_pwrseqcmdparsing(): PWR_CMD_POLLING\n");
 				polling_bit = false;
 				offset = GET_PWR_CFG_OFFSET(cfg_cmd);
 
-				do {
-					value = rtl_read_byte(rtlpriv, offset);
+				करो अणु
+					value = rtl_पढ़ो_byte(rtlpriv, offset);
 
 					value &= GET_PWR_CFG_MASK(cfg_cmd);
-					if (value ==
+					अगर (value ==
 					    (GET_PWR_CFG_VALUE(cfg_cmd) &
 					     GET_PWR_CFG_MASK(cfg_cmd)))
 						polling_bit = true;
-					else
+					अन्यथा
 						udelay(10);
 
-					if (polling_count++ > max_polling_cnt)
-						return false;
-				} while (!polling_bit);
-				break;
-			case PWR_CMD_DELAY:
+					अगर (polling_count++ > max_polling_cnt)
+						वापस false;
+				पूर्ण जबतक (!polling_bit);
+				अवरोध;
+			हाल PWR_CMD_DELAY:
 				rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 					"%s: PWR_CMD_DELAY\n", __func__);
-				if (GET_PWR_CFG_VALUE(cfg_cmd) ==
+				अगर (GET_PWR_CFG_VALUE(cfg_cmd) ==
 				    PWRSEQ_DELAY_US)
 					udelay(GET_PWR_CFG_OFFSET(cfg_cmd));
-				else
+				अन्यथा
 					mdelay(GET_PWR_CFG_OFFSET(cfg_cmd));
-				break;
-			case PWR_CMD_END:
+				अवरोध;
+			हाल PWR_CMD_END:
 				rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 					"%s: PWR_CMD_END\n", __func__);
-				return true;
-			default:
+				वापस true;
+			शेष:
 				WARN_ONCE(true,
 					  "rtlwifi: rtl_hal_pwrseqcmdparsing(): Unknown CMD!!\n");
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		ary_idx++;
-	} while (1);
+	पूर्ण जबतक (1);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(rtl_hal_pwrseqcmdparsing);
 
-bool rtl_cmd_send_packet(struct ieee80211_hw *hw, struct sk_buff *skb)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	struct rtl8192_tx_ring *ring;
-	struct rtl_tx_desc *pdesc;
-	unsigned long flags;
-	struct sk_buff *pskb = NULL;
+bool rtl_cmd_send_packet(काष्ठा ieee80211_hw *hw, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	काष्ठा rtl8192_tx_ring *ring;
+	काष्ठा rtl_tx_desc *pdesc;
+	अचिन्हित दीर्घ flags;
+	काष्ठा sk_buff *pskb = शून्य;
 
 	ring = &rtlpci->tx_ring[BEACON_QUEUE];
 
 	spin_lock_irqsave(&rtlpriv->locks.irq_th_lock, flags);
 	pskb = __skb_dequeue(&ring->queue);
-	if (pskb)
-		dev_kfree_skb_irq(pskb);
+	अगर (pskb)
+		dev_kमुक्त_skb_irq(pskb);
 
 	/*this is wrong, fill_tx_cmddesc needs update*/
 	pdesc = &ring->desc[0];
@@ -1904,20 +1905,20 @@ bool rtl_cmd_send_packet(struct ieee80211_hw *hw, struct sk_buff *skb)
 
 	rtlpriv->cfg->ops->tx_polling(hw, BEACON_QUEUE);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL(rtl_cmd_send_packet);
-const struct ieee80211_ops rtl_ops = {
+स्थिर काष्ठा ieee80211_ops rtl_ops = अणु
 	.start = rtl_op_start,
 	.stop = rtl_op_stop,
 	.tx = rtl_op_tx,
-	.add_interface = rtl_op_add_interface,
-	.remove_interface = rtl_op_remove_interface,
-	.change_interface = rtl_op_change_interface,
-#ifdef CONFIG_PM
+	.add_पूर्णांकerface = rtl_op_add_पूर्णांकerface,
+	.हटाओ_पूर्णांकerface = rtl_op_हटाओ_पूर्णांकerface,
+	.change_पूर्णांकerface = rtl_op_change_पूर्णांकerface,
+#अगर_घोषित CONFIG_PM
 	.suspend = rtl_op_suspend,
 	.resume = rtl_op_resume,
-#endif
+#पूर्ण_अगर
 	.config = rtl_op_config,
 	.configure_filter = rtl_op_configure_filter,
 	.set_key = rtl_op_set_key,
@@ -1926,28 +1927,28 @@ const struct ieee80211_ops rtl_ops = {
 	.get_tsf = rtl_op_get_tsf,
 	.set_tsf = rtl_op_set_tsf,
 	.reset_tsf = rtl_op_reset_tsf,
-	.sta_notify = rtl_op_sta_notify,
+	.sta_notअगरy = rtl_op_sta_notअगरy,
 	.ampdu_action = rtl_op_ampdu_action,
 	.sw_scan_start = rtl_op_sw_scan_start,
 	.sw_scan_complete = rtl_op_sw_scan_complete,
-	.rfkill_poll = rtl_op_rfkill_poll,
+	.rfसमाप्त_poll = rtl_op_rfसमाप्त_poll,
 	.sta_add = rtl_op_sta_add,
-	.sta_remove = rtl_op_sta_remove,
+	.sta_हटाओ = rtl_op_sta_हटाओ,
 	.flush = rtl_op_flush,
 	.set_tim = rtl_op_set_tim,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(rtl_ops);
 
-bool rtl_btc_status_false(void)
-{
-	return false;
-}
+bool rtl_btc_status_false(व्योम)
+अणु
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(rtl_btc_status_false);
 
-void rtl_dm_diginit(struct ieee80211_hw *hw, u32 cur_igvalue)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct dig_t *dm_digtable = &rtlpriv->dm_digtable;
+व्योम rtl_dm_diginit(काष्ठा ieee80211_hw *hw, u32 cur_igvalue)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा dig_t *dm_digtable = &rtlpriv->dm_digtable;
 
 	dm_digtable->dig_enable_flag = true;
 	dm_digtable->dig_ext_port_stage = DIG_EXT_PORT_STAGE_MAX;
@@ -1967,7 +1968,7 @@ void rtl_dm_diginit(struct ieee80211_hw *hw, u32 cur_igvalue)
 	dm_digtable->back_range_min = DM_DIG_BACKOFF_MIN;
 	dm_digtable->pre_cck_cca_thres = 0xff;
 	dm_digtable->cur_cck_cca_thres = 0x83;
-	dm_digtable->forbidden_igi = DM_DIG_MIN;
+	dm_digtable->क्रमbidden_igi = DM_DIG_MIN;
 	dm_digtable->large_fa_hit = 0;
 	dm_digtable->recover_cnt = 0;
 	dm_digtable->dig_min_0 = 0x25;
@@ -1980,5 +1981,5 @@ void rtl_dm_diginit(struct ieee80211_hw *hw, u32 cur_igvalue)
 	dm_digtable->cur_cck_pd_state = CCK_PD_STAGE_LOWRSSI;
 	dm_digtable->pre_cck_fa_state = 0;
 	dm_digtable->cur_cck_fa_state = 0;
-}
+पूर्ण
 EXPORT_SYMBOL(rtl_dm_diginit);

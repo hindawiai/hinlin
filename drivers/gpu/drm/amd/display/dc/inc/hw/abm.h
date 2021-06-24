@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,37 +23,37 @@
  *
  */
 
-#ifndef __DC_ABM_H__
-#define __DC_ABM_H__
+#अगर_अघोषित __DC_ABM_H__
+#घोषणा __DC_ABM_H__
 
-#include "dm_services_types.h"
+#समावेश "dm_services_types.h"
 
-struct abm {
-	struct dc_context *ctx;
-	const struct abm_funcs *funcs;
+काष्ठा abm अणु
+	काष्ठा dc_context *ctx;
+	स्थिर काष्ठा abm_funcs *funcs;
 	bool dmcu_is_running;
-};
+पूर्ण;
 
-struct abm_funcs {
-	void (*abm_init)(struct abm *abm, uint32_t back_light);
-	bool (*set_abm_level)(struct abm *abm, unsigned int abm_level);
-	bool (*set_abm_immediate_disable)(struct abm *abm, unsigned int panel_inst);
-	bool (*set_pipe)(struct abm *abm, unsigned int controller_id, unsigned int panel_inst);
+काष्ठा abm_funcs अणु
+	व्योम (*abm_init)(काष्ठा abm *abm, uपूर्णांक32_t back_light);
+	bool (*set_abm_level)(काष्ठा abm *abm, अचिन्हित पूर्णांक abm_level);
+	bool (*set_abm_immediate_disable)(काष्ठा abm *abm, अचिन्हित पूर्णांक panel_inst);
+	bool (*set_pipe)(काष्ठा abm *abm, अचिन्हित पूर्णांक controller_id, अचिन्हित पूर्णांक panel_inst);
 
-	/* backlight_pwm_u16_16 is unsigned 32 bit,
-	 * 16 bit integer + 16 fractional, where 1.0 is max backlight value.
+	/* backlight_pwm_u16_16 is अचिन्हित 32 bit,
+	 * 16 bit पूर्णांकeger + 16 fractional, where 1.0 is max backlight value.
 	 */
-	bool (*set_backlight_level_pwm)(struct abm *abm,
-			unsigned int backlight_pwm_u16_16,
-			unsigned int frame_ramp,
-			unsigned int controller_id,
-			unsigned int panel_inst);
+	bool (*set_backlight_level_pwm)(काष्ठा abm *abm,
+			अचिन्हित पूर्णांक backlight_pwm_u16_16,
+			अचिन्हित पूर्णांक frame_ramp,
+			अचिन्हित पूर्णांक controller_id,
+			अचिन्हित पूर्णांक panel_inst);
 
-	unsigned int (*get_current_backlight)(struct abm *abm);
-	unsigned int (*get_target_backlight)(struct abm *abm);
-	bool (*init_abm_config)(struct abm *abm,
-			const char *src,
-			unsigned int bytes);
-};
+	अचिन्हित पूर्णांक (*get_current_backlight)(काष्ठा abm *abm);
+	अचिन्हित पूर्णांक (*get_target_backlight)(काष्ठा abm *abm);
+	bool (*init_abm_config)(काष्ठा abm *abm,
+			स्थिर अक्षर *src,
+			अचिन्हित पूर्णांक bytes);
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

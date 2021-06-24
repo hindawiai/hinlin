@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * File: af_phonet.c
  *
@@ -7,88 +8,88 @@
  * Copyright (C) 2008 Nokia Corporation.
  *
  * Authors: Sakari Ailus <sakari.ailus@nokia.com>
- *          Rémi Denis-Courmont
+ *          Rथऊmi Denis-Courmont
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <asm/unaligned.h>
-#include <net/sock.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <net/sock.h>
 
-#include <linux/if_phonet.h>
-#include <linux/phonet.h>
-#include <net/phonet/phonet.h>
-#include <net/phonet/pn_dev.h>
+#समावेश <linux/अगर_phonet.h>
+#समावेश <linux/phonet.h>
+#समावेश <net/phonet/phonet.h>
+#समावेश <net/phonet/pn_dev.h>
 
 /* Transport protocol registration */
-static const struct phonet_protocol *proto_tab[PHONET_NPROTO] __read_mostly;
+अटल स्थिर काष्ठा phonet_protocol *proto_tab[PHONET_NPROTO] __पढ़ो_mostly;
 
-static const struct phonet_protocol *phonet_proto_get(unsigned int protocol)
-{
-	const struct phonet_protocol *pp;
+अटल स्थिर काष्ठा phonet_protocol *phonet_proto_get(अचिन्हित पूर्णांक protocol)
+अणु
+	स्थिर काष्ठा phonet_protocol *pp;
 
-	if (protocol >= PHONET_NPROTO)
-		return NULL;
+	अगर (protocol >= PHONET_NPROTO)
+		वापस शून्य;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	pp = rcu_dereference(proto_tab[protocol]);
-	if (pp && !try_module_get(pp->prot->owner))
-		pp = NULL;
-	rcu_read_unlock();
+	अगर (pp && !try_module_get(pp->prot->owner))
+		pp = शून्य;
+	rcu_पढ़ो_unlock();
 
-	return pp;
-}
+	वापस pp;
+पूर्ण
 
-static inline void phonet_proto_put(const struct phonet_protocol *pp)
-{
+अटल अंतरभूत व्योम phonet_proto_put(स्थिर काष्ठा phonet_protocol *pp)
+अणु
 	module_put(pp->prot->owner);
-}
+पूर्ण
 
 /* protocol family functions */
 
-static int pn_socket_create(struct net *net, struct socket *sock, int protocol,
-			    int kern)
-{
-	struct sock *sk;
-	struct pn_sock *pn;
-	const struct phonet_protocol *pnp;
-	int err;
+अटल पूर्णांक pn_socket_create(काष्ठा net *net, काष्ठा socket *sock, पूर्णांक protocol,
+			    पूर्णांक kern)
+अणु
+	काष्ठा sock *sk;
+	काष्ठा pn_sock *pn;
+	स्थिर काष्ठा phonet_protocol *pnp;
+	पूर्णांक err;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EPERM;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EPERM;
 
-	if (protocol == 0) {
+	अगर (protocol == 0) अणु
 		/* Default protocol selection */
-		switch (sock->type) {
-		case SOCK_DGRAM:
+		चयन (sock->type) अणु
+		हाल SOCK_DGRAM:
 			protocol = PN_PROTO_PHONET;
-			break;
-		case SOCK_SEQPACKET:
+			अवरोध;
+		हाल SOCK_SEQPACKET:
 			protocol = PN_PROTO_PIPE;
-			break;
-		default:
-			return -EPROTONOSUPPORT;
-		}
-	}
+			अवरोध;
+		शेष:
+			वापस -EPROTONOSUPPORT;
+		पूर्ण
+	पूर्ण
 
 	pnp = phonet_proto_get(protocol);
-	if (pnp == NULL &&
+	अगर (pnp == शून्य &&
 	    request_module("net-pf-%d-proto-%d", PF_PHONET, protocol) == 0)
 		pnp = phonet_proto_get(protocol);
 
-	if (pnp == NULL)
-		return -EPROTONOSUPPORT;
-	if (sock->type != pnp->sock_type) {
+	अगर (pnp == शून्य)
+		वापस -EPROTONOSUPPORT;
+	अगर (sock->type != pnp->sock_type) अणु
 		err = -EPROTONOSUPPORT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sk = sk_alloc(net, PF_PHONET, GFP_KERNEL, pnp->prot, kern);
-	if (sk == NULL) {
+	अगर (sk == शून्य) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	sock_init_data(sock, sk);
 	sock->state = SS_UNCONNECTED;
@@ -97,81 +98,81 @@ static int pn_socket_create(struct net *net, struct socket *sock, int protocol,
 	sk->sk_protocol = protocol;
 	pn = pn_sk(sk);
 	pn->sobject = 0;
-	pn->dobject = 0;
+	pn->करोbject = 0;
 	pn->resource = 0;
 	sk->sk_prot->init(sk);
 	err = 0;
 
 out:
 	phonet_proto_put(pnp);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct net_proto_family phonet_proto_family = {
+अटल स्थिर काष्ठा net_proto_family phonet_proto_family = अणु
 	.family = PF_PHONET,
 	.create = pn_socket_create,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
 /* Phonet device header operations */
-static int pn_header_create(struct sk_buff *skb, struct net_device *dev,
-				unsigned short type, const void *daddr,
-				const void *saddr, unsigned int len)
-{
+अटल पूर्णांक pn_header_create(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+				अचिन्हित लघु type, स्थिर व्योम *daddr,
+				स्थिर व्योम *saddr, अचिन्हित पूर्णांक len)
+अणु
 	u8 *media = skb_push(skb, 1);
 
-	if (type != ETH_P_PHONET)
-		return -1;
+	अगर (type != ETH_P_PHONET)
+		वापस -1;
 
-	if (!saddr)
+	अगर (!saddr)
 		saddr = dev->dev_addr;
-	*media = *(const u8 *)saddr;
-	return 1;
-}
+	*media = *(स्थिर u8 *)saddr;
+	वापस 1;
+पूर्ण
 
-static int pn_header_parse(const struct sk_buff *skb, unsigned char *haddr)
-{
-	const u8 *media = skb_mac_header(skb);
+अटल पूर्णांक pn_header_parse(स्थिर काष्ठा sk_buff *skb, अचिन्हित अक्षर *haddr)
+अणु
+	स्थिर u8 *media = skb_mac_header(skb);
 	*haddr = *media;
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-const struct header_ops phonet_header_ops = {
+स्थिर काष्ठा header_ops phonet_header_ops = अणु
 	.create = pn_header_create,
 	.parse = pn_header_parse,
-};
+पूर्ण;
 EXPORT_SYMBOL(phonet_header_ops);
 
 /*
  * Prepends an ISI header and sends a datagram.
  */
-static int pn_send(struct sk_buff *skb, struct net_device *dev,
+अटल पूर्णांक pn_send(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
 			u16 dst, u16 src, u8 res, u8 irq)
-{
-	struct phonethdr *ph;
-	int err;
+अणु
+	काष्ठा phonethdr *ph;
+	पूर्णांक err;
 
-	if (skb->len + 2 > 0xffff /* Phonet length field limit */ ||
-	    skb->len + sizeof(struct phonethdr) > dev->mtu) {
+	अगर (skb->len + 2 > 0xffff /* Phonet length field limit */ ||
+	    skb->len + माप(काष्ठा phonethdr) > dev->mtu) अणु
 		err = -EMSGSIZE;
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
 	/* Broadcast sending is not implemented */
-	if (pn_addr(dst) == PNADDR_BROADCAST) {
+	अगर (pn_addr(dst) == PNADDR_BROADCAST) अणु
 		err = -EOPNOTSUPP;
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 
 	skb_reset_transport_header(skb);
 	WARN_ON(skb_headroom(skb) & 1); /* HW assumes word alignment */
-	skb_push(skb, sizeof(struct phonethdr));
+	skb_push(skb, माप(काष्ठा phonethdr));
 	skb_reset_network_header(skb);
 	ph = pn_hdr(skb);
 	ph->pn_rdev = pn_dev(dst);
 	ph->pn_sdev = pn_dev(src);
 	ph->pn_res = res;
-	ph->pn_length = __cpu_to_be16(skb->len + 2 - sizeof(*ph));
+	ph->pn_length = __cpu_to_be16(skb->len + 2 - माप(*ph));
 	ph->pn_robj = pn_obj(dst);
 	ph->pn_sobj = pn_obj(src);
 
@@ -179,363 +180,363 @@ static int pn_send(struct sk_buff *skb, struct net_device *dev,
 	skb->priority = 0;
 	skb->dev = dev;
 
-	if (skb->pkt_type == PACKET_LOOPBACK) {
+	अगर (skb->pkt_type == PACKET_LOOPBACK) अणु
 		skb_reset_mac_header(skb);
 		skb_orphan(skb);
-		err = (irq ? netif_rx(skb) : netif_rx_ni(skb)) ? -ENOBUFS : 0;
-	} else {
+		err = (irq ? netअगर_rx(skb) : netअगर_rx_ni(skb)) ? -ENOBUFS : 0;
+	पूर्ण अन्यथा अणु
 		err = dev_hard_header(skb, dev, ntohs(skb->protocol),
-					NULL, NULL, skb->len);
-		if (err < 0) {
+					शून्य, शून्य, skb->len);
+		अगर (err < 0) अणु
 			err = -EHOSTUNREACH;
-			goto drop;
-		}
+			जाओ drop;
+		पूर्ण
 		err = dev_queue_xmit(skb);
-		if (unlikely(err > 0))
-			err = net_xmit_errno(err);
-	}
+		अगर (unlikely(err > 0))
+			err = net_xmit_त्रुटि_सं(err);
+	पूर्ण
 
-	return err;
+	वापस err;
 drop:
-	kfree_skb(skb);
-	return err;
-}
+	kमुक्त_skb(skb);
+	वापस err;
+पूर्ण
 
-static int pn_raw_send(const void *data, int len, struct net_device *dev,
+अटल पूर्णांक pn_raw_send(स्थिर व्योम *data, पूर्णांक len, काष्ठा net_device *dev,
 			u16 dst, u16 src, u8 res)
-{
-	struct sk_buff *skb = alloc_skb(MAX_PHONET_HEADER + len, GFP_ATOMIC);
-	if (skb == NULL)
-		return -ENOMEM;
+अणु
+	काष्ठा sk_buff *skb = alloc_skb(MAX_PHONET_HEADER + len, GFP_ATOMIC);
+	अगर (skb == शून्य)
+		वापस -ENOMEM;
 
-	if (phonet_address_lookup(dev_net(dev), pn_addr(dst)) == 0)
+	अगर (phonet_address_lookup(dev_net(dev), pn_addr(dst)) == 0)
 		skb->pkt_type = PACKET_LOOPBACK;
 
 	skb_reserve(skb, MAX_PHONET_HEADER);
 	__skb_put(skb, len);
 	skb_copy_to_linear_data(skb, data, len);
-	return pn_send(skb, dev, dst, src, res, 1);
-}
+	वापस pn_send(skb, dev, dst, src, res, 1);
+पूर्ण
 
 /*
- * Create a Phonet header for the skb and send it out. Returns
- * non-zero error code if failed. The skb is freed then.
+ * Create a Phonet header क्रम the skb and send it out. Returns
+ * non-zero error code अगर failed. The skb is मुक्तd then.
  */
-int pn_skb_send(struct sock *sk, struct sk_buff *skb,
-		const struct sockaddr_pn *target)
-{
-	struct net *net = sock_net(sk);
-	struct net_device *dev;
-	struct pn_sock *pn = pn_sk(sk);
-	int err;
+पूर्णांक pn_skb_send(काष्ठा sock *sk, काष्ठा sk_buff *skb,
+		स्थिर काष्ठा sockaddr_pn *target)
+अणु
+	काष्ठा net *net = sock_net(sk);
+	काष्ठा net_device *dev;
+	काष्ठा pn_sock *pn = pn_sk(sk);
+	पूर्णांक err;
 	u16 src, dst;
 	u8 daddr, saddr, res;
 
 	src = pn->sobject;
-	if (target != NULL) {
+	अगर (target != शून्य) अणु
 		dst = pn_sockaddr_get_object(target);
 		res = pn_sockaddr_get_resource(target);
-	} else {
-		dst = pn->dobject;
+	पूर्ण अन्यथा अणु
+		dst = pn->करोbject;
 		res = pn->resource;
-	}
+	पूर्ण
 	daddr = pn_addr(dst);
 
 	err = -EHOSTUNREACH;
-	if (sk->sk_bound_dev_if)
-		dev = dev_get_by_index(net, sk->sk_bound_dev_if);
-	else if (phonet_address_lookup(net, daddr) == 0) {
+	अगर (sk->sk_bound_dev_अगर)
+		dev = dev_get_by_index(net, sk->sk_bound_dev_अगर);
+	अन्यथा अगर (phonet_address_lookup(net, daddr) == 0) अणु
 		dev = phonet_device_get(net);
 		skb->pkt_type = PACKET_LOOPBACK;
-	} else if (dst == 0) {
+	पूर्ण अन्यथा अगर (dst == 0) अणु
 		/* Resource routing (small race until phonet_rcv()) */
-		struct sock *sk = pn_find_sock_by_res(net, res);
-		if (sk)	{
+		काष्ठा sock *sk = pn_find_sock_by_res(net, res);
+		अगर (sk)	अणु
 			sock_put(sk);
 			dev = phonet_device_get(net);
 			skb->pkt_type = PACKET_LOOPBACK;
-		} else
+		पूर्ण अन्यथा
 			dev = phonet_route_output(net, daddr);
-	} else
+	पूर्ण अन्यथा
 		dev = phonet_route_output(net, daddr);
 
-	if (!dev || !(dev->flags & IFF_UP))
-		goto drop;
+	अगर (!dev || !(dev->flags & IFF_UP))
+		जाओ drop;
 
 	saddr = phonet_address_get(dev, daddr);
-	if (saddr == PN_NO_ADDR)
-		goto drop;
+	अगर (saddr == PN_NO_ADDR)
+		जाओ drop;
 
-	if (!pn_addr(src))
+	अगर (!pn_addr(src))
 		src = pn_object(saddr, pn_obj(src));
 
 	err = pn_send(skb, dev, dst, src, res, 0);
 	dev_put(dev);
-	return err;
+	वापस err;
 
 drop:
-	kfree_skb(skb);
-	if (dev)
+	kमुक्त_skb(skb);
+	अगर (dev)
 		dev_put(dev);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(pn_skb_send);
 
 /* Do not send an error message in response to an error message */
-static inline int can_respond(struct sk_buff *skb)
-{
-	const struct phonethdr *ph;
-	const struct phonetmsg *pm;
+अटल अंतरभूत पूर्णांक can_respond(काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा phonethdr *ph;
+	स्थिर काष्ठा phoneपंचांगsg *pm;
 	u8 submsg_id;
 
-	if (!pskb_may_pull(skb, 3))
-		return 0;
+	अगर (!pskb_may_pull(skb, 3))
+		वापस 0;
 
 	ph = pn_hdr(skb);
-	if (ph->pn_res == PN_PREFIX && !pskb_may_pull(skb, 5))
-		return 0;
-	if (ph->pn_res == PN_COMMGR) /* indications */
-		return 0;
+	अगर (ph->pn_res == PN_PREFIX && !pskb_may_pull(skb, 5))
+		वापस 0;
+	अगर (ph->pn_res == PN_COMMGR) /* indications */
+		वापस 0;
 
-	ph = pn_hdr(skb); /* re-acquires the pointer */
+	ph = pn_hdr(skb); /* re-acquires the poपूर्णांकer */
 	pm = pn_msg(skb);
-	if (pm->pn_msg_id != PN_COMMON_MESSAGE)
-		return 1;
+	अगर (pm->pn_msg_id != PN_COMMON_MESSAGE)
+		वापस 1;
 	submsg_id = (ph->pn_res == PN_PREFIX)
 		? pm->pn_e_submsg_id : pm->pn_submsg_id;
-	if (submsg_id != PN_COMM_ISA_ENTITY_NOT_REACHABLE_RESP &&
+	अगर (submsg_id != PN_COMM_ISA_ENTITY_NOT_REACHABLE_RESP &&
 		pm->pn_e_submsg_id != PN_COMM_SERVICE_NOT_IDENTIFIED_RESP)
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int send_obj_unreachable(struct sk_buff *rskb)
-{
-	const struct phonethdr *oph = pn_hdr(rskb);
-	const struct phonetmsg *opm = pn_msg(rskb);
-	struct phonetmsg resp;
+अटल पूर्णांक send_obj_unreachable(काष्ठा sk_buff *rskb)
+अणु
+	स्थिर काष्ठा phonethdr *oph = pn_hdr(rskb);
+	स्थिर काष्ठा phoneपंचांगsg *opm = pn_msg(rskb);
+	काष्ठा phoneपंचांगsg resp;
 
-	memset(&resp, 0, sizeof(resp));
+	स_रखो(&resp, 0, माप(resp));
 	resp.pn_trans_id = opm->pn_trans_id;
 	resp.pn_msg_id = PN_COMMON_MESSAGE;
-	if (oph->pn_res == PN_PREFIX) {
+	अगर (oph->pn_res == PN_PREFIX) अणु
 		resp.pn_e_res_id = opm->pn_e_res_id;
 		resp.pn_e_submsg_id = PN_COMM_ISA_ENTITY_NOT_REACHABLE_RESP;
 		resp.pn_e_orig_msg_id = opm->pn_msg_id;
 		resp.pn_e_status = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		resp.pn_submsg_id = PN_COMM_ISA_ENTITY_NOT_REACHABLE_RESP;
 		resp.pn_orig_msg_id = opm->pn_msg_id;
 		resp.pn_status = 0;
-	}
-	return pn_raw_send(&resp, sizeof(resp), rskb->dev,
+	पूर्ण
+	वापस pn_raw_send(&resp, माप(resp), rskb->dev,
 				pn_object(oph->pn_sdev, oph->pn_sobj),
 				pn_object(oph->pn_rdev, oph->pn_robj),
 				oph->pn_res);
-}
+पूर्ण
 
-static int send_reset_indications(struct sk_buff *rskb)
-{
-	struct phonethdr *oph = pn_hdr(rskb);
-	static const u8 data[4] = {
+अटल पूर्णांक send_reset_indications(काष्ठा sk_buff *rskb)
+अणु
+	काष्ठा phonethdr *oph = pn_hdr(rskb);
+	अटल स्थिर u8 data[4] = अणु
 		0x00 /* trans ID */, 0x10 /* subscribe msg */,
 		0x00 /* subscription count */, 0x00 /* dummy */
-	};
+	पूर्ण;
 
-	return pn_raw_send(data, sizeof(data), rskb->dev,
+	वापस pn_raw_send(data, माप(data), rskb->dev,
 				pn_object(oph->pn_sdev, 0x00),
 				pn_object(oph->pn_rdev, oph->pn_robj),
 				PN_COMMGR);
-}
+पूर्ण
 
 
 /* packet type functions */
 
 /*
  * Stuff received packets to associated sockets.
- * On error, returns non-zero and releases the skb.
+ * On error, वापसs non-zero and releases the skb.
  */
-static int phonet_rcv(struct sk_buff *skb, struct net_device *dev,
-			struct packet_type *pkttype,
-			struct net_device *orig_dev)
-{
-	struct net *net = dev_net(dev);
-	struct phonethdr *ph;
-	struct sockaddr_pn sa;
+अटल पूर्णांक phonet_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			काष्ठा packet_type *pkttype,
+			काष्ठा net_device *orig_dev)
+अणु
+	काष्ठा net *net = dev_net(dev);
+	काष्ठा phonethdr *ph;
+	काष्ठा sockaddr_pn sa;
 	u16 len;
 
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	if (!skb)
-		return NET_RX_DROP;
+	अगर (!skb)
+		वापस NET_RX_DROP;
 
 	/* check we have at least a full Phonet header */
-	if (!pskb_pull(skb, sizeof(struct phonethdr)))
-		goto out;
+	अगर (!pskb_pull(skb, माप(काष्ठा phonethdr)))
+		जाओ out;
 
 	/* check that the advertised length is correct */
 	ph = pn_hdr(skb);
 	len = get_unaligned_be16(&ph->pn_length);
-	if (len < 2)
-		goto out;
+	अगर (len < 2)
+		जाओ out;
 	len -= 2;
-	if ((len > skb->len) || pskb_trim(skb, len))
-		goto out;
+	अगर ((len > skb->len) || pskb_trim(skb, len))
+		जाओ out;
 	skb_reset_transport_header(skb);
 
 	pn_skb_get_dst_sockaddr(skb, &sa);
 
-	/* check if this is broadcasted */
-	if (pn_sockaddr_get_addr(&sa) == PNADDR_BROADCAST) {
+	/* check अगर this is broadcasted */
+	अगर (pn_sockaddr_get_addr(&sa) == PNADDR_BROADCAST) अणु
 		pn_deliver_sock_broadcast(net, skb);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* resource routing */
-	if (pn_sockaddr_get_object(&sa) == 0) {
-		struct sock *sk = pn_find_sock_by_res(net, sa.spn_resource);
-		if (sk)
-			return sk_receive_skb(sk, skb, 0);
-	}
+	अगर (pn_sockaddr_get_object(&sa) == 0) अणु
+		काष्ठा sock *sk = pn_find_sock_by_res(net, sa.spn_resource);
+		अगर (sk)
+			वापस sk_receive_skb(sk, skb, 0);
+	पूर्ण
 
-	/* check if we are the destination */
-	if (phonet_address_lookup(net, pn_sockaddr_get_addr(&sa)) == 0) {
+	/* check अगर we are the destination */
+	अगर (phonet_address_lookup(net, pn_sockaddr_get_addr(&sa)) == 0) अणु
 		/* Phonet packet input */
-		struct sock *sk = pn_find_sock_by_sa(net, &sa);
+		काष्ठा sock *sk = pn_find_sock_by_sa(net, &sa);
 
-		if (sk)
-			return sk_receive_skb(sk, skb, 0);
+		अगर (sk)
+			वापस sk_receive_skb(sk, skb, 0);
 
-		if (can_respond(skb)) {
+		अगर (can_respond(skb)) अणु
 			send_obj_unreachable(skb);
 			send_reset_indications(skb);
-		}
-	} else if (unlikely(skb->pkt_type == PACKET_LOOPBACK))
-		goto out; /* Race between address deletion and loopback */
-	else {
+		पूर्ण
+	पूर्ण अन्यथा अगर (unlikely(skb->pkt_type == PACKET_LOOPBACK))
+		जाओ out; /* Race between address deletion and loopback */
+	अन्यथा अणु
 		/* Phonet packet routing */
-		struct net_device *out_dev;
+		काष्ठा net_device *out_dev;
 
 		out_dev = phonet_route_output(net, pn_sockaddr_get_addr(&sa));
-		if (!out_dev) {
+		अगर (!out_dev) अणु
 			net_dbg_ratelimited("No Phonet route to %02X\n",
 					    pn_sockaddr_get_addr(&sa));
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		__skb_push(skb, sizeof(struct phonethdr));
+		__skb_push(skb, माप(काष्ठा phonethdr));
 		skb->dev = out_dev;
-		if (out_dev == dev) {
+		अगर (out_dev == dev) अणु
 			net_dbg_ratelimited("Phonet loop to %02X on %s\n",
 					    pn_sockaddr_get_addr(&sa),
 					    dev->name);
-			goto out_dev;
-		}
-		/* Some drivers (e.g. TUN) do not allocate HW header space */
-		if (skb_cow_head(skb, out_dev->hard_header_len))
-			goto out_dev;
+			जाओ out_dev;
+		पूर्ण
+		/* Some drivers (e.g. TUN) करो not allocate HW header space */
+		अगर (skb_cow_head(skb, out_dev->hard_header_len))
+			जाओ out_dev;
 
-		if (dev_hard_header(skb, out_dev, ETH_P_PHONET, NULL, NULL,
+		अगर (dev_hard_header(skb, out_dev, ETH_P_PHONET, शून्य, शून्य,
 					skb->len) < 0)
-			goto out_dev;
+			जाओ out_dev;
 		dev_queue_xmit(skb);
 		dev_put(out_dev);
-		return NET_RX_SUCCESS;
+		वापस NET_RX_SUCCESS;
 out_dev:
 		dev_put(out_dev);
-	}
+	पूर्ण
 
 out:
-	kfree_skb(skb);
-	return NET_RX_DROP;
-}
+	kमुक्त_skb(skb);
+	वापस NET_RX_DROP;
+पूर्ण
 
-static struct packet_type phonet_packet_type __read_mostly = {
+अटल काष्ठा packet_type phonet_packet_type __पढ़ो_mostly = अणु
 	.type = cpu_to_be16(ETH_P_PHONET),
 	.func = phonet_rcv,
-};
+पूर्ण;
 
-static DEFINE_MUTEX(proto_tab_lock);
+अटल DEFINE_MUTEX(proto_tab_lock);
 
-int __init_or_module phonet_proto_register(unsigned int protocol,
-				const struct phonet_protocol *pp)
-{
-	int err = 0;
+पूर्णांक __init_or_module phonet_proto_रेजिस्टर(अचिन्हित पूर्णांक protocol,
+				स्थिर काष्ठा phonet_protocol *pp)
+अणु
+	पूर्णांक err = 0;
 
-	if (protocol >= PHONET_NPROTO)
-		return -EINVAL;
+	अगर (protocol >= PHONET_NPROTO)
+		वापस -EINVAL;
 
-	err = proto_register(pp->prot, 1);
-	if (err)
-		return err;
+	err = proto_रेजिस्टर(pp->prot, 1);
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&proto_tab_lock);
-	if (proto_tab[protocol])
+	अगर (proto_tab[protocol])
 		err = -EBUSY;
-	else
-		rcu_assign_pointer(proto_tab[protocol], pp);
+	अन्यथा
+		rcu_assign_poपूर्णांकer(proto_tab[protocol], pp);
 	mutex_unlock(&proto_tab_lock);
 
-	return err;
-}
-EXPORT_SYMBOL(phonet_proto_register);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(phonet_proto_रेजिस्टर);
 
-void phonet_proto_unregister(unsigned int protocol,
-			const struct phonet_protocol *pp)
-{
+व्योम phonet_proto_unरेजिस्टर(अचिन्हित पूर्णांक protocol,
+			स्थिर काष्ठा phonet_protocol *pp)
+अणु
 	mutex_lock(&proto_tab_lock);
 	BUG_ON(proto_tab[protocol] != pp);
-	RCU_INIT_POINTER(proto_tab[protocol], NULL);
+	RCU_INIT_POINTER(proto_tab[protocol], शून्य);
 	mutex_unlock(&proto_tab_lock);
 	synchronize_rcu();
-	proto_unregister(pp->prot);
-}
-EXPORT_SYMBOL(phonet_proto_unregister);
+	proto_unरेजिस्टर(pp->prot);
+पूर्ण
+EXPORT_SYMBOL(phonet_proto_unरेजिस्टर);
 
 /* Module registration */
-static int __init phonet_init(void)
-{
-	int err;
+अटल पूर्णांक __init phonet_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	err = phonet_device_init();
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pn_sock_init();
-	err = sock_register(&phonet_proto_family);
-	if (err) {
-		printk(KERN_ALERT
+	err = sock_रेजिस्टर(&phonet_proto_family);
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ALERT
 			"phonet protocol family initialization failed\n");
-		goto err_sock;
-	}
+		जाओ err_sock;
+	पूर्ण
 
 	dev_add_pack(&phonet_packet_type);
 	phonet_sysctl_init();
 
-	err = isi_register();
-	if (err)
-		goto err;
-	return 0;
+	err = isi_रेजिस्टर();
+	अगर (err)
+		जाओ err;
+	वापस 0;
 
 err:
-	phonet_sysctl_exit();
-	sock_unregister(PF_PHONET);
-	dev_remove_pack(&phonet_packet_type);
+	phonet_sysctl_निकास();
+	sock_unरेजिस्टर(PF_PHONET);
+	dev_हटाओ_pack(&phonet_packet_type);
 err_sock:
-	phonet_device_exit();
-	return err;
-}
+	phonet_device_निकास();
+	वापस err;
+पूर्ण
 
-static void __exit phonet_exit(void)
-{
-	isi_unregister();
-	phonet_sysctl_exit();
-	sock_unregister(PF_PHONET);
-	dev_remove_pack(&phonet_packet_type);
-	phonet_device_exit();
-}
+अटल व्योम __निकास phonet_निकास(व्योम)
+अणु
+	isi_unरेजिस्टर();
+	phonet_sysctl_निकास();
+	sock_unरेजिस्टर(PF_PHONET);
+	dev_हटाओ_pack(&phonet_packet_type);
+	phonet_device_निकास();
+पूर्ण
 
 module_init(phonet_init);
-module_exit(phonet_exit);
+module_निकास(phonet_निकास);
 MODULE_DESCRIPTION("Phonet protocol stack for Linux");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(PF_PHONET);

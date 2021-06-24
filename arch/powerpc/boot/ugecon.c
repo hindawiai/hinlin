@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * arch/powerpc/boot/ugecon.c
+ * arch/घातerpc/boot/ugecon.c
  *
  * USB Gecko bootwrapper console.
  * Copyright (C) 2008-2009 The GameCube Linux Team
  * Copyright (C) 2008,2009 Albert Herranz
  */
 
-#include <stddef.h>
-#include "stdio.h"
-#include "types.h"
-#include "io.h"
-#include "ops.h"
+#समावेश <मानकघोष.स>
+#समावेश "stdio.h"
+#समावेश "types.h"
+#समावेश "io.h"
+#समावेश "ops.h"
 
 
-#define EXI_CLK_32MHZ           5
+#घोषणा EXI_CLK_32MHZ           5
 
-#define EXI_CSR                 0x00
-#define   EXI_CSR_CLKMASK       (0x7<<4)
-#define     EXI_CSR_CLK_32MHZ   (EXI_CLK_32MHZ<<4)
-#define   EXI_CSR_CSMASK        (0x7<<7)
-#define     EXI_CSR_CS_0        (0x1<<7)  /* Chip Select 001 */
+#घोषणा EXI_CSR                 0x00
+#घोषणा   EXI_CSR_CLKMASK       (0x7<<4)
+#घोषणा     EXI_CSR_CLK_32MHZ   (EXI_CLK_32MHZ<<4)
+#घोषणा   EXI_CSR_CSMASK        (0x7<<7)
+#घोषणा     EXI_CSR_CS_0        (0x1<<7)  /* Chip Select 001 */
 
-#define EXI_CR                  0x0c
-#define   EXI_CR_TSTART         (1<<0)
-#define   EXI_CR_WRITE		(1<<2)
-#define   EXI_CR_READ_WRITE     (2<<2)
-#define   EXI_CR_TLEN(len)      (((len)-1)<<4)
+#घोषणा EXI_CR                  0x0c
+#घोषणा   EXI_CR_TSTART         (1<<0)
+#घोषणा   EXI_CR_WRITE		(1<<2)
+#घोषणा   EXI_CR_READ_WRITE     (2<<2)
+#घोषणा   EXI_CR_TLEN(len)      (((len)-1)<<4)
 
-#define EXI_DATA                0x10
-
-
-/* virtual address base for input/output, retrieved from device tree */
-static void *ug_io_base;
+#घोषणा EXI_DATA                0x10
 
 
-static u32 ug_io_transaction(u32 in)
-{
+/* भव address base क्रम input/output, retrieved from device tree */
+अटल व्योम *ug_io_base;
+
+
+अटल u32 ug_io_transaction(u32 in)
+अणु
 	u32 *csr_reg = ug_io_base + EXI_CSR;
 	u32 *data_reg = ug_io_base + EXI_DATA;
 	u32 *cr_reg = ug_io_base + EXI_CR;
@@ -46,97 +47,97 @@ static u32 ug_io_transaction(u32 in)
 	csr = EXI_CSR_CLK_32MHZ | EXI_CSR_CS_0;
 	out_be32(csr_reg, csr);
 
-	/* read/write */
+	/* पढ़ो/ग_लिखो */
 	data = in;
 	out_be32(data_reg, data);
 	cr = EXI_CR_TLEN(2) | EXI_CR_READ_WRITE | EXI_CR_TSTART;
 	out_be32(cr_reg, cr);
 
-	while (in_be32(cr_reg) & EXI_CR_TSTART)
+	जबतक (in_be32(cr_reg) & EXI_CR_TSTART)
 		barrier();
 
 	/* deselect */
 	out_be32(csr_reg, 0);
 
 	data = in_be32(data_reg);
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static int ug_is_txfifo_ready(void)
-{
-	return ug_io_transaction(0xc0000000) & 0x04000000;
-}
+अटल पूर्णांक ug_is_txfअगरo_पढ़ोy(व्योम)
+अणु
+	वापस ug_io_transaction(0xc0000000) & 0x04000000;
+पूर्ण
 
-static void ug_raw_putc(char ch)
-{
+अटल व्योम ug_raw_अ_दो(अक्षर ch)
+अणु
 	ug_io_transaction(0xb0000000 | (ch << 20));
-}
+पूर्ण
 
-static void ug_putc(char ch)
-{
-	int count = 16;
+अटल व्योम ug_अ_दो(अक्षर ch)
+अणु
+	पूर्णांक count = 16;
 
-	if (!ug_io_base)
-		return;
+	अगर (!ug_io_base)
+		वापस;
 
-	while (!ug_is_txfifo_ready() && count--)
+	जबतक (!ug_is_txfअगरo_पढ़ोy() && count--)
 		barrier();
-	if (count >= 0)
-		ug_raw_putc(ch);
-}
+	अगर (count >= 0)
+		ug_raw_अ_दो(ch);
+पूर्ण
 
-void ug_console_write(const char *buf, int len)
-{
-	char *b = (char *)buf;
+व्योम ug_console_ग_लिखो(स्थिर अक्षर *buf, पूर्णांक len)
+अणु
+	अक्षर *b = (अक्षर *)buf;
 
-	while (len--) {
-		if (*b == '\n')
-			ug_putc('\r');
-		ug_putc(*b++);
-	}
-}
+	जबतक (len--) अणु
+		अगर (*b == '\n')
+			ug_अ_दो('\r');
+		ug_अ_दो(*b++);
+	पूर्ण
+पूर्ण
 
-static int ug_is_adapter_present(void)
-{
-	if (!ug_io_base)
-		return 0;
-	return ug_io_transaction(0x90000000) == 0x04700000;
-}
+अटल पूर्णांक ug_is_adapter_present(व्योम)
+अणु
+	अगर (!ug_io_base)
+		वापस 0;
+	वापस ug_io_transaction(0x90000000) == 0x04700000;
+पूर्ण
 
-static void *ug_grab_exi_io_base(void)
-{
+अटल व्योम *ug_grab_exi_io_base(व्योम)
+अणु
 	u32 v;
-	void *devp;
+	व्योम *devp;
 
-	devp = find_node_by_compatible(NULL, "nintendo,flipper-exi");
-	if (devp == NULL)
-		goto err_out;
-	if (getprop(devp, "virtual-reg", &v, sizeof(v)) != sizeof(v))
-		goto err_out;
+	devp = find_node_by_compatible(शून्य, "nintendo,flipper-exi");
+	अगर (devp == शून्य)
+		जाओ err_out;
+	अगर (getprop(devp, "virtual-reg", &v, माप(v)) != माप(v))
+		जाओ err_out;
 
-	return (void *)v;
+	वापस (व्योम *)v;
 
 err_out:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void *ug_probe(void)
-{
-	void *exi_io_base;
-	int i;
+व्योम *ug_probe(व्योम)
+अणु
+	व्योम *exi_io_base;
+	पूर्णांक i;
 
 	exi_io_base = ug_grab_exi_io_base();
-	if (!exi_io_base)
-		return NULL;
+	अगर (!exi_io_base)
+		वापस शून्य;
 
-	/* look for a usbgecko on memcard slots A and B */
-	for (i = 0; i < 2; i++) {
+	/* look क्रम a usbgecko on memcard slots A and B */
+	क्रम (i = 0; i < 2; i++) अणु
 		ug_io_base = exi_io_base + 0x14 * i;
-		if (ug_is_adapter_present())
-			break;
-	}
-	if (i == 2)
-		ug_io_base = NULL;
-	return ug_io_base;
-}
+		अगर (ug_is_adapter_present())
+			अवरोध;
+	पूर्ण
+	अगर (i == 2)
+		ug_io_base = शून्य;
+	वापस ug_io_base;
+पूर्ण
 

@@ -1,430 +1,431 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
 // Copyright(c) 2015-18 Intel Corporation.
 
 /*
  *  stream.c - SoundWire Bus stream operations.
  */
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/slab.h>
-#include <linux/soundwire/sdw_registers.h>
-#include <linux/soundwire/sdw.h>
-#include <sound/soc.h>
-#include "bus.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/soundwire/sdw_रेजिस्टरs.h>
+#समावेश <linux/soundwire/sdw.h>
+#समावेश <sound/soc.h>
+#समावेश "bus.h"
 
 /*
- * Array of supported rows and columns as per MIPI SoundWire Specification 1.1
+ * Array of supported rows and columns as per MIPI SoundWire Specअगरication 1.1
  *
  * The rows are arranged as per the array index value programmed
- * in register. The index 15 has dummy value 0 in order to fill hole.
+ * in रेजिस्टर. The index 15 has dummy value 0 in order to fill hole.
  */
-int sdw_rows[SDW_FRAME_ROWS] = {48, 50, 60, 64, 75, 80, 125, 147,
+पूर्णांक sdw_rows[SDW_FRAME_ROWS] = अणु48, 50, 60, 64, 75, 80, 125, 147,
 			96, 100, 120, 128, 150, 160, 250, 0,
-			192, 200, 240, 256, 72, 144, 90, 180};
+			192, 200, 240, 256, 72, 144, 90, 180पूर्ण;
 EXPORT_SYMBOL(sdw_rows);
 
-int sdw_cols[SDW_FRAME_COLS] = {2, 4, 6, 8, 10, 12, 14, 16};
+पूर्णांक sdw_cols[SDW_FRAME_COLS] = अणु2, 4, 6, 8, 10, 12, 14, 16पूर्ण;
 EXPORT_SYMBOL(sdw_cols);
 
-int sdw_find_col_index(int col)
-{
-	int i;
+पूर्णांक sdw_find_col_index(पूर्णांक col)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SDW_FRAME_COLS; i++) {
-		if (sdw_cols[i] == col)
-			return i;
-	}
+	क्रम (i = 0; i < SDW_FRAME_COLS; i++) अणु
+		अगर (sdw_cols[i] == col)
+			वापस i;
+	पूर्ण
 
 	pr_warn("Requested column not found, selecting lowest column no: 2\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(sdw_find_col_index);
 
-int sdw_find_row_index(int row)
-{
-	int i;
+पूर्णांक sdw_find_row_index(पूर्णांक row)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SDW_FRAME_ROWS; i++) {
-		if (sdw_rows[i] == row)
-			return i;
-	}
+	क्रम (i = 0; i < SDW_FRAME_ROWS; i++) अणु
+		अगर (sdw_rows[i] == row)
+			वापस i;
+	पूर्ण
 
 	pr_warn("Requested row not found, selecting lowest row no: 48\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(sdw_find_row_index);
 
-static int _sdw_program_slave_port_params(struct sdw_bus *bus,
-					  struct sdw_slave *slave,
-					  struct sdw_transport_params *t_params,
-					  enum sdw_dpn_type type)
-{
+अटल पूर्णांक _sdw_program_slave_port_params(काष्ठा sdw_bus *bus,
+					  काष्ठा sdw_slave *slave,
+					  काष्ठा sdw_transport_params *t_params,
+					  क्रमागत sdw_dpn_type type)
+अणु
 	u32 addr1, addr2, addr3, addr4;
-	int ret;
+	पूर्णांक ret;
 	u16 wbuf;
 
-	if (bus->params.next_bank) {
+	अगर (bus->params.next_bank) अणु
 		addr1 = SDW_DPN_OFFSETCTRL2_B1(t_params->port_num);
 		addr2 = SDW_DPN_BLOCKCTRL3_B1(t_params->port_num);
 		addr3 = SDW_DPN_SAMPLECTRL2_B1(t_params->port_num);
 		addr4 = SDW_DPN_HCTRL_B1(t_params->port_num);
-	} else {
+	पूर्ण अन्यथा अणु
 		addr1 = SDW_DPN_OFFSETCTRL2_B0(t_params->port_num);
 		addr2 = SDW_DPN_BLOCKCTRL3_B0(t_params->port_num);
 		addr3 = SDW_DPN_SAMPLECTRL2_B0(t_params->port_num);
 		addr4 = SDW_DPN_HCTRL_B0(t_params->port_num);
-	}
+	पूर्ण
 
-	/* Program DPN_OffsetCtrl2 registers */
-	ret = sdw_write(slave, addr1, t_params->offset2);
-	if (ret < 0) {
+	/* Program DPN_OffsetCtrl2 रेजिस्टरs */
+	ret = sdw_ग_लिखो(slave, addr1, t_params->offset2);
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "DPN_OffsetCtrl2 register write failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Program DPN_BlockCtrl3 register */
-	ret = sdw_write(slave, addr2, t_params->blk_pkg_mode);
-	if (ret < 0) {
+	/* Program DPN_BlockCtrl3 रेजिस्टर */
+	ret = sdw_ग_लिखो(slave, addr2, t_params->blk_pkg_mode);
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "DPN_BlockCtrl3 register write failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Data ports are FULL, SIMPLE and REDUCED. This function handles
-	 * FULL and REDUCED only and beyond this point only FULL is
-	 * handled, so bail out if we are not FULL data port type
+	 * FULL and REDUCED only and beyond this poपूर्णांक only FULL is
+	 * handled, so bail out अगर we are not FULL data port type
 	 */
-	if (type != SDW_DPN_FULL)
-		return ret;
+	अगर (type != SDW_DPN_FULL)
+		वापस ret;
 
-	/* Program DPN_SampleCtrl2 register */
-	wbuf = FIELD_GET(SDW_DPN_SAMPLECTRL_HIGH, t_params->sample_interval - 1);
+	/* Program DPN_SampleCtrl2 रेजिस्टर */
+	wbuf = FIELD_GET(SDW_DPN_SAMPLECTRL_HIGH, t_params->sample_पूर्णांकerval - 1);
 
-	ret = sdw_write(slave, addr3, wbuf);
-	if (ret < 0) {
+	ret = sdw_ग_लिखो(slave, addr3, wbuf);
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "DPN_SampleCtrl2 register write failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Program DPN_HCtrl register */
+	/* Program DPN_HCtrl रेजिस्टर */
 	wbuf = FIELD_PREP(SDW_DPN_HCTRL_HSTART, t_params->hstart);
 	wbuf |= FIELD_PREP(SDW_DPN_HCTRL_HSTOP, t_params->hstop);
 
-	ret = sdw_write(slave, addr4, wbuf);
-	if (ret < 0)
+	ret = sdw_ग_लिखो(slave, addr4, wbuf);
+	अगर (ret < 0)
 		dev_err(bus->dev, "DPN_HCtrl register write failed\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdw_program_slave_port_params(struct sdw_bus *bus,
-					 struct sdw_slave_runtime *s_rt,
-					 struct sdw_port_runtime *p_rt)
-{
-	struct sdw_transport_params *t_params = &p_rt->transport_params;
-	struct sdw_port_params *p_params = &p_rt->port_params;
-	struct sdw_slave_prop *slave_prop = &s_rt->slave->prop;
+अटल पूर्णांक sdw_program_slave_port_params(काष्ठा sdw_bus *bus,
+					 काष्ठा sdw_slave_runसमय *s_rt,
+					 काष्ठा sdw_port_runसमय *p_rt)
+अणु
+	काष्ठा sdw_transport_params *t_params = &p_rt->transport_params;
+	काष्ठा sdw_port_params *p_params = &p_rt->port_params;
+	काष्ठा sdw_slave_prop *slave_prop = &s_rt->slave->prop;
 	u32 addr1, addr2, addr3, addr4, addr5, addr6;
-	struct sdw_dpn_prop *dpn_prop;
-	int ret;
+	काष्ठा sdw_dpn_prop *dpn_prop;
+	पूर्णांक ret;
 	u8 wbuf;
 
 	dpn_prop = sdw_get_slave_dpn_prop(s_rt->slave,
 					  s_rt->direction,
 					  t_params->port_num);
-	if (!dpn_prop)
-		return -EINVAL;
+	अगर (!dpn_prop)
+		वापस -EINVAL;
 
 	addr1 = SDW_DPN_PORTCTRL(t_params->port_num);
 	addr2 = SDW_DPN_BLOCKCTRL1(t_params->port_num);
 
-	if (bus->params.next_bank) {
+	अगर (bus->params.next_bank) अणु
 		addr3 = SDW_DPN_SAMPLECTRL1_B1(t_params->port_num);
 		addr4 = SDW_DPN_OFFSETCTRL1_B1(t_params->port_num);
 		addr5 = SDW_DPN_BLOCKCTRL2_B1(t_params->port_num);
 		addr6 = SDW_DPN_LANECTRL_B1(t_params->port_num);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		addr3 = SDW_DPN_SAMPLECTRL1_B0(t_params->port_num);
 		addr4 = SDW_DPN_OFFSETCTRL1_B0(t_params->port_num);
 		addr5 = SDW_DPN_BLOCKCTRL2_B0(t_params->port_num);
 		addr6 = SDW_DPN_LANECTRL_B0(t_params->port_num);
-	}
+	पूर्ण
 
-	/* Program DPN_PortCtrl register */
+	/* Program DPN_PortCtrl रेजिस्टर */
 	wbuf = FIELD_PREP(SDW_DPN_PORTCTRL_DATAMODE, p_params->data_mode);
 	wbuf |= FIELD_PREP(SDW_DPN_PORTCTRL_FLOWMODE, p_params->flow_mode);
 
 	ret = sdw_update(s_rt->slave, addr1, 0xF, wbuf);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&s_rt->slave->dev,
 			"DPN_PortCtrl register write failed for port %d\n",
 			t_params->port_num);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!dpn_prop->read_only_wordlength) {
-		/* Program DPN_BlockCtrl1 register */
-		ret = sdw_write(s_rt->slave, addr2, (p_params->bps - 1));
-		if (ret < 0) {
+	अगर (!dpn_prop->पढ़ो_only_wordlength) अणु
+		/* Program DPN_BlockCtrl1 रेजिस्टर */
+		ret = sdw_ग_लिखो(s_rt->slave, addr2, (p_params->bps - 1));
+		अगर (ret < 0) अणु
 			dev_err(&s_rt->slave->dev,
 				"DPN_BlockCtrl1 register write failed for port %d\n",
 				t_params->port_num);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* Program DPN_SampleCtrl1 register */
-	wbuf = (t_params->sample_interval - 1) & SDW_DPN_SAMPLECTRL_LOW;
-	ret = sdw_write(s_rt->slave, addr3, wbuf);
-	if (ret < 0) {
+	/* Program DPN_SampleCtrl1 रेजिस्टर */
+	wbuf = (t_params->sample_पूर्णांकerval - 1) & SDW_DPN_SAMPLECTRL_LOW;
+	ret = sdw_ग_लिखो(s_rt->slave, addr3, wbuf);
+	अगर (ret < 0) अणु
 		dev_err(&s_rt->slave->dev,
 			"DPN_SampleCtrl1 register write failed for port %d\n",
 			t_params->port_num);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Program DPN_OffsetCtrl1 registers */
-	ret = sdw_write(s_rt->slave, addr4, t_params->offset1);
-	if (ret < 0) {
+	/* Program DPN_OffsetCtrl1 रेजिस्टरs */
+	ret = sdw_ग_लिखो(s_rt->slave, addr4, t_params->offset1);
+	अगर (ret < 0) अणु
 		dev_err(&s_rt->slave->dev,
 			"DPN_OffsetCtrl1 register write failed for port %d\n",
 			t_params->port_num);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* Program DPN_BlockCtrl2 register*/
-	if (t_params->blk_grp_ctrl_valid) {
-		ret = sdw_write(s_rt->slave, addr5, t_params->blk_grp_ctrl);
-		if (ret < 0) {
+	/* Program DPN_BlockCtrl2 रेजिस्टर*/
+	अगर (t_params->blk_grp_ctrl_valid) अणु
+		ret = sdw_ग_लिखो(s_rt->slave, addr5, t_params->blk_grp_ctrl);
+		अगर (ret < 0) अणु
 			dev_err(&s_rt->slave->dev,
 				"DPN_BlockCtrl2 reg write failed for port %d\n",
 				t_params->port_num);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* program DPN_LaneCtrl register */
-	if (slave_prop->lane_control_support) {
-		ret = sdw_write(s_rt->slave, addr6, t_params->lane_ctrl);
-		if (ret < 0) {
+	/* program DPN_LaneCtrl रेजिस्टर */
+	अगर (slave_prop->lane_control_support) अणु
+		ret = sdw_ग_लिखो(s_rt->slave, addr6, t_params->lane_ctrl);
+		अगर (ret < 0) अणु
 			dev_err(&s_rt->slave->dev,
 				"DPN_LaneCtrl register write failed for port %d\n",
 				t_params->port_num);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (dpn_prop->type != SDW_DPN_SIMPLE) {
+	अगर (dpn_prop->type != SDW_DPN_SIMPLE) अणु
 		ret = _sdw_program_slave_port_params(bus, s_rt->slave,
 						     t_params, dpn_prop->type);
-		if (ret < 0)
+		अगर (ret < 0)
 			dev_err(&s_rt->slave->dev,
 				"Transport reg write failed for port: %d\n",
 				t_params->port_num);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdw_program_master_port_params(struct sdw_bus *bus,
-					  struct sdw_port_runtime *p_rt)
-{
-	int ret;
+अटल पूर्णांक sdw_program_master_port_params(काष्ठा sdw_bus *bus,
+					  काष्ठा sdw_port_runसमय *p_rt)
+अणु
+	पूर्णांक ret;
 
 	/*
-	 * we need to set transport and port parameters for the port.
-	 * Transport parameters refers to the sample interval, offsets and
+	 * we need to set transport and port parameters क्रम the port.
+	 * Transport parameters refers to the sample पूर्णांकerval, offsets and
 	 * hstart/stop etc of the data. Port parameters refers to word
 	 * length, flow mode etc of the port
 	 */
 	ret = bus->port_ops->dpn_set_port_transport_params(bus,
 					&p_rt->transport_params,
 					bus->params.next_bank);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return bus->port_ops->dpn_set_port_params(bus,
+	वापस bus->port_ops->dpn_set_port_params(bus,
 						  &p_rt->port_params,
 						  bus->params.next_bank);
-}
+पूर्ण
 
 /**
  * sdw_program_port_params() - Programs transport parameters of Master(s)
  * and Slave(s)
  *
- * @m_rt: Master stream runtime
+ * @m_rt: Master stream runसमय
  */
-static int sdw_program_port_params(struct sdw_master_runtime *m_rt)
-{
-	struct sdw_slave_runtime *s_rt;
-	struct sdw_bus *bus = m_rt->bus;
-	struct sdw_port_runtime *p_rt;
-	int ret = 0;
+अटल पूर्णांक sdw_program_port_params(काष्ठा sdw_master_runसमय *m_rt)
+अणु
+	काष्ठा sdw_slave_runसमय *s_rt;
+	काष्ठा sdw_bus *bus = m_rt->bus;
+	काष्ठा sdw_port_runसमय *p_rt;
+	पूर्णांक ret = 0;
 
-	/* Program transport & port parameters for Slave(s) */
-	list_for_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) {
-		list_for_each_entry(p_rt, &s_rt->port_list, port_node) {
+	/* Program transport & port parameters क्रम Slave(s) */
+	list_क्रम_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) अणु
+		list_क्रम_each_entry(p_rt, &s_rt->port_list, port_node) अणु
 			ret = sdw_program_slave_port_params(bus, s_rt, p_rt);
-			if (ret < 0)
-				return ret;
-		}
-	}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	/* Program transport & port parameters for Master(s) */
-	list_for_each_entry(p_rt, &m_rt->port_list, port_node) {
+	/* Program transport & port parameters क्रम Master(s) */
+	list_क्रम_each_entry(p_rt, &m_rt->port_list, port_node) अणु
 		ret = sdw_program_master_port_params(bus, p_rt);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sdw_enable_disable_slave_ports: Enable/disable slave data port
  *
  * @bus: bus instance
- * @s_rt: slave runtime
- * @p_rt: port runtime
+ * @s_rt: slave runसमय
+ * @p_rt: port runसमय
  * @en: enable or disable operation
  *
  * This function only sets the enable/disable bits in the relevant bank, the
- * actual enable/disable is done with a bank switch
+ * actual enable/disable is करोne with a bank चयन
  */
-static int sdw_enable_disable_slave_ports(struct sdw_bus *bus,
-					  struct sdw_slave_runtime *s_rt,
-					  struct sdw_port_runtime *p_rt,
+अटल पूर्णांक sdw_enable_disable_slave_ports(काष्ठा sdw_bus *bus,
+					  काष्ठा sdw_slave_runसमय *s_rt,
+					  काष्ठा sdw_port_runसमय *p_rt,
 					  bool en)
-{
-	struct sdw_transport_params *t_params = &p_rt->transport_params;
+अणु
+	काष्ठा sdw_transport_params *t_params = &p_rt->transport_params;
 	u32 addr;
-	int ret;
+	पूर्णांक ret;
 
-	if (bus->params.next_bank)
+	अगर (bus->params.next_bank)
 		addr = SDW_DPN_CHANNELEN_B1(p_rt->num);
-	else
+	अन्यथा
 		addr = SDW_DPN_CHANNELEN_B0(p_rt->num);
 
 	/*
-	 * Since bus doesn't support sharing a port across two streams,
-	 * it is safe to reset this register
+	 * Since bus करोesn't support sharing a port across two streams,
+	 * it is safe to reset this रेजिस्टर
 	 */
-	if (en)
-		ret = sdw_write(s_rt->slave, addr, p_rt->ch_mask);
-	else
-		ret = sdw_write(s_rt->slave, addr, 0x0);
+	अगर (en)
+		ret = sdw_ग_लिखो(s_rt->slave, addr, p_rt->ch_mask);
+	अन्यथा
+		ret = sdw_ग_लिखो(s_rt->slave, addr, 0x0);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&s_rt->slave->dev,
 			"Slave chn_en reg write failed:%d port:%d\n",
 			ret, t_params->port_num);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdw_enable_disable_master_ports(struct sdw_master_runtime *m_rt,
-					   struct sdw_port_runtime *p_rt,
+अटल पूर्णांक sdw_enable_disable_master_ports(काष्ठा sdw_master_runसमय *m_rt,
+					   काष्ठा sdw_port_runसमय *p_rt,
 					   bool en)
-{
-	struct sdw_transport_params *t_params = &p_rt->transport_params;
-	struct sdw_bus *bus = m_rt->bus;
-	struct sdw_enable_ch enable_ch;
-	int ret;
+अणु
+	काष्ठा sdw_transport_params *t_params = &p_rt->transport_params;
+	काष्ठा sdw_bus *bus = m_rt->bus;
+	काष्ठा sdw_enable_ch enable_ch;
+	पूर्णांक ret;
 
 	enable_ch.port_num = p_rt->num;
 	enable_ch.ch_mask = p_rt->ch_mask;
 	enable_ch.enable = en;
 
-	/* Perform Master port channel(s) enable/disable */
-	if (bus->port_ops->dpn_port_enable_ch) {
+	/* Perक्रमm Master port channel(s) enable/disable */
+	अगर (bus->port_ops->dpn_port_enable_ch) अणु
 		ret = bus->port_ops->dpn_port_enable_ch(bus,
 							&enable_ch,
 							bus->params.next_bank);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev,
 				"Master chn_en write failed:%d port:%d\n",
 				ret, t_params->port_num);
-			return ret;
-		}
-	} else {
+			वापस ret;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_err(bus->dev,
 			"dpn_port_enable_ch not supported, %s failed\n",
 			en ? "enable" : "disable");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sdw_enable_disable_ports() - Enable/disable port(s) for Master and
+ * sdw_enable_disable_ports() - Enable/disable port(s) क्रम Master and
  * Slave(s)
  *
- * @m_rt: Master stream runtime
+ * @m_rt: Master stream runसमय
  * @en: mode (enable/disable)
  */
-static int sdw_enable_disable_ports(struct sdw_master_runtime *m_rt, bool en)
-{
-	struct sdw_port_runtime *s_port, *m_port;
-	struct sdw_slave_runtime *s_rt;
-	int ret = 0;
+अटल पूर्णांक sdw_enable_disable_ports(काष्ठा sdw_master_runसमय *m_rt, bool en)
+अणु
+	काष्ठा sdw_port_runसमय *s_port, *m_port;
+	काष्ठा sdw_slave_runसमय *s_rt;
+	पूर्णांक ret = 0;
 
 	/* Enable/Disable Slave port(s) */
-	list_for_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) {
-		list_for_each_entry(s_port, &s_rt->port_list, port_node) {
+	list_क्रम_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) अणु
+		list_क्रम_each_entry(s_port, &s_rt->port_list, port_node) अणु
 			ret = sdw_enable_disable_slave_ports(m_rt->bus, s_rt,
 							     s_port, en);
-			if (ret < 0)
-				return ret;
-		}
-	}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* Enable/Disable Master port(s) */
-	list_for_each_entry(m_port, &m_rt->port_list, port_node) {
+	list_क्रम_each_entry(m_port, &m_rt->port_list, port_node) अणु
 		ret = sdw_enable_disable_master_ports(m_rt, m_port, en);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdw_do_port_prep(struct sdw_slave_runtime *s_rt,
-			    struct sdw_prepare_ch prep_ch,
-			    enum sdw_port_prep_ops cmd)
-{
-	const struct sdw_slave_ops *ops = s_rt->slave->ops;
-	int ret;
+अटल पूर्णांक sdw_करो_port_prep(काष्ठा sdw_slave_runसमय *s_rt,
+			    काष्ठा sdw_prepare_ch prep_ch,
+			    क्रमागत sdw_port_prep_ops cmd)
+अणु
+	स्थिर काष्ठा sdw_slave_ops *ops = s_rt->slave->ops;
+	पूर्णांक ret;
 
-	if (ops->port_prep) {
+	अगर (ops->port_prep) अणु
 		ret = ops->port_prep(s_rt->slave, &prep_ch, cmd);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&s_rt->slave->dev,
 				"Slave Port Prep cmd %d failed: %d\n",
 				cmd, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdw_prep_deprep_slave_ports(struct sdw_bus *bus,
-				       struct sdw_slave_runtime *s_rt,
-				       struct sdw_port_runtime *p_rt,
+अटल पूर्णांक sdw_prep_deprep_slave_ports(काष्ठा sdw_bus *bus,
+				       काष्ठा sdw_slave_runसमय *s_rt,
+				       काष्ठा sdw_port_runसमय *p_rt,
 				       bool prep)
-{
-	struct completion *port_ready;
-	struct sdw_dpn_prop *dpn_prop;
-	struct sdw_prepare_ch prep_ch;
-	unsigned int time_left;
-	bool intr = false;
-	int ret = 0, val;
+अणु
+	काष्ठा completion *port_पढ़ोy;
+	काष्ठा sdw_dpn_prop *dpn_prop;
+	काष्ठा sdw_prepare_ch prep_ch;
+	अचिन्हित पूर्णांक समय_left;
+	bool पूर्णांकr = false;
+	पूर्णांक ret = 0, val;
 	u32 addr;
 
 	prep_ch.num = p_rt->num;
@@ -433,84 +434,84 @@ static int sdw_prep_deprep_slave_ports(struct sdw_bus *bus,
 	dpn_prop = sdw_get_slave_dpn_prop(s_rt->slave,
 					  s_rt->direction,
 					  prep_ch.num);
-	if (!dpn_prop) {
+	अगर (!dpn_prop) अणु
 		dev_err(bus->dev,
 			"Slave Port:%d properties not found\n", prep_ch.num);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	prep_ch.prepare = prep;
 
 	prep_ch.bank = bus->params.next_bank;
 
-	if (dpn_prop->imp_def_interrupts || !dpn_prop->simple_ch_prep_sm ||
+	अगर (dpn_prop->imp_def_पूर्णांकerrupts || !dpn_prop->simple_ch_prep_sm ||
 	    bus->params.s_data_mode != SDW_PORT_DATA_MODE_NORMAL)
-		intr = true;
+		पूर्णांकr = true;
 
 	/*
-	 * Enable interrupt before Port prepare.
+	 * Enable पूर्णांकerrupt beक्रमe Port prepare.
 	 * For Port de-prepare, it is assumed that port
 	 * was prepared earlier
 	 */
-	if (prep && intr) {
-		ret = sdw_configure_dpn_intr(s_rt->slave, p_rt->num, prep,
-					     dpn_prop->imp_def_interrupts);
-		if (ret < 0)
-			return ret;
-	}
+	अगर (prep && पूर्णांकr) अणु
+		ret = sdw_configure_dpn_पूर्णांकr(s_rt->slave, p_rt->num, prep,
+					     dpn_prop->imp_def_पूर्णांकerrupts);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	/* Inform slave about the impending port prepare */
-	sdw_do_port_prep(s_rt, prep_ch, SDW_OPS_PORT_PRE_PREP);
+	/* Inक्रमm slave about the impending port prepare */
+	sdw_करो_port_prep(s_rt, prep_ch, SDW_OPS_PORT_PRE_PREP);
 
 	/* Prepare Slave port implementing CP_SM */
-	if (!dpn_prop->simple_ch_prep_sm) {
+	अगर (!dpn_prop->simple_ch_prep_sm) अणु
 		addr = SDW_DPN_PREPARECTRL(p_rt->num);
 
-		if (prep)
-			ret = sdw_write(s_rt->slave, addr, p_rt->ch_mask);
-		else
-			ret = sdw_write(s_rt->slave, addr, 0x0);
+		अगर (prep)
+			ret = sdw_ग_लिखो(s_rt->slave, addr, p_rt->ch_mask);
+		अन्यथा
+			ret = sdw_ग_लिखो(s_rt->slave, addr, 0x0);
 
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(&s_rt->slave->dev,
 				"Slave prep_ctrl reg write failed\n");
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		/* Wait for completion on port ready */
-		port_ready = &s_rt->slave->port_ready[prep_ch.num];
-		time_left = wait_for_completion_timeout(port_ready,
-				msecs_to_jiffies(dpn_prop->ch_prep_timeout));
+		/* Wait क्रम completion on port पढ़ोy */
+		port_पढ़ोy = &s_rt->slave->port_पढ़ोy[prep_ch.num];
+		समय_left = रुको_क्रम_completion_समयout(port_पढ़ोy,
+				msecs_to_jअगरfies(dpn_prop->ch_prep_समयout));
 
-		val = sdw_read(s_rt->slave, SDW_DPN_PREPARESTATUS(p_rt->num));
+		val = sdw_पढ़ो(s_rt->slave, SDW_DPN_PREPARESTATUS(p_rt->num));
 		val &= p_rt->ch_mask;
-		if (!time_left || val) {
+		अगर (!समय_left || val) अणु
 			dev_err(&s_rt->slave->dev,
 				"Chn prep failed for port:%d\n", prep_ch.num);
-			return -ETIMEDOUT;
-		}
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+	पूर्ण
 
-	/* Inform slaves about ports prepared */
-	sdw_do_port_prep(s_rt, prep_ch, SDW_OPS_PORT_POST_PREP);
+	/* Inक्रमm slaves about ports prepared */
+	sdw_करो_port_prep(s_rt, prep_ch, SDW_OPS_PORT_POST_PREP);
 
-	/* Disable interrupt after Port de-prepare */
-	if (!prep && intr)
-		ret = sdw_configure_dpn_intr(s_rt->slave, p_rt->num, prep,
-					     dpn_prop->imp_def_interrupts);
+	/* Disable पूर्णांकerrupt after Port de-prepare */
+	अगर (!prep && पूर्णांकr)
+		ret = sdw_configure_dpn_पूर्णांकr(s_rt->slave, p_rt->num, prep,
+					     dpn_prop->imp_def_पूर्णांकerrupts);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdw_prep_deprep_master_ports(struct sdw_master_runtime *m_rt,
-					struct sdw_port_runtime *p_rt,
+अटल पूर्णांक sdw_prep_deprep_master_ports(काष्ठा sdw_master_runसमय *m_rt,
+					काष्ठा sdw_port_runसमय *p_rt,
 					bool prep)
-{
-	struct sdw_transport_params *t_params = &p_rt->transport_params;
-	struct sdw_bus *bus = m_rt->bus;
-	const struct sdw_master_port_ops *ops = bus->port_ops;
-	struct sdw_prepare_ch prep_ch;
-	int ret = 0;
+अणु
+	काष्ठा sdw_transport_params *t_params = &p_rt->transport_params;
+	काष्ठा sdw_bus *bus = m_rt->bus;
+	स्थिर काष्ठा sdw_master_port_ops *ops = bus->port_ops;
+	काष्ठा sdw_prepare_ch prep_ch;
+	पूर्णांक ret = 0;
 
 	prep_ch.num = p_rt->num;
 	prep_ch.ch_mask = p_rt->ch_mask;
@@ -518,172 +519,172 @@ static int sdw_prep_deprep_master_ports(struct sdw_master_runtime *m_rt,
 	prep_ch.bank = bus->params.next_bank;
 
 	/* Pre-prepare/Pre-deprepare port(s) */
-	if (ops->dpn_port_prep) {
+	अगर (ops->dpn_port_prep) अणु
 		ret = ops->dpn_port_prep(bus, &prep_ch);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Port prepare failed for port:%d\n",
 				t_params->port_num);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * sdw_prep_deprep_ports() - Prepare/De-prepare port(s) for Master(s) and
+ * sdw_prep_deprep_ports() - Prepare/De-prepare port(s) क्रम Master(s) and
  * Slave(s)
  *
- * @m_rt: Master runtime handle
+ * @m_rt: Master runसमय handle
  * @prep: Prepare or De-prepare
  */
-static int sdw_prep_deprep_ports(struct sdw_master_runtime *m_rt, bool prep)
-{
-	struct sdw_slave_runtime *s_rt;
-	struct sdw_port_runtime *p_rt;
-	int ret = 0;
+अटल पूर्णांक sdw_prep_deprep_ports(काष्ठा sdw_master_runसमय *m_rt, bool prep)
+अणु
+	काष्ठा sdw_slave_runसमय *s_rt;
+	काष्ठा sdw_port_runसमय *p_rt;
+	पूर्णांक ret = 0;
 
 	/* Prepare/De-prepare Slave port(s) */
-	list_for_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) {
-		list_for_each_entry(p_rt, &s_rt->port_list, port_node) {
+	list_क्रम_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) अणु
+		list_क्रम_each_entry(p_rt, &s_rt->port_list, port_node) अणु
 			ret = sdw_prep_deprep_slave_ports(m_rt->bus, s_rt,
 							  p_rt, prep);
-			if (ret < 0)
-				return ret;
-		}
-	}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* Prepare/De-prepare Master port(s) */
-	list_for_each_entry(p_rt, &m_rt->port_list, port_node) {
+	list_क्रम_each_entry(p_rt, &m_rt->port_list, port_node) अणु
 		ret = sdw_prep_deprep_master_ports(m_rt, p_rt, prep);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * sdw_notify_config() - Notify bus configuration
+ * sdw_notअगरy_config() - Notअगरy bus configuration
  *
- * @m_rt: Master runtime handle
+ * @m_rt: Master runसमय handle
  *
- * This function notifies the Master(s) and Slave(s) of the
+ * This function notअगरies the Master(s) and Slave(s) of the
  * new bus configuration.
  */
-static int sdw_notify_config(struct sdw_master_runtime *m_rt)
-{
-	struct sdw_slave_runtime *s_rt;
-	struct sdw_bus *bus = m_rt->bus;
-	struct sdw_slave *slave;
-	int ret = 0;
+अटल पूर्णांक sdw_notअगरy_config(काष्ठा sdw_master_runसमय *m_rt)
+अणु
+	काष्ठा sdw_slave_runसमय *s_rt;
+	काष्ठा sdw_bus *bus = m_rt->bus;
+	काष्ठा sdw_slave *slave;
+	पूर्णांक ret = 0;
 
-	if (bus->ops->set_bus_conf) {
+	अगर (bus->ops->set_bus_conf) अणु
 		ret = bus->ops->set_bus_conf(bus, &bus->params);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	list_for_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) {
+	list_क्रम_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) अणु
 		slave = s_rt->slave;
 
-		if (slave->ops->bus_config) {
+		अगर (slave->ops->bus_config) अणु
 			ret = slave->ops->bus_config(slave, &bus->params);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(bus->dev, "Notify Slave: %d failed\n",
 					slave->dev_num);
-				return ret;
-			}
-		}
-	}
+				वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * sdw_program_params() - Program transport and port parameters for Master(s)
+ * sdw_program_params() - Program transport and port parameters क्रम Master(s)
  * and Slave(s)
  *
  * @bus: SDW bus instance
- * @prepare: true if sdw_program_params() is called by _prepare.
+ * @prepare: true अगर sdw_program_params() is called by _prepare.
  */
-static int sdw_program_params(struct sdw_bus *bus, bool prepare)
-{
-	struct sdw_master_runtime *m_rt;
-	int ret = 0;
+अटल पूर्णांक sdw_program_params(काष्ठा sdw_bus *bus, bool prepare)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(m_rt, &bus->m_rt_list, bus_node) {
+	list_क्रम_each_entry(m_rt, &bus->m_rt_list, bus_node) अणु
 
 		/*
-		 * this loop walks through all master runtimes for a
-		 * bus, but the ports can only be configured while
+		 * this loop walks through all master runबार क्रम a
+		 * bus, but the ports can only be configured जबतक
 		 * explicitly preparing a stream or handling an
-		 * already-prepared stream otherwise.
+		 * alपढ़ोy-prepared stream otherwise.
 		 */
-		if (!prepare &&
+		अगर (!prepare &&
 		    m_rt->stream->state == SDW_STREAM_CONFIGURED)
-			continue;
+			जारी;
 
 		ret = sdw_program_port_params(m_rt);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev,
 				"Program transport params failed: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = sdw_notify_config(m_rt);
-		if (ret < 0) {
+		ret = sdw_notअगरy_config(m_rt);
+		अगर (ret < 0) अणु
 			dev_err(bus->dev,
 				"Notify bus config failed: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		/* Enable port(s) on alternate bank for all active streams */
-		if (m_rt->stream->state != SDW_STREAM_ENABLED)
-			continue;
+		/* Enable port(s) on alternate bank क्रम all active streams */
+		अगर (m_rt->stream->state != SDW_STREAM_ENABLED)
+			जारी;
 
 		ret = sdw_enable_disable_ports(m_rt, true);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Enable channel failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdw_bank_switch(struct sdw_bus *bus, int m_rt_count)
-{
-	int col_index, row_index;
+अटल पूर्णांक sdw_bank_चयन(काष्ठा sdw_bus *bus, पूर्णांक m_rt_count)
+अणु
+	पूर्णांक col_index, row_index;
 	bool multi_link;
-	struct sdw_msg *wr_msg;
+	काष्ठा sdw_msg *wr_msg;
 	u8 *wbuf;
-	int ret;
+	पूर्णांक ret;
 	u16 addr;
 
-	wr_msg = kzalloc(sizeof(*wr_msg), GFP_KERNEL);
-	if (!wr_msg)
-		return -ENOMEM;
+	wr_msg = kzalloc(माप(*wr_msg), GFP_KERNEL);
+	अगर (!wr_msg)
+		वापस -ENOMEM;
 
 	bus->defer_msg.msg = wr_msg;
 
-	wbuf = kzalloc(sizeof(*wbuf), GFP_KERNEL);
-	if (!wbuf) {
+	wbuf = kzalloc(माप(*wbuf), GFP_KERNEL);
+	अगर (!wbuf) अणु
 		ret = -ENOMEM;
-		goto error_1;
-	}
+		जाओ error_1;
+	पूर्ण
 
-	/* Get row and column index to program register */
+	/* Get row and column index to program रेजिस्टर */
 	col_index = sdw_find_col_index(bus->params.col);
 	row_index = sdw_find_row_index(bus->params.row);
 	wbuf[0] = col_index | (row_index << 3);
 
-	if (bus->params.next_bank)
+	अगर (bus->params.next_bank)
 		addr = SDW_SCP_FRAMECTRL_B1;
-	else
+	अन्यथा
 		addr = SDW_SCP_FRAMECTRL_B0;
 
-	sdw_fill_msg(wr_msg, NULL, addr, 1, SDW_BROADCAST_DEV_NUM,
+	sdw_fill_msg(wr_msg, शून्य, addr, 1, SDW_BROADCAST_DEV_NUM,
 		     SDW_MSG_FLAG_WRITE, wbuf);
 	wr_msg->ssp_sync = true;
 
@@ -693,259 +694,259 @@ static int sdw_bank_switch(struct sdw_bus *bus, int m_rt_count)
 	 */
 	multi_link = bus->multi_link && (m_rt_count >= bus->hw_sync_min_links);
 
-	if (multi_link)
+	अगर (multi_link)
 		ret = sdw_transfer_defer(bus, wr_msg, &bus->defer_msg);
-	else
+	अन्यथा
 		ret = sdw_transfer(bus, wr_msg);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "Slave frame_ctrl reg write failed\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (!multi_link) {
-		kfree(wr_msg);
-		kfree(wbuf);
-		bus->defer_msg.msg = NULL;
+	अगर (!multi_link) अणु
+		kमुक्त(wr_msg);
+		kमुक्त(wbuf);
+		bus->defer_msg.msg = शून्य;
 		bus->params.curr_bank = !bus->params.curr_bank;
 		bus->params.next_bank = !bus->params.next_bank;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	kfree(wbuf);
+	kमुक्त(wbuf);
 error_1:
-	kfree(wr_msg);
-	bus->defer_msg.msg = NULL;
-	return ret;
-}
+	kमुक्त(wr_msg);
+	bus->defer_msg.msg = शून्य;
+	वापस ret;
+पूर्ण
 
 /**
- * sdw_ml_sync_bank_switch: Multilink register bank switch
+ * sdw_ml_sync_bank_चयन: Multilink रेजिस्टर bank चयन
  *
  * @bus: SDW bus instance
  *
- * Caller function should free the buffers on error
+ * Caller function should मुक्त the buffers on error
  */
-static int sdw_ml_sync_bank_switch(struct sdw_bus *bus)
-{
-	unsigned long time_left;
+अटल पूर्णांक sdw_ml_sync_bank_चयन(काष्ठा sdw_bus *bus)
+अणु
+	अचिन्हित दीर्घ समय_left;
 
-	if (!bus->multi_link)
-		return 0;
+	अगर (!bus->multi_link)
+		वापस 0;
 
-	/* Wait for completion of transfer */
-	time_left = wait_for_completion_timeout(&bus->defer_msg.complete,
-						bus->bank_switch_timeout);
+	/* Wait क्रम completion of transfer */
+	समय_left = रुको_क्रम_completion_समयout(&bus->defer_msg.complete,
+						bus->bank_चयन_समयout);
 
-	if (!time_left) {
+	अगर (!समय_left) अणु
 		dev_err(bus->dev, "Controller Timed out on bank switch\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
 	bus->params.curr_bank = !bus->params.curr_bank;
 	bus->params.next_bank = !bus->params.next_bank;
 
-	if (bus->defer_msg.msg) {
-		kfree(bus->defer_msg.msg->buf);
-		kfree(bus->defer_msg.msg);
-	}
+	अगर (bus->defer_msg.msg) अणु
+		kमुक्त(bus->defer_msg.msg->buf);
+		kमुक्त(bus->defer_msg.msg);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int do_bank_switch(struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt;
-	const struct sdw_master_ops *ops;
-	struct sdw_bus *bus;
+अटल पूर्णांक करो_bank_चयन(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	स्थिर काष्ठा sdw_master_ops *ops;
+	काष्ठा sdw_bus *bus;
 	bool multi_link = false;
-	int m_rt_count;
-	int ret = 0;
+	पूर्णांक m_rt_count;
+	पूर्णांक ret = 0;
 
 	m_rt_count = stream->m_rt_count;
 
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
 		bus = m_rt->bus;
 		ops = bus->ops;
 
-		if (bus->multi_link && m_rt_count >= bus->hw_sync_min_links) {
+		अगर (bus->multi_link && m_rt_count >= bus->hw_sync_min_links) अणु
 			multi_link = true;
 			mutex_lock(&bus->msg_lock);
-		}
+		पूर्ण
 
-		/* Pre-bank switch */
-		if (ops->pre_bank_switch) {
-			ret = ops->pre_bank_switch(bus);
-			if (ret < 0) {
+		/* Pre-bank चयन */
+		अगर (ops->pre_bank_चयन) अणु
+			ret = ops->pre_bank_चयन(bus);
+			अगर (ret < 0) अणु
 				dev_err(bus->dev,
 					"Pre bank switch op failed: %d\n", ret);
-				goto msg_unlock;
-			}
-		}
+				जाओ msg_unlock;
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * Perform Bank switch operation.
-		 * For multi link cases, the actual bank switch is
+		 * Perक्रमm Bank चयन operation.
+		 * For multi link हालs, the actual bank चयन is
 		 * synchronized across all Masters and happens later as a
-		 * part of post_bank_switch ops.
+		 * part of post_bank_चयन ops.
 		 */
-		ret = sdw_bank_switch(bus, m_rt_count);
-		if (ret < 0) {
+		ret = sdw_bank_चयन(bus, m_rt_count);
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Bank switch failed: %d\n", ret);
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * For multi link cases, it is expected that the bank switch is
-	 * triggered by the post_bank_switch for the first Master in the list
-	 * and for the other Masters the post_bank_switch() should return doing
+	 * For multi link हालs, it is expected that the bank चयन is
+	 * triggered by the post_bank_चयन क्रम the first Master in the list
+	 * and क्रम the other Masters the post_bank_चयन() should वापस करोing
 	 * nothing.
 	 */
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
 		bus = m_rt->bus;
 		ops = bus->ops;
 
-		/* Post-bank switch */
-		if (ops->post_bank_switch) {
-			ret = ops->post_bank_switch(bus);
-			if (ret < 0) {
+		/* Post-bank चयन */
+		अगर (ops->post_bank_चयन) अणु
+			ret = ops->post_bank_चयन(bus);
+			अगर (ret < 0) अणु
 				dev_err(bus->dev,
 					"Post bank switch op failed: %d\n",
 					ret);
-				goto error;
-			}
-		} else if (multi_link) {
+				जाओ error;
+			पूर्ण
+		पूर्ण अन्यथा अगर (multi_link) अणु
 			dev_err(bus->dev,
 				"Post bank switch ops not implemented\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		/* Set the bank switch timeout to default, if not set */
-		if (!bus->bank_switch_timeout)
-			bus->bank_switch_timeout = DEFAULT_BANK_SWITCH_TIMEOUT;
+		/* Set the bank चयन समयout to शेष, अगर not set */
+		अगर (!bus->bank_चयन_समयout)
+			bus->bank_चयन_समयout = DEFAULT_BANK_SWITCH_TIMEOUT;
 
-		/* Check if bank switch was successful */
-		ret = sdw_ml_sync_bank_switch(bus);
-		if (ret < 0) {
+		/* Check अगर bank चयन was successful */
+		ret = sdw_ml_sync_bank_चयन(bus);
+		अगर (ret < 0) अणु
 			dev_err(bus->dev,
 				"multi link bank switch failed: %d\n", ret);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		if (multi_link)
+		अगर (multi_link)
 			mutex_unlock(&bus->msg_lock);
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 error:
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
 		bus = m_rt->bus;
-		if (bus->defer_msg.msg) {
-			kfree(bus->defer_msg.msg->buf);
-			kfree(bus->defer_msg.msg);
-		}
-	}
+		अगर (bus->defer_msg.msg) अणु
+			kमुक्त(bus->defer_msg.msg->buf);
+			kमुक्त(bus->defer_msg.msg);
+		पूर्ण
+	पूर्ण
 
 msg_unlock:
 
-	if (multi_link) {
-		list_for_each_entry(m_rt, &stream->master_list, stream_node) {
+	अगर (multi_link) अणु
+		list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
 			bus = m_rt->bus;
-			if (mutex_is_locked(&bus->msg_lock))
+			अगर (mutex_is_locked(&bus->msg_lock))
 				mutex_unlock(&bus->msg_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * sdw_release_stream() - Free the assigned stream runtime
+ * sdw_release_stream() - Free the asचिन्हित stream runसमय
  *
- * @stream: SoundWire stream runtime
+ * @stream: SoundWire stream runसमय
  *
  * sdw_release_stream should be called only once per stream
  */
-void sdw_release_stream(struct sdw_stream_runtime *stream)
-{
-	kfree(stream);
-}
+व्योम sdw_release_stream(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	kमुक्त(stream);
+पूर्ण
 EXPORT_SYMBOL(sdw_release_stream);
 
 /**
- * sdw_alloc_stream() - Allocate and return stream runtime
+ * sdw_alloc_stream() - Allocate and वापस stream runसमय
  *
  * @stream_name: SoundWire stream name
  *
- * Allocates a SoundWire stream runtime instance.
+ * Allocates a SoundWire stream runसमय instance.
  * sdw_alloc_stream should be called only once per stream. Typically
- * invoked from ALSA/ASoC machine/platform driver.
+ * invoked from ALSA/ASoC machine/platक्रमm driver.
  */
-struct sdw_stream_runtime *sdw_alloc_stream(const char *stream_name)
-{
-	struct sdw_stream_runtime *stream;
+काष्ठा sdw_stream_runसमय *sdw_alloc_stream(स्थिर अक्षर *stream_name)
+अणु
+	काष्ठा sdw_stream_runसमय *stream;
 
-	stream = kzalloc(sizeof(*stream), GFP_KERNEL);
-	if (!stream)
-		return NULL;
+	stream = kzalloc(माप(*stream), GFP_KERNEL);
+	अगर (!stream)
+		वापस शून्य;
 
 	stream->name = stream_name;
 	INIT_LIST_HEAD(&stream->master_list);
 	stream->state = SDW_STREAM_ALLOCATED;
 	stream->m_rt_count = 0;
 
-	return stream;
-}
+	वापस stream;
+पूर्ण
 EXPORT_SYMBOL(sdw_alloc_stream);
 
-static struct sdw_master_runtime
-*sdw_find_master_rt(struct sdw_bus *bus,
-		    struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt;
+अटल काष्ठा sdw_master_runसमय
+*sdw_find_master_rt(काष्ठा sdw_bus *bus,
+		    काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
 
-	/* Retrieve Bus handle if already available */
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
-		if (m_rt->bus == bus)
-			return m_rt;
-	}
+	/* Retrieve Bus handle अगर alपढ़ोy available */
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
+		अगर (m_rt->bus == bus)
+			वापस m_rt;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * sdw_alloc_master_rt() - Allocates and initialize Master runtime handle
+ * sdw_alloc_master_rt() - Allocates and initialize Master runसमय handle
  *
  * @bus: SDW bus instance
  * @stream_config: Stream configuration
- * @stream: Stream runtime handle.
+ * @stream: Stream runसमय handle.
  *
  * This function is to be called with bus_lock held.
  */
-static struct sdw_master_runtime
-*sdw_alloc_master_rt(struct sdw_bus *bus,
-		     struct sdw_stream_config *stream_config,
-		     struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt;
+अटल काष्ठा sdw_master_runसमय
+*sdw_alloc_master_rt(काष्ठा sdw_bus *bus,
+		     काष्ठा sdw_stream_config *stream_config,
+		     काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
 
 	/*
-	 * check if Master is already allocated (as a result of Slave adding
-	 * it first), if so skip allocation and go to configure
+	 * check अगर Master is alपढ़ोy allocated (as a result of Slave adding
+	 * it first), अगर so skip allocation and go to configure
 	 */
 	m_rt = sdw_find_master_rt(bus, stream);
-	if (m_rt)
-		goto stream_config;
+	अगर (m_rt)
+		जाओ stream_config;
 
-	m_rt = kzalloc(sizeof(*m_rt), GFP_KERNEL);
-	if (!m_rt)
-		return NULL;
+	m_rt = kzalloc(माप(*m_rt), GFP_KERNEL);
+	अगर (!m_rt)
+		वापस शून्य;
 
-	/* Initialization of Master runtime handle */
+	/* Initialization of Master runसमय handle */
 	INIT_LIST_HEAD(&m_rt->port_list);
 	INIT_LIST_HEAD(&m_rt->slave_rt_list);
 	list_add_tail(&m_rt->stream_node, &stream->master_list);
@@ -958,168 +959,168 @@ stream_config:
 	m_rt->stream = stream;
 	m_rt->direction = stream_config->direction;
 
-	return m_rt;
-}
+	वापस m_rt;
+पूर्ण
 
 /**
- * sdw_alloc_slave_rt() - Allocate and initialize Slave runtime handle.
+ * sdw_alloc_slave_rt() - Allocate and initialize Slave runसमय handle.
  *
  * @slave: Slave handle
  * @stream_config: Stream configuration
- * @stream: Stream runtime handle
+ * @stream: Stream runसमय handle
  *
  * This function is to be called with bus_lock held.
  */
-static struct sdw_slave_runtime
-*sdw_alloc_slave_rt(struct sdw_slave *slave,
-		    struct sdw_stream_config *stream_config,
-		    struct sdw_stream_runtime *stream)
-{
-	struct sdw_slave_runtime *s_rt;
+अटल काष्ठा sdw_slave_runसमय
+*sdw_alloc_slave_rt(काष्ठा sdw_slave *slave,
+		    काष्ठा sdw_stream_config *stream_config,
+		    काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_slave_runसमय *s_rt;
 
-	s_rt = kzalloc(sizeof(*s_rt), GFP_KERNEL);
-	if (!s_rt)
-		return NULL;
+	s_rt = kzalloc(माप(*s_rt), GFP_KERNEL);
+	अगर (!s_rt)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&s_rt->port_list);
 	s_rt->ch_count = stream_config->ch_count;
 	s_rt->direction = stream_config->direction;
 	s_rt->slave = slave;
 
-	return s_rt;
-}
+	वापस s_rt;
+पूर्ण
 
-static void sdw_master_port_release(struct sdw_bus *bus,
-				    struct sdw_master_runtime *m_rt)
-{
-	struct sdw_port_runtime *p_rt, *_p_rt;
+अटल व्योम sdw_master_port_release(काष्ठा sdw_bus *bus,
+				    काष्ठा sdw_master_runसमय *m_rt)
+अणु
+	काष्ठा sdw_port_runसमय *p_rt, *_p_rt;
 
-	list_for_each_entry_safe(p_rt, _p_rt, &m_rt->port_list, port_node) {
+	list_क्रम_each_entry_safe(p_rt, _p_rt, &m_rt->port_list, port_node) अणु
 		list_del(&p_rt->port_node);
-		kfree(p_rt);
-	}
-}
+		kमुक्त(p_rt);
+	पूर्ण
+पूर्ण
 
-static void sdw_slave_port_release(struct sdw_bus *bus,
-				   struct sdw_slave *slave,
-				   struct sdw_stream_runtime *stream)
-{
-	struct sdw_port_runtime *p_rt, *_p_rt;
-	struct sdw_master_runtime *m_rt;
-	struct sdw_slave_runtime *s_rt;
+अटल व्योम sdw_slave_port_release(काष्ठा sdw_bus *bus,
+				   काष्ठा sdw_slave *slave,
+				   काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_port_runसमय *p_rt, *_p_rt;
+	काष्ठा sdw_master_runसमय *m_rt;
+	काष्ठा sdw_slave_runसमय *s_rt;
 
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
-		list_for_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) {
-			if (s_rt->slave != slave)
-				continue;
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
+		list_क्रम_each_entry(s_rt, &m_rt->slave_rt_list, m_rt_node) अणु
+			अगर (s_rt->slave != slave)
+				जारी;
 
-			list_for_each_entry_safe(p_rt, _p_rt,
-						 &s_rt->port_list, port_node) {
+			list_क्रम_each_entry_safe(p_rt, _p_rt,
+						 &s_rt->port_list, port_node) अणु
 				list_del(&p_rt->port_node);
-				kfree(p_rt);
-			}
-		}
-	}
-}
+				kमुक्त(p_rt);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * sdw_release_slave_stream() - Free Slave(s) runtime handle
+ * sdw_release_slave_stream() - Free Slave(s) runसमय handle
  *
  * @slave: Slave handle.
- * @stream: Stream runtime handle.
+ * @stream: Stream runसमय handle.
  *
  * This function is to be called with bus_lock held.
  */
-static void sdw_release_slave_stream(struct sdw_slave *slave,
-				     struct sdw_stream_runtime *stream)
-{
-	struct sdw_slave_runtime *s_rt, *_s_rt;
-	struct sdw_master_runtime *m_rt;
+अटल व्योम sdw_release_slave_stream(काष्ठा sdw_slave *slave,
+				     काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_slave_runसमय *s_rt, *_s_rt;
+	काष्ठा sdw_master_runसमय *m_rt;
 
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
-		/* Retrieve Slave runtime handle */
-		list_for_each_entry_safe(s_rt, _s_rt,
-					 &m_rt->slave_rt_list, m_rt_node) {
-			if (s_rt->slave == slave) {
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
+		/* Retrieve Slave runसमय handle */
+		list_क्रम_each_entry_safe(s_rt, _s_rt,
+					 &m_rt->slave_rt_list, m_rt_node) अणु
+			अगर (s_rt->slave == slave) अणु
 				list_del(&s_rt->m_rt_node);
-				kfree(s_rt);
-				return;
-			}
-		}
-	}
-}
+				kमुक्त(s_rt);
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * sdw_release_master_stream() - Free Master runtime handle
+ * sdw_release_master_stream() - Free Master runसमय handle
  *
- * @m_rt: Master runtime node
- * @stream: Stream runtime handle.
+ * @m_rt: Master runसमय node
+ * @stream: Stream runसमय handle.
  *
  * This function is to be called with bus_lock held
- * It frees the Master runtime handle and associated Slave(s) runtime
+ * It मुक्तs the Master runसमय handle and associated Slave(s) runसमय
  * handle. If this is called first then sdw_release_slave_stream() will have
- * no effect as Slave(s) runtime handle would already be freed up.
+ * no effect as Slave(s) runसमय handle would alपढ़ोy be मुक्तd up.
  */
-static void sdw_release_master_stream(struct sdw_master_runtime *m_rt,
-				      struct sdw_stream_runtime *stream)
-{
-	struct sdw_slave_runtime *s_rt, *_s_rt;
+अटल व्योम sdw_release_master_stream(काष्ठा sdw_master_runसमय *m_rt,
+				      काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_slave_runसमय *s_rt, *_s_rt;
 
-	list_for_each_entry_safe(s_rt, _s_rt, &m_rt->slave_rt_list, m_rt_node) {
+	list_क्रम_each_entry_safe(s_rt, _s_rt, &m_rt->slave_rt_list, m_rt_node) अणु
 		sdw_slave_port_release(s_rt->slave->bus, s_rt->slave, stream);
 		sdw_release_slave_stream(s_rt->slave, stream);
-	}
+	पूर्ण
 
 	list_del(&m_rt->stream_node);
 	list_del(&m_rt->bus_node);
-	kfree(m_rt);
-}
+	kमुक्त(m_rt);
+पूर्ण
 
 /**
- * sdw_stream_remove_master() - Remove master from sdw_stream
+ * sdw_stream_हटाओ_master() - Remove master from sdw_stream
  *
  * @bus: SDW Bus instance
  * @stream: SoundWire stream
  *
- * This removes and frees port_rt and master_rt from a stream
+ * This हटाओs and मुक्तs port_rt and master_rt from a stream
  */
-int sdw_stream_remove_master(struct sdw_bus *bus,
-			     struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt, *_m_rt;
+पूर्णांक sdw_stream_हटाओ_master(काष्ठा sdw_bus *bus,
+			     काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt, *_m_rt;
 
 	mutex_lock(&bus->bus_lock);
 
-	list_for_each_entry_safe(m_rt, _m_rt,
-				 &stream->master_list, stream_node) {
-		if (m_rt->bus != bus)
-			continue;
+	list_क्रम_each_entry_safe(m_rt, _m_rt,
+				 &stream->master_list, stream_node) अणु
+		अगर (m_rt->bus != bus)
+			जारी;
 
 		sdw_master_port_release(bus, m_rt);
 		sdw_release_master_stream(m_rt, stream);
 		stream->m_rt_count--;
-	}
+	पूर्ण
 
-	if (list_empty(&stream->master_list))
+	अगर (list_empty(&stream->master_list))
 		stream->state = SDW_STREAM_RELEASED;
 
 	mutex_unlock(&bus->bus_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL(sdw_stream_remove_master);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(sdw_stream_हटाओ_master);
 
 /**
- * sdw_stream_remove_slave() - Remove slave from sdw_stream
+ * sdw_stream_हटाओ_slave() - Remove slave from sdw_stream
  *
  * @slave: SDW Slave instance
  * @stream: SoundWire stream
  *
- * This removes and frees port_rt and slave_rt from a stream
+ * This हटाओs and मुक्तs port_rt and slave_rt from a stream
  */
-int sdw_stream_remove_slave(struct sdw_slave *slave,
-			    struct sdw_stream_runtime *stream)
-{
+पूर्णांक sdw_stream_हटाओ_slave(काष्ठा sdw_slave *slave,
+			    काष्ठा sdw_stream_runसमय *stream)
+अणु
 	mutex_lock(&slave->bus->bus_lock);
 
 	sdw_slave_port_release(slave->bus, slave, stream);
@@ -1127,25 +1128,25 @@ int sdw_stream_remove_slave(struct sdw_slave *slave,
 
 	mutex_unlock(&slave->bus->bus_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL(sdw_stream_remove_slave);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(sdw_stream_हटाओ_slave);
 
 /**
  * sdw_config_stream() - Configure the allocated stream
  *
  * @dev: SDW device
  * @stream: SoundWire stream
- * @stream_config: Stream configuration for audio stream
+ * @stream_config: Stream configuration क्रम audio stream
  * @is_slave: is API called from Slave or Master
  *
  * This function is to be called with bus_lock held.
  */
-static int sdw_config_stream(struct device *dev,
-			     struct sdw_stream_runtime *stream,
-			     struct sdw_stream_config *stream_config,
+अटल पूर्णांक sdw_config_stream(काष्ठा device *dev,
+			     काष्ठा sdw_stream_runसमय *stream,
+			     काष्ठा sdw_stream_config *stream_config,
 			     bool is_slave)
-{
+अणु
 	/*
 	 * Update the stream rate, channel and bps based on data
 	 * source. For more than one data source (multilink),
@@ -1154,201 +1155,201 @@ static int sdw_config_stream(struct device *dev,
 	 * If rate/bps is zero, it means the values are not set, so skip
 	 * comparison and allow the value to be set and stored in stream
 	 */
-	if (stream->params.rate &&
-	    stream->params.rate != stream_config->frame_rate) {
+	अगर (stream->params.rate &&
+	    stream->params.rate != stream_config->frame_rate) अणु
 		dev_err(dev, "rate not matching, stream:%s\n", stream->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (stream->params.bps &&
-	    stream->params.bps != stream_config->bps) {
+	अगर (stream->params.bps &&
+	    stream->params.bps != stream_config->bps) अणु
 		dev_err(dev, "bps not matching, stream:%s\n", stream->name);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	stream->type = stream_config->type;
 	stream->params.rate = stream_config->frame_rate;
 	stream->params.bps = stream_config->bps;
 
 	/* TODO: Update this check during Device-device support */
-	if (is_slave)
+	अगर (is_slave)
 		stream->params.ch_count += stream_config->ch_count;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdw_is_valid_port_range(struct device *dev,
-				   struct sdw_port_runtime *p_rt)
-{
-	if (!SDW_VALID_PORT_RANGE(p_rt->num)) {
+अटल पूर्णांक sdw_is_valid_port_range(काष्ठा device *dev,
+				   काष्ठा sdw_port_runसमय *p_rt)
+अणु
+	अगर (!SDW_VALID_PORT_RANGE(p_rt->num)) अणु
 		dev_err(dev,
 			"SoundWire: Invalid port number :%d\n", p_rt->num);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sdw_port_runtime
-*sdw_port_alloc(struct device *dev,
-		struct sdw_port_config *port_config,
-		int port_index)
-{
-	struct sdw_port_runtime *p_rt;
+अटल काष्ठा sdw_port_runसमय
+*sdw_port_alloc(काष्ठा device *dev,
+		काष्ठा sdw_port_config *port_config,
+		पूर्णांक port_index)
+अणु
+	काष्ठा sdw_port_runसमय *p_rt;
 
-	p_rt = kzalloc(sizeof(*p_rt), GFP_KERNEL);
-	if (!p_rt)
-		return NULL;
+	p_rt = kzalloc(माप(*p_rt), GFP_KERNEL);
+	अगर (!p_rt)
+		वापस शून्य;
 
 	p_rt->ch_mask = port_config[port_index].ch_mask;
 	p_rt->num = port_config[port_index].num;
 
-	return p_rt;
-}
+	वापस p_rt;
+पूर्ण
 
-static int sdw_master_port_config(struct sdw_bus *bus,
-				  struct sdw_master_runtime *m_rt,
-				  struct sdw_port_config *port_config,
-				  unsigned int num_ports)
-{
-	struct sdw_port_runtime *p_rt;
-	int i;
+अटल पूर्णांक sdw_master_port_config(काष्ठा sdw_bus *bus,
+				  काष्ठा sdw_master_runसमय *m_rt,
+				  काष्ठा sdw_port_config *port_config,
+				  अचिन्हित पूर्णांक num_ports)
+अणु
+	काष्ठा sdw_port_runसमय *p_rt;
+	पूर्णांक i;
 
-	/* Iterate for number of ports to perform initialization */
-	for (i = 0; i < num_ports; i++) {
+	/* Iterate क्रम number of ports to perक्रमm initialization */
+	क्रम (i = 0; i < num_ports; i++) अणु
 		p_rt = sdw_port_alloc(bus->dev, port_config, i);
-		if (!p_rt)
-			return -ENOMEM;
+		अगर (!p_rt)
+			वापस -ENOMEM;
 
 		/*
-		 * TODO: Check port capabilities for requested
+		 * TODO: Check port capabilities क्रम requested
 		 * configuration (audio mode support)
 		 */
 
 		list_add_tail(&p_rt->port_node, &m_rt->port_list);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sdw_slave_port_config(struct sdw_slave *slave,
-				 struct sdw_slave_runtime *s_rt,
-				 struct sdw_port_config *port_config,
-				 unsigned int num_config)
-{
-	struct sdw_port_runtime *p_rt;
-	int i, ret;
+अटल पूर्णांक sdw_slave_port_config(काष्ठा sdw_slave *slave,
+				 काष्ठा sdw_slave_runसमय *s_rt,
+				 काष्ठा sdw_port_config *port_config,
+				 अचिन्हित पूर्णांक num_config)
+अणु
+	काष्ठा sdw_port_runसमय *p_rt;
+	पूर्णांक i, ret;
 
-	/* Iterate for number of ports to perform initialization */
-	for (i = 0; i < num_config; i++) {
+	/* Iterate क्रम number of ports to perक्रमm initialization */
+	क्रम (i = 0; i < num_config; i++) अणु
 		p_rt = sdw_port_alloc(&slave->dev, port_config, i);
-		if (!p_rt)
-			return -ENOMEM;
+		अगर (!p_rt)
+			वापस -ENOMEM;
 
 		/*
 		 * TODO: Check valid port range as defined by DisCo/
 		 * slave
 		 */
 		ret = sdw_is_valid_port_range(&slave->dev, p_rt);
-		if (ret < 0) {
-			kfree(p_rt);
-			return ret;
-		}
+		अगर (ret < 0) अणु
+			kमुक्त(p_rt);
+			वापस ret;
+		पूर्ण
 
 		/*
-		 * TODO: Check port capabilities for requested
+		 * TODO: Check port capabilities क्रम requested
 		 * configuration (audio mode support)
 		 */
 
 		list_add_tail(&p_rt->port_node, &s_rt->port_list);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sdw_stream_add_master() - Allocate and add master runtime to a stream
+ * sdw_stream_add_master() - Allocate and add master runसमय to a stream
  *
  * @bus: SDW Bus instance
- * @stream_config: Stream configuration for audio stream
- * @port_config: Port configuration for audio stream
+ * @stream_config: Stream configuration क्रम audio stream
+ * @port_config: Port configuration क्रम audio stream
  * @num_ports: Number of ports
  * @stream: SoundWire stream
  */
-int sdw_stream_add_master(struct sdw_bus *bus,
-			  struct sdw_stream_config *stream_config,
-			  struct sdw_port_config *port_config,
-			  unsigned int num_ports,
-			  struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt;
-	int ret;
+पूर्णांक sdw_stream_add_master(काष्ठा sdw_bus *bus,
+			  काष्ठा sdw_stream_config *stream_config,
+			  काष्ठा sdw_port_config *port_config,
+			  अचिन्हित पूर्णांक num_ports,
+			  काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	पूर्णांक ret;
 
 	mutex_lock(&bus->bus_lock);
 
 	/*
-	 * For multi link streams, add the second master only if
+	 * For multi link streams, add the second master only अगर
 	 * the bus supports it.
-	 * Check if bus->multi_link is set
+	 * Check अगर bus->multi_link is set
 	 */
-	if (!bus->multi_link && stream->m_rt_count > 0) {
+	अगर (!bus->multi_link && stream->m_rt_count > 0) अणु
 		dev_err(bus->dev,
 			"Multilink not supported, link %d\n", bus->link_id);
 		ret = -EINVAL;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	m_rt = sdw_alloc_master_rt(bus, stream_config, stream);
-	if (!m_rt) {
+	अगर (!m_rt) अणु
 		dev_err(bus->dev,
 			"Master runtime config failed for stream:%s\n",
 			stream->name);
 		ret = -ENOMEM;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	ret = sdw_config_stream(bus->dev, stream, stream_config, false);
-	if (ret)
-		goto stream_error;
+	अगर (ret)
+		जाओ stream_error;
 
 	ret = sdw_master_port_config(bus, m_rt, port_config, num_ports);
-	if (ret)
-		goto stream_error;
+	अगर (ret)
+		जाओ stream_error;
 
 	stream->m_rt_count++;
 
-	goto unlock;
+	जाओ unlock;
 
 stream_error:
 	sdw_release_master_stream(m_rt, stream);
 unlock:
 	mutex_unlock(&bus->bus_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sdw_stream_add_master);
 
 /**
- * sdw_stream_add_slave() - Allocate and add master/slave runtime to a stream
+ * sdw_stream_add_slave() - Allocate and add master/slave runसमय to a stream
  *
  * @slave: SDW Slave instance
- * @stream_config: Stream configuration for audio stream
+ * @stream_config: Stream configuration क्रम audio stream
  * @stream: SoundWire stream
- * @port_config: Port configuration for audio stream
+ * @port_config: Port configuration क्रम audio stream
  * @num_ports: Number of ports
  *
- * It is expected that Slave is added before adding Master
+ * It is expected that Slave is added beक्रमe adding Master
  * to the Stream.
  *
  */
-int sdw_stream_add_slave(struct sdw_slave *slave,
-			 struct sdw_stream_config *stream_config,
-			 struct sdw_port_config *port_config,
-			 unsigned int num_ports,
-			 struct sdw_stream_runtime *stream)
-{
-	struct sdw_slave_runtime *s_rt;
-	struct sdw_master_runtime *m_rt;
-	int ret;
+पूर्णांक sdw_stream_add_slave(काष्ठा sdw_slave *slave,
+			 काष्ठा sdw_stream_config *stream_config,
+			 काष्ठा sdw_port_config *port_config,
+			 अचिन्हित पूर्णांक num_ports,
+			 काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_slave_runसमय *s_rt;
+	काष्ठा sdw_master_runसमय *m_rt;
+	पूर्णांक ret;
 
 	mutex_lock(&slave->bus->bus_lock);
 
@@ -1357,60 +1358,60 @@ int sdw_stream_add_slave(struct sdw_slave *slave,
 	 * So, allocate m_rt and add Slave to it.
 	 */
 	m_rt = sdw_alloc_master_rt(slave->bus, stream_config, stream);
-	if (!m_rt) {
+	अगर (!m_rt) अणु
 		dev_err(&slave->dev,
 			"alloc master runtime failed for stream:%s\n",
 			stream->name);
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	s_rt = sdw_alloc_slave_rt(slave, stream_config, stream);
-	if (!s_rt) {
+	अगर (!s_rt) अणु
 		dev_err(&slave->dev,
 			"Slave runtime config failed for stream:%s\n",
 			stream->name);
 		ret = -ENOMEM;
-		goto stream_error;
-	}
+		जाओ stream_error;
+	पूर्ण
 
 	ret = sdw_config_stream(&slave->dev, stream, stream_config, true);
-	if (ret) {
+	अगर (ret) अणु
 		/*
 		 * sdw_release_master_stream will release s_rt in slave_rt_list in
-		 * stream_error case, but s_rt is only added to slave_rt_list
-		 * when sdw_config_stream is successful, so free s_rt explicitly
+		 * stream_error हाल, but s_rt is only added to slave_rt_list
+		 * when sdw_config_stream is successful, so मुक्त s_rt explicitly
 		 * when sdw_config_stream is failed.
 		 */
-		kfree(s_rt);
-		goto stream_error;
-	}
+		kमुक्त(s_rt);
+		जाओ stream_error;
+	पूर्ण
 
 	list_add_tail(&s_rt->m_rt_node, &m_rt->slave_rt_list);
 
 	ret = sdw_slave_port_config(slave, s_rt, port_config, num_ports);
-	if (ret)
-		goto stream_error;
+	अगर (ret)
+		जाओ stream_error;
 
 	/*
 	 * Change stream state to CONFIGURED on first Slave add.
 	 * Bus is not aware of number of Slave(s) in a stream at this
-	 * point so cannot depend on all Slave(s) to be added in order to
+	 * poपूर्णांक so cannot depend on all Slave(s) to be added in order to
 	 * change stream state to CONFIGURED.
 	 */
 	stream->state = SDW_STREAM_CONFIGURED;
-	goto error;
+	जाओ error;
 
 stream_error:
 	/*
 	 * we hit error so cleanup the stream, release all Slave(s) and
-	 * Master runtime
+	 * Master runसमय
 	 */
 	sdw_release_master_stream(m_rt, stream);
 error:
 	mutex_unlock(&slave->bus->bus_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sdw_stream_add_slave);
 
 /**
@@ -1420,97 +1421,97 @@ EXPORT_SYMBOL(sdw_stream_add_slave);
  * @direction: Data direction.
  * @port_num: Port number
  */
-struct sdw_dpn_prop *sdw_get_slave_dpn_prop(struct sdw_slave *slave,
-					    enum sdw_data_direction direction,
-					    unsigned int port_num)
-{
-	struct sdw_dpn_prop *dpn_prop;
+काष्ठा sdw_dpn_prop *sdw_get_slave_dpn_prop(काष्ठा sdw_slave *slave,
+					    क्रमागत sdw_data_direction direction,
+					    अचिन्हित पूर्णांक port_num)
+अणु
+	काष्ठा sdw_dpn_prop *dpn_prop;
 	u8 num_ports;
-	int i;
+	पूर्णांक i;
 
-	if (direction == SDW_DATA_DIR_TX) {
+	अगर (direction == SDW_DATA_सूची_TX) अणु
 		num_ports = hweight32(slave->prop.source_ports);
 		dpn_prop = slave->prop.src_dpn_prop;
-	} else {
+	पूर्ण अन्यथा अणु
 		num_ports = hweight32(slave->prop.sink_ports);
 		dpn_prop = slave->prop.sink_dpn_prop;
-	}
+	पूर्ण
 
-	for (i = 0; i < num_ports; i++) {
-		if (dpn_prop[i].num == port_num)
-			return &dpn_prop[i];
-	}
+	क्रम (i = 0; i < num_ports; i++) अणु
+		अगर (dpn_prop[i].num == port_num)
+			वापस &dpn_prop[i];
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * sdw_acquire_bus_lock: Acquire bus lock for all Master runtime(s)
+ * sdw_acquire_bus_lock: Acquire bus lock क्रम all Master runसमय(s)
  *
  * @stream: SoundWire stream
  *
- * Acquire bus_lock for each of the master runtime(m_rt) part of this
+ * Acquire bus_lock क्रम each of the master runसमय(m_rt) part of this
  * stream to reconfigure the bus.
  * NOTE: This function is called from SoundWire stream ops and is
- * expected that a global lock is held before acquiring bus_lock.
+ * expected that a global lock is held beक्रमe acquiring bus_lock.
  */
-static void sdw_acquire_bus_lock(struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt;
-	struct sdw_bus *bus;
+अटल व्योम sdw_acquire_bus_lock(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	काष्ठा sdw_bus *bus;
 
-	/* Iterate for all Master(s) in Master list */
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
+	/* Iterate क्रम all Master(s) in Master list */
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
 		bus = m_rt->bus;
 
 		mutex_lock(&bus->bus_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * sdw_release_bus_lock: Release bus lock for all Master runtime(s)
+ * sdw_release_bus_lock: Release bus lock क्रम all Master runसमय(s)
  *
  * @stream: SoundWire stream
  *
  * Release the previously held bus_lock after reconfiguring the bus.
  * NOTE: This function is called from SoundWire stream ops and is
- * expected that a global lock is held before releasing bus_lock.
+ * expected that a global lock is held beक्रमe releasing bus_lock.
  */
-static void sdw_release_bus_lock(struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt;
-	struct sdw_bus *bus;
+अटल व्योम sdw_release_bus_lock(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	काष्ठा sdw_bus *bus;
 
-	/* Iterate for all Master(s) in Master list */
-	list_for_each_entry_reverse(m_rt, &stream->master_list, stream_node) {
+	/* Iterate क्रम all Master(s) in Master list */
+	list_क्रम_each_entry_reverse(m_rt, &stream->master_list, stream_node) अणु
 		bus = m_rt->bus;
 		mutex_unlock(&bus->bus_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int _sdw_prepare_stream(struct sdw_stream_runtime *stream,
+अटल पूर्णांक _sdw_prepare_stream(काष्ठा sdw_stream_runसमय *stream,
 			       bool update_params)
-{
-	struct sdw_master_runtime *m_rt;
-	struct sdw_bus *bus = NULL;
-	struct sdw_master_prop *prop;
-	struct sdw_bus_params params;
-	int ret;
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	काष्ठा sdw_bus *bus = शून्य;
+	काष्ठा sdw_master_prop *prop;
+	काष्ठा sdw_bus_params params;
+	पूर्णांक ret;
 
 	/* Prepare  Master(s) and Slave(s) port(s) associated with stream */
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
 		bus = m_rt->bus;
 		prop = &bus->prop;
-		memcpy(&params, &bus->params, sizeof(params));
+		स_नकल(&params, &bus->params, माप(params));
 
 		/* TODO: Support Asynchronous mode */
-		if ((prop->max_clk_freq % stream->params.rate) != 0) {
+		अगर ((prop->max_clk_freq % stream->params.rate) != 0) अणु
 			dev_err(bus->dev, "Async mode not supported\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!update_params)
-			goto program_params;
+		अगर (!update_params)
+			जाओ program_params;
 
 		/* Increment cumulative bus bandwidth */
 		/* TODO: Update this during Device-Device support */
@@ -1518,55 +1519,55 @@ static int _sdw_prepare_stream(struct sdw_stream_runtime *stream,
 			m_rt->ch_count * m_rt->stream->params.bps;
 
 		/* Compute params */
-		if (bus->compute_params) {
+		अगर (bus->compute_params) अणु
 			ret = bus->compute_params(bus);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(bus->dev, "Compute params failed: %d\n",
 					ret);
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
 program_params:
 		/* Program params */
 		ret = sdw_program_params(bus, true);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Program params failed: %d\n", ret);
-			goto restore_params;
-		}
-	}
+			जाओ restore_params;
+		पूर्ण
+	पूर्ण
 
-	if (!bus) {
+	अगर (!bus) अणु
 		pr_err("Configuration error in %s\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = do_bank_switch(stream);
-	if (ret < 0) {
+	ret = करो_bank_चयन(stream);
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "Bank switch failed: %d\n", ret);
-		goto restore_params;
-	}
+		जाओ restore_params;
+	पूर्ण
 
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
 		bus = m_rt->bus;
 
-		/* Prepare port(s) on the new clock configuration */
+		/* Prepare port(s) on the new घड़ी configuration */
 		ret = sdw_prep_deprep_ports(m_rt, true);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Prepare port(s) failed ret = %d\n",
 				ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	stream->state = SDW_STREAM_PREPARED;
 
-	return ret;
+	वापस ret;
 
 restore_params:
-	memcpy(&bus->params, &params, sizeof(params));
-	return ret;
-}
+	स_नकल(&bus->params, &params, माप(params));
+	वापस ret;
+पूर्ण
 
 /**
  * sdw_prepare_stream() - Prepare SoundWire stream
@@ -1575,89 +1576,89 @@ restore_params:
  *
  * Documentation/driver-api/soundwire/stream.rst explains this API in detail
  */
-int sdw_prepare_stream(struct sdw_stream_runtime *stream)
-{
+पूर्णांक sdw_prepare_stream(काष्ठा sdw_stream_runसमय *stream)
+अणु
 	bool update_params = true;
-	int ret;
+	पूर्णांक ret;
 
-	if (!stream) {
+	अगर (!stream) अणु
 		pr_err("SoundWire: Handle not found for stream\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sdw_acquire_bus_lock(stream);
 
-	if (stream->state == SDW_STREAM_PREPARED) {
+	अगर (stream->state == SDW_STREAM_PREPARED) अणु
 		ret = 0;
-		goto state_err;
-	}
+		जाओ state_err;
+	पूर्ण
 
-	if (stream->state != SDW_STREAM_CONFIGURED &&
+	अगर (stream->state != SDW_STREAM_CONFIGURED &&
 	    stream->state != SDW_STREAM_DEPREPARED &&
-	    stream->state != SDW_STREAM_DISABLED) {
+	    stream->state != SDW_STREAM_DISABLED) अणु
 		pr_err("%s: %s: inconsistent state state %d\n",
 		       __func__, stream->name, stream->state);
 		ret = -EINVAL;
-		goto state_err;
-	}
+		जाओ state_err;
+	पूर्ण
 
 	/*
 	 * when the stream is DISABLED, this means sdw_prepare_stream()
 	 * is called as a result of an underflow or a resume operation.
-	 * In this case, the bus parameters shall not be recomputed, but
+	 * In this हाल, the bus parameters shall not be recomputed, but
 	 * still need to be re-applied
 	 */
-	if (stream->state == SDW_STREAM_DISABLED)
+	अगर (stream->state == SDW_STREAM_DISABLED)
 		update_params = false;
 
 	ret = _sdw_prepare_stream(stream, update_params);
 
 state_err:
 	sdw_release_bus_lock(stream);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sdw_prepare_stream);
 
-static int _sdw_enable_stream(struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt;
-	struct sdw_bus *bus = NULL;
-	int ret;
+अटल पूर्णांक _sdw_enable_stream(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	काष्ठा sdw_bus *bus = शून्य;
+	पूर्णांक ret;
 
 	/* Enable Master(s) and Slave(s) port(s) associated with stream */
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
 		bus = m_rt->bus;
 
 		/* Program params */
 		ret = sdw_program_params(bus, false);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Program params failed: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/* Enable port(s) */
 		ret = sdw_enable_disable_ports(m_rt, true);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev,
 				"Enable port(s) failed ret: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (!bus) {
+	अगर (!bus) अणु
 		pr_err("Configuration error in %s\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ret = do_bank_switch(stream);
-	if (ret < 0) {
+	ret = करो_bank_चयन(stream);
+	अगर (ret < 0) अणु
 		dev_err(bus->dev, "Bank switch failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	stream->state = SDW_STREAM_ENABLED;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sdw_enable_stream() - Enable SoundWire stream
@@ -1666,81 +1667,81 @@ static int _sdw_enable_stream(struct sdw_stream_runtime *stream)
  *
  * Documentation/driver-api/soundwire/stream.rst explains this API in detail
  */
-int sdw_enable_stream(struct sdw_stream_runtime *stream)
-{
-	int ret;
+पूर्णांक sdw_enable_stream(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	पूर्णांक ret;
 
-	if (!stream) {
+	अगर (!stream) अणु
 		pr_err("SoundWire: Handle not found for stream\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sdw_acquire_bus_lock(stream);
 
-	if (stream->state != SDW_STREAM_PREPARED &&
-	    stream->state != SDW_STREAM_DISABLED) {
+	अगर (stream->state != SDW_STREAM_PREPARED &&
+	    stream->state != SDW_STREAM_DISABLED) अणु
 		pr_err("%s: %s: inconsistent state state %d\n",
 		       __func__, stream->name, stream->state);
 		ret = -EINVAL;
-		goto state_err;
-	}
+		जाओ state_err;
+	पूर्ण
 
 	ret = _sdw_enable_stream(stream);
 
 state_err:
 	sdw_release_bus_lock(stream);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sdw_enable_stream);
 
-static int _sdw_disable_stream(struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt;
-	int ret;
+अटल पूर्णांक _sdw_disable_stream(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	पूर्णांक ret;
 
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
-		struct sdw_bus *bus = m_rt->bus;
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
+		काष्ठा sdw_bus *bus = m_rt->bus;
 
 		/* Disable port(s) */
 		ret = sdw_enable_disable_ports(m_rt, false);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Disable port(s) failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 	stream->state = SDW_STREAM_DISABLED;
 
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
-		struct sdw_bus *bus = m_rt->bus;
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
+		काष्ठा sdw_bus *bus = m_rt->bus;
 
 		/* Program params */
 		ret = sdw_program_params(bus, false);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Program params failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	ret = do_bank_switch(stream);
-	if (ret < 0) {
+	ret = करो_bank_चयन(stream);
+	अगर (ret < 0) अणु
 		pr_err("Bank switch failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* make sure alternate bank (previous current) is also disabled */
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
-		struct sdw_bus *bus = m_rt->bus;
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
+		काष्ठा sdw_bus *bus = m_rt->bus;
 
 		/* Disable port(s) */
 		ret = sdw_enable_disable_ports(m_rt, false);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Disable port(s) failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sdw_disable_stream() - Disable SoundWire stream
@@ -1749,73 +1750,73 @@ static int _sdw_disable_stream(struct sdw_stream_runtime *stream)
  *
  * Documentation/driver-api/soundwire/stream.rst explains this API in detail
  */
-int sdw_disable_stream(struct sdw_stream_runtime *stream)
-{
-	int ret;
+पूर्णांक sdw_disable_stream(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	पूर्णांक ret;
 
-	if (!stream) {
+	अगर (!stream) अणु
 		pr_err("SoundWire: Handle not found for stream\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sdw_acquire_bus_lock(stream);
 
-	if (stream->state != SDW_STREAM_ENABLED) {
+	अगर (stream->state != SDW_STREAM_ENABLED) अणु
 		pr_err("%s: %s: inconsistent state state %d\n",
 		       __func__, stream->name, stream->state);
 		ret = -EINVAL;
-		goto state_err;
-	}
+		जाओ state_err;
+	पूर्ण
 
 	ret = _sdw_disable_stream(stream);
 
 state_err:
 	sdw_release_bus_lock(stream);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sdw_disable_stream);
 
-static int _sdw_deprepare_stream(struct sdw_stream_runtime *stream)
-{
-	struct sdw_master_runtime *m_rt;
-	struct sdw_bus *bus;
-	int ret = 0;
+अटल पूर्णांक _sdw_deprepare_stream(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	काष्ठा sdw_master_runसमय *m_rt;
+	काष्ठा sdw_bus *bus;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(m_rt, &stream->master_list, stream_node) {
+	list_क्रम_each_entry(m_rt, &stream->master_list, stream_node) अणु
 		bus = m_rt->bus;
 		/* De-prepare port(s) */
 		ret = sdw_prep_deprep_ports(m_rt, false);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev,
 				"De-prepare port(s) failed: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/* TODO: Update this during Device-Device support */
 		bus->params.bandwidth -= m_rt->stream->params.rate *
 			m_rt->ch_count * m_rt->stream->params.bps;
 
 		/* Compute params */
-		if (bus->compute_params) {
+		अगर (bus->compute_params) अणु
 			ret = bus->compute_params(bus);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(bus->dev, "Compute params failed: %d\n",
 					ret);
-				return ret;
-			}
-		}
+				वापस ret;
+			पूर्ण
+		पूर्ण
 
 		/* Program params */
 		ret = sdw_program_params(bus, false);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(bus->dev, "Program params failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	stream->state = SDW_STREAM_DEPREPARED;
-	return do_bank_switch(stream);
-}
+	वापस करो_bank_चयन(stream);
+पूर्ण
 
 /**
  * sdw_deprepare_stream() - Deprepare SoundWire stream
@@ -1824,52 +1825,52 @@ static int _sdw_deprepare_stream(struct sdw_stream_runtime *stream)
  *
  * Documentation/driver-api/soundwire/stream.rst explains this API in detail
  */
-int sdw_deprepare_stream(struct sdw_stream_runtime *stream)
-{
-	int ret;
+पूर्णांक sdw_deprepare_stream(काष्ठा sdw_stream_runसमय *stream)
+अणु
+	पूर्णांक ret;
 
-	if (!stream) {
+	अगर (!stream) अणु
 		pr_err("SoundWire: Handle not found for stream\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	sdw_acquire_bus_lock(stream);
 
-	if (stream->state != SDW_STREAM_PREPARED &&
-	    stream->state != SDW_STREAM_DISABLED) {
+	अगर (stream->state != SDW_STREAM_PREPARED &&
+	    stream->state != SDW_STREAM_DISABLED) अणु
 		pr_err("%s: %s: inconsistent state state %d\n",
 		       __func__, stream->name, stream->state);
 		ret = -EINVAL;
-		goto state_err;
-	}
+		जाओ state_err;
+	पूर्ण
 
 	ret = _sdw_deprepare_stream(stream);
 
 state_err:
 	sdw_release_bus_lock(stream);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sdw_deprepare_stream);
 
-static int set_stream(struct snd_pcm_substream *substream,
-		      struct sdw_stream_runtime *sdw_stream)
-{
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_dai *dai;
-	int ret = 0;
-	int i;
+अटल पूर्णांक set_stream(काष्ठा snd_pcm_substream *substream,
+		      काष्ठा sdw_stream_runसमय *sdw_stream)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
+	काष्ठा snd_soc_dai *dai;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	/* Set stream pointer on all DAIs */
-	for_each_rtd_dais(rtd, i, dai) {
+	/* Set stream poपूर्णांकer on all DAIs */
+	क्रम_each_rtd_dais(rtd, i, dai) अणु
 		ret = snd_soc_dai_set_sdw_stream(dai, sdw_stream, substream->stream);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(rtd->dev, "failed to set stream pointer on dai %s\n", dai->name);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * sdw_startup_stream() - Startup SoundWire stream
@@ -1878,72 +1879,72 @@ static int set_stream(struct snd_pcm_substream *substream,
  *
  * Documentation/driver-api/soundwire/stream.rst explains this API in detail
  */
-int sdw_startup_stream(void *sdw_substream)
-{
-	struct snd_pcm_substream *substream = sdw_substream;
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct sdw_stream_runtime *sdw_stream;
-	char *name;
-	int ret;
+पूर्णांक sdw_startup_stream(व्योम *sdw_substream)
+अणु
+	काष्ठा snd_pcm_substream *substream = sdw_substream;
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
+	काष्ठा sdw_stream_runसमय *sdw_stream;
+	अक्षर *name;
+	पूर्णांक ret;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		name = kasprintf(GFP_KERNEL, "%s-Playback", substream->name);
-	else
-		name = kasprintf(GFP_KERNEL, "%s-Capture", substream->name);
+	अगर (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		name = kaप्र_लिखो(GFP_KERNEL, "%s-Playback", substream->name);
+	अन्यथा
+		name = kaप्र_लिखो(GFP_KERNEL, "%s-Capture", substream->name);
 
-	if (!name)
-		return -ENOMEM;
+	अगर (!name)
+		वापस -ENOMEM;
 
 	sdw_stream = sdw_alloc_stream(name);
-	if (!sdw_stream) {
+	अगर (!sdw_stream) अणु
 		dev_err(rtd->dev, "alloc stream failed for substream DAI %s\n", substream->name);
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ret = set_stream(substream, sdw_stream);
-	if (ret < 0)
-		goto release_stream;
-	return 0;
+	अगर (ret < 0)
+		जाओ release_stream;
+	वापस 0;
 
 release_stream:
 	sdw_release_stream(sdw_stream);
-	set_stream(substream, NULL);
+	set_stream(substream, शून्य);
 error:
-	kfree(name);
-	return ret;
-}
+	kमुक्त(name);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(sdw_startup_stream);
 
 /**
- * sdw_shutdown_stream() - Shutdown SoundWire stream
+ * sdw_shutकरोwn_stream() - Shutकरोwn SoundWire stream
  *
  * @sdw_substream: Soundwire stream
  *
  * Documentation/driver-api/soundwire/stream.rst explains this API in detail
  */
-void sdw_shutdown_stream(void *sdw_substream)
-{
-	struct snd_pcm_substream *substream = sdw_substream;
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct sdw_stream_runtime *sdw_stream;
-	struct snd_soc_dai *dai;
+व्योम sdw_shutकरोwn_stream(व्योम *sdw_substream)
+अणु
+	काष्ठा snd_pcm_substream *substream = sdw_substream;
+	काष्ठा snd_soc_pcm_runसमय *rtd = substream->निजी_data;
+	काष्ठा sdw_stream_runसमय *sdw_stream;
+	काष्ठा snd_soc_dai *dai;
 
 	/* Find stream from first CPU DAI */
 	dai = asoc_rtd_to_cpu(rtd, 0);
 
 	sdw_stream = snd_soc_dai_get_sdw_stream(dai, substream->stream);
 
-	if (IS_ERR(sdw_stream)) {
+	अगर (IS_ERR(sdw_stream)) अणु
 		dev_err(rtd->dev, "no stream found for DAI %s\n", dai->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* release memory */
-	kfree(sdw_stream->name);
+	kमुक्त(sdw_stream->name);
 	sdw_release_stream(sdw_stream);
 
 	/* clear DAI data */
-	set_stream(substream, NULL);
-}
-EXPORT_SYMBOL(sdw_shutdown_stream);
+	set_stream(substream, शून्य);
+पूर्ण
+EXPORT_SYMBOL(sdw_shutकरोwn_stream);

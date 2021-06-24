@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * Equalizer Load-balancer for serial network interfaces.
+ * Equalizer Load-balancer क्रम serial network पूर्णांकerfaces.
  *
  * (c) Copyright 1995 Simon "Guru Aleph-Null" Janes
  * NCM: Network and Communications Management, Inc.
@@ -15,35 +16,35 @@
  *    McLean VA 22101
  *    Phone: 1-703-847-0040 ext 103
  */
-#ifndef _LINUX_IF_EQL_H
-#define _LINUX_IF_EQL_H
+#अगर_अघोषित _LINUX_IF_EQL_H
+#घोषणा _LINUX_IF_EQL_H
 
 
-#include <linux/timer.h>
-#include <linux/spinlock.h>
-#include <uapi/linux/if_eql.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/spinlock.h>
+#समावेश <uapi/linux/अगर_eql.h>
 
-typedef struct slave {
-	struct list_head	list;
-	struct net_device	*dev;
-	long			priority;
-	long			priority_bps;
-	long			priority_Bps;
-	long			bytes_queued;
-} slave_t;
+प्रकार काष्ठा slave अणु
+	काष्ठा list_head	list;
+	काष्ठा net_device	*dev;
+	दीर्घ			priority;
+	दीर्घ			priority_bps;
+	दीर्घ			priority_Bps;
+	दीर्घ			bytes_queued;
+पूर्ण slave_t;
 
-typedef struct slave_queue {
+प्रकार काष्ठा slave_queue अणु
 	spinlock_t		lock;
-	struct list_head	all_slaves;
-	int			num_slaves;
-	struct net_device	*master_dev;
-} slave_queue_t;
+	काष्ठा list_head	all_slaves;
+	पूर्णांक			num_slaves;
+	काष्ठा net_device	*master_dev;
+पूर्ण slave_queue_t;
 
-typedef struct equalizer {
+प्रकार काष्ठा equalizer अणु
 	slave_queue_t		queue;
-	int			min_slaves;
-	int			max_slaves;
-	struct timer_list	timer;
-} equalizer_t;  
+	पूर्णांक			min_slaves;
+	पूर्णांक			max_slaves;
+	काष्ठा समयr_list	समयr;
+पूर्ण equalizer_t;  
 
-#endif /* _LINUX_EQL_H */
+#पूर्ण_अगर /* _LINUX_EQL_H */

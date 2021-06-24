@@ -1,102 +1,103 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2020, Oracle and/or its affiliates
  */
 
-#ifndef SVC_RDMA_PCL_H
-#define SVC_RDMA_PCL_H
+#अगर_अघोषित SVC_RDMA_PCL_H
+#घोषणा SVC_RDMA_PCL_H
 
-#include <linux/list.h>
+#समावेश <linux/list.h>
 
-struct svc_rdma_segment {
+काष्ठा svc_rdma_segment अणु
 	u32			rs_handle;
 	u32			rs_length;
 	u64			rs_offset;
-};
+पूर्ण;
 
-struct svc_rdma_chunk {
-	struct list_head	ch_list;
+काष्ठा svc_rdma_chunk अणु
+	काष्ठा list_head	ch_list;
 
 	u32			ch_position;
 	u32			ch_length;
 	u32			ch_payload_length;
 
 	u32			ch_segcount;
-	struct svc_rdma_segment	ch_segments[];
-};
+	काष्ठा svc_rdma_segment	ch_segments[];
+पूर्ण;
 
-struct svc_rdma_pcl {
-	unsigned int		cl_count;
-	struct list_head	cl_chunks;
-};
+काष्ठा svc_rdma_pcl अणु
+	अचिन्हित पूर्णांक		cl_count;
+	काष्ठा list_head	cl_chunks;
+पूर्ण;
 
 /**
  * pcl_init - Initialize a parsed chunk list
  * @pcl: parsed chunk list to initialize
  *
  */
-static inline void pcl_init(struct svc_rdma_pcl *pcl)
-{
+अटल अंतरभूत व्योम pcl_init(काष्ठा svc_rdma_pcl *pcl)
+अणु
 	INIT_LIST_HEAD(&pcl->cl_chunks);
-}
+पूर्ण
 
 /**
- * pcl_is_empty - Return true if parsed chunk list is empty
+ * pcl_is_empty - Return true अगर parsed chunk list is empty
  * @pcl: parsed chunk list
  *
  */
-static inline bool pcl_is_empty(const struct svc_rdma_pcl *pcl)
-{
-	return list_empty(&pcl->cl_chunks);
-}
+अटल अंतरभूत bool pcl_is_empty(स्थिर काष्ठा svc_rdma_pcl *pcl)
+अणु
+	वापस list_empty(&pcl->cl_chunks);
+पूर्ण
 
 /**
  * pcl_first_chunk - Return first chunk in a parsed chunk list
  * @pcl: parsed chunk list
  *
- * Returns the first chunk in the list, or NULL if the list is empty.
+ * Returns the first chunk in the list, or शून्य अगर the list is empty.
  */
-static inline struct svc_rdma_chunk *
-pcl_first_chunk(const struct svc_rdma_pcl *pcl)
-{
-	if (pcl_is_empty(pcl))
-		return NULL;
-	return list_first_entry(&pcl->cl_chunks, struct svc_rdma_chunk,
+अटल अंतरभूत काष्ठा svc_rdma_chunk *
+pcl_first_chunk(स्थिर काष्ठा svc_rdma_pcl *pcl)
+अणु
+	अगर (pcl_is_empty(pcl))
+		वापस शून्य;
+	वापस list_first_entry(&pcl->cl_chunks, काष्ठा svc_rdma_chunk,
 				ch_list);
-}
+पूर्ण
 
 /**
  * pcl_next_chunk - Return next chunk in a parsed chunk list
  * @pcl: a parsed chunk list
  * @chunk: chunk in @pcl
  *
- * Returns the next chunk in the list, or NULL if @chunk is already last.
+ * Returns the next chunk in the list, or शून्य अगर @chunk is alपढ़ोy last.
  */
-static inline struct svc_rdma_chunk *
-pcl_next_chunk(const struct svc_rdma_pcl *pcl, struct svc_rdma_chunk *chunk)
-{
-	if (list_is_last(&chunk->ch_list, &pcl->cl_chunks))
-		return NULL;
-	return list_next_entry(chunk, ch_list);
-}
+अटल अंतरभूत काष्ठा svc_rdma_chunk *
+pcl_next_chunk(स्थिर काष्ठा svc_rdma_pcl *pcl, काष्ठा svc_rdma_chunk *chunk)
+अणु
+	अगर (list_is_last(&chunk->ch_list, &pcl->cl_chunks))
+		वापस शून्य;
+	वापस list_next_entry(chunk, ch_list);
+पूर्ण
 
 /**
- * pcl_for_each_chunk - Iterate over chunks in a parsed chunk list
+ * pcl_क्रम_each_chunk - Iterate over chunks in a parsed chunk list
  * @pos: the loop cursor
  * @pcl: a parsed chunk list
  */
-#define pcl_for_each_chunk(pos, pcl) \
-	for (pos = list_first_entry(&(pcl)->cl_chunks, struct svc_rdma_chunk, ch_list); \
+#घोषणा pcl_क्रम_each_chunk(pos, pcl) \
+	क्रम (pos = list_first_entry(&(pcl)->cl_chunks, काष्ठा svc_rdma_chunk, ch_list); \
 	     &pos->ch_list != &(pcl)->cl_chunks; \
 	     pos = list_next_entry(pos, ch_list))
 
 /**
- * pcl_for_each_segment - Iterate over segments in a parsed chunk
+ * pcl_क्रम_each_segment - Iterate over segments in a parsed chunk
  * @pos: the loop cursor
  * @chunk: a parsed chunk
  */
-#define pcl_for_each_segment(pos, chunk) \
-	for (pos = &(chunk)->ch_segments[0]; \
+#घोषणा pcl_क्रम_each_segment(pos, chunk) \
+	क्रम (pos = &(chunk)->ch_segments[0]; \
 	     pos <= &(chunk)->ch_segments[(chunk)->ch_segcount - 1]; \
 	     pos++)
 
@@ -106,23 +107,23 @@ pcl_next_chunk(const struct svc_rdma_pcl *pcl, struct svc_rdma_chunk *chunk)
  *
  * Returns starting offset of the region just after @chunk
  */
-static inline unsigned int
-pcl_chunk_end_offset(const struct svc_rdma_chunk *chunk)
-{
-	return xdr_align_size(chunk->ch_position + chunk->ch_payload_length);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक
+pcl_chunk_end_offset(स्थिर काष्ठा svc_rdma_chunk *chunk)
+अणु
+	वापस xdr_align_size(chunk->ch_position + chunk->ch_payload_length);
+पूर्ण
 
-struct svc_rdma_recv_ctxt;
+काष्ठा svc_rdma_recv_ctxt;
 
-extern void pcl_free(struct svc_rdma_pcl *pcl);
-extern bool pcl_alloc_call(struct svc_rdma_recv_ctxt *rctxt, __be32 *p);
-extern bool pcl_alloc_read(struct svc_rdma_recv_ctxt *rctxt, __be32 *p);
-extern bool pcl_alloc_write(struct svc_rdma_recv_ctxt *rctxt,
-			    struct svc_rdma_pcl *pcl, __be32 *p);
-extern int pcl_process_nonpayloads(const struct svc_rdma_pcl *pcl,
-				   const struct xdr_buf *xdr,
-				   int (*actor)(const struct xdr_buf *,
-						void *),
-				   void *data);
+बाह्य व्योम pcl_मुक्त(काष्ठा svc_rdma_pcl *pcl);
+बाह्य bool pcl_alloc_call(काष्ठा svc_rdma_recv_ctxt *rctxt, __be32 *p);
+बाह्य bool pcl_alloc_पढ़ो(काष्ठा svc_rdma_recv_ctxt *rctxt, __be32 *p);
+बाह्य bool pcl_alloc_ग_लिखो(काष्ठा svc_rdma_recv_ctxt *rctxt,
+			    काष्ठा svc_rdma_pcl *pcl, __be32 *p);
+बाह्य पूर्णांक pcl_process_nonpayloads(स्थिर काष्ठा svc_rdma_pcl *pcl,
+				   स्थिर काष्ठा xdr_buf *xdr,
+				   पूर्णांक (*actor)(स्थिर काष्ठा xdr_buf *,
+						व्योम *),
+				   व्योम *data);
 
-#endif	/* SVC_RDMA_PCL_H */
+#पूर्ण_अगर	/* SVC_RDMA_PCL_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * memconsole-coreboot.c
  *
@@ -7,103 +8,103 @@
  * Copyright 2017 Google Inc.
  */
 
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "memconsole.h"
-#include "coreboot_table.h"
+#समावेश "memconsole.h"
+#समावेश "coreboot_table.h"
 
-#define CB_TAG_CBMEM_CONSOLE	0x17
+#घोषणा CB_TAG_CBMEM_CONSOLE	0x17
 
 /* CBMEM firmware console log descriptor. */
-struct cbmem_cons {
-	u32 size_dont_access_after_boot;
+काष्ठा cbmem_cons अणु
+	u32 size_करोnt_access_after_boot;
 	u32 cursor;
 	u8  body[];
-} __packed;
+पूर्ण __packed;
 
-#define CURSOR_MASK ((1 << 28) - 1)
-#define OVERFLOW (1 << 31)
+#घोषणा CURSOR_MASK ((1 << 28) - 1)
+#घोषणा OVERFLOW (1 << 31)
 
-static struct cbmem_cons *cbmem_console;
-static u32 cbmem_console_size;
+अटल काष्ठा cbmem_cons *cbmem_console;
+अटल u32 cbmem_console_size;
 
 /*
- * The cbmem_console structure is read again on every access because it may
- * change at any time if runtime firmware logs new messages. This may rarely
- * lead to race conditions where the firmware overwrites the beginning of the
- * ring buffer with more lines after we have already read |cursor|. It should be
- * rare and harmless enough that we don't spend extra effort working around it.
+ * The cbmem_console काष्ठाure is पढ़ो again on every access because it may
+ * change at any समय अगर runसमय firmware logs new messages. This may rarely
+ * lead to race conditions where the firmware overग_लिखोs the beginning of the
+ * ring buffer with more lines after we have alपढ़ोy पढ़ो |cursor|. It should be
+ * rare and harmless enough that we करोn't spend extra efक्रमt working around it.
  */
-static ssize_t memconsole_coreboot_read(char *buf, loff_t pos, size_t count)
-{
+अटल sमाप_प्रकार memconsole_coreboot_पढ़ो(अक्षर *buf, loff_t pos, माप_प्रकार count)
+अणु
 	u32 cursor = cbmem_console->cursor & CURSOR_MASK;
 	u32 flags = cbmem_console->cursor & ~CURSOR_MASK;
 	u32 size = cbmem_console_size;
-	struct seg {	/* describes ring buffer segments in logical order */
+	काष्ठा seg अणु	/* describes ring buffer segments in logical order */
 		u32 phys;	/* physical offset from start of mem buffer */
 		u32 len;	/* length of segment */
-	} seg[2] = { {0}, {0} };
-	size_t done = 0;
-	int i;
+	पूर्ण seg[2] = अणु अणु0पूर्ण, अणु0पूर्ण पूर्ण;
+	माप_प्रकार करोne = 0;
+	पूर्णांक i;
 
-	if (flags & OVERFLOW) {
-		if (cursor > size)	/* Shouldn't really happen, but... */
+	अगर (flags & OVERFLOW) अणु
+		अगर (cursor > size)	/* Shouldn't really happen, but... */
 			cursor = 0;
-		seg[0] = (struct seg){.phys = cursor, .len = size - cursor};
-		seg[1] = (struct seg){.phys = 0, .len = cursor};
-	} else {
-		seg[0] = (struct seg){.phys = 0, .len = min(cursor, size)};
-	}
+		seg[0] = (काष्ठा seg)अणु.phys = cursor, .len = size - cursorपूर्ण;
+		seg[1] = (काष्ठा seg)अणु.phys = 0, .len = cursorपूर्ण;
+	पूर्ण अन्यथा अणु
+		seg[0] = (काष्ठा seg)अणु.phys = 0, .len = min(cursor, size)पूर्ण;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(seg) && count > done; i++) {
-		done += memory_read_from_buffer(buf + done, count - done, &pos,
+	क्रम (i = 0; i < ARRAY_SIZE(seg) && count > करोne; i++) अणु
+		करोne += memory_पढ़ो_from_buffer(buf + करोne, count - करोne, &pos,
 			cbmem_console->body + seg[i].phys, seg[i].len);
 		pos -= seg[i].len;
-	}
-	return done;
-}
+	पूर्ण
+	वापस करोne;
+पूर्ण
 
-static int memconsole_probe(struct coreboot_device *dev)
-{
-	struct cbmem_cons *tmp_cbmc;
+अटल पूर्णांक memconsole_probe(काष्ठा coreboot_device *dev)
+अणु
+	काष्ठा cbmem_cons *पंचांगp_cbmc;
 
-	tmp_cbmc = memremap(dev->cbmem_ref.cbmem_addr,
-			    sizeof(*tmp_cbmc), MEMREMAP_WB);
+	पंचांगp_cbmc = memremap(dev->cbmem_ref.cbmem_addr,
+			    माप(*पंचांगp_cbmc), MEMREMAP_WB);
 
-	if (!tmp_cbmc)
-		return -ENOMEM;
+	अगर (!पंचांगp_cbmc)
+		वापस -ENOMEM;
 
 	/* Read size only once to prevent overrun attack through /dev/mem. */
-	cbmem_console_size = tmp_cbmc->size_dont_access_after_boot;
+	cbmem_console_size = पंचांगp_cbmc->size_करोnt_access_after_boot;
 	cbmem_console = devm_memremap(&dev->dev, dev->cbmem_ref.cbmem_addr,
-				 cbmem_console_size + sizeof(*cbmem_console),
+				 cbmem_console_size + माप(*cbmem_console),
 				 MEMREMAP_WB);
-	memunmap(tmp_cbmc);
+	memunmap(पंचांगp_cbmc);
 
-	if (IS_ERR(cbmem_console))
-		return PTR_ERR(cbmem_console);
+	अगर (IS_ERR(cbmem_console))
+		वापस PTR_ERR(cbmem_console);
 
-	memconsole_setup(memconsole_coreboot_read);
+	memconsole_setup(memconsole_coreboot_पढ़ो);
 
-	return memconsole_sysfs_init();
-}
+	वापस memconsole_sysfs_init();
+पूर्ण
 
-static void memconsole_remove(struct coreboot_device *dev)
-{
-	memconsole_exit();
-}
+अटल व्योम memconsole_हटाओ(काष्ठा coreboot_device *dev)
+अणु
+	memconsole_निकास();
+पूर्ण
 
-static struct coreboot_driver memconsole_driver = {
+अटल काष्ठा coreboot_driver memconsole_driver = अणु
 	.probe = memconsole_probe,
-	.remove = memconsole_remove,
-	.drv = {
+	.हटाओ = memconsole_हटाओ,
+	.drv = अणु
 		.name = "memconsole",
-	},
+	पूर्ण,
 	.tag = CB_TAG_CBMEM_CONSOLE,
-};
+पूर्ण;
 module_coreboot_driver(memconsole_driver);
 
 MODULE_AUTHOR("Google, Inc.");

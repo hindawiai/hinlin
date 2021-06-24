@@ -1,197 +1,198 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2019, The Linaro Limited. All rights reserved.
  */
-#include <linux/coresight.h>
-#include <linux/device.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/property.h>
-#include <linux/slab.h>
+#समावेश <linux/coresight.h>
+#समावेश <linux/device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/property.h>
+#समावेश <linux/slab.h>
 
-#include <dt-bindings/arm/coresight-cti-dt.h>
+#समावेश <dt-bindings/arm/coresight-cti-dt.h>
 
-#include "coresight-cti.h"
-#include "coresight-priv.h"
+#समावेश "coresight-cti.h"
+#समावेश "coresight-priv.h"
 
-/* Number of CTI signals in the v8 architecturally defined connection */
-#define NR_V8PE_IN_SIGS		2
-#define NR_V8PE_OUT_SIGS	3
-#define NR_V8ETM_INOUT_SIGS	4
+/* Number of CTI संकेतs in the v8 architecturally defined connection */
+#घोषणा NR_V8PE_IN_SIGS		2
+#घोषणा NR_V8PE_OUT_SIGS	3
+#घोषणा NR_V8ETM_INOUT_SIGS	4
 
 /* CTI device tree trigger connection node keyword */
-#define CTI_DT_CONNS		"trig-conns"
+#घोषणा CTI_DT_CONNS		"trig-conns"
 
 /* CTI device tree connection property keywords */
-#define CTI_DT_V8ARCH_COMPAT	"arm,coresight-cti-v8-arch"
-#define CTI_DT_CSDEV_ASSOC	"arm,cs-dev-assoc"
-#define CTI_DT_TRIGIN_SIGS	"arm,trig-in-sigs"
-#define CTI_DT_TRIGOUT_SIGS	"arm,trig-out-sigs"
-#define CTI_DT_TRIGIN_TYPES	"arm,trig-in-types"
-#define CTI_DT_TRIGOUT_TYPES	"arm,trig-out-types"
-#define CTI_DT_FILTER_OUT_SIGS	"arm,trig-filters"
-#define CTI_DT_CONN_NAME	"arm,trig-conn-name"
-#define CTI_DT_CTM_ID		"arm,cti-ctm-id"
+#घोषणा CTI_DT_V8ARCH_COMPAT	"arm,coresight-cti-v8-arch"
+#घोषणा CTI_DT_CSDEV_ASSOC	"arm,cs-dev-assoc"
+#घोषणा CTI_DT_TRIGIN_SIGS	"arm,trig-in-sigs"
+#घोषणा CTI_DT_TRIGOUT_SIGS	"arm,trig-out-sigs"
+#घोषणा CTI_DT_TRIGIN_TYPES	"arm,trig-in-types"
+#घोषणा CTI_DT_TRIGOUT_TYPES	"arm,trig-out-types"
+#घोषणा CTI_DT_FILTER_OUT_SIGS	"arm,trig-filters"
+#घोषणा CTI_DT_CONN_NAME	"arm,trig-conn-name"
+#घोषणा CTI_DT_CTM_ID		"arm,cti-ctm-id"
 
-#ifdef CONFIG_OF
+#अगर_घोषित CONFIG_OF
 /*
- * CTI can be bound to a CPU, or a system device.
+ * CTI can be bound to a CPU, or a प्रणाली device.
  * CPU can be declared at the device top level or in a connections node
  * so need to check relative to node not device.
  */
-static int of_cti_get_cpu_at_node(const struct device_node *node)
-{
-	int cpu;
-	struct device_node *dn;
+अटल पूर्णांक of_cti_get_cpu_at_node(स्थिर काष्ठा device_node *node)
+अणु
+	पूर्णांक cpu;
+	काष्ठा device_node *dn;
 
-	if (node == NULL)
-		return -1;
+	अगर (node == शून्य)
+		वापस -1;
 
 	dn = of_parse_phandle(node, "cpu", 0);
-	/* CTI affinity defaults to no cpu */
-	if (!dn)
-		return -1;
+	/* CTI affinity शेषs to no cpu */
+	अगर (!dn)
+		वापस -1;
 	cpu = of_cpu_node_to_id(dn);
 	of_node_put(dn);
 
-	/* No Affinity  if no cpu nodes are found */
-	return (cpu < 0) ? -1 : cpu;
-}
+	/* No Affinity  अगर no cpu nodes are found */
+	वापस (cpu < 0) ? -1 : cpu;
+पूर्ण
 
-#else
-static int of_cti_get_cpu_at_node(const struct device_node *node)
-{
-	return -1;
-}
+#अन्यथा
+अटल पूर्णांक of_cti_get_cpu_at_node(स्थिर काष्ठा device_node *node)
+अणु
+	वापस -1;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /*
- * CTI can be bound to a CPU, or a system device.
+ * CTI can be bound to a CPU, or a प्रणाली device.
  * CPU can be declared at the device top level or in a connections node
  * so need to check relative to node not device.
  */
-static int cti_plat_get_cpu_at_node(struct fwnode_handle *fwnode)
-{
-	if (is_of_node(fwnode))
-		return of_cti_get_cpu_at_node(to_of_node(fwnode));
-	return -1;
-}
+अटल पूर्णांक cti_plat_get_cpu_at_node(काष्ठा fwnode_handle *fwnode)
+अणु
+	अगर (is_of_node(fwnode))
+		वापस of_cti_get_cpu_at_node(to_of_node(fwnode));
+	वापस -1;
+पूर्ण
 
-const char *cti_plat_get_node_name(struct fwnode_handle *fwnode)
-{
-	if (is_of_node(fwnode))
-		return of_node_full_name(to_of_node(fwnode));
-	return "unknown";
-}
+स्थिर अक्षर *cti_plat_get_node_name(काष्ठा fwnode_handle *fwnode)
+अणु
+	अगर (is_of_node(fwnode))
+		वापस of_node_full_name(to_of_node(fwnode));
+	वापस "unknown";
+पूर्ण
 
 /*
  * Extract a name from the fwnode.
- * If the device associated with the node is a coresight_device, then return
- * that name and the coresight_device pointer, otherwise return the node name.
+ * If the device associated with the node is a coresight_device, then वापस
+ * that name and the coresight_device poपूर्णांकer, otherwise वापस the node name.
  */
-static const char *
-cti_plat_get_csdev_or_node_name(struct fwnode_handle *fwnode,
-				struct coresight_device **csdev)
-{
-	const char *name = NULL;
+अटल स्थिर अक्षर *
+cti_plat_get_csdev_or_node_name(काष्ठा fwnode_handle *fwnode,
+				काष्ठा coresight_device **csdev)
+अणु
+	स्थिर अक्षर *name = शून्य;
 	*csdev = coresight_find_csdev_by_fwnode(fwnode);
-	if (*csdev)
+	अगर (*csdev)
 		name = dev_name(&(*csdev)->dev);
-	else
+	अन्यथा
 		name = cti_plat_get_node_name(fwnode);
-	return name;
-}
+	वापस name;
+पूर्ण
 
-static bool cti_plat_node_name_eq(struct fwnode_handle *fwnode,
-				  const char *name)
-{
-	if (is_of_node(fwnode))
-		return of_node_name_eq(to_of_node(fwnode), name);
-	return false;
-}
+अटल bool cti_plat_node_name_eq(काष्ठा fwnode_handle *fwnode,
+				  स्थिर अक्षर *name)
+अणु
+	अगर (is_of_node(fwnode))
+		वापस of_node_name_eq(to_of_node(fwnode), name);
+	वापस false;
+पूर्ण
 
-static int cti_plat_create_v8_etm_connection(struct device *dev,
-					     struct cti_drvdata *drvdata)
-{
-	int ret = -ENOMEM, i;
-	struct fwnode_handle *root_fwnode, *cs_fwnode;
-	const char *assoc_name = NULL;
-	struct coresight_device *csdev;
-	struct cti_trig_con *tc = NULL;
+अटल पूर्णांक cti_plat_create_v8_eपंचांग_connection(काष्ठा device *dev,
+					     काष्ठा cti_drvdata *drvdata)
+अणु
+	पूर्णांक ret = -ENOMEM, i;
+	काष्ठा fwnode_handle *root_fwnode, *cs_fwnode;
+	स्थिर अक्षर *assoc_name = शून्य;
+	काष्ठा coresight_device *csdev;
+	काष्ठा cti_trig_con *tc = शून्य;
 
 	root_fwnode = dev_fwnode(dev);
-	if (IS_ERR_OR_NULL(root_fwnode))
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(root_fwnode))
+		वापस -EINVAL;
 
-	/* Can optionally have an etm node - return if not  */
+	/* Can optionally have an eपंचांग node - वापस अगर not  */
 	cs_fwnode = fwnode_find_reference(root_fwnode, CTI_DT_CSDEV_ASSOC, 0);
-	if (IS_ERR(cs_fwnode))
-		return 0;
+	अगर (IS_ERR(cs_fwnode))
+		वापस 0;
 
 	/* allocate memory */
 	tc = cti_allocate_trig_con(dev, NR_V8ETM_INOUT_SIGS,
 				   NR_V8ETM_INOUT_SIGS);
-	if (!tc)
-		goto create_v8_etm_out;
+	अगर (!tc)
+		जाओ create_v8_eपंचांग_out;
 
 	/* build connection data */
 	tc->con_in->used_mask = 0xF0; /* sigs <4,5,6,7> */
 	tc->con_out->used_mask = 0xF0; /* sigs <4,5,6,7> */
 
 	/*
-	 * The EXTOUT type signals from the ETM are connected to a set of input
+	 * The EXTOUT type संकेतs from the ETM are connected to a set of input
 	 * triggers on the CTI, the EXTIN being connected to output triggers.
 	 */
-	for (i = 0; i < NR_V8ETM_INOUT_SIGS; i++) {
+	क्रम (i = 0; i < NR_V8ETM_INOUT_SIGS; i++) अणु
 		tc->con_in->sig_types[i] = ETM_EXTOUT;
 		tc->con_out->sig_types[i] = ETM_EXTIN;
-	}
+	पूर्ण
 
 	/*
-	 * We look to see if the ETM coresight device associated with this
-	 * handle has been registered with the system - i.e. probed before
-	 * this CTI. If so csdev will be non NULL and we can use the device
+	 * We look to see अगर the ETM coresight device associated with this
+	 * handle has been रेजिस्टरed with the प्रणाली - i.e. probed beक्रमe
+	 * this CTI. If so csdev will be non शून्य and we can use the device
 	 * name and pass the csdev to the connection entry function where
 	 * the association will be recorded.
 	 * If not, then simply record the name in the connection data, the
-	 * probing of the ETM will call into the CTI driver API to update the
+	 * probing of the ETM will call पूर्णांकo the CTI driver API to update the
 	 * association then.
 	 */
 	assoc_name = cti_plat_get_csdev_or_node_name(cs_fwnode, &csdev);
 	ret = cti_add_connection_entry(dev, drvdata, tc, csdev, assoc_name);
 
-create_v8_etm_out:
+create_v8_eपंचांग_out:
 	fwnode_handle_put(cs_fwnode);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Create an architecturally defined v8 connection
  * must have a cpu, can have an ETM.
  */
-static int cti_plat_create_v8_connections(struct device *dev,
-					  struct cti_drvdata *drvdata)
-{
-	struct cti_device *cti_dev = &drvdata->ctidev;
-	struct cti_trig_con *tc = NULL;
-	int cpuid = 0;
-	char cpu_name_str[16];
-	int ret = -ENOMEM;
+अटल पूर्णांक cti_plat_create_v8_connections(काष्ठा device *dev,
+					  काष्ठा cti_drvdata *drvdata)
+अणु
+	काष्ठा cti_device *cti_dev = &drvdata->ctidev;
+	काष्ठा cti_trig_con *tc = शून्य;
+	पूर्णांक cpuid = 0;
+	अक्षर cpu_name_str[16];
+	पूर्णांक ret = -ENOMEM;
 
 	/* Must have a cpu node */
 	cpuid = cti_plat_get_cpu_at_node(dev_fwnode(dev));
-	if (cpuid < 0) {
+	अगर (cpuid < 0) अणु
 		dev_warn(dev,
 			 "ARM v8 architectural CTI connection: missing cpu\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	cti_dev->cpu = cpuid;
 
 	/* Allocate the v8 cpu connection memory */
 	tc = cti_allocate_trig_con(dev, NR_V8PE_IN_SIGS, NR_V8PE_OUT_SIGS);
-	if (!tc)
-		goto of_create_v8_out;
+	अगर (!tc)
+		जाओ of_create_v8_out;
 
 	/* Set the v8 PE CTI connection data */
 	tc->con_in->used_mask = 0x3; /* sigs <0 1> */
@@ -201,290 +202,290 @@ static int cti_plat_create_v8_connections(struct device *dev,
 	tc->con_out->sig_types[0] = PE_EDBGREQ;
 	tc->con_out->sig_types[1] = PE_DBGRESTART;
 	tc->con_out->sig_types[2] = PE_CTIIRQ;
-	scnprintf(cpu_name_str, sizeof(cpu_name_str), "cpu%d", cpuid);
+	scnम_लिखो(cpu_name_str, माप(cpu_name_str), "cpu%d", cpuid);
 
-	ret = cti_add_connection_entry(dev, drvdata, tc, NULL, cpu_name_str);
-	if (ret)
-		goto of_create_v8_out;
+	ret = cti_add_connection_entry(dev, drvdata, tc, शून्य, cpu_name_str);
+	अगर (ret)
+		जाओ of_create_v8_out;
 
 	/* Create the v8 ETM associated connection */
-	ret = cti_plat_create_v8_etm_connection(dev, drvdata);
-	if (ret)
-		goto of_create_v8_out;
+	ret = cti_plat_create_v8_eपंचांग_connection(dev, drvdata);
+	अगर (ret)
+		जाओ of_create_v8_out;
 
 	/* filter pe_edbgreq - PE trigout sig <0> */
 	drvdata->config.trig_out_filter |= 0x1;
 
 of_create_v8_out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cti_plat_check_v8_arch_compatible(struct device *dev)
-{
-	struct fwnode_handle *fwnode = dev_fwnode(dev);
+अटल पूर्णांक cti_plat_check_v8_arch_compatible(काष्ठा device *dev)
+अणु
+	काष्ठा fwnode_handle *fwnode = dev_fwnode(dev);
 
-	if (is_of_node(fwnode))
-		return of_device_is_compatible(to_of_node(fwnode),
+	अगर (is_of_node(fwnode))
+		वापस of_device_is_compatible(to_of_node(fwnode),
 					       CTI_DT_V8ARCH_COMPAT);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cti_plat_count_sig_elements(const struct fwnode_handle *fwnode,
-				       const char *name)
-{
-	int nr_elem = fwnode_property_count_u32(fwnode, name);
+अटल पूर्णांक cti_plat_count_sig_elements(स्थिर काष्ठा fwnode_handle *fwnode,
+				       स्थिर अक्षर *name)
+अणु
+	पूर्णांक nr_elem = fwnode_property_count_u32(fwnode, name);
 
-	return (nr_elem < 0 ? 0 : nr_elem);
-}
+	वापस (nr_elem < 0 ? 0 : nr_elem);
+पूर्ण
 
-static int cti_plat_read_trig_group(struct cti_trig_grp *tgrp,
-				    const struct fwnode_handle *fwnode,
-				    const char *grp_name)
-{
-	int idx, err = 0;
+अटल पूर्णांक cti_plat_पढ़ो_trig_group(काष्ठा cti_trig_grp *tgrp,
+				    स्थिर काष्ठा fwnode_handle *fwnode,
+				    स्थिर अक्षर *grp_name)
+अणु
+	पूर्णांक idx, err = 0;
 	u32 *values;
 
-	if (!tgrp->nr_sigs)
-		return 0;
+	अगर (!tgrp->nr_sigs)
+		वापस 0;
 
-	values = kcalloc(tgrp->nr_sigs, sizeof(u32), GFP_KERNEL);
-	if (!values)
-		return -ENOMEM;
+	values = kसुस्मृति(tgrp->nr_sigs, माप(u32), GFP_KERNEL);
+	अगर (!values)
+		वापस -ENOMEM;
 
-	err = fwnode_property_read_u32_array(fwnode, grp_name,
+	err = fwnode_property_पढ़ो_u32_array(fwnode, grp_name,
 					     values, tgrp->nr_sigs);
 
-	if (!err) {
-		/* set the signal usage mask */
-		for (idx = 0; idx < tgrp->nr_sigs; idx++)
+	अगर (!err) अणु
+		/* set the संकेत usage mask */
+		क्रम (idx = 0; idx < tgrp->nr_sigs; idx++)
 			tgrp->used_mask |= BIT(values[idx]);
-	}
+	पूर्ण
 
-	kfree(values);
-	return err;
-}
+	kमुक्त(values);
+	वापस err;
+पूर्ण
 
-static int cti_plat_read_trig_types(struct cti_trig_grp *tgrp,
-				    const struct fwnode_handle *fwnode,
-				    const char *type_name)
-{
-	int items, err = 0, nr_sigs;
-	u32 *values = NULL, i;
+अटल पूर्णांक cti_plat_पढ़ो_trig_types(काष्ठा cti_trig_grp *tgrp,
+				    स्थिर काष्ठा fwnode_handle *fwnode,
+				    स्थिर अक्षर *type_name)
+अणु
+	पूर्णांक items, err = 0, nr_sigs;
+	u32 *values = शून्य, i;
 
-	/* allocate an array according to number of signals in connection */
+	/* allocate an array according to number of संकेतs in connection */
 	nr_sigs = tgrp->nr_sigs;
-	if (!nr_sigs)
-		return 0;
+	अगर (!nr_sigs)
+		वापस 0;
 
-	/* see if any types have been included in the device description */
+	/* see अगर any types have been included in the device description */
 	items = cti_plat_count_sig_elements(fwnode, type_name);
-	if (items > nr_sigs)
-		return -EINVAL;
+	अगर (items > nr_sigs)
+		वापस -EINVAL;
 
-	/* need an array to store the values iff there are any */
-	if (items) {
-		values = kcalloc(items, sizeof(u32), GFP_KERNEL);
-		if (!values)
-			return -ENOMEM;
+	/* need an array to store the values अगरf there are any */
+	अगर (items) अणु
+		values = kसुस्मृति(items, माप(u32), GFP_KERNEL);
+		अगर (!values)
+			वापस -ENOMEM;
 
-		err = fwnode_property_read_u32_array(fwnode, type_name,
+		err = fwnode_property_पढ़ो_u32_array(fwnode, type_name,
 						     values, items);
-		if (err)
-			goto read_trig_types_out;
-	}
+		अगर (err)
+			जाओ पढ़ो_trig_types_out;
+	पूर्ण
 
 	/*
-	 * Match type id to signal index, 1st type to 1st index etc.
-	 * If fewer types than signals default remainder to GEN_IO.
+	 * Match type id to संकेत index, 1st type to 1st index etc.
+	 * If fewer types than संकेतs शेष reमुख्यder to GEN_IO.
 	 */
-	for (i = 0; i < nr_sigs; i++) {
-		if (i < items) {
+	क्रम (i = 0; i < nr_sigs; i++) अणु
+		अगर (i < items) अणु
 			tgrp->sig_types[i] =
 				values[i] < CTI_TRIG_MAX ? values[i] : GEN_IO;
-		} else {
+		पूर्ण अन्यथा अणु
 			tgrp->sig_types[i] = GEN_IO;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-read_trig_types_out:
-	kfree(values);
-	return err;
-}
+पढ़ो_trig_types_out:
+	kमुक्त(values);
+	वापस err;
+पूर्ण
 
-static int cti_plat_process_filter_sigs(struct cti_drvdata *drvdata,
-					const struct fwnode_handle *fwnode)
-{
-	struct cti_trig_grp *tg = NULL;
-	int err = 0, nr_filter_sigs;
+अटल पूर्णांक cti_plat_process_filter_sigs(काष्ठा cti_drvdata *drvdata,
+					स्थिर काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा cti_trig_grp *tg = शून्य;
+	पूर्णांक err = 0, nr_filter_sigs;
 
 	nr_filter_sigs = cti_plat_count_sig_elements(fwnode,
 						     CTI_DT_FILTER_OUT_SIGS);
-	if (nr_filter_sigs == 0)
-		return 0;
+	अगर (nr_filter_sigs == 0)
+		वापस 0;
 
-	if (nr_filter_sigs > drvdata->config.nr_trig_max)
-		return -EINVAL;
+	अगर (nr_filter_sigs > drvdata->config.nr_trig_max)
+		वापस -EINVAL;
 
-	tg = kzalloc(sizeof(*tg), GFP_KERNEL);
-	if (!tg)
-		return -ENOMEM;
+	tg = kzalloc(माप(*tg), GFP_KERNEL);
+	अगर (!tg)
+		वापस -ENOMEM;
 
-	err = cti_plat_read_trig_group(tg, fwnode, CTI_DT_FILTER_OUT_SIGS);
-	if (!err)
+	err = cti_plat_पढ़ो_trig_group(tg, fwnode, CTI_DT_FILTER_OUT_SIGS);
+	अगर (!err)
 		drvdata->config.trig_out_filter |= tg->used_mask;
 
-	kfree(tg);
-	return err;
-}
+	kमुक्त(tg);
+	वापस err;
+पूर्ण
 
-static int cti_plat_create_connection(struct device *dev,
-				      struct cti_drvdata *drvdata,
-				      struct fwnode_handle *fwnode)
-{
-	struct cti_trig_con *tc = NULL;
-	int cpuid = -1, err = 0;
-	struct coresight_device *csdev = NULL;
-	const char *assoc_name = "unknown";
-	char cpu_name_str[16];
-	int nr_sigs_in, nr_sigs_out;
+अटल पूर्णांक cti_plat_create_connection(काष्ठा device *dev,
+				      काष्ठा cti_drvdata *drvdata,
+				      काष्ठा fwnode_handle *fwnode)
+अणु
+	काष्ठा cti_trig_con *tc = शून्य;
+	पूर्णांक cpuid = -1, err = 0;
+	काष्ठा coresight_device *csdev = शून्य;
+	स्थिर अक्षर *assoc_name = "unknown";
+	अक्षर cpu_name_str[16];
+	पूर्णांक nr_sigs_in, nr_sigs_out;
 
-	/* look to see how many in and out signals we have */
+	/* look to see how many in and out संकेतs we have */
 	nr_sigs_in = cti_plat_count_sig_elements(fwnode, CTI_DT_TRIGIN_SIGS);
 	nr_sigs_out = cti_plat_count_sig_elements(fwnode, CTI_DT_TRIGOUT_SIGS);
 
-	if ((nr_sigs_in > drvdata->config.nr_trig_max) ||
+	अगर ((nr_sigs_in > drvdata->config.nr_trig_max) ||
 	    (nr_sigs_out > drvdata->config.nr_trig_max))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	tc = cti_allocate_trig_con(dev, nr_sigs_in, nr_sigs_out);
-	if (!tc)
-		return -ENOMEM;
+	अगर (!tc)
+		वापस -ENOMEM;
 
-	/* look for the signals properties. */
-	err = cti_plat_read_trig_group(tc->con_in, fwnode,
+	/* look क्रम the संकेतs properties. */
+	err = cti_plat_पढ़ो_trig_group(tc->con_in, fwnode,
 				       CTI_DT_TRIGIN_SIGS);
-	if (err)
-		goto create_con_err;
+	अगर (err)
+		जाओ create_con_err;
 
-	err = cti_plat_read_trig_types(tc->con_in, fwnode,
+	err = cti_plat_पढ़ो_trig_types(tc->con_in, fwnode,
 				       CTI_DT_TRIGIN_TYPES);
-	if (err)
-		goto create_con_err;
+	अगर (err)
+		जाओ create_con_err;
 
-	err = cti_plat_read_trig_group(tc->con_out, fwnode,
+	err = cti_plat_पढ़ो_trig_group(tc->con_out, fwnode,
 				       CTI_DT_TRIGOUT_SIGS);
-	if (err)
-		goto create_con_err;
+	अगर (err)
+		जाओ create_con_err;
 
-	err = cti_plat_read_trig_types(tc->con_out, fwnode,
+	err = cti_plat_पढ़ो_trig_types(tc->con_out, fwnode,
 				       CTI_DT_TRIGOUT_TYPES);
-	if (err)
-		goto create_con_err;
+	अगर (err)
+		जाओ create_con_err;
 
 	err = cti_plat_process_filter_sigs(drvdata, fwnode);
-	if (err)
-		goto create_con_err;
+	अगर (err)
+		जाओ create_con_err;
 
-	/* read the connection name if set - may be overridden by later */
-	fwnode_property_read_string(fwnode, CTI_DT_CONN_NAME, &assoc_name);
+	/* पढ़ो the connection name अगर set - may be overridden by later */
+	fwnode_property_पढ़ो_string(fwnode, CTI_DT_CONN_NAME, &assoc_name);
 
 	/* associated cpu ? */
 	cpuid = cti_plat_get_cpu_at_node(fwnode);
-	if (cpuid >= 0) {
+	अगर (cpuid >= 0) अणु
 		drvdata->ctidev.cpu = cpuid;
-		scnprintf(cpu_name_str, sizeof(cpu_name_str), "cpu%d", cpuid);
+		scnम_लिखो(cpu_name_str, माप(cpu_name_str), "cpu%d", cpuid);
 		assoc_name = cpu_name_str;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* associated device ? */
-		struct fwnode_handle *cs_fwnode = fwnode_find_reference(fwnode,
+		काष्ठा fwnode_handle *cs_fwnode = fwnode_find_reference(fwnode,
 									CTI_DT_CSDEV_ASSOC,
 									0);
-		if (!IS_ERR(cs_fwnode)) {
+		अगर (!IS_ERR(cs_fwnode)) अणु
 			assoc_name = cti_plat_get_csdev_or_node_name(cs_fwnode,
 								     &csdev);
 			fwnode_handle_put(cs_fwnode);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* set up a connection */
 	err = cti_add_connection_entry(dev, drvdata, tc, csdev, assoc_name);
 
 create_con_err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int cti_plat_create_impdef_connections(struct device *dev,
-					      struct cti_drvdata *drvdata)
-{
-	int rc = 0;
-	struct fwnode_handle *fwnode = dev_fwnode(dev);
-	struct fwnode_handle *child = NULL;
+अटल पूर्णांक cti_plat_create_impdef_connections(काष्ठा device *dev,
+					      काष्ठा cti_drvdata *drvdata)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा fwnode_handle *fwnode = dev_fwnode(dev);
+	काष्ठा fwnode_handle *child = शून्य;
 
-	if (IS_ERR_OR_NULL(fwnode))
-		return -EINVAL;
+	अगर (IS_ERR_OR_शून्य(fwnode))
+		वापस -EINVAL;
 
-	fwnode_for_each_child_node(fwnode, child) {
-		if (cti_plat_node_name_eq(child, CTI_DT_CONNS))
+	fwnode_क्रम_each_child_node(fwnode, child) अणु
+		अगर (cti_plat_node_name_eq(child, CTI_DT_CONNS))
 			rc = cti_plat_create_connection(dev, drvdata,
 							child);
-		if (rc != 0)
-			break;
-	}
+		अगर (rc != 0)
+			अवरोध;
+	पूर्ण
 	fwnode_handle_put(child);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /* get the hardware configuration & connection data. */
-static int cti_plat_get_hw_data(struct device *dev, struct cti_drvdata *drvdata)
-{
-	int rc = 0;
-	struct cti_device *cti_dev = &drvdata->ctidev;
+अटल पूर्णांक cti_plat_get_hw_data(काष्ठा device *dev, काष्ठा cti_drvdata *drvdata)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा cti_device *cti_dev = &drvdata->ctidev;
 
-	/* get any CTM ID - defaults to 0 */
-	device_property_read_u32(dev, CTI_DT_CTM_ID, &cti_dev->ctm_id);
+	/* get any CTM ID - शेषs to 0 */
+	device_property_पढ़ो_u32(dev, CTI_DT_CTM_ID, &cti_dev->cपंचांग_id);
 
-	/* check for a v8 architectural CTI device */
-	if (cti_plat_check_v8_arch_compatible(dev))
+	/* check क्रम a v8 architectural CTI device */
+	अगर (cti_plat_check_v8_arch_compatible(dev))
 		rc = cti_plat_create_v8_connections(dev, drvdata);
-	else
+	अन्यथा
 		rc = cti_plat_create_impdef_connections(dev, drvdata);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* if no connections, just add a single default based on max IN-OUT */
-	if (cti_dev->nr_trig_con == 0)
-		rc = cti_add_default_connection(dev, drvdata);
-	return rc;
-}
+	/* अगर no connections, just add a single शेष based on max IN-OUT */
+	अगर (cti_dev->nr_trig_con == 0)
+		rc = cti_add_शेष_connection(dev, drvdata);
+	वापस rc;
+पूर्ण
 
-struct coresight_platform_data *
-coresight_cti_get_platform_data(struct device *dev)
-{
-	int ret = -ENOENT;
-	struct coresight_platform_data *pdata = NULL;
-	struct fwnode_handle *fwnode = dev_fwnode(dev);
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev);
+काष्ठा coresight_platक्रमm_data *
+coresight_cti_get_platक्रमm_data(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = -ENOENT;
+	काष्ठा coresight_platक्रमm_data *pdata = शून्य;
+	काष्ठा fwnode_handle *fwnode = dev_fwnode(dev);
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev);
 
-	if (IS_ERR_OR_NULL(fwnode))
-		goto error;
+	अगर (IS_ERR_OR_शून्य(fwnode))
+		जाओ error;
 
 	/*
-	 * Alloc platform data but leave it zero init. CTI does not use the
-	 * same connection infrastructuree as trace path components but an
-	 * empty struct enables us to use the standard coresight component
+	 * Alloc platक्रमm data but leave it zero init. CTI करोes not use the
+	 * same connection infraकाष्ठाuree as trace path components but an
+	 * empty काष्ठा enables us to use the standard coresight component
 	 * registration code.
 	 */
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata) {
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata) अणु
 		ret = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	/* get some CTI specifics */
+	/* get some CTI specअगरics */
 	ret = cti_plat_get_hw_data(dev, drvdata);
 
-	if (!ret)
-		return pdata;
+	अगर (!ret)
+		वापस pdata;
 error:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण

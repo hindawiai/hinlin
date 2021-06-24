@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_BYTEORDER_BIG_ENDIAN_H
-#define _LINUX_BYTEORDER_BIG_ENDIAN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_BYTEORDER_BIG_ENDIAN_H
+#घोषणा _LINUX_BYTEORDER_BIG_ENDIAN_H
 
-#include <uapi/linux/byteorder/big_endian.h>
+#समावेश <uapi/linux/byteorder/big_endian.h>
 
-#ifndef CONFIG_CPU_BIG_ENDIAN
+#अगर_अघोषित CONFIG_CPU_BIG_ENDIAN
 #warning inconsistent configuration, needs CONFIG_CPU_BIG_ENDIAN
-#endif
+#पूर्ण_अगर
 
-#include <linux/byteorder/generic.h>
-#endif /* _LINUX_BYTEORDER_BIG_ENDIAN_H */
+#समावेश <linux/byteorder/generic.h>
+#पूर्ण_अगर /* _LINUX_BYTEORDER_BIG_ENDIAN_H */

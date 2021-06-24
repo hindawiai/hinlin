@@ -1,126 +1,127 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * INET		An implementation of the TCP/IP protocol suite for the LINUX
- *		operating system.  INET is implemented using the  BSD Socket
- *		interface as the means of communication with the user level.
+ * INET		An implementation of the TCP/IP protocol suite क्रम the LINUX
+ *		operating प्रणाली.  INET is implemented using the  BSD Socket
+ *		पूर्णांकerface as the means of communication with the user level.
  *
- *		Definitions for a generic INET TIMEWAIT sock
+ *		Definitions क्रम a generic INET TIMEWAIT sock
  *
  *		From code originally in net/tcp.h
  */
-#ifndef _INET_TIMEWAIT_SOCK_
-#define _INET_TIMEWAIT_SOCK_
+#अगर_अघोषित _INET_TIMEWAIT_SOCK_
+#घोषणा _INET_TIMEWAIT_SOCK_
 
-#include <linux/list.h>
-#include <linux/timer.h>
-#include <linux/types.h>
-#include <linux/workqueue.h>
+#समावेश <linux/list.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/types.h>
+#समावेश <linux/workqueue.h>
 
-#include <net/inet_sock.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <net/timewait_sock.h>
+#समावेश <net/inet_sock.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <net/समयरुको_sock.h>
 
-#include <linux/atomic.h>
+#समावेश <linux/atomic.h>
 
-struct inet_bind_bucket;
+काष्ठा inet_bind_bucket;
 
 /*
  * This is a TIME_WAIT sock. It works around the memory consumption
  * problems of sockets in such a state on heavily loaded servers, but
- * without violating the protocol specification.
+ * without violating the protocol specअगरication.
  */
-struct inet_timewait_sock {
+काष्ठा inet_समयरुको_sock अणु
 	/*
-	 * Now struct sock also uses sock_common, so please just
-	 * don't add nothing before this first member (__tw_common) --acme
+	 * Now काष्ठा sock also uses sock_common, so please just
+	 * करोn't add nothing beक्रमe this first member (__tw_common) --acme
 	 */
-	struct sock_common	__tw_common;
-#define tw_family		__tw_common.skc_family
-#define tw_state		__tw_common.skc_state
-#define tw_reuse		__tw_common.skc_reuse
-#define tw_reuseport		__tw_common.skc_reuseport
-#define tw_ipv6only		__tw_common.skc_ipv6only
-#define tw_bound_dev_if		__tw_common.skc_bound_dev_if
-#define tw_node			__tw_common.skc_nulls_node
-#define tw_bind_node		__tw_common.skc_bind_node
-#define tw_refcnt		__tw_common.skc_refcnt
-#define tw_hash			__tw_common.skc_hash
-#define tw_prot			__tw_common.skc_prot
-#define tw_net			__tw_common.skc_net
-#define tw_daddr        	__tw_common.skc_daddr
-#define tw_v6_daddr		__tw_common.skc_v6_daddr
-#define tw_rcv_saddr    	__tw_common.skc_rcv_saddr
-#define tw_v6_rcv_saddr    	__tw_common.skc_v6_rcv_saddr
-#define tw_dport		__tw_common.skc_dport
-#define tw_num			__tw_common.skc_num
-#define tw_cookie		__tw_common.skc_cookie
-#define tw_dr			__tw_common.skc_tw_dr
+	काष्ठा sock_common	__tw_common;
+#घोषणा tw_family		__tw_common.skc_family
+#घोषणा tw_state		__tw_common.skc_state
+#घोषणा tw_reuse		__tw_common.skc_reuse
+#घोषणा tw_reuseport		__tw_common.skc_reuseport
+#घोषणा tw_ipv6only		__tw_common.skc_ipv6only
+#घोषणा tw_bound_dev_अगर		__tw_common.skc_bound_dev_अगर
+#घोषणा tw_node			__tw_common.skc_nulls_node
+#घोषणा tw_bind_node		__tw_common.skc_bind_node
+#घोषणा tw_refcnt		__tw_common.skc_refcnt
+#घोषणा tw_hash			__tw_common.skc_hash
+#घोषणा tw_prot			__tw_common.skc_prot
+#घोषणा tw_net			__tw_common.skc_net
+#घोषणा tw_daddr        	__tw_common.skc_daddr
+#घोषणा tw_v6_daddr		__tw_common.skc_v6_daddr
+#घोषणा tw_rcv_saddr    	__tw_common.skc_rcv_saddr
+#घोषणा tw_v6_rcv_saddr    	__tw_common.skc_v6_rcv_saddr
+#घोषणा tw_dport		__tw_common.skc_dport
+#घोषणा tw_num			__tw_common.skc_num
+#घोषणा tw_cookie		__tw_common.skc_cookie
+#घोषणा tw_dr			__tw_common.skc_tw_dr
 
 	__u32			tw_mark;
-	volatile unsigned char	tw_substate;
-	unsigned char		tw_rcv_wscale;
+	अस्थिर अचिन्हित अक्षर	tw_substate;
+	अचिन्हित अक्षर		tw_rcv_wscale;
 
 	/* Socket demultiplex comparisons on incoming packets. */
 	/* these three are in inet_sock */
 	__be16			tw_sport;
 	/* And these are ours. */
-	unsigned int		tw_kill		: 1,
+	अचिन्हित पूर्णांक		tw_समाप्त		: 1,
 				tw_transparent  : 1,
 				tw_flowlabel	: 20,
 				tw_pad		: 2,	/* 2 bits hole */
 				tw_tos		: 8;
 	u32			tw_txhash;
 	u32			tw_priority;
-	struct timer_list	tw_timer;
-	struct inet_bind_bucket	*tw_tb;
-};
-#define tw_tclass tw_tos
+	काष्ठा समयr_list	tw_समयr;
+	काष्ठा inet_bind_bucket	*tw_tb;
+पूर्ण;
+#घोषणा tw_tclass tw_tos
 
-static inline struct inet_timewait_sock *inet_twsk(const struct sock *sk)
-{
-	return (struct inet_timewait_sock *)sk;
-}
+अटल अंतरभूत काष्ठा inet_समयरुको_sock *inet_twsk(स्थिर काष्ठा sock *sk)
+अणु
+	वापस (काष्ठा inet_समयरुको_sock *)sk;
+पूर्ण
 
-void inet_twsk_free(struct inet_timewait_sock *tw);
-void inet_twsk_put(struct inet_timewait_sock *tw);
+व्योम inet_twsk_मुक्त(काष्ठा inet_समयरुको_sock *tw);
+व्योम inet_twsk_put(काष्ठा inet_समयरुको_sock *tw);
 
-void inet_twsk_bind_unhash(struct inet_timewait_sock *tw,
-			   struct inet_hashinfo *hashinfo);
+व्योम inet_twsk_bind_unhash(काष्ठा inet_समयरुको_sock *tw,
+			   काष्ठा inet_hashinfo *hashinfo);
 
-struct inet_timewait_sock *inet_twsk_alloc(const struct sock *sk,
-					   struct inet_timewait_death_row *dr,
-					   const int state);
+काष्ठा inet_समयरुको_sock *inet_twsk_alloc(स्थिर काष्ठा sock *sk,
+					   काष्ठा inet_समयरुको_death_row *dr,
+					   स्थिर पूर्णांक state);
 
-void inet_twsk_hashdance(struct inet_timewait_sock *tw, struct sock *sk,
-			 struct inet_hashinfo *hashinfo);
+व्योम inet_twsk_hashdance(काष्ठा inet_समयरुको_sock *tw, काष्ठा sock *sk,
+			 काष्ठा inet_hashinfo *hashinfo);
 
-void __inet_twsk_schedule(struct inet_timewait_sock *tw, int timeo,
+व्योम __inet_twsk_schedule(काष्ठा inet_समयरुको_sock *tw, पूर्णांक समयo,
 			  bool rearm);
 
-static inline void inet_twsk_schedule(struct inet_timewait_sock *tw, int timeo)
-{
-	__inet_twsk_schedule(tw, timeo, false);
-}
+अटल अंतरभूत व्योम inet_twsk_schedule(काष्ठा inet_समयरुको_sock *tw, पूर्णांक समयo)
+अणु
+	__inet_twsk_schedule(tw, समयo, false);
+पूर्ण
 
-static inline void inet_twsk_reschedule(struct inet_timewait_sock *tw, int timeo)
-{
-	__inet_twsk_schedule(tw, timeo, true);
-}
+अटल अंतरभूत व्योम inet_twsk_reschedule(काष्ठा inet_समयरुको_sock *tw, पूर्णांक समयo)
+अणु
+	__inet_twsk_schedule(tw, समयo, true);
+पूर्ण
 
-void inet_twsk_deschedule_put(struct inet_timewait_sock *tw);
+व्योम inet_twsk_deschedule_put(काष्ठा inet_समयरुको_sock *tw);
 
-void inet_twsk_purge(struct inet_hashinfo *hashinfo, int family);
+व्योम inet_twsk_purge(काष्ठा inet_hashinfo *hashinfo, पूर्णांक family);
 
-static inline
-struct net *twsk_net(const struct inet_timewait_sock *twsk)
-{
-	return read_pnet(&twsk->tw_net);
-}
+अटल अंतरभूत
+काष्ठा net *twsk_net(स्थिर काष्ठा inet_समयरुको_sock *twsk)
+अणु
+	वापस पढ़ो_pnet(&twsk->tw_net);
+पूर्ण
 
-static inline
-void twsk_net_set(struct inet_timewait_sock *twsk, struct net *net)
-{
-	write_pnet(&twsk->tw_net, net);
-}
-#endif	/* _INET_TIMEWAIT_SOCK_ */
+अटल अंतरभूत
+व्योम twsk_net_set(काष्ठा inet_समयरुको_sock *twsk, काष्ठा net *net)
+अणु
+	ग_लिखो_pnet(&twsk->tw_net, net);
+पूर्ण
+#पूर्ण_अगर	/* _INET_TIMEWAIT_SOCK_ */

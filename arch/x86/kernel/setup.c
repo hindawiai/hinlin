@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 1995  Linus Torvalds
  *
  * This file contains the setup_arch() code, which handles the architecture-dependent
  * parts of early kernel initialization.
  */
-#include <linux/console.h>
-#include <linux/crash_dump.h>
-#include <linux/dma-map-ops.h>
-#include <linux/dmi.h>
-#include <linux/efi.h>
-#include <linux/init_ohci1394_dma.h>
-#include <linux/initrd.h>
-#include <linux/iscsi_ibft.h>
-#include <linux/memblock.h>
-#include <linux/pci.h>
-#include <linux/root_dev.h>
-#include <linux/hugetlb.h>
-#include <linux/tboot.h>
-#include <linux/usb/xhci-dbgp.h>
-#include <linux/static_call.h>
-#include <linux/swiotlb.h>
+#समावेश <linux/console.h>
+#समावेश <linux/crash_dump.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/init_ohci1394_dma.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/iscsi_ibft.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/root_dev.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/tboot.h>
+#समावेश <linux/usb/xhci-dbgp.h>
+#समावेश <linux/अटल_call.h>
+#समावेश <linux/swiotlb.h>
 
-#include <uapi/linux/mount.h>
+#समावेश <uapi/linux/mount.h>
 
-#include <xen/xen.h>
+#समावेश <xen/xen.h>
 
-#include <asm/apic.h>
-#include <asm/numa.h>
-#include <asm/bios_ebda.h>
-#include <asm/bugs.h>
-#include <asm/cpu.h>
-#include <asm/efi.h>
-#include <asm/gart.h>
-#include <asm/hypervisor.h>
-#include <asm/io_apic.h>
-#include <asm/kasan.h>
-#include <asm/kaslr.h>
-#include <asm/mce.h>
-#include <asm/mtrr.h>
-#include <asm/realmode.h>
-#include <asm/olpc_ofw.h>
-#include <asm/pci-direct.h>
-#include <asm/prom.h>
-#include <asm/proto.h>
-#include <asm/thermal.h>
-#include <asm/unwind.h>
-#include <asm/vsyscall.h>
-#include <linux/vmalloc.h>
+#समावेश <यंत्र/apic.h>
+#समावेश <यंत्र/numa.h>
+#समावेश <यंत्र/bios_ebda.h>
+#समावेश <यंत्र/bugs.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/efi.h>
+#समावेश <यंत्र/gart.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <यंत्र/io_apic.h>
+#समावेश <यंत्र/kasan.h>
+#समावेश <यंत्र/kaslr.h>
+#समावेश <यंत्र/mce.h>
+#समावेश <यंत्र/mtrr.h>
+#समावेश <यंत्र/realmode.h>
+#समावेश <यंत्र/olpc_ofw.h>
+#समावेश <यंत्र/pci-direct.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/thermal.h>
+#समावेश <यंत्र/unwind.h>
+#समावेश <यंत्र/vsyscall.h>
+#समावेश <linux/vदो_स्मृति.h>
 
 /*
  * max_low_pfn_mapped: highest directly mapped pfn < 4 GB
@@ -56,342 +57,342 @@
  * The direct mapping only covers E820_TYPE_RAM regions, so the ranges and gaps are
  * represented by pfn_mapped[].
  */
-unsigned long max_low_pfn_mapped;
-unsigned long max_pfn_mapped;
+अचिन्हित दीर्घ max_low_pfn_mapped;
+अचिन्हित दीर्घ max_pfn_mapped;
 
-#ifdef CONFIG_DMI
+#अगर_घोषित CONFIG_DMI
 RESERVE_BRK(dmi_alloc, 65536);
-#endif
+#पूर्ण_अगर
 
 
 /*
  * Range of the BSS area. The size of the BSS area is determined
- * at link time, with RESERVE_BRK() facility reserving additional
+ * at link समय, with RESERVE_BRK() facility reserving additional
  * chunks.
  */
-unsigned long _brk_start = (unsigned long)__brk_base;
-unsigned long _brk_end   = (unsigned long)__brk_base;
+अचिन्हित दीर्घ _brk_start = (अचिन्हित दीर्घ)__brk_base;
+अचिन्हित दीर्घ _brk_end   = (अचिन्हित दीर्घ)__brk_base;
 
-struct boot_params boot_params;
+काष्ठा boot_params boot_params;
 
 /*
- * These are the four main kernel memory regions, we put them into
+ * These are the four मुख्य kernel memory regions, we put them पूर्णांकo
  * the resource tree so that kdump tools and other debugging tools
  * recover it:
  */
 
-static struct resource rodata_resource = {
+अटल काष्ठा resource rodata_resource = अणु
 	.name	= "Kernel rodata",
 	.start	= 0,
 	.end	= 0,
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-};
+पूर्ण;
 
-static struct resource data_resource = {
+अटल काष्ठा resource data_resource = अणु
 	.name	= "Kernel data",
 	.start	= 0,
 	.end	= 0,
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-};
+पूर्ण;
 
-static struct resource code_resource = {
+अटल काष्ठा resource code_resource = अणु
 	.name	= "Kernel code",
 	.start	= 0,
 	.end	= 0,
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-};
+पूर्ण;
 
-static struct resource bss_resource = {
+अटल काष्ठा resource bss_resource = अणु
 	.name	= "Kernel bss",
 	.start	= 0,
 	.end	= 0,
 	.flags	= IORESOURCE_BUSY | IORESOURCE_SYSTEM_RAM
-};
+पूर्ण;
 
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 /* CPU data as detected by the assembly code in head_32.S */
-struct cpuinfo_x86 new_cpu_data;
+काष्ठा cpuinfo_x86 new_cpu_data;
 
-/* Common CPU data for all CPUs */
-struct cpuinfo_x86 boot_cpu_data __read_mostly;
+/* Common CPU data क्रम all CPUs */
+काष्ठा cpuinfo_x86 boot_cpu_data __पढ़ो_mostly;
 EXPORT_SYMBOL(boot_cpu_data);
 
-unsigned int def_to_bigsmp;
+अचिन्हित पूर्णांक def_to_bigsmp;
 
-struct apm_info apm_info;
+काष्ठा apm_info apm_info;
 EXPORT_SYMBOL(apm_info);
 
-#if defined(CONFIG_X86_SPEEDSTEP_SMI) || \
+#अगर defined(CONFIG_X86_SPEEDSTEP_SMI) || \
 	defined(CONFIG_X86_SPEEDSTEP_SMI_MODULE)
-struct ist_info ist_info;
+काष्ठा ist_info ist_info;
 EXPORT_SYMBOL(ist_info);
-#else
-struct ist_info ist_info;
-#endif
+#अन्यथा
+काष्ठा ist_info ist_info;
+#पूर्ण_अगर
 
-#else
-struct cpuinfo_x86 boot_cpu_data __read_mostly;
+#अन्यथा
+काष्ठा cpuinfo_x86 boot_cpu_data __पढ़ो_mostly;
 EXPORT_SYMBOL(boot_cpu_data);
-#endif
+#पूर्ण_अगर
 
 
-#if !defined(CONFIG_X86_PAE) || defined(CONFIG_X86_64)
-__visible unsigned long mmu_cr4_features __ro_after_init;
-#else
-__visible unsigned long mmu_cr4_features __ro_after_init = X86_CR4_PAE;
-#endif
+#अगर !defined(CONFIG_X86_PAE) || defined(CONFIG_X86_64)
+__visible अचिन्हित दीर्घ mmu_cr4_features __ro_after_init;
+#अन्यथा
+__visible अचिन्हित दीर्घ mmu_cr4_features __ro_after_init = X86_CR4_PAE;
+#पूर्ण_अगर
 
-/* Boot loader ID and version as integers, for the benefit of proc_dointvec */
-int bootloader_type, bootloader_version;
+/* Boot loader ID and version as पूर्णांकegers, क्रम the benefit of proc_करोपूर्णांकvec */
+पूर्णांक bootloader_type, bootloader_version;
 
 /*
  * Setup options
  */
-struct screen_info screen_info;
+काष्ठा screen_info screen_info;
 EXPORT_SYMBOL(screen_info);
-struct edid_info edid_info;
+काष्ठा edid_info edid_info;
 EXPORT_SYMBOL_GPL(edid_info);
 
-extern int root_mountflags;
+बाह्य पूर्णांक root_mountflags;
 
-unsigned long saved_video_mode;
+अचिन्हित दीर्घ saved_video_mode;
 
-#define RAMDISK_IMAGE_START_MASK	0x07FF
-#define RAMDISK_PROMPT_FLAG		0x8000
-#define RAMDISK_LOAD_FLAG		0x4000
+#घोषणा RAMDISK_IMAGE_START_MASK	0x07FF
+#घोषणा RAMDISK_PROMPT_FLAG		0x8000
+#घोषणा RAMDISK_LOAD_FLAG		0x4000
 
-static char __initdata command_line[COMMAND_LINE_SIZE];
-#ifdef CONFIG_CMDLINE_BOOL
-static char __initdata builtin_cmdline[COMMAND_LINE_SIZE] = CONFIG_CMDLINE;
-#endif
+अटल अक्षर __initdata command_line[COMMAND_LINE_SIZE];
+#अगर_घोषित CONFIG_CMDLINE_BOOL
+अटल अक्षर __initdata builtin_cmdline[COMMAND_LINE_SIZE] = CONFIG_CMDLINE;
+#पूर्ण_अगर
 
-#if defined(CONFIG_EDD) || defined(CONFIG_EDD_MODULE)
-struct edd edd;
-#ifdef CONFIG_EDD_MODULE
+#अगर defined(CONFIG_EDD) || defined(CONFIG_EDD_MODULE)
+काष्ठा edd edd;
+#अगर_घोषित CONFIG_EDD_MODULE
 EXPORT_SYMBOL(edd);
-#endif
+#पूर्ण_अगर
 /**
- * copy_edd() - Copy the BIOS EDD information
- *              from boot_params into a safe place.
+ * copy_edd() - Copy the BIOS EDD inक्रमmation
+ *              from boot_params पूर्णांकo a safe place.
  *
  */
-static inline void __init copy_edd(void)
-{
-     memcpy(edd.mbr_signature, boot_params.edd_mbr_sig_buffer,
-	    sizeof(edd.mbr_signature));
-     memcpy(edd.edd_info, boot_params.eddbuf, sizeof(edd.edd_info));
+अटल अंतरभूत व्योम __init copy_edd(व्योम)
+अणु
+     स_नकल(edd.mbr_signature, boot_params.edd_mbr_sig_buffer,
+	    माप(edd.mbr_signature));
+     स_नकल(edd.edd_info, boot_params.eddbuf, माप(edd.edd_info));
      edd.mbr_signature_nr = boot_params.edd_mbr_sig_buf_entries;
      edd.edd_info_nr = boot_params.eddbuf_entries;
-}
-#else
-static inline void __init copy_edd(void)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम __init copy_edd(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-void * __init extend_brk(size_t size, size_t align)
-{
-	size_t mask = align - 1;
-	void *ret;
+व्योम * __init extend_brk(माप_प्रकार size, माप_प्रकार align)
+अणु
+	माप_प्रकार mask = align - 1;
+	व्योम *ret;
 
 	BUG_ON(_brk_start == 0);
 	BUG_ON(align & mask);
 
 	_brk_end = (_brk_end + mask) & ~mask;
-	BUG_ON((char *)(_brk_end + size) > __brk_limit);
+	BUG_ON((अक्षर *)(_brk_end + size) > __brk_limit);
 
-	ret = (void *)_brk_end;
+	ret = (व्योम *)_brk_end;
 	_brk_end += size;
 
-	memset(ret, 0, size);
+	स_रखो(ret, 0, size);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_X86_32
-static void __init cleanup_highmap(void)
-{
-}
-#endif
+#अगर_घोषित CONFIG_X86_32
+अटल व्योम __init cleanup_highmap(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static void __init reserve_brk(void)
-{
-	if (_brk_end > _brk_start)
+अटल व्योम __init reserve_brk(व्योम)
+अणु
+	अगर (_brk_end > _brk_start)
 		memblock_reserve(__pa_symbol(_brk_start),
 				 _brk_end - _brk_start);
 
-	/* Mark brk area as locked down and no longer taking any
+	/* Mark brk area as locked करोwn and no दीर्घer taking any
 	   new allocations */
 	_brk_start = 0;
-}
+पूर्ण
 
 u64 relocated_ramdisk;
 
-#ifdef CONFIG_BLK_DEV_INITRD
+#अगर_घोषित CONFIG_BLK_DEV_INITRD
 
-static u64 __init get_ramdisk_image(void)
-{
+अटल u64 __init get_ramdisk_image(व्योम)
+अणु
 	u64 ramdisk_image = boot_params.hdr.ramdisk_image;
 
 	ramdisk_image |= (u64)boot_params.ext_ramdisk_image << 32;
 
-	if (ramdisk_image == 0)
+	अगर (ramdisk_image == 0)
 		ramdisk_image = phys_initrd_start;
 
-	return ramdisk_image;
-}
-static u64 __init get_ramdisk_size(void)
-{
+	वापस ramdisk_image;
+पूर्ण
+अटल u64 __init get_ramdisk_size(व्योम)
+अणु
 	u64 ramdisk_size = boot_params.hdr.ramdisk_size;
 
 	ramdisk_size |= (u64)boot_params.ext_ramdisk_size << 32;
 
-	if (ramdisk_size == 0)
+	अगर (ramdisk_size == 0)
 		ramdisk_size = phys_initrd_size;
 
-	return ramdisk_size;
-}
+	वापस ramdisk_size;
+पूर्ण
 
-static void __init relocate_initrd(void)
-{
+अटल व्योम __init relocate_initrd(व्योम)
+अणु
 	/* Assume only end is not page aligned */
 	u64 ramdisk_image = get_ramdisk_image();
 	u64 ramdisk_size  = get_ramdisk_size();
 	u64 area_size     = PAGE_ALIGN(ramdisk_size);
 
-	/* We need to move the initrd down into directly mapped mem */
+	/* We need to move the initrd करोwn पूर्णांकo directly mapped mem */
 	relocated_ramdisk = memblock_phys_alloc_range(area_size, PAGE_SIZE, 0,
 						      PFN_PHYS(max_pfn_mapped));
-	if (!relocated_ramdisk)
+	अगर (!relocated_ramdisk)
 		panic("Cannot find place for new RAMDISK of size %lld\n",
 		      ramdisk_size);
 
 	initrd_start = relocated_ramdisk + PAGE_OFFSET;
 	initrd_end   = initrd_start + ramdisk_size;
-	printk(KERN_INFO "Allocated new RAMDISK: [mem %#010llx-%#010llx]\n",
+	prपूर्णांकk(KERN_INFO "Allocated new RAMDISK: [mem %#010llx-%#010llx]\n",
 	       relocated_ramdisk, relocated_ramdisk + ramdisk_size - 1);
 
-	copy_from_early_mem((void *)initrd_start, ramdisk_image, ramdisk_size);
+	copy_from_early_mem((व्योम *)initrd_start, ramdisk_image, ramdisk_size);
 
-	printk(KERN_INFO "Move RAMDISK from [mem %#010llx-%#010llx] to"
+	prपूर्णांकk(KERN_INFO "Move RAMDISK from [mem %#010llx-%#010llx] to"
 		" [mem %#010llx-%#010llx]\n",
 		ramdisk_image, ramdisk_image + ramdisk_size - 1,
 		relocated_ramdisk, relocated_ramdisk + ramdisk_size - 1);
-}
+पूर्ण
 
-static void __init early_reserve_initrd(void)
-{
+अटल व्योम __init early_reserve_initrd(व्योम)
+अणु
 	/* Assume only end is not page aligned */
 	u64 ramdisk_image = get_ramdisk_image();
 	u64 ramdisk_size  = get_ramdisk_size();
 	u64 ramdisk_end   = PAGE_ALIGN(ramdisk_image + ramdisk_size);
 
-	if (!boot_params.hdr.type_of_loader ||
+	अगर (!boot_params.hdr.type_of_loader ||
 	    !ramdisk_image || !ramdisk_size)
-		return;		/* No initrd provided by bootloader */
+		वापस;		/* No initrd provided by bootloader */
 
 	memblock_reserve(ramdisk_image, ramdisk_end - ramdisk_image);
-}
+पूर्ण
 
-static void __init reserve_initrd(void)
-{
+अटल व्योम __init reserve_initrd(व्योम)
+अणु
 	/* Assume only end is not page aligned */
 	u64 ramdisk_image = get_ramdisk_image();
 	u64 ramdisk_size  = get_ramdisk_size();
 	u64 ramdisk_end   = PAGE_ALIGN(ramdisk_image + ramdisk_size);
 
-	if (!boot_params.hdr.type_of_loader ||
+	अगर (!boot_params.hdr.type_of_loader ||
 	    !ramdisk_image || !ramdisk_size)
-		return;		/* No initrd provided by bootloader */
+		वापस;		/* No initrd provided by bootloader */
 
 	initrd_start = 0;
 
-	printk(KERN_INFO "RAMDISK: [mem %#010llx-%#010llx]\n", ramdisk_image,
+	prपूर्णांकk(KERN_INFO "RAMDISK: [mem %#010llx-%#010llx]\n", ramdisk_image,
 			ramdisk_end - 1);
 
-	if (pfn_range_is_mapped(PFN_DOWN(ramdisk_image),
-				PFN_DOWN(ramdisk_end))) {
-		/* All are mapped, easy case */
+	अगर (pfn_range_is_mapped(PFN_DOWN(ramdisk_image),
+				PFN_DOWN(ramdisk_end))) अणु
+		/* All are mapped, easy हाल */
 		initrd_start = ramdisk_image + PAGE_OFFSET;
 		initrd_end = initrd_start + ramdisk_size;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	relocate_initrd();
 
-	memblock_free(ramdisk_image, ramdisk_end - ramdisk_image);
-}
+	memblock_मुक्त(ramdisk_image, ramdisk_end - ramdisk_image);
+पूर्ण
 
-#else
-static void __init early_reserve_initrd(void)
-{
-}
-static void __init reserve_initrd(void)
-{
-}
-#endif /* CONFIG_BLK_DEV_INITRD */
+#अन्यथा
+अटल व्योम __init early_reserve_initrd(व्योम)
+अणु
+पूर्ण
+अटल व्योम __init reserve_initrd(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_BLK_DEV_INITRD */
 
-static void __init parse_setup_data(void)
-{
-	struct setup_data *data;
+अटल व्योम __init parse_setup_data(व्योम)
+अणु
+	काष्ठा setup_data *data;
 	u64 pa_data, pa_next;
 
 	pa_data = boot_params.hdr.setup_data;
-	while (pa_data) {
+	जबतक (pa_data) अणु
 		u32 data_len, data_type;
 
-		data = early_memremap(pa_data, sizeof(*data));
-		data_len = data->len + sizeof(struct setup_data);
+		data = early_memremap(pa_data, माप(*data));
+		data_len = data->len + माप(काष्ठा setup_data);
 		data_type = data->type;
 		pa_next = data->next;
-		early_memunmap(data, sizeof(*data));
+		early_memunmap(data, माप(*data));
 
-		switch (data_type) {
-		case SETUP_E820_EXT:
+		चयन (data_type) अणु
+		हाल SETUP_E820_EXT:
 			e820__memory_setup_extended(pa_data, data_len);
-			break;
-		case SETUP_DTB:
+			अवरोध;
+		हाल SETUP_DTB:
 			add_dtb(pa_data);
-			break;
-		case SETUP_EFI:
+			अवरोध;
+		हाल SETUP_EFI:
 			parse_efi_setup(pa_data, data_len);
-			break;
-		default:
-			break;
-		}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 		pa_data = pa_next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init memblock_x86_reserve_range_setup_data(void)
-{
-	struct setup_data *data;
+अटल व्योम __init memblock_x86_reserve_range_setup_data(व्योम)
+अणु
+	काष्ठा setup_data *data;
 	u64 pa_data;
 
 	pa_data = boot_params.hdr.setup_data;
-	while (pa_data) {
-		data = early_memremap(pa_data, sizeof(*data));
-		memblock_reserve(pa_data, sizeof(*data) + data->len);
+	जबतक (pa_data) अणु
+		data = early_memremap(pa_data, माप(*data));
+		memblock_reserve(pa_data, माप(*data) + data->len);
 
-		if (data->type == SETUP_INDIRECT &&
-		    ((struct setup_indirect *)data->data)->type != SETUP_INDIRECT)
-			memblock_reserve(((struct setup_indirect *)data->data)->addr,
-					 ((struct setup_indirect *)data->data)->len);
+		अगर (data->type == SETUP_INसूचीECT &&
+		    ((काष्ठा setup_indirect *)data->data)->type != SETUP_INसूचीECT)
+			memblock_reserve(((काष्ठा setup_indirect *)data->data)->addr,
+					 ((काष्ठा setup_indirect *)data->data)->len);
 
 		pa_data = data->next;
-		early_memunmap(data, sizeof(*data));
-	}
-}
+		early_memunmap(data, माप(*data));
+	पूर्ण
+पूर्ण
 
 /*
  * --------- Crashkernel reservation ------------------------------
  */
 
-#ifdef CONFIG_KEXEC_CORE
+#अगर_घोषित CONFIG_KEXEC_CORE
 
-/* 16M alignment for crash kernel regions */
-#define CRASH_ALIGN		SZ_16M
+/* 16M alignment क्रम crash kernel regions */
+#घोषणा CRASH_ALIGN		SZ_16M
 
 /*
  * Keep the crash kernel below this limit.
@@ -400,193 +401,193 @@ static void __init memblock_x86_reserve_range_setup_data(void)
  * due to mapping restrictions.
  *
  * 64-bit kdump kernels need to be restricted to be under 64 TB, which is
- * the upper limit of system RAM in 4-level paging mode. Since the kdump
- * jump could be from 5-level paging to 4-level paging, the jump will fail if
+ * the upper limit of प्रणाली RAM in 4-level paging mode. Since the kdump
+ * jump could be from 5-level paging to 4-level paging, the jump will fail अगर
  * the kernel is put above 64 TB, and during the 1st kernel bootup there's
  * no good way to detect the paging mode of the target kernel which will be
- * loaded for dumping.
+ * loaded क्रम dumping.
  */
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 # define CRASH_ADDR_LOW_MAX	SZ_512M
 # define CRASH_ADDR_HIGH_MAX	SZ_512M
-#else
+#अन्यथा
 # define CRASH_ADDR_LOW_MAX	SZ_4G
 # define CRASH_ADDR_HIGH_MAX	SZ_64T
-#endif
+#पूर्ण_अगर
 
-static int __init reserve_crashkernel_low(void)
-{
-#ifdef CONFIG_X86_64
-	unsigned long long base, low_base = 0, low_size = 0;
-	unsigned long low_mem_limit;
-	int ret;
+अटल पूर्णांक __init reserve_crashkernel_low(व्योम)
+अणु
+#अगर_घोषित CONFIG_X86_64
+	अचिन्हित दीर्घ दीर्घ base, low_base = 0, low_size = 0;
+	अचिन्हित दीर्घ low_mem_limit;
+	पूर्णांक ret;
 
 	low_mem_limit = min(memblock_phys_mem_size(), CRASH_ADDR_LOW_MAX);
 
 	/* crashkernel=Y,low */
 	ret = parse_crashkernel_low(boot_command_line, low_mem_limit, &low_size, &base);
-	if (ret) {
+	अगर (ret) अणु
 		/*
 		 * two parts from kernel/dma/swiotlb.c:
-		 * -swiotlb size: user-specified with swiotlb= or default.
+		 * -swiotlb size: user-specअगरied with swiotlb= or शेष.
 		 *
 		 * -swiotlb overflow buffer: now hardcoded to 32k. We round it
-		 * to 8M for other buffers that may need to stay low too. Also
+		 * to 8M क्रम other buffers that may need to stay low too. Also
 		 * make sure we allocate enough extra low memory so that we
-		 * don't run out of DMA buffers for 32-bit devices.
+		 * करोn't run out of DMA buffers क्रम 32-bit devices.
 		 */
-		low_size = max(swiotlb_size_or_default() + (8UL << 20), 256UL << 20);
-	} else {
+		low_size = max(swiotlb_size_or_शेष() + (8UL << 20), 256UL << 20);
+	पूर्ण अन्यथा अणु
 		/* passed with crashkernel=0,low ? */
-		if (!low_size)
-			return 0;
-	}
+		अगर (!low_size)
+			वापस 0;
+	पूर्ण
 
 	low_base = memblock_phys_alloc_range(low_size, CRASH_ALIGN, 0, CRASH_ADDR_LOW_MAX);
-	if (!low_base) {
+	अगर (!low_base) अणु
 		pr_err("Cannot reserve %ldMB crashkernel low memory, please try smaller size.\n",
-		       (unsigned long)(low_size >> 20));
-		return -ENOMEM;
-	}
+		       (अचिन्हित दीर्घ)(low_size >> 20));
+		वापस -ENOMEM;
+	पूर्ण
 
 	pr_info("Reserving %ldMB of low memory at %ldMB for crashkernel (low RAM limit: %ldMB)\n",
-		(unsigned long)(low_size >> 20),
-		(unsigned long)(low_base >> 20),
-		(unsigned long)(low_mem_limit >> 20));
+		(अचिन्हित दीर्घ)(low_size >> 20),
+		(अचिन्हित दीर्घ)(low_base >> 20),
+		(अचिन्हित दीर्घ)(low_mem_limit >> 20));
 
 	crashk_low_res.start = low_base;
 	crashk_low_res.end   = low_base + low_size - 1;
 	insert_resource(&iomem_resource, &crashk_low_res);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void __init reserve_crashkernel(void)
-{
-	unsigned long long crash_size, crash_base, total_mem;
+अटल व्योम __init reserve_crashkernel(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ crash_size, crash_base, total_mem;
 	bool high = false;
-	int ret;
+	पूर्णांक ret;
 
 	total_mem = memblock_phys_mem_size();
 
 	/* crashkernel=XM */
 	ret = parse_crashkernel(boot_command_line, total_mem, &crash_size, &crash_base);
-	if (ret != 0 || crash_size <= 0) {
+	अगर (ret != 0 || crash_size <= 0) अणु
 		/* crashkernel=X,high */
 		ret = parse_crashkernel_high(boot_command_line, total_mem,
 					     &crash_size, &crash_base);
-		if (ret != 0 || crash_size <= 0)
-			return;
+		अगर (ret != 0 || crash_size <= 0)
+			वापस;
 		high = true;
-	}
+	पूर्ण
 
-	if (xen_pv_domain()) {
+	अगर (xen_pv_करोमुख्य()) अणु
 		pr_info("Ignoring crashkernel for a Xen PV domain\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* 0 means: find the address automatically */
-	if (!crash_base) {
+	/* 0 means: find the address स्वतःmatically */
+	अगर (!crash_base) अणु
 		/*
-		 * Set CRASH_ADDR_LOW_MAX upper bound for crash memory,
+		 * Set CRASH_ADDR_LOW_MAX upper bound क्रम crash memory,
 		 * crashkernel=x,high reserves memory over 4G, also allocates
-		 * 256M extra low memory for DMA buffers and swiotlb.
-		 * But the extra memory is not required for all machines.
+		 * 256M extra low memory क्रम DMA buffers and swiotlb.
+		 * But the extra memory is not required क्रम all machines.
 		 * So try low memory first and fall back to high memory
-		 * unless "crashkernel=size[KMG],high" is specified.
+		 * unless "crashkernel=size[KMG],high" is specअगरied.
 		 */
-		if (!high)
+		अगर (!high)
 			crash_base = memblock_phys_alloc_range(crash_size,
 						CRASH_ALIGN, CRASH_ALIGN,
 						CRASH_ADDR_LOW_MAX);
-		if (!crash_base)
+		अगर (!crash_base)
 			crash_base = memblock_phys_alloc_range(crash_size,
 						CRASH_ALIGN, CRASH_ALIGN,
 						CRASH_ADDR_HIGH_MAX);
-		if (!crash_base) {
+		अगर (!crash_base) अणु
 			pr_info("crashkernel reservation failed - No suitable area found.\n");
-			return;
-		}
-	} else {
-		unsigned long long start;
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ दीर्घ start;
 
 		start = memblock_phys_alloc_range(crash_size, SZ_1M, crash_base,
 						  crash_base + crash_size);
-		if (start != crash_base) {
+		अगर (start != crash_base) अणु
 			pr_info("crashkernel reservation failed - memory is in use.\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	if (crash_base >= (1ULL << 32) && reserve_crashkernel_low()) {
-		memblock_free(crash_base, crash_size);
-		return;
-	}
+	अगर (crash_base >= (1ULL << 32) && reserve_crashkernel_low()) अणु
+		memblock_मुक्त(crash_base, crash_size);
+		वापस;
+	पूर्ण
 
 	pr_info("Reserving %ldMB of memory at %ldMB for crashkernel (System RAM: %ldMB)\n",
-		(unsigned long)(crash_size >> 20),
-		(unsigned long)(crash_base >> 20),
-		(unsigned long)(total_mem >> 20));
+		(अचिन्हित दीर्घ)(crash_size >> 20),
+		(अचिन्हित दीर्घ)(crash_base >> 20),
+		(अचिन्हित दीर्घ)(total_mem >> 20));
 
 	crashk_res.start = crash_base;
 	crashk_res.end   = crash_base + crash_size - 1;
 	insert_resource(&iomem_resource, &crashk_res);
-}
-#else
-static void __init reserve_crashkernel(void)
-{
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल व्योम __init reserve_crashkernel(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static struct resource standard_io_resources[] = {
-	{ .name = "dma1", .start = 0x00, .end = 0x1f,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO },
-	{ .name = "pic1", .start = 0x20, .end = 0x21,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO },
-	{ .name = "timer0", .start = 0x40, .end = 0x43,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO },
-	{ .name = "timer1", .start = 0x50, .end = 0x53,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO },
-	{ .name = "keyboard", .start = 0x60, .end = 0x60,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO },
-	{ .name = "keyboard", .start = 0x64, .end = 0x64,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO },
-	{ .name = "dma page reg", .start = 0x80, .end = 0x8f,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO },
-	{ .name = "pic2", .start = 0xa0, .end = 0xa1,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO },
-	{ .name = "dma2", .start = 0xc0, .end = 0xdf,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO },
-	{ .name = "fpu", .start = 0xf0, .end = 0xff,
-		.flags = IORESOURCE_BUSY | IORESOURCE_IO }
-};
+अटल काष्ठा resource standard_io_resources[] = अणु
+	अणु .name = "dma1", .start = 0x00, .end = 0x1f,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण,
+	अणु .name = "pic1", .start = 0x20, .end = 0x21,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण,
+	अणु .name = "timer0", .start = 0x40, .end = 0x43,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण,
+	अणु .name = "timer1", .start = 0x50, .end = 0x53,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण,
+	अणु .name = "keyboard", .start = 0x60, .end = 0x60,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण,
+	अणु .name = "keyboard", .start = 0x64, .end = 0x64,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण,
+	अणु .name = "dma page reg", .start = 0x80, .end = 0x8f,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण,
+	अणु .name = "pic2", .start = 0xa0, .end = 0xa1,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण,
+	अणु .name = "dma2", .start = 0xc0, .end = 0xdf,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण,
+	अणु .name = "fpu", .start = 0xf0, .end = 0xff,
+		.flags = IORESOURCE_BUSY | IORESOURCE_IO पूर्ण
+पूर्ण;
 
-void __init reserve_standard_io_resources(void)
-{
-	int i;
+व्योम __init reserve_standard_io_resources(व्योम)
+अणु
+	पूर्णांक i;
 
-	/* request I/O space for devices used on all i[345]86 PCs */
-	for (i = 0; i < ARRAY_SIZE(standard_io_resources); i++)
+	/* request I/O space क्रम devices used on all i[345]86 PCs */
+	क्रम (i = 0; i < ARRAY_SIZE(standard_io_resources); i++)
 		request_resource(&ioport_resource, &standard_io_resources[i]);
 
-}
+पूर्ण
 
-static __init void reserve_ibft_region(void)
-{
-	unsigned long addr, size = 0;
+अटल __init व्योम reserve_ibft_region(व्योम)
+अणु
+	अचिन्हित दीर्घ addr, size = 0;
 
 	addr = find_ibft_region(&size);
 
-	if (size)
+	अगर (size)
 		memblock_reserve(addr, size);
-}
+पूर्ण
 
-static bool __init snb_gfx_workaround_needed(void)
-{
-#ifdef CONFIG_PCI
-	int i;
-	u16 vendor, devid;
-	static const __initconst u16 snb_ids[] = {
+अटल bool __init snb_gfx_workaround_needed(व्योम)
+अणु
+#अगर_घोषित CONFIG_PCI
+	पूर्णांक i;
+	u16 venकरोr, devid;
+	अटल स्थिर __initस्थिर u16 snb_ids[] = अणु
 		0x0102,
 		0x0112,
 		0x0122,
@@ -594,133 +595,133 @@ static bool __init snb_gfx_workaround_needed(void)
 		0x0116,
 		0x0126,
 		0x010a,
-	};
+	पूर्ण;
 
-	/* Assume no if something weird is going on with PCI */
-	if (!early_pci_allowed())
-		return false;
+	/* Assume no अगर something weird is going on with PCI */
+	अगर (!early_pci_allowed())
+		वापस false;
 
-	vendor = read_pci_config_16(0, 2, 0, PCI_VENDOR_ID);
-	if (vendor != 0x8086)
-		return false;
+	venकरोr = पढ़ो_pci_config_16(0, 2, 0, PCI_VENDOR_ID);
+	अगर (venकरोr != 0x8086)
+		वापस false;
 
-	devid = read_pci_config_16(0, 2, 0, PCI_DEVICE_ID);
-	for (i = 0; i < ARRAY_SIZE(snb_ids); i++)
-		if (devid == snb_ids[i])
-			return true;
-#endif
+	devid = पढ़ो_pci_config_16(0, 2, 0, PCI_DEVICE_ID);
+	क्रम (i = 0; i < ARRAY_SIZE(snb_ids); i++)
+		अगर (devid == snb_ids[i])
+			वापस true;
+#पूर्ण_अगर
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * Sandy Bridge graphics has trouble with certain ranges, exclude
  * them from allocation.
  */
-static void __init trim_snb_memory(void)
-{
-	static const __initconst unsigned long bad_pages[] = {
+अटल व्योम __init trim_snb_memory(व्योम)
+अणु
+	अटल स्थिर __initस्थिर अचिन्हित दीर्घ bad_pages[] = अणु
 		0x20050000,
 		0x20110000,
 		0x20130000,
 		0x20138000,
 		0x40004000,
-	};
-	int i;
+	पूर्ण;
+	पूर्णांक i;
 
-	if (!snb_gfx_workaround_needed())
-		return;
+	अगर (!snb_gfx_workaround_needed())
+		वापस;
 
-	printk(KERN_DEBUG "reserving inaccessible SNB gfx pages\n");
+	prपूर्णांकk(KERN_DEBUG "reserving inaccessible SNB gfx pages\n");
 
 	/*
-	 * SandyBridge integrated graphics devices have a bug that prevents
+	 * SandyBridge पूर्णांकegrated graphics devices have a bug that prevents
 	 * them from accessing certain memory ranges, namely anything below
 	 * 1M and in the pages listed in bad_pages[] above.
 	 *
-	 * To avoid these pages being ever accessed by SNB gfx devices reserve
-	 * bad_pages that have not already been reserved at boot time.
+	 * To aव्योम these pages being ever accessed by SNB gfx devices reserve
+	 * bad_pages that have not alपढ़ोy been reserved at boot समय.
 	 * All memory below the 1 MB mark is anyway reserved later during
 	 * setup_arch(), so there is no need to reserve it here.
 	 */
 
-	for (i = 0; i < ARRAY_SIZE(bad_pages); i++) {
-		if (memblock_reserve(bad_pages[i], PAGE_SIZE))
-			printk(KERN_WARNING "failed to reserve 0x%08lx\n",
+	क्रम (i = 0; i < ARRAY_SIZE(bad_pages); i++) अणु
+		अगर (memblock_reserve(bad_pages[i], PAGE_SIZE))
+			prपूर्णांकk(KERN_WARNING "failed to reserve 0x%08lx\n",
 			       bad_pages[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init trim_bios_range(void)
-{
+अटल व्योम __init trim_bios_range(व्योम)
+अणु
 	/*
-	 * A special case is the first 4Kb of memory;
+	 * A special हाल is the first 4Kb of memory;
 	 * This is a BIOS owned area, not kernel ram, but generally
 	 * not listed as such in the E820 table.
 	 *
-	 * This typically reserves additional memory (64KiB by default)
+	 * This typically reserves additional memory (64KiB by शेष)
 	 * since some BIOSes are known to corrupt low memory.  See the
-	 * Kconfig help text for X86_RESERVE_LOW.
+	 * Kconfig help text क्रम X86_RESERVE_LOW.
 	 */
 	e820__range_update(0, PAGE_SIZE, E820_TYPE_RAM, E820_TYPE_RESERVED);
 
 	/*
-	 * special case: Some BIOSes report the PC BIOS
+	 * special हाल: Some BIOSes report the PC BIOS
 	 * area (640Kb -> 1Mb) as RAM even though it is not.
 	 * take them out.
 	 */
-	e820__range_remove(BIOS_BEGIN, BIOS_END - BIOS_BEGIN, E820_TYPE_RAM, 1);
+	e820__range_हटाओ(BIOS_BEGIN, BIOS_END - BIOS_BEGIN, E820_TYPE_RAM, 1);
 
 	e820__update_table(e820_table);
-}
+पूर्ण
 
-/* called before trim_bios_range() to spare extra sanitize */
-static void __init e820_add_kernel_range(void)
-{
+/* called beक्रमe trim_bios_range() to spare extra sanitize */
+अटल व्योम __init e820_add_kernel_range(व्योम)
+अणु
 	u64 start = __pa_symbol(_text);
 	u64 size = __pa_symbol(_end) - start;
 
 	/*
-	 * Complain if .text .data and .bss are not marked as E820_TYPE_RAM and
+	 * Complain अगर .text .data and .bss are not marked as E820_TYPE_RAM and
 	 * attempt to fix it by adding the range. We may have a confused BIOS,
-	 * or the user may have used memmap=exactmap or memmap=xxM$yyM to
+	 * or the user may have used memmap=exacपंचांगap or memmap=xxM$yyM to
 	 * exclude kernel range. If we really are running on top non-RAM,
 	 * we will crash later anyways.
 	 */
-	if (e820__mapped_all(start, start + size, E820_TYPE_RAM))
-		return;
+	अगर (e820__mapped_all(start, start + size, E820_TYPE_RAM))
+		वापस;
 
 	pr_warn(".text .data .bss are not marked as E820_TYPE_RAM!\n");
-	e820__range_remove(start, size, E820_TYPE_RAM, 0);
+	e820__range_हटाओ(start, size, E820_TYPE_RAM, 0);
 	e820__range_add(start, size, E820_TYPE_RAM);
-}
+पूर्ण
 
-static unsigned reserve_low = CONFIG_X86_RESERVE_LOW << 10;
+अटल अचिन्हित reserve_low = CONFIG_X86_RESERVE_LOW << 10;
 
-static int __init parse_reservelow(char *p)
-{
-	unsigned long long size;
+अटल पूर्णांक __init parse_reservelow(अक्षर *p)
+अणु
+	अचिन्हित दीर्घ दीर्घ size;
 
-	if (!p)
-		return -EINVAL;
+	अगर (!p)
+		वापस -EINVAL;
 
 	size = memparse(p, &p);
 
-	if (size < 4096)
+	अगर (size < 4096)
 		size = 4096;
 
-	if (size > 640*1024)
+	अगर (size > 640*1024)
 		size = 640*1024;
 
 	reserve_low = size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 early_param("reservelow", parse_reservelow);
 
-static void __init early_reserve_memory(void)
-{
+अटल व्योम __init early_reserve_memory(व्योम)
+अणु
 	/*
 	 * Reserve the memory occupied by the kernel between _text and
 	 * __end_of_kernel_reserve symbols. Any kernel sections after the
@@ -728,7 +729,7 @@ static void __init early_reserve_memory(void)
 	 * separate memblock_reserve() or they will be discarded.
 	 */
 	memblock_reserve(__pa_symbol(_text),
-			 (unsigned long)__end_of_kernel_reserve - (unsigned long)_text);
+			 (अचिन्हित दीर्घ)__end_of_kernel_reserve - (अचिन्हित दीर्घ)_text);
 
 	/*
 	 * The first 4Kb of memory is a BIOS owned area, but generally it is
@@ -739,13 +740,13 @@ static void __init early_reserve_memory(void)
 	 * rest of the memory below 640k is reserved.
 	 *
 	 * In addition, make sure page 0 is always reserved because on
-	 * systems with L1TF its contents can be leaked to user processes.
+	 * प्रणालीs with L1TF its contents can be leaked to user processes.
 	 */
 	memblock_reserve(0, SZ_64K);
 
 	early_reserve_initrd();
 
-	if (efi_enabled(EFI_BOOT))
+	अगर (efi_enabled(EFI_BOOT))
 		efi_memblock_x86_reserve_range();
 
 	memblock_x86_reserve_range_setup_data();
@@ -753,47 +754,47 @@ static void __init early_reserve_memory(void)
 	reserve_ibft_region();
 	reserve_bios_regions();
 	trim_snb_memory();
-}
+पूर्ण
 
 /*
- * Dump out kernel offset information on panic.
+ * Dump out kernel offset inक्रमmation on panic.
  */
-static int
-dump_kernel_offset(struct notifier_block *self, unsigned long v, void *p)
-{
-	if (kaslr_enabled()) {
+अटल पूर्णांक
+dump_kernel_offset(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ v, व्योम *p)
+अणु
+	अगर (kaslr_enabled()) अणु
 		pr_emerg("Kernel Offset: 0x%lx from 0x%lx (relocation range: 0x%lx-0x%lx)\n",
 			 kaslr_offset(),
 			 __START_KERNEL,
 			 __START_KERNEL_map,
 			 MODULES_VADDR-1);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_emerg("Kernel Offset: disabled\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Determine if we were loaded by an EFI loader.  If so, then we have also been
- * passed the efi memmap, systab, etc., so we should use these data structures
- * for initialization.  Note, the efi init code path is determined by the
+ * Determine अगर we were loaded by an EFI loader.  If so, then we have also been
+ * passed the efi memmap, systab, etc., so we should use these data काष्ठाures
+ * क्रम initialization.  Note, the efi init code path is determined by the
  * global efi_enabled. This allows the same kernel image to be used on existing
- * systems (with a traditional BIOS) as well as on EFI systems.
+ * प्रणालीs (with a traditional BIOS) as well as on EFI प्रणालीs.
  */
 /*
- * setup_arch - architecture-specific boot-time initializations
+ * setup_arch - architecture-specअगरic boot-समय initializations
  *
- * Note: On x86_64, fixmaps are ready for use even before this is called.
+ * Note: On x86_64, fixmaps are पढ़ोy क्रम use even beक्रमe this is called.
  */
 
-void __init setup_arch(char **cmdline_p)
-{
-#ifdef CONFIG_X86_32
-	memcpy(&boot_cpu_data, &new_cpu_data, sizeof(new_cpu_data));
+व्योम __init setup_arch(अक्षर **cmdline_p)
+अणु
+#अगर_घोषित CONFIG_X86_32
+	स_नकल(&boot_cpu_data, &new_cpu_data, माप(new_cpu_data));
 
 	/*
-	 * copy kernel address range established so far and switch
+	 * copy kernel address range established so far and चयन
 	 * to the proper swapper page table
 	 */
 	clone_pgd_range(swapper_pg_dir     + KERNEL_PGD_BOUNDARY,
@@ -806,26 +807,26 @@ void __init setup_arch(char **cmdline_p)
 	 * a cr3 based tlb flush, so the following __flush_tlb_all()
 	 * will not flush anything because the CPU quirk which clears
 	 * X86_FEATURE_PGE has not been invoked yet. Though due to the
-	 * load_cr3() above the TLB has been flushed already. The
-	 * quirk is invoked before subsequent calls to __flush_tlb_all()
+	 * load_cr3() above the TLB has been flushed alपढ़ोy. The
+	 * quirk is invoked beक्रमe subsequent calls to __flush_tlb_all()
 	 * so proper operation is guaranteed.
 	 */
 	__flush_tlb_all();
-#else
-	printk(KERN_INFO "Command line: %s\n", boot_command_line);
+#अन्यथा
+	prपूर्णांकk(KERN_INFO "Command line: %s\n", boot_command_line);
 	boot_cpu_data.x86_phys_bits = MAX_PHYSMEM_BITS;
-#endif
+#पूर्ण_अगर
 
 	/*
 	 * If we have OLPC OFW, we might end up relocating the fixmap due to
-	 * reserve_top(), so do this before touching the ioremap area.
+	 * reserve_top(), so करो this beक्रमe touching the ioremap area.
 	 */
 	olpc_ofw_detect();
 
 	idt_setup_early_traps();
 	early_cpu_init();
 	jump_label_init();
-	static_call_init();
+	अटल_call_init();
 	early_ioremap_init();
 
 	setup_olpc_ofw_pgd();
@@ -833,32 +834,32 @@ void __init setup_arch(char **cmdline_p)
 	ROOT_DEV = old_decode_dev(boot_params.hdr.root_dev);
 	screen_info = boot_params.screen_info;
 	edid_info = boot_params.edid_info;
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	apm_info.bios = boot_params.apm_bios_info;
 	ist_info = boot_params.ist_info;
-#endif
+#पूर्ण_अगर
 	saved_video_mode = boot_params.hdr.vid_mode;
 	bootloader_type = boot_params.hdr.type_of_loader;
-	if ((bootloader_type >> 4) == 0xe) {
+	अगर ((bootloader_type >> 4) == 0xe) अणु
 		bootloader_type &= 0xf;
 		bootloader_type |= (boot_params.hdr.ext_loader_type+0x10) << 4;
-	}
+	पूर्ण
 	bootloader_version  = bootloader_type & 0xf;
 	bootloader_version |= boot_params.hdr.ext_loader_ver << 4;
 
-#ifdef CONFIG_BLK_DEV_RAM
+#अगर_घोषित CONFIG_BLK_DEV_RAM
 	rd_image_start = boot_params.hdr.ram_size & RAMDISK_IMAGE_START_MASK;
-#endif
-#ifdef CONFIG_EFI
-	if (!strncmp((char *)&boot_params.efi_info.efi_loader_signature,
-		     EFI32_LOADER_SIGNATURE, 4)) {
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_EFI
+	अगर (!म_भेदन((अक्षर *)&boot_params.efi_info.efi_loader_signature,
+		     EFI32_LOADER_SIGNATURE, 4)) अणु
 		set_bit(EFI_BOOT, &efi.flags);
-	} else if (!strncmp((char *)&boot_params.efi_info.efi_loader_signature,
-		     EFI64_LOADER_SIGNATURE, 4)) {
+	पूर्ण अन्यथा अगर (!म_भेदन((अक्षर *)&boot_params.efi_info.efi_loader_signature,
+		     EFI64_LOADER_SIGNATURE, 4)) अणु
 		set_bit(EFI_BOOT, &efi.flags);
 		set_bit(EFI_64BIT, &efi.flags);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	x86_init.oem.arch_setup();
 
@@ -868,11 +869,11 @@ void __init setup_arch(char **cmdline_p)
 
 	copy_edd();
 
-	if (!boot_params.hdr.root_flags)
+	अगर (!boot_params.hdr.root_flags)
 		root_mountflags &= ~MS_RDONLY;
-	init_mm.start_code = (unsigned long) _text;
-	init_mm.end_code = (unsigned long) _etext;
-	init_mm.end_data = (unsigned long) _edata;
+	init_mm.start_code = (अचिन्हित दीर्घ) _text;
+	init_mm.end_code = (अचिन्हित दीर्घ) _etext;
+	init_mm.end_data = (अचिन्हित दीर्घ) _edata;
 	init_mm.brk = _brk_end;
 
 	code_resource.start = __pa_symbol(_text);
@@ -884,25 +885,25 @@ void __init setup_arch(char **cmdline_p)
 	bss_resource.start = __pa_symbol(__bss_start);
 	bss_resource.end = __pa_symbol(__bss_stop)-1;
 
-#ifdef CONFIG_CMDLINE_BOOL
-#ifdef CONFIG_CMDLINE_OVERRIDE
+#अगर_घोषित CONFIG_CMDLINE_BOOL
+#अगर_घोषित CONFIG_CMDLINE_OVERRIDE
 	strlcpy(boot_command_line, builtin_cmdline, COMMAND_LINE_SIZE);
-#else
-	if (builtin_cmdline[0]) {
+#अन्यथा
+	अगर (builtin_cmdline[0]) अणु
 		/* append boot loader cmdline to builtin */
 		strlcat(builtin_cmdline, " ", COMMAND_LINE_SIZE);
 		strlcat(builtin_cmdline, boot_command_line, COMMAND_LINE_SIZE);
 		strlcpy(boot_command_line, builtin_cmdline, COMMAND_LINE_SIZE);
-	}
-#endif
-#endif
+	पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर
 
 	strlcpy(command_line, boot_command_line, COMMAND_LINE_SIZE);
 	*cmdline_p = command_line;
 
 	/*
-	 * x86_configure_nx() is called before parse_early_param() to detect
-	 * whether hardware doesn't support NX (so that the early EHCI debug
+	 * x86_configure_nx() is called beक्रमe parse_early_param() to detect
+	 * whether hardware करोesn't support NX (so that the early EHCI debug
 	 * console setup can safely call set_fixmap()). It may then be called
 	 * again from within noexec_setup() during parsing early parameters
 	 * to honor the respective command line option.
@@ -912,63 +913,63 @@ void __init setup_arch(char **cmdline_p)
 	parse_early_param();
 
 	/*
-	 * Do some memory reservations *before* memory is added to
-	 * memblock, so memblock allocations won't overwrite it.
+	 * Do some memory reservations *beक्रमe* memory is added to
+	 * memblock, so memblock allocations won't overग_लिखो it.
 	 * Do it after early param, so we could get (unlikely) panic from
 	 * serial.
 	 *
-	 * After this point everything still needed from the boot loader or
+	 * After this poपूर्णांक everything still needed from the boot loader or
 	 * firmware or kernel text should be early reserved or marked not
-	 * RAM in e820. All other memory is free game.
+	 * RAM in e820. All other memory is मुक्त game.
 	 */
 	early_reserve_memory();
 
-#ifdef CONFIG_MEMORY_HOTPLUG
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
 	/*
-	 * Memory used by the kernel cannot be hot-removed because Linux
+	 * Memory used by the kernel cannot be hot-हटाओd because Linux
 	 * cannot migrate the kernel pages. When memory hotplug is
 	 * enabled, we should prevent memblock from allocating memory
-	 * for the kernel.
+	 * क्रम the kernel.
 	 *
-	 * ACPI SRAT records all hotpluggable memory ranges. But before
-	 * SRAT is parsed, we don't know about it.
+	 * ACPI SRAT records all hotpluggable memory ranges. But beक्रमe
+	 * SRAT is parsed, we करोn't know about it.
 	 *
-	 * The kernel image is loaded into memory at very early time. We
-	 * cannot prevent this anyway. So on NUMA system, we set any
+	 * The kernel image is loaded पूर्णांकo memory at very early समय. We
+	 * cannot prevent this anyway. So on NUMA प्रणाली, we set any
 	 * node the kernel resides in as un-hotpluggable.
 	 *
-	 * Since on modern servers, one node could have double-digit
+	 * Since on modern servers, one node could have द्विगुन-digit
 	 * gigabytes memory, we can assume the memory around the kernel
-	 * image is also un-hotpluggable. So before SRAT is parsed, just
+	 * image is also un-hotpluggable. So beक्रमe SRAT is parsed, just
 	 * allocate memory near the kernel image to try the best to keep
 	 * the kernel away from hotpluggable memory.
 	 */
-	if (movable_node_is_enabled())
+	अगर (movable_node_is_enabled())
 		memblock_set_bottom_up(true);
-#endif
+#पूर्ण_अगर
 
 	x86_report_nx();
 
-	if (acpi_mps_check()) {
-#ifdef CONFIG_X86_LOCAL_APIC
+	अगर (acpi_mps_check()) अणु
+#अगर_घोषित CONFIG_X86_LOCAL_APIC
 		disable_apic = 1;
-#endif
+#पूर्ण_अगर
 		setup_clear_cpu_cap(X86_FEATURE_APIC);
-	}
+	पूर्ण
 
 	e820__reserve_setup_data();
 	e820__finish_early_params();
 
-	if (efi_enabled(EFI_BOOT))
+	अगर (efi_enabled(EFI_BOOT))
 		efi_init();
 
 	dmi_setup();
 
 	/*
 	 * VMware detection requires dmi to be available, so this
-	 * needs to be done after dmi_setup(), for the boot CPU.
+	 * needs to be करोne after dmi_setup(), क्रम the boot CPU.
 	 */
-	init_hypervisor_platform();
+	init_hypervisor_platक्रमm();
 
 	tsc_early_init();
 	x86_init.resources.probe_roms();
@@ -981,17 +982,17 @@ void __init setup_arch(char **cmdline_p)
 
 	e820_add_kernel_range();
 	trim_bios_range();
-#ifdef CONFIG_X86_32
-	if (ppro_with_ram_bug()) {
+#अगर_घोषित CONFIG_X86_32
+	अगर (ppro_with_ram_bug()) अणु
 		e820__range_update(0x70000000ULL, 0x40000ULL, E820_TYPE_RAM,
 				  E820_TYPE_RESERVED);
 		e820__update_table(e820_table);
-		printk(KERN_INFO "fixed physical RAM map:\n");
-		e820__print_table("bad_ppro");
-	}
-#else
+		prपूर्णांकk(KERN_INFO "fixed physical RAM map:\n");
+		e820__prपूर्णांक_table("bad_ppro");
+	पूर्ण
+#अन्यथा
 	early_gart_iommu_check();
-#endif
+#पूर्ण_अगर
 
 	/*
 	 * partially used pages are not usable - thus
@@ -999,51 +1000,51 @@ void __init setup_arch(char **cmdline_p)
 	 */
 	max_pfn = e820__end_of_ram_pfn();
 
-	/* update e820 for memory not covered by WB MTRRs */
+	/* update e820 क्रम memory not covered by WB MTRRs */
 	mtrr_bp_init();
-	if (mtrr_trim_uncached_memory(max_pfn))
+	अगर (mtrr_trim_uncached_memory(max_pfn))
 		max_pfn = e820__end_of_ram_pfn();
 
 	max_possible_pfn = max_pfn;
 
 	/*
-	 * This call is required when the CPU does not support PAT. If
-	 * mtrr_bp_init() invoked it already via pat_init() the call has no
+	 * This call is required when the CPU करोes not support PAT. If
+	 * mtrr_bp_init() invoked it alपढ़ोy via pat_init() the call has no
 	 * effect.
 	 */
 	init_cache_modes();
 
 	/*
-	 * Define random base addresses for memory sections after max_pfn is
-	 * defined and before each memory section base is used.
+	 * Define अक्रमom base addresses क्रम memory sections after max_pfn is
+	 * defined and beक्रमe each memory section base is used.
 	 */
-	kernel_randomize_memory();
+	kernel_अक्रमomize_memory();
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	/* max_low_pfn get updated here */
 	find_low_pfn_range();
-#else
+#अन्यथा
 	check_x2apic();
 
-	/* How many end-of-memory variables you have, grandma! */
-	/* need this before calling reserve_initrd */
-	if (max_pfn > (1UL<<(32 - PAGE_SHIFT)))
+	/* How many end-of-memory variables you have, gअक्रमma! */
+	/* need this beक्रमe calling reserve_initrd */
+	अगर (max_pfn > (1UL<<(32 - PAGE_SHIFT)))
 		max_low_pfn = e820__end_of_low_ram_pfn();
-	else
+	अन्यथा
 		max_low_pfn = max_pfn;
 
-	high_memory = (void *)__va(max_pfn * PAGE_SIZE - 1) + 1;
-#endif
+	high_memory = (व्योम *)__va(max_pfn * PAGE_SIZE - 1) + 1;
+#पूर्ण_अगर
 
 	/*
-	 * Find and reserve possible boot-time SMP configuration:
+	 * Find and reserve possible boot-समय SMP configuration:
 	 */
 	find_smp_config();
 
 	early_alloc_pgt_buf();
 
 	/*
-	 * Need to conclude brk, before e820__memblock_setup()
+	 * Need to conclude brk, beक्रमe e820__memblock_setup()
 	 * it could use memblock_find_in_range, could overlap with
 	 * brk area.
 	 */
@@ -1066,33 +1067,33 @@ void __init setup_arch(char **cmdline_p)
 	efi_mokvar_table_init();
 
 	/*
-	 * The EFI specification says that boot service code won't be
+	 * The EFI specअगरication says that boot service code won't be
 	 * called after ExitBootServices(). This is, in fact, a lie.
 	 */
 	efi_reserve_boot_services();
 
-	/* preallocate 4k for mptable mpc */
+	/* pपुनः_स्मृतिate 4k क्रम mptable mpc */
 	e820__memblock_alloc_reserved_mpc_new();
 
-#ifdef CONFIG_X86_CHECK_BIOS_CORRUPTION
+#अगर_घोषित CONFIG_X86_CHECK_BIOS_CORRUPTION
 	setup_bios_corruption_check();
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_X86_32
-	printk(KERN_DEBUG "initial memory mapped: [mem 0x00000000-%#010lx]\n",
+#अगर_घोषित CONFIG_X86_32
+	prपूर्णांकk(KERN_DEBUG "initial memory mapped: [mem 0x00000000-%#010lx]\n",
 			(max_pfn_mapped<<PAGE_SHIFT) - 1);
-#endif
+#पूर्ण_अगर
 
 	/*
-	 * Find free memory for the real mode trampoline and place it
+	 * Find मुक्त memory क्रम the real mode trampoline and place it
 	 * there.
-	 * If there is not enough free memory under 1M, on EFI-enabled
-	 * systems there will be additional attempt to reclaim the memory
-	 * for the real mode trampoline at efi_free_boot_services().
+	 * If there is not enough मुक्त memory under 1M, on EFI-enabled
+	 * प्रणालीs there will be additional attempt to reclaim the memory
+	 * क्रम the real mode trampoline at efi_मुक्त_boot_services().
 	 *
 	 * Unconditionally reserve the entire first 1M of RAM because
 	 * BIOSes are know to corrupt low memory and several
-	 * hundred kilobytes are not worth complex detection what memory gets
+	 * hundred kilobytes are not worth complex detection what memory माला_लो
 	 * clobbered. Moreover, on machines with SandyBridge graphics or in
 	 * setups that use crashkernel the entire 1M is reserved anyway.
 	 */
@@ -1108,68 +1109,68 @@ void __init setup_arch(char **cmdline_p)
 	 * auditing all the early-boot CR4 manipulation would be needed to
 	 * rule it out.
 	 *
-	 * Mask off features that don't work outside long mode (just
-	 * PCIDE for now).
+	 * Mask off features that करोn't work outside दीर्घ mode (just
+	 * PCIDE क्रम now).
 	 */
-	mmu_cr4_features = __read_cr4() & ~X86_CR4_PCIDE;
+	mmu_cr4_features = __पढ़ो_cr4() & ~X86_CR4_PCIDE;
 
 	memblock_set_current_limit(get_max_mapped());
 
 	/*
-	 * NOTE: On x86-32, only from this point on, fixmaps are ready for use.
+	 * NOTE: On x86-32, only from this poपूर्णांक on, fixmaps are पढ़ोy क्रम use.
 	 */
 
-#ifdef CONFIG_PROVIDE_OHCI1394_DMA_INIT
-	if (init_ohci1394_dma_early)
+#अगर_घोषित CONFIG_PROVIDE_OHCI1394_DMA_INIT
+	अगर (init_ohci1394_dma_early)
 		init_ohci1394_dma_on_all_controllers();
-#endif
+#पूर्ण_अगर
 	/* Allocate bigger log buffer */
 	setup_log_buf(1);
 
-	if (efi_enabled(EFI_BOOT)) {
-		switch (boot_params.secure_boot) {
-		case efi_secureboot_mode_disabled:
+	अगर (efi_enabled(EFI_BOOT)) अणु
+		चयन (boot_params.secure_boot) अणु
+		हाल efi_secureboot_mode_disabled:
 			pr_info("Secure boot disabled\n");
-			break;
-		case efi_secureboot_mode_enabled:
+			अवरोध;
+		हाल efi_secureboot_mode_enabled:
 			pr_info("Secure boot enabled\n");
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_info("Secure boot could not be determined\n");
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	reserve_initrd();
 
 	acpi_table_upgrade();
-	/* Look for ACPI tables and reserve memory occupied by them. */
+	/* Look क्रम ACPI tables and reserve memory occupied by them. */
 	acpi_boot_table_init();
 
 	vsmp_init();
 
 	io_delay_init();
 
-	early_platform_quirks();
+	early_platक्रमm_quirks();
 
 	early_acpi_boot_init();
 
-	initmem_init();
+	iniपंचांगem_init();
 	dma_contiguous_reserve(max_pfn_mapped << PAGE_SHIFT);
 
-	if (boot_cpu_has(X86_FEATURE_GBPAGES))
+	अगर (boot_cpu_has(X86_FEATURE_GBPAGES))
 		hugetlb_cma_reserve(PUD_SHIFT - PAGE_SHIFT);
 
 	/*
-	 * Reserve memory for crash kernel after SRAT is parsed so that it
+	 * Reserve memory क्रम crash kernel after SRAT is parsed so that it
 	 * won't consume hotpluggable memory.
 	 */
 	reserve_crashkernel();
 
 	memblock_find_dma_reserve();
 
-	if (!early_xdbc_setup_hardware())
-		early_xdbc_register_console();
+	अगर (!early_xdbc_setup_hardware())
+		early_xdbc_रेजिस्टर_console();
 
 	x86_init.paging.pagetable_init();
 
@@ -1192,13 +1193,13 @@ void __init setup_arch(char **cmdline_p)
 	early_quirks();
 
 	/*
-	 * Read APIC and some other early information from ACPI tables.
+	 * Read APIC and some other early inक्रमmation from ACPI tables.
 	 */
 	acpi_boot_init();
 	x86_dtb_init();
 
 	/*
-	 * get boot-time SMP configuration:
+	 * get boot-समय SMP configuration:
 	 */
 	get_smp_config();
 
@@ -1218,67 +1219,67 @@ void __init setup_arch(char **cmdline_p)
 	x86_init.hyper.guest_late_init();
 
 	e820__reserve_resources();
-	e820__register_nosave_regions(max_pfn);
+	e820__रेजिस्टर_nosave_regions(max_pfn);
 
 	x86_init.resources.reserve_resources();
 
 	e820__setup_pci_gap();
 
-#ifdef CONFIG_VT
-#if defined(CONFIG_VGA_CONSOLE)
-	if (!efi_enabled(EFI_BOOT) || (efi_mem_type(0xa0000) != EFI_CONVENTIONAL_MEMORY))
-		conswitchp = &vga_con;
-#endif
-#endif
+#अगर_घोषित CONFIG_VT
+#अगर defined(CONFIG_VGA_CONSOLE)
+	अगर (!efi_enabled(EFI_BOOT) || (efi_mem_type(0xa0000) != EFI_CONVENTIONAL_MEMORY))
+		conचयनp = &vga_con;
+#पूर्ण_अगर
+#पूर्ण_अगर
 	x86_init.oem.banner();
 
-	x86_init.timers.wallclock_init();
+	x86_init.समयrs.wallघड़ी_init();
 
 	/*
-	 * This needs to run before setup_local_APIC() which soft-disables the
-	 * local APIC temporarily and that masks the thermal LVT interrupt,
+	 * This needs to run beक्रमe setup_local_APIC() which soft-disables the
+	 * local APIC temporarily and that masks the thermal LVT पूर्णांकerrupt,
 	 * leading to softlockups on machines which have configured SMI
-	 * interrupt delivery.
+	 * पूर्णांकerrupt delivery.
 	 */
 	therm_lvt_init();
 
 	mcheck_init();
 
-	register_refined_jiffies(CLOCK_TICK_RATE);
+	रेजिस्टर_refined_jअगरfies(CLOCK_TICK_RATE);
 
-#ifdef CONFIG_EFI
-	if (efi_enabled(EFI_BOOT))
+#अगर_घोषित CONFIG_EFI
+	अगर (efi_enabled(EFI_BOOT))
 		efi_apply_memmap_quirks();
-#endif
+#पूर्ण_अगर
 
 	unwind_init();
-}
+पूर्ण
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 
-static struct resource video_ram_resource = {
+अटल काष्ठा resource video_ram_resource = अणु
 	.name	= "Video RAM area",
 	.start	= 0xa0000,
 	.end	= 0xbffff,
 	.flags	= IORESOURCE_BUSY | IORESOURCE_MEM
-};
+पूर्ण;
 
-void __init i386_reserve_resources(void)
-{
+व्योम __init i386_reserve_resources(व्योम)
+अणु
 	request_resource(&iomem_resource, &video_ram_resource);
 	reserve_standard_io_resources();
-}
+पूर्ण
 
-#endif /* CONFIG_X86_32 */
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
-static struct notifier_block kernel_offset_notifier = {
-	.notifier_call = dump_kernel_offset
-};
+अटल काष्ठा notअगरier_block kernel_offset_notअगरier = अणु
+	.notअगरier_call = dump_kernel_offset
+पूर्ण;
 
-static int __init register_kernel_offset_dumper(void)
-{
-	atomic_notifier_chain_register(&panic_notifier_list,
-					&kernel_offset_notifier);
-	return 0;
-}
-__initcall(register_kernel_offset_dumper);
+अटल पूर्णांक __init रेजिस्टर_kernel_offset_dumper(व्योम)
+अणु
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
+					&kernel_offset_notअगरier);
+	वापस 0;
+पूर्ण
+__initcall(रेजिस्टर_kernel_offset_dumper);

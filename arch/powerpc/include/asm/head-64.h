@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_HEAD_64_H
-#define _ASM_POWERPC_HEAD_64_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_HEAD_64_H
+#घोषणा _ASM_POWERPC_HEAD_64_H
 
-#include <asm/cache.h>
+#समावेश <यंत्र/cache.h>
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 /*
- * We can't do CPP stringification and concatination directly into the section
- * name for some reason, so these macros can do it for us.
+ * We can't करो CPP stringअगरication and concatination directly पूर्णांकo the section
+ * name क्रम some reason, so these macros can करो it क्रम us.
  */
 .macro define_ftsec name
 	.section ".head.text.\name\()","ax",@progbits
@@ -20,16 +21,16 @@
 .endm
 
 /*
- * Fixed (location) sections are used by opening fixed sections and emitting
- * fixed section entries into them before closing them. Multiple fixed sections
- * can be open at any time.
+ * Fixed (location) sections are used by खोलोing fixed sections and emitting
+ * fixed section entries पूर्णांकo them beक्रमe closing them. Multiple fixed sections
+ * can be खोलो at any समय.
  *
  * Each fixed section created in a .S file must have corresponding linkage
- * directives including location, added to  arch/powerpc/kernel/vmlinux.lds.S
+ * directives including location, added to  arch/घातerpc/kernel/vmlinux.lds.S
  *
- * For each fixed section, code is generated into it in the order which it
+ * For each fixed section, code is generated पूर्णांकo it in the order which it
  * appears in the source.  Fixed section entries can be placed at a fixed
- * location within the section using _LOCATION postifx variants. These must
+ * location within the section using _LOCATION postअगरx variants. These must
  * be ordered according to their relative placements within the section.
  *
  * OPEN_FIXED_SECTION(section_name, start_address, end_address)
@@ -48,16 +49,16 @@
  *
  * Troubleshooting:
  * - If the build dies with "Error: attempt to move .org backwards" at
- *   CLOSE_FIXED_SECTION() or elsewhere, there may be something
+ *   CLOSE_FIXED_SECTION() or अन्यथाwhere, there may be something
  *   unexpected being added there. Remove the '. = x_len' line, rebuild, and
- *   check what is pushing the section down.
- * - If the build dies in linking, check arch/powerpc/tools/head_check.sh
+ *   check what is pushing the section करोwn.
+ * - If the build dies in linking, check arch/घातerpc/tools/head_check.sh
  *   comments.
  * - If the kernel crashes or hangs in very early boot, it could be linker
- *   stubs at the start of the main text.
+ *   stubs at the start of the मुख्य text.
  */
 
-#define OPEN_FIXED_SECTION(sname, start, end)			\
+#घोषणा OPEN_FIXED_SECTION(sname, start, end)			\
 	sname##_start = (start);				\
 	sname##_end = (end);					\
 	sname##_len = (end) - (start);				\
@@ -67,13 +68,13 @@ start_##sname:
 
 /*
  * .linker_stub_catch section is used to catch linker stubs from being
- * inserted in our .text section, above the start_text label (which breaks
+ * inserted in our .text section, above the start_text label (which अवरोधs
  * the ABS_ADDR calculation). See kernel/vmlinux.lds.S and tools/head_check.sh
- * for more details. We would prefer to just keep a cacheline (0x80), but
+ * क्रम more details. We would prefer to just keep a cacheline (0x80), but
  * 0x100 seems to be how the linker aligns branch stub groups.
  */
-#ifdef CONFIG_LD_HEAD_STUB_CATCH
-#define OPEN_TEXT_SECTION(start)				\
+#अगर_घोषित CONFIG_LD_HEAD_STUB_CATCH
+#घोषणा OPEN_TEXT_SECTION(start)				\
 	.section ".linker_stub_catch","ax",@progbits;		\
 linker_stub_catch:						\
 	. = 0x4;						\
@@ -81,15 +82,15 @@ linker_stub_catch:						\
 	.section ".text","ax",@progbits;			\
 	.balign 0x100;						\
 start_text:
-#else
-#define OPEN_TEXT_SECTION(start)				\
+#अन्यथा
+#घोषणा OPEN_TEXT_SECTION(start)				\
 	text_start = (start);					\
 	.section ".text","ax",@progbits;			\
 	. = 0x0;						\
 start_text:
-#endif
+#पूर्ण_अगर
 
-#define ZERO_FIXED_SECTION(sname, start, end)			\
+#घोषणा ZERO_FIXED_SECTION(sname, start, end)			\
 	sname##_start = (start);				\
 	sname##_end = (end);					\
 	sname##_len = (end) - (start);				\
@@ -97,78 +98,78 @@ start_text:
 	. = 0x0;						\
 	. = sname##_len;
 
-#define USE_FIXED_SECTION(sname)				\
+#घोषणा USE_FIXED_SECTION(sname)				\
 	fs_label = start_##sname;				\
 	fs_start = sname##_start;				\
 	use_ftsec sname;
 
-#define USE_TEXT_SECTION()					\
+#घोषणा USE_TEXT_SECTION()					\
 	fs_label = start_text;					\
 	fs_start = text_start;					\
 	.text
 
-#define CLOSE_FIXED_SECTION(sname)				\
+#घोषणा CLOSE_FIXED_SECTION(sname)				\
 	USE_FIXED_SECTION(sname);				\
 	. = sname##_len;					\
 end_##sname:
 
 
-#define __FIXED_SECTION_ENTRY_BEGIN(sname, name, __align)	\
+#घोषणा __FIXED_SECTION_ENTRY_BEGIN(sname, name, __align)	\
 	USE_FIXED_SECTION(sname);				\
 	.balign __align;					\
 	.global name;						\
 name:
 
-#define FIXED_SECTION_ENTRY_BEGIN(sname, name)			\
+#घोषणा FIXED_SECTION_ENTRY_BEGIN(sname, name)			\
 	__FIXED_SECTION_ENTRY_BEGIN(sname, name, IFETCH_ALIGN_BYTES)
 
-#define FIXED_SECTION_ENTRY_BEGIN_LOCATION(sname, name, start, size) \
+#घोषणा FIXED_SECTION_ENTRY_BEGIN_LOCATION(sname, name, start, size) \
 	USE_FIXED_SECTION(sname);				\
 	name##_start = (start);					\
-	.if ((start) % (size) != 0);				\
+	.अगर ((start) % (size) != 0);				\
 	.error "Fixed section exception vector misalignment";	\
-	.endif;							\
-	.if ((size) != 0x20) && ((size) != 0x80) && ((size) != 0x100) && ((size) != 0x1000); \
+	.endअगर;							\
+	.अगर ((size) != 0x20) && ((size) != 0x80) && ((size) != 0x100) && ((size) != 0x1000); \
 	.error "Fixed section exception vector bad size";	\
-	.endif;							\
-	.if (start) < sname##_start;				\
+	.endअगर;							\
+	.अगर (start) < sname##_start;				\
 	.error "Fixed section underflow";			\
-	.abort;							\
-	.endif;							\
+	.पात;							\
+	.endअगर;							\
 	. = (start) - sname##_start;				\
 	.global name;						\
 name:
 
-#define FIXED_SECTION_ENTRY_END_LOCATION(sname, name, start, size) \
-	.if (start) + (size) > sname##_end;			\
+#घोषणा FIXED_SECTION_ENTRY_END_LOCATION(sname, name, start, size) \
+	.अगर (start) + (size) > sname##_end;			\
 	.error "Fixed section overflow";			\
-	.abort;							\
-	.endif;							\
-	.if (. - name > (start) + (size) - name##_start);	\
+	.पात;							\
+	.endअगर;							\
+	.अगर (. - name > (start) + (size) - name##_start);	\
 	.error "Fixed entry overflow";				\
-	.abort;							\
-	.endif;							\
+	.पात;							\
+	.endअगर;							\
 	. = ((start) + (size) - sname##_start);			\
 
 
 /*
  * These macros are used to change symbols in other fixed sections to be
- * absolute or related to our current fixed section.
+ * असलolute or related to our current fixed section.
  *
  * - DEFINE_FIXED_SYMBOL / FIXED_SYMBOL_ABS_ADDR is used to find the
- *   absolute address of a symbol within a fixed section, from any section.
+ *   असलolute address of a symbol within a fixed section, from any section.
  *
- * - ABS_ADDR is used to find the absolute address of any symbol, from within
+ * - ABS_ADDR is used to find the असलolute address of any symbol, from within
  *   a fixed section.
  */
-#define DEFINE_FIXED_SYMBOL(label)				\
-	label##_absolute = (label - fs_label + fs_start)
+#घोषणा DEFINE_FIXED_SYMBOL(label)				\
+	label##_असलolute = (label - fs_label + fs_start)
 
-#define FIXED_SYMBOL_ABS_ADDR(label)				\
-	(label##_absolute)
+#घोषणा FIXED_SYMBOL_ABS_ADDR(label)				\
+	(label##_असलolute)
 
-#define ABS_ADDR(label) (label - fs_label + fs_start)
+#घोषणा ABS_ADDR(label) (label - fs_label + fs_start)
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif	/* _ASM_POWERPC_HEAD_64_H */
+#पूर्ण_अगर	/* _ASM_POWERPC_HEAD_64_H */

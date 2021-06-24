@@ -1,142 +1,143 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Kernel-based Virtual Machine driver for Linux
+ * Kernel-based Virtual Machine driver क्रम Linux
  *
  * AMD SVM-SEV support
  *
  * Copyright 2010 Red Hat, Inc. and/or its affiliates.
  */
 
-#include <linux/kvm_types.h>
-#include <linux/kvm_host.h>
-#include <linux/kernel.h>
-#include <linux/highmem.h>
-#include <linux/psp-sev.h>
-#include <linux/pagemap.h>
-#include <linux/swap.h>
-#include <linux/misc_cgroup.h>
-#include <linux/processor.h>
-#include <linux/trace_events.h>
-#include <asm/fpu/internal.h>
+#समावेश <linux/kvm_types.h>
+#समावेश <linux/kvm_host.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/psp-sev.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/misc_cgroup.h>
+#समावेश <linux/processor.h>
+#समावेश <linux/trace_events.h>
+#समावेश <यंत्र/fpu/पूर्णांकernal.h>
 
-#include <asm/trapnr.h>
+#समावेश <यंत्र/trapnr.h>
 
-#include "x86.h"
-#include "svm.h"
-#include "svm_ops.h"
-#include "cpuid.h"
-#include "trace.h"
+#समावेश "x86.h"
+#समावेश "svm.h"
+#समावेश "svm_ops.h"
+#समावेश "cpuid.h"
+#समावेश "trace.h"
 
-#define __ex(x) __kvm_handle_fault_on_reboot(x)
+#घोषणा __ex(x) __kvm_handle_fault_on_reboot(x)
 
-#ifndef CONFIG_KVM_AMD_SEV
+#अगर_अघोषित CONFIG_KVM_AMD_SEV
 /*
  * When this config is not defined, SEV feature is not supported and APIs in
- * this file are not used but this file still gets compiled into the KVM AMD
+ * this file are not used but this file still माला_लो compiled पूर्णांकo the KVM AMD
  * module.
  *
- * We will not have MISC_CG_RES_SEV and MISC_CG_RES_SEV_ES entries in the enum
- * misc_res_type {} defined in linux/misc_cgroup.h.
+ * We will not have MISC_CG_RES_SEV and MISC_CG_RES_SEV_ES entries in the क्रमागत
+ * misc_res_type अणुपूर्ण defined in linux/misc_cgroup.h.
  *
  * Below macros allow compilation to succeed.
  */
-#define MISC_CG_RES_SEV MISC_CG_RES_TYPES
-#define MISC_CG_RES_SEV_ES MISC_CG_RES_TYPES
-#endif
+#घोषणा MISC_CG_RES_SEV MISC_CG_RES_TYPES
+#घोषणा MISC_CG_RES_SEV_ES MISC_CG_RES_TYPES
+#पूर्ण_अगर
 
-#ifdef CONFIG_KVM_AMD_SEV
+#अगर_घोषित CONFIG_KVM_AMD_SEV
 /* enable/disable SEV support */
-static bool sev_enabled = true;
+अटल bool sev_enabled = true;
 module_param_named(sev, sev_enabled, bool, 0444);
 
 /* enable/disable SEV-ES support */
-static bool sev_es_enabled = true;
+अटल bool sev_es_enabled = true;
 module_param_named(sev_es, sev_es_enabled, bool, 0444);
-#else
-#define sev_enabled false
-#define sev_es_enabled false
-#endif /* CONFIG_KVM_AMD_SEV */
+#अन्यथा
+#घोषणा sev_enabled false
+#घोषणा sev_es_enabled false
+#पूर्ण_अगर /* CONFIG_KVM_AMD_SEV */
 
-static u8 sev_enc_bit;
-static DECLARE_RWSEM(sev_deactivate_lock);
-static DEFINE_MUTEX(sev_bitmap_lock);
-unsigned int max_sev_asid;
-static unsigned int min_sev_asid;
-static unsigned long sev_me_mask;
-static unsigned long *sev_asid_bitmap;
-static unsigned long *sev_reclaim_asid_bitmap;
+अटल u8 sev_enc_bit;
+अटल DECLARE_RWSEM(sev_deactivate_lock);
+अटल DEFINE_MUTEX(sev_biपंचांगap_lock);
+अचिन्हित पूर्णांक max_sev_asid;
+अटल अचिन्हित पूर्णांक min_sev_asid;
+अटल अचिन्हित दीर्घ sev_me_mask;
+अटल अचिन्हित दीर्घ *sev_asid_biपंचांगap;
+अटल अचिन्हित दीर्घ *sev_reclaim_asid_biपंचांगap;
 
-struct enc_region {
-	struct list_head list;
-	unsigned long npages;
-	struct page **pages;
-	unsigned long uaddr;
-	unsigned long size;
-};
+काष्ठा enc_region अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ npages;
+	काष्ठा page **pages;
+	अचिन्हित दीर्घ uaddr;
+	अचिन्हित दीर्घ size;
+पूर्ण;
 
-/* Called with the sev_bitmap_lock held, or on shutdown  */
-static int sev_flush_asids(int min_asid, int max_asid)
-{
-	int ret, pos, error = 0;
+/* Called with the sev_biपंचांगap_lock held, or on shutकरोwn  */
+अटल पूर्णांक sev_flush_asids(पूर्णांक min_asid, पूर्णांक max_asid)
+अणु
+	पूर्णांक ret, pos, error = 0;
 
-	/* Check if there are any ASIDs to reclaim before performing a flush */
-	pos = find_next_bit(sev_reclaim_asid_bitmap, max_asid, min_asid);
-	if (pos >= max_asid)
-		return -EBUSY;
+	/* Check अगर there are any ASIDs to reclaim beक्रमe perक्रमming a flush */
+	pos = find_next_bit(sev_reclaim_asid_biपंचांगap, max_asid, min_asid);
+	अगर (pos >= max_asid)
+		वापस -EBUSY;
 
 	/*
 	 * DEACTIVATE will clear the WBINVD indicator causing DF_FLUSH to fail,
 	 * so it must be guarded.
 	 */
-	down_write(&sev_deactivate_lock);
+	करोwn_ग_लिखो(&sev_deactivate_lock);
 
 	wbinvd_on_all_cpus();
 	ret = sev_guest_df_flush(&error);
 
-	up_write(&sev_deactivate_lock);
+	up_ग_लिखो(&sev_deactivate_lock);
 
-	if (ret)
+	अगर (ret)
 		pr_err("SEV: DF_FLUSH failed, ret=%d, error=%#x\n", ret, error);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline bool is_mirroring_enc_context(struct kvm *kvm)
-{
-	return !!to_kvm_svm(kvm)->sev_info.enc_context_owner;
-}
+अटल अंतरभूत bool is_mirroring_enc_context(काष्ठा kvm *kvm)
+अणु
+	वापस !!to_kvm_svm(kvm)->sev_info.enc_context_owner;
+पूर्ण
 
-/* Must be called with the sev_bitmap_lock held */
-static bool __sev_recycle_asids(int min_asid, int max_asid)
-{
-	if (sev_flush_asids(min_asid, max_asid))
-		return false;
+/* Must be called with the sev_biपंचांगap_lock held */
+अटल bool __sev_recycle_asids(पूर्णांक min_asid, पूर्णांक max_asid)
+अणु
+	अगर (sev_flush_asids(min_asid, max_asid))
+		वापस false;
 
 	/* The flush process will flush all reclaimable SEV and SEV-ES ASIDs */
-	bitmap_xor(sev_asid_bitmap, sev_asid_bitmap, sev_reclaim_asid_bitmap,
+	biपंचांगap_xor(sev_asid_biपंचांगap, sev_asid_biपंचांगap, sev_reclaim_asid_biपंचांगap,
 		   max_sev_asid);
-	bitmap_zero(sev_reclaim_asid_bitmap, max_sev_asid);
+	biपंचांगap_zero(sev_reclaim_asid_biपंचांगap, max_sev_asid);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int sev_asid_new(struct kvm_sev_info *sev)
-{
-	int pos, min_asid, max_asid, ret;
+अटल पूर्णांक sev_asid_new(काष्ठा kvm_sev_info *sev)
+अणु
+	पूर्णांक pos, min_asid, max_asid, ret;
 	bool retry = true;
-	enum misc_res_type type;
+	क्रमागत misc_res_type type;
 
 	type = sev->es_active ? MISC_CG_RES_SEV_ES : MISC_CG_RES_SEV;
 	WARN_ON(sev->misc_cg);
 	sev->misc_cg = get_current_misc_cg();
-	ret = misc_cg_try_charge(type, sev->misc_cg, 1);
-	if (ret) {
+	ret = misc_cg_try_अक्षरge(type, sev->misc_cg, 1);
+	अगर (ret) अणु
 		put_misc_cg(sev->misc_cg);
-		sev->misc_cg = NULL;
-		return ret;
-	}
+		sev->misc_cg = शून्य;
+		वापस ret;
+	पूर्ण
 
-	mutex_lock(&sev_bitmap_lock);
+	mutex_lock(&sev_biपंचांगap_lock);
 
 	/*
 	 * SEV-enabled guests must use asid from min_sev_asid to max_sev_asid.
@@ -145,249 +146,249 @@ static int sev_asid_new(struct kvm_sev_info *sev)
 	min_asid = sev->es_active ? 0 : min_sev_asid - 1;
 	max_asid = sev->es_active ? min_sev_asid - 1 : max_sev_asid;
 again:
-	pos = find_next_zero_bit(sev_asid_bitmap, max_sev_asid, min_asid);
-	if (pos >= max_asid) {
-		if (retry && __sev_recycle_asids(min_asid, max_asid)) {
+	pos = find_next_zero_bit(sev_asid_biपंचांगap, max_sev_asid, min_asid);
+	अगर (pos >= max_asid) अणु
+		अगर (retry && __sev_recycle_asids(min_asid, max_asid)) अणु
 			retry = false;
-			goto again;
-		}
-		mutex_unlock(&sev_bitmap_lock);
+			जाओ again;
+		पूर्ण
+		mutex_unlock(&sev_biपंचांगap_lock);
 		ret = -EBUSY;
-		goto e_uncharge;
-	}
+		जाओ e_unअक्षरge;
+	पूर्ण
 
-	__set_bit(pos, sev_asid_bitmap);
+	__set_bit(pos, sev_asid_biपंचांगap);
 
-	mutex_unlock(&sev_bitmap_lock);
+	mutex_unlock(&sev_biपंचांगap_lock);
 
-	return pos + 1;
-e_uncharge:
-	misc_cg_uncharge(type, sev->misc_cg, 1);
+	वापस pos + 1;
+e_unअक्षरge:
+	misc_cg_unअक्षरge(type, sev->misc_cg, 1);
 	put_misc_cg(sev->misc_cg);
-	sev->misc_cg = NULL;
-	return ret;
-}
+	sev->misc_cg = शून्य;
+	वापस ret;
+पूर्ण
 
-static int sev_get_asid(struct kvm *kvm)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+अटल पूर्णांक sev_get_asid(काष्ठा kvm *kvm)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
 
-	return sev->asid;
-}
+	वापस sev->asid;
+पूर्ण
 
-static void sev_asid_free(struct kvm_sev_info *sev)
-{
-	struct svm_cpu_data *sd;
-	int cpu, pos;
-	enum misc_res_type type;
+अटल व्योम sev_asid_मुक्त(काष्ठा kvm_sev_info *sev)
+अणु
+	काष्ठा svm_cpu_data *sd;
+	पूर्णांक cpu, pos;
+	क्रमागत misc_res_type type;
 
-	mutex_lock(&sev_bitmap_lock);
+	mutex_lock(&sev_biपंचांगap_lock);
 
 	pos = sev->asid - 1;
-	__set_bit(pos, sev_reclaim_asid_bitmap);
+	__set_bit(pos, sev_reclaim_asid_biपंचांगap);
 
-	for_each_possible_cpu(cpu) {
+	क्रम_each_possible_cpu(cpu) अणु
 		sd = per_cpu(svm_data, cpu);
-		sd->sev_vmcbs[pos] = NULL;
-	}
+		sd->sev_vmcbs[pos] = शून्य;
+	पूर्ण
 
-	mutex_unlock(&sev_bitmap_lock);
+	mutex_unlock(&sev_biपंचांगap_lock);
 
 	type = sev->es_active ? MISC_CG_RES_SEV_ES : MISC_CG_RES_SEV;
-	misc_cg_uncharge(type, sev->misc_cg, 1);
+	misc_cg_unअक्षरge(type, sev->misc_cg, 1);
 	put_misc_cg(sev->misc_cg);
-	sev->misc_cg = NULL;
-}
+	sev->misc_cg = शून्य;
+पूर्ण
 
-static void sev_decommission(unsigned int handle)
-{
-	struct sev_data_decommission decommission;
+अटल व्योम sev_decommission(अचिन्हित पूर्णांक handle)
+अणु
+	काष्ठा sev_data_decommission decommission;
 
-	if (!handle)
-		return;
+	अगर (!handle)
+		वापस;
 
 	decommission.handle = handle;
-	sev_guest_decommission(&decommission, NULL);
-}
+	sev_guest_decommission(&decommission, शून्य);
+पूर्ण
 
-static void sev_unbind_asid(struct kvm *kvm, unsigned int handle)
-{
-	struct sev_data_deactivate deactivate;
+अटल व्योम sev_unbind_asid(काष्ठा kvm *kvm, अचिन्हित पूर्णांक handle)
+अणु
+	काष्ठा sev_data_deactivate deactivate;
 
-	if (!handle)
-		return;
+	अगर (!handle)
+		वापस;
 
 	deactivate.handle = handle;
 
 	/* Guard DEACTIVATE against WBINVD/DF_FLUSH used in ASID recycling */
-	down_read(&sev_deactivate_lock);
-	sev_guest_deactivate(&deactivate, NULL);
-	up_read(&sev_deactivate_lock);
+	करोwn_पढ़ो(&sev_deactivate_lock);
+	sev_guest_deactivate(&deactivate, शून्य);
+	up_पढ़ो(&sev_deactivate_lock);
 
 	sev_decommission(handle);
-}
+पूर्ण
 
-static int sev_guest_init(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+अटल पूर्णांक sev_guest_init(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
 	bool es_active = argp->id == KVM_SEV_ES_INIT;
-	int asid, ret;
+	पूर्णांक asid, ret;
 
-	if (kvm->created_vcpus)
-		return -EINVAL;
+	अगर (kvm->created_vcpus)
+		वापस -EINVAL;
 
 	ret = -EBUSY;
-	if (unlikely(sev->active))
-		return ret;
+	अगर (unlikely(sev->active))
+		वापस ret;
 
 	sev->es_active = es_active;
 	asid = sev_asid_new(sev);
-	if (asid < 0)
-		goto e_no_asid;
+	अगर (asid < 0)
+		जाओ e_no_asid;
 	sev->asid = asid;
 
-	ret = sev_platform_init(&argp->error);
-	if (ret)
-		goto e_free;
+	ret = sev_platक्रमm_init(&argp->error);
+	अगर (ret)
+		जाओ e_मुक्त;
 
 	sev->active = true;
 	sev->asid = asid;
 	INIT_LIST_HEAD(&sev->regions_list);
 
-	return 0;
+	वापस 0;
 
-e_free:
-	sev_asid_free(sev);
+e_मुक्त:
+	sev_asid_मुक्त(sev);
 	sev->asid = 0;
 e_no_asid:
 	sev->es_active = false;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_bind_asid(struct kvm *kvm, unsigned int handle, int *error)
-{
-	struct sev_data_activate activate;
-	int asid = sev_get_asid(kvm);
-	int ret;
+अटल पूर्णांक sev_bind_asid(काष्ठा kvm *kvm, अचिन्हित पूर्णांक handle, पूर्णांक *error)
+अणु
+	काष्ठा sev_data_activate activate;
+	पूर्णांक asid = sev_get_asid(kvm);
+	पूर्णांक ret;
 
 	/* activate ASID on the given handle */
 	activate.handle = handle;
 	activate.asid   = asid;
 	ret = sev_guest_activate(&activate, error);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __sev_issue_cmd(int fd, int id, void *data, int *error)
-{
-	struct fd f;
-	int ret;
+अटल पूर्णांक __sev_issue_cmd(पूर्णांक fd, पूर्णांक id, व्योम *data, पूर्णांक *error)
+अणु
+	काष्ठा fd f;
+	पूर्णांक ret;
 
 	f = fdget(fd);
-	if (!f.file)
-		return -EBADF;
+	अगर (!f.file)
+		वापस -EBADF;
 
-	ret = sev_issue_cmd_external_user(f.file, id, data, error);
+	ret = sev_issue_cmd_बाह्यal_user(f.file, id, data, error);
 
 	fdput(f);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_issue_cmd(struct kvm *kvm, int id, void *data, int *error)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+अटल पूर्णांक sev_issue_cmd(काष्ठा kvm *kvm, पूर्णांक id, व्योम *data, पूर्णांक *error)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
 
-	return __sev_issue_cmd(sev->fd, id, data, error);
-}
+	वापस __sev_issue_cmd(sev->fd, id, data, error);
+पूर्ण
 
-static int sev_launch_start(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_launch_start start;
-	struct kvm_sev_launch_start params;
-	void *dh_blob, *session_blob;
-	int *error = &argp->error;
-	int ret;
+अटल पूर्णांक sev_launch_start(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_launch_start start;
+	काष्ठा kvm_sev_launch_start params;
+	व्योम *dh_blob, *session_blob;
+	पूर्णांक *error = &argp->error;
+	पूर्णांक ret;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	if (copy_from_user(&params, (void __user *)(uintptr_t)argp->data, sizeof(params)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, (व्योम __user *)(uपूर्णांकptr_t)argp->data, माप(params)))
+		वापस -EFAULT;
 
-	memset(&start, 0, sizeof(start));
+	स_रखो(&start, 0, माप(start));
 
-	dh_blob = NULL;
-	if (params.dh_uaddr) {
+	dh_blob = शून्य;
+	अगर (params.dh_uaddr) अणु
 		dh_blob = psp_copy_user_blob(params.dh_uaddr, params.dh_len);
-		if (IS_ERR(dh_blob))
-			return PTR_ERR(dh_blob);
+		अगर (IS_ERR(dh_blob))
+			वापस PTR_ERR(dh_blob);
 
 		start.dh_cert_address = __sme_set(__pa(dh_blob));
 		start.dh_cert_len = params.dh_len;
-	}
+	पूर्ण
 
-	session_blob = NULL;
-	if (params.session_uaddr) {
+	session_blob = शून्य;
+	अगर (params.session_uaddr) अणु
 		session_blob = psp_copy_user_blob(params.session_uaddr, params.session_len);
-		if (IS_ERR(session_blob)) {
+		अगर (IS_ERR(session_blob)) अणु
 			ret = PTR_ERR(session_blob);
-			goto e_free_dh;
-		}
+			जाओ e_मुक्त_dh;
+		पूर्ण
 
 		start.session_address = __sme_set(__pa(session_blob));
 		start.session_len = params.session_len;
-	}
+	पूर्ण
 
 	start.handle = params.handle;
 	start.policy = params.policy;
 
 	/* create memory encryption context */
 	ret = __sev_issue_cmd(argp->sev_fd, SEV_CMD_LAUNCH_START, &start, error);
-	if (ret)
-		goto e_free_session;
+	अगर (ret)
+		जाओ e_मुक्त_session;
 
 	/* Bind ASID to this guest */
 	ret = sev_bind_asid(kvm, start.handle, error);
-	if (ret) {
+	अगर (ret) अणु
 		sev_decommission(start.handle);
-		goto e_free_session;
-	}
+		जाओ e_मुक्त_session;
+	पूर्ण
 
-	/* return handle to userspace */
+	/* वापस handle to userspace */
 	params.handle = start.handle;
-	if (copy_to_user((void __user *)(uintptr_t)argp->data, &params, sizeof(params))) {
+	अगर (copy_to_user((व्योम __user *)(uपूर्णांकptr_t)argp->data, &params, माप(params))) अणु
 		sev_unbind_asid(kvm, start.handle);
 		ret = -EFAULT;
-		goto e_free_session;
-	}
+		जाओ e_मुक्त_session;
+	पूर्ण
 
 	sev->handle = start.handle;
 	sev->fd = argp->sev_fd;
 
-e_free_session:
-	kfree(session_blob);
-e_free_dh:
-	kfree(dh_blob);
-	return ret;
-}
+e_मुक्त_session:
+	kमुक्त(session_blob);
+e_मुक्त_dh:
+	kमुक्त(dh_blob);
+	वापस ret;
+पूर्ण
 
-static struct page **sev_pin_memory(struct kvm *kvm, unsigned long uaddr,
-				    unsigned long ulen, unsigned long *n,
-				    int write)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	unsigned long npages, size;
-	int npinned;
-	unsigned long locked, lock_limit;
-	struct page **pages;
-	unsigned long first, last;
-	int ret;
+अटल काष्ठा page **sev_pin_memory(काष्ठा kvm *kvm, अचिन्हित दीर्घ uaddr,
+				    अचिन्हित दीर्घ ulen, अचिन्हित दीर्घ *n,
+				    पूर्णांक ग_लिखो)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	अचिन्हित दीर्घ npages, size;
+	पूर्णांक npinned;
+	अचिन्हित दीर्घ locked, lock_limit;
+	काष्ठा page **pages;
+	अचिन्हित दीर्घ first, last;
+	पूर्णांक ret;
 
-	lockdep_assert_held(&kvm->lock);
+	lockdep_निश्चित_held(&kvm->lock);
 
-	if (ulen == 0 || uaddr + ulen < uaddr)
-		return ERR_PTR(-EINVAL);
+	अगर (ulen == 0 || uaddr + ulen < uaddr)
+		वापस ERR_PTR(-EINVAL);
 
 	/* Calculate number of pages. */
 	first = (uaddr & PAGE_MASK) >> PAGE_SHIFT;
@@ -396,106 +397,106 @@ static struct page **sev_pin_memory(struct kvm *kvm, unsigned long uaddr,
 
 	locked = sev->pages_locked + npages;
 	lock_limit = rlimit(RLIMIT_MEMLOCK) >> PAGE_SHIFT;
-	if (locked > lock_limit && !capable(CAP_IPC_LOCK)) {
+	अगर (locked > lock_limit && !capable(CAP_IPC_LOCK)) अणु
 		pr_err("SEV: %lu locked pages exceed the lock limit of %lu.\n", locked, lock_limit);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
-	if (WARN_ON_ONCE(npages > INT_MAX))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON_ONCE(npages > पूर्णांक_उच्च))
+		वापस ERR_PTR(-EINVAL);
 
-	/* Avoid using vmalloc for smaller buffers. */
-	size = npages * sizeof(struct page *);
-	if (size > PAGE_SIZE)
-		pages = __vmalloc(size, GFP_KERNEL_ACCOUNT | __GFP_ZERO);
-	else
-		pages = kmalloc(size, GFP_KERNEL_ACCOUNT);
+	/* Aव्योम using vदो_स्मृति क्रम smaller buffers. */
+	size = npages * माप(काष्ठा page *);
+	अगर (size > PAGE_SIZE)
+		pages = __vदो_स्मृति(size, GFP_KERNEL_ACCOUNT | __GFP_ZERO);
+	अन्यथा
+		pages = kदो_स्मृति(size, GFP_KERNEL_ACCOUNT);
 
-	if (!pages)
-		return ERR_PTR(-ENOMEM);
+	अगर (!pages)
+		वापस ERR_PTR(-ENOMEM);
 
-	/* Pin the user virtual address. */
-	npinned = pin_user_pages_fast(uaddr, npages, write ? FOLL_WRITE : 0, pages);
-	if (npinned != npages) {
+	/* Pin the user भव address. */
+	npinned = pin_user_pages_fast(uaddr, npages, ग_लिखो ? FOLL_WRITE : 0, pages);
+	अगर (npinned != npages) अणु
 		pr_err("SEV: Failure locking %lu pages.\n", npages);
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	*n = npages;
 	sev->pages_locked = locked;
 
-	return pages;
+	वापस pages;
 
 err:
-	if (npinned > 0)
+	अगर (npinned > 0)
 		unpin_user_pages(pages, npinned);
 
-	kvfree(pages);
-	return ERR_PTR(ret);
-}
+	kvमुक्त(pages);
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static void sev_unpin_memory(struct kvm *kvm, struct page **pages,
-			     unsigned long npages)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+अटल व्योम sev_unpin_memory(काष्ठा kvm *kvm, काष्ठा page **pages,
+			     अचिन्हित दीर्घ npages)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
 
 	unpin_user_pages(pages, npages);
-	kvfree(pages);
+	kvमुक्त(pages);
 	sev->pages_locked -= npages;
-}
+पूर्ण
 
-static void sev_clflush_pages(struct page *pages[], unsigned long npages)
-{
-	uint8_t *page_virtual;
-	unsigned long i;
+अटल व्योम sev_clflush_pages(काष्ठा page *pages[], अचिन्हित दीर्घ npages)
+अणु
+	uपूर्णांक8_t *page_भव;
+	अचिन्हित दीर्घ i;
 
-	if (this_cpu_has(X86_FEATURE_SME_COHERENT) || npages == 0 ||
-	    pages == NULL)
-		return;
+	अगर (this_cpu_has(X86_FEATURE_SME_COHERENT) || npages == 0 ||
+	    pages == शून्य)
+		वापस;
 
-	for (i = 0; i < npages; i++) {
-		page_virtual = kmap_atomic(pages[i]);
-		clflush_cache_range(page_virtual, PAGE_SIZE);
-		kunmap_atomic(page_virtual);
-	}
-}
+	क्रम (i = 0; i < npages; i++) अणु
+		page_भव = kmap_atomic(pages[i]);
+		clflush_cache_range(page_भव, PAGE_SIZE);
+		kunmap_atomic(page_भव);
+	पूर्ण
+पूर्ण
 
-static unsigned long get_num_contig_pages(unsigned long idx,
-				struct page **inpages, unsigned long npages)
-{
-	unsigned long paddr, next_paddr;
-	unsigned long i = idx + 1, pages = 1;
+अटल अचिन्हित दीर्घ get_num_contig_pages(अचिन्हित दीर्घ idx,
+				काष्ठा page **inpages, अचिन्हित दीर्घ npages)
+अणु
+	अचिन्हित दीर्घ paddr, next_paddr;
+	अचिन्हित दीर्घ i = idx + 1, pages = 1;
 
 	/* find the number of contiguous pages starting from idx */
 	paddr = __sme_page_pa(inpages[idx]);
-	while (i < npages) {
+	जबतक (i < npages) अणु
 		next_paddr = __sme_page_pa(inpages[i++]);
-		if ((paddr + PAGE_SIZE) == next_paddr) {
+		अगर ((paddr + PAGE_SIZE) == next_paddr) अणु
 			pages++;
 			paddr = next_paddr;
-			continue;
-		}
-		break;
-	}
+			जारी;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	return pages;
-}
+	वापस pages;
+पूर्ण
 
-static int sev_launch_update_data(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	unsigned long vaddr, vaddr_end, next_vaddr, npages, pages, size, i;
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct kvm_sev_launch_update_data params;
-	struct sev_data_launch_update_data data;
-	struct page **inpages;
-	int ret;
+अटल पूर्णांक sev_launch_update_data(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	अचिन्हित दीर्घ vaddr, vaddr_end, next_vaddr, npages, pages, size, i;
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा kvm_sev_launch_update_data params;
+	काष्ठा sev_data_launch_update_data data;
+	काष्ठा page **inpages;
+	पूर्णांक ret;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	if (copy_from_user(&params, (void __user *)(uintptr_t)argp->data, sizeof(params)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, (व्योम __user *)(uपूर्णांकptr_t)argp->data, माप(params)))
+		वापस -EFAULT;
 
 	vaddr = params.uaddr;
 	size = params.len;
@@ -503,11 +504,11 @@ static int sev_launch_update_data(struct kvm *kvm, struct kvm_sev_cmd *argp)
 
 	/* Lock the user memory. */
 	inpages = sev_pin_memory(kvm, vaddr, size, &npages, 1);
-	if (IS_ERR(inpages))
-		return PTR_ERR(inpages);
+	अगर (IS_ERR(inpages))
+		वापस PTR_ERR(inpages);
 
 	/*
-	 * Flush (on non-coherent CPUs) before LAUNCH_UPDATE encrypts pages in
+	 * Flush (on non-coherent CPUs) beक्रमe LAUNCH_UPDATE encrypts pages in
 	 * place; the cache may contain the data that was written unencrypted.
 	 */
 	sev_clflush_pages(inpages, npages);
@@ -515,8 +516,8 @@ static int sev_launch_update_data(struct kvm *kvm, struct kvm_sev_cmd *argp)
 	data.reserved = 0;
 	data.handle = sev->handle;
 
-	for (i = 0; vaddr < vaddr_end; vaddr = next_vaddr, i += pages) {
-		int offset, len;
+	क्रम (i = 0; vaddr < vaddr_end; vaddr = next_vaddr, i += pages) अणु
+		पूर्णांक offset, len;
 
 		/*
 		 * If the user buffer is not page-aligned, calculate the offset
@@ -527,36 +528,36 @@ static int sev_launch_update_data(struct kvm *kvm, struct kvm_sev_cmd *argp)
 		/* Calculate the number of pages that can be encrypted in one go. */
 		pages = get_num_contig_pages(i, inpages, npages);
 
-		len = min_t(size_t, ((pages * PAGE_SIZE) - offset), size);
+		len = min_t(माप_प्रकार, ((pages * PAGE_SIZE) - offset), size);
 
 		data.len = len;
 		data.address = __sme_page_pa(inpages[i]) + offset;
 		ret = sev_issue_cmd(kvm, SEV_CMD_LAUNCH_UPDATE_DATA, &data, &argp->error);
-		if (ret)
-			goto e_unpin;
+		अगर (ret)
+			जाओ e_unpin;
 
 		size -= len;
 		next_vaddr = vaddr + len;
-	}
+	पूर्ण
 
 e_unpin:
 	/* content of memory is updated, mark pages dirty */
-	for (i = 0; i < npages; i++) {
+	क्रम (i = 0; i < npages; i++) अणु
 		set_page_dirty_lock(inpages[i]);
 		mark_page_accessed(inpages[i]);
-	}
+	पूर्ण
 	/* unlock the user pages */
 	sev_unpin_memory(kvm, inpages, npages);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_es_sync_vmsa(struct vcpu_svm *svm)
-{
-	struct vmcb_save_area *save = &svm->vmcb->save;
+अटल पूर्णांक sev_es_sync_vmsa(काष्ठा vcpu_svm *svm)
+अणु
+	काष्ठा vmcb_save_area *save = &svm->vmcb->save;
 
-	/* Check some debug related fields before encrypting the VMSA */
-	if (svm->vcpu.guest_debug || (save->dr7 & ~DR7_FIXED_1))
-		return -EINVAL;
+	/* Check some debug related fields beक्रमe encrypting the VMSA */
+	अगर (svm->vcpu.guest_debug || (save->dr7 & ~DR7_FIXED_1))
+		वापस -EINVAL;
 
 	/* Sync registgers */
 	save->rax = svm->vcpu.arch.regs[VCPU_REGS_RAX];
@@ -567,7 +568,7 @@ static int sev_es_sync_vmsa(struct vcpu_svm *svm)
 	save->rbp = svm->vcpu.arch.regs[VCPU_REGS_RBP];
 	save->rsi = svm->vcpu.arch.regs[VCPU_REGS_RSI];
 	save->rdi = svm->vcpu.arch.regs[VCPU_REGS_RDI];
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 	save->r8  = svm->vcpu.arch.regs[VCPU_REGS_R8];
 	save->r9  = svm->vcpu.arch.regs[VCPU_REGS_R9];
 	save->r10 = svm->vcpu.arch.regs[VCPU_REGS_R10];
@@ -576,48 +577,48 @@ static int sev_es_sync_vmsa(struct vcpu_svm *svm)
 	save->r13 = svm->vcpu.arch.regs[VCPU_REGS_R13];
 	save->r14 = svm->vcpu.arch.regs[VCPU_REGS_R14];
 	save->r15 = svm->vcpu.arch.regs[VCPU_REGS_R15];
-#endif
+#पूर्ण_अगर
 	save->rip = svm->vcpu.arch.regs[VCPU_REGS_RIP];
 
-	/* Sync some non-GPR registers before encrypting */
+	/* Sync some non-GPR रेजिस्टरs beक्रमe encrypting */
 	save->xcr0 = svm->vcpu.arch.xcr0;
 	save->pkru = svm->vcpu.arch.pkru;
 	save->xss  = svm->vcpu.arch.ia32_xss;
 
 	/*
-	 * SEV-ES will use a VMSA that is pointed to by the VMCB, not
+	 * SEV-ES will use a VMSA that is poपूर्णांकed to by the VMCB, not
 	 * the traditional VMSA that is part of the VMCB. Copy the
 	 * traditional VMSA as it has been built so far (in prep
-	 * for LAUNCH_UPDATE_VMSA) to be the initial SEV-ES state.
+	 * क्रम LAUNCH_UPDATE_VMSA) to be the initial SEV-ES state.
 	 */
-	memcpy(svm->vmsa, save, sizeof(*save));
+	स_नकल(svm->vmsa, save, माप(*save));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sev_launch_update_vmsa(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_launch_update_vmsa vmsa;
-	struct kvm_vcpu *vcpu;
-	int i, ret;
+अटल पूर्णांक sev_launch_update_vmsa(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_launch_update_vmsa vmsa;
+	काष्ठा kvm_vcpu *vcpu;
+	पूर्णांक i, ret;
 
-	if (!sev_es_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_es_guest(kvm))
+		वापस -ENOTTY;
 
 	vmsa.reserved = 0;
 
-	kvm_for_each_vcpu(i, vcpu, kvm) {
-		struct vcpu_svm *svm = to_svm(vcpu);
+	kvm_क्रम_each_vcpu(i, vcpu, kvm) अणु
+		काष्ठा vcpu_svm *svm = to_svm(vcpu);
 
-		/* Perform some pre-encryption checks against the VMSA */
+		/* Perक्रमm some pre-encryption checks against the VMSA */
 		ret = sev_es_sync_vmsa(svm);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		/*
-		 * The LAUNCH_UPDATE_VMSA command will perform in-place
-		 * encryption of the VMSA memory content (i.e it will write
+		 * The LAUNCH_UPDATE_VMSA command will perक्रमm in-place
+		 * encryption of the VMSA memory content (i.e it will ग_लिखो
 		 * the same memory region with the guest's key), so invalidate
 		 * it first.
 		 */
@@ -628,49 +629,49 @@ static int sev_launch_update_vmsa(struct kvm *kvm, struct kvm_sev_cmd *argp)
 		vmsa.len = PAGE_SIZE;
 		ret = sev_issue_cmd(kvm, SEV_CMD_LAUNCH_UPDATE_VMSA, &vmsa,
 				    &argp->error);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		svm->vcpu.arch.guest_state_protected = true;
-	}
+		svm->vcpu.arch.guest_state_रक्षित = true;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sev_launch_measure(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	void __user *measure = (void __user *)(uintptr_t)argp->data;
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_launch_measure data;
-	struct kvm_sev_launch_measure params;
-	void __user *p = NULL;
-	void *blob = NULL;
-	int ret;
+अटल पूर्णांक sev_launch_measure(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	व्योम __user *measure = (व्योम __user *)(uपूर्णांकptr_t)argp->data;
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_launch_measure data;
+	काष्ठा kvm_sev_launch_measure params;
+	व्योम __user *p = शून्य;
+	व्योम *blob = शून्य;
+	पूर्णांक ret;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	if (copy_from_user(&params, measure, sizeof(params)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, measure, माप(params)))
+		वापस -EFAULT;
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 
 	/* User wants to query the blob length */
-	if (!params.len)
-		goto cmd;
+	अगर (!params.len)
+		जाओ cmd;
 
-	p = (void __user *)(uintptr_t)params.uaddr;
-	if (p) {
-		if (params.len > SEV_FW_BLOB_MAX_SIZE)
-			return -EINVAL;
+	p = (व्योम __user *)(uपूर्णांकptr_t)params.uaddr;
+	अगर (p) अणु
+		अगर (params.len > SEV_FW_BLOB_MAX_SIZE)
+			वापस -EINVAL;
 
-		blob = kmalloc(params.len, GFP_KERNEL_ACCOUNT);
-		if (!blob)
-			return -ENOMEM;
+		blob = kदो_स्मृति(params.len, GFP_KERNEL_ACCOUNT);
+		अगर (!blob)
+			वापस -ENOMEM;
 
 		data.address = __psp_pa(blob);
 		data.len = params.len;
-	}
+	पूर्ण
 
 cmd:
 	data.handle = sev->handle;
@@ -679,71 +680,71 @@ cmd:
 	/*
 	 * If we query the session length, FW responded with expected data.
 	 */
-	if (!params.len)
-		goto done;
+	अगर (!params.len)
+		जाओ करोne;
 
-	if (ret)
-		goto e_free_blob;
+	अगर (ret)
+		जाओ e_मुक्त_blob;
 
-	if (blob) {
-		if (copy_to_user(p, blob, params.len))
+	अगर (blob) अणु
+		अगर (copy_to_user(p, blob, params.len))
 			ret = -EFAULT;
-	}
+	पूर्ण
 
-done:
+करोne:
 	params.len = data.len;
-	if (copy_to_user(measure, &params, sizeof(params)))
+	अगर (copy_to_user(measure, &params, माप(params)))
 		ret = -EFAULT;
-e_free_blob:
-	kfree(blob);
-	return ret;
-}
+e_मुक्त_blob:
+	kमुक्त(blob);
+	वापस ret;
+पूर्ण
 
-static int sev_launch_finish(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_launch_finish data;
+अटल पूर्णांक sev_launch_finish(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_launch_finish data;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
 	data.handle = sev->handle;
-	return sev_issue_cmd(kvm, SEV_CMD_LAUNCH_FINISH, &data, &argp->error);
-}
+	वापस sev_issue_cmd(kvm, SEV_CMD_LAUNCH_FINISH, &data, &argp->error);
+पूर्ण
 
-static int sev_guest_status(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct kvm_sev_guest_status params;
-	struct sev_data_guest_status data;
-	int ret;
+अटल पूर्णांक sev_guest_status(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा kvm_sev_guest_status params;
+	काष्ठा sev_data_guest_status data;
+	पूर्णांक ret;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 
 	data.handle = sev->handle;
 	ret = sev_issue_cmd(kvm, SEV_CMD_GUEST_STATUS, &data, &argp->error);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	params.policy = data.policy;
 	params.state = data.state;
 	params.handle = data.handle;
 
-	if (copy_to_user((void __user *)(uintptr_t)argp->data, &params, sizeof(params)))
+	अगर (copy_to_user((व्योम __user *)(uपूर्णांकptr_t)argp->data, &params, माप(params)))
 		ret = -EFAULT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __sev_issue_dbg_cmd(struct kvm *kvm, unsigned long src,
-			       unsigned long dst, int size,
-			       int *error, bool enc)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_dbg data;
+अटल पूर्णांक __sev_issue_dbg_cmd(काष्ठा kvm *kvm, अचिन्हित दीर्घ src,
+			       अचिन्हित दीर्घ dst, पूर्णांक size,
+			       पूर्णांक *error, bool enc)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_dbg data;
 
 	data.reserved = 0;
 	data.handle = sev->handle;
@@ -751,182 +752,182 @@ static int __sev_issue_dbg_cmd(struct kvm *kvm, unsigned long src,
 	data.src_addr = src;
 	data.len = size;
 
-	return sev_issue_cmd(kvm,
+	वापस sev_issue_cmd(kvm,
 			     enc ? SEV_CMD_DBG_ENCRYPT : SEV_CMD_DBG_DECRYPT,
 			     &data, error);
-}
+पूर्ण
 
-static int __sev_dbg_decrypt(struct kvm *kvm, unsigned long src_paddr,
-			     unsigned long dst_paddr, int sz, int *err)
-{
-	int offset;
+अटल पूर्णांक __sev_dbg_decrypt(काष्ठा kvm *kvm, अचिन्हित दीर्घ src_paddr,
+			     अचिन्हित दीर्घ dst_paddr, पूर्णांक sz, पूर्णांक *err)
+अणु
+	पूर्णांक offset;
 
 	/*
-	 * Its safe to read more than we are asked, caller should ensure that
+	 * Its safe to पढ़ो more than we are asked, caller should ensure that
 	 * destination has enough space.
 	 */
 	offset = src_paddr & 15;
-	src_paddr = round_down(src_paddr, 16);
+	src_paddr = round_करोwn(src_paddr, 16);
 	sz = round_up(sz + offset, 16);
 
-	return __sev_issue_dbg_cmd(kvm, src_paddr, dst_paddr, sz, err, false);
-}
+	वापस __sev_issue_dbg_cmd(kvm, src_paddr, dst_paddr, sz, err, false);
+पूर्ण
 
-static int __sev_dbg_decrypt_user(struct kvm *kvm, unsigned long paddr,
-				  void __user *dst_uaddr,
-				  unsigned long dst_paddr,
-				  int size, int *err)
-{
-	struct page *tpage = NULL;
-	int ret, offset;
+अटल पूर्णांक __sev_dbg_decrypt_user(काष्ठा kvm *kvm, अचिन्हित दीर्घ paddr,
+				  व्योम __user *dst_uaddr,
+				  अचिन्हित दीर्घ dst_paddr,
+				  पूर्णांक size, पूर्णांक *err)
+अणु
+	काष्ठा page *tpage = शून्य;
+	पूर्णांक ret, offset;
 
-	/* if inputs are not 16-byte then use intermediate buffer */
-	if (!IS_ALIGNED(dst_paddr, 16) ||
+	/* अगर inमाला_दो are not 16-byte then use पूर्णांकermediate buffer */
+	अगर (!IS_ALIGNED(dst_paddr, 16) ||
 	    !IS_ALIGNED(paddr,     16) ||
-	    !IS_ALIGNED(size,      16)) {
-		tpage = (void *)alloc_page(GFP_KERNEL);
-		if (!tpage)
-			return -ENOMEM;
+	    !IS_ALIGNED(size,      16)) अणु
+		tpage = (व्योम *)alloc_page(GFP_KERNEL);
+		अगर (!tpage)
+			वापस -ENOMEM;
 
 		dst_paddr = __sme_page_pa(tpage);
-	}
+	पूर्ण
 
 	ret = __sev_dbg_decrypt(kvm, paddr, dst_paddr, size, err);
-	if (ret)
-		goto e_free;
+	अगर (ret)
+		जाओ e_मुक्त;
 
-	if (tpage) {
+	अगर (tpage) अणु
 		offset = paddr & 15;
-		if (copy_to_user(dst_uaddr, page_address(tpage) + offset, size))
+		अगर (copy_to_user(dst_uaddr, page_address(tpage) + offset, size))
 			ret = -EFAULT;
-	}
+	पूर्ण
 
-e_free:
-	if (tpage)
-		__free_page(tpage);
+e_मुक्त:
+	अगर (tpage)
+		__मुक्त_page(tpage);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __sev_dbg_encrypt_user(struct kvm *kvm, unsigned long paddr,
-				  void __user *vaddr,
-				  unsigned long dst_paddr,
-				  void __user *dst_vaddr,
-				  int size, int *error)
-{
-	struct page *src_tpage = NULL;
-	struct page *dst_tpage = NULL;
-	int ret, len = size;
+अटल पूर्णांक __sev_dbg_encrypt_user(काष्ठा kvm *kvm, अचिन्हित दीर्घ paddr,
+				  व्योम __user *vaddr,
+				  अचिन्हित दीर्घ dst_paddr,
+				  व्योम __user *dst_vaddr,
+				  पूर्णांक size, पूर्णांक *error)
+अणु
+	काष्ठा page *src_tpage = शून्य;
+	काष्ठा page *dst_tpage = शून्य;
+	पूर्णांक ret, len = size;
 
-	/* If source buffer is not aligned then use an intermediate buffer */
-	if (!IS_ALIGNED((unsigned long)vaddr, 16)) {
+	/* If source buffer is not aligned then use an पूर्णांकermediate buffer */
+	अगर (!IS_ALIGNED((अचिन्हित दीर्घ)vaddr, 16)) अणु
 		src_tpage = alloc_page(GFP_KERNEL);
-		if (!src_tpage)
-			return -ENOMEM;
+		अगर (!src_tpage)
+			वापस -ENOMEM;
 
-		if (copy_from_user(page_address(src_tpage), vaddr, size)) {
-			__free_page(src_tpage);
-			return -EFAULT;
-		}
+		अगर (copy_from_user(page_address(src_tpage), vaddr, size)) अणु
+			__मुक्त_page(src_tpage);
+			वापस -EFAULT;
+		पूर्ण
 
 		paddr = __sme_page_pa(src_tpage);
-	}
+	पूर्ण
 
 	/*
-	 *  If destination buffer or length is not aligned then do read-modify-write:
-	 *   - decrypt destination in an intermediate buffer
-	 *   - copy the source buffer in an intermediate buffer
-	 *   - use the intermediate buffer as source buffer
+	 *  If destination buffer or length is not aligned then करो पढ़ो-modअगरy-ग_लिखो:
+	 *   - decrypt destination in an पूर्णांकermediate buffer
+	 *   - copy the source buffer in an पूर्णांकermediate buffer
+	 *   - use the पूर्णांकermediate buffer as source buffer
 	 */
-	if (!IS_ALIGNED((unsigned long)dst_vaddr, 16) || !IS_ALIGNED(size, 16)) {
-		int dst_offset;
+	अगर (!IS_ALIGNED((अचिन्हित दीर्घ)dst_vaddr, 16) || !IS_ALIGNED(size, 16)) अणु
+		पूर्णांक dst_offset;
 
 		dst_tpage = alloc_page(GFP_KERNEL);
-		if (!dst_tpage) {
+		अगर (!dst_tpage) अणु
 			ret = -ENOMEM;
-			goto e_free;
-		}
+			जाओ e_मुक्त;
+		पूर्ण
 
 		ret = __sev_dbg_decrypt(kvm, dst_paddr,
 					__sme_page_pa(dst_tpage), size, error);
-		if (ret)
-			goto e_free;
+		अगर (ret)
+			जाओ e_मुक्त;
 
 		/*
-		 *  If source is kernel buffer then use memcpy() otherwise
+		 *  If source is kernel buffer then use स_नकल() otherwise
 		 *  copy_from_user().
 		 */
 		dst_offset = dst_paddr & 15;
 
-		if (src_tpage)
-			memcpy(page_address(dst_tpage) + dst_offset,
+		अगर (src_tpage)
+			स_नकल(page_address(dst_tpage) + dst_offset,
 			       page_address(src_tpage), size);
-		else {
-			if (copy_from_user(page_address(dst_tpage) + dst_offset,
-					   vaddr, size)) {
+		अन्यथा अणु
+			अगर (copy_from_user(page_address(dst_tpage) + dst_offset,
+					   vaddr, size)) अणु
 				ret = -EFAULT;
-				goto e_free;
-			}
-		}
+				जाओ e_मुक्त;
+			पूर्ण
+		पूर्ण
 
 		paddr = __sme_page_pa(dst_tpage);
-		dst_paddr = round_down(dst_paddr, 16);
+		dst_paddr = round_करोwn(dst_paddr, 16);
 		len = round_up(size, 16);
-	}
+	पूर्ण
 
 	ret = __sev_issue_dbg_cmd(kvm, paddr, dst_paddr, len, error, true);
 
-e_free:
-	if (src_tpage)
-		__free_page(src_tpage);
-	if (dst_tpage)
-		__free_page(dst_tpage);
-	return ret;
-}
+e_मुक्त:
+	अगर (src_tpage)
+		__मुक्त_page(src_tpage);
+	अगर (dst_tpage)
+		__मुक्त_page(dst_tpage);
+	वापस ret;
+पूर्ण
 
-static int sev_dbg_crypt(struct kvm *kvm, struct kvm_sev_cmd *argp, bool dec)
-{
-	unsigned long vaddr, vaddr_end, next_vaddr;
-	unsigned long dst_vaddr;
-	struct page **src_p, **dst_p;
-	struct kvm_sev_dbg debug;
-	unsigned long n;
-	unsigned int size;
-	int ret;
+अटल पूर्णांक sev_dbg_crypt(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp, bool dec)
+अणु
+	अचिन्हित दीर्घ vaddr, vaddr_end, next_vaddr;
+	अचिन्हित दीर्घ dst_vaddr;
+	काष्ठा page **src_p, **dst_p;
+	काष्ठा kvm_sev_dbg debug;
+	अचिन्हित दीर्घ n;
+	अचिन्हित पूर्णांक size;
+	पूर्णांक ret;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	if (copy_from_user(&debug, (void __user *)(uintptr_t)argp->data, sizeof(debug)))
-		return -EFAULT;
+	अगर (copy_from_user(&debug, (व्योम __user *)(uपूर्णांकptr_t)argp->data, माप(debug)))
+		वापस -EFAULT;
 
-	if (!debug.len || debug.src_uaddr + debug.len < debug.src_uaddr)
-		return -EINVAL;
-	if (!debug.dst_uaddr)
-		return -EINVAL;
+	अगर (!debug.len || debug.src_uaddr + debug.len < debug.src_uaddr)
+		वापस -EINVAL;
+	अगर (!debug.dst_uaddr)
+		वापस -EINVAL;
 
 	vaddr = debug.src_uaddr;
 	size = debug.len;
 	vaddr_end = vaddr + size;
 	dst_vaddr = debug.dst_uaddr;
 
-	for (; vaddr < vaddr_end; vaddr = next_vaddr) {
-		int len, s_off, d_off;
+	क्रम (; vaddr < vaddr_end; vaddr = next_vaddr) अणु
+		पूर्णांक len, s_off, d_off;
 
 		/* lock userspace source and destination page */
 		src_p = sev_pin_memory(kvm, vaddr & PAGE_MASK, PAGE_SIZE, &n, 0);
-		if (IS_ERR(src_p))
-			return PTR_ERR(src_p);
+		अगर (IS_ERR(src_p))
+			वापस PTR_ERR(src_p);
 
 		dst_p = sev_pin_memory(kvm, dst_vaddr & PAGE_MASK, PAGE_SIZE, &n, 1);
-		if (IS_ERR(dst_p)) {
+		अगर (IS_ERR(dst_p)) अणु
 			sev_unpin_memory(kvm, src_p, n);
-			return PTR_ERR(dst_p);
-		}
+			वापस PTR_ERR(dst_p);
+		पूर्ण
 
 		/*
-		 * Flush (on non-coherent CPUs) before DBG_{DE,EN}CRYPT read or modify
-		 * the pages; flush the destination too so that future accesses do not
+		 * Flush (on non-coherent CPUs) beक्रमe DBG_अणुDE,ENपूर्णCRYPT पढ़ो or modअगरy
+		 * the pages; flush the destination too so that future accesses करो not
 		 * see stale data.
 		 */
 		sev_clflush_pages(src_p, 1);
@@ -938,248 +939,248 @@ static int sev_dbg_crypt(struct kvm *kvm, struct kvm_sev_cmd *argp, bool dec)
 		 */
 		s_off = vaddr & ~PAGE_MASK;
 		d_off = dst_vaddr & ~PAGE_MASK;
-		len = min_t(size_t, (PAGE_SIZE - s_off), size);
+		len = min_t(माप_प्रकार, (PAGE_SIZE - s_off), size);
 
-		if (dec)
+		अगर (dec)
 			ret = __sev_dbg_decrypt_user(kvm,
 						     __sme_page_pa(src_p[0]) + s_off,
-						     (void __user *)dst_vaddr,
+						     (व्योम __user *)dst_vaddr,
 						     __sme_page_pa(dst_p[0]) + d_off,
 						     len, &argp->error);
-		else
+		अन्यथा
 			ret = __sev_dbg_encrypt_user(kvm,
 						     __sme_page_pa(src_p[0]) + s_off,
-						     (void __user *)vaddr,
+						     (व्योम __user *)vaddr,
 						     __sme_page_pa(dst_p[0]) + d_off,
-						     (void __user *)dst_vaddr,
+						     (व्योम __user *)dst_vaddr,
 						     len, &argp->error);
 
 		sev_unpin_memory(kvm, src_p, n);
 		sev_unpin_memory(kvm, dst_p, n);
 
-		if (ret)
-			goto err;
+		अगर (ret)
+			जाओ err;
 
 		next_vaddr = vaddr + len;
 		dst_vaddr = dst_vaddr + len;
 		size -= len;
-	}
+	पूर्ण
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_launch_secret(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_launch_secret data;
-	struct kvm_sev_launch_secret params;
-	struct page **pages;
-	void *blob, *hdr;
-	unsigned long n, i;
-	int ret, offset;
+अटल पूर्णांक sev_launch_secret(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_launch_secret data;
+	काष्ठा kvm_sev_launch_secret params;
+	काष्ठा page **pages;
+	व्योम *blob, *hdr;
+	अचिन्हित दीर्घ n, i;
+	पूर्णांक ret, offset;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	if (copy_from_user(&params, (void __user *)(uintptr_t)argp->data, sizeof(params)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, (व्योम __user *)(uपूर्णांकptr_t)argp->data, माप(params)))
+		वापस -EFAULT;
 
 	pages = sev_pin_memory(kvm, params.guest_uaddr, params.guest_len, &n, 1);
-	if (IS_ERR(pages))
-		return PTR_ERR(pages);
+	अगर (IS_ERR(pages))
+		वापस PTR_ERR(pages);
 
 	/*
-	 * Flush (on non-coherent CPUs) before LAUNCH_SECRET encrypts pages in
+	 * Flush (on non-coherent CPUs) beक्रमe LAUNCH_SECRET encrypts pages in
 	 * place; the cache may contain the data that was written unencrypted.
 	 */
 	sev_clflush_pages(pages, n);
 
 	/*
-	 * The secret must be copied into contiguous memory region, lets verify
-	 * that userspace memory pages are contiguous before we issue command.
+	 * The secret must be copied पूर्णांकo contiguous memory region, lets verअगरy
+	 * that userspace memory pages are contiguous beक्रमe we issue command.
 	 */
-	if (get_num_contig_pages(0, pages, n) != n) {
+	अगर (get_num_contig_pages(0, pages, n) != n) अणु
 		ret = -EINVAL;
-		goto e_unpin_memory;
-	}
+		जाओ e_unpin_memory;
+	पूर्ण
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 
 	offset = params.guest_uaddr & (PAGE_SIZE - 1);
 	data.guest_address = __sme_page_pa(pages[0]) + offset;
 	data.guest_len = params.guest_len;
 
 	blob = psp_copy_user_blob(params.trans_uaddr, params.trans_len);
-	if (IS_ERR(blob)) {
+	अगर (IS_ERR(blob)) अणु
 		ret = PTR_ERR(blob);
-		goto e_unpin_memory;
-	}
+		जाओ e_unpin_memory;
+	पूर्ण
 
 	data.trans_address = __psp_pa(blob);
 	data.trans_len = params.trans_len;
 
 	hdr = psp_copy_user_blob(params.hdr_uaddr, params.hdr_len);
-	if (IS_ERR(hdr)) {
+	अगर (IS_ERR(hdr)) अणु
 		ret = PTR_ERR(hdr);
-		goto e_free_blob;
-	}
+		जाओ e_मुक्त_blob;
+	पूर्ण
 	data.hdr_address = __psp_pa(hdr);
 	data.hdr_len = params.hdr_len;
 
 	data.handle = sev->handle;
 	ret = sev_issue_cmd(kvm, SEV_CMD_LAUNCH_UPDATE_SECRET, &data, &argp->error);
 
-	kfree(hdr);
+	kमुक्त(hdr);
 
-e_free_blob:
-	kfree(blob);
+e_मुक्त_blob:
+	kमुक्त(blob);
 e_unpin_memory:
 	/* content of memory is updated, mark pages dirty */
-	for (i = 0; i < n; i++) {
+	क्रम (i = 0; i < n; i++) अणु
 		set_page_dirty_lock(pages[i]);
 		mark_page_accessed(pages[i]);
-	}
+	पूर्ण
 	sev_unpin_memory(kvm, pages, n);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_get_attestation_report(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	void __user *report = (void __user *)(uintptr_t)argp->data;
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_attestation_report data;
-	struct kvm_sev_attestation_report params;
-	void __user *p;
-	void *blob = NULL;
-	int ret;
+अटल पूर्णांक sev_get_attestation_report(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	व्योम __user *report = (व्योम __user *)(uपूर्णांकptr_t)argp->data;
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_attestation_report data;
+	काष्ठा kvm_sev_attestation_report params;
+	व्योम __user *p;
+	व्योम *blob = शून्य;
+	पूर्णांक ret;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	if (copy_from_user(&params, (void __user *)(uintptr_t)argp->data, sizeof(params)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, (व्योम __user *)(uपूर्णांकptr_t)argp->data, माप(params)))
+		वापस -EFAULT;
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 
 	/* User wants to query the blob length */
-	if (!params.len)
-		goto cmd;
+	अगर (!params.len)
+		जाओ cmd;
 
-	p = (void __user *)(uintptr_t)params.uaddr;
-	if (p) {
-		if (params.len > SEV_FW_BLOB_MAX_SIZE)
-			return -EINVAL;
+	p = (व्योम __user *)(uपूर्णांकptr_t)params.uaddr;
+	अगर (p) अणु
+		अगर (params.len > SEV_FW_BLOB_MAX_SIZE)
+			वापस -EINVAL;
 
-		blob = kmalloc(params.len, GFP_KERNEL_ACCOUNT);
-		if (!blob)
-			return -ENOMEM;
+		blob = kदो_स्मृति(params.len, GFP_KERNEL_ACCOUNT);
+		अगर (!blob)
+			वापस -ENOMEM;
 
 		data.address = __psp_pa(blob);
 		data.len = params.len;
-		memcpy(data.mnonce, params.mnonce, sizeof(params.mnonce));
-	}
+		स_नकल(data.mnonce, params.mnonce, माप(params.mnonce));
+	पूर्ण
 cmd:
 	data.handle = sev->handle;
 	ret = sev_issue_cmd(kvm, SEV_CMD_ATTESTATION_REPORT, &data, &argp->error);
 	/*
 	 * If we query the session length, FW responded with expected data.
 	 */
-	if (!params.len)
-		goto done;
+	अगर (!params.len)
+		जाओ करोne;
 
-	if (ret)
-		goto e_free_blob;
+	अगर (ret)
+		जाओ e_मुक्त_blob;
 
-	if (blob) {
-		if (copy_to_user(p, blob, params.len))
+	अगर (blob) अणु
+		अगर (copy_to_user(p, blob, params.len))
 			ret = -EFAULT;
-	}
+	पूर्ण
 
-done:
+करोne:
 	params.len = data.len;
-	if (copy_to_user(report, &params, sizeof(params)))
+	अगर (copy_to_user(report, &params, माप(params)))
 		ret = -EFAULT;
-e_free_blob:
-	kfree(blob);
-	return ret;
-}
+e_मुक्त_blob:
+	kमुक्त(blob);
+	वापस ret;
+पूर्ण
 
 /* Userspace wants to query session length. */
-static int
-__sev_send_start_query_session_length(struct kvm *kvm, struct kvm_sev_cmd *argp,
-				      struct kvm_sev_send_start *params)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_send_start data;
-	int ret;
+अटल पूर्णांक
+__sev_send_start_query_session_length(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp,
+				      काष्ठा kvm_sev_send_start *params)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_send_start data;
+	पूर्णांक ret;
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 	data.handle = sev->handle;
 	ret = sev_issue_cmd(kvm, SEV_CMD_SEND_START, &data, &argp->error);
 
 	params->session_len = data.session_len;
-	if (copy_to_user((void __user *)(uintptr_t)argp->data, params,
-				sizeof(struct kvm_sev_send_start)))
+	अगर (copy_to_user((व्योम __user *)(uपूर्णांकptr_t)argp->data, params,
+				माप(काष्ठा kvm_sev_send_start)))
 		ret = -EFAULT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_send_start(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_send_start data;
-	struct kvm_sev_send_start params;
-	void *amd_certs, *session_data;
-	void *pdh_cert, *plat_certs;
-	int ret;
+अटल पूर्णांक sev_send_start(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_send_start data;
+	काष्ठा kvm_sev_send_start params;
+	व्योम *amd_certs, *session_data;
+	व्योम *pdh_cert, *plat_certs;
+	पूर्णांक ret;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	if (copy_from_user(&params, (void __user *)(uintptr_t)argp->data,
-				sizeof(struct kvm_sev_send_start)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, (व्योम __user *)(uपूर्णांकptr_t)argp->data,
+				माप(काष्ठा kvm_sev_send_start)))
+		वापस -EFAULT;
 
-	/* if session_len is zero, userspace wants to query the session length */
-	if (!params.session_len)
-		return __sev_send_start_query_session_length(kvm, argp,
+	/* अगर session_len is zero, userspace wants to query the session length */
+	अगर (!params.session_len)
+		वापस __sev_send_start_query_session_length(kvm, argp,
 				&params);
 
 	/* some sanity checks */
-	if (!params.pdh_cert_uaddr || !params.pdh_cert_len ||
+	अगर (!params.pdh_cert_uaddr || !params.pdh_cert_len ||
 	    !params.session_uaddr || params.session_len > SEV_FW_BLOB_MAX_SIZE)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* allocate the memory to hold the session data blob */
-	session_data = kmalloc(params.session_len, GFP_KERNEL_ACCOUNT);
-	if (!session_data)
-		return -ENOMEM;
+	session_data = kदो_स्मृति(params.session_len, GFP_KERNEL_ACCOUNT);
+	अगर (!session_data)
+		वापस -ENOMEM;
 
-	/* copy the certificate blobs from userspace */
+	/* copy the certअगरicate blobs from userspace */
 	pdh_cert = psp_copy_user_blob(params.pdh_cert_uaddr,
 				params.pdh_cert_len);
-	if (IS_ERR(pdh_cert)) {
+	अगर (IS_ERR(pdh_cert)) अणु
 		ret = PTR_ERR(pdh_cert);
-		goto e_free_session;
-	}
+		जाओ e_मुक्त_session;
+	पूर्ण
 
 	plat_certs = psp_copy_user_blob(params.plat_certs_uaddr,
 				params.plat_certs_len);
-	if (IS_ERR(plat_certs)) {
+	अगर (IS_ERR(plat_certs)) अणु
 		ret = PTR_ERR(plat_certs);
-		goto e_free_pdh;
-	}
+		जाओ e_मुक्त_pdh;
+	पूर्ण
 
 	amd_certs = psp_copy_user_blob(params.amd_certs_uaddr,
 				params.amd_certs_len);
-	if (IS_ERR(amd_certs)) {
+	अगर (IS_ERR(amd_certs)) अणु
 		ret = PTR_ERR(amd_certs);
-		goto e_free_plat_cert;
-	}
+		जाओ e_मुक्त_plat_cert;
+	पूर्ण
 
-	/* populate the FW SEND_START field with system physical address */
-	memset(&data, 0, sizeof(data));
+	/* populate the FW SEND_START field with प्रणाली physical address */
+	स_रखो(&data, 0, माप(data));
 	data.pdh_cert_address = __psp_pa(pdh_cert);
 	data.pdh_cert_len = params.pdh_cert_len;
 	data.plat_certs_address = __psp_pa(plat_certs);
@@ -1192,99 +1193,99 @@ static int sev_send_start(struct kvm *kvm, struct kvm_sev_cmd *argp)
 
 	ret = sev_issue_cmd(kvm, SEV_CMD_SEND_START, &data, &argp->error);
 
-	if (!ret && copy_to_user((void __user *)(uintptr_t)params.session_uaddr,
-			session_data, params.session_len)) {
+	अगर (!ret && copy_to_user((व्योम __user *)(uपूर्णांकptr_t)params.session_uaddr,
+			session_data, params.session_len)) अणु
 		ret = -EFAULT;
-		goto e_free_amd_cert;
-	}
+		जाओ e_मुक्त_amd_cert;
+	पूर्ण
 
 	params.policy = data.policy;
 	params.session_len = data.session_len;
-	if (copy_to_user((void __user *)(uintptr_t)argp->data, &params,
-				sizeof(struct kvm_sev_send_start)))
+	अगर (copy_to_user((व्योम __user *)(uपूर्णांकptr_t)argp->data, &params,
+				माप(काष्ठा kvm_sev_send_start)))
 		ret = -EFAULT;
 
-e_free_amd_cert:
-	kfree(amd_certs);
-e_free_plat_cert:
-	kfree(plat_certs);
-e_free_pdh:
-	kfree(pdh_cert);
-e_free_session:
-	kfree(session_data);
-	return ret;
-}
+e_मुक्त_amd_cert:
+	kमुक्त(amd_certs);
+e_मुक्त_plat_cert:
+	kमुक्त(plat_certs);
+e_मुक्त_pdh:
+	kमुक्त(pdh_cert);
+e_मुक्त_session:
+	kमुक्त(session_data);
+	वापस ret;
+पूर्ण
 
 /* Userspace wants to query either header or trans length. */
-static int
-__sev_send_update_data_query_lengths(struct kvm *kvm, struct kvm_sev_cmd *argp,
-				     struct kvm_sev_send_update_data *params)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_send_update_data data;
-	int ret;
+अटल पूर्णांक
+__sev_send_update_data_query_lengths(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp,
+				     काष्ठा kvm_sev_send_update_data *params)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_send_update_data data;
+	पूर्णांक ret;
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 	data.handle = sev->handle;
 	ret = sev_issue_cmd(kvm, SEV_CMD_SEND_UPDATE_DATA, &data, &argp->error);
 
 	params->hdr_len = data.hdr_len;
 	params->trans_len = data.trans_len;
 
-	if (copy_to_user((void __user *)(uintptr_t)argp->data, params,
-			 sizeof(struct kvm_sev_send_update_data)))
+	अगर (copy_to_user((व्योम __user *)(uपूर्णांकptr_t)argp->data, params,
+			 माप(काष्ठा kvm_sev_send_update_data)))
 		ret = -EFAULT;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_send_update_data(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_send_update_data data;
-	struct kvm_sev_send_update_data params;
-	void *hdr, *trans_data;
-	struct page **guest_page;
-	unsigned long n;
-	int ret, offset;
+अटल पूर्णांक sev_send_update_data(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_send_update_data data;
+	काष्ठा kvm_sev_send_update_data params;
+	व्योम *hdr, *trans_data;
+	काष्ठा page **guest_page;
+	अचिन्हित दीर्घ n;
+	पूर्णांक ret, offset;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	if (copy_from_user(&params, (void __user *)(uintptr_t)argp->data,
-			sizeof(struct kvm_sev_send_update_data)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, (व्योम __user *)(uपूर्णांकptr_t)argp->data,
+			माप(काष्ठा kvm_sev_send_update_data)))
+		वापस -EFAULT;
 
 	/* userspace wants to query either header or trans length */
-	if (!params.trans_len || !params.hdr_len)
-		return __sev_send_update_data_query_lengths(kvm, argp, &params);
+	अगर (!params.trans_len || !params.hdr_len)
+		वापस __sev_send_update_data_query_lengths(kvm, argp, &params);
 
-	if (!params.trans_uaddr || !params.guest_uaddr ||
+	अगर (!params.trans_uaddr || !params.guest_uaddr ||
 	    !params.guest_len || !params.hdr_uaddr)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Check if we are crossing the page boundary */
+	/* Check अगर we are crossing the page boundary */
 	offset = params.guest_uaddr & (PAGE_SIZE - 1);
-	if ((params.guest_len + offset > PAGE_SIZE))
-		return -EINVAL;
+	अगर ((params.guest_len + offset > PAGE_SIZE))
+		वापस -EINVAL;
 
 	/* Pin guest memory */
 	guest_page = sev_pin_memory(kvm, params.guest_uaddr & PAGE_MASK,
 				    PAGE_SIZE, &n, 0);
-	if (!guest_page)
-		return -EFAULT;
+	अगर (!guest_page)
+		वापस -EFAULT;
 
-	/* allocate memory for header and transport buffer */
+	/* allocate memory क्रम header and transport buffer */
 	ret = -ENOMEM;
-	hdr = kmalloc(params.hdr_len, GFP_KERNEL_ACCOUNT);
-	if (!hdr)
-		goto e_unpin;
+	hdr = kदो_स्मृति(params.hdr_len, GFP_KERNEL_ACCOUNT);
+	अगर (!hdr)
+		जाओ e_unpin;
 
-	trans_data = kmalloc(params.trans_len, GFP_KERNEL_ACCOUNT);
-	if (!trans_data)
-		goto e_free_hdr;
+	trans_data = kदो_स्मृति(params.trans_len, GFP_KERNEL_ACCOUNT);
+	अगर (!trans_data)
+		जाओ e_मुक्त_hdr;
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 	data.hdr_address = __psp_pa(hdr);
 	data.hdr_len = params.hdr_len;
 	data.trans_address = __psp_pa(trans_data);
@@ -1298,89 +1299,89 @@ static int sev_send_update_data(struct kvm *kvm, struct kvm_sev_cmd *argp)
 
 	ret = sev_issue_cmd(kvm, SEV_CMD_SEND_UPDATE_DATA, &data, &argp->error);
 
-	if (ret)
-		goto e_free_trans_data;
+	अगर (ret)
+		जाओ e_मुक्त_trans_data;
 
 	/* copy transport buffer to user space */
-	if (copy_to_user((void __user *)(uintptr_t)params.trans_uaddr,
-			 trans_data, params.trans_len)) {
+	अगर (copy_to_user((व्योम __user *)(uपूर्णांकptr_t)params.trans_uaddr,
+			 trans_data, params.trans_len)) अणु
 		ret = -EFAULT;
-		goto e_free_trans_data;
-	}
+		जाओ e_मुक्त_trans_data;
+	पूर्ण
 
 	/* Copy packet header to userspace. */
-	ret = copy_to_user((void __user *)(uintptr_t)params.hdr_uaddr, hdr,
+	ret = copy_to_user((व्योम __user *)(uपूर्णांकptr_t)params.hdr_uaddr, hdr,
 				params.hdr_len);
 
-e_free_trans_data:
-	kfree(trans_data);
-e_free_hdr:
-	kfree(hdr);
+e_मुक्त_trans_data:
+	kमुक्त(trans_data);
+e_मुक्त_hdr:
+	kमुक्त(hdr);
 e_unpin:
 	sev_unpin_memory(kvm, guest_page, n);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_send_finish(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_send_finish data;
+अटल पूर्णांक sev_send_finish(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_send_finish data;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
-
-	data.handle = sev->handle;
-	return sev_issue_cmd(kvm, SEV_CMD_SEND_FINISH, &data, &argp->error);
-}
-
-static int sev_send_cancel(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_send_cancel data;
-
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
 	data.handle = sev->handle;
-	return sev_issue_cmd(kvm, SEV_CMD_SEND_CANCEL, &data, &argp->error);
-}
+	वापस sev_issue_cmd(kvm, SEV_CMD_SEND_FINISH, &data, &argp->error);
+पूर्ण
 
-static int sev_receive_start(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_receive_start start;
-	struct kvm_sev_receive_start params;
-	int *error = &argp->error;
-	void *session_data;
-	void *pdh_data;
-	int ret;
+अटल पूर्णांक sev_send_cancel(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_send_cancel data;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
+
+	data.handle = sev->handle;
+	वापस sev_issue_cmd(kvm, SEV_CMD_SEND_CANCEL, &data, &argp->error);
+पूर्ण
+
+अटल पूर्णांक sev_receive_start(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_receive_start start;
+	काष्ठा kvm_sev_receive_start params;
+	पूर्णांक *error = &argp->error;
+	व्योम *session_data;
+	व्योम *pdh_data;
+	पूर्णांक ret;
+
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
 	/* Get parameter from the userspace */
-	if (copy_from_user(&params, (void __user *)(uintptr_t)argp->data,
-			sizeof(struct kvm_sev_receive_start)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, (व्योम __user *)(uपूर्णांकptr_t)argp->data,
+			माप(काष्ठा kvm_sev_receive_start)))
+		वापस -EFAULT;
 
 	/* some sanity checks */
-	if (!params.pdh_uaddr || !params.pdh_len ||
+	अगर (!params.pdh_uaddr || !params.pdh_len ||
 	    !params.session_uaddr || !params.session_len)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	pdh_data = psp_copy_user_blob(params.pdh_uaddr, params.pdh_len);
-	if (IS_ERR(pdh_data))
-		return PTR_ERR(pdh_data);
+	अगर (IS_ERR(pdh_data))
+		वापस PTR_ERR(pdh_data);
 
 	session_data = psp_copy_user_blob(params.session_uaddr,
 			params.session_len);
-	if (IS_ERR(session_data)) {
+	अगर (IS_ERR(session_data)) अणु
 		ret = PTR_ERR(session_data);
-		goto e_free_pdh;
-	}
+		जाओ e_मुक्त_pdh;
+	पूर्ण
 
-	memset(&start, 0, sizeof(start));
+	स_रखो(&start, 0, माप(start));
 	start.handle = params.handle;
 	start.policy = params.policy;
 	start.pdh_cert_address = __psp_pa(pdh_data);
@@ -1391,71 +1392,71 @@ static int sev_receive_start(struct kvm *kvm, struct kvm_sev_cmd *argp)
 	/* create memory encryption context */
 	ret = __sev_issue_cmd(argp->sev_fd, SEV_CMD_RECEIVE_START, &start,
 				error);
-	if (ret)
-		goto e_free_session;
+	अगर (ret)
+		जाओ e_मुक्त_session;
 
 	/* Bind ASID to this guest */
 	ret = sev_bind_asid(kvm, start.handle, error);
-	if (ret)
-		goto e_free_session;
+	अगर (ret)
+		जाओ e_मुक्त_session;
 
 	params.handle = start.handle;
-	if (copy_to_user((void __user *)(uintptr_t)argp->data,
-			 &params, sizeof(struct kvm_sev_receive_start))) {
+	अगर (copy_to_user((व्योम __user *)(uपूर्णांकptr_t)argp->data,
+			 &params, माप(काष्ठा kvm_sev_receive_start))) अणु
 		ret = -EFAULT;
 		sev_unbind_asid(kvm, start.handle);
-		goto e_free_session;
-	}
+		जाओ e_मुक्त_session;
+	पूर्ण
 
     	sev->handle = start.handle;
 	sev->fd = argp->sev_fd;
 
-e_free_session:
-	kfree(session_data);
-e_free_pdh:
-	kfree(pdh_data);
+e_मुक्त_session:
+	kमुक्त(session_data);
+e_मुक्त_pdh:
+	kमुक्त(pdh_data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_receive_update_data(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct kvm_sev_receive_update_data params;
-	struct sev_data_receive_update_data data;
-	void *hdr = NULL, *trans = NULL;
-	struct page **guest_page;
-	unsigned long n;
-	int ret, offset;
+अटल पूर्णांक sev_receive_update_data(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा kvm_sev_receive_update_data params;
+	काष्ठा sev_data_receive_update_data data;
+	व्योम *hdr = शून्य, *trans = शून्य;
+	काष्ठा page **guest_page;
+	अचिन्हित दीर्घ n;
+	पूर्णांक ret, offset;
 
-	if (!sev_guest(kvm))
-		return -EINVAL;
+	अगर (!sev_guest(kvm))
+		वापस -EINVAL;
 
-	if (copy_from_user(&params, (void __user *)(uintptr_t)argp->data,
-			sizeof(struct kvm_sev_receive_update_data)))
-		return -EFAULT;
+	अगर (copy_from_user(&params, (व्योम __user *)(uपूर्णांकptr_t)argp->data,
+			माप(काष्ठा kvm_sev_receive_update_data)))
+		वापस -EFAULT;
 
-	if (!params.hdr_uaddr || !params.hdr_len ||
+	अगर (!params.hdr_uaddr || !params.hdr_len ||
 	    !params.guest_uaddr || !params.guest_len ||
 	    !params.trans_uaddr || !params.trans_len)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* Check if we are crossing the page boundary */
+	/* Check अगर we are crossing the page boundary */
 	offset = params.guest_uaddr & (PAGE_SIZE - 1);
-	if ((params.guest_len + offset > PAGE_SIZE))
-		return -EINVAL;
+	अगर ((params.guest_len + offset > PAGE_SIZE))
+		वापस -EINVAL;
 
 	hdr = psp_copy_user_blob(params.hdr_uaddr, params.hdr_len);
-	if (IS_ERR(hdr))
-		return PTR_ERR(hdr);
+	अगर (IS_ERR(hdr))
+		वापस PTR_ERR(hdr);
 
 	trans = psp_copy_user_blob(params.trans_uaddr, params.trans_len);
-	if (IS_ERR(trans)) {
+	अगर (IS_ERR(trans)) अणु
 		ret = PTR_ERR(trans);
-		goto e_free_hdr;
-	}
+		जाओ e_मुक्त_hdr;
+	पूर्ण
 
-	memset(&data, 0, sizeof(data));
+	स_रखो(&data, 0, माप(data));
 	data.hdr_address = __psp_pa(hdr);
 	data.hdr_len = params.hdr_len;
 	data.trans_address = __psp_pa(trans);
@@ -1465,8 +1466,8 @@ static int sev_receive_update_data(struct kvm *kvm, struct kvm_sev_cmd *argp)
 	ret = -EFAULT;
 	guest_page = sev_pin_memory(kvm, params.guest_uaddr & PAGE_MASK,
 				    PAGE_SIZE, &n, 0);
-	if (!guest_page)
-		goto e_free_trans;
+	अगर (!guest_page)
+		जाओ e_मुक्त_trans;
 
 	/* The RECEIVE_UPDATE_DATA command requires C-bit to be always set. */
 	data.guest_address = (page_to_pfn(guest_page[0]) << PAGE_SHIFT) + offset;
@@ -1479,150 +1480,150 @@ static int sev_receive_update_data(struct kvm *kvm, struct kvm_sev_cmd *argp)
 
 	sev_unpin_memory(kvm, guest_page, n);
 
-e_free_trans:
-	kfree(trans);
-e_free_hdr:
-	kfree(hdr);
+e_मुक्त_trans:
+	kमुक्त(trans);
+e_मुक्त_hdr:
+	kमुक्त(hdr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sev_receive_finish(struct kvm *kvm, struct kvm_sev_cmd *argp)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct sev_data_receive_finish data;
+अटल पूर्णांक sev_receive_finish(काष्ठा kvm *kvm, काष्ठा kvm_sev_cmd *argp)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा sev_data_receive_finish data;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
 	data.handle = sev->handle;
-	return sev_issue_cmd(kvm, SEV_CMD_RECEIVE_FINISH, &data, &argp->error);
-}
+	वापस sev_issue_cmd(kvm, SEV_CMD_RECEIVE_FINISH, &data, &argp->error);
+पूर्ण
 
-int svm_mem_enc_op(struct kvm *kvm, void __user *argp)
-{
-	struct kvm_sev_cmd sev_cmd;
-	int r;
+पूर्णांक svm_mem_enc_op(काष्ठा kvm *kvm, व्योम __user *argp)
+अणु
+	काष्ठा kvm_sev_cmd sev_cmd;
+	पूर्णांक r;
 
-	if (!sev_enabled)
-		return -ENOTTY;
+	अगर (!sev_enabled)
+		वापस -ENOTTY;
 
-	if (!argp)
-		return 0;
+	अगर (!argp)
+		वापस 0;
 
-	if (copy_from_user(&sev_cmd, argp, sizeof(struct kvm_sev_cmd)))
-		return -EFAULT;
+	अगर (copy_from_user(&sev_cmd, argp, माप(काष्ठा kvm_sev_cmd)))
+		वापस -EFAULT;
 
 	mutex_lock(&kvm->lock);
 
 	/* enc_context_owner handles all memory enc operations */
-	if (is_mirroring_enc_context(kvm)) {
+	अगर (is_mirroring_enc_context(kvm)) अणु
 		r = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (sev_cmd.id) {
-	case KVM_SEV_ES_INIT:
-		if (!sev_es_enabled) {
+	चयन (sev_cmd.id) अणु
+	हाल KVM_SEV_ES_INIT:
+		अगर (!sev_es_enabled) अणु
 			r = -ENOTTY;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		fallthrough;
-	case KVM_SEV_INIT:
+	हाल KVM_SEV_INIT:
 		r = sev_guest_init(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_LAUNCH_START:
+		अवरोध;
+	हाल KVM_SEV_LAUNCH_START:
 		r = sev_launch_start(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_LAUNCH_UPDATE_DATA:
+		अवरोध;
+	हाल KVM_SEV_LAUNCH_UPDATE_DATA:
 		r = sev_launch_update_data(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_LAUNCH_UPDATE_VMSA:
+		अवरोध;
+	हाल KVM_SEV_LAUNCH_UPDATE_VMSA:
 		r = sev_launch_update_vmsa(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_LAUNCH_MEASURE:
+		अवरोध;
+	हाल KVM_SEV_LAUNCH_MEASURE:
 		r = sev_launch_measure(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_LAUNCH_FINISH:
+		अवरोध;
+	हाल KVM_SEV_LAUNCH_FINISH:
 		r = sev_launch_finish(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_GUEST_STATUS:
+		अवरोध;
+	हाल KVM_SEV_GUEST_STATUS:
 		r = sev_guest_status(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_DBG_DECRYPT:
+		अवरोध;
+	हाल KVM_SEV_DBG_DECRYPT:
 		r = sev_dbg_crypt(kvm, &sev_cmd, true);
-		break;
-	case KVM_SEV_DBG_ENCRYPT:
+		अवरोध;
+	हाल KVM_SEV_DBG_ENCRYPT:
 		r = sev_dbg_crypt(kvm, &sev_cmd, false);
-		break;
-	case KVM_SEV_LAUNCH_SECRET:
+		अवरोध;
+	हाल KVM_SEV_LAUNCH_SECRET:
 		r = sev_launch_secret(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_GET_ATTESTATION_REPORT:
+		अवरोध;
+	हाल KVM_SEV_GET_ATTESTATION_REPORT:
 		r = sev_get_attestation_report(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_SEND_START:
+		अवरोध;
+	हाल KVM_SEV_SEND_START:
 		r = sev_send_start(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_SEND_UPDATE_DATA:
+		अवरोध;
+	हाल KVM_SEV_SEND_UPDATE_DATA:
 		r = sev_send_update_data(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_SEND_FINISH:
+		अवरोध;
+	हाल KVM_SEV_SEND_FINISH:
 		r = sev_send_finish(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_SEND_CANCEL:
+		अवरोध;
+	हाल KVM_SEV_SEND_CANCEL:
 		r = sev_send_cancel(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_RECEIVE_START:
+		अवरोध;
+	हाल KVM_SEV_RECEIVE_START:
 		r = sev_receive_start(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_RECEIVE_UPDATE_DATA:
+		अवरोध;
+	हाल KVM_SEV_RECEIVE_UPDATE_DATA:
 		r = sev_receive_update_data(kvm, &sev_cmd);
-		break;
-	case KVM_SEV_RECEIVE_FINISH:
+		अवरोध;
+	हाल KVM_SEV_RECEIVE_FINISH:
 		r = sev_receive_finish(kvm, &sev_cmd);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		r = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (copy_to_user(argp, &sev_cmd, sizeof(struct kvm_sev_cmd)))
+	अगर (copy_to_user(argp, &sev_cmd, माप(काष्ठा kvm_sev_cmd)))
 		r = -EFAULT;
 
 out:
 	mutex_unlock(&kvm->lock);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int svm_register_enc_region(struct kvm *kvm,
-			    struct kvm_enc_region *range)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct enc_region *region;
-	int ret = 0;
+पूर्णांक svm_रेजिस्टर_enc_region(काष्ठा kvm *kvm,
+			    काष्ठा kvm_enc_region *range)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा enc_region *region;
+	पूर्णांक ret = 0;
 
-	if (!sev_guest(kvm))
-		return -ENOTTY;
+	अगर (!sev_guest(kvm))
+		वापस -ENOTTY;
 
-	/* If kvm is mirroring encryption context it isn't responsible for it */
-	if (is_mirroring_enc_context(kvm))
-		return -EINVAL;
+	/* If kvm is mirroring encryption context it isn't responsible क्रम it */
+	अगर (is_mirroring_enc_context(kvm))
+		वापस -EINVAL;
 
-	if (range->addr > ULONG_MAX || range->size > ULONG_MAX)
-		return -EINVAL;
+	अगर (range->addr > अच_दीर्घ_उच्च || range->size > अच_दीर्घ_उच्च)
+		वापस -EINVAL;
 
-	region = kzalloc(sizeof(*region), GFP_KERNEL_ACCOUNT);
-	if (!region)
-		return -ENOMEM;
+	region = kzalloc(माप(*region), GFP_KERNEL_ACCOUNT);
+	अगर (!region)
+		वापस -ENOMEM;
 
 	mutex_lock(&kvm->lock);
 	region->pages = sev_pin_memory(kvm, range->addr, range->size, &region->npages, 1);
-	if (IS_ERR(region->pages)) {
+	अगर (IS_ERR(region->pages)) अणु
 		ret = PTR_ERR(region->pages);
 		mutex_unlock(&kvm->lock);
-		goto e_free;
-	}
+		जाओ e_मुक्त;
+	पूर्ण
 
 	region->uaddr = range->addr;
 	region->size = range->size;
@@ -1632,116 +1633,116 @@ int svm_register_enc_region(struct kvm *kvm,
 
 	/*
 	 * The guest may change the memory encryption attribute from C=0 -> C=1
-	 * or vice versa for this memory range. Lets make sure caches are
-	 * flushed to ensure that guest data gets written into memory with
+	 * or vice versa क्रम this memory range. Lets make sure caches are
+	 * flushed to ensure that guest data माला_लो written पूर्णांकo memory with
 	 * correct C-bit.
 	 */
 	sev_clflush_pages(region->pages, region->npages);
 
-	return ret;
+	वापस ret;
 
-e_free:
-	kfree(region);
-	return ret;
-}
+e_मुक्त:
+	kमुक्त(region);
+	वापस ret;
+पूर्ण
 
-static struct enc_region *
-find_enc_region(struct kvm *kvm, struct kvm_enc_region *range)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct list_head *head = &sev->regions_list;
-	struct enc_region *i;
+अटल काष्ठा enc_region *
+find_enc_region(काष्ठा kvm *kvm, काष्ठा kvm_enc_region *range)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा list_head *head = &sev->regions_list;
+	काष्ठा enc_region *i;
 
-	list_for_each_entry(i, head, list) {
-		if (i->uaddr == range->addr &&
+	list_क्रम_each_entry(i, head, list) अणु
+		अगर (i->uaddr == range->addr &&
 		    i->size == range->size)
-			return i;
-	}
+			वापस i;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __unregister_enc_region_locked(struct kvm *kvm,
-					   struct enc_region *region)
-{
+अटल व्योम __unरेजिस्टर_enc_region_locked(काष्ठा kvm *kvm,
+					   काष्ठा enc_region *region)
+अणु
 	sev_unpin_memory(kvm, region->pages, region->npages);
 	list_del(&region->list);
-	kfree(region);
-}
+	kमुक्त(region);
+पूर्ण
 
-int svm_unregister_enc_region(struct kvm *kvm,
-			      struct kvm_enc_region *range)
-{
-	struct enc_region *region;
-	int ret;
+पूर्णांक svm_unरेजिस्टर_enc_region(काष्ठा kvm *kvm,
+			      काष्ठा kvm_enc_region *range)
+अणु
+	काष्ठा enc_region *region;
+	पूर्णांक ret;
 
-	/* If kvm is mirroring encryption context it isn't responsible for it */
-	if (is_mirroring_enc_context(kvm))
-		return -EINVAL;
+	/* If kvm is mirroring encryption context it isn't responsible क्रम it */
+	अगर (is_mirroring_enc_context(kvm))
+		वापस -EINVAL;
 
 	mutex_lock(&kvm->lock);
 
-	if (!sev_guest(kvm)) {
+	अगर (!sev_guest(kvm)) अणु
 		ret = -ENOTTY;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	region = find_enc_region(kvm, range);
-	if (!region) {
+	अगर (!region) अणु
 		ret = -EINVAL;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	/*
-	 * Ensure that all guest tagged cache entries are flushed before
-	 * releasing the pages back to the system for use. CLFLUSH will
-	 * not do this, so issue a WBINVD.
+	 * Ensure that all guest tagged cache entries are flushed beक्रमe
+	 * releasing the pages back to the प्रणाली क्रम use. CLFLUSH will
+	 * not करो this, so issue a WBINVD.
 	 */
 	wbinvd_on_all_cpus();
 
-	__unregister_enc_region_locked(kvm, region);
+	__unरेजिस्टर_enc_region_locked(kvm, region);
 
 	mutex_unlock(&kvm->lock);
-	return 0;
+	वापस 0;
 
 failed:
 	mutex_unlock(&kvm->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int svm_vm_copy_asid_from(struct kvm *kvm, unsigned int source_fd)
-{
-	struct file *source_kvm_file;
-	struct kvm *source_kvm;
-	struct kvm_sev_info *mirror_sev;
-	unsigned int asid;
-	int ret;
+पूर्णांक svm_vm_copy_asid_from(काष्ठा kvm *kvm, अचिन्हित पूर्णांक source_fd)
+अणु
+	काष्ठा file *source_kvm_file;
+	काष्ठा kvm *source_kvm;
+	काष्ठा kvm_sev_info *mirror_sev;
+	अचिन्हित पूर्णांक asid;
+	पूर्णांक ret;
 
 	source_kvm_file = fget(source_fd);
-	if (!file_is_kvm(source_kvm_file)) {
+	अगर (!file_is_kvm(source_kvm_file)) अणु
 		ret = -EBADF;
-		goto e_source_put;
-	}
+		जाओ e_source_put;
+	पूर्ण
 
-	source_kvm = source_kvm_file->private_data;
+	source_kvm = source_kvm_file->निजी_data;
 	mutex_lock(&source_kvm->lock);
 
-	if (!sev_guest(source_kvm)) {
+	अगर (!sev_guest(source_kvm)) अणु
 		ret = -EINVAL;
-		goto e_source_unlock;
-	}
+		जाओ e_source_unlock;
+	पूर्ण
 
 	/* Mirrors of mirrors should work, but let's not get silly */
-	if (is_mirroring_enc_context(source_kvm) || source_kvm == kvm) {
+	अगर (is_mirroring_enc_context(source_kvm) || source_kvm == kvm) अणु
 		ret = -EINVAL;
-		goto e_source_unlock;
-	}
+		जाओ e_source_unlock;
+	पूर्ण
 
 	asid = to_kvm_svm(source_kvm)->sev_info.asid;
 
 	/*
 	 * The mirror kvm holds an enc_context_owner ref so its asid can't
-	 * disappear until we're done with it
+	 * disappear until we're करोne with it
 	 */
 	kvm_get_kvm(source_kvm);
 
@@ -1749,10 +1750,10 @@ int svm_vm_copy_asid_from(struct kvm *kvm, unsigned int source_fd)
 	mutex_unlock(&source_kvm->lock);
 	mutex_lock(&kvm->lock);
 
-	if (sev_guest(kvm)) {
+	अगर (sev_guest(kvm)) अणु
 		ret = -EINVAL;
-		goto e_mirror_unlock;
-	}
+		जाओ e_mirror_unlock;
+	पूर्ण
 
 	/* Set enc_context_owner and copy its encryption context over */
 	mirror_sev = &to_kvm_svm(kvm)->sev_info;
@@ -1761,133 +1762,133 @@ int svm_vm_copy_asid_from(struct kvm *kvm, unsigned int source_fd)
 	mirror_sev->active = true;
 
 	mutex_unlock(&kvm->lock);
-	return 0;
+	वापस 0;
 
 e_mirror_unlock:
 	mutex_unlock(&kvm->lock);
 	kvm_put_kvm(source_kvm);
-	return ret;
+	वापस ret;
 e_source_unlock:
 	mutex_unlock(&source_kvm->lock);
 e_source_put:
-	if (source_kvm_file)
+	अगर (source_kvm_file)
 		fput(source_kvm_file);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void sev_vm_destroy(struct kvm *kvm)
-{
-	struct kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
-	struct list_head *head = &sev->regions_list;
-	struct list_head *pos, *q;
+व्योम sev_vm_destroy(काष्ठा kvm *kvm)
+अणु
+	काष्ठा kvm_sev_info *sev = &to_kvm_svm(kvm)->sev_info;
+	काष्ठा list_head *head = &sev->regions_list;
+	काष्ठा list_head *pos, *q;
 
-	if (!sev_guest(kvm))
-		return;
+	अगर (!sev_guest(kvm))
+		वापस;
 
 	/* If this is a mirror_kvm release the enc_context_owner and skip sev cleanup */
-	if (is_mirroring_enc_context(kvm)) {
+	अगर (is_mirroring_enc_context(kvm)) अणु
 		kvm_put_kvm(sev->enc_context_owner);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&kvm->lock);
 
 	/*
-	 * Ensure that all guest tagged cache entries are flushed before
-	 * releasing the pages back to the system for use. CLFLUSH will
-	 * not do this, so issue a WBINVD.
+	 * Ensure that all guest tagged cache entries are flushed beक्रमe
+	 * releasing the pages back to the प्रणाली क्रम use. CLFLUSH will
+	 * not करो this, so issue a WBINVD.
 	 */
 	wbinvd_on_all_cpus();
 
 	/*
-	 * if userspace was terminated before unregistering the memory regions
-	 * then lets unpin all the registered memory.
+	 * अगर userspace was terminated beक्रमe unरेजिस्टरing the memory regions
+	 * then lets unpin all the रेजिस्टरed memory.
 	 */
-	if (!list_empty(head)) {
-		list_for_each_safe(pos, q, head) {
-			__unregister_enc_region_locked(kvm,
-				list_entry(pos, struct enc_region, list));
+	अगर (!list_empty(head)) अणु
+		list_क्रम_each_safe(pos, q, head) अणु
+			__unरेजिस्टर_enc_region_locked(kvm,
+				list_entry(pos, काष्ठा enc_region, list));
 			cond_resched();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&kvm->lock);
 
 	sev_unbind_asid(kvm, sev->handle);
-	sev_asid_free(sev);
-}
+	sev_asid_मुक्त(sev);
+पूर्ण
 
-void __init sev_set_cpu_caps(void)
-{
-	if (!sev_enabled)
+व्योम __init sev_set_cpu_caps(व्योम)
+अणु
+	अगर (!sev_enabled)
 		kvm_cpu_cap_clear(X86_FEATURE_SEV);
-	if (!sev_es_enabled)
+	अगर (!sev_es_enabled)
 		kvm_cpu_cap_clear(X86_FEATURE_SEV_ES);
-}
+पूर्ण
 
-void __init sev_hardware_setup(void)
-{
-#ifdef CONFIG_KVM_AMD_SEV
-	unsigned int eax, ebx, ecx, edx, sev_asid_count, sev_es_asid_count;
+व्योम __init sev_hardware_setup(व्योम)
+अणु
+#अगर_घोषित CONFIG_KVM_AMD_SEV
+	अचिन्हित पूर्णांक eax, ebx, ecx, edx, sev_asid_count, sev_es_asid_count;
 	bool sev_es_supported = false;
 	bool sev_supported = false;
 
-	if (!sev_enabled || !npt_enabled)
-		goto out;
+	अगर (!sev_enabled || !npt_enabled)
+		जाओ out;
 
 	/* Does the CPU support SEV? */
-	if (!boot_cpu_has(X86_FEATURE_SEV))
-		goto out;
+	अगर (!boot_cpu_has(X86_FEATURE_SEV))
+		जाओ out;
 
-	/* Retrieve SEV CPUID information */
+	/* Retrieve SEV CPUID inक्रमmation */
 	cpuid(0x8000001f, &eax, &ebx, &ecx, &edx);
 
-	/* Set encryption bit location for SEV-ES guests */
+	/* Set encryption bit location क्रम SEV-ES guests */
 	sev_enc_bit = ebx & 0x3f;
 
 	/* Maximum number of encrypted guests supported simultaneously */
 	max_sev_asid = ecx;
-	if (!max_sev_asid)
-		goto out;
+	अगर (!max_sev_asid)
+		जाओ out;
 
-	/* Minimum ASID value that should be used for SEV guest */
+	/* Minimum ASID value that should be used क्रम SEV guest */
 	min_sev_asid = edx;
 	sev_me_mask = 1UL << (ebx & 0x3f);
 
-	/* Initialize SEV ASID bitmaps */
-	sev_asid_bitmap = bitmap_zalloc(max_sev_asid, GFP_KERNEL);
-	if (!sev_asid_bitmap)
-		goto out;
+	/* Initialize SEV ASID biपंचांगaps */
+	sev_asid_biपंचांगap = biपंचांगap_zalloc(max_sev_asid, GFP_KERNEL);
+	अगर (!sev_asid_biपंचांगap)
+		जाओ out;
 
-	sev_reclaim_asid_bitmap = bitmap_zalloc(max_sev_asid, GFP_KERNEL);
-	if (!sev_reclaim_asid_bitmap) {
-		bitmap_free(sev_asid_bitmap);
-		sev_asid_bitmap = NULL;
-		goto out;
-	}
+	sev_reclaim_asid_biपंचांगap = biपंचांगap_zalloc(max_sev_asid, GFP_KERNEL);
+	अगर (!sev_reclaim_asid_biपंचांगap) अणु
+		biपंचांगap_मुक्त(sev_asid_biपंचांगap);
+		sev_asid_biपंचांगap = शून्य;
+		जाओ out;
+	पूर्ण
 
 	sev_asid_count = max_sev_asid - min_sev_asid + 1;
-	if (misc_cg_set_capacity(MISC_CG_RES_SEV, sev_asid_count))
-		goto out;
+	अगर (misc_cg_set_capacity(MISC_CG_RES_SEV, sev_asid_count))
+		जाओ out;
 
 	pr_info("SEV supported: %u ASIDs\n", sev_asid_count);
 	sev_supported = true;
 
 	/* SEV-ES support requested? */
-	if (!sev_es_enabled)
-		goto out;
+	अगर (!sev_es_enabled)
+		जाओ out;
 
 	/* Does the CPU support SEV-ES? */
-	if (!boot_cpu_has(X86_FEATURE_SEV_ES))
-		goto out;
+	अगर (!boot_cpu_has(X86_FEATURE_SEV_ES))
+		जाओ out;
 
-	/* Has the system been allocated ASIDs for SEV-ES? */
-	if (min_sev_asid == 1)
-		goto out;
+	/* Has the प्रणाली been allocated ASIDs क्रम SEV-ES? */
+	अगर (min_sev_asid == 1)
+		जाओ out;
 
 	sev_es_asid_count = min_sev_asid - 1;
-	if (misc_cg_set_capacity(MISC_CG_RES_SEV_ES, sev_es_asid_count))
-		goto out;
+	अगर (misc_cg_set_capacity(MISC_CG_RES_SEV_ES, sev_es_asid_count))
+		जाओ out;
 
 	pr_info("SEV-ES supported: %u ASIDs\n", sev_es_asid_count);
 	sev_es_supported = true;
@@ -1895,351 +1896,351 @@ void __init sev_hardware_setup(void)
 out:
 	sev_enabled = sev_supported;
 	sev_es_enabled = sev_es_supported;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-void sev_hardware_teardown(void)
-{
-	if (!sev_enabled)
-		return;
+व्योम sev_hardware_tearकरोwn(व्योम)
+अणु
+	अगर (!sev_enabled)
+		वापस;
 
-	/* No need to take sev_bitmap_lock, all VMs have been destroyed. */
+	/* No need to take sev_biपंचांगap_lock, all VMs have been destroyed. */
 	sev_flush_asids(0, max_sev_asid);
 
-	bitmap_free(sev_asid_bitmap);
-	bitmap_free(sev_reclaim_asid_bitmap);
+	biपंचांगap_मुक्त(sev_asid_biपंचांगap);
+	biपंचांगap_मुक्त(sev_reclaim_asid_biपंचांगap);
 
 	misc_cg_set_capacity(MISC_CG_RES_SEV, 0);
 	misc_cg_set_capacity(MISC_CG_RES_SEV_ES, 0);
-}
+पूर्ण
 
-int sev_cpu_init(struct svm_cpu_data *sd)
-{
-	if (!sev_enabled)
-		return 0;
+पूर्णांक sev_cpu_init(काष्ठा svm_cpu_data *sd)
+अणु
+	अगर (!sev_enabled)
+		वापस 0;
 
-	sd->sev_vmcbs = kcalloc(max_sev_asid + 1, sizeof(void *), GFP_KERNEL);
-	if (!sd->sev_vmcbs)
-		return -ENOMEM;
+	sd->sev_vmcbs = kसुस्मृति(max_sev_asid + 1, माप(व्योम *), GFP_KERNEL);
+	अगर (!sd->sev_vmcbs)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Pages used by hardware to hold guest encrypted state must be flushed before
- * returning them to the system.
+ * Pages used by hardware to hold guest encrypted state must be flushed beक्रमe
+ * वापसing them to the प्रणाली.
  */
-static void sev_flush_guest_memory(struct vcpu_svm *svm, void *va,
-				   unsigned long len)
-{
+अटल व्योम sev_flush_guest_memory(काष्ठा vcpu_svm *svm, व्योम *va,
+				   अचिन्हित दीर्घ len)
+अणु
 	/*
-	 * If hardware enforced cache coherency for encrypted mappings of the
-	 * same physical page is supported, nothing to do.
+	 * If hardware enक्रमced cache coherency क्रम encrypted mappings of the
+	 * same physical page is supported, nothing to करो.
 	 */
-	if (boot_cpu_has(X86_FEATURE_SME_COHERENT))
-		return;
+	अगर (boot_cpu_has(X86_FEATURE_SME_COHERENT))
+		वापस;
 
 	/*
 	 * If the VM Page Flush MSR is supported, use it to flush the page
-	 * (using the page virtual address and the guest ASID).
+	 * (using the page भव address and the guest ASID).
 	 */
-	if (boot_cpu_has(X86_FEATURE_VM_PAGE_FLUSH)) {
-		struct kvm_sev_info *sev;
-		unsigned long va_start;
+	अगर (boot_cpu_has(X86_FEATURE_VM_PAGE_FLUSH)) अणु
+		काष्ठा kvm_sev_info *sev;
+		अचिन्हित दीर्घ बहु_शुरू;
 		u64 start, stop;
 
 		/* Align start and stop to page boundaries. */
-		va_start = (unsigned long)va;
-		start = (u64)va_start & PAGE_MASK;
-		stop = PAGE_ALIGN((u64)va_start + len);
+		बहु_शुरू = (अचिन्हित दीर्घ)va;
+		start = (u64)बहु_शुरू & PAGE_MASK;
+		stop = PAGE_ALIGN((u64)बहु_शुरू + len);
 
-		if (start < stop) {
+		अगर (start < stop) अणु
 			sev = &to_kvm_svm(svm->vcpu.kvm)->sev_info;
 
-			while (start < stop) {
+			जबतक (start < stop) अणु
 				wrmsrl(MSR_AMD64_VM_PAGE_FLUSH,
 				       start | sev->asid);
 
 				start += PAGE_SIZE;
-			}
+			पूर्ण
 
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		WARN(1, "Address overflow, using WBINVD\n");
-	}
+	पूर्ण
 
 	/*
 	 * Hardware should always have one of the above features,
-	 * but if not, use WBINVD and issue a warning.
+	 * but अगर not, use WBINVD and issue a warning.
 	 */
 	WARN_ONCE(1, "Using WBINVD to flush guest memory\n");
 	wbinvd_on_all_cpus();
-}
+पूर्ण
 
-void sev_free_vcpu(struct kvm_vcpu *vcpu)
-{
-	struct vcpu_svm *svm;
+व्योम sev_मुक्त_vcpu(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा vcpu_svm *svm;
 
-	if (!sev_es_guest(vcpu->kvm))
-		return;
+	अगर (!sev_es_guest(vcpu->kvm))
+		वापस;
 
 	svm = to_svm(vcpu);
 
-	if (vcpu->arch.guest_state_protected)
+	अगर (vcpu->arch.guest_state_रक्षित)
 		sev_flush_guest_memory(svm, svm->vmsa, PAGE_SIZE);
-	__free_page(virt_to_page(svm->vmsa));
+	__मुक्त_page(virt_to_page(svm->vmsa));
 
-	if (svm->ghcb_sa_free)
-		kfree(svm->ghcb_sa);
-}
+	अगर (svm->ghcb_sa_मुक्त)
+		kमुक्त(svm->ghcb_sa);
+पूर्ण
 
-static void dump_ghcb(struct vcpu_svm *svm)
-{
-	struct ghcb *ghcb = svm->ghcb;
-	unsigned int nbits;
+अटल व्योम dump_ghcb(काष्ठा vcpu_svm *svm)
+अणु
+	काष्ठा ghcb *ghcb = svm->ghcb;
+	अचिन्हित पूर्णांक nbits;
 
 	/* Re-use the dump_invalid_vmcb module parameter */
-	if (!dump_invalid_vmcb) {
+	अगर (!dump_invalid_vmcb) अणु
 		pr_warn_ratelimited("set kvm_amd.dump_invalid_vmcb=1 to dump internal KVM state.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	nbits = sizeof(ghcb->save.valid_bitmap) * 8;
+	nbits = माप(ghcb->save.valid_biपंचांगap) * 8;
 
 	pr_err("GHCB (GPA=%016llx):\n", svm->vmcb->control.ghcb_gpa);
 	pr_err("%-20s%016llx is_valid: %u\n", "sw_exit_code",
-	       ghcb->save.sw_exit_code, ghcb_sw_exit_code_is_valid(ghcb));
+	       ghcb->save.sw_निकास_code, ghcb_sw_निकास_code_is_valid(ghcb));
 	pr_err("%-20s%016llx is_valid: %u\n", "sw_exit_info_1",
-	       ghcb->save.sw_exit_info_1, ghcb_sw_exit_info_1_is_valid(ghcb));
+	       ghcb->save.sw_निकास_info_1, ghcb_sw_निकास_info_1_is_valid(ghcb));
 	pr_err("%-20s%016llx is_valid: %u\n", "sw_exit_info_2",
-	       ghcb->save.sw_exit_info_2, ghcb_sw_exit_info_2_is_valid(ghcb));
+	       ghcb->save.sw_निकास_info_2, ghcb_sw_निकास_info_2_is_valid(ghcb));
 	pr_err("%-20s%016llx is_valid: %u\n", "sw_scratch",
 	       ghcb->save.sw_scratch, ghcb_sw_scratch_is_valid(ghcb));
-	pr_err("%-20s%*pb\n", "valid_bitmap", nbits, ghcb->save.valid_bitmap);
-}
+	pr_err("%-20s%*pb\n", "valid_bitmap", nbits, ghcb->save.valid_biपंचांगap);
+पूर्ण
 
-static void sev_es_sync_to_ghcb(struct vcpu_svm *svm)
-{
-	struct kvm_vcpu *vcpu = &svm->vcpu;
-	struct ghcb *ghcb = svm->ghcb;
+अटल व्योम sev_es_sync_to_ghcb(काष्ठा vcpu_svm *svm)
+अणु
+	काष्ठा kvm_vcpu *vcpu = &svm->vcpu;
+	काष्ठा ghcb *ghcb = svm->ghcb;
 
 	/*
-	 * The GHCB protocol so far allows for the following data
-	 * to be returned:
+	 * The GHCB protocol so far allows क्रम the following data
+	 * to be वापसed:
 	 *   GPRs RAX, RBX, RCX, RDX
 	 *
-	 * Copy their values, even if they may not have been written during the
-	 * VM-Exit.  It's the guest's responsibility to not consume random data.
+	 * Copy their values, even अगर they may not have been written during the
+	 * VM-Exit.  It's the guest's responsibility to not consume अक्रमom data.
 	 */
 	ghcb_set_rax(ghcb, vcpu->arch.regs[VCPU_REGS_RAX]);
 	ghcb_set_rbx(ghcb, vcpu->arch.regs[VCPU_REGS_RBX]);
 	ghcb_set_rcx(ghcb, vcpu->arch.regs[VCPU_REGS_RCX]);
 	ghcb_set_rdx(ghcb, vcpu->arch.regs[VCPU_REGS_RDX]);
-}
+पूर्ण
 
-static void sev_es_sync_from_ghcb(struct vcpu_svm *svm)
-{
-	struct vmcb_control_area *control = &svm->vmcb->control;
-	struct kvm_vcpu *vcpu = &svm->vcpu;
-	struct ghcb *ghcb = svm->ghcb;
-	u64 exit_code;
+अटल व्योम sev_es_sync_from_ghcb(काष्ठा vcpu_svm *svm)
+अणु
+	काष्ठा vmcb_control_area *control = &svm->vmcb->control;
+	काष्ठा kvm_vcpu *vcpu = &svm->vcpu;
+	काष्ठा ghcb *ghcb = svm->ghcb;
+	u64 निकास_code;
 
 	/*
-	 * The GHCB protocol so far allows for the following data
+	 * The GHCB protocol so far allows क्रम the following data
 	 * to be supplied:
 	 *   GPRs RAX, RBX, RCX, RDX
 	 *   XCR0
 	 *   CPL
 	 *
-	 * VMMCALL allows the guest to provide extra registers. KVM also
-	 * expects RSI for hypercalls, so include that, too.
+	 * VMMCALL allows the guest to provide extra रेजिस्टरs. KVM also
+	 * expects RSI क्रम hypercalls, so include that, too.
 	 *
-	 * Copy their values to the appropriate location if supplied.
+	 * Copy their values to the appropriate location अगर supplied.
 	 */
-	memset(vcpu->arch.regs, 0, sizeof(vcpu->arch.regs));
+	स_रखो(vcpu->arch.regs, 0, माप(vcpu->arch.regs));
 
-	vcpu->arch.regs[VCPU_REGS_RAX] = ghcb_get_rax_if_valid(ghcb);
-	vcpu->arch.regs[VCPU_REGS_RBX] = ghcb_get_rbx_if_valid(ghcb);
-	vcpu->arch.regs[VCPU_REGS_RCX] = ghcb_get_rcx_if_valid(ghcb);
-	vcpu->arch.regs[VCPU_REGS_RDX] = ghcb_get_rdx_if_valid(ghcb);
-	vcpu->arch.regs[VCPU_REGS_RSI] = ghcb_get_rsi_if_valid(ghcb);
+	vcpu->arch.regs[VCPU_REGS_RAX] = ghcb_get_rax_अगर_valid(ghcb);
+	vcpu->arch.regs[VCPU_REGS_RBX] = ghcb_get_rbx_अगर_valid(ghcb);
+	vcpu->arch.regs[VCPU_REGS_RCX] = ghcb_get_rcx_अगर_valid(ghcb);
+	vcpu->arch.regs[VCPU_REGS_RDX] = ghcb_get_rdx_अगर_valid(ghcb);
+	vcpu->arch.regs[VCPU_REGS_RSI] = ghcb_get_rsi_अगर_valid(ghcb);
 
-	svm->vmcb->save.cpl = ghcb_get_cpl_if_valid(ghcb);
+	svm->vmcb->save.cpl = ghcb_get_cpl_अगर_valid(ghcb);
 
-	if (ghcb_xcr0_is_valid(ghcb)) {
+	अगर (ghcb_xcr0_is_valid(ghcb)) अणु
 		vcpu->arch.xcr0 = ghcb_get_xcr0(ghcb);
-		kvm_update_cpuid_runtime(vcpu);
-	}
+		kvm_update_cpuid_runसमय(vcpu);
+	पूर्ण
 
-	/* Copy the GHCB exit information into the VMCB fields */
-	exit_code = ghcb_get_sw_exit_code(ghcb);
-	control->exit_code = lower_32_bits(exit_code);
-	control->exit_code_hi = upper_32_bits(exit_code);
-	control->exit_info_1 = ghcb_get_sw_exit_info_1(ghcb);
-	control->exit_info_2 = ghcb_get_sw_exit_info_2(ghcb);
+	/* Copy the GHCB निकास inक्रमmation पूर्णांकo the VMCB fields */
+	निकास_code = ghcb_get_sw_निकास_code(ghcb);
+	control->निकास_code = lower_32_bits(निकास_code);
+	control->निकास_code_hi = upper_32_bits(निकास_code);
+	control->निकास_info_1 = ghcb_get_sw_निकास_info_1(ghcb);
+	control->निकास_info_2 = ghcb_get_sw_निकास_info_2(ghcb);
 
 	/* Clear the valid entries fields */
-	memset(ghcb->save.valid_bitmap, 0, sizeof(ghcb->save.valid_bitmap));
-}
+	स_रखो(ghcb->save.valid_biपंचांगap, 0, माप(ghcb->save.valid_biपंचांगap));
+पूर्ण
 
-static int sev_es_validate_vmgexit(struct vcpu_svm *svm)
-{
-	struct kvm_vcpu *vcpu;
-	struct ghcb *ghcb;
-	u64 exit_code = 0;
+अटल पूर्णांक sev_es_validate_vmgनिकास(काष्ठा vcpu_svm *svm)
+अणु
+	काष्ठा kvm_vcpu *vcpu;
+	काष्ठा ghcb *ghcb;
+	u64 निकास_code = 0;
 
 	ghcb = svm->ghcb;
 
 	/* Only GHCB Usage code 0 is supported */
-	if (ghcb->ghcb_usage)
-		goto vmgexit_err;
+	अगर (ghcb->ghcb_usage)
+		जाओ vmgनिकास_err;
 
 	/*
-	 * Retrieve the exit code now even though is may not be marked valid
+	 * Retrieve the निकास code now even though is may not be marked valid
 	 * as it could help with debugging.
 	 */
-	exit_code = ghcb_get_sw_exit_code(ghcb);
+	निकास_code = ghcb_get_sw_निकास_code(ghcb);
 
-	if (!ghcb_sw_exit_code_is_valid(ghcb) ||
-	    !ghcb_sw_exit_info_1_is_valid(ghcb) ||
-	    !ghcb_sw_exit_info_2_is_valid(ghcb))
-		goto vmgexit_err;
+	अगर (!ghcb_sw_निकास_code_is_valid(ghcb) ||
+	    !ghcb_sw_निकास_info_1_is_valid(ghcb) ||
+	    !ghcb_sw_निकास_info_2_is_valid(ghcb))
+		जाओ vmgनिकास_err;
 
-	switch (ghcb_get_sw_exit_code(ghcb)) {
-	case SVM_EXIT_READ_DR7:
-		break;
-	case SVM_EXIT_WRITE_DR7:
-		if (!ghcb_rax_is_valid(ghcb))
-			goto vmgexit_err;
-		break;
-	case SVM_EXIT_RDTSC:
-		break;
-	case SVM_EXIT_RDPMC:
-		if (!ghcb_rcx_is_valid(ghcb))
-			goto vmgexit_err;
-		break;
-	case SVM_EXIT_CPUID:
-		if (!ghcb_rax_is_valid(ghcb) ||
+	चयन (ghcb_get_sw_निकास_code(ghcb)) अणु
+	हाल SVM_EXIT_READ_DR7:
+		अवरोध;
+	हाल SVM_EXIT_WRITE_DR7:
+		अगर (!ghcb_rax_is_valid(ghcb))
+			जाओ vmgनिकास_err;
+		अवरोध;
+	हाल SVM_EXIT_RDTSC:
+		अवरोध;
+	हाल SVM_EXIT_RDPMC:
+		अगर (!ghcb_rcx_is_valid(ghcb))
+			जाओ vmgनिकास_err;
+		अवरोध;
+	हाल SVM_EXIT_CPUID:
+		अगर (!ghcb_rax_is_valid(ghcb) ||
 		    !ghcb_rcx_is_valid(ghcb))
-			goto vmgexit_err;
-		if (ghcb_get_rax(ghcb) == 0xd)
-			if (!ghcb_xcr0_is_valid(ghcb))
-				goto vmgexit_err;
-		break;
-	case SVM_EXIT_INVD:
-		break;
-	case SVM_EXIT_IOIO:
-		if (ghcb_get_sw_exit_info_1(ghcb) & SVM_IOIO_STR_MASK) {
-			if (!ghcb_sw_scratch_is_valid(ghcb))
-				goto vmgexit_err;
-		} else {
-			if (!(ghcb_get_sw_exit_info_1(ghcb) & SVM_IOIO_TYPE_MASK))
-				if (!ghcb_rax_is_valid(ghcb))
-					goto vmgexit_err;
-		}
-		break;
-	case SVM_EXIT_MSR:
-		if (!ghcb_rcx_is_valid(ghcb))
-			goto vmgexit_err;
-		if (ghcb_get_sw_exit_info_1(ghcb)) {
-			if (!ghcb_rax_is_valid(ghcb) ||
+			जाओ vmgनिकास_err;
+		अगर (ghcb_get_rax(ghcb) == 0xd)
+			अगर (!ghcb_xcr0_is_valid(ghcb))
+				जाओ vmgनिकास_err;
+		अवरोध;
+	हाल SVM_EXIT_INVD:
+		अवरोध;
+	हाल SVM_EXIT_IOIO:
+		अगर (ghcb_get_sw_निकास_info_1(ghcb) & SVM_IOIO_STR_MASK) अणु
+			अगर (!ghcb_sw_scratch_is_valid(ghcb))
+				जाओ vmgनिकास_err;
+		पूर्ण अन्यथा अणु
+			अगर (!(ghcb_get_sw_निकास_info_1(ghcb) & SVM_IOIO_TYPE_MASK))
+				अगर (!ghcb_rax_is_valid(ghcb))
+					जाओ vmgनिकास_err;
+		पूर्ण
+		अवरोध;
+	हाल SVM_EXIT_MSR:
+		अगर (!ghcb_rcx_is_valid(ghcb))
+			जाओ vmgनिकास_err;
+		अगर (ghcb_get_sw_निकास_info_1(ghcb)) अणु
+			अगर (!ghcb_rax_is_valid(ghcb) ||
 			    !ghcb_rdx_is_valid(ghcb))
-				goto vmgexit_err;
-		}
-		break;
-	case SVM_EXIT_VMMCALL:
-		if (!ghcb_rax_is_valid(ghcb) ||
+				जाओ vmgनिकास_err;
+		पूर्ण
+		अवरोध;
+	हाल SVM_EXIT_VMMCALL:
+		अगर (!ghcb_rax_is_valid(ghcb) ||
 		    !ghcb_cpl_is_valid(ghcb))
-			goto vmgexit_err;
-		break;
-	case SVM_EXIT_RDTSCP:
-		break;
-	case SVM_EXIT_WBINVD:
-		break;
-	case SVM_EXIT_MONITOR:
-		if (!ghcb_rax_is_valid(ghcb) ||
+			जाओ vmgनिकास_err;
+		अवरोध;
+	हाल SVM_EXIT_RDTSCP:
+		अवरोध;
+	हाल SVM_EXIT_WBINVD:
+		अवरोध;
+	हाल SVM_EXIT_MONITOR:
+		अगर (!ghcb_rax_is_valid(ghcb) ||
 		    !ghcb_rcx_is_valid(ghcb) ||
 		    !ghcb_rdx_is_valid(ghcb))
-			goto vmgexit_err;
-		break;
-	case SVM_EXIT_MWAIT:
-		if (!ghcb_rax_is_valid(ghcb) ||
+			जाओ vmgनिकास_err;
+		अवरोध;
+	हाल SVM_EXIT_MWAIT:
+		अगर (!ghcb_rax_is_valid(ghcb) ||
 		    !ghcb_rcx_is_valid(ghcb))
-			goto vmgexit_err;
-		break;
-	case SVM_VMGEXIT_MMIO_READ:
-	case SVM_VMGEXIT_MMIO_WRITE:
-		if (!ghcb_sw_scratch_is_valid(ghcb))
-			goto vmgexit_err;
-		break;
-	case SVM_VMGEXIT_NMI_COMPLETE:
-	case SVM_VMGEXIT_AP_HLT_LOOP:
-	case SVM_VMGEXIT_AP_JUMP_TABLE:
-	case SVM_VMGEXIT_UNSUPPORTED_EVENT:
-		break;
-	default:
-		goto vmgexit_err;
-	}
+			जाओ vmgनिकास_err;
+		अवरोध;
+	हाल SVM_VMGEXIT_MMIO_READ:
+	हाल SVM_VMGEXIT_MMIO_WRITE:
+		अगर (!ghcb_sw_scratch_is_valid(ghcb))
+			जाओ vmgनिकास_err;
+		अवरोध;
+	हाल SVM_VMGEXIT_NMI_COMPLETE:
+	हाल SVM_VMGEXIT_AP_HLT_LOOP:
+	हाल SVM_VMGEXIT_AP_JUMP_TABLE:
+	हाल SVM_VMGEXIT_UNSUPPORTED_EVENT:
+		अवरोध;
+	शेष:
+		जाओ vmgनिकास_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-vmgexit_err:
+vmgनिकास_err:
 	vcpu = &svm->vcpu;
 
-	if (ghcb->ghcb_usage) {
+	अगर (ghcb->ghcb_usage) अणु
 		vcpu_unimpl(vcpu, "vmgexit: ghcb usage %#x is not valid\n",
 			    ghcb->ghcb_usage);
-	} else {
+	पूर्ण अन्यथा अणु
 		vcpu_unimpl(vcpu, "vmgexit: exit reason %#llx is not valid\n",
-			    exit_code);
+			    निकास_code);
 		dump_ghcb(svm);
-	}
+	पूर्ण
 
-	vcpu->run->exit_reason = KVM_EXIT_INTERNAL_ERROR;
-	vcpu->run->internal.suberror = KVM_INTERNAL_ERROR_UNEXPECTED_EXIT_REASON;
-	vcpu->run->internal.ndata = 2;
-	vcpu->run->internal.data[0] = exit_code;
-	vcpu->run->internal.data[1] = vcpu->arch.last_vmentry_cpu;
+	vcpu->run->निकास_reason = KVM_EXIT_INTERNAL_ERROR;
+	vcpu->run->पूर्णांकernal.suberror = KVM_INTERNAL_ERROR_UNEXPECTED_EXIT_REASON;
+	vcpu->run->पूर्णांकernal.ndata = 2;
+	vcpu->run->पूर्णांकernal.data[0] = निकास_code;
+	vcpu->run->पूर्णांकernal.data[1] = vcpu->arch.last_vmentry_cpu;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-void sev_es_unmap_ghcb(struct vcpu_svm *svm)
-{
-	if (!svm->ghcb)
-		return;
+व्योम sev_es_unmap_ghcb(काष्ठा vcpu_svm *svm)
+अणु
+	अगर (!svm->ghcb)
+		वापस;
 
-	if (svm->ghcb_sa_free) {
+	अगर (svm->ghcb_sa_मुक्त) अणु
 		/*
 		 * The scratch area lives outside the GHCB, so there is a
-		 * buffer that, depending on the operation performed, may
-		 * need to be synced, then freed.
+		 * buffer that, depending on the operation perक्रमmed, may
+		 * need to be synced, then मुक्तd.
 		 */
-		if (svm->ghcb_sa_sync) {
-			kvm_write_guest(svm->vcpu.kvm,
+		अगर (svm->ghcb_sa_sync) अणु
+			kvm_ग_लिखो_guest(svm->vcpu.kvm,
 					ghcb_get_sw_scratch(svm->ghcb),
 					svm->ghcb_sa, svm->ghcb_sa_len);
 			svm->ghcb_sa_sync = false;
-		}
+		पूर्ण
 
-		kfree(svm->ghcb_sa);
-		svm->ghcb_sa = NULL;
-		svm->ghcb_sa_free = false;
-	}
+		kमुक्त(svm->ghcb_sa);
+		svm->ghcb_sa = शून्य;
+		svm->ghcb_sa_मुक्त = false;
+	पूर्ण
 
-	trace_kvm_vmgexit_exit(svm->vcpu.vcpu_id, svm->ghcb);
+	trace_kvm_vmgनिकास_निकास(svm->vcpu.vcpu_id, svm->ghcb);
 
 	sev_es_sync_to_ghcb(svm);
 
 	kvm_vcpu_unmap(&svm->vcpu, &svm->ghcb_map, true);
-	svm->ghcb = NULL;
-}
+	svm->ghcb = शून्य;
+पूर्ण
 
-void pre_sev_run(struct vcpu_svm *svm, int cpu)
-{
-	struct svm_cpu_data *sd = per_cpu(svm_data, cpu);
-	int asid = sev_get_asid(svm->vcpu.kvm);
+व्योम pre_sev_run(काष्ठा vcpu_svm *svm, पूर्णांक cpu)
+अणु
+	काष्ठा svm_cpu_data *sd = per_cpu(svm_data, cpu);
+	पूर्णांक asid = sev_get_asid(svm->vcpu.kvm);
 
 	/* Assign the asid allocated with this SEV guest */
 	svm->asid = asid;
@@ -2247,160 +2248,160 @@ void pre_sev_run(struct vcpu_svm *svm, int cpu)
 	/*
 	 * Flush guest TLB:
 	 *
-	 * 1) when different VMCB for the same ASID is to be run on the same host CPU.
-	 * 2) or this VMCB was executed on different host CPU in previous VMRUNs.
+	 * 1) when dअगरferent VMCB क्रम the same ASID is to be run on the same host CPU.
+	 * 2) or this VMCB was executed on dअगरferent host CPU in previous VMRUNs.
 	 */
-	if (sd->sev_vmcbs[asid] == svm->vmcb &&
+	अगर (sd->sev_vmcbs[asid] == svm->vmcb &&
 	    svm->vcpu.arch.last_vmentry_cpu == cpu)
-		return;
+		वापस;
 
 	sd->sev_vmcbs[asid] = svm->vmcb;
 	svm->vmcb->control.tlb_ctl = TLB_CONTROL_FLUSH_ASID;
 	vmcb_mark_dirty(svm->vmcb, VMCB_ASID);
-}
+पूर्ण
 
-#define GHCB_SCRATCH_AREA_LIMIT		(16ULL * PAGE_SIZE)
-static bool setup_vmgexit_scratch(struct vcpu_svm *svm, bool sync, u64 len)
-{
-	struct vmcb_control_area *control = &svm->vmcb->control;
-	struct ghcb *ghcb = svm->ghcb;
+#घोषणा GHCB_SCRATCH_AREA_LIMIT		(16ULL * PAGE_SIZE)
+अटल bool setup_vmgनिकास_scratch(काष्ठा vcpu_svm *svm, bool sync, u64 len)
+अणु
+	काष्ठा vmcb_control_area *control = &svm->vmcb->control;
+	काष्ठा ghcb *ghcb = svm->ghcb;
 	u64 ghcb_scratch_beg, ghcb_scratch_end;
 	u64 scratch_gpa_beg, scratch_gpa_end;
-	void *scratch_va;
+	व्योम *scratch_va;
 
 	scratch_gpa_beg = ghcb_get_sw_scratch(ghcb);
-	if (!scratch_gpa_beg) {
+	अगर (!scratch_gpa_beg) अणु
 		pr_err("vmgexit: scratch gpa not provided\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	scratch_gpa_end = scratch_gpa_beg + len;
-	if (scratch_gpa_end < scratch_gpa_beg) {
+	अगर (scratch_gpa_end < scratch_gpa_beg) अणु
 		pr_err("vmgexit: scratch length (%#llx) not valid for scratch address (%#llx)\n",
 		       len, scratch_gpa_beg);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if ((scratch_gpa_beg & PAGE_MASK) == control->ghcb_gpa) {
+	अगर ((scratch_gpa_beg & PAGE_MASK) == control->ghcb_gpa) अणु
 		/* Scratch area begins within GHCB */
 		ghcb_scratch_beg = control->ghcb_gpa +
-				   offsetof(struct ghcb, shared_buffer);
+				   दुरत्व(काष्ठा ghcb, shared_buffer);
 		ghcb_scratch_end = control->ghcb_gpa +
-				   offsetof(struct ghcb, reserved_1);
+				   दुरत्व(काष्ठा ghcb, reserved_1);
 
 		/*
 		 * If the scratch area begins within the GHCB, it must be
 		 * completely contained in the GHCB shared buffer area.
 		 */
-		if (scratch_gpa_beg < ghcb_scratch_beg ||
-		    scratch_gpa_end > ghcb_scratch_end) {
+		अगर (scratch_gpa_beg < ghcb_scratch_beg ||
+		    scratch_gpa_end > ghcb_scratch_end) अणु
 			pr_err("vmgexit: scratch area is outside of GHCB shared buffer area (%#llx - %#llx)\n",
 			       scratch_gpa_beg, scratch_gpa_end);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		scratch_va = (void *)svm->ghcb;
+		scratch_va = (व्योम *)svm->ghcb;
 		scratch_va += (scratch_gpa_beg - control->ghcb_gpa);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * The guest memory must be read into a kernel buffer, so
+		 * The guest memory must be पढ़ो पूर्णांकo a kernel buffer, so
 		 * limit the size
 		 */
-		if (len > GHCB_SCRATCH_AREA_LIMIT) {
+		अगर (len > GHCB_SCRATCH_AREA_LIMIT) अणु
 			pr_err("vmgexit: scratch area exceeds KVM limits (%#llx requested, %#llx limit)\n",
 			       len, GHCB_SCRATCH_AREA_LIMIT);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 		scratch_va = kzalloc(len, GFP_KERNEL_ACCOUNT);
-		if (!scratch_va)
-			return false;
+		अगर (!scratch_va)
+			वापस false;
 
-		if (kvm_read_guest(svm->vcpu.kvm, scratch_gpa_beg, scratch_va, len)) {
+		अगर (kvm_पढ़ो_guest(svm->vcpu.kvm, scratch_gpa_beg, scratch_va, len)) अणु
 			/* Unable to copy scratch area from guest */
 			pr_err("vmgexit: kvm_read_guest for scratch area failed\n");
 
-			kfree(scratch_va);
-			return false;
-		}
+			kमुक्त(scratch_va);
+			वापस false;
+		पूर्ण
 
 		/*
 		 * The scratch area is outside the GHCB. The operation will
-		 * dictate whether the buffer needs to be synced before running
-		 * the vCPU next time (i.e. a read was requested so the data
+		 * dictate whether the buffer needs to be synced beक्रमe running
+		 * the vCPU next समय (i.e. a पढ़ो was requested so the data
 		 * must be written back to the guest memory).
 		 */
 		svm->ghcb_sa_sync = sync;
-		svm->ghcb_sa_free = true;
-	}
+		svm->ghcb_sa_मुक्त = true;
+	पूर्ण
 
 	svm->ghcb_sa = scratch_va;
 	svm->ghcb_sa_len = len;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void set_ghcb_msr_bits(struct vcpu_svm *svm, u64 value, u64 mask,
-			      unsigned int pos)
-{
+अटल व्योम set_ghcb_msr_bits(काष्ठा vcpu_svm *svm, u64 value, u64 mask,
+			      अचिन्हित पूर्णांक pos)
+अणु
 	svm->vmcb->control.ghcb_gpa &= ~(mask << pos);
 	svm->vmcb->control.ghcb_gpa |= (value & mask) << pos;
-}
+पूर्ण
 
-static u64 get_ghcb_msr_bits(struct vcpu_svm *svm, u64 mask, unsigned int pos)
-{
-	return (svm->vmcb->control.ghcb_gpa >> pos) & mask;
-}
+अटल u64 get_ghcb_msr_bits(काष्ठा vcpu_svm *svm, u64 mask, अचिन्हित पूर्णांक pos)
+अणु
+	वापस (svm->vmcb->control.ghcb_gpa >> pos) & mask;
+पूर्ण
 
-static void set_ghcb_msr(struct vcpu_svm *svm, u64 value)
-{
+अटल व्योम set_ghcb_msr(काष्ठा vcpu_svm *svm, u64 value)
+अणु
 	svm->vmcb->control.ghcb_gpa = value;
-}
+पूर्ण
 
-static int sev_handle_vmgexit_msr_protocol(struct vcpu_svm *svm)
-{
-	struct vmcb_control_area *control = &svm->vmcb->control;
-	struct kvm_vcpu *vcpu = &svm->vcpu;
+अटल पूर्णांक sev_handle_vmgनिकास_msr_protocol(काष्ठा vcpu_svm *svm)
+अणु
+	काष्ठा vmcb_control_area *control = &svm->vmcb->control;
+	काष्ठा kvm_vcpu *vcpu = &svm->vcpu;
 	u64 ghcb_info;
-	int ret = 1;
+	पूर्णांक ret = 1;
 
 	ghcb_info = control->ghcb_gpa & GHCB_MSR_INFO_MASK;
 
-	trace_kvm_vmgexit_msr_protocol_enter(svm->vcpu.vcpu_id,
+	trace_kvm_vmgनिकास_msr_protocol_enter(svm->vcpu.vcpu_id,
 					     control->ghcb_gpa);
 
-	switch (ghcb_info) {
-	case GHCB_MSR_SEV_INFO_REQ:
+	चयन (ghcb_info) अणु
+	हाल GHCB_MSR_SEV_INFO_REQ:
 		set_ghcb_msr(svm, GHCB_MSR_SEV_INFO(GHCB_VERSION_MAX,
 						    GHCB_VERSION_MIN,
 						    sev_enc_bit));
-		break;
-	case GHCB_MSR_CPUID_REQ: {
+		अवरोध;
+	हाल GHCB_MSR_CPUID_REQ: अणु
 		u64 cpuid_fn, cpuid_reg, cpuid_value;
 
 		cpuid_fn = get_ghcb_msr_bits(svm,
 					     GHCB_MSR_CPUID_FUNC_MASK,
 					     GHCB_MSR_CPUID_FUNC_POS);
 
-		/* Initialize the registers needed by the CPUID intercept */
+		/* Initialize the रेजिस्टरs needed by the CPUID पूर्णांकercept */
 		vcpu->arch.regs[VCPU_REGS_RAX] = cpuid_fn;
 		vcpu->arch.regs[VCPU_REGS_RCX] = 0;
 
-		ret = svm_invoke_exit_handler(vcpu, SVM_EXIT_CPUID);
-		if (!ret) {
+		ret = svm_invoke_निकास_handler(vcpu, SVM_EXIT_CPUID);
+		अगर (!ret) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		cpuid_reg = get_ghcb_msr_bits(svm,
 					      GHCB_MSR_CPUID_REG_MASK,
 					      GHCB_MSR_CPUID_REG_POS);
-		if (cpuid_reg == 0)
+		अगर (cpuid_reg == 0)
 			cpuid_value = vcpu->arch.regs[VCPU_REGS_RAX];
-		else if (cpuid_reg == 1)
+		अन्यथा अगर (cpuid_reg == 1)
 			cpuid_value = vcpu->arch.regs[VCPU_REGS_RBX];
-		else if (cpuid_reg == 2)
+		अन्यथा अगर (cpuid_reg == 2)
 			cpuid_value = vcpu->arch.regs[VCPU_REGS_RCX];
-		else
+		अन्यथा
 			cpuid_value = vcpu->arch.regs[VCPU_REGS_RDX];
 
 		set_ghcb_msr_bits(svm, cpuid_value,
@@ -2410,9 +2411,9 @@ static int sev_handle_vmgexit_msr_protocol(struct vcpu_svm *svm)
 		set_ghcb_msr_bits(svm, GHCB_MSR_CPUID_RESP,
 				  GHCB_MSR_INFO_MASK,
 				  GHCB_MSR_INFO_POS);
-		break;
-	}
-	case GHCB_MSR_TERM_REQ: {
+		अवरोध;
+	पूर्ण
+	हाल GHCB_MSR_TERM_REQ: अणु
 		u64 reason_set, reason_code;
 
 		reason_set = get_ghcb_msr_bits(svm,
@@ -2424,132 +2425,132 @@ static int sev_handle_vmgexit_msr_protocol(struct vcpu_svm *svm)
 		pr_info("SEV-ES guest requested termination: %#llx:%#llx\n",
 			reason_set, reason_code);
 		fallthrough;
-	}
-	default:
+	पूर्ण
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	trace_kvm_vmgexit_msr_protocol_exit(svm->vcpu.vcpu_id,
+	trace_kvm_vmgनिकास_msr_protocol_निकास(svm->vcpu.vcpu_id,
 					    control->ghcb_gpa, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sev_handle_vmgexit(struct kvm_vcpu *vcpu)
-{
-	struct vcpu_svm *svm = to_svm(vcpu);
-	struct vmcb_control_area *control = &svm->vmcb->control;
-	u64 ghcb_gpa, exit_code;
-	struct ghcb *ghcb;
-	int ret;
+पूर्णांक sev_handle_vmgनिकास(काष्ठा kvm_vcpu *vcpu)
+अणु
+	काष्ठा vcpu_svm *svm = to_svm(vcpu);
+	काष्ठा vmcb_control_area *control = &svm->vmcb->control;
+	u64 ghcb_gpa, निकास_code;
+	काष्ठा ghcb *ghcb;
+	पूर्णांक ret;
 
 	/* Validate the GHCB */
 	ghcb_gpa = control->ghcb_gpa;
-	if (ghcb_gpa & GHCB_MSR_INFO_MASK)
-		return sev_handle_vmgexit_msr_protocol(svm);
+	अगर (ghcb_gpa & GHCB_MSR_INFO_MASK)
+		वापस sev_handle_vmgनिकास_msr_protocol(svm);
 
-	if (!ghcb_gpa) {
+	अगर (!ghcb_gpa) अणु
 		vcpu_unimpl(vcpu, "vmgexit: GHCB gpa is not set\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (kvm_vcpu_map(vcpu, ghcb_gpa >> PAGE_SHIFT, &svm->ghcb_map)) {
+	अगर (kvm_vcpu_map(vcpu, ghcb_gpa >> PAGE_SHIFT, &svm->ghcb_map)) अणु
 		/* Unable to map GHCB from guest */
 		vcpu_unimpl(vcpu, "vmgexit: error mapping GHCB [%#llx] from guest\n",
 			    ghcb_gpa);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	svm->ghcb = svm->ghcb_map.hva;
 	ghcb = svm->ghcb_map.hva;
 
-	trace_kvm_vmgexit_enter(vcpu->vcpu_id, ghcb);
+	trace_kvm_vmgनिकास_enter(vcpu->vcpu_id, ghcb);
 
-	exit_code = ghcb_get_sw_exit_code(ghcb);
+	निकास_code = ghcb_get_sw_निकास_code(ghcb);
 
-	ret = sev_es_validate_vmgexit(svm);
-	if (ret)
-		return ret;
+	ret = sev_es_validate_vmgनिकास(svm);
+	अगर (ret)
+		वापस ret;
 
 	sev_es_sync_from_ghcb(svm);
-	ghcb_set_sw_exit_info_1(ghcb, 0);
-	ghcb_set_sw_exit_info_2(ghcb, 0);
+	ghcb_set_sw_निकास_info_1(ghcb, 0);
+	ghcb_set_sw_निकास_info_2(ghcb, 0);
 
 	ret = -EINVAL;
-	switch (exit_code) {
-	case SVM_VMGEXIT_MMIO_READ:
-		if (!setup_vmgexit_scratch(svm, true, control->exit_info_2))
-			break;
+	चयन (निकास_code) अणु
+	हाल SVM_VMGEXIT_MMIO_READ:
+		अगर (!setup_vmgनिकास_scratch(svm, true, control->निकास_info_2))
+			अवरोध;
 
-		ret = kvm_sev_es_mmio_read(vcpu,
-					   control->exit_info_1,
-					   control->exit_info_2,
+		ret = kvm_sev_es_mmio_पढ़ो(vcpu,
+					   control->निकास_info_1,
+					   control->निकास_info_2,
 					   svm->ghcb_sa);
-		break;
-	case SVM_VMGEXIT_MMIO_WRITE:
-		if (!setup_vmgexit_scratch(svm, false, control->exit_info_2))
-			break;
+		अवरोध;
+	हाल SVM_VMGEXIT_MMIO_WRITE:
+		अगर (!setup_vmgनिकास_scratch(svm, false, control->निकास_info_2))
+			अवरोध;
 
-		ret = kvm_sev_es_mmio_write(vcpu,
-					    control->exit_info_1,
-					    control->exit_info_2,
+		ret = kvm_sev_es_mmio_ग_लिखो(vcpu,
+					    control->निकास_info_1,
+					    control->निकास_info_2,
 					    svm->ghcb_sa);
-		break;
-	case SVM_VMGEXIT_NMI_COMPLETE:
-		ret = svm_invoke_exit_handler(vcpu, SVM_EXIT_IRET);
-		break;
-	case SVM_VMGEXIT_AP_HLT_LOOP:
+		अवरोध;
+	हाल SVM_VMGEXIT_NMI_COMPLETE:
+		ret = svm_invoke_निकास_handler(vcpu, SVM_EXIT_IRET);
+		अवरोध;
+	हाल SVM_VMGEXIT_AP_HLT_LOOP:
 		ret = kvm_emulate_ap_reset_hold(vcpu);
-		break;
-	case SVM_VMGEXIT_AP_JUMP_TABLE: {
-		struct kvm_sev_info *sev = &to_kvm_svm(vcpu->kvm)->sev_info;
+		अवरोध;
+	हाल SVM_VMGEXIT_AP_JUMP_TABLE: अणु
+		काष्ठा kvm_sev_info *sev = &to_kvm_svm(vcpu->kvm)->sev_info;
 
-		switch (control->exit_info_1) {
-		case 0:
+		चयन (control->निकास_info_1) अणु
+		हाल 0:
 			/* Set AP jump table address */
-			sev->ap_jump_table = control->exit_info_2;
-			break;
-		case 1:
+			sev->ap_jump_table = control->निकास_info_2;
+			अवरोध;
+		हाल 1:
 			/* Get AP jump table address */
-			ghcb_set_sw_exit_info_2(ghcb, sev->ap_jump_table);
-			break;
-		default:
+			ghcb_set_sw_निकास_info_2(ghcb, sev->ap_jump_table);
+			अवरोध;
+		शेष:
 			pr_err("svm: vmgexit: unsupported AP jump table request - exit_info_1=%#llx\n",
-			       control->exit_info_1);
-			ghcb_set_sw_exit_info_1(ghcb, 1);
-			ghcb_set_sw_exit_info_2(ghcb,
+			       control->निकास_info_1);
+			ghcb_set_sw_निकास_info_1(ghcb, 1);
+			ghcb_set_sw_निकास_info_2(ghcb,
 						X86_TRAP_UD |
 						SVM_EVTINJ_TYPE_EXEPT |
 						SVM_EVTINJ_VALID);
-		}
+		पूर्ण
 
 		ret = 1;
-		break;
-	}
-	case SVM_VMGEXIT_UNSUPPORTED_EVENT:
+		अवरोध;
+	पूर्ण
+	हाल SVM_VMGEXIT_UNSUPPORTED_EVENT:
 		vcpu_unimpl(vcpu,
 			    "vmgexit: unsupported event - exit_info_1=%#llx, exit_info_2=%#llx\n",
-			    control->exit_info_1, control->exit_info_2);
-		break;
-	default:
-		ret = svm_invoke_exit_handler(vcpu, exit_code);
-	}
+			    control->निकास_info_1, control->निकास_info_2);
+		अवरोध;
+	शेष:
+		ret = svm_invoke_निकास_handler(vcpu, निकास_code);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sev_es_string_io(struct vcpu_svm *svm, int size, unsigned int port, int in)
-{
-	if (!setup_vmgexit_scratch(svm, in, svm->vmcb->control.exit_info_2))
-		return -EINVAL;
+पूर्णांक sev_es_string_io(काष्ठा vcpu_svm *svm, पूर्णांक size, अचिन्हित पूर्णांक port, पूर्णांक in)
+अणु
+	अगर (!setup_vmgनिकास_scratch(svm, in, svm->vmcb->control.निकास_info_2))
+		वापस -EINVAL;
 
-	return kvm_sev_es_string_io(&svm->vcpu, size, port,
+	वापस kvm_sev_es_string_io(&svm->vcpu, size, port,
 				    svm->ghcb_sa, svm->ghcb_sa_len, in);
-}
+पूर्ण
 
-void sev_es_init_vmcb(struct vcpu_svm *svm)
-{
-	struct kvm_vcpu *vcpu = &svm->vcpu;
+व्योम sev_es_init_vmcb(काष्ठा vcpu_svm *svm)
+अणु
+	काष्ठा kvm_vcpu *vcpu = &svm->vcpu;
 
 	svm->vmcb->control.nested_ctl |= SVM_NESTED_CTL_SEV_ES_ENABLE;
 	svm->vmcb->control.virt_ext |= LBR_CTL_ENABLE_MASK;
@@ -2561,88 +2562,88 @@ void sev_es_init_vmcb(struct vcpu_svm *svm)
 	 */
 	svm->vmcb->control.vmsa_pa = __pa(svm->vmsa);
 
-	/* Can't intercept CR register access, HV can't modify CR registers */
-	svm_clr_intercept(svm, INTERCEPT_CR0_READ);
-	svm_clr_intercept(svm, INTERCEPT_CR4_READ);
-	svm_clr_intercept(svm, INTERCEPT_CR8_READ);
-	svm_clr_intercept(svm, INTERCEPT_CR0_WRITE);
-	svm_clr_intercept(svm, INTERCEPT_CR4_WRITE);
-	svm_clr_intercept(svm, INTERCEPT_CR8_WRITE);
+	/* Can't intercept CR register access, HV can't modअगरy CR रेजिस्टरs */
+	svm_clr_पूर्णांकercept(svm, INTERCEPT_CR0_READ);
+	svm_clr_पूर्णांकercept(svm, INTERCEPT_CR4_READ);
+	svm_clr_पूर्णांकercept(svm, INTERCEPT_CR8_READ);
+	svm_clr_पूर्णांकercept(svm, INTERCEPT_CR0_WRITE);
+	svm_clr_पूर्णांकercept(svm, INTERCEPT_CR4_WRITE);
+	svm_clr_पूर्णांकercept(svm, INTERCEPT_CR8_WRITE);
 
-	svm_clr_intercept(svm, INTERCEPT_SELECTIVE_CR0);
+	svm_clr_पूर्णांकercept(svm, INTERCEPT_SELECTIVE_CR0);
 
-	/* Track EFER/CR register changes */
-	svm_set_intercept(svm, TRAP_EFER_WRITE);
-	svm_set_intercept(svm, TRAP_CR0_WRITE);
-	svm_set_intercept(svm, TRAP_CR4_WRITE);
-	svm_set_intercept(svm, TRAP_CR8_WRITE);
+	/* Track EFER/CR रेजिस्टर changes */
+	svm_set_पूर्णांकercept(svm, TRAP_EFER_WRITE);
+	svm_set_पूर्णांकercept(svm, TRAP_CR0_WRITE);
+	svm_set_पूर्णांकercept(svm, TRAP_CR4_WRITE);
+	svm_set_पूर्णांकercept(svm, TRAP_CR8_WRITE);
 
-	/* No support for enable_vmware_backdoor */
-	clr_exception_intercept(svm, GP_VECTOR);
+	/* No support क्रम enable_vmware_backकरोor */
+	clr_exception_पूर्णांकercept(svm, GP_VECTOR);
 
-	/* Can't intercept XSETBV, HV can't modify XCR0 directly */
-	svm_clr_intercept(svm, INTERCEPT_XSETBV);
+	/* Can't intercept XSETBV, HV can't modअगरy XCR0 directly */
+	svm_clr_पूर्णांकercept(svm, INTERCEPT_XSETBV);
 
-	/* Clear intercepts on selected MSRs */
-	set_msr_interception(vcpu, svm->msrpm, MSR_EFER, 1, 1);
-	set_msr_interception(vcpu, svm->msrpm, MSR_IA32_CR_PAT, 1, 1);
-	set_msr_interception(vcpu, svm->msrpm, MSR_IA32_LASTBRANCHFROMIP, 1, 1);
-	set_msr_interception(vcpu, svm->msrpm, MSR_IA32_LASTBRANCHTOIP, 1, 1);
-	set_msr_interception(vcpu, svm->msrpm, MSR_IA32_LASTINTFROMIP, 1, 1);
-	set_msr_interception(vcpu, svm->msrpm, MSR_IA32_LASTINTTOIP, 1, 1);
-}
+	/* Clear पूर्णांकercepts on selected MSRs */
+	set_msr_पूर्णांकerception(vcpu, svm->msrpm, MSR_EFER, 1, 1);
+	set_msr_पूर्णांकerception(vcpu, svm->msrpm, MSR_IA32_CR_PAT, 1, 1);
+	set_msr_पूर्णांकerception(vcpu, svm->msrpm, MSR_IA32_LASTBRANCHFROMIP, 1, 1);
+	set_msr_पूर्णांकerception(vcpu, svm->msrpm, MSR_IA32_LASTBRANCHTOIP, 1, 1);
+	set_msr_पूर्णांकerception(vcpu, svm->msrpm, MSR_IA32_LASTINTFROMIP, 1, 1);
+	set_msr_पूर्णांकerception(vcpu, svm->msrpm, MSR_IA32_LASTINTTOIP, 1, 1);
+पूर्ण
 
-void sev_es_create_vcpu(struct vcpu_svm *svm)
-{
+व्योम sev_es_create_vcpu(काष्ठा vcpu_svm *svm)
+अणु
 	/*
-	 * Set the GHCB MSR value as per the GHCB specification when creating
-	 * a vCPU for an SEV-ES guest.
+	 * Set the GHCB MSR value as per the GHCB specअगरication when creating
+	 * a vCPU क्रम an SEV-ES guest.
 	 */
 	set_ghcb_msr(svm, GHCB_MSR_SEV_INFO(GHCB_VERSION_MAX,
 					    GHCB_VERSION_MIN,
 					    sev_enc_bit));
-}
+पूर्ण
 
-void sev_es_prepare_guest_switch(struct vcpu_svm *svm, unsigned int cpu)
-{
-	struct svm_cpu_data *sd = per_cpu(svm_data, cpu);
-	struct vmcb_save_area *hostsa;
+व्योम sev_es_prepare_guest_चयन(काष्ठा vcpu_svm *svm, अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा svm_cpu_data *sd = per_cpu(svm_data, cpu);
+	काष्ठा vmcb_save_area *hostsa;
 
 	/*
 	 * As an SEV-ES guest, hardware will restore the host state on VMEXIT,
-	 * of which one step is to perform a VMLOAD. Since hardware does not
-	 * perform a VMSAVE on VMRUN, the host savearea must be updated.
+	 * of which one step is to perक्रमm a VMLOAD. Since hardware करोes not
+	 * perक्रमm a VMSAVE on VMRUN, the host savearea must be updated.
 	 */
 	vmsave(__sme_page_pa(sd->save_area));
 
 	/* XCR0 is restored on VMEXIT, save the current host value */
-	hostsa = (struct vmcb_save_area *)(page_address(sd->save_area) + 0x400);
+	hostsa = (काष्ठा vmcb_save_area *)(page_address(sd->save_area) + 0x400);
 	hostsa->xcr0 = xgetbv(XCR_XFEATURE_ENABLED_MASK);
 
 	/* PKRU is restored on VMEXIT, save the current host value */
-	hostsa->pkru = read_pkru();
+	hostsa->pkru = पढ़ो_pkru();
 
 	/* MSR_IA32_XSS is restored on VMEXIT, save the currnet host value */
 	hostsa->xss = host_xss;
-}
+पूर्ण
 
-void sev_vcpu_deliver_sipi_vector(struct kvm_vcpu *vcpu, u8 vector)
-{
-	struct vcpu_svm *svm = to_svm(vcpu);
+व्योम sev_vcpu_deliver_sipi_vector(काष्ठा kvm_vcpu *vcpu, u8 vector)
+अणु
+	काष्ठा vcpu_svm *svm = to_svm(vcpu);
 
 	/* First SIPI: Use the values as initially set by the VMM */
-	if (!svm->received_first_sipi) {
+	अगर (!svm->received_first_sipi) अणु
 		svm->received_first_sipi = true;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Subsequent SIPI: Return from an AP Reset Hold VMGEXIT, where
 	 * the guest will set the CS and RIP. Set SW_EXIT_INFO_2 to a
 	 * non-zero value.
 	 */
-	if (!svm->ghcb)
-		return;
+	अगर (!svm->ghcb)
+		वापस;
 
-	ghcb_set_sw_exit_info_2(svm->ghcb, 1);
-}
+	ghcb_set_sw_निकास_info_2(svm->ghcb, 1);
+पूर्ण

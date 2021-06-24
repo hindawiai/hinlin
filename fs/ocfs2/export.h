@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * export.h
  *
@@ -7,11 +8,11 @@
  * Copyright (C) 2002, 2005 Oracle.  All rights reserved.
  */
 
-#ifndef OCFS2_EXPORT_H
-#define OCFS2_EXPORT_H
+#अगर_अघोषित OCFS2_EXPORT_H
+#घोषणा OCFS2_EXPORT_H
 
-#include <linux/exportfs.h>
+#समावेश <linux/exportfs.h>
 
-extern const struct export_operations ocfs2_export_ops;
+बाह्य स्थिर काष्ठा export_operations ocfs2_export_ops;
 
-#endif /* OCFS2_EXPORT_H */
+#पूर्ण_अगर /* OCFS2_EXPORT_H */

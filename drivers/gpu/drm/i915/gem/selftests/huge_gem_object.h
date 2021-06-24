@@ -1,33 +1,34 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#ifndef __HUGE_GEM_OBJECT_H
-#define __HUGE_GEM_OBJECT_H
+#अगर_अघोषित __HUGE_GEM_OBJECT_H
+#घोषणा __HUGE_GEM_OBJECT_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include "gem/i915_gem_object_types.h"
+#समावेश "gem/i915_gem_object_types.h"
 
-struct drm_i915_private;
+काष्ठा drm_i915_निजी;
 
-struct drm_i915_gem_object *
-huge_gem_object(struct drm_i915_private *i915,
+काष्ठा drm_i915_gem_object *
+huge_gem_object(काष्ठा drm_i915_निजी *i915,
 		phys_addr_t phys_size,
 		dma_addr_t dma_size);
 
-static inline phys_addr_t
-huge_gem_object_phys_size(struct drm_i915_gem_object *obj)
-{
-	return obj->scratch;
-}
+अटल अंतरभूत phys_addr_t
+huge_gem_object_phys_size(काष्ठा drm_i915_gem_object *obj)
+अणु
+	वापस obj->scratch;
+पूर्ण
 
-static inline dma_addr_t
-huge_gem_object_dma_size(struct drm_i915_gem_object *obj)
-{
-	return obj->base.size;
-}
+अटल अंतरभूत dma_addr_t
+huge_gem_object_dma_size(काष्ठा drm_i915_gem_object *obj)
+अणु
+	वापस obj->base.size;
+पूर्ण
 
-#endif /* !__HUGE_GEM_OBJECT_H */
+#पूर्ण_अगर /* !__HUGE_GEM_OBJECT_H */

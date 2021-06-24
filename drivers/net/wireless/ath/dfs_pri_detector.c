@@ -1,73 +1,74 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2012 Neratec Solutions AG
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <linux/slab.h>
-#include <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
 
-#include "ath.h"
-#include "dfs_pattern_detector.h"
-#include "dfs_pri_detector.h"
+#समावेश "ath.h"
+#समावेश "dfs_pattern_detector.h"
+#समावेश "dfs_pri_detector.h"
 
-struct ath_dfs_pool_stats global_dfs_pool_stats = {};
+काष्ठा ath_dfs_pool_stats global_dfs_pool_stats = अणुपूर्ण;
 
-#define DFS_POOL_STAT_INC(c) (global_dfs_pool_stats.c++)
-#define DFS_POOL_STAT_DEC(c) (global_dfs_pool_stats.c--)
-#define GET_PRI_TO_USE(MIN, MAX, RUNTIME) \
+#घोषणा DFS_POOL_STAT_INC(c) (global_dfs_pool_stats.c++)
+#घोषणा DFS_POOL_STAT_DEC(c) (global_dfs_pool_stats.c--)
+#घोषणा GET_PRI_TO_USE(MIN, MAX, RUNTIME) \
 	(MIN + PRI_TOLERANCE == MAX - PRI_TOLERANCE ? \
 	MIN + PRI_TOLERANCE : RUNTIME)
 
 /*
- * struct pulse_elem - elements in pulse queue
+ * काष्ठा pulse_elem - elements in pulse queue
  */
-struct pulse_elem {
-	struct list_head head;
+काष्ठा pulse_elem अणु
+	काष्ठा list_head head;
 	u64 ts;
-};
+पूर्ण;
 
 /*
  * pde_get_multiple() - get number of multiples considering a given tolerance
- * Return value: factor if abs(val - factor*fraction) <= tolerance, 0 otherwise
+ * Return value: factor अगर असल(val - factor*fraction) <= tolerance, 0 otherwise
  */
-static u32 pde_get_multiple(u32 val, u32 fraction, u32 tolerance)
-{
-	u32 remainder;
+अटल u32 pde_get_multiple(u32 val, u32 fraction, u32 tolerance)
+अणु
+	u32 reमुख्यder;
 	u32 factor;
 	u32 delta;
 
-	if (fraction == 0)
-		return 0;
+	अगर (fraction == 0)
+		वापस 0;
 
 	delta = (val < fraction) ? (fraction - val) : (val - fraction);
 
-	if (delta <= tolerance)
+	अगर (delta <= tolerance)
 		/* val and fraction are within tolerance */
-		return 1;
+		वापस 1;
 
 	factor = val / fraction;
-	remainder = val % fraction;
-	if (remainder > tolerance) {
+	reमुख्यder = val % fraction;
+	अगर (reमुख्यder > tolerance) अणु
 		/* no exact match */
-		if ((fraction - remainder) <= tolerance)
-			/* remainder is within tolerance */
+		अगर ((fraction - reमुख्यder) <= tolerance)
+			/* reमुख्यder is within tolerance */
 			factor++;
-		else
+		अन्यथा
 			factor = 0;
-	}
-	return factor;
-}
+	पूर्ण
+	वापस factor;
+पूर्ण
 
 /*
  * DOC: Singleton Pulse and Sequence Pools
@@ -76,169 +77,169 @@ static u32 pde_get_multiple(u32 val, u32 fraction, u32 tolerance)
  * reduce the number of dynamic allocations. They are shared between all
  * instances and grow up to the peak number of simultaneously used objects.
  *
- * Memory is freed after all references to the pools are released.
+ * Memory is मुक्तd after all references to the pools are released.
  */
-static u32 singleton_pool_references;
-static LIST_HEAD(pulse_pool);
-static LIST_HEAD(pseq_pool);
-static DEFINE_SPINLOCK(pool_lock);
+अटल u32 singleton_pool_references;
+अटल LIST_HEAD(pulse_pool);
+अटल LIST_HEAD(pseq_pool);
+अटल DEFINE_SPINLOCK(pool_lock);
 
-static void pool_register_ref(void)
-{
+अटल व्योम pool_रेजिस्टर_ref(व्योम)
+अणु
 	spin_lock_bh(&pool_lock);
 	singleton_pool_references++;
 	DFS_POOL_STAT_INC(pool_reference);
 	spin_unlock_bh(&pool_lock);
-}
+पूर्ण
 
-static void pool_deregister_ref(void)
-{
+अटल व्योम pool_deरेजिस्टर_ref(व्योम)
+अणु
 	spin_lock_bh(&pool_lock);
 	singleton_pool_references--;
 	DFS_POOL_STAT_DEC(pool_reference);
-	if (singleton_pool_references == 0) {
-		/* free singleton pools with no references left */
-		struct pri_sequence *ps, *ps0;
-		struct pulse_elem *p, *p0;
+	अगर (singleton_pool_references == 0) अणु
+		/* मुक्त singleton pools with no references left */
+		काष्ठा pri_sequence *ps, *ps0;
+		काष्ठा pulse_elem *p, *p0;
 
-		list_for_each_entry_safe(p, p0, &pulse_pool, head) {
+		list_क्रम_each_entry_safe(p, p0, &pulse_pool, head) अणु
 			list_del(&p->head);
 			DFS_POOL_STAT_DEC(pulse_allocated);
-			kfree(p);
-		}
-		list_for_each_entry_safe(ps, ps0, &pseq_pool, head) {
+			kमुक्त(p);
+		पूर्ण
+		list_क्रम_each_entry_safe(ps, ps0, &pseq_pool, head) अणु
 			list_del(&ps->head);
 			DFS_POOL_STAT_DEC(pseq_allocated);
-			kfree(ps);
-		}
-	}
+			kमुक्त(ps);
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&pool_lock);
-}
+पूर्ण
 
-static void pool_put_pulse_elem(struct pulse_elem *pe)
-{
+अटल व्योम pool_put_pulse_elem(काष्ठा pulse_elem *pe)
+अणु
 	spin_lock_bh(&pool_lock);
 	list_add(&pe->head, &pulse_pool);
 	DFS_POOL_STAT_DEC(pulse_used);
 	spin_unlock_bh(&pool_lock);
-}
+पूर्ण
 
-static void pool_put_pseq_elem(struct pri_sequence *pse)
-{
+अटल व्योम pool_put_pseq_elem(काष्ठा pri_sequence *pse)
+अणु
 	spin_lock_bh(&pool_lock);
 	list_add(&pse->head, &pseq_pool);
 	DFS_POOL_STAT_DEC(pseq_used);
 	spin_unlock_bh(&pool_lock);
-}
+पूर्ण
 
-static struct pri_sequence *pool_get_pseq_elem(void)
-{
-	struct pri_sequence *pse = NULL;
+अटल काष्ठा pri_sequence *pool_get_pseq_elem(व्योम)
+अणु
+	काष्ठा pri_sequence *pse = शून्य;
 	spin_lock_bh(&pool_lock);
-	if (!list_empty(&pseq_pool)) {
-		pse = list_first_entry(&pseq_pool, struct pri_sequence, head);
+	अगर (!list_empty(&pseq_pool)) अणु
+		pse = list_first_entry(&pseq_pool, काष्ठा pri_sequence, head);
 		list_del(&pse->head);
 		DFS_POOL_STAT_INC(pseq_used);
-	}
+	पूर्ण
 	spin_unlock_bh(&pool_lock);
-	return pse;
-}
+	वापस pse;
+पूर्ण
 
-static struct pulse_elem *pool_get_pulse_elem(void)
-{
-	struct pulse_elem *pe = NULL;
+अटल काष्ठा pulse_elem *pool_get_pulse_elem(व्योम)
+अणु
+	काष्ठा pulse_elem *pe = शून्य;
 	spin_lock_bh(&pool_lock);
-	if (!list_empty(&pulse_pool)) {
-		pe = list_first_entry(&pulse_pool, struct pulse_elem, head);
+	अगर (!list_empty(&pulse_pool)) अणु
+		pe = list_first_entry(&pulse_pool, काष्ठा pulse_elem, head);
 		list_del(&pe->head);
 		DFS_POOL_STAT_INC(pulse_used);
-	}
+	पूर्ण
 	spin_unlock_bh(&pool_lock);
-	return pe;
-}
+	वापस pe;
+पूर्ण
 
-static struct pulse_elem *pulse_queue_get_tail(struct pri_detector *pde)
-{
-	struct list_head *l = &pde->pulses;
-	if (list_empty(l))
-		return NULL;
-	return list_entry(l->prev, struct pulse_elem, head);
-}
+अटल काष्ठा pulse_elem *pulse_queue_get_tail(काष्ठा pri_detector *pde)
+अणु
+	काष्ठा list_head *l = &pde->pulses;
+	अगर (list_empty(l))
+		वापस शून्य;
+	वापस list_entry(l->prev, काष्ठा pulse_elem, head);
+पूर्ण
 
-static bool pulse_queue_dequeue(struct pri_detector *pde)
-{
-	struct pulse_elem *p = pulse_queue_get_tail(pde);
-	if (p != NULL) {
+अटल bool pulse_queue_dequeue(काष्ठा pri_detector *pde)
+अणु
+	काष्ठा pulse_elem *p = pulse_queue_get_tail(pde);
+	अगर (p != शून्य) अणु
 		list_del_init(&p->head);
 		pde->count--;
 		/* give it back to pool */
 		pool_put_pulse_elem(p);
-	}
-	return (pde->count > 0);
-}
+	पूर्ण
+	वापस (pde->count > 0);
+पूर्ण
 
-/* remove pulses older than window */
-static void pulse_queue_check_window(struct pri_detector *pde)
-{
+/* हटाओ pulses older than winकरोw */
+अटल व्योम pulse_queue_check_winकरोw(काष्ठा pri_detector *pde)
+अणु
 	u64 min_valid_ts;
-	struct pulse_elem *p;
+	काष्ठा pulse_elem *p;
 
-	/* there is no delta time with less than 2 pulses */
-	if (pde->count < 2)
-		return;
+	/* there is no delta समय with less than 2 pulses */
+	अगर (pde->count < 2)
+		वापस;
 
-	if (pde->last_ts <= pde->window_size)
-		return;
+	अगर (pde->last_ts <= pde->winकरोw_size)
+		वापस;
 
-	min_valid_ts = pde->last_ts - pde->window_size;
-	while ((p = pulse_queue_get_tail(pde)) != NULL) {
-		if (p->ts >= min_valid_ts)
-			return;
+	min_valid_ts = pde->last_ts - pde->winकरोw_size;
+	जबतक ((p = pulse_queue_get_tail(pde)) != शून्य) अणु
+		अगर (p->ts >= min_valid_ts)
+			वापस;
 		pulse_queue_dequeue(pde);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static bool pulse_queue_enqueue(struct pri_detector *pde, u64 ts)
-{
-	struct pulse_elem *p = pool_get_pulse_elem();
-	if (p == NULL) {
-		p = kmalloc(sizeof(*p), GFP_ATOMIC);
-		if (p == NULL) {
+अटल bool pulse_queue_enqueue(काष्ठा pri_detector *pde, u64 ts)
+अणु
+	काष्ठा pulse_elem *p = pool_get_pulse_elem();
+	अगर (p == शून्य) अणु
+		p = kदो_स्मृति(माप(*p), GFP_ATOMIC);
+		अगर (p == शून्य) अणु
 			DFS_POOL_STAT_INC(pulse_alloc_error);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 		DFS_POOL_STAT_INC(pulse_allocated);
 		DFS_POOL_STAT_INC(pulse_used);
-	}
+	पूर्ण
 	INIT_LIST_HEAD(&p->head);
 	p->ts = ts;
 	list_add(&p->head, &pde->pulses);
 	pde->count++;
 	pde->last_ts = ts;
-	pulse_queue_check_window(pde);
-	if (pde->count >= pde->max_count)
+	pulse_queue_check_winकरोw(pde);
+	अगर (pde->count >= pde->max_count)
 		pulse_queue_dequeue(pde);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool pseq_handler_create_sequences(struct pri_detector *pde,
+अटल bool pseq_handler_create_sequences(काष्ठा pri_detector *pde,
 					  u64 ts, u32 min_count)
-{
-	struct pulse_elem *p;
-	list_for_each_entry(p, &pde->pulses, head) {
-		struct pri_sequence ps, *new_ps;
-		struct pulse_elem *p2;
-		u32 tmp_false_count;
+अणु
+	काष्ठा pulse_elem *p;
+	list_क्रम_each_entry(p, &pde->pulses, head) अणु
+		काष्ठा pri_sequence ps, *new_ps;
+		काष्ठा pulse_elem *p2;
+		u32 पंचांगp_false_count;
 		u64 min_valid_ts;
 		u32 delta_ts = ts - p->ts;
 
-		if (delta_ts < pde->rs->pri_min)
+		अगर (delta_ts < pde->rs->pri_min)
 			/* ignore too small pri */
-			continue;
+			जारी;
 
-		if (delta_ts > pde->rs->pri_max)
+		अगर (delta_ts > pde->rs->pri_max)
 			/* stop on too large pri (sorted list) */
-			break;
+			अवरोध;
 
 		/* build a new sequence with new potential pri */
 		ps.count = 2;
@@ -251,186 +252,186 @@ static bool pseq_handler_create_sequences(struct pri_detector *pde,
 				+ 2 * pde->rs->max_pri_tolerance;
 
 		p2 = p;
-		tmp_false_count = 0;
+		पंचांगp_false_count = 0;
 		min_valid_ts = ts - ps.dur;
-		/* check which past pulses are candidates for new sequence */
-		list_for_each_entry_continue(p2, &pde->pulses, head) {
+		/* check which past pulses are candidates क्रम new sequence */
+		list_क्रम_each_entry_जारी(p2, &pde->pulses, head) अणु
 			u32 factor;
-			if (p2->ts < min_valid_ts)
-				/* stop on crossing window border */
-				break;
-			/* check if pulse match (multi)PRI */
+			अगर (p2->ts < min_valid_ts)
+				/* stop on crossing winकरोw border */
+				अवरोध;
+			/* check अगर pulse match (multi)PRI */
 			factor = pde_get_multiple(ps.last_ts - p2->ts, ps.pri,
 						  pde->rs->max_pri_tolerance);
-			if (factor > 0) {
+			अगर (factor > 0) अणु
 				ps.count++;
 				ps.first_ts = p2->ts;
 				/*
-				 * on match, add the intermediate falses
+				 * on match, add the पूर्णांकermediate falses
 				 * and reset counter
 				 */
-				ps.count_falses += tmp_false_count;
-				tmp_false_count = 0;
-			} else {
+				ps.count_falses += पंचांगp_false_count;
+				पंचांगp_false_count = 0;
+			पूर्ण अन्यथा अणु
 				/* this is a potential false one */
-				tmp_false_count++;
-			}
-		}
-		if (ps.count <= min_count)
+				पंचांगp_false_count++;
+			पूर्ण
+		पूर्ण
+		अगर (ps.count <= min_count)
 			/* did not reach minimum count, drop sequence */
-			continue;
+			जारी;
 
 		/* this is a valid one, add it */
 		ps.deadline_ts = ps.first_ts + ps.dur;
 		new_ps = pool_get_pseq_elem();
-		if (new_ps == NULL) {
-			new_ps = kmalloc(sizeof(*new_ps), GFP_ATOMIC);
-			if (new_ps == NULL) {
+		अगर (new_ps == शून्य) अणु
+			new_ps = kदो_स्मृति(माप(*new_ps), GFP_ATOMIC);
+			अगर (new_ps == शून्य) अणु
 				DFS_POOL_STAT_INC(pseq_alloc_error);
-				return false;
-			}
+				वापस false;
+			पूर्ण
 			DFS_POOL_STAT_INC(pseq_allocated);
 			DFS_POOL_STAT_INC(pseq_used);
-		}
-		memcpy(new_ps, &ps, sizeof(ps));
+		पूर्ण
+		स_नकल(new_ps, &ps, माप(ps));
 		INIT_LIST_HEAD(&new_ps->head);
 		list_add(&new_ps->head, &pde->sequences);
-	}
-	return true;
-}
+	पूर्ण
+	वापस true;
+पूर्ण
 
 /* check new ts and add to all matching existing sequences */
-static u32
-pseq_handler_add_to_existing_seqs(struct pri_detector *pde, u64 ts)
-{
+अटल u32
+pseq_handler_add_to_existing_seqs(काष्ठा pri_detector *pde, u64 ts)
+अणु
 	u32 max_count = 0;
-	struct pri_sequence *ps, *ps2;
-	list_for_each_entry_safe(ps, ps2, &pde->sequences, head) {
+	काष्ठा pri_sequence *ps, *ps2;
+	list_क्रम_each_entry_safe(ps, ps2, &pde->sequences, head) अणु
 		u32 delta_ts;
 		u32 factor;
 
-		/* first ensure that sequence is within window */
-		if (ts > ps->deadline_ts) {
+		/* first ensure that sequence is within winकरोw */
+		अगर (ts > ps->deadline_ts) अणु
 			list_del_init(&ps->head);
 			pool_put_pseq_elem(ps);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		delta_ts = ts - ps->last_ts;
 		factor = pde_get_multiple(delta_ts, ps->pri,
 					  pde->rs->max_pri_tolerance);
-		if (factor > 0) {
+		अगर (factor > 0) अणु
 			ps->last_ts = ts;
 			ps->count++;
 
-			if (max_count < ps->count)
+			अगर (max_count < ps->count)
 				max_count = ps->count;
-		} else {
+		पूर्ण अन्यथा अणु
 			ps->count_falses++;
-		}
-	}
-	return max_count;
-}
+		पूर्ण
+	पूर्ण
+	वापस max_count;
+पूर्ण
 
-static struct pri_sequence *
-pseq_handler_check_detection(struct pri_detector *pde)
-{
-	struct pri_sequence *ps;
+अटल काष्ठा pri_sequence *
+pseq_handler_check_detection(काष्ठा pri_detector *pde)
+अणु
+	काष्ठा pri_sequence *ps;
 
-	if (list_empty(&pde->sequences))
-		return NULL;
+	अगर (list_empty(&pde->sequences))
+		वापस शून्य;
 
-	list_for_each_entry(ps, &pde->sequences, head) {
+	list_क्रम_each_entry(ps, &pde->sequences, head) अणु
 		/*
-		 * we assume to have enough matching confidence if we
+		 * we assume to have enough matching confidence अगर we
 		 * 1) have enough pulses
 		 * 2) have more matching than false pulses
 		 */
-		if ((ps->count >= pde->rs->ppb_thresh) &&
+		अगर ((ps->count >= pde->rs->ppb_thresh) &&
 		    (ps->count * pde->rs->num_pri >= ps->count_falses))
-			return ps;
-	}
-	return NULL;
-}
+			वापस ps;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 
-/* free pulse queue and sequences list and give objects back to pools */
-static void pri_detector_reset(struct pri_detector *pde, u64 ts)
-{
-	struct pri_sequence *ps, *ps0;
-	struct pulse_elem *p, *p0;
-	list_for_each_entry_safe(ps, ps0, &pde->sequences, head) {
+/* मुक्त pulse queue and sequences list and give objects back to pools */
+अटल व्योम pri_detector_reset(काष्ठा pri_detector *pde, u64 ts)
+अणु
+	काष्ठा pri_sequence *ps, *ps0;
+	काष्ठा pulse_elem *p, *p0;
+	list_क्रम_each_entry_safe(ps, ps0, &pde->sequences, head) अणु
 		list_del_init(&ps->head);
 		pool_put_pseq_elem(ps);
-	}
-	list_for_each_entry_safe(p, p0, &pde->pulses, head) {
+	पूर्ण
+	list_क्रम_each_entry_safe(p, p0, &pde->pulses, head) अणु
 		list_del_init(&p->head);
 		pool_put_pulse_elem(p);
-	}
+	पूर्ण
 	pde->count = 0;
 	pde->last_ts = ts;
-}
+पूर्ण
 
-static void pri_detector_exit(struct pri_detector *de)
-{
+अटल व्योम pri_detector_निकास(काष्ठा pri_detector *de)
+अणु
 	pri_detector_reset(de, 0);
-	pool_deregister_ref();
-	kfree(de);
-}
+	pool_deरेजिस्टर_ref();
+	kमुक्त(de);
+पूर्ण
 
-static struct pri_sequence *pri_detector_add_pulse(struct pri_detector *de,
-						   struct pulse_event *event)
-{
+अटल काष्ठा pri_sequence *pri_detector_add_pulse(काष्ठा pri_detector *de,
+						   काष्ठा pulse_event *event)
+अणु
 	u32 max_updated_seq;
-	struct pri_sequence *ps;
+	काष्ठा pri_sequence *ps;
 	u64 ts = event->ts;
-	const struct radar_detector_specs *rs = de->rs;
+	स्थिर काष्ठा radar_detector_specs *rs = de->rs;
 
 	/* ignore pulses not within width range */
-	if ((rs->width_min > event->width) || (rs->width_max < event->width))
-		return NULL;
+	अगर ((rs->width_min > event->width) || (rs->width_max < event->width))
+		वापस शून्य;
 
-	if ((ts - de->last_ts) < rs->max_pri_tolerance)
-		/* if delta to last pulse is too short, don't use this pulse */
-		return NULL;
+	अगर ((ts - de->last_ts) < rs->max_pri_tolerance)
+		/* अगर delta to last pulse is too लघु, करोn't use this pulse */
+		वापस शून्य;
 	/* radar detector spec needs chirp, but not detected */
-	if (rs->chirp && rs->chirp != event->chirp)
-		return NULL;
+	अगर (rs->chirp && rs->chirp != event->chirp)
+		वापस शून्य;
 
 	de->last_ts = ts;
 
 	max_updated_seq = pseq_handler_add_to_existing_seqs(de, ts);
 
-	if (!pseq_handler_create_sequences(de, ts, max_updated_seq)) {
+	अगर (!pseq_handler_create_sequences(de, ts, max_updated_seq)) अणु
 		pri_detector_reset(de, ts);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	ps = pseq_handler_check_detection(de);
 
-	if (ps == NULL)
+	अगर (ps == शून्य)
 		pulse_queue_enqueue(de, ts);
 
-	return ps;
-}
+	वापस ps;
+पूर्ण
 
-struct pri_detector *pri_detector_init(const struct radar_detector_specs *rs)
-{
-	struct pri_detector *de;
+काष्ठा pri_detector *pri_detector_init(स्थिर काष्ठा radar_detector_specs *rs)
+अणु
+	काष्ठा pri_detector *de;
 
-	de = kzalloc(sizeof(*de), GFP_ATOMIC);
-	if (de == NULL)
-		return NULL;
-	de->exit = pri_detector_exit;
+	de = kzalloc(माप(*de), GFP_ATOMIC);
+	अगर (de == शून्य)
+		वापस शून्य;
+	de->निकास = pri_detector_निकास;
 	de->add_pulse = pri_detector_add_pulse;
 	de->reset = pri_detector_reset;
 
 	INIT_LIST_HEAD(&de->sequences);
 	INIT_LIST_HEAD(&de->pulses);
-	de->window_size = rs->pri_max * rs->ppb * rs->num_pri;
+	de->winकरोw_size = rs->pri_max * rs->ppb * rs->num_pri;
 	de->max_count = rs->ppb * 2;
 	de->rs = rs;
 
-	pool_register_ref();
-	return de;
-}
+	pool_रेजिस्टर_ref();
+	वापस de;
+पूर्ण

@@ -1,154 +1,155 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Marvell OcteonTx2 PTP support for ethernet driver
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Marvell OcteonTx2 PTP support क्रम ethernet driver
  *
  * Copyright (C) 2020 Marvell International Ltd.
  */
 
-#include "otx2_common.h"
-#include "otx2_ptp.h"
+#समावेश "otx2_common.h"
+#समावेश "otx2_ptp.h"
 
-static int otx2_ptp_adjfine(struct ptp_clock_info *ptp_info, long scaled_ppm)
-{
-	struct otx2_ptp *ptp = container_of(ptp_info, struct otx2_ptp,
+अटल पूर्णांक otx2_ptp_adjfine(काष्ठा ptp_घड़ी_info *ptp_info, दीर्घ scaled_ppm)
+अणु
+	काष्ठा otx2_ptp *ptp = container_of(ptp_info, काष्ठा otx2_ptp,
 					    ptp_info);
-	struct ptp_req *req;
+	काष्ठा ptp_req *req;
 
-	if (!ptp->nic)
-		return -ENODEV;
+	अगर (!ptp->nic)
+		वापस -ENODEV;
 
 	req = otx2_mbox_alloc_msg_ptp_op(&ptp->nic->mbox);
-	if (!req)
-		return -ENOMEM;
+	अगर (!req)
+		वापस -ENOMEM;
 
 	req->op = PTP_OP_ADJFINE;
 	req->scaled_ppm = scaled_ppm;
 
-	return otx2_sync_mbox_msg(&ptp->nic->mbox);
-}
+	वापस otx2_sync_mbox_msg(&ptp->nic->mbox);
+पूर्ण
 
-static u64 ptp_cc_read(const struct cyclecounter *cc)
-{
-	struct otx2_ptp *ptp = container_of(cc, struct otx2_ptp, cycle_counter);
-	struct ptp_req *req;
-	struct ptp_rsp *rsp;
-	int err;
+अटल u64 ptp_cc_पढ़ो(स्थिर काष्ठा cyclecounter *cc)
+अणु
+	काष्ठा otx2_ptp *ptp = container_of(cc, काष्ठा otx2_ptp, cycle_counter);
+	काष्ठा ptp_req *req;
+	काष्ठा ptp_rsp *rsp;
+	पूर्णांक err;
 
-	if (!ptp->nic)
-		return 0;
+	अगर (!ptp->nic)
+		वापस 0;
 
 	req = otx2_mbox_alloc_msg_ptp_op(&ptp->nic->mbox);
-	if (!req)
-		return 0;
+	अगर (!req)
+		वापस 0;
 
 	req->op = PTP_OP_GET_CLOCK;
 
 	err = otx2_sync_mbox_msg(&ptp->nic->mbox);
-	if (err)
-		return 0;
+	अगर (err)
+		वापस 0;
 
-	rsp = (struct ptp_rsp *)otx2_mbox_get_rsp(&ptp->nic->mbox.mbox, 0,
+	rsp = (काष्ठा ptp_rsp *)otx2_mbox_get_rsp(&ptp->nic->mbox.mbox, 0,
 						  &req->hdr);
-	if (IS_ERR(rsp))
-		return 0;
+	अगर (IS_ERR(rsp))
+		वापस 0;
 
-	return rsp->clk;
-}
+	वापस rsp->clk;
+पूर्ण
 
-static int otx2_ptp_adjtime(struct ptp_clock_info *ptp_info, s64 delta)
-{
-	struct otx2_ptp *ptp = container_of(ptp_info, struct otx2_ptp,
+अटल पूर्णांक otx2_ptp_adjसमय(काष्ठा ptp_घड़ी_info *ptp_info, s64 delta)
+अणु
+	काष्ठा otx2_ptp *ptp = container_of(ptp_info, काष्ठा otx2_ptp,
 					    ptp_info);
-	struct otx2_nic *pfvf = ptp->nic;
+	काष्ठा otx2_nic *pfvf = ptp->nic;
 
 	mutex_lock(&pfvf->mbox.lock);
-	timecounter_adjtime(&ptp->time_counter, delta);
+	समयcounter_adjसमय(&ptp->समय_counter, delta);
 	mutex_unlock(&pfvf->mbox.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int otx2_ptp_gettime(struct ptp_clock_info *ptp_info,
-			    struct timespec64 *ts)
-{
-	struct otx2_ptp *ptp = container_of(ptp_info, struct otx2_ptp,
+अटल पूर्णांक otx2_ptp_समय_लो(काष्ठा ptp_घड़ी_info *ptp_info,
+			    काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा otx2_ptp *ptp = container_of(ptp_info, काष्ठा otx2_ptp,
 					    ptp_info);
-	struct otx2_nic *pfvf = ptp->nic;
+	काष्ठा otx2_nic *pfvf = ptp->nic;
 	u64 nsec;
 
 	mutex_lock(&pfvf->mbox.lock);
-	nsec = timecounter_read(&ptp->time_counter);
+	nsec = समयcounter_पढ़ो(&ptp->समय_counter);
 	mutex_unlock(&pfvf->mbox.lock);
 
-	*ts = ns_to_timespec64(nsec);
+	*ts = ns_to_बारpec64(nsec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int otx2_ptp_settime(struct ptp_clock_info *ptp_info,
-			    const struct timespec64 *ts)
-{
-	struct otx2_ptp *ptp = container_of(ptp_info, struct otx2_ptp,
+अटल पूर्णांक otx2_ptp_समय_रखो(काष्ठा ptp_घड़ी_info *ptp_info,
+			    स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा otx2_ptp *ptp = container_of(ptp_info, काष्ठा otx2_ptp,
 					    ptp_info);
-	struct otx2_nic *pfvf = ptp->nic;
+	काष्ठा otx2_nic *pfvf = ptp->nic;
 	u64 nsec;
 
-	nsec = timespec64_to_ns(ts);
+	nsec = बारpec64_to_ns(ts);
 
 	mutex_lock(&pfvf->mbox.lock);
-	timecounter_init(&ptp->time_counter, &ptp->cycle_counter, nsec);
+	समयcounter_init(&ptp->समय_counter, &ptp->cycle_counter, nsec);
 	mutex_unlock(&pfvf->mbox.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int otx2_ptp_enable(struct ptp_clock_info *ptp_info,
-			   struct ptp_clock_request *rq, int on)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक otx2_ptp_enable(काष्ठा ptp_घड़ी_info *ptp_info,
+			   काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-int otx2_ptp_init(struct otx2_nic *pfvf)
-{
-	struct otx2_ptp *ptp_ptr;
-	struct cyclecounter *cc;
-	struct ptp_req *req;
-	int err;
+पूर्णांक otx2_ptp_init(काष्ठा otx2_nic *pfvf)
+अणु
+	काष्ठा otx2_ptp *ptp_ptr;
+	काष्ठा cyclecounter *cc;
+	काष्ठा ptp_req *req;
+	पूर्णांक err;
 
 	mutex_lock(&pfvf->mbox.lock);
-	/* check if PTP block is available */
+	/* check अगर PTP block is available */
 	req = otx2_mbox_alloc_msg_ptp_op(&pfvf->mbox);
-	if (!req) {
+	अगर (!req) अणु
 		mutex_unlock(&pfvf->mbox.lock);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	req->op = PTP_OP_GET_CLOCK;
 
 	err = otx2_sync_mbox_msg(&pfvf->mbox);
-	if (err) {
+	अगर (err) अणु
 		mutex_unlock(&pfvf->mbox.lock);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	mutex_unlock(&pfvf->mbox.lock);
 
-	ptp_ptr = kzalloc(sizeof(*ptp_ptr), GFP_KERNEL);
-	if (!ptp_ptr) {
+	ptp_ptr = kzalloc(माप(*ptp_ptr), GFP_KERNEL);
+	अगर (!ptp_ptr) अणु
 		err = -ENOMEM;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	ptp_ptr->nic = pfvf;
 
 	cc = &ptp_ptr->cycle_counter;
-	cc->read = ptp_cc_read;
+	cc->पढ़ो = ptp_cc_पढ़ो;
 	cc->mask = CYCLECOUNTER_MASK(64);
 	cc->mult = 1;
-	cc->shift = 0;
+	cc->shअगरt = 0;
 
-	timecounter_init(&ptp_ptr->time_counter, &ptp_ptr->cycle_counter,
-			 ktime_to_ns(ktime_get_real()));
+	समयcounter_init(&ptp_ptr->समय_counter, &ptp_ptr->cycle_counter,
+			 kसमय_प्रकारo_ns(kसमय_get_real()));
 
-	ptp_ptr->ptp_info = (struct ptp_clock_info) {
+	ptp_ptr->ptp_info = (काष्ठा ptp_घड़ी_info) अणु
 		.owner          = THIS_MODULE,
 		.name           = "OcteonTX2 PTP",
 		.max_adj        = 1000000000ull,
@@ -156,52 +157,52 @@ int otx2_ptp_init(struct otx2_nic *pfvf)
 		.n_pins         = 0,
 		.pps            = 0,
 		.adjfine        = otx2_ptp_adjfine,
-		.adjtime        = otx2_ptp_adjtime,
-		.gettime64      = otx2_ptp_gettime,
-		.settime64      = otx2_ptp_settime,
+		.adjसमय        = otx2_ptp_adjसमय,
+		.समय_लो64      = otx2_ptp_समय_लो,
+		.समय_रखो64      = otx2_ptp_समय_रखो,
 		.enable         = otx2_ptp_enable,
-	};
+	पूर्ण;
 
-	ptp_ptr->ptp_clock = ptp_clock_register(&ptp_ptr->ptp_info, pfvf->dev);
-	if (IS_ERR_OR_NULL(ptp_ptr->ptp_clock)) {
-		err = ptp_ptr->ptp_clock ?
-		      PTR_ERR(ptp_ptr->ptp_clock) : -ENODEV;
-		kfree(ptp_ptr);
-		goto error;
-	}
+	ptp_ptr->ptp_घड़ी = ptp_घड़ी_रेजिस्टर(&ptp_ptr->ptp_info, pfvf->dev);
+	अगर (IS_ERR_OR_शून्य(ptp_ptr->ptp_घड़ी)) अणु
+		err = ptp_ptr->ptp_घड़ी ?
+		      PTR_ERR(ptp_ptr->ptp_घड़ी) : -ENODEV;
+		kमुक्त(ptp_ptr);
+		जाओ error;
+	पूर्ण
 
 	pfvf->ptp = ptp_ptr;
 
 error:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void otx2_ptp_destroy(struct otx2_nic *pfvf)
-{
-	struct otx2_ptp *ptp = pfvf->ptp;
+व्योम otx2_ptp_destroy(काष्ठा otx2_nic *pfvf)
+अणु
+	काष्ठा otx2_ptp *ptp = pfvf->ptp;
 
-	if (!ptp)
-		return;
+	अगर (!ptp)
+		वापस;
 
-	ptp_clock_unregister(ptp->ptp_clock);
-	kfree(ptp);
-	pfvf->ptp = NULL;
-}
+	ptp_घड़ी_unरेजिस्टर(ptp->ptp_घड़ी);
+	kमुक्त(ptp);
+	pfvf->ptp = शून्य;
+पूर्ण
 
-int otx2_ptp_clock_index(struct otx2_nic *pfvf)
-{
-	if (!pfvf->ptp)
-		return -ENODEV;
+पूर्णांक otx2_ptp_घड़ी_index(काष्ठा otx2_nic *pfvf)
+अणु
+	अगर (!pfvf->ptp)
+		वापस -ENODEV;
 
-	return ptp_clock_index(pfvf->ptp->ptp_clock);
-}
+	वापस ptp_घड़ी_index(pfvf->ptp->ptp_घड़ी);
+पूर्ण
 
-int otx2_ptp_tstamp2time(struct otx2_nic *pfvf, u64 tstamp, u64 *tsns)
-{
-	if (!pfvf->ptp)
-		return -ENODEV;
+पूर्णांक otx2_ptp_tstamp2समय(काष्ठा otx2_nic *pfvf, u64 tstamp, u64 *tsns)
+अणु
+	अगर (!pfvf->ptp)
+		वापस -ENODEV;
 
-	*tsns = timecounter_cyc2time(&pfvf->ptp->time_counter, tstamp);
+	*tsns = समयcounter_cyc2समय(&pfvf->ptp->समय_counter, tstamp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,14 +23,14 @@
  * Authors: Lyude Paul
  */
 
-#ifndef __GF100_THERM_H__
-#define __GF100_THERM_H__
+#अगर_अघोषित __GF100_THERM_H__
+#घोषणा __GF100_THERM_H__
 
-#include <core/device.h>
+#समावेश <core/device.h>
 
-struct gf100_idle_filter {
+काष्ठा gf100_idle_filter अणु
 	u32 fecs;
 	u32 hubmmu;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

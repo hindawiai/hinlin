@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_FS_STRUCT_H
-#define _LINUX_FS_STRUCT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_FS_STRUCT_H
+#घोषणा _LINUX_FS_STRUCT_H
 
-#include <linux/path.h>
-#include <linux/spinlock.h>
-#include <linux/seqlock.h>
+#समावेश <linux/path.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/seqlock.h>
 
-struct fs_struct {
-	int users;
+काष्ठा fs_काष्ठा अणु
+	पूर्णांक users;
 	spinlock_t lock;
 	seqcount_spinlock_t seq;
-	int umask;
-	int in_exec;
-	struct path root, pwd;
-} __randomize_layout;
+	पूर्णांक umask;
+	पूर्णांक in_exec;
+	काष्ठा path root, pwd;
+पूर्ण __अक्रमomize_layout;
 
-extern struct kmem_cache *fs_cachep;
+बाह्य काष्ठा kmem_cache *fs_cachep;
 
-extern void exit_fs(struct task_struct *);
-extern void set_fs_root(struct fs_struct *, const struct path *);
-extern void set_fs_pwd(struct fs_struct *, const struct path *);
-extern struct fs_struct *copy_fs_struct(struct fs_struct *);
-extern void free_fs_struct(struct fs_struct *);
-extern int unshare_fs_struct(void);
+बाह्य व्योम निकास_fs(काष्ठा task_काष्ठा *);
+बाह्य व्योम set_fs_root(काष्ठा fs_काष्ठा *, स्थिर काष्ठा path *);
+बाह्य व्योम set_fs_pwd(काष्ठा fs_काष्ठा *, स्थिर काष्ठा path *);
+बाह्य काष्ठा fs_काष्ठा *copy_fs_काष्ठा(काष्ठा fs_काष्ठा *);
+बाह्य व्योम मुक्त_fs_काष्ठा(काष्ठा fs_काष्ठा *);
+बाह्य पूर्णांक unshare_fs_काष्ठा(व्योम);
 
-static inline void get_fs_root(struct fs_struct *fs, struct path *root)
-{
+अटल अंतरभूत व्योम get_fs_root(काष्ठा fs_काष्ठा *fs, काष्ठा path *root)
+अणु
 	spin_lock(&fs->lock);
 	*root = fs->root;
 	path_get(root);
 	spin_unlock(&fs->lock);
-}
+पूर्ण
 
-static inline void get_fs_pwd(struct fs_struct *fs, struct path *pwd)
-{
+अटल अंतरभूत व्योम get_fs_pwd(काष्ठा fs_काष्ठा *fs, काष्ठा path *pwd)
+अणु
 	spin_lock(&fs->lock);
 	*pwd = fs->pwd;
 	path_get(pwd);
 	spin_unlock(&fs->lock);
-}
+पूर्ण
 
-extern bool current_chrooted(void);
+बाह्य bool current_chrooted(व्योम);
 
-#endif /* _LINUX_FS_STRUCT_H */
+#पूर्ण_अगर /* _LINUX_FS_STRUCT_H */

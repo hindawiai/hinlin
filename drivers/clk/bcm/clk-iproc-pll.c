@@ -1,783 +1,784 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2014 Broadcom Corporation
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/clk-provider.h>
-#include <linux/io.h>
-#include <linux/of.h>
-#include <linux/clkdev.h>
-#include <linux/of_address.h>
-#include <linux/delay.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/delay.h>
 
-#include "clk-iproc.h"
+#समावेश "clk-iproc.h"
 
-#define PLL_VCO_HIGH_SHIFT 19
-#define PLL_VCO_LOW_SHIFT  30
+#घोषणा PLL_VCO_HIGH_SHIFT 19
+#घोषणा PLL_VCO_LOW_SHIFT  30
 
 /*
  * PLL MACRO_SELECT modes 0 to 5 choose pre-calculated PLL output frequencies
- * from a look-up table. Mode 7 allows user to manipulate PLL clock dividers
+ * from a look-up table. Mode 7 allows user to manipulate PLL घड़ी भागiders
  */
-#define PLL_USER_MODE 7
+#घोषणा PLL_USER_MODE 7
 
-/* number of delay loops waiting for PLL to lock */
-#define LOCK_DELAY 100
+/* number of delay loops रुकोing क्रम PLL to lock */
+#घोषणा LOCK_DELAY 100
 
 /* number of VCO frequency bands */
-#define NUM_FREQ_BANDS 8
+#घोषणा NUM_FREQ_BANDS 8
 
-#define NUM_KP_BANDS 3
-enum kp_band {
+#घोषणा NUM_KP_BANDS 3
+क्रमागत kp_band अणु
 	KP_BAND_MID = 0,
 	KP_BAND_HIGH,
 	KP_BAND_HIGH_HIGH
-};
+पूर्ण;
 
-static const unsigned int kp_table[NUM_KP_BANDS][NUM_FREQ_BANDS] = {
-	{ 5, 6, 6, 7, 7, 8, 9, 10 },
-	{ 4, 4, 5, 5, 6, 7, 8, 9  },
-	{ 4, 5, 5, 6, 7, 8, 9, 10 },
-};
+अटल स्थिर अचिन्हित पूर्णांक kp_table[NUM_KP_BANDS][NUM_FREQ_BANDS] = अणु
+	अणु 5, 6, 6, 7, 7, 8, 9, 10 पूर्ण,
+	अणु 4, 4, 5, 5, 6, 7, 8, 9  पूर्ण,
+	अणु 4, 5, 5, 6, 7, 8, 9, 10 पूर्ण,
+पूर्ण;
 
-static const unsigned long ref_freq_table[NUM_FREQ_BANDS][2] = {
-	{ 10000000,  12500000  },
-	{ 12500000,  15000000  },
-	{ 15000000,  20000000  },
-	{ 20000000,  25000000  },
-	{ 25000000,  50000000  },
-	{ 50000000,  75000000  },
-	{ 75000000,  100000000 },
-	{ 100000000, 125000000 },
-};
+अटल स्थिर अचिन्हित दीर्घ ref_freq_table[NUM_FREQ_BANDS][2] = अणु
+	अणु 10000000,  12500000  पूर्ण,
+	अणु 12500000,  15000000  पूर्ण,
+	अणु 15000000,  20000000  पूर्ण,
+	अणु 20000000,  25000000  पूर्ण,
+	अणु 25000000,  50000000  पूर्ण,
+	अणु 50000000,  75000000  पूर्ण,
+	अणु 75000000,  100000000 पूर्ण,
+	अणु 100000000, 125000000 पूर्ण,
+पूर्ण;
 
-enum vco_freq_range {
+क्रमागत vco_freq_range अणु
 	VCO_LOW       = 700000000U,
 	VCO_MID       = 1200000000U,
 	VCO_HIGH      = 2200000000U,
 	VCO_HIGH_HIGH = 3100000000U,
 	VCO_MAX       = 4000000000U,
-};
+पूर्ण;
 
-struct iproc_pll {
-	void __iomem *status_base;
-	void __iomem *control_base;
-	void __iomem *pwr_base;
-	void __iomem *asiu_base;
+काष्ठा iproc_pll अणु
+	व्योम __iomem *status_base;
+	व्योम __iomem *control_base;
+	व्योम __iomem *pwr_base;
+	व्योम __iomem *asiu_base;
 
-	const struct iproc_pll_ctrl *ctrl;
-	const struct iproc_pll_vco_param *vco_param;
-	unsigned int num_vco_entries;
-};
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl;
+	स्थिर काष्ठा iproc_pll_vco_param *vco_param;
+	अचिन्हित पूर्णांक num_vco_entries;
+पूर्ण;
 
-struct iproc_clk {
-	struct clk_hw hw;
-	struct iproc_pll *pll;
-	const struct iproc_clk_ctrl *ctrl;
-};
+काष्ठा iproc_clk अणु
+	काष्ठा clk_hw hw;
+	काष्ठा iproc_pll *pll;
+	स्थिर काष्ठा iproc_clk_ctrl *ctrl;
+पूर्ण;
 
-#define to_iproc_clk(hw) container_of(hw, struct iproc_clk, hw)
+#घोषणा to_iproc_clk(hw) container_of(hw, काष्ठा iproc_clk, hw)
 
-static int pll_calc_param(unsigned long target_rate,
-			unsigned long parent_rate,
-			struct iproc_pll_vco_param *vco_out)
-{
-	u64 ndiv_int, ndiv_frac, residual;
+अटल पूर्णांक pll_calc_param(अचिन्हित दीर्घ target_rate,
+			अचिन्हित दीर्घ parent_rate,
+			काष्ठा iproc_pll_vco_param *vco_out)
+अणु
+	u64 nभाग_पूर्णांक, nभाग_frac, residual;
 
-	ndiv_int = target_rate / parent_rate;
+	nभाग_पूर्णांक = target_rate / parent_rate;
 
-	if (!ndiv_int || (ndiv_int > 255))
-		return -EINVAL;
+	अगर (!nभाग_पूर्णांक || (nभाग_पूर्णांक > 255))
+		वापस -EINVAL;
 
-	residual = target_rate - (ndiv_int * parent_rate);
+	residual = target_rate - (nभाग_पूर्णांक * parent_rate);
 	residual <<= 20;
 
 	/*
-	 * Add half of the divisor so the result will be rounded to closest
-	 * instead of rounded down.
+	 * Add half of the भागisor so the result will be rounded to बंदst
+	 * instead of rounded करोwn.
 	 */
 	residual += (parent_rate / 2);
-	ndiv_frac = div64_u64((u64)residual, (u64)parent_rate);
+	nभाग_frac = भाग64_u64((u64)residual, (u64)parent_rate);
 
-	vco_out->ndiv_int = ndiv_int;
-	vco_out->ndiv_frac = ndiv_frac;
-	vco_out->pdiv = 1;
+	vco_out->nभाग_पूर्णांक = nभाग_पूर्णांक;
+	vco_out->nभाग_frac = nभाग_frac;
+	vco_out->pभाग = 1;
 
-	vco_out->rate = vco_out->ndiv_int * parent_rate;
-	residual = (u64)vco_out->ndiv_frac * (u64)parent_rate;
+	vco_out->rate = vco_out->nभाग_पूर्णांक * parent_rate;
+	residual = (u64)vco_out->nभाग_frac * (u64)parent_rate;
 	residual >>= 20;
 	vco_out->rate += residual;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Based on the target frequency, find a match from the VCO frequency parameter
- * table and return its index
+ * table and वापस its index
  */
-static int pll_get_rate_index(struct iproc_pll *pll, unsigned int target_rate)
-{
-	int i;
+अटल पूर्णांक pll_get_rate_index(काष्ठा iproc_pll *pll, अचिन्हित पूर्णांक target_rate)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < pll->num_vco_entries; i++)
-		if (target_rate == pll->vco_param[i].rate)
-			break;
+	क्रम (i = 0; i < pll->num_vco_entries; i++)
+		अगर (target_rate == pll->vco_param[i].rate)
+			अवरोध;
 
-	if (i >= pll->num_vco_entries)
-		return -EINVAL;
+	अगर (i >= pll->num_vco_entries)
+		वापस -EINVAL;
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int get_kp(unsigned long ref_freq, enum kp_band kp_index)
-{
-	int i;
+अटल पूर्णांक get_kp(अचिन्हित दीर्घ ref_freq, क्रमागत kp_band kp_index)
+अणु
+	पूर्णांक i;
 
-	if (ref_freq < ref_freq_table[0][0])
-		return -EINVAL;
+	अगर (ref_freq < ref_freq_table[0][0])
+		वापस -EINVAL;
 
-	for (i = 0; i < NUM_FREQ_BANDS; i++) {
-		if (ref_freq >= ref_freq_table[i][0] &&
+	क्रम (i = 0; i < NUM_FREQ_BANDS; i++) अणु
+		अगर (ref_freq >= ref_freq_table[i][0] &&
 		    ref_freq < ref_freq_table[i][1])
-			return kp_table[kp_index][i];
-	}
-	return -EINVAL;
-}
+			वापस kp_table[kp_index][i];
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int pll_wait_for_lock(struct iproc_pll *pll)
-{
-	int i;
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
+अटल पूर्णांक pll_रुको_क्रम_lock(काष्ठा iproc_pll *pll)
+अणु
+	पूर्णांक i;
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
 
-	for (i = 0; i < LOCK_DELAY; i++) {
-		u32 val = readl(pll->status_base + ctrl->status.offset);
+	क्रम (i = 0; i < LOCK_DELAY; i++) अणु
+		u32 val = पढ़ोl(pll->status_base + ctrl->status.offset);
 
-		if (val & (1 << ctrl->status.shift))
-			return 0;
+		अगर (val & (1 << ctrl->status.shअगरt))
+			वापस 0;
 		udelay(10);
-	}
+	पूर्ण
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static void iproc_pll_write(const struct iproc_pll *pll, void __iomem *base,
-			    const u32 offset, u32 val)
-{
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
+अटल व्योम iproc_pll_ग_लिखो(स्थिर काष्ठा iproc_pll *pll, व्योम __iomem *base,
+			    स्थिर u32 offset, u32 val)
+अणु
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
 
-	writel(val, base + offset);
+	ग_लिखोl(val, base + offset);
 
-	if (unlikely(ctrl->flags & IPROC_CLK_NEEDS_READ_BACK &&
+	अगर (unlikely(ctrl->flags & IPROC_CLK_NEEDS_READ_BACK &&
 		     (base == pll->status_base || base == pll->control_base)))
-		val = readl(base + offset);
-}
+		val = पढ़ोl(base + offset);
+पूर्ण
 
-static void __pll_disable(struct iproc_pll *pll)
-{
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
+अटल व्योम __pll_disable(काष्ठा iproc_pll *pll)
+अणु
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
 	u32 val;
 
-	if (ctrl->flags & IPROC_CLK_PLL_ASIU) {
-		val = readl(pll->asiu_base + ctrl->asiu.offset);
-		val &= ~(1 << ctrl->asiu.en_shift);
-		iproc_pll_write(pll, pll->asiu_base, ctrl->asiu.offset, val);
-	}
+	अगर (ctrl->flags & IPROC_CLK_PLL_ASIU) अणु
+		val = पढ़ोl(pll->asiu_base + ctrl->asiu.offset);
+		val &= ~(1 << ctrl->asiu.en_shअगरt);
+		iproc_pll_ग_लिखो(pll, pll->asiu_base, ctrl->asiu.offset, val);
+	पूर्ण
 
-	if (ctrl->flags & IPROC_CLK_EMBED_PWRCTRL) {
-		val = readl(pll->control_base + ctrl->aon.offset);
-		val |= bit_mask(ctrl->aon.pwr_width) << ctrl->aon.pwr_shift;
-		iproc_pll_write(pll, pll->control_base, ctrl->aon.offset, val);
-	}
+	अगर (ctrl->flags & IPROC_CLK_EMBED_PWRCTRL) अणु
+		val = पढ़ोl(pll->control_base + ctrl->aon.offset);
+		val |= bit_mask(ctrl->aon.pwr_width) << ctrl->aon.pwr_shअगरt;
+		iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->aon.offset, val);
+	पूर्ण
 
-	if (pll->pwr_base) {
-		/* latch input value so core power can be shut down */
-		val = readl(pll->pwr_base + ctrl->aon.offset);
-		val |= 1 << ctrl->aon.iso_shift;
-		iproc_pll_write(pll, pll->pwr_base, ctrl->aon.offset, val);
+	अगर (pll->pwr_base) अणु
+		/* latch input value so core घातer can be shut करोwn */
+		val = पढ़ोl(pll->pwr_base + ctrl->aon.offset);
+		val |= 1 << ctrl->aon.iso_shअगरt;
+		iproc_pll_ग_लिखो(pll, pll->pwr_base, ctrl->aon.offset, val);
 
-		/* power down the core */
-		val &= ~(bit_mask(ctrl->aon.pwr_width) << ctrl->aon.pwr_shift);
-		iproc_pll_write(pll, pll->pwr_base, ctrl->aon.offset, val);
-	}
-}
+		/* घातer करोwn the core */
+		val &= ~(bit_mask(ctrl->aon.pwr_width) << ctrl->aon.pwr_shअगरt);
+		iproc_pll_ग_लिखो(pll, pll->pwr_base, ctrl->aon.offset, val);
+	पूर्ण
+पूर्ण
 
-static int __pll_enable(struct iproc_pll *pll)
-{
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
+अटल पूर्णांक __pll_enable(काष्ठा iproc_pll *pll)
+अणु
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
 	u32 val;
 
-	if (ctrl->flags & IPROC_CLK_EMBED_PWRCTRL) {
-		val = readl(pll->control_base + ctrl->aon.offset);
-		val &= ~(bit_mask(ctrl->aon.pwr_width) << ctrl->aon.pwr_shift);
-		iproc_pll_write(pll, pll->control_base, ctrl->aon.offset, val);
-	}
+	अगर (ctrl->flags & IPROC_CLK_EMBED_PWRCTRL) अणु
+		val = पढ़ोl(pll->control_base + ctrl->aon.offset);
+		val &= ~(bit_mask(ctrl->aon.pwr_width) << ctrl->aon.pwr_shअगरt);
+		iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->aon.offset, val);
+	पूर्ण
 
-	if (pll->pwr_base) {
-		/* power up the PLL and make sure it's not latched */
-		val = readl(pll->pwr_base + ctrl->aon.offset);
-		val |= bit_mask(ctrl->aon.pwr_width) << ctrl->aon.pwr_shift;
-		val &= ~(1 << ctrl->aon.iso_shift);
-		iproc_pll_write(pll, pll->pwr_base, ctrl->aon.offset, val);
-	}
+	अगर (pll->pwr_base) अणु
+		/* घातer up the PLL and make sure it's not latched */
+		val = पढ़ोl(pll->pwr_base + ctrl->aon.offset);
+		val |= bit_mask(ctrl->aon.pwr_width) << ctrl->aon.pwr_shअगरt;
+		val &= ~(1 << ctrl->aon.iso_shअगरt);
+		iproc_pll_ग_लिखो(pll, pll->pwr_base, ctrl->aon.offset, val);
+	पूर्ण
 
 	/* certain PLLs also need to be ungated from the ASIU top level */
-	if (ctrl->flags & IPROC_CLK_PLL_ASIU) {
-		val = readl(pll->asiu_base + ctrl->asiu.offset);
-		val |= (1 << ctrl->asiu.en_shift);
-		iproc_pll_write(pll, pll->asiu_base, ctrl->asiu.offset, val);
-	}
+	अगर (ctrl->flags & IPROC_CLK_PLL_ASIU) अणु
+		val = पढ़ोl(pll->asiu_base + ctrl->asiu.offset);
+		val |= (1 << ctrl->asiu.en_shअगरt);
+		iproc_pll_ग_लिखो(pll, pll->asiu_base, ctrl->asiu.offset, val);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __pll_put_in_reset(struct iproc_pll *pll)
-{
+अटल व्योम __pll_put_in_reset(काष्ठा iproc_pll *pll)
+अणु
 	u32 val;
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
-	const struct iproc_pll_reset_ctrl *reset = &ctrl->reset;
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
+	स्थिर काष्ठा iproc_pll_reset_ctrl *reset = &ctrl->reset;
 
-	val = readl(pll->control_base + reset->offset);
-	if (ctrl->flags & IPROC_CLK_PLL_RESET_ACTIVE_LOW)
-		val |= BIT(reset->reset_shift) | BIT(reset->p_reset_shift);
-	else
-		val &= ~(BIT(reset->reset_shift) | BIT(reset->p_reset_shift));
-	iproc_pll_write(pll, pll->control_base, reset->offset, val);
-}
+	val = पढ़ोl(pll->control_base + reset->offset);
+	अगर (ctrl->flags & IPROC_CLK_PLL_RESET_ACTIVE_LOW)
+		val |= BIT(reset->reset_shअगरt) | BIT(reset->p_reset_shअगरt);
+	अन्यथा
+		val &= ~(BIT(reset->reset_shअगरt) | BIT(reset->p_reset_shअगरt));
+	iproc_pll_ग_लिखो(pll, pll->control_base, reset->offset, val);
+पूर्ण
 
-static void __pll_bring_out_reset(struct iproc_pll *pll, unsigned int kp,
-				  unsigned int ka, unsigned int ki)
-{
+अटल व्योम __pll_bring_out_reset(काष्ठा iproc_pll *pll, अचिन्हित पूर्णांक kp,
+				  अचिन्हित पूर्णांक ka, अचिन्हित पूर्णांक ki)
+अणु
 	u32 val;
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
-	const struct iproc_pll_reset_ctrl *reset = &ctrl->reset;
-	const struct iproc_pll_dig_filter_ctrl *dig_filter = &ctrl->dig_filter;
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
+	स्थिर काष्ठा iproc_pll_reset_ctrl *reset = &ctrl->reset;
+	स्थिर काष्ठा iproc_pll_dig_filter_ctrl *dig_filter = &ctrl->dig_filter;
 
-	val = readl(pll->control_base + dig_filter->offset);
-	val &= ~(bit_mask(dig_filter->ki_width) << dig_filter->ki_shift |
-		bit_mask(dig_filter->kp_width) << dig_filter->kp_shift |
-		bit_mask(dig_filter->ka_width) << dig_filter->ka_shift);
-	val |= ki << dig_filter->ki_shift | kp << dig_filter->kp_shift |
-	       ka << dig_filter->ka_shift;
-	iproc_pll_write(pll, pll->control_base, dig_filter->offset, val);
+	val = पढ़ोl(pll->control_base + dig_filter->offset);
+	val &= ~(bit_mask(dig_filter->ki_width) << dig_filter->ki_shअगरt |
+		bit_mask(dig_filter->kp_width) << dig_filter->kp_shअगरt |
+		bit_mask(dig_filter->ka_width) << dig_filter->ka_shअगरt);
+	val |= ki << dig_filter->ki_shअगरt | kp << dig_filter->kp_shअगरt |
+	       ka << dig_filter->ka_shअगरt;
+	iproc_pll_ग_लिखो(pll, pll->control_base, dig_filter->offset, val);
 
-	val = readl(pll->control_base + reset->offset);
-	if (ctrl->flags & IPROC_CLK_PLL_RESET_ACTIVE_LOW)
-		val &= ~(BIT(reset->reset_shift) | BIT(reset->p_reset_shift));
-	else
-		val |= BIT(reset->reset_shift) | BIT(reset->p_reset_shift);
-	iproc_pll_write(pll, pll->control_base, reset->offset, val);
-}
+	val = पढ़ोl(pll->control_base + reset->offset);
+	अगर (ctrl->flags & IPROC_CLK_PLL_RESET_ACTIVE_LOW)
+		val &= ~(BIT(reset->reset_shअगरt) | BIT(reset->p_reset_shअगरt));
+	अन्यथा
+		val |= BIT(reset->reset_shअगरt) | BIT(reset->p_reset_shअगरt);
+	iproc_pll_ग_लिखो(pll, pll->control_base, reset->offset, val);
+पूर्ण
 
 /*
- * Determines if the change to be applied to the PLL is minor (just an update
- * or the fractional divider). If so, then we can avoid going through a
+ * Determines अगर the change to be applied to the PLL is minor (just an update
+ * or the fractional भागider). If so, then we can aव्योम going through a
  * disruptive reset and lock sequence.
  */
-static bool pll_fractional_change_only(struct iproc_pll *pll,
-				       struct iproc_pll_vco_param *vco)
-{
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
+अटल bool pll_fractional_change_only(काष्ठा iproc_pll *pll,
+				       काष्ठा iproc_pll_vco_param *vco)
+अणु
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
 	u32 val;
-	u32 ndiv_int;
-	unsigned int pdiv;
+	u32 nभाग_पूर्णांक;
+	अचिन्हित पूर्णांक pभाग;
 
 	/* PLL needs to be locked */
-	val = readl(pll->status_base + ctrl->status.offset);
-	if ((val & (1 << ctrl->status.shift)) == 0)
-		return false;
+	val = पढ़ोl(pll->status_base + ctrl->status.offset);
+	अगर ((val & (1 << ctrl->status.shअगरt)) == 0)
+		वापस false;
 
-	val = readl(pll->control_base + ctrl->ndiv_int.offset);
-	ndiv_int = (val >> ctrl->ndiv_int.shift) &
-		bit_mask(ctrl->ndiv_int.width);
+	val = पढ़ोl(pll->control_base + ctrl->nभाग_पूर्णांक.offset);
+	nभाग_पूर्णांक = (val >> ctrl->nभाग_पूर्णांक.shअगरt) &
+		bit_mask(ctrl->nभाग_पूर्णांक.width);
 
-	if (ndiv_int != vco->ndiv_int)
-		return false;
+	अगर (nभाग_पूर्णांक != vco->nभाग_पूर्णांक)
+		वापस false;
 
-	val = readl(pll->control_base + ctrl->pdiv.offset);
-	pdiv = (val >> ctrl->pdiv.shift) & bit_mask(ctrl->pdiv.width);
+	val = पढ़ोl(pll->control_base + ctrl->pभाग.offset);
+	pभाग = (val >> ctrl->pभाग.shअगरt) & bit_mask(ctrl->pभाग.width);
 
-	if (pdiv != vco->pdiv)
-		return false;
+	अगर (pभाग != vco->pभाग)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int pll_set_rate(struct iproc_clk *clk, struct iproc_pll_vco_param *vco,
-			unsigned long parent_rate)
-{
-	struct iproc_pll *pll = clk->pll;
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
-	int ka = 0, ki, kp, ret;
-	unsigned long rate = vco->rate;
+अटल पूर्णांक pll_set_rate(काष्ठा iproc_clk *clk, काष्ठा iproc_pll_vco_param *vco,
+			अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा iproc_pll *pll = clk->pll;
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
+	पूर्णांक ka = 0, ki, kp, ret;
+	अचिन्हित दीर्घ rate = vco->rate;
 	u32 val;
-	enum kp_band kp_index;
-	unsigned long ref_freq;
-	const char *clk_name = clk_hw_get_name(&clk->hw);
+	क्रमागत kp_band kp_index;
+	अचिन्हित दीर्घ ref_freq;
+	स्थिर अक्षर *clk_name = clk_hw_get_name(&clk->hw);
 
 	/*
 	 * reference frequency = parent frequency / PDIV
 	 * If PDIV = 0, then it becomes a multiplier (x2)
 	 */
-	if (vco->pdiv == 0)
+	अगर (vco->pभाग == 0)
 		ref_freq = parent_rate * 2;
-	else
-		ref_freq = parent_rate / vco->pdiv;
+	अन्यथा
+		ref_freq = parent_rate / vco->pभाग;
 
 	/* determine Ki and Kp index based on target VCO frequency */
-	if (rate >= VCO_LOW && rate < VCO_HIGH) {
+	अगर (rate >= VCO_LOW && rate < VCO_HIGH) अणु
 		ki = 4;
 		kp_index = KP_BAND_MID;
-	} else if (rate >= VCO_HIGH && rate < VCO_HIGH_HIGH) {
+	पूर्ण अन्यथा अगर (rate >= VCO_HIGH && rate < VCO_HIGH_HIGH) अणु
 		ki = 3;
 		kp_index = KP_BAND_HIGH;
-	} else if (rate >= VCO_HIGH_HIGH && rate < VCO_MAX) {
+	पूर्ण अन्यथा अगर (rate >= VCO_HIGH_HIGH && rate < VCO_MAX) अणु
 		ki = 3;
 		kp_index = KP_BAND_HIGH_HIGH;
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_err("%s: pll: %s has invalid rate: %lu\n", __func__,
 				clk_name, rate);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	kp = get_kp(ref_freq, kp_index);
-	if (kp < 0) {
+	अगर (kp < 0) अणु
 		pr_err("%s: pll: %s has invalid kp\n", __func__, clk_name);
-		return kp;
-	}
+		वापस kp;
+	पूर्ण
 
 	ret = __pll_enable(pll);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: pll: %s fails to enable\n", __func__, clk_name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (pll_fractional_change_only(clk->pll, vco)) {
+	अगर (pll_fractional_change_only(clk->pll, vco)) अणु
 		/* program fractional part of NDIV */
-		if (ctrl->flags & IPROC_CLK_PLL_HAS_NDIV_FRAC) {
-			val = readl(pll->control_base + ctrl->ndiv_frac.offset);
-			val &= ~(bit_mask(ctrl->ndiv_frac.width) <<
-				 ctrl->ndiv_frac.shift);
-			val |= vco->ndiv_frac << ctrl->ndiv_frac.shift;
-			iproc_pll_write(pll, pll->control_base,
-					ctrl->ndiv_frac.offset, val);
-			return 0;
-		}
-	}
+		अगर (ctrl->flags & IPROC_CLK_PLL_HAS_NDIV_FRAC) अणु
+			val = पढ़ोl(pll->control_base + ctrl->nभाग_frac.offset);
+			val &= ~(bit_mask(ctrl->nभाग_frac.width) <<
+				 ctrl->nभाग_frac.shअगरt);
+			val |= vco->nभाग_frac << ctrl->nभाग_frac.shअगरt;
+			iproc_pll_ग_लिखो(pll, pll->control_base,
+					ctrl->nभाग_frac.offset, val);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/* put PLL in reset */
 	__pll_put_in_reset(pll);
 
-	/* set PLL in user mode before modifying PLL controls */
-	if (ctrl->flags & IPROC_CLK_PLL_USER_MODE_ON) {
-		val = readl(pll->control_base + ctrl->macro_mode.offset);
+	/* set PLL in user mode beक्रमe modअगरying PLL controls */
+	अगर (ctrl->flags & IPROC_CLK_PLL_USER_MODE_ON) अणु
+		val = पढ़ोl(pll->control_base + ctrl->macro_mode.offset);
 		val &= ~(bit_mask(ctrl->macro_mode.width) <<
-			ctrl->macro_mode.shift);
-		val |= PLL_USER_MODE << ctrl->macro_mode.shift;
-		iproc_pll_write(pll, pll->control_base,
+			ctrl->macro_mode.shअगरt);
+		val |= PLL_USER_MODE << ctrl->macro_mode.shअगरt;
+		iproc_pll_ग_लिखो(pll, pll->control_base,
 			ctrl->macro_mode.offset, val);
-	}
+	पूर्ण
 
-	iproc_pll_write(pll, pll->control_base, ctrl->vco_ctrl.u_offset, 0);
+	iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->vco_ctrl.u_offset, 0);
 
-	val = readl(pll->control_base + ctrl->vco_ctrl.l_offset);
+	val = पढ़ोl(pll->control_base + ctrl->vco_ctrl.l_offset);
 
-	if (rate >= VCO_LOW && rate < VCO_MID)
+	अगर (rate >= VCO_LOW && rate < VCO_MID)
 		val |= (1 << PLL_VCO_LOW_SHIFT);
 
-	if (rate < VCO_HIGH)
+	अगर (rate < VCO_HIGH)
 		val &= ~(1 << PLL_VCO_HIGH_SHIFT);
-	else
+	अन्यथा
 		val |= (1 << PLL_VCO_HIGH_SHIFT);
 
-	iproc_pll_write(pll, pll->control_base, ctrl->vco_ctrl.l_offset, val);
+	iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->vco_ctrl.l_offset, val);
 
-	/* program integer part of NDIV */
-	val = readl(pll->control_base + ctrl->ndiv_int.offset);
-	val &= ~(bit_mask(ctrl->ndiv_int.width) << ctrl->ndiv_int.shift);
-	val |= vco->ndiv_int << ctrl->ndiv_int.shift;
-	iproc_pll_write(pll, pll->control_base, ctrl->ndiv_int.offset, val);
+	/* program पूर्णांकeger part of NDIV */
+	val = पढ़ोl(pll->control_base + ctrl->nभाग_पूर्णांक.offset);
+	val &= ~(bit_mask(ctrl->nभाग_पूर्णांक.width) << ctrl->nभाग_पूर्णांक.shअगरt);
+	val |= vco->nभाग_पूर्णांक << ctrl->nभाग_पूर्णांक.shअगरt;
+	iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->nभाग_पूर्णांक.offset, val);
 
 	/* program fractional part of NDIV */
-	if (ctrl->flags & IPROC_CLK_PLL_HAS_NDIV_FRAC) {
-		val = readl(pll->control_base + ctrl->ndiv_frac.offset);
-		val &= ~(bit_mask(ctrl->ndiv_frac.width) <<
-			 ctrl->ndiv_frac.shift);
-		val |= vco->ndiv_frac << ctrl->ndiv_frac.shift;
-		iproc_pll_write(pll, pll->control_base, ctrl->ndiv_frac.offset,
+	अगर (ctrl->flags & IPROC_CLK_PLL_HAS_NDIV_FRAC) अणु
+		val = पढ़ोl(pll->control_base + ctrl->nभाग_frac.offset);
+		val &= ~(bit_mask(ctrl->nभाग_frac.width) <<
+			 ctrl->nभाग_frac.shअगरt);
+		val |= vco->nभाग_frac << ctrl->nभाग_frac.shअगरt;
+		iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->nभाग_frac.offset,
 				val);
-	}
+	पूर्ण
 
 	/* program PDIV */
-	val = readl(pll->control_base + ctrl->pdiv.offset);
-	val &= ~(bit_mask(ctrl->pdiv.width) << ctrl->pdiv.shift);
-	val |= vco->pdiv << ctrl->pdiv.shift;
-	iproc_pll_write(pll, pll->control_base, ctrl->pdiv.offset, val);
+	val = पढ़ोl(pll->control_base + ctrl->pभाग.offset);
+	val &= ~(bit_mask(ctrl->pभाग.width) << ctrl->pभाग.shअगरt);
+	val |= vco->pभाग << ctrl->pभाग.shअगरt;
+	iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->pभाग.offset, val);
 
 	__pll_bring_out_reset(pll, kp, ka, ki);
 
-	ret = pll_wait_for_lock(pll);
-	if (ret < 0) {
+	ret = pll_रुको_क्रम_lock(pll);
+	अगर (ret < 0) अणु
 		pr_err("%s: pll: %s failed to lock\n", __func__, clk_name);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iproc_pll_enable(struct clk_hw *hw)
-{
-	struct iproc_clk *clk = to_iproc_clk(hw);
-	struct iproc_pll *pll = clk->pll;
+अटल पूर्णांक iproc_pll_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा iproc_clk *clk = to_iproc_clk(hw);
+	काष्ठा iproc_pll *pll = clk->pll;
 
-	return __pll_enable(pll);
-}
+	वापस __pll_enable(pll);
+पूर्ण
 
-static void iproc_pll_disable(struct clk_hw *hw)
-{
-	struct iproc_clk *clk = to_iproc_clk(hw);
-	struct iproc_pll *pll = clk->pll;
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
+अटल व्योम iproc_pll_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा iproc_clk *clk = to_iproc_clk(hw);
+	काष्ठा iproc_pll *pll = clk->pll;
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
 
-	if (ctrl->flags & IPROC_CLK_AON)
-		return;
+	अगर (ctrl->flags & IPROC_CLK_AON)
+		वापस;
 
 	__pll_disable(pll);
-}
+पूर्ण
 
-static unsigned long iproc_pll_recalc_rate(struct clk_hw *hw,
-					   unsigned long parent_rate)
-{
-	struct iproc_clk *clk = to_iproc_clk(hw);
-	struct iproc_pll *pll = clk->pll;
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
+अटल अचिन्हित दीर्घ iproc_pll_recalc_rate(काष्ठा clk_hw *hw,
+					   अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा iproc_clk *clk = to_iproc_clk(hw);
+	काष्ठा iproc_pll *pll = clk->pll;
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
 	u32 val;
-	u64 ndiv, ndiv_int, ndiv_frac;
-	unsigned int pdiv;
-	unsigned long rate;
+	u64 nभाग, nभाग_पूर्णांक, nभाग_frac;
+	अचिन्हित पूर्णांक pभाग;
+	अचिन्हित दीर्घ rate;
 
-	if (parent_rate == 0)
-		return 0;
+	अगर (parent_rate == 0)
+		वापस 0;
 
 	/* PLL needs to be locked */
-	val = readl(pll->status_base + ctrl->status.offset);
-	if ((val & (1 << ctrl->status.shift)) == 0)
-		return 0;
+	val = पढ़ोl(pll->status_base + ctrl->status.offset);
+	अगर ((val & (1 << ctrl->status.shअगरt)) == 0)
+		वापस 0;
 
 	/*
 	 * PLL output frequency =
 	 *
-	 * ((ndiv_int + ndiv_frac / 2^20) * (parent clock rate / pdiv)
+	 * ((nभाग_पूर्णांक + nभाग_frac / 2^20) * (parent घड़ी rate / pभाग)
 	 */
-	val = readl(pll->control_base + ctrl->ndiv_int.offset);
-	ndiv_int = (val >> ctrl->ndiv_int.shift) &
-		bit_mask(ctrl->ndiv_int.width);
-	ndiv = ndiv_int << 20;
+	val = पढ़ोl(pll->control_base + ctrl->nभाग_पूर्णांक.offset);
+	nभाग_पूर्णांक = (val >> ctrl->nभाग_पूर्णांक.shअगरt) &
+		bit_mask(ctrl->nभाग_पूर्णांक.width);
+	nभाग = nभाग_पूर्णांक << 20;
 
-	if (ctrl->flags & IPROC_CLK_PLL_HAS_NDIV_FRAC) {
-		val = readl(pll->control_base + ctrl->ndiv_frac.offset);
-		ndiv_frac = (val >> ctrl->ndiv_frac.shift) &
-			bit_mask(ctrl->ndiv_frac.width);
-		ndiv += ndiv_frac;
-	}
+	अगर (ctrl->flags & IPROC_CLK_PLL_HAS_NDIV_FRAC) अणु
+		val = पढ़ोl(pll->control_base + ctrl->nभाग_frac.offset);
+		nभाग_frac = (val >> ctrl->nभाग_frac.shअगरt) &
+			bit_mask(ctrl->nभाग_frac.width);
+		nभाग += nभाग_frac;
+	पूर्ण
 
-	val = readl(pll->control_base + ctrl->pdiv.offset);
-	pdiv = (val >> ctrl->pdiv.shift) & bit_mask(ctrl->pdiv.width);
+	val = पढ़ोl(pll->control_base + ctrl->pभाग.offset);
+	pभाग = (val >> ctrl->pभाग.shअगरt) & bit_mask(ctrl->pभाग.width);
 
-	rate = (ndiv * parent_rate) >> 20;
+	rate = (nभाग * parent_rate) >> 20;
 
-	if (pdiv == 0)
+	अगर (pभाग == 0)
 		rate *= 2;
-	else
-		rate /= pdiv;
+	अन्यथा
+		rate /= pभाग;
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static int iproc_pll_determine_rate(struct clk_hw *hw,
-		struct clk_rate_request *req)
-{
-	unsigned int  i;
-	struct iproc_clk *clk = to_iproc_clk(hw);
-	struct iproc_pll *pll = clk->pll;
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
-	unsigned long  diff, best_diff;
-	unsigned int  best_idx = 0;
-	int ret;
+अटल पूर्णांक iproc_pll_determine_rate(काष्ठा clk_hw *hw,
+		काष्ठा clk_rate_request *req)
+अणु
+	अचिन्हित पूर्णांक  i;
+	काष्ठा iproc_clk *clk = to_iproc_clk(hw);
+	काष्ठा iproc_pll *pll = clk->pll;
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
+	अचिन्हित दीर्घ  dअगरf, best_dअगरf;
+	अचिन्हित पूर्णांक  best_idx = 0;
+	पूर्णांक ret;
 
-	if (req->rate == 0 || req->best_parent_rate == 0)
-		return -EINVAL;
+	अगर (req->rate == 0 || req->best_parent_rate == 0)
+		वापस -EINVAL;
 
-	if (ctrl->flags & IPROC_CLK_PLL_CALC_PARAM) {
-		struct iproc_pll_vco_param vco_param;
+	अगर (ctrl->flags & IPROC_CLK_PLL_CALC_PARAM) अणु
+		काष्ठा iproc_pll_vco_param vco_param;
 
 		ret = pll_calc_param(req->rate, req->best_parent_rate,
 					&vco_param);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		req->rate = vco_param.rate;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!pll->vco_param)
-		return -EINVAL;
+	अगर (!pll->vco_param)
+		वापस -EINVAL;
 
-	best_diff = ULONG_MAX;
-	for (i = 0; i < pll->num_vco_entries; i++) {
-		diff = abs(req->rate - pll->vco_param[i].rate);
-		if (diff <= best_diff) {
-			best_diff = diff;
+	best_dअगरf = अच_दीर्घ_उच्च;
+	क्रम (i = 0; i < pll->num_vco_entries; i++) अणु
+		dअगरf = असल(req->rate - pll->vco_param[i].rate);
+		अगर (dअगरf <= best_dअगरf) अणु
+			best_dअगरf = dअगरf;
 			best_idx = i;
-		}
-		/* break now if perfect match */
-		if (diff == 0)
-			break;
-	}
+		पूर्ण
+		/* अवरोध now अगर perfect match */
+		अगर (dअगरf == 0)
+			अवरोध;
+	पूर्ण
 
 	req->rate = pll->vco_param[best_idx].rate;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iproc_pll_set_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long parent_rate)
-{
-	struct iproc_clk *clk = to_iproc_clk(hw);
-	struct iproc_pll *pll = clk->pll;
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
-	struct iproc_pll_vco_param vco_param;
-	int rate_index, ret;
+अटल पूर्णांक iproc_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा iproc_clk *clk = to_iproc_clk(hw);
+	काष्ठा iproc_pll *pll = clk->pll;
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
+	काष्ठा iproc_pll_vco_param vco_param;
+	पूर्णांक rate_index, ret;
 
-	if (ctrl->flags & IPROC_CLK_PLL_CALC_PARAM) {
+	अगर (ctrl->flags & IPROC_CLK_PLL_CALC_PARAM) अणु
 		ret = pll_calc_param(rate, parent_rate, &vco_param);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		rate_index = pll_get_rate_index(pll, rate);
-		if (rate_index < 0)
-			return rate_index;
+		अगर (rate_index < 0)
+			वापस rate_index;
 
 		vco_param = pll->vco_param[rate_index];
-	}
+	पूर्ण
 
 	ret = pll_set_rate(clk, &vco_param, parent_rate);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct clk_ops iproc_pll_ops = {
+अटल स्थिर काष्ठा clk_ops iproc_pll_ops = अणु
 	.enable = iproc_pll_enable,
 	.disable = iproc_pll_disable,
 	.recalc_rate = iproc_pll_recalc_rate,
 	.determine_rate = iproc_pll_determine_rate,
 	.set_rate = iproc_pll_set_rate,
-};
+पूर्ण;
 
-static int iproc_clk_enable(struct clk_hw *hw)
-{
-	struct iproc_clk *clk = to_iproc_clk(hw);
-	const struct iproc_clk_ctrl *ctrl = clk->ctrl;
-	struct iproc_pll *pll = clk->pll;
+अटल पूर्णांक iproc_clk_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा iproc_clk *clk = to_iproc_clk(hw);
+	स्थिर काष्ठा iproc_clk_ctrl *ctrl = clk->ctrl;
+	काष्ठा iproc_pll *pll = clk->pll;
 	u32 val;
 
 	/* channel enable is active low */
-	val = readl(pll->control_base + ctrl->enable.offset);
-	val &= ~(1 << ctrl->enable.enable_shift);
-	iproc_pll_write(pll, pll->control_base, ctrl->enable.offset, val);
+	val = पढ़ोl(pll->control_base + ctrl->enable.offset);
+	val &= ~(1 << ctrl->enable.enable_shअगरt);
+	iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->enable.offset, val);
 
 	/* also make sure channel is not held */
-	val = readl(pll->control_base + ctrl->enable.offset);
-	val &= ~(1 << ctrl->enable.hold_shift);
-	iproc_pll_write(pll, pll->control_base, ctrl->enable.offset, val);
+	val = पढ़ोl(pll->control_base + ctrl->enable.offset);
+	val &= ~(1 << ctrl->enable.hold_shअगरt);
+	iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->enable.offset, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void iproc_clk_disable(struct clk_hw *hw)
-{
-	struct iproc_clk *clk = to_iproc_clk(hw);
-	const struct iproc_clk_ctrl *ctrl = clk->ctrl;
-	struct iproc_pll *pll = clk->pll;
+अटल व्योम iproc_clk_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा iproc_clk *clk = to_iproc_clk(hw);
+	स्थिर काष्ठा iproc_clk_ctrl *ctrl = clk->ctrl;
+	काष्ठा iproc_pll *pll = clk->pll;
 	u32 val;
 
-	if (ctrl->flags & IPROC_CLK_AON)
-		return;
+	अगर (ctrl->flags & IPROC_CLK_AON)
+		वापस;
 
-	val = readl(pll->control_base + ctrl->enable.offset);
-	val |= 1 << ctrl->enable.enable_shift;
-	iproc_pll_write(pll, pll->control_base, ctrl->enable.offset, val);
-}
+	val = पढ़ोl(pll->control_base + ctrl->enable.offset);
+	val |= 1 << ctrl->enable.enable_shअगरt;
+	iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->enable.offset, val);
+पूर्ण
 
-static unsigned long iproc_clk_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	struct iproc_clk *clk = to_iproc_clk(hw);
-	const struct iproc_clk_ctrl *ctrl = clk->ctrl;
-	struct iproc_pll *pll = clk->pll;
+अटल अचिन्हित दीर्घ iproc_clk_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा iproc_clk *clk = to_iproc_clk(hw);
+	स्थिर काष्ठा iproc_clk_ctrl *ctrl = clk->ctrl;
+	काष्ठा iproc_pll *pll = clk->pll;
 	u32 val;
-	unsigned int mdiv;
-	unsigned long rate;
+	अचिन्हित पूर्णांक mभाग;
+	अचिन्हित दीर्घ rate;
 
-	if (parent_rate == 0)
-		return 0;
+	अगर (parent_rate == 0)
+		वापस 0;
 
-	val = readl(pll->control_base + ctrl->mdiv.offset);
-	mdiv = (val >> ctrl->mdiv.shift) & bit_mask(ctrl->mdiv.width);
-	if (mdiv == 0)
-		mdiv = 256;
+	val = पढ़ोl(pll->control_base + ctrl->mभाग.offset);
+	mभाग = (val >> ctrl->mभाग.shअगरt) & bit_mask(ctrl->mभाग.width);
+	अगर (mभाग == 0)
+		mभाग = 256;
 
-	if (ctrl->flags & IPROC_CLK_MCLK_DIV_BY_2)
-		rate = parent_rate / (mdiv * 2);
-	else
-		rate = parent_rate / mdiv;
+	अगर (ctrl->flags & IPROC_CLK_MCLK_DIV_BY_2)
+		rate = parent_rate / (mभाग * 2);
+	अन्यथा
+		rate = parent_rate / mभाग;
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-static int iproc_clk_determine_rate(struct clk_hw *hw,
-		struct clk_rate_request *req)
-{
-	unsigned int bestdiv;
+अटल पूर्णांक iproc_clk_determine_rate(काष्ठा clk_hw *hw,
+		काष्ठा clk_rate_request *req)
+अणु
+	अचिन्हित पूर्णांक bestभाग;
 
-	if (req->rate == 0)
-		return -EINVAL;
-	if (req->rate == req->best_parent_rate)
-		return 0;
+	अगर (req->rate == 0)
+		वापस -EINVAL;
+	अगर (req->rate == req->best_parent_rate)
+		वापस 0;
 
-	bestdiv = DIV_ROUND_CLOSEST(req->best_parent_rate, req->rate);
-	if (bestdiv < 2)
+	bestभाग = DIV_ROUND_CLOSEST(req->best_parent_rate, req->rate);
+	अगर (bestभाग < 2)
 		req->rate = req->best_parent_rate;
 
-	if (bestdiv > 256)
-		bestdiv = 256;
+	अगर (bestभाग > 256)
+		bestभाग = 256;
 
-	req->rate = req->best_parent_rate / bestdiv;
+	req->rate = req->best_parent_rate / bestभाग;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iproc_clk_set_rate(struct clk_hw *hw, unsigned long rate,
-		unsigned long parent_rate)
-{
-	struct iproc_clk *clk = to_iproc_clk(hw);
-	const struct iproc_clk_ctrl *ctrl = clk->ctrl;
-	struct iproc_pll *pll = clk->pll;
+अटल पूर्णांक iproc_clk_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा iproc_clk *clk = to_iproc_clk(hw);
+	स्थिर काष्ठा iproc_clk_ctrl *ctrl = clk->ctrl;
+	काष्ठा iproc_pll *pll = clk->pll;
 	u32 val;
-	unsigned int div;
+	अचिन्हित पूर्णांक भाग;
 
-	if (rate == 0 || parent_rate == 0)
-		return -EINVAL;
+	अगर (rate == 0 || parent_rate == 0)
+		वापस -EINVAL;
 
-	div = DIV_ROUND_CLOSEST(parent_rate, rate);
-	if (ctrl->flags & IPROC_CLK_MCLK_DIV_BY_2)
-		div /=  2;
+	भाग = DIV_ROUND_CLOSEST(parent_rate, rate);
+	अगर (ctrl->flags & IPROC_CLK_MCLK_DIV_BY_2)
+		भाग /=  2;
 
-	if (div > 256)
-		return -EINVAL;
+	अगर (भाग > 256)
+		वापस -EINVAL;
 
-	val = readl(pll->control_base + ctrl->mdiv.offset);
-	if (div == 256) {
-		val &= ~(bit_mask(ctrl->mdiv.width) << ctrl->mdiv.shift);
-	} else {
-		val &= ~(bit_mask(ctrl->mdiv.width) << ctrl->mdiv.shift);
-		val |= div << ctrl->mdiv.shift;
-	}
-	iproc_pll_write(pll, pll->control_base, ctrl->mdiv.offset, val);
+	val = पढ़ोl(pll->control_base + ctrl->mभाग.offset);
+	अगर (भाग == 256) अणु
+		val &= ~(bit_mask(ctrl->mभाग.width) << ctrl->mभाग.shअगरt);
+	पूर्ण अन्यथा अणु
+		val &= ~(bit_mask(ctrl->mभाग.width) << ctrl->mभाग.shअगरt);
+		val |= भाग << ctrl->mभाग.shअगरt;
+	पूर्ण
+	iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->mभाग.offset, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops iproc_clk_ops = {
+अटल स्थिर काष्ठा clk_ops iproc_clk_ops = अणु
 	.enable = iproc_clk_enable,
 	.disable = iproc_clk_disable,
 	.recalc_rate = iproc_clk_recalc_rate,
 	.determine_rate = iproc_clk_determine_rate,
 	.set_rate = iproc_clk_set_rate,
-};
+पूर्ण;
 
 /*
- * Some PLLs require the PLL SW override bit to be set before changes can be
+ * Some PLLs require the PLL SW override bit to be set beक्रमe changes can be
  * applied to the PLL
  */
-static void iproc_pll_sw_cfg(struct iproc_pll *pll)
-{
-	const struct iproc_pll_ctrl *ctrl = pll->ctrl;
+अटल व्योम iproc_pll_sw_cfg(काष्ठा iproc_pll *pll)
+अणु
+	स्थिर काष्ठा iproc_pll_ctrl *ctrl = pll->ctrl;
 
-	if (ctrl->flags & IPROC_CLK_PLL_NEEDS_SW_CFG) {
+	अगर (ctrl->flags & IPROC_CLK_PLL_NEEDS_SW_CFG) अणु
 		u32 val;
 
-		val = readl(pll->control_base + ctrl->sw_ctrl.offset);
-		val |= BIT(ctrl->sw_ctrl.shift);
-		iproc_pll_write(pll, pll->control_base, ctrl->sw_ctrl.offset,
+		val = पढ़ोl(pll->control_base + ctrl->sw_ctrl.offset);
+		val |= BIT(ctrl->sw_ctrl.shअगरt);
+		iproc_pll_ग_लिखो(pll, pll->control_base, ctrl->sw_ctrl.offset,
 				val);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void iproc_pll_clk_setup(struct device_node *node,
-			 const struct iproc_pll_ctrl *pll_ctrl,
-			 const struct iproc_pll_vco_param *vco,
-			 unsigned int num_vco_entries,
-			 const struct iproc_clk_ctrl *clk_ctrl,
-			 unsigned int num_clks)
-{
-	int i, ret;
-	struct iproc_pll *pll;
-	struct iproc_clk *iclk;
-	struct clk_init_data init;
-	const char *parent_name;
-	struct iproc_clk *iclk_array;
-	struct clk_hw_onecell_data *clk_data;
+व्योम iproc_pll_clk_setup(काष्ठा device_node *node,
+			 स्थिर काष्ठा iproc_pll_ctrl *pll_ctrl,
+			 स्थिर काष्ठा iproc_pll_vco_param *vco,
+			 अचिन्हित पूर्णांक num_vco_entries,
+			 स्थिर काष्ठा iproc_clk_ctrl *clk_ctrl,
+			 अचिन्हित पूर्णांक num_clks)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा iproc_pll *pll;
+	काष्ठा iproc_clk *iclk;
+	काष्ठा clk_init_data init;
+	स्थिर अक्षर *parent_name;
+	काष्ठा iproc_clk *iclk_array;
+	काष्ठा clk_hw_onecell_data *clk_data;
 
-	if (WARN_ON(!pll_ctrl) || WARN_ON(!clk_ctrl))
-		return;
+	अगर (WARN_ON(!pll_ctrl) || WARN_ON(!clk_ctrl))
+		वापस;
 
-	pll = kzalloc(sizeof(*pll), GFP_KERNEL);
-	if (WARN_ON(!pll))
-		return;
+	pll = kzalloc(माप(*pll), GFP_KERNEL);
+	अगर (WARN_ON(!pll))
+		वापस;
 
-	clk_data = kzalloc(struct_size(clk_data, hws, num_clks), GFP_KERNEL);
-	if (WARN_ON(!clk_data))
-		goto err_clk_data;
+	clk_data = kzalloc(काष्ठा_size(clk_data, hws, num_clks), GFP_KERNEL);
+	अगर (WARN_ON(!clk_data))
+		जाओ err_clk_data;
 	clk_data->num = num_clks;
 
-	iclk_array = kcalloc(num_clks, sizeof(struct iproc_clk), GFP_KERNEL);
-	if (WARN_ON(!iclk_array))
-		goto err_clks;
+	iclk_array = kसुस्मृति(num_clks, माप(काष्ठा iproc_clk), GFP_KERNEL);
+	अगर (WARN_ON(!iclk_array))
+		जाओ err_clks;
 
 	pll->control_base = of_iomap(node, 0);
-	if (WARN_ON(!pll->control_base))
-		goto err_pll_iomap;
+	अगर (WARN_ON(!pll->control_base))
+		जाओ err_pll_iomap;
 
-	/* Some SoCs do not require the pwr_base, thus failing is not fatal */
+	/* Some SoCs करो not require the pwr_base, thus failing is not fatal */
 	pll->pwr_base = of_iomap(node, 1);
 
 	/* some PLLs require gating control at the top ASIU level */
-	if (pll_ctrl->flags & IPROC_CLK_PLL_ASIU) {
+	अगर (pll_ctrl->flags & IPROC_CLK_PLL_ASIU) अणु
 		pll->asiu_base = of_iomap(node, 2);
-		if (WARN_ON(!pll->asiu_base))
-			goto err_asiu_iomap;
-	}
+		अगर (WARN_ON(!pll->asiu_base))
+			जाओ err_asiu_iomap;
+	पूर्ण
 
-	if (pll_ctrl->flags & IPROC_CLK_PLL_SPLIT_STAT_CTRL) {
-		/* Some SoCs have a split status/control.  If this does not
-		 * exist, assume they are unified.
+	अगर (pll_ctrl->flags & IPROC_CLK_PLL_SPLIT_STAT_CTRL) अणु
+		/* Some SoCs have a split status/control.  If this करोes not
+		 * exist, assume they are unअगरied.
 		 */
 		pll->status_base = of_iomap(node, 2);
-		if (!pll->status_base)
-			goto err_status_iomap;
-	} else
+		अगर (!pll->status_base)
+			जाओ err_status_iomap;
+	पूर्ण अन्यथा
 		pll->status_base = pll->control_base;
 
-	/* initialize and register the PLL itself */
+	/* initialize and रेजिस्टर the PLL itself */
 	pll->ctrl = pll_ctrl;
 
 	iclk = &iclk_array[0];
@@ -787,34 +788,34 @@ void iproc_pll_clk_setup(struct device_node *node,
 	init.ops = &iproc_pll_ops;
 	init.flags = 0;
 	parent_name = of_clk_get_parent_name(node, 0);
-	init.parent_names = (parent_name ? &parent_name : NULL);
+	init.parent_names = (parent_name ? &parent_name : शून्य);
 	init.num_parents = (parent_name ? 1 : 0);
 	iclk->hw.init = &init;
 
-	if (vco) {
+	अगर (vco) अणु
 		pll->num_vco_entries = num_vco_entries;
 		pll->vco_param = vco;
-	}
+	पूर्ण
 
 	iproc_pll_sw_cfg(pll);
 
-	ret = clk_hw_register(NULL, &iclk->hw);
-	if (WARN_ON(ret))
-		goto err_pll_register;
+	ret = clk_hw_रेजिस्टर(शून्य, &iclk->hw);
+	अगर (WARN_ON(ret))
+		जाओ err_pll_रेजिस्टर;
 
 	clk_data->hws[0] = &iclk->hw;
 
-	/* now initialize and register all leaf clocks */
-	for (i = 1; i < num_clks; i++) {
-		const char *clk_name;
+	/* now initialize and रेजिस्टर all leaf घड़ीs */
+	क्रम (i = 1; i < num_clks; i++) अणु
+		स्थिर अक्षर *clk_name;
 
-		memset(&init, 0, sizeof(init));
+		स_रखो(&init, 0, माप(init));
 		parent_name = node->name;
 
-		ret = of_property_read_string_index(node, "clock-output-names",
+		ret = of_property_पढ़ो_string_index(node, "clock-output-names",
 						    i, &clk_name);
-		if (WARN_ON(ret))
-			goto err_clk_register;
+		अगर (WARN_ON(ret))
+			जाओ err_clk_रेजिस्टर;
 
 		iclk = &iclk_array[i];
 		iclk->pll = pll;
@@ -823,47 +824,47 @@ void iproc_pll_clk_setup(struct device_node *node,
 		init.name = clk_name;
 		init.ops = &iproc_clk_ops;
 		init.flags = 0;
-		init.parent_names = (parent_name ? &parent_name : NULL);
+		init.parent_names = (parent_name ? &parent_name : शून्य);
 		init.num_parents = (parent_name ? 1 : 0);
 		iclk->hw.init = &init;
 
-		ret = clk_hw_register(NULL, &iclk->hw);
-		if (WARN_ON(ret))
-			goto err_clk_register;
+		ret = clk_hw_रेजिस्टर(शून्य, &iclk->hw);
+		अगर (WARN_ON(ret))
+			जाओ err_clk_रेजिस्टर;
 
 		clk_data->hws[i] = &iclk->hw;
-	}
+	पूर्ण
 
 	ret = of_clk_add_hw_provider(node, of_clk_hw_onecell_get, clk_data);
-	if (WARN_ON(ret))
-		goto err_clk_register;
+	अगर (WARN_ON(ret))
+		जाओ err_clk_रेजिस्टर;
 
-	return;
+	वापस;
 
-err_clk_register:
-	while (--i >= 0)
-		clk_hw_unregister(clk_data->hws[i]);
+err_clk_रेजिस्टर:
+	जबतक (--i >= 0)
+		clk_hw_unरेजिस्टर(clk_data->hws[i]);
 
-err_pll_register:
-	if (pll->status_base != pll->control_base)
+err_pll_रेजिस्टर:
+	अगर (pll->status_base != pll->control_base)
 		iounmap(pll->status_base);
 
 err_status_iomap:
-	if (pll->asiu_base)
+	अगर (pll->asiu_base)
 		iounmap(pll->asiu_base);
 
 err_asiu_iomap:
-	if (pll->pwr_base)
+	अगर (pll->pwr_base)
 		iounmap(pll->pwr_base);
 
 	iounmap(pll->control_base);
 
 err_pll_iomap:
-	kfree(iclk_array);
+	kमुक्त(iclk_array);
 
 err_clks:
-	kfree(clk_data);
+	kमुक्त(clk_data);
 
 err_clk_data:
-	kfree(pll);
-}
+	kमुक्त(pll);
+पूर्ण

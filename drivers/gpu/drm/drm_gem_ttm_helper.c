@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-#include <drm/drm_gem_ttm_helper.h>
+#समावेश <drm/drm_gem_tपंचांग_helper.h>
 
 /**
  * DOC: overview
  *
- * This library provides helper functions for gem objects backed by
- * ttm.
+ * This library provides helper functions क्रम gem objects backed by
+ * tपंचांग.
  */
 
 /**
- * drm_gem_ttm_print_info() - Print &ttm_buffer_object info for debugfs
- * @p: DRM printer
+ * drm_gem_tपंचांग_prपूर्णांक_info() - Prपूर्णांक &tपंचांग_buffer_object info क्रम debugfs
+ * @p: DRM prपूर्णांकer
  * @indent: Tab indentation level
  * @gem: GEM object
  *
- * This function can be used as &drm_gem_object_funcs.print_info
+ * This function can be used as &drm_gem_object_funcs.prपूर्णांक_info
  * callback.
  */
-void drm_gem_ttm_print_info(struct drm_printer *p, unsigned int indent,
-			    const struct drm_gem_object *gem)
-{
-	static const char * const plname[] = {
+व्योम drm_gem_tपंचांग_prपूर्णांक_info(काष्ठा drm_prपूर्णांकer *p, अचिन्हित पूर्णांक indent,
+			    स्थिर काष्ठा drm_gem_object *gem)
+अणु
+	अटल स्थिर अक्षर * स्थिर plname[] = अणु
 		[ TTM_PL_SYSTEM ] = "system",
 		[ TTM_PL_TT     ] = "tt",
 		[ TTM_PL_VRAM   ] = "vram",
@@ -36,83 +37,83 @@ void drm_gem_ttm_print_info(struct drm_printer *p, unsigned int indent,
 
 		[ 21 ]            = "pinned", /* NO_EVICT */
 		[ 22 ]            = "topdown",
-	};
-	const struct ttm_buffer_object *bo = drm_gem_ttm_of_gem(gem);
+	पूर्ण;
+	स्थिर काष्ठा tपंचांग_buffer_object *bo = drm_gem_tपंचांग_of_gem(gem);
 
-	drm_printf_indent(p, indent, "placement=");
-	drm_print_bits(p, bo->mem.placement, plname, ARRAY_SIZE(plname));
-	drm_printf(p, "\n");
+	drm_म_लिखो_indent(p, indent, "placement=");
+	drm_prपूर्णांक_bits(p, bo->mem.placement, plname, ARRAY_SIZE(plname));
+	drm_म_लिखो(p, "\n");
 
-	if (bo->mem.bus.is_iomem)
-		drm_printf_indent(p, indent, "bus.offset=%lx\n",
-				  (unsigned long)bo->mem.bus.offset);
-}
-EXPORT_SYMBOL(drm_gem_ttm_print_info);
+	अगर (bo->mem.bus.is_iomem)
+		drm_म_लिखो_indent(p, indent, "bus.offset=%lx\n",
+				  (अचिन्हित दीर्घ)bo->mem.bus.offset);
+पूर्ण
+EXPORT_SYMBOL(drm_gem_tपंचांग_prपूर्णांक_info);
 
 /**
- * drm_gem_ttm_vmap() - vmap &ttm_buffer_object
+ * drm_gem_tपंचांग_vmap() - vmap &tपंचांग_buffer_object
  * @gem: GEM object.
- * @map: [out] returns the dma-buf mapping.
+ * @map: [out] वापसs the dma-buf mapping.
  *
- * Maps a GEM object with ttm_bo_vmap(). This function can be used as
+ * Maps a GEM object with tपंचांग_bo_vmap(). This function can be used as
  * &drm_gem_object_funcs.vmap callback.
  *
  * Returns:
- * 0 on success, or a negative errno code otherwise.
+ * 0 on success, or a negative त्रुटि_सं code otherwise.
  */
-int drm_gem_ttm_vmap(struct drm_gem_object *gem,
-		     struct dma_buf_map *map)
-{
-	struct ttm_buffer_object *bo = drm_gem_ttm_of_gem(gem);
+पूर्णांक drm_gem_tपंचांग_vmap(काष्ठा drm_gem_object *gem,
+		     काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा tपंचांग_buffer_object *bo = drm_gem_tपंचांग_of_gem(gem);
 
-	return ttm_bo_vmap(bo, map);
-}
-EXPORT_SYMBOL(drm_gem_ttm_vmap);
+	वापस tपंचांग_bo_vmap(bo, map);
+पूर्ण
+EXPORT_SYMBOL(drm_gem_tपंचांग_vmap);
 
 /**
- * drm_gem_ttm_vunmap() - vunmap &ttm_buffer_object
+ * drm_gem_tपंचांग_vunmap() - vunmap &tपंचांग_buffer_object
  * @gem: GEM object.
  * @map: dma-buf mapping.
  *
- * Unmaps a GEM object with ttm_bo_vunmap(). This function can be used as
+ * Unmaps a GEM object with tपंचांग_bo_vunmap(). This function can be used as
  * &drm_gem_object_funcs.vmap callback.
  */
-void drm_gem_ttm_vunmap(struct drm_gem_object *gem,
-			struct dma_buf_map *map)
-{
-	struct ttm_buffer_object *bo = drm_gem_ttm_of_gem(gem);
+व्योम drm_gem_tपंचांग_vunmap(काष्ठा drm_gem_object *gem,
+			काष्ठा dma_buf_map *map)
+अणु
+	काष्ठा tपंचांग_buffer_object *bo = drm_gem_tपंचांग_of_gem(gem);
 
-	ttm_bo_vunmap(bo, map);
-}
-EXPORT_SYMBOL(drm_gem_ttm_vunmap);
+	tपंचांग_bo_vunmap(bo, map);
+पूर्ण
+EXPORT_SYMBOL(drm_gem_tपंचांग_vunmap);
 
 /**
- * drm_gem_ttm_mmap() - mmap &ttm_buffer_object
+ * drm_gem_tपंचांग_mmap() - mmap &tपंचांग_buffer_object
  * @gem: GEM object.
  * @vma: vm area.
  *
  * This function can be used as &drm_gem_object_funcs.mmap
  * callback.
  */
-int drm_gem_ttm_mmap(struct drm_gem_object *gem,
-		     struct vm_area_struct *vma)
-{
-	struct ttm_buffer_object *bo = drm_gem_ttm_of_gem(gem);
-	int ret;
+पूर्णांक drm_gem_tपंचांग_mmap(काष्ठा drm_gem_object *gem,
+		     काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा tपंचांग_buffer_object *bo = drm_gem_tपंचांग_of_gem(gem);
+	पूर्णांक ret;
 
-	ret = ttm_bo_mmap_obj(vma, bo);
-	if (ret < 0)
-		return ret;
+	ret = tपंचांग_bo_mmap_obj(vma, bo);
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * ttm has its own object refcounting, so drop gem reference
-	 * to avoid double accounting counting.
+	 * tपंचांग has its own object refcounting, so drop gem reference
+	 * to aव्योम द्विगुन accounting counting.
 	 */
 	drm_gem_object_put(gem);
 
-	return 0;
-}
-EXPORT_SYMBOL(drm_gem_ttm_mmap);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(drm_gem_tपंचांग_mmap);
 
 MODULE_DESCRIPTION("DRM gem ttm helpers");
 MODULE_LICENSE("GPL");

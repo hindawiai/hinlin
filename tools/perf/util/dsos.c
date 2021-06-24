@@ -1,310 +1,311 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "debug.h"
-#include "dsos.h"
-#include "dso.h"
-#include "vdso.h"
-#include "namespaces.h"
-#include <libgen.h>
-#include <stdlib.h>
-#include <string.h>
-#include <symbol.h> // filename__read_build_id
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "debug.h"
+#समावेश "dsos.h"
+#समावेश "dso.h"
+#समावेश "vdso.h"
+#समावेश "namespaces.h"
+#समावेश <libgen.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <symbol.h> // filename__पढ़ो_build_id
 
-static int __dso_id__cmp(struct dso_id *a, struct dso_id *b)
-{
-	if (a->maj > b->maj) return -1;
-	if (a->maj < b->maj) return 1;
+अटल पूर्णांक __dso_id__cmp(काष्ठा dso_id *a, काष्ठा dso_id *b)
+अणु
+	अगर (a->maj > b->maj) वापस -1;
+	अगर (a->maj < b->maj) वापस 1;
 
-	if (a->min > b->min) return -1;
-	if (a->min < b->min) return 1;
+	अगर (a->min > b->min) वापस -1;
+	अगर (a->min < b->min) वापस 1;
 
-	if (a->ino > b->ino) return -1;
-	if (a->ino < b->ino) return 1;
+	अगर (a->ino > b->ino) वापस -1;
+	अगर (a->ino < b->ino) वापस 1;
 
-	if (a->ino_generation > b->ino_generation) return -1;
-	if (a->ino_generation < b->ino_generation) return 1;
+	अगर (a->ino_generation > b->ino_generation) वापस -1;
+	अगर (a->ino_generation < b->ino_generation) वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool dso_id__empty(struct dso_id *id)
-{
-	if (!id)
-		return true;
+अटल bool dso_id__empty(काष्ठा dso_id *id)
+अणु
+	अगर (!id)
+		वापस true;
 
-	return !id->maj && !id->min && !id->ino && !id->ino_generation;
-}
+	वापस !id->maj && !id->min && !id->ino && !id->ino_generation;
+पूर्ण
 
-static void dso__inject_id(struct dso *dso, struct dso_id *id)
-{
+अटल व्योम dso__inject_id(काष्ठा dso *dso, काष्ठा dso_id *id)
+अणु
 	dso->id.maj = id->maj;
 	dso->id.min = id->min;
 	dso->id.ino = id->ino;
 	dso->id.ino_generation = id->ino_generation;
-}
+पूर्ण
 
-static int dso_id__cmp(struct dso_id *a, struct dso_id *b)
-{
+अटल पूर्णांक dso_id__cmp(काष्ठा dso_id *a, काष्ठा dso_id *b)
+अणु
 	/*
-	 * The second is always dso->id, so zeroes if not set, assume passing
-	 * NULL for a means a zeroed id
+	 * The second is always dso->id, so zeroes अगर not set, assume passing
+	 * शून्य क्रम a means a zeroed id
 	 */
-	if (dso_id__empty(a) || dso_id__empty(b))
-		return 0;
+	अगर (dso_id__empty(a) || dso_id__empty(b))
+		वापस 0;
 
-	return __dso_id__cmp(a, b);
-}
+	वापस __dso_id__cmp(a, b);
+पूर्ण
 
-int dso__cmp_id(struct dso *a, struct dso *b)
-{
-	return __dso_id__cmp(&a->id, &b->id);
-}
+पूर्णांक dso__cmp_id(काष्ठा dso *a, काष्ठा dso *b)
+अणु
+	वापस __dso_id__cmp(&a->id, &b->id);
+पूर्ण
 
-bool __dsos__read_build_ids(struct list_head *head, bool with_hits)
-{
+bool __dsos__पढ़ो_build_ids(काष्ठा list_head *head, bool with_hits)
+अणु
 	bool have_build_id = false;
-	struct dso *pos;
-	struct nscookie nsc;
+	काष्ठा dso *pos;
+	काष्ठा nscookie nsc;
 
-	list_for_each_entry(pos, head, node) {
-		if (with_hits && !pos->hit && !dso__is_vdso(pos))
-			continue;
-		if (pos->has_build_id) {
+	list_क्रम_each_entry(pos, head, node) अणु
+		अगर (with_hits && !pos->hit && !dso__is_vdso(pos))
+			जारी;
+		अगर (pos->has_build_id) अणु
 			have_build_id = true;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		nsinfo__mountns_enter(pos->nsinfo, &nsc);
-		if (filename__read_build_id(pos->long_name, &pos->bid) > 0) {
+		अगर (filename__पढ़ो_build_id(pos->दीर्घ_name, &pos->bid) > 0) अणु
 			have_build_id	  = true;
 			pos->has_build_id = true;
-		}
-		nsinfo__mountns_exit(&nsc);
-	}
+		पूर्ण
+		nsinfo__mountns_निकास(&nsc);
+	पूर्ण
 
-	return have_build_id;
-}
+	वापस have_build_id;
+पूर्ण
 
-static int __dso__cmp_long_name(const char *long_name, struct dso_id *id, struct dso *b)
-{
-	int rc = strcmp(long_name, b->long_name);
-	return rc ?: dso_id__cmp(id, &b->id);
-}
+अटल पूर्णांक __dso__cmp_दीर्घ_name(स्थिर अक्षर *दीर्घ_name, काष्ठा dso_id *id, काष्ठा dso *b)
+अणु
+	पूर्णांक rc = म_भेद(दीर्घ_name, b->दीर्घ_name);
+	वापस rc ?: dso_id__cmp(id, &b->id);
+पूर्ण
 
-static int __dso__cmp_short_name(const char *short_name, struct dso_id *id, struct dso *b)
-{
-	int rc = strcmp(short_name, b->short_name);
-	return rc ?: dso_id__cmp(id, &b->id);
-}
+अटल पूर्णांक __dso__cmp_लघु_name(स्थिर अक्षर *लघु_name, काष्ठा dso_id *id, काष्ठा dso *b)
+अणु
+	पूर्णांक rc = म_भेद(लघु_name, b->लघु_name);
+	वापस rc ?: dso_id__cmp(id, &b->id);
+पूर्ण
 
-static int dso__cmp_short_name(struct dso *a, struct dso *b)
-{
-	return __dso__cmp_short_name(a->short_name, &a->id, b);
-}
+अटल पूर्णांक dso__cmp_लघु_name(काष्ठा dso *a, काष्ठा dso *b)
+अणु
+	वापस __dso__cmp_लघु_name(a->लघु_name, &a->id, b);
+पूर्ण
 
 /*
  * Find a matching entry and/or link current entry to RB tree.
- * Either one of the dso or name parameter must be non-NULL or the
+ * Either one of the dso or name parameter must be non-शून्य or the
  * function will not work.
  */
-struct dso *__dsos__findnew_link_by_longname_id(struct rb_root *root, struct dso *dso,
-						const char *name, struct dso_id *id)
-{
-	struct rb_node **p = &root->rb_node;
-	struct rb_node  *parent = NULL;
+काष्ठा dso *__dsos__findnew_link_by_दीर्घname_id(काष्ठा rb_root *root, काष्ठा dso *dso,
+						स्थिर अक्षर *name, काष्ठा dso_id *id)
+अणु
+	काष्ठा rb_node **p = &root->rb_node;
+	काष्ठा rb_node  *parent = शून्य;
 
-	if (!name)
-		name = dso->long_name;
+	अगर (!name)
+		name = dso->दीर्घ_name;
 	/*
 	 * Find node with the matching name
 	 */
-	while (*p) {
-		struct dso *this = rb_entry(*p, struct dso, rb_node);
-		int rc = __dso__cmp_long_name(name, id, this);
+	जबतक (*p) अणु
+		काष्ठा dso *this = rb_entry(*p, काष्ठा dso, rb_node);
+		पूर्णांक rc = __dso__cmp_दीर्घ_name(name, id, this);
 
 		parent = *p;
-		if (rc == 0) {
+		अगर (rc == 0) अणु
 			/*
-			 * In case the new DSO is a duplicate of an existing
-			 * one, print a one-time warning & put the new entry
+			 * In हाल the new DSO is a duplicate of an existing
+			 * one, prपूर्णांक a one-समय warning & put the new entry
 			 * at the end of the list of duplicates.
 			 */
-			if (!dso || (dso == this))
-				return this;	/* Find matching dso */
+			अगर (!dso || (dso == this))
+				वापस this;	/* Find matching dso */
 			/*
-			 * The core kernel DSOs may have duplicated long name.
-			 * In this case, the short name should be different.
-			 * Comparing the short names to differentiate the DSOs.
+			 * The core kernel DSOs may have duplicated दीर्घ name.
+			 * In this हाल, the लघु name should be dअगरferent.
+			 * Comparing the लघु names to dअगरferentiate the DSOs.
 			 */
-			rc = dso__cmp_short_name(dso, this);
-			if (rc == 0) {
+			rc = dso__cmp_लघु_name(dso, this);
+			अगर (rc == 0) अणु
 				pr_err("Duplicated dso name: %s\n", name);
-				return NULL;
-			}
-		}
-		if (rc < 0)
+				वापस शून्य;
+			पूर्ण
+		पूर्ण
+		अगर (rc < 0)
 			p = &parent->rb_left;
-		else
+		अन्यथा
 			p = &parent->rb_right;
-	}
-	if (dso) {
+	पूर्ण
+	अगर (dso) अणु
 		/* Add new node and rebalance tree */
 		rb_link_node(&dso->rb_node, parent, p);
 		rb_insert_color(&dso->rb_node, root);
 		dso->root = root;
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-void __dsos__add(struct dsos *dsos, struct dso *dso)
-{
+व्योम __dsos__add(काष्ठा dsos *dsos, काष्ठा dso *dso)
+अणु
 	list_add_tail(&dso->node, &dsos->head);
-	__dsos__findnew_link_by_longname_id(&dsos->root, dso, NULL, &dso->id);
+	__dsos__findnew_link_by_दीर्घname_id(&dsos->root, dso, शून्य, &dso->id);
 	/*
 	 * It is now in the linked list, grab a reference, then garbage collect
 	 * this when needing memory, by looking at LRU dso instances in the
-	 * list with atomic_read(&dso->refcnt) == 1, i.e. no references
-	 * anywhere besides the one for the list, do, under a lock for the
-	 * list: remove it from the list, then a dso__put(), that probably will
-	 * be the last and will then call dso__delete(), end of life.
+	 * list with atomic_पढ़ो(&dso->refcnt) == 1, i.e. no references
+	 * anywhere besides the one क्रम the list, करो, under a lock क्रम the
+	 * list: हटाओ it from the list, then a dso__put(), that probably will
+	 * be the last and will then call dso__delete(), end of lअगरe.
 	 *
-	 * That, or at the end of the 'struct machine' lifetime, when all
-	 * 'struct dso' instances will be removed from the list, in
-	 * dsos__exit(), if they have no other reference from some other data
-	 * structure.
+	 * That, or at the end of the 'struct machine' lअगरeसमय, when all
+	 * 'struct dso' instances will be हटाओd from the list, in
+	 * dsos__निकास(), अगर they have no other reference from some other data
+	 * काष्ठाure.
 	 *
 	 * E.g.: after processing a 'perf.data' file and storing references
-	 * to objects instantiated while processing events, we will have
-	 * references to the 'thread', 'map', 'dso' structs all from 'struct
+	 * to objects instantiated जबतक processing events, we will have
+	 * references to the 'thread', 'map', 'dso' structs all from 'काष्ठा
 	 * hist_entry' instances, but we may not need anything not referenced,
-	 * so we might as well call machines__exit()/machines__delete() and
+	 * so we might as well call machines__निकास()/machines__delete() and
 	 * garbage collect it.
 	 */
 	dso__get(dso);
-}
+पूर्ण
 
-void dsos__add(struct dsos *dsos, struct dso *dso)
-{
-	down_write(&dsos->lock);
+व्योम dsos__add(काष्ठा dsos *dsos, काष्ठा dso *dso)
+अणु
+	करोwn_ग_लिखो(&dsos->lock);
 	__dsos__add(dsos, dso);
-	up_write(&dsos->lock);
-}
+	up_ग_लिखो(&dsos->lock);
+पूर्ण
 
-static struct dso *__dsos__findnew_by_longname_id(struct rb_root *root, const char *name, struct dso_id *id)
-{
-	return __dsos__findnew_link_by_longname_id(root, NULL, name, id);
-}
+अटल काष्ठा dso *__dsos__findnew_by_दीर्घname_id(काष्ठा rb_root *root, स्थिर अक्षर *name, काष्ठा dso_id *id)
+अणु
+	वापस __dsos__findnew_link_by_दीर्घname_id(root, शून्य, name, id);
+पूर्ण
 
-static struct dso *__dsos__find_id(struct dsos *dsos, const char *name, struct dso_id *id, bool cmp_short)
-{
-	struct dso *pos;
+अटल काष्ठा dso *__dsos__find_id(काष्ठा dsos *dsos, स्थिर अक्षर *name, काष्ठा dso_id *id, bool cmp_लघु)
+अणु
+	काष्ठा dso *pos;
 
-	if (cmp_short) {
-		list_for_each_entry(pos, &dsos->head, node)
-			if (__dso__cmp_short_name(name, id, pos) == 0)
-				return pos;
-		return NULL;
-	}
-	return __dsos__findnew_by_longname_id(&dsos->root, name, id);
-}
+	अगर (cmp_लघु) अणु
+		list_क्रम_each_entry(pos, &dsos->head, node)
+			अगर (__dso__cmp_लघु_name(name, id, pos) == 0)
+				वापस pos;
+		वापस शून्य;
+	पूर्ण
+	वापस __dsos__findnew_by_दीर्घname_id(&dsos->root, name, id);
+पूर्ण
 
-struct dso *__dsos__find(struct dsos *dsos, const char *name, bool cmp_short)
-{
-	return __dsos__find_id(dsos, name, NULL, cmp_short);
-}
+काष्ठा dso *__dsos__find(काष्ठा dsos *dsos, स्थिर अक्षर *name, bool cmp_लघु)
+अणु
+	वापस __dsos__find_id(dsos, name, शून्य, cmp_लघु);
+पूर्ण
 
-static void dso__set_basename(struct dso *dso)
-{
-	char *base, *lname;
-	int tid;
+अटल व्योम dso__set_basename(काष्ठा dso *dso)
+अणु
+	अक्षर *base, *lname;
+	पूर्णांक tid;
 
-	if (sscanf(dso->long_name, "/tmp/perf-%d.map", &tid) == 1) {
-		if (asprintf(&base, "[JIT] tid %d", tid) < 0)
-			return;
-	} else {
+	अगर (माला_पूछो(dso->दीर्घ_name, "/tmp/perf-%d.map", &tid) == 1) अणु
+		अगर (aप्र_लिखो(&base, "[JIT] tid %d", tid) < 0)
+			वापस;
+	पूर्ण अन्यथा अणु
 	      /*
-	       * basename() may modify path buffer, so we must pass
+	       * basename() may modअगरy path buffer, so we must pass
                * a copy.
                */
-		lname = strdup(dso->long_name);
-		if (!lname)
-			return;
+		lname = strdup(dso->दीर्घ_name);
+		अगर (!lname)
+			वापस;
 
 		/*
-		 * basename() may return a pointer to internal
+		 * basename() may वापस a poपूर्णांकer to पूर्णांकernal
 		 * storage which is reused in subsequent calls
 		 * so copy the result.
 		 */
 		base = strdup(basename(lname));
 
-		free(lname);
+		मुक्त(lname);
 
-		if (!base)
-			return;
-	}
-	dso__set_short_name(dso, base, true);
-}
+		अगर (!base)
+			वापस;
+	पूर्ण
+	dso__set_लघु_name(dso, base, true);
+पूर्ण
 
-static struct dso *__dsos__addnew_id(struct dsos *dsos, const char *name, struct dso_id *id)
-{
-	struct dso *dso = dso__new_id(name, id);
+अटल काष्ठा dso *__dsos__addnew_id(काष्ठा dsos *dsos, स्थिर अक्षर *name, काष्ठा dso_id *id)
+अणु
+	काष्ठा dso *dso = dso__new_id(name, id);
 
-	if (dso != NULL) {
+	अगर (dso != शून्य) अणु
 		__dsos__add(dsos, dso);
 		dso__set_basename(dso);
-		/* Put dso here because __dsos_add already got it */
+		/* Put dso here because __dsos_add alपढ़ोy got it */
 		dso__put(dso);
-	}
-	return dso;
-}
+	पूर्ण
+	वापस dso;
+पूर्ण
 
-struct dso *__dsos__addnew(struct dsos *dsos, const char *name)
-{
-	return __dsos__addnew_id(dsos, name, NULL);
-}
+काष्ठा dso *__dsos__addnew(काष्ठा dsos *dsos, स्थिर अक्षर *name)
+अणु
+	वापस __dsos__addnew_id(dsos, name, शून्य);
+पूर्ण
 
-static struct dso *__dsos__findnew_id(struct dsos *dsos, const char *name, struct dso_id *id)
-{
-	struct dso *dso = __dsos__find_id(dsos, name, id, false);
+अटल काष्ठा dso *__dsos__findnew_id(काष्ठा dsos *dsos, स्थिर अक्षर *name, काष्ठा dso_id *id)
+अणु
+	काष्ठा dso *dso = __dsos__find_id(dsos, name, id, false);
 
-	if (dso && dso_id__empty(&dso->id) && !dso_id__empty(id))
+	अगर (dso && dso_id__empty(&dso->id) && !dso_id__empty(id))
 		dso__inject_id(dso, id);
 
-	return dso ? dso : __dsos__addnew_id(dsos, name, id);
-}
+	वापस dso ? dso : __dsos__addnew_id(dsos, name, id);
+पूर्ण
 
-struct dso *dsos__findnew_id(struct dsos *dsos, const char *name, struct dso_id *id)
-{
-	struct dso *dso;
-	down_write(&dsos->lock);
+काष्ठा dso *dsos__findnew_id(काष्ठा dsos *dsos, स्थिर अक्षर *name, काष्ठा dso_id *id)
+अणु
+	काष्ठा dso *dso;
+	करोwn_ग_लिखो(&dsos->lock);
 	dso = dso__get(__dsos__findnew_id(dsos, name, id));
-	up_write(&dsos->lock);
-	return dso;
-}
+	up_ग_लिखो(&dsos->lock);
+	वापस dso;
+पूर्ण
 
-size_t __dsos__fprintf_buildid(struct list_head *head, FILE *fp,
-			       bool (skip)(struct dso *dso, int parm), int parm)
-{
-	struct dso *pos;
-	size_t ret = 0;
+माप_प्रकार __dsos__ख_लिखो_buildid(काष्ठा list_head *head, खाता *fp,
+			       bool (skip)(काष्ठा dso *dso, पूर्णांक parm), पूर्णांक parm)
+अणु
+	काष्ठा dso *pos;
+	माप_प्रकार ret = 0;
 
-	list_for_each_entry(pos, head, node) {
-		char sbuild_id[SBUILD_ID_SIZE];
+	list_क्रम_each_entry(pos, head, node) अणु
+		अक्षर sbuild_id[SBUILD_ID_SIZE];
 
-		if (skip && skip(pos, parm))
-			continue;
-		build_id__sprintf(&pos->bid, sbuild_id);
-		ret += fprintf(fp, "%-40s %s\n", sbuild_id, pos->long_name);
-	}
-	return ret;
-}
+		अगर (skip && skip(pos, parm))
+			जारी;
+		build_id__प्र_लिखो(&pos->bid, sbuild_id);
+		ret += ख_लिखो(fp, "%-40s %s\n", sbuild_id, pos->दीर्घ_name);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-size_t __dsos__fprintf(struct list_head *head, FILE *fp)
-{
-	struct dso *pos;
-	size_t ret = 0;
+माप_प्रकार __dsos__ख_लिखो(काष्ठा list_head *head, खाता *fp)
+अणु
+	काष्ठा dso *pos;
+	माप_प्रकार ret = 0;
 
-	list_for_each_entry(pos, head, node) {
-		ret += dso__fprintf(pos, fp);
-	}
+	list_क्रम_each_entry(pos, head, node) अणु
+		ret += dso__ख_लिखो(pos, fp);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

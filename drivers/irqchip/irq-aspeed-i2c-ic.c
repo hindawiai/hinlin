@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Aspeed 24XX/25XX I2C Interrupt Controller.
  *
@@ -7,106 +8,106 @@
  *  Copyright 2017 Google, Inc.
  */
 
-#include <linux/irq.h>
-#include <linux/irqchip.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/irqdomain.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/io.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/पन.स>
 
 
-#define ASPEED_I2C_IC_NUM_BUS 14
+#घोषणा ASPEED_I2C_IC_NUM_BUS 14
 
-struct aspeed_i2c_ic {
-	void __iomem		*base;
-	int			parent_irq;
-	struct irq_domain	*irq_domain;
-};
+काष्ठा aspeed_i2c_ic अणु
+	व्योम __iomem		*base;
+	पूर्णांक			parent_irq;
+	काष्ठा irq_करोमुख्य	*irq_करोमुख्य;
+पूर्ण;
 
 /*
- * The aspeed chip provides a single hardware interrupt for all of the I2C
- * busses, so we use a dummy interrupt chip to translate this single interrupt
- * into multiple interrupts, each associated with a single I2C bus.
+ * The aspeed chip provides a single hardware पूर्णांकerrupt क्रम all of the I2C
+ * busses, so we use a dummy पूर्णांकerrupt chip to translate this single पूर्णांकerrupt
+ * पूर्णांकo multiple पूर्णांकerrupts, each associated with a single I2C bus.
  */
-static void aspeed_i2c_ic_irq_handler(struct irq_desc *desc)
-{
-	struct aspeed_i2c_ic *i2c_ic = irq_desc_get_handler_data(desc);
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	unsigned long bit, status;
-	unsigned int bus_irq;
+अटल व्योम aspeed_i2c_ic_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा aspeed_i2c_ic *i2c_ic = irq_desc_get_handler_data(desc);
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	अचिन्हित दीर्घ bit, status;
+	अचिन्हित पूर्णांक bus_irq;
 
 	chained_irq_enter(chip, desc);
-	status = readl(i2c_ic->base);
-	for_each_set_bit(bit, &status, ASPEED_I2C_IC_NUM_BUS) {
-		bus_irq = irq_find_mapping(i2c_ic->irq_domain, bit);
+	status = पढ़ोl(i2c_ic->base);
+	क्रम_each_set_bit(bit, &status, ASPEED_I2C_IC_NUM_BUS) अणु
+		bus_irq = irq_find_mapping(i2c_ic->irq_करोमुख्य, bit);
 		generic_handle_irq(bus_irq);
-	}
-	chained_irq_exit(chip, desc);
-}
+	पूर्ण
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
 /*
- * Set simple handler and mark IRQ as valid. Nothing interesting to do here
- * since we are using a dummy interrupt chip.
+ * Set simple handler and mark IRQ as valid. Nothing पूर्णांकeresting to करो here
+ * since we are using a dummy पूर्णांकerrupt chip.
  */
-static int aspeed_i2c_ic_map_irq_domain(struct irq_domain *domain,
-					unsigned int irq, irq_hw_number_t hwirq)
-{
+अटल पूर्णांक aspeed_i2c_ic_map_irq_करोमुख्य(काष्ठा irq_करोमुख्य *करोमुख्य,
+					अचिन्हित पूर्णांक irq, irq_hw_number_t hwirq)
+अणु
 	irq_set_chip_and_handler(irq, &dummy_irq_chip, handle_simple_irq);
-	irq_set_chip_data(irq, domain->host_data);
+	irq_set_chip_data(irq, करोमुख्य->host_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops aspeed_i2c_ic_irq_domain_ops = {
-	.map = aspeed_i2c_ic_map_irq_domain,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops aspeed_i2c_ic_irq_करोमुख्य_ops = अणु
+	.map = aspeed_i2c_ic_map_irq_करोमुख्य,
+पूर्ण;
 
-static int __init aspeed_i2c_ic_of_init(struct device_node *node,
-					struct device_node *parent)
-{
-	struct aspeed_i2c_ic *i2c_ic;
-	int ret = 0;
+अटल पूर्णांक __init aspeed_i2c_ic_of_init(काष्ठा device_node *node,
+					काष्ठा device_node *parent)
+अणु
+	काष्ठा aspeed_i2c_ic *i2c_ic;
+	पूर्णांक ret = 0;
 
-	i2c_ic = kzalloc(sizeof(*i2c_ic), GFP_KERNEL);
-	if (!i2c_ic)
-		return -ENOMEM;
+	i2c_ic = kzalloc(माप(*i2c_ic), GFP_KERNEL);
+	अगर (!i2c_ic)
+		वापस -ENOMEM;
 
 	i2c_ic->base = of_iomap(node, 0);
-	if (!i2c_ic->base) {
+	अगर (!i2c_ic->base) अणु
 		ret = -ENOMEM;
-		goto err_free_ic;
-	}
+		जाओ err_मुक्त_ic;
+	पूर्ण
 
 	i2c_ic->parent_irq = irq_of_parse_and_map(node, 0);
-	if (i2c_ic->parent_irq < 0) {
+	अगर (i2c_ic->parent_irq < 0) अणु
 		ret = i2c_ic->parent_irq;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	i2c_ic->irq_domain = irq_domain_add_linear(node, ASPEED_I2C_IC_NUM_BUS,
-						   &aspeed_i2c_ic_irq_domain_ops,
-						   NULL);
-	if (!i2c_ic->irq_domain) {
+	i2c_ic->irq_करोमुख्य = irq_करोमुख्य_add_linear(node, ASPEED_I2C_IC_NUM_BUS,
+						   &aspeed_i2c_ic_irq_करोमुख्य_ops,
+						   शून्य);
+	अगर (!i2c_ic->irq_करोमुख्य) अणु
 		ret = -ENOMEM;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	i2c_ic->irq_domain->name = "aspeed-i2c-domain";
+	i2c_ic->irq_करोमुख्य->name = "aspeed-i2c-domain";
 
 	irq_set_chained_handler_and_data(i2c_ic->parent_irq,
 					 aspeed_i2c_ic_irq_handler, i2c_ic);
 
 	pr_info("i2c controller registered, irq %d\n", i2c_ic->parent_irq);
 
-	return 0;
+	वापस 0;
 
 err_iounmap:
 	iounmap(i2c_ic->base);
-err_free_ic:
-	kfree(i2c_ic);
-	return ret;
-}
+err_मुक्त_ic:
+	kमुक्त(i2c_ic);
+	वापस ret;
+पूर्ण
 
 IRQCHIP_DECLARE(ast2400_i2c_ic, "aspeed,ast2400-i2c-ic", aspeed_i2c_ic_of_init);
 IRQCHIP_DECLARE(ast2500_i2c_ic, "aspeed,ast2500-i2c-ic", aspeed_i2c_ic_of_init);

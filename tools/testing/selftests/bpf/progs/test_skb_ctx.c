@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-int _version SEC("version") = 1;
-char _license[] SEC("license") = "GPL";
+पूर्णांक _version SEC("version") = 1;
+अक्षर _license[] SEC("license") = "GPL";
 
 SEC("skb_ctx")
-int process(struct __sk_buff *skb)
-{
-	#pragma clang loop unroll(full)
-	for (int i = 0; i < 5; i++) {
-		if (skb->cb[i] != i + 1)
-			return 1;
+पूर्णांक process(काष्ठा __sk_buff *skb)
+अणु
+	#आशय clang loop unroll(full)
+	क्रम (पूर्णांक i = 0; i < 5; i++) अणु
+		अगर (skb->cb[i] != i + 1)
+			वापस 1;
 		skb->cb[i]++;
-	}
+	पूर्ण
 	skb->priority++;
 	skb->tstamp++;
 	skb->mark++;
 
-	if (skb->wire_len != 100)
-		return 1;
-	if (skb->gso_segs != 8)
-		return 1;
-	if (skb->gso_size != 10)
-		return 1;
+	अगर (skb->wire_len != 100)
+		वापस 1;
+	अगर (skb->gso_segs != 8)
+		वापस 1;
+	अगर (skb->gso_size != 10)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

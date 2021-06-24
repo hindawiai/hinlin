@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MACH_PXA25x_H
-#define __MACH_PXA25x_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MACH_PXA25x_H
+#घोषणा __MACH_PXA25x_H
 
-#include <mach/hardware.h>
-#include <mach/pxa2xx-regs.h>
-#include "mfp-pxa25x.h"
-#include <mach/irqs.h>
+#समावेश <mach/hardware.h>
+#समावेश <mach/pxa2xx-regs.h>
+#समावेश "mfp-pxa25x.h"
+#समावेश <mach/irqs.h>
 
-#endif /* __MACH_PXA25x_H */
+#पूर्ण_अगर /* __MACH_PXA25x_H */

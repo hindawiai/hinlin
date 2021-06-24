@@ -1,276 +1,277 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Soundfont generic routines.
- *	It is intended that these should be used by any driver that is willing
+ *	It is पूर्णांकended that these should be used by any driver that is willing
  *	to accept soundfont patches.
  *
- *  Copyright (C) 1999 Steve Ratcliffe
+ *  Copyright (C) 1999 Steve Ratclअगरfe
  *  Copyright (c) 1999-2000 Takashi Iwai <tiwai@suse.de>
  */
 /*
- * Deal with reading in of a soundfont.  Code follows the OSS way
- * of doing things so that the old sfxload utility can be used.
- * Everything may change when there is an alsa way of doing things.
+ * Deal with पढ़ोing in of a soundfont.  Code follows the OSS way
+ * of करोing things so that the old sfxload utility can be used.
+ * Everything may change when there is an alsa way of करोing things.
  */
-#include <linux/uaccess.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <sound/core.h>
-#include <sound/soundfont.h>
-#include <sound/seq_oss_legacy.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <sound/core.h>
+#समावेश <sound/soundfont.h>
+#समावेश <sound/seq_oss_legacy.h>
 
-/* Prototypes for static functions */
+/* Prototypes क्रम अटल functions */
 
-static int open_patch(struct snd_sf_list *sflist, const char __user *data,
-		      int count, int client);
-static struct snd_soundfont *newsf(struct snd_sf_list *sflist, int type, char *name);
-static int is_identical_font(struct snd_soundfont *sf, int type, unsigned char *name);
-static int close_patch(struct snd_sf_list *sflist);
-static int probe_data(struct snd_sf_list *sflist, int sample_id);
-static void set_zone_counter(struct snd_sf_list *sflist,
-			     struct snd_soundfont *sf, struct snd_sf_zone *zp);
-static struct snd_sf_zone *sf_zone_new(struct snd_sf_list *sflist,
-				       struct snd_soundfont *sf);
-static void set_sample_counter(struct snd_sf_list *sflist,
-			       struct snd_soundfont *sf, struct snd_sf_sample *sp);
-static struct snd_sf_sample *sf_sample_new(struct snd_sf_list *sflist,
-					   struct snd_soundfont *sf);
-static void sf_sample_delete(struct snd_sf_list *sflist,
-			     struct snd_soundfont *sf, struct snd_sf_sample *sp);
-static int load_map(struct snd_sf_list *sflist, const void __user *data, int count);
-static int load_info(struct snd_sf_list *sflist, const void __user *data, long count);
-static int remove_info(struct snd_sf_list *sflist, struct snd_soundfont *sf,
-		       int bank, int instr);
-static void init_voice_info(struct soundfont_voice_info *avp);
-static void init_voice_parm(struct soundfont_voice_parm *pp);
-static struct snd_sf_sample *set_sample(struct snd_soundfont *sf,
-					struct soundfont_voice_info *avp);
-static struct snd_sf_sample *find_sample(struct snd_soundfont *sf, int sample_id);
-static int load_data(struct snd_sf_list *sflist, const void __user *data, long count);
-static void rebuild_presets(struct snd_sf_list *sflist);
-static void add_preset(struct snd_sf_list *sflist, struct snd_sf_zone *cur);
-static void delete_preset(struct snd_sf_list *sflist, struct snd_sf_zone *zp);
-static struct snd_sf_zone *search_first_zone(struct snd_sf_list *sflist,
-					     int bank, int preset, int key);
-static int search_zones(struct snd_sf_list *sflist, int *notep, int vel,
-			int preset, int bank, struct snd_sf_zone **table,
-			int max_layers, int level);
-static int get_index(int bank, int instr, int key);
-static void snd_sf_init(struct snd_sf_list *sflist);
-static void snd_sf_clear(struct snd_sf_list *sflist);
+अटल पूर्णांक खोलो_patch(काष्ठा snd_sf_list *sflist, स्थिर अक्षर __user *data,
+		      पूर्णांक count, पूर्णांक client);
+अटल काष्ठा snd_soundfont *newsf(काष्ठा snd_sf_list *sflist, पूर्णांक type, अक्षर *name);
+अटल पूर्णांक is_identical_font(काष्ठा snd_soundfont *sf, पूर्णांक type, अचिन्हित अक्षर *name);
+अटल पूर्णांक बंद_patch(काष्ठा snd_sf_list *sflist);
+अटल पूर्णांक probe_data(काष्ठा snd_sf_list *sflist, पूर्णांक sample_id);
+अटल व्योम set_zone_counter(काष्ठा snd_sf_list *sflist,
+			     काष्ठा snd_soundfont *sf, काष्ठा snd_sf_zone *zp);
+अटल काष्ठा snd_sf_zone *sf_zone_new(काष्ठा snd_sf_list *sflist,
+				       काष्ठा snd_soundfont *sf);
+अटल व्योम set_sample_counter(काष्ठा snd_sf_list *sflist,
+			       काष्ठा snd_soundfont *sf, काष्ठा snd_sf_sample *sp);
+अटल काष्ठा snd_sf_sample *sf_sample_new(काष्ठा snd_sf_list *sflist,
+					   काष्ठा snd_soundfont *sf);
+अटल व्योम sf_sample_delete(काष्ठा snd_sf_list *sflist,
+			     काष्ठा snd_soundfont *sf, काष्ठा snd_sf_sample *sp);
+अटल पूर्णांक load_map(काष्ठा snd_sf_list *sflist, स्थिर व्योम __user *data, पूर्णांक count);
+अटल पूर्णांक load_info(काष्ठा snd_sf_list *sflist, स्थिर व्योम __user *data, दीर्घ count);
+अटल पूर्णांक हटाओ_info(काष्ठा snd_sf_list *sflist, काष्ठा snd_soundfont *sf,
+		       पूर्णांक bank, पूर्णांक instr);
+अटल व्योम init_voice_info(काष्ठा soundfont_voice_info *avp);
+अटल व्योम init_voice_parm(काष्ठा soundfont_voice_parm *pp);
+अटल काष्ठा snd_sf_sample *set_sample(काष्ठा snd_soundfont *sf,
+					काष्ठा soundfont_voice_info *avp);
+अटल काष्ठा snd_sf_sample *find_sample(काष्ठा snd_soundfont *sf, पूर्णांक sample_id);
+अटल पूर्णांक load_data(काष्ठा snd_sf_list *sflist, स्थिर व्योम __user *data, दीर्घ count);
+अटल व्योम rebuild_presets(काष्ठा snd_sf_list *sflist);
+अटल व्योम add_preset(काष्ठा snd_sf_list *sflist, काष्ठा snd_sf_zone *cur);
+अटल व्योम delete_preset(काष्ठा snd_sf_list *sflist, काष्ठा snd_sf_zone *zp);
+अटल काष्ठा snd_sf_zone *search_first_zone(काष्ठा snd_sf_list *sflist,
+					     पूर्णांक bank, पूर्णांक preset, पूर्णांक key);
+अटल पूर्णांक search_zones(काष्ठा snd_sf_list *sflist, पूर्णांक *notep, पूर्णांक vel,
+			पूर्णांक preset, पूर्णांक bank, काष्ठा snd_sf_zone **table,
+			पूर्णांक max_layers, पूर्णांक level);
+अटल पूर्णांक get_index(पूर्णांक bank, पूर्णांक instr, पूर्णांक key);
+अटल व्योम snd_sf_init(काष्ठा snd_sf_list *sflist);
+अटल व्योम snd_sf_clear(काष्ठा snd_sf_list *sflist);
 
 /*
  * lock access to sflist
  */
-static void
-lock_preset(struct snd_sf_list *sflist)
-{
-	unsigned long flags;
+अटल व्योम
+lock_preset(काष्ठा snd_sf_list *sflist)
+अणु
+	अचिन्हित दीर्घ flags;
 	mutex_lock(&sflist->presets_mutex);
 	spin_lock_irqsave(&sflist->lock, flags);
 	sflist->presets_locked = 1;
 	spin_unlock_irqrestore(&sflist->lock, flags);
-}
+पूर्ण
 
 
 /*
- * remove lock
+ * हटाओ lock
  */
-static void
-unlock_preset(struct snd_sf_list *sflist)
-{
-	unsigned long flags;
+अटल व्योम
+unlock_preset(काष्ठा snd_sf_list *sflist)
+अणु
+	अचिन्हित दीर्घ flags;
 	spin_lock_irqsave(&sflist->lock, flags);
 	sflist->presets_locked = 0;
 	spin_unlock_irqrestore(&sflist->lock, flags);
 	mutex_unlock(&sflist->presets_mutex);
-}
+पूर्ण
 
 
 /*
- * close the patch if the patch was opened by this client.
+ * बंद the patch अगर the patch was खोलोed by this client.
  */
-int
-snd_soundfont_close_check(struct snd_sf_list *sflist, int client)
-{
-	unsigned long flags;
+पूर्णांक
+snd_soundfont_बंद_check(काष्ठा snd_sf_list *sflist, पूर्णांक client)
+अणु
+	अचिन्हित दीर्घ flags;
 	spin_lock_irqsave(&sflist->lock, flags);
-	if (sflist->open_client == client)  {
+	अगर (sflist->खोलो_client == client)  अणु
 		spin_unlock_irqrestore(&sflist->lock, flags);
-		return close_patch(sflist);
-	}
+		वापस बंद_patch(sflist);
+	पूर्ण
 	spin_unlock_irqrestore(&sflist->lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  * Deal with a soundfont patch.  Any driver could use these routines
- * although it was designed for the AWE64.
+ * although it was deचिन्हित क्रम the AWE64.
  *
- * The sample_write and callargs pararameters allow a callback into
- * the actual driver to write sample data to the board or whatever
- * it wants to do with it.
+ * The sample_ग_लिखो and callargs pararameters allow a callback पूर्णांकo
+ * the actual driver to ग_लिखो sample data to the board or whatever
+ * it wants to करो with it.
  */
-int
-snd_soundfont_load(struct snd_sf_list *sflist, const void __user *data,
-		   long count, int client)
-{
-	struct soundfont_patch_info patch;
-	unsigned long flags;
-	int  rc;
+पूर्णांक
+snd_soundfont_load(काष्ठा snd_sf_list *sflist, स्थिर व्योम __user *data,
+		   दीर्घ count, पूर्णांक client)
+अणु
+	काष्ठा soundfont_patch_info patch;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक  rc;
 
-	if (count < (long)sizeof(patch)) {
-		snd_printk(KERN_ERR "patch record too small %ld\n", count);
-		return -EINVAL;
-	}
-	if (copy_from_user(&patch, data, sizeof(patch)))
-		return -EFAULT;
+	अगर (count < (दीर्घ)माप(patch)) अणु
+		snd_prपूर्णांकk(KERN_ERR "patch record too small %ld\n", count);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (copy_from_user(&patch, data, माप(patch)))
+		वापस -EFAULT;
 
-	count -= sizeof(patch);
-	data += sizeof(patch);
+	count -= माप(patch);
+	data += माप(patch);
 
-	if (patch.key != SNDRV_OSS_SOUNDFONT_PATCH) {
-		snd_printk(KERN_ERR "The wrong kind of patch %x\n", patch.key);
-		return -EINVAL;
-	}
-	if (count < patch.len) {
-		snd_printk(KERN_ERR "Patch too short %ld, need %d\n",
+	अगर (patch.key != SNDRV_OSS_SOUNDFONT_PATCH) अणु
+		snd_prपूर्णांकk(KERN_ERR "The wrong kind of patch %x\n", patch.key);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (count < patch.len) अणु
+		snd_prपूर्णांकk(KERN_ERR "Patch too short %ld, need %d\n",
 			   count, patch.len);
-		return -EINVAL;
-	}
-	if (patch.len < 0) {
-		snd_printk(KERN_ERR "poor length %d\n", patch.len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
+	अगर (patch.len < 0) अणु
+		snd_prपूर्णांकk(KERN_ERR "poor length %d\n", patch.len);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (patch.type == SNDRV_SFNT_OPEN_PATCH) {
-		/* grab sflist to open */
+	अगर (patch.type == SNDRV_SFNT_OPEN_PATCH) अणु
+		/* grab sflist to खोलो */
 		lock_preset(sflist);
-		rc = open_patch(sflist, data, count, client);
+		rc = खोलो_patch(sflist, data, count, client);
 		unlock_preset(sflist);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* check if other client already opened patch */
+	/* check अगर other client alपढ़ोy खोलोed patch */
 	spin_lock_irqsave(&sflist->lock, flags);
-	if (sflist->open_client != client) {
+	अगर (sflist->खोलो_client != client) अणु
 		spin_unlock_irqrestore(&sflist->lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	spin_unlock_irqrestore(&sflist->lock, flags);
 
 	lock_preset(sflist);
 	rc = -EINVAL;
-	switch (patch.type) {
-	case SNDRV_SFNT_LOAD_INFO:
+	चयन (patch.type) अणु
+	हाल SNDRV_SFNT_LOAD_INFO:
 		rc = load_info(sflist, data, count);
-		break;
-	case SNDRV_SFNT_LOAD_DATA:
+		अवरोध;
+	हाल SNDRV_SFNT_LOAD_DATA:
 		rc = load_data(sflist, data, count);
-		break;
-	case SNDRV_SFNT_CLOSE_PATCH:
-		rc = close_patch(sflist);
-		break;
-	case SNDRV_SFNT_REPLACE_DATA:
+		अवरोध;
+	हाल SNDRV_SFNT_CLOSE_PATCH:
+		rc = बंद_patch(sflist);
+		अवरोध;
+	हाल SNDRV_SFNT_REPLACE_DATA:
 		/*rc = replace_data(&patch, data, count);*/
-		break;
-	case SNDRV_SFNT_MAP_PRESET:
+		अवरोध;
+	हाल SNDRV_SFNT_MAP_PRESET:
 		rc = load_map(sflist, data, count);
-		break;
-	case SNDRV_SFNT_PROBE_DATA:
+		अवरोध;
+	हाल SNDRV_SFNT_PROBE_DATA:
 		rc = probe_data(sflist, patch.optarg);
-		break;
-	case SNDRV_SFNT_REMOVE_INFO:
-		/* patch must be opened */
-		if (!sflist->currsf) {
-			snd_printk(KERN_ERR "soundfont: remove_info: "
+		अवरोध;
+	हाल SNDRV_SFNT_REMOVE_INFO:
+		/* patch must be खोलोed */
+		अगर (!sflist->currsf) अणु
+			snd_prपूर्णांकk(KERN_ERR "soundfont: remove_info: "
 				   "patch not opened\n");
 			rc = -EINVAL;
-		} else {
-			int bank, instr;
-			bank = ((unsigned short)patch.optarg >> 8) & 0xff;
-			instr = (unsigned short)patch.optarg & 0xff;
-			if (! remove_info(sflist, sflist->currsf, bank, instr))
+		पूर्ण अन्यथा अणु
+			पूर्णांक bank, instr;
+			bank = ((अचिन्हित लघु)patch.optarg >> 8) & 0xff;
+			instr = (अचिन्हित लघु)patch.optarg & 0xff;
+			अगर (! हटाओ_info(sflist, sflist->currsf, bank, instr))
 				rc = -EINVAL;
-			else
+			अन्यथा
 				rc = 0;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 	unlock_preset(sflist);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
-/* check if specified type is special font (GUS or preset-alias) */
-static inline int
-is_special_type(int type)
-{
+/* check अगर specअगरied type is special font (GUS or preset-alias) */
+अटल अंतरभूत पूर्णांक
+is_special_type(पूर्णांक type)
+अणु
 	type &= 0x0f;
-	return (type == SNDRV_SFNT_PAT_TYPE_GUS ||
+	वापस (type == SNDRV_SFNT_PAT_TYPE_GUS ||
 		type == SNDRV_SFNT_PAT_TYPE_MAP);
-}
+पूर्ण
 
 
-/* open patch; create sf list */
-static int
-open_patch(struct snd_sf_list *sflist, const char __user *data,
-	   int count, int client)
-{
-	struct soundfont_open_parm parm;
-	struct snd_soundfont *sf;
-	unsigned long flags;
+/* खोलो patch; create sf list */
+अटल पूर्णांक
+खोलो_patch(काष्ठा snd_sf_list *sflist, स्थिर अक्षर __user *data,
+	   पूर्णांक count, पूर्णांक client)
+अणु
+	काष्ठा soundfont_खोलो_parm parm;
+	काष्ठा snd_soundfont *sf;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sflist->lock, flags);
-	if (sflist->open_client >= 0 || sflist->currsf) {
+	अगर (sflist->खोलो_client >= 0 || sflist->currsf) अणु
 		spin_unlock_irqrestore(&sflist->lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	spin_unlock_irqrestore(&sflist->lock, flags);
 
-	if (copy_from_user(&parm, data, sizeof(parm)))
-		return -EFAULT;
+	अगर (copy_from_user(&parm, data, माप(parm)))
+		वापस -EFAULT;
 
-	if (is_special_type(parm.type)) {
+	अगर (is_special_type(parm.type)) अणु
 		parm.type |= SNDRV_SFNT_PAT_SHARED;
-		sf = newsf(sflist, parm.type, NULL);
-	} else 
+		sf = newsf(sflist, parm.type, शून्य);
+	पूर्ण अन्यथा 
 		sf = newsf(sflist, parm.type, parm.name);
-	if (sf == NULL) {
-		return -ENOMEM;
-	}
+	अगर (sf == शून्य) अणु
+		वापस -ENOMEM;
+	पूर्ण
 
 	spin_lock_irqsave(&sflist->lock, flags);
-	sflist->open_client = client;
+	sflist->खोलो_client = client;
 	sflist->currsf = sf;
 	spin_unlock_irqrestore(&sflist->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Allocate a new soundfont structure.
+ * Allocate a new soundfont काष्ठाure.
  */
-static struct snd_soundfont *
-newsf(struct snd_sf_list *sflist, int type, char *name)
-{
-	struct snd_soundfont *sf;
+अटल काष्ठा snd_soundfont *
+newsf(काष्ठा snd_sf_list *sflist, पूर्णांक type, अक्षर *name)
+अणु
+	काष्ठा snd_soundfont *sf;
 
 	/* check the shared fonts */
-	if (type & SNDRV_SFNT_PAT_SHARED) {
-		for (sf = sflist->fonts; sf; sf = sf->next) {
-			if (is_identical_font(sf, type, name)) {
-				return sf;
-			}
-		}
-	}
+	अगर (type & SNDRV_SFNT_PAT_SHARED) अणु
+		क्रम (sf = sflist->fonts; sf; sf = sf->next) अणु
+			अगर (is_identical_font(sf, type, name)) अणु
+				वापस sf;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* not found -- create a new one */
-	sf = kzalloc(sizeof(*sf), GFP_KERNEL);
-	if (sf == NULL)
-		return NULL;
+	sf = kzalloc(माप(*sf), GFP_KERNEL);
+	अगर (sf == शून्य)
+		वापस शून्य;
 	sf->id = sflist->fonts_size;
 	sflist->fonts_size++;
 
@@ -279,188 +280,188 @@ newsf(struct snd_sf_list *sflist, int type, char *name)
 	sflist->fonts = sf;
 
 	sf->type = type;
-	sf->zones = NULL;
-	sf->samples = NULL;
-	if (name)
-		memcpy(sf->name, name, SNDRV_SFNT_PATCH_NAME_LEN);
+	sf->zones = शून्य;
+	sf->samples = शून्य;
+	अगर (name)
+		स_नकल(sf->name, name, SNDRV_SFNT_PATCH_NAME_LEN);
 
-	return sf;
-}
+	वापस sf;
+पूर्ण
 
-/* check if the given name matches to the existing list */
-static int
-is_identical_font(struct snd_soundfont *sf, int type, unsigned char *name)
-{
-	return ((sf->type & SNDRV_SFNT_PAT_SHARED) &&
+/* check अगर the given name matches to the existing list */
+अटल पूर्णांक
+is_identical_font(काष्ठा snd_soundfont *sf, पूर्णांक type, अचिन्हित अक्षर *name)
+अणु
+	वापस ((sf->type & SNDRV_SFNT_PAT_SHARED) &&
 		(sf->type & 0x0f) == (type & 0x0f) &&
-		(name == NULL ||
-		 memcmp(sf->name, name, SNDRV_SFNT_PATCH_NAME_LEN) == 0));
-}
+		(name == शून्य ||
+		 स_भेद(sf->name, name, SNDRV_SFNT_PATCH_NAME_LEN) == 0));
+पूर्ण
 
 /*
  * Close the current patch.
  */
-static int
-close_patch(struct snd_sf_list *sflist)
-{
-	unsigned long flags;
+अटल पूर्णांक
+बंद_patch(काष्ठा snd_sf_list *sflist)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&sflist->lock, flags);
-	sflist->currsf = NULL;
-	sflist->open_client = -1;
+	sflist->currsf = शून्य;
+	sflist->खोलो_client = -1;
 	spin_unlock_irqrestore(&sflist->lock, flags);
 
 	rebuild_presets(sflist);
 
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
 /* probe sample in the current list -- nothing to be loaded */
-static int
-probe_data(struct snd_sf_list *sflist, int sample_id)
-{
-	/* patch must be opened */
-	if (sflist->currsf) {
-		/* search the specified sample by optarg */
-		if (find_sample(sflist->currsf, sample_id))
-			return 0;
-	}
-	return -EINVAL;
-}
+अटल पूर्णांक
+probe_data(काष्ठा snd_sf_list *sflist, पूर्णांक sample_id)
+अणु
+	/* patch must be खोलोed */
+	अगर (sflist->currsf) अणु
+		/* search the specअगरied sample by optarg */
+		अगर (find_sample(sflist->currsf, sample_id))
+			वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * increment zone counter
  */
-static void
-set_zone_counter(struct snd_sf_list *sflist, struct snd_soundfont *sf,
-		 struct snd_sf_zone *zp)
-{
+अटल व्योम
+set_zone_counter(काष्ठा snd_sf_list *sflist, काष्ठा snd_soundfont *sf,
+		 काष्ठा snd_sf_zone *zp)
+अणु
 	zp->counter = sflist->zone_counter++;
-	if (sf->type & SNDRV_SFNT_PAT_LOCKED)
+	अगर (sf->type & SNDRV_SFNT_PAT_LOCKED)
 		sflist->zone_locked = sflist->zone_counter;
-}
+पूर्ण
 
 /*
  * allocate a new zone record
  */
-static struct snd_sf_zone *
-sf_zone_new(struct snd_sf_list *sflist, struct snd_soundfont *sf)
-{
-	struct snd_sf_zone *zp;
+अटल काष्ठा snd_sf_zone *
+sf_zone_new(काष्ठा snd_sf_list *sflist, काष्ठा snd_soundfont *sf)
+अणु
+	काष्ठा snd_sf_zone *zp;
 
-	if ((zp = kzalloc(sizeof(*zp), GFP_KERNEL)) == NULL)
-		return NULL;
+	अगर ((zp = kzalloc(माप(*zp), GFP_KERNEL)) == शून्य)
+		वापस शून्य;
 	zp->next = sf->zones;
 	sf->zones = zp;
 
 	init_voice_info(&zp->v);
 
 	set_zone_counter(sflist, sf, zp);
-	return zp;
-}
+	वापस zp;
+पूर्ण
 
 
 /*
  * increment sample counter
  */
-static void
-set_sample_counter(struct snd_sf_list *sflist, struct snd_soundfont *sf,
-		   struct snd_sf_sample *sp)
-{
+अटल व्योम
+set_sample_counter(काष्ठा snd_sf_list *sflist, काष्ठा snd_soundfont *sf,
+		   काष्ठा snd_sf_sample *sp)
+अणु
 	sp->counter = sflist->sample_counter++;
-	if (sf->type & SNDRV_SFNT_PAT_LOCKED)
+	अगर (sf->type & SNDRV_SFNT_PAT_LOCKED)
 		sflist->sample_locked = sflist->sample_counter;
-}
+पूर्ण
 
 /*
  * allocate a new sample list record
  */
-static struct snd_sf_sample *
-sf_sample_new(struct snd_sf_list *sflist, struct snd_soundfont *sf)
-{
-	struct snd_sf_sample *sp;
+अटल काष्ठा snd_sf_sample *
+sf_sample_new(काष्ठा snd_sf_list *sflist, काष्ठा snd_soundfont *sf)
+अणु
+	काष्ठा snd_sf_sample *sp;
 
-	if ((sp = kzalloc(sizeof(*sp), GFP_KERNEL)) == NULL)
-		return NULL;
+	अगर ((sp = kzalloc(माप(*sp), GFP_KERNEL)) == शून्य)
+		वापस शून्य;
 
 	sp->next = sf->samples;
 	sf->samples = sp;
 
 	set_sample_counter(sflist, sf, sp);
-	return sp;
-}
+	वापस sp;
+पूर्ण
 
 /*
  * delete sample list -- this is an exceptional job.
  * only the last allocated sample can be deleted.
  */
-static void
-sf_sample_delete(struct snd_sf_list *sflist, struct snd_soundfont *sf,
-		 struct snd_sf_sample *sp)
-{
+अटल व्योम
+sf_sample_delete(काष्ठा snd_sf_list *sflist, काष्ठा snd_soundfont *sf,
+		 काष्ठा snd_sf_sample *sp)
+अणु
 	/* only last sample is accepted */
-	if (sp == sf->samples) {
+	अगर (sp == sf->samples) अणु
 		sf->samples = sp->next;
-		kfree(sp);
-	}
-}
+		kमुक्त(sp);
+	पूर्ण
+पूर्ण
 
 
 /* load voice map */
-static int
-load_map(struct snd_sf_list *sflist, const void __user *data, int count)
-{
-	struct snd_sf_zone *zp, *prevp;
-	struct snd_soundfont *sf;
-	struct soundfont_voice_map map;
+अटल पूर्णांक
+load_map(काष्ठा snd_sf_list *sflist, स्थिर व्योम __user *data, पूर्णांक count)
+अणु
+	काष्ठा snd_sf_zone *zp, *prevp;
+	काष्ठा snd_soundfont *sf;
+	काष्ठा soundfont_voice_map map;
 
 	/* get the link info */
-	if (count < (int)sizeof(map))
-		return -EINVAL;
-	if (copy_from_user(&map, data, sizeof(map)))
-		return -EFAULT;
+	अगर (count < (पूर्णांक)माप(map))
+		वापस -EINVAL;
+	अगर (copy_from_user(&map, data, माप(map)))
+		वापस -EFAULT;
 
-	if (map.map_instr < 0 || map.map_instr >= SF_MAX_INSTRUMENTS)
-		return -EINVAL;
+	अगर (map.map_instr < 0 || map.map_instr >= SF_MAX_INSTRUMENTS)
+		वापस -EINVAL;
 	
-	sf = newsf(sflist, SNDRV_SFNT_PAT_TYPE_MAP|SNDRV_SFNT_PAT_SHARED, NULL);
-	if (sf == NULL)
-		return -ENOMEM;
+	sf = newsf(sflist, SNDRV_SFNT_PAT_TYPE_MAP|SNDRV_SFNT_PAT_SHARED, शून्य);
+	अगर (sf == शून्य)
+		वापस -ENOMEM;
 
-	prevp = NULL;
-	for (zp = sf->zones; zp; prevp = zp, zp = zp->next) {
-		if (zp->mapped &&
+	prevp = शून्य;
+	क्रम (zp = sf->zones; zp; prevp = zp, zp = zp->next) अणु
+		अगर (zp->mapped &&
 		    zp->instr == map.map_instr &&
 		    zp->bank == map.map_bank &&
 		    zp->v.low == map.map_key &&
 		    zp->v.start == map.src_instr &&
 		    zp->v.end == map.src_bank &&
-		    zp->v.fixkey == map.src_key) {
-			/* the same mapping is already present */
+		    zp->v.fixkey == map.src_key) अणु
+			/* the same mapping is alपढ़ोy present */
 			/* relink this record to the link head */
-			if (prevp) {
+			अगर (prevp) अणु
 				prevp->next = zp->next;
 				zp->next = sf->zones;
 				sf->zones = zp;
-			}
+			पूर्ण
 			/* update the counter */
 			set_zone_counter(sflist, sf, zp);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/* create a new zone */
-	if ((zp = sf_zone_new(sflist, sf)) == NULL)
-		return -ENOMEM;
+	अगर ((zp = sf_zone_new(sflist, sf)) == शून्य)
+		वापस -ENOMEM;
 
 	zp->bank = map.map_bank;
 	zp->instr = map.map_instr;
 	zp->mapped = 1;
-	if (map.map_key >= 0) {
+	अगर (map.map_key >= 0) अणु
 		zp->v.low = map.map_key;
 		zp->v.high = map.map_key;
-	}
+	पूर्ण
 	zp->v.start = map.src_instr;
 	zp->v.end = map.src_bank;
 	zp->v.fixkey = map.src_key;
@@ -468,139 +469,139 @@ load_map(struct snd_sf_list *sflist, const void __user *data, int count)
 
 	add_preset(sflist, zp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-/* remove the present instrument layers */
-static int
-remove_info(struct snd_sf_list *sflist, struct snd_soundfont *sf,
-	    int bank, int instr)
-{
-	struct snd_sf_zone *prev, *next, *p;
-	int removed = 0;
+/* हटाओ the present instrument layers */
+अटल पूर्णांक
+हटाओ_info(काष्ठा snd_sf_list *sflist, काष्ठा snd_soundfont *sf,
+	    पूर्णांक bank, पूर्णांक instr)
+अणु
+	काष्ठा snd_sf_zone *prev, *next, *p;
+	पूर्णांक हटाओd = 0;
 
-	prev = NULL;
-	for (p = sf->zones; p; p = next) {
+	prev = शून्य;
+	क्रम (p = sf->zones; p; p = next) अणु
 		next = p->next;
-		if (! p->mapped &&
-		    p->bank == bank && p->instr == instr) {
-			/* remove this layer */
-			if (prev)
+		अगर (! p->mapped &&
+		    p->bank == bank && p->instr == instr) अणु
+			/* हटाओ this layer */
+			अगर (prev)
 				prev->next = next;
-			else
+			अन्यथा
 				sf->zones = next;
-			removed++;
-			kfree(p);
-		} else
+			हटाओd++;
+			kमुक्त(p);
+		पूर्ण अन्यथा
 			prev = p;
-	}
-	if (removed)
+	पूर्ण
+	अगर (हटाओd)
 		rebuild_presets(sflist);
-	return removed;
-}
+	वापस हटाओd;
+पूर्ण
 
 
 /*
  * Read an info record from the user buffer and save it on the current
- * open soundfont.
+ * खोलो soundfont.
  */
-static int
-load_info(struct snd_sf_list *sflist, const void __user *data, long count)
-{
-	struct snd_soundfont *sf;
-	struct snd_sf_zone *zone;
-	struct soundfont_voice_rec_hdr hdr;
-	int i;
+अटल पूर्णांक
+load_info(काष्ठा snd_sf_list *sflist, स्थिर व्योम __user *data, दीर्घ count)
+अणु
+	काष्ठा snd_soundfont *sf;
+	काष्ठा snd_sf_zone *zone;
+	काष्ठा soundfont_voice_rec_hdr hdr;
+	पूर्णांक i;
 
-	/* patch must be opened */
-	if ((sf = sflist->currsf) == NULL)
-		return -EINVAL;
+	/* patch must be खोलोed */
+	अगर ((sf = sflist->currsf) == शून्य)
+		वापस -EINVAL;
 
-	if (is_special_type(sf->type))
-		return -EINVAL;
+	अगर (is_special_type(sf->type))
+		वापस -EINVAL;
 
-	if (count < (long)sizeof(hdr)) {
-		printk(KERN_ERR "Soundfont error: invalid patch zone length\n");
-		return -EINVAL;
-	}
-	if (copy_from_user((char*)&hdr, data, sizeof(hdr)))
-		return -EFAULT;
+	अगर (count < (दीर्घ)माप(hdr)) अणु
+		prपूर्णांकk(KERN_ERR "Soundfont error: invalid patch zone length\n");
+		वापस -EINVAL;
+	पूर्ण
+	अगर (copy_from_user((अक्षर*)&hdr, data, माप(hdr)))
+		वापस -EFAULT;
 	
-	data += sizeof(hdr);
-	count -= sizeof(hdr);
+	data += माप(hdr);
+	count -= माप(hdr);
 
-	if (hdr.nvoices <= 0 || hdr.nvoices >= 100) {
-		printk(KERN_ERR "Soundfont error: Illegal voice number %d\n",
+	अगर (hdr.nvoices <= 0 || hdr.nvoices >= 100) अणु
+		prपूर्णांकk(KERN_ERR "Soundfont error: Illegal voice number %d\n",
 		       hdr.nvoices);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (count < (long)sizeof(struct soundfont_voice_info) * hdr.nvoices) {
-		printk(KERN_ERR "Soundfont Error: "
+	अगर (count < (दीर्घ)माप(काष्ठा soundfont_voice_info) * hdr.nvoices) अणु
+		prपूर्णांकk(KERN_ERR "Soundfont Error: "
 		       "patch length(%ld) is smaller than nvoices(%d)\n",
 		       count, hdr.nvoices);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (hdr.write_mode) {
-	case SNDRV_SFNT_WR_EXCLUSIVE:
-		/* exclusive mode - if the instrument already exists,
-		   return error */
-		for (zone = sf->zones; zone; zone = zone->next) {
-			if (!zone->mapped &&
+	चयन (hdr.ग_लिखो_mode) अणु
+	हाल SNDRV_SFNT_WR_EXCLUSIVE:
+		/* exclusive mode - अगर the instrument alपढ़ोy exists,
+		   वापस error */
+		क्रम (zone = sf->zones; zone; zone = zone->next) अणु
+			अगर (!zone->mapped &&
 			    zone->bank == hdr.bank &&
 			    zone->instr == hdr.instr)
-				return -EINVAL;
-		}
-		break;
-	case SNDRV_SFNT_WR_REPLACE:
-		/* replace mode - remove the instrument if it already exists */
-		remove_info(sflist, sf, hdr.bank, hdr.instr);
-		break;
-	}
+				वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	हाल SNDRV_SFNT_WR_REPLACE:
+		/* replace mode - हटाओ the instrument अगर it alपढ़ोy exists */
+		हटाओ_info(sflist, sf, hdr.bank, hdr.instr);
+		अवरोध;
+	पूर्ण
 
-	for (i = 0; i < hdr.nvoices; i++) {
-		struct snd_sf_zone tmpzone;
+	क्रम (i = 0; i < hdr.nvoices; i++) अणु
+		काष्ठा snd_sf_zone पंचांगpzone;
 
 		/* copy awe_voice_info parameters */
-		if (copy_from_user(&tmpzone.v, data, sizeof(tmpzone.v))) {
-			return -EFAULT;
-		}
+		अगर (copy_from_user(&पंचांगpzone.v, data, माप(पंचांगpzone.v))) अणु
+			वापस -EFAULT;
+		पूर्ण
 
-		data += sizeof(tmpzone.v);
-		count -= sizeof(tmpzone.v);
+		data += माप(पंचांगpzone.v);
+		count -= माप(पंचांगpzone.v);
 
-		tmpzone.bank = hdr.bank;
-		tmpzone.instr = hdr.instr;
-		tmpzone.mapped = 0;
-		tmpzone.v.sf_id = sf->id;
-		if (tmpzone.v.mode & SNDRV_SFNT_MODE_INIT_PARM)
-			init_voice_parm(&tmpzone.v.parm);
+		पंचांगpzone.bank = hdr.bank;
+		पंचांगpzone.instr = hdr.instr;
+		पंचांगpzone.mapped = 0;
+		पंचांगpzone.v.sf_id = sf->id;
+		अगर (पंचांगpzone.v.mode & SNDRV_SFNT_MODE_INIT_PARM)
+			init_voice_parm(&पंचांगpzone.v.parm);
 
 		/* create a new zone */
-		if ((zone = sf_zone_new(sflist, sf)) == NULL) {
-			return -ENOMEM;
-		}
+		अगर ((zone = sf_zone_new(sflist, sf)) == शून्य) अणु
+			वापस -ENOMEM;
+		पूर्ण
 
 		/* copy the temporary data */
-		zone->bank = tmpzone.bank;
-		zone->instr = tmpzone.instr;
-		zone->v = tmpzone.v;
+		zone->bank = पंचांगpzone.bank;
+		zone->instr = पंचांगpzone.instr;
+		zone->v = पंचांगpzone.v;
 
 		/* look up the sample */
 		zone->sample = set_sample(sf, &zone->v);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /* initialize voice_info record */
-static void
-init_voice_info(struct soundfont_voice_info *avp)
-{
-	memset(avp, 0, sizeof(*avp));
+अटल व्योम
+init_voice_info(काष्ठा soundfont_voice_info *avp)
+अणु
+	स_रखो(avp, 0, माप(*avp));
 
 	avp->root = 60;
 	avp->high = 127;
@@ -613,7 +614,7 @@ init_voice_info(struct soundfont_voice_info *avp)
 	avp->scaleTuning = 100;
 
 	init_voice_parm(&avp->parm);
-}
+पूर्ण
 
 /* initialize voice_parm record:
  * Env1/2: delay=0, attack=0, hold=0, sustain=0, decay=0, release=0.
@@ -621,10 +622,10 @@ init_voice_info(struct soundfont_voice_info *avp)
  * Cutoff is maximum.
  * Chorus and Reverb effects are zero.
  */
-static void
-init_voice_parm(struct soundfont_voice_parm *pp)
-{
-	memset(pp, 0, sizeof(*pp));
+अटल व्योम
+init_voice_parm(काष्ठा soundfont_voice_parm *pp)
+अणु
+	स_रखो(pp, 0, माप(*pp));
 
 	pp->moddelay = 0x8000;
 	pp->modatkhld = 0x7f7f;
@@ -640,91 +641,91 @@ init_voice_parm(struct soundfont_voice_parm *pp)
 	pp->lfo2delay = 0x8000;
 
 	pp->cutoff = 0xff;
-}	
+पूर्ण	
 
-/* search the specified sample */
-static struct snd_sf_sample *
-set_sample(struct snd_soundfont *sf, struct soundfont_voice_info *avp)
-{
-	struct snd_sf_sample *sample;
+/* search the specअगरied sample */
+अटल काष्ठा snd_sf_sample *
+set_sample(काष्ठा snd_soundfont *sf, काष्ठा soundfont_voice_info *avp)
+अणु
+	काष्ठा snd_sf_sample *sample;
 
 	sample = find_sample(sf, avp->sample);
-	if (sample == NULL)
-		return NULL;
+	अगर (sample == शून्य)
+		वापस शून्य;
 
 	/* add in the actual sample offsets:
 	 * The voice_info addresses define only the relative offset
-	 * from sample pointers.  Here we calculate the actual DRAM
-	 * offset from sample pointers.
+	 * from sample poपूर्णांकers.  Here we calculate the actual DRAM
+	 * offset from sample poपूर्णांकers.
 	 */
 	avp->start += sample->v.start;
 	avp->end += sample->v.end;
 	avp->loopstart += sample->v.loopstart;
-	avp->loopend += sample->v.loopend;
+	avp->loखोलोd += sample->v.loखोलोd;
 
 	/* copy mode flags */
 	avp->sample_mode = sample->v.mode_flags;
 
-	return sample;
-}
+	वापस sample;
+पूर्ण
 
-/* find the sample pointer with the given id in the soundfont */
-static struct snd_sf_sample *
-find_sample(struct snd_soundfont *sf, int sample_id)
-{
-	struct snd_sf_sample *p;
+/* find the sample poपूर्णांकer with the given id in the soundfont */
+अटल काष्ठा snd_sf_sample *
+find_sample(काष्ठा snd_soundfont *sf, पूर्णांक sample_id)
+अणु
+	काष्ठा snd_sf_sample *p;
 
-	if (sf == NULL)
-		return NULL;
+	अगर (sf == शून्य)
+		वापस शून्य;
 
-	for (p = sf->samples; p; p = p->next) {
-		if (p->v.sample == sample_id)
-			return p;
-	}
-	return NULL;
-}
+	क्रम (p = sf->samples; p; p = p->next) अणु
+		अगर (p->v.sample == sample_id)
+			वापस p;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 
 /*
- * Load sample information, this can include data to be loaded onto
- * the soundcard.  It can also just be a pointer into soundcard ROM.
+ * Load sample inक्रमmation, this can include data to be loaded onto
+ * the soundcard.  It can also just be a poपूर्णांकer पूर्णांकo soundcard ROM.
  * If there is data it will be written to the soundcard via the callback
  * routine.
  */
-static int
-load_data(struct snd_sf_list *sflist, const void __user *data, long count)
-{
-	struct snd_soundfont *sf;
-	struct soundfont_sample_info sample_info;
-	struct snd_sf_sample *sp;
-	long off;
+अटल पूर्णांक
+load_data(काष्ठा snd_sf_list *sflist, स्थिर व्योम __user *data, दीर्घ count)
+अणु
+	काष्ठा snd_soundfont *sf;
+	काष्ठा soundfont_sample_info sample_info;
+	काष्ठा snd_sf_sample *sp;
+	दीर्घ off;
 
-	/* patch must be opened */
-	if ((sf = sflist->currsf) == NULL)
-		return -EINVAL;
+	/* patch must be खोलोed */
+	अगर ((sf = sflist->currsf) == शून्य)
+		वापस -EINVAL;
 
-	if (is_special_type(sf->type))
-		return -EINVAL;
+	अगर (is_special_type(sf->type))
+		वापस -EINVAL;
 
-	if (copy_from_user(&sample_info, data, sizeof(sample_info)))
-		return -EFAULT;
+	अगर (copy_from_user(&sample_info, data, माप(sample_info)))
+		वापस -EFAULT;
 
-	off = sizeof(sample_info);
+	off = माप(sample_info);
 
-	if (sample_info.size != (count-off)/2)
-		return -EINVAL;
+	अगर (sample_info.size != (count-off)/2)
+		वापस -EINVAL;
 
-	/* Check for dup */
-	if (find_sample(sf, sample_info.sample)) {
-		/* if shared sample, skip this data */
-		if (sf->type & SNDRV_SFNT_PAT_SHARED)
-			return 0;
-		return -EINVAL;
-	}
+	/* Check क्रम dup */
+	अगर (find_sample(sf, sample_info.sample)) अणु
+		/* अगर shared sample, skip this data */
+		अगर (sf->type & SNDRV_SFNT_PAT_SHARED)
+			वापस 0;
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Allocate a new sample structure */
-	if ((sp = sf_sample_new(sflist, sf)) == NULL)
-		return -ENOMEM;
+	/* Allocate a new sample काष्ठाure */
+	अगर ((sp = sf_sample_new(sflist, sf)) == शून्य)
+		वापस -ENOMEM;
 
 	sp->v = sample_info;
 	sp->v.sf_id = sf->id;
@@ -734,24 +735,24 @@ load_data(struct snd_sf_list *sflist, const void __user *data, long count)
 	/*
 	 * If there is wave data then load it.
 	 */
-	if (sp->v.size > 0) {
-		int  rc;
+	अगर (sp->v.size > 0) अणु
+		पूर्णांक  rc;
 		rc = sflist->callback.sample_new
-			(sflist->callback.private_data, sp, sflist->memhdr,
+			(sflist->callback.निजी_data, sp, sflist->memhdr,
 			 data + off, count - off);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			sf_sample_delete(sflist, sf, sp);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 		sflist->mem_used += sp->v.truesize;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 
 /* log2_tbl[i] = log2(i+128) * 0x10000 */
-static const int log_tbl[129] = {
+अटल स्थिर पूर्णांक log_tbl[129] = अणु
 	0x70000, 0x702df, 0x705b9, 0x7088e, 0x70b5d, 0x70e26, 0x710eb, 0x713aa,
 	0x71663, 0x71918, 0x71bc8, 0x71e72, 0x72118, 0x723b9, 0x72655, 0x728ed,
 	0x72b80, 0x72e0e, 0x73098, 0x7331d, 0x7359e, 0x7381b, 0x73a93, 0x73d08,
@@ -769,27 +770,27 @@ static const int log_tbl[129] = {
 	0x7e829, 0x7e9b3, 0x7eb3a, 0x7ecc0, 0x7ee44, 0x7efc7, 0x7f148, 0x7f2c8,
 	0x7f446, 0x7f5c2, 0x7f73d, 0x7f8b7, 0x7fa2f, 0x7fba5, 0x7fd1a, 0x7fe8d,
 	0x80000,
-};
+पूर्ण;
 
 /* convert from linear to log value
  *
  * conversion: value = log2(amount / base) * ratio
  *
  * argument:
- *   amount = linear value (unsigned, 32bit max)
+ *   amount = linear value (अचिन्हित, 32bit max)
  *   offset = base offset (:= log2(base) * 0x10000)
- *   ratio = division ratio
+ *   ratio = भागision ratio
  *
  */
-int
-snd_sf_linear_to_log(unsigned int amount, int offset, int ratio)
-{
-	int v;
-	int s, low, bit;
+पूर्णांक
+snd_sf_linear_to_log(अचिन्हित पूर्णांक amount, पूर्णांक offset, पूर्णांक ratio)
+अणु
+	पूर्णांक v;
+	पूर्णांक s, low, bit;
 	
-	if (amount < 2)
-		return 0;
-	for (bit = 0; ! (amount & 0x80000000L); bit++)
+	अगर (amount < 2)
+		वापस 0;
+	क्रम (bit = 0; ! (amount & 0x80000000L); bit++)
 		amount <<= 1;
 	s = (amount >> 24) & 0x7f;
 	low = (amount >> 16) & 0xff;
@@ -798,66 +799,66 @@ snd_sf_linear_to_log(unsigned int amount, int offset, int ratio)
 	v -= offset;
 	v = (v * ratio) >> 16;
 	v += (24 - bit) * ratio;
-	return v;
-}
+	वापस v;
+पूर्ण
 
 EXPORT_SYMBOL(snd_sf_linear_to_log);
 
 
-#define OFFSET_MSEC		653117		/* base = 1000 */
-#define OFFSET_ABSCENT		851781		/* base = 8176 */
-#define OFFSET_SAMPLERATE	1011119		/* base = 44100 */
+#घोषणा OFFSET_MSEC		653117		/* base = 1000 */
+#घोषणा OFFSET_ABSCENT		851781		/* base = 8176 */
+#घोषणा OFFSET_SAMPLERATE	1011119		/* base = 44100 */
 
-#define ABSCENT_RATIO		1200
-#define TIMECENT_RATIO		1200
-#define SAMPLERATE_RATIO	4096
+#घोषणा ABSCENT_RATIO		1200
+#घोषणा TIMECENT_RATIO		1200
+#घोषणा SAMPLERATE_RATIO	4096
 
 /*
- * mHz to abscent
- * conversion: abscent = log2(MHz / 8176) * 1200
+ * mHz to असलcent
+ * conversion: असलcent = log2(MHz / 8176) * 1200
  */
-static int
-freq_to_note(int mhz)
-{
-	return snd_sf_linear_to_log(mhz, OFFSET_ABSCENT, ABSCENT_RATIO);
-}
+अटल पूर्णांक
+freq_to_note(पूर्णांक mhz)
+अणु
+	वापस snd_sf_linear_to_log(mhz, OFFSET_ABSCENT, ABSCENT_RATIO);
+पूर्ण
 
 /* convert Hz to AWE32 rate offset:
- * sample pitch offset for the specified sample rate
+ * sample pitch offset क्रम the specअगरied sample rate
  * rate=44100 is no offset, each 4096 is 1 octave (twice).
  * eg, when rate is 22050, this offset becomes -4096.
  *
  * conversion: offset = log2(Hz / 44100) * 4096
  */
-static int
-calc_rate_offset(int hz)
-{
-	return snd_sf_linear_to_log(hz, OFFSET_SAMPLERATE, SAMPLERATE_RATIO);
-}
+अटल पूर्णांक
+calc_rate_offset(पूर्णांक hz)
+अणु
+	वापस snd_sf_linear_to_log(hz, OFFSET_SAMPLERATE, SAMPLERATE_RATIO);
+पूर्ण
 
 
-/* calculate GUS envelope time */
-static int
-calc_gus_envelope_time(int rate, int start, int end)
-{
-	int r, p, t;
+/* calculate GUS envelope समय */
+अटल पूर्णांक
+calc_gus_envelope_समय(पूर्णांक rate, पूर्णांक start, पूर्णांक end)
+अणु
+	पूर्णांक r, p, t;
 	r = (3 - ((rate >> 6) & 3)) * 3;
 	p = rate & 0x3f;
-	if (!p)
+	अगर (!p)
 		p = 1;
 	t = end - start;
-	if (t < 0) t = -t;
-	if (13 > r)
+	अगर (t < 0) t = -t;
+	अगर (13 > r)
 		t = t << (13 - r);
-	else
+	अन्यथा
 		t = t >> (r - 13);
-	return (t * 10) / (p * 441);
-}
+	वापस (t * 10) / (p * 441);
+पूर्ण
 
-/* convert envelope time parameter to soundfont parameters */
+/* convert envelope समय parameter to soundfont parameters */
 
-/* attack & decay/release time table (msec) */
-static const short attack_time_tbl[128] = {
+/* attack & decay/release समय table (msec) */
+अटल स्थिर लघु attack_समय_प्रकारbl[128] = अणु
 32767, 32767, 5989, 4235, 2994, 2518, 2117, 1780, 1497, 1373, 1259, 1154, 1058, 970, 890, 816,
 707, 691, 662, 634, 607, 581, 557, 533, 510, 489, 468, 448, 429, 411, 393, 377,
 361, 345, 331, 317, 303, 290, 278, 266, 255, 244, 234, 224, 214, 205, 196, 188,
@@ -866,9 +867,9 @@ static const short attack_time_tbl[128] = {
 45, 43, 41, 39, 37, 36, 34, 33, 31, 30, 29, 28, 26, 25, 24, 23,
 22, 21, 20, 19, 19, 18, 17, 16, 16, 15, 15, 14, 13, 13, 12, 12,
 11, 11, 10, 10, 10, 9, 9, 8, 8, 8, 8, 7, 7, 7, 6, 0,
-};
+पूर्ण;
 
-static const short decay_time_tbl[128] = {
+अटल स्थिर लघु decay_समय_प्रकारbl[128] = अणु
 32767, 32767, 22614, 15990, 11307, 9508, 7995, 6723, 5653, 5184, 4754, 4359, 3997, 3665, 3361, 3082,
 2828, 2765, 2648, 2535, 2428, 2325, 2226, 2132, 2042, 1955, 1872, 1793, 1717, 1644, 1574, 1507,
 1443, 1382, 1324, 1267, 1214, 1162, 1113, 1066, 978, 936, 897, 859, 822, 787, 754, 722,
@@ -877,48 +878,48 @@ static const short decay_time_tbl[128] = {
 172, 165, 158, 151, 145, 139, 133, 127, 122, 117, 112, 107, 102, 98, 94, 90,
 86, 82, 79, 75, 72, 69, 66, 63, 61, 58, 56, 53, 51, 49, 47, 45,
 43, 41, 39, 37, 36, 34, 33, 31, 30, 29, 28, 26, 25, 24, 23, 22,
-};
+पूर्ण;
 
-/* delay time = 0x8000 - msec/92 */
-int
-snd_sf_calc_parm_hold(int msec)
-{
-	int val = (0x7f * 92 - msec) / 92;
-	if (val < 1) val = 1;
-	if (val >= 126) val = 126;
-	return val;
-}
+/* delay समय = 0x8000 - msec/92 */
+पूर्णांक
+snd_sf_calc_parm_hold(पूर्णांक msec)
+अणु
+	पूर्णांक val = (0x7f * 92 - msec) / 92;
+	अगर (val < 1) val = 1;
+	अगर (val >= 126) val = 126;
+	वापस val;
+पूर्ण
 
-/* search an index for specified time from given time table */
-static int
-calc_parm_search(int msec, const short *table)
-{
-	int left = 1, right = 127, mid;
-	while (left < right) {
+/* search an index क्रम specअगरied समय from given समय table */
+अटल पूर्णांक
+calc_parm_search(पूर्णांक msec, स्थिर लघु *table)
+अणु
+	पूर्णांक left = 1, right = 127, mid;
+	जबतक (left < right) अणु
 		mid = (left + right) / 2;
-		if (msec < (int)table[mid])
+		अगर (msec < (पूर्णांक)table[mid])
 			left = mid + 1;
-		else
+		अन्यथा
 			right = mid;
-	}
-	return left;
-}
+	पूर्ण
+	वापस left;
+पूर्ण
 
-/* attack time: search from time table */
-int
-snd_sf_calc_parm_attack(int msec)
-{
-	return calc_parm_search(msec, attack_time_tbl);
-}
+/* attack समय: search from समय table */
+पूर्णांक
+snd_sf_calc_parm_attack(पूर्णांक msec)
+अणु
+	वापस calc_parm_search(msec, attack_समय_प्रकारbl);
+पूर्ण
 
-/* decay/release time: search from time table */
-int
-snd_sf_calc_parm_decay(int msec)
-{
-	return calc_parm_search(msec, decay_time_tbl);
-}
+/* decay/release समय: search from समय table */
+पूर्णांक
+snd_sf_calc_parm_decay(पूर्णांक msec)
+अणु
+	वापस calc_parm_search(msec, decay_समय_प्रकारbl);
+पूर्ण
 
-int snd_sf_vol_table[128] = {
+पूर्णांक snd_sf_vol_table[128] = अणु
 	255,111,95,86,79,74,70,66,63,61,58,56,54,52,50,49,
 	47,46,45,43,42,41,40,39,38,37,36,35,34,34,33,32,
 	31,31,30,29,29,28,27,27,26,26,25,24,24,23,23,22,
@@ -927,94 +928,94 @@ int snd_sf_vol_table[128] = {
 	10,10,10,9,9,9,8,8,8,8,7,7,7,7,6,6,
 	6,6,5,5,5,5,5,4,4,4,4,3,3,3,3,3,
 	2,2,2,2,2,1,1,1,1,1,0,0,0,0,0,0,
-};
+पूर्ण;
 
 
-#define calc_gus_sustain(val)  (0x7f - snd_sf_vol_table[(val)/2])
-#define calc_gus_attenuation(val)	snd_sf_vol_table[(val)/2]
+#घोषणा calc_gus_sustain(val)  (0x7f - snd_sf_vol_table[(val)/2])
+#घोषणा calc_gus_attenuation(val)	snd_sf_vol_table[(val)/2]
 
 /* load GUS patch */
-static int
-load_guspatch(struct snd_sf_list *sflist, const char __user *data,
-	      long count, int client)
-{
-	struct patch_info patch;
-	struct snd_soundfont *sf;
-	struct snd_sf_zone *zone;
-	struct snd_sf_sample *smp;
-	int note, sample_id;
-	int rc;
+अटल पूर्णांक
+load_guspatch(काष्ठा snd_sf_list *sflist, स्थिर अक्षर __user *data,
+	      दीर्घ count, पूर्णांक client)
+अणु
+	काष्ठा patch_info patch;
+	काष्ठा snd_soundfont *sf;
+	काष्ठा snd_sf_zone *zone;
+	काष्ठा snd_sf_sample *smp;
+	पूर्णांक note, sample_id;
+	पूर्णांक rc;
 
-	if (count < (long)sizeof(patch)) {
-		snd_printk(KERN_ERR "patch record too small %ld\n", count);
-		return -EINVAL;
-	}
-	if (copy_from_user(&patch, data, sizeof(patch)))
-		return -EFAULT;
+	अगर (count < (दीर्घ)माप(patch)) अणु
+		snd_prपूर्णांकk(KERN_ERR "patch record too small %ld\n", count);
+		वापस -EINVAL;
+	पूर्ण
+	अगर (copy_from_user(&patch, data, माप(patch)))
+		वापस -EFAULT;
 	
-	count -= sizeof(patch);
-	data += sizeof(patch);
+	count -= माप(patch);
+	data += माप(patch);
 
-	sf = newsf(sflist, SNDRV_SFNT_PAT_TYPE_GUS|SNDRV_SFNT_PAT_SHARED, NULL);
-	if (sf == NULL)
-		return -ENOMEM;
-	if ((smp = sf_sample_new(sflist, sf)) == NULL)
-		return -ENOMEM;
+	sf = newsf(sflist, SNDRV_SFNT_PAT_TYPE_GUS|SNDRV_SFNT_PAT_SHARED, शून्य);
+	अगर (sf == शून्य)
+		वापस -ENOMEM;
+	अगर ((smp = sf_sample_new(sflist, sf)) == शून्य)
+		वापस -ENOMEM;
 	sample_id = sflist->sample_counter;
 	smp->v.sample = sample_id;
 	smp->v.start = 0;
 	smp->v.end = patch.len;
 	smp->v.loopstart = patch.loop_start;
-	smp->v.loopend = patch.loop_end;
+	smp->v.loखोलोd = patch.loop_end;
 	smp->v.size = patch.len;
 
 	/* set up mode flags */
 	smp->v.mode_flags = 0;
-	if (!(patch.mode & WAVE_16_BITS))
+	अगर (!(patch.mode & WAVE_16_BITS))
 		smp->v.mode_flags |= SNDRV_SFNT_SAMPLE_8BITS;
-	if (patch.mode & WAVE_UNSIGNED)
+	अगर (patch.mode & WAVE_UNSIGNED)
 		smp->v.mode_flags |= SNDRV_SFNT_SAMPLE_UNSIGNED;
 	smp->v.mode_flags |= SNDRV_SFNT_SAMPLE_NO_BLANK;
-	if (!(patch.mode & (WAVE_LOOPING|WAVE_BIDIR_LOOP|WAVE_LOOP_BACK)))
+	अगर (!(patch.mode & (WAVE_LOOPING|WAVE_BIसूची_LOOP|WAVE_LOOP_BACK)))
 		smp->v.mode_flags |= SNDRV_SFNT_SAMPLE_SINGLESHOT;
-	if (patch.mode & WAVE_BIDIR_LOOP)
-		smp->v.mode_flags |= SNDRV_SFNT_SAMPLE_BIDIR_LOOP;
-	if (patch.mode & WAVE_LOOP_BACK)
+	अगर (patch.mode & WAVE_BIसूची_LOOP)
+		smp->v.mode_flags |= SNDRV_SFNT_SAMPLE_BIसूची_LOOP;
+	अगर (patch.mode & WAVE_LOOP_BACK)
 		smp->v.mode_flags |= SNDRV_SFNT_SAMPLE_REVERSE_LOOP;
 
-	if (patch.mode & WAVE_16_BITS) {
+	अगर (patch.mode & WAVE_16_BITS) अणु
 		/* convert to word offsets */
 		smp->v.size /= 2;
 		smp->v.end /= 2;
 		smp->v.loopstart /= 2;
-		smp->v.loopend /= 2;
-	}
-	/*smp->v.loopend++;*/
+		smp->v.loखोलोd /= 2;
+	पूर्ण
+	/*smp->v.loखोलोd++;*/
 
 	smp->v.dummy = 0;
 	smp->v.truesize = 0;
 	smp->v.sf_id = sf->id;
 
 	/* set up voice info */
-	if ((zone = sf_zone_new(sflist, sf)) == NULL) {
+	अगर ((zone = sf_zone_new(sflist, sf)) == शून्य) अणु
 		sf_sample_delete(sflist, sf, smp);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
 	 * load wave data
 	 */
-	if (sflist->callback.sample_new) {
+	अगर (sflist->callback.sample_new) अणु
 		rc = sflist->callback.sample_new
-			(sflist->callback.private_data, smp, sflist->memhdr,
+			(sflist->callback.निजी_data, smp, sflist->memhdr,
 			 data, count);
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			sf_sample_delete(sflist, sf, smp);
-			kfree(zone);
-			return rc;
-		}
+			kमुक्त(zone);
+			वापस rc;
+		पूर्ण
 		/* memory offset is updated after */
-	}
+	पूर्ण
 
 	/* update the memory offset here */
 	sflist->mem_used += smp->v.truesize;
@@ -1028,32 +1029,32 @@ load_guspatch(struct snd_sf_list *sflist, const char __user *data,
 	zone->v.high = freq_to_note(patch.high_note) / 100;
 	/* panning position; -128 - 127 => 0-127 */
 	zone->v.pan = (patch.panning + 128) / 2;
-#if 0
-	snd_printk(KERN_DEBUG
+#अगर 0
+	snd_prपूर्णांकk(KERN_DEBUG
 		   "gus: basefrq=%d (ofs=%d) root=%d,tune=%d, range:%d-%d\n",
-		   (int)patch.base_freq, zone->v.rate_offset,
+		   (पूर्णांक)patch.base_freq, zone->v.rate_offset,
 		   zone->v.root, zone->v.tune, zone->v.low, zone->v.high);
-#endif
+#पूर्ण_अगर
 
 	/* detuning is ignored */
-	/* 6points volume envelope */
-	if (patch.mode & WAVE_ENVELOPES) {
-		int attack, hold, decay, release;
-		attack = calc_gus_envelope_time
+	/* 6poपूर्णांकs volume envelope */
+	अगर (patch.mode & WAVE_ENVELOPES) अणु
+		पूर्णांक attack, hold, decay, release;
+		attack = calc_gus_envelope_समय
 			(patch.env_rate[0], 0, patch.env_offset[0]);
-		hold = calc_gus_envelope_time
+		hold = calc_gus_envelope_समय
 			(patch.env_rate[1], patch.env_offset[0],
 			 patch.env_offset[1]);
-		decay = calc_gus_envelope_time
+		decay = calc_gus_envelope_समय
 			(patch.env_rate[2], patch.env_offset[1],
 			 patch.env_offset[2]);
-		release = calc_gus_envelope_time
+		release = calc_gus_envelope_समय
 			(patch.env_rate[3], patch.env_offset[1],
 			 patch.env_offset[4]);
-		release += calc_gus_envelope_time
+		release += calc_gus_envelope_समय
 			(patch.env_rate[4], patch.env_offset[3],
 			 patch.env_offset[4]);
-		release += calc_gus_envelope_time
+		release += calc_gus_envelope_समय
 			(patch.env_rate[5], patch.env_offset[4],
 			 patch.env_offset[5]);
 		zone->v.parm.volatkhld = 
@@ -1063,37 +1064,37 @@ load_guspatch(struct snd_sf_list *sflist, const char __user *data,
 			snd_sf_calc_parm_decay(decay);
 		zone->v.parm.volrelease = 0x8000 | snd_sf_calc_parm_decay(release);
 		zone->v.attenuation = calc_gus_attenuation(patch.env_offset[0]);
-#if 0
-		snd_printk(KERN_DEBUG
+#अगर 0
+		snd_prपूर्णांकk(KERN_DEBUG
 			   "gus: atkhld=%x, dcysus=%x, volrel=%x, att=%d\n",
 			   zone->v.parm.volatkhld,
 			   zone->v.parm.voldcysus,
 			   zone->v.parm.volrelease,
 			   zone->v.attenuation);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	/* fast release */
-	if (patch.mode & WAVE_FAST_RELEASE) {
+	अगर (patch.mode & WAVE_FAST_RELEASE) अणु
 		zone->v.parm.volrelease = 0x807f;
-	}
+	पूर्ण
 
 	/* tremolo effect */
-	if (patch.mode & WAVE_TREMOLO) {
-		int rate = (patch.tremolo_rate * 1000 / 38) / 42;
+	अगर (patch.mode & WAVE_TREMOLO) अणु
+		पूर्णांक rate = (patch.tremolo_rate * 1000 / 38) / 42;
 		zone->v.parm.tremfrq = ((patch.tremolo_depth / 2) << 8) | rate;
-	}
+	पूर्ण
 	/* vibrato effect */
-	if (patch.mode & WAVE_VIBRATO) {
-		int rate = (patch.vibrato_rate * 1000 / 38) / 42;
+	अगर (patch.mode & WAVE_VIBRATO) अणु
+		पूर्णांक rate = (patch.vibrato_rate * 1000 / 38) / 42;
 		zone->v.parm.fm2frq2 = ((patch.vibrato_depth / 6) << 8) | rate;
-	}
+	पूर्ण
 	
 	/* scale_freq, scale_factor, volume, and fractions not implemented */
 
-	if (!(smp->v.mode_flags & SNDRV_SFNT_SAMPLE_SINGLESHOT))
+	अगर (!(smp->v.mode_flags & SNDRV_SFNT_SAMPLE_SINGLESHOT))
 		zone->v.mode = SNDRV_SFNT_MODE_LOOPING;
-	else
+	अन्यथा
 		zone->v.mode = 0;
 
 	/* append to the tail of the list */
@@ -1108,106 +1109,106 @@ load_guspatch(struct snd_sf_list *sflist, const char __user *data,
 	/* rebuild preset now */
 	add_preset(sflist, zone);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* load GUS patch */
-int
-snd_soundfont_load_guspatch(struct snd_sf_list *sflist, const char __user *data,
-			    long count, int client)
-{
-	int rc;
+पूर्णांक
+snd_soundfont_load_guspatch(काष्ठा snd_sf_list *sflist, स्थिर अक्षर __user *data,
+			    दीर्घ count, पूर्णांक client)
+अणु
+	पूर्णांक rc;
 	lock_preset(sflist);
 	rc = load_guspatch(sflist, data, count, client);
 	unlock_preset(sflist);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /*
  * Rebuild the preset table.  This is like a hash table in that it allows
- * quick access to the zone information.  For each preset there are zone
- * structures linked by next_instr and by next_zone.  Former is the whole
- * link for this preset, and latter is the link for zone (i.e. instrument/
+ * quick access to the zone inक्रमmation.  For each preset there are zone
+ * काष्ठाures linked by next_instr and by next_zone.  Former is the whole
+ * link क्रम this preset, and latter is the link क्रम zone (i.e. instrument/
  * bank/key combination).
  */
-static void
-rebuild_presets(struct snd_sf_list *sflist)
-{
-	struct snd_soundfont *sf;
-	struct snd_sf_zone *cur;
+अटल व्योम
+rebuild_presets(काष्ठा snd_sf_list *sflist)
+अणु
+	काष्ठा snd_soundfont *sf;
+	काष्ठा snd_sf_zone *cur;
 
 	/* clear preset table */
-	memset(sflist->presets, 0, sizeof(sflist->presets));
+	स_रखो(sflist->presets, 0, माप(sflist->presets));
 
 	/* search all fonts and insert each font */
-	for (sf = sflist->fonts; sf; sf = sf->next) {
-		for (cur = sf->zones; cur; cur = cur->next) {
-			if (! cur->mapped && cur->sample == NULL) {
+	क्रम (sf = sflist->fonts; sf; sf = sf->next) अणु
+		क्रम (cur = sf->zones; cur; cur = cur->next) अणु
+			अगर (! cur->mapped && cur->sample == शून्य) अणु
 				/* try again to search the corresponding sample */
 				cur->sample = set_sample(sf, &cur->v);
-				if (cur->sample == NULL)
-					continue;
-			}
+				अगर (cur->sample == शून्य)
+					जारी;
+			पूर्ण
 
 			add_preset(sflist, cur);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
 /*
  * add the given zone to preset table
  */
-static void
-add_preset(struct snd_sf_list *sflist, struct snd_sf_zone *cur)
-{
-	struct snd_sf_zone *zone;
-	int index;
+अटल व्योम
+add_preset(काष्ठा snd_sf_list *sflist, काष्ठा snd_sf_zone *cur)
+अणु
+	काष्ठा snd_sf_zone *zone;
+	पूर्णांक index;
 
 	zone = search_first_zone(sflist, cur->bank, cur->instr, cur->v.low);
-	if (zone && zone->v.sf_id != cur->v.sf_id) {
-		/* different instrument was already defined */
-		struct snd_sf_zone *p;
-		/* compare the allocated time */
-		for (p = zone; p; p = p->next_zone) {
-			if (p->counter > cur->counter)
+	अगर (zone && zone->v.sf_id != cur->v.sf_id) अणु
+		/* dअगरferent instrument was alपढ़ोy defined */
+		काष्ठा snd_sf_zone *p;
+		/* compare the allocated समय */
+		क्रम (p = zone; p; p = p->next_zone) अणु
+			अगर (p->counter > cur->counter)
 				/* the current is older.. skipped */
-				return;
-		}
-		/* remove old zones */
+				वापस;
+		पूर्ण
+		/* हटाओ old zones */
 		delete_preset(sflist, zone);
-		zone = NULL; /* do not forget to clear this! */
-	}
+		zone = शून्य; /* करो not क्रमget to clear this! */
+	पूर्ण
 
 	/* prepend this zone */
-	if ((index = get_index(cur->bank, cur->instr, cur->v.low)) < 0)
-		return;
+	अगर ((index = get_index(cur->bank, cur->instr, cur->v.low)) < 0)
+		वापस;
 	cur->next_zone = zone; /* zone link */
 	cur->next_instr = sflist->presets[index]; /* preset table link */
 	sflist->presets[index] = cur;
-}
+पूर्ण
 
 /*
  * delete the given zones from preset_table
  */
-static void
-delete_preset(struct snd_sf_list *sflist, struct snd_sf_zone *zp)
-{
-	int index;
-	struct snd_sf_zone *p;
+अटल व्योम
+delete_preset(काष्ठा snd_sf_list *sflist, काष्ठा snd_sf_zone *zp)
+अणु
+	पूर्णांक index;
+	काष्ठा snd_sf_zone *p;
 
-	if ((index = get_index(zp->bank, zp->instr, zp->v.low)) < 0)
-		return;
-	for (p = sflist->presets[index]; p; p = p->next_instr) {
-		while (p->next_instr == zp) {
+	अगर ((index = get_index(zp->bank, zp->instr, zp->v.low)) < 0)
+		वापस;
+	क्रम (p = sflist->presets[index]; p; p = p->next_instr) अणु
+		जबतक (p->next_instr == zp) अणु
 			p->next_instr = zp->next_instr;
 			zp = zp->next_zone;
-			if (zp == NULL)
-				return;
-		}
-	}
-}
+			अगर (zp == शून्य)
+				वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
 /*
@@ -1215,266 +1216,266 @@ delete_preset(struct snd_sf_list *sflist, struct snd_sf_zone *zp)
  * The note can be rewritten by preset mapping (alias).
  * The found zones are stored on 'table' array.  max_layers defines
  * the maximum number of elements in this array.
- * This function returns the number of found zones.  0 if not found.
+ * This function वापसs the number of found zones.  0 अगर not found.
  */
-int
-snd_soundfont_search_zone(struct snd_sf_list *sflist, int *notep, int vel,
-			  int preset, int bank,
-			  int def_preset, int def_bank,
-			  struct snd_sf_zone **table, int max_layers)
-{
-	int nvoices;
-	unsigned long flags;
+पूर्णांक
+snd_soundfont_search_zone(काष्ठा snd_sf_list *sflist, पूर्णांक *notep, पूर्णांक vel,
+			  पूर्णांक preset, पूर्णांक bank,
+			  पूर्णांक def_preset, पूर्णांक def_bank,
+			  काष्ठा snd_sf_zone **table, पूर्णांक max_layers)
+अणु
+	पूर्णांक nvoices;
+	अचिन्हित दीर्घ flags;
 
 	/* this function is supposed to be called atomically,
-	 * so we check the lock.  if it's busy, just returns 0 to
+	 * so we check the lock.  अगर it's busy, just वापसs 0 to
 	 * tell the caller the busy state
 	 */
 	spin_lock_irqsave(&sflist->lock, flags);
-	if (sflist->presets_locked) {
+	अगर (sflist->presets_locked) अणु
 		spin_unlock_irqrestore(&sflist->lock, flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	nvoices = search_zones(sflist, notep, vel, preset, bank,
 			       table, max_layers, 0);
-	if (! nvoices) {
-		if (preset != def_preset || bank != def_bank)
+	अगर (! nvoices) अणु
+		अगर (preset != def_preset || bank != def_bank)
 			nvoices = search_zones(sflist, notep, vel,
 					       def_preset, def_bank,
 					       table, max_layers, 0);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&sflist->lock, flags);
-	return nvoices;
-}
+	वापस nvoices;
+पूर्ण
 
 
 /*
  * search the first matching zone
  */
-static struct snd_sf_zone *
-search_first_zone(struct snd_sf_list *sflist, int bank, int preset, int key)
-{
-	int index;
-	struct snd_sf_zone *zp;
+अटल काष्ठा snd_sf_zone *
+search_first_zone(काष्ठा snd_sf_list *sflist, पूर्णांक bank, पूर्णांक preset, पूर्णांक key)
+अणु
+	पूर्णांक index;
+	काष्ठा snd_sf_zone *zp;
 
-	if ((index = get_index(bank, preset, key)) < 0)
-		return NULL;
-	for (zp = sflist->presets[index]; zp; zp = zp->next_instr) {
-		if (zp->instr == preset && zp->bank == bank)
-			return zp;
-	}
-	return NULL;
-}
+	अगर ((index = get_index(bank, preset, key)) < 0)
+		वापस शून्य;
+	क्रम (zp = sflist->presets[index]; zp; zp = zp->next_instr) अणु
+		अगर (zp->instr == preset && zp->bank == bank)
+			वापस zp;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 
 /*
  * search matching zones from sflist.  can be called recursively.
  */
-static int
-search_zones(struct snd_sf_list *sflist, int *notep, int vel,
-	     int preset, int bank, struct snd_sf_zone **table,
-	     int max_layers, int level)
-{
-	struct snd_sf_zone *zp;
-	int nvoices;
+अटल पूर्णांक
+search_zones(काष्ठा snd_sf_list *sflist, पूर्णांक *notep, पूर्णांक vel,
+	     पूर्णांक preset, पूर्णांक bank, काष्ठा snd_sf_zone **table,
+	     पूर्णांक max_layers, पूर्णांक level)
+अणु
+	काष्ठा snd_sf_zone *zp;
+	पूर्णांक nvoices;
 
 	zp = search_first_zone(sflist, bank, preset, *notep);
 	nvoices = 0;
-	for (; zp; zp = zp->next_zone) {
-		if (*notep >= zp->v.low && *notep <= zp->v.high &&
-		    vel >= zp->v.vellow && vel <= zp->v.velhigh) {
-			if (zp->mapped) {
+	क्रम (; zp; zp = zp->next_zone) अणु
+		अगर (*notep >= zp->v.low && *notep <= zp->v.high &&
+		    vel >= zp->v.vellow && vel <= zp->v.velhigh) अणु
+			अगर (zp->mapped) अणु
 				/* search preset mapping (aliasing) */
-				int key = zp->v.fixkey;
+				पूर्णांक key = zp->v.fixkey;
 				preset = zp->v.start;
 				bank = zp->v.end;
 
-				if (level > 5) /* too deep alias level */
-					return 0;
-				if (key < 0)
+				अगर (level > 5) /* too deep alias level */
+					वापस 0;
+				अगर (key < 0)
 					key = *notep;
 				nvoices = search_zones(sflist, &key, vel,
 						       preset, bank, table,
 						       max_layers, level + 1);
-				if (nvoices > 0)
+				अगर (nvoices > 0)
 					*notep = key;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			table[nvoices++] = zp;
-			if (nvoices >= max_layers)
-				break;
-		}
-	}
+			अगर (nvoices >= max_layers)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return nvoices;
-}
+	वापस nvoices;
+पूर्ण
 
 
 /* calculate the index of preset table:
  * drums are mapped from 128 to 255 according to its note key.
  * other instruments are mapped from 0 to 127.
- * if the index is out of range, return -1.
+ * अगर the index is out of range, वापस -1.
  */
-static int
-get_index(int bank, int instr, int key)
-{
-	int index;
-	if (SF_IS_DRUM_BANK(bank))
+अटल पूर्णांक
+get_index(पूर्णांक bank, पूर्णांक instr, पूर्णांक key)
+अणु
+	पूर्णांक index;
+	अगर (SF_IS_DRUM_BANK(bank))
 		index = key + SF_MAX_INSTRUMENTS;
-	else
+	अन्यथा
 		index = instr;
 	index = index % SF_MAX_PRESETS;
-	if (index < 0)
-		return -1;
-	return index;
-}
+	अगर (index < 0)
+		वापस -1;
+	वापस index;
+पूर्ण
 
 /*
- * Initialise the sflist structure.
+ * Initialise the sflist काष्ठाure.
  */
-static void
-snd_sf_init(struct snd_sf_list *sflist)
-{
-	memset(sflist->presets, 0, sizeof(sflist->presets));
+अटल व्योम
+snd_sf_init(काष्ठा snd_sf_list *sflist)
+अणु
+	स_रखो(sflist->presets, 0, माप(sflist->presets));
 
 	sflist->mem_used = 0;
-	sflist->currsf = NULL;
-	sflist->open_client = -1;
-	sflist->fonts = NULL;
+	sflist->currsf = शून्य;
+	sflist->खोलो_client = -1;
+	sflist->fonts = शून्य;
 	sflist->fonts_size = 0;
 	sflist->zone_counter = 0;
 	sflist->sample_counter = 0;
 	sflist->zone_locked = 0;
 	sflist->sample_locked = 0;
-}
+पूर्ण
 
 /*
  * Release all list records
  */
-static void
-snd_sf_clear(struct snd_sf_list *sflist)
-{
-	struct snd_soundfont *sf, *nextsf;
-	struct snd_sf_zone *zp, *nextzp;
-	struct snd_sf_sample *sp, *nextsp;
+अटल व्योम
+snd_sf_clear(काष्ठा snd_sf_list *sflist)
+अणु
+	काष्ठा snd_soundfont *sf, *nextsf;
+	काष्ठा snd_sf_zone *zp, *nextzp;
+	काष्ठा snd_sf_sample *sp, *nextsp;
 
-	for (sf = sflist->fonts; sf; sf = nextsf) {
+	क्रम (sf = sflist->fonts; sf; sf = nextsf) अणु
 		nextsf = sf->next;
-		for (zp = sf->zones; zp; zp = nextzp) {
+		क्रम (zp = sf->zones; zp; zp = nextzp) अणु
 			nextzp = zp->next;
-			kfree(zp);
-		}
-		for (sp = sf->samples; sp; sp = nextsp) {
+			kमुक्त(zp);
+		पूर्ण
+		क्रम (sp = sf->samples; sp; sp = nextsp) अणु
 			nextsp = sp->next;
-			if (sflist->callback.sample_free)
-				sflist->callback.sample_free(sflist->callback.private_data,
+			अगर (sflist->callback.sample_मुक्त)
+				sflist->callback.sample_मुक्त(sflist->callback.निजी_data,
 							     sp, sflist->memhdr);
-			kfree(sp);
-		}
-		kfree(sf);
-	}
+			kमुक्त(sp);
+		पूर्ण
+		kमुक्त(sf);
+	पूर्ण
 
 	snd_sf_init(sflist);
-}
+पूर्ण
 
 
 /*
- * Create a new sflist structure
+ * Create a new sflist काष्ठाure
  */
-struct snd_sf_list *
-snd_sf_new(struct snd_sf_callback *callback, struct snd_util_memhdr *hdr)
-{
-	struct snd_sf_list *sflist;
+काष्ठा snd_sf_list *
+snd_sf_new(काष्ठा snd_sf_callback *callback, काष्ठा snd_util_memhdr *hdr)
+अणु
+	काष्ठा snd_sf_list *sflist;
 
-	if ((sflist = kzalloc(sizeof(*sflist), GFP_KERNEL)) == NULL)
-		return NULL;
+	अगर ((sflist = kzalloc(माप(*sflist), GFP_KERNEL)) == शून्य)
+		वापस शून्य;
 
 	mutex_init(&sflist->presets_mutex);
 	spin_lock_init(&sflist->lock);
 	sflist->memhdr = hdr;
 
-	if (callback)
+	अगर (callback)
 		sflist->callback = *callback;
 
 	snd_sf_init(sflist);
-	return sflist;
-}
+	वापस sflist;
+पूर्ण
 
 
 /*
- * Free everything allocated off the sflist structure.
+ * Free everything allocated off the sflist काष्ठाure.
  */
-void
-snd_sf_free(struct snd_sf_list *sflist)
-{
-	if (sflist == NULL)
-		return;
+व्योम
+snd_sf_मुक्त(काष्ठा snd_sf_list *sflist)
+अणु
+	अगर (sflist == शून्य)
+		वापस;
 	
 	lock_preset(sflist);
-	if (sflist->callback.sample_reset)
-		sflist->callback.sample_reset(sflist->callback.private_data);
+	अगर (sflist->callback.sample_reset)
+		sflist->callback.sample_reset(sflist->callback.निजी_data);
 	snd_sf_clear(sflist);
 	unlock_preset(sflist);
 
-	kfree(sflist);
-}
+	kमुक्त(sflist);
+पूर्ण
 
 /*
  * Remove all samples
- * The soundcard should be silet before calling this function.
+ * The soundcard should be silet beक्रमe calling this function.
  */
-int
-snd_soundfont_remove_samples(struct snd_sf_list *sflist)
-{
+पूर्णांक
+snd_soundfont_हटाओ_samples(काष्ठा snd_sf_list *sflist)
+अणु
 	lock_preset(sflist);
-	if (sflist->callback.sample_reset)
-		sflist->callback.sample_reset(sflist->callback.private_data);
+	अगर (sflist->callback.sample_reset)
+		sflist->callback.sample_reset(sflist->callback.निजी_data);
 	snd_sf_clear(sflist);
 	unlock_preset(sflist);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Remove unlocked samples.
- * The soundcard should be silent before calling this function.
+ * The soundcard should be silent beक्रमe calling this function.
  */
-int
-snd_soundfont_remove_unlocked(struct snd_sf_list *sflist)
-{
-	struct snd_soundfont *sf;
-	struct snd_sf_zone *zp, *nextzp;
-	struct snd_sf_sample *sp, *nextsp;
+पूर्णांक
+snd_soundfont_हटाओ_unlocked(काष्ठा snd_sf_list *sflist)
+अणु
+	काष्ठा snd_soundfont *sf;
+	काष्ठा snd_sf_zone *zp, *nextzp;
+	काष्ठा snd_sf_sample *sp, *nextsp;
 
 	lock_preset(sflist);
 
-	if (sflist->callback.sample_reset)
-		sflist->callback.sample_reset(sflist->callback.private_data);
+	अगर (sflist->callback.sample_reset)
+		sflist->callback.sample_reset(sflist->callback.निजी_data);
 
 	/* to be sure */
-	memset(sflist->presets, 0, sizeof(sflist->presets));
+	स_रखो(sflist->presets, 0, माप(sflist->presets));
 
-	for (sf = sflist->fonts; sf; sf = sf->next) {
-		for (zp = sf->zones; zp; zp = nextzp) {
-			if (zp->counter < sflist->zone_locked)
-				break;
+	क्रम (sf = sflist->fonts; sf; sf = sf->next) अणु
+		क्रम (zp = sf->zones; zp; zp = nextzp) अणु
+			अगर (zp->counter < sflist->zone_locked)
+				अवरोध;
 			nextzp = zp->next;
 			sf->zones = nextzp;
-			kfree(zp);
-		}
+			kमुक्त(zp);
+		पूर्ण
 
-		for (sp = sf->samples; sp; sp = nextsp) {
-			if (sp->counter < sflist->sample_locked)
-				break;
+		क्रम (sp = sf->samples; sp; sp = nextsp) अणु
+			अगर (sp->counter < sflist->sample_locked)
+				अवरोध;
 			nextsp = sp->next;
 			sf->samples = nextsp;
 			sflist->mem_used -= sp->v.truesize;
-			if (sflist->callback.sample_free)
-				sflist->callback.sample_free(sflist->callback.private_data,
+			अगर (sflist->callback.sample_मुक्त)
+				sflist->callback.sample_मुक्त(sflist->callback.निजी_data,
 							     sp, sflist->memhdr);
-			kfree(sp);
-		}
-	}
+			kमुक्त(sp);
+		पूर्ण
+	पूर्ण
 
 	sflist->zone_counter = sflist->zone_locked;
 	sflist->sample_counter = sflist->sample_locked;
@@ -1482,5 +1483,5 @@ snd_soundfont_remove_unlocked(struct snd_sf_list *sflist)
 	rebuild_presets(sflist);
 
 	unlock_preset(sflist);
-	return 0;
-}
+	वापस 0;
+पूर्ण

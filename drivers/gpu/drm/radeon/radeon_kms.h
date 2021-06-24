@@ -1,15 +1,16 @@
-/* radeon_kms.h -- Private header for radeon driver -*- linux-c -*-
+<शैली गुरु>
+/* radeon_kms.h -- Private header क्रम radeon driver -*- linux-c -*-
  *
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Fremont, California.
+ * Copyright 2000 VA Linux Systems, Inc., Fremont, Calअगरornia.
  * All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -25,15 +26,15 @@
  *
  */
 
-#ifndef __RADEON_KMS_H__
-#define __RADEON_KMS_H__
+#अगर_अघोषित __RADEON_KMS_H__
+#घोषणा __RADEON_KMS_H__
 
-u32 radeon_get_vblank_counter_kms(struct drm_crtc *crtc);
-int radeon_enable_vblank_kms(struct drm_crtc *crtc);
-void radeon_disable_vblank_kms(struct drm_crtc *crtc);
-irqreturn_t radeon_driver_irq_handler_kms(int irq, void *arg);
-void radeon_driver_irq_preinstall_kms(struct drm_device *dev);
-int radeon_driver_irq_postinstall_kms(struct drm_device *dev);
-void radeon_driver_irq_uninstall_kms(struct drm_device *dev);
+u32 radeon_get_vblank_counter_kms(काष्ठा drm_crtc *crtc);
+पूर्णांक radeon_enable_vblank_kms(काष्ठा drm_crtc *crtc);
+व्योम radeon_disable_vblank_kms(काष्ठा drm_crtc *crtc);
+irqवापस_t radeon_driver_irq_handler_kms(पूर्णांक irq, व्योम *arg);
+व्योम radeon_driver_irq_preinstall_kms(काष्ठा drm_device *dev);
+पूर्णांक radeon_driver_irq_postinstall_kms(काष्ठा drm_device *dev);
+व्योम radeon_driver_irq_uninstall_kms(काष्ठा drm_device *dev);
 
-#endif				/* __RADEON_KMS_H__ */
+#पूर्ण_अगर				/* __RADEON_KMS_H__ */

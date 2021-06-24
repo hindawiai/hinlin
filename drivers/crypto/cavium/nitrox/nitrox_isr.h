@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NITROX_ISR_H
-#define __NITROX_ISR_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NITROX_ISR_H
+#घोषणा __NITROX_ISR_H
 
-#include "nitrox_dev.h"
+#समावेश "nitrox_dev.h"
 
-int nitrox_register_interrupts(struct nitrox_device *ndev);
-void nitrox_unregister_interrupts(struct nitrox_device *ndev);
-int nitrox_sriov_register_interupts(struct nitrox_device *ndev);
-void nitrox_sriov_unregister_interrupts(struct nitrox_device *ndev);
+पूर्णांक nitrox_रेजिस्टर_पूर्णांकerrupts(काष्ठा nitrox_device *ndev);
+व्योम nitrox_unरेजिस्टर_पूर्णांकerrupts(काष्ठा nitrox_device *ndev);
+पूर्णांक nitrox_sriov_रेजिस्टर_पूर्णांकerupts(काष्ठा nitrox_device *ndev);
+व्योम nitrox_sriov_unरेजिस्टर_पूर्णांकerrupts(काष्ठा nitrox_device *ndev);
 
-#ifdef CONFIG_PCI_IOV
-int nitrox_sriov_configure(struct pci_dev *pdev, int num_vfs);
-#else
-static inline int nitrox_sriov_configure(struct pci_dev *pdev, int num_vfs)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित CONFIG_PCI_IOV
+पूर्णांक nitrox_sriov_configure(काष्ठा pci_dev *pdev, पूर्णांक num_vfs);
+#अन्यथा
+अटल अंतरभूत पूर्णांक nitrox_sriov_configure(काष्ठा pci_dev *pdev, पूर्णांक num_vfs)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __NITROX_ISR_H */
+#पूर्ण_अगर /* __NITROX_ISR_H */

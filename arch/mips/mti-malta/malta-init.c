@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * PROM library initialisation code.
  *
@@ -11,191 +12,191 @@
  *         Maciej W. Rozycki <macro@mips.com>
  *          Steven J. Hill <sjhill@mips.com>
  */
-#include <linux/init.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/pci_regs.h>
-#include <linux/serial_core.h>
+#समावेश <linux/init.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci_regs.h>
+#समावेश <linux/serial_core.h>
 
-#include <asm/cacheflush.h>
-#include <asm/smp-ops.h>
-#include <asm/traps.h>
-#include <asm/fw/fw.h>
-#include <asm/mips-cps.h>
-#include <asm/mips-boards/generic.h>
-#include <asm/mips-boards/malta.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/smp-ops.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/fw/fw.h>
+#समावेश <यंत्र/mips-cps.h>
+#समावेश <यंत्र/mips-boards/generic.h>
+#समावेश <यंत्र/mips-boards/malta.h>
 
-static int mips_revision_corid;
-int mips_revision_sconid;
+अटल पूर्णांक mips_revision_corid;
+पूर्णांक mips_revision_sconid;
 
-/* Bonito64 system controller register base. */
-unsigned long _pcictrl_bonito;
-unsigned long _pcictrl_bonito_pcicfg;
+/* Bonito64 प्रणाली controller रेजिस्टर base. */
+अचिन्हित दीर्घ _pcictrl_bonito;
+अचिन्हित दीर्घ _pcictrl_bonito_pcicfg;
 
-/* GT64120 system controller register base */
-unsigned long _pcictrl_gt64120;
+/* GT64120 प्रणाली controller रेजिस्टर base */
+अचिन्हित दीर्घ _pcictrl_gt64120;
 
-/* MIPS System controller register base */
-unsigned long _pcictrl_msc;
+/* MIPS System controller रेजिस्टर base */
+अचिन्हित दीर्घ _pcictrl_msc;
 
-#ifdef CONFIG_SERIAL_8250_CONSOLE
-static void __init console_config(void)
-{
-	char console_string[40];
-	int baud = 0;
-	char parity = '\0', bits = '\0', flow = '\0';
-	char *s;
+#अगर_घोषित CONFIG_SERIAL_8250_CONSOLE
+अटल व्योम __init console_config(व्योम)
+अणु
+	अक्षर console_string[40];
+	पूर्णांक baud = 0;
+	अक्षर parity = '\0', bits = '\0', flow = '\0';
+	अक्षर *s;
 
-	s = fw_getenv("modetty0");
-	if (s) {
-		while (*s >= '0' && *s <= '9')
+	s = fw_दो_पर्या("modetty0");
+	अगर (s) अणु
+		जबतक (*s >= '0' && *s <= '9')
 			baud = baud*10 + *s++ - '0';
-		if (*s == ',')
+		अगर (*s == ',')
 			s++;
-		if (*s)
+		अगर (*s)
 			parity = *s++;
-		if (*s == ',')
+		अगर (*s == ',')
 			s++;
-		if (*s)
+		अगर (*s)
 			bits = *s++;
-		if (*s == ',')
+		अगर (*s == ',')
 			s++;
-		if (*s == 'h')
+		अगर (*s == 'h')
 			flow = 'r';
-	}
-	if (baud == 0)
+	पूर्ण
+	अगर (baud == 0)
 		baud = 38400;
-	if (parity != 'n' && parity != 'o' && parity != 'e')
+	अगर (parity != 'n' && parity != 'o' && parity != 'e')
 		parity = 'n';
-	if (bits != '7' && bits != '8')
+	अगर (bits != '7' && bits != '8')
 		bits = '8';
-	if (flow == '\0')
+	अगर (flow == '\0')
 		flow = 'r';
 
-	if ((strstr(fw_getcmdline(), "earlycon=")) == NULL) {
-		sprintf(console_string, "uart8250,io,0x3f8,%d%c%c", baud,
+	अगर ((म_माला(fw_अ_लोmdline(), "earlycon=")) == शून्य) अणु
+		प्र_लिखो(console_string, "uart8250,io,0x3f8,%d%c%c", baud,
 			parity, bits);
 		setup_earlycon(console_string);
-	}
+	पूर्ण
 
-	if ((strstr(fw_getcmdline(), "console=")) == NULL) {
-		sprintf(console_string, " console=ttyS0,%d%c%c%c", baud,
+	अगर ((म_माला(fw_अ_लोmdline(), "console=")) == शून्य) अणु
+		प्र_लिखो(console_string, " console=ttyS0,%d%c%c%c", baud,
 			parity, bits, flow);
-		strcat(fw_getcmdline(), console_string);
+		म_जोड़ो(fw_अ_लोmdline(), console_string);
 		pr_info("Config serial console:%s\n", console_string);
-	}
-}
-#endif
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-static void __init mips_nmi_setup(void)
-{
-	void *base;
-
-	base = cpu_has_veic ?
-		(void *)(CAC_BASE + 0xa80) :
-		(void *)(CAC_BASE + 0x380);
-	memcpy(base, except_vec_nmi, 0x80);
-	flush_icache_range((unsigned long)base, (unsigned long)base + 0x80);
-}
-
-static void __init mips_ejtag_setup(void)
-{
-	void *base;
-	extern char except_vec_ejtag_debug[];
+अटल व्योम __init mips_nmi_setup(व्योम)
+अणु
+	व्योम *base;
 
 	base = cpu_has_veic ?
-		(void *)(CAC_BASE + 0xa00) :
-		(void *)(CAC_BASE + 0x300);
-	memcpy(base, except_vec_ejtag_debug, 0x80);
-	flush_icache_range((unsigned long)base, (unsigned long)base + 0x80);
-}
+		(व्योम *)(CAC_BASE + 0xa80) :
+		(व्योम *)(CAC_BASE + 0x380);
+	स_नकल(base, except_vec_nmi, 0x80);
+	flush_icache_range((अचिन्हित दीर्घ)base, (अचिन्हित दीर्घ)base + 0x80);
+पूर्ण
 
-phys_addr_t mips_cpc_default_phys_base(void)
-{
-	return CPC_BASE_ADDR;
-}
+अटल व्योम __init mips_ejtag_setup(व्योम)
+अणु
+	व्योम *base;
+	बाह्य अक्षर except_vec_ejtag_debug[];
 
-void __init prom_init(void)
-{
+	base = cpu_has_veic ?
+		(व्योम *)(CAC_BASE + 0xa00) :
+		(व्योम *)(CAC_BASE + 0x300);
+	स_नकल(base, except_vec_ejtag_debug, 0x80);
+	flush_icache_range((अचिन्हित दीर्घ)base, (अचिन्हित दीर्घ)base + 0x80);
+पूर्ण
+
+phys_addr_t mips_cpc_शेष_phys_base(व्योम)
+अणु
+	वापस CPC_BASE_ADDR;
+पूर्ण
+
+व्योम __init prom_init(व्योम)
+अणु
 	/*
 	 * early setup of _pcictrl_bonito so that we can determine
-	 * the system controller on a CORE_EMUL board
+	 * the प्रणाली controller on a CORE_EMUL board
 	 */
-	_pcictrl_bonito = (unsigned long)ioremap(BONITO_REG_BASE, BONITO_REG_SIZE);
+	_pcictrl_bonito = (अचिन्हित दीर्घ)ioremap(BONITO_REG_BASE, BONITO_REG_SIZE);
 
 	mips_revision_corid = MIPS_REVISION_CORID;
 
-	if (mips_revision_corid == MIPS_REVISION_CORID_CORE_EMUL) {
-		if (BONITO_PCIDID == 0x0001df53 ||
+	अगर (mips_revision_corid == MIPS_REVISION_CORID_CORE_EMUL) अणु
+		अगर (BONITO_PCIDID == 0x0001df53 ||
 		    BONITO_PCIDID == 0x0003df53)
 			mips_revision_corid = MIPS_REVISION_CORID_CORE_EMUL_BON;
-		else
+		अन्यथा
 			mips_revision_corid = MIPS_REVISION_CORID_CORE_EMUL_MSC;
-	}
+	पूर्ण
 
 	mips_revision_sconid = MIPS_REVISION_SCONID;
-	if (mips_revision_sconid == MIPS_REVISION_SCON_OTHER) {
-		switch (mips_revision_corid) {
-		case MIPS_REVISION_CORID_QED_RM5261:
-		case MIPS_REVISION_CORID_CORE_LV:
-		case MIPS_REVISION_CORID_CORE_FPGA:
-		case MIPS_REVISION_CORID_CORE_FPGAR2:
+	अगर (mips_revision_sconid == MIPS_REVISION_SCON_OTHER) अणु
+		चयन (mips_revision_corid) अणु
+		हाल MIPS_REVISION_CORID_QED_RM5261:
+		हाल MIPS_REVISION_CORID_CORE_LV:
+		हाल MIPS_REVISION_CORID_CORE_FPGA:
+		हाल MIPS_REVISION_CORID_CORE_FPGAR2:
 			mips_revision_sconid = MIPS_REVISION_SCON_GT64120;
-			break;
-		case MIPS_REVISION_CORID_CORE_EMUL_BON:
-		case MIPS_REVISION_CORID_BONITO64:
-		case MIPS_REVISION_CORID_CORE_20K:
+			अवरोध;
+		हाल MIPS_REVISION_CORID_CORE_EMUL_BON:
+		हाल MIPS_REVISION_CORID_BONITO64:
+		हाल MIPS_REVISION_CORID_CORE_20K:
 			mips_revision_sconid = MIPS_REVISION_SCON_BONITO;
-			break;
-		case MIPS_REVISION_CORID_CORE_MSC:
-		case MIPS_REVISION_CORID_CORE_FPGA2:
-		case MIPS_REVISION_CORID_CORE_24K:
+			अवरोध;
+		हाल MIPS_REVISION_CORID_CORE_MSC:
+		हाल MIPS_REVISION_CORID_CORE_FPGA2:
+		हाल MIPS_REVISION_CORID_CORE_24K:
 			/*
 			 * SOCit/ROCit support is essentially identical
 			 * but make an attempt to distinguish them
 			 */
 			mips_revision_sconid = MIPS_REVISION_SCON_SOCIT;
-			break;
-		case MIPS_REVISION_CORID_CORE_FPGA3:
-		case MIPS_REVISION_CORID_CORE_FPGA4:
-		case MIPS_REVISION_CORID_CORE_FPGA5:
-		case MIPS_REVISION_CORID_CORE_EMUL_MSC:
-		default:
+			अवरोध;
+		हाल MIPS_REVISION_CORID_CORE_FPGA3:
+		हाल MIPS_REVISION_CORID_CORE_FPGA4:
+		हाल MIPS_REVISION_CORID_CORE_FPGA5:
+		हाल MIPS_REVISION_CORID_CORE_EMUL_MSC:
+		शेष:
 			/* See above */
 			mips_revision_sconid = MIPS_REVISION_SCON_ROCIT;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	switch (mips_revision_sconid) {
+	चयन (mips_revision_sconid) अणु
 		u32 start, map, mask, data;
 
-	case MIPS_REVISION_SCON_GT64120:
+	हाल MIPS_REVISION_SCON_GT64120:
 		/*
-		 * Setup the North bridge to do Master byte-lane swapping
+		 * Setup the North bridge to करो Master byte-lane swapping
 		 * when running in bigendian.
 		 */
-		_pcictrl_gt64120 = (unsigned long)ioremap(MIPS_GT_BASE, 0x2000);
+		_pcictrl_gt64120 = (अचिन्हित दीर्घ)ioremap(MIPS_GT_BASE, 0x2000);
 
-#ifdef CONFIG_CPU_LITTLE_ENDIAN
+#अगर_घोषित CONFIG_CPU_LITTLE_ENDIAN
 		GT_WRITE(GT_PCI0_CMD_OFS, GT_PCI0_CMD_MBYTESWAP_BIT |
 			 GT_PCI0_CMD_SBYTESWAP_BIT);
-#else
+#अन्यथा
 		GT_WRITE(GT_PCI0_CMD_OFS, 0);
-#endif
-		/* Fix up PCI I/O mapping if necessary (for Atlas).  */
+#पूर्ण_अगर
+		/* Fix up PCI I/O mapping अगर necessary (क्रम Atlas).  */
 		start = GT_READ(GT_PCI0IOLD_OFS);
 		map = GT_READ(GT_PCI0IOREMAP_OFS);
-		if ((start & map) != 0) {
+		अगर ((start & map) != 0) अणु
 			map &= ~start;
 			GT_WRITE(GT_PCI0IOREMAP_OFS, map);
-		}
+		पूर्ण
 
 		set_io_port_base(MALTA_GT_PORT_BASE);
-		break;
+		अवरोध;
 
-	case MIPS_REVISION_SCON_BONITO:
-		_pcictrl_bonito_pcicfg = (unsigned long)ioremap(BONITO_PCICFG_BASE, BONITO_PCICFG_SIZE);
+	हाल MIPS_REVISION_SCON_BONITO:
+		_pcictrl_bonito_pcicfg = (अचिन्हित दीर्घ)ioremap(BONITO_PCICFG_BASE, BONITO_PCICFG_SIZE);
 
 		/*
 		 * Disable Bonito IOBC.
@@ -205,25 +206,25 @@ void __init prom_init(void)
 			  BONITO_PCIMEMBASECFG_MEMBASE1_CACHED);
 
 		/*
-		 * Setup the North bridge to do Master byte-lane swapping
+		 * Setup the North bridge to करो Master byte-lane swapping
 		 * when running in bigendian.
 		 */
-#ifdef CONFIG_CPU_LITTLE_ENDIAN
+#अगर_घोषित CONFIG_CPU_LITTLE_ENDIAN
 		BONITO_BONGENCFG = BONITO_BONGENCFG &
 			~(BONITO_BONGENCFG_MSTRBYTESWAP |
 			  BONITO_BONGENCFG_BYTESWAP);
-#else
+#अन्यथा
 		BONITO_BONGENCFG = BONITO_BONGENCFG |
 			BONITO_BONGENCFG_MSTRBYTESWAP |
 			BONITO_BONGENCFG_BYTESWAP;
-#endif
+#पूर्ण_अगर
 
 		set_io_port_base(MALTA_BONITO_PORT_BASE);
-		break;
+		अवरोध;
 
-	case MIPS_REVISION_SCON_SOCIT:
-	case MIPS_REVISION_SCON_ROCIT:
-		_pcictrl_msc = (unsigned long)ioremap(MIPS_MSC01_PCI_REG_BASE, 0x2000);
+	हाल MIPS_REVISION_SCON_SOCIT:
+	हाल MIPS_REVISION_SCON_ROCIT:
+		_pcictrl_msc = (अचिन्हित दीर्घ)ioremap(MIPS_MSC01_PCI_REG_BASE, 0x2000);
 mips_pci_controller:
 		mb();
 		MSC_READ(MSC01_PCI_CFG, data);
@@ -231,17 +232,17 @@ mips_pci_controller:
 		wmb();
 
 		/* Fix up lane swapping.  */
-#ifdef CONFIG_CPU_LITTLE_ENDIAN
+#अगर_घोषित CONFIG_CPU_LITTLE_ENDIAN
 		MSC_WRITE(MSC01_PCI_SWAP, MSC01_PCI_SWAP_NOSWAP);
-#else
+#अन्यथा
 		MSC_WRITE(MSC01_PCI_SWAP,
 			  MSC01_PCI_SWAP_BYTESWAP << MSC01_PCI_SWAP_IO_SHF |
 			  MSC01_PCI_SWAP_BYTESWAP << MSC01_PCI_SWAP_MEM_SHF |
 			  MSC01_PCI_SWAP_BYTESWAP << MSC01_PCI_SWAP_BAR0_SHF);
-#endif
+#पूर्ण_अगर
 
 		/*
-		 * Setup the Malta max (2GB) memory for PCI DMA in host bridge
+		 * Setup the Malta max (2GB) memory क्रम PCI DMA in host bridge
 		 * in transparent addressing mode.
 		 */
 		mask = PHYS_OFFSET | PCI_BASE_ADDRESS_MEM_PREFETCH;
@@ -253,7 +254,7 @@ mips_pci_controller:
 		MSC_WRITE(MSC01_PCI_P2SCMAPL, mask);
 
 		/* Don't handle target retries indefinitely.  */
-		if ((data & MSC01_PCI_CFG_MAXRTRY_MSK) ==
+		अगर ((data & MSC01_PCI_CFG_MAXRTRY_MSK) ==
 		    MSC01_PCI_CFG_MAXRTRY_MSK)
 			data = (data & ~(MSC01_PCI_CFG_MAXRTRY_MSK <<
 					 MSC01_PCI_CFG_MAXRTRY_SHF)) |
@@ -265,33 +266,33 @@ mips_pci_controller:
 		mb();
 
 		set_io_port_base(MALTA_MSC_PORT_BASE);
-		break;
+		अवरोध;
 
-	case MIPS_REVISION_SCON_SOCITSC:
-	case MIPS_REVISION_SCON_SOCITSCP:
-		_pcictrl_msc = (unsigned long)ioremap(MIPS_SOCITSC_PCI_REG_BASE, 0x2000);
-		goto mips_pci_controller;
+	हाल MIPS_REVISION_SCON_SOCITSC:
+	हाल MIPS_REVISION_SCON_SOCITSCP:
+		_pcictrl_msc = (अचिन्हित दीर्घ)ioremap(MIPS_SOCITSC_PCI_REG_BASE, 0x2000);
+		जाओ mips_pci_controller;
 
-	default:
-		/* Unknown system controller */
-		while (1);	/* We die here... */
-	}
+	शेष:
+		/* Unknown प्रणाली controller */
+		जबतक (1);	/* We die here... */
+	पूर्ण
 	board_nmi_handler_setup = mips_nmi_setup;
 	board_ejtag_handler_setup = mips_ejtag_setup;
 
 	fw_init_cmdline();
 	fw_meminit();
-#ifdef CONFIG_SERIAL_8250_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_8250_CONSOLE
 	console_config();
-#endif
+#पूर्ण_अगर
 	/* Early detection of CMP support */
 	mips_cpc_probe();
 
-	if (!register_cps_smp_ops())
-		return;
-	if (!register_cmp_smp_ops())
-		return;
-	if (!register_vsmp_smp_ops())
-		return;
-	register_up_smp_ops();
-}
+	अगर (!रेजिस्टर_cps_smp_ops())
+		वापस;
+	अगर (!रेजिस्टर_cmp_smp_ops())
+		वापस;
+	अगर (!रेजिस्टर_vsmp_smp_ops())
+		वापस;
+	रेजिस्टर_up_smp_ops();
+पूर्ण

@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  bytcht_es8316.c - ASoc Machine driver for Intel Baytrail/Cherrytrail
- *                    platforms with Everest ES8316 SoC
+ *  bytcht_es8316.c - ASoc Machine driver क्रम Intel Baytrail/Cherrytrail
+ *                    platक्रमms with Everest ES8316 SoC
  *
  *  Copyright (C) 2017 Endless Mobile, Inc.
  *  Authors: David Yang <yangxiaohua@everest-semi.com>,
@@ -11,253 +12,253 @@
  *
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-#include <linux/acpi.h>
-#include <linux/clk.h>
-#include <linux/device.h>
-#include <linux/dmi.h>
-#include <linux/gpio/consumer.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/input.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <sound/jack.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
-#include <sound/soc-acpi.h>
-#include "../atom/sst-atom-controls.h"
-#include "../common/soc-intel-quirks.h"
+#समावेश <linux/acpi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/jack.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/soc-acpi.h>
+#समावेश "../atom/sst-atom-controls.h"
+#समावेश "../common/soc-intel-quirks.h"
 
 /* jd-inv + terminating entry */
-#define MAX_NO_PROPS 2
+#घोषणा MAX_NO_PROPS 2
 
-struct byt_cht_es8316_private {
-	struct clk *mclk;
-	struct snd_soc_jack jack;
-	struct gpio_desc *speaker_en_gpio;
+काष्ठा byt_cht_es8316_निजी अणु
+	काष्ठा clk *mclk;
+	काष्ठा snd_soc_jack jack;
+	काष्ठा gpio_desc *speaker_en_gpio;
 	bool speaker_en;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	BYT_CHT_ES8316_INTMIC_IN1_MAP,
 	BYT_CHT_ES8316_INTMIC_IN2_MAP,
-};
+पूर्ण;
 
-#define BYT_CHT_ES8316_MAP(quirk)		((quirk) & GENMASK(3, 0))
-#define BYT_CHT_ES8316_SSP0			BIT(16)
-#define BYT_CHT_ES8316_MONO_SPEAKER		BIT(17)
-#define BYT_CHT_ES8316_JD_INVERTED		BIT(18)
+#घोषणा BYT_CHT_ES8316_MAP(quirk)		((quirk) & GENMASK(3, 0))
+#घोषणा BYT_CHT_ES8316_SSP0			BIT(16)
+#घोषणा BYT_CHT_ES8316_MONO_SPEAKER		BIT(17)
+#घोषणा BYT_CHT_ES8316_JD_INVERTED		BIT(18)
 
-static unsigned long quirk;
+अटल अचिन्हित दीर्घ quirk;
 
-static int quirk_override = -1;
-module_param_named(quirk, quirk_override, int, 0444);
+अटल पूर्णांक quirk_override = -1;
+module_param_named(quirk, quirk_override, पूर्णांक, 0444);
 MODULE_PARM_DESC(quirk, "Board-specific quirk override");
 
-static void log_quirks(struct device *dev)
-{
-	if (BYT_CHT_ES8316_MAP(quirk) == BYT_CHT_ES8316_INTMIC_IN1_MAP)
+अटल व्योम log_quirks(काष्ठा device *dev)
+अणु
+	अगर (BYT_CHT_ES8316_MAP(quirk) == BYT_CHT_ES8316_INTMIC_IN1_MAP)
 		dev_info(dev, "quirk IN1_MAP enabled");
-	if (BYT_CHT_ES8316_MAP(quirk) == BYT_CHT_ES8316_INTMIC_IN2_MAP)
+	अगर (BYT_CHT_ES8316_MAP(quirk) == BYT_CHT_ES8316_INTMIC_IN2_MAP)
 		dev_info(dev, "quirk IN2_MAP enabled");
-	if (quirk & BYT_CHT_ES8316_SSP0)
+	अगर (quirk & BYT_CHT_ES8316_SSP0)
 		dev_info(dev, "quirk SSP0 enabled");
-	if (quirk & BYT_CHT_ES8316_MONO_SPEAKER)
+	अगर (quirk & BYT_CHT_ES8316_MONO_SPEAKER)
 		dev_info(dev, "quirk MONO_SPEAKER enabled\n");
-	if (quirk & BYT_CHT_ES8316_JD_INVERTED)
+	अगर (quirk & BYT_CHT_ES8316_JD_INVERTED)
 		dev_info(dev, "quirk JD_INVERTED enabled\n");
-}
+पूर्ण
 
-static int byt_cht_es8316_speaker_power_event(struct snd_soc_dapm_widget *w,
-	struct snd_kcontrol *kcontrol, int event)
-{
-	struct snd_soc_card *card = w->dapm->card;
-	struct byt_cht_es8316_private *priv = snd_soc_card_get_drvdata(card);
+अटल पूर्णांक byt_cht_es8316_speaker_घातer_event(काष्ठा snd_soc_dapm_widget *w,
+	काष्ठा snd_kcontrol *kcontrol, पूर्णांक event)
+अणु
+	काष्ठा snd_soc_card *card = w->dapm->card;
+	काष्ठा byt_cht_es8316_निजी *priv = snd_soc_card_get_drvdata(card);
 
-	if (SND_SOC_DAPM_EVENT_ON(event))
+	अगर (SND_SOC_DAPM_EVENT_ON(event))
 		priv->speaker_en = true;
-	else
+	अन्यथा
 		priv->speaker_en = false;
 
 	gpiod_set_value_cansleep(priv->speaker_en_gpio, priv->speaker_en);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dapm_widget byt_cht_es8316_widgets[] = {
-	SND_SOC_DAPM_SPK("Speaker", NULL),
-	SND_SOC_DAPM_HP("Headphone", NULL),
-	SND_SOC_DAPM_MIC("Headset Mic", NULL),
-	SND_SOC_DAPM_MIC("Internal Mic", NULL),
+अटल स्थिर काष्ठा snd_soc_dapm_widget byt_cht_es8316_widमाला_लो[] = अणु
+	SND_SOC_DAPM_SPK("Speaker", शून्य),
+	SND_SOC_DAPM_HP("Headphone", शून्य),
+	SND_SOC_DAPM_MIC("Headset Mic", शून्य),
+	SND_SOC_DAPM_MIC("Internal Mic", शून्य),
 
 	SND_SOC_DAPM_SUPPLY("Speaker Power", SND_SOC_NOPM, 0, 0,
-			    byt_cht_es8316_speaker_power_event,
+			    byt_cht_es8316_speaker_घातer_event,
 			    SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMU),
-};
+पूर्ण;
 
-static const struct snd_soc_dapm_route byt_cht_es8316_audio_map[] = {
-	{"Headphone", NULL, "HPOL"},
-	{"Headphone", NULL, "HPOR"},
+अटल स्थिर काष्ठा snd_soc_dapm_route byt_cht_es8316_audio_map[] = अणु
+	अणु"Headphone", शून्य, "HPOL"पूर्ण,
+	अणु"Headphone", शून्य, "HPOR"पूर्ण,
 
 	/*
 	 * There is no separate speaker output instead the speakers are muxed to
-	 * the HP outputs. The mux is controlled by the "Speaker Power" supply.
+	 * the HP outमाला_दो. The mux is controlled by the "Speaker Power" supply.
 	 */
-	{"Speaker", NULL, "HPOL"},
-	{"Speaker", NULL, "HPOR"},
-	{"Speaker", NULL, "Speaker Power"},
-};
+	अणु"Speaker", शून्य, "HPOL"पूर्ण,
+	अणु"Speaker", शून्य, "HPOR"पूर्ण,
+	अणु"Speaker", शून्य, "Speaker Power"पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_route byt_cht_es8316_intmic_in1_map[] = {
-	{"MIC1", NULL, "Internal Mic"},
-	{"MIC2", NULL, "Headset Mic"},
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route byt_cht_es8316_पूर्णांकmic_in1_map[] = अणु
+	अणु"MIC1", शून्य, "Internal Mic"पूर्ण,
+	अणु"MIC2", शून्य, "Headset Mic"पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_route byt_cht_es8316_intmic_in2_map[] = {
-	{"MIC2", NULL, "Internal Mic"},
-	{"MIC1", NULL, "Headset Mic"},
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route byt_cht_es8316_पूर्णांकmic_in2_map[] = अणु
+	अणु"MIC2", शून्य, "Internal Mic"पूर्ण,
+	अणु"MIC1", शून्य, "Headset Mic"पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_route byt_cht_es8316_ssp0_map[] = {
-	{"Playback", NULL, "ssp0 Tx"},
-	{"ssp0 Tx", NULL, "modem_out"},
-	{"modem_in", NULL, "ssp0 Rx"},
-	{"ssp0 Rx", NULL, "Capture"},
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route byt_cht_es8316_ssp0_map[] = अणु
+	अणु"Playback", शून्य, "ssp0 Tx"पूर्ण,
+	अणु"ssp0 Tx", शून्य, "modem_out"पूर्ण,
+	अणु"modem_in", शून्य, "ssp0 Rx"पूर्ण,
+	अणु"ssp0 Rx", शून्य, "Capture"पूर्ण,
+पूर्ण;
 
-static const struct snd_soc_dapm_route byt_cht_es8316_ssp2_map[] = {
-	{"Playback", NULL, "ssp2 Tx"},
-	{"ssp2 Tx", NULL, "codec_out0"},
-	{"ssp2 Tx", NULL, "codec_out1"},
-	{"codec_in0", NULL, "ssp2 Rx" },
-	{"codec_in1", NULL, "ssp2 Rx" },
-	{"ssp2 Rx", NULL, "Capture"},
-};
+अटल स्थिर काष्ठा snd_soc_dapm_route byt_cht_es8316_ssp2_map[] = अणु
+	अणु"Playback", शून्य, "ssp2 Tx"पूर्ण,
+	अणु"ssp2 Tx", शून्य, "codec_out0"पूर्ण,
+	अणु"ssp2 Tx", शून्य, "codec_out1"पूर्ण,
+	अणु"codec_in0", शून्य, "ssp2 Rx" पूर्ण,
+	अणु"codec_in1", शून्य, "ssp2 Rx" पूर्ण,
+	अणु"ssp2 Rx", शून्य, "Capture"पूर्ण,
+पूर्ण;
 
-static const struct snd_kcontrol_new byt_cht_es8316_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new byt_cht_es8316_controls[] = अणु
 	SOC_DAPM_PIN_SWITCH("Speaker"),
 	SOC_DAPM_PIN_SWITCH("Headphone"),
 	SOC_DAPM_PIN_SWITCH("Headset Mic"),
 	SOC_DAPM_PIN_SWITCH("Internal Mic"),
-};
+पूर्ण;
 
-static struct snd_soc_jack_pin byt_cht_es8316_jack_pins[] = {
-	{
+अटल काष्ठा snd_soc_jack_pin byt_cht_es8316_jack_pins[] = अणु
+	अणु
 		.pin	= "Headphone",
 		.mask	= SND_JACK_HEADPHONE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.pin	= "Headset Mic",
 		.mask	= SND_JACK_MICROPHONE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int byt_cht_es8316_init(struct snd_soc_pcm_runtime *runtime)
-{
-	struct snd_soc_component *codec = asoc_rtd_to_codec(runtime, 0)->component;
-	struct snd_soc_card *card = runtime->card;
-	struct byt_cht_es8316_private *priv = snd_soc_card_get_drvdata(card);
-	const struct snd_soc_dapm_route *custom_map;
-	int num_routes;
-	int ret;
+अटल पूर्णांक byt_cht_es8316_init(काष्ठा snd_soc_pcm_runसमय *runसमय)
+अणु
+	काष्ठा snd_soc_component *codec = asoc_rtd_to_codec(runसमय, 0)->component;
+	काष्ठा snd_soc_card *card = runसमय->card;
+	काष्ठा byt_cht_es8316_निजी *priv = snd_soc_card_get_drvdata(card);
+	स्थिर काष्ठा snd_soc_dapm_route *custom_map;
+	पूर्णांक num_routes;
+	पूर्णांक ret;
 
 	card->dapm.idle_bias_off = true;
 
-	switch (BYT_CHT_ES8316_MAP(quirk)) {
-	case BYT_CHT_ES8316_INTMIC_IN1_MAP:
-	default:
-		custom_map = byt_cht_es8316_intmic_in1_map;
-		num_routes = ARRAY_SIZE(byt_cht_es8316_intmic_in1_map);
-		break;
-	case BYT_CHT_ES8316_INTMIC_IN2_MAP:
-		custom_map = byt_cht_es8316_intmic_in2_map;
-		num_routes = ARRAY_SIZE(byt_cht_es8316_intmic_in2_map);
-		break;
-	}
+	चयन (BYT_CHT_ES8316_MAP(quirk)) अणु
+	हाल BYT_CHT_ES8316_INTMIC_IN1_MAP:
+	शेष:
+		custom_map = byt_cht_es8316_पूर्णांकmic_in1_map;
+		num_routes = ARRAY_SIZE(byt_cht_es8316_पूर्णांकmic_in1_map);
+		अवरोध;
+	हाल BYT_CHT_ES8316_INTMIC_IN2_MAP:
+		custom_map = byt_cht_es8316_पूर्णांकmic_in2_map;
+		num_routes = ARRAY_SIZE(byt_cht_es8316_पूर्णांकmic_in2_map);
+		अवरोध;
+	पूर्ण
 	ret = snd_soc_dapm_add_routes(&card->dapm, custom_map, num_routes);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (quirk & BYT_CHT_ES8316_SSP0) {
+	अगर (quirk & BYT_CHT_ES8316_SSP0) अणु
 		custom_map = byt_cht_es8316_ssp0_map;
 		num_routes = ARRAY_SIZE(byt_cht_es8316_ssp0_map);
-	} else {
+	पूर्ण अन्यथा अणु
 		custom_map = byt_cht_es8316_ssp2_map;
 		num_routes = ARRAY_SIZE(byt_cht_es8316_ssp2_map);
-	}
+	पूर्ण
 	ret = snd_soc_dapm_add_routes(&card->dapm, custom_map, num_routes);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * The firmware might enable the clock at boot (this information
-	 * may or may not be reflected in the enable clock register).
-	 * To change the rate we must disable the clock first to cover these
-	 * cases. Due to common clock framework restrictions that do not allow
-	 * to disable a clock that has not been enabled, we need to enable
-	 * the clock first.
+	 * The firmware might enable the घड़ी at boot (this inक्रमmation
+	 * may or may not be reflected in the enable घड़ी रेजिस्टर).
+	 * To change the rate we must disable the घड़ी first to cover these
+	 * हालs. Due to common घड़ी framework restrictions that करो not allow
+	 * to disable a घड़ी that has not been enabled, we need to enable
+	 * the घड़ी first.
 	 */
 	ret = clk_prepare_enable(priv->mclk);
-	if (!ret)
+	अगर (!ret)
 		clk_disable_unprepare(priv->mclk);
 
 	ret = clk_set_rate(priv->mclk, 19200000);
-	if (ret)
+	अगर (ret)
 		dev_err(card->dev, "unable to set MCLK rate\n");
 
 	ret = clk_prepare_enable(priv->mclk);
-	if (ret)
+	अगर (ret)
 		dev_err(card->dev, "unable to enable MCLK\n");
 
-	ret = snd_soc_dai_set_sysclk(asoc_rtd_to_codec(runtime, 0), 0, 19200000,
+	ret = snd_soc_dai_set_sysclk(asoc_rtd_to_codec(runसमय, 0), 0, 19200000,
 				     SND_SOC_CLOCK_IN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(card->dev, "can't set codec clock %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = snd_soc_card_jack_new(card, "Headset",
 				    SND_JACK_HEADSET | SND_JACK_BTN_0,
 				    &priv->jack, byt_cht_es8316_jack_pins,
 				    ARRAY_SIZE(byt_cht_es8316_jack_pins));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(card->dev, "jack creation failed %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	snd_jack_set_key(priv->jack.jack, SND_JACK_BTN_0, KEY_PLAYPAUSE);
-	snd_soc_component_set_jack(codec, &priv->jack, NULL);
+	snd_soc_component_set_jack(codec, &priv->jack, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int byt_cht_es8316_codec_fixup(struct snd_soc_pcm_runtime *rtd,
-			    struct snd_pcm_hw_params *params)
-{
-	struct snd_interval *rate = hw_param_interval(params,
+अटल पूर्णांक byt_cht_es8316_codec_fixup(काष्ठा snd_soc_pcm_runसमय *rtd,
+			    काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_पूर्णांकerval *rate = hw_param_पूर्णांकerval(params,
 			SNDRV_PCM_HW_PARAM_RATE);
-	struct snd_interval *channels = hw_param_interval(params,
+	काष्ठा snd_पूर्णांकerval *channels = hw_param_पूर्णांकerval(params,
 						SNDRV_PCM_HW_PARAM_CHANNELS);
-	int ret, bits;
+	पूर्णांक ret, bits;
 
 	/* The DSP will covert the FE rate to 48k, stereo */
 	rate->min = rate->max = 48000;
 	channels->min = channels->max = 2;
 
-	if (quirk & BYT_CHT_ES8316_SSP0) {
+	अगर (quirk & BYT_CHT_ES8316_SSP0) अणु
 		/* set SSP0 to 16-bit */
-		params_set_format(params, SNDRV_PCM_FORMAT_S16_LE);
+		params_set_क्रमmat(params, SNDRV_PCM_FORMAT_S16_LE);
 		bits = 16;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* set SSP2 to 24-bit */
-		params_set_format(params, SNDRV_PCM_FORMAT_S24_LE);
+		params_set_क्रमmat(params, SNDRV_PCM_FORMAT_S24_LE);
 		bits = 24;
-	}
+	पूर्ण
 
 	/*
-	 * Default mode for SSP configuration is TDM 4 slot, override config
+	 * Default mode क्रम SSP configuration is TDM 4 slot, override config
 	 * with explicit setting to I2S 2ch 24-bit. The word length is set with
 	 * dai_set_tdm_slot() since there is no other API exposed
 	 */
@@ -266,29 +267,29 @@ static int byt_cht_es8316_codec_fixup(struct snd_soc_pcm_runtime *rtd,
 				SND_SOC_DAIFMT_NB_NF   |
 				SND_SOC_DAIFMT_CBS_CFS
 		);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(rtd->dev, "can't set format to I2S, err %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = snd_soc_dai_set_tdm_slot(asoc_rtd_to_cpu(rtd, 0), 0x3, 0x3, 2, bits);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(rtd->dev, "can't set I2S config, err %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int byt_cht_es8316_aif1_startup(struct snd_pcm_substream *substream)
-{
-	return snd_pcm_hw_constraint_single(substream->runtime,
+अटल पूर्णांक byt_cht_es8316_aअगर1_startup(काष्ठा snd_pcm_substream *substream)
+अणु
+	वापस snd_pcm_hw_स्थिरraपूर्णांक_single(substream->runसमय,
 			SNDRV_PCM_HW_PARAM_RATE, 48000);
-}
+पूर्ण
 
-static const struct snd_soc_ops byt_cht_es8316_aif1_ops = {
-	.startup = byt_cht_es8316_aif1_startup,
-};
+अटल स्थिर काष्ठा snd_soc_ops byt_cht_es8316_aअगर1_ops = अणु
+	.startup = byt_cht_es8316_aअगर1_startup,
+पूर्ण;
 
 SND_SOC_DAILINK_DEF(dummy,
 	DAILINK_COMP_ARRAY(COMP_DUMMY()));
@@ -304,33 +305,33 @@ SND_SOC_DAILINK_DEF(ssp2_port,
 SND_SOC_DAILINK_DEF(ssp2_codec,
 	DAILINK_COMP_ARRAY(COMP_CODEC("i2c-ESSX8316:00", "ES8316 HiFi")));
 
-SND_SOC_DAILINK_DEF(platform,
+SND_SOC_DAILINK_DEF(platक्रमm,
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("sst-mfld-platform")));
 
-static struct snd_soc_dai_link byt_cht_es8316_dais[] = {
-	[MERR_DPCM_AUDIO] = {
+अटल काष्ठा snd_soc_dai_link byt_cht_es8316_dais[] = अणु
+	[MERR_DPCM_AUDIO] = अणु
 		.name = "Audio Port",
 		.stream_name = "Audio",
 		.nonatomic = true,
 		.dynamic = 1,
 		.dpcm_playback = 1,
 		.dpcm_capture = 1,
-		.ops = &byt_cht_es8316_aif1_ops,
-		SND_SOC_DAILINK_REG(media, dummy, platform),
-	},
+		.ops = &byt_cht_es8316_aअगर1_ops,
+		SND_SOC_DAILINK_REG(media, dummy, platक्रमm),
+	पूर्ण,
 
-	[MERR_DPCM_DEEP_BUFFER] = {
+	[MERR_DPCM_DEEP_BUFFER] = अणु
 		.name = "Deep-Buffer Audio Port",
 		.stream_name = "Deep-Buffer Audio",
 		.nonatomic = true,
 		.dynamic = 1,
 		.dpcm_playback = 1,
-		.ops = &byt_cht_es8316_aif1_ops,
-		SND_SOC_DAILINK_REG(deepbuffer, dummy, platform),
-	},
+		.ops = &byt_cht_es8316_aअगर1_ops,
+		SND_SOC_DAILINK_REG(deepbuffer, dummy, platक्रमm),
+	पूर्ण,
 
 		/* back ends */
-	{
+	अणु
 		.name = "SSP2-Codec",
 		.id = 0,
 		.no_pcm = 1,
@@ -341,45 +342,45 @@ static struct snd_soc_dai_link byt_cht_es8316_dais[] = {
 		.dpcm_playback = 1,
 		.dpcm_capture = 1,
 		.init = byt_cht_es8316_init,
-		SND_SOC_DAILINK_REG(ssp2_port, ssp2_codec, platform),
-	},
-};
+		SND_SOC_DAILINK_REG(ssp2_port, ssp2_codec, platक्रमm),
+	पूर्ण,
+पूर्ण;
 
 
 /* SoC card */
-static char codec_name[SND_ACPI_I2C_ID_LEN];
-#if !IS_ENABLED(CONFIG_SND_SOC_INTEL_USER_FRIENDLY_LONG_NAMES)
-static char long_name[50]; /* = "bytcht-es8316-*-spk-*-mic" */
-#endif
-static char components_string[32]; /* = "cfg-spk:* cfg-mic:* */
+अटल अक्षर codec_name[SND_ACPI_I2C_ID_LEN];
+#अगर !IS_ENABLED(CONFIG_SND_SOC_INTEL_USER_FRIENDLY_LONG_NAMES)
+अटल अक्षर दीर्घ_name[50]; /* = "bytcht-es8316-*-spk-*-mic" */
+#पूर्ण_अगर
+अटल अक्षर components_string[32]; /* = "cfg-spk:* cfg-mic:* */
 
-static int byt_cht_es8316_suspend(struct snd_soc_card *card)
-{
-	struct snd_soc_component *component;
+अटल पूर्णांक byt_cht_es8316_suspend(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_component *component;
 
-	for_each_card_components(card, component) {
-		if (!strcmp(component->name, codec_name)) {
+	क्रम_each_card_components(card, component) अणु
+		अगर (!म_भेद(component->name, codec_name)) अणु
 			dev_dbg(component->dev, "disabling jack detect before suspend\n");
-			snd_soc_component_set_jack(component, NULL, NULL);
-			break;
-		}
-	}
+			snd_soc_component_set_jack(component, शून्य, शून्य);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int byt_cht_es8316_resume(struct snd_soc_card *card)
-{
-	struct byt_cht_es8316_private *priv = snd_soc_card_get_drvdata(card);
-	struct snd_soc_component *component;
+अटल पूर्णांक byt_cht_es8316_resume(काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा byt_cht_es8316_निजी *priv = snd_soc_card_get_drvdata(card);
+	काष्ठा snd_soc_component *component;
 
-	for_each_card_components(card, component) {
-		if (!strcmp(component->name, codec_name)) {
+	क्रम_each_card_components(card, component) अणु
+		अगर (!म_भेद(component->name, codec_name)) अणु
 			dev_dbg(component->dev, "re-enabling jack detect after resume\n");
-			snd_soc_component_set_jack(component, &priv->jack, NULL);
-			break;
-		}
-	}
+			snd_soc_component_set_jack(component, &priv->jack, शून्य);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Some Cherry Trail boards with an ES8316 codec have a bug in their
@@ -388,34 +389,34 @@ static int byt_cht_es8316_resume(struct snd_soc_card *card)
 	 * that this really is a bug and the GPIO has no influence on the
 	 * touchscreen at all.
 	 *
-	 * The silead.c touchscreen driver does not support runtime suspend, so
-	 * the GPIO can only be changed underneath us during a system suspend.
+	 * The silead.c touchscreen driver करोes not support runसमय suspend, so
+	 * the GPIO can only be changed underneath us during a प्रणाली suspend.
 	 * This resume() function runs from a pm complete() callback, and thus
 	 * is guaranteed to run after the touchscreen driver/ACPI-subsys has
 	 * brought the touchscreen back up again (and thus changed the GPIO).
 	 *
 	 * So to work around this we pass GPIOD_FLAGS_BIT_NONEXCLUSIVE when
-	 * requesting the GPIO and we set its value here to undo any changes
-	 * done by the touchscreen's broken _PS0 ACPI method.
+	 * requesting the GPIO and we set its value here to unकरो any changes
+	 * करोne by the touchscreen's broken _PS0 ACPI method.
 	 */
 	gpiod_set_value_cansleep(priv->speaker_en_gpio, priv->speaker_en);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* use space before codec name to simplify card ID, and simplify driver name */
-#define SOF_CARD_NAME "bytcht es8316" /* card name will be 'sof-bytcht es8316' */
-#define SOF_DRIVER_NAME "SOF"
+/* use space beक्रमe codec name to simplअगरy card ID, and simplअगरy driver name */
+#घोषणा SOF_CARD_NAME "bytcht es8316" /* card name will be 'sof-bytcht es8316' */
+#घोषणा SOF_DRIVER_NAME "SOF"
 
-#define CARD_NAME "bytcht-es8316"
-#define DRIVER_NAME NULL /* card name will be used for driver name */
+#घोषणा CARD_NAME "bytcht-es8316"
+#घोषणा DRIVER_NAME शून्य /* card name will be used क्रम driver name */
 
-static struct snd_soc_card byt_cht_es8316_card = {
+अटल काष्ठा snd_soc_card byt_cht_es8316_card = अणु
 	.owner = THIS_MODULE,
 	.dai_link = byt_cht_es8316_dais,
 	.num_links = ARRAY_SIZE(byt_cht_es8316_dais),
-	.dapm_widgets = byt_cht_es8316_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(byt_cht_es8316_widgets),
+	.dapm_widमाला_लो = byt_cht_es8316_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(byt_cht_es8316_widमाला_लो),
 	.dapm_routes = byt_cht_es8316_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(byt_cht_es8316_audio_map),
 	.controls = byt_cht_es8316_controls,
@@ -423,133 +424,133 @@ static struct snd_soc_card byt_cht_es8316_card = {
 	.fully_routed = true,
 	.suspend_pre = byt_cht_es8316_suspend,
 	.resume_post = byt_cht_es8316_resume,
-};
+पूर्ण;
 
-static const struct acpi_gpio_params first_gpio = { 0, 0, false };
+अटल स्थिर काष्ठा acpi_gpio_params first_gpio = अणु 0, 0, false पूर्ण;
 
-static const struct acpi_gpio_mapping byt_cht_es8316_gpios[] = {
-	{ "speaker-enable-gpios", &first_gpio, 1 },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_gpio_mapping byt_cht_es8316_gpios[] = अणु
+	अणु "speaker-enable-gpios", &first_gpio, 1 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
 /* Please keep this list alphabetically sorted */
-static const struct dmi_system_id byt_cht_es8316_quirk_table[] = {
-	{	/* Irbis NB41 */
-		.matches = {
+अटल स्थिर काष्ठा dmi_प्रणाली_id byt_cht_es8316_quirk_table[] = अणु
+	अणु	/* Irbis NB41 */
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "IRBIS"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "NB41"),
-		},
-		.driver_data = (void *)(BYT_CHT_ES8316_SSP0
+		पूर्ण,
+		.driver_data = (व्योम *)(BYT_CHT_ES8316_SSP0
 					| BYT_CHT_ES8316_INTMIC_IN2_MAP
 					| BYT_CHT_ES8316_JD_INVERTED),
-	},
-	{	/* Teclast X98 Plus II */
-		.matches = {
+	पूर्ण,
+	अणु	/* Teclast X98 Plus II */
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "TECLAST"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "X98 Plus II"),
-		},
-		.driver_data = (void *)(BYT_CHT_ES8316_INTMIC_IN1_MAP
+		पूर्ण,
+		.driver_data = (व्योम *)(BYT_CHT_ES8316_INTMIC_IN1_MAP
 					| BYT_CHT_ES8316_JD_INVERTED),
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static int snd_byt_cht_es8316_mc_probe(struct platform_device *pdev)
-{
-	static const char * const mic_name[] = { "in1", "in2" };
-	struct property_entry props[MAX_NO_PROPS] = {};
-	struct byt_cht_es8316_private *priv;
-	const struct dmi_system_id *dmi_id;
-	struct device *dev = &pdev->dev;
-	struct snd_soc_acpi_mach *mach;
-	const char *platform_name;
-	struct acpi_device *adev;
-	struct device *codec_dev;
+अटल पूर्णांक snd_byt_cht_es8316_mc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अटल स्थिर अक्षर * स्थिर mic_name[] = अणु "in1", "in2" पूर्ण;
+	काष्ठा property_entry props[MAX_NO_PROPS] = अणुपूर्ण;
+	काष्ठा byt_cht_es8316_निजी *priv;
+	स्थिर काष्ठा dmi_प्रणाली_id *dmi_id;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा snd_soc_acpi_mach *mach;
+	स्थिर अक्षर *platक्रमm_name;
+	काष्ठा acpi_device *adev;
+	काष्ठा device *codec_dev;
 	bool sof_parent;
-	unsigned int cnt = 0;
-	int dai_index = 0;
-	int i;
-	int ret = 0;
+	अचिन्हित पूर्णांक cnt = 0;
+	पूर्णांक dai_index = 0;
+	पूर्णांक i;
+	पूर्णांक ret = 0;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	mach = dev->platform_data;
+	mach = dev->platक्रमm_data;
 	/* fix index of codec dai */
-	for (i = 0; i < ARRAY_SIZE(byt_cht_es8316_dais); i++) {
-		if (!strcmp(byt_cht_es8316_dais[i].codecs->name,
-			    "i2c-ESSX8316:00")) {
+	क्रम (i = 0; i < ARRAY_SIZE(byt_cht_es8316_dais); i++) अणु
+		अगर (!म_भेद(byt_cht_es8316_dais[i].codecs->name,
+			    "i2c-ESSX8316:00")) अणु
 			dai_index = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* fixup codec name based on HID */
-	adev = acpi_dev_get_first_match_dev(mach->id, NULL, -1);
-	if (adev) {
-		snprintf(codec_name, sizeof(codec_name),
+	adev = acpi_dev_get_first_match_dev(mach->id, शून्य, -1);
+	अगर (adev) अणु
+		snम_लिखो(codec_name, माप(codec_name),
 			 "i2c-%s", acpi_dev_name(adev));
 		put_device(&adev->dev);
 		byt_cht_es8316_dais[dai_index].codecs->name = codec_name;
-	}
+	पूर्ण
 
-	/* override plaform name, if required */
+	/* override plaक्रमm name, अगर required */
 	byt_cht_es8316_card.dev = dev;
-	platform_name = mach->mach_params.platform;
+	platक्रमm_name = mach->mach_params.platक्रमm;
 
-	ret = snd_soc_fixup_dai_links_platform_name(&byt_cht_es8316_card,
-						    platform_name);
-	if (ret)
-		return ret;
+	ret = snd_soc_fixup_dai_links_platक्रमm_name(&byt_cht_es8316_card,
+						    platक्रमm_name);
+	अगर (ret)
+		वापस ret;
 
-	/* Check for BYTCR or other platform and setup quirks */
+	/* Check क्रम BYTCR or other platक्रमm and setup quirks */
 	dmi_id = dmi_first_match(byt_cht_es8316_quirk_table);
-	if (dmi_id) {
-		quirk = (unsigned long)dmi_id->driver_data;
-	} else if (soc_intel_is_byt() &&
-		   mach->mach_params.acpi_ipc_irq_index == 0) {
-		/* On BYTCR default to SSP0, internal-mic-in2-map, mono-spk */
+	अगर (dmi_id) अणु
+		quirk = (अचिन्हित दीर्घ)dmi_id->driver_data;
+	पूर्ण अन्यथा अगर (soc_पूर्णांकel_is_byt() &&
+		   mach->mach_params.acpi_ipc_irq_index == 0) अणु
+		/* On BYTCR शेष to SSP0, पूर्णांकernal-mic-in2-map, mono-spk */
 		quirk = BYT_CHT_ES8316_SSP0 | BYT_CHT_ES8316_INTMIC_IN2_MAP |
 			BYT_CHT_ES8316_MONO_SPEAKER;
-	} else {
-		/* Others default to internal-mic-in1-map, mono-speaker */
+	पूर्ण अन्यथा अणु
+		/* Others शेष to पूर्णांकernal-mic-in1-map, mono-speaker */
 		quirk = BYT_CHT_ES8316_INTMIC_IN1_MAP |
 			BYT_CHT_ES8316_MONO_SPEAKER;
-	}
-	if (quirk_override != -1) {
+	पूर्ण
+	अगर (quirk_override != -1) अणु
 		dev_info(dev, "Overriding quirk 0x%lx => 0x%x\n",
 			 quirk, quirk_override);
 		quirk = quirk_override;
-	}
+	पूर्ण
 	log_quirks(dev);
 
-	if (quirk & BYT_CHT_ES8316_SSP0)
+	अगर (quirk & BYT_CHT_ES8316_SSP0)
 		byt_cht_es8316_dais[dai_index].cpus->dai_name = "ssp0-port";
 
-	/* get the clock */
+	/* get the घड़ी */
 	priv->mclk = devm_clk_get(dev, "pmc_plt_clk_3");
-	if (IS_ERR(priv->mclk)) {
+	अगर (IS_ERR(priv->mclk)) अणु
 		ret = PTR_ERR(priv->mclk);
 		dev_err(dev, "clk_get pmc_plt_clk_3 failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* get speaker enable GPIO */
-	codec_dev = bus_find_device_by_name(&i2c_bus_type, NULL, codec_name);
-	if (!codec_dev)
-		return -EPROBE_DEFER;
+	codec_dev = bus_find_device_by_name(&i2c_bus_type, शून्य, codec_name);
+	अगर (!codec_dev)
+		वापस -EPROBE_DEFER;
 
-	if (quirk & BYT_CHT_ES8316_JD_INVERTED)
+	अगर (quirk & BYT_CHT_ES8316_JD_INVERTED)
 		props[cnt++] = PROPERTY_ENTRY_BOOL("everest,jack-detect-inverted");
 
-	if (cnt) {
+	अगर (cnt) अणु
 		ret = device_add_properties(codec_dev, props);
-		if (ret) {
+		अगर (ret) अणु
 			put_device(codec_dev);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	devm_acpi_dev_add_driver_gpios(codec_dev, byt_cht_es8316_gpios);
 	priv->speaker_en_gpio =
@@ -558,78 +559,78 @@ static int snd_byt_cht_es8316_mc_probe(struct platform_device *pdev)
 				GPIOD_OUT_LOW | GPIOD_FLAGS_BIT_NONEXCLUSIVE);
 	put_device(codec_dev);
 
-	if (IS_ERR(priv->speaker_en_gpio)) {
+	अगर (IS_ERR(priv->speaker_en_gpio)) अणु
 		ret = PTR_ERR(priv->speaker_en_gpio);
-		switch (ret) {
-		case -ENOENT:
-			priv->speaker_en_gpio = NULL;
-			break;
-		default:
+		चयन (ret) अणु
+		हाल -ENOENT:
+			priv->speaker_en_gpio = शून्य;
+			अवरोध;
+		शेष:
 			dev_err(dev, "get speaker GPIO failed: %d\n", ret);
 			fallthrough;
-		case -EPROBE_DEFER:
-			return ret;
-		}
-	}
+		हाल -EPROBE_DEFER:
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	snprintf(components_string, sizeof(components_string),
+	snम_लिखो(components_string, माप(components_string),
 		 "cfg-spk:%s cfg-mic:%s",
 		 (quirk & BYT_CHT_ES8316_MONO_SPEAKER) ? "1" : "2",
 		 mic_name[BYT_CHT_ES8316_MAP(quirk)]);
 	byt_cht_es8316_card.components = components_string;
-#if !IS_ENABLED(CONFIG_SND_SOC_INTEL_USER_FRIENDLY_LONG_NAMES)
-	snprintf(long_name, sizeof(long_name), "bytcht-es8316-%s-spk-%s-mic",
+#अगर !IS_ENABLED(CONFIG_SND_SOC_INTEL_USER_FRIENDLY_LONG_NAMES)
+	snम_लिखो(दीर्घ_name, माप(दीर्घ_name), "bytcht-es8316-%s-spk-%s-mic",
 		 (quirk & BYT_CHT_ES8316_MONO_SPEAKER) ? "mono" : "stereo",
 		 mic_name[BYT_CHT_ES8316_MAP(quirk)]);
-	byt_cht_es8316_card.long_name = long_name;
-#endif
+	byt_cht_es8316_card.दीर्घ_name = दीर्घ_name;
+#पूर्ण_अगर
 
 	sof_parent = snd_soc_acpi_sof_parent(&pdev->dev);
 
 	/* set card and driver name */
-	if (sof_parent) {
+	अगर (sof_parent) अणु
 		byt_cht_es8316_card.name = SOF_CARD_NAME;
 		byt_cht_es8316_card.driver_name = SOF_DRIVER_NAME;
-	} else {
+	पूर्ण अन्यथा अणु
 		byt_cht_es8316_card.name = CARD_NAME;
 		byt_cht_es8316_card.driver_name = DRIVER_NAME;
-	}
+	पूर्ण
 
 	/* set pm ops */
-	if (sof_parent)
+	अगर (sof_parent)
 		dev->driver->pm = &snd_soc_pm_ops;
 
-	/* register the soc card */
+	/* रेजिस्टर the soc card */
 	snd_soc_card_set_drvdata(&byt_cht_es8316_card, priv);
 
-	ret = devm_snd_soc_register_card(dev, &byt_cht_es8316_card);
-	if (ret) {
+	ret = devm_snd_soc_रेजिस्टर_card(dev, &byt_cht_es8316_card);
+	अगर (ret) अणु
 		gpiod_put(priv->speaker_en_gpio);
 		dev_err(dev, "snd_soc_register_card failed: %d\n", ret);
-		return ret;
-	}
-	platform_set_drvdata(pdev, &byt_cht_es8316_card);
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	platक्रमm_set_drvdata(pdev, &byt_cht_es8316_card);
+	वापस 0;
+पूर्ण
 
-static int snd_byt_cht_es8316_mc_remove(struct platform_device *pdev)
-{
-	struct snd_soc_card *card = platform_get_drvdata(pdev);
-	struct byt_cht_es8316_private *priv = snd_soc_card_get_drvdata(card);
+अटल पूर्णांक snd_byt_cht_es8316_mc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा snd_soc_card *card = platक्रमm_get_drvdata(pdev);
+	काष्ठा byt_cht_es8316_निजी *priv = snd_soc_card_get_drvdata(card);
 
 	gpiod_put(priv->speaker_en_gpio);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver snd_byt_cht_es8316_mc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver snd_byt_cht_es8316_mc_driver = अणु
+	.driver = अणु
 		.name = "bytcht_es8316",
-	},
+	पूर्ण,
 	.probe = snd_byt_cht_es8316_mc_probe,
-	.remove = snd_byt_cht_es8316_mc_remove,
-};
+	.हटाओ = snd_byt_cht_es8316_mc_हटाओ,
+पूर्ण;
 
-module_platform_driver(snd_byt_cht_es8316_mc_driver);
+module_platक्रमm_driver(snd_byt_cht_es8316_mc_driver);
 MODULE_DESCRIPTION("ASoC Intel(R) Baytrail/Cherrytrail Machine driver");
 MODULE_AUTHOR("David Yang <yangxiaohua@everest-semi.com>");
 MODULE_LICENSE("GPL v2");

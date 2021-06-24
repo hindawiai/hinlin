@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* rwsem.h: R/W semaphores, public interface
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* rwsem.h: R/W semaphores, खुला पूर्णांकerface
  *
  * Written by David Howells (dhowells@redhat.com).
- * Derived from asm-i386/semaphore.h
+ * Derived from यंत्र-i386/semaphore.h
  */
 
-#ifndef _LINUX_RWSEM_H
-#define _LINUX_RWSEM_H
+#अगर_अघोषित _LINUX_RWSEM_H
+#घोषणा _LINUX_RWSEM_H
 
-#include <linux/linkage.h>
+#समावेश <linux/linkage.h>
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/atomic.h>
-#include <linux/err.h>
-#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-#include <linux/osq_lock.h>
-#endif
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/err.h>
+#अगर_घोषित CONFIG_RWSEM_SPIN_ON_OWNER
+#समावेश <linux/osq_lock.h>
+#पूर्ण_अगर
 
 /*
  * For an uncontended rwsem, count and owner are the only fields a task
@@ -26,179 +27,179 @@
  * other to increase the chance that they will share the same cacheline.
  *
  * In a contended rwsem, the owner is likely the most frequently accessed
- * field in the structure as the optimistic waiter that holds the osq lock
+ * field in the काष्ठाure as the optimistic रुकोer that holds the osq lock
  * will spin on owner. For an embedded rwsem, other hot fields in the
- * containing structure should be moved further away from the rwsem to
+ * containing काष्ठाure should be moved further away from the rwsem to
  * reduce the chance that they will share the same cacheline causing
  * cacheline bouncing problem.
  */
-struct rw_semaphore {
-	atomic_long_t count;
+काष्ठा rw_semaphore अणु
+	atomic_दीर्घ_t count;
 	/*
-	 * Write owner or one of the read owners as well flags regarding
+	 * Write owner or one of the पढ़ो owners as well flags regarding
 	 * the current state of the rwsem. Can be used as a speculative
-	 * check to see if the write owner is running on the cpu.
+	 * check to see अगर the ग_लिखो owner is running on the cpu.
 	 */
-	atomic_long_t owner;
-#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-	struct optimistic_spin_queue osq; /* spinner MCS lock */
-#endif
-	raw_spinlock_t wait_lock;
-	struct list_head wait_list;
-#ifdef CONFIG_DEBUG_RWSEMS
-	void *magic;
-#endif
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-	struct lockdep_map	dep_map;
-#endif
-};
+	atomic_दीर्घ_t owner;
+#अगर_घोषित CONFIG_RWSEM_SPIN_ON_OWNER
+	काष्ठा optimistic_spin_queue osq; /* spinner MCS lock */
+#पूर्ण_अगर
+	raw_spinlock_t रुको_lock;
+	काष्ठा list_head रुको_list;
+#अगर_घोषित CONFIG_DEBUG_RWSEMS
+	व्योम *magic;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+	काष्ठा lockdep_map	dep_map;
+#पूर्ण_अगर
+पूर्ण;
 
 /* In all implementations count != 0 means locked */
-static inline int rwsem_is_locked(struct rw_semaphore *sem)
-{
-	return atomic_long_read(&sem->count) != 0;
-}
+अटल अंतरभूत पूर्णांक rwsem_is_locked(काष्ठा rw_semaphore *sem)
+अणु
+	वापस atomic_दीर्घ_पढ़ो(&sem->count) != 0;
+पूर्ण
 
-#define RWSEM_UNLOCKED_VALUE		0L
-#define __RWSEM_COUNT_INIT(name)	.count = ATOMIC_LONG_INIT(RWSEM_UNLOCKED_VALUE)
+#घोषणा RWSEM_UNLOCKED_VALUE		0L
+#घोषणा __RWSEM_COUNT_INIT(name)	.count = ATOMIC_LONG_INIT(RWSEM_UNLOCKED_VALUE)
 
 /* Common initializer macros and functions */
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 # define __RWSEM_DEP_MAP_INIT(lockname)			\
-	.dep_map = {					\
+	.dep_map = अणु					\
 		.name = #lockname,			\
-		.wait_type_inner = LD_WAIT_SLEEP,	\
-	},
-#else
+		.रुको_type_inner = LD_WAIT_SLEEP,	\
+	पूर्ण,
+#अन्यथा
 # define __RWSEM_DEP_MAP_INIT(lockname)
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_DEBUG_RWSEMS
+#अगर_घोषित CONFIG_DEBUG_RWSEMS
 # define __RWSEM_DEBUG_INIT(lockname) .magic = &lockname,
-#else
+#अन्यथा
 # define __RWSEM_DEBUG_INIT(lockname)
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_RWSEM_SPIN_ON_OWNER
-#define __RWSEM_OPT_INIT(lockname) .osq = OSQ_LOCK_UNLOCKED,
-#else
-#define __RWSEM_OPT_INIT(lockname)
-#endif
+#अगर_घोषित CONFIG_RWSEM_SPIN_ON_OWNER
+#घोषणा __RWSEM_OPT_INIT(lockname) .osq = OSQ_LOCK_UNLOCKED,
+#अन्यथा
+#घोषणा __RWSEM_OPT_INIT(lockname)
+#पूर्ण_अगर
 
-#define __RWSEM_INITIALIZER(name)				\
-	{ __RWSEM_COUNT_INIT(name),				\
+#घोषणा __RWSEM_INITIALIZER(name)				\
+	अणु __RWSEM_COUNT_INIT(name),				\
 	  .owner = ATOMIC_LONG_INIT(0),				\
 	  __RWSEM_OPT_INIT(name)				\
-	  .wait_lock = __RAW_SPIN_LOCK_UNLOCKED(name.wait_lock),\
-	  .wait_list = LIST_HEAD_INIT((name).wait_list),	\
+	  .रुको_lock = __RAW_SPIN_LOCK_UNLOCKED(name.रुको_lock),\
+	  .रुको_list = LIST_HEAD_INIT((name).रुको_list),	\
 	  __RWSEM_DEBUG_INIT(name)				\
-	  __RWSEM_DEP_MAP_INIT(name) }
+	  __RWSEM_DEP_MAP_INIT(name) पूर्ण
 
-#define DECLARE_RWSEM(name) \
-	struct rw_semaphore name = __RWSEM_INITIALIZER(name)
+#घोषणा DECLARE_RWSEM(name) \
+	काष्ठा rw_semaphore name = __RWSEM_INITIALIZER(name)
 
-extern void __init_rwsem(struct rw_semaphore *sem, const char *name,
-			 struct lock_class_key *key);
+बाह्य व्योम __init_rwsem(काष्ठा rw_semaphore *sem, स्थिर अक्षर *name,
+			 काष्ठा lock_class_key *key);
 
-#define init_rwsem(sem)						\
-do {								\
-	static struct lock_class_key __key;			\
+#घोषणा init_rwsem(sem)						\
+करो अणु								\
+	अटल काष्ठा lock_class_key __key;			\
 								\
 	__init_rwsem((sem), #sem, &__key);			\
-} while (0)
+पूर्ण जबतक (0)
 
 /*
  * This is the same regardless of which rwsem implementation that is being used.
- * It is just a heuristic meant to be called by somebody already holding the
- * rwsem to see if somebody from an incompatible type is wanting access to the
+ * It is just a heuristic meant to be called by somebody alपढ़ोy holding the
+ * rwsem to see अगर somebody from an incompatible type is wanting access to the
  * lock.
  */
-static inline int rwsem_is_contended(struct rw_semaphore *sem)
-{
-	return !list_empty(&sem->wait_list);
-}
+अटल अंतरभूत पूर्णांक rwsem_is_contended(काष्ठा rw_semaphore *sem)
+अणु
+	वापस !list_empty(&sem->रुको_list);
+पूर्ण
 
 /*
- * lock for reading
+ * lock क्रम पढ़ोing
  */
-extern void down_read(struct rw_semaphore *sem);
-extern int __must_check down_read_interruptible(struct rw_semaphore *sem);
-extern int __must_check down_read_killable(struct rw_semaphore *sem);
+बाह्य व्योम करोwn_पढ़ो(काष्ठा rw_semaphore *sem);
+बाह्य पूर्णांक __must_check करोwn_पढ़ो_पूर्णांकerruptible(काष्ठा rw_semaphore *sem);
+बाह्य पूर्णांक __must_check करोwn_पढ़ो_समाप्तable(काष्ठा rw_semaphore *sem);
 
 /*
- * trylock for reading -- returns 1 if successful, 0 if contention
+ * trylock क्रम पढ़ोing -- वापसs 1 अगर successful, 0 अगर contention
  */
-extern int down_read_trylock(struct rw_semaphore *sem);
+बाह्य पूर्णांक करोwn_पढ़ो_trylock(काष्ठा rw_semaphore *sem);
 
 /*
- * lock for writing
+ * lock क्रम writing
  */
-extern void down_write(struct rw_semaphore *sem);
-extern int __must_check down_write_killable(struct rw_semaphore *sem);
+बाह्य व्योम करोwn_ग_लिखो(काष्ठा rw_semaphore *sem);
+बाह्य पूर्णांक __must_check करोwn_ग_लिखो_समाप्तable(काष्ठा rw_semaphore *sem);
 
 /*
- * trylock for writing -- returns 1 if successful, 0 if contention
+ * trylock क्रम writing -- वापसs 1 अगर successful, 0 अगर contention
  */
-extern int down_write_trylock(struct rw_semaphore *sem);
+बाह्य पूर्णांक करोwn_ग_लिखो_trylock(काष्ठा rw_semaphore *sem);
 
 /*
- * release a read lock
+ * release a पढ़ो lock
  */
-extern void up_read(struct rw_semaphore *sem);
+बाह्य व्योम up_पढ़ो(काष्ठा rw_semaphore *sem);
 
 /*
- * release a write lock
+ * release a ग_लिखो lock
  */
-extern void up_write(struct rw_semaphore *sem);
+बाह्य व्योम up_ग_लिखो(काष्ठा rw_semaphore *sem);
 
 /*
- * downgrade write lock to read lock
+ * करोwngrade ग_लिखो lock to पढ़ो lock
  */
-extern void downgrade_write(struct rw_semaphore *sem);
+बाह्य व्योम करोwngrade_ग_लिखो(काष्ठा rw_semaphore *sem);
 
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
 /*
  * nested locking. NOTE: rwsems are not allowed to recurse
- * (which occurs if the same task tries to acquire the same
- * lock instance multiple times), but multiple locks of the
- * same lock class might be taken, if the order of the locks
+ * (which occurs अगर the same task tries to acquire the same
+ * lock instance multiple बार), but multiple locks of the
+ * same lock class might be taken, अगर the order of the locks
  * is always the same. This ordering rule can be expressed
- * to lockdep via the _nested() APIs, but enumerating the
+ * to lockdep via the _nested() APIs, but क्रमागतerating the
  * subclasses that are used. (If the nesting relationship is
- * static then another method for expressing nested locking is
+ * अटल then another method क्रम expressing nested locking is
  * the explicit definition of lock class keys and the use of
- * lockdep_set_class() at lock initialization time.
- * See Documentation/locking/lockdep-design.rst for more details.)
+ * lockdep_set_class() at lock initialization समय.
+ * See Documentation/locking/lockdep-design.rst क्रम more details.)
  */
-extern void down_read_nested(struct rw_semaphore *sem, int subclass);
-extern int __must_check down_read_killable_nested(struct rw_semaphore *sem, int subclass);
-extern void down_write_nested(struct rw_semaphore *sem, int subclass);
-extern int down_write_killable_nested(struct rw_semaphore *sem, int subclass);
-extern void _down_write_nest_lock(struct rw_semaphore *sem, struct lockdep_map *nest_lock);
+बाह्य व्योम करोwn_पढ़ो_nested(काष्ठा rw_semaphore *sem, पूर्णांक subclass);
+बाह्य पूर्णांक __must_check करोwn_पढ़ो_समाप्तable_nested(काष्ठा rw_semaphore *sem, पूर्णांक subclass);
+बाह्य व्योम करोwn_ग_लिखो_nested(काष्ठा rw_semaphore *sem, पूर्णांक subclass);
+बाह्य पूर्णांक करोwn_ग_लिखो_समाप्तable_nested(काष्ठा rw_semaphore *sem, पूर्णांक subclass);
+बाह्य व्योम _करोwn_ग_लिखो_nest_lock(काष्ठा rw_semaphore *sem, काष्ठा lockdep_map *nest_lock);
 
-# define down_write_nest_lock(sem, nest_lock)			\
-do {								\
-	typecheck(struct lockdep_map *, &(nest_lock)->dep_map);	\
-	_down_write_nest_lock(sem, &(nest_lock)->dep_map);	\
-} while (0);
+# define करोwn_ग_लिखो_nest_lock(sem, nest_lock)			\
+करो अणु								\
+	typecheck(काष्ठा lockdep_map *, &(nest_lock)->dep_map);	\
+	_करोwn_ग_लिखो_nest_lock(sem, &(nest_lock)->dep_map);	\
+पूर्ण जबतक (0);
 
 /*
  * Take/release a lock when not the owner will release it.
  *
- * [ This API should be avoided as much as possible - the
- *   proper abstraction for this case is completions. ]
+ * [ This API should be aव्योमed as much as possible - the
+ *   proper असलtraction क्रम this हाल is completions. ]
  */
-extern void down_read_non_owner(struct rw_semaphore *sem);
-extern void up_read_non_owner(struct rw_semaphore *sem);
-#else
-# define down_read_nested(sem, subclass)		down_read(sem)
-# define down_read_killable_nested(sem, subclass)	down_read_killable(sem)
-# define down_write_nest_lock(sem, nest_lock)	down_write(sem)
-# define down_write_nested(sem, subclass)	down_write(sem)
-# define down_write_killable_nested(sem, subclass)	down_write_killable(sem)
-# define down_read_non_owner(sem)		down_read(sem)
-# define up_read_non_owner(sem)			up_read(sem)
-#endif
+बाह्य व्योम करोwn_पढ़ो_non_owner(काष्ठा rw_semaphore *sem);
+बाह्य व्योम up_पढ़ो_non_owner(काष्ठा rw_semaphore *sem);
+#अन्यथा
+# define करोwn_पढ़ो_nested(sem, subclass)		करोwn_पढ़ो(sem)
+# define करोwn_पढ़ो_समाप्तable_nested(sem, subclass)	करोwn_पढ़ो_समाप्तable(sem)
+# define करोwn_ग_लिखो_nest_lock(sem, nest_lock)	करोwn_ग_लिखो(sem)
+# define करोwn_ग_लिखो_nested(sem, subclass)	करोwn_ग_लिखो(sem)
+# define करोwn_ग_लिखो_समाप्तable_nested(sem, subclass)	करोwn_ग_लिखो_समाप्तable(sem)
+# define करोwn_पढ़ो_non_owner(sem)		करोwn_पढ़ो(sem)
+# define up_पढ़ो_non_owner(sem)			up_पढ़ो(sem)
+#पूर्ण_अगर
 
-#endif /* _LINUX_RWSEM_H */
+#पूर्ण_अगर /* _LINUX_RWSEM_H */

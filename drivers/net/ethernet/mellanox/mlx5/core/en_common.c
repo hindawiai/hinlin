@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2016, Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,60 +31,60 @@
  * SOFTWARE.
  */
 
-#include "en.h"
+#समावेश "en.h"
 
 /* mlx5e global resources should be placed in this file.
  * Global resources are common to all the netdevices crated on the same nic.
  */
 
-int mlx5e_create_tir(struct mlx5_core_dev *mdev, struct mlx5e_tir *tir, u32 *in)
-{
-	struct mlx5e_hw_objs *res = &mdev->mlx5e_res.hw_objs;
-	int err;
+पूर्णांक mlx5e_create_tir(काष्ठा mlx5_core_dev *mdev, काष्ठा mlx5e_tir *tir, u32 *in)
+अणु
+	काष्ठा mlx5e_hw_objs *res = &mdev->mlx5e_res.hw_objs;
+	पूर्णांक err;
 
 	err = mlx5_core_create_tir(mdev, in, &tir->tirn);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mutex_lock(&res->td.list_lock);
 	list_add(&tir->list, &res->td.tirs_list);
 	mutex_unlock(&res->td.list_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mlx5e_destroy_tir(struct mlx5_core_dev *mdev,
-		       struct mlx5e_tir *tir)
-{
-	struct mlx5e_hw_objs *res = &mdev->mlx5e_res.hw_objs;
+व्योम mlx5e_destroy_tir(काष्ठा mlx5_core_dev *mdev,
+		       काष्ठा mlx5e_tir *tir)
+अणु
+	काष्ठा mlx5e_hw_objs *res = &mdev->mlx5e_res.hw_objs;
 
 	mutex_lock(&res->td.list_lock);
 	mlx5_core_destroy_tir(mdev, tir->tirn);
 	list_del(&tir->list);
 	mutex_unlock(&res->td.list_lock);
-}
+पूर्ण
 
-void mlx5e_mkey_set_relaxed_ordering(struct mlx5_core_dev *mdev, void *mkc)
-{
+व्योम mlx5e_mkey_set_relaxed_ordering(काष्ठा mlx5_core_dev *mdev, व्योम *mkc)
+अणु
 	bool ro_pci_enable = pcie_relaxed_ordering_enabled(mdev->pdev);
-	bool ro_write = MLX5_CAP_GEN(mdev, relaxed_ordering_write);
-	bool ro_read = MLX5_CAP_GEN(mdev, relaxed_ordering_read);
+	bool ro_ग_लिखो = MLX5_CAP_GEN(mdev, relaxed_ordering_ग_लिखो);
+	bool ro_पढ़ो = MLX5_CAP_GEN(mdev, relaxed_ordering_पढ़ो);
 
-	MLX5_SET(mkc, mkc, relaxed_ordering_read, ro_pci_enable && ro_read);
-	MLX5_SET(mkc, mkc, relaxed_ordering_write, ro_pci_enable && ro_write);
-}
+	MLX5_SET(mkc, mkc, relaxed_ordering_पढ़ो, ro_pci_enable && ro_पढ़ो);
+	MLX5_SET(mkc, mkc, relaxed_ordering_ग_लिखो, ro_pci_enable && ro_ग_लिखो);
+पूर्ण
 
-static int mlx5e_create_mkey(struct mlx5_core_dev *mdev, u32 pdn,
-			     struct mlx5_core_mkey *mkey)
-{
-	int inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
-	void *mkc;
+अटल पूर्णांक mlx5e_create_mkey(काष्ठा mlx5_core_dev *mdev, u32 pdn,
+			     काष्ठा mlx5_core_mkey *mkey)
+अणु
+	पूर्णांक inlen = MLX5_ST_SZ_BYTES(create_mkey_in);
+	व्योम *mkc;
 	u32 *in;
-	int err;
+	पूर्णांक err;
 
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in)
-		return -ENOMEM;
+	अगर (!in)
+		वापस -ENOMEM;
 
 	mkc = MLX5_ADDR_OF(create_mkey_in, in, memory_key_mkey_entry);
 	MLX5_SET(mkc, mkc, access_mode_1_0, MLX5_MKC_ACCESS_MODE_PA);
@@ -96,106 +97,106 @@ static int mlx5e_create_mkey(struct mlx5_core_dev *mdev, u32 pdn,
 
 	err = mlx5_core_create_mkey(mdev, mkey, in, inlen);
 
-	kvfree(in);
-	return err;
-}
+	kvमुक्त(in);
+	वापस err;
+पूर्ण
 
-int mlx5e_create_mdev_resources(struct mlx5_core_dev *mdev)
-{
-	struct mlx5e_hw_objs *res = &mdev->mlx5e_res.hw_objs;
-	int err;
+पूर्णांक mlx5e_create_mdev_resources(काष्ठा mlx5_core_dev *mdev)
+अणु
+	काष्ठा mlx5e_hw_objs *res = &mdev->mlx5e_res.hw_objs;
+	पूर्णांक err;
 
 	err = mlx5_core_alloc_pd(mdev, &res->pdn);
-	if (err) {
+	अगर (err) अणु
 		mlx5_core_err(mdev, "alloc pd failed, %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = mlx5_core_alloc_transport_domain(mdev, &res->td.tdn);
-	if (err) {
+	err = mlx5_core_alloc_transport_करोमुख्य(mdev, &res->td.tdn);
+	अगर (err) अणु
 		mlx5_core_err(mdev, "alloc td failed, %d\n", err);
-		goto err_dealloc_pd;
-	}
+		जाओ err_dealloc_pd;
+	पूर्ण
 
 	err = mlx5e_create_mkey(mdev, res->pdn, &res->mkey);
-	if (err) {
+	अगर (err) अणु
 		mlx5_core_err(mdev, "create mkey failed, %d\n", err);
-		goto err_dealloc_transport_domain;
-	}
+		जाओ err_dealloc_transport_करोमुख्य;
+	पूर्ण
 
 	err = mlx5_alloc_bfreg(mdev, &res->bfreg, false, false);
-	if (err) {
+	अगर (err) अणु
 		mlx5_core_err(mdev, "alloc bfreg failed, %d\n", err);
-		goto err_destroy_mkey;
-	}
+		जाओ err_destroy_mkey;
+	पूर्ण
 
 	INIT_LIST_HEAD(&res->td.tirs_list);
 	mutex_init(&res->td.list_lock);
 
-	return 0;
+	वापस 0;
 
 err_destroy_mkey:
 	mlx5_core_destroy_mkey(mdev, &res->mkey);
-err_dealloc_transport_domain:
-	mlx5_core_dealloc_transport_domain(mdev, res->td.tdn);
+err_dealloc_transport_करोमुख्य:
+	mlx5_core_dealloc_transport_करोमुख्य(mdev, res->td.tdn);
 err_dealloc_pd:
 	mlx5_core_dealloc_pd(mdev, res->pdn);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void mlx5e_destroy_mdev_resources(struct mlx5_core_dev *mdev)
-{
-	struct mlx5e_hw_objs *res = &mdev->mlx5e_res.hw_objs;
+व्योम mlx5e_destroy_mdev_resources(काष्ठा mlx5_core_dev *mdev)
+अणु
+	काष्ठा mlx5e_hw_objs *res = &mdev->mlx5e_res.hw_objs;
 
-	mlx5_free_bfreg(mdev, &res->bfreg);
+	mlx5_मुक्त_bfreg(mdev, &res->bfreg);
 	mlx5_core_destroy_mkey(mdev, &res->mkey);
-	mlx5_core_dealloc_transport_domain(mdev, res->td.tdn);
+	mlx5_core_dealloc_transport_करोमुख्य(mdev, res->td.tdn);
 	mlx5_core_dealloc_pd(mdev, res->pdn);
-	memset(res, 0, sizeof(*res));
-}
+	स_रखो(res, 0, माप(*res));
+पूर्ण
 
-int mlx5e_refresh_tirs(struct mlx5e_priv *priv, bool enable_uc_lb,
+पूर्णांक mlx5e_refresh_tirs(काष्ठा mlx5e_priv *priv, bool enable_uc_lb,
 		       bool enable_mc_lb)
-{
-	struct mlx5_core_dev *mdev = priv->mdev;
-	struct mlx5e_tir *tir;
+अणु
+	काष्ठा mlx5_core_dev *mdev = priv->mdev;
+	काष्ठा mlx5e_tir *tir;
 	u8 lb_flags = 0;
-	int err  = 0;
+	पूर्णांक err  = 0;
 	u32 tirn = 0;
-	int inlen;
-	void *in;
+	पूर्णांक inlen;
+	व्योम *in;
 
-	inlen = MLX5_ST_SZ_BYTES(modify_tir_in);
+	inlen = MLX5_ST_SZ_BYTES(modअगरy_tir_in);
 	in = kvzalloc(inlen, GFP_KERNEL);
-	if (!in) {
+	अगर (!in) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (enable_uc_lb)
+	अगर (enable_uc_lb)
 		lb_flags = MLX5_TIRC_SELF_LB_BLOCK_BLOCK_UNICAST;
 
-	if (enable_mc_lb)
+	अगर (enable_mc_lb)
 		lb_flags |= MLX5_TIRC_SELF_LB_BLOCK_BLOCK_MULTICAST;
 
-	if (lb_flags)
-		MLX5_SET(modify_tir_in, in, ctx.self_lb_block, lb_flags);
+	अगर (lb_flags)
+		MLX5_SET(modअगरy_tir_in, in, ctx.self_lb_block, lb_flags);
 
-	MLX5_SET(modify_tir_in, in, bitmask.self_lb_en, 1);
+	MLX5_SET(modअगरy_tir_in, in, biपंचांगask.self_lb_en, 1);
 
 	mutex_lock(&mdev->mlx5e_res.hw_objs.td.list_lock);
-	list_for_each_entry(tir, &mdev->mlx5e_res.hw_objs.td.tirs_list, list) {
+	list_क्रम_each_entry(tir, &mdev->mlx5e_res.hw_objs.td.tirs_list, list) अणु
 		tirn = tir->tirn;
-		err = mlx5_core_modify_tir(mdev, tirn, in);
-		if (err)
-			goto out;
-	}
+		err = mlx5_core_modअगरy_tir(mdev, tirn, in);
+		अगर (err)
+			जाओ out;
+	पूर्ण
 
 out:
-	kvfree(in);
-	if (err)
+	kvमुक्त(in);
+	अगर (err)
 		netdev_err(priv->netdev, "refresh tir(0x%x) failed, %d\n", tirn, err);
 	mutex_unlock(&mdev->mlx5e_res.hw_objs.td.list_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण

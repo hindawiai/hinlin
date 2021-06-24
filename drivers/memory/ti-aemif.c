@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TI AEMIF driver
  *
@@ -9,68 +10,68 @@
  * Ivan Khoronzhuk <ivan.khoronzhuk@ti.com>
  */
 
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/ti-aemif.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/ti-aemअगर.h>
 
-#define TA_SHIFT	2
-#define RHOLD_SHIFT	4
-#define RSTROBE_SHIFT	7
-#define RSETUP_SHIFT	13
-#define WHOLD_SHIFT	17
-#define WSTROBE_SHIFT	20
-#define WSETUP_SHIFT	26
-#define EW_SHIFT	30
-#define SSTROBE_SHIFT	31
+#घोषणा TA_SHIFT	2
+#घोषणा RHOLD_SHIFT	4
+#घोषणा RSTROBE_SHIFT	7
+#घोषणा RSETUP_SHIFT	13
+#घोषणा WHOLD_SHIFT	17
+#घोषणा WSTROBE_SHIFT	20
+#घोषणा WSETUP_SHIFT	26
+#घोषणा EW_SHIFT	30
+#घोषणा SSTROBE_SHIFT	31
 
-#define TA(x)		((x) << TA_SHIFT)
-#define RHOLD(x)	((x) << RHOLD_SHIFT)
-#define RSTROBE(x)	((x) << RSTROBE_SHIFT)
-#define RSETUP(x)	((x) << RSETUP_SHIFT)
-#define WHOLD(x)	((x) << WHOLD_SHIFT)
-#define WSTROBE(x)	((x) << WSTROBE_SHIFT)
-#define WSETUP(x)	((x) << WSETUP_SHIFT)
-#define EW(x)		((x) << EW_SHIFT)
-#define SSTROBE(x)	((x) << SSTROBE_SHIFT)
+#घोषणा TA(x)		((x) << TA_SHIFT)
+#घोषणा RHOLD(x)	((x) << RHOLD_SHIFT)
+#घोषणा RSTROBE(x)	((x) << RSTROBE_SHIFT)
+#घोषणा RSETUP(x)	((x) << RSETUP_SHIFT)
+#घोषणा WHOLD(x)	((x) << WHOLD_SHIFT)
+#घोषणा WSTROBE(x)	((x) << WSTROBE_SHIFT)
+#घोषणा WSETUP(x)	((x) << WSETUP_SHIFT)
+#घोषणा EW(x)		((x) << EW_SHIFT)
+#घोषणा SSTROBE(x)	((x) << SSTROBE_SHIFT)
 
-#define ASIZE_MAX	0x1
-#define TA_MAX		0x3
-#define RHOLD_MAX	0x7
-#define RSTROBE_MAX	0x3f
-#define RSETUP_MAX	0xf
-#define WHOLD_MAX	0x7
-#define WSTROBE_MAX	0x3f
-#define WSETUP_MAX	0xf
-#define EW_MAX		0x1
-#define SSTROBE_MAX	0x1
-#define NUM_CS		4
+#घोषणा ASIZE_MAX	0x1
+#घोषणा TA_MAX		0x3
+#घोषणा RHOLD_MAX	0x7
+#घोषणा RSTROBE_MAX	0x3f
+#घोषणा RSETUP_MAX	0xf
+#घोषणा WHOLD_MAX	0x7
+#घोषणा WSTROBE_MAX	0x3f
+#घोषणा WSETUP_MAX	0xf
+#घोषणा EW_MAX		0x1
+#घोषणा SSTROBE_MAX	0x1
+#घोषणा NUM_CS		4
 
-#define TA_VAL(x)	(((x) & TA(TA_MAX)) >> TA_SHIFT)
-#define RHOLD_VAL(x)	(((x) & RHOLD(RHOLD_MAX)) >> RHOLD_SHIFT)
-#define RSTROBE_VAL(x)	(((x) & RSTROBE(RSTROBE_MAX)) >> RSTROBE_SHIFT)
-#define RSETUP_VAL(x)	(((x) & RSETUP(RSETUP_MAX)) >> RSETUP_SHIFT)
-#define WHOLD_VAL(x)	(((x) & WHOLD(WHOLD_MAX)) >> WHOLD_SHIFT)
-#define WSTROBE_VAL(x)	(((x) & WSTROBE(WSTROBE_MAX)) >> WSTROBE_SHIFT)
-#define WSETUP_VAL(x)	(((x) & WSETUP(WSETUP_MAX)) >> WSETUP_SHIFT)
-#define EW_VAL(x)	(((x) & EW(EW_MAX)) >> EW_SHIFT)
-#define SSTROBE_VAL(x)	(((x) & SSTROBE(SSTROBE_MAX)) >> SSTROBE_SHIFT)
+#घोषणा TA_VAL(x)	(((x) & TA(TA_MAX)) >> TA_SHIFT)
+#घोषणा RHOLD_VAL(x)	(((x) & RHOLD(RHOLD_MAX)) >> RHOLD_SHIFT)
+#घोषणा RSTROBE_VAL(x)	(((x) & RSTROBE(RSTROBE_MAX)) >> RSTROBE_SHIFT)
+#घोषणा RSETUP_VAL(x)	(((x) & RSETUP(RSETUP_MAX)) >> RSETUP_SHIFT)
+#घोषणा WHOLD_VAL(x)	(((x) & WHOLD(WHOLD_MAX)) >> WHOLD_SHIFT)
+#घोषणा WSTROBE_VAL(x)	(((x) & WSTROBE(WSTROBE_MAX)) >> WSTROBE_SHIFT)
+#घोषणा WSETUP_VAL(x)	(((x) & WSETUP(WSETUP_MAX)) >> WSETUP_SHIFT)
+#घोषणा EW_VAL(x)	(((x) & EW(EW_MAX)) >> EW_SHIFT)
+#घोषणा SSTROBE_VAL(x)	(((x) & SSTROBE(SSTROBE_MAX)) >> SSTROBE_SHIFT)
 
-#define NRCSR_OFFSET	0x00
-#define AWCCR_OFFSET	0x04
-#define A1CR_OFFSET	0x10
+#घोषणा NRCSR_OFFSET	0x00
+#घोषणा AWCCR_OFFSET	0x04
+#घोषणा A1CR_OFFSET	0x10
 
-#define ACR_ASIZE_MASK	0x3
-#define ACR_EW_MASK	BIT(30)
-#define ACR_SSTROBE_MASK	BIT(31)
-#define ASIZE_16BIT	1
+#घोषणा ACR_ASIZE_MASK	0x3
+#घोषणा ACR_EW_MASK	BIT(30)
+#घोषणा ACR_SSTROBE_MASK	BIT(31)
+#घोषणा ASIZE_16BIT	1
 
-#define CONFIG_MASK	(TA(TA_MAX) | \
+#घोषणा CONFIG_MASK	(TA(TA_MAX) | \
 				RHOLD(RHOLD_MAX) | \
 				RSTROBE(RSTROBE_MAX) |	\
 				RSETUP(RSETUP_MAX) | \
@@ -81,20 +82,20 @@
 				ASIZE_MAX)
 
 /**
- * struct aemif_cs_data: structure to hold cs parameters
+ * काष्ठा aemअगर_cs_data: काष्ठाure to hold cs parameters
  * @cs: chip-select number
- * @wstrobe: write strobe width, ns
- * @rstrobe: read strobe width, ns
- * @wsetup: write setup width, ns
- * @whold: write hold width, ns
- * @rsetup: read setup width, ns
- * @rhold: read hold width, ns
- * @ta: minimum turn around time, ns
+ * @wstrobe: ग_लिखो strobe width, ns
+ * @rstrobe: पढ़ो strobe width, ns
+ * @wsetup: ग_लिखो setup width, ns
+ * @whold: ग_लिखो hold width, ns
+ * @rsetup: पढ़ो setup width, ns
+ * @rhold: पढ़ो hold width, ns
+ * @ta: minimum turn around समय, ns
  * @enable_ss: enable/disable select strobe mode
- * @enable_ew: enable/disable extended wait mode
+ * @enable_ew: enable/disable extended रुको mode
  * @asize: width of the asynchronous device's data bus
  */
-struct aemif_cs_data {
+काष्ठा aemअगर_cs_data अणु
 	u8	cs;
 	u16	wstrobe;
 	u16	rstrobe;
@@ -106,40 +107,40 @@ struct aemif_cs_data {
 	u8	enable_ss;
 	u8	enable_ew;
 	u8	asize;
-};
+पूर्ण;
 
 /**
- * struct aemif_device: structure to hold device data
- * @base: base address of AEMIF registers
- * @clk: source clock
- * @clk_rate: clock's rate in kHz
- * @num_cs: number of assigned chip-selects
+ * काष्ठा aemअगर_device: काष्ठाure to hold device data
+ * @base: base address of AEMIF रेजिस्टरs
+ * @clk: source घड़ी
+ * @clk_rate: घड़ी's rate in kHz
+ * @num_cs: number of asचिन्हित chip-selects
  * @cs_offset: start number of cs nodes
  * @cs_data: array of chip-select settings
  */
-struct aemif_device {
-	void __iomem *base;
-	struct clk *clk;
-	unsigned long clk_rate;
+काष्ठा aemअगर_device अणु
+	व्योम __iomem *base;
+	काष्ठा clk *clk;
+	अचिन्हित दीर्घ clk_rate;
 	u8 num_cs;
-	int cs_offset;
-	struct aemif_cs_data cs_data[NUM_CS];
-};
+	पूर्णांक cs_offset;
+	काष्ठा aemअगर_cs_data cs_data[NUM_CS];
+पूर्ण;
 
 /**
- * aemif_calc_rate - calculate timing data.
- * @pdev: platform device to calculate for
- * @wanted: The cycle time needed in nanoseconds.
- * @clk: The input clock rate in kHz.
- * @max: The maximum divider value that can be programmed.
+ * aemअगर_calc_rate - calculate timing data.
+ * @pdev: platक्रमm device to calculate क्रम
+ * @wanted: The cycle समय needed in nanoseconds.
+ * @clk: The input घड़ी rate in kHz.
+ * @max: The maximum भागider value that can be programmed.
  *
- * On success, returns the calculated timing value minus 1 for easy
- * programming into AEMIF timing registers, else negative errno.
+ * On success, वापसs the calculated timing value minus 1 क्रम easy
+ * programming पूर्णांकo AEMIF timing रेजिस्टरs, अन्यथा negative त्रुटि_सं.
  */
-static int aemif_calc_rate(struct platform_device *pdev, int wanted,
-			   unsigned long clk, int max)
-{
-	int result;
+अटल पूर्णांक aemअगर_calc_rate(काष्ठा platक्रमm_device *pdev, पूर्णांक wanted,
+			   अचिन्हित दीर्घ clk, पूर्णांक max)
+अणु
+	पूर्णांक result;
 
 	result = DIV_ROUND_UP((wanted * clk), NSEC_PER_MSEC) - 1;
 
@@ -147,306 +148,306 @@ static int aemif_calc_rate(struct platform_device *pdev, int wanted,
 		clk, wanted);
 
 	/* It is generally OK to have a more relaxed timing than requested... */
-	if (result < 0)
+	अगर (result < 0)
 		result = 0;
 
 	/* ... But configuring tighter timings is not an option. */
-	else if (result > max)
+	अन्यथा अगर (result > max)
 		result = -EINVAL;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * aemif_config_abus - configure async bus parameters
- * @pdev: platform device to configure for
- * @csnum: aemif chip select number
+ * aemअगर_config_abus - configure async bus parameters
+ * @pdev: platक्रमm device to configure क्रम
+ * @csnum: aemअगर chip select number
  *
- * This function programs the given timing values (in real clock) into the
- * AEMIF registers taking the AEMIF clock into account.
+ * This function programs the given timing values (in real घड़ी) पूर्णांकo the
+ * AEMIF रेजिस्टरs taking the AEMIF घड़ी पूर्णांकo account.
  *
- * This function does not use any locking while programming the AEMIF
+ * This function करोes not use any locking जबतक programming the AEMIF
  * because it is expected that there is only one user of a given
  * chip-select.
  *
- * Returns 0 on success, else negative errno.
+ * Returns 0 on success, अन्यथा negative त्रुटि_सं.
  */
-static int aemif_config_abus(struct platform_device *pdev, int csnum)
-{
-	struct aemif_device *aemif = platform_get_drvdata(pdev);
-	struct aemif_cs_data *data = &aemif->cs_data[csnum];
-	int ta, rhold, rstrobe, rsetup, whold, wstrobe, wsetup;
-	unsigned long clk_rate = aemif->clk_rate;
-	unsigned offset;
+अटल पूर्णांक aemअगर_config_abus(काष्ठा platक्रमm_device *pdev, पूर्णांक csnum)
+अणु
+	काष्ठा aemअगर_device *aemअगर = platक्रमm_get_drvdata(pdev);
+	काष्ठा aemअगर_cs_data *data = &aemअगर->cs_data[csnum];
+	पूर्णांक ta, rhold, rstrobe, rsetup, whold, wstrobe, wsetup;
+	अचिन्हित दीर्घ clk_rate = aemअगर->clk_rate;
+	अचिन्हित offset;
 	u32 set, val;
 
-	offset = A1CR_OFFSET + (data->cs - aemif->cs_offset) * 4;
+	offset = A1CR_OFFSET + (data->cs - aemअगर->cs_offset) * 4;
 
-	ta	= aemif_calc_rate(pdev, data->ta, clk_rate, TA_MAX);
-	rhold	= aemif_calc_rate(pdev, data->rhold, clk_rate, RHOLD_MAX);
-	rstrobe	= aemif_calc_rate(pdev, data->rstrobe, clk_rate, RSTROBE_MAX);
-	rsetup	= aemif_calc_rate(pdev, data->rsetup, clk_rate, RSETUP_MAX);
-	whold	= aemif_calc_rate(pdev, data->whold, clk_rate, WHOLD_MAX);
-	wstrobe	= aemif_calc_rate(pdev, data->wstrobe, clk_rate, WSTROBE_MAX);
-	wsetup	= aemif_calc_rate(pdev, data->wsetup, clk_rate, WSETUP_MAX);
+	ta	= aemअगर_calc_rate(pdev, data->ta, clk_rate, TA_MAX);
+	rhold	= aemअगर_calc_rate(pdev, data->rhold, clk_rate, RHOLD_MAX);
+	rstrobe	= aemअगर_calc_rate(pdev, data->rstrobe, clk_rate, RSTROBE_MAX);
+	rsetup	= aemअगर_calc_rate(pdev, data->rsetup, clk_rate, RSETUP_MAX);
+	whold	= aemअगर_calc_rate(pdev, data->whold, clk_rate, WHOLD_MAX);
+	wstrobe	= aemअगर_calc_rate(pdev, data->wstrobe, clk_rate, WSTROBE_MAX);
+	wsetup	= aemअगर_calc_rate(pdev, data->wsetup, clk_rate, WSETUP_MAX);
 
-	if (ta < 0 || rhold < 0 || rstrobe < 0 || rsetup < 0 ||
-	    whold < 0 || wstrobe < 0 || wsetup < 0) {
+	अगर (ta < 0 || rhold < 0 || rstrobe < 0 || rsetup < 0 ||
+	    whold < 0 || wstrobe < 0 || wsetup < 0) अणु
 		dev_err(&pdev->dev, "%s: cannot get suitable timings\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	set = TA(ta) | RHOLD(rhold) | RSTROBE(rstrobe) | RSETUP(rsetup) |
 		WHOLD(whold) | WSTROBE(wstrobe) | WSETUP(wsetup);
 
 	set |= (data->asize & ACR_ASIZE_MASK);
-	if (data->enable_ew)
+	अगर (data->enable_ew)
 		set |= ACR_EW_MASK;
-	if (data->enable_ss)
+	अगर (data->enable_ss)
 		set |= ACR_SSTROBE_MASK;
 
-	val = readl(aemif->base + offset);
+	val = पढ़ोl(aemअगर->base + offset);
 	val &= ~CONFIG_MASK;
 	val |= set;
-	writel(val, aemif->base + offset);
+	ग_लिखोl(val, aemअगर->base + offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int aemif_cycles_to_nsec(int val, unsigned long clk_rate)
-{
-	return ((val + 1) * NSEC_PER_MSEC) / clk_rate;
-}
+अटल अंतरभूत पूर्णांक aemअगर_cycles_to_nsec(पूर्णांक val, अचिन्हित दीर्घ clk_rate)
+अणु
+	वापस ((val + 1) * NSEC_PER_MSEC) / clk_rate;
+पूर्ण
 
 /**
- * aemif_get_hw_params - function to read hw register values
- * @pdev: platform device to read for
- * @csnum: aemif chip select number
+ * aemअगर_get_hw_params - function to पढ़ो hw रेजिस्टर values
+ * @pdev: platक्रमm device to पढ़ो क्रम
+ * @csnum: aemअगर chip select number
  *
- * This function reads the defaults from the registers and update
- * the timing values. Required for get/set commands and also for
- * the case when driver needs to use defaults in hardware.
+ * This function पढ़ोs the शेषs from the रेजिस्टरs and update
+ * the timing values. Required क्रम get/set commands and also क्रम
+ * the हाल when driver needs to use शेषs in hardware.
  */
-static void aemif_get_hw_params(struct platform_device *pdev, int csnum)
-{
-	struct aemif_device *aemif = platform_get_drvdata(pdev);
-	struct aemif_cs_data *data = &aemif->cs_data[csnum];
-	unsigned long clk_rate = aemif->clk_rate;
+अटल व्योम aemअगर_get_hw_params(काष्ठा platक्रमm_device *pdev, पूर्णांक csnum)
+अणु
+	काष्ठा aemअगर_device *aemअगर = platक्रमm_get_drvdata(pdev);
+	काष्ठा aemअगर_cs_data *data = &aemअगर->cs_data[csnum];
+	अचिन्हित दीर्घ clk_rate = aemअगर->clk_rate;
 	u32 val, offset;
 
-	offset = A1CR_OFFSET + (data->cs - aemif->cs_offset) * 4;
-	val = readl(aemif->base + offset);
+	offset = A1CR_OFFSET + (data->cs - aemअगर->cs_offset) * 4;
+	val = पढ़ोl(aemअगर->base + offset);
 
-	data->ta = aemif_cycles_to_nsec(TA_VAL(val), clk_rate);
-	data->rhold = aemif_cycles_to_nsec(RHOLD_VAL(val), clk_rate);
-	data->rstrobe = aemif_cycles_to_nsec(RSTROBE_VAL(val), clk_rate);
-	data->rsetup = aemif_cycles_to_nsec(RSETUP_VAL(val), clk_rate);
-	data->whold = aemif_cycles_to_nsec(WHOLD_VAL(val), clk_rate);
-	data->wstrobe = aemif_cycles_to_nsec(WSTROBE_VAL(val), clk_rate);
-	data->wsetup = aemif_cycles_to_nsec(WSETUP_VAL(val), clk_rate);
+	data->ta = aemअगर_cycles_to_nsec(TA_VAL(val), clk_rate);
+	data->rhold = aemअगर_cycles_to_nsec(RHOLD_VAL(val), clk_rate);
+	data->rstrobe = aemअगर_cycles_to_nsec(RSTROBE_VAL(val), clk_rate);
+	data->rsetup = aemअगर_cycles_to_nsec(RSETUP_VAL(val), clk_rate);
+	data->whold = aemअगर_cycles_to_nsec(WHOLD_VAL(val), clk_rate);
+	data->wstrobe = aemअगर_cycles_to_nsec(WSTROBE_VAL(val), clk_rate);
+	data->wsetup = aemअगर_cycles_to_nsec(WSETUP_VAL(val), clk_rate);
 	data->enable_ew = EW_VAL(val);
 	data->enable_ss = SSTROBE_VAL(val);
 	data->asize = val & ASIZE_MAX;
-}
+पूर्ण
 
 /**
- * of_aemif_parse_abus_config - parse CS configuration from DT
- * @pdev: platform device to parse for
+ * of_aemअगर_parse_abus_config - parse CS configuration from DT
+ * @pdev: platक्रमm device to parse क्रम
  * @np: device node ptr
  *
- * This function update the emif async bus configuration based on the values
+ * This function update the emअगर async bus configuration based on the values
  * configured in a cs device binding node.
  */
-static int of_aemif_parse_abus_config(struct platform_device *pdev,
-				      struct device_node *np)
-{
-	struct aemif_device *aemif = platform_get_drvdata(pdev);
-	struct aemif_cs_data *data;
+अटल पूर्णांक of_aemअगर_parse_abus_config(काष्ठा platक्रमm_device *pdev,
+				      काष्ठा device_node *np)
+अणु
+	काष्ठा aemअगर_device *aemअगर = platक्रमm_get_drvdata(pdev);
+	काष्ठा aemअगर_cs_data *data;
 	u32 cs;
 	u32 val;
 
-	if (of_property_read_u32(np, "ti,cs-chipselect", &cs)) {
+	अगर (of_property_पढ़ो_u32(np, "ti,cs-chipselect", &cs)) अणु
 		dev_dbg(&pdev->dev, "cs property is required");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cs - aemif->cs_offset >= NUM_CS || cs < aemif->cs_offset) {
+	अगर (cs - aemअगर->cs_offset >= NUM_CS || cs < aemअगर->cs_offset) अणु
 		dev_dbg(&pdev->dev, "cs number is incorrect %d", cs);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (aemif->num_cs >= NUM_CS) {
+	अगर (aemअगर->num_cs >= NUM_CS) अणु
 		dev_dbg(&pdev->dev, "cs count is more than %d", NUM_CS);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	data = &aemif->cs_data[aemif->num_cs];
+	data = &aemअगर->cs_data[aemअगर->num_cs];
 	data->cs = cs;
 
-	/* read the current value in the hw register */
-	aemif_get_hw_params(pdev, aemif->num_cs++);
+	/* पढ़ो the current value in the hw रेजिस्टर */
+	aemअगर_get_hw_params(pdev, aemअगर->num_cs++);
 
 	/* override the values from device node */
-	if (!of_property_read_u32(np, "ti,cs-min-turnaround-ns", &val))
+	अगर (!of_property_पढ़ो_u32(np, "ti,cs-min-turnaround-ns", &val))
 		data->ta = val;
 
-	if (!of_property_read_u32(np, "ti,cs-read-hold-ns", &val))
+	अगर (!of_property_पढ़ो_u32(np, "ti,cs-read-hold-ns", &val))
 		data->rhold = val;
 
-	if (!of_property_read_u32(np, "ti,cs-read-strobe-ns", &val))
+	अगर (!of_property_पढ़ो_u32(np, "ti,cs-read-strobe-ns", &val))
 		data->rstrobe = val;
 
-	if (!of_property_read_u32(np, "ti,cs-read-setup-ns", &val))
+	अगर (!of_property_पढ़ो_u32(np, "ti,cs-read-setup-ns", &val))
 		data->rsetup = val;
 
-	if (!of_property_read_u32(np, "ti,cs-write-hold-ns", &val))
+	अगर (!of_property_पढ़ो_u32(np, "ti,cs-write-hold-ns", &val))
 		data->whold = val;
 
-	if (!of_property_read_u32(np, "ti,cs-write-strobe-ns", &val))
+	अगर (!of_property_पढ़ो_u32(np, "ti,cs-write-strobe-ns", &val))
 		data->wstrobe = val;
 
-	if (!of_property_read_u32(np, "ti,cs-write-setup-ns", &val))
+	अगर (!of_property_पढ़ो_u32(np, "ti,cs-write-setup-ns", &val))
 		data->wsetup = val;
 
-	if (!of_property_read_u32(np, "ti,cs-bus-width", &val))
-		if (val == 16)
+	अगर (!of_property_पढ़ो_u32(np, "ti,cs-bus-width", &val))
+		अगर (val == 16)
 			data->asize = 1;
-	data->enable_ew = of_property_read_bool(np, "ti,cs-extended-wait-mode");
-	data->enable_ss = of_property_read_bool(np, "ti,cs-select-strobe-mode");
-	return 0;
-}
+	data->enable_ew = of_property_पढ़ो_bool(np, "ti,cs-extended-wait-mode");
+	data->enable_ss = of_property_पढ़ो_bool(np, "ti,cs-select-strobe-mode");
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id aemif_of_match[] = {
-	{ .compatible = "ti,davinci-aemif", },
-	{ .compatible = "ti,da850-aemif", },
-	{},
-};
-MODULE_DEVICE_TABLE(of, aemif_of_match);
+अटल स्थिर काष्ठा of_device_id aemअगर_of_match[] = अणु
+	अणु .compatible = "ti,davinci-aemif", पूर्ण,
+	अणु .compatible = "ti,da850-aemif", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, aemअगर_of_match);
 
-static int aemif_probe(struct platform_device *pdev)
-{
-	int i;
-	int ret = -ENODEV;
-	struct resource *res;
-	struct device *dev = &pdev->dev;
-	struct device_node *np = dev->of_node;
-	struct device_node *child_np;
-	struct aemif_device *aemif;
-	struct aemif_platform_data *pdata;
-	struct of_dev_auxdata *dev_lookup;
+अटल पूर्णांक aemअगर_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret = -ENODEV;
+	काष्ठा resource *res;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा device_node *child_np;
+	काष्ठा aemअगर_device *aemअगर;
+	काष्ठा aemअगर_platक्रमm_data *pdata;
+	काष्ठा of_dev_auxdata *dev_lookup;
 
-	aemif = devm_kzalloc(dev, sizeof(*aemif), GFP_KERNEL);
-	if (!aemif)
-		return -ENOMEM;
+	aemअगर = devm_kzalloc(dev, माप(*aemअगर), GFP_KERNEL);
+	अगर (!aemअगर)
+		वापस -ENOMEM;
 
 	pdata = dev_get_platdata(&pdev->dev);
-	dev_lookup = pdata ? pdata->dev_lookup : NULL;
+	dev_lookup = pdata ? pdata->dev_lookup : शून्य;
 
-	platform_set_drvdata(pdev, aemif);
+	platक्रमm_set_drvdata(pdev, aemअगर);
 
-	aemif->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(aemif->clk)) {
+	aemअगर->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(aemअगर->clk)) अणु
 		dev_err(dev, "cannot get clock 'aemif'\n");
-		return PTR_ERR(aemif->clk);
-	}
+		वापस PTR_ERR(aemअगर->clk);
+	पूर्ण
 
-	ret = clk_prepare_enable(aemif->clk);
-	if (ret)
-		return ret;
+	ret = clk_prepare_enable(aemअगर->clk);
+	अगर (ret)
+		वापस ret;
 
-	aemif->clk_rate = clk_get_rate(aemif->clk) / MSEC_PER_SEC;
+	aemअगर->clk_rate = clk_get_rate(aemअगर->clk) / MSEC_PER_SEC;
 
-	if (np && of_device_is_compatible(np, "ti,da850-aemif"))
-		aemif->cs_offset = 2;
-	else if (pdata)
-		aemif->cs_offset = pdata->cs_offset;
+	अगर (np && of_device_is_compatible(np, "ti,da850-aemif"))
+		aemअगर->cs_offset = 2;
+	अन्यथा अगर (pdata)
+		aemअगर->cs_offset = pdata->cs_offset;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	aemif->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(aemif->base)) {
-		ret = PTR_ERR(aemif->base);
-		goto error;
-	}
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	aemअगर->base = devm_ioremap_resource(dev, res);
+	अगर (IS_ERR(aemअगर->base)) अणु
+		ret = PTR_ERR(aemअगर->base);
+		जाओ error;
+	पूर्ण
 
-	if (np) {
+	अगर (np) अणु
 		/*
 		 * For every controller device node, there is a cs device node
 		 * that describe the bus configuration parameters. This
 		 * functions iterate over these nodes and update the cs data
 		 * array.
 		 */
-		for_each_available_child_of_node(np, child_np) {
-			ret = of_aemif_parse_abus_config(pdev, child_np);
-			if (ret < 0) {
+		क्रम_each_available_child_of_node(np, child_np) अणु
+			ret = of_aemअगर_parse_abus_config(pdev, child_np);
+			अगर (ret < 0) अणु
 				of_node_put(child_np);
-				goto error;
-			}
-		}
-	} else if (pdata && pdata->num_abus_data > 0) {
-		for (i = 0; i < pdata->num_abus_data; i++, aemif->num_cs++) {
-			aemif->cs_data[i].cs = pdata->abus_data[i].cs;
-			aemif_get_hw_params(pdev, i);
-		}
-	}
+				जाओ error;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (pdata && pdata->num_abus_data > 0) अणु
+		क्रम (i = 0; i < pdata->num_abus_data; i++, aemअगर->num_cs++) अणु
+			aemअगर->cs_data[i].cs = pdata->abus_data[i].cs;
+			aemअगर_get_hw_params(pdev, i);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < aemif->num_cs; i++) {
-		ret = aemif_config_abus(pdev, i);
-		if (ret < 0) {
+	क्रम (i = 0; i < aemअगर->num_cs; i++) अणु
+		ret = aemअगर_config_abus(pdev, i);
+		अगर (ret < 0) अणु
 			dev_err(dev, "Error configuring chip select %d\n",
-				aemif->cs_data[i].cs);
-			goto error;
-		}
-	}
+				aemअगर->cs_data[i].cs);
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Create a child devices explicitly from here to guarantee that the
 	 * child will be probed after the AEMIF timing parameters are set.
 	 */
-	if (np) {
-		for_each_available_child_of_node(np, child_np) {
-			ret = of_platform_populate(child_np, NULL,
+	अगर (np) अणु
+		क्रम_each_available_child_of_node(np, child_np) अणु
+			ret = of_platक्रमm_populate(child_np, शून्य,
 						   dev_lookup, dev);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				of_node_put(child_np);
-				goto error;
-			}
-		}
-	} else if (pdata) {
-		for (i = 0; i < pdata->num_sub_devices; i++) {
+				जाओ error;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (pdata) अणु
+		क्रम (i = 0; i < pdata->num_sub_devices; i++) अणु
 			pdata->sub_devices[i].dev.parent = dev;
-			ret = platform_device_register(&pdata->sub_devices[i]);
-			if (ret) {
+			ret = platक्रमm_device_रेजिस्टर(&pdata->sub_devices[i]);
+			अगर (ret) अणु
 				dev_warn(dev, "Error register sub device %s\n",
 					 pdata->sub_devices[i].name);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error:
-	clk_disable_unprepare(aemif->clk);
-	return ret;
-}
+	clk_disable_unprepare(aemअगर->clk);
+	वापस ret;
+पूर्ण
 
-static int aemif_remove(struct platform_device *pdev)
-{
-	struct aemif_device *aemif = platform_get_drvdata(pdev);
+अटल पूर्णांक aemअगर_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा aemअगर_device *aemअगर = platक्रमm_get_drvdata(pdev);
 
-	clk_disable_unprepare(aemif->clk);
-	return 0;
-}
+	clk_disable_unprepare(aemअगर->clk);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver aemif_driver = {
-	.probe = aemif_probe,
-	.remove = aemif_remove,
-	.driver = {
+अटल काष्ठा platक्रमm_driver aemअगर_driver = अणु
+	.probe = aemअगर_probe,
+	.हटाओ = aemअगर_हटाओ,
+	.driver = अणु
 		.name = "ti-aemif",
-		.of_match_table = of_match_ptr(aemif_of_match),
-	},
-};
+		.of_match_table = of_match_ptr(aemअगर_of_match),
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(aemif_driver);
+module_platक्रमm_driver(aemअगर_driver);
 
 MODULE_AUTHOR("Murali Karicheri <m-karicheri2@ti.com>");
 MODULE_AUTHOR("Ivan Khoronzhuk <ivan.khoronzhuk@ti.com>");

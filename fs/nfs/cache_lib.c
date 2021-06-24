@@ -1,158 +1,159 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/nfs/cache_lib.c
  *
- * Helper routines for the NFS client caches
+ * Helper routines क्रम the NFS client caches
  *
  * Copyright (c) 2009 Trond Myklebust <Trond.Myklebust@netapp.com>
  */
-#include <linux/kmod.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/mount.h>
-#include <linux/namei.h>
-#include <linux/slab.h>
-#include <linux/sunrpc/cache.h>
-#include <linux/sunrpc/rpc_pipe_fs.h>
-#include <net/net_namespace.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sunrpc/cache.h>
+#समावेश <linux/sunrpc/rpc_pipe_fs.h>
+#समावेश <net/net_namespace.h>
 
-#include "cache_lib.h"
+#समावेश "cache_lib.h"
 
-#define NFS_CACHE_UPCALL_PATHLEN 256
-#define NFS_CACHE_UPCALL_TIMEOUT 15
+#घोषणा NFS_CACHE_UPCALL_PATHLEN 256
+#घोषणा NFS_CACHE_UPCALL_TIMEOUT 15
 
-static char nfs_cache_getent_prog[NFS_CACHE_UPCALL_PATHLEN] =
+अटल अक्षर nfs_cache_getent_prog[NFS_CACHE_UPCALL_PATHLEN] =
 				"/sbin/nfs_cache_getent";
-static unsigned long nfs_cache_getent_timeout = NFS_CACHE_UPCALL_TIMEOUT;
+अटल अचिन्हित दीर्घ nfs_cache_getent_समयout = NFS_CACHE_UPCALL_TIMEOUT;
 
 module_param_string(cache_getent, nfs_cache_getent_prog,
-		sizeof(nfs_cache_getent_prog), 0600);
+		माप(nfs_cache_getent_prog), 0600);
 MODULE_PARM_DESC(cache_getent, "Path to the client cache upcall program");
-module_param_named(cache_getent_timeout, nfs_cache_getent_timeout, ulong, 0600);
-MODULE_PARM_DESC(cache_getent_timeout, "Timeout (in seconds) after which "
+module_param_named(cache_getent_समयout, nfs_cache_getent_समयout, uदीर्घ, 0600);
+MODULE_PARM_DESC(cache_getent_समयout, "Timeout (in seconds) after which "
 		"the cache upcall is assumed to have failed");
 
-int nfs_cache_upcall(struct cache_detail *cd, char *entry_name)
-{
-	static char *envp[] = { "HOME=/",
+पूर्णांक nfs_cache_upcall(काष्ठा cache_detail *cd, अक्षर *entry_name)
+अणु
+	अटल अक्षर *envp[] = अणु "HOME=/",
 		"TERM=linux",
 		"PATH=/sbin:/usr/sbin:/bin:/usr/bin",
-		NULL
-	};
-	char *argv[] = {
+		शून्य
+	पूर्ण;
+	अक्षर *argv[] = अणु
 		nfs_cache_getent_prog,
 		cd->name,
 		entry_name,
-		NULL
-	};
-	int ret = -EACCES;
+		शून्य
+	पूर्ण;
+	पूर्णांक ret = -EACCES;
 
-	if (nfs_cache_getent_prog[0] == '\0')
-		goto out;
+	अगर (nfs_cache_getent_prog[0] == '\0')
+		जाओ out;
 	ret = call_usermodehelper(argv[0], argv, envp, UMH_WAIT_EXEC);
 	/*
-	 * Disable the upcall mechanism if we're getting an ENOENT or
+	 * Disable the upcall mechanism अगर we're getting an ENOENT or
 	 * EACCES error. The admin can re-enable it on the fly by using
 	 * sysfs to set the 'cache_getent' parameter once the problem
 	 * has been fixed.
 	 */
-	if (ret == -ENOENT || ret == -EACCES)
+	अगर (ret == -ENOENT || ret == -EACCES)
 		nfs_cache_getent_prog[0] = '\0';
 out:
-	return ret > 0 ? 0 : ret;
-}
+	वापस ret > 0 ? 0 : ret;
+पूर्ण
 
 /*
  * Deferred request handling
  */
-void nfs_cache_defer_req_put(struct nfs_cache_defer_req *dreq)
-{
-	if (refcount_dec_and_test(&dreq->count))
-		kfree(dreq);
-}
+व्योम nfs_cache_defer_req_put(काष्ठा nfs_cache_defer_req *dreq)
+अणु
+	अगर (refcount_dec_and_test(&dreq->count))
+		kमुक्त(dreq);
+पूर्ण
 
-static void nfs_dns_cache_revisit(struct cache_deferred_req *d, int toomany)
-{
-	struct nfs_cache_defer_req *dreq;
+अटल व्योम nfs_dns_cache_revisit(काष्ठा cache_deferred_req *d, पूर्णांक toomany)
+अणु
+	काष्ठा nfs_cache_defer_req *dreq;
 
-	dreq = container_of(d, struct nfs_cache_defer_req, deferred_req);
+	dreq = container_of(d, काष्ठा nfs_cache_defer_req, deferred_req);
 
 	complete(&dreq->completion);
 	nfs_cache_defer_req_put(dreq);
-}
+पूर्ण
 
-static struct cache_deferred_req *nfs_dns_cache_defer(struct cache_req *req)
-{
-	struct nfs_cache_defer_req *dreq;
+अटल काष्ठा cache_deferred_req *nfs_dns_cache_defer(काष्ठा cache_req *req)
+अणु
+	काष्ठा nfs_cache_defer_req *dreq;
 
-	dreq = container_of(req, struct nfs_cache_defer_req, req);
+	dreq = container_of(req, काष्ठा nfs_cache_defer_req, req);
 	dreq->deferred_req.revisit = nfs_dns_cache_revisit;
 	refcount_inc(&dreq->count);
 
-	return &dreq->deferred_req;
-}
+	वापस &dreq->deferred_req;
+पूर्ण
 
-struct nfs_cache_defer_req *nfs_cache_defer_req_alloc(void)
-{
-	struct nfs_cache_defer_req *dreq;
+काष्ठा nfs_cache_defer_req *nfs_cache_defer_req_alloc(व्योम)
+अणु
+	काष्ठा nfs_cache_defer_req *dreq;
 
-	dreq = kzalloc(sizeof(*dreq), GFP_KERNEL);
-	if (dreq) {
+	dreq = kzalloc(माप(*dreq), GFP_KERNEL);
+	अगर (dreq) अणु
 		init_completion(&dreq->completion);
 		refcount_set(&dreq->count, 1);
 		dreq->req.defer = nfs_dns_cache_defer;
-	}
-	return dreq;
-}
+	पूर्ण
+	वापस dreq;
+पूर्ण
 
-int nfs_cache_wait_for_upcall(struct nfs_cache_defer_req *dreq)
-{
-	if (wait_for_completion_timeout(&dreq->completion,
-			nfs_cache_getent_timeout * HZ) == 0)
-		return -ETIMEDOUT;
-	return 0;
-}
+पूर्णांक nfs_cache_रुको_क्रम_upcall(काष्ठा nfs_cache_defer_req *dreq)
+अणु
+	अगर (रुको_क्रम_completion_समयout(&dreq->completion,
+			nfs_cache_getent_समयout * HZ) == 0)
+		वापस -ETIMEDOUT;
+	वापस 0;
+पूर्ण
 
-int nfs_cache_register_sb(struct super_block *sb, struct cache_detail *cd)
-{
-	int ret;
-	struct dentry *dir;
+पूर्णांक nfs_cache_रेजिस्टर_sb(काष्ठा super_block *sb, काष्ठा cache_detail *cd)
+अणु
+	पूर्णांक ret;
+	काष्ठा dentry *dir;
 
 	dir = rpc_d_lookup_sb(sb, "cache");
-	ret = sunrpc_cache_register_pipefs(dir, cd->name, 0600, cd);
+	ret = sunrpc_cache_रेजिस्टर_pipefs(dir, cd->name, 0600, cd);
 	dput(dir);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int nfs_cache_register_net(struct net *net, struct cache_detail *cd)
-{
-	struct super_block *pipefs_sb;
-	int ret = 0;
+पूर्णांक nfs_cache_रेजिस्टर_net(काष्ठा net *net, काष्ठा cache_detail *cd)
+अणु
+	काष्ठा super_block *pipefs_sb;
+	पूर्णांक ret = 0;
 
 	sunrpc_init_cache_detail(cd);
 	pipefs_sb = rpc_get_sb_net(net);
-	if (pipefs_sb) {
-		ret = nfs_cache_register_sb(pipefs_sb, cd);
+	अगर (pipefs_sb) अणु
+		ret = nfs_cache_रेजिस्टर_sb(pipefs_sb, cd);
 		rpc_put_sb_net(net);
-		if (ret)
+		अगर (ret)
 			sunrpc_destroy_cache_detail(cd);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void nfs_cache_unregister_sb(struct super_block *sb, struct cache_detail *cd)
-{
-	sunrpc_cache_unregister_pipefs(cd);
-}
+व्योम nfs_cache_unरेजिस्टर_sb(काष्ठा super_block *sb, काष्ठा cache_detail *cd)
+अणु
+	sunrpc_cache_unरेजिस्टर_pipefs(cd);
+पूर्ण
 
-void nfs_cache_unregister_net(struct net *net, struct cache_detail *cd)
-{
-	struct super_block *pipefs_sb;
+व्योम nfs_cache_unरेजिस्टर_net(काष्ठा net *net, काष्ठा cache_detail *cd)
+अणु
+	काष्ठा super_block *pipefs_sb;
 
 	pipefs_sb = rpc_get_sb_net(net);
-	if (pipefs_sb) {
-		nfs_cache_unregister_sb(pipefs_sb, cd);
+	अगर (pipefs_sb) अणु
+		nfs_cache_unरेजिस्टर_sb(pipefs_sb, cd);
 		rpc_put_sb_net(net);
-	}
+	पूर्ण
 	sunrpc_destroy_cache_detail(cd);
-}
+पूर्ण

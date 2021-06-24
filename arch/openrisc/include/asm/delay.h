@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -10,11 +11,11 @@
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  */
 
-#ifndef __ASM_OPENRISC_DELAY_H
-#define __ASM_OPENRISC_DELAY_H
+#अगर_अघोषित __ASM_OPENRISC_DELAY_H
+#घोषणा __ASM_OPENRISC_DELAY_H
 
-#include <asm-generic/delay.h>
+#समावेश <यंत्र-generic/delay.h>
 
-extern unsigned long loops_per_jiffy;
+बाह्य अचिन्हित दीर्घ loops_per_jअगरfy;
 
-#endif
+#पूर्ण_अगर

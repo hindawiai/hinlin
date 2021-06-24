@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Deadline Scheduling Class (SCHED_DEADLINE)
  *
  * Earliest Deadline First (EDF) + Constant Bandwidth Server (CBS).
  *
- * Tasks that periodically executes their instances for less than their
- * runtime won't miss any of their deadlines.
+ * Tasks that periodically executes their instances क्रम less than their
+ * runसमय won't miss any of their deadlines.
  * Tasks that are not periodic or sporadic or that tries to execute more
- * than their reserved bandwidth will be slowed down (and may potentially
+ * than their reserved bandwidth will be slowed करोwn (and may potentially
  * miss some of their deadlines), and won't affect any other task.
  *
  * Copyright (C) 2012 Dario Faggioli <raistlin@linux.it>,
@@ -15,271 +16,271 @@
  *                    Michael Trimarchi <michael@amarulasolutions.com>,
  *                    Fabio Checconi <fchecconi@gmail.com>
  */
-#include "sched.h"
-#include "pelt.h"
+#समावेश "sched.h"
+#समावेश "pelt.h"
 
-struct dl_bandwidth def_dl_bandwidth;
+काष्ठा dl_bandwidth def_dl_bandwidth;
 
-static inline struct task_struct *dl_task_of(struct sched_dl_entity *dl_se)
-{
-	return container_of(dl_se, struct task_struct, dl);
-}
+अटल अंतरभूत काष्ठा task_काष्ठा *dl_task_of(काष्ठा sched_dl_entity *dl_se)
+अणु
+	वापस container_of(dl_se, काष्ठा task_काष्ठा, dl);
+पूर्ण
 
-static inline struct rq *rq_of_dl_rq(struct dl_rq *dl_rq)
-{
-	return container_of(dl_rq, struct rq, dl);
-}
+अटल अंतरभूत काष्ठा rq *rq_of_dl_rq(काष्ठा dl_rq *dl_rq)
+अणु
+	वापस container_of(dl_rq, काष्ठा rq, dl);
+पूर्ण
 
-static inline struct dl_rq *dl_rq_of_se(struct sched_dl_entity *dl_se)
-{
-	struct task_struct *p = dl_task_of(dl_se);
-	struct rq *rq = task_rq(p);
+अटल अंतरभूत काष्ठा dl_rq *dl_rq_of_se(काष्ठा sched_dl_entity *dl_se)
+अणु
+	काष्ठा task_काष्ठा *p = dl_task_of(dl_se);
+	काष्ठा rq *rq = task_rq(p);
 
-	return &rq->dl;
-}
+	वापस &rq->dl;
+पूर्ण
 
-static inline int on_dl_rq(struct sched_dl_entity *dl_se)
-{
-	return !RB_EMPTY_NODE(&dl_se->rb_node);
-}
+अटल अंतरभूत पूर्णांक on_dl_rq(काष्ठा sched_dl_entity *dl_se)
+अणु
+	वापस !RB_EMPTY_NODE(&dl_se->rb_node);
+पूर्ण
 
-#ifdef CONFIG_RT_MUTEXES
-static inline struct sched_dl_entity *pi_of(struct sched_dl_entity *dl_se)
-{
-	return dl_se->pi_se;
-}
+#अगर_घोषित CONFIG_RT_MUTEXES
+अटल अंतरभूत काष्ठा sched_dl_entity *pi_of(काष्ठा sched_dl_entity *dl_se)
+अणु
+	वापस dl_se->pi_se;
+पूर्ण
 
-static inline bool is_dl_boosted(struct sched_dl_entity *dl_se)
-{
-	return pi_of(dl_se) != dl_se;
-}
-#else
-static inline struct sched_dl_entity *pi_of(struct sched_dl_entity *dl_se)
-{
-	return dl_se;
-}
+अटल अंतरभूत bool is_dl_boosted(काष्ठा sched_dl_entity *dl_se)
+अणु
+	वापस pi_of(dl_se) != dl_se;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत काष्ठा sched_dl_entity *pi_of(काष्ठा sched_dl_entity *dl_se)
+अणु
+	वापस dl_se;
+पूर्ण
 
-static inline bool is_dl_boosted(struct sched_dl_entity *dl_se)
-{
-	return false;
-}
-#endif
+अटल अंतरभूत bool is_dl_boosted(काष्ठा sched_dl_entity *dl_se)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SMP
-static inline struct dl_bw *dl_bw_of(int i)
-{
-	RCU_LOCKDEP_WARN(!rcu_read_lock_sched_held(),
+#अगर_घोषित CONFIG_SMP
+अटल अंतरभूत काष्ठा dl_bw *dl_bw_of(पूर्णांक i)
+अणु
+	RCU_LOCKDEP_WARN(!rcu_पढ़ो_lock_sched_held(),
 			 "sched RCU must be held");
-	return &cpu_rq(i)->rd->dl_bw;
-}
+	वापस &cpu_rq(i)->rd->dl_bw;
+पूर्ण
 
-static inline int dl_bw_cpus(int i)
-{
-	struct root_domain *rd = cpu_rq(i)->rd;
-	int cpus;
+अटल अंतरभूत पूर्णांक dl_bw_cpus(पूर्णांक i)
+अणु
+	काष्ठा root_करोमुख्य *rd = cpu_rq(i)->rd;
+	पूर्णांक cpus;
 
-	RCU_LOCKDEP_WARN(!rcu_read_lock_sched_held(),
+	RCU_LOCKDEP_WARN(!rcu_पढ़ो_lock_sched_held(),
 			 "sched RCU must be held");
 
-	if (cpumask_subset(rd->span, cpu_active_mask))
-		return cpumask_weight(rd->span);
+	अगर (cpumask_subset(rd->span, cpu_active_mask))
+		वापस cpumask_weight(rd->span);
 
 	cpus = 0;
 
-	for_each_cpu_and(i, rd->span, cpu_active_mask)
+	क्रम_each_cpu_and(i, rd->span, cpu_active_mask)
 		cpus++;
 
-	return cpus;
-}
+	वापस cpus;
+पूर्ण
 
-static inline unsigned long __dl_bw_capacity(int i)
-{
-	struct root_domain *rd = cpu_rq(i)->rd;
-	unsigned long cap = 0;
+अटल अंतरभूत अचिन्हित दीर्घ __dl_bw_capacity(पूर्णांक i)
+अणु
+	काष्ठा root_करोमुख्य *rd = cpu_rq(i)->rd;
+	अचिन्हित दीर्घ cap = 0;
 
-	RCU_LOCKDEP_WARN(!rcu_read_lock_sched_held(),
+	RCU_LOCKDEP_WARN(!rcu_पढ़ो_lock_sched_held(),
 			 "sched RCU must be held");
 
-	for_each_cpu_and(i, rd->span, cpu_active_mask)
+	क्रम_each_cpu_and(i, rd->span, cpu_active_mask)
 		cap += capacity_orig_of(i);
 
-	return cap;
-}
+	वापस cap;
+पूर्ण
 
 /*
- * XXX Fix: If 'rq->rd == def_root_domain' perform AC against capacity
+ * XXX Fix: If 'rq->rd == def_root_domain' perक्रमm AC against capacity
  * of the CPU the task is running on rather rd's \Sum CPU capacity.
  */
-static inline unsigned long dl_bw_capacity(int i)
-{
-	if (!static_branch_unlikely(&sched_asym_cpucapacity) &&
-	    capacity_orig_of(i) == SCHED_CAPACITY_SCALE) {
-		return dl_bw_cpus(i) << SCHED_CAPACITY_SHIFT;
-	} else {
-		return __dl_bw_capacity(i);
-	}
-}
+अटल अंतरभूत अचिन्हित दीर्घ dl_bw_capacity(पूर्णांक i)
+अणु
+	अगर (!अटल_branch_unlikely(&sched_asym_cpucapacity) &&
+	    capacity_orig_of(i) == SCHED_CAPACITY_SCALE) अणु
+		वापस dl_bw_cpus(i) << SCHED_CAPACITY_SHIFT;
+	पूर्ण अन्यथा अणु
+		वापस __dl_bw_capacity(i);
+	पूर्ण
+पूर्ण
 
-static inline bool dl_bw_visited(int cpu, u64 gen)
-{
-	struct root_domain *rd = cpu_rq(cpu)->rd;
+अटल अंतरभूत bool dl_bw_visited(पूर्णांक cpu, u64 gen)
+अणु
+	काष्ठा root_करोमुख्य *rd = cpu_rq(cpu)->rd;
 
-	if (rd->visit_gen == gen)
-		return true;
+	अगर (rd->visit_gen == gen)
+		वापस true;
 
 	rd->visit_gen = gen;
-	return false;
-}
-#else
-static inline struct dl_bw *dl_bw_of(int i)
-{
-	return &cpu_rq(i)->dl.dl_bw;
-}
+	वापस false;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत काष्ठा dl_bw *dl_bw_of(पूर्णांक i)
+अणु
+	वापस &cpu_rq(i)->dl.dl_bw;
+पूर्ण
 
-static inline int dl_bw_cpus(int i)
-{
-	return 1;
-}
+अटल अंतरभूत पूर्णांक dl_bw_cpus(पूर्णांक i)
+अणु
+	वापस 1;
+पूर्ण
 
-static inline unsigned long dl_bw_capacity(int i)
-{
-	return SCHED_CAPACITY_SCALE;
-}
+अटल अंतरभूत अचिन्हित दीर्घ dl_bw_capacity(पूर्णांक i)
+अणु
+	वापस SCHED_CAPACITY_SCALE;
+पूर्ण
 
-static inline bool dl_bw_visited(int cpu, u64 gen)
-{
-	return false;
-}
-#endif
+अटल अंतरभूत bool dl_bw_visited(पूर्णांक cpu, u64 gen)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-static inline
-void __add_running_bw(u64 dl_bw, struct dl_rq *dl_rq)
-{
+अटल अंतरभूत
+व्योम __add_running_bw(u64 dl_bw, काष्ठा dl_rq *dl_rq)
+अणु
 	u64 old = dl_rq->running_bw;
 
-	lockdep_assert_held(&(rq_of_dl_rq(dl_rq))->lock);
+	lockdep_निश्चित_held(&(rq_of_dl_rq(dl_rq))->lock);
 	dl_rq->running_bw += dl_bw;
 	SCHED_WARN_ON(dl_rq->running_bw < old); /* overflow */
 	SCHED_WARN_ON(dl_rq->running_bw > dl_rq->this_bw);
 	/* kick cpufreq (see the comment in kernel/sched/sched.h). */
 	cpufreq_update_util(rq_of_dl_rq(dl_rq), 0);
-}
+पूर्ण
 
-static inline
-void __sub_running_bw(u64 dl_bw, struct dl_rq *dl_rq)
-{
+अटल अंतरभूत
+व्योम __sub_running_bw(u64 dl_bw, काष्ठा dl_rq *dl_rq)
+अणु
 	u64 old = dl_rq->running_bw;
 
-	lockdep_assert_held(&(rq_of_dl_rq(dl_rq))->lock);
+	lockdep_निश्चित_held(&(rq_of_dl_rq(dl_rq))->lock);
 	dl_rq->running_bw -= dl_bw;
 	SCHED_WARN_ON(dl_rq->running_bw > old); /* underflow */
-	if (dl_rq->running_bw > old)
+	अगर (dl_rq->running_bw > old)
 		dl_rq->running_bw = 0;
 	/* kick cpufreq (see the comment in kernel/sched/sched.h). */
 	cpufreq_update_util(rq_of_dl_rq(dl_rq), 0);
-}
+पूर्ण
 
-static inline
-void __add_rq_bw(u64 dl_bw, struct dl_rq *dl_rq)
-{
+अटल अंतरभूत
+व्योम __add_rq_bw(u64 dl_bw, काष्ठा dl_rq *dl_rq)
+अणु
 	u64 old = dl_rq->this_bw;
 
-	lockdep_assert_held(&(rq_of_dl_rq(dl_rq))->lock);
+	lockdep_निश्चित_held(&(rq_of_dl_rq(dl_rq))->lock);
 	dl_rq->this_bw += dl_bw;
 	SCHED_WARN_ON(dl_rq->this_bw < old); /* overflow */
-}
+पूर्ण
 
-static inline
-void __sub_rq_bw(u64 dl_bw, struct dl_rq *dl_rq)
-{
+अटल अंतरभूत
+व्योम __sub_rq_bw(u64 dl_bw, काष्ठा dl_rq *dl_rq)
+अणु
 	u64 old = dl_rq->this_bw;
 
-	lockdep_assert_held(&(rq_of_dl_rq(dl_rq))->lock);
+	lockdep_निश्चित_held(&(rq_of_dl_rq(dl_rq))->lock);
 	dl_rq->this_bw -= dl_bw;
 	SCHED_WARN_ON(dl_rq->this_bw > old); /* underflow */
-	if (dl_rq->this_bw > old)
+	अगर (dl_rq->this_bw > old)
 		dl_rq->this_bw = 0;
 	SCHED_WARN_ON(dl_rq->running_bw > dl_rq->this_bw);
-}
+पूर्ण
 
-static inline
-void add_rq_bw(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-	if (!dl_entity_is_special(dl_se))
+अटल अंतरभूत
+व्योम add_rq_bw(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+	अगर (!dl_entity_is_special(dl_se))
 		__add_rq_bw(dl_se->dl_bw, dl_rq);
-}
+पूर्ण
 
-static inline
-void sub_rq_bw(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-	if (!dl_entity_is_special(dl_se))
+अटल अंतरभूत
+व्योम sub_rq_bw(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+	अगर (!dl_entity_is_special(dl_se))
 		__sub_rq_bw(dl_se->dl_bw, dl_rq);
-}
+पूर्ण
 
-static inline
-void add_running_bw(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-	if (!dl_entity_is_special(dl_se))
+अटल अंतरभूत
+व्योम add_running_bw(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+	अगर (!dl_entity_is_special(dl_se))
 		__add_running_bw(dl_se->dl_bw, dl_rq);
-}
+पूर्ण
 
-static inline
-void sub_running_bw(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-	if (!dl_entity_is_special(dl_se))
+अटल अंतरभूत
+व्योम sub_running_bw(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+	अगर (!dl_entity_is_special(dl_se))
 		__sub_running_bw(dl_se->dl_bw, dl_rq);
-}
+पूर्ण
 
-static void dl_change_utilization(struct task_struct *p, u64 new_bw)
-{
-	struct rq *rq;
+अटल व्योम dl_change_utilization(काष्ठा task_काष्ठा *p, u64 new_bw)
+अणु
+	काष्ठा rq *rq;
 
 	BUG_ON(p->dl.flags & SCHED_FLAG_SUGOV);
 
-	if (task_on_rq_queued(p))
-		return;
+	अगर (task_on_rq_queued(p))
+		वापस;
 
 	rq = task_rq(p);
-	if (p->dl.dl_non_contending) {
+	अगर (p->dl.dl_non_contending) अणु
 		sub_running_bw(&p->dl, &rq->dl);
 		p->dl.dl_non_contending = 0;
 		/*
-		 * If the timer handler is currently running and the
-		 * timer cannot be canceled, inactive_task_timer()
+		 * If the समयr handler is currently running and the
+		 * समयr cannot be canceled, inactive_task_समयr()
 		 * will see that dl_not_contending is not set, and
 		 * will not touch the rq's active utilization,
 		 * so we are still safe.
 		 */
-		if (hrtimer_try_to_cancel(&p->dl.inactive_timer) == 1)
-			put_task_struct(p);
-	}
+		अगर (hrसमयr_try_to_cancel(&p->dl.inactive_समयr) == 1)
+			put_task_काष्ठा(p);
+	पूर्ण
 	__sub_rq_bw(p->dl.dl_bw, &rq->dl);
 	__add_rq_bw(new_bw, &rq->dl);
-}
+पूर्ण
 
 /*
- * The utilization of a task cannot be immediately removed from
+ * The utilization of a task cannot be immediately हटाओd from
  * the rq active utilization (running_bw) when the task blocks.
- * Instead, we have to wait for the so called "0-lag time".
+ * Instead, we have to रुको क्रम the so called "0-lag time".
  *
- * If a task blocks before the "0-lag time", a timer (the inactive
- * timer) is armed, and running_bw is decreased when the timer
+ * If a task blocks beक्रमe the "0-lag time", a समयr (the inactive
+ * समयr) is armed, and running_bw is decreased when the समयr
  * fires.
  *
- * If the task wakes up again before the inactive timer fires,
- * the timer is canceled, whereas if the task wakes up after the
- * inactive timer fired (and running_bw has been decreased) the
+ * If the task wakes up again beक्रमe the inactive समयr fires,
+ * the समयr is canceled, whereas अगर the task wakes up after the
+ * inactive समयr fired (and running_bw has been decreased) the
  * task's utilization has to be added to running_bw again.
  * A flag in the deadline scheduling entity (dl_non_contending)
- * is used to avoid race conditions between the inactive timer handler
+ * is used to aव्योम race conditions between the inactive समयr handler
  * and task wakeups.
  *
  * The following diagram shows how running_bw is updated. A task is
  * "ACTIVE" when its utilization contributes to running_bw; an
- * "ACTIVE contending" task is in the TASK_RUNNING state, while an
- * "ACTIVE non contending" task is a blocked task for which the "0-lag time"
- * has not passed yet. An "INACTIVE" task is a task for which the "0-lag"
- * time already passed, which does not contribute to running_bw anymore.
+ * "ACTIVE contending" task is in the TASK_RUNNING state, जबतक an
+ * "ACTIVE non contending" task is a blocked task क्रम which the "0-lag time"
+ * has not passed yet. An "INACTIVE" task is a task क्रम which the "0-lag"
+ * समय alपढ़ोy passed, which करोes not contribute to running_bw anymore.
  *                              +------------------+
  *             wakeup           |    ACTIVE        |
  *          +------------------>+   contending     |
@@ -299,313 +300,313 @@ static void dl_change_utilization(struct task_struct *p, u64 new_bw)
  *          |                   +----+------+------+
  *          | sub_running_bw    |    ACTIVE        |
  *          +-------------------+                  |
- *            inactive timer    |  non contending  |
+ *            inactive समयr    |  non contending  |
  *            fired             +------------------+
  *
  * The task_non_contending() function is invoked when a task
- * blocks, and checks if the 0-lag time already passed or
- * not (in the first case, it directly updates running_bw;
- * in the second case, it arms the inactive timer).
+ * blocks, and checks अगर the 0-lag समय alपढ़ोy passed or
+ * not (in the first हाल, it directly updates running_bw;
+ * in the second हाल, it arms the inactive समयr).
  *
  * The task_contending() function is invoked when a task wakes
- * up, and checks if the task is still in the "ACTIVE non contending"
- * state or not (in the second case, it updates running_bw).
+ * up, and checks अगर the task is still in the "ACTIVE non contending"
+ * state or not (in the second हाल, it updates running_bw).
  */
-static void task_non_contending(struct task_struct *p)
-{
-	struct sched_dl_entity *dl_se = &p->dl;
-	struct hrtimer *timer = &dl_se->inactive_timer;
-	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
-	struct rq *rq = rq_of_dl_rq(dl_rq);
-	s64 zerolag_time;
+अटल व्योम task_non_contending(काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा sched_dl_entity *dl_se = &p->dl;
+	काष्ठा hrसमयr *समयr = &dl_se->inactive_समयr;
+	काष्ठा dl_rq *dl_rq = dl_rq_of_se(dl_se);
+	काष्ठा rq *rq = rq_of_dl_rq(dl_rq);
+	s64 zerolag_समय;
 
 	/*
 	 * If this is a non-deadline task that has been boosted,
-	 * do nothing
+	 * करो nothing
 	 */
-	if (dl_se->dl_runtime == 0)
-		return;
+	अगर (dl_se->dl_runसमय == 0)
+		वापस;
 
-	if (dl_entity_is_special(dl_se))
-		return;
+	अगर (dl_entity_is_special(dl_se))
+		वापस;
 
 	WARN_ON(dl_se->dl_non_contending);
 
-	zerolag_time = dl_se->deadline -
-		 div64_long((dl_se->runtime * dl_se->dl_period),
-			dl_se->dl_runtime);
+	zerolag_समय = dl_se->deadline -
+		 भाग64_दीर्घ((dl_se->runसमय * dl_se->dl_period),
+			dl_se->dl_runसमय);
 
 	/*
-	 * Using relative times instead of the absolute "0-lag time"
-	 * allows to simplify the code
+	 * Using relative बार instead of the असलolute "0-lag time"
+	 * allows to simplअगरy the code
 	 */
-	zerolag_time -= rq_clock(rq);
+	zerolag_समय -= rq_घड़ी(rq);
 
 	/*
-	 * If the "0-lag time" already passed, decrease the active
-	 * utilization now, instead of starting a timer
+	 * If the "0-lag time" alपढ़ोy passed, decrease the active
+	 * utilization now, instead of starting a समयr
 	 */
-	if ((zerolag_time < 0) || hrtimer_active(&dl_se->inactive_timer)) {
-		if (dl_task(p))
+	अगर ((zerolag_समय < 0) || hrसमयr_active(&dl_se->inactive_समयr)) अणु
+		अगर (dl_task(p))
 			sub_running_bw(dl_se, dl_rq);
-		if (!dl_task(p) || p->state == TASK_DEAD) {
-			struct dl_bw *dl_b = dl_bw_of(task_cpu(p));
+		अगर (!dl_task(p) || p->state == TASK_DEAD) अणु
+			काष्ठा dl_bw *dl_b = dl_bw_of(task_cpu(p));
 
-			if (p->state == TASK_DEAD)
+			अगर (p->state == TASK_DEAD)
 				sub_rq_bw(&p->dl, &rq->dl);
 			raw_spin_lock(&dl_b->lock);
 			__dl_sub(dl_b, p->dl.dl_bw, dl_bw_cpus(task_cpu(p)));
 			__dl_clear_params(p);
 			raw_spin_unlock(&dl_b->lock);
-		}
+		पूर्ण
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dl_se->dl_non_contending = 1;
-	get_task_struct(p);
-	hrtimer_start(timer, ns_to_ktime(zerolag_time), HRTIMER_MODE_REL_HARD);
-}
+	get_task_काष्ठा(p);
+	hrसमयr_start(समयr, ns_to_kसमय(zerolag_समय), HRTIMER_MODE_REL_HARD);
+पूर्ण
 
-static void task_contending(struct sched_dl_entity *dl_se, int flags)
-{
-	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
+अटल व्योम task_contending(काष्ठा sched_dl_entity *dl_se, पूर्णांक flags)
+अणु
+	काष्ठा dl_rq *dl_rq = dl_rq_of_se(dl_se);
 
 	/*
 	 * If this is a non-deadline task that has been boosted,
-	 * do nothing
+	 * करो nothing
 	 */
-	if (dl_se->dl_runtime == 0)
-		return;
+	अगर (dl_se->dl_runसमय == 0)
+		वापस;
 
-	if (flags & ENQUEUE_MIGRATED)
+	अगर (flags & ENQUEUE_MIGRATED)
 		add_rq_bw(dl_se, dl_rq);
 
-	if (dl_se->dl_non_contending) {
+	अगर (dl_se->dl_non_contending) अणु
 		dl_se->dl_non_contending = 0;
 		/*
-		 * If the timer handler is currently running and the
-		 * timer cannot be canceled, inactive_task_timer()
+		 * If the समयr handler is currently running and the
+		 * समयr cannot be canceled, inactive_task_समयr()
 		 * will see that dl_not_contending is not set, and
 		 * will not touch the rq's active utilization,
 		 * so we are still safe.
 		 */
-		if (hrtimer_try_to_cancel(&dl_se->inactive_timer) == 1)
-			put_task_struct(dl_task_of(dl_se));
-	} else {
+		अगर (hrसमयr_try_to_cancel(&dl_se->inactive_समयr) == 1)
+			put_task_काष्ठा(dl_task_of(dl_se));
+	पूर्ण अन्यथा अणु
 		/*
 		 * Since "dl_non_contending" is not set, the
-		 * task's utilization has already been removed from
+		 * task's utilization has alपढ़ोy been हटाओd from
 		 * active utilization (either when the task blocked,
 		 * when the "inactive timer" fired).
 		 * So, add it back.
 		 */
 		add_running_bw(dl_se, dl_rq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline int is_leftmost(struct task_struct *p, struct dl_rq *dl_rq)
-{
-	struct sched_dl_entity *dl_se = &p->dl;
+अटल अंतरभूत पूर्णांक is_lefपंचांगost(काष्ठा task_काष्ठा *p, काष्ठा dl_rq *dl_rq)
+अणु
+	काष्ठा sched_dl_entity *dl_se = &p->dl;
 
-	return dl_rq->root.rb_leftmost == &dl_se->rb_node;
-}
+	वापस dl_rq->root.rb_lefपंचांगost == &dl_se->rb_node;
+पूर्ण
 
-static void init_dl_rq_bw_ratio(struct dl_rq *dl_rq);
+अटल व्योम init_dl_rq_bw_ratio(काष्ठा dl_rq *dl_rq);
 
-void init_dl_bandwidth(struct dl_bandwidth *dl_b, u64 period, u64 runtime)
-{
-	raw_spin_lock_init(&dl_b->dl_runtime_lock);
+व्योम init_dl_bandwidth(काष्ठा dl_bandwidth *dl_b, u64 period, u64 runसमय)
+अणु
+	raw_spin_lock_init(&dl_b->dl_runसमय_lock);
 	dl_b->dl_period = period;
-	dl_b->dl_runtime = runtime;
-}
+	dl_b->dl_runसमय = runसमय;
+पूर्ण
 
-void init_dl_bw(struct dl_bw *dl_b)
-{
+व्योम init_dl_bw(काष्ठा dl_bw *dl_b)
+अणु
 	raw_spin_lock_init(&dl_b->lock);
-	raw_spin_lock(&def_dl_bandwidth.dl_runtime_lock);
-	if (global_rt_runtime() == RUNTIME_INF)
+	raw_spin_lock(&def_dl_bandwidth.dl_runसमय_lock);
+	अगर (global_rt_runसमय() == RUNTIME_INF)
 		dl_b->bw = -1;
-	else
-		dl_b->bw = to_ratio(global_rt_period(), global_rt_runtime());
-	raw_spin_unlock(&def_dl_bandwidth.dl_runtime_lock);
+	अन्यथा
+		dl_b->bw = to_ratio(global_rt_period(), global_rt_runसमय());
+	raw_spin_unlock(&def_dl_bandwidth.dl_runसमय_lock);
 	dl_b->total_bw = 0;
-}
+पूर्ण
 
-void init_dl_rq(struct dl_rq *dl_rq)
-{
+व्योम init_dl_rq(काष्ठा dl_rq *dl_rq)
+अणु
 	dl_rq->root = RB_ROOT_CACHED;
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	/* zero means no -deadline tasks */
 	dl_rq->earliest_dl.curr = dl_rq->earliest_dl.next = 0;
 
 	dl_rq->dl_nr_migratory = 0;
 	dl_rq->overloaded = 0;
 	dl_rq->pushable_dl_tasks_root = RB_ROOT_CACHED;
-#else
+#अन्यथा
 	init_dl_bw(&dl_rq->dl_bw);
-#endif
+#पूर्ण_अगर
 
 	dl_rq->running_bw = 0;
 	dl_rq->this_bw = 0;
 	init_dl_rq_bw_ratio(dl_rq);
-}
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static inline int dl_overloaded(struct rq *rq)
-{
-	return atomic_read(&rq->rd->dlo_count);
-}
+अटल अंतरभूत पूर्णांक dl_overloaded(काष्ठा rq *rq)
+अणु
+	वापस atomic_पढ़ो(&rq->rd->dlo_count);
+पूर्ण
 
-static inline void dl_set_overload(struct rq *rq)
-{
-	if (!rq->online)
-		return;
+अटल अंतरभूत व्योम dl_set_overload(काष्ठा rq *rq)
+अणु
+	अगर (!rq->online)
+		वापस;
 
 	cpumask_set_cpu(rq->cpu, rq->rd->dlo_mask);
 	/*
-	 * Must be visible before the overload count is
+	 * Must be visible beक्रमe the overload count is
 	 * set (as in sched_rt.c).
 	 *
 	 * Matched by the barrier in pull_dl_task().
 	 */
 	smp_wmb();
 	atomic_inc(&rq->rd->dlo_count);
-}
+पूर्ण
 
-static inline void dl_clear_overload(struct rq *rq)
-{
-	if (!rq->online)
-		return;
+अटल अंतरभूत व्योम dl_clear_overload(काष्ठा rq *rq)
+अणु
+	अगर (!rq->online)
+		वापस;
 
 	atomic_dec(&rq->rd->dlo_count);
 	cpumask_clear_cpu(rq->cpu, rq->rd->dlo_mask);
-}
+पूर्ण
 
-static void update_dl_migration(struct dl_rq *dl_rq)
-{
-	if (dl_rq->dl_nr_migratory && dl_rq->dl_nr_running > 1) {
-		if (!dl_rq->overloaded) {
+अटल व्योम update_dl_migration(काष्ठा dl_rq *dl_rq)
+अणु
+	अगर (dl_rq->dl_nr_migratory && dl_rq->dl_nr_running > 1) अणु
+		अगर (!dl_rq->overloaded) अणु
 			dl_set_overload(rq_of_dl_rq(dl_rq));
 			dl_rq->overloaded = 1;
-		}
-	} else if (dl_rq->overloaded) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (dl_rq->overloaded) अणु
 		dl_clear_overload(rq_of_dl_rq(dl_rq));
 		dl_rq->overloaded = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void inc_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-	struct task_struct *p = dl_task_of(dl_se);
+अटल व्योम inc_dl_migration(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+	काष्ठा task_काष्ठा *p = dl_task_of(dl_se);
 
-	if (p->nr_cpus_allowed > 1)
+	अगर (p->nr_cpus_allowed > 1)
 		dl_rq->dl_nr_migratory++;
 
 	update_dl_migration(dl_rq);
-}
+पूर्ण
 
-static void dec_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-	struct task_struct *p = dl_task_of(dl_se);
+अटल व्योम dec_dl_migration(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+	काष्ठा task_काष्ठा *p = dl_task_of(dl_se);
 
-	if (p->nr_cpus_allowed > 1)
+	अगर (p->nr_cpus_allowed > 1)
 		dl_rq->dl_nr_migratory--;
 
 	update_dl_migration(dl_rq);
-}
+पूर्ण
 
-#define __node_2_pdl(node) \
-	rb_entry((node), struct task_struct, pushable_dl_tasks)
+#घोषणा __node_2_pdl(node) \
+	rb_entry((node), काष्ठा task_काष्ठा, pushable_dl_tasks)
 
-static inline bool __pushable_less(struct rb_node *a, const struct rb_node *b)
-{
-	return dl_entity_preempt(&__node_2_pdl(a)->dl, &__node_2_pdl(b)->dl);
-}
+अटल अंतरभूत bool __pushable_less(काष्ठा rb_node *a, स्थिर काष्ठा rb_node *b)
+अणु
+	वापस dl_entity_preempt(&__node_2_pdl(a)->dl, &__node_2_pdl(b)->dl);
+पूर्ण
 
 /*
  * The list of pushable -deadline task is not a plist, like in
  * sched_rt.c, it is an rb-tree with tasks ordered by deadline.
  */
-static void enqueue_pushable_dl_task(struct rq *rq, struct task_struct *p)
-{
-	struct rb_node *leftmost;
+अटल व्योम enqueue_pushable_dl_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा rb_node *lefपंचांगost;
 
 	BUG_ON(!RB_EMPTY_NODE(&p->pushable_dl_tasks));
 
-	leftmost = rb_add_cached(&p->pushable_dl_tasks,
+	lefपंचांगost = rb_add_cached(&p->pushable_dl_tasks,
 				 &rq->dl.pushable_dl_tasks_root,
 				 __pushable_less);
-	if (leftmost)
+	अगर (lefपंचांगost)
 		rq->dl.earliest_dl.next = p->dl.deadline;
-}
+पूर्ण
 
-static void dequeue_pushable_dl_task(struct rq *rq, struct task_struct *p)
-{
-	struct dl_rq *dl_rq = &rq->dl;
-	struct rb_root_cached *root = &dl_rq->pushable_dl_tasks_root;
-	struct rb_node *leftmost;
+अटल व्योम dequeue_pushable_dl_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा dl_rq *dl_rq = &rq->dl;
+	काष्ठा rb_root_cached *root = &dl_rq->pushable_dl_tasks_root;
+	काष्ठा rb_node *lefपंचांगost;
 
-	if (RB_EMPTY_NODE(&p->pushable_dl_tasks))
-		return;
+	अगर (RB_EMPTY_NODE(&p->pushable_dl_tasks))
+		वापस;
 
-	leftmost = rb_erase_cached(&p->pushable_dl_tasks, root);
-	if (leftmost)
-		dl_rq->earliest_dl.next = __node_2_pdl(leftmost)->dl.deadline;
+	lefपंचांगost = rb_erase_cached(&p->pushable_dl_tasks, root);
+	अगर (lefपंचांगost)
+		dl_rq->earliest_dl.next = __node_2_pdl(lefपंचांगost)->dl.deadline;
 
 	RB_CLEAR_NODE(&p->pushable_dl_tasks);
-}
+पूर्ण
 
-static inline int has_pushable_dl_tasks(struct rq *rq)
-{
-	return !RB_EMPTY_ROOT(&rq->dl.pushable_dl_tasks_root.rb_root);
-}
+अटल अंतरभूत पूर्णांक has_pushable_dl_tasks(काष्ठा rq *rq)
+अणु
+	वापस !RB_EMPTY_ROOT(&rq->dl.pushable_dl_tasks_root.rb_root);
+पूर्ण
 
-static int push_dl_task(struct rq *rq);
+अटल पूर्णांक push_dl_task(काष्ठा rq *rq);
 
-static inline bool need_pull_dl_task(struct rq *rq, struct task_struct *prev)
-{
-	return rq->online && dl_task(prev);
-}
+अटल अंतरभूत bool need_pull_dl_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *prev)
+अणु
+	वापस rq->online && dl_task(prev);
+पूर्ण
 
-static DEFINE_PER_CPU(struct callback_head, dl_push_head);
-static DEFINE_PER_CPU(struct callback_head, dl_pull_head);
+अटल DEFINE_PER_CPU(काष्ठा callback_head, dl_push_head);
+अटल DEFINE_PER_CPU(काष्ठा callback_head, dl_pull_head);
 
-static void push_dl_tasks(struct rq *);
-static void pull_dl_task(struct rq *);
+अटल व्योम push_dl_tasks(काष्ठा rq *);
+अटल व्योम pull_dl_task(काष्ठा rq *);
 
-static inline void deadline_queue_push_tasks(struct rq *rq)
-{
-	if (!has_pushable_dl_tasks(rq))
-		return;
+अटल अंतरभूत व्योम deadline_queue_push_tasks(काष्ठा rq *rq)
+अणु
+	अगर (!has_pushable_dl_tasks(rq))
+		वापस;
 
 	queue_balance_callback(rq, &per_cpu(dl_push_head, rq->cpu), push_dl_tasks);
-}
+पूर्ण
 
-static inline void deadline_queue_pull_task(struct rq *rq)
-{
+अटल अंतरभूत व्योम deadline_queue_pull_task(काष्ठा rq *rq)
+अणु
 	queue_balance_callback(rq, &per_cpu(dl_pull_head, rq->cpu), pull_dl_task);
-}
+पूर्ण
 
-static struct rq *find_lock_later_rq(struct task_struct *task, struct rq *rq);
+अटल काष्ठा rq *find_lock_later_rq(काष्ठा task_काष्ठा *task, काष्ठा rq *rq);
 
-static struct rq *dl_task_offline_migration(struct rq *rq, struct task_struct *p)
-{
-	struct rq *later_rq = NULL;
-	struct dl_bw *dl_b;
+अटल काष्ठा rq *dl_task_offline_migration(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा rq *later_rq = शून्य;
+	काष्ठा dl_bw *dl_b;
 
 	later_rq = find_lock_later_rq(p, rq);
-	if (!later_rq) {
-		int cpu;
+	अगर (!later_rq) अणु
+		पूर्णांक cpu;
 
 		/*
 		 * If we cannot preempt any rq, fall back to pick any
 		 * online CPU:
 		 */
 		cpu = cpumask_any_and(cpu_active_mask, p->cpus_ptr);
-		if (cpu >= nr_cpu_ids) {
+		अगर (cpu >= nr_cpu_ids) अणु
 			/*
 			 * Failed to find any suitable CPU.
 			 * The task will never come back!
@@ -618,16 +619,16 @@ static struct rq *dl_task_offline_migration(struct rq *rq, struct task_struct *p
 			 * run.
 			 */
 			cpu = cpumask_any(cpu_active_mask);
-		}
+		पूर्ण
 		later_rq = cpu_rq(cpu);
-		double_lock_balance(rq, later_rq);
-	}
+		द्विगुन_lock_balance(rq, later_rq);
+	पूर्ण
 
-	if (p->dl.dl_non_contending || p->dl.dl_throttled) {
+	अगर (p->dl.dl_non_contending || p->dl.dl_throttled) अणु
 		/*
-		 * Inactive timer is armed (or callback is running, but
-		 * waiting for us to release rq locks). In any case, when it
-		 * will fire (or continue), it will see running_bw of this
+		 * Inactive समयr is armed (or callback is running, but
+		 * रुकोing क्रम us to release rq locks). In any हाल, when it
+		 * will fire (or जारी), it will see running_bw of this
 		 * task migrated to later_rq (and correctly handle it).
 		 */
 		sub_running_bw(&p->dl, &rq->dl);
@@ -635,15 +636,15 @@ static struct rq *dl_task_offline_migration(struct rq *rq, struct task_struct *p
 
 		add_rq_bw(&p->dl, &later_rq->dl);
 		add_running_bw(&p->dl, &later_rq->dl);
-	} else {
+	पूर्ण अन्यथा अणु
 		sub_rq_bw(&p->dl, &rq->dl);
 		add_rq_bw(&p->dl, &later_rq->dl);
-	}
+	पूर्ण
 
 	/*
-	 * And we finally need to fixup root_domain(s) bandwidth accounting,
-	 * since p is still hanging out in the old (now moved to default) root
-	 * domain.
+	 * And we finally need to fixup root_करोमुख्य(s) bandwidth accounting,
+	 * since p is still hanging out in the old (now moved to शेष) root
+	 * करोमुख्य.
 	 */
 	dl_b = &rq->rd->dl_bw;
 	raw_spin_lock(&dl_b->lock);
@@ -656,421 +657,421 @@ static struct rq *dl_task_offline_migration(struct rq *rq, struct task_struct *p
 	raw_spin_unlock(&dl_b->lock);
 
 	set_task_cpu(p, later_rq->cpu);
-	double_unlock_balance(later_rq, rq);
+	द्विगुन_unlock_balance(later_rq, rq);
 
-	return later_rq;
-}
+	वापस later_rq;
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline
-void enqueue_pushable_dl_task(struct rq *rq, struct task_struct *p)
-{
-}
+अटल अंतरभूत
+व्योम enqueue_pushable_dl_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
+पूर्ण
 
-static inline
-void dequeue_pushable_dl_task(struct rq *rq, struct task_struct *p)
-{
-}
+अटल अंतरभूत
+व्योम dequeue_pushable_dl_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
+पूर्ण
 
-static inline
-void inc_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-}
+अटल अंतरभूत
+व्योम inc_dl_migration(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+पूर्ण
 
-static inline
-void dec_dl_migration(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-}
+अटल अंतरभूत
+व्योम dec_dl_migration(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+पूर्ण
 
-static inline bool need_pull_dl_task(struct rq *rq, struct task_struct *prev)
-{
-	return false;
-}
+अटल अंतरभूत bool need_pull_dl_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *prev)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void pull_dl_task(struct rq *rq)
-{
-}
+अटल अंतरभूत व्योम pull_dl_task(काष्ठा rq *rq)
+अणु
+पूर्ण
 
-static inline void deadline_queue_push_tasks(struct rq *rq)
-{
-}
+अटल अंतरभूत व्योम deadline_queue_push_tasks(काष्ठा rq *rq)
+अणु
+पूर्ण
 
-static inline void deadline_queue_pull_task(struct rq *rq)
-{
-}
-#endif /* CONFIG_SMP */
+अटल अंतरभूत व्योम deadline_queue_pull_task(काष्ठा rq *rq)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static void enqueue_task_dl(struct rq *rq, struct task_struct *p, int flags);
-static void __dequeue_task_dl(struct rq *rq, struct task_struct *p, int flags);
-static void check_preempt_curr_dl(struct rq *rq, struct task_struct *p, int flags);
+अटल व्योम enqueue_task_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags);
+अटल व्योम __dequeue_task_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags);
+अटल व्योम check_preempt_curr_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags);
 
 /*
- * We are being explicitly informed that a new instance is starting,
+ * We are being explicitly inक्रमmed that a new instance is starting,
  * and this means that:
- *  - the absolute deadline of the entity has to be placed at
- *    current time + relative deadline;
- *  - the runtime of the entity has to be set to the maximum value.
+ *  - the असलolute deadline of the entity has to be placed at
+ *    current समय + relative deadline;
+ *  - the runसमय of the entity has to be set to the maximum value.
  *
- * The capability of specifying such event is useful whenever a -deadline
+ * The capability of specअगरying such event is useful whenever a -deadline
  * entity wants to (try to!) synchronize its behaviour with the scheduler's
  * one, and to (try to!) reconcile itself with its own scheduling
  * parameters.
  */
-static inline void setup_new_dl_entity(struct sched_dl_entity *dl_se)
-{
-	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
-	struct rq *rq = rq_of_dl_rq(dl_rq);
+अटल अंतरभूत व्योम setup_new_dl_entity(काष्ठा sched_dl_entity *dl_se)
+अणु
+	काष्ठा dl_rq *dl_rq = dl_rq_of_se(dl_se);
+	काष्ठा rq *rq = rq_of_dl_rq(dl_rq);
 
 	WARN_ON(is_dl_boosted(dl_se));
-	WARN_ON(dl_time_before(rq_clock(rq), dl_se->deadline));
+	WARN_ON(dl_समय_beक्रमe(rq_घड़ी(rq), dl_se->deadline));
 
 	/*
-	 * We are racing with the deadline timer. So, do nothing because
-	 * the deadline timer handler will take care of properly recharging
-	 * the runtime and postponing the deadline
+	 * We are racing with the deadline समयr. So, करो nothing because
+	 * the deadline समयr handler will take care of properly reअक्षरging
+	 * the runसमय and postponing the deadline
 	 */
-	if (dl_se->dl_throttled)
-		return;
+	अगर (dl_se->dl_throttled)
+		वापस;
 
 	/*
-	 * We use the regular wall clock time to set deadlines in the
-	 * future; in fact, we must consider execution overheads (time
+	 * We use the regular wall घड़ी समय to set deadlines in the
+	 * future; in fact, we must consider execution overheads (समय
 	 * spent on hardirq context, etc.).
 	 */
-	dl_se->deadline = rq_clock(rq) + dl_se->dl_deadline;
-	dl_se->runtime = dl_se->dl_runtime;
-}
+	dl_se->deadline = rq_घड़ी(rq) + dl_se->dl_deadline;
+	dl_se->runसमय = dl_se->dl_runसमय;
+पूर्ण
 
 /*
- * Pure Earliest Deadline First (EDF) scheduling does not deal with the
+ * Pure Earliest Deadline First (EDF) scheduling करोes not deal with the
  * possibility of a entity lasting more than what it declared, and thus
- * exhausting its runtime.
+ * exhausting its runसमय.
  *
- * Here we are interested in making runtime overrun possible, but we do
+ * Here we are पूर्णांकerested in making runसमय overrun possible, but we करो
  * not want a entity which is misbehaving to affect the scheduling of all
  * other entities.
- * Therefore, a budgeting strategy called Constant Bandwidth Server (CBS)
+ * Thereक्रमe, a budgeting strategy called Constant Bandwidth Server (CBS)
  * is used, in order to confine each entity within its own bandwidth.
  *
- * This function deals exactly with that, and ensures that when the runtime
+ * This function deals exactly with that, and ensures that when the runसमय
  * of a entity is replenished, its deadline is also postponed. That ensures
- * the overrunning entity can't interfere with other entity in the system and
+ * the overrunning entity can't पूर्णांकerfere with other entity in the प्रणाली and
  * can't make them miss their deadlines. Reasons why this kind of overruns
  * could happen are, typically, a entity voluntarily trying to overcome its
- * runtime, or it just underestimated it during sched_setattr().
+ * runसमय, or it just underestimated it during sched_setattr().
  */
-static void replenish_dl_entity(struct sched_dl_entity *dl_se)
-{
-	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
-	struct rq *rq = rq_of_dl_rq(dl_rq);
+अटल व्योम replenish_dl_entity(काष्ठा sched_dl_entity *dl_se)
+अणु
+	काष्ठा dl_rq *dl_rq = dl_rq_of_se(dl_se);
+	काष्ठा rq *rq = rq_of_dl_rq(dl_rq);
 
-	BUG_ON(pi_of(dl_se)->dl_runtime <= 0);
+	BUG_ON(pi_of(dl_se)->dl_runसमय <= 0);
 
 	/*
-	 * This could be the case for a !-dl task that is boosted.
+	 * This could be the हाल क्रम a !-dl task that is boosted.
 	 * Just go with full inherited parameters.
 	 */
-	if (dl_se->dl_deadline == 0) {
-		dl_se->deadline = rq_clock(rq) + pi_of(dl_se)->dl_deadline;
-		dl_se->runtime = pi_of(dl_se)->dl_runtime;
-	}
+	अगर (dl_se->dl_deadline == 0) अणु
+		dl_se->deadline = rq_घड़ी(rq) + pi_of(dl_se)->dl_deadline;
+		dl_se->runसमय = pi_of(dl_se)->dl_runसमय;
+	पूर्ण
 
-	if (dl_se->dl_yielded && dl_se->runtime > 0)
-		dl_se->runtime = 0;
+	अगर (dl_se->dl_yielded && dl_se->runसमय > 0)
+		dl_se->runसमय = 0;
 
 	/*
 	 * We keep moving the deadline away until we get some
-	 * available runtime for the entity. This ensures correct
-	 * handling of situations where the runtime overrun is
+	 * available runसमय क्रम the entity. This ensures correct
+	 * handling of situations where the runसमय overrun is
 	 * arbitrary large.
 	 */
-	while (dl_se->runtime <= 0) {
+	जबतक (dl_se->runसमय <= 0) अणु
 		dl_se->deadline += pi_of(dl_se)->dl_period;
-		dl_se->runtime += pi_of(dl_se)->dl_runtime;
-	}
+		dl_se->runसमय += pi_of(dl_se)->dl_runसमय;
+	पूर्ण
 
 	/*
-	 * At this point, the deadline really should be "in
-	 * the future" with respect to rq->clock. If it's
-	 * not, we are, for some reason, lagging too much!
+	 * At this poपूर्णांक, the deadline really should be "in
+	 * the future" with respect to rq->घड़ी. If it's
+	 * not, we are, क्रम some reason, lagging too much!
 	 * Anyway, after having warn userspace abut that,
 	 * we still try to keep the things running by
 	 * resetting the deadline and the budget of the
 	 * entity.
 	 */
-	if (dl_time_before(dl_se->deadline, rq_clock(rq))) {
-		printk_deferred_once("sched: DL replenish lagged too much\n");
-		dl_se->deadline = rq_clock(rq) + pi_of(dl_se)->dl_deadline;
-		dl_se->runtime = pi_of(dl_se)->dl_runtime;
-	}
+	अगर (dl_समय_beक्रमe(dl_se->deadline, rq_घड़ी(rq))) अणु
+		prपूर्णांकk_deferred_once("sched: DL replenish lagged too much\n");
+		dl_se->deadline = rq_घड़ी(rq) + pi_of(dl_se)->dl_deadline;
+		dl_se->runसमय = pi_of(dl_se)->dl_runसमय;
+	पूर्ण
 
-	if (dl_se->dl_yielded)
+	अगर (dl_se->dl_yielded)
 		dl_se->dl_yielded = 0;
-	if (dl_se->dl_throttled)
+	अगर (dl_se->dl_throttled)
 		dl_se->dl_throttled = 0;
-}
+पूर्ण
 
 /*
- * Here we check if --at time t-- an entity (which is probably being
- * [re]activated or, in general, enqueued) can use its remaining runtime
+ * Here we check अगर --at समय t-- an entity (which is probably being
+ * [re]activated or, in general, enqueued) can use its reमुख्यing runसमय
  * and its current deadline _without_ exceeding the bandwidth it is
- * assigned (function returns true if it can't). We are in fact applying
- * one of the CBS rules: when a task wakes up, if the residual runtime
+ * asचिन्हित (function वापसs true अगर it can't). We are in fact applying
+ * one of the CBS rules: when a task wakes up, अगर the residual runसमय
  * over residual deadline fits within the allocated bandwidth, then we
- * can keep the current (absolute) deadline and residual budget without
- * disrupting the schedulability of the system. Otherwise, we should
- * refill the runtime and set the deadline a period in the future,
- * because keeping the current (absolute) deadline of the task would
- * result in breaking guarantees promised to other tasks (refer to
- * Documentation/scheduler/sched-deadline.rst for more information).
+ * can keep the current (असलolute) deadline and residual budget without
+ * disrupting the schedulability of the प्रणाली. Otherwise, we should
+ * refill the runसमय and set the deadline a period in the future,
+ * because keeping the current (असलolute) deadline of the task would
+ * result in अवरोधing guarantees promised to other tasks (refer to
+ * Documentation/scheduler/sched-deadline.rst क्रम more inक्रमmation).
  *
- * This function returns true if:
+ * This function वापसs true अगर:
  *
- *   runtime / (deadline - t) > dl_runtime / dl_deadline ,
+ *   runसमय / (deadline - t) > dl_runसमय / dl_deadline ,
  *
  * IOW we can't recycle current parameters.
  *
- * Notice that the bandwidth check is done against the deadline. For
+ * Notice that the bandwidth check is करोne against the deadline. For
  * task with deadline equal to period this is the same of using
  * dl_period instead of dl_deadline in the equation above.
  */
-static bool dl_entity_overflow(struct sched_dl_entity *dl_se, u64 t)
-{
+अटल bool dl_entity_overflow(काष्ठा sched_dl_entity *dl_se, u64 t)
+अणु
 	u64 left, right;
 
 	/*
 	 * left and right are the two sides of the equation above,
 	 * after a bit of shuffling to use multiplications instead
-	 * of divisions.
+	 * of भागisions.
 	 *
-	 * Note that none of the time values involved in the two
-	 * multiplications are absolute: dl_deadline and dl_runtime
-	 * are the relative deadline and the maximum runtime of each
-	 * instance, runtime is the runtime left for the last instance
-	 * and (deadline - t), since t is rq->clock, is the time left
-	 * to the (absolute) deadline. Even if overflowing the u64 type
-	 * is very unlikely to occur in both cases, here we scale down
-	 * as we want to avoid that risk at all. Scaling down by 10
+	 * Note that none of the समय values involved in the two
+	 * multiplications are असलolute: dl_deadline and dl_runसमय
+	 * are the relative deadline and the maximum runसमय of each
+	 * instance, runसमय is the runसमय left क्रम the last instance
+	 * and (deadline - t), since t is rq->घड़ी, is the समय left
+	 * to the (असलolute) deadline. Even अगर overflowing the u64 type
+	 * is very unlikely to occur in both हालs, here we scale करोwn
+	 * as we want to aव्योम that risk at all. Scaling करोwn by 10
 	 * means that we reduce granularity to 1us. We are fine with it,
 	 * since this is only a true/false check and, anyway, thinking
 	 * of anything below microseconds resolution is actually fiction
 	 * (but still we want to give the user that illusion >;).
 	 */
-	left = (pi_of(dl_se)->dl_deadline >> DL_SCALE) * (dl_se->runtime >> DL_SCALE);
+	left = (pi_of(dl_se)->dl_deadline >> DL_SCALE) * (dl_se->runसमय >> DL_SCALE);
 	right = ((dl_se->deadline - t) >> DL_SCALE) *
-		(pi_of(dl_se)->dl_runtime >> DL_SCALE);
+		(pi_of(dl_se)->dl_runसमय >> DL_SCALE);
 
-	return dl_time_before(right, left);
-}
+	वापस dl_समय_beक्रमe(right, left);
+पूर्ण
 
 /*
  * Revised wakeup rule [1]: For self-suspending tasks, rather then
- * re-initializing task's runtime and deadline, the revised wakeup
- * rule adjusts the task's runtime to avoid the task to overrun its
+ * re-initializing task's runसमय and deadline, the revised wakeup
+ * rule adjusts the task's runसमय to aव्योम the task to overrun its
  * density.
  *
- * Reasoning: a task may overrun the density if:
- *    runtime / (deadline - t) > dl_runtime / dl_deadline
+ * Reasoning: a task may overrun the density अगर:
+ *    runसमय / (deadline - t) > dl_runसमय / dl_deadline
  *
- * Therefore, runtime can be adjusted to:
- *     runtime = (dl_runtime / dl_deadline) * (deadline - t)
+ * Thereक्रमe, runसमय can be adjusted to:
+ *     runसमय = (dl_runसमय / dl_deadline) * (deadline - t)
  *
- * In such way that runtime will be equal to the maximum density
- * the task can use without breaking any rule.
+ * In such way that runसमय will be equal to the maximum density
+ * the task can use without अवरोधing any rule.
  *
  * [1] Luca Abeni, Giuseppe Lipari, and Juri Lelli. 2015. Constant
  * bandwidth server revisited. SIGBED Rev. 11, 4 (January 2015), 19-24.
  */
-static void
-update_dl_revised_wakeup(struct sched_dl_entity *dl_se, struct rq *rq)
-{
-	u64 laxity = dl_se->deadline - rq_clock(rq);
+अटल व्योम
+update_dl_revised_wakeup(काष्ठा sched_dl_entity *dl_se, काष्ठा rq *rq)
+अणु
+	u64 laxity = dl_se->deadline - rq_घड़ी(rq);
 
 	/*
 	 * If the task has deadline < period, and the deadline is in the past,
-	 * it should already be throttled before this check.
+	 * it should alपढ़ोy be throttled beक्रमe this check.
 	 *
-	 * See update_dl_entity() comments for further details.
+	 * See update_dl_entity() comments क्रम further details.
 	 */
-	WARN_ON(dl_time_before(dl_se->deadline, rq_clock(rq)));
+	WARN_ON(dl_समय_beक्रमe(dl_se->deadline, rq_घड़ी(rq)));
 
-	dl_se->runtime = (dl_se->dl_density * laxity) >> BW_SHIFT;
-}
+	dl_se->runसमय = (dl_se->dl_density * laxity) >> BW_SHIFT;
+पूर्ण
 
 /*
  * Regarding the deadline, a task with implicit deadline has a relative
- * deadline == relative period. A task with constrained deadline has a
+ * deadline == relative period. A task with स्थिरrained deadline has a
  * relative deadline <= relative period.
  *
- * We support constrained deadline tasks. However, there are some restrictions
- * applied only for tasks which do not have an implicit deadline. See
+ * We support स्थिरrained deadline tasks. However, there are some restrictions
+ * applied only क्रम tasks which करो not have an implicit deadline. See
  * update_dl_entity() to know more about such restrictions.
  *
- * The dl_is_implicit() returns true if the task has an implicit deadline.
+ * The dl_is_implicit() वापसs true अगर the task has an implicit deadline.
  */
-static inline bool dl_is_implicit(struct sched_dl_entity *dl_se)
-{
-	return dl_se->dl_deadline == dl_se->dl_period;
-}
+अटल अंतरभूत bool dl_is_implicit(काष्ठा sched_dl_entity *dl_se)
+अणु
+	वापस dl_se->dl_deadline == dl_se->dl_period;
+पूर्ण
 
 /*
- * When a deadline entity is placed in the runqueue, its runtime and deadline
- * might need to be updated. This is done by a CBS wake up rule. There are two
- * different rules: 1) the original CBS; and 2) the Revisited CBS.
+ * When a deadline entity is placed in the runqueue, its runसमय and deadline
+ * might need to be updated. This is करोne by a CBS wake up rule. There are two
+ * dअगरferent rules: 1) the original CBS; and 2) the Revisited CBS.
  *
  * When the task is starting a new period, the Original CBS is used. In this
- * case, the runtime is replenished and a new absolute deadline is set.
+ * हाल, the runसमय is replenished and a new असलolute deadline is set.
  *
- * When a task is queued before the begin of the next period, using the
- * remaining runtime and deadline could make the entity to overflow, see
- * dl_entity_overflow() to find more about runtime overflow. When such case
- * is detected, the runtime and deadline need to be updated.
+ * When a task is queued beक्रमe the begin of the next period, using the
+ * reमुख्यing runसमय and deadline could make the entity to overflow, see
+ * dl_entity_overflow() to find more about runसमय overflow. When such हाल
+ * is detected, the runसमय and deadline need to be updated.
  *
  * If the task has an implicit deadline, i.e., deadline == period, the Original
- * CBS is applied. the runtime is replenished and a new absolute deadline is
- * set, as in the previous cases.
+ * CBS is applied. the runसमय is replenished and a new असलolute deadline is
+ * set, as in the previous हालs.
  *
- * However, the Original CBS does not work properly for tasks with
- * deadline < period, which are said to have a constrained deadline. By
- * applying the Original CBS, a constrained deadline task would be able to run
- * runtime/deadline in a period. With deadline < period, the task would
- * overrun the runtime/period allowed bandwidth, breaking the admission test.
+ * However, the Original CBS करोes not work properly क्रम tasks with
+ * deadline < period, which are said to have a स्थिरrained deadline. By
+ * applying the Original CBS, a स्थिरrained deadline task would be able to run
+ * runसमय/deadline in a period. With deadline < period, the task would
+ * overrun the runसमय/period allowed bandwidth, अवरोधing the admission test.
  *
- * In order to prevent this misbehave, the Revisited CBS is used for
- * constrained deadline tasks when a runtime overflow is detected. In the
- * Revisited CBS, rather than replenishing & setting a new absolute deadline,
- * the remaining runtime of the task is reduced to avoid runtime overflow.
+ * In order to prevent this misbehave, the Revisited CBS is used क्रम
+ * स्थिरrained deadline tasks when a runसमय overflow is detected. In the
+ * Revisited CBS, rather than replenishing & setting a new असलolute deadline,
+ * the reमुख्यing runसमय of the task is reduced to aव्योम runसमय overflow.
  * Please refer to the comments update_dl_revised_wakeup() function to find
  * more about the Revised CBS rule.
  */
-static void update_dl_entity(struct sched_dl_entity *dl_se)
-{
-	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
-	struct rq *rq = rq_of_dl_rq(dl_rq);
+अटल व्योम update_dl_entity(काष्ठा sched_dl_entity *dl_se)
+अणु
+	काष्ठा dl_rq *dl_rq = dl_rq_of_se(dl_se);
+	काष्ठा rq *rq = rq_of_dl_rq(dl_rq);
 
-	if (dl_time_before(dl_se->deadline, rq_clock(rq)) ||
-	    dl_entity_overflow(dl_se, rq_clock(rq))) {
+	अगर (dl_समय_beक्रमe(dl_se->deadline, rq_घड़ी(rq)) ||
+	    dl_entity_overflow(dl_se, rq_घड़ी(rq))) अणु
 
-		if (unlikely(!dl_is_implicit(dl_se) &&
-			     !dl_time_before(dl_se->deadline, rq_clock(rq)) &&
-			     !is_dl_boosted(dl_se))) {
+		अगर (unlikely(!dl_is_implicit(dl_se) &&
+			     !dl_समय_beक्रमe(dl_se->deadline, rq_घड़ी(rq)) &&
+			     !is_dl_boosted(dl_se))) अणु
 			update_dl_revised_wakeup(dl_se, rq);
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		dl_se->deadline = rq_clock(rq) + pi_of(dl_se)->dl_deadline;
-		dl_se->runtime = pi_of(dl_se)->dl_runtime;
-	}
-}
+		dl_se->deadline = rq_घड़ी(rq) + pi_of(dl_se)->dl_deadline;
+		dl_se->runसमय = pi_of(dl_se)->dl_runसमय;
+	पूर्ण
+पूर्ण
 
-static inline u64 dl_next_period(struct sched_dl_entity *dl_se)
-{
-	return dl_se->deadline - dl_se->dl_deadline + dl_se->dl_period;
-}
+अटल अंतरभूत u64 dl_next_period(काष्ठा sched_dl_entity *dl_se)
+अणु
+	वापस dl_se->deadline - dl_se->dl_deadline + dl_se->dl_period;
+पूर्ण
 
 /*
- * If the entity depleted all its runtime, and if we want it to sleep
- * while waiting for some new execution time to become available, we
- * set the bandwidth replenishment timer to the replenishment instant
+ * If the entity depleted all its runसमय, and अगर we want it to sleep
+ * जबतक रुकोing क्रम some new execution समय to become available, we
+ * set the bandwidth replenishment समयr to the replenishment instant
  * and try to activate it.
  *
- * Notice that it is important for the caller to know if the timer
+ * Notice that it is important क्रम the caller to know अगर the समयr
  * actually started or not (i.e., the replenishment instant is in
  * the future or in the past).
  */
-static int start_dl_timer(struct task_struct *p)
-{
-	struct sched_dl_entity *dl_se = &p->dl;
-	struct hrtimer *timer = &dl_se->dl_timer;
-	struct rq *rq = task_rq(p);
-	ktime_t now, act;
+अटल पूर्णांक start_dl_समयr(काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा sched_dl_entity *dl_se = &p->dl;
+	काष्ठा hrसमयr *समयr = &dl_se->dl_समयr;
+	काष्ठा rq *rq = task_rq(p);
+	kसमय_प्रकार now, act;
 	s64 delta;
 
-	lockdep_assert_held(&rq->lock);
+	lockdep_निश्चित_held(&rq->lock);
 
 	/*
-	 * We want the timer to fire at the deadline, but considering
-	 * that it is actually coming from rq->clock and not from
-	 * hrtimer's time base reading.
+	 * We want the समयr to fire at the deadline, but considering
+	 * that it is actually coming from rq->घड़ी and not from
+	 * hrसमयr's समय base पढ़ोing.
 	 */
-	act = ns_to_ktime(dl_next_period(dl_se));
-	now = hrtimer_cb_get_time(timer);
-	delta = ktime_to_ns(now) - rq_clock(rq);
-	act = ktime_add_ns(act, delta);
+	act = ns_to_kसमय(dl_next_period(dl_se));
+	now = hrसमयr_cb_get_समय(समयr);
+	delta = kसमय_प्रकारo_ns(now) - rq_घड़ी(rq);
+	act = kसमय_add_ns(act, delta);
 
 	/*
-	 * If the expiry time already passed, e.g., because the value
-	 * chosen as the deadline is too small, don't even try to
-	 * start the timer in the past!
+	 * If the expiry समय alपढ़ोy passed, e.g., because the value
+	 * chosen as the deadline is too small, करोn't even try to
+	 * start the समयr in the past!
 	 */
-	if (ktime_us_delta(act, now) < 0)
-		return 0;
+	अगर (kसमय_us_delta(act, now) < 0)
+		वापस 0;
 
 	/*
-	 * !enqueued will guarantee another callback; even if one is already in
-	 * progress. This ensures a balanced {get,put}_task_struct().
+	 * !enqueued will guarantee another callback; even अगर one is alपढ़ोy in
+	 * progress. This ensures a balanced अणुget,putपूर्ण_task_काष्ठा().
 	 *
-	 * The race against __run_timer() clearing the enqueued state is
-	 * harmless because we're holding task_rq()->lock, therefore the timer
-	 * expiring after we've done the check will wait on its task_rq_lock()
+	 * The race against __run_समयr() clearing the enqueued state is
+	 * harmless because we're holding task_rq()->lock, thereक्रमe the समयr
+	 * expiring after we've करोne the check will रुको on its task_rq_lock()
 	 * and observe our state.
 	 */
-	if (!hrtimer_is_queued(timer)) {
-		get_task_struct(p);
-		hrtimer_start(timer, act, HRTIMER_MODE_ABS_HARD);
-	}
+	अगर (!hrसमयr_is_queued(समयr)) अणु
+		get_task_काष्ठा(p);
+		hrसमयr_start(समयr, act, HRTIMER_MODE_ABS_HARD);
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * This is the bandwidth enforcement timer callback. If here, we know
- * a task is not on its dl_rq, since the fact that the timer was running
- * means the task is throttled and needs a runtime replenishment.
+ * This is the bandwidth enक्रमcement समयr callback. If here, we know
+ * a task is not on its dl_rq, since the fact that the समयr was running
+ * means the task is throttled and needs a runसमय replenishment.
  *
- * However, what we actually do depends on the fact the task is active,
- * (it is on its rq) or has been removed from there by a call to
- * dequeue_task_dl(). In the former case we must issue the runtime
+ * However, what we actually करो depends on the fact the task is active,
+ * (it is on its rq) or has been हटाओd from there by a call to
+ * dequeue_task_dl(). In the क्रमmer हाल we must issue the runसमय
  * replenishment and add the task back to the dl_rq; in the latter, we just
- * do nothing but clearing dl_throttled, so that runtime and deadline
- * updating (and the queueing back to dl_rq) will be done by the
+ * करो nothing but clearing dl_throttled, so that runसमय and deadline
+ * updating (and the queueing back to dl_rq) will be करोne by the
  * next call to enqueue_task_dl().
  */
-static enum hrtimer_restart dl_task_timer(struct hrtimer *timer)
-{
-	struct sched_dl_entity *dl_se = container_of(timer,
-						     struct sched_dl_entity,
-						     dl_timer);
-	struct task_struct *p = dl_task_of(dl_se);
-	struct rq_flags rf;
-	struct rq *rq;
+अटल क्रमागत hrसमयr_restart dl_task_समयr(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा sched_dl_entity *dl_se = container_of(समयr,
+						     काष्ठा sched_dl_entity,
+						     dl_समयr);
+	काष्ठा task_काष्ठा *p = dl_task_of(dl_se);
+	काष्ठा rq_flags rf;
+	काष्ठा rq *rq;
 
 	rq = task_rq_lock(p, &rf);
 
 	/*
 	 * The task might have changed its scheduling policy to something
-	 * different than SCHED_DEADLINE (through switched_from_dl()).
+	 * dअगरferent than SCHED_DEADLINE (through चयनed_from_dl()).
 	 */
-	if (!dl_task(p))
-		goto unlock;
+	अगर (!dl_task(p))
+		जाओ unlock;
 
 	/*
-	 * The task might have been boosted by someone else and might be in the
+	 * The task might have been boosted by someone अन्यथा and might be in the
 	 * boosting/deboosting path, its not throttled.
 	 */
-	if (is_dl_boosted(dl_se))
-		goto unlock;
+	अगर (is_dl_boosted(dl_se))
+		जाओ unlock;
 
 	/*
-	 * Spurious timer due to start_dl_timer() race; or we already received
+	 * Spurious समयr due to start_dl_समयr() race; or we alपढ़ोy received
 	 * a replenishment from rt_mutex_setprio().
 	 */
-	if (!dl_se->dl_throttled)
-		goto unlock;
+	अगर (!dl_se->dl_throttled)
+		जाओ unlock;
 
-	sched_clock_tick();
-	update_rq_clock(rq);
+	sched_घड़ी_प्रकारick();
+	update_rq_घड़ी(rq);
 
 	/*
 	 * If the throttle happened during sched-out; like:
@@ -1079,49 +1080,49 @@ static enum hrtimer_restart dl_task_timer(struct hrtimer *timer)
 	 *     deactivate_task()
 	 *       dequeue_task_dl()
 	 *         update_curr_dl()
-	 *           start_dl_timer()
+	 *           start_dl_समयr()
 	 *         __dequeue_task_dl()
 	 *     prev->on_rq = 0;
 	 *
 	 * We can be both throttled and !queued. Replenish the counter
-	 * but do not enqueue -- wait for our wakeup to do that.
+	 * but करो not enqueue -- रुको क्रम our wakeup to करो that.
 	 */
-	if (!task_on_rq_queued(p)) {
+	अगर (!task_on_rq_queued(p)) अणु
 		replenish_dl_entity(dl_se);
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-#ifdef CONFIG_SMP
-	if (unlikely(!rq->online)) {
+#अगर_घोषित CONFIG_SMP
+	अगर (unlikely(!rq->online)) अणु
 		/*
-		 * If the runqueue is no longer available, migrate the
-		 * task elsewhere. This necessarily changes rq.
+		 * If the runqueue is no दीर्घer available, migrate the
+		 * task अन्यथाwhere. This necessarily changes rq.
 		 */
 		lockdep_unpin_lock(&rq->lock, rf.cookie);
 		rq = dl_task_offline_migration(rq, p);
 		rf.cookie = lockdep_pin_lock(&rq->lock);
-		update_rq_clock(rq);
+		update_rq_घड़ी(rq);
 
 		/*
 		 * Now that the task has been migrated to the new RQ and we
 		 * have that locked, proceed as normal and enqueue the task
 		 * there.
 		 */
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	enqueue_task_dl(rq, p, ENQUEUE_REPLENISH);
-	if (dl_task(rq->curr))
+	अगर (dl_task(rq->curr))
 		check_preempt_curr_dl(rq, p, 0);
-	else
+	अन्यथा
 		resched_curr(rq);
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	/*
-	 * Queueing this task back might have overloaded rq, check if we need
+	 * Queueing this task back might have overloaded rq, check अगर we need
 	 * to kick someone away.
 	 */
-	if (has_pushable_dl_tasks(rq)) {
+	अगर (has_pushable_dl_tasks(rq)) अणु
 		/*
 		 * Nothing relies on rq->lock after this, so its safe to drop
 		 * rq->lock.
@@ -1129,317 +1130,317 @@ static enum hrtimer_restart dl_task_timer(struct hrtimer *timer)
 		rq_unpin_lock(rq, &rf);
 		push_dl_task(rq);
 		rq_repin_lock(rq, &rf);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 unlock:
 	task_rq_unlock(rq, p, &rf);
 
 	/*
-	 * This can free the task_struct, including this hrtimer, do not touch
+	 * This can मुक्त the task_काष्ठा, including this hrसमयr, करो not touch
 	 * anything related to that after this.
 	 */
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-void init_dl_task_timer(struct sched_dl_entity *dl_se)
-{
-	struct hrtimer *timer = &dl_se->dl_timer;
+व्योम init_dl_task_समयr(काष्ठा sched_dl_entity *dl_se)
+अणु
+	काष्ठा hrसमयr *समयr = &dl_se->dl_समयr;
 
-	hrtimer_init(timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
-	timer->function = dl_task_timer;
-}
+	hrसमयr_init(समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+	समयr->function = dl_task_समयr;
+पूर्ण
 
 /*
- * During the activation, CBS checks if it can reuse the current task's
- * runtime and period. If the deadline of the task is in the past, CBS
- * cannot use the runtime, and so it replenishes the task. This rule
- * works fine for implicit deadline tasks (deadline == period), and the
- * CBS was designed for implicit deadline tasks. However, a task with
- * constrained deadline (deadline < period) might be awakened after the
- * deadline, but before the next period. In this case, replenishing the
- * task would allow it to run for runtime / deadline. As in this case
- * deadline < period, CBS enables a task to run for more than the
- * runtime / period. In a very loaded system, this can cause a domino
+ * During the activation, CBS checks अगर it can reuse the current task's
+ * runसमय and period. If the deadline of the task is in the past, CBS
+ * cannot use the runसमय, and so it replenishes the task. This rule
+ * works fine क्रम implicit deadline tasks (deadline == period), and the
+ * CBS was deचिन्हित क्रम implicit deadline tasks. However, a task with
+ * स्थिरrained deadline (deadline < period) might be awakened after the
+ * deadline, but beक्रमe the next period. In this हाल, replenishing the
+ * task would allow it to run क्रम runसमय / deadline. As in this हाल
+ * deadline < period, CBS enables a task to run क्रम more than the
+ * runसमय / period. In a very loaded प्रणाली, this can cause a करोmino
  * effect, making other tasks miss their deadlines.
  *
- * To avoid this problem, in the activation of a constrained deadline
- * task after the deadline but before the next period, throttle the
- * task and set the replenishing timer to the begin of the next period,
+ * To aव्योम this problem, in the activation of a स्थिरrained deadline
+ * task after the deadline but beक्रमe the next period, throttle the
+ * task and set the replenishing समयr to the begin of the next period,
  * unless it is boosted.
  */
-static inline void dl_check_constrained_dl(struct sched_dl_entity *dl_se)
-{
-	struct task_struct *p = dl_task_of(dl_se);
-	struct rq *rq = rq_of_dl_rq(dl_rq_of_se(dl_se));
+अटल अंतरभूत व्योम dl_check_स्थिरrained_dl(काष्ठा sched_dl_entity *dl_se)
+अणु
+	काष्ठा task_काष्ठा *p = dl_task_of(dl_se);
+	काष्ठा rq *rq = rq_of_dl_rq(dl_rq_of_se(dl_se));
 
-	if (dl_time_before(dl_se->deadline, rq_clock(rq)) &&
-	    dl_time_before(rq_clock(rq), dl_next_period(dl_se))) {
-		if (unlikely(is_dl_boosted(dl_se) || !start_dl_timer(p)))
-			return;
+	अगर (dl_समय_beक्रमe(dl_se->deadline, rq_घड़ी(rq)) &&
+	    dl_समय_beक्रमe(rq_घड़ी(rq), dl_next_period(dl_se))) अणु
+		अगर (unlikely(is_dl_boosted(dl_se) || !start_dl_समयr(p)))
+			वापस;
 		dl_se->dl_throttled = 1;
-		if (dl_se->runtime > 0)
-			dl_se->runtime = 0;
-	}
-}
+		अगर (dl_se->runसमय > 0)
+			dl_se->runसमय = 0;
+	पूर्ण
+पूर्ण
 
-static
-int dl_runtime_exceeded(struct sched_dl_entity *dl_se)
-{
-	return (dl_se->runtime <= 0);
-}
+अटल
+पूर्णांक dl_runसमय_exceeded(काष्ठा sched_dl_entity *dl_se)
+अणु
+	वापस (dl_se->runसमय <= 0);
+पूर्ण
 
-extern bool sched_rt_bandwidth_account(struct rt_rq *rt_rq);
+बाह्य bool sched_rt_bandwidth_account(काष्ठा rt_rq *rt_rq);
 
 /*
  * This function implements the GRUB accounting rule:
- * according to the GRUB reclaiming algorithm, the runtime is
+ * according to the GRUB reclaiming algorithm, the runसमय is
  * not decreased as "dq = -dt", but as
  * "dq = -max{u / Umax, (1 - Uinact - Uextra)} dt",
  * where u is the utilization of the task, Umax is the maximum reclaimable
  * utilization, Uinact is the (per-runqueue) inactive utilization, computed
- * as the difference between the "total runqueue utilization" and the
+ * as the dअगरference between the "total runqueue utilization" and the
  * runqueue active utilization, and Uextra is the (per runqueue) extra
  * reclaimable utilization.
  * Since rq->dl.running_bw and rq->dl.this_bw contain utilizations
- * multiplied by 2^BW_SHIFT, the result has to be shifted right by
+ * multiplied by 2^BW_SHIFT, the result has to be shअगरted right by
  * BW_SHIFT.
  * Since rq->dl.bw_ratio contains 1 / Umax multiplied by 2^RATIO_SHIFT,
- * dl_bw is multiped by rq->dl.bw_ratio and shifted right by RATIO_SHIFT.
+ * dl_bw is multiped by rq->dl.bw_ratio and shअगरted right by RATIO_SHIFT.
  * Since delta is a 64 bit variable, to have an overflow its value
  * should be larger than 2^(64 - 20 - 8), which is more than 64 seconds.
  * So, overflow is not an issue here.
  */
-static u64 grub_reclaim(u64 delta, struct rq *rq, struct sched_dl_entity *dl_se)
-{
+अटल u64 grub_reclaim(u64 delta, काष्ठा rq *rq, काष्ठा sched_dl_entity *dl_se)
+अणु
 	u64 u_inact = rq->dl.this_bw - rq->dl.running_bw; /* Utot - Uact */
 	u64 u_act;
 	u64 u_act_min = (dl_se->dl_bw * rq->dl.bw_ratio) >> RATIO_SHIFT;
 
 	/*
-	 * Instead of computing max{u * bw_ratio, (1 - u_inact - u_extra)},
+	 * Instead of computing maxअणुu * bw_ratio, (1 - u_inact - u_extra)पूर्ण,
 	 * we compare u_inact + rq->dl.extra_bw with
 	 * 1 - (u * rq->dl.bw_ratio >> RATIO_SHIFT), because
 	 * u_inact + rq->dl.extra_bw can be larger than
 	 * 1 * (so, 1 - u_inact - rq->dl.extra_bw would be negative
 	 * leading to wrong results)
 	 */
-	if (u_inact + rq->dl.extra_bw > BW_UNIT - u_act_min)
+	अगर (u_inact + rq->dl.extra_bw > BW_UNIT - u_act_min)
 		u_act = u_act_min;
-	else
+	अन्यथा
 		u_act = BW_UNIT - u_inact - rq->dl.extra_bw;
 
-	return (delta * u_act) >> BW_SHIFT;
-}
+	वापस (delta * u_act) >> BW_SHIFT;
+पूर्ण
 
 /*
- * Update the current task's runtime statistics (provided it is still
- * a -deadline task and has not been removed from the dl_rq).
+ * Update the current task's runसमय statistics (provided it is still
+ * a -deadline task and has not been हटाओd from the dl_rq).
  */
-static void update_curr_dl(struct rq *rq)
-{
-	struct task_struct *curr = rq->curr;
-	struct sched_dl_entity *dl_se = &curr->dl;
+अटल व्योम update_curr_dl(काष्ठा rq *rq)
+अणु
+	काष्ठा task_काष्ठा *curr = rq->curr;
+	काष्ठा sched_dl_entity *dl_se = &curr->dl;
 	u64 delta_exec, scaled_delta_exec;
-	int cpu = cpu_of(rq);
+	पूर्णांक cpu = cpu_of(rq);
 	u64 now;
 
-	if (!dl_task(curr) || !on_dl_rq(dl_se))
-		return;
+	अगर (!dl_task(curr) || !on_dl_rq(dl_se))
+		वापस;
 
 	/*
-	 * Consumed budget is computed considering the time as
-	 * observed by schedulable tasks (excluding time spent
+	 * Consumed budget is computed considering the समय as
+	 * observed by schedulable tasks (excluding समय spent
 	 * in hardirq context, etc.). Deadlines are instead
-	 * computed using hard walltime. This seems to be the more
-	 * natural solution, but the full ramifications of this
+	 * computed using hard wallसमय. This seems to be the more
+	 * natural solution, but the full ramअगरications of this
 	 * approach need further study.
 	 */
-	now = rq_clock_task(rq);
+	now = rq_घड़ी_प्रकारask(rq);
 	delta_exec = now - curr->se.exec_start;
-	if (unlikely((s64)delta_exec <= 0)) {
-		if (unlikely(dl_se->dl_yielded))
-			goto throttle;
-		return;
-	}
+	अगर (unlikely((s64)delta_exec <= 0)) अणु
+		अगर (unlikely(dl_se->dl_yielded))
+			जाओ throttle;
+		वापस;
+	पूर्ण
 
 	schedstat_set(curr->se.statistics.exec_max,
 		      max(curr->se.statistics.exec_max, delta_exec));
 
-	curr->se.sum_exec_runtime += delta_exec;
-	account_group_exec_runtime(curr, delta_exec);
+	curr->se.sum_exec_runसमय += delta_exec;
+	account_group_exec_runसमय(curr, delta_exec);
 
 	curr->se.exec_start = now;
-	cgroup_account_cputime(curr, delta_exec);
+	cgroup_account_cpuसमय(curr, delta_exec);
 
-	if (dl_entity_is_special(dl_se))
-		return;
+	अगर (dl_entity_is_special(dl_se))
+		वापस;
 
 	/*
 	 * For tasks that participate in GRUB, we implement GRUB-PA: the
-	 * spare reclaimed bandwidth is used to clock down frequency.
+	 * spare reclaimed bandwidth is used to घड़ी करोwn frequency.
 	 *
 	 * For the others, we still need to scale reservation parameters
 	 * according to current frequency and CPU maximum capacity.
 	 */
-	if (unlikely(dl_se->flags & SCHED_FLAG_RECLAIM)) {
+	अगर (unlikely(dl_se->flags & SCHED_FLAG_RECLAIM)) अणु
 		scaled_delta_exec = grub_reclaim(delta_exec,
 						 rq,
 						 &curr->dl);
-	} else {
-		unsigned long scale_freq = arch_scale_freq_capacity(cpu);
-		unsigned long scale_cpu = arch_scale_cpu_capacity(cpu);
+	पूर्ण अन्यथा अणु
+		अचिन्हित दीर्घ scale_freq = arch_scale_freq_capacity(cpu);
+		अचिन्हित दीर्घ scale_cpu = arch_scale_cpu_capacity(cpu);
 
 		scaled_delta_exec = cap_scale(delta_exec, scale_freq);
 		scaled_delta_exec = cap_scale(scaled_delta_exec, scale_cpu);
-	}
+	पूर्ण
 
-	dl_se->runtime -= scaled_delta_exec;
+	dl_se->runसमय -= scaled_delta_exec;
 
 throttle:
-	if (dl_runtime_exceeded(dl_se) || dl_se->dl_yielded) {
+	अगर (dl_runसमय_exceeded(dl_se) || dl_se->dl_yielded) अणु
 		dl_se->dl_throttled = 1;
 
-		/* If requested, inform the user about runtime overruns. */
-		if (dl_runtime_exceeded(dl_se) &&
+		/* If requested, inक्रमm the user about runसमय overruns. */
+		अगर (dl_runसमय_exceeded(dl_se) &&
 		    (dl_se->flags & SCHED_FLAG_DL_OVERRUN))
 			dl_se->dl_overrun = 1;
 
 		__dequeue_task_dl(rq, curr, 0);
-		if (unlikely(is_dl_boosted(dl_se) || !start_dl_timer(curr)))
+		अगर (unlikely(is_dl_boosted(dl_se) || !start_dl_समयr(curr)))
 			enqueue_task_dl(rq, curr, ENQUEUE_REPLENISH);
 
-		if (!is_leftmost(curr, &rq->dl))
+		अगर (!is_lefपंचांगost(curr, &rq->dl))
 			resched_curr(rq);
-	}
+	पूर्ण
 
 	/*
-	 * Because -- for now -- we share the rt bandwidth, we need to
-	 * account our runtime there too, otherwise actual rt tasks
+	 * Because -- क्रम now -- we share the rt bandwidth, we need to
+	 * account our runसमय there too, otherwise actual rt tasks
 	 * would be able to exceed the shared quota.
 	 *
-	 * Account to the root rt group for now.
+	 * Account to the root rt group क्रम now.
 	 *
 	 * The solution we're working towards is having the RT groups scheduled
 	 * using deadline servers -- however there's a few nasties to figure
-	 * out before that can happen.
+	 * out beक्रमe that can happen.
 	 */
-	if (rt_bandwidth_enabled()) {
-		struct rt_rq *rt_rq = &rq->rt;
+	अगर (rt_bandwidth_enabled()) अणु
+		काष्ठा rt_rq *rt_rq = &rq->rt;
 
-		raw_spin_lock(&rt_rq->rt_runtime_lock);
+		raw_spin_lock(&rt_rq->rt_runसमय_lock);
 		/*
 		 * We'll let actual RT tasks worry about the overflow here, we
-		 * have our own CBS to keep us inline; only account when RT
+		 * have our own CBS to keep us अंतरभूत; only account when RT
 		 * bandwidth is relevant.
 		 */
-		if (sched_rt_bandwidth_account(rt_rq))
-			rt_rq->rt_time += delta_exec;
-		raw_spin_unlock(&rt_rq->rt_runtime_lock);
-	}
-}
+		अगर (sched_rt_bandwidth_account(rt_rq))
+			rt_rq->rt_समय += delta_exec;
+		raw_spin_unlock(&rt_rq->rt_runसमय_lock);
+	पूर्ण
+पूर्ण
 
-static enum hrtimer_restart inactive_task_timer(struct hrtimer *timer)
-{
-	struct sched_dl_entity *dl_se = container_of(timer,
-						     struct sched_dl_entity,
-						     inactive_timer);
-	struct task_struct *p = dl_task_of(dl_se);
-	struct rq_flags rf;
-	struct rq *rq;
+अटल क्रमागत hrसमयr_restart inactive_task_समयr(काष्ठा hrसमयr *समयr)
+अणु
+	काष्ठा sched_dl_entity *dl_se = container_of(समयr,
+						     काष्ठा sched_dl_entity,
+						     inactive_समयr);
+	काष्ठा task_काष्ठा *p = dl_task_of(dl_se);
+	काष्ठा rq_flags rf;
+	काष्ठा rq *rq;
 
 	rq = task_rq_lock(p, &rf);
 
-	sched_clock_tick();
-	update_rq_clock(rq);
+	sched_घड़ी_प्रकारick();
+	update_rq_घड़ी(rq);
 
-	if (!dl_task(p) || p->state == TASK_DEAD) {
-		struct dl_bw *dl_b = dl_bw_of(task_cpu(p));
+	अगर (!dl_task(p) || p->state == TASK_DEAD) अणु
+		काष्ठा dl_bw *dl_b = dl_bw_of(task_cpu(p));
 
-		if (p->state == TASK_DEAD && dl_se->dl_non_contending) {
+		अगर (p->state == TASK_DEAD && dl_se->dl_non_contending) अणु
 			sub_running_bw(&p->dl, dl_rq_of_se(&p->dl));
 			sub_rq_bw(&p->dl, dl_rq_of_se(&p->dl));
 			dl_se->dl_non_contending = 0;
-		}
+		पूर्ण
 
 		raw_spin_lock(&dl_b->lock);
 		__dl_sub(dl_b, p->dl.dl_bw, dl_bw_cpus(task_cpu(p)));
 		raw_spin_unlock(&dl_b->lock);
 		__dl_clear_params(p);
 
-		goto unlock;
-	}
-	if (dl_se->dl_non_contending == 0)
-		goto unlock;
+		जाओ unlock;
+	पूर्ण
+	अगर (dl_se->dl_non_contending == 0)
+		जाओ unlock;
 
 	sub_running_bw(dl_se, &rq->dl);
 	dl_se->dl_non_contending = 0;
 unlock:
 	task_rq_unlock(rq, p, &rf);
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return HRTIMER_NORESTART;
-}
+	वापस HRTIMER_NORESTART;
+पूर्ण
 
-void init_dl_inactive_task_timer(struct sched_dl_entity *dl_se)
-{
-	struct hrtimer *timer = &dl_se->inactive_timer;
+व्योम init_dl_inactive_task_समयr(काष्ठा sched_dl_entity *dl_se)
+अणु
+	काष्ठा hrसमयr *समयr = &dl_se->inactive_समयr;
 
-	hrtimer_init(timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
-	timer->function = inactive_task_timer;
-}
+	hrसमयr_init(समयr, CLOCK_MONOTONIC, HRTIMER_MODE_REL_HARD);
+	समयr->function = inactive_task_समयr;
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static void inc_dl_deadline(struct dl_rq *dl_rq, u64 deadline)
-{
-	struct rq *rq = rq_of_dl_rq(dl_rq);
+अटल व्योम inc_dl_deadline(काष्ठा dl_rq *dl_rq, u64 deadline)
+अणु
+	काष्ठा rq *rq = rq_of_dl_rq(dl_rq);
 
-	if (dl_rq->earliest_dl.curr == 0 ||
-	    dl_time_before(deadline, dl_rq->earliest_dl.curr)) {
-		if (dl_rq->earliest_dl.curr == 0)
+	अगर (dl_rq->earliest_dl.curr == 0 ||
+	    dl_समय_beक्रमe(deadline, dl_rq->earliest_dl.curr)) अणु
+		अगर (dl_rq->earliest_dl.curr == 0)
 			cpupri_set(&rq->rd->cpupri, rq->cpu, CPUPRI_HIGHER);
 		dl_rq->earliest_dl.curr = deadline;
 		cpudl_set(&rq->rd->cpudl, rq->cpu, deadline);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dec_dl_deadline(struct dl_rq *dl_rq, u64 deadline)
-{
-	struct rq *rq = rq_of_dl_rq(dl_rq);
+अटल व्योम dec_dl_deadline(काष्ठा dl_rq *dl_rq, u64 deadline)
+अणु
+	काष्ठा rq *rq = rq_of_dl_rq(dl_rq);
 
 	/*
-	 * Since we may have removed our earliest (and/or next earliest)
+	 * Since we may have हटाओd our earliest (and/or next earliest)
 	 * task we must recompute them.
 	 */
-	if (!dl_rq->dl_nr_running) {
+	अगर (!dl_rq->dl_nr_running) अणु
 		dl_rq->earliest_dl.curr = 0;
 		dl_rq->earliest_dl.next = 0;
 		cpudl_clear(&rq->rd->cpudl, rq->cpu);
 		cpupri_set(&rq->rd->cpupri, rq->cpu, rq->rt.highest_prio.curr);
-	} else {
-		struct rb_node *leftmost = dl_rq->root.rb_leftmost;
-		struct sched_dl_entity *entry;
+	पूर्ण अन्यथा अणु
+		काष्ठा rb_node *lefपंचांगost = dl_rq->root.rb_lefपंचांगost;
+		काष्ठा sched_dl_entity *entry;
 
-		entry = rb_entry(leftmost, struct sched_dl_entity, rb_node);
+		entry = rb_entry(lefपंचांगost, काष्ठा sched_dl_entity, rb_node);
 		dl_rq->earliest_dl.curr = entry->deadline;
 		cpudl_set(&rq->rd->cpudl, rq->cpu, entry->deadline);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline void inc_dl_deadline(struct dl_rq *dl_rq, u64 deadline) {}
-static inline void dec_dl_deadline(struct dl_rq *dl_rq, u64 deadline) {}
+अटल अंतरभूत व्योम inc_dl_deadline(काष्ठा dl_rq *dl_rq, u64 deadline) अणुपूर्ण
+अटल अंतरभूत व्योम dec_dl_deadline(काष्ठा dl_rq *dl_rq, u64 deadline) अणुपूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static inline
-void inc_dl_tasks(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-	int prio = dl_task_of(dl_se)->prio;
+अटल अंतरभूत
+व्योम inc_dl_tasks(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+	पूर्णांक prio = dl_task_of(dl_se)->prio;
 	u64 deadline = dl_se->deadline;
 
 	WARN_ON(!dl_prio(prio));
@@ -1448,12 +1449,12 @@ void inc_dl_tasks(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
 
 	inc_dl_deadline(dl_rq, deadline);
 	inc_dl_migration(dl_se, dl_rq);
-}
+पूर्ण
 
-static inline
-void dec_dl_tasks(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
-{
-	int prio = dl_task_of(dl_se)->prio;
+अटल अंतरभूत
+व्योम dec_dl_tasks(काष्ठा sched_dl_entity *dl_se, काष्ठा dl_rq *dl_rq)
+अणु
+	पूर्णांक prio = dl_task_of(dl_se)->prio;
 
 	WARN_ON(!dl_prio(prio));
 	WARN_ON(!dl_rq->dl_nr_running);
@@ -1462,224 +1463,224 @@ void dec_dl_tasks(struct sched_dl_entity *dl_se, struct dl_rq *dl_rq)
 
 	dec_dl_deadline(dl_rq, dl_se->deadline);
 	dec_dl_migration(dl_se, dl_rq);
-}
+पूर्ण
 
-#define __node_2_dle(node) \
-	rb_entry((node), struct sched_dl_entity, rb_node)
+#घोषणा __node_2_dle(node) \
+	rb_entry((node), काष्ठा sched_dl_entity, rb_node)
 
-static inline bool __dl_less(struct rb_node *a, const struct rb_node *b)
-{
-	return dl_time_before(__node_2_dle(a)->deadline, __node_2_dle(b)->deadline);
-}
+अटल अंतरभूत bool __dl_less(काष्ठा rb_node *a, स्थिर काष्ठा rb_node *b)
+अणु
+	वापस dl_समय_beक्रमe(__node_2_dle(a)->deadline, __node_2_dle(b)->deadline);
+पूर्ण
 
-static void __enqueue_dl_entity(struct sched_dl_entity *dl_se)
-{
-	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
+अटल व्योम __enqueue_dl_entity(काष्ठा sched_dl_entity *dl_se)
+अणु
+	काष्ठा dl_rq *dl_rq = dl_rq_of_se(dl_se);
 
 	BUG_ON(!RB_EMPTY_NODE(&dl_se->rb_node));
 
 	rb_add_cached(&dl_se->rb_node, &dl_rq->root, __dl_less);
 
 	inc_dl_tasks(dl_se, dl_rq);
-}
+पूर्ण
 
-static void __dequeue_dl_entity(struct sched_dl_entity *dl_se)
-{
-	struct dl_rq *dl_rq = dl_rq_of_se(dl_se);
+अटल व्योम __dequeue_dl_entity(काष्ठा sched_dl_entity *dl_se)
+अणु
+	काष्ठा dl_rq *dl_rq = dl_rq_of_se(dl_se);
 
-	if (RB_EMPTY_NODE(&dl_se->rb_node))
-		return;
+	अगर (RB_EMPTY_NODE(&dl_se->rb_node))
+		वापस;
 
 	rb_erase_cached(&dl_se->rb_node, &dl_rq->root);
 
 	RB_CLEAR_NODE(&dl_se->rb_node);
 
 	dec_dl_tasks(dl_se, dl_rq);
-}
+पूर्ण
 
-static void
-enqueue_dl_entity(struct sched_dl_entity *dl_se, int flags)
-{
+अटल व्योम
+enqueue_dl_entity(काष्ठा sched_dl_entity *dl_se, पूर्णांक flags)
+अणु
 	BUG_ON(on_dl_rq(dl_se));
 
 	/*
 	 * If this is a wakeup or a new instance, the scheduling
 	 * parameters of the task might need updating. Otherwise,
-	 * we want a replenishment of its runtime.
+	 * we want a replenishment of its runसमय.
 	 */
-	if (flags & ENQUEUE_WAKEUP) {
+	अगर (flags & ENQUEUE_WAKEUP) अणु
 		task_contending(dl_se, flags);
 		update_dl_entity(dl_se);
-	} else if (flags & ENQUEUE_REPLENISH) {
+	पूर्ण अन्यथा अगर (flags & ENQUEUE_REPLENISH) अणु
 		replenish_dl_entity(dl_se);
-	} else if ((flags & ENQUEUE_RESTORE) &&
-		  dl_time_before(dl_se->deadline,
-				 rq_clock(rq_of_dl_rq(dl_rq_of_se(dl_se))))) {
+	पूर्ण अन्यथा अगर ((flags & ENQUEUE_RESTORE) &&
+		  dl_समय_beक्रमe(dl_se->deadline,
+				 rq_घड़ी(rq_of_dl_rq(dl_rq_of_se(dl_se))))) अणु
 		setup_new_dl_entity(dl_se);
-	}
+	पूर्ण
 
 	__enqueue_dl_entity(dl_se);
-}
+पूर्ण
 
-static void dequeue_dl_entity(struct sched_dl_entity *dl_se)
-{
+अटल व्योम dequeue_dl_entity(काष्ठा sched_dl_entity *dl_se)
+अणु
 	__dequeue_dl_entity(dl_se);
-}
+पूर्ण
 
-static void enqueue_task_dl(struct rq *rq, struct task_struct *p, int flags)
-{
-	if (is_dl_boosted(&p->dl)) {
+अटल व्योम enqueue_task_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags)
+अणु
+	अगर (is_dl_boosted(&p->dl)) अणु
 		/*
 		 * Because of delays in the detection of the overrun of a
-		 * thread's runtime, it might be the case that a thread
-		 * goes to sleep in a rt mutex with negative runtime. As
-		 * a consequence, the thread will be throttled.
+		 * thपढ़ो's runसमय, it might be the हाल that a thपढ़ो
+		 * goes to sleep in a rt mutex with negative runसमय. As
+		 * a consequence, the thपढ़ो will be throttled.
 		 *
-		 * While waiting for the mutex, this thread can also be
-		 * boosted via PI, resulting in a thread that is throttled
-		 * and boosted at the same time.
+		 * While रुकोing क्रम the mutex, this thपढ़ो can also be
+		 * boosted via PI, resulting in a thपढ़ो that is throttled
+		 * and boosted at the same समय.
 		 *
-		 * In this case, the boost overrides the throttle.
+		 * In this हाल, the boost overrides the throttle.
 		 */
-		if (p->dl.dl_throttled) {
+		अगर (p->dl.dl_throttled) अणु
 			/*
-			 * The replenish timer needs to be canceled. No
-			 * problem if it fires concurrently: boosted threads
-			 * are ignored in dl_task_timer().
+			 * The replenish समयr needs to be canceled. No
+			 * problem अगर it fires concurrently: boosted thपढ़ोs
+			 * are ignored in dl_task_समयr().
 			 */
-			hrtimer_try_to_cancel(&p->dl.dl_timer);
+			hrसमयr_try_to_cancel(&p->dl.dl_समयr);
 			p->dl.dl_throttled = 0;
-		}
-	} else if (!dl_prio(p->normal_prio)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (!dl_prio(p->normal_prio)) अणु
 		/*
-		 * Special case in which we have a !SCHED_DEADLINE task that is going
-		 * to be deboosted, but exceeds its runtime while doing so. No point in
-		 * replenishing it, as it's going to return back to its original
+		 * Special हाल in which we have a !SCHED_DEADLINE task that is going
+		 * to be deboosted, but exceeds its runसमय जबतक करोing so. No poपूर्णांक in
+		 * replenishing it, as it's going to वापस back to its original
 		 * scheduling class after this. If it has been throttled, we need to
 		 * clear the flag, otherwise the task may wake up as throttled after
-		 * being boosted again with no means to replenish the runtime and clear
+		 * being boosted again with no means to replenish the runसमय and clear
 		 * the throttle.
 		 */
 		p->dl.dl_throttled = 0;
 		BUG_ON(!is_dl_boosted(&p->dl) || flags != ENQUEUE_REPLENISH);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Check if a constrained deadline task was activated
-	 * after the deadline but before the next period.
-	 * If that is the case, the task will be throttled and
-	 * the replenishment timer will be set to the next period.
+	 * Check अगर a स्थिरrained deadline task was activated
+	 * after the deadline but beक्रमe the next period.
+	 * If that is the हाल, the task will be throttled and
+	 * the replenishment समयr will be set to the next period.
 	 */
-	if (!p->dl.dl_throttled && !dl_is_implicit(&p->dl))
-		dl_check_constrained_dl(&p->dl);
+	अगर (!p->dl.dl_throttled && !dl_is_implicit(&p->dl))
+		dl_check_स्थिरrained_dl(&p->dl);
 
-	if (p->on_rq == TASK_ON_RQ_MIGRATING || flags & ENQUEUE_RESTORE) {
+	अगर (p->on_rq == TASK_ON_RQ_MIGRATING || flags & ENQUEUE_RESTORE) अणु
 		add_rq_bw(&p->dl, &rq->dl);
 		add_running_bw(&p->dl, &rq->dl);
-	}
+	पूर्ण
 
 	/*
-	 * If p is throttled, we do not enqueue it. In fact, if it exhausted
+	 * If p is throttled, we करो not enqueue it. In fact, अगर it exhausted
 	 * its budget it needs a replenishment and, since it now is on
-	 * its rq, the bandwidth timer callback (which clearly has not
+	 * its rq, the bandwidth समयr callback (which clearly has not
 	 * run yet) will take care of this.
-	 * However, the active utilization does not depend on the fact
+	 * However, the active utilization करोes not depend on the fact
 	 * that the task is on the runqueue or not (but depends on the
 	 * task's state - in GRUB parlance, "inactive" vs "active contending").
-	 * In other words, even if a task is throttled its utilization must
+	 * In other words, even अगर a task is throttled its utilization must
 	 * be counted in the active utilization; hence, we need to call
 	 * add_running_bw().
 	 */
-	if (p->dl.dl_throttled && !(flags & ENQUEUE_REPLENISH)) {
-		if (flags & ENQUEUE_WAKEUP)
+	अगर (p->dl.dl_throttled && !(flags & ENQUEUE_REPLENISH)) अणु
+		अगर (flags & ENQUEUE_WAKEUP)
 			task_contending(&p->dl, flags);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	enqueue_dl_entity(&p->dl, flags);
 
-	if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
+	अगर (!task_current(rq, p) && p->nr_cpus_allowed > 1)
 		enqueue_pushable_dl_task(rq, p);
-}
+पूर्ण
 
-static void __dequeue_task_dl(struct rq *rq, struct task_struct *p, int flags)
-{
+अटल व्योम __dequeue_task_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags)
+अणु
 	dequeue_dl_entity(&p->dl);
 	dequeue_pushable_dl_task(rq, p);
-}
+पूर्ण
 
-static void dequeue_task_dl(struct rq *rq, struct task_struct *p, int flags)
-{
+अटल व्योम dequeue_task_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक flags)
+अणु
 	update_curr_dl(rq);
 	__dequeue_task_dl(rq, p, flags);
 
-	if (p->on_rq == TASK_ON_RQ_MIGRATING || flags & DEQUEUE_SAVE) {
+	अगर (p->on_rq == TASK_ON_RQ_MIGRATING || flags & DEQUEUE_SAVE) अणु
 		sub_running_bw(&p->dl, &rq->dl);
 		sub_rq_bw(&p->dl, &rq->dl);
-	}
+	पूर्ण
 
 	/*
-	 * This check allows to start the inactive timer (or to immediately
-	 * decrease the active utilization, if needed) in two cases:
+	 * This check allows to start the inactive समयr (or to immediately
+	 * decrease the active utilization, अगर needed) in two हालs:
 	 * when the task blocks and when it is terminating
-	 * (p->state == TASK_DEAD). We can handle the two cases in the same
-	 * way, because from GRUB's point of view the same thing is happening
+	 * (p->state == TASK_DEAD). We can handle the two हालs in the same
+	 * way, because from GRUB's poपूर्णांक of view the same thing is happening
 	 * (the task moves from "active contending" to "active non contending"
 	 * or "inactive")
 	 */
-	if (flags & DEQUEUE_SLEEP)
+	अगर (flags & DEQUEUE_SLEEP)
 		task_non_contending(p);
-}
+पूर्ण
 
 /*
- * Yield task semantic for -deadline tasks is:
+ * Yield task semantic क्रम -deadline tasks is:
  *
  *   get off from the CPU until our next instance, with
- *   a new runtime. This is of little use now, since we
- *   don't have a bandwidth reclaiming mechanism. Anyway,
- *   bandwidth reclaiming is planned for the future, and
+ *   a new runसमय. This is of little use now, since we
+ *   करोn't have a bandwidth reclaiming mechanism. Anyway,
+ *   bandwidth reclaiming is planned क्रम the future, and
  *   yield_task_dl will indicate that some spare budget
- *   is available for other task instances to use it.
+ *   is available क्रम other task instances to use it.
  */
-static void yield_task_dl(struct rq *rq)
-{
+अटल व्योम yield_task_dl(काष्ठा rq *rq)
+अणु
 	/*
 	 * We make the task go to sleep until its current deadline by
-	 * forcing its runtime to zero. This way, update_curr_dl() stops
-	 * it and the bandwidth timer will wake it up and will give it
+	 * क्रमcing its runसमय to zero. This way, update_curr_dl() stops
+	 * it and the bandwidth समयr will wake it up and will give it
 	 * new scheduling parameters (thanks to dl_yielded=1).
 	 */
 	rq->curr->dl.dl_yielded = 1;
 
-	update_rq_clock(rq);
+	update_rq_घड़ी(rq);
 	update_curr_dl(rq);
 	/*
-	 * Tell update_rq_clock() that we've just updated,
-	 * so we don't do microscopic update in schedule()
-	 * and double the fastpath cost.
+	 * Tell update_rq_घड़ी() that we've just updated,
+	 * so we करोn't करो microscopic update in schedule()
+	 * and द्विगुन the fastpath cost.
 	 */
-	rq_clock_skip_update(rq);
-}
+	rq_घड़ी_skip_update(rq);
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static int find_later_rq(struct task_struct *task);
+अटल पूर्णांक find_later_rq(काष्ठा task_काष्ठा *task);
 
-static int
-select_task_rq_dl(struct task_struct *p, int cpu, int flags)
-{
-	struct task_struct *curr;
+अटल पूर्णांक
+select_task_rq_dl(काष्ठा task_काष्ठा *p, पूर्णांक cpu, पूर्णांक flags)
+अणु
+	काष्ठा task_काष्ठा *curr;
 	bool select_rq;
-	struct rq *rq;
+	काष्ठा rq *rq;
 
-	if (!(flags & WF_TTWU))
-		goto out;
+	अगर (!(flags & WF_TTWU))
+		जाओ out;
 
 	rq = cpu_rq(cpu);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	curr = READ_ONCE(rq->curr); /* unlocked access */
 
 	/*
@@ -1687,8 +1688,8 @@ select_task_rq_dl(struct task_struct *p, int cpu, int flags)
 	 * decide where to wake it up.
 	 * If it has a later deadline and the current task
 	 * on this rq can't move (provided the waking task
-	 * can!) we prefer to send it somewhere else. On the
-	 * other hand, if it has a shorter deadline, we
+	 * can!) we prefer to send it somewhere अन्यथा. On the
+	 * other hand, अगर it has a लघुer deadline, we
 	 * try to make it stay here, it might be important.
 	 */
 	select_rq = unlikely(dl_task(curr)) &&
@@ -1697,33 +1698,33 @@ select_task_rq_dl(struct task_struct *p, int cpu, int flags)
 		    p->nr_cpus_allowed > 1;
 
 	/*
-	 * Take the capacity of the CPU into account to
+	 * Take the capacity of the CPU पूर्णांकo account to
 	 * ensure it fits the requirement of the task.
 	 */
-	if (static_branch_unlikely(&sched_asym_cpucapacity))
+	अगर (अटल_branch_unlikely(&sched_asym_cpucapacity))
 		select_rq |= !dl_task_fits_capacity(p, cpu);
 
-	if (select_rq) {
-		int target = find_later_rq(p);
+	अगर (select_rq) अणु
+		पूर्णांक target = find_later_rq(p);
 
-		if (target != -1 &&
-				(dl_time_before(p->dl.deadline,
+		अगर (target != -1 &&
+				(dl_समय_beक्रमe(p->dl.deadline,
 					cpu_rq(target)->dl.earliest_dl.curr) ||
 				(cpu_rq(target)->dl.dl_nr_running == 0)))
 			cpu = target;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 out:
-	return cpu;
-}
+	वापस cpu;
+पूर्ण
 
-static void migrate_task_rq_dl(struct task_struct *p, int new_cpu __maybe_unused)
-{
-	struct rq *rq;
+अटल व्योम migrate_task_rq_dl(काष्ठा task_काष्ठा *p, पूर्णांक new_cpu __maybe_unused)
+अणु
+	काष्ठा rq *rq;
 
-	if (p->state != TASK_WAKING)
-		return;
+	अगर (p->state != TASK_WAKING)
+		वापस;
 
 	rq = task_rq(p);
 	/*
@@ -1732,377 +1733,377 @@ static void migrate_task_rq_dl(struct task_struct *p, int new_cpu __maybe_unused
 	 * rq->lock is not... So, lock it
 	 */
 	raw_spin_lock(&rq->lock);
-	if (p->dl.dl_non_contending) {
+	अगर (p->dl.dl_non_contending) अणु
 		sub_running_bw(&p->dl, &rq->dl);
 		p->dl.dl_non_contending = 0;
 		/*
-		 * If the timer handler is currently running and the
-		 * timer cannot be canceled, inactive_task_timer()
+		 * If the समयr handler is currently running and the
+		 * समयr cannot be canceled, inactive_task_समयr()
 		 * will see that dl_not_contending is not set, and
 		 * will not touch the rq's active utilization,
 		 * so we are still safe.
 		 */
-		if (hrtimer_try_to_cancel(&p->dl.inactive_timer) == 1)
-			put_task_struct(p);
-	}
+		अगर (hrसमयr_try_to_cancel(&p->dl.inactive_समयr) == 1)
+			put_task_काष्ठा(p);
+	पूर्ण
 	sub_rq_bw(&p->dl, &rq->dl);
 	raw_spin_unlock(&rq->lock);
-}
+पूर्ण
 
-static void check_preempt_equal_dl(struct rq *rq, struct task_struct *p)
-{
+अटल व्योम check_preempt_equal_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
 	/*
 	 * Current can't be migrated, useless to reschedule,
 	 * let's hope p can move out.
 	 */
-	if (rq->curr->nr_cpus_allowed == 1 ||
-	    !cpudl_find(&rq->rd->cpudl, rq->curr, NULL))
-		return;
+	अगर (rq->curr->nr_cpus_allowed == 1 ||
+	    !cpudl_find(&rq->rd->cpudl, rq->curr, शून्य))
+		वापस;
 
 	/*
 	 * p is migratable, so let's not schedule it and
-	 * see if it is pushed or pulled somewhere else.
+	 * see अगर it is pushed or pulled somewhere अन्यथा.
 	 */
-	if (p->nr_cpus_allowed != 1 &&
-	    cpudl_find(&rq->rd->cpudl, p, NULL))
-		return;
+	अगर (p->nr_cpus_allowed != 1 &&
+	    cpudl_find(&rq->rd->cpudl, p, शून्य))
+		वापस;
 
 	resched_curr(rq);
-}
+पूर्ण
 
-static int balance_dl(struct rq *rq, struct task_struct *p, struct rq_flags *rf)
-{
-	if (!on_dl_rq(&p->dl) && need_pull_dl_task(rq, p)) {
+अटल पूर्णांक balance_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, काष्ठा rq_flags *rf)
+अणु
+	अगर (!on_dl_rq(&p->dl) && need_pull_dl_task(rq, p)) अणु
 		/*
-		 * This is OK, because current is on_cpu, which avoids it being
-		 * picked for load-balance and preemption/IRQs are still
-		 * disabled avoiding further scheduler activity on it and we've
+		 * This is OK, because current is on_cpu, which aव्योमs it being
+		 * picked क्रम load-balance and preemption/IRQs are still
+		 * disabled aव्योमing further scheduler activity on it and we've
 		 * not yet started the picking loop.
 		 */
 		rq_unpin_lock(rq, rf);
 		pull_dl_task(rq);
 		rq_repin_lock(rq, rf);
-	}
+	पूर्ण
 
-	return sched_stop_runnable(rq) || sched_dl_runnable(rq);
-}
-#endif /* CONFIG_SMP */
+	वापस sched_stop_runnable(rq) || sched_dl_runnable(rq);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SMP */
 
 /*
  * Only called when both the current and waking task are -deadline
  * tasks.
  */
-static void check_preempt_curr_dl(struct rq *rq, struct task_struct *p,
-				  int flags)
-{
-	if (dl_entity_preempt(&p->dl, &rq->curr->dl)) {
+अटल व्योम check_preempt_curr_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p,
+				  पूर्णांक flags)
+अणु
+	अगर (dl_entity_preempt(&p->dl, &rq->curr->dl)) अणु
 		resched_curr(rq);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	/*
-	 * In the unlikely case current and p have the same deadline
-	 * let us try to decide what's the best thing to do...
+	 * In the unlikely हाल current and p have the same deadline
+	 * let us try to decide what's the best thing to करो...
 	 */
-	if ((p->dl.deadline == rq->curr->dl.deadline) &&
+	अगर ((p->dl.deadline == rq->curr->dl.deadline) &&
 	    !test_tsk_need_resched(rq->curr))
 		check_preempt_equal_dl(rq, p);
-#endif /* CONFIG_SMP */
-}
+#पूर्ण_अगर /* CONFIG_SMP */
+पूर्ण
 
-#ifdef CONFIG_SCHED_HRTICK
-static void start_hrtick_dl(struct rq *rq, struct task_struct *p)
-{
-	hrtick_start(rq, p->dl.runtime);
-}
-#else /* !CONFIG_SCHED_HRTICK */
-static void start_hrtick_dl(struct rq *rq, struct task_struct *p)
-{
-}
-#endif
+#अगर_घोषित CONFIG_SCHED_HRTICK
+अटल व्योम start_hrtick_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
+	hrtick_start(rq, p->dl.runसमय);
+पूर्ण
+#अन्यथा /* !CONFIG_SCHED_HRTICK */
+अटल व्योम start_hrtick_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static void set_next_task_dl(struct rq *rq, struct task_struct *p, bool first)
-{
-	p->se.exec_start = rq_clock_task(rq);
+अटल व्योम set_next_task_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, bool first)
+अणु
+	p->se.exec_start = rq_घड़ी_प्रकारask(rq);
 
 	/* You can't push away the running task */
 	dequeue_pushable_dl_task(rq, p);
 
-	if (!first)
-		return;
+	अगर (!first)
+		वापस;
 
-	if (hrtick_enabled_dl(rq))
+	अगर (hrtick_enabled_dl(rq))
 		start_hrtick_dl(rq, p);
 
-	if (rq->curr->sched_class != &dl_sched_class)
-		update_dl_rq_load_avg(rq_clock_pelt(rq), rq, 0);
+	अगर (rq->curr->sched_class != &dl_sched_class)
+		update_dl_rq_load_avg(rq_घड़ी_pelt(rq), rq, 0);
 
 	deadline_queue_push_tasks(rq);
-}
+पूर्ण
 
-static struct sched_dl_entity *pick_next_dl_entity(struct rq *rq,
-						   struct dl_rq *dl_rq)
-{
-	struct rb_node *left = rb_first_cached(&dl_rq->root);
+अटल काष्ठा sched_dl_entity *pick_next_dl_entity(काष्ठा rq *rq,
+						   काष्ठा dl_rq *dl_rq)
+अणु
+	काष्ठा rb_node *left = rb_first_cached(&dl_rq->root);
 
-	if (!left)
-		return NULL;
+	अगर (!left)
+		वापस शून्य;
 
-	return rb_entry(left, struct sched_dl_entity, rb_node);
-}
+	वापस rb_entry(left, काष्ठा sched_dl_entity, rb_node);
+पूर्ण
 
-static struct task_struct *pick_next_task_dl(struct rq *rq)
-{
-	struct sched_dl_entity *dl_se;
-	struct dl_rq *dl_rq = &rq->dl;
-	struct task_struct *p;
+अटल काष्ठा task_काष्ठा *pick_next_task_dl(काष्ठा rq *rq)
+अणु
+	काष्ठा sched_dl_entity *dl_se;
+	काष्ठा dl_rq *dl_rq = &rq->dl;
+	काष्ठा task_काष्ठा *p;
 
-	if (!sched_dl_runnable(rq))
-		return NULL;
+	अगर (!sched_dl_runnable(rq))
+		वापस शून्य;
 
 	dl_se = pick_next_dl_entity(rq, dl_rq);
 	BUG_ON(!dl_se);
 	p = dl_task_of(dl_se);
 	set_next_task_dl(rq, p, true);
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static void put_prev_task_dl(struct rq *rq, struct task_struct *p)
-{
+अटल व्योम put_prev_task_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
 	update_curr_dl(rq);
 
-	update_dl_rq_load_avg(rq_clock_pelt(rq), rq, 1);
-	if (on_dl_rq(&p->dl) && p->nr_cpus_allowed > 1)
+	update_dl_rq_load_avg(rq_घड़ी_pelt(rq), rq, 1);
+	अगर (on_dl_rq(&p->dl) && p->nr_cpus_allowed > 1)
 		enqueue_pushable_dl_task(rq, p);
-}
+पूर्ण
 
 /*
  * scheduler tick hitting a task of our scheduling class.
  *
  * NOTE: This function can be called remotely by the tick offload that
- * goes along full dynticks. Therefore no local assumption can be made
+ * goes aदीर्घ full dynticks. Thereक्रमe no local assumption can be made
  * and everything must be accessed through the @rq and @curr passed in
  * parameters.
  */
-static void task_tick_dl(struct rq *rq, struct task_struct *p, int queued)
-{
+अटल व्योम task_tick_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक queued)
+अणु
 	update_curr_dl(rq);
 
-	update_dl_rq_load_avg(rq_clock_pelt(rq), rq, 1);
+	update_dl_rq_load_avg(rq_घड़ी_pelt(rq), rq, 1);
 	/*
-	 * Even when we have runtime, update_curr_dl() might have resulted in us
-	 * not being the leftmost task anymore. In that case NEED_RESCHED will
-	 * be set and schedule() will start a new hrtick for the next task.
+	 * Even when we have runसमय, update_curr_dl() might have resulted in us
+	 * not being the lefपंचांगost task anymore. In that हाल NEED_RESCHED will
+	 * be set and schedule() will start a new hrtick क्रम the next task.
 	 */
-	if (hrtick_enabled_dl(rq) && queued && p->dl.runtime > 0 &&
-	    is_leftmost(p, &rq->dl))
+	अगर (hrtick_enabled_dl(rq) && queued && p->dl.runसमय > 0 &&
+	    is_lefपंचांगost(p, &rq->dl))
 		start_hrtick_dl(rq, p);
-}
+पूर्ण
 
-static void task_fork_dl(struct task_struct *p)
-{
+अटल व्योम task_विभाजन_dl(काष्ठा task_काष्ठा *p)
+अणु
 	/*
-	 * SCHED_DEADLINE tasks cannot fork and this is achieved through
-	 * sched_fork()
+	 * SCHED_DEADLINE tasks cannot विभाजन and this is achieved through
+	 * sched_विभाजन()
 	 */
-}
+पूर्ण
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-/* Only try algorithms three times */
-#define DL_MAX_TRIES 3
+/* Only try algorithms three बार */
+#घोषणा DL_MAX_TRIES 3
 
-static int pick_dl_task(struct rq *rq, struct task_struct *p, int cpu)
-{
-	if (!task_running(rq, p) &&
+अटल पूर्णांक pick_dl_task(काष्ठा rq *rq, काष्ठा task_काष्ठा *p, पूर्णांक cpu)
+अणु
+	अगर (!task_running(rq, p) &&
 	    cpumask_test_cpu(cpu, &p->cpus_mask))
-		return 1;
-	return 0;
-}
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /*
  * Return the earliest pushable rq's task, which is suitable to be executed
- * on the CPU, NULL otherwise:
+ * on the CPU, शून्य otherwise:
  */
-static struct task_struct *pick_earliest_pushable_dl_task(struct rq *rq, int cpu)
-{
-	struct rb_node *next_node = rq->dl.pushable_dl_tasks_root.rb_leftmost;
-	struct task_struct *p = NULL;
+अटल काष्ठा task_काष्ठा *pick_earliest_pushable_dl_task(काष्ठा rq *rq, पूर्णांक cpu)
+अणु
+	काष्ठा rb_node *next_node = rq->dl.pushable_dl_tasks_root.rb_lefपंचांगost;
+	काष्ठा task_काष्ठा *p = शून्य;
 
-	if (!has_pushable_dl_tasks(rq))
-		return NULL;
+	अगर (!has_pushable_dl_tasks(rq))
+		वापस शून्य;
 
 next_node:
-	if (next_node) {
-		p = rb_entry(next_node, struct task_struct, pushable_dl_tasks);
+	अगर (next_node) अणु
+		p = rb_entry(next_node, काष्ठा task_काष्ठा, pushable_dl_tasks);
 
-		if (pick_dl_task(rq, p, cpu))
-			return p;
+		अगर (pick_dl_task(rq, p, cpu))
+			वापस p;
 
 		next_node = rb_next(next_node);
-		goto next_node;
-	}
+		जाओ next_node;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static DEFINE_PER_CPU(cpumask_var_t, local_cpu_mask_dl);
+अटल DEFINE_PER_CPU(cpumask_var_t, local_cpu_mask_dl);
 
-static int find_later_rq(struct task_struct *task)
-{
-	struct sched_domain *sd;
-	struct cpumask *later_mask = this_cpu_cpumask_var_ptr(local_cpu_mask_dl);
-	int this_cpu = smp_processor_id();
-	int cpu = task_cpu(task);
+अटल पूर्णांक find_later_rq(काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा sched_करोमुख्य *sd;
+	काष्ठा cpumask *later_mask = this_cpu_cpumask_var_ptr(local_cpu_mask_dl);
+	पूर्णांक this_cpu = smp_processor_id();
+	पूर्णांक cpu = task_cpu(task);
 
 	/* Make sure the mask is initialized first */
-	if (unlikely(!later_mask))
-		return -1;
+	अगर (unlikely(!later_mask))
+		वापस -1;
 
-	if (task->nr_cpus_allowed == 1)
-		return -1;
+	अगर (task->nr_cpus_allowed == 1)
+		वापस -1;
 
 	/*
-	 * We have to consider system topology and task affinity
-	 * first, then we can look for a suitable CPU.
+	 * We have to consider प्रणाली topology and task affinity
+	 * first, then we can look क्रम a suitable CPU.
 	 */
-	if (!cpudl_find(&task_rq(task)->rd->cpudl, task, later_mask))
-		return -1;
+	अगर (!cpudl_find(&task_rq(task)->rd->cpudl, task, later_mask))
+		वापस -1;
 
 	/*
-	 * If we are here, some targets have been found, including
+	 * If we are here, some tarमाला_लो have been found, including
 	 * the most suitable which is, among the runqueues where the
 	 * current tasks have later deadlines than the task's one, the
 	 * rq with the latest possible one.
 	 *
 	 * Now we check how well this matches with task's
-	 * affinity and system topology.
+	 * affinity and प्रणाली topology.
 	 *
 	 * The last CPU where the task run is our first
 	 * guess, since it is most likely cache-hot there.
 	 */
-	if (cpumask_test_cpu(cpu, later_mask))
-		return cpu;
+	अगर (cpumask_test_cpu(cpu, later_mask))
+		वापस cpu;
 	/*
-	 * Check if this_cpu is to be skipped (i.e., it is
+	 * Check अगर this_cpu is to be skipped (i.e., it is
 	 * not in the mask) or not.
 	 */
-	if (!cpumask_test_cpu(this_cpu, later_mask))
+	अगर (!cpumask_test_cpu(this_cpu, later_mask))
 		this_cpu = -1;
 
-	rcu_read_lock();
-	for_each_domain(cpu, sd) {
-		if (sd->flags & SD_WAKE_AFFINE) {
-			int best_cpu;
+	rcu_पढ़ो_lock();
+	क्रम_each_करोमुख्य(cpu, sd) अणु
+		अगर (sd->flags & SD_WAKE_AFFINE) अणु
+			पूर्णांक best_cpu;
 
 			/*
 			 * If possible, preempting this_cpu is
 			 * cheaper than migrating.
 			 */
-			if (this_cpu != -1 &&
-			    cpumask_test_cpu(this_cpu, sched_domain_span(sd))) {
-				rcu_read_unlock();
-				return this_cpu;
-			}
+			अगर (this_cpu != -1 &&
+			    cpumask_test_cpu(this_cpu, sched_करोमुख्य_span(sd))) अणु
+				rcu_पढ़ो_unlock();
+				वापस this_cpu;
+			पूर्ण
 
 			best_cpu = cpumask_any_and_distribute(later_mask,
-							      sched_domain_span(sd));
+							      sched_करोमुख्य_span(sd));
 			/*
-			 * Last chance: if a CPU being in both later_mask
+			 * Last chance: अगर a CPU being in both later_mask
 			 * and current sd span is valid, that becomes our
 			 * choice. Of course, the latest possible CPU is
-			 * already under consideration through later_mask.
+			 * alपढ़ोy under consideration through later_mask.
 			 */
-			if (best_cpu < nr_cpu_ids) {
-				rcu_read_unlock();
-				return best_cpu;
-			}
-		}
-	}
-	rcu_read_unlock();
+			अगर (best_cpu < nr_cpu_ids) अणु
+				rcu_पढ़ो_unlock();
+				वापस best_cpu;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	/*
-	 * At this point, all our guesses failed, we just return
+	 * At this poपूर्णांक, all our guesses failed, we just वापस
 	 * 'something', and let the caller sort the things out.
 	 */
-	if (this_cpu != -1)
-		return this_cpu;
+	अगर (this_cpu != -1)
+		वापस this_cpu;
 
 	cpu = cpumask_any_distribute(later_mask);
-	if (cpu < nr_cpu_ids)
-		return cpu;
+	अगर (cpu < nr_cpu_ids)
+		वापस cpu;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /* Locks the rq it finds */
-static struct rq *find_lock_later_rq(struct task_struct *task, struct rq *rq)
-{
-	struct rq *later_rq = NULL;
-	int tries;
-	int cpu;
+अटल काष्ठा rq *find_lock_later_rq(काष्ठा task_काष्ठा *task, काष्ठा rq *rq)
+अणु
+	काष्ठा rq *later_rq = शून्य;
+	पूर्णांक tries;
+	पूर्णांक cpu;
 
-	for (tries = 0; tries < DL_MAX_TRIES; tries++) {
+	क्रम (tries = 0; tries < DL_MAX_TRIES; tries++) अणु
 		cpu = find_later_rq(task);
 
-		if ((cpu == -1) || (cpu == rq->cpu))
-			break;
+		अगर ((cpu == -1) || (cpu == rq->cpu))
+			अवरोध;
 
 		later_rq = cpu_rq(cpu);
 
-		if (later_rq->dl.dl_nr_running &&
-		    !dl_time_before(task->dl.deadline,
-					later_rq->dl.earliest_dl.curr)) {
+		अगर (later_rq->dl.dl_nr_running &&
+		    !dl_समय_beक्रमe(task->dl.deadline,
+					later_rq->dl.earliest_dl.curr)) अणु
 			/*
 			 * Target rq has tasks of equal or earlier deadline,
-			 * retrying does not release any lock and is unlikely
-			 * to yield a different result.
+			 * retrying करोes not release any lock and is unlikely
+			 * to yield a dअगरferent result.
 			 */
-			later_rq = NULL;
-			break;
-		}
+			later_rq = शून्य;
+			अवरोध;
+		पूर्ण
 
-		/* Retry if something changed. */
-		if (double_lock_balance(rq, later_rq)) {
-			if (unlikely(task_rq(task) != rq ||
+		/* Retry अगर something changed. */
+		अगर (द्विगुन_lock_balance(rq, later_rq)) अणु
+			अगर (unlikely(task_rq(task) != rq ||
 				     !cpumask_test_cpu(later_rq->cpu, &task->cpus_mask) ||
 				     task_running(rq, task) ||
 				     !dl_task(task) ||
-				     !task_on_rq_queued(task))) {
-				double_unlock_balance(rq, later_rq);
-				later_rq = NULL;
-				break;
-			}
-		}
+				     !task_on_rq_queued(task))) अणु
+				द्विगुन_unlock_balance(rq, later_rq);
+				later_rq = शून्य;
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/*
 		 * If the rq we found has no -deadline task, or
 		 * its earliest one has a later deadline than our
 		 * task, the rq is a good one.
 		 */
-		if (!later_rq->dl.dl_nr_running ||
-		    dl_time_before(task->dl.deadline,
+		अगर (!later_rq->dl.dl_nr_running ||
+		    dl_समय_beक्रमe(task->dl.deadline,
 				   later_rq->dl.earliest_dl.curr))
-			break;
+			अवरोध;
 
 		/* Otherwise we try again. */
-		double_unlock_balance(rq, later_rq);
-		later_rq = NULL;
-	}
+		द्विगुन_unlock_balance(rq, later_rq);
+		later_rq = शून्य;
+	पूर्ण
 
-	return later_rq;
-}
+	वापस later_rq;
+पूर्ण
 
-static struct task_struct *pick_next_pushable_dl_task(struct rq *rq)
-{
-	struct task_struct *p;
+अटल काष्ठा task_काष्ठा *pick_next_pushable_dl_task(काष्ठा rq *rq)
+अणु
+	काष्ठा task_काष्ठा *p;
 
-	if (!has_pushable_dl_tasks(rq))
-		return NULL;
+	अगर (!has_pushable_dl_tasks(rq))
+		वापस शून्य;
 
-	p = rb_entry(rq->dl.pushable_dl_tasks_root.rb_leftmost,
-		     struct task_struct, pushable_dl_tasks);
+	p = rb_entry(rq->dl.pushable_dl_tasks_root.rb_lefपंचांगost,
+		     काष्ठा task_काष्ठा, pushable_dl_tasks);
 
 	BUG_ON(rq->cpu != task_cpu(p));
 	BUG_ON(task_current(rq, p));
@@ -2111,53 +2112,53 @@ static struct task_struct *pick_next_pushable_dl_task(struct rq *rq)
 	BUG_ON(!task_on_rq_queued(p));
 	BUG_ON(!dl_task(p));
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
 /*
- * See if the non running -deadline tasks on this rq
+ * See अगर the non running -deadline tasks on this rq
  * can be sent to some other CPU where they can preempt
  * and start executing.
  */
-static int push_dl_task(struct rq *rq)
-{
-	struct task_struct *next_task;
-	struct rq *later_rq;
-	int ret = 0;
+अटल पूर्णांक push_dl_task(काष्ठा rq *rq)
+अणु
+	काष्ठा task_काष्ठा *next_task;
+	काष्ठा rq *later_rq;
+	पूर्णांक ret = 0;
 
-	if (!rq->dl.overloaded)
-		return 0;
+	अगर (!rq->dl.overloaded)
+		वापस 0;
 
 	next_task = pick_next_pushable_dl_task(rq);
-	if (!next_task)
-		return 0;
+	अगर (!next_task)
+		वापस 0;
 
 retry:
-	if (is_migration_disabled(next_task))
-		return 0;
+	अगर (is_migration_disabled(next_task))
+		वापस 0;
 
-	if (WARN_ON(next_task == rq->curr))
-		return 0;
+	अगर (WARN_ON(next_task == rq->curr))
+		वापस 0;
 
 	/*
 	 * If next_task preempts rq->curr, and rq->curr
 	 * can move away, it makes sense to just reschedule
 	 * without going further in pushing next_task.
 	 */
-	if (dl_task(rq->curr) &&
-	    dl_time_before(next_task->dl.deadline, rq->curr->dl.deadline) &&
-	    rq->curr->nr_cpus_allowed > 1) {
+	अगर (dl_task(rq->curr) &&
+	    dl_समय_beक्रमe(next_task->dl.deadline, rq->curr->dl.deadline) &&
+	    rq->curr->nr_cpus_allowed > 1) अणु
 		resched_curr(rq);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* We might release rq lock */
-	get_task_struct(next_task);
+	get_task_काष्ठा(next_task);
 
 	/* Will lock the rq it'll find */
 	later_rq = find_lock_later_rq(next_task, rq);
-	if (!later_rq) {
-		struct task_struct *task;
+	अगर (!later_rq) अणु
+		काष्ठा task_काष्ठा *task;
 
 		/*
 		 * We must check all this again, since
@@ -2165,71 +2166,71 @@ retry:
 		 * then possible that next_task has migrated.
 		 */
 		task = pick_next_pushable_dl_task(rq);
-		if (task == next_task) {
+		अगर (task == next_task) अणु
 			/*
-			 * The task is still there. We don't try
-			 * again, some other CPU will pull it when ready.
+			 * The task is still there. We करोn't try
+			 * again, some other CPU will pull it when पढ़ोy.
 			 */
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!task)
+		अगर (!task)
 			/* No more tasks */
-			goto out;
+			जाओ out;
 
-		put_task_struct(next_task);
+		put_task_काष्ठा(next_task);
 		next_task = task;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	deactivate_task(rq, next_task, 0);
 	set_task_cpu(next_task, later_rq->cpu);
 
 	/*
-	 * Update the later_rq clock here, because the clock is used
+	 * Update the later_rq घड़ी here, because the घड़ी is used
 	 * by the cpufreq_update_util() inside __add_running_bw().
 	 */
-	update_rq_clock(later_rq);
+	update_rq_घड़ी(later_rq);
 	activate_task(later_rq, next_task, ENQUEUE_NOCLOCK);
 	ret = 1;
 
 	resched_curr(later_rq);
 
-	double_unlock_balance(rq, later_rq);
+	द्विगुन_unlock_balance(rq, later_rq);
 
 out:
-	put_task_struct(next_task);
+	put_task_काष्ठा(next_task);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void push_dl_tasks(struct rq *rq)
-{
-	/* push_dl_task() will return true if it moved a -deadline task */
-	while (push_dl_task(rq))
+अटल व्योम push_dl_tasks(काष्ठा rq *rq)
+अणु
+	/* push_dl_task() will वापस true अगर it moved a -deadline task */
+	जबतक (push_dl_task(rq))
 		;
-}
+पूर्ण
 
-static void pull_dl_task(struct rq *this_rq)
-{
-	int this_cpu = this_rq->cpu, cpu;
-	struct task_struct *p, *push_task;
+अटल व्योम pull_dl_task(काष्ठा rq *this_rq)
+अणु
+	पूर्णांक this_cpu = this_rq->cpu, cpu;
+	काष्ठा task_काष्ठा *p, *push_task;
 	bool resched = false;
-	struct rq *src_rq;
-	u64 dmin = LONG_MAX;
+	काष्ठा rq *src_rq;
+	u64 dmin = दीर्घ_उच्च;
 
-	if (likely(!dl_overloaded(this_rq)))
-		return;
+	अगर (likely(!dl_overloaded(this_rq)))
+		वापस;
 
 	/*
-	 * Match the barrier from dl_set_overloaded; this guarantees that if we
+	 * Match the barrier from dl_set_overloaded; this guarantees that अगर we
 	 * see overloaded we must also see the dlo_mask bit.
 	 */
 	smp_rmb();
 
-	for_each_cpu(cpu, this_rq->rd->dlo_mask) {
-		if (this_cpu == cpu)
-			continue;
+	क्रम_each_cpu(cpu, this_rq->rd->dlo_mask) अणु
+		अगर (this_cpu == cpu)
+			जारी;
 
 		src_rq = cpu_rq(cpu);
 
@@ -2237,93 +2238,93 @@ static void pull_dl_task(struct rq *this_rq)
 		 * It looks racy, abd it is! However, as in sched_rt.c,
 		 * we are fine with this.
 		 */
-		if (this_rq->dl.dl_nr_running &&
-		    dl_time_before(this_rq->dl.earliest_dl.curr,
+		अगर (this_rq->dl.dl_nr_running &&
+		    dl_समय_beक्रमe(this_rq->dl.earliest_dl.curr,
 				   src_rq->dl.earliest_dl.next))
-			continue;
+			जारी;
 
 		/* Might drop this_rq->lock */
-		push_task = NULL;
-		double_lock_balance(this_rq, src_rq);
+		push_task = शून्य;
+		द्विगुन_lock_balance(this_rq, src_rq);
 
 		/*
 		 * If there are no more pullable tasks on the
-		 * rq, we're done with it.
+		 * rq, we're करोne with it.
 		 */
-		if (src_rq->dl.dl_nr_running <= 1)
-			goto skip;
+		अगर (src_rq->dl.dl_nr_running <= 1)
+			जाओ skip;
 
 		p = pick_earliest_pushable_dl_task(src_rq, this_cpu);
 
 		/*
-		 * We found a task to be pulled if:
-		 *  - it preempts our current (if there's one),
-		 *  - it will preempt the last one we pulled (if any).
+		 * We found a task to be pulled अगर:
+		 *  - it preempts our current (अगर there's one),
+		 *  - it will preempt the last one we pulled (अगर any).
 		 */
-		if (p && dl_time_before(p->dl.deadline, dmin) &&
+		अगर (p && dl_समय_beक्रमe(p->dl.deadline, dmin) &&
 		    (!this_rq->dl.dl_nr_running ||
-		     dl_time_before(p->dl.deadline,
-				    this_rq->dl.earliest_dl.curr))) {
+		     dl_समय_beक्रमe(p->dl.deadline,
+				    this_rq->dl.earliest_dl.curr))) अणु
 			WARN_ON(p == src_rq->curr);
 			WARN_ON(!task_on_rq_queued(p));
 
 			/*
-			 * Then we pull iff p has actually an earlier
+			 * Then we pull अगरf p has actually an earlier
 			 * deadline than the current task of its runqueue.
 			 */
-			if (dl_time_before(p->dl.deadline,
+			अगर (dl_समय_beक्रमe(p->dl.deadline,
 					   src_rq->curr->dl.deadline))
-				goto skip;
+				जाओ skip;
 
-			if (is_migration_disabled(p)) {
+			अगर (is_migration_disabled(p)) अणु
 				push_task = get_push_task(src_rq);
-			} else {
+			पूर्ण अन्यथा अणु
 				deactivate_task(src_rq, p, 0);
 				set_task_cpu(p, this_cpu);
 				activate_task(this_rq, p, 0);
 				dmin = p->dl.deadline;
 				resched = true;
-			}
+			पूर्ण
 
 			/* Is there any other task even earlier? */
-		}
+		पूर्ण
 skip:
-		double_unlock_balance(this_rq, src_rq);
+		द्विगुन_unlock_balance(this_rq, src_rq);
 
-		if (push_task) {
+		अगर (push_task) अणु
 			raw_spin_unlock(&this_rq->lock);
-			stop_one_cpu_nowait(src_rq->cpu, push_cpu_stop,
+			stop_one_cpu_noरुको(src_rq->cpu, push_cpu_stop,
 					    push_task, &src_rq->push_work);
 			raw_spin_lock(&this_rq->lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (resched)
+	अगर (resched)
 		resched_curr(this_rq);
-}
+पूर्ण
 
 /*
  * Since the task is not running and a reschedule is not going to happen
- * anytime soon on its runqueue, we try pushing it away now.
+ * anyसमय soon on its runqueue, we try pushing it away now.
  */
-static void task_woken_dl(struct rq *rq, struct task_struct *p)
-{
-	if (!task_running(rq, p) &&
+अटल व्योम task_woken_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
+	अगर (!task_running(rq, p) &&
 	    !test_tsk_need_resched(rq->curr) &&
 	    p->nr_cpus_allowed > 1 &&
 	    dl_task(rq->curr) &&
 	    (rq->curr->nr_cpus_allowed < 2 ||
-	     !dl_entity_preempt(&p->dl, &rq->curr->dl))) {
+	     !dl_entity_preempt(&p->dl, &rq->curr->dl))) अणु
 		push_dl_tasks(rq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void set_cpus_allowed_dl(struct task_struct *p,
-				const struct cpumask *new_mask,
+अटल व्योम set_cpus_allowed_dl(काष्ठा task_काष्ठा *p,
+				स्थिर काष्ठा cpumask *new_mask,
 				u32 flags)
-{
-	struct root_domain *src_rd;
-	struct rq *rq;
+अणु
+	काष्ठा root_करोमुख्य *src_rd;
+	काष्ठा rq *rq;
 
 	BUG_ON(!dl_task(p));
 
@@ -2331,68 +2332,68 @@ static void set_cpus_allowed_dl(struct task_struct *p,
 	src_rd = rq->rd;
 	/*
 	 * Migrating a SCHED_DEADLINE task between exclusive
-	 * cpusets (different root_domains) entails a bandwidth
-	 * update. We already made space for us in the destination
-	 * domain (see cpuset_can_attach()).
+	 * cpusets (dअगरferent root_करोमुख्यs) entails a bandwidth
+	 * update. We alपढ़ोy made space क्रम us in the destination
+	 * करोमुख्य (see cpuset_can_attach()).
 	 */
-	if (!cpumask_intersects(src_rd->span, new_mask)) {
-		struct dl_bw *src_dl_b;
+	अगर (!cpumask_पूर्णांकersects(src_rd->span, new_mask)) अणु
+		काष्ठा dl_bw *src_dl_b;
 
 		src_dl_b = dl_bw_of(cpu_of(rq));
 		/*
-		 * We now free resources of the root_domain we are migrating
-		 * off. In the worst case, sched_setattr() may temporary fail
+		 * We now मुक्त resources of the root_करोमुख्य we are migrating
+		 * off. In the worst हाल, sched_setattr() may temporary fail
 		 * until we complete the update.
 		 */
 		raw_spin_lock(&src_dl_b->lock);
 		__dl_sub(src_dl_b, p->dl.dl_bw, dl_bw_cpus(task_cpu(p)));
 		raw_spin_unlock(&src_dl_b->lock);
-	}
+	पूर्ण
 
 	set_cpus_allowed_common(p, new_mask, flags);
-}
+पूर्ण
 
 /* Assumes rq->lock is held */
-static void rq_online_dl(struct rq *rq)
-{
-	if (rq->dl.overloaded)
+अटल व्योम rq_online_dl(काष्ठा rq *rq)
+अणु
+	अगर (rq->dl.overloaded)
 		dl_set_overload(rq);
 
-	cpudl_set_freecpu(&rq->rd->cpudl, rq->cpu);
-	if (rq->dl.dl_nr_running > 0)
+	cpudl_set_मुक्तcpu(&rq->rd->cpudl, rq->cpu);
+	अगर (rq->dl.dl_nr_running > 0)
 		cpudl_set(&rq->rd->cpudl, rq->cpu, rq->dl.earliest_dl.curr);
-}
+पूर्ण
 
 /* Assumes rq->lock is held */
-static void rq_offline_dl(struct rq *rq)
-{
-	if (rq->dl.overloaded)
+अटल व्योम rq_offline_dl(काष्ठा rq *rq)
+अणु
+	अगर (rq->dl.overloaded)
 		dl_clear_overload(rq);
 
 	cpudl_clear(&rq->rd->cpudl, rq->cpu);
-	cpudl_clear_freecpu(&rq->rd->cpudl, rq->cpu);
-}
+	cpudl_clear_मुक्तcpu(&rq->rd->cpudl, rq->cpu);
+पूर्ण
 
-void __init init_sched_dl_class(void)
-{
-	unsigned int i;
+व्योम __init init_sched_dl_class(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for_each_possible_cpu(i)
+	क्रम_each_possible_cpu(i)
 		zalloc_cpumask_var_node(&per_cpu(local_cpu_mask_dl, i),
 					GFP_KERNEL, cpu_to_node(i));
-}
+पूर्ण
 
-void dl_add_task_root_domain(struct task_struct *p)
-{
-	struct rq_flags rf;
-	struct rq *rq;
-	struct dl_bw *dl_b;
+व्योम dl_add_task_root_करोमुख्य(काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा rq_flags rf;
+	काष्ठा rq *rq;
+	काष्ठा dl_bw *dl_b;
 
 	raw_spin_lock_irqsave(&p->pi_lock, rf.flags);
-	if (!dl_task(p)) {
+	अगर (!dl_task(p)) अणु
 		raw_spin_unlock_irqrestore(&p->pi_lock, rf.flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rq = __task_rq_lock(p, &rf);
 
@@ -2404,107 +2405,107 @@ void dl_add_task_root_domain(struct task_struct *p)
 	raw_spin_unlock(&dl_b->lock);
 
 	task_rq_unlock(rq, p, &rf);
-}
+पूर्ण
 
-void dl_clear_root_domain(struct root_domain *rd)
-{
-	unsigned long flags;
+व्योम dl_clear_root_करोमुख्य(काष्ठा root_करोमुख्य *rd)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&rd->dl_bw.lock, flags);
 	rd->dl_bw.total_bw = 0;
 	raw_spin_unlock_irqrestore(&rd->dl_bw.lock, flags);
-}
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static void switched_from_dl(struct rq *rq, struct task_struct *p)
-{
+अटल व्योम चयनed_from_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
 	/*
-	 * task_non_contending() can start the "inactive timer" (if the 0-lag
-	 * time is in the future). If the task switches back to dl before
-	 * the "inactive timer" fires, it can continue to consume its current
-	 * runtime using its current deadline. If it stays outside of
-	 * SCHED_DEADLINE until the 0-lag time passes, inactive_task_timer()
+	 * task_non_contending() can start the "inactive timer" (अगर the 0-lag
+	 * समय is in the future). If the task चयनes back to dl beक्रमe
+	 * the "inactive timer" fires, it can जारी to consume its current
+	 * runसमय using its current deadline. If it stays outside of
+	 * SCHED_DEADLINE until the 0-lag समय passes, inactive_task_समयr()
 	 * will reset the task parameters.
 	 */
-	if (task_on_rq_queued(p) && p->dl.dl_runtime)
+	अगर (task_on_rq_queued(p) && p->dl.dl_runसमय)
 		task_non_contending(p);
 
-	if (!task_on_rq_queued(p)) {
+	अगर (!task_on_rq_queued(p)) अणु
 		/*
-		 * Inactive timer is armed. However, p is leaving DEADLINE and
-		 * might migrate away from this rq while continuing to run on
-		 * some other class. We need to remove its contribution from
+		 * Inactive समयr is armed. However, p is leaving DEADLINE and
+		 * might migrate away from this rq जबतक continuing to run on
+		 * some other class. We need to हटाओ its contribution from
 		 * this rq running_bw now, or sub_rq_bw (below) will complain.
 		 */
-		if (p->dl.dl_non_contending)
+		अगर (p->dl.dl_non_contending)
 			sub_running_bw(&p->dl, &rq->dl);
 		sub_rq_bw(&p->dl, &rq->dl);
-	}
+	पूर्ण
 
 	/*
-	 * We cannot use inactive_task_timer() to invoke sub_running_bw()
-	 * at the 0-lag time, because the task could have been migrated
-	 * while SCHED_OTHER in the meanwhile.
+	 * We cannot use inactive_task_समयr() to invoke sub_running_bw()
+	 * at the 0-lag समय, because the task could have been migrated
+	 * जबतक SCHED_OTHER in the meanजबतक.
 	 */
-	if (p->dl.dl_non_contending)
+	अगर (p->dl.dl_non_contending)
 		p->dl.dl_non_contending = 0;
 
 	/*
 	 * Since this might be the only -deadline task on the rq,
 	 * this is the right place to try to pull some other one
-	 * from an overloaded CPU, if any.
+	 * from an overloaded CPU, अगर any.
 	 */
-	if (!task_on_rq_queued(p) || rq->dl.dl_nr_running)
-		return;
+	अगर (!task_on_rq_queued(p) || rq->dl.dl_nr_running)
+		वापस;
 
 	deadline_queue_pull_task(rq);
-}
+पूर्ण
 
 /*
- * When switching to -deadline, we may overload the rq, then
- * we try to push someone off, if possible.
+ * When चयनing to -deadline, we may overload the rq, then
+ * we try to push someone off, अगर possible.
  */
-static void switched_to_dl(struct rq *rq, struct task_struct *p)
-{
-	if (hrtimer_try_to_cancel(&p->dl.inactive_timer) == 1)
-		put_task_struct(p);
+अटल व्योम चयनed_to_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p)
+अणु
+	अगर (hrसमयr_try_to_cancel(&p->dl.inactive_समयr) == 1)
+		put_task_काष्ठा(p);
 
 	/* If p is not queued we will update its parameters at next wakeup. */
-	if (!task_on_rq_queued(p)) {
+	अगर (!task_on_rq_queued(p)) अणु
 		add_rq_bw(&p->dl, &rq->dl);
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (rq->curr != p) {
-#ifdef CONFIG_SMP
-		if (p->nr_cpus_allowed > 1 && rq->dl.overloaded)
+	अगर (rq->curr != p) अणु
+#अगर_घोषित CONFIG_SMP
+		अगर (p->nr_cpus_allowed > 1 && rq->dl.overloaded)
 			deadline_queue_push_tasks(rq);
-#endif
-		if (dl_task(rq->curr))
+#पूर्ण_अगर
+		अगर (dl_task(rq->curr))
 			check_preempt_curr_dl(rq, p, 0);
-		else
+		अन्यथा
 			resched_curr(rq);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * If the scheduling parameters of a -deadline task changed,
  * a push or pull operation might be needed.
  */
-static void prio_changed_dl(struct rq *rq, struct task_struct *p,
-			    int oldprio)
-{
-	if (task_on_rq_queued(p) || task_current(rq, p)) {
-#ifdef CONFIG_SMP
+अटल व्योम prio_changed_dl(काष्ठा rq *rq, काष्ठा task_काष्ठा *p,
+			    पूर्णांक oldprio)
+अणु
+	अगर (task_on_rq_queued(p) || task_current(rq, p)) अणु
+#अगर_घोषित CONFIG_SMP
 		/*
-		 * This might be too much, but unfortunately
-		 * we don't have the old deadline value, and
-		 * we can't argue if the task is increasing
+		 * This might be too much, but unक्रमtunately
+		 * we करोn't have the old deadline value, and
+		 * we can't argue अगर the task is increasing
 		 * or lowering its prio, so...
 		 */
-		if (!rq->dl.overloaded)
+		अगर (!rq->dl.overloaded)
 			deadline_queue_pull_task(rq);
 
 		/*
@@ -2512,20 +2513,20 @@ static void prio_changed_dl(struct rq *rq, struct task_struct *p,
 		 * then reschedule, provided p is still on this
 		 * runqueue.
 		 */
-		if (dl_time_before(rq->dl.earliest_dl.curr, p->dl.deadline))
+		अगर (dl_समय_beक्रमe(rq->dl.earliest_dl.curr, p->dl.deadline))
 			resched_curr(rq);
-#else
+#अन्यथा
 		/*
-		 * Again, we don't know if p has a earlier
+		 * Again, we करोn't know अगर p has a earlier
 		 * or later deadline, so let's blindly set a
-		 * (maybe not needed) rescheduling point.
+		 * (maybe not needed) rescheduling poपूर्णांक.
 		 */
 		resched_curr(rq);
-#endif /* CONFIG_SMP */
-	}
-}
+#पूर्ण_अगर /* CONFIG_SMP */
+	पूर्ण
+पूर्ण
 
-DEFINE_SCHED_CLASS(dl) = {
+DEFINE_SCHED_CLASS(dl) = अणु
 
 	.enqueue_task		= enqueue_task_dl,
 	.dequeue_task		= dequeue_task_dl,
@@ -2537,7 +2538,7 @@ DEFINE_SCHED_CLASS(dl) = {
 	.put_prev_task		= put_prev_task_dl,
 	.set_next_task		= set_next_task_dl,
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	.balance		= balance_dl,
 	.select_task_rq		= select_task_rq_dl,
 	.migrate_task_rq	= migrate_task_rq_dl,
@@ -2546,94 +2547,94 @@ DEFINE_SCHED_CLASS(dl) = {
 	.rq_offline             = rq_offline_dl,
 	.task_woken		= task_woken_dl,
 	.find_lock_rq		= find_lock_later_rq,
-#endif
+#पूर्ण_अगर
 
 	.task_tick		= task_tick_dl,
-	.task_fork              = task_fork_dl,
+	.task_विभाजन              = task_विभाजन_dl,
 
 	.prio_changed           = prio_changed_dl,
-	.switched_from		= switched_from_dl,
-	.switched_to		= switched_to_dl,
+	.चयनed_from		= चयनed_from_dl,
+	.चयनed_to		= चयनed_to_dl,
 
 	.update_curr		= update_curr_dl,
-};
+पूर्ण;
 
-/* Used for dl_bw check and update, used under sched_rt_handler()::mutex */
-static u64 dl_generation;
+/* Used क्रम dl_bw check and update, used under sched_rt_handler()::mutex */
+अटल u64 dl_generation;
 
-int sched_dl_global_validate(void)
-{
-	u64 runtime = global_rt_runtime();
+पूर्णांक sched_dl_global_validate(व्योम)
+अणु
+	u64 runसमय = global_rt_runसमय();
 	u64 period = global_rt_period();
-	u64 new_bw = to_ratio(period, runtime);
+	u64 new_bw = to_ratio(period, runसमय);
 	u64 gen = ++dl_generation;
-	struct dl_bw *dl_b;
-	int cpu, cpus, ret = 0;
-	unsigned long flags;
+	काष्ठा dl_bw *dl_b;
+	पूर्णांक cpu, cpus, ret = 0;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * Here we want to check the bandwidth not being set to some
 	 * value smaller than the currently allocated bandwidth in
-	 * any of the root_domains.
+	 * any of the root_करोमुख्यs.
 	 */
-	for_each_possible_cpu(cpu) {
-		rcu_read_lock_sched();
+	क्रम_each_possible_cpu(cpu) अणु
+		rcu_पढ़ो_lock_sched();
 
-		if (dl_bw_visited(cpu, gen))
-			goto next;
+		अगर (dl_bw_visited(cpu, gen))
+			जाओ next;
 
 		dl_b = dl_bw_of(cpu);
 		cpus = dl_bw_cpus(cpu);
 
 		raw_spin_lock_irqsave(&dl_b->lock, flags);
-		if (new_bw * cpus < dl_b->total_bw)
+		अगर (new_bw * cpus < dl_b->total_bw)
 			ret = -EBUSY;
 		raw_spin_unlock_irqrestore(&dl_b->lock, flags);
 
 next:
-		rcu_read_unlock_sched();
+		rcu_पढ़ो_unlock_sched();
 
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void init_dl_rq_bw_ratio(struct dl_rq *dl_rq)
-{
-	if (global_rt_runtime() == RUNTIME_INF) {
+अटल व्योम init_dl_rq_bw_ratio(काष्ठा dl_rq *dl_rq)
+अणु
+	अगर (global_rt_runसमय() == RUNTIME_INF) अणु
 		dl_rq->bw_ratio = 1 << RATIO_SHIFT;
 		dl_rq->extra_bw = 1 << BW_SHIFT;
-	} else {
-		dl_rq->bw_ratio = to_ratio(global_rt_runtime(),
+	पूर्ण अन्यथा अणु
+		dl_rq->bw_ratio = to_ratio(global_rt_runसमय(),
 			  global_rt_period()) >> (BW_SHIFT - RATIO_SHIFT);
 		dl_rq->extra_bw = to_ratio(global_rt_period(),
-						    global_rt_runtime());
-	}
-}
+						    global_rt_runसमय());
+	पूर्ण
+पूर्ण
 
-void sched_dl_do_global(void)
-{
+व्योम sched_dl_करो_global(व्योम)
+अणु
 	u64 new_bw = -1;
 	u64 gen = ++dl_generation;
-	struct dl_bw *dl_b;
-	int cpu;
-	unsigned long flags;
+	काष्ठा dl_bw *dl_b;
+	पूर्णांक cpu;
+	अचिन्हित दीर्घ flags;
 
 	def_dl_bandwidth.dl_period = global_rt_period();
-	def_dl_bandwidth.dl_runtime = global_rt_runtime();
+	def_dl_bandwidth.dl_runसमय = global_rt_runसमय();
 
-	if (global_rt_runtime() != RUNTIME_INF)
-		new_bw = to_ratio(global_rt_period(), global_rt_runtime());
+	अगर (global_rt_runसमय() != RUNTIME_INF)
+		new_bw = to_ratio(global_rt_period(), global_rt_runसमय());
 
-	for_each_possible_cpu(cpu) {
-		rcu_read_lock_sched();
+	क्रम_each_possible_cpu(cpu) अणु
+		rcu_पढ़ो_lock_sched();
 
-		if (dl_bw_visited(cpu, gen)) {
-			rcu_read_unlock_sched();
-			continue;
-		}
+		अगर (dl_bw_visited(cpu, gen)) अणु
+			rcu_पढ़ो_unlock_sched();
+			जारी;
+		पूर्ण
 
 		dl_b = dl_bw_of(cpu);
 
@@ -2641,38 +2642,38 @@ void sched_dl_do_global(void)
 		dl_b->bw = new_bw;
 		raw_spin_unlock_irqrestore(&dl_b->lock, flags);
 
-		rcu_read_unlock_sched();
+		rcu_पढ़ो_unlock_sched();
 		init_dl_rq_bw_ratio(&cpu_rq(cpu)->dl);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * We must be sure that accepting a new task (or allowing changing the
  * parameters of an existing one) is consistent with the bandwidth
- * constraints. If yes, this function also accordingly updates the currently
+ * स्थिरraपूर्णांकs. If yes, this function also accordingly updates the currently
  * allocated bandwidth to reflect the new situation.
  *
- * This function is called while holding p's rq->lock.
+ * This function is called जबतक holding p's rq->lock.
  */
-int sched_dl_overflow(struct task_struct *p, int policy,
-		      const struct sched_attr *attr)
-{
+पूर्णांक sched_dl_overflow(काष्ठा task_काष्ठा *p, पूर्णांक policy,
+		      स्थिर काष्ठा sched_attr *attr)
+अणु
 	u64 period = attr->sched_period ?: attr->sched_deadline;
-	u64 runtime = attr->sched_runtime;
-	u64 new_bw = dl_policy(policy) ? to_ratio(period, runtime) : 0;
-	int cpus, err = -1, cpu = task_cpu(p);
-	struct dl_bw *dl_b = dl_bw_of(cpu);
-	unsigned long cap;
+	u64 runसमय = attr->sched_runसमय;
+	u64 new_bw = dl_policy(policy) ? to_ratio(period, runसमय) : 0;
+	पूर्णांक cpus, err = -1, cpu = task_cpu(p);
+	काष्ठा dl_bw *dl_b = dl_bw_of(cpu);
+	अचिन्हित दीर्घ cap;
 
-	if (attr->sched_flags & SCHED_FLAG_SUGOV)
-		return 0;
+	अगर (attr->sched_flags & SCHED_FLAG_SUGOV)
+		वापस 0;
 
 	/* !deadline task may carry old deadline bandwidth */
-	if (new_bw == p->dl.dl_bw && task_has_dl_policy(p))
-		return 0;
+	अगर (new_bw == p->dl.dl_bw && task_has_dl_policy(p))
+		वापस 0;
 
 	/*
-	 * Either if a task, enters, leave, or stays -deadline but changes
+	 * Either अगर a task, enters, leave, or stays -deadline but changes
 	 * its parameters, we may need to update accordingly the total
 	 * allocated bandwidth of the container.
 	 */
@@ -2680,140 +2681,140 @@ int sched_dl_overflow(struct task_struct *p, int policy,
 	cpus = dl_bw_cpus(cpu);
 	cap = dl_bw_capacity(cpu);
 
-	if (dl_policy(policy) && !task_has_dl_policy(p) &&
-	    !__dl_overflow(dl_b, cap, 0, new_bw)) {
-		if (hrtimer_active(&p->dl.inactive_timer))
+	अगर (dl_policy(policy) && !task_has_dl_policy(p) &&
+	    !__dl_overflow(dl_b, cap, 0, new_bw)) अणु
+		अगर (hrसमयr_active(&p->dl.inactive_समयr))
 			__dl_sub(dl_b, p->dl.dl_bw, cpus);
 		__dl_add(dl_b, new_bw, cpus);
 		err = 0;
-	} else if (dl_policy(policy) && task_has_dl_policy(p) &&
-		   !__dl_overflow(dl_b, cap, p->dl.dl_bw, new_bw)) {
+	पूर्ण अन्यथा अगर (dl_policy(policy) && task_has_dl_policy(p) &&
+		   !__dl_overflow(dl_b, cap, p->dl.dl_bw, new_bw)) अणु
 		/*
 		 * XXX this is slightly incorrect: when the task
 		 * utilization decreases, we should delay the total
-		 * utilization change until the task's 0-lag point.
+		 * utilization change until the task's 0-lag poपूर्णांक.
 		 * But this would require to set the task's "inactive
-		 * timer" when the task is not inactive.
+		 * समयr" when the task is not inactive.
 		 */
 		__dl_sub(dl_b, p->dl.dl_bw, cpus);
 		__dl_add(dl_b, new_bw, cpus);
 		dl_change_utilization(p, new_bw);
 		err = 0;
-	} else if (!dl_policy(policy) && task_has_dl_policy(p)) {
+	पूर्ण अन्यथा अगर (!dl_policy(policy) && task_has_dl_policy(p)) अणु
 		/*
 		 * Do not decrease the total deadline utilization here,
-		 * switched_from_dl() will take care to do it at the correct
-		 * (0-lag) time.
+		 * चयनed_from_dl() will take care to करो it at the correct
+		 * (0-lag) समय.
 		 */
 		err = 0;
-	}
+	पूर्ण
 	raw_spin_unlock(&dl_b->lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * This function initializes the sched_dl_entity of a newly becoming
  * SCHED_DEADLINE task.
  *
- * Only the static values are considered here, the actual runtime and the
- * absolute deadline will be properly calculated when the task is enqueued
- * for the first time with its new policy.
+ * Only the अटल values are considered here, the actual runसमय and the
+ * असलolute deadline will be properly calculated when the task is enqueued
+ * क्रम the first समय with its new policy.
  */
-void __setparam_dl(struct task_struct *p, const struct sched_attr *attr)
-{
-	struct sched_dl_entity *dl_se = &p->dl;
+व्योम __setparam_dl(काष्ठा task_काष्ठा *p, स्थिर काष्ठा sched_attr *attr)
+अणु
+	काष्ठा sched_dl_entity *dl_se = &p->dl;
 
-	dl_se->dl_runtime = attr->sched_runtime;
+	dl_se->dl_runसमय = attr->sched_runसमय;
 	dl_se->dl_deadline = attr->sched_deadline;
 	dl_se->dl_period = attr->sched_period ?: dl_se->dl_deadline;
 	dl_se->flags = attr->sched_flags;
-	dl_se->dl_bw = to_ratio(dl_se->dl_period, dl_se->dl_runtime);
-	dl_se->dl_density = to_ratio(dl_se->dl_deadline, dl_se->dl_runtime);
-}
+	dl_se->dl_bw = to_ratio(dl_se->dl_period, dl_se->dl_runसमय);
+	dl_se->dl_density = to_ratio(dl_se->dl_deadline, dl_se->dl_runसमय);
+पूर्ण
 
-void __getparam_dl(struct task_struct *p, struct sched_attr *attr)
-{
-	struct sched_dl_entity *dl_se = &p->dl;
+व्योम __getparam_dl(काष्ठा task_काष्ठा *p, काष्ठा sched_attr *attr)
+अणु
+	काष्ठा sched_dl_entity *dl_se = &p->dl;
 
 	attr->sched_priority = p->rt_priority;
-	attr->sched_runtime = dl_se->dl_runtime;
+	attr->sched_runसमय = dl_se->dl_runसमय;
 	attr->sched_deadline = dl_se->dl_deadline;
 	attr->sched_period = dl_se->dl_period;
 	attr->sched_flags = dl_se->flags;
-}
+पूर्ण
 
 /*
- * Default limits for DL period; on the top end we guard against small util
- * tasks still getting ridiculously long effective runtimes, on the bottom end we
- * guard against timer DoS.
+ * Default limits क्रम DL period; on the top end we guard against small util
+ * tasks still getting ridiculously दीर्घ effective runबार, on the bottom end we
+ * guard against समयr DoS.
  */
-unsigned int sysctl_sched_dl_period_max = 1 << 22; /* ~4 seconds */
-unsigned int sysctl_sched_dl_period_min = 100;     /* 100 us */
+अचिन्हित पूर्णांक sysctl_sched_dl_period_max = 1 << 22; /* ~4 seconds */
+अचिन्हित पूर्णांक sysctl_sched_dl_period_min = 100;     /* 100 us */
 
 /*
  * This function validates the new parameters of a -deadline task.
- * We ask for the deadline not being zero, and greater or equal
- * than the runtime, as well as the period of being zero or
+ * We ask क्रम the deadline not being zero, and greater or equal
+ * than the runसमय, as well as the period of being zero or
  * greater than deadline. Furthermore, we have to be sure that
- * user parameters are above the internal resolution of 1us (we
- * check sched_runtime only since it is always the smaller one) and
+ * user parameters are above the पूर्णांकernal resolution of 1us (we
+ * check sched_runसमय only since it is always the smaller one) and
  * below 2^63 ns (we have to check both sched_deadline and
  * sched_period, as the latter can be zero).
  */
-bool __checkparam_dl(const struct sched_attr *attr)
-{
+bool __checkparam_dl(स्थिर काष्ठा sched_attr *attr)
+अणु
 	u64 period, max, min;
 
-	/* special dl tasks don't actually use any parameter */
-	if (attr->sched_flags & SCHED_FLAG_SUGOV)
-		return true;
+	/* special dl tasks करोn't actually use any parameter */
+	अगर (attr->sched_flags & SCHED_FLAG_SUGOV)
+		वापस true;
 
 	/* deadline != 0 */
-	if (attr->sched_deadline == 0)
-		return false;
+	अगर (attr->sched_deadline == 0)
+		वापस false;
 
 	/*
 	 * Since we truncate DL_SCALE bits, make sure we're at least
 	 * that big.
 	 */
-	if (attr->sched_runtime < (1ULL << DL_SCALE))
-		return false;
+	अगर (attr->sched_runसमय < (1ULL << DL_SCALE))
+		वापस false;
 
 	/*
-	 * Since we use the MSB for wrap-around and sign issues, make
+	 * Since we use the MSB क्रम wrap-around and sign issues, make
 	 * sure it's not set (mind that period can be equal to zero).
 	 */
-	if (attr->sched_deadline & (1ULL << 63) ||
+	अगर (attr->sched_deadline & (1ULL << 63) ||
 	    attr->sched_period & (1ULL << 63))
-		return false;
+		वापस false;
 
 	period = attr->sched_period;
-	if (!period)
+	अगर (!period)
 		period = attr->sched_deadline;
 
-	/* runtime <= deadline <= period (if period != 0) */
-	if (period < attr->sched_deadline ||
-	    attr->sched_deadline < attr->sched_runtime)
-		return false;
+	/* runसमय <= deadline <= period (अगर period != 0) */
+	अगर (period < attr->sched_deadline ||
+	    attr->sched_deadline < attr->sched_runसमय)
+		वापस false;
 
 	max = (u64)READ_ONCE(sysctl_sched_dl_period_max) * NSEC_PER_USEC;
 	min = (u64)READ_ONCE(sysctl_sched_dl_period_min) * NSEC_PER_USEC;
 
-	if (period < min || period > max)
-		return false;
+	अगर (period < min || period > max)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * This function clears the sched_dl_entity static params.
+ * This function clears the sched_dl_entity अटल params.
  */
-void __dl_clear_params(struct task_struct *p)
-{
-	struct sched_dl_entity *dl_se = &p->dl;
+व्योम __dl_clear_params(काष्ठा task_काष्ठा *p)
+अणु
+	काष्ठा sched_dl_entity *dl_se = &p->dl;
 
-	dl_se->dl_runtime		= 0;
+	dl_se->dl_runसमय		= 0;
 	dl_se->dl_deadline		= 0;
 	dl_se->dl_period		= 0;
 	dl_se->flags			= 0;
@@ -2825,102 +2826,102 @@ void __dl_clear_params(struct task_struct *p)
 	dl_se->dl_non_contending	= 0;
 	dl_se->dl_overrun		= 0;
 
-#ifdef CONFIG_RT_MUTEXES
+#अगर_घोषित CONFIG_RT_MUTEXES
 	dl_se->pi_se			= dl_se;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-bool dl_param_changed(struct task_struct *p, const struct sched_attr *attr)
-{
-	struct sched_dl_entity *dl_se = &p->dl;
+bool dl_param_changed(काष्ठा task_काष्ठा *p, स्थिर काष्ठा sched_attr *attr)
+अणु
+	काष्ठा sched_dl_entity *dl_se = &p->dl;
 
-	if (dl_se->dl_runtime != attr->sched_runtime ||
+	अगर (dl_se->dl_runसमय != attr->sched_runसमय ||
 	    dl_se->dl_deadline != attr->sched_deadline ||
 	    dl_se->dl_period != attr->sched_period ||
 	    dl_se->flags != attr->sched_flags)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#ifdef CONFIG_SMP
-int dl_task_can_attach(struct task_struct *p, const struct cpumask *cs_cpus_allowed)
-{
-	unsigned long flags, cap;
-	unsigned int dest_cpu;
-	struct dl_bw *dl_b;
+#अगर_घोषित CONFIG_SMP
+पूर्णांक dl_task_can_attach(काष्ठा task_काष्ठा *p, स्थिर काष्ठा cpumask *cs_cpus_allowed)
+अणु
+	अचिन्हित दीर्घ flags, cap;
+	अचिन्हित पूर्णांक dest_cpu;
+	काष्ठा dl_bw *dl_b;
 	bool overflow;
-	int ret;
+	पूर्णांक ret;
 
 	dest_cpu = cpumask_any_and(cpu_active_mask, cs_cpus_allowed);
 
-	rcu_read_lock_sched();
+	rcu_पढ़ो_lock_sched();
 	dl_b = dl_bw_of(dest_cpu);
 	raw_spin_lock_irqsave(&dl_b->lock, flags);
 	cap = dl_bw_capacity(dest_cpu);
 	overflow = __dl_overflow(dl_b, cap, 0, p->dl.dl_bw);
-	if (overflow) {
+	अगर (overflow) अणु
 		ret = -EBUSY;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * We reserve space for this task in the destination
-		 * root_domain, as we can't fail after this point.
-		 * We will free resources in the source root_domain
+		 * We reserve space क्रम this task in the destination
+		 * root_करोमुख्य, as we can't fail after this poपूर्णांक.
+		 * We will मुक्त resources in the source root_करोमुख्य
 		 * later on (see set_cpus_allowed_dl()).
 		 */
-		int cpus = dl_bw_cpus(dest_cpu);
+		पूर्णांक cpus = dl_bw_cpus(dest_cpu);
 
 		__dl_add(dl_b, p->dl.dl_bw, cpus);
 		ret = 0;
-	}
+	पूर्ण
 	raw_spin_unlock_irqrestore(&dl_b->lock, flags);
-	rcu_read_unlock_sched();
+	rcu_पढ़ो_unlock_sched();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int dl_cpuset_cpumask_can_shrink(const struct cpumask *cur,
-				 const struct cpumask *trial)
-{
-	int ret = 1, trial_cpus;
-	struct dl_bw *cur_dl_b;
-	unsigned long flags;
+पूर्णांक dl_cpuset_cpumask_can_shrink(स्थिर काष्ठा cpumask *cur,
+				 स्थिर काष्ठा cpumask *trial)
+अणु
+	पूर्णांक ret = 1, trial_cpus;
+	काष्ठा dl_bw *cur_dl_b;
+	अचिन्हित दीर्घ flags;
 
-	rcu_read_lock_sched();
+	rcu_पढ़ो_lock_sched();
 	cur_dl_b = dl_bw_of(cpumask_any(cur));
 	trial_cpus = cpumask_weight(trial);
 
 	raw_spin_lock_irqsave(&cur_dl_b->lock, flags);
-	if (cur_dl_b->bw != -1 &&
+	अगर (cur_dl_b->bw != -1 &&
 	    cur_dl_b->bw * trial_cpus < cur_dl_b->total_bw)
 		ret = 0;
 	raw_spin_unlock_irqrestore(&cur_dl_b->lock, flags);
-	rcu_read_unlock_sched();
+	rcu_पढ़ो_unlock_sched();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool dl_cpu_busy(unsigned int cpu)
-{
-	unsigned long flags, cap;
-	struct dl_bw *dl_b;
+bool dl_cpu_busy(अचिन्हित पूर्णांक cpu)
+अणु
+	अचिन्हित दीर्घ flags, cap;
+	काष्ठा dl_bw *dl_b;
 	bool overflow;
 
-	rcu_read_lock_sched();
+	rcu_पढ़ो_lock_sched();
 	dl_b = dl_bw_of(cpu);
 	raw_spin_lock_irqsave(&dl_b->lock, flags);
 	cap = dl_bw_capacity(cpu);
 	overflow = __dl_overflow(dl_b, cap, 0, 0);
 	raw_spin_unlock_irqrestore(&dl_b->lock, flags);
-	rcu_read_unlock_sched();
+	rcu_पढ़ो_unlock_sched();
 
-	return overflow;
-}
-#endif
+	वापस overflow;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_SCHED_DEBUG
-void print_dl_stats(struct seq_file *m, int cpu)
-{
-	print_dl_rq(m, cpu, &cpu_rq(cpu)->dl);
-}
-#endif /* CONFIG_SCHED_DEBUG */
+#अगर_घोषित CONFIG_SCHED_DEBUG
+व्योम prपूर्णांक_dl_stats(काष्ठा seq_file *m, पूर्णांक cpu)
+अणु
+	prपूर्णांक_dl_rq(m, cpu, &cpu_rq(cpu)->dl);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SCHED_DEBUG */

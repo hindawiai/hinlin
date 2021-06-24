@@ -1,112 +1,113 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /******************************************************************************
- * platform-pci-unplug.c
+ * platक्रमm-pci-unplug.c
  *
- * Xen platform PCI device driver
+ * Xen platक्रमm PCI device driver
  * Copyright (c) 2010, Citrix
  */
 
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/export.h>
 
-#include <xen/xen.h>
-#include <xen/platform_pci.h>
-#include "xen-ops.h"
+#समावेश <xen/xen.h>
+#समावेश <xen/platक्रमm_pci.h>
+#समावेश "xen-ops.h"
 
-#define XEN_PLATFORM_ERR_MAGIC -1
-#define XEN_PLATFORM_ERR_PROTOCOL -2
-#define XEN_PLATFORM_ERR_BLACKLIST -3
+#घोषणा XEN_PLATFORM_ERR_MAGIC -1
+#घोषणा XEN_PLATFORM_ERR_PROTOCOL -2
+#घोषणा XEN_PLATFORM_ERR_BLACKLIST -3
 
-/* store the value of xen_emul_unplug after the unplug is done */
-static int xen_platform_pci_unplug;
-static int xen_emul_unplug;
+/* store the value of xen_emul_unplug after the unplug is करोne */
+अटल पूर्णांक xen_platक्रमm_pci_unplug;
+अटल पूर्णांक xen_emul_unplug;
 
-static int check_platform_magic(void)
-{
-	short magic;
-	char protocol;
+अटल पूर्णांक check_platक्रमm_magic(व्योम)
+अणु
+	लघु magic;
+	अक्षर protocol;
 
 	magic = inw(XEN_IOPORT_MAGIC);
-	if (magic != XEN_IOPORT_MAGIC_VAL) {
-		printk(KERN_ERR "Xen Platform PCI: unrecognised magic value\n");
-		return XEN_PLATFORM_ERR_MAGIC;
-	}
+	अगर (magic != XEN_IOPORT_MAGIC_VAL) अणु
+		prपूर्णांकk(KERN_ERR "Xen Platform PCI: unrecognised magic value\n");
+		वापस XEN_PLATFORM_ERR_MAGIC;
+	पूर्ण
 
 	protocol = inb(XEN_IOPORT_PROTOVER);
 
-	printk(KERN_DEBUG "Xen Platform PCI: I/O protocol version %d\n",
+	prपूर्णांकk(KERN_DEBUG "Xen Platform PCI: I/O protocol version %d\n",
 			protocol);
 
-	switch (protocol) {
-	case 1:
+	चयन (protocol) अणु
+	हाल 1:
 		outw(XEN_IOPORT_LINUX_PRODNUM, XEN_IOPORT_PRODNUM);
 		outl(XEN_IOPORT_LINUX_DRVVER, XEN_IOPORT_DRVVER);
-		if (inw(XEN_IOPORT_MAGIC) != XEN_IOPORT_MAGIC_VAL) {
-			printk(KERN_ERR "Xen Platform: blacklisted by host\n");
-			return XEN_PLATFORM_ERR_BLACKLIST;
-		}
-		break;
-	default:
-		printk(KERN_WARNING "Xen Platform PCI: unknown I/O protocol version\n");
-		return XEN_PLATFORM_ERR_PROTOCOL;
-	}
+		अगर (inw(XEN_IOPORT_MAGIC) != XEN_IOPORT_MAGIC_VAL) अणु
+			prपूर्णांकk(KERN_ERR "Xen Platform: blacklisted by host\n");
+			वापस XEN_PLATFORM_ERR_BLACKLIST;
+		पूर्ण
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_WARNING "Xen Platform PCI: unknown I/O protocol version\n");
+		वापस XEN_PLATFORM_ERR_PROTOCOL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-bool xen_has_pv_devices(void)
-{
-	if (!xen_domain())
-		return false;
+bool xen_has_pv_devices(व्योम)
+अणु
+	अगर (!xen_करोमुख्य())
+		वापस false;
 
-	/* PV and PVH domains always have them. */
-	if (xen_pv_domain() || xen_pvh_domain())
-		return true;
+	/* PV and PVH करोमुख्यs always have them. */
+	अगर (xen_pv_करोमुख्य() || xen_pvh_करोमुख्य())
+		वापस true;
 
-	/* And user has xen_platform_pci=0 set in guest config as
-	 * driver did not modify the value. */
-	if (xen_platform_pci_unplug == 0)
-		return false;
+	/* And user has xen_platक्रमm_pci=0 set in guest config as
+	 * driver did not modअगरy the value. */
+	अगर (xen_platक्रमm_pci_unplug == 0)
+		वापस false;
 
-	if (xen_platform_pci_unplug & XEN_UNPLUG_NEVER)
-		return false;
+	अगर (xen_platक्रमm_pci_unplug & XEN_UNPLUG_NEVER)
+		वापस false;
 
-	if (xen_platform_pci_unplug & XEN_UNPLUG_ALL)
-		return true;
+	अगर (xen_platक्रमm_pci_unplug & XEN_UNPLUG_ALL)
+		वापस true;
 
 	/* This is an odd one - we are going to run legacy
-	 * and PV drivers at the same time. */
-	if (xen_platform_pci_unplug & XEN_UNPLUG_UNNECESSARY)
-		return true;
+	 * and PV drivers at the same समय. */
+	अगर (xen_platक्रमm_pci_unplug & XEN_UNPLUG_UNNECESSARY)
+		वापस true;
 
-	/* And the caller has to follow with xen_pv_{disk,nic}_devices
+	/* And the caller has to follow with xen_pv_अणुdisk,nicपूर्ण_devices
 	 * to be certain which driver can load. */
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(xen_has_pv_devices);
 
-static bool __xen_has_pv_device(int state)
-{
-	/* HVM domains might or might not */
-	if (xen_hvm_domain() && (xen_platform_pci_unplug & state))
-		return true;
+अटल bool __xen_has_pv_device(पूर्णांक state)
+अणु
+	/* HVM करोमुख्यs might or might not */
+	अगर (xen_hvm_करोमुख्य() && (xen_platक्रमm_pci_unplug & state))
+		वापस true;
 
-	return xen_has_pv_devices();
-}
+	वापस xen_has_pv_devices();
+पूर्ण
 
-bool xen_has_pv_nic_devices(void)
-{
-	return __xen_has_pv_device(XEN_UNPLUG_ALL_NICS | XEN_UNPLUG_ALL);
-}
+bool xen_has_pv_nic_devices(व्योम)
+अणु
+	वापस __xen_has_pv_device(XEN_UNPLUG_ALL_NICS | XEN_UNPLUG_ALL);
+पूर्ण
 EXPORT_SYMBOL_GPL(xen_has_pv_nic_devices);
 
-bool xen_has_pv_disk_devices(void)
-{
-	return __xen_has_pv_device(XEN_UNPLUG_ALL_IDE_DISKS |
+bool xen_has_pv_disk_devices(व्योम)
+अणु
+	वापस __xen_has_pv_device(XEN_UNPLUG_ALL_IDE_DISKS |
 				   XEN_UNPLUG_AUX_IDE_DISKS | XEN_UNPLUG_ALL);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(xen_has_pv_disk_devices);
 
 /*
@@ -114,95 +115,95 @@ EXPORT_SYMBOL_GPL(xen_has_pv_disk_devices);
  * legacy (IDE) drivers together. This combination is only possible
  * under HVM.
  */
-bool xen_has_pv_and_legacy_disk_devices(void)
-{
-	if (!xen_domain())
-		return false;
+bool xen_has_pv_and_legacy_disk_devices(व्योम)
+अणु
+	अगर (!xen_करोमुख्य())
+		वापस false;
 
 	/* N.B. This is only ever used in HVM mode */
-	if (xen_pv_domain())
-		return false;
+	अगर (xen_pv_करोमुख्य())
+		वापस false;
 
-	if (xen_platform_pci_unplug & XEN_UNPLUG_UNNECESSARY)
-		return true;
+	अगर (xen_platक्रमm_pci_unplug & XEN_UNPLUG_UNNECESSARY)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(xen_has_pv_and_legacy_disk_devices);
 
-void xen_unplug_emulated_devices(void)
-{
-	int r;
+व्योम xen_unplug_emulated_devices(व्योम)
+अणु
+	पूर्णांक r;
 
-	/* PVH guests don't have emulated devices. */
-	if (xen_pvh_domain())
-		return;
+	/* PVH guests करोn't have emulated devices. */
+	अगर (xen_pvh_करोमुख्य())
+		वापस;
 
 	/* user explicitly requested no unplug */
-	if (xen_emul_unplug & XEN_UNPLUG_NEVER)
-		return;
-	/* check the version of the xen platform PCI device */
-	r = check_platform_magic();
-	/* If the version matches enable the Xen platform PCI driver.
-	 * Also enable the Xen platform PCI driver if the host does
+	अगर (xen_emul_unplug & XEN_UNPLUG_NEVER)
+		वापस;
+	/* check the version of the xen platक्रमm PCI device */
+	r = check_platक्रमm_magic();
+	/* If the version matches enable the Xen platक्रमm PCI driver.
+	 * Also enable the Xen platक्रमm PCI driver अगर the host करोes
 	 * not support the unplug protocol (XEN_PLATFORM_ERR_MAGIC)
 	 * but the user told us that unplugging is unnecessary. */
-	if (r && !(r == XEN_PLATFORM_ERR_MAGIC &&
+	अगर (r && !(r == XEN_PLATFORM_ERR_MAGIC &&
 			(xen_emul_unplug & XEN_UNPLUG_UNNECESSARY)))
-		return;
-	/* Set the default value of xen_emul_unplug depending on whether or
-	 * not the Xen PV frontends and the Xen platform PCI driver have
-	 * been compiled for this kernel (modules or built-in are both OK). */
-	if (!xen_emul_unplug) {
-		if (xen_must_unplug_nics()) {
-			printk(KERN_INFO "Netfront and the Xen platform PCI driver have "
+		वापस;
+	/* Set the शेष value of xen_emul_unplug depending on whether or
+	 * not the Xen PV frontends and the Xen platक्रमm PCI driver have
+	 * been compiled क्रम this kernel (modules or built-in are both OK). */
+	अगर (!xen_emul_unplug) अणु
+		अगर (xen_must_unplug_nics()) अणु
+			prपूर्णांकk(KERN_INFO "Netfront and the Xen platform PCI driver have "
 					"been compiled for this kernel: unplug emulated NICs.\n");
 			xen_emul_unplug |= XEN_UNPLUG_ALL_NICS;
-		}
-		if (xen_must_unplug_disks()) {
-			printk(KERN_INFO "Blkfront and the Xen platform PCI driver have "
+		पूर्ण
+		अगर (xen_must_unplug_disks()) अणु
+			prपूर्णांकk(KERN_INFO "Blkfront and the Xen platform PCI driver have "
 					"been compiled for this kernel: unplug emulated disks.\n"
 					"You might have to change the root device\n"
 					"from /dev/hd[a-d] to /dev/xvd[a-d]\n"
 					"in your root= kernel command line option\n");
 			xen_emul_unplug |= XEN_UNPLUG_ALL_IDE_DISKS;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* Now unplug the emulated devices */
-	if (!(xen_emul_unplug & XEN_UNPLUG_UNNECESSARY))
+	अगर (!(xen_emul_unplug & XEN_UNPLUG_UNNECESSARY))
 		outw(xen_emul_unplug, XEN_IOPORT_UNPLUG);
-	xen_platform_pci_unplug = xen_emul_unplug;
-}
+	xen_platक्रमm_pci_unplug = xen_emul_unplug;
+पूर्ण
 
-static int __init parse_xen_emul_unplug(char *arg)
-{
-	char *p, *q;
-	int l;
+अटल पूर्णांक __init parse_xen_emul_unplug(अक्षर *arg)
+अणु
+	अक्षर *p, *q;
+	पूर्णांक l;
 
-	for (p = arg; p; p = q) {
-		q = strchr(p, ',');
-		if (q) {
+	क्रम (p = arg; p; p = q) अणु
+		q = म_अक्षर(p, ',');
+		अगर (q) अणु
 			l = q - p;
 			q++;
-		} else {
-			l = strlen(p);
-		}
-		if (!strncmp(p, "all", l))
+		पूर्ण अन्यथा अणु
+			l = म_माप(p);
+		पूर्ण
+		अगर (!म_भेदन(p, "all", l))
 			xen_emul_unplug |= XEN_UNPLUG_ALL;
-		else if (!strncmp(p, "ide-disks", l))
+		अन्यथा अगर (!म_भेदन(p, "ide-disks", l))
 			xen_emul_unplug |= XEN_UNPLUG_ALL_IDE_DISKS;
-		else if (!strncmp(p, "aux-ide-disks", l))
+		अन्यथा अगर (!म_भेदन(p, "aux-ide-disks", l))
 			xen_emul_unplug |= XEN_UNPLUG_AUX_IDE_DISKS;
-		else if (!strncmp(p, "nics", l))
+		अन्यथा अगर (!म_भेदन(p, "nics", l))
 			xen_emul_unplug |= XEN_UNPLUG_ALL_NICS;
-		else if (!strncmp(p, "unnecessary", l))
+		अन्यथा अगर (!म_भेदन(p, "unnecessary", l))
 			xen_emul_unplug |= XEN_UNPLUG_UNNECESSARY;
-		else if (!strncmp(p, "never", l))
+		अन्यथा अगर (!म_भेदन(p, "never", l))
 			xen_emul_unplug |= XEN_UNPLUG_NEVER;
-		else
-			printk(KERN_WARNING "unrecognised option '%s' "
+		अन्यथा
+			prपूर्णांकk(KERN_WARNING "unrecognised option '%s' "
 				 "in parameter 'xen_emul_unplug'\n", p);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 early_param("xen_emul_unplug", parse_xen_emul_unplug);

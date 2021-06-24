@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved. */
 
-#define KBUILD_MODNAME "foo"
-#include <stddef.h>
-#include <string.h>
-#include <linux/bpf.h>
-#include <linux/icmp.h>
-#include <linux/in.h>
-#include <linux/if_ether.h>
-#include <linux/if_packet.h>
-#include <linux/if_vlan.h>
-#include <linux/ip.h>
+#घोषणा KBUILD_MODNAME "foo"
+#समावेश <मानकघोष.स>
+#समावेश <माला.स>
+#समावेश <linux/bpf.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/in.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/अगर_packet.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/ip.h>
 
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
-#include "xdping.h"
+#समावेश "xdping.h"
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__uint(max_entries, 256);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__uपूर्णांक(max_entries, 256);
 	__type(key, __u32);
-	__type(value, struct pinginfo);
-} ping_map SEC(".maps");
+	__type(value, काष्ठा pinginfo);
+पूर्ण ping_map SEC(".maps");
 
-static __always_inline void swap_src_dst_mac(void *data)
-{
-	unsigned short *p = data;
-	unsigned short dst[3];
+अटल __always_अंतरभूत व्योम swap_src_dst_mac(व्योम *data)
+अणु
+	अचिन्हित लघु *p = data;
+	अचिन्हित लघु dst[3];
 
 	dst[0] = p[0];
 	dst[1] = p[1];
@@ -38,103 +39,103 @@ static __always_inline void swap_src_dst_mac(void *data)
 	p[3] = dst[0];
 	p[4] = dst[1];
 	p[5] = dst[2];
-}
+पूर्ण
 
-static __always_inline __u16 csum_fold_helper(__wsum sum)
-{
+अटल __always_अंतरभूत __u16 csum_fold_helper(__wsum sum)
+अणु
 	sum = (sum & 0xffff) + (sum >> 16);
-	return ~((sum & 0xffff) + (sum >> 16));
-}
+	वापस ~((sum & 0xffff) + (sum >> 16));
+पूर्ण
 
-static __always_inline __u16 ipv4_csum(void *data_start, int data_size)
-{
+अटल __always_अंतरभूत __u16 ipv4_csum(व्योम *data_start, पूर्णांक data_size)
+अणु
 	__wsum sum;
 
-	sum = bpf_csum_diff(0, 0, data_start, data_size, 0);
-	return csum_fold_helper(sum);
-}
+	sum = bpf_csum_dअगरf(0, 0, data_start, data_size, 0);
+	वापस csum_fold_helper(sum);
+पूर्ण
 
-#define ICMP_ECHO_LEN		64
+#घोषणा ICMP_ECHO_LEN		64
 
-static __always_inline int icmp_check(struct xdp_md *ctx, int type)
-{
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
-	struct ethhdr *eth = data;
-	struct icmphdr *icmph;
-	struct iphdr *iph;
+अटल __always_अंतरभूत पूर्णांक icmp_check(काष्ठा xdp_md *ctx, पूर्णांक type)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+	काष्ठा ethhdr *eth = data;
+	काष्ठा icmphdr *icmph;
+	काष्ठा iphdr *iph;
 
-	if (data + sizeof(*eth) + sizeof(*iph) + ICMP_ECHO_LEN > data_end)
-		return XDP_PASS;
+	अगर (data + माप(*eth) + माप(*iph) + ICMP_ECHO_LEN > data_end)
+		वापस XDP_PASS;
 
-	if (eth->h_proto != bpf_htons(ETH_P_IP))
-		return XDP_PASS;
+	अगर (eth->h_proto != bpf_htons(ETH_P_IP))
+		वापस XDP_PASS;
 
-	iph = data + sizeof(*eth);
+	iph = data + माप(*eth);
 
-	if (iph->protocol != IPPROTO_ICMP)
-		return XDP_PASS;
+	अगर (iph->protocol != IPPROTO_ICMP)
+		वापस XDP_PASS;
 
-	if (bpf_ntohs(iph->tot_len) - sizeof(*iph) != ICMP_ECHO_LEN)
-		return XDP_PASS;
+	अगर (bpf_ntohs(iph->tot_len) - माप(*iph) != ICMP_ECHO_LEN)
+		वापस XDP_PASS;
 
-	icmph = data + sizeof(*eth) + sizeof(*iph);
+	icmph = data + माप(*eth) + माप(*iph);
 
-	if (icmph->type != type)
-		return XDP_PASS;
+	अगर (icmph->type != type)
+		वापस XDP_PASS;
 
-	return XDP_TX;
-}
+	वापस XDP_TX;
+पूर्ण
 
 SEC("xdpclient")
-int xdping_client(struct xdp_md *ctx)
-{
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
-	struct pinginfo *pinginfo = NULL;
-	struct ethhdr *eth = data;
-	struct icmphdr *icmph;
-	struct iphdr *iph;
-	__u64 recvtime;
+पूर्णांक xdping_client(काष्ठा xdp_md *ctx)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+	काष्ठा pinginfo *pinginfo = शून्य;
+	काष्ठा ethhdr *eth = data;
+	काष्ठा icmphdr *icmph;
+	काष्ठा iphdr *iph;
+	__u64 recvसमय;
 	__be32 raddr;
 	__be16 seq;
-	int ret;
+	पूर्णांक ret;
 	__u8 i;
 
 	ret = icmp_check(ctx, ICMP_ECHOREPLY);
 
-	if (ret != XDP_TX)
-		return ret;
+	अगर (ret != XDP_TX)
+		वापस ret;
 
-	iph = data + sizeof(*eth);
-	icmph = data + sizeof(*eth) + sizeof(*iph);
+	iph = data + माप(*eth);
+	icmph = data + माप(*eth) + माप(*iph);
 	raddr = iph->saddr;
 
-	/* Record time reply received. */
-	recvtime = bpf_ktime_get_ns();
+	/* Record समय reply received. */
+	recvसमय = bpf_kसमय_get_ns();
 	pinginfo = bpf_map_lookup_elem(&ping_map, &raddr);
-	if (!pinginfo || pinginfo->seq != icmph->un.echo.sequence)
-		return XDP_PASS;
+	अगर (!pinginfo || pinginfo->seq != icmph->un.echo.sequence)
+		वापस XDP_PASS;
 
-	if (pinginfo->start) {
-#pragma clang loop unroll(full)
-		for (i = 0; i < XDPING_MAX_COUNT; i++) {
-			if (pinginfo->times[i] == 0)
-				break;
-		}
-		/* verifier is fussy here... */
-		if (i < XDPING_MAX_COUNT) {
-			pinginfo->times[i] = recvtime -
+	अगर (pinginfo->start) अणु
+#आशय clang loop unroll(full)
+		क्रम (i = 0; i < XDPING_MAX_COUNT; i++) अणु
+			अगर (pinginfo->बार[i] == 0)
+				अवरोध;
+		पूर्ण
+		/* verअगरier is fussy here... */
+		अगर (i < XDPING_MAX_COUNT) अणु
+			pinginfo->बार[i] = recvसमय -
 					     pinginfo->start;
 			pinginfo->start = 0;
 			i++;
-		}
-		/* No more space for values? */
-		if (i == pinginfo->count || i == XDPING_MAX_COUNT)
-			return XDP_PASS;
-	}
+		पूर्ण
+		/* No more space क्रम values? */
+		अगर (i == pinginfo->count || i == XDPING_MAX_COUNT)
+			वापस XDP_PASS;
+	पूर्ण
 
-	/* Now convert reply back into echo request. */
+	/* Now convert reply back पूर्णांकo echo request. */
 	swap_src_dst_mac(data);
 	iph->saddr = iph->daddr;
 	iph->daddr = raddr;
@@ -145,32 +146,32 @@ int xdping_client(struct xdp_md *ctx)
 	icmph->checksum = ipv4_csum(icmph, ICMP_ECHO_LEN);
 
 	pinginfo->seq = seq;
-	pinginfo->start = bpf_ktime_get_ns();
+	pinginfo->start = bpf_kसमय_get_ns();
 
-	return XDP_TX;
-}
+	वापस XDP_TX;
+पूर्ण
 
 SEC("xdpserver")
-int xdping_server(struct xdp_md *ctx)
-{
-	void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
-	struct ethhdr *eth = data;
-	struct icmphdr *icmph;
-	struct iphdr *iph;
+पूर्णांक xdping_server(काष्ठा xdp_md *ctx)
+अणु
+	व्योम *data_end = (व्योम *)(दीर्घ)ctx->data_end;
+	व्योम *data = (व्योम *)(दीर्घ)ctx->data;
+	काष्ठा ethhdr *eth = data;
+	काष्ठा icmphdr *icmph;
+	काष्ठा iphdr *iph;
 	__be32 raddr;
-	int ret;
+	पूर्णांक ret;
 
 	ret = icmp_check(ctx, ICMP_ECHO);
 
-	if (ret != XDP_TX)
-		return ret;
+	अगर (ret != XDP_TX)
+		वापस ret;
 
-	iph = data + sizeof(*eth);
-	icmph = data + sizeof(*eth) + sizeof(*iph);
+	iph = data + माप(*eth);
+	icmph = data + माप(*eth) + माप(*iph);
 	raddr = iph->saddr;
 
-	/* Now convert request into echo reply. */
+	/* Now convert request पूर्णांकo echo reply. */
 	swap_src_dst_mac(data);
 	iph->saddr = iph->daddr;
 	iph->daddr = raddr;
@@ -178,7 +179,7 @@ int xdping_server(struct xdp_md *ctx)
 	icmph->checksum = 0;
 	icmph->checksum = ipv4_csum(icmph, ICMP_ECHO_LEN);
 
-	return XDP_TX;
-}
+	वापस XDP_TX;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

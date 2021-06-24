@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Adiantum length-preserving encryption mode
  *
@@ -6,104 +7,104 @@
  */
 
 /*
- * Adiantum is a tweakable, length-preserving encryption mode designed for fast
+ * Adiantum is a tweakable, length-preserving encryption mode deचिन्हित क्रम fast
  * and secure disk encryption, especially on CPUs without dedicated crypto
- * instructions.  Adiantum encrypts each sector using the XChaCha12 stream
- * cipher, two passes of an ε-almost-∆-universal (ε-∆U) hash function based on
+ * inकाष्ठाions.  Adiantum encrypts each sector using the XChaCha12 stream
+ * cipher, two passes of an Nग-almost-ै-universal (Nग-ैU) hash function based on
  * NH and Poly1305, and an invocation of the AES-256 block cipher on a single
- * 16-byte block.  See the paper for details:
+ * 16-byte block.  See the paper क्रम details:
  *
- *	Adiantum: length-preserving encryption for entry-level processors
- *      (https://eprint.iacr.org/2018/720.pdf)
+ *	Adiantum: length-preserving encryption क्रम entry-level processors
+ *      (https://eprपूर्णांक.iacr.org/2018/720.pdf)
  *
  * For flexibility, this implementation also allows other ciphers:
  *
  *	- Stream cipher: XChaCha12 or XChaCha20
  *	- Block cipher: any with a 128-bit block size and 256-bit key
  *
- * This implementation doesn't currently allow other ε-∆U hash functions, i.e.
+ * This implementation करोesn't currently allow other Nग-ैU hash functions, i.e.
  * HPolyC is not supported.  This is because Adiantum is ~20% faster than HPolyC
- * but still provably as secure, and also the ε-∆U hash function of HBSH is
- * formally defined to take two inputs (tweak, message) which makes it difficult
+ * but still provably as secure, and also the Nग-ैU hash function of HBSH is
+ * क्रमmally defined to take two inमाला_दो (tweak, message) which makes it dअगरficult
  * to wrap with the crypto_shash API.  Rather, some details need to be handled
- * here.  Nevertheless, if needed in the future, support for other ε-∆U hash
+ * here.  Nevertheless, अगर needed in the future, support क्रम other Nग-ैU hash
  * functions could be added here.
  */
 
-#include <crypto/b128ops.h>
-#include <crypto/chacha.h>
-#include <crypto/internal/cipher.h>
-#include <crypto/internal/hash.h>
-#include <crypto/internal/poly1305.h>
-#include <crypto/internal/skcipher.h>
-#include <crypto/nhpoly1305.h>
-#include <crypto/scatterwalk.h>
-#include <linux/module.h>
+#समावेश <crypto/b128ops.h>
+#समावेश <crypto/chacha.h>
+#समावेश <crypto/पूर्णांकernal/cipher.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/poly1305.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <crypto/nhpoly1305.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <linux/module.h>
 
 /*
  * Size of right-hand part of input data, in bytes; also the size of the block
  * cipher's block size and the hash function's output.
  */
-#define BLOCKCIPHER_BLOCK_SIZE		16
+#घोषणा BLOCKCIPHER_BLOCK_SIZE		16
 
 /* Size of the block cipher key (K_E) in bytes */
-#define BLOCKCIPHER_KEY_SIZE		32
+#घोषणा BLOCKCIPHER_KEY_SIZE		32
 
 /* Size of the hash key (K_H) in bytes */
-#define HASH_KEY_SIZE		(POLY1305_BLOCK_SIZE + NHPOLY1305_KEY_SIZE)
+#घोषणा HASH_KEY_SIZE		(POLY1305_BLOCK_SIZE + NHPOLY1305_KEY_SIZE)
 
 /*
- * The specification allows variable-length tweaks, but Linux's crypto API
+ * The specअगरication allows variable-length tweaks, but Linux's crypto API
  * currently only allows algorithms to support a single length.  The "natural"
- * tweak length for Adiantum is 16, since that fits into one Poly1305 block for
- * the best performance.  But longer tweaks are useful for fscrypt, to avoid
+ * tweak length क्रम Adiantum is 16, since that fits पूर्णांकo one Poly1305 block क्रम
+ * the best perक्रमmance.  But दीर्घer tweaks are useful क्रम fscrypt, to aव्योम
  * needing to derive per-file keys.  So instead we use two blocks, or 32 bytes.
  */
-#define TWEAK_SIZE		32
+#घोषणा TWEAK_SIZE		32
 
-struct adiantum_instance_ctx {
-	struct crypto_skcipher_spawn streamcipher_spawn;
-	struct crypto_cipher_spawn blockcipher_spawn;
-	struct crypto_shash_spawn hash_spawn;
-};
+काष्ठा adiantum_instance_ctx अणु
+	काष्ठा crypto_skcipher_spawn streamcipher_spawn;
+	काष्ठा crypto_cipher_spawn blockcipher_spawn;
+	काष्ठा crypto_shash_spawn hash_spawn;
+पूर्ण;
 
-struct adiantum_tfm_ctx {
-	struct crypto_skcipher *streamcipher;
-	struct crypto_cipher *blockcipher;
-	struct crypto_shash *hash;
-	struct poly1305_core_key header_hash_key;
-};
+काष्ठा adiantum_tfm_ctx अणु
+	काष्ठा crypto_skcipher *streamcipher;
+	काष्ठा crypto_cipher *blockcipher;
+	काष्ठा crypto_shash *hash;
+	काष्ठा poly1305_core_key header_hash_key;
+पूर्ण;
 
-struct adiantum_request_ctx {
+काष्ठा adiantum_request_ctx अणु
 
 	/*
-	 * Buffer for right-hand part of data, i.e.
+	 * Buffer क्रम right-hand part of data, i.e.
 	 *
 	 *    P_L => P_M => C_M => C_R when encrypting, or
 	 *    C_R => C_M => P_M => P_L when decrypting.
 	 *
-	 * Also used to build the IV for the stream cipher.
+	 * Also used to build the IV क्रम the stream cipher.
 	 */
-	union {
+	जोड़ अणु
 		u8 bytes[XCHACHA_IV_SIZE];
-		__le32 words[XCHACHA_IV_SIZE / sizeof(__le32)];
-		le128 bignum;	/* interpret as element of Z/(2^{128}Z) */
-	} rbuf;
+		__le32 words[XCHACHA_IV_SIZE / माप(__le32)];
+		le128 bignum;	/* पूर्णांकerpret as element of Z/(2^अणु128पूर्णZ) */
+	पूर्ण rbuf;
 
-	bool enc; /* true if encrypting, false if decrypting */
+	bool enc; /* true अगर encrypting, false अगर decrypting */
 
 	/*
-	 * The result of the Poly1305 ε-∆U hash function applied to
+	 * The result of the Poly1305 Nग-ैU hash function applied to
 	 * (bulk length, tweak)
 	 */
 	le128 header_hash;
 
 	/* Sub-requests, must be last */
-	union {
-		struct shash_desc hash_desc;
-		struct skcipher_request streamcipher_req;
-	} u;
-};
+	जोड़ अणु
+		काष्ठा shash_desc hash_desc;
+		काष्ठा skcipher_request streamcipher_req;
+	पूर्ण u;
+पूर्ण;
 
 /*
  * Given the XChaCha stream key K_S, derive the block cipher key K_E and the
@@ -114,19 +115,19 @@ struct adiantum_request_ctx {
  * Note that this denotes using bits from the XChaCha keystream, which here we
  * get indirectly by encrypting a buffer containing all 0's.
  */
-static int adiantum_setkey(struct crypto_skcipher *tfm, const u8 *key,
-			   unsigned int keylen)
-{
-	struct adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-	struct {
+अटल पूर्णांक adiantum_setkey(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			   अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+	काष्ठा अणु
 		u8 iv[XCHACHA_IV_SIZE];
 		u8 derived_keys[BLOCKCIPHER_KEY_SIZE + HASH_KEY_SIZE];
-		struct scatterlist sg;
-		struct crypto_wait wait;
-		struct skcipher_request req; /* must be last */
-	} *data;
+		काष्ठा scatterlist sg;
+		काष्ठा crypto_रुको रुको;
+		काष्ठा skcipher_request req; /* must be last */
+	पूर्ण *data;
 	u8 *keyp;
-	int err;
+	पूर्णांक err;
 
 	/* Set the stream cipher key (K_S) */
 	crypto_skcipher_clear_flags(tctx->streamcipher, CRYPTO_TFM_REQ_MASK);
@@ -134,26 +135,26 @@ static int adiantum_setkey(struct crypto_skcipher *tfm, const u8 *key,
 				  crypto_skcipher_get_flags(tfm) &
 				  CRYPTO_TFM_REQ_MASK);
 	err = crypto_skcipher_setkey(tctx->streamcipher, key, keylen);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* Derive the subkeys */
-	data = kzalloc(sizeof(*data) +
+	data = kzalloc(माप(*data) +
 		       crypto_skcipher_reqsize(tctx->streamcipher), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 	data->iv[0] = 1;
-	sg_init_one(&data->sg, data->derived_keys, sizeof(data->derived_keys));
-	crypto_init_wait(&data->wait);
+	sg_init_one(&data->sg, data->derived_keys, माप(data->derived_keys));
+	crypto_init_रुको(&data->रुको);
 	skcipher_request_set_tfm(&data->req, tctx->streamcipher);
 	skcipher_request_set_callback(&data->req, CRYPTO_TFM_REQ_MAY_SLEEP |
 						  CRYPTO_TFM_REQ_MAY_BACKLOG,
-				      crypto_req_done, &data->wait);
+				      crypto_req_करोne, &data->रुको);
 	skcipher_request_set_crypt(&data->req, &data->sg, &data->sg,
-				   sizeof(data->derived_keys), data->iv);
-	err = crypto_wait_req(crypto_skcipher_encrypt(&data->req), &data->wait);
-	if (err)
-		goto out;
+				   माप(data->derived_keys), data->iv);
+	err = crypto_रुको_req(crypto_skcipher_encrypt(&data->req), &data->रुको);
+	अगर (err)
+		जाओ out;
 	keyp = data->derived_keys;
 
 	/* Set the block cipher key (K_E) */
@@ -163,8 +164,8 @@ static int adiantum_setkey(struct crypto_skcipher *tfm, const u8 *key,
 				CRYPTO_TFM_REQ_MASK);
 	err = crypto_cipher_setkey(tctx->blockcipher, keyp,
 				   BLOCKCIPHER_KEY_SIZE);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 	keyp += BLOCKCIPHER_KEY_SIZE;
 
 	/* Set the hash key (K_H) */
@@ -178,178 +179,178 @@ static int adiantum_setkey(struct crypto_skcipher *tfm, const u8 *key,
 	keyp += NHPOLY1305_KEY_SIZE;
 	WARN_ON(keyp != &data->derived_keys[ARRAY_SIZE(data->derived_keys)]);
 out:
-	kfree_sensitive(data);
-	return err;
-}
+	kमुक्त_sensitive(data);
+	वापस err;
+पूर्ण
 
-/* Addition in Z/(2^{128}Z) */
-static inline void le128_add(le128 *r, const le128 *v1, const le128 *v2)
-{
+/* Addition in Z/(2^अणु128पूर्णZ) */
+अटल अंतरभूत व्योम le128_add(le128 *r, स्थिर le128 *v1, स्थिर le128 *v2)
+अणु
 	u64 x = le64_to_cpu(v1->b);
 	u64 y = le64_to_cpu(v2->b);
 
 	r->b = cpu_to_le64(x + y);
 	r->a = cpu_to_le64(le64_to_cpu(v1->a) + le64_to_cpu(v2->a) +
 			   (x + y < x));
-}
+पूर्ण
 
-/* Subtraction in Z/(2^{128}Z) */
-static inline void le128_sub(le128 *r, const le128 *v1, const le128 *v2)
-{
+/* Subtraction in Z/(2^अणु128पूर्णZ) */
+अटल अंतरभूत व्योम le128_sub(le128 *r, स्थिर le128 *v1, स्थिर le128 *v2)
+अणु
 	u64 x = le64_to_cpu(v1->b);
 	u64 y = le64_to_cpu(v2->b);
 
 	r->b = cpu_to_le64(x - y);
 	r->a = cpu_to_le64(le64_to_cpu(v1->a) - le64_to_cpu(v2->a) -
 			   (x - y > x));
-}
+पूर्ण
 
 /*
- * Apply the Poly1305 ε-∆U hash function to (bulk length, tweak) and save the
+ * Apply the Poly1305 Nग-ैU hash function to (bulk length, tweak) and save the
  * result to rctx->header_hash.  This is the calculation
  *
- *	H_T ← Poly1305_{K_T}(bin_{128}(|L|) || T)
+ *	H_T ै Poly1305_अणुK_Tपूर्ण(bin_अणु128पूर्ण(|L|) || T)
  *
  * from the procedure in section 6.4 of the Adiantum paper.  The resulting value
- * is reused in both the first and second hash steps.  Specifically, it's added
- * to the result of an independently keyed ε-∆U hash function (for equal length
- * inputs only) taken over the left-hand part (the "bulk") of the message, to
+ * is reused in both the first and second hash steps.  Specअगरically, it's added
+ * to the result of an independently keyed Nग-ैU hash function (क्रम equal length
+ * inमाला_दो only) taken over the left-hand part (the "bulk") of the message, to
  * give the overall Adiantum hash of the (tweak, left-hand part) pair.
  */
-static void adiantum_hash_header(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	const struct adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-	struct adiantum_request_ctx *rctx = skcipher_request_ctx(req);
-	const unsigned int bulk_len = req->cryptlen - BLOCKCIPHER_BLOCK_SIZE;
-	struct {
+अटल व्योम adiantum_hash_header(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	स्थिर काष्ठा adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+	काष्ठा adiantum_request_ctx *rctx = skcipher_request_ctx(req);
+	स्थिर अचिन्हित पूर्णांक bulk_len = req->cryptlen - BLOCKCIPHER_BLOCK_SIZE;
+	काष्ठा अणु
 		__le64 message_bits;
 		__le64 padding;
-	} header = {
+	पूर्ण header = अणु
 		.message_bits = cpu_to_le64((u64)bulk_len * 8)
-	};
-	struct poly1305_state state;
+	पूर्ण;
+	काष्ठा poly1305_state state;
 
 	poly1305_core_init(&state);
 
-	BUILD_BUG_ON(sizeof(header) % POLY1305_BLOCK_SIZE != 0);
+	BUILD_BUG_ON(माप(header) % POLY1305_BLOCK_SIZE != 0);
 	poly1305_core_blocks(&state, &tctx->header_hash_key,
-			     &header, sizeof(header) / POLY1305_BLOCK_SIZE, 1);
+			     &header, माप(header) / POLY1305_BLOCK_SIZE, 1);
 
 	BUILD_BUG_ON(TWEAK_SIZE % POLY1305_BLOCK_SIZE != 0);
 	poly1305_core_blocks(&state, &tctx->header_hash_key, req->iv,
 			     TWEAK_SIZE / POLY1305_BLOCK_SIZE, 1);
 
-	poly1305_core_emit(&state, NULL, &rctx->header_hash);
-}
+	poly1305_core_emit(&state, शून्य, &rctx->header_hash);
+पूर्ण
 
 /* Hash the left-hand part (the "bulk") of the message using NHPoly1305 */
-static int adiantum_hash_message(struct skcipher_request *req,
-				 struct scatterlist *sgl, le128 *digest)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	const struct adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-	struct adiantum_request_ctx *rctx = skcipher_request_ctx(req);
-	const unsigned int bulk_len = req->cryptlen - BLOCKCIPHER_BLOCK_SIZE;
-	struct shash_desc *hash_desc = &rctx->u.hash_desc;
-	struct sg_mapping_iter miter;
-	unsigned int i, n;
-	int err;
+अटल पूर्णांक adiantum_hash_message(काष्ठा skcipher_request *req,
+				 काष्ठा scatterlist *sgl, le128 *digest)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	स्थिर काष्ठा adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+	काष्ठा adiantum_request_ctx *rctx = skcipher_request_ctx(req);
+	स्थिर अचिन्हित पूर्णांक bulk_len = req->cryptlen - BLOCKCIPHER_BLOCK_SIZE;
+	काष्ठा shash_desc *hash_desc = &rctx->u.hash_desc;
+	काष्ठा sg_mapping_iter miter;
+	अचिन्हित पूर्णांक i, n;
+	पूर्णांक err;
 
 	hash_desc->tfm = tctx->hash;
 
 	err = crypto_shash_init(hash_desc);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	sg_miter_start(&miter, sgl, sg_nents(sgl),
 		       SG_MITER_FROM_SG | SG_MITER_ATOMIC);
-	for (i = 0; i < bulk_len; i += n) {
+	क्रम (i = 0; i < bulk_len; i += n) अणु
 		sg_miter_next(&miter);
-		n = min_t(unsigned int, miter.length, bulk_len - i);
+		n = min_t(अचिन्हित पूर्णांक, miter.length, bulk_len - i);
 		err = crypto_shash_update(hash_desc, miter.addr, n);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	sg_miter_stop(&miter);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return crypto_shash_final(hash_desc, (u8 *)digest);
-}
+	वापस crypto_shash_final(hash_desc, (u8 *)digest);
+पूर्ण
 
 /* Continue Adiantum encryption/decryption after the stream cipher step */
-static int adiantum_finish(struct skcipher_request *req)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	const struct adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-	struct adiantum_request_ctx *rctx = skcipher_request_ctx(req);
-	const unsigned int bulk_len = req->cryptlen - BLOCKCIPHER_BLOCK_SIZE;
+अटल पूर्णांक adiantum_finish(काष्ठा skcipher_request *req)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	स्थिर काष्ठा adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+	काष्ठा adiantum_request_ctx *rctx = skcipher_request_ctx(req);
+	स्थिर अचिन्हित पूर्णांक bulk_len = req->cryptlen - BLOCKCIPHER_BLOCK_SIZE;
 	le128 digest;
-	int err;
+	पूर्णांक err;
 
 	/* If decrypting, decrypt C_M with the block cipher to get P_M */
-	if (!rctx->enc)
+	अगर (!rctx->enc)
 		crypto_cipher_decrypt_one(tctx->blockcipher, rctx->rbuf.bytes,
 					  rctx->rbuf.bytes);
 
 	/*
 	 * Second hash step
-	 *	enc: C_R = C_M - H_{K_H}(T, C_L)
-	 *	dec: P_R = P_M - H_{K_H}(T, P_L)
+	 *	enc: C_R = C_M - H_अणुK_Hपूर्ण(T, C_L)
+	 *	dec: P_R = P_M - H_अणुK_Hपूर्ण(T, P_L)
 	 */
 	err = adiantum_hash_message(req, req->dst, &digest);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	le128_add(&digest, &digest, &rctx->header_hash);
 	le128_sub(&rctx->rbuf.bignum, &rctx->rbuf.bignum, &digest);
 	scatterwalk_map_and_copy(&rctx->rbuf.bignum, req->dst,
 				 bulk_len, BLOCKCIPHER_BLOCK_SIZE, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void adiantum_streamcipher_done(struct crypto_async_request *areq,
-				       int err)
-{
-	struct skcipher_request *req = areq->data;
+अटल व्योम adiantum_streamcipher_करोne(काष्ठा crypto_async_request *areq,
+				       पूर्णांक err)
+अणु
+	काष्ठा skcipher_request *req = areq->data;
 
-	if (!err)
+	अगर (!err)
 		err = adiantum_finish(req);
 
 	skcipher_request_complete(req, err);
-}
+पूर्ण
 
-static int adiantum_crypt(struct skcipher_request *req, bool enc)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	const struct adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-	struct adiantum_request_ctx *rctx = skcipher_request_ctx(req);
-	const unsigned int bulk_len = req->cryptlen - BLOCKCIPHER_BLOCK_SIZE;
-	unsigned int stream_len;
+अटल पूर्णांक adiantum_crypt(काष्ठा skcipher_request *req, bool enc)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	स्थिर काष्ठा adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+	काष्ठा adiantum_request_ctx *rctx = skcipher_request_ctx(req);
+	स्थिर अचिन्हित पूर्णांक bulk_len = req->cryptlen - BLOCKCIPHER_BLOCK_SIZE;
+	अचिन्हित पूर्णांक stream_len;
 	le128 digest;
-	int err;
+	पूर्णांक err;
 
-	if (req->cryptlen < BLOCKCIPHER_BLOCK_SIZE)
-		return -EINVAL;
+	अगर (req->cryptlen < BLOCKCIPHER_BLOCK_SIZE)
+		वापस -EINVAL;
 
 	rctx->enc = enc;
 
 	/*
 	 * First hash step
-	 *	enc: P_M = P_R + H_{K_H}(T, P_L)
-	 *	dec: C_M = C_R + H_{K_H}(T, C_L)
+	 *	enc: P_M = P_R + H_अणुK_Hपूर्ण(T, P_L)
+	 *	dec: C_M = C_R + H_अणुK_Hपूर्ण(T, C_L)
 	 */
 	adiantum_hash_header(req);
 	err = adiantum_hash_message(req, req->src, &digest);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	le128_add(&digest, &digest, &rctx->header_hash);
 	scatterwalk_map_and_copy(&rctx->rbuf.bignum, req->src,
 				 bulk_len, BLOCKCIPHER_BLOCK_SIZE, 0);
 	le128_add(&rctx->rbuf.bignum, &rctx->rbuf.bignum, &digest);
 
 	/* If encrypting, encrypt P_M with the block cipher to get C_M */
-	if (enc)
+	अगर (enc)
 		crypto_cipher_encrypt_one(tctx->blockcipher, rctx->rbuf.bytes,
 					  rctx->rbuf.bytes);
 
@@ -362,16 +363,16 @@ static int adiantum_crypt(struct skcipher_request *req, bool enc)
 	rctx->rbuf.words[7] = 0;
 
 	/*
-	 * XChaCha needs to be done on all the data except the last 16 bytes;
-	 * for disk encryption that usually means 4080 or 496 bytes.  But ChaCha
+	 * XChaCha needs to be करोne on all the data except the last 16 bytes;
+	 * क्रम disk encryption that usually means 4080 or 496 bytes.  But ChaCha
 	 * implementations tend to be most efficient when passed a whole number
-	 * of 64-byte ChaCha blocks, or sometimes even a multiple of 256 bytes.
-	 * And here it doesn't matter whether the last 16 bytes are written to,
-	 * as the second hash step will overwrite them.  Thus, round the XChaCha
-	 * length up to the next 64-byte boundary if possible.
+	 * of 64-byte ChaCha blocks, or someबार even a multiple of 256 bytes.
+	 * And here it करोesn't matter whether the last 16 bytes are written to,
+	 * as the second hash step will overग_लिखो them.  Thus, round the XChaCha
+	 * length up to the next 64-byte boundary अगर possible.
 	 */
 	stream_len = bulk_len;
-	if (round_up(stream_len, CHACHA_BLOCK_SIZE) <= req->cryptlen)
+	अगर (round_up(stream_len, CHACHA_BLOCK_SIZE) <= req->cryptlen)
 		stream_len = round_up(stream_len, CHACHA_BLOCK_SIZE);
 
 	skcipher_request_set_tfm(&rctx->u.streamcipher_req, tctx->streamcipher);
@@ -379,194 +380,194 @@ static int adiantum_crypt(struct skcipher_request *req, bool enc)
 				   req->dst, stream_len, &rctx->rbuf);
 	skcipher_request_set_callback(&rctx->u.streamcipher_req,
 				      req->base.flags,
-				      adiantum_streamcipher_done, req);
-	return crypto_skcipher_encrypt(&rctx->u.streamcipher_req) ?:
+				      adiantum_streamcipher_करोne, req);
+	वापस crypto_skcipher_encrypt(&rctx->u.streamcipher_req) ?:
 		adiantum_finish(req);
-}
+पूर्ण
 
-static int adiantum_encrypt(struct skcipher_request *req)
-{
-	return adiantum_crypt(req, true);
-}
+अटल पूर्णांक adiantum_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस adiantum_crypt(req, true);
+पूर्ण
 
-static int adiantum_decrypt(struct skcipher_request *req)
-{
-	return adiantum_crypt(req, false);
-}
+अटल पूर्णांक adiantum_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस adiantum_crypt(req, false);
+पूर्ण
 
-static int adiantum_init_tfm(struct crypto_skcipher *tfm)
-{
-	struct skcipher_instance *inst = skcipher_alg_instance(tfm);
-	struct adiantum_instance_ctx *ictx = skcipher_instance_ctx(inst);
-	struct adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
-	struct crypto_skcipher *streamcipher;
-	struct crypto_cipher *blockcipher;
-	struct crypto_shash *hash;
-	unsigned int subreq_size;
-	int err;
+अटल पूर्णांक adiantum_init_tfm(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा skcipher_instance *inst = skcipher_alg_instance(tfm);
+	काष्ठा adiantum_instance_ctx *ictx = skcipher_instance_ctx(inst);
+	काष्ठा adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+	काष्ठा crypto_skcipher *streamcipher;
+	काष्ठा crypto_cipher *blockcipher;
+	काष्ठा crypto_shash *hash;
+	अचिन्हित पूर्णांक subreq_size;
+	पूर्णांक err;
 
 	streamcipher = crypto_spawn_skcipher(&ictx->streamcipher_spawn);
-	if (IS_ERR(streamcipher))
-		return PTR_ERR(streamcipher);
+	अगर (IS_ERR(streamcipher))
+		वापस PTR_ERR(streamcipher);
 
 	blockcipher = crypto_spawn_cipher(&ictx->blockcipher_spawn);
-	if (IS_ERR(blockcipher)) {
+	अगर (IS_ERR(blockcipher)) अणु
 		err = PTR_ERR(blockcipher);
-		goto err_free_streamcipher;
-	}
+		जाओ err_मुक्त_streamcipher;
+	पूर्ण
 
 	hash = crypto_spawn_shash(&ictx->hash_spawn);
-	if (IS_ERR(hash)) {
+	अगर (IS_ERR(hash)) अणु
 		err = PTR_ERR(hash);
-		goto err_free_blockcipher;
-	}
+		जाओ err_मुक्त_blockcipher;
+	पूर्ण
 
 	tctx->streamcipher = streamcipher;
 	tctx->blockcipher = blockcipher;
 	tctx->hash = hash;
 
-	BUILD_BUG_ON(offsetofend(struct adiantum_request_ctx, u) !=
-		     sizeof(struct adiantum_request_ctx));
-	subreq_size = max(sizeof_field(struct adiantum_request_ctx,
+	BUILD_BUG_ON(दुरत्वend(काष्ठा adiantum_request_ctx, u) !=
+		     माप(काष्ठा adiantum_request_ctx));
+	subreq_size = max(माप_field(काष्ठा adiantum_request_ctx,
 				       u.hash_desc) +
 			  crypto_shash_descsize(hash),
-			  sizeof_field(struct adiantum_request_ctx,
+			  माप_field(काष्ठा adiantum_request_ctx,
 				       u.streamcipher_req) +
 			  crypto_skcipher_reqsize(streamcipher));
 
 	crypto_skcipher_set_reqsize(tfm,
-				    offsetof(struct adiantum_request_ctx, u) +
+				    दुरत्व(काष्ठा adiantum_request_ctx, u) +
 				    subreq_size);
-	return 0;
+	वापस 0;
 
-err_free_blockcipher:
-	crypto_free_cipher(blockcipher);
-err_free_streamcipher:
-	crypto_free_skcipher(streamcipher);
-	return err;
-}
+err_मुक्त_blockcipher:
+	crypto_मुक्त_cipher(blockcipher);
+err_मुक्त_streamcipher:
+	crypto_मुक्त_skcipher(streamcipher);
+	वापस err;
+पूर्ण
 
-static void adiantum_exit_tfm(struct crypto_skcipher *tfm)
-{
-	struct adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
+अटल व्योम adiantum_निकास_tfm(काष्ठा crypto_skcipher *tfm)
+अणु
+	काष्ठा adiantum_tfm_ctx *tctx = crypto_skcipher_ctx(tfm);
 
-	crypto_free_skcipher(tctx->streamcipher);
-	crypto_free_cipher(tctx->blockcipher);
-	crypto_free_shash(tctx->hash);
-}
+	crypto_मुक्त_skcipher(tctx->streamcipher);
+	crypto_मुक्त_cipher(tctx->blockcipher);
+	crypto_मुक्त_shash(tctx->hash);
+पूर्ण
 
-static void adiantum_free_instance(struct skcipher_instance *inst)
-{
-	struct adiantum_instance_ctx *ictx = skcipher_instance_ctx(inst);
+अटल व्योम adiantum_मुक्त_instance(काष्ठा skcipher_instance *inst)
+अणु
+	काष्ठा adiantum_instance_ctx *ictx = skcipher_instance_ctx(inst);
 
 	crypto_drop_skcipher(&ictx->streamcipher_spawn);
 	crypto_drop_cipher(&ictx->blockcipher_spawn);
 	crypto_drop_shash(&ictx->hash_spawn);
-	kfree(inst);
-}
+	kमुक्त(inst);
+पूर्ण
 
 /*
- * Check for a supported set of inner algorithms.
+ * Check क्रम a supported set of inner algorithms.
  * See the comment at the beginning of this file.
  */
-static bool adiantum_supported_algorithms(struct skcipher_alg *streamcipher_alg,
-					  struct crypto_alg *blockcipher_alg,
-					  struct shash_alg *hash_alg)
-{
-	if (strcmp(streamcipher_alg->base.cra_name, "xchacha12") != 0 &&
-	    strcmp(streamcipher_alg->base.cra_name, "xchacha20") != 0)
-		return false;
+अटल bool adiantum_supported_algorithms(काष्ठा skcipher_alg *streamcipher_alg,
+					  काष्ठा crypto_alg *blockcipher_alg,
+					  काष्ठा shash_alg *hash_alg)
+अणु
+	अगर (म_भेद(streamcipher_alg->base.cra_name, "xchacha12") != 0 &&
+	    म_भेद(streamcipher_alg->base.cra_name, "xchacha20") != 0)
+		वापस false;
 
-	if (blockcipher_alg->cra_cipher.cia_min_keysize > BLOCKCIPHER_KEY_SIZE ||
+	अगर (blockcipher_alg->cra_cipher.cia_min_keysize > BLOCKCIPHER_KEY_SIZE ||
 	    blockcipher_alg->cra_cipher.cia_max_keysize < BLOCKCIPHER_KEY_SIZE)
-		return false;
-	if (blockcipher_alg->cra_blocksize != BLOCKCIPHER_BLOCK_SIZE)
-		return false;
+		वापस false;
+	अगर (blockcipher_alg->cra_blocksize != BLOCKCIPHER_BLOCK_SIZE)
+		वापस false;
 
-	if (strcmp(hash_alg->base.cra_name, "nhpoly1305") != 0)
-		return false;
+	अगर (म_भेद(hash_alg->base.cra_name, "nhpoly1305") != 0)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int adiantum_create(struct crypto_template *tmpl, struct rtattr **tb)
-{
+अटल पूर्णांक adiantum_create(काष्ठा crypto_ढाँचा *पंचांगpl, काष्ठा rtattr **tb)
+अणु
 	u32 mask;
-	const char *nhpoly1305_name;
-	struct skcipher_instance *inst;
-	struct adiantum_instance_ctx *ictx;
-	struct skcipher_alg *streamcipher_alg;
-	struct crypto_alg *blockcipher_alg;
-	struct shash_alg *hash_alg;
-	int err;
+	स्थिर अक्षर *nhpoly1305_name;
+	काष्ठा skcipher_instance *inst;
+	काष्ठा adiantum_instance_ctx *ictx;
+	काष्ठा skcipher_alg *streamcipher_alg;
+	काष्ठा crypto_alg *blockcipher_alg;
+	काष्ठा shash_alg *hash_alg;
+	पूर्णांक err;
 
 	err = crypto_check_attr_type(tb, CRYPTO_ALG_TYPE_SKCIPHER, &mask);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	inst = kzalloc(sizeof(*inst) + sizeof(*ictx), GFP_KERNEL);
-	if (!inst)
-		return -ENOMEM;
+	inst = kzalloc(माप(*inst) + माप(*ictx), GFP_KERNEL);
+	अगर (!inst)
+		वापस -ENOMEM;
 	ictx = skcipher_instance_ctx(inst);
 
 	/* Stream cipher, e.g. "xchacha12" */
 	err = crypto_grab_skcipher(&ictx->streamcipher_spawn,
 				   skcipher_crypto_instance(inst),
 				   crypto_attr_alg_name(tb[1]), 0, mask);
-	if (err)
-		goto err_free_inst;
+	अगर (err)
+		जाओ err_मुक्त_inst;
 	streamcipher_alg = crypto_spawn_skcipher_alg(&ictx->streamcipher_spawn);
 
 	/* Block cipher, e.g. "aes" */
 	err = crypto_grab_cipher(&ictx->blockcipher_spawn,
 				 skcipher_crypto_instance(inst),
 				 crypto_attr_alg_name(tb[2]), 0, mask);
-	if (err)
-		goto err_free_inst;
+	अगर (err)
+		जाओ err_मुक्त_inst;
 	blockcipher_alg = crypto_spawn_cipher_alg(&ictx->blockcipher_spawn);
 
-	/* NHPoly1305 ε-∆U hash function */
+	/* NHPoly1305 Nग-ैU hash function */
 	nhpoly1305_name = crypto_attr_alg_name(tb[3]);
-	if (nhpoly1305_name == ERR_PTR(-ENOENT))
+	अगर (nhpoly1305_name == ERR_PTR(-ENOENT))
 		nhpoly1305_name = "nhpoly1305";
 	err = crypto_grab_shash(&ictx->hash_spawn,
 				skcipher_crypto_instance(inst),
 				nhpoly1305_name, 0, mask);
-	if (err)
-		goto err_free_inst;
+	अगर (err)
+		जाओ err_मुक्त_inst;
 	hash_alg = crypto_spawn_shash_alg(&ictx->hash_spawn);
 
 	/* Check the set of algorithms */
-	if (!adiantum_supported_algorithms(streamcipher_alg, blockcipher_alg,
-					   hash_alg)) {
+	अगर (!adiantum_supported_algorithms(streamcipher_alg, blockcipher_alg,
+					   hash_alg)) अणु
 		pr_warn("Unsupported Adiantum instantiation: (%s,%s,%s)\n",
 			streamcipher_alg->base.cra_name,
 			blockcipher_alg->cra_name, hash_alg->base.cra_name);
 		err = -EINVAL;
-		goto err_free_inst;
-	}
+		जाओ err_मुक्त_inst;
+	पूर्ण
 
 	/* Instance fields */
 
 	err = -ENAMETOOLONG;
-	if (snprintf(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
+	अगर (snम_लिखो(inst->alg.base.cra_name, CRYPTO_MAX_ALG_NAME,
 		     "adiantum(%s,%s)", streamcipher_alg->base.cra_name,
 		     blockcipher_alg->cra_name) >= CRYPTO_MAX_ALG_NAME)
-		goto err_free_inst;
-	if (snprintf(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
+		जाओ err_मुक्त_inst;
+	अगर (snम_लिखो(inst->alg.base.cra_driver_name, CRYPTO_MAX_ALG_NAME,
 		     "adiantum(%s,%s,%s)",
 		     streamcipher_alg->base.cra_driver_name,
 		     blockcipher_alg->cra_driver_name,
 		     hash_alg->base.cra_driver_name) >= CRYPTO_MAX_ALG_NAME)
-		goto err_free_inst;
+		जाओ err_मुक्त_inst;
 
 	inst->alg.base.cra_blocksize = BLOCKCIPHER_BLOCK_SIZE;
-	inst->alg.base.cra_ctxsize = sizeof(struct adiantum_tfm_ctx);
+	inst->alg.base.cra_ctxsize = माप(काष्ठा adiantum_tfm_ctx);
 	inst->alg.base.cra_alignmask = streamcipher_alg->base.cra_alignmask |
 				       hash_alg->base.cra_alignmask;
 	/*
-	 * The block cipher is only invoked once per message, so for long
-	 * messages (e.g. sectors for disk encryption) its performance doesn't
+	 * The block cipher is only invoked once per message, so क्रम दीर्घ
+	 * messages (e.g. sectors क्रम disk encryption) its perक्रमmance करोesn't
 	 * matter as much as that of the stream cipher and hash function.  Thus,
 	 * weigh the block cipher's ->cra_priority less.
 	 */
@@ -578,40 +579,40 @@ static int adiantum_create(struct crypto_template *tmpl, struct rtattr **tb)
 	inst->alg.encrypt = adiantum_encrypt;
 	inst->alg.decrypt = adiantum_decrypt;
 	inst->alg.init = adiantum_init_tfm;
-	inst->alg.exit = adiantum_exit_tfm;
+	inst->alg.निकास = adiantum_निकास_tfm;
 	inst->alg.min_keysize = crypto_skcipher_alg_min_keysize(streamcipher_alg);
 	inst->alg.max_keysize = crypto_skcipher_alg_max_keysize(streamcipher_alg);
 	inst->alg.ivsize = TWEAK_SIZE;
 
-	inst->free = adiantum_free_instance;
+	inst->मुक्त = adiantum_मुक्त_instance;
 
-	err = skcipher_register_instance(tmpl, inst);
-	if (err) {
-err_free_inst:
-		adiantum_free_instance(inst);
-	}
-	return err;
-}
+	err = skcipher_रेजिस्टर_instance(पंचांगpl, inst);
+	अगर (err) अणु
+err_मुक्त_inst:
+		adiantum_मुक्त_instance(inst);
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /* adiantum(streamcipher_name, blockcipher_name [, nhpoly1305_name]) */
-static struct crypto_template adiantum_tmpl = {
+अटल काष्ठा crypto_ढाँचा adiantum_पंचांगpl = अणु
 	.name = "adiantum",
 	.create = adiantum_create,
 	.module = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init adiantum_module_init(void)
-{
-	return crypto_register_template(&adiantum_tmpl);
-}
+अटल पूर्णांक __init adiantum_module_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_ढाँचा(&adiantum_पंचांगpl);
+पूर्ण
 
-static void __exit adiantum_module_exit(void)
-{
-	crypto_unregister_template(&adiantum_tmpl);
-}
+अटल व्योम __निकास adiantum_module_निकास(व्योम)
+अणु
+	crypto_unरेजिस्टर_ढाँचा(&adiantum_पंचांगpl);
+पूर्ण
 
 subsys_initcall(adiantum_module_init);
-module_exit(adiantum_module_exit);
+module_निकास(adiantum_module_निकास);
 
 MODULE_DESCRIPTION("Adiantum length-preserving encryption mode");
 MODULE_LICENSE("GPL v2");

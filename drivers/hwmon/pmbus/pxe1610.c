@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Hardware monitoring driver for Infineon PXE1610
+ * Hardware monitoring driver क्रम Infineon PXE1610
  *
  * Copyright (c) 2019 Facebook Inc
  *
  */
 
-#include <linux/err.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include "pmbus.h"
+#समावेश <linux/err.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश "pmbus.h"
 
-#define PXE1610_NUM_PAGES 3
+#घोषणा PXE1610_NUM_PAGES 3
 
-/* Identify chip parameters. */
-static int pxe1610_identify(struct i2c_client *client,
-			     struct pmbus_driver_info *info)
-{
-	int i;
+/* Identअगरy chip parameters. */
+अटल पूर्णांक pxe1610_identअगरy(काष्ठा i2c_client *client,
+			     काष्ठा pmbus_driver_info *info)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < PXE1610_NUM_PAGES; i++) {
-		if (pmbus_check_byte_register(client, i, PMBUS_VOUT_MODE)) {
+	क्रम (i = 0; i < PXE1610_NUM_PAGES; i++) अणु
+		अगर (pmbus_check_byte_रेजिस्टर(client, i, PMBUS_VOUT_MODE)) अणु
 			u8 vout_mode;
-			int ret;
+			पूर्णांक ret;
 
-			/* Read the register with VOUT scaling value.*/
-			ret = pmbus_read_byte_data(client, i, PMBUS_VOUT_MODE);
-			if (ret < 0)
-				return ret;
+			/* Read the रेजिस्टर with VOUT scaling value.*/
+			ret = pmbus_पढ़ो_byte_data(client, i, PMBUS_VOUT_MODE);
+			अगर (ret < 0)
+				वापस ret;
 
 			vout_mode = ret & GENMASK(4, 0);
 
-			switch (vout_mode) {
-			case 1:
+			चयन (vout_mode) अणु
+			हाल 1:
 				info->vrm_version[i] = vr12;
-				break;
-			case 2:
+				अवरोध;
+			हाल 2:
 				info->vrm_version[i] = vr13;
-				break;
-			default:
+				अवरोध;
+			शेष:
 				/*
 				 * If prior pages are available limit operation
 				 * to them
 				 */
-				if (i != 0) {
+				अगर (i != 0) अणु
 					info->pages = i;
-					return 0;
-				}
+					वापस 0;
+				पूर्ण
 
-				return -ENODEV;
-			}
-		}
-	}
+				वापस -ENODEV;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pmbus_driver_info pxe1610_info = {
+अटल काष्ठा pmbus_driver_info pxe1610_info = अणु
 	.pages = PXE1610_NUM_PAGES,
-	.format[PSC_VOLTAGE_IN] = linear,
-	.format[PSC_VOLTAGE_OUT] = vid,
-	.format[PSC_CURRENT_IN] = linear,
-	.format[PSC_CURRENT_OUT] = linear,
-	.format[PSC_TEMPERATURE] = linear,
-	.format[PSC_POWER] = linear,
+	.क्रमmat[PSC_VOLTAGE_IN] = linear,
+	.क्रमmat[PSC_VOLTAGE_OUT] = vid,
+	.क्रमmat[PSC_CURRENT_IN] = linear,
+	.क्रमmat[PSC_CURRENT_OUT] = linear,
+	.क्रमmat[PSC_TEMPERATURE] = linear,
+	.क्रमmat[PSC_POWER] = linear,
 	.func[0] = PMBUS_HAVE_VIN
 		| PMBUS_HAVE_VOUT | PMBUS_HAVE_IIN
 		| PMBUS_HAVE_IOUT | PMBUS_HAVE_PIN
@@ -84,64 +85,64 @@ static struct pmbus_driver_info pxe1610_info = {
 		| PMBUS_HAVE_POUT | PMBUS_HAVE_TEMP
 		| PMBUS_HAVE_STATUS_VOUT | PMBUS_HAVE_STATUS_IOUT
 		| PMBUS_HAVE_STATUS_INPUT | PMBUS_HAVE_STATUS_TEMP,
-	.identify = pxe1610_identify,
-};
+	.identअगरy = pxe1610_identअगरy,
+पूर्ण;
 
-static int pxe1610_probe(struct i2c_client *client)
-{
-	struct pmbus_driver_info *info;
+अटल पूर्णांक pxe1610_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा pmbus_driver_info *info;
 	u8 buf[I2C_SMBUS_BLOCK_MAX];
-	int ret;
+	पूर्णांक ret;
 
-	if (!i2c_check_functionality(
+	अगर (!i2c_check_functionality(
 			client->adapter,
 			I2C_FUNC_SMBUS_READ_BYTE_DATA
 			| I2C_FUNC_SMBUS_READ_WORD_DATA
 			| I2C_FUNC_SMBUS_READ_BLOCK_DATA))
-		return -ENODEV;
+		वापस -ENODEV;
 
 	/*
-	 * By default this device doesn't boot to page 0, so set page 0
-	 * to access all pmbus registers.
+	 * By शेष this device करोesn't boot to page 0, so set page 0
+	 * to access all pmbus रेजिस्टरs.
 	 */
-	i2c_smbus_write_byte_data(client, PMBUS_PAGE, 0);
+	i2c_smbus_ग_लिखो_byte_data(client, PMBUS_PAGE, 0);
 
 	/* Read Manufacturer id */
-	ret = i2c_smbus_read_block_data(client, PMBUS_MFR_ID, buf);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_block_data(client, PMBUS_MFR_ID, buf);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Failed to read PMBUS_MFR_ID\n");
-		return ret;
-	}
-	if (ret != 2 || strncmp(buf, "XP", 2)) {
+		वापस ret;
+	पूर्ण
+	अगर (ret != 2 || म_भेदन(buf, "XP", 2)) अणु
 		dev_err(&client->dev, "MFR_ID unrecognized\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	info = devm_kmemdup(&client->dev, &pxe1610_info,
-			    sizeof(struct pmbus_driver_info),
+			    माप(काष्ठा pmbus_driver_info),
 			    GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	अगर (!info)
+		वापस -ENOMEM;
 
-	return pmbus_do_probe(client, info);
-}
+	वापस pmbus_करो_probe(client, info);
+पूर्ण
 
-static const struct i2c_device_id pxe1610_id[] = {
-	{"pxe1610", 0},
-	{"pxe1110", 0},
-	{"pxm1310", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id pxe1610_id[] = अणु
+	अणु"pxe1610", 0पूर्ण,
+	अणु"pxe1110", 0पूर्ण,
+	अणु"pxm1310", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, pxe1610_id);
 
-static struct i2c_driver pxe1610_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver pxe1610_driver = अणु
+	.driver = अणु
 			.name = "pxe1610",
-			},
+			पूर्ण,
 	.probe_new = pxe1610_probe,
 	.id_table = pxe1610_id,
-};
+पूर्ण;
 
 module_i2c_driver(pxe1610_driver);
 

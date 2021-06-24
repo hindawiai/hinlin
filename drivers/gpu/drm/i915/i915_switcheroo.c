@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#include <linux/vga_switcheroo.h>
+#समावेश <linux/vga_चयनeroo.h>
 
-#include "i915_drv.h"
-#include "i915_switcheroo.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_switcheroo.h"
 
-static void i915_switcheroo_set_state(struct pci_dev *pdev,
-				      enum vga_switcheroo_state state)
-{
-	struct drm_i915_private *i915 = pdev_to_i915(pdev);
-	pm_message_t pmm = { .event = PM_EVENT_SUSPEND };
+अटल व्योम i915_चयनeroo_set_state(काष्ठा pci_dev *pdev,
+				      क्रमागत vga_चयनeroo_state state)
+अणु
+	काष्ठा drm_i915_निजी *i915 = pdev_to_i915(pdev);
+	pm_message_t pmm = अणु .event = PM_EVENT_SUSPEND पूर्ण;
 
-	if (!i915) {
+	अगर (!i915) अणु
 		dev_err(&pdev->dev, "DRM not initialized, aborting switch.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (state == VGA_SWITCHEROO_ON) {
+	अगर (state == VGA_SWITCHEROO_ON) अणु
 		drm_info(&i915->drm, "switched on\n");
-		i915->drm.switch_power_state = DRM_SWITCH_POWER_CHANGING;
-		/* i915 resume handler doesn't set to D0 */
-		pci_set_power_state(pdev, PCI_D0);
-		i915_resume_switcheroo(i915);
-		i915->drm.switch_power_state = DRM_SWITCH_POWER_ON;
-	} else {
+		i915->drm.चयन_घातer_state = DRM_SWITCH_POWER_CHANGING;
+		/* i915 resume handler करोesn't set to D0 */
+		pci_set_घातer_state(pdev, PCI_D0);
+		i915_resume_चयनeroo(i915);
+		i915->drm.चयन_घातer_state = DRM_SWITCH_POWER_ON;
+	पूर्ण अन्यथा अणु
 		drm_info(&i915->drm, "switched off\n");
-		i915->drm.switch_power_state = DRM_SWITCH_POWER_CHANGING;
-		i915_suspend_switcheroo(i915, pmm);
-		i915->drm.switch_power_state = DRM_SWITCH_POWER_OFF;
-	}
-}
+		i915->drm.चयन_घातer_state = DRM_SWITCH_POWER_CHANGING;
+		i915_suspend_चयनeroo(i915, pmm);
+		i915->drm.चयन_घातer_state = DRM_SWITCH_POWER_OFF;
+	पूर्ण
+पूर्ण
 
-static bool i915_switcheroo_can_switch(struct pci_dev *pdev)
-{
-	struct drm_i915_private *i915 = pdev_to_i915(pdev);
+अटल bool i915_चयनeroo_can_चयन(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा drm_i915_निजी *i915 = pdev_to_i915(pdev);
 
 	/*
-	 * FIXME: open_count is protected by drm_global_mutex but that would lead to
+	 * FIXME: खोलो_count is रक्षित by drm_global_mutex but that would lead to
 	 * locking inversion with the driver load path. And the access here is
-	 * completely racy anyway. So don't bother with locking for now.
+	 * completely racy anyway. So करोn't bother with locking क्रम now.
 	 */
-	return i915 && atomic_read(&i915->drm.open_count) == 0;
-}
+	वापस i915 && atomic_पढ़ो(&i915->drm.खोलो_count) == 0;
+पूर्ण
 
-static const struct vga_switcheroo_client_ops i915_switcheroo_ops = {
-	.set_gpu_state = i915_switcheroo_set_state,
-	.reprobe = NULL,
-	.can_switch = i915_switcheroo_can_switch,
-};
+अटल स्थिर काष्ठा vga_चयनeroo_client_ops i915_चयनeroo_ops = अणु
+	.set_gpu_state = i915_चयनeroo_set_state,
+	.reprobe = शून्य,
+	.can_चयन = i915_चयनeroo_can_चयन,
+पूर्ण;
 
-int i915_switcheroo_register(struct drm_i915_private *i915)
-{
-	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
+पूर्णांक i915_चयनeroo_रेजिस्टर(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
 
-	return vga_switcheroo_register_client(pdev, &i915_switcheroo_ops, false);
-}
+	वापस vga_चयनeroo_रेजिस्टर_client(pdev, &i915_चयनeroo_ops, false);
+पूर्ण
 
-void i915_switcheroo_unregister(struct drm_i915_private *i915)
-{
-	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
+व्योम i915_चयनeroo_unरेजिस्टर(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
 
-	vga_switcheroo_unregister_client(pdev);
-}
+	vga_चयनeroo_unरेजिस्टर_client(pdev);
+पूर्ण

@@ -1,98 +1,99 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * DMA coherent memory allocation.
  *
  * Copyright (C) 2002 - 2005 Tensilica Inc.
  * Copyright (C) 2015 Cadence Design Systems Inc.
  *
- * Based on version for i386.
+ * Based on version क्रम i386.
  *
  * Chris Zankel <chris@zankel.net>
  * Joe Taylor <joe@tensilica.com, joetylr@yahoo.com>
  */
 
-#include <linux/dma-map-ops.h>
-#include <linux/dma-direct.h>
-#include <linux/gfp.h>
-#include <linux/highmem.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <asm/cacheflush.h>
-#include <asm/io.h>
-#include <asm/platform.h>
+#समावेश <linux/dma-map-ops.h>
+#समावेश <linux/dma-direct.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/platक्रमm.h>
 
-static void do_cache_op(phys_addr_t paddr, size_t size,
-			void (*fn)(unsigned long, unsigned long))
-{
-	unsigned long off = paddr & (PAGE_SIZE - 1);
-	unsigned long pfn = PFN_DOWN(paddr);
-	struct page *page = pfn_to_page(pfn);
+अटल व्योम करो_cache_op(phys_addr_t paddr, माप_प्रकार size,
+			व्योम (*fn)(अचिन्हित दीर्घ, अचिन्हित दीर्घ))
+अणु
+	अचिन्हित दीर्घ off = paddr & (PAGE_SIZE - 1);
+	अचिन्हित दीर्घ pfn = PFN_DOWN(paddr);
+	काष्ठा page *page = pfn_to_page(pfn);
 
-	if (!PageHighMem(page))
-		fn((unsigned long)phys_to_virt(paddr), size);
-	else
-		while (size > 0) {
-			size_t sz = min_t(size_t, size, PAGE_SIZE - off);
-			void *vaddr = kmap_atomic(page);
+	अगर (!PageHighMem(page))
+		fn((अचिन्हित दीर्घ)phys_to_virt(paddr), size);
+	अन्यथा
+		जबतक (size > 0) अणु
+			माप_प्रकार sz = min_t(माप_प्रकार, size, PAGE_SIZE - off);
+			व्योम *vaddr = kmap_atomic(page);
 
-			fn((unsigned long)vaddr + off, sz);
+			fn((अचिन्हित दीर्घ)vaddr + off, sz);
 			kunmap_atomic(vaddr);
 			off = 0;
 			++page;
 			size -= sz;
-		}
-}
+		पूर्ण
+पूर्ण
 
-void arch_sync_dma_for_cpu(phys_addr_t paddr, size_t size,
-		enum dma_data_direction dir)
-{
-	switch (dir) {
-	case DMA_BIDIRECTIONAL:
-	case DMA_FROM_DEVICE:
-		do_cache_op(paddr, size, __invalidate_dcache_range);
-		break;
+व्योम arch_sync_dma_क्रम_cpu(phys_addr_t paddr, माप_प्रकार size,
+		क्रमागत dma_data_direction dir)
+अणु
+	चयन (dir) अणु
+	हाल DMA_BIसूचीECTIONAL:
+	हाल DMA_FROM_DEVICE:
+		करो_cache_op(paddr, size, __invalidate_dcache_range);
+		अवरोध;
 
-	case DMA_NONE:
+	हाल DMA_NONE:
 		BUG();
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void arch_sync_dma_for_device(phys_addr_t paddr, size_t size,
-		enum dma_data_direction dir)
-{
-	switch (dir) {
-	case DMA_BIDIRECTIONAL:
-	case DMA_TO_DEVICE:
-		if (XCHAL_DCACHE_IS_WRITEBACK)
-			do_cache_op(paddr, size, __flush_dcache_range);
-		break;
+व्योम arch_sync_dma_क्रम_device(phys_addr_t paddr, माप_प्रकार size,
+		क्रमागत dma_data_direction dir)
+अणु
+	चयन (dir) अणु
+	हाल DMA_BIसूचीECTIONAL:
+	हाल DMA_TO_DEVICE:
+		अगर (XCHAL_DCACHE_IS_WRITEBACK)
+			करो_cache_op(paddr, size, __flush_dcache_range);
+		अवरोध;
 
-	case DMA_NONE:
+	हाल DMA_NONE:
 		BUG();
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
-}
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void arch_dma_prep_coherent(struct page *page, size_t size)
-{
-	__invalidate_dcache_range((unsigned long)page_address(page), size);
-}
+व्योम arch_dma_prep_coherent(काष्ठा page *page, माप_प्रकार size)
+अणु
+	__invalidate_dcache_range((अचिन्हित दीर्घ)page_address(page), size);
+पूर्ण
 
 /*
- * Memory caching is platform-dependent in noMMU xtensa configurations.
- * This function should be implemented in platform code in order to enable
+ * Memory caching is platक्रमm-dependent in noMMU xtensa configurations.
+ * This function should be implemented in platक्रमm code in order to enable
  * coherent DMA memory operations when CONFIG_MMU is not enabled.
  */
-#ifdef CONFIG_MMU
-void *arch_dma_set_uncached(void *p, size_t size)
-{
-	return p + XCHAL_KSEG_BYPASS_VADDR - XCHAL_KSEG_CACHED_VADDR;
-}
-#endif /* CONFIG_MMU */
+#अगर_घोषित CONFIG_MMU
+व्योम *arch_dma_set_uncached(व्योम *p, माप_प्रकार size)
+अणु
+	वापस p + XCHAL_KSEG_BYPASS_VADDR - XCHAL_KSEG_CACHED_VADDR;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MMU */

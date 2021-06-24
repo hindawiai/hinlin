@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCMCIA driver for SL811HS (as found in REX-CFU1U)
+ * PCMCIA driver क्रम SL811HS (as found in REX-CFU1U)
  * Filename: sl811_cs.c
  * Author:   Yukio Yamamoto
  *
  *  Port to sl811-hcd and 2.6.x by
- *    Botond Botyanszki <boti@rocketmail.com>
+ *    Botond Botyanszki <boti@rockeपंचांगail.com>
  *    Simon Pickering
  *
  *  Last update: 2005-05-12
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/ptrace.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/cisreg.h>
-#include <pcmcia/ds.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/cisreg.h>
+#समावेश <pcmcia/ds.h>
 
-#include <linux/usb/sl811.h>
+#समावेश <linux/usb/sl811.h>
 
 MODULE_AUTHOR("Botond Botyanszki");
 MODULE_DESCRIPTION("REX-CFU1U PCMCIA driver for 2.6");
@@ -35,66 +36,66 @@ MODULE_LICENSE("GPL");
 /* MACROS                                                             */
 /*====================================================================*/
 
-#define INFO(args...) printk(KERN_INFO "sl811_cs: " args)
+#घोषणा INFO(args...) prपूर्णांकk(KERN_INFO "sl811_cs: " args)
 
 /*====================================================================*/
 /* VARIABLES                                                          */
 /*====================================================================*/
 
-typedef struct local_info_t {
-	struct pcmcia_device	*p_dev;
-} local_info_t;
+प्रकार काष्ठा local_info_t अणु
+	काष्ठा pcmcia_device	*p_dev;
+पूर्ण local_info_t;
 
-static void sl811_cs_release(struct pcmcia_device * link);
+अटल व्योम sl811_cs_release(काष्ठा pcmcia_device * link);
 
 /*====================================================================*/
 
-static void release_platform_dev(struct device * dev)
-{
+अटल व्योम release_platक्रमm_dev(काष्ठा device * dev)
+अणु
 	dev_dbg(dev, "sl811_cs platform_dev release\n");
-	dev->parent = NULL;
-}
+	dev->parent = शून्य;
+पूर्ण
 
-static struct sl811_platform_data platform_data = {
+अटल काष्ठा sl811_platक्रमm_data platक्रमm_data = अणु
 	.potpg		= 100,
-	.power		= 50,		/* == 100mA */
+	.घातer		= 50,		/* == 100mA */
 	// .reset	= ... FIXME:  invoke CF reset on the card
-};
+पूर्ण;
 
-static struct resource resources[] = {
-	[0] = {
+अटल काष्ठा resource resources[] = अणु
+	[0] = अणु
 		.flags	= IORESOURCE_IRQ,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		// .name   = "address",
 		.flags	= IORESOURCE_IO,
-	},
-	[2] = {
+	पूर्ण,
+	[2] = अणु
 		// .name   = "data",
 		.flags	= IORESOURCE_IO,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-extern struct platform_driver sl811h_driver;
+बाह्य काष्ठा platक्रमm_driver sl811h_driver;
 
-static struct platform_device platform_dev = {
+अटल काष्ठा platक्रमm_device platक्रमm_dev = अणु
 	.id			= -1,
-	.dev = {
-		.platform_data = &platform_data,
-		.release       = release_platform_dev,
-	},
+	.dev = अणु
+		.platक्रमm_data = &platक्रमm_data,
+		.release       = release_platक्रमm_dev,
+	पूर्ण,
 	.resource		= resources,
 	.num_resources		= ARRAY_SIZE(resources),
-};
+पूर्ण;
 
-static int sl811_hc_init(struct device *parent, resource_size_t base_addr,
-			 int irq)
-{
-	if (platform_dev.dev.parent)
-		return -EBUSY;
-	platform_dev.dev.parent = parent;
+अटल पूर्णांक sl811_hc_init(काष्ठा device *parent, resource_माप_प्रकार base_addr,
+			 पूर्णांक irq)
+अणु
+	अगर (platक्रमm_dev.dev.parent)
+		वापस -EBUSY;
+	platक्रमm_dev.dev.parent = parent;
 
-	/* finish setting up the platform device */
+	/* finish setting up the platक्रमm device */
 	resources[0].start = irq;
 
 	resources[1].start = base_addr;
@@ -103,101 +104,101 @@ static int sl811_hc_init(struct device *parent, resource_size_t base_addr,
 	resources[2].start = base_addr + 1;
 	resources[2].end   = base_addr + 1;
 
-	/* The driver core will probe for us.  We know sl811-hcd has been
-	 * initialized already because of the link order dependency created
+	/* The driver core will probe क्रम us.  We know sl811-hcd has been
+	 * initialized alपढ़ोy because of the link order dependency created
 	 * by referencing "sl811h_driver".
 	 */
-	platform_dev.name = sl811h_driver.driver.name;
-	return platform_device_register(&platform_dev);
-}
+	platक्रमm_dev.name = sl811h_driver.driver.name;
+	वापस platक्रमm_device_रेजिस्टर(&platक्रमm_dev);
+पूर्ण
 
 /*====================================================================*/
 
-static void sl811_cs_detach(struct pcmcia_device *link)
-{
+अटल व्योम sl811_cs_detach(काष्ठा pcmcia_device *link)
+अणु
 	dev_dbg(&link->dev, "sl811_cs_detach\n");
 
 	sl811_cs_release(link);
 
-	/* This points to the parent local_info_t struct */
-	kfree(link->priv);
-}
+	/* This poपूर्णांकs to the parent local_info_t काष्ठा */
+	kमुक्त(link->priv);
+पूर्ण
 
-static void sl811_cs_release(struct pcmcia_device * link)
-{
+अटल व्योम sl811_cs_release(काष्ठा pcmcia_device * link)
+अणु
 	dev_dbg(&link->dev, "sl811_cs_release\n");
 
 	pcmcia_disable_device(link);
-	platform_device_unregister(&platform_dev);
-}
+	platक्रमm_device_unरेजिस्टर(&platक्रमm_dev);
+पूर्ण
 
-static int sl811_cs_config_check(struct pcmcia_device *p_dev, void *priv_data)
-{
-	if (p_dev->config_index == 0)
-		return -EINVAL;
+अटल पूर्णांक sl811_cs_config_check(काष्ठा pcmcia_device *p_dev, व्योम *priv_data)
+अणु
+	अगर (p_dev->config_index == 0)
+		वापस -EINVAL;
 
-	return pcmcia_request_io(p_dev);
-}
+	वापस pcmcia_request_io(p_dev);
+पूर्ण
 
 
-static int sl811_cs_config(struct pcmcia_device *link)
-{
-	struct device		*parent = &link->dev;
-	int			ret;
+अटल पूर्णांक sl811_cs_config(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा device		*parent = &link->dev;
+	पूर्णांक			ret;
 
 	dev_dbg(&link->dev, "sl811_cs_config\n");
 
 	link->config_flags |= CONF_ENABLE_IRQ |	CONF_AUTO_SET_VPP |
 		CONF_AUTO_CHECK_VCC | CONF_AUTO_SET_IO;
 
-	if (pcmcia_loop_config(link, sl811_cs_config_check, NULL))
-		goto failed;
+	अगर (pcmcia_loop_config(link, sl811_cs_config_check, शून्य))
+		जाओ failed;
 
-	/* require an IRQ and two registers */
-	if (resource_size(link->resource[0]) < 2)
-		goto failed;
+	/* require an IRQ and two रेजिस्टरs */
+	अगर (resource_size(link->resource[0]) < 2)
+		जाओ failed;
 
-	if (!link->irq)
-		goto failed;
+	अगर (!link->irq)
+		जाओ failed;
 
 	ret = pcmcia_enable_device(link);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 
-	if (sl811_hc_init(parent, link->resource[0]->start, link->irq)
-			< 0) {
+	अगर (sl811_hc_init(parent, link->resource[0]->start, link->irq)
+			< 0) अणु
 failed:
-		printk(KERN_WARNING "sl811_cs_config failed\n");
+		prपूर्णांकk(KERN_WARNING "sl811_cs_config failed\n");
 		sl811_cs_release(link);
-		return  -ENODEV;
-	}
-	return 0;
-}
+		वापस  -ENODEV;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int sl811_cs_probe(struct pcmcia_device *link)
-{
+अटल पूर्णांक sl811_cs_probe(काष्ठा pcmcia_device *link)
+अणु
 	local_info_t *local;
 
-	local = kzalloc(sizeof(local_info_t), GFP_KERNEL);
-	if (!local)
-		return -ENOMEM;
+	local = kzalloc(माप(local_info_t), GFP_KERNEL);
+	अगर (!local)
+		वापस -ENOMEM;
 	local->p_dev = link;
 	link->priv = local;
 
-	return sl811_cs_config(link);
-}
+	वापस sl811_cs_config(link);
+पूर्ण
 
-static const struct pcmcia_device_id sl811_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id sl811_ids[] = अणु
 	PCMCIA_DEVICE_MANF_CARD(0xc015, 0x0001), /* RATOC USB HOST CF+ Card */
-	PCMCIA_DEVICE_NULL,
-};
+	PCMCIA_DEVICE_शून्य,
+पूर्ण;
 MODULE_DEVICE_TABLE(pcmcia, sl811_ids);
 
-static struct pcmcia_driver sl811_cs_driver = {
+अटल काष्ठा pcmcia_driver sl811_cs_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= "sl811_cs",
 	.probe		= sl811_cs_probe,
-	.remove		= sl811_cs_detach,
+	.हटाओ		= sl811_cs_detach,
 	.id_table	= sl811_ids,
-};
+पूर्ण;
 module_pcmcia_driver(sl811_cs_driver);

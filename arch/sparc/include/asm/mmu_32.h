@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MMU_H
-#define __MMU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MMU_H
+#घोषणा __MMU_H
 
 /* Default "unsigned long" context */
-typedef unsigned long mm_context_t;
+प्रकार अचिन्हित दीर्घ mm_context_t;
 
 /* mm/srmmu.c */
-extern ctxd_t *srmmu_ctx_table_phys;
+बाह्य ctxd_t *srmmu_ctx_table_phys;
 
-#endif
+#पूर्ण_अगर

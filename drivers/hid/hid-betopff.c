@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Force feedback support for Betop based devices
+ *  Force feedback support क्रम Betop based devices
  *
  *  The devices are distributed under various names and the same USB device ID
  *  can be used in both adapters and actual game controllers.
@@ -23,22 +24,22 @@
  */
 
 
-#include <linux/input.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/hid.h>
+#समावेश <linux/input.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/hid.h>
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
-struct betopff_device {
-	struct hid_report *report;
-};
+काष्ठा betopff_device अणु
+	काष्ठा hid_report *report;
+पूर्ण;
 
-static int hid_betopff_play(struct input_dev *dev, void *data,
-			 struct ff_effect *effect)
-{
-	struct hid_device *hid = input_get_drvdata(dev);
-	struct betopff_device *betopff = data;
+अटल पूर्णांक hid_betopff_play(काष्ठा input_dev *dev, व्योम *data,
+			 काष्ठा ff_effect *effect)
+अणु
+	काष्ठा hid_device *hid = input_get_drvdata(dev);
+	काष्ठा betopff_device *betopff = data;
 	__u16 left, right;
 
 	left = effect->u.rumble.strong_magnitude;
@@ -49,109 +50,109 @@ static int hid_betopff_play(struct input_dev *dev, void *data,
 
 	hid_hw_request(hid, betopff->report, HID_REQ_SET_REPORT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int betopff_init(struct hid_device *hid)
-{
-	struct betopff_device *betopff;
-	struct hid_report *report;
-	struct hid_input *hidinput =
-			list_first_entry(&hid->inputs, struct hid_input, list);
-	struct list_head *report_list =
-			&hid->report_enum[HID_OUTPUT_REPORT].report_list;
-	struct input_dev *dev = hidinput->input;
-	int field_count = 0;
-	int error;
-	int i, j;
+अटल पूर्णांक betopff_init(काष्ठा hid_device *hid)
+अणु
+	काष्ठा betopff_device *betopff;
+	काष्ठा hid_report *report;
+	काष्ठा hid_input *hidinput =
+			list_first_entry(&hid->inमाला_दो, काष्ठा hid_input, list);
+	काष्ठा list_head *report_list =
+			&hid->report_क्रमागत[HID_OUTPUT_REPORT].report_list;
+	काष्ठा input_dev *dev = hidinput->input;
+	पूर्णांक field_count = 0;
+	पूर्णांक error;
+	पूर्णांक i, j;
 
-	if (list_empty(report_list)) {
+	अगर (list_empty(report_list)) अणु
 		hid_err(hid, "no output reports found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	report = list_first_entry(report_list, struct hid_report, list);
+	report = list_first_entry(report_list, काष्ठा hid_report, list);
 	/*
-	 * Actually there are 4 fields for 4 Bytes as below:
+	 * Actually there are 4 fields क्रम 4 Bytes as below:
 	 * -----------------------------------------
 	 * Byte0  Byte1  Byte2	  Byte3
 	 * 0x00   0x00   left_motor right_motor
 	 * -----------------------------------------
-	 * Do init them with default value.
+	 * Do init them with शेष value.
 	 */
-	for (i = 0; i < report->maxfield; i++) {
-		for (j = 0; j < report->field[i]->report_count; j++) {
+	क्रम (i = 0; i < report->maxfield; i++) अणु
+		क्रम (j = 0; j < report->field[i]->report_count; j++) अणु
 			report->field[i]->value[j] = 0x00;
 			field_count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (field_count < 4) {
+	अगर (field_count < 4) अणु
 		hid_err(hid, "not enough fields in the report: %d\n",
 				field_count);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	betopff = kzalloc(sizeof(*betopff), GFP_KERNEL);
-	if (!betopff)
-		return -ENOMEM;
+	betopff = kzalloc(माप(*betopff), GFP_KERNEL);
+	अगर (!betopff)
+		वापस -ENOMEM;
 
 	set_bit(FF_RUMBLE, dev->ffbit);
 
 	error = input_ff_create_memless(dev, betopff, hid_betopff_play);
-	if (error) {
-		kfree(betopff);
-		return error;
-	}
+	अगर (error) अणु
+		kमुक्त(betopff);
+		वापस error;
+	पूर्ण
 
 	betopff->report = report;
 	hid_hw_request(hid, betopff->report, HID_REQ_SET_REPORT);
 
 	hid_info(hid, "Force feedback for betop devices by huangbo <huangbobupt@163.com>\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int betop_probe(struct hid_device *hdev, const struct hid_device_id *id)
-{
-	int ret;
+अटल पूर्णांक betop_probe(काष्ठा hid_device *hdev, स्थिर काष्ठा hid_device_id *id)
+अणु
+	पूर्णांक ret;
 
-	if (id->driver_data)
+	अगर (id->driver_data)
 		hdev->quirks |= HID_QUIRK_MULTI_INPUT;
 
 	ret = hid_parse(hdev);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "parse failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT & ~HID_CONNECT_FF);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "hw start failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	betopff_init(hdev);
 
-	return 0;
+	वापस 0;
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct hid_device_id betop_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_BETOP_2185BFM, 0x2208) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_BETOP_2185PC, 0x5506) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_BETOP_2185V2PC, 0x1850) },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_BETOP_2185V2BFM, 0x5500) },
-	{ }
-};
+अटल स्थिर काष्ठा hid_device_id betop_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_BETOP_2185BFM, 0x2208) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_BETOP_2185PC, 0x5506) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_BETOP_2185V2PC, 0x1850) पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_BETOP_2185V2BFM, 0x5500) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, betop_devices);
 
-static struct hid_driver betop_driver = {
+अटल काष्ठा hid_driver betop_driver = अणु
 	.name = "betop",
 	.id_table = betop_devices,
 	.probe = betop_probe,
-};
+पूर्ण;
 module_hid_driver(betop_driver);
 
 MODULE_LICENSE("GPL");

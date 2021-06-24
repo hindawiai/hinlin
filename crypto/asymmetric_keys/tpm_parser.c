@@ -1,102 +1,103 @@
-// SPDX-License-Identifier: GPL-2.0
-#define pr_fmt(fmt) "TPM-PARSER: "fmt
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <keys/asymmetric-subtype.h>
-#include <keys/asymmetric-parser.h>
-#include <crypto/asym_tpm_subtype.h>
-#include "tpm.asn1.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#घोषणा pr_fmt(fmt) "TPM-PARSER: "fmt
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <keys/asymmetric-subtype.h>
+#समावेश <keys/asymmetric-parser.h>
+#समावेश <crypto/asym_tpm_subtype.h>
+#समावेश "tpm.asn1.h"
 
-struct tpm_parse_context {
-	const void	*blob;
+काष्ठा tpm_parse_context अणु
+	स्थिर व्योम	*blob;
 	u32		blob_len;
-};
+पूर्ण;
 
 /*
  * Note the key data of the ASN.1 blob.
  */
-int tpm_note_key(void *context, size_t hdrlen,
-		   unsigned char tag,
-		   const void *value, size_t vlen)
-{
-	struct tpm_parse_context *ctx = context;
+पूर्णांक tpm_note_key(व्योम *context, माप_प्रकार hdrlen,
+		   अचिन्हित अक्षर tag,
+		   स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	काष्ठा tpm_parse_context *ctx = context;
 
 	ctx->blob = value;
 	ctx->blob_len = vlen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Parse a TPM-encrypted private key blob.
+ * Parse a TPM-encrypted निजी key blob.
  */
-static struct tpm_key *tpm_parse(const void *data, size_t datalen)
-{
-	struct tpm_parse_context ctx;
-	long ret;
+अटल काष्ठा tpm_key *tpm_parse(स्थिर व्योम *data, माप_प्रकार datalen)
+अणु
+	काष्ठा tpm_parse_context ctx;
+	दीर्घ ret;
 
-	memset(&ctx, 0, sizeof(ctx));
+	स_रखो(&ctx, 0, माप(ctx));
 
-	/* Attempt to decode the private key */
+	/* Attempt to decode the निजी key */
 	ret = asn1_ber_decoder(&tpm_decoder, &ctx, data, datalen);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
-	return tpm_key_create(ctx.blob, ctx.blob_len);
+	वापस tpm_key_create(ctx.blob, ctx.blob_len);
 
 error:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 /*
- * Attempt to parse a data blob for a key as a TPM private key blob.
+ * Attempt to parse a data blob क्रम a key as a TPM निजी key blob.
  */
-static int tpm_key_preparse(struct key_preparsed_payload *prep)
-{
-	struct tpm_key *tk;
+अटल पूर्णांक tpm_key_preparse(काष्ठा key_preparsed_payload *prep)
+अणु
+	काष्ठा tpm_key *tk;
 
 	/*
-	 * TPM 1.2 keys are max 2048 bits long, so assume the blob is no
+	 * TPM 1.2 keys are max 2048 bits दीर्घ, so assume the blob is no
 	 * more than 4x that
 	 */
-	if (prep->datalen > 256 * 4)
-		return -EMSGSIZE;
+	अगर (prep->datalen > 256 * 4)
+		वापस -EMSGSIZE;
 
 	tk = tpm_parse(prep->data, prep->datalen);
 
-	if (IS_ERR(tk))
-		return PTR_ERR(tk);
+	अगर (IS_ERR(tk))
+		वापस PTR_ERR(tk);
 
 	/* We're pinning the module by being linked against it */
 	__module_get(asym_tpm_subtype.owner);
 	prep->payload.data[asym_subtype] = &asym_tpm_subtype;
-	prep->payload.data[asym_key_ids] = NULL;
+	prep->payload.data[asym_key_ids] = शून्य;
 	prep->payload.data[asym_crypto] = tk;
-	prep->payload.data[asym_auth] = NULL;
+	prep->payload.data[asym_auth] = शून्य;
 	prep->quotalen = 100;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct asymmetric_key_parser tpm_key_parser = {
+अटल काष्ठा asymmetric_key_parser tpm_key_parser = अणु
 	.owner	= THIS_MODULE,
 	.name	= "tpm_parser",
 	.parse	= tpm_key_preparse,
-};
+पूर्ण;
 
-static int __init tpm_key_init(void)
-{
-	return register_asymmetric_key_parser(&tpm_key_parser);
-}
+अटल पूर्णांक __init tpm_key_init(व्योम)
+अणु
+	वापस रेजिस्टर_asymmetric_key_parser(&tpm_key_parser);
+पूर्ण
 
-static void __exit tpm_key_exit(void)
-{
-	unregister_asymmetric_key_parser(&tpm_key_parser);
-}
+अटल व्योम __निकास tpm_key_निकास(व्योम)
+अणु
+	unरेजिस्टर_asymmetric_key_parser(&tpm_key_parser);
+पूर्ण
 
 module_init(tpm_key_init);
-module_exit(tpm_key_exit);
+module_निकास(tpm_key_निकास);
 
 MODULE_DESCRIPTION("TPM private key-blob parser");
 MODULE_LICENSE("GPL v2");

@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NMI_H
-#define __NMI_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NMI_H
+#घोषणा __NMI_H
 
-int __init nmi_init(void);
-void perfctr_irq(int irq, struct pt_regs *regs);
-void nmi_adjust_hz(unsigned int new_hz);
+पूर्णांक __init nmi_init(व्योम);
+व्योम perfctr_irq(पूर्णांक irq, काष्ठा pt_regs *regs);
+व्योम nmi_adjust_hz(अचिन्हित पूर्णांक new_hz);
 
-extern atomic_t nmi_active;
+बाह्य atomic_t nmi_active;
 
-void arch_touch_nmi_watchdog(void);
-void start_nmi_watchdog(void *unused);
-void stop_nmi_watchdog(void *unused);
+व्योम arch_touch_nmi_watchकरोg(व्योम);
+व्योम start_nmi_watchकरोg(व्योम *unused);
+व्योम stop_nmi_watchकरोg(व्योम *unused);
 
-#endif /* __NMI_H */
+#पूर्ण_अगर /* __NMI_H */

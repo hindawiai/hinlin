@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,499 +24,499 @@
  *
  */
 
-#include "dccg.h"
-#include "clk_mgr_internal.h"
+#समावेश "dccg.h"
+#समावेश "clk_mgr_internal.h"
 
-#include "dce100/dce_clk_mgr.h"
-#include "dcn20_clk_mgr.h"
-#include "reg_helper.h"
-#include "core_types.h"
-#include "dm_helpers.h"
+#समावेश "dce100/dce_clk_mgr.h"
+#समावेश "dcn20_clk_mgr.h"
+#समावेश "reg_helper.h"
+#समावेश "core_types.h"
+#समावेश "dm_helpers.h"
 
-#include "navi10_ip_offset.h"
-#include "dcn/dcn_2_0_0_offset.h"
-#include "dcn/dcn_2_0_0_sh_mask.h"
-#include "clk/clk_11_0_0_offset.h"
-#include "clk/clk_11_0_0_sh_mask.h"
+#समावेश "navi10_ip_offset.h"
+#समावेश "dcn/dcn_2_0_0_offset.h"
+#समावेश "dcn/dcn_2_0_0_sh_mask.h"
+#समावेश "clk/clk_11_0_0_offset.h"
+#समावेश "clk/clk_11_0_0_sh_mask.h"
 
-#undef FN
-#define FN(reg_name, field_name) \
-	clk_mgr->clk_mgr_shift->field_name, clk_mgr->clk_mgr_mask->field_name
+#अघोषित FN
+#घोषणा FN(reg_name, field_name) \
+	clk_mgr->clk_mgr_shअगरt->field_name, clk_mgr->clk_mgr_mask->field_name
 
-#define REG(reg) \
+#घोषणा REG(reg) \
 	(clk_mgr->regs->reg)
 
-#define BASE_INNER(seg) DCN_BASE__INST0_SEG ## seg
+#घोषणा BASE_INNER(seg) DCN_BASE__INST0_SEG ## seg
 
-#define BASE(seg) BASE_INNER(seg)
+#घोषणा BASE(seg) BASE_INNER(seg)
 
-#define SR(reg_name)\
+#घोषणा SR(reg_name)\
 		.reg_name = BASE(mm ## reg_name ## _BASE_IDX) +  \
 					mm ## reg_name
 
-#define CLK_BASE_INNER(seg) \
+#घोषणा CLK_BASE_INNER(seg) \
 	CLK_BASE__INST0_SEG ## seg
 
 
-static const struct clk_mgr_registers clk_mgr_regs = {
+अटल स्थिर काष्ठा clk_mgr_रेजिस्टरs clk_mgr_regs = अणु
 	CLK_REG_LIST_NV10()
-};
+पूर्ण;
 
-static const struct clk_mgr_shift clk_mgr_shift = {
+अटल स्थिर काष्ठा clk_mgr_shअगरt clk_mgr_shअगरt = अणु
 	CLK_MASK_SH_LIST_NV10(__SHIFT)
-};
+पूर्ण;
 
-static const struct clk_mgr_mask clk_mgr_mask = {
+अटल स्थिर काष्ठा clk_mgr_mask clk_mgr_mask = अणु
 	CLK_MASK_SH_LIST_NV10(_MASK)
-};
+पूर्ण;
 
-uint32_t dentist_get_did_from_divider(int divider)
-{
-	uint32_t divider_id;
+uपूर्णांक32_t dentist_get_did_from_भागider(पूर्णांक भागider)
+अणु
+	uपूर्णांक32_t भागider_id;
 
-	/* we want to floor here to get higher clock than required rather than lower */
-	if (divider < DENTIST_DIVIDER_RANGE_2_START) {
-		if (divider < DENTIST_DIVIDER_RANGE_1_START)
-			divider_id = DENTIST_BASE_DID_1;
-		else
-			divider_id = DENTIST_BASE_DID_1
-				+ (divider - DENTIST_DIVIDER_RANGE_1_START)
+	/* we want to न्यूनमान here to get higher घड़ी than required rather than lower */
+	अगर (भागider < DENTIST_DIVIDER_RANGE_2_START) अणु
+		अगर (भागider < DENTIST_DIVIDER_RANGE_1_START)
+			भागider_id = DENTIST_BASE_DID_1;
+		अन्यथा
+			भागider_id = DENTIST_BASE_DID_1
+				+ (भागider - DENTIST_DIVIDER_RANGE_1_START)
 					/ DENTIST_DIVIDER_RANGE_1_STEP;
-	} else if (divider < DENTIST_DIVIDER_RANGE_3_START) {
-		divider_id = DENTIST_BASE_DID_2
-				+ (divider - DENTIST_DIVIDER_RANGE_2_START)
+	पूर्ण अन्यथा अगर (भागider < DENTIST_DIVIDER_RANGE_3_START) अणु
+		भागider_id = DENTIST_BASE_DID_2
+				+ (भागider - DENTIST_DIVIDER_RANGE_2_START)
 					/ DENTIST_DIVIDER_RANGE_2_STEP;
-	} else if (divider < DENTIST_DIVIDER_RANGE_4_START) {
-		divider_id = DENTIST_BASE_DID_3
-				+ (divider - DENTIST_DIVIDER_RANGE_3_START)
+	पूर्ण अन्यथा अगर (भागider < DENTIST_DIVIDER_RANGE_4_START) अणु
+		भागider_id = DENTIST_BASE_DID_3
+				+ (भागider - DENTIST_DIVIDER_RANGE_3_START)
 					/ DENTIST_DIVIDER_RANGE_3_STEP;
-	} else {
-		divider_id = DENTIST_BASE_DID_4
-				+ (divider - DENTIST_DIVIDER_RANGE_4_START)
+	पूर्ण अन्यथा अणु
+		भागider_id = DENTIST_BASE_DID_4
+				+ (भागider - DENTIST_DIVIDER_RANGE_4_START)
 					/ DENTIST_DIVIDER_RANGE_4_STEP;
-		if (divider_id > DENTIST_MAX_DID)
-			divider_id = DENTIST_MAX_DID;
-	}
+		अगर (भागider_id > DENTIST_MAX_DID)
+			भागider_id = DENTIST_MAX_DID;
+	पूर्ण
 
-	return divider_id;
-}
+	वापस भागider_id;
+पूर्ण
 
-void dcn20_update_clocks_update_dpp_dto(struct clk_mgr_internal *clk_mgr,
-		struct dc_state *context, bool safe_to_lower)
-{
-	int i;
+व्योम dcn20_update_घड़ीs_update_dpp_dto(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr,
+		काष्ठा dc_state *context, bool safe_to_lower)
+अणु
+	पूर्णांक i;
 
 	clk_mgr->dccg->ref_dppclk = clk_mgr->base.clks.dppclk_khz;
-	for (i = 0; i < clk_mgr->base.ctx->dc->res_pool->pipe_count; i++) {
-		int dpp_inst, dppclk_khz, prev_dppclk_khz;
+	क्रम (i = 0; i < clk_mgr->base.ctx->dc->res_pool->pipe_count; i++) अणु
+		पूर्णांक dpp_inst, dppclk_khz, prev_dppclk_khz;
 
-		/* Loop index will match dpp->inst if resource exists,
-		 * and we want to avoid dependency on dpp object
+		/* Loop index will match dpp->inst अगर resource exists,
+		 * and we want to aव्योम dependency on dpp object
 		 */
 		dpp_inst = i;
 		dppclk_khz = context->res_ctx.pipe_ctx[i].plane_res.bw.dppclk_khz;
 
 		prev_dppclk_khz = clk_mgr->dccg->pipe_dppclk_khz[i];
 
-		if (safe_to_lower || prev_dppclk_khz < dppclk_khz)
+		अगर (safe_to_lower || prev_dppclk_khz < dppclk_khz)
 			clk_mgr->dccg->funcs->update_dpp_dto(
 							clk_mgr->dccg, dpp_inst, dppclk_khz);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void dcn20_update_clocks_update_dentist(struct clk_mgr_internal *clk_mgr)
-{
-	int dpp_divider = DENTIST_DIVIDER_RANGE_SCALE_FACTOR
+व्योम dcn20_update_घड़ीs_update_dentist(काष्ठा clk_mgr_पूर्णांकernal *clk_mgr)
+अणु
+	पूर्णांक dpp_भागider = DENTIST_DIVIDER_RANGE_SCALE_FACTOR
 			* clk_mgr->base.dentist_vco_freq_khz / clk_mgr->base.clks.dppclk_khz;
-	int disp_divider = DENTIST_DIVIDER_RANGE_SCALE_FACTOR
+	पूर्णांक disp_भागider = DENTIST_DIVIDER_RANGE_SCALE_FACTOR
 			* clk_mgr->base.dentist_vco_freq_khz / clk_mgr->base.clks.dispclk_khz;
 
-	uint32_t dppclk_wdivider = dentist_get_did_from_divider(dpp_divider);
-	uint32_t dispclk_wdivider = dentist_get_did_from_divider(disp_divider);
+	uपूर्णांक32_t dppclk_wभागider = dentist_get_did_from_भागider(dpp_भागider);
+	uपूर्णांक32_t dispclk_wभागider = dentist_get_did_from_भागider(disp_भागider);
 
 	REG_UPDATE(DENTIST_DISPCLK_CNTL,
-			DENTIST_DISPCLK_WDIVIDER, dispclk_wdivider);
+			DENTIST_DISPCLK_WDIVIDER, dispclk_wभागider);
 //	REG_WAIT(DENTIST_DISPCLK_CNTL, DENTIST_DISPCLK_CHG_DONE, 1, 5, 100);
 	REG_UPDATE(DENTIST_DISPCLK_CNTL,
-			DENTIST_DPPCLK_WDIVIDER, dppclk_wdivider);
+			DENTIST_DPPCLK_WDIVIDER, dppclk_wभागider);
 	REG_WAIT(DENTIST_DISPCLK_CNTL, DENTIST_DPPCLK_CHG_DONE, 1, 5, 100);
-}
+पूर्ण
 
 
-void dcn2_update_clocks(struct clk_mgr *clk_mgr_base,
-			struct dc_state *context,
+व्योम dcn2_update_घड़ीs(काष्ठा clk_mgr *clk_mgr_base,
+			काष्ठा dc_state *context,
 			bool safe_to_lower)
-{
-	struct clk_mgr_internal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
-	struct dc_clocks *new_clocks = &context->bw_ctx.bw.dcn.clk;
-	struct dc *dc = clk_mgr_base->ctx->dc;
-	struct pp_smu_funcs_nv *pp_smu = NULL;
-	int display_count;
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+	काष्ठा dc_घड़ीs *new_घड़ीs = &context->bw_ctx.bw.dcn.clk;
+	काष्ठा dc *dc = clk_mgr_base->ctx->dc;
+	काष्ठा pp_smu_funcs_nv *pp_smu = शून्य;
+	पूर्णांक display_count;
 	bool update_dppclk = false;
 	bool update_dispclk = false;
 	bool enter_display_off = false;
-	bool dpp_clock_lowered = false;
-	struct dmcu *dmcu = clk_mgr_base->ctx->dc->res_pool->dmcu;
-	bool force_reset = false;
+	bool dpp_घड़ी_lowered = false;
+	काष्ठा dmcu *dmcu = clk_mgr_base->ctx->dc->res_pool->dmcu;
+	bool क्रमce_reset = false;
 	bool p_state_change_support;
-	int total_plane_count;
+	पूर्णांक total_plane_count;
 
-	if (dc->work_arounds.skip_clock_update)
-		return;
+	अगर (dc->work_arounds.skip_घड़ी_update)
+		वापस;
 
-	if (clk_mgr_base->clks.dispclk_khz == 0 ||
-		dc->debug.force_clock_mode & 0x1) {
-		//this is from resume or boot up, if forced_clock cfg option used, we bypass program dispclk and DPPCLK, but need set them for S3.
-		force_reset = true;
+	अगर (clk_mgr_base->clks.dispclk_khz == 0 ||
+		dc->debug.क्रमce_घड़ी_mode & 0x1) अणु
+		//this is from resume or boot up, अगर क्रमced_घड़ी cfg option used, we bypass program dispclk and DPPCLK, but need set them क्रम S3.
+		क्रमce_reset = true;
 
-		dcn2_read_clocks_from_hw_dentist(clk_mgr_base);
+		dcn2_पढ़ो_घड़ीs_from_hw_dentist(clk_mgr_base);
 
-		//force_clock_mode 0x1:  force reset the clock even it is the same clock as long as it is in Passive level.
-	}
+		//क्रमce_घड़ी_mode 0x1:  क्रमce reset the घड़ी even it is the same घड़ी as दीर्घ as it is in Passive level.
+	पूर्ण
 	display_count = clk_mgr_helper_get_active_display_cnt(dc, context);
-	if (dc->res_pool->pp_smu)
+	अगर (dc->res_pool->pp_smu)
 		pp_smu = &dc->res_pool->pp_smu->nv_funcs;
 
-	if (display_count == 0)
+	अगर (display_count == 0)
 		enter_display_off = true;
 
-	if (enter_display_off == safe_to_lower) {
-		if (pp_smu && pp_smu->set_display_count)
+	अगर (enter_display_off == safe_to_lower) अणु
+		अगर (pp_smu && pp_smu->set_display_count)
 			pp_smu->set_display_count(&pp_smu->pp_smu, display_count);
-	}
+	पूर्ण
 
-	if (dc->debug.force_min_dcfclk_mhz > 0)
-		new_clocks->dcfclk_khz = (new_clocks->dcfclk_khz > (dc->debug.force_min_dcfclk_mhz * 1000)) ?
-				new_clocks->dcfclk_khz : (dc->debug.force_min_dcfclk_mhz * 1000);
+	अगर (dc->debug.क्रमce_min_dcfclk_mhz > 0)
+		new_घड़ीs->dcfclk_khz = (new_घड़ीs->dcfclk_khz > (dc->debug.क्रमce_min_dcfclk_mhz * 1000)) ?
+				new_घड़ीs->dcfclk_khz : (dc->debug.क्रमce_min_dcfclk_mhz * 1000);
 
-	if (should_set_clock(safe_to_lower, new_clocks->dcfclk_khz, clk_mgr_base->clks.dcfclk_khz)) {
-		clk_mgr_base->clks.dcfclk_khz = new_clocks->dcfclk_khz;
-		if (pp_smu && pp_smu->set_hard_min_dcfclk_by_freq)
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->dcfclk_khz, clk_mgr_base->clks.dcfclk_khz)) अणु
+		clk_mgr_base->clks.dcfclk_khz = new_घड़ीs->dcfclk_khz;
+		अगर (pp_smu && pp_smu->set_hard_min_dcfclk_by_freq)
 			pp_smu->set_hard_min_dcfclk_by_freq(&pp_smu->pp_smu, clk_mgr_base->clks.dcfclk_khz / 1000);
-	}
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower,
-			new_clocks->dcfclk_deep_sleep_khz, clk_mgr_base->clks.dcfclk_deep_sleep_khz)) {
-		clk_mgr_base->clks.dcfclk_deep_sleep_khz = new_clocks->dcfclk_deep_sleep_khz;
-		if (pp_smu && pp_smu->set_min_deep_sleep_dcfclk)
+	अगर (should_set_घड़ी(safe_to_lower,
+			new_घड़ीs->dcfclk_deep_sleep_khz, clk_mgr_base->clks.dcfclk_deep_sleep_khz)) अणु
+		clk_mgr_base->clks.dcfclk_deep_sleep_khz = new_घड़ीs->dcfclk_deep_sleep_khz;
+		अगर (pp_smu && pp_smu->set_min_deep_sleep_dcfclk)
 			pp_smu->set_min_deep_sleep_dcfclk(&pp_smu->pp_smu, clk_mgr_base->clks.dcfclk_deep_sleep_khz / 1000);
-	}
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, new_clocks->socclk_khz, clk_mgr_base->clks.socclk_khz)) {
-		clk_mgr_base->clks.socclk_khz = new_clocks->socclk_khz;
-		if (pp_smu && pp_smu->set_hard_min_socclk_by_freq)
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->socclk_khz, clk_mgr_base->clks.socclk_khz)) अणु
+		clk_mgr_base->clks.socclk_khz = new_घड़ीs->socclk_khz;
+		अगर (pp_smu && pp_smu->set_hard_min_socclk_by_freq)
 			pp_smu->set_hard_min_socclk_by_freq(&pp_smu->pp_smu, clk_mgr_base->clks.socclk_khz / 1000);
-	}
+	पूर्ण
 
 	total_plane_count = clk_mgr_helper_get_active_plane_cnt(dc, context);
-	p_state_change_support = new_clocks->p_state_change_support || (total_plane_count == 0);
-	if (should_update_pstate_support(safe_to_lower, p_state_change_support, clk_mgr_base->clks.p_state_change_support)) {
+	p_state_change_support = new_घड़ीs->p_state_change_support || (total_plane_count == 0);
+	अगर (should_update_pstate_support(safe_to_lower, p_state_change_support, clk_mgr_base->clks.p_state_change_support)) अणु
 		clk_mgr_base->clks.prev_p_state_change_support = clk_mgr_base->clks.p_state_change_support;
 		clk_mgr_base->clks.p_state_change_support = p_state_change_support;
-		if (pp_smu && pp_smu->set_pstate_handshake_support)
+		अगर (pp_smu && pp_smu->set_pstate_handshake_support)
 			pp_smu->set_pstate_handshake_support(&pp_smu->pp_smu, clk_mgr_base->clks.p_state_change_support);
-	}
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, new_clocks->dramclk_khz, clk_mgr_base->clks.dramclk_khz)) {
-		clk_mgr_base->clks.dramclk_khz = new_clocks->dramclk_khz;
-		if (pp_smu && pp_smu->set_hard_min_uclk_by_freq)
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->dramclk_khz, clk_mgr_base->clks.dramclk_khz)) अणु
+		clk_mgr_base->clks.dramclk_khz = new_घड़ीs->dramclk_khz;
+		अगर (pp_smu && pp_smu->set_hard_min_uclk_by_freq)
 			pp_smu->set_hard_min_uclk_by_freq(&pp_smu->pp_smu, clk_mgr_base->clks.dramclk_khz / 1000);
-	}
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, new_clocks->dppclk_khz, clk_mgr->base.clks.dppclk_khz)) {
-		if (clk_mgr->base.clks.dppclk_khz > new_clocks->dppclk_khz)
-			dpp_clock_lowered = true;
-		clk_mgr->base.clks.dppclk_khz = new_clocks->dppclk_khz;
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->dppclk_khz, clk_mgr->base.clks.dppclk_khz)) अणु
+		अगर (clk_mgr->base.clks.dppclk_khz > new_घड़ीs->dppclk_khz)
+			dpp_घड़ी_lowered = true;
+		clk_mgr->base.clks.dppclk_khz = new_घड़ीs->dppclk_khz;
 
 		update_dppclk = true;
-	}
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, new_clocks->dispclk_khz, clk_mgr_base->clks.dispclk_khz)) {
-		clk_mgr_base->clks.dispclk_khz = new_clocks->dispclk_khz;
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->dispclk_khz, clk_mgr_base->clks.dispclk_khz)) अणु
+		clk_mgr_base->clks.dispclk_khz = new_घड़ीs->dispclk_khz;
 
 		update_dispclk = true;
-	}
+	पूर्ण
 
-	if (update_dppclk || update_dispclk) {
-		new_clocks->disp_dpp_voltage_level_khz = new_clocks->dppclk_khz;
+	अगर (update_dppclk || update_dispclk) अणु
+		new_घड़ीs->disp_dpp_voltage_level_khz = new_घड़ीs->dppclk_khz;
 
-		if (update_dispclk)
-			new_clocks->disp_dpp_voltage_level_khz = new_clocks->dispclk_khz > new_clocks->dppclk_khz ? new_clocks->dispclk_khz : new_clocks->dppclk_khz;
+		अगर (update_dispclk)
+			new_घड़ीs->disp_dpp_voltage_level_khz = new_घड़ीs->dispclk_khz > new_घड़ीs->dppclk_khz ? new_घड़ीs->dispclk_khz : new_घड़ीs->dppclk_khz;
 
-		clk_mgr_base->clks.disp_dpp_voltage_level_khz = new_clocks->disp_dpp_voltage_level_khz;
-		if (pp_smu && pp_smu->set_voltage_by_freq)
+		clk_mgr_base->clks.disp_dpp_voltage_level_khz = new_घड़ीs->disp_dpp_voltage_level_khz;
+		अगर (pp_smu && pp_smu->set_voltage_by_freq)
 			pp_smu->set_voltage_by_freq(&pp_smu->pp_smu, PP_SMU_NV_DISPCLK, clk_mgr_base->clks.disp_dpp_voltage_level_khz / 1000);
-	}
+	पूर्ण
 
-	if (dc->config.forced_clocks == false || (force_reset && safe_to_lower)) {
-		if (dpp_clock_lowered) {
-			// if clock is being lowered, increase DTO before lowering refclk
-			dcn20_update_clocks_update_dpp_dto(clk_mgr, context, safe_to_lower);
-			dcn20_update_clocks_update_dentist(clk_mgr);
-		} else {
-			// if clock is being raised, increase refclk before lowering DTO
-			if (update_dppclk || update_dispclk)
-				dcn20_update_clocks_update_dentist(clk_mgr);
-			// always update dtos unless clock is lowered and not safe to lower
-			dcn20_update_clocks_update_dpp_dto(clk_mgr, context, safe_to_lower);
-		}
-	}
+	अगर (dc->config.क्रमced_घड़ीs == false || (क्रमce_reset && safe_to_lower)) अणु
+		अगर (dpp_घड़ी_lowered) अणु
+			// अगर घड़ी is being lowered, increase DTO beक्रमe lowering refclk
+			dcn20_update_घड़ीs_update_dpp_dto(clk_mgr, context, safe_to_lower);
+			dcn20_update_घड़ीs_update_dentist(clk_mgr);
+		पूर्ण अन्यथा अणु
+			// अगर घड़ी is being उठाओd, increase refclk beक्रमe lowering DTO
+			अगर (update_dppclk || update_dispclk)
+				dcn20_update_घड़ीs_update_dentist(clk_mgr);
+			// always update dtos unless घड़ी is lowered and not safe to lower
+			dcn20_update_घड़ीs_update_dpp_dto(clk_mgr, context, safe_to_lower);
+		पूर्ण
+	पूर्ण
 
-	if (update_dispclk &&
-			dmcu && dmcu->funcs->is_dmcu_initialized(dmcu)) {
-		/*update dmcu for wait_loop count*/
-		dmcu->funcs->set_psr_wait_loop(dmcu,
+	अगर (update_dispclk &&
+			dmcu && dmcu->funcs->is_dmcu_initialized(dmcu)) अणु
+		/*update dmcu क्रम रुको_loop count*/
+		dmcu->funcs->set_psr_रुको_loop(dmcu,
 			clk_mgr_base->clks.dispclk_khz / 1000 / 7);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void dcn2_update_clocks_fpga(struct clk_mgr *clk_mgr,
-		struct dc_state *context,
+व्योम dcn2_update_घड़ीs_fpga(काष्ठा clk_mgr *clk_mgr,
+		काष्ठा dc_state *context,
 		bool safe_to_lower)
-{
-	struct clk_mgr_internal *clk_mgr_int = TO_CLK_MGR_INTERNAL(clk_mgr);
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr_पूर्णांक = TO_CLK_MGR_INTERNAL(clk_mgr);
 
-	struct dc_clocks *new_clocks = &context->bw_ctx.bw.dcn.clk;
+	काष्ठा dc_घड़ीs *new_घड़ीs = &context->bw_ctx.bw.dcn.clk;
 	/* Min fclk = 1.2GHz since all the extra scemi logic seems to run off of it */
-	int fclk_adj = new_clocks->fclk_khz > 1200000 ? new_clocks->fclk_khz : 1200000;
+	पूर्णांक fclk_adj = new_घड़ीs->fclk_khz > 1200000 ? new_घड़ीs->fclk_khz : 1200000;
 
-	if (should_set_clock(safe_to_lower, new_clocks->phyclk_khz, clk_mgr->clks.phyclk_khz)) {
-		clk_mgr->clks.phyclk_khz = new_clocks->phyclk_khz;
-	}
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->phyclk_khz, clk_mgr->clks.phyclk_khz)) अणु
+		clk_mgr->clks.phyclk_khz = new_घड़ीs->phyclk_khz;
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, new_clocks->dcfclk_khz, clk_mgr->clks.dcfclk_khz)) {
-		clk_mgr->clks.dcfclk_khz = new_clocks->dcfclk_khz;
-	}
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->dcfclk_khz, clk_mgr->clks.dcfclk_khz)) अणु
+		clk_mgr->clks.dcfclk_khz = new_घड़ीs->dcfclk_khz;
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower,
-			new_clocks->dcfclk_deep_sleep_khz, clk_mgr->clks.dcfclk_deep_sleep_khz)) {
-		clk_mgr->clks.dcfclk_deep_sleep_khz = new_clocks->dcfclk_deep_sleep_khz;
-	}
+	अगर (should_set_घड़ी(safe_to_lower,
+			new_घड़ीs->dcfclk_deep_sleep_khz, clk_mgr->clks.dcfclk_deep_sleep_khz)) अणु
+		clk_mgr->clks.dcfclk_deep_sleep_khz = new_घड़ीs->dcfclk_deep_sleep_khz;
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, new_clocks->socclk_khz, clk_mgr->clks.socclk_khz)) {
-		clk_mgr->clks.socclk_khz = new_clocks->socclk_khz;
-	}
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->socclk_khz, clk_mgr->clks.socclk_khz)) अणु
+		clk_mgr->clks.socclk_khz = new_घड़ीs->socclk_khz;
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, new_clocks->dramclk_khz, clk_mgr->clks.dramclk_khz)) {
-		clk_mgr->clks.dramclk_khz = new_clocks->dramclk_khz;
-	}
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->dramclk_khz, clk_mgr->clks.dramclk_khz)) अणु
+		clk_mgr->clks.dramclk_khz = new_घड़ीs->dramclk_khz;
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, new_clocks->dppclk_khz, clk_mgr->clks.dppclk_khz)) {
-		clk_mgr->clks.dppclk_khz = new_clocks->dppclk_khz;
-	}
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->dppclk_khz, clk_mgr->clks.dppclk_khz)) अणु
+		clk_mgr->clks.dppclk_khz = new_घड़ीs->dppclk_khz;
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, fclk_adj, clk_mgr->clks.fclk_khz)) {
+	अगर (should_set_घड़ी(safe_to_lower, fclk_adj, clk_mgr->clks.fclk_khz)) अणु
 		clk_mgr->clks.fclk_khz = fclk_adj;
-	}
+	पूर्ण
 
-	if (should_set_clock(safe_to_lower, new_clocks->dispclk_khz, clk_mgr->clks.dispclk_khz)) {
-		clk_mgr->clks.dispclk_khz = new_clocks->dispclk_khz;
-	}
+	अगर (should_set_घड़ी(safe_to_lower, new_घड़ीs->dispclk_khz, clk_mgr->clks.dispclk_khz)) अणु
+		clk_mgr->clks.dispclk_khz = new_घड़ीs->dispclk_khz;
+	पूर्ण
 
-	/* Both fclk and ref_dppclk run on the same scemi clock.
+	/* Both fclk and ref_dppclk run on the same scemi घड़ी.
 	 * So take the higher value since the DPP DTO is typically programmed
 	 * such that max dppclk is 1:1 with ref_dppclk.
 	 */
-	if (clk_mgr->clks.fclk_khz > clk_mgr->clks.dppclk_khz)
+	अगर (clk_mgr->clks.fclk_khz > clk_mgr->clks.dppclk_khz)
 		clk_mgr->clks.dppclk_khz = clk_mgr->clks.fclk_khz;
-	if (clk_mgr->clks.dppclk_khz > clk_mgr->clks.fclk_khz)
+	अगर (clk_mgr->clks.dppclk_khz > clk_mgr->clks.fclk_khz)
 		clk_mgr->clks.fclk_khz = clk_mgr->clks.dppclk_khz;
 
-	// Both fclk and ref_dppclk run on the same scemi clock.
-	clk_mgr_int->dccg->ref_dppclk = clk_mgr->clks.fclk_khz;
+	// Both fclk and ref_dppclk run on the same scemi घड़ी.
+	clk_mgr_पूर्णांक->dccg->ref_dppclk = clk_mgr->clks.fclk_khz;
 
-	dm_set_dcn_clocks(clk_mgr->ctx, &clk_mgr->clks);
-}
+	dm_set_dcn_घड़ीs(clk_mgr->ctx, &clk_mgr->clks);
+पूर्ण
 
-void dcn2_init_clocks(struct clk_mgr *clk_mgr)
-{
-	memset(&(clk_mgr->clks), 0, sizeof(struct dc_clocks));
+व्योम dcn2_init_घड़ीs(काष्ठा clk_mgr *clk_mgr)
+अणु
+	स_रखो(&(clk_mgr->clks), 0, माप(काष्ठा dc_घड़ीs));
 	// Assumption is that boot state always supports pstate
 	clk_mgr->clks.p_state_change_support = true;
 	clk_mgr->clks.prev_p_state_change_support = true;
-}
+पूर्ण
 
-void dcn2_enable_pme_wa(struct clk_mgr *clk_mgr_base)
-{
-	struct clk_mgr_internal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
-	struct pp_smu_funcs_nv *pp_smu = NULL;
+व्योम dcn2_enable_pme_wa(काष्ठा clk_mgr *clk_mgr_base)
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+	काष्ठा pp_smu_funcs_nv *pp_smu = शून्य;
 
-	if (clk_mgr->pp_smu) {
+	अगर (clk_mgr->pp_smu) अणु
 		pp_smu = &clk_mgr->pp_smu->nv_funcs;
 
-		if (pp_smu->set_pme_wa_enable)
+		अगर (pp_smu->set_pme_wa_enable)
 			pp_smu->set_pme_wa_enable(&pp_smu->pp_smu);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-void dcn2_read_clocks_from_hw_dentist(struct clk_mgr *clk_mgr_base)
-{
-	struct clk_mgr_internal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
-	uint32_t dispclk_wdivider;
-	uint32_t dppclk_wdivider;
-	int disp_divider;
-	int dpp_divider;
+व्योम dcn2_पढ़ो_घड़ीs_from_hw_dentist(काष्ठा clk_mgr *clk_mgr_base)
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+	uपूर्णांक32_t dispclk_wभागider;
+	uपूर्णांक32_t dppclk_wभागider;
+	पूर्णांक disp_भागider;
+	पूर्णांक dpp_भागider;
 
-	REG_GET(DENTIST_DISPCLK_CNTL, DENTIST_DISPCLK_WDIVIDER, &dispclk_wdivider);
-	REG_GET(DENTIST_DISPCLK_CNTL, DENTIST_DPPCLK_WDIVIDER, &dppclk_wdivider);
+	REG_GET(DENTIST_DISPCLK_CNTL, DENTIST_DISPCLK_WDIVIDER, &dispclk_wभागider);
+	REG_GET(DENTIST_DISPCLK_CNTL, DENTIST_DPPCLK_WDIVIDER, &dppclk_wभागider);
 
-	disp_divider = dentist_get_divider_from_did(dispclk_wdivider);
-	dpp_divider = dentist_get_divider_from_did(dppclk_wdivider);
+	disp_भागider = dentist_get_भागider_from_did(dispclk_wभागider);
+	dpp_भागider = dentist_get_भागider_from_did(dppclk_wभागider);
 
-	if (disp_divider && dpp_divider) {
-		/* Calculate the current DFS clock, in kHz.*/
+	अगर (disp_भागider && dpp_भागider) अणु
+		/* Calculate the current DFS घड़ी, in kHz.*/
 		clk_mgr_base->clks.dispclk_khz = (DENTIST_DIVIDER_RANGE_SCALE_FACTOR
-			* clk_mgr->base.dentist_vco_freq_khz) / disp_divider;
+			* clk_mgr->base.dentist_vco_freq_khz) / disp_भागider;
 
 		clk_mgr_base->clks.dppclk_khz = (DENTIST_DIVIDER_RANGE_SCALE_FACTOR
-				* clk_mgr->base.dentist_vco_freq_khz) / dpp_divider;
-	}
+				* clk_mgr->base.dentist_vco_freq_khz) / dpp_भागider;
+	पूर्ण
 
-}
+पूर्ण
 
-void dcn2_get_clock(struct clk_mgr *clk_mgr,
-		struct dc_state *context,
-			enum dc_clock_type clock_type,
-			struct dc_clock_config *clock_cfg)
-{
+व्योम dcn2_get_घड़ी(काष्ठा clk_mgr *clk_mgr,
+		काष्ठा dc_state *context,
+			क्रमागत dc_घड़ी_प्रकारype घड़ी_प्रकारype,
+			काष्ठा dc_घड़ी_config *घड़ी_cfg)
+अणु
 
-	if (clock_type == DC_CLOCK_TYPE_DISPCLK) {
-		clock_cfg->max_clock_khz = context->bw_ctx.bw.dcn.clk.max_supported_dispclk_khz;
-		clock_cfg->min_clock_khz = DCN_MINIMUM_DISPCLK_Khz;
-		clock_cfg->current_clock_khz = clk_mgr->clks.dispclk_khz;
-		clock_cfg->bw_requirequired_clock_khz = context->bw_ctx.bw.dcn.clk.bw_dispclk_khz;
-	}
-	if (clock_type == DC_CLOCK_TYPE_DPPCLK) {
-		clock_cfg->max_clock_khz = context->bw_ctx.bw.dcn.clk.max_supported_dppclk_khz;
-		clock_cfg->min_clock_khz = DCN_MINIMUM_DPPCLK_Khz;
-		clock_cfg->current_clock_khz = clk_mgr->clks.dppclk_khz;
-		clock_cfg->bw_requirequired_clock_khz = context->bw_ctx.bw.dcn.clk.bw_dppclk_khz;
-	}
-}
+	अगर (घड़ी_प्रकारype == DC_CLOCK_TYPE_DISPCLK) अणु
+		घड़ी_cfg->max_घड़ी_khz = context->bw_ctx.bw.dcn.clk.max_supported_dispclk_khz;
+		घड़ी_cfg->min_घड़ी_khz = DCN_MINIMUM_DISPCLK_Khz;
+		घड़ी_cfg->current_घड़ी_khz = clk_mgr->clks.dispclk_khz;
+		घड़ी_cfg->bw_requirequired_घड़ी_khz = context->bw_ctx.bw.dcn.clk.bw_dispclk_khz;
+	पूर्ण
+	अगर (घड़ी_प्रकारype == DC_CLOCK_TYPE_DPPCLK) अणु
+		घड़ी_cfg->max_घड़ी_khz = context->bw_ctx.bw.dcn.clk.max_supported_dppclk_khz;
+		घड़ी_cfg->min_घड़ी_khz = DCN_MINIMUM_DPPCLK_Khz;
+		घड़ी_cfg->current_घड़ी_khz = clk_mgr->clks.dppclk_khz;
+		घड़ी_cfg->bw_requirequired_घड़ी_khz = context->bw_ctx.bw.dcn.clk.bw_dppclk_khz;
+	पूर्ण
+पूर्ण
 
-static bool dcn2_are_clock_states_equal(struct dc_clocks *a,
-		struct dc_clocks *b)
-{
-	if (a->dispclk_khz != b->dispclk_khz)
-		return false;
-	else if (a->dppclk_khz != b->dppclk_khz)
-		return false;
-	else if (a->disp_dpp_voltage_level_khz != b->disp_dpp_voltage_level_khz)
-		return false;
-	else if (a->dcfclk_khz != b->dcfclk_khz)
-		return false;
-	else if (a->socclk_khz != b->socclk_khz)
-		return false;
-	else if (a->dcfclk_deep_sleep_khz != b->dcfclk_deep_sleep_khz)
-		return false;
-	else if (a->dramclk_khz != b->dramclk_khz)
-		return false;
-	else if (a->p_state_change_support != b->p_state_change_support)
-		return false;
+अटल bool dcn2_are_घड़ी_states_equal(काष्ठा dc_घड़ीs *a,
+		काष्ठा dc_घड़ीs *b)
+अणु
+	अगर (a->dispclk_khz != b->dispclk_khz)
+		वापस false;
+	अन्यथा अगर (a->dppclk_khz != b->dppclk_khz)
+		वापस false;
+	अन्यथा अगर (a->disp_dpp_voltage_level_khz != b->disp_dpp_voltage_level_khz)
+		वापस false;
+	अन्यथा अगर (a->dcfclk_khz != b->dcfclk_khz)
+		वापस false;
+	अन्यथा अगर (a->socclk_khz != b->socclk_khz)
+		वापस false;
+	अन्यथा अगर (a->dcfclk_deep_sleep_khz != b->dcfclk_deep_sleep_khz)
+		वापस false;
+	अन्यथा अगर (a->dramclk_khz != b->dramclk_khz)
+		वापस false;
+	अन्यथा अगर (a->p_state_change_support != b->p_state_change_support)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* Notify clk_mgr of a change in link rate, update phyclk frequency if necessary */
-static void dcn2_notify_link_rate_change(struct clk_mgr *clk_mgr_base, struct dc_link *link)
-{
-	struct clk_mgr_internal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
-	unsigned int i, max_phyclk_req = 0;
-	struct pp_smu_funcs_nv *pp_smu = NULL;
+/* Notअगरy clk_mgr of a change in link rate, update phyclk frequency अगर necessary */
+अटल व्योम dcn2_notअगरy_link_rate_change(काष्ठा clk_mgr *clk_mgr_base, काष्ठा dc_link *link)
+अणु
+	काष्ठा clk_mgr_पूर्णांकernal *clk_mgr = TO_CLK_MGR_INTERNAL(clk_mgr_base);
+	अचिन्हित पूर्णांक i, max_phyclk_req = 0;
+	काष्ठा pp_smu_funcs_nv *pp_smu = शून्य;
 
-	if (!clk_mgr->pp_smu || !clk_mgr->pp_smu->nv_funcs.set_voltage_by_freq)
-		return;
+	अगर (!clk_mgr->pp_smu || !clk_mgr->pp_smu->nv_funcs.set_voltage_by_freq)
+		वापस;
 
 	pp_smu = &clk_mgr->pp_smu->nv_funcs;
 
 	clk_mgr->cur_phyclk_req_table[link->link_index] = link->cur_link_settings.link_rate * LINK_RATE_REF_FREQ_IN_KHZ;
 
-	for (i = 0; i < MAX_PIPES * 2; i++) {
-		if (clk_mgr->cur_phyclk_req_table[i] > max_phyclk_req)
+	क्रम (i = 0; i < MAX_PIPES * 2; i++) अणु
+		अगर (clk_mgr->cur_phyclk_req_table[i] > max_phyclk_req)
 			max_phyclk_req = clk_mgr->cur_phyclk_req_table[i];
-	}
+	पूर्ण
 
-	if (max_phyclk_req != clk_mgr_base->clks.phyclk_khz) {
+	अगर (max_phyclk_req != clk_mgr_base->clks.phyclk_khz) अणु
 		clk_mgr_base->clks.phyclk_khz = max_phyclk_req;
 		pp_smu->set_voltage_by_freq(&pp_smu->pp_smu, PP_SMU_NV_PHYCLK, clk_mgr_base->clks.phyclk_khz / 1000);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct clk_mgr_funcs dcn2_funcs = {
+अटल काष्ठा clk_mgr_funcs dcn2_funcs = अणु
 	.get_dp_ref_clk_frequency = dce12_get_dp_ref_freq_khz,
-	.update_clocks = dcn2_update_clocks,
-	.init_clocks = dcn2_init_clocks,
+	.update_घड़ीs = dcn2_update_घड़ीs,
+	.init_घड़ीs = dcn2_init_घड़ीs,
 	.enable_pme_wa = dcn2_enable_pme_wa,
-	.get_clock = dcn2_get_clock,
-	.are_clock_states_equal = dcn2_are_clock_states_equal,
-	.notify_link_rate_change = dcn2_notify_link_rate_change,
-};
+	.get_घड़ी = dcn2_get_घड़ी,
+	.are_घड़ी_states_equal = dcn2_are_घड़ी_states_equal,
+	.notअगरy_link_rate_change = dcn2_notअगरy_link_rate_change,
+पूर्ण;
 
 
-void dcn20_clk_mgr_construct(
-		struct dc_context *ctx,
-		struct clk_mgr_internal *clk_mgr,
-		struct pp_smu_funcs *pp_smu,
-		struct dccg *dccg)
-{
+व्योम dcn20_clk_mgr_स्थिरruct(
+		काष्ठा dc_context *ctx,
+		काष्ठा clk_mgr_पूर्णांकernal *clk_mgr,
+		काष्ठा pp_smu_funcs *pp_smu,
+		काष्ठा dccg *dccg)
+अणु
 	clk_mgr->base.ctx = ctx;
 	clk_mgr->pp_smu = pp_smu;
 	clk_mgr->base.funcs = &dcn2_funcs;
 	clk_mgr->regs = &clk_mgr_regs;
-	clk_mgr->clk_mgr_shift = &clk_mgr_shift;
+	clk_mgr->clk_mgr_shअगरt = &clk_mgr_shअगरt;
 	clk_mgr->clk_mgr_mask = &clk_mgr_mask;
 
 	clk_mgr->dccg = dccg;
 	clk_mgr->dfs_bypass_disp_clk = 0;
 
 	clk_mgr->dprefclk_ss_percentage = 0;
-	clk_mgr->dprefclk_ss_divider = 1000;
+	clk_mgr->dprefclk_ss_भागider = 1000;
 	clk_mgr->ss_on_dprefclk = false;
 
-	clk_mgr->base.dprefclk_khz = 700000; // 700 MHz planned if VCO is 3.85 GHz, will be retrieved
+	clk_mgr->base.dprefclk_khz = 700000; // 700 MHz planned अगर VCO is 3.85 GHz, will be retrieved
 
-	if (IS_FPGA_MAXIMUS_DC(ctx->dce_environment)) {
-		dcn2_funcs.update_clocks = dcn2_update_clocks_fpga;
+	अगर (IS_FPGA_MAXIMUS_DC(ctx->dce_environment)) अणु
+		dcn2_funcs.update_घड़ीs = dcn2_update_घड़ीs_fpga;
 		clk_mgr->base.dentist_vco_freq_khz = 3850000;
 
-	} else {
-		/* DFS Slice 2 should be used for DPREFCLK */
-		int dprefclk_did = REG_READ(CLK3_CLK2_DFS_CNTL);
-		/* Convert DPREFCLK DFS Slice DID to actual divider*/
-		int target_div = dentist_get_divider_from_did(dprefclk_did);
+	पूर्ण अन्यथा अणु
+		/* DFS Slice 2 should be used क्रम DPREFCLK */
+		पूर्णांक dprefclk_did = REG_READ(CLK3_CLK2_DFS_CNTL);
+		/* Convert DPREFCLK DFS Slice DID to actual भागider*/
+		पूर्णांक target_भाग = dentist_get_भागider_from_did(dprefclk_did);
 
 		/* get FbMult value */
-		uint32_t pll_req_reg = REG_READ(CLK3_CLK_PLL_REQ);
-		struct fixed31_32 pll_req;
+		uपूर्णांक32_t pll_req_reg = REG_READ(CLK3_CLK_PLL_REQ);
+		काष्ठा fixed31_32 pll_req;
 
-		/* set up a fixed-point number
-		 * this works because the int part is on the right edge of the register
+		/* set up a fixed-poपूर्णांक number
+		 * this works because the पूर्णांक part is on the right edge of the रेजिस्टर
 		 * and the frac part is on the left edge
 		 */
 
-		pll_req = dc_fixpt_from_int(pll_req_reg & clk_mgr->clk_mgr_mask->FbMult_int);
+		pll_req = dc_fixpt_from_पूर्णांक(pll_req_reg & clk_mgr->clk_mgr_mask->FbMult_पूर्णांक);
 		pll_req.value |= pll_req_reg & clk_mgr->clk_mgr_mask->FbMult_frac;
 
 		/* multiply by REFCLK period */
-		pll_req = dc_fixpt_mul_int(pll_req, 100000);
+		pll_req = dc_fixpt_mul_पूर्णांक(pll_req, 100000);
 
-		/* integer part is now VCO frequency in kHz */
-		clk_mgr->base.dentist_vco_freq_khz = dc_fixpt_floor(pll_req);
+		/* पूर्णांकeger part is now VCO frequency in kHz */
+		clk_mgr->base.dentist_vco_freq_khz = dc_fixpt_न्यूनमान(pll_req);
 
-		/* in case we don't get a value from the register, use default */
-		if (clk_mgr->base.dentist_vco_freq_khz == 0)
+		/* in हाल we करोn't get a value from the रेजिस्टर, use शेष */
+		अगर (clk_mgr->base.dentist_vco_freq_khz == 0)
 			clk_mgr->base.dentist_vco_freq_khz = 3850000;
 
 		/* Calculate the DPREFCLK in kHz.*/
 		clk_mgr->base.dprefclk_khz = (DENTIST_DIVIDER_RANGE_SCALE_FACTOR
-			* clk_mgr->base.dentist_vco_freq_khz) / target_div;
-	}
-	//Integrated_info table does not exist on dGPU projects so should not be referenced
-	//anywhere in code for dGPUs.
-	//Also there is no plan for now that DFS BYPASS will be used on NV10/12/14.
+			* clk_mgr->base.dentist_vco_freq_khz) / target_भाग;
+	पूर्ण
+	//Integrated_info table करोes not exist on dGPU projects so should not be referenced
+	//anywhere in code क्रम dGPUs.
+	//Also there is no plan क्रम now that DFS BYPASS will be used on NV10/12/14.
 	clk_mgr->dfs_bypass_enabled = false;
 
-	dce_clock_read_ss_info(clk_mgr);
-}
+	dce_घड़ी_पढ़ो_ss_info(clk_mgr);
+पूर्ण
 

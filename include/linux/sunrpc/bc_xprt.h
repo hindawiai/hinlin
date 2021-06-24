@@ -1,16 +1,17 @@
+<शैली गुरु>
 /******************************************************************************
 
 (c) 2008 NetApp.  All Rights Reserved.
 
 NetApp provides this source code under the GPL v2 License.
 The GPL v2 license is available at
-https://opensource.org/licenses/gpl-license.php.
+https://खोलोsource.org/licenses/gpl-license.php.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL,
 EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
 PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
 PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -24,63 +25,63 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  * Functions to create and manage the backchannel
  */
 
-#ifndef _LINUX_SUNRPC_BC_XPRT_H
-#define _LINUX_SUNRPC_BC_XPRT_H
+#अगर_अघोषित _LINUX_SUNRPC_BC_XPRT_H
+#घोषणा _LINUX_SUNRPC_BC_XPRT_H
 
-#include <linux/sunrpc/svcsock.h>
-#include <linux/sunrpc/xprt.h>
-#include <linux/sunrpc/sched.h>
+#समावेश <linux/sunrpc/svcsock.h>
+#समावेश <linux/sunrpc/xprt.h>
+#समावेश <linux/sunrpc/sched.h>
 
-#ifdef CONFIG_SUNRPC_BACKCHANNEL
-struct rpc_rqst *xprt_lookup_bc_request(struct rpc_xprt *xprt, __be32 xid);
-void xprt_complete_bc_request(struct rpc_rqst *req, uint32_t copied);
-void xprt_init_bc_request(struct rpc_rqst *req, struct rpc_task *task);
-void xprt_free_bc_request(struct rpc_rqst *req);
-int xprt_setup_backchannel(struct rpc_xprt *, unsigned int min_reqs);
-void xprt_destroy_backchannel(struct rpc_xprt *, unsigned int max_reqs);
+#अगर_घोषित CONFIG_SUNRPC_BACKCHANNEL
+काष्ठा rpc_rqst *xprt_lookup_bc_request(काष्ठा rpc_xprt *xprt, __be32 xid);
+व्योम xprt_complete_bc_request(काष्ठा rpc_rqst *req, uपूर्णांक32_t copied);
+व्योम xprt_init_bc_request(काष्ठा rpc_rqst *req, काष्ठा rpc_task *task);
+व्योम xprt_मुक्त_bc_request(काष्ठा rpc_rqst *req);
+पूर्णांक xprt_setup_backchannel(काष्ठा rpc_xprt *, अचिन्हित पूर्णांक min_reqs);
+व्योम xprt_destroy_backchannel(काष्ठा rpc_xprt *, अचिन्हित पूर्णांक max_reqs);
 
 /* Socket backchannel transport methods */
-int xprt_setup_bc(struct rpc_xprt *xprt, unsigned int min_reqs);
-void xprt_destroy_bc(struct rpc_xprt *xprt, unsigned int max_reqs);
-void xprt_free_bc_rqst(struct rpc_rqst *req);
-unsigned int xprt_bc_max_slots(struct rpc_xprt *xprt);
+पूर्णांक xprt_setup_bc(काष्ठा rpc_xprt *xprt, अचिन्हित पूर्णांक min_reqs);
+व्योम xprt_destroy_bc(काष्ठा rpc_xprt *xprt, अचिन्हित पूर्णांक max_reqs);
+व्योम xprt_मुक्त_bc_rqst(काष्ठा rpc_rqst *req);
+अचिन्हित पूर्णांक xprt_bc_max_slots(काष्ठा rpc_xprt *xprt);
 
 /*
- * Determine if a shared backchannel is in use
+ * Determine अगर a shared backchannel is in use
  */
-static inline bool svc_is_backchannel(const struct svc_rqst *rqstp)
-{
-	return rqstp->rq_server->sv_bc_enabled;
-}
+अटल अंतरभूत bool svc_is_backchannel(स्थिर काष्ठा svc_rqst *rqstp)
+अणु
+	वापस rqstp->rq_server->sv_bc_enabled;
+पूर्ण
 
-static inline void set_bc_enabled(struct svc_serv *serv)
-{
+अटल अंतरभूत व्योम set_bc_enabled(काष्ठा svc_serv *serv)
+अणु
 	serv->sv_bc_enabled = true;
-}
-#else /* CONFIG_SUNRPC_BACKCHANNEL */
-static inline int xprt_setup_backchannel(struct rpc_xprt *xprt,
-					 unsigned int min_reqs)
-{
-	return 0;
-}
+पूर्ण
+#अन्यथा /* CONFIG_SUNRPC_BACKCHANNEL */
+अटल अंतरभूत पूर्णांक xprt_setup_backchannel(काष्ठा rpc_xprt *xprt,
+					 अचिन्हित पूर्णांक min_reqs)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void xprt_destroy_backchannel(struct rpc_xprt *xprt,
-					    unsigned int max_reqs)
-{
-}
+अटल अंतरभूत व्योम xprt_destroy_backchannel(काष्ठा rpc_xprt *xprt,
+					    अचिन्हित पूर्णांक max_reqs)
+अणु
+पूर्ण
 
-static inline bool svc_is_backchannel(const struct svc_rqst *rqstp)
-{
-	return false;
-}
+अटल अंतरभूत bool svc_is_backchannel(स्थिर काष्ठा svc_rqst *rqstp)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void set_bc_enabled(struct svc_serv *serv)
-{
-}
+अटल अंतरभूत व्योम set_bc_enabled(काष्ठा svc_serv *serv)
+अणु
+पूर्ण
 
-static inline void xprt_free_bc_request(struct rpc_rqst *req)
-{
-}
-#endif /* CONFIG_SUNRPC_BACKCHANNEL */
-#endif /* _LINUX_SUNRPC_BC_XPRT_H */
+अटल अंतरभूत व्योम xprt_मुक्त_bc_request(काष्ठा rpc_rqst *req)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_SUNRPC_BACKCHANNEL */
+#पूर्ण_अगर /* _LINUX_SUNRPC_BC_XPRT_H */
 

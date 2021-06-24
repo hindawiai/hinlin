@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/atomic.h>
-#include <linux/percpu.h>
-#include <linux/wait.h>
-#include <linux/lockdep.h>
-#include <linux/percpu-rwsem.h>
-#include <linux/rcupdate.h>
-#include <linux/sched.h>
-#include <linux/sched/task.h>
-#include <linux/errno.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/atomic.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/percpu-rwsem.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/त्रुटिसं.स>
 
-int __percpu_init_rwsem(struct percpu_rw_semaphore *sem,
-			const char *name, struct lock_class_key *key)
-{
-	sem->read_count = alloc_percpu(int);
-	if (unlikely(!sem->read_count))
-		return -ENOMEM;
+पूर्णांक __percpu_init_rwsem(काष्ठा percpu_rw_semaphore *sem,
+			स्थिर अक्षर *name, काष्ठा lock_class_key *key)
+अणु
+	sem->पढ़ो_count = alloc_percpu(पूर्णांक);
+	अगर (unlikely(!sem->पढ़ो_count))
+		वापस -ENOMEM;
 
 	rcu_sync_init(&sem->rss);
-	rcuwait_init(&sem->writer);
-	init_waitqueue_head(&sem->waiters);
+	rcuरुको_init(&sem->ग_लिखोr);
+	init_रुकोqueue_head(&sem->रुकोers);
 	atomic_set(&sem->block, 0);
-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-	debug_check_no_locks_freed((void *)sem, sizeof(*sem));
+#अगर_घोषित CONFIG_DEBUG_LOCK_ALLOC
+	debug_check_no_locks_मुक्तd((व्योम *)sem, माप(*sem));
 	lockdep_init_map(&sem->dep_map, name, key, 0);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__percpu_init_rwsem);
 
-void percpu_free_rwsem(struct percpu_rw_semaphore *sem)
-{
+व्योम percpu_मुक्त_rwsem(काष्ठा percpu_rw_semaphore *sem)
+अणु
 	/*
 	 * XXX: temporary kludge. The error path in alloc_super()
-	 * assumes that percpu_free_rwsem() is safe after kzalloc().
+	 * assumes that percpu_मुक्त_rwsem() is safe after kzalloc().
 	 */
-	if (!sem->read_count)
-		return;
+	अगर (!sem->पढ़ो_count)
+		वापस;
 
 	rcu_sync_dtor(&sem->rss);
-	free_percpu(sem->read_count);
-	sem->read_count = NULL; /* catch use after free bugs */
-}
-EXPORT_SYMBOL_GPL(percpu_free_rwsem);
+	मुक्त_percpu(sem->पढ़ो_count);
+	sem->पढ़ो_count = शून्य; /* catch use after मुक्त bugs */
+पूर्ण
+EXPORT_SYMBOL_GPL(percpu_मुक्त_rwsem);
 
-static bool __percpu_down_read_trylock(struct percpu_rw_semaphore *sem)
-{
-	this_cpu_inc(*sem->read_count);
+अटल bool __percpu_करोwn_पढ़ो_trylock(काष्ठा percpu_rw_semaphore *sem)
+अणु
+	this_cpu_inc(*sem->पढ़ो_count);
 
 	/*
 	 * Due to having preemption disabled the decrement happens on
-	 * the same CPU as the increment, avoiding the
+	 * the same CPU as the increment, aव्योमing the
 	 * increment-on-one-CPU-and-decrement-on-another problem.
 	 *
-	 * If the reader misses the writer's assignment of sem->block, then the
-	 * writer is guaranteed to see the reader's increment.
+	 * If the पढ़ोer misses the ग_लिखोr's assignment of sem->block, then the
+	 * ग_लिखोr is guaranteed to see the पढ़ोer's increment.
 	 *
-	 * Conversely, any readers that increment their sem->read_count after
-	 * the writer looks are guaranteed to see the sem->block value, which
+	 * Conversely, any पढ़ोers that increment their sem->पढ़ो_count after
+	 * the ग_लिखोr looks are guaranteed to see the sem->block value, which
 	 * in turn means that they are guaranteed to immediately decrement
-	 * their sem->read_count, so that it doesn't matter that the writer
+	 * their sem->पढ़ो_count, so that it करोesn't matter that the ग_लिखोr
 	 * missed them.
 	 */
 
@@ -66,140 +67,140 @@ static bool __percpu_down_read_trylock(struct percpu_rw_semaphore *sem)
 
 	/*
 	 * If !sem->block the critical section starts here, matched by the
-	 * release in percpu_up_write().
+	 * release in percpu_up_ग_लिखो().
 	 */
-	if (likely(!atomic_read_acquire(&sem->block)))
-		return true;
+	अगर (likely(!atomic_पढ़ो_acquire(&sem->block)))
+		वापस true;
 
-	this_cpu_dec(*sem->read_count);
+	this_cpu_dec(*sem->पढ़ो_count);
 
-	/* Prod writer to re-evaluate readers_active_check() */
-	rcuwait_wake_up(&sem->writer);
+	/* Prod ग_लिखोr to re-evaluate पढ़ोers_active_check() */
+	rcuरुको_wake_up(&sem->ग_लिखोr);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool __percpu_down_write_trylock(struct percpu_rw_semaphore *sem)
-{
-	if (atomic_read(&sem->block))
-		return false;
+अटल अंतरभूत bool __percpu_करोwn_ग_लिखो_trylock(काष्ठा percpu_rw_semaphore *sem)
+अणु
+	अगर (atomic_पढ़ो(&sem->block))
+		वापस false;
 
-	return atomic_xchg(&sem->block, 1) == 0;
-}
+	वापस atomic_xchg(&sem->block, 1) == 0;
+पूर्ण
 
-static bool __percpu_rwsem_trylock(struct percpu_rw_semaphore *sem, bool reader)
-{
-	if (reader) {
+अटल bool __percpu_rwsem_trylock(काष्ठा percpu_rw_semaphore *sem, bool पढ़ोer)
+अणु
+	अगर (पढ़ोer) अणु
 		bool ret;
 
 		preempt_disable();
-		ret = __percpu_down_read_trylock(sem);
+		ret = __percpu_करोwn_पढ़ो_trylock(sem);
 		preempt_enable();
 
-		return ret;
-	}
-	return __percpu_down_write_trylock(sem);
-}
+		वापस ret;
+	पूर्ण
+	वापस __percpu_करोwn_ग_लिखो_trylock(sem);
+पूर्ण
 
 /*
- * The return value of wait_queue_entry::func means:
+ * The वापस value of रुको_queue_entry::func means:
  *
- *  <0 - error, wakeup is terminated and the error is returned
- *   0 - no wakeup, a next waiter is tried
- *  >0 - woken, if EXCLUSIVE, counted towards @nr_exclusive.
+ *  <0 - error, wakeup is terminated and the error is वापसed
+ *   0 - no wakeup, a next रुकोer is tried
+ *  >0 - woken, अगर EXCLUSIVE, counted towards @nr_exclusive.
  *
- * We use EXCLUSIVE for both readers and writers to preserve FIFO order,
- * and play games with the return value to allow waking multiple readers.
+ * We use EXCLUSIVE क्रम both पढ़ोers and ग_लिखोrs to preserve FIFO order,
+ * and play games with the वापस value to allow waking multiple पढ़ोers.
  *
- * Specifically, we wake readers until we've woken a single writer, or until a
+ * Specअगरically, we wake पढ़ोers until we've woken a single ग_लिखोr, or until a
  * trylock fails.
  */
-static int percpu_rwsem_wake_function(struct wait_queue_entry *wq_entry,
-				      unsigned int mode, int wake_flags,
-				      void *key)
-{
-	bool reader = wq_entry->flags & WQ_FLAG_CUSTOM;
-	struct percpu_rw_semaphore *sem = key;
-	struct task_struct *p;
+अटल पूर्णांक percpu_rwsem_wake_function(काष्ठा रुको_queue_entry *wq_entry,
+				      अचिन्हित पूर्णांक mode, पूर्णांक wake_flags,
+				      व्योम *key)
+अणु
+	bool पढ़ोer = wq_entry->flags & WQ_FLAG_CUSTOM;
+	काष्ठा percpu_rw_semaphore *sem = key;
+	काष्ठा task_काष्ठा *p;
 
-	/* concurrent against percpu_down_write(), can get stolen */
-	if (!__percpu_rwsem_trylock(sem, reader))
-		return 1;
+	/* concurrent against percpu_करोwn_ग_लिखो(), can get stolen */
+	अगर (!__percpu_rwsem_trylock(sem, पढ़ोer))
+		वापस 1;
 
-	p = get_task_struct(wq_entry->private);
+	p = get_task_काष्ठा(wq_entry->निजी);
 	list_del_init(&wq_entry->entry);
-	smp_store_release(&wq_entry->private, NULL);
+	smp_store_release(&wq_entry->निजी, शून्य);
 
 	wake_up_process(p);
-	put_task_struct(p);
+	put_task_काष्ठा(p);
 
-	return !reader; /* wake (readers until) 1 writer */
-}
+	वापस !पढ़ोer; /* wake (पढ़ोers until) 1 ग_लिखोr */
+पूर्ण
 
-static void percpu_rwsem_wait(struct percpu_rw_semaphore *sem, bool reader)
-{
+अटल व्योम percpu_rwsem_रुको(काष्ठा percpu_rw_semaphore *sem, bool पढ़ोer)
+अणु
 	DEFINE_WAIT_FUNC(wq_entry, percpu_rwsem_wake_function);
-	bool wait;
+	bool रुको;
 
-	spin_lock_irq(&sem->waiters.lock);
+	spin_lock_irq(&sem->रुकोers.lock);
 	/*
-	 * Serialize against the wakeup in percpu_up_write(), if we fail
+	 * Serialize against the wakeup in percpu_up_ग_लिखो(), अगर we fail
 	 * the trylock, the wakeup must see us on the list.
 	 */
-	wait = !__percpu_rwsem_trylock(sem, reader);
-	if (wait) {
-		wq_entry.flags |= WQ_FLAG_EXCLUSIVE | reader * WQ_FLAG_CUSTOM;
-		__add_wait_queue_entry_tail(&sem->waiters, &wq_entry);
-	}
-	spin_unlock_irq(&sem->waiters.lock);
+	रुको = !__percpu_rwsem_trylock(sem, पढ़ोer);
+	अगर (रुको) अणु
+		wq_entry.flags |= WQ_FLAG_EXCLUSIVE | पढ़ोer * WQ_FLAG_CUSTOM;
+		__add_रुको_queue_entry_tail(&sem->रुकोers, &wq_entry);
+	पूर्ण
+	spin_unlock_irq(&sem->रुकोers.lock);
 
-	while (wait) {
+	जबतक (रुको) अणु
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		if (!smp_load_acquire(&wq_entry.private))
-			break;
+		अगर (!smp_load_acquire(&wq_entry.निजी))
+			अवरोध;
 		schedule();
-	}
+	पूर्ण
 	__set_current_state(TASK_RUNNING);
-}
+पूर्ण
 
-bool __percpu_down_read(struct percpu_rw_semaphore *sem, bool try)
-{
-	if (__percpu_down_read_trylock(sem))
-		return true;
+bool __percpu_करोwn_पढ़ो(काष्ठा percpu_rw_semaphore *sem, bool try)
+अणु
+	अगर (__percpu_करोwn_पढ़ो_trylock(sem))
+		वापस true;
 
-	if (try)
-		return false;
+	अगर (try)
+		वापस false;
 
 	preempt_enable();
-	percpu_rwsem_wait(sem, /* .reader = */ true);
+	percpu_rwsem_रुको(sem, /* .पढ़ोer = */ true);
 	preempt_disable();
 
-	return true;
-}
-EXPORT_SYMBOL_GPL(__percpu_down_read);
+	वापस true;
+पूर्ण
+EXPORT_SYMBOL_GPL(__percpu_करोwn_पढ़ो);
 
-#define per_cpu_sum(var)						\
-({									\
+#घोषणा per_cpu_sum(var)						\
+(अणु									\
 	typeof(var) __sum = 0;						\
-	int cpu;							\
-	compiletime_assert_atomic_type(__sum);				\
-	for_each_possible_cpu(cpu)					\
+	पूर्णांक cpu;							\
+	compileसमय_निश्चित_atomic_type(__sum);				\
+	क्रम_each_possible_cpu(cpu)					\
 		__sum += per_cpu(var, cpu);				\
 	__sum;								\
-})
+पूर्ण)
 
 /*
- * Return true if the modular sum of the sem->read_count per-CPU variable is
- * zero.  If this sum is zero, then it is stable due to the fact that if any
- * newly arriving readers increment a given counter, they will immediately
+ * Return true अगर the modular sum of the sem->पढ़ो_count per-CPU variable is
+ * zero.  If this sum is zero, then it is stable due to the fact that अगर any
+ * newly arriving पढ़ोers increment a given counter, they will immediately
  * decrement that same counter.
  *
  * Assumes sem->block is set.
  */
-static bool readers_active_check(struct percpu_rw_semaphore *sem)
-{
-	if (per_cpu_sum(*sem->read_count) != 0)
-		return false;
+अटल bool पढ़ोers_active_check(काष्ठा percpu_rw_semaphore *sem)
+अणु
+	अगर (per_cpu_sum(*sem->पढ़ो_count) != 0)
+		वापस false;
 
 	/*
 	 * If we observed the decrement; ensure we see the entire critical
@@ -208,63 +209,63 @@ static bool readers_active_check(struct percpu_rw_semaphore *sem)
 
 	smp_mb(); /* C matches B */
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void percpu_down_write(struct percpu_rw_semaphore *sem)
-{
+व्योम percpu_करोwn_ग_लिखो(काष्ठा percpu_rw_semaphore *sem)
+अणु
 	might_sleep();
 	rwsem_acquire(&sem->dep_map, 0, 0, _RET_IP_);
 
-	/* Notify readers to take the slow path. */
+	/* Notअगरy पढ़ोers to take the slow path. */
 	rcu_sync_enter(&sem->rss);
 
 	/*
-	 * Try set sem->block; this provides writer-writer exclusion.
-	 * Having sem->block set makes new readers block.
+	 * Try set sem->block; this provides ग_लिखोr-ग_लिखोr exclusion.
+	 * Having sem->block set makes new पढ़ोers block.
 	 */
-	if (!__percpu_down_write_trylock(sem))
-		percpu_rwsem_wait(sem, /* .reader = */ false);
+	अगर (!__percpu_करोwn_ग_लिखो_trylock(sem))
+		percpu_rwsem_रुको(sem, /* .पढ़ोer = */ false);
 
-	/* smp_mb() implied by __percpu_down_write_trylock() on success -- D matches A */
+	/* smp_mb() implied by __percpu_करोwn_ग_लिखो_trylock() on success -- D matches A */
 
 	/*
-	 * If they don't see our store of sem->block, then we are guaranteed to
-	 * see their sem->read_count increment, and therefore will wait for
+	 * If they करोn't see our store of sem->block, then we are guaranteed to
+	 * see their sem->पढ़ो_count increment, and thereक्रमe will रुको क्रम
 	 * them.
 	 */
 
-	/* Wait for all active readers to complete. */
-	rcuwait_wait_event(&sem->writer, readers_active_check(sem), TASK_UNINTERRUPTIBLE);
-}
-EXPORT_SYMBOL_GPL(percpu_down_write);
+	/* Wait क्रम all active पढ़ोers to complete. */
+	rcuरुको_रुको_event(&sem->ग_लिखोr, पढ़ोers_active_check(sem), TASK_UNINTERRUPTIBLE);
+पूर्ण
+EXPORT_SYMBOL_GPL(percpu_करोwn_ग_लिखो);
 
-void percpu_up_write(struct percpu_rw_semaphore *sem)
-{
+व्योम percpu_up_ग_लिखो(काष्ठा percpu_rw_semaphore *sem)
+अणु
 	rwsem_release(&sem->dep_map, _RET_IP_);
 
 	/*
-	 * Signal the writer is done, no fast path yet.
+	 * Signal the ग_लिखोr is करोne, no fast path yet.
 	 *
-	 * One reason that we cannot just immediately flip to readers_fast is
-	 * that new readers might fail to see the results of this writer's
+	 * One reason that we cannot just immediately flip to पढ़ोers_fast is
+	 * that new पढ़ोers might fail to see the results of this ग_लिखोr's
 	 * critical section.
 	 *
-	 * Therefore we force it through the slow path which guarantees an
+	 * Thereक्रमe we क्रमce it through the slow path which guarantees an
 	 * acquire and thereby guarantees the critical section's consistency.
 	 */
 	atomic_set_release(&sem->block, 0);
 
 	/*
-	 * Prod any pending reader/writer to make progress.
+	 * Prod any pending पढ़ोer/ग_लिखोr to make progress.
 	 */
-	__wake_up(&sem->waiters, TASK_NORMAL, 1, sem);
+	__wake_up(&sem->रुकोers, TASK_NORMAL, 1, sem);
 
 	/*
 	 * Once this completes (at least one RCU-sched grace period hence) the
-	 * reader fast path will be available again. Safe to use outside the
-	 * exclusive write lock because its counting.
+	 * पढ़ोer fast path will be available again. Safe to use outside the
+	 * exclusive ग_लिखो lock because its counting.
 	 */
-	rcu_sync_exit(&sem->rss);
-}
-EXPORT_SYMBOL_GPL(percpu_up_write);
+	rcu_sync_निकास(&sem->rss);
+पूर्ण
+EXPORT_SYMBOL_GPL(percpu_up_ग_लिखो);

@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson SA 2012
  *
- * Battery temperature driver for AB8500
+ * Battery temperature driver क्रम AB8500
  *
  * Author:
  *	Johan Palsson <johan.palsson@stericsson.com>
@@ -10,53 +11,53 @@
  *	Arun R Murthy <arun.murthy@stericsson.com>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/completion.h>
-#include <linux/workqueue.h>
-#include <linux/jiffies.h>
-#include <linux/of.h>
-#include <linux/mfd/core.h>
-#include <linux/mfd/abx500.h>
-#include <linux/mfd/abx500/ab8500.h>
-#include <linux/iio/consumer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/of.h>
+#समावेश <linux/mfd/core.h>
+#समावेश <linux/mfd/abx500.h>
+#समावेश <linux/mfd/abx500/ab8500.h>
+#समावेश <linux/iio/consumer.h>
 
-#include "ab8500-bm.h"
+#समावेश "ab8500-bm.h"
 
-#define VTVOUT_V			1800
+#घोषणा VTVOUT_V			1800
 
-#define BTEMP_THERMAL_LOW_LIMIT		-10
-#define BTEMP_THERMAL_MED_LIMIT		0
-#define BTEMP_THERMAL_HIGH_LIMIT_52	52
-#define BTEMP_THERMAL_HIGH_LIMIT_57	57
-#define BTEMP_THERMAL_HIGH_LIMIT_62	62
+#घोषणा BTEMP_THERMAL_LOW_LIMIT		-10
+#घोषणा BTEMP_THERMAL_MED_LIMIT		0
+#घोषणा BTEMP_THERMAL_HIGH_LIMIT_52	52
+#घोषणा BTEMP_THERMAL_HIGH_LIMIT_57	57
+#घोषणा BTEMP_THERMAL_HIGH_LIMIT_62	62
 
-#define BTEMP_BATCTRL_CURR_SRC_7UA	7
-#define BTEMP_BATCTRL_CURR_SRC_20UA	20
+#घोषणा BTEMP_BATCTRL_CURR_SRC_7UA	7
+#घोषणा BTEMP_BATCTRL_CURR_SRC_20UA	20
 
-#define BTEMP_BATCTRL_CURR_SRC_16UA	16
-#define BTEMP_BATCTRL_CURR_SRC_18UA	18
+#घोषणा BTEMP_BATCTRL_CURR_SRC_16UA	16
+#घोषणा BTEMP_BATCTRL_CURR_SRC_18UA	18
 
-#define BTEMP_BATCTRL_CURR_SRC_60UA	60
-#define BTEMP_BATCTRL_CURR_SRC_120UA	120
+#घोषणा BTEMP_BATCTRL_CURR_SRC_60UA	60
+#घोषणा BTEMP_BATCTRL_CURR_SRC_120UA	120
 
 /**
- * struct ab8500_btemp_interrupts - ab8500 interrupts
- * @name:	name of the interrupt
- * @isr		function pointer to the isr
+ * काष्ठा ab8500_btemp_पूर्णांकerrupts - ab8500 पूर्णांकerrupts
+ * @name:	name of the पूर्णांकerrupt
+ * @isr		function poपूर्णांकer to the isr
  */
-struct ab8500_btemp_interrupts {
-	char *name;
-	irqreturn_t (*isr)(int irq, void *data);
-};
+काष्ठा ab8500_btemp_पूर्णांकerrupts अणु
+	अक्षर *name;
+	irqवापस_t (*isr)(पूर्णांक irq, व्योम *data);
+पूर्ण;
 
-struct ab8500_btemp_events {
+काष्ठा ab8500_btemp_events अणु
 	bool batt_rem;
 	bool btemp_high;
 	bool btemp_medhigh;
@@ -64,422 +65,422 @@ struct ab8500_btemp_events {
 	bool btemp_low;
 	bool ac_conn;
 	bool usb_conn;
-};
+पूर्ण;
 
-struct ab8500_btemp_ranges {
-	int btemp_high_limit;
-	int btemp_med_limit;
-	int btemp_low_limit;
-};
+काष्ठा ab8500_btemp_ranges अणु
+	पूर्णांक btemp_high_limit;
+	पूर्णांक btemp_med_limit;
+	पूर्णांक btemp_low_limit;
+पूर्ण;
 
 /**
- * struct ab8500_btemp - ab8500 BTEMP device information
- * @dev:		Pointer to the structure device
- * @node:		List of AB8500 BTEMPs, hence prepared for reentrance
+ * काष्ठा ab8500_btemp - ab8500 BTEMP device inक्रमmation
+ * @dev:		Poपूर्णांकer to the काष्ठाure device
+ * @node:		List of AB8500 BTEMPs, hence prepared क्रम reentrance
  * @curr_source:	What current source we use, in uA
  * @bat_temp:		Dispatched battery temperature in degree Celsius
  * @prev_bat_temp	Last measured battery temperature in degree Celsius
- * @parent:		Pointer to the struct ab8500
- * @adc_btemp_ball:	ADC channel for the battery ball temperature
- * @adc_bat_ctrl:	ADC channel for the battery control
- * @fg:			Pointer to the struct fg
- * @bm:           	Platform specific battery management information
- * @btemp_psy:		Structure for BTEMP specific battery properties
- * @events:		Structure for information about events triggered
- * @btemp_ranges:	Battery temperature range structure
- * @btemp_wq:		Work queue for measuring the temperature periodically
- * @btemp_periodic_work:	Work for measuring the temperature periodically
- * @initialized:	True if battery id read.
+ * @parent:		Poपूर्णांकer to the काष्ठा ab8500
+ * @adc_btemp_ball:	ADC channel क्रम the battery ball temperature
+ * @adc_bat_ctrl:	ADC channel क्रम the battery control
+ * @fg:			Poपूर्णांकer to the काष्ठा fg
+ * @bm:           	Platक्रमm specअगरic battery management inक्रमmation
+ * @btemp_psy:		Structure क्रम BTEMP specअगरic battery properties
+ * @events:		Structure क्रम inक्रमmation about events triggered
+ * @btemp_ranges:	Battery temperature range काष्ठाure
+ * @btemp_wq:		Work queue क्रम measuring the temperature periodically
+ * @btemp_periodic_work:	Work क्रम measuring the temperature periodically
+ * @initialized:	True अगर battery id पढ़ो.
  */
-struct ab8500_btemp {
-	struct device *dev;
-	struct list_head node;
-	int curr_source;
-	int bat_temp;
-	int prev_bat_temp;
-	struct ab8500 *parent;
-	struct iio_channel *btemp_ball;
-	struct iio_channel *bat_ctrl;
-	struct ab8500_fg *fg;
-	struct abx500_bm_data *bm;
-	struct power_supply *btemp_psy;
-	struct ab8500_btemp_events events;
-	struct ab8500_btemp_ranges btemp_ranges;
-	struct workqueue_struct *btemp_wq;
-	struct delayed_work btemp_periodic_work;
+काष्ठा ab8500_btemp अणु
+	काष्ठा device *dev;
+	काष्ठा list_head node;
+	पूर्णांक curr_source;
+	पूर्णांक bat_temp;
+	पूर्णांक prev_bat_temp;
+	काष्ठा ab8500 *parent;
+	काष्ठा iio_channel *btemp_ball;
+	काष्ठा iio_channel *bat_ctrl;
+	काष्ठा ab8500_fg *fg;
+	काष्ठा abx500_bm_data *bm;
+	काष्ठा घातer_supply *btemp_psy;
+	काष्ठा ab8500_btemp_events events;
+	काष्ठा ab8500_btemp_ranges btemp_ranges;
+	काष्ठा workqueue_काष्ठा *btemp_wq;
+	काष्ठा delayed_work btemp_periodic_work;
 	bool initialized;
-};
+पूर्ण;
 
-/* BTEMP power supply properties */
-static enum power_supply_property ab8500_btemp_props[] = {
+/* BTEMP घातer supply properties */
+अटल क्रमागत घातer_supply_property ab8500_btemp_props[] = अणु
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_TECHNOLOGY,
 	POWER_SUPPLY_PROP_TEMP,
-};
+पूर्ण;
 
-static LIST_HEAD(ab8500_btemp_list);
+अटल LIST_HEAD(ab8500_btemp_list);
 
 /**
  * ab8500_btemp_batctrl_volt_to_res() - convert batctrl voltage to resistance
- * @di:		pointer to the ab8500_btemp structure
+ * @di:		poपूर्णांकer to the ab8500_btemp काष्ठाure
  * @v_batctrl:	measured batctrl voltage
  * @inst_curr:	measured instant current
  *
- * This function returns the battery resistance that is
+ * This function वापसs the battery resistance that is
  * derived from the BATCTRL voltage.
  * Returns value in Ohms.
  */
-static int ab8500_btemp_batctrl_volt_to_res(struct ab8500_btemp *di,
-	int v_batctrl, int inst_curr)
-{
-	int rbs;
+अटल पूर्णांक ab8500_btemp_batctrl_volt_to_res(काष्ठा ab8500_btemp *di,
+	पूर्णांक v_batctrl, पूर्णांक inst_curr)
+अणु
+	पूर्णांक rbs;
 
-	if (is_ab8500_1p1_or_earlier(di->parent)) {
+	अगर (is_ab8500_1p1_or_earlier(di->parent)) अणु
 		/*
-		 * For ABB cut1.0 and 1.1 BAT_CTRL is internally
+		 * For ABB cut1.0 and 1.1 BAT_CTRL is पूर्णांकernally
 		 * connected to 1.8V through a 450k resistor
 		 */
-		return (450000 * (v_batctrl)) / (1800 - v_batctrl);
-	}
+		वापस (450000 * (v_batctrl)) / (1800 - v_batctrl);
+	पूर्ण
 
-	if (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL) {
+	अगर (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL) अणु
 		/*
-		 * If the battery has internal NTC, we use the current
+		 * If the battery has पूर्णांकernal NTC, we use the current
 		 * source to calculate the resistance.
 		 */
 		rbs = (v_batctrl * 1000
-		       - di->bm->gnd_lift_resistance * inst_curr)
+		       - di->bm->gnd_lअगरt_resistance * inst_curr)
 		      / di->curr_source;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * BAT_CTRL is internally
+		 * BAT_CTRL is पूर्णांकernally
 		 * connected to 1.8V through a 80k resistor
 		 */
 		rbs = (80000 * (v_batctrl)) / (1800 - v_batctrl);
-	}
+	पूर्ण
 
-	return rbs;
-}
+	वापस rbs;
+पूर्ण
 
 /**
- * ab8500_btemp_read_batctrl_voltage() - measure batctrl voltage
- * @di:		pointer to the ab8500_btemp structure
+ * ab8500_btemp_पढ़ो_batctrl_voltage() - measure batctrl voltage
+ * @di:		poपूर्णांकer to the ab8500_btemp काष्ठाure
  *
- * This function returns the voltage on BATCTRL. Returns value in mV.
+ * This function वापसs the voltage on BATCTRL. Returns value in mV.
  */
-static int ab8500_btemp_read_batctrl_voltage(struct ab8500_btemp *di)
-{
-	int vbtemp, ret;
-	static int prev;
+अटल पूर्णांक ab8500_btemp_पढ़ो_batctrl_voltage(काष्ठा ab8500_btemp *di)
+अणु
+	पूर्णांक vbtemp, ret;
+	अटल पूर्णांक prev;
 
-	ret = iio_read_channel_processed(di->bat_ctrl, &vbtemp);
-	if (ret < 0) {
+	ret = iio_पढ़ो_channel_processed(di->bat_ctrl, &vbtemp);
+	अगर (ret < 0) अणु
 		dev_err(di->dev,
 			"%s ADC conversion failed, using previous value",
 			__func__);
-		return prev;
-	}
+		वापस prev;
+	पूर्ण
 	prev = vbtemp;
-	return vbtemp;
-}
+	वापस vbtemp;
+पूर्ण
 
 /**
  * ab8500_btemp_curr_source_enable() - enable/disable batctrl current source
- * @di:		pointer to the ab8500_btemp structure
+ * @di:		poपूर्णांकer to the ab8500_btemp काष्ठाure
  * @enable:	enable or disable the current source
  *
- * Enable or disable the current sources for the BatCtrl AD channel
+ * Enable or disable the current sources क्रम the BatCtrl AD channel
  */
-static int ab8500_btemp_curr_source_enable(struct ab8500_btemp *di,
+अटल पूर्णांक ab8500_btemp_curr_source_enable(काष्ठा ab8500_btemp *di,
 	bool enable)
-{
-	int curr;
-	int ret = 0;
+अणु
+	पूर्णांक curr;
+	पूर्णांक ret = 0;
 
 	/*
 	 * BATCTRL current sources are included on AB8500 cut2.0
 	 * and future versions
 	 */
-	if (is_ab8500_1p1_or_earlier(di->parent))
-		return 0;
+	अगर (is_ab8500_1p1_or_earlier(di->parent))
+		वापस 0;
 
-	/* Only do this for batteries with internal NTC */
-	if (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL && enable) {
+	/* Only करो this क्रम batteries with पूर्णांकernal NTC */
+	अगर (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL && enable) अणु
 
-		if (di->curr_source == BTEMP_BATCTRL_CURR_SRC_7UA)
+		अगर (di->curr_source == BTEMP_BATCTRL_CURR_SRC_7UA)
 			curr = BAT_CTRL_7U_ENA;
-		else
+		अन्यथा
 			curr = BAT_CTRL_20U_ENA;
 
 		dev_dbg(di->dev, "Set BATCTRL %duA\n", di->curr_source);
 
-		ret = abx500_mask_and_set_register_interruptible(di->dev,
+		ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
 			AB8500_CHARGER, AB8500_BAT_CTRL_CURRENT_SOURCE,
 			FORCE_BAT_CTRL_CMP_HIGH, FORCE_BAT_CTRL_CMP_HIGH);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(di->dev, "%s failed setting cmp_force\n",
 				__func__);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/*
-		 * We have to wait one 32kHz cycle before enabling
+		 * We have to रुको one 32kHz cycle beक्रमe enabling
 		 * the current source, since ForceBatCtrlCmpHigh needs
 		 * to be written in a separate cycle
 		 */
 		udelay(32);
 
-		ret = abx500_set_register_interruptible(di->dev,
+		ret = abx500_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
 			AB8500_CHARGER, AB8500_BAT_CTRL_CURRENT_SOURCE,
 			FORCE_BAT_CTRL_CMP_HIGH | curr);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(di->dev, "%s failed enabling current source\n",
 				__func__);
-			goto disable_curr_source;
-		}
-	} else if (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL && !enable) {
+			जाओ disable_curr_source;
+		पूर्ण
+	पूर्ण अन्यथा अगर (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL && !enable) अणु
 		dev_dbg(di->dev, "Disable BATCTRL curr source\n");
 
 		/* Write 0 to the curr bits */
-		ret = abx500_mask_and_set_register_interruptible(
+		ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(
 			di->dev,
 			AB8500_CHARGER, AB8500_BAT_CTRL_CURRENT_SOURCE,
 			BAT_CTRL_7U_ENA | BAT_CTRL_20U_ENA,
 			~(BAT_CTRL_7U_ENA | BAT_CTRL_20U_ENA));
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(di->dev, "%s failed disabling current source\n",
 				__func__);
-			goto disable_curr_source;
-		}
+			जाओ disable_curr_source;
+		पूर्ण
 
 		/* Enable Pull-Up and comparator */
-		ret = abx500_mask_and_set_register_interruptible(di->dev,
+		ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
 			AB8500_CHARGER,	AB8500_BAT_CTRL_CURRENT_SOURCE,
 			BAT_CTRL_PULL_UP_ENA | BAT_CTRL_CMP_ENA,
 			BAT_CTRL_PULL_UP_ENA | BAT_CTRL_CMP_ENA);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(di->dev, "%s failed enabling PU and comp\n",
 				__func__);
-			goto enable_pu_comp;
-		}
+			जाओ enable_pu_comp;
+		पूर्ण
 
 		/*
-		 * We have to wait one 32kHz cycle before disabling
+		 * We have to रुको one 32kHz cycle beक्रमe disabling
 		 * ForceBatCtrlCmpHigh since this needs to be written
 		 * in a separate cycle
 		 */
 		udelay(32);
 
 		/* Disable 'force comparator' */
-		ret = abx500_mask_and_set_register_interruptible(di->dev,
+		ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
 			AB8500_CHARGER, AB8500_BAT_CTRL_CURRENT_SOURCE,
 			FORCE_BAT_CTRL_CMP_HIGH, ~FORCE_BAT_CTRL_CMP_HIGH);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(di->dev, "%s failed disabling force comp\n",
 				__func__);
-			goto disable_force_comp;
-		}
-	}
-	return ret;
+			जाओ disable_क्रमce_comp;
+		पूर्ण
+	पूर्ण
+	वापस ret;
 
 	/*
-	 * We have to try unsetting FORCE_BAT_CTRL_CMP_HIGH one more time
-	 * if we got an error above
+	 * We have to try unsetting FORCE_BAT_CTRL_CMP_HIGH one more समय
+	 * अगर we got an error above
 	 */
 disable_curr_source:
 	/* Write 0 to the curr bits */
-	ret = abx500_mask_and_set_register_interruptible(di->dev,
+	ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
 		AB8500_CHARGER, AB8500_BAT_CTRL_CURRENT_SOURCE,
 		BAT_CTRL_7U_ENA | BAT_CTRL_20U_ENA,
 		~(BAT_CTRL_7U_ENA | BAT_CTRL_20U_ENA));
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(di->dev, "%s failed disabling current source\n",
 			__func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 enable_pu_comp:
 	/* Enable Pull-Up and comparator */
-	ret = abx500_mask_and_set_register_interruptible(di->dev,
+	ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
 		AB8500_CHARGER,	AB8500_BAT_CTRL_CURRENT_SOURCE,
 		BAT_CTRL_PULL_UP_ENA | BAT_CTRL_CMP_ENA,
 		BAT_CTRL_PULL_UP_ENA | BAT_CTRL_CMP_ENA);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(di->dev, "%s failed enabling PU and comp\n",
 			__func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-disable_force_comp:
+disable_क्रमce_comp:
 	/*
-	 * We have to wait one 32kHz cycle before disabling
+	 * We have to रुको one 32kHz cycle beक्रमe disabling
 	 * ForceBatCtrlCmpHigh since this needs to be written
 	 * in a separate cycle
 	 */
 	udelay(32);
 
 	/* Disable 'force comparator' */
-	ret = abx500_mask_and_set_register_interruptible(di->dev,
+	ret = abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(di->dev,
 		AB8500_CHARGER, AB8500_BAT_CTRL_CURRENT_SOURCE,
 		FORCE_BAT_CTRL_CMP_HIGH, ~FORCE_BAT_CTRL_CMP_HIGH);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(di->dev, "%s failed disabling force comp\n",
 			__func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * ab8500_btemp_get_batctrl_res() - get battery resistance
- * @di:		pointer to the ab8500_btemp structure
+ * @di:		poपूर्णांकer to the ab8500_btemp काष्ठाure
  *
- * This function returns the battery pack identification resistance.
+ * This function वापसs the battery pack identअगरication resistance.
  * Returns value in Ohms.
  */
-static int ab8500_btemp_get_batctrl_res(struct ab8500_btemp *di)
-{
-	int ret;
-	int batctrl = 0;
-	int res;
-	int inst_curr;
-	int i;
+अटल पूर्णांक ab8500_btemp_get_batctrl_res(काष्ठा ab8500_btemp *di)
+अणु
+	पूर्णांक ret;
+	पूर्णांक batctrl = 0;
+	पूर्णांक res;
+	पूर्णांक inst_curr;
+	पूर्णांक i;
 
 	/*
 	 * BATCTRL current sources are included on AB8500 cut2.0
 	 * and future versions
 	 */
 	ret = ab8500_btemp_curr_source_enable(di, true);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(di->dev, "%s curr source enabled failed\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!di->fg)
+	अगर (!di->fg)
 		di->fg = ab8500_fg_get();
-	if (!di->fg) {
+	अगर (!di->fg) अणु
 		dev_err(di->dev, "No fg found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = ab8500_fg_inst_curr_start(di->fg);
 
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(di->dev, "Failed to start current measurement\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	do {
+	करो अणु
 		msleep(20);
-	} while (!ab8500_fg_inst_curr_started(di->fg));
+	पूर्ण जबतक (!ab8500_fg_inst_curr_started(di->fg));
 
 	i = 0;
 
-	do {
-		batctrl += ab8500_btemp_read_batctrl_voltage(di);
+	करो अणु
+		batctrl += ab8500_btemp_पढ़ो_batctrl_voltage(di);
 		i++;
 		msleep(20);
-	} while (!ab8500_fg_inst_curr_done(di->fg));
+	पूर्ण जबतक (!ab8500_fg_inst_curr_करोne(di->fg));
 	batctrl /= i;
 
 	ret = ab8500_fg_inst_curr_finalize(di->fg, &inst_curr);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(di->dev, "Failed to finalize current measurement\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	res = ab8500_btemp_batctrl_volt_to_res(di, batctrl, inst_curr);
 
 	ret = ab8500_btemp_curr_source_enable(di, false);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(di->dev, "%s curr source disable failed\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(di->dev, "%s batctrl: %d res: %d inst_curr: %d samples: %d\n",
 		__func__, batctrl, res, inst_curr, i);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /**
  * ab8500_btemp_res_to_temp() - resistance to temperature
- * @di:		pointer to the ab8500_btemp structure
- * @tbl:	pointer to the resiatance to temperature table
+ * @di:		poपूर्णांकer to the ab8500_btemp काष्ठाure
+ * @tbl:	poपूर्णांकer to the resiatance to temperature table
  * @tbl_size:	size of the resistance to temperature table
  * @res:	resistance to calculate the temperature from
  *
- * This function returns the battery temperature in degrees Celsius
+ * This function वापसs the battery temperature in degrees Celsius
  * based on the NTC resistance.
  */
-static int ab8500_btemp_res_to_temp(struct ab8500_btemp *di,
-	const struct abx500_res_to_temp *tbl, int tbl_size, int res)
-{
-	int i;
+अटल पूर्णांक ab8500_btemp_res_to_temp(काष्ठा ab8500_btemp *di,
+	स्थिर काष्ठा abx500_res_to_temp *tbl, पूर्णांक tbl_size, पूर्णांक res)
+अणु
+	पूर्णांक i;
 	/*
-	 * Calculate the formula for the straight line
-	 * Simple interpolation if we are within
+	 * Calculate the क्रमmula क्रम the straight line
+	 * Simple पूर्णांकerpolation अगर we are within
 	 * the resistance table limits, extrapolate
-	 * if resistance is outside the limits.
+	 * अगर resistance is outside the limits.
 	 */
-	if (res > tbl[0].resist)
+	अगर (res > tbl[0].resist)
 		i = 0;
-	else if (res <= tbl[tbl_size - 1].resist)
+	अन्यथा अगर (res <= tbl[tbl_size - 1].resist)
 		i = tbl_size - 2;
-	else {
+	अन्यथा अणु
 		i = 0;
-		while (!(res <= tbl[i].resist &&
+		जबतक (!(res <= tbl[i].resist &&
 			res > tbl[i + 1].resist))
 			i++;
-	}
+	पूर्ण
 
-	return tbl[i].temp + ((tbl[i + 1].temp - tbl[i].temp) *
+	वापस tbl[i].temp + ((tbl[i + 1].temp - tbl[i].temp) *
 		(res - tbl[i].resist)) / (tbl[i + 1].resist - tbl[i].resist);
-}
+पूर्ण
 
 /**
  * ab8500_btemp_measure_temp() - measure battery temperature
- * @di:		pointer to the ab8500_btemp structure
+ * @di:		poपूर्णांकer to the ab8500_btemp काष्ठाure
  *
- * Returns battery temperature (on success) else the previous temperature
+ * Returns battery temperature (on success) अन्यथा the previous temperature
  */
-static int ab8500_btemp_measure_temp(struct ab8500_btemp *di)
-{
-	int temp, ret;
-	static int prev;
-	int rbat, rntc, vntc;
+अटल पूर्णांक ab8500_btemp_measure_temp(काष्ठा ab8500_btemp *di)
+अणु
+	पूर्णांक temp, ret;
+	अटल पूर्णांक prev;
+	पूर्णांक rbat, rntc, vntc;
 	u8 id;
 
 	id = di->bm->batt_id;
 
-	if (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL &&
-			id != BATTERY_UNKNOWN) {
+	अगर (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL &&
+			id != BATTERY_UNKNOWN) अणु
 
 		rbat = ab8500_btemp_get_batctrl_res(di);
-		if (rbat < 0) {
+		अगर (rbat < 0) अणु
 			dev_err(di->dev, "%s get batctrl res failed\n",
 				__func__);
 			/*
 			 * Return out-of-range temperature so that
-			 * charging is stopped
+			 * अक्षरging is stopped
 			 */
-			return BTEMP_THERMAL_LOW_LIMIT;
-		}
+			वापस BTEMP_THERMAL_LOW_LIMIT;
+		पूर्ण
 
 		temp = ab8500_btemp_res_to_temp(di,
 			di->bm->bat_type[id].r_to_t_tbl,
 			di->bm->bat_type[id].n_temp_tbl_elements, rbat);
-	} else {
-		ret = iio_read_channel_processed(di->btemp_ball, &vntc);
-		if (ret < 0) {
+	पूर्ण अन्यथा अणु
+		ret = iio_पढ़ो_channel_processed(di->btemp_ball, &vntc);
+		अगर (ret < 0) अणु
 			dev_err(di->dev,
 				"%s ADC conversion failed,"
 				" using previous value\n", __func__);
-			return prev;
-		}
+			वापस prev;
+		पूर्ण
 		/*
 		 * The PCB NTC is sourced from VTVOUT via a 230kOhm
 		 * resistor.
@@ -490,37 +491,37 @@ static int ab8500_btemp_measure_temp(struct ab8500_btemp *di)
 			di->bm->bat_type[id].r_to_t_tbl,
 			di->bm->bat_type[id].n_temp_tbl_elements, rntc);
 		prev = temp;
-	}
+	पूर्ण
 	dev_dbg(di->dev, "Battery temperature is %d\n", temp);
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
 /**
- * ab8500_btemp_id() - Identify the connected battery
- * @di:		pointer to the ab8500_btemp structure
+ * ab8500_btemp_id() - Identअगरy the connected battery
+ * @di:		poपूर्णांकer to the ab8500_btemp काष्ठाure
  *
- * This function will try to identify the battery by reading the ID
- * resistor. Some brands use a combined ID resistor with a NTC resistor to
- * both be able to identify and to read the temperature of it.
+ * This function will try to identअगरy the battery by पढ़ोing the ID
+ * resistor. Some bअक्रमs use a combined ID resistor with a NTC resistor to
+ * both be able to identअगरy and to पढ़ो the temperature of it.
  */
-static int ab8500_btemp_id(struct ab8500_btemp *di)
-{
-	int res;
+अटल पूर्णांक ab8500_btemp_id(काष्ठा ab8500_btemp *di)
+अणु
+	पूर्णांक res;
 	u8 i;
 
 	di->curr_source = BTEMP_BATCTRL_CURR_SRC_7UA;
 	di->bm->batt_id = BATTERY_UNKNOWN;
 
 	res =  ab8500_btemp_get_batctrl_res(di);
-	if (res < 0) {
+	अगर (res < 0) अणु
 		dev_err(di->dev, "%s get batctrl res failed\n", __func__);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/* BATTERY_UNKNOWN is defined on position 0, skip it! */
-	for (i = BATTERY_UNKNOWN + 1; i < di->bm->n_btypes; i++) {
-		if ((res <= di->bm->bat_type[i].resis_high) &&
-			(res >= di->bm->bat_type[i].resis_low)) {
+	क्रम (i = BATTERY_UNKNOWN + 1; i < di->bm->n_btypes; i++) अणु
+		अगर ((res <= di->bm->bat_type[i].resis_high) &&
+			(res >= di->bm->bat_type[i].resis_low)) अणु
 			dev_dbg(di->dev, "Battery detected on %s"
 				" low %d < res %d < high: %d"
 				" index: %d\n",
@@ -530,136 +531,136 @@ static int ab8500_btemp_id(struct ab8500_btemp *di)
 				di->bm->bat_type[i].resis_high, i);
 
 			di->bm->batt_id = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (di->bm->batt_id == BATTERY_UNKNOWN) {
+	अगर (di->bm->batt_id == BATTERY_UNKNOWN) अणु
 		dev_warn(di->dev, "Battery identified as unknown"
 			", resistance %d Ohm\n", res);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	/*
-	 * We only have to change current source if the
+	 * We only have to change current source अगर the
 	 * detected type is Type 1.
 	 */
-	if (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL &&
-	    di->bm->batt_id == 1) {
+	अगर (di->bm->adc_therm == ABx500_ADC_THERM_BATCTRL &&
+	    di->bm->batt_id == 1) अणु
 		dev_dbg(di->dev, "Set BATCTRL current source to 20uA\n");
 		di->curr_source = BTEMP_BATCTRL_CURR_SRC_20UA;
-	}
+	पूर्ण
 
-	return di->bm->batt_id;
-}
+	वापस di->bm->batt_id;
+पूर्ण
 
 /**
  * ab8500_btemp_periodic_work() - Measuring the temperature periodically
- * @work:	pointer to the work_struct structure
+ * @work:	poपूर्णांकer to the work_काष्ठा काष्ठाure
  *
- * Work function for measuring the temperature periodically
+ * Work function क्रम measuring the temperature periodically
  */
-static void ab8500_btemp_periodic_work(struct work_struct *work)
-{
-	int interval;
-	int bat_temp;
-	struct ab8500_btemp *di = container_of(work,
-		struct ab8500_btemp, btemp_periodic_work.work);
+अटल व्योम ab8500_btemp_periodic_work(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक पूर्णांकerval;
+	पूर्णांक bat_temp;
+	काष्ठा ab8500_btemp *di = container_of(work,
+		काष्ठा ab8500_btemp, btemp_periodic_work.work);
 
-	if (!di->initialized) {
-		/* Identify the battery */
-		if (ab8500_btemp_id(di) < 0)
+	अगर (!di->initialized) अणु
+		/* Identअगरy the battery */
+		अगर (ab8500_btemp_id(di) < 0)
 			dev_warn(di->dev, "failed to identify the battery\n");
-	}
+	पूर्ण
 
 	bat_temp = ab8500_btemp_measure_temp(di);
 	/*
 	 * Filter battery temperature.
-	 * Allow direct updates on temperature only if two samples result in
+	 * Allow direct updates on temperature only अगर two samples result in
 	 * same temperature. Else only allow 1 degree change from previous
 	 * reported value in the direction of the new measurement.
 	 */
-	if ((bat_temp == di->prev_bat_temp) || !di->initialized) {
-		if ((di->bat_temp != di->prev_bat_temp) || !di->initialized) {
+	अगर ((bat_temp == di->prev_bat_temp) || !di->initialized) अणु
+		अगर ((di->bat_temp != di->prev_bat_temp) || !di->initialized) अणु
 			di->initialized = true;
 			di->bat_temp = bat_temp;
-			power_supply_changed(di->btemp_psy);
-		}
-	} else if (bat_temp < di->prev_bat_temp) {
+			घातer_supply_changed(di->btemp_psy);
+		पूर्ण
+	पूर्ण अन्यथा अगर (bat_temp < di->prev_bat_temp) अणु
 		di->bat_temp--;
-		power_supply_changed(di->btemp_psy);
-	} else if (bat_temp > di->prev_bat_temp) {
+		घातer_supply_changed(di->btemp_psy);
+	पूर्ण अन्यथा अगर (bat_temp > di->prev_bat_temp) अणु
 		di->bat_temp++;
-		power_supply_changed(di->btemp_psy);
-	}
+		घातer_supply_changed(di->btemp_psy);
+	पूर्ण
 	di->prev_bat_temp = bat_temp;
 
-	if (di->events.ac_conn || di->events.usb_conn)
-		interval = di->bm->temp_interval_chg;
-	else
-		interval = di->bm->temp_interval_nochg;
+	अगर (di->events.ac_conn || di->events.usb_conn)
+		पूर्णांकerval = di->bm->temp_पूर्णांकerval_chg;
+	अन्यथा
+		पूर्णांकerval = di->bm->temp_पूर्णांकerval_nochg;
 
 	/* Schedule a new measurement */
 	queue_delayed_work(di->btemp_wq,
 		&di->btemp_periodic_work,
-		round_jiffies(interval * HZ));
-}
+		round_jअगरfies(पूर्णांकerval * HZ));
+पूर्ण
 
 /**
  * ab8500_btemp_batctrlindb_handler() - battery removal detected
- * @irq:       interrupt number
- * @_di:       void pointer that has to address of ab8500_btemp
+ * @irq:       पूर्णांकerrupt number
+ * @_di:       व्योम poपूर्णांकer that has to address of ab8500_btemp
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-static irqreturn_t ab8500_btemp_batctrlindb_handler(int irq, void *_di)
-{
-	struct ab8500_btemp *di = _di;
+अटल irqवापस_t ab8500_btemp_batctrlindb_handler(पूर्णांक irq, व्योम *_di)
+अणु
+	काष्ठा ab8500_btemp *di = _di;
 	dev_err(di->dev, "Battery removal detected!\n");
 
 	di->events.batt_rem = true;
-	power_supply_changed(di->btemp_psy);
+	घातer_supply_changed(di->btemp_psy);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * ab8500_btemp_templow_handler() - battery temp lower than 10 degrees
- * @irq:       interrupt number
- * @_di:       void pointer that has to address of ab8500_btemp
+ * @irq:       पूर्णांकerrupt number
+ * @_di:       व्योम poपूर्णांकer that has to address of ab8500_btemp
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-static irqreturn_t ab8500_btemp_templow_handler(int irq, void *_di)
-{
-	struct ab8500_btemp *di = _di;
+अटल irqवापस_t ab8500_btemp_templow_handler(पूर्णांक irq, व्योम *_di)
+अणु
+	काष्ठा ab8500_btemp *di = _di;
 
-	if (is_ab8500_3p3_or_earlier(di->parent)) {
+	अगर (is_ab8500_3p3_or_earlier(di->parent)) अणु
 		dev_dbg(di->dev, "Ignore false btemp low irq"
 			" for ABB cut 1.0, 1.1, 2.0 and 3.3\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_crit(di->dev, "Battery temperature lower than -10deg c\n");
 
 		di->events.btemp_low = true;
 		di->events.btemp_high = false;
 		di->events.btemp_medhigh = false;
 		di->events.btemp_lowmed = false;
-		power_supply_changed(di->btemp_psy);
-	}
+		घातer_supply_changed(di->btemp_psy);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * ab8500_btemp_temphigh_handler() - battery temp higher than max temp
- * @irq:       interrupt number
- * @_di:       void pointer that has to address of ab8500_btemp
+ * @irq:       पूर्णांकerrupt number
+ * @_di:       व्योम poपूर्णांकer that has to address of ab8500_btemp
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-static irqreturn_t ab8500_btemp_temphigh_handler(int irq, void *_di)
-{
-	struct ab8500_btemp *di = _di;
+अटल irqवापस_t ab8500_btemp_temphigh_handler(पूर्णांक irq, व्योम *_di)
+अणु
+	काष्ठा ab8500_btemp *di = _di;
 
 	dev_crit(di->dev, "Battery temperature is higher than MAX temp\n");
 
@@ -667,21 +668,21 @@ static irqreturn_t ab8500_btemp_temphigh_handler(int irq, void *_di)
 	di->events.btemp_medhigh = false;
 	di->events.btemp_lowmed = false;
 	di->events.btemp_low = false;
-	power_supply_changed(di->btemp_psy);
+	घातer_supply_changed(di->btemp_psy);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * ab8500_btemp_lowmed_handler() - battery temp between low and medium
- * @irq:       interrupt number
- * @_di:       void pointer that has to address of ab8500_btemp
+ * @irq:       पूर्णांकerrupt number
+ * @_di:       व्योम poपूर्णांकer that has to address of ab8500_btemp
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-static irqreturn_t ab8500_btemp_lowmed_handler(int irq, void *_di)
-{
-	struct ab8500_btemp *di = _di;
+अटल irqवापस_t ab8500_btemp_lowmed_handler(पूर्णांक irq, व्योम *_di)
+अणु
+	काष्ठा ab8500_btemp *di = _di;
 
 	dev_dbg(di->dev, "Battery temperature is between low and medium\n");
 
@@ -689,21 +690,21 @@ static irqreturn_t ab8500_btemp_lowmed_handler(int irq, void *_di)
 	di->events.btemp_medhigh = false;
 	di->events.btemp_high = false;
 	di->events.btemp_low = false;
-	power_supply_changed(di->btemp_psy);
+	घातer_supply_changed(di->btemp_psy);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * ab8500_btemp_medhigh_handler() - battery temp between medium and high
- * @irq:       interrupt number
- * @_di:       void pointer that has to address of ab8500_btemp
+ * @irq:       पूर्णांकerrupt number
+ * @_di:       व्योम poपूर्णांकer that has to address of ab8500_btemp
  *
  * Returns IRQ status(IRQ_HANDLED)
  */
-static irqreturn_t ab8500_btemp_medhigh_handler(int irq, void *_di)
-{
-	struct ab8500_btemp *di = _di;
+अटल irqवापस_t ab8500_btemp_medhigh_handler(पूर्णांक irq, व्योम *_di)
+अणु
+	काष्ठा ab8500_btemp *di = _di;
 
 	dev_dbg(di->dev, "Battery temperature is between medium and high\n");
 
@@ -711,281 +712,281 @@ static irqreturn_t ab8500_btemp_medhigh_handler(int irq, void *_di)
 	di->events.btemp_lowmed = false;
 	di->events.btemp_high = false;
 	di->events.btemp_low = false;
-	power_supply_changed(di->btemp_psy);
+	घातer_supply_changed(di->btemp_psy);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
  * ab8500_btemp_periodic() - Periodic temperature measurements
- * @di:		pointer to the ab8500_btemp structure
+ * @di:		poपूर्णांकer to the ab8500_btemp काष्ठाure
  * @enable:	enable or disable periodic temperature measurements
  *
  * Starts of stops periodic temperature measurements. Periodic measurements
- * should only be done when a charger is connected.
+ * should only be करोne when a अक्षरger is connected.
  */
-static void ab8500_btemp_periodic(struct ab8500_btemp *di,
+अटल व्योम ab8500_btemp_periodic(काष्ठा ab8500_btemp *di,
 	bool enable)
-{
+अणु
 	dev_dbg(di->dev, "Enable periodic temperature measurements: %d\n",
 		enable);
 	/*
-	 * Make sure a new measurement is done directly by cancelling
+	 * Make sure a new measurement is करोne directly by cancelling
 	 * any pending work
 	 */
 	cancel_delayed_work_sync(&di->btemp_periodic_work);
 
-	if (enable)
+	अगर (enable)
 		queue_delayed_work(di->btemp_wq, &di->btemp_periodic_work, 0);
-}
+पूर्ण
 
 /**
  * ab8500_btemp_get_temp() - get battery temperature
- * @di:		pointer to the ab8500_btemp structure
+ * @di:		poपूर्णांकer to the ab8500_btemp काष्ठाure
  *
  * Returns battery temperature
  */
-static int ab8500_btemp_get_temp(struct ab8500_btemp *di)
-{
-	int temp = 0;
+अटल पूर्णांक ab8500_btemp_get_temp(काष्ठा ab8500_btemp *di)
+अणु
+	पूर्णांक temp = 0;
 
 	/*
 	 * The BTEMP events are not reliabe on AB8500 cut3.3
 	 * and prior versions
 	 */
-	if (is_ab8500_3p3_or_earlier(di->parent)) {
+	अगर (is_ab8500_3p3_or_earlier(di->parent)) अणु
 		temp = di->bat_temp * 10;
-	} else {
-		if (di->events.btemp_low) {
-			if (temp > di->btemp_ranges.btemp_low_limit)
+	पूर्ण अन्यथा अणु
+		अगर (di->events.btemp_low) अणु
+			अगर (temp > di->btemp_ranges.btemp_low_limit)
 				temp = di->btemp_ranges.btemp_low_limit * 10;
-			else
+			अन्यथा
 				temp = di->bat_temp * 10;
-		} else if (di->events.btemp_high) {
-			if (temp < di->btemp_ranges.btemp_high_limit)
+		पूर्ण अन्यथा अगर (di->events.btemp_high) अणु
+			अगर (temp < di->btemp_ranges.btemp_high_limit)
 				temp = di->btemp_ranges.btemp_high_limit * 10;
-			else
+			अन्यथा
 				temp = di->bat_temp * 10;
-		} else if (di->events.btemp_lowmed) {
-			if (temp > di->btemp_ranges.btemp_med_limit)
+		पूर्ण अन्यथा अगर (di->events.btemp_lowmed) अणु
+			अगर (temp > di->btemp_ranges.btemp_med_limit)
 				temp = di->btemp_ranges.btemp_med_limit * 10;
-			else
+			अन्यथा
 				temp = di->bat_temp * 10;
-		} else if (di->events.btemp_medhigh) {
-			if (temp < di->btemp_ranges.btemp_med_limit)
+		पूर्ण अन्यथा अगर (di->events.btemp_medhigh) अणु
+			अगर (temp < di->btemp_ranges.btemp_med_limit)
 				temp = di->btemp_ranges.btemp_med_limit * 10;
-			else
+			अन्यथा
 				temp = di->bat_temp * 10;
-		} else
+		पूर्ण अन्यथा
 			temp = di->bat_temp * 10;
-	}
-	return temp;
-}
+	पूर्ण
+	वापस temp;
+पूर्ण
 
 /**
  * ab8500_btemp_get_property() - get the btemp properties
- * @psy:        pointer to the power_supply structure
- * @psp:        pointer to the power_supply_property structure
- * @val:        pointer to the power_supply_propval union
+ * @psy:        poपूर्णांकer to the घातer_supply काष्ठाure
+ * @psp:        poपूर्णांकer to the घातer_supply_property काष्ठाure
+ * @val:        poपूर्णांकer to the घातer_supply_propval जोड़
  *
- * This function gets called when an application tries to get the btemp
- * properties by reading the sysfs files.
+ * This function माला_लो called when an application tries to get the btemp
+ * properties by पढ़ोing the sysfs files.
  * online:	presence of the battery
  * present:	presence of the battery
  * technology:	battery technology
  * temp:	battery temperature
- * Returns error code in case of failure else 0(on success)
+ * Returns error code in हाल of failure अन्यथा 0(on success)
  */
-static int ab8500_btemp_get_property(struct power_supply *psy,
-	enum power_supply_property psp,
-	union power_supply_propval *val)
-{
-	struct ab8500_btemp *di = power_supply_get_drvdata(psy);
+अटल पूर्णांक ab8500_btemp_get_property(काष्ठा घातer_supply *psy,
+	क्रमागत घातer_supply_property psp,
+	जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा ab8500_btemp *di = घातer_supply_get_drvdata(psy);
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_PRESENT:
-	case POWER_SUPPLY_PROP_ONLINE:
-		if (di->events.batt_rem)
-			val->intval = 0;
-		else
-			val->intval = 1;
-		break;
-	case POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->intval = di->bm->bat_type[di->bm->batt_id].name;
-		break;
-	case POWER_SUPPLY_PROP_TEMP:
-		val->intval = ab8500_btemp_get_temp(di);
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_PRESENT:
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		अगर (di->events.batt_rem)
+			val->पूर्णांकval = 0;
+		अन्यथा
+			val->पूर्णांकval = 1;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TECHNOLOGY:
+		val->पूर्णांकval = di->bm->bat_type[di->bm->batt_id].name;
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_TEMP:
+		val->पूर्णांकval = ab8500_btemp_get_temp(di);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ab8500_btemp_get_ext_psy_data(struct device *dev, void *data)
-{
-	struct power_supply *psy;
-	struct power_supply *ext = dev_get_drvdata(dev);
-	const char **supplicants = (const char **)ext->supplied_to;
-	struct ab8500_btemp *di;
-	union power_supply_propval ret;
-	int j;
+अटल पूर्णांक ab8500_btemp_get_ext_psy_data(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा घातer_supply *psy;
+	काष्ठा घातer_supply *ext = dev_get_drvdata(dev);
+	स्थिर अक्षर **supplicants = (स्थिर अक्षर **)ext->supplied_to;
+	काष्ठा ab8500_btemp *di;
+	जोड़ घातer_supply_propval ret;
+	पूर्णांक j;
 
-	psy = (struct power_supply *)data;
-	di = power_supply_get_drvdata(psy);
+	psy = (काष्ठा घातer_supply *)data;
+	di = घातer_supply_get_drvdata(psy);
 
 	/*
 	 * For all psy where the name of your driver
 	 * appears in any supplied_to
 	 */
 	j = match_string(supplicants, ext->num_supplicants, psy->desc->name);
-	if (j < 0)
-		return 0;
+	अगर (j < 0)
+		वापस 0;
 
-	/* Go through all properties for the psy */
-	for (j = 0; j < ext->desc->num_properties; j++) {
-		enum power_supply_property prop;
+	/* Go through all properties क्रम the psy */
+	क्रम (j = 0; j < ext->desc->num_properties; j++) अणु
+		क्रमागत घातer_supply_property prop;
 		prop = ext->desc->properties[j];
 
-		if (power_supply_get_property(ext, prop, &ret))
-			continue;
+		अगर (घातer_supply_get_property(ext, prop, &ret))
+			जारी;
 
-		switch (prop) {
-		case POWER_SUPPLY_PROP_PRESENT:
-			switch (ext->desc->type) {
-			case POWER_SUPPLY_TYPE_MAINS:
+		चयन (prop) अणु
+		हाल POWER_SUPPLY_PROP_PRESENT:
+			चयन (ext->desc->type) अणु
+			हाल POWER_SUPPLY_TYPE_MAINS:
 				/* AC disconnected */
-				if (!ret.intval && di->events.ac_conn) {
+				अगर (!ret.पूर्णांकval && di->events.ac_conn) अणु
 					di->events.ac_conn = false;
-				}
+				पूर्ण
 				/* AC connected */
-				else if (ret.intval && !di->events.ac_conn) {
+				अन्यथा अगर (ret.पूर्णांकval && !di->events.ac_conn) अणु
 					di->events.ac_conn = true;
-					if (!di->events.usb_conn)
+					अगर (!di->events.usb_conn)
 						ab8500_btemp_periodic(di, true);
-				}
-				break;
-			case POWER_SUPPLY_TYPE_USB:
+				पूर्ण
+				अवरोध;
+			हाल POWER_SUPPLY_TYPE_USB:
 				/* USB disconnected */
-				if (!ret.intval && di->events.usb_conn) {
+				अगर (!ret.पूर्णांकval && di->events.usb_conn) अणु
 					di->events.usb_conn = false;
-				}
+				पूर्ण
 				/* USB connected */
-				else if (ret.intval && !di->events.usb_conn) {
+				अन्यथा अगर (ret.पूर्णांकval && !di->events.usb_conn) अणु
 					di->events.usb_conn = true;
-					if (!di->events.ac_conn)
+					अगर (!di->events.ac_conn)
 						ab8500_btemp_periodic(di, true);
-				}
-				break;
-			default:
-				break;
-			}
-			break;
-		default:
-			break;
-		}
-	}
-	return 0;
-}
+				पूर्ण
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * ab8500_btemp_external_power_changed() - callback for power supply changes
- * @psy:       pointer to the structure power_supply
+ * ab8500_btemp_बाह्यal_घातer_changed() - callback क्रम घातer supply changes
+ * @psy:       poपूर्णांकer to the काष्ठाure घातer_supply
  *
- * This function is pointing to the function pointer external_power_changed
- * of the structure power_supply.
- * This function gets executed when there is a change in the external power
+ * This function is poपूर्णांकing to the function poपूर्णांकer बाह्यal_घातer_changed
+ * of the काष्ठाure घातer_supply.
+ * This function माला_लो executed when there is a change in the बाह्यal घातer
  * supply to the btemp.
  */
-static void ab8500_btemp_external_power_changed(struct power_supply *psy)
-{
-	struct ab8500_btemp *di = power_supply_get_drvdata(psy);
+अटल व्योम ab8500_btemp_बाह्यal_घातer_changed(काष्ठा घातer_supply *psy)
+अणु
+	काष्ठा ab8500_btemp *di = घातer_supply_get_drvdata(psy);
 
-	class_for_each_device(power_supply_class, NULL,
+	class_क्रम_each_device(घातer_supply_class, शून्य,
 		di->btemp_psy, ab8500_btemp_get_ext_psy_data);
-}
+पूर्ण
 
-/* ab8500 btemp driver interrupts and their respective isr */
-static struct ab8500_btemp_interrupts ab8500_btemp_irq[] = {
-	{"BAT_CTRL_INDB", ab8500_btemp_batctrlindb_handler},
-	{"BTEMP_LOW", ab8500_btemp_templow_handler},
-	{"BTEMP_HIGH", ab8500_btemp_temphigh_handler},
-	{"BTEMP_LOW_MEDIUM", ab8500_btemp_lowmed_handler},
-	{"BTEMP_MEDIUM_HIGH", ab8500_btemp_medhigh_handler},
-};
+/* ab8500 btemp driver पूर्णांकerrupts and their respective isr */
+अटल काष्ठा ab8500_btemp_पूर्णांकerrupts ab8500_btemp_irq[] = अणु
+	अणु"BAT_CTRL_INDB", ab8500_btemp_batctrlindb_handlerपूर्ण,
+	अणु"BTEMP_LOW", ab8500_btemp_templow_handlerपूर्ण,
+	अणु"BTEMP_HIGH", ab8500_btemp_temphigh_handlerपूर्ण,
+	अणु"BTEMP_LOW_MEDIUM", ab8500_btemp_lowmed_handlerपूर्ण,
+	अणु"BTEMP_MEDIUM_HIGH", ab8500_btemp_medhigh_handlerपूर्ण,
+पूर्ण;
 
-static int __maybe_unused ab8500_btemp_resume(struct device *dev)
-{
-	struct ab8500_btemp *di = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused ab8500_btemp_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ab8500_btemp *di = dev_get_drvdata(dev);
 
 	ab8500_btemp_periodic(di, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused ab8500_btemp_suspend(struct device *dev)
-{
-	struct ab8500_btemp *di = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused ab8500_btemp_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ab8500_btemp *di = dev_get_drvdata(dev);
 
 	ab8500_btemp_periodic(di, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ab8500_btemp_remove(struct platform_device *pdev)
-{
-	struct ab8500_btemp *di = platform_get_drvdata(pdev);
-	int i, irq;
+अटल पूर्णांक ab8500_btemp_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ab8500_btemp *di = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i, irq;
 
-	/* Disable interrupts */
-	for (i = 0; i < ARRAY_SIZE(ab8500_btemp_irq); i++) {
-		irq = platform_get_irq_byname(pdev, ab8500_btemp_irq[i].name);
-		free_irq(irq, di);
-	}
+	/* Disable पूर्णांकerrupts */
+	क्रम (i = 0; i < ARRAY_SIZE(ab8500_btemp_irq); i++) अणु
+		irq = platक्रमm_get_irq_byname(pdev, ab8500_btemp_irq[i].name);
+		मुक्त_irq(irq, di);
+	पूर्ण
 
 	/* Delete the work queue */
 	destroy_workqueue(di->btemp_wq);
 
 	flush_scheduled_work();
-	power_supply_unregister(di->btemp_psy);
+	घातer_supply_unरेजिस्टर(di->btemp_psy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static char *supply_interface[] = {
+अटल अक्षर *supply_पूर्णांकerface[] = अणु
 	"ab8500_chargalg",
 	"ab8500_fg",
-};
+पूर्ण;
 
-static const struct power_supply_desc ab8500_btemp_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc ab8500_btemp_desc = अणु
 	.name			= "ab8500_btemp",
 	.type			= POWER_SUPPLY_TYPE_BATTERY,
 	.properties		= ab8500_btemp_props,
 	.num_properties		= ARRAY_SIZE(ab8500_btemp_props),
 	.get_property		= ab8500_btemp_get_property,
-	.external_power_changed	= ab8500_btemp_external_power_changed,
-};
+	.बाह्यal_घातer_changed	= ab8500_btemp_बाह्यal_घातer_changed,
+पूर्ण;
 
-static int ab8500_btemp_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct power_supply_config psy_cfg = {};
-	struct device *dev = &pdev->dev;
-	struct ab8500_btemp *di;
-	int irq, i, ret = 0;
+अटल पूर्णांक ab8500_btemp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा ab8500_btemp *di;
+	पूर्णांक irq, i, ret = 0;
 	u8 val;
 
-	di = devm_kzalloc(dev, sizeof(*di), GFP_KERNEL);
-	if (!di)
-		return -ENOMEM;
+	di = devm_kzalloc(dev, माप(*di), GFP_KERNEL);
+	अगर (!di)
+		वापस -ENOMEM;
 
 	di->bm = &ab8500_bm_data;
 
 	ret = ab8500_bm_of_probe(dev, np, di->bm);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "failed to get battery information\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* get parent data */
 	di->dev = dev;
@@ -993,33 +994,33 @@ static int ab8500_btemp_probe(struct platform_device *pdev)
 
 	/* Get ADC channels */
 	di->btemp_ball = devm_iio_channel_get(dev, "btemp_ball");
-	if (IS_ERR(di->btemp_ball)) {
+	अगर (IS_ERR(di->btemp_ball)) अणु
 		ret = dev_err_probe(dev, PTR_ERR(di->btemp_ball),
 				    "failed to get BTEMP BALL ADC channel\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	di->bat_ctrl = devm_iio_channel_get(dev, "bat_ctrl");
-	if (IS_ERR(di->bat_ctrl)) {
+	अगर (IS_ERR(di->bat_ctrl)) अणु
 		ret = dev_err_probe(dev, PTR_ERR(di->bat_ctrl),
 				    "failed to get BAT CTRL ADC channel\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	di->initialized = false;
 
-	psy_cfg.supplied_to = supply_interface;
-	psy_cfg.num_supplicants = ARRAY_SIZE(supply_interface);
+	psy_cfg.supplied_to = supply_पूर्णांकerface;
+	psy_cfg.num_supplicants = ARRAY_SIZE(supply_पूर्णांकerface);
 	psy_cfg.drv_data = di;
 
-	/* Create a work queue for the btemp */
+	/* Create a work queue क्रम the btemp */
 	di->btemp_wq =
 		alloc_workqueue("ab8500_btemp_wq", WQ_MEM_RECLAIM, 0);
-	if (di->btemp_wq == NULL) {
+	अगर (di->btemp_wq == शून्य) अणु
 		dev_err(dev, "failed to create work queue\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Init work for measuring temperature periodically */
+	/* Init work क्रम measuring temperature periodically */
 	INIT_DEFERRABLE_WORK(&di->btemp_periodic_work,
 		ab8500_btemp_periodic_work);
 
@@ -1027,108 +1028,108 @@ static int ab8500_btemp_probe(struct platform_device *pdev)
 	di->btemp_ranges.btemp_low_limit = BTEMP_THERMAL_LOW_LIMIT;
 	di->btemp_ranges.btemp_med_limit = BTEMP_THERMAL_MED_LIMIT;
 
-	ret = abx500_get_register_interruptible(dev, AB8500_CHARGER,
+	ret = abx500_get_रेजिस्टर_पूर्णांकerruptible(dev, AB8500_CHARGER,
 		AB8500_BTEMP_HIGH_TH, &val);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "%s ab8500 read failed\n", __func__);
-		goto free_btemp_wq;
-	}
-	switch (val) {
-	case BTEMP_HIGH_TH_57_0:
-	case BTEMP_HIGH_TH_57_1:
+		जाओ मुक्त_btemp_wq;
+	पूर्ण
+	चयन (val) अणु
+	हाल BTEMP_HIGH_TH_57_0:
+	हाल BTEMP_HIGH_TH_57_1:
 		di->btemp_ranges.btemp_high_limit =
 			BTEMP_THERMAL_HIGH_LIMIT_57;
-		break;
-	case BTEMP_HIGH_TH_52:
+		अवरोध;
+	हाल BTEMP_HIGH_TH_52:
 		di->btemp_ranges.btemp_high_limit =
 			BTEMP_THERMAL_HIGH_LIMIT_52;
-		break;
-	case BTEMP_HIGH_TH_62:
+		अवरोध;
+	हाल BTEMP_HIGH_TH_62:
 		di->btemp_ranges.btemp_high_limit =
 			BTEMP_THERMAL_HIGH_LIMIT_62;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Register BTEMP power supply class */
-	di->btemp_psy = power_supply_register(dev, &ab8500_btemp_desc,
+	/* Register BTEMP घातer supply class */
+	di->btemp_psy = घातer_supply_रेजिस्टर(dev, &ab8500_btemp_desc,
 					      &psy_cfg);
-	if (IS_ERR(di->btemp_psy)) {
+	अगर (IS_ERR(di->btemp_psy)) अणु
 		dev_err(dev, "failed to register BTEMP psy\n");
 		ret = PTR_ERR(di->btemp_psy);
-		goto free_btemp_wq;
-	}
+		जाओ मुक्त_btemp_wq;
+	पूर्ण
 
-	/* Register interrupts */
-	for (i = 0; i < ARRAY_SIZE(ab8500_btemp_irq); i++) {
-		irq = platform_get_irq_byname(pdev, ab8500_btemp_irq[i].name);
-		if (irq < 0) {
+	/* Register पूर्णांकerrupts */
+	क्रम (i = 0; i < ARRAY_SIZE(ab8500_btemp_irq); i++) अणु
+		irq = platक्रमm_get_irq_byname(pdev, ab8500_btemp_irq[i].name);
+		अगर (irq < 0) अणु
 			ret = irq;
-			goto free_irq;
-		}
+			जाओ मुक्त_irq;
+		पूर्ण
 
-		ret = request_threaded_irq(irq, NULL, ab8500_btemp_irq[i].isr,
+		ret = request_thपढ़ोed_irq(irq, शून्य, ab8500_btemp_irq[i].isr,
 			IRQF_SHARED | IRQF_NO_SUSPEND | IRQF_ONESHOT,
 			ab8500_btemp_irq[i].name, di);
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "failed to request %s IRQ %d: %d\n"
 				, ab8500_btemp_irq[i].name, irq, ret);
-			goto free_irq;
-		}
+			जाओ मुक्त_irq;
+		पूर्ण
 		dev_dbg(dev, "Requested %s IRQ %d: %d\n",
 			ab8500_btemp_irq[i].name, irq, ret);
-	}
+	पूर्ण
 
-	platform_set_drvdata(pdev, di);
+	platक्रमm_set_drvdata(pdev, di);
 
 	/* Kick off periodic temperature measurements */
 	ab8500_btemp_periodic(di, true);
 	list_add_tail(&di->node, &ab8500_btemp_list);
 
-	return ret;
+	वापस ret;
 
-free_irq:
-	/* We also have to free all successfully registered irqs */
-	for (i = i - 1; i >= 0; i--) {
-		irq = platform_get_irq_byname(pdev, ab8500_btemp_irq[i].name);
-		free_irq(irq, di);
-	}
+मुक्त_irq:
+	/* We also have to मुक्त all successfully रेजिस्टरed irqs */
+	क्रम (i = i - 1; i >= 0; i--) अणु
+		irq = platक्रमm_get_irq_byname(pdev, ab8500_btemp_irq[i].name);
+		मुक्त_irq(irq, di);
+	पूर्ण
 
-	power_supply_unregister(di->btemp_psy);
-free_btemp_wq:
+	घातer_supply_unरेजिस्टर(di->btemp_psy);
+मुक्त_btemp_wq:
 	destroy_workqueue(di->btemp_wq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(ab8500_btemp_pm_ops, ab8500_btemp_suspend, ab8500_btemp_resume);
+अटल SIMPLE_DEV_PM_OPS(ab8500_btemp_pm_ops, ab8500_btemp_suspend, ab8500_btemp_resume);
 
-static const struct of_device_id ab8500_btemp_match[] = {
-	{ .compatible = "stericsson,ab8500-btemp", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id ab8500_btemp_match[] = अणु
+	अणु .compatible = "stericsson,ab8500-btemp", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver ab8500_btemp_driver = {
+अटल काष्ठा platक्रमm_driver ab8500_btemp_driver = अणु
 	.probe = ab8500_btemp_probe,
-	.remove = ab8500_btemp_remove,
-	.driver = {
+	.हटाओ = ab8500_btemp_हटाओ,
+	.driver = अणु
 		.name = "ab8500-btemp",
 		.of_match_table = ab8500_btemp_match,
 		.pm = &ab8500_btemp_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init ab8500_btemp_init(void)
-{
-	return platform_driver_register(&ab8500_btemp_driver);
-}
+अटल पूर्णांक __init ab8500_btemp_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&ab8500_btemp_driver);
+पूर्ण
 
-static void __exit ab8500_btemp_exit(void)
-{
-	platform_driver_unregister(&ab8500_btemp_driver);
-}
+अटल व्योम __निकास ab8500_btemp_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&ab8500_btemp_driver);
+पूर्ण
 
 device_initcall(ab8500_btemp_init);
-module_exit(ab8500_btemp_exit);
+module_निकास(ab8500_btemp_निकास);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Johan Palsson, Karl Komierowski, Arun R Murthy");

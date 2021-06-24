@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 OR MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,390 +27,390 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
  */
 
-#define pr_fmt(fmt) "[TTM] " fmt
+#घोषणा pr_fmt(fmt) "[TTM] " fmt
 
-#include <linux/sched.h>
-#include <linux/pagemap.h>
-#include <linux/shmem_fs.h>
-#include <linux/file.h>
-#include <drm/drm_cache.h>
-#include <drm/ttm/ttm_bo_driver.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/shmem_fs.h>
+#समावेश <linux/file.h>
+#समावेश <drm/drm_cache.h>
+#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
 
-#include "ttm_module.h"
+#समावेश "ttm_module.h"
 
-static unsigned long ttm_pages_limit;
+अटल अचिन्हित दीर्घ tपंचांग_pages_limit;
 
 MODULE_PARM_DESC(pages_limit, "Limit for the allocated pages");
-module_param_named(pages_limit, ttm_pages_limit, ulong, 0644);
+module_param_named(pages_limit, tपंचांग_pages_limit, uदीर्घ, 0644);
 
-static unsigned long ttm_dma32_pages_limit;
+अटल अचिन्हित दीर्घ tपंचांग_dma32_pages_limit;
 
 MODULE_PARM_DESC(dma32_pages_limit, "Limit for the allocated DMA32 pages");
-module_param_named(dma32_pages_limit, ttm_dma32_pages_limit, ulong, 0644);
+module_param_named(dma32_pages_limit, tपंचांग_dma32_pages_limit, uदीर्घ, 0644);
 
-static atomic_long_t ttm_pages_allocated;
-static atomic_long_t ttm_dma32_pages_allocated;
+अटल atomic_दीर्घ_t tपंचांग_pages_allocated;
+अटल atomic_दीर्घ_t tपंचांग_dma32_pages_allocated;
 
 /*
- * Allocates a ttm structure for the given BO.
+ * Allocates a tपंचांग काष्ठाure क्रम the given BO.
  */
-int ttm_tt_create(struct ttm_buffer_object *bo, bool zero_alloc)
-{
-	struct ttm_device *bdev = bo->bdev;
-	uint32_t page_flags = 0;
+पूर्णांक tपंचांग_tt_create(काष्ठा tपंचांग_buffer_object *bo, bool zero_alloc)
+अणु
+	काष्ठा tपंचांग_device *bdev = bo->bdev;
+	uपूर्णांक32_t page_flags = 0;
 
-	dma_resv_assert_held(bo->base.resv);
+	dma_resv_निश्चित_held(bo->base.resv);
 
-	if (bo->ttm)
-		return 0;
+	अगर (bo->tपंचांग)
+		वापस 0;
 
-	switch (bo->type) {
-	case ttm_bo_type_device:
-		if (zero_alloc)
+	चयन (bo->type) अणु
+	हाल tपंचांग_bo_type_device:
+		अगर (zero_alloc)
 			page_flags |= TTM_PAGE_FLAG_ZERO_ALLOC;
-		break;
-	case ttm_bo_type_kernel:
-		break;
-	case ttm_bo_type_sg:
+		अवरोध;
+	हाल tपंचांग_bo_type_kernel:
+		अवरोध;
+	हाल tपंचांग_bo_type_sg:
 		page_flags |= TTM_PAGE_FLAG_SG;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("Illegal buffer object type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	bo->ttm = bdev->funcs->ttm_tt_create(bo, page_flags);
-	if (unlikely(bo->ttm == NULL))
-		return -ENOMEM;
+	bo->tपंचांग = bdev->funcs->tपंचांग_tt_create(bo, page_flags);
+	अगर (unlikely(bo->tपंचांग == शून्य))
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Allocates storage for pointers to the pages that back the ttm.
+ * Allocates storage क्रम poपूर्णांकers to the pages that back the tपंचांग.
  */
-static int ttm_tt_alloc_page_directory(struct ttm_tt *ttm)
-{
-	ttm->pages = kvmalloc_array(ttm->num_pages, sizeof(void*),
+अटल पूर्णांक tपंचांग_tt_alloc_page_directory(काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	tपंचांग->pages = kvदो_स्मृति_array(tपंचांग->num_pages, माप(व्योम*),
 			GFP_KERNEL | __GFP_ZERO);
-	if (!ttm->pages)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!tपंचांग->pages)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static int ttm_dma_tt_alloc_page_directory(struct ttm_tt *ttm)
-{
-	ttm->pages = kvmalloc_array(ttm->num_pages,
-				    sizeof(*ttm->pages) +
-				    sizeof(*ttm->dma_address),
+अटल पूर्णांक tपंचांग_dma_tt_alloc_page_directory(काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	tपंचांग->pages = kvदो_स्मृति_array(tपंचांग->num_pages,
+				    माप(*tपंचांग->pages) +
+				    माप(*tपंचांग->dma_address),
 				    GFP_KERNEL | __GFP_ZERO);
-	if (!ttm->pages)
-		return -ENOMEM;
+	अगर (!tपंचांग->pages)
+		वापस -ENOMEM;
 
-	ttm->dma_address = (void *)(ttm->pages + ttm->num_pages);
-	return 0;
-}
+	tपंचांग->dma_address = (व्योम *)(tपंचांग->pages + tपंचांग->num_pages);
+	वापस 0;
+पूर्ण
 
-static int ttm_sg_tt_alloc_page_directory(struct ttm_tt *ttm)
-{
-	ttm->dma_address = kvmalloc_array(ttm->num_pages,
-					  sizeof(*ttm->dma_address),
+अटल पूर्णांक tपंचांग_sg_tt_alloc_page_directory(काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	tपंचांग->dma_address = kvदो_स्मृति_array(tपंचांग->num_pages,
+					  माप(*tपंचांग->dma_address),
 					  GFP_KERNEL | __GFP_ZERO);
-	if (!ttm->dma_address)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!tपंचांग->dma_address)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-void ttm_tt_destroy_common(struct ttm_device *bdev, struct ttm_tt *ttm)
-{
-	ttm_tt_unpopulate(bdev, ttm);
+व्योम tपंचांग_tt_destroy_common(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	tपंचांग_tt_unpopulate(bdev, tपंचांग);
 
-	if (ttm->swap_storage)
-		fput(ttm->swap_storage);
+	अगर (tपंचांग->swap_storage)
+		fput(tपंचांग->swap_storage);
 
-	ttm->swap_storage = NULL;
-}
-EXPORT_SYMBOL(ttm_tt_destroy_common);
+	tपंचांग->swap_storage = शून्य;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_tt_destroy_common);
 
-void ttm_tt_destroy(struct ttm_device *bdev, struct ttm_tt *ttm)
-{
-	bdev->funcs->ttm_tt_destroy(bdev, ttm);
-}
+व्योम tपंचांग_tt_destroy(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	bdev->funcs->tपंचांग_tt_destroy(bdev, tपंचांग);
+पूर्ण
 
-static void ttm_tt_init_fields(struct ttm_tt *ttm,
-			       struct ttm_buffer_object *bo,
-			       uint32_t page_flags,
-			       enum ttm_caching caching)
-{
-	ttm->num_pages = PAGE_ALIGN(bo->base.size) >> PAGE_SHIFT;
-	ttm->caching = ttm_cached;
-	ttm->page_flags = page_flags;
-	ttm->dma_address = NULL;
-	ttm->swap_storage = NULL;
-	ttm->sg = bo->sg;
-	ttm->caching = caching;
-}
+अटल व्योम tपंचांग_tt_init_fields(काष्ठा tपंचांग_tt *tपंचांग,
+			       काष्ठा tपंचांग_buffer_object *bo,
+			       uपूर्णांक32_t page_flags,
+			       क्रमागत tपंचांग_caching caching)
+अणु
+	tपंचांग->num_pages = PAGE_ALIGN(bo->base.size) >> PAGE_SHIFT;
+	tपंचांग->caching = tपंचांग_cached;
+	tपंचांग->page_flags = page_flags;
+	tपंचांग->dma_address = शून्य;
+	tपंचांग->swap_storage = शून्य;
+	tपंचांग->sg = bo->sg;
+	tपंचांग->caching = caching;
+पूर्ण
 
-int ttm_tt_init(struct ttm_tt *ttm, struct ttm_buffer_object *bo,
-		uint32_t page_flags, enum ttm_caching caching)
-{
-	ttm_tt_init_fields(ttm, bo, page_flags, caching);
+पूर्णांक tपंचांग_tt_init(काष्ठा tपंचांग_tt *tपंचांग, काष्ठा tपंचांग_buffer_object *bo,
+		uपूर्णांक32_t page_flags, क्रमागत tपंचांग_caching caching)
+अणु
+	tपंचांग_tt_init_fields(tपंचांग, bo, page_flags, caching);
 
-	if (ttm_tt_alloc_page_directory(ttm)) {
+	अगर (tपंचांग_tt_alloc_page_directory(tपंचांग)) अणु
 		pr_err("Failed allocating page table\n");
-		return -ENOMEM;
-	}
-	return 0;
-}
-EXPORT_SYMBOL(ttm_tt_init);
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_tt_init);
 
-void ttm_tt_fini(struct ttm_tt *ttm)
-{
-	if (ttm->pages)
-		kvfree(ttm->pages);
-	else
-		kvfree(ttm->dma_address);
-	ttm->pages = NULL;
-	ttm->dma_address = NULL;
-}
-EXPORT_SYMBOL(ttm_tt_fini);
+व्योम tपंचांग_tt_fini(काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	अगर (tपंचांग->pages)
+		kvमुक्त(tपंचांग->pages);
+	अन्यथा
+		kvमुक्त(tपंचांग->dma_address);
+	tपंचांग->pages = शून्य;
+	tपंचांग->dma_address = शून्य;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_tt_fini);
 
-int ttm_sg_tt_init(struct ttm_tt *ttm, struct ttm_buffer_object *bo,
-		   uint32_t page_flags, enum ttm_caching caching)
-{
-	int ret;
+पूर्णांक tपंचांग_sg_tt_init(काष्ठा tपंचांग_tt *tपंचांग, काष्ठा tपंचांग_buffer_object *bo,
+		   uपूर्णांक32_t page_flags, क्रमागत tपंचांग_caching caching)
+अणु
+	पूर्णांक ret;
 
-	ttm_tt_init_fields(ttm, bo, page_flags, caching);
+	tपंचांग_tt_init_fields(tपंचांग, bo, page_flags, caching);
 
-	if (page_flags & TTM_PAGE_FLAG_SG)
-		ret = ttm_sg_tt_alloc_page_directory(ttm);
-	else
-		ret = ttm_dma_tt_alloc_page_directory(ttm);
-	if (ret) {
+	अगर (page_flags & TTM_PAGE_FLAG_SG)
+		ret = tपंचांग_sg_tt_alloc_page_directory(tपंचांग);
+	अन्यथा
+		ret = tपंचांग_dma_tt_alloc_page_directory(tपंचांग);
+	अगर (ret) अणु
 		pr_err("Failed allocating page table\n");
-		return -ENOMEM;
-	}
-	return 0;
-}
-EXPORT_SYMBOL(ttm_sg_tt_init);
+		वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_sg_tt_init);
 
-int ttm_tt_swapin(struct ttm_tt *ttm)
-{
-	struct address_space *swap_space;
-	struct file *swap_storage;
-	struct page *from_page;
-	struct page *to_page;
+पूर्णांक tपंचांग_tt_swapin(काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	काष्ठा address_space *swap_space;
+	काष्ठा file *swap_storage;
+	काष्ठा page *from_page;
+	काष्ठा page *to_page;
 	gfp_t gfp_mask;
-	int i, ret;
+	पूर्णांक i, ret;
 
-	swap_storage = ttm->swap_storage;
-	BUG_ON(swap_storage == NULL);
+	swap_storage = tपंचांग->swap_storage;
+	BUG_ON(swap_storage == शून्य);
 
 	swap_space = swap_storage->f_mapping;
 	gfp_mask = mapping_gfp_mask(swap_space);
 
-	for (i = 0; i < ttm->num_pages; ++i) {
-		from_page = shmem_read_mapping_page_gfp(swap_space, i,
+	क्रम (i = 0; i < tपंचांग->num_pages; ++i) अणु
+		from_page = shmem_पढ़ो_mapping_page_gfp(swap_space, i,
 							gfp_mask);
-		if (IS_ERR(from_page)) {
+		अगर (IS_ERR(from_page)) अणु
 			ret = PTR_ERR(from_page);
-			goto out_err;
-		}
-		to_page = ttm->pages[i];
-		if (unlikely(to_page == NULL)) {
+			जाओ out_err;
+		पूर्ण
+		to_page = tपंचांग->pages[i];
+		अगर (unlikely(to_page == शून्य)) अणु
 			ret = -ENOMEM;
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 
 		copy_highpage(to_page, from_page);
 		put_page(from_page);
-	}
+	पूर्ण
 
 	fput(swap_storage);
-	ttm->swap_storage = NULL;
-	ttm->page_flags &= ~TTM_PAGE_FLAG_SWAPPED;
+	tपंचांग->swap_storage = शून्य;
+	tपंचांग->page_flags &= ~TTM_PAGE_FLAG_SWAPPED;
 
-	return 0;
+	वापस 0;
 
 out_err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * ttm_tt_swapout - swap out tt object
+ * tपंचांग_tt_swapout - swap out tt object
  *
- * @bdev: TTM device structure.
- * @ttm: The struct ttm_tt.
- * @gfp_flags: Flags to use for memory allocation.
+ * @bdev: TTM device काष्ठाure.
+ * @tपंचांग: The काष्ठा tपंचांग_tt.
+ * @gfp_flags: Flags to use क्रम memory allocation.
  *
- * Swapout a TT object to a shmem_file, return number of pages swapped out or
+ * Swapout a TT object to a shmem_file, वापस number of pages swapped out or
  * negative error code.
  */
-int ttm_tt_swapout(struct ttm_device *bdev, struct ttm_tt *ttm,
+पूर्णांक tपंचांग_tt_swapout(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग,
 		   gfp_t gfp_flags)
-{
-	loff_t size = (loff_t)ttm->num_pages << PAGE_SHIFT;
-	struct address_space *swap_space;
-	struct file *swap_storage;
-	struct page *from_page;
-	struct page *to_page;
-	int i, ret;
+अणु
+	loff_t size = (loff_t)tपंचांग->num_pages << PAGE_SHIFT;
+	काष्ठा address_space *swap_space;
+	काष्ठा file *swap_storage;
+	काष्ठा page *from_page;
+	काष्ठा page *to_page;
+	पूर्णांक i, ret;
 
 	swap_storage = shmem_file_setup("ttm swap", size, 0);
-	if (IS_ERR(swap_storage)) {
+	अगर (IS_ERR(swap_storage)) अणु
 		pr_err("Failed allocating swap storage\n");
-		return PTR_ERR(swap_storage);
-	}
+		वापस PTR_ERR(swap_storage);
+	पूर्ण
 
 	swap_space = swap_storage->f_mapping;
 	gfp_flags &= mapping_gfp_mask(swap_space);
 
-	for (i = 0; i < ttm->num_pages; ++i) {
-		from_page = ttm->pages[i];
-		if (unlikely(from_page == NULL))
-			continue;
+	क्रम (i = 0; i < tपंचांग->num_pages; ++i) अणु
+		from_page = tपंचांग->pages[i];
+		अगर (unlikely(from_page == शून्य))
+			जारी;
 
-		to_page = shmem_read_mapping_page_gfp(swap_space, i, gfp_flags);
-		if (IS_ERR(to_page)) {
+		to_page = shmem_पढ़ो_mapping_page_gfp(swap_space, i, gfp_flags);
+		अगर (IS_ERR(to_page)) अणु
 			ret = PTR_ERR(to_page);
-			goto out_err;
-		}
+			जाओ out_err;
+		पूर्ण
 		copy_highpage(to_page, from_page);
 		set_page_dirty(to_page);
 		mark_page_accessed(to_page);
 		put_page(to_page);
-	}
+	पूर्ण
 
-	ttm_tt_unpopulate(bdev, ttm);
-	ttm->swap_storage = swap_storage;
-	ttm->page_flags |= TTM_PAGE_FLAG_SWAPPED;
+	tपंचांग_tt_unpopulate(bdev, tपंचांग);
+	tपंचांग->swap_storage = swap_storage;
+	tपंचांग->page_flags |= TTM_PAGE_FLAG_SWAPPED;
 
-	return ttm->num_pages;
+	वापस tपंचांग->num_pages;
 
 out_err:
 	fput(swap_storage);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ttm_tt_add_mapping(struct ttm_device *bdev, struct ttm_tt *ttm)
-{
+अटल व्योम tपंचांग_tt_add_mapping(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
+अणु
 	pgoff_t i;
 
-	if (ttm->page_flags & TTM_PAGE_FLAG_SG)
-		return;
+	अगर (tपंचांग->page_flags & TTM_PAGE_FLAG_SG)
+		वापस;
 
-	for (i = 0; i < ttm->num_pages; ++i)
-		ttm->pages[i]->mapping = bdev->dev_mapping;
-}
+	क्रम (i = 0; i < tपंचांग->num_pages; ++i)
+		tपंचांग->pages[i]->mapping = bdev->dev_mapping;
+पूर्ण
 
-int ttm_tt_populate(struct ttm_device *bdev,
-		    struct ttm_tt *ttm, struct ttm_operation_ctx *ctx)
-{
-	int ret;
+पूर्णांक tपंचांग_tt_populate(काष्ठा tपंचांग_device *bdev,
+		    काष्ठा tपंचांग_tt *tपंचांग, काष्ठा tपंचांग_operation_ctx *ctx)
+अणु
+	पूर्णांक ret;
 
-	if (!ttm)
-		return -EINVAL;
+	अगर (!tपंचांग)
+		वापस -EINVAL;
 
-	if (ttm_tt_is_populated(ttm))
-		return 0;
+	अगर (tपंचांग_tt_is_populated(tपंचांग))
+		वापस 0;
 
-	if (!(ttm->page_flags & TTM_PAGE_FLAG_SG)) {
-		atomic_long_add(ttm->num_pages, &ttm_pages_allocated);
-		if (bdev->pool.use_dma32)
-			atomic_long_add(ttm->num_pages,
-					&ttm_dma32_pages_allocated);
-	}
+	अगर (!(tपंचांग->page_flags & TTM_PAGE_FLAG_SG)) अणु
+		atomic_दीर्घ_add(tपंचांग->num_pages, &tपंचांग_pages_allocated);
+		अगर (bdev->pool.use_dma32)
+			atomic_दीर्घ_add(tपंचांग->num_pages,
+					&tपंचांग_dma32_pages_allocated);
+	पूर्ण
 
-	while (atomic_long_read(&ttm_pages_allocated) > ttm_pages_limit ||
-	       atomic_long_read(&ttm_dma32_pages_allocated) >
-	       ttm_dma32_pages_limit) {
+	जबतक (atomic_दीर्घ_पढ़ो(&tपंचांग_pages_allocated) > tपंचांग_pages_limit ||
+	       atomic_दीर्घ_पढ़ो(&tपंचांग_dma32_pages_allocated) >
+	       tपंचांग_dma32_pages_limit) अणु
 
-		ret = ttm_global_swapout(ctx, GFP_KERNEL);
-		if (ret == 0)
-			break;
-		if (ret < 0)
-			goto error;
-	}
+		ret = tपंचांग_global_swapout(ctx, GFP_KERNEL);
+		अगर (ret == 0)
+			अवरोध;
+		अगर (ret < 0)
+			जाओ error;
+	पूर्ण
 
-	if (bdev->funcs->ttm_tt_populate)
-		ret = bdev->funcs->ttm_tt_populate(bdev, ttm, ctx);
-	else
-		ret = ttm_pool_alloc(&bdev->pool, ttm, ctx);
-	if (ret)
-		goto error;
+	अगर (bdev->funcs->tपंचांग_tt_populate)
+		ret = bdev->funcs->tपंचांग_tt_populate(bdev, tपंचांग, ctx);
+	अन्यथा
+		ret = tपंचांग_pool_alloc(&bdev->pool, tपंचांग, ctx);
+	अगर (ret)
+		जाओ error;
 
-	ttm_tt_add_mapping(bdev, ttm);
-	ttm->page_flags |= TTM_PAGE_FLAG_PRIV_POPULATED;
-	if (unlikely(ttm->page_flags & TTM_PAGE_FLAG_SWAPPED)) {
-		ret = ttm_tt_swapin(ttm);
-		if (unlikely(ret != 0)) {
-			ttm_tt_unpopulate(bdev, ttm);
-			return ret;
-		}
-	}
+	tपंचांग_tt_add_mapping(bdev, tपंचांग);
+	tपंचांग->page_flags |= TTM_PAGE_FLAG_PRIV_POPULATED;
+	अगर (unlikely(tपंचांग->page_flags & TTM_PAGE_FLAG_SWAPPED)) अणु
+		ret = tपंचांग_tt_swapin(tपंचांग);
+		अगर (unlikely(ret != 0)) अणु
+			tपंचांग_tt_unpopulate(bdev, tपंचांग);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	if (!(ttm->page_flags & TTM_PAGE_FLAG_SG)) {
-		atomic_long_sub(ttm->num_pages, &ttm_pages_allocated);
-		if (bdev->pool.use_dma32)
-			atomic_long_sub(ttm->num_pages,
-					&ttm_dma32_pages_allocated);
-	}
-	return ret;
-}
-EXPORT_SYMBOL(ttm_tt_populate);
+	अगर (!(tपंचांग->page_flags & TTM_PAGE_FLAG_SG)) अणु
+		atomic_दीर्घ_sub(tपंचांग->num_pages, &tपंचांग_pages_allocated);
+		अगर (bdev->pool.use_dma32)
+			atomic_दीर्घ_sub(tपंचांग->num_pages,
+					&tपंचांग_dma32_pages_allocated);
+	पूर्ण
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(tपंचांग_tt_populate);
 
-static void ttm_tt_clear_mapping(struct ttm_tt *ttm)
-{
+अटल व्योम tपंचांग_tt_clear_mapping(काष्ठा tपंचांग_tt *tपंचांग)
+अणु
 	pgoff_t i;
-	struct page **page = ttm->pages;
+	काष्ठा page **page = tपंचांग->pages;
 
-	if (ttm->page_flags & TTM_PAGE_FLAG_SG)
-		return;
+	अगर (tपंचांग->page_flags & TTM_PAGE_FLAG_SG)
+		वापस;
 
-	for (i = 0; i < ttm->num_pages; ++i) {
-		(*page)->mapping = NULL;
+	क्रम (i = 0; i < tपंचांग->num_pages; ++i) अणु
+		(*page)->mapping = शून्य;
 		(*page++)->index = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ttm_tt_unpopulate(struct ttm_device *bdev, struct ttm_tt *ttm)
-{
-	if (!ttm_tt_is_populated(ttm))
-		return;
+व्योम tपंचांग_tt_unpopulate(काष्ठा tपंचांग_device *bdev, काष्ठा tपंचांग_tt *tपंचांग)
+अणु
+	अगर (!tपंचांग_tt_is_populated(tपंचांग))
+		वापस;
 
-	ttm_tt_clear_mapping(ttm);
-	if (bdev->funcs->ttm_tt_unpopulate)
-		bdev->funcs->ttm_tt_unpopulate(bdev, ttm);
-	else
-		ttm_pool_free(&bdev->pool, ttm);
+	tपंचांग_tt_clear_mapping(tपंचांग);
+	अगर (bdev->funcs->tपंचांग_tt_unpopulate)
+		bdev->funcs->tपंचांग_tt_unpopulate(bdev, tपंचांग);
+	अन्यथा
+		tपंचांग_pool_मुक्त(&bdev->pool, tपंचांग);
 
-	if (!(ttm->page_flags & TTM_PAGE_FLAG_SG)) {
-		atomic_long_sub(ttm->num_pages, &ttm_pages_allocated);
-		if (bdev->pool.use_dma32)
-			atomic_long_sub(ttm->num_pages,
-					&ttm_dma32_pages_allocated);
-	}
+	अगर (!(tपंचांग->page_flags & TTM_PAGE_FLAG_SG)) अणु
+		atomic_दीर्घ_sub(tपंचांग->num_pages, &tपंचांग_pages_allocated);
+		अगर (bdev->pool.use_dma32)
+			atomic_दीर्घ_sub(tपंचांग->num_pages,
+					&tपंचांग_dma32_pages_allocated);
+	पूर्ण
 
-	ttm->page_flags &= ~TTM_PAGE_FLAG_PRIV_POPULATED;
-}
+	tपंचांग->page_flags &= ~TTM_PAGE_FLAG_PRIV_POPULATED;
+पूर्ण
 
 /**
- * ttm_tt_mgr_init - register with the MM shrinker
+ * tपंचांग_tt_mgr_init - रेजिस्टर with the MM shrinker
  *
- * Register with the MM shrinker for swapping out BOs.
+ * Register with the MM shrinker क्रम swapping out BOs.
  */
-void ttm_tt_mgr_init(unsigned long num_pages, unsigned long num_dma32_pages)
-{
-	if (!ttm_pages_limit)
-		ttm_pages_limit = num_pages;
+व्योम tपंचांग_tt_mgr_init(अचिन्हित दीर्घ num_pages, अचिन्हित दीर्घ num_dma32_pages)
+अणु
+	अगर (!tपंचांग_pages_limit)
+		tपंचांग_pages_limit = num_pages;
 
-	if (!ttm_dma32_pages_limit)
-		ttm_dma32_pages_limit = num_dma32_pages;
-}
+	अगर (!tपंचांग_dma32_pages_limit)
+		tपंचांग_dma32_pages_limit = num_dma32_pages;
+पूर्ण

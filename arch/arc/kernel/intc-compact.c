@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2011-12 Synopsys, Inc. (www.synopsys.com)
  */
 
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/irqdomain.h>
-#include <linux/irqchip.h>
-#include <asm/irq.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/irqchip.h>
+#समावेश <यंत्र/irq.h>
 
-#define NR_CPU_IRQS	32	/* number of irq lines coming in */
-#define TIMER0_IRQ	3	/* Fixed by ISA */
+#घोषणा NR_CPU_IRQS	32	/* number of irq lines coming in */
+#घोषणा TIMER0_IRQ	3	/* Fixed by ISA */
 
 /*
- * Early Hardware specific Interrupt setup
- * -Platform independent, needed for each CPU (not foldable into init_IRQ)
+ * Early Hardware specअगरic Interrupt setup
+ * -Platक्रमm independent, needed क्रम each CPU (not foldable पूर्णांकo init_IRQ)
  * -Called very early (start_kernel -> setup_arch -> setup_processor)
  *
- * what it does ?
+ * what it करोes ?
  * -Optionally, setup the High priority Interrupts as Level 2 IRQs
  */
-void arc_init_IRQ(void)
-{
-	unsigned int level_mask = 0, i;
+व्योम arc_init_IRQ(व्योम)
+अणु
+	अचिन्हित पूर्णांक level_mask = 0, i;
 
-       /* Is timer high priority Interrupt (Level2 in ARCompact jargon) */
+       /* Is समयr high priority Interrupt (Level2 in ARCompact jargon) */
 	level_mask |= IS_ENABLED(CONFIG_ARC_COMPACT_IRQ_LEVELS) << TIMER0_IRQ;
 
 	/*
-	 * Write to register, even if no LV2 IRQs configured to reset it
-	 * in case bootloader had mucked with it
+	 * Write to रेजिस्टर, even अगर no LV2 IRQs configured to reset it
+	 * in हाल bootloader had mucked with it
 	 */
-	write_aux_reg(AUX_IRQ_LEV, level_mask);
+	ग_लिखो_aux_reg(AUX_IRQ_LEV, level_mask);
 
-	if (level_mask)
+	अगर (level_mask)
 		pr_info("Level-2 interrupts bitset %x\n", level_mask);
 
 	/*
-	 * Disable all IRQ lines so faulty external hardware won't
-	 * trigger interrupt that kernel is not ready to handle.
+	 * Disable all IRQ lines so faulty बाह्यal hardware won't
+	 * trigger पूर्णांकerrupt that kernel is not पढ़ोy to handle.
 	 */
-	for (i = TIMER0_IRQ; i < NR_CPU_IRQS; i++) {
-		unsigned int ienb;
+	क्रम (i = TIMER0_IRQ; i < NR_CPU_IRQS; i++) अणु
+		अचिन्हित पूर्णांक ienb;
 
-		ienb = read_aux_reg(AUX_IENABLE);
+		ienb = पढ़ो_aux_reg(AUX_IENABLE);
 		ienb &= ~(1 << i);
-		write_aux_reg(AUX_IENABLE, ienb);
-	}
-}
+		ग_लिखो_aux_reg(AUX_IENABLE, ienb);
+	पूर्ण
+पूर्ण
 
 /*
- * ARC700 core includes a simple on-chip intc supporting
+ * ARC700 core includes a simple on-chip पूर्णांकc supporting
  * -per IRQ enable/disable
- * -2 levels of interrupts (high/low)
- * -all interrupts being level triggered
+ * -2 levels of पूर्णांकerrupts (high/low)
+ * -all पूर्णांकerrupts being level triggered
  *
- * To reduce platform code, we assume all IRQs directly hooked-up into intc.
- * Platforms with external intc, hence cascaded IRQs, are free to over-ride
+ * To reduce platक्रमm code, we assume all IRQs directly hooked-up पूर्णांकo पूर्णांकc.
+ * Platक्रमms with बाह्यal पूर्णांकc, hence cascaded IRQs, are मुक्त to over-ride
  * below, per IRQ.
  */
 
-static void arc_irq_mask(struct irq_data *data)
-{
-	unsigned int ienb;
+अटल व्योम arc_irq_mask(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक ienb;
 
-	ienb = read_aux_reg(AUX_IENABLE);
+	ienb = पढ़ो_aux_reg(AUX_IENABLE);
 	ienb &= ~(1 << data->hwirq);
-	write_aux_reg(AUX_IENABLE, ienb);
-}
+	ग_लिखो_aux_reg(AUX_IENABLE, ienb);
+पूर्ण
 
-static void arc_irq_unmask(struct irq_data *data)
-{
-	unsigned int ienb;
+अटल व्योम arc_irq_unmask(काष्ठा irq_data *data)
+अणु
+	अचिन्हित पूर्णांक ienb;
 
-	ienb = read_aux_reg(AUX_IENABLE);
+	ienb = पढ़ो_aux_reg(AUX_IENABLE);
 	ienb |= (1 << data->hwirq);
-	write_aux_reg(AUX_IENABLE, ienb);
-}
+	ग_लिखो_aux_reg(AUX_IENABLE, ienb);
+पूर्ण
 
-static struct irq_chip onchip_intc = {
+अटल काष्ठा irq_chip onchip_पूर्णांकc = अणु
 	.name           = "ARC In-core Intc",
 	.irq_mask	= arc_irq_mask,
 	.irq_unmask	= arc_irq_unmask,
-};
+पूर्ण;
 
-static int arc_intc_domain_map(struct irq_domain *d, unsigned int irq,
+अटल पूर्णांक arc_पूर्णांकc_करोमुख्य_map(काष्ठा irq_करोमुख्य *d, अचिन्हित पूर्णांक irq,
 			       irq_hw_number_t hw)
-{
-	switch (hw) {
-	case TIMER0_IRQ:
+अणु
+	चयन (hw) अणु
+	हाल TIMER0_IRQ:
 		irq_set_percpu_devid(irq);
-		irq_set_chip_and_handler(irq, &onchip_intc, handle_percpu_irq);
-		break;
-	default:
-		irq_set_chip_and_handler(irq, &onchip_intc, handle_level_irq);
-	}
-	return 0;
-}
+		irq_set_chip_and_handler(irq, &onchip_पूर्णांकc, handle_percpu_irq);
+		अवरोध;
+	शेष:
+		irq_set_chip_and_handler(irq, &onchip_पूर्णांकc, handle_level_irq);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops arc_intc_domain_ops = {
-	.xlate = irq_domain_xlate_onecell,
-	.map = arc_intc_domain_map,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops arc_पूर्णांकc_करोमुख्य_ops = अणु
+	.xlate = irq_करोमुख्य_xlate_onecell,
+	.map = arc_पूर्णांकc_करोमुख्य_map,
+पूर्ण;
 
-static int __init
-init_onchip_IRQ(struct device_node *intc, struct device_node *parent)
-{
-	struct irq_domain *root_domain;
+अटल पूर्णांक __init
+init_onchip_IRQ(काष्ठा device_node *पूर्णांकc, काष्ठा device_node *parent)
+अणु
+	काष्ठा irq_करोमुख्य *root_करोमुख्य;
 
-	if (parent)
+	अगर (parent)
 		panic("DeviceTree incore intc not a root irq controller\n");
 
-	root_domain = irq_domain_add_linear(intc, NR_CPU_IRQS,
-					    &arc_intc_domain_ops, NULL);
-	if (!root_domain)
+	root_करोमुख्य = irq_करोमुख्य_add_linear(पूर्णांकc, NR_CPU_IRQS,
+					    &arc_पूर्णांकc_करोमुख्य_ops, शून्य);
+	अगर (!root_करोमुख्य)
 		panic("root irq domain not avail\n");
 
 	/*
-	 * Needed for primary domain lookup to succeed
+	 * Needed क्रम primary करोमुख्य lookup to succeed
 	 * This is a primary irqchip, and can never have a parent
 	 */
-	irq_set_default_host(root_domain);
+	irq_set_शेष_host(root_करोमुख्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-IRQCHIP_DECLARE(arc_intc, "snps,arc700-intc", init_onchip_IRQ);
+IRQCHIP_DECLARE(arc_पूर्णांकc, "snps,arc700-intc", init_onchip_IRQ);
 
 /*
- * arch_local_irq_enable - Enable interrupts.
+ * arch_local_irq_enable - Enable पूर्णांकerrupts.
  *
- * 1. Explicitly called to re-enable interrupts
- * 2. Implicitly called from spin_unlock_irq, write_unlock_irq etc
+ * 1. Explicitly called to re-enable पूर्णांकerrupts
+ * 2. Implicitly called from spin_unlock_irq, ग_लिखो_unlock_irq etc
  *    which maybe in hard ISR itself
  *
  * Semantics of this function change depending on where it is called from:
  *
- * -If called from hard-ISR, it must not invert interrupt priorities
+ * -If called from hard-ISR, it must not invert पूर्णांकerrupt priorities
  *  e.g. suppose TIMER is high priority (Level 2) IRQ
- *    Time hard-ISR, timer_interrupt( ) calls spin_unlock_irq several times.
- *    Here local_irq_enable( ) shd not re-enable lower priority interrupts
- * -If called from soft-ISR, it must re-enable all interrupts
+ *    Time hard-ISR, समयr_पूर्णांकerrupt( ) calls spin_unlock_irq several बार.
+ *    Here local_irq_enable( ) shd not re-enable lower priority पूर्णांकerrupts
+ * -If called from soft-ISR, it must re-enable all पूर्णांकerrupts
  *    soft ISR are low prioity jobs which can be very slow, thus all IRQs
- *    must be enabled while they run.
- *    Now hardware context wise we may still be in L2 ISR (not done rtie)
+ *    must be enabled जबतक they run.
+ *    Now hardware context wise we may still be in L2 ISR (not करोne rtie)
  *    still we must re-enable both L1 and L2 IRQs
  *  Another twist is prev scenario with flow being
- *     L1 ISR ==> interrupted by L2 ISR  ==> L2 soft ISR
+ *     L1 ISR ==> पूर्णांकerrupted by L2 ISR  ==> L2 soft ISR
  *     here we must not re-enable Ll as prev Ll Interrupt's h/w context will get
  *     over-written (this is deficiency in ARC700 Interrupt mechanism)
  */
 
-#ifdef CONFIG_ARC_COMPACT_IRQ_LEVELS	/* Complex version for 2 IRQ levels */
+#अगर_घोषित CONFIG_ARC_COMPACT_IRQ_LEVELS	/* Complex version क्रम 2 IRQ levels */
 
-void arch_local_irq_enable(void)
-{
-	unsigned long flags = arch_local_save_flags();
+व्योम arch_local_irq_enable(व्योम)
+अणु
+	अचिन्हित दीर्घ flags = arch_local_save_flags();
 
-	if (flags & STATUS_A2_MASK)
+	अगर (flags & STATUS_A2_MASK)
 		flags |= STATUS_E2_MASK;
-	else if (flags & STATUS_A1_MASK)
+	अन्यथा अगर (flags & STATUS_A1_MASK)
 		flags |= STATUS_E1_MASK;
 
 	arch_local_irq_restore(flags);
-}
+पूर्ण
 
 EXPORT_SYMBOL(arch_local_irq_enable);
-#endif
+#पूर्ण_अगर

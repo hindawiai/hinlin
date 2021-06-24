@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Kernel module to match TCP MSS values. */
 
 /* Copyright (C) 2000 Marc Boucher <marc@mbsi.ca>
- * Portions (C) 2005 by Harald Welte <laforge@netfilter.org>
+ * Portions (C) 2005 by Harald Welte <laक्रमge@netfilter.org>
  */
 
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <net/tcp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/tcp.h>
 
-#include <linux/netfilter/xt_tcpmss.h>
-#include <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter/xt_tcpmss.h>
+#समावेश <linux/netfilter/x_tables.h>
 
-#include <linux/netfilter_ipv4/ip_tables.h>
-#include <linux/netfilter_ipv6/ip6_tables.h>
+#समावेश <linux/netfilter_ipv4/ip_tables.h>
+#समावेश <linux/netfilter_ipv6/ip6_tables.h>
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Marc Boucher <marc@mbsi.ca>");
@@ -21,87 +22,87 @@ MODULE_DESCRIPTION("Xtables: TCP MSS match");
 MODULE_ALIAS("ipt_tcpmss");
 MODULE_ALIAS("ip6t_tcpmss");
 
-static bool
-tcpmss_mt(const struct sk_buff *skb, struct xt_action_param *par)
-{
-	const struct xt_tcpmss_match_info *info = par->matchinfo;
-	const struct tcphdr *th;
-	struct tcphdr _tcph;
-	/* tcp.doff is only 4 bits, ie. max 15 * 4 bytes */
-	const u_int8_t *op;
-	u8 _opt[15 * 4 - sizeof(_tcph)];
-	unsigned int i, optlen;
+अटल bool
+tcpmss_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
+अणु
+	स्थिर काष्ठा xt_tcpmss_match_info *info = par->matchinfo;
+	स्थिर काष्ठा tcphdr *th;
+	काष्ठा tcphdr _tcph;
+	/* tcp.करोff is only 4 bits, ie. max 15 * 4 bytes */
+	स्थिर u_पूर्णांक8_t *op;
+	u8 _opt[15 * 4 - माप(_tcph)];
+	अचिन्हित पूर्णांक i, optlen;
 
-	/* If we don't have the whole header, drop packet. */
-	th = skb_header_pointer(skb, par->thoff, sizeof(_tcph), &_tcph);
-	if (th == NULL)
-		goto dropit;
+	/* If we करोn't have the whole header, drop packet. */
+	th = skb_header_poपूर्णांकer(skb, par->thoff, माप(_tcph), &_tcph);
+	अगर (th == शून्य)
+		जाओ dropit;
 
-	/* Malformed. */
-	if (th->doff*4 < sizeof(*th))
-		goto dropit;
+	/* Malक्रमmed. */
+	अगर (th->करोff*4 < माप(*th))
+		जाओ dropit;
 
-	optlen = th->doff*4 - sizeof(*th);
-	if (!optlen)
-		goto out;
+	optlen = th->करोff*4 - माप(*th);
+	अगर (!optlen)
+		जाओ out;
 
 	/* Truncated options. */
-	op = skb_header_pointer(skb, par->thoff + sizeof(*th), optlen, _opt);
-	if (op == NULL)
-		goto dropit;
+	op = skb_header_poपूर्णांकer(skb, par->thoff + माप(*th), optlen, _opt);
+	अगर (op == शून्य)
+		जाओ dropit;
 
-	for (i = 0; i < optlen; ) {
-		if (op[i] == TCPOPT_MSS
+	क्रम (i = 0; i < optlen; ) अणु
+		अगर (op[i] == TCPOPT_MSS
 		    && (optlen - i) >= TCPOLEN_MSS
-		    && op[i+1] == TCPOLEN_MSS) {
-			u_int16_t mssval;
+		    && op[i+1] == TCPOLEN_MSS) अणु
+			u_पूर्णांक16_t mssval;
 
 			mssval = (op[i+2] << 8) | op[i+3];
 
-			return (mssval >= info->mss_min &&
+			वापस (mssval >= info->mss_min &&
 				mssval <= info->mss_max) ^ info->invert;
-		}
-		if (op[i] < 2)
+		पूर्ण
+		अगर (op[i] < 2)
 			i++;
-		else
+		अन्यथा
 			i += op[i+1] ? : 1;
-	}
+	पूर्ण
 out:
-	return info->invert;
+	वापस info->invert;
 
 dropit:
 	par->hotdrop = true;
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static struct xt_match tcpmss_mt_reg[] __read_mostly = {
-	{
+अटल काष्ठा xt_match tcpmss_mt_reg[] __पढ़ो_mostly = अणु
+	अणु
 		.name		= "tcpmss",
 		.family		= NFPROTO_IPV4,
 		.match		= tcpmss_mt,
-		.matchsize	= sizeof(struct xt_tcpmss_match_info),
+		.matchsize	= माप(काष्ठा xt_tcpmss_match_info),
 		.proto		= IPPROTO_TCP,
 		.me		= THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "tcpmss",
 		.family		= NFPROTO_IPV6,
 		.match		= tcpmss_mt,
-		.matchsize	= sizeof(struct xt_tcpmss_match_info),
+		.matchsize	= माप(काष्ठा xt_tcpmss_match_info),
 		.proto		= IPPROTO_TCP,
 		.me		= THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init tcpmss_mt_init(void)
-{
-	return xt_register_matches(tcpmss_mt_reg, ARRAY_SIZE(tcpmss_mt_reg));
-}
+अटल पूर्णांक __init tcpmss_mt_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_matches(tcpmss_mt_reg, ARRAY_SIZE(tcpmss_mt_reg));
+पूर्ण
 
-static void __exit tcpmss_mt_exit(void)
-{
-	xt_unregister_matches(tcpmss_mt_reg, ARRAY_SIZE(tcpmss_mt_reg));
-}
+अटल व्योम __निकास tcpmss_mt_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_matches(tcpmss_mt_reg, ARRAY_SIZE(tcpmss_mt_reg));
+पूर्ण
 
 module_init(tcpmss_mt_init);
-module_exit(tcpmss_mt_exit);
+module_निकास(tcpmss_mt_निकास);

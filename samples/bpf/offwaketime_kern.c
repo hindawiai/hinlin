@@ -1,157 +1,158 @@
+<शैली गुरु>
 /* Copyright (c) 2016 Facebook
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of version 2 of the GNU General Public
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of version 2 of the GNU General Public
  * License as published by the Free Software Foundation.
  */
-#include <uapi/linux/bpf.h>
-#include <uapi/linux/ptrace.h>
-#include <uapi/linux/perf_event.h>
-#include <linux/version.h>
-#include <linux/sched.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <uapi/linux/bpf.h>
+#समावेश <uapi/linux/ptrace.h>
+#समावेश <uapi/linux/perf_event.h>
+#समावेश <linux/version.h>
+#समावेश <linux/sched.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-#define _(P)                                                                   \
-	({                                                                     \
+#घोषणा _(P)                                                                   \
+	(अणु                                                                     \
 		typeof(P) val;                                                 \
-		bpf_probe_read_kernel(&val, sizeof(val), &(P));                \
+		bpf_probe_पढ़ो_kernel(&val, माप(val), &(P));                \
 		val;                                                           \
-	})
+	पूर्ण)
 
-#define MINBLOCK_US	1
+#घोषणा MINBLOCK_US	1
 
-struct key_t {
-	char waker[TASK_COMM_LEN];
-	char target[TASK_COMM_LEN];
+काष्ठा key_t अणु
+	अक्षर waker[TASK_COMM_LEN];
+	अक्षर target[TASK_COMM_LEN];
 	u32 wret;
 	u32 tret;
-};
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__type(key, struct key_t);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__type(key, काष्ठा key_t);
 	__type(value, u64);
-	__uint(max_entries, 10000);
-} counts SEC(".maps");
+	__uपूर्णांक(max_entries, 10000);
+पूर्ण counts SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
 	__type(key, u32);
 	__type(value, u64);
-	__uint(max_entries, 10000);
-} start SEC(".maps");
+	__uपूर्णांक(max_entries, 10000);
+पूर्ण start SEC(".maps");
 
-struct wokeby_t {
-	char name[TASK_COMM_LEN];
+काष्ठा wokeby_t अणु
+	अक्षर name[TASK_COMM_LEN];
 	u32 ret;
-};
+पूर्ण;
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
 	__type(key, u32);
-	__type(value, struct wokeby_t);
-	__uint(max_entries, 10000);
-} wokeby SEC(".maps");
+	__type(value, काष्ठा wokeby_t);
+	__uपूर्णांक(max_entries, 10000);
+पूर्ण wokeby SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_STACK_TRACE);
-	__uint(key_size, sizeof(u32));
-	__uint(value_size, PERF_MAX_STACK_DEPTH * sizeof(u64));
-	__uint(max_entries, 10000);
-} stackmap SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_STACK_TRACE);
+	__uपूर्णांक(key_size, माप(u32));
+	__uपूर्णांक(value_size, PERF_MAX_STACK_DEPTH * माप(u64));
+	__uपूर्णांक(max_entries, 10000);
+पूर्ण stackmap SEC(".maps");
 
-#define STACKID_FLAGS (0 | BPF_F_FAST_STACK_CMP)
+#घोषणा STACKID_FLAGS (0 | BPF_F_FAST_STACK_CMP)
 
 SEC("kprobe/try_to_wake_up")
-int waker(struct pt_regs *ctx)
-{
-	struct task_struct *p = (void *) PT_REGS_PARM1(ctx);
-	struct wokeby_t woke;
+पूर्णांक waker(काष्ठा pt_regs *ctx)
+अणु
+	काष्ठा task_काष्ठा *p = (व्योम *) PT_REGS_PARM1(ctx);
+	काष्ठा wokeby_t woke;
 	u32 pid;
 
 	pid = _(p->pid);
 
-	bpf_get_current_comm(&woke.name, sizeof(woke.name));
+	bpf_get_current_comm(&woke.name, माप(woke.name));
 	woke.ret = bpf_get_stackid(ctx, &stackmap, STACKID_FLAGS);
 
 	bpf_map_update_elem(&wokeby, &pid, &woke, BPF_ANY);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int update_counts(void *ctx, u32 pid, u64 delta)
-{
-	struct wokeby_t *woke;
+अटल अंतरभूत पूर्णांक update_counts(व्योम *ctx, u32 pid, u64 delta)
+अणु
+	काष्ठा wokeby_t *woke;
 	u64 zero = 0, *val;
-	struct key_t key;
+	काष्ठा key_t key;
 
-	__builtin_memset(&key.waker, 0, sizeof(key.waker));
-	bpf_get_current_comm(&key.target, sizeof(key.target));
+	__builtin_स_रखो(&key.waker, 0, माप(key.waker));
+	bpf_get_current_comm(&key.target, माप(key.target));
 	key.tret = bpf_get_stackid(ctx, &stackmap, STACKID_FLAGS);
 	key.wret = 0;
 
 	woke = bpf_map_lookup_elem(&wokeby, &pid);
-	if (woke) {
+	अगर (woke) अणु
 		key.wret = woke->ret;
-		__builtin_memcpy(&key.waker, woke->name, sizeof(key.waker));
+		__builtin_स_नकल(&key.waker, woke->name, माप(key.waker));
 		bpf_map_delete_elem(&wokeby, &pid);
-	}
+	पूर्ण
 
 	val = bpf_map_lookup_elem(&counts, &key);
-	if (!val) {
+	अगर (!val) अणु
 		bpf_map_update_elem(&counts, &key, &zero, BPF_NOEXIST);
 		val = bpf_map_lookup_elem(&counts, &key);
-		if (!val)
-			return 0;
-	}
+		अगर (!val)
+			वापस 0;
+	पूर्ण
 	(*val) += delta;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if 1
-/* taken from /sys/kernel/debug/tracing/events/sched/sched_switch/format */
-struct sched_switch_args {
-	unsigned long long pad;
-	char prev_comm[16];
-	int prev_pid;
-	int prev_prio;
-	long long prev_state;
-	char next_comm[16];
-	int next_pid;
-	int next_prio;
-};
+#अगर 1
+/* taken from /sys/kernel/debug/tracing/events/sched/sched_चयन/क्रमmat */
+काष्ठा sched_चयन_args अणु
+	अचिन्हित दीर्घ दीर्घ pad;
+	अक्षर prev_comm[16];
+	पूर्णांक prev_pid;
+	पूर्णांक prev_prio;
+	दीर्घ दीर्घ prev_state;
+	अक्षर next_comm[16];
+	पूर्णांक next_pid;
+	पूर्णांक next_prio;
+पूर्ण;
 SEC("tracepoint/sched/sched_switch")
-int oncpu(struct sched_switch_args *ctx)
-{
-	/* record previous thread sleep time */
+पूर्णांक oncpu(काष्ठा sched_चयन_args *ctx)
+अणु
+	/* record previous thपढ़ो sleep समय */
 	u32 pid = ctx->prev_pid;
-#else
+#अन्यथा
 SEC("kprobe/finish_task_switch")
-int oncpu(struct pt_regs *ctx)
-{
-	struct task_struct *p = (void *) PT_REGS_PARM1(ctx);
-	/* record previous thread sleep time */
+पूर्णांक oncpu(काष्ठा pt_regs *ctx)
+अणु
+	काष्ठा task_काष्ठा *p = (व्योम *) PT_REGS_PARM1(ctx);
+	/* record previous thपढ़ो sleep समय */
 	u32 pid = _(p->pid);
-#endif
+#पूर्ण_अगर
 	u64 delta, ts, *tsp;
 
-	ts = bpf_ktime_get_ns();
+	ts = bpf_kसमय_get_ns();
 	bpf_map_update_elem(&start, &pid, &ts, BPF_ANY);
 
-	/* calculate current thread's delta time */
+	/* calculate current thपढ़ो's delta समय */
 	pid = bpf_get_current_pid_tgid();
 	tsp = bpf_map_lookup_elem(&start, &pid);
-	if (!tsp)
+	अगर (!tsp)
 		/* missed start or filtered */
-		return 0;
+		वापस 0;
 
-	delta = bpf_ktime_get_ns() - *tsp;
+	delta = bpf_kसमय_get_ns() - *tsp;
 	bpf_map_delete_elem(&start, &pid);
 	delta = delta / 1000;
-	if (delta < MINBLOCK_US)
-		return 0;
+	अगर (delta < MINBLOCK_US)
+		वापस 0;
 
-	return update_counts(ctx, pid, delta);
-}
-char _license[] SEC("license") = "GPL";
+	वापस update_counts(ctx, pid, delta);
+पूर्ण
+अक्षर _license[] SEC("license") = "GPL";
 u32 _version SEC("version") = LINUX_VERSION_CODE;

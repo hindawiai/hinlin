@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM raw_syscalls
-#undef TRACE_INCLUDE_FILE
-#define TRACE_INCLUDE_FILE syscalls
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM raw_syscalls
+#अघोषित TRACE_INCLUDE_खाता
+#घोषणा TRACE_INCLUDE_खाता syscalls
 
-#if !defined(_TRACE_EVENTS_SYSCALLS_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_EVENTS_SYSCALLS_H
+#अगर !defined(_TRACE_EVENTS_SYSCALLS_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_EVENTS_SYSCALLS_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-#include <asm/ptrace.h>
-#include <asm/syscall.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/syscall.h>
 
 
-#ifdef CONFIG_HAVE_SYSCALL_TRACEPOINTS
+#अगर_घोषित CONFIG_HAVE_SYSCALL_TRACEPOINTS
 
 TRACE_EVENT_FN(sys_enter,
 
-	TP_PROTO(struct pt_regs *regs, long id),
+	TP_PROTO(काष्ठा pt_regs *regs, दीर्घ id),
 
 	TP_ARGS(regs, id),
 
 	TP_STRUCT__entry(
-		__field(	long,		id		)
-		__array(	unsigned long,	args,	6	)
+		__field(	दीर्घ,		id		)
+		__array(	अचिन्हित दीर्घ,	args,	6	)
 	),
 
 	TP_fast_assign(
@@ -31,7 +32,7 @@ TRACE_EVENT_FN(sys_enter,
 		syscall_get_arguments(current, regs, __entry->args);
 	),
 
-	TP_printk("NR %ld (%lx, %lx, %lx, %lx, %lx, %lx)",
+	TP_prपूर्णांकk("NR %ld (%lx, %lx, %lx, %lx, %lx, %lx)",
 		  __entry->id,
 		  __entry->args[0], __entry->args[1], __entry->args[2],
 		  __entry->args[3], __entry->args[4], __entry->args[5]),
@@ -41,15 +42,15 @@ TRACE_EVENT_FN(sys_enter,
 
 TRACE_EVENT_FLAGS(sys_enter, TRACE_EVENT_FL_CAP_ANY)
 
-TRACE_EVENT_FN(sys_exit,
+TRACE_EVENT_FN(sys_निकास,
 
-	TP_PROTO(struct pt_regs *regs, long ret),
+	TP_PROTO(काष्ठा pt_regs *regs, दीर्घ ret),
 
 	TP_ARGS(regs, ret),
 
 	TP_STRUCT__entry(
-		__field(	long,	id	)
-		__field(	long,	ret	)
+		__field(	दीर्घ,	id	)
+		__field(	दीर्घ,	ret	)
 	),
 
 	TP_fast_assign(
@@ -57,18 +58,18 @@ TRACE_EVENT_FN(sys_exit,
 		__entry->ret	= ret;
 	),
 
-	TP_printk("NR %ld = %ld",
+	TP_prपूर्णांकk("NR %ld = %ld",
 		  __entry->id, __entry->ret),
 
 	syscall_regfunc, syscall_unregfunc
 );
 
-TRACE_EVENT_FLAGS(sys_exit, TRACE_EVENT_FL_CAP_ANY)
+TRACE_EVENT_FLAGS(sys_निकास, TRACE_EVENT_FL_CAP_ANY)
 
-#endif /* CONFIG_HAVE_SYSCALL_TRACEPOINTS */
+#पूर्ण_अगर /* CONFIG_HAVE_SYSCALL_TRACEPOINTS */
 
-#endif /* _TRACE_EVENTS_SYSCALLS_H */
+#पूर्ण_अगर /* _TRACE_EVENTS_SYSCALLS_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>
 

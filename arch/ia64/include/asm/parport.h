@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * parport.h: platform-specific PC-style parport initialisation
+ * parport.h: platक्रमm-specअगरic PC-style parport initialisation
  *
  * Copyright (C) 1999, 2000  Tim Waugh <tim@cyberelk.demon.co.uk>
  *
  * This file should only be included by drivers/parport/parport_pc.c.
  */
 
-#ifndef _ASM_IA64_PARPORT_H
-#define _ASM_IA64_PARPORT_H 1
+#अगर_अघोषित _ASM_IA64_PARPORT_H
+#घोषणा _ASM_IA64_PARPORT_H 1
 
-static int parport_pc_find_isa_ports(int autoirq, int autodma);
+अटल पूर्णांक parport_pc_find_isa_ports(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma);
 
-static int parport_pc_find_nonpci_ports(int autoirq, int autodma)
-{
-	return parport_pc_find_isa_ports(autoirq, autodma);
-}
+अटल पूर्णांक parport_pc_find_nonpci_ports(पूर्णांक स्वतःirq, पूर्णांक स्वतःdma)
+अणु
+	वापस parport_pc_find_isa_ports(स्वतःirq, स्वतःdma);
+पूर्ण
 
-#endif /* _ASM_IA64_PARPORT_H */
+#पूर्ण_अगर /* _ASM_IA64_PARPORT_H */

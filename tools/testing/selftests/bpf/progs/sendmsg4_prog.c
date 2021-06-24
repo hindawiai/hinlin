@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2018 Facebook
 
-#include <linux/stddef.h>
-#include <linux/bpf.h>
-#include <sys/socket.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/bpf.h>
+#समावेश <sys/socket.h>
 
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
 
-#include <bpf_sockopt_helpers.h>
+#समावेश <bpf_sockopt_helpers.h>
 
-#define SRC1_IP4		0xAC100001U /* 172.16.0.1 */
-#define SRC2_IP4		0x00000000U
-#define SRC_REWRITE_IP4		0x7f000004U
-#define DST_IP4			0xC0A801FEU /* 192.168.1.254 */
-#define DST_REWRITE_IP4		0x7f000001U
-#define DST_PORT		4040
-#define DST_REWRITE_PORT4	4444
+#घोषणा SRC1_IP4		0xAC100001U /* 172.16.0.1 */
+#घोषणा SRC2_IP4		0x00000000U
+#घोषणा SRC_REWRITE_IP4		0x7f000004U
+#घोषणा DST_IP4			0xC0A801FEU /* 192.168.1.254 */
+#घोषणा DST_REWRITE_IP4		0x7f000001U
+#घोषणा DST_PORT		4040
+#घोषणा DST_REWRITE_PORT4	4444
 
-int _version SEC("version") = 1;
+पूर्णांक _version SEC("version") = 1;
 
 SEC("cgroup/sendmsg4")
-int sendmsg_v4_prog(struct bpf_sock_addr *ctx)
-{
-	int prio;
+पूर्णांक sendmsg_v4_prog(काष्ठा bpf_sock_addr *ctx)
+अणु
+	पूर्णांक prio;
 
-	if (ctx->type != SOCK_DGRAM)
-		return 0;
+	अगर (ctx->type != SOCK_DGRAM)
+		वापस 0;
 
-	if (!get_set_sk_priority(ctx))
-		return 0;
+	अगर (!get_set_sk_priority(ctx))
+		वापस 0;
 
-	/* Rewrite source. */
-	if (ctx->msg_src_ip4 == bpf_htonl(SRC1_IP4) ||
-	    ctx->msg_src_ip4 == bpf_htonl(SRC2_IP4)) {
+	/* Reग_लिखो source. */
+	अगर (ctx->msg_src_ip4 == bpf_htonl(SRC1_IP4) ||
+	    ctx->msg_src_ip4 == bpf_htonl(SRC2_IP4)) अणु
 		ctx->msg_src_ip4 = bpf_htonl(SRC_REWRITE_IP4);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Unexpected source. Reject sendmsg. */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Rewrite destination. */
-	if ((ctx->user_ip4 >> 24) == (bpf_htonl(DST_IP4) >> 24) &&
-	     ctx->user_port == bpf_htons(DST_PORT)) {
+	/* Reग_लिखो destination. */
+	अगर ((ctx->user_ip4 >> 24) == (bpf_htonl(DST_IP4) >> 24) &&
+	     ctx->user_port == bpf_htons(DST_PORT)) अणु
 		ctx->user_ip4 = bpf_htonl(DST_REWRITE_IP4);
 		ctx->user_port = bpf_htons(DST_REWRITE_PORT4);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Unexpected source. Reject sendmsg. */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __USBHID_H
-#define __USBHID_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __USBHID_H
+#घोषणा __USBHID_H
 
 /*
  *  Copyright (c) 1999 Andreas Gal
@@ -11,87 +12,87 @@
 /*
  */
 
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/timer.h>
-#include <linux/wait.h>
-#include <linux/workqueue.h>
-#include <linux/input.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/input.h>
 
-/*  API provided by hid-core.c for USB HID drivers */
-void usbhid_init_reports(struct hid_device *hid);
-struct usb_interface *usbhid_find_interface(int minor);
+/*  API provided by hid-core.c क्रम USB HID drivers */
+व्योम usbhid_init_reports(काष्ठा hid_device *hid);
+काष्ठा usb_पूर्णांकerface *usbhid_find_पूर्णांकerface(पूर्णांक minor);
 
 /* iofl flags */
-#define HID_CTRL_RUNNING	1
-#define HID_OUT_RUNNING		2
-#define HID_IN_RUNNING		3
-#define HID_RESET_PENDING	4
-#define HID_SUSPENDED		5
-#define HID_CLEAR_HALT		6
-#define HID_DISCONNECTED	7
-#define HID_STARTED		8
-#define HID_KEYS_PRESSED	10
-#define HID_NO_BANDWIDTH	11
-#define HID_RESUME_RUNNING	12
+#घोषणा HID_CTRL_RUNNING	1
+#घोषणा HID_OUT_RUNNING		2
+#घोषणा HID_IN_RUNNING		3
+#घोषणा HID_RESET_PENDING	4
+#घोषणा HID_SUSPENDED		5
+#घोषणा HID_CLEAR_HALT		6
+#घोषणा HID_DISCONNECTED	7
+#घोषणा HID_STARTED		8
+#घोषणा HID_KEYS_PRESSED	10
+#घोषणा HID_NO_BANDWIDTH	11
+#घोषणा HID_RESUME_RUNNING	12
 /*
- * The device is opened, meaning there is a client that is interested
+ * The device is खोलोed, meaning there is a client that is पूर्णांकerested
  * in data coming from the device.
  */
-#define HID_OPENED		13
+#घोषणा HID_OPENED		13
 /*
- * We are polling input endpoint by [re]submitting IN URB, because
- * either HID device is opened or ALWAYS POLL quirk is set for the
+ * We are polling input endpoपूर्णांक by [re]submitting IN URB, because
+ * either HID device is खोलोed or ALWAYS POLL quirk is set क्रम the
  * device.
  */
-#define HID_IN_POLLING		14
+#घोषणा HID_IN_POLLING		14
 
 /*
- * USB-specific HID struct, to be pointed to
- * from struct hid_device->driver_data
+ * USB-specअगरic HID काष्ठा, to be poपूर्णांकed to
+ * from काष्ठा hid_device->driver_data
  */
 
-struct usbhid_device {
-	struct hid_device *hid;						/* pointer to corresponding HID dev */
+काष्ठा usbhid_device अणु
+	काष्ठा hid_device *hid;						/* poपूर्णांकer to corresponding HID dev */
 
-	struct usb_interface *intf;                                     /* USB interface */
-	int ifnum;                                                      /* USB interface number */
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;                                     /* USB पूर्णांकerface */
+	पूर्णांक अगरnum;                                                      /* USB पूर्णांकerface number */
 
-	unsigned int bufsize;                                           /* URB buffer size */
+	अचिन्हित पूर्णांक bufsize;                                           /* URB buffer size */
 
-	struct urb *urbin;                                              /* Input URB */
-	char *inbuf;                                                    /* Input buffer */
+	काष्ठा urb *urbin;                                              /* Input URB */
+	अक्षर *inbuf;                                                    /* Input buffer */
 	dma_addr_t inbuf_dma;                                           /* Input buffer dma */
 
-	struct urb *urbctrl;                                            /* Control URB */
-	struct usb_ctrlrequest *cr;                                     /* Control request struct */
-	struct hid_control_fifo ctrl[HID_CONTROL_FIFO_SIZE];  		/* Control fifo */
-	unsigned char ctrlhead, ctrltail;                               /* Control fifo head & tail */
-	char *ctrlbuf;                                                  /* Control buffer */
+	काष्ठा urb *urbctrl;                                            /* Control URB */
+	काष्ठा usb_ctrlrequest *cr;                                     /* Control request काष्ठा */
+	काष्ठा hid_control_fअगरo ctrl[HID_CONTROL_FIFO_SIZE];  		/* Control fअगरo */
+	अचिन्हित अक्षर ctrlhead, ctrltail;                               /* Control fअगरo head & tail */
+	अक्षर *ctrlbuf;                                                  /* Control buffer */
 	dma_addr_t ctrlbuf_dma;                                         /* Control buffer dma */
-	unsigned long last_ctrl;						/* record of last output for timeouts */
+	अचिन्हित दीर्घ last_ctrl;						/* record of last output क्रम समयouts */
 
-	struct urb *urbout;                                             /* Output URB */
-	struct hid_output_fifo out[HID_CONTROL_FIFO_SIZE];              /* Output pipe fifo */
-	unsigned char outhead, outtail;                                 /* Output pipe fifo head & tail */
-	char *outbuf;                                                   /* Output buffer */
+	काष्ठा urb *urbout;                                             /* Output URB */
+	काष्ठा hid_output_fअगरo out[HID_CONTROL_FIFO_SIZE];              /* Output pipe fअगरo */
+	अचिन्हित अक्षर outhead, outtail;                                 /* Output pipe fअगरo head & tail */
+	अक्षर *outbuf;                                                   /* Output buffer */
 	dma_addr_t outbuf_dma;                                          /* Output buffer dma */
-	unsigned long last_out;							/* record of last output for timeouts */
+	अचिन्हित दीर्घ last_out;							/* record of last output क्रम समयouts */
 
-	struct mutex mutex;						/* start/stop/open/close */
-	spinlock_t lock;						/* fifo spinlock */
-	unsigned long iofl;                                             /* I/O flags (CTRL_RUNNING, OUT_RUNNING) */
-	struct timer_list io_retry;                                     /* Retry timer */
-	unsigned long stop_retry;                                       /* Time to give up, in jiffies */
-	unsigned int retry_delay;                                       /* Delay length in ms */
-	struct work_struct reset_work;                                  /* Task context for resets */
-	wait_queue_head_t wait;						/* For sleeping */
-};
+	काष्ठा mutex mutex;						/* start/stop/खोलो/बंद */
+	spinlock_t lock;						/* fअगरo spinlock */
+	अचिन्हित दीर्घ iofl;                                             /* I/O flags (CTRL_RUNNING, OUT_RUNNING) */
+	काष्ठा समयr_list io_retry;                                     /* Retry समयr */
+	अचिन्हित दीर्घ stop_retry;                                       /* Time to give up, in jअगरfies */
+	अचिन्हित पूर्णांक retry_delay;                                       /* Delay length in ms */
+	काष्ठा work_काष्ठा reset_work;                                  /* Task context क्रम resets */
+	रुको_queue_head_t रुको;						/* For sleeping */
+पूर्ण;
 
-#define	hid_to_usb_dev(hid_dev) \
+#घोषणा	hid_to_usb_dev(hid_dev) \
 	to_usb_device(hid_dev->dev.parent->parent)
 
-#endif
+#पूर्ण_अगर
 

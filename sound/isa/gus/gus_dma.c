@@ -1,234 +1,235 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Routines for GF1 DMA control
+ *  Routines क्रम GF1 DMA control
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <asm/dma.h>
-#include <linux/slab.h>
-#include <sound/core.h>
-#include <sound/gus.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <linux/slab.h>
+#समावेश <sound/core.h>
+#समावेश <sound/gus.h>
 
-static void snd_gf1_dma_ack(struct snd_gus_card * gus)
-{
-	unsigned long flags;
+अटल व्योम snd_gf1_dma_ack(काष्ठा snd_gus_card * gus)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gus->reg_lock, flags);
-	snd_gf1_write8(gus, SNDRV_GF1_GB_DRAM_DMA_CONTROL, 0x00);
+	snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_DRAM_DMA_CONTROL, 0x00);
 	snd_gf1_look8(gus, SNDRV_GF1_GB_DRAM_DMA_CONTROL);
 	spin_unlock_irqrestore(&gus->reg_lock, flags);
-}
+पूर्ण
 
-static void snd_gf1_dma_program(struct snd_gus_card * gus,
-				unsigned int addr,
-				unsigned long buf_addr,
-				unsigned int count,
-				unsigned int cmd)
-{
-	unsigned long flags;
-	unsigned int address;
-	unsigned char dma_cmd;
-	unsigned int address_high;
+अटल व्योम snd_gf1_dma_program(काष्ठा snd_gus_card * gus,
+				अचिन्हित पूर्णांक addr,
+				अचिन्हित दीर्घ buf_addr,
+				अचिन्हित पूर्णांक count,
+				अचिन्हित पूर्णांक cmd)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक address;
+	अचिन्हित अक्षर dma_cmd;
+	अचिन्हित पूर्णांक address_high;
 
-	snd_printdd("dma_transfer: addr=0x%x, buf=0x%lx, count=0x%x\n",
+	snd_prपूर्णांकdd("dma_transfer: addr=0x%x, buf=0x%lx, count=0x%x\n",
 		    addr, buf_addr, count);
 
-	if (gus->gf1.dma1 > 3) {
-		if (gus->gf1.enh_mode) {
+	अगर (gus->gf1.dma1 > 3) अणु
+		अगर (gus->gf1.enh_mode) अणु
 			address = addr >> 1;
-		} else {
-			if (addr & 0x1f) {
-				snd_printd("snd_gf1_dma_transfer: unaligned address (0x%x)?\n", addr);
-				return;
-			}
+		पूर्ण अन्यथा अणु
+			अगर (addr & 0x1f) अणु
+				snd_prपूर्णांकd("snd_gf1_dma_transfer: unaligned address (0x%x)?\n", addr);
+				वापस;
+			पूर्ण
 			address = (addr & 0x000c0000) | ((addr & 0x0003ffff) >> 1);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		address = addr;
-	}
+	पूर्ण
 
-	dma_cmd = SNDRV_GF1_DMA_ENABLE | (unsigned short) cmd;
-#if 0
+	dma_cmd = SNDRV_GF1_DMA_ENABLE | (अचिन्हित लघु) cmd;
+#अगर 0
 	dma_cmd |= 0x08;
-#endif
-	if (dma_cmd & SNDRV_GF1_DMA_16BIT) {
+#पूर्ण_अगर
+	अगर (dma_cmd & SNDRV_GF1_DMA_16BIT) अणु
 		count++;
 		count &= ~1;	/* align */
-	}
-	if (gus->gf1.dma1 > 3) {
+	पूर्ण
+	अगर (gus->gf1.dma1 > 3) अणु
 		dma_cmd |= SNDRV_GF1_DMA_WIDTH16;
 		count++;
 		count &= ~1;	/* align */
-	}
+	पूर्ण
 	snd_gf1_dma_ack(gus);
 	snd_dma_program(gus->gf1.dma1, buf_addr, count, dma_cmd & SNDRV_GF1_DMA_READ ? DMA_MODE_READ : DMA_MODE_WRITE);
-#if 0
-	snd_printk(KERN_DEBUG "address = 0x%x, count = 0x%x, dma_cmd = 0x%x\n",
+#अगर 0
+	snd_prपूर्णांकk(KERN_DEBUG "address = 0x%x, count = 0x%x, dma_cmd = 0x%x\n",
 		   address << 1, count, dma_cmd);
-#endif
+#पूर्ण_अगर
 	spin_lock_irqsave(&gus->reg_lock, flags);
-	if (gus->gf1.enh_mode) {
+	अगर (gus->gf1.enh_mode) अणु
 		address_high = ((address >> 16) & 0x000000f0) | (address & 0x0000000f);
-		snd_gf1_write16(gus, SNDRV_GF1_GW_DRAM_DMA_LOW, (unsigned short) (address >> 4));
-		snd_gf1_write8(gus, SNDRV_GF1_GB_DRAM_DMA_HIGH, (unsigned char) address_high);
-	} else
-		snd_gf1_write16(gus, SNDRV_GF1_GW_DRAM_DMA_LOW, (unsigned short) (address >> 4));
-	snd_gf1_write8(gus, SNDRV_GF1_GB_DRAM_DMA_CONTROL, dma_cmd);
+		snd_gf1_ग_लिखो16(gus, SNDRV_GF1_GW_DRAM_DMA_LOW, (अचिन्हित लघु) (address >> 4));
+		snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_DRAM_DMA_HIGH, (अचिन्हित अक्षर) address_high);
+	पूर्ण अन्यथा
+		snd_gf1_ग_लिखो16(gus, SNDRV_GF1_GW_DRAM_DMA_LOW, (अचिन्हित लघु) (address >> 4));
+	snd_gf1_ग_लिखो8(gus, SNDRV_GF1_GB_DRAM_DMA_CONTROL, dma_cmd);
 	spin_unlock_irqrestore(&gus->reg_lock, flags);
-}
+पूर्ण
 
-static struct snd_gf1_dma_block *snd_gf1_dma_next_block(struct snd_gus_card * gus)
-{
-	struct snd_gf1_dma_block *block;
+अटल काष्ठा snd_gf1_dma_block *snd_gf1_dma_next_block(काष्ठा snd_gus_card * gus)
+अणु
+	काष्ठा snd_gf1_dma_block *block;
 
 	/* PCM block have bigger priority than synthesizer one */
-	if (gus->gf1.dma_data_pcm) {
+	अगर (gus->gf1.dma_data_pcm) अणु
 		block = gus->gf1.dma_data_pcm;
-		if (gus->gf1.dma_data_pcm_last == block) {
+		अगर (gus->gf1.dma_data_pcm_last == block) अणु
 			gus->gf1.dma_data_pcm =
-			gus->gf1.dma_data_pcm_last = NULL;
-		} else {
+			gus->gf1.dma_data_pcm_last = शून्य;
+		पूर्ण अन्यथा अणु
 			gus->gf1.dma_data_pcm = block->next;
-		}
-	} else if (gus->gf1.dma_data_synth) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (gus->gf1.dma_data_synth) अणु
 		block = gus->gf1.dma_data_synth;
-		if (gus->gf1.dma_data_synth_last == block) {
+		अगर (gus->gf1.dma_data_synth_last == block) अणु
 			gus->gf1.dma_data_synth =
-			gus->gf1.dma_data_synth_last = NULL;
-		} else {
+			gus->gf1.dma_data_synth_last = शून्य;
+		पूर्ण अन्यथा अणु
 			gus->gf1.dma_data_synth = block->next;
-		}
-	} else {
-		block = NULL;
-	}
-	if (block) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		block = शून्य;
+	पूर्ण
+	अगर (block) अणु
 		gus->gf1.dma_ack = block->ack;
-		gus->gf1.dma_private_data = block->private_data;
-	}
-	return block;
-}
+		gus->gf1.dma_निजी_data = block->निजी_data;
+	पूर्ण
+	वापस block;
+पूर्ण
 
 
-static void snd_gf1_dma_interrupt(struct snd_gus_card * gus)
-{
-	struct snd_gf1_dma_block *block;
+अटल व्योम snd_gf1_dma_पूर्णांकerrupt(काष्ठा snd_gus_card * gus)
+अणु
+	काष्ठा snd_gf1_dma_block *block;
 
 	snd_gf1_dma_ack(gus);
-	if (gus->gf1.dma_ack)
-		gus->gf1.dma_ack(gus, gus->gf1.dma_private_data);
+	अगर (gus->gf1.dma_ack)
+		gus->gf1.dma_ack(gus, gus->gf1.dma_निजी_data);
 	spin_lock(&gus->dma_lock);
-	if (gus->gf1.dma_data_pcm == NULL &&
-	    gus->gf1.dma_data_synth == NULL) {
-	    	gus->gf1.dma_ack = NULL;
+	अगर (gus->gf1.dma_data_pcm == शून्य &&
+	    gus->gf1.dma_data_synth == शून्य) अणु
+	    	gus->gf1.dma_ack = शून्य;
 		gus->gf1.dma_flags &= ~SNDRV_GF1_DMA_TRIGGER;
 		spin_unlock(&gus->dma_lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	block = snd_gf1_dma_next_block(gus);
 	spin_unlock(&gus->dma_lock);
-	snd_gf1_dma_program(gus, block->addr, block->buf_addr, block->count, (unsigned short) block->cmd);
-	kfree(block);
-#if 0
-	snd_printd(KERN_DEBUG "program dma (IRQ) - "
+	snd_gf1_dma_program(gus, block->addr, block->buf_addr, block->count, (अचिन्हित लघु) block->cmd);
+	kमुक्त(block);
+#अगर 0
+	snd_prपूर्णांकd(KERN_DEBUG "program dma (IRQ) - "
 		   "addr = 0x%x, buffer = 0x%lx, count = 0x%x, cmd = 0x%x\n",
 		   block->addr, block->buf_addr, block->count, block->cmd);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-int snd_gf1_dma_init(struct snd_gus_card * gus)
-{
+पूर्णांक snd_gf1_dma_init(काष्ठा snd_gus_card * gus)
+अणु
 	mutex_lock(&gus->dma_mutex);
 	gus->gf1.dma_shared++;
-	if (gus->gf1.dma_shared > 1) {
+	अगर (gus->gf1.dma_shared > 1) अणु
 		mutex_unlock(&gus->dma_mutex);
-		return 0;
-	}
-	gus->gf1.interrupt_handler_dma_write = snd_gf1_dma_interrupt;
+		वापस 0;
+	पूर्ण
+	gus->gf1.पूर्णांकerrupt_handler_dma_ग_लिखो = snd_gf1_dma_पूर्णांकerrupt;
 	gus->gf1.dma_data_pcm = 
 	gus->gf1.dma_data_pcm_last =
 	gus->gf1.dma_data_synth = 
-	gus->gf1.dma_data_synth_last = NULL;
+	gus->gf1.dma_data_synth_last = शून्य;
 	mutex_unlock(&gus->dma_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_gf1_dma_done(struct snd_gus_card * gus)
-{
-	struct snd_gf1_dma_block *block;
+पूर्णांक snd_gf1_dma_करोne(काष्ठा snd_gus_card * gus)
+अणु
+	काष्ठा snd_gf1_dma_block *block;
 
 	mutex_lock(&gus->dma_mutex);
 	gus->gf1.dma_shared--;
-	if (!gus->gf1.dma_shared) {
+	अगर (!gus->gf1.dma_shared) अणु
 		snd_dma_disable(gus->gf1.dma1);
-		snd_gf1_set_default_handlers(gus, SNDRV_GF1_HANDLER_DMA_WRITE);
+		snd_gf1_set_शेष_handlers(gus, SNDRV_GF1_HANDLER_DMA_WRITE);
 		snd_gf1_dma_ack(gus);
-		while ((block = gus->gf1.dma_data_pcm)) {
+		जबतक ((block = gus->gf1.dma_data_pcm)) अणु
 			gus->gf1.dma_data_pcm = block->next;
-			kfree(block);
-		}
-		while ((block = gus->gf1.dma_data_synth)) {
+			kमुक्त(block);
+		पूर्ण
+		जबतक ((block = gus->gf1.dma_data_synth)) अणु
 			gus->gf1.dma_data_synth = block->next;
-			kfree(block);
-		}
+			kमुक्त(block);
+		पूर्ण
 		gus->gf1.dma_data_pcm_last =
-		gus->gf1.dma_data_synth_last = NULL;
-	}
+		gus->gf1.dma_data_synth_last = शून्य;
+	पूर्ण
 	mutex_unlock(&gus->dma_mutex);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_gf1_dma_transfer_block(struct snd_gus_card * gus,
-			       struct snd_gf1_dma_block * __block,
-			       int atomic,
-			       int synth)
-{
-	unsigned long flags;
-	struct snd_gf1_dma_block *block;
+पूर्णांक snd_gf1_dma_transfer_block(काष्ठा snd_gus_card * gus,
+			       काष्ठा snd_gf1_dma_block * __block,
+			       पूर्णांक atomic,
+			       पूर्णांक synth)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा snd_gf1_dma_block *block;
 
-	block = kmalloc(sizeof(*block), atomic ? GFP_ATOMIC : GFP_KERNEL);
-	if (!block)
-		return -ENOMEM;
+	block = kदो_स्मृति(माप(*block), atomic ? GFP_ATOMIC : GFP_KERNEL);
+	अगर (!block)
+		वापस -ENOMEM;
 
 	*block = *__block;
-	block->next = NULL;
+	block->next = शून्य;
 
-	snd_printdd("addr = 0x%x, buffer = 0x%lx, count = 0x%x, cmd = 0x%x\n",
-		    block->addr, (long) block->buffer, block->count,
+	snd_prपूर्णांकdd("addr = 0x%x, buffer = 0x%lx, count = 0x%x, cmd = 0x%x\n",
+		    block->addr, (दीर्घ) block->buffer, block->count,
 		    block->cmd);
 
-	snd_printdd("gus->gf1.dma_data_pcm_last = 0x%lx\n",
-		    (long)gus->gf1.dma_data_pcm_last);
-	snd_printdd("gus->gf1.dma_data_pcm = 0x%lx\n",
-		    (long)gus->gf1.dma_data_pcm);
+	snd_prपूर्णांकdd("gus->gf1.dma_data_pcm_last = 0x%lx\n",
+		    (दीर्घ)gus->gf1.dma_data_pcm_last);
+	snd_prपूर्णांकdd("gus->gf1.dma_data_pcm = 0x%lx\n",
+		    (दीर्घ)gus->gf1.dma_data_pcm);
 
 	spin_lock_irqsave(&gus->dma_lock, flags);
-	if (synth) {
-		if (gus->gf1.dma_data_synth_last) {
+	अगर (synth) अणु
+		अगर (gus->gf1.dma_data_synth_last) अणु
 			gus->gf1.dma_data_synth_last->next = block;
 			gus->gf1.dma_data_synth_last = block;
-		} else {
+		पूर्ण अन्यथा अणु
 			gus->gf1.dma_data_synth = 
 			gus->gf1.dma_data_synth_last = block;
-		}
-	} else {
-		if (gus->gf1.dma_data_pcm_last) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (gus->gf1.dma_data_pcm_last) अणु
 			gus->gf1.dma_data_pcm_last->next = block;
 			gus->gf1.dma_data_pcm_last = block;
-		} else {
+		पूर्ण अन्यथा अणु
 			gus->gf1.dma_data_pcm = 
 			gus->gf1.dma_data_pcm_last = block;
-		}
-	}
-	if (!(gus->gf1.dma_flags & SNDRV_GF1_DMA_TRIGGER)) {
+		पूर्ण
+	पूर्ण
+	अगर (!(gus->gf1.dma_flags & SNDRV_GF1_DMA_TRIGGER)) अणु
 		gus->gf1.dma_flags |= SNDRV_GF1_DMA_TRIGGER;
 		block = snd_gf1_dma_next_block(gus);
 		spin_unlock_irqrestore(&gus->dma_lock, flags);
-		if (block == NULL)
-			return 0;
-		snd_gf1_dma_program(gus, block->addr, block->buf_addr, block->count, (unsigned short) block->cmd);
-		kfree(block);
-		return 0;
-	}
+		अगर (block == शून्य)
+			वापस 0;
+		snd_gf1_dma_program(gus, block->addr, block->buf_addr, block->count, (अचिन्हित लघु) block->cmd);
+		kमुक्त(block);
+		वापस 0;
+	पूर्ण
 	spin_unlock_irqrestore(&gus->dma_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण

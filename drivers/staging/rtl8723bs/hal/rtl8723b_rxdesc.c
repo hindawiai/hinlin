@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#define _RTL8723B_REDESC_C_
+#घोषणा _RTL8723B_REDESC_C_
 
-#include <rtl8723b_hal.h>
+#समावेश <rtl8723b_hal.h>
 
-static void process_rssi(struct adapter *padapter, union recv_frame *prframe)
-{
-	struct rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
-	struct signal_stat *signal_stat = &padapter->recvpriv.signal_strength_data;
+अटल व्योम process_rssi(काष्ठा adapter *padapter, जोड़ recv_frame *prframe)
+अणु
+	काष्ठा rx_pkt_attrib *pattrib = &prframe->u.hdr.attrib;
+	काष्ठा संकेत_stat *संकेत_stat = &padapter->recvpriv.संकेत_strength_data;
 
-	/* if (pRfd->Status.bPacketToSelf || pRfd->Status.bPacketBeacon) */
-	{
-		if (signal_stat->update_req) {
-			signal_stat->total_num = 0;
-			signal_stat->total_val = 0;
-			signal_stat->update_req = 0;
-		}
+	/* अगर (pRfd->Status.bPacketToSelf || pRfd->Status.bPacketBeacon) */
+	अणु
+		अगर (संकेत_stat->update_req) अणु
+			संकेत_stat->total_num = 0;
+			संकेत_stat->total_val = 0;
+			संकेत_stat->update_req = 0;
+		पूर्ण
 
-		signal_stat->total_num++;
-		signal_stat->total_val  += pattrib->phy_info.SignalStrength;
-		signal_stat->avg_val = signal_stat->total_val / signal_stat->total_num;
-	}
+		संकेत_stat->total_num++;
+		संकेत_stat->total_val  += pattrib->phy_info.SignalStrength;
+		संकेत_stat->avg_val = संकेत_stat->total_val / संकेत_stat->total_num;
+	पूर्ण
 
-} /*  Process_UI_RSSI_8192C */
+पूर्ण /*  Process_UI_RSSI_8192C */
 
-static void process_link_qual(struct adapter *padapter, union recv_frame *prframe)
-{
-	struct rx_pkt_attrib *pattrib;
-	struct signal_stat *signal_stat;
+अटल व्योम process_link_qual(काष्ठा adapter *padapter, जोड़ recv_frame *prframe)
+अणु
+	काष्ठा rx_pkt_attrib *pattrib;
+	काष्ठा संकेत_stat *संकेत_stat;
 
-	if (!prframe || !padapter)
-		return;
+	अगर (!prframe || !padapter)
+		वापस;
 
 	pattrib = &prframe->u.hdr.attrib;
-	signal_stat = &padapter->recvpriv.signal_qual_data;
+	संकेत_stat = &padapter->recvpriv.संकेत_qual_data;
 
-	if (signal_stat->update_req) {
-		signal_stat->total_num = 0;
-		signal_stat->total_val = 0;
-		signal_stat->update_req = 0;
-	}
+	अगर (संकेत_stat->update_req) अणु
+		संकेत_stat->total_num = 0;
+		संकेत_stat->total_val = 0;
+		संकेत_stat->update_req = 0;
+	पूर्ण
 
-	signal_stat->total_num++;
-	signal_stat->total_val  += pattrib->phy_info.SignalQuality;
-	signal_stat->avg_val = signal_stat->total_val / signal_stat->total_num;
-} /*  Process_UiLinkQuality8192S */
+	संकेत_stat->total_num++;
+	संकेत_stat->total_val  += pattrib->phy_info.SignalQuality;
+	संकेत_stat->avg_val = संकेत_stat->total_val / संकेत_stat->total_num;
+पूर्ण /*  Process_UiLinkQuality8192S */
 
 
-void rtl8723b_process_phy_info(struct adapter *padapter, void *prframe)
-{
-	union recv_frame *precvframe = prframe;
+व्योम rtl8723b_process_phy_info(काष्ठा adapter *padapter, व्योम *prframe)
+अणु
+	जोड़ recv_frame *precvframe = prframe;
 	/*  */
 	/*  Check RSSI */
 	/*  */
@@ -68,8 +69,8 @@ void rtl8723b_process_phy_info(struct adapter *padapter, void *prframe)
 	/*  Check EVM */
 	/*  */
 	process_link_qual(padapter,  precvframe);
-	#ifdef DBG_RX_SIGNAL_DISPLAY_RAW_DATA
+	#अगर_घोषित DBG_RX_SIGNAL_DISPLAY_RAW_DATA
 	rtw_store_phy_info(padapter, prframe);
-	#endif
+	#पूर्ण_अगर
 
-}
+पूर्ण

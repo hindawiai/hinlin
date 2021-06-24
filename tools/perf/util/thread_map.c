@@ -1,429 +1,430 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <dirent.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include "string2.h"
-#include "strlist.h"
-#include <string.h>
-#include <api/fs/fs.h>
-#include <linux/string.h>
-#include <linux/zalloc.h>
-#include "asm/bug.h"
-#include "thread_map.h"
-#include "debug.h"
-#include "event.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <dirent.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <सीमा.स>
+#समावेश <stdbool.h>
+#समावेश <मानककोष.स>
+#समावेश <मानकपन.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <unistd.h>
+#समावेश "string2.h"
+#समावेश "strlist.h"
+#समावेश <माला.स>
+#समावेश <api/fs/fs.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/zभाग.स>
+#समावेश "asm/bug.h"
+#समावेश "thread_map.h"
+#समावेश "debug.h"
+#समावेश "event.h"
 
 /* Skip "." and ".." directories */
-static int filter(const struct dirent *dir)
-{
-	if (dir->d_name[0] == '.')
-		return 0;
-	else
-		return 1;
-}
+अटल पूर्णांक filter(स्थिर काष्ठा dirent *dir)
+अणु
+	अगर (dir->d_name[0] == '.')
+		वापस 0;
+	अन्यथा
+		वापस 1;
+पूर्ण
 
-#define thread_map__alloc(__nr) perf_thread_map__realloc(NULL, __nr)
+#घोषणा thपढ़ो_map__alloc(__nr) perf_thपढ़ो_map__पुनः_स्मृति(शून्य, __nr)
 
-struct perf_thread_map *thread_map__new_by_pid(pid_t pid)
-{
-	struct perf_thread_map *threads;
-	char name[256];
-	int items;
-	struct dirent **namelist = NULL;
-	int i;
+काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_by_pid(pid_t pid)
+अणु
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+	अक्षर name[256];
+	पूर्णांक items;
+	काष्ठा dirent **namelist = शून्य;
+	पूर्णांक i;
 
-	sprintf(name, "/proc/%d/task", pid);
-	items = scandir(name, &namelist, filter, NULL);
-	if (items <= 0)
-		return NULL;
+	प्र_लिखो(name, "/proc/%d/task", pid);
+	items = scandir(name, &namelist, filter, शून्य);
+	अगर (items <= 0)
+		वापस शून्य;
 
-	threads = thread_map__alloc(items);
-	if (threads != NULL) {
-		for (i = 0; i < items; i++)
-			perf_thread_map__set_pid(threads, i, atoi(namelist[i]->d_name));
-		threads->nr = items;
-		refcount_set(&threads->refcnt, 1);
-	}
+	thपढ़ोs = thपढ़ो_map__alloc(items);
+	अगर (thपढ़ोs != शून्य) अणु
+		क्रम (i = 0; i < items; i++)
+			perf_thपढ़ो_map__set_pid(thपढ़ोs, i, म_से_प(namelist[i]->d_name));
+		thपढ़ोs->nr = items;
+		refcount_set(&thपढ़ोs->refcnt, 1);
+	पूर्ण
 
-	for (i=0; i<items; i++)
-		zfree(&namelist[i]);
-	free(namelist);
+	क्रम (i=0; i<items; i++)
+		zमुक्त(&namelist[i]);
+	मुक्त(namelist);
 
-	return threads;
-}
+	वापस thपढ़ोs;
+पूर्ण
 
-struct perf_thread_map *thread_map__new_by_tid(pid_t tid)
-{
-	struct perf_thread_map *threads = thread_map__alloc(1);
+काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_by_tid(pid_t tid)
+अणु
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = thपढ़ो_map__alloc(1);
 
-	if (threads != NULL) {
-		perf_thread_map__set_pid(threads, 0, tid);
-		threads->nr = 1;
-		refcount_set(&threads->refcnt, 1);
-	}
+	अगर (thपढ़ोs != शून्य) अणु
+		perf_thपढ़ो_map__set_pid(thपढ़ोs, 0, tid);
+		thपढ़ोs->nr = 1;
+		refcount_set(&thपढ़ोs->refcnt, 1);
+	पूर्ण
 
-	return threads;
-}
+	वापस thपढ़ोs;
+पूर्ण
 
-static struct perf_thread_map *__thread_map__new_all_cpus(uid_t uid)
-{
-	DIR *proc;
-	int max_threads = 32, items, i;
-	char path[NAME_MAX + 1 + 6];
-	struct dirent *dirent, **namelist = NULL;
-	struct perf_thread_map *threads = thread_map__alloc(max_threads);
+अटल काष्ठा perf_thपढ़ो_map *__thपढ़ो_map__new_all_cpus(uid_t uid)
+अणु
+	सूची *proc;
+	पूर्णांक max_thपढ़ोs = 32, items, i;
+	अक्षर path[NAME_MAX + 1 + 6];
+	काष्ठा dirent *dirent, **namelist = शून्य;
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = thपढ़ो_map__alloc(max_thपढ़ोs);
 
-	if (threads == NULL)
-		goto out;
+	अगर (thपढ़ोs == शून्य)
+		जाओ out;
 
-	proc = opendir("/proc");
-	if (proc == NULL)
-		goto out_free_threads;
+	proc = सूची_खोलो("/proc");
+	अगर (proc == शून्य)
+		जाओ out_मुक्त_thपढ़ोs;
 
-	threads->nr = 0;
-	refcount_set(&threads->refcnt, 1);
+	thपढ़ोs->nr = 0;
+	refcount_set(&thपढ़ोs->refcnt, 1);
 
-	while ((dirent = readdir(proc)) != NULL) {
-		char *end;
+	जबतक ((dirent = सूची_पढ़ो(proc)) != शून्य) अणु
+		अक्षर *end;
 		bool grow = false;
-		pid_t pid = strtol(dirent->d_name, &end, 10);
+		pid_t pid = म_से_दीर्घ(dirent->d_name, &end, 10);
 
-		if (*end) /* only interested in proper numerical dirents */
-			continue;
+		अगर (*end) /* only पूर्णांकerested in proper numerical dirents */
+			जारी;
 
-		snprintf(path, sizeof(path), "/proc/%s", dirent->d_name);
+		snम_लिखो(path, माप(path), "/proc/%s", dirent->d_name);
 
-		if (uid != UINT_MAX) {
-			struct stat st;
+		अगर (uid != अच_पूर्णांक_उच्च) अणु
+			काष्ठा stat st;
 
-			if (stat(path, &st) != 0 || st.st_uid != uid)
-				continue;
-		}
+			अगर (stat(path, &st) != 0 || st.st_uid != uid)
+				जारी;
+		पूर्ण
 
-		snprintf(path, sizeof(path), "/proc/%d/task", pid);
-		items = scandir(path, &namelist, filter, NULL);
-		if (items <= 0)
-			goto out_free_closedir;
+		snम_लिखो(path, माप(path), "/proc/%d/task", pid);
+		items = scandir(path, &namelist, filter, शून्य);
+		अगर (items <= 0)
+			जाओ out_मुक्त_बंद_सूची;
 
-		while (threads->nr + items >= max_threads) {
-			max_threads *= 2;
+		जबतक (thपढ़ोs->nr + items >= max_thपढ़ोs) अणु
+			max_thपढ़ोs *= 2;
 			grow = true;
-		}
+		पूर्ण
 
-		if (grow) {
-			struct perf_thread_map *tmp;
+		अगर (grow) अणु
+			काष्ठा perf_thपढ़ो_map *पंचांगp;
 
-			tmp = perf_thread_map__realloc(threads, max_threads);
-			if (tmp == NULL)
-				goto out_free_namelist;
+			पंचांगp = perf_thपढ़ो_map__पुनः_स्मृति(thपढ़ोs, max_thपढ़ोs);
+			अगर (पंचांगp == शून्य)
+				जाओ out_मुक्त_namelist;
 
-			threads = tmp;
-		}
+			thपढ़ोs = पंचांगp;
+		पूर्ण
 
-		for (i = 0; i < items; i++) {
-			perf_thread_map__set_pid(threads, threads->nr + i,
-						    atoi(namelist[i]->d_name));
-		}
+		क्रम (i = 0; i < items; i++) अणु
+			perf_thपढ़ो_map__set_pid(thपढ़ोs, thपढ़ोs->nr + i,
+						    म_से_प(namelist[i]->d_name));
+		पूर्ण
 
-		for (i = 0; i < items; i++)
-			zfree(&namelist[i]);
-		free(namelist);
+		क्रम (i = 0; i < items; i++)
+			zमुक्त(&namelist[i]);
+		मुक्त(namelist);
 
-		threads->nr += items;
-	}
+		thपढ़ोs->nr += items;
+	पूर्ण
 
-out_closedir:
-	closedir(proc);
+out_बंद_सूची:
+	बंद_सूची(proc);
 out:
-	return threads;
+	वापस thपढ़ोs;
 
-out_free_threads:
-	free(threads);
-	return NULL;
+out_मुक्त_thपढ़ोs:
+	मुक्त(thपढ़ोs);
+	वापस शून्य;
 
-out_free_namelist:
-	for (i = 0; i < items; i++)
-		zfree(&namelist[i]);
-	free(namelist);
+out_मुक्त_namelist:
+	क्रम (i = 0; i < items; i++)
+		zमुक्त(&namelist[i]);
+	मुक्त(namelist);
 
-out_free_closedir:
-	zfree(&threads);
-	goto out_closedir;
-}
+out_मुक्त_बंद_सूची:
+	zमुक्त(&thपढ़ोs);
+	जाओ out_बंद_सूची;
+पूर्ण
 
-struct perf_thread_map *thread_map__new_all_cpus(void)
-{
-	return __thread_map__new_all_cpus(UINT_MAX);
-}
+काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_all_cpus(व्योम)
+अणु
+	वापस __thपढ़ो_map__new_all_cpus(अच_पूर्णांक_उच्च);
+पूर्ण
 
-struct perf_thread_map *thread_map__new_by_uid(uid_t uid)
-{
-	return __thread_map__new_all_cpus(uid);
-}
+काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_by_uid(uid_t uid)
+अणु
+	वापस __thपढ़ो_map__new_all_cpus(uid);
+पूर्ण
 
-struct perf_thread_map *thread_map__new(pid_t pid, pid_t tid, uid_t uid)
-{
-	if (pid != -1)
-		return thread_map__new_by_pid(pid);
+काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new(pid_t pid, pid_t tid, uid_t uid)
+अणु
+	अगर (pid != -1)
+		वापस thपढ़ो_map__new_by_pid(pid);
 
-	if (tid == -1 && uid != UINT_MAX)
-		return thread_map__new_by_uid(uid);
+	अगर (tid == -1 && uid != अच_पूर्णांक_उच्च)
+		वापस thपढ़ो_map__new_by_uid(uid);
 
-	return thread_map__new_by_tid(tid);
-}
+	वापस thपढ़ो_map__new_by_tid(tid);
+पूर्ण
 
-static struct perf_thread_map *thread_map__new_by_pid_str(const char *pid_str)
-{
-	struct perf_thread_map *threads = NULL, *nt;
-	char name[256];
-	int items, total_tasks = 0;
-	struct dirent **namelist = NULL;
-	int i, j = 0;
-	pid_t pid, prev_pid = INT_MAX;
-	char *end_ptr;
-	struct str_node *pos;
-	struct strlist_config slist_config = { .dont_dupstr = true, };
-	struct strlist *slist = strlist__new(pid_str, &slist_config);
+अटल काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_by_pid_str(स्थिर अक्षर *pid_str)
+अणु
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = शून्य, *nt;
+	अक्षर name[256];
+	पूर्णांक items, total_tasks = 0;
+	काष्ठा dirent **namelist = शून्य;
+	पूर्णांक i, j = 0;
+	pid_t pid, prev_pid = पूर्णांक_उच्च;
+	अक्षर *end_ptr;
+	काष्ठा str_node *pos;
+	काष्ठा strlist_config slist_config = अणु .करोnt_dupstr = true, पूर्ण;
+	काष्ठा strlist *slist = strlist__new(pid_str, &slist_config);
 
-	if (!slist)
-		return NULL;
+	अगर (!slist)
+		वापस शून्य;
 
-	strlist__for_each_entry(pos, slist) {
-		pid = strtol(pos->s, &end_ptr, 10);
+	strlist__क्रम_each_entry(pos, slist) अणु
+		pid = म_से_दीर्घ(pos->s, &end_ptr, 10);
 
-		if (pid == INT_MIN || pid == INT_MAX ||
+		अगर (pid == पूर्णांक_न्यून || pid == पूर्णांक_उच्च ||
 		    (*end_ptr != '\0' && *end_ptr != ','))
-			goto out_free_threads;
+			जाओ out_मुक्त_thपढ़ोs;
 
-		if (pid == prev_pid)
-			continue;
+		अगर (pid == prev_pid)
+			जारी;
 
-		sprintf(name, "/proc/%d/task", pid);
-		items = scandir(name, &namelist, filter, NULL);
-		if (items <= 0)
-			goto out_free_threads;
+		प्र_लिखो(name, "/proc/%d/task", pid);
+		items = scandir(name, &namelist, filter, शून्य);
+		अगर (items <= 0)
+			जाओ out_मुक्त_thपढ़ोs;
 
 		total_tasks += items;
-		nt = perf_thread_map__realloc(threads, total_tasks);
-		if (nt == NULL)
-			goto out_free_namelist;
+		nt = perf_thपढ़ो_map__पुनः_स्मृति(thपढ़ोs, total_tasks);
+		अगर (nt == शून्य)
+			जाओ out_मुक्त_namelist;
 
-		threads = nt;
+		thपढ़ोs = nt;
 
-		for (i = 0; i < items; i++) {
-			perf_thread_map__set_pid(threads, j++, atoi(namelist[i]->d_name));
-			zfree(&namelist[i]);
-		}
-		threads->nr = total_tasks;
-		free(namelist);
-	}
+		क्रम (i = 0; i < items; i++) अणु
+			perf_thपढ़ो_map__set_pid(thपढ़ोs, j++, म_से_प(namelist[i]->d_name));
+			zमुक्त(&namelist[i]);
+		पूर्ण
+		thपढ़ोs->nr = total_tasks;
+		मुक्त(namelist);
+	पूर्ण
 
 out:
 	strlist__delete(slist);
-	if (threads)
-		refcount_set(&threads->refcnt, 1);
-	return threads;
+	अगर (thपढ़ोs)
+		refcount_set(&thपढ़ोs->refcnt, 1);
+	वापस thपढ़ोs;
 
-out_free_namelist:
-	for (i = 0; i < items; i++)
-		zfree(&namelist[i]);
-	free(namelist);
+out_मुक्त_namelist:
+	क्रम (i = 0; i < items; i++)
+		zमुक्त(&namelist[i]);
+	मुक्त(namelist);
 
-out_free_threads:
-	zfree(&threads);
-	goto out;
-}
+out_मुक्त_thपढ़ोs:
+	zमुक्त(&thपढ़ोs);
+	जाओ out;
+पूर्ण
 
-struct perf_thread_map *thread_map__new_by_tid_str(const char *tid_str)
-{
-	struct perf_thread_map *threads = NULL, *nt;
-	int ntasks = 0;
-	pid_t tid, prev_tid = INT_MAX;
-	char *end_ptr;
-	struct str_node *pos;
-	struct strlist_config slist_config = { .dont_dupstr = true, };
-	struct strlist *slist;
+काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_by_tid_str(स्थिर अक्षर *tid_str)
+अणु
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = शून्य, *nt;
+	पूर्णांक ntasks = 0;
+	pid_t tid, prev_tid = पूर्णांक_उच्च;
+	अक्षर *end_ptr;
+	काष्ठा str_node *pos;
+	काष्ठा strlist_config slist_config = अणु .करोnt_dupstr = true, पूर्ण;
+	काष्ठा strlist *slist;
 
-	/* perf-stat expects threads to be generated even if tid not given */
-	if (!tid_str)
-		return perf_thread_map__new_dummy();
+	/* perf-stat expects thपढ़ोs to be generated even अगर tid not given */
+	अगर (!tid_str)
+		वापस perf_thपढ़ो_map__new_dummy();
 
 	slist = strlist__new(tid_str, &slist_config);
-	if (!slist)
-		return NULL;
+	अगर (!slist)
+		वापस शून्य;
 
-	strlist__for_each_entry(pos, slist) {
-		tid = strtol(pos->s, &end_ptr, 10);
+	strlist__क्रम_each_entry(pos, slist) अणु
+		tid = म_से_दीर्घ(pos->s, &end_ptr, 10);
 
-		if (tid == INT_MIN || tid == INT_MAX ||
+		अगर (tid == पूर्णांक_न्यून || tid == पूर्णांक_उच्च ||
 		    (*end_ptr != '\0' && *end_ptr != ','))
-			goto out_free_threads;
+			जाओ out_मुक्त_thपढ़ोs;
 
-		if (tid == prev_tid)
-			continue;
+		अगर (tid == prev_tid)
+			जारी;
 
 		ntasks++;
-		nt = perf_thread_map__realloc(threads, ntasks);
+		nt = perf_thपढ़ो_map__पुनः_स्मृति(thपढ़ोs, ntasks);
 
-		if (nt == NULL)
-			goto out_free_threads;
+		अगर (nt == शून्य)
+			जाओ out_मुक्त_thपढ़ोs;
 
-		threads = nt;
-		perf_thread_map__set_pid(threads, ntasks - 1, tid);
-		threads->nr = ntasks;
-	}
+		thपढ़ोs = nt;
+		perf_thपढ़ो_map__set_pid(thपढ़ोs, ntasks - 1, tid);
+		thपढ़ोs->nr = ntasks;
+	पूर्ण
 out:
-	if (threads)
-		refcount_set(&threads->refcnt, 1);
-	return threads;
+	अगर (thपढ़ोs)
+		refcount_set(&thपढ़ोs->refcnt, 1);
+	वापस thपढ़ोs;
 
-out_free_threads:
-	zfree(&threads);
+out_मुक्त_thपढ़ोs:
+	zमुक्त(&thपढ़ोs);
 	strlist__delete(slist);
-	goto out;
-}
+	जाओ out;
+पूर्ण
 
-struct perf_thread_map *thread_map__new_str(const char *pid, const char *tid,
-				       uid_t uid, bool all_threads)
-{
-	if (pid)
-		return thread_map__new_by_pid_str(pid);
+काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_str(स्थिर अक्षर *pid, स्थिर अक्षर *tid,
+				       uid_t uid, bool all_thपढ़ोs)
+अणु
+	अगर (pid)
+		वापस thपढ़ो_map__new_by_pid_str(pid);
 
-	if (!tid && uid != UINT_MAX)
-		return thread_map__new_by_uid(uid);
+	अगर (!tid && uid != अच_पूर्णांक_उच्च)
+		वापस thपढ़ो_map__new_by_uid(uid);
 
-	if (all_threads)
-		return thread_map__new_all_cpus();
+	अगर (all_thपढ़ोs)
+		वापस thपढ़ो_map__new_all_cpus();
 
-	return thread_map__new_by_tid_str(tid);
-}
+	वापस thपढ़ो_map__new_by_tid_str(tid);
+पूर्ण
 
-size_t thread_map__fprintf(struct perf_thread_map *threads, FILE *fp)
-{
-	int i;
-	size_t printed = fprintf(fp, "%d thread%s: ",
-				 threads->nr, threads->nr > 1 ? "s" : "");
-	for (i = 0; i < threads->nr; ++i)
-		printed += fprintf(fp, "%s%d", i ? ", " : "", perf_thread_map__pid(threads, i));
+माप_प्रकार thपढ़ो_map__ख_लिखो(काष्ठा perf_thपढ़ो_map *thपढ़ोs, खाता *fp)
+अणु
+	पूर्णांक i;
+	माप_प्रकार prपूर्णांकed = ख_लिखो(fp, "%d thread%s: ",
+				 thपढ़ोs->nr, thपढ़ोs->nr > 1 ? "s" : "");
+	क्रम (i = 0; i < thपढ़ोs->nr; ++i)
+		prपूर्णांकed += ख_लिखो(fp, "%s%d", i ? ", " : "", perf_thपढ़ो_map__pid(thपढ़ोs, i));
 
-	return printed + fprintf(fp, "\n");
-}
+	वापस prपूर्णांकed + ख_लिखो(fp, "\n");
+पूर्ण
 
-static int get_comm(char **comm, pid_t pid)
-{
-	char *path;
-	size_t size;
-	int err;
+अटल पूर्णांक get_comm(अक्षर **comm, pid_t pid)
+अणु
+	अक्षर *path;
+	माप_प्रकार size;
+	पूर्णांक err;
 
-	if (asprintf(&path, "%s/%d/comm", procfs__mountpoint(), pid) == -1)
-		return -ENOMEM;
+	अगर (aप्र_लिखो(&path, "%s/%d/comm", procfs__mountpoपूर्णांक(), pid) == -1)
+		वापस -ENOMEM;
 
-	err = filename__read_str(path, comm, &size);
-	if (!err) {
+	err = filename__पढ़ो_str(path, comm, &size);
+	अगर (!err) अणु
 		/*
-		 * We're reading 16 bytes, while filename__read_str
-		 * allocates data per BUFSIZ bytes, so we can safely
+		 * We're पढ़ोing 16 bytes, जबतक filename__पढ़ो_str
+		 * allocates data per बफ_मान bytes, so we can safely
 		 * mark the end of the string.
 		 */
 		(*comm)[size] = 0;
 		strim(*comm);
-	}
+	पूर्ण
 
-	free(path);
-	return err;
-}
+	मुक्त(path);
+	वापस err;
+पूर्ण
 
-static void comm_init(struct perf_thread_map *map, int i)
-{
-	pid_t pid = perf_thread_map__pid(map, i);
-	char *comm = NULL;
+अटल व्योम comm_init(काष्ठा perf_thपढ़ो_map *map, पूर्णांक i)
+अणु
+	pid_t pid = perf_thपढ़ो_map__pid(map, i);
+	अक्षर *comm = शून्य;
 
 	/* dummy pid comm initialization */
-	if (pid == -1) {
+	अगर (pid == -1) अणु
 		map->map[i].comm = strdup("dummy");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * The comm name is like extra bonus ;-),
-	 * so just warn if we fail for any reason.
+	 * so just warn अगर we fail क्रम any reason.
 	 */
-	if (get_comm(&comm, pid))
+	अगर (get_comm(&comm, pid))
 		pr_warning("Couldn't resolve comm name for pid %d\n", pid);
 
 	map->map[i].comm = comm;
-}
+पूर्ण
 
-void thread_map__read_comms(struct perf_thread_map *threads)
-{
-	int i;
+व्योम thपढ़ो_map__पढ़ो_comms(काष्ठा perf_thपढ़ो_map *thपढ़ोs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < threads->nr; ++i)
-		comm_init(threads, i);
-}
+	क्रम (i = 0; i < thपढ़ोs->nr; ++i)
+		comm_init(thपढ़ोs, i);
+पूर्ण
 
-static void thread_map__copy_event(struct perf_thread_map *threads,
-				   struct perf_record_thread_map *event)
-{
-	unsigned i;
+अटल व्योम thपढ़ो_map__copy_event(काष्ठा perf_thपढ़ो_map *thपढ़ोs,
+				   काष्ठा perf_record_thपढ़ो_map *event)
+अणु
+	अचिन्हित i;
 
-	threads->nr = (int) event->nr;
+	thपढ़ोs->nr = (पूर्णांक) event->nr;
 
-	for (i = 0; i < event->nr; i++) {
-		perf_thread_map__set_pid(threads, i, (pid_t) event->entries[i].pid);
-		threads->map[i].comm = strndup(event->entries[i].comm, 16);
-	}
+	क्रम (i = 0; i < event->nr; i++) अणु
+		perf_thपढ़ो_map__set_pid(thपढ़ोs, i, (pid_t) event->entries[i].pid);
+		thपढ़ोs->map[i].comm = strndup(event->entries[i].comm, 16);
+	पूर्ण
 
-	refcount_set(&threads->refcnt, 1);
-}
+	refcount_set(&thपढ़ोs->refcnt, 1);
+पूर्ण
 
-struct perf_thread_map *thread_map__new_event(struct perf_record_thread_map *event)
-{
-	struct perf_thread_map *threads;
+काष्ठा perf_thपढ़ो_map *thपढ़ो_map__new_event(काष्ठा perf_record_thपढ़ो_map *event)
+अणु
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
 
-	threads = thread_map__alloc(event->nr);
-	if (threads)
-		thread_map__copy_event(threads, event);
+	thपढ़ोs = thपढ़ो_map__alloc(event->nr);
+	अगर (thपढ़ोs)
+		thपढ़ो_map__copy_event(thपढ़ोs, event);
 
-	return threads;
-}
+	वापस thपढ़ोs;
+पूर्ण
 
-bool thread_map__has(struct perf_thread_map *threads, pid_t pid)
-{
-	int i;
+bool thपढ़ो_map__has(काष्ठा perf_thपढ़ो_map *thपढ़ोs, pid_t pid)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < threads->nr; ++i) {
-		if (threads->map[i].pid == pid)
-			return true;
-	}
+	क्रम (i = 0; i < thपढ़ोs->nr; ++i) अणु
+		अगर (thपढ़ोs->map[i].pid == pid)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int thread_map__remove(struct perf_thread_map *threads, int idx)
-{
-	int i;
+पूर्णांक thपढ़ो_map__हटाओ(काष्ठा perf_thपढ़ो_map *thपढ़ोs, पूर्णांक idx)
+अणु
+	पूर्णांक i;
 
-	if (threads->nr < 1)
-		return -EINVAL;
+	अगर (thपढ़ोs->nr < 1)
+		वापस -EINVAL;
 
-	if (idx >= threads->nr)
-		return -EINVAL;
+	अगर (idx >= thपढ़ोs->nr)
+		वापस -EINVAL;
 
 	/*
-	 * Free the 'idx' item and shift the rest up.
+	 * Free the 'idx' item and shअगरt the rest up.
 	 */
-	zfree(&threads->map[idx].comm);
+	zमुक्त(&thपढ़ोs->map[idx].comm);
 
-	for (i = idx; i < threads->nr - 1; i++)
-		threads->map[i] = threads->map[i + 1];
+	क्रम (i = idx; i < thपढ़ोs->nr - 1; i++)
+		thपढ़ोs->map[i] = thपढ़ोs->map[i + 1];
 
-	threads->nr--;
-	return 0;
-}
+	thपढ़ोs->nr--;
+	वापस 0;
+पूर्ण

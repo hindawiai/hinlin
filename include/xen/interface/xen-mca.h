@@ -1,19 +1,20 @@
+<शैली गुरु>
 /******************************************************************************
  * arch-x86/mca.h
- * Guest OS machine check interface to x86 Xen.
+ * Guest OS machine check पूर्णांकerface to x86 Xen.
  *
  * Contributed by Advanced Micro Devices, Inc.
  * Author: Christoph Egger <Christoph.Egger@amd.com>
  *
  * Updated by Intel Corporation
- * Author: Liu, Jinsong <jinsong.liu@intel.com>
+ * Author: Liu, Jinsong <jinsong.liu@पूर्णांकel.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
+ * of this software and associated करोcumentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * rights to use, copy, modअगरy, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ * furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -27,324 +28,324 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __XEN_PUBLIC_ARCH_X86_MCA_H__
-#define __XEN_PUBLIC_ARCH_X86_MCA_H__
+#अगर_अघोषित __XEN_PUBLIC_ARCH_X86_MCA_H__
+#घोषणा __XEN_PUBLIC_ARCH_X86_MCA_H__
 
 /* Hypercall */
-#define __HYPERVISOR_mca __HYPERVISOR_arch_0
+#घोषणा __HYPERVISOR_mca __HYPERVISOR_arch_0
 
-#define XEN_MCA_INTERFACE_VERSION	0x01ecc003
+#घोषणा XEN_MCA_INTERFACE_VERSION	0x01ecc003
 
 /* IN: Dom0 calls hypercall to retrieve nonurgent error log entry */
-#define XEN_MC_NONURGENT	0x1
+#घोषणा XEN_MC_NONURGENT	0x1
 /* IN: Dom0 calls hypercall to retrieve urgent error log entry */
-#define XEN_MC_URGENT		0x2
+#घोषणा XEN_MC_URGENT		0x2
 /* IN: Dom0 acknowledges previosly-fetched error log entry */
-#define XEN_MC_ACK		0x4
+#घोषणा XEN_MC_ACK		0x4
 
 /* OUT: All is ok */
-#define XEN_MC_OK		0x0
-/* OUT: Domain could not fetch data. */
-#define XEN_MC_FETCHFAILED	0x1
+#घोषणा XEN_MC_OK		0x0
+/* OUT: Doमुख्य could not fetch data. */
+#घोषणा XEN_MC_FETCHFAILED	0x1
 /* OUT: There was no machine check data to fetch. */
-#define XEN_MC_NODATA		0x2
+#घोषणा XEN_MC_NODATA		0x2
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 /* vIRQ injected to Dom0 */
-#define VIRQ_MCA VIRQ_ARCH_0
+#घोषणा VIRQ_MCA VIRQ_ARCH_0
 
 /*
  * mc_info entry types
  * mca machine check info are recorded in mc_info entries.
  * when fetch mca info, it can use MC_TYPE_... to distinguish
- * different mca info.
+ * dअगरferent mca info.
  */
-#define MC_TYPE_GLOBAL		0
-#define MC_TYPE_BANK		1
-#define MC_TYPE_EXTENDED	2
-#define MC_TYPE_RECOVERY	3
+#घोषणा MC_TYPE_GLOBAL		0
+#घोषणा MC_TYPE_BANK		1
+#घोषणा MC_TYPE_EXTENDED	2
+#घोषणा MC_TYPE_RECOVERY	3
 
-struct mcinfo_common {
-	uint16_t type; /* structure type */
-	uint16_t size; /* size of this struct in bytes */
-};
+काष्ठा mcinfo_common अणु
+	uपूर्णांक16_t type; /* काष्ठाure type */
+	uपूर्णांक16_t size; /* size of this काष्ठा in bytes */
+पूर्ण;
 
-#define MC_FLAG_CORRECTABLE	(1 << 0)
-#define MC_FLAG_UNCORRECTABLE	(1 << 1)
-#define MC_FLAG_RECOVERABLE	(1 << 2)
-#define MC_FLAG_POLLED		(1 << 3)
-#define MC_FLAG_RESET		(1 << 4)
-#define MC_FLAG_CMCI		(1 << 5)
-#define MC_FLAG_MCE		(1 << 6)
+#घोषणा MC_FLAG_CORRECTABLE	(1 << 0)
+#घोषणा MC_FLAG_UNCORRECTABLE	(1 << 1)
+#घोषणा MC_FLAG_RECOVERABLE	(1 << 2)
+#घोषणा MC_FLAG_POLLED		(1 << 3)
+#घोषणा MC_FLAG_RESET		(1 << 4)
+#घोषणा MC_FLAG_CMCI		(1 << 5)
+#घोषणा MC_FLAG_MCE		(1 << 6)
 
-/* contains x86 global mc information */
-struct mcinfo_global {
-	struct mcinfo_common common;
+/* contains x86 global mc inक्रमmation */
+काष्ठा mcinfo_global अणु
+	काष्ठा mcinfo_common common;
 
-	uint16_t mc_domid; /* running domain at the time in error */
-	uint16_t mc_vcpuid; /* virtual cpu scheduled for mc_domid */
-	uint32_t mc_socketid; /* physical socket of the physical core */
-	uint16_t mc_coreid; /* physical impacted core */
-	uint16_t mc_core_threadid; /* core thread of physical core */
-	uint32_t mc_apicid;
-	uint32_t mc_flags;
-	uint64_t mc_gstatus; /* global status */
-};
+	uपूर्णांक16_t mc_करोmid; /* running करोमुख्य at the समय in error */
+	uपूर्णांक16_t mc_vcpuid; /* भव cpu scheduled क्रम mc_करोmid */
+	uपूर्णांक32_t mc_socketid; /* physical socket of the physical core */
+	uपूर्णांक16_t mc_coreid; /* physical impacted core */
+	uपूर्णांक16_t mc_core_thपढ़ोid; /* core thपढ़ो of physical core */
+	uपूर्णांक32_t mc_apicid;
+	uपूर्णांक32_t mc_flags;
+	uपूर्णांक64_t mc_gstatus; /* global status */
+पूर्ण;
 
-/* contains x86 bank mc information */
-struct mcinfo_bank {
-	struct mcinfo_common common;
+/* contains x86 bank mc inक्रमmation */
+काष्ठा mcinfo_bank अणु
+	काष्ठा mcinfo_common common;
 
-	uint16_t mc_bank; /* bank nr */
-	uint16_t mc_domid; /* domain referenced by mc_addr if valid */
-	uint64_t mc_status; /* bank status */
-	uint64_t mc_addr; /* bank address */
-	uint64_t mc_misc;
-	uint64_t mc_ctrl2;
-	uint64_t mc_tsc;
-};
+	uपूर्णांक16_t mc_bank; /* bank nr */
+	uपूर्णांक16_t mc_करोmid; /* करोमुख्य referenced by mc_addr अगर valid */
+	uपूर्णांक64_t mc_status; /* bank status */
+	uपूर्णांक64_t mc_addr; /* bank address */
+	uपूर्णांक64_t mc_misc;
+	uपूर्णांक64_t mc_ctrl2;
+	uपूर्णांक64_t mc_tsc;
+पूर्ण;
 
-struct mcinfo_msr {
-	uint64_t reg; /* MSR */
-	uint64_t value; /* MSR value */
-};
+काष्ठा mcinfo_msr अणु
+	uपूर्णांक64_t reg; /* MSR */
+	uपूर्णांक64_t value; /* MSR value */
+पूर्ण;
 
-/* contains mc information from other or additional mc MSRs */
-struct mcinfo_extended {
-	struct mcinfo_common common;
-	uint32_t mc_msrs; /* Number of msr with valid values. */
+/* contains mc inक्रमmation from other or additional mc MSRs */
+काष्ठा mcinfo_extended अणु
+	काष्ठा mcinfo_common common;
+	uपूर्णांक32_t mc_msrs; /* Number of msr with valid values. */
 	/*
-	 * Currently Intel extended MSR (32/64) include all gp registers
+	 * Currently Intel extended MSR (32/64) include all gp रेजिस्टरs
 	 * and E(R)FLAGS, E(R)IP, E(R)MISC, up to 11/19 of them might be
 	 * useful at present. So expand this array to 16/32 to leave room.
 	 */
-	struct mcinfo_msr mc_msr[sizeof(void *) * 4];
-};
+	काष्ठा mcinfo_msr mc_msr[माप(व्योम *) * 4];
+पूर्ण;
 
-/* Recovery Action flags. Giving recovery result information to DOM0 */
+/* Recovery Action flags. Giving recovery result inक्रमmation to DOM0 */
 
 /* Xen takes successful recovery action, the error is recovered */
-#define REC_ACTION_RECOVERED (0x1 << 0)
-/* No action is performed by XEN */
-#define REC_ACTION_NONE (0x1 << 1)
-/* It's possible DOM0 might take action ownership in some case */
-#define REC_ACTION_NEED_RESET (0x1 << 2)
+#घोषणा REC_ACTION_RECOVERED (0x1 << 0)
+/* No action is perक्रमmed by XEN */
+#घोषणा REC_ACTION_NONE (0x1 << 1)
+/* It's possible DOM0 might take action ownership in some हाल */
+#घोषणा REC_ACTION_NEED_RESET (0x1 << 2)
 
 /*
- * Different Recovery Action types, if the action is performed successfully,
- * REC_ACTION_RECOVERED flag will be returned.
+ * Dअगरferent Recovery Action types, अगर the action is perक्रमmed successfully,
+ * REC_ACTION_RECOVERED flag will be वापसed.
  */
 
 /* Page Offline Action */
-#define MC_ACTION_PAGE_OFFLINE (0x1 << 0)
+#घोषणा MC_ACTION_PAGE_OFFLINE (0x1 << 0)
 /* CPU offline Action */
-#define MC_ACTION_CPU_OFFLINE (0x1 << 1)
+#घोषणा MC_ACTION_CPU_OFFLINE (0x1 << 1)
 /* L3 cache disable Action */
-#define MC_ACTION_CACHE_SHRINK (0x1 << 2)
+#घोषणा MC_ACTION_CACHE_SHRINK (0x1 << 2)
 
 /*
- * Below interface used between XEN/DOM0 for passing XEN's recovery action
- * information to DOM0.
+ * Below पूर्णांकerface used between XEN/DOM0 क्रम passing XEN's recovery action
+ * inक्रमmation to DOM0.
  */
-struct page_offline_action {
-	/* Params for passing the offlined page number to DOM0 */
-	uint64_t mfn;
-	uint64_t status;
-};
+काष्ठा page_offline_action अणु
+	/* Params क्रम passing the offlined page number to DOM0 */
+	uपूर्णांक64_t mfn;
+	uपूर्णांक64_t status;
+पूर्ण;
 
-struct cpu_offline_action {
-	/* Params for passing the identity of the offlined CPU to DOM0 */
-	uint32_t mc_socketid;
-	uint16_t mc_coreid;
-	uint16_t mc_core_threadid;
-};
+काष्ठा cpu_offline_action अणु
+	/* Params क्रम passing the identity of the offlined CPU to DOM0 */
+	uपूर्णांक32_t mc_socketid;
+	uपूर्णांक16_t mc_coreid;
+	uपूर्णांक16_t mc_core_thपढ़ोid;
+पूर्ण;
 
-#define MAX_UNION_SIZE 16
-struct mcinfo_recovery {
-	struct mcinfo_common common;
-	uint16_t mc_bank; /* bank nr */
-	uint8_t action_flags;
-	uint8_t action_types;
-	union {
-		struct page_offline_action page_retire;
-		struct cpu_offline_action cpu_offline;
-		uint8_t pad[MAX_UNION_SIZE];
-	} action_info;
-};
+#घोषणा MAX_UNION_SIZE 16
+काष्ठा mcinfo_recovery अणु
+	काष्ठा mcinfo_common common;
+	uपूर्णांक16_t mc_bank; /* bank nr */
+	uपूर्णांक8_t action_flags;
+	uपूर्णांक8_t action_types;
+	जोड़ अणु
+		काष्ठा page_offline_action page_retire;
+		काष्ठा cpu_offline_action cpu_offline;
+		uपूर्णांक8_t pad[MAX_UNION_SIZE];
+	पूर्ण action_info;
+पूर्ण;
 
 
-#define MCINFO_MAXSIZE 768
-struct mc_info {
+#घोषणा MCINFO_MAXSIZE 768
+काष्ठा mc_info अणु
 	/* Number of mcinfo_* entries in mi_data */
-	uint32_t mi_nentries;
-	uint32_t flags;
-	uint64_t mi_data[(MCINFO_MAXSIZE - 1) / 8];
-};
+	uपूर्णांक32_t mi_nentries;
+	uपूर्णांक32_t flags;
+	uपूर्णांक64_t mi_data[(MCINFO_MAXSIZE - 1) / 8];
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(mc_info);
 
-#define __MC_MSR_ARRAYSIZE 8
-#define __MC_NMSRS 1
-#define MC_NCAPS 7
-struct mcinfo_logical_cpu {
-	uint32_t mc_cpunr;
-	uint32_t mc_chipid;
-	uint16_t mc_coreid;
-	uint16_t mc_threadid;
-	uint32_t mc_apicid;
-	uint32_t mc_clusterid;
-	uint32_t mc_ncores;
-	uint32_t mc_ncores_active;
-	uint32_t mc_nthreads;
-	uint32_t mc_cpuid_level;
-	uint32_t mc_family;
-	uint32_t mc_vendor;
-	uint32_t mc_model;
-	uint32_t mc_step;
-	char mc_vendorid[16];
-	char mc_brandid[64];
-	uint32_t mc_cpu_caps[MC_NCAPS];
-	uint32_t mc_cache_size;
-	uint32_t mc_cache_alignment;
-	uint32_t mc_nmsrvals;
-	struct mcinfo_msr mc_msrvalues[__MC_MSR_ARRAYSIZE];
-};
+#घोषणा __MC_MSR_ARRAYSIZE 8
+#घोषणा __MC_NMSRS 1
+#घोषणा MC_NCAPS 7
+काष्ठा mcinfo_logical_cpu अणु
+	uपूर्णांक32_t mc_cpunr;
+	uपूर्णांक32_t mc_chipid;
+	uपूर्णांक16_t mc_coreid;
+	uपूर्णांक16_t mc_thपढ़ोid;
+	uपूर्णांक32_t mc_apicid;
+	uपूर्णांक32_t mc_clusterid;
+	uपूर्णांक32_t mc_ncores;
+	uपूर्णांक32_t mc_ncores_active;
+	uपूर्णांक32_t mc_nthपढ़ोs;
+	uपूर्णांक32_t mc_cpuid_level;
+	uपूर्णांक32_t mc_family;
+	uपूर्णांक32_t mc_venकरोr;
+	uपूर्णांक32_t mc_model;
+	uपूर्णांक32_t mc_step;
+	अक्षर mc_venकरोrid[16];
+	अक्षर mc_bअक्रमid[64];
+	uपूर्णांक32_t mc_cpu_caps[MC_NCAPS];
+	uपूर्णांक32_t mc_cache_size;
+	uपूर्णांक32_t mc_cache_alignment;
+	uपूर्णांक32_t mc_nmsrvals;
+	काष्ठा mcinfo_msr mc_msrvalues[__MC_MSR_ARRAYSIZE];
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(mcinfo_logical_cpu);
 
 /*
  * Prototype:
- *    uint32_t x86_mcinfo_nentries(struct mc_info *mi);
+ *    uपूर्णांक32_t x86_mcinfo_nentries(काष्ठा mc_info *mi);
  */
-#define x86_mcinfo_nentries(_mi)    \
+#घोषणा x86_mcinfo_nentries(_mi)    \
 	((_mi)->mi_nentries)
 /*
  * Prototype:
- *    struct mcinfo_common *x86_mcinfo_first(struct mc_info *mi);
+ *    काष्ठा mcinfo_common *x86_mcinfo_first(काष्ठा mc_info *mi);
  */
-#define x86_mcinfo_first(_mi)       \
-	((struct mcinfo_common *)(_mi)->mi_data)
+#घोषणा x86_mcinfo_first(_mi)       \
+	((काष्ठा mcinfo_common *)(_mi)->mi_data)
 /*
  * Prototype:
- *    struct mcinfo_common *x86_mcinfo_next(struct mcinfo_common *mic);
+ *    काष्ठा mcinfo_common *x86_mcinfo_next(काष्ठा mcinfo_common *mic);
  */
-#define x86_mcinfo_next(_mic)       \
-	((struct mcinfo_common *)((uint8_t *)(_mic) + (_mic)->size))
+#घोषणा x86_mcinfo_next(_mic)       \
+	((काष्ठा mcinfo_common *)((uपूर्णांक8_t *)(_mic) + (_mic)->size))
 
 /*
  * Prototype:
- *    void x86_mcinfo_lookup(void *ret, struct mc_info *mi, uint16_t type);
+ *    व्योम x86_mcinfo_lookup(व्योम *ret, काष्ठा mc_info *mi, uपूर्णांक16_t type);
  */
-static inline void x86_mcinfo_lookup(struct mcinfo_common **ret,
-				     struct mc_info *mi, uint16_t type)
-{
-	uint32_t i;
-	struct mcinfo_common *mic;
+अटल अंतरभूत व्योम x86_mcinfo_lookup(काष्ठा mcinfo_common **ret,
+				     काष्ठा mc_info *mi, uपूर्णांक16_t type)
+अणु
+	uपूर्णांक32_t i;
+	काष्ठा mcinfo_common *mic;
 	bool found = 0;
 
-	if (!ret || !mi)
-		return;
+	अगर (!ret || !mi)
+		वापस;
 
 	mic = x86_mcinfo_first(mi);
-	for (i = 0; i < x86_mcinfo_nentries(mi); i++) {
-		if (mic->type == type) {
+	क्रम (i = 0; i < x86_mcinfo_nentries(mi); i++) अणु
+		अगर (mic->type == type) अणु
 			found = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mic = x86_mcinfo_next(mic);
-	}
+	पूर्ण
 
-	*ret = found ? mic : NULL;
-}
+	*ret = found ? mic : शून्य;
+पूर्ण
 
 /*
  * Fetch machine check data from hypervisor.
  */
-#define XEN_MC_fetch		1
-struct xen_mc_fetch {
+#घोषणा XEN_MC_fetch		1
+काष्ठा xen_mc_fetch अणु
 	/*
 	 * IN: XEN_MC_NONURGENT, XEN_MC_URGENT,
-	 * XEN_MC_ACK if ack'king an earlier fetch
+	 * XEN_MC_ACK अगर ack'king an earlier fetch
 	 * OUT: XEN_MC_OK, XEN_MC_FETCHAILED, XEN_MC_NODATA
 	 */
-	uint32_t flags;
-	uint32_t _pad0;
-	/* OUT: id for ack, IN: id we are ack'ing */
-	uint64_t fetch_id;
+	uपूर्णांक32_t flags;
+	uपूर्णांक32_t _pad0;
+	/* OUT: id क्रम ack, IN: id we are ack'ing */
+	uपूर्णांक64_t fetch_id;
 
 	/* OUT variables. */
 	GUEST_HANDLE(mc_info) data;
-};
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xen_mc_fetch);
 
 
 /*
- * This tells the hypervisor to notify a DomU about the machine check error
+ * This tells the hypervisor to notअगरy a DomU about the machine check error
  */
-#define XEN_MC_notifydomain	2
-struct xen_mc_notifydomain {
+#घोषणा XEN_MC_notअगरyकरोमुख्य	2
+काष्ठा xen_mc_notअगरyकरोमुख्य अणु
 	/* IN variables */
-	uint16_t mc_domid; /* The unprivileged domain to notify */
-	uint16_t mc_vcpuid; /* The vcpu in mc_domid to notify */
+	uपूर्णांक16_t mc_करोmid; /* The unprivileged करोमुख्य to notअगरy */
+	uपूर्णांक16_t mc_vcpuid; /* The vcpu in mc_करोmid to notअगरy */
 
 	/* IN/OUT variables */
-	uint32_t flags;
-};
-DEFINE_GUEST_HANDLE_STRUCT(xen_mc_notifydomain);
+	uपूर्णांक32_t flags;
+पूर्ण;
+DEFINE_GUEST_HANDLE_STRUCT(xen_mc_notअगरyकरोमुख्य);
 
-#define XEN_MC_physcpuinfo	3
-struct xen_mc_physcpuinfo {
+#घोषणा XEN_MC_physcpuinfo	3
+काष्ठा xen_mc_physcpuinfo अणु
 	/* IN/OUT */
-	uint32_t ncpus;
-	uint32_t _pad0;
+	uपूर्णांक32_t ncpus;
+	uपूर्णांक32_t _pad0;
 	/* OUT */
 	GUEST_HANDLE(mcinfo_logical_cpu) info;
-};
+पूर्ण;
 
-#define XEN_MC_msrinject	4
-#define MC_MSRINJ_MAXMSRS	8
-struct xen_mc_msrinject {
+#घोषणा XEN_MC_msrinject	4
+#घोषणा MC_MSRINJ_MAXMSRS	8
+काष्ठा xen_mc_msrinject अणु
 	/* IN */
-	uint32_t mcinj_cpunr; /* target processor id */
-	uint32_t mcinj_flags; /* see MC_MSRINJ_F_* below */
-	uint32_t mcinj_count; /* 0 .. count-1 in array are valid */
-	uint32_t _pad0;
-	struct mcinfo_msr mcinj_msr[MC_MSRINJ_MAXMSRS];
-};
+	uपूर्णांक32_t mcinj_cpunr; /* target processor id */
+	uपूर्णांक32_t mcinj_flags; /* see MC_MSRINJ_F_* below */
+	uपूर्णांक32_t mcinj_count; /* 0 .. count-1 in array are valid */
+	uपूर्णांक32_t _pad0;
+	काष्ठा mcinfo_msr mcinj_msr[MC_MSRINJ_MAXMSRS];
+पूर्ण;
 
-/* Flags for mcinj_flags above; bits 16-31 are reserved */
-#define MC_MSRINJ_F_INTERPOSE	0x1
+/* Flags क्रम mcinj_flags above; bits 16-31 are reserved */
+#घोषणा MC_MSRINJ_F_INTERPOSE	0x1
 
-#define XEN_MC_mceinject	5
-struct xen_mc_mceinject {
-	unsigned int mceinj_cpunr; /* target processor id */
-};
+#घोषणा XEN_MC_mceinject	5
+काष्ठा xen_mc_mceinject अणु
+	अचिन्हित पूर्णांक mceinj_cpunr; /* target processor id */
+पूर्ण;
 
-struct xen_mc {
-	uint32_t cmd;
-	uint32_t interface_version; /* XEN_MCA_INTERFACE_VERSION */
-	union {
-		struct xen_mc_fetch        mc_fetch;
-		struct xen_mc_notifydomain mc_notifydomain;
-		struct xen_mc_physcpuinfo  mc_physcpuinfo;
-		struct xen_mc_msrinject    mc_msrinject;
-		struct xen_mc_mceinject    mc_mceinject;
-	} u;
-};
+काष्ठा xen_mc अणु
+	uपूर्णांक32_t cmd;
+	uपूर्णांक32_t पूर्णांकerface_version; /* XEN_MCA_INTERFACE_VERSION */
+	जोड़ अणु
+		काष्ठा xen_mc_fetch        mc_fetch;
+		काष्ठा xen_mc_notअगरyकरोमुख्य mc_notअगरyकरोमुख्य;
+		काष्ठा xen_mc_physcpuinfo  mc_physcpuinfo;
+		काष्ठा xen_mc_msrinject    mc_msrinject;
+		काष्ठा xen_mc_mceinject    mc_mceinject;
+	पूर्ण u;
+पूर्ण;
 DEFINE_GUEST_HANDLE_STRUCT(xen_mc);
 
 /*
- * Fields are zero when not available. Also, this struct is shared with
+ * Fields are zero when not available. Also, this काष्ठा is shared with
  * userspace mcelog and thus must keep existing fields at current offsets.
- * Only add new fields to the end of the structure
+ * Only add new fields to the end of the काष्ठाure
  */
-struct xen_mce {
+काष्ठा xen_mce अणु
 	__u64 status;
 	__u64 misc;
 	__u64 addr;
 	__u64 mcgstatus;
 	__u64 ip;
-	__u64 tsc;	/* cpu time stamp counter */
-	__u64 time;	/* wall time_t when error was detected */
-	__u8  cpuvendor;	/* cpu vendor as encoded in system.h */
+	__u64 tsc;	/* cpu समय stamp counter */
+	__u64 समय;	/* wall समय_प्रकार when error was detected */
+	__u8  cpuvenकरोr;	/* cpu venकरोr as encoded in प्रणाली.h */
 	__u8  inject_flags;	/* software inject flags */
 	__u16  pad;
 	__u32 cpuid;	/* CPUID 1 EAX */
@@ -356,36 +357,36 @@ struct xen_mce {
 	__u32 socketid;	/* CPU socket ID */
 	__u32 apicid;	/* CPU initial apic ID */
 	__u64 mcgcap;	/* MCGCAP MSR: machine check capabilities of CPU */
-	__u64 synd;	/* MCA_SYND MSR: only valid on SMCA systems */
-	__u64 ipid;	/* MCA_IPID MSR: only valid on SMCA systems */
+	__u64 synd;	/* MCA_SYND MSR: only valid on SMCA प्रणालीs */
+	__u64 ipid;	/* MCA_IPID MSR: only valid on SMCA प्रणालीs */
 	__u64 ppin;	/* Protected Processor Inventory Number */
-};
+पूर्ण;
 
 /*
- * This structure contains all data related to the MCE log.  Also
- * carries a signature to make it easier to find from external
+ * This काष्ठाure contains all data related to the MCE log.  Also
+ * carries a signature to make it easier to find from बाह्यal
  * debugging tools.  Each entry is only valid when its finished flag
  * is set.
  */
 
-#define XEN_MCE_LOG_LEN 32
+#घोषणा XEN_MCE_LOG_LEN 32
 
-struct xen_mce_log {
-	char signature[12]; /* "MACHINECHECK" */
-	unsigned len;	    /* = XEN_MCE_LOG_LEN */
-	unsigned next;
-	unsigned flags;
-	unsigned recordlen;	/* length of struct xen_mce */
-	struct xen_mce entry[XEN_MCE_LOG_LEN];
-};
+काष्ठा xen_mce_log अणु
+	अक्षर signature[12]; /* "MACHINECHECK" */
+	अचिन्हित len;	    /* = XEN_MCE_LOG_LEN */
+	अचिन्हित next;
+	अचिन्हित flags;
+	अचिन्हित recordlen;	/* length of काष्ठा xen_mce */
+	काष्ठा xen_mce entry[XEN_MCE_LOG_LEN];
+पूर्ण;
 
-#define XEN_MCE_OVERFLOW 0		/* bit 0 in flags means overflow */
+#घोषणा XEN_MCE_OVERFLOW 0		/* bit 0 in flags means overflow */
 
-#define XEN_MCE_LOG_SIGNATURE	"MACHINECHECK"
+#घोषणा XEN_MCE_LOG_SIGNATURE	"MACHINECHECK"
 
-#define MCE_GET_RECORD_LEN   _IOR('M', 1, int)
-#define MCE_GET_LOG_LEN      _IOR('M', 2, int)
-#define MCE_GETCLEAR_FLAGS   _IOR('M', 3, int)
+#घोषणा MCE_GET_RECORD_LEN   _IOR('M', 1, पूर्णांक)
+#घोषणा MCE_GET_LOG_LEN      _IOR('M', 2, पूर्णांक)
+#घोषणा MCE_GETCLEAR_FLAGS   _IOR('M', 3, पूर्णांक)
 
-#endif /* __ASSEMBLY__ */
-#endif /* __XEN_PUBLIC_ARCH_X86_MCA_H__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __XEN_PUBLIC_ARCH_X86_MCA_H__ */

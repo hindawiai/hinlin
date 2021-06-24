@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/mmc/host/pxa.c - PXA MMCI driver
  *
  *  Copyright (C) 2003 Russell King, All Rights Reserved.
  *
  *  This hardware is really sick:
- *   - No way to clear interrupts.
- *   - Have to turn off the clock whenever we touch the device.
+ *   - No way to clear पूर्णांकerrupts.
+ *   - Have to turn off the घड़ी whenever we touch the device.
  *   - Doesn't tell you how many data blocks were transferred.
  *  Yuck!
  *
  *	1 and 3 byte data transfers not supported
  *	max block length up to 1023
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/mmc/host.h>
-#include <linux/mmc/slot-gpio.h>
-#include <linux/io.h>
-#include <linux/regulator/consumer.h>
-#include <linux/gpio/consumer.h>
-#include <linux/gfp.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mmc/host.h>
+#समावेश <linux/mmc/slot-gpपन.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
 
-#include <linux/sizes.h>
+#समावेश <linux/sizes.h>
 
-#include <mach/hardware.h>
-#include <linux/platform_data/mmc-pxamci.h>
+#समावेश <mach/hardware.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
 
-#include "pxamci.h"
+#समावेश "pxamci.h"
 
-#define DRIVER_NAME	"pxa2xx-mci"
+#घोषणा DRIVER_NAME	"pxa2xx-mci"
 
-#define NR_SG	1
-#define CLKRT_OFF	(~0)
+#घोषणा NR_SG	1
+#घोषणा CLKRT_OFF	(~0)
 
-#define mmc_has_26MHz()		(cpu_is_pxa300() || cpu_is_pxa310() \
+#घोषणा mmc_has_26MHz()		(cpu_is_pxa300() || cpu_is_pxa310() \
 				|| cpu_is_pxa935())
 
-struct pxamci_host {
-	struct mmc_host		*mmc;
+काष्ठा pxamci_host अणु
+	काष्ठा mmc_host		*mmc;
 	spinlock_t		lock;
-	struct resource		*res;
-	void __iomem		*base;
-	struct clk		*clk;
-	unsigned long		clkrate;
-	unsigned int		clkrt;
-	unsigned int		cmdat;
-	unsigned int		imask;
-	unsigned int		power_mode;
-	unsigned long		detect_delay_ms;
+	काष्ठा resource		*res;
+	व्योम __iomem		*base;
+	काष्ठा clk		*clk;
+	अचिन्हित दीर्घ		clkrate;
+	अचिन्हित पूर्णांक		clkrt;
+	अचिन्हित पूर्णांक		cmdat;
+	अचिन्हित पूर्णांक		imask;
+	अचिन्हित पूर्णांक		घातer_mode;
+	अचिन्हित दीर्घ		detect_delay_ms;
 	bool			use_ro_gpio;
-	struct gpio_desc	*power;
-	struct pxamci_platform_data *pdata;
+	काष्ठा gpio_desc	*घातer;
+	काष्ठा pxamci_platक्रमm_data *pdata;
 
-	struct mmc_request	*mrq;
-	struct mmc_command	*cmd;
-	struct mmc_data		*data;
+	काष्ठा mmc_request	*mrq;
+	काष्ठा mmc_command	*cmd;
+	काष्ठा mmc_data		*data;
 
-	struct dma_chan		*dma_chan_rx;
-	struct dma_chan		*dma_chan_tx;
+	काष्ठा dma_chan		*dma_chan_rx;
+	काष्ठा dma_chan		*dma_chan_tx;
 	dma_cookie_t		dma_cookie;
-	unsigned int		dma_len;
-	unsigned int		dma_dir;
-};
+	अचिन्हित पूर्णांक		dma_len;
+	अचिन्हित पूर्णांक		dma_dir;
+पूर्ण;
 
-static int pxamci_init_ocr(struct pxamci_host *host)
-{
-	struct mmc_host *mmc = host->mmc;
-	int ret;
+अटल पूर्णांक pxamci_init_ocr(काष्ठा pxamci_host *host)
+अणु
+	काष्ठा mmc_host *mmc = host->mmc;
+	पूर्णांक ret;
 
 	ret = mmc_regulator_get_supply(mmc);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (IS_ERR(mmc->supply.vmmc)) {
-		/* fall-back to platform data */
+	अगर (IS_ERR(mmc->supply.vmmc)) अणु
+		/* fall-back to platक्रमm data */
 		mmc->ocr_avail = host->pdata ?
 			host->pdata->ocr_mask :
 			MMC_VDD_32_33 | MMC_VDD_33_34;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int pxamci_set_power(struct pxamci_host *host,
-				    unsigned char power_mode,
-				    unsigned int vdd)
-{
-	struct mmc_host *mmc = host->mmc;
-	struct regulator *supply = mmc->supply.vmmc;
+अटल अंतरभूत पूर्णांक pxamci_set_घातer(काष्ठा pxamci_host *host,
+				    अचिन्हित अक्षर घातer_mode,
+				    अचिन्हित पूर्णांक vdd)
+अणु
+	काष्ठा mmc_host *mmc = host->mmc;
+	काष्ठा regulator *supply = mmc->supply.vmmc;
 
-	if (!IS_ERR(supply))
-		return mmc_regulator_set_ocr(mmc, supply, vdd);
+	अगर (!IS_ERR(supply))
+		वापस mmc_regulator_set_ocr(mmc, supply, vdd);
 
-	if (host->power) {
+	अगर (host->घातer) अणु
 		bool on = !!((1 << vdd) & host->pdata->ocr_mask);
-		gpiod_set_value(host->power, on);
-	}
+		gpiod_set_value(host->घातer, on);
+	पूर्ण
 
-	if (host->pdata && host->pdata->setpower)
-		return host->pdata->setpower(mmc_dev(host->mmc), vdd);
+	अगर (host->pdata && host->pdata->setघातer)
+		वापस host->pdata->setघातer(mmc_dev(host->mmc), vdd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pxamci_stop_clock(struct pxamci_host *host)
-{
-	if (readl(host->base + MMC_STAT) & STAT_CLK_EN) {
-		unsigned long timeout = 10000;
-		unsigned int v;
+अटल व्योम pxamci_stop_घड़ी(काष्ठा pxamci_host *host)
+अणु
+	अगर (पढ़ोl(host->base + MMC_STAT) & STAT_CLK_EN) अणु
+		अचिन्हित दीर्घ समयout = 10000;
+		अचिन्हित पूर्णांक v;
 
-		writel(STOP_CLOCK, host->base + MMC_STRPCL);
+		ग_लिखोl(STOP_CLOCK, host->base + MMC_STRPCL);
 
-		do {
-			v = readl(host->base + MMC_STAT);
-			if (!(v & STAT_CLK_EN))
-				break;
+		करो अणु
+			v = पढ़ोl(host->base + MMC_STAT);
+			अगर (!(v & STAT_CLK_EN))
+				अवरोध;
 			udelay(1);
-		} while (timeout--);
+		पूर्ण जबतक (समयout--);
 
-		if (v & STAT_CLK_EN)
+		अगर (v & STAT_CLK_EN)
 			dev_err(mmc_dev(host->mmc), "unable to stop clock\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pxamci_enable_irq(struct pxamci_host *host, unsigned int mask)
-{
-	unsigned long flags;
+अटल व्योम pxamci_enable_irq(काष्ठा pxamci_host *host, अचिन्हित पूर्णांक mask)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
 	host->imask &= ~mask;
-	writel(host->imask, host->base + MMC_I_MASK);
+	ग_लिखोl(host->imask, host->base + MMC_I_MASK);
 	spin_unlock_irqrestore(&host->lock, flags);
-}
+पूर्ण
 
-static void pxamci_disable_irq(struct pxamci_host *host, unsigned int mask)
-{
-	unsigned long flags;
+अटल व्योम pxamci_disable_irq(काष्ठा pxamci_host *host, अचिन्हित पूर्णांक mask)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
 	host->imask |= mask;
-	writel(host->imask, host->base + MMC_I_MASK);
+	ग_लिखोl(host->imask, host->base + MMC_I_MASK);
 	spin_unlock_irqrestore(&host->lock, flags);
-}
+पूर्ण
 
-static void pxamci_dma_irq(void *param);
+अटल व्योम pxamci_dma_irq(व्योम *param);
 
-static void pxamci_setup_data(struct pxamci_host *host, struct mmc_data *data)
-{
-	struct dma_async_tx_descriptor *tx;
-	enum dma_transfer_direction direction;
-	struct dma_slave_config	config;
-	struct dma_chan *chan;
-	unsigned int nob = data->blocks;
-	unsigned long long clks;
-	unsigned int timeout;
-	int ret;
+अटल व्योम pxamci_setup_data(काष्ठा pxamci_host *host, काष्ठा mmc_data *data)
+अणु
+	काष्ठा dma_async_tx_descriptor *tx;
+	क्रमागत dma_transfer_direction direction;
+	काष्ठा dma_slave_config	config;
+	काष्ठा dma_chan *chan;
+	अचिन्हित पूर्णांक nob = data->blocks;
+	अचिन्हित दीर्घ दीर्घ clks;
+	अचिन्हित पूर्णांक समयout;
+	पूर्णांक ret;
 
 	host->data = data;
 
-	writel(nob, host->base + MMC_NOB);
-	writel(data->blksz, host->base + MMC_BLKLEN);
+	ग_लिखोl(nob, host->base + MMC_NOB);
+	ग_लिखोl(data->blksz, host->base + MMC_BLKLEN);
 
-	clks = (unsigned long long)data->timeout_ns * host->clkrate;
-	do_div(clks, 1000000000UL);
-	timeout = (unsigned int)clks + (data->timeout_clks << host->clkrt);
-	writel((timeout + 255) / 256, host->base + MMC_RDTO);
+	clks = (अचिन्हित दीर्घ दीर्घ)data->समयout_ns * host->clkrate;
+	करो_भाग(clks, 1000000000UL);
+	समयout = (अचिन्हित पूर्णांक)clks + (data->समयout_clks << host->clkrt);
+	ग_लिखोl((समयout + 255) / 256, host->base + MMC_RDTO);
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 	config.src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
 	config.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
 	config.src_addr = host->res->start + MMC_RXFIFO;
@@ -185,448 +186,448 @@ static void pxamci_setup_data(struct pxamci_host *host, struct mmc_data *data)
 	config.src_maxburst = 32;
 	config.dst_maxburst = 32;
 
-	if (data->flags & MMC_DATA_READ) {
+	अगर (data->flags & MMC_DATA_READ) अणु
 		host->dma_dir = DMA_FROM_DEVICE;
 		direction = DMA_DEV_TO_MEM;
 		chan = host->dma_chan_rx;
-	} else {
+	पूर्ण अन्यथा अणु
 		host->dma_dir = DMA_TO_DEVICE;
 		direction = DMA_MEM_TO_DEV;
 		chan = host->dma_chan_tx;
-	}
+	पूर्ण
 
 	config.direction = direction;
 
 	ret = dmaengine_slave_config(chan, &config);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(mmc_dev(host->mmc), "dma slave config failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	host->dma_len = dma_map_sg(chan->device->dev, data->sg, data->sg_len,
 				   host->dma_dir);
 
 	tx = dmaengine_prep_slave_sg(chan, data->sg, host->dma_len, direction,
 				     DMA_PREP_INTERRUPT);
-	if (!tx) {
+	अगर (!tx) अणु
 		dev_err(mmc_dev(host->mmc), "prep_slave_sg() failed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!(data->flags & MMC_DATA_READ)) {
+	अगर (!(data->flags & MMC_DATA_READ)) अणु
 		tx->callback = pxamci_dma_irq;
 		tx->callback_param = host;
-	}
+	पूर्ण
 
 	host->dma_cookie = dmaengine_submit(tx);
 
 	/*
-	 * workaround for erratum #91:
-	 * only start DMA now if we are doing a read,
-	 * otherwise we wait until CMD/RESP has finished
-	 * before starting DMA.
+	 * workaround क्रम erratum #91:
+	 * only start DMA now अगर we are करोing a पढ़ो,
+	 * otherwise we रुको until CMD/RESP has finished
+	 * beक्रमe starting DMA.
 	 */
-	if (!cpu_is_pxa27x() || data->flags & MMC_DATA_READ)
+	अगर (!cpu_is_pxa27x() || data->flags & MMC_DATA_READ)
 		dma_async_issue_pending(chan);
-}
+पूर्ण
 
-static void pxamci_start_cmd(struct pxamci_host *host, struct mmc_command *cmd, unsigned int cmdat)
-{
-	WARN_ON(host->cmd != NULL);
+अटल व्योम pxamci_start_cmd(काष्ठा pxamci_host *host, काष्ठा mmc_command *cmd, अचिन्हित पूर्णांक cmdat)
+अणु
+	WARN_ON(host->cmd != शून्य);
 	host->cmd = cmd;
 
-	if (cmd->flags & MMC_RSP_BUSY)
+	अगर (cmd->flags & MMC_RSP_BUSY)
 		cmdat |= CMDAT_BUSY;
 
-#define RSP_TYPE(x)	((x) & ~(MMC_RSP_BUSY|MMC_RSP_OPCODE))
-	switch (RSP_TYPE(mmc_resp_type(cmd))) {
-	case RSP_TYPE(MMC_RSP_R1): /* r1, r1b, r6, r7 */
+#घोषणा RSP_TYPE(x)	((x) & ~(MMC_RSP_BUSY|MMC_RSP_OPCODE))
+	चयन (RSP_TYPE(mmc_resp_type(cmd))) अणु
+	हाल RSP_TYPE(MMC_RSP_R1): /* r1, r1b, r6, r7 */
 		cmdat |= CMDAT_RESP_SHORT;
-		break;
-	case RSP_TYPE(MMC_RSP_R3):
+		अवरोध;
+	हाल RSP_TYPE(MMC_RSP_R3):
 		cmdat |= CMDAT_RESP_R3;
-		break;
-	case RSP_TYPE(MMC_RSP_R2):
+		अवरोध;
+	हाल RSP_TYPE(MMC_RSP_R2):
 		cmdat |= CMDAT_RESP_R2;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	writel(cmd->opcode, host->base + MMC_CMD);
-	writel(cmd->arg >> 16, host->base + MMC_ARGH);
-	writel(cmd->arg & 0xffff, host->base + MMC_ARGL);
-	writel(cmdat, host->base + MMC_CMDAT);
-	writel(host->clkrt, host->base + MMC_CLKRT);
+	ग_लिखोl(cmd->opcode, host->base + MMC_CMD);
+	ग_लिखोl(cmd->arg >> 16, host->base + MMC_ARGH);
+	ग_लिखोl(cmd->arg & 0xffff, host->base + MMC_ARGL);
+	ग_लिखोl(cmdat, host->base + MMC_CMDAT);
+	ग_लिखोl(host->clkrt, host->base + MMC_CLKRT);
 
-	writel(START_CLOCK, host->base + MMC_STRPCL);
+	ग_लिखोl(START_CLOCK, host->base + MMC_STRPCL);
 
 	pxamci_enable_irq(host, END_CMD_RES);
-}
+पूर्ण
 
-static void pxamci_finish_request(struct pxamci_host *host, struct mmc_request *mrq)
-{
-	host->mrq = NULL;
-	host->cmd = NULL;
-	host->data = NULL;
-	mmc_request_done(host->mmc, mrq);
-}
+अटल व्योम pxamci_finish_request(काष्ठा pxamci_host *host, काष्ठा mmc_request *mrq)
+अणु
+	host->mrq = शून्य;
+	host->cmd = शून्य;
+	host->data = शून्य;
+	mmc_request_करोne(host->mmc, mrq);
+पूर्ण
 
-static int pxamci_cmd_done(struct pxamci_host *host, unsigned int stat)
-{
-	struct mmc_command *cmd = host->cmd;
-	int i;
+अटल पूर्णांक pxamci_cmd_करोne(काष्ठा pxamci_host *host, अचिन्हित पूर्णांक stat)
+अणु
+	काष्ठा mmc_command *cmd = host->cmd;
+	पूर्णांक i;
 	u32 v;
 
-	if (!cmd)
-		return 0;
+	अगर (!cmd)
+		वापस 0;
 
-	host->cmd = NULL;
+	host->cmd = शून्य;
 
 	/*
 	 * Did I mention this is Sick.  We always need to
 	 * discard the upper 8 bits of the first 16-bit word.
 	 */
-	v = readl(host->base + MMC_RES) & 0xffff;
-	for (i = 0; i < 4; i++) {
-		u32 w1 = readl(host->base + MMC_RES) & 0xffff;
-		u32 w2 = readl(host->base + MMC_RES) & 0xffff;
+	v = पढ़ोl(host->base + MMC_RES) & 0xffff;
+	क्रम (i = 0; i < 4; i++) अणु
+		u32 w1 = पढ़ोl(host->base + MMC_RES) & 0xffff;
+		u32 w2 = पढ़ोl(host->base + MMC_RES) & 0xffff;
 		cmd->resp[i] = v << 24 | w1 << 8 | w2 >> 8;
 		v = w2;
-	}
+	पूर्ण
 
-	if (stat & STAT_TIME_OUT_RESPONSE) {
+	अगर (stat & STAT_TIME_OUT_RESPONSE) अणु
 		cmd->error = -ETIMEDOUT;
-	} else if (stat & STAT_RES_CRC_ERR && cmd->flags & MMC_RSP_CRC) {
+	पूर्ण अन्यथा अगर (stat & STAT_RES_CRC_ERR && cmd->flags & MMC_RSP_CRC) अणु
 		/*
-		 * workaround for erratum #42:
-		 * Intel PXA27x Family Processor Specification Update Rev 001
-		 * A bogus CRC error can appear if the msb of a 136 bit
+		 * workaround क्रम erratum #42:
+		 * Intel PXA27x Family Processor Specअगरication Update Rev 001
+		 * A bogus CRC error can appear अगर the msb of a 136 bit
 		 * response is a one.
 		 */
-		if (cpu_is_pxa27x() &&
+		अगर (cpu_is_pxa27x() &&
 		    (cmd->flags & MMC_RSP_136 && cmd->resp[0] & 0x80000000))
 			pr_debug("ignoring CRC from command %d - *risky*\n", cmd->opcode);
-		else
+		अन्यथा
 			cmd->error = -EILSEQ;
-	}
+	पूर्ण
 
 	pxamci_disable_irq(host, END_CMD_RES);
-	if (host->data && !cmd->error) {
+	अगर (host->data && !cmd->error) अणु
 		pxamci_enable_irq(host, DATA_TRAN_DONE);
 		/*
-		 * workaround for erratum #91, if doing write
+		 * workaround क्रम erratum #91, अगर करोing ग_लिखो
 		 * enable DMA late
 		 */
-		if (cpu_is_pxa27x() && host->data->flags & MMC_DATA_WRITE)
+		अगर (cpu_is_pxa27x() && host->data->flags & MMC_DATA_WRITE)
 			dma_async_issue_pending(host->dma_chan_tx);
-	} else {
+	पूर्ण अन्यथा अणु
 		pxamci_finish_request(host, host->mrq);
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int pxamci_data_done(struct pxamci_host *host, unsigned int stat)
-{
-	struct mmc_data *data = host->data;
-	struct dma_chan *chan;
+अटल पूर्णांक pxamci_data_करोne(काष्ठा pxamci_host *host, अचिन्हित पूर्णांक stat)
+अणु
+	काष्ठा mmc_data *data = host->data;
+	काष्ठा dma_chan *chan;
 
-	if (!data)
-		return 0;
+	अगर (!data)
+		वापस 0;
 
-	if (data->flags & MMC_DATA_READ)
+	अगर (data->flags & MMC_DATA_READ)
 		chan = host->dma_chan_rx;
-	else
+	अन्यथा
 		chan = host->dma_chan_tx;
 	dma_unmap_sg(chan->device->dev,
 		     data->sg, data->sg_len, host->dma_dir);
 
-	if (stat & STAT_READ_TIME_OUT)
+	अगर (stat & STAT_READ_TIME_OUT)
 		data->error = -ETIMEDOUT;
-	else if (stat & (STAT_CRC_READ_ERROR|STAT_CRC_WRITE_ERROR))
+	अन्यथा अगर (stat & (STAT_CRC_READ_ERROR|STAT_CRC_WRITE_ERROR))
 		data->error = -EILSEQ;
 
 	/*
 	 * There appears to be a hardware design bug here.  There seems to
 	 * be no way to find out how much data was transferred to the card.
-	 * This means that if there was an error on any block, we mark all
+	 * This means that अगर there was an error on any block, we mark all
 	 * data blocks as being in error.
 	 */
-	if (!data->error)
+	अगर (!data->error)
 		data->bytes_xfered = data->blocks * data->blksz;
-	else
+	अन्यथा
 		data->bytes_xfered = 0;
 
 	pxamci_disable_irq(host, DATA_TRAN_DONE);
 
-	host->data = NULL;
-	if (host->mrq->stop) {
-		pxamci_stop_clock(host);
+	host->data = शून्य;
+	अगर (host->mrq->stop) अणु
+		pxamci_stop_घड़ी(host);
 		pxamci_start_cmd(host, host->mrq->stop, host->cmdat);
-	} else {
+	पूर्ण अन्यथा अणु
 		pxamci_finish_request(host, host->mrq);
-	}
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static irqreturn_t pxamci_irq(int irq, void *devid)
-{
-	struct pxamci_host *host = devid;
-	unsigned int ireg;
-	int handled = 0;
+अटल irqवापस_t pxamci_irq(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा pxamci_host *host = devid;
+	अचिन्हित पूर्णांक ireg;
+	पूर्णांक handled = 0;
 
-	ireg = readl(host->base + MMC_I_REG) & ~readl(host->base + MMC_I_MASK);
+	ireg = पढ़ोl(host->base + MMC_I_REG) & ~पढ़ोl(host->base + MMC_I_MASK);
 
-	if (ireg) {
-		unsigned stat = readl(host->base + MMC_STAT);
+	अगर (ireg) अणु
+		अचिन्हित stat = पढ़ोl(host->base + MMC_STAT);
 
 		pr_debug("PXAMCI: irq %08x stat %08x\n", ireg, stat);
 
-		if (ireg & END_CMD_RES)
-			handled |= pxamci_cmd_done(host, stat);
-		if (ireg & DATA_TRAN_DONE)
-			handled |= pxamci_data_done(host, stat);
-		if (ireg & SDIO_INT) {
-			mmc_signal_sdio_irq(host->mmc);
+		अगर (ireg & END_CMD_RES)
+			handled |= pxamci_cmd_करोne(host, stat);
+		अगर (ireg & DATA_TRAN_DONE)
+			handled |= pxamci_data_करोne(host, stat);
+		अगर (ireg & SDIO_INT) अणु
+			mmc_संकेत_sdio_irq(host->mmc);
 			handled = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static void pxamci_request(struct mmc_host *mmc, struct mmc_request *mrq)
-{
-	struct pxamci_host *host = mmc_priv(mmc);
-	unsigned int cmdat;
+अटल व्योम pxamci_request(काष्ठा mmc_host *mmc, काष्ठा mmc_request *mrq)
+अणु
+	काष्ठा pxamci_host *host = mmc_priv(mmc);
+	अचिन्हित पूर्णांक cmdat;
 
-	WARN_ON(host->mrq != NULL);
+	WARN_ON(host->mrq != शून्य);
 
 	host->mrq = mrq;
 
-	pxamci_stop_clock(host);
+	pxamci_stop_घड़ी(host);
 
 	cmdat = host->cmdat;
 	host->cmdat &= ~CMDAT_INIT;
 
-	if (mrq->data) {
+	अगर (mrq->data) अणु
 		pxamci_setup_data(host, mrq->data);
 
 		cmdat &= ~CMDAT_BUSY;
 		cmdat |= CMDAT_DATAEN | CMDAT_DMAEN;
-		if (mrq->data->flags & MMC_DATA_WRITE)
+		अगर (mrq->data->flags & MMC_DATA_WRITE)
 			cmdat |= CMDAT_WRITE;
-	}
+	पूर्ण
 
 	pxamci_start_cmd(host, mrq->cmd, cmdat);
-}
+पूर्ण
 
-static int pxamci_get_ro(struct mmc_host *mmc)
-{
-	struct pxamci_host *host = mmc_priv(mmc);
+अटल पूर्णांक pxamci_get_ro(काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा pxamci_host *host = mmc_priv(mmc);
 
-	if (host->use_ro_gpio)
-		return mmc_gpio_get_ro(mmc);
-	if (host->pdata && host->pdata->get_ro)
-		return !!host->pdata->get_ro(mmc_dev(mmc));
+	अगर (host->use_ro_gpio)
+		वापस mmc_gpio_get_ro(mmc);
+	अगर (host->pdata && host->pdata->get_ro)
+		वापस !!host->pdata->get_ro(mmc_dev(mmc));
 	/*
-	 * Board doesn't support read only detection; let the mmc core
-	 * decide what to do.
+	 * Board करोesn't support पढ़ो only detection; let the mmc core
+	 * decide what to करो.
 	 */
-	return -ENOSYS;
-}
+	वापस -ENOSYS;
+पूर्ण
 
-static void pxamci_set_ios(struct mmc_host *mmc, struct mmc_ios *ios)
-{
-	struct pxamci_host *host = mmc_priv(mmc);
+अटल व्योम pxamci_set_ios(काष्ठा mmc_host *mmc, काष्ठा mmc_ios *ios)
+अणु
+	काष्ठा pxamci_host *host = mmc_priv(mmc);
 
-	if (ios->clock) {
-		unsigned long rate = host->clkrate;
-		unsigned int clk = rate / ios->clock;
+	अगर (ios->घड़ी) अणु
+		अचिन्हित दीर्घ rate = host->clkrate;
+		अचिन्हित पूर्णांक clk = rate / ios->घड़ी;
 
-		if (host->clkrt == CLKRT_OFF)
+		अगर (host->clkrt == CLKRT_OFF)
 			clk_prepare_enable(host->clk);
 
-		if (ios->clock == 26000000) {
+		अगर (ios->घड़ी == 26000000) अणु
 			/* to support 26MHz */
 			host->clkrt = 7;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* to handle (19.5MHz, 26MHz) */
-			if (!clk)
+			अगर (!clk)
 				clk = 1;
 
 			/*
-			 * clk might result in a lower divisor than we
-			 * desire.  check for that condition and adjust
+			 * clk might result in a lower भागisor than we
+			 * desire.  check क्रम that condition and adjust
 			 * as appropriate.
 			 */
-			if (rate / clk > ios->clock)
+			अगर (rate / clk > ios->घड़ी)
 				clk <<= 1;
 			host->clkrt = fls(clk) - 1;
-		}
+		पूर्ण
 
 		/*
-		 * we write clkrt on the next command
+		 * we ग_लिखो clkrt on the next command
 		 */
-	} else {
-		pxamci_stop_clock(host);
-		if (host->clkrt != CLKRT_OFF) {
+	पूर्ण अन्यथा अणु
+		pxamci_stop_घड़ी(host);
+		अगर (host->clkrt != CLKRT_OFF) अणु
 			host->clkrt = CLKRT_OFF;
 			clk_disable_unprepare(host->clk);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (host->power_mode != ios->power_mode) {
-		int ret;
+	अगर (host->घातer_mode != ios->घातer_mode) अणु
+		पूर्णांक ret;
 
-		host->power_mode = ios->power_mode;
+		host->घातer_mode = ios->घातer_mode;
 
-		ret = pxamci_set_power(host, ios->power_mode, ios->vdd);
-		if (ret) {
+		ret = pxamci_set_घातer(host, ios->घातer_mode, ios->vdd);
+		अगर (ret) अणु
 			dev_err(mmc_dev(mmc), "unable to set power\n");
 			/*
 			 * The .set_ios() function in the mmc_host_ops
-			 * struct return void, and failing to set the
-			 * power should be rare so we print an error and
-			 * return here.
+			 * काष्ठा वापस व्योम, and failing to set the
+			 * घातer should be rare so we prपूर्णांक an error and
+			 * वापस here.
 			 */
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (ios->power_mode == MMC_POWER_ON)
+		अगर (ios->घातer_mode == MMC_POWER_ON)
 			host->cmdat |= CMDAT_INIT;
-	}
+	पूर्ण
 
-	if (ios->bus_width == MMC_BUS_WIDTH_4)
+	अगर (ios->bus_width == MMC_BUS_WIDTH_4)
 		host->cmdat |= CMDAT_SD_4DAT;
-	else
+	अन्यथा
 		host->cmdat &= ~CMDAT_SD_4DAT;
 
 	dev_dbg(mmc_dev(mmc), "PXAMCI: clkrt = %x cmdat = %x\n",
 		host->clkrt, host->cmdat);
-}
+पूर्ण
 
-static void pxamci_enable_sdio_irq(struct mmc_host *host, int enable)
-{
-	struct pxamci_host *pxa_host = mmc_priv(host);
+अटल व्योम pxamci_enable_sdio_irq(काष्ठा mmc_host *host, पूर्णांक enable)
+अणु
+	काष्ठा pxamci_host *pxa_host = mmc_priv(host);
 
-	if (enable)
+	अगर (enable)
 		pxamci_enable_irq(pxa_host, SDIO_INT);
-	else
+	अन्यथा
 		pxamci_disable_irq(pxa_host, SDIO_INT);
-}
+पूर्ण
 
-static const struct mmc_host_ops pxamci_ops = {
+अटल स्थिर काष्ठा mmc_host_ops pxamci_ops = अणु
 	.request		= pxamci_request,
 	.get_cd			= mmc_gpio_get_cd,
 	.get_ro			= pxamci_get_ro,
 	.set_ios		= pxamci_set_ios,
 	.enable_sdio_irq	= pxamci_enable_sdio_irq,
-};
+पूर्ण;
 
-static void pxamci_dma_irq(void *param)
-{
-	struct pxamci_host *host = param;
-	struct dma_tx_state state;
-	enum dma_status status;
-	struct dma_chan *chan;
-	unsigned long flags;
+अटल व्योम pxamci_dma_irq(व्योम *param)
+अणु
+	काष्ठा pxamci_host *host = param;
+	काष्ठा dma_tx_state state;
+	क्रमागत dma_status status;
+	काष्ठा dma_chan *chan;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
 
-	if (!host->data)
-		goto out_unlock;
+	अगर (!host->data)
+		जाओ out_unlock;
 
-	if (host->data->flags & MMC_DATA_READ)
+	अगर (host->data->flags & MMC_DATA_READ)
 		chan = host->dma_chan_rx;
-	else
+	अन्यथा
 		chan = host->dma_chan_tx;
 
 	status = dmaengine_tx_status(chan, host->dma_cookie, &state);
 
-	if (likely(status == DMA_COMPLETE)) {
-		writel(BUF_PART_FULL, host->base + MMC_PRTBUF);
-	} else {
+	अगर (likely(status == DMA_COMPLETE)) अणु
+		ग_लिखोl(BUF_PART_FULL, host->base + MMC_PRTBUF);
+	पूर्ण अन्यथा अणु
 		pr_err("%s: DMA error on %s channel\n", mmc_hostname(host->mmc),
 			host->data->flags & MMC_DATA_READ ? "rx" : "tx");
 		host->data->error = -EIO;
-		pxamci_data_done(host, 0);
-	}
+		pxamci_data_करोne(host, 0);
+	पूर्ण
 
 out_unlock:
 	spin_unlock_irqrestore(&host->lock, flags);
-}
+पूर्ण
 
-static irqreturn_t pxamci_detect_irq(int irq, void *devid)
-{
-	struct pxamci_host *host = mmc_priv(devid);
+अटल irqवापस_t pxamci_detect_irq(पूर्णांक irq, व्योम *devid)
+अणु
+	काष्ठा pxamci_host *host = mmc_priv(devid);
 
-	mmc_detect_change(devid, msecs_to_jiffies(host->detect_delay_ms));
-	return IRQ_HANDLED;
-}
+	mmc_detect_change(devid, msecs_to_jअगरfies(host->detect_delay_ms));
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#ifdef CONFIG_OF
-static const struct of_device_id pxa_mmc_dt_ids[] = {
-        { .compatible = "marvell,pxa-mmc" },
-        { }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id pxa_mmc_dt_ids[] = अणु
+        अणु .compatible = "marvell,pxa-mmc" पूर्ण,
+        अणु पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, pxa_mmc_dt_ids);
 
-static int pxamci_of_init(struct platform_device *pdev,
-			  struct mmc_host *mmc)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct pxamci_host *host = mmc_priv(mmc);
-	u32 tmp;
-	int ret;
+अटल पूर्णांक pxamci_of_init(काष्ठा platक्रमm_device *pdev,
+			  काष्ठा mmc_host *mmc)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा pxamci_host *host = mmc_priv(mmc);
+	u32 पंचांगp;
+	पूर्णांक ret;
 
-	if (!np)
-		return 0;
+	अगर (!np)
+		वापस 0;
 
-	/* pxa-mmc specific */
-	if (of_property_read_u32(np, "pxa-mmc,detect-delay-ms", &tmp) == 0)
-		host->detect_delay_ms = tmp;
+	/* pxa-mmc specअगरic */
+	अगर (of_property_पढ़ो_u32(np, "pxa-mmc,detect-delay-ms", &पंचांगp) == 0)
+		host->detect_delay_ms = पंचांगp;
 
 	ret = mmc_of_parse(mmc);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
-#else
-static int pxamci_of_init(struct platform_device *pdev,
-			  struct mmc_host *mmc)
-{
-        return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक pxamci_of_init(काष्ठा platक्रमm_device *pdev,
+			  काष्ठा mmc_host *mmc)
+अणु
+        वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static int pxamci_probe(struct platform_device *pdev)
-{
-	struct mmc_host *mmc;
-	struct pxamci_host *host = NULL;
-	struct device *dev = &pdev->dev;
-	struct resource *r;
-	int ret, irq;
+अटल पूर्णांक pxamci_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mmc_host *mmc;
+	काष्ठा pxamci_host *host = शून्य;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *r;
+	पूर्णांक ret, irq;
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	mmc = mmc_alloc_host(sizeof(struct pxamci_host), dev);
-	if (!mmc) {
+	mmc = mmc_alloc_host(माप(काष्ठा pxamci_host), dev);
+	अगर (!mmc) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mmc->ops = &pxamci_ops;
 
 	/*
-	 * We can do SG-DMA, but we don't because we never know how much
+	 * We can करो SG-DMA, but we करोn't because we never know how much
 	 * data we successfully wrote to the card.
 	 */
 	mmc->max_segs = NR_SG;
@@ -637,162 +638,162 @@ static int pxamci_probe(struct platform_device *pdev)
 	mmc->max_seg_size = PAGE_SIZE;
 
 	/*
-	 * Block length register is only 10 bits before PXA27x.
+	 * Block length रेजिस्टर is only 10 bits beक्रमe PXA27x.
 	 */
 	mmc->max_blk_size = cpu_is_pxa25x() ? 1023 : 2048;
 
 	/*
-	 * Block count register is 16 bits.
+	 * Block count रेजिस्टर is 16 bits.
 	 */
 	mmc->max_blk_count = 65535;
 
 	ret = pxamci_of_init(pdev, mmc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	host = mmc_priv(mmc);
 	host->mmc = mmc;
-	host->pdata = pdev->dev.platform_data;
+	host->pdata = pdev->dev.platक्रमm_data;
 	host->clkrt = CLKRT_OFF;
 
-	host->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(host->clk)) {
+	host->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(host->clk)) अणु
 		ret = PTR_ERR(host->clk);
-		host->clk = NULL;
-		goto out;
-	}
+		host->clk = शून्य;
+		जाओ out;
+	पूर्ण
 
 	host->clkrate = clk_get_rate(host->clk);
 
 	/*
-	 * Calculate minimum clock rate, rounding up.
+	 * Calculate minimum घड़ी rate, rounding up.
 	 */
 	mmc->f_min = (host->clkrate + 63) / 64;
 	mmc->f_max = (mmc_has_26MHz()) ? 26000000 : host->clkrate;
 
 	ret = pxamci_init_ocr(host);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	mmc->caps = 0;
 	host->cmdat = 0;
-	if (!cpu_is_pxa25x()) {
+	अगर (!cpu_is_pxa25x()) अणु
 		mmc->caps |= MMC_CAP_4_BIT_DATA | MMC_CAP_SDIO_IRQ;
 		host->cmdat |= CMDAT_SDIO_INT_EN;
-		if (mmc_has_26MHz())
+		अगर (mmc_has_26MHz())
 			mmc->caps |= MMC_CAP_MMC_HIGHSPEED |
 				     MMC_CAP_SD_HIGHSPEED;
-	}
+	पूर्ण
 
 	spin_lock_init(&host->lock);
 	host->res = r;
 	host->imask = MMC_I_MASK_ALL;
 
 	host->base = devm_ioremap_resource(dev, r);
-	if (IS_ERR(host->base)) {
+	अगर (IS_ERR(host->base)) अणु
 		ret = PTR_ERR(host->base);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Ensure that the host controller is shut down, and setup
-	 * with our defaults.
+	 * Ensure that the host controller is shut करोwn, and setup
+	 * with our शेषs.
 	 */
-	pxamci_stop_clock(host);
-	writel(0, host->base + MMC_SPI);
-	writel(64, host->base + MMC_RESTO);
-	writel(host->imask, host->base + MMC_I_MASK);
+	pxamci_stop_घड़ी(host);
+	ग_लिखोl(0, host->base + MMC_SPI);
+	ग_लिखोl(64, host->base + MMC_RESTO);
+	ग_लिखोl(host->imask, host->base + MMC_I_MASK);
 
 	ret = devm_request_irq(dev, irq, pxamci_irq, 0,
 			       DRIVER_NAME, host);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	platform_set_drvdata(pdev, mmc);
+	platक्रमm_set_drvdata(pdev, mmc);
 
 	host->dma_chan_rx = dma_request_chan(dev, "rx");
-	if (IS_ERR(host->dma_chan_rx)) {
+	अगर (IS_ERR(host->dma_chan_rx)) अणु
 		dev_err(dev, "unable to request rx dma channel\n");
 		ret = PTR_ERR(host->dma_chan_rx);
-		host->dma_chan_rx = NULL;
-		goto out;
-	}
+		host->dma_chan_rx = शून्य;
+		जाओ out;
+	पूर्ण
 
 	host->dma_chan_tx = dma_request_chan(dev, "tx");
-	if (IS_ERR(host->dma_chan_tx)) {
+	अगर (IS_ERR(host->dma_chan_tx)) अणु
 		dev_err(dev, "unable to request tx dma channel\n");
 		ret = PTR_ERR(host->dma_chan_tx);
-		host->dma_chan_tx = NULL;
-		goto out;
-	}
+		host->dma_chan_tx = शून्य;
+		जाओ out;
+	पूर्ण
 
-	if (host->pdata) {
+	अगर (host->pdata) अणु
 		host->detect_delay_ms = host->pdata->detect_delay_ms;
 
-		host->power = devm_gpiod_get_optional(dev, "power", GPIOD_OUT_LOW);
-		if (IS_ERR(host->power)) {
-			ret = PTR_ERR(host->power);
+		host->घातer = devm_gpiod_get_optional(dev, "power", GPIOD_OUT_LOW);
+		अगर (IS_ERR(host->घातer)) अणु
+			ret = PTR_ERR(host->घातer);
 			dev_err(dev, "Failed requesting gpio_power\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* FIXME: should we pass detection delay to debounce? */
 		ret = mmc_gpiod_request_cd(mmc, "cd", 0, false, 0);
-		if (ret && ret != -ENOENT) {
+		अगर (ret && ret != -ENOENT) अणु
 			dev_err(dev, "Failed requesting gpio_cd\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (!host->pdata->gpio_card_ro_invert)
+		अगर (!host->pdata->gpio_card_ro_invert)
 			mmc->caps2 |= MMC_CAP2_RO_ACTIVE_HIGH;
 
 		ret = mmc_gpiod_request_ro(mmc, "wp", 0, 0);
-		if (ret && ret != -ENOENT) {
+		अगर (ret && ret != -ENOENT) अणु
 			dev_err(dev, "Failed requesting gpio_ro\n");
-			goto out;
-		}
-		if (!ret)
+			जाओ out;
+		पूर्ण
+		अगर (!ret)
 			host->use_ro_gpio = true;
 
-		if (host->pdata->init)
+		अगर (host->pdata->init)
 			host->pdata->init(dev, pxamci_detect_irq, mmc);
 
-		if (host->power && host->pdata->setpower)
+		अगर (host->घातer && host->pdata->setघातer)
 			dev_warn(dev, "gpio_power and setpower() both defined\n");
-		if (host->use_ro_gpio && host->pdata->get_ro)
+		अगर (host->use_ro_gpio && host->pdata->get_ro)
 			dev_warn(dev, "gpio_ro and get_ro() both defined\n");
-	}
+	पूर्ण
 
 	mmc_add_host(mmc);
 
-	return 0;
+	वापस 0;
 
 out:
-	if (host) {
-		if (host->dma_chan_rx)
+	अगर (host) अणु
+		अगर (host->dma_chan_rx)
 			dma_release_channel(host->dma_chan_rx);
-		if (host->dma_chan_tx)
+		अगर (host->dma_chan_tx)
 			dma_release_channel(host->dma_chan_tx);
-	}
-	if (mmc)
-		mmc_free_host(mmc);
-	return ret;
-}
+	पूर्ण
+	अगर (mmc)
+		mmc_मुक्त_host(mmc);
+	वापस ret;
+पूर्ण
 
-static int pxamci_remove(struct platform_device *pdev)
-{
-	struct mmc_host *mmc = platform_get_drvdata(pdev);
+अटल पूर्णांक pxamci_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mmc_host *mmc = platक्रमm_get_drvdata(pdev);
 
-	if (mmc) {
-		struct pxamci_host *host = mmc_priv(mmc);
+	अगर (mmc) अणु
+		काष्ठा pxamci_host *host = mmc_priv(mmc);
 
-		mmc_remove_host(mmc);
+		mmc_हटाओ_host(mmc);
 
-		if (host->pdata && host->pdata->exit)
-			host->pdata->exit(&pdev->dev, mmc);
+		अगर (host->pdata && host->pdata->निकास)
+			host->pdata->निकास(&pdev->dev, mmc);
 
-		pxamci_stop_clock(host);
-		writel(TXFIFO_WR_REQ|RXFIFO_RD_REQ|CLK_IS_OFF|STOP_CMD|
+		pxamci_stop_घड़ी(host);
+		ग_लिखोl(TXFIFO_WR_REQ|RXFIFO_RD_REQ|CLK_IS_OFF|STOP_CMD|
 		       END_CMD_RES|PRG_DONE|DATA_TRAN_DONE,
 		       host->base + MMC_I_MASK);
 
@@ -801,23 +802,23 @@ static int pxamci_remove(struct platform_device *pdev)
 		dma_release_channel(host->dma_chan_rx);
 		dma_release_channel(host->dma_chan_tx);
 
-		mmc_free_host(mmc);
-	}
+		mmc_मुक्त_host(mmc);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pxamci_driver = {
+अटल काष्ठा platक्रमm_driver pxamci_driver = अणु
 	.probe		= pxamci_probe,
-	.remove		= pxamci_remove,
-	.driver		= {
+	.हटाओ		= pxamci_हटाओ,
+	.driver		= अणु
 		.name	= DRIVER_NAME,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.of_match_table = of_match_ptr(pxa_mmc_dt_ids),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(pxamci_driver);
+module_platक्रमm_driver(pxamci_driver);
 
 MODULE_DESCRIPTION("PXA Multimedia Card Interface Driver");
 MODULE_LICENSE("GPL");

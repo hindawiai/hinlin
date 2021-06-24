@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,41 +22,41 @@
  *
  * Authors: Ben Skeggs
  */
-#include "gk104.h"
-#include "changk104.h"
+#समावेश "gk104.h"
+#समावेश "changk104.h"
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-int
-gm200_fifo_pbdma_nr(struct gk104_fifo *fifo)
-{
-	struct nvkm_device *device = fifo->base.engine.subdev.device;
-	return nvkm_rd32(device, 0x002004) & 0x000000ff;
-}
+पूर्णांक
+gm200_fअगरo_pbdma_nr(काष्ठा gk104_fअगरo *fअगरo)
+अणु
+	काष्ठा nvkm_device *device = fअगरo->base.engine.subdev.device;
+	वापस nvkm_rd32(device, 0x002004) & 0x000000ff;
+पूर्ण
 
-const struct gk104_fifo_pbdma_func
-gm200_fifo_pbdma = {
-	.nr = gm200_fifo_pbdma_nr,
-	.init = gk104_fifo_pbdma_init,
-	.init_timeout = gk208_fifo_pbdma_init_timeout,
-};
+स्थिर काष्ठा gk104_fअगरo_pbdma_func
+gm200_fअगरo_pbdma = अणु
+	.nr = gm200_fअगरo_pbdma_nr,
+	.init = gk104_fअगरo_pbdma_init,
+	.init_समयout = gk208_fअगरo_pbdma_init_समयout,
+पूर्ण;
 
-static const struct gk104_fifo_func
-gm200_fifo = {
-	.intr.fault = gm107_fifo_intr_fault,
-	.pbdma = &gm200_fifo_pbdma,
-	.fault.access = gk104_fifo_fault_access,
-	.fault.engine = gm107_fifo_fault_engine,
-	.fault.reason = gk104_fifo_fault_reason,
-	.fault.hubclient = gk104_fifo_fault_hubclient,
-	.fault.gpcclient = gk104_fifo_fault_gpcclient,
-	.runlist = &gm107_fifo_runlist,
-	.chan = {{0,0,MAXWELL_CHANNEL_GPFIFO_A}, gk104_fifo_gpfifo_new },
-};
+अटल स्थिर काष्ठा gk104_fअगरo_func
+gm200_fअगरo = अणु
+	.पूर्णांकr.fault = gm107_fअगरo_पूर्णांकr_fault,
+	.pbdma = &gm200_fअगरo_pbdma,
+	.fault.access = gk104_fअगरo_fault_access,
+	.fault.engine = gm107_fअगरo_fault_engine,
+	.fault.reason = gk104_fअगरo_fault_reason,
+	.fault.hubclient = gk104_fअगरo_fault_hubclient,
+	.fault.gpcclient = gk104_fअगरo_fault_gpcclient,
+	.runlist = &gm107_fअगरo_runlist,
+	.chan = अणुअणु0,0,MAXWELL_CHANNEL_GPFIFO_Aपूर्ण, gk104_fअगरo_gpfअगरo_new पूर्ण,
+पूर्ण;
 
-int
-gm200_fifo_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	       struct nvkm_fifo **pfifo)
-{
-	return gk104_fifo_new_(&gm200_fifo, device, type, inst, 4096, pfifo);
-}
+पूर्णांक
+gm200_fअगरo_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	       काष्ठा nvkm_fअगरo **pfअगरo)
+अणु
+	वापस gk104_fअगरo_new_(&gm200_fअगरo, device, type, inst, 4096, pfअगरo);
+पूर्ण

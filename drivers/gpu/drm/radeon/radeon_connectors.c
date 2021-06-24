@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,1907 +25,1907 @@
  *          Alex Deucher
  */
 
-#include <drm/drm_edid.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_dp_mst_helper.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/radeon_drm.h>
-#include "radeon.h"
-#include "radeon_audio.h"
-#include "atom.h"
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_crtc_helper.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_dp_mst_helper.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/radeon_drm.h>
+#समावेश "radeon.h"
+#समावेश "radeon_audio.h"
+#समावेश "atom.h"
 
-#include <linux/pm_runtime.h>
-#include <linux/vga_switcheroo.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/vga_चयनeroo.h>
 
-static int radeon_dp_handle_hpd(struct drm_connector *connector)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	int ret;
+अटल पूर्णांक radeon_dp_handle_hpd(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	पूर्णांक ret;
 
 	ret = radeon_dp_mst_check_status(radeon_connector);
-	if (ret == -EINVAL)
-		return 1;
-	return 0;
-}
-void radeon_connector_hotplug(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+	अगर (ret == -EINVAL)
+		वापस 1;
+	वापस 0;
+पूर्ण
+व्योम radeon_connector_hotplug(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 
-	if (connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) {
-		struct radeon_connector_atom_dig *dig_connector =
+	अगर (connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) अणु
+		काष्ठा radeon_connector_atom_dig *dig_connector =
 			radeon_connector->con_priv;
 
-		if (radeon_connector->is_mst_connector)
-			return;
-		if (dig_connector->is_mst) {
+		अगर (radeon_connector->is_mst_connector)
+			वापस;
+		अगर (dig_connector->is_mst) अणु
 			radeon_dp_handle_hpd(connector);
-			return;
-		}
-	}
-	/* bail if the connector does not have hpd pin, e.g.,
+			वापस;
+		पूर्ण
+	पूर्ण
+	/* bail अगर the connector करोes not have hpd pin, e.g.,
 	 * VGA, TV, etc.
 	 */
-	if (radeon_connector->hpd.hpd == RADEON_HPD_NONE)
-		return;
+	अगर (radeon_connector->hpd.hpd == RADEON_HPD_NONE)
+		वापस;
 
 	radeon_hpd_set_polarity(rdev, radeon_connector->hpd.hpd);
 
-	/* if the connector is already off, don't turn it back on */
-	/* FIXME: This access isn't protected by any locks. */
-	if (connector->dpms != DRM_MODE_DPMS_ON)
-		return;
+	/* अगर the connector is alपढ़ोy off, करोn't turn it back on */
+	/* FIXME: This access isn't रक्षित by any locks. */
+	अगर (connector->dpms != DRM_MODE_DPMS_ON)
+		वापस;
 
 	/* just deal with DP (not eDP) here. */
-	if (connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) {
-		struct radeon_connector_atom_dig *dig_connector =
+	अगर (connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) अणु
+		काष्ठा radeon_connector_atom_dig *dig_connector =
 			radeon_connector->con_priv;
 
-		/* if existing sink type was not DP no need to retrain */
-		if (dig_connector->dp_sink_type != CONNECTOR_OBJECT_ID_DISPLAYPORT)
-			return;
+		/* अगर existing sink type was not DP no need to retrain */
+		अगर (dig_connector->dp_sink_type != CONNECTOR_OBJECT_ID_DISPLAYPORT)
+			वापस;
 
 		/* first get sink type as it may be reset after (un)plug */
-		dig_connector->dp_sink_type = radeon_dp_getsinktype(radeon_connector);
-		/* don't do anything if sink is not display port, i.e.,
+		dig_connector->dp_sink_type = radeon_dp_माला_लोinktype(radeon_connector);
+		/* करोn't करो anything अगर sink is not display port, i.e.,
 		 * passive dp->(dvi|hdmi) adaptor
 		 */
-		if (dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT &&
+		अगर (dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT &&
 		    radeon_hpd_sense(rdev, radeon_connector->hpd.hpd) &&
-		    radeon_dp_needs_link_train(radeon_connector)) {
-			/* Don't start link training before we have the DPCD */
-			if (!radeon_dp_getdpcd(radeon_connector))
-				return;
+		    radeon_dp_needs_link_train(radeon_connector)) अणु
+			/* Don't start link training beक्रमe we have the DPCD */
+			अगर (!radeon_dp_getdpcd(radeon_connector))
+				वापस;
 
 			/* Turn the connector off and back on immediately, which
 			 * will trigger link training
 			 */
 			drm_helper_connector_dpms(connector, DRM_MODE_DPMS_OFF);
 			drm_helper_connector_dpms(connector, DRM_MODE_DPMS_ON);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void radeon_property_change_mode(struct drm_encoder *encoder)
-{
-	struct drm_crtc *crtc = encoder->crtc;
+अटल व्योम radeon_property_change_mode(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा drm_crtc *crtc = encoder->crtc;
 
-	if (crtc && crtc->enabled) {
+	अगर (crtc && crtc->enabled) अणु
 		drm_crtc_helper_set_mode(crtc, &crtc->mode,
 					 crtc->x, crtc->y, crtc->primary->fb);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int radeon_get_monitor_bpc(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct radeon_connector_atom_dig *dig_connector;
-	int bpc = 8;
-	int mode_clock, max_tmds_clock;
+पूर्णांक radeon_get_monitor_bpc(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा radeon_connector_atom_dig *dig_connector;
+	पूर्णांक bpc = 8;
+	पूर्णांक mode_घड़ी, max_पंचांगds_घड़ी;
 
-	switch (connector->connector_type) {
-	case DRM_MODE_CONNECTOR_DVII:
-	case DRM_MODE_CONNECTOR_HDMIB:
-		if (radeon_connector->use_digital) {
-			if (drm_detect_hdmi_monitor(radeon_connector_edid(connector))) {
-				if (connector->display_info.bpc)
+	चयन (connector->connector_type) अणु
+	हाल DRM_MODE_CONNECTOR_DVII:
+	हाल DRM_MODE_CONNECTOR_HDMIB:
+		अगर (radeon_connector->use_digital) अणु
+			अगर (drm_detect_hdmi_monitor(radeon_connector_edid(connector))) अणु
+				अगर (connector->display_info.bpc)
 					bpc = connector->display_info.bpc;
-			}
-		}
-		break;
-	case DRM_MODE_CONNECTOR_DVID:
-	case DRM_MODE_CONNECTOR_HDMIA:
-		if (drm_detect_hdmi_monitor(radeon_connector_edid(connector))) {
-			if (connector->display_info.bpc)
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_DVID:
+	हाल DRM_MODE_CONNECTOR_HDMIA:
+		अगर (drm_detect_hdmi_monitor(radeon_connector_edid(connector))) अणु
+			अगर (connector->display_info.bpc)
 				bpc = connector->display_info.bpc;
-		}
-		break;
-	case DRM_MODE_CONNECTOR_DisplayPort:
+		पूर्ण
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_DisplayPort:
 		dig_connector = radeon_connector->con_priv;
-		if ((dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
+		अगर ((dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
 		    (dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_eDP) ||
-		    drm_detect_hdmi_monitor(radeon_connector_edid(connector))) {
-			if (connector->display_info.bpc)
+		    drm_detect_hdmi_monitor(radeon_connector_edid(connector))) अणु
+			अगर (connector->display_info.bpc)
 				bpc = connector->display_info.bpc;
-		}
-		break;
-	case DRM_MODE_CONNECTOR_eDP:
-	case DRM_MODE_CONNECTOR_LVDS:
-		if (connector->display_info.bpc)
+		पूर्ण
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_eDP:
+	हाल DRM_MODE_CONNECTOR_LVDS:
+		अगर (connector->display_info.bpc)
 			bpc = connector->display_info.bpc;
-		else if (ASIC_IS_DCE41(rdev) || ASIC_IS_DCE5(rdev)) {
-			const struct drm_connector_helper_funcs *connector_funcs =
-				connector->helper_private;
-			struct drm_encoder *encoder = connector_funcs->best_encoder(connector);
-			struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-			struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
+		अन्यथा अगर (ASIC_IS_DCE41(rdev) || ASIC_IS_DCE5(rdev)) अणु
+			स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs =
+				connector->helper_निजी;
+			काष्ठा drm_encoder *encoder = connector_funcs->best_encoder(connector);
+			काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+			काष्ठा radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
 
-			if (dig->lcd_misc & ATOM_PANEL_MISC_V13_6BIT_PER_COLOR)
+			अगर (dig->lcd_misc & ATOM_PANEL_MISC_V13_6BIT_PER_COLOR)
 				bpc = 6;
-			else if (dig->lcd_misc & ATOM_PANEL_MISC_V13_8BIT_PER_COLOR)
+			अन्यथा अगर (dig->lcd_misc & ATOM_PANEL_MISC_V13_8BIT_PER_COLOR)
 				bpc = 8;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	if (drm_detect_hdmi_monitor(radeon_connector_edid(connector))) {
+	अगर (drm_detect_hdmi_monitor(radeon_connector_edid(connector))) अणु
 		/* hdmi deep color only implemented on DCE4+ */
-		if ((bpc > 8) && !ASIC_IS_DCE4(rdev)) {
+		अगर ((bpc > 8) && !ASIC_IS_DCE4(rdev)) अणु
 			DRM_DEBUG("%s: HDMI deep color %d bpc unsupported. Using 8 bpc.\n",
 					  connector->name, bpc);
 			bpc = 8;
-		}
+		पूर्ण
 
 		/*
 		 * Pre DCE-8 hw can't handle > 12 bpc, and more than 12 bpc doesn't make
-		 * much sense without support for > 12 bpc framebuffers. RGB 4:4:4 at
+		 * much sense without support क्रम > 12 bpc framebuffers. RGB 4:4:4 at
 		 * 12 bpc is always supported on hdmi deep color sinks, as this is
 		 * required by the HDMI-1.3 spec. Clamp to a safe 12 bpc maximum.
 		 */
-		if (bpc > 12) {
+		अगर (bpc > 12) अणु
 			DRM_DEBUG("%s: HDMI deep color %d bpc unsupported. Using 12 bpc.\n",
 					  connector->name, bpc);
 			bpc = 12;
-		}
+		पूर्ण
 
-		/* Any defined maximum tmds clock limit we must not exceed? */
-		if (connector->display_info.max_tmds_clock > 0) {
-			/* mode_clock is clock in kHz for mode to be modeset on this connector */
-			mode_clock = radeon_connector->pixelclock_for_modeset;
+		/* Any defined maximum पंचांगds घड़ी limit we must not exceed? */
+		अगर (connector->display_info.max_पंचांगds_घड़ी > 0) अणु
+			/* mode_घड़ी is घड़ी in kHz क्रम mode to be modeset on this connector */
+			mode_घड़ी = radeon_connector->pixelघड़ी_क्रम_modeset;
 
-			/* Maximum allowable input clock in kHz */
-			max_tmds_clock = connector->display_info.max_tmds_clock;
+			/* Maximum allowable input घड़ी in kHz */
+			max_पंचांगds_घड़ी = connector->display_info.max_पंचांगds_घड़ी;
 
 			DRM_DEBUG("%s: hdmi mode dotclock %d kHz, max tmds input clock %d kHz.\n",
-					  connector->name, mode_clock, max_tmds_clock);
+					  connector->name, mode_घड़ी, max_पंचांगds_घड़ी);
 
-			/* Check if bpc is within clock limit. Try to degrade gracefully otherwise */
-			if ((bpc == 12) && (mode_clock * 3/2 > max_tmds_clock)) {
-				if ((connector->display_info.edid_hdmi_dc_modes & DRM_EDID_HDMI_DC_30) &&
-					(mode_clock * 5/4 <= max_tmds_clock))
+			/* Check अगर bpc is within घड़ी limit. Try to degrade gracefully otherwise */
+			अगर ((bpc == 12) && (mode_घड़ी * 3/2 > max_पंचांगds_घड़ी)) अणु
+				अगर ((connector->display_info.edid_hdmi_dc_modes & DRM_EDID_HDMI_DC_30) &&
+					(mode_घड़ी * 5/4 <= max_पंचांगds_घड़ी))
 					bpc = 10;
-				else
+				अन्यथा
 					bpc = 8;
 
 				DRM_DEBUG("%s: HDMI deep color 12 bpc exceeds max tmds clock. Using %d bpc.\n",
 						  connector->name, bpc);
-			}
+			पूर्ण
 
-			if ((bpc == 10) && (mode_clock * 5/4 > max_tmds_clock)) {
+			अगर ((bpc == 10) && (mode_घड़ी * 5/4 > max_पंचांगds_घड़ी)) अणु
 				bpc = 8;
 				DRM_DEBUG("%s: HDMI deep color 10 bpc exceeds max tmds clock. Using %d bpc.\n",
 						  connector->name, bpc);
-			}
-		}
-		else if (bpc > 8) {
-			/* max_tmds_clock missing, but hdmi spec mandates it for deep color. */
+			पूर्ण
+		पूर्ण
+		अन्यथा अगर (bpc > 8) अणु
+			/* max_पंचांगds_घड़ी missing, but hdmi spec mandates it क्रम deep color. */
 			DRM_DEBUG("%s: Required max tmds clock for HDMI deep color missing. Using 8 bpc.\n",
 					  connector->name);
 			bpc = 8;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if ((radeon_deep_color == 0) && (bpc > 8)) {
+	अगर ((radeon_deep_color == 0) && (bpc > 8)) अणु
 		DRM_DEBUG("%s: Deep color disabled. Set radeon module param deep_color=1 to enable.\n",
 				  connector->name);
 		bpc = 8;
-	}
+	पूर्ण
 
 	DRM_DEBUG("%s: Display bpc=%d, returned bpc=%d\n",
 			  connector->name, connector->display_info.bpc, bpc);
 
-	return bpc;
-}
+	वापस bpc;
+पूर्ण
 
-static void
-radeon_connector_update_scratch_regs(struct drm_connector *connector, enum drm_connector_status status)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct drm_encoder *best_encoder;
-	struct drm_encoder *encoder;
-	const struct drm_connector_helper_funcs *connector_funcs = connector->helper_private;
+अटल व्योम
+radeon_connector_update_scratch_regs(काष्ठा drm_connector *connector, क्रमागत drm_connector_status status)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा drm_encoder *best_encoder;
+	काष्ठा drm_encoder *encoder;
+	स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs = connector->helper_निजी;
 	bool connected;
 
 	best_encoder = connector_funcs->best_encoder(connector);
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
-		if ((encoder == best_encoder) && (status == connector_status_connected))
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
+		अगर ((encoder == best_encoder) && (status == connector_status_connected))
 			connected = true;
-		else
+		अन्यथा
 			connected = false;
 
-		if (rdev->is_atom_bios)
+		अगर (rdev->is_atom_bios)
 			radeon_atombios_connected_scratch_regs(connector, encoder, connected);
-		else
+		अन्यथा
 			radeon_combios_connected_scratch_regs(connector, encoder, connected);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct drm_encoder *radeon_find_encoder(struct drm_connector *connector, int encoder_type)
-{
-	struct drm_encoder *encoder;
+अटल काष्ठा drm_encoder *radeon_find_encoder(काष्ठा drm_connector *connector, पूर्णांक encoder_type)
+अणु
+	काष्ठा drm_encoder *encoder;
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
-		if (encoder->encoder_type == encoder_type)
-			return encoder;
-	}
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
+		अगर (encoder->encoder_type == encoder_type)
+			वापस encoder;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-struct edid *radeon_connector_edid(struct drm_connector *connector)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct drm_property_blob *edid_blob = connector->edid_blob_ptr;
+काष्ठा edid *radeon_connector_edid(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा drm_property_blob *edid_blob = connector->edid_blob_ptr;
 
-	if (radeon_connector->edid) {
-		return radeon_connector->edid;
-	} else if (edid_blob) {
-		struct edid *edid = kmemdup(edid_blob->data, edid_blob->length, GFP_KERNEL);
-		if (edid)
+	अगर (radeon_connector->edid) अणु
+		वापस radeon_connector->edid;
+	पूर्ण अन्यथा अगर (edid_blob) अणु
+		काष्ठा edid *edid = kmemdup(edid_blob->data, edid_blob->length, GFP_KERNEL);
+		अगर (edid)
 			radeon_connector->edid = edid;
-	}
-	return radeon_connector->edid;
-}
+	पूर्ण
+	वापस radeon_connector->edid;
+पूर्ण
 
-static void radeon_connector_get_edid(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+अटल व्योम radeon_connector_get_edid(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 
-	if (radeon_connector->edid)
-		return;
+	अगर (radeon_connector->edid)
+		वापस;
 
 	/* on hw with routers, select right port */
-	if (radeon_connector->router.ddc_valid)
+	अगर (radeon_connector->router.ddc_valid)
 		radeon_router_select_ddc_port(radeon_connector);
 
-	if ((radeon_connector_encoder_get_dp_bridge_encoder_id(connector) !=
+	अगर ((radeon_connector_encoder_get_dp_bridge_encoder_id(connector) !=
 	     ENCODER_OBJECT_ID_NONE) &&
-	    radeon_connector->ddc_bus->has_aux) {
+	    radeon_connector->ddc_bus->has_aux) अणु
 		radeon_connector->edid = drm_get_edid(connector,
 						      &radeon_connector->ddc_bus->aux.ddc);
-	} else if ((connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) ||
-		   (connector->connector_type == DRM_MODE_CONNECTOR_eDP)) {
-		struct radeon_connector_atom_dig *dig = radeon_connector->con_priv;
+	पूर्ण अन्यथा अगर ((connector->connector_type == DRM_MODE_CONNECTOR_DisplayPort) ||
+		   (connector->connector_type == DRM_MODE_CONNECTOR_eDP)) अणु
+		काष्ठा radeon_connector_atom_dig *dig = radeon_connector->con_priv;
 
-		if ((dig->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT ||
+		अगर ((dig->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT ||
 		     dig->dp_sink_type == CONNECTOR_OBJECT_ID_eDP) &&
 		    radeon_connector->ddc_bus->has_aux)
 			radeon_connector->edid = drm_get_edid(&radeon_connector->base,
 							      &radeon_connector->ddc_bus->aux.ddc);
-		else if (radeon_connector->ddc_bus)
+		अन्यथा अगर (radeon_connector->ddc_bus)
 			radeon_connector->edid = drm_get_edid(&radeon_connector->base,
 							      &radeon_connector->ddc_bus->adapter);
-	} else if (vga_switcheroo_handler_flags() & VGA_SWITCHEROO_CAN_SWITCH_DDC &&
+	पूर्ण अन्यथा अगर (vga_चयनeroo_handler_flags() & VGA_SWITCHEROO_CAN_SWITCH_DDC &&
 		   connector->connector_type == DRM_MODE_CONNECTOR_LVDS &&
-		   radeon_connector->ddc_bus) {
-		radeon_connector->edid = drm_get_edid_switcheroo(&radeon_connector->base,
+		   radeon_connector->ddc_bus) अणु
+		radeon_connector->edid = drm_get_edid_चयनeroo(&radeon_connector->base,
 								 &radeon_connector->ddc_bus->adapter);
-	} else if (radeon_connector->ddc_bus) {
+	पूर्ण अन्यथा अगर (radeon_connector->ddc_bus) अणु
 		radeon_connector->edid = drm_get_edid(&radeon_connector->base,
 						      &radeon_connector->ddc_bus->adapter);
-	}
+	पूर्ण
 
-	if (!radeon_connector->edid) {
-		/* don't fetch the edid from the vbios if ddc fails and runpm is
+	अगर (!radeon_connector->edid) अणु
+		/* करोn't fetch the edid from the vbios अगर ddc fails and runpm is
 		 * enabled so we report disconnected.
 		 */
-		if ((rdev->flags & RADEON_IS_PX) && (radeon_runtime_pm != 0))
-			return;
+		अगर ((rdev->flags & RADEON_IS_PX) && (radeon_runसमय_pm != 0))
+			वापस;
 
-		if (rdev->is_atom_bios) {
-			/* some laptops provide a hardcoded edid in rom for LCDs */
-			if (((connector->connector_type == DRM_MODE_CONNECTOR_LVDS) ||
+		अगर (rdev->is_atom_bios) अणु
+			/* some laptops provide a hardcoded edid in rom क्रम LCDs */
+			अगर (((connector->connector_type == DRM_MODE_CONNECTOR_LVDS) ||
 			     (connector->connector_type == DRM_MODE_CONNECTOR_eDP)))
 				radeon_connector->edid = radeon_bios_get_hardcoded_edid(rdev);
-		} else {
-			/* some servers provide a hardcoded edid in rom for KVMs */
+		पूर्ण अन्यथा अणु
+			/* some servers provide a hardcoded edid in rom क्रम KVMs */
 			radeon_connector->edid = radeon_bios_get_hardcoded_edid(rdev);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void radeon_connector_free_edid(struct drm_connector *connector)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+अटल व्योम radeon_connector_मुक्त_edid(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 
-	if (radeon_connector->edid) {
-		kfree(radeon_connector->edid);
-		radeon_connector->edid = NULL;
-	}
-}
+	अगर (radeon_connector->edid) अणु
+		kमुक्त(radeon_connector->edid);
+		radeon_connector->edid = शून्य;
+	पूर्ण
+पूर्ण
 
-static int radeon_ddc_get_modes(struct drm_connector *connector)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	int ret;
+अटल पूर्णांक radeon_ddc_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	पूर्णांक ret;
 
-	if (radeon_connector->edid) {
+	अगर (radeon_connector->edid) अणु
 		drm_connector_update_edid_property(connector, radeon_connector->edid);
 		ret = drm_add_edid_modes(connector, radeon_connector->edid);
-		return ret;
-	}
-	drm_connector_update_edid_property(connector, NULL);
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	drm_connector_update_edid_property(connector, शून्य);
+	वापस 0;
+पूर्ण
 
-static struct drm_encoder *radeon_best_single_encoder(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder;
+अटल काष्ठा drm_encoder *radeon_best_single_encoder(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder;
 
 	/* pick the first one */
-	drm_connector_for_each_possible_encoder(connector, encoder)
-		return encoder;
+	drm_connector_क्रम_each_possible_encoder(connector, encoder)
+		वापस encoder;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void radeon_get_native_mode(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder = radeon_best_single_encoder(connector);
-	struct radeon_encoder *radeon_encoder;
+अटल व्योम radeon_get_native_mode(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder = radeon_best_single_encoder(connector);
+	काष्ठा radeon_encoder *radeon_encoder;
 
-	if (encoder == NULL)
-		return;
+	अगर (encoder == शून्य)
+		वापस;
 
 	radeon_encoder = to_radeon_encoder(encoder);
 
-	if (!list_empty(&connector->probed_modes)) {
-		struct drm_display_mode *preferred_mode =
+	अगर (!list_empty(&connector->probed_modes)) अणु
+		काष्ठा drm_display_mode *preferred_mode =
 			list_first_entry(&connector->probed_modes,
-					 struct drm_display_mode, head);
+					 काष्ठा drm_display_mode, head);
 
 		radeon_encoder->native_mode = *preferred_mode;
-	} else {
-		radeon_encoder->native_mode.clock = 0;
-	}
-}
+	पूर्ण अन्यथा अणु
+		radeon_encoder->native_mode.घड़ी = 0;
+	पूर्ण
+पूर्ण
 
 /*
  * radeon_connector_analog_encoder_conflict_solve
- * - search for other connectors sharing this encoder
- *   if priority is true, then set them disconnected if this is connected
- *   if priority is false, set us disconnected if they are connected
+ * - search क्रम other connectors sharing this encoder
+ *   अगर priority is true, then set them disconnected अगर this is connected
+ *   अगर priority is false, set us disconnected अगर they are connected
  */
-static enum drm_connector_status
-radeon_connector_analog_encoder_conflict_solve(struct drm_connector *connector,
-					       struct drm_encoder *encoder,
-					       enum drm_connector_status current_status,
+अटल क्रमागत drm_connector_status
+radeon_connector_analog_encoder_conflict_solve(काष्ठा drm_connector *connector,
+					       काष्ठा drm_encoder *encoder,
+					       क्रमागत drm_connector_status current_status,
 					       bool priority)
-{
-	struct drm_device *dev = connector->dev;
-	struct drm_connector *conflict;
-	struct radeon_connector *radeon_conflict;
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा drm_connector *conflict;
+	काष्ठा radeon_connector *radeon_conflict;
 
-	list_for_each_entry(conflict, &dev->mode_config.connector_list, head) {
-		struct drm_encoder *enc;
+	list_क्रम_each_entry(conflict, &dev->mode_config.connector_list, head) अणु
+		काष्ठा drm_encoder *enc;
 
-		if (conflict == connector)
-			continue;
+		अगर (conflict == connector)
+			जारी;
 
 		radeon_conflict = to_radeon_connector(conflict);
 
-		drm_connector_for_each_possible_encoder(conflict, enc) {
-			/* if the IDs match */
-			if (enc == encoder) {
-				if (conflict->status != connector_status_connected)
-					continue;
+		drm_connector_क्रम_each_possible_encoder(conflict, enc) अणु
+			/* अगर the IDs match */
+			अगर (enc == encoder) अणु
+				अगर (conflict->status != connector_status_connected)
+					जारी;
 
-				if (radeon_conflict->use_digital)
-					continue;
+				अगर (radeon_conflict->use_digital)
+					जारी;
 
-				if (priority) {
+				अगर (priority) अणु
 					DRM_DEBUG_KMS("1: conflicting encoders switching off %s\n",
 						      conflict->name);
 					DRM_DEBUG_KMS("in favor of %s\n",
 						      connector->name);
 					conflict->status = connector_status_disconnected;
 					radeon_connector_update_scratch_regs(conflict, connector_status_disconnected);
-				} else {
+				पूर्ण अन्यथा अणु
 					DRM_DEBUG_KMS("2: conflicting encoders switching off %s\n",
 						      connector->name);
 					DRM_DEBUG_KMS("in favor of %s\n",
 						      conflict->name);
 					current_status = connector_status_disconnected;
-				}
-				break;
-			}
-		}
-	}
-	return current_status;
+				पूर्ण
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस current_status;
 
-}
+पूर्ण
 
-static struct drm_display_mode *radeon_fp_native_mode(struct drm_encoder *encoder)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	struct drm_display_mode *mode = NULL;
-	struct drm_display_mode *native_mode = &radeon_encoder->native_mode;
+अटल काष्ठा drm_display_mode *radeon_fp_native_mode(काष्ठा drm_encoder *encoder)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	काष्ठा drm_display_mode *mode = शून्य;
+	काष्ठा drm_display_mode *native_mode = &radeon_encoder->native_mode;
 
-	if (native_mode->hdisplay != 0 &&
+	अगर (native_mode->hdisplay != 0 &&
 	    native_mode->vdisplay != 0 &&
-	    native_mode->clock != 0) {
+	    native_mode->घड़ी != 0) अणु
 		mode = drm_mode_duplicate(dev, native_mode);
 		mode->type = DRM_MODE_TYPE_PREFERRED | DRM_MODE_TYPE_DRIVER;
 		drm_mode_set_name(mode);
 
 		DRM_DEBUG_KMS("Adding native panel mode %s\n", mode->name);
-	} else if (native_mode->hdisplay != 0 &&
-		   native_mode->vdisplay != 0) {
+	पूर्ण अन्यथा अगर (native_mode->hdisplay != 0 &&
+		   native_mode->vdisplay != 0) अणु
 		/* mac laptops without an edid */
 		/* Note that this is not necessarily the exact panel mode,
-		 * but an approximation based on the cvt formula.  For these
-		 * systems we should ideally read the mode info out of the
-		 * registers or add a mode table, but this works and is much
+		 * but an approximation based on the cvt क्रमmula.  For these
+		 * प्रणालीs we should ideally पढ़ो the mode info out of the
+		 * रेजिस्टरs or add a mode table, but this works and is much
 		 * simpler.
 		 */
 		mode = drm_cvt_mode(dev, native_mode->hdisplay, native_mode->vdisplay, 60, true, false, false);
 		mode->type = DRM_MODE_TYPE_PREFERRED | DRM_MODE_TYPE_DRIVER;
 		DRM_DEBUG_KMS("Adding cvt approximation of native panel mode %s\n", mode->name);
-	}
-	return mode;
-}
+	पूर्ण
+	वापस mode;
+पूर्ण
 
-static void radeon_add_common_modes(struct drm_encoder *encoder, struct drm_connector *connector)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	struct drm_display_mode *mode = NULL;
-	struct drm_display_mode *native_mode = &radeon_encoder->native_mode;
-	int i;
-	struct mode_size {
-		int w;
-		int h;
-	} common_modes[17] = {
-		{ 640,  480},
-		{ 720,  480},
-		{ 800,  600},
-		{ 848,  480},
-		{1024,  768},
-		{1152,  768},
-		{1280,  720},
-		{1280,  800},
-		{1280,  854},
-		{1280,  960},
-		{1280, 1024},
-		{1440,  900},
-		{1400, 1050},
-		{1680, 1050},
-		{1600, 1200},
-		{1920, 1080},
-		{1920, 1200}
-	};
+अटल व्योम radeon_add_common_modes(काष्ठा drm_encoder *encoder, काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	काष्ठा drm_display_mode *mode = शून्य;
+	काष्ठा drm_display_mode *native_mode = &radeon_encoder->native_mode;
+	पूर्णांक i;
+	काष्ठा mode_size अणु
+		पूर्णांक w;
+		पूर्णांक h;
+	पूर्ण common_modes[17] = अणु
+		अणु 640,  480पूर्ण,
+		अणु 720,  480पूर्ण,
+		अणु 800,  600पूर्ण,
+		अणु 848,  480पूर्ण,
+		अणु1024,  768पूर्ण,
+		अणु1152,  768पूर्ण,
+		अणु1280,  720पूर्ण,
+		अणु1280,  800पूर्ण,
+		अणु1280,  854पूर्ण,
+		अणु1280,  960पूर्ण,
+		अणु1280, 1024पूर्ण,
+		अणु1440,  900पूर्ण,
+		अणु1400, 1050पूर्ण,
+		अणु1680, 1050पूर्ण,
+		अणु1600, 1200पूर्ण,
+		अणु1920, 1080पूर्ण,
+		अणु1920, 1200पूर्ण
+	पूर्ण;
 
-	for (i = 0; i < 17; i++) {
-		if (radeon_encoder->devices & (ATOM_DEVICE_TV_SUPPORT)) {
-			if (common_modes[i].w > 1024 ||
+	क्रम (i = 0; i < 17; i++) अणु
+		अगर (radeon_encoder->devices & (ATOM_DEVICE_TV_SUPPORT)) अणु
+			अगर (common_modes[i].w > 1024 ||
 			    common_modes[i].h > 768)
-				continue;
-		}
-		if (radeon_encoder->devices & (ATOM_DEVICE_LCD_SUPPORT)) {
-			if (common_modes[i].w > native_mode->hdisplay ||
+				जारी;
+		पूर्ण
+		अगर (radeon_encoder->devices & (ATOM_DEVICE_LCD_SUPPORT)) अणु
+			अगर (common_modes[i].w > native_mode->hdisplay ||
 			    common_modes[i].h > native_mode->vdisplay ||
 			    (common_modes[i].w == native_mode->hdisplay &&
 			     common_modes[i].h == native_mode->vdisplay))
-				continue;
-		}
-		if (common_modes[i].w < 320 || common_modes[i].h < 200)
-			continue;
+				जारी;
+		पूर्ण
+		अगर (common_modes[i].w < 320 || common_modes[i].h < 200)
+			जारी;
 
 		mode = drm_cvt_mode(dev, common_modes[i].w, common_modes[i].h, 60, false, false, false);
 		drm_mode_probed_add(connector, mode);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int radeon_connector_set_property(struct drm_connector *connector, struct drm_property *property,
-				  uint64_t val)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct drm_encoder *encoder;
-	struct radeon_encoder *radeon_encoder;
+अटल पूर्णांक radeon_connector_set_property(काष्ठा drm_connector *connector, काष्ठा drm_property *property,
+				  uपूर्णांक64_t val)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा radeon_encoder *radeon_encoder;
 
-	if (property == rdev->mode_info.coherent_mode_property) {
-		struct radeon_encoder_atom_dig *dig;
+	अगर (property == rdev->mode_info.coherent_mode_property) अणु
+		काष्ठा radeon_encoder_atom_dig *dig;
 		bool new_coherent_mode;
 
 		/* need to find digital encoder on connector */
 		encoder = radeon_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		radeon_encoder = to_radeon_encoder(encoder);
 
-		if (!radeon_encoder->enc_priv)
-			return 0;
+		अगर (!radeon_encoder->enc_priv)
+			वापस 0;
 
 		dig = radeon_encoder->enc_priv;
 		new_coherent_mode = val ? true : false;
-		if (dig->coherent_mode != new_coherent_mode) {
+		अगर (dig->coherent_mode != new_coherent_mode) अणु
 			dig->coherent_mode = new_coherent_mode;
 			radeon_property_change_mode(&radeon_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == rdev->mode_info.audio_property) {
-		struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+	अगर (property == rdev->mode_info.audio_property) अणु
+		काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 		/* need to find digital encoder on connector */
 		encoder = radeon_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		radeon_encoder = to_radeon_encoder(encoder);
 
-		if (radeon_connector->audio != val) {
+		अगर (radeon_connector->audio != val) अणु
 			radeon_connector->audio = val;
 			radeon_property_change_mode(&radeon_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == rdev->mode_info.dither_property) {
-		struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+	अगर (property == rdev->mode_info.dither_property) अणु
+		काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 		/* need to find digital encoder on connector */
 		encoder = radeon_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		radeon_encoder = to_radeon_encoder(encoder);
 
-		if (radeon_connector->dither != val) {
+		अगर (radeon_connector->dither != val) अणु
 			radeon_connector->dither = val;
 			radeon_property_change_mode(&radeon_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == rdev->mode_info.underscan_property) {
+	अगर (property == rdev->mode_info.underscan_property) अणु
 		/* need to find digital encoder on connector */
 		encoder = radeon_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		radeon_encoder = to_radeon_encoder(encoder);
 
-		if (radeon_encoder->underscan_type != val) {
+		अगर (radeon_encoder->underscan_type != val) अणु
 			radeon_encoder->underscan_type = val;
 			radeon_property_change_mode(&radeon_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == rdev->mode_info.underscan_hborder_property) {
+	अगर (property == rdev->mode_info.underscan_hborder_property) अणु
 		/* need to find digital encoder on connector */
 		encoder = radeon_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		radeon_encoder = to_radeon_encoder(encoder);
 
-		if (radeon_encoder->underscan_hborder != val) {
+		अगर (radeon_encoder->underscan_hborder != val) अणु
 			radeon_encoder->underscan_hborder = val;
 			radeon_property_change_mode(&radeon_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == rdev->mode_info.underscan_vborder_property) {
+	अगर (property == rdev->mode_info.underscan_vborder_property) अणु
 		/* need to find digital encoder on connector */
 		encoder = radeon_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		radeon_encoder = to_radeon_encoder(encoder);
 
-		if (radeon_encoder->underscan_vborder != val) {
+		अगर (radeon_encoder->underscan_vborder != val) अणु
 			radeon_encoder->underscan_vborder = val;
 			radeon_property_change_mode(&radeon_encoder->base);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (property == rdev->mode_info.tv_std_property) {
+	अगर (property == rdev->mode_info.tv_std_property) अणु
 		encoder = radeon_find_encoder(connector, DRM_MODE_ENCODER_TVDAC);
-		if (!encoder) {
+		अगर (!encoder) अणु
 			encoder = radeon_find_encoder(connector, DRM_MODE_ENCODER_DAC);
-		}
+		पूर्ण
 
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		radeon_encoder = to_radeon_encoder(encoder);
-		if (!radeon_encoder->enc_priv)
-			return 0;
-		if (ASIC_IS_AVIVO(rdev) || radeon_r4xx_atom) {
-			struct radeon_encoder_atom_dac *dac_int;
-			dac_int = radeon_encoder->enc_priv;
-			dac_int->tv_std = val;
-		} else {
-			struct radeon_encoder_tv_dac *dac_int;
-			dac_int = radeon_encoder->enc_priv;
-			dac_int->tv_std = val;
-		}
+		अगर (!radeon_encoder->enc_priv)
+			वापस 0;
+		अगर (ASIC_IS_AVIVO(rdev) || radeon_r4xx_atom) अणु
+			काष्ठा radeon_encoder_atom_dac *dac_पूर्णांक;
+			dac_पूर्णांक = radeon_encoder->enc_priv;
+			dac_पूर्णांक->tv_std = val;
+		पूर्ण अन्यथा अणु
+			काष्ठा radeon_encoder_tv_dac *dac_पूर्णांक;
+			dac_पूर्णांक = radeon_encoder->enc_priv;
+			dac_पूर्णांक->tv_std = val;
+		पूर्ण
 		radeon_property_change_mode(&radeon_encoder->base);
-	}
+	पूर्ण
 
-	if (property == rdev->mode_info.load_detect_property) {
-		struct radeon_connector *radeon_connector =
+	अगर (property == rdev->mode_info.load_detect_property) अणु
+		काष्ठा radeon_connector *radeon_connector =
 			to_radeon_connector(connector);
 
-		if (val == 0)
+		अगर (val == 0)
 			radeon_connector->dac_load_detect = false;
-		else
+		अन्यथा
 			radeon_connector->dac_load_detect = true;
-	}
+	पूर्ण
 
-	if (property == rdev->mode_info.tmds_pll_property) {
-		struct radeon_encoder_int_tmds *tmds = NULL;
+	अगर (property == rdev->mode_info.पंचांगds_pll_property) अणु
+		काष्ठा radeon_encoder_पूर्णांक_पंचांगds *पंचांगds = शून्य;
 		bool ret = false;
 		/* need to find digital encoder on connector */
 		encoder = radeon_find_encoder(connector, DRM_MODE_ENCODER_TMDS);
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		radeon_encoder = to_radeon_encoder(encoder);
 
-		tmds = radeon_encoder->enc_priv;
-		if (!tmds)
-			return 0;
+		पंचांगds = radeon_encoder->enc_priv;
+		अगर (!पंचांगds)
+			वापस 0;
 
-		if (val == 0) {
-			if (rdev->is_atom_bios)
-				ret = radeon_atombios_get_tmds_info(radeon_encoder, tmds);
-			else
-				ret = radeon_legacy_get_tmds_info_from_combios(radeon_encoder, tmds);
-		}
-		if (val == 1 || !ret)
-			radeon_legacy_get_tmds_info_from_table(radeon_encoder, tmds);
+		अगर (val == 0) अणु
+			अगर (rdev->is_atom_bios)
+				ret = radeon_atombios_get_पंचांगds_info(radeon_encoder, पंचांगds);
+			अन्यथा
+				ret = radeon_legacy_get_पंचांगds_info_from_combios(radeon_encoder, पंचांगds);
+		पूर्ण
+		अगर (val == 1 || !ret)
+			radeon_legacy_get_पंचांगds_info_from_table(radeon_encoder, पंचांगds);
 
 		radeon_property_change_mode(&radeon_encoder->base);
-	}
+	पूर्ण
 
-	if (property == dev->mode_config.scaling_mode_property) {
-		enum radeon_rmx_type rmx_type;
+	अगर (property == dev->mode_config.scaling_mode_property) अणु
+		क्रमागत radeon_rmx_type rmx_type;
 
-		if (connector->encoder)
+		अगर (connector->encoder)
 			radeon_encoder = to_radeon_encoder(connector->encoder);
-		else {
-			const struct drm_connector_helper_funcs *connector_funcs = connector->helper_private;
+		अन्यथा अणु
+			स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs = connector->helper_निजी;
 			radeon_encoder = to_radeon_encoder(connector_funcs->best_encoder(connector));
-		}
+		पूर्ण
 
-		switch (val) {
-		default:
-		case DRM_MODE_SCALE_NONE: rmx_type = RMX_OFF; break;
-		case DRM_MODE_SCALE_CENTER: rmx_type = RMX_CENTER; break;
-		case DRM_MODE_SCALE_ASPECT: rmx_type = RMX_ASPECT; break;
-		case DRM_MODE_SCALE_FULLSCREEN: rmx_type = RMX_FULL; break;
-		}
-		if (radeon_encoder->rmx_type == rmx_type)
-			return 0;
+		चयन (val) अणु
+		शेष:
+		हाल DRM_MODE_SCALE_NONE: rmx_type = RMX_OFF; अवरोध;
+		हाल DRM_MODE_SCALE_CENTER: rmx_type = RMX_CENTER; अवरोध;
+		हाल DRM_MODE_SCALE_ASPECT: rmx_type = RMX_ASPECT; अवरोध;
+		हाल DRM_MODE_SCALE_FULLSCREEN: rmx_type = RMX_FULL; अवरोध;
+		पूर्ण
+		अगर (radeon_encoder->rmx_type == rmx_type)
+			वापस 0;
 
-		if ((rmx_type != DRM_MODE_SCALE_NONE) &&
-		    (radeon_encoder->native_mode.clock == 0))
-			return 0;
+		अगर ((rmx_type != DRM_MODE_SCALE_NONE) &&
+		    (radeon_encoder->native_mode.घड़ी == 0))
+			वापस 0;
 
 		radeon_encoder->rmx_type = rmx_type;
 
 		radeon_property_change_mode(&radeon_encoder->base);
-	}
+	पूर्ण
 
-	if (property == rdev->mode_info.output_csc_property) {
-		if (connector->encoder)
+	अगर (property == rdev->mode_info.output_csc_property) अणु
+		अगर (connector->encoder)
 			radeon_encoder = to_radeon_encoder(connector->encoder);
-		else {
-			const struct drm_connector_helper_funcs *connector_funcs = connector->helper_private;
+		अन्यथा अणु
+			स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs = connector->helper_निजी;
 			radeon_encoder = to_radeon_encoder(connector_funcs->best_encoder(connector));
-		}
+		पूर्ण
 
-		if (radeon_encoder->output_csc == val)
-			return 0;
+		अगर (radeon_encoder->output_csc == val)
+			वापस 0;
 
 		radeon_encoder->output_csc = val;
 
-		if (connector->encoder && connector->encoder->crtc) {
-			struct drm_crtc *crtc  = connector->encoder->crtc;
-			struct radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
+		अगर (connector->encoder && connector->encoder->crtc) अणु
+			काष्ठा drm_crtc *crtc  = connector->encoder->crtc;
+			काष्ठा radeon_crtc *radeon_crtc = to_radeon_crtc(crtc);
 
 			radeon_crtc->output_csc = radeon_encoder->output_csc;
 
 			/*
 			 * Our .gamma_set assumes the .gamma_store has been
-			 * prefilled and don't care about its arguments.
+			 * prefilled and करोn't care about its arguments.
 			 */
-			crtc->funcs->gamma_set(crtc, NULL, NULL, NULL, 0, NULL);
-		}
-	}
+			crtc->funcs->gamma_set(crtc, शून्य, शून्य, शून्य, 0, शून्य);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void radeon_fixup_lvds_native_mode(struct drm_encoder *encoder,
-					  struct drm_connector *connector)
-{
-	struct radeon_encoder *radeon_encoder =	to_radeon_encoder(encoder);
-	struct drm_display_mode *native_mode = &radeon_encoder->native_mode;
-	struct drm_display_mode *t, *mode;
+अटल व्योम radeon_fixup_lvds_native_mode(काष्ठा drm_encoder *encoder,
+					  काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_encoder *radeon_encoder =	to_radeon_encoder(encoder);
+	काष्ठा drm_display_mode *native_mode = &radeon_encoder->native_mode;
+	काष्ठा drm_display_mode *t, *mode;
 
-	/* If the EDID preferred mode doesn't match the native mode, use it */
-	list_for_each_entry_safe(mode, t, &connector->probed_modes, head) {
-		if (mode->type & DRM_MODE_TYPE_PREFERRED) {
-			if (mode->hdisplay != native_mode->hdisplay ||
+	/* If the EDID preferred mode करोesn't match the native mode, use it */
+	list_क्रम_each_entry_safe(mode, t, &connector->probed_modes, head) अणु
+		अगर (mode->type & DRM_MODE_TYPE_PREFERRED) अणु
+			अगर (mode->hdisplay != native_mode->hdisplay ||
 			    mode->vdisplay != native_mode->vdisplay)
-				memcpy(native_mode, mode, sizeof(*mode));
-		}
-	}
+				स_नकल(native_mode, mode, माप(*mode));
+		पूर्ण
+	पूर्ण
 
-	/* Try to get native mode details from EDID if necessary */
-	if (!native_mode->clock) {
-		list_for_each_entry_safe(mode, t, &connector->probed_modes, head) {
-			if (mode->hdisplay == native_mode->hdisplay &&
-			    mode->vdisplay == native_mode->vdisplay) {
+	/* Try to get native mode details from EDID अगर necessary */
+	अगर (!native_mode->घड़ी) अणु
+		list_क्रम_each_entry_safe(mode, t, &connector->probed_modes, head) अणु
+			अगर (mode->hdisplay == native_mode->hdisplay &&
+			    mode->vdisplay == native_mode->vdisplay) अणु
 				*native_mode = *mode;
 				drm_mode_set_crtcinfo(native_mode, CRTC_INTERLACE_HALVE_V);
 				DRM_DEBUG_KMS("Determined LVDS native mode details from EDID\n");
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!native_mode->clock) {
+	अगर (!native_mode->घड़ी) अणु
 		DRM_DEBUG_KMS("No LVDS native mode details, disabling RMX\n");
 		radeon_encoder->rmx_type = RMX_OFF;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int radeon_lvds_get_modes(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder;
-	int ret = 0;
-	struct drm_display_mode *mode;
+अटल पूर्णांक radeon_lvds_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder;
+	पूर्णांक ret = 0;
+	काष्ठा drm_display_mode *mode;
 
 	radeon_connector_get_edid(connector);
 	ret = radeon_ddc_get_modes(connector);
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		encoder = radeon_best_single_encoder(connector);
-		if (encoder) {
+		अगर (encoder) अणु
 			radeon_fixup_lvds_native_mode(encoder, connector);
 			/* add scaled modes */
 			radeon_add_common_modes(encoder, connector);
-		}
-		return ret;
-	}
+		पूर्ण
+		वापस ret;
+	पूर्ण
 
 	encoder = radeon_best_single_encoder(connector);
-	if (!encoder)
-		return 0;
+	अगर (!encoder)
+		वापस 0;
 
 	/* we have no EDID modes */
 	mode = radeon_fp_native_mode(encoder);
-	if (mode) {
+	अगर (mode) अणु
 		ret = 1;
 		drm_mode_probed_add(connector, mode);
-		/* add the width/height from vbios tables if available */
+		/* add the width/height from vbios tables अगर available */
 		connector->display_info.width_mm = mode->width_mm;
 		connector->display_info.height_mm = mode->height_mm;
 		/* add scaled modes */
 		radeon_add_common_modes(encoder, connector);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum drm_mode_status radeon_lvds_mode_valid(struct drm_connector *connector,
-				  struct drm_display_mode *mode)
-{
-	struct drm_encoder *encoder = radeon_best_single_encoder(connector);
+अटल क्रमागत drm_mode_status radeon_lvds_mode_valid(काष्ठा drm_connector *connector,
+				  काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_encoder *encoder = radeon_best_single_encoder(connector);
 
-	if ((mode->hdisplay < 320) || (mode->vdisplay < 240))
-		return MODE_PANEL;
+	अगर ((mode->hdisplay < 320) || (mode->vdisplay < 240))
+		वापस MODE_PANEL;
 
-	if (encoder) {
-		struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-		struct drm_display_mode *native_mode = &radeon_encoder->native_mode;
+	अगर (encoder) अणु
+		काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+		काष्ठा drm_display_mode *native_mode = &radeon_encoder->native_mode;
 
-		/* AVIVO hardware supports downscaling modes larger than the panel
+		/* AVIVO hardware supports करोwnscaling modes larger than the panel
 		 * to the panel size, but I'm not sure this is desirable.
 		 */
-		if ((mode->hdisplay > native_mode->hdisplay) ||
+		अगर ((mode->hdisplay > native_mode->hdisplay) ||
 		    (mode->vdisplay > native_mode->vdisplay))
-			return MODE_PANEL;
+			वापस MODE_PANEL;
 
-		/* if scaling is disabled, block non-native modes */
-		if (radeon_encoder->rmx_type == RMX_OFF) {
-			if ((mode->hdisplay != native_mode->hdisplay) ||
+		/* अगर scaling is disabled, block non-native modes */
+		अगर (radeon_encoder->rmx_type == RMX_OFF) अणु
+			अगर ((mode->hdisplay != native_mode->hdisplay) ||
 			    (mode->vdisplay != native_mode->vdisplay))
-				return MODE_PANEL;
-		}
-	}
+				वापस MODE_PANEL;
+		पूर्ण
+	पूर्ण
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static enum drm_connector_status
-radeon_lvds_detect(struct drm_connector *connector, bool force)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct drm_encoder *encoder = radeon_best_single_encoder(connector);
-	enum drm_connector_status ret = connector_status_disconnected;
-	int r;
+अटल क्रमागत drm_connector_status
+radeon_lvds_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा drm_encoder *encoder = radeon_best_single_encoder(connector);
+	क्रमागत drm_connector_status ret = connector_status_disconnected;
+	पूर्णांक r;
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		r = pm_runtime_get_sync(connector->dev->dev);
-		if (r < 0) {
-			pm_runtime_put_autosuspend(connector->dev->dev);
-			return connector_status_disconnected;
-		}
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		r = pm_runसमय_get_sync(connector->dev->dev);
+		अगर (r < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+			वापस connector_status_disconnected;
+		पूर्ण
+	पूर्ण
 
-	if (encoder) {
-		struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-		struct drm_display_mode *native_mode = &radeon_encoder->native_mode;
+	अगर (encoder) अणु
+		काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+		काष्ठा drm_display_mode *native_mode = &radeon_encoder->native_mode;
 
-		/* check if panel is valid */
-		if (native_mode->hdisplay >= 320 && native_mode->vdisplay >= 240)
+		/* check अगर panel is valid */
+		अगर (native_mode->hdisplay >= 320 && native_mode->vdisplay >= 240)
 			ret = connector_status_connected;
-		/* don't fetch the edid from the vbios if ddc fails and runpm is
+		/* करोn't fetch the edid from the vbios अगर ddc fails and runpm is
 		 * enabled so we report disconnected.
 		 */
-		if ((rdev->flags & RADEON_IS_PX) && (radeon_runtime_pm != 0))
+		अगर ((rdev->flags & RADEON_IS_PX) && (radeon_runसमय_pm != 0))
 			ret = connector_status_disconnected;
-	}
+	पूर्ण
 
-	/* check for edid as well */
+	/* check क्रम edid as well */
 	radeon_connector_get_edid(connector);
-	if (radeon_connector->edid)
+	अगर (radeon_connector->edid)
 		ret = connector_status_connected;
 	/* check acpi lid status ??? */
 
 	radeon_connector_update_scratch_regs(connector, ret);
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		pm_runtime_mark_last_busy(connector->dev->dev);
-		pm_runtime_put_autosuspend(connector->dev->dev);
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		pm_runसमय_mark_last_busy(connector->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void radeon_connector_unregister(struct drm_connector *connector)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+अटल व्योम radeon_connector_unरेजिस्टर(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 
-	if (radeon_connector->ddc_bus && radeon_connector->ddc_bus->has_aux) {
-		drm_dp_aux_unregister(&radeon_connector->ddc_bus->aux);
+	अगर (radeon_connector->ddc_bus && radeon_connector->ddc_bus->has_aux) अणु
+		drm_dp_aux_unरेजिस्टर(&radeon_connector->ddc_bus->aux);
 		radeon_connector->ddc_bus->has_aux = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void radeon_connector_destroy(struct drm_connector *connector)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+अटल व्योम radeon_connector_destroy(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 
-	radeon_connector_free_edid(connector);
-	kfree(radeon_connector->con_priv);
-	drm_connector_unregister(connector);
+	radeon_connector_मुक्त_edid(connector);
+	kमुक्त(radeon_connector->con_priv);
+	drm_connector_unरेजिस्टर(connector);
 	drm_connector_cleanup(connector);
-	kfree(connector);
-}
+	kमुक्त(connector);
+पूर्ण
 
-static int radeon_lvds_set_property(struct drm_connector *connector,
-				    struct drm_property *property,
-				    uint64_t value)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_encoder *radeon_encoder;
-	enum radeon_rmx_type rmx_type;
+अटल पूर्णांक radeon_lvds_set_property(काष्ठा drm_connector *connector,
+				    काष्ठा drm_property *property,
+				    uपूर्णांक64_t value)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_encoder *radeon_encoder;
+	क्रमागत radeon_rmx_type rmx_type;
 
 	DRM_DEBUG_KMS("\n");
-	if (property != dev->mode_config.scaling_mode_property)
-		return 0;
+	अगर (property != dev->mode_config.scaling_mode_property)
+		वापस 0;
 
-	if (connector->encoder)
+	अगर (connector->encoder)
 		radeon_encoder = to_radeon_encoder(connector->encoder);
-	else {
-		const struct drm_connector_helper_funcs *connector_funcs = connector->helper_private;
+	अन्यथा अणु
+		स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs = connector->helper_निजी;
 		radeon_encoder = to_radeon_encoder(connector_funcs->best_encoder(connector));
-	}
+	पूर्ण
 
-	switch (value) {
-	case DRM_MODE_SCALE_NONE: rmx_type = RMX_OFF; break;
-	case DRM_MODE_SCALE_CENTER: rmx_type = RMX_CENTER; break;
-	case DRM_MODE_SCALE_ASPECT: rmx_type = RMX_ASPECT; break;
-	default:
-	case DRM_MODE_SCALE_FULLSCREEN: rmx_type = RMX_FULL; break;
-	}
-	if (radeon_encoder->rmx_type == rmx_type)
-		return 0;
+	चयन (value) अणु
+	हाल DRM_MODE_SCALE_NONE: rmx_type = RMX_OFF; अवरोध;
+	हाल DRM_MODE_SCALE_CENTER: rmx_type = RMX_CENTER; अवरोध;
+	हाल DRM_MODE_SCALE_ASPECT: rmx_type = RMX_ASPECT; अवरोध;
+	शेष:
+	हाल DRM_MODE_SCALE_FULLSCREEN: rmx_type = RMX_FULL; अवरोध;
+	पूर्ण
+	अगर (radeon_encoder->rmx_type == rmx_type)
+		वापस 0;
 
 	radeon_encoder->rmx_type = rmx_type;
 
 	radeon_property_change_mode(&radeon_encoder->base);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct drm_connector_helper_funcs radeon_lvds_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs radeon_lvds_connector_helper_funcs = अणु
 	.get_modes = radeon_lvds_get_modes,
 	.mode_valid = radeon_lvds_mode_valid,
 	.best_encoder = radeon_best_single_encoder,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs radeon_lvds_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs radeon_lvds_connector_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = radeon_lvds_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
-	.early_unregister = radeon_connector_unregister,
+	.early_unरेजिस्टर = radeon_connector_unरेजिस्टर,
 	.destroy = radeon_connector_destroy,
 	.set_property = radeon_lvds_set_property,
-};
+पूर्ण;
 
-static int radeon_vga_get_modes(struct drm_connector *connector)
-{
-	int ret;
+अटल पूर्णांक radeon_vga_get_modes(काष्ठा drm_connector *connector)
+अणु
+	पूर्णांक ret;
 
 	radeon_connector_get_edid(connector);
 	ret = radeon_ddc_get_modes(connector);
 
 	radeon_get_native_mode(connector);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum drm_mode_status radeon_vga_mode_valid(struct drm_connector *connector,
-				  struct drm_display_mode *mode)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
+अटल क्रमागत drm_mode_status radeon_vga_mode_valid(काष्ठा drm_connector *connector,
+				  काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
 
 	/* XXX check mode bandwidth */
 
-	if ((mode->clock / 10) > rdev->clock.max_pixel_clock)
-		return MODE_CLOCK_HIGH;
+	अगर ((mode->घड़ी / 10) > rdev->घड़ी.max_pixel_घड़ी)
+		वापस MODE_CLOCK_HIGH;
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static enum drm_connector_status
-radeon_vga_detect(struct drm_connector *connector, bool force)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct drm_encoder *encoder;
-	const struct drm_encoder_helper_funcs *encoder_funcs;
+अटल क्रमागत drm_connector_status
+radeon_vga_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा drm_encoder *encoder;
+	स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs;
 	bool dret = false;
-	enum drm_connector_status ret = connector_status_disconnected;
-	int r;
+	क्रमागत drm_connector_status ret = connector_status_disconnected;
+	पूर्णांक r;
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		r = pm_runtime_get_sync(connector->dev->dev);
-		if (r < 0) {
-			pm_runtime_put_autosuspend(connector->dev->dev);
-			return connector_status_disconnected;
-		}
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		r = pm_runसमय_get_sync(connector->dev->dev);
+		अगर (r < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+			वापस connector_status_disconnected;
+		पूर्ण
+	पूर्ण
 
 	encoder = radeon_best_single_encoder(connector);
-	if (!encoder)
+	अगर (!encoder)
 		ret = connector_status_disconnected;
 
-	if (radeon_connector->ddc_bus)
+	अगर (radeon_connector->ddc_bus)
 		dret = radeon_ddc_probe(radeon_connector, false);
-	if (dret) {
+	अगर (dret) अणु
 		radeon_connector->detected_by_load = false;
-		radeon_connector_free_edid(connector);
+		radeon_connector_मुक्त_edid(connector);
 		radeon_connector_get_edid(connector);
 
-		if (!radeon_connector->edid) {
+		अगर (!radeon_connector->edid) अणु
 			DRM_ERROR("%s: probed a monitor but no|invalid EDID\n",
 					connector->name);
 			ret = connector_status_connected;
-		} else {
+		पूर्ण अन्यथा अणु
 			radeon_connector->use_digital =
 				!!(radeon_connector->edid->input & DRM_EDID_INPUT_DIGITAL);
 
 			/* some oems have boards with separate digital and analog connectors
 			 * with a shared ddc line (often vga + hdmi)
 			 */
-			if (radeon_connector->use_digital && radeon_connector->shared_ddc) {
-				radeon_connector_free_edid(connector);
+			अगर (radeon_connector->use_digital && radeon_connector->shared_ddc) अणु
+				radeon_connector_मुक्त_edid(connector);
 				ret = connector_status_disconnected;
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = connector_status_connected;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 
-		/* if we aren't forcing don't do destructive polling */
-		if (!force) {
-			/* only return the previous status if we last
+		/* अगर we aren't forcing don't करो deकाष्ठाive polling */
+		अगर (!क्रमce) अणु
+			/* only वापस the previous status अगर we last
 			 * detected a monitor via load.
 			 */
-			if (radeon_connector->detected_by_load)
+			अगर (radeon_connector->detected_by_load)
 				ret = connector->status;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (radeon_connector->dac_load_detect && encoder) {
-			encoder_funcs = encoder->helper_private;
+		अगर (radeon_connector->dac_load_detect && encoder) अणु
+			encoder_funcs = encoder->helper_निजी;
 			ret = encoder_funcs->detect(encoder, connector);
-			if (ret != connector_status_disconnected)
+			अगर (ret != connector_status_disconnected)
 				radeon_connector->detected_by_load = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ret == connector_status_connected)
+	अगर (ret == connector_status_connected)
 		ret = radeon_connector_analog_encoder_conflict_solve(connector, encoder, ret, true);
 
 	/* RN50 and some RV100 asics in servers often have a hardcoded EDID in the
 	 * vbios to deal with KVMs. If we have one and are not able to detect a monitor
 	 * by other means, assume the CRT is connected and use that EDID.
 	 */
-	if ((!rdev->is_atom_bios) &&
+	अगर ((!rdev->is_atom_bios) &&
 	    (ret == connector_status_disconnected) &&
-	    rdev->mode_info.bios_hardcoded_edid_size) {
+	    rdev->mode_info.bios_hardcoded_edid_size) अणु
 		ret = connector_status_connected;
-	}
+	पूर्ण
 
 	radeon_connector_update_scratch_regs(connector, ret);
 
 out:
-	if (!drm_kms_helper_is_poll_worker()) {
-		pm_runtime_mark_last_busy(connector->dev->dev);
-		pm_runtime_put_autosuspend(connector->dev->dev);
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		pm_runसमय_mark_last_busy(connector->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct drm_connector_helper_funcs radeon_vga_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs radeon_vga_connector_helper_funcs = अणु
 	.get_modes = radeon_vga_get_modes,
 	.mode_valid = radeon_vga_mode_valid,
 	.best_encoder = radeon_best_single_encoder,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs radeon_vga_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs radeon_vga_connector_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = radeon_vga_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
-	.early_unregister = radeon_connector_unregister,
+	.early_unरेजिस्टर = radeon_connector_unरेजिस्टर,
 	.destroy = radeon_connector_destroy,
 	.set_property = radeon_connector_set_property,
-};
+पूर्ण;
 
-static int radeon_tv_get_modes(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct drm_display_mode *tv_mode;
-	struct drm_encoder *encoder;
+अटल पूर्णांक radeon_tv_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा drm_display_mode *tv_mode;
+	काष्ठा drm_encoder *encoder;
 
 	encoder = radeon_best_single_encoder(connector);
-	if (!encoder)
-		return 0;
+	अगर (!encoder)
+		वापस 0;
 
 	/* avivo chips can scale any mode */
-	if (rdev->family >= CHIP_RS600)
+	अगर (rdev->family >= CHIP_RS600)
 		/* add scaled modes */
 		radeon_add_common_modes(encoder, connector);
-	else {
+	अन्यथा अणु
 		/* only 800x600 is supported right now on pre-avivo chips */
 		tv_mode = drm_cvt_mode(dev, 800, 600, 60, false, false, false);
 		tv_mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
 		drm_mode_probed_add(connector, tv_mode);
-	}
-	return 1;
-}
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static enum drm_mode_status radeon_tv_mode_valid(struct drm_connector *connector,
-				struct drm_display_mode *mode)
-{
-	if ((mode->hdisplay > 1024) || (mode->vdisplay > 768))
-		return MODE_CLOCK_RANGE;
-	return MODE_OK;
-}
+अटल क्रमागत drm_mode_status radeon_tv_mode_valid(काष्ठा drm_connector *connector,
+				काष्ठा drm_display_mode *mode)
+अणु
+	अगर ((mode->hdisplay > 1024) || (mode->vdisplay > 768))
+		वापस MODE_CLOCK_RANGE;
+	वापस MODE_OK;
+पूर्ण
 
-static enum drm_connector_status
-radeon_tv_detect(struct drm_connector *connector, bool force)
-{
-	struct drm_encoder *encoder;
-	const struct drm_encoder_helper_funcs *encoder_funcs;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	enum drm_connector_status ret = connector_status_disconnected;
-	int r;
+अटल क्रमागत drm_connector_status
+radeon_tv_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा drm_encoder *encoder;
+	स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	क्रमागत drm_connector_status ret = connector_status_disconnected;
+	पूर्णांक r;
 
-	if (!radeon_connector->dac_load_detect)
-		return ret;
+	अगर (!radeon_connector->dac_load_detect)
+		वापस ret;
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		r = pm_runtime_get_sync(connector->dev->dev);
-		if (r < 0) {
-			pm_runtime_put_autosuspend(connector->dev->dev);
-			return connector_status_disconnected;
-		}
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		r = pm_runसमय_get_sync(connector->dev->dev);
+		अगर (r < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+			वापस connector_status_disconnected;
+		पूर्ण
+	पूर्ण
 
 	encoder = radeon_best_single_encoder(connector);
-	if (!encoder)
+	अगर (!encoder)
 		ret = connector_status_disconnected;
-	else {
-		encoder_funcs = encoder->helper_private;
+	अन्यथा अणु
+		encoder_funcs = encoder->helper_निजी;
 		ret = encoder_funcs->detect(encoder, connector);
-	}
-	if (ret == connector_status_connected)
+	पूर्ण
+	अगर (ret == connector_status_connected)
 		ret = radeon_connector_analog_encoder_conflict_solve(connector, encoder, ret, false);
 	radeon_connector_update_scratch_regs(connector, ret);
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		pm_runtime_mark_last_busy(connector->dev->dev);
-		pm_runtime_put_autosuspend(connector->dev->dev);
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		pm_runसमय_mark_last_busy(connector->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct drm_connector_helper_funcs radeon_tv_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs radeon_tv_connector_helper_funcs = अणु
 	.get_modes = radeon_tv_get_modes,
 	.mode_valid = radeon_tv_mode_valid,
 	.best_encoder = radeon_best_single_encoder,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs radeon_tv_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs radeon_tv_connector_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = radeon_tv_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
-	.early_unregister = radeon_connector_unregister,
+	.early_unरेजिस्टर = radeon_connector_unरेजिस्टर,
 	.destroy = radeon_connector_destroy,
 	.set_property = radeon_connector_set_property,
-};
+पूर्ण;
 
-static bool radeon_check_hpd_status_unchanged(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	enum drm_connector_status status;
+अटल bool radeon_check_hpd_status_unchanged(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	क्रमागत drm_connector_status status;
 
 	/* We only trust HPD on R600 and newer ASICS. */
-	if (rdev->family >= CHIP_R600
-	  && radeon_connector->hpd.hpd != RADEON_HPD_NONE) {
-		if (radeon_hpd_sense(rdev, radeon_connector->hpd.hpd))
+	अगर (rdev->family >= CHIP_R600
+	  && radeon_connector->hpd.hpd != RADEON_HPD_NONE) अणु
+		अगर (radeon_hpd_sense(rdev, radeon_connector->hpd.hpd))
 			status = connector_status_connected;
-		else
+		अन्यथा
 			status = connector_status_disconnected;
-		if (connector->status == status)
-			return true;
-	}
+		अगर (connector->status == status)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * DVI is complicated
- * Do a DDC probe, if DDC probe passes, get the full EDID so
- * we can do analog/digital monitor detection at this point.
+ * Do a DDC probe, अगर DDC probe passes, get the full EDID so
+ * we can करो analog/digital monitor detection at this poपूर्णांक.
  * If the monitor is an analog monitor or we got no DDC,
- * we need to find the DAC encoder object for this connector.
- * If we got no DDC, we do load detection on the DAC encoder object.
+ * we need to find the DAC encoder object क्रम this connector.
+ * If we got no DDC, we करो load detection on the DAC encoder object.
  * If we got analog DDC or load detection passes on the DAC encoder
- * we have to check if this analog encoder is shared with anyone else (TV)
- * if its shared we have to set the other connector to disconnected.
+ * we have to check अगर this analog encoder is shared with anyone अन्यथा (TV)
+ * अगर its shared we have to set the other connector to disconnected.
  */
-static enum drm_connector_status
-radeon_dvi_detect(struct drm_connector *connector, bool force)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct drm_encoder *encoder = NULL;
-	const struct drm_encoder_helper_funcs *encoder_funcs;
-	int r;
-	enum drm_connector_status ret = connector_status_disconnected;
+अटल क्रमागत drm_connector_status
+radeon_dvi_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा drm_encoder *encoder = शून्य;
+	स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs;
+	पूर्णांक r;
+	क्रमागत drm_connector_status ret = connector_status_disconnected;
 	bool dret = false, broken_edid = false;
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		r = pm_runtime_get_sync(connector->dev->dev);
-		if (r < 0) {
-			pm_runtime_put_autosuspend(connector->dev->dev);
-			return connector_status_disconnected;
-		}
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		r = pm_runसमय_get_sync(connector->dev->dev);
+		अगर (r < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+			वापस connector_status_disconnected;
+		पूर्ण
+	पूर्ण
 
-	if (radeon_connector->detected_hpd_without_ddc) {
-		force = true;
+	अगर (radeon_connector->detected_hpd_without_ddc) अणु
+		क्रमce = true;
 		radeon_connector->detected_hpd_without_ddc = false;
-	}
+	पूर्ण
 
-	if (!force && radeon_check_hpd_status_unchanged(connector)) {
+	अगर (!क्रमce && radeon_check_hpd_status_unchanged(connector)) अणु
 		ret = connector->status;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (radeon_connector->ddc_bus) {
+	अगर (radeon_connector->ddc_bus) अणु
 		dret = radeon_ddc_probe(radeon_connector, false);
 
-		/* Sometimes the pins required for the DDC probe on DVI
-		 * connectors don't make contact at the same time that the ones
-		 * for HPD do. If the DDC probe fails even though we had an HPD
-		 * signal, try again later */
-		if (!dret && !force &&
-		    connector->status != connector_status_connected) {
+		/* Someबार the pins required क्रम the DDC probe on DVI
+		 * connectors करोn't make contact at the same समय that the ones
+		 * क्रम HPD करो. If the DDC probe fails even though we had an HPD
+		 * संकेत, try again later */
+		अगर (!dret && !क्रमce &&
+		    connector->status != connector_status_connected) अणु
 			DRM_DEBUG_KMS("hpd detected without ddc, retrying in 1 second\n");
 			radeon_connector->detected_hpd_without_ddc = true;
 			schedule_delayed_work(&rdev->hotplug_work,
-					      msecs_to_jiffies(1000));
-			goto exit;
-		}
-	}
-	if (dret) {
+					      msecs_to_jअगरfies(1000));
+			जाओ निकास;
+		पूर्ण
+	पूर्ण
+	अगर (dret) अणु
 		radeon_connector->detected_by_load = false;
-		radeon_connector_free_edid(connector);
+		radeon_connector_मुक्त_edid(connector);
 		radeon_connector_get_edid(connector);
 
-		if (!radeon_connector->edid) {
+		अगर (!radeon_connector->edid) अणु
 			DRM_ERROR("%s: probed a monitor but no|invalid EDID\n",
 					connector->name);
 			/* rs690 seems to have a problem with connectors not existing and always
-			 * return a block of 0's. If we see this just stop polling on this output */
-			if ((rdev->family == CHIP_RS690 || rdev->family == CHIP_RS740) &&
-			    radeon_connector->base.null_edid_counter) {
+			 * वापस a block of 0's. If we see this just stop polling on this output */
+			अगर ((rdev->family == CHIP_RS690 || rdev->family == CHIP_RS740) &&
+			    radeon_connector->base.null_edid_counter) अणु
 				ret = connector_status_disconnected;
 				DRM_ERROR("%s: detected RS690 floating bus bug, stopping ddc detect\n",
 					  connector->name);
-				radeon_connector->ddc_bus = NULL;
-			} else {
+				radeon_connector->ddc_bus = शून्य;
+			पूर्ण अन्यथा अणु
 				ret = connector_status_connected;
 				broken_edid = true; /* defer use_digital to later */
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			radeon_connector->use_digital =
 				!!(radeon_connector->edid->input & DRM_EDID_INPUT_DIGITAL);
 
 			/* some oems have boards with separate digital and analog connectors
 			 * with a shared ddc line (often vga + hdmi)
 			 */
-			if ((!radeon_connector->use_digital) && radeon_connector->shared_ddc) {
-				radeon_connector_free_edid(connector);
+			अगर ((!radeon_connector->use_digital) && radeon_connector->shared_ddc) अणु
+				radeon_connector_मुक्त_edid(connector);
 				ret = connector_status_disconnected;
-			} else {
+			पूर्ण अन्यथा अणु
 				ret = connector_status_connected;
-			}
-			/* This gets complicated.  We have boards with VGA + HDMI with a
+			पूर्ण
+			/* This माला_लो complicated.  We have boards with VGA + HDMI with a
 			 * shared DDC line and we have boards with DVI-D + HDMI with a shared
 			 * DDC line.  The latter is more complex because with DVI<->HDMI adapters
-			 * you don't really know what's connected to which port as both are digital.
+			 * you करोn't really know what's connected to which port as both are digital.
 			 */
-			if (radeon_connector->shared_ddc && (ret == connector_status_connected)) {
-				struct drm_connector *list_connector;
-				struct radeon_connector *list_radeon_connector;
-				list_for_each_entry(list_connector, &dev->mode_config.connector_list, head) {
-					if (connector == list_connector)
-						continue;
+			अगर (radeon_connector->shared_ddc && (ret == connector_status_connected)) अणु
+				काष्ठा drm_connector *list_connector;
+				काष्ठा radeon_connector *list_radeon_connector;
+				list_क्रम_each_entry(list_connector, &dev->mode_config.connector_list, head) अणु
+					अगर (connector == list_connector)
+						जारी;
 					list_radeon_connector = to_radeon_connector(list_connector);
-					if (list_radeon_connector->shared_ddc &&
+					अगर (list_radeon_connector->shared_ddc &&
 					    (list_radeon_connector->ddc_bus->rec.i2c_id ==
-					     radeon_connector->ddc_bus->rec.i2c_id)) {
-						/* cases where both connectors are digital */
-						if (list_connector->connector_type != DRM_MODE_CONNECTOR_VGA) {
-							/* hpd is our only option in this case */
-							if (!radeon_hpd_sense(rdev, radeon_connector->hpd.hpd)) {
-								radeon_connector_free_edid(connector);
+					     radeon_connector->ddc_bus->rec.i2c_id)) अणु
+						/* हालs where both connectors are digital */
+						अगर (list_connector->connector_type != DRM_MODE_CONNECTOR_VGA) अणु
+							/* hpd is our only option in this हाल */
+							अगर (!radeon_hpd_sense(rdev, radeon_connector->hpd.hpd)) अणु
+								radeon_connector_मुक्त_edid(connector);
 								ret = connector_status_disconnected;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+							पूर्ण
+						पूर्ण
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if ((ret == connector_status_connected) && (radeon_connector->use_digital == true))
-		goto out;
+	अगर ((ret == connector_status_connected) && (radeon_connector->use_digital == true))
+		जाओ out;
 
 	/* DVI-D and HDMI-A are digital only */
-	if ((connector->connector_type == DRM_MODE_CONNECTOR_DVID) ||
+	अगर ((connector->connector_type == DRM_MODE_CONNECTOR_DVID) ||
 	    (connector->connector_type == DRM_MODE_CONNECTOR_HDMIA))
-		goto out;
+		जाओ out;
 
-	/* if we aren't forcing don't do destructive polling */
-	if (!force) {
-		/* only return the previous status if we last
+	/* अगर we aren't forcing don't करो deकाष्ठाive polling */
+	अगर (!क्रमce) अणु
+		/* only वापस the previous status अगर we last
 		 * detected a monitor via load.
 		 */
-		if (radeon_connector->detected_by_load)
+		अगर (radeon_connector->detected_by_load)
 			ret = connector->status;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* find analog encoder */
-	if (radeon_connector->dac_load_detect) {
-		drm_connector_for_each_possible_encoder(connector, encoder) {
-			if (encoder->encoder_type != DRM_MODE_ENCODER_DAC &&
+	अगर (radeon_connector->dac_load_detect) अणु
+		drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
+			अगर (encoder->encoder_type != DRM_MODE_ENCODER_DAC &&
 			    encoder->encoder_type != DRM_MODE_ENCODER_TVDAC)
-				continue;
+				जारी;
 
-			encoder_funcs = encoder->helper_private;
-			if (encoder_funcs->detect) {
-				if (!broken_edid) {
-					if (ret != connector_status_connected) {
+			encoder_funcs = encoder->helper_निजी;
+			अगर (encoder_funcs->detect) अणु
+				अगर (!broken_edid) अणु
+					अगर (ret != connector_status_connected) अणु
 						/* deal with analog monitors without DDC */
 						ret = encoder_funcs->detect(encoder, connector);
-						if (ret == connector_status_connected) {
+						अगर (ret == connector_status_connected) अणु
 							radeon_connector->use_digital = false;
-						}
-						if (ret != connector_status_disconnected)
+						पूर्ण
+						अगर (ret != connector_status_disconnected)
 							radeon_connector->detected_by_load = true;
-					}
-				} else {
-					enum drm_connector_status lret;
+					पूर्ण
+				पूर्ण अन्यथा अणु
+					क्रमागत drm_connector_status lret;
 					/* assume digital unless load detected otherwise */
 					radeon_connector->use_digital = true;
 					lret = encoder_funcs->detect(encoder, connector);
 					DRM_DEBUG_KMS("load_detect %x returned: %x\n",encoder->encoder_type,lret);
-					if (lret == connector_status_connected)
+					अगर (lret == connector_status_connected)
 						radeon_connector->use_digital = false;
-				}
-				break;
-			}
-		}
-	}
+				पूर्ण
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if ((ret == connector_status_connected) && (radeon_connector->use_digital == false) &&
-	    encoder) {
+	अगर ((ret == connector_status_connected) && (radeon_connector->use_digital == false) &&
+	    encoder) अणु
 		ret = radeon_connector_analog_encoder_conflict_solve(connector, encoder, ret, true);
-	}
+	पूर्ण
 
 	/* RN50 and some RV100 asics in servers often have a hardcoded EDID in the
 	 * vbios to deal with KVMs. If we have one and are not able to detect a monitor
 	 * by other means, assume the DFP is connected and use that EDID.  In most
-	 * cases the DVI port is actually a virtual KVM port connected to the service
+	 * हालs the DVI port is actually a भव KVM port connected to the service
 	 * processor.
 	 */
 out:
-	if ((!rdev->is_atom_bios) &&
+	अगर ((!rdev->is_atom_bios) &&
 	    (ret == connector_status_disconnected) &&
-	    rdev->mode_info.bios_hardcoded_edid_size) {
+	    rdev->mode_info.bios_hardcoded_edid_size) अणु
 		radeon_connector->use_digital = true;
 		ret = connector_status_connected;
-	}
+	पूर्ण
 
-	/* updated in get modes as well since we need to know if it's analog or digital */
+	/* updated in get modes as well since we need to know अगर it's analog or digital */
 	radeon_connector_update_scratch_regs(connector, ret);
 
-	if ((radeon_audio != 0) && radeon_connector->use_digital) {
-		const struct drm_connector_helper_funcs *connector_funcs =
-			connector->helper_private;
+	अगर ((radeon_audio != 0) && radeon_connector->use_digital) अणु
+		स्थिर काष्ठा drm_connector_helper_funcs *connector_funcs =
+			connector->helper_निजी;
 
 		encoder = connector_funcs->best_encoder(connector);
-		if (encoder && (encoder->encoder_type == DRM_MODE_ENCODER_TMDS)) {
+		अगर (encoder && (encoder->encoder_type == DRM_MODE_ENCODER_TMDS)) अणु
 			radeon_connector_get_edid(connector);
 			radeon_audio_detect(connector, encoder, ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-exit:
-	if (!drm_kms_helper_is_poll_worker()) {
-		pm_runtime_mark_last_busy(connector->dev->dev);
-		pm_runtime_put_autosuspend(connector->dev->dev);
-	}
+निकास:
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		pm_runसमय_mark_last_busy(connector->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* okay need to be smart in here about which encoder to pick */
-static struct drm_encoder *radeon_dvi_encoder(struct drm_connector *connector)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct drm_encoder *encoder;
+अटल काष्ठा drm_encoder *radeon_dvi_encoder(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा drm_encoder *encoder;
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
-		if (radeon_connector->use_digital == true) {
-			if (encoder->encoder_type == DRM_MODE_ENCODER_TMDS)
-				return encoder;
-		} else {
-			if (encoder->encoder_type == DRM_MODE_ENCODER_DAC ||
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
+		अगर (radeon_connector->use_digital == true) अणु
+			अगर (encoder->encoder_type == DRM_MODE_ENCODER_TMDS)
+				वापस encoder;
+		पूर्ण अन्यथा अणु
+			अगर (encoder->encoder_type == DRM_MODE_ENCODER_DAC ||
 			    encoder->encoder_type == DRM_MODE_ENCODER_TVDAC)
-				return encoder;
-		}
-	}
+				वापस encoder;
+		पूर्ण
+	पूर्ण
 
-	/* see if we have a default encoder  TODO */
+	/* see अगर we have a शेष encoder  TODO */
 
 	/* then check use digitial */
 	/* pick the first one */
-	drm_connector_for_each_possible_encoder(connector, encoder)
-		return encoder;
+	drm_connector_क्रम_each_possible_encoder(connector, encoder)
+		वापस encoder;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void radeon_dvi_force(struct drm_connector *connector)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	if (connector->force == DRM_FORCE_ON)
+अटल व्योम radeon_dvi_क्रमce(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	अगर (connector->क्रमce == DRM_FORCE_ON)
 		radeon_connector->use_digital = false;
-	if (connector->force == DRM_FORCE_ON_DIGITAL)
+	अगर (connector->क्रमce == DRM_FORCE_ON_DIGITAL)
 		radeon_connector->use_digital = true;
-}
+पूर्ण
 
-static enum drm_mode_status radeon_dvi_mode_valid(struct drm_connector *connector,
-				  struct drm_display_mode *mode)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
+अटल क्रमागत drm_mode_status radeon_dvi_mode_valid(काष्ठा drm_connector *connector,
+				  काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
 
 	/* XXX check mode bandwidth */
 
-	/* clocks over 135 MHz have heat issues with DVI on RV100 */
-	if (radeon_connector->use_digital &&
+	/* घड़ीs over 135 MHz have heat issues with DVI on RV100 */
+	अगर (radeon_connector->use_digital &&
 	    (rdev->family == CHIP_RV100) &&
-	    (mode->clock > 135000))
-		return MODE_CLOCK_HIGH;
+	    (mode->घड़ी > 135000))
+		वापस MODE_CLOCK_HIGH;
 
-	if (radeon_connector->use_digital && (mode->clock > 165000)) {
-		if ((radeon_connector->connector_object_id == CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_I) ||
+	अगर (radeon_connector->use_digital && (mode->घड़ी > 165000)) अणु
+		अगर ((radeon_connector->connector_object_id == CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_I) ||
 		    (radeon_connector->connector_object_id == CONNECTOR_OBJECT_ID_DUAL_LINK_DVI_D) ||
 		    (radeon_connector->connector_object_id == CONNECTOR_OBJECT_ID_HDMI_TYPE_B))
-			return MODE_OK;
-		else if (ASIC_IS_DCE6(rdev) && drm_detect_hdmi_monitor(radeon_connector_edid(connector))) {
-			/* HDMI 1.3+ supports max clock of 340 Mhz */
-			if (mode->clock > 340000)
-				return MODE_CLOCK_HIGH;
-			else
-				return MODE_OK;
-		} else {
-			return MODE_CLOCK_HIGH;
-		}
-	}
+			वापस MODE_OK;
+		अन्यथा अगर (ASIC_IS_DCE6(rdev) && drm_detect_hdmi_monitor(radeon_connector_edid(connector))) अणु
+			/* HDMI 1.3+ supports max घड़ी of 340 Mhz */
+			अगर (mode->घड़ी > 340000)
+				वापस MODE_CLOCK_HIGH;
+			अन्यथा
+				वापस MODE_OK;
+		पूर्ण अन्यथा अणु
+			वापस MODE_CLOCK_HIGH;
+		पूर्ण
+	पूर्ण
 
-	/* check against the max pixel clock */
-	if ((mode->clock / 10) > rdev->clock.max_pixel_clock)
-		return MODE_CLOCK_HIGH;
+	/* check against the max pixel घड़ी */
+	अगर ((mode->घड़ी / 10) > rdev->घड़ी.max_pixel_घड़ी)
+		वापस MODE_CLOCK_HIGH;
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static const struct drm_connector_helper_funcs radeon_dvi_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs radeon_dvi_connector_helper_funcs = अणु
 	.get_modes = radeon_vga_get_modes,
 	.mode_valid = radeon_dvi_mode_valid,
 	.best_encoder = radeon_dvi_encoder,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs radeon_dvi_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs radeon_dvi_connector_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = radeon_dvi_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.set_property = radeon_connector_set_property,
-	.early_unregister = radeon_connector_unregister,
+	.early_unरेजिस्टर = radeon_connector_unरेजिस्टर,
 	.destroy = radeon_connector_destroy,
-	.force = radeon_dvi_force,
-};
+	.क्रमce = radeon_dvi_क्रमce,
+पूर्ण;
 
-static int radeon_dp_get_modes(struct drm_connector *connector)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct radeon_connector_atom_dig *radeon_dig_connector = radeon_connector->con_priv;
-	struct drm_encoder *encoder = radeon_best_single_encoder(connector);
-	int ret;
+अटल पूर्णांक radeon_dp_get_modes(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा radeon_connector_atom_dig *radeon_dig_connector = radeon_connector->con_priv;
+	काष्ठा drm_encoder *encoder = radeon_best_single_encoder(connector);
+	पूर्णांक ret;
 
-	if ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
-	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) {
-		struct drm_display_mode *mode;
+	अगर ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
+	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) अणु
+		काष्ठा drm_display_mode *mode;
 
-		if (connector->connector_type == DRM_MODE_CONNECTOR_eDP) {
-			if (!radeon_dig_connector->edp_on)
-				atombios_set_edp_panel_power(connector,
+		अगर (connector->connector_type == DRM_MODE_CONNECTOR_eDP) अणु
+			अगर (!radeon_dig_connector->edp_on)
+				atombios_set_edp_panel_घातer(connector,
 							     ATOM_TRANSMITTER_ACTION_POWER_ON);
 			radeon_connector_get_edid(connector);
 			ret = radeon_ddc_get_modes(connector);
-			if (!radeon_dig_connector->edp_on)
-				atombios_set_edp_panel_power(connector,
+			अगर (!radeon_dig_connector->edp_on)
+				atombios_set_edp_panel_घातer(connector,
 							     ATOM_TRANSMITTER_ACTION_POWER_OFF);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* need to setup ddc on the bridge */
-			if (radeon_connector_encoder_get_dp_bridge_encoder_id(connector) !=
-			    ENCODER_OBJECT_ID_NONE) {
-				if (encoder)
+			अगर (radeon_connector_encoder_get_dp_bridge_encoder_id(connector) !=
+			    ENCODER_OBJECT_ID_NONE) अणु
+				अगर (encoder)
 					radeon_atom_ext_encoder_setup_ddc(encoder);
-			}
+			पूर्ण
 			radeon_connector_get_edid(connector);
 			ret = radeon_ddc_get_modes(connector);
-		}
+		पूर्ण
 
-		if (ret > 0) {
-			if (encoder) {
+		अगर (ret > 0) अणु
+			अगर (encoder) अणु
 				radeon_fixup_lvds_native_mode(encoder, connector);
 				/* add scaled modes */
 				radeon_add_common_modes(encoder, connector);
-			}
-			return ret;
-		}
+			पूर्ण
+			वापस ret;
+		पूर्ण
 
-		if (!encoder)
-			return 0;
+		अगर (!encoder)
+			वापस 0;
 
 		/* we have no EDID modes */
 		mode = radeon_fp_native_mode(encoder);
-		if (mode) {
+		अगर (mode) अणु
 			ret = 1;
 			drm_mode_probed_add(connector, mode);
-			/* add the width/height from vbios tables if available */
+			/* add the width/height from vbios tables अगर available */
 			connector->display_info.width_mm = mode->width_mm;
 			connector->display_info.height_mm = mode->height_mm;
 			/* add scaled modes */
 			radeon_add_common_modes(encoder, connector);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* need to setup ddc on the bridge */
-		if (radeon_connector_encoder_get_dp_bridge_encoder_id(connector) !=
-			ENCODER_OBJECT_ID_NONE) {
-			if (encoder)
+		अगर (radeon_connector_encoder_get_dp_bridge_encoder_id(connector) !=
+			ENCODER_OBJECT_ID_NONE) अणु
+			अगर (encoder)
 				radeon_atom_ext_encoder_setup_ddc(encoder);
-		}
+		पूर्ण
 		radeon_connector_get_edid(connector);
 		ret = radeon_ddc_get_modes(connector);
 
 		radeon_get_native_mode(connector);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-u16 radeon_connector_encoder_get_dp_bridge_encoder_id(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder;
-	struct radeon_encoder *radeon_encoder;
+u16 radeon_connector_encoder_get_dp_bridge_encoder_id(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder;
+	काष्ठा radeon_encoder *radeon_encoder;
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
 		radeon_encoder = to_radeon_encoder(encoder);
 
-		switch (radeon_encoder->encoder_id) {
-		case ENCODER_OBJECT_ID_TRAVIS:
-		case ENCODER_OBJECT_ID_NUTMEG:
-			return radeon_encoder->encoder_id;
-		default:
-			break;
-		}
-	}
+		चयन (radeon_encoder->encoder_id) अणु
+		हाल ENCODER_OBJECT_ID_TRAVIS:
+		हाल ENCODER_OBJECT_ID_NUTMEG:
+			वापस radeon_encoder->encoder_id;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ENCODER_OBJECT_ID_NONE;
-}
+	वापस ENCODER_OBJECT_ID_NONE;
+पूर्ण
 
-static bool radeon_connector_encoder_is_hbr2(struct drm_connector *connector)
-{
-	struct drm_encoder *encoder;
-	struct radeon_encoder *radeon_encoder;
+अटल bool radeon_connector_encoder_is_hbr2(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_encoder *encoder;
+	काष्ठा radeon_encoder *radeon_encoder;
 	bool found = false;
 
-	drm_connector_for_each_possible_encoder(connector, encoder) {
+	drm_connector_क्रम_each_possible_encoder(connector, encoder) अणु
 		radeon_encoder = to_radeon_encoder(encoder);
-		if (radeon_encoder->caps & ATOM_ENCODER_CAP_RECORD_HBR2)
+		अगर (radeon_encoder->caps & ATOM_ENCODER_CAP_RECORD_HBR2)
 			found = true;
-	}
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-bool radeon_connector_is_dp12_capable(struct drm_connector *connector)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
+bool radeon_connector_is_dp12_capable(काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
 
-	if (ASIC_IS_DCE5(rdev) &&
-	    (rdev->clock.default_dispclk >= 53900) &&
-	    radeon_connector_encoder_is_hbr2(connector)) {
-		return true;
-	}
+	अगर (ASIC_IS_DCE5(rdev) &&
+	    (rdev->घड़ी.शेष_dispclk >= 53900) &&
+	    radeon_connector_encoder_is_hbr2(connector)) अणु
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static enum drm_connector_status
-radeon_dp_detect(struct drm_connector *connector, bool force)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	enum drm_connector_status ret = connector_status_disconnected;
-	struct radeon_connector_atom_dig *radeon_dig_connector = radeon_connector->con_priv;
-	struct drm_encoder *encoder = radeon_best_single_encoder(connector);
-	int r;
+अटल क्रमागत drm_connector_status
+radeon_dp_detect(काष्ठा drm_connector *connector, bool क्रमce)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	क्रमागत drm_connector_status ret = connector_status_disconnected;
+	काष्ठा radeon_connector_atom_dig *radeon_dig_connector = radeon_connector->con_priv;
+	काष्ठा drm_encoder *encoder = radeon_best_single_encoder(connector);
+	पूर्णांक r;
 
-	if (radeon_dig_connector->is_mst)
-		return connector_status_disconnected;
+	अगर (radeon_dig_connector->is_mst)
+		वापस connector_status_disconnected;
 
-	if (!drm_kms_helper_is_poll_worker()) {
-		r = pm_runtime_get_sync(connector->dev->dev);
-		if (r < 0) {
-			pm_runtime_put_autosuspend(connector->dev->dev);
-			return connector_status_disconnected;
-		}
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		r = pm_runसमय_get_sync(connector->dev->dev);
+		अगर (r < 0) अणु
+			pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+			वापस connector_status_disconnected;
+		पूर्ण
+	पूर्ण
 
-	if (!force && radeon_check_hpd_status_unchanged(connector)) {
+	अगर (!क्रमce && radeon_check_hpd_status_unchanged(connector)) अणु
 		ret = connector->status;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	radeon_connector_free_edid(connector);
+	radeon_connector_मुक्त_edid(connector);
 
-	if ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
-	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) {
-		if (encoder) {
-			struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-			struct drm_display_mode *native_mode = &radeon_encoder->native_mode;
+	अगर ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
+	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) अणु
+		अगर (encoder) अणु
+			काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+			काष्ठा drm_display_mode *native_mode = &radeon_encoder->native_mode;
 
-			/* check if panel is valid */
-			if (native_mode->hdisplay >= 320 && native_mode->vdisplay >= 240)
+			/* check अगर panel is valid */
+			अगर (native_mode->hdisplay >= 320 && native_mode->vdisplay >= 240)
 				ret = connector_status_connected;
-			/* don't fetch the edid from the vbios if ddc fails and runpm is
+			/* करोn't fetch the edid from the vbios अगर ddc fails and runpm is
 			 * enabled so we report disconnected.
 			 */
-			if ((rdev->flags & RADEON_IS_PX) && (radeon_runtime_pm != 0))
+			अगर ((rdev->flags & RADEON_IS_PX) && (radeon_runसमय_pm != 0))
 				ret = connector_status_disconnected;
-		}
+		पूर्ण
 		/* eDP is always DP */
 		radeon_dig_connector->dp_sink_type = CONNECTOR_OBJECT_ID_DISPLAYPORT;
-		if (!radeon_dig_connector->edp_on)
-			atombios_set_edp_panel_power(connector,
+		अगर (!radeon_dig_connector->edp_on)
+			atombios_set_edp_panel_घातer(connector,
 						     ATOM_TRANSMITTER_ACTION_POWER_ON);
-		if (radeon_dp_getdpcd(radeon_connector))
+		अगर (radeon_dp_getdpcd(radeon_connector))
 			ret = connector_status_connected;
-		if (!radeon_dig_connector->edp_on)
-			atombios_set_edp_panel_power(connector,
+		अगर (!radeon_dig_connector->edp_on)
+			atombios_set_edp_panel_घातer(connector,
 						     ATOM_TRANSMITTER_ACTION_POWER_OFF);
-	} else if (radeon_connector_encoder_get_dp_bridge_encoder_id(connector) !=
-		   ENCODER_OBJECT_ID_NONE) {
+	पूर्ण अन्यथा अगर (radeon_connector_encoder_get_dp_bridge_encoder_id(connector) !=
+		   ENCODER_OBJECT_ID_NONE) अणु
 		/* DP bridges are always DP */
 		radeon_dig_connector->dp_sink_type = CONNECTOR_OBJECT_ID_DISPLAYPORT;
 		/* get the DPCD from the bridge */
 		radeon_dp_getdpcd(radeon_connector);
 
-		if (encoder) {
+		अगर (encoder) अणु
 			/* setup ddc on the bridge */
 			radeon_atom_ext_encoder_setup_ddc(encoder);
 			/* bridge chips are always aux */
-			if (radeon_ddc_probe(radeon_connector, true)) /* try DDC */
+			अगर (radeon_ddc_probe(radeon_connector, true)) /* try DDC */
 				ret = connector_status_connected;
-			else if (radeon_connector->dac_load_detect) { /* try load detection */
-				const struct drm_encoder_helper_funcs *encoder_funcs = encoder->helper_private;
+			अन्यथा अगर (radeon_connector->dac_load_detect) अणु /* try load detection */
+				स्थिर काष्ठा drm_encoder_helper_funcs *encoder_funcs = encoder->helper_निजी;
 				ret = encoder_funcs->detect(encoder, connector);
-			}
-		}
-	} else {
-		radeon_dig_connector->dp_sink_type = radeon_dp_getsinktype(radeon_connector);
-		if (radeon_hpd_sense(rdev, radeon_connector->hpd.hpd)) {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		radeon_dig_connector->dp_sink_type = radeon_dp_माला_लोinktype(radeon_connector);
+		अगर (radeon_hpd_sense(rdev, radeon_connector->hpd.hpd)) अणु
 			ret = connector_status_connected;
-			if (radeon_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) {
+			अगर (radeon_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) अणु
 				radeon_dp_getdpcd(radeon_connector);
 				r = radeon_dp_mst_probe(radeon_connector);
-				if (r == 1)
+				अगर (r == 1)
 					ret = connector_status_disconnected;
-			}
-		} else {
-			if (radeon_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) {
-				if (radeon_dp_getdpcd(radeon_connector)) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (radeon_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) अणु
+				अगर (radeon_dp_getdpcd(radeon_connector)) अणु
 					r = radeon_dp_mst_probe(radeon_connector);
-					if (r == 1)
+					अगर (r == 1)
 						ret = connector_status_disconnected;
-					else
+					अन्यथा
 						ret = connector_status_connected;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				/* try non-aux ddc (DP to DVI/HDMI/etc. adapter) */
-				if (radeon_ddc_probe(radeon_connector, false))
+				अगर (radeon_ddc_probe(radeon_connector, false))
 					ret = connector_status_connected;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	radeon_connector_update_scratch_regs(connector, ret);
 
-	if ((radeon_audio != 0) && encoder) {
+	अगर ((radeon_audio != 0) && encoder) अणु
 		radeon_connector_get_edid(connector);
 		radeon_audio_detect(connector, encoder, ret);
-	}
+	पूर्ण
 
 out:
-	if (!drm_kms_helper_is_poll_worker()) {
-		pm_runtime_mark_last_busy(connector->dev->dev);
-		pm_runtime_put_autosuspend(connector->dev->dev);
-	}
+	अगर (!drm_kms_helper_is_poll_worker()) अणु
+		pm_runसमय_mark_last_busy(connector->dev->dev);
+		pm_runसमय_put_स्वतःsuspend(connector->dev->dev);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum drm_mode_status radeon_dp_mode_valid(struct drm_connector *connector,
-				  struct drm_display_mode *mode)
-{
-	struct drm_device *dev = connector->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct radeon_connector_atom_dig *radeon_dig_connector = radeon_connector->con_priv;
+अटल क्रमागत drm_mode_status radeon_dp_mode_valid(काष्ठा drm_connector *connector,
+				  काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा drm_device *dev = connector->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा radeon_connector_atom_dig *radeon_dig_connector = radeon_connector->con_priv;
 
 	/* XXX check mode bandwidth */
 
-	if ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
-	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) {
-		struct drm_encoder *encoder = radeon_best_single_encoder(connector);
+	अगर ((connector->connector_type == DRM_MODE_CONNECTOR_eDP) ||
+	    (connector->connector_type == DRM_MODE_CONNECTOR_LVDS)) अणु
+		काष्ठा drm_encoder *encoder = radeon_best_single_encoder(connector);
 
-		if ((mode->hdisplay < 320) || (mode->vdisplay < 240))
-			return MODE_PANEL;
+		अगर ((mode->hdisplay < 320) || (mode->vdisplay < 240))
+			वापस MODE_PANEL;
 
-		if (encoder) {
-			struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-			struct drm_display_mode *native_mode = &radeon_encoder->native_mode;
+		अगर (encoder) अणु
+			काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+			काष्ठा drm_display_mode *native_mode = &radeon_encoder->native_mode;
 
-			/* AVIVO hardware supports downscaling modes larger than the panel
+			/* AVIVO hardware supports करोwnscaling modes larger than the panel
 			 * to the panel size, but I'm not sure this is desirable.
 			 */
-			if ((mode->hdisplay > native_mode->hdisplay) ||
+			अगर ((mode->hdisplay > native_mode->hdisplay) ||
 			    (mode->vdisplay > native_mode->vdisplay))
-				return MODE_PANEL;
+				वापस MODE_PANEL;
 
-			/* if scaling is disabled, block non-native modes */
-			if (radeon_encoder->rmx_type == RMX_OFF) {
-				if ((mode->hdisplay != native_mode->hdisplay) ||
+			/* अगर scaling is disabled, block non-native modes */
+			अगर (radeon_encoder->rmx_type == RMX_OFF) अणु
+				अगर ((mode->hdisplay != native_mode->hdisplay) ||
 				    (mode->vdisplay != native_mode->vdisplay))
-					return MODE_PANEL;
-			}
-		}
-	} else {
-		if ((radeon_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
-		    (radeon_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_eDP)) {
-			return radeon_dp_mode_valid_helper(connector, mode);
-		} else {
-			if (ASIC_IS_DCE6(rdev) && drm_detect_hdmi_monitor(radeon_connector_edid(connector))) {
-				/* HDMI 1.3+ supports max clock of 340 Mhz */
-				if (mode->clock > 340000)
-					return MODE_CLOCK_HIGH;
-			} else {
-				if (mode->clock > 165000)
-					return MODE_CLOCK_HIGH;
-			}
-		}
-	}
+					वापस MODE_PANEL;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर ((radeon_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
+		    (radeon_dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_eDP)) अणु
+			वापस radeon_dp_mode_valid_helper(connector, mode);
+		पूर्ण अन्यथा अणु
+			अगर (ASIC_IS_DCE6(rdev) && drm_detect_hdmi_monitor(radeon_connector_edid(connector))) अणु
+				/* HDMI 1.3+ supports max घड़ी of 340 Mhz */
+				अगर (mode->घड़ी > 340000)
+					वापस MODE_CLOCK_HIGH;
+			पूर्ण अन्यथा अणु
+				अगर (mode->घड़ी > 165000)
+					वापस MODE_CLOCK_HIGH;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-static const struct drm_connector_helper_funcs radeon_dp_connector_helper_funcs = {
+अटल स्थिर काष्ठा drm_connector_helper_funcs radeon_dp_connector_helper_funcs = अणु
 	.get_modes = radeon_dp_get_modes,
 	.mode_valid = radeon_dp_mode_valid,
 	.best_encoder = radeon_dvi_encoder,
-};
+पूर्ण;
 
-static const struct drm_connector_funcs radeon_dp_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs radeon_dp_connector_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = radeon_dp_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.set_property = radeon_connector_set_property,
-	.early_unregister = radeon_connector_unregister,
+	.early_unरेजिस्टर = radeon_connector_unरेजिस्टर,
 	.destroy = radeon_connector_destroy,
-	.force = radeon_dvi_force,
-};
+	.क्रमce = radeon_dvi_क्रमce,
+पूर्ण;
 
-static const struct drm_connector_funcs radeon_edp_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs radeon_edp_connector_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = radeon_dp_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.set_property = radeon_lvds_set_property,
-	.early_unregister = radeon_connector_unregister,
+	.early_unरेजिस्टर = radeon_connector_unरेजिस्टर,
 	.destroy = radeon_connector_destroy,
-	.force = radeon_dvi_force,
-};
+	.क्रमce = radeon_dvi_क्रमce,
+पूर्ण;
 
-static const struct drm_connector_funcs radeon_lvds_bridge_connector_funcs = {
+अटल स्थिर काष्ठा drm_connector_funcs radeon_lvds_bridge_connector_funcs = अणु
 	.dpms = drm_helper_connector_dpms,
 	.detect = radeon_dp_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.set_property = radeon_lvds_set_property,
-	.early_unregister = radeon_connector_unregister,
+	.early_unरेजिस्टर = radeon_connector_unरेजिस्टर,
 	.destroy = radeon_connector_destroy,
-	.force = radeon_dvi_force,
-};
+	.क्रमce = radeon_dvi_क्रमce,
+पूर्ण;
 
-void
-radeon_add_atom_connector(struct drm_device *dev,
-			  uint32_t connector_id,
-			  uint32_t supported_device,
-			  int connector_type,
-			  struct radeon_i2c_bus_rec *i2c_bus,
-			  uint32_t igp_lane_info,
-			  uint16_t connector_object_id,
-			  struct radeon_hpd *hpd,
-			  struct radeon_router *router)
-{
-	struct radeon_device *rdev = dev->dev_private;
-	struct drm_connector *connector;
-	struct radeon_connector *radeon_connector;
-	struct radeon_connector_atom_dig *radeon_dig_connector;
-	struct drm_encoder *encoder;
-	struct radeon_encoder *radeon_encoder;
-	struct i2c_adapter *ddc = NULL;
-	uint32_t subpixel_order = SubPixelNone;
+व्योम
+radeon_add_atom_connector(काष्ठा drm_device *dev,
+			  uपूर्णांक32_t connector_id,
+			  uपूर्णांक32_t supported_device,
+			  पूर्णांक connector_type,
+			  काष्ठा radeon_i2c_bus_rec *i2c_bus,
+			  uपूर्णांक32_t igp_lane_info,
+			  uपूर्णांक16_t connector_object_id,
+			  काष्ठा radeon_hpd *hpd,
+			  काष्ठा radeon_router *router)
+अणु
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा drm_connector *connector;
+	काष्ठा radeon_connector *radeon_connector;
+	काष्ठा radeon_connector_atom_dig *radeon_dig_connector;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा radeon_encoder *radeon_encoder;
+	काष्ठा i2c_adapter *ddc = शून्य;
+	uपूर्णांक32_t subpixel_order = SubPixelNone;
 	bool shared_ddc = false;
 	bool is_dp_bridge = false;
 	bool has_aux = false;
 
-	if (connector_type == DRM_MODE_CONNECTOR_Unknown)
-		return;
+	अगर (connector_type == DRM_MODE_CONNECTOR_Unknown)
+		वापस;
 
-	/* if the user selected tv=0 don't try and add the connector */
-	if (((connector_type == DRM_MODE_CONNECTOR_SVIDEO) ||
+	/* अगर the user selected tv=0 करोn't try and add the connector */
+	अगर (((connector_type == DRM_MODE_CONNECTOR_SVIDEO) ||
 	     (connector_type == DRM_MODE_CONNECTOR_Composite) ||
 	     (connector_type == DRM_MODE_CONNECTOR_9PinDIN)) &&
 	    (radeon_tv == 0))
-		return;
+		वापस;
 
-	/* see if we already added it */
-	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
+	/* see अगर we alपढ़ोy added it */
+	list_क्रम_each_entry(connector, &dev->mode_config.connector_list, head) अणु
 		radeon_connector = to_radeon_connector(connector);
-		if (radeon_connector->connector_id == connector_id) {
+		अगर (radeon_connector->connector_id == connector_id) अणु
 			radeon_connector->devices |= supported_device;
-			return;
-		}
-		if (radeon_connector->ddc_bus && i2c_bus->valid) {
-			if (radeon_connector->ddc_bus->rec.i2c_id == i2c_bus->i2c_id) {
+			वापस;
+		पूर्ण
+		अगर (radeon_connector->ddc_bus && i2c_bus->valid) अणु
+			अगर (radeon_connector->ddc_bus->rec.i2c_id == i2c_bus->i2c_id) अणु
 				radeon_connector->shared_ddc = true;
 				shared_ddc = true;
-			}
-			if (radeon_connector->router_bus && router->ddc_valid &&
-			    (radeon_connector->router.router_id == router->router_id)) {
+			पूर्ण
+			अगर (radeon_connector->router_bus && router->ddc_valid &&
+			    (radeon_connector->router.router_id == router->router_id)) अणु
 				radeon_connector->shared_ddc = false;
 				shared_ddc = false;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* check if it's a dp bridge */
-	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
+	/* check अगर it's a dp bridge */
+	list_क्रम_each_entry(encoder, &dev->mode_config.encoder_list, head) अणु
 		radeon_encoder = to_radeon_encoder(encoder);
-		if (radeon_encoder->devices & supported_device) {
-			switch (radeon_encoder->encoder_id) {
-			case ENCODER_OBJECT_ID_TRAVIS:
-			case ENCODER_OBJECT_ID_NUTMEG:
+		अगर (radeon_encoder->devices & supported_device) अणु
+			चयन (radeon_encoder->encoder_id) अणु
+			हाल ENCODER_OBJECT_ID_TRAVIS:
+			हाल ENCODER_OBJECT_ID_NUTMEG:
 				is_dp_bridge = true;
-				break;
-			default:
-				break;
-			}
-		}
-	}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	radeon_connector = kzalloc(sizeof(struct radeon_connector), GFP_KERNEL);
-	if (!radeon_connector)
-		return;
+	radeon_connector = kzalloc(माप(काष्ठा radeon_connector), GFP_KERNEL);
+	अगर (!radeon_connector)
+		वापस;
 
 	connector = &radeon_connector->base;
 
@@ -1935,39 +1936,39 @@ radeon_add_atom_connector(struct drm_device *dev,
 	radeon_connector->hpd = *hpd;
 
 	radeon_connector->router = *router;
-	if (router->ddc_valid || router->cd_valid) {
+	अगर (router->ddc_valid || router->cd_valid) अणु
 		radeon_connector->router_bus = radeon_i2c_lookup(rdev, &router->i2c_info);
-		if (!radeon_connector->router_bus)
+		अगर (!radeon_connector->router_bus)
 			DRM_ERROR("Failed to assign router i2c bus! Check dmesg for i2c errors.\n");
-	}
+	पूर्ण
 
-	if (is_dp_bridge) {
-		radeon_dig_connector = kzalloc(sizeof(struct radeon_connector_atom_dig), GFP_KERNEL);
-		if (!radeon_dig_connector)
-			goto failed;
+	अगर (is_dp_bridge) अणु
+		radeon_dig_connector = kzalloc(माप(काष्ठा radeon_connector_atom_dig), GFP_KERNEL);
+		अगर (!radeon_dig_connector)
+			जाओ failed;
 		radeon_dig_connector->igp_lane_info = igp_lane_info;
 		radeon_connector->con_priv = radeon_dig_connector;
-		if (i2c_bus->valid) {
+		अगर (i2c_bus->valid) अणु
 			radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-			if (radeon_connector->ddc_bus) {
+			अगर (radeon_connector->ddc_bus) अणु
 				has_aux = true;
 				ddc = &radeon_connector->ddc_bus->adapter;
-			} else {
+			पूर्ण अन्यथा अणु
 				DRM_ERROR("DP: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-			}
-		}
-		switch (connector_type) {
-		case DRM_MODE_CONNECTOR_VGA:
-		case DRM_MODE_CONNECTOR_DVIA:
-		default:
+			पूर्ण
+		पूर्ण
+		चयन (connector_type) अणु
+		हाल DRM_MODE_CONNECTOR_VGA:
+		हाल DRM_MODE_CONNECTOR_DVIA:
+		शेष:
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_dp_connector_funcs,
 						    connector_type,
 						    ddc);
 			drm_connector_helper_add(&radeon_connector->base,
 						 &radeon_dp_connector_helper_funcs);
-			connector->interlace_allowed = true;
-			connector->doublescan_allowed = true;
+			connector->पूर्णांकerlace_allowed = true;
+			connector->द्विगुनscan_allowed = true;
 			radeon_connector->dac_load_detect = true;
 			drm_object_attach_property(&radeon_connector->base.base,
 						      rdev->mode_info.load_detect_property,
@@ -1975,16 +1976,16 @@ radeon_add_atom_connector(struct drm_device *dev,
 			drm_object_attach_property(&radeon_connector->base.base,
 						   dev->mode_config.scaling_mode_property,
 						   DRM_MODE_SCALE_NONE);
-			if (ASIC_IS_DCE5(rdev))
+			अगर (ASIC_IS_DCE5(rdev))
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.output_csc_property,
 							   RADEON_OUTPUT_CSC_BYPASS);
-			break;
-		case DRM_MODE_CONNECTOR_DVII:
-		case DRM_MODE_CONNECTOR_DVID:
-		case DRM_MODE_CONNECTOR_HDMIA:
-		case DRM_MODE_CONNECTOR_HDMIB:
-		case DRM_MODE_CONNECTOR_DisplayPort:
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_DVII:
+		हाल DRM_MODE_CONNECTOR_DVID:
+		हाल DRM_MODE_CONNECTOR_HDMIA:
+		हाल DRM_MODE_CONNECTOR_HDMIB:
+		हाल DRM_MODE_CONNECTOR_DisplayPort:
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_dp_connector_funcs,
 						    connector_type,
@@ -2009,32 +2010,32 @@ radeon_add_atom_connector(struct drm_device *dev,
 						   rdev->mode_info.dither_property,
 						   RADEON_FMT_DITHER_DISABLE);
 
-			if (radeon_audio != 0) {
+			अगर (radeon_audio != 0) अणु
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.audio_property,
 							   RADEON_AUDIO_AUTO);
 				radeon_connector->audio = RADEON_AUDIO_AUTO;
-			}
-			if (ASIC_IS_DCE5(rdev))
+			पूर्ण
+			अगर (ASIC_IS_DCE5(rdev))
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.output_csc_property,
 							   RADEON_OUTPUT_CSC_BYPASS);
 
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = true;
-			if (connector_type == DRM_MODE_CONNECTOR_HDMIB)
-				connector->doublescan_allowed = true;
-			else
-				connector->doublescan_allowed = false;
-			if (connector_type == DRM_MODE_CONNECTOR_DVII) {
+			connector->पूर्णांकerlace_allowed = true;
+			अगर (connector_type == DRM_MODE_CONNECTOR_HDMIB)
+				connector->द्विगुनscan_allowed = true;
+			अन्यथा
+				connector->द्विगुनscan_allowed = false;
+			अगर (connector_type == DRM_MODE_CONNECTOR_DVII) अणु
 				radeon_connector->dac_load_detect = true;
 				drm_object_attach_property(&radeon_connector->base.base,
 							      rdev->mode_info.load_detect_property,
 							      1);
-			}
-			break;
-		case DRM_MODE_CONNECTOR_LVDS:
-		case DRM_MODE_CONNECTOR_eDP:
+			पूर्ण
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_LVDS:
+		हाल DRM_MODE_CONNECTOR_eDP:
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_lvds_bridge_connector_funcs,
 						    connector_type,
@@ -2045,20 +2046,20 @@ radeon_add_atom_connector(struct drm_device *dev,
 						      dev->mode_config.scaling_mode_property,
 						      DRM_MODE_SCALE_FULLSCREEN);
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = false;
-			connector->doublescan_allowed = false;
-			break;
-		}
-	} else {
-		switch (connector_type) {
-		case DRM_MODE_CONNECTOR_VGA:
-			if (i2c_bus->valid) {
+			connector->पूर्णांकerlace_allowed = false;
+			connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (connector_type) अणु
+		हाल DRM_MODE_CONNECTOR_VGA:
+			अगर (i2c_bus->valid) अणु
 				radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-				if (!radeon_connector->ddc_bus)
+				अगर (!radeon_connector->ddc_bus)
 					DRM_ERROR("VGA: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &radeon_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_vga_connector_funcs,
 						    connector_type,
@@ -2068,27 +2069,27 @@ radeon_add_atom_connector(struct drm_device *dev,
 			drm_object_attach_property(&radeon_connector->base.base,
 						      rdev->mode_info.load_detect_property,
 						      1);
-			if (ASIC_IS_AVIVO(rdev))
+			अगर (ASIC_IS_AVIVO(rdev))
 				drm_object_attach_property(&radeon_connector->base.base,
 							   dev->mode_config.scaling_mode_property,
 							   DRM_MODE_SCALE_NONE);
-			if (ASIC_IS_DCE5(rdev))
+			अगर (ASIC_IS_DCE5(rdev))
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.output_csc_property,
 							   RADEON_OUTPUT_CSC_BYPASS);
 			/* no HPD on analog connectors */
 			radeon_connector->hpd.hpd = RADEON_HPD_NONE;
-			connector->interlace_allowed = true;
-			connector->doublescan_allowed = true;
-			break;
-		case DRM_MODE_CONNECTOR_DVIA:
-			if (i2c_bus->valid) {
+			connector->पूर्णांकerlace_allowed = true;
+			connector->द्विगुनscan_allowed = true;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_DVIA:
+			अगर (i2c_bus->valid) अणु
 				radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-				if (!radeon_connector->ddc_bus)
+				अगर (!radeon_connector->ddc_bus)
 					DRM_ERROR("DVIA: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &radeon_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_vga_connector_funcs,
 						    connector_type,
@@ -2098,33 +2099,33 @@ radeon_add_atom_connector(struct drm_device *dev,
 			drm_object_attach_property(&radeon_connector->base.base,
 						      rdev->mode_info.load_detect_property,
 						      1);
-			if (ASIC_IS_AVIVO(rdev))
+			अगर (ASIC_IS_AVIVO(rdev))
 				drm_object_attach_property(&radeon_connector->base.base,
 							   dev->mode_config.scaling_mode_property,
 							   DRM_MODE_SCALE_NONE);
-			if (ASIC_IS_DCE5(rdev))
+			अगर (ASIC_IS_DCE5(rdev))
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.output_csc_property,
 							   RADEON_OUTPUT_CSC_BYPASS);
 			/* no HPD on analog connectors */
 			radeon_connector->hpd.hpd = RADEON_HPD_NONE;
-			connector->interlace_allowed = true;
-			connector->doublescan_allowed = true;
-			break;
-		case DRM_MODE_CONNECTOR_DVII:
-		case DRM_MODE_CONNECTOR_DVID:
-			radeon_dig_connector = kzalloc(sizeof(struct radeon_connector_atom_dig), GFP_KERNEL);
-			if (!radeon_dig_connector)
-				goto failed;
+			connector->पूर्णांकerlace_allowed = true;
+			connector->द्विगुनscan_allowed = true;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_DVII:
+		हाल DRM_MODE_CONNECTOR_DVID:
+			radeon_dig_connector = kzalloc(माप(काष्ठा radeon_connector_atom_dig), GFP_KERNEL);
+			अगर (!radeon_dig_connector)
+				जाओ failed;
 			radeon_dig_connector->igp_lane_info = igp_lane_info;
 			radeon_connector->con_priv = radeon_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-				if (!radeon_connector->ddc_bus)
+				अगर (!radeon_connector->ddc_bus)
 					DRM_ERROR("DVI: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &radeon_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_dvi_connector_funcs,
 						    connector_type,
@@ -2134,7 +2135,7 @@ radeon_add_atom_connector(struct drm_device *dev,
 			drm_object_attach_property(&radeon_connector->base.base,
 						      rdev->mode_info.coherent_mode_property,
 						      1);
-			if (ASIC_IS_AVIVO(rdev)) {
+			अगर (ASIC_IS_AVIVO(rdev)) अणु
 				drm_object_attach_property(&radeon_connector->base.base,
 							      rdev->mode_info.underscan_property,
 							      UNDERSCAN_OFF);
@@ -2150,43 +2151,43 @@ radeon_add_atom_connector(struct drm_device *dev,
 				drm_object_attach_property(&radeon_connector->base.base,
 							   dev->mode_config.scaling_mode_property,
 							   DRM_MODE_SCALE_NONE);
-			}
-			if (ASIC_IS_DCE2(rdev) && (radeon_audio != 0)) {
+			पूर्ण
+			अगर (ASIC_IS_DCE2(rdev) && (radeon_audio != 0)) अणु
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.audio_property,
 							   RADEON_AUDIO_AUTO);
 				radeon_connector->audio = RADEON_AUDIO_AUTO;
-			}
-			if (connector_type == DRM_MODE_CONNECTOR_DVII) {
+			पूर्ण
+			अगर (connector_type == DRM_MODE_CONNECTOR_DVII) अणु
 				radeon_connector->dac_load_detect = true;
 				drm_object_attach_property(&radeon_connector->base.base,
 							      rdev->mode_info.load_detect_property,
 							      1);
-			}
-			if (ASIC_IS_DCE5(rdev))
+			पूर्ण
+			अगर (ASIC_IS_DCE5(rdev))
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.output_csc_property,
 							   RADEON_OUTPUT_CSC_BYPASS);
-			connector->interlace_allowed = true;
-			if (connector_type == DRM_MODE_CONNECTOR_DVII)
-				connector->doublescan_allowed = true;
-			else
-				connector->doublescan_allowed = false;
-			break;
-		case DRM_MODE_CONNECTOR_HDMIA:
-		case DRM_MODE_CONNECTOR_HDMIB:
-			radeon_dig_connector = kzalloc(sizeof(struct radeon_connector_atom_dig), GFP_KERNEL);
-			if (!radeon_dig_connector)
-				goto failed;
+			connector->पूर्णांकerlace_allowed = true;
+			अगर (connector_type == DRM_MODE_CONNECTOR_DVII)
+				connector->द्विगुनscan_allowed = true;
+			अन्यथा
+				connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_HDMIA:
+		हाल DRM_MODE_CONNECTOR_HDMIB:
+			radeon_dig_connector = kzalloc(माप(काष्ठा radeon_connector_atom_dig), GFP_KERNEL);
+			अगर (!radeon_dig_connector)
+				जाओ failed;
 			radeon_dig_connector->igp_lane_info = igp_lane_info;
 			radeon_connector->con_priv = radeon_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-				if (!radeon_connector->ddc_bus)
+				अगर (!radeon_connector->ddc_bus)
 					DRM_ERROR("HDMI: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &radeon_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_dvi_connector_funcs,
 						    connector_type,
@@ -2195,7 +2196,7 @@ radeon_add_atom_connector(struct drm_device *dev,
 			drm_object_attach_property(&radeon_connector->base.base,
 						      rdev->mode_info.coherent_mode_property,
 						      1);
-			if (ASIC_IS_AVIVO(rdev)) {
+			अगर (ASIC_IS_AVIVO(rdev)) अणु
 				drm_object_attach_property(&radeon_connector->base.base,
 							      rdev->mode_info.underscan_property,
 							      UNDERSCAN_OFF);
@@ -2211,39 +2212,39 @@ radeon_add_atom_connector(struct drm_device *dev,
 				drm_object_attach_property(&radeon_connector->base.base,
 							   dev->mode_config.scaling_mode_property,
 							   DRM_MODE_SCALE_NONE);
-			}
-			if (ASIC_IS_DCE2(rdev) && (radeon_audio != 0)) {
+			पूर्ण
+			अगर (ASIC_IS_DCE2(rdev) && (radeon_audio != 0)) अणु
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.audio_property,
 							   RADEON_AUDIO_AUTO);
 				radeon_connector->audio = RADEON_AUDIO_AUTO;
-			}
-			if (ASIC_IS_DCE5(rdev))
+			पूर्ण
+			अगर (ASIC_IS_DCE5(rdev))
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.output_csc_property,
 							   RADEON_OUTPUT_CSC_BYPASS);
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = true;
-			if (connector_type == DRM_MODE_CONNECTOR_HDMIB)
-				connector->doublescan_allowed = true;
-			else
-				connector->doublescan_allowed = false;
-			break;
-		case DRM_MODE_CONNECTOR_DisplayPort:
-			radeon_dig_connector = kzalloc(sizeof(struct radeon_connector_atom_dig), GFP_KERNEL);
-			if (!radeon_dig_connector)
-				goto failed;
+			connector->पूर्णांकerlace_allowed = true;
+			अगर (connector_type == DRM_MODE_CONNECTOR_HDMIB)
+				connector->द्विगुनscan_allowed = true;
+			अन्यथा
+				connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_DisplayPort:
+			radeon_dig_connector = kzalloc(माप(काष्ठा radeon_connector_atom_dig), GFP_KERNEL);
+			अगर (!radeon_dig_connector)
+				जाओ failed;
 			radeon_dig_connector->igp_lane_info = igp_lane_info;
 			radeon_connector->con_priv = radeon_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-				if (radeon_connector->ddc_bus) {
+				अगर (radeon_connector->ddc_bus) अणु
 					has_aux = true;
 					ddc = &radeon_connector->ddc_bus->adapter;
-				} else {
+				पूर्ण अन्यथा अणु
 					DRM_ERROR("DP: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				}
-			}
+				पूर्ण
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_dp_connector_funcs,
 						    connector_type,
@@ -2253,7 +2254,7 @@ radeon_add_atom_connector(struct drm_device *dev,
 			drm_object_attach_property(&radeon_connector->base.base,
 						      rdev->mode_info.coherent_mode_property,
 						      1);
-			if (ASIC_IS_AVIVO(rdev)) {
+			अगर (ASIC_IS_AVIVO(rdev)) अणु
 				drm_object_attach_property(&radeon_connector->base.base,
 							      rdev->mode_info.underscan_property,
 							      UNDERSCAN_OFF);
@@ -2269,36 +2270,36 @@ radeon_add_atom_connector(struct drm_device *dev,
 				drm_object_attach_property(&radeon_connector->base.base,
 							   dev->mode_config.scaling_mode_property,
 							   DRM_MODE_SCALE_NONE);
-			}
-			if (ASIC_IS_DCE2(rdev) && (radeon_audio != 0)) {
+			पूर्ण
+			अगर (ASIC_IS_DCE2(rdev) && (radeon_audio != 0)) अणु
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.audio_property,
 							   RADEON_AUDIO_AUTO);
 				radeon_connector->audio = RADEON_AUDIO_AUTO;
-			}
-			if (ASIC_IS_DCE5(rdev))
+			पूर्ण
+			अगर (ASIC_IS_DCE5(rdev))
 				drm_object_attach_property(&radeon_connector->base.base,
 							   rdev->mode_info.output_csc_property,
 							   RADEON_OUTPUT_CSC_BYPASS);
-			connector->interlace_allowed = true;
+			connector->पूर्णांकerlace_allowed = true;
 			/* in theory with a DP to VGA converter... */
-			connector->doublescan_allowed = false;
-			break;
-		case DRM_MODE_CONNECTOR_eDP:
-			radeon_dig_connector = kzalloc(sizeof(struct radeon_connector_atom_dig), GFP_KERNEL);
-			if (!radeon_dig_connector)
-				goto failed;
+			connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_eDP:
+			radeon_dig_connector = kzalloc(माप(काष्ठा radeon_connector_atom_dig), GFP_KERNEL);
+			अगर (!radeon_dig_connector)
+				जाओ failed;
 			radeon_dig_connector->igp_lane_info = igp_lane_info;
 			radeon_connector->con_priv = radeon_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-				if (radeon_connector->ddc_bus) {
+				अगर (radeon_connector->ddc_bus) अणु
 					has_aux = true;
 					ddc = &radeon_connector->ddc_bus->adapter;
-				} else {
+				पूर्ण अन्यथा अणु
 					DRM_ERROR("DP: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				}
-			}
+				पूर्ण
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_edp_connector_funcs,
 						    connector_type,
@@ -2308,12 +2309,12 @@ radeon_add_atom_connector(struct drm_device *dev,
 						      dev->mode_config.scaling_mode_property,
 						      DRM_MODE_SCALE_FULLSCREEN);
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = false;
-			connector->doublescan_allowed = false;
-			break;
-		case DRM_MODE_CONNECTOR_SVIDEO:
-		case DRM_MODE_CONNECTOR_Composite:
-		case DRM_MODE_CONNECTOR_9PinDIN:
+			connector->पूर्णांकerlace_allowed = false;
+			connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_SVIDEO:
+		हाल DRM_MODE_CONNECTOR_Composite:
+		हाल DRM_MODE_CONNECTOR_9PinDIN:
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_tv_connector_funcs,
 						    connector_type,
@@ -2328,22 +2329,22 @@ radeon_add_atom_connector(struct drm_device *dev,
 						      radeon_atombios_get_tv_info(rdev));
 			/* no HPD on analog connectors */
 			radeon_connector->hpd.hpd = RADEON_HPD_NONE;
-			connector->interlace_allowed = false;
-			connector->doublescan_allowed = false;
-			break;
-		case DRM_MODE_CONNECTOR_LVDS:
-			radeon_dig_connector = kzalloc(sizeof(struct radeon_connector_atom_dig), GFP_KERNEL);
-			if (!radeon_dig_connector)
-				goto failed;
+			connector->पूर्णांकerlace_allowed = false;
+			connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		हाल DRM_MODE_CONNECTOR_LVDS:
+			radeon_dig_connector = kzalloc(माप(काष्ठा radeon_connector_atom_dig), GFP_KERNEL);
+			अगर (!radeon_dig_connector)
+				जाओ failed;
 			radeon_dig_connector->igp_lane_info = igp_lane_info;
 			radeon_connector->con_priv = radeon_dig_connector;
-			if (i2c_bus->valid) {
+			अगर (i2c_bus->valid) अणु
 				radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-				if (!radeon_connector->ddc_bus)
+				अगर (!radeon_connector->ddc_bus)
 					DRM_ERROR("LVDS: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-				else
+				अन्यथा
 					ddc = &radeon_connector->ddc_bus->adapter;
-			}
+			पूर्ण
 			drm_connector_init_with_ddc(dev, &radeon_connector->base,
 						    &radeon_lvds_connector_funcs,
 						    connector_type,
@@ -2353,70 +2354,70 @@ radeon_add_atom_connector(struct drm_device *dev,
 						      dev->mode_config.scaling_mode_property,
 						      DRM_MODE_SCALE_FULLSCREEN);
 			subpixel_order = SubPixelHorizontalRGB;
-			connector->interlace_allowed = false;
-			connector->doublescan_allowed = false;
-			break;
-		}
-	}
+			connector->पूर्णांकerlace_allowed = false;
+			connector->द्विगुनscan_allowed = false;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (radeon_connector->hpd.hpd == RADEON_HPD_NONE) {
-		if (i2c_bus->valid) {
+	अगर (radeon_connector->hpd.hpd == RADEON_HPD_NONE) अणु
+		अगर (i2c_bus->valid) अणु
 			connector->polled = DRM_CONNECTOR_POLL_CONNECT |
 			                    DRM_CONNECTOR_POLL_DISCONNECT;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		connector->polled = DRM_CONNECTOR_POLL_HPD;
 
 	connector->display_info.subpixel_order = subpixel_order;
-	drm_connector_register(connector);
+	drm_connector_रेजिस्टर(connector);
 
-	if (has_aux)
+	अगर (has_aux)
 		radeon_dp_aux_init(radeon_connector);
 
-	return;
+	वापस;
 
 failed:
 	drm_connector_cleanup(connector);
-	kfree(connector);
-}
+	kमुक्त(connector);
+पूर्ण
 
-void
-radeon_add_legacy_connector(struct drm_device *dev,
-			    uint32_t connector_id,
-			    uint32_t supported_device,
-			    int connector_type,
-			    struct radeon_i2c_bus_rec *i2c_bus,
-			    uint16_t connector_object_id,
-			    struct radeon_hpd *hpd)
-{
-	struct radeon_device *rdev = dev->dev_private;
-	struct drm_connector *connector;
-	struct radeon_connector *radeon_connector;
-	struct i2c_adapter *ddc = NULL;
-	uint32_t subpixel_order = SubPixelNone;
+व्योम
+radeon_add_legacy_connector(काष्ठा drm_device *dev,
+			    uपूर्णांक32_t connector_id,
+			    uपूर्णांक32_t supported_device,
+			    पूर्णांक connector_type,
+			    काष्ठा radeon_i2c_bus_rec *i2c_bus,
+			    uपूर्णांक16_t connector_object_id,
+			    काष्ठा radeon_hpd *hpd)
+अणु
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा drm_connector *connector;
+	काष्ठा radeon_connector *radeon_connector;
+	काष्ठा i2c_adapter *ddc = शून्य;
+	uपूर्णांक32_t subpixel_order = SubPixelNone;
 
-	if (connector_type == DRM_MODE_CONNECTOR_Unknown)
-		return;
+	अगर (connector_type == DRM_MODE_CONNECTOR_Unknown)
+		वापस;
 
-	/* if the user selected tv=0 don't try and add the connector */
-	if (((connector_type == DRM_MODE_CONNECTOR_SVIDEO) ||
+	/* अगर the user selected tv=0 करोn't try and add the connector */
+	अगर (((connector_type == DRM_MODE_CONNECTOR_SVIDEO) ||
 	     (connector_type == DRM_MODE_CONNECTOR_Composite) ||
 	     (connector_type == DRM_MODE_CONNECTOR_9PinDIN)) &&
 	    (radeon_tv == 0))
-		return;
+		वापस;
 
-	/* see if we already added it */
-	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
+	/* see अगर we alपढ़ोy added it */
+	list_क्रम_each_entry(connector, &dev->mode_config.connector_list, head) अणु
 		radeon_connector = to_radeon_connector(connector);
-		if (radeon_connector->connector_id == connector_id) {
+		अगर (radeon_connector->connector_id == connector_id) अणु
 			radeon_connector->devices |= supported_device;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	radeon_connector = kzalloc(sizeof(struct radeon_connector), GFP_KERNEL);
-	if (!radeon_connector)
-		return;
+	radeon_connector = kzalloc(माप(काष्ठा radeon_connector), GFP_KERNEL);
+	अगर (!radeon_connector)
+		वापस;
 
 	connector = &radeon_connector->base;
 
@@ -2425,15 +2426,15 @@ radeon_add_legacy_connector(struct drm_device *dev,
 	radeon_connector->connector_object_id = connector_object_id;
 	radeon_connector->hpd = *hpd;
 
-	switch (connector_type) {
-	case DRM_MODE_CONNECTOR_VGA:
-		if (i2c_bus->valid) {
+	चयन (connector_type) अणु
+	हाल DRM_MODE_CONNECTOR_VGA:
+		अगर (i2c_bus->valid) अणु
 			radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-			if (!radeon_connector->ddc_bus)
+			अगर (!radeon_connector->ddc_bus)
 				DRM_ERROR("VGA: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-			else
+			अन्यथा
 				ddc = &radeon_connector->ddc_bus->adapter;
-		}
+		पूर्ण
 		drm_connector_init_with_ddc(dev, &radeon_connector->base,
 					    &radeon_vga_connector_funcs,
 					    connector_type,
@@ -2445,17 +2446,17 @@ radeon_add_legacy_connector(struct drm_device *dev,
 					      1);
 		/* no HPD on analog connectors */
 		radeon_connector->hpd.hpd = RADEON_HPD_NONE;
-		connector->interlace_allowed = true;
-		connector->doublescan_allowed = true;
-		break;
-	case DRM_MODE_CONNECTOR_DVIA:
-		if (i2c_bus->valid) {
+		connector->पूर्णांकerlace_allowed = true;
+		connector->द्विगुनscan_allowed = true;
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_DVIA:
+		अगर (i2c_bus->valid) अणु
 			radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-			if (!radeon_connector->ddc_bus)
+			अगर (!radeon_connector->ddc_bus)
 				DRM_ERROR("DVIA: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-			else
+			अन्यथा
 				ddc = &radeon_connector->ddc_bus->adapter;
-		}
+		पूर्ण
 		drm_connector_init_with_ddc(dev, &radeon_connector->base,
 					    &radeon_vga_connector_funcs,
 					    connector_type,
@@ -2467,39 +2468,39 @@ radeon_add_legacy_connector(struct drm_device *dev,
 					      1);
 		/* no HPD on analog connectors */
 		radeon_connector->hpd.hpd = RADEON_HPD_NONE;
-		connector->interlace_allowed = true;
-		connector->doublescan_allowed = true;
-		break;
-	case DRM_MODE_CONNECTOR_DVII:
-	case DRM_MODE_CONNECTOR_DVID:
-		if (i2c_bus->valid) {
+		connector->पूर्णांकerlace_allowed = true;
+		connector->द्विगुनscan_allowed = true;
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_DVII:
+	हाल DRM_MODE_CONNECTOR_DVID:
+		अगर (i2c_bus->valid) अणु
 			radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-			if (!radeon_connector->ddc_bus)
+			अगर (!radeon_connector->ddc_bus)
 				DRM_ERROR("DVI: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-			else
+			अन्यथा
 				ddc = &radeon_connector->ddc_bus->adapter;
-		}
+		पूर्ण
 		drm_connector_init_with_ddc(dev, &radeon_connector->base,
 					    &radeon_dvi_connector_funcs,
 					    connector_type,
 					    ddc);
 		drm_connector_helper_add(&radeon_connector->base, &radeon_dvi_connector_helper_funcs);
-		if (connector_type == DRM_MODE_CONNECTOR_DVII) {
+		अगर (connector_type == DRM_MODE_CONNECTOR_DVII) अणु
 			radeon_connector->dac_load_detect = true;
 			drm_object_attach_property(&radeon_connector->base.base,
 						      rdev->mode_info.load_detect_property,
 						      1);
-		}
+		पूर्ण
 		subpixel_order = SubPixelHorizontalRGB;
-		connector->interlace_allowed = true;
-		if (connector_type == DRM_MODE_CONNECTOR_DVII)
-			connector->doublescan_allowed = true;
-		else
-			connector->doublescan_allowed = false;
-		break;
-	case DRM_MODE_CONNECTOR_SVIDEO:
-	case DRM_MODE_CONNECTOR_Composite:
-	case DRM_MODE_CONNECTOR_9PinDIN:
+		connector->पूर्णांकerlace_allowed = true;
+		अगर (connector_type == DRM_MODE_CONNECTOR_DVII)
+			connector->द्विगुनscan_allowed = true;
+		अन्यथा
+			connector->द्विगुनscan_allowed = false;
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_SVIDEO:
+	हाल DRM_MODE_CONNECTOR_Composite:
+	हाल DRM_MODE_CONNECTOR_9PinDIN:
 		drm_connector_init_with_ddc(dev, &radeon_connector->base,
 					    &radeon_tv_connector_funcs,
 					    connector_type,
@@ -2509,9 +2510,9 @@ radeon_add_legacy_connector(struct drm_device *dev,
 		/* RS400,RC410,RS480 chipset seems to report a lot
 		 * of false positive on load detect, we haven't yet
 		 * found a way to make load detect reliable on those
-		 * chipset, thus just disable it for TV.
+		 * chipset, thus just disable it क्रम TV.
 		 */
-		if (rdev->family == CHIP_RS400 || rdev->family == CHIP_RS480)
+		अगर (rdev->family == CHIP_RS400 || rdev->family == CHIP_RS480)
 			radeon_connector->dac_load_detect = false;
 		drm_object_attach_property(&radeon_connector->base.base,
 					      rdev->mode_info.load_detect_property,
@@ -2521,17 +2522,17 @@ radeon_add_legacy_connector(struct drm_device *dev,
 					      radeon_combios_get_tv_info(rdev));
 		/* no HPD on analog connectors */
 		radeon_connector->hpd.hpd = RADEON_HPD_NONE;
-		connector->interlace_allowed = false;
-		connector->doublescan_allowed = false;
-		break;
-	case DRM_MODE_CONNECTOR_LVDS:
-		if (i2c_bus->valid) {
+		connector->पूर्णांकerlace_allowed = false;
+		connector->द्विगुनscan_allowed = false;
+		अवरोध;
+	हाल DRM_MODE_CONNECTOR_LVDS:
+		अगर (i2c_bus->valid) अणु
 			radeon_connector->ddc_bus = radeon_i2c_lookup(rdev, i2c_bus);
-			if (!radeon_connector->ddc_bus)
+			अगर (!radeon_connector->ddc_bus)
 				DRM_ERROR("LVDS: Failed to assign ddc bus! Check dmesg for i2c errors.\n");
-			else
+			अन्यथा
 				ddc = &radeon_connector->ddc_bus->adapter;
-		}
+		पूर्ण
 		drm_connector_init_with_ddc(dev, &radeon_connector->base,
 					    &radeon_lvds_connector_funcs,
 					    connector_type,
@@ -2541,41 +2542,41 @@ radeon_add_legacy_connector(struct drm_device *dev,
 					      dev->mode_config.scaling_mode_property,
 					      DRM_MODE_SCALE_FULLSCREEN);
 		subpixel_order = SubPixelHorizontalRGB;
-		connector->interlace_allowed = false;
-		connector->doublescan_allowed = false;
-		break;
-	}
+		connector->पूर्णांकerlace_allowed = false;
+		connector->द्विगुनscan_allowed = false;
+		अवरोध;
+	पूर्ण
 
-	if (radeon_connector->hpd.hpd == RADEON_HPD_NONE) {
-		if (i2c_bus->valid) {
+	अगर (radeon_connector->hpd.hpd == RADEON_HPD_NONE) अणु
+		अगर (i2c_bus->valid) अणु
 			connector->polled = DRM_CONNECTOR_POLL_CONNECT |
 			                    DRM_CONNECTOR_POLL_DISCONNECT;
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		connector->polled = DRM_CONNECTOR_POLL_HPD;
 
 	connector->display_info.subpixel_order = subpixel_order;
-	drm_connector_register(connector);
-}
+	drm_connector_रेजिस्टर(connector);
+पूर्ण
 
-void radeon_setup_mst_connector(struct drm_device *dev)
-{
-	struct radeon_device *rdev = dev->dev_private;
-	struct drm_connector *connector;
-	struct radeon_connector *radeon_connector;
+व्योम radeon_setup_mst_connector(काष्ठा drm_device *dev)
+अणु
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा drm_connector *connector;
+	काष्ठा radeon_connector *radeon_connector;
 
-	if (!ASIC_IS_DCE5(rdev))
-		return;
+	अगर (!ASIC_IS_DCE5(rdev))
+		वापस;
 
-	if (radeon_mst == 0)
-		return;
+	अगर (radeon_mst == 0)
+		वापस;
 
-	list_for_each_entry(connector, &dev->mode_config.connector_list, head) {
+	list_क्रम_each_entry(connector, &dev->mode_config.connector_list, head) अणु
 		radeon_connector = to_radeon_connector(connector);
 
-		if (connector->connector_type != DRM_MODE_CONNECTOR_DisplayPort)
-			continue;
+		अगर (connector->connector_type != DRM_MODE_CONNECTOR_DisplayPort)
+			जारी;
 
 		radeon_dp_mst_init(radeon_connector);
-	}
-}
+	पूर्ण
+पूर्ण

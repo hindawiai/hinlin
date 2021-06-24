@@ -1,1 +1,2 @@
-#include "../../../include/linux/virtio_ring.h"
+<शैली गुरु>
+#समावेश "../../../include/linux/virtio_ring.h"

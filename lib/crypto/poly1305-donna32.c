@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  *
- * This is based in part on Andrew Moon's poly1305-donna, which is in the
- * public domain.
+ * This is based in part on Andrew Moon's poly1305-करोnna, which is in the
+ * खुला करोमुख्य.
  */
 
-#include <linux/kernel.h>
-#include <asm/unaligned.h>
-#include <crypto/internal/poly1305.h>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <crypto/पूर्णांकernal/poly1305.h>
 
-void poly1305_core_setkey(struct poly1305_core_key *key,
-			  const u8 raw_key[POLY1305_BLOCK_SIZE])
-{
+व्योम poly1305_core_setkey(काष्ठा poly1305_core_key *key,
+			  स्थिर u8 raw_key[POLY1305_BLOCK_SIZE])
+अणु
 	/* r &= 0xffffffc0ffffffc0ffffffc0fffffff */
 	key->key.r[0] = (get_unaligned_le32(&raw_key[0])) & 0x3ffffff;
 	key->key.r[1] = (get_unaligned_le32(&raw_key[3]) >> 2) & 0x3ffff03;
@@ -25,22 +26,22 @@ void poly1305_core_setkey(struct poly1305_core_key *key,
 	key->precomputed_s.r[1] = key->key.r[2] * 5;
 	key->precomputed_s.r[2] = key->key.r[3] * 5;
 	key->precomputed_s.r[3] = key->key.r[4] * 5;
-}
+पूर्ण
 EXPORT_SYMBOL(poly1305_core_setkey);
 
-void poly1305_core_blocks(struct poly1305_state *state,
-			  const struct poly1305_core_key *key, const void *src,
-			  unsigned int nblocks, u32 hibit)
-{
-	const u8 *input = src;
+व्योम poly1305_core_blocks(काष्ठा poly1305_state *state,
+			  स्थिर काष्ठा poly1305_core_key *key, स्थिर व्योम *src,
+			  अचिन्हित पूर्णांक nblocks, u32 hibit)
+अणु
+	स्थिर u8 *input = src;
 	u32 r0, r1, r2, r3, r4;
 	u32 s1, s2, s3, s4;
 	u32 h0, h1, h2, h3, h4;
 	u64 d0, d1, d2, d3, d4;
 	u32 c;
 
-	if (!nblocks)
-		return;
+	अगर (!nblocks)
+		वापस;
 
 	hibit <<= 24;
 
@@ -61,7 +62,7 @@ void poly1305_core_blocks(struct poly1305_state *state,
 	h3 = state->h[3];
 	h4 = state->h[4];
 
-	do {
+	करो अणु
 		/* h += m[i] */
 		h0 += (get_unaligned_le32(&input[0])) & 0x3ffffff;
 		h1 += (get_unaligned_le32(&input[3]) >> 2) & 0x3ffffff;
@@ -107,19 +108,19 @@ void poly1305_core_blocks(struct poly1305_state *state,
 		h1 += c;
 
 		input += POLY1305_BLOCK_SIZE;
-	} while (--nblocks);
+	पूर्ण जबतक (--nblocks);
 
 	state->h[0] = h0;
 	state->h[1] = h1;
 	state->h[2] = h2;
 	state->h[3] = h3;
 	state->h[4] = h4;
-}
+पूर्ण
 EXPORT_SYMBOL(poly1305_core_blocks);
 
-void poly1305_core_emit(const struct poly1305_state *state, const u32 nonce[4],
-			void *dst)
-{
+व्योम poly1305_core_emit(स्थिर काष्ठा poly1305_state *state, स्थिर u32 nonce[4],
+			व्योम *dst)
+अणु
 	u8 *mac = dst;
 	u32 h0, h1, h2, h3, h4, c;
 	u32 g0, g1, g2, g3, g4;
@@ -164,8 +165,8 @@ void poly1305_core_emit(const struct poly1305_state *state, const u32 nonce[4],
 	g3 &= 0x3ffffff;
 	g4 = h4 + c - (1UL << 26);
 
-	/* select h if h < p, or h + -p if h >= p */
-	mask = (g4 >> ((sizeof(u32) * 8) - 1)) - 1;
+	/* select h अगर h < p, or h + -p अगर h >= p */
+	mask = (g4 >> ((माप(u32) * 8) - 1)) - 1;
 	g0 &= mask;
 	g1 &= mask;
 	g2 &= mask;
@@ -185,7 +186,7 @@ void poly1305_core_emit(const struct poly1305_state *state, const u32 nonce[4],
 	h2 = ((h2 >> 12) | (h3 << 14)) & 0xffffffff;
 	h3 = ((h3 >> 18) | (h4 << 8)) & 0xffffffff;
 
-	if (likely(nonce)) {
+	अगर (likely(nonce)) अणु
 		/* mac = (h + nonce) % (2^128) */
 		f = (u64)h0 + nonce[0];
 		h0 = (u32)f;
@@ -195,11 +196,11 @@ void poly1305_core_emit(const struct poly1305_state *state, const u32 nonce[4],
 		h2 = (u32)f;
 		f = (u64)h3 + nonce[3] + (f >> 32);
 		h3 = (u32)f;
-	}
+	पूर्ण
 
 	put_unaligned_le32(h0, &mac[0]);
 	put_unaligned_le32(h1, &mac[4]);
 	put_unaligned_le32(h2, &mac[8]);
 	put_unaligned_le32(h3, &mac[12]);
-}
+पूर्ण
 EXPORT_SYMBOL(poly1305_core_emit);

@@ -1,328 +1,329 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2002 MontaVista Software Inc.
  * Author: Jun Sun, jsun@mvista.com or jsun@junsun.net
  */
-#ifndef _ASM_FPU_H
-#define _ASM_FPU_H
+#अगर_अघोषित _ASM_FPU_H
+#घोषणा _ASM_FPU_H
 
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/ptrace.h>
-#include <linux/thread_info.h>
-#include <linux/bitops.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/thपढ़ो_info.h>
+#समावेश <linux/bitops.h>
 
-#include <asm/mipsregs.h>
-#include <asm/cpu.h>
-#include <asm/cpu-features.h>
-#include <asm/fpu_emulator.h>
-#include <asm/hazards.h>
-#include <asm/ptrace.h>
-#include <asm/processor.h>
-#include <asm/current.h>
-#include <asm/msa.h>
+#समावेश <यंत्र/mipsregs.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/cpu-features.h>
+#समावेश <यंत्र/fpu_emulator.h>
+#समावेश <यंत्र/hazards.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/msa.h>
 
-#ifdef CONFIG_MIPS_MT_FPAFF
-#include <asm/mips_mt.h>
-#endif
+#अगर_घोषित CONFIG_MIPS_MT_FPAFF
+#समावेश <यंत्र/mips_mt.h>
+#पूर्ण_अगर
 
 /*
- * This enum specifies a mode in which we want the FPU to operate, for cores
+ * This क्रमागत specअगरies a mode in which we want the FPU to operate, क्रम cores
  * which implement the Status.FR bit. Note that the bottom bit of the value
  * purposefully matches the desired value of the Status.FR bit.
  */
-enum fpu_mode {
+क्रमागत fpu_mode अणु
 	FPU_32BIT = 0,		/* FR = 0 */
 	FPU_64BIT,		/* FR = 1, FRE = 0 */
 	FPU_AS_IS,
 	FPU_HYBRID,		/* FR = 1, FRE = 1 */
 
-#define FPU_FR_MASK		0x1
-};
+#घोषणा FPU_FR_MASK		0x1
+पूर्ण;
 
-#ifdef CONFIG_MIPS_FP_SUPPORT
+#अगर_घोषित CONFIG_MIPS_FP_SUPPORT
 
-extern void _save_fp(struct task_struct *);
-extern void _restore_fp(struct task_struct *);
+बाह्य व्योम _save_fp(काष्ठा task_काष्ठा *);
+बाह्य व्योम _restore_fp(काष्ठा task_काष्ठा *);
 
-#define __disable_fpu()							\
-do {									\
+#घोषणा __disable_fpu()							\
+करो अणु									\
 	clear_c0_status(ST0_CU1);					\
 	disable_fpu_hazard();						\
-} while (0)
+पूर्ण जबतक (0)
 
-static inline int __enable_fpu(enum fpu_mode mode)
-{
-	int fr;
+अटल अंतरभूत पूर्णांक __enable_fpu(क्रमागत fpu_mode mode)
+अणु
+	पूर्णांक fr;
 
-	switch (mode) {
-	case FPU_AS_IS:
+	चयन (mode) अणु
+	हाल FPU_AS_IS:
 		/* just enable the FPU in its current mode */
 		set_c0_status(ST0_CU1);
 		enable_fpu_hazard();
-		return 0;
+		वापस 0;
 
-	case FPU_HYBRID:
-		if (!cpu_has_fre)
-			return SIGFPE;
+	हाल FPU_HYBRID:
+		अगर (!cpu_has_fre)
+			वापस संक_भ_त्रुटि;
 
 		/* set FRE */
 		set_c0_config5(MIPS_CONF5_FRE);
-		goto fr_common;
+		जाओ fr_common;
 
-	case FPU_64BIT:
-#if !(defined(CONFIG_CPU_MIPSR2) || defined(CONFIG_CPU_MIPSR5) || \
+	हाल FPU_64BIT:
+#अगर !(defined(CONFIG_CPU_MIPSR2) || defined(CONFIG_CPU_MIPSR5) || \
       defined(CONFIG_CPU_MIPSR6) || defined(CONFIG_64BIT))
 		/* we only have a 32-bit FPU */
-		return SIGFPE;
-#endif
+		वापस संक_भ_त्रुटि;
+#पूर्ण_अगर
 		fallthrough;
-	case FPU_32BIT:
-		if (cpu_has_fre) {
+	हाल FPU_32BIT:
+		अगर (cpu_has_fre) अणु
 			/* clear FRE */
 			clear_c0_config5(MIPS_CONF5_FRE);
-		}
+		पूर्ण
 fr_common:
 		/* set CU1 & change FR appropriately */
-		fr = (int)mode & FPU_FR_MASK;
+		fr = (पूर्णांक)mode & FPU_FR_MASK;
 		change_c0_status(ST0_CU1 | ST0_FR, ST0_CU1 | (fr ? ST0_FR : 0));
 		enable_fpu_hazard();
 
 		/* check FR has the desired value */
-		if (!!(read_c0_status() & ST0_FR) == !!fr)
-			return 0;
+		अगर (!!(पढ़ो_c0_status() & ST0_FR) == !!fr)
+			वापस 0;
 
 		/* unsupported FR value */
 		__disable_fpu();
-		return SIGFPE;
+		वापस संक_भ_त्रुटि;
 
-	default:
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return SIGFPE;
-}
+	वापस संक_भ_त्रुटि;
+पूर्ण
 
-#define clear_fpu_owner()	clear_thread_flag(TIF_USEDFPU)
+#घोषणा clear_fpu_owner()	clear_thपढ़ो_flag(TIF_USEDFPU)
 
-static inline int __is_fpu_owner(void)
-{
-	return test_thread_flag(TIF_USEDFPU);
-}
+अटल अंतरभूत पूर्णांक __is_fpu_owner(व्योम)
+अणु
+	वापस test_thपढ़ो_flag(TIF_USEDFPU);
+पूर्ण
 
-static inline int is_fpu_owner(void)
-{
-	return cpu_has_fpu && __is_fpu_owner();
-}
+अटल अंतरभूत पूर्णांक is_fpu_owner(व्योम)
+अणु
+	वापस cpu_has_fpu && __is_fpu_owner();
+पूर्ण
 
-static inline int __own_fpu(void)
-{
-	enum fpu_mode mode;
-	int ret;
+अटल अंतरभूत पूर्णांक __own_fpu(व्योम)
+अणु
+	क्रमागत fpu_mode mode;
+	पूर्णांक ret;
 
-	if (test_thread_flag(TIF_HYBRID_FPREGS))
+	अगर (test_thपढ़ो_flag(TIF_HYBRID_FPREGS))
 		mode = FPU_HYBRID;
-	else
-		mode = !test_thread_flag(TIF_32BIT_FPREGS);
+	अन्यथा
+		mode = !test_thपढ़ो_flag(TIF_32BIT_FPREGS);
 
 	ret = __enable_fpu(mode);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	KSTK_STATUS(current) |= ST0_CU1;
-	if (mode == FPU_64BIT || mode == FPU_HYBRID)
+	अगर (mode == FPU_64BIT || mode == FPU_HYBRID)
 		KSTK_STATUS(current) |= ST0_FR;
-	else /* mode == FPU_32BIT */
+	अन्यथा /* mode == FPU_32BIT */
 		KSTK_STATUS(current) &= ~ST0_FR;
 
-	set_thread_flag(TIF_USEDFPU);
-	return 0;
-}
+	set_thपढ़ो_flag(TIF_USEDFPU);
+	वापस 0;
+पूर्ण
 
-static inline int own_fpu_inatomic(int restore)
-{
-	int ret = 0;
+अटल अंतरभूत पूर्णांक own_fpu_inatomic(पूर्णांक restore)
+अणु
+	पूर्णांक ret = 0;
 
-	if (cpu_has_fpu && !__is_fpu_owner()) {
+	अगर (cpu_has_fpu && !__is_fpu_owner()) अणु
 		ret = __own_fpu();
-		if (restore && !ret)
+		अगर (restore && !ret)
 			_restore_fp(current);
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static inline int own_fpu(int restore)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक own_fpu(पूर्णांक restore)
+अणु
+	पूर्णांक ret;
 
 	preempt_disable();
 	ret = own_fpu_inatomic(restore);
 	preempt_enable();
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void lose_fpu_inatomic(int save, struct task_struct *tsk)
-{
-	if (is_msa_enabled()) {
-		if (save) {
+अटल अंतरभूत व्योम lose_fpu_inatomic(पूर्णांक save, काष्ठा task_काष्ठा *tsk)
+अणु
+	अगर (is_msa_enabled()) अणु
+		अगर (save) अणु
 			save_msa(tsk);
-			tsk->thread.fpu.fcr31 =
-					read_32bit_cp1_register(CP1_STATUS);
-		}
+			tsk->thपढ़ो.fpu.fcr31 =
+					पढ़ो_32bit_cp1_रेजिस्टर(CP1_STATUS);
+		पूर्ण
 		disable_msa();
-		clear_tsk_thread_flag(tsk, TIF_USEDMSA);
+		clear_tsk_thपढ़ो_flag(tsk, TIF_USEDMSA);
 		__disable_fpu();
-	} else if (is_fpu_owner()) {
-		if (save)
+	पूर्ण अन्यथा अगर (is_fpu_owner()) अणु
+		अगर (save)
 			_save_fp(tsk);
 		__disable_fpu();
-	} else {
+	पूर्ण अन्यथा अणु
 		/* FPU should not have been left enabled with no owner */
-		WARN(read_c0_status() & ST0_CU1,
+		WARN(पढ़ो_c0_status() & ST0_CU1,
 		     "Orphaned FPU left enabled");
-	}
+	पूर्ण
 	KSTK_STATUS(tsk) &= ~ST0_CU1;
-	clear_tsk_thread_flag(tsk, TIF_USEDFPU);
-}
+	clear_tsk_thपढ़ो_flag(tsk, TIF_USEDFPU);
+पूर्ण
 
-static inline void lose_fpu(int save)
-{
+अटल अंतरभूत व्योम lose_fpu(पूर्णांक save)
+अणु
 	preempt_disable();
 	lose_fpu_inatomic(save, current);
 	preempt_enable();
-}
+पूर्ण
 
 /**
  * init_fp_ctx() - Initialize task FP context
  * @target: The task whose FP context should be initialized.
  *
- * Initializes the FP context of the target task to sane default values if that
- * target task does not already have valid FP context. Once the context has
+ * Initializes the FP context of the target task to sane शेष values अगर that
+ * target task करोes not alपढ़ोy have valid FP context. Once the context has
  * been initialized, the task will be marked as having used FP & thus having
  * valid FP context.
  *
- * Returns: true if context is initialized, else false.
+ * Returns: true अगर context is initialized, अन्यथा false.
  */
-static inline bool init_fp_ctx(struct task_struct *target)
-{
-	/* If FP has been used then the target already has context */
-	if (tsk_used_math(target))
-		return false;
+अटल अंतरभूत bool init_fp_ctx(काष्ठा task_काष्ठा *target)
+अणु
+	/* If FP has been used then the target alपढ़ोy has context */
+	अगर (tsk_used_math(target))
+		वापस false;
 
-	/* Begin with data registers set to all 1s... */
-	memset(&target->thread.fpu.fpr, ~0, sizeof(target->thread.fpu.fpr));
+	/* Begin with data रेजिस्टरs set to all 1s... */
+	स_रखो(&target->thपढ़ो.fpu.fpr, ~0, माप(target->thपढ़ो.fpu.fpr));
 
 	/* FCSR has been preset by `mips_set_personality_nan'.  */
 
 	/*
 	 * Record that the target has "used" math, such that the context
-	 * just initialised, and any modifications made by the caller,
+	 * just initialised, and any modअगरications made by the caller,
 	 * aren't discarded.
 	 */
 	set_stopped_child_used_math(target);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline void save_fp(struct task_struct *tsk)
-{
-	if (cpu_has_fpu)
+अटल अंतरभूत व्योम save_fp(काष्ठा task_काष्ठा *tsk)
+अणु
+	अगर (cpu_has_fpu)
 		_save_fp(tsk);
-}
+पूर्ण
 
-static inline void restore_fp(struct task_struct *tsk)
-{
-	if (cpu_has_fpu)
+अटल अंतरभूत व्योम restore_fp(काष्ठा task_काष्ठा *tsk)
+अणु
+	अगर (cpu_has_fpu)
 		_restore_fp(tsk);
-}
+पूर्ण
 
-static inline union fpureg *get_fpu_regs(struct task_struct *tsk)
-{
-	if (tsk == current) {
+अटल अंतरभूत जोड़ fpureg *get_fpu_regs(काष्ठा task_काष्ठा *tsk)
+अणु
+	अगर (tsk == current) अणु
 		preempt_disable();
-		if (is_fpu_owner())
+		अगर (is_fpu_owner())
 			_save_fp(current);
 		preempt_enable();
-	}
+	पूर्ण
 
-	return tsk->thread.fpu.fpr;
-}
+	वापस tsk->thपढ़ो.fpu.fpr;
+पूर्ण
 
-#else /* !CONFIG_MIPS_FP_SUPPORT */
+#अन्यथा /* !CONFIG_MIPS_FP_SUPPORT */
 
 /*
  * When FP support is disabled we provide only a minimal set of stub functions
- * to avoid callers needing to care too much about CONFIG_MIPS_FP_SUPPORT.
+ * to aव्योम callers needing to care too much about CONFIG_MIPS_FP_SUPPORT.
  */
 
-static inline int __enable_fpu(enum fpu_mode mode)
-{
-	return SIGILL;
-}
+अटल अंतरभूत पूर्णांक __enable_fpu(क्रमागत fpu_mode mode)
+अणु
+	वापस संक_अवैध;
+पूर्ण
 
-static inline void __disable_fpu(void)
-{
+अटल अंतरभूत व्योम __disable_fpu(व्योम)
+अणु
 	/* no-op */
-}
+पूर्ण
 
 
-static inline int is_fpu_owner(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक is_fpu_owner(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void clear_fpu_owner(void)
-{
+अटल अंतरभूत व्योम clear_fpu_owner(व्योम)
+अणु
 	/* no-op */
-}
+पूर्ण
 
-static inline int own_fpu_inatomic(int restore)
-{
-	return SIGILL;
-}
+अटल अंतरभूत पूर्णांक own_fpu_inatomic(पूर्णांक restore)
+अणु
+	वापस संक_अवैध;
+पूर्ण
 
-static inline int own_fpu(int restore)
-{
-	return SIGILL;
-}
+अटल अंतरभूत पूर्णांक own_fpu(पूर्णांक restore)
+अणु
+	वापस संक_अवैध;
+पूर्ण
 
-static inline void lose_fpu_inatomic(int save, struct task_struct *tsk)
-{
+अटल अंतरभूत व्योम lose_fpu_inatomic(पूर्णांक save, काष्ठा task_काष्ठा *tsk)
+अणु
 	/* no-op */
-}
+पूर्ण
 
-static inline void lose_fpu(int save)
-{
+अटल अंतरभूत व्योम lose_fpu(पूर्णांक save)
+अणु
 	/* no-op */
-}
+पूर्ण
 
-static inline bool init_fp_ctx(struct task_struct *target)
-{
-	return false;
-}
+अटल अंतरभूत bool init_fp_ctx(काष्ठा task_काष्ठा *target)
+अणु
+	वापस false;
+पूर्ण
 
 /*
  * The following functions should only be called in paths where we know that FP
  * support is enabled, typically a path where own_fpu() or __enable_fpu() have
- * returned successfully. When CONFIG_MIPS_FP_SUPPORT=n it is known at compile
- * time that this should never happen, so calls to these functions should be
+ * वापसed successfully. When CONFIG_MIPS_FP_SUPPORT=n it is known at compile
+ * समय that this should never happen, so calls to these functions should be
  * optimized away & never actually be emitted.
  */
 
-extern void save_fp(struct task_struct *tsk)
-	__compiletime_error("save_fp() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
+बाह्य व्योम save_fp(काष्ठा task_काष्ठा *tsk)
+	__compileसमय_error("save_fp() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
 
-extern void _save_fp(struct task_struct *)
-	__compiletime_error("_save_fp() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
+बाह्य व्योम _save_fp(काष्ठा task_काष्ठा *)
+	__compileसमय_error("_save_fp() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
 
-extern void restore_fp(struct task_struct *tsk)
-	__compiletime_error("restore_fp() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
+बाह्य व्योम restore_fp(काष्ठा task_काष्ठा *tsk)
+	__compileसमय_error("restore_fp() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
 
-extern void _restore_fp(struct task_struct *)
-	__compiletime_error("_restore_fp() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
+बाह्य व्योम _restore_fp(काष्ठा task_काष्ठा *)
+	__compileसमय_error("_restore_fp() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
 
-extern union fpureg *get_fpu_regs(struct task_struct *tsk)
-	__compiletime_error("get_fpu_regs() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
+बाह्य जोड़ fpureg *get_fpu_regs(काष्ठा task_काष्ठा *tsk)
+	__compileसमय_error("get_fpu_regs() should not be called when CONFIG_MIPS_FP_SUPPORT=n");
 
-#endif /* !CONFIG_MIPS_FP_SUPPORT */
-#endif /* _ASM_FPU_H */
+#पूर्ण_अगर /* !CONFIG_MIPS_FP_SUPPORT */
+#पूर्ण_अगर /* _ASM_FPU_H */

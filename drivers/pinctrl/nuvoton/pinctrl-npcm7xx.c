@@ -1,222 +1,223 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2016-2018 Nuvoton Technology corporation.
 // Copyright (c) 2016, Dell Inc
 
-#include <linux/device.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
+#समावेश <linux/device.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
 
-/* GCR registers */
-#define NPCM7XX_GCR_PDID	0x00
-#define NPCM7XX_GCR_MFSEL1	0x0C
-#define NPCM7XX_GCR_MFSEL2	0x10
-#define NPCM7XX_GCR_MFSEL3	0x64
-#define NPCM7XX_GCR_MFSEL4	0xb0
-#define NPCM7XX_GCR_CPCTL	0xD0
-#define NPCM7XX_GCR_CP2BST	0xD4
-#define NPCM7XX_GCR_B2CPNT	0xD8
-#define NPCM7XX_GCR_I2CSEGSEL	0xE0
-#define NPCM7XX_GCR_I2CSEGCTL	0xE4
-#define NPCM7XX_GCR_SRCNT	0x68
-#define NPCM7XX_GCR_FLOCKR1	0x74
-#define NPCM7XX_GCR_DSCNT	0x78
+/* GCR रेजिस्टरs */
+#घोषणा NPCM7XX_GCR_PDID	0x00
+#घोषणा NPCM7XX_GCR_MFSEL1	0x0C
+#घोषणा NPCM7XX_GCR_MFSEL2	0x10
+#घोषणा NPCM7XX_GCR_MFSEL3	0x64
+#घोषणा NPCM7XX_GCR_MFSEL4	0xb0
+#घोषणा NPCM7XX_GCR_CPCTL	0xD0
+#घोषणा NPCM7XX_GCR_CP2BST	0xD4
+#घोषणा NPCM7XX_GCR_B2CPNT	0xD8
+#घोषणा NPCM7XX_GCR_I2CSEGSEL	0xE0
+#घोषणा NPCM7XX_GCR_I2CSEGCTL	0xE4
+#घोषणा NPCM7XX_GCR_SRCNT	0x68
+#घोषणा NPCM7XX_GCR_FLOCKR1	0x74
+#घोषणा NPCM7XX_GCR_DSCNT	0x78
 
-#define SRCNT_ESPI		BIT(3)
+#घोषणा SRCNT_ESPI		BIT(3)
 
-/* GPIO registers */
-#define NPCM7XX_GP_N_TLOCK1	0x00
-#define NPCM7XX_GP_N_DIN	0x04 /* Data IN */
-#define NPCM7XX_GP_N_POL	0x08 /* Polarity */
-#define NPCM7XX_GP_N_DOUT	0x0c /* Data OUT */
-#define NPCM7XX_GP_N_OE		0x10 /* Output Enable */
-#define NPCM7XX_GP_N_OTYP	0x14
-#define NPCM7XX_GP_N_MP		0x18
-#define NPCM7XX_GP_N_PU		0x1c /* Pull-up */
-#define NPCM7XX_GP_N_PD		0x20 /* Pull-down */
-#define NPCM7XX_GP_N_DBNC	0x24 /* Debounce */
-#define NPCM7XX_GP_N_EVTYP	0x28 /* Event Type */
-#define NPCM7XX_GP_N_EVBE	0x2c /* Event Both Edge */
-#define NPCM7XX_GP_N_OBL0	0x30
-#define NPCM7XX_GP_N_OBL1	0x34
-#define NPCM7XX_GP_N_OBL2	0x38
-#define NPCM7XX_GP_N_OBL3	0x3c
-#define NPCM7XX_GP_N_EVEN	0x40 /* Event Enable */
-#define NPCM7XX_GP_N_EVENS	0x44 /* Event Set (enable) */
-#define NPCM7XX_GP_N_EVENC	0x48 /* Event Clear (disable) */
-#define NPCM7XX_GP_N_EVST	0x4c /* Event Status */
-#define NPCM7XX_GP_N_SPLCK	0x50
-#define NPCM7XX_GP_N_MPLCK	0x54
-#define NPCM7XX_GP_N_IEM	0x58 /* Input Enable */
-#define NPCM7XX_GP_N_OSRC	0x5c
-#define NPCM7XX_GP_N_ODSC	0x60
-#define NPCM7XX_GP_N_DOS	0x68 /* Data OUT Set */
-#define NPCM7XX_GP_N_DOC	0x6c /* Data OUT Clear */
-#define NPCM7XX_GP_N_OES	0x70 /* Output Enable Set */
-#define NPCM7XX_GP_N_OEC	0x74 /* Output Enable Clear */
-#define NPCM7XX_GP_N_TLOCK2	0x7c
+/* GPIO रेजिस्टरs */
+#घोषणा NPCM7XX_GP_N_TLOCK1	0x00
+#घोषणा NPCM7XX_GP_N_DIN	0x04 /* Data IN */
+#घोषणा NPCM7XX_GP_N_POL	0x08 /* Polarity */
+#घोषणा NPCM7XX_GP_N_DOUT	0x0c /* Data OUT */
+#घोषणा NPCM7XX_GP_N_OE		0x10 /* Output Enable */
+#घोषणा NPCM7XX_GP_N_OTYP	0x14
+#घोषणा NPCM7XX_GP_N_MP		0x18
+#घोषणा NPCM7XX_GP_N_PU		0x1c /* Pull-up */
+#घोषणा NPCM7XX_GP_N_PD		0x20 /* Pull-करोwn */
+#घोषणा NPCM7XX_GP_N_DBNC	0x24 /* Debounce */
+#घोषणा NPCM7XX_GP_N_EVTYP	0x28 /* Event Type */
+#घोषणा NPCM7XX_GP_N_EVBE	0x2c /* Event Both Edge */
+#घोषणा NPCM7XX_GP_N_OBL0	0x30
+#घोषणा NPCM7XX_GP_N_OBL1	0x34
+#घोषणा NPCM7XX_GP_N_OBL2	0x38
+#घोषणा NPCM7XX_GP_N_OBL3	0x3c
+#घोषणा NPCM7XX_GP_N_EVEN	0x40 /* Event Enable */
+#घोषणा NPCM7XX_GP_N_EVENS	0x44 /* Event Set (enable) */
+#घोषणा NPCM7XX_GP_N_EVENC	0x48 /* Event Clear (disable) */
+#घोषणा NPCM7XX_GP_N_EVST	0x4c /* Event Status */
+#घोषणा NPCM7XX_GP_N_SPLCK	0x50
+#घोषणा NPCM7XX_GP_N_MPLCK	0x54
+#घोषणा NPCM7XX_GP_N_IEM	0x58 /* Input Enable */
+#घोषणा NPCM7XX_GP_N_OSRC	0x5c
+#घोषणा NPCM7XX_GP_N_ODSC	0x60
+#घोषणा NPCM7XX_GP_N_DOS	0x68 /* Data OUT Set */
+#घोषणा NPCM7XX_GP_N_DOC	0x6c /* Data OUT Clear */
+#घोषणा NPCM7XX_GP_N_OES	0x70 /* Output Enable Set */
+#घोषणा NPCM7XX_GP_N_OEC	0x74 /* Output Enable Clear */
+#घोषणा NPCM7XX_GP_N_TLOCK2	0x7c
 
-#define NPCM7XX_GPIO_PER_BANK	32
-#define NPCM7XX_GPIO_BANK_NUM	8
-#define NPCM7XX_GCR_NONE	0
+#घोषणा NPCM7XX_GPIO_PER_BANK	32
+#घोषणा NPCM7XX_GPIO_BANK_NUM	8
+#घोषणा NPCM7XX_GCR_NONE	0
 
-/* Structure for register banks */
-struct npcm7xx_gpio {
-	void __iomem		*base;
-	struct gpio_chip	gc;
-	int			irqbase;
-	int			irq;
-	void			*priv;
-	struct irq_chip		irq_chip;
+/* Structure क्रम रेजिस्टर banks */
+काष्ठा npcm7xx_gpio अणु
+	व्योम __iomem		*base;
+	काष्ठा gpio_chip	gc;
+	पूर्णांक			irqbase;
+	पूर्णांक			irq;
+	व्योम			*priv;
+	काष्ठा irq_chip		irq_chip;
 	u32			pinctrl_id;
-	int (*direction_input)(struct gpio_chip *chip, unsigned offset);
-	int (*direction_output)(struct gpio_chip *chip, unsigned offset,
-				int value);
-	int (*request)(struct gpio_chip *chip, unsigned offset);
-	void (*free)(struct gpio_chip *chip, unsigned offset);
-};
+	पूर्णांक (*direction_input)(काष्ठा gpio_chip *chip, अचिन्हित offset);
+	पूर्णांक (*direction_output)(काष्ठा gpio_chip *chip, अचिन्हित offset,
+				पूर्णांक value);
+	पूर्णांक (*request)(काष्ठा gpio_chip *chip, अचिन्हित offset);
+	व्योम (*मुक्त)(काष्ठा gpio_chip *chip, अचिन्हित offset);
+पूर्ण;
 
-struct npcm7xx_pinctrl {
-	struct pinctrl_dev	*pctldev;
-	struct device		*dev;
-	struct npcm7xx_gpio	gpio_bank[NPCM7XX_GPIO_BANK_NUM];
-	struct irq_domain	*domain;
-	struct regmap		*gcr_regmap;
-	void __iomem		*regs;
+काष्ठा npcm7xx_pinctrl अणु
+	काष्ठा pinctrl_dev	*pctldev;
+	काष्ठा device		*dev;
+	काष्ठा npcm7xx_gpio	gpio_bank[NPCM7XX_GPIO_BANK_NUM];
+	काष्ठा irq_करोमुख्य	*करोमुख्य;
+	काष्ठा regmap		*gcr_regmap;
+	व्योम __iomem		*regs;
 	u32			bank_num;
-};
+पूर्ण;
 
 /* GPIO handling in the pinctrl driver */
-static void npcm_gpio_set(struct gpio_chip *gc, void __iomem *reg,
-			  unsigned int pinmask)
-{
-	unsigned long flags;
-	unsigned long val;
+अटल व्योम npcm_gpio_set(काष्ठा gpio_chip *gc, व्योम __iomem *reg,
+			  अचिन्हित पूर्णांक pinmask)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ val;
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 
-	val = ioread32(reg) | pinmask;
-	iowrite32(val, reg);
+	val = ioपढ़ो32(reg) | pinmask;
+	ioग_लिखो32(val, reg);
 
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
-}
+पूर्ण
 
-static void npcm_gpio_clr(struct gpio_chip *gc, void __iomem *reg,
-			  unsigned int pinmask)
-{
-	unsigned long flags;
-	unsigned long val;
+अटल व्योम npcm_gpio_clr(काष्ठा gpio_chip *gc, व्योम __iomem *reg,
+			  अचिन्हित पूर्णांक pinmask)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ val;
 
 	spin_lock_irqsave(&gc->bgpio_lock, flags);
 
-	val = ioread32(reg) & ~pinmask;
-	iowrite32(val, reg);
+	val = ioपढ़ो32(reg) & ~pinmask;
+	ioग_लिखो32(val, reg);
 
 	spin_unlock_irqrestore(&gc->bgpio_lock, flags);
-}
+पूर्ण
 
-static void npcmgpio_dbg_show(struct seq_file *s, struct gpio_chip *chip)
-{
-	struct npcm7xx_gpio *bank = gpiochip_get_data(chip);
+अटल व्योम npcmgpio_dbg_show(काष्ठा seq_file *s, काष्ठा gpio_chip *chip)
+अणु
+	काष्ठा npcm7xx_gpio *bank = gpiochip_get_data(chip);
 
-	seq_printf(s, "-- module %d [gpio%d - %d]\n",
+	seq_म_लिखो(s, "-- module %d [gpio%d - %d]\n",
 		   bank->gc.base / bank->gc.ngpio,
 		   bank->gc.base,
 		   bank->gc.base + bank->gc.ngpio);
-	seq_printf(s, "DIN :%.8x DOUT:%.8x IE  :%.8x OE	 :%.8x\n",
-		   ioread32(bank->base + NPCM7XX_GP_N_DIN),
-		   ioread32(bank->base + NPCM7XX_GP_N_DOUT),
-		   ioread32(bank->base + NPCM7XX_GP_N_IEM),
-		   ioread32(bank->base + NPCM7XX_GP_N_OE));
-	seq_printf(s, "PU  :%.8x PD  :%.8x DB  :%.8x POL :%.8x\n",
-		   ioread32(bank->base + NPCM7XX_GP_N_PU),
-		   ioread32(bank->base + NPCM7XX_GP_N_PD),
-		   ioread32(bank->base + NPCM7XX_GP_N_DBNC),
-		   ioread32(bank->base + NPCM7XX_GP_N_POL));
-	seq_printf(s, "ETYP:%.8x EVBE:%.8x EVEN:%.8x EVST:%.8x\n",
-		   ioread32(bank->base + NPCM7XX_GP_N_EVTYP),
-		   ioread32(bank->base + NPCM7XX_GP_N_EVBE),
-		   ioread32(bank->base + NPCM7XX_GP_N_EVEN),
-		   ioread32(bank->base + NPCM7XX_GP_N_EVST));
-	seq_printf(s, "OTYP:%.8x OSRC:%.8x ODSC:%.8x\n",
-		   ioread32(bank->base + NPCM7XX_GP_N_OTYP),
-		   ioread32(bank->base + NPCM7XX_GP_N_OSRC),
-		   ioread32(bank->base + NPCM7XX_GP_N_ODSC));
-	seq_printf(s, "OBL0:%.8x OBL1:%.8x OBL2:%.8x OBL3:%.8x\n",
-		   ioread32(bank->base + NPCM7XX_GP_N_OBL0),
-		   ioread32(bank->base + NPCM7XX_GP_N_OBL1),
-		   ioread32(bank->base + NPCM7XX_GP_N_OBL2),
-		   ioread32(bank->base + NPCM7XX_GP_N_OBL3));
-	seq_printf(s, "SLCK:%.8x MLCK:%.8x\n",
-		   ioread32(bank->base + NPCM7XX_GP_N_SPLCK),
-		   ioread32(bank->base + NPCM7XX_GP_N_MPLCK));
-}
+	seq_म_लिखो(s, "DIN :%.8x DOUT:%.8x IE  :%.8x OE	 :%.8x\n",
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_DIN),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_DOUT),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_IEM),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_OE));
+	seq_म_लिखो(s, "PU  :%.8x PD  :%.8x DB  :%.8x POL :%.8x\n",
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_PU),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_PD),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_DBNC),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_POL));
+	seq_म_लिखो(s, "ETYP:%.8x EVBE:%.8x EVEN:%.8x EVST:%.8x\n",
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_EVTYP),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_EVBE),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_EVEN),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_EVST));
+	seq_म_लिखो(s, "OTYP:%.8x OSRC:%.8x ODSC:%.8x\n",
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_OTYP),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_OSRC),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_ODSC));
+	seq_म_लिखो(s, "OBL0:%.8x OBL1:%.8x OBL2:%.8x OBL3:%.8x\n",
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_OBL0),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_OBL1),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_OBL2),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_OBL3));
+	seq_म_लिखो(s, "SLCK:%.8x MLCK:%.8x\n",
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_SPLCK),
+		   ioपढ़ो32(bank->base + NPCM7XX_GP_N_MPLCK));
+पूर्ण
 
-static int npcmgpio_direction_input(struct gpio_chip *chip, unsigned int offset)
-{
-	struct npcm7xx_gpio *bank = gpiochip_get_data(chip);
-	int ret;
+अटल पूर्णांक npcmgpio_direction_input(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा npcm7xx_gpio *bank = gpiochip_get_data(chip);
+	पूर्णांक ret;
 
 	ret = pinctrl_gpio_direction_input(offset + chip->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return bank->direction_input(chip, offset);
-}
+	वापस bank->direction_input(chip, offset);
+पूर्ण
 
 /* Set GPIO to Output with initial value */
-static int npcmgpio_direction_output(struct gpio_chip *chip,
-				     unsigned int offset, int value)
-{
-	struct npcm7xx_gpio *bank = gpiochip_get_data(chip);
-	int ret;
+अटल पूर्णांक npcmgpio_direction_output(काष्ठा gpio_chip *chip,
+				     अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा npcm7xx_gpio *bank = gpiochip_get_data(chip);
+	पूर्णांक ret;
 
 	dev_dbg(chip->parent, "gpio_direction_output: offset%d = %x\n", offset,
 		value);
 
 	ret = pinctrl_gpio_direction_output(offset + chip->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return bank->direction_output(chip, offset, value);
-}
+	वापस bank->direction_output(chip, offset, value);
+पूर्ण
 
-static int npcmgpio_gpio_request(struct gpio_chip *chip, unsigned int offset)
-{
-	struct npcm7xx_gpio *bank = gpiochip_get_data(chip);
-	int ret;
+अटल पूर्णांक npcmgpio_gpio_request(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा npcm7xx_gpio *bank = gpiochip_get_data(chip);
+	पूर्णांक ret;
 
 	dev_dbg(chip->parent, "gpio_request: offset%d\n", offset);
 	ret = pinctrl_gpio_request(offset + chip->base);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return bank->request(chip, offset);
-}
+	वापस bank->request(chip, offset);
+पूर्ण
 
-static void npcmgpio_gpio_free(struct gpio_chip *chip, unsigned int offset)
-{
+अटल व्योम npcmgpio_gpio_मुक्त(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
 	dev_dbg(chip->parent, "gpio_free: offset%d\n", offset);
-	pinctrl_gpio_free(offset + chip->base);
-}
+	pinctrl_gpio_मुक्त(offset + chip->base);
+पूर्ण
 
-static void npcmgpio_irq_handler(struct irq_desc *desc)
-{
-	struct gpio_chip *gc;
-	struct irq_chip *chip;
-	struct npcm7xx_gpio *bank;
+अटल व्योम npcmgpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा gpio_chip *gc;
+	काष्ठा irq_chip *chip;
+	काष्ठा npcm7xx_gpio *bank;
 	u32 sts, en, bit;
 
 	gc = irq_desc_get_handler_data(desc);
@@ -224,298 +225,298 @@ static void npcmgpio_irq_handler(struct irq_desc *desc)
 	chip = irq_desc_get_chip(desc);
 
 	chained_irq_enter(chip, desc);
-	sts = ioread32(bank->base + NPCM7XX_GP_N_EVST);
-	en  = ioread32(bank->base + NPCM7XX_GP_N_EVEN);
+	sts = ioपढ़ो32(bank->base + NPCM7XX_GP_N_EVST);
+	en  = ioपढ़ो32(bank->base + NPCM7XX_GP_N_EVEN);
 	dev_dbg(chip->parent_device, "==> got irq sts %.8x %.8x\n", sts,
 		en);
 
 	sts &= en;
-	for_each_set_bit(bit, (const void *)&sts, NPCM7XX_GPIO_PER_BANK)
-		generic_handle_irq(irq_linear_revmap(gc->irq.domain, bit));
-	chained_irq_exit(chip, desc);
-}
+	क्रम_each_set_bit(bit, (स्थिर व्योम *)&sts, NPCM7XX_GPIO_PER_BANK)
+		generic_handle_irq(irq_linear_revmap(gc->irq.करोमुख्य, bit));
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-static int npcmgpio_set_irq_type(struct irq_data *d, unsigned int type)
-{
-	struct npcm7xx_gpio *bank =
+अटल पूर्णांक npcmgpio_set_irq_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा npcm7xx_gpio *bank =
 		gpiochip_get_data(irq_data_get_irq_chip_data(d));
-	unsigned int gpio = BIT(d->hwirq);
+	अचिन्हित पूर्णांक gpio = BIT(d->hwirq);
 
 	dev_dbg(d->chip->parent_device, "setirqtype: %u.%u = %u\n", gpio,
 		d->irq, type);
-	switch (type) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		dev_dbg(d->chip->parent_device, "edge.rising\n");
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_EVBE, gpio);
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_POL, gpio);
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		dev_dbg(d->chip->parent_device, "edge.falling\n");
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_EVBE, gpio);
 		npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_POL, gpio);
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		dev_dbg(d->chip->parent_device, "edge.both\n");
 		npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_EVBE, gpio);
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		dev_dbg(d->chip->parent_device, "level.low\n");
 		npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_POL, gpio);
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		dev_dbg(d->chip->parent_device, "level.high\n");
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_POL, gpio);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_dbg(d->chip->parent_device, "invalid irq type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (type & (IRQ_TYPE_LEVEL_HIGH | IRQ_TYPE_LEVEL_LOW)) {
+	अगर (type & (IRQ_TYPE_LEVEL_HIGH | IRQ_TYPE_LEVEL_LOW)) अणु
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_EVTYP, gpio);
 		irq_set_handler_locked(d, handle_level_irq);
-	} else if (type & (IRQ_TYPE_EDGE_BOTH | IRQ_TYPE_EDGE_RISING
-			   | IRQ_TYPE_EDGE_FALLING)) {
+	पूर्ण अन्यथा अगर (type & (IRQ_TYPE_EDGE_BOTH | IRQ_TYPE_EDGE_RISING
+			   | IRQ_TYPE_EDGE_FALLING)) अणु
 		npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_EVTYP, gpio);
 		irq_set_handler_locked(d, handle_edge_irq);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void npcmgpio_irq_ack(struct irq_data *d)
-{
-	struct npcm7xx_gpio *bank =
+अटल व्योम npcmgpio_irq_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा npcm7xx_gpio *bank =
 		gpiochip_get_data(irq_data_get_irq_chip_data(d));
-	unsigned int gpio = d->hwirq;
+	अचिन्हित पूर्णांक gpio = d->hwirq;
 
 	dev_dbg(d->chip->parent_device, "irq_ack: %u.%u\n", gpio, d->irq);
-	iowrite32(BIT(gpio), bank->base + NPCM7XX_GP_N_EVST);
-}
+	ioग_लिखो32(BIT(gpio), bank->base + NPCM7XX_GP_N_EVST);
+पूर्ण
 
-/* Disable GPIO interrupt */
-static void npcmgpio_irq_mask(struct irq_data *d)
-{
-	struct npcm7xx_gpio *bank =
+/* Disable GPIO पूर्णांकerrupt */
+अटल व्योम npcmgpio_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा npcm7xx_gpio *bank =
 		gpiochip_get_data(irq_data_get_irq_chip_data(d));
-	unsigned int gpio = d->hwirq;
+	अचिन्हित पूर्णांक gpio = d->hwirq;
 
 	/* Clear events */
 	dev_dbg(d->chip->parent_device, "irq_mask: %u.%u\n", gpio, d->irq);
-	iowrite32(BIT(gpio), bank->base + NPCM7XX_GP_N_EVENC);
-}
+	ioग_लिखो32(BIT(gpio), bank->base + NPCM7XX_GP_N_EVENC);
+पूर्ण
 
-/* Enable GPIO interrupt */
-static void npcmgpio_irq_unmask(struct irq_data *d)
-{
-	struct npcm7xx_gpio *bank =
+/* Enable GPIO पूर्णांकerrupt */
+अटल व्योम npcmgpio_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा npcm7xx_gpio *bank =
 		gpiochip_get_data(irq_data_get_irq_chip_data(d));
-	unsigned int gpio = d->hwirq;
+	अचिन्हित पूर्णांक gpio = d->hwirq;
 
 	/* Enable events */
 	dev_dbg(d->chip->parent_device, "irq_unmask: %u.%u\n", gpio, d->irq);
-	iowrite32(BIT(gpio), bank->base + NPCM7XX_GP_N_EVENS);
-}
+	ioग_लिखो32(BIT(gpio), bank->base + NPCM7XX_GP_N_EVENS);
+पूर्ण
 
-static unsigned int npcmgpio_irq_startup(struct irq_data *d)
-{
-	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
-	unsigned int gpio = d->hwirq;
+अटल अचिन्हित पूर्णांक npcmgpio_irq_startup(काष्ठा irq_data *d)
+अणु
+	काष्ठा gpio_chip *gc = irq_data_get_irq_chip_data(d);
+	अचिन्हित पूर्णांक gpio = d->hwirq;
 
-	/* active-high, input, clear interrupt, enable interrupt */
+	/* active-high, input, clear पूर्णांकerrupt, enable पूर्णांकerrupt */
 	dev_dbg(d->chip->parent_device, "startup: %u.%u\n", gpio, d->irq);
 	npcmgpio_direction_input(gc, gpio);
 	npcmgpio_irq_ack(d);
 	npcmgpio_irq_unmask(d);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_chip npcmgpio_irqchip = {
+अटल स्थिर काष्ठा irq_chip npcmgpio_irqchip = अणु
 	.name = "NPCM7XX-GPIO-IRQ",
 	.irq_ack = npcmgpio_irq_ack,
 	.irq_unmask = npcmgpio_irq_unmask,
 	.irq_mask = npcmgpio_irq_mask,
 	.irq_set_type = npcmgpio_set_irq_type,
 	.irq_startup = npcmgpio_irq_startup,
-};
+पूर्ण;
 
 /* pinmux handing in the pinctrl driver*/
-static const int smb0_pins[]  = { 115, 114 };
-static const int smb0b_pins[] = { 195, 194 };
-static const int smb0c_pins[] = { 202, 196 };
-static const int smb0d_pins[] = { 198, 199 };
-static const int smb0den_pins[] = { 197 };
+अटल स्थिर पूर्णांक smb0_pins[]  = अणु 115, 114 पूर्ण;
+अटल स्थिर पूर्णांक smb0b_pins[] = अणु 195, 194 पूर्ण;
+अटल स्थिर पूर्णांक smb0c_pins[] = अणु 202, 196 पूर्ण;
+अटल स्थिर पूर्णांक smb0d_pins[] = अणु 198, 199 पूर्ण;
+अटल स्थिर पूर्णांक smb0den_pins[] = अणु 197 पूर्ण;
 
-static const int smb1_pins[]  = { 117, 116 };
-static const int smb1b_pins[] = { 126, 127 };
-static const int smb1c_pins[] = { 124, 125 };
-static const int smb1d_pins[] = { 4, 5 };
+अटल स्थिर पूर्णांक smb1_pins[]  = अणु 117, 116 पूर्ण;
+अटल स्थिर पूर्णांक smb1b_pins[] = अणु 126, 127 पूर्ण;
+अटल स्थिर पूर्णांक smb1c_pins[] = अणु 124, 125 पूर्ण;
+अटल स्थिर पूर्णांक smb1d_pins[] = अणु 4, 5 पूर्ण;
 
-static const int smb2_pins[]  = { 119, 118 };
-static const int smb2b_pins[] = { 122, 123 };
-static const int smb2c_pins[] = { 120, 121 };
-static const int smb2d_pins[] = { 6, 7 };
+अटल स्थिर पूर्णांक smb2_pins[]  = अणु 119, 118 पूर्ण;
+अटल स्थिर पूर्णांक smb2b_pins[] = अणु 122, 123 पूर्ण;
+अटल स्थिर पूर्णांक smb2c_pins[] = अणु 120, 121 पूर्ण;
+अटल स्थिर पूर्णांक smb2d_pins[] = अणु 6, 7 पूर्ण;
 
-static const int smb3_pins[]  = { 30, 31 };
-static const int smb3b_pins[] = { 39, 40 };
-static const int smb3c_pins[] = { 37, 38 };
-static const int smb3d_pins[] = { 59, 60 };
+अटल स्थिर पूर्णांक smb3_pins[]  = अणु 30, 31 पूर्ण;
+अटल स्थिर पूर्णांक smb3b_pins[] = अणु 39, 40 पूर्ण;
+अटल स्थिर पूर्णांक smb3c_pins[] = अणु 37, 38 पूर्ण;
+अटल स्थिर पूर्णांक smb3d_pins[] = अणु 59, 60 पूर्ण;
 
-static const int smb4_pins[]  = { 28, 29 };
-static const int smb4b_pins[] = { 18, 19 };
-static const int smb4c_pins[] = { 20, 21 };
-static const int smb4d_pins[] = { 22, 23 };
-static const int smb4den_pins[] = { 17 };
+अटल स्थिर पूर्णांक smb4_pins[]  = अणु 28, 29 पूर्ण;
+अटल स्थिर पूर्णांक smb4b_pins[] = अणु 18, 19 पूर्ण;
+अटल स्थिर पूर्णांक smb4c_pins[] = अणु 20, 21 पूर्ण;
+अटल स्थिर पूर्णांक smb4d_pins[] = अणु 22, 23 पूर्ण;
+अटल स्थिर पूर्णांक smb4den_pins[] = अणु 17 पूर्ण;
 
-static const int smb5_pins[]  = { 26, 27 };
-static const int smb5b_pins[] = { 13, 12 };
-static const int smb5c_pins[] = { 15, 14 };
-static const int smb5d_pins[] = { 94, 93 };
-static const int ga20kbc_pins[] = { 94, 93 };
+अटल स्थिर पूर्णांक smb5_pins[]  = अणु 26, 27 पूर्ण;
+अटल स्थिर पूर्णांक smb5b_pins[] = अणु 13, 12 पूर्ण;
+अटल स्थिर पूर्णांक smb5c_pins[] = अणु 15, 14 पूर्ण;
+अटल स्थिर पूर्णांक smb5d_pins[] = अणु 94, 93 पूर्ण;
+अटल स्थिर पूर्णांक ga20kbc_pins[] = अणु 94, 93 पूर्ण;
 
-static const int smb6_pins[]  = { 172, 171 };
-static const int smb7_pins[]  = { 174, 173 };
-static const int smb8_pins[]  = { 129, 128 };
-static const int smb9_pins[]  = { 131, 130 };
-static const int smb10_pins[] = { 133, 132 };
-static const int smb11_pins[] = { 135, 134 };
-static const int smb12_pins[] = { 221, 220 };
-static const int smb13_pins[] = { 223, 222 };
-static const int smb14_pins[] = { 22, 23 };
-static const int smb15_pins[] = { 20, 21 };
+अटल स्थिर पूर्णांक smb6_pins[]  = अणु 172, 171 पूर्ण;
+अटल स्थिर पूर्णांक smb7_pins[]  = अणु 174, 173 पूर्ण;
+अटल स्थिर पूर्णांक smb8_pins[]  = अणु 129, 128 पूर्ण;
+अटल स्थिर पूर्णांक smb9_pins[]  = अणु 131, 130 पूर्ण;
+अटल स्थिर पूर्णांक smb10_pins[] = अणु 133, 132 पूर्ण;
+अटल स्थिर पूर्णांक smb11_pins[] = अणु 135, 134 पूर्ण;
+अटल स्थिर पूर्णांक smb12_pins[] = अणु 221, 220 पूर्ण;
+अटल स्थिर पूर्णांक smb13_pins[] = अणु 223, 222 पूर्ण;
+अटल स्थिर पूर्णांक smb14_pins[] = अणु 22, 23 पूर्ण;
+अटल स्थिर पूर्णांक smb15_pins[] = अणु 20, 21 पूर्ण;
 
-static const int fanin0_pins[] = { 64 };
-static const int fanin1_pins[] = { 65 };
-static const int fanin2_pins[] = { 66 };
-static const int fanin3_pins[] = { 67 };
-static const int fanin4_pins[] = { 68 };
-static const int fanin5_pins[] = { 69 };
-static const int fanin6_pins[] = { 70 };
-static const int fanin7_pins[] = { 71 };
-static const int fanin8_pins[] = { 72 };
-static const int fanin9_pins[] = { 73 };
-static const int fanin10_pins[] = { 74 };
-static const int fanin11_pins[] = { 75 };
-static const int fanin12_pins[] = { 76 };
-static const int fanin13_pins[] = { 77 };
-static const int fanin14_pins[] = { 78 };
-static const int fanin15_pins[] = { 79 };
-static const int faninx_pins[] = { 175, 176, 177, 203 };
+अटल स्थिर पूर्णांक fanin0_pins[] = अणु 64 पूर्ण;
+अटल स्थिर पूर्णांक fanin1_pins[] = अणु 65 पूर्ण;
+अटल स्थिर पूर्णांक fanin2_pins[] = अणु 66 पूर्ण;
+अटल स्थिर पूर्णांक fanin3_pins[] = अणु 67 पूर्ण;
+अटल स्थिर पूर्णांक fanin4_pins[] = अणु 68 पूर्ण;
+अटल स्थिर पूर्णांक fanin5_pins[] = अणु 69 पूर्ण;
+अटल स्थिर पूर्णांक fanin6_pins[] = अणु 70 पूर्ण;
+अटल स्थिर पूर्णांक fanin7_pins[] = अणु 71 पूर्ण;
+अटल स्थिर पूर्णांक fanin8_pins[] = अणु 72 पूर्ण;
+अटल स्थिर पूर्णांक fanin9_pins[] = अणु 73 पूर्ण;
+अटल स्थिर पूर्णांक fanin10_pins[] = अणु 74 पूर्ण;
+अटल स्थिर पूर्णांक fanin11_pins[] = अणु 75 पूर्ण;
+अटल स्थिर पूर्णांक fanin12_pins[] = अणु 76 पूर्ण;
+अटल स्थिर पूर्णांक fanin13_pins[] = अणु 77 पूर्ण;
+अटल स्थिर पूर्णांक fanin14_pins[] = अणु 78 पूर्ण;
+अटल स्थिर पूर्णांक fanin15_pins[] = अणु 79 पूर्ण;
+अटल स्थिर पूर्णांक faninx_pins[] = अणु 175, 176, 177, 203 पूर्ण;
 
-static const int pwm0_pins[] = { 80 };
-static const int pwm1_pins[] = { 81 };
-static const int pwm2_pins[] = { 82 };
-static const int pwm3_pins[] = { 83 };
-static const int pwm4_pins[] = { 144 };
-static const int pwm5_pins[] = { 145 };
-static const int pwm6_pins[] = { 146 };
-static const int pwm7_pins[] = { 147 };
+अटल स्थिर पूर्णांक pwm0_pins[] = अणु 80 पूर्ण;
+अटल स्थिर पूर्णांक pwm1_pins[] = अणु 81 पूर्ण;
+अटल स्थिर पूर्णांक pwm2_pins[] = अणु 82 पूर्ण;
+अटल स्थिर पूर्णांक pwm3_pins[] = अणु 83 पूर्ण;
+अटल स्थिर पूर्णांक pwm4_pins[] = अणु 144 पूर्ण;
+अटल स्थिर पूर्णांक pwm5_pins[] = अणु 145 पूर्ण;
+अटल स्थिर पूर्णांक pwm6_pins[] = अणु 146 पूर्ण;
+अटल स्थिर पूर्णांक pwm7_pins[] = अणु 147 पूर्ण;
 
-static const int uart1_pins[] = { 43, 44, 45, 46, 47, 61, 62, 63 };
-static const int uart2_pins[] = { 48, 49, 50, 51, 52, 53, 54, 55 };
+अटल स्थिर पूर्णांक uart1_pins[] = अणु 43, 44, 45, 46, 47, 61, 62, 63 पूर्ण;
+अटल स्थिर पूर्णांक uart2_pins[] = अणु 48, 49, 50, 51, 52, 53, 54, 55 पूर्ण;
 
 /* RGMII 1 pin group */
-static const int rg1_pins[] = { 96, 97, 98, 99, 100, 101, 102, 103, 104, 105,
-	106, 107 };
-/* RGMII 1 MD interface pin group */
-static const int rg1mdio_pins[] = { 108, 109 };
+अटल स्थिर पूर्णांक rg1_pins[] = अणु 96, 97, 98, 99, 100, 101, 102, 103, 104, 105,
+	106, 107 पूर्ण;
+/* RGMII 1 MD पूर्णांकerface pin group */
+अटल स्थिर पूर्णांक rg1mdio_pins[] = अणु 108, 109 पूर्ण;
 
 /* RGMII 2 pin group */
-static const int rg2_pins[] = { 110, 111, 112, 113, 208, 209, 210, 211, 212,
-	213, 214, 215 };
-/* RGMII 2 MD interface pin group */
-static const int rg2mdio_pins[] = { 216, 217 };
+अटल स्थिर पूर्णांक rg2_pins[] = अणु 110, 111, 112, 113, 208, 209, 210, 211, 212,
+	213, 214, 215 पूर्ण;
+/* RGMII 2 MD पूर्णांकerface pin group */
+अटल स्थिर पूर्णांक rg2mdio_pins[] = अणु 216, 217 पूर्ण;
 
-static const int ddr_pins[] = { 110, 111, 112, 113, 208, 209, 210, 211, 212,
-	213, 214, 215, 216, 217 };
+अटल स्थिर पूर्णांक ddr_pins[] = अणु 110, 111, 112, 113, 208, 209, 210, 211, 212,
+	213, 214, 215, 216, 217 पूर्ण;
 /* Serial I/O Expander 1 */
-static const int iox1_pins[] = { 0, 1, 2, 3 };
+अटल स्थिर पूर्णांक iox1_pins[] = अणु 0, 1, 2, 3 पूर्ण;
 /* Serial I/O Expander 2 */
-static const int iox2_pins[] = { 4, 5, 6, 7 };
+अटल स्थिर पूर्णांक iox2_pins[] = अणु 4, 5, 6, 7 पूर्ण;
 /* Host Serial I/O Expander 2 */
-static const int ioxh_pins[] = { 10, 11, 24, 25 };
+अटल स्थिर पूर्णांक ioxh_pins[] = अणु 10, 11, 24, 25 पूर्ण;
 
-static const int mmc_pins[] = { 152, 154, 156, 157, 158, 159 };
-static const int mmcwp_pins[] = { 153 };
-static const int mmccd_pins[] = { 155 };
-static const int mmcrst_pins[] = { 155 };
-static const int mmc8_pins[] = { 148, 149, 150, 151 };
+अटल स्थिर पूर्णांक mmc_pins[] = अणु 152, 154, 156, 157, 158, 159 पूर्ण;
+अटल स्थिर पूर्णांक mmcwp_pins[] = अणु 153 पूर्ण;
+अटल स्थिर पूर्णांक mmccd_pins[] = अणु 155 पूर्ण;
+अटल स्थिर पूर्णांक mmcrst_pins[] = अणु 155 पूर्ण;
+अटल स्थिर पूर्णांक mmc8_pins[] = अणु 148, 149, 150, 151 पूर्ण;
 
 /* RMII 1 pin groups */
-static const int r1_pins[] = { 178, 179, 180, 181, 182, 193, 201 };
-static const int r1err_pins[] = { 56 };
-static const int r1md_pins[] = { 57, 58 };
+अटल स्थिर पूर्णांक r1_pins[] = अणु 178, 179, 180, 181, 182, 193, 201 पूर्ण;
+अटल स्थिर पूर्णांक r1err_pins[] = अणु 56 पूर्ण;
+अटल स्थिर पूर्णांक r1md_pins[] = अणु 57, 58 पूर्ण;
 
 /* RMII 2 pin groups */
-static const int r2_pins[] = { 84, 85, 86, 87, 88, 89, 200 };
-static const int r2err_pins[] = { 90 };
-static const int r2md_pins[] = { 91, 92 };
+अटल स्थिर पूर्णांक r2_pins[] = अणु 84, 85, 86, 87, 88, 89, 200 पूर्ण;
+अटल स्थिर पूर्णांक r2err_pins[] = अणु 90 पूर्ण;
+अटल स्थिर पूर्णांक r2md_pins[] = अणु 91, 92 पूर्ण;
 
-static const int sd1_pins[] = { 136, 137, 138, 139, 140, 141, 142, 143 };
-static const int sd1pwr_pins[] = { 143 };
+अटल स्थिर पूर्णांक sd1_pins[] = अणु 136, 137, 138, 139, 140, 141, 142, 143 पूर्ण;
+अटल स्थिर पूर्णांक sd1pwr_pins[] = अणु 143 पूर्ण;
 
-static const int wdog1_pins[] = { 218 };
-static const int wdog2_pins[] = { 219 };
+अटल स्थिर पूर्णांक wकरोg1_pins[] = अणु 218 पूर्ण;
+अटल स्थिर पूर्णांक wकरोg2_pins[] = अणु 219 पूर्ण;
 
 /* BMC serial port 0 */
-static const int bmcuart0a_pins[] = { 41, 42 };
-static const int bmcuart0b_pins[] = { 48, 49 };
+अटल स्थिर पूर्णांक bmcuart0a_pins[] = अणु 41, 42 पूर्ण;
+अटल स्थिर पूर्णांक bmcuart0b_pins[] = अणु 48, 49 पूर्ण;
 
-static const int bmcuart1_pins[] = { 43, 44, 62, 63 };
+अटल स्थिर पूर्णांक bmcuart1_pins[] = अणु 43, 44, 62, 63 पूर्ण;
 
 /* System Control Interrupt and Power Management Event pin group */
-static const int scipme_pins[] = { 169 };
+अटल स्थिर पूर्णांक scipme_pins[] = अणु 169 पूर्ण;
 /* System Management Interrupt pin group */
-static const int sci_pins[] = { 170 };
+अटल स्थिर पूर्णांक sci_pins[] = अणु 170 पूर्ण;
 /* Serial Interrupt Line pin group */
-static const int serirq_pins[] = { 162 };
+अटल स्थिर पूर्णांक serirq_pins[] = अणु 162 पूर्ण;
 
-static const int clkout_pins[] = { 160 };
-static const int clkreq_pins[] = { 231 };
+अटल स्थिर पूर्णांक clkout_pins[] = अणु 160 पूर्ण;
+अटल स्थिर पूर्णांक clkreq_pins[] = अणु 231 पूर्ण;
 
-static const int jtag2_pins[] = { 43, 44, 45, 46, 47 };
+अटल स्थिर पूर्णांक jtag2_pins[] = अणु 43, 44, 45, 46, 47 पूर्ण;
 /* Graphics SPI Clock pin group */
-static const int gspi_pins[] = { 12, 13, 14, 15 };
+अटल स्थिर पूर्णांक gspi_pins[] = अणु 12, 13, 14, 15 पूर्ण;
 
-static const int spix_pins[] = { 224, 225, 226, 227, 229, 230 };
-static const int spixcs1_pins[] = { 228 };
+अटल स्थिर पूर्णांक spix_pins[] = अणु 224, 225, 226, 227, 229, 230 पूर्ण;
+अटल स्थिर पूर्णांक spixcs1_pins[] = अणु 228 पूर्ण;
 
-static const int pspi1_pins[] = { 175, 176, 177 };
-static const int pspi2_pins[] = { 17, 18, 19 };
+अटल स्थिर पूर्णांक pspi1_pins[] = अणु 175, 176, 177 पूर्ण;
+अटल स्थिर पूर्णांक pspi2_pins[] = अणु 17, 18, 19 पूर्ण;
 
-static const int spi0cs1_pins[] = { 32 };
+अटल स्थिर पूर्णांक spi0cs1_pins[] = अणु 32 पूर्ण;
 
-static const int spi3_pins[] = { 183, 184, 185, 186 };
-static const int spi3cs1_pins[] = { 187 };
-static const int spi3quad_pins[] = { 188, 189 };
-static const int spi3cs2_pins[] = { 188 };
-static const int spi3cs3_pins[] = { 189 };
+अटल स्थिर पूर्णांक spi3_pins[] = अणु 183, 184, 185, 186 पूर्ण;
+अटल स्थिर पूर्णांक spi3cs1_pins[] = अणु 187 पूर्ण;
+अटल स्थिर पूर्णांक spi3quad_pins[] = अणु 188, 189 पूर्ण;
+अटल स्थिर पूर्णांक spi3cs2_pins[] = अणु 188 पूर्ण;
+अटल स्थिर पूर्णांक spi3cs3_pins[] = अणु 189 पूर्ण;
 
-static const int ddc_pins[] = { 204, 205, 206, 207 };
+अटल स्थिर पूर्णांक ddc_pins[] = अणु 204, 205, 206, 207 पूर्ण;
 
-static const int lpc_pins[] = { 95, 161, 163, 164, 165, 166, 167 };
-static const int lpcclk_pins[] = { 168 };
-static const int espi_pins[] = { 95, 161, 163, 164, 165, 166, 167, 168 };
+अटल स्थिर पूर्णांक lpc_pins[] = अणु 95, 161, 163, 164, 165, 166, 167 पूर्ण;
+अटल स्थिर पूर्णांक lpcclk_pins[] = अणु 168 पूर्ण;
+अटल स्थिर पूर्णांक espi_pins[] = अणु 95, 161, 163, 164, 165, 166, 167, 168 पूर्ण;
 
-static const int lkgpo0_pins[] = { 16 };
-static const int lkgpo1_pins[] = { 8 };
-static const int lkgpo2_pins[] = { 9 };
+अटल स्थिर पूर्णांक lkgpo0_pins[] = अणु 16 पूर्ण;
+अटल स्थिर पूर्णांक lkgpo1_pins[] = अणु 8 पूर्ण;
+अटल स्थिर पूर्णांक lkgpo2_pins[] = अणु 9 पूर्ण;
 
-static const int nprd_smi_pins[] = { 190 };
+अटल स्थिर पूर्णांक nprd_smi_pins[] = अणु 190 पूर्ण;
 
 /*
  * pin:	     name, number
  * group:    name, npins,   pins
  * function: name, ngroups, groups
  */
-struct npcm7xx_group {
-	const char *name;
-	const unsigned int *pins;
-	int npins;
-};
+काष्ठा npcm7xx_group अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित पूर्णांक *pins;
+	पूर्णांक npins;
+पूर्ण;
 
-#define NPCM7XX_GRPS \
+#घोषणा NPCM7XX_GRPS \
 	NPCM7XX_GRP(smb0), \
 	NPCM7XX_GRP(smb0b), \
 	NPCM7XX_GRP(smb0c), \
@@ -605,8 +606,8 @@ struct npcm7xx_group {
 	NPCM7XX_GRP(r2md), \
 	NPCM7XX_GRP(sd1), \
 	NPCM7XX_GRP(sd1pwr), \
-	NPCM7XX_GRP(wdog1), \
-	NPCM7XX_GRP(wdog2), \
+	NPCM7XX_GRP(wकरोg1), \
+	NPCM7XX_GRP(wकरोg2), \
 	NPCM7XX_GRP(scipme), \
 	NPCM7XX_GRP(sci), \
 	NPCM7XX_GRP(serirq), \
@@ -633,31 +634,31 @@ struct npcm7xx_group {
 	NPCM7XX_GRP(nprd_smi), \
 	\
 
-enum {
-#define NPCM7XX_GRP(x) fn_ ## x
+क्रमागत अणु
+#घोषणा NPCM7XX_GRP(x) fn_ ## x
 	NPCM7XX_GRPS
-	/* add placeholder for none/gpio */
+	/* add placeholder क्रम none/gpio */
 	NPCM7XX_GRP(none),
 	NPCM7XX_GRP(gpio),
-#undef NPCM7XX_GRP
-};
+#अघोषित NPCM7XX_GRP
+पूर्ण;
 
-static struct npcm7xx_group npcm7xx_groups[] = {
-#define NPCM7XX_GRP(x) { .name = #x, .pins = x ## _pins, \
-			.npins = ARRAY_SIZE(x ## _pins) }
+अटल काष्ठा npcm7xx_group npcm7xx_groups[] = अणु
+#घोषणा NPCM7XX_GRP(x) अणु .name = #x, .pins = x ## _pins, \
+			.npins = ARRAY_SIZE(x ## _pins) पूर्ण
 	NPCM7XX_GRPS
-#undef NPCM7XX_GRP
-};
+#अघोषित NPCM7XX_GRP
+पूर्ण;
 
-#define NPCM7XX_SFUNC(a) NPCM7XX_FUNC(a, #a)
-#define NPCM7XX_FUNC(a, b...) static const char *a ## _grp[] = { b }
-#define NPCM7XX_MKFUNC(nm) { .name = #nm, .ngroups = ARRAY_SIZE(nm ## _grp), \
-			.groups = nm ## _grp }
-struct npcm7xx_func {
-	const char *name;
-	const unsigned int ngroups;
-	const char *const *groups;
-};
+#घोषणा NPCM7XX_SFUNC(a) NPCM7XX_FUNC(a, #a)
+#घोषणा NPCM7XX_FUNC(a, b...) अटल स्थिर अक्षर *a ## _grp[] = अणु b पूर्ण
+#घोषणा NPCM7XX_MKFUNC(nm) अणु .name = #nm, .ngroups = ARRAY_SIZE(nm ## _grp), \
+			.groups = nm ## _grp पूर्ण
+काष्ठा npcm7xx_func अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित पूर्णांक ngroups;
+	स्थिर अक्षर *स्थिर *groups;
+पूर्ण;
 
 NPCM7XX_SFUNC(smb0);
 NPCM7XX_SFUNC(smb0b);
@@ -748,8 +749,8 @@ NPCM7XX_SFUNC(r2err);
 NPCM7XX_SFUNC(r2md);
 NPCM7XX_SFUNC(sd1);
 NPCM7XX_SFUNC(sd1pwr);
-NPCM7XX_SFUNC(wdog1);
-NPCM7XX_SFUNC(wdog2);
+NPCM7XX_SFUNC(wकरोg1);
+NPCM7XX_SFUNC(wकरोg2);
 NPCM7XX_SFUNC(scipme);
 NPCM7XX_SFUNC(sci);
 NPCM7XX_SFUNC(serirq);
@@ -776,7 +777,7 @@ NPCM7XX_SFUNC(lkgpo2);
 NPCM7XX_SFUNC(nprd_smi);
 
 /* Function names */
-static struct npcm7xx_func npcm7xx_funcs[] = {
+अटल काष्ठा npcm7xx_func npcm7xx_funcs[] = अणु
 	NPCM7XX_MKFUNC(smb0),
 	NPCM7XX_MKFUNC(smb0b),
 	NPCM7XX_MKFUNC(smb0c),
@@ -866,8 +867,8 @@ static struct npcm7xx_func npcm7xx_funcs[] = {
 	NPCM7XX_MKFUNC(r2md),
 	NPCM7XX_MKFUNC(sd1),
 	NPCM7XX_MKFUNC(sd1pwr),
-	NPCM7XX_MKFUNC(wdog1),
-	NPCM7XX_MKFUNC(wdog2),
+	NPCM7XX_MKFUNC(wकरोg1),
+	NPCM7XX_MKFUNC(wकरोg2),
 	NPCM7XX_MKFUNC(scipme),
 	NPCM7XX_MKFUNC(sci),
 	NPCM7XX_MKFUNC(serirq),
@@ -892,37 +893,37 @@ static struct npcm7xx_func npcm7xx_funcs[] = {
 	NPCM7XX_MKFUNC(lkgpo1),
 	NPCM7XX_MKFUNC(lkgpo2),
 	NPCM7XX_MKFUNC(nprd_smi),
-};
+पूर्ण;
 
-#define NPCM7XX_PINCFG(a, b, c, d, e, f, g, h, i, j, k) \
-	[a] { .fn0 = fn_ ## b, .reg0 = NPCM7XX_GCR_ ## c, .bit0 = d, \
+#घोषणा NPCM7XX_PINCFG(a, b, c, d, e, f, g, h, i, j, k) \
+	[a] अणु .fn0 = fn_ ## b, .reg0 = NPCM7XX_GCR_ ## c, .bit0 = d, \
 			.fn1 = fn_ ## e, .reg1 = NPCM7XX_GCR_ ## f, .bit1 = g, \
 			.fn2 = fn_ ## h, .reg2 = NPCM7XX_GCR_ ## i, .bit2 = j, \
-			.flag = k }
+			.flag = k पूर्ण
 
 /* Drive strength controlled by NPCM7XX_GP_N_ODSC */
-#define DRIVE_STRENGTH_LO_SHIFT		8
-#define DRIVE_STRENGTH_HI_SHIFT		12
-#define DRIVE_STRENGTH_MASK		0x0000FF00
+#घोषणा DRIVE_STRENGTH_LO_SHIFT		8
+#घोषणा DRIVE_STRENGTH_HI_SHIFT		12
+#घोषणा DRIVE_STRENGTH_MASK		0x0000FF00
 
-#define DS(lo, hi)	(((lo) << DRIVE_STRENGTH_LO_SHIFT) | \
+#घोषणा DS(lo, hi)	(((lo) << DRIVE_STRENGTH_LO_SHIFT) | \
 			 ((hi) << DRIVE_STRENGTH_HI_SHIFT))
-#define DSLO(x)		(((x) >> DRIVE_STRENGTH_LO_SHIFT) & 0xF)
-#define DSHI(x)		(((x) >> DRIVE_STRENGTH_HI_SHIFT) & 0xF)
+#घोषणा DSLO(x)		(((x) >> DRIVE_STRENGTH_LO_SHIFT) & 0xF)
+#घोषणा DSHI(x)		(((x) >> DRIVE_STRENGTH_HI_SHIFT) & 0xF)
 
-#define GPI		0x1 /* Not GPO */
-#define GPO		0x2 /* Not GPI */
-#define SLEW		0x4 /* Has Slew Control, NPCM7XX_GP_N_OSRC */
-#define SLEWLPC		0x8 /* Has Slew Control, SRCNT.3 */
+#घोषणा GPI		0x1 /* Not GPO */
+#घोषणा GPO		0x2 /* Not GPI */
+#घोषणा SLEW		0x4 /* Has Slew Control, NPCM7XX_GP_N_OSRC */
+#घोषणा SLEWLPC		0x8 /* Has Slew Control, SRCNT.3 */
 
-struct npcm7xx_pincfg {
-	int flag;
-	int fn0, reg0, bit0;
-	int fn1, reg1, bit1;
-	int fn2, reg2, bit2;
-};
+काष्ठा npcm7xx_pincfg अणु
+	पूर्णांक flag;
+	पूर्णांक fn0, reg0, bit0;
+	पूर्णांक fn1, reg1, bit1;
+	पूर्णांक fn2, reg2, bit2;
+पूर्ण;
 
-static const struct npcm7xx_pincfg pincfg[] = {
+अटल स्थिर काष्ठा npcm7xx_pincfg pincfg[] = अणु
 	/*		PIN	  FUNCTION 1		   FUNCTION 2		  FUNCTION 3	    FLAGS */
 	NPCM7XX_PINCFG(0,	 iox1, MFSEL1, 30,	  none, NONE, 0,	none, NONE, 0,	     0),
 	NPCM7XX_PINCFG(1,	 iox1, MFSEL1, 30,	  none, NONE, 0,	none, NONE, 0,	     DS(8, 12)),
@@ -1146,8 +1147,8 @@ static const struct npcm7xx_pincfg pincfg[] = {
 	NPCM7XX_PINCFG(215,       rg2, MFSEL4, 24,         ddr, MFSEL3, 26,     none, NONE, 0,       0),
 	NPCM7XX_PINCFG(216,   rg2mdio, MFSEL4, 23,         ddr, MFSEL3, 26,     none, NONE, 0,       0),
 	NPCM7XX_PINCFG(217,   rg2mdio, MFSEL4, 23,         ddr, MFSEL3, 26,     none, NONE, 0,       0),
-	NPCM7XX_PINCFG(218,     wdog1, MFSEL3, 19,        none, NONE, 0,	none, NONE, 0,	     0),
-	NPCM7XX_PINCFG(219,     wdog2, MFSEL3, 20,        none, NONE, 0,	none, NONE, 0,	     DS(4, 8)),
+	NPCM7XX_PINCFG(218,     wकरोg1, MFSEL3, 19,        none, NONE, 0,	none, NONE, 0,	     0),
+	NPCM7XX_PINCFG(219,     wकरोg2, MFSEL3, 20,        none, NONE, 0,	none, NONE, 0,	     DS(4, 8)),
 	NPCM7XX_PINCFG(220,	smb12, MFSEL3, 5,	  none, NONE, 0,	none, NONE, 0,	     0),
 	NPCM7XX_PINCFG(221,	smb12, MFSEL3, 5,	  none, NONE, 0,	none, NONE, 0,	     0),
 	NPCM7XX_PINCFG(222,     smb13, MFSEL3, 6,         none, NONE, 0,	none, NONE, 0,	     0),
@@ -1161,13 +1162,13 @@ static const struct npcm7xx_pincfg pincfg[] = {
 	NPCM7XX_PINCFG(229,	 spix, MFSEL4, 27,        none, NONE, 0,	none, NONE, 0,	     DS(8, 12) | SLEW),
 	NPCM7XX_PINCFG(230,	 spix, MFSEL4, 27,        none, NONE, 0,	none, NONE, 0,	     DS(8, 12) | SLEW),
 	NPCM7XX_PINCFG(231,    clkreq, MFSEL4, 9,         none, NONE, 0,        none, NONE, 0,	     DS(8, 12)),
-	NPCM7XX_PINCFG(253,	 none, NONE, 0,		  none, NONE, 0,	none, NONE, 0,	     GPI), /* SDHC1 power */
-	NPCM7XX_PINCFG(254,	 none, NONE, 0,		  none, NONE, 0,	none, NONE, 0,	     GPI), /* SDHC2 power */
+	NPCM7XX_PINCFG(253,	 none, NONE, 0,		  none, NONE, 0,	none, NONE, 0,	     GPI), /* SDHC1 घातer */
+	NPCM7XX_PINCFG(254,	 none, NONE, 0,		  none, NONE, 0,	none, NONE, 0,	     GPI), /* SDHC2 घातer */
 	NPCM7XX_PINCFG(255,	 none, NONE, 0,		  none, NONE, 0,	none, NONE, 0,	     GPI), /* DACOSEL */
-};
+पूर्ण;
 
 /* number, name, drv_data */
-static const struct pinctrl_pin_desc npcm7xx_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc npcm7xx_pins[] = अणु
 	PINCTRL_PIN(0,	"GPIO0/IOX1DI"),
 	PINCTRL_PIN(1,	"GPIO1/IOX1LD"),
 	PINCTRL_PIN(2,	"GPIO2/IOX1CK"),
@@ -1406,238 +1407,238 @@ static const struct pinctrl_pin_desc npcm7xx_pins[] = {
 	PINCTRL_PIN(230, "GPIO230/SPIXD3"),
 	PINCTRL_PIN(231, "GPIO231/nCLKREQ"),
 	PINCTRL_PIN(255, "GPI255/DACOSEL"),
-};
+पूर्ण;
 
 /* Enable mode in pin group */
-static void npcm7xx_setfunc(struct regmap *gcr_regmap, const unsigned int *pin,
-			    int pin_number, int mode)
-{
-	const struct npcm7xx_pincfg *cfg;
-	int i;
+अटल व्योम npcm7xx_setfunc(काष्ठा regmap *gcr_regmap, स्थिर अचिन्हित पूर्णांक *pin,
+			    पूर्णांक pin_number, पूर्णांक mode)
+अणु
+	स्थिर काष्ठा npcm7xx_pincfg *cfg;
+	पूर्णांक i;
 
-	for (i = 0 ; i < pin_number ; i++) {
+	क्रम (i = 0 ; i < pin_number ; i++) अणु
 		cfg = &pincfg[pin[i]];
-		if (mode == fn_gpio || cfg->fn0 == mode || cfg->fn1 == mode || cfg->fn2 == mode) {
-			if (cfg->reg0)
+		अगर (mode == fn_gpio || cfg->fn0 == mode || cfg->fn1 == mode || cfg->fn2 == mode) अणु
+			अगर (cfg->reg0)
 				regmap_update_bits(gcr_regmap, cfg->reg0,
 						   BIT(cfg->bit0),
 						   !!(cfg->fn0 == mode) ?
 						   BIT(cfg->bit0) : 0);
-			if (cfg->reg1)
+			अगर (cfg->reg1)
 				regmap_update_bits(gcr_regmap, cfg->reg1,
 						   BIT(cfg->bit1),
 						   !!(cfg->fn1 == mode) ?
 						   BIT(cfg->bit1) : 0);
-			if (cfg->reg2)
+			अगर (cfg->reg2)
 				regmap_update_bits(gcr_regmap, cfg->reg2,
 						   BIT(cfg->bit2),
 						   !!(cfg->fn2 == mode) ?
 						   BIT(cfg->bit2) : 0);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /* Get slew rate of pin (high/low) */
-static int npcm7xx_get_slew_rate(struct npcm7xx_gpio *bank,
-				 struct regmap *gcr_regmap, unsigned int pin)
-{
+अटल पूर्णांक npcm7xx_get_slew_rate(काष्ठा npcm7xx_gpio *bank,
+				 काष्ठा regmap *gcr_regmap, अचिन्हित पूर्णांक pin)
+अणु
 	u32 val;
-	int gpio = (pin % bank->gc.ngpio);
-	unsigned long pinmask = BIT(gpio);
+	पूर्णांक gpio = (pin % bank->gc.ngpio);
+	अचिन्हित दीर्घ pinmask = BIT(gpio);
 
-	if (pincfg[pin].flag & SLEW)
-		return ioread32(bank->base + NPCM7XX_GP_N_OSRC)
+	अगर (pincfg[pin].flag & SLEW)
+		वापस ioपढ़ो32(bank->base + NPCM7XX_GP_N_OSRC)
 		& pinmask;
-	/* LPC Slew rate in SRCNT register */
-	if (pincfg[pin].flag & SLEWLPC) {
-		regmap_read(gcr_regmap, NPCM7XX_GCR_SRCNT, &val);
-		return !!(val & SRCNT_ESPI);
-	}
+	/* LPC Slew rate in SRCNT रेजिस्टर */
+	अगर (pincfg[pin].flag & SLEWLPC) अणु
+		regmap_पढ़ो(gcr_regmap, NPCM7XX_GCR_SRCNT, &val);
+		वापस !!(val & SRCNT_ESPI);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /* Set slew rate of pin (high/low) */
-static int npcm7xx_set_slew_rate(struct npcm7xx_gpio *bank,
-				 struct regmap *gcr_regmap, unsigned int pin,
-				 int arg)
-{
-	int gpio = BIT(pin % bank->gc.ngpio);
+अटल पूर्णांक npcm7xx_set_slew_rate(काष्ठा npcm7xx_gpio *bank,
+				 काष्ठा regmap *gcr_regmap, अचिन्हित पूर्णांक pin,
+				 पूर्णांक arg)
+अणु
+	पूर्णांक gpio = BIT(pin % bank->gc.ngpio);
 
-	if (pincfg[pin].flag & SLEW) {
-		switch (arg) {
-		case 0:
+	अगर (pincfg[pin].flag & SLEW) अणु
+		चयन (arg) अणु
+		हाल 0:
 			npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_OSRC,
 				      gpio);
-			return 0;
-		case 1:
+			वापस 0;
+		हाल 1:
 			npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_OSRC,
 				      gpio);
-			return 0;
-		default:
-			return -EINVAL;
-		}
-	}
-	/* LPC Slew rate in SRCNT register */
-	if (pincfg[pin].flag & SLEWLPC) {
-		switch (arg) {
-		case 0:
+			वापस 0;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	/* LPC Slew rate in SRCNT रेजिस्टर */
+	अगर (pincfg[pin].flag & SLEWLPC) अणु
+		चयन (arg) अणु
+		हाल 0:
 			regmap_update_bits(gcr_regmap, NPCM7XX_GCR_SRCNT,
 					   SRCNT_ESPI, 0);
-			return 0;
-		case 1:
+			वापस 0;
+		हाल 1:
 			regmap_update_bits(gcr_regmap, NPCM7XX_GCR_SRCNT,
 					   SRCNT_ESPI, SRCNT_ESPI);
-			return 0;
-		default:
-			return -EINVAL;
-		}
-	}
+			वापस 0;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* Get drive strength for a pin, if supported */
-static int npcm7xx_get_drive_strength(struct pinctrl_dev *pctldev,
-				      unsigned int pin)
-{
-	struct npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
-	struct npcm7xx_gpio *bank =
+/* Get drive strength क्रम a pin, अगर supported */
+अटल पूर्णांक npcm7xx_get_drive_strength(काष्ठा pinctrl_dev *pctldev,
+				      अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा npcm7xx_gpio *bank =
 		&npcm->gpio_bank[pin / NPCM7XX_GPIO_PER_BANK];
-	int gpio = (pin % bank->gc.ngpio);
-	unsigned long pinmask = BIT(gpio);
+	पूर्णांक gpio = (pin % bank->gc.ngpio);
+	अचिन्हित दीर्घ pinmask = BIT(gpio);
 	u32 ds = 0;
-	int flg, val;
+	पूर्णांक flg, val;
 
 	flg = pincfg[pin].flag;
-	if (flg & DRIVE_STRENGTH_MASK) {
-		/* Get standard reading */
-		val = ioread32(bank->base + NPCM7XX_GP_N_ODSC)
+	अगर (flg & DRIVE_STRENGTH_MASK) अणु
+		/* Get standard पढ़ोing */
+		val = ioपढ़ो32(bank->base + NPCM7XX_GP_N_ODSC)
 		& pinmask;
 		ds = val ? DSHI(flg) : DSLO(flg);
 		dev_dbg(bank->gc.parent,
 			"pin %d strength %d = %d\n", pin, val, ds);
-		return ds;
-	}
+		वापस ds;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-/* Set drive strength for a pin, if supported */
-static int npcm7xx_set_drive_strength(struct npcm7xx_pinctrl *npcm,
-				      unsigned int pin, int nval)
-{
-	int v;
-	struct npcm7xx_gpio *bank =
+/* Set drive strength क्रम a pin, अगर supported */
+अटल पूर्णांक npcm7xx_set_drive_strength(काष्ठा npcm7xx_pinctrl *npcm,
+				      अचिन्हित पूर्णांक pin, पूर्णांक nval)
+अणु
+	पूर्णांक v;
+	काष्ठा npcm7xx_gpio *bank =
 		&npcm->gpio_bank[pin / NPCM7XX_GPIO_PER_BANK];
-	int gpio = BIT(pin % bank->gc.ngpio);
+	पूर्णांक gpio = BIT(pin % bank->gc.ngpio);
 
 	v = (pincfg[pin].flag & DRIVE_STRENGTH_MASK);
-	if (!nval || !v)
-		return -ENOTSUPP;
-	if (DSLO(v) == nval) {
+	अगर (!nval || !v)
+		वापस -ENOTSUPP;
+	अगर (DSLO(v) == nval) अणु
 		dev_dbg(bank->gc.parent,
 			"setting pin %d to low strength [%d]\n", pin, nval);
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_ODSC, gpio);
-		return 0;
-	} else if (DSHI(v) == nval) {
+		वापस 0;
+	पूर्ण अन्यथा अगर (DSHI(v) == nval) अणु
 		dev_dbg(bank->gc.parent,
 			"setting pin %d to high strength [%d]\n", pin, nval);
 		npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_ODSC, gpio);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -ENOTSUPP;
-}
+	वापस -ENOTSUPP;
+पूर्ण
 
 /* pinctrl_ops */
-static void npcm7xx_pin_dbg_show(struct pinctrl_dev *pctldev,
-				 struct seq_file *s, unsigned int offset)
-{
-	seq_printf(s, "pinctrl_ops.dbg: %d", offset);
-}
+अटल व्योम npcm7xx_pin_dbg_show(काष्ठा pinctrl_dev *pctldev,
+				 काष्ठा seq_file *s, अचिन्हित पूर्णांक offset)
+अणु
+	seq_म_लिखो(s, "pinctrl_ops.dbg: %d", offset);
+पूर्ण
 
-static int npcm7xx_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक npcm7xx_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
 
 	dev_dbg(npcm->dev, "group size: %d\n", ARRAY_SIZE(npcm7xx_groups));
-	return ARRAY_SIZE(npcm7xx_groups);
-}
+	वापस ARRAY_SIZE(npcm7xx_groups);
+पूर्ण
 
-static const char *npcm7xx_get_group_name(struct pinctrl_dev *pctldev,
-					  unsigned int selector)
-{
-	return npcm7xx_groups[selector].name;
-}
+अटल स्थिर अक्षर *npcm7xx_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					  अचिन्हित पूर्णांक selector)
+अणु
+	वापस npcm7xx_groups[selector].name;
+पूर्ण
 
-static int npcm7xx_get_group_pins(struct pinctrl_dev *pctldev,
-				  unsigned int selector,
-				  const unsigned int **pins,
-				  unsigned int *npins)
-{
+अटल पूर्णांक npcm7xx_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित पूर्णांक selector,
+				  स्थिर अचिन्हित पूर्णांक **pins,
+				  अचिन्हित पूर्णांक *npins)
+अणु
 	*npins = npcm7xx_groups[selector].npins;
 	*pins  = npcm7xx_groups[selector].pins;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npcm7xx_dt_node_to_map(struct pinctrl_dev *pctldev,
-				  struct device_node *np_config,
-				  struct pinctrl_map **map,
+अटल पूर्णांक npcm7xx_dt_node_to_map(काष्ठा pinctrl_dev *pctldev,
+				  काष्ठा device_node *np_config,
+				  काष्ठा pinctrl_map **map,
 				  u32 *num_maps)
-{
-	struct npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
+अणु
+	काष्ठा npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
 
 	dev_dbg(npcm->dev, "dt_node_to_map: %s\n", np_config->name);
-	return pinconf_generic_dt_node_to_map(pctldev, np_config,
+	वापस pinconf_generic_dt_node_to_map(pctldev, np_config,
 					      map, num_maps,
 					      PIN_MAP_TYPE_INVALID);
-}
+पूर्ण
 
-static void npcm7xx_dt_free_map(struct pinctrl_dev *pctldev,
-				struct pinctrl_map *map, u32 num_maps)
-{
-	kfree(map);
-}
+अटल व्योम npcm7xx_dt_मुक्त_map(काष्ठा pinctrl_dev *pctldev,
+				काष्ठा pinctrl_map *map, u32 num_maps)
+अणु
+	kमुक्त(map);
+पूर्ण
 
-static const struct pinctrl_ops npcm7xx_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops npcm7xx_pinctrl_ops = अणु
 	.get_groups_count = npcm7xx_get_groups_count,
 	.get_group_name = npcm7xx_get_group_name,
 	.get_group_pins = npcm7xx_get_group_pins,
 	.pin_dbg_show = npcm7xx_pin_dbg_show,
 	.dt_node_to_map = npcm7xx_dt_node_to_map,
-	.dt_free_map = npcm7xx_dt_free_map,
-};
+	.dt_मुक्त_map = npcm7xx_dt_मुक्त_map,
+पूर्ण;
 
 /* pinmux_ops  */
-static int npcm7xx_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	return ARRAY_SIZE(npcm7xx_funcs);
-}
+अटल पूर्णांक npcm7xx_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	वापस ARRAY_SIZE(npcm7xx_funcs);
+पूर्ण
 
-static const char *npcm7xx_get_function_name(struct pinctrl_dev *pctldev,
-					     unsigned int function)
-{
-	return npcm7xx_funcs[function].name;
-}
+अटल स्थिर अक्षर *npcm7xx_get_function_name(काष्ठा pinctrl_dev *pctldev,
+					     अचिन्हित पूर्णांक function)
+अणु
+	वापस npcm7xx_funcs[function].name;
+पूर्ण
 
-static int npcm7xx_get_function_groups(struct pinctrl_dev *pctldev,
-				       unsigned int function,
-				       const char * const **groups,
-				       unsigned int * const ngroups)
-{
+अटल पूर्णांक npcm7xx_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+				       अचिन्हित पूर्णांक function,
+				       स्थिर अक्षर * स्थिर **groups,
+				       अचिन्हित पूर्णांक * स्थिर ngroups)
+अणु
 	*ngroups = npcm7xx_funcs[function].ngroups;
 	*groups	 = npcm7xx_funcs[function].groups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npcm7xx_pinmux_set_mux(struct pinctrl_dev *pctldev,
-				  unsigned int function,
-				  unsigned int group)
-{
-	struct npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक npcm7xx_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित पूर्णांक function,
+				  अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
 
 	dev_dbg(npcm->dev, "set_mux: %d, %d[%s]\n", function, group,
 		npcm7xx_groups[group].name);
@@ -1645,211 +1646,211 @@ static int npcm7xx_pinmux_set_mux(struct pinctrl_dev *pctldev,
 	npcm7xx_setfunc(npcm->gcr_regmap, npcm7xx_groups[group].pins,
 			npcm7xx_groups[group].npins, group);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npcm7xx_gpio_request_enable(struct pinctrl_dev *pctldev,
-				       struct pinctrl_gpio_range *range,
-				       unsigned int offset)
-{
-	struct npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक npcm7xx_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+				       काष्ठा pinctrl_gpio_range *range,
+				       अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
 
-	if (!range) {
+	अगर (!range) अणु
 		dev_err(npcm->dev, "invalid range\n");
-		return -EINVAL;
-	}
-	if (!range->gc) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (!range->gc) अणु
 		dev_err(npcm->dev, "invalid gpiochip\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	npcm7xx_setfunc(npcm->gcr_regmap, &offset, 1, fn_gpio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Release GPIO back to pinctrl mode */
-static void npcm7xx_gpio_request_free(struct pinctrl_dev *pctldev,
-				      struct pinctrl_gpio_range *range,
-				      unsigned int offset)
-{
-	struct npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
-	int virq;
+अटल व्योम npcm7xx_gpio_request_मुक्त(काष्ठा pinctrl_dev *pctldev,
+				      काष्ठा pinctrl_gpio_range *range,
+				      अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक virq;
 
-	virq = irq_find_mapping(npcm->domain, offset);
-	if (virq)
+	virq = irq_find_mapping(npcm->करोमुख्य, offset);
+	अगर (virq)
 		irq_dispose_mapping(virq);
-}
+पूर्ण
 
 /* Set GPIO direction */
-static int npcm_gpio_set_direction(struct pinctrl_dev *pctldev,
-				   struct pinctrl_gpio_range *range,
-				   unsigned int offset, bool input)
-{
-	struct npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
-	struct npcm7xx_gpio *bank =
+अटल पूर्णांक npcm_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+				   काष्ठा pinctrl_gpio_range *range,
+				   अचिन्हित पूर्णांक offset, bool input)
+अणु
+	काष्ठा npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा npcm7xx_gpio *bank =
 		&npcm->gpio_bank[offset / NPCM7XX_GPIO_PER_BANK];
-	int gpio = BIT(offset % bank->gc.ngpio);
+	पूर्णांक gpio = BIT(offset % bank->gc.ngpio);
 
 	dev_dbg(bank->gc.parent, "GPIO Set Direction: %d = %d\n", offset,
 		input);
-	if (input)
-		iowrite32(gpio, bank->base + NPCM7XX_GP_N_OEC);
-	else
-		iowrite32(gpio, bank->base + NPCM7XX_GP_N_OES);
+	अगर (input)
+		ioग_लिखो32(gpio, bank->base + NPCM7XX_GP_N_OEC);
+	अन्यथा
+		ioग_लिखो32(gpio, bank->base + NPCM7XX_GP_N_OES);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops npcm7xx_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops npcm7xx_pinmux_ops = अणु
 	.get_functions_count = npcm7xx_get_functions_count,
 	.get_function_name = npcm7xx_get_function_name,
 	.get_function_groups = npcm7xx_get_function_groups,
 	.set_mux = npcm7xx_pinmux_set_mux,
 	.gpio_request_enable = npcm7xx_gpio_request_enable,
-	.gpio_disable_free = npcm7xx_gpio_request_free,
+	.gpio_disable_मुक्त = npcm7xx_gpio_request_मुक्त,
 	.gpio_set_direction = npcm_gpio_set_direction,
-};
+पूर्ण;
 
 /* pinconf_ops */
-static int npcm7xx_config_get(struct pinctrl_dev *pctldev, unsigned int pin,
-			      unsigned long *config)
-{
-	enum pin_config_param param = pinconf_to_config_param(*config);
-	struct npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
-	struct npcm7xx_gpio *bank =
+अटल पूर्णांक npcm7xx_config_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			      अचिन्हित दीर्घ *config)
+अणु
+	क्रमागत pin_config_param param = pinconf_to_config_param(*config);
+	काष्ठा npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा npcm7xx_gpio *bank =
 		&npcm->gpio_bank[pin / NPCM7XX_GPIO_PER_BANK];
-	int gpio = (pin % bank->gc.ngpio);
-	unsigned long pinmask = BIT(gpio);
+	पूर्णांक gpio = (pin % bank->gc.ngpio);
+	अचिन्हित दीर्घ pinmask = BIT(gpio);
 	u32 ie, oe, pu, pd;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
-	case PIN_CONFIG_BIAS_PULL_UP:
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		pu = ioread32(bank->base + NPCM7XX_GP_N_PU) & pinmask;
-		pd = ioread32(bank->base + NPCM7XX_GP_N_PD) & pinmask;
-		if (param == PIN_CONFIG_BIAS_DISABLE)
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		pu = ioपढ़ो32(bank->base + NPCM7XX_GP_N_PU) & pinmask;
+		pd = ioपढ़ो32(bank->base + NPCM7XX_GP_N_PD) & pinmask;
+		अगर (param == PIN_CONFIG_BIAS_DISABLE)
 			rc = (!pu && !pd);
-		else if (param == PIN_CONFIG_BIAS_PULL_UP)
+		अन्यथा अगर (param == PIN_CONFIG_BIAS_PULL_UP)
 			rc = (pu && !pd);
-		else if (param == PIN_CONFIG_BIAS_PULL_DOWN)
+		अन्यथा अगर (param == PIN_CONFIG_BIAS_PULL_DOWN)
 			rc = (!pu && pd);
-		break;
-	case PIN_CONFIG_OUTPUT:
-	case PIN_CONFIG_INPUT_ENABLE:
-		ie = ioread32(bank->base + NPCM7XX_GP_N_IEM) & pinmask;
-		oe = ioread32(bank->base + NPCM7XX_GP_N_OE) & pinmask;
-		if (param == PIN_CONFIG_INPUT_ENABLE)
+		अवरोध;
+	हाल PIN_CONFIG_OUTPUT:
+	हाल PIN_CONFIG_INPUT_ENABLE:
+		ie = ioपढ़ो32(bank->base + NPCM7XX_GP_N_IEM) & pinmask;
+		oe = ioपढ़ो32(bank->base + NPCM7XX_GP_N_OE) & pinmask;
+		अगर (param == PIN_CONFIG_INPUT_ENABLE)
 			rc = (ie && !oe);
-		else if (param == PIN_CONFIG_OUTPUT)
+		अन्यथा अगर (param == PIN_CONFIG_OUTPUT)
 			rc = (!ie && oe);
-		break;
-	case PIN_CONFIG_DRIVE_PUSH_PULL:
-		rc = !(ioread32(bank->base + NPCM7XX_GP_N_OTYP) & pinmask);
-		break;
-	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		rc = ioread32(bank->base + NPCM7XX_GP_N_OTYP) & pinmask;
-		break;
-	case PIN_CONFIG_INPUT_DEBOUNCE:
-		rc = ioread32(bank->base + NPCM7XX_GP_N_DBNC) & pinmask;
-		break;
-	case PIN_CONFIG_DRIVE_STRENGTH:
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_PUSH_PULL:
+		rc = !(ioपढ़ो32(bank->base + NPCM7XX_GP_N_OTYP) & pinmask);
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		rc = ioपढ़ो32(bank->base + NPCM7XX_GP_N_OTYP) & pinmask;
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_DEBOUNCE:
+		rc = ioपढ़ो32(bank->base + NPCM7XX_GP_N_DBNC) & pinmask;
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
 		rc = npcm7xx_get_drive_strength(pctldev, pin);
-		if (rc)
+		अगर (rc)
 			*config = pinconf_to_config_packed(param, rc);
-		break;
-	case PIN_CONFIG_SLEW_RATE:
+		अवरोध;
+	हाल PIN_CONFIG_SLEW_RATE:
 		rc = npcm7xx_get_slew_rate(bank, npcm->gcr_regmap, pin);
-		if (rc >= 0)
+		अगर (rc >= 0)
 			*config = pinconf_to_config_packed(param, rc);
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (!rc)
-		return -EINVAL;
+	अगर (!rc)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npcm7xx_config_set_one(struct npcm7xx_pinctrl *npcm,
-				  unsigned int pin, unsigned long config)
-{
-	enum pin_config_param param = pinconf_to_config_param(config);
+अटल पूर्णांक npcm7xx_config_set_one(काष्ठा npcm7xx_pinctrl *npcm,
+				  अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ config)
+अणु
+	क्रमागत pin_config_param param = pinconf_to_config_param(config);
 	u16 arg = pinconf_to_config_argument(config);
-	struct npcm7xx_gpio *bank =
+	काष्ठा npcm7xx_gpio *bank =
 		&npcm->gpio_bank[pin / NPCM7XX_GPIO_PER_BANK];
-	int gpio = BIT(pin % bank->gc.ngpio);
+	पूर्णांक gpio = BIT(pin % bank->gc.ngpio);
 
 	dev_dbg(bank->gc.parent, "param=%d %d[GPIO]\n", param, pin);
-	switch (param) {
-	case PIN_CONFIG_BIAS_DISABLE:
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_DISABLE:
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_PU, gpio);
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_PD, gpio);
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_PU, gpio);
 		npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_PD, gpio);
-		break;
-	case PIN_CONFIG_BIAS_PULL_UP:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_UP:
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_PD, gpio);
 		npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_PU, gpio);
-		break;
-	case PIN_CONFIG_INPUT_ENABLE:
-		iowrite32(gpio, bank->base + NPCM7XX_GP_N_OEC);
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_ENABLE:
+		ioग_लिखो32(gpio, bank->base + NPCM7XX_GP_N_OEC);
 		bank->direction_input(&bank->gc, pin % bank->gc.ngpio);
-		break;
-	case PIN_CONFIG_OUTPUT:
-		iowrite32(gpio, bank->base + NPCM7XX_GP_N_OES);
+		अवरोध;
+	हाल PIN_CONFIG_OUTPUT:
+		ioग_लिखो32(gpio, bank->base + NPCM7XX_GP_N_OES);
 		bank->direction_output(&bank->gc, pin % bank->gc.ngpio, arg);
-		break;
-	case PIN_CONFIG_DRIVE_PUSH_PULL:
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_PUSH_PULL:
 		npcm_gpio_clr(&bank->gc, bank->base + NPCM7XX_GP_N_OTYP, gpio);
-		break;
-	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
 		npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_OTYP, gpio);
-		break;
-	case PIN_CONFIG_INPUT_DEBOUNCE:
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_DEBOUNCE:
 		npcm_gpio_set(&bank->gc, bank->base + NPCM7XX_GP_N_DBNC, gpio);
-		break;
-	case PIN_CONFIG_SLEW_RATE:
-		return npcm7xx_set_slew_rate(bank, npcm->gcr_regmap, pin, arg);
-	case PIN_CONFIG_DRIVE_STRENGTH:
-		return npcm7xx_set_drive_strength(npcm, pin, arg);
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	हाल PIN_CONFIG_SLEW_RATE:
+		वापस npcm7xx_set_slew_rate(bank, npcm->gcr_regmap, pin, arg);
+	हाल PIN_CONFIG_DRIVE_STRENGTH:
+		वापस npcm7xx_set_drive_strength(npcm, pin, arg);
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Set multiple configuration settings for a pin */
-static int npcm7xx_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
-			      unsigned long *configs, unsigned int num_configs)
-{
-	struct npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
-	int rc;
+/* Set multiple configuration settings क्रम a pin */
+अटल पूर्णांक npcm7xx_config_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक pin,
+			      अचिन्हित दीर्घ *configs, अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा npcm7xx_pinctrl *npcm = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक rc;
 
-	while (num_configs--) {
+	जबतक (num_configs--) अणु
 		rc = npcm7xx_config_set_one(npcm, pin, *configs++);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops npcm7xx_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops npcm7xx_pinconf_ops = अणु
 	.is_generic = true,
 	.pin_config_get = npcm7xx_config_get,
 	.pin_config_set = npcm7xx_config_set,
-};
+पूर्ण;
 
 /* pinctrl_desc */
-static struct pinctrl_desc npcm7xx_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc npcm7xx_pinctrl_desc = अणु
 	.name = "npcm7xx-pinctrl",
 	.pins = npcm7xx_pins,
 	.npins = ARRAY_SIZE(npcm7xx_pins),
@@ -1857,35 +1858,35 @@ static struct pinctrl_desc npcm7xx_pinctrl_desc = {
 	.pmxops = &npcm7xx_pinmux_ops,
 	.confops = &npcm7xx_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int npcm7xx_gpio_of(struct npcm7xx_pinctrl *pctrl)
-{
-	int ret = -ENXIO;
-	struct resource res;
-	int id = 0, irq;
-	struct device_node *np;
-	struct of_phandle_args pinspec;
+अटल पूर्णांक npcm7xx_gpio_of(काष्ठा npcm7xx_pinctrl *pctrl)
+अणु
+	पूर्णांक ret = -ENXIO;
+	काष्ठा resource res;
+	पूर्णांक id = 0, irq;
+	काष्ठा device_node *np;
+	काष्ठा of_phandle_args pinspec;
 
-	for_each_available_child_of_node(pctrl->dev->of_node, np)
-		if (of_find_property(np, "gpio-controller", NULL)) {
+	क्रम_each_available_child_of_node(pctrl->dev->of_node, np)
+		अगर (of_find_property(np, "gpio-controller", शून्य)) अणु
 			ret = of_address_to_resource(np, 0, &res);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(pctrl->dev,
 					"Resource fail for GPIO bank %u\n", id);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
 			pctrl->gpio_bank[id].base =
 				ioremap(res.start, resource_size(&res));
 
 			irq = irq_of_parse_and_map(np, 0);
-			if (irq < 0) {
+			अगर (irq < 0) अणु
 				dev_err(pctrl->dev,
 					"No IRQ for GPIO bank %u\n", id);
 				ret = irq;
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
 			ret = bgpio_init(&pctrl->gpio_bank[id].gc,
 					 pctrl->dev, 4,
@@ -1893,25 +1894,25 @@ static int npcm7xx_gpio_of(struct npcm7xx_pinctrl *pctrl)
 					 NPCM7XX_GP_N_DIN,
 					 pctrl->gpio_bank[id].base +
 					 NPCM7XX_GP_N_DOUT,
-					 NULL,
-					 NULL,
+					 शून्य,
+					 शून्य,
 					 pctrl->gpio_bank[id].base +
 					 NPCM7XX_GP_N_IEM,
 					 BGPIOF_READ_OUTPUT_REG_SET);
-			if (ret) {
+			अगर (ret) अणु
 				dev_err(pctrl->dev, "bgpio_init() failed\n");
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
 			ret = of_parse_phandle_with_fixed_args(np,
 							       "gpio-ranges", 3,
 							       0, &pinspec);
-			if (ret < 0) {
+			अगर (ret < 0) अणु
 				dev_err(pctrl->dev,
 					"gpio-ranges fail for GPIO bank %u\n",
 					id);
-				return ret;
-			}
+				वापस ret;
+			पूर्ण
 
 			pctrl->gpio_bank[id].irq = irq;
 			pctrl->gpio_bank[id].irq_chip = npcmgpio_irqchip;
@@ -1923,10 +1924,10 @@ static int npcm7xx_gpio_of(struct npcm7xx_pinctrl *pctrl)
 			pctrl->gpio_bank[id].gc.ngpio = pinspec.args[2];
 			pctrl->gpio_bank[id].gc.owner = THIS_MODULE;
 			pctrl->gpio_bank[id].gc.label =
-				devm_kasprintf(pctrl->dev, GFP_KERNEL, "%pOF",
+				devm_kaप्र_लिखो(pctrl->dev, GFP_KERNEL, "%pOF",
 					       np);
-			if (pctrl->gpio_bank[id].gc.label == NULL)
-				return -ENOMEM;
+			अगर (pctrl->gpio_bank[id].gc.label == शून्य)
+				वापस -ENOMEM;
 
 			pctrl->gpio_bank[id].gc.dbg_show = npcmgpio_dbg_show;
 			pctrl->gpio_bank[id].direction_input =
@@ -1940,127 +1941,127 @@ static int npcm7xx_gpio_of(struct npcm7xx_pinctrl *pctrl)
 			pctrl->gpio_bank[id].request =
 				pctrl->gpio_bank[id].gc.request;
 			pctrl->gpio_bank[id].gc.request = npcmgpio_gpio_request;
-			pctrl->gpio_bank[id].gc.free = npcmgpio_gpio_free;
+			pctrl->gpio_bank[id].gc.मुक्त = npcmgpio_gpio_मुक्त;
 			pctrl->gpio_bank[id].gc.of_node = np;
 			id++;
-		}
+		पूर्ण
 
 	pctrl->bank_num = id;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int npcm7xx_gpio_register(struct npcm7xx_pinctrl *pctrl)
-{
-	int ret, id;
+अटल पूर्णांक npcm7xx_gpio_रेजिस्टर(काष्ठा npcm7xx_pinctrl *pctrl)
+अणु
+	पूर्णांक ret, id;
 
-	for (id = 0 ; id < pctrl->bank_num ; id++) {
-		struct gpio_irq_chip *girq;
+	क्रम (id = 0 ; id < pctrl->bank_num ; id++) अणु
+		काष्ठा gpio_irq_chip *girq;
 
 		girq = &pctrl->gpio_bank[id].gc.irq;
 		girq->chip = &pctrl->gpio_bank[id].irq_chip;
 		girq->parent_handler = npcmgpio_irq_handler;
 		girq->num_parents = 1;
-		girq->parents = devm_kcalloc(pctrl->dev, 1,
-					     sizeof(*girq->parents),
+		girq->parents = devm_kसुस्मृति(pctrl->dev, 1,
+					     माप(*girq->parents),
 					     GFP_KERNEL);
-		if (!girq->parents) {
+		अगर (!girq->parents) अणु
 			ret = -ENOMEM;
-			goto err_register;
-		}
+			जाओ err_रेजिस्टर;
+		पूर्ण
 		girq->parents[0] = pctrl->gpio_bank[id].irq;
-		girq->default_type = IRQ_TYPE_NONE;
+		girq->शेष_type = IRQ_TYPE_NONE;
 		girq->handler = handle_level_irq;
 		ret = devm_gpiochip_add_data(pctrl->dev,
 					     &pctrl->gpio_bank[id].gc,
 					     &pctrl->gpio_bank[id]);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(pctrl->dev, "Failed to add GPIO chip %u\n", id);
-			goto err_register;
-		}
+			जाओ err_रेजिस्टर;
+		पूर्ण
 
 		ret = gpiochip_add_pin_range(&pctrl->gpio_bank[id].gc,
 					     dev_name(pctrl->dev),
 					     pctrl->gpio_bank[id].pinctrl_id,
 					     pctrl->gpio_bank[id].gc.base,
 					     pctrl->gpio_bank[id].gc.ngpio);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(pctrl->dev, "Failed to add GPIO bank %u\n", id);
-			gpiochip_remove(&pctrl->gpio_bank[id].gc);
-			goto err_register;
-		}
-	}
+			gpiochip_हटाओ(&pctrl->gpio_bank[id].gc);
+			जाओ err_रेजिस्टर;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_register:
-	for (; id > 0; id--)
-		gpiochip_remove(&pctrl->gpio_bank[id - 1].gc);
+err_रेजिस्टर:
+	क्रम (; id > 0; id--)
+		gpiochip_हटाओ(&pctrl->gpio_bank[id - 1].gc);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int npcm7xx_pinctrl_probe(struct platform_device *pdev)
-{
-	struct npcm7xx_pinctrl *pctrl;
-	int ret;
+अटल पूर्णांक npcm7xx_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा npcm7xx_pinctrl *pctrl;
+	पूर्णांक ret;
 
-	pctrl = devm_kzalloc(&pdev->dev, sizeof(*pctrl), GFP_KERNEL);
-	if (!pctrl)
-		return -ENOMEM;
+	pctrl = devm_kzalloc(&pdev->dev, माप(*pctrl), GFP_KERNEL);
+	अगर (!pctrl)
+		वापस -ENOMEM;
 
 	pctrl->dev = &pdev->dev;
 	dev_set_drvdata(&pdev->dev, pctrl);
 
 	pctrl->gcr_regmap =
 		syscon_regmap_lookup_by_compatible("nuvoton,npcm750-gcr");
-	if (IS_ERR(pctrl->gcr_regmap)) {
+	अगर (IS_ERR(pctrl->gcr_regmap)) अणु
 		dev_err(pctrl->dev, "didn't find nuvoton,npcm750-gcr\n");
-		return PTR_ERR(pctrl->gcr_regmap);
-	}
+		वापस PTR_ERR(pctrl->gcr_regmap);
+	पूर्ण
 
 	ret = npcm7xx_gpio_of(pctrl);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(pctrl->dev, "Failed to gpio dt-binding %u\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	pctrl->pctldev = devm_pinctrl_register(&pdev->dev,
+	pctrl->pctldev = devm_pinctrl_रेजिस्टर(&pdev->dev,
 					       &npcm7xx_pinctrl_desc, pctrl);
-	if (IS_ERR(pctrl->pctldev)) {
+	अगर (IS_ERR(pctrl->pctldev)) अणु
 		dev_err(&pdev->dev, "Failed to register pinctrl device\n");
-		return PTR_ERR(pctrl->pctldev);
-	}
+		वापस PTR_ERR(pctrl->pctldev);
+	पूर्ण
 
-	ret = npcm7xx_gpio_register(pctrl);
-	if (ret < 0) {
+	ret = npcm7xx_gpio_रेजिस्टर(pctrl);
+	अगर (ret < 0) अणु
 		dev_err(pctrl->dev, "Failed to register gpio %u\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pr_info("NPCM7xx Pinctrl driver probed\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id npcm7xx_pinctrl_match[] = {
-	{ .compatible = "nuvoton,npcm750-pinctrl" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id npcm7xx_pinctrl_match[] = अणु
+	अणु .compatible = "nuvoton,npcm750-pinctrl" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, npcm7xx_pinctrl_match);
 
-static struct platform_driver npcm7xx_pinctrl_driver = {
+अटल काष्ठा platक्रमm_driver npcm7xx_pinctrl_driver = अणु
 	.probe = npcm7xx_pinctrl_probe,
-	.driver = {
+	.driver = अणु
 		.name = "npcm7xx-pinctrl",
 		.of_match_table = npcm7xx_pinctrl_match,
 		.suppress_bind_attrs = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init npcm7xx_pinctrl_register(void)
-{
-	return platform_driver_register(&npcm7xx_pinctrl_driver);
-}
-arch_initcall(npcm7xx_pinctrl_register);
+अटल पूर्णांक __init npcm7xx_pinctrl_रेजिस्टर(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&npcm7xx_pinctrl_driver);
+पूर्ण
+arch_initcall(npcm7xx_pinctrl_रेजिस्टर);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("jordan_hargrave@dell.com");

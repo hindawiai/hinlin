@@ -1,165 +1,166 @@
+<शैली गुरु>
 /*
- * llc_core.c - Minimum needed routines for sap handling and module init/exit
+ * llc_core.c - Minimum needed routines क्रम sap handling and module init/निकास
  *
  * Copyright (c) 1997 by Procom Technology, Inc.
- * 		 2001-2003 by Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+ * 		 2001-2003 by Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
  *
- * This program can be redistributed or modified under the terms of the
+ * This program can be redistributed or modअगरied under the terms of the
  * GNU General Public License as published by the Free Software Foundation.
  * This program is distributed without any warranty or implied warranty
- * of merchantability or fitness for a particular purpose.
+ * of merchantability or fitness क्रम a particular purpose.
  *
- * See the GNU General Public License for more details.
+ * See the GNU General Public License क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/interrupt.h>
-#include <linux/if_ether.h>
-#include <linux/netdevice.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <net/net_namespace.h>
-#include <net/llc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/llc.h>
 
 LIST_HEAD(llc_sap_list);
-static DEFINE_SPINLOCK(llc_sap_list_lock);
+अटल DEFINE_SPINLOCK(llc_sap_list_lock);
 
 /**
  *	llc_sap_alloc - allocates and initializes sap.
  *
  *	Allocates and initializes sap.
  */
-static struct llc_sap *llc_sap_alloc(void)
-{
-	struct llc_sap *sap = kzalloc(sizeof(*sap), GFP_ATOMIC);
-	int i;
+अटल काष्ठा llc_sap *llc_sap_alloc(व्योम)
+अणु
+	काष्ठा llc_sap *sap = kzalloc(माप(*sap), GFP_ATOMIC);
+	पूर्णांक i;
 
-	if (sap) {
+	अगर (sap) अणु
 		/* sap->laddr.mac - leave as a null, it's filled by bind */
 		sap->state = LLC_SAP_STATE_ACTIVE;
 		spin_lock_init(&sap->sk_lock);
-		for (i = 0; i < LLC_SK_LADDR_HASH_ENTRIES; i++)
-			INIT_HLIST_NULLS_HEAD(&sap->sk_laddr_hash[i], i);
+		क्रम (i = 0; i < LLC_SK_LADDR_HASH_ENTRIES; i++)
+			INIT_HLIST_शून्यS_HEAD(&sap->sk_laddr_hash[i], i);
 		refcount_set(&sap->refcnt, 1);
-	}
-	return sap;
-}
+	पूर्ण
+	वापस sap;
+पूर्ण
 
-static struct llc_sap *__llc_sap_find(unsigned char sap_value)
-{
-	struct llc_sap *sap;
+अटल काष्ठा llc_sap *__llc_sap_find(अचिन्हित अक्षर sap_value)
+अणु
+	काष्ठा llc_sap *sap;
 
-	list_for_each_entry(sap, &llc_sap_list, node)
-		if (sap->laddr.lsap == sap_value)
-			goto out;
-	sap = NULL;
+	list_क्रम_each_entry(sap, &llc_sap_list, node)
+		अगर (sap->laddr.lsap == sap_value)
+			जाओ out;
+	sap = शून्य;
 out:
-	return sap;
-}
+	वापस sap;
+पूर्ण
 
 /**
  *	llc_sap_find - searches a SAP in station
  *	@sap_value: sap to be found
  *
- *	Searches for a sap in the sap list of the LLC's station upon the sap ID.
- *	If the sap is found it will be refcounted and the user will have to do
+ *	Searches क्रम a sap in the sap list of the LLC's station upon the sap ID.
+ *	If the sap is found it will be refcounted and the user will have to करो
  *	a llc_sap_put after use.
- *	Returns the sap or %NULL if not found.
+ *	Returns the sap or %शून्य अगर not found.
  */
-struct llc_sap *llc_sap_find(unsigned char sap_value)
-{
-	struct llc_sap *sap;
+काष्ठा llc_sap *llc_sap_find(अचिन्हित अक्षर sap_value)
+अणु
+	काष्ठा llc_sap *sap;
 
-	rcu_read_lock_bh();
+	rcu_पढ़ो_lock_bh();
 	sap = __llc_sap_find(sap_value);
-	if (!sap || !llc_sap_hold_safe(sap))
-		sap = NULL;
-	rcu_read_unlock_bh();
-	return sap;
-}
+	अगर (!sap || !llc_sap_hold_safe(sap))
+		sap = शून्य;
+	rcu_पढ़ो_unlock_bh();
+	वापस sap;
+पूर्ण
 
 /**
- *	llc_sap_open - open interface to the upper layers.
+ *	llc_sap_खोलो - खोलो पूर्णांकerface to the upper layers.
  *	@lsap: SAP number.
- *	@func: rcv func for datalink protos
+ *	@func: rcv func क्रम datalink protos
  *
  *	Interface function to upper layer. Each one who wants to get a SAP
- *	(for example NetBEUI) should call this function. Returns the opened
- *	SAP for success, NULL for failure.
+ *	(क्रम example NetBEUI) should call this function. Returns the खोलोed
+ *	SAP क्रम success, शून्य क्रम failure.
  */
-struct llc_sap *llc_sap_open(unsigned char lsap,
-			     int (*func)(struct sk_buff *skb,
-					 struct net_device *dev,
-					 struct packet_type *pt,
-					 struct net_device *orig_dev))
-{
-	struct llc_sap *sap = NULL;
+काष्ठा llc_sap *llc_sap_खोलो(अचिन्हित अक्षर lsap,
+			     पूर्णांक (*func)(काष्ठा sk_buff *skb,
+					 काष्ठा net_device *dev,
+					 काष्ठा packet_type *pt,
+					 काष्ठा net_device *orig_dev))
+अणु
+	काष्ठा llc_sap *sap = शून्य;
 
 	spin_lock_bh(&llc_sap_list_lock);
-	if (__llc_sap_find(lsap)) /* SAP already exists */
-		goto out;
+	अगर (__llc_sap_find(lsap)) /* SAP alपढ़ोy exists */
+		जाओ out;
 	sap = llc_sap_alloc();
-	if (!sap)
-		goto out;
+	अगर (!sap)
+		जाओ out;
 	sap->laddr.lsap = lsap;
 	sap->rcv_func	= func;
 	list_add_tail_rcu(&sap->node, &llc_sap_list);
 out:
 	spin_unlock_bh(&llc_sap_list_lock);
-	return sap;
-}
+	वापस sap;
+पूर्ण
 
 /**
- *	llc_sap_close - close interface for upper layers.
- *	@sap: SAP to be closed.
+ *	llc_sap_बंद - बंद पूर्णांकerface क्रम upper layers.
+ *	@sap: SAP to be बंदd.
  *
- *	Close interface function to upper layer. Each one who wants to
- *	close an open SAP (for example NetBEUI) should call this function.
+ *	Close पूर्णांकerface function to upper layer. Each one who wants to
+ *	बंद an खोलो SAP (क्रम example NetBEUI) should call this function.
  * 	Removes this sap from the list of saps in the station and then
- * 	frees the memory for this sap.
+ * 	मुक्तs the memory क्रम this sap.
  */
-void llc_sap_close(struct llc_sap *sap)
-{
+व्योम llc_sap_बंद(काष्ठा llc_sap *sap)
+अणु
 	WARN_ON(sap->sk_count);
 
 	spin_lock_bh(&llc_sap_list_lock);
 	list_del_rcu(&sap->node);
 	spin_unlock_bh(&llc_sap_list_lock);
 
-	kfree_rcu(sap, rcu);
-}
+	kमुक्त_rcu(sap, rcu);
+पूर्ण
 
-static struct packet_type llc_packet_type __read_mostly = {
+अटल काष्ठा packet_type llc_packet_type __पढ़ो_mostly = अणु
 	.type = cpu_to_be16(ETH_P_802_2),
 	.func = llc_rcv,
-};
+पूर्ण;
 
-static struct packet_type llc_tr_packet_type __read_mostly = {
+अटल काष्ठा packet_type llc_tr_packet_type __पढ़ो_mostly = अणु
 	.type = cpu_to_be16(ETH_P_TR_802_2),
 	.func = llc_rcv,
-};
+पूर्ण;
 
-static int __init llc_init(void)
-{
+अटल पूर्णांक __init llc_init(व्योम)
+अणु
 	dev_add_pack(&llc_packet_type);
 	dev_add_pack(&llc_tr_packet_type);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit llc_exit(void)
-{
-	dev_remove_pack(&llc_packet_type);
-	dev_remove_pack(&llc_tr_packet_type);
-}
+अटल व्योम __निकास llc_निकास(व्योम)
+अणु
+	dev_हटाओ_pack(&llc_packet_type);
+	dev_हटाओ_pack(&llc_tr_packet_type);
+पूर्ण
 
 module_init(llc_init);
-module_exit(llc_exit);
+module_निकास(llc_निकास);
 
 EXPORT_SYMBOL(llc_sap_list);
 EXPORT_SYMBOL(llc_sap_find);
-EXPORT_SYMBOL(llc_sap_open);
-EXPORT_SYMBOL(llc_sap_close);
+EXPORT_SYMBOL(llc_sap_खोलो);
+EXPORT_SYMBOL(llc_sap_बंद);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Procom 1997, Jay Schullist 2001, Arnaldo C. Melo 2001-2003");

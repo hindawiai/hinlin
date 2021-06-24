@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef INTEL_RC6_H
-#define INTEL_RC6_H
+#अगर_अघोषित INTEL_RC6_H
+#घोषणा INTEL_RC6_H
 
-#include "i915_reg.h"
+#समावेश "i915_reg.h"
 
-struct intel_engine_cs;
-struct intel_rc6;
+काष्ठा पूर्णांकel_engine_cs;
+काष्ठा पूर्णांकel_rc6;
 
-void intel_rc6_init(struct intel_rc6 *rc6);
-void intel_rc6_fini(struct intel_rc6 *rc6);
+व्योम पूर्णांकel_rc6_init(काष्ठा पूर्णांकel_rc6 *rc6);
+व्योम पूर्णांकel_rc6_fini(काष्ठा पूर्णांकel_rc6 *rc6);
 
-void intel_rc6_unpark(struct intel_rc6 *rc6);
-void intel_rc6_park(struct intel_rc6 *rc6);
+व्योम पूर्णांकel_rc6_unpark(काष्ठा पूर्णांकel_rc6 *rc6);
+व्योम पूर्णांकel_rc6_park(काष्ठा पूर्णांकel_rc6 *rc6);
 
-void intel_rc6_sanitize(struct intel_rc6 *rc6);
-void intel_rc6_enable(struct intel_rc6 *rc6);
-void intel_rc6_disable(struct intel_rc6 *rc6);
+व्योम पूर्णांकel_rc6_sanitize(काष्ठा पूर्णांकel_rc6 *rc6);
+व्योम पूर्णांकel_rc6_enable(काष्ठा पूर्णांकel_rc6 *rc6);
+व्योम पूर्णांकel_rc6_disable(काष्ठा पूर्णांकel_rc6 *rc6);
 
-u64 intel_rc6_residency_ns(struct intel_rc6 *rc6, i915_reg_t reg);
-u64 intel_rc6_residency_us(struct intel_rc6 *rc6, i915_reg_t reg);
+u64 पूर्णांकel_rc6_residency_ns(काष्ठा पूर्णांकel_rc6 *rc6, i915_reg_t reg);
+u64 पूर्णांकel_rc6_residency_us(काष्ठा पूर्णांकel_rc6 *rc6, i915_reg_t reg);
 
-#endif /* INTEL_RC6_H */
+#पूर्ण_अगर /* INTEL_RC6_H */

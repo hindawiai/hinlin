@@ -1,133 +1,134 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* smp.h: Sparc specific SMP stuff.
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* smp.h: Sparc specअगरic SMP stuff.
  *
  * Copyright (C) 1996 David S. Miller (davem@caip.rutgers.edu)
  */
 
-#ifndef _SPARC_SMP_H
-#define _SPARC_SMP_H
+#अगर_अघोषित _SPARC_SMP_H
+#घोषणा _SPARC_SMP_H
 
-#include <linux/threads.h>
-#include <asm/head.h>
+#समावेश <linux/thपढ़ोs.h>
+#समावेश <यंत्र/head.h>
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <linux/cpumask.h>
+#समावेश <linux/cpumask.h>
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-#include <asm/ptrace.h>
-#include <asm/asi.h>
-#include <linux/atomic.h>
+#समावेश <यंत्र/ptrace.h>
+#समावेश <यंत्र/asi.h>
+#समावेश <linux/atomic.h>
 
 /*
  *	Private routines/data
  */
 
-extern unsigned char boot_cpu_id;
-extern volatile unsigned long cpu_callin_map[NR_CPUS];
-extern cpumask_t smp_commenced_mask;
-extern struct linux_prom_registers smp_penguin_ctable;
+बाह्य अचिन्हित अक्षर boot_cpu_id;
+बाह्य अस्थिर अचिन्हित दीर्घ cpu_callin_map[NR_CPUS];
+बाह्य cpumask_t smp_commenced_mask;
+बाह्य काष्ठा linux_prom_रेजिस्टरs smp_penguin_ctable;
 
-typedef void (*smpfunc_t)(unsigned long, unsigned long, unsigned long,
-		       unsigned long, unsigned long);
+प्रकार व्योम (*smpfunc_t)(अचिन्हित दीर्घ, अचिन्हित दीर्घ, अचिन्हित दीर्घ,
+		       अचिन्हित दीर्घ, अचिन्हित दीर्घ);
 
-void cpu_panic(void);
+व्योम cpu_panic(व्योम);
 
 /*
- *	General functions that each host system must provide.
+ *	General functions that each host प्रणाली must provide.
  */
 
-void sun4m_init_smp(void);
-void sun4d_init_smp(void);
+व्योम sun4m_init_smp(व्योम);
+व्योम sun4d_init_smp(व्योम);
 
-void smp_callin(void);
-void smp_store_cpu_info(int);
+व्योम smp_callin(व्योम);
+व्योम smp_store_cpu_info(पूर्णांक);
 
-void smp_resched_interrupt(void);
-void smp_call_function_single_interrupt(void);
-void smp_call_function_interrupt(void);
+व्योम smp_resched_पूर्णांकerrupt(व्योम);
+व्योम smp_call_function_single_पूर्णांकerrupt(व्योम);
+व्योम smp_call_function_पूर्णांकerrupt(व्योम);
 
-struct seq_file;
-void smp_bogo(struct seq_file *);
-void smp_info(struct seq_file *);
+काष्ठा seq_file;
+व्योम smp_bogo(काष्ठा seq_file *);
+व्योम smp_info(काष्ठा seq_file *);
 
-struct sparc32_ipi_ops {
-	void (*cross_call)(smpfunc_t func, cpumask_t mask, unsigned long arg1,
-			   unsigned long arg2, unsigned long arg3,
-			   unsigned long arg4);
-	void (*resched)(int cpu);
-	void (*single)(int cpu);
-	void (*mask_one)(int cpu);
-};
-extern const struct sparc32_ipi_ops *sparc32_ipi_ops;
+काष्ठा sparc32_ipi_ops अणु
+	व्योम (*cross_call)(smpfunc_t func, cpumask_t mask, अचिन्हित दीर्घ arg1,
+			   अचिन्हित दीर्घ arg2, अचिन्हित दीर्घ arg3,
+			   अचिन्हित दीर्घ arg4);
+	व्योम (*resched)(पूर्णांक cpu);
+	व्योम (*single)(पूर्णांक cpu);
+	व्योम (*mask_one)(पूर्णांक cpu);
+पूर्ण;
+बाह्य स्थिर काष्ठा sparc32_ipi_ops *sparc32_ipi_ops;
 
-static inline void xc0(smpfunc_t func)
-{
+अटल अंतरभूत व्योम xc0(smpfunc_t func)
+अणु
 	sparc32_ipi_ops->cross_call(func, *cpu_online_mask, 0, 0, 0, 0);
-}
+पूर्ण
 
-static inline void xc1(smpfunc_t func, unsigned long arg1)
-{
+अटल अंतरभूत व्योम xc1(smpfunc_t func, अचिन्हित दीर्घ arg1)
+अणु
 	sparc32_ipi_ops->cross_call(func, *cpu_online_mask, arg1, 0, 0, 0);
-}
-static inline void xc2(smpfunc_t func, unsigned long arg1, unsigned long arg2)
-{
+पूर्ण
+अटल अंतरभूत व्योम xc2(smpfunc_t func, अचिन्हित दीर्घ arg1, अचिन्हित दीर्घ arg2)
+अणु
 	sparc32_ipi_ops->cross_call(func, *cpu_online_mask, arg1, arg2, 0, 0);
-}
+पूर्ण
 
-static inline void xc3(smpfunc_t func, unsigned long arg1, unsigned long arg2,
-		       unsigned long arg3)
-{
+अटल अंतरभूत व्योम xc3(smpfunc_t func, अचिन्हित दीर्घ arg1, अचिन्हित दीर्घ arg2,
+		       अचिन्हित दीर्घ arg3)
+अणु
 	sparc32_ipi_ops->cross_call(func, *cpu_online_mask,
 				    arg1, arg2, arg3, 0);
-}
+पूर्ण
 
-static inline void xc4(smpfunc_t func, unsigned long arg1, unsigned long arg2,
-		       unsigned long arg3, unsigned long arg4)
-{
+अटल अंतरभूत व्योम xc4(smpfunc_t func, अचिन्हित दीर्घ arg1, अचिन्हित दीर्घ arg2,
+		       अचिन्हित दीर्घ arg3, अचिन्हित दीर्घ arg4)
+अणु
 	sparc32_ipi_ops->cross_call(func, *cpu_online_mask,
 				    arg1, arg2, arg3, arg4);
-}
+पूर्ण
 
-void arch_send_call_function_single_ipi(int cpu);
-void arch_send_call_function_ipi_mask(const struct cpumask *mask);
+व्योम arch_send_call_function_single_ipi(पूर्णांक cpu);
+व्योम arch_send_call_function_ipi_mask(स्थिर काष्ठा cpumask *mask);
 
-static inline int cpu_logical_map(int cpu)
-{
-	return cpu;
-}
+अटल अंतरभूत पूर्णांक cpu_logical_map(पूर्णांक cpu)
+अणु
+	वापस cpu;
+पूर्ण
 
-int hard_smp_processor_id(void);
+पूर्णांक hard_smp_processor_id(व्योम);
 
-#define raw_smp_processor_id()		(current_thread_info()->cpu)
+#घोषणा raw_smp_processor_id()		(current_thपढ़ो_info()->cpu)
 
-void smp_setup_cpu_possible_map(void);
+व्योम smp_setup_cpu_possible_map(व्योम);
 
-#endif /* !(__ASSEMBLY__) */
+#पूर्ण_अगर /* !(__ASSEMBLY__) */
 
-/* Sparc specific messages. */
-#define MSG_CROSS_CALL         0x0005       /* run func on cpus */
+/* Sparc specअगरic messages. */
+#घोषणा MSG_CROSS_CALL         0x0005       /* run func on cpus */
 
-/* Empirical PROM processor mailbox constants.  If the per-cpu mailbox
+/* Empirical PROM processor mailbox स्थिरants.  If the per-cpu mailbox
  * contains something other than one of these then the ipi is from
  * Linux's active_kernel_processor.  This facility exists so that
  * the boot monitor can capture all the other cpus when one catches
- * a watchdog reset or the user enters the monitor using L1-A keys.
+ * a watchकरोg reset or the user enters the monitor using L1-A keys.
  */
-#define MBOX_STOPCPU          0xFB
-#define MBOX_IDLECPU          0xFC
-#define MBOX_IDLECPU2         0xFD
-#define MBOX_STOPCPU2         0xFE
+#घोषणा MBOX_STOPCPU          0xFB
+#घोषणा MBOX_IDLECPU          0xFC
+#घोषणा MBOX_IDLECPU2         0xFD
+#घोषणा MBOX_STOPCPU2         0xFE
 
-#else /* SMP */
+#अन्यथा /* SMP */
 
-#define hard_smp_processor_id()		0
-#define smp_setup_cpu_possible_map() do { } while (0)
+#घोषणा hard_smp_processor_id()		0
+#घोषणा smp_setup_cpu_possible_map() करो अणु पूर्ण जबतक (0)
 
-#endif /* !(SMP) */
-#endif /* !(_SPARC_SMP_H) */
+#पूर्ण_अगर /* !(SMP) */
+#पूर्ण_अगर /* !(_SPARC_SMP_H) */

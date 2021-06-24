@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,13 +24,13 @@
  *
  */
 
-#ifndef AMD_DAL_DEV_AMDGPU_DM_AMDGPU_DM_CRC_H_
-#define AMD_DAL_DEV_AMDGPU_DM_AMDGPU_DM_CRC_H_
+#अगर_अघोषित AMD_DAL_DEV_AMDGPU_DM_AMDGPU_DM_CRC_H_
+#घोषणा AMD_DAL_DEV_AMDGPU_DM_AMDGPU_DM_CRC_H_
 
-struct drm_crtc;
-struct dm_crtc_state;
+काष्ठा drm_crtc;
+काष्ठा dm_crtc_state;
 
-enum amdgpu_dm_pipe_crc_source {
+क्रमागत amdgpu_dm_pipe_crc_source अणु
 	AMDGPU_DM_PIPE_CRC_SOURCE_NONE = 0,
 	AMDGPU_DM_PIPE_CRC_SOURCE_CRTC,
 	AMDGPU_DM_PIPE_CRC_SOURCE_CRTC_DITHER,
@@ -37,68 +38,68 @@ enum amdgpu_dm_pipe_crc_source {
 	AMDGPU_DM_PIPE_CRC_SOURCE_DPRX_DITHER,
 	AMDGPU_DM_PIPE_CRC_SOURCE_MAX,
 	AMDGPU_DM_PIPE_CRC_SOURCE_INVALID = -1,
-};
+पूर्ण;
 
-#ifdef CONFIG_DRM_AMD_SECURE_DISPLAY
-struct crc_window_parm {
-	uint16_t x_start;
-	uint16_t y_start;
-	uint16_t x_end;
-	uint16_t y_end;
+#अगर_घोषित CONFIG_DRM_AMD_SECURE_DISPLAY
+काष्ठा crc_winकरोw_parm अणु
+	uपूर्णांक16_t x_start;
+	uपूर्णांक16_t y_start;
+	uपूर्णांक16_t x_end;
+	uपूर्णांक16_t y_end;
 	/* CRC windwo is activated or not*/
 	bool activated;
-	/* Update crc window during vertical blank or not */
+	/* Update crc winकरोw during vertical blank or not */
 	bool update_win;
-	/* skip reading/writing for few frames */
-	int skip_frame_cnt;
-};
+	/* skip पढ़ोing/writing क्रम few frames */
+	पूर्णांक skip_frame_cnt;
+पूर्ण;
 
-struct crc_rd_work {
-	struct work_struct notify_ta_work;
+काष्ठा crc_rd_work अणु
+	काष्ठा work_काष्ठा notअगरy_ta_work;
 	/* To protect crc_rd_work carried fields*/
 	spinlock_t crc_rd_work_lock;
-	struct drm_crtc *crtc;
-	uint8_t phy_inst;
-};
-#endif
+	काष्ठा drm_crtc *crtc;
+	uपूर्णांक8_t phy_inst;
+पूर्ण;
+#पूर्ण_अगर
 
-static inline bool amdgpu_dm_is_valid_crc_source(enum amdgpu_dm_pipe_crc_source source)
-{
-	return (source > AMDGPU_DM_PIPE_CRC_SOURCE_NONE) &&
+अटल अंतरभूत bool amdgpu_dm_is_valid_crc_source(क्रमागत amdgpu_dm_pipe_crc_source source)
+अणु
+	वापस (source > AMDGPU_DM_PIPE_CRC_SOURCE_NONE) &&
 	       (source < AMDGPU_DM_PIPE_CRC_SOURCE_MAX);
-}
+पूर्ण
 
 /* amdgpu_dm_crc.c */
-#ifdef CONFIG_DEBUG_FS
-int amdgpu_dm_crtc_configure_crc_source(struct drm_crtc *crtc,
-					struct dm_crtc_state *dm_crtc_state,
-					enum amdgpu_dm_pipe_crc_source source);
-int amdgpu_dm_crtc_set_crc_source(struct drm_crtc *crtc, const char *src_name);
-int amdgpu_dm_crtc_verify_crc_source(struct drm_crtc *crtc,
-				     const char *src_name,
-				     size_t *values_cnt);
-const char *const *amdgpu_dm_crtc_get_crc_sources(struct drm_crtc *crtc,
-						  size_t *count);
-void amdgpu_dm_crtc_handle_crc_irq(struct drm_crtc *crtc);
-#else
-#define amdgpu_dm_crtc_set_crc_source NULL
-#define amdgpu_dm_crtc_verify_crc_source NULL
-#define amdgpu_dm_crtc_get_crc_sources NULL
-#define amdgpu_dm_crtc_handle_crc_irq(x)
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+पूर्णांक amdgpu_dm_crtc_configure_crc_source(काष्ठा drm_crtc *crtc,
+					काष्ठा dm_crtc_state *dm_crtc_state,
+					क्रमागत amdgpu_dm_pipe_crc_source source);
+पूर्णांक amdgpu_dm_crtc_set_crc_source(काष्ठा drm_crtc *crtc, स्थिर अक्षर *src_name);
+पूर्णांक amdgpu_dm_crtc_verअगरy_crc_source(काष्ठा drm_crtc *crtc,
+				     स्थिर अक्षर *src_name,
+				     माप_प्रकार *values_cnt);
+स्थिर अक्षर *स्थिर *amdgpu_dm_crtc_get_crc_sources(काष्ठा drm_crtc *crtc,
+						  माप_प्रकार *count);
+व्योम amdgpu_dm_crtc_handle_crc_irq(काष्ठा drm_crtc *crtc);
+#अन्यथा
+#घोषणा amdgpu_dm_crtc_set_crc_source शून्य
+#घोषणा amdgpu_dm_crtc_verअगरy_crc_source शून्य
+#घोषणा amdgpu_dm_crtc_get_crc_sources शून्य
+#घोषणा amdgpu_dm_crtc_handle_crc_irq(x)
+#पूर्ण_अगर
 
-#ifdef CONFIG_DRM_AMD_SECURE_DISPLAY
-bool amdgpu_dm_crc_window_is_activated(struct drm_crtc *crtc);
-void amdgpu_dm_crtc_handle_crc_window_irq(struct drm_crtc *crtc);
-struct crc_rd_work *amdgpu_dm_crtc_secure_display_create_work(void);
-void amdgpu_dm_crtc_secure_display_resume(struct amdgpu_device *adev);
-void amdgpu_dm_crtc_secure_display_suspend(struct amdgpu_device *adev);
-#else
-#define amdgpu_dm_crc_window_is_activated(x)
-#define amdgpu_dm_crtc_handle_crc_window_irq(x)
-#define amdgpu_dm_crtc_secure_display_create_work()
-#define amdgpu_dm_crtc_secure_display_resume(x)
-#define amdgpu_dm_crtc_secure_display_suspend(x)
-#endif
+#अगर_घोषित CONFIG_DRM_AMD_SECURE_DISPLAY
+bool amdgpu_dm_crc_winकरोw_is_activated(काष्ठा drm_crtc *crtc);
+व्योम amdgpu_dm_crtc_handle_crc_winकरोw_irq(काष्ठा drm_crtc *crtc);
+काष्ठा crc_rd_work *amdgpu_dm_crtc_secure_display_create_work(व्योम);
+व्योम amdgpu_dm_crtc_secure_display_resume(काष्ठा amdgpu_device *adev);
+व्योम amdgpu_dm_crtc_secure_display_suspend(काष्ठा amdgpu_device *adev);
+#अन्यथा
+#घोषणा amdgpu_dm_crc_winकरोw_is_activated(x)
+#घोषणा amdgpu_dm_crtc_handle_crc_winकरोw_irq(x)
+#घोषणा amdgpu_dm_crtc_secure_display_create_work()
+#घोषणा amdgpu_dm_crtc_secure_display_resume(x)
+#घोषणा amdgpu_dm_crtc_secure_display_suspend(x)
+#पूर्ण_अगर
 
-#endif /* AMD_DAL_DEV_AMDGPU_DM_AMDGPU_DM_CRC_H_ */
+#पूर्ण_अगर /* AMD_DAL_DEV_AMDGPU_DM_AMDGPU_DM_CRC_H_ */

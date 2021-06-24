@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_REGDEF_H
-#define __ASM_CSKY_REGDEF_H
+#अगर_अघोषित __ASM_CSKY_REGDEF_H
+#घोषणा __ASM_CSKY_REGDEF_H
 
-#ifdef __ASSEMBLY__
-#define syscallid	r7
-#else
-#define syscallid	"r7"
-#endif
+#अगर_घोषित __ASSEMBLY__
+#घोषणा syscallid	r7
+#अन्यथा
+#घोषणा syscallid	"r7"
+#पूर्ण_अगर
 
-#define regs_syscallid(regs) regs->regs[3]
-#define regs_fp(regs) regs->regs[4]
+#घोषणा regs_syscallid(regs) regs->regs[3]
+#घोषणा regs_fp(regs) regs->regs[4]
 
 /*
- * PSR format:
+ * PSR क्रमmat:
  * | 31 | 30-24 | 23-16 | 15 14 | 13-10 | 9 | 8-0 |
  *   S              VEC     TM            MM
  *
@@ -22,10 +23,10 @@
  *  TM: Trace Mode
  *  MM: Memory unaligned addr access
  */
-#define DEFAULT_PSR_VALUE	0x80000200
+#घोषणा DEFAULT_PSR_VALUE	0x80000200
 
-#define SYSTRACE_SAVENUM	5
+#घोषणा SYSTRACE_SAVENUM	5
 
-#define TRAP0_SIZE		4
+#घोषणा TRAP0_SIZE		4
 
-#endif /* __ASM_CSKY_REGDEF_H */
+#पूर्ण_अगर /* __ASM_CSKY_REGDEF_H */

@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * dice.h - a part of driver for Dice based devices
+ * dice.h - a part of driver क्रम Dice based devices
  *
  * Copyright (c) Clemens Ladisch
  * Copyright (c) 2014 Takashi Sakamoto
  */
 
-#ifndef SOUND_DICE_H_INCLUDED
-#define SOUND_DICE_H_INCLUDED
+#अगर_अघोषित SOUND_DICE_H_INCLUDED
+#घोषणा SOUND_DICE_H_INCLUDED
 
-#include <linux/compat.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/firewire.h>
-#include <linux/firewire-constants.h>
-#include <linux/jiffies.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/mutex.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/wait.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/firewire.h>
+#समावेश <linux/firewire-स्थिरants.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <sound/control.h>
-#include <sound/core.h>
-#include <sound/firewire.h>
-#include <sound/hwdep.h>
-#include <sound/info.h>
-#include <sound/initval.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/rawmidi.h>
+#समावेश <sound/control.h>
+#समावेश <sound/core.h>
+#समावेश <sound/firewire.h>
+#समावेश <sound/hwdep.h>
+#समावेश <sound/info.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/rawmidi.h>
 
-#include "../amdtp-am824.h"
-#include "../iso-resources.h"
-#include "../lib.h"
-#include "dice-interface.h"
+#समावेश "../amdtp-am824.h"
+#समावेश "../iso-resources.h"
+#समावेश "../lib.h"
+#समावेश "dice-interface.h"
 
 /*
- * This module support maximum 2 pairs of tx/rx isochronous streams for
+ * This module support maximum 2 pairs of tx/rx isochronous streams क्रम
  * our convinience.
  *
- * In documents for ASICs called with a name of 'DICE':
- *  - ASIC for DICE II:
+ * In करोcuments क्रम ASICs called with a name of 'DICE':
+ *  - ASIC क्रम DICE II:
  *   - Maximum 2 tx and 4 rx are supported.
  *   - A packet supports maximum 16 data channels.
  *  - TCD2210/2210-E (so-called 'Dice Mini'):
@@ -57,183 +58,183 @@
  *   - Maximum 2 tx and 2 rx are supported.
  *   - A packet supports maximum 32 data channels.
  *
- * For the above, MIDI conformant data channel is just on the first isochronous
+ * For the above, MIDI conक्रमmant data channel is just on the first isochronous
  * stream.
  */
-#define MAX_STREAMS	2
+#घोषणा MAX_STREAMS	2
 
-enum snd_dice_rate_mode {
+क्रमागत snd_dice_rate_mode अणु
 	SND_DICE_RATE_MODE_LOW = 0,
 	SND_DICE_RATE_MODE_MIDDLE,
 	SND_DICE_RATE_MODE_HIGH,
 	SND_DICE_RATE_MODE_COUNT,
-};
+पूर्ण;
 
-struct snd_dice;
-typedef int (*snd_dice_detect_formats_t)(struct snd_dice *dice);
+काष्ठा snd_dice;
+प्रकार पूर्णांक (*snd_dice_detect_क्रमmats_t)(काष्ठा snd_dice *dice);
 
-struct snd_dice {
-	struct snd_card *card;
-	struct fw_unit *unit;
+काष्ठा snd_dice अणु
+	काष्ठा snd_card *card;
+	काष्ठा fw_unit *unit;
 	spinlock_t lock;
-	struct mutex mutex;
+	काष्ठा mutex mutex;
 
-	bool registered;
-	struct delayed_work dwork;
+	bool रेजिस्टरed;
+	काष्ठा delayed_work dwork;
 
-	/* Offsets for sub-addresses */
-	unsigned int global_offset;
-	unsigned int rx_offset;
-	unsigned int tx_offset;
-	unsigned int sync_offset;
-	unsigned int rsrv_offset;
+	/* Offsets क्रम sub-addresses */
+	अचिन्हित पूर्णांक global_offset;
+	अचिन्हित पूर्णांक rx_offset;
+	अचिन्हित पूर्णांक tx_offset;
+	अचिन्हित पूर्णांक sync_offset;
+	अचिन्हित पूर्णांक rsrv_offset;
 
-	unsigned int clock_caps;
-	unsigned int tx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
-	unsigned int rx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
-	unsigned int tx_midi_ports[MAX_STREAMS];
-	unsigned int rx_midi_ports[MAX_STREAMS];
-	snd_dice_detect_formats_t detect_formats;
+	अचिन्हित पूर्णांक घड़ी_caps;
+	अचिन्हित पूर्णांक tx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
+	अचिन्हित पूर्णांक rx_pcm_chs[MAX_STREAMS][SND_DICE_RATE_MODE_COUNT];
+	अचिन्हित पूर्णांक tx_midi_ports[MAX_STREAMS];
+	अचिन्हित पूर्णांक rx_midi_ports[MAX_STREAMS];
+	snd_dice_detect_क्रमmats_t detect_क्रमmats;
 
-	struct fw_address_handler notification_handler;
-	int owner_generation;
-	u32 notification_bits;
+	काष्ठा fw_address_handler notअगरication_handler;
+	पूर्णांक owner_generation;
+	u32 notअगरication_bits;
 
 	/* For uapi */
-	int dev_lock_count; /* > 0 driver, < 0 userspace */
+	पूर्णांक dev_lock_count; /* > 0 driver, < 0 userspace */
 	bool dev_lock_changed;
-	wait_queue_head_t hwdep_wait;
+	रुको_queue_head_t hwdep_रुको;
 
 	/* For streaming */
-	struct fw_iso_resources tx_resources[MAX_STREAMS];
-	struct fw_iso_resources rx_resources[MAX_STREAMS];
-	struct amdtp_stream tx_stream[MAX_STREAMS];
-	struct amdtp_stream rx_stream[MAX_STREAMS];
+	काष्ठा fw_iso_resources tx_resources[MAX_STREAMS];
+	काष्ठा fw_iso_resources rx_resources[MAX_STREAMS];
+	काष्ठा amdtp_stream tx_stream[MAX_STREAMS];
+	काष्ठा amdtp_stream rx_stream[MAX_STREAMS];
 	bool global_enabled:1;
-	bool disable_double_pcm_frames:1;
-	struct completion clock_accepted;
-	unsigned int substreams_counter;
+	bool disable_द्विगुन_pcm_frames:1;
+	काष्ठा completion घड़ी_accepted;
+	अचिन्हित पूर्णांक substreams_counter;
 
-	struct amdtp_domain domain;
-};
+	काष्ठा amdtp_करोमुख्य करोमुख्य;
+पूर्ण;
 
-enum snd_dice_addr_type {
+क्रमागत snd_dice_addr_type अणु
 	SND_DICE_ADDR_TYPE_PRIVATE,
 	SND_DICE_ADDR_TYPE_GLOBAL,
 	SND_DICE_ADDR_TYPE_TX,
 	SND_DICE_ADDR_TYPE_RX,
 	SND_DICE_ADDR_TYPE_SYNC,
 	SND_DICE_ADDR_TYPE_RSRV,
-};
+पूर्ण;
 
-int snd_dice_transaction_write(struct snd_dice *dice,
-			       enum snd_dice_addr_type type,
-			       unsigned int offset,
-			       void *buf, unsigned int len);
-int snd_dice_transaction_read(struct snd_dice *dice,
-			      enum snd_dice_addr_type type, unsigned int offset,
-			      void *buf, unsigned int len);
+पूर्णांक snd_dice_transaction_ग_लिखो(काष्ठा snd_dice *dice,
+			       क्रमागत snd_dice_addr_type type,
+			       अचिन्हित पूर्णांक offset,
+			       व्योम *buf, अचिन्हित पूर्णांक len);
+पूर्णांक snd_dice_transaction_पढ़ो(काष्ठा snd_dice *dice,
+			      क्रमागत snd_dice_addr_type type, अचिन्हित पूर्णांक offset,
+			      व्योम *buf, अचिन्हित पूर्णांक len);
 
-static inline int snd_dice_transaction_write_global(struct snd_dice *dice,
-						    unsigned int offset,
-						    void *buf, unsigned int len)
-{
-	return snd_dice_transaction_write(dice,
+अटल अंतरभूत पूर्णांक snd_dice_transaction_ग_लिखो_global(काष्ठा snd_dice *dice,
+						    अचिन्हित पूर्णांक offset,
+						    व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_dice_transaction_ग_लिखो(dice,
 					  SND_DICE_ADDR_TYPE_GLOBAL, offset,
 					  buf, len);
-}
-static inline int snd_dice_transaction_read_global(struct snd_dice *dice,
-						   unsigned int offset,
-						   void *buf, unsigned int len)
-{
-	return snd_dice_transaction_read(dice,
+पूर्ण
+अटल अंतरभूत पूर्णांक snd_dice_transaction_पढ़ो_global(काष्ठा snd_dice *dice,
+						   अचिन्हित पूर्णांक offset,
+						   व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_dice_transaction_पढ़ो(dice,
 					 SND_DICE_ADDR_TYPE_GLOBAL, offset,
 					 buf, len);
-}
-static inline int snd_dice_transaction_write_tx(struct snd_dice *dice,
-						unsigned int offset,
-						void *buf, unsigned int len)
-{
-	return snd_dice_transaction_write(dice, SND_DICE_ADDR_TYPE_TX, offset,
+पूर्ण
+अटल अंतरभूत पूर्णांक snd_dice_transaction_ग_लिखो_tx(काष्ठा snd_dice *dice,
+						अचिन्हित पूर्णांक offset,
+						व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_dice_transaction_ग_लिखो(dice, SND_DICE_ADDR_TYPE_TX, offset,
 					  buf, len);
-}
-static inline int snd_dice_transaction_read_tx(struct snd_dice *dice,
-					       unsigned int offset,
-					       void *buf, unsigned int len)
-{
-	return snd_dice_transaction_read(dice, SND_DICE_ADDR_TYPE_TX, offset,
+पूर्ण
+अटल अंतरभूत पूर्णांक snd_dice_transaction_पढ़ो_tx(काष्ठा snd_dice *dice,
+					       अचिन्हित पूर्णांक offset,
+					       व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_dice_transaction_पढ़ो(dice, SND_DICE_ADDR_TYPE_TX, offset,
 					 buf, len);
-}
-static inline int snd_dice_transaction_write_rx(struct snd_dice *dice,
-						unsigned int offset,
-						void *buf, unsigned int len)
-{
-	return snd_dice_transaction_write(dice, SND_DICE_ADDR_TYPE_RX, offset,
+पूर्ण
+अटल अंतरभूत पूर्णांक snd_dice_transaction_ग_लिखो_rx(काष्ठा snd_dice *dice,
+						अचिन्हित पूर्णांक offset,
+						व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_dice_transaction_ग_लिखो(dice, SND_DICE_ADDR_TYPE_RX, offset,
 					  buf, len);
-}
-static inline int snd_dice_transaction_read_rx(struct snd_dice *dice,
-					       unsigned int offset,
-					       void *buf, unsigned int len)
-{
-	return snd_dice_transaction_read(dice, SND_DICE_ADDR_TYPE_RX, offset,
+पूर्ण
+अटल अंतरभूत पूर्णांक snd_dice_transaction_पढ़ो_rx(काष्ठा snd_dice *dice,
+					       अचिन्हित पूर्णांक offset,
+					       व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_dice_transaction_पढ़ो(dice, SND_DICE_ADDR_TYPE_RX, offset,
 					 buf, len);
-}
-static inline int snd_dice_transaction_write_sync(struct snd_dice *dice,
-						  unsigned int offset,
-						  void *buf, unsigned int len)
-{
-	return snd_dice_transaction_write(dice, SND_DICE_ADDR_TYPE_SYNC, offset,
+पूर्ण
+अटल अंतरभूत पूर्णांक snd_dice_transaction_ग_लिखो_sync(काष्ठा snd_dice *dice,
+						  अचिन्हित पूर्णांक offset,
+						  व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_dice_transaction_ग_लिखो(dice, SND_DICE_ADDR_TYPE_SYNC, offset,
 					  buf, len);
-}
-static inline int snd_dice_transaction_read_sync(struct snd_dice *dice,
-						 unsigned int offset,
-						 void *buf, unsigned int len)
-{
-	return snd_dice_transaction_read(dice, SND_DICE_ADDR_TYPE_SYNC, offset,
+पूर्ण
+अटल अंतरभूत पूर्णांक snd_dice_transaction_पढ़ो_sync(काष्ठा snd_dice *dice,
+						 अचिन्हित पूर्णांक offset,
+						 व्योम *buf, अचिन्हित पूर्णांक len)
+अणु
+	वापस snd_dice_transaction_पढ़ो(dice, SND_DICE_ADDR_TYPE_SYNC, offset,
 					 buf, len);
-}
+पूर्ण
 
-int snd_dice_transaction_get_clock_source(struct snd_dice *dice,
-					  unsigned int *source);
-int snd_dice_transaction_get_rate(struct snd_dice *dice, unsigned int *rate);
-int snd_dice_transaction_set_enable(struct snd_dice *dice);
-void snd_dice_transaction_clear_enable(struct snd_dice *dice);
-int snd_dice_transaction_init(struct snd_dice *dice);
-int snd_dice_transaction_reinit(struct snd_dice *dice);
-void snd_dice_transaction_destroy(struct snd_dice *dice);
+पूर्णांक snd_dice_transaction_get_घड़ी_source(काष्ठा snd_dice *dice,
+					  अचिन्हित पूर्णांक *source);
+पूर्णांक snd_dice_transaction_get_rate(काष्ठा snd_dice *dice, अचिन्हित पूर्णांक *rate);
+पूर्णांक snd_dice_transaction_set_enable(काष्ठा snd_dice *dice);
+व्योम snd_dice_transaction_clear_enable(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_transaction_init(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_transaction_reinit(काष्ठा snd_dice *dice);
+व्योम snd_dice_transaction_destroy(काष्ठा snd_dice *dice);
 
-#define SND_DICE_RATES_COUNT	7
-extern const unsigned int snd_dice_rates[SND_DICE_RATES_COUNT];
+#घोषणा SND_DICE_RATES_COUNT	7
+बाह्य स्थिर अचिन्हित पूर्णांक snd_dice_rates[SND_DICE_RATES_COUNT];
 
-int snd_dice_stream_get_rate_mode(struct snd_dice *dice, unsigned int rate,
-				  enum snd_dice_rate_mode *mode);
-int snd_dice_stream_start_duplex(struct snd_dice *dice);
-void snd_dice_stream_stop_duplex(struct snd_dice *dice);
-int snd_dice_stream_init_duplex(struct snd_dice *dice);
-void snd_dice_stream_destroy_duplex(struct snd_dice *dice);
-int snd_dice_stream_reserve_duplex(struct snd_dice *dice, unsigned int rate,
-				   unsigned int events_per_period,
-				   unsigned int events_per_buffer);
-void snd_dice_stream_update_duplex(struct snd_dice *dice);
-int snd_dice_stream_detect_current_formats(struct snd_dice *dice);
+पूर्णांक snd_dice_stream_get_rate_mode(काष्ठा snd_dice *dice, अचिन्हित पूर्णांक rate,
+				  क्रमागत snd_dice_rate_mode *mode);
+पूर्णांक snd_dice_stream_start_duplex(काष्ठा snd_dice *dice);
+व्योम snd_dice_stream_stop_duplex(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_stream_init_duplex(काष्ठा snd_dice *dice);
+व्योम snd_dice_stream_destroy_duplex(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_stream_reserve_duplex(काष्ठा snd_dice *dice, अचिन्हित पूर्णांक rate,
+				   अचिन्हित पूर्णांक events_per_period,
+				   अचिन्हित पूर्णांक events_per_buffer);
+व्योम snd_dice_stream_update_duplex(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_stream_detect_current_क्रमmats(काष्ठा snd_dice *dice);
 
-int snd_dice_stream_lock_try(struct snd_dice *dice);
-void snd_dice_stream_lock_release(struct snd_dice *dice);
+पूर्णांक snd_dice_stream_lock_try(काष्ठा snd_dice *dice);
+व्योम snd_dice_stream_lock_release(काष्ठा snd_dice *dice);
 
-int snd_dice_create_pcm(struct snd_dice *dice);
+पूर्णांक snd_dice_create_pcm(काष्ठा snd_dice *dice);
 
-int snd_dice_create_hwdep(struct snd_dice *dice);
+पूर्णांक snd_dice_create_hwdep(काष्ठा snd_dice *dice);
 
-void snd_dice_create_proc(struct snd_dice *dice);
+व्योम snd_dice_create_proc(काष्ठा snd_dice *dice);
 
-int snd_dice_create_midi(struct snd_dice *dice);
+पूर्णांक snd_dice_create_midi(काष्ठा snd_dice *dice);
 
-int snd_dice_detect_tcelectronic_formats(struct snd_dice *dice);
-int snd_dice_detect_alesis_formats(struct snd_dice *dice);
-int snd_dice_detect_alesis_mastercontrol_formats(struct snd_dice *dice);
-int snd_dice_detect_extension_formats(struct snd_dice *dice);
-int snd_dice_detect_mytek_formats(struct snd_dice *dice);
-int snd_dice_detect_presonus_formats(struct snd_dice *dice);
-int snd_dice_detect_harman_formats(struct snd_dice *dice);
+पूर्णांक snd_dice_detect_tcelectronic_क्रमmats(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_detect_alesis_क्रमmats(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_detect_alesis_mastercontrol_क्रमmats(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_detect_extension_क्रमmats(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_detect_mytek_क्रमmats(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_detect_presonus_क्रमmats(काष्ठा snd_dice *dice);
+पूर्णांक snd_dice_detect_harman_क्रमmats(काष्ठा snd_dice *dice);
 
-#endif
+#पूर्ण_अगर

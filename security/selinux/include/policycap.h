@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _SELINUX_POLICYCAP_H_
-#define _SELINUX_POLICYCAP_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _SELINUX_POLICYCAP_H_
+#घोषणा _SELINUX_POLICYCAP_H_
 
 /* Policy capabilities */
-enum {
+क्रमागत अणु
 	POLICYDB_CAPABILITY_NETPEER,
 	POLICYDB_CAPABILITY_OPENPERM,
 	POLICYDB_CAPABILITY_EXTSOCKCLASS,
@@ -12,9 +13,9 @@ enum {
 	POLICYDB_CAPABILITY_NNP_NOSUID_TRANSITION,
 	POLICYDB_CAPABILITY_GENFS_SECLABEL_SYMLINKS,
 	__POLICYDB_CAPABILITY_MAX
-};
-#define POLICYDB_CAPABILITY_MAX (__POLICYDB_CAPABILITY_MAX - 1)
+पूर्ण;
+#घोषणा POLICYDB_CAPABILITY_MAX (__POLICYDB_CAPABILITY_MAX - 1)
 
-extern const char *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX];
+बाह्य स्थिर अक्षर *selinux_policycap_names[__POLICYDB_CAPABILITY_MAX];
 
-#endif /* _SELINUX_POLICYCAP_H_ */
+#पूर्ण_अगर /* _SELINUX_POLICYCAP_H_ */

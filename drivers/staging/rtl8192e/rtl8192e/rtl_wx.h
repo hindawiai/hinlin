@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright(c) 2008 - 2010 Realtek Corporation. All rights reserved.
  *
- * Contact Information: wlanfae <wlanfae@realtek.com>
+ * Contact Inक्रमmation: wlanfae <wlanfae@realtek.com>
  */
-#ifndef R819x_WX_H
-#define R819x_WX_H
+#अगर_अघोषित R819x_WX_H
+#घोषणा R819x_WX_H
 
-struct iw_handler_def;
+काष्ठा iw_handler_def;
 
-extern const struct iw_handler_def r8192_wx_handlers_def;
-#endif
+बाह्य स्थिर काष्ठा iw_handler_def r8192_wx_handlers_def;
+#पूर्ण_अगर

@@ -1,344 +1,345 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2006 Sony Computer Entertainment Inc.
  * Copyright 2006, 2007 Sony Corporation
  *
- * AV backend support for PS3
+ * AV backend support क्रम PS3
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
 
-#include <asm/ps3av.h>
-#include <asm/ps3.h>
-#include <asm/ps3gpu.h>
+#समावेश <यंत्र/ps3av.h>
+#समावेश <यंत्र/ps3.h>
+#समावेश <यंत्र/ps3gpu.h>
 
-#include "vuart.h"
+#समावेश "vuart.h"
 
-static const struct video_fmt {
-	u32 format;
+अटल स्थिर काष्ठा video_fmt अणु
+	u32 क्रमmat;
 	u32 order;
-} ps3av_video_fmt_table[] = {
-	{ PS3AV_CMD_VIDEO_FORMAT_ARGB_8BIT, PS3AV_CMD_VIDEO_ORDER_RGB },
-	{ PS3AV_CMD_VIDEO_FORMAT_ARGB_8BIT, PS3AV_CMD_VIDEO_ORDER_BGR },
-};
+पूर्ण ps3av_video_fmt_table[] = अणु
+	अणु PS3AV_CMD_VIDEO_FORMAT_ARGB_8BIT, PS3AV_CMD_VIDEO_ORDER_RGB पूर्ण,
+	अणु PS3AV_CMD_VIDEO_FORMAT_ARGB_8BIT, PS3AV_CMD_VIDEO_ORDER_BGR पूर्ण,
+पूर्ण;
 
-static const struct {
-	int cs;
+अटल स्थिर काष्ठा अणु
+	पूर्णांक cs;
 	u32 av;
 	u32 bl;
-} ps3av_cs_video2av_table[] = {
-	{
+पूर्ण ps3av_cs_video2av_table[] = अणु
+	अणु
 		.cs = PS3AV_CMD_VIDEO_CS_RGB_8,
 		.av = PS3AV_CMD_AV_CS_RGB_8,
 		.bl = PS3AV_CMD_AV_CS_8
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_RGB_10,
 		.av = PS3AV_CMD_AV_CS_RGB_8,
 		.bl = PS3AV_CMD_AV_CS_8
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_RGB_12,
 		.av = PS3AV_CMD_AV_CS_RGB_8,
 		.bl = PS3AV_CMD_AV_CS_8
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_YUV444_8,
 		.av = PS3AV_CMD_AV_CS_YUV444_8,
 		.bl = PS3AV_CMD_AV_CS_8
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_YUV444_10,
 		.av = PS3AV_CMD_AV_CS_YUV444_8,
 		.bl = PS3AV_CMD_AV_CS_10
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_YUV444_12,
 		.av = PS3AV_CMD_AV_CS_YUV444_8,
 		.bl = PS3AV_CMD_AV_CS_10
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_YUV422_8,
 		.av = PS3AV_CMD_AV_CS_YUV422_8,
 		.bl = PS3AV_CMD_AV_CS_10
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_YUV422_10,
 		.av = PS3AV_CMD_AV_CS_YUV422_8,
 		.bl = PS3AV_CMD_AV_CS_10
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_YUV422_12,
 		.av = PS3AV_CMD_AV_CS_YUV422_8,
 		.bl = PS3AV_CMD_AV_CS_12
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_XVYCC_8,
 		.av = PS3AV_CMD_AV_CS_XVYCC_8,
 		.bl = PS3AV_CMD_AV_CS_12
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_XVYCC_10,
 		.av = PS3AV_CMD_AV_CS_XVYCC_8,
 		.bl = PS3AV_CMD_AV_CS_12
-	}, {
+	पूर्ण, अणु
 		.cs = PS3AV_CMD_VIDEO_CS_XVYCC_12,
 		.av = PS3AV_CMD_AV_CS_XVYCC_8,
 		.bl = PS3AV_CMD_AV_CS_12
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static u32 ps3av_cs_video2av(int cs)
-{
-	unsigned int i;
+अटल u32 ps3av_cs_video2av(पूर्णांक cs)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ps3av_cs_video2av_table); i++)
-		if (ps3av_cs_video2av_table[i].cs == cs)
-			return ps3av_cs_video2av_table[i].av;
+	क्रम (i = 0; i < ARRAY_SIZE(ps3av_cs_video2av_table); i++)
+		अगर (ps3av_cs_video2av_table[i].cs == cs)
+			वापस ps3av_cs_video2av_table[i].av;
 
-	return PS3AV_CMD_AV_CS_RGB_8;
-}
+	वापस PS3AV_CMD_AV_CS_RGB_8;
+पूर्ण
 
-static u32 ps3av_cs_video2av_bitlen(int cs)
-{
-	unsigned int i;
+अटल u32 ps3av_cs_video2av_bitlen(पूर्णांक cs)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ps3av_cs_video2av_table); i++)
-		if (ps3av_cs_video2av_table[i].cs == cs)
-			return ps3av_cs_video2av_table[i].bl;
+	क्रम (i = 0; i < ARRAY_SIZE(ps3av_cs_video2av_table); i++)
+		अगर (ps3av_cs_video2av_table[i].cs == cs)
+			वापस ps3av_cs_video2av_table[i].bl;
 
-	return PS3AV_CMD_AV_CS_8;
-}
+	वापस PS3AV_CMD_AV_CS_8;
+पूर्ण
 
-static const struct {
-	int vid;
+अटल स्थिर काष्ठा अणु
+	पूर्णांक vid;
 	u32 av;
-} ps3av_vid_video2av_table[] = {
-	{ PS3AV_CMD_VIDEO_VID_480I, PS3AV_CMD_AV_VID_480I },
-	{ PS3AV_CMD_VIDEO_VID_480P, PS3AV_CMD_AV_VID_480P },
-	{ PS3AV_CMD_VIDEO_VID_576I, PS3AV_CMD_AV_VID_576I },
-	{ PS3AV_CMD_VIDEO_VID_576P, PS3AV_CMD_AV_VID_576P },
-	{ PS3AV_CMD_VIDEO_VID_1080I_60HZ, PS3AV_CMD_AV_VID_1080I_60HZ },
-	{ PS3AV_CMD_VIDEO_VID_720P_60HZ, PS3AV_CMD_AV_VID_720P_60HZ },
-	{ PS3AV_CMD_VIDEO_VID_1080P_60HZ, PS3AV_CMD_AV_VID_1080P_60HZ },
-	{ PS3AV_CMD_VIDEO_VID_1080I_50HZ, PS3AV_CMD_AV_VID_1080I_50HZ },
-	{ PS3AV_CMD_VIDEO_VID_720P_50HZ, PS3AV_CMD_AV_VID_720P_50HZ },
-	{ PS3AV_CMD_VIDEO_VID_1080P_50HZ, PS3AV_CMD_AV_VID_1080P_50HZ },
-	{ PS3AV_CMD_VIDEO_VID_WXGA, PS3AV_CMD_AV_VID_WXGA },
-	{ PS3AV_CMD_VIDEO_VID_SXGA, PS3AV_CMD_AV_VID_SXGA },
-	{ PS3AV_CMD_VIDEO_VID_WUXGA, PS3AV_CMD_AV_VID_WUXGA }
-};
+पूर्ण ps3av_vid_video2av_table[] = अणु
+	अणु PS3AV_CMD_VIDEO_VID_480I, PS3AV_CMD_AV_VID_480I पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_480P, PS3AV_CMD_AV_VID_480P पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_576I, PS3AV_CMD_AV_VID_576I पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_576P, PS3AV_CMD_AV_VID_576P पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_1080I_60HZ, PS3AV_CMD_AV_VID_1080I_60HZ पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_720P_60HZ, PS3AV_CMD_AV_VID_720P_60HZ पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_1080P_60HZ, PS3AV_CMD_AV_VID_1080P_60HZ पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_1080I_50HZ, PS3AV_CMD_AV_VID_1080I_50HZ पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_720P_50HZ, PS3AV_CMD_AV_VID_720P_50HZ पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_1080P_50HZ, PS3AV_CMD_AV_VID_1080P_50HZ पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_WXGA, PS3AV_CMD_AV_VID_WXGA पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_SXGA, PS3AV_CMD_AV_VID_SXGA पूर्ण,
+	अणु PS3AV_CMD_VIDEO_VID_WUXGA, PS3AV_CMD_AV_VID_WUXGA पूर्ण
+पूर्ण;
 
-static u32 ps3av_vid_video2av(int vid)
-{
-	unsigned int i;
+अटल u32 ps3av_vid_video2av(पूर्णांक vid)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ps3av_vid_video2av_table); i++)
-		if (ps3av_vid_video2av_table[i].vid == vid)
-			return ps3av_vid_video2av_table[i].av;
+	क्रम (i = 0; i < ARRAY_SIZE(ps3av_vid_video2av_table); i++)
+		अगर (ps3av_vid_video2av_table[i].vid == vid)
+			वापस ps3av_vid_video2av_table[i].av;
 
-	return PS3AV_CMD_AV_VID_480P;
-}
+	वापस PS3AV_CMD_AV_VID_480P;
+पूर्ण
 
-static int ps3av_hdmi_range(void)
-{
-	if (ps3_compare_firmware_version(1, 8, 0) < 0)
-		return 0;
-	else
-		return 1; /* supported */
-}
+अटल पूर्णांक ps3av_hdmi_range(व्योम)
+अणु
+	अगर (ps3_compare_firmware_version(1, 8, 0) < 0)
+		वापस 0;
+	अन्यथा
+		वापस 1; /* supported */
+पूर्ण
 
-int ps3av_cmd_init(void)
-{
-	int res;
-	struct ps3av_pkt_av_init av_init;
-	struct ps3av_pkt_video_init video_init;
-	struct ps3av_pkt_audio_init audio_init;
+पूर्णांक ps3av_cmd_init(व्योम)
+अणु
+	पूर्णांक res;
+	काष्ठा ps3av_pkt_av_init av_init;
+	काष्ठा ps3av_pkt_video_init video_init;
+	काष्ठा ps3av_pkt_audio_init audio_init;
 
 	/* video init */
-	memset(&video_init, 0, sizeof(video_init));
+	स_रखो(&video_init, 0, माप(video_init));
 
-	res = ps3av_do_pkt(PS3AV_CID_VIDEO_INIT, sizeof(video_init.send_hdr),
-			   sizeof(video_init), &video_init.send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_VIDEO_INIT, माप(video_init.send_hdr),
+			   माप(video_init), &video_init.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&video_init);
-	if (res) {
-		printk(KERN_ERR "PS3AV_CID_VIDEO_INIT: failed %x\n", res);
-		return res;
-	}
+	अगर (res) अणु
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_VIDEO_INIT: failed %x\n", res);
+		वापस res;
+	पूर्ण
 
 	/* audio init */
-	memset(&audio_init, 0, sizeof(audio_init));
+	स_रखो(&audio_init, 0, माप(audio_init));
 
-	res = ps3av_do_pkt(PS3AV_CID_AUDIO_INIT, sizeof(audio_init.send_hdr),
-			   sizeof(audio_init), &audio_init.send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AUDIO_INIT, माप(audio_init.send_hdr),
+			   माप(audio_init), &audio_init.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&audio_init);
-	if (res) {
-		printk(KERN_ERR "PS3AV_CID_AUDIO_INIT: failed %x\n", res);
-		return res;
-	}
+	अगर (res) अणु
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AUDIO_INIT: failed %x\n", res);
+		वापस res;
+	पूर्ण
 
 	/* av init */
-	memset(&av_init, 0, sizeof(av_init));
+	स_रखो(&av_init, 0, माप(av_init));
 	av_init.event_bit = 0;
 
-	res = ps3av_do_pkt(PS3AV_CID_AV_INIT, sizeof(av_init), sizeof(av_init),
+	res = ps3av_करो_pkt(PS3AV_CID_AV_INIT, माप(av_init), माप(av_init),
 			   &av_init.send_hdr);
-	if (res < 0)
-		return res;
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&av_init);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AV_INIT: failed %x\n", res);
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AV_INIT: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_fin(void)
-{
-	int res;
-	struct ps3av_pkt_av_fin av_fin;
+पूर्णांक ps3av_cmd_fin(व्योम)
+अणु
+	पूर्णांक res;
+	काष्ठा ps3av_pkt_av_fin av_fin;
 
-	memset(&av_fin, 0, sizeof(av_fin));
+	स_रखो(&av_fin, 0, माप(av_fin));
 
-	res = ps3av_do_pkt(PS3AV_CID_AV_FIN, sizeof(av_fin.send_hdr),
-			   sizeof(av_fin), &av_fin.send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AV_FIN, माप(av_fin.send_hdr),
+			   माप(av_fin), &av_fin.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&av_fin);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AV_FIN: failed %x\n", res);
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AV_FIN: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_av_video_mute(int num_of_port, u32 *port, u32 mute)
-{
-	int i, send_len, res;
-	struct ps3av_pkt_av_video_mute av_video_mute;
+पूर्णांक ps3av_cmd_av_video_mute(पूर्णांक num_of_port, u32 *port, u32 mute)
+अणु
+	पूर्णांक i, send_len, res;
+	काष्ठा ps3av_pkt_av_video_mute av_video_mute;
 
-	if (num_of_port > PS3AV_MUTE_PORT_MAX)
-		return -EINVAL;
+	अगर (num_of_port > PS3AV_MUTE_PORT_MAX)
+		वापस -EINVAL;
 
-	memset(&av_video_mute, 0, sizeof(av_video_mute));
-	for (i = 0; i < num_of_port; i++) {
+	स_रखो(&av_video_mute, 0, माप(av_video_mute));
+	क्रम (i = 0; i < num_of_port; i++) अणु
 		av_video_mute.mute[i].avport = port[i];
 		av_video_mute.mute[i].mute = mute;
-	}
+	पूर्ण
 
-	send_len = sizeof(av_video_mute.send_hdr) +
-	    sizeof(struct ps3av_av_mute) * num_of_port;
-	res = ps3av_do_pkt(PS3AV_CID_AV_VIDEO_MUTE, send_len,
-			   sizeof(av_video_mute), &av_video_mute.send_hdr);
-	if (res < 0)
-		return res;
+	send_len = माप(av_video_mute.send_hdr) +
+	    माप(काष्ठा ps3av_av_mute) * num_of_port;
+	res = ps3av_करो_pkt(PS3AV_CID_AV_VIDEO_MUTE, send_len,
+			   माप(av_video_mute), &av_video_mute.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&av_video_mute);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AV_VIDEO_MUTE: failed %x\n", res);
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AV_VIDEO_MUTE: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_av_video_disable_sig(u32 port)
-{
-	int res;
-	struct ps3av_pkt_av_video_disable_sig av_video_sig;
+पूर्णांक ps3av_cmd_av_video_disable_sig(u32 port)
+अणु
+	पूर्णांक res;
+	काष्ठा ps3av_pkt_av_video_disable_sig av_video_sig;
 
-	memset(&av_video_sig, 0, sizeof(av_video_sig));
+	स_रखो(&av_video_sig, 0, माप(av_video_sig));
 	av_video_sig.avport = port;
 
-	res = ps3av_do_pkt(PS3AV_CID_AV_VIDEO_DISABLE_SIG,
-			   sizeof(av_video_sig), sizeof(av_video_sig),
+	res = ps3av_करो_pkt(PS3AV_CID_AV_VIDEO_DISABLE_SIG,
+			   माप(av_video_sig), माप(av_video_sig),
 			   &av_video_sig.send_hdr);
-	if (res < 0)
-		return res;
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&av_video_sig);
-	if (res)
-		printk(KERN_ERR
+	अगर (res)
+		prपूर्णांकk(KERN_ERR
 		       "PS3AV_CID_AV_VIDEO_DISABLE_SIG: failed %x port:%x\n",
 		       res, port);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_av_tv_mute(u32 avport, u32 mute)
-{
-	int res;
-	struct ps3av_pkt_av_tv_mute tv_mute;
+पूर्णांक ps3av_cmd_av_tv_mute(u32 avport, u32 mute)
+अणु
+	पूर्णांक res;
+	काष्ठा ps3av_pkt_av_tv_mute tv_mute;
 
-	memset(&tv_mute, 0, sizeof(tv_mute));
+	स_रखो(&tv_mute, 0, माप(tv_mute));
 	tv_mute.avport = avport;
 	tv_mute.mute = mute;
 
-	res = ps3av_do_pkt(PS3AV_CID_AV_TV_MUTE, sizeof(tv_mute),
-			   sizeof(tv_mute), &tv_mute.send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AV_TV_MUTE, माप(tv_mute),
+			   माप(tv_mute), &tv_mute.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&tv_mute);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AV_TV_MUTE: failed %x port:%x\n",
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AV_TV_MUTE: failed %x port:%x\n",
 		       res, avport);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_enable_event(void)
-{
-	int res;
-	struct ps3av_pkt_av_event av_event;
+पूर्णांक ps3av_cmd_enable_event(व्योम)
+अणु
+	पूर्णांक res;
+	काष्ठा ps3av_pkt_av_event av_event;
 
-	memset(&av_event, 0, sizeof(av_event));
+	स_रखो(&av_event, 0, माप(av_event));
 	av_event.event_bit = PS3AV_CMD_EVENT_BIT_UNPLUGGED |
 	    PS3AV_CMD_EVENT_BIT_PLUGGED | PS3AV_CMD_EVENT_BIT_HDCP_DONE;
 
-	res = ps3av_do_pkt(PS3AV_CID_AV_ENABLE_EVENT, sizeof(av_event),
-			   sizeof(av_event), &av_event.send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AV_ENABLE_EVENT, माप(av_event),
+			   माप(av_event), &av_event.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&av_event);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AV_ENABLE_EVENT: failed %x\n", res);
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AV_ENABLE_EVENT: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_av_hdmi_mode(u8 mode)
-{
-	int res;
-	struct ps3av_pkt_av_hdmi_mode hdmi_mode;
+पूर्णांक ps3av_cmd_av_hdmi_mode(u8 mode)
+अणु
+	पूर्णांक res;
+	काष्ठा ps3av_pkt_av_hdmi_mode hdmi_mode;
 
-	memset(&hdmi_mode, 0, sizeof(hdmi_mode));
+	स_रखो(&hdmi_mode, 0, माप(hdmi_mode));
 	hdmi_mode.mode = mode;
 
-	res = ps3av_do_pkt(PS3AV_CID_AV_HDMI_MODE, sizeof(hdmi_mode),
-			   sizeof(hdmi_mode), &hdmi_mode.send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AV_HDMI_MODE, माप(hdmi_mode),
+			   माप(hdmi_mode), &hdmi_mode.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&hdmi_mode);
-	if (res && res != PS3AV_STATUS_UNSUPPORTED_HDMI_MODE)
-		printk(KERN_ERR "PS3AV_CID_AV_HDMI_MODE: failed %x\n", res);
+	अगर (res && res != PS3AV_STATUS_UNSUPPORTED_HDMI_MODE)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AV_HDMI_MODE: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-u32 ps3av_cmd_set_av_video_cs(void *p, u32 avport, int video_vid, int cs_out,
-			      int aspect, u32 id)
-{
-	struct ps3av_pkt_av_video_cs *av_video_cs;
+u32 ps3av_cmd_set_av_video_cs(व्योम *p, u32 avport, पूर्णांक video_vid, पूर्णांक cs_out,
+			      पूर्णांक aspect, u32 id)
+अणु
+	काष्ठा ps3av_pkt_av_video_cs *av_video_cs;
 
-	av_video_cs = (struct ps3av_pkt_av_video_cs *)p;
-	if (video_vid == -1)
+	av_video_cs = (काष्ठा ps3av_pkt_av_video_cs *)p;
+	अगर (video_vid == -1)
 		video_vid = PS3AV_CMD_VIDEO_VID_720P_60HZ;
-	if (cs_out == -1)
+	अगर (cs_out == -1)
 		cs_out = PS3AV_CMD_VIDEO_CS_YUV444_8;
-	if (aspect == -1)
+	अगर (aspect == -1)
 		aspect = 0;
 
-	memset(av_video_cs, 0, sizeof(*av_video_cs));
-	ps3av_set_hdr(PS3AV_CID_AV_VIDEO_CS, sizeof(*av_video_cs),
+	स_रखो(av_video_cs, 0, माप(*av_video_cs));
+	ps3av_set_hdr(PS3AV_CID_AV_VIDEO_CS, माप(*av_video_cs),
 		      &av_video_cs->send_hdr);
 	av_video_cs->avport = avport;
 	/* should be same as video_mode.resolution */
@@ -347,289 +348,289 @@ u32 ps3av_cmd_set_av_video_cs(void *p, u32 avport, int video_vid, int cs_out,
 	/* should be same as video_mode.video_cs_out */
 	av_video_cs->av_cs_in = ps3av_cs_video2av(PS3AV_CMD_VIDEO_CS_RGB_8);
 	av_video_cs->bitlen_out = ps3av_cs_video2av_bitlen(cs_out);
-	if ((id & PS3AV_MODE_WHITE) && ps3av_hdmi_range())
+	अगर ((id & PS3AV_MODE_WHITE) && ps3av_hdmi_range())
 		av_video_cs->super_white = PS3AV_CMD_AV_SUPER_WHITE_ON;
-	else /* default off */
+	अन्यथा /* शेष off */
 		av_video_cs->super_white = PS3AV_CMD_AV_SUPER_WHITE_OFF;
 	av_video_cs->aspect = aspect;
-	if (id & PS3AV_MODE_DITHER) {
+	अगर (id & PS3AV_MODE_DITHER) अणु
 		av_video_cs->dither = PS3AV_CMD_AV_DITHER_ON
 		    | PS3AV_CMD_AV_DITHER_8BIT;
-	} else {
-		/* default off */
+	पूर्ण अन्यथा अणु
+		/* शेष off */
 		av_video_cs->dither = PS3AV_CMD_AV_DITHER_OFF;
-	}
+	पूर्ण
 
-	return sizeof(*av_video_cs);
-}
+	वापस माप(*av_video_cs);
+पूर्ण
 
-u32 ps3av_cmd_set_video_mode(void *p, u32 head, int video_vid, int video_fmt,
+u32 ps3av_cmd_set_video_mode(व्योम *p, u32 head, पूर्णांक video_vid, पूर्णांक video_fmt,
 			     u32 id)
-{
-	struct ps3av_pkt_video_mode *video_mode;
+अणु
+	काष्ठा ps3av_pkt_video_mode *video_mode;
 	u32 x, y;
 
-	video_mode = (struct ps3av_pkt_video_mode *)p;
-	if (video_vid == -1)
+	video_mode = (काष्ठा ps3av_pkt_video_mode *)p;
+	अगर (video_vid == -1)
 		video_vid = PS3AV_CMD_VIDEO_VID_720P_60HZ;
-	if (video_fmt == -1)
+	अगर (video_fmt == -1)
 		video_fmt = PS3AV_CMD_VIDEO_FMT_X8R8G8B8;
 
-	if (ps3av_video_mode2res(id, &x, &y))
-		return 0;
+	अगर (ps3av_video_mode2res(id, &x, &y))
+		वापस 0;
 
 	/* video mode */
-	memset(video_mode, 0, sizeof(*video_mode));
-	ps3av_set_hdr(PS3AV_CID_VIDEO_MODE, sizeof(*video_mode),
+	स_रखो(video_mode, 0, माप(*video_mode));
+	ps3av_set_hdr(PS3AV_CID_VIDEO_MODE, माप(*video_mode),
 		      &video_mode->send_hdr);
 	video_mode->video_head = head;
-	if (video_vid == PS3AV_CMD_VIDEO_VID_480I
+	अगर (video_vid == PS3AV_CMD_VIDEO_VID_480I
 	    && head == PS3AV_CMD_VIDEO_HEAD_B)
 		video_mode->video_vid = PS3AV_CMD_VIDEO_VID_480I_A;
-	else
+	अन्यथा
 		video_mode->video_vid = video_vid;
 	video_mode->width = (u16) x;
 	video_mode->height = (u16) y;
 	video_mode->pitch = video_mode->width * 4;	/* line_length */
-	video_mode->video_out_format = PS3AV_CMD_VIDEO_OUT_FORMAT_RGB_12BIT;
-	video_mode->video_format = ps3av_video_fmt_table[video_fmt].format;
-	if ((id & PS3AV_MODE_COLOR) && ps3av_hdmi_range())
+	video_mode->video_out_क्रमmat = PS3AV_CMD_VIDEO_OUT_FORMAT_RGB_12BIT;
+	video_mode->video_क्रमmat = ps3av_video_fmt_table[video_fmt].क्रमmat;
+	अगर ((id & PS3AV_MODE_COLOR) && ps3av_hdmi_range())
 		video_mode->video_cl_cnv = PS3AV_CMD_VIDEO_CL_CNV_DISABLE_LUT;
-	else /* default enable */
+	अन्यथा /* शेष enable */
 		video_mode->video_cl_cnv = PS3AV_CMD_VIDEO_CL_CNV_ENABLE_LUT;
 	video_mode->video_order = ps3av_video_fmt_table[video_fmt].order;
 
 	pr_debug("%s: video_mode:vid:%x width:%d height:%d pitch:%d out_format:%d format:%x order:%x\n",
 		__func__, video_vid, video_mode->width, video_mode->height,
-		video_mode->pitch, video_mode->video_out_format,
-		video_mode->video_format, video_mode->video_order);
-	return sizeof(*video_mode);
-}
+		video_mode->pitch, video_mode->video_out_क्रमmat,
+		video_mode->video_क्रमmat, video_mode->video_order);
+	वापस माप(*video_mode);
+पूर्ण
 
-int ps3av_cmd_video_format_black(u32 head, u32 video_fmt, u32 mute)
-{
-	int res;
-	struct ps3av_pkt_video_format video_format;
+पूर्णांक ps3av_cmd_video_क्रमmat_black(u32 head, u32 video_fmt, u32 mute)
+अणु
+	पूर्णांक res;
+	काष्ठा ps3av_pkt_video_क्रमmat video_क्रमmat;
 
-	memset(&video_format, 0, sizeof(video_format));
-	video_format.video_head = head;
-	if (mute != PS3AV_CMD_MUTE_OFF)
-		video_format.video_format = PS3AV_CMD_VIDEO_FORMAT_BLACK;
-	else
-		video_format.video_format =
-		    ps3av_video_fmt_table[video_fmt].format;
-	video_format.video_order = ps3av_video_fmt_table[video_fmt].order;
+	स_रखो(&video_क्रमmat, 0, माप(video_क्रमmat));
+	video_क्रमmat.video_head = head;
+	अगर (mute != PS3AV_CMD_MUTE_OFF)
+		video_क्रमmat.video_क्रमmat = PS3AV_CMD_VIDEO_FORMAT_BLACK;
+	अन्यथा
+		video_क्रमmat.video_क्रमmat =
+		    ps3av_video_fmt_table[video_fmt].क्रमmat;
+	video_क्रमmat.video_order = ps3av_video_fmt_table[video_fmt].order;
 
-	res = ps3av_do_pkt(PS3AV_CID_VIDEO_FORMAT, sizeof(video_format),
-			   sizeof(video_format), &video_format.send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_VIDEO_FORMAT, माप(video_क्रमmat),
+			   माप(video_क्रमmat), &video_क्रमmat.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
-	res = get_status(&video_format);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_VIDEO_FORMAT: failed %x\n", res);
+	res = get_status(&video_क्रमmat);
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_VIDEO_FORMAT: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 
-int ps3av_cmd_av_audio_mute(int num_of_port, u32 *port, u32 mute)
-{
-	int i, res;
-	struct ps3av_pkt_av_audio_mute av_audio_mute;
+पूर्णांक ps3av_cmd_av_audio_mute(पूर्णांक num_of_port, u32 *port, u32 mute)
+अणु
+	पूर्णांक i, res;
+	काष्ठा ps3av_pkt_av_audio_mute av_audio_mute;
 
-	if (num_of_port > PS3AV_MUTE_PORT_MAX)
-		return -EINVAL;
+	अगर (num_of_port > PS3AV_MUTE_PORT_MAX)
+		वापस -EINVAL;
 
 	/* audio mute */
-	memset(&av_audio_mute, 0, sizeof(av_audio_mute));
-	for (i = 0; i < num_of_port; i++) {
+	स_रखो(&av_audio_mute, 0, माप(av_audio_mute));
+	क्रम (i = 0; i < num_of_port; i++) अणु
 		av_audio_mute.mute[i].avport = port[i];
 		av_audio_mute.mute[i].mute = mute;
-	}
+	पूर्ण
 
-	res = ps3av_do_pkt(PS3AV_CID_AV_AUDIO_MUTE,
-			   sizeof(av_audio_mute.send_hdr) +
-			   sizeof(struct ps3av_av_mute) * num_of_port,
-			   sizeof(av_audio_mute), &av_audio_mute.send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AV_AUDIO_MUTE,
+			   माप(av_audio_mute.send_hdr) +
+			   माप(काष्ठा ps3av_av_mute) * num_of_port,
+			   माप(av_audio_mute), &av_audio_mute.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&av_audio_mute);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AV_AUDIO_MUTE: failed %x\n", res);
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AV_AUDIO_MUTE: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static const struct {
+अटल स्थिर काष्ठा अणु
 	u32 fs;
 	u8 mclk;
-} ps3av_cnv_mclk_table[] = {
-	{ PS3AV_CMD_AUDIO_FS_44K, PS3AV_CMD_AV_MCLK_512 },
-	{ PS3AV_CMD_AUDIO_FS_48K, PS3AV_CMD_AV_MCLK_512 },
-	{ PS3AV_CMD_AUDIO_FS_88K, PS3AV_CMD_AV_MCLK_256 },
-	{ PS3AV_CMD_AUDIO_FS_96K, PS3AV_CMD_AV_MCLK_256 },
-	{ PS3AV_CMD_AUDIO_FS_176K, PS3AV_CMD_AV_MCLK_128 },
-	{ PS3AV_CMD_AUDIO_FS_192K, PS3AV_CMD_AV_MCLK_128 }
-};
+पूर्ण ps3av_cnv_mclk_table[] = अणु
+	अणु PS3AV_CMD_AUDIO_FS_44K, PS3AV_CMD_AV_MCLK_512 पूर्ण,
+	अणु PS3AV_CMD_AUDIO_FS_48K, PS3AV_CMD_AV_MCLK_512 पूर्ण,
+	अणु PS3AV_CMD_AUDIO_FS_88K, PS3AV_CMD_AV_MCLK_256 पूर्ण,
+	अणु PS3AV_CMD_AUDIO_FS_96K, PS3AV_CMD_AV_MCLK_256 पूर्ण,
+	अणु PS3AV_CMD_AUDIO_FS_176K, PS3AV_CMD_AV_MCLK_128 पूर्ण,
+	अणु PS3AV_CMD_AUDIO_FS_192K, PS3AV_CMD_AV_MCLK_128 पूर्ण
+पूर्ण;
 
-static u8 ps3av_cnv_mclk(u32 fs)
-{
-	unsigned int i;
+अटल u8 ps3av_cnv_mclk(u32 fs)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ps3av_cnv_mclk_table); i++)
-		if (ps3av_cnv_mclk_table[i].fs == fs)
-			return ps3av_cnv_mclk_table[i].mclk;
+	क्रम (i = 0; i < ARRAY_SIZE(ps3av_cnv_mclk_table); i++)
+		अगर (ps3av_cnv_mclk_table[i].fs == fs)
+			वापस ps3av_cnv_mclk_table[i].mclk;
 
-	printk(KERN_ERR "%s failed, fs:%x\n", __func__, fs);
-	return 0;
-}
+	prपूर्णांकk(KERN_ERR "%s failed, fs:%x\n", __func__, fs);
+	वापस 0;
+पूर्ण
 
-#define BASE	PS3AV_CMD_AUDIO_FS_44K
+#घोषणा BASE	PS3AV_CMD_AUDIO_FS_44K
 
-static const u32 ps3av_ns_table[][5] = {
+अटल स्थिर u32 ps3av_ns_table[][5] = अणु
 					/*   D1,    D2,    D3,    D4,    D5 */
-	[PS3AV_CMD_AUDIO_FS_44K-BASE] =	{  6272,  6272, 17836, 17836,  8918 },
-	[PS3AV_CMD_AUDIO_FS_48K-BASE] =	{  6144,  6144, 11648, 11648,  5824 },
-	[PS3AV_CMD_AUDIO_FS_88K-BASE] =	{ 12544, 12544, 35672, 35672, 17836 },
-	[PS3AV_CMD_AUDIO_FS_96K-BASE] =	{ 12288, 12288, 23296, 23296, 11648 },
-	[PS3AV_CMD_AUDIO_FS_176K-BASE] =	{ 25088, 25088, 71344, 71344, 35672 },
-	[PS3AV_CMD_AUDIO_FS_192K-BASE] =	{ 24576, 24576, 46592, 46592, 23296 }
-};
+	[PS3AV_CMD_AUDIO_FS_44K-BASE] =	अणु  6272,  6272, 17836, 17836,  8918 पूर्ण,
+	[PS3AV_CMD_AUDIO_FS_48K-BASE] =	अणु  6144,  6144, 11648, 11648,  5824 पूर्ण,
+	[PS3AV_CMD_AUDIO_FS_88K-BASE] =	अणु 12544, 12544, 35672, 35672, 17836 पूर्ण,
+	[PS3AV_CMD_AUDIO_FS_96K-BASE] =	अणु 12288, 12288, 23296, 23296, 11648 पूर्ण,
+	[PS3AV_CMD_AUDIO_FS_176K-BASE] =	अणु 25088, 25088, 71344, 71344, 35672 पूर्ण,
+	[PS3AV_CMD_AUDIO_FS_192K-BASE] =	अणु 24576, 24576, 46592, 46592, 23296 पूर्ण
+पूर्ण;
 
-static void ps3av_cnv_ns(u8 *ns, u32 fs, u32 video_vid)
-{
+अटल व्योम ps3av_cnv_ns(u8 *ns, u32 fs, u32 video_vid)
+अणु
 	u32 av_vid, ns_val;
-	int d;
+	पूर्णांक d;
 
 	d = ns_val = 0;
 	av_vid = ps3av_vid_video2av(video_vid);
-	switch (av_vid) {
-	case PS3AV_CMD_AV_VID_480I:
-	case PS3AV_CMD_AV_VID_576I:
+	चयन (av_vid) अणु
+	हाल PS3AV_CMD_AV_VID_480I:
+	हाल PS3AV_CMD_AV_VID_576I:
 		d = 0;
-		break;
-	case PS3AV_CMD_AV_VID_480P:
-	case PS3AV_CMD_AV_VID_576P:
+		अवरोध;
+	हाल PS3AV_CMD_AV_VID_480P:
+	हाल PS3AV_CMD_AV_VID_576P:
 		d = 1;
-		break;
-	case PS3AV_CMD_AV_VID_1080I_60HZ:
-	case PS3AV_CMD_AV_VID_1080I_50HZ:
+		अवरोध;
+	हाल PS3AV_CMD_AV_VID_1080I_60HZ:
+	हाल PS3AV_CMD_AV_VID_1080I_50HZ:
 		d = 2;
-		break;
-	case PS3AV_CMD_AV_VID_720P_60HZ:
-	case PS3AV_CMD_AV_VID_720P_50HZ:
+		अवरोध;
+	हाल PS3AV_CMD_AV_VID_720P_60HZ:
+	हाल PS3AV_CMD_AV_VID_720P_50HZ:
 		d = 3;
-		break;
-	case PS3AV_CMD_AV_VID_1080P_60HZ:
-	case PS3AV_CMD_AV_VID_1080P_50HZ:
-	case PS3AV_CMD_AV_VID_WXGA:
-	case PS3AV_CMD_AV_VID_SXGA:
-	case PS3AV_CMD_AV_VID_WUXGA:
+		अवरोध;
+	हाल PS3AV_CMD_AV_VID_1080P_60HZ:
+	हाल PS3AV_CMD_AV_VID_1080P_50HZ:
+	हाल PS3AV_CMD_AV_VID_WXGA:
+	हाल PS3AV_CMD_AV_VID_SXGA:
+	हाल PS3AV_CMD_AV_VID_WUXGA:
 		d = 4;
-		break;
-	default:
-		printk(KERN_ERR "%s failed, vid:%x\n", __func__, video_vid);
-		break;
-	}
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "%s failed, vid:%x\n", __func__, video_vid);
+		अवरोध;
+	पूर्ण
 
-	if (fs < PS3AV_CMD_AUDIO_FS_44K || fs > PS3AV_CMD_AUDIO_FS_192K)
-		printk(KERN_ERR "%s failed, fs:%x\n", __func__, fs);
-	else
+	अगर (fs < PS3AV_CMD_AUDIO_FS_44K || fs > PS3AV_CMD_AUDIO_FS_192K)
+		prपूर्णांकk(KERN_ERR "%s failed, fs:%x\n", __func__, fs);
+	अन्यथा
 		ns_val = ps3av_ns_table[PS3AV_CMD_AUDIO_FS_44K-BASE][d];
 
 	*ns++ = ns_val & 0x000000FF;
 	*ns++ = (ns_val & 0x0000FF00) >> 8;
 	*ns = (ns_val & 0x00FF0000) >> 16;
-}
+पूर्ण
 
-#undef BASE
+#अघोषित BASE
 
-static u8 ps3av_cnv_enable(u32 source, const u8 *enable)
-{
+अटल u8 ps3av_cnv_enable(u32 source, स्थिर u8 *enable)
+अणु
 	u8 ret = 0;
 
-	if (source == PS3AV_CMD_AUDIO_SOURCE_SPDIF) {
+	अगर (source == PS3AV_CMD_AUDIO_SOURCE_SPDIF) अणु
 		ret = 0x03;
-	} else if (source == PS3AV_CMD_AUDIO_SOURCE_SERIAL) {
+	पूर्ण अन्यथा अगर (source == PS3AV_CMD_AUDIO_SOURCE_SERIAL) अणु
 		ret = ((enable[0] << 4) + (enable[1] << 5) + (enable[2] << 6) +
 		       (enable[3] << 7)) | 0x01;
-	} else
-		printk(KERN_ERR "%s failed, source:%x\n", __func__, source);
-	return ret;
-}
+	पूर्ण अन्यथा
+		prपूर्णांकk(KERN_ERR "%s failed, source:%x\n", __func__, source);
+	वापस ret;
+पूर्ण
 
-static u8 ps3av_cnv_fifomap(const u8 *map)
-{
+अटल u8 ps3av_cnv_fअगरomap(स्थिर u8 *map)
+अणु
 	u8 ret = 0;
 
 	ret = map[0] + (map[1] << 2) + (map[2] << 4) + (map[3] << 6);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u8 ps3av_cnv_inputlen(u32 word_bits)
-{
+अटल u8 ps3av_cnv_inputlen(u32 word_bits)
+अणु
 	u8 ret = 0;
 
-	switch (word_bits) {
-	case PS3AV_CMD_AUDIO_WORD_BITS_16:
+	चयन (word_bits) अणु
+	हाल PS3AV_CMD_AUDIO_WORD_BITS_16:
 		ret = PS3AV_CMD_AV_INPUTLEN_16;
-		break;
-	case PS3AV_CMD_AUDIO_WORD_BITS_20:
+		अवरोध;
+	हाल PS3AV_CMD_AUDIO_WORD_BITS_20:
 		ret = PS3AV_CMD_AV_INPUTLEN_20;
-		break;
-	case PS3AV_CMD_AUDIO_WORD_BITS_24:
+		अवरोध;
+	हाल PS3AV_CMD_AUDIO_WORD_BITS_24:
 		ret = PS3AV_CMD_AV_INPUTLEN_24;
-		break;
-	default:
-		printk(KERN_ERR "%s failed, word_bits:%x\n", __func__,
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "%s failed, word_bits:%x\n", __func__,
 		       word_bits);
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static u8 ps3av_cnv_layout(u32 num_of_ch)
-{
-	if (num_of_ch > PS3AV_CMD_AUDIO_NUM_OF_CH_8) {
-		printk(KERN_ERR "%s failed, num_of_ch:%x\n", __func__,
+अटल u8 ps3av_cnv_layout(u32 num_of_ch)
+अणु
+	अगर (num_of_ch > PS3AV_CMD_AUDIO_NUM_OF_CH_8) अणु
+		prपूर्णांकk(KERN_ERR "%s failed, num_of_ch:%x\n", __func__,
 		       num_of_ch);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return num_of_ch == PS3AV_CMD_AUDIO_NUM_OF_CH_2 ? 0x0 : 0x1;
-}
+	वापस num_of_ch == PS3AV_CMD_AUDIO_NUM_OF_CH_2 ? 0x0 : 0x1;
+पूर्ण
 
-static void ps3av_cnv_info(struct ps3av_audio_info_frame *info,
-			   const struct ps3av_pkt_audio_mode *mode)
-{
+अटल व्योम ps3av_cnv_info(काष्ठा ps3av_audio_info_frame *info,
+			   स्थिर काष्ठा ps3av_pkt_audio_mode *mode)
+अणु
 	info->pb1.cc = mode->audio_num_of_ch + 1;	/* CH2:0x01 --- CH8:0x07 */
 	info->pb1.ct = 0;
 	info->pb2.sf = 0;
 	info->pb2.ss = 0;
 
-	info->pb3 = 0;		/* check mode->audio_format ?? */
+	info->pb3 = 0;		/* check mode->audio_क्रमmat ?? */
 	info->pb4 = mode->audio_layout;
-	info->pb5.dm = mode->audio_downmix;
-	info->pb5.lsv = mode->audio_downmix_level;
-}
+	info->pb5.dm = mode->audio_करोwnmix;
+	info->pb5.lsv = mode->audio_करोwnmix_level;
+पूर्ण
 
-static void ps3av_cnv_chstat(u8 *chstat, const u8 *cs_info)
-{
-	memcpy(chstat, cs_info, 5);
-}
+अटल व्योम ps3av_cnv_chstat(u8 *chstat, स्थिर u8 *cs_info)
+अणु
+	स_नकल(chstat, cs_info, 5);
+पूर्ण
 
-u32 ps3av_cmd_set_av_audio_param(void *p, u32 port,
-				 const struct ps3av_pkt_audio_mode *audio_mode,
+u32 ps3av_cmd_set_av_audio_param(व्योम *p, u32 port,
+				 स्थिर काष्ठा ps3av_pkt_audio_mode *audio_mode,
 				 u32 video_vid)
-{
-	struct ps3av_pkt_av_audio_param *param;
+अणु
+	काष्ठा ps3av_pkt_av_audio_param *param;
 
-	param = (struct ps3av_pkt_av_audio_param *)p;
+	param = (काष्ठा ps3av_pkt_av_audio_param *)p;
 
-	memset(param, 0, sizeof(*param));
-	ps3av_set_hdr(PS3AV_CID_AV_AUDIO_PARAM, sizeof(*param),
+	स_रखो(param, 0, माप(*param));
+	ps3av_set_hdr(PS3AV_CID_AV_AUDIO_PARAM, माप(*param),
 		      &param->send_hdr);
 
 	param->avport = port;
@@ -638,73 +639,73 @@ u32 ps3av_cmd_set_av_audio_param(void *p, u32 port,
 	param->enable = ps3av_cnv_enable(audio_mode->audio_source,
 					 audio_mode->audio_enable);
 	param->swaplr = 0x09;
-	param->fifomap = ps3av_cnv_fifomap(audio_mode->audio_map);
-	param->inputctrl = 0x49;
+	param->fअगरomap = ps3av_cnv_fअगरomap(audio_mode->audio_map);
+	param->inअ_दोtrl = 0x49;
 	param->inputlen = ps3av_cnv_inputlen(audio_mode->audio_word_bits);
 	param->layout = ps3av_cnv_layout(audio_mode->audio_num_of_ch);
 	ps3av_cnv_info(&param->info, audio_mode);
 	ps3av_cnv_chstat(param->chstat, audio_mode->audio_cs_info);
 
-	return sizeof(*param);
-}
+	वापस माप(*param);
+पूर्ण
 
-/* default cs val */
-u8 ps3av_mode_cs_info[] = {
+/* शेष cs val */
+u8 ps3av_mode_cs_info[] = अणु
 	0x00, 0x09, 0x00, 0x02, 0x01, 0x00, 0x00, 0x00
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(ps3av_mode_cs_info);
 
-#define CS_44	0x00
-#define CS_48	0x02
-#define CS_88	0x08
-#define CS_96	0x0a
-#define CS_176	0x0c
-#define CS_192	0x0e
-#define CS_MASK	0x0f
-#define CS_BIT	0x40
+#घोषणा CS_44	0x00
+#घोषणा CS_48	0x02
+#घोषणा CS_88	0x08
+#घोषणा CS_96	0x0a
+#घोषणा CS_176	0x0c
+#घोषणा CS_192	0x0e
+#घोषणा CS_MASK	0x0f
+#घोषणा CS_BIT	0x40
 
-void ps3av_cmd_set_audio_mode(struct ps3av_pkt_audio_mode *audio, u32 avport,
-			      u32 ch, u32 fs, u32 word_bits, u32 format,
+व्योम ps3av_cmd_set_audio_mode(काष्ठा ps3av_pkt_audio_mode *audio, u32 avport,
+			      u32 ch, u32 fs, u32 word_bits, u32 क्रमmat,
 			      u32 source)
-{
-	int spdif_through;
-	int i;
+अणु
+	पूर्णांक spdअगर_through;
+	पूर्णांक i;
 
-	if (!(ch | fs | format | word_bits | source)) {
+	अगर (!(ch | fs | क्रमmat | word_bits | source)) अणु
 		ch = PS3AV_CMD_AUDIO_NUM_OF_CH_2;
 		fs = PS3AV_CMD_AUDIO_FS_48K;
 		word_bits = PS3AV_CMD_AUDIO_WORD_BITS_16;
-		format = PS3AV_CMD_AUDIO_FORMAT_PCM;
+		क्रमmat = PS3AV_CMD_AUDIO_FORMAT_PCM;
 		source = PS3AV_CMD_AUDIO_SOURCE_SERIAL;
-	}
+	पूर्ण
 
 	/* audio mode */
-	memset(audio, 0, sizeof(*audio));
-	ps3av_set_hdr(PS3AV_CID_AUDIO_MODE, sizeof(*audio), &audio->send_hdr);
+	स_रखो(audio, 0, माप(*audio));
+	ps3av_set_hdr(PS3AV_CID_AUDIO_MODE, माप(*audio), &audio->send_hdr);
 
 	audio->avport = (u8) avport;
 	audio->mask = 0x0FFF;	/* XXX set all */
 	audio->audio_num_of_ch = ch;
 	audio->audio_fs = fs;
 	audio->audio_word_bits = word_bits;
-	audio->audio_format = format;
+	audio->audio_क्रमmat = क्रमmat;
 	audio->audio_source = source;
 
-	switch (ch) {
-	case PS3AV_CMD_AUDIO_NUM_OF_CH_8:
+	चयन (ch) अणु
+	हाल PS3AV_CMD_AUDIO_NUM_OF_CH_8:
 		audio->audio_enable[3] = 1;
 		fallthrough;
-	case PS3AV_CMD_AUDIO_NUM_OF_CH_6:
+	हाल PS3AV_CMD_AUDIO_NUM_OF_CH_6:
 		audio->audio_enable[2] = 1;
 		audio->audio_enable[1] = 1;
 		fallthrough;
-	case PS3AV_CMD_AUDIO_NUM_OF_CH_2:
-	default:
+	हाल PS3AV_CMD_AUDIO_NUM_OF_CH_2:
+	शेष:
 		audio->audio_enable[0] = 1;
-	}
+	पूर्ण
 
 	/* audio swap L/R */
-	for (i = 0; i < 4; i++)
+	क्रम (i = 0; i < 4; i++)
 		audio->audio_swap[i] = PS3AV_CMD_AUDIO_SWAP_0;	/* no swap */
 
 	/* audio serial input mapping */
@@ -714,209 +715,209 @@ void ps3av_cmd_set_audio_mode(struct ps3av_pkt_audio_mode *audio, u32 avport,
 	audio->audio_map[3] = PS3AV_CMD_AUDIO_MAP_OUTPUT_3;
 
 	/* audio speaker layout */
-	if (avport == PS3AV_CMD_AVPORT_HDMI_0 ||
-	    avport == PS3AV_CMD_AVPORT_HDMI_1) {
-		switch (ch) {
-		case PS3AV_CMD_AUDIO_NUM_OF_CH_8:
+	अगर (avport == PS3AV_CMD_AVPORT_HDMI_0 ||
+	    avport == PS3AV_CMD_AVPORT_HDMI_1) अणु
+		चयन (ch) अणु
+		हाल PS3AV_CMD_AUDIO_NUM_OF_CH_8:
 			audio->audio_layout = PS3AV_CMD_AUDIO_LAYOUT_8CH;
-			break;
-		case PS3AV_CMD_AUDIO_NUM_OF_CH_6:
+			अवरोध;
+		हाल PS3AV_CMD_AUDIO_NUM_OF_CH_6:
 			audio->audio_layout = PS3AV_CMD_AUDIO_LAYOUT_6CH;
-			break;
-		case PS3AV_CMD_AUDIO_NUM_OF_CH_2:
-		default:
+			अवरोध;
+		हाल PS3AV_CMD_AUDIO_NUM_OF_CH_2:
+		शेष:
 			audio->audio_layout = PS3AV_CMD_AUDIO_LAYOUT_2CH;
-			break;
-		}
-	} else {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		audio->audio_layout = PS3AV_CMD_AUDIO_LAYOUT_2CH;
-	}
+	पूर्ण
 
-	/* audio downmix permission */
-	audio->audio_downmix = PS3AV_CMD_AUDIO_DOWNMIX_PERMITTED;
-	/* audio downmix level shift (0:0dB to 15:15dB) */
-	audio->audio_downmix_level = 0;	/* 0dB */
+	/* audio करोwnmix permission */
+	audio->audio_करोwnmix = PS3AV_CMD_AUDIO_DOWNMIX_PERMITTED;
+	/* audio करोwnmix level shअगरt (0:0dB to 15:15dB) */
+	audio->audio_करोwnmix_level = 0;	/* 0dB */
 
 	/* set ch status */
-	for (i = 0; i < 8; i++)
+	क्रम (i = 0; i < 8; i++)
 		audio->audio_cs_info[i] = ps3av_mode_cs_info[i];
 
-	switch (fs) {
-	case PS3AV_CMD_AUDIO_FS_44K:
+	चयन (fs) अणु
+	हाल PS3AV_CMD_AUDIO_FS_44K:
 		audio->audio_cs_info[3] &= ~CS_MASK;
 		audio->audio_cs_info[3] |= CS_44;
-		break;
-	case PS3AV_CMD_AUDIO_FS_88K:
+		अवरोध;
+	हाल PS3AV_CMD_AUDIO_FS_88K:
 		audio->audio_cs_info[3] &= ~CS_MASK;
 		audio->audio_cs_info[3] |= CS_88;
-		break;
-	case PS3AV_CMD_AUDIO_FS_96K:
+		अवरोध;
+	हाल PS3AV_CMD_AUDIO_FS_96K:
 		audio->audio_cs_info[3] &= ~CS_MASK;
 		audio->audio_cs_info[3] |= CS_96;
-		break;
-	case PS3AV_CMD_AUDIO_FS_176K:
+		अवरोध;
+	हाल PS3AV_CMD_AUDIO_FS_176K:
 		audio->audio_cs_info[3] &= ~CS_MASK;
 		audio->audio_cs_info[3] |= CS_176;
-		break;
-	case PS3AV_CMD_AUDIO_FS_192K:
+		अवरोध;
+	हाल PS3AV_CMD_AUDIO_FS_192K:
 		audio->audio_cs_info[3] &= ~CS_MASK;
 		audio->audio_cs_info[3] |= CS_192;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/* non-audio bit */
-	spdif_through = audio->audio_cs_info[0] & 0x02;
+	spdअगर_through = audio->audio_cs_info[0] & 0x02;
 
 	/* pass through setting */
-	if (spdif_through &&
+	अगर (spdअगर_through &&
 	    (avport == PS3AV_CMD_AVPORT_SPDIF_0 ||
 	     avport == PS3AV_CMD_AVPORT_SPDIF_1 ||
 	     avport == PS3AV_CMD_AVPORT_HDMI_0 ||
-	     avport == PS3AV_CMD_AVPORT_HDMI_1)) {
+	     avport == PS3AV_CMD_AVPORT_HDMI_1)) अणु
 		audio->audio_word_bits = PS3AV_CMD_AUDIO_WORD_BITS_16;
-		audio->audio_format = PS3AV_CMD_AUDIO_FORMAT_BITSTREAM;
-	}
-}
+		audio->audio_क्रमmat = PS3AV_CMD_AUDIO_FORMAT_BITSTREAM;
+	पूर्ण
+पूर्ण
 
-int ps3av_cmd_audio_mode(struct ps3av_pkt_audio_mode *audio_mode)
-{
-	int res;
+पूर्णांक ps3av_cmd_audio_mode(काष्ठा ps3av_pkt_audio_mode *audio_mode)
+अणु
+	पूर्णांक res;
 
-	res = ps3av_do_pkt(PS3AV_CID_AUDIO_MODE, sizeof(*audio_mode),
-			   sizeof(*audio_mode), &audio_mode->send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AUDIO_MODE, माप(*audio_mode),
+			   माप(*audio_mode), &audio_mode->send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(audio_mode);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AUDIO_MODE: failed %x\n", res);
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AUDIO_MODE: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_audio_mute(int num_of_port, u32 *port, u32 mute)
-{
-	int i, res;
-	struct ps3av_pkt_audio_mute audio_mute;
+पूर्णांक ps3av_cmd_audio_mute(पूर्णांक num_of_port, u32 *port, u32 mute)
+अणु
+	पूर्णांक i, res;
+	काष्ठा ps3av_pkt_audio_mute audio_mute;
 
-	if (num_of_port > PS3AV_OPT_PORT_MAX)
-		return -EINVAL;
+	अगर (num_of_port > PS3AV_OPT_PORT_MAX)
+		वापस -EINVAL;
 
 	/* audio mute */
-	memset(&audio_mute, 0, sizeof(audio_mute));
-	for (i = 0; i < num_of_port; i++) {
+	स_रखो(&audio_mute, 0, माप(audio_mute));
+	क्रम (i = 0; i < num_of_port; i++) अणु
 		audio_mute.mute[i].avport = port[i];
 		audio_mute.mute[i].mute = mute;
-	}
+	पूर्ण
 
-	res = ps3av_do_pkt(PS3AV_CID_AUDIO_MUTE,
-			   sizeof(audio_mute.send_hdr) +
-			   sizeof(struct ps3av_audio_mute) * num_of_port,
-			   sizeof(audio_mute), &audio_mute.send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AUDIO_MUTE,
+			   माप(audio_mute.send_hdr) +
+			   माप(काष्ठा ps3av_audio_mute) * num_of_port,
+			   माप(audio_mute), &audio_mute.send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&audio_mute);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AUDIO_MUTE: failed %x\n", res);
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AUDIO_MUTE: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_audio_active(int active, u32 port)
-{
-	int res;
-	struct ps3av_pkt_audio_active audio_active;
+पूर्णांक ps3av_cmd_audio_active(पूर्णांक active, u32 port)
+अणु
+	पूर्णांक res;
+	काष्ठा ps3av_pkt_audio_active audio_active;
 	u32 cid;
 
 	/* audio active */
-	memset(&audio_active, 0, sizeof(audio_active));
+	स_रखो(&audio_active, 0, माप(audio_active));
 	audio_active.audio_port = port;
 	cid = active ? PS3AV_CID_AUDIO_ACTIVE : PS3AV_CID_AUDIO_INACTIVE;
 
-	res = ps3av_do_pkt(cid, sizeof(audio_active), sizeof(audio_active),
+	res = ps3av_करो_pkt(cid, माप(audio_active), माप(audio_active),
 			   &audio_active.send_hdr);
-	if (res < 0)
-		return res;
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(&audio_active);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AUDIO_ACTIVE:%x failed %x\n", cid,
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AUDIO_ACTIVE:%x failed %x\n", cid,
 		       res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_avb_param(struct ps3av_pkt_avb_param *avb, u32 send_len)
-{
-	int res;
+पूर्णांक ps3av_cmd_avb_param(काष्ठा ps3av_pkt_avb_param *avb, u32 send_len)
+अणु
+	पूर्णांक res;
 
 	mutex_lock(&ps3_gpu_mutex);
 
 	/* avb packet */
-	res = ps3av_do_pkt(PS3AV_CID_AVB_PARAM, send_len, sizeof(*avb),
+	res = ps3av_करो_pkt(PS3AV_CID_AVB_PARAM, send_len, माप(*avb),
 			   &avb->send_hdr);
-	if (res < 0)
-		goto out;
+	अगर (res < 0)
+		जाओ out;
 
 	res = get_status(avb);
-	if (res)
+	अगर (res)
 		pr_debug("%s: PS3AV_CID_AVB_PARAM: failed %x\n", __func__,
 			 res);
 
       out:
 	mutex_unlock(&ps3_gpu_mutex);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_av_get_hw_conf(struct ps3av_pkt_av_get_hw_conf *hw_conf)
-{
-	int res;
+पूर्णांक ps3av_cmd_av_get_hw_conf(काष्ठा ps3av_pkt_av_get_hw_conf *hw_conf)
+अणु
+	पूर्णांक res;
 
-	memset(hw_conf, 0, sizeof(*hw_conf));
+	स_रखो(hw_conf, 0, माप(*hw_conf));
 
-	res = ps3av_do_pkt(PS3AV_CID_AV_GET_HW_CONF, sizeof(hw_conf->send_hdr),
-			   sizeof(*hw_conf), &hw_conf->send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AV_GET_HW_CONF, माप(hw_conf->send_hdr),
+			   माप(*hw_conf), &hw_conf->send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(hw_conf);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AV_GET_HW_CONF: failed %x\n", res);
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AV_GET_HW_CONF: failed %x\n", res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-int ps3av_cmd_video_get_monitor_info(struct ps3av_pkt_av_get_monitor_info *info,
+पूर्णांक ps3av_cmd_video_get_monitor_info(काष्ठा ps3av_pkt_av_get_monitor_info *info,
 				     u32 avport)
-{
-	int res;
+अणु
+	पूर्णांक res;
 
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 	info->avport = avport;
 
-	res = ps3av_do_pkt(PS3AV_CID_AV_GET_MONITOR_INFO,
-			   sizeof(info->send_hdr) + sizeof(info->avport) +
-			   sizeof(info->reserved),
-			   sizeof(*info), &info->send_hdr);
-	if (res < 0)
-		return res;
+	res = ps3av_करो_pkt(PS3AV_CID_AV_GET_MONITOR_INFO,
+			   माप(info->send_hdr) + माप(info->avport) +
+			   माप(info->reserved),
+			   माप(*info), &info->send_hdr);
+	अगर (res < 0)
+		वापस res;
 
 	res = get_status(info);
-	if (res)
-		printk(KERN_ERR "PS3AV_CID_AV_GET_MONITOR_INFO: failed %x\n",
+	अगर (res)
+		prपूर्णांकk(KERN_ERR "PS3AV_CID_AV_GET_MONITOR_INFO: failed %x\n",
 		       res);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-#define PS3AV_AV_LAYOUT_0 (PS3AV_CMD_AV_LAYOUT_32 \
+#घोषणा PS3AV_AV_LAYOUT_0 (PS3AV_CMD_AV_LAYOUT_32 \
 		| PS3AV_CMD_AV_LAYOUT_44 \
 		| PS3AV_CMD_AV_LAYOUT_48)
 
-#define PS3AV_AV_LAYOUT_1 (PS3AV_AV_LAYOUT_0 \
+#घोषणा PS3AV_AV_LAYOUT_1 (PS3AV_AV_LAYOUT_0 \
 		| PS3AV_CMD_AV_LAYOUT_88 \
 		| PS3AV_CMD_AV_LAYOUT_96 \
 		| PS3AV_CMD_AV_LAYOUT_176 \

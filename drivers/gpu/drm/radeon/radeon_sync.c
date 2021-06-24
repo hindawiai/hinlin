@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -25,31 +26,31 @@
  */
 /*
  * Authors:
- *    Christian König <christian.koenig@amd.com>
+ *    Christian Kथघnig <christian.koenig@amd.com>
  */
 
-#include "radeon.h"
-#include "radeon_trace.h"
+#समावेश "radeon.h"
+#समावेश "radeon_trace.h"
 
 /**
  * radeon_sync_create - zero init sync object
  *
  * @sync: sync object to initialize
  *
- * Just clear the sync object for now.
+ * Just clear the sync object क्रम now.
  */
-void radeon_sync_create(struct radeon_sync *sync)
-{
-	unsigned i;
+व्योम radeon_sync_create(काष्ठा radeon_sync *sync)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < RADEON_NUM_SYNCS; ++i)
-		sync->semaphores[i] = NULL;
+	क्रम (i = 0; i < RADEON_NUM_SYNCS; ++i)
+		sync->semaphores[i] = शून्य;
 
-	for (i = 0; i < RADEON_NUM_RINGS; ++i)
-		sync->sync_to[i] = NULL;
+	क्रम (i = 0; i < RADEON_NUM_RINGS; ++i)
+		sync->sync_to[i] = शून्य;
 
-	sync->last_vm_update = NULL;
-}
+	sync->last_vm_update = शून्य;
+पूर्ण
 
 /**
  * radeon_sync_fence - use the semaphore to sync to a fence
@@ -59,162 +60,162 @@ void radeon_sync_create(struct radeon_sync *sync)
  *
  * Sync to the fence using the semaphore objects
  */
-void radeon_sync_fence(struct radeon_sync *sync,
-		       struct radeon_fence *fence)
-{
-	struct radeon_fence *other;
+व्योम radeon_sync_fence(काष्ठा radeon_sync *sync,
+		       काष्ठा radeon_fence *fence)
+अणु
+	काष्ठा radeon_fence *other;
 
-	if (!fence)
-		return;
+	अगर (!fence)
+		वापस;
 
 	other = sync->sync_to[fence->ring];
 	sync->sync_to[fence->ring] = radeon_fence_later(fence, other);
 
-	if (fence->is_vm_update) {
+	अगर (fence->is_vm_update) अणु
 		other = sync->last_vm_update;
 		sync->last_vm_update = radeon_fence_later(fence, other);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * radeon_sync_resv - use the semaphores to sync to a reservation object
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @sync: sync object to add fences from reservation object to
  * @resv: reservation object with embedded fence
- * @shared: true if we should only sync to the exclusive fence
+ * @shared: true अगर we should only sync to the exclusive fence
  *
  * Sync to the fence using the semaphore objects
  */
-int radeon_sync_resv(struct radeon_device *rdev,
-		     struct radeon_sync *sync,
-		     struct dma_resv *resv,
+पूर्णांक radeon_sync_resv(काष्ठा radeon_device *rdev,
+		     काष्ठा radeon_sync *sync,
+		     काष्ठा dma_resv *resv,
 		     bool shared)
-{
-	struct dma_resv_list *flist;
-	struct dma_fence *f;
-	struct radeon_fence *fence;
-	unsigned i;
-	int r = 0;
+अणु
+	काष्ठा dma_resv_list *flist;
+	काष्ठा dma_fence *f;
+	काष्ठा radeon_fence *fence;
+	अचिन्हित i;
+	पूर्णांक r = 0;
 
 	/* always sync to the exclusive fence */
 	f = dma_resv_get_excl(resv);
-	fence = f ? to_radeon_fence(f) : NULL;
-	if (fence && fence->rdev == rdev)
+	fence = f ? to_radeon_fence(f) : शून्य;
+	अगर (fence && fence->rdev == rdev)
 		radeon_sync_fence(sync, fence);
-	else if (f)
-		r = dma_fence_wait(f, true);
+	अन्यथा अगर (f)
+		r = dma_fence_रुको(f, true);
 
 	flist = dma_resv_get_list(resv);
-	if (shared || !flist || r)
-		return r;
+	अगर (shared || !flist || r)
+		वापस r;
 
-	for (i = 0; i < flist->shared_count; ++i) {
-		f = rcu_dereference_protected(flist->shared[i],
+	क्रम (i = 0; i < flist->shared_count; ++i) अणु
+		f = rcu_dereference_रक्षित(flist->shared[i],
 					      dma_resv_held(resv));
 		fence = to_radeon_fence(f);
-		if (fence && fence->rdev == rdev)
+		अगर (fence && fence->rdev == rdev)
 			radeon_sync_fence(sync, fence);
-		else
-			r = dma_fence_wait(f, true);
+		अन्यथा
+			r = dma_fence_रुको(f, true);
 
-		if (r)
-			break;
-	}
-	return r;
-}
+		अगर (r)
+			अवरोध;
+	पूर्ण
+	वापस r;
+पूर्ण
 
 /**
- * radeon_sync_rings - sync ring to all registered fences
+ * radeon_sync_rings - sync ring to all रेजिस्टरed fences
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @sync: sync object to use
  * @ring: ring that needs sync
  *
- * Ensure that all registered fences are signaled before letting
- * the ring continue. The caller must hold the ring lock.
+ * Ensure that all रेजिस्टरed fences are संकेतed beक्रमe letting
+ * the ring जारी. The caller must hold the ring lock.
  */
-int radeon_sync_rings(struct radeon_device *rdev,
-		      struct radeon_sync *sync,
-		      int ring)
-{
-	unsigned count = 0;
-	int i, r;
+पूर्णांक radeon_sync_rings(काष्ठा radeon_device *rdev,
+		      काष्ठा radeon_sync *sync,
+		      पूर्णांक ring)
+अणु
+	अचिन्हित count = 0;
+	पूर्णांक i, r;
 
-	for (i = 0; i < RADEON_NUM_RINGS; ++i) {
-		struct radeon_fence *fence = sync->sync_to[i];
-		struct radeon_semaphore *semaphore;
+	क्रम (i = 0; i < RADEON_NUM_RINGS; ++i) अणु
+		काष्ठा radeon_fence *fence = sync->sync_to[i];
+		काष्ठा radeon_semaphore *semaphore;
 
-		/* check if we really need to sync */
-		if (!radeon_fence_need_sync(fence, ring))
-			continue;
+		/* check अगर we really need to sync */
+		अगर (!radeon_fence_need_sync(fence, ring))
+			जारी;
 
 		/* prevent GPU deadlocks */
-		if (!rdev->ring[i].ready) {
+		अगर (!rdev->ring[i].पढ़ोy) अणु
 			dev_err(rdev->dev, "Syncing to a disabled ring!");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (count >= RADEON_NUM_SYNCS) {
-			/* not enough room, wait manually */
-			r = radeon_fence_wait(fence, false);
-			if (r)
-				return r;
-			continue;
-		}
+		अगर (count >= RADEON_NUM_SYNCS) अणु
+			/* not enough room, रुको manually */
+			r = radeon_fence_रुको(fence, false);
+			अगर (r)
+				वापस r;
+			जारी;
+		पूर्ण
 		r = radeon_semaphore_create(rdev, &semaphore);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
 		sync->semaphores[count++] = semaphore;
 
-		/* allocate enough space for sync command */
+		/* allocate enough space क्रम sync command */
 		r = radeon_ring_alloc(rdev, &rdev->ring[i], 16);
-		if (r)
-			return r;
+		अगर (r)
+			वापस r;
 
-		/* emit the signal semaphore */
-		if (!radeon_semaphore_emit_signal(rdev, i, semaphore)) {
-			/* signaling wasn't successful wait manually */
-			radeon_ring_undo(&rdev->ring[i]);
-			r = radeon_fence_wait(fence, false);
-			if (r)
-				return r;
-			continue;
-		}
+		/* emit the संकेत semaphore */
+		अगर (!radeon_semaphore_emit_संकेत(rdev, i, semaphore)) अणु
+			/* संकेतing wasn't successful रुको manually */
+			radeon_ring_unकरो(&rdev->ring[i]);
+			r = radeon_fence_रुको(fence, false);
+			अगर (r)
+				वापस r;
+			जारी;
+		पूर्ण
 
-		/* we assume caller has already allocated space on waiters ring */
-		if (!radeon_semaphore_emit_wait(rdev, ring, semaphore)) {
-			/* waiting wasn't successful wait manually */
-			radeon_ring_undo(&rdev->ring[i]);
-			r = radeon_fence_wait(fence, false);
-			if (r)
-				return r;
-			continue;
-		}
+		/* we assume caller has alपढ़ोy allocated space on रुकोers ring */
+		अगर (!radeon_semaphore_emit_रुको(rdev, ring, semaphore)) अणु
+			/* रुकोing wasn't successful रुको manually */
+			radeon_ring_unकरो(&rdev->ring[i]);
+			r = radeon_fence_रुको(fence, false);
+			अगर (r)
+				वापस r;
+			जारी;
+		पूर्ण
 
 		radeon_ring_commit(rdev, &rdev->ring[i], false);
 		radeon_fence_note_sync(fence, ring);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * radeon_sync_free - free the sync object
+ * radeon_sync_मुक्त - मुक्त the sync object
  *
- * @rdev: radeon_device pointer
+ * @rdev: radeon_device poपूर्णांकer
  * @sync: sync object to use
- * @fence: fence to use for the free
+ * @fence: fence to use क्रम the मुक्त
  *
- * Free the sync object by freeing all semaphores in it.
+ * Free the sync object by मुक्तing all semaphores in it.
  */
-void radeon_sync_free(struct radeon_device *rdev,
-		      struct radeon_sync *sync,
-		      struct radeon_fence *fence)
-{
-	unsigned i;
+व्योम radeon_sync_मुक्त(काष्ठा radeon_device *rdev,
+		      काष्ठा radeon_sync *sync,
+		      काष्ठा radeon_fence *fence)
+अणु
+	अचिन्हित i;
 
-	for (i = 0; i < RADEON_NUM_SYNCS; ++i)
-		radeon_semaphore_free(rdev, &sync->semaphores[i], fence);
-}
+	क्रम (i = 0; i < RADEON_NUM_SYNCS; ++i)
+		radeon_semaphore_मुक्त(rdev, &sync->semaphores[i], fence);
+पूर्ण

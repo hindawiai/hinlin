@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /*
  * Jailhouse paravirt detection
@@ -9,18 +10,18 @@
  *  Jan Kiszka <jan.kiszka@siemens.com>
  */
 
-#ifndef _ASM_X86_JAILHOUSE_PARA_H
-#define _ASM_X86_JAILHOUSE_PARA_H
+#अगर_अघोषित _ASM_X86_JAILHOUSE_PARA_H
+#घोषणा _ASM_X86_JAILHOUSE_PARA_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#ifdef CONFIG_JAILHOUSE_GUEST
-bool jailhouse_paravirt(void);
-#else
-static inline bool jailhouse_paravirt(void)
-{
-	return false;
-}
-#endif
+#अगर_घोषित CONFIG_JAILHOUSE_GUEST
+bool jailhouse_paravirt(व्योम);
+#अन्यथा
+अटल अंतरभूत bool jailhouse_paravirt(व्योम)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* _ASM_X86_JAILHOUSE_PARA_H */
+#पूर्ण_अगर /* _ASM_X86_JAILHOUSE_PARA_H */

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _ASM_ARM64_PERF_REGS_H
-#define _ASM_ARM64_PERF_REGS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _ASM_ARM64_PERF_REGS_H
+#घोषणा _ASM_ARM64_PERF_REGS_H
 
-enum perf_event_arm_regs {
+क्रमागत perf_event_arm_regs अणु
 	PERF_REG_ARM64_X0,
 	PERF_REG_ARM64_X1,
 	PERF_REG_ARM64_X2,
@@ -37,5 +38,5 @@ enum perf_event_arm_regs {
 	PERF_REG_ARM64_SP,
 	PERF_REG_ARM64_PC,
 	PERF_REG_ARM64_MAX,
-};
-#endif /* _ASM_ARM64_PERF_REGS_H */
+पूर्ण;
+#पूर्ण_अगर /* _ASM_ARM64_PERF_REGS_H */

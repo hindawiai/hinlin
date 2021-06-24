@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * CS5536 General timer functions
+ * CS5536 General समयr functions
  *
  * Copyright (C) 2007 Lemote Inc. & Institute of Computing Technology
  * Author: Yanhua, yanh@lemote.com
@@ -11,44 +12,44 @@
  * Reference: AMD Geode(TM) CS5536 Companion Device Data Book
  */
 
-#include <linux/io.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/jiffies.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/clockchips.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/घड़ीchips.h>
 
-#include <asm/time.h>
+#समावेश <यंत्र/समय.स>
 
-#include <cs5536/cs5536_mfgpt.h>
+#समावेश <cs5536/cs5536_mfgpt.h>
 
-static DEFINE_RAW_SPINLOCK(mfgpt_lock);
+अटल DEFINE_RAW_SPINLOCK(mfgpt_lock);
 
-static u32 mfgpt_base;
+अटल u32 mfgpt_base;
 
 /*
- * Initialize the MFGPT timer.
+ * Initialize the MFGPT समयr.
  *
- * This is also called after resume to bring the MFGPT into operation again.
+ * This is also called after resume to bring the MFGPT पूर्णांकo operation again.
  */
 
 /* disable counter */
-void disable_mfgpt0_counter(void)
-{
+व्योम disable_mfgpt0_counter(व्योम)
+अणु
 	outw(inw(MFGPT0_SETUP) & 0x7fff, MFGPT0_SETUP);
-}
+पूर्ण
 EXPORT_SYMBOL(disable_mfgpt0_counter);
 
-/* enable counter, comparator2 to event mode, 14.318MHz clock */
-void enable_mfgpt0_counter(void)
-{
+/* enable counter, comparator2 to event mode, 14.318MHz घड़ी */
+व्योम enable_mfgpt0_counter(व्योम)
+अणु
 	outw(0xe310, MFGPT0_SETUP);
-}
+पूर्ण
 EXPORT_SYMBOL(enable_mfgpt0_counter);
 
-static int mfgpt_timer_set_periodic(struct clock_event_device *evt)
-{
+अटल पूर्णांक mfgpt_समयr_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
 	raw_spin_lock(&mfgpt_lock);
 
 	outw(COMPARE, MFGPT0_CMP2);	/* set comparator2 */
@@ -56,38 +57,38 @@ static int mfgpt_timer_set_periodic(struct clock_event_device *evt)
 	enable_mfgpt0_counter();
 
 	raw_spin_unlock(&mfgpt_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mfgpt_timer_shutdown(struct clock_event_device *evt)
-{
-	if (clockevent_state_periodic(evt) || clockevent_state_oneshot(evt)) {
+अटल पूर्णांक mfgpt_समयr_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
+	अगर (घड़ीevent_state_periodic(evt) || घड़ीevent_state_oneshot(evt)) अणु
 		raw_spin_lock(&mfgpt_lock);
 		disable_mfgpt0_counter();
 		raw_spin_unlock(&mfgpt_lock);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct clock_event_device mfgpt_clockevent = {
+अटल काष्ठा घड़ी_event_device mfgpt_घड़ीevent = अणु
 	.name = "mfgpt",
 	.features = CLOCK_EVT_FEAT_PERIODIC,
 
-	/* The oneshot mode have very high deviation, don't use it! */
-	.set_state_shutdown = mfgpt_timer_shutdown,
-	.set_state_periodic = mfgpt_timer_set_periodic,
+	/* The oneshot mode have very high deviation, करोn't use it! */
+	.set_state_shutकरोwn = mfgpt_समयr_shutकरोwn,
+	.set_state_periodic = mfgpt_समयr_set_periodic,
 	.irq = CS5536_MFGPT_INTR,
-};
+पूर्ण;
 
-static irqreturn_t timer_interrupt(int irq, void *dev_id)
-{
+अटल irqवापस_t समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
 	u32 basehi;
 
 	/*
 	 * get MFGPT base address
 	 *
-	 * NOTE: do not remove me, it's need for the value of mfgpt_base is
+	 * NOTE: करो not हटाओ me, it's need क्रम the value of mfgpt_base is
 	 * variable
 	 */
 	_rdmsr(DIVIL_MSR_REG(DIVIL_LBAR_MFGPT), &basehi, &mfgpt_base);
@@ -95,26 +96,26 @@ static irqreturn_t timer_interrupt(int irq, void *dev_id)
 	/* ack */
 	outw(inw(MFGPT0_SETUP) | 0x4000, MFGPT0_SETUP);
 
-	mfgpt_clockevent.event_handler(&mfgpt_clockevent);
+	mfgpt_घड़ीevent.event_handler(&mfgpt_घड़ीevent);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * Initialize the conversion factor and the min/max deltas of the clock event
- * structure and register the clock event source with the framework.
+ * Initialize the conversion factor and the min/max deltas of the घड़ी event
+ * काष्ठाure and रेजिस्टर the घड़ी event source with the framework.
  */
-void __init setup_mfgpt0_timer(void)
-{
+व्योम __init setup_mfgpt0_समयr(व्योम)
+अणु
 	u32 basehi;
-	struct clock_event_device *cd = &mfgpt_clockevent;
-	unsigned int cpu = smp_processor_id();
+	काष्ठा घड़ी_event_device *cd = &mfgpt_घड़ीevent;
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
 	cd->cpumask = cpumask_of(cpu);
-	clockevent_set_clock(cd, MFGPT_TICK_RATE);
-	cd->max_delta_ns = clockevent_delta2ns(0xffff, cd);
+	घड़ीevent_set_घड़ी(cd, MFGPT_TICK_RATE);
+	cd->max_delta_ns = घड़ीevent_delta2ns(0xffff, cd);
 	cd->max_delta_ticks = 0xffff;
-	cd->min_delta_ns = clockevent_delta2ns(0xf, cd);
+	cd->min_delta_ns = घड़ीevent_delta2ns(0xf, cd);
 	cd->min_delta_ticks = 0xf;
 
 	/* Enable MFGPT0 Comparator 2 Output to the Interrupt Mapper */
@@ -126,78 +127,78 @@ void __init setup_mfgpt0_timer(void)
 	/* get MFGPT base address */
 	_rdmsr(DIVIL_MSR_REG(DIVIL_LBAR_MFGPT), &basehi, &mfgpt_base);
 
-	clockevents_register_device(cd);
+	घड़ीevents_रेजिस्टर_device(cd);
 
-	if (request_irq(CS5536_MFGPT_INTR, timer_interrupt,
-			IRQF_NOBALANCING | IRQF_TIMER, "timer", NULL))
+	अगर (request_irq(CS5536_MFGPT_INTR, समयr_पूर्णांकerrupt,
+			IRQF_NOBALANCING | IRQF_TIMER, "timer", शून्य))
 		pr_err("Failed to register timer interrupt\n");
-}
+पूर्ण
 
 /*
  * Since the MFGPT overflows every tick, its not very useful
- * to just read by itself. So use jiffies to emulate a free
+ * to just पढ़ो by itself. So use jअगरfies to emulate a मुक्त
  * running counter:
  */
-static u64 mfgpt_read(struct clocksource *cs)
-{
-	unsigned long flags;
-	int count;
-	u32 jifs;
-	static int old_count;
-	static u32 old_jifs;
+अटल u64 mfgpt_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count;
+	u32 jअगरs;
+	अटल पूर्णांक old_count;
+	अटल u32 old_jअगरs;
 
 	raw_spin_lock_irqsave(&mfgpt_lock, flags);
 	/*
-	 * Although our caller may have the read side of xtime_lock,
+	 * Although our caller may have the पढ़ो side of xसमय_lock,
 	 * this is now a seqlock, and we are cheating in this routine
-	 * by having side effects on state that we cannot undo if
+	 * by having side effects on state that we cannot unकरो अगर
 	 * there is a collision on the seqlock and our caller has to
-	 * retry.  (Namely, old_jifs and old_count.)  So we must treat
-	 * jiffies as volatile despite the lock.  We read jiffies
-	 * before latching the timer count to guarantee that although
-	 * the jiffies value might be older than the count (that is,
-	 * the counter may underflow between the last point where
-	 * jiffies was incremented and the point where we latch the
+	 * retry.  (Namely, old_jअगरs and old_count.)  So we must treat
+	 * jअगरfies as अस्थिर despite the lock.  We पढ़ो jअगरfies
+	 * beक्रमe latching the समयr count to guarantee that although
+	 * the jअगरfies value might be older than the count (that is,
+	 * the counter may underflow between the last poपूर्णांक where
+	 * jअगरfies was incremented and the poपूर्णांक where we latch the
 	 * count), it cannot be newer.
 	 */
-	jifs = jiffies;
-	/* read the count */
+	jअगरs = jअगरfies;
+	/* पढ़ो the count */
 	count = inw(MFGPT0_CNT);
 
 	/*
-	 * It's possible for count to appear to go the wrong way for this
+	 * It's possible क्रम count to appear to go the wrong way क्रम this
 	 * reason:
 	 *
-	 *  The timer counter underflows, but we haven't handled the resulting
-	 *  interrupt and incremented jiffies yet.
+	 *  The समयr counter underflows, but we haven't handled the resulting
+	 *  पूर्णांकerrupt and incremented jअगरfies yet.
 	 *
-	 * Previous attempts to handle these cases intelligently were buggy, so
-	 * we just do the simple thing now.
+	 * Previous attempts to handle these हालs पूर्णांकelligently were buggy, so
+	 * we just करो the simple thing now.
 	 */
-	if (count < old_count && jifs == old_jifs)
+	अगर (count < old_count && jअगरs == old_jअगरs)
 		count = old_count;
 
 	old_count = count;
-	old_jifs = jifs;
+	old_jअगरs = jअगरs;
 
 	raw_spin_unlock_irqrestore(&mfgpt_lock, flags);
 
-	return (u64) (jifs * COMPARE) + count;
-}
+	वापस (u64) (jअगरs * COMPARE) + count;
+पूर्ण
 
-static struct clocksource clocksource_mfgpt = {
+अटल काष्ठा घड़ीsource घड़ीsource_mfgpt = अणु
 	.name = "mfgpt",
-	.rating = 120, /* Functional for real use, but not desired */
-	.read = mfgpt_read,
+	.rating = 120, /* Functional क्रम real use, but not desired */
+	.पढ़ो = mfgpt_पढ़ो,
 	.mask = CLOCKSOURCE_MASK(32),
-};
+पूर्ण;
 
-int __init init_mfgpt_clocksource(void)
-{
-	if (num_possible_cpus() > 1)	/* MFGPT does not scale! */
-		return 0;
+पूर्णांक __init init_mfgpt_घड़ीsource(व्योम)
+अणु
+	अगर (num_possible_cpus() > 1)	/* MFGPT करोes not scale! */
+		वापस 0;
 
-	return clocksource_register_hz(&clocksource_mfgpt, MFGPT_TICK_RATE);
-}
+	वापस घड़ीsource_रेजिस्टर_hz(&घड़ीsource_mfgpt, MFGPT_TICK_RATE);
+पूर्ण
 
-arch_initcall(init_mfgpt_clocksource);
+arch_initcall(init_mfgpt_घड़ीsource);

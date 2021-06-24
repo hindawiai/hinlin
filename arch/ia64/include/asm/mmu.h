@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __MMU_H
-#define __MMU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __MMU_H
+#घोषणा __MMU_H
 
 /*
- * Type for a context number.  We declare it volatile to ensure proper
+ * Type क्रम a context number.  We declare it अस्थिर to ensure proper
  * ordering when it's accessed outside of spinlock'd critical sections
- * (e.g., as done in activate_mm() and init_new_context()).
+ * (e.g., as करोne in activate_mm() and init_new_context()).
  */
-typedef volatile unsigned long mm_context_t;
+प्रकार अस्थिर अचिन्हित दीर्घ mm_context_t;
 
-typedef unsigned long nv_mm_context_t;
+प्रकार अचिन्हित दीर्घ nv_mm_context_t;
 
-#endif
+#पूर्ण_अगर

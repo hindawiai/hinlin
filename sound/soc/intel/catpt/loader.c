@@ -1,671 +1,672 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 //
 // Copyright(c) 2020 Intel Corporation. All rights reserved.
 //
-// Author: Cezary Rojewski <cezary.rojewski@intel.com>
+// Author: Cezary Rojewski <cezary.rojewski@पूर्णांकel.com>
 //
 
-#include <linux/dma-mapping.h>
-#include <linux/firmware.h>
-#include <linux/slab.h>
-#include "core.h"
-#include "registers.h"
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/slab.h>
+#समावेश "core.h"
+#समावेश "registers.h"
 
 /* FW load (200ms) plus operational delays */
-#define FW_READY_TIMEOUT_MS	250
+#घोषणा FW_READY_TIMEOUT_MS	250
 
-#define FW_SIGNATURE		"$SST"
-#define FW_SIGNATURE_SIZE	4
+#घोषणा FW_SIGNATURE		"$SST"
+#घोषणा FW_SIGNATURE_SIZE	4
 
-struct catpt_fw_hdr {
-	char signature[FW_SIGNATURE_SIZE];
+काष्ठा catpt_fw_hdr अणु
+	अक्षर signature[FW_SIGNATURE_SIZE];
 	u32 file_size;
 	u32 modules;
-	u32 file_format;
+	u32 file_क्रमmat;
 	u32 reserved[4];
-} __packed;
+पूर्ण __packed;
 
-struct catpt_fw_mod_hdr {
-	char signature[FW_SIGNATURE_SIZE];
+काष्ठा catpt_fw_mod_hdr अणु
+	अक्षर signature[FW_SIGNATURE_SIZE];
 	u32 mod_size;
 	u32 blocks;
 	u16 slot;
 	u16 module_id;
-	u32 entry_point;
+	u32 entry_poपूर्णांक;
 	u32 persistent_size;
 	u32 scratch_size;
-} __packed;
+पूर्ण __packed;
 
-enum catpt_ram_type {
+क्रमागत catpt_ram_type अणु
 	CATPT_RAM_TYPE_IRAM = 1,
 	CATPT_RAM_TYPE_DRAM = 2,
 	/* DRAM with module's initial state */
 	CATPT_RAM_TYPE_INSTANCE = 3,
-};
+पूर्ण;
 
-struct catpt_fw_block_hdr {
+काष्ठा catpt_fw_block_hdr अणु
 	u32 ram_type;
 	u32 size;
 	u32 ram_offset;
 	u32 rsvd;
-} __packed;
+पूर्ण __packed;
 
-void catpt_sram_init(struct resource *sram, u32 start, u32 size)
-{
+व्योम catpt_sram_init(काष्ठा resource *sram, u32 start, u32 size)
+अणु
 	sram->start = start;
 	sram->end = start + size - 1;
-}
+पूर्ण
 
-void catpt_sram_free(struct resource *sram)
-{
-	struct resource *res, *save;
+व्योम catpt_sram_मुक्त(काष्ठा resource *sram)
+अणु
+	काष्ठा resource *res, *save;
 
-	for (res = sram->child; res;) {
+	क्रम (res = sram->child; res;) अणु
 		save = res->sibling;
 		release_resource(res);
-		kfree(res);
+		kमुक्त(res);
 		res = save;
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct resource *
-catpt_request_region(struct resource *root, resource_size_t size)
-{
-	struct resource *res = root->child;
-	resource_size_t addr = root->start;
+काष्ठा resource *
+catpt_request_region(काष्ठा resource *root, resource_माप_प्रकार size)
+अणु
+	काष्ठा resource *res = root->child;
+	resource_माप_प्रकार addr = root->start;
 
-	for (;;) {
-		if (res->start - addr >= size)
-			break;
+	क्रम (;;) अणु
+		अगर (res->start - addr >= size)
+			अवरोध;
 		addr = res->end + 1;
 		res = res->sibling;
-		if (!res)
-			return NULL;
-	}
+		अगर (!res)
+			वापस शून्य;
+	पूर्ण
 
-	return __request_region(root, addr, size, NULL, 0);
-}
+	वापस __request_region(root, addr, size, शून्य, 0);
+पूर्ण
 
-int catpt_store_streams_context(struct catpt_dev *cdev, struct dma_chan *chan)
-{
-	struct catpt_stream_runtime *stream;
+पूर्णांक catpt_store_streams_context(काष्ठा catpt_dev *cdev, काष्ठा dma_chan *chan)
+अणु
+	काष्ठा catpt_stream_runसमय *stream;
 
-	list_for_each_entry(stream, &cdev->stream_list, node) {
+	list_क्रम_each_entry(stream, &cdev->stream_list, node) अणु
 		u32 off, size;
-		int ret;
+		पूर्णांक ret;
 
 		off = stream->persistent->start;
 		size = resource_size(stream->persistent);
 		dev_dbg(cdev->dev, "storing stream %d ctx: off 0x%08x size %d\n",
 			stream->info.stream_hw_id, off, size);
 
-		ret = catpt_dma_memcpy_fromdsp(cdev, chan,
+		ret = catpt_dma_स_नकल_fromdsp(cdev, chan,
 					       cdev->dxbuf_paddr + off,
 					       cdev->lpe_base + off,
 					       ALIGN(size, 4));
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "memcpy fromdsp failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int catpt_store_module_states(struct catpt_dev *cdev, struct dma_chan *chan)
-{
-	int i;
+पूर्णांक catpt_store_module_states(काष्ठा catpt_dev *cdev, काष्ठा dma_chan *chan)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(cdev->modules); i++) {
-		struct catpt_module_type *type;
+	क्रम (i = 0; i < ARRAY_SIZE(cdev->modules); i++) अणु
+		काष्ठा catpt_module_type *type;
 		u32 off;
-		int ret;
+		पूर्णांक ret;
 
 		type = &cdev->modules[i];
-		if (!type->loaded || !type->state_size)
-			continue;
+		अगर (!type->loaded || !type->state_size)
+			जारी;
 
 		off = type->state_offset;
 		dev_dbg(cdev->dev, "storing mod %d state: off 0x%08x size %d\n",
 			i, off, type->state_size);
 
-		ret = catpt_dma_memcpy_fromdsp(cdev, chan,
+		ret = catpt_dma_स_नकल_fromdsp(cdev, chan,
 					       cdev->dxbuf_paddr + off,
 					       cdev->lpe_base + off,
 					       ALIGN(type->state_size, 4));
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "memcpy fromdsp failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int catpt_store_memdumps(struct catpt_dev *cdev, struct dma_chan *chan)
-{
-	int i;
+पूर्णांक catpt_store_memdumps(काष्ठा catpt_dev *cdev, काष्ठा dma_chan *chan)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < cdev->dx_ctx.num_meminfo; i++) {
-		struct catpt_save_meminfo *info;
+	क्रम (i = 0; i < cdev->dx_ctx.num_meminfo; i++) अणु
+		काष्ठा catpt_save_meminfo *info;
 		u32 off;
-		int ret;
+		पूर्णांक ret;
 
 		info = &cdev->dx_ctx.meminfo[i];
-		if (info->source != CATPT_DX_TYPE_MEMORY_DUMP)
-			continue;
+		अगर (info->source != CATPT_DX_TYPE_MEMORY_DUMP)
+			जारी;
 
 		off = catpt_to_host_offset(info->offset);
-		if (off < cdev->dram.start || off > cdev->dram.end)
-			continue;
+		अगर (off < cdev->dram.start || off > cdev->dram.end)
+			जारी;
 
 		dev_dbg(cdev->dev, "storing memdump: off 0x%08x size %d\n",
 			off, info->size);
 
-		ret = catpt_dma_memcpy_fromdsp(cdev, chan,
+		ret = catpt_dma_स_नकल_fromdsp(cdev, chan,
 					       cdev->dxbuf_paddr + off,
 					       cdev->lpe_base + off,
 					       ALIGN(info->size, 4));
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "memcpy fromdsp failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-catpt_restore_streams_context(struct catpt_dev *cdev, struct dma_chan *chan)
-{
-	struct catpt_stream_runtime *stream;
+अटल पूर्णांक
+catpt_restore_streams_context(काष्ठा catpt_dev *cdev, काष्ठा dma_chan *chan)
+अणु
+	काष्ठा catpt_stream_runसमय *stream;
 
-	list_for_each_entry(stream, &cdev->stream_list, node) {
+	list_क्रम_each_entry(stream, &cdev->stream_list, node) अणु
 		u32 off, size;
-		int ret;
+		पूर्णांक ret;
 
 		off = stream->persistent->start;
 		size = resource_size(stream->persistent);
 		dev_dbg(cdev->dev, "restoring stream %d ctx: off 0x%08x size %d\n",
 			stream->info.stream_hw_id, off, size);
 
-		ret = catpt_dma_memcpy_todsp(cdev, chan,
+		ret = catpt_dma_स_नकल_todsp(cdev, chan,
 					     cdev->lpe_base + off,
 					     cdev->dxbuf_paddr + off,
 					     ALIGN(size, 4));
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "memcpy fromdsp failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int catpt_restore_memdumps(struct catpt_dev *cdev, struct dma_chan *chan)
-{
-	int i;
+अटल पूर्णांक catpt_restore_memdumps(काष्ठा catpt_dev *cdev, काष्ठा dma_chan *chan)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < cdev->dx_ctx.num_meminfo; i++) {
-		struct catpt_save_meminfo *info;
+	क्रम (i = 0; i < cdev->dx_ctx.num_meminfo; i++) अणु
+		काष्ठा catpt_save_meminfo *info;
 		u32 off;
-		int ret;
+		पूर्णांक ret;
 
 		info = &cdev->dx_ctx.meminfo[i];
-		if (info->source != CATPT_DX_TYPE_MEMORY_DUMP)
-			continue;
+		अगर (info->source != CATPT_DX_TYPE_MEMORY_DUMP)
+			जारी;
 
 		off = catpt_to_host_offset(info->offset);
-		if (off < cdev->dram.start || off > cdev->dram.end)
-			continue;
+		अगर (off < cdev->dram.start || off > cdev->dram.end)
+			जारी;
 
 		dev_dbg(cdev->dev, "restoring memdump: off 0x%08x size %d\n",
 			off, info->size);
 
-		ret = catpt_dma_memcpy_todsp(cdev, chan,
+		ret = catpt_dma_स_नकल_todsp(cdev, chan,
 					     cdev->lpe_base + off,
 					     cdev->dxbuf_paddr + off,
 					     ALIGN(info->size, 4));
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "restore block failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int catpt_restore_fwimage(struct catpt_dev *cdev,
-				 struct dma_chan *chan, dma_addr_t paddr,
-				 struct catpt_fw_block_hdr *blk)
-{
-	struct resource r1, r2, common;
-	int i;
+अटल पूर्णांक catpt_restore_fwimage(काष्ठा catpt_dev *cdev,
+				 काष्ठा dma_chan *chan, dma_addr_t paddr,
+				 काष्ठा catpt_fw_block_hdr *blk)
+अणु
+	काष्ठा resource r1, r2, common;
+	पूर्णांक i;
 
-	print_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
-			     blk, sizeof(*blk), false);
+	prपूर्णांक_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
+			     blk, माप(*blk), false);
 
 	r1.start = cdev->dram.start + blk->ram_offset;
 	r1.end = r1.start + blk->size - 1;
 	/* advance to data area */
-	paddr += sizeof(*blk);
+	paddr += माप(*blk);
 
-	for (i = 0; i < cdev->dx_ctx.num_meminfo; i++) {
-		struct catpt_save_meminfo *info;
+	क्रम (i = 0; i < cdev->dx_ctx.num_meminfo; i++) अणु
+		काष्ठा catpt_save_meminfo *info;
 		u32 off;
-		int ret;
+		पूर्णांक ret;
 
 		info = &cdev->dx_ctx.meminfo[i];
 
-		if (info->source != CATPT_DX_TYPE_FW_IMAGE)
-			continue;
+		अगर (info->source != CATPT_DX_TYPE_FW_IMAGE)
+			जारी;
 
 		off = catpt_to_host_offset(info->offset);
-		if (off < cdev->dram.start || off > cdev->dram.end)
-			continue;
+		अगर (off < cdev->dram.start || off > cdev->dram.end)
+			जारी;
 
 		r2.start = off;
 		r2.end = r2.start + info->size - 1;
 
-		if (!resource_intersection(&r2, &r1, &common))
-			continue;
+		अगर (!resource_पूर्णांकersection(&r2, &r1, &common))
+			जारी;
 		/* calculate start offset of common data area */
 		off = common.start - r1.start;
 
 		dev_dbg(cdev->dev, "restoring fwimage: %pr\n", &common);
 
-		ret = catpt_dma_memcpy_todsp(cdev, chan, common.start,
+		ret = catpt_dma_स_नकल_todsp(cdev, chan, common.start,
 					     paddr + off,
 					     resource_size(&common));
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "memcpy todsp failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int catpt_load_block(struct catpt_dev *cdev,
-			    struct dma_chan *chan, dma_addr_t paddr,
-			    struct catpt_fw_block_hdr *blk, bool alloc)
-{
-	struct resource *sram, *res;
+अटल पूर्णांक catpt_load_block(काष्ठा catpt_dev *cdev,
+			    काष्ठा dma_chan *chan, dma_addr_t paddr,
+			    काष्ठा catpt_fw_block_hdr *blk, bool alloc)
+अणु
+	काष्ठा resource *sram, *res;
 	dma_addr_t dst_addr;
-	int ret;
+	पूर्णांक ret;
 
-	print_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
-			     blk, sizeof(*blk), false);
+	prपूर्णांक_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
+			     blk, माप(*blk), false);
 
-	switch (blk->ram_type) {
-	case CATPT_RAM_TYPE_IRAM:
+	चयन (blk->ram_type) अणु
+	हाल CATPT_RAM_TYPE_IRAM:
 		sram = &cdev->iram;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		sram = &cdev->dram;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dst_addr = sram->start + blk->ram_offset;
-	if (alloc) {
-		res = __request_region(sram, dst_addr, blk->size, NULL, 0);
-		if (!res)
-			return -EBUSY;
-	}
+	अगर (alloc) अणु
+		res = __request_region(sram, dst_addr, blk->size, शून्य, 0);
+		अगर (!res)
+			वापस -EBUSY;
+	पूर्ण
 
 	/* advance to data area */
-	paddr += sizeof(*blk);
+	paddr += माप(*blk);
 
-	ret = catpt_dma_memcpy_todsp(cdev, chan, dst_addr, paddr, blk->size);
-	if (ret) {
+	ret = catpt_dma_स_नकल_todsp(cdev, chan, dst_addr, paddr, blk->size);
+	अगर (ret) अणु
 		dev_err(cdev->dev, "memcpy error: %d\n", ret);
 		__release_region(sram, dst_addr, blk->size);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int catpt_restore_basefw(struct catpt_dev *cdev,
-				struct dma_chan *chan, dma_addr_t paddr,
-				struct catpt_fw_mod_hdr *basefw)
-{
-	u32 offset = sizeof(*basefw);
-	int ret, i;
+अटल पूर्णांक catpt_restore_basefw(काष्ठा catpt_dev *cdev,
+				काष्ठा dma_chan *chan, dma_addr_t paddr,
+				काष्ठा catpt_fw_mod_hdr *basefw)
+अणु
+	u32 offset = माप(*basefw);
+	पूर्णांक ret, i;
 
-	print_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
-			     basefw, sizeof(*basefw), false);
+	prपूर्णांक_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
+			     basefw, माप(*basefw), false);
 
 	/* restore basefw image */
-	for (i = 0; i < basefw->blocks; i++) {
-		struct catpt_fw_block_hdr *blk;
+	क्रम (i = 0; i < basefw->blocks; i++) अणु
+		काष्ठा catpt_fw_block_hdr *blk;
 
-		blk = (struct catpt_fw_block_hdr *)((u8 *)basefw + offset);
+		blk = (काष्ठा catpt_fw_block_hdr *)((u8 *)basefw + offset);
 
-		switch (blk->ram_type) {
-		case CATPT_RAM_TYPE_IRAM:
+		चयन (blk->ram_type) अणु
+		हाल CATPT_RAM_TYPE_IRAM:
 			ret = catpt_load_block(cdev, chan, paddr + offset,
 					       blk, false);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = catpt_restore_fwimage(cdev, chan, paddr + offset,
 						    blk);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "restore block failed: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		offset += sizeof(*blk) + blk->size;
-	}
+		offset += माप(*blk) + blk->size;
+	पूर्ण
 
 	/* then proceed with memory dumps */
 	ret = catpt_restore_memdumps(cdev, chan);
-	if (ret)
+	अगर (ret)
 		dev_err(cdev->dev, "restore memdumps failed: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int catpt_restore_module(struct catpt_dev *cdev,
-				struct dma_chan *chan, dma_addr_t paddr,
-				struct catpt_fw_mod_hdr *mod)
-{
-	u32 offset = sizeof(*mod);
-	int i;
+अटल पूर्णांक catpt_restore_module(काष्ठा catpt_dev *cdev,
+				काष्ठा dma_chan *chan, dma_addr_t paddr,
+				काष्ठा catpt_fw_mod_hdr *mod)
+अणु
+	u32 offset = माप(*mod);
+	पूर्णांक i;
 
-	print_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
-			     mod, sizeof(*mod), false);
+	prपूर्णांक_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
+			     mod, माप(*mod), false);
 
-	for (i = 0; i < mod->blocks; i++) {
-		struct catpt_fw_block_hdr *blk;
-		int ret;
+	क्रम (i = 0; i < mod->blocks; i++) अणु
+		काष्ठा catpt_fw_block_hdr *blk;
+		पूर्णांक ret;
 
-		blk = (struct catpt_fw_block_hdr *)((u8 *)mod + offset);
+		blk = (काष्ठा catpt_fw_block_hdr *)((u8 *)mod + offset);
 
-		switch (blk->ram_type) {
-		case CATPT_RAM_TYPE_INSTANCE:
+		चयन (blk->ram_type) अणु
+		हाल CATPT_RAM_TYPE_INSTANCE:
 			/* restore module state */
-			ret = catpt_dma_memcpy_todsp(cdev, chan,
+			ret = catpt_dma_स_नकल_todsp(cdev, chan,
 					cdev->lpe_base + blk->ram_offset,
 					cdev->dxbuf_paddr + blk->ram_offset,
 					ALIGN(blk->size, 4));
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = catpt_load_block(cdev, chan, paddr + offset,
 					       blk, false);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "restore block failed: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		offset += sizeof(*blk) + blk->size;
-	}
+		offset += माप(*blk) + blk->size;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int catpt_load_module(struct catpt_dev *cdev,
-			     struct dma_chan *chan, dma_addr_t paddr,
-			     struct catpt_fw_mod_hdr *mod)
-{
-	struct catpt_module_type *type;
-	u32 offset = sizeof(*mod);
-	int i;
+अटल पूर्णांक catpt_load_module(काष्ठा catpt_dev *cdev,
+			     काष्ठा dma_chan *chan, dma_addr_t paddr,
+			     काष्ठा catpt_fw_mod_hdr *mod)
+अणु
+	काष्ठा catpt_module_type *type;
+	u32 offset = माप(*mod);
+	पूर्णांक i;
 
-	print_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
-			     mod, sizeof(*mod), false);
+	prपूर्णांक_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
+			     mod, माप(*mod), false);
 
 	type = &cdev->modules[mod->module_id];
 
-	for (i = 0; i < mod->blocks; i++) {
-		struct catpt_fw_block_hdr *blk;
-		int ret;
+	क्रम (i = 0; i < mod->blocks; i++) अणु
+		काष्ठा catpt_fw_block_hdr *blk;
+		पूर्णांक ret;
 
-		blk = (struct catpt_fw_block_hdr *)((u8 *)mod + offset);
+		blk = (काष्ठा catpt_fw_block_hdr *)((u8 *)mod + offset);
 
 		ret = catpt_load_block(cdev, chan, paddr + offset, blk, true);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "load block failed: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		/*
-		 * Save state window coordinates - these will be
-		 * used to capture module state on D0 exit.
+		 * Save state winकरोw coordinates - these will be
+		 * used to capture module state on D0 निकास.
 		 */
-		if (blk->ram_type == CATPT_RAM_TYPE_INSTANCE) {
+		अगर (blk->ram_type == CATPT_RAM_TYPE_INSTANCE) अणु
 			type->state_offset = blk->ram_offset;
 			type->state_size = blk->size;
-		}
+		पूर्ण
 
-		offset += sizeof(*blk) + blk->size;
-	}
+		offset += माप(*blk) + blk->size;
+	पूर्ण
 
-	/* init module type static info */
+	/* init module type अटल info */
 	type->loaded = true;
 	/* DSP expects address from module header substracted by 4 */
-	type->entry_point = mod->entry_point - 4;
+	type->entry_poपूर्णांक = mod->entry_poपूर्णांक - 4;
 	type->persistent_size = mod->persistent_size;
 	type->scratch_size = mod->scratch_size;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int catpt_restore_firmware(struct catpt_dev *cdev,
-				  struct dma_chan *chan, dma_addr_t paddr,
-				  struct catpt_fw_hdr *fw)
-{
-	u32 offset = sizeof(*fw);
-	int i;
+अटल पूर्णांक catpt_restore_firmware(काष्ठा catpt_dev *cdev,
+				  काष्ठा dma_chan *chan, dma_addr_t paddr,
+				  काष्ठा catpt_fw_hdr *fw)
+अणु
+	u32 offset = माप(*fw);
+	पूर्णांक i;
 
-	print_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
-			     fw, sizeof(*fw), false);
+	prपूर्णांक_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
+			     fw, माप(*fw), false);
 
-	for (i = 0; i < fw->modules; i++) {
-		struct catpt_fw_mod_hdr *mod;
-		int ret;
+	क्रम (i = 0; i < fw->modules; i++) अणु
+		काष्ठा catpt_fw_mod_hdr *mod;
+		पूर्णांक ret;
 
-		mod = (struct catpt_fw_mod_hdr *)((u8 *)fw + offset);
-		if (strncmp(fw->signature, mod->signature,
-			    FW_SIGNATURE_SIZE)) {
+		mod = (काष्ठा catpt_fw_mod_hdr *)((u8 *)fw + offset);
+		अगर (म_भेदन(fw->signature, mod->signature,
+			    FW_SIGNATURE_SIZE)) अणु
 			dev_err(cdev->dev, "module signature mismatch\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (mod->module_id > CATPT_MODID_LAST)
-			return -EINVAL;
+		अगर (mod->module_id > CATPT_MODID_LAST)
+			वापस -EINVAL;
 
-		switch (mod->module_id) {
-		case CATPT_MODID_BASE_FW:
+		चयन (mod->module_id) अणु
+		हाल CATPT_MODID_BASE_FW:
 			ret = catpt_restore_basefw(cdev, chan, paddr + offset,
 						   mod);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			ret = catpt_restore_module(cdev, chan, paddr + offset,
 						   mod);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "restore module failed: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		offset += sizeof(*mod) + mod->mod_size;
-	}
+		offset += माप(*mod) + mod->mod_size;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int catpt_load_firmware(struct catpt_dev *cdev,
-			       struct dma_chan *chan, dma_addr_t paddr,
-			       struct catpt_fw_hdr *fw)
-{
-	u32 offset = sizeof(*fw);
-	int i;
+अटल पूर्णांक catpt_load_firmware(काष्ठा catpt_dev *cdev,
+			       काष्ठा dma_chan *chan, dma_addr_t paddr,
+			       काष्ठा catpt_fw_hdr *fw)
+अणु
+	u32 offset = माप(*fw);
+	पूर्णांक i;
 
-	print_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
-			     fw, sizeof(*fw), false);
+	prपूर्णांक_hex_dump_debug(__func__, DUMP_PREFIX_OFFSET, 8, 4,
+			     fw, माप(*fw), false);
 
-	for (i = 0; i < fw->modules; i++) {
-		struct catpt_fw_mod_hdr *mod;
-		int ret;
+	क्रम (i = 0; i < fw->modules; i++) अणु
+		काष्ठा catpt_fw_mod_hdr *mod;
+		पूर्णांक ret;
 
-		mod = (struct catpt_fw_mod_hdr *)((u8 *)fw + offset);
-		if (strncmp(fw->signature, mod->signature,
-			    FW_SIGNATURE_SIZE)) {
+		mod = (काष्ठा catpt_fw_mod_hdr *)((u8 *)fw + offset);
+		अगर (म_भेदन(fw->signature, mod->signature,
+			    FW_SIGNATURE_SIZE)) अणु
 			dev_err(cdev->dev, "module signature mismatch\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (mod->module_id > CATPT_MODID_LAST)
-			return -EINVAL;
+		अगर (mod->module_id > CATPT_MODID_LAST)
+			वापस -EINVAL;
 
 		ret = catpt_load_module(cdev, chan, paddr + offset, mod);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(cdev->dev, "load module failed: %d\n", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		offset += sizeof(*mod) + mod->mod_size;
-	}
+		offset += माप(*mod) + mod->mod_size;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int catpt_load_image(struct catpt_dev *cdev, struct dma_chan *chan,
-			    const char *name, const char *signature,
+अटल पूर्णांक catpt_load_image(काष्ठा catpt_dev *cdev, काष्ठा dma_chan *chan,
+			    स्थिर अक्षर *name, स्थिर अक्षर *signature,
 			    bool restore)
-{
-	struct catpt_fw_hdr *fw;
-	struct firmware *img;
+अणु
+	काष्ठा catpt_fw_hdr *fw;
+	काष्ठा firmware *img;
 	dma_addr_t paddr;
-	void *vaddr;
-	int ret;
+	व्योम *vaddr;
+	पूर्णांक ret;
 
-	ret = request_firmware((const struct firmware **)&img, name, cdev->dev);
-	if (ret)
-		return ret;
+	ret = request_firmware((स्थिर काष्ठा firmware **)&img, name, cdev->dev);
+	अगर (ret)
+		वापस ret;
 
-	fw = (struct catpt_fw_hdr *)img->data;
-	if (strncmp(fw->signature, signature, FW_SIGNATURE_SIZE)) {
+	fw = (काष्ठा catpt_fw_hdr *)img->data;
+	अगर (म_भेदन(fw->signature, signature, FW_SIGNATURE_SIZE)) अणु
 		dev_err(cdev->dev, "firmware signature mismatch\n");
 		ret = -EINVAL;
-		goto release_fw;
-	}
+		जाओ release_fw;
+	पूर्ण
 
 	vaddr = dma_alloc_coherent(cdev->dev, img->size, &paddr, GFP_KERNEL);
-	if (!vaddr) {
+	अगर (!vaddr) अणु
 		ret = -ENOMEM;
-		goto release_fw;
-	}
+		जाओ release_fw;
+	पूर्ण
 
-	memcpy(vaddr, img->data, img->size);
-	fw = (struct catpt_fw_hdr *)vaddr;
-	if (restore)
+	स_नकल(vaddr, img->data, img->size);
+	fw = (काष्ठा catpt_fw_hdr *)vaddr;
+	अगर (restore)
 		ret = catpt_restore_firmware(cdev, chan, paddr, fw);
-	else
+	अन्यथा
 		ret = catpt_load_firmware(cdev, chan, paddr, fw);
 
-	dma_free_coherent(cdev->dev, img->size, vaddr, paddr);
+	dma_मुक्त_coherent(cdev->dev, img->size, vaddr, paddr);
 release_fw:
 	release_firmware(img);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int catpt_load_images(struct catpt_dev *cdev, bool restore)
-{
-	static const char *const names[] = {
+अटल पूर्णांक catpt_load_images(काष्ठा catpt_dev *cdev, bool restore)
+अणु
+	अटल स्थिर अक्षर *स्थिर names[] = अणु
 		"intel/IntcSST1.bin",
 		"intel/IntcSST2.bin",
-	};
-	struct dma_chan *chan;
-	int ret;
+	पूर्ण;
+	काष्ठा dma_chan *chan;
+	पूर्णांक ret;
 
 	chan = catpt_dma_request_config_chan(cdev);
-	if (IS_ERR(chan))
-		return PTR_ERR(chan);
+	अगर (IS_ERR(chan))
+		वापस PTR_ERR(chan);
 
 	ret = catpt_load_image(cdev, chan, names[cdev->spec->core_id - 1],
 			       FW_SIGNATURE, restore);
-	if (ret)
-		goto release_dma_chan;
+	अगर (ret)
+		जाओ release_dma_chan;
 
-	if (!restore)
-		goto release_dma_chan;
+	अगर (!restore)
+		जाओ release_dma_chan;
 	ret = catpt_restore_streams_context(cdev, chan);
-	if (ret)
+	अगर (ret)
 		dev_err(cdev->dev, "restore streams ctx failed: %d\n", ret);
 release_dma_chan:
 	dma_release_channel(chan);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int catpt_boot_firmware(struct catpt_dev *cdev, bool restore)
-{
-	int ret;
+पूर्णांक catpt_boot_firmware(काष्ठा catpt_dev *cdev, bool restore)
+अणु
+	पूर्णांक ret;
 
 	catpt_dsp_stall(cdev, true);
 
 	ret = catpt_load_images(cdev, restore);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(cdev->dev, "load binaries failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	reinit_completion(&cdev->fw_ready);
+	reinit_completion(&cdev->fw_पढ़ोy);
 	catpt_dsp_stall(cdev, false);
 
-	ret = wait_for_completion_timeout(&cdev->fw_ready,
-			msecs_to_jiffies(FW_READY_TIMEOUT_MS));
-	if (!ret) {
+	ret = रुको_क्रम_completion_समयout(&cdev->fw_पढ़ोy,
+			msecs_to_jअगरfies(FW_READY_TIMEOUT_MS));
+	अगर (!ret) अणु
 		dev_err(cdev->dev, "firmware ready timeout\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	/* update sram pg & clock once done booting */
+	/* update sram pg & घड़ी once करोne booting */
 	catpt_dsp_update_srampge(cdev, &cdev->dram, cdev->spec->dram_mask);
 	catpt_dsp_update_srampge(cdev, &cdev->iram, cdev->spec->iram_mask);
 
-	return catpt_dsp_update_lpclock(cdev);
-}
+	वापस catpt_dsp_update_lpघड़ी(cdev);
+पूर्ण
 
-int catpt_first_boot_firmware(struct catpt_dev *cdev)
-{
-	struct resource *res;
-	int ret;
+पूर्णांक catpt_first_boot_firmware(काष्ठा catpt_dev *cdev)
+अणु
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
 	ret = catpt_boot_firmware(cdev, false);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(cdev->dev, "basefw boot failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* restrict FW Core dump area */
-	__request_region(&cdev->dram, 0, 0x200, NULL, 0);
+	__request_region(&cdev->dram, 0, 0x200, शून्य, 0);
 	/* restrict entire area following BASE_FW - highest offset in DRAM */
-	for (res = cdev->dram.child; res->sibling; res = res->sibling)
+	क्रम (res = cdev->dram.child; res->sibling; res = res->sibling)
 		;
 	__request_region(&cdev->dram, res->end + 1,
-			 cdev->dram.end - res->end, NULL, 0);
+			 cdev->dram.end - res->end, शून्य, 0);
 
 	ret = catpt_ipc_get_mixer_stream_info(cdev, &cdev->mixer);
-	if (ret)
-		return CATPT_IPC_ERROR(ret);
+	अगर (ret)
+		वापस CATPT_IPC_ERROR(ret);
 
-	ret = catpt_arm_stream_templates(cdev);
-	if (ret) {
+	ret = catpt_arm_stream_ढाँचाs(cdev);
+	अगर (ret) अणु
 		dev_err(cdev->dev, "arm templates failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* update dram pg for scratch and restricted regions */
+	/* update dram pg क्रम scratch and restricted regions */
 	catpt_dsp_update_srampge(cdev, &cdev->dram, cdev->spec->dram_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

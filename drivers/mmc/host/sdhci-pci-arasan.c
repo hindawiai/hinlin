@@ -1,331 +1,332 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * sdhci-pci-arasan.c - Driver for Arasan PCI Controller with
- * integrated phy.
+ * sdhci-pci-arasan.c - Driver क्रम Arasan PCI Controller with
+ * पूर्णांकegrated phy.
  *
  * Copyright (C) 2017 Arasan Chip Systems Inc.
  *
  * Author: Atul Garg <agarg@arasan.com>
  */
 
-#include <linux/pci.h>
-#include <linux/delay.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
 
-#include "sdhci.h"
-#include "sdhci-pci.h"
+#समावेश "sdhci.h"
+#समावेश "sdhci-pci.h"
 
-/* Extra registers for Arasan SD/SDIO/MMC Host Controller with PHY */
-#define PHY_ADDR_REG	0x300
-#define PHY_DAT_REG	0x304
+/* Extra रेजिस्टरs क्रम Arasan SD/SDIO/MMC Host Controller with PHY */
+#घोषणा PHY_ADDR_REG	0x300
+#घोषणा PHY_DAT_REG	0x304
 
-#define PHY_WRITE	BIT(8)
-#define PHY_BUSY	BIT(9)
-#define DATA_MASK	0xFF
+#घोषणा PHY_WRITE	BIT(8)
+#घोषणा PHY_BUSY	BIT(9)
+#घोषणा DATA_MASK	0xFF
 
-/* PHY Specific Registers */
-#define DLL_STATUS	0x00
-#define IPAD_CTRL1	0x01
-#define IPAD_CTRL2	0x02
-#define IPAD_STS	0x03
-#define IOREN_CTRL1	0x06
-#define IOREN_CTRL2	0x07
-#define IOPU_CTRL1	0x08
-#define IOPU_CTRL2	0x09
-#define ITAP_DELAY	0x0C
-#define OTAP_DELAY	0x0D
-#define STRB_SEL	0x0E
-#define CLKBUF_SEL	0x0F
-#define MODE_CTRL	0x11
-#define DLL_TRIM	0x12
-#define CMD_CTRL	0x20
-#define DATA_CTRL	0x21
-#define STRB_CTRL	0x22
-#define CLK_CTRL	0x23
-#define PHY_CTRL	0x24
+/* PHY Specअगरic Registers */
+#घोषणा DLL_STATUS	0x00
+#घोषणा IPAD_CTRL1	0x01
+#घोषणा IPAD_CTRL2	0x02
+#घोषणा IPAD_STS	0x03
+#घोषणा IOREN_CTRL1	0x06
+#घोषणा IOREN_CTRL2	0x07
+#घोषणा IOPU_CTRL1	0x08
+#घोषणा IOPU_CTRL2	0x09
+#घोषणा ITAP_DELAY	0x0C
+#घोषणा OTAP_DELAY	0x0D
+#घोषणा STRB_SEL	0x0E
+#घोषणा CLKBUF_SEL	0x0F
+#घोषणा MODE_CTRL	0x11
+#घोषणा DLL_TRIM	0x12
+#घोषणा CMD_CTRL	0x20
+#घोषणा DATA_CTRL	0x21
+#घोषणा STRB_CTRL	0x22
+#घोषणा CLK_CTRL	0x23
+#घोषणा PHY_CTRL	0x24
 
-#define DLL_ENBL	BIT(3)
-#define RTRIM_EN	BIT(1)
-#define PDB_ENBL	BIT(1)
-#define RETB_ENBL	BIT(6)
-#define ODEN_CMD	BIT(1)
-#define ODEN_DAT	0xFF
-#define REN_STRB	BIT(0)
-#define REN_CMND	BIT(1)
-#define REN_DATA	0xFF
-#define PU_CMD		BIT(1)
-#define PU_DAT		0xFF
-#define ITAPDLY_EN	BIT(0)
-#define OTAPDLY_EN	BIT(0)
-#define OD_REL_CMD	BIT(1)
-#define OD_REL_DAT	0xFF
-#define DLLTRM_ICP	0x8
-#define PDB_CMND	BIT(0)
-#define PDB_DATA	0xFF
-#define PDB_STRB	BIT(0)
-#define PDB_CLOCK	BIT(0)
-#define CALDONE_MASK	0x10
-#define DLL_RDY_MASK	0x10
-#define MAX_CLK_BUF	0x7
+#घोषणा DLL_ENBL	BIT(3)
+#घोषणा RTRIM_EN	BIT(1)
+#घोषणा PDB_ENBL	BIT(1)
+#घोषणा RETB_ENBL	BIT(6)
+#घोषणा ODEN_CMD	BIT(1)
+#घोषणा ODEN_DAT	0xFF
+#घोषणा REN_STRB	BIT(0)
+#घोषणा REN_CMND	BIT(1)
+#घोषणा REN_DATA	0xFF
+#घोषणा PU_CMD		BIT(1)
+#घोषणा PU_DAT		0xFF
+#घोषणा ITAPDLY_EN	BIT(0)
+#घोषणा OTAPDLY_EN	BIT(0)
+#घोषणा OD_REL_CMD	BIT(1)
+#घोषणा OD_REL_DAT	0xFF
+#घोषणा DLLTRM_ICP	0x8
+#घोषणा PDB_CMND	BIT(0)
+#घोषणा PDB_DATA	0xFF
+#घोषणा PDB_STRB	BIT(0)
+#घोषणा PDB_CLOCK	BIT(0)
+#घोषणा CALDONE_MASK	0x10
+#घोषणा DLL_RDY_MASK	0x10
+#घोषणा MAX_CLK_BUF	0x7
 
 /* Mode Controls */
-#define ENHSTRB_MODE	BIT(0)
-#define HS400_MODE	BIT(1)
-#define LEGACY_MODE	BIT(2)
-#define DDR50_MODE	BIT(3)
+#घोषणा ENHSTRB_MODE	BIT(0)
+#घोषणा HS400_MODE	BIT(1)
+#घोषणा LEGACY_MODE	BIT(2)
+#घोषणा DDR50_MODE	BIT(3)
 
 /*
- * Controller has no specific bits for HS200/HS.
- * Used BIT(4), BIT(5) for software programming.
+ * Controller has no specअगरic bits क्रम HS200/HS.
+ * Used BIT(4), BIT(5) क्रम software programming.
  */
-#define HS200_MODE	BIT(4)
-#define HISPD_MODE	BIT(5)
+#घोषणा HS200_MODE	BIT(4)
+#घोषणा HISPD_MODE	BIT(5)
 
-#define OTAPDLY(x)	(((x) << 1) | OTAPDLY_EN)
-#define ITAPDLY(x)	(((x) << 1) | ITAPDLY_EN)
-#define FREQSEL(x)	(((x) << 5) | DLL_ENBL)
-#define IOPAD(x, y)	((x) | ((y) << 2))
+#घोषणा OTAPDLY(x)	(((x) << 1) | OTAPDLY_EN)
+#घोषणा ITAPDLY(x)	(((x) << 1) | ITAPDLY_EN)
+#घोषणा FREQSEL(x)	(((x) << 5) | DLL_ENBL)
+#घोषणा IOPAD(x, y)	((x) | ((y) << 2))
 
-/* Arasan private data */
-struct arasan_host {
+/* Arasan निजी data */
+काष्ठा arasan_host अणु
 	u32 chg_clk;
-};
+पूर्ण;
 
-static int arasan_phy_addr_poll(struct sdhci_host *host, u32 offset, u32 mask)
-{
-	ktime_t timeout = ktime_add_us(ktime_get(), 100);
+अटल पूर्णांक arasan_phy_addr_poll(काष्ठा sdhci_host *host, u32 offset, u32 mask)
+अणु
+	kसमय_प्रकार समयout = kसमय_add_us(kसमय_get(), 100);
 	bool failed;
 	u8 val = 0;
 
-	while (1) {
-		failed = ktime_after(ktime_get(), timeout);
-		val = sdhci_readw(host, PHY_ADDR_REG);
-		if (!(val & mask))
-			return 0;
-		if (failed)
-			return -EBUSY;
-	}
-}
+	जबतक (1) अणु
+		failed = kसमय_after(kसमय_get(), समयout);
+		val = sdhci_पढ़ोw(host, PHY_ADDR_REG);
+		अगर (!(val & mask))
+			वापस 0;
+		अगर (failed)
+			वापस -EBUSY;
+	पूर्ण
+पूर्ण
 
-static int arasan_phy_write(struct sdhci_host *host, u8 data, u8 offset)
-{
-	sdhci_writew(host, data, PHY_DAT_REG);
-	sdhci_writew(host, (PHY_WRITE | offset), PHY_ADDR_REG);
-	return arasan_phy_addr_poll(host, PHY_ADDR_REG, PHY_BUSY);
-}
+अटल पूर्णांक arasan_phy_ग_लिखो(काष्ठा sdhci_host *host, u8 data, u8 offset)
+अणु
+	sdhci_ग_लिखोw(host, data, PHY_DAT_REG);
+	sdhci_ग_लिखोw(host, (PHY_WRITE | offset), PHY_ADDR_REG);
+	वापस arasan_phy_addr_poll(host, PHY_ADDR_REG, PHY_BUSY);
+पूर्ण
 
-static int arasan_phy_read(struct sdhci_host *host, u8 offset, u8 *data)
-{
-	int ret;
+अटल पूर्णांक arasan_phy_पढ़ो(काष्ठा sdhci_host *host, u8 offset, u8 *data)
+अणु
+	पूर्णांक ret;
 
-	sdhci_writew(host, 0, PHY_DAT_REG);
-	sdhci_writew(host, offset, PHY_ADDR_REG);
+	sdhci_ग_लिखोw(host, 0, PHY_DAT_REG);
+	sdhci_ग_लिखोw(host, offset, PHY_ADDR_REG);
 	ret = arasan_phy_addr_poll(host, PHY_ADDR_REG, PHY_BUSY);
 
 	/* Masking valid data bits */
-	*data = sdhci_readw(host, PHY_DAT_REG) & DATA_MASK;
-	return ret;
-}
+	*data = sdhci_पढ़ोw(host, PHY_DAT_REG) & DATA_MASK;
+	वापस ret;
+पूर्ण
 
-static int arasan_phy_sts_poll(struct sdhci_host *host, u32 offset, u32 mask)
-{
-	int ret;
-	ktime_t timeout = ktime_add_us(ktime_get(), 100);
+अटल पूर्णांक arasan_phy_sts_poll(काष्ठा sdhci_host *host, u32 offset, u32 mask)
+अणु
+	पूर्णांक ret;
+	kसमय_प्रकार समयout = kसमय_add_us(kसमय_get(), 100);
 	bool failed;
 	u8 val = 0;
 
-	while (1) {
-		failed = ktime_after(ktime_get(), timeout);
-		ret = arasan_phy_read(host, offset, &val);
-		if (ret)
-			return -EBUSY;
-		else if (val & mask)
-			return 0;
-		if (failed)
-			return -EBUSY;
-	}
-}
+	जबतक (1) अणु
+		failed = kसमय_after(kसमय_get(), समयout);
+		ret = arasan_phy_पढ़ो(host, offset, &val);
+		अगर (ret)
+			वापस -EBUSY;
+		अन्यथा अगर (val & mask)
+			वापस 0;
+		अगर (failed)
+			वापस -EBUSY;
+	पूर्ण
+पूर्ण
 
 /* Initialize the Arasan PHY */
-static int arasan_phy_init(struct sdhci_host *host)
-{
-	int ret;
+अटल पूर्णांक arasan_phy_init(काष्ठा sdhci_host *host)
+अणु
+	पूर्णांक ret;
 	u8 val;
 
-	/* Program IOPADs and wait for calibration to be done */
-	if (arasan_phy_read(host, IPAD_CTRL1, &val) ||
-	    arasan_phy_write(host, val | RETB_ENBL | PDB_ENBL, IPAD_CTRL1) ||
-	    arasan_phy_read(host, IPAD_CTRL2, &val) ||
-	    arasan_phy_write(host, val | RTRIM_EN, IPAD_CTRL2))
-		return -EBUSY;
+	/* Program IOPADs and रुको क्रम calibration to be करोne */
+	अगर (arasan_phy_पढ़ो(host, IPAD_CTRL1, &val) ||
+	    arasan_phy_ग_लिखो(host, val | RETB_ENBL | PDB_ENBL, IPAD_CTRL1) ||
+	    arasan_phy_पढ़ो(host, IPAD_CTRL2, &val) ||
+	    arasan_phy_ग_लिखो(host, val | RTRIM_EN, IPAD_CTRL2))
+		वापस -EBUSY;
 	ret = arasan_phy_sts_poll(host, IPAD_STS, CALDONE_MASK);
-	if (ret)
-		return -EBUSY;
+	अगर (ret)
+		वापस -EBUSY;
 
 	/* Program CMD/Data lines */
-	if (arasan_phy_read(host, IOREN_CTRL1, &val) ||
-	    arasan_phy_write(host, val | REN_CMND | REN_STRB, IOREN_CTRL1) ||
-	    arasan_phy_read(host, IOPU_CTRL1, &val) ||
-	    arasan_phy_write(host, val | PU_CMD, IOPU_CTRL1) ||
-	    arasan_phy_read(host, CMD_CTRL, &val) ||
-	    arasan_phy_write(host, val | PDB_CMND, CMD_CTRL) ||
-	    arasan_phy_read(host, IOREN_CTRL2, &val) ||
-	    arasan_phy_write(host, val | REN_DATA, IOREN_CTRL2) ||
-	    arasan_phy_read(host, IOPU_CTRL2, &val) ||
-	    arasan_phy_write(host, val | PU_DAT, IOPU_CTRL2) ||
-	    arasan_phy_read(host, DATA_CTRL, &val) ||
-	    arasan_phy_write(host, val | PDB_DATA, DATA_CTRL) ||
-	    arasan_phy_read(host, STRB_CTRL, &val) ||
-	    arasan_phy_write(host, val | PDB_STRB, STRB_CTRL) ||
-	    arasan_phy_read(host, CLK_CTRL, &val) ||
-	    arasan_phy_write(host, val | PDB_CLOCK, CLK_CTRL) ||
-	    arasan_phy_read(host, CLKBUF_SEL, &val) ||
-	    arasan_phy_write(host, val | MAX_CLK_BUF, CLKBUF_SEL) ||
-	    arasan_phy_write(host, LEGACY_MODE, MODE_CTRL))
-		return -EBUSY;
-	return 0;
-}
+	अगर (arasan_phy_पढ़ो(host, IOREN_CTRL1, &val) ||
+	    arasan_phy_ग_लिखो(host, val | REN_CMND | REN_STRB, IOREN_CTRL1) ||
+	    arasan_phy_पढ़ो(host, IOPU_CTRL1, &val) ||
+	    arasan_phy_ग_लिखो(host, val | PU_CMD, IOPU_CTRL1) ||
+	    arasan_phy_पढ़ो(host, CMD_CTRL, &val) ||
+	    arasan_phy_ग_लिखो(host, val | PDB_CMND, CMD_CTRL) ||
+	    arasan_phy_पढ़ो(host, IOREN_CTRL2, &val) ||
+	    arasan_phy_ग_लिखो(host, val | REN_DATA, IOREN_CTRL2) ||
+	    arasan_phy_पढ़ो(host, IOPU_CTRL2, &val) ||
+	    arasan_phy_ग_लिखो(host, val | PU_DAT, IOPU_CTRL2) ||
+	    arasan_phy_पढ़ो(host, DATA_CTRL, &val) ||
+	    arasan_phy_ग_लिखो(host, val | PDB_DATA, DATA_CTRL) ||
+	    arasan_phy_पढ़ो(host, STRB_CTRL, &val) ||
+	    arasan_phy_ग_लिखो(host, val | PDB_STRB, STRB_CTRL) ||
+	    arasan_phy_पढ़ो(host, CLK_CTRL, &val) ||
+	    arasan_phy_ग_लिखो(host, val | PDB_CLOCK, CLK_CTRL) ||
+	    arasan_phy_पढ़ो(host, CLKBUF_SEL, &val) ||
+	    arasan_phy_ग_लिखो(host, val | MAX_CLK_BUF, CLKBUF_SEL) ||
+	    arasan_phy_ग_लिखो(host, LEGACY_MODE, MODE_CTRL))
+		वापस -EBUSY;
+	वापस 0;
+पूर्ण
 
-/* Set Arasan PHY for different modes */
-static int arasan_phy_set(struct sdhci_host *host, u8 mode, u8 otap,
+/* Set Arasan PHY क्रम dअगरferent modes */
+अटल पूर्णांक arasan_phy_set(काष्ठा sdhci_host *host, u8 mode, u8 otap,
 			  u8 drv_type, u8 itap, u8 trim, u8 clk)
-{
+अणु
 	u8 val;
-	int ret;
+	पूर्णांक ret;
 
-	if (mode == HISPD_MODE || mode == HS200_MODE)
-		ret = arasan_phy_write(host, 0x0, MODE_CTRL);
-	else
-		ret = arasan_phy_write(host, mode, MODE_CTRL);
-	if (ret)
-		return ret;
-	if (mode == HS400_MODE || mode == HS200_MODE) {
-		ret = arasan_phy_read(host, IPAD_CTRL1, &val);
-		if (ret)
-			return ret;
-		ret = arasan_phy_write(host, IOPAD(val, drv_type), IPAD_CTRL1);
-		if (ret)
-			return ret;
-	}
-	if (mode == LEGACY_MODE) {
-		ret = arasan_phy_write(host, 0x0, OTAP_DELAY);
-		if (ret)
-			return ret;
-		ret = arasan_phy_write(host, 0x0, ITAP_DELAY);
-	} else {
-		ret = arasan_phy_write(host, OTAPDLY(otap), OTAP_DELAY);
-		if (ret)
-			return ret;
-		if (mode != HS200_MODE)
-			ret = arasan_phy_write(host, ITAPDLY(itap), ITAP_DELAY);
-		else
-			ret = arasan_phy_write(host, 0x0, ITAP_DELAY);
-	}
-	if (ret)
-		return ret;
-	if (mode != LEGACY_MODE) {
-		ret = arasan_phy_write(host, trim, DLL_TRIM);
-		if (ret)
-			return ret;
-	}
-	ret = arasan_phy_write(host, 0, DLL_STATUS);
-	if (ret)
-		return ret;
-	if (mode != LEGACY_MODE) {
-		ret = arasan_phy_write(host, FREQSEL(clk), DLL_STATUS);
-		if (ret)
-			return ret;
+	अगर (mode == HISPD_MODE || mode == HS200_MODE)
+		ret = arasan_phy_ग_लिखो(host, 0x0, MODE_CTRL);
+	अन्यथा
+		ret = arasan_phy_ग_लिखो(host, mode, MODE_CTRL);
+	अगर (ret)
+		वापस ret;
+	अगर (mode == HS400_MODE || mode == HS200_MODE) अणु
+		ret = arasan_phy_पढ़ो(host, IPAD_CTRL1, &val);
+		अगर (ret)
+			वापस ret;
+		ret = arasan_phy_ग_लिखो(host, IOPAD(val, drv_type), IPAD_CTRL1);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	अगर (mode == LEGACY_MODE) अणु
+		ret = arasan_phy_ग_लिखो(host, 0x0, OTAP_DELAY);
+		अगर (ret)
+			वापस ret;
+		ret = arasan_phy_ग_लिखो(host, 0x0, ITAP_DELAY);
+	पूर्ण अन्यथा अणु
+		ret = arasan_phy_ग_लिखो(host, OTAPDLY(otap), OTAP_DELAY);
+		अगर (ret)
+			वापस ret;
+		अगर (mode != HS200_MODE)
+			ret = arasan_phy_ग_लिखो(host, ITAPDLY(itap), ITAP_DELAY);
+		अन्यथा
+			ret = arasan_phy_ग_लिखो(host, 0x0, ITAP_DELAY);
+	पूर्ण
+	अगर (ret)
+		वापस ret;
+	अगर (mode != LEGACY_MODE) अणु
+		ret = arasan_phy_ग_लिखो(host, trim, DLL_TRIM);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
+	ret = arasan_phy_ग_लिखो(host, 0, DLL_STATUS);
+	अगर (ret)
+		वापस ret;
+	अगर (mode != LEGACY_MODE) अणु
+		ret = arasan_phy_ग_लिखो(host, FREQSEL(clk), DLL_STATUS);
+		अगर (ret)
+			वापस ret;
 		ret = arasan_phy_sts_poll(host, DLL_STATUS, DLL_RDY_MASK);
-		if (ret)
-			return -EBUSY;
-	}
-	return 0;
-}
+		अगर (ret)
+			वापस -EBUSY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int arasan_select_phy_clock(struct sdhci_host *host)
-{
-	struct sdhci_pci_slot *slot = sdhci_priv(host);
-	struct arasan_host *arasan_host = sdhci_pci_priv(slot);
+अटल पूर्णांक arasan_select_phy_घड़ी(काष्ठा sdhci_host *host)
+अणु
+	काष्ठा sdhci_pci_slot *slot = sdhci_priv(host);
+	काष्ठा arasan_host *arasan_host = sdhci_pci_priv(slot);
 	u8 clk;
 
-	if (arasan_host->chg_clk == host->mmc->ios.clock)
-		return 0;
+	अगर (arasan_host->chg_clk == host->mmc->ios.घड़ी)
+		वापस 0;
 
-	arasan_host->chg_clk = host->mmc->ios.clock;
-	if (host->mmc->ios.clock == 200000000)
+	arasan_host->chg_clk = host->mmc->ios.घड़ी;
+	अगर (host->mmc->ios.घड़ी == 200000000)
 		clk = 0x0;
-	else if (host->mmc->ios.clock == 100000000)
+	अन्यथा अगर (host->mmc->ios.घड़ी == 100000000)
 		clk = 0x2;
-	else if (host->mmc->ios.clock == 50000000)
+	अन्यथा अगर (host->mmc->ios.घड़ी == 50000000)
 		clk = 0x1;
-	else
+	अन्यथा
 		clk = 0x0;
 
-	if (host->mmc_host_ops.hs400_enhanced_strobe) {
+	अगर (host->mmc_host_ops.hs400_enhanced_strobe) अणु
 		arasan_phy_set(host, ENHSTRB_MODE, 1, 0x0, 0x0,
 			       DLLTRM_ICP, clk);
-	} else {
-		switch (host->mmc->ios.timing) {
-		case MMC_TIMING_LEGACY:
+	पूर्ण अन्यथा अणु
+		चयन (host->mmc->ios.timing) अणु
+		हाल MMC_TIMING_LEGACY:
 			arasan_phy_set(host, LEGACY_MODE, 0x0, 0x0, 0x0,
 				       0x0, 0x0);
-			break;
-		case MMC_TIMING_MMC_HS:
-		case MMC_TIMING_SD_HS:
+			अवरोध;
+		हाल MMC_TIMING_MMC_HS:
+		हाल MMC_TIMING_SD_HS:
 			arasan_phy_set(host, HISPD_MODE, 0x3, 0x0, 0x2,
 				       DLLTRM_ICP, clk);
-			break;
-		case MMC_TIMING_MMC_HS200:
-		case MMC_TIMING_UHS_SDR104:
+			अवरोध;
+		हाल MMC_TIMING_MMC_HS200:
+		हाल MMC_TIMING_UHS_SDR104:
 			arasan_phy_set(host, HS200_MODE, 0x2,
 				       host->mmc->ios.drv_type, 0x0,
 				       DLLTRM_ICP, clk);
-			break;
-		case MMC_TIMING_MMC_DDR52:
-		case MMC_TIMING_UHS_DDR50:
+			अवरोध;
+		हाल MMC_TIMING_MMC_DDR52:
+		हाल MMC_TIMING_UHS_DDR50:
 			arasan_phy_set(host, DDR50_MODE, 0x1, 0x0,
 				       0x0, DLLTRM_ICP, clk);
-			break;
-		case MMC_TIMING_MMC_HS400:
+			अवरोध;
+		हाल MMC_TIMING_MMC_HS400:
 			arasan_phy_set(host, HS400_MODE, 0x1,
 				       host->mmc->ios.drv_type, 0xa,
 				       DLLTRM_ICP, clk);
-			break;
-		default:
-			break;
-		}
-	}
-	return 0;
-}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int arasan_pci_probe_slot(struct sdhci_pci_slot *slot)
-{
-	int err;
+अटल पूर्णांक arasan_pci_probe_slot(काष्ठा sdhci_pci_slot *slot)
+अणु
+	पूर्णांक err;
 
 	slot->host->mmc->caps |= MMC_CAP_NONREMOVABLE | MMC_CAP_8_BIT_DATA;
 	err = arasan_phy_init(slot->host);
-	if (err)
-		return -ENODEV;
-	return 0;
-}
+	अगर (err)
+		वापस -ENODEV;
+	वापस 0;
+पूर्ण
 
-static void arasan_sdhci_set_clock(struct sdhci_host *host, unsigned int clock)
-{
-	sdhci_set_clock(host, clock);
+अटल व्योम arasan_sdhci_set_घड़ी(काष्ठा sdhci_host *host, अचिन्हित पूर्णांक घड़ी)
+अणु
+	sdhci_set_घड़ी(host, घड़ी);
 
-	/* Change phy settings for the new clock */
-	arasan_select_phy_clock(host);
-}
+	/* Change phy settings क्रम the new घड़ी */
+	arasan_select_phy_घड़ी(host);
+पूर्ण
 
-static const struct sdhci_ops arasan_sdhci_pci_ops = {
-	.set_clock	= arasan_sdhci_set_clock,
+अटल स्थिर काष्ठा sdhci_ops arasan_sdhci_pci_ops = अणु
+	.set_घड़ी	= arasan_sdhci_set_घड़ी,
 	.enable_dma	= sdhci_pci_enable_dma,
 	.set_bus_width	= sdhci_set_bus_width,
 	.reset		= sdhci_reset,
-	.set_uhs_signaling	= sdhci_set_uhs_signaling,
-};
+	.set_uhs_संकेतing	= sdhci_set_uhs_संकेतing,
+पूर्ण;
 
-const struct sdhci_pci_fixes sdhci_arasan = {
+स्थिर काष्ठा sdhci_pci_fixes sdhci_arasan = अणु
 	.probe_slot = arasan_pci_probe_slot,
 	.ops        = &arasan_sdhci_pci_ops,
-	.priv_size  = sizeof(struct arasan_host),
-};
+	.priv_size  = माप(काष्ठा arasan_host),
+पूर्ण;

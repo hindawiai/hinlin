@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *    Filename: ks0108.h
  *     Version: 0.1.0
@@ -8,28 +9,28 @@
  *        Date: 2006-10-31
  */
 
-#ifndef _KS0108_H_
-#define _KS0108_H_
+#अगर_अघोषित _KS0108_H_
+#घोषणा _KS0108_H_
 
 /* Write a byte to the data port */
-extern void ks0108_writedata(unsigned char byte);
+बाह्य व्योम ks0108_ग_लिखोdata(अचिन्हित अक्षर byte);
 
 /* Write a byte to the control port */
-extern void ks0108_writecontrol(unsigned char byte);
+बाह्य व्योम ks0108_ग_लिखोcontrol(अचिन्हित अक्षर byte);
 
 /* Set the controller's current display state (0..1) */
-extern void ks0108_displaystate(unsigned char state);
+बाह्य व्योम ks0108_displaystate(अचिन्हित अक्षर state);
 
 /* Set the controller's current startline (0..63) */
-extern void ks0108_startline(unsigned char startline);
+बाह्य व्योम ks0108_startline(अचिन्हित अक्षर startline);
 
 /* Set the controller's current address (0..63) */
-extern void ks0108_address(unsigned char address);
+बाह्य व्योम ks0108_address(अचिन्हित अक्षर address);
 
 /* Set the controller's current page (0..7) */
-extern void ks0108_page(unsigned char page);
+बाह्य व्योम ks0108_page(अचिन्हित अक्षर page);
 
 /* Is the module inited? */
-extern unsigned char ks0108_isinited(void);
+बाह्य अचिन्हित अक्षर ks0108_isinited(व्योम);
 
-#endif /* _KS0108_H_ */
+#पूर्ण_अगर /* _KS0108_H_ */

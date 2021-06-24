@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2007-2010 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -25,133 +26,133 @@
  *
  **************************************************************************/
 /*
- * Authors: Thomas Hellstrom <thellstrom-at-vmware-dot-com>
+ * Authors: Thomas Hellstrom <thellstrom-at-vmware-करोt-com>
  */
 
-#include "vmwgfx_drv.h"
-#include <drm/ttm/ttm_bo_driver.h>
-#include <drm/ttm/ttm_placement.h>
-#include <linux/idr.h>
-#include <linux/spinlock.h>
-#include <linux/kernel.h>
+#समावेश "vmwgfx_drv.h"
+#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
+#समावेश <drm/tपंचांग/tपंचांग_placement.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kernel.h>
 
-struct vmwgfx_gmrid_man {
-	struct ttm_resource_manager manager;
+काष्ठा vmwgfx_gmrid_man अणु
+	काष्ठा tपंचांग_resource_manager manager;
 	spinlock_t lock;
-	struct ida gmr_ida;
-	uint32_t max_gmr_ids;
-	uint32_t max_gmr_pages;
-	uint32_t used_gmr_pages;
-};
+	काष्ठा ida gmr_ida;
+	uपूर्णांक32_t max_gmr_ids;
+	uपूर्णांक32_t max_gmr_pages;
+	uपूर्णांक32_t used_gmr_pages;
+पूर्ण;
 
-static struct vmwgfx_gmrid_man *to_gmrid_manager(struct ttm_resource_manager *man)
-{
-	return container_of(man, struct vmwgfx_gmrid_man, manager);
-}
+अटल काष्ठा vmwgfx_gmrid_man *to_gmrid_manager(काष्ठा tपंचांग_resource_manager *man)
+अणु
+	वापस container_of(man, काष्ठा vmwgfx_gmrid_man, manager);
+पूर्ण
 
-static int vmw_gmrid_man_get_node(struct ttm_resource_manager *man,
-				  struct ttm_buffer_object *bo,
-				  const struct ttm_place *place,
-				  struct ttm_resource *mem)
-{
-	struct vmwgfx_gmrid_man *gman = to_gmrid_manager(man);
-	int id;
+अटल पूर्णांक vmw_gmrid_man_get_node(काष्ठा tपंचांग_resource_manager *man,
+				  काष्ठा tपंचांग_buffer_object *bo,
+				  स्थिर काष्ठा tपंचांग_place *place,
+				  काष्ठा tपंचांग_resource *mem)
+अणु
+	काष्ठा vmwgfx_gmrid_man *gman = to_gmrid_manager(man);
+	पूर्णांक id;
 
 	id = ida_alloc_max(&gman->gmr_ida, gman->max_gmr_ids - 1, GFP_KERNEL);
-	if (id < 0)
-		return id;
+	अगर (id < 0)
+		वापस id;
 
 	spin_lock(&gman->lock);
 
-	if (gman->max_gmr_pages > 0) {
+	अगर (gman->max_gmr_pages > 0) अणु
 		gman->used_gmr_pages += mem->num_pages;
-		if (unlikely(gman->used_gmr_pages > gman->max_gmr_pages))
-			goto nospace;
-	}
+		अगर (unlikely(gman->used_gmr_pages > gman->max_gmr_pages))
+			जाओ nospace;
+	पूर्ण
 
 	mem->mm_node = gman;
 	mem->start = id;
 
 	spin_unlock(&gman->lock);
-	return 0;
+	वापस 0;
 
 nospace:
 	gman->used_gmr_pages -= mem->num_pages;
 	spin_unlock(&gman->lock);
-	ida_free(&gman->gmr_ida, id);
-	return -ENOSPC;
-}
+	ida_मुक्त(&gman->gmr_ida, id);
+	वापस -ENOSPC;
+पूर्ण
 
-static void vmw_gmrid_man_put_node(struct ttm_resource_manager *man,
-				   struct ttm_resource *mem)
-{
-	struct vmwgfx_gmrid_man *gman = to_gmrid_manager(man);
+अटल व्योम vmw_gmrid_man_put_node(काष्ठा tपंचांग_resource_manager *man,
+				   काष्ठा tपंचांग_resource *mem)
+अणु
+	काष्ठा vmwgfx_gmrid_man *gman = to_gmrid_manager(man);
 
-	if (mem->mm_node) {
-		ida_free(&gman->gmr_ida, mem->start);
+	अगर (mem->mm_node) अणु
+		ida_मुक्त(&gman->gmr_ida, mem->start);
 		spin_lock(&gman->lock);
 		gman->used_gmr_pages -= mem->num_pages;
 		spin_unlock(&gman->lock);
-		mem->mm_node = NULL;
-	}
-}
+		mem->mm_node = शून्य;
+	पूर्ण
+पूर्ण
 
-static const struct ttm_resource_manager_func vmw_gmrid_manager_func;
+अटल स्थिर काष्ठा tपंचांग_resource_manager_func vmw_gmrid_manager_func;
 
-int vmw_gmrid_man_init(struct vmw_private *dev_priv, int type)
-{
-	struct ttm_resource_manager *man;
-	struct vmwgfx_gmrid_man *gman =
-		kzalloc(sizeof(*gman), GFP_KERNEL);
+पूर्णांक vmw_gmrid_man_init(काष्ठा vmw_निजी *dev_priv, पूर्णांक type)
+अणु
+	काष्ठा tपंचांग_resource_manager *man;
+	काष्ठा vmwgfx_gmrid_man *gman =
+		kzalloc(माप(*gman), GFP_KERNEL);
 
-	if (unlikely(!gman))
-		return -ENOMEM;
+	अगर (unlikely(!gman))
+		वापस -ENOMEM;
 
 	man = &gman->manager;
 
 	man->func = &vmw_gmrid_manager_func;
 	/* TODO: This is most likely not correct */
 	man->use_tt = true;
-	ttm_resource_manager_init(man, 0);
+	tपंचांग_resource_manager_init(man, 0);
 	spin_lock_init(&gman->lock);
 	gman->used_gmr_pages = 0;
 	ida_init(&gman->gmr_ida);
 
-	switch (type) {
-	case VMW_PL_GMR:
+	चयन (type) अणु
+	हाल VMW_PL_GMR:
 		gman->max_gmr_ids = dev_priv->max_gmr_ids;
 		gman->max_gmr_pages = dev_priv->max_gmr_pages;
-		break;
-	case VMW_PL_MOB:
+		अवरोध;
+	हाल VMW_PL_MOB:
 		gman->max_gmr_ids = VMWGFX_NUM_MOB;
 		gman->max_gmr_pages = dev_priv->max_mob_pages;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		BUG();
-	}
-	ttm_set_driver_manager(&dev_priv->bdev, type, &gman->manager);
-	ttm_resource_manager_set_used(man, true);
-	return 0;
-}
+	पूर्ण
+	tपंचांग_set_driver_manager(&dev_priv->bdev, type, &gman->manager);
+	tपंचांग_resource_manager_set_used(man, true);
+	वापस 0;
+पूर्ण
 
-void vmw_gmrid_man_fini(struct vmw_private *dev_priv, int type)
-{
-	struct ttm_resource_manager *man = ttm_manager_type(&dev_priv->bdev, type);
-	struct vmwgfx_gmrid_man *gman = to_gmrid_manager(man);
+व्योम vmw_gmrid_man_fini(काष्ठा vmw_निजी *dev_priv, पूर्णांक type)
+अणु
+	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(&dev_priv->bdev, type);
+	काष्ठा vmwgfx_gmrid_man *gman = to_gmrid_manager(man);
 
-	ttm_resource_manager_set_used(man, false);
+	tपंचांग_resource_manager_set_used(man, false);
 
-	ttm_resource_manager_evict_all(&dev_priv->bdev, man);
+	tपंचांग_resource_manager_evict_all(&dev_priv->bdev, man);
 
-	ttm_resource_manager_cleanup(man);
+	tपंचांग_resource_manager_cleanup(man);
 
-	ttm_set_driver_manager(&dev_priv->bdev, type, NULL);
+	tपंचांग_set_driver_manager(&dev_priv->bdev, type, शून्य);
 	ida_destroy(&gman->gmr_ida);
-	kfree(gman);
+	kमुक्त(gman);
 
-}
+पूर्ण
 
-static const struct ttm_resource_manager_func vmw_gmrid_manager_func = {
+अटल स्थिर काष्ठा tपंचांग_resource_manager_func vmw_gmrid_manager_func = अणु
 	.alloc = vmw_gmrid_man_get_node,
-	.free = vmw_gmrid_man_put_node,
-};
+	.मुक्त = vmw_gmrid_man_put_node,
+पूर्ण;

@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* xfrm4_tunnel.c: Generic IP tunnel transformer.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* xfrm4_tunnel.c: Generic IP tunnel transक्रमmer.
  *
  * Copyright (C) 2003 David S. Miller (davem@redhat.com)
  */
 
-#define pr_fmt(fmt) "IPsec: " fmt
+#घोषणा pr_fmt(fmt) "IPsec: " fmt
 
-#include <linux/skbuff.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <net/xfrm.h>
-#include <net/ip.h>
-#include <net/protocol.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/ip.h>
+#समावेश <net/protocol.h>
 
-static int ipip_output(struct xfrm_state *x, struct sk_buff *skb)
-{
+अटल पूर्णांक ipip_output(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
 	skb_push(skb, -skb_network_offset(skb));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipip_xfrm_rcv(struct xfrm_state *x, struct sk_buff *skb)
-{
-	return ip_hdr(skb)->protocol;
-}
+अटल पूर्णांक ipip_xfrm_rcv(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	वापस ip_hdr(skb)->protocol;
+पूर्ण
 
-static int ipip_init_state(struct xfrm_state *x)
-{
-	if (x->props.mode != XFRM_MODE_TUNNEL)
-		return -EINVAL;
+अटल पूर्णांक ipip_init_state(काष्ठा xfrm_state *x)
+अणु
+	अगर (x->props.mode != XFRM_MODE_TUNNEL)
+		वापस -EINVAL;
 
-	if (x->encap)
-		return -EINVAL;
+	अगर (x->encap)
+		वापस -EINVAL;
 
-	x->props.header_len = sizeof(struct iphdr);
+	x->props.header_len = माप(काष्ठा iphdr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ipip_destroy(struct xfrm_state *x)
-{
-}
+अटल व्योम ipip_destroy(काष्ठा xfrm_state *x)
+अणु
+पूर्ण
 
-static const struct xfrm_type ipip_type = {
+अटल स्थिर काष्ठा xfrm_type ipip_type = अणु
 	.description	= "IPIP",
 	.owner		= THIS_MODULE,
 	.proto	     	= IPPROTO_IPIP,
 	.init_state	= ipip_init_state,
-	.destructor	= ipip_destroy,
+	.deकाष्ठाor	= ipip_destroy,
 	.input		= ipip_xfrm_rcv,
 	.output		= ipip_output
-};
+पूर्ण;
 
-static int xfrm_tunnel_rcv(struct sk_buff *skb)
-{
-	return xfrm4_rcv_spi(skb, IPPROTO_IPIP, ip_hdr(skb)->saddr);
-}
+अटल पूर्णांक xfrm_tunnel_rcv(काष्ठा sk_buff *skb)
+अणु
+	वापस xfrm4_rcv_spi(skb, IPPROTO_IPIP, ip_hdr(skb)->saddr);
+पूर्ण
 
-static int xfrm_tunnel_err(struct sk_buff *skb, u32 info)
-{
-	return -ENOENT;
-}
+अटल पूर्णांक xfrm_tunnel_err(काष्ठा sk_buff *skb, u32 info)
+अणु
+	वापस -ENOENT;
+पूर्ण
 
-static struct xfrm_tunnel xfrm_tunnel_handler __read_mostly = {
+अटल काष्ठा xfrm_tunnel xfrm_tunnel_handler __पढ़ो_mostly = अणु
 	.handler	=	xfrm_tunnel_rcv,
 	.err_handler	=	xfrm_tunnel_err,
 	.priority	=	4,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_IPV6)
-static struct xfrm_tunnel xfrm64_tunnel_handler __read_mostly = {
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल काष्ठा xfrm_tunnel xfrm64_tunnel_handler __पढ़ो_mostly = अणु
 	.handler	=	xfrm_tunnel_rcv,
 	.err_handler	=	xfrm_tunnel_err,
 	.priority	=	3,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static int __init ipip_init(void)
-{
-	if (xfrm_register_type(&ipip_type, AF_INET) < 0) {
+अटल पूर्णांक __init ipip_init(व्योम)
+अणु
+	अगर (xfrm_रेजिस्टर_type(&ipip_type, AF_INET) < 0) अणु
 		pr_info("%s: can't add xfrm type\n", __func__);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (xfrm4_tunnel_register(&xfrm_tunnel_handler, AF_INET)) {
+	अगर (xfrm4_tunnel_रेजिस्टर(&xfrm_tunnel_handler, AF_INET)) अणु
 		pr_info("%s: can't add xfrm handler for AF_INET\n", __func__);
-		xfrm_unregister_type(&ipip_type, AF_INET);
-		return -EAGAIN;
-	}
-#if IS_ENABLED(CONFIG_IPV6)
-	if (xfrm4_tunnel_register(&xfrm64_tunnel_handler, AF_INET6)) {
+		xfrm_unरेजिस्टर_type(&ipip_type, AF_INET);
+		वापस -EAGAIN;
+	पूर्ण
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अगर (xfrm4_tunnel_रेजिस्टर(&xfrm64_tunnel_handler, AF_INET6)) अणु
 		pr_info("%s: can't add xfrm handler for AF_INET6\n", __func__);
-		xfrm4_tunnel_deregister(&xfrm_tunnel_handler, AF_INET);
-		xfrm_unregister_type(&ipip_type, AF_INET);
-		return -EAGAIN;
-	}
-#endif
-	return 0;
-}
+		xfrm4_tunnel_deरेजिस्टर(&xfrm_tunnel_handler, AF_INET);
+		xfrm_unरेजिस्टर_type(&ipip_type, AF_INET);
+		वापस -EAGAIN;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void __exit ipip_fini(void)
-{
-#if IS_ENABLED(CONFIG_IPV6)
-	if (xfrm4_tunnel_deregister(&xfrm64_tunnel_handler, AF_INET6))
+अटल व्योम __निकास ipip_fini(व्योम)
+अणु
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अगर (xfrm4_tunnel_deरेजिस्टर(&xfrm64_tunnel_handler, AF_INET6))
 		pr_info("%s: can't remove xfrm handler for AF_INET6\n",
 			__func__);
-#endif
-	if (xfrm4_tunnel_deregister(&xfrm_tunnel_handler, AF_INET))
+#पूर्ण_अगर
+	अगर (xfrm4_tunnel_deरेजिस्टर(&xfrm_tunnel_handler, AF_INET))
 		pr_info("%s: can't remove xfrm handler for AF_INET\n",
 			__func__);
-	xfrm_unregister_type(&ipip_type, AF_INET);
-}
+	xfrm_unरेजिस्टर_type(&ipip_type, AF_INET);
+पूर्ण
 
 module_init(ipip_init);
-module_exit(ipip_fini);
+module_निकास(ipip_fini);
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_XFRM_TYPE(AF_INET, XFRM_PROTO_IPIP);

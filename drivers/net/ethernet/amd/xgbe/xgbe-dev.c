@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * AMD 10Gb Ethernet driver
  *
@@ -8,7 +9,7 @@
  *
  * Copyright (c) 2014-2016 Advanced Micro Devices, Inc.
  *
- * This file is free software; you may copy, redistribute and/or modify
+ * This file is मुक्त software; you may copy, redistribute and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 2 of the License, or (at
  * your option) any later version.
@@ -16,27 +17,27 @@
  * This file is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- *     The Synopsys DWC ETHER XGMAC Software Driver and documentation
+ *     The Synopsys DWC ETHER XGMAC Software Driver and करोcumentation
  *     (hereinafter "Software") is an unsupported proprietary work of Synopsys,
  *     Inc. unless otherwise expressly agreed to in writing between Synopsys
  *     and you.
  *
  *     The Software IS NOT an item of Licensed Software or Licensed Product
- *     under any End User Software License Agreement or Agreement for Licensed
+ *     under any End User Software License Agreement or Agreement क्रम Licensed
  *     Product with Synopsys or any supplement thereto.  Permission is hereby
- *     granted, free of charge, to any person obtaining a copy of this software
+ *     granted, मुक्त of अक्षरge, to any person obtaining a copy of this software
  *     annotated with this license and the Software, to deal in the Software
  *     without restriction, including without limitation the rights to use,
- *     copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ *     copy, modअगरy, merge, publish, distribute, sublicense, and/or sell copies
  *     of the Software, and to permit persons to whom the Software is furnished
- *     to do so, subject to the following conditions:
+ *     to करो so, subject to the following conditions:
  *
  *     The above copyright notice and this permission notice shall be included
  *     in all copies or substantial portions of the Software.
@@ -45,7 +46,7 @@
  *     BASIS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
  *     PARTICULAR PURPOSE ARE HEREBY DISCLAIMED. IN NO EVENT SHALL SYNOPSYS
- *     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *     BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *     CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *     SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  *     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -54,27 +55,27 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  *
  *
- * License 2: Modified BSD
+ * License 2: Modअगरied BSD
  *
  * Copyright (c) 2014-2016 Advanced Micro Devices, Inc.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *     * Redistributions of source code must retain the above copyright
  *       notice, this list of conditions and the following disclaimer.
- *     * Redistributions in binary form must reproduce the above copyright
+ *     * Redistributions in binary क्रमm must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
- *       documentation and/or other materials provided with the distribution.
+ *       करोcumentation and/or other materials provided with the distribution.
  *     * Neither the name of Advanced Micro Devices, Inc. nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this software without specific prior written permission.
+ *       names of its contributors may be used to enकरोrse or promote products
+ *       derived from this software without specअगरic prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL <COPYRIGHT HOLDER> BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
  * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  * ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
@@ -83,20 +84,20 @@
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
- *     The Synopsys DWC ETHER XGMAC Software Driver and documentation
+ *     The Synopsys DWC ETHER XGMAC Software Driver and करोcumentation
  *     (hereinafter "Software") is an unsupported proprietary work of Synopsys,
  *     Inc. unless otherwise expressly agreed to in writing between Synopsys
  *     and you.
  *
  *     The Software IS NOT an item of Licensed Software or Licensed Product
- *     under any End User Software License Agreement or Agreement for Licensed
+ *     under any End User Software License Agreement or Agreement क्रम Licensed
  *     Product with Synopsys or any supplement thereto.  Permission is hereby
- *     granted, free of charge, to any person obtaining a copy of this software
+ *     granted, मुक्त of अक्षरge, to any person obtaining a copy of this software
  *     annotated with this license and the Software, to deal in the Software
  *     without restriction, including without limitation the rights to use,
- *     copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ *     copy, modअगरy, merge, publish, distribute, sublicense, and/or sell copies
  *     of the Software, and to permit persons to whom the Software is furnished
- *     to do so, subject to the following conditions:
+ *     to करो so, subject to the following conditions:
  *
  *     The above copyright notice and this permission notice shall be included
  *     in all copies or substantial portions of the Software.
@@ -105,7 +106,7 @@
  *     BASIS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  *     TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
  *     PARTICULAR PURPOSE ARE HEREBY DISCLAIMED. IN NO EVENT SHALL SYNOPSYS
- *     BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ *     BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  *     CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  *     SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  *     INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -114,224 +115,224 @@
  *     THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <linux/phy.h>
-#include <linux/mdio.h>
-#include <linux/clk.h>
-#include <linux/bitrev.h>
-#include <linux/crc32.h>
-#include <linux/crc32poly.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/mdपन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/bitrev.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/crc32poly.h>
 
-#include "xgbe.h"
-#include "xgbe-common.h"
+#समावेश "xgbe.h"
+#समावेश "xgbe-common.h"
 
-static inline unsigned int xgbe_get_max_frame(struct xgbe_prv_data *pdata)
-{
-	return pdata->netdev->mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN;
-}
+अटल अंतरभूत अचिन्हित पूर्णांक xgbe_get_max_frame(काष्ठा xgbe_prv_data *pdata)
+अणु
+	वापस pdata->netdev->mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN;
+पूर्ण
 
-static unsigned int xgbe_usec_to_riwt(struct xgbe_prv_data *pdata,
-				      unsigned int usec)
-{
-	unsigned long rate;
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक xgbe_usec_to_riwt(काष्ठा xgbe_prv_data *pdata,
+				      अचिन्हित पूर्णांक usec)
+अणु
+	अचिन्हित दीर्घ rate;
+	अचिन्हित पूर्णांक ret;
 
 	DBGPR("-->xgbe_usec_to_riwt\n");
 
 	rate = pdata->sysclk_rate;
 
 	/*
-	 * Convert the input usec value to the watchdog timer value. Each
-	 * watchdog timer value is equivalent to 256 clock cycles.
+	 * Convert the input usec value to the watchकरोg समयr value. Each
+	 * watchकरोg समयr value is equivalent to 256 घड़ी cycles.
 	 * Calculate the required value as:
-	 *   ( usec * ( system_clock_mhz / 10^6 ) / 256
+	 *   ( usec * ( प्रणाली_घड़ी_mhz / 10^6 ) / 256
 	 */
 	ret = (usec * (rate / 1000000)) / 256;
 
 	DBGPR("<--xgbe_usec_to_riwt\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static unsigned int xgbe_riwt_to_usec(struct xgbe_prv_data *pdata,
-				      unsigned int riwt)
-{
-	unsigned long rate;
-	unsigned int ret;
+अटल अचिन्हित पूर्णांक xgbe_riwt_to_usec(काष्ठा xgbe_prv_data *pdata,
+				      अचिन्हित पूर्णांक riwt)
+अणु
+	अचिन्हित दीर्घ rate;
+	अचिन्हित पूर्णांक ret;
 
 	DBGPR("-->xgbe_riwt_to_usec\n");
 
 	rate = pdata->sysclk_rate;
 
 	/*
-	 * Convert the input watchdog timer value to the usec value. Each
-	 * watchdog timer value is equivalent to 256 clock cycles.
+	 * Convert the input watchकरोg समयr value to the usec value. Each
+	 * watchकरोg समयr value is equivalent to 256 घड़ी cycles.
 	 * Calculate the required value as:
-	 *   ( riwt * 256 ) / ( system_clock_mhz / 10^6 )
+	 *   ( riwt * 256 ) / ( प्रणाली_घड़ी_mhz / 10^6 )
 	 */
 	ret = (riwt * 256) / (rate / 1000000);
 
 	DBGPR("<--xgbe_riwt_to_usec\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_config_pbl_val(struct xgbe_prv_data *pdata)
-{
-	unsigned int pblx8, pbl;
-	unsigned int i;
+अटल पूर्णांक xgbe_config_pbl_val(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक pblx8, pbl;
+	अचिन्हित पूर्णांक i;
 
 	pblx8 = DMA_PBL_X8_DISABLE;
 	pbl = pdata->pbl;
 
-	if (pdata->pbl > 32) {
+	अगर (pdata->pbl > 32) अणु
 		pblx8 = DMA_PBL_X8_ENABLE;
 		pbl >>= 3;
-	}
+	पूर्ण
 
-	for (i = 0; i < pdata->channel_count; i++) {
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_CR, PBLX8,
 				       pblx8);
 
-		if (pdata->channel[i]->tx_ring)
+		अगर (pdata->channel[i]->tx_ring)
 			XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_TCR,
 					       PBL, pbl);
 
-		if (pdata->channel[i]->rx_ring)
+		अगर (pdata->channel[i]->rx_ring)
 			XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_RCR,
 					       PBL, pbl);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_osp_mode(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल पूर्णांक xgbe_config_osp_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->tx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->tx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_TCR, OSP,
 				       pdata->tx_osp_mode);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_rsf_mode(struct xgbe_prv_data *pdata, unsigned int val)
-{
-	unsigned int i;
+अटल पूर्णांक xgbe_config_rsf_mode(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->rx_q_count; i++)
+	क्रम (i = 0; i < pdata->rx_q_count; i++)
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_RQOMR, RSF, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_tsf_mode(struct xgbe_prv_data *pdata, unsigned int val)
-{
-	unsigned int i;
+अटल पूर्णांक xgbe_config_tsf_mode(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->tx_q_count; i++)
+	क्रम (i = 0; i < pdata->tx_q_count; i++)
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_TQOMR, TSF, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_rx_threshold(struct xgbe_prv_data *pdata,
-				    unsigned int val)
-{
-	unsigned int i;
+अटल पूर्णांक xgbe_config_rx_threshold(काष्ठा xgbe_prv_data *pdata,
+				    अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->rx_q_count; i++)
+	क्रम (i = 0; i < pdata->rx_q_count; i++)
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_RQOMR, RTC, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_tx_threshold(struct xgbe_prv_data *pdata,
-				    unsigned int val)
-{
-	unsigned int i;
+अटल पूर्णांक xgbe_config_tx_threshold(काष्ठा xgbe_prv_data *pdata,
+				    अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->tx_q_count; i++)
+	क्रम (i = 0; i < pdata->tx_q_count; i++)
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_TQOMR, TTC, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_rx_coalesce(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल पूर्णांक xgbe_config_rx_coalesce(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->rx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->rx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_RIWT, RWT,
 				       pdata->rx_riwt);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_tx_coalesce(struct xgbe_prv_data *pdata)
-{
-	return 0;
-}
+अटल पूर्णांक xgbe_config_tx_coalesce(काष्ठा xgbe_prv_data *pdata)
+अणु
+	वापस 0;
+पूर्ण
 
-static void xgbe_config_rx_buffer_size(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_config_rx_buffer_size(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->rx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->rx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_RCR, RBSZ,
 				       pdata->rx_buf_size);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_config_tso_mode(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_config_tso_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->tx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->tx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_TCR, TSE, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_config_sph_mode(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_config_sph_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->rx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->rx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_CR, SPH, 1);
-	}
+	पूर्ण
 
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, HDSMS, XGBE_SPH_HDSMS_SIZE);
-}
+पूर्ण
 
-static int xgbe_write_rss_reg(struct xgbe_prv_data *pdata, unsigned int type,
-			      unsigned int index, unsigned int val)
-{
-	unsigned int wait;
-	int ret = 0;
+अटल पूर्णांक xgbe_ग_लिखो_rss_reg(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक type,
+			      अचिन्हित पूर्णांक index, अचिन्हित पूर्णांक val)
+अणु
+	अचिन्हित पूर्णांक रुको;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&pdata->rss_mutex);
 
-	if (XGMAC_IOREAD_BITS(pdata, MAC_RSSAR, OB)) {
+	अगर (XGMAC_IOREAD_BITS(pdata, MAC_RSSAR, OB)) अणु
 		ret = -EBUSY;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	XGMAC_IOWRITE(pdata, MAC_RSSDR, val);
 
@@ -340,88 +341,88 @@ static int xgbe_write_rss_reg(struct xgbe_prv_data *pdata, unsigned int type,
 	XGMAC_IOWRITE_BITS(pdata, MAC_RSSAR, CT, 0);
 	XGMAC_IOWRITE_BITS(pdata, MAC_RSSAR, OB, 1);
 
-	wait = 1000;
-	while (wait--) {
-		if (!XGMAC_IOREAD_BITS(pdata, MAC_RSSAR, OB))
-			goto unlock;
+	रुको = 1000;
+	जबतक (रुको--) अणु
+		अगर (!XGMAC_IOREAD_BITS(pdata, MAC_RSSAR, OB))
+			जाओ unlock;
 
 		usleep_range(1000, 1500);
-	}
+	पूर्ण
 
 	ret = -EBUSY;
 
 unlock:
 	mutex_unlock(&pdata->rss_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int xgbe_write_rss_hash_key(struct xgbe_prv_data *pdata)
-{
-	unsigned int key_regs = sizeof(pdata->rss_key) / sizeof(u32);
-	unsigned int *key = (unsigned int *)&pdata->rss_key;
-	int ret;
+अटल पूर्णांक xgbe_ग_लिखो_rss_hash_key(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक key_regs = माप(pdata->rss_key) / माप(u32);
+	अचिन्हित पूर्णांक *key = (अचिन्हित पूर्णांक *)&pdata->rss_key;
+	पूर्णांक ret;
 
-	while (key_regs--) {
-		ret = xgbe_write_rss_reg(pdata, XGBE_RSS_HASH_KEY_TYPE,
+	जबतक (key_regs--) अणु
+		ret = xgbe_ग_लिखो_rss_reg(pdata, XGBE_RSS_HASH_KEY_TYPE,
 					 key_regs, *key++);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_write_rss_lookup_table(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
-	int ret;
+अटल पूर्णांक xgbe_ग_लिखो_rss_lookup_table(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < ARRAY_SIZE(pdata->rss_table); i++) {
-		ret = xgbe_write_rss_reg(pdata,
+	क्रम (i = 0; i < ARRAY_SIZE(pdata->rss_table); i++) अणु
+		ret = xgbe_ग_लिखो_rss_reg(pdata,
 					 XGBE_RSS_LOOKUP_TABLE_TYPE, i,
 					 pdata->rss_table[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_set_rss_hash_key(struct xgbe_prv_data *pdata, const u8 *key)
-{
-	memcpy(pdata->rss_key, key, sizeof(pdata->rss_key));
+अटल पूर्णांक xgbe_set_rss_hash_key(काष्ठा xgbe_prv_data *pdata, स्थिर u8 *key)
+अणु
+	स_नकल(pdata->rss_key, key, माप(pdata->rss_key));
 
-	return xgbe_write_rss_hash_key(pdata);
-}
+	वापस xgbe_ग_लिखो_rss_hash_key(pdata);
+पूर्ण
 
-static int xgbe_set_rss_lookup_table(struct xgbe_prv_data *pdata,
-				     const u32 *table)
-{
-	unsigned int i;
+अटल पूर्णांक xgbe_set_rss_lookup_table(काष्ठा xgbe_prv_data *pdata,
+				     स्थिर u32 *table)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(pdata->rss_table); i++)
+	क्रम (i = 0; i < ARRAY_SIZE(pdata->rss_table); i++)
 		XGMAC_SET_BITS(pdata->rss_table[i], MAC_RSSDR, DMCH, table[i]);
 
-	return xgbe_write_rss_lookup_table(pdata);
-}
+	वापस xgbe_ग_लिखो_rss_lookup_table(pdata);
+पूर्ण
 
-static int xgbe_enable_rss(struct xgbe_prv_data *pdata)
-{
-	int ret;
+अटल पूर्णांक xgbe_enable_rss(काष्ठा xgbe_prv_data *pdata)
+अणु
+	पूर्णांक ret;
 
-	if (!pdata->hw_feat.rss)
-		return -EOPNOTSUPP;
+	अगर (!pdata->hw_feat.rss)
+		वापस -EOPNOTSUPP;
 
 	/* Program the hash key */
-	ret = xgbe_write_rss_hash_key(pdata);
-	if (ret)
-		return ret;
+	ret = xgbe_ग_लिखो_rss_hash_key(pdata);
+	अगर (ret)
+		वापस ret;
 
 	/* Program the lookup table */
-	ret = xgbe_write_rss_lookup_table(pdata);
-	if (ret)
-		return ret;
+	ret = xgbe_ग_लिखो_rss_lookup_table(pdata);
+	अगर (ret)
+		वापस ret;
 
 	/* Set the RSS options */
 	XGMAC_IOWRITE(pdata, MAC_RSSCR, pdata->rss_options);
@@ -429,88 +430,88 @@ static int xgbe_enable_rss(struct xgbe_prv_data *pdata)
 	/* Enable RSS */
 	XGMAC_IOWRITE_BITS(pdata, MAC_RSSCR, RSSE, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_disable_rss(struct xgbe_prv_data *pdata)
-{
-	if (!pdata->hw_feat.rss)
-		return -EOPNOTSUPP;
+अटल पूर्णांक xgbe_disable_rss(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (!pdata->hw_feat.rss)
+		वापस -EOPNOTSUPP;
 
 	XGMAC_IOWRITE_BITS(pdata, MAC_RSSCR, RSSE, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgbe_config_rss(struct xgbe_prv_data *pdata)
-{
-	int ret;
+अटल व्योम xgbe_config_rss(काष्ठा xgbe_prv_data *pdata)
+अणु
+	पूर्णांक ret;
 
-	if (!pdata->hw_feat.rss)
-		return;
+	अगर (!pdata->hw_feat.rss)
+		वापस;
 
-	if (pdata->netdev->features & NETIF_F_RXHASH)
+	अगर (pdata->netdev->features & NETIF_F_RXHASH)
 		ret = xgbe_enable_rss(pdata);
-	else
+	अन्यथा
 		ret = xgbe_disable_rss(pdata);
 
-	if (ret)
+	अगर (ret)
 		netdev_err(pdata->netdev,
 			   "error configuring RSS, RSS disabled\n");
-}
+पूर्ण
 
-static bool xgbe_is_pfc_queue(struct xgbe_prv_data *pdata,
-			      unsigned int queue)
-{
-	unsigned int prio, tc;
+अटल bool xgbe_is_pfc_queue(काष्ठा xgbe_prv_data *pdata,
+			      अचिन्हित पूर्णांक queue)
+अणु
+	अचिन्हित पूर्णांक prio, tc;
 
-	for (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++) {
+	क्रम (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++) अणु
 		/* Does this queue handle the priority? */
-		if (pdata->prio2q_map[prio] != queue)
-			continue;
+		अगर (pdata->prio2q_map[prio] != queue)
+			जारी;
 
-		/* Get the Traffic Class for this priority */
+		/* Get the Traffic Class क्रम this priority */
 		tc = pdata->ets->prio_tc[prio];
 
-		/* Check if PFC is enabled for this traffic class */
-		if (pdata->pfc->pfc_en & (1 << tc))
-			return true;
-	}
+		/* Check अगर PFC is enabled क्रम this traffic class */
+		अगर (pdata->pfc->pfc_en & (1 << tc))
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void xgbe_set_vxlan_id(struct xgbe_prv_data *pdata)
-{
+अटल व्योम xgbe_set_vxlan_id(काष्ठा xgbe_prv_data *pdata)
+अणु
 	/* Program the VXLAN port */
 	XGMAC_IOWRITE_BITS(pdata, MAC_TIR, TNID, pdata->vxlan_port);
 
-	netif_dbg(pdata, drv, pdata->netdev, "VXLAN tunnel id set to %hx\n",
+	netअगर_dbg(pdata, drv, pdata->netdev, "VXLAN tunnel id set to %hx\n",
 		  pdata->vxlan_port);
-}
+पूर्ण
 
-static void xgbe_enable_vxlan(struct xgbe_prv_data *pdata)
-{
-	if (!pdata->hw_feat.vxn)
-		return;
+अटल व्योम xgbe_enable_vxlan(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (!pdata->hw_feat.vxn)
+		वापस;
 
 	/* Program the VXLAN port */
 	xgbe_set_vxlan_id(pdata);
 
-	/* Allow for IPv6/UDP zero-checksum VXLAN packets */
+	/* Allow क्रम IPv6/UDP zero-checksum VXLAN packets */
 	XGMAC_IOWRITE_BITS(pdata, MAC_PFR, VUCC, 1);
 
 	/* Enable VXLAN tunneling mode */
 	XGMAC_IOWRITE_BITS(pdata, MAC_TCR, VNM, 0);
 	XGMAC_IOWRITE_BITS(pdata, MAC_TCR, VNE, 1);
 
-	netif_dbg(pdata, drv, pdata->netdev, "VXLAN acceleration enabled\n");
-}
+	netअगर_dbg(pdata, drv, pdata->netdev, "VXLAN acceleration enabled\n");
+पूर्ण
 
-static void xgbe_disable_vxlan(struct xgbe_prv_data *pdata)
-{
-	if (!pdata->hw_feat.vxn)
-		return;
+अटल व्योम xgbe_disable_vxlan(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (!pdata->hw_feat.vxn)
+		वापस;
 
 	/* Disable tunneling mode */
 	XGMAC_IOWRITE_BITS(pdata, MAC_TCR, VNE, 0);
@@ -521,240 +522,240 @@ static void xgbe_disable_vxlan(struct xgbe_prv_data *pdata)
 	/* Clear the VXLAN port */
 	XGMAC_IOWRITE_BITS(pdata, MAC_TIR, TNID, 0);
 
-	netif_dbg(pdata, drv, pdata->netdev, "VXLAN acceleration disabled\n");
-}
+	netअगर_dbg(pdata, drv, pdata->netdev, "VXLAN acceleration disabled\n");
+पूर्ण
 
-static int xgbe_disable_tx_flow_control(struct xgbe_prv_data *pdata)
-{
-	unsigned int max_q_count, q_count;
-	unsigned int reg, reg_val;
-	unsigned int i;
+अटल पूर्णांक xgbe_disable_tx_flow_control(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक max_q_count, q_count;
+	अचिन्हित पूर्णांक reg, reg_val;
+	अचिन्हित पूर्णांक i;
 
 	/* Clear MTL flow control */
-	for (i = 0; i < pdata->rx_q_count; i++)
+	क्रम (i = 0; i < pdata->rx_q_count; i++)
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_RQOMR, EHFC, 0);
 
 	/* Clear MAC flow control */
 	max_q_count = XGMAC_MAX_FLOW_CONTROL_QUEUES;
-	q_count = min_t(unsigned int, pdata->tx_q_count, max_q_count);
+	q_count = min_t(अचिन्हित पूर्णांक, pdata->tx_q_count, max_q_count);
 	reg = MAC_Q0TFCR;
-	for (i = 0; i < q_count; i++) {
+	क्रम (i = 0; i < q_count; i++) अणु
 		reg_val = XGMAC_IOREAD(pdata, reg);
 		XGMAC_SET_BITS(reg_val, MAC_Q0TFCR, TFE, 0);
 		XGMAC_IOWRITE(pdata, reg, reg_val);
 
 		reg += MAC_QTFCR_INC;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_enable_tx_flow_control(struct xgbe_prv_data *pdata)
-{
-	struct ieee_pfc *pfc = pdata->pfc;
-	struct ieee_ets *ets = pdata->ets;
-	unsigned int max_q_count, q_count;
-	unsigned int reg, reg_val;
-	unsigned int i;
+अटल पूर्णांक xgbe_enable_tx_flow_control(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ieee_pfc *pfc = pdata->pfc;
+	काष्ठा ieee_ets *ets = pdata->ets;
+	अचिन्हित पूर्णांक max_q_count, q_count;
+	अचिन्हित पूर्णांक reg, reg_val;
+	अचिन्हित पूर्णांक i;
 
 	/* Set MTL flow control */
-	for (i = 0; i < pdata->rx_q_count; i++) {
-		unsigned int ehfc = 0;
+	क्रम (i = 0; i < pdata->rx_q_count; i++) अणु
+		अचिन्हित पूर्णांक ehfc = 0;
 
-		if (pdata->rx_rfd[i]) {
+		अगर (pdata->rx_rfd[i]) अणु
 			/* Flow control thresholds are established */
-			if (pfc && ets) {
-				if (xgbe_is_pfc_queue(pdata, i))
+			अगर (pfc && ets) अणु
+				अगर (xgbe_is_pfc_queue(pdata, i))
 					ehfc = 1;
-			} else {
+			पूर्ण अन्यथा अणु
 				ehfc = 1;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_RQOMR, EHFC, ehfc);
 
-		netif_dbg(pdata, drv, pdata->netdev,
+		netअगर_dbg(pdata, drv, pdata->netdev,
 			  "flow control %s for RXq%u\n",
 			  ehfc ? "enabled" : "disabled", i);
-	}
+	पूर्ण
 
 	/* Set MAC flow control */
 	max_q_count = XGMAC_MAX_FLOW_CONTROL_QUEUES;
-	q_count = min_t(unsigned int, pdata->tx_q_count, max_q_count);
+	q_count = min_t(अचिन्हित पूर्णांक, pdata->tx_q_count, max_q_count);
 	reg = MAC_Q0TFCR;
-	for (i = 0; i < q_count; i++) {
+	क्रम (i = 0; i < q_count; i++) अणु
 		reg_val = XGMAC_IOREAD(pdata, reg);
 
 		/* Enable transmit flow control */
 		XGMAC_SET_BITS(reg_val, MAC_Q0TFCR, TFE, 1);
-		/* Set pause time */
+		/* Set छोड़ो समय */
 		XGMAC_SET_BITS(reg_val, MAC_Q0TFCR, PT, 0xffff);
 
 		XGMAC_IOWRITE(pdata, reg, reg_val);
 
 		reg += MAC_QTFCR_INC;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_disable_rx_flow_control(struct xgbe_prv_data *pdata)
-{
+अटल पूर्णांक xgbe_disable_rx_flow_control(काष्ठा xgbe_prv_data *pdata)
+अणु
 	XGMAC_IOWRITE_BITS(pdata, MAC_RFCR, RFE, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_enable_rx_flow_control(struct xgbe_prv_data *pdata)
-{
+अटल पूर्णांक xgbe_enable_rx_flow_control(काष्ठा xgbe_prv_data *pdata)
+अणु
 	XGMAC_IOWRITE_BITS(pdata, MAC_RFCR, RFE, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_tx_flow_control(struct xgbe_prv_data *pdata)
-{
-	struct ieee_pfc *pfc = pdata->pfc;
+अटल पूर्णांक xgbe_config_tx_flow_control(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ieee_pfc *pfc = pdata->pfc;
 
-	if (pdata->tx_pause || (pfc && pfc->pfc_en))
+	अगर (pdata->tx_छोड़ो || (pfc && pfc->pfc_en))
 		xgbe_enable_tx_flow_control(pdata);
-	else
+	अन्यथा
 		xgbe_disable_tx_flow_control(pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_rx_flow_control(struct xgbe_prv_data *pdata)
-{
-	struct ieee_pfc *pfc = pdata->pfc;
+अटल पूर्णांक xgbe_config_rx_flow_control(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ieee_pfc *pfc = pdata->pfc;
 
-	if (pdata->rx_pause || (pfc && pfc->pfc_en))
+	अगर (pdata->rx_छोड़ो || (pfc && pfc->pfc_en))
 		xgbe_enable_rx_flow_control(pdata);
-	else
+	अन्यथा
 		xgbe_disable_rx_flow_control(pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgbe_config_flow_control(struct xgbe_prv_data *pdata)
-{
-	struct ieee_pfc *pfc = pdata->pfc;
+अटल व्योम xgbe_config_flow_control(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ieee_pfc *pfc = pdata->pfc;
 
 	xgbe_config_tx_flow_control(pdata);
 	xgbe_config_rx_flow_control(pdata);
 
 	XGMAC_IOWRITE_BITS(pdata, MAC_RFCR, PFCE,
 			   (pfc && pfc->pfc_en) ? 1 : 0);
-}
+पूर्ण
 
-static void xgbe_enable_dma_interrupts(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_channel *channel;
-	unsigned int i, ver;
+अटल व्योम xgbe_enable_dma_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_channel *channel;
+	अचिन्हित पूर्णांक i, ver;
 
-	/* Set the interrupt mode if supported */
-	if (pdata->channel_irq_mode)
+	/* Set the पूर्णांकerrupt mode अगर supported */
+	अगर (pdata->channel_irq_mode)
 		XGMAC_IOWRITE_BITS(pdata, DMA_MR, INTM,
 				   pdata->channel_irq_mode);
 
 	ver = XGMAC_GET_BITS(pdata->hw_feat.version, MAC_VR, SNPSVER);
 
-	for (i = 0; i < pdata->channel_count; i++) {
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
 		channel = pdata->channel[i];
 
-		/* Clear all the interrupts which are set */
+		/* Clear all the पूर्णांकerrupts which are set */
 		XGMAC_DMA_IOWRITE(channel, DMA_CH_SR,
 				  XGMAC_DMA_IOREAD(channel, DMA_CH_SR));
 
-		/* Clear all interrupt enable bits */
+		/* Clear all पूर्णांकerrupt enable bits */
 		channel->curr_ier = 0;
 
-		/* Enable following interrupts
+		/* Enable following पूर्णांकerrupts
 		 *   NIE  - Normal Interrupt Summary Enable
 		 *   AIE  - Abnormal Interrupt Summary Enable
 		 *   FBEE - Fatal Bus Error Enable
 		 */
-		if (ver < 0x21) {
+		अगर (ver < 0x21) अणु
 			XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, NIE20, 1);
 			XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, AIE20, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, NIE, 1);
 			XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, AIE, 1);
-		}
+		पूर्ण
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, FBEE, 1);
 
-		if (channel->tx_ring) {
-			/* Enable the following Tx interrupts
+		अगर (channel->tx_ring) अणु
+			/* Enable the following Tx पूर्णांकerrupts
 			 *   TIE  - Transmit Interrupt Enable (unless using
-			 *          per channel interrupts in edge triggered
+			 *          per channel पूर्णांकerrupts in edge triggered
 			 *          mode)
 			 */
-			if (!pdata->per_channel_irq || pdata->channel_irq_mode)
+			अगर (!pdata->per_channel_irq || pdata->channel_irq_mode)
 				XGMAC_SET_BITS(channel->curr_ier,
 					       DMA_CH_IER, TIE, 1);
-		}
-		if (channel->rx_ring) {
-			/* Enable following Rx interrupts
+		पूर्ण
+		अगर (channel->rx_ring) अणु
+			/* Enable following Rx पूर्णांकerrupts
 			 *   RBUE - Receive Buffer Unavailable Enable
 			 *   RIE  - Receive Interrupt Enable (unless using
-			 *          per channel interrupts in edge triggered
+			 *          per channel पूर्णांकerrupts in edge triggered
 			 *          mode)
 			 */
 			XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, RBUE, 1);
-			if (!pdata->per_channel_irq || pdata->channel_irq_mode)
+			अगर (!pdata->per_channel_irq || pdata->channel_irq_mode)
 				XGMAC_SET_BITS(channel->curr_ier,
 					       DMA_CH_IER, RIE, 1);
-		}
+		पूर्ण
 
 		XGMAC_DMA_IOWRITE(channel, DMA_CH_IER, channel->curr_ier);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_enable_mtl_interrupts(struct xgbe_prv_data *pdata)
-{
-	unsigned int mtl_q_isr;
-	unsigned int q_count, i;
+अटल व्योम xgbe_enable_mtl_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक mtl_q_isr;
+	अचिन्हित पूर्णांक q_count, i;
 
 	q_count = max(pdata->hw_feat.tx_q_cnt, pdata->hw_feat.rx_q_cnt);
-	for (i = 0; i < q_count; i++) {
-		/* Clear all the interrupts which are set */
+	क्रम (i = 0; i < q_count; i++) अणु
+		/* Clear all the पूर्णांकerrupts which are set */
 		mtl_q_isr = XGMAC_MTL_IOREAD(pdata, i, MTL_Q_ISR);
 		XGMAC_MTL_IOWRITE(pdata, i, MTL_Q_ISR, mtl_q_isr);
 
-		/* No MTL interrupts to be enabled */
+		/* No MTL पूर्णांकerrupts to be enabled */
 		XGMAC_MTL_IOWRITE(pdata, i, MTL_Q_IER, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_enable_mac_interrupts(struct xgbe_prv_data *pdata)
-{
-	unsigned int mac_ier = 0;
+अटल व्योम xgbe_enable_mac_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक mac_ier = 0;
 
-	/* Enable Timestamp interrupt */
+	/* Enable Timestamp पूर्णांकerrupt */
 	XGMAC_SET_BITS(mac_ier, MAC_IER, TSIE, 1);
 
 	XGMAC_IOWRITE(pdata, MAC_IER, mac_ier);
 
-	/* Enable all counter interrupts */
+	/* Enable all counter पूर्णांकerrupts */
 	XGMAC_IOWRITE_BITS(pdata, MMC_RIER, ALL_INTERRUPTS, 0xffffffff);
 	XGMAC_IOWRITE_BITS(pdata, MMC_TIER, ALL_INTERRUPTS, 0xffffffff);
 
-	/* Enable MDIO single command completion interrupt */
+	/* Enable MDIO single command completion पूर्णांकerrupt */
 	XGMAC_IOWRITE_BITS(pdata, MAC_MDIOIER, SNGLCOMPIE, 1);
-}
+पूर्ण
 
-static void xgbe_enable_ecc_interrupts(struct xgbe_prv_data *pdata)
-{
-	unsigned int ecc_isr, ecc_ier = 0;
+अटल व्योम xgbe_enable_ecc_पूर्णांकerrupts(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक ecc_isr, ecc_ier = 0;
 
-	if (!pdata->vdata->ecc_support)
-		return;
+	अगर (!pdata->vdata->ecc_support)
+		वापस;
 
-	/* Clear all the interrupts which are set */
+	/* Clear all the पूर्णांकerrupts which are set */
 	ecc_isr = XP_IOREAD(pdata, XP_ECC_ISR);
 	XP_IOWRITE(pdata, XP_ECC_ISR, ecc_isr);
 
-	/* Enable ECC interrupts */
+	/* Enable ECC पूर्णांकerrupts */
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, TX_DED, 1);
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, TX_SEC, 1);
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, RX_DED, 1);
@@ -763,71 +764,71 @@ static void xgbe_enable_ecc_interrupts(struct xgbe_prv_data *pdata)
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, DESC_SEC, 1);
 
 	XP_IOWRITE(pdata, XP_ECC_IER, ecc_ier);
-}
+पूर्ण
 
-static void xgbe_disable_ecc_ded(struct xgbe_prv_data *pdata)
-{
-	unsigned int ecc_ier;
+अटल व्योम xgbe_disable_ecc_ded(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक ecc_ier;
 
 	ecc_ier = XP_IOREAD(pdata, XP_ECC_IER);
 
-	/* Disable ECC DED interrupts */
+	/* Disable ECC DED पूर्णांकerrupts */
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, TX_DED, 0);
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, RX_DED, 0);
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, DESC_DED, 0);
 
 	XP_IOWRITE(pdata, XP_ECC_IER, ecc_ier);
-}
+पूर्ण
 
-static void xgbe_disable_ecc_sec(struct xgbe_prv_data *pdata,
-				 enum xgbe_ecc_sec sec)
-{
-	unsigned int ecc_ier;
+अटल व्योम xgbe_disable_ecc_sec(काष्ठा xgbe_prv_data *pdata,
+				 क्रमागत xgbe_ecc_sec sec)
+अणु
+	अचिन्हित पूर्णांक ecc_ier;
 
 	ecc_ier = XP_IOREAD(pdata, XP_ECC_IER);
 
-	/* Disable ECC SEC interrupt */
-	switch (sec) {
-	case XGBE_ECC_SEC_TX:
+	/* Disable ECC SEC पूर्णांकerrupt */
+	चयन (sec) अणु
+	हाल XGBE_ECC_SEC_TX:
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, TX_SEC, 0);
-		break;
-	case XGBE_ECC_SEC_RX:
+		अवरोध;
+	हाल XGBE_ECC_SEC_RX:
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, RX_SEC, 0);
-		break;
-	case XGBE_ECC_SEC_DESC:
+		अवरोध;
+	हाल XGBE_ECC_SEC_DESC:
 	XP_SET_BITS(ecc_ier, XP_ECC_IER, DESC_SEC, 0);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	XP_IOWRITE(pdata, XP_ECC_IER, ecc_ier);
-}
+पूर्ण
 
-static int xgbe_set_speed(struct xgbe_prv_data *pdata, int speed)
-{
-	unsigned int ss;
+अटल पूर्णांक xgbe_set_speed(काष्ठा xgbe_prv_data *pdata, पूर्णांक speed)
+अणु
+	अचिन्हित पूर्णांक ss;
 
-	switch (speed) {
-	case SPEED_1000:
+	चयन (speed) अणु
+	हाल SPEED_1000:
 		ss = 0x03;
-		break;
-	case SPEED_2500:
+		अवरोध;
+	हाल SPEED_2500:
 		ss = 0x02;
-		break;
-	case SPEED_10000:
+		अवरोध;
+	हाल SPEED_10000:
 		ss = 0x00;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (XGMAC_IOREAD_BITS(pdata, MAC_TCR, SS) != ss)
+	अगर (XGMAC_IOREAD_BITS(pdata, MAC_TCR, SS) != ss)
 		XGMAC_IOWRITE_BITS(pdata, MAC_TCR, SS, ss);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_enable_rx_vlan_stripping(struct xgbe_prv_data *pdata)
-{
+अटल पूर्णांक xgbe_enable_rx_vlan_stripping(काष्ठा xgbe_prv_data *pdata)
+अणु
 	/* Put the VLAN tag in the Rx descriptor */
 	XGMAC_IOWRITE_BITS(pdata, MAC_VLANTR, EVLRXS, 1);
 
@@ -843,18 +844,18 @@ static int xgbe_enable_rx_vlan_stripping(struct xgbe_prv_data *pdata)
 	/* Enable VLAN tag stripping */
 	XGMAC_IOWRITE_BITS(pdata, MAC_VLANTR, EVLS, 0x3);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_disable_rx_vlan_stripping(struct xgbe_prv_data *pdata)
-{
+अटल पूर्णांक xgbe_disable_rx_vlan_stripping(काष्ठा xgbe_prv_data *pdata)
+अणु
 	XGMAC_IOWRITE_BITS(pdata, MAC_VLANTR, EVLS, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_enable_rx_vlan_filtering(struct xgbe_prv_data *pdata)
-{
+अटल पूर्णांक xgbe_enable_rx_vlan_filtering(काष्ठा xgbe_prv_data *pdata)
+अणु
 	/* Enable VLAN filtering */
 	XGMAC_IOWRITE_BITS(pdata, MAC_PFR, VTFE, 1);
 
@@ -867,119 +868,119 @@ static int xgbe_enable_rx_vlan_filtering(struct xgbe_prv_data *pdata)
 	/* Only filter on the lower 12-bits of the VLAN tag */
 	XGMAC_IOWRITE_BITS(pdata, MAC_VLANTR, ETV, 1);
 
-	/* In order for the VLAN Hash Table filtering to be effective,
-	 * the VLAN tag identifier in the VLAN Tag Register must not
-	 * be zero.  Set the VLAN tag identifier to "1" to enable the
+	/* In order क्रम the VLAN Hash Table filtering to be effective,
+	 * the VLAN tag identअगरier in the VLAN Tag Register must not
+	 * be zero.  Set the VLAN tag identअगरier to "1" to enable the
 	 * VLAN Hash Table filtering.  This implies that a VLAN tag of
 	 * 1 will always pass filtering.
 	 */
 	XGMAC_IOWRITE_BITS(pdata, MAC_VLANTR, VL, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_disable_rx_vlan_filtering(struct xgbe_prv_data *pdata)
-{
+अटल पूर्णांक xgbe_disable_rx_vlan_filtering(काष्ठा xgbe_prv_data *pdata)
+अणु
 	/* Disable VLAN filtering */
 	XGMAC_IOWRITE_BITS(pdata, MAC_PFR, VTFE, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 xgbe_vid_crc32_le(__le16 vid_le)
-{
+अटल u32 xgbe_vid_crc32_le(__le16 vid_le)
+अणु
 	u32 crc = ~0;
 	u32 temp = 0;
-	unsigned char *data = (unsigned char *)&vid_le;
-	unsigned char data_byte = 0;
-	int i, bits;
+	अचिन्हित अक्षर *data = (अचिन्हित अक्षर *)&vid_le;
+	अचिन्हित अक्षर data_byte = 0;
+	पूर्णांक i, bits;
 
-	bits = get_bitmask_order(VLAN_VID_MASK);
-	for (i = 0; i < bits; i++) {
-		if ((i % 8) == 0)
+	bits = get_biपंचांगask_order(VLAN_VID_MASK);
+	क्रम (i = 0; i < bits; i++) अणु
+		अगर ((i % 8) == 0)
 			data_byte = data[i / 8];
 
 		temp = ((crc & 1) ^ data_byte) & 1;
 		crc >>= 1;
 		data_byte >>= 1;
 
-		if (temp)
+		अगर (temp)
 			crc ^= CRC32_POLY_LE;
-	}
+	पूर्ण
 
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-static int xgbe_update_vlan_hash_table(struct xgbe_prv_data *pdata)
-{
+अटल पूर्णांक xgbe_update_vlan_hash_table(काष्ठा xgbe_prv_data *pdata)
+अणु
 	u32 crc;
 	u16 vid;
 	__le16 vid_le;
 	u16 vlan_hash_table = 0;
 
 	/* Generate the VLAN Hash Table value */
-	for_each_set_bit(vid, pdata->active_vlans, VLAN_N_VID) {
+	क्रम_each_set_bit(vid, pdata->active_vlans, VLAN_N_VID) अणु
 		/* Get the CRC32 value of the VLAN ID */
 		vid_le = cpu_to_le16(vid);
 		crc = bitrev32(~xgbe_vid_crc32_le(vid_le)) >> 28;
 
 		vlan_hash_table |= (1 << crc);
-	}
+	पूर्ण
 
-	/* Set the VLAN Hash Table filtering register */
+	/* Set the VLAN Hash Table filtering रेजिस्टर */
 	XGMAC_IOWRITE_BITS(pdata, MAC_VLANHTR, VLHT, vlan_hash_table);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_set_promiscuous_mode(struct xgbe_prv_data *pdata,
-				     unsigned int enable)
-{
-	unsigned int val = enable ? 1 : 0;
+अटल पूर्णांक xgbe_set_promiscuous_mode(काष्ठा xgbe_prv_data *pdata,
+				     अचिन्हित पूर्णांक enable)
+अणु
+	अचिन्हित पूर्णांक val = enable ? 1 : 0;
 
-	if (XGMAC_IOREAD_BITS(pdata, MAC_PFR, PR) == val)
-		return 0;
+	अगर (XGMAC_IOREAD_BITS(pdata, MAC_PFR, PR) == val)
+		वापस 0;
 
-	netif_dbg(pdata, drv, pdata->netdev, "%s promiscuous mode\n",
+	netअगर_dbg(pdata, drv, pdata->netdev, "%s promiscuous mode\n",
 		  enable ? "entering" : "leaving");
 	XGMAC_IOWRITE_BITS(pdata, MAC_PFR, PR, val);
 
-	/* Hardware will still perform VLAN filtering in promiscuous mode */
-	if (enable) {
+	/* Hardware will still perक्रमm VLAN filtering in promiscuous mode */
+	अगर (enable) अणु
 		xgbe_disable_rx_vlan_filtering(pdata);
-	} else {
-		if (pdata->netdev->features & NETIF_F_HW_VLAN_CTAG_FILTER)
+	पूर्ण अन्यथा अणु
+		अगर (pdata->netdev->features & NETIF_F_HW_VLAN_CTAG_FILTER)
 			xgbe_enable_rx_vlan_filtering(pdata);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_set_all_multicast_mode(struct xgbe_prv_data *pdata,
-				       unsigned int enable)
-{
-	unsigned int val = enable ? 1 : 0;
+अटल पूर्णांक xgbe_set_all_multicast_mode(काष्ठा xgbe_prv_data *pdata,
+				       अचिन्हित पूर्णांक enable)
+अणु
+	अचिन्हित पूर्णांक val = enable ? 1 : 0;
 
-	if (XGMAC_IOREAD_BITS(pdata, MAC_PFR, PM) == val)
-		return 0;
+	अगर (XGMAC_IOREAD_BITS(pdata, MAC_PFR, PM) == val)
+		वापस 0;
 
-	netif_dbg(pdata, drv, pdata->netdev, "%s allmulti mode\n",
+	netअगर_dbg(pdata, drv, pdata->netdev, "%s allmulti mode\n",
 		  enable ? "entering" : "leaving");
 	XGMAC_IOWRITE_BITS(pdata, MAC_PFR, PM, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgbe_set_mac_reg(struct xgbe_prv_data *pdata,
-			     struct netdev_hw_addr *ha, unsigned int *mac_reg)
-{
-	unsigned int mac_addr_hi, mac_addr_lo;
+अटल व्योम xgbe_set_mac_reg(काष्ठा xgbe_prv_data *pdata,
+			     काष्ठा netdev_hw_addr *ha, अचिन्हित पूर्णांक *mac_reg)
+अणु
+	अचिन्हित पूर्णांक mac_addr_hi, mac_addr_lo;
 	u8 *mac_addr;
 
 	mac_addr_lo = 0;
 	mac_addr_hi = 0;
 
-	if (ha) {
+	अगर (ha) अणु
 		mac_addr = (u8 *)&mac_addr_lo;
 		mac_addr[0] = ha->addr[0];
 		mac_addr[1] = ha->addr[1];
@@ -989,100 +990,100 @@ static void xgbe_set_mac_reg(struct xgbe_prv_data *pdata,
 		mac_addr[0] = ha->addr[4];
 		mac_addr[1] = ha->addr[5];
 
-		netif_dbg(pdata, drv, pdata->netdev,
+		netअगर_dbg(pdata, drv, pdata->netdev,
 			  "adding mac address %pM at %#x\n",
 			  ha->addr, *mac_reg);
 
 		XGMAC_SET_BITS(mac_addr_hi, MAC_MACA1HR, AE, 1);
-	}
+	पूर्ण
 
 	XGMAC_IOWRITE(pdata, *mac_reg, mac_addr_hi);
 	*mac_reg += MAC_MACA_INC;
 	XGMAC_IOWRITE(pdata, *mac_reg, mac_addr_lo);
 	*mac_reg += MAC_MACA_INC;
-}
+पूर्ण
 
-static void xgbe_set_mac_addn_addrs(struct xgbe_prv_data *pdata)
-{
-	struct net_device *netdev = pdata->netdev;
-	struct netdev_hw_addr *ha;
-	unsigned int mac_reg;
-	unsigned int addn_macs;
+अटल व्योम xgbe_set_mac_addn_addrs(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा net_device *netdev = pdata->netdev;
+	काष्ठा netdev_hw_addr *ha;
+	अचिन्हित पूर्णांक mac_reg;
+	अचिन्हित पूर्णांक addn_macs;
 
 	mac_reg = MAC_MACA1HR;
 	addn_macs = pdata->hw_feat.addn_mac;
 
-	if (netdev_uc_count(netdev) > addn_macs) {
+	अगर (netdev_uc_count(netdev) > addn_macs) अणु
 		xgbe_set_promiscuous_mode(pdata, 1);
-	} else {
-		netdev_for_each_uc_addr(ha, netdev) {
+	पूर्ण अन्यथा अणु
+		netdev_क्रम_each_uc_addr(ha, netdev) अणु
 			xgbe_set_mac_reg(pdata, ha, &mac_reg);
 			addn_macs--;
-		}
+		पूर्ण
 
-		if (netdev_mc_count(netdev) > addn_macs) {
+		अगर (netdev_mc_count(netdev) > addn_macs) अणु
 			xgbe_set_all_multicast_mode(pdata, 1);
-		} else {
-			netdev_for_each_mc_addr(ha, netdev) {
+		पूर्ण अन्यथा अणु
+			netdev_क्रम_each_mc_addr(ha, netdev) अणु
 				xgbe_set_mac_reg(pdata, ha, &mac_reg);
 				addn_macs--;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* Clear remaining additional MAC address entries */
-	while (addn_macs--)
-		xgbe_set_mac_reg(pdata, NULL, &mac_reg);
-}
+	/* Clear reमुख्यing additional MAC address entries */
+	जबतक (addn_macs--)
+		xgbe_set_mac_reg(pdata, शून्य, &mac_reg);
+पूर्ण
 
-static void xgbe_set_mac_hash_table(struct xgbe_prv_data *pdata)
-{
-	struct net_device *netdev = pdata->netdev;
-	struct netdev_hw_addr *ha;
-	unsigned int hash_reg;
-	unsigned int hash_table_shift, hash_table_count;
+अटल व्योम xgbe_set_mac_hash_table(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा net_device *netdev = pdata->netdev;
+	काष्ठा netdev_hw_addr *ha;
+	अचिन्हित पूर्णांक hash_reg;
+	अचिन्हित पूर्णांक hash_table_shअगरt, hash_table_count;
 	u32 hash_table[XGBE_MAC_HASH_TABLE_SIZE];
 	u32 crc;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	hash_table_shift = 26 - (pdata->hw_feat.hash_table_size >> 7);
+	hash_table_shअगरt = 26 - (pdata->hw_feat.hash_table_size >> 7);
 	hash_table_count = pdata->hw_feat.hash_table_size / 32;
-	memset(hash_table, 0, sizeof(hash_table));
+	स_रखो(hash_table, 0, माप(hash_table));
 
-	/* Build the MAC Hash Table register values */
-	netdev_for_each_uc_addr(ha, netdev) {
+	/* Build the MAC Hash Table रेजिस्टर values */
+	netdev_क्रम_each_uc_addr(ha, netdev) अणु
 		crc = bitrev32(~crc32_le(~0, ha->addr, ETH_ALEN));
-		crc >>= hash_table_shift;
+		crc >>= hash_table_shअगरt;
 		hash_table[crc >> 5] |= (1 << (crc & 0x1f));
-	}
+	पूर्ण
 
-	netdev_for_each_mc_addr(ha, netdev) {
+	netdev_क्रम_each_mc_addr(ha, netdev) अणु
 		crc = bitrev32(~crc32_le(~0, ha->addr, ETH_ALEN));
-		crc >>= hash_table_shift;
+		crc >>= hash_table_shअगरt;
 		hash_table[crc >> 5] |= (1 << (crc & 0x1f));
-	}
+	पूर्ण
 
-	/* Set the MAC Hash Table registers */
+	/* Set the MAC Hash Table रेजिस्टरs */
 	hash_reg = MAC_HTR0;
-	for (i = 0; i < hash_table_count; i++) {
+	क्रम (i = 0; i < hash_table_count; i++) अणु
 		XGMAC_IOWRITE(pdata, hash_reg, hash_table[i]);
 		hash_reg += MAC_HTR_INC;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int xgbe_add_mac_addresses(struct xgbe_prv_data *pdata)
-{
-	if (pdata->hw_feat.hash_table_size)
+अटल पूर्णांक xgbe_add_mac_addresses(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (pdata->hw_feat.hash_table_size)
 		xgbe_set_mac_hash_table(pdata);
-	else
+	अन्यथा
 		xgbe_set_mac_addn_addrs(pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_set_mac_address(struct xgbe_prv_data *pdata, u8 *addr)
-{
-	unsigned int mac_addr_hi, mac_addr_lo;
+अटल पूर्णांक xgbe_set_mac_address(काष्ठा xgbe_prv_data *pdata, u8 *addr)
+अणु
+	अचिन्हित पूर्णांक mac_addr_hi, mac_addr_lo;
 
 	mac_addr_hi = (addr[5] <<  8) | (addr[4] <<  0);
 	mac_addr_lo = (addr[3] << 24) | (addr[2] << 16) |
@@ -1091,13 +1092,13 @@ static int xgbe_set_mac_address(struct xgbe_prv_data *pdata, u8 *addr)
 	XGMAC_IOWRITE(pdata, MAC_MACA0HR, mac_addr_hi);
 	XGMAC_IOWRITE(pdata, MAC_MACA0LR, mac_addr_lo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_config_rx_mode(struct xgbe_prv_data *pdata)
-{
-	struct net_device *netdev = pdata->netdev;
-	unsigned int pr_mode, am_mode;
+अटल पूर्णांक xgbe_config_rx_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा net_device *netdev = pdata->netdev;
+	अचिन्हित पूर्णांक pr_mode, am_mode;
 
 	pr_mode = ((netdev->flags & IFF_PROMISC) != 0);
 	am_mode = ((netdev->flags & IFF_ALLMULTI) != 0);
@@ -1107,186 +1108,186 @@ static int xgbe_config_rx_mode(struct xgbe_prv_data *pdata)
 
 	xgbe_add_mac_addresses(pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_clr_gpio(struct xgbe_prv_data *pdata, unsigned int gpio)
-{
-	unsigned int reg;
+अटल पूर्णांक xgbe_clr_gpio(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक gpio)
+अणु
+	अचिन्हित पूर्णांक reg;
 
-	if (gpio > 15)
-		return -EINVAL;
+	अगर (gpio > 15)
+		वापस -EINVAL;
 
 	reg = XGMAC_IOREAD(pdata, MAC_GPIOSR);
 
 	reg &= ~(1 << (gpio + 16));
 	XGMAC_IOWRITE(pdata, MAC_GPIOSR, reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_set_gpio(struct xgbe_prv_data *pdata, unsigned int gpio)
-{
-	unsigned int reg;
+अटल पूर्णांक xgbe_set_gpio(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक gpio)
+अणु
+	अचिन्हित पूर्णांक reg;
 
-	if (gpio > 15)
-		return -EINVAL;
+	अगर (gpio > 15)
+		वापस -EINVAL;
 
 	reg = XGMAC_IOREAD(pdata, MAC_GPIOSR);
 
 	reg |= (1 << (gpio + 16));
 	XGMAC_IOWRITE(pdata, MAC_GPIOSR, reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_read_mmd_regs_v2(struct xgbe_prv_data *pdata, int prtad,
-				 int mmd_reg)
-{
-	unsigned long flags;
-	unsigned int mmd_address, index, offset;
-	int mmd_data;
+अटल पूर्णांक xgbe_पढ़ो_mmd_regs_v2(काष्ठा xgbe_prv_data *pdata, पूर्णांक prtad,
+				 पूर्णांक mmd_reg)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक mmd_address, index, offset;
+	पूर्णांक mmd_data;
 
-	if (mmd_reg & MII_ADDR_C45)
+	अगर (mmd_reg & MII_ADDR_C45)
 		mmd_address = mmd_reg & ~MII_ADDR_C45;
-	else
+	अन्यथा
 		mmd_address = (pdata->mdio_mmd << 16) | (mmd_reg & 0xffff);
 
-	/* The PCS registers are accessed using mmio. The underlying
-	 * management interface uses indirect addressing to access the MMD
-	 * register sets. This requires accessing of the PCS register in two
+	/* The PCS रेजिस्टरs are accessed using mmio. The underlying
+	 * management पूर्णांकerface uses indirect addressing to access the MMD
+	 * रेजिस्टर sets. This requires accessing of the PCS रेजिस्टर in two
 	 * phases, an address phase and a data phase.
 	 *
-	 * The mmio interface is based on 16-bit offsets and values. All
-	 * register offsets must therefore be adjusted by left shifting the
-	 * offset 1 bit and reading 16 bits of data.
+	 * The mmio पूर्णांकerface is based on 16-bit offsets and values. All
+	 * रेजिस्टर offsets must thereक्रमe be adjusted by left shअगरting the
+	 * offset 1 bit and पढ़ोing 16 bits of data.
 	 */
 	mmd_address <<= 1;
-	index = mmd_address & ~pdata->xpcs_window_mask;
-	offset = pdata->xpcs_window + (mmd_address & pdata->xpcs_window_mask);
+	index = mmd_address & ~pdata->xpcs_winकरोw_mask;
+	offset = pdata->xpcs_winकरोw + (mmd_address & pdata->xpcs_winकरोw_mask);
 
 	spin_lock_irqsave(&pdata->xpcs_lock, flags);
-	XPCS32_IOWRITE(pdata, pdata->xpcs_window_sel_reg, index);
+	XPCS32_IOWRITE(pdata, pdata->xpcs_winकरोw_sel_reg, index);
 	mmd_data = XPCS16_IOREAD(pdata, offset);
 	spin_unlock_irqrestore(&pdata->xpcs_lock, flags);
 
-	return mmd_data;
-}
+	वापस mmd_data;
+पूर्ण
 
-static void xgbe_write_mmd_regs_v2(struct xgbe_prv_data *pdata, int prtad,
-				   int mmd_reg, int mmd_data)
-{
-	unsigned long flags;
-	unsigned int mmd_address, index, offset;
+अटल व्योम xgbe_ग_लिखो_mmd_regs_v2(काष्ठा xgbe_prv_data *pdata, पूर्णांक prtad,
+				   पूर्णांक mmd_reg, पूर्णांक mmd_data)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक mmd_address, index, offset;
 
-	if (mmd_reg & MII_ADDR_C45)
+	अगर (mmd_reg & MII_ADDR_C45)
 		mmd_address = mmd_reg & ~MII_ADDR_C45;
-	else
+	अन्यथा
 		mmd_address = (pdata->mdio_mmd << 16) | (mmd_reg & 0xffff);
 
-	/* The PCS registers are accessed using mmio. The underlying
-	 * management interface uses indirect addressing to access the MMD
-	 * register sets. This requires accessing of the PCS register in two
+	/* The PCS रेजिस्टरs are accessed using mmio. The underlying
+	 * management पूर्णांकerface uses indirect addressing to access the MMD
+	 * रेजिस्टर sets. This requires accessing of the PCS रेजिस्टर in two
 	 * phases, an address phase and a data phase.
 	 *
-	 * The mmio interface is based on 16-bit offsets and values. All
-	 * register offsets must therefore be adjusted by left shifting the
+	 * The mmio पूर्णांकerface is based on 16-bit offsets and values. All
+	 * रेजिस्टर offsets must thereक्रमe be adjusted by left shअगरting the
 	 * offset 1 bit and writing 16 bits of data.
 	 */
 	mmd_address <<= 1;
-	index = mmd_address & ~pdata->xpcs_window_mask;
-	offset = pdata->xpcs_window + (mmd_address & pdata->xpcs_window_mask);
+	index = mmd_address & ~pdata->xpcs_winकरोw_mask;
+	offset = pdata->xpcs_winकरोw + (mmd_address & pdata->xpcs_winकरोw_mask);
 
 	spin_lock_irqsave(&pdata->xpcs_lock, flags);
-	XPCS32_IOWRITE(pdata, pdata->xpcs_window_sel_reg, index);
+	XPCS32_IOWRITE(pdata, pdata->xpcs_winकरोw_sel_reg, index);
 	XPCS16_IOWRITE(pdata, offset, mmd_data);
 	spin_unlock_irqrestore(&pdata->xpcs_lock, flags);
-}
+पूर्ण
 
-static int xgbe_read_mmd_regs_v1(struct xgbe_prv_data *pdata, int prtad,
-				 int mmd_reg)
-{
-	unsigned long flags;
-	unsigned int mmd_address;
-	int mmd_data;
+अटल पूर्णांक xgbe_पढ़ो_mmd_regs_v1(काष्ठा xgbe_prv_data *pdata, पूर्णांक prtad,
+				 पूर्णांक mmd_reg)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक mmd_address;
+	पूर्णांक mmd_data;
 
-	if (mmd_reg & MII_ADDR_C45)
+	अगर (mmd_reg & MII_ADDR_C45)
 		mmd_address = mmd_reg & ~MII_ADDR_C45;
-	else
+	अन्यथा
 		mmd_address = (pdata->mdio_mmd << 16) | (mmd_reg & 0xffff);
 
-	/* The PCS registers are accessed using mmio. The underlying APB3
-	 * management interface uses indirect addressing to access the MMD
-	 * register sets. This requires accessing of the PCS register in two
+	/* The PCS रेजिस्टरs are accessed using mmio. The underlying APB3
+	 * management पूर्णांकerface uses indirect addressing to access the MMD
+	 * रेजिस्टर sets. This requires accessing of the PCS रेजिस्टर in two
 	 * phases, an address phase and a data phase.
 	 *
-	 * The mmio interface is based on 32-bit offsets and values. All
-	 * register offsets must therefore be adjusted by left shifting the
-	 * offset 2 bits and reading 32 bits of data.
+	 * The mmio पूर्णांकerface is based on 32-bit offsets and values. All
+	 * रेजिस्टर offsets must thereक्रमe be adjusted by left shअगरting the
+	 * offset 2 bits and पढ़ोing 32 bits of data.
 	 */
 	spin_lock_irqsave(&pdata->xpcs_lock, flags);
 	XPCS32_IOWRITE(pdata, PCS_V1_WINDOW_SELECT, mmd_address >> 8);
 	mmd_data = XPCS32_IOREAD(pdata, (mmd_address & 0xff) << 2);
 	spin_unlock_irqrestore(&pdata->xpcs_lock, flags);
 
-	return mmd_data;
-}
+	वापस mmd_data;
+पूर्ण
 
-static void xgbe_write_mmd_regs_v1(struct xgbe_prv_data *pdata, int prtad,
-				   int mmd_reg, int mmd_data)
-{
-	unsigned int mmd_address;
-	unsigned long flags;
+अटल व्योम xgbe_ग_लिखो_mmd_regs_v1(काष्ठा xgbe_prv_data *pdata, पूर्णांक prtad,
+				   पूर्णांक mmd_reg, पूर्णांक mmd_data)
+अणु
+	अचिन्हित पूर्णांक mmd_address;
+	अचिन्हित दीर्घ flags;
 
-	if (mmd_reg & MII_ADDR_C45)
+	अगर (mmd_reg & MII_ADDR_C45)
 		mmd_address = mmd_reg & ~MII_ADDR_C45;
-	else
+	अन्यथा
 		mmd_address = (pdata->mdio_mmd << 16) | (mmd_reg & 0xffff);
 
-	/* The PCS registers are accessed using mmio. The underlying APB3
-	 * management interface uses indirect addressing to access the MMD
-	 * register sets. This requires accessing of the PCS register in two
+	/* The PCS रेजिस्टरs are accessed using mmio. The underlying APB3
+	 * management पूर्णांकerface uses indirect addressing to access the MMD
+	 * रेजिस्टर sets. This requires accessing of the PCS रेजिस्टर in two
 	 * phases, an address phase and a data phase.
 	 *
-	 * The mmio interface is based on 32-bit offsets and values. All
-	 * register offsets must therefore be adjusted by left shifting the
+	 * The mmio पूर्णांकerface is based on 32-bit offsets and values. All
+	 * रेजिस्टर offsets must thereक्रमe be adjusted by left shअगरting the
 	 * offset 2 bits and writing 32 bits of data.
 	 */
 	spin_lock_irqsave(&pdata->xpcs_lock, flags);
 	XPCS32_IOWRITE(pdata, PCS_V1_WINDOW_SELECT, mmd_address >> 8);
 	XPCS32_IOWRITE(pdata, (mmd_address & 0xff) << 2, mmd_data);
 	spin_unlock_irqrestore(&pdata->xpcs_lock, flags);
-}
+पूर्ण
 
-static int xgbe_read_mmd_regs(struct xgbe_prv_data *pdata, int prtad,
-			      int mmd_reg)
-{
-	switch (pdata->vdata->xpcs_access) {
-	case XGBE_XPCS_ACCESS_V1:
-		return xgbe_read_mmd_regs_v1(pdata, prtad, mmd_reg);
+अटल पूर्णांक xgbe_पढ़ो_mmd_regs(काष्ठा xgbe_prv_data *pdata, पूर्णांक prtad,
+			      पूर्णांक mmd_reg)
+अणु
+	चयन (pdata->vdata->xpcs_access) अणु
+	हाल XGBE_XPCS_ACCESS_V1:
+		वापस xgbe_पढ़ो_mmd_regs_v1(pdata, prtad, mmd_reg);
 
-	case XGBE_XPCS_ACCESS_V2:
-	default:
-		return xgbe_read_mmd_regs_v2(pdata, prtad, mmd_reg);
-	}
-}
+	हाल XGBE_XPCS_ACCESS_V2:
+	शेष:
+		वापस xgbe_पढ़ो_mmd_regs_v2(pdata, prtad, mmd_reg);
+	पूर्ण
+पूर्ण
 
-static void xgbe_write_mmd_regs(struct xgbe_prv_data *pdata, int prtad,
-				int mmd_reg, int mmd_data)
-{
-	switch (pdata->vdata->xpcs_access) {
-	case XGBE_XPCS_ACCESS_V1:
-		return xgbe_write_mmd_regs_v1(pdata, prtad, mmd_reg, mmd_data);
+अटल व्योम xgbe_ग_लिखो_mmd_regs(काष्ठा xgbe_prv_data *pdata, पूर्णांक prtad,
+				पूर्णांक mmd_reg, पूर्णांक mmd_data)
+अणु
+	चयन (pdata->vdata->xpcs_access) अणु
+	हाल XGBE_XPCS_ACCESS_V1:
+		वापस xgbe_ग_लिखो_mmd_regs_v1(pdata, prtad, mmd_reg, mmd_data);
 
-	case XGBE_XPCS_ACCESS_V2:
-	default:
-		return xgbe_write_mmd_regs_v2(pdata, prtad, mmd_reg, mmd_data);
-	}
-}
+	हाल XGBE_XPCS_ACCESS_V2:
+	शेष:
+		वापस xgbe_ग_लिखो_mmd_regs_v2(pdata, prtad, mmd_reg, mmd_data);
+	पूर्ण
+पूर्ण
 
-static unsigned int xgbe_create_mdio_sca(int port, int reg)
-{
-	unsigned int mdio_sca, da;
+अटल अचिन्हित पूर्णांक xgbe_create_mdio_sca(पूर्णांक port, पूर्णांक reg)
+अणु
+	अचिन्हित पूर्णांक mdio_sca, da;
 
 	da = (reg & MII_ADDR_C45) ? reg >> 16 : 0;
 
@@ -1295,13 +1296,13 @@ static unsigned int xgbe_create_mdio_sca(int port, int reg)
 	XGMAC_SET_BITS(mdio_sca, MAC_MDIOSCAR, PA, port);
 	XGMAC_SET_BITS(mdio_sca, MAC_MDIOSCAR, DA, da);
 
-	return mdio_sca;
-}
+	वापस mdio_sca;
+पूर्ण
 
-static int xgbe_write_ext_mii_regs(struct xgbe_prv_data *pdata, int addr,
-				   int reg, u16 val)
-{
-	unsigned int mdio_sca, mdio_sccd;
+अटल पूर्णांक xgbe_ग_लिखो_ext_mii_regs(काष्ठा xgbe_prv_data *pdata, पूर्णांक addr,
+				   पूर्णांक reg, u16 val)
+अणु
+	अचिन्हित पूर्णांक mdio_sca, mdio_sccd;
 
 	reinit_completion(&pdata->mdio_complete);
 
@@ -1314,18 +1315,18 @@ static int xgbe_write_ext_mii_regs(struct xgbe_prv_data *pdata, int addr,
 	XGMAC_SET_BITS(mdio_sccd, MAC_MDIOSCCDR, BUSY, 1);
 	XGMAC_IOWRITE(pdata, MAC_MDIOSCCDR, mdio_sccd);
 
-	if (!wait_for_completion_timeout(&pdata->mdio_complete, HZ)) {
+	अगर (!रुको_क्रम_completion_समयout(&pdata->mdio_complete, HZ)) अणु
 		netdev_err(pdata->netdev, "mdio write operation timed out\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_read_ext_mii_regs(struct xgbe_prv_data *pdata, int addr,
-				  int reg)
-{
-	unsigned int mdio_sca, mdio_sccd;
+अटल पूर्णांक xgbe_पढ़ो_ext_mii_regs(काष्ठा xgbe_prv_data *pdata, पूर्णांक addr,
+				  पूर्णांक reg)
+अणु
+	अचिन्हित पूर्णांक mdio_sca, mdio_sccd;
 
 	reinit_completion(&pdata->mdio_complete);
 
@@ -1337,58 +1338,58 @@ static int xgbe_read_ext_mii_regs(struct xgbe_prv_data *pdata, int addr,
 	XGMAC_SET_BITS(mdio_sccd, MAC_MDIOSCCDR, BUSY, 1);
 	XGMAC_IOWRITE(pdata, MAC_MDIOSCCDR, mdio_sccd);
 
-	if (!wait_for_completion_timeout(&pdata->mdio_complete, HZ)) {
+	अगर (!रुको_क्रम_completion_समयout(&pdata->mdio_complete, HZ)) अणु
 		netdev_err(pdata->netdev, "mdio read operation timed out\n");
-		return -ETIMEDOUT;
-	}
+		वापस -ETIMEDOUT;
+	पूर्ण
 
-	return XGMAC_IOREAD_BITS(pdata, MAC_MDIOSCCDR, DATA);
-}
+	वापस XGMAC_IOREAD_BITS(pdata, MAC_MDIOSCCDR, DATA);
+पूर्ण
 
-static int xgbe_set_ext_mii_mode(struct xgbe_prv_data *pdata, unsigned int port,
-				 enum xgbe_mdio_mode mode)
-{
-	unsigned int reg_val = XGMAC_IOREAD(pdata, MAC_MDIOCL22R);
+अटल पूर्णांक xgbe_set_ext_mii_mode(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक port,
+				 क्रमागत xgbe_mdio_mode mode)
+अणु
+	अचिन्हित पूर्णांक reg_val = XGMAC_IOREAD(pdata, MAC_MDIOCL22R);
 
-	switch (mode) {
-	case XGBE_MDIO_MODE_CL22:
-		if (port > XGMAC_MAX_C22_PORT)
-			return -EINVAL;
+	चयन (mode) अणु
+	हाल XGBE_MDIO_MODE_CL22:
+		अगर (port > XGMAC_MAX_C22_PORT)
+			वापस -EINVAL;
 		reg_val |= (1 << port);
-		break;
-	case XGBE_MDIO_MODE_CL45:
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	हाल XGBE_MDIO_MODE_CL45:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	XGMAC_IOWRITE(pdata, MAC_MDIOCL22R, reg_val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_tx_complete(struct xgbe_ring_desc *rdesc)
-{
-	return !XGMAC_GET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, OWN);
-}
+अटल पूर्णांक xgbe_tx_complete(काष्ठा xgbe_ring_desc *rdesc)
+अणु
+	वापस !XGMAC_GET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, OWN);
+पूर्ण
 
-static int xgbe_disable_rx_csum(struct xgbe_prv_data *pdata)
-{
+अटल पूर्णांक xgbe_disable_rx_csum(काष्ठा xgbe_prv_data *pdata)
+अणु
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, IPC, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_enable_rx_csum(struct xgbe_prv_data *pdata)
-{
+अटल पूर्णांक xgbe_enable_rx_csum(काष्ठा xgbe_prv_data *pdata)
+अणु
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, IPC, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgbe_tx_desc_reset(struct xgbe_ring_data *rdata)
-{
-	struct xgbe_ring_desc *rdesc = rdata->rdesc;
+अटल व्योम xgbe_tx_desc_reset(काष्ठा xgbe_ring_data *rdata)
+अणु
+	काष्ठा xgbe_ring_desc *rdesc = rdata->rdesc;
 
 	/* Reset the Tx descriptor
 	 *   Set buffer 1 (lo) address to zero
@@ -1403,24 +1404,24 @@ static void xgbe_tx_desc_reset(struct xgbe_ring_data *rdata)
 
 	/* Make sure ownership is written to the descriptor */
 	dma_wmb();
-}
+पूर्ण
 
-static void xgbe_tx_desc_init(struct xgbe_channel *channel)
-{
-	struct xgbe_ring *ring = channel->tx_ring;
-	struct xgbe_ring_data *rdata;
-	int i;
-	int start_index = ring->cur;
+अटल व्योम xgbe_tx_desc_init(काष्ठा xgbe_channel *channel)
+अणु
+	काष्ठा xgbe_ring *ring = channel->tx_ring;
+	काष्ठा xgbe_ring_data *rdata;
+	पूर्णांक i;
+	पूर्णांक start_index = ring->cur;
 
 	DBGPR("-->tx_desc_init\n");
 
 	/* Initialze all descriptors */
-	for (i = 0; i < ring->rdesc_count; i++) {
+	क्रम (i = 0; i < ring->rdesc_count; i++) अणु
 		rdata = XGBE_GET_DESC_DATA(ring, i);
 
 		/* Initialize Tx descriptor */
 		xgbe_tx_desc_reset(rdata);
-	}
+	पूर्ण
 
 	/* Update the total number of Tx descriptors */
 	XGMAC_DMA_IOWRITE(channel, DMA_CH_TDRLR, ring->rdesc_count - 1);
@@ -1433,27 +1434,27 @@ static void xgbe_tx_desc_init(struct xgbe_channel *channel)
 			  lower_32_bits(rdata->rdesc_dma));
 
 	DBGPR("<--tx_desc_init\n");
-}
+पूर्ण
 
-static void xgbe_rx_desc_reset(struct xgbe_prv_data *pdata,
-			       struct xgbe_ring_data *rdata, unsigned int index)
-{
-	struct xgbe_ring_desc *rdesc = rdata->rdesc;
-	unsigned int rx_usecs = pdata->rx_usecs;
-	unsigned int rx_frames = pdata->rx_frames;
-	unsigned int inte;
+अटल व्योम xgbe_rx_desc_reset(काष्ठा xgbe_prv_data *pdata,
+			       काष्ठा xgbe_ring_data *rdata, अचिन्हित पूर्णांक index)
+अणु
+	काष्ठा xgbe_ring_desc *rdesc = rdata->rdesc;
+	अचिन्हित पूर्णांक rx_usecs = pdata->rx_usecs;
+	अचिन्हित पूर्णांक rx_frames = pdata->rx_frames;
+	अचिन्हित पूर्णांक पूर्णांकe;
 	dma_addr_t hdr_dma, buf_dma;
 
-	if (!rx_usecs && !rx_frames) {
-		/* No coalescing, interrupt for every descriptor */
-		inte = 1;
-	} else {
-		/* Set interrupt based on Rx frame coalescing setting */
-		if (rx_frames && !((index + 1) % rx_frames))
-			inte = 1;
-		else
-			inte = 0;
-	}
+	अगर (!rx_usecs && !rx_frames) अणु
+		/* No coalescing, पूर्णांकerrupt क्रम every descriptor */
+		पूर्णांकe = 1;
+	पूर्ण अन्यथा अणु
+		/* Set पूर्णांकerrupt based on Rx frame coalescing setting */
+		अगर (rx_frames && !((index + 1) % rx_frames))
+			पूर्णांकe = 1;
+		अन्यथा
+			पूर्णांकe = 0;
+	पूर्ण
 
 	/* Reset the Rx descriptor
 	 *   Set buffer 1 (lo) address to header dma address (lo)
@@ -1469,11 +1470,11 @@ static void xgbe_rx_desc_reset(struct xgbe_prv_data *pdata,
 	rdesc->desc2 = cpu_to_le32(lower_32_bits(buf_dma));
 	rdesc->desc3 = cpu_to_le32(upper_32_bits(buf_dma));
 
-	XGMAC_SET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, INTE, inte);
+	XGMAC_SET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, INTE, पूर्णांकe);
 
 	/* Since the Rx DMA engine is likely running, make sure everything
-	 * is written to the descriptor(s) before setting the OWN bit
-	 * for the descriptor
+	 * is written to the descriptor(s) beक्रमe setting the OWN bit
+	 * क्रम the descriptor
 	 */
 	dma_wmb();
 
@@ -1481,25 +1482,25 @@ static void xgbe_rx_desc_reset(struct xgbe_prv_data *pdata,
 
 	/* Make sure ownership is written to the descriptor */
 	dma_wmb();
-}
+पूर्ण
 
-static void xgbe_rx_desc_init(struct xgbe_channel *channel)
-{
-	struct xgbe_prv_data *pdata = channel->pdata;
-	struct xgbe_ring *ring = channel->rx_ring;
-	struct xgbe_ring_data *rdata;
-	unsigned int start_index = ring->cur;
-	unsigned int i;
+अटल व्योम xgbe_rx_desc_init(काष्ठा xgbe_channel *channel)
+अणु
+	काष्ठा xgbe_prv_data *pdata = channel->pdata;
+	काष्ठा xgbe_ring *ring = channel->rx_ring;
+	काष्ठा xgbe_ring_data *rdata;
+	अचिन्हित पूर्णांक start_index = ring->cur;
+	अचिन्हित पूर्णांक i;
 
 	DBGPR("-->rx_desc_init\n");
 
 	/* Initialize all descriptors */
-	for (i = 0; i < ring->rdesc_count; i++) {
+	क्रम (i = 0; i < ring->rdesc_count; i++) अणु
 		rdata = XGBE_GET_DESC_DATA(ring, i);
 
 		/* Initialize Rx descriptor */
 		xgbe_rx_desc_reset(pdata, rdata, i);
-	}
+	पूर्ण
 
 	/* Update the total number of Rx descriptors */
 	XGMAC_DMA_IOWRITE(channel, DMA_CH_RDRLR, ring->rdesc_count - 1);
@@ -1511,172 +1512,172 @@ static void xgbe_rx_desc_init(struct xgbe_channel *channel)
 	XGMAC_DMA_IOWRITE(channel, DMA_CH_RDLR_LO,
 			  lower_32_bits(rdata->rdesc_dma));
 
-	/* Update the Rx Descriptor Tail Pointer */
+	/* Update the Rx Descriptor Tail Poपूर्णांकer */
 	rdata = XGBE_GET_DESC_DATA(ring, start_index + ring->rdesc_count - 1);
 	XGMAC_DMA_IOWRITE(channel, DMA_CH_RDTR_LO,
 			  lower_32_bits(rdata->rdesc_dma));
 
 	DBGPR("<--rx_desc_init\n");
-}
+पूर्ण
 
-static void xgbe_update_tstamp_addend(struct xgbe_prv_data *pdata,
-				      unsigned int addend)
-{
-	unsigned int count = 10000;
+अटल व्योम xgbe_update_tstamp_addend(काष्ठा xgbe_prv_data *pdata,
+				      अचिन्हित पूर्णांक addend)
+अणु
+	अचिन्हित पूर्णांक count = 10000;
 
-	/* Set the addend register value and tell the device */
+	/* Set the addend रेजिस्टर value and tell the device */
 	XGMAC_IOWRITE(pdata, MAC_TSAR, addend);
 	XGMAC_IOWRITE_BITS(pdata, MAC_TSCR, TSADDREG, 1);
 
-	/* Wait for addend update to complete */
-	while (--count && XGMAC_IOREAD_BITS(pdata, MAC_TSCR, TSADDREG))
+	/* Wait क्रम addend update to complete */
+	जबतक (--count && XGMAC_IOREAD_BITS(pdata, MAC_TSCR, TSADDREG))
 		udelay(5);
 
-	if (!count)
+	अगर (!count)
 		netdev_err(pdata->netdev,
 			   "timed out updating timestamp addend register\n");
-}
+पूर्ण
 
-static void xgbe_set_tstamp_time(struct xgbe_prv_data *pdata, unsigned int sec,
-				 unsigned int nsec)
-{
-	unsigned int count = 10000;
+अटल व्योम xgbe_set_tstamp_समय(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक sec,
+				 अचिन्हित पूर्णांक nsec)
+अणु
+	अचिन्हित पूर्णांक count = 10000;
 
-	/* Set the time values and tell the device */
+	/* Set the समय values and tell the device */
 	XGMAC_IOWRITE(pdata, MAC_STSUR, sec);
 	XGMAC_IOWRITE(pdata, MAC_STNUR, nsec);
 	XGMAC_IOWRITE_BITS(pdata, MAC_TSCR, TSINIT, 1);
 
-	/* Wait for time update to complete */
-	while (--count && XGMAC_IOREAD_BITS(pdata, MAC_TSCR, TSINIT))
+	/* Wait क्रम समय update to complete */
+	जबतक (--count && XGMAC_IOREAD_BITS(pdata, MAC_TSCR, TSINIT))
 		udelay(5);
 
-	if (!count)
+	अगर (!count)
 		netdev_err(pdata->netdev, "timed out initializing timestamp\n");
-}
+पूर्ण
 
-static u64 xgbe_get_tstamp_time(struct xgbe_prv_data *pdata)
-{
+अटल u64 xgbe_get_tstamp_समय(काष्ठा xgbe_prv_data *pdata)
+अणु
 	u64 nsec;
 
 	nsec = XGMAC_IOREAD(pdata, MAC_STSR);
 	nsec *= NSEC_PER_SEC;
 	nsec += XGMAC_IOREAD(pdata, MAC_STNR);
 
-	return nsec;
-}
+	वापस nsec;
+पूर्ण
 
-static u64 xgbe_get_tx_tstamp(struct xgbe_prv_data *pdata)
-{
-	unsigned int tx_snr, tx_ssr;
+अटल u64 xgbe_get_tx_tstamp(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक tx_snr, tx_ssr;
 	u64 nsec;
 
-	if (pdata->vdata->tx_tstamp_workaround) {
+	अगर (pdata->vdata->tx_tstamp_workaround) अणु
 		tx_snr = XGMAC_IOREAD(pdata, MAC_TXSNR);
 		tx_ssr = XGMAC_IOREAD(pdata, MAC_TXSSR);
-	} else {
+	पूर्ण अन्यथा अणु
 		tx_ssr = XGMAC_IOREAD(pdata, MAC_TXSSR);
 		tx_snr = XGMAC_IOREAD(pdata, MAC_TXSNR);
-	}
+	पूर्ण
 
-	if (XGMAC_GET_BITS(tx_snr, MAC_TXSNR, TXTSSTSMIS))
-		return 0;
+	अगर (XGMAC_GET_BITS(tx_snr, MAC_TXSNR, TXTSSTSMIS))
+		वापस 0;
 
 	nsec = tx_ssr;
 	nsec *= NSEC_PER_SEC;
 	nsec += tx_snr;
 
-	return nsec;
-}
+	वापस nsec;
+पूर्ण
 
-static void xgbe_get_rx_tstamp(struct xgbe_packet_data *packet,
-			       struct xgbe_ring_desc *rdesc)
-{
+अटल व्योम xgbe_get_rx_tstamp(काष्ठा xgbe_packet_data *packet,
+			       काष्ठा xgbe_ring_desc *rdesc)
+अणु
 	u64 nsec;
 
-	if (XGMAC_GET_BITS_LE(rdesc->desc3, RX_CONTEXT_DESC3, TSA) &&
-	    !XGMAC_GET_BITS_LE(rdesc->desc3, RX_CONTEXT_DESC3, TSD)) {
+	अगर (XGMAC_GET_BITS_LE(rdesc->desc3, RX_CONTEXT_DESC3, TSA) &&
+	    !XGMAC_GET_BITS_LE(rdesc->desc3, RX_CONTEXT_DESC3, TSD)) अणु
 		nsec = le32_to_cpu(rdesc->desc1);
 		nsec <<= 32;
 		nsec |= le32_to_cpu(rdesc->desc0);
-		if (nsec != 0xffffffffffffffffULL) {
+		अगर (nsec != 0xffffffffffffffffULL) अणु
 			packet->rx_tstamp = nsec;
 			XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 				       RX_TSTAMP, 1);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int xgbe_config_tstamp(struct xgbe_prv_data *pdata,
-			      unsigned int mac_tscr)
-{
+अटल पूर्णांक xgbe_config_tstamp(काष्ठा xgbe_prv_data *pdata,
+			      अचिन्हित पूर्णांक mac_tscr)
+अणु
 	/* Set one nano-second accuracy */
 	XGMAC_SET_BITS(mac_tscr, MAC_TSCR, TSCTRLSSR, 1);
 
-	/* Set fine timestamp update */
+	/* Set fine बारtamp update */
 	XGMAC_SET_BITS(mac_tscr, MAC_TSCR, TSCFUPDT, 1);
 
-	/* Overwrite earlier timestamps */
+	/* Overग_लिखो earlier बारtamps */
 	XGMAC_SET_BITS(mac_tscr, MAC_TSCR, TXTSSTSM, 1);
 
 	XGMAC_IOWRITE(pdata, MAC_TSCR, mac_tscr);
 
-	/* Exit if timestamping is not enabled */
-	if (!XGMAC_GET_BITS(mac_tscr, MAC_TSCR, TSENA))
-		return 0;
+	/* Exit अगर बारtamping is not enabled */
+	अगर (!XGMAC_GET_BITS(mac_tscr, MAC_TSCR, TSENA))
+		वापस 0;
 
-	/* Initialize time registers */
+	/* Initialize समय रेजिस्टरs */
 	XGMAC_IOWRITE_BITS(pdata, MAC_SSIR, SSINC, XGBE_TSTAMP_SSINC);
 	XGMAC_IOWRITE_BITS(pdata, MAC_SSIR, SNSINC, XGBE_TSTAMP_SNSINC);
 	xgbe_update_tstamp_addend(pdata, pdata->tstamp_addend);
-	xgbe_set_tstamp_time(pdata, 0, 0);
+	xgbe_set_tstamp_समय(pdata, 0, 0);
 
-	/* Initialize the timecounter */
-	timecounter_init(&pdata->tstamp_tc, &pdata->tstamp_cc,
-			 ktime_to_ns(ktime_get_real()));
+	/* Initialize the समयcounter */
+	समयcounter_init(&pdata->tstamp_tc, &pdata->tstamp_cc,
+			 kसमय_प्रकारo_ns(kसमय_get_real()));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgbe_tx_start_xmit(struct xgbe_channel *channel,
-			       struct xgbe_ring *ring)
-{
-	struct xgbe_prv_data *pdata = channel->pdata;
-	struct xgbe_ring_data *rdata;
+अटल व्योम xgbe_tx_start_xmit(काष्ठा xgbe_channel *channel,
+			       काष्ठा xgbe_ring *ring)
+अणु
+	काष्ठा xgbe_prv_data *pdata = channel->pdata;
+	काष्ठा xgbe_ring_data *rdata;
 
-	/* Make sure everything is written before the register write */
+	/* Make sure everything is written beक्रमe the रेजिस्टर ग_लिखो */
 	wmb();
 
 	/* Issue a poll command to Tx DMA by writing address
-	 * of next immediate free descriptor */
+	 * of next immediate मुक्त descriptor */
 	rdata = XGBE_GET_DESC_DATA(ring, ring->cur);
 	XGMAC_DMA_IOWRITE(channel, DMA_CH_TDTR_LO,
 			  lower_32_bits(rdata->rdesc_dma));
 
-	/* Start the Tx timer */
-	if (pdata->tx_usecs && !channel->tx_timer_active) {
-		channel->tx_timer_active = 1;
-		mod_timer(&channel->tx_timer,
-			  jiffies + usecs_to_jiffies(pdata->tx_usecs));
-	}
+	/* Start the Tx समयr */
+	अगर (pdata->tx_usecs && !channel->tx_समयr_active) अणु
+		channel->tx_समयr_active = 1;
+		mod_समयr(&channel->tx_समयr,
+			  jअगरfies + usecs_to_jअगरfies(pdata->tx_usecs));
+	पूर्ण
 
 	ring->tx.xmit_more = 0;
-}
+पूर्ण
 
-static void xgbe_dev_xmit(struct xgbe_channel *channel)
-{
-	struct xgbe_prv_data *pdata = channel->pdata;
-	struct xgbe_ring *ring = channel->tx_ring;
-	struct xgbe_ring_data *rdata;
-	struct xgbe_ring_desc *rdesc;
-	struct xgbe_packet_data *packet = &ring->packet_data;
-	unsigned int tx_packets, tx_bytes;
-	unsigned int csum, tso, vlan, vxlan;
-	unsigned int tso_context, vlan_context;
-	unsigned int tx_set_ic;
-	int start_index = ring->cur;
-	int cur_index = ring->cur;
-	int i;
+अटल व्योम xgbe_dev_xmit(काष्ठा xgbe_channel *channel)
+अणु
+	काष्ठा xgbe_prv_data *pdata = channel->pdata;
+	काष्ठा xgbe_ring *ring = channel->tx_ring;
+	काष्ठा xgbe_ring_data *rdata;
+	काष्ठा xgbe_ring_desc *rdesc;
+	काष्ठा xgbe_packet_data *packet = &ring->packet_data;
+	अचिन्हित पूर्णांक tx_packets, tx_bytes;
+	अचिन्हित पूर्णांक csum, tso, vlan, vxlan;
+	अचिन्हित पूर्णांक tso_context, vlan_context;
+	अचिन्हित पूर्णांक tx_set_ic;
+	पूर्णांक start_index = ring->cur;
+	पूर्णांक cur_index = ring->cur;
+	पूर्णांक i;
 
 	DBGPR("-->xgbe_dev_xmit\n");
 
@@ -1692,43 +1693,43 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 	vxlan = XGMAC_GET_BITS(packet->attributes, TX_PACKET_ATTRIBUTES,
 			       VXLAN);
 
-	if (tso && (packet->mss != ring->tx.cur_mss))
+	अगर (tso && (packet->mss != ring->tx.cur_mss))
 		tso_context = 1;
-	else
+	अन्यथा
 		tso_context = 0;
 
-	if (vlan && (packet->vlan_ctag != ring->tx.cur_vlan_ctag))
+	अगर (vlan && (packet->vlan_ctag != ring->tx.cur_vlan_ctag))
 		vlan_context = 1;
-	else
+	अन्यथा
 		vlan_context = 0;
 
-	/* Determine if an interrupt should be generated for this Tx:
+	/* Determine अगर an पूर्णांकerrupt should be generated क्रम this Tx:
 	 *   Interrupt:
 	 *     - Tx frame count exceeds the frame count setting
 	 *     - Addition of Tx frame count to the frame count since the
-	 *       last interrupt was set exceeds the frame count setting
-	 *   No interrupt:
-	 *     - No frame count setting specified (ethtool -C ethX tx-frames 0)
+	 *       last पूर्णांकerrupt was set exceeds the frame count setting
+	 *   No पूर्णांकerrupt:
+	 *     - No frame count setting specअगरied (ethtool -C ethX tx-frames 0)
 	 *     - Addition of Tx frame count to the frame count since the
-	 *       last interrupt was set does not exceed the frame count setting
+	 *       last पूर्णांकerrupt was set करोes not exceed the frame count setting
 	 */
 	ring->coalesce_count += tx_packets;
-	if (!pdata->tx_frames)
+	अगर (!pdata->tx_frames)
 		tx_set_ic = 0;
-	else if (tx_packets > pdata->tx_frames)
+	अन्यथा अगर (tx_packets > pdata->tx_frames)
 		tx_set_ic = 1;
-	else if ((ring->coalesce_count % pdata->tx_frames) < tx_packets)
+	अन्यथा अगर ((ring->coalesce_count % pdata->tx_frames) < tx_packets)
 		tx_set_ic = 1;
-	else
+	अन्यथा
 		tx_set_ic = 0;
 
 	rdata = XGBE_GET_DESC_DATA(ring, cur_index);
 	rdesc = rdata->rdesc;
 
-	/* Create a context descriptor if this is a TSO packet */
-	if (tso_context || vlan_context) {
-		if (tso_context) {
-			netif_dbg(pdata, tx_queued, pdata->netdev,
+	/* Create a context descriptor अगर this is a TSO packet */
+	अगर (tso_context || vlan_context) अणु
+		अगर (tso_context) अणु
+			netअगर_dbg(pdata, tx_queued, pdata->netdev,
 				  "TSO context descriptor, mss=%u\n",
 				  packet->mss);
 
@@ -1745,10 +1746,10 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 					  TCMSSV, 1);
 
 			ring->tx.cur_mss = packet->mss;
-		}
+		पूर्ण
 
-		if (vlan_context) {
-			netif_dbg(pdata, tx_queued, pdata->netdev,
+		अगर (vlan_context) अणु
+			netअगर_dbg(pdata, tx_queued, pdata->netdev,
 				  "VLAN context descriptor, ctag=%u\n",
 				  packet->vlan_ctag);
 
@@ -1765,14 +1766,14 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 					  VLTV, 1);
 
 			ring->tx.cur_vlan_ctag = packet->vlan_ctag;
-		}
+		पूर्ण
 
 		cur_index++;
 		rdata = XGBE_GET_DESC_DATA(ring, cur_index);
 		rdesc = rdata->rdesc;
-	}
+	पूर्ण
 
-	/* Update buffer address (for TSO this is the header) */
+	/* Update buffer address (क्रम TSO this is the header) */
 	rdesc->desc0 =  cpu_to_le32(lower_32_bits(rdata->skb_dma));
 	rdesc->desc1 =  cpu_to_le32(upper_32_bits(rdata->skb_dma));
 
@@ -1781,12 +1782,12 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 			  rdata->skb_dma_len);
 
 	/* VLAN tag insertion check */
-	if (vlan)
+	अगर (vlan)
 		XGMAC_SET_BITS_LE(rdesc->desc2, TX_NORMAL_DESC2, VTIR,
 				  TX_NORMAL_DESC2_VLAN_INSERT);
 
 	/* Timestamp enablement check */
-	if (XGMAC_GET_BITS(packet->attributes, TX_PACKET_ATTRIBUTES, PTP))
+	अगर (XGMAC_GET_BITS(packet->attributes, TX_PACKET_ATTRIBUTES, PTP))
 		XGMAC_SET_BITS_LE(rdesc->desc2, TX_NORMAL_DESC2, TTSE, 1);
 
 	/* Mark it as First Descriptor */
@@ -1795,11 +1796,11 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 	/* Mark it as a NORMAL descriptor */
 	XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, CTXT, 0);
 
-	/* Set OWN bit if not the first descriptor */
-	if (cur_index != start_index)
+	/* Set OWN bit अगर not the first descriptor */
+	अगर (cur_index != start_index)
 		XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, OWN, 1);
 
-	if (tso) {
+	अगर (tso) अणु
 		/* Enable TSO */
 		XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, TSE, 1);
 		XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, TCPPL,
@@ -1808,28 +1809,28 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 				  packet->tcp_header_len / 4);
 
 		pdata->ext_stats.tx_tso_packets += tx_packets;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Enable CRC and Pad Insertion */
 		XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, CPC, 0);
 
 		/* Enable HW CSUM */
-		if (csum)
+		अगर (csum)
 			XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3,
 					  CIC, 0x3);
 
 		/* Set the total length to be transmitted */
 		XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, FL,
 				  packet->length);
-	}
+	पूर्ण
 
-	if (vxlan) {
+	अगर (vxlan) अणु
 		XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, VNP,
 				  TX_NORMAL_DESC3_VXLAN_PACKET);
 
 		pdata->ext_stats.tx_vxlan_packets += packet->tx_packets;
-	}
+	पूर्ण
 
-	for (i = cur_index - start_index + 1; i < packet->rdesc_count; i++) {
+	क्रम (i = cur_index - start_index + 1; i < packet->rdesc_count; i++) अणु
 		cur_index++;
 		rdata = XGBE_GET_DESC_DATA(ring, cur_index);
 		rdesc = rdata->rdesc;
@@ -1849,16 +1850,16 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 		XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, CTXT, 0);
 
 		/* Enable HW CSUM */
-		if (csum)
+		अगर (csum)
 			XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3,
 					  CIC, 0x3);
-	}
+	पूर्ण
 
-	/* Set LAST bit for the last descriptor */
+	/* Set LAST bit क्रम the last descriptor */
 	XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, LD, 1);
 
 	/* Set IC bit based on Tx coalescing settings */
-	if (tx_set_ic)
+	अगर (tx_set_ic)
 		XGMAC_SET_BITS_LE(rdesc->desc2, TX_NORMAL_DESC2, IC, 1);
 
 	/* Save the Tx info to report back during cleanup */
@@ -1868,18 +1869,18 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 	pdata->ext_stats.txq_packets[channel->queue_index] += tx_packets;
 	pdata->ext_stats.txq_bytes[channel->queue_index] += tx_bytes;
 
-	/* In case the Tx DMA engine is running, make sure everything
-	 * is written to the descriptor(s) before setting the OWN bit
-	 * for the first descriptor
+	/* In हाल the Tx DMA engine is running, make sure everything
+	 * is written to the descriptor(s) beक्रमe setting the OWN bit
+	 * क्रम the first descriptor
 	 */
 	dma_wmb();
 
-	/* Set OWN bit for the first descriptor */
+	/* Set OWN bit क्रम the first descriptor */
 	rdata = XGBE_GET_DESC_DATA(ring, start_index);
 	rdesc = rdata->rdesc;
 	XGMAC_SET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, OWN, 1);
 
-	if (netif_msg_tx_queued(pdata))
+	अगर (netअगर_msg_tx_queued(pdata))
 		xgbe_dump_tx_desc(pdata, ring, start_index,
 				  packet->rdesc_count, 1);
 
@@ -1887,11 +1888,11 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 	smp_wmb();
 
 	ring->cur = cur_index + 1;
-	if (!netdev_xmit_more() ||
-	    netif_xmit_stopped(netdev_get_tx_queue(pdata->netdev,
+	अगर (!netdev_xmit_more() ||
+	    netअगर_xmit_stopped(netdev_get_tx_queue(pdata->netdev,
 						   channel->queue_index)))
 		xgbe_tx_start_xmit(channel, ring);
-	else
+	अन्यथा
 		ring->tx.xmit_more = 1;
 
 	DBGPR("  %s: descriptors %u to %u written\n",
@@ -1899,34 +1900,34 @@ static void xgbe_dev_xmit(struct xgbe_channel *channel)
 	      (ring->cur - 1) & (ring->rdesc_count - 1));
 
 	DBGPR("<--xgbe_dev_xmit\n");
-}
+पूर्ण
 
-static int xgbe_dev_read(struct xgbe_channel *channel)
-{
-	struct xgbe_prv_data *pdata = channel->pdata;
-	struct xgbe_ring *ring = channel->rx_ring;
-	struct xgbe_ring_data *rdata;
-	struct xgbe_ring_desc *rdesc;
-	struct xgbe_packet_data *packet = &ring->packet_data;
-	struct net_device *netdev = pdata->netdev;
-	unsigned int err, etlt, l34t;
+अटल पूर्णांक xgbe_dev_पढ़ो(काष्ठा xgbe_channel *channel)
+अणु
+	काष्ठा xgbe_prv_data *pdata = channel->pdata;
+	काष्ठा xgbe_ring *ring = channel->rx_ring;
+	काष्ठा xgbe_ring_data *rdata;
+	काष्ठा xgbe_ring_desc *rdesc;
+	काष्ठा xgbe_packet_data *packet = &ring->packet_data;
+	काष्ठा net_device *netdev = pdata->netdev;
+	अचिन्हित पूर्णांक err, etlt, l34t;
 
 	DBGPR("-->xgbe_dev_read: cur = %d\n", ring->cur);
 
 	rdata = XGBE_GET_DESC_DATA(ring, ring->cur);
 	rdesc = rdata->rdesc;
 
-	/* Check for data availability */
-	if (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, OWN))
-		return 1;
+	/* Check क्रम data availability */
+	अगर (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, OWN))
+		वापस 1;
 
-	/* Make sure descriptor fields are read after reading the OWN bit */
+	/* Make sure descriptor fields are पढ़ो after पढ़ोing the OWN bit */
 	dma_rmb();
 
-	if (netif_msg_rx_status(pdata))
+	अगर (netअगर_msg_rx_status(pdata))
 		xgbe_dump_rx_desc(pdata, ring, ring->cur);
 
-	if (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, CTXT)) {
+	अगर (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, CTXT)) अणु
 		/* Timestamp Context Descriptor */
 		xgbe_get_rx_tstamp(packet, rdesc);
 
@@ -1934,123 +1935,123 @@ static int xgbe_dev_read(struct xgbe_channel *channel)
 			       CONTEXT, 1);
 		XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 			       CONTEXT_NEXT, 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Normal Descriptor, be sure Context Descriptor bit is off */
 	XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES, CONTEXT, 0);
 
-	/* Indicate if a Context Descriptor is next */
-	if (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, CDA))
+	/* Indicate अगर a Context Descriptor is next */
+	अगर (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, CDA))
 		XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 			       CONTEXT_NEXT, 1);
 
 	/* Get the header length */
-	if (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, FD)) {
+	अगर (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, FD)) अणु
 		XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 			       FIRST, 1);
 		rdata->rx.hdr_len = XGMAC_GET_BITS_LE(rdesc->desc2,
 						      RX_NORMAL_DESC2, HL);
-		if (rdata->rx.hdr_len)
+		अगर (rdata->rx.hdr_len)
 			pdata->ext_stats.rx_split_header_packets++;
-	} else {
+	पूर्ण अन्यथा अणु
 		XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 			       FIRST, 0);
-	}
+	पूर्ण
 
 	/* Get the RSS hash */
-	if (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, RSV)) {
+	अगर (XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, RSV)) अणु
 		XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 			       RSS_HASH, 1);
 
 		packet->rss_hash = le32_to_cpu(rdesc->desc1);
 
 		l34t = XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, L34T);
-		switch (l34t) {
-		case RX_DESC3_L34T_IPV4_TCP:
-		case RX_DESC3_L34T_IPV4_UDP:
-		case RX_DESC3_L34T_IPV6_TCP:
-		case RX_DESC3_L34T_IPV6_UDP:
+		चयन (l34t) अणु
+		हाल RX_DESC3_L34T_IPV4_TCP:
+		हाल RX_DESC3_L34T_IPV4_UDP:
+		हाल RX_DESC3_L34T_IPV6_TCP:
+		हाल RX_DESC3_L34T_IPV6_UDP:
 			packet->rss_hash_type = PKT_HASH_TYPE_L4;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			packet->rss_hash_type = PKT_HASH_TYPE_L3;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Not all the data has been transferred for this packet */
-	if (!XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, LD))
-		return 0;
+	/* Not all the data has been transferred क्रम this packet */
+	अगर (!XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, LD))
+		वापस 0;
 
-	/* This is the last of the data for this packet */
+	/* This is the last of the data क्रम this packet */
 	XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 		       LAST, 1);
 
 	/* Get the packet length */
 	rdata->rx.len = XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, PL);
 
-	/* Set checksum done indicator as appropriate */
-	if (netdev->features & NETIF_F_RXCSUM) {
+	/* Set checksum करोne indicator as appropriate */
+	अगर (netdev->features & NETIF_F_RXCSUM) अणु
 		XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 			       CSUM_DONE, 1);
 		XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 			       TNPCSUM_DONE, 1);
-	}
+	पूर्ण
 
 	/* Set the tunneled packet indicator */
-	if (XGMAC_GET_BITS_LE(rdesc->desc2, RX_NORMAL_DESC2, TNP)) {
+	अगर (XGMAC_GET_BITS_LE(rdesc->desc2, RX_NORMAL_DESC2, TNP)) अणु
 		XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 			       TNP, 1);
 		pdata->ext_stats.rx_vxlan_packets++;
 
 		l34t = XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, L34T);
-		switch (l34t) {
-		case RX_DESC3_L34T_IPV4_UNKNOWN:
-		case RX_DESC3_L34T_IPV6_UNKNOWN:
+		चयन (l34t) अणु
+		हाल RX_DESC3_L34T_IPV4_UNKNOWN:
+		हाल RX_DESC3_L34T_IPV6_UNKNOWN:
 			XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 				       TNPCSUM_DONE, 0);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* Check for errors (only valid in last descriptor) */
+	/* Check क्रम errors (only valid in last descriptor) */
 	err = XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, ES);
 	etlt = XGMAC_GET_BITS_LE(rdesc->desc3, RX_NORMAL_DESC3, ETLT);
-	netif_dbg(pdata, rx_status, netdev, "err=%u, etlt=%#x\n", err, etlt);
+	netअगर_dbg(pdata, rx_status, netdev, "err=%u, etlt=%#x\n", err, etlt);
 
-	if (!err || !etlt) {
-		/* No error if err is 0 or etlt is 0 */
-		if ((etlt == 0x09) &&
-		    (netdev->features & NETIF_F_HW_VLAN_CTAG_RX)) {
+	अगर (!err || !etlt) अणु
+		/* No error अगर err is 0 or etlt is 0 */
+		अगर ((etlt == 0x09) &&
+		    (netdev->features & NETIF_F_HW_VLAN_CTAG_RX)) अणु
 			XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 				       VLAN_CTAG, 1);
 			packet->vlan_ctag = XGMAC_GET_BITS_LE(rdesc->desc0,
 							      RX_NORMAL_DESC0,
 							      OVT);
-			netif_dbg(pdata, rx_status, netdev, "vlan-ctag=%#06x\n",
+			netअगर_dbg(pdata, rx_status, netdev, "vlan-ctag=%#06x\n",
 				  packet->vlan_ctag);
-		}
-	} else {
-		unsigned int tnp = XGMAC_GET_BITS(packet->attributes,
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अचिन्हित पूर्णांक tnp = XGMAC_GET_BITS(packet->attributes,
 						  RX_PACKET_ATTRIBUTES, TNP);
 
-		if ((etlt == 0x05) || (etlt == 0x06)) {
+		अगर ((etlt == 0x05) || (etlt == 0x06)) अणु
 			XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 				       CSUM_DONE, 0);
 			XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 				       TNPCSUM_DONE, 0);
 			pdata->ext_stats.rx_csum_errors++;
-		} else if (tnp && ((etlt == 0x09) || (etlt == 0x0a))) {
+		पूर्ण अन्यथा अगर (tnp && ((etlt == 0x09) || (etlt == 0x0a))) अणु
 			XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 				       CSUM_DONE, 0);
 			XGMAC_SET_BITS(packet->attributes, RX_PACKET_ATTRIBUTES,
 				       TNPCSUM_DONE, 0);
 			pdata->ext_stats.rx_vxlan_csum_errors++;
-		} else {
+		पूर्ण अन्यथा अणु
 			XGMAC_SET_BITS(packet->errors, RX_PACKET_ERRORS,
 				       FRAME, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	pdata->ext_stats.rxq_packets[channel->queue_index]++;
 	pdata->ext_stats.rxq_bytes[channel->queue_index] += rdata->rx.len;
@@ -2058,107 +2059,107 @@ static int xgbe_dev_read(struct xgbe_channel *channel)
 	DBGPR("<--xgbe_dev_read: %s - descriptor=%u (cur=%d)\n", channel->name,
 	      ring->cur & (ring->rdesc_count - 1), ring->cur);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_is_context_desc(struct xgbe_ring_desc *rdesc)
-{
+अटल पूर्णांक xgbe_is_context_desc(काष्ठा xgbe_ring_desc *rdesc)
+अणु
 	/* Rx and Tx share CTXT bit, so check TDES3.CTXT bit */
-	return XGMAC_GET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, CTXT);
-}
+	वापस XGMAC_GET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, CTXT);
+पूर्ण
 
-static int xgbe_is_last_desc(struct xgbe_ring_desc *rdesc)
-{
+अटल पूर्णांक xgbe_is_last_desc(काष्ठा xgbe_ring_desc *rdesc)
+अणु
 	/* Rx and Tx share LD bit, so check TDES3.LD bit */
-	return XGMAC_GET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, LD);
-}
+	वापस XGMAC_GET_BITS_LE(rdesc->desc3, TX_NORMAL_DESC3, LD);
+पूर्ण
 
-static int xgbe_enable_int(struct xgbe_channel *channel,
-			   enum xgbe_int int_id)
-{
-	switch (int_id) {
-	case XGMAC_INT_DMA_CH_SR_TI:
+अटल पूर्णांक xgbe_enable_पूर्णांक(काष्ठा xgbe_channel *channel,
+			   क्रमागत xgbe_पूर्णांक पूर्णांक_id)
+अणु
+	चयन (पूर्णांक_id) अणु
+	हाल XGMAC_INT_DMA_CH_SR_TI:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, TIE, 1);
-		break;
-	case XGMAC_INT_DMA_CH_SR_TPS:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_TPS:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, TXSE, 1);
-		break;
-	case XGMAC_INT_DMA_CH_SR_TBU:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_TBU:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, TBUE, 1);
-		break;
-	case XGMAC_INT_DMA_CH_SR_RI:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_RI:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, RIE, 1);
-		break;
-	case XGMAC_INT_DMA_CH_SR_RBU:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_RBU:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, RBUE, 1);
-		break;
-	case XGMAC_INT_DMA_CH_SR_RPS:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_RPS:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, RSE, 1);
-		break;
-	case XGMAC_INT_DMA_CH_SR_TI_RI:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_TI_RI:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, TIE, 1);
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, RIE, 1);
-		break;
-	case XGMAC_INT_DMA_CH_SR_FBE:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_FBE:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, FBEE, 1);
-		break;
-	case XGMAC_INT_DMA_ALL:
+		अवरोध;
+	हाल XGMAC_INT_DMA_ALL:
 		channel->curr_ier |= channel->saved_ier;
-		break;
-	default:
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
 	XGMAC_DMA_IOWRITE(channel, DMA_CH_IER, channel->curr_ier);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_disable_int(struct xgbe_channel *channel,
-			    enum xgbe_int int_id)
-{
-	switch (int_id) {
-	case XGMAC_INT_DMA_CH_SR_TI:
+अटल पूर्णांक xgbe_disable_पूर्णांक(काष्ठा xgbe_channel *channel,
+			    क्रमागत xgbe_पूर्णांक पूर्णांक_id)
+अणु
+	चयन (पूर्णांक_id) अणु
+	हाल XGMAC_INT_DMA_CH_SR_TI:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, TIE, 0);
-		break;
-	case XGMAC_INT_DMA_CH_SR_TPS:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_TPS:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, TXSE, 0);
-		break;
-	case XGMAC_INT_DMA_CH_SR_TBU:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_TBU:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, TBUE, 0);
-		break;
-	case XGMAC_INT_DMA_CH_SR_RI:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_RI:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, RIE, 0);
-		break;
-	case XGMAC_INT_DMA_CH_SR_RBU:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_RBU:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, RBUE, 0);
-		break;
-	case XGMAC_INT_DMA_CH_SR_RPS:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_RPS:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, RSE, 0);
-		break;
-	case XGMAC_INT_DMA_CH_SR_TI_RI:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_TI_RI:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, TIE, 0);
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, RIE, 0);
-		break;
-	case XGMAC_INT_DMA_CH_SR_FBE:
+		अवरोध;
+	हाल XGMAC_INT_DMA_CH_SR_FBE:
 		XGMAC_SET_BITS(channel->curr_ier, DMA_CH_IER, FBEE, 0);
-		break;
-	case XGMAC_INT_DMA_ALL:
+		अवरोध;
+	हाल XGMAC_INT_DMA_ALL:
 		channel->saved_ier = channel->curr_ier;
 		channel->curr_ier = 0;
-		break;
-	default:
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
 	XGMAC_DMA_IOWRITE(channel, DMA_CH_IER, channel->curr_ier);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __xgbe_exit(struct xgbe_prv_data *pdata)
-{
-	unsigned int count = 2000;
+अटल पूर्णांक __xgbe_निकास(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक count = 2000;
 
 	DBGPR("-->xgbe_exit\n");
 
@@ -2167,58 +2168,58 @@ static int __xgbe_exit(struct xgbe_prv_data *pdata)
 	usleep_range(10, 15);
 
 	/* Poll Until Poll Condition */
-	while (--count && XGMAC_IOREAD_BITS(pdata, DMA_MR, SWR))
+	जबतक (--count && XGMAC_IOREAD_BITS(pdata, DMA_MR, SWR))
 		usleep_range(500, 600);
 
-	if (!count)
-		return -EBUSY;
+	अगर (!count)
+		वापस -EBUSY;
 
 	DBGPR("<--xgbe_exit\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int xgbe_exit(struct xgbe_prv_data *pdata)
-{
-	int ret;
+अटल पूर्णांक xgbe_निकास(काष्ठा xgbe_prv_data *pdata)
+अणु
+	पूर्णांक ret;
 
-	/* To guard against possible incorrectly generated interrupts,
+	/* To guard against possible incorrectly generated पूर्णांकerrupts,
 	 * issue the software reset twice.
 	 */
-	ret = __xgbe_exit(pdata);
-	if (ret)
-		return ret;
+	ret = __xgbe_निकास(pdata);
+	अगर (ret)
+		वापस ret;
 
-	return __xgbe_exit(pdata);
-}
+	वापस __xgbe_निकास(pdata);
+पूर्ण
 
-static int xgbe_flush_tx_queues(struct xgbe_prv_data *pdata)
-{
-	unsigned int i, count;
+अटल पूर्णांक xgbe_flush_tx_queues(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i, count;
 
-	if (XGMAC_GET_BITS(pdata->hw_feat.version, MAC_VR, SNPSVER) < 0x21)
-		return 0;
+	अगर (XGMAC_GET_BITS(pdata->hw_feat.version, MAC_VR, SNPSVER) < 0x21)
+		वापस 0;
 
-	for (i = 0; i < pdata->tx_q_count; i++)
+	क्रम (i = 0; i < pdata->tx_q_count; i++)
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_TQOMR, FTQ, 1);
 
 	/* Poll Until Poll Condition */
-	for (i = 0; i < pdata->tx_q_count; i++) {
+	क्रम (i = 0; i < pdata->tx_q_count; i++) अणु
 		count = 2000;
-		while (--count && XGMAC_MTL_IOREAD_BITS(pdata, i,
+		जबतक (--count && XGMAC_MTL_IOREAD_BITS(pdata, i,
 							MTL_Q_TQOMR, FTQ))
 			usleep_range(500, 600);
 
-		if (!count)
-			return -EBUSY;
-	}
+		अगर (!count)
+			वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void xgbe_config_dma_bus(struct xgbe_prv_data *pdata)
-{
-	unsigned int sbmr;
+अटल व्योम xgbe_config_dma_bus(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक sbmr;
 
 	sbmr = XGMAC_IOREAD(pdata, DMA_SBMR);
 
@@ -2235,375 +2236,375 @@ static void xgbe_config_dma_bus(struct xgbe_prv_data *pdata)
 	XGMAC_IOWRITE(pdata, DMA_SBMR, sbmr);
 
 	/* Set descriptor fetching threshold */
-	if (pdata->vdata->tx_desc_prefetch)
+	अगर (pdata->vdata->tx_desc_prefetch)
 		XGMAC_IOWRITE_BITS(pdata, DMA_TXEDMACR, TDPS,
 				   pdata->vdata->tx_desc_prefetch);
 
-	if (pdata->vdata->rx_desc_prefetch)
+	अगर (pdata->vdata->rx_desc_prefetch)
 		XGMAC_IOWRITE_BITS(pdata, DMA_RXEDMACR, RDPS,
 				   pdata->vdata->rx_desc_prefetch);
-}
+पूर्ण
 
-static void xgbe_config_dma_cache(struct xgbe_prv_data *pdata)
-{
+अटल व्योम xgbe_config_dma_cache(काष्ठा xgbe_prv_data *pdata)
+अणु
 	XGMAC_IOWRITE(pdata, DMA_AXIARCR, pdata->arcr);
 	XGMAC_IOWRITE(pdata, DMA_AXIAWCR, pdata->awcr);
-	if (pdata->awarcr)
+	अगर (pdata->awarcr)
 		XGMAC_IOWRITE(pdata, DMA_AXIAWARCR, pdata->awarcr);
-}
+पूर्ण
 
-static void xgbe_config_mtl_mode(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_config_mtl_mode(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* Set Tx to weighted round robin scheduling algorithm */
 	XGMAC_IOWRITE_BITS(pdata, MTL_OMR, ETSALG, MTL_ETSALG_WRR);
 
 	/* Set Tx traffic classes to use WRR algorithm with equal weights */
-	for (i = 0; i < pdata->hw_feat.tc_cnt; i++) {
+	क्रम (i = 0; i < pdata->hw_feat.tc_cnt; i++) अणु
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_TC_ETSCR, TSA,
 				       MTL_TSA_ETS);
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_TC_QWR, QW, 1);
-	}
+	पूर्ण
 
 	/* Set Rx to strict priority algorithm */
 	XGMAC_IOWRITE_BITS(pdata, MTL_OMR, RAA, MTL_RAA_SP);
-}
+पूर्ण
 
-static void xgbe_queue_flow_control_threshold(struct xgbe_prv_data *pdata,
-					      unsigned int queue,
-					      unsigned int q_fifo_size)
-{
-	unsigned int frame_fifo_size;
-	unsigned int rfa, rfd;
+अटल व्योम xgbe_queue_flow_control_threshold(काष्ठा xgbe_prv_data *pdata,
+					      अचिन्हित पूर्णांक queue,
+					      अचिन्हित पूर्णांक q_fअगरo_size)
+अणु
+	अचिन्हित पूर्णांक frame_fअगरo_size;
+	अचिन्हित पूर्णांक rfa, rfd;
 
-	frame_fifo_size = XGMAC_FLOW_CONTROL_ALIGN(xgbe_get_max_frame(pdata));
+	frame_fअगरo_size = XGMAC_FLOW_CONTROL_ALIGN(xgbe_get_max_frame(pdata));
 
-	if (pdata->pfcq[queue] && (q_fifo_size > pdata->pfc_rfa)) {
-		/* PFC is active for this queue */
+	अगर (pdata->pfcq[queue] && (q_fअगरo_size > pdata->pfc_rfa)) अणु
+		/* PFC is active क्रम this queue */
 		rfa = pdata->pfc_rfa;
-		rfd = rfa + frame_fifo_size;
-		if (rfd > XGMAC_FLOW_CONTROL_MAX)
+		rfd = rfa + frame_fअगरo_size;
+		अगर (rfd > XGMAC_FLOW_CONTROL_MAX)
 			rfd = XGMAC_FLOW_CONTROL_MAX;
-		if (rfa >= XGMAC_FLOW_CONTROL_MAX)
+		अगर (rfa >= XGMAC_FLOW_CONTROL_MAX)
 			rfa = XGMAC_FLOW_CONTROL_MAX - XGMAC_FLOW_CONTROL_UNIT;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* This path deals with just maximum frame sizes which are
 		 * limited to a jumbo frame of 9,000 (plus headers, etc.)
 		 * so we can never exceed the maximum allowable RFA/RFD
 		 * values.
 		 */
-		if (q_fifo_size <= 2048) {
-			/* rx_rfd to zero to signal no flow control */
+		अगर (q_fअगरo_size <= 2048) अणु
+			/* rx_rfd to zero to संकेत no flow control */
 			pdata->rx_rfa[queue] = 0;
 			pdata->rx_rfd[queue] = 0;
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (q_fifo_size <= 4096) {
+		अगर (q_fअगरo_size <= 4096) अणु
 			/* Between 2048 and 4096 */
 			pdata->rx_rfa[queue] = 0;	/* Full - 1024 bytes */
 			pdata->rx_rfd[queue] = 1;	/* Full - 1536 bytes */
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (q_fifo_size <= frame_fifo_size) {
+		अगर (q_fअगरo_size <= frame_fअगरo_size) अणु
 			/* Between 4096 and max-frame */
 			pdata->rx_rfa[queue] = 2;	/* Full - 2048 bytes */
 			pdata->rx_rfd[queue] = 5;	/* Full - 3584 bytes */
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (q_fifo_size <= (frame_fifo_size * 3)) {
+		अगर (q_fअगरo_size <= (frame_fअगरo_size * 3)) अणु
 			/* Between max-frame and 3 max-frames,
-			 * trigger if we get just over a frame of data and
+			 * trigger अगर we get just over a frame of data and
 			 * resume when we have just under half a frame left.
 			 */
-			rfa = q_fifo_size - frame_fifo_size;
-			rfd = rfa + (frame_fifo_size / 2);
-		} else {
+			rfa = q_fअगरo_size - frame_fअगरo_size;
+			rfd = rfa + (frame_fअगरo_size / 2);
+		पूर्ण अन्यथा अणु
 			/* Above 3 max-frames - trigger when just over
 			 * 2 frames of space available
 			 */
-			rfa = frame_fifo_size * 2;
+			rfa = frame_fअगरo_size * 2;
 			rfa += XGMAC_FLOW_CONTROL_UNIT;
-			rfd = rfa + frame_fifo_size;
-		}
-	}
+			rfd = rfa + frame_fअगरo_size;
+		पूर्ण
+	पूर्ण
 
 	pdata->rx_rfa[queue] = XGMAC_FLOW_CONTROL_VALUE(rfa);
 	pdata->rx_rfd[queue] = XGMAC_FLOW_CONTROL_VALUE(rfd);
-}
+पूर्ण
 
-static void xgbe_calculate_flow_control_threshold(struct xgbe_prv_data *pdata,
-						  unsigned int *fifo)
-{
-	unsigned int q_fifo_size;
-	unsigned int i;
+अटल व्योम xgbe_calculate_flow_control_threshold(काष्ठा xgbe_prv_data *pdata,
+						  अचिन्हित पूर्णांक *fअगरo)
+अणु
+	अचिन्हित पूर्णांक q_fअगरo_size;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->rx_q_count; i++) {
-		q_fifo_size = (fifo[i] + 1) * XGMAC_FIFO_UNIT;
+	क्रम (i = 0; i < pdata->rx_q_count; i++) अणु
+		q_fअगरo_size = (fअगरo[i] + 1) * XGMAC_FIFO_UNIT;
 
-		xgbe_queue_flow_control_threshold(pdata, i, q_fifo_size);
-	}
-}
+		xgbe_queue_flow_control_threshold(pdata, i, q_fअगरo_size);
+	पूर्ण
+पूर्ण
 
-static void xgbe_config_flow_control_threshold(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_config_flow_control_threshold(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < pdata->rx_q_count; i++) {
+	क्रम (i = 0; i < pdata->rx_q_count; i++) अणु
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_RQFCR, RFA,
 				       pdata->rx_rfa[i]);
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_RQFCR, RFD,
 				       pdata->rx_rfd[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int xgbe_get_tx_fifo_size(struct xgbe_prv_data *pdata)
-{
-	/* The configured value may not be the actual amount of fifo RAM */
-	return min_t(unsigned int, pdata->tx_max_fifo_size,
-		     pdata->hw_feat.tx_fifo_size);
-}
+अटल अचिन्हित पूर्णांक xgbe_get_tx_fअगरo_size(काष्ठा xgbe_prv_data *pdata)
+अणु
+	/* The configured value may not be the actual amount of fअगरo RAM */
+	वापस min_t(अचिन्हित पूर्णांक, pdata->tx_max_fअगरo_size,
+		     pdata->hw_feat.tx_fअगरo_size);
+पूर्ण
 
-static unsigned int xgbe_get_rx_fifo_size(struct xgbe_prv_data *pdata)
-{
-	/* The configured value may not be the actual amount of fifo RAM */
-	return min_t(unsigned int, pdata->rx_max_fifo_size,
-		     pdata->hw_feat.rx_fifo_size);
-}
+अटल अचिन्हित पूर्णांक xgbe_get_rx_fअगरo_size(काष्ठा xgbe_prv_data *pdata)
+अणु
+	/* The configured value may not be the actual amount of fअगरo RAM */
+	वापस min_t(अचिन्हित पूर्णांक, pdata->rx_max_fअगरo_size,
+		     pdata->hw_feat.rx_fअगरo_size);
+पूर्ण
 
-static void xgbe_calculate_equal_fifo(unsigned int fifo_size,
-				      unsigned int queue_count,
-				      unsigned int *fifo)
-{
-	unsigned int q_fifo_size;
-	unsigned int p_fifo;
-	unsigned int i;
+अटल व्योम xgbe_calculate_equal_fअगरo(अचिन्हित पूर्णांक fअगरo_size,
+				      अचिन्हित पूर्णांक queue_count,
+				      अचिन्हित पूर्णांक *fअगरo)
+अणु
+	अचिन्हित पूर्णांक q_fअगरo_size;
+	अचिन्हित पूर्णांक p_fअगरo;
+	अचिन्हित पूर्णांक i;
 
-	q_fifo_size = fifo_size / queue_count;
+	q_fअगरo_size = fअगरo_size / queue_count;
 
-	/* Calculate the fifo setting by dividing the queue's fifo size
-	 * by the fifo allocation increment (with 0 representing the
+	/* Calculate the fअगरo setting by भागiding the queue's fअगरo size
+	 * by the fअगरo allocation increment (with 0 representing the
 	 * base allocation increment so decrement the result by 1).
 	 */
-	p_fifo = q_fifo_size / XGMAC_FIFO_UNIT;
-	if (p_fifo)
-		p_fifo--;
+	p_fअगरo = q_fअगरo_size / XGMAC_FIFO_UNIT;
+	अगर (p_fअगरo)
+		p_fअगरo--;
 
-	/* Distribute the fifo equally amongst the queues */
-	for (i = 0; i < queue_count; i++)
-		fifo[i] = p_fifo;
-}
+	/* Distribute the fअगरo equally amongst the queues */
+	क्रम (i = 0; i < queue_count; i++)
+		fअगरo[i] = p_fअगरo;
+पूर्ण
 
-static unsigned int xgbe_set_nonprio_fifos(unsigned int fifo_size,
-					   unsigned int queue_count,
-					   unsigned int *fifo)
-{
-	unsigned int i;
+अटल अचिन्हित पूर्णांक xgbe_set_nonprio_fअगरos(अचिन्हित पूर्णांक fअगरo_size,
+					   अचिन्हित पूर्णांक queue_count,
+					   अचिन्हित पूर्णांक *fअगरo)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	BUILD_BUG_ON_NOT_POWER_OF_2(XGMAC_FIFO_MIN_ALLOC);
 
-	if (queue_count <= IEEE_8021QAZ_MAX_TCS)
-		return fifo_size;
+	अगर (queue_count <= IEEE_8021QAZ_MAX_TCS)
+		वापस fअगरo_size;
 
-	/* Rx queues 9 and up are for specialized packets,
+	/* Rx queues 9 and up are क्रम specialized packets,
 	 * such as PTP or DCB control packets, etc. and
-	 * don't require a large fifo
+	 * करोn't require a large fअगरo
 	 */
-	for (i = IEEE_8021QAZ_MAX_TCS; i < queue_count; i++) {
-		fifo[i] = (XGMAC_FIFO_MIN_ALLOC / XGMAC_FIFO_UNIT) - 1;
-		fifo_size -= XGMAC_FIFO_MIN_ALLOC;
-	}
+	क्रम (i = IEEE_8021QAZ_MAX_TCS; i < queue_count; i++) अणु
+		fअगरo[i] = (XGMAC_FIFO_MIN_ALLOC / XGMAC_FIFO_UNIT) - 1;
+		fअगरo_size -= XGMAC_FIFO_MIN_ALLOC;
+	पूर्ण
 
-	return fifo_size;
-}
+	वापस fअगरo_size;
+पूर्ण
 
-static unsigned int xgbe_get_pfc_delay(struct xgbe_prv_data *pdata)
-{
-	unsigned int delay;
+अटल अचिन्हित पूर्णांक xgbe_get_pfc_delay(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक delay;
 
 	/* If a delay has been provided, use that */
-	if (pdata->pfc->delay)
-		return pdata->pfc->delay / 8;
+	अगर (pdata->pfc->delay)
+		वापस pdata->pfc->delay / 8;
 
-	/* Allow for two maximum size frames */
+	/* Allow क्रम two maximum size frames */
 	delay = xgbe_get_max_frame(pdata);
 	delay += XGMAC_ETH_PREAMBLE;
 	delay *= 2;
 
-	/* Allow for PFC frame */
+	/* Allow क्रम PFC frame */
 	delay += XGMAC_PFC_DATA_LEN;
 	delay += ETH_HLEN + ETH_FCS_LEN;
 	delay += XGMAC_ETH_PREAMBLE;
 
-	/* Allow for miscellaneous delays (LPI exit, cable, etc.) */
+	/* Allow क्रम miscellaneous delays (LPI निकास, cable, etc.) */
 	delay += XGMAC_PFC_DELAYS;
 
-	return delay;
-}
+	वापस delay;
+पूर्ण
 
-static unsigned int xgbe_get_pfc_queues(struct xgbe_prv_data *pdata)
-{
-	unsigned int count, prio_queues;
-	unsigned int i;
+अटल अचिन्हित पूर्णांक xgbe_get_pfc_queues(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक count, prio_queues;
+	अचिन्हित पूर्णांक i;
 
-	if (!pdata->pfc->pfc_en)
-		return 0;
+	अगर (!pdata->pfc->pfc_en)
+		वापस 0;
 
 	count = 0;
 	prio_queues = XGMAC_PRIO_QUEUES(pdata->rx_q_count);
-	for (i = 0; i < prio_queues; i++) {
-		if (!xgbe_is_pfc_queue(pdata, i))
-			continue;
+	क्रम (i = 0; i < prio_queues; i++) अणु
+		अगर (!xgbe_is_pfc_queue(pdata, i))
+			जारी;
 
 		pdata->pfcq[i] = 1;
 		count++;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void xgbe_calculate_dcb_fifo(struct xgbe_prv_data *pdata,
-				    unsigned int fifo_size,
-				    unsigned int *fifo)
-{
-	unsigned int q_fifo_size, rem_fifo, addn_fifo;
-	unsigned int prio_queues;
-	unsigned int pfc_count;
-	unsigned int i;
+अटल व्योम xgbe_calculate_dcb_fअगरo(काष्ठा xgbe_prv_data *pdata,
+				    अचिन्हित पूर्णांक fअगरo_size,
+				    अचिन्हित पूर्णांक *fअगरo)
+अणु
+	अचिन्हित पूर्णांक q_fअगरo_size, rem_fअगरo, addn_fअगरo;
+	अचिन्हित पूर्णांक prio_queues;
+	अचिन्हित पूर्णांक pfc_count;
+	अचिन्हित पूर्णांक i;
 
-	q_fifo_size = XGMAC_FIFO_ALIGN(xgbe_get_max_frame(pdata));
+	q_fअगरo_size = XGMAC_FIFO_ALIGN(xgbe_get_max_frame(pdata));
 	prio_queues = XGMAC_PRIO_QUEUES(pdata->rx_q_count);
 	pfc_count = xgbe_get_pfc_queues(pdata);
 
-	if (!pfc_count || ((q_fifo_size * prio_queues) > fifo_size)) {
-		/* No traffic classes with PFC enabled or can't do lossless */
-		xgbe_calculate_equal_fifo(fifo_size, prio_queues, fifo);
-		return;
-	}
+	अगर (!pfc_count || ((q_fअगरo_size * prio_queues) > fअगरo_size)) अणु
+		/* No traffic classes with PFC enabled or can't करो lossless */
+		xgbe_calculate_equal_fअगरo(fअगरo_size, prio_queues, fअगरo);
+		वापस;
+	पूर्ण
 
-	/* Calculate how much fifo we have to play with */
-	rem_fifo = fifo_size - (q_fifo_size * prio_queues);
+	/* Calculate how much fअगरo we have to play with */
+	rem_fअगरo = fअगरo_size - (q_fअगरo_size * prio_queues);
 
-	/* Calculate how much more than base fifo PFC needs, which also
-	 * becomes the threshold activation point (RFA)
+	/* Calculate how much more than base fअगरo PFC needs, which also
+	 * becomes the threshold activation poपूर्णांक (RFA)
 	 */
 	pdata->pfc_rfa = xgbe_get_pfc_delay(pdata);
 	pdata->pfc_rfa = XGMAC_FLOW_CONTROL_ALIGN(pdata->pfc_rfa);
 
-	if (pdata->pfc_rfa > q_fifo_size) {
-		addn_fifo = pdata->pfc_rfa - q_fifo_size;
-		addn_fifo = XGMAC_FIFO_ALIGN(addn_fifo);
-	} else {
-		addn_fifo = 0;
-	}
+	अगर (pdata->pfc_rfa > q_fअगरo_size) अणु
+		addn_fअगरo = pdata->pfc_rfa - q_fअगरo_size;
+		addn_fअगरo = XGMAC_FIFO_ALIGN(addn_fअगरo);
+	पूर्ण अन्यथा अणु
+		addn_fअगरo = 0;
+	पूर्ण
 
-	/* Calculate DCB fifo settings:
-	 *   - distribute remaining fifo between the VLAN priority
+	/* Calculate DCB fअगरo settings:
+	 *   - distribute reमुख्यing fअगरo between the VLAN priority
 	 *     queues based on traffic class PFC enablement and overall
 	 *     priority (0 is lowest priority, so start at highest)
 	 */
 	i = prio_queues;
-	while (i > 0) {
+	जबतक (i > 0) अणु
 		i--;
 
-		fifo[i] = (q_fifo_size / XGMAC_FIFO_UNIT) - 1;
+		fअगरo[i] = (q_fअगरo_size / XGMAC_FIFO_UNIT) - 1;
 
-		if (!pdata->pfcq[i] || !addn_fifo)
-			continue;
+		अगर (!pdata->pfcq[i] || !addn_fअगरo)
+			जारी;
 
-		if (addn_fifo > rem_fifo) {
+		अगर (addn_fअगरo > rem_fअगरo) अणु
 			netdev_warn(pdata->netdev,
 				    "RXq%u cannot set needed fifo size\n", i);
-			if (!rem_fifo)
-				continue;
+			अगर (!rem_fअगरo)
+				जारी;
 
-			addn_fifo = rem_fifo;
-		}
+			addn_fअगरo = rem_fअगरo;
+		पूर्ण
 
-		fifo[i] += (addn_fifo / XGMAC_FIFO_UNIT);
-		rem_fifo -= addn_fifo;
-	}
+		fअगरo[i] += (addn_fअगरo / XGMAC_FIFO_UNIT);
+		rem_fअगरo -= addn_fअगरo;
+	पूर्ण
 
-	if (rem_fifo) {
-		unsigned int inc_fifo = rem_fifo / prio_queues;
+	अगर (rem_fअगरo) अणु
+		अचिन्हित पूर्णांक inc_fअगरo = rem_fअगरo / prio_queues;
 
-		/* Distribute remaining fifo across queues */
-		for (i = 0; i < prio_queues; i++)
-			fifo[i] += (inc_fifo / XGMAC_FIFO_UNIT);
-	}
-}
+		/* Distribute reमुख्यing fअगरo across queues */
+		क्रम (i = 0; i < prio_queues; i++)
+			fअगरo[i] += (inc_fअगरo / XGMAC_FIFO_UNIT);
+	पूर्ण
+पूर्ण
 
-static void xgbe_config_tx_fifo_size(struct xgbe_prv_data *pdata)
-{
-	unsigned int fifo_size;
-	unsigned int fifo[XGBE_MAX_QUEUES];
-	unsigned int i;
+अटल व्योम xgbe_config_tx_fअगरo_size(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक fअगरo_size;
+	अचिन्हित पूर्णांक fअगरo[XGBE_MAX_QUEUES];
+	अचिन्हित पूर्णांक i;
 
-	fifo_size = xgbe_get_tx_fifo_size(pdata);
+	fअगरo_size = xgbe_get_tx_fअगरo_size(pdata);
 
-	xgbe_calculate_equal_fifo(fifo_size, pdata->tx_q_count, fifo);
+	xgbe_calculate_equal_fअगरo(fअगरo_size, pdata->tx_q_count, fअगरo);
 
-	for (i = 0; i < pdata->tx_q_count; i++)
-		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_TQOMR, TQS, fifo[i]);
+	क्रम (i = 0; i < pdata->tx_q_count; i++)
+		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_TQOMR, TQS, fअगरo[i]);
 
-	netif_info(pdata, drv, pdata->netdev,
+	netअगर_info(pdata, drv, pdata->netdev,
 		   "%d Tx hardware queues, %d byte fifo per queue\n",
-		   pdata->tx_q_count, ((fifo[0] + 1) * XGMAC_FIFO_UNIT));
-}
+		   pdata->tx_q_count, ((fअगरo[0] + 1) * XGMAC_FIFO_UNIT));
+पूर्ण
 
-static void xgbe_config_rx_fifo_size(struct xgbe_prv_data *pdata)
-{
-	unsigned int fifo_size;
-	unsigned int fifo[XGBE_MAX_QUEUES];
-	unsigned int prio_queues;
-	unsigned int i;
+अटल व्योम xgbe_config_rx_fअगरo_size(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक fअगरo_size;
+	अचिन्हित पूर्णांक fअगरo[XGBE_MAX_QUEUES];
+	अचिन्हित पूर्णांक prio_queues;
+	अचिन्हित पूर्णांक i;
 
-	/* Clear any DCB related fifo/queue information */
-	memset(pdata->pfcq, 0, sizeof(pdata->pfcq));
+	/* Clear any DCB related fअगरo/queue inक्रमmation */
+	स_रखो(pdata->pfcq, 0, माप(pdata->pfcq));
 	pdata->pfc_rfa = 0;
 
-	fifo_size = xgbe_get_rx_fifo_size(pdata);
+	fअगरo_size = xgbe_get_rx_fअगरo_size(pdata);
 	prio_queues = XGMAC_PRIO_QUEUES(pdata->rx_q_count);
 
-	/* Assign a minimum fifo to the non-VLAN priority queues */
-	fifo_size = xgbe_set_nonprio_fifos(fifo_size, pdata->rx_q_count, fifo);
+	/* Assign a minimum fअगरo to the non-VLAN priority queues */
+	fअगरo_size = xgbe_set_nonprio_fअगरos(fअगरo_size, pdata->rx_q_count, fअगरo);
 
-	if (pdata->pfc && pdata->ets)
-		xgbe_calculate_dcb_fifo(pdata, fifo_size, fifo);
-	else
-		xgbe_calculate_equal_fifo(fifo_size, prio_queues, fifo);
+	अगर (pdata->pfc && pdata->ets)
+		xgbe_calculate_dcb_fअगरo(pdata, fअगरo_size, fअगरo);
+	अन्यथा
+		xgbe_calculate_equal_fअगरo(fअगरo_size, prio_queues, fअगरo);
 
-	for (i = 0; i < pdata->rx_q_count; i++)
-		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_RQOMR, RQS, fifo[i]);
+	क्रम (i = 0; i < pdata->rx_q_count; i++)
+		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_RQOMR, RQS, fअगरo[i]);
 
-	xgbe_calculate_flow_control_threshold(pdata, fifo);
+	xgbe_calculate_flow_control_threshold(pdata, fअगरo);
 	xgbe_config_flow_control_threshold(pdata);
 
-	if (pdata->pfc && pdata->ets && pdata->pfc->pfc_en) {
-		netif_info(pdata, drv, pdata->netdev,
+	अगर (pdata->pfc && pdata->ets && pdata->pfc->pfc_en) अणु
+		netअगर_info(pdata, drv, pdata->netdev,
 			   "%u Rx hardware queues\n", pdata->rx_q_count);
-		for (i = 0; i < pdata->rx_q_count; i++)
-			netif_info(pdata, drv, pdata->netdev,
+		क्रम (i = 0; i < pdata->rx_q_count; i++)
+			netअगर_info(pdata, drv, pdata->netdev,
 				   "RxQ%u, %u byte fifo queue\n", i,
-				   ((fifo[i] + 1) * XGMAC_FIFO_UNIT));
-	} else {
-		netif_info(pdata, drv, pdata->netdev,
+				   ((fअगरo[i] + 1) * XGMAC_FIFO_UNIT));
+	पूर्ण अन्यथा अणु
+		netअगर_info(pdata, drv, pdata->netdev,
 			   "%u Rx hardware queues, %u byte fifo per queue\n",
 			   pdata->rx_q_count,
-			   ((fifo[0] + 1) * XGMAC_FIFO_UNIT));
-	}
-}
+			   ((fअगरo[0] + 1) * XGMAC_FIFO_UNIT));
+	पूर्ण
+पूर्ण
 
-static void xgbe_config_queue_mapping(struct xgbe_prv_data *pdata)
-{
-	unsigned int qptc, qptc_extra, queue;
-	unsigned int prio_queues;
-	unsigned int ppq, ppq_extra, prio;
-	unsigned int mask;
-	unsigned int i, j, reg, reg_val;
+अटल व्योम xgbe_config_queue_mapping(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक qptc, qptc_extra, queue;
+	अचिन्हित पूर्णांक prio_queues;
+	अचिन्हित पूर्णांक ppq, ppq_extra, prio;
+	अचिन्हित पूर्णांक mask;
+	अचिन्हित पूर्णांक i, j, reg, reg_val;
 
 	/* Map the MTL Tx Queues to Traffic Classes
 	 *   Note: Tx Queues >= Traffic Classes
@@ -2611,23 +2612,23 @@ static void xgbe_config_queue_mapping(struct xgbe_prv_data *pdata)
 	qptc = pdata->tx_q_count / pdata->hw_feat.tc_cnt;
 	qptc_extra = pdata->tx_q_count % pdata->hw_feat.tc_cnt;
 
-	for (i = 0, queue = 0; i < pdata->hw_feat.tc_cnt; i++) {
-		for (j = 0; j < qptc; j++) {
-			netif_dbg(pdata, drv, pdata->netdev,
+	क्रम (i = 0, queue = 0; i < pdata->hw_feat.tc_cnt; i++) अणु
+		क्रम (j = 0; j < qptc; j++) अणु
+			netअगर_dbg(pdata, drv, pdata->netdev,
 				  "TXq%u mapped to TC%u\n", queue, i);
 			XGMAC_MTL_IOWRITE_BITS(pdata, queue, MTL_Q_TQOMR,
 					       Q2TCMAP, i);
 			pdata->q2tc_map[queue++] = i;
-		}
+		पूर्ण
 
-		if (i < qptc_extra) {
-			netif_dbg(pdata, drv, pdata->netdev,
+		अगर (i < qptc_extra) अणु
+			netअगर_dbg(pdata, drv, pdata->netdev,
 				  "TXq%u mapped to TC%u\n", queue, i);
 			XGMAC_MTL_IOWRITE_BITS(pdata, queue, MTL_Q_TQOMR,
 					       Q2TCMAP, i);
 			pdata->q2tc_map[queue++] = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Map the 8 VLAN priority values to available MTL Rx queues */
 	prio_queues = XGMAC_PRIO_QUEUES(pdata->rx_q_count);
@@ -2636,87 +2637,87 @@ static void xgbe_config_queue_mapping(struct xgbe_prv_data *pdata)
 
 	reg = MAC_RQC2R;
 	reg_val = 0;
-	for (i = 0, prio = 0; i < prio_queues;) {
+	क्रम (i = 0, prio = 0; i < prio_queues;) अणु
 		mask = 0;
-		for (j = 0; j < ppq; j++) {
-			netif_dbg(pdata, drv, pdata->netdev,
+		क्रम (j = 0; j < ppq; j++) अणु
+			netअगर_dbg(pdata, drv, pdata->netdev,
 				  "PRIO%u mapped to RXq%u\n", prio, i);
 			mask |= (1 << prio);
 			pdata->prio2q_map[prio++] = i;
-		}
+		पूर्ण
 
-		if (i < ppq_extra) {
-			netif_dbg(pdata, drv, pdata->netdev,
+		अगर (i < ppq_extra) अणु
+			netअगर_dbg(pdata, drv, pdata->netdev,
 				  "PRIO%u mapped to RXq%u\n", prio, i);
 			mask |= (1 << prio);
 			pdata->prio2q_map[prio++] = i;
-		}
+		पूर्ण
 
 		reg_val |= (mask << ((i++ % MAC_RQC2_Q_PER_REG) << 3));
 
-		if ((i % MAC_RQC2_Q_PER_REG) && (i != prio_queues))
-			continue;
+		अगर ((i % MAC_RQC2_Q_PER_REG) && (i != prio_queues))
+			जारी;
 
 		XGMAC_IOWRITE(pdata, reg, reg_val);
 		reg += MAC_RQC2_INC;
 		reg_val = 0;
-	}
+	पूर्ण
 
 	/* Select dynamic mapping of MTL Rx queue to DMA Rx channel */
 	reg = MTL_RQDCM0R;
 	reg_val = 0;
-	for (i = 0; i < pdata->rx_q_count;) {
+	क्रम (i = 0; i < pdata->rx_q_count;) अणु
 		reg_val |= (0x80 << ((i++ % MTL_RQDCM_Q_PER_REG) << 3));
 
-		if ((i % MTL_RQDCM_Q_PER_REG) && (i != pdata->rx_q_count))
-			continue;
+		अगर ((i % MTL_RQDCM_Q_PER_REG) && (i != pdata->rx_q_count))
+			जारी;
 
 		XGMAC_IOWRITE(pdata, reg, reg_val);
 
 		reg += MTL_RQDCM_INC;
 		reg_val = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_config_tc(struct xgbe_prv_data *pdata)
-{
-	unsigned int offset, queue, prio;
+अटल व्योम xgbe_config_tc(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक offset, queue, prio;
 	u8 i;
 
 	netdev_reset_tc(pdata->netdev);
-	if (!pdata->num_tcs)
-		return;
+	अगर (!pdata->num_tcs)
+		वापस;
 
 	netdev_set_num_tc(pdata->netdev, pdata->num_tcs);
 
-	for (i = 0, queue = 0, offset = 0; i < pdata->num_tcs; i++) {
-		while ((queue < pdata->tx_q_count) &&
+	क्रम (i = 0, queue = 0, offset = 0; i < pdata->num_tcs; i++) अणु
+		जबतक ((queue < pdata->tx_q_count) &&
 		       (pdata->q2tc_map[queue] == i))
 			queue++;
 
-		netif_dbg(pdata, drv, pdata->netdev, "TC%u using TXq%u-%u\n",
+		netअगर_dbg(pdata, drv, pdata->netdev, "TC%u using TXq%u-%u\n",
 			  i, offset, queue - 1);
 		netdev_set_tc_queue(pdata->netdev, i, queue - offset, offset);
 		offset = queue;
-	}
+	पूर्ण
 
-	if (!pdata->ets)
-		return;
+	अगर (!pdata->ets)
+		वापस;
 
-	for (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++)
+	क्रम (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++)
 		netdev_set_prio_tc_map(pdata->netdev, prio,
 				       pdata->ets->prio_tc[prio]);
-}
+पूर्ण
 
-static void xgbe_config_dcb_tc(struct xgbe_prv_data *pdata)
-{
-	struct ieee_ets *ets = pdata->ets;
-	unsigned int total_weight, min_weight, weight;
-	unsigned int mask, reg, reg_val;
-	unsigned int i, prio;
+अटल व्योम xgbe_config_dcb_tc(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा ieee_ets *ets = pdata->ets;
+	अचिन्हित पूर्णांक total_weight, min_weight, weight;
+	अचिन्हित पूर्णांक mask, reg, reg_val;
+	अचिन्हित पूर्णांक i, prio;
 
-	if (!ets)
-		return;
+	अगर (!ets)
+		वापस;
 
 	/* Set Tx to deficit weighted round robin scheduling algorithm (when
 	 * traffic class is using ETS algorithm)
@@ -2726,19 +2727,19 @@ static void xgbe_config_dcb_tc(struct xgbe_prv_data *pdata)
 	/* Set Traffic Class algorithms */
 	total_weight = pdata->netdev->mtu * pdata->hw_feat.tc_cnt;
 	min_weight = total_weight / 100;
-	if (!min_weight)
+	अगर (!min_weight)
 		min_weight = 1;
 
-	for (i = 0; i < pdata->hw_feat.tc_cnt; i++) {
+	क्रम (i = 0; i < pdata->hw_feat.tc_cnt; i++) अणु
 		/* Map the priorities to the traffic class */
 		mask = 0;
-		for (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++) {
-			if (ets->prio_tc[prio] == i)
+		क्रम (prio = 0; prio < IEEE_8021QAZ_MAX_TCS; prio++) अणु
+			अगर (ets->prio_tc[prio] == i)
 				mask |= (1 << prio);
-		}
+		पूर्ण
 		mask &= 0xff;
 
-		netif_dbg(pdata, drv, pdata->netdev, "TC%u PRIO mask=%#x\n",
+		netअगर_dbg(pdata, drv, pdata->netdev, "TC%u PRIO mask=%#x\n",
 			  i, mask);
 		reg = MTL_TCPM0R + (MTL_TCPM_INC * (i / MTL_TCPM_TC_PER_REG));
 		reg_val = XGMAC_IOREAD(pdata, reg);
@@ -2749,622 +2750,622 @@ static void xgbe_config_dcb_tc(struct xgbe_prv_data *pdata)
 		XGMAC_IOWRITE(pdata, reg, reg_val);
 
 		/* Set the traffic class algorithm */
-		switch (ets->tc_tsa[i]) {
-		case IEEE_8021QAZ_TSA_STRICT:
-			netif_dbg(pdata, drv, pdata->netdev,
+		चयन (ets->tc_tsa[i]) अणु
+		हाल IEEE_8021QAZ_TSA_STRICT:
+			netअगर_dbg(pdata, drv, pdata->netdev,
 				  "TC%u using SP\n", i);
 			XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_TC_ETSCR, TSA,
 					       MTL_TSA_SP);
-			break;
-		case IEEE_8021QAZ_TSA_ETS:
+			अवरोध;
+		हाल IEEE_8021QAZ_TSA_ETS:
 			weight = total_weight * ets->tc_tx_bw[i] / 100;
 			weight = clamp(weight, min_weight, total_weight);
 
-			netif_dbg(pdata, drv, pdata->netdev,
+			netअगर_dbg(pdata, drv, pdata->netdev,
 				  "TC%u using DWRR (weight %u)\n", i, weight);
 			XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_TC_ETSCR, TSA,
 					       MTL_TSA_ETS);
 			XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_TC_QWR, QW,
 					       weight);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	xgbe_config_tc(pdata);
-}
+पूर्ण
 
-static void xgbe_config_dcb_pfc(struct xgbe_prv_data *pdata)
-{
-	if (!test_bit(XGBE_DOWN, &pdata->dev_state)) {
-		/* Just stop the Tx queues while Rx fifo is changed */
-		netif_tx_stop_all_queues(pdata->netdev);
+अटल व्योम xgbe_config_dcb_pfc(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (!test_bit(XGBE_DOWN, &pdata->dev_state)) अणु
+		/* Just stop the Tx queues जबतक Rx fअगरo is changed */
+		netअगर_tx_stop_all_queues(pdata->netdev);
 
-		/* Suspend Rx so that fifo's can be adjusted */
-		pdata->hw_if.disable_rx(pdata);
-	}
+		/* Suspend Rx so that fअगरo's can be adjusted */
+		pdata->hw_अगर.disable_rx(pdata);
+	पूर्ण
 
-	xgbe_config_rx_fifo_size(pdata);
+	xgbe_config_rx_fअगरo_size(pdata);
 	xgbe_config_flow_control(pdata);
 
-	if (!test_bit(XGBE_DOWN, &pdata->dev_state)) {
+	अगर (!test_bit(XGBE_DOWN, &pdata->dev_state)) अणु
 		/* Resume Rx */
-		pdata->hw_if.enable_rx(pdata);
+		pdata->hw_अगर.enable_rx(pdata);
 
 		/* Resume Tx queues */
-		netif_tx_start_all_queues(pdata->netdev);
-	}
-}
+		netअगर_tx_start_all_queues(pdata->netdev);
+	पूर्ण
+पूर्ण
 
-static void xgbe_config_mac_address(struct xgbe_prv_data *pdata)
-{
+अटल व्योम xgbe_config_mac_address(काष्ठा xgbe_prv_data *pdata)
+अणु
 	xgbe_set_mac_address(pdata, pdata->netdev->dev_addr);
 
-	/* Filtering is done using perfect filtering and hash filtering */
-	if (pdata->hw_feat.hash_table_size) {
+	/* Filtering is करोne using perfect filtering and hash filtering */
+	अगर (pdata->hw_feat.hash_table_size) अणु
 		XGMAC_IOWRITE_BITS(pdata, MAC_PFR, HPF, 1);
 		XGMAC_IOWRITE_BITS(pdata, MAC_PFR, HUC, 1);
 		XGMAC_IOWRITE_BITS(pdata, MAC_PFR, HMC, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_config_jumbo_enable(struct xgbe_prv_data *pdata)
-{
-	unsigned int val;
+अटल व्योम xgbe_config_jumbo_enable(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक val;
 
 	val = (pdata->netdev->mtu > XGMAC_STD_PACKET_MTU) ? 1 : 0;
 
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, JE, val);
-}
+पूर्ण
 
-static void xgbe_config_mac_speed(struct xgbe_prv_data *pdata)
-{
+अटल व्योम xgbe_config_mac_speed(काष्ठा xgbe_prv_data *pdata)
+अणु
 	xgbe_set_speed(pdata, pdata->phy_speed);
-}
+पूर्ण
 
-static void xgbe_config_checksum_offload(struct xgbe_prv_data *pdata)
-{
-	if (pdata->netdev->features & NETIF_F_RXCSUM)
+अटल व्योम xgbe_config_checksum_offload(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अगर (pdata->netdev->features & NETIF_F_RXCSUM)
 		xgbe_enable_rx_csum(pdata);
-	else
+	अन्यथा
 		xgbe_disable_rx_csum(pdata);
-}
+पूर्ण
 
-static void xgbe_config_vlan_support(struct xgbe_prv_data *pdata)
-{
+अटल व्योम xgbe_config_vlan_support(काष्ठा xgbe_prv_data *pdata)
+अणु
 	/* Indicate that VLAN Tx CTAGs come from context descriptors */
 	XGMAC_IOWRITE_BITS(pdata, MAC_VLANIR, CSVL, 0);
 	XGMAC_IOWRITE_BITS(pdata, MAC_VLANIR, VLTI, 1);
 
-	/* Set the current VLAN Hash Table register value */
+	/* Set the current VLAN Hash Table रेजिस्टर value */
 	xgbe_update_vlan_hash_table(pdata);
 
-	if (pdata->netdev->features & NETIF_F_HW_VLAN_CTAG_FILTER)
+	अगर (pdata->netdev->features & NETIF_F_HW_VLAN_CTAG_FILTER)
 		xgbe_enable_rx_vlan_filtering(pdata);
-	else
+	अन्यथा
 		xgbe_disable_rx_vlan_filtering(pdata);
 
-	if (pdata->netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
+	अगर (pdata->netdev->features & NETIF_F_HW_VLAN_CTAG_RX)
 		xgbe_enable_rx_vlan_stripping(pdata);
-	else
+	अन्यथा
 		xgbe_disable_rx_vlan_stripping(pdata);
-}
+पूर्ण
 
-static u64 xgbe_mmc_read(struct xgbe_prv_data *pdata, unsigned int reg_lo)
-{
-	bool read_hi;
+अटल u64 xgbe_mmc_पढ़ो(काष्ठा xgbe_prv_data *pdata, अचिन्हित पूर्णांक reg_lo)
+अणु
+	bool पढ़ो_hi;
 	u64 val;
 
-	if (pdata->vdata->mmc_64bit) {
-		switch (reg_lo) {
-		/* These registers are always 32 bit */
-		case MMC_RXRUNTERROR:
-		case MMC_RXJABBERERROR:
-		case MMC_RXUNDERSIZE_G:
-		case MMC_RXOVERSIZE_G:
-		case MMC_RXWATCHDOGERROR:
-			read_hi = false;
-			break;
+	अगर (pdata->vdata->mmc_64bit) अणु
+		चयन (reg_lo) अणु
+		/* These रेजिस्टरs are always 32 bit */
+		हाल MMC_RXRUNTERROR:
+		हाल MMC_RXJABBERERROR:
+		हाल MMC_RXUNDERSIZE_G:
+		हाल MMC_RXOVERSIZE_G:
+		हाल MMC_RXWATCHDOGERROR:
+			पढ़ो_hi = false;
+			अवरोध;
 
-		default:
-			read_hi = true;
-		}
-	} else {
-		switch (reg_lo) {
-		/* These registers are always 64 bit */
-		case MMC_TXOCTETCOUNT_GB_LO:
-		case MMC_TXOCTETCOUNT_G_LO:
-		case MMC_RXOCTETCOUNT_GB_LO:
-		case MMC_RXOCTETCOUNT_G_LO:
-			read_hi = true;
-			break;
+		शेष:
+			पढ़ो_hi = true;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (reg_lo) अणु
+		/* These रेजिस्टरs are always 64 bit */
+		हाल MMC_TXOCTETCOUNT_GB_LO:
+		हाल MMC_TXOCTETCOUNT_G_LO:
+		हाल MMC_RXOCTETCOUNT_GB_LO:
+		हाल MMC_RXOCTETCOUNT_G_LO:
+			पढ़ो_hi = true;
+			अवरोध;
 
-		default:
-			read_hi = false;
-		}
-	}
+		शेष:
+			पढ़ो_hi = false;
+		पूर्ण
+	पूर्ण
 
 	val = XGMAC_IOREAD(pdata, reg_lo);
 
-	if (read_hi)
+	अगर (पढ़ो_hi)
 		val |= ((u64)XGMAC_IOREAD(pdata, reg_lo + 4) << 32);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void xgbe_tx_mmc_int(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_mmc_stats *stats = &pdata->mmc_stats;
-	unsigned int mmc_isr = XGMAC_IOREAD(pdata, MMC_TISR);
+अटल व्योम xgbe_tx_mmc_पूर्णांक(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_mmc_stats *stats = &pdata->mmc_stats;
+	अचिन्हित पूर्णांक mmc_isr = XGMAC_IOREAD(pdata, MMC_TISR);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXOCTETCOUNT_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXOCTETCOUNT_GB))
 		stats->txoctetcount_gb +=
-			xgbe_mmc_read(pdata, MMC_TXOCTETCOUNT_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXOCTETCOUNT_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXFRAMECOUNT_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXFRAMECOUNT_GB))
 		stats->txframecount_gb +=
-			xgbe_mmc_read(pdata, MMC_TXFRAMECOUNT_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXFRAMECOUNT_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXBROADCASTFRAMES_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXBROADCASTFRAMES_G))
 		stats->txbroadcastframes_g +=
-			xgbe_mmc_read(pdata, MMC_TXBROADCASTFRAMES_G_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXBROADCASTFRAMES_G_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXMULTICASTFRAMES_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXMULTICASTFRAMES_G))
 		stats->txmulticastframes_g +=
-			xgbe_mmc_read(pdata, MMC_TXMULTICASTFRAMES_G_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXMULTICASTFRAMES_G_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX64OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX64OCTETS_GB))
 		stats->tx64octets_gb +=
-			xgbe_mmc_read(pdata, MMC_TX64OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TX64OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX65TO127OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX65TO127OCTETS_GB))
 		stats->tx65to127octets_gb +=
-			xgbe_mmc_read(pdata, MMC_TX65TO127OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TX65TO127OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX128TO255OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX128TO255OCTETS_GB))
 		stats->tx128to255octets_gb +=
-			xgbe_mmc_read(pdata, MMC_TX128TO255OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TX128TO255OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX256TO511OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX256TO511OCTETS_GB))
 		stats->tx256to511octets_gb +=
-			xgbe_mmc_read(pdata, MMC_TX256TO511OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TX256TO511OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX512TO1023OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX512TO1023OCTETS_GB))
 		stats->tx512to1023octets_gb +=
-			xgbe_mmc_read(pdata, MMC_TX512TO1023OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TX512TO1023OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX1024TOMAXOCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TX1024TOMAXOCTETS_GB))
 		stats->tx1024tomaxoctets_gb +=
-			xgbe_mmc_read(pdata, MMC_TX1024TOMAXOCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TX1024TOMAXOCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXUNICASTFRAMES_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXUNICASTFRAMES_GB))
 		stats->txunicastframes_gb +=
-			xgbe_mmc_read(pdata, MMC_TXUNICASTFRAMES_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXUNICASTFRAMES_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXMULTICASTFRAMES_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXMULTICASTFRAMES_GB))
 		stats->txmulticastframes_gb +=
-			xgbe_mmc_read(pdata, MMC_TXMULTICASTFRAMES_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXMULTICASTFRAMES_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXBROADCASTFRAMES_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXBROADCASTFRAMES_GB))
 		stats->txbroadcastframes_g +=
-			xgbe_mmc_read(pdata, MMC_TXBROADCASTFRAMES_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXBROADCASTFRAMES_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXUNDERFLOWERROR))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXUNDERFLOWERROR))
 		stats->txunderflowerror +=
-			xgbe_mmc_read(pdata, MMC_TXUNDERFLOWERROR_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXUNDERFLOWERROR_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXOCTETCOUNT_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXOCTETCOUNT_G))
 		stats->txoctetcount_g +=
-			xgbe_mmc_read(pdata, MMC_TXOCTETCOUNT_G_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXOCTETCOUNT_G_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXFRAMECOUNT_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXFRAMECOUNT_G))
 		stats->txframecount_g +=
-			xgbe_mmc_read(pdata, MMC_TXFRAMECOUNT_G_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_TXFRAMECOUNT_G_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXPAUSEFRAMES))
-		stats->txpauseframes +=
-			xgbe_mmc_read(pdata, MMC_TXPAUSEFRAMES_LO);
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXPAUSEFRAMES))
+		stats->txछोड़ोframes +=
+			xgbe_mmc_पढ़ो(pdata, MMC_TXPAUSEFRAMES_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXVLANFRAMES_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_TISR, TXVLANFRAMES_G))
 		stats->txvlanframes_g +=
-			xgbe_mmc_read(pdata, MMC_TXVLANFRAMES_G_LO);
-}
+			xgbe_mmc_पढ़ो(pdata, MMC_TXVLANFRAMES_G_LO);
+पूर्ण
 
-static void xgbe_rx_mmc_int(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_mmc_stats *stats = &pdata->mmc_stats;
-	unsigned int mmc_isr = XGMAC_IOREAD(pdata, MMC_RISR);
+अटल व्योम xgbe_rx_mmc_पूर्णांक(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_mmc_stats *stats = &pdata->mmc_stats;
+	अचिन्हित पूर्णांक mmc_isr = XGMAC_IOREAD(pdata, MMC_RISR);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXFRAMECOUNT_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXFRAMECOUNT_GB))
 		stats->rxframecount_gb +=
-			xgbe_mmc_read(pdata, MMC_RXFRAMECOUNT_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXFRAMECOUNT_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXOCTETCOUNT_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXOCTETCOUNT_GB))
 		stats->rxoctetcount_gb +=
-			xgbe_mmc_read(pdata, MMC_RXOCTETCOUNT_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXOCTETCOUNT_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXOCTETCOUNT_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXOCTETCOUNT_G))
 		stats->rxoctetcount_g +=
-			xgbe_mmc_read(pdata, MMC_RXOCTETCOUNT_G_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXOCTETCOUNT_G_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXBROADCASTFRAMES_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXBROADCASTFRAMES_G))
 		stats->rxbroadcastframes_g +=
-			xgbe_mmc_read(pdata, MMC_RXBROADCASTFRAMES_G_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXBROADCASTFRAMES_G_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXMULTICASTFRAMES_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXMULTICASTFRAMES_G))
 		stats->rxmulticastframes_g +=
-			xgbe_mmc_read(pdata, MMC_RXMULTICASTFRAMES_G_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXMULTICASTFRAMES_G_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXCRCERROR))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXCRCERROR))
 		stats->rxcrcerror +=
-			xgbe_mmc_read(pdata, MMC_RXCRCERROR_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXCRCERROR_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXRUNTERROR))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXRUNTERROR))
 		stats->rxrunterror +=
-			xgbe_mmc_read(pdata, MMC_RXRUNTERROR);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXRUNTERROR);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXJABBERERROR))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXJABBERERROR))
 		stats->rxjabbererror +=
-			xgbe_mmc_read(pdata, MMC_RXJABBERERROR);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXJABBERERROR);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXUNDERSIZE_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXUNDERSIZE_G))
 		stats->rxundersize_g +=
-			xgbe_mmc_read(pdata, MMC_RXUNDERSIZE_G);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXUNDERSIZE_G);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXOVERSIZE_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXOVERSIZE_G))
 		stats->rxoversize_g +=
-			xgbe_mmc_read(pdata, MMC_RXOVERSIZE_G);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXOVERSIZE_G);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX64OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX64OCTETS_GB))
 		stats->rx64octets_gb +=
-			xgbe_mmc_read(pdata, MMC_RX64OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RX64OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX65TO127OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX65TO127OCTETS_GB))
 		stats->rx65to127octets_gb +=
-			xgbe_mmc_read(pdata, MMC_RX65TO127OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RX65TO127OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX128TO255OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX128TO255OCTETS_GB))
 		stats->rx128to255octets_gb +=
-			xgbe_mmc_read(pdata, MMC_RX128TO255OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RX128TO255OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX256TO511OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX256TO511OCTETS_GB))
 		stats->rx256to511octets_gb +=
-			xgbe_mmc_read(pdata, MMC_RX256TO511OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RX256TO511OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX512TO1023OCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX512TO1023OCTETS_GB))
 		stats->rx512to1023octets_gb +=
-			xgbe_mmc_read(pdata, MMC_RX512TO1023OCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RX512TO1023OCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX1024TOMAXOCTETS_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RX1024TOMAXOCTETS_GB))
 		stats->rx1024tomaxoctets_gb +=
-			xgbe_mmc_read(pdata, MMC_RX1024TOMAXOCTETS_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RX1024TOMAXOCTETS_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXUNICASTFRAMES_G))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXUNICASTFRAMES_G))
 		stats->rxunicastframes_g +=
-			xgbe_mmc_read(pdata, MMC_RXUNICASTFRAMES_G_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXUNICASTFRAMES_G_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXLENGTHERROR))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXLENGTHERROR))
 		stats->rxlengtherror +=
-			xgbe_mmc_read(pdata, MMC_RXLENGTHERROR_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXLENGTHERROR_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXOUTOFRANGETYPE))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXOUTOFRANGETYPE))
 		stats->rxoutofrangetype +=
-			xgbe_mmc_read(pdata, MMC_RXOUTOFRANGETYPE_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXOUTOFRANGETYPE_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXPAUSEFRAMES))
-		stats->rxpauseframes +=
-			xgbe_mmc_read(pdata, MMC_RXPAUSEFRAMES_LO);
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXPAUSEFRAMES))
+		stats->rxछोड़ोframes +=
+			xgbe_mmc_पढ़ो(pdata, MMC_RXPAUSEFRAMES_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXFIFOOVERFLOW))
-		stats->rxfifooverflow +=
-			xgbe_mmc_read(pdata, MMC_RXFIFOOVERFLOW_LO);
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXFIFOOVERFLOW))
+		stats->rxfअगरooverflow +=
+			xgbe_mmc_पढ़ो(pdata, MMC_RXFIFOOVERFLOW_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXVLANFRAMES_GB))
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXVLANFRAMES_GB))
 		stats->rxvlanframes_gb +=
-			xgbe_mmc_read(pdata, MMC_RXVLANFRAMES_GB_LO);
+			xgbe_mmc_पढ़ो(pdata, MMC_RXVLANFRAMES_GB_LO);
 
-	if (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXWATCHDOGERROR))
-		stats->rxwatchdogerror +=
-			xgbe_mmc_read(pdata, MMC_RXWATCHDOGERROR);
-}
+	अगर (XGMAC_GET_BITS(mmc_isr, MMC_RISR, RXWATCHDOGERROR))
+		stats->rxwatchकरोgerror +=
+			xgbe_mmc_पढ़ो(pdata, MMC_RXWATCHDOGERROR);
+पूर्ण
 
-static void xgbe_read_mmc_stats(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_mmc_stats *stats = &pdata->mmc_stats;
+अटल व्योम xgbe_पढ़ो_mmc_stats(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_mmc_stats *stats = &pdata->mmc_stats;
 
 	/* Freeze counters */
 	XGMAC_IOWRITE_BITS(pdata, MMC_CR, MCF, 1);
 
 	stats->txoctetcount_gb +=
-		xgbe_mmc_read(pdata, MMC_TXOCTETCOUNT_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXOCTETCOUNT_GB_LO);
 
 	stats->txframecount_gb +=
-		xgbe_mmc_read(pdata, MMC_TXFRAMECOUNT_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXFRAMECOUNT_GB_LO);
 
 	stats->txbroadcastframes_g +=
-		xgbe_mmc_read(pdata, MMC_TXBROADCASTFRAMES_G_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXBROADCASTFRAMES_G_LO);
 
 	stats->txmulticastframes_g +=
-		xgbe_mmc_read(pdata, MMC_TXMULTICASTFRAMES_G_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXMULTICASTFRAMES_G_LO);
 
 	stats->tx64octets_gb +=
-		xgbe_mmc_read(pdata, MMC_TX64OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TX64OCTETS_GB_LO);
 
 	stats->tx65to127octets_gb +=
-		xgbe_mmc_read(pdata, MMC_TX65TO127OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TX65TO127OCTETS_GB_LO);
 
 	stats->tx128to255octets_gb +=
-		xgbe_mmc_read(pdata, MMC_TX128TO255OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TX128TO255OCTETS_GB_LO);
 
 	stats->tx256to511octets_gb +=
-		xgbe_mmc_read(pdata, MMC_TX256TO511OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TX256TO511OCTETS_GB_LO);
 
 	stats->tx512to1023octets_gb +=
-		xgbe_mmc_read(pdata, MMC_TX512TO1023OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TX512TO1023OCTETS_GB_LO);
 
 	stats->tx1024tomaxoctets_gb +=
-		xgbe_mmc_read(pdata, MMC_TX1024TOMAXOCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TX1024TOMAXOCTETS_GB_LO);
 
 	stats->txunicastframes_gb +=
-		xgbe_mmc_read(pdata, MMC_TXUNICASTFRAMES_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXUNICASTFRAMES_GB_LO);
 
 	stats->txmulticastframes_gb +=
-		xgbe_mmc_read(pdata, MMC_TXMULTICASTFRAMES_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXMULTICASTFRAMES_GB_LO);
 
 	stats->txbroadcastframes_g +=
-		xgbe_mmc_read(pdata, MMC_TXBROADCASTFRAMES_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXBROADCASTFRAMES_GB_LO);
 
 	stats->txunderflowerror +=
-		xgbe_mmc_read(pdata, MMC_TXUNDERFLOWERROR_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXUNDERFLOWERROR_LO);
 
 	stats->txoctetcount_g +=
-		xgbe_mmc_read(pdata, MMC_TXOCTETCOUNT_G_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXOCTETCOUNT_G_LO);
 
 	stats->txframecount_g +=
-		xgbe_mmc_read(pdata, MMC_TXFRAMECOUNT_G_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXFRAMECOUNT_G_LO);
 
-	stats->txpauseframes +=
-		xgbe_mmc_read(pdata, MMC_TXPAUSEFRAMES_LO);
+	stats->txछोड़ोframes +=
+		xgbe_mmc_पढ़ो(pdata, MMC_TXPAUSEFRAMES_LO);
 
 	stats->txvlanframes_g +=
-		xgbe_mmc_read(pdata, MMC_TXVLANFRAMES_G_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_TXVLANFRAMES_G_LO);
 
 	stats->rxframecount_gb +=
-		xgbe_mmc_read(pdata, MMC_RXFRAMECOUNT_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXFRAMECOUNT_GB_LO);
 
 	stats->rxoctetcount_gb +=
-		xgbe_mmc_read(pdata, MMC_RXOCTETCOUNT_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXOCTETCOUNT_GB_LO);
 
 	stats->rxoctetcount_g +=
-		xgbe_mmc_read(pdata, MMC_RXOCTETCOUNT_G_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXOCTETCOUNT_G_LO);
 
 	stats->rxbroadcastframes_g +=
-		xgbe_mmc_read(pdata, MMC_RXBROADCASTFRAMES_G_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXBROADCASTFRAMES_G_LO);
 
 	stats->rxmulticastframes_g +=
-		xgbe_mmc_read(pdata, MMC_RXMULTICASTFRAMES_G_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXMULTICASTFRAMES_G_LO);
 
 	stats->rxcrcerror +=
-		xgbe_mmc_read(pdata, MMC_RXCRCERROR_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXCRCERROR_LO);
 
 	stats->rxrunterror +=
-		xgbe_mmc_read(pdata, MMC_RXRUNTERROR);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXRUNTERROR);
 
 	stats->rxjabbererror +=
-		xgbe_mmc_read(pdata, MMC_RXJABBERERROR);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXJABBERERROR);
 
 	stats->rxundersize_g +=
-		xgbe_mmc_read(pdata, MMC_RXUNDERSIZE_G);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXUNDERSIZE_G);
 
 	stats->rxoversize_g +=
-		xgbe_mmc_read(pdata, MMC_RXOVERSIZE_G);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXOVERSIZE_G);
 
 	stats->rx64octets_gb +=
-		xgbe_mmc_read(pdata, MMC_RX64OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RX64OCTETS_GB_LO);
 
 	stats->rx65to127octets_gb +=
-		xgbe_mmc_read(pdata, MMC_RX65TO127OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RX65TO127OCTETS_GB_LO);
 
 	stats->rx128to255octets_gb +=
-		xgbe_mmc_read(pdata, MMC_RX128TO255OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RX128TO255OCTETS_GB_LO);
 
 	stats->rx256to511octets_gb +=
-		xgbe_mmc_read(pdata, MMC_RX256TO511OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RX256TO511OCTETS_GB_LO);
 
 	stats->rx512to1023octets_gb +=
-		xgbe_mmc_read(pdata, MMC_RX512TO1023OCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RX512TO1023OCTETS_GB_LO);
 
 	stats->rx1024tomaxoctets_gb +=
-		xgbe_mmc_read(pdata, MMC_RX1024TOMAXOCTETS_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RX1024TOMAXOCTETS_GB_LO);
 
 	stats->rxunicastframes_g +=
-		xgbe_mmc_read(pdata, MMC_RXUNICASTFRAMES_G_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXUNICASTFRAMES_G_LO);
 
 	stats->rxlengtherror +=
-		xgbe_mmc_read(pdata, MMC_RXLENGTHERROR_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXLENGTHERROR_LO);
 
 	stats->rxoutofrangetype +=
-		xgbe_mmc_read(pdata, MMC_RXOUTOFRANGETYPE_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXOUTOFRANGETYPE_LO);
 
-	stats->rxpauseframes +=
-		xgbe_mmc_read(pdata, MMC_RXPAUSEFRAMES_LO);
+	stats->rxछोड़ोframes +=
+		xgbe_mmc_पढ़ो(pdata, MMC_RXPAUSEFRAMES_LO);
 
-	stats->rxfifooverflow +=
-		xgbe_mmc_read(pdata, MMC_RXFIFOOVERFLOW_LO);
+	stats->rxfअगरooverflow +=
+		xgbe_mmc_पढ़ो(pdata, MMC_RXFIFOOVERFLOW_LO);
 
 	stats->rxvlanframes_gb +=
-		xgbe_mmc_read(pdata, MMC_RXVLANFRAMES_GB_LO);
+		xgbe_mmc_पढ़ो(pdata, MMC_RXVLANFRAMES_GB_LO);
 
-	stats->rxwatchdogerror +=
-		xgbe_mmc_read(pdata, MMC_RXWATCHDOGERROR);
+	stats->rxwatchकरोgerror +=
+		xgbe_mmc_पढ़ो(pdata, MMC_RXWATCHDOGERROR);
 
-	/* Un-freeze counters */
+	/* Un-मुक्तze counters */
 	XGMAC_IOWRITE_BITS(pdata, MMC_CR, MCF, 0);
-}
+पूर्ण
 
-static void xgbe_config_mmc(struct xgbe_prv_data *pdata)
-{
-	/* Set counters to reset on read */
+अटल व्योम xgbe_config_mmc(काष्ठा xgbe_prv_data *pdata)
+अणु
+	/* Set counters to reset on पढ़ो */
 	XGMAC_IOWRITE_BITS(pdata, MMC_CR, ROR, 1);
 
 	/* Reset the counters */
 	XGMAC_IOWRITE_BITS(pdata, MMC_CR, CR, 1);
-}
+पूर्ण
 
-static void xgbe_txq_prepare_tx_stop(struct xgbe_prv_data *pdata,
-				     unsigned int queue)
-{
-	unsigned int tx_status;
-	unsigned long tx_timeout;
+अटल व्योम xgbe_txq_prepare_tx_stop(काष्ठा xgbe_prv_data *pdata,
+				     अचिन्हित पूर्णांक queue)
+अणु
+	अचिन्हित पूर्णांक tx_status;
+	अचिन्हित दीर्घ tx_समयout;
 
-	/* The Tx engine cannot be stopped if it is actively processing
-	 * packets. Wait for the Tx queue to empty the Tx fifo.  Don't
-	 * wait forever though...
+	/* The Tx engine cannot be stopped अगर it is actively processing
+	 * packets. Wait क्रम the Tx queue to empty the Tx fअगरo.  Don't
+	 * रुको क्रमever though...
 	 */
-	tx_timeout = jiffies + (XGBE_DMA_STOP_TIMEOUT * HZ);
-	while (time_before(jiffies, tx_timeout)) {
+	tx_समयout = jअगरfies + (XGBE_DMA_STOP_TIMEOUT * HZ);
+	जबतक (समय_beक्रमe(jअगरfies, tx_समयout)) अणु
 		tx_status = XGMAC_MTL_IOREAD(pdata, queue, MTL_Q_TQDR);
-		if ((XGMAC_GET_BITS(tx_status, MTL_Q_TQDR, TRCSTS) != 1) &&
+		अगर ((XGMAC_GET_BITS(tx_status, MTL_Q_TQDR, TRCSTS) != 1) &&
 		    (XGMAC_GET_BITS(tx_status, MTL_Q_TQDR, TXQSTS) == 0))
-			break;
+			अवरोध;
 
 		usleep_range(500, 1000);
-	}
+	पूर्ण
 
-	if (!time_before(jiffies, tx_timeout))
+	अगर (!समय_beक्रमe(jअगरfies, tx_समयout))
 		netdev_info(pdata->netdev,
 			    "timed out waiting for Tx queue %u to empty\n",
 			    queue);
-}
+पूर्ण
 
-static void xgbe_prepare_tx_stop(struct xgbe_prv_data *pdata,
-				 unsigned int queue)
-{
-	unsigned int tx_dsr, tx_pos, tx_qidx;
-	unsigned int tx_status;
-	unsigned long tx_timeout;
+अटल व्योम xgbe_prepare_tx_stop(काष्ठा xgbe_prv_data *pdata,
+				 अचिन्हित पूर्णांक queue)
+अणु
+	अचिन्हित पूर्णांक tx_dsr, tx_pos, tx_qidx;
+	अचिन्हित पूर्णांक tx_status;
+	अचिन्हित दीर्घ tx_समयout;
 
-	if (XGMAC_GET_BITS(pdata->hw_feat.version, MAC_VR, SNPSVER) > 0x20)
-		return xgbe_txq_prepare_tx_stop(pdata, queue);
+	अगर (XGMAC_GET_BITS(pdata->hw_feat.version, MAC_VR, SNPSVER) > 0x20)
+		वापस xgbe_txq_prepare_tx_stop(pdata, queue);
 
-	/* Calculate the status register to read and the position within */
-	if (queue < DMA_DSRX_FIRST_QUEUE) {
+	/* Calculate the status रेजिस्टर to पढ़ो and the position within */
+	अगर (queue < DMA_DSRX_FIRST_QUEUE) अणु
 		tx_dsr = DMA_DSR0;
 		tx_pos = (queue * DMA_DSR_Q_WIDTH) + DMA_DSR0_TPS_START;
-	} else {
+	पूर्ण अन्यथा अणु
 		tx_qidx = queue - DMA_DSRX_FIRST_QUEUE;
 
 		tx_dsr = DMA_DSR1 + ((tx_qidx / DMA_DSRX_QPR) * DMA_DSRX_INC);
 		tx_pos = ((tx_qidx % DMA_DSRX_QPR) * DMA_DSR_Q_WIDTH) +
 			 DMA_DSRX_TPS_START;
-	}
+	पूर्ण
 
-	/* The Tx engine cannot be stopped if it is actively processing
-	 * descriptors. Wait for the Tx engine to enter the stopped or
-	 * suspended state.  Don't wait forever though...
+	/* The Tx engine cannot be stopped अगर it is actively processing
+	 * descriptors. Wait क्रम the Tx engine to enter the stopped or
+	 * suspended state.  Don't रुको क्रमever though...
 	 */
-	tx_timeout = jiffies + (XGBE_DMA_STOP_TIMEOUT * HZ);
-	while (time_before(jiffies, tx_timeout)) {
+	tx_समयout = jअगरfies + (XGBE_DMA_STOP_TIMEOUT * HZ);
+	जबतक (समय_beक्रमe(jअगरfies, tx_समयout)) अणु
 		tx_status = XGMAC_IOREAD(pdata, tx_dsr);
 		tx_status = GET_BITS(tx_status, tx_pos, DMA_DSR_TPS_WIDTH);
-		if ((tx_status == DMA_TPS_STOPPED) ||
+		अगर ((tx_status == DMA_TPS_STOPPED) ||
 		    (tx_status == DMA_TPS_SUSPENDED))
-			break;
+			अवरोध;
 
 		usleep_range(500, 1000);
-	}
+	पूर्ण
 
-	if (!time_before(jiffies, tx_timeout))
+	अगर (!समय_beक्रमe(jअगरfies, tx_समयout))
 		netdev_info(pdata->netdev,
 			    "timed out waiting for Tx DMA channel %u to stop\n",
 			    queue);
-}
+पूर्ण
 
-static void xgbe_enable_tx(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_enable_tx(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* Enable each Tx DMA channel */
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->tx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->tx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_TCR, ST, 1);
-	}
+	पूर्ण
 
 	/* Enable each Tx queue */
-	for (i = 0; i < pdata->tx_q_count; i++)
+	क्रम (i = 0; i < pdata->tx_q_count; i++)
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_TQOMR, TXQEN,
 				       MTL_Q_ENABLED);
 
 	/* Enable MAC Tx */
 	XGMAC_IOWRITE_BITS(pdata, MAC_TCR, TE, 1);
-}
+पूर्ण
 
-static void xgbe_disable_tx(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_disable_tx(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	/* Prepare for Tx DMA channel stop */
-	for (i = 0; i < pdata->tx_q_count; i++)
+	/* Prepare क्रम Tx DMA channel stop */
+	क्रम (i = 0; i < pdata->tx_q_count; i++)
 		xgbe_prepare_tx_stop(pdata, i);
 
 	/* Disable MAC Tx */
 	XGMAC_IOWRITE_BITS(pdata, MAC_TCR, TE, 0);
 
 	/* Disable each Tx queue */
-	for (i = 0; i < pdata->tx_q_count; i++)
+	क्रम (i = 0; i < pdata->tx_q_count; i++)
 		XGMAC_MTL_IOWRITE_BITS(pdata, i, MTL_Q_TQOMR, TXQEN, 0);
 
 	/* Disable each Tx DMA channel */
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->tx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->tx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_TCR, ST, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_prepare_rx_stop(struct xgbe_prv_data *pdata,
-				 unsigned int queue)
-{
-	unsigned int rx_status;
-	unsigned long rx_timeout;
+अटल व्योम xgbe_prepare_rx_stop(काष्ठा xgbe_prv_data *pdata,
+				 अचिन्हित पूर्णांक queue)
+अणु
+	अचिन्हित पूर्णांक rx_status;
+	अचिन्हित दीर्घ rx_समयout;
 
-	/* The Rx engine cannot be stopped if it is actively processing
-	 * packets. Wait for the Rx queue to empty the Rx fifo.  Don't
-	 * wait forever though...
+	/* The Rx engine cannot be stopped अगर it is actively processing
+	 * packets. Wait क्रम the Rx queue to empty the Rx fअगरo.  Don't
+	 * रुको क्रमever though...
 	 */
-	rx_timeout = jiffies + (XGBE_DMA_STOP_TIMEOUT * HZ);
-	while (time_before(jiffies, rx_timeout)) {
+	rx_समयout = jअगरfies + (XGBE_DMA_STOP_TIMEOUT * HZ);
+	जबतक (समय_beक्रमe(jअगरfies, rx_समयout)) अणु
 		rx_status = XGMAC_MTL_IOREAD(pdata, queue, MTL_Q_RQDR);
-		if ((XGMAC_GET_BITS(rx_status, MTL_Q_RQDR, PRXQ) == 0) &&
+		अगर ((XGMAC_GET_BITS(rx_status, MTL_Q_RQDR, PRXQ) == 0) &&
 		    (XGMAC_GET_BITS(rx_status, MTL_Q_RQDR, RXQSTS) == 0))
-			break;
+			अवरोध;
 
 		usleep_range(500, 1000);
-	}
+	पूर्ण
 
-	if (!time_before(jiffies, rx_timeout))
+	अगर (!समय_beक्रमe(jअगरfies, rx_समयout))
 		netdev_info(pdata->netdev,
 			    "timed out waiting for Rx queue %u to empty\n",
 			    queue);
-}
+पूर्ण
 
-static void xgbe_enable_rx(struct xgbe_prv_data *pdata)
-{
-	unsigned int reg_val, i;
+अटल व्योम xgbe_enable_rx(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक reg_val, i;
 
 	/* Enable each Rx DMA channel */
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->rx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->rx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_RCR, SR, 1);
-	}
+	पूर्ण
 
 	/* Enable each Rx queue */
 	reg_val = 0;
-	for (i = 0; i < pdata->rx_q_count; i++)
+	क्रम (i = 0; i < pdata->rx_q_count; i++)
 		reg_val |= (0x02 << (i << 1));
 	XGMAC_IOWRITE(pdata, MAC_RQC0R, reg_val);
 
@@ -3373,11 +3374,11 @@ static void xgbe_enable_rx(struct xgbe_prv_data *pdata)
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, CST, 1);
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, ACS, 1);
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, RE, 1);
-}
+पूर्ण
 
-static void xgbe_disable_rx(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_disable_rx(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* Disable MAC Rx */
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, DCRCC, 0);
@@ -3385,97 +3386,97 @@ static void xgbe_disable_rx(struct xgbe_prv_data *pdata)
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, ACS, 0);
 	XGMAC_IOWRITE_BITS(pdata, MAC_RCR, RE, 0);
 
-	/* Prepare for Rx DMA channel stop */
-	for (i = 0; i < pdata->rx_q_count; i++)
+	/* Prepare क्रम Rx DMA channel stop */
+	क्रम (i = 0; i < pdata->rx_q_count; i++)
 		xgbe_prepare_rx_stop(pdata, i);
 
 	/* Disable each Rx queue */
 	XGMAC_IOWRITE(pdata, MAC_RQC0R, 0);
 
 	/* Disable each Rx DMA channel */
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->rx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->rx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_RCR, SR, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_powerup_tx(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_घातerup_tx(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* Enable each Tx DMA channel */
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->tx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->tx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_TCR, ST, 1);
-	}
+	पूर्ण
 
 	/* Enable MAC Tx */
 	XGMAC_IOWRITE_BITS(pdata, MAC_TCR, TE, 1);
-}
+पूर्ण
 
-static void xgbe_powerdown_tx(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_घातerकरोwn_tx(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	/* Prepare for Tx DMA channel stop */
-	for (i = 0; i < pdata->tx_q_count; i++)
+	/* Prepare क्रम Tx DMA channel stop */
+	क्रम (i = 0; i < pdata->tx_q_count; i++)
 		xgbe_prepare_tx_stop(pdata, i);
 
 	/* Disable MAC Tx */
 	XGMAC_IOWRITE_BITS(pdata, MAC_TCR, TE, 0);
 
 	/* Disable each Tx DMA channel */
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->tx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->tx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_TCR, ST, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_powerup_rx(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_घातerup_rx(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* Enable each Rx DMA channel */
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->rx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->rx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_RCR, SR, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void xgbe_powerdown_rx(struct xgbe_prv_data *pdata)
-{
-	unsigned int i;
+अटल व्योम xgbe_घातerकरोwn_rx(काष्ठा xgbe_prv_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	/* Disable each Rx DMA channel */
-	for (i = 0; i < pdata->channel_count; i++) {
-		if (!pdata->channel[i]->rx_ring)
-			break;
+	क्रम (i = 0; i < pdata->channel_count; i++) अणु
+		अगर (!pdata->channel[i]->rx_ring)
+			अवरोध;
 
 		XGMAC_DMA_IOWRITE_BITS(pdata->channel[i], DMA_CH_RCR, SR, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int xgbe_init(struct xgbe_prv_data *pdata)
-{
-	struct xgbe_desc_if *desc_if = &pdata->desc_if;
-	int ret;
+अटल पूर्णांक xgbe_init(काष्ठा xgbe_prv_data *pdata)
+अणु
+	काष्ठा xgbe_desc_अगर *desc_अगर = &pdata->desc_अगर;
+	पूर्णांक ret;
 
 	DBGPR("-->xgbe_init\n");
 
 	/* Flush Tx queues */
 	ret = xgbe_flush_tx_queues(pdata);
-	if (ret) {
+	अगर (ret) अणु
 		netdev_err(pdata->netdev, "error flushing TX queues\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
 	 * Initialize DMA related features
@@ -3490,9 +3491,9 @@ static int xgbe_init(struct xgbe_prv_data *pdata)
 	xgbe_config_tso_mode(pdata);
 	xgbe_config_sph_mode(pdata);
 	xgbe_config_rss(pdata);
-	desc_if->wrapper_tx_desc_init(pdata);
-	desc_if->wrapper_rx_desc_init(pdata);
-	xgbe_enable_dma_interrupts(pdata);
+	desc_अगर->wrapper_tx_desc_init(pdata);
+	desc_अगर->wrapper_rx_desc_init(pdata);
+	xgbe_enable_dma_पूर्णांकerrupts(pdata);
 
 	/*
 	 * Initialize MTL related features
@@ -3503,13 +3504,13 @@ static int xgbe_init(struct xgbe_prv_data *pdata)
 	xgbe_config_rsf_mode(pdata, pdata->rx_sf_mode);
 	xgbe_config_tx_threshold(pdata, pdata->tx_threshold);
 	xgbe_config_rx_threshold(pdata, pdata->rx_threshold);
-	xgbe_config_tx_fifo_size(pdata);
-	xgbe_config_rx_fifo_size(pdata);
-	/*TODO: Error Packet and undersized good Packet forwarding enable
+	xgbe_config_tx_fअगरo_size(pdata);
+	xgbe_config_rx_fअगरo_size(pdata);
+	/*TODO: Error Packet and undersized good Packet क्रमwarding enable
 		(FEP and FUP)
 	 */
 	xgbe_config_dcb_tc(pdata);
-	xgbe_enable_mtl_interrupts(pdata);
+	xgbe_enable_mtl_पूर्णांकerrupts(pdata);
 
 	/*
 	 * Initialize MAC related features
@@ -3522,126 +3523,126 @@ static int xgbe_init(struct xgbe_prv_data *pdata)
 	xgbe_config_checksum_offload(pdata);
 	xgbe_config_vlan_support(pdata);
 	xgbe_config_mmc(pdata);
-	xgbe_enable_mac_interrupts(pdata);
+	xgbe_enable_mac_पूर्णांकerrupts(pdata);
 
 	/*
 	 * Initialize ECC related features
 	 */
-	xgbe_enable_ecc_interrupts(pdata);
+	xgbe_enable_ecc_पूर्णांकerrupts(pdata);
 
 	DBGPR("<--xgbe_init\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void xgbe_init_function_ptrs_dev(struct xgbe_hw_if *hw_if)
-{
+व्योम xgbe_init_function_ptrs_dev(काष्ठा xgbe_hw_अगर *hw_अगर)
+अणु
 	DBGPR("-->xgbe_init_function_ptrs\n");
 
-	hw_if->tx_complete = xgbe_tx_complete;
+	hw_अगर->tx_complete = xgbe_tx_complete;
 
-	hw_if->set_mac_address = xgbe_set_mac_address;
-	hw_if->config_rx_mode = xgbe_config_rx_mode;
+	hw_अगर->set_mac_address = xgbe_set_mac_address;
+	hw_अगर->config_rx_mode = xgbe_config_rx_mode;
 
-	hw_if->enable_rx_csum = xgbe_enable_rx_csum;
-	hw_if->disable_rx_csum = xgbe_disable_rx_csum;
+	hw_अगर->enable_rx_csum = xgbe_enable_rx_csum;
+	hw_अगर->disable_rx_csum = xgbe_disable_rx_csum;
 
-	hw_if->enable_rx_vlan_stripping = xgbe_enable_rx_vlan_stripping;
-	hw_if->disable_rx_vlan_stripping = xgbe_disable_rx_vlan_stripping;
-	hw_if->enable_rx_vlan_filtering = xgbe_enable_rx_vlan_filtering;
-	hw_if->disable_rx_vlan_filtering = xgbe_disable_rx_vlan_filtering;
-	hw_if->update_vlan_hash_table = xgbe_update_vlan_hash_table;
+	hw_अगर->enable_rx_vlan_stripping = xgbe_enable_rx_vlan_stripping;
+	hw_अगर->disable_rx_vlan_stripping = xgbe_disable_rx_vlan_stripping;
+	hw_अगर->enable_rx_vlan_filtering = xgbe_enable_rx_vlan_filtering;
+	hw_अगर->disable_rx_vlan_filtering = xgbe_disable_rx_vlan_filtering;
+	hw_अगर->update_vlan_hash_table = xgbe_update_vlan_hash_table;
 
-	hw_if->read_mmd_regs = xgbe_read_mmd_regs;
-	hw_if->write_mmd_regs = xgbe_write_mmd_regs;
+	hw_अगर->पढ़ो_mmd_regs = xgbe_पढ़ो_mmd_regs;
+	hw_अगर->ग_लिखो_mmd_regs = xgbe_ग_लिखो_mmd_regs;
 
-	hw_if->set_speed = xgbe_set_speed;
+	hw_अगर->set_speed = xgbe_set_speed;
 
-	hw_if->set_ext_mii_mode = xgbe_set_ext_mii_mode;
-	hw_if->read_ext_mii_regs = xgbe_read_ext_mii_regs;
-	hw_if->write_ext_mii_regs = xgbe_write_ext_mii_regs;
+	hw_अगर->set_ext_mii_mode = xgbe_set_ext_mii_mode;
+	hw_अगर->पढ़ो_ext_mii_regs = xgbe_पढ़ो_ext_mii_regs;
+	hw_अगर->ग_लिखो_ext_mii_regs = xgbe_ग_लिखो_ext_mii_regs;
 
-	hw_if->set_gpio = xgbe_set_gpio;
-	hw_if->clr_gpio = xgbe_clr_gpio;
+	hw_अगर->set_gpio = xgbe_set_gpio;
+	hw_अगर->clr_gpio = xgbe_clr_gpio;
 
-	hw_if->enable_tx = xgbe_enable_tx;
-	hw_if->disable_tx = xgbe_disable_tx;
-	hw_if->enable_rx = xgbe_enable_rx;
-	hw_if->disable_rx = xgbe_disable_rx;
+	hw_अगर->enable_tx = xgbe_enable_tx;
+	hw_अगर->disable_tx = xgbe_disable_tx;
+	hw_अगर->enable_rx = xgbe_enable_rx;
+	hw_अगर->disable_rx = xgbe_disable_rx;
 
-	hw_if->powerup_tx = xgbe_powerup_tx;
-	hw_if->powerdown_tx = xgbe_powerdown_tx;
-	hw_if->powerup_rx = xgbe_powerup_rx;
-	hw_if->powerdown_rx = xgbe_powerdown_rx;
+	hw_अगर->घातerup_tx = xgbe_घातerup_tx;
+	hw_अगर->घातerकरोwn_tx = xgbe_घातerकरोwn_tx;
+	hw_अगर->घातerup_rx = xgbe_घातerup_rx;
+	hw_अगर->घातerकरोwn_rx = xgbe_घातerकरोwn_rx;
 
-	hw_if->dev_xmit = xgbe_dev_xmit;
-	hw_if->dev_read = xgbe_dev_read;
-	hw_if->enable_int = xgbe_enable_int;
-	hw_if->disable_int = xgbe_disable_int;
-	hw_if->init = xgbe_init;
-	hw_if->exit = xgbe_exit;
+	hw_अगर->dev_xmit = xgbe_dev_xmit;
+	hw_अगर->dev_पढ़ो = xgbe_dev_पढ़ो;
+	hw_अगर->enable_पूर्णांक = xgbe_enable_पूर्णांक;
+	hw_अगर->disable_पूर्णांक = xgbe_disable_पूर्णांक;
+	hw_अगर->init = xgbe_init;
+	hw_अगर->निकास = xgbe_निकास;
 
 	/* Descriptor related Sequences have to be initialized here */
-	hw_if->tx_desc_init = xgbe_tx_desc_init;
-	hw_if->rx_desc_init = xgbe_rx_desc_init;
-	hw_if->tx_desc_reset = xgbe_tx_desc_reset;
-	hw_if->rx_desc_reset = xgbe_rx_desc_reset;
-	hw_if->is_last_desc = xgbe_is_last_desc;
-	hw_if->is_context_desc = xgbe_is_context_desc;
-	hw_if->tx_start_xmit = xgbe_tx_start_xmit;
+	hw_अगर->tx_desc_init = xgbe_tx_desc_init;
+	hw_अगर->rx_desc_init = xgbe_rx_desc_init;
+	hw_अगर->tx_desc_reset = xgbe_tx_desc_reset;
+	hw_अगर->rx_desc_reset = xgbe_rx_desc_reset;
+	hw_अगर->is_last_desc = xgbe_is_last_desc;
+	hw_अगर->is_context_desc = xgbe_is_context_desc;
+	hw_अगर->tx_start_xmit = xgbe_tx_start_xmit;
 
 	/* For FLOW ctrl */
-	hw_if->config_tx_flow_control = xgbe_config_tx_flow_control;
-	hw_if->config_rx_flow_control = xgbe_config_rx_flow_control;
+	hw_अगर->config_tx_flow_control = xgbe_config_tx_flow_control;
+	hw_अगर->config_rx_flow_control = xgbe_config_rx_flow_control;
 
 	/* For RX coalescing */
-	hw_if->config_rx_coalesce = xgbe_config_rx_coalesce;
-	hw_if->config_tx_coalesce = xgbe_config_tx_coalesce;
-	hw_if->usec_to_riwt = xgbe_usec_to_riwt;
-	hw_if->riwt_to_usec = xgbe_riwt_to_usec;
+	hw_अगर->config_rx_coalesce = xgbe_config_rx_coalesce;
+	hw_अगर->config_tx_coalesce = xgbe_config_tx_coalesce;
+	hw_अगर->usec_to_riwt = xgbe_usec_to_riwt;
+	hw_अगर->riwt_to_usec = xgbe_riwt_to_usec;
 
 	/* For RX and TX threshold config */
-	hw_if->config_rx_threshold = xgbe_config_rx_threshold;
-	hw_if->config_tx_threshold = xgbe_config_tx_threshold;
+	hw_अगर->config_rx_threshold = xgbe_config_rx_threshold;
+	hw_अगर->config_tx_threshold = xgbe_config_tx_threshold;
 
 	/* For RX and TX Store and Forward Mode config */
-	hw_if->config_rsf_mode = xgbe_config_rsf_mode;
-	hw_if->config_tsf_mode = xgbe_config_tsf_mode;
+	hw_अगर->config_rsf_mode = xgbe_config_rsf_mode;
+	hw_अगर->config_tsf_mode = xgbe_config_tsf_mode;
 
 	/* For TX DMA Operating on Second Frame config */
-	hw_if->config_osp_mode = xgbe_config_osp_mode;
+	hw_अगर->config_osp_mode = xgbe_config_osp_mode;
 
 	/* For MMC statistics support */
-	hw_if->tx_mmc_int = xgbe_tx_mmc_int;
-	hw_if->rx_mmc_int = xgbe_rx_mmc_int;
-	hw_if->read_mmc_stats = xgbe_read_mmc_stats;
+	hw_अगर->tx_mmc_पूर्णांक = xgbe_tx_mmc_पूर्णांक;
+	hw_अगर->rx_mmc_पूर्णांक = xgbe_rx_mmc_पूर्णांक;
+	hw_अगर->पढ़ो_mmc_stats = xgbe_पढ़ो_mmc_stats;
 
 	/* For PTP config */
-	hw_if->config_tstamp = xgbe_config_tstamp;
-	hw_if->update_tstamp_addend = xgbe_update_tstamp_addend;
-	hw_if->set_tstamp_time = xgbe_set_tstamp_time;
-	hw_if->get_tstamp_time = xgbe_get_tstamp_time;
-	hw_if->get_tx_tstamp = xgbe_get_tx_tstamp;
+	hw_अगर->config_tstamp = xgbe_config_tstamp;
+	hw_अगर->update_tstamp_addend = xgbe_update_tstamp_addend;
+	hw_अगर->set_tstamp_समय = xgbe_set_tstamp_समय;
+	hw_अगर->get_tstamp_समय = xgbe_get_tstamp_समय;
+	hw_अगर->get_tx_tstamp = xgbe_get_tx_tstamp;
 
 	/* For Data Center Bridging config */
-	hw_if->config_tc = xgbe_config_tc;
-	hw_if->config_dcb_tc = xgbe_config_dcb_tc;
-	hw_if->config_dcb_pfc = xgbe_config_dcb_pfc;
+	hw_अगर->config_tc = xgbe_config_tc;
+	hw_अगर->config_dcb_tc = xgbe_config_dcb_tc;
+	hw_अगर->config_dcb_pfc = xgbe_config_dcb_pfc;
 
 	/* For Receive Side Scaling */
-	hw_if->enable_rss = xgbe_enable_rss;
-	hw_if->disable_rss = xgbe_disable_rss;
-	hw_if->set_rss_hash_key = xgbe_set_rss_hash_key;
-	hw_if->set_rss_lookup_table = xgbe_set_rss_lookup_table;
+	hw_अगर->enable_rss = xgbe_enable_rss;
+	hw_अगर->disable_rss = xgbe_disable_rss;
+	hw_अगर->set_rss_hash_key = xgbe_set_rss_hash_key;
+	hw_अगर->set_rss_lookup_table = xgbe_set_rss_lookup_table;
 
 	/* For ECC */
-	hw_if->disable_ecc_ded = xgbe_disable_ecc_ded;
-	hw_if->disable_ecc_sec = xgbe_disable_ecc_sec;
+	hw_अगर->disable_ecc_ded = xgbe_disable_ecc_ded;
+	hw_अगर->disable_ecc_sec = xgbe_disable_ecc_sec;
 
 	/* For VXLAN */
-	hw_if->enable_vxlan = xgbe_enable_vxlan;
-	hw_if->disable_vxlan = xgbe_disable_vxlan;
-	hw_if->set_vxlan_id = xgbe_set_vxlan_id;
+	hw_अगर->enable_vxlan = xgbe_enable_vxlan;
+	hw_अगर->disable_vxlan = xgbe_disable_vxlan;
+	hw_अगर->set_vxlan_id = xgbe_set_vxlan_id;
 
 	DBGPR("<--xgbe_init_function_ptrs\n");
-}
+पूर्ण

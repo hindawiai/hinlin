@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  linux/arch/arm/mach-footbridge/isa-timer.c
+ *  linux/arch/arm/mach-footbridge/isa-समयr.c
  *
  *  Copyright (C) 1998 Russell King.
  *  Copyright (C) 1998 Phil Blundell
  */
-#include <linux/clockchips.h>
-#include <linux/i8253.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/spinlock.h>
-#include <linux/timex.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/i8253.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/समयx.h>
 
-#include <asm/irq.h>
-#include <asm/mach/time.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/mach/समय.स>
 
-#include "common.h"
+#समावेश "common.h"
 
-static irqreturn_t pit_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *ce = dev_id;
+अटल irqवापस_t pit_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *ce = dev_id;
 	ce->event_handler(ce);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void __init isa_timer_init(void)
-{
-	clocksource_i8253_init();
+व्योम __init isa_समयr_init(व्योम)
+अणु
+	घड़ीsource_i8253_init();
 
-	if (request_irq(i8253_clockevent.irq, pit_timer_interrupt,
-			IRQF_TIMER | IRQF_IRQPOLL, "pit", &i8253_clockevent))
-		pr_err("Failed to request irq %d(pit)\n", i8253_clockevent.irq);
-	clockevent_i8253_init(false);
-}
+	अगर (request_irq(i8253_घड़ीevent.irq, pit_समयr_पूर्णांकerrupt,
+			IRQF_TIMER | IRQF_IRQPOLL, "pit", &i8253_घड़ीevent))
+		pr_err("Failed to request irq %d(pit)\n", i8253_घड़ीevent.irq);
+	घड़ीevent_i8253_init(false);
+पूर्ण

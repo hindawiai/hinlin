@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2001 - 2007  Tensilica Inc.
  *
@@ -12,75 +13,75 @@
  * Marc Gauthier<marc@tensilica.com> <marc@alumni.uwaterloo.ca>
  */
 
-#include <linux/audit.h>
-#include <linux/errno.h>
-#include <linux/hw_breakpoint.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/perf_event.h>
-#include <linux/ptrace.h>
-#include <linux/regset.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/seccomp.h>
-#include <linux/security.h>
-#include <linux/signal.h>
-#include <linux/smp.h>
-#include <linux/tracehook.h>
-#include <linux/uaccess.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/regset.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/seccomp.h>
+#समावेश <linux/security.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/smp.h>
+#समावेश <linux/tracehook.h>
+#समावेश <linux/uaccess.h>
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/syscalls.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/syscalls.h>
 
-#include <asm/coprocessor.h>
-#include <asm/elf.h>
-#include <asm/page.h>
-#include <asm/ptrace.h>
+#समावेश <यंत्र/coprocessor.h>
+#समावेश <यंत्र/elf.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/ptrace.h>
 
-static int gpr_get(struct task_struct *target,
-		   const struct user_regset *regset,
-		   struct membuf to)
-{
-	struct pt_regs *regs = task_pt_regs(target);
-	struct user_pt_regs newregs = {
+अटल पूर्णांक gpr_get(काष्ठा task_काष्ठा *target,
+		   स्थिर काष्ठा user_regset *regset,
+		   काष्ठा membuf to)
+अणु
+	काष्ठा pt_regs *regs = task_pt_regs(target);
+	काष्ठा user_pt_regs newregs = अणु
 		.pc = regs->pc,
 		.ps = regs->ps & ~(1 << PS_EXCM_BIT),
 		.lbeg = regs->lbeg,
 		.lend = regs->lend,
 		.lcount = regs->lcount,
 		.sar = regs->sar,
-		.threadptr = regs->threadptr,
-		.windowbase = regs->windowbase,
-		.windowstart = regs->windowstart,
+		.thपढ़ोptr = regs->thपढ़ोptr,
+		.winकरोwbase = regs->winकरोwbase,
+		.winकरोwstart = regs->winकरोwstart,
 		.syscall = regs->syscall,
-	};
+	पूर्ण;
 
-	memcpy(newregs.a,
-	       regs->areg + XCHAL_NUM_AREGS - regs->windowbase * 4,
-	       regs->windowbase * 16);
-	memcpy(newregs.a + regs->windowbase * 4,
+	स_नकल(newregs.a,
+	       regs->areg + XCHAL_NUM_AREGS - regs->winकरोwbase * 4,
+	       regs->winकरोwbase * 16);
+	स_नकल(newregs.a + regs->winकरोwbase * 4,
 	       regs->areg,
-	       (WSBITS - regs->windowbase) * 16);
+	       (WSBITS - regs->winकरोwbase) * 16);
 
-	return membuf_write(&to, &newregs, sizeof(newregs));
-}
+	वापस membuf_ग_लिखो(&to, &newregs, माप(newregs));
+पूर्ण
 
-static int gpr_set(struct task_struct *target,
-		   const struct user_regset *regset,
-		   unsigned int pos, unsigned int count,
-		   const void *kbuf, const void __user *ubuf)
-{
-	int ret;
-	struct user_pt_regs newregs = {0};
-	struct pt_regs *regs;
-	const u32 ps_mask = PS_CALLINC_MASK | PS_OWB_MASK;
+अटल पूर्णांक gpr_set(काष्ठा task_काष्ठा *target,
+		   स्थिर काष्ठा user_regset *regset,
+		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		   स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
+	काष्ठा user_pt_regs newregs = अणु0पूर्ण;
+	काष्ठा pt_regs *regs;
+	स्थिर u32 ps_mask = PS_CALLINC_MASK | PS_OWB_MASK;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf, &newregs, 0, -1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (newregs.windowbase >= XCHAL_NUM_AREGS / 4)
-		return -EINVAL;
+	अगर (newregs.winकरोwbase >= XCHAL_NUM_AREGS / 4)
+		वापस -EINVAL;
 
 	regs = task_pt_regs(target);
 	regs->pc = newregs.pc;
@@ -89,51 +90,51 @@ static int gpr_set(struct task_struct *target,
 	regs->lend = newregs.lend;
 	regs->lcount = newregs.lcount;
 	regs->sar = newregs.sar;
-	regs->threadptr = newregs.threadptr;
+	regs->thपढ़ोptr = newregs.thपढ़ोptr;
 
-	if (newregs.syscall)
+	अगर (newregs.syscall)
 		regs->syscall = newregs.syscall;
 
-	if (newregs.windowbase != regs->windowbase ||
-	    newregs.windowstart != regs->windowstart) {
+	अगर (newregs.winकरोwbase != regs->winकरोwbase ||
+	    newregs.winकरोwstart != regs->winकरोwstart) अणु
 		u32 rotws, wmask;
 
-		rotws = (((newregs.windowstart |
-			   (newregs.windowstart << WSBITS)) >>
-			  newregs.windowbase) &
+		rotws = (((newregs.winकरोwstart |
+			   (newregs.winकरोwstart << WSBITS)) >>
+			  newregs.winकरोwbase) &
 			 ((1 << WSBITS) - 1)) & ~1;
 		wmask = ((rotws ? WSBITS + 1 - ffs(rotws) : 0) << 4) |
 			(rotws & 0xF) | 1;
-		regs->windowbase = newregs.windowbase;
-		regs->windowstart = newregs.windowstart;
+		regs->winकरोwbase = newregs.winकरोwbase;
+		regs->winकरोwstart = newregs.winकरोwstart;
 		regs->wmask = wmask;
-	}
+	पूर्ण
 
-	memcpy(regs->areg + XCHAL_NUM_AREGS - newregs.windowbase * 4,
-	       newregs.a, newregs.windowbase * 16);
-	memcpy(regs->areg, newregs.a + newregs.windowbase * 4,
-	       (WSBITS - newregs.windowbase) * 16);
+	स_नकल(regs->areg + XCHAL_NUM_AREGS - newregs.winकरोwbase * 4,
+	       newregs.a, newregs.winकरोwbase * 16);
+	स_नकल(regs->areg, newregs.a + newregs.winकरोwbase * 4,
+	       (WSBITS - newregs.winकरोwbase) * 16);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tie_get(struct task_struct *target,
-		   const struct user_regset *regset,
-		   struct membuf to)
-{
-	int ret;
-	struct pt_regs *regs = task_pt_regs(target);
-	struct thread_info *ti = task_thread_info(target);
-	elf_xtregs_t *newregs = kzalloc(sizeof(elf_xtregs_t), GFP_KERNEL);
+अटल पूर्णांक tie_get(काष्ठा task_काष्ठा *target,
+		   स्थिर काष्ठा user_regset *regset,
+		   काष्ठा membuf to)
+अणु
+	पूर्णांक ret;
+	काष्ठा pt_regs *regs = task_pt_regs(target);
+	काष्ठा thपढ़ो_info *ti = task_thपढ़ो_info(target);
+	elf_xtregs_t *newregs = kzalloc(माप(elf_xtregs_t), GFP_KERNEL);
 
-	if (!newregs)
-		return -ENOMEM;
+	अगर (!newregs)
+		वापस -ENOMEM;
 
 	newregs->opt = regs->xtregs_opt;
 	newregs->user = ti->xtregs_user;
 
-#if XTENSA_HAVE_COPROCESSORS
-	/* Flush all coprocessor registers to memory. */
+#अगर XTENSA_HAVE_COPROCESSORS
+	/* Flush all coprocessor रेजिस्टरs to memory. */
 	coprocessor_flush_all(ti);
 	newregs->cp0 = ti->xtregs_cp.cp0;
 	newregs->cp1 = ti->xtregs_cp.cp1;
@@ -143,35 +144,35 @@ static int tie_get(struct task_struct *target,
 	newregs->cp5 = ti->xtregs_cp.cp5;
 	newregs->cp6 = ti->xtregs_cp.cp6;
 	newregs->cp7 = ti->xtregs_cp.cp7;
-#endif
-	ret = membuf_write(&to, newregs, sizeof(*newregs));
-	kfree(newregs);
-	return ret;
-}
+#पूर्ण_अगर
+	ret = membuf_ग_लिखो(&to, newregs, माप(*newregs));
+	kमुक्त(newregs);
+	वापस ret;
+पूर्ण
 
-static int tie_set(struct task_struct *target,
-		   const struct user_regset *regset,
-		   unsigned int pos, unsigned int count,
-		   const void *kbuf, const void __user *ubuf)
-{
-	int ret;
-	struct pt_regs *regs = task_pt_regs(target);
-	struct thread_info *ti = task_thread_info(target);
-	elf_xtregs_t *newregs = kzalloc(sizeof(elf_xtregs_t), GFP_KERNEL);
+अटल पूर्णांक tie_set(काष्ठा task_काष्ठा *target,
+		   स्थिर काष्ठा user_regset *regset,
+		   अचिन्हित पूर्णांक pos, अचिन्हित पूर्णांक count,
+		   स्थिर व्योम *kbuf, स्थिर व्योम __user *ubuf)
+अणु
+	पूर्णांक ret;
+	काष्ठा pt_regs *regs = task_pt_regs(target);
+	काष्ठा thपढ़ो_info *ti = task_thपढ़ो_info(target);
+	elf_xtregs_t *newregs = kzalloc(माप(elf_xtregs_t), GFP_KERNEL);
 
-	if (!newregs)
-		return -ENOMEM;
+	अगर (!newregs)
+		वापस -ENOMEM;
 
 	ret = user_regset_copyin(&pos, &count, &kbuf, &ubuf,
 				 newregs, 0, -1);
 
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 	regs->xtregs_opt = newregs->opt;
 	ti->xtregs_user = newregs->user;
 
-#if XTENSA_HAVE_COPROCESSORS
-	/* Flush all coprocessors before we overwrite them. */
+#अगर XTENSA_HAVE_COPROCESSORS
+	/* Flush all coprocessors beक्रमe we overग_लिखो them. */
 	coprocessor_flush_all(ti);
 	coprocessor_release_all(ti);
 	ti->xtregs_cp.cp0 = newregs->cp0;
@@ -182,309 +183,309 @@ static int tie_set(struct task_struct *target,
 	ti->xtregs_cp.cp5 = newregs->cp5;
 	ti->xtregs_cp.cp6 = newregs->cp6;
 	ti->xtregs_cp.cp7 = newregs->cp7;
-#endif
-exit:
-	kfree(newregs);
-	return ret;
-}
+#पूर्ण_अगर
+निकास:
+	kमुक्त(newregs);
+	वापस ret;
+पूर्ण
 
-enum xtensa_regset {
+क्रमागत xtensa_regset अणु
 	REGSET_GPR,
 	REGSET_TIE,
-};
+पूर्ण;
 
-static const struct user_regset xtensa_regsets[] = {
-	[REGSET_GPR] = {
+अटल स्थिर काष्ठा user_regset xtensa_regsets[] = अणु
+	[REGSET_GPR] = अणु
 		.core_note_type = NT_PRSTATUS,
-		.n = sizeof(struct user_pt_regs) / sizeof(u32),
-		.size = sizeof(u32),
-		.align = sizeof(u32),
+		.n = माप(काष्ठा user_pt_regs) / माप(u32),
+		.size = माप(u32),
+		.align = माप(u32),
 		.regset_get = gpr_get,
 		.set = gpr_set,
-	},
-	[REGSET_TIE] = {
+	पूर्ण,
+	[REGSET_TIE] = अणु
 		.core_note_type = NT_PRFPREG,
-		.n = sizeof(elf_xtregs_t) / sizeof(u32),
-		.size = sizeof(u32),
-		.align = sizeof(u32),
+		.n = माप(elf_xtregs_t) / माप(u32),
+		.size = माप(u32),
+		.align = माप(u32),
 		.regset_get = tie_get,
 		.set = tie_set,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct user_regset_view user_xtensa_view = {
+अटल स्थिर काष्ठा user_regset_view user_xtensa_view = अणु
 	.name = "xtensa",
 	.e_machine = EM_XTENSA,
 	.regsets = xtensa_regsets,
 	.n = ARRAY_SIZE(xtensa_regsets)
-};
+पूर्ण;
 
-const struct user_regset_view *task_user_regset_view(struct task_struct *task)
-{
-	return &user_xtensa_view;
-}
+स्थिर काष्ठा user_regset_view *task_user_regset_view(काष्ठा task_काष्ठा *task)
+अणु
+	वापस &user_xtensa_view;
+पूर्ण
 
-void user_enable_single_step(struct task_struct *child)
-{
+व्योम user_enable_single_step(काष्ठा task_काष्ठा *child)
+अणु
 	child->ptrace |= PT_SINGLESTEP;
-}
+पूर्ण
 
-void user_disable_single_step(struct task_struct *child)
-{
+व्योम user_disable_single_step(काष्ठा task_काष्ठा *child)
+अणु
 	child->ptrace &= ~PT_SINGLESTEP;
-}
+पूर्ण
 
 /*
  * Called by kernel/ptrace.c when detaching to disable single stepping.
  */
 
-void ptrace_disable(struct task_struct *child)
-{
-	/* Nothing to do.. */
-}
+व्योम ptrace_disable(काष्ठा task_काष्ठा *child)
+अणु
+	/* Nothing to करो.. */
+पूर्ण
 
-static int ptrace_getregs(struct task_struct *child, void __user *uregs)
-{
-	return copy_regset_to_user(child, &user_xtensa_view, REGSET_GPR,
-				   0, sizeof(xtensa_gregset_t), uregs);
-}
+अटल पूर्णांक ptrace_getregs(काष्ठा task_काष्ठा *child, व्योम __user *uregs)
+अणु
+	वापस copy_regset_to_user(child, &user_xtensa_view, REGSET_GPR,
+				   0, माप(xtensa_gregset_t), uregs);
+पूर्ण
 
-static int ptrace_setregs(struct task_struct *child, void __user *uregs)
-{
-	return copy_regset_from_user(child, &user_xtensa_view, REGSET_GPR,
-				     0, sizeof(xtensa_gregset_t), uregs);
-}
+अटल पूर्णांक ptrace_setregs(काष्ठा task_काष्ठा *child, व्योम __user *uregs)
+अणु
+	वापस copy_regset_from_user(child, &user_xtensa_view, REGSET_GPR,
+				     0, माप(xtensa_gregset_t), uregs);
+पूर्ण
 
-static int ptrace_getxregs(struct task_struct *child, void __user *uregs)
-{
-	return copy_regset_to_user(child, &user_xtensa_view, REGSET_TIE,
-				   0, sizeof(elf_xtregs_t), uregs);
-}
+अटल पूर्णांक ptrace_getxregs(काष्ठा task_काष्ठा *child, व्योम __user *uregs)
+अणु
+	वापस copy_regset_to_user(child, &user_xtensa_view, REGSET_TIE,
+				   0, माप(elf_xtregs_t), uregs);
+पूर्ण
 
-static int ptrace_setxregs(struct task_struct *child, void __user *uregs)
-{
-	return copy_regset_from_user(child, &user_xtensa_view, REGSET_TIE,
-				     0, sizeof(elf_xtregs_t), uregs);
-}
+अटल पूर्णांक ptrace_setxregs(काष्ठा task_काष्ठा *child, व्योम __user *uregs)
+अणु
+	वापस copy_regset_from_user(child, &user_xtensa_view, REGSET_TIE,
+				     0, माप(elf_xtregs_t), uregs);
+पूर्ण
 
-static int ptrace_peekusr(struct task_struct *child, long regno,
-			  long __user *ret)
-{
-	struct pt_regs *regs;
-	unsigned long tmp;
+अटल पूर्णांक ptrace_peekusr(काष्ठा task_काष्ठा *child, दीर्घ regno,
+			  दीर्घ __user *ret)
+अणु
+	काष्ठा pt_regs *regs;
+	अचिन्हित दीर्घ पंचांगp;
 
 	regs = task_pt_regs(child);
-	tmp = 0;  /* Default return value. */
+	पंचांगp = 0;  /* Default वापस value. */
 
-	switch(regno) {
-	case REG_AR_BASE ... REG_AR_BASE + XCHAL_NUM_AREGS - 1:
-		tmp = regs->areg[regno - REG_AR_BASE];
-		break;
+	चयन(regno) अणु
+	हाल REG_AR_BASE ... REG_AR_BASE + XCHAL_NUM_AREGS - 1:
+		पंचांगp = regs->areg[regno - REG_AR_BASE];
+		अवरोध;
 
-	case REG_A_BASE ... REG_A_BASE + 15:
-		tmp = regs->areg[regno - REG_A_BASE];
-		break;
+	हाल REG_A_BASE ... REG_A_BASE + 15:
+		पंचांगp = regs->areg[regno - REG_A_BASE];
+		अवरोध;
 
-	case REG_PC:
-		tmp = regs->pc;
-		break;
+	हाल REG_PC:
+		पंचांगp = regs->pc;
+		अवरोध;
 
-	case REG_PS:
-		/* Note: PS.EXCM is not set while user task is running;
-		 * its being set in regs is for exception handling
+	हाल REG_PS:
+		/* Note: PS.EXCM is not set जबतक user task is running;
+		 * its being set in regs is क्रम exception handling
 		 * convenience.
 		 */
-		tmp = (regs->ps & ~(1 << PS_EXCM_BIT));
-		break;
+		पंचांगp = (regs->ps & ~(1 << PS_EXCM_BIT));
+		अवरोध;
 
-	case REG_WB:
-		break;		/* tmp = 0 */
+	हाल REG_WB:
+		अवरोध;		/* पंचांगp = 0 */
 
-	case REG_WS:
-		{
-			unsigned long wb = regs->windowbase;
-			unsigned long ws = regs->windowstart;
-			tmp = ((ws >> wb) | (ws << (WSBITS - wb))) &
+	हाल REG_WS:
+		अणु
+			अचिन्हित दीर्घ wb = regs->winकरोwbase;
+			अचिन्हित दीर्घ ws = regs->winकरोwstart;
+			पंचांगp = ((ws >> wb) | (ws << (WSBITS - wb))) &
 				((1 << WSBITS) - 1);
-			break;
-		}
-	case REG_LBEG:
-		tmp = regs->lbeg;
-		break;
+			अवरोध;
+		पूर्ण
+	हाल REG_LBEG:
+		पंचांगp = regs->lbeg;
+		अवरोध;
 
-	case REG_LEND:
-		tmp = regs->lend;
-		break;
+	हाल REG_LEND:
+		पंचांगp = regs->lend;
+		अवरोध;
 
-	case REG_LCOUNT:
-		tmp = regs->lcount;
-		break;
+	हाल REG_LCOUNT:
+		पंचांगp = regs->lcount;
+		अवरोध;
 
-	case REG_SAR:
-		tmp = regs->sar;
-		break;
+	हाल REG_SAR:
+		पंचांगp = regs->sar;
+		अवरोध;
 
-	case SYSCALL_NR:
-		tmp = regs->syscall;
-		break;
+	हाल SYSCALL_NR:
+		पंचांगp = regs->syscall;
+		अवरोध;
 
-	default:
-		return -EIO;
-	}
-	return put_user(tmp, ret);
-}
+	शेष:
+		वापस -EIO;
+	पूर्ण
+	वापस put_user(पंचांगp, ret);
+पूर्ण
 
-static int ptrace_pokeusr(struct task_struct *child, long regno, long val)
-{
-	struct pt_regs *regs;
+अटल पूर्णांक ptrace_pokeusr(काष्ठा task_काष्ठा *child, दीर्घ regno, दीर्घ val)
+अणु
+	काष्ठा pt_regs *regs;
 	regs = task_pt_regs(child);
 
-	switch (regno) {
-	case REG_AR_BASE ... REG_AR_BASE + XCHAL_NUM_AREGS - 1:
+	चयन (regno) अणु
+	हाल REG_AR_BASE ... REG_AR_BASE + XCHAL_NUM_AREGS - 1:
 		regs->areg[regno - REG_AR_BASE] = val;
-		break;
+		अवरोध;
 
-	case REG_A_BASE ... REG_A_BASE + 15:
+	हाल REG_A_BASE ... REG_A_BASE + 15:
 		regs->areg[regno - REG_A_BASE] = val;
-		break;
+		अवरोध;
 
-	case REG_PC:
+	हाल REG_PC:
 		regs->pc = val;
-		break;
+		अवरोध;
 
-	case SYSCALL_NR:
+	हाल SYSCALL_NR:
 		regs->syscall = val;
-		break;
+		अवरोध;
 
-	default:
-		return -EIO;
-	}
-	return 0;
-}
+	शेष:
+		वापस -EIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-static void ptrace_hbptriggered(struct perf_event *bp,
-				struct perf_sample_data *data,
-				struct pt_regs *regs)
-{
-	int i;
-	struct arch_hw_breakpoint *bkpt = counter_arch_bp(bp);
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+अटल व्योम ptrace_hbptriggered(काष्ठा perf_event *bp,
+				काष्ठा perf_sample_data *data,
+				काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक i;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *bkpt = counter_arch_bp(bp);
 
-	if (bp->attr.bp_type & HW_BREAKPOINT_X) {
-		for (i = 0; i < XCHAL_NUM_IBREAK; ++i)
-			if (current->thread.ptrace_bp[i] == bp)
-				break;
+	अगर (bp->attr.bp_type & HW_BREAKPOINT_X) अणु
+		क्रम (i = 0; i < XCHAL_NUM_IBREAK; ++i)
+			अगर (current->thपढ़ो.ptrace_bp[i] == bp)
+				अवरोध;
 		i <<= 1;
-	} else {
-		for (i = 0; i < XCHAL_NUM_DBREAK; ++i)
-			if (current->thread.ptrace_wp[i] == bp)
-				break;
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < XCHAL_NUM_DBREAK; ++i)
+			अगर (current->thपढ़ो.ptrace_wp[i] == bp)
+				अवरोध;
 		i = (i << 1) | 1;
-	}
+	पूर्ण
 
-	force_sig_ptrace_errno_trap(i, (void __user *)bkpt->address);
-}
+	क्रमce_sig_ptrace_त्रुटि_सं_trap(i, (व्योम __user *)bkpt->address);
+पूर्ण
 
-static struct perf_event *ptrace_hbp_create(struct task_struct *tsk, int type)
-{
-	struct perf_event_attr attr;
+अटल काष्ठा perf_event *ptrace_hbp_create(काष्ठा task_काष्ठा *tsk, पूर्णांक type)
+अणु
+	काष्ठा perf_event_attr attr;
 
-	ptrace_breakpoint_init(&attr);
+	ptrace_अवरोधpoपूर्णांक_init(&attr);
 
-	/* Initialise fields to sane defaults. */
+	/* Initialise fields to sane शेषs. */
 	attr.bp_addr	= 0;
 	attr.bp_len	= 1;
 	attr.bp_type	= type;
 	attr.disabled	= 1;
 
-	return register_user_hw_breakpoint(&attr, ptrace_hbptriggered, NULL,
+	वापस रेजिस्टर_user_hw_अवरोधpoपूर्णांक(&attr, ptrace_hbptriggered, शून्य,
 					   tsk);
-}
+पूर्ण
 
 /*
- * Address bit 0 choose instruction (0) or data (1) break register, bits
- * 31..1 are the register number.
+ * Address bit 0 choose inकाष्ठाion (0) or data (1) अवरोध रेजिस्टर, bits
+ * 31..1 are the रेजिस्टर number.
  * Both PTRACE_GETHBPREGS and PTRACE_SETHBPREGS transfer two 32-bit words:
  * address (0) and control (1).
- * Instruction breakpoint contorl word is 0 to clear breakpoint, 1 to set.
- * Data breakpoint control word bit 31 is 'trigger on store', bit 30 is
+ * Inकाष्ठाion अवरोधpoपूर्णांक contorl word is 0 to clear अवरोधpoपूर्णांक, 1 to set.
+ * Data अवरोधpoपूर्णांक control word bit 31 is 'trigger on store', bit 30 is
  * 'trigger on load, bits 29..0 are length. Length 0 is used to clear a
- * breakpoint. To set a breakpoint length must be a power of 2 in the range
+ * अवरोधpoपूर्णांक. To set a अवरोधpoपूर्णांक length must be a घातer of 2 in the range
  * 1..64 and the address must be length-aligned.
  */
 
-static long ptrace_gethbpregs(struct task_struct *child, long addr,
-			      long __user *datap)
-{
-	struct perf_event *bp;
-	u32 user_data[2] = {0};
-	bool dbreak = addr & 1;
-	unsigned idx = addr >> 1;
+अटल दीर्घ ptrace_gethbpregs(काष्ठा task_काष्ठा *child, दीर्घ addr,
+			      दीर्घ __user *datap)
+अणु
+	काष्ठा perf_event *bp;
+	u32 user_data[2] = अणु0पूर्ण;
+	bool dअवरोध = addr & 1;
+	अचिन्हित idx = addr >> 1;
 
-	if ((!dbreak && idx >= XCHAL_NUM_IBREAK) ||
-	    (dbreak && idx >= XCHAL_NUM_DBREAK))
-		return -EINVAL;
+	अगर ((!dअवरोध && idx >= XCHAL_NUM_IBREAK) ||
+	    (dअवरोध && idx >= XCHAL_NUM_DBREAK))
+		वापस -EINVAL;
 
-	if (dbreak)
-		bp = child->thread.ptrace_wp[idx];
-	else
-		bp = child->thread.ptrace_bp[idx];
+	अगर (dअवरोध)
+		bp = child->thपढ़ो.ptrace_wp[idx];
+	अन्यथा
+		bp = child->thपढ़ो.ptrace_bp[idx];
 
-	if (bp) {
+	अगर (bp) अणु
 		user_data[0] = bp->attr.bp_addr;
 		user_data[1] = bp->attr.disabled ? 0 : bp->attr.bp_len;
-		if (dbreak) {
-			if (bp->attr.bp_type & HW_BREAKPOINT_R)
+		अगर (dअवरोध) अणु
+			अगर (bp->attr.bp_type & HW_BREAKPOINT_R)
 				user_data[1] |= DBREAKC_LOAD_MASK;
-			if (bp->attr.bp_type & HW_BREAKPOINT_W)
+			अगर (bp->attr.bp_type & HW_BREAKPOINT_W)
 				user_data[1] |= DBREAKC_STOR_MASK;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (copy_to_user(datap, user_data, sizeof(user_data)))
-		return -EFAULT;
+	अगर (copy_to_user(datap, user_data, माप(user_data)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long ptrace_sethbpregs(struct task_struct *child, long addr,
-			      long __user *datap)
-{
-	struct perf_event *bp;
-	struct perf_event_attr attr;
+अटल दीर्घ ptrace_sethbpregs(काष्ठा task_काष्ठा *child, दीर्घ addr,
+			      दीर्घ __user *datap)
+अणु
+	काष्ठा perf_event *bp;
+	काष्ठा perf_event_attr attr;
 	u32 user_data[2];
-	bool dbreak = addr & 1;
-	unsigned idx = addr >> 1;
-	int bp_type = 0;
+	bool dअवरोध = addr & 1;
+	अचिन्हित idx = addr >> 1;
+	पूर्णांक bp_type = 0;
 
-	if ((!dbreak && idx >= XCHAL_NUM_IBREAK) ||
-	    (dbreak && idx >= XCHAL_NUM_DBREAK))
-		return -EINVAL;
+	अगर ((!dअवरोध && idx >= XCHAL_NUM_IBREAK) ||
+	    (dअवरोध && idx >= XCHAL_NUM_DBREAK))
+		वापस -EINVAL;
 
-	if (copy_from_user(user_data, datap, sizeof(user_data)))
-		return -EFAULT;
+	अगर (copy_from_user(user_data, datap, माप(user_data)))
+		वापस -EFAULT;
 
-	if (dbreak) {
-		bp = child->thread.ptrace_wp[idx];
-		if (user_data[1] & DBREAKC_LOAD_MASK)
+	अगर (dअवरोध) अणु
+		bp = child->thपढ़ो.ptrace_wp[idx];
+		अगर (user_data[1] & DBREAKC_LOAD_MASK)
 			bp_type |= HW_BREAKPOINT_R;
-		if (user_data[1] & DBREAKC_STOR_MASK)
+		अगर (user_data[1] & DBREAKC_STOR_MASK)
 			bp_type |= HW_BREAKPOINT_W;
-	} else {
-		bp = child->thread.ptrace_bp[idx];
+	पूर्ण अन्यथा अणु
+		bp = child->thपढ़ो.ptrace_bp[idx];
 		bp_type = HW_BREAKPOINT_X;
-	}
+	पूर्ण
 
-	if (!bp) {
+	अगर (!bp) अणु
 		bp = ptrace_hbp_create(child,
 				       bp_type ? bp_type : HW_BREAKPOINT_RW);
-		if (IS_ERR(bp))
-			return PTR_ERR(bp);
-		if (dbreak)
-			child->thread.ptrace_wp[idx] = bp;
-		else
-			child->thread.ptrace_bp[idx] = bp;
-	}
+		अगर (IS_ERR(bp))
+			वापस PTR_ERR(bp);
+		अगर (dअवरोध)
+			child->thपढ़ो.ptrace_wp[idx] = bp;
+		अन्यथा
+			child->thपढ़ो.ptrace_bp[idx] = bp;
+	पूर्ण
 
 	attr = bp->attr;
 	attr.bp_addr = user_data[0];
@@ -492,96 +493,96 @@ static long ptrace_sethbpregs(struct task_struct *child, long addr,
 	attr.bp_type = bp_type;
 	attr.disabled = !attr.bp_len;
 
-	return modify_user_hw_breakpoint(bp, &attr);
-}
-#endif
+	वापस modअगरy_user_hw_अवरोधpoपूर्णांक(bp, &attr);
+पूर्ण
+#पूर्ण_अगर
 
-long arch_ptrace(struct task_struct *child, long request,
-		 unsigned long addr, unsigned long data)
-{
-	int ret = -EPERM;
-	void __user *datap = (void __user *) data;
+दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
+		 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
+अणु
+	पूर्णांक ret = -EPERM;
+	व्योम __user *datap = (व्योम __user *) data;
 
-	switch (request) {
-	case PTRACE_PEEKUSR:	/* read register specified by addr. */
+	चयन (request) अणु
+	हाल PTRACE_PEEKUSR:	/* पढ़ो रेजिस्टर specअगरied by addr. */
 		ret = ptrace_peekusr(child, addr, datap);
-		break;
+		अवरोध;
 
-	case PTRACE_POKEUSR:	/* write register specified by addr. */
+	हाल PTRACE_POKEUSR:	/* ग_लिखो रेजिस्टर specअगरied by addr. */
 		ret = ptrace_pokeusr(child, addr, data);
-		break;
+		अवरोध;
 
-	case PTRACE_GETREGS:
+	हाल PTRACE_GETREGS:
 		ret = ptrace_getregs(child, datap);
-		break;
+		अवरोध;
 
-	case PTRACE_SETREGS:
+	हाल PTRACE_SETREGS:
 		ret = ptrace_setregs(child, datap);
-		break;
+		अवरोध;
 
-	case PTRACE_GETXTREGS:
+	हाल PTRACE_GETXTREGS:
 		ret = ptrace_getxregs(child, datap);
-		break;
+		अवरोध;
 
-	case PTRACE_SETXTREGS:
+	हाल PTRACE_SETXTREGS:
 		ret = ptrace_setxregs(child, datap);
-		break;
-#ifdef CONFIG_HAVE_HW_BREAKPOINT
-	case PTRACE_GETHBPREGS:
+		अवरोध;
+#अगर_घोषित CONFIG_HAVE_HW_BREAKPOINT
+	हाल PTRACE_GETHBPREGS:
 		ret = ptrace_gethbpregs(child, addr, datap);
-		break;
+		अवरोध;
 
-	case PTRACE_SETHBPREGS:
+	हाल PTRACE_SETHBPREGS:
 		ret = ptrace_sethbpregs(child, addr, datap);
-		break;
-#endif
-	default:
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		ret = ptrace_request(child, request, addr, data);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void do_syscall_trace_leave(struct pt_regs *regs);
-int do_syscall_trace_enter(struct pt_regs *regs)
-{
-	if (regs->syscall == NO_SYSCALL)
+व्योम करो_syscall_trace_leave(काष्ठा pt_regs *regs);
+पूर्णांक करो_syscall_trace_enter(काष्ठा pt_regs *regs)
+अणु
+	अगर (regs->syscall == NO_SYSCALL)
 		regs->areg[2] = -ENOSYS;
 
-	if (test_thread_flag(TIF_SYSCALL_TRACE) &&
-	    tracehook_report_syscall_entry(regs)) {
+	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACE) &&
+	    tracehook_report_syscall_entry(regs)) अणु
 		regs->areg[2] = -ENOSYS;
 		regs->syscall = NO_SYSCALL;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (regs->syscall == NO_SYSCALL ||
-	    secure_computing() == -1) {
-		do_syscall_trace_leave(regs);
-		return 0;
-	}
+	अगर (regs->syscall == NO_SYSCALL ||
+	    secure_computing() == -1) अणु
+		करो_syscall_trace_leave(regs);
+		वापस 0;
+	पूर्ण
 
-	if (test_thread_flag(TIF_SYSCALL_TRACEPOINT))
+	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACEPOINT))
 		trace_sys_enter(regs, syscall_get_nr(current, regs));
 
 	audit_syscall_entry(regs->syscall, regs->areg[6],
 			    regs->areg[3], regs->areg[4],
 			    regs->areg[5]);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-void do_syscall_trace_leave(struct pt_regs *regs)
-{
-	int step;
+व्योम करो_syscall_trace_leave(काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक step;
 
-	audit_syscall_exit(regs);
+	audit_syscall_निकास(regs);
 
-	if (test_thread_flag(TIF_SYSCALL_TRACEPOINT))
-		trace_sys_exit(regs, regs_return_value(regs));
+	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACEPOINT))
+		trace_sys_निकास(regs, regs_वापस_value(regs));
 
-	step = test_thread_flag(TIF_SINGLESTEP);
+	step = test_thपढ़ो_flag(TIF_SINGLESTEP);
 
-	if (step || test_thread_flag(TIF_SYSCALL_TRACE))
-		tracehook_report_syscall_exit(regs, step);
-}
+	अगर (step || test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
+		tracehook_report_syscall_निकास(regs, step);
+पूर्ण

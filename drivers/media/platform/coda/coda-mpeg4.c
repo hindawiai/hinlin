@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Coda multi-standard codec IP - MPEG-4 helper functions
  *
  * Copyright (C) 2019 Pengutronix, Philipp Zabel
  */
 
-#include <linux/kernel.h>
-#include <linux/videodev2.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/videodev2.h>
 
-#include "coda.h"
+#समावेश "coda.h"
 
-int coda_mpeg4_profile(int profile_idc)
-{
-	switch (profile_idc) {
-	case 0:
-		return V4L2_MPEG_VIDEO_MPEG4_PROFILE_SIMPLE;
-	case 15:
-		return V4L2_MPEG_VIDEO_MPEG4_PROFILE_ADVANCED_SIMPLE;
-	case 2:
-		return V4L2_MPEG_VIDEO_MPEG4_PROFILE_CORE;
-	case 1:
-		return V4L2_MPEG_VIDEO_MPEG4_PROFILE_SIMPLE_SCALABLE;
-	case 11:
-		return V4L2_MPEG_VIDEO_MPEG4_PROFILE_ADVANCED_CODING_EFFICIENCY;
-	default:
-		return -EINVAL;
-	}
-}
+पूर्णांक coda_mpeg4_profile(पूर्णांक profile_idc)
+अणु
+	चयन (profile_idc) अणु
+	हाल 0:
+		वापस V4L2_MPEG_VIDEO_MPEG4_PROखाता_SIMPLE;
+	हाल 15:
+		वापस V4L2_MPEG_VIDEO_MPEG4_PROखाता_ADVANCED_SIMPLE;
+	हाल 2:
+		वापस V4L2_MPEG_VIDEO_MPEG4_PROखाता_CORE;
+	हाल 1:
+		वापस V4L2_MPEG_VIDEO_MPEG4_PROखाता_SIMPLE_SCALABLE;
+	हाल 11:
+		वापस V4L2_MPEG_VIDEO_MPEG4_PROखाता_ADVANCED_CODING_EFFICIENCY;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-int coda_mpeg4_level(int level_idc)
-{
-	switch (level_idc) {
-	case 0:
-		return V4L2_MPEG_VIDEO_MPEG4_LEVEL_0;
-	case 1:
-		return V4L2_MPEG_VIDEO_MPEG4_LEVEL_1;
-	case 2:
-		return V4L2_MPEG_VIDEO_MPEG4_LEVEL_2;
-	case 3:
-		return V4L2_MPEG_VIDEO_MPEG4_LEVEL_3;
-	case 4:
-		return V4L2_MPEG_VIDEO_MPEG4_LEVEL_4;
-	case 5:
-		return V4L2_MPEG_VIDEO_MPEG4_LEVEL_5;
-	default:
-		return -EINVAL;
-	}
-}
+पूर्णांक coda_mpeg4_level(पूर्णांक level_idc)
+अणु
+	चयन (level_idc) अणु
+	हाल 0:
+		वापस V4L2_MPEG_VIDEO_MPEG4_LEVEL_0;
+	हाल 1:
+		वापस V4L2_MPEG_VIDEO_MPEG4_LEVEL_1;
+	हाल 2:
+		वापस V4L2_MPEG_VIDEO_MPEG4_LEVEL_2;
+	हाल 3:
+		वापस V4L2_MPEG_VIDEO_MPEG4_LEVEL_3;
+	हाल 4:
+		वापस V4L2_MPEG_VIDEO_MPEG4_LEVEL_4;
+	हाल 5:
+		वापस V4L2_MPEG_VIDEO_MPEG4_LEVEL_5;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /*
- * Check if the buffer starts with the MPEG-4 visual object sequence and visual
- * object headers, for example:
+ * Check अगर the buffer starts with the MPEG-4 visual object sequence and visual
+ * object headers, क्रम example:
  *
  *   00 00 01 b0 f1
  *   00 00 01 b5 a9 13 00 00 01 00 00 00 01 20 08
@@ -58,30 +59,30 @@ int coda_mpeg4_level(int level_idc)
  *
  * Returns the detected header size in bytes or 0.
  */
-u32 coda_mpeg4_parse_headers(struct coda_ctx *ctx, u8 *buf, u32 size)
-{
-	static const u8 vos_start[4] = { 0x00, 0x00, 0x01, 0xb0 };
-	static const union {
+u32 coda_mpeg4_parse_headers(काष्ठा coda_ctx *ctx, u8 *buf, u32 size)
+अणु
+	अटल स्थिर u8 vos_start[4] = अणु 0x00, 0x00, 0x01, 0xb0 पूर्ण;
+	अटल स्थिर जोड़ अणु
 		u8 vo_start[4];
 		u8 start_code_prefix[3];
-	} u = { { 0x00, 0x00, 0x01, 0xb5 } };
+	पूर्ण u = अणु अणु 0x00, 0x00, 0x01, 0xb5 पूर्ण पूर्ण;
 
-	if (size < 30 ||
-	    memcmp(buf, vos_start, 4) != 0 ||
-	    memcmp(buf + 5, u.vo_start, 4) != 0)
-		return 0;
+	अगर (size < 30 ||
+	    स_भेद(buf, vos_start, 4) != 0 ||
+	    स_भेद(buf + 5, u.vo_start, 4) != 0)
+		वापस 0;
 
-	if (size == 30 ||
-	    (size >= 33 && memcmp(buf + 30, u.start_code_prefix, 3) == 0))
-		return 30;
+	अगर (size == 30 ||
+	    (size >= 33 && स_भेद(buf + 30, u.start_code_prefix, 3) == 0))
+		वापस 30;
 
-	if (size == 31 ||
-	    (size >= 34 && memcmp(buf + 31, u.start_code_prefix, 3) == 0))
-		return 31;
+	अगर (size == 31 ||
+	    (size >= 34 && स_भेद(buf + 31, u.start_code_prefix, 3) == 0))
+		वापस 31;
 
-	if (size == 32 ||
-	    (size >= 35 && memcmp(buf + 32, u.start_code_prefix, 3) == 0))
-		return 32;
+	अगर (size == 32 ||
+	    (size >= 35 && स_भेद(buf + 32, u.start_code_prefix, 3) == 0))
+		वापस 32;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

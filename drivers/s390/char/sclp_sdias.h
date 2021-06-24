@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * SCLP "store data in absolute storage"
  *
  * Copyright IBM Corp. 2003, 2013
  */
 
-#ifndef SCLP_SDIAS_H
-#define SCLP_SDIAS_H
+#अगर_अघोषित SCLP_SDIAS_H
+#घोषणा SCLP_SDIAS_H
 
-#include "sclp.h"
+#समावेश "sclp.h"
 
-#define SDIAS_EQ_STORE_DATA		0x0
-#define SDIAS_EQ_SIZE			0x1
-#define SDIAS_DI_FCP_DUMP		0x0
-#define SDIAS_ASA_SIZE_32		0x0
-#define SDIAS_ASA_SIZE_64		0x1
-#define SDIAS_EVSTATE_ALL_STORED	0x0
-#define SDIAS_EVSTATE_NO_DATA		0x3
-#define SDIAS_EVSTATE_PART_STORED	0x10
+#घोषणा SDIAS_EQ_STORE_DATA		0x0
+#घोषणा SDIAS_EQ_SIZE			0x1
+#घोषणा SDIAS_DI_FCP_DUMP		0x0
+#घोषणा SDIAS_ASA_SIZE_32		0x0
+#घोषणा SDIAS_ASA_SIZE_64		0x1
+#घोषणा SDIAS_EVSTATE_ALL_STORED	0x0
+#घोषणा SDIAS_EVSTATE_NO_DATA		0x3
+#घोषणा SDIAS_EVSTATE_PART_STORED	0x10
 
-struct sdias_evbuf {
-	struct	evbuf_header hdr;
+काष्ठा sdias_evbuf अणु
+	काष्ठा	evbuf_header hdr;
 	u8	event_qual;
 	u8	data_id;
 	u64	reserved2;
@@ -37,11 +38,11 @@ struct sdias_evbuf {
 	u32	lbn;
 	u16	reserved7;
 	u16	dbs;
-} __packed;
+पूर्ण __packed;
 
-struct sdias_sccb {
-	struct sccb_header	hdr;
-	struct sdias_evbuf	evbuf;
-} __packed;
+काष्ठा sdias_sccb अणु
+	काष्ठा sccb_header	hdr;
+	काष्ठा sdias_evbuf	evbuf;
+पूर्ण __packed;
 
-#endif /* SCLP_SDIAS_H */
+#पूर्ण_अगर /* SCLP_SDIAS_H */

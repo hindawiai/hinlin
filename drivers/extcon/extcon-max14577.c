@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // extcon-max14577.c - MAX14577/77836 extcon driver to support MUIC
 //
@@ -6,104 +7,104 @@
 // Chanwoo Choi <cw00.choi@samsung.com>
 // Krzysztof Kozlowski <krzk@kernel.org>
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/mfd/max14577.h>
-#include <linux/mfd/max14577-private.h>
-#include <linux/extcon-provider.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/mfd/max14577.h>
+#समावेश <linux/mfd/max14577-निजी.h>
+#समावेश <linux/extcon-provider.h>
 
-#define	DELAY_MS_DEFAULT		17000		/* unit: millisecond */
+#घोषणा	DELAY_MS_DEFAULT		17000		/* unit: millisecond */
 
-enum max14577_muic_adc_debounce_time {
+क्रमागत max14577_muic_adc_debounce_समय अणु
 	ADC_DEBOUNCE_TIME_5MS = 0,
 	ADC_DEBOUNCE_TIME_10MS,
 	ADC_DEBOUNCE_TIME_25MS,
 	ADC_DEBOUNCE_TIME_38_62MS,
-};
+पूर्ण;
 
-enum max14577_muic_status {
+क्रमागत max14577_muic_status अणु
 	MAX14577_MUIC_STATUS1 = 0,
 	MAX14577_MUIC_STATUS2 = 1,
 	MAX14577_MUIC_STATUS_END,
-};
+पूर्ण;
 
 /**
- * struct max14577_muic_irq
+ * काष्ठा max14577_muic_irq
  * @irq: the index of irq list of MUIC device.
  * @name: the name of irq.
- * @virq: the virtual irq to use irq domain
+ * @virq: the भव irq to use irq करोमुख्य
  */
-struct max14577_muic_irq {
-	unsigned int irq;
-	const char *name;
-	unsigned int virq;
-};
+काष्ठा max14577_muic_irq अणु
+	अचिन्हित पूर्णांक irq;
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक virq;
+पूर्ण;
 
-static struct max14577_muic_irq max14577_muic_irqs[] = {
-	{ MAX14577_IRQ_INT1_ADC,	"muic-ADC" },
-	{ MAX14577_IRQ_INT1_ADCLOW,	"muic-ADCLOW" },
-	{ MAX14577_IRQ_INT1_ADCERR,	"muic-ADCError" },
-	{ MAX14577_IRQ_INT2_CHGTYP,	"muic-CHGTYP" },
-	{ MAX14577_IRQ_INT2_CHGDETRUN,	"muic-CHGDETRUN" },
-	{ MAX14577_IRQ_INT2_DCDTMR,	"muic-DCDTMR" },
-	{ MAX14577_IRQ_INT2_DBCHG,	"muic-DBCHG" },
-	{ MAX14577_IRQ_INT2_VBVOLT,	"muic-VBVOLT" },
-};
+अटल काष्ठा max14577_muic_irq max14577_muic_irqs[] = अणु
+	अणु MAX14577_IRQ_INT1_ADC,	"muic-ADC" पूर्ण,
+	अणु MAX14577_IRQ_INT1_ADCLOW,	"muic-ADCLOW" पूर्ण,
+	अणु MAX14577_IRQ_INT1_ADCERR,	"muic-ADCError" पूर्ण,
+	अणु MAX14577_IRQ_INT2_CHGTYP,	"muic-CHGTYP" पूर्ण,
+	अणु MAX14577_IRQ_INT2_CHGDETRUN,	"muic-CHGDETRUN" पूर्ण,
+	अणु MAX14577_IRQ_INT2_DCDTMR,	"muic-DCDTMR" पूर्ण,
+	अणु MAX14577_IRQ_INT2_DBCHG,	"muic-DBCHG" पूर्ण,
+	अणु MAX14577_IRQ_INT2_VBVOLT,	"muic-VBVOLT" पूर्ण,
+पूर्ण;
 
-static struct max14577_muic_irq max77836_muic_irqs[] = {
-	{ MAX14577_IRQ_INT1_ADC,	"muic-ADC" },
-	{ MAX14577_IRQ_INT1_ADCLOW,	"muic-ADCLOW" },
-	{ MAX14577_IRQ_INT1_ADCERR,	"muic-ADCError" },
-	{ MAX77836_IRQ_INT1_ADC1K,	"muic-ADC1K" },
-	{ MAX14577_IRQ_INT2_CHGTYP,	"muic-CHGTYP" },
-	{ MAX14577_IRQ_INT2_CHGDETRUN,	"muic-CHGDETRUN" },
-	{ MAX14577_IRQ_INT2_DCDTMR,	"muic-DCDTMR" },
-	{ MAX14577_IRQ_INT2_DBCHG,	"muic-DBCHG" },
-	{ MAX14577_IRQ_INT2_VBVOLT,	"muic-VBVOLT" },
-	{ MAX77836_IRQ_INT2_VIDRM,	"muic-VIDRM" },
-};
+अटल काष्ठा max14577_muic_irq max77836_muic_irqs[] = अणु
+	अणु MAX14577_IRQ_INT1_ADC,	"muic-ADC" पूर्ण,
+	अणु MAX14577_IRQ_INT1_ADCLOW,	"muic-ADCLOW" पूर्ण,
+	अणु MAX14577_IRQ_INT1_ADCERR,	"muic-ADCError" पूर्ण,
+	अणु MAX77836_IRQ_INT1_ADC1K,	"muic-ADC1K" पूर्ण,
+	अणु MAX14577_IRQ_INT2_CHGTYP,	"muic-CHGTYP" पूर्ण,
+	अणु MAX14577_IRQ_INT2_CHGDETRUN,	"muic-CHGDETRUN" पूर्ण,
+	अणु MAX14577_IRQ_INT2_DCDTMR,	"muic-DCDTMR" पूर्ण,
+	अणु MAX14577_IRQ_INT2_DBCHG,	"muic-DBCHG" पूर्ण,
+	अणु MAX14577_IRQ_INT2_VBVOLT,	"muic-VBVOLT" पूर्ण,
+	अणु MAX77836_IRQ_INT2_VIDRM,	"muic-VIDRM" पूर्ण,
+पूर्ण;
 
-struct max14577_muic_info {
-	struct device *dev;
-	struct max14577 *max14577;
-	struct extcon_dev *edev;
-	int prev_cable_type;
-	int prev_chg_type;
+काष्ठा max14577_muic_info अणु
+	काष्ठा device *dev;
+	काष्ठा max14577 *max14577;
+	काष्ठा extcon_dev *edev;
+	पूर्णांक prev_cable_type;
+	पूर्णांक prev_chg_type;
 	u8 status[MAX14577_MUIC_STATUS_END];
 
-	struct max14577_muic_irq *muic_irqs;
-	unsigned int muic_irqs_num;
+	काष्ठा max14577_muic_irq *muic_irqs;
+	अचिन्हित पूर्णांक muic_irqs_num;
 	bool irq_adc;
 	bool irq_chg;
-	struct work_struct irq_work;
-	struct mutex mutex;
+	काष्ठा work_काष्ठा irq_work;
+	काष्ठा mutex mutex;
 
 	/*
 	 * Use delayed workqueue to detect cable state and then
-	 * notify cable state to notifiee/platform through uevent.
-	 * After completing the booting of platform, the extcon provider
-	 * driver should notify cable state to upper layer.
+	 * notअगरy cable state to notअगरiee/platक्रमm through uevent.
+	 * After completing the booting of platक्रमm, the extcon provider
+	 * driver should notअगरy cable state to upper layer.
 	 */
-	struct delayed_work wq_detcable;
+	काष्ठा delayed_work wq_detcable;
 
 	/*
 	 * Default usb/uart path whether UART/USB or AUX_UART/AUX_USB
-	 * h/w path of COMP2/COMN1 on CONTROL1 register.
+	 * h/w path of COMP2/COMN1 on CONTROL1 रेजिस्टर.
 	 */
-	int path_usb;
-	int path_uart;
-};
+	पूर्णांक path_usb;
+	पूर्णांक path_uart;
+पूर्ण;
 
-enum max14577_muic_cable_group {
+क्रमागत max14577_muic_cable_group अणु
 	MAX14577_CABLE_GROUP_ADC = 0,
 	MAX14577_CABLE_GROUP_CHG,
-};
+पूर्ण;
 
 /* Define supported accessory type */
-enum max14577_muic_acc_type {
+क्रमागत max14577_muic_acc_type अणु
 	MAX14577_MUIC_ADC_GROUND = 0x0,
 	MAX14577_MUIC_ADC_SEND_END_BUTTON,
 	MAX14577_MUIC_ADC_REMOTE_S1_BUTTON,
@@ -136,9 +137,9 @@ enum max14577_muic_acc_type {
 	MAX14577_MUIC_ADC_FACTORY_MODE_UART_ON,
 	MAX14577_MUIC_ADC_AUDIO_DEVICE_TYPE1, /* with Remote and Simple Ctrl */
 	MAX14577_MUIC_ADC_OPEN,
-};
+पूर्ण;
 
-static const unsigned int max14577_extcon_cable[] = {
+अटल स्थिर अचिन्हित पूर्णांक max14577_extcon_cable[] = अणु
 	EXTCON_USB,
 	EXTCON_CHG_USB_SDP,
 	EXTCON_CHG_USB_DCP,
@@ -147,118 +148,118 @@ static const unsigned int max14577_extcon_cable[] = {
 	EXTCON_CHG_USB_CDP,
 	EXTCON_JIG,
 	EXTCON_NONE,
-};
+पूर्ण;
 
 /*
- * max14577_muic_set_debounce_time - Set the debounce time of ADC
- * @info: the instance including private data of max14577 MUIC
- * @time: the debounce time of ADC
+ * max14577_muic_set_debounce_समय - Set the debounce समय of ADC
+ * @info: the instance including निजी data of max14577 MUIC
+ * @समय: the debounce समय of ADC
  */
-static int max14577_muic_set_debounce_time(struct max14577_muic_info *info,
-		enum max14577_muic_adc_debounce_time time)
-{
+अटल पूर्णांक max14577_muic_set_debounce_समय(काष्ठा max14577_muic_info *info,
+		क्रमागत max14577_muic_adc_debounce_समय समय)
+अणु
 	u8 ret;
 
-	switch (time) {
-	case ADC_DEBOUNCE_TIME_5MS:
-	case ADC_DEBOUNCE_TIME_10MS:
-	case ADC_DEBOUNCE_TIME_25MS:
-	case ADC_DEBOUNCE_TIME_38_62MS:
+	चयन (समय) अणु
+	हाल ADC_DEBOUNCE_TIME_5MS:
+	हाल ADC_DEBOUNCE_TIME_10MS:
+	हाल ADC_DEBOUNCE_TIME_25MS:
+	हाल ADC_DEBOUNCE_TIME_38_62MS:
 		ret = max14577_update_reg(info->max14577->regmap,
 					  MAX14577_MUIC_REG_CONTROL3,
 					  CTRL3_ADCDBSET_MASK,
-					  time << CTRL3_ADCDBSET_SHIFT);
-		if (ret) {
+					  समय << CTRL3_ADCDBSET_SHIFT);
+		अगर (ret) अणु
 			dev_err(info->dev, "failed to set ADC debounce time\n");
-			return ret;
-		}
-		break;
-	default:
+			वापस ret;
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(info->dev, "invalid ADC debounce time\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
 /*
  * max14577_muic_set_path - Set hardware line according to attached cable
- * @info: the instance including private data of max14577 MUIC
+ * @info: the instance including निजी data of max14577 MUIC
  * @value: the path according to attached cable
  * @attached: the state of cable (true:attached, false:detached)
  *
  * The max14577 MUIC device share outside H/W line among a varity of cables
- * so, this function set internal path of H/W line according to the type of
+ * so, this function set पूर्णांकernal path of H/W line according to the type of
  * attached cable.
  */
-static int max14577_muic_set_path(struct max14577_muic_info *info,
+अटल पूर्णांक max14577_muic_set_path(काष्ठा max14577_muic_info *info,
 		u8 val, bool attached)
-{
+अणु
 	u8 ctrl1, ctrl2 = 0;
-	int ret;
+	पूर्णांक ret;
 
-	/* Set open state to path before changing hw path */
+	/* Set खोलो state to path beक्रमe changing hw path */
 	ret = max14577_update_reg(info->max14577->regmap,
 				MAX14577_MUIC_REG_CONTROL1,
 				CLEAR_IDBEN_MICEN_MASK, CTRL1_SW_OPEN);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(info->dev, "failed to update MUIC register\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (attached)
+	अगर (attached)
 		ctrl1 = val;
-	else
+	अन्यथा
 		ctrl1 = CTRL1_SW_OPEN;
 
 	ret = max14577_update_reg(info->max14577->regmap,
 				MAX14577_MUIC_REG_CONTROL1,
 				CLEAR_IDBEN_MICEN_MASK, ctrl1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(info->dev, "failed to update MUIC register\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (attached)
+	अगर (attached)
 		ctrl2 |= CTRL2_CPEN_MASK;	/* LowPwr=0, CPEn=1 */
-	else
+	अन्यथा
 		ctrl2 |= CTRL2_LOWPWR_MASK;	/* LowPwr=1, CPEn=0 */
 
 	ret = max14577_update_reg(info->max14577->regmap,
 			MAX14577_REG_CONTROL2,
 			CTRL2_LOWPWR_MASK | CTRL2_CPEN_MASK, ctrl2);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(info->dev, "failed to update MUIC register\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dev_dbg(info->dev,
 		"CONTROL1 : 0x%02x, CONTROL2 : 0x%02x, state : %s\n",
 		ctrl1, ctrl2, attached ? "attached" : "detached");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * max14577_muic_get_cable_type - Return cable type and check cable state
- * @info: the instance including private data of max14577 MUIC
+ * @info: the instance including निजी data of max14577 MUIC
  * @group: the path according to attached cable
- * @attached: store cable state and return
+ * @attached: store cable state and वापस
  *
  * This function check the cable state either attached or detached,
- * and then divide precise type of cable according to cable group.
+ * and then भागide precise type of cable according to cable group.
  *	- max14577_CABLE_GROUP_ADC
  *	- max14577_CABLE_GROUP_CHG
  */
-static int max14577_muic_get_cable_type(struct max14577_muic_info *info,
-		enum max14577_muic_cable_group group, bool *attached)
-{
-	int cable_type = 0;
-	int adc;
-	int chg_type;
+अटल पूर्णांक max14577_muic_get_cable_type(काष्ठा max14577_muic_info *info,
+		क्रमागत max14577_muic_cable_group group, bool *attached)
+अणु
+	पूर्णांक cable_type = 0;
+	पूर्णांक adc;
+	पूर्णांक chg_type;
 
-	switch (group) {
-	case MAX14577_CABLE_GROUP_ADC:
+	चयन (group) अणु
+	हाल MAX14577_CABLE_GROUP_ADC:
 		/*
 		 * Read ADC value to check cable type and decide cable state
 		 * according to cable type
@@ -268,95 +269,95 @@ static int max14577_muic_get_cable_type(struct max14577_muic_info *info,
 
 		/*
 		 * Check current cable state/cable type and store cable type
-		 * (info->prev_cable_type) for handling cable when cable is
+		 * (info->prev_cable_type) क्रम handling cable when cable is
 		 * detached.
 		 */
-		if (adc == MAX14577_MUIC_ADC_OPEN) {
+		अगर (adc == MAX14577_MUIC_ADC_OPEN) अणु
 			*attached = false;
 
 			cable_type = info->prev_cable_type;
 			info->prev_cable_type = MAX14577_MUIC_ADC_OPEN;
-		} else {
+		पूर्ण अन्यथा अणु
 			*attached = true;
 
 			cable_type = info->prev_cable_type = adc;
-		}
-		break;
-	case MAX14577_CABLE_GROUP_CHG:
+		पूर्ण
+		अवरोध;
+	हाल MAX14577_CABLE_GROUP_CHG:
 		/*
-		 * Read charger type to check cable type and decide cable state
-		 * according to type of charger cable.
+		 * Read अक्षरger type to check cable type and decide cable state
+		 * according to type of अक्षरger cable.
 		 */
 		chg_type = info->status[MAX14577_MUIC_STATUS2] &
 			STATUS2_CHGTYP_MASK;
 		chg_type >>= STATUS2_CHGTYP_SHIFT;
 
-		if (chg_type == MAX14577_CHARGER_TYPE_NONE) {
+		अगर (chg_type == MAX14577_CHARGER_TYPE_NONE) अणु
 			*attached = false;
 
 			cable_type = info->prev_chg_type;
 			info->prev_chg_type = MAX14577_CHARGER_TYPE_NONE;
-		} else {
+		पूर्ण अन्यथा अणु
 			*attached = true;
 
 			/*
 			 * Check current cable state/cable type and store cable
-			 * type(info->prev_chg_type) for handling cable when
-			 * charger cable is detached.
+			 * type(info->prev_chg_type) क्रम handling cable when
+			 * अक्षरger cable is detached.
 			 */
 			cable_type = info->prev_chg_type = chg_type;
-		}
+		पूर्ण
 
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(info->dev, "Unknown cable group (%d)\n", group);
 		cable_type = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return cable_type;
-}
+	वापस cable_type;
+पूर्ण
 
-static int max14577_muic_jig_handler(struct max14577_muic_info *info,
-		int cable_type, bool attached)
-{
-	int ret = 0;
+अटल पूर्णांक max14577_muic_jig_handler(काष्ठा max14577_muic_info *info,
+		पूर्णांक cable_type, bool attached)
+अणु
+	पूर्णांक ret = 0;
 	u8 path = CTRL1_SW_OPEN;
 
 	dev_dbg(info->dev,
 		"external connector is %s (adc:0x%02x)\n",
 		attached ? "attached" : "detached", cable_type);
 
-	switch (cable_type) {
-	case MAX14577_MUIC_ADC_FACTORY_MODE_USB_OFF:	/* ADC_JIG_USB_OFF */
-	case MAX14577_MUIC_ADC_FACTORY_MODE_USB_ON:	/* ADC_JIG_USB_ON */
+	चयन (cable_type) अणु
+	हाल MAX14577_MUIC_ADC_FACTORY_MODE_USB_OFF:	/* ADC_JIG_USB_OFF */
+	हाल MAX14577_MUIC_ADC_FACTORY_MODE_USB_ON:	/* ADC_JIG_USB_ON */
 		/* PATH:AP_USB */
 		path = CTRL1_SW_USB;
-		break;
-	case MAX14577_MUIC_ADC_FACTORY_MODE_UART_OFF:	/* ADC_JIG_UART_OFF */
+		अवरोध;
+	हाल MAX14577_MUIC_ADC_FACTORY_MODE_UART_OFF:	/* ADC_JIG_UART_OFF */
 		/* PATH:AP_UART */
 		path = CTRL1_SW_UART;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(info->dev, "failed to detect %s jig cable\n",
 			attached ? "attached" : "detached");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = max14577_muic_set_path(info, path, attached);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	extcon_set_state_sync(info->edev, EXTCON_JIG, attached);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max14577_muic_adc_handler(struct max14577_muic_info *info)
-{
-	int cable_type;
+अटल पूर्णांक max14577_muic_adc_handler(काष्ठा max14577_muic_info *info)
+अणु
+	पूर्णांक cable_type;
 	bool attached;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/* Check accessory state which is either detached or attached */
 	cable_type = max14577_muic_get_cable_type(info,
@@ -367,67 +368,67 @@ static int max14577_muic_adc_handler(struct max14577_muic_info *info)
 		attached ? "attached" : "detached", cable_type,
 		info->prev_cable_type);
 
-	switch (cable_type) {
-	case MAX14577_MUIC_ADC_FACTORY_MODE_USB_OFF:
-	case MAX14577_MUIC_ADC_FACTORY_MODE_USB_ON:
-	case MAX14577_MUIC_ADC_FACTORY_MODE_UART_OFF:
+	चयन (cable_type) अणु
+	हाल MAX14577_MUIC_ADC_FACTORY_MODE_USB_OFF:
+	हाल MAX14577_MUIC_ADC_FACTORY_MODE_USB_ON:
+	हाल MAX14577_MUIC_ADC_FACTORY_MODE_UART_OFF:
 		/* JIG */
 		ret = max14577_muic_jig_handler(info, cable_type, attached);
-		if (ret < 0)
-			return ret;
-		break;
-	case MAX14577_MUIC_ADC_GROUND:
-	case MAX14577_MUIC_ADC_SEND_END_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S1_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S2_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S3_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S4_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S5_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S6_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S7_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S8_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S9_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S10_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S11_BUTTON:
-	case MAX14577_MUIC_ADC_REMOTE_S12_BUTTON:
-	case MAX14577_MUIC_ADC_RESERVED_ACC_1:
-	case MAX14577_MUIC_ADC_RESERVED_ACC_2:
-	case MAX14577_MUIC_ADC_RESERVED_ACC_3:
-	case MAX14577_MUIC_ADC_RESERVED_ACC_4:
-	case MAX14577_MUIC_ADC_RESERVED_ACC_5:
-	case MAX14577_MUIC_ADC_AUDIO_DEVICE_TYPE2:
-	case MAX14577_MUIC_ADC_PHONE_POWERED_DEV:
-	case MAX14577_MUIC_ADC_TTY_CONVERTER:
-	case MAX14577_MUIC_ADC_UART_CABLE:
-	case MAX14577_MUIC_ADC_CEA936A_TYPE1_CHG:
-	case MAX14577_MUIC_ADC_AV_CABLE_NOLOAD:
-	case MAX14577_MUIC_ADC_CEA936A_TYPE2_CHG:
-	case MAX14577_MUIC_ADC_FACTORY_MODE_UART_ON:
-	case MAX14577_MUIC_ADC_AUDIO_DEVICE_TYPE1:
+		अगर (ret < 0)
+			वापस ret;
+		अवरोध;
+	हाल MAX14577_MUIC_ADC_GROUND:
+	हाल MAX14577_MUIC_ADC_SEND_END_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S1_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S2_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S3_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S4_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S5_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S6_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S7_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S8_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S9_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S10_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S11_BUTTON:
+	हाल MAX14577_MUIC_ADC_REMOTE_S12_BUTTON:
+	हाल MAX14577_MUIC_ADC_RESERVED_ACC_1:
+	हाल MAX14577_MUIC_ADC_RESERVED_ACC_2:
+	हाल MAX14577_MUIC_ADC_RESERVED_ACC_3:
+	हाल MAX14577_MUIC_ADC_RESERVED_ACC_4:
+	हाल MAX14577_MUIC_ADC_RESERVED_ACC_5:
+	हाल MAX14577_MUIC_ADC_AUDIO_DEVICE_TYPE2:
+	हाल MAX14577_MUIC_ADC_PHONE_POWERED_DEV:
+	हाल MAX14577_MUIC_ADC_TTY_CONVERTER:
+	हाल MAX14577_MUIC_ADC_UART_CABLE:
+	हाल MAX14577_MUIC_ADC_CEA936A_TYPE1_CHG:
+	हाल MAX14577_MUIC_ADC_AV_CABLE_NOLOAD:
+	हाल MAX14577_MUIC_ADC_CEA936A_TYPE2_CHG:
+	हाल MAX14577_MUIC_ADC_FACTORY_MODE_UART_ON:
+	हाल MAX14577_MUIC_ADC_AUDIO_DEVICE_TYPE1:
 		/*
-		 * This accessory isn't used in general case if it is specially
+		 * This accessory isn't used in general हाल अगर it is specially
 		 * needed to detect additional accessory, should implement
 		 * proper operation when this accessory is attached/detached.
 		 */
 		dev_info(info->dev,
 			"accessory is %s but it isn't used (adc:0x%x)\n",
 			attached ? "attached" : "detached", cable_type);
-		return -EAGAIN;
-	default:
+		वापस -EAGAIN;
+	शेष:
 		dev_err(info->dev,
 			"failed to detect %s accessory (adc:0x%x)\n",
 			attached ? "attached" : "detached", cable_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max14577_muic_chg_handler(struct max14577_muic_info *info)
-{
-	int chg_type;
+अटल पूर्णांक max14577_muic_chg_handler(काष्ठा max14577_muic_info *info)
+अणु
+	पूर्णांक chg_type;
 	bool attached;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	chg_type = max14577_muic_get_cable_type(info,
 				MAX14577_CABLE_GROUP_CHG, &attached);
@@ -437,371 +438,371 @@ static int max14577_muic_chg_handler(struct max14577_muic_info *info)
 			attached ? "attached" : "detached",
 			chg_type, info->prev_chg_type);
 
-	switch (chg_type) {
-	case MAX14577_CHARGER_TYPE_USB:
+	चयन (chg_type) अणु
+	हाल MAX14577_CHARGER_TYPE_USB:
 		/* PATH:AP_USB */
 		ret = max14577_muic_set_path(info, info->path_usb, attached);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		extcon_set_state_sync(info->edev, EXTCON_USB, attached);
 		extcon_set_state_sync(info->edev, EXTCON_CHG_USB_SDP,
 					attached);
-		break;
-	case MAX14577_CHARGER_TYPE_DEDICATED_CHG:
+		अवरोध;
+	हाल MAX14577_CHARGER_TYPE_DEDICATED_CHG:
 		extcon_set_state_sync(info->edev, EXTCON_CHG_USB_DCP,
 					attached);
-		break;
-	case MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT:
+		अवरोध;
+	हाल MAX14577_CHARGER_TYPE_DOWNSTREAM_PORT:
 		extcon_set_state_sync(info->edev, EXTCON_CHG_USB_CDP,
 					attached);
-		break;
-	case MAX14577_CHARGER_TYPE_SPECIAL_500MA:
+		अवरोध;
+	हाल MAX14577_CHARGER_TYPE_SPECIAL_500MA:
 		extcon_set_state_sync(info->edev, EXTCON_CHG_USB_SLOW,
 					attached);
-		break;
-	case MAX14577_CHARGER_TYPE_SPECIAL_1A:
+		अवरोध;
+	हाल MAX14577_CHARGER_TYPE_SPECIAL_1A:
 		extcon_set_state_sync(info->edev, EXTCON_CHG_USB_FAST,
 					attached);
-		break;
-	case MAX14577_CHARGER_TYPE_NONE:
-	case MAX14577_CHARGER_TYPE_DEAD_BATTERY:
-		break;
-	default:
+		अवरोध;
+	हाल MAX14577_CHARGER_TYPE_NONE:
+	हाल MAX14577_CHARGER_TYPE_DEAD_BATTERY:
+		अवरोध;
+	शेष:
 		dev_err(info->dev,
 			"failed to detect %s accessory (chg_type:0x%x)\n",
 			attached ? "attached" : "detached", chg_type);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void max14577_muic_irq_work(struct work_struct *work)
-{
-	struct max14577_muic_info *info = container_of(work,
-			struct max14577_muic_info, irq_work);
-	int ret = 0;
+अटल व्योम max14577_muic_irq_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा max14577_muic_info *info = container_of(work,
+			काष्ठा max14577_muic_info, irq_work);
+	पूर्णांक ret = 0;
 
-	if (!info->edev)
-		return;
+	अगर (!info->edev)
+		वापस;
 
 	mutex_lock(&info->mutex);
 
-	ret = max14577_bulk_read(info->max14577->regmap,
+	ret = max14577_bulk_पढ़ो(info->max14577->regmap,
 			MAX14577_MUIC_REG_STATUS1, info->status, 2);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(info->dev, "failed to read MUIC register\n");
 		mutex_unlock(&info->mutex);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (info->irq_adc) {
+	अगर (info->irq_adc) अणु
 		ret = max14577_muic_adc_handler(info);
 		info->irq_adc = false;
-	}
-	if (info->irq_chg) {
+	पूर्ण
+	अगर (info->irq_chg) अणु
 		ret = max14577_muic_chg_handler(info);
 		info->irq_chg = false;
-	}
+	पूर्ण
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(info->dev, "failed to handle MUIC interrupt\n");
 
 	mutex_unlock(&info->mutex);
-}
+पूर्ण
 
 /*
- * Sets irq_adc or irq_chg in max14577_muic_info and returns 1.
- * Returns 0 if irq_type does not match registered IRQ for this device type.
+ * Sets irq_adc or irq_chg in max14577_muic_info and वापसs 1.
+ * Returns 0 अगर irq_type करोes not match रेजिस्टरed IRQ क्रम this device type.
  */
-static int max14577_parse_irq(struct max14577_muic_info *info, int irq_type)
-{
-	switch (irq_type) {
-	case MAX14577_IRQ_INT1_ADC:
-	case MAX14577_IRQ_INT1_ADCLOW:
-	case MAX14577_IRQ_INT1_ADCERR:
+अटल पूर्णांक max14577_parse_irq(काष्ठा max14577_muic_info *info, पूर्णांक irq_type)
+अणु
+	चयन (irq_type) अणु
+	हाल MAX14577_IRQ_INT1_ADC:
+	हाल MAX14577_IRQ_INT1_ADCLOW:
+	हाल MAX14577_IRQ_INT1_ADCERR:
 		/*
-		 * Handle all of accessory except for
-		 * type of charger accessory.
+		 * Handle all of accessory except क्रम
+		 * type of अक्षरger accessory.
 		 */
 		info->irq_adc = true;
-		return 1;
-	case MAX14577_IRQ_INT2_CHGTYP:
-	case MAX14577_IRQ_INT2_CHGDETRUN:
-	case MAX14577_IRQ_INT2_DCDTMR:
-	case MAX14577_IRQ_INT2_DBCHG:
-	case MAX14577_IRQ_INT2_VBVOLT:
-		/* Handle charger accessory */
+		वापस 1;
+	हाल MAX14577_IRQ_INT2_CHGTYP:
+	हाल MAX14577_IRQ_INT2_CHGDETRUN:
+	हाल MAX14577_IRQ_INT2_DCDTMR:
+	हाल MAX14577_IRQ_INT2_DBCHG:
+	हाल MAX14577_IRQ_INT2_VBVOLT:
+		/* Handle अक्षरger accessory */
 		info->irq_chg = true;
-		return 1;
-	default:
-		return 0;
-	}
-}
+		वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /*
- * Sets irq_adc or irq_chg in max14577_muic_info and returns 1.
- * Returns 0 if irq_type does not match registered IRQ for this device type.
+ * Sets irq_adc or irq_chg in max14577_muic_info and वापसs 1.
+ * Returns 0 अगर irq_type करोes not match रेजिस्टरed IRQ क्रम this device type.
  */
-static int max77836_parse_irq(struct max14577_muic_info *info, int irq_type)
-{
-	/* First check common max14577 interrupts */
-	if (max14577_parse_irq(info, irq_type))
-		return 1;
+अटल पूर्णांक max77836_parse_irq(काष्ठा max14577_muic_info *info, पूर्णांक irq_type)
+अणु
+	/* First check common max14577 पूर्णांकerrupts */
+	अगर (max14577_parse_irq(info, irq_type))
+		वापस 1;
 
-	switch (irq_type) {
-	case MAX77836_IRQ_INT1_ADC1K:
+	चयन (irq_type) अणु
+	हाल MAX77836_IRQ_INT1_ADC1K:
 		info->irq_adc = true;
-		return 1;
-	case MAX77836_IRQ_INT2_VIDRM:
-		/* Handle charger accessory */
+		वापस 1;
+	हाल MAX77836_IRQ_INT2_VIDRM:
+		/* Handle अक्षरger accessory */
 		info->irq_chg = true;
-		return 1;
-	default:
-		return 0;
-	}
-}
+		वापस 1;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t max14577_muic_irq_handler(int irq, void *data)
-{
-	struct max14577_muic_info *info = data;
-	int i, irq_type = -1;
+अटल irqवापस_t max14577_muic_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा max14577_muic_info *info = data;
+	पूर्णांक i, irq_type = -1;
 	bool irq_parsed;
 
 	/*
-	 * We may be called multiple times for different nested IRQ-s.
+	 * We may be called multiple बार क्रम dअगरferent nested IRQ-s.
 	 * Including changes in INT1_ADC and INT2_CGHTYP at once.
-	 * However we only need to know whether it was ADC, charger
-	 * or both interrupts so decode IRQ and turn on proper flags.
+	 * However we only need to know whether it was ADC, अक्षरger
+	 * or both पूर्णांकerrupts so decode IRQ and turn on proper flags.
 	 */
-	for (i = 0; i < info->muic_irqs_num; i++)
-		if (irq == info->muic_irqs[i].virq)
+	क्रम (i = 0; i < info->muic_irqs_num; i++)
+		अगर (irq == info->muic_irqs[i].virq)
 			irq_type = info->muic_irqs[i].irq;
 
-	switch (info->max14577->dev_type) {
-	case MAXIM_DEVICE_TYPE_MAX77836:
+	चयन (info->max14577->dev_type) अणु
+	हाल MAXIM_DEVICE_TYPE_MAX77836:
 		irq_parsed = max77836_parse_irq(info, irq_type);
-		break;
-	case MAXIM_DEVICE_TYPE_MAX14577:
-	default:
+		अवरोध;
+	हाल MAXIM_DEVICE_TYPE_MAX14577:
+	शेष:
 		irq_parsed = max14577_parse_irq(info, irq_type);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!irq_parsed) {
+	अगर (!irq_parsed) अणु
 		dev_err(info->dev, "muic interrupt: irq %d occurred, skipped\n",
 				irq_type);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 	schedule_work(&info->irq_work);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int max14577_muic_detect_accessory(struct max14577_muic_info *info)
-{
-	int ret = 0;
-	int adc;
-	int chg_type;
+अटल पूर्णांक max14577_muic_detect_accessory(काष्ठा max14577_muic_info *info)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक adc;
+	पूर्णांक chg_type;
 	bool attached;
 
 	mutex_lock(&info->mutex);
 
-	/* Read STATUSx register to detect accessory */
-	ret = max14577_bulk_read(info->max14577->regmap,
+	/* Read STATUSx रेजिस्टर to detect accessory */
+	ret = max14577_bulk_पढ़ो(info->max14577->regmap,
 			MAX14577_MUIC_REG_STATUS1, info->status, 2);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(info->dev, "failed to read MUIC register\n");
 		mutex_unlock(&info->mutex);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	adc = max14577_muic_get_cable_type(info, MAX14577_CABLE_GROUP_ADC,
 					&attached);
-	if (attached && adc != MAX14577_MUIC_ADC_OPEN) {
+	अगर (attached && adc != MAX14577_MUIC_ADC_OPEN) अणु
 		ret = max14577_muic_adc_handler(info);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(info->dev, "Cannot detect accessory\n");
 			mutex_unlock(&info->mutex);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	chg_type = max14577_muic_get_cable_type(info, MAX14577_CABLE_GROUP_CHG,
 					&attached);
-	if (attached && chg_type != MAX14577_CHARGER_TYPE_NONE) {
+	अगर (attached && chg_type != MAX14577_CHARGER_TYPE_NONE) अणु
 		ret = max14577_muic_chg_handler(info);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(info->dev, "Cannot detect charger accessory\n");
 			mutex_unlock(&info->mutex);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&info->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void max14577_muic_detect_cable_wq(struct work_struct *work)
-{
-	struct max14577_muic_info *info = container_of(to_delayed_work(work),
-				struct max14577_muic_info, wq_detcable);
+अटल व्योम max14577_muic_detect_cable_wq(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा max14577_muic_info *info = container_of(to_delayed_work(work),
+				काष्ठा max14577_muic_info, wq_detcable);
 
 	max14577_muic_detect_accessory(info);
-}
+पूर्ण
 
-static int max14577_muic_probe(struct platform_device *pdev)
-{
-	struct max14577 *max14577 = dev_get_drvdata(pdev->dev.parent);
-	struct max14577_muic_info *info;
-	int delay_jiffies;
-	int cable_type;
+अटल पूर्णांक max14577_muic_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max14577 *max14577 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा max14577_muic_info *info;
+	पूर्णांक delay_jअगरfies;
+	पूर्णांक cable_type;
 	bool attached;
-	int ret;
-	int i;
+	पूर्णांक ret;
+	पूर्णांक i;
 	u8 id;
 
-	info = devm_kzalloc(&pdev->dev, sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = devm_kzalloc(&pdev->dev, माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	info->dev = &pdev->dev;
 	info->max14577 = max14577;
 
-	platform_set_drvdata(pdev, info);
+	platक्रमm_set_drvdata(pdev, info);
 	mutex_init(&info->mutex);
 
 	INIT_WORK(&info->irq_work, max14577_muic_irq_work);
 
-	switch (max14577->dev_type) {
-	case MAXIM_DEVICE_TYPE_MAX77836:
+	चयन (max14577->dev_type) अणु
+	हाल MAXIM_DEVICE_TYPE_MAX77836:
 		info->muic_irqs = max77836_muic_irqs;
 		info->muic_irqs_num = ARRAY_SIZE(max77836_muic_irqs);
-		break;
-	case MAXIM_DEVICE_TYPE_MAX14577:
-	default:
+		अवरोध;
+	हाल MAXIM_DEVICE_TYPE_MAX14577:
+	शेष:
 		info->muic_irqs = max14577_muic_irqs;
 		info->muic_irqs_num = ARRAY_SIZE(max14577_muic_irqs);
-	}
+	पूर्ण
 
-	/* Support irq domain for max14577 MUIC device */
-	for (i = 0; i < info->muic_irqs_num; i++) {
-		struct max14577_muic_irq *muic_irq = &info->muic_irqs[i];
-		int virq = 0;
+	/* Support irq करोमुख्य क्रम max14577 MUIC device */
+	क्रम (i = 0; i < info->muic_irqs_num; i++) अणु
+		काष्ठा max14577_muic_irq *muic_irq = &info->muic_irqs[i];
+		पूर्णांक virq = 0;
 
 		virq = regmap_irq_get_virq(max14577->irq_data, muic_irq->irq);
-		if (virq <= 0)
-			return -EINVAL;
+		अगर (virq <= 0)
+			वापस -EINVAL;
 		muic_irq->virq = virq;
 
-		ret = devm_request_threaded_irq(&pdev->dev, virq, NULL,
+		ret = devm_request_thपढ़ोed_irq(&pdev->dev, virq, शून्य,
 				max14577_muic_irq_handler,
 				IRQF_NO_SUSPEND,
 				muic_irq->name, info);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(&pdev->dev,
 				"failed: irq request (IRQ: %d, error :%d)\n",
 				muic_irq->irq, ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
 	/* Initialize extcon device */
 	info->edev = devm_extcon_dev_allocate(&pdev->dev,
 					      max14577_extcon_cable);
-	if (IS_ERR(info->edev)) {
+	अगर (IS_ERR(info->edev)) अणु
 		dev_err(&pdev->dev, "failed to allocate memory for extcon\n");
-		return PTR_ERR(info->edev);
-	}
+		वापस PTR_ERR(info->edev);
+	पूर्ण
 
-	ret = devm_extcon_dev_register(&pdev->dev, info->edev);
-	if (ret) {
+	ret = devm_extcon_dev_रेजिस्टर(&pdev->dev, info->edev);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "failed to register extcon device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Default h/w line path */
 	info->path_usb = CTRL1_SW_USB;
 	info->path_uart = CTRL1_SW_UART;
-	delay_jiffies = msecs_to_jiffies(DELAY_MS_DEFAULT);
+	delay_jअगरfies = msecs_to_jअगरfies(DELAY_MS_DEFAULT);
 
-	/* Set initial path for UART when JIG is connected to get serial logs */
-	ret = max14577_bulk_read(info->max14577->regmap,
+	/* Set initial path क्रम UART when JIG is connected to get serial logs */
+	ret = max14577_bulk_पढ़ो(info->max14577->regmap,
 			MAX14577_MUIC_REG_STATUS1, info->status, 2);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(info->dev, "Cannot read STATUS registers\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	cable_type = max14577_muic_get_cable_type(info, MAX14577_CABLE_GROUP_ADC,
 					 &attached);
-	if (attached && cable_type == MAX14577_MUIC_ADC_FACTORY_MODE_UART_OFF)
+	अगर (attached && cable_type == MAX14577_MUIC_ADC_FACTORY_MODE_UART_OFF)
 		max14577_muic_set_path(info, info->path_uart, true);
 
 	/* Check revision number of MUIC device*/
-	ret = max14577_read_reg(info->max14577->regmap,
+	ret = max14577_पढ़ो_reg(info->max14577->regmap,
 			MAX14577_REG_DEVICEID, &id);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "failed to read revision number\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	dev_info(info->dev, "device ID : 0x%x\n", id);
 
-	/* Set ADC debounce time */
-	max14577_muic_set_debounce_time(info, ADC_DEBOUNCE_TIME_25MS);
+	/* Set ADC debounce समय */
+	max14577_muic_set_debounce_समय(info, ADC_DEBOUNCE_TIME_25MS);
 
 	/*
-	 * Detect accessory after completing the initialization of platform
+	 * Detect accessory after completing the initialization of platक्रमm
 	 *
 	 * - Use delayed workqueue to detect cable state and then
-	 * notify cable state to notifiee/platform through uevent.
-	 * After completing the booting of platform, the extcon provider
-	 * driver should notify cable state to upper layer.
+	 * notअगरy cable state to notअगरiee/platक्रमm through uevent.
+	 * After completing the booting of platक्रमm, the extcon provider
+	 * driver should notअगरy cable state to upper layer.
 	 */
 	INIT_DELAYED_WORK(&info->wq_detcable, max14577_muic_detect_cable_wq);
-	queue_delayed_work(system_power_efficient_wq, &info->wq_detcable,
-			delay_jiffies);
+	queue_delayed_work(प्रणाली_घातer_efficient_wq, &info->wq_detcable,
+			delay_jअगरfies);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int max14577_muic_remove(struct platform_device *pdev)
-{
-	struct max14577_muic_info *info = platform_get_drvdata(pdev);
+अटल पूर्णांक max14577_muic_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max14577_muic_info *info = platक्रमm_get_drvdata(pdev);
 
 	cancel_work_sync(&info->irq_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id max14577_muic_id[] = {
-	{ "max14577-muic", MAXIM_DEVICE_TYPE_MAX14577, },
-	{ "max77836-muic", MAXIM_DEVICE_TYPE_MAX77836, },
-	{ }
-};
-MODULE_DEVICE_TABLE(platform, max14577_muic_id);
+अटल स्थिर काष्ठा platक्रमm_device_id max14577_muic_id[] = अणु
+	अणु "max14577-muic", MAXIM_DEVICE_TYPE_MAX14577, पूर्ण,
+	अणु "max77836-muic", MAXIM_DEVICE_TYPE_MAX77836, पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, max14577_muic_id);
 
-static const struct of_device_id of_max14577_muic_dt_match[] = {
-	{ .compatible = "maxim,max14577-muic",
-	  .data = (void *)MAXIM_DEVICE_TYPE_MAX14577, },
-	{ .compatible = "maxim,max77836-muic",
-	  .data = (void *)MAXIM_DEVICE_TYPE_MAX77836, },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id of_max14577_muic_dt_match[] = अणु
+	अणु .compatible = "maxim,max14577-muic",
+	  .data = (व्योम *)MAXIM_DEVICE_TYPE_MAX14577, पूर्ण,
+	अणु .compatible = "maxim,max77836-muic",
+	  .data = (व्योम *)MAXIM_DEVICE_TYPE_MAX77836, पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_max14577_muic_dt_match);
 
-static struct platform_driver max14577_muic_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver max14577_muic_driver = अणु
+	.driver		= अणु
 		.name	= "max14577-muic",
 		.of_match_table = of_max14577_muic_dt_match,
-	},
+	पूर्ण,
 	.probe		= max14577_muic_probe,
-	.remove		= max14577_muic_remove,
+	.हटाओ		= max14577_muic_हटाओ,
 	.id_table	= max14577_muic_id,
-};
+पूर्ण;
 
-module_platform_driver(max14577_muic_driver);
+module_platक्रमm_driver(max14577_muic_driver);
 
 MODULE_DESCRIPTION("Maxim 14577/77836 Extcon driver");
 MODULE_AUTHOR("Chanwoo Choi <cw00.choi@samsung.com>, Krzysztof Kozlowski <krzk@kernel.org>");

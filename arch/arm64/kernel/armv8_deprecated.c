@@ -1,250 +1,251 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 2014 ARM Limited
  */
 
-#include <linux/cpu.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/perf_event.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/sysctl.h>
-#include <linux/uaccess.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/cpufeature.h>
-#include <asm/insn.h>
-#include <asm/sysreg.h>
-#include <asm/system_misc.h>
-#include <asm/traps.h>
-#include <asm/kprobes.h>
+#समावेश <यंत्र/cpufeature.h>
+#समावेश <यंत्र/insn.h>
+#समावेश <यंत्र/sysreg.h>
+#समावेश <यंत्र/प्रणाली_misc.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/kprobes.h>
 
-#define CREATE_TRACE_POINTS
-#include "trace-events-emulation.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "trace-events-emulation.h"
 
 /*
- * The runtime support for deprecated instruction support can be in one of
+ * The runसमय support क्रम deprecated inकाष्ठाion support can be in one of
  * following three states -
  *
  * 0 = undef
  * 1 = emulate (software emulation)
  * 2 = hw (supported in hardware)
  */
-enum insn_emulation_mode {
+क्रमागत insn_emulation_mode अणु
 	INSN_UNDEF,
 	INSN_EMULATE,
 	INSN_HW,
-};
+पूर्ण;
 
-enum legacy_insn_status {
+क्रमागत legacy_insn_status अणु
 	INSN_DEPRECATED,
 	INSN_OBSOLETE,
-};
+पूर्ण;
 
-struct insn_emulation_ops {
-	const char		*name;
-	enum legacy_insn_status	status;
-	struct undef_hook	*hooks;
-	int			(*set_hw_mode)(bool enable);
-};
+काष्ठा insn_emulation_ops अणु
+	स्थिर अक्षर		*name;
+	क्रमागत legacy_insn_status	status;
+	काष्ठा undef_hook	*hooks;
+	पूर्णांक			(*set_hw_mode)(bool enable);
+पूर्ण;
 
-struct insn_emulation {
-	struct list_head node;
-	struct insn_emulation_ops *ops;
-	int current_mode;
-	int min;
-	int max;
-};
+काष्ठा insn_emulation अणु
+	काष्ठा list_head node;
+	काष्ठा insn_emulation_ops *ops;
+	पूर्णांक current_mode;
+	पूर्णांक min;
+	पूर्णांक max;
+पूर्ण;
 
-static LIST_HEAD(insn_emulation);
-static int nr_insn_emulated __initdata;
-static DEFINE_RAW_SPINLOCK(insn_emulation_lock);
+अटल LIST_HEAD(insn_emulation);
+अटल पूर्णांक nr_insn_emulated __initdata;
+अटल DEFINE_RAW_SPINLOCK(insn_emulation_lock);
 
-static void register_emulation_hooks(struct insn_emulation_ops *ops)
-{
-	struct undef_hook *hook;
+अटल व्योम रेजिस्टर_emulation_hooks(काष्ठा insn_emulation_ops *ops)
+अणु
+	काष्ठा undef_hook *hook;
 
 	BUG_ON(!ops->hooks);
 
-	for (hook = ops->hooks; hook->instr_mask; hook++)
-		register_undef_hook(hook);
+	क्रम (hook = ops->hooks; hook->instr_mask; hook++)
+		रेजिस्टर_undef_hook(hook);
 
 	pr_notice("Registered %s emulation handler\n", ops->name);
-}
+पूर्ण
 
-static void remove_emulation_hooks(struct insn_emulation_ops *ops)
-{
-	struct undef_hook *hook;
+अटल व्योम हटाओ_emulation_hooks(काष्ठा insn_emulation_ops *ops)
+अणु
+	काष्ठा undef_hook *hook;
 
 	BUG_ON(!ops->hooks);
 
-	for (hook = ops->hooks; hook->instr_mask; hook++)
-		unregister_undef_hook(hook);
+	क्रम (hook = ops->hooks; hook->instr_mask; hook++)
+		unरेजिस्टर_undef_hook(hook);
 
 	pr_notice("Removed %s emulation handler\n", ops->name);
-}
+पूर्ण
 
-static void enable_insn_hw_mode(void *data)
-{
-	struct insn_emulation *insn = (struct insn_emulation *)data;
-	if (insn->ops->set_hw_mode)
+अटल व्योम enable_insn_hw_mode(व्योम *data)
+अणु
+	काष्ठा insn_emulation *insn = (काष्ठा insn_emulation *)data;
+	अगर (insn->ops->set_hw_mode)
 		insn->ops->set_hw_mode(true);
-}
+पूर्ण
 
-static void disable_insn_hw_mode(void *data)
-{
-	struct insn_emulation *insn = (struct insn_emulation *)data;
-	if (insn->ops->set_hw_mode)
+अटल व्योम disable_insn_hw_mode(व्योम *data)
+अणु
+	काष्ठा insn_emulation *insn = (काष्ठा insn_emulation *)data;
+	अगर (insn->ops->set_hw_mode)
 		insn->ops->set_hw_mode(false);
-}
+पूर्ण
 
 /* Run set_hw_mode(mode) on all active CPUs */
-static int run_all_cpu_set_hw_mode(struct insn_emulation *insn, bool enable)
-{
-	if (!insn->ops->set_hw_mode)
-		return -EINVAL;
-	if (enable)
-		on_each_cpu(enable_insn_hw_mode, (void *)insn, true);
-	else
-		on_each_cpu(disable_insn_hw_mode, (void *)insn, true);
-	return 0;
-}
+अटल पूर्णांक run_all_cpu_set_hw_mode(काष्ठा insn_emulation *insn, bool enable)
+अणु
+	अगर (!insn->ops->set_hw_mode)
+		वापस -EINVAL;
+	अगर (enable)
+		on_each_cpu(enable_insn_hw_mode, (व्योम *)insn, true);
+	अन्यथा
+		on_each_cpu(disable_insn_hw_mode, (व्योम *)insn, true);
+	वापस 0;
+पूर्ण
 
 /*
- * Run set_hw_mode for all insns on a starting CPU.
+ * Run set_hw_mode क्रम all insns on a starting CPU.
  * Returns:
  *  0 		- If all the hooks ran successfully.
  * -EINVAL	- At least one hook is not supported by the CPU.
  */
-static int run_all_insn_set_hw_mode(unsigned int cpu)
-{
-	int rc = 0;
-	unsigned long flags;
-	struct insn_emulation *insn;
+अटल पूर्णांक run_all_insn_set_hw_mode(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक rc = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा insn_emulation *insn;
 
 	raw_spin_lock_irqsave(&insn_emulation_lock, flags);
-	list_for_each_entry(insn, &insn_emulation, node) {
+	list_क्रम_each_entry(insn, &insn_emulation, node) अणु
 		bool enable = (insn->current_mode == INSN_HW);
-		if (insn->ops->set_hw_mode && insn->ops->set_hw_mode(enable)) {
+		अगर (insn->ops->set_hw_mode && insn->ops->set_hw_mode(enable)) अणु
 			pr_warn("CPU[%u] cannot support the emulation of %s",
 				cpu, insn->ops->name);
 			rc = -EINVAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	raw_spin_unlock_irqrestore(&insn_emulation_lock, flags);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int update_insn_emulation_mode(struct insn_emulation *insn,
-				       enum insn_emulation_mode prev)
-{
-	int ret = 0;
+अटल पूर्णांक update_insn_emulation_mode(काष्ठा insn_emulation *insn,
+				       क्रमागत insn_emulation_mode prev)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (prev) {
-	case INSN_UNDEF: /* Nothing to be done */
-		break;
-	case INSN_EMULATE:
-		remove_emulation_hooks(insn->ops);
-		break;
-	case INSN_HW:
-		if (!run_all_cpu_set_hw_mode(insn, false))
+	चयन (prev) अणु
+	हाल INSN_UNDEF: /* Nothing to be करोne */
+		अवरोध;
+	हाल INSN_EMULATE:
+		हटाओ_emulation_hooks(insn->ops);
+		अवरोध;
+	हाल INSN_HW:
+		अगर (!run_all_cpu_set_hw_mode(insn, false))
 			pr_notice("Disabled %s support\n", insn->ops->name);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (insn->current_mode) {
-	case INSN_UNDEF:
-		break;
-	case INSN_EMULATE:
-		register_emulation_hooks(insn->ops);
-		break;
-	case INSN_HW:
+	चयन (insn->current_mode) अणु
+	हाल INSN_UNDEF:
+		अवरोध;
+	हाल INSN_EMULATE:
+		रेजिस्टर_emulation_hooks(insn->ops);
+		अवरोध;
+	हाल INSN_HW:
 		ret = run_all_cpu_set_hw_mode(insn, true);
-		if (!ret)
+		अगर (!ret)
 			pr_notice("Enabled %s support\n", insn->ops->name);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __init register_insn_emulation(struct insn_emulation_ops *ops)
-{
-	unsigned long flags;
-	struct insn_emulation *insn;
+अटल व्योम __init रेजिस्टर_insn_emulation(काष्ठा insn_emulation_ops *ops)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा insn_emulation *insn;
 
-	insn = kzalloc(sizeof(*insn), GFP_KERNEL);
-	if (!insn)
-		return;
+	insn = kzalloc(माप(*insn), GFP_KERNEL);
+	अगर (!insn)
+		वापस;
 
 	insn->ops = ops;
 	insn->min = INSN_UNDEF;
 
-	switch (ops->status) {
-	case INSN_DEPRECATED:
+	चयन (ops->status) अणु
+	हाल INSN_DEPRECATED:
 		insn->current_mode = INSN_EMULATE;
-		/* Disable the HW mode if it was turned on at early boot time */
+		/* Disable the HW mode अगर it was turned on at early boot समय */
 		run_all_cpu_set_hw_mode(insn, false);
 		insn->max = INSN_HW;
-		break;
-	case INSN_OBSOLETE:
+		अवरोध;
+	हाल INSN_OBSOLETE:
 		insn->current_mode = INSN_UNDEF;
 		insn->max = INSN_EMULATE;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	raw_spin_lock_irqsave(&insn_emulation_lock, flags);
 	list_add(&insn->node, &insn_emulation);
 	nr_insn_emulated++;
 	raw_spin_unlock_irqrestore(&insn_emulation_lock, flags);
 
-	/* Register any handlers if required */
+	/* Register any handlers अगर required */
 	update_insn_emulation_mode(insn, INSN_UNDEF);
-}
+पूर्ण
 
-static int emulation_proc_handler(struct ctl_table *table, int write,
-				  void *buffer, size_t *lenp,
+अटल पूर्णांक emulation_proc_handler(काष्ठा ctl_table *table, पूर्णांक ग_लिखो,
+				  व्योम *buffer, माप_प्रकार *lenp,
 				  loff_t *ppos)
-{
-	int ret = 0;
-	struct insn_emulation *insn = (struct insn_emulation *) table->data;
-	enum insn_emulation_mode prev_mode = insn->current_mode;
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा insn_emulation *insn = (काष्ठा insn_emulation *) table->data;
+	क्रमागत insn_emulation_mode prev_mode = insn->current_mode;
 
 	table->data = &insn->current_mode;
-	ret = proc_dointvec_minmax(table, write, buffer, lenp, ppos);
+	ret = proc_करोपूर्णांकvec_minmax(table, ग_लिखो, buffer, lenp, ppos);
 
-	if (ret || !write || prev_mode == insn->current_mode)
-		goto ret;
+	अगर (ret || !ग_लिखो || prev_mode == insn->current_mode)
+		जाओ ret;
 
 	ret = update_insn_emulation_mode(insn, prev_mode);
-	if (ret) {
+	अगर (ret) अणु
 		/* Mode change failed, revert to previous mode. */
 		insn->current_mode = prev_mode;
 		update_insn_emulation_mode(insn, INSN_UNDEF);
-	}
+	पूर्ण
 ret:
 	table->data = insn;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __init register_insn_emulation_sysctl(void)
-{
-	unsigned long flags;
-	int i = 0;
-	struct insn_emulation *insn;
-	struct ctl_table *insns_sysctl, *sysctl;
+अटल व्योम __init रेजिस्टर_insn_emulation_sysctl(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i = 0;
+	काष्ठा insn_emulation *insn;
+	काष्ठा ctl_table *insns_sysctl, *sysctl;
 
-	insns_sysctl = kcalloc(nr_insn_emulated + 1, sizeof(*sysctl),
+	insns_sysctl = kसुस्मृति(nr_insn_emulated + 1, माप(*sysctl),
 			       GFP_KERNEL);
-	if (!insns_sysctl)
-		return;
+	अगर (!insns_sysctl)
+		वापस;
 
 	raw_spin_lock_irqsave(&insn_emulation_lock, flags);
-	list_for_each_entry(insn, &insn_emulation, node) {
+	list_क्रम_each_entry(insn, &insn_emulation, node) अणु
 		sysctl = &insns_sysctl[i];
 
 		sysctl->mode = 0644;
-		sysctl->maxlen = sizeof(int);
+		sysctl->maxlen = माप(पूर्णांक);
 
 		sysctl->procname = insn->ops->name;
 		sysctl->data = insn;
@@ -252,33 +253,33 @@ static void __init register_insn_emulation_sysctl(void)
 		sysctl->extra2 = &insn->max;
 		sysctl->proc_handler = emulation_proc_handler;
 		i++;
-	}
+	पूर्ण
 	raw_spin_unlock_irqrestore(&insn_emulation_lock, flags);
 
-	register_sysctl("abi", insns_sysctl);
-}
+	रेजिस्टर_sysctl("abi", insns_sysctl);
+पूर्ण
 
 /*
- *  Implement emulation of the SWP/SWPB instructions using load-exclusive and
+ *  Implement emulation of the SWP/SWPB inकाष्ठाions using load-exclusive and
  *  store-exclusive.
  *
- *  Syntax of SWP{B} instruction: SWP{B}<c> <Rt>, <Rt2>, [<Rn>]
+ *  Syntax of SWPअणुBपूर्ण inकाष्ठाion: SWPअणुBपूर्ण<c> <Rt>, <Rt2>, [<Rn>]
  *  Where: Rt  = destination
  *	   Rt2 = source
  *	   Rn  = address
  */
 
 /*
- * Error-checking SWP macros implemented using ldxr{b}/stxr{b}
+ * Error-checking SWP macros implemented using ldxrअणुbपूर्ण/stxrअणुbपूर्ण
  */
 
-/* Arbitrary constant to ensure forward-progress of the LL/SC loop */
-#define __SWP_LL_SC_LOOPS	4
+/* Arbitrary स्थिरant to ensure क्रमward-progress of the LL/SC loop */
+#घोषणा __SWP_LL_SC_LOOPS	4
 
-#define __user_swpX_asm(data, addr, res, temp, temp2, B)	\
-do {								\
+#घोषणा __user_swpX_यंत्र(data, addr, res, temp, temp2, B)	\
+करो अणु								\
 	uaccess_enable_privileged();				\
-	__asm__ __volatile__(					\
+	__यंत्र__ __अस्थिर__(					\
 	"	mov		%w3, %w7\n"			\
 	"0:	ldxr"B"		%w2, [%4]\n"			\
 	"1:	stxr"B"		%w0, %w1, [%4]\n"		\
@@ -298,98 +299,98 @@ do {								\
 	_ASM_EXTABLE(0b, 4b)					\
 	_ASM_EXTABLE(1b, 4b)					\
 	: "=&r" (res), "+r" (data), "=&r" (temp), "=&r" (temp2)	\
-	: "r" ((unsigned long)addr), "i" (-EAGAIN),		\
+	: "r" ((अचिन्हित दीर्घ)addr), "i" (-EAGAIN),		\
 	  "i" (-EFAULT),					\
 	  "i" (__SWP_LL_SC_LOOPS)				\
 	: "memory");						\
 	uaccess_disable_privileged();				\
-} while (0)
+पूर्ण जबतक (0)
 
-#define __user_swp_asm(data, addr, res, temp, temp2) \
-	__user_swpX_asm(data, addr, res, temp, temp2, "")
-#define __user_swpb_asm(data, addr, res, temp, temp2) \
-	__user_swpX_asm(data, addr, res, temp, temp2, "b")
+#घोषणा __user_swp_यंत्र(data, addr, res, temp, temp2) \
+	__user_swpX_यंत्र(data, addr, res, temp, temp2, "")
+#घोषणा __user_swpb_यंत्र(data, addr, res, temp, temp2) \
+	__user_swpX_यंत्र(data, addr, res, temp, temp2, "b")
 
 /*
- * Bit 22 of the instruction encoding distinguishes between
+ * Bit 22 of the inकाष्ठाion encoding distinguishes between
  * the SWP and SWPB variants (bit set means SWPB).
  */
-#define TYPE_SWPB (1 << 22)
+#घोषणा TYPE_SWPB (1 << 22)
 
-static int emulate_swpX(unsigned int address, unsigned int *data,
-			unsigned int type)
-{
-	unsigned int res = 0;
+अटल पूर्णांक emulate_swpX(अचिन्हित पूर्णांक address, अचिन्हित पूर्णांक *data,
+			अचिन्हित पूर्णांक type)
+अणु
+	अचिन्हित पूर्णांक res = 0;
 
-	if ((type != TYPE_SWPB) && (address & 0x3)) {
+	अगर ((type != TYPE_SWPB) && (address & 0x3)) अणु
 		/* SWP to unaligned address not permitted */
 		pr_debug("SWP instruction on unaligned pointer!\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	while (1) {
-		unsigned long temp, temp2;
+	जबतक (1) अणु
+		अचिन्हित दीर्घ temp, temp2;
 
-		if (type == TYPE_SWPB)
-			__user_swpb_asm(*data, address, res, temp, temp2);
-		else
-			__user_swp_asm(*data, address, res, temp, temp2);
+		अगर (type == TYPE_SWPB)
+			__user_swpb_यंत्र(*data, address, res, temp, temp2);
+		अन्यथा
+			__user_swp_यंत्र(*data, address, res, temp, temp2);
 
-		if (likely(res != -EAGAIN) || signal_pending(current))
-			break;
+		अगर (likely(res != -EAGAIN) || संकेत_pending(current))
+			अवरोध;
 
 		cond_resched();
-	}
+	पूर्ण
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-#define ARM_OPCODE_CONDTEST_FAIL   0
-#define ARM_OPCODE_CONDTEST_PASS   1
-#define ARM_OPCODE_CONDTEST_UNCOND 2
+#घोषणा ARM_OPCODE_CONDTEST_FAIL   0
+#घोषणा ARM_OPCODE_CONDTEST_PASS   1
+#घोषणा ARM_OPCODE_CONDTEST_UNCOND 2
 
-#define	ARM_OPCODE_CONDITION_UNCOND	0xf
+#घोषणा	ARM_OPCODE_CONDITION_UNCOND	0xf
 
-static unsigned int __kprobes aarch32_check_condition(u32 opcode, u32 psr)
-{
+अटल अचिन्हित पूर्णांक __kprobes aarch32_check_condition(u32 opcode, u32 psr)
+अणु
 	u32 cc_bits  = opcode >> 28;
 
-	if (cc_bits != ARM_OPCODE_CONDITION_UNCOND) {
-		if ((*aarch32_opcode_cond_checks[cc_bits])(psr))
-			return ARM_OPCODE_CONDTEST_PASS;
-		else
-			return ARM_OPCODE_CONDTEST_FAIL;
-	}
-	return ARM_OPCODE_CONDTEST_UNCOND;
-}
+	अगर (cc_bits != ARM_OPCODE_CONDITION_UNCOND) अणु
+		अगर ((*aarch32_opcode_cond_checks[cc_bits])(psr))
+			वापस ARM_OPCODE_CONDTEST_PASS;
+		अन्यथा
+			वापस ARM_OPCODE_CONDTEST_FAIL;
+	पूर्ण
+	वापस ARM_OPCODE_CONDTEST_UNCOND;
+पूर्ण
 
 /*
- * swp_handler logs the id of calling process, dissects the instruction, sanity
- * checks the memory location, calls emulate_swpX for the actual operation and
- * deals with fixup/error handling before returning
+ * swp_handler logs the id of calling process, dissects the inकाष्ठाion, sanity
+ * checks the memory location, calls emulate_swpX क्रम the actual operation and
+ * deals with fixup/error handling beक्रमe वापसing
  */
-static int swp_handler(struct pt_regs *regs, u32 instr)
-{
+अटल पूर्णांक swp_handler(काष्ठा pt_regs *regs, u32 instr)
+अणु
 	u32 destreg, data, type, address = 0;
-	const void __user *user_ptr;
-	int rn, rt2, res = 0;
+	स्थिर व्योम __user *user_ptr;
+	पूर्णांक rn, rt2, res = 0;
 
 	perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS, 1, regs, regs->pc);
 
 	type = instr & TYPE_SWPB;
 
-	switch (aarch32_check_condition(instr, regs->pstate)) {
-	case ARM_OPCODE_CONDTEST_PASS:
-		break;
-	case ARM_OPCODE_CONDTEST_FAIL:
-		/* Condition failed - return to next instruction */
-		goto ret;
-	case ARM_OPCODE_CONDTEST_UNCOND:
+	चयन (aarch32_check_condition(instr, regs->pstate)) अणु
+	हाल ARM_OPCODE_CONDTEST_PASS:
+		अवरोध;
+	हाल ARM_OPCODE_CONDTEST_FAIL:
+		/* Condition failed - वापस to next inकाष्ठाion */
+		जाओ ret;
+	हाल ARM_OPCODE_CONDTEST_UNCOND:
 		/* If unconditional encoding - not a SWP, undef */
-		return -EFAULT;
-	default:
-		return -EINVAL;
-	}
+		वापस -EFAULT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	rn = aarch32_insn_extract_reg_num(instr, A32_RN_OFFSET);
 	rt2 = aarch32_insn_extract_reg_num(instr, A32_RT2_OFFSET);
@@ -402,246 +403,246 @@ static int swp_handler(struct pt_regs *regs, u32 instr)
 		rn, address, destreg,
 		aarch32_insn_extract_reg_num(instr, A32_RT2_OFFSET), data);
 
-	/* Check access in reasonable access range for both SWP and SWPB */
-	user_ptr = (const void __user *)(unsigned long)(address & ~3);
-	if (!access_ok(user_ptr, 4)) {
+	/* Check access in reasonable access range क्रम both SWP and SWPB */
+	user_ptr = (स्थिर व्योम __user *)(अचिन्हित दीर्घ)(address & ~3);
+	अगर (!access_ok(user_ptr, 4)) अणु
 		pr_debug("SWP{B} emulation: access to 0x%08x not allowed!\n",
 			address);
-		goto fault;
-	}
+		जाओ fault;
+	पूर्ण
 
 	res = emulate_swpX(address, &data, type);
-	if (res == -EFAULT)
-		goto fault;
-	else if (res == 0)
+	अगर (res == -EFAULT)
+		जाओ fault;
+	अन्यथा अगर (res == 0)
 		regs->user_regs.regs[destreg] = data;
 
 ret:
-	if (type == TYPE_SWPB)
-		trace_instruction_emulation("swpb", regs->pc);
-	else
-		trace_instruction_emulation("swp", regs->pc);
+	अगर (type == TYPE_SWPB)
+		trace_inकाष्ठाion_emulation("swpb", regs->pc);
+	अन्यथा
+		trace_inकाष्ठाion_emulation("swp", regs->pc);
 
 	pr_warn_ratelimited("\"%s\" (%ld) uses obsolete SWP{B} instruction at 0x%llx\n",
-			current->comm, (unsigned long)current->pid, regs->pc);
+			current->comm, (अचिन्हित दीर्घ)current->pid, regs->pc);
 
-	arm64_skip_faulting_instruction(regs, 4);
-	return 0;
+	arm64_skip_faulting_inकाष्ठाion(regs, 4);
+	वापस 0;
 
 fault:
 	pr_debug("SWP{B} emulation: access caused memory abort!\n");
-	arm64_notify_segfault(address);
+	arm64_notअगरy_segfault(address);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Only emulate SWP/SWPB executed in ARM state/User mode.
- * The kernel must be SWP free and SWP{B} does not exist in Thumb.
+ * The kernel must be SWP मुक्त and SWPअणुBपूर्ण करोes not exist in Thumb.
  */
-static struct undef_hook swp_hooks[] = {
-	{
+अटल काष्ठा undef_hook swp_hooks[] = अणु
+	अणु
 		.instr_mask	= 0x0fb00ff0,
 		.instr_val	= 0x01000090,
 		.pstate_mask	= PSR_AA32_MODE_MASK,
 		.pstate_val	= PSR_AA32_MODE_USR,
 		.fn		= swp_handler
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct insn_emulation_ops swp_ops = {
+अटल काष्ठा insn_emulation_ops swp_ops = अणु
 	.name = "swp",
 	.status = INSN_OBSOLETE,
 	.hooks = swp_hooks,
-	.set_hw_mode = NULL,
-};
+	.set_hw_mode = शून्य,
+पूर्ण;
 
-static int cp15barrier_handler(struct pt_regs *regs, u32 instr)
-{
+अटल पूर्णांक cp15barrier_handler(काष्ठा pt_regs *regs, u32 instr)
+अणु
 	perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS, 1, regs, regs->pc);
 
-	switch (aarch32_check_condition(instr, regs->pstate)) {
-	case ARM_OPCODE_CONDTEST_PASS:
-		break;
-	case ARM_OPCODE_CONDTEST_FAIL:
-		/* Condition failed - return to next instruction */
-		goto ret;
-	case ARM_OPCODE_CONDTEST_UNCOND:
-		/* If unconditional encoding - not a barrier instruction */
-		return -EFAULT;
-	default:
-		return -EINVAL;
-	}
+	चयन (aarch32_check_condition(instr, regs->pstate)) अणु
+	हाल ARM_OPCODE_CONDTEST_PASS:
+		अवरोध;
+	हाल ARM_OPCODE_CONDTEST_FAIL:
+		/* Condition failed - वापस to next inकाष्ठाion */
+		जाओ ret;
+	हाल ARM_OPCODE_CONDTEST_UNCOND:
+		/* If unconditional encoding - not a barrier inकाष्ठाion */
+		वापस -EFAULT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (aarch32_insn_mcr_extract_crm(instr)) {
-	case 10:
+	चयन (aarch32_insn_mcr_extract_crm(instr)) अणु
+	हाल 10:
 		/*
 		 * dmb - mcr p15, 0, Rt, c7, c10, 5
 		 * dsb - mcr p15, 0, Rt, c7, c10, 4
 		 */
-		if (aarch32_insn_mcr_extract_opc2(instr) == 5) {
+		अगर (aarch32_insn_mcr_extract_opc2(instr) == 5) अणु
 			dmb(sy);
-			trace_instruction_emulation(
+			trace_inकाष्ठाion_emulation(
 				"mcr p15, 0, Rt, c7, c10, 5 ; dmb", regs->pc);
-		} else {
+		पूर्ण अन्यथा अणु
 			dsb(sy);
-			trace_instruction_emulation(
+			trace_inकाष्ठाion_emulation(
 				"mcr p15, 0, Rt, c7, c10, 4 ; dsb", regs->pc);
-		}
-		break;
-	case 5:
+		पूर्ण
+		अवरोध;
+	हाल 5:
 		/*
 		 * isb - mcr p15, 0, Rt, c7, c5, 4
 		 *
-		 * Taking an exception or returning from one acts as an
-		 * instruction barrier. So no explicit barrier needed here.
+		 * Taking an exception or वापसing from one acts as an
+		 * inकाष्ठाion barrier. So no explicit barrier needed here.
 		 */
-		trace_instruction_emulation(
+		trace_inकाष्ठाion_emulation(
 			"mcr p15, 0, Rt, c7, c5, 4 ; isb", regs->pc);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 ret:
 	pr_warn_ratelimited("\"%s\" (%ld) uses deprecated CP15 Barrier instruction at 0x%llx\n",
-			current->comm, (unsigned long)current->pid, regs->pc);
+			current->comm, (अचिन्हित दीर्घ)current->pid, regs->pc);
 
-	arm64_skip_faulting_instruction(regs, 4);
-	return 0;
-}
+	arm64_skip_faulting_inकाष्ठाion(regs, 4);
+	वापस 0;
+पूर्ण
 
-static int cp15_barrier_set_hw_mode(bool enable)
-{
-	if (enable)
+अटल पूर्णांक cp15_barrier_set_hw_mode(bool enable)
+अणु
+	अगर (enable)
 		sysreg_clear_set(sctlr_el1, 0, SCTLR_EL1_CP15BEN);
-	else
+	अन्यथा
 		sysreg_clear_set(sctlr_el1, SCTLR_EL1_CP15BEN, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct undef_hook cp15_barrier_hooks[] = {
-	{
+अटल काष्ठा undef_hook cp15_barrier_hooks[] = अणु
+	अणु
 		.instr_mask	= 0x0fff0fdf,
 		.instr_val	= 0x0e070f9a,
 		.pstate_mask	= PSR_AA32_MODE_MASK,
 		.pstate_val	= PSR_AA32_MODE_USR,
 		.fn		= cp15barrier_handler,
-	},
-	{
+	पूर्ण,
+	अणु
 		.instr_mask	= 0x0fff0fff,
 		.instr_val	= 0x0e070f95,
 		.pstate_mask	= PSR_AA32_MODE_MASK,
 		.pstate_val	= PSR_AA32_MODE_USR,
 		.fn		= cp15barrier_handler,
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct insn_emulation_ops cp15_barrier_ops = {
+अटल काष्ठा insn_emulation_ops cp15_barrier_ops = अणु
 	.name = "cp15_barrier",
 	.status = INSN_DEPRECATED,
 	.hooks = cp15_barrier_hooks,
 	.set_hw_mode = cp15_barrier_set_hw_mode,
-};
+पूर्ण;
 
-static int setend_set_hw_mode(bool enable)
-{
-	if (!cpu_supports_mixed_endian_el0())
-		return -EINVAL;
+अटल पूर्णांक setend_set_hw_mode(bool enable)
+अणु
+	अगर (!cpu_supports_mixed_endian_el0())
+		वापस -EINVAL;
 
-	if (enable)
+	अगर (enable)
 		sysreg_clear_set(sctlr_el1, SCTLR_EL1_SED, 0);
-	else
+	अन्यथा
 		sysreg_clear_set(sctlr_el1, 0, SCTLR_EL1_SED);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int compat_setend_handler(struct pt_regs *regs, u32 big_endian)
-{
-	char *insn;
+अटल पूर्णांक compat_setend_handler(काष्ठा pt_regs *regs, u32 big_endian)
+अणु
+	अक्षर *insn;
 
 	perf_sw_event(PERF_COUNT_SW_EMULATION_FAULTS, 1, regs, regs->pc);
 
-	if (big_endian) {
+	अगर (big_endian) अणु
 		insn = "setend be";
 		regs->pstate |= PSR_AA32_E_BIT;
-	} else {
+	पूर्ण अन्यथा अणु
 		insn = "setend le";
 		regs->pstate &= ~PSR_AA32_E_BIT;
-	}
+	पूर्ण
 
-	trace_instruction_emulation(insn, regs->pc);
+	trace_inकाष्ठाion_emulation(insn, regs->pc);
 	pr_warn_ratelimited("\"%s\" (%ld) uses deprecated setend instruction at 0x%llx\n",
-			current->comm, (unsigned long)current->pid, regs->pc);
+			current->comm, (अचिन्हित दीर्घ)current->pid, regs->pc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int a32_setend_handler(struct pt_regs *regs, u32 instr)
-{
-	int rc = compat_setend_handler(regs, (instr >> 9) & 1);
-	arm64_skip_faulting_instruction(regs, 4);
-	return rc;
-}
+अटल पूर्णांक a32_setend_handler(काष्ठा pt_regs *regs, u32 instr)
+अणु
+	पूर्णांक rc = compat_setend_handler(regs, (instr >> 9) & 1);
+	arm64_skip_faulting_inकाष्ठाion(regs, 4);
+	वापस rc;
+पूर्ण
 
-static int t16_setend_handler(struct pt_regs *regs, u32 instr)
-{
-	int rc = compat_setend_handler(regs, (instr >> 3) & 1);
-	arm64_skip_faulting_instruction(regs, 2);
-	return rc;
-}
+अटल पूर्णांक t16_setend_handler(काष्ठा pt_regs *regs, u32 instr)
+अणु
+	पूर्णांक rc = compat_setend_handler(regs, (instr >> 3) & 1);
+	arm64_skip_faulting_inकाष्ठाion(regs, 2);
+	वापस rc;
+पूर्ण
 
-static struct undef_hook setend_hooks[] = {
-	{
+अटल काष्ठा undef_hook setend_hooks[] = अणु
+	अणु
 		.instr_mask	= 0xfffffdff,
 		.instr_val	= 0xf1010000,
 		.pstate_mask	= PSR_AA32_MODE_MASK,
 		.pstate_val	= PSR_AA32_MODE_USR,
 		.fn		= a32_setend_handler,
-	},
-	{
+	पूर्ण,
+	अणु
 		/* Thumb mode */
 		.instr_mask	= 0xfffffff7,
 		.instr_val	= 0x0000b650,
 		.pstate_mask	= (PSR_AA32_T_BIT | PSR_AA32_MODE_MASK),
 		.pstate_val	= (PSR_AA32_T_BIT | PSR_AA32_MODE_USR),
 		.fn		= t16_setend_handler,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct insn_emulation_ops setend_ops = {
+अटल काष्ठा insn_emulation_ops setend_ops = अणु
 	.name = "setend",
 	.status = INSN_DEPRECATED,
 	.hooks = setend_hooks,
 	.set_hw_mode = setend_set_hw_mode,
-};
+पूर्ण;
 
 /*
- * Invoked as core_initcall, which guarantees that the instruction
- * emulation is ready for userspace.
+ * Invoked as core_initcall, which guarantees that the inकाष्ठाion
+ * emulation is पढ़ोy क्रम userspace.
  */
-static int __init armv8_deprecated_init(void)
-{
-	if (IS_ENABLED(CONFIG_SWP_EMULATION))
-		register_insn_emulation(&swp_ops);
+अटल पूर्णांक __init armv8_deprecated_init(व्योम)
+अणु
+	अगर (IS_ENABLED(CONFIG_SWP_EMULATION))
+		रेजिस्टर_insn_emulation(&swp_ops);
 
-	if (IS_ENABLED(CONFIG_CP15_BARRIER_EMULATION))
-		register_insn_emulation(&cp15_barrier_ops);
+	अगर (IS_ENABLED(CONFIG_CP15_BARRIER_EMULATION))
+		रेजिस्टर_insn_emulation(&cp15_barrier_ops);
 
-	if (IS_ENABLED(CONFIG_SETEND_EMULATION)) {
-		if (system_supports_mixed_endian_el0())
-			register_insn_emulation(&setend_ops);
-		else
+	अगर (IS_ENABLED(CONFIG_SETEND_EMULATION)) अणु
+		अगर (प्रणाली_supports_mixed_endian_el0())
+			रेजिस्टर_insn_emulation(&setend_ops);
+		अन्यथा
 			pr_info("setend instruction emulation is not supported on this system\n");
-	}
+	पूर्ण
 
 	cpuhp_setup_state_nocalls(CPUHP_AP_ARM64_ISNDEP_STARTING,
 				  "arm64/isndep:starting",
-				  run_all_insn_set_hw_mode, NULL);
-	register_insn_emulation_sysctl();
+				  run_all_insn_set_hw_mode, शून्य);
+	रेजिस्टर_insn_emulation_sysctl();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 core_initcall(armv8_deprecated_init);

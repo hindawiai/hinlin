@@ -1,132 +1,133 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* pci_impl.h: Helper definitions for PCI controller support.
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* pci_impl.h: Helper definitions क्रम PCI controller support.
  *
  * Copyright (C) 1999, 2007 David S. Miller (davem@davemloft.net)
  */
 
-#ifndef PCI_IMPL_H
-#define PCI_IMPL_H
+#अगर_अघोषित PCI_IMPL_H
+#घोषणा PCI_IMPL_H
 
-#include <linux/types.h>
-#include <linux/spinlock.h>
-#include <linux/pci.h>
-#include <linux/msi.h>
-#include <linux/of_device.h>
-#include <asm/io.h>
-#include <asm/prom.h>
-#include <asm/iommu.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/of_device.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/iommu.h>
 
-/* The abstraction used here is that there are PCI controllers,
+/* The असलtraction used here is that there are PCI controllers,
  * each with one (Sabre) or two (PSYCHO/SCHIZO) PCI bus modules
  * underneath.  Each PCI bus module uses an IOMMU (shared by both
- * PBMs of a controller, or per-PBM), and if a streaming buffer
+ * PBMs of a controller, or per-PBM), and अगर a streaming buffer
  * is present, each PCI bus module has it's own. (ie. the IOMMU
  * might be shared between PBMs, the STC is never shared)
- * Furthermore, each PCI bus module controls it's own autonomous
+ * Furthermore, each PCI bus module controls it's own स्वतःnomous
  * PCI bus.
  */
 
-#define PCI_STC_FLUSHFLAG_INIT(STC) \
+#घोषणा PCI_STC_FLUSHFLAG_INIT(STC) \
 	(*((STC)->strbuf_flushflag) = 0UL)
-#define PCI_STC_FLUSHFLAG_SET(STC) \
+#घोषणा PCI_STC_FLUSHFLAG_SET(STC) \
 	(*((STC)->strbuf_flushflag) != 0UL)
 
-#ifdef CONFIG_PCI_MSI
-struct pci_pbm_info;
-struct sparc64_msiq_ops {
-	int (*get_head)(struct pci_pbm_info *pbm, unsigned long msiqid,
-			unsigned long *head);
-	int (*dequeue_msi)(struct pci_pbm_info *pbm, unsigned long msiqid,
-			   unsigned long *head, unsigned long *msi);
-	int (*set_head)(struct pci_pbm_info *pbm, unsigned long msiqid,
-			unsigned long head);
-	int (*msi_setup)(struct pci_pbm_info *pbm, unsigned long msiqid,
-			 unsigned long msi, int is_msi64);
-	int (*msi_teardown)(struct pci_pbm_info *pbm, unsigned long msi);
-	int (*msiq_alloc)(struct pci_pbm_info *pbm);
-	void (*msiq_free)(struct pci_pbm_info *pbm);
-	int (*msiq_build_irq)(struct pci_pbm_info *pbm, unsigned long msiqid,
-			      unsigned long devino);
-};
+#अगर_घोषित CONFIG_PCI_MSI
+काष्ठा pci_pbm_info;
+काष्ठा sparc64_msiq_ops अणु
+	पूर्णांक (*get_head)(काष्ठा pci_pbm_info *pbm, अचिन्हित दीर्घ msiqid,
+			अचिन्हित दीर्घ *head);
+	पूर्णांक (*dequeue_msi)(काष्ठा pci_pbm_info *pbm, अचिन्हित दीर्घ msiqid,
+			   अचिन्हित दीर्घ *head, अचिन्हित दीर्घ *msi);
+	पूर्णांक (*set_head)(काष्ठा pci_pbm_info *pbm, अचिन्हित दीर्घ msiqid,
+			अचिन्हित दीर्घ head);
+	पूर्णांक (*msi_setup)(काष्ठा pci_pbm_info *pbm, अचिन्हित दीर्घ msiqid,
+			 अचिन्हित दीर्घ msi, पूर्णांक is_msi64);
+	पूर्णांक (*msi_tearकरोwn)(काष्ठा pci_pbm_info *pbm, अचिन्हित दीर्घ msi);
+	पूर्णांक (*msiq_alloc)(काष्ठा pci_pbm_info *pbm);
+	व्योम (*msiq_मुक्त)(काष्ठा pci_pbm_info *pbm);
+	पूर्णांक (*msiq_build_irq)(काष्ठा pci_pbm_info *pbm, अचिन्हित दीर्घ msiqid,
+			      अचिन्हित दीर्घ devino);
+पूर्ण;
 
-void sparc64_pbm_msi_init(struct pci_pbm_info *pbm,
-			  const struct sparc64_msiq_ops *ops);
+व्योम sparc64_pbm_msi_init(काष्ठा pci_pbm_info *pbm,
+			  स्थिर काष्ठा sparc64_msiq_ops *ops);
 
-struct sparc64_msiq_cookie {
-	struct pci_pbm_info *pbm;
-	unsigned long msiqid;
-};
-#endif
+काष्ठा sparc64_msiq_cookie अणु
+	काष्ठा pci_pbm_info *pbm;
+	अचिन्हित दीर्घ msiqid;
+पूर्ण;
+#पूर्ण_अगर
 
-struct pci_pbm_info {
-	struct pci_pbm_info		*next;
-	struct pci_pbm_info		*sibling;
-	int				index;
+काष्ठा pci_pbm_info अणु
+	काष्ठा pci_pbm_info		*next;
+	काष्ठा pci_pbm_info		*sibling;
+	पूर्णांक				index;
 
-	/* Physical address base of controller registers. */
-	unsigned long			controller_regs;
+	/* Physical address base of controller रेजिस्टरs. */
+	अचिन्हित दीर्घ			controller_regs;
 
-	/* Physical address base of PBM registers. */
-	unsigned long			pbm_regs;
+	/* Physical address base of PBM रेजिस्टरs. */
+	अचिन्हित दीर्घ			pbm_regs;
 
-	/* Physical address of DMA sync register, if any.  */
-	unsigned long			sync_reg;
+	/* Physical address of DMA sync रेजिस्टर, अगर any.  */
+	अचिन्हित दीर्घ			sync_reg;
 
-	/* Opaque 32-bit system bus Port ID. */
+	/* Opaque 32-bit प्रणाली bus Port ID. */
 	u32				portid;
 
-	/* Opaque 32-bit handle used for hypervisor calls.  */
+	/* Opaque 32-bit handle used क्रम hypervisor calls.  */
 	u32				devhandle;
 
-	/* Chipset version information. */
-	int				chip_type;
-#define PBM_CHIP_TYPE_SABRE		1
-#define PBM_CHIP_TYPE_PSYCHO		2
-#define PBM_CHIP_TYPE_SCHIZO		3
-#define PBM_CHIP_TYPE_SCHIZO_PLUS	4
-#define PBM_CHIP_TYPE_TOMATILLO		5
-	int				chip_version;
-	int				chip_revision;
+	/* Chipset version inक्रमmation. */
+	पूर्णांक				chip_type;
+#घोषणा PBM_CHIP_TYPE_SABRE		1
+#घोषणा PBM_CHIP_TYPE_PSYCHO		2
+#घोषणा PBM_CHIP_TYPE_SCHIZO		3
+#घोषणा PBM_CHIP_TYPE_SCHIZO_PLUS	4
+#घोषणा PBM_CHIP_TYPE_TOMATILLO		5
+	पूर्णांक				chip_version;
+	पूर्णांक				chip_revision;
 
-	/* Name used for top-level resources. */
-	const char			*name;
+	/* Name used क्रम top-level resources. */
+	स्थिर अक्षर			*name;
 
-	/* OBP specific information. */
-	struct platform_device		*op;
-	u64				ino_bitmap;
+	/* OBP specअगरic inक्रमmation. */
+	काष्ठा platक्रमm_device		*op;
+	u64				ino_biपंचांगap;
 
 	/* PBM I/O and Memory space resources. */
-	struct resource			io_space;
-	struct resource			mem_space;
-	struct resource			mem64_space;
-	struct resource			busn;
+	काष्ठा resource			io_space;
+	काष्ठा resource			mem_space;
+	काष्ठा resource			mem64_space;
+	काष्ठा resource			busn;
 	/* offset */
-	resource_size_t			io_offset;
-	resource_size_t			mem_offset;
-	resource_size_t			mem64_offset;
+	resource_माप_प्रकार			io_offset;
+	resource_माप_प्रकार			mem_offset;
+	resource_माप_प्रकार			mem64_offset;
 
 	/* Base of PCI Config space, can be per-PBM or shared. */
-	unsigned long			config_space;
+	अचिन्हित दीर्घ			config_space;
 
-	/* This will be 12 on PCI-E controllers, 8 elsewhere.  */
-	unsigned long			config_space_reg_bits;
+	/* This will be 12 on PCI-E controllers, 8 अन्यथाwhere.  */
+	अचिन्हित दीर्घ			config_space_reg_bits;
 
-	unsigned long			pci_afsr;
-	unsigned long			pci_afar;
-	unsigned long			pci_csr;
+	अचिन्हित दीर्घ			pci_afsr;
+	अचिन्हित दीर्घ			pci_afar;
+	अचिन्हित दीर्घ			pci_csr;
 
 	/* State of 66MHz capabilities on this PBM. */
-	int				is_66mhz_capable;
-	int				all_devs_66mhz;
+	पूर्णांक				is_66mhz_capable;
+	पूर्णांक				all_devs_66mhz;
 
-#ifdef CONFIG_PCI_MSI
+#अगर_घोषित CONFIG_PCI_MSI
 	/* MSI info.  */
 	u32				msiq_num;
 	u32				msiq_ent_count;
 	u32				msiq_first;
 	u32				msiq_first_devino;
 	u32				msiq_rotor;
-	struct sparc64_msiq_cookie	*msiq_irq_cookies;
+	काष्ठा sparc64_msiq_cookie	*msiq_irq_cookies;
 	u32				msi_num;
 	u32				msi_first;
 	u32				msi_data_mask;
@@ -135,58 +136,58 @@ struct pci_pbm_info {
 	u64				msi64_start;
 	u32				msi32_len;
 	u32				msi64_len;
-	void				*msi_queues;
-	unsigned long			*msi_bitmap;
-	unsigned int			*msi_irq_table;
-	int (*setup_msi_irq)(unsigned int *irq_p, struct pci_dev *pdev,
-			     struct msi_desc *entry);
-	void (*teardown_msi_irq)(unsigned int irq, struct pci_dev *pdev);
-	const struct sparc64_msiq_ops	*msi_ops;
-#endif /* !(CONFIG_PCI_MSI) */
+	व्योम				*msi_queues;
+	अचिन्हित दीर्घ			*msi_biपंचांगap;
+	अचिन्हित पूर्णांक			*msi_irq_table;
+	पूर्णांक (*setup_msi_irq)(अचिन्हित पूर्णांक *irq_p, काष्ठा pci_dev *pdev,
+			     काष्ठा msi_desc *entry);
+	व्योम (*tearकरोwn_msi_irq)(अचिन्हित पूर्णांक irq, काष्ठा pci_dev *pdev);
+	स्थिर काष्ठा sparc64_msiq_ops	*msi_ops;
+#पूर्ण_अगर /* !(CONFIG_PCI_MSI) */
 
 	/* This PBM's streaming buffer. */
-	struct strbuf			stc;
+	काष्ठा strbuf			stc;
 
 	/* IOMMU state, potentially shared by both PBM segments. */
-	struct iommu			*iommu;
+	काष्ठा iommu			*iommu;
 
-	/* Now things for the actual PCI bus probes. */
-	unsigned int			pci_first_busno;
-	unsigned int			pci_last_busno;
-	struct pci_bus			*pci_bus;
-	struct pci_ops			*pci_ops;
+	/* Now things क्रम the actual PCI bus probes. */
+	अचिन्हित पूर्णांक			pci_first_busno;
+	अचिन्हित पूर्णांक			pci_last_busno;
+	काष्ठा pci_bus			*pci_bus;
+	काष्ठा pci_ops			*pci_ops;
 
-	int				numa_node;
-};
+	पूर्णांक				numa_node;
+पूर्ण;
 
-extern struct pci_pbm_info *pci_pbm_root;
+बाह्य काष्ठा pci_pbm_info *pci_pbm_root;
 
-extern int pci_num_pbms;
+बाह्य पूर्णांक pci_num_pbms;
 
 /* PCI bus scanning and fixup support. */
-void pci_get_pbm_props(struct pci_pbm_info *pbm);
-struct pci_bus *pci_scan_one_pbm(struct pci_pbm_info *pbm,
-				 struct device *parent);
-void pci_determine_mem_io_space(struct pci_pbm_info *pbm);
+व्योम pci_get_pbm_props(काष्ठा pci_pbm_info *pbm);
+काष्ठा pci_bus *pci_scan_one_pbm(काष्ठा pci_pbm_info *pbm,
+				 काष्ठा device *parent);
+व्योम pci_determine_mem_io_space(काष्ठा pci_pbm_info *pbm);
 
 /* Error reporting support. */
-void pci_scan_for_target_abort(struct pci_pbm_info *, struct pci_bus *);
-void pci_scan_for_master_abort(struct pci_pbm_info *, struct pci_bus *);
-void pci_scan_for_parity_error(struct pci_pbm_info *, struct pci_bus *);
+व्योम pci_scan_क्रम_target_पात(काष्ठा pci_pbm_info *, काष्ठा pci_bus *);
+व्योम pci_scan_क्रम_master_पात(काष्ठा pci_pbm_info *, काष्ठा pci_bus *);
+व्योम pci_scan_क्रम_parity_error(काष्ठा pci_pbm_info *, काष्ठा pci_bus *);
 
 /* Configuration space access. */
-void pci_config_read8(u8 *addr, u8 *ret);
-void pci_config_read16(u16 *addr, u16 *ret);
-void pci_config_read32(u32 *addr, u32 *ret);
-void pci_config_write8(u8 *addr, u8 val);
-void pci_config_write16(u16 *addr, u16 val);
-void pci_config_write32(u32 *addr, u32 val);
+व्योम pci_config_पढ़ो8(u8 *addr, u8 *ret);
+व्योम pci_config_पढ़ो16(u16 *addr, u16 *ret);
+व्योम pci_config_पढ़ो32(u32 *addr, u32 *ret);
+व्योम pci_config_ग_लिखो8(u8 *addr, u8 val);
+व्योम pci_config_ग_लिखो16(u16 *addr, u16 val);
+व्योम pci_config_ग_लिखो32(u32 *addr, u32 val);
 
-extern struct pci_ops sun4u_pci_ops;
-extern struct pci_ops sun4v_pci_ops;
+बाह्य काष्ठा pci_ops sun4u_pci_ops;
+बाह्य काष्ठा pci_ops sun4v_pci_ops;
 
-extern volatile int pci_poke_in_progress;
-extern volatile int pci_poke_cpu;
-extern volatile int pci_poke_faulted;
+बाह्य अस्थिर पूर्णांक pci_poke_in_progress;
+बाह्य अस्थिर पूर्णांक pci_poke_cpu;
+बाह्य अस्थिर पूर्णांक pci_poke_faulted;
 
-#endif /* !(PCI_IMPL_H) */
+#पूर्ण_अगर /* !(PCI_IMPL_H) */

@@ -1,91 +1,92 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_GENERIC_BITOPS_LOCK_H_
-#define _ASM_GENERIC_BITOPS_LOCK_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_GENERIC_BITOPS_LOCK_H_
+#घोषणा _ASM_GENERIC_BITOPS_LOCK_H_
 
-#include <linux/atomic.h>
-#include <linux/compiler.h>
-#include <asm/barrier.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/compiler.h>
+#समावेश <यंत्र/barrier.h>
 
 /**
- * test_and_set_bit_lock - Set a bit and return its old value, for lock
+ * test_and_set_bit_lock - Set a bit and वापस its old value, क्रम lock
  * @nr: Bit to set
  * @addr: Address to count from
  *
- * This operation is atomic and provides acquire barrier semantics if
- * the returned value is 0.
+ * This operation is atomic and provides acquire barrier semantics अगर
+ * the वापसed value is 0.
  * It can be used to implement bit locks.
  */
-static inline int test_and_set_bit_lock(unsigned int nr,
-					volatile unsigned long *p)
-{
-	long old;
-	unsigned long mask = BIT_MASK(nr);
+अटल अंतरभूत पूर्णांक test_and_set_bit_lock(अचिन्हित पूर्णांक nr,
+					अस्थिर अचिन्हित दीर्घ *p)
+अणु
+	दीर्घ old;
+	अचिन्हित दीर्घ mask = BIT_MASK(nr);
 
 	p += BIT_WORD(nr);
-	if (READ_ONCE(*p) & mask)
-		return 1;
+	अगर (READ_ONCE(*p) & mask)
+		वापस 1;
 
-	old = atomic_long_fetch_or_acquire(mask, (atomic_long_t *)p);
-	return !!(old & mask);
-}
+	old = atomic_दीर्घ_fetch_or_acquire(mask, (atomic_दीर्घ_t *)p);
+	वापस !!(old & mask);
+पूर्ण
 
 
 /**
- * clear_bit_unlock - Clear a bit in memory, for unlock
+ * clear_bit_unlock - Clear a bit in memory, क्रम unlock
  * @nr: the bit to set
  * @addr: the address to start counting from
  *
  * This operation is atomic and provides release barrier semantics.
  */
-static inline void clear_bit_unlock(unsigned int nr, volatile unsigned long *p)
-{
+अटल अंतरभूत व्योम clear_bit_unlock(अचिन्हित पूर्णांक nr, अस्थिर अचिन्हित दीर्घ *p)
+अणु
 	p += BIT_WORD(nr);
-	atomic_long_fetch_andnot_release(BIT_MASK(nr), (atomic_long_t *)p);
-}
+	atomic_दीर्घ_fetch_andnot_release(BIT_MASK(nr), (atomic_दीर्घ_t *)p);
+पूर्ण
 
 /**
- * __clear_bit_unlock - Clear a bit in memory, for unlock
+ * __clear_bit_unlock - Clear a bit in memory, क्रम unlock
  * @nr: the bit to set
  * @addr: the address to start counting from
  *
- * A weaker form of clear_bit_unlock() as used by __bit_lock_unlock(). If all
- * the bits in the word are protected by this lock some archs can use weaker
+ * A weaker क्रमm of clear_bit_unlock() as used by __bit_lock_unlock(). If all
+ * the bits in the word are रक्षित by this lock some archs can use weaker
  * ops to safely unlock.
  *
- * See for example x86's implementation.
+ * See क्रम example x86's implementation.
  */
-static inline void __clear_bit_unlock(unsigned int nr,
-				      volatile unsigned long *p)
-{
-	unsigned long old;
+अटल अंतरभूत व्योम __clear_bit_unlock(अचिन्हित पूर्णांक nr,
+				      अस्थिर अचिन्हित दीर्घ *p)
+अणु
+	अचिन्हित दीर्घ old;
 
 	p += BIT_WORD(nr);
 	old = READ_ONCE(*p);
 	old &= ~BIT_MASK(nr);
-	atomic_long_set_release((atomic_long_t *)p, old);
-}
+	atomic_दीर्घ_set_release((atomic_दीर्घ_t *)p, old);
+पूर्ण
 
 /**
- * clear_bit_unlock_is_negative_byte - Clear a bit in memory and test if bottom
- *                                     byte is negative, for unlock.
+ * clear_bit_unlock_is_negative_byte - Clear a bit in memory and test अगर bottom
+ *                                     byte is negative, क्रम unlock.
  * @nr: the bit to clear
  * @addr: the address to start counting from
  *
- * This is a bit of a one-trick-pony for the filemap code, which clears
- * PG_locked and tests PG_waiters,
+ * This is a bit of a one-trick-pony क्रम the filemap code, which clears
+ * PG_locked and tests PG_रुकोers,
  */
-#ifndef clear_bit_unlock_is_negative_byte
-static inline bool clear_bit_unlock_is_negative_byte(unsigned int nr,
-						     volatile unsigned long *p)
-{
-	long old;
-	unsigned long mask = BIT_MASK(nr);
+#अगर_अघोषित clear_bit_unlock_is_negative_byte
+अटल अंतरभूत bool clear_bit_unlock_is_negative_byte(अचिन्हित पूर्णांक nr,
+						     अस्थिर अचिन्हित दीर्घ *p)
+अणु
+	दीर्घ old;
+	अचिन्हित दीर्घ mask = BIT_MASK(nr);
 
 	p += BIT_WORD(nr);
-	old = atomic_long_fetch_andnot_release(mask, (atomic_long_t *)p);
-	return !!(old & BIT(7));
-}
-#define clear_bit_unlock_is_negative_byte clear_bit_unlock_is_negative_byte
-#endif
+	old = atomic_दीर्घ_fetch_andnot_release(mask, (atomic_दीर्घ_t *)p);
+	वापस !!(old & BIT(7));
+पूर्ण
+#घोषणा clear_bit_unlock_is_negative_byte clear_bit_unlock_is_negative_byte
+#पूर्ण_अगर
 
-#endif /* _ASM_GENERIC_BITOPS_LOCK_H_ */
+#पूर्ण_अगर /* _ASM_GENERIC_BITOPS_LOCK_H_ */

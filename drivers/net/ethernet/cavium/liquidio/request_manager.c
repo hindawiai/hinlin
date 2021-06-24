@@ -1,3 +1,4 @@
+<शैली गुरु>
 /**********************************************************************
  * Author: Cavium, Inc.
  *
@@ -6,76 +7,76 @@
  *
  * Copyright (c) 2003-2016 Cavium, Inc.
  *
- * This file is free software; you can redistribute it and/or modify
+ * This file is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License, Version 2, as
  * published by the Free Software Foundation.
  *
  * This file is distributed in the hope that it will be useful, but
  * AS-IS and WITHOUT ANY WARRANTY; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE, TITLE, or
- * NONINFRINGEMENT.  See the GNU General Public License for more
+ * NONINFRINGEMENT.  See the GNU General Public License क्रम more
  * details.
  **********************************************************************/
-#include <linux/pci.h>
-#include <linux/netdevice.h>
-#include <linux/vmalloc.h>
-#include "liquidio_common.h"
-#include "octeon_droq.h"
-#include "octeon_iq.h"
-#include "response_manager.h"
-#include "octeon_device.h"
-#include "octeon_main.h"
-#include "octeon_network.h"
-#include "cn66xx_device.h"
-#include "cn23xx_pf_device.h"
-#include "cn23xx_vf_device.h"
+#समावेश <linux/pci.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश "liquidio_common.h"
+#समावेश "octeon_droq.h"
+#समावेश "octeon_iq.h"
+#समावेश "response_manager.h"
+#समावेश "octeon_device.h"
+#समावेश "octeon_main.h"
+#समावेश "octeon_network.h"
+#समावेश "cn66xx_device.h"
+#समावेश "cn23xx_pf_device.h"
+#समावेश "cn23xx_vf_device.h"
 
-struct iq_post_status {
-	int status;
-	int index;
-};
+काष्ठा iq_post_status अणु
+	पूर्णांक status;
+	पूर्णांक index;
+पूर्ण;
 
-static void check_db_timeout(struct work_struct *work);
-static void  __check_db_timeout(struct octeon_device *oct, u64 iq_no);
+अटल व्योम check_db_समयout(काष्ठा work_काष्ठा *work);
+अटल व्योम  __check_db_समयout(काष्ठा octeon_device *oct, u64 iq_no);
 
-static void (*reqtype_free_fn[MAX_OCTEON_DEVICES][REQTYPE_LAST + 1]) (void *);
+अटल व्योम (*reqtype_मुक्त_fn[MAX_OCTEON_DEVICES][REQTYPE_LAST + 1]) (व्योम *);
 
-static inline int IQ_INSTR_MODE_64B(struct octeon_device *oct, int iq_no)
-{
-	struct octeon_instr_queue *iq =
-	    (struct octeon_instr_queue *)oct->instr_queue[iq_no];
-	return iq->iqcmd_64B;
-}
+अटल अंतरभूत पूर्णांक IQ_INSTR_MODE_64B(काष्ठा octeon_device *oct, पूर्णांक iq_no)
+अणु
+	काष्ठा octeon_instr_queue *iq =
+	    (काष्ठा octeon_instr_queue *)oct->instr_queue[iq_no];
+	वापस iq->iqcmd_64B;
+पूर्ण
 
-#define IQ_INSTR_MODE_32B(oct, iq_no)  (!IQ_INSTR_MODE_64B(oct, iq_no))
+#घोषणा IQ_INSTR_MODE_32B(oct, iq_no)  (!IQ_INSTR_MODE_64B(oct, iq_no))
 
-/* Define this to return the request status comaptible to old code */
-/*#define OCTEON_USE_OLD_REQ_STATUS*/
+/* Define this to वापस the request status comaptible to old code */
+/*#घोषणा OCTEON_USE_OLD_REQ_STATUS*/
 
 /* Return 0 on success, 1 on failure */
-int octeon_init_instr_queue(struct octeon_device *oct,
-			    union oct_txpciq txpciq,
+पूर्णांक octeon_init_instr_queue(काष्ठा octeon_device *oct,
+			    जोड़ oct_txpciq txpciq,
 			    u32 num_descs)
-{
-	struct octeon_instr_queue *iq;
-	struct octeon_iq_config *conf = NULL;
+अणु
+	काष्ठा octeon_instr_queue *iq;
+	काष्ठा octeon_iq_config *conf = शून्य;
 	u32 iq_no = (u32)txpciq.s.q_no;
 	u32 q_size;
-	struct cavium_wq *db_wq;
-	int numa_node = dev_to_node(&oct->pci_dev->dev);
+	काष्ठा cavium_wq *db_wq;
+	पूर्णांक numa_node = dev_to_node(&oct->pci_dev->dev);
 
-	if (OCTEON_CN6XXX(oct))
+	अगर (OCTEON_CN6XXX(oct))
 		conf = &(CFG_GET_IQ_CFG(CHIP_CONF(oct, cn6xxx)));
-	else if (OCTEON_CN23XX_PF(oct))
+	अन्यथा अगर (OCTEON_CN23XX_PF(oct))
 		conf = &(CFG_GET_IQ_CFG(CHIP_CONF(oct, cn23xx_pf)));
-	else if (OCTEON_CN23XX_VF(oct))
+	अन्यथा अगर (OCTEON_CN23XX_VF(oct))
 		conf = &(CFG_GET_IQ_CFG(CHIP_CONF(oct, cn23xx_vf)));
 
-	if (!conf) {
+	अगर (!conf) अणु
 		dev_err(&oct->pci_dev->dev, "Unsupported Chip %x\n",
 			oct->chip_id);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	q_size = (u32)conf->instr_type * num_descs;
 
@@ -84,27 +85,27 @@ int octeon_init_instr_queue(struct octeon_device *oct,
 	iq->oct_dev = oct;
 
 	iq->base_addr = lio_dma_alloc(oct, q_size, &iq->base_addr_dma);
-	if (!iq->base_addr) {
+	अगर (!iq->base_addr) अणु
 		dev_err(&oct->pci_dev->dev, "Cannot allocate memory for instr queue %d\n",
 			iq_no);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	iq->max_count = num_descs;
 
 	/* Initialize a list to holds requests that have been posted to Octeon
 	 * but has yet to be fetched by octeon
 	 */
-	iq->request_list = vzalloc_node(array_size(num_descs, sizeof(*iq->request_list)),
+	iq->request_list = vzalloc_node(array_size(num_descs, माप(*iq->request_list)),
 					numa_node);
-	if (!iq->request_list)
-		iq->request_list = vzalloc(array_size(num_descs, sizeof(*iq->request_list)));
-	if (!iq->request_list) {
-		lio_dma_free(oct, q_size, iq->base_addr, iq->base_addr_dma);
+	अगर (!iq->request_list)
+		iq->request_list = vzalloc(array_size(num_descs, माप(*iq->request_list)));
+	अगर (!iq->request_list) अणु
+		lio_dma_मुक्त(oct, q_size, iq->base_addr, iq->base_addr_dma);
 		dev_err(&oct->pci_dev->dev, "Alloc failed for IQ[%d] nr free list\n",
 			iq_no);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	dev_dbg(&oct->pci_dev->dev, "IQ[%d]: base: %p basedma: %pad count: %d\n",
 		iq_no, iq->base_addr, &iq->base_addr_dma, iq->max_count);
@@ -112,29 +113,29 @@ int octeon_init_instr_queue(struct octeon_device *oct,
 	iq->txpciq.u64 = txpciq.u64;
 	iq->fill_threshold = (u32)conf->db_min;
 	iq->fill_cnt = 0;
-	iq->host_write_index = 0;
-	iq->octeon_read_index = 0;
+	iq->host_ग_लिखो_index = 0;
+	iq->octeon_पढ़ो_index = 0;
 	iq->flush_index = 0;
-	iq->last_db_time = 0;
-	iq->do_auto_flush = 1;
-	iq->db_timeout = (u32)conf->db_timeout;
+	iq->last_db_समय = 0;
+	iq->करो_स्वतः_flush = 1;
+	iq->db_समयout = (u32)conf->db_समयout;
 	atomic_set(&iq->instr_pending, 0);
 	iq->pkts_processed = 0;
 
-	/* Initialize the spinlock for this instruction queue */
+	/* Initialize the spinlock क्रम this inकाष्ठाion queue */
 	spin_lock_init(&iq->lock);
-	if (iq_no == 0) {
+	अगर (iq_no == 0) अणु
 		iq->allow_soft_cmds = true;
 		spin_lock_init(&iq->post_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		iq->allow_soft_cmds = false;
-	}
+	पूर्ण
 
 	spin_lock_init(&iq->iq_flush_running_lock);
 
 	oct->io_qmask.iq |= BIT_ULL(iq_no);
 
-	/* Set the 32B/64B mode for each input queue */
+	/* Set the 32B/64B mode क्रम each input queue */
 	oct->io_qmask.iq64B |= ((conf->instr_type == 64) << iq_no);
 	iq->iqcmd_64B = (conf->instr_type == 64);
 
@@ -143,258 +144,258 @@ int octeon_init_instr_queue(struct octeon_device *oct,
 	oct->check_db_wq[iq_no].wq = alloc_workqueue("check_iq_db",
 						     WQ_MEM_RECLAIM,
 						     0);
-	if (!oct->check_db_wq[iq_no].wq) {
-		vfree(iq->request_list);
-		iq->request_list = NULL;
-		lio_dma_free(oct, q_size, iq->base_addr, iq->base_addr_dma);
+	अगर (!oct->check_db_wq[iq_no].wq) अणु
+		vमुक्त(iq->request_list);
+		iq->request_list = शून्य;
+		lio_dma_मुक्त(oct, q_size, iq->base_addr, iq->base_addr_dma);
 		dev_err(&oct->pci_dev->dev, "check db wq create failed for iq %d\n",
 			iq_no);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	db_wq = &oct->check_db_wq[iq_no];
 
-	INIT_DELAYED_WORK(&db_wq->wk.work, check_db_timeout);
+	INIT_DELAYED_WORK(&db_wq->wk.work, check_db_समयout);
 	db_wq->wk.ctxptr = oct;
 	db_wq->wk.ctxul = iq_no;
-	queue_delayed_work(db_wq->wq, &db_wq->wk.work, msecs_to_jiffies(1));
+	queue_delayed_work(db_wq->wq, &db_wq->wk.work, msecs_to_jअगरfies(1));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int octeon_delete_instr_queue(struct octeon_device *oct, u32 iq_no)
-{
+पूर्णांक octeon_delete_instr_queue(काष्ठा octeon_device *oct, u32 iq_no)
+अणु
 	u64 desc_size = 0, q_size;
-	struct octeon_instr_queue *iq = oct->instr_queue[iq_no];
+	काष्ठा octeon_instr_queue *iq = oct->instr_queue[iq_no];
 
 	cancel_delayed_work_sync(&oct->check_db_wq[iq_no].wk.work);
 	destroy_workqueue(oct->check_db_wq[iq_no].wq);
 
-	if (OCTEON_CN6XXX(oct))
+	अगर (OCTEON_CN6XXX(oct))
 		desc_size =
 		    CFG_GET_IQ_INSTR_TYPE(CHIP_CONF(oct, cn6xxx));
-	else if (OCTEON_CN23XX_PF(oct))
+	अन्यथा अगर (OCTEON_CN23XX_PF(oct))
 		desc_size =
 		    CFG_GET_IQ_INSTR_TYPE(CHIP_CONF(oct, cn23xx_pf));
-	else if (OCTEON_CN23XX_VF(oct))
+	अन्यथा अगर (OCTEON_CN23XX_VF(oct))
 		desc_size =
 		    CFG_GET_IQ_INSTR_TYPE(CHIP_CONF(oct, cn23xx_vf));
 
-	vfree(iq->request_list);
+	vमुक्त(iq->request_list);
 
-	if (iq->base_addr) {
+	अगर (iq->base_addr) अणु
 		q_size = iq->max_count * desc_size;
-		lio_dma_free(oct, (u32)q_size, iq->base_addr,
+		lio_dma_मुक्त(oct, (u32)q_size, iq->base_addr,
 			     iq->base_addr_dma);
 		oct->io_qmask.iq &= ~(1ULL << iq_no);
-		vfree(oct->instr_queue[iq_no]);
-		oct->instr_queue[iq_no] = NULL;
+		vमुक्त(oct->instr_queue[iq_no]);
+		oct->instr_queue[iq_no] = शून्य;
 		oct->num_iqs--;
-		return 0;
-	}
-	return 1;
-}
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /* Return 0 on success, 1 on failure */
-int octeon_setup_iq(struct octeon_device *oct,
-		    int ifidx,
-		    int q_index,
-		    union oct_txpciq txpciq,
+पूर्णांक octeon_setup_iq(काष्ठा octeon_device *oct,
+		    पूर्णांक अगरidx,
+		    पूर्णांक q_index,
+		    जोड़ oct_txpciq txpciq,
 		    u32 num_descs,
-		    void *app_ctx)
-{
+		    व्योम *app_ctx)
+अणु
 	u32 iq_no = (u32)txpciq.s.q_no;
-	int numa_node = dev_to_node(&oct->pci_dev->dev);
+	पूर्णांक numa_node = dev_to_node(&oct->pci_dev->dev);
 
-	if (oct->instr_queue[iq_no]) {
+	अगर (oct->instr_queue[iq_no]) अणु
 		dev_dbg(&oct->pci_dev->dev, "IQ is in use. Cannot create the IQ: %d again\n",
 			iq_no);
 		oct->instr_queue[iq_no]->txpciq.u64 = txpciq.u64;
 		oct->instr_queue[iq_no]->app_ctx = app_ctx;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	oct->instr_queue[iq_no] =
-	    vzalloc_node(sizeof(struct octeon_instr_queue), numa_node);
-	if (!oct->instr_queue[iq_no])
+	    vzalloc_node(माप(काष्ठा octeon_instr_queue), numa_node);
+	अगर (!oct->instr_queue[iq_no])
 		oct->instr_queue[iq_no] =
-		    vzalloc(sizeof(struct octeon_instr_queue));
-	if (!oct->instr_queue[iq_no])
-		return 1;
+		    vzalloc(माप(काष्ठा octeon_instr_queue));
+	अगर (!oct->instr_queue[iq_no])
+		वापस 1;
 
 
 	oct->instr_queue[iq_no]->q_index = q_index;
 	oct->instr_queue[iq_no]->app_ctx = app_ctx;
-	oct->instr_queue[iq_no]->ifidx = ifidx;
+	oct->instr_queue[iq_no]->अगरidx = अगरidx;
 
-	if (octeon_init_instr_queue(oct, txpciq, num_descs)) {
-		vfree(oct->instr_queue[iq_no]);
-		oct->instr_queue[iq_no] = NULL;
-		return 1;
-	}
+	अगर (octeon_init_instr_queue(oct, txpciq, num_descs)) अणु
+		vमुक्त(oct->instr_queue[iq_no]);
+		oct->instr_queue[iq_no] = शून्य;
+		वापस 1;
+	पूर्ण
 
 	oct->num_iqs++;
-	if (oct->fn_list.enable_io_queues(oct)) {
+	अगर (oct->fn_list.enable_io_queues(oct)) अणु
 		octeon_delete_instr_queue(oct, iq_no);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int lio_wait_for_instr_fetch(struct octeon_device *oct)
-{
-	int i, retry = 1000, pending, instr_cnt = 0;
+पूर्णांक lio_रुको_क्रम_instr_fetch(काष्ठा octeon_device *oct)
+अणु
+	पूर्णांक i, retry = 1000, pending, instr_cnt = 0;
 
-	do {
+	करो अणु
 		instr_cnt = 0;
 
-		for (i = 0; i < MAX_OCTEON_INSTR_QUEUES(oct); i++) {
-			if (!(oct->io_qmask.iq & BIT_ULL(i)))
-				continue;
+		क्रम (i = 0; i < MAX_OCTEON_INSTR_QUEUES(oct); i++) अणु
+			अगर (!(oct->io_qmask.iq & BIT_ULL(i)))
+				जारी;
 			pending =
-			    atomic_read(&oct->instr_queue[i]->instr_pending);
-			if (pending)
-				__check_db_timeout(oct, i);
+			    atomic_पढ़ो(&oct->instr_queue[i]->instr_pending);
+			अगर (pending)
+				__check_db_समयout(oct, i);
 			instr_cnt += pending;
-		}
+		पूर्ण
 
-		if (instr_cnt == 0)
-			break;
+		अगर (instr_cnt == 0)
+			अवरोध;
 
-		schedule_timeout_uninterruptible(1);
+		schedule_समयout_unपूर्णांकerruptible(1);
 
-	} while (retry-- && instr_cnt);
+	पूर्ण जबतक (retry-- && instr_cnt);
 
-	return instr_cnt;
-}
+	वापस instr_cnt;
+पूर्ण
 
-static inline void
-ring_doorbell(struct octeon_device *oct, struct octeon_instr_queue *iq)
-{
-	if (atomic_read(&oct->status) == OCT_DEV_RUNNING) {
-		writel(iq->fill_cnt, iq->doorbell_reg);
-		/* make sure doorbell write goes through */
+अटल अंतरभूत व्योम
+ring_करोorbell(काष्ठा octeon_device *oct, काष्ठा octeon_instr_queue *iq)
+अणु
+	अगर (atomic_पढ़ो(&oct->status) == OCT_DEV_RUNNING) अणु
+		ग_लिखोl(iq->fill_cnt, iq->करोorbell_reg);
+		/* make sure करोorbell ग_लिखो goes through */
 		iq->fill_cnt = 0;
-		iq->last_db_time = jiffies;
-		return;
-	}
-}
+		iq->last_db_समय = jअगरfies;
+		वापस;
+	पूर्ण
+पूर्ण
 
-void
-octeon_ring_doorbell_locked(struct octeon_device *oct, u32 iq_no)
-{
-	struct octeon_instr_queue *iq;
+व्योम
+octeon_ring_करोorbell_locked(काष्ठा octeon_device *oct, u32 iq_no)
+अणु
+	काष्ठा octeon_instr_queue *iq;
 
 	iq = oct->instr_queue[iq_no];
 	spin_lock(&iq->post_lock);
-	if (iq->fill_cnt)
-		ring_doorbell(oct, iq);
+	अगर (iq->fill_cnt)
+		ring_करोorbell(oct, iq);
 	spin_unlock(&iq->post_lock);
-}
+पूर्ण
 
-static inline void __copy_cmd_into_iq(struct octeon_instr_queue *iq,
+अटल अंतरभूत व्योम __copy_cmd_पूर्णांकo_iq(काष्ठा octeon_instr_queue *iq,
 				      u8 *cmd)
-{
+अणु
 	u8 *iqptr, cmdsize;
 
 	cmdsize = ((iq->iqcmd_64B) ? 64 : 32);
-	iqptr = iq->base_addr + (cmdsize * iq->host_write_index);
+	iqptr = iq->base_addr + (cmdsize * iq->host_ग_लिखो_index);
 
-	memcpy(iqptr, cmd, cmdsize);
-}
+	स_नकल(iqptr, cmd, cmdsize);
+पूर्ण
 
-static inline struct iq_post_status
-__post_command2(struct octeon_instr_queue *iq, u8 *cmd)
-{
-	struct iq_post_status st;
+अटल अंतरभूत काष्ठा iq_post_status
+__post_command2(काष्ठा octeon_instr_queue *iq, u8 *cmd)
+अणु
+	काष्ठा iq_post_status st;
 
 	st.status = IQ_SEND_OK;
 
-	/* This ensures that the read index does not wrap around to the same
-	 * position if queue gets full before Octeon could fetch any instr.
+	/* This ensures that the पढ़ो index करोes not wrap around to the same
+	 * position अगर queue माला_लो full beक्रमe Octeon could fetch any instr.
 	 */
-	if (atomic_read(&iq->instr_pending) >= (s32)(iq->max_count - 1)) {
+	अगर (atomic_पढ़ो(&iq->instr_pending) >= (s32)(iq->max_count - 1)) अणु
 		st.status = IQ_SEND_FAILED;
 		st.index = -1;
-		return st;
-	}
+		वापस st;
+	पूर्ण
 
-	if (atomic_read(&iq->instr_pending) >= (s32)(iq->max_count - 2))
+	अगर (atomic_पढ़ो(&iq->instr_pending) >= (s32)(iq->max_count - 2))
 		st.status = IQ_SEND_STOP;
 
-	__copy_cmd_into_iq(iq, cmd);
+	__copy_cmd_पूर्णांकo_iq(iq, cmd);
 
-	/* "index" is returned, host_write_index is modified. */
-	st.index = iq->host_write_index;
-	iq->host_write_index = incr_index(iq->host_write_index, 1,
+	/* "index" is वापसed, host_ग_लिखो_index is modअगरied. */
+	st.index = iq->host_ग_लिखो_index;
+	iq->host_ग_लिखो_index = incr_index(iq->host_ग_लिखो_index, 1,
 					  iq->max_count);
 	iq->fill_cnt++;
 
-	/* Flush the command into memory. We need to be sure the data is in
-	 * memory before indicating that the instruction is pending.
+	/* Flush the command पूर्णांकo memory. We need to be sure the data is in
+	 * memory beक्रमe indicating that the inकाष्ठाion is pending.
 	 */
 	wmb();
 
 	atomic_inc(&iq->instr_pending);
 
-	return st;
-}
+	वापस st;
+पूर्ण
 
-int
-octeon_register_reqtype_free_fn(struct octeon_device *oct, int reqtype,
-				void (*fn)(void *))
-{
-	if (reqtype > REQTYPE_LAST) {
+पूर्णांक
+octeon_रेजिस्टर_reqtype_मुक्त_fn(काष्ठा octeon_device *oct, पूर्णांक reqtype,
+				व्योम (*fn)(व्योम *))
+अणु
+	अगर (reqtype > REQTYPE_LAST) अणु
 		dev_err(&oct->pci_dev->dev, "%s: Invalid reqtype: %d\n",
 			__func__, reqtype);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	reqtype_free_fn[oct->octeon_id][reqtype] = fn;
+	reqtype_मुक्त_fn[oct->octeon_id][reqtype] = fn;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void
-__add_to_request_list(struct octeon_instr_queue *iq,
-		      int idx, void *buf, int reqtype)
-{
+अटल अंतरभूत व्योम
+__add_to_request_list(काष्ठा octeon_instr_queue *iq,
+		      पूर्णांक idx, व्योम *buf, पूर्णांक reqtype)
+अणु
 	iq->request_list[idx].buf = buf;
 	iq->request_list[idx].reqtype = reqtype;
-}
+पूर्ण
 
 /* Can only run in process context */
-int
-lio_process_iq_request_list(struct octeon_device *oct,
-			    struct octeon_instr_queue *iq, u32 napi_budget)
-{
-	struct cavium_wq *cwq = &oct->dma_comp_wq;
-	int reqtype;
-	void *buf;
+पूर्णांक
+lio_process_iq_request_list(काष्ठा octeon_device *oct,
+			    काष्ठा octeon_instr_queue *iq, u32 napi_budget)
+अणु
+	काष्ठा cavium_wq *cwq = &oct->dma_comp_wq;
+	पूर्णांक reqtype;
+	व्योम *buf;
 	u32 old = iq->flush_index;
 	u32 inst_count = 0;
-	unsigned int pkts_compl = 0, bytes_compl = 0;
-	struct octeon_soft_command *sc;
-	unsigned long flags;
+	अचिन्हित पूर्णांक pkts_compl = 0, bytes_compl = 0;
+	काष्ठा octeon_soft_command *sc;
+	अचिन्हित दीर्घ flags;
 
-	while (old != iq->octeon_read_index) {
+	जबतक (old != iq->octeon_पढ़ो_index) अणु
 		reqtype = iq->request_list[old].reqtype;
 		buf     = iq->request_list[old].buf;
 
-		if (reqtype == REQTYPE_NONE)
-			goto skip_this;
+		अगर (reqtype == REQTYPE_NONE)
+			जाओ skip_this;
 
 		octeon_update_tx_completion_counters(buf, reqtype, &pkts_compl,
 						     &bytes_compl);
 
-		switch (reqtype) {
-		case REQTYPE_NORESP_NET:
-		case REQTYPE_NORESP_NET_SG:
-		case REQTYPE_RESP_NET_SG:
-			reqtype_free_fn[oct->octeon_id][reqtype](buf);
-			break;
-		case REQTYPE_RESP_NET:
-		case REQTYPE_SOFT_COMMAND:
+		चयन (reqtype) अणु
+		हाल REQTYPE_NORESP_NET:
+		हाल REQTYPE_NORESP_NET_SG:
+		हाल REQTYPE_RESP_NET_SG:
+			reqtype_मुक्त_fn[oct->octeon_id][reqtype](buf);
+			अवरोध;
+		हाल REQTYPE_RESP_NET:
+		हाल REQTYPE_SOFT_COMMAND:
 			sc = buf;
 			/* We're expecting a response from Octeon.
 			 * It's up to lio_process_ordered_list() to
@@ -411,198 +412,198 @@ lio_process_iq_request_list(struct octeon_device *oct,
 			spin_unlock_irqrestore(&oct->response_list
 					       [OCTEON_ORDERED_SC_LIST].lock,
 					       flags);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(&oct->pci_dev->dev,
 				"%s Unknown reqtype: %d buf: %p at idx %d\n",
 				__func__, reqtype, buf, old);
-		}
+		पूर्ण
 
-		iq->request_list[old].buf = NULL;
+		iq->request_list[old].buf = शून्य;
 		iq->request_list[old].reqtype = 0;
 
  skip_this:
 		inst_count++;
 		old = incr_index(old, 1, iq->max_count);
 
-		if ((napi_budget) && (inst_count >= napi_budget))
-			break;
-	}
-	if (bytes_compl)
+		अगर ((napi_budget) && (inst_count >= napi_budget))
+			अवरोध;
+	पूर्ण
+	अगर (bytes_compl)
 		octeon_report_tx_completion_to_bql(iq->app_ctx, pkts_compl,
 						   bytes_compl);
 	iq->flush_index = old;
 
-	if (atomic_read(&oct->response_list
+	अगर (atomic_पढ़ो(&oct->response_list
 			[OCTEON_ORDERED_SC_LIST].pending_req_count))
 		queue_work(cwq->wq, &cwq->wk.work.work);
 
-	return inst_count;
-}
+	वापस inst_count;
+पूर्ण
 
 /* Can only be called from process context */
-int
-octeon_flush_iq(struct octeon_device *oct, struct octeon_instr_queue *iq,
+पूर्णांक
+octeon_flush_iq(काष्ठा octeon_device *oct, काष्ठा octeon_instr_queue *iq,
 		u32 napi_budget)
-{
+अणु
 	u32 inst_processed = 0;
 	u32 tot_inst_processed = 0;
-	int tx_done = 1;
+	पूर्णांक tx_करोne = 1;
 
-	if (!spin_trylock(&iq->iq_flush_running_lock))
-		return tx_done;
+	अगर (!spin_trylock(&iq->iq_flush_running_lock))
+		वापस tx_करोne;
 
 	spin_lock_bh(&iq->lock);
 
-	iq->octeon_read_index = oct->fn_list.update_iq_read_idx(iq);
+	iq->octeon_पढ़ो_index = oct->fn_list.update_iq_पढ़ो_idx(iq);
 
-	do {
+	करो अणु
 		/* Process any outstanding IQ packets. */
-		if (iq->flush_index == iq->octeon_read_index)
-			break;
+		अगर (iq->flush_index == iq->octeon_पढ़ो_index)
+			अवरोध;
 
-		if (napi_budget)
+		अगर (napi_budget)
 			inst_processed =
 				lio_process_iq_request_list(oct, iq,
 							    napi_budget -
 							    tot_inst_processed);
-		else
+		अन्यथा
 			inst_processed =
 				lio_process_iq_request_list(oct, iq, 0);
 
-		if (inst_processed) {
+		अगर (inst_processed) अणु
 			iq->pkts_processed += inst_processed;
 			atomic_sub(inst_processed, &iq->instr_pending);
 			iq->stats.instr_processed += inst_processed;
-		}
+		पूर्ण
 
 		tot_inst_processed += inst_processed;
-	} while (tot_inst_processed < napi_budget);
+	पूर्ण जबतक (tot_inst_processed < napi_budget);
 
-	if (napi_budget && (tot_inst_processed >= napi_budget))
-		tx_done = 0;
+	अगर (napi_budget && (tot_inst_processed >= napi_budget))
+		tx_करोne = 0;
 
-	iq->last_db_time = jiffies;
+	iq->last_db_समय = jअगरfies;
 
 	spin_unlock_bh(&iq->lock);
 
 	spin_unlock(&iq->iq_flush_running_lock);
 
-	return tx_done;
-}
+	वापस tx_करोne;
+पूर्ण
 
-/* Process instruction queue after timeout.
- * This routine gets called from a workqueue or when removing the module.
+/* Process inकाष्ठाion queue after समयout.
+ * This routine माला_लो called from a workqueue or when removing the module.
  */
-static void __check_db_timeout(struct octeon_device *oct, u64 iq_no)
-{
-	struct octeon_instr_queue *iq;
-	u64 next_time;
+अटल व्योम __check_db_समयout(काष्ठा octeon_device *oct, u64 iq_no)
+अणु
+	काष्ठा octeon_instr_queue *iq;
+	u64 next_समय;
 
-	if (!oct)
-		return;
+	अगर (!oct)
+		वापस;
 
 	iq = oct->instr_queue[iq_no];
-	if (!iq)
-		return;
+	अगर (!iq)
+		वापस;
 
-	/* return immediately, if no work pending */
-	if (!atomic_read(&iq->instr_pending))
-		return;
-	/* If jiffies - last_db_time < db_timeout do nothing  */
-	next_time = iq->last_db_time + iq->db_timeout;
-	if (!time_after(jiffies, (unsigned long)next_time))
-		return;
-	iq->last_db_time = jiffies;
+	/* वापस immediately, अगर no work pending */
+	अगर (!atomic_पढ़ो(&iq->instr_pending))
+		वापस;
+	/* If jअगरfies - last_db_समय < db_समयout करो nothing  */
+	next_समय = iq->last_db_समय + iq->db_समयout;
+	अगर (!समय_after(jअगरfies, (अचिन्हित दीर्घ)next_समय))
+		वापस;
+	iq->last_db_समय = jअगरfies;
 
-	/* Flush the instruction queue */
+	/* Flush the inकाष्ठाion queue */
 	octeon_flush_iq(oct, iq, 0);
 
-	lio_enable_irq(NULL, iq);
-}
+	lio_enable_irq(शून्य, iq);
+पूर्ण
 
-/* Called by the Poll thread at regular intervals to check the instruction
- * queue for commands to be posted and for commands that were fetched by Octeon.
+/* Called by the Poll thपढ़ो at regular पूर्णांकervals to check the inकाष्ठाion
+ * queue क्रम commands to be posted and क्रम commands that were fetched by Octeon.
  */
-static void check_db_timeout(struct work_struct *work)
-{
-	struct cavium_wk *wk = (struct cavium_wk *)work;
-	struct octeon_device *oct = (struct octeon_device *)wk->ctxptr;
+अटल व्योम check_db_समयout(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा cavium_wk *wk = (काष्ठा cavium_wk *)work;
+	काष्ठा octeon_device *oct = (काष्ठा octeon_device *)wk->ctxptr;
 	u64 iq_no = wk->ctxul;
-	struct cavium_wq *db_wq = &oct->check_db_wq[iq_no];
+	काष्ठा cavium_wq *db_wq = &oct->check_db_wq[iq_no];
 	u32 delay = 10;
 
-	__check_db_timeout(oct, iq_no);
-	queue_delayed_work(db_wq->wq, &db_wq->wk.work, msecs_to_jiffies(delay));
-}
+	__check_db_समयout(oct, iq_no);
+	queue_delayed_work(db_wq->wq, &db_wq->wk.work, msecs_to_jअगरfies(delay));
+पूर्ण
 
-int
-octeon_send_command(struct octeon_device *oct, u32 iq_no,
-		    u32 force_db, void *cmd, void *buf,
+पूर्णांक
+octeon_send_command(काष्ठा octeon_device *oct, u32 iq_no,
+		    u32 क्रमce_db, व्योम *cmd, व्योम *buf,
 		    u32 datasize, u32 reqtype)
-{
-	int xmit_stopped;
-	struct iq_post_status st;
-	struct octeon_instr_queue *iq = oct->instr_queue[iq_no];
+अणु
+	पूर्णांक xmit_stopped;
+	काष्ठा iq_post_status st;
+	काष्ठा octeon_instr_queue *iq = oct->instr_queue[iq_no];
 
-	/* Get the lock and prevent other tasks and tx interrupt handler from
+	/* Get the lock and prevent other tasks and tx पूर्णांकerrupt handler from
 	 * running.
 	 */
-	if (iq->allow_soft_cmds)
+	अगर (iq->allow_soft_cmds)
 		spin_lock_bh(&iq->post_lock);
 
 	st = __post_command2(iq, cmd);
 
-	if (st.status != IQ_SEND_FAILED) {
+	अगर (st.status != IQ_SEND_FAILED) अणु
 		xmit_stopped = octeon_report_sent_bytes_to_bql(buf, reqtype);
 		__add_to_request_list(iq, st.index, buf, reqtype);
 		INCR_INSTRQUEUE_PKT_COUNT(oct, iq_no, bytes_sent, datasize);
 		INCR_INSTRQUEUE_PKT_COUNT(oct, iq_no, instr_posted, 1);
 
-		if (iq->fill_cnt >= MAX_OCTEON_FILL_COUNT || force_db ||
+		अगर (iq->fill_cnt >= MAX_OCTEON_FILL_COUNT || क्रमce_db ||
 		    xmit_stopped || st.status == IQ_SEND_STOP)
-			ring_doorbell(oct, iq);
-	} else {
+			ring_करोorbell(oct, iq);
+	पूर्ण अन्यथा अणु
 		INCR_INSTRQUEUE_PKT_COUNT(oct, iq_no, instr_dropped, 1);
-	}
+	पूर्ण
 
-	if (iq->allow_soft_cmds)
+	अगर (iq->allow_soft_cmds)
 		spin_unlock_bh(&iq->post_lock);
 
-	/* This is only done here to expedite packets being flushed
-	 * for cases where there are no IQ completion interrupts.
+	/* This is only करोne here to expedite packets being flushed
+	 * क्रम हालs where there are no IQ completion पूर्णांकerrupts.
 	 */
 
-	return st.status;
-}
+	वापस st.status;
+पूर्ण
 
-void
-octeon_prepare_soft_command(struct octeon_device *oct,
-			    struct octeon_soft_command *sc,
+व्योम
+octeon_prepare_soft_command(काष्ठा octeon_device *oct,
+			    काष्ठा octeon_soft_command *sc,
 			    u8 opcode,
 			    u8 subcode,
 			    u32 irh_ossp,
 			    u64 ossp0,
 			    u64 ossp1)
-{
-	struct octeon_config *oct_cfg;
-	struct octeon_instr_ih2 *ih2;
-	struct octeon_instr_ih3 *ih3;
-	struct octeon_instr_pki_ih3 *pki_ih3;
-	struct octeon_instr_irh *irh;
-	struct octeon_instr_rdp *rdp;
+अणु
+	काष्ठा octeon_config *oct_cfg;
+	काष्ठा octeon_instr_ih2 *ih2;
+	काष्ठा octeon_instr_ih3 *ih3;
+	काष्ठा octeon_instr_pki_ih3 *pki_ih3;
+	काष्ठा octeon_instr_irh *irh;
+	काष्ठा octeon_instr_rdp *rdp;
 
 	WARN_ON(opcode > 15);
 	WARN_ON(subcode > 127);
 
 	oct_cfg = octeon_get_conf(oct);
 
-	if (OCTEON_CN23XX_PF(oct) || OCTEON_CN23XX_VF(oct)) {
-		ih3 = (struct octeon_instr_ih3 *)&sc->cmd.cmd3.ih3;
+	अगर (OCTEON_CN23XX_PF(oct) || OCTEON_CN23XX_VF(oct)) अणु
+		ih3 = (काष्ठा octeon_instr_ih3 *)&sc->cmd.cmd3.ih3;
 
 		ih3->pkind = oct->instr_queue[sc->iq_no]->txpciq.s.pkind;
 
-		pki_ih3 = (struct octeon_instr_pki_ih3 *)&sc->cmd.cmd3.pki_ih3;
+		pki_ih3 = (काष्ठा octeon_instr_pki_ih3 *)&sc->cmd.cmd3.pki_ih3;
 
 		pki_ih3->w           = 1;
 		pki_ih3->raw         = 1;
@@ -618,20 +619,20 @@ octeon_prepare_soft_command(struct octeon_device *oct,
 		pki_ih3->pm          = 0x7;
 		pki_ih3->sl          = 8;
 
-		if (sc->datasize)
+		अगर (sc->datasize)
 			ih3->dlengsz = sc->datasize;
 
-		irh            = (struct octeon_instr_irh *)&sc->cmd.cmd3.irh;
+		irh            = (काष्ठा octeon_instr_irh *)&sc->cmd.cmd3.irh;
 		irh->opcode    = opcode;
 		irh->subcode   = subcode;
 
-		/* opcode/subcode specific parameters (ossp) */
+		/* opcode/subcode specअगरic parameters (ossp) */
 		irh->ossp       = irh_ossp;
 		sc->cmd.cmd3.ossp[0] = ossp0;
 		sc->cmd.cmd3.ossp[1] = ossp1;
 
-		if (sc->rdatasize) {
-			rdp = (struct octeon_instr_rdp *)&sc->cmd.cmd3.rdp;
+		अगर (sc->rdatasize) अणु
+			rdp = (काष्ठा octeon_instr_rdp *)&sc->cmd.cmd3.rdp;
 			rdp->pcie_port = oct->pcie_port;
 			rdp->rlen      = sc->rdatasize;
 
@@ -639,231 +640,231 @@ octeon_prepare_soft_command(struct octeon_device *oct,
 			/*PKI IH3*/
 			/* pki_ih3 irh+ossp[0]+ossp[1]+rdp+rptr = 48 bytes */
 			ih3->fsz    = LIO_SOFTCMDRESP_IH3;
-		} else {
+		पूर्ण अन्यथा अणु
 			irh->rflag =  0;
 			/*PKI IH3*/
 			/* pki_h3 + irh + ossp[0] + ossp[1] = 32 bytes */
 			ih3->fsz    = LIO_PCICMD_O3;
-		}
+		पूर्ण
 
-	} else {
-		ih2          = (struct octeon_instr_ih2 *)&sc->cmd.cmd2.ih2;
+	पूर्ण अन्यथा अणु
+		ih2          = (काष्ठा octeon_instr_ih2 *)&sc->cmd.cmd2.ih2;
 		ih2->tagtype = ATOMIC_TAG;
 		ih2->tag     = LIO_CONTROL;
 		ih2->raw     = 1;
 		ih2->grp     = CFG_GET_CTRL_Q_GRP(oct_cfg);
 
-		if (sc->datasize) {
+		अगर (sc->datasize) अणु
 			ih2->dlengsz = sc->datasize;
 			ih2->rs = 1;
-		}
+		पूर्ण
 
-		irh            = (struct octeon_instr_irh *)&sc->cmd.cmd2.irh;
+		irh            = (काष्ठा octeon_instr_irh *)&sc->cmd.cmd2.irh;
 		irh->opcode    = opcode;
 		irh->subcode   = subcode;
 
-		/* opcode/subcode specific parameters (ossp) */
+		/* opcode/subcode specअगरic parameters (ossp) */
 		irh->ossp       = irh_ossp;
 		sc->cmd.cmd2.ossp[0] = ossp0;
 		sc->cmd.cmd2.ossp[1] = ossp1;
 
-		if (sc->rdatasize) {
-			rdp = (struct octeon_instr_rdp *)&sc->cmd.cmd2.rdp;
+		अगर (sc->rdatasize) अणु
+			rdp = (काष्ठा octeon_instr_rdp *)&sc->cmd.cmd2.rdp;
 			rdp->pcie_port = oct->pcie_port;
 			rdp->rlen      = sc->rdatasize;
 
 			irh->rflag =  1;
 			/* irh+ossp[0]+ossp[1]+rdp+rptr = 40 bytes */
 			ih2->fsz   = LIO_SOFTCMDRESP_IH2;
-		} else {
+		पूर्ण अन्यथा अणु
 			irh->rflag =  0;
 			/* irh + ossp[0] + ossp[1] = 24 bytes */
 			ih2->fsz   = LIO_PCICMD_O2;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int octeon_send_soft_command(struct octeon_device *oct,
-			     struct octeon_soft_command *sc)
-{
-	struct octeon_instr_queue *iq;
-	struct octeon_instr_ih2 *ih2;
-	struct octeon_instr_ih3 *ih3;
-	struct octeon_instr_irh *irh;
+पूर्णांक octeon_send_soft_command(काष्ठा octeon_device *oct,
+			     काष्ठा octeon_soft_command *sc)
+अणु
+	काष्ठा octeon_instr_queue *iq;
+	काष्ठा octeon_instr_ih2 *ih2;
+	काष्ठा octeon_instr_ih3 *ih3;
+	काष्ठा octeon_instr_irh *irh;
 	u32 len;
 
 	iq = oct->instr_queue[sc->iq_no];
-	if (!iq->allow_soft_cmds) {
+	अगर (!iq->allow_soft_cmds) अणु
 		dev_err(&oct->pci_dev->dev, "Soft commands are not allowed on Queue %d\n",
 			sc->iq_no);
 		INCR_INSTRQUEUE_PKT_COUNT(oct, sc->iq_no, instr_dropped, 1);
-		return IQ_SEND_FAILED;
-	}
+		वापस IQ_SEND_FAILED;
+	पूर्ण
 
-	if (OCTEON_CN23XX_PF(oct) || OCTEON_CN23XX_VF(oct)) {
-		ih3 =  (struct octeon_instr_ih3 *)&sc->cmd.cmd3.ih3;
-		if (ih3->dlengsz) {
+	अगर (OCTEON_CN23XX_PF(oct) || OCTEON_CN23XX_VF(oct)) अणु
+		ih3 =  (काष्ठा octeon_instr_ih3 *)&sc->cmd.cmd3.ih3;
+		अगर (ih3->dlengsz) अणु
 			WARN_ON(!sc->dmadptr);
 			sc->cmd.cmd3.dptr = sc->dmadptr;
-		}
-		irh = (struct octeon_instr_irh *)&sc->cmd.cmd3.irh;
-		if (irh->rflag) {
+		पूर्ण
+		irh = (काष्ठा octeon_instr_irh *)&sc->cmd.cmd3.irh;
+		अगर (irh->rflag) अणु
 			WARN_ON(!sc->dmarptr);
 			WARN_ON(!sc->status_word);
 			*sc->status_word = COMPLETION_WORD_INIT;
 			sc->cmd.cmd3.rptr = sc->dmarptr;
-		}
+		पूर्ण
 		len = (u32)ih3->dlengsz;
-	} else {
-		ih2 = (struct octeon_instr_ih2 *)&sc->cmd.cmd2.ih2;
-		if (ih2->dlengsz) {
+	पूर्ण अन्यथा अणु
+		ih2 = (काष्ठा octeon_instr_ih2 *)&sc->cmd.cmd2.ih2;
+		अगर (ih2->dlengsz) अणु
 			WARN_ON(!sc->dmadptr);
 			sc->cmd.cmd2.dptr = sc->dmadptr;
-		}
-		irh = (struct octeon_instr_irh *)&sc->cmd.cmd2.irh;
-		if (irh->rflag) {
+		पूर्ण
+		irh = (काष्ठा octeon_instr_irh *)&sc->cmd.cmd2.irh;
+		अगर (irh->rflag) अणु
 			WARN_ON(!sc->dmarptr);
 			WARN_ON(!sc->status_word);
 			*sc->status_word = COMPLETION_WORD_INIT;
 			sc->cmd.cmd2.rptr = sc->dmarptr;
-		}
+		पूर्ण
 		len = (u32)ih2->dlengsz;
-	}
+	पूर्ण
 
-	sc->expiry_time = jiffies + msecs_to_jiffies(LIO_SC_MAX_TMO_MS);
+	sc->expiry_समय = jअगरfies + msecs_to_jअगरfies(LIO_SC_MAX_TMO_MS);
 
-	return (octeon_send_command(oct, sc->iq_no, 1, &sc->cmd, sc,
+	वापस (octeon_send_command(oct, sc->iq_no, 1, &sc->cmd, sc,
 				    len, REQTYPE_SOFT_COMMAND));
-}
+पूर्ण
 
-int octeon_setup_sc_buffer_pool(struct octeon_device *oct)
-{
-	int i;
+पूर्णांक octeon_setup_sc_buffer_pool(काष्ठा octeon_device *oct)
+अणु
+	पूर्णांक i;
 	u64 dma_addr;
-	struct octeon_soft_command *sc;
+	काष्ठा octeon_soft_command *sc;
 
 	INIT_LIST_HEAD(&oct->sc_buf_pool.head);
 	spin_lock_init(&oct->sc_buf_pool.lock);
 	atomic_set(&oct->sc_buf_pool.alloc_buf_count, 0);
 
-	for (i = 0; i < MAX_SOFT_COMMAND_BUFFERS; i++) {
-		sc = (struct octeon_soft_command *)
+	क्रम (i = 0; i < MAX_SOFT_COMMAND_BUFFERS; i++) अणु
+		sc = (काष्ठा octeon_soft_command *)
 			lio_dma_alloc(oct,
 				      SOFT_COMMAND_BUFFER_SIZE,
 					  (dma_addr_t *)&dma_addr);
-		if (!sc) {
-			octeon_free_sc_buffer_pool(oct);
-			return 1;
-		}
+		अगर (!sc) अणु
+			octeon_मुक्त_sc_buffer_pool(oct);
+			वापस 1;
+		पूर्ण
 
 		sc->dma_addr = dma_addr;
 		sc->size = SOFT_COMMAND_BUFFER_SIZE;
 
 		list_add_tail(&sc->node, &oct->sc_buf_pool.head);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int octeon_free_sc_done_list(struct octeon_device *oct)
-{
-	struct octeon_response_list *done_sc_list, *zombie_sc_list;
-	struct octeon_soft_command *sc;
-	struct list_head *tmp, *tmp2;
-	spinlock_t *sc_lists_lock; /* lock for response_list */
+पूर्णांक octeon_मुक्त_sc_करोne_list(काष्ठा octeon_device *oct)
+अणु
+	काष्ठा octeon_response_list *करोne_sc_list, *zombie_sc_list;
+	काष्ठा octeon_soft_command *sc;
+	काष्ठा list_head *पंचांगp, *पंचांगp2;
+	spinlock_t *sc_lists_lock; /* lock क्रम response_list */
 
-	done_sc_list = &oct->response_list[OCTEON_DONE_SC_LIST];
+	करोne_sc_list = &oct->response_list[OCTEON_DONE_SC_LIST];
 	zombie_sc_list = &oct->response_list[OCTEON_ZOMBIE_SC_LIST];
 
-	if (!atomic_read(&done_sc_list->pending_req_count))
-		return 0;
+	अगर (!atomic_पढ़ो(&करोne_sc_list->pending_req_count))
+		वापस 0;
 
 	sc_lists_lock = &oct->response_list[OCTEON_ORDERED_SC_LIST].lock;
 
 	spin_lock_bh(sc_lists_lock);
 
-	list_for_each_safe(tmp, tmp2, &done_sc_list->head) {
-		sc = list_entry(tmp, struct octeon_soft_command, node);
+	list_क्रम_each_safe(पंचांगp, पंचांगp2, &करोne_sc_list->head) अणु
+		sc = list_entry(पंचांगp, काष्ठा octeon_soft_command, node);
 
-		if (READ_ONCE(sc->caller_is_done)) {
+		अगर (READ_ONCE(sc->caller_is_करोne)) अणु
 			list_del(&sc->node);
-			atomic_dec(&done_sc_list->pending_req_count);
+			atomic_dec(&करोne_sc_list->pending_req_count);
 
-			if (*sc->status_word == COMPLETION_WORD_INIT) {
-				/* timeout; move sc to zombie list */
+			अगर (*sc->status_word == COMPLETION_WORD_INIT) अणु
+				/* समयout; move sc to zombie list */
 				list_add_tail(&sc->node, &zombie_sc_list->head);
 				atomic_inc(&zombie_sc_list->pending_req_count);
-			} else {
-				octeon_free_soft_command(oct, sc);
-			}
-		}
-	}
+			पूर्ण अन्यथा अणु
+				octeon_मुक्त_soft_command(oct, sc);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_bh(sc_lists_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int octeon_free_sc_zombie_list(struct octeon_device *oct)
-{
-	struct octeon_response_list *zombie_sc_list;
-	struct octeon_soft_command *sc;
-	struct list_head *tmp, *tmp2;
-	spinlock_t *sc_lists_lock; /* lock for response_list */
+पूर्णांक octeon_मुक्त_sc_zombie_list(काष्ठा octeon_device *oct)
+अणु
+	काष्ठा octeon_response_list *zombie_sc_list;
+	काष्ठा octeon_soft_command *sc;
+	काष्ठा list_head *पंचांगp, *पंचांगp2;
+	spinlock_t *sc_lists_lock; /* lock क्रम response_list */
 
 	zombie_sc_list = &oct->response_list[OCTEON_ZOMBIE_SC_LIST];
 	sc_lists_lock = &oct->response_list[OCTEON_ORDERED_SC_LIST].lock;
 
 	spin_lock_bh(sc_lists_lock);
 
-	list_for_each_safe(tmp, tmp2, &zombie_sc_list->head) {
-		list_del(tmp);
+	list_क्रम_each_safe(पंचांगp, पंचांगp2, &zombie_sc_list->head) अणु
+		list_del(पंचांगp);
 		atomic_dec(&zombie_sc_list->pending_req_count);
-		sc = list_entry(tmp, struct octeon_soft_command, node);
-		octeon_free_soft_command(oct, sc);
-	}
+		sc = list_entry(पंचांगp, काष्ठा octeon_soft_command, node);
+		octeon_मुक्त_soft_command(oct, sc);
+	पूर्ण
 
 	spin_unlock_bh(sc_lists_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int octeon_free_sc_buffer_pool(struct octeon_device *oct)
-{
-	struct list_head *tmp, *tmp2;
-	struct octeon_soft_command *sc;
+पूर्णांक octeon_मुक्त_sc_buffer_pool(काष्ठा octeon_device *oct)
+अणु
+	काष्ठा list_head *पंचांगp, *पंचांगp2;
+	काष्ठा octeon_soft_command *sc;
 
-	octeon_free_sc_zombie_list(oct);
+	octeon_मुक्त_sc_zombie_list(oct);
 
 	spin_lock_bh(&oct->sc_buf_pool.lock);
 
-	list_for_each_safe(tmp, tmp2, &oct->sc_buf_pool.head) {
-		list_del(tmp);
+	list_क्रम_each_safe(पंचांगp, पंचांगp2, &oct->sc_buf_pool.head) अणु
+		list_del(पंचांगp);
 
-		sc = (struct octeon_soft_command *)tmp;
+		sc = (काष्ठा octeon_soft_command *)पंचांगp;
 
-		lio_dma_free(oct, sc->size, sc, sc->dma_addr);
-	}
+		lio_dma_मुक्त(oct, sc->size, sc, sc->dma_addr);
+	पूर्ण
 
 	INIT_LIST_HEAD(&oct->sc_buf_pool.head);
 
 	spin_unlock_bh(&oct->sc_buf_pool.lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct octeon_soft_command *octeon_alloc_soft_command(struct octeon_device *oct,
+काष्ठा octeon_soft_command *octeon_alloc_soft_command(काष्ठा octeon_device *oct,
 						      u32 datasize,
 						      u32 rdatasize,
 						      u32 ctxsize)
-{
+अणु
 	u64 dma_addr;
 	u32 size;
-	u32 offset = sizeof(struct octeon_soft_command);
-	struct octeon_soft_command *sc = NULL;
-	struct list_head *tmp;
+	u32 offset = माप(काष्ठा octeon_soft_command);
+	काष्ठा octeon_soft_command *sc = शून्य;
+	काष्ठा list_head *पंचांगp;
 
-	if (!rdatasize)
+	अगर (!rdatasize)
 		rdatasize = 16;
 
 	WARN_ON((offset + datasize + rdatasize + ctxsize) >
@@ -871,61 +872,61 @@ struct octeon_soft_command *octeon_alloc_soft_command(struct octeon_device *oct,
 
 	spin_lock_bh(&oct->sc_buf_pool.lock);
 
-	if (list_empty(&oct->sc_buf_pool.head)) {
+	अगर (list_empty(&oct->sc_buf_pool.head)) अणु
 		spin_unlock_bh(&oct->sc_buf_pool.lock);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	list_for_each(tmp, &oct->sc_buf_pool.head)
-		break;
+	list_क्रम_each(पंचांगp, &oct->sc_buf_pool.head)
+		अवरोध;
 
-	list_del(tmp);
+	list_del(पंचांगp);
 
 	atomic_inc(&oct->sc_buf_pool.alloc_buf_count);
 
 	spin_unlock_bh(&oct->sc_buf_pool.lock);
 
-	sc = (struct octeon_soft_command *)tmp;
+	sc = (काष्ठा octeon_soft_command *)पंचांगp;
 
 	dma_addr = sc->dma_addr;
 	size = sc->size;
 
-	memset(sc, 0, sc->size);
+	स_रखो(sc, 0, sc->size);
 
 	sc->dma_addr = dma_addr;
 	sc->size = size;
 
-	if (ctxsize) {
+	अगर (ctxsize) अणु
 		sc->ctxptr = (u8 *)sc + offset;
 		sc->ctxsize = ctxsize;
-	}
+	पूर्ण
 
 	/* Start data at 128 byte boundary */
 	offset = (offset + ctxsize + 127) & 0xffffff80;
 
-	if (datasize) {
+	अगर (datasize) अणु
 		sc->virtdptr = (u8 *)sc + offset;
 		sc->dmadptr = dma_addr + offset;
 		sc->datasize = datasize;
-	}
+	पूर्ण
 
 	/* Start rdata at 128 byte boundary */
 	offset = (offset + datasize + 127) & 0xffffff80;
 
-	if (rdatasize) {
+	अगर (rdatasize) अणु
 		WARN_ON(rdatasize < 16);
 		sc->virtrptr = (u8 *)sc + offset;
 		sc->dmarptr = dma_addr + offset;
 		sc->rdatasize = rdatasize;
 		sc->status_word = (u64 *)((u8 *)(sc->virtrptr) + rdatasize - 8);
-	}
+	पूर्ण
 
-	return sc;
-}
+	वापस sc;
+पूर्ण
 
-void octeon_free_soft_command(struct octeon_device *oct,
-			      struct octeon_soft_command *sc)
-{
+व्योम octeon_मुक्त_soft_command(काष्ठा octeon_device *oct,
+			      काष्ठा octeon_soft_command *sc)
+अणु
 	spin_lock_bh(&oct->sc_buf_pool.lock);
 
 	list_add_tail(&sc->node, &oct->sc_buf_pool.head);
@@ -933,4 +934,4 @@ void octeon_free_soft_command(struct octeon_device *oct,
 	atomic_dec(&oct->sc_buf_pool.alloc_buf_count);
 
 	spin_unlock_bh(&oct->sc_buf_pool.lock);
-}
+पूर्ण

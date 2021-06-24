@@ -1,165 +1,166 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/init.h>
-#include <linux/ctype.h>
-#include <asm/ebcdic.h>
-#include <asm/sclp.h>
-#include <asm/sections.h>
-#include <asm/boot_data.h>
-#include <uapi/asm/ipl.h>
-#include "boot.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/init.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <यंत्र/ebcdic.h>
+#समावेश <यंत्र/sclp.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/boot_data.h>
+#समावेश <uapi/यंत्र/ipl.h>
+#समावेश "boot.h"
 
-int __bootdata_preserved(ipl_secure_flag);
+पूर्णांक __bootdata_preserved(ipl_secure_flag);
 
-unsigned long __bootdata_preserved(ipl_cert_list_addr);
-unsigned long __bootdata_preserved(ipl_cert_list_size);
+अचिन्हित दीर्घ __bootdata_preserved(ipl_cert_list_addr);
+अचिन्हित दीर्घ __bootdata_preserved(ipl_cert_list_size);
 
-unsigned long __bootdata(early_ipl_comp_list_addr);
-unsigned long __bootdata(early_ipl_comp_list_size);
+अचिन्हित दीर्घ __bootdata(early_ipl_comp_list_addr);
+अचिन्हित दीर्घ __bootdata(early_ipl_comp_list_size);
 
-#define for_each_rb_entry(entry, rb) \
-	for (entry = rb->entries; \
-	     (void *) entry + sizeof(*entry) <= (void *) rb + rb->len; \
+#घोषणा क्रम_each_rb_entry(entry, rb) \
+	क्रम (entry = rb->entries; \
+	     (व्योम *) entry + माप(*entry) <= (व्योम *) rb + rb->len; \
 	     entry++)
 
-static inline bool intersects(unsigned long addr0, unsigned long size0,
-			      unsigned long addr1, unsigned long size1)
-{
-	return addr0 + size0 > addr1 && addr1 + size1 > addr0;
-}
+अटल अंतरभूत bool पूर्णांकersects(अचिन्हित दीर्घ addr0, अचिन्हित दीर्घ size0,
+			      अचिन्हित दीर्घ addr1, अचिन्हित दीर्घ size1)
+अणु
+	वापस addr0 + size0 > addr1 && addr1 + size1 > addr0;
+पूर्ण
 
-static unsigned long find_bootdata_space(struct ipl_rb_components *comps,
-					 struct ipl_rb_certificates *certs,
-					 unsigned long safe_addr)
-{
-	struct ipl_rb_certificate_entry *cert;
-	struct ipl_rb_component_entry *comp;
-	size_t size;
+अटल अचिन्हित दीर्घ find_bootdata_space(काष्ठा ipl_rb_components *comps,
+					 काष्ठा ipl_rb_certअगरicates *certs,
+					 अचिन्हित दीर्घ safe_addr)
+अणु
+	काष्ठा ipl_rb_certअगरicate_entry *cert;
+	काष्ठा ipl_rb_component_entry *comp;
+	माप_प्रकार size;
 
 	/*
-	 * Find the length for the IPL report boot data
+	 * Find the length क्रम the IPL report boot data
 	 */
 	early_ipl_comp_list_size = 0;
-	for_each_rb_entry(comp, comps)
-		early_ipl_comp_list_size += sizeof(*comp);
+	क्रम_each_rb_entry(comp, comps)
+		early_ipl_comp_list_size += माप(*comp);
 	ipl_cert_list_size = 0;
-	for_each_rb_entry(cert, certs)
-		ipl_cert_list_size += sizeof(unsigned int) + cert->len;
+	क्रम_each_rb_entry(cert, certs)
+		ipl_cert_list_size += माप(अचिन्हित पूर्णांक) + cert->len;
 	size = ipl_cert_list_size + early_ipl_comp_list_size;
 
 	/*
-	 * Start from safe_addr to find a free memory area large
-	 * enough for the IPL report boot data. This area is used
-	 * for ipl_cert_list_addr/ipl_cert_list_size and
+	 * Start from safe_addr to find a मुक्त memory area large
+	 * enough क्रम the IPL report boot data. This area is used
+	 * क्रम ipl_cert_list_addr/ipl_cert_list_size and
 	 * early_ipl_comp_list_addr/early_ipl_comp_list_size. It must
-	 * not overlap with any component or any certificate.
+	 * not overlap with any component or any certअगरicate.
 	 */
 repeat:
-	if (IS_ENABLED(CONFIG_BLK_DEV_INITRD) && INITRD_START && INITRD_SIZE &&
-	    intersects(INITRD_START, INITRD_SIZE, safe_addr, size))
+	अगर (IS_ENABLED(CONFIG_BLK_DEV_INITRD) && INITRD_START && INITRD_SIZE &&
+	    पूर्णांकersects(INITRD_START, INITRD_SIZE, safe_addr, size))
 		safe_addr = INITRD_START + INITRD_SIZE;
-	for_each_rb_entry(comp, comps)
-		if (intersects(safe_addr, size, comp->addr, comp->len)) {
+	क्रम_each_rb_entry(comp, comps)
+		अगर (पूर्णांकersects(safe_addr, size, comp->addr, comp->len)) अणु
 			safe_addr = comp->addr + comp->len;
-			goto repeat;
-		}
-	for_each_rb_entry(cert, certs)
-		if (intersects(safe_addr, size, cert->addr, cert->len)) {
+			जाओ repeat;
+		पूर्ण
+	क्रम_each_rb_entry(cert, certs)
+		अगर (पूर्णांकersects(safe_addr, size, cert->addr, cert->len)) अणु
 			safe_addr = cert->addr + cert->len;
-			goto repeat;
-		}
+			जाओ repeat;
+		पूर्ण
 	early_ipl_comp_list_addr = safe_addr;
 	ipl_cert_list_addr = safe_addr + early_ipl_comp_list_size;
 
-	return safe_addr + size;
-}
+	वापस safe_addr + size;
+पूर्ण
 
-static void copy_components_bootdata(struct ipl_rb_components *comps)
-{
-	struct ipl_rb_component_entry *comp, *ptr;
+अटल व्योम copy_components_bootdata(काष्ठा ipl_rb_components *comps)
+अणु
+	काष्ठा ipl_rb_component_entry *comp, *ptr;
 
-	ptr = (struct ipl_rb_component_entry *) early_ipl_comp_list_addr;
-	for_each_rb_entry(comp, comps)
-		memcpy(ptr++, comp, sizeof(*ptr));
-}
+	ptr = (काष्ठा ipl_rb_component_entry *) early_ipl_comp_list_addr;
+	क्रम_each_rb_entry(comp, comps)
+		स_नकल(ptr++, comp, माप(*ptr));
+पूर्ण
 
-static void copy_certificates_bootdata(struct ipl_rb_certificates *certs)
-{
-	struct ipl_rb_certificate_entry *cert;
-	void *ptr;
+अटल व्योम copy_certअगरicates_bootdata(काष्ठा ipl_rb_certअगरicates *certs)
+अणु
+	काष्ठा ipl_rb_certअगरicate_entry *cert;
+	व्योम *ptr;
 
-	ptr = (void *) ipl_cert_list_addr;
-	for_each_rb_entry(cert, certs) {
-		*(unsigned int *) ptr = cert->len;
-		ptr += sizeof(unsigned int);
-		memcpy(ptr, (void *) cert->addr, cert->len);
+	ptr = (व्योम *) ipl_cert_list_addr;
+	क्रम_each_rb_entry(cert, certs) अणु
+		*(अचिन्हित पूर्णांक *) ptr = cert->len;
+		ptr += माप(अचिन्हित पूर्णांक);
+		स_नकल(ptr, (व्योम *) cert->addr, cert->len);
 		ptr += cert->len;
-	}
-}
+	पूर्ण
+पूर्ण
 
-unsigned long read_ipl_report(unsigned long safe_addr)
-{
-	struct ipl_rb_certificates *certs;
-	struct ipl_rb_components *comps;
-	struct ipl_pl_hdr *pl_hdr;
-	struct ipl_rl_hdr *rl_hdr;
-	struct ipl_rb_hdr *rb_hdr;
-	unsigned long tmp;
-	void *rl_end;
+अचिन्हित दीर्घ पढ़ो_ipl_report(अचिन्हित दीर्घ safe_addr)
+अणु
+	काष्ठा ipl_rb_certअगरicates *certs;
+	काष्ठा ipl_rb_components *comps;
+	काष्ठा ipl_pl_hdr *pl_hdr;
+	काष्ठा ipl_rl_hdr *rl_hdr;
+	काष्ठा ipl_rb_hdr *rb_hdr;
+	अचिन्हित दीर्घ पंचांगp;
+	व्योम *rl_end;
 
 	/*
-	 * Check if there is a IPL report by looking at the copy
-	 * of the IPL parameter information block.
+	 * Check अगर there is a IPL report by looking at the copy
+	 * of the IPL parameter inक्रमmation block.
 	 */
-	if (!ipl_block_valid ||
+	अगर (!ipl_block_valid ||
 	    !(ipl_block.hdr.flags & IPL_PL_FLAG_IPLSR))
-		return safe_addr;
+		वापस safe_addr;
 	ipl_secure_flag = !!(ipl_block.hdr.flags & IPL_PL_FLAG_SIPL);
 	/*
-	 * There is an IPL report, to find it load the pointer to the
-	 * IPL parameter information block from lowcore and skip past
-	 * the IPL parameter list, then align the address to a double
+	 * There is an IPL report, to find it load the poपूर्णांकer to the
+	 * IPL parameter inक्रमmation block from lowcore and skip past
+	 * the IPL parameter list, then align the address to a द्विगुन
 	 * word boundary.
 	 */
-	tmp = (unsigned long) S390_lowcore.ipl_parmblock_ptr;
-	pl_hdr = (struct ipl_pl_hdr *) tmp;
-	tmp = (tmp + pl_hdr->len + 7) & -8UL;
-	rl_hdr = (struct ipl_rl_hdr *) tmp;
+	पंचांगp = (अचिन्हित दीर्घ) S390_lowcore.ipl_parmblock_ptr;
+	pl_hdr = (काष्ठा ipl_pl_hdr *) पंचांगp;
+	पंचांगp = (पंचांगp + pl_hdr->len + 7) & -8UL;
+	rl_hdr = (काष्ठा ipl_rl_hdr *) पंचांगp;
 	/* Walk through the IPL report blocks in the IPL Report list */
-	certs = NULL;
-	comps = NULL;
-	rl_end = (void *) rl_hdr + rl_hdr->len;
-	rb_hdr = (void *) rl_hdr + sizeof(*rl_hdr);
-	while ((void *) rb_hdr + sizeof(*rb_hdr) < rl_end &&
-	       (void *) rb_hdr + rb_hdr->len <= rl_end) {
+	certs = शून्य;
+	comps = शून्य;
+	rl_end = (व्योम *) rl_hdr + rl_hdr->len;
+	rb_hdr = (व्योम *) rl_hdr + माप(*rl_hdr);
+	जबतक ((व्योम *) rb_hdr + माप(*rb_hdr) < rl_end &&
+	       (व्योम *) rb_hdr + rb_hdr->len <= rl_end) अणु
 
-		switch (rb_hdr->rbt) {
-		case IPL_RBT_CERTIFICATES:
-			certs = (struct ipl_rb_certificates *) rb_hdr;
-			break;
-		case IPL_RBT_COMPONENTS:
-			comps = (struct ipl_rb_components *) rb_hdr;
-			break;
-		default:
-			break;
-		}
+		चयन (rb_hdr->rbt) अणु
+		हाल IPL_RBT_CERTIFICATES:
+			certs = (काष्ठा ipl_rb_certअगरicates *) rb_hdr;
+			अवरोध;
+		हाल IPL_RBT_COMPONENTS:
+			comps = (काष्ठा ipl_rb_components *) rb_hdr;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		rb_hdr = (void *) rb_hdr + rb_hdr->len;
-	}
+		rb_hdr = (व्योम *) rb_hdr + rb_hdr->len;
+	पूर्ण
 
 	/*
-	 * With either the component list or the certificate list
+	 * With either the component list or the certअगरicate list
 	 * missing the kernel will stay ignorant of secure IPL.
 	 */
-	if (!comps || !certs)
-		return safe_addr;
+	अगर (!comps || !certs)
+		वापस safe_addr;
 
 	/*
-	 * Copy component and certificate list to a safe area
+	 * Copy component and certअगरicate list to a safe area
 	 * where the decompressed kernel can find them.
 	 */
 	safe_addr = find_bootdata_space(comps, certs, safe_addr);
 	copy_components_bootdata(comps);
-	copy_certificates_bootdata(certs);
+	copy_certअगरicates_bootdata(certs);
 
-	return safe_addr;
-}
+	वापस safe_addr;
+पूर्ण

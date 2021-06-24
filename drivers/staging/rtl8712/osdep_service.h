@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
  *
- * Modifications for inclusion into the Linux staging tree are
+ * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact information:
+ * Contact inक्रमmation:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
-#ifndef __OSDEP_SERVICE_H_
-#define __OSDEP_SERVICE_H_
+#अगर_अघोषित __OSDEP_SERVICE_H_
+#घोषणा __OSDEP_SERVICE_H_
 
-#define _SUCCESS	1
-#define _FAIL		0
+#घोषणा _SUCCESS	1
+#घोषणा _FAIL		0
 
-#include <linux/spinlock.h>
+#समावेश <linux/spinlock.h>
 
-#include <linux/interrupt.h>
-#include <linux/semaphore.h>
-#include <linux/sched/signal.h>
-#include <linux/sem.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <net/iw_handler.h>
-#include <linux/proc_fs.h>      /* Necessary because we use the proc fs */
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sem.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <net/iw_handler.h>
+#समावेश <linux/proc_fs.h>      /* Necessary because we use the proc fs */
 
-#include "basic_types.h"
+#समावेश "basic_types.h"
 
-struct	__queue	{
-	struct	list_head	queue;
+काष्ठा	__queue	अणु
+	काष्ठा	list_head	queue;
 	spinlock_t lock;
-};
+पूर्ण;
 
-#define _pkt struct sk_buff
-#define _buffer unsigned char
-#define thread_exit() complete_and_exit(NULL, 0)
+#घोषणा _pkt काष्ठा sk_buff
+#घोषणा _buffer अचिन्हित अक्षर
+#घोषणा thपढ़ो_निकास() complete_and_निकास(शून्य, 0)
 
-#define _init_queue(pqueue)				\
-	do {						\
+#घोषणा _init_queue(pqueue)				\
+	करो अणु						\
 		INIT_LIST_HEAD(&((pqueue)->queue));	\
 		spin_lock_init(&((pqueue)->lock));	\
-	} while (0)
+	पूर्ण जबतक (0)
 
-static inline u32 end_of_queue_search(struct list_head *head,
-		struct list_head *plist)
-{
-	return (head == plist);
-}
+अटल अंतरभूत u32 end_of_queue_search(काष्ठा list_head *head,
+		काष्ठा list_head *plist)
+अणु
+	वापस (head == plist);
+पूर्ण
 
-static inline void flush_signals_thread(void)
-{
-	if (signal_pending(current))
-		flush_signals(current);
-}
+अटल अंतरभूत व्योम flush_संकेतs_thपढ़ो(व्योम)
+अणु
+	अगर (संकेत_pending(current))
+		flush_संकेतs(current);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 

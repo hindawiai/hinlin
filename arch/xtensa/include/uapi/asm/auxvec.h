@@ -1,4 +1,5 @@
-#ifndef __XTENSA_AUXVEC_H
-#define __XTENSA_AUXVEC_H
+<शैली गुरु>
+#अगर_अघोषित __XTENSA_AUXVEC_H
+#घोषणा __XTENSA_AUXVEC_H
 
-#endif
+#पूर्ण_अगर

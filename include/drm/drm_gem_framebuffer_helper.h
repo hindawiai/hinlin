@@ -1,44 +1,45 @@
-#ifndef __DRM_GEM_FB_HELPER_H__
-#define __DRM_GEM_FB_HELPER_H__
+<शैली गुरु>
+#अगर_अघोषित __DRM_GEM_FB_HELPER_H__
+#घोषणा __DRM_GEM_FB_HELPER_H__
 
-struct drm_afbc_framebuffer;
-struct drm_device;
-struct drm_fb_helper_surface_size;
-struct drm_file;
-struct drm_framebuffer;
-struct drm_framebuffer_funcs;
-struct drm_gem_object;
-struct drm_mode_fb_cmd2;
+काष्ठा drm_afbc_framebuffer;
+काष्ठा drm_device;
+काष्ठा drm_fb_helper_surface_size;
+काष्ठा drm_file;
+काष्ठा drm_framebuffer;
+काष्ठा drm_framebuffer_funcs;
+काष्ठा drm_gem_object;
+काष्ठा drm_mode_fb_cmd2;
 
-#define AFBC_VENDOR_AND_TYPE_MASK	GENMASK_ULL(63, 52)
+#घोषणा AFBC_VENDOR_AND_TYPE_MASK	GENMASK_ULL(63, 52)
 
-struct drm_gem_object *drm_gem_fb_get_obj(struct drm_framebuffer *fb,
-					  unsigned int plane);
-void drm_gem_fb_destroy(struct drm_framebuffer *fb);
-int drm_gem_fb_create_handle(struct drm_framebuffer *fb, struct drm_file *file,
-			     unsigned int *handle);
+काष्ठा drm_gem_object *drm_gem_fb_get_obj(काष्ठा drm_framebuffer *fb,
+					  अचिन्हित पूर्णांक plane);
+व्योम drm_gem_fb_destroy(काष्ठा drm_framebuffer *fb);
+पूर्णांक drm_gem_fb_create_handle(काष्ठा drm_framebuffer *fb, काष्ठा drm_file *file,
+			     अचिन्हित पूर्णांक *handle);
 
-int drm_gem_fb_init_with_funcs(struct drm_device *dev,
-			       struct drm_framebuffer *fb,
-			       struct drm_file *file,
-			       const struct drm_mode_fb_cmd2 *mode_cmd,
-			       const struct drm_framebuffer_funcs *funcs);
-struct drm_framebuffer *
-drm_gem_fb_create_with_funcs(struct drm_device *dev, struct drm_file *file,
-			     const struct drm_mode_fb_cmd2 *mode_cmd,
-			     const struct drm_framebuffer_funcs *funcs);
-struct drm_framebuffer *
-drm_gem_fb_create(struct drm_device *dev, struct drm_file *file,
-		  const struct drm_mode_fb_cmd2 *mode_cmd);
-struct drm_framebuffer *
-drm_gem_fb_create_with_dirty(struct drm_device *dev, struct drm_file *file,
-			     const struct drm_mode_fb_cmd2 *mode_cmd);
+पूर्णांक drm_gem_fb_init_with_funcs(काष्ठा drm_device *dev,
+			       काष्ठा drm_framebuffer *fb,
+			       काष्ठा drm_file *file,
+			       स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd,
+			       स्थिर काष्ठा drm_framebuffer_funcs *funcs);
+काष्ठा drm_framebuffer *
+drm_gem_fb_create_with_funcs(काष्ठा drm_device *dev, काष्ठा drm_file *file,
+			     स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd,
+			     स्थिर काष्ठा drm_framebuffer_funcs *funcs);
+काष्ठा drm_framebuffer *
+drm_gem_fb_create(काष्ठा drm_device *dev, काष्ठा drm_file *file,
+		  स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd);
+काष्ठा drm_framebuffer *
+drm_gem_fb_create_with_dirty(काष्ठा drm_device *dev, काष्ठा drm_file *file,
+			     स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd);
 
-#define drm_is_afbc(modifier) \
-	(((modifier) & AFBC_VENDOR_AND_TYPE_MASK) == DRM_FORMAT_MOD_ARM_AFBC(0))
+#घोषणा drm_is_afbc(modअगरier) \
+	(((modअगरier) & AFBC_VENDOR_AND_TYPE_MASK) == DRM_FORMAT_MOD_ARM_AFBC(0))
 
-int drm_gem_fb_afbc_init(struct drm_device *dev,
-			 const struct drm_mode_fb_cmd2 *mode_cmd,
-			 struct drm_afbc_framebuffer *afbc_fb);
+पूर्णांक drm_gem_fb_afbc_init(काष्ठा drm_device *dev,
+			 स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd,
+			 काष्ठा drm_afbc_framebuffer *afbc_fb);
 
-#endif
+#पूर्ण_अगर

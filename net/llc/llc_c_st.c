@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * llc_c_st.c - This module contains state transition of connection component.
  *
@@ -5,26 +6,26 @@
  * or in "llc_c_ac.c" and "llc_c_ev.c" modules.
  *
  * Copyright (c) 1997 by Procom Technology, Inc.
- * 		 2001-2003 by Arnaldo Carvalho de Melo <acme@conectiva.com.br>
+ * 		 2001-2003 by Arnalकरो Carvalho de Melo <acme@conectiva.com.br>
  *
- * This program can be redistributed or modified under the terms of the
+ * This program can be redistributed or modअगरied under the terms of the
  * GNU General Public License as published by the Free Software Foundation.
  * This program is distributed without any warranty or implied warranty
- * of merchantability or fitness for a particular purpose.
+ * of merchantability or fitness क्रम a particular purpose.
  *
- * See the GNU General Public License for more details.
+ * See the GNU General Public License क्रम more details.
  */
-#include <linux/types.h>
-#include <net/llc_if.h>
-#include <net/llc_sap.h>
-#include <net/llc_c_ev.h>
-#include <net/llc_c_ac.h>
-#include <net/llc_c_st.h>
+#समावेश <linux/types.h>
+#समावेश <net/llc_अगर.h>
+#समावेश <net/llc_sap.h>
+#समावेश <net/llc_c_ev.h>
+#समावेश <net/llc_c_ac.h>
+#समावेश <net/llc_c_st.h>
 
-#define NONE NULL
+#घोषणा NONE शून्य
 
 /* COMMON CONNECTION STATE transitions
- * Common transitions for
+ * Common transitions क्रम
  * LLC_CONN_STATE_NORMAL,
  * LLC_CONN_STATE_BUSY,
  * LLC_CONN_STATE_REJ,
@@ -32,43 +33,43 @@
  * LLC_CONN_STATE_AWAIT_BUSY and
  * LLC_CONN_STATE_AWAIT_REJ states
  */
-/* State transitions for LLC_CONN_EV_DISC_REQ event */
-static const llc_conn_action_t llc_common_actions_1[] = {
+/* State transitions क्रम LLC_CONN_EV_DISC_REQ event */
+अटल स्थिर llc_conn_action_t llc_common_actions_1[] = अणु
 	[0] = llc_conn_ac_send_disc_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
 	[4] = llc_conn_ac_set_cause_flag_1,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_disc_req,
 	.next_state    = LLC_CONN_STATE_D_CONN,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RESET_REQ event */
-static const llc_conn_action_t llc_common_actions_2[] = {
+/* State transitions क्रम LLC_CONN_EV_RESET_REQ event */
+अटल स्थिर llc_conn_action_t llc_common_actions_2[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
 	[4] = llc_conn_ac_set_cause_flag_1,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_rst_req,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_2,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_common_actions_3[] = {
-	[0] = llc_conn_ac_stop_all_timers,
+/* State transitions क्रम LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_common_actions_3[] = अणु
+	[0] = llc_conn_ac_stop_all_समयrs,
 	[1] = llc_conn_ac_set_vs_0,
 	[2] = llc_conn_ac_set_vr_0,
 	[3] = llc_conn_ac_send_ua_rsp_f_set_p,
@@ -76,298 +77,298 @@ static const llc_conn_action_t llc_common_actions_3[] = {
 	[5] = llc_conn_ac_set_p_flag_0,
 	[6] = llc_conn_ac_set_remote_busy_0,
 	[7] = llc_conn_reset,
-	[8] = NULL,
-};
+	[8] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_3 = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_3 = अणु
 	.ev	       = llc_conn_ev_rx_sabme_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_3,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_common_actions_4[] = {
-	[0] = llc_conn_ac_stop_all_timers,
+/* State transitions क्रम LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_common_actions_4[] = अणु
+	[0] = llc_conn_ac_stop_all_समयrs,
 	[1] = llc_conn_ac_send_ua_rsp_f_set_p,
 	[2] = llc_conn_ac_disc_ind,
 	[3] = llc_conn_disc,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_rx_disc_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_4,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_FRMR_RSP_Fbit_SET_X event */
-static const llc_conn_action_t llc_common_actions_5[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_FRMR_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_common_actions_5[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
 	[4] = llc_conn_ac_rst_ind,
 	[5] = llc_conn_ac_set_cause_flag_0,
 	[6] = llc_conn_reset,
-	[7] = NULL,
-};
+	[7] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_5 = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_5 = अणु
 	.ev	       = llc_conn_ev_rx_frmr_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_5,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event */
-static const llc_conn_action_t llc_common_actions_6[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_common_actions_6[] = अणु
 	[0] = llc_conn_ac_disc_ind,
-	[1] = llc_conn_ac_stop_all_timers,
+	[1] = llc_conn_ac_stop_all_समयrs,
 	[2] = llc_conn_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_6 = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_6 = अणु
 	.ev	       = llc_conn_ev_rx_dm_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_6,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_ZZZ_CMD_Pbit_SET_X_INVAL_Nr event */
-static const llc_conn_action_t llc_common_actions_7a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_ZZZ_CMD_Pbit_SET_X_INVAL_Nr event */
+अटल स्थिर llc_conn_action_t llc_common_actions_7a[] = अणु
 	[0] = llc_conn_ac_send_frmr_rsp_f_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_7a = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_7a = अणु
 	.ev	       = llc_conn_ev_rx_zzz_cmd_pbit_set_x_inval_nr,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_7a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_X_INVAL_Ns event */
-static const llc_conn_action_t llc_common_actions_7b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_X_INVAL_Ns event */
+अटल स्थिर llc_conn_action_t llc_common_actions_7b[] = अणु
 	[0] = llc_conn_ac_send_frmr_rsp_f_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_7b = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_7b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_x_inval_ns,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_7b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_ZZZ_RSP_Fbit_SET_X_INVAL_Nr event */
-static const llc_conn_action_t llc_common_actions_8a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_ZZZ_RSP_Fbit_SET_X_INVAL_Nr event */
+अटल स्थिर llc_conn_action_t llc_common_actions_8a[] = अणु
 	[0] = llc_conn_ac_send_frmr_rsp_f_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_8a = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_8a = अणु
 	.ev	       = llc_conn_ev_rx_zzz_rsp_fbit_set_x_inval_nr,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_8a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_X_INVAL_Ns event */
-static const llc_conn_action_t llc_common_actions_8b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_X_INVAL_Ns event */
+अटल स्थिर llc_conn_action_t llc_common_actions_8b[] = अणु
 	[0] = llc_conn_ac_send_frmr_rsp_f_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_8b = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_8b = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_x_inval_ns,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_8b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_BAD_PDU event */
-static const llc_conn_action_t llc_common_actions_8c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_BAD_PDU event */
+अटल स्थिर llc_conn_action_t llc_common_actions_8c[] = अणु
 	[0] = llc_conn_ac_send_frmr_rsp_f_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_8c = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_8c = अणु
 	.ev	       = llc_conn_ev_rx_bad_pdu,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_8c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event */
-static const llc_conn_action_t llc_common_actions_9[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_common_actions_9[] = अणु
 	[0] = llc_conn_ac_send_frmr_rsp_f_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_9 = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_9 = अणु
 	.ev	       = llc_conn_ev_rx_ua_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_common_actions_9,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_XXX_RSP_Fbit_SET_1 event */
-#if 0
-static const llc_conn_ev_qfyr_t llc_common_ev_qfyrs_10[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_XXX_RSP_Fbit_SET_1 event */
+#अगर 0
+अटल स्थिर llc_conn_ev_qfyr_t llc_common_ev_qfyrs_10[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_common_actions_10[] = {
+अटल स्थिर llc_conn_action_t llc_common_actions_10[] = अणु
 	[0] = llc_conn_ac_send_frmr_rsp_f_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_10 = {
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_10 = अणु
 	.ev	       = llc_conn_ev_rx_xxx_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = llc_common_ev_qfyrs_10,
+	.ev_qualअगरiers = llc_common_ev_qfyrs_10,
 	.ev_actions    = llc_common_actions_10,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-/* State transitions for LLC_CONN_EV_P_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_common_ev_qfyrs_11a[] = {
+/* State transitions क्रम LLC_CONN_EV_P_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_common_ev_qfyrs_11a[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_common_actions_11a[] = {
+अटल स्थिर llc_conn_action_t llc_common_actions_11a[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
 	[4] = llc_conn_ac_set_cause_flag_0,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_11a = {
-	.ev	       = llc_conn_ev_p_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_11a = अणु
+	.ev	       = llc_conn_ev_p_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = llc_common_ev_qfyrs_11a,
+	.ev_qualअगरiers = llc_common_ev_qfyrs_11a,
 	.ev_actions    = llc_common_actions_11a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_common_ev_qfyrs_11b[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_common_ev_qfyrs_11b[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_common_actions_11b[] = {
+अटल स्थिर llc_conn_action_t llc_common_actions_11b[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
 	[4] = llc_conn_ac_set_cause_flag_0,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_11b = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_11b = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = llc_common_ev_qfyrs_11b,
+	.ev_qualअगरiers = llc_common_ev_qfyrs_11b,
 	.ev_actions    = llc_common_actions_11b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_REJ_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_common_ev_qfyrs_11c[] = {
+/* State transitions क्रम LLC_CONN_EV_REJ_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_common_ev_qfyrs_11c[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_common_actions_11c[] = {
+अटल स्थिर llc_conn_action_t llc_common_actions_11c[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
 	[4] = llc_conn_ac_set_cause_flag_0,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_11c = {
-	.ev	       = llc_conn_ev_rej_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_11c = अणु
+	.ev	       = llc_conn_ev_rej_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = llc_common_ev_qfyrs_11c,
+	.ev_qualअगरiers = llc_common_ev_qfyrs_11c,
 	.ev_actions    = llc_common_actions_11c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_BUSY_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_common_ev_qfyrs_11d[] = {
+/* State transitions क्रम LLC_CONN_EV_BUSY_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_common_ev_qfyrs_11d[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_common_actions_11d[] = {
+अटल स्थिर llc_conn_action_t llc_common_actions_11d[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
-	[2] = llc_conn_ac_stop_other_timers,
+	[1] = llc_conn_ac_start_ack_समयr,
+	[2] = llc_conn_ac_stop_other_समयrs,
 	[3] = llc_conn_ac_set_retry_cnt_0,
 	[4] = llc_conn_ac_set_cause_flag_0,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_common_state_trans_11d = {
-	.ev	       = llc_conn_ev_busy_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_11d = अणु
+	.ev	       = llc_conn_ev_busy_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = llc_common_ev_qfyrs_11d,
+	.ev_qualअगरiers = llc_common_ev_qfyrs_11d,
 	.ev_actions    = llc_common_actions_11d,
-};
+पूर्ण;
 
 /*
- * Common dummy state transition; must be last entry for all state
+ * Common dummy state transition; must be last entry क्रम all state
  * transition groups - it'll be on .bss, so will be zeroed.
  */
-static struct llc_conn_state_trans llc_common_state_trans_end;
+अटल काष्ठा llc_conn_state_trans llc_common_state_trans_end;
 
 /* LLC_CONN_STATE_ADM transitions */
-/* State transitions for LLC_CONN_EV_CONN_REQ event */
-static const llc_conn_action_t llc_adm_actions_1[] = {
+/* State transitions क्रम LLC_CONN_EV_CONN_REQ event */
+अटल स्थिर llc_conn_action_t llc_adm_actions_1[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
+	[1] = llc_conn_ac_start_ack_समयr,
 	[2] = llc_conn_ac_set_retry_cnt_0,
 	[3] = llc_conn_ac_set_s_flag_0,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_adm_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_adm_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_conn_req,
 	.next_state    = LLC_CONN_STATE_SETUP,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_adm_actions_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_adm_actions_2[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_adm_actions_2[] = अणु
 	[0] = llc_conn_ac_send_ua_rsp_f_set_p,
 	[1] = llc_conn_ac_set_vs_0,
 	[2] = llc_conn_ac_set_vr_0,
@@ -375,224 +376,224 @@ static const llc_conn_action_t llc_adm_actions_2[] = {
 	[4] = llc_conn_ac_set_p_flag_0,
 	[5] = llc_conn_ac_set_remote_busy_0,
 	[6] = llc_conn_ac_conn_ind,
-	[7] = NULL,
-};
+	[7] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_adm_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_adm_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_rx_sabme_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_adm_actions_2,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_adm_actions_3[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_adm_actions_3[] = अणु
 	[0] = llc_conn_ac_send_dm_rsp_f_set_p,
 	[1] = llc_conn_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_adm_state_trans_3 = {
+अटल काष्ठा llc_conn_state_trans llc_adm_state_trans_3 = अणु
 	.ev	       = llc_conn_ev_rx_disc_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_adm_actions_3,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_XXX_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_adm_actions_4[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_XXX_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_adm_actions_4[] = अणु
 	[0] = llc_conn_ac_send_dm_rsp_f_set_1,
 	[1] = llc_conn_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_adm_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_adm_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_rx_xxx_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_adm_actions_4,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_XXX_YYY event */
-static const llc_conn_action_t llc_adm_actions_5[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_XXX_YYY event */
+अटल स्थिर llc_conn_action_t llc_adm_actions_5[] = अणु
 	[0] = llc_conn_disc,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_adm_state_trans_5 = {
+अटल काष्ठा llc_conn_state_trans llc_adm_state_trans_5 = अणु
 	.ev	       = llc_conn_ev_rx_any_frame,
 	.next_state    = LLC_CONN_OUT_OF_SVC,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_adm_actions_5,
-};
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_adm_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_adm_state_transitions[] = अणु
 	[0] = &llc_adm_state_trans_1,		/* Request */
 	[1] = &llc_common_state_trans_end,
 	[2] = &llc_common_state_trans_end,	/* local_busy */
 	[3] = &llc_common_state_trans_end,	/* init_pf_cycle */
-	[4] = &llc_common_state_trans_end,	/* timer */
+	[4] = &llc_common_state_trans_end,	/* समयr */
 	[5] = &llc_adm_state_trans_2,		/* Receive frame */
 	[6] = &llc_adm_state_trans_3,
 	[7] = &llc_adm_state_trans_4,
 	[8] = &llc_adm_state_trans_5,
 	[9] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_SETUP transitions */
-/* State transitions for LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_setup_actions_1[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_setup_actions_1[] = अणु
 	[0] = llc_conn_ac_send_ua_rsp_f_set_p,
 	[1] = llc_conn_ac_set_vs_0,
 	[2] = llc_conn_ac_set_vr_0,
 	[3] = llc_conn_ac_set_s_flag_1,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_setup_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_setup_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_rx_sabme_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_SETUP,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_setup_actions_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event */
-static const llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_2[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_2[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
 	[1] = llc_conn_ev_qlfy_set_status_conn,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_setup_actions_2[] = {
-	[0] = llc_conn_ac_stop_ack_timer,
+अटल स्थिर llc_conn_action_t llc_setup_actions_2[] = अणु
+	[0] = llc_conn_ac_stop_ack_समयr,
 	[1] = llc_conn_ac_set_vs_0,
 	[2] = llc_conn_ac_set_vr_0,
 	[3] = llc_conn_ac_upd_p_flag,
 	[4] = llc_conn_ac_set_remote_busy_0,
 	[5] = llc_conn_ac_conn_confirm,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_setup_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_setup_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_rx_ua_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_setup_ev_qfyrs_2,
+	.ev_qualअगरiers = llc_setup_ev_qfyrs_2,
 	.ev_actions    = llc_setup_actions_2,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_3[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_3[] = अणु
 	[0] = llc_conn_ev_qlfy_s_flag_eq_1,
 	[1] = llc_conn_ev_qlfy_set_status_conn,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_setup_actions_3[] = {
+अटल स्थिर llc_conn_action_t llc_setup_actions_3[] = अणु
 	[0] = llc_conn_ac_set_p_flag_0,
 	[1] = llc_conn_ac_set_remote_busy_0,
 	[2] = llc_conn_ac_conn_confirm,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_setup_state_trans_3 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_setup_state_trans_3 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_setup_ev_qfyrs_3,
+	.ev_qualअगरiers = llc_setup_ev_qfyrs_3,
 	.ev_actions    = llc_setup_actions_3,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
-static const llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_4[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_4[] = अणु
 	[0] = llc_conn_ev_qlfy_set_status_disc,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_setup_actions_4[] = {
+अटल स्थिर llc_conn_action_t llc_setup_actions_4[] = अणु
 	[0] = llc_conn_ac_send_dm_rsp_f_set_p,
-	[1] = llc_conn_ac_stop_ack_timer,
+	[1] = llc_conn_ac_stop_ack_समयr,
 	[2] = llc_conn_ac_conn_confirm,
 	[3] = llc_conn_disc,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_setup_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_setup_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_rx_disc_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_setup_ev_qfyrs_4,
+	.ev_qualअगरiers = llc_setup_ev_qfyrs_4,
 	.ev_actions    = llc_setup_actions_4,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event */
-static const llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_5[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_5[] = अणु
 	[0] = llc_conn_ev_qlfy_set_status_disc,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_setup_actions_5[] = {
-	[0] = llc_conn_ac_stop_ack_timer,
+अटल स्थिर llc_conn_action_t llc_setup_actions_5[] = अणु
+	[0] = llc_conn_ac_stop_ack_समयr,
 	[1] = llc_conn_ac_conn_confirm,
 	[2] = llc_conn_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_setup_state_trans_5 = {
+अटल काष्ठा llc_conn_state_trans llc_setup_state_trans_5 = अणु
 	.ev	       = llc_conn_ev_rx_dm_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_setup_ev_qfyrs_5,
+	.ev_qualअगरiers = llc_setup_ev_qfyrs_5,
 	.ev_actions    = llc_setup_actions_5,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_7[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_7[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
 	[1] = llc_conn_ev_qlfy_s_flag_eq_0,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_setup_actions_7[] = {
+अटल स्थिर llc_conn_action_t llc_setup_actions_7[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
+	[1] = llc_conn_ac_start_ack_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_setup_state_trans_7 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_setup_state_trans_7 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_SETUP,
-	.ev_qualifiers = llc_setup_ev_qfyrs_7,
+	.ev_qualअगरiers = llc_setup_ev_qfyrs_7,
 	.ev_actions    = llc_setup_actions_7,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_8[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_setup_ev_qfyrs_8[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
 	[1] = llc_conn_ev_qlfy_s_flag_eq_0,
 	[2] = llc_conn_ev_qlfy_set_status_failed,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_setup_actions_8[] = {
+अटल स्थिर llc_conn_action_t llc_setup_actions_8[] = अणु
 	[0] = llc_conn_ac_conn_confirm,
 	[1] = llc_conn_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_setup_state_trans_8 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_setup_state_trans_8 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_setup_ev_qfyrs_8,
+	.ev_qualअगरiers = llc_setup_ev_qfyrs_8,
 	.ev_actions    = llc_setup_actions_8,
-};
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_setup_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_setup_state_transitions[] = अणु
 	 [0] = &llc_common_state_trans_end,	/* Request */
 	 [1] = &llc_common_state_trans_end,	/* local busy */
 	 [2] = &llc_common_state_trans_end,	/* init_pf_cycle */
@@ -605,683 +606,683 @@ static struct llc_conn_state_trans *llc_setup_state_transitions[] = {
 	 [9] = &llc_setup_state_trans_4,
 	[10] = &llc_setup_state_trans_5,
 	[11] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_NORMAL transitions */
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_1[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_1[] = अणु
 	[0] = llc_conn_ev_qlfy_remote_busy_eq_0,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[2] = llc_conn_ev_qlfy_last_frame_eq_0,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_1[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_1[] = अणु
 	[0] = llc_conn_ac_send_i_as_ack,
-	[1] = llc_conn_ac_start_ack_tmr_if_not_running,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_ack_पंचांगr_अगर_not_running,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_1,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_1,
 	.ev_actions    = llc_normal_actions_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_2[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_2[] = अणु
 	[0] = llc_conn_ev_qlfy_remote_busy_eq_0,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[2] = llc_conn_ev_qlfy_last_frame_eq_1,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_2[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_2[] = अणु
 	[0] = llc_conn_ac_send_i_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_p_समयr,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_2,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_2,
 	.ev_actions    = llc_normal_actions_2,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_2_1[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_2_1[] = अणु
 	[0] = llc_conn_ev_qlfy_remote_busy_eq_1,
 	[1] = llc_conn_ev_qlfy_set_status_remote_busy,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-/* just one member, NULL, .bss zeroes it */
-static const llc_conn_action_t llc_normal_actions_2_1[1];
+/* just one member, शून्य, .bss zeroes it */
+अटल स्थिर llc_conn_action_t llc_normal_actions_2_1[1];
 
-static struct llc_conn_state_trans llc_normal_state_trans_2_1 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_2_1 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_2_1,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_2_1,
 	.ev_actions    = llc_normal_actions_2_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_3[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_3[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_3[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_3[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rnr_xxx_x_set_0,
 	[2] = llc_conn_ac_set_data_flag_0,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_3 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_3 = अणु
 	.ev	       = llc_conn_ev_local_busy_detected,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_normal_ev_qfyrs_3,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_3,
 	.ev_actions    = llc_normal_actions_3,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_4[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_4[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_4[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_4[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rnr_xxx_x_set_0,
 	[2] = llc_conn_ac_set_data_flag_0,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_local_busy_detected,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_normal_ev_qfyrs_4,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_4,
 	.ev_actions    = llc_normal_actions_4,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_5a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_5a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_5a[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_5a[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rej_xxx_x_set_0,
 	[2] = llc_conn_ac_upd_nr_received,
 	[3] = llc_conn_ac_upd_p_flag,
-	[4] = llc_conn_ac_start_rej_timer,
-	[5] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[6] = NULL,
-};
+	[4] = llc_conn_ac_start_rej_समयr,
+	[5] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_5a = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_5a = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_normal_ev_qfyrs_5a,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_5a,
 	.ev_actions    = llc_normal_actions_5a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_5b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_5b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_5b[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_5b[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rej_xxx_x_set_0,
 	[2] = llc_conn_ac_upd_nr_received,
 	[3] = llc_conn_ac_upd_p_flag,
-	[4] = llc_conn_ac_start_rej_timer,
-	[5] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[6] = NULL,
-};
+	[4] = llc_conn_ac_start_rej_समयr,
+	[5] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_5b = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_5b = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_normal_ev_qfyrs_5b,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_5b,
 	.ev_actions    = llc_normal_actions_5b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_5c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_5c[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_5c[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_5c[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rej_xxx_x_set_0,
 	[2] = llc_conn_ac_upd_nr_received,
 	[3] = llc_conn_ac_upd_p_flag,
-	[4] = llc_conn_ac_start_rej_timer,
-	[5] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[6] = NULL,
-};
+	[4] = llc_conn_ac_start_rej_समयr,
+	[5] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_5c = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_5c = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_normal_ev_qfyrs_5c,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_5c,
 	.ev_actions    = llc_normal_actions_5c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_6a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_6a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_6a[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_6a[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rej_xxx_x_set_0,
 	[2] = llc_conn_ac_upd_nr_received,
-	[3] = llc_conn_ac_start_rej_timer,
-	[4] = NULL,
-};
+	[3] = llc_conn_ac_start_rej_समयr,
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_6a = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_6a = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_normal_ev_qfyrs_6a,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_6a,
 	.ev_actions    = llc_normal_actions_6a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_6b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_6b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_6b[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_6b[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rej_xxx_x_set_0,
 	[2] = llc_conn_ac_upd_nr_received,
-	[3] = llc_conn_ac_start_rej_timer,
-	[4] = NULL,
-};
+	[3] = llc_conn_ac_start_rej_समयr,
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_6b = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_6b = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_normal_ev_qfyrs_6b,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_6b,
 	.ev_actions    = llc_normal_actions_6b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_action_t llc_normal_actions_7[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_normal_actions_7[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rej_rsp_f_set_1,
 	[2] = llc_conn_ac_upd_nr_received,
-	[3] = llc_conn_ac_start_rej_timer,
-	[4] = NULL,
-};
+	[3] = llc_conn_ac_start_rej_समयr,
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_7 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_7 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_normal_actions_7,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_X event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_8a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_8a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_8[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_8[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_upd_nr_received,
-	[4] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[5] = llc_conn_ac_send_ack_if_needed,
-	[6] = NULL,
-};
+	[4] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[5] = llc_conn_ac_send_ack_अगर_needed,
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_8a = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_8a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_8a,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_8a,
 	.ev_actions    = llc_normal_actions_8,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_8b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_8b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_8b = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_8b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_8b,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_8b,
 	.ev_actions    = llc_normal_actions_8,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_9a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_9a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_9a[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_9a[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_data_ind,
-	[3] = llc_conn_ac_send_ack_if_needed,
-	[4] = NULL,
-};
+	[3] = llc_conn_ac_send_ack_अगर_needed,
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_9a = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_9a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_9a,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_9a,
 	.ev_actions    = llc_normal_actions_9a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_9b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_9b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_9b[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_9b[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_data_ind,
-	[3] = llc_conn_ac_send_ack_if_needed,
-	[4] = NULL,
-};
+	[3] = llc_conn_ac_send_ack_अगर_needed,
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_9b = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_9b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_9b,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_9b,
 	.ev_actions    = llc_normal_actions_9b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_normal_actions_10[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_normal_actions_10[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_send_ack_rsp_f_set_1,
 	[2] = llc_conn_ac_rst_sendack_flag,
 	[3] = llc_conn_ac_upd_nr_received,
 	[4] = llc_conn_ac_data_ind,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_10 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_10 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_normal_actions_10,
-};
+पूर्ण;
 
-/* State transitions for * LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_normal_actions_11a[] = {
+/* State transitions क्रम * LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_normal_actions_11a[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_11a = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_11a = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_normal_actions_11a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_normal_actions_11b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_normal_actions_11b[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_11b = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_11b = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_normal_actions_11b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_11c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_11c[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_11c[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_11c[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_inc_tx_win_size,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_11c = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_11c = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_11c,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_11c,
 	.ev_actions    = llc_normal_actions_11c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_normal_actions_12[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_normal_actions_12[] = अणु
 	[0] = llc_conn_ac_send_ack_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_adjust_npta_by_rr,
 	[3] = llc_conn_ac_rst_sendack_flag,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_12 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_12 = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_normal_actions_12,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_normal_actions_13a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_normal_actions_13a[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_13a = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_13a = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_normal_actions_13a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_normal_actions_13b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_normal_actions_13b[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_13b = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_13b = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_normal_actions_13b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_13c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_13c[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_13c[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_13c[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_13c = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_13c = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_13c,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_13c,
 	.ev_actions    = llc_normal_actions_13c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_normal_actions_14[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_normal_actions_14[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_adjust_npta_by_rnr,
 	[3] = llc_conn_ac_rst_sendack_flag,
 	[4] = llc_conn_ac_set_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_14 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_14 = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_normal_actions_14,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_15a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_15a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_15a[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_15a[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_dec_tx_win_size,
 	[4] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[5] = llc_conn_ac_clear_remote_busy,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_15a = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_15a = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_15a,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_15a,
 	.ev_actions    = llc_normal_actions_15a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_X event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_15b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_15b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_15b[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_15b[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_dec_tx_win_size,
 	[4] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[5] = llc_conn_ac_clear_remote_busy,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_15b = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_15b = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_15b,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_15b,
 	.ev_actions    = llc_normal_actions_15b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_16a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_16a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_16a[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_16a[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_dec_tx_win_size,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_16a = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_16a = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_16a,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_16a,
 	.ev_actions    = llc_normal_actions_16a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_16b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_16b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_16b[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_16b[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_dec_tx_win_size,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_16b = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_16b = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_16b,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_16b,
 	.ev_actions    = llc_normal_actions_16b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_normal_actions_17[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_normal_actions_17[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_dec_tx_win_size,
 	[3] = llc_conn_ac_resend_i_rsp_f_set_1,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_17 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_17 = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_normal_actions_17,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_INIT_P_F_CYCLE event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_18[] = {
+/* State transitions क्रम LLC_CONN_EV_INIT_P_F_CYCLE event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_18[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_18[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_18[] = अणु
 	[0] = llc_conn_ac_send_rr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_p_समयr,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_18 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_18 = अणु
 	.ev	       = llc_conn_ev_init_p_f_cycle,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_18,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_18,
 	.ev_actions    = llc_normal_actions_18,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_P_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_19[] = {
+/* State transitions क्रम LLC_CONN_EV_P_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_19[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_19[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_19[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rr_cmd_p_set_1,
 	[2] = llc_conn_ac_rst_vs,
-	[3] = llc_conn_ac_start_p_timer,
+	[3] = llc_conn_ac_start_p_समयr,
 	[4] = llc_conn_ac_inc_retry_cnt_by_1,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_19 = {
-	.ev	       = llc_conn_ev_p_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_19 = अणु
+	.ev	       = llc_conn_ev_p_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = llc_normal_ev_qfyrs_19,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_19,
 	.ev_actions    = llc_normal_actions_19,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_20a[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_20a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_20a[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_20a[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rr_cmd_p_set_1,
 	[2] = llc_conn_ac_rst_vs,
-	[3] = llc_conn_ac_start_p_timer,
+	[3] = llc_conn_ac_start_p_समयr,
 	[4] = llc_conn_ac_inc_retry_cnt_by_1,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_20a = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_20a = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = llc_normal_ev_qfyrs_20a,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_20a,
 	.ev_actions    = llc_normal_actions_20a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_BUSY_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_20b[] = {
+/* State transitions क्रम LLC_CONN_EV_BUSY_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_20b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_20b[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_20b[] = अणु
 	[0] = llc_conn_ac_rst_sendack_flag,
 	[1] = llc_conn_ac_send_rr_cmd_p_set_1,
 	[2] = llc_conn_ac_rst_vs,
-	[3] = llc_conn_ac_start_p_timer,
+	[3] = llc_conn_ac_start_p_समयr,
 	[4] = llc_conn_ac_inc_retry_cnt_by_1,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_20b = {
-	.ev	       = llc_conn_ev_busy_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_20b = अणु
+	.ev	       = llc_conn_ev_busy_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = llc_normal_ev_qfyrs_20b,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_20b,
 	.ev_actions    = llc_normal_actions_20b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_TX_BUFF_FULL event */
-static const llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_21[] = {
+/* State transitions क्रम LLC_CONN_EV_TX_BUFF_FULL event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_normal_ev_qfyrs_21[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_normal_actions_21[] = {
+अटल स्थिर llc_conn_action_t llc_normal_actions_21[] = अणु
 	[0] = llc_conn_ac_send_rr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_p_समयr,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_normal_state_trans_21 = {
+अटल काष्ठा llc_conn_state_trans llc_normal_state_trans_21 = अणु
 	.ev	       = llc_conn_ev_tx_buffer_full,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_normal_ev_qfyrs_21,
+	.ev_qualअगरiers = llc_normal_ev_qfyrs_21,
 	.ev_actions    = llc_normal_actions_21,
-};
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_normal_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_normal_state_transitions[] = अणु
 	 [0] = &llc_normal_state_trans_1,	/* Requests */
 	 [1] = &llc_normal_state_trans_2,
 	 [2] = &llc_normal_state_trans_2_1,
@@ -1338,759 +1339,759 @@ static struct llc_conn_state_trans *llc_normal_state_transitions[] = {
 	[53] = &llc_common_state_trans_9,
 	/* [54] = &llc_common_state_trans_10, */
 	[54] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_BUSY transitions */
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_1[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_1[] = अणु
 	[0] = llc_conn_ev_qlfy_remote_busy_eq_0,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_1[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_1[] = अणु
 	[0] = llc_conn_ac_send_i_xxx_x_set_0,
-	[1] = llc_conn_ac_start_ack_tmr_if_not_running,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_ack_पंचांगr_अगर_not_running,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_1,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_1,
 	.ev_actions    = llc_busy_actions_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_2[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_2[] = अणु
 	[0] = llc_conn_ev_qlfy_remote_busy_eq_0,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_2[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_2[] = अणु
 	[0] = llc_conn_ac_send_i_xxx_x_set_0,
-	[1] = llc_conn_ac_start_ack_tmr_if_not_running,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_ack_पंचांगr_अगर_not_running,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_2,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_2,
 	.ev_actions    = llc_busy_actions_2,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_2_1[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_2_1[] = अणु
 	[0] = llc_conn_ev_qlfy_remote_busy_eq_1,
 	[1] = llc_conn_ev_qlfy_set_status_remote_busy,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-/* just one member, NULL, .bss zeroes it */
-static const llc_conn_action_t llc_busy_actions_2_1[1];
+/* just one member, शून्य, .bss zeroes it */
+अटल स्थिर llc_conn_action_t llc_busy_actions_2_1[1];
 
-static struct llc_conn_state_trans llc_busy_state_trans_2_1 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_2_1 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_2_1,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_2_1,
 	.ev_actions    = llc_busy_actions_2_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_3[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_3[] = अणु
 	[0] = llc_conn_ev_qlfy_data_flag_eq_1,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_3[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_3[] = अणु
 	[0] = llc_conn_ac_send_rej_xxx_x_set_0,
-	[1] = llc_conn_ac_start_rej_timer,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_rej_समयr,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_3 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_3 = अणु
 	.ev	       = llc_conn_ev_local_busy_cleared,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_busy_ev_qfyrs_3,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_3,
 	.ev_actions    = llc_busy_actions_3,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_4[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_4[] = अणु
 	[0] = llc_conn_ev_qlfy_data_flag_eq_1,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_4[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_4[] = अणु
 	[0] = llc_conn_ac_send_rej_xxx_x_set_0,
-	[1] = llc_conn_ac_start_rej_timer,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_rej_समयr,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_local_busy_cleared,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_busy_ev_qfyrs_4,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_4,
 	.ev_actions    = llc_busy_actions_4,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_5[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_5[] = अणु
 	[0] = llc_conn_ev_qlfy_data_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_5[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_5[] = अणु
 	[0] = llc_conn_ac_send_rr_xxx_x_set_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_5 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_5 = अणु
 	.ev	       = llc_conn_ev_local_busy_cleared,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_busy_ev_qfyrs_5,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_5,
 	.ev_actions    = llc_busy_actions_5,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_6[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_6[] = अणु
 	[0] = llc_conn_ev_qlfy_data_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_6[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_6[] = अणु
 	[0] = llc_conn_ac_send_rr_xxx_x_set_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_6 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_6 = अणु
 	.ev	       = llc_conn_ev_local_busy_cleared,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_busy_ev_qfyrs_6,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_6,
 	.ev_actions    = llc_busy_actions_6,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_7[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_7[] = अणु
 	[0] = llc_conn_ev_qlfy_data_flag_eq_2,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_7[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_7[] = अणु
 	[0] = llc_conn_ac_send_rr_xxx_x_set_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_7 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_7 = अणु
 	.ev	       = llc_conn_ev_local_busy_cleared,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_busy_ev_qfyrs_7,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_7,
 	.ev_actions    = llc_busy_actions_7,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_8[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_8[] = अणु
 	[0] = llc_conn_ev_qlfy_data_flag_eq_2,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_8[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_8[] = अणु
 	[0] = llc_conn_ac_send_rr_xxx_x_set_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_8 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_8 = अणु
 	.ev	       = llc_conn_ev_local_busy_cleared,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_busy_ev_qfyrs_8,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_8,
 	.ev_actions    = llc_busy_actions_8,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_X_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_9a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_X_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_9a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_9a[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_9a[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_p_flag,
 	[2] = llc_conn_ac_upd_nr_received,
-	[3] = llc_conn_ac_set_data_flag_1_if_data_flag_eq_0,
-	[4] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[5] = NULL,
-};
+	[3] = llc_conn_ac_set_data_flag_1_अगर_data_flag_eq_0,
+	[4] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_9a = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_9a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_x_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_9a,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_9a,
 	.ev_actions    = llc_busy_actions_9a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_9b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_9b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_9b[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_9b[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_p_flag,
 	[2] = llc_conn_ac_upd_nr_received,
-	[3] = llc_conn_ac_set_data_flag_1_if_data_flag_eq_0,
-	[4] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[5] = NULL,
-};
+	[3] = llc_conn_ac_set_data_flag_1_अगर_data_flag_eq_0,
+	[4] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_9b = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_9b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_9b,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_9b,
 	.ev_actions    = llc_busy_actions_9b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_10a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_10a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_10a[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_10a[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_nr_received,
-	[2] = llc_conn_ac_set_data_flag_1_if_data_flag_eq_0,
-	[3] = NULL,
-};
+	[2] = llc_conn_ac_set_data_flag_1_अगर_data_flag_eq_0,
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_10a = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_10a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_10a,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_10a,
 	.ev_actions    = llc_busy_actions_10a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_10b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_10b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_10b[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_10b[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_nr_received,
-	[2] = llc_conn_ac_set_data_flag_1_if_data_flag_eq_0,
-	[3] = NULL,
-};
+	[2] = llc_conn_ac_set_data_flag_1_अगर_data_flag_eq_0,
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_10b = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_10b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_10b,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_10b,
 	.ev_actions    = llc_busy_actions_10b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_action_t llc_busy_actions_11[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_busy_actions_11[] = अणु
 	[0] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
-	[2] = llc_conn_ac_set_data_flag_1_if_data_flag_eq_0,
-	[3] = NULL,
-};
+	[2] = llc_conn_ac_set_data_flag_1_अगर_data_flag_eq_0,
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_11 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_11 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_busy_actions_11,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_busy_actions_12[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_busy_actions_12[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[3] = llc_conn_ac_upd_nr_received,
-	[4] = llc_conn_ac_stop_rej_tmr_if_data_flag_eq_2,
+	[4] = llc_conn_ac_stop_rej_पंचांगr_अगर_data_flag_eq_2,
 	[5] = llc_conn_ac_set_data_flag_0,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_12 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_12 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_busy_actions_12,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_X event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_13a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_13a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_13a[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_13a[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[4] = llc_conn_ac_upd_nr_received,
-	[5] = llc_conn_ac_stop_rej_tmr_if_data_flag_eq_2,
+	[5] = llc_conn_ac_stop_rej_पंचांगr_अगर_data_flag_eq_2,
 	[6] = llc_conn_ac_set_data_flag_0,
-	[7] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[8] = NULL,
-};
+	[7] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[8] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_13a = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_13a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_13a,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_13a,
 	.ev_actions    = llc_busy_actions_13a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_13b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_13b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_13b[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_13b[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[4] = llc_conn_ac_upd_nr_received,
-	[5] = llc_conn_ac_stop_rej_tmr_if_data_flag_eq_2,
+	[5] = llc_conn_ac_stop_rej_पंचांगr_अगर_data_flag_eq_2,
 	[6] = llc_conn_ac_set_data_flag_0,
-	[7] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[8] = NULL,
-};
+	[7] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[8] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_13b = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_13b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_13b,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_13b,
 	.ev_actions    = llc_busy_actions_13b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_14a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_14a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_14a[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_14a[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[3] = llc_conn_ac_upd_nr_received,
-	[4] = llc_conn_ac_stop_rej_tmr_if_data_flag_eq_2,
+	[4] = llc_conn_ac_stop_rej_पंचांगr_अगर_data_flag_eq_2,
 	[5] = llc_conn_ac_set_data_flag_0,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_14a = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_14a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_14a,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_14a,
 	.ev_actions    = llc_busy_actions_14a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_14b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_14b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_14b[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_14b[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[3] = llc_conn_ac_upd_nr_received,
-	[4] = llc_conn_ac_stop_rej_tmr_if_data_flag_eq_2,
+	[4] = llc_conn_ac_stop_rej_पंचांगr_अगर_data_flag_eq_2,
 	[5] = llc_conn_ac_set_data_flag_0,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_14b = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_14b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_14b,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_14b,
 	.ev_actions    = llc_busy_actions_14b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_busy_actions_15a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_busy_actions_15a[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_15a = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_15a = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_busy_actions_15a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_busy_actions_15b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_busy_actions_15b[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_15b = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_15b = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_busy_actions_15b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_15c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_15c[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_15c[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_15c[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_15c = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_15c = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_15c,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_15c,
 	.ev_actions    = llc_busy_actions_15c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_busy_actions_16[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_busy_actions_16[] = अणु
 	[0] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_16 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_16 = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_busy_actions_16,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_busy_actions_17a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_busy_actions_17a[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_17a = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_17a = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_busy_actions_17a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_busy_actions_17b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_busy_actions_17b[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_17b = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_17b = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_busy_actions_17b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_17c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_17c[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_17c[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_17c[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_17c = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_17c = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_17c,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_17c,
 	.ev_actions    = llc_busy_actions_17c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_busy_actions_18[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_busy_actions_18[] = अणु
 	[0] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_18 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_18 = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_busy_actions_18,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_19a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_19a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_19a[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_19a[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_19a = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_19a = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_19a,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_19a,
 	.ev_actions    = llc_busy_actions_19a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_X event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_19b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_19b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_19b[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_19b[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_19b = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_19b = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_19b,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_19b,
 	.ev_actions    = llc_busy_actions_19b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_20a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_20a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_20a[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_20a[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_20a = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_20a = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_20a,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_20a,
 	.ev_actions    = llc_busy_actions_20a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_20b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_20b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_20b[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_20b[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_20b = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_20b = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_20b,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_20b,
 	.ev_actions    = llc_busy_actions_20b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_busy_actions_21[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_busy_actions_21[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_21 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_21 = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_busy_actions_21,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_INIT_P_F_CYCLE event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_22[] = {
+/* State transitions क्रम LLC_CONN_EV_INIT_P_F_CYCLE event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_22[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_22[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_22[] = अणु
 	[0] = llc_conn_ac_send_rnr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_p_समयr,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_22 = {
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_22 = अणु
 	.ev	       = llc_conn_ev_init_p_f_cycle,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_22,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_22,
 	.ev_actions    = llc_busy_actions_22,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_P_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_23[] = {
+/* State transitions क्रम LLC_CONN_EV_P_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_23[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_23[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_23[] = अणु
 	[0] = llc_conn_ac_send_rnr_cmd_p_set_1,
 	[1] = llc_conn_ac_rst_vs,
-	[2] = llc_conn_ac_start_p_timer,
+	[2] = llc_conn_ac_start_p_समयr,
 	[3] = llc_conn_ac_inc_retry_cnt_by_1,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_23 = {
-	.ev	       = llc_conn_ev_p_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_23 = अणु
+	.ev	       = llc_conn_ev_p_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_23,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_23,
 	.ev_actions    = llc_busy_actions_23,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_24a[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_24a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_24a[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_24a[] = अणु
 	[0] = llc_conn_ac_send_rnr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
+	[1] = llc_conn_ac_start_p_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
 	[3] = llc_conn_ac_rst_vs,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_24a = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_24a = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_24a,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_24a,
 	.ev_actions    = llc_busy_actions_24a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_BUSY_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_24b[] = {
+/* State transitions क्रम LLC_CONN_EV_BUSY_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_24b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_24b[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_24b[] = अणु
 	[0] = llc_conn_ac_send_rnr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
+	[1] = llc_conn_ac_start_p_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
 	[3] = llc_conn_ac_rst_vs,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_24b = {
-	.ev	       = llc_conn_ev_busy_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_24b = अणु
+	.ev	       = llc_conn_ev_busy_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_24b,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_24b,
 	.ev_actions    = llc_busy_actions_24b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_REJ_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_25[] = {
+/* State transitions क्रम LLC_CONN_EV_REJ_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_25[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_25[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_25[] = अणु
 	[0] = llc_conn_ac_send_rnr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
+	[1] = llc_conn_ac_start_p_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
 	[3] = llc_conn_ac_rst_vs,
 	[4] = llc_conn_ac_set_data_flag_1,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_25 = {
-	.ev	       = llc_conn_ev_rej_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_25 = अणु
+	.ev	       = llc_conn_ev_rej_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_25,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_25,
 	.ev_actions    = llc_busy_actions_25,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_REJ_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_26[] = {
+/* State transitions क्रम LLC_CONN_EV_REJ_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_busy_ev_qfyrs_26[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
 	[1] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_busy_actions_26[] = {
+अटल स्थिर llc_conn_action_t llc_busy_actions_26[] = अणु
 	[0] = llc_conn_ac_set_data_flag_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_busy_state_trans_26 = {
-	.ev	       = llc_conn_ev_rej_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_busy_state_trans_26 = अणु
+	.ev	       = llc_conn_ev_rej_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_busy_ev_qfyrs_26,
+	.ev_qualअगरiers = llc_busy_ev_qfyrs_26,
 	.ev_actions    = llc_busy_actions_26,
-};
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_busy_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_busy_state_transitions[] = अणु
 	 [0] = &llc_common_state_trans_1,	/* Request */
 	 [1] = &llc_common_state_trans_2,
 	 [2] = &llc_busy_state_trans_1,
@@ -2151,623 +2152,623 @@ static struct llc_conn_state_trans *llc_busy_state_transitions[] = {
 	[57] = &llc_common_state_trans_9,
 	/* [58] = &llc_common_state_trans_10, */
 	[58] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_REJ transitions */
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_1[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_1[] = अणु
 	[0] = llc_conn_ev_qlfy_remote_busy_eq_0,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_1[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_1[] = अणु
 	[0] = llc_conn_ac_send_i_xxx_x_set_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_1,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_1,
 	.ev_actions    = llc_reject_actions_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_2[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_2[] = अणु
 	[0] = llc_conn_ev_qlfy_remote_busy_eq_0,
 	[1] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_2[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_2[] = अणु
 	[0] = llc_conn_ac_send_i_xxx_x_set_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_2,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_2,
 	.ev_actions    = llc_reject_actions_2,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_2_1[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_2_1[] = अणु
 	[0] = llc_conn_ev_qlfy_remote_busy_eq_1,
 	[1] = llc_conn_ev_qlfy_set_status_remote_busy,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-/* just one member, NULL, .bss zeroes it */
-static const llc_conn_action_t llc_reject_actions_2_1[1];
+/* just one member, शून्य, .bss zeroes it */
+अटल स्थिर llc_conn_action_t llc_reject_actions_2_1[1];
 
-static struct llc_conn_state_trans llc_reject_state_trans_2_1 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_2_1 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_2_1,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_2_1,
 	.ev_actions    = llc_reject_actions_2_1,
-};
+पूर्ण;
 
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_3[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_3[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_3[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_3[] = अणु
 	[0] = llc_conn_ac_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_set_data_flag_2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_3 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_3 = अणु
 	.ev	       = llc_conn_ev_local_busy_detected,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_reject_ev_qfyrs_3,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_3,
 	.ev_actions    = llc_reject_actions_3,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_4[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_4[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_4[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_4[] = अणु
 	[0] = llc_conn_ac_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_set_data_flag_2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_local_busy_detected,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = llc_reject_ev_qfyrs_4,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_4,
 	.ev_actions    = llc_reject_actions_4,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_action_t llc_reject_actions_5a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_5a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_p_flag,
-	[2] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[3] = NULL,
-};
+	[2] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_5a = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_5a = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_5a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_action_t llc_reject_actions_5b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_5b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_p_flag,
-	[2] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[3] = NULL,
-};
+	[2] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_5b = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_5b = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_5b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_5c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_5c[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_5c[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_5c[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_p_flag,
-	[2] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[3] = NULL,
-};
+	[2] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_5c = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_5c = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_5c,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_5c,
 	.ev_actions    = llc_reject_actions_5c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_action_t llc_reject_actions_6[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_6[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_6 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_6 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_6,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_X event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_7a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_7a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_7a[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_7a[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_send_ack_xxx_x_set_0,
 	[4] = llc_conn_ac_upd_nr_received,
-	[5] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[6] = llc_conn_ac_stop_rej_timer,
-	[7] = NULL,
+	[5] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[6] = llc_conn_ac_stop_rej_समयr,
+	[7] = शून्य,
 
-};
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_7a = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_7a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_reject_ev_qfyrs_7a,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_7a,
 	.ev_actions    = llc_reject_actions_7a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_7b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_7b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_7b[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_7b[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_send_ack_xxx_x_set_0,
 	[4] = llc_conn_ac_upd_nr_received,
-	[5] = llc_conn_ac_clear_remote_busy_if_f_eq_1,
-	[6] = llc_conn_ac_stop_rej_timer,
-	[7] = NULL,
-};
+	[5] = llc_conn_ac_clear_remote_busy_अगर_f_eq_1,
+	[6] = llc_conn_ac_stop_rej_समयr,
+	[7] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_7b = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_7b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_reject_ev_qfyrs_7b,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_7b,
 	.ev_actions    = llc_reject_actions_7b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_8a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_8a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_8a[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_8a[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_ack_xxx_x_set_0,
 	[3] = llc_conn_ac_upd_nr_received,
-	[4] = llc_conn_ac_stop_rej_timer,
-	[5] = NULL,
-};
+	[4] = llc_conn_ac_stop_rej_समयr,
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_8a = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_8a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_reject_ev_qfyrs_8a,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_8a,
 	.ev_actions    = llc_reject_actions_8a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_8b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_8b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_8b[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_8b[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_ack_xxx_x_set_0,
 	[3] = llc_conn_ac_upd_nr_received,
-	[4] = llc_conn_ac_stop_rej_timer,
-	[5] = NULL,
-};
+	[4] = llc_conn_ac_stop_rej_समयr,
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_8b = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_8b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_reject_ev_qfyrs_8b,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_8b,
 	.ev_actions    = llc_reject_actions_8b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_reject_actions_9[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_9[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_ack_rsp_f_set_1,
 	[3] = llc_conn_ac_upd_nr_received,
-	[4] = llc_conn_ac_stop_rej_timer,
-	[5] = NULL,
-};
+	[4] = llc_conn_ac_stop_rej_समयr,
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_9 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_9 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_9,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_reject_actions_10a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_10a[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_10a = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_10a = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_10a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_reject_actions_10b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_10b[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_10b = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_10b = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_10b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_10c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_10c[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_10c[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_10c[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_10c = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_10c = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_10c,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_10c,
 	.ev_actions    = llc_reject_actions_10c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_reject_actions_11[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_11[] = अणु
 	[0] = llc_conn_ac_send_ack_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_11 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_11 = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_11,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_reject_actions_12a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_12a[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_12a = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_12a = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_12a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_reject_actions_12b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_12b[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_12b = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_12b = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_12b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_12c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_12c[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_12c[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_12c[] = अणु
 	[0] = llc_conn_ac_upd_p_flag,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_12c = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_12c = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_12c,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_12c,
 	.ev_actions    = llc_reject_actions_12c,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_reject_actions_13[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_13[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_13 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_13 = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_13,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_14a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_14a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_14a[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_14a[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_14a = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_14a = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_14a,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_14a,
 	.ev_actions    = llc_reject_actions_14a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_X event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_14b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_14b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_14b[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_14b[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_p_flag,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_14b = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_14b = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_14b,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_14b,
 	.ev_actions    = llc_reject_actions_14b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_15a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_15a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_15a[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_15a[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_15a = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_15a = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_15a,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_15a,
 	.ev_actions    = llc_reject_actions_15a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_15b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_15b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_15b[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_15b[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_15b = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_15b = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_15b,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_15b,
 	.ev_actions    = llc_reject_actions_15b,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_reject_actions_16[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_reject_actions_16[] = अणु
 	[0] = llc_conn_ac_set_vs_nr,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_resend_i_rsp_f_set_1,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_16 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_16 = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_reject_actions_16,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_INIT_P_F_CYCLE event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_17[] = {
+/* State transitions क्रम LLC_CONN_EV_INIT_P_F_CYCLE event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_17[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_17[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_17[] = अणु
 	[0] = llc_conn_ac_send_rr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_p_समयr,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_17 = {
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_17 = अणु
 	.ev	       = llc_conn_ev_init_p_f_cycle,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_17,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_17,
 	.ev_actions    = llc_reject_actions_17,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_REJ_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_18[] = {
+/* State transitions क्रम LLC_CONN_EV_REJ_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_18[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_18[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_18[] = अणु
 	[0] = llc_conn_ac_send_rej_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
-	[2] = llc_conn_ac_start_rej_timer,
+	[1] = llc_conn_ac_start_p_समयr,
+	[2] = llc_conn_ac_start_rej_समयr,
 	[3] = llc_conn_ac_inc_retry_cnt_by_1,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_18 = {
-	.ev	       = llc_conn_ev_rej_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_18 = अणु
+	.ev	       = llc_conn_ev_rej_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_18,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_18,
 	.ev_actions    = llc_reject_actions_18,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_P_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_19[] = {
+/* State transitions क्रम LLC_CONN_EV_P_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_19[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_19[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_19[] = अणु
 	[0] = llc_conn_ac_send_rr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
-	[2] = llc_conn_ac_start_rej_timer,
+	[1] = llc_conn_ac_start_p_समयr,
+	[2] = llc_conn_ac_start_rej_समयr,
 	[3] = llc_conn_ac_inc_retry_cnt_by_1,
 	[4] = llc_conn_ac_rst_vs,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_19 = {
-	.ev	       = llc_conn_ev_p_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_19 = अणु
+	.ev	       = llc_conn_ev_p_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_19,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_19,
 	.ev_actions    = llc_reject_actions_19,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_20a[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_20a[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_20a[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_20a[] = अणु
 	[0] = llc_conn_ac_send_rr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
-	[2] = llc_conn_ac_start_rej_timer,
+	[1] = llc_conn_ac_start_p_समयr,
+	[2] = llc_conn_ac_start_rej_समयr,
 	[3] = llc_conn_ac_inc_retry_cnt_by_1,
 	[4] = llc_conn_ac_rst_vs,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_20a = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_20a = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_20a,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_20a,
 	.ev_actions    = llc_reject_actions_20a,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_BUSY_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_20b[] = {
+/* State transitions क्रम LLC_CONN_EV_BUSY_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_reject_ev_qfyrs_20b[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_reject_actions_20b[] = {
+अटल स्थिर llc_conn_action_t llc_reject_actions_20b[] = अणु
 	[0] = llc_conn_ac_send_rr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
-	[2] = llc_conn_ac_start_rej_timer,
+	[1] = llc_conn_ac_start_p_समयr,
+	[2] = llc_conn_ac_start_rej_समयr,
 	[3] = llc_conn_ac_inc_retry_cnt_by_1,
 	[4] = llc_conn_ac_rst_vs,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_reject_state_trans_20b = {
-	.ev	       = llc_conn_ev_busy_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_reject_state_trans_20b = अणु
+	.ev	       = llc_conn_ev_busy_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = llc_reject_ev_qfyrs_20b,
+	.ev_qualअगरiers = llc_reject_ev_qfyrs_20b,
 	.ev_actions    = llc_reject_actions_20b,
-};
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_reject_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_reject_state_transitions[] = अणु
 	 [0] = &llc_common_state_trans_1,	/* Request */
 	 [1] = &llc_common_state_trans_2,
 	 [2] = &llc_common_state_trans_end,
@@ -2822,402 +2823,402 @@ static struct llc_conn_state_trans *llc_reject_state_transitions[] = {
 	[50] = &llc_reject_state_trans_15b,
 	[51] = &llc_reject_state_trans_16,
 	[52] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_AWAIT transitions */
-/* State transitions for LLC_CONN_EV_DATA_REQ event */
-static const llc_conn_ev_qfyr_t llc_await_ev_qfyrs_1_0[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_aरुको_ev_qfyrs_1_0[] = अणु
 	[0] = llc_conn_ev_qlfy_set_status_refuse,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-/* just one member, NULL, .bss zeroes it */
-static const llc_conn_action_t llc_await_actions_1_0[1];
+/* just one member, शून्य, .bss zeroes it */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_1_0[1];
 
-static struct llc_conn_state_trans llc_await_state_trans_1_0 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_1_0 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = llc_await_ev_qfyrs_1_0,
-	.ev_actions    = llc_await_actions_1_0,
-};
+	.ev_qualअगरiers = llc_aरुको_ev_qfyrs_1_0,
+	.ev_actions    = llc_aरुको_actions_1_0,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
-static const llc_conn_action_t llc_await_actions_1[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_1[] = अणु
 	[0] = llc_conn_ac_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_set_data_flag_0,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_local_busy_detected,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_1,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_1,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_actions_2[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_2[] = अणु
 	[0] = llc_conn_ac_send_rej_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
-	[3] = llc_conn_ac_stop_p_timer,
+	[3] = llc_conn_ac_stop_p_समयr,
 	[4] = llc_conn_ac_resend_i_xxx_x_set_0,
-	[5] = llc_conn_ac_start_rej_timer,
+	[5] = llc_conn_ac_start_rej_समयr,
 	[6] = llc_conn_ac_clear_remote_busy,
-	[7] = NULL,
-};
+	[7] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_2,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_2,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_actions_3a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_3a[] = अणु
 	[0] = llc_conn_ac_send_rej_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
-	[3] = llc_conn_ac_start_rej_timer,
-	[4] = NULL,
-};
+	[3] = llc_conn_ac_start_rej_समयr,
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_3a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_3a = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_3a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_3a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_actions_3b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_3b[] = अणु
 	[0] = llc_conn_ac_send_rej_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
-	[3] = llc_conn_ac_start_rej_timer,
-	[4] = NULL,
-};
+	[3] = llc_conn_ac_start_rej_समयr,
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_3b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_3b = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_3b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_3b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_actions_4[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_4[] = अणु
 	[0] = llc_conn_ac_send_rej_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
-	[3] = llc_conn_ac_start_rej_timer,
-	[4] = llc_conn_ac_start_p_timer,
-	[5] = NULL,
-};
+	[3] = llc_conn_ac_start_rej_समयr,
+	[4] = llc_conn_ac_start_p_समयr,
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_4,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_4,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_actions_5[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_5[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_upd_nr_received,
 	[4] = llc_conn_ac_upd_vs,
 	[5] = llc_conn_ac_resend_i_xxx_x_set_0_or_send_rr,
 	[6] = llc_conn_ac_clear_remote_busy,
-	[7] = NULL,
-};
+	[7] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_5 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_5 = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_5,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_5,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_actions_6a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_6a[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_rr_xxx_x_set_0,
 	[3] = llc_conn_ac_upd_nr_received,
 	[4] = llc_conn_ac_upd_vs,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_6a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_6a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_6a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_6a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_actions_6b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_6b[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_rr_xxx_x_set_0,
 	[3] = llc_conn_ac_upd_nr_received,
 	[4] = llc_conn_ac_upd_vs,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_6b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_6b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_6b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_6b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_actions_7[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_7[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[3] = llc_conn_ac_upd_nr_received,
 	[4] = llc_conn_ac_upd_vs,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_7 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_7 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_7,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_7,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_actions_8a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_8a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_8a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_8a = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_8a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_8a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_actions_8b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_8b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_8b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_8b = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_8b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_8b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_actions_9a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_9a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_9a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_9a = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_9a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_9a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_actions_9b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_9b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_9b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_9b = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_9b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_9b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_actions_9c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_9c[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_9c = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_9c = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_9c,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_9c,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_actions_9d[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_9d[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_9d = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_9d = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_9d,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_9d,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_actions_10a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_10a[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_10a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_10a = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_10a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_10a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_actions_10b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_10b[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_10b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_10b = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_10b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_10b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_actions_11[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_11[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_set_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_11 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_11 = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_11,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_11,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_actions_12a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_12a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_12a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_12a = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_12a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_12a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_actions_12b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_12b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_12b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_12b = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_12b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_12b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_actions_13[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_13[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_set_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_13 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_13 = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_actions_13,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_actions_13,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_P_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_await_ev_qfyrs_14[] = {
+/* State transitions क्रम LLC_CONN_EV_P_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_aरुको_ev_qfyrs_14[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_await_actions_14[] = {
+अटल स्थिर llc_conn_action_t llc_aरुको_actions_14[] = अणु
 	[0] = llc_conn_ac_send_rr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
+	[1] = llc_conn_ac_start_p_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_state_trans_14 = {
-	.ev	       = llc_conn_ev_p_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_aरुको_state_trans_14 = अणु
+	.ev	       = llc_conn_ev_p_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = llc_await_ev_qfyrs_14,
-	.ev_actions    = llc_await_actions_14,
-};
+	.ev_qualअगरiers = llc_aरुको_ev_qfyrs_14,
+	.ev_actions    = llc_aरुको_actions_14,
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_await_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_aरुको_state_transitions[] = अणु
 	 [0] = &llc_common_state_trans_1,	/* Request */
 	 [1] = &llc_common_state_trans_2,
-	 [2] = &llc_await_state_trans_1_0,
+	 [2] = &llc_aरुको_state_trans_1_0,
 	 [3] = &llc_common_state_trans_end,
-	 [4] = &llc_await_state_trans_1,	/* Local busy */
+	 [4] = &llc_aरुको_state_trans_1,	/* Local busy */
 	 [5] = &llc_common_state_trans_end,
 	 [6] = &llc_common_state_trans_end,	/* Initiate PF Cycle */
 	 [7] = &llc_common_state_trans_11a,	/* Timer */
 	 [8] = &llc_common_state_trans_11b,
 	 [9] = &llc_common_state_trans_11c,
 	[10] = &llc_common_state_trans_11d,
-	[11] = &llc_await_state_trans_14,
+	[11] = &llc_aरुको_state_trans_14,
 	[12] = &llc_common_state_trans_end,
 	[13] = &llc_common_state_trans_3,	/* Receive frame */
 	[14] = &llc_common_state_trans_4,
@@ -3230,491 +3231,491 @@ static struct llc_conn_state_trans *llc_await_state_transitions[] = {
 	[21] = &llc_common_state_trans_8c,
 	[22] = &llc_common_state_trans_9,
 	/* [23] = &llc_common_state_trans_10, */
-	[23] = &llc_await_state_trans_2,
-	[24] = &llc_await_state_trans_3a,
-	[25] = &llc_await_state_trans_3b,
-	[26] = &llc_await_state_trans_4,
-	[27] = &llc_await_state_trans_5,
-	[28] = &llc_await_state_trans_6a,
-	[29] = &llc_await_state_trans_6b,
-	[30] = &llc_await_state_trans_7,
-	[31] = &llc_await_state_trans_8a,
-	[32] = &llc_await_state_trans_8b,
-	[33] = &llc_await_state_trans_9a,
-	[34] = &llc_await_state_trans_9b,
-	[35] = &llc_await_state_trans_9c,
-	[36] = &llc_await_state_trans_9d,
-	[37] = &llc_await_state_trans_10a,
-	[38] = &llc_await_state_trans_10b,
-	[39] = &llc_await_state_trans_11,
-	[40] = &llc_await_state_trans_12a,
-	[41] = &llc_await_state_trans_12b,
-	[42] = &llc_await_state_trans_13,
+	[23] = &llc_aरुको_state_trans_2,
+	[24] = &llc_aरुको_state_trans_3a,
+	[25] = &llc_aरुको_state_trans_3b,
+	[26] = &llc_aरुको_state_trans_4,
+	[27] = &llc_aरुको_state_trans_5,
+	[28] = &llc_aरुको_state_trans_6a,
+	[29] = &llc_aरुको_state_trans_6b,
+	[30] = &llc_aरुको_state_trans_7,
+	[31] = &llc_aरुको_state_trans_8a,
+	[32] = &llc_aरुको_state_trans_8b,
+	[33] = &llc_aरुको_state_trans_9a,
+	[34] = &llc_aरुको_state_trans_9b,
+	[35] = &llc_aरुको_state_trans_9c,
+	[36] = &llc_aरुको_state_trans_9d,
+	[37] = &llc_aरुको_state_trans_10a,
+	[38] = &llc_aरुको_state_trans_10b,
+	[39] = &llc_aरुको_state_trans_11,
+	[40] = &llc_aरुको_state_trans_12a,
+	[41] = &llc_aरुको_state_trans_12b,
+	[42] = &llc_aरुको_state_trans_13,
 	[43] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_AWAIT_BUSY transitions */
-/* State transitions for LLC_CONN_EV_DATA_CONN_REQ event */
-static const llc_conn_ev_qfyr_t llc_await_busy_ev_qfyrs_1_0[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_CONN_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_aरुको_busy_ev_qfyrs_1_0[] = अणु
 	[0] = llc_conn_ev_qlfy_set_status_refuse,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-/* just one member, NULL, .bss zeroes it */
-static const llc_conn_action_t llc_await_busy_actions_1_0[1];
+/* just one member, शून्य, .bss zeroes it */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_1_0[1];
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_1_0 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_1_0 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = llc_await_busy_ev_qfyrs_1_0,
-	.ev_actions    = llc_await_busy_actions_1_0,
-};
+	.ev_qualअगरiers = llc_aरुको_busy_ev_qfyrs_1_0,
+	.ev_actions    = llc_aरुको_busy_actions_1_0,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
-static const llc_conn_ev_qfyr_t llc_await_busy_ev_qfyrs_1[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_aरुको_busy_ev_qfyrs_1[] = अणु
 	[0] = llc_conn_ev_qlfy_data_flag_eq_1,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_await_busy_actions_1[] = {
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_1[] = अणु
 	[0] = llc_conn_ac_send_rej_xxx_x_set_0,
-	[1] = llc_conn_ac_start_rej_timer,
-	[2] = NULL,
-};
+	[1] = llc_conn_ac_start_rej_समयr,
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_local_busy_cleared,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = llc_await_busy_ev_qfyrs_1,
-	.ev_actions    = llc_await_busy_actions_1,
-};
+	.ev_qualअगरiers = llc_aरुको_busy_ev_qfyrs_1,
+	.ev_actions    = llc_aरुको_busy_actions_1,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
-static const llc_conn_ev_qfyr_t llc_await_busy_ev_qfyrs_2[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_aरुको_busy_ev_qfyrs_2[] = अणु
 	[0] = llc_conn_ev_qlfy_data_flag_eq_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_await_busy_actions_2[] = {
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_2[] = अणु
 	[0] = llc_conn_ac_send_rr_xxx_x_set_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_local_busy_cleared,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = llc_await_busy_ev_qfyrs_2,
-	.ev_actions    = llc_await_busy_actions_2,
-};
+	.ev_qualअगरiers = llc_aरुको_busy_ev_qfyrs_2,
+	.ev_actions    = llc_aरुको_busy_actions_2,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
-static const llc_conn_ev_qfyr_t llc_await_busy_ev_qfyrs_3[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_CLEARED event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_aरुको_busy_ev_qfyrs_3[] = अणु
 	[0] = llc_conn_ev_qlfy_data_flag_eq_2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_await_busy_actions_3[] = {
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_3[] = अणु
 	[0] = llc_conn_ac_send_rr_xxx_x_set_0,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_3 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_3 = अणु
 	.ev	       = llc_conn_ev_local_busy_cleared,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = llc_await_busy_ev_qfyrs_3,
-	.ev_actions    = llc_await_busy_actions_3,
-};
+	.ev_qualअगरiers = llc_aरुको_busy_ev_qfyrs_3,
+	.ev_actions    = llc_aरुको_busy_actions_3,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_busy_actions_4[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_4[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
-	[3] = llc_conn_ac_stop_p_timer,
+	[3] = llc_conn_ac_stop_p_समयr,
 	[4] = llc_conn_ac_set_data_flag_1,
 	[5] = llc_conn_ac_clear_remote_busy,
 	[6] = llc_conn_ac_resend_i_xxx_x_set_0,
-	[7] = NULL,
-};
+	[7] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_4,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_4,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_busy_actions_5a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_5a[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_set_data_flag_1,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_5a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_5a = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_5a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_5a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_busy_actions_5b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_5b[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_set_data_flag_1,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_5b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_5b = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_5b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_5b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_busy_actions_6[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_6[] = अणु
 	[0] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_set_data_flag_1,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_6 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_6 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_6,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_6,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_busy_actions_7[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_7[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_inc_vr_by_1,
 	[2] = llc_conn_ac_data_ind,
-	[3] = llc_conn_ac_stop_p_timer,
+	[3] = llc_conn_ac_stop_p_समयr,
 	[4] = llc_conn_ac_upd_nr_received,
 	[5] = llc_conn_ac_upd_vs,
 	[6] = llc_conn_ac_set_data_flag_0,
 	[7] = llc_conn_ac_clear_remote_busy,
 	[8] = llc_conn_ac_resend_i_xxx_x_set_0,
-	[9] = NULL,
-};
+	[9] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_7 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_7 = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_7,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_7,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_busy_actions_8a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_8a[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_inc_vr_by_1,
 	[2] = llc_conn_ac_data_ind,
 	[3] = llc_conn_ac_upd_nr_received,
 	[4] = llc_conn_ac_upd_vs,
 	[5] = llc_conn_ac_set_data_flag_0,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_8a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_8a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_8a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_8a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_busy_actions_8b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_8b[] = अणु
 	[0] = llc_conn_ac_opt_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_inc_vr_by_1,
 	[2] = llc_conn_ac_data_ind,
 	[3] = llc_conn_ac_upd_nr_received,
 	[4] = llc_conn_ac_upd_vs,
 	[5] = llc_conn_ac_set_data_flag_0,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_8b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_8b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_8b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_8b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_busy_actions_9[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_9[] = अणु
 	[0] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[1] = llc_conn_ac_inc_vr_by_1,
 	[2] = llc_conn_ac_data_ind,
 	[3] = llc_conn_ac_upd_nr_received,
 	[4] = llc_conn_ac_upd_vs,
 	[5] = llc_conn_ac_set_data_flag_0,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_9 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_9 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_9,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_9,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_busy_actions_10a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_10a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_10a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_10a = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_10a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_10a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_busy_actions_10b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_10b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_10b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_10b = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_10b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_10b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_busy_actions_11a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_11a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_11a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_11a = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_11a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_11a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_busy_actions_11b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_11b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_11b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_11b = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_11b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_11b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_busy_actions_11c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_11c[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_11c = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_11c = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_11c,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_11c,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_busy_actions_11d[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_11d[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_11d = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_11d = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_11d,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_11d,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_busy_actions_12a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_12a[] = अणु
 	[0] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_12a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_12a = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_12a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_12a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_busy_actions_12b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_12b[] = अणु
 	[0] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_12b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_12b = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_12b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_12b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_busy_actions_13[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_13[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_set_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_13 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_13 = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_13,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_13,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_busy_actions_14a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_14a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_14a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_14a = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_14a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_14a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_busy_actions_14b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_14b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_14b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_14b = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_14b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_14b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_busy_actions_15[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_15[] = अणु
 	[0] = llc_conn_ac_send_rnr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_set_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_15 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_15 = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_busy_actions_15,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_busy_actions_15,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_P_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_await_busy_ev_qfyrs_16[] = {
+/* State transitions क्रम LLC_CONN_EV_P_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_aरुको_busy_ev_qfyrs_16[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_await_busy_actions_16[] = {
+अटल स्थिर llc_conn_action_t llc_aरुको_busy_actions_16[] = अणु
 	[0] = llc_conn_ac_send_rnr_cmd_p_set_1,
-	[1] = llc_conn_ac_start_p_timer,
+	[1] = llc_conn_ac_start_p_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_busy_state_trans_16 = {
-	.ev	       = llc_conn_ev_p_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_aरुको_busy_state_trans_16 = अणु
+	.ev	       = llc_conn_ev_p_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = llc_await_busy_ev_qfyrs_16,
-	.ev_actions    = llc_await_busy_actions_16,
-};
+	.ev_qualअगरiers = llc_aरुको_busy_ev_qfyrs_16,
+	.ev_actions    = llc_aरुको_busy_actions_16,
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_await_busy_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_aरुको_busy_state_transitions[] = अणु
 	 [0] = &llc_common_state_trans_1,		/* Request */
 	 [1] = &llc_common_state_trans_2,
-	 [2] = &llc_await_busy_state_trans_1_0,
+	 [2] = &llc_aरुको_busy_state_trans_1_0,
 	 [3] = &llc_common_state_trans_end,
-	 [4] = &llc_await_busy_state_trans_1,		/* Local busy */
-	 [5] = &llc_await_busy_state_trans_2,
-	 [6] = &llc_await_busy_state_trans_3,
+	 [4] = &llc_aरुको_busy_state_trans_1,		/* Local busy */
+	 [5] = &llc_aरुको_busy_state_trans_2,
+	 [6] = &llc_aरुको_busy_state_trans_3,
 	 [7] = &llc_common_state_trans_end,
 	 [8] = &llc_common_state_trans_end,		/* Initiate PF cycle */
 	 [9] = &llc_common_state_trans_11a,		/* Timer */
 	[10] = &llc_common_state_trans_11b,
 	[11] = &llc_common_state_trans_11c,
 	[12] = &llc_common_state_trans_11d,
-	[13] = &llc_await_busy_state_trans_16,
+	[13] = &llc_aरुको_busy_state_trans_16,
 	[14] = &llc_common_state_trans_end,
-	[15] = &llc_await_busy_state_trans_4,		/* Receive frame */
-	[16] = &llc_await_busy_state_trans_5a,
-	[17] = &llc_await_busy_state_trans_5b,
-	[18] = &llc_await_busy_state_trans_6,
-	[19] = &llc_await_busy_state_trans_7,
-	[20] = &llc_await_busy_state_trans_8a,
-	[21] = &llc_await_busy_state_trans_8b,
-	[22] = &llc_await_busy_state_trans_9,
-	[23] = &llc_await_busy_state_trans_10a,
-	[24] = &llc_await_busy_state_trans_10b,
-	[25] = &llc_await_busy_state_trans_11a,
-	[26] = &llc_await_busy_state_trans_11b,
-	[27] = &llc_await_busy_state_trans_11c,
-	[28] = &llc_await_busy_state_trans_11d,
-	[29] = &llc_await_busy_state_trans_12a,
-	[30] = &llc_await_busy_state_trans_12b,
-	[31] = &llc_await_busy_state_trans_13,
-	[32] = &llc_await_busy_state_trans_14a,
-	[33] = &llc_await_busy_state_trans_14b,
-	[34] = &llc_await_busy_state_trans_15,
+	[15] = &llc_aरुको_busy_state_trans_4,		/* Receive frame */
+	[16] = &llc_aरुको_busy_state_trans_5a,
+	[17] = &llc_aरुको_busy_state_trans_5b,
+	[18] = &llc_aरुको_busy_state_trans_6,
+	[19] = &llc_aरुको_busy_state_trans_7,
+	[20] = &llc_aरुको_busy_state_trans_8a,
+	[21] = &llc_aरुको_busy_state_trans_8b,
+	[22] = &llc_aरुको_busy_state_trans_9,
+	[23] = &llc_aरुको_busy_state_trans_10a,
+	[24] = &llc_aरुको_busy_state_trans_10b,
+	[25] = &llc_aरुको_busy_state_trans_11a,
+	[26] = &llc_aरुको_busy_state_trans_11b,
+	[27] = &llc_aरुको_busy_state_trans_11c,
+	[28] = &llc_aरुको_busy_state_trans_11d,
+	[29] = &llc_aरुको_busy_state_trans_12a,
+	[30] = &llc_aरुको_busy_state_trans_12b,
+	[31] = &llc_aरुको_busy_state_trans_13,
+	[32] = &llc_aरुको_busy_state_trans_14a,
+	[33] = &llc_aरुको_busy_state_trans_14b,
+	[34] = &llc_aरुको_busy_state_trans_15,
 	[35] = &llc_common_state_trans_3,
 	[36] = &llc_common_state_trans_4,
 	[37] = &llc_common_state_trans_5,
@@ -3727,419 +3728,419 @@ static struct llc_conn_state_trans *llc_await_busy_state_transitions[] = {
 	[44] = &llc_common_state_trans_9,
 	/* [45] = &llc_common_state_trans_10, */
 	[45] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* ----------------- LLC_CONN_STATE_AWAIT_REJ transitions --------------- */
-/* State transitions for LLC_CONN_EV_DATA_CONN_REQ event */
-static const llc_conn_ev_qfyr_t llc_await_reject_ev_qfyrs_1_0[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_CONN_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_aरुको_reject_ev_qfyrs_1_0[] = अणु
 	[0] = llc_conn_ev_qlfy_set_status_refuse,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-/* just one member, NULL, .bss zeroes it */
-static const llc_conn_action_t llc_await_reject_actions_1_0[1];
+/* just one member, शून्य, .bss zeroes it */
+अटल स्थिर llc_conn_action_t llc_aरुको_reject_actions_1_0[1];
 
-static struct llc_conn_state_trans llc_await_reject_state_trans_1_0 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_reject_state_trans_1_0 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = llc_await_reject_ev_qfyrs_1_0,
-	.ev_actions    = llc_await_reject_actions_1_0,
-};
+	.ev_qualअगरiers = llc_aरुको_reject_ev_qfyrs_1_0,
+	.ev_actions    = llc_aरुको_reject_actions_1_0,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
-static const llc_conn_action_t llc_await_rejct_actions_1[] = {
+/* State transitions क्रम LLC_CONN_EV_LOCAL_BUSY_DETECTED event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_1[] = अणु
 	[0] = llc_conn_ac_send_rnr_xxx_x_set_0,
 	[1] = llc_conn_ac_set_data_flag_2,
-	[2] = NULL
-};
+	[2] = शून्य
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_local_busy_detected,
 	.next_state    = LLC_CONN_STATE_AWAIT_BUSY,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_1,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_1,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_rejct_actions_2a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_2a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = NULL
-};
+	[2] = शून्य
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_2a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_2a = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_2a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_2a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_rejct_actions_2b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_2b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = NULL
-};
+	[2] = शून्य
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_2b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_2b = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_2b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_2b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_rejct_actions_3[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_3[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
-	[3] = NULL
-};
+	[3] = शून्य
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_3 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_3 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_3,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_3,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_rejct_actions_4[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_4[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
-	[2] = llc_conn_ac_stop_p_timer,
-	[3] = llc_conn_ac_stop_rej_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
+	[3] = llc_conn_ac_stop_rej_समयr,
 	[4] = llc_conn_ac_upd_nr_received,
 	[5] = llc_conn_ac_upd_vs,
 	[6] = llc_conn_ac_resend_i_xxx_x_set_0_or_send_rr,
 	[7] = llc_conn_ac_clear_remote_busy,
-	[8] = NULL,
-};
+	[8] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_4,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_4,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_rejct_actions_5a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_5a[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_rr_xxx_x_set_0,
-	[3] = llc_conn_ac_stop_rej_timer,
+	[3] = llc_conn_ac_stop_rej_समयr,
 	[4] = llc_conn_ac_upd_nr_received,
 	[5] = llc_conn_ac_upd_vs,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_5a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_5a = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_5a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_5a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_rejct_actions_5b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_5b[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_rr_xxx_x_set_0,
-	[3] = llc_conn_ac_stop_rej_timer,
+	[3] = llc_conn_ac_stop_rej_समयr,
 	[4] = llc_conn_ac_upd_nr_received,
 	[5] = llc_conn_ac_upd_vs,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_5b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_5b = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_5b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_5b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_rejct_actions_6[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_6[] = अणु
 	[0] = llc_conn_ac_inc_vr_by_1,
 	[1] = llc_conn_ac_data_ind,
 	[2] = llc_conn_ac_send_rr_rsp_f_set_1,
-	[3] = llc_conn_ac_stop_rej_timer,
+	[3] = llc_conn_ac_stop_rej_समयr,
 	[4] = llc_conn_ac_upd_nr_received,
 	[5] = llc_conn_ac_upd_vs,
-	[6] = NULL,
-};
+	[6] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_6 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_6 = अणु
 	.ev	       = llc_conn_ev_rx_i_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_6,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_6,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_rejct_actions_7a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_7a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_7a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_7a = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_7a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_7a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_rejct_actions_7b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_7b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_7b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_7b = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_7b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_7b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
-static const llc_conn_action_t llc_await_rejct_actions_7c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_I_RSP_Fbit_SET_1_UNEXPD_Ns event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_7c[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_resend_i_xxx_x_set_0,
 	[4] = llc_conn_ac_clear_remote_busy,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_7c = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_7c = अणु
 	.ev	       = llc_conn_ev_rx_i_rsp_fbit_set_1_unexpd_ns,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_7c,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_7c,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_rejct_actions_8a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_8a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_8a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_8a = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_8a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_8a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_rejct_actions_8b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_8b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_8b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_8b = अणु
 	.ev	       = llc_conn_ev_rx_rr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_8b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_8b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_rejct_actions_8c[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_8c[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_8c = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_8c = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_8c,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_8c,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_rejct_actions_8d[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_8d[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_clear_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_8d = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_8d = अणु
 	.ev	       = llc_conn_ev_rx_rej_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_8d,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_8d,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_rejct_actions_9a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_9a[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_9a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_9a = अणु
 	.ev	       = llc_conn_ev_rx_rr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_9a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_9a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_rejct_actions_9b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_REJ_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_9b[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_clear_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_9b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_9b = अणु
 	.ev	       = llc_conn_ev_rx_rej_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_9b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_9b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
-static const llc_conn_action_t llc_await_rejct_actions_10[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_10[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
-	[2] = llc_conn_ac_stop_p_timer,
+	[2] = llc_conn_ac_stop_p_समयr,
 	[3] = llc_conn_ac_set_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_10 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_10 = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_1,
 	.next_state    = LLC_CONN_STATE_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_10,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_10,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
-static const llc_conn_action_t llc_await_rejct_actions_11a[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_11a[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_11a = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_11a = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_11a,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_11a,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
-static const llc_conn_action_t llc_await_rejct_actions_11b[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_RSP_Fbit_SET_0 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_11b[] = अणु
 	[0] = llc_conn_ac_upd_nr_received,
 	[1] = llc_conn_ac_upd_vs,
 	[2] = llc_conn_ac_set_remote_busy,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_11b = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_11b = अणु
 	.ev	       = llc_conn_ev_rx_rnr_rsp_fbit_set_0,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_11b,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_11b,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
-static const llc_conn_action_t llc_await_rejct_actions_12[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_RNR_CMD_Pbit_SET_1 event */
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_12[] = अणु
 	[0] = llc_conn_ac_send_rr_rsp_f_set_1,
 	[1] = llc_conn_ac_upd_nr_received,
 	[2] = llc_conn_ac_upd_vs,
 	[3] = llc_conn_ac_set_remote_busy,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_12 = {
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_12 = अणु
 	.ev	       = llc_conn_ev_rx_rnr_cmd_pbit_set_1,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = NONE,
-	.ev_actions    = llc_await_rejct_actions_12,
-};
+	.ev_qualअगरiers = NONE,
+	.ev_actions    = llc_aरुको_rejct_actions_12,
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_P_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_await_rejct_ev_qfyrs_13[] = {
+/* State transitions क्रम LLC_CONN_EV_P_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_aरुको_rejct_ev_qfyrs_13[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_await_rejct_actions_13[] = {
+अटल स्थिर llc_conn_action_t llc_aरुको_rejct_actions_13[] = अणु
 	[0] = llc_conn_ac_send_rej_cmd_p_set_1,
-	[1] = llc_conn_ac_stop_p_timer,
+	[1] = llc_conn_ac_stop_p_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_await_rejct_state_trans_13 = {
-	.ev	       = llc_conn_ev_p_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_aरुको_rejct_state_trans_13 = अणु
+	.ev	       = llc_conn_ev_p_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_AWAIT_REJ,
-	.ev_qualifiers = llc_await_rejct_ev_qfyrs_13,
-	.ev_actions    = llc_await_rejct_actions_13,
-};
+	.ev_qualअगरiers = llc_aरुको_rejct_ev_qfyrs_13,
+	.ev_actions    = llc_aरुको_rejct_actions_13,
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_await_rejct_state_transitions[] = {
-	 [0] = &llc_await_reject_state_trans_1_0,
+अटल काष्ठा llc_conn_state_trans *llc_aरुको_rejct_state_transitions[] = अणु
+	 [0] = &llc_aरुको_reject_state_trans_1_0,
 	 [1] = &llc_common_state_trans_1,		/* requests */
 	 [2] = &llc_common_state_trans_2,
 	 [3] = &llc_common_state_trans_end,
-	 [4] = &llc_await_rejct_state_trans_1,		/* local busy */
+	 [4] = &llc_aरुको_rejct_state_trans_1,		/* local busy */
 	 [5] = &llc_common_state_trans_end,
 	 [6] = &llc_common_state_trans_end,		/* Initiate PF cycle */
-	 [7] = &llc_await_rejct_state_trans_13,	/* timers */
+	 [7] = &llc_aरुको_rejct_state_trans_13,	/* समयrs */
 	 [8] = &llc_common_state_trans_11a,
 	 [9] = &llc_common_state_trans_11b,
 	[10] = &llc_common_state_trans_11c,
 	[11] = &llc_common_state_trans_11d,
 	[12] = &llc_common_state_trans_end,
-	[13] = &llc_await_rejct_state_trans_2a,	/* receive frames */
-	[14] = &llc_await_rejct_state_trans_2b,
-	[15] = &llc_await_rejct_state_trans_3,
-	[16] = &llc_await_rejct_state_trans_4,
-	[17] = &llc_await_rejct_state_trans_5a,
-	[18] = &llc_await_rejct_state_trans_5b,
-	[19] = &llc_await_rejct_state_trans_6,
-	[20] = &llc_await_rejct_state_trans_7a,
-	[21] = &llc_await_rejct_state_trans_7b,
-	[22] = &llc_await_rejct_state_trans_7c,
-	[23] = &llc_await_rejct_state_trans_8a,
-	[24] = &llc_await_rejct_state_trans_8b,
-	[25] = &llc_await_rejct_state_trans_8c,
-	[26] = &llc_await_rejct_state_trans_8d,
-	[27] = &llc_await_rejct_state_trans_9a,
-	[28] = &llc_await_rejct_state_trans_9b,
-	[29] = &llc_await_rejct_state_trans_10,
-	[30] = &llc_await_rejct_state_trans_11a,
-	[31] = &llc_await_rejct_state_trans_11b,
-	[32] = &llc_await_rejct_state_trans_12,
+	[13] = &llc_aरुको_rejct_state_trans_2a,	/* receive frames */
+	[14] = &llc_aरुको_rejct_state_trans_2b,
+	[15] = &llc_aरुको_rejct_state_trans_3,
+	[16] = &llc_aरुको_rejct_state_trans_4,
+	[17] = &llc_aरुको_rejct_state_trans_5a,
+	[18] = &llc_aरुको_rejct_state_trans_5b,
+	[19] = &llc_aरुको_rejct_state_trans_6,
+	[20] = &llc_aरुको_rejct_state_trans_7a,
+	[21] = &llc_aरुको_rejct_state_trans_7b,
+	[22] = &llc_aरुको_rejct_state_trans_7c,
+	[23] = &llc_aरुको_rejct_state_trans_8a,
+	[24] = &llc_aरुको_rejct_state_trans_8b,
+	[25] = &llc_aरुको_rejct_state_trans_8c,
+	[26] = &llc_aरुको_rejct_state_trans_8d,
+	[27] = &llc_aरुको_rejct_state_trans_9a,
+	[28] = &llc_aरुको_rejct_state_trans_9b,
+	[29] = &llc_aरुको_rejct_state_trans_10,
+	[30] = &llc_aरुको_rejct_state_trans_11a,
+	[31] = &llc_aरुको_rejct_state_trans_11b,
+	[32] = &llc_aरुको_rejct_state_trans_12,
 	[33] = &llc_common_state_trans_3,
 	[34] = &llc_common_state_trans_4,
 	[35] = &llc_common_state_trans_5,
@@ -4152,245 +4153,245 @@ static struct llc_conn_state_trans *llc_await_rejct_state_transitions[] = {
 	[42] = &llc_common_state_trans_9,
 	/* [43] = &llc_common_state_trans_10, */
 	[43] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_D_CONN transitions */
-/* State transitions for LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event,
  * cause_flag = 1 */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_1[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_1[] = अणु
 	[0] = llc_conn_ev_qlfy_cause_flag_eq_1,
 	[1] = llc_conn_ev_qlfy_set_status_conflict,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_d_conn_actions_1[] = {
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_1[] = अणु
 	[0] = llc_conn_ac_send_dm_rsp_f_set_p,
-	[1] = llc_conn_ac_stop_ack_timer,
+	[1] = llc_conn_ac_stop_ack_समयr,
 	[2] = llc_conn_ac_disc_confirm,
 	[3] = llc_conn_disc,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_rx_sabme_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_1,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_1,
 	.ev_actions    = llc_d_conn_actions_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event,
  * cause_flag = 0
  */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_1_1[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_1_1[] = अणु
 	[0] = llc_conn_ev_qlfy_cause_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_set_status_conflict,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_d_conn_actions_1_1[] = {
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_1_1[] = अणु
 	[0] = llc_conn_ac_send_dm_rsp_f_set_p,
-	[1] = llc_conn_ac_stop_ack_timer,
+	[1] = llc_conn_ac_stop_ack_समयr,
 	[2] = llc_conn_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_1_1 = {
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_1_1 = अणु
 	.ev	       = llc_conn_ev_rx_sabme_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_1_1,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_1_1,
 	.ev_actions    = llc_d_conn_actions_1_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event,
  * cause_flag = 1
  */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_2[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_2[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
 	[1] = llc_conn_ev_qlfy_cause_flag_eq_1,
 	[2] = llc_conn_ev_qlfy_set_status_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_d_conn_actions_2[] = {
-	[0] = llc_conn_ac_stop_ack_timer,
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_2[] = अणु
+	[0] = llc_conn_ac_stop_ack_समयr,
 	[1] = llc_conn_ac_disc_confirm,
 	[2] = llc_conn_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_rx_ua_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_2,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_2,
 	.ev_actions    = llc_d_conn_actions_2,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event,
  * cause_flag = 0
  */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_2_1[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_2_1[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
 	[1] = llc_conn_ev_qlfy_cause_flag_eq_0,
 	[2] = llc_conn_ev_qlfy_set_status_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_d_conn_actions_2_1[] = {
-	[0] = llc_conn_ac_stop_ack_timer,
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_2_1[] = अणु
+	[0] = llc_conn_ac_stop_ack_समयr,
 	[1] = llc_conn_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_2_1 = {
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_2_1 = अणु
 	.ev	       = llc_conn_ev_rx_ua_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_2_1,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_2_1,
 	.ev_actions    = llc_d_conn_actions_2_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_d_conn_actions_3[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_3[] = अणु
 	[0] = llc_conn_ac_send_ua_rsp_f_set_p,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_3 = {
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_3 = अणु
 	.ev	       = llc_conn_ev_rx_disc_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_D_CONN,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_d_conn_actions_3,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event,
  * cause_flag = 1
  */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_4[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_4[] = अणु
 	[0] = llc_conn_ev_qlfy_cause_flag_eq_1,
 	[1] = llc_conn_ev_qlfy_set_status_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_d_conn_actions_4[] = {
-	[0] = llc_conn_ac_stop_ack_timer,
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_4[] = अणु
+	[0] = llc_conn_ac_stop_ack_समयr,
 	[1] = llc_conn_ac_disc_confirm,
 	[2] = llc_conn_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_rx_dm_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_4,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_4,
 	.ev_actions    = llc_d_conn_actions_4,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event,
  * cause_flag = 0
  */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_4_1[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_4_1[] = अणु
 	[0] = llc_conn_ev_qlfy_cause_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_set_status_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_d_conn_actions_4_1[] = {
-	[0] = llc_conn_ac_stop_ack_timer,
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_4_1[] = अणु
+	[0] = llc_conn_ac_stop_ack_समयr,
 	[1] = llc_conn_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_4_1 = {
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_4_1 = अणु
 	.ev	       = llc_conn_ev_rx_dm_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_4_1,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_4_1,
 	.ev_actions    = llc_d_conn_actions_4_1,
-};
+पूर्ण;
 
 /*
- * State transition for
+ * State transition क्रम
  * LLC_CONN_EV_DATA_CONN_REQ event
  */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_5[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_5[] = अणु
 	[0] = llc_conn_ev_qlfy_set_status_refuse,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-/* just one member, NULL, .bss zeroes it */
-static const llc_conn_action_t llc_d_conn_actions_5[1];
+/* just one member, शून्य, .bss zeroes it */
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_5[1];
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_5 = {
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_5 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_D_CONN,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_5,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_5,
 	.ev_actions    = llc_d_conn_actions_5,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_6[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_6[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_d_conn_actions_6[] = {
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_6[] = अणु
 	[0] = llc_conn_ac_send_disc_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
+	[1] = llc_conn_ac_start_ack_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_6 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_6 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_D_CONN,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_6,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_6,
 	.ev_actions    = llc_d_conn_actions_6,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event, cause_flag = 1 */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_7[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event, cause_flag = 1 */
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_7[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
 	[1] = llc_conn_ev_qlfy_cause_flag_eq_1,
 	[2] = llc_conn_ev_qlfy_set_status_failed,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_d_conn_actions_7[] = {
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_7[] = अणु
 	[0] = llc_conn_ac_disc_confirm,
 	[1] = llc_conn_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_7 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_7 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_7,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_7,
 	.ev_actions    = llc_d_conn_actions_7,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event, cause_flag = 0 */
-static const llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_8[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event, cause_flag = 0 */
+अटल स्थिर llc_conn_ev_qfyr_t llc_d_conn_ev_qfyrs_8[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
 	[1] = llc_conn_ev_qlfy_cause_flag_eq_0,
 	[2] = llc_conn_ev_qlfy_set_status_failed,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_d_conn_actions_8[] = {
+अटल स्थिर llc_conn_action_t llc_d_conn_actions_8[] = अणु
 	[0] = llc_conn_disc,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_d_conn_state_trans_8 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_d_conn_state_trans_8 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_d_conn_ev_qfyrs_8,
+	.ev_qualअगरiers = llc_d_conn_ev_qfyrs_8,
 	.ev_actions    = llc_d_conn_actions_8,
-};
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_d_conn_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_d_conn_state_transitions[] = अणु
 	 [0] = &llc_d_conn_state_trans_5,	/* Request */
 	 [1] = &llc_common_state_trans_end,
 	 [2] = &llc_common_state_trans_end,	/* Local busy */
@@ -4407,276 +4408,276 @@ static struct llc_conn_state_trans *llc_d_conn_state_transitions[] = {
 	[13] = &llc_d_conn_state_trans_4,
 	[14] = &llc_d_conn_state_trans_4_1,
 	[15] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_RESET transitions */
-/* State transitions for LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_rst_actions_1[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_rst_actions_1[] = अणु
 	[0] = llc_conn_ac_set_vs_0,
 	[1] = llc_conn_ac_set_vr_0,
 	[2] = llc_conn_ac_set_s_flag_1,
 	[3] = llc_conn_ac_send_ua_rsp_f_set_p,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_rx_sabme_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_rst_actions_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event,
  * cause_flag = 1
  */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_2[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_2[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
 	[1] = llc_conn_ev_qlfy_cause_flag_eq_1,
 	[2] = llc_conn_ev_qlfy_set_status_conn,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_rst_actions_2[] = {
-	[0] = llc_conn_ac_stop_ack_timer,
+अटल स्थिर llc_conn_action_t llc_rst_actions_2[] = अणु
+	[0] = llc_conn_ac_stop_ack_समयr,
 	[1] = llc_conn_ac_set_vs_0,
 	[2] = llc_conn_ac_set_vr_0,
 	[3] = llc_conn_ac_upd_p_flag,
 	[4] = llc_conn_ac_rst_confirm,
 	[5] = llc_conn_ac_set_remote_busy_0,
 	[6] = llc_conn_reset,
-	[7] = NULL,
-};
+	[7] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_rx_ua_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_rst_ev_qfyrs_2,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_2,
 	.ev_actions    = llc_rst_actions_2,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_UA_RSP_Fbit_SET_X event,
  * cause_flag = 0
  */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_2_1[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_2_1[] = अणु
 	[0] = llc_conn_ev_qlfy_p_flag_eq_f,
 	[1] = llc_conn_ev_qlfy_cause_flag_eq_0,
-	[2] = llc_conn_ev_qlfy_set_status_rst_done,
-	[3] = NULL,
-};
+	[2] = llc_conn_ev_qlfy_set_status_rst_करोne,
+	[3] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_rst_actions_2_1[] = {
-	[0] = llc_conn_ac_stop_ack_timer,
+अटल स्थिर llc_conn_action_t llc_rst_actions_2_1[] = अणु
+	[0] = llc_conn_ac_stop_ack_समयr,
 	[1] = llc_conn_ac_set_vs_0,
 	[2] = llc_conn_ac_set_vr_0,
 	[3] = llc_conn_ac_upd_p_flag,
 	[4] = llc_conn_ac_rst_confirm,
 	[5] = llc_conn_ac_set_remote_busy_0,
 	[6] = llc_conn_reset,
-	[7] = NULL,
-};
+	[7] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_2_1 = {
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_2_1 = अणु
 	.ev	       = llc_conn_ev_rx_ua_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_rst_ev_qfyrs_2_1,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_2_1,
 	.ev_actions    = llc_rst_actions_2_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_3[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_3[] = अणु
 	[0] = llc_conn_ev_qlfy_s_flag_eq_1,
-	[1] = llc_conn_ev_qlfy_set_status_rst_done,
-	[2] = NULL,
-};
+	[1] = llc_conn_ev_qlfy_set_status_rst_करोne,
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_rst_actions_3[] = {
+अटल स्थिर llc_conn_action_t llc_rst_actions_3[] = अणु
 	[0] = llc_conn_ac_set_p_flag_0,
 	[1] = llc_conn_ac_set_remote_busy_0,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_3 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_3 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = llc_rst_ev_qfyrs_3,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_3,
 	.ev_actions    = llc_rst_actions_3,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event,
  * cause_flag = 1
  */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_4[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_4[] = अणु
 	[0] = llc_conn_ev_qlfy_cause_flag_eq_1,
 	[1] = llc_conn_ev_qlfy_set_status_disc,
-	[2] = NULL,
-};
-static const llc_conn_action_t llc_rst_actions_4[] = {
+	[2] = शून्य,
+पूर्ण;
+अटल स्थिर llc_conn_action_t llc_rst_actions_4[] = अणु
 	[0] = llc_conn_ac_send_dm_rsp_f_set_p,
 	[1] = llc_conn_ac_disc_ind,
-	[2] = llc_conn_ac_stop_ack_timer,
+	[2] = llc_conn_ac_stop_ack_समयr,
 	[3] = llc_conn_disc,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_rx_disc_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_rst_ev_qfyrs_4,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_4,
 	.ev_actions    = llc_rst_actions_4,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event,
  * cause_flag = 0
  */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_4_1[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_4_1[] = अणु
 	[0] = llc_conn_ev_qlfy_cause_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_set_status_refuse,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_rst_actions_4_1[] = {
+अटल स्थिर llc_conn_action_t llc_rst_actions_4_1[] = अणु
 	[0] = llc_conn_ac_send_dm_rsp_f_set_p,
-	[1] = llc_conn_ac_stop_ack_timer,
+	[1] = llc_conn_ac_stop_ack_समयr,
 	[2] = llc_conn_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_4_1 = {
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_4_1 = अणु
 	.ev	       = llc_conn_ev_rx_disc_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_rst_ev_qfyrs_4_1,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_4_1,
 	.ev_actions    = llc_rst_actions_4_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event,
  * cause_flag = 1
  */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_5[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_5[] = अणु
 	[0] = llc_conn_ev_qlfy_cause_flag_eq_1,
 	[1] = llc_conn_ev_qlfy_set_status_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_rst_actions_5[] = {
+अटल स्थिर llc_conn_action_t llc_rst_actions_5[] = अणु
 	[0] = llc_conn_ac_disc_ind,
-	[1] = llc_conn_ac_stop_ack_timer,
+	[1] = llc_conn_ac_stop_ack_समयr,
 	[2] = llc_conn_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_5 = {
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_5 = अणु
 	.ev	       = llc_conn_ev_rx_dm_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_rst_ev_qfyrs_5,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_5,
 	.ev_actions    = llc_rst_actions_5,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event,
+/* State transitions क्रम LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event,
  * cause_flag = 0
  */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_5_1[] = {
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_5_1[] = अणु
 	[0] = llc_conn_ev_qlfy_cause_flag_eq_0,
 	[1] = llc_conn_ev_qlfy_set_status_refuse,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_rst_actions_5_1[] = {
-	[0] = llc_conn_ac_stop_ack_timer,
+अटल स्थिर llc_conn_action_t llc_rst_actions_5_1[] = अणु
+	[0] = llc_conn_ac_stop_ack_समयr,
 	[1] = llc_conn_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_5_1 = {
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_5_1 = अणु
 	.ev	       = llc_conn_ev_rx_dm_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_rst_ev_qfyrs_5_1,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_5_1,
 	.ev_actions    = llc_rst_actions_5_1,
-};
+पूर्ण;
 
-/* State transitions for DATA_CONN_REQ event */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_6[] = {
+/* State transitions क्रम DATA_CONN_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_6[] = अणु
 	[0] = llc_conn_ev_qlfy_set_status_refuse,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-/* just one member, NULL, .bss zeroes it */
-static const llc_conn_action_t llc_rst_actions_6[1];
+/* just one member, शून्य, .bss zeroes it */
+अटल स्थिर llc_conn_action_t llc_rst_actions_6[1];
 
-static struct llc_conn_state_trans llc_rst_state_trans_6 = {
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_6 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = llc_rst_ev_qfyrs_6,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_6,
 	.ev_actions    = llc_rst_actions_6,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_7[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_7[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
 	[1] = llc_conn_ev_qlfy_s_flag_eq_0,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_rst_actions_7[] = {
+अटल स्थिर llc_conn_action_t llc_rst_actions_7[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
+	[1] = llc_conn_ac_start_ack_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_7 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_7 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = llc_rst_ev_qfyrs_7,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_7,
 	.ev_actions    = llc_rst_actions_7,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_8[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_8[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
 	[1] = llc_conn_ev_qlfy_s_flag_eq_0,
 	[2] = llc_conn_ev_qlfy_cause_flag_eq_1,
 	[3] = llc_conn_ev_qlfy_set_status_failed,
-	[4] = NULL,
-};
-static const llc_conn_action_t llc_rst_actions_8[] = {
+	[4] = शून्य,
+पूर्ण;
+अटल स्थिर llc_conn_action_t llc_rst_actions_8[] = अणु
 	[0] = llc_conn_ac_disc_ind,
 	[1] = llc_conn_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_8 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_8 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_rst_ev_qfyrs_8,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_8,
 	.ev_actions    = llc_rst_actions_8,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_8_1[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_rst_ev_qfyrs_8_1[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
 	[1] = llc_conn_ev_qlfy_s_flag_eq_0,
 	[2] = llc_conn_ev_qlfy_cause_flag_eq_0,
 	[3] = llc_conn_ev_qlfy_set_status_failed,
-	[4] = NULL,
-};
-static const llc_conn_action_t llc_rst_actions_8_1[] = {
+	[4] = शून्य,
+पूर्ण;
+अटल स्थिर llc_conn_action_t llc_rst_actions_8_1[] = अणु
 	[0] = llc_conn_ac_disc_ind,
 	[1] = llc_conn_disc,
-	[2] = NULL,
-};
+	[2] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_rst_state_trans_8_1 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_rst_state_trans_8_1 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = llc_rst_ev_qfyrs_8_1,
+	.ev_qualअगरiers = llc_rst_ev_qfyrs_8_1,
 	.ev_actions    = llc_rst_actions_8_1,
-};
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_rst_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_rst_state_transitions[] = अणु
 	 [0] = &llc_rst_state_trans_6,		/* Request */
 	 [1] = &llc_common_state_trans_end,
 	 [2] = &llc_common_state_trans_end,	/* Local busy */
@@ -4694,160 +4695,160 @@ static struct llc_conn_state_trans *llc_rst_state_transitions[] = {
 	[14] = &llc_rst_state_trans_5,
 	[15] = &llc_rst_state_trans_5_1,
 	[16] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_ERROR transitions */
-/* State transitions for LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_error_actions_1[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_SABME_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_error_actions_1[] = अणु
 	[0] = llc_conn_ac_set_vs_0,
 	[1] = llc_conn_ac_set_vr_0,
 	[2] = llc_conn_ac_send_ua_rsp_f_set_p,
 	[3] = llc_conn_ac_rst_ind,
 	[4] = llc_conn_ac_set_p_flag_0,
 	[5] = llc_conn_ac_set_remote_busy_0,
-	[6] = llc_conn_ac_stop_ack_timer,
+	[6] = llc_conn_ac_stop_ack_समयr,
 	[7] = llc_conn_reset,
-	[8] = NULL,
-};
+	[8] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_error_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_error_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_rx_sabme_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_NORMAL,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_error_actions_1,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_error_actions_2[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_DISC_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_error_actions_2[] = अणु
 	[0] = llc_conn_ac_send_ua_rsp_f_set_p,
 	[1] = llc_conn_ac_disc_ind,
-	[2] = llc_conn_ac_stop_ack_timer,
+	[2] = llc_conn_ac_stop_ack_समयr,
 	[3] = llc_conn_disc,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_error_state_trans_2 = {
+अटल काष्ठा llc_conn_state_trans llc_error_state_trans_2 = अणु
 	.ev	       = llc_conn_ev_rx_disc_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_error_actions_2,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event */
-static const llc_conn_action_t llc_error_actions_3[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_DM_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_error_actions_3[] = अणु
 	[0] = llc_conn_ac_disc_ind,
-	[1] = llc_conn_ac_stop_ack_timer,
+	[1] = llc_conn_ac_stop_ack_समयr,
 	[2] = llc_conn_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_error_state_trans_3 = {
+अटल काष्ठा llc_conn_state_trans llc_error_state_trans_3 = अणु
 	.ev	       = llc_conn_ev_rx_dm_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_error_actions_3,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_FRMR_RSP_Fbit_SET_X event */
-static const llc_conn_action_t llc_error_actions_4[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_FRMR_RSP_Fbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_error_actions_4[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
-	[1] = llc_conn_ac_start_ack_timer,
+	[1] = llc_conn_ac_start_ack_समयr,
 	[2] = llc_conn_ac_set_retry_cnt_0,
 	[3] = llc_conn_ac_set_cause_flag_0,
-	[4] = NULL,
-};
+	[4] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_error_state_trans_4 = {
+अटल काष्ठा llc_conn_state_trans llc_error_state_trans_4 = अणु
 	.ev	       = llc_conn_ev_rx_frmr_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_error_actions_4,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_XXX_CMD_Pbit_SET_X event */
-static const llc_conn_action_t llc_error_actions_5[] = {
+/* State transitions क्रम LLC_CONN_EV_RX_XXX_CMD_Pbit_SET_X event */
+अटल स्थिर llc_conn_action_t llc_error_actions_5[] = अणु
 	[0] = llc_conn_ac_resend_frmr_rsp_f_set_p,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_error_state_trans_5 = {
+अटल काष्ठा llc_conn_state_trans llc_error_state_trans_5 = अणु
 	.ev	       = llc_conn_ev_rx_xxx_cmd_pbit_set_x,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_error_actions_5,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_RX_XXX_RSP_Fbit_SET_X event */
-static struct llc_conn_state_trans llc_error_state_trans_6 = {
+/* State transitions क्रम LLC_CONN_EV_RX_XXX_RSP_Fbit_SET_X event */
+अटल काष्ठा llc_conn_state_trans llc_error_state_trans_6 = अणु
 	.ev	       = llc_conn_ev_rx_xxx_rsp_fbit_set_x,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = NONE,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_error_ev_qfyrs_7[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_error_ev_qfyrs_7[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_lt_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_error_actions_7[] = {
+अटल स्थिर llc_conn_action_t llc_error_actions_7[] = अणु
 	[0] = llc_conn_ac_resend_frmr_rsp_f_set_0,
-	[1] = llc_conn_ac_start_ack_timer,
+	[1] = llc_conn_ac_start_ack_समयr,
 	[2] = llc_conn_ac_inc_retry_cnt_by_1,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_error_state_trans_7 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_error_state_trans_7 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = llc_error_ev_qfyrs_7,
+	.ev_qualअगरiers = llc_error_ev_qfyrs_7,
 	.ev_actions    = llc_error_actions_7,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_ACK_TMR_EXP event */
-static const llc_conn_ev_qfyr_t llc_error_ev_qfyrs_8[] = {
+/* State transitions क्रम LLC_CONN_EV_ACK_TMR_EXP event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_error_ev_qfyrs_8[] = अणु
 	[0] = llc_conn_ev_qlfy_retry_cnt_gte_n2,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-static const llc_conn_action_t llc_error_actions_8[] = {
+अटल स्थिर llc_conn_action_t llc_error_actions_8[] = अणु
 	[0] = llc_conn_ac_send_sabme_cmd_p_set_x,
 	[1] = llc_conn_ac_set_s_flag_0,
-	[2] = llc_conn_ac_start_ack_timer,
+	[2] = llc_conn_ac_start_ack_समयr,
 	[3] = llc_conn_ac_set_retry_cnt_0,
 	[4] = llc_conn_ac_set_cause_flag_0,
-	[5] = NULL,
-};
+	[5] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_error_state_trans_8 = {
-	.ev	       = llc_conn_ev_ack_tmr_exp,
+अटल काष्ठा llc_conn_state_trans llc_error_state_trans_8 = अणु
+	.ev	       = llc_conn_ev_ack_पंचांगr_exp,
 	.next_state    = LLC_CONN_STATE_RESET,
-	.ev_qualifiers = llc_error_ev_qfyrs_8,
+	.ev_qualअगरiers = llc_error_ev_qfyrs_8,
 	.ev_actions    = llc_error_actions_8,
-};
+पूर्ण;
 
-/* State transitions for LLC_CONN_EV_DATA_CONN_REQ event */
-static const llc_conn_ev_qfyr_t llc_error_ev_qfyrs_9[] = {
+/* State transitions क्रम LLC_CONN_EV_DATA_CONN_REQ event */
+अटल स्थिर llc_conn_ev_qfyr_t llc_error_ev_qfyrs_9[] = अणु
 	[0] = llc_conn_ev_qlfy_set_status_refuse,
-	[1] = NULL,
-};
+	[1] = शून्य,
+पूर्ण;
 
-/* just one member, NULL, .bss zeroes it */
-static const llc_conn_action_t llc_error_actions_9[1];
+/* just one member, शून्य, .bss zeroes it */
+अटल स्थिर llc_conn_action_t llc_error_actions_9[1];
 
-static struct llc_conn_state_trans llc_error_state_trans_9 = {
+अटल काष्ठा llc_conn_state_trans llc_error_state_trans_9 = अणु
 	.ev	       = llc_conn_ev_data_req,
 	.next_state    = LLC_CONN_STATE_ERROR,
-	.ev_qualifiers = llc_error_ev_qfyrs_9,
+	.ev_qualअगरiers = llc_error_ev_qfyrs_9,
 	.ev_actions    = llc_error_actions_9,
-};
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_error_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_error_state_transitions[] = अणु
 	 [0] = &llc_error_state_trans_9,	/* Request */
 	 [1] = &llc_common_state_trans_end,
 	 [2] = &llc_common_state_trans_end,	/* Local busy */
@@ -4862,85 +4863,85 @@ static struct llc_conn_state_trans *llc_error_state_transitions[] = {
 	[11] = &llc_error_state_trans_5,
 	[12] = &llc_error_state_trans_6,
 	[13] = &llc_common_state_trans_end,
-};
+पूर्ण;
 
 /* LLC_CONN_STATE_TEMP transitions */
-/* State transitions for LLC_CONN_EV_DISC_REQ event */
-static const llc_conn_action_t llc_temp_actions_1[] = {
-	[0] = llc_conn_ac_stop_all_timers,
+/* State transitions क्रम LLC_CONN_EV_DISC_REQ event */
+अटल स्थिर llc_conn_action_t llc_temp_actions_1[] = अणु
+	[0] = llc_conn_ac_stop_all_समयrs,
 	[1] = llc_conn_ac_send_disc_cmd_p_set_x,
 	[2] = llc_conn_disc,
-	[3] = NULL,
-};
+	[3] = शून्य,
+पूर्ण;
 
-static struct llc_conn_state_trans llc_temp_state_trans_1 = {
+अटल काष्ठा llc_conn_state_trans llc_temp_state_trans_1 = अणु
 	.ev	       = llc_conn_ev_disc_req,
 	.next_state    = LLC_CONN_STATE_ADM,
-	.ev_qualifiers = NONE,
+	.ev_qualअगरiers = NONE,
 	.ev_actions    = llc_temp_actions_1,
-};
+पूर्ण;
 
 /*
- * Array of pointers;
+ * Array of poपूर्णांकers;
  * one to each transition
  */
-static struct llc_conn_state_trans *llc_temp_state_transitions[] = {
+अटल काष्ठा llc_conn_state_trans *llc_temp_state_transitions[] = अणु
 	[0] = &llc_temp_state_trans_1,		/* requests */
 	[1] = &llc_common_state_trans_end,
 	[2] = &llc_common_state_trans_end,	/* local busy */
 	[3] = &llc_common_state_trans_end,	/* init_pf_cycle */
-	[4] = &llc_common_state_trans_end,	/* timer */
+	[4] = &llc_common_state_trans_end,	/* समयr */
 	[5] = &llc_common_state_trans_end,	/* receive */
-};
+पूर्ण;
 
 /* Connection State Transition Table */
-struct llc_conn_state llc_conn_state_table[NBR_CONN_STATES] = {
-	[LLC_CONN_STATE_ADM - 1] = {
+काष्ठा llc_conn_state llc_conn_state_table[NBR_CONN_STATES] = अणु
+	[LLC_CONN_STATE_ADM - 1] = अणु
 		.current_state	= LLC_CONN_STATE_ADM,
 		.transitions	= llc_adm_state_transitions,
-	},
-	[LLC_CONN_STATE_SETUP - 1] = {
+	पूर्ण,
+	[LLC_CONN_STATE_SETUP - 1] = अणु
 		.current_state	= LLC_CONN_STATE_SETUP,
 		.transitions	= llc_setup_state_transitions,
-	},
-	[LLC_CONN_STATE_NORMAL - 1] = {
+	पूर्ण,
+	[LLC_CONN_STATE_NORMAL - 1] = अणु
 		.current_state	= LLC_CONN_STATE_NORMAL,
 		.transitions	= llc_normal_state_transitions,
-	},
-	[LLC_CONN_STATE_BUSY - 1] = {
+	पूर्ण,
+	[LLC_CONN_STATE_BUSY - 1] = अणु
 		.current_state	= LLC_CONN_STATE_BUSY,
 		.transitions	= llc_busy_state_transitions,
-	},
-	[LLC_CONN_STATE_REJ - 1] = {
+	पूर्ण,
+	[LLC_CONN_STATE_REJ - 1] = अणु
 		.current_state	= LLC_CONN_STATE_REJ,
 		.transitions	= llc_reject_state_transitions,
-	},
-	[LLC_CONN_STATE_AWAIT - 1] = {
+	पूर्ण,
+	[LLC_CONN_STATE_AWAIT - 1] = अणु
 		.current_state	= LLC_CONN_STATE_AWAIT,
-		.transitions	= llc_await_state_transitions,
-	},
-	[LLC_CONN_STATE_AWAIT_BUSY - 1] = {
+		.transitions	= llc_aरुको_state_transitions,
+	पूर्ण,
+	[LLC_CONN_STATE_AWAIT_BUSY - 1] = अणु
 		.current_state	= LLC_CONN_STATE_AWAIT_BUSY,
-		.transitions	= llc_await_busy_state_transitions,
-	},
-	[LLC_CONN_STATE_AWAIT_REJ - 1] = {
+		.transitions	= llc_aरुको_busy_state_transitions,
+	पूर्ण,
+	[LLC_CONN_STATE_AWAIT_REJ - 1] = अणु
 		.current_state	= LLC_CONN_STATE_AWAIT_REJ,
-		.transitions	= llc_await_rejct_state_transitions,
-	},
-	[LLC_CONN_STATE_D_CONN - 1] = {
+		.transitions	= llc_aरुको_rejct_state_transitions,
+	पूर्ण,
+	[LLC_CONN_STATE_D_CONN - 1] = अणु
 		.current_state	= LLC_CONN_STATE_D_CONN,
 		.transitions	= llc_d_conn_state_transitions,
-	},
-	[LLC_CONN_STATE_RESET - 1] = {
+	पूर्ण,
+	[LLC_CONN_STATE_RESET - 1] = अणु
 		.current_state	= LLC_CONN_STATE_RESET,
 		.transitions	= llc_rst_state_transitions,
-	},
-	[LLC_CONN_STATE_ERROR - 1] = {
+	पूर्ण,
+	[LLC_CONN_STATE_ERROR - 1] = अणु
 		.current_state	= LLC_CONN_STATE_ERROR,
 		.transitions	= llc_error_state_transitions,
-	},
-	[LLC_CONN_STATE_TEMP - 1] = {
+	पूर्ण,
+	[LLC_CONN_STATE_TEMP - 1] = अणु
 		.current_state	= LLC_CONN_STATE_TEMP,
 		.transitions	= llc_temp_state_transitions,
-	},
-};
+	पूर्ण,
+पूर्ण;

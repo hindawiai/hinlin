@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __UM_CACHE_H
-#define __UM_CACHE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __UM_CACHE_H
+#घोषणा __UM_CACHE_H
 
 
-#if defined(CONFIG_UML_X86) && !defined(CONFIG_64BIT)
+#अगर defined(CONFIG_UML_X86) && !defined(CONFIG_64BIT)
 # define L1_CACHE_SHIFT		(CONFIG_X86_L1_CACHE_SHIFT)
-#elif defined(CONFIG_UML_X86) /* 64-bit */
+#या_अगर defined(CONFIG_UML_X86) /* 64-bit */
 # define L1_CACHE_SHIFT		6 /* Should be 7 on Intel */
-#else
-/* XXX: this was taken from x86, now it's completely random. Luckily only
+#अन्यथा
+/* XXX: this was taken from x86, now it's completely अक्रमom. Luckily only
  * affects SMP padding. */
 # define L1_CACHE_SHIFT		5
-#endif
+#पूर्ण_अगर
 
-#define L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
+#घोषणा L1_CACHE_BYTES		(1 << L1_CACHE_SHIFT)
 
-#endif
+#पूर्ण_अगर

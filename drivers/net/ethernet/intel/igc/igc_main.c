@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c)  2018 Intel Corporation */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/if_vlan.h>
-#include <linux/aer.h>
-#include <linux/tcp.h>
-#include <linux/udp.h>
-#include <linux/ip.h>
-#include <linux/pm_runtime.h>
-#include <net/pkt_sched.h>
-#include <linux/bpf_trace.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/aer.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/udp.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <net/pkt_sched.h>
+#समावेश <linux/bpf_trace.h>
 
-#include <net/ipv6.h>
+#समावेश <net/ipv6.h>
 
-#include "igc.h"
-#include "igc_hw.h"
-#include "igc_tsn.h"
-#include "igc_xdp.h"
+#समावेश "igc.h"
+#समावेश "igc_hw.h"
+#समावेश "igc_tsn.h"
+#समावेश "igc_xdp.h"
 
-#define DRV_SUMMARY	"Intel(R) 2.5G Ethernet Linux Driver"
+#घोषणा DRV_SUMMARY	"Intel(R) 2.5G Ethernet Linux Driver"
 
-#define DEFAULT_MSG_ENABLE (NETIF_MSG_DRV | NETIF_MSG_PROBE | NETIF_MSG_LINK)
+#घोषणा DEFAULT_MSG_ENABLE (NETIF_MSG_DRV | NETIF_MSG_PROBE | NETIF_MSG_LINK)
 
-#define IGC_XDP_PASS		0
-#define IGC_XDP_CONSUMED	BIT(0)
-#define IGC_XDP_TX		BIT(1)
-#define IGC_XDP_REDIRECT	BIT(2)
+#घोषणा IGC_XDP_PASS		0
+#घोषणा IGC_XDP_CONSUMED	BIT(0)
+#घोषणा IGC_XDP_TX		BIT(1)
+#घोषणा IGC_XDP_REसूचीECT	BIT(2)
 
-static int debug = -1;
+अटल पूर्णांक debug = -1;
 
 MODULE_AUTHOR("Intel Corporation, <linux.nics@intel.com>");
 MODULE_DESCRIPTION(DRV_SUMMARY);
 MODULE_LICENSE("GPL v2");
-module_param(debug, int, 0);
+module_param(debug, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "Debug level (0=none,...,16=all)");
 
-char igc_driver_name[] = "igc";
-static const char igc_driver_string[] = DRV_SUMMARY;
-static const char igc_copyright[] =
+अक्षर igc_driver_name[] = "igc";
+अटल स्थिर अक्षर igc_driver_string[] = DRV_SUMMARY;
+अटल स्थिर अक्षर igc_copyright[] =
 	"Copyright(c) 2018 Intel Corporation.";
 
-static const struct igc_info *igc_info_tbl[] = {
+अटल स्थिर काष्ठा igc_info *igc_info_tbl[] = अणु
 	[board_base] = &igc_base_info,
-};
+पूर्ण;
 
-static const struct pci_device_id igc_pci_tbl[] = {
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_LM), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_V), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_I), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I220_V), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_K), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_K2), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_K), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_LMVP), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_IT), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_LM), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_V), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_IT), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I221_V), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_BLANK_NVM), board_base },
-	{ PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_BLANK_NVM), board_base },
+अटल स्थिर काष्ठा pci_device_id igc_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_LM), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_V), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_I), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I220_V), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_K), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_K2), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_K), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_LMVP), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_IT), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_LM), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_V), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_IT), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I221_V), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I226_BLANK_NVM), board_base पूर्ण,
+	अणु PCI_VDEVICE(INTEL, IGC_DEV_ID_I225_BLANK_NVM), board_base पूर्ण,
 	/* required last entry */
-	{0, }
-};
+	अणु0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, igc_pci_tbl);
 
-enum latency_range {
+क्रमागत latency_range अणु
 	lowest_latency = 0,
 	low_latency = 1,
 	bulk_latency = 2,
 	latency_invalid = 255
-};
+पूर्ण;
 
-void igc_reset(struct igc_adapter *adapter)
-{
-	struct net_device *dev = adapter->netdev;
-	struct igc_hw *hw = &adapter->hw;
-	struct igc_fc_info *fc = &hw->fc;
+व्योम igc_reset(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
+	काष्ठा igc_fc_info *fc = &hw->fc;
 	u32 pba, hwm;
 
-	/* Repartition PBA for greater than 9k MTU if required */
+	/* Repartition PBA क्रम greater than 9k MTU अगर required */
 	pba = IGC_PBA_34K;
 
 	/* flow control settings
 	 * The high water mark must be low enough to fit one full frame
-	 * after transmitting the pause frame.  As such we must have enough
-	 * space to allow for us to complete our current transmit and then
+	 * after transmitting the छोड़ो frame.  As such we must have enough
+	 * space to allow क्रम us to complete our current transmit and then
 	 * receive the frame that is in progress from the link partner.
 	 * Set it to:
 	 * - the full Rx FIFO size minus one full Tx plus one full Rx frame
@@ -96,20 +97,20 @@ void igc_reset(struct igc_adapter *adapter)
 
 	fc->high_water = hwm & 0xFFFFFFF0;	/* 16-byte granularity */
 	fc->low_water = fc->high_water - 16;
-	fc->pause_time = 0xFFFF;
+	fc->छोड़ो_समय = 0xFFFF;
 	fc->send_xon = 1;
 	fc->current_mode = fc->requested_mode;
 
 	hw->mac.ops.reset_hw(hw);
 
-	if (hw->mac.ops.init_hw(hw))
+	अगर (hw->mac.ops.init_hw(hw))
 		netdev_err(dev, "Error on hardware initialization\n");
 
 	/* Re-establish EEE setting */
 	igc_set_eee_i225(hw, true, true, true);
 
-	if (!netif_running(adapter->netdev))
-		igc_power_down_phy_copper_base(&adapter->hw);
+	अगर (!netअगर_running(adapter->netdev))
+		igc_घातer_करोwn_phy_copper_base(&adapter->hw);
 
 	/* Re-enable PTP, where applicable. */
 	igc_ptp_reset(adapter);
@@ -118,75 +119,75 @@ void igc_reset(struct igc_adapter *adapter)
 	igc_tsn_offload_apply(adapter);
 
 	igc_get_phy_info(hw);
-}
+पूर्ण
 
 /**
- * igc_power_up_link - Power up the phy link
- * @adapter: address of board private structure
+ * igc_घातer_up_link - Power up the phy link
+ * @adapter: address of board निजी काष्ठाure
  */
-static void igc_power_up_link(struct igc_adapter *adapter)
-{
+अटल व्योम igc_घातer_up_link(काष्ठा igc_adapter *adapter)
+अणु
 	igc_reset_phy(&adapter->hw);
 
-	igc_power_up_phy_copper(&adapter->hw);
+	igc_घातer_up_phy_copper(&adapter->hw);
 
 	igc_setup_link(&adapter->hw);
-}
+पूर्ण
 
 /**
  * igc_release_hw_control - release control of the h/w to f/w
- * @adapter: address of board private structure
+ * @adapter: address of board निजी काष्ठाure
  *
  * igc_release_hw_control resets CTRL_EXT:DRV_LOAD bit.
  * For ASF and Pass Through versions of f/w this means that the
- * driver is no longer loaded.
+ * driver is no दीर्घer loaded.
  */
-static void igc_release_hw_control(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_release_hw_control(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 ctrl_ext;
 
 	/* Let firmware take over control of h/w */
 	ctrl_ext = rd32(IGC_CTRL_EXT);
 	wr32(IGC_CTRL_EXT,
 	     ctrl_ext & ~IGC_CTRL_EXT_DRV_LOAD);
-}
+पूर्ण
 
 /**
  * igc_get_hw_control - get control of the h/w from f/w
- * @adapter: address of board private structure
+ * @adapter: address of board निजी काष्ठाure
  *
  * igc_get_hw_control sets CTRL_EXT:DRV_LOAD bit.
  * For ASF and Pass Through versions of f/w this means that
  * the driver is loaded.
  */
-static void igc_get_hw_control(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_get_hw_control(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 ctrl_ext;
 
 	/* Let firmware know the driver has taken over */
 	ctrl_ext = rd32(IGC_CTRL_EXT);
 	wr32(IGC_CTRL_EXT,
 	     ctrl_ext | IGC_CTRL_EXT_DRV_LOAD);
-}
+पूर्ण
 
 /**
  * igc_clean_tx_ring - Free Tx Buffers
  * @tx_ring: ring to be cleaned
  */
-static void igc_clean_tx_ring(struct igc_ring *tx_ring)
-{
+अटल व्योम igc_clean_tx_ring(काष्ठा igc_ring *tx_ring)
+अणु
 	u16 i = tx_ring->next_to_clean;
-	struct igc_tx_buffer *tx_buffer = &tx_ring->tx_buffer_info[i];
+	काष्ठा igc_tx_buffer *tx_buffer = &tx_ring->tx_buffer_info[i];
 
-	while (i != tx_ring->next_to_use) {
-		union igc_adv_tx_desc *eop_desc, *tx_desc;
+	जबतक (i != tx_ring->next_to_use) अणु
+		जोड़ igc_adv_tx_desc *eop_desc, *tx_desc;
 
-		if (tx_buffer->tx_flags & IGC_TX_FLAGS_XDP)
-			xdp_return_frame(tx_buffer->xdpf);
-		else
-			dev_kfree_skb_any(tx_buffer->skb);
+		अगर (tx_buffer->tx_flags & IGC_TX_FLAGS_XDP)
+			xdp_वापस_frame(tx_buffer->xdpf);
+		अन्यथा
+			dev_kमुक्त_skb_any(tx_buffer->skb);
 
 		/* unmap skb header data */
 		dma_unmap_single(tx_ring->dev,
@@ -194,183 +195,183 @@ static void igc_clean_tx_ring(struct igc_ring *tx_ring)
 				 dma_unmap_len(tx_buffer, len),
 				 DMA_TO_DEVICE);
 
-		/* check for eop_desc to determine the end of the packet */
+		/* check क्रम eop_desc to determine the end of the packet */
 		eop_desc = tx_buffer->next_to_watch;
 		tx_desc = IGC_TX_DESC(tx_ring, i);
 
-		/* unmap remaining buffers */
-		while (tx_desc != eop_desc) {
+		/* unmap reमुख्यing buffers */
+		जबतक (tx_desc != eop_desc) अणु
 			tx_buffer++;
 			tx_desc++;
 			i++;
-			if (unlikely(i == tx_ring->count)) {
+			अगर (unlikely(i == tx_ring->count)) अणु
 				i = 0;
 				tx_buffer = tx_ring->tx_buffer_info;
 				tx_desc = IGC_TX_DESC(tx_ring, 0);
-			}
+			पूर्ण
 
-			/* unmap any remaining paged data */
-			if (dma_unmap_len(tx_buffer, len))
+			/* unmap any reमुख्यing paged data */
+			अगर (dma_unmap_len(tx_buffer, len))
 				dma_unmap_page(tx_ring->dev,
 					       dma_unmap_addr(tx_buffer, dma),
 					       dma_unmap_len(tx_buffer, len),
 					       DMA_TO_DEVICE);
-		}
+		पूर्ण
 
-		/* move us one more past the eop_desc for start of next pkt */
+		/* move us one more past the eop_desc क्रम start of next pkt */
 		tx_buffer++;
 		i++;
-		if (unlikely(i == tx_ring->count)) {
+		अगर (unlikely(i == tx_ring->count)) अणु
 			i = 0;
 			tx_buffer = tx_ring->tx_buffer_info;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* reset BQL for queue */
+	/* reset BQL क्रम queue */
 	netdev_tx_reset_queue(txring_txq(tx_ring));
 
 	/* reset next_to_use and next_to_clean */
 	tx_ring->next_to_use = 0;
 	tx_ring->next_to_clean = 0;
-}
+पूर्ण
 
 /**
- * igc_free_tx_resources - Free Tx Resources per Queue
- * @tx_ring: Tx descriptor ring for a specific queue
+ * igc_मुक्त_tx_resources - Free Tx Resources per Queue
+ * @tx_ring: Tx descriptor ring क्रम a specअगरic queue
  *
  * Free all transmit software resources
  */
-void igc_free_tx_resources(struct igc_ring *tx_ring)
-{
+व्योम igc_मुक्त_tx_resources(काष्ठा igc_ring *tx_ring)
+अणु
 	igc_clean_tx_ring(tx_ring);
 
-	vfree(tx_ring->tx_buffer_info);
-	tx_ring->tx_buffer_info = NULL;
+	vमुक्त(tx_ring->tx_buffer_info);
+	tx_ring->tx_buffer_info = शून्य;
 
-	/* if not set, then don't free */
-	if (!tx_ring->desc)
-		return;
+	/* अगर not set, then करोn't मुक्त */
+	अगर (!tx_ring->desc)
+		वापस;
 
-	dma_free_coherent(tx_ring->dev, tx_ring->size,
+	dma_मुक्त_coherent(tx_ring->dev, tx_ring->size,
 			  tx_ring->desc, tx_ring->dma);
 
-	tx_ring->desc = NULL;
-}
+	tx_ring->desc = शून्य;
+पूर्ण
 
 /**
- * igc_free_all_tx_resources - Free Tx Resources for All Queues
- * @adapter: board private structure
+ * igc_मुक्त_all_tx_resources - Free Tx Resources क्रम All Queues
+ * @adapter: board निजी काष्ठाure
  *
  * Free all transmit software resources
  */
-static void igc_free_all_tx_resources(struct igc_adapter *adapter)
-{
-	int i;
+अटल व्योम igc_मुक्त_all_tx_resources(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_tx_queues; i++)
-		igc_free_tx_resources(adapter->tx_ring[i]);
-}
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
+		igc_मुक्त_tx_resources(adapter->tx_ring[i]);
+पूर्ण
 
 /**
- * igc_clean_all_tx_rings - Free Tx Buffers for all queues
- * @adapter: board private structure
+ * igc_clean_all_tx_rings - Free Tx Buffers क्रम all queues
+ * @adapter: board निजी काष्ठाure
  */
-static void igc_clean_all_tx_rings(struct igc_adapter *adapter)
-{
-	int i;
+अटल व्योम igc_clean_all_tx_rings(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_tx_queues; i++)
-		if (adapter->tx_ring[i])
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
+		अगर (adapter->tx_ring[i])
 			igc_clean_tx_ring(adapter->tx_ring[i]);
-}
+पूर्ण
 
 /**
  * igc_setup_tx_resources - allocate Tx resources (Descriptors)
- * @tx_ring: tx descriptor ring (for a specific queue) to setup
+ * @tx_ring: tx descriptor ring (क्रम a specअगरic queue) to setup
  *
  * Return 0 on success, negative on failure
  */
-int igc_setup_tx_resources(struct igc_ring *tx_ring)
-{
-	struct net_device *ndev = tx_ring->netdev;
-	struct device *dev = tx_ring->dev;
-	int size = 0;
+पूर्णांक igc_setup_tx_resources(काष्ठा igc_ring *tx_ring)
+अणु
+	काष्ठा net_device *ndev = tx_ring->netdev;
+	काष्ठा device *dev = tx_ring->dev;
+	पूर्णांक size = 0;
 
-	size = sizeof(struct igc_tx_buffer) * tx_ring->count;
+	size = माप(काष्ठा igc_tx_buffer) * tx_ring->count;
 	tx_ring->tx_buffer_info = vzalloc(size);
-	if (!tx_ring->tx_buffer_info)
-		goto err;
+	अगर (!tx_ring->tx_buffer_info)
+		जाओ err;
 
 	/* round up to nearest 4K */
-	tx_ring->size = tx_ring->count * sizeof(union igc_adv_tx_desc);
+	tx_ring->size = tx_ring->count * माप(जोड़ igc_adv_tx_desc);
 	tx_ring->size = ALIGN(tx_ring->size, 4096);
 
 	tx_ring->desc = dma_alloc_coherent(dev, tx_ring->size,
 					   &tx_ring->dma, GFP_KERNEL);
 
-	if (!tx_ring->desc)
-		goto err;
+	अगर (!tx_ring->desc)
+		जाओ err;
 
 	tx_ring->next_to_use = 0;
 	tx_ring->next_to_clean = 0;
 
-	return 0;
+	वापस 0;
 
 err:
-	vfree(tx_ring->tx_buffer_info);
+	vमुक्त(tx_ring->tx_buffer_info);
 	netdev_err(ndev, "Unable to allocate memory for Tx descriptor ring\n");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * igc_setup_all_tx_resources - wrapper to allocate Tx resources for all queues
- * @adapter: board private structure
+ * igc_setup_all_tx_resources - wrapper to allocate Tx resources क्रम all queues
+ * @adapter: board निजी काष्ठाure
  *
  * Return 0 on success, negative on failure
  */
-static int igc_setup_all_tx_resources(struct igc_adapter *adapter)
-{
-	struct net_device *dev = adapter->netdev;
-	int i, err = 0;
+अटल पूर्णांक igc_setup_all_tx_resources(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	पूर्णांक i, err = 0;
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
 		err = igc_setup_tx_resources(adapter->tx_ring[i]);
-		if (err) {
+		अगर (err) अणु
 			netdev_err(dev, "Error on Tx queue %u setup\n", i);
-			for (i--; i >= 0; i--)
-				igc_free_tx_resources(adapter->tx_ring[i]);
-			break;
-		}
-	}
+			क्रम (i--; i >= 0; i--)
+				igc_मुक्त_tx_resources(adapter->tx_ring[i]);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * igc_clean_rx_ring - Free Rx Buffers per Queue
- * @rx_ring: ring to free buffers from
+ * @rx_ring: ring to मुक्त buffers from
  */
-static void igc_clean_rx_ring(struct igc_ring *rx_ring)
-{
+अटल व्योम igc_clean_rx_ring(काष्ठा igc_ring *rx_ring)
+अणु
 	u16 i = rx_ring->next_to_clean;
 
-	dev_kfree_skb(rx_ring->skb);
-	rx_ring->skb = NULL;
+	dev_kमुक्त_skb(rx_ring->skb);
+	rx_ring->skb = शून्य;
 
 	/* Free all the Rx ring sk_buffs */
-	while (i != rx_ring->next_to_alloc) {
-		struct igc_rx_buffer *buffer_info = &rx_ring->rx_buffer_info[i];
+	जबतक (i != rx_ring->next_to_alloc) अणु
+		काष्ठा igc_rx_buffer *buffer_info = &rx_ring->rx_buffer_info[i];
 
 		/* Invalidate cache lines that may have been written to by
-		 * device so that we avoid corrupting memory.
+		 * device so that we aव्योम corrupting memory.
 		 */
-		dma_sync_single_range_for_cpu(rx_ring->dev,
+		dma_sync_single_range_क्रम_cpu(rx_ring->dev,
 					      buffer_info->dma,
 					      buffer_info->page_offset,
 					      igc_rx_bufsz(rx_ring),
 					      DMA_FROM_DEVICE);
 
-		/* free resources associated with mapping */
+		/* मुक्त resources associated with mapping */
 		dma_unmap_page_attrs(rx_ring->dev,
 				     buffer_info->dma,
 				     igc_rx_pg_size(rx_ring),
@@ -380,91 +381,91 @@ static void igc_clean_rx_ring(struct igc_ring *rx_ring)
 					buffer_info->pagecnt_bias);
 
 		i++;
-		if (i == rx_ring->count)
+		अगर (i == rx_ring->count)
 			i = 0;
-	}
+	पूर्ण
 
 	clear_ring_uses_large_buffer(rx_ring);
 
 	rx_ring->next_to_alloc = 0;
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
-}
+पूर्ण
 
 /**
- * igc_clean_all_rx_rings - Free Rx Buffers for all queues
- * @adapter: board private structure
+ * igc_clean_all_rx_rings - Free Rx Buffers क्रम all queues
+ * @adapter: board निजी काष्ठाure
  */
-static void igc_clean_all_rx_rings(struct igc_adapter *adapter)
-{
-	int i;
+अटल व्योम igc_clean_all_rx_rings(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_rx_queues; i++)
-		if (adapter->rx_ring[i])
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
+		अगर (adapter->rx_ring[i])
 			igc_clean_rx_ring(adapter->rx_ring[i]);
-}
+पूर्ण
 
 /**
- * igc_free_rx_resources - Free Rx Resources
+ * igc_मुक्त_rx_resources - Free Rx Resources
  * @rx_ring: ring to clean the resources from
  *
  * Free all receive software resources
  */
-void igc_free_rx_resources(struct igc_ring *rx_ring)
-{
+व्योम igc_मुक्त_rx_resources(काष्ठा igc_ring *rx_ring)
+अणु
 	igc_clean_rx_ring(rx_ring);
 
-	igc_xdp_unregister_rxq_info(rx_ring);
+	igc_xdp_unरेजिस्टर_rxq_info(rx_ring);
 
-	vfree(rx_ring->rx_buffer_info);
-	rx_ring->rx_buffer_info = NULL;
+	vमुक्त(rx_ring->rx_buffer_info);
+	rx_ring->rx_buffer_info = शून्य;
 
-	/* if not set, then don't free */
-	if (!rx_ring->desc)
-		return;
+	/* अगर not set, then करोn't मुक्त */
+	अगर (!rx_ring->desc)
+		वापस;
 
-	dma_free_coherent(rx_ring->dev, rx_ring->size,
+	dma_मुक्त_coherent(rx_ring->dev, rx_ring->size,
 			  rx_ring->desc, rx_ring->dma);
 
-	rx_ring->desc = NULL;
-}
+	rx_ring->desc = शून्य;
+पूर्ण
 
 /**
- * igc_free_all_rx_resources - Free Rx Resources for All Queues
- * @adapter: board private structure
+ * igc_मुक्त_all_rx_resources - Free Rx Resources क्रम All Queues
+ * @adapter: board निजी काष्ठाure
  *
  * Free all receive software resources
  */
-static void igc_free_all_rx_resources(struct igc_adapter *adapter)
-{
-	int i;
+अटल व्योम igc_मुक्त_all_rx_resources(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_rx_queues; i++)
-		igc_free_rx_resources(adapter->rx_ring[i]);
-}
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
+		igc_मुक्त_rx_resources(adapter->rx_ring[i]);
+पूर्ण
 
 /**
  * igc_setup_rx_resources - allocate Rx resources (Descriptors)
- * @rx_ring:    rx descriptor ring (for a specific queue) to setup
+ * @rx_ring:    rx descriptor ring (क्रम a specअगरic queue) to setup
  *
  * Returns 0 on success, negative on failure
  */
-int igc_setup_rx_resources(struct igc_ring *rx_ring)
-{
-	struct net_device *ndev = rx_ring->netdev;
-	struct device *dev = rx_ring->dev;
-	int size, desc_len, res;
+पूर्णांक igc_setup_rx_resources(काष्ठा igc_ring *rx_ring)
+अणु
+	काष्ठा net_device *ndev = rx_ring->netdev;
+	काष्ठा device *dev = rx_ring->dev;
+	पूर्णांक size, desc_len, res;
 
-	res = igc_xdp_register_rxq_info(rx_ring);
-	if (res < 0)
-		return res;
+	res = igc_xdp_रेजिस्टर_rxq_info(rx_ring);
+	अगर (res < 0)
+		वापस res;
 
-	size = sizeof(struct igc_rx_buffer) * rx_ring->count;
+	size = माप(काष्ठा igc_rx_buffer) * rx_ring->count;
 	rx_ring->rx_buffer_info = vzalloc(size);
-	if (!rx_ring->rx_buffer_info)
-		goto err;
+	अगर (!rx_ring->rx_buffer_info)
+		जाओ err;
 
-	desc_len = sizeof(union igc_adv_rx_desc);
+	desc_len = माप(जोड़ igc_adv_rx_desc);
 
 	/* Round up to nearest 4K */
 	rx_ring->size = rx_ring->count * desc_len;
@@ -473,86 +474,86 @@ int igc_setup_rx_resources(struct igc_ring *rx_ring)
 	rx_ring->desc = dma_alloc_coherent(dev, rx_ring->size,
 					   &rx_ring->dma, GFP_KERNEL);
 
-	if (!rx_ring->desc)
-		goto err;
+	अगर (!rx_ring->desc)
+		जाओ err;
 
 	rx_ring->next_to_alloc = 0;
 	rx_ring->next_to_clean = 0;
 	rx_ring->next_to_use = 0;
 
-	return 0;
+	वापस 0;
 
 err:
-	igc_xdp_unregister_rxq_info(rx_ring);
-	vfree(rx_ring->rx_buffer_info);
-	rx_ring->rx_buffer_info = NULL;
+	igc_xdp_unरेजिस्टर_rxq_info(rx_ring);
+	vमुक्त(rx_ring->rx_buffer_info);
+	rx_ring->rx_buffer_info = शून्य;
 	netdev_err(ndev, "Unable to allocate memory for Rx descriptor ring\n");
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * igc_setup_all_rx_resources - wrapper to allocate Rx resources
- *                                (Descriptors) for all queues
- * @adapter: board private structure
+ *                                (Descriptors) क्रम all queues
+ * @adapter: board निजी काष्ठाure
  *
  * Return 0 on success, negative on failure
  */
-static int igc_setup_all_rx_resources(struct igc_adapter *adapter)
-{
-	struct net_device *dev = adapter->netdev;
-	int i, err = 0;
+अटल पूर्णांक igc_setup_all_rx_resources(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	पूर्णांक i, err = 0;
 
-	for (i = 0; i < adapter->num_rx_queues; i++) {
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
 		err = igc_setup_rx_resources(adapter->rx_ring[i]);
-		if (err) {
+		अगर (err) अणु
 			netdev_err(dev, "Error on Rx queue %u setup\n", i);
-			for (i--; i >= 0; i--)
-				igc_free_rx_resources(adapter->rx_ring[i]);
-			break;
-		}
-	}
+			क्रम (i--; i >= 0; i--)
+				igc_मुक्त_rx_resources(adapter->rx_ring[i]);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool igc_xdp_is_enabled(struct igc_adapter *adapter)
-{
-	return !!adapter->xdp_prog;
-}
+अटल bool igc_xdp_is_enabled(काष्ठा igc_adapter *adapter)
+अणु
+	वापस !!adapter->xdp_prog;
+पूर्ण
 
 /**
  * igc_configure_rx_ring - Configure a receive ring after Reset
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  * @ring: receive ring to be configured
  *
  * Configure the Rx unit of the MAC after a reset.
  */
-static void igc_configure_rx_ring(struct igc_adapter *adapter,
-				  struct igc_ring *ring)
-{
-	struct igc_hw *hw = &adapter->hw;
-	union igc_adv_rx_desc *rx_desc;
-	int reg_idx = ring->reg_idx;
+अटल व्योम igc_configure_rx_ring(काष्ठा igc_adapter *adapter,
+				  काष्ठा igc_ring *ring)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	जोड़ igc_adv_rx_desc *rx_desc;
+	पूर्णांक reg_idx = ring->reg_idx;
 	u32 srrctl = 0, rxdctl = 0;
 	u64 rdba = ring->dma;
 
-	if (igc_xdp_is_enabled(adapter))
+	अगर (igc_xdp_is_enabled(adapter))
 		set_ring_uses_large_buffer(ring);
 
 	/* disable the queue */
 	wr32(IGC_RXDCTL(reg_idx), 0);
 
-	/* Set DMA base address registers */
+	/* Set DMA base address रेजिस्टरs */
 	wr32(IGC_RDBAL(reg_idx),
 	     rdba & 0x00000000ffffffffULL);
 	wr32(IGC_RDBAH(reg_idx), rdba >> 32);
 	wr32(IGC_RDLEN(reg_idx),
-	     ring->count * sizeof(union igc_adv_rx_desc));
+	     ring->count * माप(जोड़ igc_adv_rx_desc));
 
 	/* initialize head and tail */
 	ring->tail = adapter->io_addr + IGC_RDT(reg_idx);
 	wr32(IGC_RDH(reg_idx), 0);
-	writel(0, ring->tail);
+	ग_लिखोl(0, ring->tail);
 
 	/* reset next-to- use/clean to place SW in sync with hardware */
 	ring->next_to_clean = 0;
@@ -560,9 +561,9 @@ static void igc_configure_rx_ring(struct igc_adapter *adapter,
 
 	/* set descriptor configuration */
 	srrctl = IGC_RX_HDR_LEN << IGC_SRRCTL_BSIZEHDRSIZE_SHIFT;
-	if (ring_uses_large_buffer(ring))
+	अगर (ring_uses_large_buffer(ring))
 		srrctl |= IGC_RXBUFFER_3072 >> IGC_SRRCTL_BSIZEPKT_SHIFT;
-	else
+	अन्यथा
 		srrctl |= IGC_RXBUFFER_2048 >> IGC_SRRCTL_BSIZEPKT_SHIFT;
 	srrctl |= IGC_SRRCTL_DESCTYPE_ADV_ONEBUF;
 
@@ -573,8 +574,8 @@ static void igc_configure_rx_ring(struct igc_adapter *adapter,
 	rxdctl |= IGC_RX_WTHRESH << 16;
 
 	/* initialize rx_buffer_info */
-	memset(ring->rx_buffer_info, 0,
-	       sizeof(struct igc_rx_buffer) * ring->count);
+	स_रखो(ring->rx_buffer_info, 0,
+	       माप(काष्ठा igc_rx_buffer) * ring->count);
 
 	/* initialize Rx descriptor 0 */
 	rx_desc = IGC_RX_DESC(ring, 0);
@@ -584,37 +585,37 @@ static void igc_configure_rx_ring(struct igc_adapter *adapter,
 	rxdctl |= IGC_RXDCTL_QUEUE_ENABLE;
 
 	wr32(IGC_RXDCTL(reg_idx), rxdctl);
-}
+पूर्ण
 
 /**
  * igc_configure_rx - Configure receive Unit after Reset
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
  * Configure the Rx unit of the MAC after a reset.
  */
-static void igc_configure_rx(struct igc_adapter *adapter)
-{
-	int i;
+अटल व्योम igc_configure_rx(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	/* Setup the HW Rx Head and Tail Descriptor Pointers and
+	/* Setup the HW Rx Head and Tail Descriptor Poपूर्णांकers and
 	 * the Base and Length of the Rx Descriptor Ring
 	 */
-	for (i = 0; i < adapter->num_rx_queues; i++)
+	क्रम (i = 0; i < adapter->num_rx_queues; i++)
 		igc_configure_rx_ring(adapter, adapter->rx_ring[i]);
-}
+पूर्ण
 
 /**
  * igc_configure_tx_ring - Configure transmit ring after Reset
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  * @ring: tx ring to configure
  *
  * Configure a transmit ring after a reset.
  */
-static void igc_configure_tx_ring(struct igc_adapter *adapter,
-				  struct igc_ring *ring)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int reg_idx = ring->reg_idx;
+अटल व्योम igc_configure_tx_ring(काष्ठा igc_adapter *adapter,
+				  काष्ठा igc_ring *ring)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक reg_idx = ring->reg_idx;
 	u64 tdba = ring->dma;
 	u32 txdctl = 0;
 
@@ -624,14 +625,14 @@ static void igc_configure_tx_ring(struct igc_adapter *adapter,
 	mdelay(10);
 
 	wr32(IGC_TDLEN(reg_idx),
-	     ring->count * sizeof(union igc_adv_tx_desc));
+	     ring->count * माप(जोड़ igc_adv_tx_desc));
 	wr32(IGC_TDBAL(reg_idx),
 	     tdba & 0x00000000ffffffffULL);
 	wr32(IGC_TDBAH(reg_idx), tdba >> 32);
 
 	ring->tail = adapter->io_addr + IGC_TDT(reg_idx);
 	wr32(IGC_TDH(reg_idx), 0);
-	writel(0, ring->tail);
+	ग_लिखोl(0, ring->tail);
 
 	txdctl |= IGC_TX_PTHRESH;
 	txdctl |= IGC_TX_HTHRESH << 8;
@@ -639,58 +640,58 @@ static void igc_configure_tx_ring(struct igc_adapter *adapter,
 
 	txdctl |= IGC_TXDCTL_QUEUE_ENABLE;
 	wr32(IGC_TXDCTL(reg_idx), txdctl);
-}
+पूर्ण
 
 /**
  * igc_configure_tx - Configure transmit Unit after Reset
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  *
  * Configure the Tx unit of the MAC after a reset.
  */
-static void igc_configure_tx(struct igc_adapter *adapter)
-{
-	int i;
+अटल व्योम igc_configure_tx(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < adapter->num_tx_queues; i++)
+	क्रम (i = 0; i < adapter->num_tx_queues; i++)
 		igc_configure_tx_ring(adapter, adapter->tx_ring[i]);
-}
+पूर्ण
 
 /**
- * igc_setup_mrqc - configure the multiple receive queue control registers
- * @adapter: Board private structure
+ * igc_setup_mrqc - configure the multiple receive queue control रेजिस्टरs
+ * @adapter: Board निजी काष्ठाure
  */
-static void igc_setup_mrqc(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_setup_mrqc(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 j, num_rx_queues;
 	u32 mrqc, rxcsum;
 	u32 rss_key[10];
 
-	netdev_rss_key_fill(rss_key, sizeof(rss_key));
-	for (j = 0; j < 10; j++)
+	netdev_rss_key_fill(rss_key, माप(rss_key));
+	क्रम (j = 0; j < 10; j++)
 		wr32(IGC_RSSRK(j), rss_key[j]);
 
 	num_rx_queues = adapter->rss_queues;
 
-	if (adapter->rss_indir_tbl_init != num_rx_queues) {
-		for (j = 0; j < IGC_RETA_SIZE; j++)
+	अगर (adapter->rss_indir_tbl_init != num_rx_queues) अणु
+		क्रम (j = 0; j < IGC_RETA_SIZE; j++)
 			adapter->rss_indir_tbl[j] =
 			(j * num_rx_queues) / IGC_RETA_SIZE;
 		adapter->rss_indir_tbl_init = num_rx_queues;
-	}
-	igc_write_rss_indir_tbl(adapter);
+	पूर्ण
+	igc_ग_लिखो_rss_indir_tbl(adapter);
 
 	/* Disable raw packet checksumming so that RSS hash is placed in
-	 * descriptor on writeback.  No need to enable TCP/UDP/IP checksum
-	 * offloads as they are enabled by default
+	 * descriptor on ग_लिखोback.  No need to enable TCP/UDP/IP checksum
+	 * offloads as they are enabled by शेष
 	 */
 	rxcsum = rd32(IGC_RXCSUM);
 	rxcsum |= IGC_RXCSUM_PCSD;
 
-	/* Enable Receive Checksum Offload for SCTP */
+	/* Enable Receive Checksum Offload क्रम SCTP */
 	rxcsum |= IGC_RXCSUM_CRCOFL;
 
-	/* Don't need to set TUOFL or IPOFL, they default to 1 */
+	/* Don't need to set TUOFL or IPOFL, they शेष to 1 */
 	wr32(IGC_RXCSUM, rxcsum);
 
 	/* Generate RSS hash based on packet types, TCP/UDP
@@ -702,23 +703,23 @@ static void igc_setup_mrqc(struct igc_adapter *adapter)
 	       IGC_MRQC_RSS_FIELD_IPV6_TCP |
 	       IGC_MRQC_RSS_FIELD_IPV6_TCP_EX;
 
-	if (adapter->flags & IGC_FLAG_RSS_FIELD_IPV4_UDP)
+	अगर (adapter->flags & IGC_FLAG_RSS_FIELD_IPV4_UDP)
 		mrqc |= IGC_MRQC_RSS_FIELD_IPV4_UDP;
-	if (adapter->flags & IGC_FLAG_RSS_FIELD_IPV6_UDP)
+	अगर (adapter->flags & IGC_FLAG_RSS_FIELD_IPV6_UDP)
 		mrqc |= IGC_MRQC_RSS_FIELD_IPV6_UDP;
 
 	mrqc |= IGC_MRQC_ENABLE_RSS_MQ;
 
 	wr32(IGC_MRQC, mrqc);
-}
+पूर्ण
 
 /**
- * igc_setup_rctl - configure the receive control registers
- * @adapter: Board private structure
+ * igc_setup_rctl - configure the receive control रेजिस्टरs
+ * @adapter: Board निजी काष्ठाure
  */
-static void igc_setup_rctl(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_setup_rctl(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 rctl;
 
 	rctl = rd32(IGC_RCTL);
@@ -737,14 +738,14 @@ static void igc_setup_rctl(struct igc_adapter *adapter)
 	/* disable store bad packets and clear size bits. */
 	rctl &= ~(IGC_RCTL_SBP | IGC_RCTL_SZ_256);
 
-	/* enable LPE to allow for reception of jumbo frames */
+	/* enable LPE to allow क्रम reception of jumbo frames */
 	rctl |= IGC_RCTL_LPE;
 
-	/* disable queue 0 to prevent tail write w/o re-config */
+	/* disable queue 0 to prevent tail ग_लिखो w/o re-config */
 	wr32(IGC_RXDCTL(0), 0);
 
-	/* This is useful for sniffing bad packets. */
-	if (adapter->netdev->features & NETIF_F_RXALL) {
+	/* This is useful क्रम snअगरfing bad packets. */
+	अगर (adapter->netdev->features & NETIF_F_RXALL) अणु
 		/* UPE and MPE will be handled by normal PROMISC logic
 		 * in set_rx_mode
 		 */
@@ -752,23 +753,23 @@ static void igc_setup_rctl(struct igc_adapter *adapter)
 			 IGC_RCTL_BAM | /* RX All Bcast Pkts */
 			 IGC_RCTL_PMCF); /* RX All MAC Ctrl Pkts */
 
-		rctl &= ~(IGC_RCTL_DPF | /* Allow filtered pause */
+		rctl &= ~(IGC_RCTL_DPF | /* Allow filtered छोड़ो */
 			  IGC_RCTL_CFIEN); /* Disable VLAN CFIEN Filter */
-	}
+	पूर्ण
 
 	wr32(IGC_RCTL, rctl);
-}
+पूर्ण
 
 /**
- * igc_setup_tctl - configure the transmit control registers
- * @adapter: Board private structure
+ * igc_setup_tctl - configure the transmit control रेजिस्टरs
+ * @adapter: Board निजी काष्ठाure
  */
-static void igc_setup_tctl(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_setup_tctl(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 tctl;
 
-	/* disable queue 0 which icould be enabled by default */
+	/* disable queue 0 which icould be enabled by शेष */
 	wr32(IGC_TXDCTL(0), 0);
 
 	/* Program the Transmit Control Register */
@@ -781,11 +782,11 @@ static void igc_setup_tctl(struct igc_adapter *adapter)
 	tctl |= IGC_TCTL_EN;
 
 	wr32(IGC_TCTL, tctl);
-}
+पूर्ण
 
 /**
  * igc_set_mac_filter_hw() - Set MAC address filter in hardware
- * @adapter: Pointer to adapter where the filter should be set
+ * @adapter: Poपूर्णांकer to adapter where the filter should be set
  * @index: Filter index
  * @type: MAC address filter type (source or destination)
  * @addr: MAC address
@@ -793,30 +794,30 @@ static void igc_setup_tctl(struct igc_adapter *adapter)
  *         matching the filter are enqueued onto 'queue'. Otherwise, queue
  *         assignment is disabled.
  */
-static void igc_set_mac_filter_hw(struct igc_adapter *adapter, int index,
-				  enum igc_mac_filter_type type,
-				  const u8 *addr, int queue)
-{
-	struct net_device *dev = adapter->netdev;
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_set_mac_filter_hw(काष्ठा igc_adapter *adapter, पूर्णांक index,
+				  क्रमागत igc_mac_filter_type type,
+				  स्थिर u8 *addr, पूर्णांक queue)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 ral, rah;
 
-	if (WARN_ON(index >= hw->mac.rar_entry_count))
-		return;
+	अगर (WARN_ON(index >= hw->mac.rar_entry_count))
+		वापस;
 
 	ral = le32_to_cpup((__le32 *)(addr));
 	rah = le16_to_cpup((__le16 *)(addr + 4));
 
-	if (type == IGC_MAC_FILTER_TYPE_SRC) {
+	अगर (type == IGC_MAC_FILTER_TYPE_SRC) अणु
 		rah &= ~IGC_RAH_ASEL_MASK;
 		rah |= IGC_RAH_ASEL_SRC_ADDR;
-	}
+	पूर्ण
 
-	if (queue >= 0) {
+	अगर (queue >= 0) अणु
 		rah &= ~IGC_RAH_QSEL_MASK;
 		rah |= (queue << IGC_RAH_QSEL_SHIFT);
 		rah |= IGC_RAH_QSEL_ENABLE;
-	}
+	पूर्ण
 
 	rah |= IGC_RAH_AV;
 
@@ -824,124 +825,124 @@ static void igc_set_mac_filter_hw(struct igc_adapter *adapter, int index,
 	wr32(IGC_RAH(index), rah);
 
 	netdev_dbg(dev, "MAC address filter set in HW: index %d", index);
-}
+पूर्ण
 
 /**
  * igc_clear_mac_filter_hw() - Clear MAC address filter in hardware
- * @adapter: Pointer to adapter where the filter should be cleared
+ * @adapter: Poपूर्णांकer to adapter where the filter should be cleared
  * @index: Filter index
  */
-static void igc_clear_mac_filter_hw(struct igc_adapter *adapter, int index)
-{
-	struct net_device *dev = adapter->netdev;
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_clear_mac_filter_hw(काष्ठा igc_adapter *adapter, पूर्णांक index)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
 
-	if (WARN_ON(index >= hw->mac.rar_entry_count))
-		return;
+	अगर (WARN_ON(index >= hw->mac.rar_entry_count))
+		वापस;
 
 	wr32(IGC_RAL(index), 0);
 	wr32(IGC_RAH(index), 0);
 
 	netdev_dbg(dev, "MAC address filter cleared in HW: index %d", index);
-}
+पूर्ण
 
-/* Set default MAC address for the PF in the first RAR entry */
-static void igc_set_default_mac_filter(struct igc_adapter *adapter)
-{
-	struct net_device *dev = adapter->netdev;
+/* Set शेष MAC address क्रम the PF in the first RAR entry */
+अटल व्योम igc_set_शेष_mac_filter(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
 	u8 *addr = adapter->hw.mac.addr;
 
 	netdev_dbg(dev, "Set default MAC address filter: address %pM", addr);
 
 	igc_set_mac_filter_hw(adapter, 0, IGC_MAC_FILTER_TYPE_DST, addr, -1);
-}
+पूर्ण
 
 /**
  * igc_set_mac - Change the Ethernet Address of the NIC
- * @netdev: network interface device structure
- * @p: pointer to an address structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @p: poपूर्णांकer to an address काष्ठाure
  *
  * Returns 0 on success, negative on failure
  */
-static int igc_set_mac(struct net_device *netdev, void *p)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
-	struct sockaddr *addr = p;
+अटल पूर्णांक igc_set_mac(काष्ठा net_device *netdev, व्योम *p)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
+	काष्ठा sockaddr *addr = p;
 
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(addr->sa_data))
+		वापस -EADDRNOTAVAIL;
 
-	memcpy(netdev->dev_addr, addr->sa_data, netdev->addr_len);
-	memcpy(hw->mac.addr, addr->sa_data, netdev->addr_len);
+	स_नकल(netdev->dev_addr, addr->sa_data, netdev->addr_len);
+	स_नकल(hw->mac.addr, addr->sa_data, netdev->addr_len);
 
-	/* set the correct pool for the new PF MAC address in entry 0 */
-	igc_set_default_mac_filter(adapter);
+	/* set the correct pool क्रम the new PF MAC address in entry 0 */
+	igc_set_शेष_mac_filter(adapter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- *  igc_write_mc_addr_list - write multicast addresses to MTA
- *  @netdev: network interface device structure
+ *  igc_ग_लिखो_mc_addr_list - ग_लिखो multicast addresses to MTA
+ *  @netdev: network पूर्णांकerface device काष्ठाure
  *
  *  Writes multicast address list to the MTA hash table.
  *  Returns: -ENOMEM on failure
  *           0 on no addresses written
  *           X on writing X addresses to MTA
  **/
-static int igc_write_mc_addr_list(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
-	struct netdev_hw_addr *ha;
+अटल पूर्णांक igc_ग_लिखो_mc_addr_list(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
+	काष्ठा netdev_hw_addr *ha;
 	u8  *mta_list;
-	int i;
+	पूर्णांक i;
 
-	if (netdev_mc_empty(netdev)) {
+	अगर (netdev_mc_empty(netdev)) अणु
 		/* nothing to program, so clear mc list */
-		igc_update_mc_addr_list(hw, NULL, 0);
-		return 0;
-	}
+		igc_update_mc_addr_list(hw, शून्य, 0);
+		वापस 0;
+	पूर्ण
 
-	mta_list = kcalloc(netdev_mc_count(netdev), 6, GFP_ATOMIC);
-	if (!mta_list)
-		return -ENOMEM;
+	mta_list = kसुस्मृति(netdev_mc_count(netdev), 6, GFP_ATOMIC);
+	अगर (!mta_list)
+		वापस -ENOMEM;
 
 	/* The shared function expects a packed array of only addresses. */
 	i = 0;
-	netdev_for_each_mc_addr(ha, netdev)
-		memcpy(mta_list + (i++ * ETH_ALEN), ha->addr, ETH_ALEN);
+	netdev_क्रम_each_mc_addr(ha, netdev)
+		स_नकल(mta_list + (i++ * ETH_ALEN), ha->addr, ETH_ALEN);
 
 	igc_update_mc_addr_list(hw, mta_list, i);
-	kfree(mta_list);
+	kमुक्त(mta_list);
 
-	return netdev_mc_count(netdev);
-}
+	वापस netdev_mc_count(netdev);
+पूर्ण
 
-static __le32 igc_tx_launchtime(struct igc_adapter *adapter, ktime_t txtime)
-{
-	ktime_t cycle_time = adapter->cycle_time;
-	ktime_t base_time = adapter->base_time;
-	u32 launchtime;
+अटल __le32 igc_tx_launchसमय(काष्ठा igc_adapter *adapter, kसमय_प्रकार txसमय)
+अणु
+	kसमय_प्रकार cycle_समय = adapter->cycle_समय;
+	kसमय_प्रकार base_समय = adapter->base_समय;
+	u32 launchसमय;
 
 	/* FIXME: when using ETF together with taprio, we may have a
-	 * case where 'delta' is larger than the cycle_time, this may
-	 * cause problems if we don't read the current value of
-	 * IGC_BASET, as the value writen into the launchtime
-	 * descriptor field may be misinterpreted.
+	 * हाल where 'delta' is larger than the cycle_समय, this may
+	 * cause problems अगर we करोn't पढ़ो the current value of
+	 * IGC_BASET, as the value ग_लिखोn पूर्णांकo the launchसमय
+	 * descriptor field may be misपूर्णांकerpreted.
 	 */
-	div_s64_rem(ktime_sub_ns(txtime, base_time), cycle_time, &launchtime);
+	भाग_s64_rem(kसमय_sub_ns(txसमय, base_समय), cycle_समय, &launchसमय);
 
-	return cpu_to_le32(launchtime);
-}
+	वापस cpu_to_le32(launchसमय);
+पूर्ण
 
-static void igc_tx_ctxtdesc(struct igc_ring *tx_ring,
-			    struct igc_tx_buffer *first,
+अटल व्योम igc_tx_ctxtdesc(काष्ठा igc_ring *tx_ring,
+			    काष्ठा igc_tx_buffer *first,
 			    u32 vlan_macip_lens, u32 type_tucmd,
 			    u32 mss_l4len_idx)
-{
-	struct igc_adv_tx_context_desc *context_desc;
+अणु
+	काष्ठा igc_adv_tx_context_desc *context_desc;
 	u16 i = tx_ring->next_to_use;
 
 	context_desc = IGC_TX_CTXTDESC(tx_ring, i);
@@ -949,63 +950,63 @@ static void igc_tx_ctxtdesc(struct igc_ring *tx_ring,
 	i++;
 	tx_ring->next_to_use = (i < tx_ring->count) ? i : 0;
 
-	/* set bits to identify this as an advanced context descriptor */
+	/* set bits to identअगरy this as an advanced context descriptor */
 	type_tucmd |= IGC_TXD_CMD_DEXT | IGC_ADVTXD_DTYP_CTXT;
 
 	/* For i225, context index must be unique per ring. */
-	if (test_bit(IGC_RING_FLAG_TX_CTX_IDX, &tx_ring->flags))
+	अगर (test_bit(IGC_RING_FLAG_TX_CTX_IDX, &tx_ring->flags))
 		mss_l4len_idx |= tx_ring->reg_idx << 4;
 
 	context_desc->vlan_macip_lens	= cpu_to_le32(vlan_macip_lens);
 	context_desc->type_tucmd_mlhl	= cpu_to_le32(type_tucmd);
 	context_desc->mss_l4len_idx	= cpu_to_le32(mss_l4len_idx);
 
-	/* We assume there is always a valid Tx time available. Invalid times
+	/* We assume there is always a valid Tx समय available. Invalid बार
 	 * should have been handled by the upper layers.
 	 */
-	if (tx_ring->launchtime_enable) {
-		struct igc_adapter *adapter = netdev_priv(tx_ring->netdev);
-		ktime_t txtime = first->skb->tstamp;
+	अगर (tx_ring->launchसमय_enable) अणु
+		काष्ठा igc_adapter *adapter = netdev_priv(tx_ring->netdev);
+		kसमय_प्रकार txसमय = first->skb->tstamp;
 
-		skb_txtime_consumed(first->skb);
-		context_desc->launch_time = igc_tx_launchtime(adapter,
-							      txtime);
-	} else {
-		context_desc->launch_time = 0;
-	}
-}
+		skb_txसमय_consumed(first->skb);
+		context_desc->launch_समय = igc_tx_launchसमय(adapter,
+							      txसमय);
+	पूर्ण अन्यथा अणु
+		context_desc->launch_समय = 0;
+	पूर्ण
+पूर्ण
 
-static void igc_tx_csum(struct igc_ring *tx_ring, struct igc_tx_buffer *first)
-{
-	struct sk_buff *skb = first->skb;
+अटल व्योम igc_tx_csum(काष्ठा igc_ring *tx_ring, काष्ठा igc_tx_buffer *first)
+अणु
+	काष्ठा sk_buff *skb = first->skb;
 	u32 vlan_macip_lens = 0;
 	u32 type_tucmd = 0;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL) {
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL) अणु
 csum_failed:
-		if (!(first->tx_flags & IGC_TX_FLAGS_VLAN) &&
-		    !tx_ring->launchtime_enable)
-			return;
-		goto no_csum;
-	}
+		अगर (!(first->tx_flags & IGC_TX_FLAGS_VLAN) &&
+		    !tx_ring->launchसमय_enable)
+			वापस;
+		जाओ no_csum;
+	पूर्ण
 
-	switch (skb->csum_offset) {
-	case offsetof(struct tcphdr, check):
+	चयन (skb->csum_offset) अणु
+	हाल दुरत्व(काष्ठा tcphdr, check):
 		type_tucmd = IGC_ADVTXD_TUCMD_L4T_TCP;
 		fallthrough;
-	case offsetof(struct udphdr, check):
-		break;
-	case offsetof(struct sctphdr, checksum):
+	हाल दुरत्व(काष्ठा udphdr, check):
+		अवरोध;
+	हाल दुरत्व(काष्ठा sctphdr, checksum):
 		/* validate that this is actually an SCTP request */
-		if (skb_csum_is_sctp(skb)) {
+		अगर (skb_csum_is_sctp(skb)) अणु
 			type_tucmd = IGC_ADVTXD_TUCMD_L4T_SCTP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		skb_checksum_help(skb);
-		goto csum_failed;
-	}
+		जाओ csum_failed;
+	पूर्ण
 
 	/* update TX checksum flag */
 	first->tx_flags |= IGC_TX_FLAGS_CSUM;
@@ -1016,67 +1017,67 @@ no_csum:
 	vlan_macip_lens |= first->tx_flags & IGC_TX_FLAGS_VLAN_MASK;
 
 	igc_tx_ctxtdesc(tx_ring, first, vlan_macip_lens, type_tucmd, 0);
-}
+पूर्ण
 
-static int __igc_maybe_stop_tx(struct igc_ring *tx_ring, const u16 size)
-{
-	struct net_device *netdev = tx_ring->netdev;
+अटल पूर्णांक __igc_maybe_stop_tx(काष्ठा igc_ring *tx_ring, स्थिर u16 size)
+अणु
+	काष्ठा net_device *netdev = tx_ring->netdev;
 
-	netif_stop_subqueue(netdev, tx_ring->queue_index);
+	netअगर_stop_subqueue(netdev, tx_ring->queue_index);
 
 	/* memory barriier comment */
 	smp_mb();
 
-	/* We need to check again in a case another CPU has just
+	/* We need to check again in a हाल another CPU has just
 	 * made room available.
 	 */
-	if (igc_desc_unused(tx_ring) < size)
-		return -EBUSY;
+	अगर (igc_desc_unused(tx_ring) < size)
+		वापस -EBUSY;
 
 	/* A reprieve! */
-	netif_wake_subqueue(netdev, tx_ring->queue_index);
+	netअगर_wake_subqueue(netdev, tx_ring->queue_index);
 
 	u64_stats_update_begin(&tx_ring->tx_syncp2);
 	tx_ring->tx_stats.restart_queue2++;
 	u64_stats_update_end(&tx_ring->tx_syncp2);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int igc_maybe_stop_tx(struct igc_ring *tx_ring, const u16 size)
-{
-	if (igc_desc_unused(tx_ring) >= size)
-		return 0;
-	return __igc_maybe_stop_tx(tx_ring, size);
-}
+अटल अंतरभूत पूर्णांक igc_maybe_stop_tx(काष्ठा igc_ring *tx_ring, स्थिर u16 size)
+अणु
+	अगर (igc_desc_unused(tx_ring) >= size)
+		वापस 0;
+	वापस __igc_maybe_stop_tx(tx_ring, size);
+पूर्ण
 
-#define IGC_SET_FLAG(_input, _flag, _result) \
+#घोषणा IGC_SET_FLAG(_input, _flag, _result) \
 	(((_flag) <= (_result)) ?				\
 	 ((u32)((_input) & (_flag)) * ((_result) / (_flag))) :	\
 	 ((u32)((_input) & (_flag)) / ((_flag) / (_result))))
 
-static u32 igc_tx_cmd_type(u32 tx_flags)
-{
-	/* set type for advanced descriptor with frame checksum insertion */
+अटल u32 igc_tx_cmd_type(u32 tx_flags)
+अणु
+	/* set type क्रम advanced descriptor with frame checksum insertion */
 	u32 cmd_type = IGC_ADVTXD_DTYP_DATA |
 		       IGC_ADVTXD_DCMD_DEXT |
 		       IGC_ADVTXD_DCMD_IFCS;
 
-	/* set segmentation bits for TSO */
+	/* set segmentation bits क्रम TSO */
 	cmd_type |= IGC_SET_FLAG(tx_flags, IGC_TX_FLAGS_TSO,
 				 (IGC_ADVTXD_DCMD_TSE));
 
-	/* set timestamp bit if present */
+	/* set बारtamp bit अगर present */
 	cmd_type |= IGC_SET_FLAG(tx_flags, IGC_TX_FLAGS_TSTAMP,
 				 (IGC_ADVTXD_MAC_TSTAMP));
 
-	return cmd_type;
-}
+	वापस cmd_type;
+पूर्ण
 
-static void igc_tx_olinfo_status(struct igc_ring *tx_ring,
-				 union igc_adv_tx_desc *tx_desc,
-				 u32 tx_flags, unsigned int paylen)
-{
+अटल व्योम igc_tx_olinfo_status(काष्ठा igc_ring *tx_ring,
+				 जोड़ igc_adv_tx_desc *tx_desc,
+				 u32 tx_flags, अचिन्हित पूर्णांक paylen)
+अणु
 	u32 olinfo_status = paylen << IGC_ADVTXD_PAYLEN_SHIFT;
 
 	/* insert L4 checksum */
@@ -1089,20 +1090,20 @@ static void igc_tx_olinfo_status(struct igc_ring *tx_ring,
 			  (((IGC_TXD_POPTS_IXSM << 8)) /
 			  IGC_TX_FLAGS_IPV4);
 
-	tx_desc->read.olinfo_status = cpu_to_le32(olinfo_status);
-}
+	tx_desc->पढ़ो.olinfo_status = cpu_to_le32(olinfo_status);
+पूर्ण
 
-static int igc_tx_map(struct igc_ring *tx_ring,
-		      struct igc_tx_buffer *first,
-		      const u8 hdr_len)
-{
-	struct sk_buff *skb = first->skb;
-	struct igc_tx_buffer *tx_buffer;
-	union igc_adv_tx_desc *tx_desc;
+अटल पूर्णांक igc_tx_map(काष्ठा igc_ring *tx_ring,
+		      काष्ठा igc_tx_buffer *first,
+		      स्थिर u8 hdr_len)
+अणु
+	काष्ठा sk_buff *skb = first->skb;
+	काष्ठा igc_tx_buffer *tx_buffer;
+	जोड़ igc_adv_tx_desc *tx_desc;
 	u32 tx_flags = first->tx_flags;
 	skb_frag_t *frag;
 	u16 i = tx_ring->next_to_use;
-	unsigned int data_len, size;
+	अचिन्हित पूर्णांक data_len, size;
 	dma_addr_t dma;
 	u32 cmd_type = igc_tx_cmd_type(tx_flags);
 
@@ -1117,46 +1118,46 @@ static int igc_tx_map(struct igc_ring *tx_ring,
 
 	tx_buffer = first;
 
-	for (frag = &skb_shinfo(skb)->frags[0];; frag++) {
-		if (dma_mapping_error(tx_ring->dev, dma))
-			goto dma_error;
+	क्रम (frag = &skb_shinfo(skb)->frags[0];; frag++) अणु
+		अगर (dma_mapping_error(tx_ring->dev, dma))
+			जाओ dma_error;
 
 		/* record length, and DMA address */
 		dma_unmap_len_set(tx_buffer, len, size);
 		dma_unmap_addr_set(tx_buffer, dma, dma);
 
-		tx_desc->read.buffer_addr = cpu_to_le64(dma);
+		tx_desc->पढ़ो.buffer_addr = cpu_to_le64(dma);
 
-		while (unlikely(size > IGC_MAX_DATA_PER_TXD)) {
-			tx_desc->read.cmd_type_len =
+		जबतक (unlikely(size > IGC_MAX_DATA_PER_TXD)) अणु
+			tx_desc->पढ़ो.cmd_type_len =
 				cpu_to_le32(cmd_type ^ IGC_MAX_DATA_PER_TXD);
 
 			i++;
 			tx_desc++;
-			if (i == tx_ring->count) {
+			अगर (i == tx_ring->count) अणु
 				tx_desc = IGC_TX_DESC(tx_ring, 0);
 				i = 0;
-			}
-			tx_desc->read.olinfo_status = 0;
+			पूर्ण
+			tx_desc->पढ़ो.olinfo_status = 0;
 
 			dma += IGC_MAX_DATA_PER_TXD;
 			size -= IGC_MAX_DATA_PER_TXD;
 
-			tx_desc->read.buffer_addr = cpu_to_le64(dma);
-		}
+			tx_desc->पढ़ो.buffer_addr = cpu_to_le64(dma);
+		पूर्ण
 
-		if (likely(!data_len))
-			break;
+		अगर (likely(!data_len))
+			अवरोध;
 
-		tx_desc->read.cmd_type_len = cpu_to_le32(cmd_type ^ size);
+		tx_desc->पढ़ो.cmd_type_len = cpu_to_le32(cmd_type ^ size);
 
 		i++;
 		tx_desc++;
-		if (i == tx_ring->count) {
+		अगर (i == tx_ring->count) अणु
 			tx_desc = IGC_TX_DESC(tx_ring, 0);
 			i = 0;
-		}
-		tx_desc->read.olinfo_status = 0;
+		पूर्ण
+		tx_desc->पढ़ो.olinfo_status = 0;
 
 		size = skb_frag_size(frag);
 		data_len -= size;
@@ -1165,25 +1166,25 @@ static int igc_tx_map(struct igc_ring *tx_ring,
 				       size, DMA_TO_DEVICE);
 
 		tx_buffer = &tx_ring->tx_buffer_info[i];
-	}
+	पूर्ण
 
-	/* write last descriptor with RS and EOP bits */
+	/* ग_लिखो last descriptor with RS and EOP bits */
 	cmd_type |= size | IGC_TXD_DCMD;
-	tx_desc->read.cmd_type_len = cpu_to_le32(cmd_type);
+	tx_desc->पढ़ो.cmd_type_len = cpu_to_le32(cmd_type);
 
 	netdev_tx_sent_queue(txring_txq(tx_ring), first->bytecount);
 
-	/* set the timestamp */
-	first->time_stamp = jiffies;
+	/* set the बारtamp */
+	first->समय_stamp = jअगरfies;
 
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 
-	/* Force memory writes to complete before letting h/w know there
-	 * are new descriptors to fetch.  (Only applicable for weak-ordered
+	/* Force memory ग_लिखोs to complete beक्रमe letting h/w know there
+	 * are new descriptors to fetch.  (Only applicable क्रम weak-ordered
 	 * memory model archs, such as IA-64).
 	 *
 	 * We also need this memory barrier to make certain all of the
-	 * status bits have been updated before next_to_watch is written.
+	 * status bits have been updated beक्रमe next_to_watch is written.
 	 */
 	wmb();
 
@@ -1191,80 +1192,80 @@ static int igc_tx_map(struct igc_ring *tx_ring,
 	first->next_to_watch = tx_desc;
 
 	i++;
-	if (i == tx_ring->count)
+	अगर (i == tx_ring->count)
 		i = 0;
 
 	tx_ring->next_to_use = i;
 
-	/* Make sure there is space in the ring for the next send. */
+	/* Make sure there is space in the ring क्रम the next send. */
 	igc_maybe_stop_tx(tx_ring, DESC_NEEDED);
 
-	if (netif_xmit_stopped(txring_txq(tx_ring)) || !netdev_xmit_more()) {
-		writel(i, tx_ring->tail);
-	}
+	अगर (netअगर_xmit_stopped(txring_txq(tx_ring)) || !netdev_xmit_more()) अणु
+		ग_लिखोl(i, tx_ring->tail);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 dma_error:
 	netdev_err(tx_ring->netdev, "TX DMA map failed\n");
 	tx_buffer = &tx_ring->tx_buffer_info[i];
 
-	/* clear dma mappings for failed tx_buffer_info map */
-	while (tx_buffer != first) {
-		if (dma_unmap_len(tx_buffer, len))
+	/* clear dma mappings क्रम failed tx_buffer_info map */
+	जबतक (tx_buffer != first) अणु
+		अगर (dma_unmap_len(tx_buffer, len))
 			dma_unmap_page(tx_ring->dev,
 				       dma_unmap_addr(tx_buffer, dma),
 				       dma_unmap_len(tx_buffer, len),
 				       DMA_TO_DEVICE);
 		dma_unmap_len_set(tx_buffer, len, 0);
 
-		if (i-- == 0)
+		अगर (i-- == 0)
 			i += tx_ring->count;
 		tx_buffer = &tx_ring->tx_buffer_info[i];
-	}
+	पूर्ण
 
-	if (dma_unmap_len(tx_buffer, len))
+	अगर (dma_unmap_len(tx_buffer, len))
 		dma_unmap_single(tx_ring->dev,
 				 dma_unmap_addr(tx_buffer, dma),
 				 dma_unmap_len(tx_buffer, len),
 				 DMA_TO_DEVICE);
 	dma_unmap_len_set(tx_buffer, len, 0);
 
-	dev_kfree_skb_any(tx_buffer->skb);
-	tx_buffer->skb = NULL;
+	dev_kमुक्त_skb_any(tx_buffer->skb);
+	tx_buffer->skb = शून्य;
 
 	tx_ring->next_to_use = i;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int igc_tso(struct igc_ring *tx_ring,
-		   struct igc_tx_buffer *first,
+अटल पूर्णांक igc_tso(काष्ठा igc_ring *tx_ring,
+		   काष्ठा igc_tx_buffer *first,
 		   u8 *hdr_len)
-{
+अणु
 	u32 vlan_macip_lens, type_tucmd, mss_l4len_idx;
-	struct sk_buff *skb = first->skb;
-	union {
-		struct iphdr *v4;
-		struct ipv6hdr *v6;
-		unsigned char *hdr;
-	} ip;
-	union {
-		struct tcphdr *tcp;
-		struct udphdr *udp;
-		unsigned char *hdr;
-	} l4;
+	काष्ठा sk_buff *skb = first->skb;
+	जोड़ अणु
+		काष्ठा iphdr *v4;
+		काष्ठा ipv6hdr *v6;
+		अचिन्हित अक्षर *hdr;
+	पूर्ण ip;
+	जोड़ अणु
+		काष्ठा tcphdr *tcp;
+		काष्ठा udphdr *udp;
+		अचिन्हित अक्षर *hdr;
+	पूर्ण l4;
 	u32 paylen, l4_offset;
-	int err;
+	पूर्णांक err;
 
-	if (skb->ip_summed != CHECKSUM_PARTIAL)
-		return 0;
+	अगर (skb->ip_summed != CHECKSUM_PARTIAL)
+		वापस 0;
 
-	if (!skb_is_gso(skb))
-		return 0;
+	अगर (!skb_is_gso(skb))
+		वापस 0;
 
 	err = skb_cow_head(skb, 0);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	ip.hdr = skb_network_header(skb);
 	l4.hdr = skb_checksum_start(skb);
@@ -1273,9 +1274,9 @@ static int igc_tso(struct igc_ring *tx_ring,
 	type_tucmd = IGC_ADVTXD_TUCMD_L4T_TCP;
 
 	/* initialize outer IP header fields */
-	if (ip.v4->version == 4) {
-		unsigned char *csum_start = skb_checksum_start(skb);
-		unsigned char *trans_start = ip.hdr + (ip.v4->ihl * 4);
+	अगर (ip.v4->version == 4) अणु
+		अचिन्हित अक्षर *csum_start = skb_checksum_start(skb);
+		अचिन्हित अक्षर *trans_start = ip.hdr + (ip.v4->ihl * 4);
 
 		/* IP header will have to cancel out any data that
 		 * is not a part of the outer IP header
@@ -1289,28 +1290,28 @@ static int igc_tso(struct igc_ring *tx_ring,
 		first->tx_flags |= IGC_TX_FLAGS_TSO |
 				   IGC_TX_FLAGS_CSUM |
 				   IGC_TX_FLAGS_IPV4;
-	} else {
+	पूर्ण अन्यथा अणु
 		ip.v6->payload_len = 0;
 		first->tx_flags |= IGC_TX_FLAGS_TSO |
 				   IGC_TX_FLAGS_CSUM;
-	}
+	पूर्ण
 
 	/* determine offset of inner transport header */
 	l4_offset = l4.hdr - skb->data;
 
-	/* remove payload length from inner checksum */
+	/* हटाओ payload length from inner checksum */
 	paylen = skb->len - l4_offset;
-	if (type_tucmd & IGC_ADVTXD_TUCMD_L4T_TCP) {
+	अगर (type_tucmd & IGC_ADVTXD_TUCMD_L4T_TCP) अणु
 		/* compute length of segmentation header */
-		*hdr_len = (l4.tcp->doff * 4) + l4_offset;
-		csum_replace_by_diff(&l4.tcp->check,
-				     (__force __wsum)htonl(paylen));
-	} else {
+		*hdr_len = (l4.tcp->करोff * 4) + l4_offset;
+		csum_replace_by_dअगरf(&l4.tcp->check,
+				     (__क्रमce __wsum)htonl(paylen));
+	पूर्ण अन्यथा अणु
 		/* compute length of segmentation header */
-		*hdr_len = sizeof(*l4.udp) + l4_offset;
-		csum_replace_by_diff(&l4.udp->check,
-				     (__force __wsum)htonl(paylen));
-	}
+		*hdr_len = माप(*l4.udp) + l4_offset;
+		csum_replace_by_dअगरf(&l4.udp->check,
+				     (__क्रमce __wsum)htonl(paylen));
+	पूर्ण
 
 	/* update gso size and bytecount with header size */
 	first->gso_segs = skb_shinfo(skb)->gso_segs;
@@ -1328,174 +1329,174 @@ static int igc_tso(struct igc_ring *tx_ring,
 	igc_tx_ctxtdesc(tx_ring, first, vlan_macip_lens,
 			type_tucmd, mss_l4len_idx);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static netdev_tx_t igc_xmit_frame_ring(struct sk_buff *skb,
-				       struct igc_ring *tx_ring)
-{
+अटल netdev_tx_t igc_xmit_frame_ring(काष्ठा sk_buff *skb,
+				       काष्ठा igc_ring *tx_ring)
+अणु
 	u16 count = TXD_USE_COUNT(skb_headlen(skb));
 	__be16 protocol = vlan_get_protocol(skb);
-	struct igc_tx_buffer *first;
+	काष्ठा igc_tx_buffer *first;
 	u32 tx_flags = 0;
-	unsigned short f;
+	अचिन्हित लघु f;
 	u8 hdr_len = 0;
-	int tso = 0;
+	पूर्णांक tso = 0;
 
 	/* need: 1 descriptor per page * PAGE_SIZE/IGC_MAX_DATA_PER_TXD,
-	 *	+ 1 desc for skb_headlen/IGC_MAX_DATA_PER_TXD,
+	 *	+ 1 desc क्रम skb_headlen/IGC_MAX_DATA_PER_TXD,
 	 *	+ 2 desc gap to keep tail from touching head,
-	 *	+ 1 desc for context descriptor,
-	 * otherwise try next time
+	 *	+ 1 desc क्रम context descriptor,
+	 * otherwise try next समय
 	 */
-	for (f = 0; f < skb_shinfo(skb)->nr_frags; f++)
+	क्रम (f = 0; f < skb_shinfo(skb)->nr_frags; f++)
 		count += TXD_USE_COUNT(skb_frag_size(
 						&skb_shinfo(skb)->frags[f]));
 
-	if (igc_maybe_stop_tx(tx_ring, count + 3)) {
+	अगर (igc_maybe_stop_tx(tx_ring, count + 3)) अणु
 		/* this is a hard error */
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	/* record the location of the first descriptor for this packet */
+	/* record the location of the first descriptor क्रम this packet */
 	first = &tx_ring->tx_buffer_info[tx_ring->next_to_use];
 	first->skb = skb;
 	first->bytecount = skb->len;
 	first->gso_segs = 1;
 
-	if (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) {
-		struct igc_adapter *adapter = netdev_priv(tx_ring->netdev);
+	अगर (unlikely(skb_shinfo(skb)->tx_flags & SKBTX_HW_TSTAMP)) अणु
+		काष्ठा igc_adapter *adapter = netdev_priv(tx_ring->netdev);
 
-		/* FIXME: add support for retrieving timestamps from
-		 * the other timer registers before skipping the
-		 * timestamping request.
+		/* FIXME: add support क्रम retrieving बारtamps from
+		 * the other समयr रेजिस्टरs beक्रमe skipping the
+		 * बारtamping request.
 		 */
-		if (adapter->tstamp_config.tx_type == HWTSTAMP_TX_ON &&
+		अगर (adapter->tstamp_config.tx_type == HWTSTAMP_TX_ON &&
 		    !test_and_set_bit_lock(__IGC_PTP_TX_IN_PROGRESS,
-					   &adapter->state)) {
+					   &adapter->state)) अणु
 			skb_shinfo(skb)->tx_flags |= SKBTX_IN_PROGRESS;
 			tx_flags |= IGC_TX_FLAGS_TSTAMP;
 
 			adapter->ptp_tx_skb = skb_get(skb);
-			adapter->ptp_tx_start = jiffies;
-		} else {
+			adapter->ptp_tx_start = jअगरfies;
+		पूर्ण अन्यथा अणु
 			adapter->tx_hwtstamp_skipped++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* record initial flags and protocol */
 	first->tx_flags = tx_flags;
 	first->protocol = protocol;
 
 	tso = igc_tso(tx_ring, first, &hdr_len);
-	if (tso < 0)
-		goto out_drop;
-	else if (!tso)
+	अगर (tso < 0)
+		जाओ out_drop;
+	अन्यथा अगर (!tso)
 		igc_tx_csum(tx_ring, first);
 
 	igc_tx_map(tx_ring, first, hdr_len);
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 out_drop:
-	dev_kfree_skb_any(first->skb);
-	first->skb = NULL;
+	dev_kमुक्त_skb_any(first->skb);
+	first->skb = शून्य;
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static inline struct igc_ring *igc_tx_queue_mapping(struct igc_adapter *adapter,
-						    struct sk_buff *skb)
-{
-	unsigned int r_idx = skb->queue_mapping;
+अटल अंतरभूत काष्ठा igc_ring *igc_tx_queue_mapping(काष्ठा igc_adapter *adapter,
+						    काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक r_idx = skb->queue_mapping;
 
-	if (r_idx >= adapter->num_tx_queues)
+	अगर (r_idx >= adapter->num_tx_queues)
 		r_idx = r_idx % adapter->num_tx_queues;
 
-	return adapter->tx_ring[r_idx];
-}
+	वापस adapter->tx_ring[r_idx];
+पूर्ण
 
-static netdev_tx_t igc_xmit_frame(struct sk_buff *skb,
-				  struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल netdev_tx_t igc_xmit_frame(काष्ठा sk_buff *skb,
+				  काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
 	/* The minimum packet size with TCTL.PSP set is 17 so pad the skb
 	 * in order to meet this minimum size requirement.
 	 */
-	if (skb->len < 17) {
-		if (skb_padto(skb, 17))
-			return NETDEV_TX_OK;
+	अगर (skb->len < 17) अणु
+		अगर (skb_padto(skb, 17))
+			वापस NETDEV_TX_OK;
 		skb->len = 17;
-	}
+	पूर्ण
 
-	return igc_xmit_frame_ring(skb, igc_tx_queue_mapping(adapter, skb));
-}
+	वापस igc_xmit_frame_ring(skb, igc_tx_queue_mapping(adapter, skb));
+पूर्ण
 
-static void igc_rx_checksum(struct igc_ring *ring,
-			    union igc_adv_rx_desc *rx_desc,
-			    struct sk_buff *skb)
-{
-	skb_checksum_none_assert(skb);
+अटल व्योम igc_rx_checksum(काष्ठा igc_ring *ring,
+			    जोड़ igc_adv_rx_desc *rx_desc,
+			    काष्ठा sk_buff *skb)
+अणु
+	skb_checksum_none_निश्चित(skb);
 
 	/* Ignore Checksum bit is set */
-	if (igc_test_staterr(rx_desc, IGC_RXD_STAT_IXSM))
-		return;
+	अगर (igc_test_staterr(rx_desc, IGC_RXD_STAT_IXSM))
+		वापस;
 
 	/* Rx checksum disabled via ethtool */
-	if (!(ring->netdev->features & NETIF_F_RXCSUM))
-		return;
+	अगर (!(ring->netdev->features & NETIF_F_RXCSUM))
+		वापस;
 
 	/* TCP/UDP checksum error bit is set */
-	if (igc_test_staterr(rx_desc,
+	अगर (igc_test_staterr(rx_desc,
 			     IGC_RXDEXT_STATERR_L4E |
-			     IGC_RXDEXT_STATERR_IPE)) {
+			     IGC_RXDEXT_STATERR_IPE)) अणु
 		/* work around errata with sctp packets where the TCPE aka
 		 * L4E bit is set incorrectly on 64 byte (60 byte w/o crc)
 		 * packets (aka let the stack check the crc32c)
 		 */
-		if (!(skb->len == 60 &&
-		      test_bit(IGC_RING_FLAG_RX_SCTP_CSUM, &ring->flags))) {
+		अगर (!(skb->len == 60 &&
+		      test_bit(IGC_RING_FLAG_RX_SCTP_CSUM, &ring->flags))) अणु
 			u64_stats_update_begin(&ring->rx_syncp);
 			ring->rx_stats.csum_err++;
 			u64_stats_update_end(&ring->rx_syncp);
-		}
-		/* let the stack verify checksum errors */
-		return;
-	}
+		पूर्ण
+		/* let the stack verअगरy checksum errors */
+		वापस;
+	पूर्ण
 	/* It must be a TCP or UDP packet with a valid checksum */
-	if (igc_test_staterr(rx_desc, IGC_RXD_STAT_TCPCS |
+	अगर (igc_test_staterr(rx_desc, IGC_RXD_STAT_TCPCS |
 				      IGC_RXD_STAT_UDPCS))
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 
 	netdev_dbg(ring->netdev, "cksum success: bits %08X\n",
 		   le32_to_cpu(rx_desc->wb.upper.status_error));
-}
+पूर्ण
 
-static inline void igc_rx_hash(struct igc_ring *ring,
-			       union igc_adv_rx_desc *rx_desc,
-			       struct sk_buff *skb)
-{
-	if (ring->netdev->features & NETIF_F_RXHASH)
+अटल अंतरभूत व्योम igc_rx_hash(काष्ठा igc_ring *ring,
+			       जोड़ igc_adv_rx_desc *rx_desc,
+			       काष्ठा sk_buff *skb)
+अणु
+	अगर (ring->netdev->features & NETIF_F_RXHASH)
 		skb_set_hash(skb,
 			     le32_to_cpu(rx_desc->wb.lower.hi_dword.rss),
 			     PKT_HASH_TYPE_L3);
-}
+पूर्ण
 
 /**
  * igc_process_skb_fields - Populate skb header fields from Rx descriptor
  * @rx_ring: rx descriptor ring packet is being transacted on
- * @rx_desc: pointer to the EOP Rx descriptor
- * @skb: pointer to current skb being populated
+ * @rx_desc: poपूर्णांकer to the EOP Rx descriptor
+ * @skb: poपूर्णांकer to current skb being populated
  *
- * This function checks the ring, descriptor, and packet information in order
+ * This function checks the ring, descriptor, and packet inक्रमmation in order
  * to populate the hash, checksum, VLAN, protocol, and other fields within the
  * skb.
  */
-static void igc_process_skb_fields(struct igc_ring *rx_ring,
-				   union igc_adv_rx_desc *rx_desc,
-				   struct sk_buff *skb)
-{
+अटल व्योम igc_process_skb_fields(काष्ठा igc_ring *rx_ring,
+				   जोड़ igc_adv_rx_desc *rx_desc,
+				   काष्ठा sk_buff *skb)
+अणु
 	igc_rx_hash(rx_ring, rx_desc, skb);
 
 	igc_rx_checksum(rx_ring, rx_desc, skb);
@@ -1503,25 +1504,25 @@ static void igc_process_skb_fields(struct igc_ring *rx_ring,
 	skb_record_rx_queue(skb, rx_ring->queue_index);
 
 	skb->protocol = eth_type_trans(skb, rx_ring->netdev);
-}
+पूर्ण
 
-static struct igc_rx_buffer *igc_get_rx_buffer(struct igc_ring *rx_ring,
-					       const unsigned int size,
-					       int *rx_buffer_pgcnt)
-{
-	struct igc_rx_buffer *rx_buffer;
+अटल काष्ठा igc_rx_buffer *igc_get_rx_buffer(काष्ठा igc_ring *rx_ring,
+					       स्थिर अचिन्हित पूर्णांक size,
+					       पूर्णांक *rx_buffer_pgcnt)
+अणु
+	काष्ठा igc_rx_buffer *rx_buffer;
 
 	rx_buffer = &rx_ring->rx_buffer_info[rx_ring->next_to_clean];
 	*rx_buffer_pgcnt =
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 		page_count(rx_buffer->page);
-#else
+#अन्यथा
 		0;
-#endif
+#पूर्ण_अगर
 	prefetchw(rx_buffer->page);
 
-	/* we are reusing so sync this buffer for CPU use */
-	dma_sync_single_range_for_cpu(rx_ring->dev,
+	/* we are reusing so sync this buffer क्रम CPU use */
+	dma_sync_single_range_क्रम_cpu(rx_ring->dev,
 				      rx_buffer->dma,
 				      rx_buffer->page_offset,
 				      size,
@@ -1529,145 +1530,145 @@ static struct igc_rx_buffer *igc_get_rx_buffer(struct igc_ring *rx_ring,
 
 	rx_buffer->pagecnt_bias--;
 
-	return rx_buffer;
-}
+	वापस rx_buffer;
+पूर्ण
 
-static void igc_rx_buffer_flip(struct igc_rx_buffer *buffer,
-			       unsigned int truesize)
-{
-#if (PAGE_SIZE < 8192)
+अटल व्योम igc_rx_buffer_flip(काष्ठा igc_rx_buffer *buffer,
+			       अचिन्हित पूर्णांक truesize)
+अणु
+#अगर (PAGE_SIZE < 8192)
 	buffer->page_offset ^= truesize;
-#else
+#अन्यथा
 	buffer->page_offset += truesize;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static unsigned int igc_get_rx_frame_truesize(struct igc_ring *ring,
-					      unsigned int size)
-{
-	unsigned int truesize;
+अटल अचिन्हित पूर्णांक igc_get_rx_frame_truesize(काष्ठा igc_ring *ring,
+					      अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक truesize;
 
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 	truesize = igc_rx_pg_size(ring) / 2;
-#else
+#अन्यथा
 	truesize = ring_uses_build_skb(ring) ?
-		   SKB_DATA_ALIGN(sizeof(struct skb_shared_info)) +
+		   SKB_DATA_ALIGN(माप(काष्ठा skb_shared_info)) +
 		   SKB_DATA_ALIGN(IGC_SKB_PAD + size) :
 		   SKB_DATA_ALIGN(size);
-#endif
-	return truesize;
-}
+#पूर्ण_अगर
+	वापस truesize;
+पूर्ण
 
 /**
  * igc_add_rx_frag - Add contents of Rx buffer to sk_buff
  * @rx_ring: rx descriptor ring to transact packets on
  * @rx_buffer: buffer containing page to add
- * @skb: sk_buff to place the data into
+ * @skb: sk_buff to place the data पूर्णांकo
  * @size: size of buffer to be added
  *
  * This function will add the data contained in rx_buffer->page to the skb.
  */
-static void igc_add_rx_frag(struct igc_ring *rx_ring,
-			    struct igc_rx_buffer *rx_buffer,
-			    struct sk_buff *skb,
-			    unsigned int size)
-{
-	unsigned int truesize;
+अटल व्योम igc_add_rx_frag(काष्ठा igc_ring *rx_ring,
+			    काष्ठा igc_rx_buffer *rx_buffer,
+			    काष्ठा sk_buff *skb,
+			    अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक truesize;
 
-#if (PAGE_SIZE < 8192)
+#अगर (PAGE_SIZE < 8192)
 	truesize = igc_rx_pg_size(rx_ring) / 2;
-#else
+#अन्यथा
 	truesize = ring_uses_build_skb(rx_ring) ?
 		   SKB_DATA_ALIGN(IGC_SKB_PAD + size) :
 		   SKB_DATA_ALIGN(size);
-#endif
+#पूर्ण_अगर
 	skb_add_rx_frag(skb, skb_shinfo(skb)->nr_frags, rx_buffer->page,
 			rx_buffer->page_offset, size, truesize);
 
 	igc_rx_buffer_flip(rx_buffer, truesize);
-}
+पूर्ण
 
-static struct sk_buff *igc_build_skb(struct igc_ring *rx_ring,
-				     struct igc_rx_buffer *rx_buffer,
-				     union igc_adv_rx_desc *rx_desc,
-				     unsigned int size)
-{
-	void *va = page_address(rx_buffer->page) + rx_buffer->page_offset;
-	unsigned int truesize = igc_get_rx_frame_truesize(rx_ring, size);
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *igc_build_skb(काष्ठा igc_ring *rx_ring,
+				     काष्ठा igc_rx_buffer *rx_buffer,
+				     जोड़ igc_adv_rx_desc *rx_desc,
+				     अचिन्हित पूर्णांक size)
+अणु
+	व्योम *va = page_address(rx_buffer->page) + rx_buffer->page_offset;
+	अचिन्हित पूर्णांक truesize = igc_get_rx_frame_truesize(rx_ring, size);
+	काष्ठा sk_buff *skb;
 
 	/* prefetch first cache line of first page */
 	net_prefetch(va);
 
 	/* build an skb around the page buffer */
 	skb = build_skb(va - IGC_SKB_PAD, truesize);
-	if (unlikely(!skb))
-		return NULL;
+	अगर (unlikely(!skb))
+		वापस शून्य;
 
-	/* update pointers within the skb to store the data */
+	/* update poपूर्णांकers within the skb to store the data */
 	skb_reserve(skb, IGC_SKB_PAD);
 	__skb_put(skb, size);
 
 	igc_rx_buffer_flip(rx_buffer, truesize);
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static struct sk_buff *igc_construct_skb(struct igc_ring *rx_ring,
-					 struct igc_rx_buffer *rx_buffer,
-					 struct xdp_buff *xdp,
-					 ktime_t timestamp)
-{
-	unsigned int size = xdp->data_end - xdp->data;
-	unsigned int truesize = igc_get_rx_frame_truesize(rx_ring, size);
-	void *va = xdp->data;
-	unsigned int headlen;
-	struct sk_buff *skb;
+अटल काष्ठा sk_buff *igc_स्थिरruct_skb(काष्ठा igc_ring *rx_ring,
+					 काष्ठा igc_rx_buffer *rx_buffer,
+					 काष्ठा xdp_buff *xdp,
+					 kसमय_प्रकार बारtamp)
+अणु
+	अचिन्हित पूर्णांक size = xdp->data_end - xdp->data;
+	अचिन्हित पूर्णांक truesize = igc_get_rx_frame_truesize(rx_ring, size);
+	व्योम *va = xdp->data;
+	अचिन्हित पूर्णांक headlen;
+	काष्ठा sk_buff *skb;
 
 	/* prefetch first cache line of first page */
 	net_prefetch(va);
 
 	/* allocate a skb to store the frags */
 	skb = napi_alloc_skb(&rx_ring->q_vector->napi, IGC_RX_HDR_LEN);
-	if (unlikely(!skb))
-		return NULL;
+	अगर (unlikely(!skb))
+		वापस शून्य;
 
-	if (timestamp)
-		skb_hwtstamps(skb)->hwtstamp = timestamp;
+	अगर (बारtamp)
+		skb_hwtstamps(skb)->hwtstamp = बारtamp;
 
-	/* Determine available headroom for copy */
+	/* Determine available headroom क्रम copy */
 	headlen = size;
-	if (headlen > IGC_RX_HDR_LEN)
+	अगर (headlen > IGC_RX_HDR_LEN)
 		headlen = eth_get_headlen(skb->dev, va, IGC_RX_HDR_LEN);
 
-	/* align pull length to size of long to optimize memcpy performance */
-	memcpy(__skb_put(skb, headlen), va, ALIGN(headlen, sizeof(long)));
+	/* align pull length to size of दीर्घ to optimize स_नकल perक्रमmance */
+	स_नकल(__skb_put(skb, headlen), va, ALIGN(headlen, माप(दीर्घ)));
 
-	/* update all of the pointers */
+	/* update all of the poपूर्णांकers */
 	size -= headlen;
-	if (size) {
+	अगर (size) अणु
 		skb_add_rx_frag(skb, 0, rx_buffer->page,
 				(va + headlen) - page_address(rx_buffer->page),
 				size, truesize);
 		igc_rx_buffer_flip(rx_buffer, truesize);
-	} else {
+	पूर्ण अन्यथा अणु
 		rx_buffer->pagecnt_bias++;
-	}
+	पूर्ण
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /**
  * igc_reuse_rx_page - page flip buffer and store it back on the ring
  * @rx_ring: rx descriptor ring to store buffers on
- * @old_buff: donor buffer to have page reused
+ * @old_buff: करोnor buffer to have page reused
  *
- * Synchronizes page for reuse by the adapter
+ * Synchronizes page क्रम reuse by the adapter
  */
-static void igc_reuse_rx_page(struct igc_ring *rx_ring,
-			      struct igc_rx_buffer *old_buff)
-{
+अटल व्योम igc_reuse_rx_page(काष्ठा igc_ring *rx_ring,
+			      काष्ठा igc_rx_buffer *old_buff)
+अणु
 	u16 nta = rx_ring->next_to_alloc;
-	struct igc_rx_buffer *new_buff;
+	काष्ठा igc_rx_buffer *new_buff;
 
 	new_buff = &rx_ring->rx_buffer_info[nta];
 
@@ -1676,62 +1677,62 @@ static void igc_reuse_rx_page(struct igc_ring *rx_ring,
 	rx_ring->next_to_alloc = (nta < rx_ring->count) ? nta : 0;
 
 	/* Transfer page from old buffer to new buffer.
-	 * Move each member individually to avoid possible store
-	 * forwarding stalls.
+	 * Move each member inभागidually to aव्योम possible store
+	 * क्रमwarding stalls.
 	 */
 	new_buff->dma		= old_buff->dma;
 	new_buff->page		= old_buff->page;
 	new_buff->page_offset	= old_buff->page_offset;
 	new_buff->pagecnt_bias	= old_buff->pagecnt_bias;
-}
+पूर्ण
 
-static bool igc_can_reuse_rx_page(struct igc_rx_buffer *rx_buffer,
-				  int rx_buffer_pgcnt)
-{
-	unsigned int pagecnt_bias = rx_buffer->pagecnt_bias;
-	struct page *page = rx_buffer->page;
+अटल bool igc_can_reuse_rx_page(काष्ठा igc_rx_buffer *rx_buffer,
+				  पूर्णांक rx_buffer_pgcnt)
+अणु
+	अचिन्हित पूर्णांक pagecnt_bias = rx_buffer->pagecnt_bias;
+	काष्ठा page *page = rx_buffer->page;
 
-	/* avoid re-using remote and pfmemalloc pages */
-	if (!dev_page_is_reusable(page))
-		return false;
+	/* aव्योम re-using remote and pfmeदो_स्मृति pages */
+	अगर (!dev_page_is_reusable(page))
+		वापस false;
 
-#if (PAGE_SIZE < 8192)
-	/* if we are only owner of page we can reuse it */
-	if (unlikely((rx_buffer_pgcnt - pagecnt_bias) > 1))
-		return false;
-#else
-#define IGC_LAST_OFFSET \
+#अगर (PAGE_SIZE < 8192)
+	/* अगर we are only owner of page we can reuse it */
+	अगर (unlikely((rx_buffer_pgcnt - pagecnt_bias) > 1))
+		वापस false;
+#अन्यथा
+#घोषणा IGC_LAST_OFFSET \
 	(SKB_WITH_OVERHEAD(PAGE_SIZE) - IGC_RXBUFFER_2048)
 
-	if (rx_buffer->page_offset > IGC_LAST_OFFSET)
-		return false;
-#endif
+	अगर (rx_buffer->page_offset > IGC_LAST_OFFSET)
+		वापस false;
+#पूर्ण_अगर
 
 	/* If we have drained the page fragment pool we need to update
 	 * the pagecnt_bias and page count so that we fully restock the
 	 * number of references the driver holds.
 	 */
-	if (unlikely(pagecnt_bias == 1)) {
-		page_ref_add(page, USHRT_MAX - 1);
-		rx_buffer->pagecnt_bias = USHRT_MAX;
-	}
+	अगर (unlikely(pagecnt_bias == 1)) अणु
+		page_ref_add(page, अच_लघु_उच्च - 1);
+		rx_buffer->pagecnt_bias = अच_लघु_उच्च;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * igc_is_non_eop - process handling of non-EOP buffers
  * @rx_ring: Rx ring being processed
- * @rx_desc: Rx descriptor for current buffer
+ * @rx_desc: Rx descriptor क्रम current buffer
  *
  * This function updates next to clean.  If the buffer is an EOP buffer
- * this function exits returning false, otherwise it will place the
- * sk_buff in the next buffer to be chained and return true indicating
+ * this function निकासs वापसing false, otherwise it will place the
+ * sk_buff in the next buffer to be chained and वापस true indicating
  * that this is in fact a non-EOP buffer.
  */
-static bool igc_is_non_eop(struct igc_ring *rx_ring,
-			   union igc_adv_rx_desc *rx_desc)
-{
+अटल bool igc_is_non_eop(काष्ठा igc_ring *rx_ring,
+			   जोड़ igc_adv_rx_desc *rx_desc)
+अणु
 	u32 ntc = rx_ring->next_to_clean + 1;
 
 	/* fetch, update, and store next to clean */
@@ -1740,59 +1741,59 @@ static bool igc_is_non_eop(struct igc_ring *rx_ring,
 
 	prefetch(IGC_RX_DESC(rx_ring, ntc));
 
-	if (likely(igc_test_staterr(rx_desc, IGC_RXD_STAT_EOP)))
-		return false;
+	अगर (likely(igc_test_staterr(rx_desc, IGC_RXD_STAT_EOP)))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * igc_cleanup_headers - Correct corrupted or empty headers
  * @rx_ring: rx descriptor ring packet is being transacted on
- * @rx_desc: pointer to the EOP Rx descriptor
- * @skb: pointer to current skb being fixed
+ * @rx_desc: poपूर्णांकer to the EOP Rx descriptor
+ * @skb: poपूर्णांकer to current skb being fixed
  *
- * Address the case where we are pulling data in on pages only
+ * Address the हाल where we are pulling data in on pages only
  * and as such no data is present in the skb header.
  *
- * In addition if skb is not at least 60 bytes we need to pad it so that
- * it is large enough to qualify as a valid Ethernet frame.
+ * In addition अगर skb is not at least 60 bytes we need to pad it so that
+ * it is large enough to qualअगरy as a valid Ethernet frame.
  *
- * Returns true if an error was encountered and skb was freed.
+ * Returns true अगर an error was encountered and skb was मुक्तd.
  */
-static bool igc_cleanup_headers(struct igc_ring *rx_ring,
-				union igc_adv_rx_desc *rx_desc,
-				struct sk_buff *skb)
-{
-	/* XDP packets use error pointer so abort at this point */
-	if (IS_ERR(skb))
-		return true;
+अटल bool igc_cleanup_headers(काष्ठा igc_ring *rx_ring,
+				जोड़ igc_adv_rx_desc *rx_desc,
+				काष्ठा sk_buff *skb)
+अणु
+	/* XDP packets use error poपूर्णांकer so पात at this poपूर्णांक */
+	अगर (IS_ERR(skb))
+		वापस true;
 
-	if (unlikely(igc_test_staterr(rx_desc, IGC_RXDEXT_STATERR_RXE))) {
-		struct net_device *netdev = rx_ring->netdev;
+	अगर (unlikely(igc_test_staterr(rx_desc, IGC_RXDEXT_STATERR_RXE))) अणु
+		काष्ठा net_device *netdev = rx_ring->netdev;
 
-		if (!(netdev->features & NETIF_F_RXALL)) {
-			dev_kfree_skb_any(skb);
-			return true;
-		}
-	}
+		अगर (!(netdev->features & NETIF_F_RXALL)) अणु
+			dev_kमुक्त_skb_any(skb);
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	/* if eth_skb_pad returns an error the skb was freed */
-	if (eth_skb_pad(skb))
-		return true;
+	/* अगर eth_skb_pad वापसs an error the skb was मुक्तd */
+	अगर (eth_skb_pad(skb))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void igc_put_rx_buffer(struct igc_ring *rx_ring,
-			      struct igc_rx_buffer *rx_buffer,
-			      int rx_buffer_pgcnt)
-{
-	if (igc_can_reuse_rx_page(rx_buffer, rx_buffer_pgcnt)) {
+अटल व्योम igc_put_rx_buffer(काष्ठा igc_ring *rx_ring,
+			      काष्ठा igc_rx_buffer *rx_buffer,
+			      पूर्णांक rx_buffer_pgcnt)
+अणु
+	अगर (igc_can_reuse_rx_page(rx_buffer, rx_buffer_pgcnt)) अणु
 		/* hand second half of page back to the ring */
 		igc_reuse_rx_page(rx_ring, rx_buffer);
-	} else {
-		/* We are not reusing the buffer so unmap it and free
+	पूर्ण अन्यथा अणु
+		/* We are not reusing the buffer so unmap it and मुक्त
 		 * any references we are holding to it
 		 */
 		dma_unmap_page_attrs(rx_ring->dev, rx_buffer->dma,
@@ -1800,81 +1801,81 @@ static void igc_put_rx_buffer(struct igc_ring *rx_ring,
 				     IGC_RX_DMA_ATTR);
 		__page_frag_cache_drain(rx_buffer->page,
 					rx_buffer->pagecnt_bias);
-	}
+	पूर्ण
 
 	/* clear contents of rx_buffer */
-	rx_buffer->page = NULL;
-}
+	rx_buffer->page = शून्य;
+पूर्ण
 
-static inline unsigned int igc_rx_offset(struct igc_ring *rx_ring)
-{
-	struct igc_adapter *adapter = rx_ring->q_vector->adapter;
+अटल अंतरभूत अचिन्हित पूर्णांक igc_rx_offset(काष्ठा igc_ring *rx_ring)
+अणु
+	काष्ठा igc_adapter *adapter = rx_ring->q_vector->adapter;
 
-	if (ring_uses_build_skb(rx_ring))
-		return IGC_SKB_PAD;
-	if (igc_xdp_is_enabled(adapter))
-		return XDP_PACKET_HEADROOM;
+	अगर (ring_uses_build_skb(rx_ring))
+		वापस IGC_SKB_PAD;
+	अगर (igc_xdp_is_enabled(adapter))
+		वापस XDP_PACKET_HEADROOM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool igc_alloc_mapped_page(struct igc_ring *rx_ring,
-				  struct igc_rx_buffer *bi)
-{
-	struct page *page = bi->page;
+अटल bool igc_alloc_mapped_page(काष्ठा igc_ring *rx_ring,
+				  काष्ठा igc_rx_buffer *bi)
+अणु
+	काष्ठा page *page = bi->page;
 	dma_addr_t dma;
 
-	/* since we are recycling buffers we should seldom need to alloc */
-	if (likely(page))
-		return true;
+	/* since we are recycling buffers we should selकरोm need to alloc */
+	अगर (likely(page))
+		वापस true;
 
-	/* alloc new page for storage */
+	/* alloc new page क्रम storage */
 	page = dev_alloc_pages(igc_rx_pg_order(rx_ring));
-	if (unlikely(!page)) {
+	अगर (unlikely(!page)) अणु
 		rx_ring->rx_stats.alloc_failed++;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* map page for use */
+	/* map page क्रम use */
 	dma = dma_map_page_attrs(rx_ring->dev, page, 0,
 				 igc_rx_pg_size(rx_ring),
 				 DMA_FROM_DEVICE,
 				 IGC_RX_DMA_ATTR);
 
-	/* if mapping failed free memory back to system since
+	/* अगर mapping failed मुक्त memory back to प्रणाली since
 	 * there isn't much point in holding memory we can't use
 	 */
-	if (dma_mapping_error(rx_ring->dev, dma)) {
-		__free_page(page);
+	अगर (dma_mapping_error(rx_ring->dev, dma)) अणु
+		__मुक्त_page(page);
 
 		rx_ring->rx_stats.alloc_failed++;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	bi->dma = dma;
 	bi->page = page;
 	bi->page_offset = igc_rx_offset(rx_ring);
-	page_ref_add(page, USHRT_MAX - 1);
-	bi->pagecnt_bias = USHRT_MAX;
+	page_ref_add(page, अच_लघु_उच्च - 1);
+	bi->pagecnt_bias = अच_लघु_उच्च;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * igc_alloc_rx_buffers - Replace used receive buffers; packet split
  * @rx_ring: rx descriptor ring
  * @cleaned_count: number of buffers to clean
  */
-static void igc_alloc_rx_buffers(struct igc_ring *rx_ring, u16 cleaned_count)
-{
-	union igc_adv_rx_desc *rx_desc;
+अटल व्योम igc_alloc_rx_buffers(काष्ठा igc_ring *rx_ring, u16 cleaned_count)
+अणु
+	जोड़ igc_adv_rx_desc *rx_desc;
 	u16 i = rx_ring->next_to_use;
-	struct igc_rx_buffer *bi;
+	काष्ठा igc_rx_buffer *bi;
 	u16 bufsz;
 
-	/* nothing to do */
-	if (!cleaned_count)
-		return;
+	/* nothing to करो */
+	अगर (!cleaned_count)
+		वापस;
 
 	rx_desc = IGC_RX_DESC(rx_ring, i);
 	bi = &rx_ring->rx_buffer_info[i];
@@ -1882,93 +1883,93 @@ static void igc_alloc_rx_buffers(struct igc_ring *rx_ring, u16 cleaned_count)
 
 	bufsz = igc_rx_bufsz(rx_ring);
 
-	do {
-		if (!igc_alloc_mapped_page(rx_ring, bi))
-			break;
+	करो अणु
+		अगर (!igc_alloc_mapped_page(rx_ring, bi))
+			अवरोध;
 
-		/* sync the buffer for use by the device */
-		dma_sync_single_range_for_device(rx_ring->dev, bi->dma,
+		/* sync the buffer क्रम use by the device */
+		dma_sync_single_range_क्रम_device(rx_ring->dev, bi->dma,
 						 bi->page_offset, bufsz,
 						 DMA_FROM_DEVICE);
 
-		/* Refresh the desc even if buffer_addrs didn't change
-		 * because each write-back erases this info.
+		/* Refresh the desc even अगर buffer_addrs didn't change
+		 * because each ग_लिखो-back erases this info.
 		 */
-		rx_desc->read.pkt_addr = cpu_to_le64(bi->dma + bi->page_offset);
+		rx_desc->पढ़ो.pkt_addr = cpu_to_le64(bi->dma + bi->page_offset);
 
 		rx_desc++;
 		bi++;
 		i++;
-		if (unlikely(!i)) {
+		अगर (unlikely(!i)) अणु
 			rx_desc = IGC_RX_DESC(rx_ring, 0);
 			bi = rx_ring->rx_buffer_info;
 			i -= rx_ring->count;
-		}
+		पूर्ण
 
-		/* clear the length for the next_to_use descriptor */
+		/* clear the length क्रम the next_to_use descriptor */
 		rx_desc->wb.upper.length = 0;
 
 		cleaned_count--;
-	} while (cleaned_count);
+	पूर्ण जबतक (cleaned_count);
 
 	i += rx_ring->count;
 
-	if (rx_ring->next_to_use != i) {
+	अगर (rx_ring->next_to_use != i) अणु
 		/* record the next descriptor to use */
 		rx_ring->next_to_use = i;
 
 		/* update next to alloc since we have filled the ring */
 		rx_ring->next_to_alloc = i;
 
-		/* Force memory writes to complete before letting h/w
+		/* Force memory ग_लिखोs to complete beक्रमe letting h/w
 		 * know there are new descriptors to fetch.  (Only
-		 * applicable for weak-ordered memory model archs,
+		 * applicable क्रम weak-ordered memory model archs,
 		 * such as IA-64).
 		 */
 		wmb();
-		writel(i, rx_ring->tail);
-	}
-}
+		ग_लिखोl(i, rx_ring->tail);
+	पूर्ण
+पूर्ण
 
-static int igc_xdp_init_tx_buffer(struct igc_tx_buffer *buffer,
-				  struct xdp_frame *xdpf,
-				  struct igc_ring *ring)
-{
+अटल पूर्णांक igc_xdp_init_tx_buffer(काष्ठा igc_tx_buffer *buffer,
+				  काष्ठा xdp_frame *xdpf,
+				  काष्ठा igc_ring *ring)
+अणु
 	dma_addr_t dma;
 
 	dma = dma_map_single(ring->dev, xdpf->data, xdpf->len, DMA_TO_DEVICE);
-	if (dma_mapping_error(ring->dev, dma)) {
+	अगर (dma_mapping_error(ring->dev, dma)) अणु
 		netdev_err_once(ring->netdev, "Failed to map DMA for TX\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	buffer->xdpf = xdpf;
 	buffer->tx_flags = IGC_TX_FLAGS_XDP;
 	buffer->protocol = 0;
 	buffer->bytecount = xdpf->len;
 	buffer->gso_segs = 1;
-	buffer->time_stamp = jiffies;
+	buffer->समय_stamp = jअगरfies;
 	dma_unmap_len_set(buffer, len, xdpf->len);
 	dma_unmap_addr_set(buffer, dma, dma);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* This function requires __netif_tx_lock is held by the caller. */
-static int igc_xdp_init_tx_descriptor(struct igc_ring *ring,
-				      struct xdp_frame *xdpf)
-{
-	struct igc_tx_buffer *buffer;
-	union igc_adv_tx_desc *desc;
+/* This function requires __netअगर_tx_lock is held by the caller. */
+अटल पूर्णांक igc_xdp_init_tx_descriptor(काष्ठा igc_ring *ring,
+				      काष्ठा xdp_frame *xdpf)
+अणु
+	काष्ठा igc_tx_buffer *buffer;
+	जोड़ igc_adv_tx_desc *desc;
 	u32 cmd_type, olinfo_status;
-	int err;
+	पूर्णांक err;
 
-	if (!igc_desc_unused(ring))
-		return -EBUSY;
+	अगर (!igc_desc_unused(ring))
+		वापस -EBUSY;
 
 	buffer = &ring->tx_buffer_info[ring->next_to_use];
 	err = igc_xdp_init_tx_buffer(buffer, xdpf, ring);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	cmd_type = IGC_ADVTXD_DTYP_DATA | IGC_ADVTXD_DCMD_DEXT |
 		   IGC_ADVTXD_DCMD_IFCS | IGC_TXD_DCMD |
@@ -1976,162 +1977,162 @@ static int igc_xdp_init_tx_descriptor(struct igc_ring *ring,
 	olinfo_status = buffer->bytecount << IGC_ADVTXD_PAYLEN_SHIFT;
 
 	desc = IGC_TX_DESC(ring, ring->next_to_use);
-	desc->read.cmd_type_len = cpu_to_le32(cmd_type);
-	desc->read.olinfo_status = cpu_to_le32(olinfo_status);
-	desc->read.buffer_addr = cpu_to_le64(dma_unmap_addr(buffer, dma));
+	desc->पढ़ो.cmd_type_len = cpu_to_le32(cmd_type);
+	desc->पढ़ो.olinfo_status = cpu_to_le32(olinfo_status);
+	desc->पढ़ो.buffer_addr = cpu_to_le64(dma_unmap_addr(buffer, dma));
 
 	netdev_tx_sent_queue(txring_txq(ring), buffer->bytecount);
 
 	buffer->next_to_watch = desc;
 
 	ring->next_to_use++;
-	if (ring->next_to_use == ring->count)
+	अगर (ring->next_to_use == ring->count)
 		ring->next_to_use = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct igc_ring *igc_xdp_get_tx_ring(struct igc_adapter *adapter,
-					    int cpu)
-{
-	int index = cpu;
+अटल काष्ठा igc_ring *igc_xdp_get_tx_ring(काष्ठा igc_adapter *adapter,
+					    पूर्णांक cpu)
+अणु
+	पूर्णांक index = cpu;
 
-	if (unlikely(index < 0))
+	अगर (unlikely(index < 0))
 		index = 0;
 
-	while (index >= adapter->num_tx_queues)
+	जबतक (index >= adapter->num_tx_queues)
 		index -= adapter->num_tx_queues;
 
-	return adapter->tx_ring[index];
-}
+	वापस adapter->tx_ring[index];
+पूर्ण
 
-static int igc_xdp_xmit_back(struct igc_adapter *adapter, struct xdp_buff *xdp)
-{
-	struct xdp_frame *xdpf = xdp_convert_buff_to_frame(xdp);
-	int cpu = smp_processor_id();
-	struct netdev_queue *nq;
-	struct igc_ring *ring;
-	int res;
+अटल पूर्णांक igc_xdp_xmit_back(काष्ठा igc_adapter *adapter, काष्ठा xdp_buff *xdp)
+अणु
+	काष्ठा xdp_frame *xdpf = xdp_convert_buff_to_frame(xdp);
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा netdev_queue *nq;
+	काष्ठा igc_ring *ring;
+	पूर्णांक res;
 
-	if (unlikely(!xdpf))
-		return -EFAULT;
+	अगर (unlikely(!xdpf))
+		वापस -EFAULT;
 
 	ring = igc_xdp_get_tx_ring(adapter, cpu);
 	nq = txring_txq(ring);
 
-	__netif_tx_lock(nq, cpu);
+	__netअगर_tx_lock(nq, cpu);
 	res = igc_xdp_init_tx_descriptor(ring, xdpf);
-	__netif_tx_unlock(nq);
-	return res;
-}
+	__netअगर_tx_unlock(nq);
+	वापस res;
+पूर्ण
 
-static struct sk_buff *igc_xdp_run_prog(struct igc_adapter *adapter,
-					struct xdp_buff *xdp)
-{
-	struct bpf_prog *prog;
-	int res;
+अटल काष्ठा sk_buff *igc_xdp_run_prog(काष्ठा igc_adapter *adapter,
+					काष्ठा xdp_buff *xdp)
+अणु
+	काष्ठा bpf_prog *prog;
+	पूर्णांक res;
 	u32 act;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	prog = READ_ONCE(adapter->xdp_prog);
-	if (!prog) {
+	अगर (!prog) अणु
 		res = IGC_XDP_PASS;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	act = bpf_prog_run_xdp(prog, xdp);
-	switch (act) {
-	case XDP_PASS:
+	चयन (act) अणु
+	हाल XDP_PASS:
 		res = IGC_XDP_PASS;
-		break;
-	case XDP_TX:
-		if (igc_xdp_xmit_back(adapter, xdp) < 0)
-			goto out_failure;
+		अवरोध;
+	हाल XDP_TX:
+		अगर (igc_xdp_xmit_back(adapter, xdp) < 0)
+			जाओ out_failure;
 		res = IGC_XDP_TX;
-		break;
-	case XDP_REDIRECT:
-		if (xdp_do_redirect(adapter->netdev, xdp, prog) < 0)
-			goto out_failure;
-		res = IGC_XDP_REDIRECT;
-		break;
-	default:
+		अवरोध;
+	हाल XDP_REसूचीECT:
+		अगर (xdp_करो_redirect(adapter->netdev, xdp, prog) < 0)
+			जाओ out_failure;
+		res = IGC_XDP_REसूचीECT;
+		अवरोध;
+	शेष:
 		bpf_warn_invalid_xdp_action(act);
 		fallthrough;
-	case XDP_ABORTED:
+	हाल XDP_ABORTED:
 out_failure:
 		trace_xdp_exception(adapter->netdev, prog, act);
 		fallthrough;
-	case XDP_DROP:
+	हाल XDP_DROP:
 		res = IGC_XDP_CONSUMED;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 unlock:
-	rcu_read_unlock();
-	return ERR_PTR(-res);
-}
+	rcu_पढ़ो_unlock();
+	वापस ERR_PTR(-res);
+पूर्ण
 
-/* This function assumes __netif_tx_lock is held by the caller. */
-static void igc_flush_tx_descriptors(struct igc_ring *ring)
-{
-	/* Once tail pointer is updated, hardware can fetch the descriptors
-	 * any time so we issue a write membar here to ensure all memory
-	 * writes are complete before the tail pointer is updated.
+/* This function assumes __netअगर_tx_lock is held by the caller. */
+अटल व्योम igc_flush_tx_descriptors(काष्ठा igc_ring *ring)
+अणु
+	/* Once tail poपूर्णांकer is updated, hardware can fetch the descriptors
+	 * any समय so we issue a ग_लिखो membar here to ensure all memory
+	 * ग_लिखोs are complete beक्रमe the tail poपूर्णांकer is updated.
 	 */
 	wmb();
-	writel(ring->next_to_use, ring->tail);
-}
+	ग_लिखोl(ring->next_to_use, ring->tail);
+पूर्ण
 
-static void igc_finalize_xdp(struct igc_adapter *adapter, int status)
-{
-	int cpu = smp_processor_id();
-	struct netdev_queue *nq;
-	struct igc_ring *ring;
+अटल व्योम igc_finalize_xdp(काष्ठा igc_adapter *adapter, पूर्णांक status)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा netdev_queue *nq;
+	काष्ठा igc_ring *ring;
 
-	if (status & IGC_XDP_TX) {
+	अगर (status & IGC_XDP_TX) अणु
 		ring = igc_xdp_get_tx_ring(adapter, cpu);
 		nq = txring_txq(ring);
 
-		__netif_tx_lock(nq, cpu);
+		__netअगर_tx_lock(nq, cpu);
 		igc_flush_tx_descriptors(ring);
-		__netif_tx_unlock(nq);
-	}
+		__netअगर_tx_unlock(nq);
+	पूर्ण
 
-	if (status & IGC_XDP_REDIRECT)
-		xdp_do_flush();
-}
+	अगर (status & IGC_XDP_REसूचीECT)
+		xdp_करो_flush();
+पूर्ण
 
-static int igc_clean_rx_irq(struct igc_q_vector *q_vector, const int budget)
-{
-	unsigned int total_bytes = 0, total_packets = 0;
-	struct igc_adapter *adapter = q_vector->adapter;
-	struct igc_ring *rx_ring = q_vector->rx.ring;
-	struct sk_buff *skb = rx_ring->skb;
+अटल पूर्णांक igc_clean_rx_irq(काष्ठा igc_q_vector *q_vector, स्थिर पूर्णांक budget)
+अणु
+	अचिन्हित पूर्णांक total_bytes = 0, total_packets = 0;
+	काष्ठा igc_adapter *adapter = q_vector->adapter;
+	काष्ठा igc_ring *rx_ring = q_vector->rx.ring;
+	काष्ठा sk_buff *skb = rx_ring->skb;
 	u16 cleaned_count = igc_desc_unused(rx_ring);
-	int xdp_status = 0, rx_buffer_pgcnt;
+	पूर्णांक xdp_status = 0, rx_buffer_pgcnt;
 
-	while (likely(total_packets < budget)) {
-		union igc_adv_rx_desc *rx_desc;
-		struct igc_rx_buffer *rx_buffer;
-		unsigned int size, truesize;
-		ktime_t timestamp = 0;
-		struct xdp_buff xdp;
-		int pkt_offset = 0;
-		void *pktbuf;
+	जबतक (likely(total_packets < budget)) अणु
+		जोड़ igc_adv_rx_desc *rx_desc;
+		काष्ठा igc_rx_buffer *rx_buffer;
+		अचिन्हित पूर्णांक size, truesize;
+		kसमय_प्रकार बारtamp = 0;
+		काष्ठा xdp_buff xdp;
+		पूर्णांक pkt_offset = 0;
+		व्योम *pktbuf;
 
-		/* return some buffers to hardware, one at a time is too slow */
-		if (cleaned_count >= IGC_RX_BUFFER_WRITE) {
+		/* वापस some buffers to hardware, one at a समय is too slow */
+		अगर (cleaned_count >= IGC_RX_BUFFER_WRITE) अणु
 			igc_alloc_rx_buffers(rx_ring, cleaned_count);
 			cleaned_count = 0;
-		}
+		पूर्ण
 
 		rx_desc = IGC_RX_DESC(rx_ring, rx_ring->next_to_clean);
 		size = le16_to_cpu(rx_desc->wb.upper.length);
-		if (!size)
-			break;
+		अगर (!size)
+			अवरोध;
 
-		/* This memory barrier is needed to keep us from reading
+		/* This memory barrier is needed to keep us from पढ़ोing
 		 * any other fields out of the rx_desc until we know the
 		 * descriptor has been written back
 		 */
@@ -2142,14 +2143,14 @@ static int igc_clean_rx_irq(struct igc_q_vector *q_vector, const int budget)
 
 		pktbuf = page_address(rx_buffer->page) + rx_buffer->page_offset;
 
-		if (igc_test_staterr(rx_desc, IGC_RXDADV_STAT_TSIP)) {
-			timestamp = igc_ptp_rx_pktstamp(q_vector->adapter,
+		अगर (igc_test_staterr(rx_desc, IGC_RXDADV_STAT_TSIP)) अणु
+			बारtamp = igc_ptp_rx_pktstamp(q_vector->adapter,
 							pktbuf);
 			pkt_offset = IGC_TS_HDR_LEN;
 			size -= IGC_TS_HDR_LEN;
-		}
+		पूर्ण
 
-		if (!skb) {
+		अगर (!skb) अणु
 			xdp.data = pktbuf + pkt_offset;
 			xdp.data_end = xdp.data + size;
 			xdp.data_hard_start = pktbuf - igc_rx_offset(rx_ring);
@@ -2158,51 +2159,51 @@ static int igc_clean_rx_irq(struct igc_q_vector *q_vector, const int budget)
 			xdp.rxq = &rx_ring->xdp_rxq;
 
 			skb = igc_xdp_run_prog(adapter, &xdp);
-		}
+		पूर्ण
 
-		if (IS_ERR(skb)) {
-			unsigned int xdp_res = -PTR_ERR(skb);
+		अगर (IS_ERR(skb)) अणु
+			अचिन्हित पूर्णांक xdp_res = -PTR_ERR(skb);
 
-			switch (xdp_res) {
-			case IGC_XDP_CONSUMED:
+			चयन (xdp_res) अणु
+			हाल IGC_XDP_CONSUMED:
 				rx_buffer->pagecnt_bias++;
-				break;
-			case IGC_XDP_TX:
-			case IGC_XDP_REDIRECT:
+				अवरोध;
+			हाल IGC_XDP_TX:
+			हाल IGC_XDP_REसूचीECT:
 				igc_rx_buffer_flip(rx_buffer, truesize);
 				xdp_status |= xdp_res;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			total_packets++;
 			total_bytes += size;
-		} else if (skb)
+		पूर्ण अन्यथा अगर (skb)
 			igc_add_rx_frag(rx_ring, rx_buffer, skb, size);
-		else if (ring_uses_build_skb(rx_ring))
+		अन्यथा अगर (ring_uses_build_skb(rx_ring))
 			skb = igc_build_skb(rx_ring, rx_buffer, rx_desc, size);
-		else
-			skb = igc_construct_skb(rx_ring, rx_buffer, &xdp,
-						timestamp);
+		अन्यथा
+			skb = igc_स्थिरruct_skb(rx_ring, rx_buffer, &xdp,
+						बारtamp);
 
-		/* exit if we failed to retrieve a buffer */
-		if (!skb) {
+		/* निकास अगर we failed to retrieve a buffer */
+		अगर (!skb) अणु
 			rx_ring->rx_stats.alloc_failed++;
 			rx_buffer->pagecnt_bias++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		igc_put_rx_buffer(rx_ring, rx_buffer, rx_buffer_pgcnt);
 		cleaned_count++;
 
-		/* fetch next buffer in frame if non-eop */
-		if (igc_is_non_eop(rx_ring, rx_desc))
-			continue;
+		/* fetch next buffer in frame अगर non-eop */
+		अगर (igc_is_non_eop(rx_ring, rx_desc))
+			जारी;
 
-		/* verify the packet layout is correct */
-		if (igc_cleanup_headers(rx_ring, rx_desc, skb)) {
-			skb = NULL;
-			continue;
-		}
+		/* verअगरy the packet layout is correct */
+		अगर (igc_cleanup_headers(rx_ring, rx_desc, skb)) अणु
+			skb = शून्य;
+			जारी;
+		पूर्ण
 
 		/* probably a little skewed due to removing CRC */
 		total_bytes += skb->len;
@@ -2212,17 +2213,17 @@ static int igc_clean_rx_irq(struct igc_q_vector *q_vector, const int budget)
 
 		napi_gro_receive(&q_vector->napi, skb);
 
-		/* reset skb pointer */
-		skb = NULL;
+		/* reset skb poपूर्णांकer */
+		skb = शून्य;
 
 		/* update budget accounting */
 		total_packets++;
-	}
+	पूर्ण
 
-	if (xdp_status)
+	अगर (xdp_status)
 		igc_finalize_xdp(adapter, xdp_status);
 
-	/* place incomplete frames back on ring for completion */
+	/* place incomplete frames back on ring क्रम completion */
 	rx_ring->skb = skb;
 
 	u64_stats_update_begin(&rx_ring->rx_syncp);
@@ -2232,60 +2233,60 @@ static int igc_clean_rx_irq(struct igc_q_vector *q_vector, const int budget)
 	q_vector->rx.total_packets += total_packets;
 	q_vector->rx.total_bytes += total_bytes;
 
-	if (cleaned_count)
+	अगर (cleaned_count)
 		igc_alloc_rx_buffers(rx_ring, cleaned_count);
 
-	return total_packets;
-}
+	वापस total_packets;
+पूर्ण
 
 /**
  * igc_clean_tx_irq - Reclaim resources after transmit completes
- * @q_vector: pointer to q_vector containing needed info
- * @napi_budget: Used to determine if we are in netpoll
+ * @q_vector: poपूर्णांकer to q_vector containing needed info
+ * @napi_budget: Used to determine अगर we are in netpoll
  *
- * returns true if ring is completely cleaned
+ * वापसs true अगर ring is completely cleaned
  */
-static bool igc_clean_tx_irq(struct igc_q_vector *q_vector, int napi_budget)
-{
-	struct igc_adapter *adapter = q_vector->adapter;
-	unsigned int total_bytes = 0, total_packets = 0;
-	unsigned int budget = q_vector->tx.work_limit;
-	struct igc_ring *tx_ring = q_vector->tx.ring;
-	unsigned int i = tx_ring->next_to_clean;
-	struct igc_tx_buffer *tx_buffer;
-	union igc_adv_tx_desc *tx_desc;
+अटल bool igc_clean_tx_irq(काष्ठा igc_q_vector *q_vector, पूर्णांक napi_budget)
+अणु
+	काष्ठा igc_adapter *adapter = q_vector->adapter;
+	अचिन्हित पूर्णांक total_bytes = 0, total_packets = 0;
+	अचिन्हित पूर्णांक budget = q_vector->tx.work_limit;
+	काष्ठा igc_ring *tx_ring = q_vector->tx.ring;
+	अचिन्हित पूर्णांक i = tx_ring->next_to_clean;
+	काष्ठा igc_tx_buffer *tx_buffer;
+	जोड़ igc_adv_tx_desc *tx_desc;
 
-	if (test_bit(__IGC_DOWN, &adapter->state))
-		return true;
+	अगर (test_bit(__IGC_DOWN, &adapter->state))
+		वापस true;
 
 	tx_buffer = &tx_ring->tx_buffer_info[i];
 	tx_desc = IGC_TX_DESC(tx_ring, i);
 	i -= tx_ring->count;
 
-	do {
-		union igc_adv_tx_desc *eop_desc = tx_buffer->next_to_watch;
+	करो अणु
+		जोड़ igc_adv_tx_desc *eop_desc = tx_buffer->next_to_watch;
 
-		/* if next_to_watch is not set then there is no work pending */
-		if (!eop_desc)
-			break;
+		/* अगर next_to_watch is not set then there is no work pending */
+		अगर (!eop_desc)
+			अवरोध;
 
-		/* prevent any other reads prior to eop_desc */
+		/* prevent any other पढ़ोs prior to eop_desc */
 		smp_rmb();
 
-		/* if DD is not set pending work has not been completed */
-		if (!(eop_desc->wb.status & cpu_to_le32(IGC_TXD_STAT_DD)))
-			break;
+		/* अगर DD is not set pending work has not been completed */
+		अगर (!(eop_desc->wb.status & cpu_to_le32(IGC_TXD_STAT_DD)))
+			अवरोध;
 
 		/* clear next_to_watch to prevent false hangs */
-		tx_buffer->next_to_watch = NULL;
+		tx_buffer->next_to_watch = शून्य;
 
-		/* update the statistics for this packet */
+		/* update the statistics क्रम this packet */
 		total_bytes += tx_buffer->bytecount;
 		total_packets += tx_buffer->gso_segs;
 
-		if (tx_buffer->tx_flags & IGC_TX_FLAGS_XDP)
-			xdp_return_frame(tx_buffer->xdpf);
-		else
+		अगर (tx_buffer->tx_flags & IGC_TX_FLAGS_XDP)
+			xdp_वापस_frame(tx_buffer->xdpf);
+		अन्यथा
 			napi_consume_skb(tx_buffer->skb, napi_budget);
 
 		/* unmap skb header data */
@@ -2297,43 +2298,43 @@ static bool igc_clean_tx_irq(struct igc_q_vector *q_vector, int napi_budget)
 		/* clear tx_buffer data */
 		dma_unmap_len_set(tx_buffer, len, 0);
 
-		/* clear last DMA location and unmap remaining buffers */
-		while (tx_desc != eop_desc) {
+		/* clear last DMA location and unmap reमुख्यing buffers */
+		जबतक (tx_desc != eop_desc) अणु
 			tx_buffer++;
 			tx_desc++;
 			i++;
-			if (unlikely(!i)) {
+			अगर (unlikely(!i)) अणु
 				i -= tx_ring->count;
 				tx_buffer = tx_ring->tx_buffer_info;
 				tx_desc = IGC_TX_DESC(tx_ring, 0);
-			}
+			पूर्ण
 
-			/* unmap any remaining paged data */
-			if (dma_unmap_len(tx_buffer, len)) {
+			/* unmap any reमुख्यing paged data */
+			अगर (dma_unmap_len(tx_buffer, len)) अणु
 				dma_unmap_page(tx_ring->dev,
 					       dma_unmap_addr(tx_buffer, dma),
 					       dma_unmap_len(tx_buffer, len),
 					       DMA_TO_DEVICE);
 				dma_unmap_len_set(tx_buffer, len, 0);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* move us one more past the eop_desc for start of next pkt */
+		/* move us one more past the eop_desc क्रम start of next pkt */
 		tx_buffer++;
 		tx_desc++;
 		i++;
-		if (unlikely(!i)) {
+		अगर (unlikely(!i)) अणु
 			i -= tx_ring->count;
 			tx_buffer = tx_ring->tx_buffer_info;
 			tx_desc = IGC_TX_DESC(tx_ring, 0);
-		}
+		पूर्ण
 
-		/* issue prefetch for next Tx descriptor */
+		/* issue prefetch क्रम next Tx descriptor */
 		prefetch(tx_desc);
 
 		/* update budget accounting */
 		budget--;
-	} while (likely(budget));
+	पूर्ण जबतक (likely(budget));
 
 	netdev_tx_completed_queue(txring_txq(tx_ring),
 				  total_packets, total_bytes);
@@ -2347,17 +2348,17 @@ static bool igc_clean_tx_irq(struct igc_q_vector *q_vector, int napi_budget)
 	q_vector->tx.total_bytes += total_bytes;
 	q_vector->tx.total_packets += total_packets;
 
-	if (test_bit(IGC_RING_FLAG_TX_DETECT_HANG, &tx_ring->flags)) {
-		struct igc_hw *hw = &adapter->hw;
+	अगर (test_bit(IGC_RING_FLAG_TX_DETECT_HANG, &tx_ring->flags)) अणु
+		काष्ठा igc_hw *hw = &adapter->hw;
 
 		/* Detect a transmit hang in hardware, this serializes the
-		 * check with the clearing of time_stamp and movement of i
+		 * check with the clearing of समय_stamp and movement of i
 		 */
 		clear_bit(IGC_RING_FLAG_TX_DETECT_HANG, &tx_ring->flags);
-		if (tx_buffer->next_to_watch &&
-		    time_after(jiffies, tx_buffer->time_stamp +
-		    (adapter->tx_timeout_factor * HZ)) &&
-		    !(rd32(IGC_STATUS) & IGC_STATUS_TXOFF)) {
+		अगर (tx_buffer->next_to_watch &&
+		    समय_after(jअगरfies, tx_buffer->समय_stamp +
+		    (adapter->tx_समयout_factor * HZ)) &&
+		    !(rd32(IGC_STATUS) & IGC_STATUS_TXOFF)) अणु
 			/* detected Tx unit hang */
 			netdev_err(tx_ring->netdev,
 				   "Detected Tx Unit Hang\n"
@@ -2373,114 +2374,114 @@ static bool igc_clean_tx_irq(struct igc_q_vector *q_vector, int napi_budget)
 				   "  desc.status          <%x>\n",
 				   tx_ring->queue_index,
 				   rd32(IGC_TDH(tx_ring->reg_idx)),
-				   readl(tx_ring->tail),
+				   पढ़ोl(tx_ring->tail),
 				   tx_ring->next_to_use,
 				   tx_ring->next_to_clean,
-				   tx_buffer->time_stamp,
+				   tx_buffer->समय_stamp,
 				   tx_buffer->next_to_watch,
-				   jiffies,
+				   jअगरfies,
 				   tx_buffer->next_to_watch->wb.status);
-			netif_stop_subqueue(tx_ring->netdev,
+			netअगर_stop_subqueue(tx_ring->netdev,
 					    tx_ring->queue_index);
 
-			/* we are about to reset, no point in enabling stuff */
-			return true;
-		}
-	}
+			/* we are about to reset, no poपूर्णांक in enabling stuff */
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-#define TX_WAKE_THRESHOLD (DESC_NEEDED * 2)
-	if (unlikely(total_packets &&
-		     netif_carrier_ok(tx_ring->netdev) &&
-		     igc_desc_unused(tx_ring) >= TX_WAKE_THRESHOLD)) {
+#घोषणा TX_WAKE_THRESHOLD (DESC_NEEDED * 2)
+	अगर (unlikely(total_packets &&
+		     netअगर_carrier_ok(tx_ring->netdev) &&
+		     igc_desc_unused(tx_ring) >= TX_WAKE_THRESHOLD)) अणु
 		/* Make sure that anybody stopping the queue after this
 		 * sees the new next_to_clean.
 		 */
 		smp_mb();
-		if (__netif_subqueue_stopped(tx_ring->netdev,
+		अगर (__netअगर_subqueue_stopped(tx_ring->netdev,
 					     tx_ring->queue_index) &&
-		    !(test_bit(__IGC_DOWN, &adapter->state))) {
-			netif_wake_subqueue(tx_ring->netdev,
+		    !(test_bit(__IGC_DOWN, &adapter->state))) अणु
+			netअगर_wake_subqueue(tx_ring->netdev,
 					    tx_ring->queue_index);
 
 			u64_stats_update_begin(&tx_ring->tx_syncp);
 			tx_ring->tx_stats.restart_queue++;
 			u64_stats_update_end(&tx_ring->tx_syncp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return !!budget;
-}
+	वापस !!budget;
+पूर्ण
 
-static int igc_find_mac_filter(struct igc_adapter *adapter,
-			       enum igc_mac_filter_type type, const u8 *addr)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int max_entries = hw->mac.rar_entry_count;
+अटल पूर्णांक igc_find_mac_filter(काष्ठा igc_adapter *adapter,
+			       क्रमागत igc_mac_filter_type type, स्थिर u8 *addr)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक max_entries = hw->mac.rar_entry_count;
 	u32 ral, rah;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < max_entries; i++) {
+	क्रम (i = 0; i < max_entries; i++) अणु
 		ral = rd32(IGC_RAL(i));
 		rah = rd32(IGC_RAH(i));
 
-		if (!(rah & IGC_RAH_AV))
-			continue;
-		if (!!(rah & IGC_RAH_ASEL_SRC_ADDR) != type)
-			continue;
-		if ((rah & IGC_RAH_RAH_MASK) !=
+		अगर (!(rah & IGC_RAH_AV))
+			जारी;
+		अगर (!!(rah & IGC_RAH_ASEL_SRC_ADDR) != type)
+			जारी;
+		अगर ((rah & IGC_RAH_RAH_MASK) !=
 		    le16_to_cpup((__le16 *)(addr + 4)))
-			continue;
-		if (ral != le32_to_cpup((__le32 *)(addr)))
-			continue;
+			जारी;
+		अगर (ral != le32_to_cpup((__le32 *)(addr)))
+			जारी;
 
-		return i;
-	}
+		वापस i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int igc_get_avail_mac_filter_slot(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int max_entries = hw->mac.rar_entry_count;
+अटल पूर्णांक igc_get_avail_mac_filter_slot(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक max_entries = hw->mac.rar_entry_count;
 	u32 rah;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < max_entries; i++) {
+	क्रम (i = 0; i < max_entries; i++) अणु
 		rah = rd32(IGC_RAH(i));
 
-		if (!(rah & IGC_RAH_AV))
-			return i;
-	}
+		अगर (!(rah & IGC_RAH_AV))
+			वापस i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /**
  * igc_add_mac_filter() - Add MAC address filter
- * @adapter: Pointer to adapter where the filter should be added
+ * @adapter: Poपूर्णांकer to adapter where the filter should be added
  * @type: MAC address filter type (source or destination)
  * @addr: MAC address
  * @queue: If non-negative, queue assignment feature is enabled and frames
  *         matching the filter are enqueued onto 'queue'. Otherwise, queue
  *         assignment is disabled.
  *
- * Return: 0 in case of success, negative errno code otherwise.
+ * Return: 0 in हाल of success, negative त्रुटि_सं code otherwise.
  */
-static int igc_add_mac_filter(struct igc_adapter *adapter,
-			      enum igc_mac_filter_type type, const u8 *addr,
-			      int queue)
-{
-	struct net_device *dev = adapter->netdev;
-	int index;
+अटल पूर्णांक igc_add_mac_filter(काष्ठा igc_adapter *adapter,
+			      क्रमागत igc_mac_filter_type type, स्थिर u8 *addr,
+			      पूर्णांक queue)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	पूर्णांक index;
 
 	index = igc_find_mac_filter(adapter, type, addr);
-	if (index >= 0)
-		goto update_filter;
+	अगर (index >= 0)
+		जाओ update_filter;
 
 	index = igc_get_avail_mac_filter_slot(adapter);
-	if (index < 0)
-		return -ENOSPC;
+	अगर (index < 0)
+		वापस -ENOSPC;
 
 	netdev_dbg(dev, "Add MAC address filter: index %d type %s address %pM queue %d\n",
 		   index, type == IGC_MAC_FILTER_TYPE_DST ? "dst" : "src",
@@ -2488,64 +2489,64 @@ static int igc_add_mac_filter(struct igc_adapter *adapter,
 
 update_filter:
 	igc_set_mac_filter_hw(adapter, index, type, addr, queue);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * igc_del_mac_filter() - Delete MAC address filter
- * @adapter: Pointer to adapter where the filter should be deleted from
+ * @adapter: Poपूर्णांकer to adapter where the filter should be deleted from
  * @type: MAC address filter type (source or destination)
  * @addr: MAC address
  */
-static void igc_del_mac_filter(struct igc_adapter *adapter,
-			       enum igc_mac_filter_type type, const u8 *addr)
-{
-	struct net_device *dev = adapter->netdev;
-	int index;
+अटल व्योम igc_del_mac_filter(काष्ठा igc_adapter *adapter,
+			       क्रमागत igc_mac_filter_type type, स्थिर u8 *addr)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	पूर्णांक index;
 
 	index = igc_find_mac_filter(adapter, type, addr);
-	if (index < 0)
-		return;
+	अगर (index < 0)
+		वापस;
 
-	if (index == 0) {
-		/* If this is the default filter, we don't actually delete it.
-		 * We just reset to its default value i.e. disable queue
+	अगर (index == 0) अणु
+		/* If this is the शेष filter, we करोn't actually delete it.
+		 * We just reset to its शेष value i.e. disable queue
 		 * assignment.
 		 */
 		netdev_dbg(dev, "Disable default MAC filter queue assignment");
 
 		igc_set_mac_filter_hw(adapter, 0, type, addr, -1);
-	} else {
+	पूर्ण अन्यथा अणु
 		netdev_dbg(dev, "Delete MAC address filter: index %d type %s address %pM\n",
 			   index,
 			   type == IGC_MAC_FILTER_TYPE_DST ? "dst" : "src",
 			   addr);
 
 		igc_clear_mac_filter_hw(adapter, index);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * igc_add_vlan_prio_filter() - Add VLAN priority filter
- * @adapter: Pointer to adapter where the filter should be added
+ * @adapter: Poपूर्णांकer to adapter where the filter should be added
  * @prio: VLAN priority value
- * @queue: Queue number which matching frames are assigned to
+ * @queue: Queue number which matching frames are asचिन्हित to
  *
- * Return: 0 in case of success, negative errno code otherwise.
+ * Return: 0 in हाल of success, negative त्रुटि_सं code otherwise.
  */
-static int igc_add_vlan_prio_filter(struct igc_adapter *adapter, int prio,
-				    int queue)
-{
-	struct net_device *dev = adapter->netdev;
-	struct igc_hw *hw = &adapter->hw;
+अटल पूर्णांक igc_add_vlan_prio_filter(काष्ठा igc_adapter *adapter, पूर्णांक prio,
+				    पूर्णांक queue)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 vlanpqf;
 
 	vlanpqf = rd32(IGC_VLANPQF);
 
-	if (vlanpqf & IGC_VLANPQF_VALID(prio)) {
+	अगर (vlanpqf & IGC_VLANPQF_VALID(prio)) अणु
 		netdev_dbg(dev, "VLAN priority filter already in use\n");
-		return -EEXIST;
-	}
+		वापस -EEXIST;
+	पूर्ण
 
 	vlanpqf |= IGC_VLANPQF_QSEL(prio, queue);
 	vlanpqf |= IGC_VLANPQF_VALID(prio);
@@ -2554,17 +2555,17 @@ static int igc_add_vlan_prio_filter(struct igc_adapter *adapter, int prio,
 
 	netdev_dbg(dev, "Add VLAN priority filter: prio %d queue %d\n",
 		   prio, queue);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * igc_del_vlan_prio_filter() - Delete VLAN priority filter
- * @adapter: Pointer to adapter where the filter should be deleted from
+ * @adapter: Poपूर्णांकer to adapter where the filter should be deleted from
  * @prio: VLAN priority value
  */
-static void igc_del_vlan_prio_filter(struct igc_adapter *adapter, int prio)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_del_vlan_prio_filter(काष्ठा igc_adapter *adapter, पूर्णांक prio)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 vlanpqf;
 
 	vlanpqf = rd32(IGC_VLANPQF);
@@ -2576,54 +2577,54 @@ static void igc_del_vlan_prio_filter(struct igc_adapter *adapter, int prio)
 
 	netdev_dbg(adapter->netdev, "Delete VLAN priority filter: prio %d\n",
 		   prio);
-}
+पूर्ण
 
-static int igc_get_avail_etype_filter_slot(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int i;
+अटल पूर्णांक igc_get_avail_etype_filter_slot(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_ETYPE_FILTER; i++) {
+	क्रम (i = 0; i < MAX_ETYPE_FILTER; i++) अणु
 		u32 etqf = rd32(IGC_ETQF(i));
 
-		if (!(etqf & IGC_ETQF_FILTER_ENABLE))
-			return i;
-	}
+		अगर (!(etqf & IGC_ETQF_FILTER_ENABLE))
+			वापस i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /**
  * igc_add_etype_filter() - Add ethertype filter
- * @adapter: Pointer to adapter where the filter should be added
+ * @adapter: Poपूर्णांकer to adapter where the filter should be added
  * @etype: Ethertype value
  * @queue: If non-negative, queue assignment feature is enabled and frames
  *         matching the filter are enqueued onto 'queue'. Otherwise, queue
  *         assignment is disabled.
  *
- * Return: 0 in case of success, negative errno code otherwise.
+ * Return: 0 in हाल of success, negative त्रुटि_सं code otherwise.
  */
-static int igc_add_etype_filter(struct igc_adapter *adapter, u16 etype,
-				int queue)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int index;
+अटल पूर्णांक igc_add_etype_filter(काष्ठा igc_adapter *adapter, u16 etype,
+				पूर्णांक queue)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक index;
 	u32 etqf;
 
 	index = igc_get_avail_etype_filter_slot(adapter);
-	if (index < 0)
-		return -ENOSPC;
+	अगर (index < 0)
+		वापस -ENOSPC;
 
 	etqf = rd32(IGC_ETQF(index));
 
 	etqf &= ~IGC_ETQF_ETYPE_MASK;
 	etqf |= etype;
 
-	if (queue >= 0) {
+	अगर (queue >= 0) अणु
 		etqf &= ~IGC_ETQF_QUEUE_MASK;
 		etqf |= (queue << IGC_ETQF_QUEUE_SHIFT);
 		etqf |= IGC_ETQF_QUEUE_ENABLE;
-	}
+	पूर्ण
 
 	etqf |= IGC_ETQF_FILTER_ENABLE;
 
@@ -2631,277 +2632,277 @@ static int igc_add_etype_filter(struct igc_adapter *adapter, u16 etype,
 
 	netdev_dbg(adapter->netdev, "Add ethertype filter: etype %04x queue %d\n",
 		   etype, queue);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_find_etype_filter(struct igc_adapter *adapter, u16 etype)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int i;
+अटल पूर्णांक igc_find_etype_filter(काष्ठा igc_adapter *adapter, u16 etype)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक i;
 
-	for (i = 0; i < MAX_ETYPE_FILTER; i++) {
+	क्रम (i = 0; i < MAX_ETYPE_FILTER; i++) अणु
 		u32 etqf = rd32(IGC_ETQF(i));
 
-		if ((etqf & IGC_ETQF_ETYPE_MASK) == etype)
-			return i;
-	}
+		अगर ((etqf & IGC_ETQF_ETYPE_MASK) == etype)
+			वापस i;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /**
  * igc_del_etype_filter() - Delete ethertype filter
- * @adapter: Pointer to adapter where the filter should be deleted from
+ * @adapter: Poपूर्णांकer to adapter where the filter should be deleted from
  * @etype: Ethertype value
  */
-static void igc_del_etype_filter(struct igc_adapter *adapter, u16 etype)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int index;
+अटल व्योम igc_del_etype_filter(काष्ठा igc_adapter *adapter, u16 etype)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक index;
 
 	index = igc_find_etype_filter(adapter, etype);
-	if (index < 0)
-		return;
+	अगर (index < 0)
+		वापस;
 
 	wr32(IGC_ETQF(index), 0);
 
 	netdev_dbg(adapter->netdev, "Delete ethertype filter: etype %04x\n",
 		   etype);
-}
+पूर्ण
 
-static int igc_enable_nfc_rule(struct igc_adapter *adapter,
-			       const struct igc_nfc_rule *rule)
-{
-	int err;
+अटल पूर्णांक igc_enable_nfc_rule(काष्ठा igc_adapter *adapter,
+			       स्थिर काष्ठा igc_nfc_rule *rule)
+अणु
+	पूर्णांक err;
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_ETHER_TYPE) {
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_ETHER_TYPE) अणु
 		err = igc_add_etype_filter(adapter, rule->filter.etype,
 					   rule->action);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_SRC_MAC_ADDR) {
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_SRC_MAC_ADDR) अणु
 		err = igc_add_mac_filter(adapter, IGC_MAC_FILTER_TYPE_SRC,
 					 rule->filter.src_addr, rule->action);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_DST_MAC_ADDR) {
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_DST_MAC_ADDR) अणु
 		err = igc_add_mac_filter(adapter, IGC_MAC_FILTER_TYPE_DST,
 					 rule->filter.dst_addr, rule->action);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_VLAN_TCI) {
-		int prio = (rule->filter.vlan_tci & VLAN_PRIO_MASK) >>
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_VLAN_TCI) अणु
+		पूर्णांक prio = (rule->filter.vlan_tci & VLAN_PRIO_MASK) >>
 			   VLAN_PRIO_SHIFT;
 
 		err = igc_add_vlan_prio_filter(adapter, prio, rule->action);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void igc_disable_nfc_rule(struct igc_adapter *adapter,
-				 const struct igc_nfc_rule *rule)
-{
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_ETHER_TYPE)
+अटल व्योम igc_disable_nfc_rule(काष्ठा igc_adapter *adapter,
+				 स्थिर काष्ठा igc_nfc_rule *rule)
+अणु
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_ETHER_TYPE)
 		igc_del_etype_filter(adapter, rule->filter.etype);
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_VLAN_TCI) {
-		int prio = (rule->filter.vlan_tci & VLAN_PRIO_MASK) >>
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_VLAN_TCI) अणु
+		पूर्णांक prio = (rule->filter.vlan_tci & VLAN_PRIO_MASK) >>
 			   VLAN_PRIO_SHIFT;
 
 		igc_del_vlan_prio_filter(adapter, prio);
-	}
+	पूर्ण
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_SRC_MAC_ADDR)
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_SRC_MAC_ADDR)
 		igc_del_mac_filter(adapter, IGC_MAC_FILTER_TYPE_SRC,
 				   rule->filter.src_addr);
 
-	if (rule->filter.match_flags & IGC_FILTER_FLAG_DST_MAC_ADDR)
+	अगर (rule->filter.match_flags & IGC_FILTER_FLAG_DST_MAC_ADDR)
 		igc_del_mac_filter(adapter, IGC_MAC_FILTER_TYPE_DST,
 				   rule->filter.dst_addr);
-}
+पूर्ण
 
 /**
  * igc_get_nfc_rule() - Get NFC rule
- * @adapter: Pointer to adapter
+ * @adapter: Poपूर्णांकer to adapter
  * @location: Rule location
  *
  * Context: Expects adapter->nfc_rule_lock to be held by caller.
  *
- * Return: Pointer to NFC rule at @location. If not found, NULL.
+ * Return: Poपूर्णांकer to NFC rule at @location. If not found, शून्य.
  */
-struct igc_nfc_rule *igc_get_nfc_rule(struct igc_adapter *adapter,
+काष्ठा igc_nfc_rule *igc_get_nfc_rule(काष्ठा igc_adapter *adapter,
 				      u32 location)
-{
-	struct igc_nfc_rule *rule;
+अणु
+	काष्ठा igc_nfc_rule *rule;
 
-	list_for_each_entry(rule, &adapter->nfc_rule_list, list) {
-		if (rule->location == location)
-			return rule;
-		if (rule->location > location)
-			break;
-	}
+	list_क्रम_each_entry(rule, &adapter->nfc_rule_list, list) अणु
+		अगर (rule->location == location)
+			वापस rule;
+		अगर (rule->location > location)
+			अवरोध;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
  * igc_del_nfc_rule() - Delete NFC rule
- * @adapter: Pointer to adapter
- * @rule: Pointer to rule to be deleted
+ * @adapter: Poपूर्णांकer to adapter
+ * @rule: Poपूर्णांकer to rule to be deleted
  *
  * Disable NFC rule in hardware and delete it from adapter.
  *
  * Context: Expects adapter->nfc_rule_lock to be held by caller.
  */
-void igc_del_nfc_rule(struct igc_adapter *adapter, struct igc_nfc_rule *rule)
-{
+व्योम igc_del_nfc_rule(काष्ठा igc_adapter *adapter, काष्ठा igc_nfc_rule *rule)
+अणु
 	igc_disable_nfc_rule(adapter, rule);
 
 	list_del(&rule->list);
 	adapter->nfc_rule_count--;
 
-	kfree(rule);
-}
+	kमुक्त(rule);
+पूर्ण
 
-static void igc_flush_nfc_rules(struct igc_adapter *adapter)
-{
-	struct igc_nfc_rule *rule, *tmp;
+अटल व्योम igc_flush_nfc_rules(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_nfc_rule *rule, *पंचांगp;
 
 	mutex_lock(&adapter->nfc_rule_lock);
 
-	list_for_each_entry_safe(rule, tmp, &adapter->nfc_rule_list, list)
+	list_क्रम_each_entry_safe(rule, पंचांगp, &adapter->nfc_rule_list, list)
 		igc_del_nfc_rule(adapter, rule);
 
 	mutex_unlock(&adapter->nfc_rule_lock);
-}
+पूर्ण
 
 /**
  * igc_add_nfc_rule() - Add NFC rule
- * @adapter: Pointer to adapter
- * @rule: Pointer to rule to be added
+ * @adapter: Poपूर्णांकer to adapter
+ * @rule: Poपूर्णांकer to rule to be added
  *
  * Enable NFC rule in hardware and add it to adapter.
  *
  * Context: Expects adapter->nfc_rule_lock to be held by caller.
  *
- * Return: 0 on success, negative errno on failure.
+ * Return: 0 on success, negative त्रुटि_सं on failure.
  */
-int igc_add_nfc_rule(struct igc_adapter *adapter, struct igc_nfc_rule *rule)
-{
-	struct igc_nfc_rule *pred, *cur;
-	int err;
+पूर्णांक igc_add_nfc_rule(काष्ठा igc_adapter *adapter, काष्ठा igc_nfc_rule *rule)
+अणु
+	काष्ठा igc_nfc_rule *pred, *cur;
+	पूर्णांक err;
 
 	err = igc_enable_nfc_rule(adapter, rule);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	pred = NULL;
-	list_for_each_entry(cur, &adapter->nfc_rule_list, list) {
-		if (cur->location >= rule->location)
-			break;
+	pred = शून्य;
+	list_क्रम_each_entry(cur, &adapter->nfc_rule_list, list) अणु
+		अगर (cur->location >= rule->location)
+			अवरोध;
 		pred = cur;
-	}
+	पूर्ण
 
 	list_add(&rule->list, pred ? &pred->list : &adapter->nfc_rule_list);
 	adapter->nfc_rule_count++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void igc_restore_nfc_rules(struct igc_adapter *adapter)
-{
-	struct igc_nfc_rule *rule;
+अटल व्योम igc_restore_nfc_rules(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_nfc_rule *rule;
 
 	mutex_lock(&adapter->nfc_rule_lock);
 
-	list_for_each_entry_reverse(rule, &adapter->nfc_rule_list, list)
+	list_क्रम_each_entry_reverse(rule, &adapter->nfc_rule_list, list)
 		igc_enable_nfc_rule(adapter, rule);
 
 	mutex_unlock(&adapter->nfc_rule_lock);
-}
+पूर्ण
 
-static int igc_uc_sync(struct net_device *netdev, const unsigned char *addr)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igc_uc_sync(काष्ठा net_device *netdev, स्थिर अचिन्हित अक्षर *addr)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	return igc_add_mac_filter(adapter, IGC_MAC_FILTER_TYPE_DST, addr, -1);
-}
+	वापस igc_add_mac_filter(adapter, IGC_MAC_FILTER_TYPE_DST, addr, -1);
+पूर्ण
 
-static int igc_uc_unsync(struct net_device *netdev, const unsigned char *addr)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igc_uc_unsync(काष्ठा net_device *netdev, स्थिर अचिन्हित अक्षर *addr)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
 	igc_del_mac_filter(adapter, IGC_MAC_FILTER_TYPE_DST, addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * igc_set_rx_mode - Secondary Unicast, Multicast and Promiscuous mode set
- * @netdev: network interface device structure
+ * @netdev: network पूर्णांकerface device काष्ठाure
  *
- * The set_rx_mode entry point is called whenever the unicast or multicast
- * address lists or the network interface flags are updated.  This routine is
- * responsible for configuring the hardware for proper unicast, multicast,
+ * The set_rx_mode entry poपूर्णांक is called whenever the unicast or multicast
+ * address lists or the network पूर्णांकerface flags are updated.  This routine is
+ * responsible क्रम configuring the hardware क्रम proper unicast, multicast,
  * promiscuous mode, and all-multi behavior.
  */
-static void igc_set_rx_mode(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_set_rx_mode(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 rctl = 0, rlpml = MAX_JUMBO_FRAME_SIZE;
-	int count;
+	पूर्णांक count;
 
-	/* Check for Promiscuous and All Multicast modes */
-	if (netdev->flags & IFF_PROMISC) {
+	/* Check क्रम Promiscuous and All Multicast modes */
+	अगर (netdev->flags & IFF_PROMISC) अणु
 		rctl |= IGC_RCTL_UPE | IGC_RCTL_MPE;
-	} else {
-		if (netdev->flags & IFF_ALLMULTI) {
+	पूर्ण अन्यथा अणु
+		अगर (netdev->flags & IFF_ALLMULTI) अणु
 			rctl |= IGC_RCTL_MPE;
-		} else {
-			/* Write addresses to the MTA, if the attempt fails
+		पूर्ण अन्यथा अणु
+			/* Write addresses to the MTA, अगर the attempt fails
 			 * then we should just turn on promiscuous mode so
 			 * that we can at least receive multicast traffic
 			 */
-			count = igc_write_mc_addr_list(netdev);
-			if (count < 0)
+			count = igc_ग_लिखो_mc_addr_list(netdev);
+			अगर (count < 0)
 				rctl |= IGC_RCTL_MPE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Write addresses to available RAR registers, if there is not
+	/* Write addresses to available RAR रेजिस्टरs, अगर there is not
 	 * sufficient space to store all the addresses then enable
 	 * unicast promiscuous mode
 	 */
-	if (__dev_uc_sync(netdev, igc_uc_sync, igc_uc_unsync))
+	अगर (__dev_uc_sync(netdev, igc_uc_sync, igc_uc_unsync))
 		rctl |= IGC_RCTL_UPE;
 
 	/* update state of unicast and multicast */
 	rctl |= rd32(IGC_RCTL) & ~(IGC_RCTL_UPE | IGC_RCTL_MPE);
 	wr32(IGC_RCTL, rctl);
 
-#if (PAGE_SIZE < 8192)
-	if (adapter->max_frame_size <= IGC_MAX_FRAME_BUILD_SKB)
+#अगर (PAGE_SIZE < 8192)
+	अगर (adapter->max_frame_size <= IGC_MAX_FRAME_BUILD_SKB)
 		rlpml = IGC_MAX_FRAME_BUILD_SKB;
-#endif
+#पूर्ण_अगर
 	wr32(IGC_RLPML, rlpml);
-}
+पूर्ण
 
 /**
- * igc_configure - configure the hardware for RX and TX
- * @adapter: private board structure
+ * igc_configure - configure the hardware क्रम RX and TX
+ * @adapter: निजी board काष्ठाure
  */
-static void igc_configure(struct igc_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	int i = 0;
+अटल व्योम igc_configure(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक i = 0;
 
 	igc_get_hw_control(adapter);
 	igc_set_rx_mode(netdev);
@@ -2910,104 +2911,104 @@ static void igc_configure(struct igc_adapter *adapter)
 	igc_setup_mrqc(adapter);
 	igc_setup_rctl(adapter);
 
-	igc_set_default_mac_filter(adapter);
+	igc_set_शेष_mac_filter(adapter);
 	igc_restore_nfc_rules(adapter);
 
 	igc_configure_tx(adapter);
 	igc_configure_rx(adapter);
 
-	igc_rx_fifo_flush_base(&adapter->hw);
+	igc_rx_fअगरo_flush_base(&adapter->hw);
 
 	/* call igc_desc_unused which always leaves
 	 * at least 1 descriptor unused to make sure
 	 * next_to_use != next_to_clean
 	 */
-	for (i = 0; i < adapter->num_rx_queues; i++) {
-		struct igc_ring *ring = adapter->rx_ring[i];
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+		काष्ठा igc_ring *ring = adapter->rx_ring[i];
 
 		igc_alloc_rx_buffers(ring, igc_desc_unused(ring));
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * igc_write_ivar - configure ivar for given MSI-X vector
- * @hw: pointer to the HW structure
+ * igc_ग_लिखो_ivar - configure ivar क्रम given MSI-X vector
+ * @hw: poपूर्णांकer to the HW काष्ठाure
  * @msix_vector: vector number we are allocating to a given ring
- * @index: row index of IVAR register to write within IVAR table
+ * @index: row index of IVAR रेजिस्टर to ग_लिखो within IVAR table
  * @offset: column offset of in IVAR, should be multiple of 8
  *
  * The IVAR table consists of 2 columns,
- * each containing an cause allocation for an Rx and Tx ring, and a
+ * each containing an cause allocation क्रम an Rx and Tx ring, and a
  * variable number of rows depending on the number of queues supported.
  */
-static void igc_write_ivar(struct igc_hw *hw, int msix_vector,
-			   int index, int offset)
-{
+अटल व्योम igc_ग_लिखो_ivar(काष्ठा igc_hw *hw, पूर्णांक msix_vector,
+			   पूर्णांक index, पूर्णांक offset)
+अणु
 	u32 ivar = array_rd32(IGC_IVAR0, index);
 
 	/* clear any bits that are currently set */
 	ivar &= ~((u32)0xFF << offset);
 
-	/* write vector and valid bit */
+	/* ग_लिखो vector and valid bit */
 	ivar |= (msix_vector | IGC_IVAR_VALID) << offset;
 
 	array_wr32(IGC_IVAR0, index, ivar);
-}
+पूर्ण
 
-static void igc_assign_vector(struct igc_q_vector *q_vector, int msix_vector)
-{
-	struct igc_adapter *adapter = q_vector->adapter;
-	struct igc_hw *hw = &adapter->hw;
-	int rx_queue = IGC_N0_QUEUE;
-	int tx_queue = IGC_N0_QUEUE;
+अटल व्योम igc_assign_vector(काष्ठा igc_q_vector *q_vector, पूर्णांक msix_vector)
+अणु
+	काष्ठा igc_adapter *adapter = q_vector->adapter;
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक rx_queue = IGC_N0_QUEUE;
+	पूर्णांक tx_queue = IGC_N0_QUEUE;
 
-	if (q_vector->rx.ring)
+	अगर (q_vector->rx.ring)
 		rx_queue = q_vector->rx.ring->reg_idx;
-	if (q_vector->tx.ring)
+	अगर (q_vector->tx.ring)
 		tx_queue = q_vector->tx.ring->reg_idx;
 
-	switch (hw->mac.type) {
-	case igc_i225:
-		if (rx_queue > IGC_N0_QUEUE)
-			igc_write_ivar(hw, msix_vector,
+	चयन (hw->mac.type) अणु
+	हाल igc_i225:
+		अगर (rx_queue > IGC_N0_QUEUE)
+			igc_ग_लिखो_ivar(hw, msix_vector,
 				       rx_queue >> 1,
 				       (rx_queue & 0x1) << 4);
-		if (tx_queue > IGC_N0_QUEUE)
-			igc_write_ivar(hw, msix_vector,
+		अगर (tx_queue > IGC_N0_QUEUE)
+			igc_ग_लिखो_ivar(hw, msix_vector,
 				       tx_queue >> 1,
 				       ((tx_queue & 0x1) << 4) + 8);
 		q_vector->eims_value = BIT(msix_vector);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ONCE(hw->mac.type != igc_i225, "Wrong MAC type\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* add q_vector eims value to global eims_enable_mask */
 	adapter->eims_enable_mask |= q_vector->eims_value;
 
-	/* configure q_vector to set itr on first interrupt */
+	/* configure q_vector to set itr on first पूर्णांकerrupt */
 	q_vector->set_itr = 1;
-}
+पूर्ण
 
 /**
  * igc_configure_msix - Configure MSI-X hardware
- * @adapter: Pointer to adapter structure
+ * @adapter: Poपूर्णांकer to adapter काष्ठाure
  *
  * igc_configure_msix sets up the hardware to properly
- * generate MSI-X interrupts.
+ * generate MSI-X पूर्णांकerrupts.
  */
-static void igc_configure_msix(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int i, vector = 0;
-	u32 tmp;
+अटल व्योम igc_configure_msix(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक i, vector = 0;
+	u32 पंचांगp;
 
 	adapter->eims_enable_mask = 0;
 
-	/* set vector for other causes, i.e. link changes */
-	switch (hw->mac.type) {
-	case igc_i225:
+	/* set vector क्रम other causes, i.e. link changes */
+	चयन (hw->mac.type) अणु
+	हाल igc_i225:
 		/* Turn on MSI-X capability first, or our settings
 		 * won't stick.  And it will take days to debug.
 		 */
@@ -3015,34 +3016,34 @@ static void igc_configure_msix(struct igc_adapter *adapter)
 		     IGC_GPIE_PBA | IGC_GPIE_EIAME |
 		     IGC_GPIE_NSICR);
 
-		/* enable msix_other interrupt */
+		/* enable msix_other पूर्णांकerrupt */
 		adapter->eims_other = BIT(vector);
-		tmp = (vector++ | IGC_IVAR_VALID) << 8;
+		पंचांगp = (vector++ | IGC_IVAR_VALID) << 8;
 
-		wr32(IGC_IVAR_MISC, tmp);
-		break;
-	default:
-		/* do nothing, since nothing else supports MSI-X */
-		break;
-	} /* switch (hw->mac.type) */
+		wr32(IGC_IVAR_MISC, पंचांगp);
+		अवरोध;
+	शेष:
+		/* करो nothing, since nothing अन्यथा supports MSI-X */
+		अवरोध;
+	पूर्ण /* चयन (hw->mac.type) */
 
 	adapter->eims_enable_mask |= adapter->eims_other;
 
-	for (i = 0; i < adapter->num_q_vectors; i++)
+	क्रम (i = 0; i < adapter->num_q_vectors; i++)
 		igc_assign_vector(adapter->q_vector[i], vector++);
 
 	wrfl();
-}
+पूर्ण
 
 /**
- * igc_irq_enable - Enable default interrupt generation settings
- * @adapter: board private structure
+ * igc_irq_enable - Enable शेष पूर्णांकerrupt generation settings
+ * @adapter: board निजी काष्ठाure
  */
-static void igc_irq_enable(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_irq_enable(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 
-	if (adapter->msix_entries) {
+	अगर (adapter->msix_entries) अणु
 		u32 ims = IGC_IMS_LSC | IGC_IMS_DOUTSYNC | IGC_IMS_DRSTA;
 		u32 regval = rd32(IGC_EIAC);
 
@@ -3051,225 +3052,225 @@ static void igc_irq_enable(struct igc_adapter *adapter)
 		wr32(IGC_EIAM, regval | adapter->eims_enable_mask);
 		wr32(IGC_EIMS, adapter->eims_enable_mask);
 		wr32(IGC_IMS, ims);
-	} else {
+	पूर्ण अन्यथा अणु
 		wr32(IGC_IMS, IMS_ENABLE_MASK | IGC_IMS_DRSTA);
 		wr32(IGC_IAM, IMS_ENABLE_MASK | IGC_IMS_DRSTA);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * igc_irq_disable - Mask off interrupt generation on the NIC
- * @adapter: board private structure
+ * igc_irq_disable - Mask off पूर्णांकerrupt generation on the NIC
+ * @adapter: board निजी काष्ठाure
  */
-static void igc_irq_disable(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_irq_disable(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 
-	if (adapter->msix_entries) {
+	अगर (adapter->msix_entries) अणु
 		u32 regval = rd32(IGC_EIAM);
 
 		wr32(IGC_EIAM, regval & ~adapter->eims_enable_mask);
 		wr32(IGC_EIMC, adapter->eims_enable_mask);
 		regval = rd32(IGC_EIAC);
 		wr32(IGC_EIAC, regval & ~adapter->eims_enable_mask);
-	}
+	पूर्ण
 
 	wr32(IGC_IAM, 0);
 	wr32(IGC_IMC, ~0);
 	wrfl();
 
-	if (adapter->msix_entries) {
-		int vector = 0, i;
+	अगर (adapter->msix_entries) अणु
+		पूर्णांक vector = 0, i;
 
 		synchronize_irq(adapter->msix_entries[vector++].vector);
 
-		for (i = 0; i < adapter->num_q_vectors; i++)
+		क्रम (i = 0; i < adapter->num_q_vectors; i++)
 			synchronize_irq(adapter->msix_entries[vector++].vector);
-	} else {
+	पूर्ण अन्यथा अणु
 		synchronize_irq(adapter->pdev->irq);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void igc_set_flag_queue_pairs(struct igc_adapter *adapter,
-			      const u32 max_rss_queues)
-{
-	/* Determine if we need to pair queues. */
+व्योम igc_set_flag_queue_pairs(काष्ठा igc_adapter *adapter,
+			      स्थिर u32 max_rss_queues)
+अणु
+	/* Determine अगर we need to pair queues. */
 	/* If rss_queues > half of max_rss_queues, pair the queues in
-	 * order to conserve interrupts due to limited supply.
+	 * order to conserve पूर्णांकerrupts due to limited supply.
 	 */
-	if (adapter->rss_queues > (max_rss_queues / 2))
+	अगर (adapter->rss_queues > (max_rss_queues / 2))
 		adapter->flags |= IGC_FLAG_QUEUE_PAIRS;
-	else
+	अन्यथा
 		adapter->flags &= ~IGC_FLAG_QUEUE_PAIRS;
-}
+पूर्ण
 
-unsigned int igc_get_max_rss_queues(struct igc_adapter *adapter)
-{
-	return IGC_MAX_RX_QUEUES;
-}
+अचिन्हित पूर्णांक igc_get_max_rss_queues(काष्ठा igc_adapter *adapter)
+अणु
+	वापस IGC_MAX_RX_QUEUES;
+पूर्ण
 
-static void igc_init_queue_configuration(struct igc_adapter *adapter)
-{
+अटल व्योम igc_init_queue_configuration(काष्ठा igc_adapter *adapter)
+अणु
 	u32 max_rss_queues;
 
 	max_rss_queues = igc_get_max_rss_queues(adapter);
 	adapter->rss_queues = min_t(u32, max_rss_queues, num_online_cpus());
 
 	igc_set_flag_queue_pairs(adapter, max_rss_queues);
-}
+पूर्ण
 
 /**
- * igc_reset_q_vector - Reset config for interrupt vector
- * @adapter: board private structure to initialize
+ * igc_reset_q_vector - Reset config क्रम पूर्णांकerrupt vector
+ * @adapter: board निजी काष्ठाure to initialize
  * @v_idx: Index of vector to be reset
  *
  * If NAPI is enabled it will delete any references to the
- * NAPI struct. This is preparation for igc_free_q_vector.
+ * NAPI काष्ठा. This is preparation क्रम igc_मुक्त_q_vector.
  */
-static void igc_reset_q_vector(struct igc_adapter *adapter, int v_idx)
-{
-	struct igc_q_vector *q_vector = adapter->q_vector[v_idx];
+अटल व्योम igc_reset_q_vector(काष्ठा igc_adapter *adapter, पूर्णांक v_idx)
+अणु
+	काष्ठा igc_q_vector *q_vector = adapter->q_vector[v_idx];
 
-	/* if we're coming from igc_set_interrupt_capability, the vectors are
+	/* अगर we're coming from igc_set_पूर्णांकerrupt_capability, the vectors are
 	 * not yet allocated
 	 */
-	if (!q_vector)
-		return;
+	अगर (!q_vector)
+		वापस;
 
-	if (q_vector->tx.ring)
-		adapter->tx_ring[q_vector->tx.ring->queue_index] = NULL;
+	अगर (q_vector->tx.ring)
+		adapter->tx_ring[q_vector->tx.ring->queue_index] = शून्य;
 
-	if (q_vector->rx.ring)
-		adapter->rx_ring[q_vector->rx.ring->queue_index] = NULL;
+	अगर (q_vector->rx.ring)
+		adapter->rx_ring[q_vector->rx.ring->queue_index] = शून्य;
 
-	netif_napi_del(&q_vector->napi);
-}
+	netअगर_napi_del(&q_vector->napi);
+पूर्ण
 
 /**
- * igc_free_q_vector - Free memory allocated for specific interrupt vector
- * @adapter: board private structure to initialize
- * @v_idx: Index of vector to be freed
+ * igc_मुक्त_q_vector - Free memory allocated क्रम specअगरic पूर्णांकerrupt vector
+ * @adapter: board निजी काष्ठाure to initialize
+ * @v_idx: Index of vector to be मुक्तd
  *
- * This function frees the memory allocated to the q_vector.
+ * This function मुक्तs the memory allocated to the q_vector.
  */
-static void igc_free_q_vector(struct igc_adapter *adapter, int v_idx)
-{
-	struct igc_q_vector *q_vector = adapter->q_vector[v_idx];
+अटल व्योम igc_मुक्त_q_vector(काष्ठा igc_adapter *adapter, पूर्णांक v_idx)
+अणु
+	काष्ठा igc_q_vector *q_vector = adapter->q_vector[v_idx];
 
-	adapter->q_vector[v_idx] = NULL;
+	adapter->q_vector[v_idx] = शून्य;
 
 	/* igc_get_stats64() might access the rings on this vector,
-	 * we must wait a grace period before freeing it.
+	 * we must रुको a grace period beक्रमe मुक्तing it.
 	 */
-	if (q_vector)
-		kfree_rcu(q_vector, rcu);
-}
+	अगर (q_vector)
+		kमुक्त_rcu(q_vector, rcu);
+पूर्ण
 
 /**
- * igc_free_q_vectors - Free memory allocated for interrupt vectors
- * @adapter: board private structure to initialize
+ * igc_मुक्त_q_vectors - Free memory allocated क्रम पूर्णांकerrupt vectors
+ * @adapter: board निजी काष्ठाure to initialize
  *
- * This function frees the memory allocated to the q_vectors.  In addition if
- * NAPI is enabled it will delete any references to the NAPI struct prior
- * to freeing the q_vector.
+ * This function मुक्तs the memory allocated to the q_vectors.  In addition अगर
+ * NAPI is enabled it will delete any references to the NAPI काष्ठा prior
+ * to मुक्तing the q_vector.
  */
-static void igc_free_q_vectors(struct igc_adapter *adapter)
-{
-	int v_idx = adapter->num_q_vectors;
+अटल व्योम igc_मुक्त_q_vectors(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक v_idx = adapter->num_q_vectors;
 
 	adapter->num_tx_queues = 0;
 	adapter->num_rx_queues = 0;
 	adapter->num_q_vectors = 0;
 
-	while (v_idx--) {
+	जबतक (v_idx--) अणु
 		igc_reset_q_vector(adapter, v_idx);
-		igc_free_q_vector(adapter, v_idx);
-	}
-}
+		igc_मुक्त_q_vector(adapter, v_idx);
+	पूर्ण
+पूर्ण
 
 /**
  * igc_update_itr - update the dynamic ITR value based on statistics
- * @q_vector: pointer to q_vector
- * @ring_container: ring info to update the itr for
+ * @q_vector: poपूर्णांकer to q_vector
+ * @ring_container: ring info to update the itr क्रम
  *
  * Stores a new ITR value based on packets and byte
- * counts during the last interrupt.  The advantage of per interrupt
- * computation is faster updates and more accurate ITR for the current
+ * counts during the last पूर्णांकerrupt.  The advantage of per पूर्णांकerrupt
+ * computation is faster updates and more accurate ITR क्रम the current
  * traffic pattern.  Constants in this function were computed
  * based on theoretical maximum wire speed and thresholds were set based
- * on testing data as well as attempting to minimize response time
- * while increasing bulk throughput.
+ * on testing data as well as attempting to minimize response समय
+ * जबतक increasing bulk throughput.
  * NOTE: These calculations are only valid when operating in a single-
  * queue environment.
  */
-static void igc_update_itr(struct igc_q_vector *q_vector,
-			   struct igc_ring_container *ring_container)
-{
-	unsigned int packets = ring_container->total_packets;
-	unsigned int bytes = ring_container->total_bytes;
+अटल व्योम igc_update_itr(काष्ठा igc_q_vector *q_vector,
+			   काष्ठा igc_ring_container *ring_container)
+अणु
+	अचिन्हित पूर्णांक packets = ring_container->total_packets;
+	अचिन्हित पूर्णांक bytes = ring_container->total_bytes;
 	u8 itrval = ring_container->itr;
 
-	/* no packets, exit with status unchanged */
-	if (packets == 0)
-		return;
+	/* no packets, निकास with status unchanged */
+	अगर (packets == 0)
+		वापस;
 
-	switch (itrval) {
-	case lowest_latency:
+	चयन (itrval) अणु
+	हाल lowest_latency:
 		/* handle TSO and jumbo frames */
-		if (bytes / packets > 8000)
+		अगर (bytes / packets > 8000)
 			itrval = bulk_latency;
-		else if ((packets < 5) && (bytes > 512))
+		अन्यथा अगर ((packets < 5) && (bytes > 512))
 			itrval = low_latency;
-		break;
-	case low_latency:  /* 50 usec aka 20000 ints/s */
-		if (bytes > 10000) {
-			/* this if handles the TSO accounting */
-			if (bytes / packets > 8000)
+		अवरोध;
+	हाल low_latency:  /* 50 usec aka 20000 पूर्णांकs/s */
+		अगर (bytes > 10000) अणु
+			/* this अगर handles the TSO accounting */
+			अगर (bytes / packets > 8000)
 				itrval = bulk_latency;
-			else if ((packets < 10) || ((bytes / packets) > 1200))
+			अन्यथा अगर ((packets < 10) || ((bytes / packets) > 1200))
 				itrval = bulk_latency;
-			else if ((packets > 35))
+			अन्यथा अगर ((packets > 35))
 				itrval = lowest_latency;
-		} else if (bytes / packets > 2000) {
+		पूर्ण अन्यथा अगर (bytes / packets > 2000) अणु
 			itrval = bulk_latency;
-		} else if (packets <= 2 && bytes < 512) {
+		पूर्ण अन्यथा अगर (packets <= 2 && bytes < 512) अणु
 			itrval = lowest_latency;
-		}
-		break;
-	case bulk_latency: /* 250 usec aka 4000 ints/s */
-		if (bytes > 25000) {
-			if (packets > 35)
+		पूर्ण
+		अवरोध;
+	हाल bulk_latency: /* 250 usec aka 4000 पूर्णांकs/s */
+		अगर (bytes > 25000) अणु
+			अगर (packets > 35)
 				itrval = low_latency;
-		} else if (bytes < 1500) {
+		पूर्ण अन्यथा अगर (bytes < 1500) अणु
 			itrval = low_latency;
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	/* clear work counters since we have the values we need */
 	ring_container->total_bytes = 0;
 	ring_container->total_packets = 0;
 
-	/* write updated itr to ring container */
+	/* ग_लिखो updated itr to ring container */
 	ring_container->itr = itrval;
-}
+पूर्ण
 
-static void igc_set_itr(struct igc_q_vector *q_vector)
-{
-	struct igc_adapter *adapter = q_vector->adapter;
+अटल व्योम igc_set_itr(काष्ठा igc_q_vector *q_vector)
+अणु
+	काष्ठा igc_adapter *adapter = q_vector->adapter;
 	u32 new_itr = q_vector->itr_val;
 	u8 current_itr = 0;
 
-	/* for non-gigabit speeds, just fix the interrupt rate at 4000 */
-	switch (adapter->link_speed) {
-	case SPEED_10:
-	case SPEED_100:
+	/* क्रम non-gigabit speeds, just fix the पूर्णांकerrupt rate at 4000 */
+	चयन (adapter->link_speed) अणु
+	हाल SPEED_10:
+	हाल SPEED_100:
 		current_itr = 0;
 		new_itr = IGC_4K_ITR;
-		goto set_itr_now;
-	default:
-		break;
-	}
+		जाओ set_itr_now;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	igc_update_itr(q_vector, &q_vector->tx);
 	igc_update_itr(q_vector, &q_vector->rx);
@@ -3277,30 +3278,30 @@ static void igc_set_itr(struct igc_q_vector *q_vector)
 	current_itr = max(q_vector->rx.itr, q_vector->tx.itr);
 
 	/* conservative mode (itr 3) eliminates the lowest_latency setting */
-	if (current_itr == lowest_latency &&
+	अगर (current_itr == lowest_latency &&
 	    ((q_vector->rx.ring && adapter->rx_itr_setting == 3) ||
 	    (!q_vector->rx.ring && adapter->tx_itr_setting == 3)))
 		current_itr = low_latency;
 
-	switch (current_itr) {
+	चयन (current_itr) अणु
 	/* counts and packets in update_itr are dependent on these numbers */
-	case lowest_latency:
-		new_itr = IGC_70K_ITR; /* 70,000 ints/sec */
-		break;
-	case low_latency:
-		new_itr = IGC_20K_ITR; /* 20,000 ints/sec */
-		break;
-	case bulk_latency:
-		new_itr = IGC_4K_ITR;  /* 4,000 ints/sec */
-		break;
-	default:
-		break;
-	}
+	हाल lowest_latency:
+		new_itr = IGC_70K_ITR; /* 70,000 पूर्णांकs/sec */
+		अवरोध;
+	हाल low_latency:
+		new_itr = IGC_20K_ITR; /* 20,000 पूर्णांकs/sec */
+		अवरोध;
+	हाल bulk_latency:
+		new_itr = IGC_4K_ITR;  /* 4,000 पूर्णांकs/sec */
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 set_itr_now:
-	if (new_itr != q_vector->itr_val) {
-		/* this attempts to bias the interrupt rate towards Bulk
-		 * by adding intermediate steps when interrupt rate is
+	अगर (new_itr != q_vector->itr_val) अणु
+		/* this attempts to bias the पूर्णांकerrupt rate towards Bulk
+		 * by adding पूर्णांकermediate steps when पूर्णांकerrupt rate is
 		 * increasing
 		 */
 		new_itr = new_itr > q_vector->itr_val ?
@@ -3308,48 +3309,48 @@ set_itr_now:
 			  (new_itr + (q_vector->itr_val >> 2)),
 			  new_itr) : new_itr;
 		/* Don't write the value here; it resets the adapter's
-		 * internal timer, and causes us to delay far longer than
-		 * we should between interrupts.  Instead, we write the ITR
-		 * value at the beginning of the next interrupt so the timing
+		 * पूर्णांकernal समयr, and causes us to delay far दीर्घer than
+		 * we should between पूर्णांकerrupts.  Instead, we ग_लिखो the ITR
+		 * value at the beginning of the next पूर्णांकerrupt so the timing
 		 * ends up being correct.
 		 */
 		q_vector->itr_val = new_itr;
 		q_vector->set_itr = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void igc_reset_interrupt_capability(struct igc_adapter *adapter)
-{
-	int v_idx = adapter->num_q_vectors;
+अटल व्योम igc_reset_पूर्णांकerrupt_capability(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक v_idx = adapter->num_q_vectors;
 
-	if (adapter->msix_entries) {
+	अगर (adapter->msix_entries) अणु
 		pci_disable_msix(adapter->pdev);
-		kfree(adapter->msix_entries);
-		adapter->msix_entries = NULL;
-	} else if (adapter->flags & IGC_FLAG_HAS_MSI) {
+		kमुक्त(adapter->msix_entries);
+		adapter->msix_entries = शून्य;
+	पूर्ण अन्यथा अगर (adapter->flags & IGC_FLAG_HAS_MSI) अणु
 		pci_disable_msi(adapter->pdev);
-	}
+	पूर्ण
 
-	while (v_idx--)
+	जबतक (v_idx--)
 		igc_reset_q_vector(adapter, v_idx);
-}
+पूर्ण
 
 /**
- * igc_set_interrupt_capability - set MSI or MSI-X if supported
- * @adapter: Pointer to adapter structure
- * @msix: boolean value for MSI-X capability
+ * igc_set_पूर्णांकerrupt_capability - set MSI or MSI-X अगर supported
+ * @adapter: Poपूर्णांकer to adapter काष्ठाure
+ * @msix: boolean value क्रम MSI-X capability
  *
- * Attempt to configure interrupts using the best available
+ * Attempt to configure पूर्णांकerrupts using the best available
  * capabilities of the hardware and kernel.
  */
-static void igc_set_interrupt_capability(struct igc_adapter *adapter,
+अटल व्योम igc_set_पूर्णांकerrupt_capability(काष्ठा igc_adapter *adapter,
 					 bool msix)
-{
-	int numvecs, i;
-	int err;
+अणु
+	पूर्णांक numvecs, i;
+	पूर्णांक err;
 
-	if (!msix)
-		goto msi_only;
+	अगर (!msix)
+		जाओ msi_only;
 	adapter->flags |= IGC_FLAG_HAS_MSIX;
 
 	/* Number of supported queues. */
@@ -3357,40 +3358,40 @@ static void igc_set_interrupt_capability(struct igc_adapter *adapter,
 
 	adapter->num_tx_queues = adapter->rss_queues;
 
-	/* start with one vector for every Rx queue */
+	/* start with one vector क्रम every Rx queue */
 	numvecs = adapter->num_rx_queues;
 
-	/* if Tx handler is separate add 1 for every Tx queue */
-	if (!(adapter->flags & IGC_FLAG_QUEUE_PAIRS))
+	/* अगर Tx handler is separate add 1 क्रम every Tx queue */
+	अगर (!(adapter->flags & IGC_FLAG_QUEUE_PAIRS))
 		numvecs += adapter->num_tx_queues;
 
-	/* store the number of vectors reserved for queues */
+	/* store the number of vectors reserved क्रम queues */
 	adapter->num_q_vectors = numvecs;
 
-	/* add 1 vector for link status interrupts */
+	/* add 1 vector क्रम link status पूर्णांकerrupts */
 	numvecs++;
 
-	adapter->msix_entries = kcalloc(numvecs, sizeof(struct msix_entry),
+	adapter->msix_entries = kसुस्मृति(numvecs, माप(काष्ठा msix_entry),
 					GFP_KERNEL);
 
-	if (!adapter->msix_entries)
-		return;
+	अगर (!adapter->msix_entries)
+		वापस;
 
 	/* populate entry values */
-	for (i = 0; i < numvecs; i++)
+	क्रम (i = 0; i < numvecs; i++)
 		adapter->msix_entries[i].entry = i;
 
 	err = pci_enable_msix_range(adapter->pdev,
 				    adapter->msix_entries,
 				    numvecs,
 				    numvecs);
-	if (err > 0)
-		return;
+	अगर (err > 0)
+		वापस;
 
-	kfree(adapter->msix_entries);
-	adapter->msix_entries = NULL;
+	kमुक्त(adapter->msix_entries);
+	adapter->msix_entries = शून्य;
 
-	igc_reset_interrupt_capability(adapter);
+	igc_reset_पूर्णांकerrupt_capability(adapter);
 
 msi_only:
 	adapter->flags &= ~IGC_FLAG_HAS_MSIX;
@@ -3400,212 +3401,212 @@ msi_only:
 	adapter->num_rx_queues = 1;
 	adapter->num_tx_queues = 1;
 	adapter->num_q_vectors = 1;
-	if (!pci_enable_msi(adapter->pdev))
+	अगर (!pci_enable_msi(adapter->pdev))
 		adapter->flags |= IGC_FLAG_HAS_MSI;
-}
+पूर्ण
 
 /**
  * igc_update_ring_itr - update the dynamic ITR value based on packet size
- * @q_vector: pointer to q_vector
+ * @q_vector: poपूर्णांकer to q_vector
  *
  * Stores a new ITR value based on strictly on packet size.  This
  * algorithm is less sophisticated than that used in igc_update_itr,
- * due to the difficulty of synchronizing statistics across multiple
- * receive rings.  The divisors and thresholds used by this function
+ * due to the dअगरficulty of synchronizing statistics across multiple
+ * receive rings.  The भागisors and thresholds used by this function
  * were determined based on theoretical maximum wire speed and testing
- * data, in order to minimize response time while increasing bulk
+ * data, in order to minimize response समय जबतक increasing bulk
  * throughput.
  * NOTE: This function is called only when operating in a multiqueue
  * receive environment.
  */
-static void igc_update_ring_itr(struct igc_q_vector *q_vector)
-{
-	struct igc_adapter *adapter = q_vector->adapter;
-	int new_val = q_vector->itr_val;
-	int avg_wire_size = 0;
-	unsigned int packets;
+अटल व्योम igc_update_ring_itr(काष्ठा igc_q_vector *q_vector)
+अणु
+	काष्ठा igc_adapter *adapter = q_vector->adapter;
+	पूर्णांक new_val = q_vector->itr_val;
+	पूर्णांक avg_wire_size = 0;
+	अचिन्हित पूर्णांक packets;
 
-	/* For non-gigabit speeds, just fix the interrupt rate at 4000
-	 * ints/sec - ITR timer value of 120 ticks.
+	/* For non-gigabit speeds, just fix the पूर्णांकerrupt rate at 4000
+	 * पूर्णांकs/sec - ITR समयr value of 120 ticks.
 	 */
-	switch (adapter->link_speed) {
-	case SPEED_10:
-	case SPEED_100:
+	चयन (adapter->link_speed) अणु
+	हाल SPEED_10:
+	हाल SPEED_100:
 		new_val = IGC_4K_ITR;
-		goto set_itr_val;
-	default:
-		break;
-	}
+		जाओ set_itr_val;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	packets = q_vector->rx.total_packets;
-	if (packets)
+	अगर (packets)
 		avg_wire_size = q_vector->rx.total_bytes / packets;
 
 	packets = q_vector->tx.total_packets;
-	if (packets)
+	अगर (packets)
 		avg_wire_size = max_t(u32, avg_wire_size,
 				      q_vector->tx.total_bytes / packets);
 
-	/* if avg_wire_size isn't set no work was done */
-	if (!avg_wire_size)
-		goto clear_counts;
+	/* अगर avg_wire_size isn't set no work was करोne */
+	अगर (!avg_wire_size)
+		जाओ clear_counts;
 
-	/* Add 24 bytes to size to account for CRC, preamble, and gap */
+	/* Add 24 bytes to size to account क्रम CRC, preamble, and gap */
 	avg_wire_size += 24;
 
 	/* Don't starve jumbo frames */
 	avg_wire_size = min(avg_wire_size, 3000);
 
 	/* Give a little boost to mid-size frames */
-	if (avg_wire_size > 300 && avg_wire_size < 1200)
+	अगर (avg_wire_size > 300 && avg_wire_size < 1200)
 		new_val = avg_wire_size / 3;
-	else
+	अन्यथा
 		new_val = avg_wire_size / 2;
 
 	/* conservative mode (itr 3) eliminates the lowest_latency setting */
-	if (new_val < IGC_20K_ITR &&
+	अगर (new_val < IGC_20K_ITR &&
 	    ((q_vector->rx.ring && adapter->rx_itr_setting == 3) ||
 	    (!q_vector->rx.ring && adapter->tx_itr_setting == 3)))
 		new_val = IGC_20K_ITR;
 
 set_itr_val:
-	if (new_val != q_vector->itr_val) {
+	अगर (new_val != q_vector->itr_val) अणु
 		q_vector->itr_val = new_val;
 		q_vector->set_itr = 1;
-	}
+	पूर्ण
 clear_counts:
 	q_vector->rx.total_bytes = 0;
 	q_vector->rx.total_packets = 0;
 	q_vector->tx.total_bytes = 0;
 	q_vector->tx.total_packets = 0;
-}
+पूर्ण
 
-static void igc_ring_irq_enable(struct igc_q_vector *q_vector)
-{
-	struct igc_adapter *adapter = q_vector->adapter;
-	struct igc_hw *hw = &adapter->hw;
+अटल व्योम igc_ring_irq_enable(काष्ठा igc_q_vector *q_vector)
+अणु
+	काष्ठा igc_adapter *adapter = q_vector->adapter;
+	काष्ठा igc_hw *hw = &adapter->hw;
 
-	if ((q_vector->rx.ring && (adapter->rx_itr_setting & 3)) ||
-	    (!q_vector->rx.ring && (adapter->tx_itr_setting & 3))) {
-		if (adapter->num_q_vectors == 1)
+	अगर ((q_vector->rx.ring && (adapter->rx_itr_setting & 3)) ||
+	    (!q_vector->rx.ring && (adapter->tx_itr_setting & 3))) अणु
+		अगर (adapter->num_q_vectors == 1)
 			igc_set_itr(q_vector);
-		else
+		अन्यथा
 			igc_update_ring_itr(q_vector);
-	}
+	पूर्ण
 
-	if (!test_bit(__IGC_DOWN, &adapter->state)) {
-		if (adapter->msix_entries)
+	अगर (!test_bit(__IGC_DOWN, &adapter->state)) अणु
+		अगर (adapter->msix_entries)
 			wr32(IGC_EIMS, q_vector->eims_value);
-		else
+		अन्यथा
 			igc_irq_enable(adapter);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void igc_add_ring(struct igc_ring *ring,
-			 struct igc_ring_container *head)
-{
+अटल व्योम igc_add_ring(काष्ठा igc_ring *ring,
+			 काष्ठा igc_ring_container *head)
+अणु
 	head->ring = ring;
 	head->count++;
-}
+पूर्ण
 
 /**
- * igc_cache_ring_register - Descriptor ring to register mapping
- * @adapter: board private structure to initialize
+ * igc_cache_ring_रेजिस्टर - Descriptor ring to रेजिस्टर mapping
+ * @adapter: board निजी काष्ठाure to initialize
  *
- * Once we know the feature-set enabled for the device, we'll cache
- * the register offset the descriptor ring is assigned to.
+ * Once we know the feature-set enabled क्रम the device, we'll cache
+ * the रेजिस्टर offset the descriptor ring is asचिन्हित to.
  */
-static void igc_cache_ring_register(struct igc_adapter *adapter)
-{
-	int i = 0, j = 0;
+अटल व्योम igc_cache_ring_रेजिस्टर(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक i = 0, j = 0;
 
-	switch (adapter->hw.mac.type) {
-	case igc_i225:
-	default:
-		for (; i < adapter->num_rx_queues; i++)
+	चयन (adapter->hw.mac.type) अणु
+	हाल igc_i225:
+	शेष:
+		क्रम (; i < adapter->num_rx_queues; i++)
 			adapter->rx_ring[i]->reg_idx = i;
-		for (; j < adapter->num_tx_queues; j++)
+		क्रम (; j < adapter->num_tx_queues; j++)
 			adapter->tx_ring[j]->reg_idx = j;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  * igc_poll - NAPI Rx polling callback
- * @napi: napi polling structure
+ * @napi: napi polling काष्ठाure
  * @budget: count of how many packets we should handle
  */
-static int igc_poll(struct napi_struct *napi, int budget)
-{
-	struct igc_q_vector *q_vector = container_of(napi,
-						     struct igc_q_vector,
+अटल पूर्णांक igc_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा igc_q_vector *q_vector = container_of(napi,
+						     काष्ठा igc_q_vector,
 						     napi);
 	bool clean_complete = true;
-	int work_done = 0;
+	पूर्णांक work_करोne = 0;
 
-	if (q_vector->tx.ring)
+	अगर (q_vector->tx.ring)
 		clean_complete = igc_clean_tx_irq(q_vector, budget);
 
-	if (q_vector->rx.ring) {
-		int cleaned = igc_clean_rx_irq(q_vector, budget);
+	अगर (q_vector->rx.ring) अणु
+		पूर्णांक cleaned = igc_clean_rx_irq(q_vector, budget);
 
-		work_done += cleaned;
-		if (cleaned >= budget)
+		work_करोne += cleaned;
+		अगर (cleaned >= budget)
 			clean_complete = false;
-	}
+	पूर्ण
 
-	/* If all work not completed, return budget and keep polling */
-	if (!clean_complete)
-		return budget;
+	/* If all work not completed, वापस budget and keep polling */
+	अगर (!clean_complete)
+		वापस budget;
 
-	/* Exit the polling mode, but don't re-enable interrupts if stack might
+	/* Exit the polling mode, but करोn't re-enable पूर्णांकerrupts अगर stack might
 	 * poll us due to busy-polling
 	 */
-	if (likely(napi_complete_done(napi, work_done)))
+	अगर (likely(napi_complete_करोne(napi, work_करोne)))
 		igc_ring_irq_enable(q_vector);
 
-	return min(work_done, budget - 1);
-}
+	वापस min(work_करोne, budget - 1);
+पूर्ण
 
 /**
- * igc_alloc_q_vector - Allocate memory for a single interrupt vector
- * @adapter: board private structure to initialize
- * @v_count: q_vectors allocated on adapter, used for ring interleaving
- * @v_idx: index of vector in adapter struct
+ * igc_alloc_q_vector - Allocate memory क्रम a single पूर्णांकerrupt vector
+ * @adapter: board निजी काष्ठाure to initialize
+ * @v_count: q_vectors allocated on adapter, used क्रम ring पूर्णांकerleaving
+ * @v_idx: index of vector in adapter काष्ठा
  * @txr_count: total number of Tx rings to allocate
  * @txr_idx: index of first Tx ring to allocate
  * @rxr_count: total number of Rx rings to allocate
  * @rxr_idx: index of first Rx ring to allocate
  *
- * We allocate one q_vector.  If allocation fails we return -ENOMEM.
+ * We allocate one q_vector.  If allocation fails we वापस -ENOMEM.
  */
-static int igc_alloc_q_vector(struct igc_adapter *adapter,
-			      unsigned int v_count, unsigned int v_idx,
-			      unsigned int txr_count, unsigned int txr_idx,
-			      unsigned int rxr_count, unsigned int rxr_idx)
-{
-	struct igc_q_vector *q_vector;
-	struct igc_ring *ring;
-	int ring_count;
+अटल पूर्णांक igc_alloc_q_vector(काष्ठा igc_adapter *adapter,
+			      अचिन्हित पूर्णांक v_count, अचिन्हित पूर्णांक v_idx,
+			      अचिन्हित पूर्णांक txr_count, अचिन्हित पूर्णांक txr_idx,
+			      अचिन्हित पूर्णांक rxr_count, अचिन्हित पूर्णांक rxr_idx)
+अणु
+	काष्ठा igc_q_vector *q_vector;
+	काष्ठा igc_ring *ring;
+	पूर्णांक ring_count;
 
 	/* igc only supports 1 Tx and/or 1 Rx queue per vector */
-	if (txr_count > 1 || rxr_count > 1)
-		return -ENOMEM;
+	अगर (txr_count > 1 || rxr_count > 1)
+		वापस -ENOMEM;
 
 	ring_count = txr_count + rxr_count;
 
 	/* allocate q_vector and rings */
 	q_vector = adapter->q_vector[v_idx];
-	if (!q_vector)
-		q_vector = kzalloc(struct_size(q_vector, ring, ring_count),
+	अगर (!q_vector)
+		q_vector = kzalloc(काष्ठा_size(q_vector, ring, ring_count),
 				   GFP_KERNEL);
-	else
-		memset(q_vector, 0, struct_size(q_vector, ring, ring_count));
-	if (!q_vector)
-		return -ENOMEM;
+	अन्यथा
+		स_रखो(q_vector, 0, काष्ठा_size(q_vector, ring, ring_count));
+	अगर (!q_vector)
+		वापस -ENOMEM;
 
 	/* initialize NAPI */
-	netif_napi_add(adapter->netdev, &q_vector->napi,
+	netअगर_napi_add(adapter->netdev, &q_vector->napi,
 		       igc_poll, 64);
 
 	/* tie q_vector and adapter together */
@@ -3616,24 +3617,24 @@ static int igc_alloc_q_vector(struct igc_adapter *adapter,
 	q_vector->tx.work_limit = adapter->tx_work_limit;
 
 	/* initialize ITR configuration */
-	q_vector->itr_register = adapter->io_addr + IGC_EITR(0);
+	q_vector->itr_रेजिस्टर = adapter->io_addr + IGC_EITR(0);
 	q_vector->itr_val = IGC_START_ITR;
 
-	/* initialize pointer to rings */
+	/* initialize poपूर्णांकer to rings */
 	ring = q_vector->ring;
 
 	/* initialize ITR */
-	if (rxr_count) {
+	अगर (rxr_count) अणु
 		/* rx or rx/tx vector */
-		if (!adapter->rx_itr_setting || adapter->rx_itr_setting > 3)
+		अगर (!adapter->rx_itr_setting || adapter->rx_itr_setting > 3)
 			q_vector->itr_val = adapter->rx_itr_setting;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* tx only vector */
-		if (!adapter->tx_itr_setting || adapter->tx_itr_setting > 3)
+		अगर (!adapter->tx_itr_setting || adapter->tx_itr_setting > 3)
 			q_vector->itr_val = adapter->tx_itr_setting;
-	}
+	पूर्ण
 
-	if (txr_count) {
+	अगर (txr_count) अणु
 		/* assign generic ring traits */
 		ring->dev = &adapter->pdev->dev;
 		ring->netdev = adapter->netdev;
@@ -3644,18 +3645,18 @@ static int igc_alloc_q_vector(struct igc_adapter *adapter,
 		/* update q_vector Tx values */
 		igc_add_ring(ring, &q_vector->tx);
 
-		/* apply Tx specific ring traits */
+		/* apply Tx specअगरic ring traits */
 		ring->count = adapter->tx_ring_count;
 		ring->queue_index = txr_idx;
 
 		/* assign ring to adapter */
 		adapter->tx_ring[txr_idx] = ring;
 
-		/* push pointer to next ring */
+		/* push poपूर्णांकer to next ring */
 		ring++;
-	}
+	पूर्ण
 
-	if (rxr_count) {
+	अगर (rxr_count) अणु
 		/* assign generic ring traits */
 		ring->dev = &adapter->pdev->dev;
 		ring->netdev = adapter->netdev;
@@ -3666,130 +3667,130 @@ static int igc_alloc_q_vector(struct igc_adapter *adapter,
 		/* update q_vector Rx values */
 		igc_add_ring(ring, &q_vector->rx);
 
-		/* apply Rx specific ring traits */
+		/* apply Rx specअगरic ring traits */
 		ring->count = adapter->rx_ring_count;
 		ring->queue_index = rxr_idx;
 
 		/* assign ring to adapter */
 		adapter->rx_ring[rxr_idx] = ring;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * igc_alloc_q_vectors - Allocate memory for interrupt vectors
- * @adapter: board private structure to initialize
+ * igc_alloc_q_vectors - Allocate memory क्रम पूर्णांकerrupt vectors
+ * @adapter: board निजी काष्ठाure to initialize
  *
- * We allocate one q_vector per queue interrupt.  If allocation fails we
- * return -ENOMEM.
+ * We allocate one q_vector per queue पूर्णांकerrupt.  If allocation fails we
+ * वापस -ENOMEM.
  */
-static int igc_alloc_q_vectors(struct igc_adapter *adapter)
-{
-	int rxr_remaining = adapter->num_rx_queues;
-	int txr_remaining = adapter->num_tx_queues;
-	int rxr_idx = 0, txr_idx = 0, v_idx = 0;
-	int q_vectors = adapter->num_q_vectors;
-	int err;
+अटल पूर्णांक igc_alloc_q_vectors(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक rxr_reमुख्यing = adapter->num_rx_queues;
+	पूर्णांक txr_reमुख्यing = adapter->num_tx_queues;
+	पूर्णांक rxr_idx = 0, txr_idx = 0, v_idx = 0;
+	पूर्णांक q_vectors = adapter->num_q_vectors;
+	पूर्णांक err;
 
-	if (q_vectors >= (rxr_remaining + txr_remaining)) {
-		for (; rxr_remaining; v_idx++) {
+	अगर (q_vectors >= (rxr_reमुख्यing + txr_reमुख्यing)) अणु
+		क्रम (; rxr_reमुख्यing; v_idx++) अणु
 			err = igc_alloc_q_vector(adapter, q_vectors, v_idx,
 						 0, 0, 1, rxr_idx);
 
-			if (err)
-				goto err_out;
+			अगर (err)
+				जाओ err_out;
 
 			/* update counts and index */
-			rxr_remaining--;
+			rxr_reमुख्यing--;
 			rxr_idx++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (; v_idx < q_vectors; v_idx++) {
-		int rqpv = DIV_ROUND_UP(rxr_remaining, q_vectors - v_idx);
-		int tqpv = DIV_ROUND_UP(txr_remaining, q_vectors - v_idx);
+	क्रम (; v_idx < q_vectors; v_idx++) अणु
+		पूर्णांक rqpv = DIV_ROUND_UP(rxr_reमुख्यing, q_vectors - v_idx);
+		पूर्णांक tqpv = DIV_ROUND_UP(txr_reमुख्यing, q_vectors - v_idx);
 
 		err = igc_alloc_q_vector(adapter, q_vectors, v_idx,
 					 tqpv, txr_idx, rqpv, rxr_idx);
 
-		if (err)
-			goto err_out;
+		अगर (err)
+			जाओ err_out;
 
 		/* update counts and index */
-		rxr_remaining -= rqpv;
-		txr_remaining -= tqpv;
+		rxr_reमुख्यing -= rqpv;
+		txr_reमुख्यing -= tqpv;
 		rxr_idx++;
 		txr_idx++;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out:
 	adapter->num_tx_queues = 0;
 	adapter->num_rx_queues = 0;
 	adapter->num_q_vectors = 0;
 
-	while (v_idx--)
-		igc_free_q_vector(adapter, v_idx);
+	जबतक (v_idx--)
+		igc_मुक्त_q_vector(adapter, v_idx);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
- * igc_init_interrupt_scheme - initialize interrupts, allocate queues/vectors
- * @adapter: Pointer to adapter structure
- * @msix: boolean for MSI-X capability
+ * igc_init_पूर्णांकerrupt_scheme - initialize पूर्णांकerrupts, allocate queues/vectors
+ * @adapter: Poपूर्णांकer to adapter काष्ठाure
+ * @msix: boolean क्रम MSI-X capability
  *
- * This function initializes the interrupts and allocates all of the queues.
+ * This function initializes the पूर्णांकerrupts and allocates all of the queues.
  */
-static int igc_init_interrupt_scheme(struct igc_adapter *adapter, bool msix)
-{
-	struct net_device *dev = adapter->netdev;
-	int err = 0;
+अटल पूर्णांक igc_init_पूर्णांकerrupt_scheme(काष्ठा igc_adapter *adapter, bool msix)
+अणु
+	काष्ठा net_device *dev = adapter->netdev;
+	पूर्णांक err = 0;
 
-	igc_set_interrupt_capability(adapter, msix);
+	igc_set_पूर्णांकerrupt_capability(adapter, msix);
 
 	err = igc_alloc_q_vectors(adapter);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(dev, "Unable to allocate memory for vectors\n");
-		goto err_alloc_q_vectors;
-	}
+		जाओ err_alloc_q_vectors;
+	पूर्ण
 
-	igc_cache_ring_register(adapter);
+	igc_cache_ring_रेजिस्टर(adapter);
 
-	return 0;
+	वापस 0;
 
 err_alloc_q_vectors:
-	igc_reset_interrupt_capability(adapter);
-	return err;
-}
+	igc_reset_पूर्णांकerrupt_capability(adapter);
+	वापस err;
+पूर्ण
 
 /**
- * igc_sw_init - Initialize general software structures (struct igc_adapter)
- * @adapter: board private structure to initialize
+ * igc_sw_init - Initialize general software काष्ठाures (काष्ठा igc_adapter)
+ * @adapter: board निजी काष्ठाure to initialize
  *
- * igc_sw_init initializes the Adapter private data structure.
- * Fields are initialized based on PCI device information and
+ * igc_sw_init initializes the Adapter निजी data काष्ठाure.
+ * Fields are initialized based on PCI device inक्रमmation and
  * OS network device settings (MTU size).
  */
-static int igc_sw_init(struct igc_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct pci_dev *pdev = adapter->pdev;
-	struct igc_hw *hw = &adapter->hw;
+अटल पूर्णांक igc_sw_init(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
 
-	pci_read_config_word(pdev, PCI_COMMAND, &hw->bus.pci_cmd_word);
+	pci_पढ़ो_config_word(pdev, PCI_COMMAND, &hw->bus.pci_cmd_word);
 
-	/* set default ring sizes */
+	/* set शेष ring sizes */
 	adapter->tx_ring_count = IGC_DEFAULT_TXD;
 	adapter->rx_ring_count = IGC_DEFAULT_RXD;
 
-	/* set default ITR values */
+	/* set शेष ITR values */
 	adapter->rx_itr_setting = IGC_DEFAULT_ITR;
 	adapter->tx_itr_setting = IGC_DEFAULT_ITR;
 
-	/* set default work limits */
+	/* set शेष work limits */
 	adapter->tx_work_limit = IGC_DEFAULT_TX_WORK;
 
 	/* adjust max frame to be at least the size of a standard frame */
@@ -3802,127 +3803,127 @@ static int igc_sw_init(struct igc_adapter *adapter)
 	adapter->nfc_rule_count = 0;
 
 	spin_lock_init(&adapter->stats64_lock);
-	/* Assume MSI-X interrupts, will be checked during IRQ allocation */
+	/* Assume MSI-X पूर्णांकerrupts, will be checked during IRQ allocation */
 	adapter->flags |= IGC_FLAG_HAS_MSIX;
 
 	igc_init_queue_configuration(adapter);
 
 	/* This call may decrease the number of queues */
-	if (igc_init_interrupt_scheme(adapter, true)) {
+	अगर (igc_init_पूर्णांकerrupt_scheme(adapter, true)) अणु
 		netdev_err(netdev, "Unable to allocate memory for queues\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Explicitly disable IRQ since the NIC can be in any state. */
 	igc_irq_disable(adapter);
 
 	set_bit(__IGC_DOWN, &adapter->state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * igc_up - Open the interface and prepare it to handle traffic
- * @adapter: board private structure
+ * igc_up - Open the पूर्णांकerface and prepare it to handle traffic
+ * @adapter: board निजी काष्ठाure
  */
-void igc_up(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int i = 0;
+व्योम igc_up(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक i = 0;
 
 	/* hardware has been reset, we need to reload some things */
 	igc_configure(adapter);
 
 	clear_bit(__IGC_DOWN, &adapter->state);
 
-	for (i = 0; i < adapter->num_q_vectors; i++)
+	क्रम (i = 0; i < adapter->num_q_vectors; i++)
 		napi_enable(&adapter->q_vector[i]->napi);
 
-	if (adapter->msix_entries)
+	अगर (adapter->msix_entries)
 		igc_configure_msix(adapter);
-	else
+	अन्यथा
 		igc_assign_vector(adapter->q_vector[0], 0);
 
-	/* Clear any pending interrupts. */
+	/* Clear any pending पूर्णांकerrupts. */
 	rd32(IGC_ICR);
 	igc_irq_enable(adapter);
 
-	netif_tx_start_all_queues(adapter->netdev);
+	netअगर_tx_start_all_queues(adapter->netdev);
 
-	/* start the watchdog. */
+	/* start the watchकरोg. */
 	hw->mac.get_link_status = true;
-	schedule_work(&adapter->watchdog_task);
-}
+	schedule_work(&adapter->watchकरोg_task);
+पूर्ण
 
 /**
  * igc_update_stats - Update the board statistics counters
- * @adapter: board private structure
+ * @adapter: board निजी काष्ठाure
  */
-void igc_update_stats(struct igc_adapter *adapter)
-{
-	struct rtnl_link_stats64 *net_stats = &adapter->stats64;
-	struct pci_dev *pdev = adapter->pdev;
-	struct igc_hw *hw = &adapter->hw;
+व्योम igc_update_stats(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा rtnl_link_stats64 *net_stats = &adapter->stats64;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u64 _bytes, _packets;
 	u64 bytes, packets;
-	unsigned int start;
+	अचिन्हित पूर्णांक start;
 	u32 mpc;
-	int i;
+	पूर्णांक i;
 
-	/* Prevent stats update while adapter is being reset, or if the pci
-	 * connection is down.
+	/* Prevent stats update जबतक adapter is being reset, or अगर the pci
+	 * connection is करोwn.
 	 */
-	if (adapter->link_speed == 0)
-		return;
-	if (pci_channel_offline(pdev))
-		return;
+	अगर (adapter->link_speed == 0)
+		वापस;
+	अगर (pci_channel_offline(pdev))
+		वापस;
 
 	packets = 0;
 	bytes = 0;
 
-	rcu_read_lock();
-	for (i = 0; i < adapter->num_rx_queues; i++) {
-		struct igc_ring *ring = adapter->rx_ring[i];
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < adapter->num_rx_queues; i++) अणु
+		काष्ठा igc_ring *ring = adapter->rx_ring[i];
 		u32 rqdpc = rd32(IGC_RQDPC(i));
 
-		if (hw->mac.type >= igc_i225)
+		अगर (hw->mac.type >= igc_i225)
 			wr32(IGC_RQDPC(i), 0);
 
-		if (rqdpc) {
+		अगर (rqdpc) अणु
 			ring->rx_stats.drops += rqdpc;
-			net_stats->rx_fifo_errors += rqdpc;
-		}
+			net_stats->rx_fअगरo_errors += rqdpc;
+		पूर्ण
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->rx_syncp);
 			_bytes = ring->rx_stats.bytes;
 			_packets = ring->rx_stats.packets;
-		} while (u64_stats_fetch_retry_irq(&ring->rx_syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->rx_syncp, start));
 		bytes += _bytes;
 		packets += _packets;
-	}
+	पूर्ण
 
 	net_stats->rx_bytes = bytes;
 	net_stats->rx_packets = packets;
 
 	packets = 0;
 	bytes = 0;
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct igc_ring *ring = adapter->tx_ring[i];
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा igc_ring *ring = adapter->tx_ring[i];
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin_irq(&ring->tx_syncp);
 			_bytes = ring->tx_stats.bytes;
 			_packets = ring->tx_stats.packets;
-		} while (u64_stats_fetch_retry_irq(&ring->tx_syncp, start));
+		पूर्ण जबतक (u64_stats_fetch_retry_irq(&ring->tx_syncp, start));
 		bytes += _bytes;
 		packets += _packets;
-	}
+	पूर्ण
 	net_stats->tx_bytes = bytes;
 	net_stats->tx_packets = packets;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	/* read stats registers */
+	/* पढ़ो stats रेजिस्टरs */
 	adapter->stats.crcerrs += rd32(IGC_CRCERRS);
 	adapter->stats.gprc += rd32(IGC_GPRC);
 	adapter->stats.gorc += rd32(IGC_GORCL);
@@ -3943,7 +3944,7 @@ void igc_update_stats(struct igc_adapter *adapter)
 
 	mpc = rd32(IGC_MPC);
 	adapter->stats.mpc += mpc;
-	net_stats->rx_fifo_errors += mpc;
+	net_stats->rx_fअगरo_errors += mpc;
 	adapter->stats.scc += rd32(IGC_SCC);
 	adapter->stats.ecol += rd32(IGC_ECOL);
 	adapter->stats.mcc += rd32(IGC_MCC);
@@ -3986,7 +3987,7 @@ void igc_update_stats(struct igc_adapter *adapter)
 
 	adapter->stats.iac += rd32(IGC_IAC);
 
-	/* Fill out the OS statistics structure */
+	/* Fill out the OS statistics काष्ठाure */
 	net_stats->multicast = adapter->stats.mprc;
 	net_stats->collisions = adapter->stats.colc;
 
@@ -4008,28 +4009,28 @@ void igc_update_stats(struct igc_adapter *adapter)
 	/* Tx Errors */
 	net_stats->tx_errors = adapter->stats.ecol +
 			       adapter->stats.latecol;
-	net_stats->tx_aborted_errors = adapter->stats.ecol;
-	net_stats->tx_window_errors = adapter->stats.latecol;
+	net_stats->tx_पातed_errors = adapter->stats.ecol;
+	net_stats->tx_winकरोw_errors = adapter->stats.latecol;
 	net_stats->tx_carrier_errors = adapter->stats.tncrs;
 
-	/* Tx Dropped needs to be maintained elsewhere */
+	/* Tx Dropped needs to be मुख्यtained अन्यथाwhere */
 
 	/* Management Stats */
 	adapter->stats.mgptc += rd32(IGC_MGTPTC);
 	adapter->stats.mgprc += rd32(IGC_MGTPRC);
 	adapter->stats.mgpdc += rd32(IGC_MGTPDC);
-}
+पूर्ण
 
 /**
- * igc_down - Close the interface
- * @adapter: board private structure
+ * igc_करोwn - Close the पूर्णांकerface
+ * @adapter: board निजी काष्ठाure
  */
-void igc_down(struct igc_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct igc_hw *hw = &adapter->hw;
+व्योम igc_करोwn(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 tctl, rctl;
-	int i = 0;
+	पूर्णांक i = 0;
 
 	set_bit(__IGC_DOWN, &adapter->state);
 
@@ -4040,17 +4041,17 @@ void igc_down(struct igc_adapter *adapter)
 	wr32(IGC_RCTL, rctl & ~IGC_RCTL_EN);
 	/* flush and sleep below */
 
-	/* set trans_start so we don't get spurious watchdogs during reset */
-	netif_trans_update(netdev);
+	/* set trans_start so we करोn't get spurious watchकरोgs during reset */
+	netअगर_trans_update(netdev);
 
-	netif_carrier_off(netdev);
-	netif_tx_stop_all_queues(netdev);
+	netअगर_carrier_off(netdev);
+	netअगर_tx_stop_all_queues(netdev);
 
 	/* disable transmits in the hardware */
 	tctl = rd32(IGC_TCTL);
 	tctl &= ~IGC_TCTL_EN;
 	wr32(IGC_TCTL, tctl);
-	/* flush both disables and wait for them to finish */
+	/* flush both disables and रुको क्रम them to finish */
 	wrfl();
 	usleep_range(10000, 20000);
 
@@ -4058,17 +4059,17 @@ void igc_down(struct igc_adapter *adapter)
 
 	adapter->flags &= ~IGC_FLAG_NEED_LINK_UPDATE;
 
-	for (i = 0; i < adapter->num_q_vectors; i++) {
-		if (adapter->q_vector[i]) {
+	क्रम (i = 0; i < adapter->num_q_vectors; i++) अणु
+		अगर (adapter->q_vector[i]) अणु
 			napi_synchronize(&adapter->q_vector[i]->napi);
 			napi_disable(&adapter->q_vector[i]->napi);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	del_timer_sync(&adapter->watchdog_timer);
-	del_timer_sync(&adapter->phy_info_timer);
+	del_समयr_sync(&adapter->watchकरोg_समयr);
+	del_समयr_sync(&adapter->phy_info_समयr);
 
-	/* record the stats before reset*/
+	/* record the stats beक्रमe reset*/
 	spin_lock(&adapter->stats64_lock);
 	igc_update_stats(adapter);
 	spin_unlock(&adapter->stats64_lock);
@@ -4076,203 +4077,203 @@ void igc_down(struct igc_adapter *adapter)
 	adapter->link_speed = 0;
 	adapter->link_duplex = 0;
 
-	if (!pci_channel_offline(adapter->pdev))
+	अगर (!pci_channel_offline(adapter->pdev))
 		igc_reset(adapter);
 
-	/* clear VLAN promisc flag so VFTA will be updated if necessary */
+	/* clear VLAN promisc flag so VFTA will be updated अगर necessary */
 	adapter->flags &= ~IGC_FLAG_VLAN_PROMISC;
 
 	igc_clean_all_tx_rings(adapter);
 	igc_clean_all_rx_rings(adapter);
-}
+पूर्ण
 
-void igc_reinit_locked(struct igc_adapter *adapter)
-{
-	while (test_and_set_bit(__IGC_RESETTING, &adapter->state))
+व्योम igc_reinit_locked(काष्ठा igc_adapter *adapter)
+अणु
+	जबतक (test_and_set_bit(__IGC_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
-	igc_down(adapter);
+	igc_करोwn(adapter);
 	igc_up(adapter);
 	clear_bit(__IGC_RESETTING, &adapter->state);
-}
+पूर्ण
 
-static void igc_reset_task(struct work_struct *work)
-{
-	struct igc_adapter *adapter;
+अटल व्योम igc_reset_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा igc_adapter *adapter;
 
-	adapter = container_of(work, struct igc_adapter, reset_task);
+	adapter = container_of(work, काष्ठा igc_adapter, reset_task);
 
 	rtnl_lock();
-	/* If we're already down or resetting, just bail */
-	if (test_bit(__IGC_DOWN, &adapter->state) ||
-	    test_bit(__IGC_RESETTING, &adapter->state)) {
+	/* If we're alपढ़ोy करोwn or resetting, just bail */
+	अगर (test_bit(__IGC_DOWN, &adapter->state) ||
+	    test_bit(__IGC_RESETTING, &adapter->state)) अणु
 		rtnl_unlock();
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	igc_rings_dump(adapter);
 	igc_regs_dump(adapter);
 	netdev_err(adapter->netdev, "Reset adapter\n");
 	igc_reinit_locked(adapter);
 	rtnl_unlock();
-}
+पूर्ण
 
 /**
  * igc_change_mtu - Change the Maximum Transfer Unit
- * @netdev: network interface device structure
- * @new_mtu: new value for maximum frame size
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @new_mtu: new value क्रम maximum frame size
  *
  * Returns 0 on success, negative on failure
  */
-static int igc_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	int max_frame = new_mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN;
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक igc_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	पूर्णांक max_frame = new_mtu + ETH_HLEN + ETH_FCS_LEN + VLAN_HLEN;
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	if (igc_xdp_is_enabled(adapter) && new_mtu > ETH_DATA_LEN) {
+	अगर (igc_xdp_is_enabled(adapter) && new_mtu > ETH_DATA_LEN) अणु
 		netdev_dbg(netdev, "Jumbo frames not supported with XDP");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* adjust max frame to be at least the size of a standard frame */
-	if (max_frame < (ETH_FRAME_LEN + ETH_FCS_LEN))
+	अगर (max_frame < (ETH_FRAME_LEN + ETH_FCS_LEN))
 		max_frame = ETH_FRAME_LEN + ETH_FCS_LEN;
 
-	while (test_and_set_bit(__IGC_RESETTING, &adapter->state))
+	जबतक (test_and_set_bit(__IGC_RESETTING, &adapter->state))
 		usleep_range(1000, 2000);
 
-	/* igc_down has a dependency on max_frame_size */
+	/* igc_करोwn has a dependency on max_frame_size */
 	adapter->max_frame_size = max_frame;
 
-	if (netif_running(netdev))
-		igc_down(adapter);
+	अगर (netअगर_running(netdev))
+		igc_करोwn(adapter);
 
 	netdev_dbg(netdev, "changing MTU from %d to %d\n", netdev->mtu, new_mtu);
 	netdev->mtu = new_mtu;
 
-	if (netif_running(netdev))
+	अगर (netअगर_running(netdev))
 		igc_up(adapter);
-	else
+	अन्यथा
 		igc_reset(adapter);
 
 	clear_bit(__IGC_RESETTING, &adapter->state);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * igc_get_stats64 - Get System Network Statistics
- * @netdev: network interface device structure
- * @stats: rtnl_link_stats64 pointer
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @stats: rtnl_link_stats64 poपूर्णांकer
  *
- * Returns the address of the device statistics structure.
- * The statistics are updated here and also from the timer callback.
+ * Returns the address of the device statistics काष्ठाure.
+ * The statistics are updated here and also from the समयr callback.
  */
-static void igc_get_stats64(struct net_device *netdev,
-			    struct rtnl_link_stats64 *stats)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igc_get_stats64(काष्ठा net_device *netdev,
+			    काष्ठा rtnl_link_stats64 *stats)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
 	spin_lock(&adapter->stats64_lock);
-	if (!test_bit(__IGC_RESETTING, &adapter->state))
+	अगर (!test_bit(__IGC_RESETTING, &adapter->state))
 		igc_update_stats(adapter);
-	memcpy(stats, &adapter->stats64, sizeof(*stats));
+	स_नकल(stats, &adapter->stats64, माप(*stats));
 	spin_unlock(&adapter->stats64_lock);
-}
+पूर्ण
 
-static netdev_features_t igc_fix_features(struct net_device *netdev,
+अटल netdev_features_t igc_fix_features(काष्ठा net_device *netdev,
 					  netdev_features_t features)
-{
-	/* Since there is no support for separate Rx/Tx vlan accel
+अणु
+	/* Since there is no support क्रम separate Rx/Tx vlan accel
 	 * enable/disable make sure Tx flag is always in same state as Rx.
 	 */
-	if (features & NETIF_F_HW_VLAN_CTAG_RX)
+	अगर (features & NETIF_F_HW_VLAN_CTAG_RX)
 		features |= NETIF_F_HW_VLAN_CTAG_TX;
-	else
+	अन्यथा
 		features &= ~NETIF_F_HW_VLAN_CTAG_TX;
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static int igc_set_features(struct net_device *netdev,
+अटल पूर्णांक igc_set_features(काष्ठा net_device *netdev,
 			    netdev_features_t features)
-{
+अणु
 	netdev_features_t changed = netdev->features ^ features;
-	struct igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
 	/* Add VLAN support */
-	if (!(changed & (NETIF_F_RXALL | NETIF_F_NTUPLE)))
-		return 0;
+	अगर (!(changed & (NETIF_F_RXALL | NETIF_F_NTUPLE)))
+		वापस 0;
 
-	if (!(features & NETIF_F_NTUPLE))
+	अगर (!(features & NETIF_F_NTUPLE))
 		igc_flush_nfc_rules(adapter);
 
 	netdev->features = features;
 
-	if (netif_running(netdev))
+	अगर (netअगर_running(netdev))
 		igc_reinit_locked(adapter);
-	else
+	अन्यथा
 		igc_reset(adapter);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static netdev_features_t
-igc_features_check(struct sk_buff *skb, struct net_device *dev,
+अटल netdev_features_t
+igc_features_check(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
 		   netdev_features_t features)
-{
-	unsigned int network_hdr_len, mac_hdr_len;
+अणु
+	अचिन्हित पूर्णांक network_hdr_len, mac_hdr_len;
 
 	/* Make certain the headers can be described by a context descriptor */
 	mac_hdr_len = skb_network_header(skb) - skb->data;
-	if (unlikely(mac_hdr_len > IGC_MAX_MAC_HDR_LEN))
-		return features & ~(NETIF_F_HW_CSUM |
+	अगर (unlikely(mac_hdr_len > IGC_MAX_MAC_HDR_LEN))
+		वापस features & ~(NETIF_F_HW_CSUM |
 				    NETIF_F_SCTP_CRC |
 				    NETIF_F_HW_VLAN_CTAG_TX |
 				    NETIF_F_TSO |
 				    NETIF_F_TSO6);
 
 	network_hdr_len = skb_checksum_start(skb) - skb_network_header(skb);
-	if (unlikely(network_hdr_len >  IGC_MAX_NETWORK_HDR_LEN))
-		return features & ~(NETIF_F_HW_CSUM |
+	अगर (unlikely(network_hdr_len >  IGC_MAX_NETWORK_HDR_LEN))
+		वापस features & ~(NETIF_F_HW_CSUM |
 				    NETIF_F_SCTP_CRC |
 				    NETIF_F_TSO |
 				    NETIF_F_TSO6);
 
-	/* We can only support IPv4 TSO in tunnels if we can mangle the
-	 * inner IP ID field, so strip TSO if MANGLEID is not supported.
+	/* We can only support IPv4 TSO in tunnels अगर we can mangle the
+	 * inner IP ID field, so strip TSO अगर MANGLEID is not supported.
 	 */
-	if (skb->encapsulation && !(features & NETIF_F_TSO_MANGLEID))
+	अगर (skb->encapsulation && !(features & NETIF_F_TSO_MANGLEID))
 		features &= ~NETIF_F_TSO;
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
-static void igc_tsync_interrupt(struct igc_adapter *adapter)
-{
+अटल व्योम igc_tsync_पूर्णांकerrupt(काष्ठा igc_adapter *adapter)
+अणु
 	u32 ack, tsauxc, sec, nsec, tsicr;
-	struct igc_hw *hw = &adapter->hw;
-	struct ptp_clock_event event;
-	struct timespec64 ts;
+	काष्ठा igc_hw *hw = &adapter->hw;
+	काष्ठा ptp_घड़ी_event event;
+	काष्ठा बारpec64 ts;
 
 	tsicr = rd32(IGC_TSICR);
 	ack = 0;
 
-	if (tsicr & IGC_TSICR_SYS_WRAP) {
+	अगर (tsicr & IGC_TSICR_SYS_WRAP) अणु
 		event.type = PTP_CLOCK_PPS;
-		if (adapter->ptp_caps.pps)
-			ptp_clock_event(adapter->ptp_clock, &event);
+		अगर (adapter->ptp_caps.pps)
+			ptp_घड़ी_event(adapter->ptp_घड़ी, &event);
 		ack |= IGC_TSICR_SYS_WRAP;
-	}
+	पूर्ण
 
-	if (tsicr & IGC_TSICR_TXTS) {
-		/* retrieve hardware timestamp */
+	अगर (tsicr & IGC_TSICR_TXTS) अणु
+		/* retrieve hardware बारtamp */
 		schedule_work(&adapter->ptp_tx_work);
 		ack |= IGC_TSICR_TXTS;
-	}
+	पूर्ण
 
-	if (tsicr & IGC_TSICR_TT0) {
-		spin_lock(&adapter->tmreg_lock);
-		ts = timespec64_add(adapter->perout[0].start,
+	अगर (tsicr & IGC_TSICR_TT0) अणु
+		spin_lock(&adapter->पंचांगreg_lock);
+		ts = बारpec64_add(adapter->perout[0].start,
 				    adapter->perout[0].period);
 		wr32(IGC_TRGTTIML0, ts.tv_nsec | IGC_TT_IO_TIMER_SEL_SYSTIM0);
 		wr32(IGC_TRGTTIMH0, (u32)ts.tv_sec);
@@ -4280,13 +4281,13 @@ static void igc_tsync_interrupt(struct igc_adapter *adapter)
 		tsauxc |= IGC_TSAUXC_EN_TT0;
 		wr32(IGC_TSAUXC, tsauxc);
 		adapter->perout[0].start = ts;
-		spin_unlock(&adapter->tmreg_lock);
+		spin_unlock(&adapter->पंचांगreg_lock);
 		ack |= IGC_TSICR_TT0;
-	}
+	पूर्ण
 
-	if (tsicr & IGC_TSICR_TT1) {
-		spin_lock(&adapter->tmreg_lock);
-		ts = timespec64_add(adapter->perout[1].start,
+	अगर (tsicr & IGC_TSICR_TT1) अणु
+		spin_lock(&adapter->पंचांगreg_lock);
+		ts = बारpec64_add(adapter->perout[1].start,
 				    adapter->perout[1].period);
 		wr32(IGC_TRGTTIML1, ts.tv_nsec | IGC_TT_IO_TIMER_SEL_SYSTIM0);
 		wr32(IGC_TRGTTIMH1, (u32)ts.tv_sec);
@@ -4294,255 +4295,255 @@ static void igc_tsync_interrupt(struct igc_adapter *adapter)
 		tsauxc |= IGC_TSAUXC_EN_TT1;
 		wr32(IGC_TSAUXC, tsauxc);
 		adapter->perout[1].start = ts;
-		spin_unlock(&adapter->tmreg_lock);
+		spin_unlock(&adapter->पंचांगreg_lock);
 		ack |= IGC_TSICR_TT1;
-	}
+	पूर्ण
 
-	if (tsicr & IGC_TSICR_AUTT0) {
+	अगर (tsicr & IGC_TSICR_AUTT0) अणु
 		nsec = rd32(IGC_AUXSTMPL0);
 		sec  = rd32(IGC_AUXSTMPH0);
 		event.type = PTP_CLOCK_EXTTS;
 		event.index = 0;
-		event.timestamp = sec * NSEC_PER_SEC + nsec;
-		ptp_clock_event(adapter->ptp_clock, &event);
+		event.बारtamp = sec * NSEC_PER_SEC + nsec;
+		ptp_घड़ी_event(adapter->ptp_घड़ी, &event);
 		ack |= IGC_TSICR_AUTT0;
-	}
+	पूर्ण
 
-	if (tsicr & IGC_TSICR_AUTT1) {
+	अगर (tsicr & IGC_TSICR_AUTT1) अणु
 		nsec = rd32(IGC_AUXSTMPL1);
 		sec  = rd32(IGC_AUXSTMPH1);
 		event.type = PTP_CLOCK_EXTTS;
 		event.index = 1;
-		event.timestamp = sec * NSEC_PER_SEC + nsec;
-		ptp_clock_event(adapter->ptp_clock, &event);
+		event.बारtamp = sec * NSEC_PER_SEC + nsec;
+		ptp_घड़ी_event(adapter->ptp_घड़ी, &event);
 		ack |= IGC_TSICR_AUTT1;
-	}
+	पूर्ण
 
-	/* acknowledge the interrupts */
+	/* acknowledge the पूर्णांकerrupts */
 	wr32(IGC_TSICR, ack);
-}
+पूर्ण
 
 /**
- * igc_msix_other - msix other interrupt handler
- * @irq: interrupt number
- * @data: pointer to a q_vector
+ * igc_msix_other - msix other पूर्णांकerrupt handler
+ * @irq: पूर्णांकerrupt number
+ * @data: poपूर्णांकer to a q_vector
  */
-static irqreturn_t igc_msix_other(int irq, void *data)
-{
-	struct igc_adapter *adapter = data;
-	struct igc_hw *hw = &adapter->hw;
+अटल irqवापस_t igc_msix_other(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा igc_adapter *adapter = data;
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 icr = rd32(IGC_ICR);
 
-	/* reading ICR causes bit 31 of EICR to be cleared */
-	if (icr & IGC_ICR_DRSTA)
+	/* पढ़ोing ICR causes bit 31 of EICR to be cleared */
+	अगर (icr & IGC_ICR_DRSTA)
 		schedule_work(&adapter->reset_task);
 
-	if (icr & IGC_ICR_DOUTSYNC) {
+	अगर (icr & IGC_ICR_DOUTSYNC) अणु
 		/* HW is reporting DMA is out of sync */
-		adapter->stats.doosync++;
-	}
+		adapter->stats.करोosync++;
+	पूर्ण
 
-	if (icr & IGC_ICR_LSC) {
+	अगर (icr & IGC_ICR_LSC) अणु
 		hw->mac.get_link_status = true;
-		/* guard against interrupt when we're going down */
-		if (!test_bit(__IGC_DOWN, &adapter->state))
-			mod_timer(&adapter->watchdog_timer, jiffies + 1);
-	}
+		/* guard against पूर्णांकerrupt when we're going करोwn */
+		अगर (!test_bit(__IGC_DOWN, &adapter->state))
+			mod_समयr(&adapter->watchकरोg_समयr, jअगरfies + 1);
+	पूर्ण
 
-	if (icr & IGC_ICR_TS)
-		igc_tsync_interrupt(adapter);
+	अगर (icr & IGC_ICR_TS)
+		igc_tsync_पूर्णांकerrupt(adapter);
 
 	wr32(IGC_EIMS, adapter->eims_other);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void igc_write_itr(struct igc_q_vector *q_vector)
-{
+अटल व्योम igc_ग_लिखो_itr(काष्ठा igc_q_vector *q_vector)
+अणु
 	u32 itr_val = q_vector->itr_val & IGC_QVECTOR_MASK;
 
-	if (!q_vector->set_itr)
-		return;
+	अगर (!q_vector->set_itr)
+		वापस;
 
-	if (!itr_val)
+	अगर (!itr_val)
 		itr_val = IGC_ITR_VAL_MASK;
 
 	itr_val |= IGC_EITR_CNT_IGNR;
 
-	writel(itr_val, q_vector->itr_register);
+	ग_लिखोl(itr_val, q_vector->itr_रेजिस्टर);
 	q_vector->set_itr = 0;
-}
+पूर्ण
 
-static irqreturn_t igc_msix_ring(int irq, void *data)
-{
-	struct igc_q_vector *q_vector = data;
+अटल irqवापस_t igc_msix_ring(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा igc_q_vector *q_vector = data;
 
-	/* Write the ITR value calculated from the previous interrupt. */
-	igc_write_itr(q_vector);
+	/* Write the ITR value calculated from the previous पूर्णांकerrupt. */
+	igc_ग_लिखो_itr(q_vector);
 
 	napi_schedule(&q_vector->napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * igc_request_msix - Initialize MSI-X interrupts
- * @adapter: Pointer to adapter structure
+ * igc_request_msix - Initialize MSI-X पूर्णांकerrupts
+ * @adapter: Poपूर्णांकer to adapter काष्ठाure
  *
- * igc_request_msix allocates MSI-X vectors and requests interrupts from the
+ * igc_request_msix allocates MSI-X vectors and requests पूर्णांकerrupts from the
  * kernel.
  */
-static int igc_request_msix(struct igc_adapter *adapter)
-{
-	int i = 0, err = 0, vector = 0, free_vector = 0;
-	struct net_device *netdev = adapter->netdev;
+अटल पूर्णांक igc_request_msix(काष्ठा igc_adapter *adapter)
+अणु
+	पूर्णांक i = 0, err = 0, vector = 0, मुक्त_vector = 0;
+	काष्ठा net_device *netdev = adapter->netdev;
 
 	err = request_irq(adapter->msix_entries[vector].vector,
 			  &igc_msix_other, 0, netdev->name, adapter);
-	if (err)
-		goto err_out;
+	अगर (err)
+		जाओ err_out;
 
-	for (i = 0; i < adapter->num_q_vectors; i++) {
-		struct igc_q_vector *q_vector = adapter->q_vector[i];
+	क्रम (i = 0; i < adapter->num_q_vectors; i++) अणु
+		काष्ठा igc_q_vector *q_vector = adapter->q_vector[i];
 
 		vector++;
 
-		q_vector->itr_register = adapter->io_addr + IGC_EITR(vector);
+		q_vector->itr_रेजिस्टर = adapter->io_addr + IGC_EITR(vector);
 
-		if (q_vector->rx.ring && q_vector->tx.ring)
-			sprintf(q_vector->name, "%s-TxRx-%u", netdev->name,
+		अगर (q_vector->rx.ring && q_vector->tx.ring)
+			प्र_लिखो(q_vector->name, "%s-TxRx-%u", netdev->name,
 				q_vector->rx.ring->queue_index);
-		else if (q_vector->tx.ring)
-			sprintf(q_vector->name, "%s-tx-%u", netdev->name,
+		अन्यथा अगर (q_vector->tx.ring)
+			प्र_लिखो(q_vector->name, "%s-tx-%u", netdev->name,
 				q_vector->tx.ring->queue_index);
-		else if (q_vector->rx.ring)
-			sprintf(q_vector->name, "%s-rx-%u", netdev->name,
+		अन्यथा अगर (q_vector->rx.ring)
+			प्र_लिखो(q_vector->name, "%s-rx-%u", netdev->name,
 				q_vector->rx.ring->queue_index);
-		else
-			sprintf(q_vector->name, "%s-unused", netdev->name);
+		अन्यथा
+			प्र_लिखो(q_vector->name, "%s-unused", netdev->name);
 
 		err = request_irq(adapter->msix_entries[vector].vector,
 				  igc_msix_ring, 0, q_vector->name,
 				  q_vector);
-		if (err)
-			goto err_free;
-	}
+		अगर (err)
+			जाओ err_मुक्त;
+	पूर्ण
 
 	igc_configure_msix(adapter);
-	return 0;
+	वापस 0;
 
-err_free:
-	/* free already assigned IRQs */
-	free_irq(adapter->msix_entries[free_vector++].vector, adapter);
+err_मुक्त:
+	/* मुक्त alपढ़ोy asचिन्हित IRQs */
+	मुक्त_irq(adapter->msix_entries[मुक्त_vector++].vector, adapter);
 
 	vector--;
-	for (i = 0; i < vector; i++) {
-		free_irq(adapter->msix_entries[free_vector++].vector,
+	क्रम (i = 0; i < vector; i++) अणु
+		मुक्त_irq(adapter->msix_entries[मुक्त_vector++].vector,
 			 adapter->q_vector[i]);
-	}
+	पूर्ण
 err_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * igc_clear_interrupt_scheme - reset the device to a state of no interrupts
- * @adapter: Pointer to adapter structure
+ * igc_clear_पूर्णांकerrupt_scheme - reset the device to a state of no पूर्णांकerrupts
+ * @adapter: Poपूर्णांकer to adapter काष्ठाure
  *
  * This function resets the device so that it has 0 rx queues, tx queues, and
- * MSI-X interrupts allocated.
+ * MSI-X पूर्णांकerrupts allocated.
  */
-static void igc_clear_interrupt_scheme(struct igc_adapter *adapter)
-{
-	igc_free_q_vectors(adapter);
-	igc_reset_interrupt_capability(adapter);
-}
+अटल व्योम igc_clear_पूर्णांकerrupt_scheme(काष्ठा igc_adapter *adapter)
+अणु
+	igc_मुक्त_q_vectors(adapter);
+	igc_reset_पूर्णांकerrupt_capability(adapter);
+पूर्ण
 
-/* Need to wait a few seconds after link up to get diagnostic information from
+/* Need to रुको a few seconds after link up to get diagnostic inक्रमmation from
  * the phy
  */
-static void igc_update_phy_info(struct timer_list *t)
-{
-	struct igc_adapter *adapter = from_timer(adapter, t, phy_info_timer);
+अटल व्योम igc_update_phy_info(काष्ठा समयr_list *t)
+अणु
+	काष्ठा igc_adapter *adapter = from_समयr(adapter, t, phy_info_समयr);
 
 	igc_get_phy_info(&adapter->hw);
-}
+पूर्ण
 
 /**
- * igc_has_link - check shared code for link and determine up/down
- * @adapter: pointer to driver private info
+ * igc_has_link - check shared code क्रम link and determine up/करोwn
+ * @adapter: poपूर्णांकer to driver निजी info
  */
-bool igc_has_link(struct igc_adapter *adapter)
-{
-	struct igc_hw *hw = &adapter->hw;
+bool igc_has_link(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
 	bool link_active = false;
 
-	/* get_link_status is set on LSC (link status) interrupt or
-	 * rx sequence error interrupt.  get_link_status will stay
-	 * false until the igc_check_for_link establishes link
-	 * for copper adapters ONLY
+	/* get_link_status is set on LSC (link status) पूर्णांकerrupt or
+	 * rx sequence error पूर्णांकerrupt.  get_link_status will stay
+	 * false until the igc_check_क्रम_link establishes link
+	 * क्रम copper adapters ONLY
 	 */
-	switch (hw->phy.media_type) {
-	case igc_media_type_copper:
-		if (!hw->mac.get_link_status)
-			return true;
-		hw->mac.ops.check_for_link(hw);
+	चयन (hw->phy.media_type) अणु
+	हाल igc_media_type_copper:
+		अगर (!hw->mac.get_link_status)
+			वापस true;
+		hw->mac.ops.check_क्रम_link(hw);
 		link_active = !hw->mac.get_link_status;
-		break;
-	default:
-	case igc_media_type_unknown:
-		break;
-	}
+		अवरोध;
+	शेष:
+	हाल igc_media_type_unknown:
+		अवरोध;
+	पूर्ण
 
-	if (hw->mac.type == igc_i225 &&
-	    hw->phy.id == I225_I_PHY_ID) {
-		if (!netif_carrier_ok(adapter->netdev)) {
+	अगर (hw->mac.type == igc_i225 &&
+	    hw->phy.id == I225_I_PHY_ID) अणु
+		अगर (!netअगर_carrier_ok(adapter->netdev)) अणु
 			adapter->flags &= ~IGC_FLAG_NEED_LINK_UPDATE;
-		} else if (!(adapter->flags & IGC_FLAG_NEED_LINK_UPDATE)) {
+		पूर्ण अन्यथा अगर (!(adapter->flags & IGC_FLAG_NEED_LINK_UPDATE)) अणु
 			adapter->flags |= IGC_FLAG_NEED_LINK_UPDATE;
-			adapter->link_check_timeout = jiffies;
-		}
-	}
+			adapter->link_check_समयout = jअगरfies;
+		पूर्ण
+	पूर्ण
 
-	return link_active;
-}
+	वापस link_active;
+पूर्ण
 
 /**
- * igc_watchdog - Timer Call-back
- * @t: timer for the watchdog
+ * igc_watchकरोg - Timer Call-back
+ * @t: समयr क्रम the watchकरोg
  */
-static void igc_watchdog(struct timer_list *t)
-{
-	struct igc_adapter *adapter = from_timer(adapter, t, watchdog_timer);
-	/* Do the rest outside of interrupt context */
-	schedule_work(&adapter->watchdog_task);
-}
+अटल व्योम igc_watchकरोg(काष्ठा समयr_list *t)
+अणु
+	काष्ठा igc_adapter *adapter = from_समयr(adapter, t, watchकरोg_समयr);
+	/* Do the rest outside of पूर्णांकerrupt context */
+	schedule_work(&adapter->watchकरोg_task);
+पूर्ण
 
-static void igc_watchdog_task(struct work_struct *work)
-{
-	struct igc_adapter *adapter = container_of(work,
-						   struct igc_adapter,
-						   watchdog_task);
-	struct net_device *netdev = adapter->netdev;
-	struct igc_hw *hw = &adapter->hw;
-	struct igc_phy_info *phy = &hw->phy;
+अटल व्योम igc_watchकरोg_task(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा igc_adapter *adapter = container_of(work,
+						   काष्ठा igc_adapter,
+						   watchकरोg_task);
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
+	काष्ठा igc_phy_info *phy = &hw->phy;
 	u16 phy_data, retry_count = 20;
 	u32 link;
-	int i;
+	पूर्णांक i;
 
 	link = igc_has_link(adapter);
 
-	if (adapter->flags & IGC_FLAG_NEED_LINK_UPDATE) {
-		if (time_after(jiffies, (adapter->link_check_timeout + HZ)))
+	अगर (adapter->flags & IGC_FLAG_NEED_LINK_UPDATE) अणु
+		अगर (समय_after(jअगरfies, (adapter->link_check_समयout + HZ)))
 			adapter->flags &= ~IGC_FLAG_NEED_LINK_UPDATE;
-		else
+		अन्यथा
 			link = false;
-	}
+	पूर्ण
 
-	if (link) {
+	अगर (link) अणु
 		/* Cancel scheduled suspend requests. */
-		pm_runtime_resume(netdev->dev.parent);
+		pm_runसमय_resume(netdev->dev.parent);
 
-		if (!netif_carrier_ok(netdev)) {
+		अगर (!netअगर_carrier_ok(netdev)) अणु
 			u32 ctrl;
 
 			hw->mac.ops.get_speed_and_duplex(hw,
@@ -4550,7 +4551,7 @@ static void igc_watchdog_task(struct work_struct *work)
 							 &adapter->link_duplex);
 
 			ctrl = rd32(IGC_CTRL);
-			/* Link status message must follow this format */
+			/* Link status message must follow this क्रमmat */
 			netdev_info(netdev,
 				    "NIC Link is Up %d Mbps %s Duplex, Flow Control: %s\n",
 				    adapter->link_speed,
@@ -4561,854 +4562,854 @@ static void igc_watchdog_task(struct work_struct *work)
 				    (ctrl & IGC_CTRL_RFCE) ?  "RX" :
 				    (ctrl & IGC_CTRL_TFCE) ?  "TX" : "None");
 
-			/* disable EEE if enabled */
-			if ((adapter->flags & IGC_FLAG_EEE) &&
-			    adapter->link_duplex == HALF_DUPLEX) {
+			/* disable EEE अगर enabled */
+			अगर ((adapter->flags & IGC_FLAG_EEE) &&
+			    adapter->link_duplex == HALF_DUPLEX) अणु
 				netdev_info(netdev,
 					    "EEE Disabled: unsupported at half duplex. Re-enable using ethtool when at full duplex\n");
 				adapter->hw.dev_spec._base.eee_enable = false;
 				adapter->flags &= ~IGC_FLAG_EEE;
-			}
+			पूर्ण
 
-			/* check if SmartSpeed worked */
-			igc_check_downshift(hw);
-			if (phy->speed_downgraded)
+			/* check अगर SmartSpeed worked */
+			igc_check_करोwnshअगरt(hw);
+			अगर (phy->speed_करोwngraded)
 				netdev_warn(netdev, "Link Speed was downgraded by SmartSpeed\n");
 
-			/* adjust timeout factor according to speed/duplex */
-			adapter->tx_timeout_factor = 1;
-			switch (adapter->link_speed) {
-			case SPEED_10:
-				adapter->tx_timeout_factor = 14;
-				break;
-			case SPEED_100:
-				/* maybe add some timeout factor ? */
-				break;
-			}
+			/* adjust समयout factor according to speed/duplex */
+			adapter->tx_समयout_factor = 1;
+			चयन (adapter->link_speed) अणु
+			हाल SPEED_10:
+				adapter->tx_समयout_factor = 14;
+				अवरोध;
+			हाल SPEED_100:
+				/* maybe add some समयout factor ? */
+				अवरोध;
+			पूर्ण
 
-			if (adapter->link_speed != SPEED_1000)
-				goto no_wait;
+			अगर (adapter->link_speed != SPEED_1000)
+				जाओ no_रुको;
 
-			/* wait for Remote receiver status OK */
-retry_read_status:
-			if (!igc_read_phy_reg(hw, PHY_1000T_STATUS,
-					      &phy_data)) {
-				if (!(phy_data & SR_1000T_REMOTE_RX_STATUS) &&
-				    retry_count) {
+			/* रुको क्रम Remote receiver status OK */
+retry_पढ़ो_status:
+			अगर (!igc_पढ़ो_phy_reg(hw, PHY_1000T_STATUS,
+					      &phy_data)) अणु
+				अगर (!(phy_data & SR_1000T_REMOTE_RX_STATUS) &&
+				    retry_count) अणु
 					msleep(100);
 					retry_count--;
-					goto retry_read_status;
-				} else if (!retry_count) {
+					जाओ retry_पढ़ो_status;
+				पूर्ण अन्यथा अगर (!retry_count) अणु
 					netdev_err(netdev, "exceed max 2 second\n");
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				netdev_err(netdev, "read 1000Base-T Status Reg\n");
-			}
-no_wait:
-			netif_carrier_on(netdev);
+			पूर्ण
+no_रुको:
+			netअगर_carrier_on(netdev);
 
 			/* link state has changed, schedule phy info update */
-			if (!test_bit(__IGC_DOWN, &adapter->state))
-				mod_timer(&adapter->phy_info_timer,
-					  round_jiffies(jiffies + 2 * HZ));
-		}
-	} else {
-		if (netif_carrier_ok(netdev)) {
+			अगर (!test_bit(__IGC_DOWN, &adapter->state))
+				mod_समयr(&adapter->phy_info_समयr,
+					  round_jअगरfies(jअगरfies + 2 * HZ));
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (netअगर_carrier_ok(netdev)) अणु
 			adapter->link_speed = 0;
 			adapter->link_duplex = 0;
 
-			/* Links status message must follow this format */
+			/* Links status message must follow this क्रमmat */
 			netdev_info(netdev, "NIC Link is Down\n");
-			netif_carrier_off(netdev);
+			netअगर_carrier_off(netdev);
 
 			/* link state has changed, schedule phy info update */
-			if (!test_bit(__IGC_DOWN, &adapter->state))
-				mod_timer(&adapter->phy_info_timer,
-					  round_jiffies(jiffies + 2 * HZ));
+			अगर (!test_bit(__IGC_DOWN, &adapter->state))
+				mod_समयr(&adapter->phy_info_समयr,
+					  round_jअगरfies(jअगरfies + 2 * HZ));
 
-			/* link is down, time to check for alternate media */
-			if (adapter->flags & IGC_FLAG_MAS_ENABLE) {
-				if (adapter->flags & IGC_FLAG_MEDIA_RESET) {
+			/* link is करोwn, समय to check क्रम alternate media */
+			अगर (adapter->flags & IGC_FLAG_MAS_ENABLE) अणु
+				अगर (adapter->flags & IGC_FLAG_MEDIA_RESET) अणु
 					schedule_work(&adapter->reset_task);
-					/* return immediately */
-					return;
-				}
-			}
+					/* वापस immediately */
+					वापस;
+				पूर्ण
+			पूर्ण
 			pm_schedule_suspend(netdev->dev.parent,
 					    MSEC_PER_SEC * 5);
 
-		/* also check for alternate media here */
-		} else if (!netif_carrier_ok(netdev) &&
-			   (adapter->flags & IGC_FLAG_MAS_ENABLE)) {
-			if (adapter->flags & IGC_FLAG_MEDIA_RESET) {
+		/* also check क्रम alternate media here */
+		पूर्ण अन्यथा अगर (!netअगर_carrier_ok(netdev) &&
+			   (adapter->flags & IGC_FLAG_MAS_ENABLE)) अणु
+			अगर (adapter->flags & IGC_FLAG_MEDIA_RESET) अणु
 				schedule_work(&adapter->reset_task);
-				/* return immediately */
-				return;
-			}
-		}
-	}
+				/* वापस immediately */
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	spin_lock(&adapter->stats64_lock);
 	igc_update_stats(adapter);
 	spin_unlock(&adapter->stats64_lock);
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
-		struct igc_ring *tx_ring = adapter->tx_ring[i];
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
+		काष्ठा igc_ring *tx_ring = adapter->tx_ring[i];
 
-		if (!netif_carrier_ok(netdev)) {
+		अगर (!netअगर_carrier_ok(netdev)) अणु
 			/* We've lost link, so the controller stops DMA,
 			 * but we've got queued Tx work that's never going
-			 * to get done, so reset controller to flush Tx.
-			 * (Do the reset outside of interrupt context).
+			 * to get करोne, so reset controller to flush Tx.
+			 * (Do the reset outside of पूर्णांकerrupt context).
 			 */
-			if (igc_desc_unused(tx_ring) + 1 < tx_ring->count) {
-				adapter->tx_timeout_count++;
+			अगर (igc_desc_unused(tx_ring) + 1 < tx_ring->count) अणु
+				adapter->tx_समयout_count++;
 				schedule_work(&adapter->reset_task);
-				/* return immediately since reset is imminent */
-				return;
-			}
-		}
+				/* वापस immediately since reset is imminent */
+				वापस;
+			पूर्ण
+		पूर्ण
 
-		/* Force detection of hung controller every watchdog period */
+		/* Force detection of hung controller every watchकरोg period */
 		set_bit(IGC_RING_FLAG_TX_DETECT_HANG, &tx_ring->flags);
-	}
+	पूर्ण
 
-	/* Cause software interrupt to ensure Rx ring is cleaned */
-	if (adapter->flags & IGC_FLAG_HAS_MSIX) {
+	/* Cause software पूर्णांकerrupt to ensure Rx ring is cleaned */
+	अगर (adapter->flags & IGC_FLAG_HAS_MSIX) अणु
 		u32 eics = 0;
 
-		for (i = 0; i < adapter->num_q_vectors; i++)
+		क्रम (i = 0; i < adapter->num_q_vectors; i++)
 			eics |= adapter->q_vector[i]->eims_value;
 		wr32(IGC_EICS, eics);
-	} else {
+	पूर्ण अन्यथा अणु
 		wr32(IGC_ICS, IGC_ICS_RXDMT0);
-	}
+	पूर्ण
 
 	igc_ptp_tx_hang(adapter);
 
-	/* Reset the timer */
-	if (!test_bit(__IGC_DOWN, &adapter->state)) {
-		if (adapter->flags & IGC_FLAG_NEED_LINK_UPDATE)
-			mod_timer(&adapter->watchdog_timer,
-				  round_jiffies(jiffies +  HZ));
-		else
-			mod_timer(&adapter->watchdog_timer,
-				  round_jiffies(jiffies + 2 * HZ));
-	}
-}
+	/* Reset the समयr */
+	अगर (!test_bit(__IGC_DOWN, &adapter->state)) अणु
+		अगर (adapter->flags & IGC_FLAG_NEED_LINK_UPDATE)
+			mod_समयr(&adapter->watchकरोg_समयr,
+				  round_jअगरfies(jअगरfies +  HZ));
+		अन्यथा
+			mod_समयr(&adapter->watchकरोg_समयr,
+				  round_jअगरfies(jअगरfies + 2 * HZ));
+	पूर्ण
+पूर्ण
 
 /**
- * igc_intr_msi - Interrupt Handler
- * @irq: interrupt number
- * @data: pointer to a network interface device structure
+ * igc_पूर्णांकr_msi - Interrupt Handler
+ * @irq: पूर्णांकerrupt number
+ * @data: poपूर्णांकer to a network पूर्णांकerface device काष्ठाure
  */
-static irqreturn_t igc_intr_msi(int irq, void *data)
-{
-	struct igc_adapter *adapter = data;
-	struct igc_q_vector *q_vector = adapter->q_vector[0];
-	struct igc_hw *hw = &adapter->hw;
-	/* read ICR disables interrupts using IAM */
+अटल irqवापस_t igc_पूर्णांकr_msi(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा igc_adapter *adapter = data;
+	काष्ठा igc_q_vector *q_vector = adapter->q_vector[0];
+	काष्ठा igc_hw *hw = &adapter->hw;
+	/* पढ़ो ICR disables पूर्णांकerrupts using IAM */
 	u32 icr = rd32(IGC_ICR);
 
-	igc_write_itr(q_vector);
+	igc_ग_लिखो_itr(q_vector);
 
-	if (icr & IGC_ICR_DRSTA)
+	अगर (icr & IGC_ICR_DRSTA)
 		schedule_work(&adapter->reset_task);
 
-	if (icr & IGC_ICR_DOUTSYNC) {
+	अगर (icr & IGC_ICR_DOUTSYNC) अणु
 		/* HW is reporting DMA is out of sync */
-		adapter->stats.doosync++;
-	}
+		adapter->stats.करोosync++;
+	पूर्ण
 
-	if (icr & (IGC_ICR_RXSEQ | IGC_ICR_LSC)) {
+	अगर (icr & (IGC_ICR_RXSEQ | IGC_ICR_LSC)) अणु
 		hw->mac.get_link_status = true;
-		if (!test_bit(__IGC_DOWN, &adapter->state))
-			mod_timer(&adapter->watchdog_timer, jiffies + 1);
-	}
+		अगर (!test_bit(__IGC_DOWN, &adapter->state))
+			mod_समयr(&adapter->watchकरोg_समयr, jअगरfies + 1);
+	पूर्ण
 
 	napi_schedule(&q_vector->napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * igc_intr - Legacy Interrupt Handler
- * @irq: interrupt number
- * @data: pointer to a network interface device structure
+ * igc_पूर्णांकr - Legacy Interrupt Handler
+ * @irq: पूर्णांकerrupt number
+ * @data: poपूर्णांकer to a network पूर्णांकerface device काष्ठाure
  */
-static irqreturn_t igc_intr(int irq, void *data)
-{
-	struct igc_adapter *adapter = data;
-	struct igc_q_vector *q_vector = adapter->q_vector[0];
-	struct igc_hw *hw = &adapter->hw;
-	/* Interrupt Auto-Mask...upon reading ICR, interrupts are masked.  No
-	 * need for the IMC write
+अटल irqवापस_t igc_पूर्णांकr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा igc_adapter *adapter = data;
+	काष्ठा igc_q_vector *q_vector = adapter->q_vector[0];
+	काष्ठा igc_hw *hw = &adapter->hw;
+	/* Interrupt Auto-Mask...upon पढ़ोing ICR, पूर्णांकerrupts are masked.  No
+	 * need क्रम the IMC ग_लिखो
 	 */
 	u32 icr = rd32(IGC_ICR);
 
-	/* IMS will not auto-mask if INT_ASSERTED is not set, and if it is
-	 * not set, then the adapter didn't send an interrupt
+	/* IMS will not स्वतः-mask अगर INT_ASSERTED is not set, and अगर it is
+	 * not set, then the adapter didn't send an पूर्णांकerrupt
 	 */
-	if (!(icr & IGC_ICR_INT_ASSERTED))
-		return IRQ_NONE;
+	अगर (!(icr & IGC_ICR_INT_ASSERTED))
+		वापस IRQ_NONE;
 
-	igc_write_itr(q_vector);
+	igc_ग_लिखो_itr(q_vector);
 
-	if (icr & IGC_ICR_DRSTA)
+	अगर (icr & IGC_ICR_DRSTA)
 		schedule_work(&adapter->reset_task);
 
-	if (icr & IGC_ICR_DOUTSYNC) {
+	अगर (icr & IGC_ICR_DOUTSYNC) अणु
 		/* HW is reporting DMA is out of sync */
-		adapter->stats.doosync++;
-	}
+		adapter->stats.करोosync++;
+	पूर्ण
 
-	if (icr & (IGC_ICR_RXSEQ | IGC_ICR_LSC)) {
+	अगर (icr & (IGC_ICR_RXSEQ | IGC_ICR_LSC)) अणु
 		hw->mac.get_link_status = true;
-		/* guard against interrupt when we're going down */
-		if (!test_bit(__IGC_DOWN, &adapter->state))
-			mod_timer(&adapter->watchdog_timer, jiffies + 1);
-	}
+		/* guard against पूर्णांकerrupt when we're going करोwn */
+		अगर (!test_bit(__IGC_DOWN, &adapter->state))
+			mod_समयr(&adapter->watchकरोg_समयr, jअगरfies + 1);
+	पूर्ण
 
 	napi_schedule(&q_vector->napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void igc_free_irq(struct igc_adapter *adapter)
-{
-	if (adapter->msix_entries) {
-		int vector = 0, i;
+अटल व्योम igc_मुक्त_irq(काष्ठा igc_adapter *adapter)
+अणु
+	अगर (adapter->msix_entries) अणु
+		पूर्णांक vector = 0, i;
 
-		free_irq(adapter->msix_entries[vector++].vector, adapter);
+		मुक्त_irq(adapter->msix_entries[vector++].vector, adapter);
 
-		for (i = 0; i < adapter->num_q_vectors; i++)
-			free_irq(adapter->msix_entries[vector++].vector,
+		क्रम (i = 0; i < adapter->num_q_vectors; i++)
+			मुक्त_irq(adapter->msix_entries[vector++].vector,
 				 adapter->q_vector[i]);
-	} else {
-		free_irq(adapter->pdev->irq, adapter);
-	}
-}
+	पूर्ण अन्यथा अणु
+		मुक्त_irq(adapter->pdev->irq, adapter);
+	पूर्ण
+पूर्ण
 
 /**
- * igc_request_irq - initialize interrupts
- * @adapter: Pointer to adapter structure
+ * igc_request_irq - initialize पूर्णांकerrupts
+ * @adapter: Poपूर्णांकer to adapter काष्ठाure
  *
- * Attempts to configure interrupts using the best available
+ * Attempts to configure पूर्णांकerrupts using the best available
  * capabilities of the hardware and kernel.
  */
-static int igc_request_irq(struct igc_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	struct pci_dev *pdev = adapter->pdev;
-	int err = 0;
+अटल पूर्णांक igc_request_irq(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	पूर्णांक err = 0;
 
-	if (adapter->flags & IGC_FLAG_HAS_MSIX) {
+	अगर (adapter->flags & IGC_FLAG_HAS_MSIX) अणु
 		err = igc_request_msix(adapter);
-		if (!err)
-			goto request_done;
+		अगर (!err)
+			जाओ request_करोne;
 		/* fall back to MSI */
-		igc_free_all_tx_resources(adapter);
-		igc_free_all_rx_resources(adapter);
+		igc_मुक्त_all_tx_resources(adapter);
+		igc_मुक्त_all_rx_resources(adapter);
 
-		igc_clear_interrupt_scheme(adapter);
-		err = igc_init_interrupt_scheme(adapter, false);
-		if (err)
-			goto request_done;
+		igc_clear_पूर्णांकerrupt_scheme(adapter);
+		err = igc_init_पूर्णांकerrupt_scheme(adapter, false);
+		अगर (err)
+			जाओ request_करोne;
 		igc_setup_all_tx_resources(adapter);
 		igc_setup_all_rx_resources(adapter);
 		igc_configure(adapter);
-	}
+	पूर्ण
 
 	igc_assign_vector(adapter->q_vector[0], 0);
 
-	if (adapter->flags & IGC_FLAG_HAS_MSI) {
-		err = request_irq(pdev->irq, &igc_intr_msi, 0,
+	अगर (adapter->flags & IGC_FLAG_HAS_MSI) अणु
+		err = request_irq(pdev->irq, &igc_पूर्णांकr_msi, 0,
 				  netdev->name, adapter);
-		if (!err)
-			goto request_done;
+		अगर (!err)
+			जाओ request_करोne;
 
-		/* fall back to legacy interrupts */
-		igc_reset_interrupt_capability(adapter);
+		/* fall back to legacy पूर्णांकerrupts */
+		igc_reset_पूर्णांकerrupt_capability(adapter);
 		adapter->flags &= ~IGC_FLAG_HAS_MSI;
-	}
+	पूर्ण
 
-	err = request_irq(pdev->irq, &igc_intr, IRQF_SHARED,
+	err = request_irq(pdev->irq, &igc_पूर्णांकr, IRQF_SHARED,
 			  netdev->name, adapter);
 
-	if (err)
+	अगर (err)
 		netdev_err(netdev, "Error %d getting interrupt\n", err);
 
-request_done:
-	return err;
-}
+request_करोne:
+	वापस err;
+पूर्ण
 
 /**
- * __igc_open - Called when a network interface is made active
- * @netdev: network interface device structure
- * @resuming: boolean indicating if the device is resuming
+ * __igc_खोलो - Called when a network पूर्णांकerface is made active
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @resuming: boolean indicating अगर the device is resuming
  *
  * Returns 0 on success, negative value on failure
  *
- * The open entry point is called when a network interface is made
- * active by the system (IFF_UP).  At this point all resources needed
- * for transmit and receive operations are allocated, the interrupt
- * handler is registered with the OS, the watchdog timer is started,
- * and the stack is notified that the interface is ready.
+ * The खोलो entry poपूर्णांक is called when a network पूर्णांकerface is made
+ * active by the प्रणाली (IFF_UP).  At this poपूर्णांक all resources needed
+ * क्रम transmit and receive operations are allocated, the पूर्णांकerrupt
+ * handler is रेजिस्टरed with the OS, the watchकरोg समयr is started,
+ * and the stack is notअगरied that the पूर्णांकerface is पढ़ोy.
  */
-static int __igc_open(struct net_device *netdev, bool resuming)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct pci_dev *pdev = adapter->pdev;
-	struct igc_hw *hw = &adapter->hw;
-	int err = 0;
-	int i = 0;
+अटल पूर्णांक __igc_खोलो(काष्ठा net_device *netdev, bool resuming)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा pci_dev *pdev = adapter->pdev;
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक err = 0;
+	पूर्णांक i = 0;
 
-	/* disallow open during test */
+	/* disallow खोलो during test */
 
-	if (test_bit(__IGC_TESTING, &adapter->state)) {
+	अगर (test_bit(__IGC_TESTING, &adapter->state)) अणु
 		WARN_ON(resuming);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!resuming)
-		pm_runtime_get_sync(&pdev->dev);
+	अगर (!resuming)
+		pm_runसमय_get_sync(&pdev->dev);
 
-	netif_carrier_off(netdev);
+	netअगर_carrier_off(netdev);
 
 	/* allocate transmit descriptors */
 	err = igc_setup_all_tx_resources(adapter);
-	if (err)
-		goto err_setup_tx;
+	अगर (err)
+		जाओ err_setup_tx;
 
 	/* allocate receive descriptors */
 	err = igc_setup_all_rx_resources(adapter);
-	if (err)
-		goto err_setup_rx;
+	अगर (err)
+		जाओ err_setup_rx;
 
-	igc_power_up_link(adapter);
+	igc_घातer_up_link(adapter);
 
 	igc_configure(adapter);
 
 	err = igc_request_irq(adapter);
-	if (err)
-		goto err_req_irq;
+	अगर (err)
+		जाओ err_req_irq;
 
-	/* Notify the stack of the actual queue counts. */
-	err = netif_set_real_num_tx_queues(netdev, adapter->num_tx_queues);
-	if (err)
-		goto err_set_queues;
+	/* Notअगरy the stack of the actual queue counts. */
+	err = netअगर_set_real_num_tx_queues(netdev, adapter->num_tx_queues);
+	अगर (err)
+		जाओ err_set_queues;
 
-	err = netif_set_real_num_rx_queues(netdev, adapter->num_rx_queues);
-	if (err)
-		goto err_set_queues;
+	err = netअगर_set_real_num_rx_queues(netdev, adapter->num_rx_queues);
+	अगर (err)
+		जाओ err_set_queues;
 
 	clear_bit(__IGC_DOWN, &adapter->state);
 
-	for (i = 0; i < adapter->num_q_vectors; i++)
+	क्रम (i = 0; i < adapter->num_q_vectors; i++)
 		napi_enable(&adapter->q_vector[i]->napi);
 
-	/* Clear any pending interrupts. */
+	/* Clear any pending पूर्णांकerrupts. */
 	rd32(IGC_ICR);
 	igc_irq_enable(adapter);
 
-	if (!resuming)
-		pm_runtime_put(&pdev->dev);
+	अगर (!resuming)
+		pm_runसमय_put(&pdev->dev);
 
-	netif_tx_start_all_queues(netdev);
+	netअगर_tx_start_all_queues(netdev);
 
-	/* start the watchdog. */
+	/* start the watchकरोg. */
 	hw->mac.get_link_status = true;
-	schedule_work(&adapter->watchdog_task);
+	schedule_work(&adapter->watchकरोg_task);
 
-	return IGC_SUCCESS;
+	वापस IGC_SUCCESS;
 
 err_set_queues:
-	igc_free_irq(adapter);
+	igc_मुक्त_irq(adapter);
 err_req_irq:
 	igc_release_hw_control(adapter);
-	igc_power_down_phy_copper_base(&adapter->hw);
-	igc_free_all_rx_resources(adapter);
+	igc_घातer_करोwn_phy_copper_base(&adapter->hw);
+	igc_मुक्त_all_rx_resources(adapter);
 err_setup_rx:
-	igc_free_all_tx_resources(adapter);
+	igc_मुक्त_all_tx_resources(adapter);
 err_setup_tx:
 	igc_reset(adapter);
-	if (!resuming)
-		pm_runtime_put(&pdev->dev);
+	अगर (!resuming)
+		pm_runसमय_put(&pdev->dev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int igc_open(struct net_device *netdev)
-{
-	return __igc_open(netdev, false);
-}
+पूर्णांक igc_खोलो(काष्ठा net_device *netdev)
+अणु
+	वापस __igc_खोलो(netdev, false);
+पूर्ण
 
 /**
- * __igc_close - Disables a network interface
- * @netdev: network interface device structure
+ * __igc_बंद - Disables a network पूर्णांकerface
+ * @netdev: network पूर्णांकerface device काष्ठाure
  * @suspending: boolean indicating the device is suspending
  *
  * Returns 0, this is not allowed to fail
  *
- * The close entry point is called when an interface is de-activated
+ * The बंद entry poपूर्णांक is called when an पूर्णांकerface is de-activated
  * by the OS.  The hardware is still under the driver's control, but
  * needs to be disabled.  A global MAC reset is issued to stop the
- * hardware, and all transmit and receive resources are freed.
+ * hardware, and all transmit and receive resources are मुक्तd.
  */
-static int __igc_close(struct net_device *netdev, bool suspending)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct pci_dev *pdev = adapter->pdev;
+अटल पूर्णांक __igc_बंद(काष्ठा net_device *netdev, bool suspending)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा pci_dev *pdev = adapter->pdev;
 
 	WARN_ON(test_bit(__IGC_RESETTING, &adapter->state));
 
-	if (!suspending)
-		pm_runtime_get_sync(&pdev->dev);
+	अगर (!suspending)
+		pm_runसमय_get_sync(&pdev->dev);
 
-	igc_down(adapter);
+	igc_करोwn(adapter);
 
 	igc_release_hw_control(adapter);
 
-	igc_free_irq(adapter);
+	igc_मुक्त_irq(adapter);
 
-	igc_free_all_tx_resources(adapter);
-	igc_free_all_rx_resources(adapter);
+	igc_मुक्त_all_tx_resources(adapter);
+	igc_मुक्त_all_rx_resources(adapter);
 
-	if (!suspending)
-		pm_runtime_put_sync(&pdev->dev);
+	अगर (!suspending)
+		pm_runसमय_put_sync(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int igc_close(struct net_device *netdev)
-{
-	if (netif_device_present(netdev) || netdev->dismantle)
-		return __igc_close(netdev, false);
-	return 0;
-}
+पूर्णांक igc_बंद(काष्ठा net_device *netdev)
+अणु
+	अगर (netअगर_device_present(netdev) || netdev->dismantle)
+		वापस __igc_बंद(netdev, false);
+	वापस 0;
+पूर्ण
 
 /**
- * igc_ioctl - Access the hwtstamp interface
- * @netdev: network interface device structure
- * @ifr: interface request data
+ * igc_ioctl - Access the hwtstamp पूर्णांकerface
+ * @netdev: network पूर्णांकerface device काष्ठाure
+ * @अगरr: पूर्णांकerface request data
  * @cmd: ioctl command
  **/
-static int igc_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
-{
-	switch (cmd) {
-	case SIOCGHWTSTAMP:
-		return igc_ptp_get_ts_config(netdev, ifr);
-	case SIOCSHWTSTAMP:
-		return igc_ptp_set_ts_config(netdev, ifr);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक igc_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	चयन (cmd) अणु
+	हाल SIOCGHWTSTAMP:
+		वापस igc_ptp_get_ts_config(netdev, अगरr);
+	हाल SIOCSHWTSTAMP:
+		वापस igc_ptp_set_ts_config(netdev, अगरr);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int igc_save_launchtime_params(struct igc_adapter *adapter, int queue,
+अटल पूर्णांक igc_save_launchसमय_params(काष्ठा igc_adapter *adapter, पूर्णांक queue,
 				      bool enable)
-{
-	struct igc_ring *ring;
-	int i;
+अणु
+	काष्ठा igc_ring *ring;
+	पूर्णांक i;
 
-	if (queue < 0 || queue >= adapter->num_tx_queues)
-		return -EINVAL;
+	अगर (queue < 0 || queue >= adapter->num_tx_queues)
+		वापस -EINVAL;
 
 	ring = adapter->tx_ring[queue];
-	ring->launchtime_enable = enable;
+	ring->launchसमय_enable = enable;
 
-	if (adapter->base_time)
-		return 0;
+	अगर (adapter->base_समय)
+		वापस 0;
 
-	adapter->cycle_time = NSEC_PER_SEC;
+	adapter->cycle_समय = NSEC_PER_SEC;
 
-	for (i = 0; i < adapter->num_tx_queues; i++) {
+	क्रम (i = 0; i < adapter->num_tx_queues; i++) अणु
 		ring = adapter->tx_ring[i];
-		ring->start_time = 0;
-		ring->end_time = NSEC_PER_SEC;
-	}
+		ring->start_समय = 0;
+		ring->end_समय = NSEC_PER_SEC;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool is_base_time_past(ktime_t base_time, const struct timespec64 *now)
-{
-	struct timespec64 b;
+अटल bool is_base_समय_past(kसमय_प्रकार base_समय, स्थिर काष्ठा बारpec64 *now)
+अणु
+	काष्ठा बारpec64 b;
 
-	b = ktime_to_timespec64(base_time);
+	b = kसमय_प्रकारo_बारpec64(base_समय);
 
-	return timespec64_compare(now, &b) > 0;
-}
+	वापस बारpec64_compare(now, &b) > 0;
+पूर्ण
 
-static bool validate_schedule(struct igc_adapter *adapter,
-			      const struct tc_taprio_qopt_offload *qopt)
-{
-	int queue_uses[IGC_MAX_TX_QUEUES] = { };
-	struct timespec64 now;
-	size_t n;
+अटल bool validate_schedule(काष्ठा igc_adapter *adapter,
+			      स्थिर काष्ठा tc_taprio_qopt_offload *qopt)
+अणु
+	पूर्णांक queue_uses[IGC_MAX_TX_QUEUES] = अणु पूर्ण;
+	काष्ठा बारpec64 now;
+	माप_प्रकार n;
 
-	if (qopt->cycle_time_extension)
-		return false;
+	अगर (qopt->cycle_समय_extension)
+		वापस false;
 
-	igc_ptp_read(adapter, &now);
+	igc_ptp_पढ़ो(adapter, &now);
 
-	/* If we program the controller's BASET registers with a time
+	/* If we program the controller's BASET रेजिस्टरs with a समय
 	 * in the future, it will hold all the packets until that
-	 * time, causing a lot of TX Hangs, so to avoid that, we
+	 * समय, causing a lot of TX Hangs, so to aव्योम that, we
 	 * reject schedules that would start in the future.
 	 */
-	if (!is_base_time_past(qopt->base_time, &now))
-		return false;
+	अगर (!is_base_समय_past(qopt->base_समय, &now))
+		वापस false;
 
-	for (n = 0; n < qopt->num_entries; n++) {
-		const struct tc_taprio_sched_entry *e;
-		int i;
+	क्रम (n = 0; n < qopt->num_entries; n++) अणु
+		स्थिर काष्ठा tc_taprio_sched_entry *e;
+		पूर्णांक i;
 
 		e = &qopt->entries[n];
 
 		/* i225 only supports "global" frame preemption
 		 * settings.
 		 */
-		if (e->command != TC_TAPRIO_CMD_SET_GATES)
-			return false;
+		अगर (e->command != TC_TAPRIO_CMD_SET_GATES)
+			वापस false;
 
-		for (i = 0; i < IGC_MAX_TX_QUEUES; i++) {
-			if (e->gate_mask & BIT(i))
+		क्रम (i = 0; i < IGC_MAX_TX_QUEUES; i++) अणु
+			अगर (e->gate_mask & BIT(i))
 				queue_uses[i]++;
 
-			if (queue_uses[i] > 1)
-				return false;
-		}
-	}
+			अगर (queue_uses[i] > 1)
+				वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int igc_tsn_enable_launchtime(struct igc_adapter *adapter,
-				     struct tc_etf_qopt_offload *qopt)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int err;
+अटल पूर्णांक igc_tsn_enable_launchसमय(काष्ठा igc_adapter *adapter,
+				     काष्ठा tc_etf_qopt_offload *qopt)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक err;
 
-	if (hw->mac.type != igc_i225)
-		return -EOPNOTSUPP;
+	अगर (hw->mac.type != igc_i225)
+		वापस -EOPNOTSUPP;
 
-	err = igc_save_launchtime_params(adapter, qopt->queue, qopt->enable);
-	if (err)
-		return err;
+	err = igc_save_launchसमय_params(adapter, qopt->queue, qopt->enable);
+	अगर (err)
+		वापस err;
 
-	return igc_tsn_offload_apply(adapter);
-}
+	वापस igc_tsn_offload_apply(adapter);
+पूर्ण
 
-static int igc_save_qbv_schedule(struct igc_adapter *adapter,
-				 struct tc_taprio_qopt_offload *qopt)
-{
-	u32 start_time = 0, end_time = 0;
-	size_t n;
+अटल पूर्णांक igc_save_qbv_schedule(काष्ठा igc_adapter *adapter,
+				 काष्ठा tc_taprio_qopt_offload *qopt)
+अणु
+	u32 start_समय = 0, end_समय = 0;
+	माप_प्रकार n;
 
-	if (!qopt->enable) {
-		adapter->base_time = 0;
-		return 0;
-	}
+	अगर (!qopt->enable) अणु
+		adapter->base_समय = 0;
+		वापस 0;
+	पूर्ण
 
-	if (adapter->base_time)
-		return -EALREADY;
+	अगर (adapter->base_समय)
+		वापस -EALREADY;
 
-	if (!validate_schedule(adapter, qopt))
-		return -EINVAL;
+	अगर (!validate_schedule(adapter, qopt))
+		वापस -EINVAL;
 
-	adapter->cycle_time = qopt->cycle_time;
-	adapter->base_time = qopt->base_time;
+	adapter->cycle_समय = qopt->cycle_समय;
+	adapter->base_समय = qopt->base_समय;
 
-	/* FIXME: be a little smarter about cases when the gate for a
-	 * queue stays open for more than one entry.
+	/* FIXME: be a little smarter about हालs when the gate क्रम a
+	 * queue stays खोलो क्रम more than one entry.
 	 */
-	for (n = 0; n < qopt->num_entries; n++) {
-		struct tc_taprio_sched_entry *e = &qopt->entries[n];
-		int i;
+	क्रम (n = 0; n < qopt->num_entries; n++) अणु
+		काष्ठा tc_taprio_sched_entry *e = &qopt->entries[n];
+		पूर्णांक i;
 
-		end_time += e->interval;
+		end_समय += e->पूर्णांकerval;
 
-		for (i = 0; i < IGC_MAX_TX_QUEUES; i++) {
-			struct igc_ring *ring = adapter->tx_ring[i];
+		क्रम (i = 0; i < IGC_MAX_TX_QUEUES; i++) अणु
+			काष्ठा igc_ring *ring = adapter->tx_ring[i];
 
-			if (!(e->gate_mask & BIT(i)))
-				continue;
+			अगर (!(e->gate_mask & BIT(i)))
+				जारी;
 
-			ring->start_time = start_time;
-			ring->end_time = end_time;
-		}
+			ring->start_समय = start_समय;
+			ring->end_समय = end_समय;
+		पूर्ण
 
-		start_time += e->interval;
-	}
+		start_समय += e->पूर्णांकerval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igc_tsn_enable_qbv_scheduling(struct igc_adapter *adapter,
-					 struct tc_taprio_qopt_offload *qopt)
-{
-	struct igc_hw *hw = &adapter->hw;
-	int err;
+अटल पूर्णांक igc_tsn_enable_qbv_scheduling(काष्ठा igc_adapter *adapter,
+					 काष्ठा tc_taprio_qopt_offload *qopt)
+अणु
+	काष्ठा igc_hw *hw = &adapter->hw;
+	पूर्णांक err;
 
-	if (hw->mac.type != igc_i225)
-		return -EOPNOTSUPP;
+	अगर (hw->mac.type != igc_i225)
+		वापस -EOPNOTSUPP;
 
 	err = igc_save_qbv_schedule(adapter, qopt);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return igc_tsn_offload_apply(adapter);
-}
+	वापस igc_tsn_offload_apply(adapter);
+पूर्ण
 
-static int igc_setup_tc(struct net_device *dev, enum tc_setup_type type,
-			void *type_data)
-{
-	struct igc_adapter *adapter = netdev_priv(dev);
+अटल पूर्णांक igc_setup_tc(काष्ठा net_device *dev, क्रमागत tc_setup_type type,
+			व्योम *type_data)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(dev);
 
-	switch (type) {
-	case TC_SETUP_QDISC_TAPRIO:
-		return igc_tsn_enable_qbv_scheduling(adapter, type_data);
+	चयन (type) अणु
+	हाल TC_SETUP_QDISC_TAPRIO:
+		वापस igc_tsn_enable_qbv_scheduling(adapter, type_data);
 
-	case TC_SETUP_QDISC_ETF:
-		return igc_tsn_enable_launchtime(adapter, type_data);
+	हाल TC_SETUP_QDISC_ETF:
+		वापस igc_tsn_enable_launchसमय(adapter, type_data);
 
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int igc_bpf(struct net_device *dev, struct netdev_bpf *bpf)
-{
-	struct igc_adapter *adapter = netdev_priv(dev);
+अटल पूर्णांक igc_bpf(काष्ठा net_device *dev, काष्ठा netdev_bpf *bpf)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(dev);
 
-	switch (bpf->command) {
-	case XDP_SETUP_PROG:
-		return igc_xdp_set_prog(adapter, bpf->prog, bpf->extack);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (bpf->command) अणु
+	हाल XDP_SETUP_PROG:
+		वापस igc_xdp_set_prog(adapter, bpf->prog, bpf->extack);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int igc_xdp_xmit(struct net_device *dev, int num_frames,
-			struct xdp_frame **frames, u32 flags)
-{
-	struct igc_adapter *adapter = netdev_priv(dev);
-	int cpu = smp_processor_id();
-	struct netdev_queue *nq;
-	struct igc_ring *ring;
-	int i, drops;
+अटल पूर्णांक igc_xdp_xmit(काष्ठा net_device *dev, पूर्णांक num_frames,
+			काष्ठा xdp_frame **frames, u32 flags)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(dev);
+	पूर्णांक cpu = smp_processor_id();
+	काष्ठा netdev_queue *nq;
+	काष्ठा igc_ring *ring;
+	पूर्णांक i, drops;
 
-	if (unlikely(test_bit(__IGC_DOWN, &adapter->state)))
-		return -ENETDOWN;
+	अगर (unlikely(test_bit(__IGC_DOWN, &adapter->state)))
+		वापस -ENETDOWN;
 
-	if (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
-		return -EINVAL;
+	अगर (unlikely(flags & ~XDP_XMIT_FLAGS_MASK))
+		वापस -EINVAL;
 
 	ring = igc_xdp_get_tx_ring(adapter, cpu);
 	nq = txring_txq(ring);
 
-	__netif_tx_lock(nq, cpu);
+	__netअगर_tx_lock(nq, cpu);
 
 	drops = 0;
-	for (i = 0; i < num_frames; i++) {
-		int err;
-		struct xdp_frame *xdpf = frames[i];
+	क्रम (i = 0; i < num_frames; i++) अणु
+		पूर्णांक err;
+		काष्ठा xdp_frame *xdpf = frames[i];
 
 		err = igc_xdp_init_tx_descriptor(ring, xdpf);
-		if (err) {
-			xdp_return_frame_rx_napi(xdpf);
+		अगर (err) अणु
+			xdp_वापस_frame_rx_napi(xdpf);
 			drops++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (flags & XDP_XMIT_FLUSH)
+	अगर (flags & XDP_XMIT_FLUSH)
 		igc_flush_tx_descriptors(ring);
 
-	__netif_tx_unlock(nq);
+	__netअगर_tx_unlock(nq);
 
-	return num_frames - drops;
-}
+	वापस num_frames - drops;
+पूर्ण
 
-static const struct net_device_ops igc_netdev_ops = {
-	.ndo_open		= igc_open,
-	.ndo_stop		= igc_close,
-	.ndo_start_xmit		= igc_xmit_frame,
-	.ndo_set_rx_mode	= igc_set_rx_mode,
-	.ndo_set_mac_address	= igc_set_mac,
-	.ndo_change_mtu		= igc_change_mtu,
-	.ndo_get_stats64	= igc_get_stats64,
-	.ndo_fix_features	= igc_fix_features,
-	.ndo_set_features	= igc_set_features,
-	.ndo_features_check	= igc_features_check,
-	.ndo_do_ioctl		= igc_ioctl,
-	.ndo_setup_tc		= igc_setup_tc,
-	.ndo_bpf		= igc_bpf,
-	.ndo_xdp_xmit		= igc_xdp_xmit,
-};
+अटल स्थिर काष्ठा net_device_ops igc_netdev_ops = अणु
+	.nकरो_खोलो		= igc_खोलो,
+	.nकरो_stop		= igc_बंद,
+	.nकरो_start_xmit		= igc_xmit_frame,
+	.nकरो_set_rx_mode	= igc_set_rx_mode,
+	.nकरो_set_mac_address	= igc_set_mac,
+	.nकरो_change_mtu		= igc_change_mtu,
+	.nकरो_get_stats64	= igc_get_stats64,
+	.nकरो_fix_features	= igc_fix_features,
+	.nकरो_set_features	= igc_set_features,
+	.nकरो_features_check	= igc_features_check,
+	.nकरो_करो_ioctl		= igc_ioctl,
+	.nकरो_setup_tc		= igc_setup_tc,
+	.nकरो_bpf		= igc_bpf,
+	.nकरो_xdp_xmit		= igc_xdp_xmit,
+पूर्ण;
 
 /* PCIe configuration access */
-void igc_read_pci_cfg(struct igc_hw *hw, u32 reg, u16 *value)
-{
-	struct igc_adapter *adapter = hw->back;
+व्योम igc_पढ़ो_pci_cfg(काष्ठा igc_hw *hw, u32 reg, u16 *value)
+अणु
+	काष्ठा igc_adapter *adapter = hw->back;
 
-	pci_read_config_word(adapter->pdev, reg, value);
-}
+	pci_पढ़ो_config_word(adapter->pdev, reg, value);
+पूर्ण
 
-void igc_write_pci_cfg(struct igc_hw *hw, u32 reg, u16 *value)
-{
-	struct igc_adapter *adapter = hw->back;
+व्योम igc_ग_लिखो_pci_cfg(काष्ठा igc_hw *hw, u32 reg, u16 *value)
+अणु
+	काष्ठा igc_adapter *adapter = hw->back;
 
-	pci_write_config_word(adapter->pdev, reg, *value);
-}
+	pci_ग_लिखो_config_word(adapter->pdev, reg, *value);
+पूर्ण
 
-s32 igc_read_pcie_cap_reg(struct igc_hw *hw, u32 reg, u16 *value)
-{
-	struct igc_adapter *adapter = hw->back;
+s32 igc_पढ़ो_pcie_cap_reg(काष्ठा igc_hw *hw, u32 reg, u16 *value)
+अणु
+	काष्ठा igc_adapter *adapter = hw->back;
 
-	if (!pci_is_pcie(adapter->pdev))
-		return -IGC_ERR_CONFIG;
+	अगर (!pci_is_pcie(adapter->pdev))
+		वापस -IGC_ERR_CONFIG;
 
-	pcie_capability_read_word(adapter->pdev, reg, value);
+	pcie_capability_पढ़ो_word(adapter->pdev, reg, value);
 
-	return IGC_SUCCESS;
-}
+	वापस IGC_SUCCESS;
+पूर्ण
 
-s32 igc_write_pcie_cap_reg(struct igc_hw *hw, u32 reg, u16 *value)
-{
-	struct igc_adapter *adapter = hw->back;
+s32 igc_ग_लिखो_pcie_cap_reg(काष्ठा igc_hw *hw, u32 reg, u16 *value)
+अणु
+	काष्ठा igc_adapter *adapter = hw->back;
 
-	if (!pci_is_pcie(adapter->pdev))
-		return -IGC_ERR_CONFIG;
+	अगर (!pci_is_pcie(adapter->pdev))
+		वापस -IGC_ERR_CONFIG;
 
-	pcie_capability_write_word(adapter->pdev, reg, *value);
+	pcie_capability_ग_लिखो_word(adapter->pdev, reg, *value);
 
-	return IGC_SUCCESS;
-}
+	वापस IGC_SUCCESS;
+पूर्ण
 
-u32 igc_rd32(struct igc_hw *hw, u32 reg)
-{
-	struct igc_adapter *igc = container_of(hw, struct igc_adapter, hw);
+u32 igc_rd32(काष्ठा igc_hw *hw, u32 reg)
+अणु
+	काष्ठा igc_adapter *igc = container_of(hw, काष्ठा igc_adapter, hw);
 	u8 __iomem *hw_addr = READ_ONCE(hw->hw_addr);
 	u32 value = 0;
 
-	value = readl(&hw_addr[reg]);
+	value = पढ़ोl(&hw_addr[reg]);
 
-	/* reads should not return all F's */
-	if (!(~value) && (!reg || !(~readl(hw_addr)))) {
-		struct net_device *netdev = igc->netdev;
+	/* पढ़ोs should not वापस all F's */
+	अगर (!(~value) && (!reg || !(~पढ़ोl(hw_addr)))) अणु
+		काष्ठा net_device *netdev = igc->netdev;
 
-		hw->hw_addr = NULL;
-		netif_device_detach(netdev);
+		hw->hw_addr = शून्य;
+		netअगर_device_detach(netdev);
 		netdev_err(netdev, "PCIe link lost, device now detached\n");
 		WARN(pci_device_is_present(igc->pdev),
 		     "igc: Failed to read reg 0x%x!\n", reg);
-	}
+	पूर्ण
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-int igc_set_spd_dplx(struct igc_adapter *adapter, u32 spd, u8 dplx)
-{
-	struct igc_mac_info *mac = &adapter->hw.mac;
+पूर्णांक igc_set_spd_dplx(काष्ठा igc_adapter *adapter, u32 spd, u8 dplx)
+अणु
+	काष्ठा igc_mac_info *mac = &adapter->hw.mac;
 
-	mac->autoneg = false;
+	mac->स्वतःneg = false;
 
 	/* Make sure dplx is at most 1 bit and lsb of speed is not set
-	 * for the switch() below to work
+	 * क्रम the चयन() below to work
 	 */
-	if ((spd & 1) || (dplx & ~1))
-		goto err_inval;
+	अगर ((spd & 1) || (dplx & ~1))
+		जाओ err_inval;
 
-	switch (spd + dplx) {
-	case SPEED_10 + DUPLEX_HALF:
-		mac->forced_speed_duplex = ADVERTISE_10_HALF;
-		break;
-	case SPEED_10 + DUPLEX_FULL:
-		mac->forced_speed_duplex = ADVERTISE_10_FULL;
-		break;
-	case SPEED_100 + DUPLEX_HALF:
-		mac->forced_speed_duplex = ADVERTISE_100_HALF;
-		break;
-	case SPEED_100 + DUPLEX_FULL:
-		mac->forced_speed_duplex = ADVERTISE_100_FULL;
-		break;
-	case SPEED_1000 + DUPLEX_FULL:
-		mac->autoneg = true;
-		adapter->hw.phy.autoneg_advertised = ADVERTISE_1000_FULL;
-		break;
-	case SPEED_1000 + DUPLEX_HALF: /* not supported */
-		goto err_inval;
-	case SPEED_2500 + DUPLEX_FULL:
-		mac->autoneg = true;
-		adapter->hw.phy.autoneg_advertised = ADVERTISE_2500_FULL;
-		break;
-	case SPEED_2500 + DUPLEX_HALF: /* not supported */
-	default:
-		goto err_inval;
-	}
+	चयन (spd + dplx) अणु
+	हाल SPEED_10 + DUPLEX_HALF:
+		mac->क्रमced_speed_duplex = ADVERTISE_10_HALF;
+		अवरोध;
+	हाल SPEED_10 + DUPLEX_FULL:
+		mac->क्रमced_speed_duplex = ADVERTISE_10_FULL;
+		अवरोध;
+	हाल SPEED_100 + DUPLEX_HALF:
+		mac->क्रमced_speed_duplex = ADVERTISE_100_HALF;
+		अवरोध;
+	हाल SPEED_100 + DUPLEX_FULL:
+		mac->क्रमced_speed_duplex = ADVERTISE_100_FULL;
+		अवरोध;
+	हाल SPEED_1000 + DUPLEX_FULL:
+		mac->स्वतःneg = true;
+		adapter->hw.phy.स्वतःneg_advertised = ADVERTISE_1000_FULL;
+		अवरोध;
+	हाल SPEED_1000 + DUPLEX_HALF: /* not supported */
+		जाओ err_inval;
+	हाल SPEED_2500 + DUPLEX_FULL:
+		mac->स्वतःneg = true;
+		adapter->hw.phy.स्वतःneg_advertised = ADVERTISE_2500_FULL;
+		अवरोध;
+	हाल SPEED_2500 + DUPLEX_HALF: /* not supported */
+	शेष:
+		जाओ err_inval;
+	पूर्ण
 
-	/* clear MDI, MDI(-X) override is only allowed when autoneg enabled */
+	/* clear MDI, MDI(-X) override is only allowed when स्वतःneg enabled */
 	adapter->hw.phy.mdix = AUTO_ALL_MODES;
 
-	return 0;
+	वापस 0;
 
 err_inval:
 	netdev_err(adapter->netdev, "Unsupported Speed/Duplex configuration\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * igc_probe - Device Initialization Routine
- * @pdev: PCI device information struct
+ * @pdev: PCI device inक्रमmation काष्ठा
  * @ent: entry in igc_pci_tbl
  *
  * Returns 0 on success, negative on failure
  *
- * igc_probe initializes an adapter identified by a pci_dev structure.
- * The OS initialization, configuring the adapter private structure,
+ * igc_probe initializes an adapter identअगरied by a pci_dev काष्ठाure.
+ * The OS initialization, configuring the adapter निजी काष्ठाure,
  * and a hardware reset occur.
  */
-static int igc_probe(struct pci_dev *pdev,
-		     const struct pci_device_id *ent)
-{
-	struct igc_adapter *adapter;
-	struct net_device *netdev;
-	struct igc_hw *hw;
-	const struct igc_info *ei = igc_info_tbl[ent->driver_data];
-	int err, pci_using_dac;
+अटल पूर्णांक igc_probe(काष्ठा pci_dev *pdev,
+		     स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा igc_adapter *adapter;
+	काष्ठा net_device *netdev;
+	काष्ठा igc_hw *hw;
+	स्थिर काष्ठा igc_info *ei = igc_info_tbl[ent->driver_data];
+	पूर्णांक err, pci_using_dac;
 
 	err = pci_enable_device_mem(pdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	pci_using_dac = 0;
 	err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	if (!err) {
+	अगर (!err) अणु
 		pci_using_dac = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
-		if (err) {
+		अगर (err) अणु
 			dev_err(&pdev->dev,
 				"No usable DMA configuration, aborting\n");
-			goto err_dma;
-		}
-	}
+			जाओ err_dma;
+		पूर्ण
+	पूर्ण
 
 	err = pci_request_mem_regions(pdev, igc_driver_name);
-	if (err)
-		goto err_pci_reg;
+	अगर (err)
+		जाओ err_pci_reg;
 
 	pci_enable_pcie_error_reporting(pdev);
 
 	pci_set_master(pdev);
 
 	err = -ENOMEM;
-	netdev = alloc_etherdev_mq(sizeof(struct igc_adapter),
+	netdev = alloc_etherdev_mq(माप(काष्ठा igc_adapter),
 				   IGC_MAX_TX_QUEUES);
 
-	if (!netdev)
-		goto err_alloc_etherdev;
+	अगर (!netdev)
+		जाओ err_alloc_etherdev;
 
 	SET_NETDEV_DEV(netdev, &pdev->dev);
 
@@ -5419,43 +5420,43 @@ static int igc_probe(struct pci_dev *pdev,
 	hw = &adapter->hw;
 	hw->back = adapter;
 	adapter->port_num = hw->bus.func;
-	adapter->msg_enable = netif_msg_init(debug, DEFAULT_MSG_ENABLE);
+	adapter->msg_enable = netअगर_msg_init(debug, DEFAULT_MSG_ENABLE);
 
 	err = pci_save_state(pdev);
-	if (err)
-		goto err_ioremap;
+	अगर (err)
+		जाओ err_ioremap;
 
 	err = -EIO;
 	adapter->io_addr = ioremap(pci_resource_start(pdev, 0),
 				   pci_resource_len(pdev, 0));
-	if (!adapter->io_addr)
-		goto err_ioremap;
+	अगर (!adapter->io_addr)
+		जाओ err_ioremap;
 
-	/* hw->hw_addr can be zeroed, so use adapter->io_addr for unmap */
+	/* hw->hw_addr can be zeroed, so use adapter->io_addr क्रम unmap */
 	hw->hw_addr = adapter->io_addr;
 
 	netdev->netdev_ops = &igc_netdev_ops;
 	igc_ethtool_set_ops(netdev);
-	netdev->watchdog_timeo = 5 * HZ;
+	netdev->watchकरोg_समयo = 5 * HZ;
 
 	netdev->mem_start = pci_resource_start(pdev, 0);
 	netdev->mem_end = pci_resource_end(pdev, 0);
 
 	/* PCI config space info */
-	hw->vendor_id = pdev->vendor;
+	hw->venकरोr_id = pdev->venकरोr;
 	hw->device_id = pdev->device;
 	hw->revision_id = pdev->revision;
-	hw->subsystem_vendor_id = pdev->subsystem_vendor;
-	hw->subsystem_device_id = pdev->subsystem_device;
+	hw->subप्रणाली_venकरोr_id = pdev->subप्रणाली_venकरोr;
+	hw->subप्रणाली_device_id = pdev->subप्रणाली_device;
 
-	/* Copy the default MAC and PHY function pointers */
-	memcpy(&hw->mac.ops, ei->mac_ops, sizeof(hw->mac.ops));
-	memcpy(&hw->phy.ops, ei->phy_ops, sizeof(hw->phy.ops));
+	/* Copy the शेष MAC and PHY function poपूर्णांकers */
+	स_नकल(&hw->mac.ops, ei->mac_ops, माप(hw->mac.ops));
+	स_नकल(&hw->phy.ops, ei->phy_ops, माप(hw->phy.ops));
 
-	/* Initialize skew-specific constants */
+	/* Initialize skew-specअगरic स्थिरants */
 	err = ei->get_invariants(hw);
-	if (err)
-		goto err_sw_init;
+	अगर (err)
+		जाओ err_sw_init;
 
 	/* Add supported features to the features list*/
 	netdev->features |= NETIF_F_SG;
@@ -5467,7 +5468,7 @@ static int igc_probe(struct pci_dev *pdev,
 	netdev->features |= NETIF_F_SCTP_CRC;
 	netdev->features |= NETIF_F_HW_TC;
 
-#define IGC_GSO_PARTIAL_FEATURES (NETIF_F_GSO_GRE | \
+#घोषणा IGC_GSO_PARTIAL_FEATURES (NETIF_F_GSO_GRE | \
 				  NETIF_F_GSO_GRE_CSUM | \
 				  NETIF_F_GSO_IPXIP4 | \
 				  NETIF_F_GSO_IPXIP6 | \
@@ -5477,72 +5478,72 @@ static int igc_probe(struct pci_dev *pdev,
 	netdev->gso_partial_features = IGC_GSO_PARTIAL_FEATURES;
 	netdev->features |= NETIF_F_GSO_PARTIAL | IGC_GSO_PARTIAL_FEATURES;
 
-	/* setup the private structure */
+	/* setup the निजी काष्ठाure */
 	err = igc_sw_init(adapter);
-	if (err)
-		goto err_sw_init;
+	अगर (err)
+		जाओ err_sw_init;
 
-	/* copy netdev features into list of user selectable features */
+	/* copy netdev features पूर्णांकo list of user selectable features */
 	netdev->hw_features |= NETIF_F_NTUPLE;
 	netdev->hw_features |= netdev->features;
 
-	if (pci_using_dac)
+	अगर (pci_using_dac)
 		netdev->features |= NETIF_F_HIGHDMA;
 
 	/* MTU range: 68 - 9216 */
 	netdev->min_mtu = ETH_MIN_MTU;
 	netdev->max_mtu = MAX_STD_JUMBO_FRAME_SIZE;
 
-	/* before reading the NVM, reset the controller to put the device in a
+	/* beक्रमe पढ़ोing the NVM, reset the controller to put the device in a
 	 * known good starting state
 	 */
 	hw->mac.ops.reset_hw(hw);
 
-	if (igc_get_flash_presence_i225(hw)) {
-		if (hw->nvm.ops.validate(hw) < 0) {
+	अगर (igc_get_flash_presence_i225(hw)) अणु
+		अगर (hw->nvm.ops.validate(hw) < 0) अणु
 			dev_err(&pdev->dev, "The NVM Checksum Is Not Valid\n");
 			err = -EIO;
-			goto err_eeprom;
-		}
-	}
+			जाओ err_eeprom;
+		पूर्ण
+	पूर्ण
 
-	if (eth_platform_get_mac_address(&pdev->dev, hw->mac.addr)) {
+	अगर (eth_platक्रमm_get_mac_address(&pdev->dev, hw->mac.addr)) अणु
 		/* copy the MAC address out of the NVM */
-		if (hw->mac.ops.read_mac_addr(hw))
+		अगर (hw->mac.ops.पढ़ो_mac_addr(hw))
 			dev_err(&pdev->dev, "NVM Read Error\n");
-	}
+	पूर्ण
 
-	memcpy(netdev->dev_addr, hw->mac.addr, netdev->addr_len);
+	स_नकल(netdev->dev_addr, hw->mac.addr, netdev->addr_len);
 
-	if (!is_valid_ether_addr(netdev->dev_addr)) {
+	अगर (!is_valid_ether_addr(netdev->dev_addr)) अणु
 		dev_err(&pdev->dev, "Invalid MAC Address\n");
 		err = -EIO;
-		goto err_eeprom;
-	}
+		जाओ err_eeprom;
+	पूर्ण
 
 	/* configure RXPBSIZE and TXPBSIZE */
 	wr32(IGC_RXPBS, I225_RXPBSIZE_DEFAULT);
 	wr32(IGC_TXPBS, I225_TXPBSIZE_DEFAULT);
 
-	timer_setup(&adapter->watchdog_timer, igc_watchdog, 0);
-	timer_setup(&adapter->phy_info_timer, igc_update_phy_info, 0);
+	समयr_setup(&adapter->watchकरोg_समयr, igc_watchकरोg, 0);
+	समयr_setup(&adapter->phy_info_समयr, igc_update_phy_info, 0);
 
 	INIT_WORK(&adapter->reset_task, igc_reset_task);
-	INIT_WORK(&adapter->watchdog_task, igc_watchdog_task);
+	INIT_WORK(&adapter->watchकरोg_task, igc_watchकरोg_task);
 
 	/* Initialize link properties that are user-changeable */
-	adapter->fc_autoneg = true;
-	hw->mac.autoneg = true;
-	hw->phy.autoneg_advertised = 0xaf;
+	adapter->fc_स्वतःneg = true;
+	hw->mac.स्वतःneg = true;
+	hw->phy.स्वतःneg_advertised = 0xaf;
 
-	hw->fc.requested_mode = igc_fc_default;
-	hw->fc.current_mode = igc_fc_default;
+	hw->fc.requested_mode = igc_fc_शेष;
+	hw->fc.current_mode = igc_fc_शेष;
 
-	/* By default, support wake on port A */
+	/* By शेष, support wake on port A */
 	adapter->flags |= IGC_FLAG_WOL_SUPPORTED;
 
 	/* initialize the wol settings based on the eeprom settings */
-	if (adapter->flags & IGC_FLAG_WOL_SUPPORTED)
+	अगर (adapter->flags & IGC_FLAG_WOL_SUPPORTED)
 		adapter->wol |= IGC_WUFC_MAG;
 
 	device_set_wakeup_enable(&adapter->pdev->dev,
@@ -5558,64 +5559,64 @@ static int igc_probe(struct pci_dev *pdev,
 	 */
 	igc_get_hw_control(adapter);
 
-	strncpy(netdev->name, "eth%d", IFNAMSIZ);
-	err = register_netdev(netdev);
-	if (err)
-		goto err_register;
+	म_नकलन(netdev->name, "eth%d", IFNAMSIZ);
+	err = रेजिस्टर_netdev(netdev);
+	अगर (err)
+		जाओ err_रेजिस्टर;
 
-	 /* carrier off reporting is important to ethtool even BEFORE open */
-	netif_carrier_off(netdev);
+	 /* carrier off reporting is important to ethtool even BEFORE खोलो */
+	netअगर_carrier_off(netdev);
 
-	/* Check if Media Autosense is enabled */
+	/* Check अगर Media Autosense is enabled */
 	adapter->ei = *ei;
 
-	/* print pcie link status and MAC address */
-	pcie_print_link_status(pdev);
+	/* prपूर्णांक pcie link status and MAC address */
+	pcie_prपूर्णांक_link_status(pdev);
 	netdev_info(netdev, "MAC: %pM\n", netdev->dev_addr);
 
-	dev_pm_set_driver_flags(&pdev->dev, DPM_FLAG_NO_DIRECT_COMPLETE);
-	/* Disable EEE for internal PHY devices */
+	dev_pm_set_driver_flags(&pdev->dev, DPM_FLAG_NO_सूचीECT_COMPLETE);
+	/* Disable EEE क्रम पूर्णांकernal PHY devices */
 	hw->dev_spec._base.eee_enable = false;
 	adapter->flags &= ~IGC_FLAG_EEE;
 	igc_set_eee_i225(hw, false, false, false);
 
-	pm_runtime_put_noidle(&pdev->dev);
+	pm_runसमय_put_noidle(&pdev->dev);
 
-	return 0;
+	वापस 0;
 
-err_register:
+err_रेजिस्टर:
 	igc_release_hw_control(adapter);
 err_eeprom:
-	if (!igc_check_reset_block(hw))
+	अगर (!igc_check_reset_block(hw))
 		igc_reset_phy(hw);
 err_sw_init:
-	igc_clear_interrupt_scheme(adapter);
+	igc_clear_पूर्णांकerrupt_scheme(adapter);
 	iounmap(adapter->io_addr);
 err_ioremap:
-	free_netdev(netdev);
+	मुक्त_netdev(netdev);
 err_alloc_etherdev:
 	pci_release_mem_regions(pdev);
 err_pci_reg:
 err_dma:
 	pci_disable_device(pdev);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * igc_remove - Device Removal Routine
- * @pdev: PCI device information struct
+ * igc_हटाओ - Device Removal Routine
+ * @pdev: PCI device inक्रमmation काष्ठा
  *
- * igc_remove is called by the PCI subsystem to alert the driver
+ * igc_हटाओ is called by the PCI subप्रणाली to alert the driver
  * that it should release a PCI device.  This could be caused by a
- * Hot-Plug event, or because the driver is going to be removed from
+ * Hot-Plug event, or because the driver is going to be हटाओd from
  * memory.
  */
-static void igc_remove(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igc_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	pm_runtime_get_noresume(&pdev->dev);
+	pm_runसमय_get_noresume(&pdev->dev);
 
 	igc_flush_nfc_rules(adapter);
 
@@ -5623,162 +5624,162 @@ static void igc_remove(struct pci_dev *pdev)
 
 	set_bit(__IGC_DOWN, &adapter->state);
 
-	del_timer_sync(&adapter->watchdog_timer);
-	del_timer_sync(&adapter->phy_info_timer);
+	del_समयr_sync(&adapter->watchकरोg_समयr);
+	del_समयr_sync(&adapter->phy_info_समयr);
 
 	cancel_work_sync(&adapter->reset_task);
-	cancel_work_sync(&adapter->watchdog_task);
+	cancel_work_sync(&adapter->watchकरोg_task);
 
 	/* Release control of h/w to f/w.  If f/w is AMT enabled, this
-	 * would have already happened in close and is redundant.
+	 * would have alपढ़ोy happened in बंद and is redundant.
 	 */
 	igc_release_hw_control(adapter);
-	unregister_netdev(netdev);
+	unरेजिस्टर_netdev(netdev);
 
-	igc_clear_interrupt_scheme(adapter);
+	igc_clear_पूर्णांकerrupt_scheme(adapter);
 	pci_iounmap(pdev, adapter->io_addr);
 	pci_release_mem_regions(pdev);
 
-	free_netdev(netdev);
+	मुक्त_netdev(netdev);
 
 	pci_disable_pcie_error_reporting(pdev);
 
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static int __igc_shutdown(struct pci_dev *pdev, bool *enable_wake,
-			  bool runtime)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	u32 wufc = runtime ? IGC_WUFC_LNKC : adapter->wol;
-	struct igc_hw *hw = &adapter->hw;
+अटल पूर्णांक __igc_shutकरोwn(काष्ठा pci_dev *pdev, bool *enable_wake,
+			  bool runसमय)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	u32 wufc = runसमय ? IGC_WUFC_LNKC : adapter->wol;
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 ctrl, rctl, status;
 	bool wake;
 
 	rtnl_lock();
-	netif_device_detach(netdev);
+	netअगर_device_detach(netdev);
 
-	if (netif_running(netdev))
-		__igc_close(netdev, true);
+	अगर (netअगर_running(netdev))
+		__igc_बंद(netdev, true);
 
 	igc_ptp_suspend(adapter);
 
-	igc_clear_interrupt_scheme(adapter);
+	igc_clear_पूर्णांकerrupt_scheme(adapter);
 	rtnl_unlock();
 
 	status = rd32(IGC_STATUS);
-	if (status & IGC_STATUS_LU)
+	अगर (status & IGC_STATUS_LU)
 		wufc &= ~IGC_WUFC_LNKC;
 
-	if (wufc) {
+	अगर (wufc) अणु
 		igc_setup_rctl(adapter);
 		igc_set_rx_mode(netdev);
 
-		/* turn on all-multi mode if wake on multicast is enabled */
-		if (wufc & IGC_WUFC_MC) {
+		/* turn on all-multi mode अगर wake on multicast is enabled */
+		अगर (wufc & IGC_WUFC_MC) अणु
 			rctl = rd32(IGC_RCTL);
 			rctl |= IGC_RCTL_MPE;
 			wr32(IGC_RCTL, rctl);
-		}
+		पूर्ण
 
 		ctrl = rd32(IGC_CTRL);
 		ctrl |= IGC_CTRL_ADVD3WUC;
 		wr32(IGC_CTRL, ctrl);
 
-		/* Allow time for pending master requests to run */
+		/* Allow समय क्रम pending master requests to run */
 		igc_disable_pcie_master(hw);
 
 		wr32(IGC_WUC, IGC_WUC_PME_EN);
 		wr32(IGC_WUFC, wufc);
-	} else {
+	पूर्ण अन्यथा अणु
 		wr32(IGC_WUC, 0);
 		wr32(IGC_WUFC, 0);
-	}
+	पूर्ण
 
 	wake = wufc || adapter->en_mng_pt;
-	if (!wake)
-		igc_power_down_phy_copper_base(&adapter->hw);
-	else
-		igc_power_up_link(adapter);
+	अगर (!wake)
+		igc_घातer_करोwn_phy_copper_base(&adapter->hw);
+	अन्यथा
+		igc_घातer_up_link(adapter);
 
-	if (enable_wake)
+	अगर (enable_wake)
 		*enable_wake = wake;
 
 	/* Release control of h/w to f/w.  If f/w is AMT enabled, this
-	 * would have already happened in close and is redundant.
+	 * would have alपढ़ोy happened in बंद and is redundant.
 	 */
 	igc_release_hw_control(adapter);
 
 	pci_disable_device(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int __maybe_unused igc_runtime_suspend(struct device *dev)
-{
-	return __igc_shutdown(to_pci_dev(dev), NULL, 1);
-}
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक __maybe_unused igc_runसमय_suspend(काष्ठा device *dev)
+अणु
+	वापस __igc_shutकरोwn(to_pci_dev(dev), शून्य, 1);
+पूर्ण
 
-static void igc_deliver_wake_packet(struct net_device *netdev)
-{
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
-	struct sk_buff *skb;
+अटल व्योम igc_deliver_wake_packet(काष्ठा net_device *netdev)
+अणु
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
+	काष्ठा sk_buff *skb;
 	u32 wupl;
 
 	wupl = rd32(IGC_WUPL) & IGC_WUPL_MASK;
 
 	/* WUPM stores only the first 128 bytes of the wake packet.
-	 * Read the packet only if we have the whole thing.
+	 * Read the packet only अगर we have the whole thing.
 	 */
-	if (wupl == 0 || wupl > IGC_WUPM_BYTES)
-		return;
+	अगर (wupl == 0 || wupl > IGC_WUPM_BYTES)
+		वापस;
 
 	skb = netdev_alloc_skb_ip_align(netdev, IGC_WUPM_BYTES);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	skb_put(skb, wupl);
 
-	/* Ensure reads are 32-bit aligned */
+	/* Ensure पढ़ोs are 32-bit aligned */
 	wupl = roundup(wupl, 4);
 
-	memcpy_fromio(skb->data, hw->hw_addr + IGC_WUPM_REG(0), wupl);
+	स_नकल_fromio(skb->data, hw->hw_addr + IGC_WUPM_REG(0), wupl);
 
 	skb->protocol = eth_type_trans(skb, netdev);
-	netif_rx(skb);
-}
+	netअगर_rx(skb);
+पूर्ण
 
-static int __maybe_unused igc_resume(struct device *dev)
-{
-	struct pci_dev *pdev = to_pci_dev(dev);
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
+अटल पूर्णांक __maybe_unused igc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(dev);
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
 	u32 err, val;
 
-	pci_set_power_state(pdev, PCI_D0);
+	pci_set_घातer_state(pdev, PCI_D0);
 	pci_restore_state(pdev);
 	pci_save_state(pdev);
 
-	if (!pci_device_is_present(pdev))
-		return -ENODEV;
+	अगर (!pci_device_is_present(pdev))
+		वापस -ENODEV;
 	err = pci_enable_device_mem(pdev);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(netdev, "Cannot enable PCI device from suspend\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	pci_set_master(pdev);
 
 	pci_enable_wake(pdev, PCI_D3hot, 0);
 	pci_enable_wake(pdev, PCI_D3cold, 0);
 
-	if (igc_init_interrupt_scheme(adapter, true)) {
+	अगर (igc_init_पूर्णांकerrupt_scheme(adapter, true)) अणु
 		netdev_err(netdev, "Unable to allocate memory for queues\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	igc_reset(adapter);
 
@@ -5788,101 +5789,101 @@ static int __maybe_unused igc_resume(struct device *dev)
 	igc_get_hw_control(adapter);
 
 	val = rd32(IGC_WUS);
-	if (val & WAKE_PKT_WUS)
+	अगर (val & WAKE_PKT_WUS)
 		igc_deliver_wake_packet(netdev);
 
 	wr32(IGC_WUS, ~0);
 
 	rtnl_lock();
-	if (!err && netif_running(netdev))
-		err = __igc_open(netdev, true);
+	अगर (!err && netअगर_running(netdev))
+		err = __igc_खोलो(netdev, true);
 
-	if (!err)
-		netif_device_attach(netdev);
+	अगर (!err)
+		netअगर_device_attach(netdev);
 	rtnl_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __maybe_unused igc_runtime_resume(struct device *dev)
-{
-	return igc_resume(dev);
-}
+अटल पूर्णांक __maybe_unused igc_runसमय_resume(काष्ठा device *dev)
+अणु
+	वापस igc_resume(dev);
+पूर्ण
 
-static int __maybe_unused igc_suspend(struct device *dev)
-{
-	return __igc_shutdown(to_pci_dev(dev), NULL, 0);
-}
+अटल पूर्णांक __maybe_unused igc_suspend(काष्ठा device *dev)
+अणु
+	वापस __igc_shutकरोwn(to_pci_dev(dev), शून्य, 0);
+पूर्ण
 
-static int __maybe_unused igc_runtime_idle(struct device *dev)
-{
-	struct net_device *netdev = dev_get_drvdata(dev);
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल पूर्णांक __maybe_unused igc_runसमय_idle(काष्ठा device *dev)
+अणु
+	काष्ठा net_device *netdev = dev_get_drvdata(dev);
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	if (!igc_has_link(adapter))
+	अगर (!igc_has_link(adapter))
 		pm_schedule_suspend(dev, MSEC_PER_SEC * 5);
 
-	return -EBUSY;
-}
-#endif /* CONFIG_PM */
+	वापस -EBUSY;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static void igc_shutdown(struct pci_dev *pdev)
-{
+अटल व्योम igc_shutकरोwn(काष्ठा pci_dev *pdev)
+अणु
 	bool wake;
 
-	__igc_shutdown(pdev, &wake, 0);
+	__igc_shutकरोwn(pdev, &wake, 0);
 
-	if (system_state == SYSTEM_POWER_OFF) {
+	अगर (प्रणाली_state == SYSTEM_POWER_OFF) अणु
 		pci_wake_from_d3(pdev, wake);
-		pci_set_power_state(pdev, PCI_D3hot);
-	}
-}
+		pci_set_घातer_state(pdev, PCI_D3hot);
+	पूर्ण
+पूर्ण
 
 /**
  *  igc_io_error_detected - called when PCI error is detected
- *  @pdev: Pointer to PCI device
+ *  @pdev: Poपूर्णांकer to PCI device
  *  @state: The current PCI connection state
  *
  *  This function is called after a PCI bus error affecting
  *  this device has been detected.
  **/
-static pci_ers_result_t igc_io_error_detected(struct pci_dev *pdev,
+अटल pci_ers_result_t igc_io_error_detected(काष्ठा pci_dev *pdev,
 					      pci_channel_state_t state)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
-	netif_device_detach(netdev);
+	netअगर_device_detach(netdev);
 
-	if (state == pci_channel_io_perm_failure)
-		return PCI_ERS_RESULT_DISCONNECT;
+	अगर (state == pci_channel_io_perm_failure)
+		वापस PCI_ERS_RESULT_DISCONNECT;
 
-	if (netif_running(netdev))
-		igc_down(adapter);
+	अगर (netअगर_running(netdev))
+		igc_करोwn(adapter);
 	pci_disable_device(pdev);
 
 	/* Request a slot reset. */
-	return PCI_ERS_RESULT_NEED_RESET;
-}
+	वापस PCI_ERS_RESULT_NEED_RESET;
+पूर्ण
 
 /**
  *  igc_io_slot_reset - called after the PCI bus has been reset.
- *  @pdev: Pointer to PCI device
+ *  @pdev: Poपूर्णांकer to PCI device
  *
- *  Restart the card from scratch, as if from a cold-boot. Implementation
+ *  Restart the card from scratch, as अगर from a cold-boot. Implementation
  *  resembles the first-half of the igc_resume routine.
  **/
-static pci_ers_result_t igc_io_slot_reset(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igc_adapter *adapter = netdev_priv(netdev);
-	struct igc_hw *hw = &adapter->hw;
+अटल pci_ers_result_t igc_io_slot_reset(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
+	काष्ठा igc_hw *hw = &adapter->hw;
 	pci_ers_result_t result;
 
-	if (pci_enable_device_mem(pdev)) {
+	अगर (pci_enable_device_mem(pdev)) अणु
 		netdev_err(netdev, "Could not re-enable PCI device after reset\n");
 		result = PCI_ERS_RESULT_DISCONNECT;
-	} else {
+	पूर्ण अन्यथा अणु
 		pci_set_master(pdev);
 		pci_restore_state(pdev);
 		pci_save_state(pdev);
@@ -5890,7 +5891,7 @@ static pci_ers_result_t igc_io_slot_reset(struct pci_dev *pdev)
 		pci_enable_wake(pdev, PCI_D3hot, 0);
 		pci_enable_wake(pdev, PCI_D3cold, 0);
 
-		/* In case of PCI error, adapter loses its HW address
+		/* In हाल of PCI error, adapter loses its HW address
 		 * so we should re-assign it here.
 		 */
 		hw->hw_addr = adapter->io_addr;
@@ -5898,134 +5899,134 @@ static pci_ers_result_t igc_io_slot_reset(struct pci_dev *pdev)
 		igc_reset(adapter);
 		wr32(IGC_WUS, ~0);
 		result = PCI_ERS_RESULT_RECOVERED;
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  *  igc_io_resume - called when traffic can start to flow again.
- *  @pdev: Pointer to PCI device
+ *  @pdev: Poपूर्णांकer to PCI device
  *
  *  This callback is called when the error recovery driver tells us that
  *  its OK to resume normal operation. Implementation resembles the
  *  second-half of the igc_resume routine.
  */
-static void igc_io_resume(struct pci_dev *pdev)
-{
-	struct net_device *netdev = pci_get_drvdata(pdev);
-	struct igc_adapter *adapter = netdev_priv(netdev);
+अटल व्योम igc_io_resume(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा net_device *netdev = pci_get_drvdata(pdev);
+	काष्ठा igc_adapter *adapter = netdev_priv(netdev);
 
 	rtnl_lock();
-	if (netif_running(netdev)) {
-		if (igc_open(netdev)) {
+	अगर (netअगर_running(netdev)) अणु
+		अगर (igc_खोलो(netdev)) अणु
 			netdev_err(netdev, "igc_open failed after reset\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	netif_device_attach(netdev);
+	netअगर_device_attach(netdev);
 
 	/* let the f/w know that the h/w is now under the control of the
 	 * driver.
 	 */
 	igc_get_hw_control(adapter);
 	rtnl_unlock();
-}
+पूर्ण
 
-static const struct pci_error_handlers igc_err_handler = {
+अटल स्थिर काष्ठा pci_error_handlers igc_err_handler = अणु
 	.error_detected = igc_io_error_detected,
 	.slot_reset = igc_io_slot_reset,
 	.resume = igc_io_resume,
-};
+पूर्ण;
 
-#ifdef CONFIG_PM
-static const struct dev_pm_ops igc_pm_ops = {
+#अगर_घोषित CONFIG_PM
+अटल स्थिर काष्ठा dev_pm_ops igc_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(igc_suspend, igc_resume)
-	SET_RUNTIME_PM_OPS(igc_runtime_suspend, igc_runtime_resume,
-			   igc_runtime_idle)
-};
-#endif
+	SET_RUNTIME_PM_OPS(igc_runसमय_suspend, igc_runसमय_resume,
+			   igc_runसमय_idle)
+पूर्ण;
+#पूर्ण_अगर
 
-static struct pci_driver igc_driver = {
+अटल काष्ठा pci_driver igc_driver = अणु
 	.name     = igc_driver_name,
 	.id_table = igc_pci_tbl,
 	.probe    = igc_probe,
-	.remove   = igc_remove,
-#ifdef CONFIG_PM
+	.हटाओ   = igc_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.driver.pm = &igc_pm_ops,
-#endif
-	.shutdown = igc_shutdown,
+#पूर्ण_अगर
+	.shutकरोwn = igc_shutकरोwn,
 	.err_handler = &igc_err_handler,
-};
+पूर्ण;
 
 /**
- * igc_reinit_queues - return error
- * @adapter: pointer to adapter structure
+ * igc_reinit_queues - वापस error
+ * @adapter: poपूर्णांकer to adapter काष्ठाure
  */
-int igc_reinit_queues(struct igc_adapter *adapter)
-{
-	struct net_device *netdev = adapter->netdev;
-	int err = 0;
+पूर्णांक igc_reinit_queues(काष्ठा igc_adapter *adapter)
+अणु
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक err = 0;
 
-	if (netif_running(netdev))
-		igc_close(netdev);
+	अगर (netअगर_running(netdev))
+		igc_बंद(netdev);
 
-	igc_reset_interrupt_capability(adapter);
+	igc_reset_पूर्णांकerrupt_capability(adapter);
 
-	if (igc_init_interrupt_scheme(adapter, true)) {
+	अगर (igc_init_पूर्णांकerrupt_scheme(adapter, true)) अणु
 		netdev_err(netdev, "Unable to allocate memory for queues\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (netif_running(netdev))
-		err = igc_open(netdev);
+	अगर (netअगर_running(netdev))
+		err = igc_खोलो(netdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * igc_get_hw_dev - return device
- * @hw: pointer to hardware structure
+ * igc_get_hw_dev - वापस device
+ * @hw: poपूर्णांकer to hardware काष्ठाure
  *
- * used by hardware layer to print debugging information
+ * used by hardware layer to prपूर्णांक debugging inक्रमmation
  */
-struct net_device *igc_get_hw_dev(struct igc_hw *hw)
-{
-	struct igc_adapter *adapter = hw->back;
+काष्ठा net_device *igc_get_hw_dev(काष्ठा igc_hw *hw)
+अणु
+	काष्ठा igc_adapter *adapter = hw->back;
 
-	return adapter->netdev;
-}
+	वापस adapter->netdev;
+पूर्ण
 
 /**
  * igc_init_module - Driver Registration Routine
  *
  * igc_init_module is the first routine called when the driver is
- * loaded. All it does is register with the PCI subsystem.
+ * loaded. All it करोes is रेजिस्टर with the PCI subप्रणाली.
  */
-static int __init igc_init_module(void)
-{
-	int ret;
+अटल पूर्णांक __init igc_init_module(व्योम)
+अणु
+	पूर्णांक ret;
 
 	pr_info("%s\n", igc_driver_string);
 	pr_info("%s\n", igc_copyright);
 
-	ret = pci_register_driver(&igc_driver);
-	return ret;
-}
+	ret = pci_रेजिस्टर_driver(&igc_driver);
+	वापस ret;
+पूर्ण
 
 module_init(igc_init_module);
 
 /**
- * igc_exit_module - Driver Exit Cleanup Routine
+ * igc_निकास_module - Driver Exit Cleanup Routine
  *
- * igc_exit_module is called just before the driver is removed
+ * igc_निकास_module is called just beक्रमe the driver is हटाओd
  * from memory.
  */
-static void __exit igc_exit_module(void)
-{
-	pci_unregister_driver(&igc_driver);
-}
+अटल व्योम __निकास igc_निकास_module(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&igc_driver);
+पूर्ण
 
-module_exit(igc_exit_module);
-/* igc_main.c */
+module_निकास(igc_निकास_module);
+/* igc_मुख्य.c */

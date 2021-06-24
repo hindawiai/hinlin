@@ -1,408 +1,409 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2017-2018 Netronome Systems, Inc. */
 
-#include <linux/etherdevice.h>
-#include <linux/lockdep.h>
-#include <linux/pci.h>
-#include <linux/skbuff.h>
-#include <linux/vmalloc.h>
-#include <net/devlink.h>
-#include <net/dst_metadata.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <net/devlink.h>
+#समावेश <net/dst_metadata.h>
 
-#include "main.h"
-#include "../nfpcore/nfp_cpp.h"
-#include "../nfpcore/nfp_nffw.h"
-#include "../nfpcore/nfp_nsp.h"
-#include "../nfp_app.h"
-#include "../nfp_main.h"
-#include "../nfp_net.h"
-#include "../nfp_net_repr.h"
-#include "../nfp_port.h"
-#include "./cmsg.h"
+#समावेश "main.h"
+#समावेश "../nfpcore/nfp_cpp.h"
+#समावेश "../nfpcore/nfp_nffw.h"
+#समावेश "../nfpcore/nfp_nsp.h"
+#समावेश "../nfp_app.h"
+#समावेश "../nfp_main.h"
+#समावेश "../nfp_net.h"
+#समावेश "../nfp_net_repr.h"
+#समावेश "../nfp_port.h"
+#समावेश "./cmsg.h"
 
-#define NFP_FLOWER_ALLOWED_VER 0x0001000000010000UL
+#घोषणा NFP_FLOWER_ALLOWED_VER 0x0001000000010000UL
 
-#define NFP_MIN_INT_PORT_ID	1
-#define NFP_MAX_INT_PORT_ID	256
+#घोषणा NFP_MIN_INT_PORT_ID	1
+#घोषणा NFP_MAX_INT_PORT_ID	256
 
-static const char *nfp_flower_extra_cap(struct nfp_app *app, struct nfp_net *nn)
-{
-	return "FLOWER";
-}
+अटल स्थिर अक्षर *nfp_flower_extra_cap(काष्ठा nfp_app *app, काष्ठा nfp_net *nn)
+अणु
+	वापस "FLOWER";
+पूर्ण
 
-static enum devlink_eswitch_mode eswitch_mode_get(struct nfp_app *app)
-{
-	return DEVLINK_ESWITCH_MODE_SWITCHDEV;
-}
+अटल क्रमागत devlink_eचयन_mode eचयन_mode_get(काष्ठा nfp_app *app)
+अणु
+	वापस DEVLINK_ESWITCH_MODE_SWITCHDEV;
+पूर्ण
 
-static int
-nfp_flower_lookup_internal_port_id(struct nfp_flower_priv *priv,
-				   struct net_device *netdev)
-{
-	struct net_device *entry;
-	int i, id = 0;
+अटल पूर्णांक
+nfp_flower_lookup_पूर्णांकernal_port_id(काष्ठा nfp_flower_priv *priv,
+				   काष्ठा net_device *netdev)
+अणु
+	काष्ठा net_device *entry;
+	पूर्णांक i, id = 0;
 
-	rcu_read_lock();
-	idr_for_each_entry(&priv->internal_ports.port_ids, entry, i)
-		if (entry == netdev) {
+	rcu_पढ़ो_lock();
+	idr_क्रम_each_entry(&priv->पूर्णांकernal_ports.port_ids, entry, i)
+		अगर (entry == netdev) अणु
 			id = i;
-			break;
-		}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
-static int
-nfp_flower_get_internal_port_id(struct nfp_app *app, struct net_device *netdev)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	int id;
+अटल पूर्णांक
+nfp_flower_get_पूर्णांकernal_port_id(काष्ठा nfp_app *app, काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	पूर्णांक id;
 
-	id = nfp_flower_lookup_internal_port_id(priv, netdev);
-	if (id > 0)
-		return id;
+	id = nfp_flower_lookup_पूर्णांकernal_port_id(priv, netdev);
+	अगर (id > 0)
+		वापस id;
 
 	idr_preload(GFP_ATOMIC);
-	spin_lock_bh(&priv->internal_ports.lock);
-	id = idr_alloc(&priv->internal_ports.port_ids, netdev,
+	spin_lock_bh(&priv->पूर्णांकernal_ports.lock);
+	id = idr_alloc(&priv->पूर्णांकernal_ports.port_ids, netdev,
 		       NFP_MIN_INT_PORT_ID, NFP_MAX_INT_PORT_ID, GFP_ATOMIC);
-	spin_unlock_bh(&priv->internal_ports.lock);
+	spin_unlock_bh(&priv->पूर्णांकernal_ports.lock);
 	idr_preload_end();
 
-	return id;
-}
+	वापस id;
+पूर्ण
 
-u32 nfp_flower_get_port_id_from_netdev(struct nfp_app *app,
-				       struct net_device *netdev)
-{
-	int ext_port;
+u32 nfp_flower_get_port_id_from_netdev(काष्ठा nfp_app *app,
+				       काष्ठा net_device *netdev)
+अणु
+	पूर्णांक ext_port;
 
-	if (nfp_netdev_is_nfp_repr(netdev)) {
-		return nfp_repr_get_port_id(netdev);
-	} else if (nfp_flower_internal_port_can_offload(app, netdev)) {
-		ext_port = nfp_flower_get_internal_port_id(app, netdev);
-		if (ext_port < 0)
-			return 0;
+	अगर (nfp_netdev_is_nfp_repr(netdev)) अणु
+		वापस nfp_repr_get_port_id(netdev);
+	पूर्ण अन्यथा अगर (nfp_flower_पूर्णांकernal_port_can_offload(app, netdev)) अणु
+		ext_port = nfp_flower_get_पूर्णांकernal_port_id(app, netdev);
+		अगर (ext_port < 0)
+			वापस 0;
 
-		return nfp_flower_internal_port_get_port_id(ext_port);
-	}
+		वापस nfp_flower_पूर्णांकernal_port_get_port_id(ext_port);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct net_device *
-nfp_flower_get_netdev_from_internal_port_id(struct nfp_app *app, int port_id)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	struct net_device *netdev;
+अटल काष्ठा net_device *
+nfp_flower_get_netdev_from_पूर्णांकernal_port_id(काष्ठा nfp_app *app, पूर्णांक port_id)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा net_device *netdev;
 
-	rcu_read_lock();
-	netdev = idr_find(&priv->internal_ports.port_ids, port_id);
-	rcu_read_unlock();
+	rcu_पढ़ो_lock();
+	netdev = idr_find(&priv->पूर्णांकernal_ports.port_ids, port_id);
+	rcu_पढ़ो_unlock();
 
-	return netdev;
-}
+	वापस netdev;
+पूर्ण
 
-static void
-nfp_flower_free_internal_port_id(struct nfp_app *app, struct net_device *netdev)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	int id;
+अटल व्योम
+nfp_flower_मुक्त_पूर्णांकernal_port_id(काष्ठा nfp_app *app, काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	पूर्णांक id;
 
-	id = nfp_flower_lookup_internal_port_id(priv, netdev);
-	if (!id)
-		return;
+	id = nfp_flower_lookup_पूर्णांकernal_port_id(priv, netdev);
+	अगर (!id)
+		वापस;
 
-	spin_lock_bh(&priv->internal_ports.lock);
-	idr_remove(&priv->internal_ports.port_ids, id);
-	spin_unlock_bh(&priv->internal_ports.lock);
-}
+	spin_lock_bh(&priv->पूर्णांकernal_ports.lock);
+	idr_हटाओ(&priv->पूर्णांकernal_ports.port_ids, id);
+	spin_unlock_bh(&priv->पूर्णांकernal_ports.lock);
+पूर्ण
 
-static int
-nfp_flower_internal_port_event_handler(struct nfp_app *app,
-				       struct net_device *netdev,
-				       unsigned long event)
-{
-	if (event == NETDEV_UNREGISTER &&
-	    nfp_flower_internal_port_can_offload(app, netdev))
-		nfp_flower_free_internal_port_id(app, netdev);
+अटल पूर्णांक
+nfp_flower_पूर्णांकernal_port_event_handler(काष्ठा nfp_app *app,
+				       काष्ठा net_device *netdev,
+				       अचिन्हित दीर्घ event)
+अणु
+	अगर (event == NETDEV_UNREGISTER &&
+	    nfp_flower_पूर्णांकernal_port_can_offload(app, netdev))
+		nfp_flower_मुक्त_पूर्णांकernal_port_id(app, netdev);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static void nfp_flower_internal_port_init(struct nfp_flower_priv *priv)
-{
-	spin_lock_init(&priv->internal_ports.lock);
-	idr_init(&priv->internal_ports.port_ids);
-}
+अटल व्योम nfp_flower_पूर्णांकernal_port_init(काष्ठा nfp_flower_priv *priv)
+अणु
+	spin_lock_init(&priv->पूर्णांकernal_ports.lock);
+	idr_init(&priv->पूर्णांकernal_ports.port_ids);
+पूर्ण
 
-static void nfp_flower_internal_port_cleanup(struct nfp_flower_priv *priv)
-{
-	idr_destroy(&priv->internal_ports.port_ids);
-}
+अटल व्योम nfp_flower_पूर्णांकernal_port_cleanup(काष्ठा nfp_flower_priv *priv)
+अणु
+	idr_destroy(&priv->पूर्णांकernal_ports.port_ids);
+पूर्ण
 
-static struct nfp_flower_non_repr_priv *
-nfp_flower_non_repr_priv_lookup(struct nfp_app *app, struct net_device *netdev)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	struct nfp_flower_non_repr_priv *entry;
+अटल काष्ठा nfp_flower_non_repr_priv *
+nfp_flower_non_repr_priv_lookup(काष्ठा nfp_app *app, काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा nfp_flower_non_repr_priv *entry;
 
 	ASSERT_RTNL();
 
-	list_for_each_entry(entry, &priv->non_repr_priv, list)
-		if (entry->netdev == netdev)
-			return entry;
+	list_क्रम_each_entry(entry, &priv->non_repr_priv, list)
+		अगर (entry->netdev == netdev)
+			वापस entry;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void
-__nfp_flower_non_repr_priv_get(struct nfp_flower_non_repr_priv *non_repr_priv)
-{
+व्योम
+__nfp_flower_non_repr_priv_get(काष्ठा nfp_flower_non_repr_priv *non_repr_priv)
+अणु
 	non_repr_priv->ref_count++;
-}
+पूर्ण
 
-struct nfp_flower_non_repr_priv *
-nfp_flower_non_repr_priv_get(struct nfp_app *app, struct net_device *netdev)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	struct nfp_flower_non_repr_priv *entry;
+काष्ठा nfp_flower_non_repr_priv *
+nfp_flower_non_repr_priv_get(काष्ठा nfp_app *app, काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	काष्ठा nfp_flower_non_repr_priv *entry;
 
 	entry = nfp_flower_non_repr_priv_lookup(app, netdev);
-	if (entry)
-		goto inc_ref;
+	अगर (entry)
+		जाओ inc_ref;
 
-	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
-	if (!entry)
-		return NULL;
+	entry = kzalloc(माप(*entry), GFP_KERNEL);
+	अगर (!entry)
+		वापस शून्य;
 
 	entry->netdev = netdev;
 	list_add(&entry->list, &priv->non_repr_priv);
 
 inc_ref:
 	__nfp_flower_non_repr_priv_get(entry);
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-void
-__nfp_flower_non_repr_priv_put(struct nfp_flower_non_repr_priv *non_repr_priv)
-{
-	if (--non_repr_priv->ref_count)
-		return;
+व्योम
+__nfp_flower_non_repr_priv_put(काष्ठा nfp_flower_non_repr_priv *non_repr_priv)
+अणु
+	अगर (--non_repr_priv->ref_count)
+		वापस;
 
 	list_del(&non_repr_priv->list);
-	kfree(non_repr_priv);
-}
+	kमुक्त(non_repr_priv);
+पूर्ण
 
-void
-nfp_flower_non_repr_priv_put(struct nfp_app *app, struct net_device *netdev)
-{
-	struct nfp_flower_non_repr_priv *entry;
+व्योम
+nfp_flower_non_repr_priv_put(काष्ठा nfp_app *app, काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_flower_non_repr_priv *entry;
 
 	entry = nfp_flower_non_repr_priv_lookup(app, netdev);
-	if (!entry)
-		return;
+	अगर (!entry)
+		वापस;
 
 	__nfp_flower_non_repr_priv_put(entry);
-}
+पूर्ण
 
-static enum nfp_repr_type
-nfp_flower_repr_get_type_and_port(struct nfp_app *app, u32 port_id, u8 *port)
-{
-	switch (FIELD_GET(NFP_FLOWER_CMSG_PORT_TYPE, port_id)) {
-	case NFP_FLOWER_CMSG_PORT_TYPE_PHYS_PORT:
+अटल क्रमागत nfp_repr_type
+nfp_flower_repr_get_type_and_port(काष्ठा nfp_app *app, u32 port_id, u8 *port)
+अणु
+	चयन (FIELD_GET(NFP_FLOWER_CMSG_PORT_TYPE, port_id)) अणु
+	हाल NFP_FLOWER_CMSG_PORT_TYPE_PHYS_PORT:
 		*port = FIELD_GET(NFP_FLOWER_CMSG_PORT_PHYS_PORT_NUM,
 				  port_id);
-		return NFP_REPR_TYPE_PHYS_PORT;
+		वापस NFP_REPR_TYPE_PHYS_PORT;
 
-	case NFP_FLOWER_CMSG_PORT_TYPE_PCIE_PORT:
+	हाल NFP_FLOWER_CMSG_PORT_TYPE_PCIE_PORT:
 		*port = FIELD_GET(NFP_FLOWER_CMSG_PORT_VNIC, port_id);
-		if (FIELD_GET(NFP_FLOWER_CMSG_PORT_VNIC_TYPE, port_id) ==
+		अगर (FIELD_GET(NFP_FLOWER_CMSG_PORT_VNIC_TYPE, port_id) ==
 		    NFP_FLOWER_CMSG_PORT_VNIC_TYPE_PF)
-			return NFP_REPR_TYPE_PF;
-		else
-			return NFP_REPR_TYPE_VF;
-	}
+			वापस NFP_REPR_TYPE_PF;
+		अन्यथा
+			वापस NFP_REPR_TYPE_VF;
+	पूर्ण
 
-	return __NFP_REPR_TYPE_MAX;
-}
+	वापस __NFP_REPR_TYPE_MAX;
+पूर्ण
 
-static struct net_device *
-nfp_flower_dev_get(struct nfp_app *app, u32 port_id, bool *redir_egress)
-{
-	enum nfp_repr_type repr_type;
-	struct nfp_reprs *reprs;
+अटल काष्ठा net_device *
+nfp_flower_dev_get(काष्ठा nfp_app *app, u32 port_id, bool *redir_egress)
+अणु
+	क्रमागत nfp_repr_type repr_type;
+	काष्ठा nfp_reprs *reprs;
 	u8 port = 0;
 
-	/* Check if the port is internal. */
-	if (FIELD_GET(NFP_FLOWER_CMSG_PORT_TYPE, port_id) ==
-	    NFP_FLOWER_CMSG_PORT_TYPE_OTHER_PORT) {
-		if (redir_egress)
+	/* Check अगर the port is पूर्णांकernal. */
+	अगर (FIELD_GET(NFP_FLOWER_CMSG_PORT_TYPE, port_id) ==
+	    NFP_FLOWER_CMSG_PORT_TYPE_OTHER_PORT) अणु
+		अगर (redir_egress)
 			*redir_egress = true;
 		port = FIELD_GET(NFP_FLOWER_CMSG_PORT_PHYS_PORT_NUM, port_id);
-		return nfp_flower_get_netdev_from_internal_port_id(app, port);
-	}
+		वापस nfp_flower_get_netdev_from_पूर्णांकernal_port_id(app, port);
+	पूर्ण
 
 	repr_type = nfp_flower_repr_get_type_and_port(app, port_id, &port);
-	if (repr_type > NFP_REPR_TYPE_MAX)
-		return NULL;
+	अगर (repr_type > NFP_REPR_TYPE_MAX)
+		वापस शून्य;
 
 	reprs = rcu_dereference(app->reprs[repr_type]);
-	if (!reprs)
-		return NULL;
+	अगर (!reprs)
+		वापस शून्य;
 
-	if (port >= reprs->num_reprs)
-		return NULL;
+	अगर (port >= reprs->num_reprs)
+		वापस शून्य;
 
-	return rcu_dereference(reprs->reprs[port]);
-}
+	वापस rcu_dereference(reprs->reprs[port]);
+पूर्ण
 
-static int
-nfp_flower_reprs_reify(struct nfp_app *app, enum nfp_repr_type type,
+अटल पूर्णांक
+nfp_flower_reprs_reअगरy(काष्ठा nfp_app *app, क्रमागत nfp_repr_type type,
 		       bool exists)
-{
-	struct nfp_reprs *reprs;
-	int i, err, count = 0;
+अणु
+	काष्ठा nfp_reprs *reprs;
+	पूर्णांक i, err, count = 0;
 
-	reprs = rcu_dereference_protected(app->reprs[type],
+	reprs = rcu_dereference_रक्षित(app->reprs[type],
 					  lockdep_is_held(&app->pf->lock));
-	if (!reprs)
-		return 0;
+	अगर (!reprs)
+		वापस 0;
 
-	for (i = 0; i < reprs->num_reprs; i++) {
-		struct net_device *netdev;
+	क्रम (i = 0; i < reprs->num_reprs; i++) अणु
+		काष्ठा net_device *netdev;
 
 		netdev = nfp_repr_get_locked(app, reprs, i);
-		if (netdev) {
-			struct nfp_repr *repr = netdev_priv(netdev);
+		अगर (netdev) अणु
+			काष्ठा nfp_repr *repr = netdev_priv(netdev);
 
-			err = nfp_flower_cmsg_portreify(repr, exists);
-			if (err)
-				return err;
+			err = nfp_flower_cmsg_portreअगरy(repr, exists);
+			अगर (err)
+				वापस err;
 			count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int
-nfp_flower_wait_repr_reify(struct nfp_app *app, atomic_t *replies, int tot_repl)
-{
-	struct nfp_flower_priv *priv = app->priv;
+अटल पूर्णांक
+nfp_flower_रुको_repr_reअगरy(काष्ठा nfp_app *app, atomic_t *replies, पूर्णांक tot_repl)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
 
-	if (!tot_repl)
-		return 0;
+	अगर (!tot_repl)
+		वापस 0;
 
-	lockdep_assert_held(&app->pf->lock);
-	if (!wait_event_timeout(priv->reify_wait_queue,
-				atomic_read(replies) >= tot_repl,
-				NFP_FL_REPLY_TIMEOUT)) {
+	lockdep_निश्चित_held(&app->pf->lock);
+	अगर (!रुको_event_समयout(priv->reअगरy_रुको_queue,
+				atomic_पढ़ो(replies) >= tot_repl,
+				NFP_FL_REPLY_TIMEOUT)) अणु
 		nfp_warn(app->cpp, "Not all reprs responded to reify\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_flower_repr_netdev_open(struct nfp_app *app, struct nfp_repr *repr)
-{
-	int err;
+अटल पूर्णांक
+nfp_flower_repr_netdev_खोलो(काष्ठा nfp_app *app, काष्ठा nfp_repr *repr)
+अणु
+	पूर्णांक err;
 
-	err = nfp_flower_cmsg_portmod(repr, true, repr->netdev->mtu, false);
-	if (err)
-		return err;
+	err = nfp_flower_cmsg_porपंचांगod(repr, true, repr->netdev->mtu, false);
+	अगर (err)
+		वापस err;
 
-	netif_tx_wake_all_queues(repr->netdev);
+	netअगर_tx_wake_all_queues(repr->netdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_flower_repr_netdev_stop(struct nfp_app *app, struct nfp_repr *repr)
-{
-	netif_tx_disable(repr->netdev);
+अटल पूर्णांक
+nfp_flower_repr_netdev_stop(काष्ठा nfp_app *app, काष्ठा nfp_repr *repr)
+अणु
+	netअगर_tx_disable(repr->netdev);
 
-	return nfp_flower_cmsg_portmod(repr, false, repr->netdev->mtu, false);
-}
+	वापस nfp_flower_cmsg_porपंचांगod(repr, false, repr->netdev->mtu, false);
+पूर्ण
 
-static void
-nfp_flower_repr_netdev_clean(struct nfp_app *app, struct net_device *netdev)
-{
-	struct nfp_repr *repr = netdev_priv(netdev);
+अटल व्योम
+nfp_flower_repr_netdev_clean(काष्ठा nfp_app *app, काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_repr *repr = netdev_priv(netdev);
 
-	kfree(repr->app_priv);
-}
+	kमुक्त(repr->app_priv);
+पूर्ण
 
-static void
-nfp_flower_repr_netdev_preclean(struct nfp_app *app, struct net_device *netdev)
-{
-	struct nfp_repr *repr = netdev_priv(netdev);
-	struct nfp_flower_priv *priv = app->priv;
-	atomic_t *replies = &priv->reify_replies;
-	int err;
+अटल व्योम
+nfp_flower_repr_netdev_preclean(काष्ठा nfp_app *app, काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_repr *repr = netdev_priv(netdev);
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	atomic_t *replies = &priv->reअगरy_replies;
+	पूर्णांक err;
 
 	atomic_set(replies, 0);
-	err = nfp_flower_cmsg_portreify(repr, false);
-	if (err) {
+	err = nfp_flower_cmsg_portreअगरy(repr, false);
+	अगर (err) अणु
 		nfp_warn(app->cpp, "Failed to notify firmware about repr destruction\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	nfp_flower_wait_repr_reify(app, replies, 1);
-}
+	nfp_flower_रुको_repr_reअगरy(app, replies, 1);
+पूर्ण
 
-static void nfp_flower_sriov_disable(struct nfp_app *app)
-{
-	struct nfp_flower_priv *priv = app->priv;
+अटल व्योम nfp_flower_sriov_disable(काष्ठा nfp_app *app)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
 
-	if (!priv->nn)
-		return;
+	अगर (!priv->nn)
+		वापस;
 
-	nfp_reprs_clean_and_free_by_type(app, NFP_REPR_TYPE_VF);
-}
+	nfp_reprs_clean_and_मुक्त_by_type(app, NFP_REPR_TYPE_VF);
+पूर्ण
 
-static int
-nfp_flower_spawn_vnic_reprs(struct nfp_app *app,
-			    enum nfp_flower_cmsg_port_vnic_type vnic_type,
-			    enum nfp_repr_type repr_type, unsigned int cnt)
-{
+अटल पूर्णांक
+nfp_flower_spawn_vnic_reprs(काष्ठा nfp_app *app,
+			    क्रमागत nfp_flower_cmsg_port_vnic_type vnic_type,
+			    क्रमागत nfp_repr_type repr_type, अचिन्हित पूर्णांक cnt)
+अणु
 	u8 nfp_pcie = nfp_cppcore_pcie_unit(app->pf->cpp);
-	struct nfp_flower_priv *priv = app->priv;
-	atomic_t *replies = &priv->reify_replies;
-	struct nfp_flower_repr_priv *repr_priv;
-	enum nfp_port_type port_type;
-	struct nfp_repr *nfp_repr;
-	struct nfp_reprs *reprs;
-	int i, err, reify_cnt;
-	const u8 queue = 0;
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	atomic_t *replies = &priv->reअगरy_replies;
+	काष्ठा nfp_flower_repr_priv *repr_priv;
+	क्रमागत nfp_port_type port_type;
+	काष्ठा nfp_repr *nfp_repr;
+	काष्ठा nfp_reprs *reprs;
+	पूर्णांक i, err, reअगरy_cnt;
+	स्थिर u8 queue = 0;
 
 	port_type = repr_type == NFP_REPR_TYPE_PF ? NFP_PORT_PF_PORT :
 						    NFP_PORT_VF_PORT;
 
 	reprs = nfp_reprs_alloc(cnt);
-	if (!reprs)
-		return -ENOMEM;
+	अगर (!reprs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < cnt; i++) {
-		struct net_device *repr;
-		struct nfp_port *port;
+	क्रम (i = 0; i < cnt; i++) अणु
+		काष्ठा net_device *repr;
+		काष्ठा nfp_port *port;
 		u32 port_id;
 
 		repr = nfp_repr_alloc(app);
-		if (!repr) {
+		अगर (!repr) अणु
 			err = -ENOMEM;
-			goto err_reprs_clean;
-		}
+			जाओ err_reprs_clean;
+		पूर्ण
 
-		repr_priv = kzalloc(sizeof(*repr_priv), GFP_KERNEL);
-		if (!repr_priv) {
+		repr_priv = kzalloc(माप(*repr_priv), GFP_KERNEL);
+		अगर (!repr_priv) अणु
 			err = -ENOMEM;
-			nfp_repr_free(repr);
-			goto err_reprs_clean;
-		}
+			nfp_repr_मुक्त(repr);
+			जाओ err_reprs_clean;
+		पूर्ण
 
 		nfp_repr = netdev_priv(repr);
 		nfp_repr->app_priv = repr_priv;
@@ -412,134 +413,134 @@ nfp_flower_spawn_vnic_reprs(struct nfp_app *app,
 		WARN_ON(repr_type == NFP_REPR_TYPE_PF && i);
 
 		port = nfp_port_alloc(app, port_type, repr);
-		if (IS_ERR(port)) {
+		अगर (IS_ERR(port)) अणु
 			err = PTR_ERR(port);
-			kfree(repr_priv);
-			nfp_repr_free(repr);
-			goto err_reprs_clean;
-		}
-		if (repr_type == NFP_REPR_TYPE_PF) {
+			kमुक्त(repr_priv);
+			nfp_repr_मुक्त(repr);
+			जाओ err_reprs_clean;
+		पूर्ण
+		अगर (repr_type == NFP_REPR_TYPE_PF) अणु
 			port->pf_id = i;
 			port->vnic = priv->nn->dp.ctrl_bar;
-		} else {
+		पूर्ण अन्यथा अणु
 			port->pf_id = 0;
 			port->vf_id = i;
 			port->vnic =
 				app->pf->vf_cfg_mem + i * NFP_NET_CFG_BAR_SZ;
-		}
+		पूर्ण
 
-		eth_hw_addr_random(repr);
+		eth_hw_addr_अक्रमom(repr);
 
 		port_id = nfp_flower_cmsg_pcie_port(nfp_pcie, vnic_type,
 						    i, queue);
 		err = nfp_repr_init(app, repr,
 				    port_id, port, priv->nn->dp.netdev);
-		if (err) {
-			kfree(repr_priv);
-			nfp_port_free(port);
-			nfp_repr_free(repr);
-			goto err_reprs_clean;
-		}
+		अगर (err) अणु
+			kमुक्त(repr_priv);
+			nfp_port_मुक्त(port);
+			nfp_repr_मुक्त(repr);
+			जाओ err_reprs_clean;
+		पूर्ण
 
 		RCU_INIT_POINTER(reprs->reprs[i], repr);
 		nfp_info(app->cpp, "%s%d Representor(%s) created\n",
 			 repr_type == NFP_REPR_TYPE_PF ? "PF" : "VF", i,
 			 repr->name);
-	}
+	पूर्ण
 
 	nfp_app_reprs_set(app, repr_type, reprs);
 
 	atomic_set(replies, 0);
-	reify_cnt = nfp_flower_reprs_reify(app, repr_type, true);
-	if (reify_cnt < 0) {
-		err = reify_cnt;
+	reअगरy_cnt = nfp_flower_reprs_reअगरy(app, repr_type, true);
+	अगर (reअगरy_cnt < 0) अणु
+		err = reअगरy_cnt;
 		nfp_warn(app->cpp, "Failed to notify firmware about repr creation\n");
-		goto err_reprs_remove;
-	}
+		जाओ err_reprs_हटाओ;
+	पूर्ण
 
-	err = nfp_flower_wait_repr_reify(app, replies, reify_cnt);
-	if (err)
-		goto err_reprs_remove;
+	err = nfp_flower_रुको_repr_reअगरy(app, replies, reअगरy_cnt);
+	अगर (err)
+		जाओ err_reprs_हटाओ;
 
-	return 0;
-err_reprs_remove:
-	reprs = nfp_app_reprs_set(app, repr_type, NULL);
+	वापस 0;
+err_reprs_हटाओ:
+	reprs = nfp_app_reprs_set(app, repr_type, शून्य);
 err_reprs_clean:
-	nfp_reprs_clean_and_free(app, reprs);
-	return err;
-}
+	nfp_reprs_clean_and_मुक्त(app, reprs);
+	वापस err;
+पूर्ण
 
-static int nfp_flower_sriov_enable(struct nfp_app *app, int num_vfs)
-{
-	struct nfp_flower_priv *priv = app->priv;
+अटल पूर्णांक nfp_flower_sriov_enable(काष्ठा nfp_app *app, पूर्णांक num_vfs)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
 
-	if (!priv->nn)
-		return 0;
+	अगर (!priv->nn)
+		वापस 0;
 
-	return nfp_flower_spawn_vnic_reprs(app,
+	वापस nfp_flower_spawn_vnic_reprs(app,
 					   NFP_FLOWER_CMSG_PORT_VNIC_TYPE_VF,
 					   NFP_REPR_TYPE_VF, num_vfs);
-}
+पूर्ण
 
-static int
-nfp_flower_spawn_phy_reprs(struct nfp_app *app, struct nfp_flower_priv *priv)
-{
-	struct nfp_eth_table *eth_tbl = app->pf->eth_tbl;
-	atomic_t *replies = &priv->reify_replies;
-	struct nfp_flower_repr_priv *repr_priv;
-	struct nfp_repr *nfp_repr;
-	struct sk_buff *ctrl_skb;
-	struct nfp_reprs *reprs;
-	int err, reify_cnt;
-	unsigned int i;
+अटल पूर्णांक
+nfp_flower_spawn_phy_reprs(काष्ठा nfp_app *app, काष्ठा nfp_flower_priv *priv)
+अणु
+	काष्ठा nfp_eth_table *eth_tbl = app->pf->eth_tbl;
+	atomic_t *replies = &priv->reअगरy_replies;
+	काष्ठा nfp_flower_repr_priv *repr_priv;
+	काष्ठा nfp_repr *nfp_repr;
+	काष्ठा sk_buff *ctrl_skb;
+	काष्ठा nfp_reprs *reprs;
+	पूर्णांक err, reअगरy_cnt;
+	अचिन्हित पूर्णांक i;
 
 	ctrl_skb = nfp_flower_cmsg_mac_repr_start(app, eth_tbl->count);
-	if (!ctrl_skb)
-		return -ENOMEM;
+	अगर (!ctrl_skb)
+		वापस -ENOMEM;
 
 	reprs = nfp_reprs_alloc(eth_tbl->max_index + 1);
-	if (!reprs) {
+	अगर (!reprs) अणु
 		err = -ENOMEM;
-		goto err_free_ctrl_skb;
-	}
+		जाओ err_मुक्त_ctrl_skb;
+	पूर्ण
 
-	for (i = 0; i < eth_tbl->count; i++) {
-		unsigned int phys_port = eth_tbl->ports[i].index;
-		struct net_device *repr;
-		struct nfp_port *port;
+	क्रम (i = 0; i < eth_tbl->count; i++) अणु
+		अचिन्हित पूर्णांक phys_port = eth_tbl->ports[i].index;
+		काष्ठा net_device *repr;
+		काष्ठा nfp_port *port;
 		u32 cmsg_port_id;
 
 		repr = nfp_repr_alloc(app);
-		if (!repr) {
+		अगर (!repr) अणु
 			err = -ENOMEM;
-			goto err_reprs_clean;
-		}
+			जाओ err_reprs_clean;
+		पूर्ण
 
-		repr_priv = kzalloc(sizeof(*repr_priv), GFP_KERNEL);
-		if (!repr_priv) {
+		repr_priv = kzalloc(माप(*repr_priv), GFP_KERNEL);
+		अगर (!repr_priv) अणु
 			err = -ENOMEM;
-			nfp_repr_free(repr);
-			goto err_reprs_clean;
-		}
+			nfp_repr_मुक्त(repr);
+			जाओ err_reprs_clean;
+		पूर्ण
 
 		nfp_repr = netdev_priv(repr);
 		nfp_repr->app_priv = repr_priv;
 		repr_priv->nfp_repr = nfp_repr;
 
 		port = nfp_port_alloc(app, NFP_PORT_PHYS_PORT, repr);
-		if (IS_ERR(port)) {
+		अगर (IS_ERR(port)) अणु
 			err = PTR_ERR(port);
-			kfree(repr_priv);
-			nfp_repr_free(repr);
-			goto err_reprs_clean;
-		}
+			kमुक्त(repr_priv);
+			nfp_repr_मुक्त(repr);
+			जाओ err_reprs_clean;
+		पूर्ण
 		err = nfp_port_init_phy_port(app->pf, app, port, i);
-		if (err) {
-			kfree(repr_priv);
-			nfp_port_free(port);
-			nfp_repr_free(repr);
-			goto err_reprs_clean;
-		}
+		अगर (err) अणु
+			kमुक्त(repr_priv);
+			nfp_port_मुक्त(port);
+			nfp_repr_मुक्त(repr);
+			जाओ err_reprs_clean;
+		पूर्ण
 
 		SET_NETDEV_DEV(repr, &priv->nn->pdev->dev);
 		nfp_net_get_mac_addr(app->pf, repr, port);
@@ -547,12 +548,12 @@ nfp_flower_spawn_phy_reprs(struct nfp_app *app, struct nfp_flower_priv *priv)
 		cmsg_port_id = nfp_flower_cmsg_phys_port(phys_port);
 		err = nfp_repr_init(app, repr,
 				    cmsg_port_id, port, priv->nn->dp.netdev);
-		if (err) {
-			kfree(repr_priv);
-			nfp_port_free(port);
-			nfp_repr_free(repr);
-			goto err_reprs_clean;
-		}
+		अगर (err) अणु
+			kमुक्त(repr_priv);
+			nfp_port_मुक्त(port);
+			nfp_repr_मुक्त(repr);
+			जाओ err_reprs_clean;
+		पूर्ण
 
 		nfp_flower_cmsg_mac_repr_add(ctrl_skb, i,
 					     eth_tbl->ports[i].nbi,
@@ -562,345 +563,345 @@ nfp_flower_spawn_phy_reprs(struct nfp_app *app, struct nfp_flower_priv *priv)
 		RCU_INIT_POINTER(reprs->reprs[phys_port], repr);
 		nfp_info(app->cpp, "Phys Port %d Representor(%s) created\n",
 			 phys_port, repr->name);
-	}
+	पूर्ण
 
 	nfp_app_reprs_set(app, NFP_REPR_TYPE_PHYS_PORT, reprs);
 
 	/* The REIFY/MAC_REPR control messages should be sent after the MAC
-	 * representors are registered using nfp_app_reprs_set().  This is
-	 * because the firmware may respond with control messages for the
-	 * MAC representors, f.e. to provide the driver with information
+	 * representors are रेजिस्टरed using nfp_app_reprs_set().  This is
+	 * because the firmware may respond with control messages क्रम the
+	 * MAC representors, f.e. to provide the driver with inक्रमmation
 	 * about their state, and without registration the driver will drop
 	 * any such messages.
 	 */
 	atomic_set(replies, 0);
-	reify_cnt = nfp_flower_reprs_reify(app, NFP_REPR_TYPE_PHYS_PORT, true);
-	if (reify_cnt < 0) {
-		err = reify_cnt;
+	reअगरy_cnt = nfp_flower_reprs_reअगरy(app, NFP_REPR_TYPE_PHYS_PORT, true);
+	अगर (reअगरy_cnt < 0) अणु
+		err = reअगरy_cnt;
 		nfp_warn(app->cpp, "Failed to notify firmware about repr creation\n");
-		goto err_reprs_remove;
-	}
+		जाओ err_reprs_हटाओ;
+	पूर्ण
 
-	err = nfp_flower_wait_repr_reify(app, replies, reify_cnt);
-	if (err)
-		goto err_reprs_remove;
+	err = nfp_flower_रुको_repr_reअगरy(app, replies, reअगरy_cnt);
+	अगर (err)
+		जाओ err_reprs_हटाओ;
 
 	nfp_ctrl_tx(app->ctrl, ctrl_skb);
 
-	return 0;
-err_reprs_remove:
-	reprs = nfp_app_reprs_set(app, NFP_REPR_TYPE_PHYS_PORT, NULL);
+	वापस 0;
+err_reprs_हटाओ:
+	reprs = nfp_app_reprs_set(app, NFP_REPR_TYPE_PHYS_PORT, शून्य);
 err_reprs_clean:
-	nfp_reprs_clean_and_free(app, reprs);
-err_free_ctrl_skb:
-	kfree_skb(ctrl_skb);
-	return err;
-}
+	nfp_reprs_clean_and_मुक्त(app, reprs);
+err_मुक्त_ctrl_skb:
+	kमुक्त_skb(ctrl_skb);
+	वापस err;
+पूर्ण
 
-static int nfp_flower_vnic_alloc(struct nfp_app *app, struct nfp_net *nn,
-				 unsigned int id)
-{
-	if (id > 0) {
+अटल पूर्णांक nfp_flower_vnic_alloc(काष्ठा nfp_app *app, काष्ठा nfp_net *nn,
+				 अचिन्हित पूर्णांक id)
+अणु
+	अगर (id > 0) अणु
 		nfp_warn(app->cpp, "FlowerNIC doesn't support more than one data vNIC\n");
-		goto err_invalid_port;
-	}
+		जाओ err_invalid_port;
+	पूर्ण
 
-	eth_hw_addr_random(nn->dp.netdev);
-	netif_keep_dst(nn->dp.netdev);
+	eth_hw_addr_अक्रमom(nn->dp.netdev);
+	netअगर_keep_dst(nn->dp.netdev);
 	nn->vnic_no_name = true;
 
-	return 0;
+	वापस 0;
 
 err_invalid_port:
 	nn->port = nfp_port_alloc(app, NFP_PORT_INVALID, nn->dp.netdev);
-	return PTR_ERR_OR_ZERO(nn->port);
-}
+	वापस PTR_ERR_OR_ZERO(nn->port);
+पूर्ण
 
-static void nfp_flower_vnic_clean(struct nfp_app *app, struct nfp_net *nn)
-{
-	struct nfp_flower_priv *priv = app->priv;
+अटल व्योम nfp_flower_vnic_clean(काष्ठा nfp_app *app, काष्ठा nfp_net *nn)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
 
-	if (app->pf->num_vfs)
-		nfp_reprs_clean_and_free_by_type(app, NFP_REPR_TYPE_VF);
-	nfp_reprs_clean_and_free_by_type(app, NFP_REPR_TYPE_PF);
-	nfp_reprs_clean_and_free_by_type(app, NFP_REPR_TYPE_PHYS_PORT);
+	अगर (app->pf->num_vfs)
+		nfp_reprs_clean_and_मुक्त_by_type(app, NFP_REPR_TYPE_VF);
+	nfp_reprs_clean_and_मुक्त_by_type(app, NFP_REPR_TYPE_PF);
+	nfp_reprs_clean_and_मुक्त_by_type(app, NFP_REPR_TYPE_PHYS_PORT);
 
-	priv->nn = NULL;
-}
+	priv->nn = शून्य;
+पूर्ण
 
-static int nfp_flower_vnic_init(struct nfp_app *app, struct nfp_net *nn)
-{
-	struct nfp_flower_priv *priv = app->priv;
-	int err;
+अटल पूर्णांक nfp_flower_vnic_init(काष्ठा nfp_app *app, काष्ठा nfp_net *nn)
+अणु
+	काष्ठा nfp_flower_priv *priv = app->priv;
+	पूर्णांक err;
 
 	priv->nn = nn;
 
 	err = nfp_flower_spawn_phy_reprs(app, app->priv);
-	if (err)
-		goto err_clear_nn;
+	अगर (err)
+		जाओ err_clear_nn;
 
 	err = nfp_flower_spawn_vnic_reprs(app,
 					  NFP_FLOWER_CMSG_PORT_VNIC_TYPE_PF,
 					  NFP_REPR_TYPE_PF, 1);
-	if (err)
-		goto err_destroy_reprs_phy;
+	अगर (err)
+		जाओ err_destroy_reprs_phy;
 
-	if (app->pf->num_vfs) {
+	अगर (app->pf->num_vfs) अणु
 		err = nfp_flower_spawn_vnic_reprs(app,
 						  NFP_FLOWER_CMSG_PORT_VNIC_TYPE_VF,
 						  NFP_REPR_TYPE_VF,
 						  app->pf->num_vfs);
-		if (err)
-			goto err_destroy_reprs_pf;
-	}
+		अगर (err)
+			जाओ err_destroy_reprs_pf;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_destroy_reprs_pf:
-	nfp_reprs_clean_and_free_by_type(app, NFP_REPR_TYPE_PF);
+	nfp_reprs_clean_and_मुक्त_by_type(app, NFP_REPR_TYPE_PF);
 err_destroy_reprs_phy:
-	nfp_reprs_clean_and_free_by_type(app, NFP_REPR_TYPE_PHYS_PORT);
+	nfp_reprs_clean_and_मुक्त_by_type(app, NFP_REPR_TYPE_PHYS_PORT);
 err_clear_nn:
-	priv->nn = NULL;
-	return err;
-}
+	priv->nn = शून्य;
+	वापस err;
+पूर्ण
 
-static void nfp_flower_wait_host_bit(struct nfp_app *app)
-{
-	unsigned long err_at;
+अटल व्योम nfp_flower_रुको_host_bit(काष्ठा nfp_app *app)
+अणु
+	अचिन्हित दीर्घ err_at;
 	u64 feat;
-	int err;
+	पूर्णांक err;
 
-	/* Wait for HOST_ACK flag bit to propagate */
-	err_at = jiffies + msecs_to_jiffies(100);
-	do {
-		feat = nfp_rtsym_read_le(app->pf->rtbl,
+	/* Wait क्रम HOST_ACK flag bit to propagate */
+	err_at = jअगरfies + msecs_to_jअगरfies(100);
+	करो अणु
+		feat = nfp_rtsym_पढ़ो_le(app->pf->rtbl,
 					 "_abi_flower_combined_features_global",
 					 &err);
-		if (time_is_before_eq_jiffies(err_at)) {
+		अगर (समय_is_beक्रमe_eq_jअगरfies(err_at)) अणु
 			nfp_warn(app->cpp,
 				 "HOST_ACK bit not propagated in FW.\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		usleep_range(1000, 2000);
-	} while (!err && !(feat & NFP_FL_FEATS_HOST_ACK));
+	पूर्ण जबतक (!err && !(feat & NFP_FL_FEATS_HOST_ACK));
 
-	if (err)
+	अगर (err)
 		nfp_warn(app->cpp,
 			 "Could not read global features entry from FW\n");
-}
+पूर्ण
 
-static int nfp_flower_sync_feature_bits(struct nfp_app *app)
-{
-	struct nfp_flower_priv *app_priv = app->priv;
-	int err;
+अटल पूर्णांक nfp_flower_sync_feature_bits(काष्ठा nfp_app *app)
+अणु
+	काष्ठा nfp_flower_priv *app_priv = app->priv;
+	पूर्णांक err;
 
 	/* Tell the firmware of the host supported features. */
-	err = nfp_rtsym_write_le(app->pf->rtbl, "_abi_flower_host_mask",
+	err = nfp_rtsym_ग_लिखो_le(app->pf->rtbl, "_abi_flower_host_mask",
 				 app_priv->flower_ext_feats |
 				 NFP_FL_FEATS_HOST_ACK);
-	if (!err)
-		nfp_flower_wait_host_bit(app);
-	else if (err != -ENOENT)
-		return err;
+	अगर (!err)
+		nfp_flower_रुको_host_bit(app);
+	अन्यथा अगर (err != -ENOENT)
+		वापस err;
 
 	/* Tell the firmware that the driver supports lag. */
-	err = nfp_rtsym_write_le(app->pf->rtbl,
+	err = nfp_rtsym_ग_लिखो_le(app->pf->rtbl,
 				 "_abi_flower_balance_sync_enable", 1);
-	if (!err) {
+	अगर (!err) अणु
 		app_priv->flower_en_feats |= NFP_FL_ENABLE_LAG;
 		nfp_flower_lag_init(&app_priv->nfp_lag);
-	} else if (err == -ENOENT) {
+	पूर्ण अन्यथा अगर (err == -ENOENT) अणु
 		nfp_warn(app->cpp, "LAG not supported by FW.\n");
-	} else {
-		return err;
-	}
+	पूर्ण अन्यथा अणु
+		वापस err;
+	पूर्ण
 
-	if (app_priv->flower_ext_feats & NFP_FL_FEATS_FLOW_MOD) {
+	अगर (app_priv->flower_ext_feats & NFP_FL_FEATS_FLOW_MOD) अणु
 		/* Tell the firmware that the driver supports flow merging. */
-		err = nfp_rtsym_write_le(app->pf->rtbl,
+		err = nfp_rtsym_ग_लिखो_le(app->pf->rtbl,
 					 "_abi_flower_merge_hint_enable", 1);
-		if (!err) {
+		अगर (!err) अणु
 			app_priv->flower_en_feats |= NFP_FL_ENABLE_FLOW_MERGE;
-			nfp_flower_internal_port_init(app_priv);
-		} else if (err == -ENOENT) {
+			nfp_flower_पूर्णांकernal_port_init(app_priv);
+		पूर्ण अन्यथा अगर (err == -ENOENT) अणु
 			nfp_warn(app->cpp,
 				 "Flow merge not supported by FW.\n");
-		} else {
-			return err;
-		}
-	} else {
+		पूर्ण अन्यथा अणु
+			वापस err;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		nfp_warn(app->cpp, "Flow mod/merge not supported by FW.\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfp_flower_init(struct nfp_app *app)
-{
+अटल पूर्णांक nfp_flower_init(काष्ठा nfp_app *app)
+अणु
 	u64 version, features, ctx_count, num_mems;
-	const struct nfp_pf *pf = app->pf;
-	struct nfp_flower_priv *app_priv;
-	int err;
+	स्थिर काष्ठा nfp_pf *pf = app->pf;
+	काष्ठा nfp_flower_priv *app_priv;
+	पूर्णांक err;
 
-	if (!pf->eth_tbl) {
+	अगर (!pf->eth_tbl) अणु
 		nfp_warn(app->cpp, "FlowerNIC requires eth table\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!pf->mac_stats_bar) {
+	अगर (!pf->mac_stats_bar) अणु
 		nfp_warn(app->cpp, "FlowerNIC requires mac_stats BAR\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!pf->vf_cfg_bar) {
+	अगर (!pf->vf_cfg_bar) अणु
 		nfp_warn(app->cpp, "FlowerNIC requires vf_cfg BAR\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	version = nfp_rtsym_read_le(app->pf->rtbl, "hw_flower_version", &err);
-	if (err) {
+	version = nfp_rtsym_पढ़ो_le(app->pf->rtbl, "hw_flower_version", &err);
+	अगर (err) अणु
 		nfp_warn(app->cpp, "FlowerNIC requires hw_flower_version memory symbol\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	num_mems = nfp_rtsym_read_le(app->pf->rtbl, "CONFIG_FC_HOST_CTX_SPLIT",
+	num_mems = nfp_rtsym_पढ़ो_le(app->pf->rtbl, "CONFIG_FC_HOST_CTX_SPLIT",
 				     &err);
-	if (err) {
+	अगर (err) अणु
 		nfp_warn(app->cpp,
 			 "FlowerNIC: unsupported host context memory: %d\n",
 			 err);
 		err = 0;
 		num_mems = 1;
-	}
+	पूर्ण
 
-	if (!FIELD_FIT(NFP_FL_STAT_ID_MU_NUM, num_mems) || !num_mems) {
+	अगर (!FIELD_FIT(NFP_FL_STAT_ID_MU_NUM, num_mems) || !num_mems) अणु
 		nfp_warn(app->cpp,
 			 "FlowerNIC: invalid host context memory: %llu\n",
 			 num_mems);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ctx_count = nfp_rtsym_read_le(app->pf->rtbl, "CONFIG_FC_HOST_CTX_COUNT",
+	ctx_count = nfp_rtsym_पढ़ो_le(app->pf->rtbl, "CONFIG_FC_HOST_CTX_COUNT",
 				      &err);
-	if (err) {
+	अगर (err) अणु
 		nfp_warn(app->cpp,
 			 "FlowerNIC: unsupported host context count: %d\n",
 			 err);
 		err = 0;
 		ctx_count = BIT(17);
-	}
+	पूर्ण
 
 	/* We need to ensure hardware has enough flower capabilities. */
-	if (version != NFP_FLOWER_ALLOWED_VER) {
+	अगर (version != NFP_FLOWER_ALLOWED_VER) अणु
 		nfp_warn(app->cpp, "FlowerNIC: unsupported firmware version\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	app_priv = vzalloc(sizeof(struct nfp_flower_priv));
-	if (!app_priv)
-		return -ENOMEM;
+	app_priv = vzalloc(माप(काष्ठा nfp_flower_priv));
+	अगर (!app_priv)
+		वापस -ENOMEM;
 
 	app_priv->total_mem_units = num_mems;
 	app_priv->active_mem_unit = 0;
-	app_priv->stats_ring_size = roundup_pow_of_two(ctx_count);
+	app_priv->stats_ring_size = roundup_घात_of_two(ctx_count);
 	app->priv = app_priv;
 	app_priv->app = app;
 	skb_queue_head_init(&app_priv->cmsg_skbs_high);
 	skb_queue_head_init(&app_priv->cmsg_skbs_low);
 	INIT_WORK(&app_priv->cmsg_work, nfp_flower_cmsg_process_rx);
-	init_waitqueue_head(&app_priv->reify_wait_queue);
+	init_रुकोqueue_head(&app_priv->reअगरy_रुको_queue);
 
-	init_waitqueue_head(&app_priv->mtu_conf.wait_q);
+	init_रुकोqueue_head(&app_priv->mtu_conf.रुको_q);
 	spin_lock_init(&app_priv->mtu_conf.lock);
 
 	err = nfp_flower_metadata_init(app, ctx_count, num_mems);
-	if (err)
-		goto err_free_app_priv;
+	अगर (err)
+		जाओ err_मुक्त_app_priv;
 
 	/* Extract the extra features supported by the firmware. */
-	features = nfp_rtsym_read_le(app->pf->rtbl,
+	features = nfp_rtsym_पढ़ो_le(app->pf->rtbl,
 				     "_abi_flower_extra_features", &err);
-	if (err)
+	अगर (err)
 		app_priv->flower_ext_feats = 0;
-	else
+	अन्यथा
 		app_priv->flower_ext_feats = features & NFP_FL_FEATS_HOST;
 
 	err = nfp_flower_sync_feature_bits(app);
-	if (err)
-		goto err_cleanup;
+	अगर (err)
+		जाओ err_cleanup;
 
-	err = flow_indr_dev_register(nfp_flower_indr_setup_tc_cb, app);
-	if (err)
-		goto err_cleanup;
+	err = flow_indr_dev_रेजिस्टर(nfp_flower_indr_setup_tc_cb, app);
+	अगर (err)
+		जाओ err_cleanup;
 
-	if (app_priv->flower_ext_feats & NFP_FL_FEATS_VF_RLIM)
+	अगर (app_priv->flower_ext_feats & NFP_FL_FEATS_VF_RLIM)
 		nfp_flower_qos_init(app);
 
 	INIT_LIST_HEAD(&app_priv->indr_block_cb_priv);
 	INIT_LIST_HEAD(&app_priv->non_repr_priv);
 	app_priv->pre_tun_rule_cnt = 0;
 
-	return 0;
+	वापस 0;
 
 err_cleanup:
-	if (app_priv->flower_en_feats & NFP_FL_ENABLE_LAG)
+	अगर (app_priv->flower_en_feats & NFP_FL_ENABLE_LAG)
 		nfp_flower_lag_cleanup(&app_priv->nfp_lag);
 	nfp_flower_metadata_cleanup(app);
-err_free_app_priv:
-	vfree(app->priv);
-	return err;
-}
+err_मुक्त_app_priv:
+	vमुक्त(app->priv);
+	वापस err;
+पूर्ण
 
-static void nfp_flower_clean(struct nfp_app *app)
-{
-	struct nfp_flower_priv *app_priv = app->priv;
+अटल व्योम nfp_flower_clean(काष्ठा nfp_app *app)
+अणु
+	काष्ठा nfp_flower_priv *app_priv = app->priv;
 
 	skb_queue_purge(&app_priv->cmsg_skbs_high);
 	skb_queue_purge(&app_priv->cmsg_skbs_low);
 	flush_work(&app_priv->cmsg_work);
 
-	if (app_priv->flower_ext_feats & NFP_FL_FEATS_VF_RLIM)
+	अगर (app_priv->flower_ext_feats & NFP_FL_FEATS_VF_RLIM)
 		nfp_flower_qos_cleanup(app);
 
-	if (app_priv->flower_en_feats & NFP_FL_ENABLE_LAG)
+	अगर (app_priv->flower_en_feats & NFP_FL_ENABLE_LAG)
 		nfp_flower_lag_cleanup(&app_priv->nfp_lag);
 
-	if (app_priv->flower_en_feats & NFP_FL_ENABLE_FLOW_MERGE)
-		nfp_flower_internal_port_cleanup(app_priv);
+	अगर (app_priv->flower_en_feats & NFP_FL_ENABLE_FLOW_MERGE)
+		nfp_flower_पूर्णांकernal_port_cleanup(app_priv);
 
 	nfp_flower_metadata_cleanup(app);
-	vfree(app->priv);
-	app->priv = NULL;
-}
+	vमुक्त(app->priv);
+	app->priv = शून्य;
+पूर्ण
 
-static bool nfp_flower_check_ack(struct nfp_flower_priv *app_priv)
-{
+अटल bool nfp_flower_check_ack(काष्ठा nfp_flower_priv *app_priv)
+अणु
 	bool ret;
 
 	spin_lock_bh(&app_priv->mtu_conf.lock);
 	ret = app_priv->mtu_conf.ack;
 	spin_unlock_bh(&app_priv->mtu_conf.lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-nfp_flower_repr_change_mtu(struct nfp_app *app, struct net_device *netdev,
-			   int new_mtu)
-{
-	struct nfp_flower_priv *app_priv = app->priv;
-	struct nfp_repr *repr = netdev_priv(netdev);
-	int err;
+अटल पूर्णांक
+nfp_flower_repr_change_mtu(काष्ठा nfp_app *app, काष्ठा net_device *netdev,
+			   पूर्णांक new_mtu)
+अणु
+	काष्ठा nfp_flower_priv *app_priv = app->priv;
+	काष्ठा nfp_repr *repr = netdev_priv(netdev);
+	पूर्णांक err;
 
-	/* Only need to config FW for physical port MTU change. */
-	if (repr->port->type != NFP_PORT_PHYS_PORT)
-		return 0;
+	/* Only need to config FW क्रम physical port MTU change. */
+	अगर (repr->port->type != NFP_PORT_PHYS_PORT)
+		वापस 0;
 
-	if (!(app_priv->flower_ext_feats & NFP_FL_NBI_MTU_SETTING)) {
+	अगर (!(app_priv->flower_ext_feats & NFP_FL_NBI_MTU_SETTING)) अणु
 		nfp_err(app->cpp, "Physical port MTU setting not supported\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_bh(&app_priv->mtu_conf.lock);
 	app_priv->mtu_conf.ack = false;
@@ -908,72 +909,72 @@ nfp_flower_repr_change_mtu(struct nfp_app *app, struct net_device *netdev,
 	app_priv->mtu_conf.portnum = repr->dst->u.port_info.port_id;
 	spin_unlock_bh(&app_priv->mtu_conf.lock);
 
-	err = nfp_flower_cmsg_portmod(repr, netif_carrier_ok(netdev), new_mtu,
+	err = nfp_flower_cmsg_porपंचांगod(repr, netअगर_carrier_ok(netdev), new_mtu,
 				      true);
-	if (err) {
+	अगर (err) अणु
 		spin_lock_bh(&app_priv->mtu_conf.lock);
 		app_priv->mtu_conf.requested_val = 0;
 		spin_unlock_bh(&app_priv->mtu_conf.lock);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	/* Wait for fw to ack the change. */
-	if (!wait_event_timeout(app_priv->mtu_conf.wait_q,
+	/* Wait क्रम fw to ack the change. */
+	अगर (!रुको_event_समयout(app_priv->mtu_conf.रुको_q,
 				nfp_flower_check_ack(app_priv),
-				NFP_FL_REPLY_TIMEOUT)) {
+				NFP_FL_REPLY_TIMEOUT)) अणु
 		spin_lock_bh(&app_priv->mtu_conf.lock);
 		app_priv->mtu_conf.requested_val = 0;
 		spin_unlock_bh(&app_priv->mtu_conf.lock);
 		nfp_warn(app->cpp, "MTU change not verified with fw\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfp_flower_start(struct nfp_app *app)
-{
-	struct nfp_flower_priv *app_priv = app->priv;
-	int err;
+अटल पूर्णांक nfp_flower_start(काष्ठा nfp_app *app)
+अणु
+	काष्ठा nfp_flower_priv *app_priv = app->priv;
+	पूर्णांक err;
 
-	if (app_priv->flower_en_feats & NFP_FL_ENABLE_LAG) {
+	अगर (app_priv->flower_en_feats & NFP_FL_ENABLE_LAG) अणु
 		err = nfp_flower_lag_reset(&app_priv->nfp_lag);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return nfp_tunnel_config_start(app);
-}
+	वापस nfp_tunnel_config_start(app);
+पूर्ण
 
-static void nfp_flower_stop(struct nfp_app *app)
-{
+अटल व्योम nfp_flower_stop(काष्ठा nfp_app *app)
+अणु
 	nfp_tunnel_config_stop(app);
 
-	flow_indr_dev_unregister(nfp_flower_indr_setup_tc_cb, app,
+	flow_indr_dev_unरेजिस्टर(nfp_flower_indr_setup_tc_cb, app,
 				 nfp_flower_setup_indr_tc_release);
-}
+पूर्ण
 
-static int
-nfp_flower_netdev_event(struct nfp_app *app, struct net_device *netdev,
-			unsigned long event, void *ptr)
-{
-	struct nfp_flower_priv *app_priv = app->priv;
-	int ret;
+अटल पूर्णांक
+nfp_flower_netdev_event(काष्ठा nfp_app *app, काष्ठा net_device *netdev,
+			अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा nfp_flower_priv *app_priv = app->priv;
+	पूर्णांक ret;
 
-	if (app_priv->flower_en_feats & NFP_FL_ENABLE_LAG) {
+	अगर (app_priv->flower_en_feats & NFP_FL_ENABLE_LAG) अणु
 		ret = nfp_flower_lag_netdev_event(app_priv, netdev, event, ptr);
-		if (ret & NOTIFY_STOP_MASK)
-			return ret;
-	}
+		अगर (ret & NOTIFY_STOP_MASK)
+			वापस ret;
+	पूर्ण
 
-	ret = nfp_flower_internal_port_event_handler(app, netdev, event);
-	if (ret & NOTIFY_STOP_MASK)
-		return ret;
+	ret = nfp_flower_पूर्णांकernal_port_event_handler(app, netdev, event);
+	अगर (ret & NOTIFY_STOP_MASK)
+		वापस ret;
 
-	return nfp_tunnel_mac_event_handler(app, netdev, event, ptr);
-}
+	वापस nfp_tunnel_mac_event_handler(app, netdev, event, ptr);
+पूर्ण
 
-const struct nfp_app_type app_flower = {
+स्थिर काष्ठा nfp_app_type app_flower = अणु
 	.id		= NFP_APP_FLOWER_NIC,
 	.name		= "flower",
 
@@ -994,7 +995,7 @@ const struct nfp_app_type app_flower = {
 	.repr_preclean	= nfp_flower_repr_netdev_preclean,
 	.repr_clean	= nfp_flower_repr_netdev_clean,
 
-	.repr_open	= nfp_flower_repr_netdev_open,
+	.repr_खोलो	= nfp_flower_repr_netdev_खोलो,
 	.repr_stop	= nfp_flower_repr_netdev_stop,
 
 	.start		= nfp_flower_start,
@@ -1007,8 +1008,8 @@ const struct nfp_app_type app_flower = {
 	.sriov_enable	= nfp_flower_sriov_enable,
 	.sriov_disable	= nfp_flower_sriov_disable,
 
-	.eswitch_mode_get  = eswitch_mode_get,
+	.eचयन_mode_get  = eचयन_mode_get,
 	.dev_get	= nfp_flower_dev_get,
 
 	.setup_tc	= nfp_flower_setup_tc,
-};
+पूर्ण;

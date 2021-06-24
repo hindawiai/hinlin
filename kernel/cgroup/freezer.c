@@ -1,59 +1,60 @@
-//SPDX-License-Identifier: GPL-2.0
-#include <linux/cgroup.h>
-#include <linux/sched.h>
-#include <linux/sched/task.h>
-#include <linux/sched/signal.h>
+<शैली गुरु>
+//SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/cgroup.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include "cgroup-internal.h"
+#समावेश "cgroup-internal.h"
 
-#include <trace/events/cgroup.h>
+#समावेश <trace/events/cgroup.h>
 
 /*
  * Propagate the cgroup frozen state upwards by the cgroup tree.
  */
-static void cgroup_propagate_frozen(struct cgroup *cgrp, bool frozen)
-{
-	int desc = 1;
+अटल व्योम cgroup_propagate_frozen(काष्ठा cgroup *cgrp, bool frozen)
+अणु
+	पूर्णांक desc = 1;
 
 	/*
-	 * If the new state is frozen, some freezing ancestor cgroups may change
-	 * their state too, depending on if all their descendants are frozen.
+	 * If the new state is frozen, some मुक्तzing ancestor cgroups may change
+	 * their state too, depending on अगर all their descendants are frozen.
 	 *
-	 * Otherwise, all ancestor cgroups are forced into the non-frozen state.
+	 * Otherwise, all ancestor cgroups are क्रमced पूर्णांकo the non-frozen state.
 	 */
-	while ((cgrp = cgroup_parent(cgrp))) {
-		if (frozen) {
-			cgrp->freezer.nr_frozen_descendants += desc;
-			if (!test_bit(CGRP_FROZEN, &cgrp->flags) &&
+	जबतक ((cgrp = cgroup_parent(cgrp))) अणु
+		अगर (frozen) अणु
+			cgrp->मुक्तzer.nr_frozen_descendants += desc;
+			अगर (!test_bit(CGRP_FROZEN, &cgrp->flags) &&
 			    test_bit(CGRP_FREEZE, &cgrp->flags) &&
-			    cgrp->freezer.nr_frozen_descendants ==
-			    cgrp->nr_descendants) {
+			    cgrp->मुक्तzer.nr_frozen_descendants ==
+			    cgrp->nr_descendants) अणु
 				set_bit(CGRP_FROZEN, &cgrp->flags);
-				cgroup_file_notify(&cgrp->events_file);
-				TRACE_CGROUP_PATH(notify_frozen, cgrp, 1);
+				cgroup_file_notअगरy(&cgrp->events_file);
+				TRACE_CGROUP_PATH(notअगरy_frozen, cgrp, 1);
 				desc++;
-			}
-		} else {
-			cgrp->freezer.nr_frozen_descendants -= desc;
-			if (test_bit(CGRP_FROZEN, &cgrp->flags)) {
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			cgrp->मुक्तzer.nr_frozen_descendants -= desc;
+			अगर (test_bit(CGRP_FROZEN, &cgrp->flags)) अणु
 				clear_bit(CGRP_FROZEN, &cgrp->flags);
-				cgroup_file_notify(&cgrp->events_file);
-				TRACE_CGROUP_PATH(notify_frozen, cgrp, 0);
+				cgroup_file_notअगरy(&cgrp->events_file);
+				TRACE_CGROUP_PATH(notअगरy_frozen, cgrp, 0);
 				desc++;
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Revisit the cgroup frozen state.
- * Checks if the cgroup is really frozen and perform all state transitions.
+ * Checks अगर the cgroup is really frozen and perक्रमm all state transitions.
  */
-void cgroup_update_frozen(struct cgroup *cgrp)
-{
+व्योम cgroup_update_frozen(काष्ठा cgroup *cgrp)
+अणु
 	bool frozen;
 
-	lockdep_assert_held(&css_set_lock);
+	lockdep_निश्चित_held(&css_set_lock);
 
 	/*
 	 * If the cgroup has to be frozen (CGRP_FREEZE bit set),
@@ -61,55 +62,55 @@ void cgroup_update_frozen(struct cgroup *cgrp)
 	 * the cgroup frozen. Otherwise it's not frozen.
 	 */
 	frozen = test_bit(CGRP_FREEZE, &cgrp->flags) &&
-		cgrp->freezer.nr_frozen_tasks == __cgroup_task_count(cgrp);
+		cgrp->मुक्तzer.nr_frozen_tasks == __cgroup_task_count(cgrp);
 
-	if (frozen) {
-		/* Already there? */
-		if (test_bit(CGRP_FROZEN, &cgrp->flags))
-			return;
+	अगर (frozen) अणु
+		/* Alपढ़ोy there? */
+		अगर (test_bit(CGRP_FROZEN, &cgrp->flags))
+			वापस;
 
 		set_bit(CGRP_FROZEN, &cgrp->flags);
-	} else {
-		/* Already there? */
-		if (!test_bit(CGRP_FROZEN, &cgrp->flags))
-			return;
+	पूर्ण अन्यथा अणु
+		/* Alपढ़ोy there? */
+		अगर (!test_bit(CGRP_FROZEN, &cgrp->flags))
+			वापस;
 
 		clear_bit(CGRP_FROZEN, &cgrp->flags);
-	}
-	cgroup_file_notify(&cgrp->events_file);
-	TRACE_CGROUP_PATH(notify_frozen, cgrp, frozen);
+	पूर्ण
+	cgroup_file_notअगरy(&cgrp->events_file);
+	TRACE_CGROUP_PATH(notअगरy_frozen, cgrp, frozen);
 
 	/* Update the state of ancestor cgroups. */
 	cgroup_propagate_frozen(cgrp, frozen);
-}
+पूर्ण
 
 /*
  * Increment cgroup's nr_frozen_tasks.
  */
-static void cgroup_inc_frozen_cnt(struct cgroup *cgrp)
-{
-	cgrp->freezer.nr_frozen_tasks++;
-}
+अटल व्योम cgroup_inc_frozen_cnt(काष्ठा cgroup *cgrp)
+अणु
+	cgrp->मुक्तzer.nr_frozen_tasks++;
+पूर्ण
 
 /*
  * Decrement cgroup's nr_frozen_tasks.
  */
-static void cgroup_dec_frozen_cnt(struct cgroup *cgrp)
-{
-	cgrp->freezer.nr_frozen_tasks--;
-	WARN_ON_ONCE(cgrp->freezer.nr_frozen_tasks < 0);
-}
+अटल व्योम cgroup_dec_frozen_cnt(काष्ठा cgroup *cgrp)
+अणु
+	cgrp->मुक्तzer.nr_frozen_tasks--;
+	WARN_ON_ONCE(cgrp->मुक्तzer.nr_frozen_tasks < 0);
+पूर्ण
 
 /*
- * Enter frozen/stopped state, if not yet there. Update cgroup's counters,
- * and revisit the state of the cgroup, if necessary.
+ * Enter frozen/stopped state, अगर not yet there. Update cgroup's counters,
+ * and revisit the state of the cgroup, अगर necessary.
  */
-void cgroup_enter_frozen(void)
-{
-	struct cgroup *cgrp;
+व्योम cgroup_enter_frozen(व्योम)
+अणु
+	काष्ठा cgroup *cgrp;
 
-	if (current->frozen)
-		return;
+	अगर (current->frozen)
+		वापस;
 
 	spin_lock_irq(&css_set_lock);
 	current->frozen = true;
@@ -117,207 +118,207 @@ void cgroup_enter_frozen(void)
 	cgroup_inc_frozen_cnt(cgrp);
 	cgroup_update_frozen(cgrp);
 	spin_unlock_irq(&css_set_lock);
-}
+पूर्ण
 
 /*
  * Conditionally leave frozen/stopped state. Update cgroup's counters,
- * and revisit the state of the cgroup, if necessary.
+ * and revisit the state of the cgroup, अगर necessary.
  *
- * If always_leave is not set, and the cgroup is freezing,
+ * If always_leave is not set, and the cgroup is मुक्तzing,
  * we're racing with the cgroup freezing. In this case, we don't
- * drop the frozen counter to avoid a transient switch to
+ * drop the frozen counter to aव्योम a transient चयन to
  * the unfrozen state.
  */
-void cgroup_leave_frozen(bool always_leave)
-{
-	struct cgroup *cgrp;
+व्योम cgroup_leave_frozen(bool always_leave)
+अणु
+	काष्ठा cgroup *cgrp;
 
 	spin_lock_irq(&css_set_lock);
 	cgrp = task_dfl_cgroup(current);
-	if (always_leave || !test_bit(CGRP_FREEZE, &cgrp->flags)) {
+	अगर (always_leave || !test_bit(CGRP_FREEZE, &cgrp->flags)) अणु
 		cgroup_dec_frozen_cnt(cgrp);
 		cgroup_update_frozen(cgrp);
 		WARN_ON_ONCE(!current->frozen);
 		current->frozen = false;
-	} else if (!(current->jobctl & JOBCTL_TRAP_FREEZE)) {
+	पूर्ण अन्यथा अगर (!(current->jobctl & JOBCTL_TRAP_FREEZE)) अणु
 		spin_lock(&current->sighand->siglock);
 		current->jobctl |= JOBCTL_TRAP_FREEZE;
-		set_thread_flag(TIF_SIGPENDING);
+		set_thपढ़ो_flag(TIF_SIGPENDING);
 		spin_unlock(&current->sighand->siglock);
-	}
+	पूर्ण
 	spin_unlock_irq(&css_set_lock);
-}
+पूर्ण
 
 /*
- * Freeze or unfreeze the task by setting or clearing the JOBCTL_TRAP_FREEZE
+ * Freeze or unमुक्तze the task by setting or clearing the JOBCTL_TRAP_FREEZE
  * jobctl bit.
  */
-static void cgroup_freeze_task(struct task_struct *task, bool freeze)
-{
-	unsigned long flags;
+अटल व्योम cgroup_मुक्तze_task(काष्ठा task_काष्ठा *task, bool मुक्तze)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	/* If the task is about to die, don't bother with freezing it. */
-	if (!lock_task_sighand(task, &flags))
-		return;
+	/* If the task is about to die, करोn't bother with मुक्तzing it. */
+	अगर (!lock_task_sighand(task, &flags))
+		वापस;
 
-	if (freeze) {
+	अगर (मुक्तze) अणु
 		task->jobctl |= JOBCTL_TRAP_FREEZE;
-		signal_wake_up(task, false);
-	} else {
+		संकेत_wake_up(task, false);
+	पूर्ण अन्यथा अणु
 		task->jobctl &= ~JOBCTL_TRAP_FREEZE;
 		wake_up_process(task);
-	}
+	पूर्ण
 
 	unlock_task_sighand(task, &flags);
-}
+पूर्ण
 
 /*
- * Freeze or unfreeze all tasks in the given cgroup.
+ * Freeze or unमुक्तze all tasks in the given cgroup.
  */
-static void cgroup_do_freeze(struct cgroup *cgrp, bool freeze)
-{
-	struct css_task_iter it;
-	struct task_struct *task;
+अटल व्योम cgroup_करो_मुक्तze(काष्ठा cgroup *cgrp, bool मुक्तze)
+अणु
+	काष्ठा css_task_iter it;
+	काष्ठा task_काष्ठा *task;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	spin_lock_irq(&css_set_lock);
-	if (freeze)
+	अगर (मुक्तze)
 		set_bit(CGRP_FREEZE, &cgrp->flags);
-	else
+	अन्यथा
 		clear_bit(CGRP_FREEZE, &cgrp->flags);
 	spin_unlock_irq(&css_set_lock);
 
-	if (freeze)
-		TRACE_CGROUP_PATH(freeze, cgrp);
-	else
-		TRACE_CGROUP_PATH(unfreeze, cgrp);
+	अगर (मुक्तze)
+		TRACE_CGROUP_PATH(मुक्तze, cgrp);
+	अन्यथा
+		TRACE_CGROUP_PATH(unमुक्तze, cgrp);
 
 	css_task_iter_start(&cgrp->self, 0, &it);
-	while ((task = css_task_iter_next(&it))) {
+	जबतक ((task = css_task_iter_next(&it))) अणु
 		/*
-		 * Ignore kernel threads here. Freezing cgroups containing
-		 * kthreads isn't supported.
+		 * Ignore kernel thपढ़ोs here. Freezing cgroups containing
+		 * kthपढ़ोs isn't supported.
 		 */
-		if (task->flags & PF_KTHREAD)
-			continue;
-		cgroup_freeze_task(task, freeze);
-	}
+		अगर (task->flags & PF_KTHREAD)
+			जारी;
+		cgroup_मुक्तze_task(task, मुक्तze);
+	पूर्ण
 	css_task_iter_end(&it);
 
 	/*
 	 * Cgroup state should be revisited here to cover empty leaf cgroups
-	 * and cgroups which descendants are already in the desired state.
+	 * and cgroups which descendants are alपढ़ोy in the desired state.
 	 */
 	spin_lock_irq(&css_set_lock);
-	if (cgrp->nr_descendants == cgrp->freezer.nr_frozen_descendants)
+	अगर (cgrp->nr_descendants == cgrp->मुक्तzer.nr_frozen_descendants)
 		cgroup_update_frozen(cgrp);
 	spin_unlock_irq(&css_set_lock);
-}
+पूर्ण
 
 /*
- * Adjust the task state (freeze or unfreeze) and revisit the state of
+ * Adjust the task state (मुक्तze or unमुक्तze) and revisit the state of
  * source and destination cgroups.
  */
-void cgroup_freezer_migrate_task(struct task_struct *task,
-				 struct cgroup *src, struct cgroup *dst)
-{
-	lockdep_assert_held(&css_set_lock);
+व्योम cgroup_मुक्तzer_migrate_task(काष्ठा task_काष्ठा *task,
+				 काष्ठा cgroup *src, काष्ठा cgroup *dst)
+अणु
+	lockdep_निश्चित_held(&css_set_lock);
 
 	/*
-	 * Kernel threads are not supposed to be frozen at all.
+	 * Kernel thपढ़ोs are not supposed to be frozen at all.
 	 */
-	if (task->flags & PF_KTHREAD)
-		return;
+	अगर (task->flags & PF_KTHREAD)
+		वापस;
 
 	/*
-	 * It's not necessary to do changes if both of the src and dst cgroups
-	 * are not freezing and task is not frozen.
+	 * It's not necessary to करो changes अगर both of the src and dst cgroups
+	 * are not मुक्तzing and task is not frozen.
 	 */
-	if (!test_bit(CGRP_FREEZE, &src->flags) &&
+	अगर (!test_bit(CGRP_FREEZE, &src->flags) &&
 	    !test_bit(CGRP_FREEZE, &dst->flags) &&
 	    !task->frozen)
-		return;
+		वापस;
 
 	/*
-	 * Adjust counters of freezing and frozen tasks.
-	 * Note, that if the task is frozen, but the destination cgroup is not
+	 * Adjust counters of मुक्तzing and frozen tasks.
+	 * Note, that अगर the task is frozen, but the destination cgroup is not
 	 * frozen, we bump both counters to keep them balanced.
 	 */
-	if (task->frozen) {
+	अगर (task->frozen) अणु
 		cgroup_inc_frozen_cnt(dst);
 		cgroup_dec_frozen_cnt(src);
-	}
+	पूर्ण
 	cgroup_update_frozen(dst);
 	cgroup_update_frozen(src);
 
 	/*
 	 * Force the task to the desired state.
 	 */
-	cgroup_freeze_task(task, test_bit(CGRP_FREEZE, &dst->flags));
-}
+	cgroup_मुक्तze_task(task, test_bit(CGRP_FREEZE, &dst->flags));
+पूर्ण
 
-void cgroup_freeze(struct cgroup *cgrp, bool freeze)
-{
-	struct cgroup_subsys_state *css;
-	struct cgroup *dsct;
+व्योम cgroup_मुक्तze(काष्ठा cgroup *cgrp, bool मुक्तze)
+अणु
+	काष्ठा cgroup_subsys_state *css;
+	काष्ठा cgroup *dsct;
 	bool applied = false;
 
-	lockdep_assert_held(&cgroup_mutex);
+	lockdep_निश्चित_held(&cgroup_mutex);
 
 	/*
-	 * Nothing changed? Just exit.
+	 * Nothing changed? Just निकास.
 	 */
-	if (cgrp->freezer.freeze == freeze)
-		return;
+	अगर (cgrp->मुक्तzer.मुक्तze == मुक्तze)
+		वापस;
 
-	cgrp->freezer.freeze = freeze;
+	cgrp->मुक्तzer.मुक्तze = मुक्तze;
 
 	/*
-	 * Propagate changes downwards the cgroup tree.
+	 * Propagate changes करोwnwards the cgroup tree.
 	 */
-	css_for_each_descendant_pre(css, &cgrp->self) {
+	css_क्रम_each_descendant_pre(css, &cgrp->self) अणु
 		dsct = css->cgroup;
 
-		if (cgroup_is_dead(dsct))
-			continue;
+		अगर (cgroup_is_dead(dsct))
+			जारी;
 
-		if (freeze) {
-			dsct->freezer.e_freeze++;
+		अगर (मुक्तze) अणु
+			dsct->मुक्तzer.e_मुक्तze++;
 			/*
-			 * Already frozen because of ancestor's settings?
+			 * Alपढ़ोy frozen because of ancestor's settings?
 			 */
-			if (dsct->freezer.e_freeze > 1)
-				continue;
-		} else {
-			dsct->freezer.e_freeze--;
+			अगर (dsct->मुक्तzer.e_मुक्तze > 1)
+				जारी;
+		पूर्ण अन्यथा अणु
+			dsct->मुक्तzer.e_मुक्तze--;
 			/*
 			 * Still frozen because of ancestor's settings?
 			 */
-			if (dsct->freezer.e_freeze > 0)
-				continue;
+			अगर (dsct->मुक्तzer.e_मुक्तze > 0)
+				जारी;
 
-			WARN_ON_ONCE(dsct->freezer.e_freeze < 0);
-		}
+			WARN_ON_ONCE(dsct->मुक्तzer.e_मुक्तze < 0);
+		पूर्ण
 
 		/*
-		 * Do change actual state: freeze or unfreeze.
+		 * Do change actual state: मुक्तze or unमुक्तze.
 		 */
-		cgroup_do_freeze(dsct, freeze);
+		cgroup_करो_मुक्तze(dsct, मुक्तze);
 		applied = true;
-	}
+	पूर्ण
 
 	/*
-	 * Even if the actual state hasn't changed, let's notify a user.
-	 * The state can be enforced by an ancestor cgroup: the cgroup
-	 * can already be in the desired state or it can be locked in the
+	 * Even अगर the actual state hasn't changed, let's notअगरy a user.
+	 * The state can be enक्रमced by an ancestor cgroup: the cgroup
+	 * can alपढ़ोy be in the desired state or it can be locked in the
 	 * opposite state, so that the transition will never happen.
-	 * In both cases it's better to notify a user, that there is
-	 * nothing to wait for.
+	 * In both हालs it's better to notअगरy a user, that there is
+	 * nothing to रुको क्रम.
 	 */
-	if (!applied) {
-		TRACE_CGROUP_PATH(notify_frozen, cgrp,
+	अगर (!applied) अणु
+		TRACE_CGROUP_PATH(notअगरy_frozen, cgrp,
 				  test_bit(CGRP_FROZEN, &cgrp->flags));
-		cgroup_file_notify(&cgrp->events_file);
-	}
-}
+		cgroup_file_notअगरy(&cgrp->events_file);
+	पूर्ण
+पूर्ण

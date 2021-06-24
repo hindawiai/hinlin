@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* ASN.1 BER/DER/CER parsing state machine internal definitions
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* ASN.1 BER/DER/CER parsing state machine पूर्णांकernal definitions
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#ifndef _LINUX_ASN1_BER_BYTECODE_H
-#define _LINUX_ASN1_BER_BYTECODE_H
+#अगर_अघोषित _LINUX_ASN1_BER_BYTECODE_H
+#घोषणा _LINUX_ASN1_BER_BYTECODE_H
 
-#ifdef __KERNEL__
-#include <linux/types.h>
-#endif
-#include <linux/asn1.h>
+#अगर_घोषित __KERNEL__
+#समावेश <linux/types.h>
+#पूर्ण_अगर
+#समावेश <linux/asn1.h>
 
-typedef int (*asn1_action_t)(void *context,
-			     size_t hdrlen, /* In case of ANY type */
-			     unsigned char tag, /* In case of ANY type */
-			     const void *value, size_t vlen);
+प्रकार पूर्णांक (*asn1_action_t)(व्योम *context,
+			     माप_प्रकार hdrlen, /* In हाल of ANY type */
+			     अचिन्हित अक्षर tag, /* In हाल of ANY type */
+			     स्थिर व्योम *value, माप_प्रकार vlen);
 
-struct asn1_decoder {
-	const unsigned char *machine;
-	size_t machlen;
-	const asn1_action_t *actions;
-};
+काष्ठा asn1_decoder अणु
+	स्थिर अचिन्हित अक्षर *machine;
+	माप_प्रकार machlen;
+	स्थिर asn1_action_t *actions;
+पूर्ण;
 
-enum asn1_opcode {
+क्रमागत asn1_opcode अणु
 	/* The tag-matching ops come first and the odd-numbered slots
-	 * are for OR_SKIP ops.
+	 * are क्रम OR_SKIP ops.
 	 */
-#define ASN1_OP_MATCH__SKIP		  0x01
-#define ASN1_OP_MATCH__ACT		  0x02
-#define ASN1_OP_MATCH__JUMP		  0x04
-#define ASN1_OP_MATCH__ANY		  0x08
-#define ASN1_OP_MATCH__COND		  0x10
+#घोषणा ASN1_OP_MATCH__SKIP		  0x01
+#घोषणा ASN1_OP_MATCH__ACT		  0x02
+#घोषणा ASN1_OP_MATCH__JUMP		  0x04
+#घोषणा ASN1_OP_MATCH__ANY		  0x08
+#घोषणा ASN1_OP_MATCH__COND		  0x10
 
 	ASN1_OP_MATCH			= 0x00,
 	ASN1_OP_MATCH_OR_SKIP		= 0x01,
@@ -44,7 +45,7 @@ enum asn1_opcode {
 	ASN1_OP_MATCH_ANY_OR_SKIP	= 0x09,
 	ASN1_OP_MATCH_ANY_ACT		= 0x0a,
 	ASN1_OP_MATCH_ANY_ACT_OR_SKIP	= 0x0b,
-	/* Everything before here matches unconditionally */
+	/* Everything beक्रमe here matches unconditionally */
 
 	ASN1_OP_COND_MATCH_OR_SKIP	= 0x11,
 	ASN1_OP_COND_MATCH_ACT_OR_SKIP	= 0x13,
@@ -54,8 +55,8 @@ enum asn1_opcode {
 	ASN1_OP_COND_MATCH_ANY_ACT	= 0x1a,
 	ASN1_OP_COND_MATCH_ANY_ACT_OR_SKIP = 0x1b,
 
-	/* Everything before here will want a tag from the data */
-#define ASN1_OP__MATCHES_TAG ASN1_OP_COND_MATCH_ANY_ACT_OR_SKIP
+	/* Everything beक्रमe here will want a tag from the data */
+#घोषणा ASN1_OP__MATCHES_TAG ASN1_OP_COND_MATCH_ANY_ACT_OR_SKIP
 
 	/* These are here to help fill up space */
 	ASN1_OP_COND_FAIL		= 0x1c,
@@ -72,18 +73,18 @@ enum asn1_opcode {
 	ASN1_OP_END_SET_ACT		= 0x25,
 	ASN1_OP_END_SEQ_OF_ACT		= 0x26,
 	ASN1_OP_END_SET_OF_ACT		= 0x27,
-#define ASN1_OP_END__SET		  0x01
-#define ASN1_OP_END__OF			  0x02
-#define ASN1_OP_END__ACT		  0x04
+#घोषणा ASN1_OP_END__SET		  0x01
+#घोषणा ASN1_OP_END__OF			  0x02
+#घोषणा ASN1_OP_END__ACT		  0x04
 
 	ASN1_OP_RETURN			= 0x28,
 
 	ASN1_OP__NR
-};
+पूर्ण;
 
-#define _tag(CLASS, CP, TAG) ((ASN1_##CLASS << 6) | (ASN1_##CP << 5) | ASN1_##TAG)
-#define _tagn(CLASS, CP, TAG) ((ASN1_##CLASS << 6) | (ASN1_##CP << 5) | TAG)
-#define _jump_target(N) (N)
-#define _action(N) (N)
+#घोषणा _tag(CLASS, CP, TAG) ((ASN1_##CLASS << 6) | (ASN1_##CP << 5) | ASN1_##TAG)
+#घोषणा _tagn(CLASS, CP, TAG) ((ASN1_##CLASS << 6) | (ASN1_##CP << 5) | TAG)
+#घोषणा _jump_target(N) (N)
+#घोषणा _action(N) (N)
 
-#endif /* _LINUX_ASN1_BER_BYTECODE_H */
+#पूर्ण_अगर /* _LINUX_ASN1_BER_BYTECODE_H */

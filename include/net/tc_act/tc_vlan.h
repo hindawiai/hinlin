@@ -1,80 +1,81 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2014 Jiri Pirko <jiri@resnulli.us>
  */
 
-#ifndef __NET_TC_VLAN_H
-#define __NET_TC_VLAN_H
+#अगर_अघोषित __NET_TC_VLAN_H
+#घोषणा __NET_TC_VLAN_H
 
-#include <net/act_api.h>
-#include <linux/tc_act/tc_vlan.h>
+#समावेश <net/act_api.h>
+#समावेश <linux/tc_act/tc_vlan.h>
 
-struct tcf_vlan_params {
-	int               tcfv_action;
-	unsigned char     tcfv_push_dst[ETH_ALEN];
-	unsigned char     tcfv_push_src[ETH_ALEN];
+काष्ठा tcf_vlan_params अणु
+	पूर्णांक               tcfv_action;
+	अचिन्हित अक्षर     tcfv_push_dst[ETH_ALEN];
+	अचिन्हित अक्षर     tcfv_push_src[ETH_ALEN];
 	u16               tcfv_push_vid;
 	__be16            tcfv_push_proto;
 	u8                tcfv_push_prio;
-	struct rcu_head   rcu;
-};
+	काष्ठा rcu_head   rcu;
+पूर्ण;
 
-struct tcf_vlan {
-	struct tc_action	common;
-	struct tcf_vlan_params __rcu *vlan_p;
-};
-#define to_vlan(a) ((struct tcf_vlan *)a)
+काष्ठा tcf_vlan अणु
+	काष्ठा tc_action	common;
+	काष्ठा tcf_vlan_params __rcu *vlan_p;
+पूर्ण;
+#घोषणा to_vlan(a) ((काष्ठा tcf_vlan *)a)
 
-static inline bool is_tcf_vlan(const struct tc_action *a)
-{
-#ifdef CONFIG_NET_CLS_ACT
-	if (a->ops && a->ops->id == TCA_ID_VLAN)
-		return true;
-#endif
-	return false;
-}
+अटल अंतरभूत bool is_tcf_vlan(स्थिर काष्ठा tc_action *a)
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	अगर (a->ops && a->ops->id == TCA_ID_VLAN)
+		वापस true;
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
-static inline u32 tcf_vlan_action(const struct tc_action *a)
-{
+अटल अंतरभूत u32 tcf_vlan_action(स्थिर काष्ठा tc_action *a)
+अणु
 	u32 tcfv_action;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfv_action = rcu_dereference(to_vlan(a)->vlan_p)->tcfv_action;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfv_action;
-}
+	वापस tcfv_action;
+पूर्ण
 
-static inline u16 tcf_vlan_push_vid(const struct tc_action *a)
-{
+अटल अंतरभूत u16 tcf_vlan_push_vid(स्थिर काष्ठा tc_action *a)
+अणु
 	u16 tcfv_push_vid;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfv_push_vid = rcu_dereference(to_vlan(a)->vlan_p)->tcfv_push_vid;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfv_push_vid;
-}
+	वापस tcfv_push_vid;
+पूर्ण
 
-static inline __be16 tcf_vlan_push_proto(const struct tc_action *a)
-{
+अटल अंतरभूत __be16 tcf_vlan_push_proto(स्थिर काष्ठा tc_action *a)
+अणु
 	__be16 tcfv_push_proto;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfv_push_proto = rcu_dereference(to_vlan(a)->vlan_p)->tcfv_push_proto;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfv_push_proto;
-}
+	वापस tcfv_push_proto;
+पूर्ण
 
-static inline u8 tcf_vlan_push_prio(const struct tc_action *a)
-{
+अटल अंतरभूत u8 tcf_vlan_push_prio(स्थिर काष्ठा tc_action *a)
+अणु
 	u8 tcfv_push_prio;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	tcfv_push_prio = rcu_dereference(to_vlan(a)->vlan_p)->tcfv_push_prio;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return tcfv_push_prio;
-}
-#endif /* __NET_TC_VLAN_H */
+	वापस tcfv_push_prio;
+पूर्ण
+#पूर्ण_अगर /* __NET_TC_VLAN_H */

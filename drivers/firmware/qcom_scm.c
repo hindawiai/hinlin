@@ -1,125 +1,126 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2010,2015,2019 The Linux Foundation. All rights reserved.
  * Copyright (C) 2015 Linaro Ltd.
  */
-#include <linux/platform_device.h>
-#include <linux/init.h>
-#include <linux/cpumask.h>
-#include <linux/export.h>
-#include <linux/dma-mapping.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/qcom_scm.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/clk.h>
-#include <linux/reset-controller.h>
-#include <linux/arm-smccc.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/export.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/qcom_scm.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/reset-controller.h>
+#समावेश <linux/arm-smccc.h>
 
-#include "qcom_scm.h"
+#समावेश "qcom_scm.h"
 
-static bool download_mode = IS_ENABLED(CONFIG_QCOM_SCM_DOWNLOAD_MODE_DEFAULT);
-module_param(download_mode, bool, 0);
+अटल bool करोwnload_mode = IS_ENABLED(CONFIG_QCOM_SCM_DOWNLOAD_MODE_DEFAULT);
+module_param(करोwnload_mode, bool, 0);
 
-#define SCM_HAS_CORE_CLK	BIT(0)
-#define SCM_HAS_IFACE_CLK	BIT(1)
-#define SCM_HAS_BUS_CLK		BIT(2)
+#घोषणा SCM_HAS_CORE_CLK	BIT(0)
+#घोषणा SCM_HAS_IFACE_CLK	BIT(1)
+#घोषणा SCM_HAS_BUS_CLK		BIT(2)
 
-struct qcom_scm {
-	struct device *dev;
-	struct clk *core_clk;
-	struct clk *iface_clk;
-	struct clk *bus_clk;
-	struct reset_controller_dev reset;
+काष्ठा qcom_scm अणु
+	काष्ठा device *dev;
+	काष्ठा clk *core_clk;
+	काष्ठा clk *अगरace_clk;
+	काष्ठा clk *bus_clk;
+	काष्ठा reset_controller_dev reset;
 
 	u64 dload_mode_addr;
-};
+पूर्ण;
 
-struct qcom_scm_current_perm_info {
+काष्ठा qcom_scm_current_perm_info अणु
 	__le32 vmid;
 	__le32 perm;
 	__le64 ctx;
 	__le32 ctx_size;
 	__le32 unused;
-};
+पूर्ण;
 
-struct qcom_scm_mem_map_info {
+काष्ठा qcom_scm_mem_map_info अणु
 	__le64 mem_addr;
 	__le64 mem_size;
-};
+पूर्ण;
 
-#define QCOM_SCM_FLAG_COLDBOOT_CPU0	0x00
-#define QCOM_SCM_FLAG_COLDBOOT_CPU1	0x01
-#define QCOM_SCM_FLAG_COLDBOOT_CPU2	0x08
-#define QCOM_SCM_FLAG_COLDBOOT_CPU3	0x20
+#घोषणा QCOM_SCM_FLAG_COLDBOOT_CPU0	0x00
+#घोषणा QCOM_SCM_FLAG_COLDBOOT_CPU1	0x01
+#घोषणा QCOM_SCM_FLAG_COLDBOOT_CPU2	0x08
+#घोषणा QCOM_SCM_FLAG_COLDBOOT_CPU3	0x20
 
-#define QCOM_SCM_FLAG_WARMBOOT_CPU0	0x04
-#define QCOM_SCM_FLAG_WARMBOOT_CPU1	0x02
-#define QCOM_SCM_FLAG_WARMBOOT_CPU2	0x10
-#define QCOM_SCM_FLAG_WARMBOOT_CPU3	0x40
+#घोषणा QCOM_SCM_FLAG_WARMBOOT_CPU0	0x04
+#घोषणा QCOM_SCM_FLAG_WARMBOOT_CPU1	0x02
+#घोषणा QCOM_SCM_FLAG_WARMBOOT_CPU2	0x10
+#घोषणा QCOM_SCM_FLAG_WARMBOOT_CPU3	0x40
 
-struct qcom_scm_wb_entry {
-	int flag;
-	void *entry;
-};
+काष्ठा qcom_scm_wb_entry अणु
+	पूर्णांक flag;
+	व्योम *entry;
+पूर्ण;
 
-static struct qcom_scm_wb_entry qcom_scm_wb[] = {
-	{ .flag = QCOM_SCM_FLAG_WARMBOOT_CPU0 },
-	{ .flag = QCOM_SCM_FLAG_WARMBOOT_CPU1 },
-	{ .flag = QCOM_SCM_FLAG_WARMBOOT_CPU2 },
-	{ .flag = QCOM_SCM_FLAG_WARMBOOT_CPU3 },
-};
+अटल काष्ठा qcom_scm_wb_entry qcom_scm_wb[] = अणु
+	अणु .flag = QCOM_SCM_FLAG_WARMBOOT_CPU0 पूर्ण,
+	अणु .flag = QCOM_SCM_FLAG_WARMBOOT_CPU1 पूर्ण,
+	अणु .flag = QCOM_SCM_FLAG_WARMBOOT_CPU2 पूर्ण,
+	अणु .flag = QCOM_SCM_FLAG_WARMBOOT_CPU3 पूर्ण,
+पूर्ण;
 
-static const char *qcom_scm_convention_names[] = {
+अटल स्थिर अक्षर *qcom_scm_convention_names[] = अणु
 	[SMC_CONVENTION_UNKNOWN] = "unknown",
 	[SMC_CONVENTION_ARM_32] = "smc arm 32",
 	[SMC_CONVENTION_ARM_64] = "smc arm 64",
 	[SMC_CONVENTION_LEGACY] = "smc legacy",
-};
+पूर्ण;
 
-static struct qcom_scm *__scm;
+अटल काष्ठा qcom_scm *__scm;
 
-static int qcom_scm_clk_enable(void)
-{
-	int ret;
+अटल पूर्णांक qcom_scm_clk_enable(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(__scm->core_clk);
-	if (ret)
-		goto bail;
+	अगर (ret)
+		जाओ bail;
 
-	ret = clk_prepare_enable(__scm->iface_clk);
-	if (ret)
-		goto disable_core;
+	ret = clk_prepare_enable(__scm->अगरace_clk);
+	अगर (ret)
+		जाओ disable_core;
 
 	ret = clk_prepare_enable(__scm->bus_clk);
-	if (ret)
-		goto disable_iface;
+	अगर (ret)
+		जाओ disable_अगरace;
 
-	return 0;
+	वापस 0;
 
-disable_iface:
-	clk_disable_unprepare(__scm->iface_clk);
+disable_अगरace:
+	clk_disable_unprepare(__scm->अगरace_clk);
 disable_core:
 	clk_disable_unprepare(__scm->core_clk);
 bail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void qcom_scm_clk_disable(void)
-{
+अटल व्योम qcom_scm_clk_disable(व्योम)
+अणु
 	clk_disable_unprepare(__scm->core_clk);
-	clk_disable_unprepare(__scm->iface_clk);
+	clk_disable_unprepare(__scm->अगरace_clk);
 	clk_disable_unprepare(__scm->bus_clk);
-}
+पूर्ण
 
-enum qcom_scm_convention qcom_scm_convention = SMC_CONVENTION_UNKNOWN;
-static DEFINE_SPINLOCK(scm_query_lock);
+क्रमागत qcom_scm_convention qcom_scm_convention = SMC_CONVENTION_UNKNOWN;
+अटल DEFINE_SPINLOCK(scm_query_lock);
 
-static enum qcom_scm_convention __get_convention(void)
-{
-	unsigned long flags;
-	struct qcom_scm_desc desc = {
+अटल क्रमागत qcom_scm_convention __get_convention(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_INFO,
 		.cmd = QCOM_SCM_INFO_IS_CALL_AVAIL,
 		.args[0] = SCM_SMC_FNID(QCOM_SCM_SVC_INFO,
@@ -127,347 +128,347 @@ static enum qcom_scm_convention __get_convention(void)
 			   (ARM_SMCCC_OWNER_SIP << ARM_SMCCC_OWNER_SHIFT),
 		.arginfo = QCOM_SCM_ARGS(1),
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
-	enum qcom_scm_convention probed_convention;
-	int ret;
-	bool forced = false;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
+	क्रमागत qcom_scm_convention probed_convention;
+	पूर्णांक ret;
+	bool क्रमced = false;
 
-	if (likely(qcom_scm_convention != SMC_CONVENTION_UNKNOWN))
-		return qcom_scm_convention;
+	अगर (likely(qcom_scm_convention != SMC_CONVENTION_UNKNOWN))
+		वापस qcom_scm_convention;
 
 	/*
 	 * Device isn't required as there is only one argument - no device
 	 * needed to dma_map_single to secure world
 	 */
 	probed_convention = SMC_CONVENTION_ARM_64;
-	ret = __scm_smc_call(NULL, &desc, probed_convention, &res, true);
-	if (!ret && res.result[0] == 1)
-		goto found;
+	ret = __scm_smc_call(शून्य, &desc, probed_convention, &res, true);
+	अगर (!ret && res.result[0] == 1)
+		जाओ found;
 
 	/*
 	 * Some SC7180 firmwares didn't implement the
-	 * QCOM_SCM_INFO_IS_CALL_AVAIL call, so we fallback to forcing ARM_64
-	 * calling conventions on these firmwares. Luckily we don't make any
-	 * early calls into the firmware on these SoCs so the device pointer
-	 * will be valid here to check if the compatible matches.
+	 * QCOM_SCM_INFO_IS_CALL_AVAIL call, so we fallback to क्रमcing ARM_64
+	 * calling conventions on these firmwares. Luckily we करोn't make any
+	 * early calls पूर्णांकo the firmware on these SoCs so the device poपूर्णांकer
+	 * will be valid here to check अगर the compatible matches.
 	 */
-	if (of_device_is_compatible(__scm ? __scm->dev->of_node : NULL, "qcom,scm-sc7180")) {
-		forced = true;
-		goto found;
-	}
+	अगर (of_device_is_compatible(__scm ? __scm->dev->of_node : शून्य, "qcom,scm-sc7180")) अणु
+		क्रमced = true;
+		जाओ found;
+	पूर्ण
 
 	probed_convention = SMC_CONVENTION_ARM_32;
-	ret = __scm_smc_call(NULL, &desc, probed_convention, &res, true);
-	if (!ret && res.result[0] == 1)
-		goto found;
+	ret = __scm_smc_call(शून्य, &desc, probed_convention, &res, true);
+	अगर (!ret && res.result[0] == 1)
+		जाओ found;
 
 	probed_convention = SMC_CONVENTION_LEGACY;
 found:
 	spin_lock_irqsave(&scm_query_lock, flags);
-	if (probed_convention != qcom_scm_convention) {
+	अगर (probed_convention != qcom_scm_convention) अणु
 		qcom_scm_convention = probed_convention;
 		pr_info("qcom_scm: convention: %s%s\n",
 			qcom_scm_convention_names[qcom_scm_convention],
-			forced ? " (forced)" : "");
-	}
+			क्रमced ? " (forced)" : "");
+	पूर्ण
 	spin_unlock_irqrestore(&scm_query_lock, flags);
 
-	return qcom_scm_convention;
-}
+	वापस qcom_scm_convention;
+पूर्ण
 
 /**
  * qcom_scm_call() - Invoke a syscall in the secure world
  * @dev:	device
- * @svc_id:	service identifier
- * @cmd_id:	command identifier
- * @desc:	Descriptor structure containing arguments and return values
+ * @svc_id:	service identअगरier
+ * @cmd_id:	command identअगरier
+ * @desc:	Descriptor काष्ठाure containing arguments and वापस values
  *
- * Sends a command to the SCM and waits for the command to finish processing.
+ * Sends a command to the SCM and रुकोs क्रम the command to finish processing.
  * This should *only* be called in pre-emptible context.
  */
-static int qcom_scm_call(struct device *dev, const struct qcom_scm_desc *desc,
-			 struct qcom_scm_res *res)
-{
+अटल पूर्णांक qcom_scm_call(काष्ठा device *dev, स्थिर काष्ठा qcom_scm_desc *desc,
+			 काष्ठा qcom_scm_res *res)
+अणु
 	might_sleep();
-	switch (__get_convention()) {
-	case SMC_CONVENTION_ARM_32:
-	case SMC_CONVENTION_ARM_64:
-		return scm_smc_call(dev, desc, res, false);
-	case SMC_CONVENTION_LEGACY:
-		return scm_legacy_call(dev, desc, res);
-	default:
+	चयन (__get_convention()) अणु
+	हाल SMC_CONVENTION_ARM_32:
+	हाल SMC_CONVENTION_ARM_64:
+		वापस scm_smc_call(dev, desc, res, false);
+	हाल SMC_CONVENTION_LEGACY:
+		वापस scm_legacy_call(dev, desc, res);
+	शेष:
 		pr_err("Unknown current SCM calling convention.\n");
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
 /**
  * qcom_scm_call_atomic() - atomic variation of qcom_scm_call()
  * @dev:	device
- * @svc_id:	service identifier
- * @cmd_id:	command identifier
- * @desc:	Descriptor structure containing arguments and return values
+ * @svc_id:	service identअगरier
+ * @cmd_id:	command identअगरier
+ * @desc:	Descriptor काष्ठाure containing arguments and वापस values
  * @res:	Structure containing results from SMC/HVC call
  *
- * Sends a command to the SCM and waits for the command to finish processing.
+ * Sends a command to the SCM and रुकोs क्रम the command to finish processing.
  * This can be called in atomic context.
  */
-static int qcom_scm_call_atomic(struct device *dev,
-				const struct qcom_scm_desc *desc,
-				struct qcom_scm_res *res)
-{
-	switch (__get_convention()) {
-	case SMC_CONVENTION_ARM_32:
-	case SMC_CONVENTION_ARM_64:
-		return scm_smc_call(dev, desc, res, true);
-	case SMC_CONVENTION_LEGACY:
-		return scm_legacy_call_atomic(dev, desc, res);
-	default:
+अटल पूर्णांक qcom_scm_call_atomic(काष्ठा device *dev,
+				स्थिर काष्ठा qcom_scm_desc *desc,
+				काष्ठा qcom_scm_res *res)
+अणु
+	चयन (__get_convention()) अणु
+	हाल SMC_CONVENTION_ARM_32:
+	हाल SMC_CONVENTION_ARM_64:
+		वापस scm_smc_call(dev, desc, res, true);
+	हाल SMC_CONVENTION_LEGACY:
+		वापस scm_legacy_call_atomic(dev, desc, res);
+	शेष:
 		pr_err("Unknown current SCM calling convention.\n");
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static bool __qcom_scm_is_call_available(struct device *dev, u32 svc_id,
+अटल bool __qcom_scm_is_call_available(काष्ठा device *dev, u32 svc_id,
 					 u32 cmd_id)
-{
-	int ret;
-	struct qcom_scm_desc desc = {
+अणु
+	पूर्णांक ret;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_INFO,
 		.cmd = QCOM_SCM_INFO_IS_CALL_AVAIL,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
 
 	desc.arginfo = QCOM_SCM_ARGS(1);
-	switch (__get_convention()) {
-	case SMC_CONVENTION_ARM_32:
-	case SMC_CONVENTION_ARM_64:
+	चयन (__get_convention()) अणु
+	हाल SMC_CONVENTION_ARM_32:
+	हाल SMC_CONVENTION_ARM_64:
 		desc.args[0] = SCM_SMC_FNID(svc_id, cmd_id) |
 				(ARM_SMCCC_OWNER_SIP << ARM_SMCCC_OWNER_SHIFT);
-		break;
-	case SMC_CONVENTION_LEGACY:
+		अवरोध;
+	हाल SMC_CONVENTION_LEGACY:
 		desc.args[0] = SCM_LEGACY_FNID(svc_id, cmd_id);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("Unknown SMC convention being used\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = qcom_scm_call(dev, &desc, &res);
 
-	return ret ? false : !!res.result[0];
-}
+	वापस ret ? false : !!res.result[0];
+पूर्ण
 
 /**
- * qcom_scm_set_warm_boot_addr() - Set the warm boot address for cpus
- * @entry: Entry point function for the cpus
- * @cpus: The cpumask of cpus that will use the entry point
+ * qcom_scm_set_warm_boot_addr() - Set the warm boot address क्रम cpus
+ * @entry: Entry poपूर्णांक function क्रम the cpus
+ * @cpus: The cpumask of cpus that will use the entry poपूर्णांक
  *
- * Set the Linux entry point for the SCM to transfer control to when coming
- * out of a power down. CPU power down may be executed on cpuidle or hotplug.
+ * Set the Linux entry poपूर्णांक क्रम the SCM to transfer control to when coming
+ * out of a घातer करोwn. CPU घातer करोwn may be executed on cpuidle or hotplug.
  */
-int qcom_scm_set_warm_boot_addr(void *entry, const cpumask_t *cpus)
-{
-	int ret;
-	int flags = 0;
-	int cpu;
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_set_warm_boot_addr(व्योम *entry, स्थिर cpumask_t *cpus)
+अणु
+	पूर्णांक ret;
+	पूर्णांक flags = 0;
+	पूर्णांक cpu;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_BOOT,
 		.cmd = QCOM_SCM_BOOT_SET_ADDR,
 		.arginfo = QCOM_SCM_ARGS(2),
-	};
+	पूर्ण;
 
 	/*
-	 * Reassign only if we are switching from hotplug entry point
-	 * to cpuidle entry point or vice versa.
+	 * Reassign only अगर we are चयनing from hotplug entry poपूर्णांक
+	 * to cpuidle entry poपूर्णांक or vice versa.
 	 */
-	for_each_cpu(cpu, cpus) {
-		if (entry == qcom_scm_wb[cpu].entry)
-			continue;
+	क्रम_each_cpu(cpu, cpus) अणु
+		अगर (entry == qcom_scm_wb[cpu].entry)
+			जारी;
 		flags |= qcom_scm_wb[cpu].flag;
-	}
+	पूर्ण
 
 	/* No change in entry function */
-	if (!flags)
-		return 0;
+	अगर (!flags)
+		वापस 0;
 
 	desc.args[0] = flags;
 	desc.args[1] = virt_to_phys(entry);
 
-	ret = qcom_scm_call(__scm->dev, &desc, NULL);
-	if (!ret) {
-		for_each_cpu(cpu, cpus)
+	ret = qcom_scm_call(__scm->dev, &desc, शून्य);
+	अगर (!ret) अणु
+		क्रम_each_cpu(cpu, cpus)
 			qcom_scm_wb[cpu].entry = entry;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_set_warm_boot_addr);
 
 /**
- * qcom_scm_set_cold_boot_addr() - Set the cold boot address for cpus
- * @entry: Entry point function for the cpus
- * @cpus: The cpumask of cpus that will use the entry point
+ * qcom_scm_set_cold_boot_addr() - Set the cold boot address क्रम cpus
+ * @entry: Entry poपूर्णांक function क्रम the cpus
+ * @cpus: The cpumask of cpus that will use the entry poपूर्णांक
  *
  * Set the cold boot address of the cpus. Any cpu outside the supported
- * range would be removed from the cpu present mask.
+ * range would be हटाओd from the cpu present mask.
  */
-int qcom_scm_set_cold_boot_addr(void *entry, const cpumask_t *cpus)
-{
-	int flags = 0;
-	int cpu;
-	int scm_cb_flags[] = {
+पूर्णांक qcom_scm_set_cold_boot_addr(व्योम *entry, स्थिर cpumask_t *cpus)
+अणु
+	पूर्णांक flags = 0;
+	पूर्णांक cpu;
+	पूर्णांक scm_cb_flags[] = अणु
 		QCOM_SCM_FLAG_COLDBOOT_CPU0,
 		QCOM_SCM_FLAG_COLDBOOT_CPU1,
 		QCOM_SCM_FLAG_COLDBOOT_CPU2,
 		QCOM_SCM_FLAG_COLDBOOT_CPU3,
-	};
-	struct qcom_scm_desc desc = {
+	पूर्ण;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_BOOT,
 		.cmd = QCOM_SCM_BOOT_SET_ADDR,
 		.arginfo = QCOM_SCM_ARGS(2),
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
+	पूर्ण;
 
-	if (!cpus || (cpus && cpumask_empty(cpus)))
-		return -EINVAL;
+	अगर (!cpus || (cpus && cpumask_empty(cpus)))
+		वापस -EINVAL;
 
-	for_each_cpu(cpu, cpus) {
-		if (cpu < ARRAY_SIZE(scm_cb_flags))
+	क्रम_each_cpu(cpu, cpus) अणु
+		अगर (cpu < ARRAY_SIZE(scm_cb_flags))
 			flags |= scm_cb_flags[cpu];
-		else
+		अन्यथा
 			set_cpu_present(cpu, false);
-	}
+	पूर्ण
 
 	desc.args[0] = flags;
 	desc.args[1] = virt_to_phys(entry);
 
-	return qcom_scm_call_atomic(__scm ? __scm->dev : NULL, &desc, NULL);
-}
+	वापस qcom_scm_call_atomic(__scm ? __scm->dev : शून्य, &desc, शून्य);
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_set_cold_boot_addr);
 
 /**
- * qcom_scm_cpu_power_down() - Power down the cpu
+ * qcom_scm_cpu_घातer_करोwn() - Power करोwn the cpu
  * @flags - Flags to flush cache
  *
- * This is an end point to power down cpu. If there was a pending interrupt,
- * the control would return from this function, otherwise, the cpu jumps to the
- * warm boot entry point set for this cpu upon reset.
+ * This is an end poपूर्णांक to घातer करोwn cpu. If there was a pending पूर्णांकerrupt,
+ * the control would वापस from this function, otherwise, the cpu jumps to the
+ * warm boot entry poपूर्णांक set क्रम this cpu upon reset.
  */
-void qcom_scm_cpu_power_down(u32 flags)
-{
-	struct qcom_scm_desc desc = {
+व्योम qcom_scm_cpu_घातer_करोwn(u32 flags)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_BOOT,
 		.cmd = QCOM_SCM_BOOT_TERMINATE_PC,
 		.args[0] = flags & QCOM_SCM_FLUSH_FLAG_MASK,
 		.arginfo = QCOM_SCM_ARGS(1),
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
+	पूर्ण;
 
-	qcom_scm_call_atomic(__scm ? __scm->dev : NULL, &desc, NULL);
-}
-EXPORT_SYMBOL(qcom_scm_cpu_power_down);
+	qcom_scm_call_atomic(__scm ? __scm->dev : शून्य, &desc, शून्य);
+पूर्ण
+EXPORT_SYMBOL(qcom_scm_cpu_घातer_करोwn);
 
-int qcom_scm_set_remote_state(u32 state, u32 id)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_set_remote_state(u32 state, u32 id)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_BOOT,
 		.cmd = QCOM_SCM_BOOT_SET_REMOTE_STATE,
 		.arginfo = QCOM_SCM_ARGS(2),
 		.args[0] = state,
 		.args[1] = id,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
-	int ret;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
+	पूर्णांक ret;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 
-	return ret ? : res.result[0];
-}
+	वापस ret ? : res.result[0];
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_set_remote_state);
 
-static int __qcom_scm_set_dload_mode(struct device *dev, bool enable)
-{
-	struct qcom_scm_desc desc = {
+अटल पूर्णांक __qcom_scm_set_dload_mode(काष्ठा device *dev, bool enable)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_BOOT,
 		.cmd = QCOM_SCM_BOOT_SET_DLOAD_MODE,
 		.arginfo = QCOM_SCM_ARGS(2),
 		.args[0] = QCOM_SCM_BOOT_SET_DLOAD_MODE,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
+	पूर्ण;
 
 	desc.args[1] = enable ? QCOM_SCM_BOOT_SET_DLOAD_MODE : 0;
 
-	return qcom_scm_call_atomic(__scm->dev, &desc, NULL);
-}
+	वापस qcom_scm_call_atomic(__scm->dev, &desc, शून्य);
+पूर्ण
 
-static void qcom_scm_set_download_mode(bool enable)
-{
+अटल व्योम qcom_scm_set_करोwnload_mode(bool enable)
+अणु
 	bool avail;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	avail = __qcom_scm_is_call_available(__scm->dev,
 					     QCOM_SCM_SVC_BOOT,
 					     QCOM_SCM_BOOT_SET_DLOAD_MODE);
-	if (avail) {
+	अगर (avail) अणु
 		ret = __qcom_scm_set_dload_mode(__scm->dev, enable);
-	} else if (__scm->dload_mode_addr) {
-		ret = qcom_scm_io_writel(__scm->dload_mode_addr,
+	पूर्ण अन्यथा अगर (__scm->dload_mode_addr) अणु
+		ret = qcom_scm_io_ग_लिखोl(__scm->dload_mode_addr,
 				enable ? QCOM_SCM_BOOT_SET_DLOAD_MODE : 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(__scm->dev,
 			"No available mechanism for setting download mode\n");
-	}
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		dev_err(__scm->dev, "failed to set download mode: %d\n", ret);
-}
+पूर्ण
 
 /**
  * qcom_scm_pas_init_image() - Initialize peripheral authentication service
- *			       state machine for a given peripheral, using the
+ *			       state machine क्रम a given peripheral, using the
  *			       metadata
  * @peripheral: peripheral id
- * @metadata:	pointer to memory containing ELF header, program header table
- *		and optional blob of data used for authenticating the metadata
+ * @metadata:	poपूर्णांकer to memory containing ELF header, program header table
+ *		and optional blob of data used क्रम authenticating the metadata
  *		and the rest of the firmware
  * @size:	size of the metadata
  *
  * Returns 0 on success.
  */
-int qcom_scm_pas_init_image(u32 peripheral, const void *metadata, size_t size)
-{
+पूर्णांक qcom_scm_pas_init_image(u32 peripheral, स्थिर व्योम *metadata, माप_प्रकार size)
+अणु
 	dma_addr_t mdata_phys;
-	void *mdata_buf;
-	int ret;
-	struct qcom_scm_desc desc = {
+	व्योम *mdata_buf;
+	पूर्णांक ret;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_PIL,
 		.cmd = QCOM_SCM_PIL_PAS_INIT_IMAGE,
 		.arginfo = QCOM_SCM_ARGS(2, QCOM_SCM_VAL, QCOM_SCM_RW),
 		.args[0] = peripheral,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
 
 	/*
-	 * During the scm call memory protection will be enabled for the meta
+	 * During the scm call memory protection will be enabled क्रम the meta
 	 * data blob, so make sure it's physically contiguous, 4K aligned and
-	 * non-cachable to avoid XPU violations.
+	 * non-cachable to aव्योम XPU violations.
 	 */
 	mdata_buf = dma_alloc_coherent(__scm->dev, size, &mdata_phys,
 				       GFP_KERNEL);
-	if (!mdata_buf) {
+	अगर (!mdata_buf) अणु
 		dev_err(__scm->dev, "Allocation of metadata buffer failed.\n");
-		return -ENOMEM;
-	}
-	memcpy(mdata_buf, metadata, size);
+		वापस -ENOMEM;
+	पूर्ण
+	स_नकल(mdata_buf, metadata, size);
 
 	ret = qcom_scm_clk_enable();
-	if (ret)
-		goto free_metadata;
+	अगर (ret)
+		जाओ मुक्त_metadata;
 
 	desc.args[1] = mdata_phys;
 
@@ -475,26 +476,26 @@ int qcom_scm_pas_init_image(u32 peripheral, const void *metadata, size_t size)
 
 	qcom_scm_clk_disable();
 
-free_metadata:
-	dma_free_coherent(__scm->dev, size, mdata_buf, mdata_phys);
+मुक्त_metadata:
+	dma_मुक्त_coherent(__scm->dev, size, mdata_buf, mdata_phys);
 
-	return ret ? : res.result[0];
-}
+	वापस ret ? : res.result[0];
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_pas_init_image);
 
 /**
  * qcom_scm_pas_mem_setup() - Prepare the memory related to a given peripheral
- *			      for firmware loading
+ *			      क्रम firmware loading
  * @peripheral:	peripheral id
  * @addr:	start address of memory area to prepare
  * @size:	size of the memory area to prepare
  *
  * Returns 0 on success.
  */
-int qcom_scm_pas_mem_setup(u32 peripheral, phys_addr_t addr, phys_addr_t size)
-{
-	int ret;
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_pas_mem_setup(u32 peripheral, phys_addr_t addr, phys_addr_t size)
+अणु
+	पूर्णांक ret;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_PIL,
 		.cmd = QCOM_SCM_PIL_PAS_MEM_SETUP,
 		.arginfo = QCOM_SCM_ARGS(3),
@@ -502,18 +503,18 @@ int qcom_scm_pas_mem_setup(u32 peripheral, phys_addr_t addr, phys_addr_t size)
 		.args[1] = addr,
 		.args[2] = size,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
 
 	ret = qcom_scm_clk_enable();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 	qcom_scm_clk_disable();
 
-	return ret ? : res.result[0];
-}
+	वापस ret ? : res.result[0];
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_pas_mem_setup);
 
 /**
@@ -523,221 +524,221 @@ EXPORT_SYMBOL(qcom_scm_pas_mem_setup);
  *
  * Return 0 on success.
  */
-int qcom_scm_pas_auth_and_reset(u32 peripheral)
-{
-	int ret;
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_pas_auth_and_reset(u32 peripheral)
+अणु
+	पूर्णांक ret;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_PIL,
 		.cmd = QCOM_SCM_PIL_PAS_AUTH_AND_RESET,
 		.arginfo = QCOM_SCM_ARGS(1),
 		.args[0] = peripheral,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
 
 	ret = qcom_scm_clk_enable();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 	qcom_scm_clk_disable();
 
-	return ret ? : res.result[0];
-}
+	वापस ret ? : res.result[0];
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_pas_auth_and_reset);
 
 /**
- * qcom_scm_pas_shutdown() - Shut down the remote processor
+ * qcom_scm_pas_shutकरोwn() - Shut करोwn the remote processor
  * @peripheral: peripheral id
  *
  * Returns 0 on success.
  */
-int qcom_scm_pas_shutdown(u32 peripheral)
-{
-	int ret;
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_pas_shutकरोwn(u32 peripheral)
+अणु
+	पूर्णांक ret;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_PIL,
 		.cmd = QCOM_SCM_PIL_PAS_SHUTDOWN,
 		.arginfo = QCOM_SCM_ARGS(1),
 		.args[0] = peripheral,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
 
 	ret = qcom_scm_clk_enable();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 
 	qcom_scm_clk_disable();
 
-	return ret ? : res.result[0];
-}
-EXPORT_SYMBOL(qcom_scm_pas_shutdown);
+	वापस ret ? : res.result[0];
+पूर्ण
+EXPORT_SYMBOL(qcom_scm_pas_shutकरोwn);
 
 /**
- * qcom_scm_pas_supported() - Check if the peripheral authentication service is
- *			      available for the given peripherial
+ * qcom_scm_pas_supported() - Check अगर the peripheral authentication service is
+ *			      available क्रम the given peripherial
  * @peripheral:	peripheral id
  *
- * Returns true if PAS is supported for this peripheral, otherwise false.
+ * Returns true अगर PAS is supported क्रम this peripheral, otherwise false.
  */
 bool qcom_scm_pas_supported(u32 peripheral)
-{
-	int ret;
-	struct qcom_scm_desc desc = {
+अणु
+	पूर्णांक ret;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_PIL,
 		.cmd = QCOM_SCM_PIL_PAS_IS_SUPPORTED,
 		.arginfo = QCOM_SCM_ARGS(1),
 		.args[0] = peripheral,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
 
-	if (!__qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_PIL,
+	अगर (!__qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_PIL,
 					  QCOM_SCM_PIL_PAS_IS_SUPPORTED))
-		return false;
+		वापस false;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 
-	return ret ? false : !!res.result[0];
-}
+	वापस ret ? false : !!res.result[0];
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_pas_supported);
 
-static int __qcom_scm_pas_mss_reset(struct device *dev, bool reset)
-{
-	struct qcom_scm_desc desc = {
+अटल पूर्णांक __qcom_scm_pas_mss_reset(काष्ठा device *dev, bool reset)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_PIL,
 		.cmd = QCOM_SCM_PIL_PAS_MSS_RESET,
 		.arginfo = QCOM_SCM_ARGS(2),
 		.args[0] = reset,
 		.args[1] = 0,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
-	int ret;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
+	पूर्णांक ret;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 
-	return ret ? : res.result[0];
-}
+	वापस ret ? : res.result[0];
+पूर्ण
 
-static int qcom_scm_pas_reset_assert(struct reset_controller_dev *rcdev,
-				     unsigned long idx)
-{
-	if (idx != 0)
-		return -EINVAL;
+अटल पूर्णांक qcom_scm_pas_reset_निश्चित(काष्ठा reset_controller_dev *rcdev,
+				     अचिन्हित दीर्घ idx)
+अणु
+	अगर (idx != 0)
+		वापस -EINVAL;
 
-	return __qcom_scm_pas_mss_reset(__scm->dev, 1);
-}
+	वापस __qcom_scm_pas_mss_reset(__scm->dev, 1);
+पूर्ण
 
-static int qcom_scm_pas_reset_deassert(struct reset_controller_dev *rcdev,
-				       unsigned long idx)
-{
-	if (idx != 0)
-		return -EINVAL;
+अटल पूर्णांक qcom_scm_pas_reset_deनिश्चित(काष्ठा reset_controller_dev *rcdev,
+				       अचिन्हित दीर्घ idx)
+अणु
+	अगर (idx != 0)
+		वापस -EINVAL;
 
-	return __qcom_scm_pas_mss_reset(__scm->dev, 0);
-}
+	वापस __qcom_scm_pas_mss_reset(__scm->dev, 0);
+पूर्ण
 
-static const struct reset_control_ops qcom_scm_pas_reset_ops = {
-	.assert = qcom_scm_pas_reset_assert,
-	.deassert = qcom_scm_pas_reset_deassert,
-};
+अटल स्थिर काष्ठा reset_control_ops qcom_scm_pas_reset_ops = अणु
+	.निश्चित = qcom_scm_pas_reset_निश्चित,
+	.deनिश्चित = qcom_scm_pas_reset_deनिश्चित,
+पूर्ण;
 
-int qcom_scm_io_readl(phys_addr_t addr, unsigned int *val)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_io_पढ़ोl(phys_addr_t addr, अचिन्हित पूर्णांक *val)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_IO,
 		.cmd = QCOM_SCM_IO_READ,
 		.arginfo = QCOM_SCM_ARGS(1),
 		.args[0] = addr,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
-	int ret;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
+	पूर्णांक ret;
 
 
 	ret = qcom_scm_call_atomic(__scm->dev, &desc, &res);
-	if (ret >= 0)
+	अगर (ret >= 0)
 		*val = res.result[0];
 
-	return ret < 0 ? ret : 0;
-}
-EXPORT_SYMBOL(qcom_scm_io_readl);
+	वापस ret < 0 ? ret : 0;
+पूर्ण
+EXPORT_SYMBOL(qcom_scm_io_पढ़ोl);
 
-int qcom_scm_io_writel(phys_addr_t addr, unsigned int val)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_io_ग_लिखोl(phys_addr_t addr, अचिन्हित पूर्णांक val)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_IO,
 		.cmd = QCOM_SCM_IO_WRITE,
 		.arginfo = QCOM_SCM_ARGS(2),
 		.args[0] = addr,
 		.args[1] = val,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
+	पूर्ण;
 
-	return qcom_scm_call_atomic(__scm->dev, &desc, NULL);
-}
-EXPORT_SYMBOL(qcom_scm_io_writel);
+	वापस qcom_scm_call_atomic(__scm->dev, &desc, शून्य);
+पूर्ण
+EXPORT_SYMBOL(qcom_scm_io_ग_लिखोl);
 
 /**
- * qcom_scm_restore_sec_cfg_available() - Check if secure environment
- * supports restore security config interface.
+ * qcom_scm_restore_sec_cfg_available() - Check अगर secure environment
+ * supports restore security config पूर्णांकerface.
  *
- * Return true if restore-cfg interface is supported, false if not.
+ * Return true अगर restore-cfg पूर्णांकerface is supported, false अगर not.
  */
-bool qcom_scm_restore_sec_cfg_available(void)
-{
-	return __qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_MP,
+bool qcom_scm_restore_sec_cfg_available(व्योम)
+अणु
+	वापस __qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_MP,
 					    QCOM_SCM_MP_RESTORE_SEC_CFG);
-}
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_restore_sec_cfg_available);
 
-int qcom_scm_restore_sec_cfg(u32 device_id, u32 spare)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_restore_sec_cfg(u32 device_id, u32 spare)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_MP,
 		.cmd = QCOM_SCM_MP_RESTORE_SEC_CFG,
 		.arginfo = QCOM_SCM_ARGS(2),
 		.args[0] = device_id,
 		.args[1] = spare,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
-	int ret;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
+	पूर्णांक ret;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 
-	return ret ? : res.result[0];
-}
+	वापस ret ? : res.result[0];
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_restore_sec_cfg);
 
-int qcom_scm_iommu_secure_ptbl_size(u32 spare, size_t *size)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_iommu_secure_ptbl_size(u32 spare, माप_प्रकार *size)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_MP,
 		.cmd = QCOM_SCM_MP_IOMMU_SECURE_PTBL_SIZE,
 		.arginfo = QCOM_SCM_ARGS(1),
 		.args[0] = spare,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
-	int ret;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
+	पूर्णांक ret;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 
-	if (size)
+	अगर (size)
 		*size = res.result[0];
 
-	return ret ? : res.result[1];
-}
+	वापस ret ? : res.result[1];
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_iommu_secure_ptbl_size);
 
-int qcom_scm_iommu_secure_ptbl_init(u64 addr, u32 size, u32 spare)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_iommu_secure_ptbl_init(u64 addr, u32 size, u32 spare)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_MP,
 		.cmd = QCOM_SCM_MP_IOMMU_SECURE_PTBL_INIT,
 		.arginfo = QCOM_SCM_ARGS(3, QCOM_SCM_RW, QCOM_SCM_VAL,
@@ -746,8 +747,8 @@ int qcom_scm_iommu_secure_ptbl_init(u64 addr, u32 size, u32 spare)
 		.args[1] = size,
 		.args[2] = spare,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
 	desc.args[0] = addr;
 	desc.args[1] = size;
@@ -755,22 +756,22 @@ int qcom_scm_iommu_secure_ptbl_init(u64 addr, u32 size, u32 spare)
 	desc.arginfo = QCOM_SCM_ARGS(3, QCOM_SCM_RW, QCOM_SCM_VAL,
 				     QCOM_SCM_VAL);
 
-	ret = qcom_scm_call(__scm->dev, &desc, NULL);
+	ret = qcom_scm_call(__scm->dev, &desc, शून्य);
 
-	/* the pg table has been initialized already, ignore the error */
-	if (ret == -EPERM)
+	/* the pg table has been initialized alपढ़ोy, ignore the error */
+	अगर (ret == -EPERM)
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_iommu_secure_ptbl_init);
 
-int qcom_scm_mem_protect_video_var(u32 cp_start, u32 cp_size,
+पूर्णांक qcom_scm_mem_protect_video_var(u32 cp_start, u32 cp_size,
 				   u32 cp_nonpixel_start,
 				   u32 cp_nonpixel_size)
-{
-	int ret;
-	struct qcom_scm_desc desc = {
+अणु
+	पूर्णांक ret;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_MP,
 		.cmd = QCOM_SCM_MP_VIDEO_VAR,
 		.arginfo = QCOM_SCM_ARGS(4, QCOM_SCM_VAL, QCOM_SCM_VAL,
@@ -780,21 +781,21 @@ int qcom_scm_mem_protect_video_var(u32 cp_start, u32 cp_size,
 		.args[2] = cp_nonpixel_start,
 		.args[3] = cp_nonpixel_size,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 
-	return ret ? : res.result[0];
-}
+	वापस ret ? : res.result[0];
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_mem_protect_video_var);
 
-static int __qcom_scm_assign_mem(struct device *dev, phys_addr_t mem_region,
-				 size_t mem_sz, phys_addr_t src, size_t src_sz,
-				 phys_addr_t dest, size_t dest_sz)
-{
-	int ret;
-	struct qcom_scm_desc desc = {
+अटल पूर्णांक __qcom_scm_assign_mem(काष्ठा device *dev, phys_addr_t mem_region,
+				 माप_प्रकार mem_sz, phys_addr_t src, माप_प्रकार src_sz,
+				 phys_addr_t dest, माप_प्रकार dest_sz)
+अणु
+	पूर्णांक ret;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_MP,
 		.cmd = QCOM_SCM_MP_ASSIGN,
 		.arginfo = QCOM_SCM_ARGS(7, QCOM_SCM_RO, QCOM_SCM_VAL,
@@ -808,60 +809,60 @@ static int __qcom_scm_assign_mem(struct device *dev, phys_addr_t mem_region,
 		.args[5] = dest_sz,
 		.args[6] = 0,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
 
 	ret = qcom_scm_call(dev, &desc, &res);
 
-	return ret ? : res.result[0];
-}
+	वापस ret ? : res.result[0];
+पूर्ण
 
 /**
  * qcom_scm_assign_mem() - Make a secure call to reassign memory ownership
- * @mem_addr: mem region whose ownership need to be reassigned
+ * @mem_addr: mem region whose ownership need to be reasचिन्हित
  * @mem_sz:   size of the region.
- * @srcvm:    vmid for current set of owners, each set bit in
+ * @srcvm:    vmid क्रम current set of owners, each set bit in
  *            flag indicate a unique owner
  * @newvm:    array having new owners and corresponding permission
  *            flags
  * @dest_cnt: number of owners in next set.
  *
- * Return negative errno on failure or 0 on success with @srcvm updated.
+ * Return negative त्रुटि_सं on failure or 0 on success with @srcvm updated.
  */
-int qcom_scm_assign_mem(phys_addr_t mem_addr, size_t mem_sz,
-			unsigned int *srcvm,
-			const struct qcom_scm_vmperm *newvm,
-			unsigned int dest_cnt)
-{
-	struct qcom_scm_current_perm_info *destvm;
-	struct qcom_scm_mem_map_info *mem_to_map;
+पूर्णांक qcom_scm_assign_mem(phys_addr_t mem_addr, माप_प्रकार mem_sz,
+			अचिन्हित पूर्णांक *srcvm,
+			स्थिर काष्ठा qcom_scm_vmperm *newvm,
+			अचिन्हित पूर्णांक dest_cnt)
+अणु
+	काष्ठा qcom_scm_current_perm_info *destvm;
+	काष्ठा qcom_scm_mem_map_info *mem_to_map;
 	phys_addr_t mem_to_map_phys;
 	phys_addr_t dest_phys;
 	dma_addr_t ptr_phys;
-	size_t mem_to_map_sz;
-	size_t dest_sz;
-	size_t src_sz;
-	size_t ptr_sz;
-	int next_vm;
+	माप_प्रकार mem_to_map_sz;
+	माप_प्रकार dest_sz;
+	माप_प्रकार src_sz;
+	माप_प्रकार ptr_sz;
+	पूर्णांक next_vm;
 	__le32 *src;
-	void *ptr;
-	int ret, i, b;
-	unsigned long srcvm_bits = *srcvm;
+	व्योम *ptr;
+	पूर्णांक ret, i, b;
+	अचिन्हित दीर्घ srcvm_bits = *srcvm;
 
-	src_sz = hweight_long(srcvm_bits) * sizeof(*src);
-	mem_to_map_sz = sizeof(*mem_to_map);
-	dest_sz = dest_cnt * sizeof(*destvm);
+	src_sz = hweight_दीर्घ(srcvm_bits) * माप(*src);
+	mem_to_map_sz = माप(*mem_to_map);
+	dest_sz = dest_cnt * माप(*destvm);
 	ptr_sz = ALIGN(src_sz, SZ_64) + ALIGN(mem_to_map_sz, SZ_64) +
 			ALIGN(dest_sz, SZ_64);
 
 	ptr = dma_alloc_coherent(__scm->dev, ptr_sz, &ptr_phys, GFP_KERNEL);
-	if (!ptr)
-		return -ENOMEM;
+	अगर (!ptr)
+		वापस -ENOMEM;
 
 	/* Fill source vmid detail */
 	src = ptr;
 	i = 0;
-	for_each_set_bit(b, &srcvm_bits, BITS_PER_LONG)
+	क्रम_each_set_bit(b, &srcvm_bits, BITS_PER_LONG)
 		src[i++] = cpu_to_le32(b);
 
 	/* Fill details of mem buff to map */
@@ -874,51 +875,51 @@ int qcom_scm_assign_mem(phys_addr_t mem_addr, size_t mem_sz,
 	/* Fill details of next vmid detail */
 	destvm = ptr + ALIGN(mem_to_map_sz, SZ_64) + ALIGN(src_sz, SZ_64);
 	dest_phys = ptr_phys + ALIGN(mem_to_map_sz, SZ_64) + ALIGN(src_sz, SZ_64);
-	for (i = 0; i < dest_cnt; i++, destvm++, newvm++) {
+	क्रम (i = 0; i < dest_cnt; i++, destvm++, newvm++) अणु
 		destvm->vmid = cpu_to_le32(newvm->vmid);
 		destvm->perm = cpu_to_le32(newvm->perm);
 		destvm->ctx = 0;
 		destvm->ctx_size = 0;
 		next_vm |= BIT(newvm->vmid);
-	}
+	पूर्ण
 
 	ret = __qcom_scm_assign_mem(__scm->dev, mem_to_map_phys, mem_to_map_sz,
 				    ptr_phys, src_sz, dest_phys, dest_sz);
-	dma_free_coherent(__scm->dev, ptr_sz, ptr, ptr_phys);
-	if (ret) {
+	dma_मुक्त_coherent(__scm->dev, ptr_sz, ptr, ptr_phys);
+	अगर (ret) अणु
 		dev_err(__scm->dev,
 			"Assign memory protection call failed %d\n", ret);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*srcvm = next_vm;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_assign_mem);
 
 /**
- * qcom_scm_ocmem_lock_available() - is OCMEM lock/unlock interface available
+ * qcom_scm_ocmem_lock_available() - is OCMEM lock/unlock पूर्णांकerface available
  */
-bool qcom_scm_ocmem_lock_available(void)
-{
-	return __qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_OCMEM,
+bool qcom_scm_ocmem_lock_available(व्योम)
+अणु
+	वापस __qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_OCMEM,
 					    QCOM_SCM_OCMEM_LOCK_CMD);
-}
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_ocmem_lock_available);
 
 /**
- * qcom_scm_ocmem_lock() - call OCMEM lock interface to assign an OCMEM
- * region to the specified initiator
+ * qcom_scm_ocmem_lock() - call OCMEM lock पूर्णांकerface to assign an OCMEM
+ * region to the specअगरied initiator
  *
  * @id:     tz initiator id
  * @offset: OCMEM offset
  * @size:   OCMEM size
  * @mode:   access mode (WIDE/NARROW)
  */
-int qcom_scm_ocmem_lock(enum qcom_scm_ocmem_client id, u32 offset, u32 size,
+पूर्णांक qcom_scm_ocmem_lock(क्रमागत qcom_scm_ocmem_client id, u32 offset, u32 size,
 			u32 mode)
-{
-	struct qcom_scm_desc desc = {
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_OCMEM,
 		.cmd = QCOM_SCM_OCMEM_LOCK_CMD,
 		.args[0] = id,
@@ -926,101 +927,101 @@ int qcom_scm_ocmem_lock(enum qcom_scm_ocmem_client id, u32 offset, u32 size,
 		.args[2] = size,
 		.args[3] = mode,
 		.arginfo = QCOM_SCM_ARGS(4),
-	};
+	पूर्ण;
 
-	return qcom_scm_call(__scm->dev, &desc, NULL);
-}
+	वापस qcom_scm_call(__scm->dev, &desc, शून्य);
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_ocmem_lock);
 
 /**
- * qcom_scm_ocmem_unlock() - call OCMEM unlock interface to release an OCMEM
- * region from the specified initiator
+ * qcom_scm_ocmem_unlock() - call OCMEM unlock पूर्णांकerface to release an OCMEM
+ * region from the specअगरied initiator
  *
  * @id:     tz initiator id
  * @offset: OCMEM offset
  * @size:   OCMEM size
  */
-int qcom_scm_ocmem_unlock(enum qcom_scm_ocmem_client id, u32 offset, u32 size)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_ocmem_unlock(क्रमागत qcom_scm_ocmem_client id, u32 offset, u32 size)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_OCMEM,
 		.cmd = QCOM_SCM_OCMEM_UNLOCK_CMD,
 		.args[0] = id,
 		.args[1] = offset,
 		.args[2] = size,
 		.arginfo = QCOM_SCM_ARGS(3),
-	};
+	पूर्ण;
 
-	return qcom_scm_call(__scm->dev, &desc, NULL);
-}
+	वापस qcom_scm_call(__scm->dev, &desc, शून्य);
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_ocmem_unlock);
 
 /**
- * qcom_scm_ice_available() - Is the ICE key programming interface available?
+ * qcom_scm_ice_available() - Is the ICE key programming पूर्णांकerface available?
  *
- * Return: true iff the SCM calls wrapped by qcom_scm_ice_invalidate_key() and
+ * Return: true अगरf the SCM calls wrapped by qcom_scm_ice_invalidate_key() and
  *	   qcom_scm_ice_set_key() are available.
  */
-bool qcom_scm_ice_available(void)
-{
-	return __qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_ES,
+bool qcom_scm_ice_available(व्योम)
+अणु
+	वापस __qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_ES,
 					    QCOM_SCM_ES_INVALIDATE_ICE_KEY) &&
 		__qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_ES,
 					     QCOM_SCM_ES_CONFIG_SET_ICE_KEY);
-}
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_ice_available);
 
 /**
- * qcom_scm_ice_invalidate_key() - Invalidate an inline encryption key
+ * qcom_scm_ice_invalidate_key() - Invalidate an अंतरभूत encryption key
  * @index: the keyslot to invalidate
  *
- * The UFSHCI and eMMC standards define a standard way to do this, but it
- * doesn't work on these SoCs; only this SCM call does.
+ * The UFSHCI and eMMC standards define a standard way to करो this, but it
+ * करोesn't work on these SoCs; only this SCM call करोes.
  *
  * It is assumed that the SoC has only one ICE instance being used, as this SCM
- * call doesn't specify which ICE instance the keyslot belongs to.
+ * call करोesn't specअगरy which ICE instance the keyslot beदीर्घs to.
  *
- * Return: 0 on success; -errno on failure.
+ * Return: 0 on success; -त्रुटि_सं on failure.
  */
-int qcom_scm_ice_invalidate_key(u32 index)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_ice_invalidate_key(u32 index)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_ES,
 		.cmd = QCOM_SCM_ES_INVALIDATE_ICE_KEY,
 		.arginfo = QCOM_SCM_ARGS(1),
 		.args[0] = index,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
+	पूर्ण;
 
-	return qcom_scm_call(__scm->dev, &desc, NULL);
-}
+	वापस qcom_scm_call(__scm->dev, &desc, शून्य);
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_ice_invalidate_key);
 
 /**
- * qcom_scm_ice_set_key() - Set an inline encryption key
- * @index: the keyslot into which to set the key
+ * qcom_scm_ice_set_key() - Set an अंतरभूत encryption key
+ * @index: the keyslot पूर्णांकo which to set the key
  * @key: the key to program
  * @key_size: the size of the key in bytes
- * @cipher: the encryption algorithm the key is for
+ * @cipher: the encryption algorithm the key is क्रम
  * @data_unit_size: the encryption data unit size, i.e. the size of each
- *		    individual plaintext and ciphertext.  Given in 512-byte
+ *		    inभागidual plaपूर्णांकext and ciphertext.  Given in 512-byte
  *		    units, e.g. 1 = 512 bytes, 8 = 4096 bytes, etc.
  *
- * Program a key into a keyslot of Qualcomm ICE (Inline Crypto Engine), where it
- * can then be used to encrypt/decrypt UFS or eMMC I/O requests inline.
+ * Program a key पूर्णांकo a keyslot of Qualcomm ICE (Inline Crypto Engine), where it
+ * can then be used to encrypt/decrypt UFS or eMMC I/O requests अंतरभूत.
  *
- * The UFSHCI and eMMC standards define a standard way to do this, but it
- * doesn't work on these SoCs; only this SCM call does.
+ * The UFSHCI and eMMC standards define a standard way to करो this, but it
+ * करोesn't work on these SoCs; only this SCM call करोes.
  *
  * It is assumed that the SoC has only one ICE instance being used, as this SCM
- * call doesn't specify which ICE instance the keyslot belongs to.
+ * call करोesn't specअगरy which ICE instance the keyslot beदीर्घs to.
  *
- * Return: 0 on success; -errno on failure.
+ * Return: 0 on success; -त्रुटि_सं on failure.
  */
-int qcom_scm_ice_set_key(u32 index, const u8 *key, u32 key_size,
-			 enum qcom_scm_ice_cipher cipher, u32 data_unit_size)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_ice_set_key(u32 index, स्थिर u8 *key, u32 key_size,
+			 क्रमागत qcom_scm_ice_cipher cipher, u32 data_unit_size)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_ES,
 		.cmd = QCOM_SCM_ES_CONFIG_SET_ICE_KEY,
 		.arginfo = QCOM_SCM_ARGS(5, QCOM_SCM_VAL, QCOM_SCM_RW,
@@ -1031,57 +1032,57 @@ int qcom_scm_ice_set_key(u32 index, const u8 *key, u32 key_size,
 		.args[3] = cipher,
 		.args[4] = data_unit_size,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	void *keybuf;
+	पूर्ण;
+	व्योम *keybuf;
 	dma_addr_t key_phys;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * 'key' may point to vmalloc()'ed memory, but we need to pass a
 	 * physical address that's been properly flushed.  The sanctioned way to
-	 * do this is by using the DMA API.  But as is best practice for crypto
+	 * करो this is by using the DMA API.  But as is best practice क्रम crypto
 	 * keys, we also must wipe the key after use.  This makes kmemdup() +
 	 * dma_map_single() not clearly correct, since the DMA API can use
 	 * bounce buffers.  Instead, just use dma_alloc_coherent().  Programming
-	 * keys is normally rare and thus not performance-critical.
+	 * keys is normally rare and thus not perक्रमmance-critical.
 	 */
 
 	keybuf = dma_alloc_coherent(__scm->dev, key_size, &key_phys,
 				    GFP_KERNEL);
-	if (!keybuf)
-		return -ENOMEM;
-	memcpy(keybuf, key, key_size);
+	अगर (!keybuf)
+		वापस -ENOMEM;
+	स_नकल(keybuf, key, key_size);
 	desc.args[1] = key_phys;
 
-	ret = qcom_scm_call(__scm->dev, &desc, NULL);
+	ret = qcom_scm_call(__scm->dev, &desc, शून्य);
 
 	memzero_explicit(keybuf, key_size);
 
-	dma_free_coherent(__scm->dev, key_size, keybuf, key_phys);
-	return ret;
-}
+	dma_मुक्त_coherent(__scm->dev, key_size, keybuf, key_phys);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_ice_set_key);
 
 /**
- * qcom_scm_hdcp_available() - Check if secure environment supports HDCP.
+ * qcom_scm_hdcp_available() - Check अगर secure environment supports HDCP.
  *
- * Return true if HDCP is supported, false if not.
+ * Return true अगर HDCP is supported, false अगर not.
  */
-bool qcom_scm_hdcp_available(void)
-{
+bool qcom_scm_hdcp_available(व्योम)
+अणु
 	bool avail;
-	int ret = qcom_scm_clk_enable();
+	पूर्णांक ret = qcom_scm_clk_enable();
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	avail = __qcom_scm_is_call_available(__scm->dev, QCOM_SCM_SVC_HDCP,
 						QCOM_SCM_HDCP_INVOKE);
 
 	qcom_scm_clk_disable();
 
-	return avail;
-}
+	वापस avail;
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_hdcp_available);
 
 /**
@@ -1090,16 +1091,16 @@ EXPORT_SYMBOL(qcom_scm_hdcp_available);
  * @req_cnt: HDCP request array count
  * @resp: response buffer passed to SCM
  *
- * Write HDCP register(s) through SCM.
+ * Write HDCP रेजिस्टर(s) through SCM.
  */
-int qcom_scm_hdcp_req(struct qcom_scm_hdcp_req *req, u32 req_cnt, u32 *resp)
-{
-	int ret;
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_hdcp_req(काष्ठा qcom_scm_hdcp_req *req, u32 req_cnt, u32 *resp)
+अणु
+	पूर्णांक ret;
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_HDCP,
 		.cmd = QCOM_SCM_HDCP_INVOKE,
 		.arginfo = QCOM_SCM_ARGS(10),
-		.args = {
+		.args = अणु
 			req[0].addr,
 			req[0].val,
 			req[1].addr,
@@ -1110,144 +1111,144 @@ int qcom_scm_hdcp_req(struct qcom_scm_hdcp_req *req, u32 req_cnt, u32 *resp)
 			req[3].val,
 			req[4].addr,
 			req[4].val
-		},
+		पूर्ण,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-	struct qcom_scm_res res;
+	पूर्ण;
+	काष्ठा qcom_scm_res res;
 
-	if (req_cnt > QCOM_SCM_HDCP_MAX_REQ_CNT)
-		return -ERANGE;
+	अगर (req_cnt > QCOM_SCM_HDCP_MAX_REQ_CNT)
+		वापस -दुस्फल;
 
 	ret = qcom_scm_clk_enable();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = qcom_scm_call(__scm->dev, &desc, &res);
 	*resp = res.result[0];
 
 	qcom_scm_clk_disable();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_hdcp_req);
 
-int qcom_scm_qsmmu500_wait_safe_toggle(bool en)
-{
-	struct qcom_scm_desc desc = {
+पूर्णांक qcom_scm_qsmmu500_रुको_safe_toggle(bool en)
+अणु
+	काष्ठा qcom_scm_desc desc = अणु
 		.svc = QCOM_SCM_SVC_SMMU_PROGRAM,
 		.cmd = QCOM_SCM_SMMU_CONFIG_ERRATA1,
 		.arginfo = QCOM_SCM_ARGS(2),
 		.args[0] = QCOM_SCM_SMMU_CONFIG_ERRATA1_CLIENT_ALL,
 		.args[1] = en,
 		.owner = ARM_SMCCC_OWNER_SIP,
-	};
+	पूर्ण;
 
 
-	return qcom_scm_call_atomic(__scm->dev, &desc, NULL);
-}
-EXPORT_SYMBOL(qcom_scm_qsmmu500_wait_safe_toggle);
+	वापस qcom_scm_call_atomic(__scm->dev, &desc, शून्य);
+पूर्ण
+EXPORT_SYMBOL(qcom_scm_qsmmu500_रुको_safe_toggle);
 
-static int qcom_scm_find_dload_address(struct device *dev, u64 *addr)
-{
-	struct device_node *tcsr;
-	struct device_node *np = dev->of_node;
-	struct resource res;
+अटल पूर्णांक qcom_scm_find_dload_address(काष्ठा device *dev, u64 *addr)
+अणु
+	काष्ठा device_node *tcsr;
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा resource res;
 	u32 offset;
-	int ret;
+	पूर्णांक ret;
 
 	tcsr = of_parse_phandle(np, "qcom,dload-mode", 0);
-	if (!tcsr)
-		return 0;
+	अगर (!tcsr)
+		वापस 0;
 
 	ret = of_address_to_resource(tcsr, 0, &res);
 	of_node_put(tcsr);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = of_property_read_u32_index(np, "qcom,dload-mode", 1, &offset);
-	if (ret < 0)
-		return ret;
+	ret = of_property_पढ़ो_u32_index(np, "qcom,dload-mode", 1, &offset);
+	अगर (ret < 0)
+		वापस ret;
 
 	*addr = res.start + offset;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * qcom_scm_is_available() - Checks if SCM is available
+ * qcom_scm_is_available() - Checks अगर SCM is available
  */
-bool qcom_scm_is_available(void)
-{
-	return !!__scm;
-}
+bool qcom_scm_is_available(व्योम)
+अणु
+	वापस !!__scm;
+पूर्ण
 EXPORT_SYMBOL(qcom_scm_is_available);
 
-static int qcom_scm_probe(struct platform_device *pdev)
-{
-	struct qcom_scm *scm;
-	unsigned long clks;
-	int ret;
+अटल पूर्णांक qcom_scm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा qcom_scm *scm;
+	अचिन्हित दीर्घ clks;
+	पूर्णांक ret;
 
-	scm = devm_kzalloc(&pdev->dev, sizeof(*scm), GFP_KERNEL);
-	if (!scm)
-		return -ENOMEM;
+	scm = devm_kzalloc(&pdev->dev, माप(*scm), GFP_KERNEL);
+	अगर (!scm)
+		वापस -ENOMEM;
 
 	ret = qcom_scm_find_dload_address(&pdev->dev, &scm->dload_mode_addr);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	clks = (unsigned long)of_device_get_match_data(&pdev->dev);
+	clks = (अचिन्हित दीर्घ)of_device_get_match_data(&pdev->dev);
 
 	scm->core_clk = devm_clk_get(&pdev->dev, "core");
-	if (IS_ERR(scm->core_clk)) {
-		if (PTR_ERR(scm->core_clk) == -EPROBE_DEFER)
-			return PTR_ERR(scm->core_clk);
+	अगर (IS_ERR(scm->core_clk)) अणु
+		अगर (PTR_ERR(scm->core_clk) == -EPROBE_DEFER)
+			वापस PTR_ERR(scm->core_clk);
 
-		if (clks & SCM_HAS_CORE_CLK) {
+		अगर (clks & SCM_HAS_CORE_CLK) अणु
 			dev_err(&pdev->dev, "failed to acquire core clk\n");
-			return PTR_ERR(scm->core_clk);
-		}
+			वापस PTR_ERR(scm->core_clk);
+		पूर्ण
 
-		scm->core_clk = NULL;
-	}
+		scm->core_clk = शून्य;
+	पूर्ण
 
-	scm->iface_clk = devm_clk_get(&pdev->dev, "iface");
-	if (IS_ERR(scm->iface_clk)) {
-		if (PTR_ERR(scm->iface_clk) == -EPROBE_DEFER)
-			return PTR_ERR(scm->iface_clk);
+	scm->अगरace_clk = devm_clk_get(&pdev->dev, "iface");
+	अगर (IS_ERR(scm->अगरace_clk)) अणु
+		अगर (PTR_ERR(scm->अगरace_clk) == -EPROBE_DEFER)
+			वापस PTR_ERR(scm->अगरace_clk);
 
-		if (clks & SCM_HAS_IFACE_CLK) {
+		अगर (clks & SCM_HAS_IFACE_CLK) अणु
 			dev_err(&pdev->dev, "failed to acquire iface clk\n");
-			return PTR_ERR(scm->iface_clk);
-		}
+			वापस PTR_ERR(scm->अगरace_clk);
+		पूर्ण
 
-		scm->iface_clk = NULL;
-	}
+		scm->अगरace_clk = शून्य;
+	पूर्ण
 
 	scm->bus_clk = devm_clk_get(&pdev->dev, "bus");
-	if (IS_ERR(scm->bus_clk)) {
-		if (PTR_ERR(scm->bus_clk) == -EPROBE_DEFER)
-			return PTR_ERR(scm->bus_clk);
+	अगर (IS_ERR(scm->bus_clk)) अणु
+		अगर (PTR_ERR(scm->bus_clk) == -EPROBE_DEFER)
+			वापस PTR_ERR(scm->bus_clk);
 
-		if (clks & SCM_HAS_BUS_CLK) {
+		अगर (clks & SCM_HAS_BUS_CLK) अणु
 			dev_err(&pdev->dev, "failed to acquire bus clk\n");
-			return PTR_ERR(scm->bus_clk);
-		}
+			वापस PTR_ERR(scm->bus_clk);
+		पूर्ण
 
-		scm->bus_clk = NULL;
-	}
+		scm->bus_clk = शून्य;
+	पूर्ण
 
 	scm->reset.ops = &qcom_scm_pas_reset_ops;
 	scm->reset.nr_resets = 1;
 	scm->reset.of_node = pdev->dev.of_node;
-	ret = devm_reset_controller_register(&pdev->dev, &scm->reset);
-	if (ret)
-		return ret;
+	ret = devm_reset_controller_रेजिस्टर(&pdev->dev, &scm->reset);
+	अगर (ret)
+		वापस ret;
 
-	/* vote for max clk rate for highest performance */
-	ret = clk_set_rate(scm->core_clk, INT_MAX);
-	if (ret)
-		return ret;
+	/* vote क्रम max clk rate क्रम highest perक्रमmance */
+	ret = clk_set_rate(scm->core_clk, पूर्णांक_उच्च);
+	अगर (ret)
+		वापस ret;
 
 	__scm = scm;
 	__scm->dev = &pdev->dev;
@@ -1255,60 +1256,60 @@ static int qcom_scm_probe(struct platform_device *pdev)
 	__get_convention();
 
 	/*
-	 * If requested enable "download mode", from this point on warmboot
-	 * will cause the the boot stages to enter download mode, unless
-	 * disabled below by a clean shutdown/reboot.
+	 * If requested enable "download mode", from this poपूर्णांक on warmboot
+	 * will cause the the boot stages to enter करोwnload mode, unless
+	 * disabled below by a clean shutकरोwn/reboot.
 	 */
-	if (download_mode)
-		qcom_scm_set_download_mode(true);
+	अगर (करोwnload_mode)
+		qcom_scm_set_करोwnload_mode(true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qcom_scm_shutdown(struct platform_device *pdev)
-{
-	/* Clean shutdown, disable download mode to allow normal restart */
-	if (download_mode)
-		qcom_scm_set_download_mode(false);
-}
+अटल व्योम qcom_scm_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	/* Clean shutकरोwn, disable करोwnload mode to allow normal restart */
+	अगर (करोwnload_mode)
+		qcom_scm_set_करोwnload_mode(false);
+पूर्ण
 
-static const struct of_device_id qcom_scm_dt_match[] = {
-	{ .compatible = "qcom,scm-apq8064",
-	  /* FIXME: This should have .data = (void *) SCM_HAS_CORE_CLK */
-	},
-	{ .compatible = "qcom,scm-apq8084", .data = (void *)(SCM_HAS_CORE_CLK |
+अटल स्थिर काष्ठा of_device_id qcom_scm_dt_match[] = अणु
+	अणु .compatible = "qcom,scm-apq8064",
+	  /* FIXME: This should have .data = (व्योम *) SCM_HAS_CORE_CLK */
+	पूर्ण,
+	अणु .compatible = "qcom,scm-apq8084", .data = (व्योम *)(SCM_HAS_CORE_CLK |
 							     SCM_HAS_IFACE_CLK |
 							     SCM_HAS_BUS_CLK)
-	},
-	{ .compatible = "qcom,scm-ipq4019" },
-	{ .compatible = "qcom,scm-msm8660", .data = (void *) SCM_HAS_CORE_CLK },
-	{ .compatible = "qcom,scm-msm8960", .data = (void *) SCM_HAS_CORE_CLK },
-	{ .compatible = "qcom,scm-msm8916", .data = (void *)(SCM_HAS_CORE_CLK |
+	पूर्ण,
+	अणु .compatible = "qcom,scm-ipq4019" पूर्ण,
+	अणु .compatible = "qcom,scm-msm8660", .data = (व्योम *) SCM_HAS_CORE_CLK पूर्ण,
+	अणु .compatible = "qcom,scm-msm8960", .data = (व्योम *) SCM_HAS_CORE_CLK पूर्ण,
+	अणु .compatible = "qcom,scm-msm8916", .data = (व्योम *)(SCM_HAS_CORE_CLK |
 							     SCM_HAS_IFACE_CLK |
 							     SCM_HAS_BUS_CLK)
-	},
-	{ .compatible = "qcom,scm-msm8974", .data = (void *)(SCM_HAS_CORE_CLK |
+	पूर्ण,
+	अणु .compatible = "qcom,scm-msm8974", .data = (व्योम *)(SCM_HAS_CORE_CLK |
 							     SCM_HAS_IFACE_CLK |
 							     SCM_HAS_BUS_CLK)
-	},
-	{ .compatible = "qcom,scm-msm8994" },
-	{ .compatible = "qcom,scm-msm8996" },
-	{ .compatible = "qcom,scm" },
-	{}
-};
+	पूर्ण,
+	अणु .compatible = "qcom,scm-msm8994" पूर्ण,
+	अणु .compatible = "qcom,scm-msm8996" पूर्ण,
+	अणु .compatible = "qcom,scm" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver qcom_scm_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver qcom_scm_driver = अणु
+	.driver = अणु
 		.name	= "qcom_scm",
 		.of_match_table = qcom_scm_dt_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = qcom_scm_probe,
-	.shutdown = qcom_scm_shutdown,
-};
+	.shutकरोwn = qcom_scm_shutकरोwn,
+पूर्ण;
 
-static int __init qcom_scm_init(void)
-{
-	return platform_driver_register(&qcom_scm_driver);
-}
+अटल पूर्णांक __init qcom_scm_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&qcom_scm_driver);
+पूर्ण
 subsys_initcall(qcom_scm_init);

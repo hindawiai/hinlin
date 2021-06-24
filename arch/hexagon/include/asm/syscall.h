@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Syscall support for the Hexagon architecture
+ * Syscall support क्रम the Hexagon architecture
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_HEXAGON_SYSCALL_H
-#define _ASM_HEXAGON_SYSCALL_H
+#अगर_अघोषित _ASM_HEXAGON_SYSCALL_H
+#घोषणा _ASM_HEXAGON_SYSCALL_H
 
-#include <uapi/linux/audit.h>
-#include <linux/err.h>
-#include <asm/ptrace.h>
+#समावेश <uapi/linux/audit.h>
+#समावेश <linux/err.h>
+#समावेश <यंत्र/ptrace.h>
 
-typedef long (*syscall_fn)(unsigned long, unsigned long,
-	unsigned long, unsigned long,
-	unsigned long, unsigned long);
+प्रकार दीर्घ (*syscall_fn)(अचिन्हित दीर्घ, अचिन्हित दीर्घ,
+	अचिन्हित दीर्घ, अचिन्हित दीर्घ,
+	अचिन्हित दीर्घ, अचिन्हित दीर्घ);
 
-#include <asm-generic/syscalls.h>
+#समावेश <यंत्र-generic/syscalls.h>
 
-extern void *sys_call_table[];
+बाह्य व्योम *sys_call_table[];
 
-static inline long syscall_get_nr(struct task_struct *task,
-				  struct pt_regs *regs)
-{
-	return regs->r06;
-}
+अटल अंतरभूत दीर्घ syscall_get_nr(काष्ठा task_काष्ठा *task,
+				  काष्ठा pt_regs *regs)
+अणु
+	वापस regs->r06;
+पूर्ण
 
-static inline void syscall_get_arguments(struct task_struct *task,
-					 struct pt_regs *regs,
-					 unsigned long *args)
-{
-	memcpy(args, &(&regs->r00)[0], 6 * sizeof(args[0]));
-}
+अटल अंतरभूत व्योम syscall_get_arguments(काष्ठा task_काष्ठा *task,
+					 काष्ठा pt_regs *regs,
+					 अचिन्हित दीर्घ *args)
+अणु
+	स_नकल(args, &(&regs->r00)[0], 6 * माप(args[0]));
+पूर्ण
 
-static inline long syscall_get_error(struct task_struct *task,
-				     struct pt_regs *regs)
-{
-	return IS_ERR_VALUE(regs->r00) ? regs->r00 : 0;
-}
+अटल अंतरभूत दीर्घ syscall_get_error(काष्ठा task_काष्ठा *task,
+				     काष्ठा pt_regs *regs)
+अणु
+	वापस IS_ERR_VALUE(regs->r00) ? regs->r00 : 0;
+पूर्ण
 
-static inline long syscall_get_return_value(struct task_struct *task,
-					    struct pt_regs *regs)
-{
-	return regs->r00;
-}
+अटल अंतरभूत दीर्घ syscall_get_वापस_value(काष्ठा task_काष्ठा *task,
+					    काष्ठा pt_regs *regs)
+अणु
+	वापस regs->r00;
+पूर्ण
 
-static inline int syscall_get_arch(struct task_struct *task)
-{
-	return AUDIT_ARCH_HEXAGON;
-}
+अटल अंतरभूत पूर्णांक syscall_get_arch(काष्ठा task_काष्ठा *task)
+अणु
+	वापस AUDIT_ARCH_HEXAGON;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

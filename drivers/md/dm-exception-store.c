@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2001-2002 Sistina Software (UK) Limited.
  * Copyright (C) 2006-2008 Red Hat GmbH
@@ -5,52 +6,52 @@
  * This file is released under the GPL.
  */
 
-#include "dm-exception-store.h"
+#समावेश "dm-exception-store.h"
 
-#include <linux/ctype.h>
-#include <linux/mm.h>
-#include <linux/pagemap.h>
-#include <linux/vmalloc.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#define DM_MSG_PREFIX "snapshot exception stores"
+#घोषणा DM_MSG_PREFIX "snapshot exception stores"
 
-static LIST_HEAD(_exception_store_types);
-static DEFINE_SPINLOCK(_lock);
+अटल LIST_HEAD(_exception_store_types);
+अटल DEFINE_SPINLOCK(_lock);
 
-static struct dm_exception_store_type *__find_exception_store_type(const char *name)
-{
-	struct dm_exception_store_type *type;
+अटल काष्ठा dm_exception_store_type *__find_exception_store_type(स्थिर अक्षर *name)
+अणु
+	काष्ठा dm_exception_store_type *type;
 
-	list_for_each_entry(type, &_exception_store_types, list)
-		if (!strcmp(name, type->name))
-			return type;
+	list_क्रम_each_entry(type, &_exception_store_types, list)
+		अगर (!म_भेद(name, type->name))
+			वापस type;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct dm_exception_store_type *_get_exception_store_type(const char *name)
-{
-	struct dm_exception_store_type *type;
+अटल काष्ठा dm_exception_store_type *_get_exception_store_type(स्थिर अक्षर *name)
+अणु
+	काष्ठा dm_exception_store_type *type;
 
 	spin_lock(&_lock);
 
 	type = __find_exception_store_type(name);
 
-	if (type && !try_module_get(type->module))
-		type = NULL;
+	अगर (type && !try_module_get(type->module))
+		type = शून्य;
 
 	spin_unlock(&_lock);
 
-	return type;
-}
+	वापस type;
+पूर्ण
 
 /*
  * get_type
  * @type_name
  *
- * Attempt to retrieve the dm_exception_store_type by name.  If not already
+ * Attempt to retrieve the dm_exception_store_type by name.  If not alपढ़ोy
  * available, attempt to load the appropriate module.
  *
  * Exstore modules are named "dm-exstore-" followed by the 'type_name'.
@@ -58,233 +59,233 @@ static struct dm_exception_store_type *_get_exception_store_type(const char *nam
  * This function will first try the module "dm-exstore-<type_name>",
  * then truncate 'type_name' on the last '-' and try again.
  *
- * For example, if type_name was "clustered-shared", it would search
+ * For example, अगर type_name was "clustered-shared", it would search
  * 'dm-exstore-clustered-shared' then 'dm-exstore-clustered'.
  *
- * 'dm-exception-store-<type_name>' is too long of a name in my
+ * 'dm-exception-store-<type_name>' is too दीर्घ of a name in my
  * opinion, which is why I've chosen to have the files
  * containing exception store implementations be 'dm-exstore-<type_name>'.
- * If you want your module to be autoloaded, you will follow this
+ * If you want your module to be स्वतःloaded, you will follow this
  * naming convention.
  *
- * Returns: dm_exception_store_type* on success, NULL on failure
+ * Returns: dm_exception_store_type* on success, शून्य on failure
  */
-static struct dm_exception_store_type *get_type(const char *type_name)
-{
-	char *p, *type_name_dup;
-	struct dm_exception_store_type *type;
+अटल काष्ठा dm_exception_store_type *get_type(स्थिर अक्षर *type_name)
+अणु
+	अक्षर *p, *type_name_dup;
+	काष्ठा dm_exception_store_type *type;
 
 	type = _get_exception_store_type(type_name);
-	if (type)
-		return type;
+	अगर (type)
+		वापस type;
 
 	type_name_dup = kstrdup(type_name, GFP_KERNEL);
-	if (!type_name_dup) {
+	अगर (!type_name_dup) अणु
 		DMERR("No memory left to attempt load for \"%s\"", type_name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	while (request_module("dm-exstore-%s", type_name_dup) ||
-	       !(type = _get_exception_store_type(type_name))) {
-		p = strrchr(type_name_dup, '-');
-		if (!p)
-			break;
+	जबतक (request_module("dm-exstore-%s", type_name_dup) ||
+	       !(type = _get_exception_store_type(type_name))) अणु
+		p = म_खोजप(type_name_dup, '-');
+		अगर (!p)
+			अवरोध;
 		p[0] = '\0';
-	}
+	पूर्ण
 
-	if (!type)
+	अगर (!type)
 		DMWARN("Module for exstore type \"%s\" not found.", type_name);
 
-	kfree(type_name_dup);
+	kमुक्त(type_name_dup);
 
-	return type;
-}
+	वापस type;
+पूर्ण
 
-static void put_type(struct dm_exception_store_type *type)
-{
+अटल व्योम put_type(काष्ठा dm_exception_store_type *type)
+अणु
 	spin_lock(&_lock);
 	module_put(type->module);
 	spin_unlock(&_lock);
-}
+पूर्ण
 
-int dm_exception_store_type_register(struct dm_exception_store_type *type)
-{
-	int r = 0;
+पूर्णांक dm_exception_store_type_रेजिस्टर(काष्ठा dm_exception_store_type *type)
+अणु
+	पूर्णांक r = 0;
 
 	spin_lock(&_lock);
-	if (!__find_exception_store_type(type->name))
+	अगर (!__find_exception_store_type(type->name))
 		list_add(&type->list, &_exception_store_types);
-	else
+	अन्यथा
 		r = -EEXIST;
 	spin_unlock(&_lock);
 
-	return r;
-}
-EXPORT_SYMBOL(dm_exception_store_type_register);
+	वापस r;
+पूर्ण
+EXPORT_SYMBOL(dm_exception_store_type_रेजिस्टर);
 
-int dm_exception_store_type_unregister(struct dm_exception_store_type *type)
-{
+पूर्णांक dm_exception_store_type_unरेजिस्टर(काष्ठा dm_exception_store_type *type)
+अणु
 	spin_lock(&_lock);
 
-	if (!__find_exception_store_type(type->name)) {
+	अगर (!__find_exception_store_type(type->name)) अणु
 		spin_unlock(&_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	list_del(&type->list);
 
 	spin_unlock(&_lock);
 
-	return 0;
-}
-EXPORT_SYMBOL(dm_exception_store_type_unregister);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(dm_exception_store_type_unरेजिस्टर);
 
-static int set_chunk_size(struct dm_exception_store *store,
-			  const char *chunk_size_arg, char **error)
-{
-	unsigned chunk_size;
+अटल पूर्णांक set_chunk_size(काष्ठा dm_exception_store *store,
+			  स्थिर अक्षर *chunk_size_arg, अक्षर **error)
+अणु
+	अचिन्हित chunk_size;
 
-	if (kstrtouint(chunk_size_arg, 10, &chunk_size)) {
+	अगर (kstrtouपूर्णांक(chunk_size_arg, 10, &chunk_size)) अणु
 		*error = "Invalid chunk size";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!chunk_size) {
-		store->chunk_size = store->chunk_mask = store->chunk_shift = 0;
-		return 0;
-	}
+	अगर (!chunk_size) अणु
+		store->chunk_size = store->chunk_mask = store->chunk_shअगरt = 0;
+		वापस 0;
+	पूर्ण
 
-	return dm_exception_store_set_chunk_size(store, chunk_size, error);
-}
+	वापस dm_exception_store_set_chunk_size(store, chunk_size, error);
+पूर्ण
 
-int dm_exception_store_set_chunk_size(struct dm_exception_store *store,
-				      unsigned chunk_size,
-				      char **error)
-{
-	/* Check chunk_size is a power of 2 */
-	if (!is_power_of_2(chunk_size)) {
+पूर्णांक dm_exception_store_set_chunk_size(काष्ठा dm_exception_store *store,
+				      अचिन्हित chunk_size,
+				      अक्षर **error)
+अणु
+	/* Check chunk_size is a घातer of 2 */
+	अगर (!is_घातer_of_2(chunk_size)) अणु
 		*error = "Chunk size is not a power of 2";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Validate the chunk size against the device block size */
-	if (chunk_size %
+	अगर (chunk_size %
 	    (bdev_logical_block_size(dm_snap_cow(store->snap)->bdev) >> 9) ||
 	    chunk_size %
-	    (bdev_logical_block_size(dm_snap_origin(store->snap)->bdev) >> 9)) {
+	    (bdev_logical_block_size(dm_snap_origin(store->snap)->bdev) >> 9)) अणु
 		*error = "Chunk size is not a multiple of device blocksize";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (chunk_size > INT_MAX >> SECTOR_SHIFT) {
+	अगर (chunk_size > पूर्णांक_उच्च >> SECTOR_SHIFT) अणु
 		*error = "Chunk size is too high";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	store->chunk_size = chunk_size;
 	store->chunk_mask = chunk_size - 1;
-	store->chunk_shift = __ffs(chunk_size);
+	store->chunk_shअगरt = __ffs(chunk_size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dm_exception_store_create(struct dm_target *ti, int argc, char **argv,
-			      struct dm_snapshot *snap,
-			      unsigned *args_used,
-			      struct dm_exception_store **store)
-{
-	int r = 0;
-	struct dm_exception_store_type *type = NULL;
-	struct dm_exception_store *tmp_store;
-	char persistent;
+पूर्णांक dm_exception_store_create(काष्ठा dm_target *ti, पूर्णांक argc, अक्षर **argv,
+			      काष्ठा dm_snapshot *snap,
+			      अचिन्हित *args_used,
+			      काष्ठा dm_exception_store **store)
+अणु
+	पूर्णांक r = 0;
+	काष्ठा dm_exception_store_type *type = शून्य;
+	काष्ठा dm_exception_store *पंचांगp_store;
+	अक्षर persistent;
 
-	if (argc < 2) {
+	अगर (argc < 2) अणु
 		ti->error = "Insufficient exception store arguments";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	tmp_store = kzalloc(sizeof(*tmp_store), GFP_KERNEL);
-	if (!tmp_store) {
+	पंचांगp_store = kzalloc(माप(*पंचांगp_store), GFP_KERNEL);
+	अगर (!पंचांगp_store) अणु
 		ti->error = "Exception store allocation failed";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	persistent = toupper(*argv[0]);
-	if (persistent == 'P')
+	persistent = बड़े(*argv[0]);
+	अगर (persistent == 'P')
 		type = get_type("P");
-	else if (persistent == 'N')
+	अन्यथा अगर (persistent == 'N')
 		type = get_type("N");
-	else {
+	अन्यथा अणु
 		ti->error = "Exception store type is not P or N";
 		r = -EINVAL;
-		goto bad_type;
-	}
+		जाओ bad_type;
+	पूर्ण
 
-	if (!type) {
+	अगर (!type) अणु
 		ti->error = "Exception store type not recognised";
 		r = -EINVAL;
-		goto bad_type;
-	}
+		जाओ bad_type;
+	पूर्ण
 
-	tmp_store->type = type;
-	tmp_store->snap = snap;
+	पंचांगp_store->type = type;
+	पंचांगp_store->snap = snap;
 
-	r = set_chunk_size(tmp_store, argv[1], &ti->error);
-	if (r)
-		goto bad;
+	r = set_chunk_size(पंचांगp_store, argv[1], &ti->error);
+	अगर (r)
+		जाओ bad;
 
-	r = type->ctr(tmp_store, (strlen(argv[0]) > 1 ? &argv[0][1] : NULL));
-	if (r) {
+	r = type->ctr(पंचांगp_store, (म_माप(argv[0]) > 1 ? &argv[0][1] : शून्य));
+	अगर (r) अणु
 		ti->error = "Exception store type constructor failed";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	*args_used = 2;
-	*store = tmp_store;
-	return 0;
+	*store = पंचांगp_store;
+	वापस 0;
 
 bad:
 	put_type(type);
 bad_type:
-	kfree(tmp_store);
-	return r;
-}
+	kमुक्त(पंचांगp_store);
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL(dm_exception_store_create);
 
-void dm_exception_store_destroy(struct dm_exception_store *store)
-{
+व्योम dm_exception_store_destroy(काष्ठा dm_exception_store *store)
+अणु
 	store->type->dtr(store);
 	put_type(store->type);
-	kfree(store);
-}
+	kमुक्त(store);
+पूर्ण
 EXPORT_SYMBOL(dm_exception_store_destroy);
 
-int dm_exception_store_init(void)
-{
-	int r;
+पूर्णांक dm_exception_store_init(व्योम)
+अणु
+	पूर्णांक r;
 
 	r = dm_transient_snapshot_init();
-	if (r) {
+	अगर (r) अणु
 		DMERR("Unable to register transient exception store type.");
-		goto transient_fail;
-	}
+		जाओ transient_fail;
+	पूर्ण
 
 	r = dm_persistent_snapshot_init();
-	if (r) {
+	अगर (r) अणु
 		DMERR("Unable to register persistent exception store type");
-		goto persistent_fail;
-	}
+		जाओ persistent_fail;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 persistent_fail:
-	dm_transient_snapshot_exit();
+	dm_transient_snapshot_निकास();
 transient_fail:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-void dm_exception_store_exit(void)
-{
-	dm_persistent_snapshot_exit();
-	dm_transient_snapshot_exit();
-}
+व्योम dm_exception_store_निकास(व्योम)
+अणु
+	dm_persistent_snapshot_निकास();
+	dm_transient_snapshot_निकास();
+पूर्ण

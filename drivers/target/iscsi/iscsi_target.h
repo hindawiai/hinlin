@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ISCSI_TARGET_H
-#define ISCSI_TARGET_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ISCSI_TARGET_H
+#घोषणा ISCSI_TARGET_H
 
-#include <linux/types.h>
-#include <linux/spinlock.h>
+#समावेश <linux/types.h>
+#समावेश <linux/spinlock.h>
 
-struct iscsi_cmd;
-struct iscsi_conn;
-struct iscsi_np;
-struct iscsi_portal_group;
-struct iscsi_session;
-struct iscsi_tpg_np;
-struct kref;
-struct sockaddr_storage;
+काष्ठा iscsi_cmd;
+काष्ठा iscsi_conn;
+काष्ठा iscsi_np;
+काष्ठा iscsi_portal_group;
+काष्ठा iscsi_session;
+काष्ठा iscsi_tpg_np;
+काष्ठा kref;
+काष्ठा sockaddr_storage;
 
-extern struct iscsi_tiqn *iscsit_get_tiqn_for_login(unsigned char *);
-extern struct iscsi_tiqn *iscsit_get_tiqn(unsigned char *, int);
-extern void iscsit_put_tiqn_for_login(struct iscsi_tiqn *);
-extern struct iscsi_tiqn *iscsit_add_tiqn(unsigned char *);
-extern void iscsit_del_tiqn(struct iscsi_tiqn *);
-extern int iscsit_access_np(struct iscsi_np *, struct iscsi_portal_group *);
-extern void iscsit_login_kref_put(struct kref *);
-extern int iscsit_deaccess_np(struct iscsi_np *, struct iscsi_portal_group *,
-				struct iscsi_tpg_np *);
-extern bool iscsit_check_np_match(struct sockaddr_storage *,
-				struct iscsi_np *, int);
-extern struct iscsi_np *iscsit_add_np(struct sockaddr_storage *,
-				int);
-extern int iscsit_reset_np_thread(struct iscsi_np *, struct iscsi_tpg_np *,
-				struct iscsi_portal_group *, bool);
-extern int iscsit_del_np(struct iscsi_np *);
-extern int iscsit_reject_cmd(struct iscsi_cmd *cmd, u8, unsigned char *);
-extern void iscsit_set_unsolicited_dataout(struct iscsi_cmd *);
-extern int iscsit_logout_closesession(struct iscsi_cmd *, struct iscsi_conn *);
-extern int iscsit_logout_closeconnection(struct iscsi_cmd *, struct iscsi_conn *);
-extern int iscsit_logout_removeconnforrecovery(struct iscsi_cmd *, struct iscsi_conn *);
-extern int iscsit_send_async_msg(struct iscsi_conn *, u16, u8, u8);
-extern int iscsit_build_r2ts_for_cmd(struct iscsi_conn *, struct iscsi_cmd *, bool recovery);
-extern void iscsit_thread_get_cpumask(struct iscsi_conn *);
-extern int iscsi_target_tx_thread(void *);
-extern int iscsi_target_rx_thread(void *);
-extern int iscsit_close_connection(struct iscsi_conn *);
-extern int iscsit_close_session(struct iscsi_session *, bool can_sleep);
-extern void iscsit_fail_session(struct iscsi_session *);
-extern void iscsit_stop_session(struct iscsi_session *, int, int);
-extern int iscsit_release_sessions_for_tpg(struct iscsi_portal_group *, int);
+बाह्य काष्ठा iscsi_tiqn *iscsit_get_tiqn_क्रम_login(अचिन्हित अक्षर *);
+बाह्य काष्ठा iscsi_tiqn *iscsit_get_tiqn(अचिन्हित अक्षर *, पूर्णांक);
+बाह्य व्योम iscsit_put_tiqn_क्रम_login(काष्ठा iscsi_tiqn *);
+बाह्य काष्ठा iscsi_tiqn *iscsit_add_tiqn(अचिन्हित अक्षर *);
+बाह्य व्योम iscsit_del_tiqn(काष्ठा iscsi_tiqn *);
+बाह्य पूर्णांक iscsit_access_np(काष्ठा iscsi_np *, काष्ठा iscsi_portal_group *);
+बाह्य व्योम iscsit_login_kref_put(काष्ठा kref *);
+बाह्य पूर्णांक iscsit_deaccess_np(काष्ठा iscsi_np *, काष्ठा iscsi_portal_group *,
+				काष्ठा iscsi_tpg_np *);
+बाह्य bool iscsit_check_np_match(काष्ठा sockaddr_storage *,
+				काष्ठा iscsi_np *, पूर्णांक);
+बाह्य काष्ठा iscsi_np *iscsit_add_np(काष्ठा sockaddr_storage *,
+				पूर्णांक);
+बाह्य पूर्णांक iscsit_reset_np_thपढ़ो(काष्ठा iscsi_np *, काष्ठा iscsi_tpg_np *,
+				काष्ठा iscsi_portal_group *, bool);
+बाह्य पूर्णांक iscsit_del_np(काष्ठा iscsi_np *);
+बाह्य पूर्णांक iscsit_reject_cmd(काष्ठा iscsi_cmd *cmd, u8, अचिन्हित अक्षर *);
+बाह्य व्योम iscsit_set_unsolicited_dataout(काष्ठा iscsi_cmd *);
+बाह्य पूर्णांक iscsit_logout_बंदsession(काष्ठा iscsi_cmd *, काष्ठा iscsi_conn *);
+बाह्य पूर्णांक iscsit_logout_बंदconnection(काष्ठा iscsi_cmd *, काष्ठा iscsi_conn *);
+बाह्य पूर्णांक iscsit_logout_हटाओconnक्रमrecovery(काष्ठा iscsi_cmd *, काष्ठा iscsi_conn *);
+बाह्य पूर्णांक iscsit_send_async_msg(काष्ठा iscsi_conn *, u16, u8, u8);
+बाह्य पूर्णांक iscsit_build_r2ts_क्रम_cmd(काष्ठा iscsi_conn *, काष्ठा iscsi_cmd *, bool recovery);
+बाह्य व्योम iscsit_thपढ़ो_get_cpumask(काष्ठा iscsi_conn *);
+बाह्य पूर्णांक iscsi_target_tx_thपढ़ो(व्योम *);
+बाह्य पूर्णांक iscsi_target_rx_thपढ़ो(व्योम *);
+बाह्य पूर्णांक iscsit_बंद_connection(काष्ठा iscsi_conn *);
+बाह्य पूर्णांक iscsit_बंद_session(काष्ठा iscsi_session *, bool can_sleep);
+बाह्य व्योम iscsit_fail_session(काष्ठा iscsi_session *);
+बाह्य व्योम iscsit_stop_session(काष्ठा iscsi_session *, पूर्णांक, पूर्णांक);
+बाह्य पूर्णांक iscsit_release_sessions_क्रम_tpg(काष्ठा iscsi_portal_group *, पूर्णांक);
 
-extern struct iscsit_global *iscsit_global;
-extern const struct target_core_fabric_ops iscsi_ops;
+बाह्य काष्ठा iscsit_global *iscsit_global;
+बाह्य स्थिर काष्ठा target_core_fabric_ops iscsi_ops;
 
-extern struct kmem_cache *lio_dr_cache;
-extern struct kmem_cache *lio_ooo_cache;
-extern struct kmem_cache *lio_qr_cache;
-extern struct kmem_cache *lio_r2t_cache;
+बाह्य काष्ठा kmem_cache *lio_dr_cache;
+बाह्य काष्ठा kmem_cache *lio_ooo_cache;
+बाह्य काष्ठा kmem_cache *lio_qr_cache;
+बाह्य काष्ठा kmem_cache *lio_r2t_cache;
 
-extern struct ida sess_ida;
-extern struct mutex auth_id_lock;
+बाह्य काष्ठा ida sess_ida;
+बाह्य काष्ठा mutex auth_id_lock;
 
-#endif   /*** ISCSI_TARGET_H ***/
+#पूर्ण_अगर   /*** ISCSI_TARGET_H ***/

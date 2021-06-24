@@ -1,170 +1,171 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_TEXT_PATCHING_H
-#define _ASM_X86_TEXT_PATCHING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_TEXT_PATCHING_H
+#घोषणा _ASM_X86_TEXT_PATCHING_H
 
-#include <linux/types.h>
-#include <linux/stddef.h>
-#include <asm/ptrace.h>
+#समावेश <linux/types.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <यंत्र/ptrace.h>
 
-struct paravirt_patch_site;
-#ifdef CONFIG_PARAVIRT
-void apply_paravirt(struct paravirt_patch_site *start,
-		    struct paravirt_patch_site *end);
-#else
-static inline void apply_paravirt(struct paravirt_patch_site *start,
-				  struct paravirt_patch_site *end)
-{}
-#define __parainstructions	NULL
-#define __parainstructions_end	NULL
-#endif
+काष्ठा paravirt_patch_site;
+#अगर_घोषित CONFIG_PARAVIRT
+व्योम apply_paravirt(काष्ठा paravirt_patch_site *start,
+		    काष्ठा paravirt_patch_site *end);
+#अन्यथा
+अटल अंतरभूत व्योम apply_paravirt(काष्ठा paravirt_patch_site *start,
+				  काष्ठा paravirt_patch_site *end)
+अणुपूर्ण
+#घोषणा __parainकाष्ठाions	शून्य
+#घोषणा __parainकाष्ठाions_end	शून्य
+#पूर्ण_अगर
 
 /*
  * Currently, the max observed size in the kernel code is
  * JUMP_LABEL_NOP_SIZE/RELATIVEJUMP_SIZE, which are 5.
- * Raise it if needed.
+ * Raise it अगर needed.
  */
-#define POKE_MAX_OPCODE_SIZE	5
+#घोषणा POKE_MAX_OPCODE_SIZE	5
 
-extern void text_poke_early(void *addr, const void *opcode, size_t len);
+बाह्य व्योम text_poke_early(व्योम *addr, स्थिर व्योम *opcode, माप_प्रकार len);
 
 /*
- * Clear and restore the kernel write-protection flag on the local CPU.
- * Allows the kernel to edit read-only pages.
- * Side-effect: any interrupt handler running between save and restore will have
- * the ability to write to read-only pages.
+ * Clear and restore the kernel ग_लिखो-protection flag on the local CPU.
+ * Allows the kernel to edit पढ़ो-only pages.
+ * Side-effect: any पूर्णांकerrupt handler running between save and restore will have
+ * the ability to ग_लिखो to पढ़ो-only pages.
  *
  * Warning:
- * Code patching in the UP case is safe if NMIs and MCE handlers are stopped and
- * no thread can be preempted in the instructions being modified (no iret to an
- * invalid instruction possible) or if the instructions are changed from a
+ * Code patching in the UP हाल is safe अगर NMIs and MCE handlers are stopped and
+ * no thपढ़ो can be preempted in the inकाष्ठाions being modअगरied (no iret to an
+ * invalid inकाष्ठाion possible) or अगर the inकाष्ठाions are changed from a
  * consistent state to another consistent state atomically.
- * On the local CPU you need to be protected against NMI or MCE handlers seeing
- * an inconsistent instruction while you patch.
+ * On the local CPU you need to be रक्षित against NMI or MCE handlers seeing
+ * an inconsistent inकाष्ठाion जबतक you patch.
  */
-extern void *text_poke(void *addr, const void *opcode, size_t len);
-extern void text_poke_sync(void);
-extern void *text_poke_kgdb(void *addr, const void *opcode, size_t len);
-extern int poke_int3_handler(struct pt_regs *regs);
-extern void text_poke_bp(void *addr, const void *opcode, size_t len, const void *emulate);
+बाह्य व्योम *text_poke(व्योम *addr, स्थिर व्योम *opcode, माप_प्रकार len);
+बाह्य व्योम text_poke_sync(व्योम);
+बाह्य व्योम *text_poke_kgdb(व्योम *addr, स्थिर व्योम *opcode, माप_प्रकार len);
+बाह्य पूर्णांक poke_पूर्णांक3_handler(काष्ठा pt_regs *regs);
+बाह्य व्योम text_poke_bp(व्योम *addr, स्थिर व्योम *opcode, माप_प्रकार len, स्थिर व्योम *emulate);
 
-extern void text_poke_queue(void *addr, const void *opcode, size_t len, const void *emulate);
-extern void text_poke_finish(void);
+बाह्य व्योम text_poke_queue(व्योम *addr, स्थिर व्योम *opcode, माप_प्रकार len, स्थिर व्योम *emulate);
+बाह्य व्योम text_poke_finish(व्योम);
 
-#define INT3_INSN_SIZE		1
-#define INT3_INSN_OPCODE	0xCC
+#घोषणा INT3_INSN_SIZE		1
+#घोषणा INT3_INSN_OPCODE	0xCC
 
-#define RET_INSN_SIZE		1
-#define RET_INSN_OPCODE		0xC3
+#घोषणा RET_INSN_SIZE		1
+#घोषणा RET_INSN_OPCODE		0xC3
 
-#define CALL_INSN_SIZE		5
-#define CALL_INSN_OPCODE	0xE8
+#घोषणा CALL_INSN_SIZE		5
+#घोषणा CALL_INSN_OPCODE	0xE8
 
-#define JMP32_INSN_SIZE		5
-#define JMP32_INSN_OPCODE	0xE9
+#घोषणा JMP32_INSN_SIZE		5
+#घोषणा JMP32_INSN_OPCODE	0xE9
 
-#define JMP8_INSN_SIZE		2
-#define JMP8_INSN_OPCODE	0xEB
+#घोषणा JMP8_INSN_SIZE		2
+#घोषणा JMP8_INSN_OPCODE	0xEB
 
-#define DISP32_SIZE		4
+#घोषणा DISP32_SIZE		4
 
-static __always_inline int text_opcode_size(u8 opcode)
-{
-	int size = 0;
+अटल __always_अंतरभूत पूर्णांक text_opcode_size(u8 opcode)
+अणु
+	पूर्णांक size = 0;
 
-#define __CASE(insn)	\
-	case insn##_INSN_OPCODE: size = insn##_INSN_SIZE; break
+#घोषणा __CASE(insn)	\
+	हाल insn##_INSN_OPCODE: size = insn##_INSN_SIZE; अवरोध
 
-	switch(opcode) {
+	चयन(opcode) अणु
 	__CASE(INT3);
 	__CASE(RET);
 	__CASE(CALL);
 	__CASE(JMP32);
 	__CASE(JMP8);
-	}
+	पूर्ण
 
-#undef __CASE
+#अघोषित __CASE
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-union text_poke_insn {
+जोड़ text_poke_insn अणु
 	u8 text[POKE_MAX_OPCODE_SIZE];
-	struct {
+	काष्ठा अणु
 		u8 opcode;
 		s32 disp;
-	} __attribute__((packed));
-};
+	पूर्ण __attribute__((packed));
+पूर्ण;
 
-static __always_inline
-void *text_gen_insn(u8 opcode, const void *addr, const void *dest)
-{
-	static union text_poke_insn insn; /* per instance */
-	int size = text_opcode_size(opcode);
+अटल __always_अंतरभूत
+व्योम *text_gen_insn(u8 opcode, स्थिर व्योम *addr, स्थिर व्योम *dest)
+अणु
+	अटल जोड़ text_poke_insn insn; /* per instance */
+	पूर्णांक size = text_opcode_size(opcode);
 
 	insn.opcode = opcode;
 
-	if (size > 1) {
-		insn.disp = (long)dest - (long)(addr + size);
-		if (size == 2) {
+	अगर (size > 1) अणु
+		insn.disp = (दीर्घ)dest - (दीर्घ)(addr + size);
+		अगर (size == 2) अणु
 			/*
-			 * Ensure that for JMP9 the displacement
-			 * actually fits the signed byte.
+			 * Ensure that क्रम JMP9 the displacement
+			 * actually fits the चिन्हित byte.
 			 */
 			BUG_ON((insn.disp >> 31) != (insn.disp >> 7));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return &insn.text;
-}
+	वापस &insn.text;
+पूर्ण
 
-extern int after_bootmem;
-extern __ro_after_init struct mm_struct *poking_mm;
-extern __ro_after_init unsigned long poking_addr;
+बाह्य पूर्णांक after_booपंचांगem;
+बाह्य __ro_after_init काष्ठा mm_काष्ठा *poking_mm;
+बाह्य __ro_after_init अचिन्हित दीर्घ poking_addr;
 
-#ifndef CONFIG_UML_X86
-static __always_inline
-void int3_emulate_jmp(struct pt_regs *regs, unsigned long ip)
-{
+#अगर_अघोषित CONFIG_UML_X86
+अटल __always_अंतरभूत
+व्योम पूर्णांक3_emulate_jmp(काष्ठा pt_regs *regs, अचिन्हित दीर्घ ip)
+अणु
 	regs->ip = ip;
-}
+पूर्ण
 
-static __always_inline
-void int3_emulate_push(struct pt_regs *regs, unsigned long val)
-{
+अटल __always_अंतरभूत
+व्योम पूर्णांक3_emulate_push(काष्ठा pt_regs *regs, अचिन्हित दीर्घ val)
+अणु
 	/*
-	 * The int3 handler in entry_64.S adds a gap between the
-	 * stack where the break point happened, and the saving of
+	 * The पूर्णांक3 handler in entry_64.S adds a gap between the
+	 * stack where the अवरोध poपूर्णांक happened, and the saving of
 	 * pt_regs. We can extend the original stack because of
 	 * this gap. See the idtentry macro's create_gap option.
 	 *
-	 * Similarly entry_32.S will have a gap on the stack for (any) hardware
+	 * Similarly entry_32.S will have a gap on the stack क्रम (any) hardware
 	 * exception and pt_regs; see FIXUP_FRAME.
 	 */
-	regs->sp -= sizeof(unsigned long);
-	*(unsigned long *)regs->sp = val;
-}
+	regs->sp -= माप(अचिन्हित दीर्घ);
+	*(अचिन्हित दीर्घ *)regs->sp = val;
+पूर्ण
 
-static __always_inline
-unsigned long int3_emulate_pop(struct pt_regs *regs)
-{
-	unsigned long val = *(unsigned long *)regs->sp;
-	regs->sp += sizeof(unsigned long);
-	return val;
-}
+अटल __always_अंतरभूत
+अचिन्हित दीर्घ पूर्णांक3_emulate_pop(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ val = *(अचिन्हित दीर्घ *)regs->sp;
+	regs->sp += माप(अचिन्हित दीर्घ);
+	वापस val;
+पूर्ण
 
-static __always_inline
-void int3_emulate_call(struct pt_regs *regs, unsigned long func)
-{
-	int3_emulate_push(regs, regs->ip - INT3_INSN_SIZE + CALL_INSN_SIZE);
-	int3_emulate_jmp(regs, func);
-}
+अटल __always_अंतरभूत
+व्योम पूर्णांक3_emulate_call(काष्ठा pt_regs *regs, अचिन्हित दीर्घ func)
+अणु
+	पूर्णांक3_emulate_push(regs, regs->ip - INT3_INSN_SIZE + CALL_INSN_SIZE);
+	पूर्णांक3_emulate_jmp(regs, func);
+पूर्ण
 
-static __always_inline
-void int3_emulate_ret(struct pt_regs *regs)
-{
-	unsigned long ip = int3_emulate_pop(regs);
-	int3_emulate_jmp(regs, ip);
-}
-#endif /* !CONFIG_UML_X86 */
+अटल __always_अंतरभूत
+व्योम पूर्णांक3_emulate_ret(काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ ip = पूर्णांक3_emulate_pop(regs);
+	पूर्णांक3_emulate_jmp(regs, ip);
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_UML_X86 */
 
-#endif /* _ASM_X86_TEXT_PATCHING_H */
+#पूर्ण_अगर /* _ASM_X86_TEXT_PATCHING_H */

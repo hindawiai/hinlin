@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * arch/arm/plat-orion/irq.c
  *
@@ -8,26 +9,26 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/irq.h>
-#include <linux/irqdomain.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <asm/exception.h>
-#include <plat/irq.h>
-#include <plat/orion-gpio.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <यंत्र/exception.h>
+#समावेश <plat/irq.h>
+#समावेश <plat/orion-gpपन.स>
 
-void __init orion_irq_init(unsigned int irq_start, void __iomem *maskaddr)
-{
-	struct irq_chip_generic *gc;
-	struct irq_chip_type *ct;
+व्योम __init orion_irq_init(अचिन्हित पूर्णांक irq_start, व्योम __iomem *maskaddr)
+अणु
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_chip_type *ct;
 
 	/*
-	 * Mask all interrupts initially.
+	 * Mask all पूर्णांकerrupts initially.
 	 */
-	writel(0, maskaddr);
+	ग_लिखोl(0, maskaddr);
 
 	gc = irq_alloc_generic_chip("orion_irq", 1, irq_start, maskaddr,
 				    handle_level_irq);
@@ -36,4 +37,4 @@ void __init orion_irq_init(unsigned int irq_start, void __iomem *maskaddr)
 	ct->chip.irq_unmask = irq_gc_mask_set_bit;
 	irq_setup_generic_chip(gc, IRQ_MSK(32), IRQ_GC_INIT_MASK_CACHE,
 			       IRQ_NOREQUEST, IRQ_LEVEL | IRQ_NOPROBE);
-}
+पूर्ण

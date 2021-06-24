@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2005
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
@@ -11,161 +12,161 @@
  * transaction starts with txBegin() and ends with txCommit()
  * or txAbort().
  *
- * tlock is acquired at the time of update;
- * (obviate scan at commit time for xtree and dtree)
- * tlock and mp points to each other;
- * (no hashlist for mp -> tlock).
+ * tlock is acquired at the समय of update;
+ * (obviate scan at commit समय क्रम xtree and dtree)
+ * tlock and mp poपूर्णांकs to each other;
+ * (no hashlist क्रम mp -> tlock).
  *
- * special cases:
+ * special हालs:
  * tlock on in-memory inode:
  * in-place tlock in the in-memory inode itself;
- * converted to page lock by iWrite() at commit time.
+ * converted to page lock by iWrite() at commit समय.
  *
- * tlock during write()/mmap() under anonymous transaction (tid = 0):
- * transferred (?) to transaction at commit time.
+ * tlock during ग_लिखो()/mmap() under anonymous transaction (tid = 0):
+ * transferred (?) to transaction at commit समय.
  *
  * use the page itself to update allocation maps
- * (obviate intermediate replication of allocation/deallocation data)
+ * (obviate पूर्णांकermediate replication of allocation/deallocation data)
  * hold on to mp+lock thru update of maps
  */
 
-#include <linux/fs.h>
-#include <linux/vmalloc.h>
-#include <linux/completion.h>
-#include <linux/freezer.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kthread.h>
-#include <linux/seq_file.h>
-#include "jfs_incore.h"
-#include "jfs_inode.h"
-#include "jfs_filsys.h"
-#include "jfs_metapage.h"
-#include "jfs_dinode.h"
-#include "jfs_imap.h"
-#include "jfs_dmap.h"
-#include "jfs_superblock.h"
-#include "jfs_debug.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/seq_file.h>
+#समावेश "jfs_incore.h"
+#समावेश "jfs_inode.h"
+#समावेश "jfs_filsys.h"
+#समावेश "jfs_metapage.h"
+#समावेश "jfs_dinode.h"
+#समावेश "jfs_imap.h"
+#समावेश "jfs_dmap.h"
+#समावेश "jfs_superblock.h"
+#समावेश "jfs_debug.h"
 
 /*
- *	transaction management structures
+ *	transaction management काष्ठाures
  */
-static struct {
-	int freetid;		/* index of a free tid structure */
-	int freelock;		/* index first free lock word */
-	wait_queue_head_t freewait;	/* eventlist of free tblock */
-	wait_queue_head_t freelockwait;	/* eventlist of free tlock */
-	wait_queue_head_t lowlockwait;	/* eventlist of ample tlocks */
-	int tlocksInUse;	/* Number of tlocks in use */
+अटल काष्ठा अणु
+	पूर्णांक मुक्तtid;		/* index of a मुक्त tid काष्ठाure */
+	पूर्णांक मुक्तlock;		/* index first मुक्त lock word */
+	रुको_queue_head_t मुक्तरुको;	/* eventlist of मुक्त tblock */
+	रुको_queue_head_t मुक्तlockरुको;	/* eventlist of मुक्त tlock */
+	रुको_queue_head_t lowlockरुको;	/* eventlist of ample tlocks */
+	पूर्णांक tlocksInUse;	/* Number of tlocks in use */
 	spinlock_t LazyLock;	/* synchronize sync_queue & unlock_queue */
-/*	struct tblock *sync_queue; * Transactions waiting for data sync */
-	struct list_head unlock_queue;	/* Txns waiting to be released */
-	struct list_head anon_list;	/* inodes having anonymous txns */
-	struct list_head anon_list2;	/* inodes having anonymous txns
+/*	काष्ठा tblock *sync_queue; * Transactions रुकोing क्रम data sync */
+	काष्ठा list_head unlock_queue;	/* Txns रुकोing to be released */
+	काष्ठा list_head anon_list;	/* inodes having anonymous txns */
+	काष्ठा list_head anon_list2;	/* inodes having anonymous txns
 					   that couldn't be sync'ed */
-} TxAnchor;
+पूर्ण TxAnchor;
 
-int jfs_tlocks_low;		/* Indicates low number of available tlocks */
+पूर्णांक jfs_tlocks_low;		/* Indicates low number of available tlocks */
 
-#ifdef CONFIG_JFS_STATISTICS
-static struct {
-	uint txBegin;
-	uint txBegin_barrier;
-	uint txBegin_lockslow;
-	uint txBegin_freetid;
-	uint txBeginAnon;
-	uint txBeginAnon_barrier;
-	uint txBeginAnon_lockslow;
-	uint txLockAlloc;
-	uint txLockAlloc_freelock;
-} TxStat;
-#endif
+#अगर_घोषित CONFIG_JFS_STATISTICS
+अटल काष्ठा अणु
+	uपूर्णांक txBegin;
+	uपूर्णांक txBegin_barrier;
+	uपूर्णांक txBegin_lockslow;
+	uपूर्णांक txBegin_मुक्तtid;
+	uपूर्णांक txBeginAnon;
+	uपूर्णांक txBeginAnon_barrier;
+	uपूर्णांक txBeginAnon_lockslow;
+	uपूर्णांक txLockAlloc;
+	uपूर्णांक txLockAlloc_मुक्तlock;
+पूर्ण TxStat;
+#पूर्ण_अगर
 
-static int nTxBlock = -1;	/* number of transaction blocks */
-module_param(nTxBlock, int, 0);
+अटल पूर्णांक nTxBlock = -1;	/* number of transaction blocks */
+module_param(nTxBlock, पूर्णांक, 0);
 MODULE_PARM_DESC(nTxBlock,
 		 "Number of transaction blocks (max:65536)");
 
-static int nTxLock = -1;	/* number of transaction locks */
-module_param(nTxLock, int, 0);
+अटल पूर्णांक nTxLock = -1;	/* number of transaction locks */
+module_param(nTxLock, पूर्णांक, 0);
 MODULE_PARM_DESC(nTxLock,
 		 "Number of transaction locks (max:65536)");
 
-struct tblock *TxBlock;	/* transaction block table */
-static int TxLockLWM;	/* Low water mark for number of txLocks used */
-static int TxLockHWM;	/* High water mark for number of txLocks used */
-static int TxLockVHWM;	/* Very High water mark */
-struct tlock *TxLock;	/* transaction lock table */
+काष्ठा tblock *TxBlock;	/* transaction block table */
+अटल पूर्णांक TxLockLWM;	/* Low water mark क्रम number of txLocks used */
+अटल पूर्णांक TxLockHWM;	/* High water mark क्रम number of txLocks used */
+अटल पूर्णांक TxLockVHWM;	/* Very High water mark */
+काष्ठा tlock *TxLock;	/* transaction lock table */
 
 /*
  *	transaction management lock
  */
-static DEFINE_SPINLOCK(jfsTxnLock);
+अटल DEFINE_SPINLOCK(jfsTxnLock);
 
-#define TXN_LOCK()		spin_lock(&jfsTxnLock)
-#define TXN_UNLOCK()		spin_unlock(&jfsTxnLock)
+#घोषणा TXN_LOCK()		spin_lock(&jfsTxnLock)
+#घोषणा TXN_UNLOCK()		spin_unlock(&jfsTxnLock)
 
-#define LAZY_LOCK_INIT()	spin_lock_init(&TxAnchor.LazyLock);
-#define LAZY_LOCK(flags)	spin_lock_irqsave(&TxAnchor.LazyLock, flags)
-#define LAZY_UNLOCK(flags) spin_unlock_irqrestore(&TxAnchor.LazyLock, flags)
+#घोषणा LAZY_LOCK_INIT()	spin_lock_init(&TxAnchor.LazyLock);
+#घोषणा LAZY_LOCK(flags)	spin_lock_irqsave(&TxAnchor.LazyLock, flags)
+#घोषणा LAZY_UNLOCK(flags) spin_unlock_irqrestore(&TxAnchor.LazyLock, flags)
 
-static DECLARE_WAIT_QUEUE_HEAD(jfs_commit_thread_wait);
-static int jfs_commit_thread_waking;
+अटल DECLARE_WAIT_QUEUE_HEAD(jfs_commit_thपढ़ो_रुको);
+अटल पूर्णांक jfs_commit_thपढ़ो_waking;
 
 /*
  * Retry logic exist outside these macros to protect from spurrious wakeups.
  */
-static inline void TXN_SLEEP_DROP_LOCK(wait_queue_head_t * event)
-{
-	DECLARE_WAITQUEUE(wait, current);
+अटल अंतरभूत व्योम TXN_SLEEP_DROP_LOCK(रुको_queue_head_t * event)
+अणु
+	DECLARE_WAITQUEUE(रुको, current);
 
-	add_wait_queue(event, &wait);
+	add_रुको_queue(event, &रुको);
 	set_current_state(TASK_UNINTERRUPTIBLE);
 	TXN_UNLOCK();
 	io_schedule();
-	remove_wait_queue(event, &wait);
-}
+	हटाओ_रुको_queue(event, &रुको);
+पूर्ण
 
-#define TXN_SLEEP(event)\
-{\
+#घोषणा TXN_SLEEP(event)\
+अणु\
 	TXN_SLEEP_DROP_LOCK(event);\
 	TXN_LOCK();\
-}
+पूर्ण
 
-#define TXN_WAKEUP(event) wake_up_all(event)
+#घोषणा TXN_WAKEUP(event) wake_up_all(event)
 
 /*
  *	statistics
  */
-static struct {
+अटल काष्ठा अणु
 	tid_t maxtid;		/* 4: biggest tid ever used */
 	lid_t maxlid;		/* 4: biggest lid ever used */
-	int ntid;		/* 4: # of transactions performed */
-	int nlid;		/* 4: # of tlocks acquired */
-	int waitlock;		/* 4: # of tlock wait */
-} stattx;
+	पूर्णांक ntid;		/* 4: # of transactions perक्रमmed */
+	पूर्णांक nlid;		/* 4: # of tlocks acquired */
+	पूर्णांक रुकोlock;		/* 4: # of tlock रुको */
+पूर्ण stattx;
 
 /*
- * forward references
+ * क्रमward references
  */
-static void diLog(struct jfs_log *log, struct tblock *tblk, struct lrd *lrd,
-		struct tlock *tlck, struct commit *cd);
-static void dataLog(struct jfs_log *log, struct tblock *tblk, struct lrd *lrd,
-		struct tlock *tlck);
-static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
-		struct tlock * tlck);
-static void mapLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
-		struct tlock * tlck);
-static void txAllocPMap(struct inode *ip, struct maplock * maplock,
-		struct tblock * tblk);
-static void txForce(struct tblock * tblk);
-static void txLog(struct jfs_log *log, struct tblock *tblk,
-		struct commit *cd);
-static void txUpdateMap(struct tblock * tblk);
-static void txRelease(struct tblock * tblk);
-static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
-	   struct tlock * tlck);
-static void LogSyncRelease(struct metapage * mp);
+अटल व्योम diLog(काष्ठा jfs_log *log, काष्ठा tblock *tblk, काष्ठा lrd *lrd,
+		काष्ठा tlock *tlck, काष्ठा commit *cd);
+अटल व्योम dataLog(काष्ठा jfs_log *log, काष्ठा tblock *tblk, काष्ठा lrd *lrd,
+		काष्ठा tlock *tlck);
+अटल व्योम dtLog(काष्ठा jfs_log * log, काष्ठा tblock * tblk, काष्ठा lrd * lrd,
+		काष्ठा tlock * tlck);
+अटल व्योम mapLog(काष्ठा jfs_log * log, काष्ठा tblock * tblk, काष्ठा lrd * lrd,
+		काष्ठा tlock * tlck);
+अटल व्योम txAllocPMap(काष्ठा inode *ip, काष्ठा maplock * maplock,
+		काष्ठा tblock * tblk);
+अटल व्योम txForce(काष्ठा tblock * tblk);
+अटल व्योम txLog(काष्ठा jfs_log *log, काष्ठा tblock *tblk,
+		काष्ठा commit *cd);
+अटल व्योम txUpdateMap(काष्ठा tblock * tblk);
+अटल व्योम txRelease(काष्ठा tblock * tblk);
+अटल व्योम xtLog(काष्ठा jfs_log * log, काष्ठा tblock * tblk, काष्ठा lrd * lrd,
+	   काष्ठा tlock * tlck);
+अटल व्योम LogSyncRelease(काष्ठा metapage * mp);
 
 /*
  *		transaction block/lock management
@@ -173,89 +174,89 @@ static void LogSyncRelease(struct metapage * mp);
  */
 
 /*
- * Get a transaction lock from the free list.  If the number in use is
+ * Get a transaction lock from the मुक्त list.  If the number in use is
  * greater than the high water mark, wake up the sync daemon.  This should
- * free some anonymous transaction locks.  (TXN_LOCK must be held.)
+ * मुक्त some anonymous transaction locks.  (TXN_LOCK must be held.)
  */
-static lid_t txLockAlloc(void)
-{
+अटल lid_t txLockAlloc(व्योम)
+अणु
 	lid_t lid;
 
 	INCREMENT(TxStat.txLockAlloc);
-	if (!TxAnchor.freelock) {
-		INCREMENT(TxStat.txLockAlloc_freelock);
-	}
+	अगर (!TxAnchor.मुक्तlock) अणु
+		INCREMENT(TxStat.txLockAlloc_मुक्तlock);
+	पूर्ण
 
-	while (!(lid = TxAnchor.freelock))
-		TXN_SLEEP(&TxAnchor.freelockwait);
-	TxAnchor.freelock = TxLock[lid].next;
+	जबतक (!(lid = TxAnchor.मुक्तlock))
+		TXN_SLEEP(&TxAnchor.मुक्तlockरुको);
+	TxAnchor.मुक्तlock = TxLock[lid].next;
 	HIGHWATERMARK(stattx.maxlid, lid);
-	if ((++TxAnchor.tlocksInUse > TxLockHWM) && (jfs_tlocks_low == 0)) {
+	अगर ((++TxAnchor.tlocksInUse > TxLockHWM) && (jfs_tlocks_low == 0)) अणु
 		jfs_info("txLockAlloc tlocks low");
 		jfs_tlocks_low = 1;
-		wake_up_process(jfsSyncThread);
-	}
+		wake_up_process(jfsSyncThपढ़ो);
+	पूर्ण
 
-	return lid;
-}
+	वापस lid;
+पूर्ण
 
-static void txLockFree(lid_t lid)
-{
+अटल व्योम txLockFree(lid_t lid)
+अणु
 	TxLock[lid].tid = 0;
-	TxLock[lid].next = TxAnchor.freelock;
-	TxAnchor.freelock = lid;
+	TxLock[lid].next = TxAnchor.मुक्तlock;
+	TxAnchor.मुक्तlock = lid;
 	TxAnchor.tlocksInUse--;
-	if (jfs_tlocks_low && (TxAnchor.tlocksInUse < TxLockLWM)) {
+	अगर (jfs_tlocks_low && (TxAnchor.tlocksInUse < TxLockLWM)) अणु
 		jfs_info("txLockFree jfs_tlocks_low no more");
 		jfs_tlocks_low = 0;
-		TXN_WAKEUP(&TxAnchor.lowlockwait);
-	}
-	TXN_WAKEUP(&TxAnchor.freelockwait);
-}
+		TXN_WAKEUP(&TxAnchor.lowlockरुको);
+	पूर्ण
+	TXN_WAKEUP(&TxAnchor.मुक्तlockरुको);
+पूर्ण
 
 /*
  * NAME:	txInit()
  *
- * FUNCTION:	initialize transaction management structures
+ * FUNCTION:	initialize transaction management काष्ठाures
  *
  * RETURN:
  *
- * serialization: single thread at jfs_init()
+ * serialization: single thपढ़ो at jfs_init()
  */
-int txInit(void)
-{
-	int k, size;
-	struct sysinfo si;
+पूर्णांक txInit(व्योम)
+अणु
+	पूर्णांक k, size;
+	काष्ठा sysinfo si;
 
-	/* Set defaults for nTxLock and nTxBlock if unset */
+	/* Set शेषs क्रम nTxLock and nTxBlock अगर unset */
 
-	if (nTxLock == -1) {
-		if (nTxBlock == -1) {
-			/* Base default on memory size */
+	अगर (nTxLock == -1) अणु
+		अगर (nTxBlock == -1) अणु
+			/* Base शेष on memory size */
 			si_meminfo(&si);
-			if (si.totalram > (256 * 1024)) /* 1 GB */
+			अगर (si.totalram > (256 * 1024)) /* 1 GB */
 				nTxLock = 64 * 1024;
-			else
+			अन्यथा
 				nTxLock = si.totalram >> 2;
-		} else if (nTxBlock > (8 * 1024))
+		पूर्ण अन्यथा अगर (nTxBlock > (8 * 1024))
 			nTxLock = 64 * 1024;
-		else
+		अन्यथा
 			nTxLock = nTxBlock << 3;
-	}
-	if (nTxBlock == -1)
+	पूर्ण
+	अगर (nTxBlock == -1)
 		nTxBlock = nTxLock >> 3;
 
-	/* Verify tunable parameters */
-	if (nTxBlock < 16)
+	/* Verअगरy tunable parameters */
+	अगर (nTxBlock < 16)
 		nTxBlock = 16;	/* No one should set it this low */
-	if (nTxBlock > 65536)
+	अगर (nTxBlock > 65536)
 		nTxBlock = 65536;
-	if (nTxLock < 256)
+	अगर (nTxLock < 256)
 		nTxLock = 256;	/* No one should set it this low */
-	if (nTxLock > 65536)
+	अगर (nTxLock > 65536)
 		nTxLock = 65536;
 
-	printk(KERN_INFO "JFS: nTxBlock = %d, nTxLock = %d\n",
+	prपूर्णांकk(KERN_INFO "JFS: nTxBlock = %d, nTxLock = %d\n",
 	       nTxBlock, nTxLock);
 	/*
 	 * initialize transaction block (tblock) table
@@ -267,22 +268,22 @@ int txInit(void)
 	TxLockHWM = (nTxLock * 7) / 10;
 	TxLockVHWM = (nTxLock * 8) / 10;
 
-	size = sizeof(struct tblock) * nTxBlock;
-	TxBlock = vmalloc(size);
-	if (TxBlock == NULL)
-		return -ENOMEM;
+	size = माप(काष्ठा tblock) * nTxBlock;
+	TxBlock = vदो_स्मृति(size);
+	अगर (TxBlock == शून्य)
+		वापस -ENOMEM;
 
-	for (k = 1; k < nTxBlock - 1; k++) {
+	क्रम (k = 1; k < nTxBlock - 1; k++) अणु
 		TxBlock[k].next = k + 1;
-		init_waitqueue_head(&TxBlock[k].gcwait);
-		init_waitqueue_head(&TxBlock[k].waitor);
-	}
+		init_रुकोqueue_head(&TxBlock[k].gcरुको);
+		init_रुकोqueue_head(&TxBlock[k].रुकोor);
+	पूर्ण
 	TxBlock[k].next = 0;
-	init_waitqueue_head(&TxBlock[k].gcwait);
-	init_waitqueue_head(&TxBlock[k].waitor);
+	init_रुकोqueue_head(&TxBlock[k].gcरुको);
+	init_रुकोqueue_head(&TxBlock[k].रुकोor);
 
-	TxAnchor.freetid = 1;
-	init_waitqueue_head(&TxAnchor.freewait);
+	TxAnchor.मुक्तtid = 1;
+	init_रुकोqueue_head(&TxAnchor.मुक्तरुको);
 
 	stattx.maxtid = 1;	/* statistics */
 
@@ -292,21 +293,21 @@ int txInit(void)
 	 * transaction lock id = tlock index
 	 * tlock id = 0 is reserved.
 	 */
-	size = sizeof(struct tlock) * nTxLock;
-	TxLock = vmalloc(size);
-	if (TxLock == NULL) {
-		vfree(TxBlock);
-		return -ENOMEM;
-	}
+	size = माप(काष्ठा tlock) * nTxLock;
+	TxLock = vदो_स्मृति(size);
+	अगर (TxLock == शून्य) अणु
+		vमुक्त(TxBlock);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* initialize tlock table */
-	for (k = 1; k < nTxLock - 1; k++)
+	क्रम (k = 1; k < nTxLock - 1; k++)
 		TxLock[k].next = k + 1;
 	TxLock[k].next = 0;
-	init_waitqueue_head(&TxAnchor.freelockwait);
-	init_waitqueue_head(&TxAnchor.lowlockwait);
+	init_रुकोqueue_head(&TxAnchor.मुक्तlockरुको);
+	init_रुकोqueue_head(&TxAnchor.lowlockरुको);
 
-	TxAnchor.freelock = 1;
+	TxAnchor.मुक्तlock = 1;
 	TxAnchor.tlocksInUse = 0;
 	INIT_LIST_HEAD(&TxAnchor.anon_list);
 	INIT_LIST_HEAD(&TxAnchor.anon_list2);
@@ -316,21 +317,21 @@ int txInit(void)
 
 	stattx.maxlid = 1;	/* statistics */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * NAME:	txExit()
  *
  * FUNCTION:	clean up when module is unloaded
  */
-void txExit(void)
-{
-	vfree(TxLock);
-	TxLock = NULL;
-	vfree(TxBlock);
-	TxBlock = NULL;
-}
+व्योम txExit(व्योम)
+अणु
+	vमुक्त(TxLock);
+	TxLock = शून्य;
+	vमुक्त(TxBlock);
+	TxBlock = शून्य;
+पूर्ण
 
 /*
  * NAME:	txBegin()
@@ -338,18 +339,18 @@ void txExit(void)
  * FUNCTION:	start a transaction.
  *
  * PARAMETER:	sb	- superblock
- *		flag	- force for nested tx;
+ *		flag	- क्रमce क्रम nested tx;
  *
  * RETURN:	tid	- transaction id
  *
- * note: flag force allows to start tx for nested tx
+ * note: flag क्रमce allows to start tx क्रम nested tx
  * to prevent deadlock on logsync barrier;
  */
-tid_t txBegin(struct super_block *sb, int flag)
-{
+tid_t txBegin(काष्ठा super_block *sb, पूर्णांक flag)
+अणु
 	tid_t t;
-	struct tblock *tblk;
-	struct jfs_log *log;
+	काष्ठा tblock *tblk;
+	काष्ठा jfs_log *log;
 
 	jfs_info("txBegin: flag = 0x%x", flag);
 	log = JFS_SBI(sb)->log;
@@ -359,61 +360,61 @@ tid_t txBegin(struct super_block *sb, int flag)
 	INCREMENT(TxStat.txBegin);
 
       retry:
-	if (!(flag & COMMIT_FORCE)) {
+	अगर (!(flag & COMMIT_FORCE)) अणु
 		/*
 		 * synchronize with logsync barrier
 		 */
-		if (test_bit(log_SYNCBARRIER, &log->flag) ||
-		    test_bit(log_QUIESCE, &log->flag)) {
+		अगर (test_bit(log_SYNCBARRIER, &log->flag) ||
+		    test_bit(log_QUIESCE, &log->flag)) अणु
 			INCREMENT(TxStat.txBegin_barrier);
-			TXN_SLEEP(&log->syncwait);
-			goto retry;
-		}
-	}
-	if (flag == 0) {
+			TXN_SLEEP(&log->syncरुको);
+			जाओ retry;
+		पूर्ण
+	पूर्ण
+	अगर (flag == 0) अणु
 		/*
-		 * Don't begin transaction if we're getting starved for tlocks
+		 * Don't begin transaction if we're getting starved क्रम tlocks
 		 * unless COMMIT_FORCE or COMMIT_INODE (which may ultimately
-		 * free tlocks)
+		 * मुक्त tlocks)
 		 */
-		if (TxAnchor.tlocksInUse > TxLockVHWM) {
+		अगर (TxAnchor.tlocksInUse > TxLockVHWM) अणु
 			INCREMENT(TxStat.txBegin_lockslow);
-			TXN_SLEEP(&TxAnchor.lowlockwait);
-			goto retry;
-		}
-	}
+			TXN_SLEEP(&TxAnchor.lowlockरुको);
+			जाओ retry;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * allocate transaction id/block
 	 */
-	if ((t = TxAnchor.freetid) == 0) {
+	अगर ((t = TxAnchor.मुक्तtid) == 0) अणु
 		jfs_info("txBegin: waiting for free tid");
-		INCREMENT(TxStat.txBegin_freetid);
-		TXN_SLEEP(&TxAnchor.freewait);
-		goto retry;
-	}
+		INCREMENT(TxStat.txBegin_मुक्तtid);
+		TXN_SLEEP(&TxAnchor.मुक्तरुको);
+		जाओ retry;
+	पूर्ण
 
 	tblk = tid_to_tblock(t);
 
-	if ((tblk->next == 0) && !(flag & COMMIT_FORCE)) {
-		/* Don't let a non-forced transaction take the last tblk */
+	अगर ((tblk->next == 0) && !(flag & COMMIT_FORCE)) अणु
+		/* Don't let a non-क्रमced transaction take the last tblk */
 		jfs_info("txBegin: waiting for free tid");
-		INCREMENT(TxStat.txBegin_freetid);
-		TXN_SLEEP(&TxAnchor.freewait);
-		goto retry;
-	}
+		INCREMENT(TxStat.txBegin_मुक्तtid);
+		TXN_SLEEP(&TxAnchor.मुक्तरुको);
+		जाओ retry;
+	पूर्ण
 
-	TxAnchor.freetid = tblk->next;
+	TxAnchor.मुक्तtid = tblk->next;
 
 	/*
 	 * initialize transaction
 	 */
 
 	/*
-	 * We can't zero the whole thing or we screw up another thread being
-	 * awakened after sleeping on tblk->waitor
+	 * We can't zero the whole thing or we screw up another thपढ़ो being
+	 * awakened after sleeping on tblk->रुकोor
 	 *
-	 * memset(tblk, 0, sizeof(struct tblock));
+	 * स_रखो(tblk, 0, माप(काष्ठा tblock));
 	 */
 	tblk->next = tblk->last = tblk->xflag = tblk->flag = tblk->lsn = 0;
 
@@ -430,23 +431,23 @@ tid_t txBegin(struct super_block *sb, int flag)
 
 	jfs_info("txBegin: returning tid = %d", t);
 
-	return t;
-}
+	वापस t;
+पूर्ण
 
 /*
  * NAME:	txBeginAnon()
  *
  * FUNCTION:	start an anonymous transaction.
- *		Blocks if logsync or available tlocks are low to prevent
+ *		Blocks अगर logsync or available tlocks are low to prevent
  *		anonymous tlocks from depleting supply.
  *
  * PARAMETER:	sb	- superblock
  *
  * RETURN:	none
  */
-void txBeginAnon(struct super_block *sb)
-{
-	struct jfs_log *log;
+व्योम txBeginAnon(काष्ठा super_block *sb)
+अणु
+	काष्ठा jfs_log *log;
 
 	log = JFS_SBI(sb)->log;
 
@@ -457,90 +458,90 @@ void txBeginAnon(struct super_block *sb)
 	/*
 	 * synchronize with logsync barrier
 	 */
-	if (test_bit(log_SYNCBARRIER, &log->flag) ||
-	    test_bit(log_QUIESCE, &log->flag)) {
+	अगर (test_bit(log_SYNCBARRIER, &log->flag) ||
+	    test_bit(log_QUIESCE, &log->flag)) अणु
 		INCREMENT(TxStat.txBeginAnon_barrier);
-		TXN_SLEEP(&log->syncwait);
-		goto retry;
-	}
+		TXN_SLEEP(&log->syncरुको);
+		जाओ retry;
+	पूर्ण
 
 	/*
-	 * Don't begin transaction if we're getting starved for tlocks
+	 * Don't begin transaction if we're getting starved क्रम tlocks
 	 */
-	if (TxAnchor.tlocksInUse > TxLockVHWM) {
+	अगर (TxAnchor.tlocksInUse > TxLockVHWM) अणु
 		INCREMENT(TxStat.txBeginAnon_lockslow);
-		TXN_SLEEP(&TxAnchor.lowlockwait);
-		goto retry;
-	}
+		TXN_SLEEP(&TxAnchor.lowlockरुको);
+		जाओ retry;
+	पूर्ण
 	TXN_UNLOCK();
-}
+पूर्ण
 
 /*
  *	txEnd()
  *
- * function: free specified transaction block.
+ * function: मुक्त specअगरied transaction block.
  *
  *	logsync barrier processing:
  *
  * serialization:
  */
-void txEnd(tid_t tid)
-{
-	struct tblock *tblk = tid_to_tblock(tid);
-	struct jfs_log *log;
+व्योम txEnd(tid_t tid)
+अणु
+	काष्ठा tblock *tblk = tid_to_tblock(tid);
+	काष्ठा jfs_log *log;
 
 	jfs_info("txEnd: tid = %d", tid);
 	TXN_LOCK();
 
 	/*
-	 * wakeup transactions waiting on the page locked
+	 * wakeup transactions रुकोing on the page locked
 	 * by the current transaction
 	 */
-	TXN_WAKEUP(&tblk->waitor);
+	TXN_WAKEUP(&tblk->रुकोor);
 
 	log = JFS_SBI(tblk->sb)->log;
 
 	/*
-	 * Lazy commit thread can't free this guy until we mark it UNLOCKED,
+	 * Lazy commit thपढ़ो can't मुक्त this guy until we mark it UNLOCKED,
 	 * otherwise, we would be left with a transaction that may have been
 	 * reused.
 	 *
-	 * Lazy commit thread will turn off tblkGC_LAZY before calling this
+	 * Lazy commit thपढ़ो will turn off tblkGC_LAZY beक्रमe calling this
 	 * routine.
 	 */
-	if (tblk->flag & tblkGC_LAZY) {
+	अगर (tblk->flag & tblkGC_LAZY) अणु
 		jfs_info("txEnd called w/lazy tid: %d, tblk = 0x%p", tid, tblk);
 		TXN_UNLOCK();
 
-		spin_lock_irq(&log->gclock);	// LOGGC_LOCK
+		spin_lock_irq(&log->gघड़ी);	// LOGGC_LOCK
 		tblk->flag |= tblkGC_UNLOCKED;
-		spin_unlock_irq(&log->gclock);	// LOGGC_UNLOCK
-		return;
-	}
+		spin_unlock_irq(&log->gघड़ी);	// LOGGC_UNLOCK
+		वापस;
+	पूर्ण
 
 	jfs_info("txEnd: tid: %d, tblk = 0x%p", tid, tblk);
 
-	assert(tblk->next == 0);
+	निश्चित(tblk->next == 0);
 
 	/*
-	 * insert tblock back on freelist
+	 * insert tblock back on मुक्तlist
 	 */
-	tblk->next = TxAnchor.freetid;
-	TxAnchor.freetid = tid;
+	tblk->next = TxAnchor.मुक्तtid;
+	TxAnchor.मुक्तtid = tid;
 
 	/*
 	 * mark the tblock not active
 	 */
-	if (--log->active == 0) {
+	अगर (--log->active == 0) अणु
 		clear_bit(log_FLUSH, &log->flag);
 
 		/*
 		 * synchronize with logsync barrier
 		 */
-		if (test_bit(log_SYNCBARRIER, &log->flag)) {
+		अगर (test_bit(log_SYNCBARRIER, &log->flag)) अणु
 			TXN_UNLOCK();
 
-			/* write dirty metadata & forward log syncpt */
+			/* ग_लिखो dirty metadata & क्रमward log syncpt */
 			jfs_syncpt(log, 1);
 
 			jfs_info("log barrier off: 0x%x", log->lsn);
@@ -548,89 +549,89 @@ void txEnd(tid_t tid)
 			/* enable new transactions start */
 			clear_bit(log_SYNCBARRIER, &log->flag);
 
-			/* wakeup all waitors for logsync barrier */
-			TXN_WAKEUP(&log->syncwait);
+			/* wakeup all रुकोors क्रम logsync barrier */
+			TXN_WAKEUP(&log->syncरुको);
 
-			goto wakeup;
-		}
-	}
+			जाओ wakeup;
+		पूर्ण
+	पूर्ण
 
 	TXN_UNLOCK();
 wakeup:
 	/*
-	 * wakeup all waitors for a free tblock
+	 * wakeup all रुकोors क्रम a मुक्त tblock
 	 */
-	TXN_WAKEUP(&TxAnchor.freewait);
-}
+	TXN_WAKEUP(&TxAnchor.मुक्तरुको);
+पूर्ण
 
 /*
  *	txLock()
  *
- * function: acquire a transaction lock on the specified <mp>
+ * function: acquire a transaction lock on the specअगरied <mp>
  *
  * parameter:
  *
- * return:	transaction lock id
+ * वापस:	transaction lock id
  *
  * serialization:
  */
-struct tlock *txLock(tid_t tid, struct inode *ip, struct metapage * mp,
-		     int type)
-{
-	struct jfs_inode_info *jfs_ip = JFS_IP(ip);
-	int dir_xtree = 0;
+काष्ठा tlock *txLock(tid_t tid, काष्ठा inode *ip, काष्ठा metapage * mp,
+		     पूर्णांक type)
+अणु
+	काष्ठा jfs_inode_info *jfs_ip = JFS_IP(ip);
+	पूर्णांक dir_xtree = 0;
 	lid_t lid;
 	tid_t xtid;
-	struct tlock *tlck;
-	struct xtlock *xtlck;
-	struct linelock *linelock;
+	काष्ठा tlock *tlck;
+	काष्ठा xtlock *xtlck;
+	काष्ठा linelock *linelock;
 	xtpage_t *p;
-	struct tblock *tblk;
+	काष्ठा tblock *tblk;
 
 	TXN_LOCK();
 
-	if (S_ISDIR(ip->i_mode) && (type & tlckXTREE) &&
-	    !(mp->xflag & COMMIT_PAGE)) {
+	अगर (S_ISसूची(ip->i_mode) && (type & tlckXTREE) &&
+	    !(mp->xflag & COMMIT_PAGE)) अणु
 		/*
 		 * Directory inode is special.  It can have both an xtree tlock
 		 * and a dtree tlock associated with it.
 		 */
 		dir_xtree = 1;
 		lid = jfs_ip->xtlid;
-	} else
+	पूर्ण अन्यथा
 		lid = mp->lid;
 
 	/* is page not locked by a transaction ? */
-	if (lid == 0)
-		goto allocateLock;
+	अगर (lid == 0)
+		जाओ allocateLock;
 
 	jfs_info("txLock: tid:%d ip:0x%p mp:0x%p lid:%d", tid, ip, mp, lid);
 
 	/* is page locked by the requester transaction ? */
 	tlck = lid_to_tlock(lid);
-	if ((xtid = tlck->tid) == tid) {
+	अगर ((xtid = tlck->tid) == tid) अणु
 		TXN_UNLOCK();
-		goto grantLock;
-	}
+		जाओ grantLock;
+	पूर्ण
 
 	/*
 	 * is page locked by anonymous transaction/lock ?
 	 *
-	 * (page update without transaction (i.e., file write) is
+	 * (page update without transaction (i.e., file ग_लिखो) is
 	 * locked under anonymous transaction tid = 0:
-	 * anonymous tlocks maintained on anonymous tlock list of
+	 * anonymous tlocks मुख्यtained on anonymous tlock list of
 	 * the inode of the page and available to all anonymous
-	 * transactions until txCommit() time at which point
+	 * transactions until txCommit() समय at which poपूर्णांक
 	 * they are transferred to the transaction tlock list of
 	 * the committing transaction of the inode)
 	 */
-	if (xtid == 0) {
+	अगर (xtid == 0) अणु
 		tlck->tid = tid;
 		TXN_UNLOCK();
 		tblk = tid_to_tblock(tid);
 		/*
 		 * The order of the tlocks in the transaction is important
-		 * (during truncate, child xtree pages must be freed before
+		 * (during truncate, child xtree pages must be मुक्तd beक्रमe
 		 * parent's tlocks change the working map).
 		 * Take tlock off anonymous list and add to tail of
 		 * transaction list
@@ -638,41 +639,41 @@ struct tlock *txLock(tid_t tid, struct inode *ip, struct metapage * mp,
 		 * Note:  We really need to get rid of the tid & lid and
 		 * use list_head's.  This code is getting UGLY!
 		 */
-		if (jfs_ip->atlhead == lid) {
-			if (jfs_ip->atltail == lid) {
+		अगर (jfs_ip->atlhead == lid) अणु
+			अगर (jfs_ip->atltail == lid) अणु
 				/* only anonymous txn.
 				 * Remove from anon_list
 				 */
 				TXN_LOCK();
 				list_del_init(&jfs_ip->anon_inode_list);
 				TXN_UNLOCK();
-			}
+			पूर्ण
 			jfs_ip->atlhead = tlck->next;
-		} else {
+		पूर्ण अन्यथा अणु
 			lid_t last;
-			for (last = jfs_ip->atlhead;
+			क्रम (last = jfs_ip->atlhead;
 			     lid_to_tlock(last)->next != lid;
-			     last = lid_to_tlock(last)->next) {
-				assert(last);
-			}
+			     last = lid_to_tlock(last)->next) अणु
+				निश्चित(last);
+			पूर्ण
 			lid_to_tlock(last)->next = tlck->next;
-			if (jfs_ip->atltail == lid)
+			अगर (jfs_ip->atltail == lid)
 				jfs_ip->atltail = last;
-		}
+		पूर्ण
 
 		/* insert the tlock at tail of transaction tlock list */
 
-		if (tblk->next)
+		अगर (tblk->next)
 			lid_to_tlock(tblk->last)->next = lid;
-		else
+		अन्यथा
 			tblk->next = lid;
 		tlck->next = 0;
 		tblk->last = lid;
 
-		goto grantLock;
-	}
+		जाओ grantLock;
+	पूर्ण
 
-	goto waitLock;
+	जाओ रुकोLock;
 
 	/*
 	 * allocate a tlock
@@ -688,8 +689,8 @@ struct tlock *txLock(tid_t tid, struct inode *ip, struct metapage * mp,
 
 	TXN_UNLOCK();
 
-	/* mark tlock for meta-data page */
-	if (mp->xflag & COMMIT_PAGE) {
+	/* mark tlock क्रम meta-data page */
+	अगर (mp->xflag & COMMIT_PAGE) अणु
 
 		tlck->flag = tlckPAGELOCK;
 
@@ -699,107 +700,107 @@ struct tlock *txLock(tid_t tid, struct inode *ip, struct metapage * mp,
 		jfs_info("locking mp = 0x%p, nohomeok = %d tid = %d tlck = 0x%p",
 			 mp, mp->nohomeok, tid, tlck);
 
-		/* if anonymous transaction, and buffer is on the group
+		/* अगर anonymous transaction, and buffer is on the group
 		 * commit synclist, mark inode to show this.  This will
-		 * prevent the buffer from being marked nohomeok for too
-		 * long a time.
+		 * prevent the buffer from being marked nohomeok क्रम too
+		 * दीर्घ a समय.
 		 */
-		if ((tid == 0) && mp->lsn)
+		अगर ((tid == 0) && mp->lsn)
 			set_cflag(COMMIT_Synclist, ip);
-	}
-	/* mark tlock for in-memory inode */
-	else
+	पूर्ण
+	/* mark tlock क्रम in-memory inode */
+	अन्यथा
 		tlck->flag = tlckINODELOCK;
 
-	if (S_ISDIR(ip->i_mode))
-		tlck->flag |= tlckDIRECTORY;
+	अगर (S_ISसूची(ip->i_mode))
+		tlck->flag |= tlckसूचीECTORY;
 
 	tlck->type = 0;
 
 	/* bind the tlock and the page */
 	tlck->ip = ip;
 	tlck->mp = mp;
-	if (dir_xtree)
+	अगर (dir_xtree)
 		jfs_ip->xtlid = lid;
-	else
+	अन्यथा
 		mp->lid = lid;
 
 	/*
 	 * enqueue transaction lock to transaction/inode
 	 */
 	/* insert the tlock at tail of transaction tlock list */
-	if (tid) {
+	अगर (tid) अणु
 		tblk = tid_to_tblock(tid);
-		if (tblk->next)
+		अगर (tblk->next)
 			lid_to_tlock(tblk->last)->next = lid;
-		else
+		अन्यथा
 			tblk->next = lid;
 		tlck->next = 0;
 		tblk->last = lid;
-	}
+	पूर्ण
 	/* anonymous transaction:
 	 * insert the tlock at head of inode anonymous tlock list
 	 */
-	else {
+	अन्यथा अणु
 		tlck->next = jfs_ip->atlhead;
 		jfs_ip->atlhead = lid;
-		if (tlck->next == 0) {
+		अगर (tlck->next == 0) अणु
 			/* This inode's first anonymous transaction */
 			jfs_ip->atltail = lid;
 			TXN_LOCK();
 			list_add_tail(&jfs_ip->anon_inode_list,
 				      &TxAnchor.anon_list);
 			TXN_UNLOCK();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* initialize type dependent area for linelock */
-	linelock = (struct linelock *) & tlck->lock;
+	/* initialize type dependent area क्रम linelock */
+	linelock = (काष्ठा linelock *) & tlck->lock;
 	linelock->next = 0;
 	linelock->flag = tlckLINELOCK;
 	linelock->maxcnt = TLOCKSHORT;
 	linelock->index = 0;
 
-	switch (type & tlckTYPE) {
-	case tlckDTREE:
+	चयन (type & tlckTYPE) अणु
+	हाल tlckDTREE:
 		linelock->l2linesize = L2DTSLOTSIZE;
-		break;
+		अवरोध;
 
-	case tlckXTREE:
+	हाल tlckXTREE:
 		linelock->l2linesize = L2XTSLOTSIZE;
 
-		xtlck = (struct xtlock *) linelock;
+		xtlck = (काष्ठा xtlock *) linelock;
 		xtlck->header.offset = 0;
 		xtlck->header.length = 2;
 
-		if (type & tlckNEW) {
+		अगर (type & tlckNEW) अणु
 			xtlck->lwm.offset = XTENTRYSTART;
-		} else {
-			if (mp->xflag & COMMIT_PAGE)
+		पूर्ण अन्यथा अणु
+			अगर (mp->xflag & COMMIT_PAGE)
 				p = (xtpage_t *) mp->data;
-			else
+			अन्यथा
 				p = &jfs_ip->i_xtroot;
 			xtlck->lwm.offset =
 			    le16_to_cpu(p->header.nextindex);
-		}
+		पूर्ण
 		xtlck->lwm.length = 0;	/* ! */
 		xtlck->twm.offset = 0;
 		xtlck->hwm.offset = 0;
 
 		xtlck->index = 2;
-		break;
+		अवरोध;
 
-	case tlckINODE:
+	हाल tlckINODE:
 		linelock->l2linesize = L2INODESLOTSIZE;
-		break;
+		अवरोध;
 
-	case tlckDATA:
+	हाल tlckDATA:
 		linelock->l2linesize = L2DATASLOTSIZE;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		jfs_err("UFO tlock:0x%p", tlck);
-	}
+	पूर्ण
 
 	/*
 	 * update tlock vector
@@ -807,28 +808,28 @@ struct tlock *txLock(tid_t tid, struct inode *ip, struct metapage * mp,
       grantLock:
 	tlck->type |= type;
 
-	return tlck;
+	वापस tlck;
 
 	/*
 	 * page is being locked by another transaction:
 	 */
-      waitLock:
+      रुकोLock:
 	/* Only locks on ipimap or ipaimap should reach here */
-	/* assert(jfs_ip->fileset == AGGREGATE_I); */
-	if (jfs_ip->fileset != AGGREGATE_I) {
-		printk(KERN_ERR "txLock: trying to lock locked page!");
-		print_hex_dump(KERN_ERR, "ip: ", DUMP_PREFIX_ADDRESS, 16, 4,
-			       ip, sizeof(*ip), 0);
-		print_hex_dump(KERN_ERR, "mp: ", DUMP_PREFIX_ADDRESS, 16, 4,
-			       mp, sizeof(*mp), 0);
-		print_hex_dump(KERN_ERR, "Locker's tblock: ",
+	/* निश्चित(jfs_ip->fileset == AGGREGATE_I); */
+	अगर (jfs_ip->fileset != AGGREGATE_I) अणु
+		prपूर्णांकk(KERN_ERR "txLock: trying to lock locked page!");
+		prपूर्णांक_hex_dump(KERN_ERR, "ip: ", DUMP_PREFIX_ADDRESS, 16, 4,
+			       ip, माप(*ip), 0);
+		prपूर्णांक_hex_dump(KERN_ERR, "mp: ", DUMP_PREFIX_ADDRESS, 16, 4,
+			       mp, माप(*mp), 0);
+		prपूर्णांक_hex_dump(KERN_ERR, "Locker's tblock: ",
 			       DUMP_PREFIX_ADDRESS, 16, 4, tid_to_tblock(tid),
-			       sizeof(struct tblock), 0);
-		print_hex_dump(KERN_ERR, "Tlock: ", DUMP_PREFIX_ADDRESS, 16, 4,
-			       tlck, sizeof(*tlck), 0);
+			       माप(काष्ठा tblock), 0);
+		prपूर्णांक_hex_dump(KERN_ERR, "Tlock: ", DUMP_PREFIX_ADDRESS, 16, 4,
+			       tlck, माप(*tlck), 0);
 		BUG();
-	}
-	INCREMENT(stattx.waitlock);	/* statistics */
+	पूर्ण
+	INCREMENT(stattx.रुकोlock);	/* statistics */
 	TXN_UNLOCK();
 	release_metapage(mp);
 	TXN_LOCK();
@@ -838,69 +839,69 @@ struct tlock *txLock(tid_t tid, struct inode *ip, struct metapage * mp,
 		 tid, xtid, lid);
 
 	/* Recheck everything since dropping TXN_LOCK */
-	if (xtid && (tlck->mp == mp) && (mp->lid == lid))
-		TXN_SLEEP_DROP_LOCK(&tid_to_tblock(xtid)->waitor);
-	else
+	अगर (xtid && (tlck->mp == mp) && (mp->lid == lid))
+		TXN_SLEEP_DROP_LOCK(&tid_to_tblock(xtid)->रुकोor);
+	अन्यथा
 		TXN_UNLOCK();
 	jfs_info("txLock: awakened     tid = %d, lid = %d", tid, lid);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * NAME:	txRelease()
  *
- * FUNCTION:	Release buffers associated with transaction locks, but don't
- *		mark homeok yet.  The allows other transactions to modify
+ * FUNCTION:	Release buffers associated with transaction locks, but करोn't
+ *		mark homeok yet.  The allows other transactions to modअगरy
  *		buffers, but won't let them go to disk until commit record
- *		actually gets written.
+ *		actually माला_लो written.
  *
  * PARAMETER:
  *		tblk	-
  *
  * RETURN:	Errors from subroutines.
  */
-static void txRelease(struct tblock * tblk)
-{
-	struct metapage *mp;
+अटल व्योम txRelease(काष्ठा tblock * tblk)
+अणु
+	काष्ठा metapage *mp;
 	lid_t lid;
-	struct tlock *tlck;
+	काष्ठा tlock *tlck;
 
 	TXN_LOCK();
 
-	for (lid = tblk->next; lid; lid = tlck->next) {
+	क्रम (lid = tblk->next; lid; lid = tlck->next) अणु
 		tlck = lid_to_tlock(lid);
-		if ((mp = tlck->mp) != NULL &&
-		    (tlck->type & tlckBTROOT) == 0) {
-			assert(mp->xflag & COMMIT_PAGE);
+		अगर ((mp = tlck->mp) != शून्य &&
+		    (tlck->type & tlckBTROOT) == 0) अणु
+			निश्चित(mp->xflag & COMMIT_PAGE);
 			mp->lid = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * wakeup transactions waiting on a page locked
+	 * wakeup transactions रुकोing on a page locked
 	 * by the current transaction
 	 */
-	TXN_WAKEUP(&tblk->waitor);
+	TXN_WAKEUP(&tblk->रुकोor);
 
 	TXN_UNLOCK();
-}
+पूर्ण
 
 /*
  * NAME:	txUnlock()
  *
- * FUNCTION:	Initiates pageout of pages modified by tid in journalled
- *		objects and frees their lockwords.
+ * FUNCTION:	Initiates pageout of pages modअगरied by tid in journalled
+ *		objects and मुक्तs their lockwords.
  */
-static void txUnlock(struct tblock * tblk)
-{
-	struct tlock *tlck;
-	struct linelock *linelock;
+अटल व्योम txUnlock(काष्ठा tblock * tblk)
+अणु
+	काष्ठा tlock *tlck;
+	काष्ठा linelock *linelock;
 	lid_t lid, next, llid, k;
-	struct metapage *mp;
-	struct jfs_log *log;
-	int difft, diffp;
-	unsigned long flags;
+	काष्ठा metapage *mp;
+	काष्ठा jfs_log *log;
+	पूर्णांक dअगरft, dअगरfp;
+	अचिन्हित दीर्घ flags;
 
 	jfs_info("txUnlock: tblk = 0x%p", tblk);
 	log = JFS_SBI(tblk->sb)->log;
@@ -908,84 +909,84 @@ static void txUnlock(struct tblock * tblk)
 	/*
 	 * mark page under tlock homeok (its log has been written):
 	 */
-	for (lid = tblk->next; lid; lid = next) {
+	क्रम (lid = tblk->next; lid; lid = next) अणु
 		tlck = lid_to_tlock(lid);
 		next = tlck->next;
 
 		jfs_info("unlocking lid = %d, tlck = 0x%p", lid, tlck);
 
 		/* unbind page from tlock */
-		if ((mp = tlck->mp) != NULL &&
-		    (tlck->type & tlckBTROOT) == 0) {
-			assert(mp->xflag & COMMIT_PAGE);
+		अगर ((mp = tlck->mp) != शून्य &&
+		    (tlck->type & tlckBTROOT) == 0) अणु
+			निश्चित(mp->xflag & COMMIT_PAGE);
 
 			/* hold buffer
 			 */
 			hold_metapage(mp);
 
-			assert(mp->nohomeok > 0);
+			निश्चित(mp->nohomeok > 0);
 			_metapage_homeok(mp);
 
 			/* inherit younger/larger clsn */
 			LOGSYNC_LOCK(log, flags);
-			if (mp->clsn) {
-				logdiff(difft, tblk->clsn, log);
-				logdiff(diffp, mp->clsn, log);
-				if (difft > diffp)
+			अगर (mp->clsn) अणु
+				logdअगरf(dअगरft, tblk->clsn, log);
+				logdअगरf(dअगरfp, mp->clsn, log);
+				अगर (dअगरft > dअगरfp)
 					mp->clsn = tblk->clsn;
-			} else
+			पूर्ण अन्यथा
 				mp->clsn = tblk->clsn;
 			LOGSYNC_UNLOCK(log, flags);
 
-			assert(!(tlck->flag & tlckFREEPAGE));
+			निश्चित(!(tlck->flag & tlckFREEPAGE));
 
 			put_metapage(mp);
-		}
+		पूर्ण
 
-		/* insert tlock, and linelock(s) of the tlock if any,
-		 * at head of freelist
+		/* insert tlock, and linelock(s) of the tlock अगर any,
+		 * at head of मुक्तlist
 		 */
 		TXN_LOCK();
 
-		llid = ((struct linelock *) & tlck->lock)->next;
-		while (llid) {
-			linelock = (struct linelock *) lid_to_tlock(llid);
+		llid = ((काष्ठा linelock *) & tlck->lock)->next;
+		जबतक (llid) अणु
+			linelock = (काष्ठा linelock *) lid_to_tlock(llid);
 			k = linelock->next;
 			txLockFree(llid);
 			llid = k;
-		}
+		पूर्ण
 		txLockFree(lid);
 
 		TXN_UNLOCK();
-	}
+	पूर्ण
 	tblk->next = tblk->last = 0;
 
 	/*
-	 * remove tblock from logsynclist
+	 * हटाओ tblock from logsynclist
 	 * (allocation map pages inherited lsn of tblk and
 	 * has been inserted in logsync list at txUpdateMap())
 	 */
-	if (tblk->lsn) {
+	अगर (tblk->lsn) अणु
 		LOGSYNC_LOCK(log, flags);
 		log->count--;
 		list_del(&tblk->synclist);
 		LOGSYNC_UNLOCK(log, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	txMaplock()
  *
- * function: allocate a transaction lock for freed page/entry;
- *	for freed page, maplock is used as xtlock/dtlock type;
+ * function: allocate a transaction lock क्रम मुक्तd page/entry;
+ *	क्रम मुक्तd page, maplock is used as xtlock/dtlock type;
  */
-struct tlock *txMaplock(tid_t tid, struct inode *ip, int type)
-{
-	struct jfs_inode_info *jfs_ip = JFS_IP(ip);
+काष्ठा tlock *txMaplock(tid_t tid, काष्ठा inode *ip, पूर्णांक type)
+अणु
+	काष्ठा jfs_inode_info *jfs_ip = JFS_IP(ip);
 	lid_t lid;
-	struct tblock *tblk;
-	struct tlock *tlck;
-	struct maplock *maplock;
+	काष्ठा tblock *tblk;
+	काष्ठा tlock *tlck;
+	काष्ठा maplock *maplock;
 
 	TXN_LOCK();
 
@@ -1002,10 +1003,10 @@ struct tlock *txMaplock(tid_t tid, struct inode *ip, int type)
 
 	/* bind the tlock and the object */
 	tlck->flag = tlckINODELOCK;
-	if (S_ISDIR(ip->i_mode))
-		tlck->flag |= tlckDIRECTORY;
+	अगर (S_ISसूची(ip->i_mode))
+		tlck->flag |= tlckसूचीECTORY;
 	tlck->ip = ip;
-	tlck->mp = NULL;
+	tlck->mp = शून्य;
 
 	tlck->type = type;
 
@@ -1013,74 +1014,74 @@ struct tlock *txMaplock(tid_t tid, struct inode *ip, int type)
 	 * enqueue transaction lock to transaction/inode
 	 */
 	/* insert the tlock at tail of transaction tlock list */
-	if (tid) {
+	अगर (tid) अणु
 		tblk = tid_to_tblock(tid);
-		if (tblk->next)
+		अगर (tblk->next)
 			lid_to_tlock(tblk->last)->next = lid;
-		else
+		अन्यथा
 			tblk->next = lid;
 		tlck->next = 0;
 		tblk->last = lid;
-	}
+	पूर्ण
 	/* anonymous transaction:
 	 * insert the tlock at head of inode anonymous tlock list
 	 */
-	else {
+	अन्यथा अणु
 		tlck->next = jfs_ip->atlhead;
 		jfs_ip->atlhead = lid;
-		if (tlck->next == 0) {
+		अगर (tlck->next == 0) अणु
 			/* This inode's first anonymous transaction */
 			jfs_ip->atltail = lid;
 			list_add_tail(&jfs_ip->anon_inode_list,
 				      &TxAnchor.anon_list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	TXN_UNLOCK();
 
-	/* initialize type dependent area for maplock */
-	maplock = (struct maplock *) & tlck->lock;
+	/* initialize type dependent area क्रम maplock */
+	maplock = (काष्ठा maplock *) & tlck->lock;
 	maplock->next = 0;
 	maplock->maxcnt = 0;
 	maplock->index = 0;
 
-	return tlck;
-}
+	वापस tlck;
+पूर्ण
 
 /*
  *	txLinelock()
  *
- * function: allocate a transaction lock for log vector list
+ * function: allocate a transaction lock क्रम log vector list
  */
-struct linelock *txLinelock(struct linelock * tlock)
-{
+काष्ठा linelock *txLinelock(काष्ठा linelock * tlock)
+अणु
 	lid_t lid;
-	struct tlock *tlck;
-	struct linelock *linelock;
+	काष्ठा tlock *tlck;
+	काष्ठा linelock *linelock;
 
 	TXN_LOCK();
 
-	/* allocate a TxLock structure */
+	/* allocate a TxLock काष्ठाure */
 	lid = txLockAlloc();
 	tlck = lid_to_tlock(lid);
 
 	TXN_UNLOCK();
 
 	/* initialize linelock */
-	linelock = (struct linelock *) tlck;
+	linelock = (काष्ठा linelock *) tlck;
 	linelock->next = 0;
 	linelock->flag = tlckLINELOCK;
 	linelock->maxcnt = TLOCKLONG;
 	linelock->index = 0;
-	if (tlck->flag & tlckDIRECTORY)
-		linelock->flag |= tlckDIRECTORY;
+	अगर (tlck->flag & tlckसूचीECTORY)
+		linelock->flag |= tlckसूचीECTORY;
 
 	/* append linelock after tlock */
 	linelock->next = tlock->next;
 	tlock->next = lid;
 
-	return linelock;
-}
+	वापस linelock;
+पूर्ण
 
 /*
  *		transaction commit management
@@ -1090,24 +1091,24 @@ struct linelock *txLinelock(struct linelock * tlock)
 /*
  * NAME:	txCommit()
  *
- * FUNCTION:	commit the changes to the objects specified in
+ * FUNCTION:	commit the changes to the objects specअगरied in
  *		clist.  For journalled segments only the
  *		changes of the caller are committed, ie by tid.
- *		for non-journalled segments the data are flushed to
+ *		क्रम non-journalled segments the data are flushed to
  *		disk and then the change to the disk inode and indirect
  *		blocks committed (so blocks newly allocated to the
  *		segment will be made a part of the segment atomically).
  *
- *		all of the segments specified in clist must be in
- *		one file system. no more than 6 segments are needed
+ *		all of the segments specअगरied in clist must be in
+ *		one file प्रणाली. no more than 6 segments are needed
  *		to handle all unix svcs.
  *
- *		if the i_nlink field (i.e. disk inode link count)
+ *		अगर the i_nlink field (i.e. disk inode link count)
  *		is zero, and the type of inode is a regular file or
  *		directory, or symbolic link , the inode is truncated
  *		to zero length. the truncation is committed but the
- *		VM resources are unaffected until it is closed (see
- *		iput and iclose).
+ *		VM resources are unaffected until it is बंदd (see
+ *		iput and iबंद).
  *
  * PARAMETER:
  *
@@ -1119,38 +1120,38 @@ struct linelock *txLinelock(struct linelock * tlock)
  *
  * i/o error:
  */
-int txCommit(tid_t tid,		/* transaction identifier */
-	     int nip,		/* number of inodes to commit */
-	     struct inode **iplist,	/* list of inode to commit */
-	     int flag)
-{
-	int rc = 0;
-	struct commit cd;
-	struct jfs_log *log;
-	struct tblock *tblk;
-	struct lrd *lrd;
-	struct inode *ip;
-	struct jfs_inode_info *jfs_ip;
-	int k, n;
+पूर्णांक txCommit(tid_t tid,		/* transaction identअगरier */
+	     पूर्णांक nip,		/* number of inodes to commit */
+	     काष्ठा inode **iplist,	/* list of inode to commit */
+	     पूर्णांक flag)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा commit cd;
+	काष्ठा jfs_log *log;
+	काष्ठा tblock *tblk;
+	काष्ठा lrd *lrd;
+	काष्ठा inode *ip;
+	काष्ठा jfs_inode_info *jfs_ip;
+	पूर्णांक k, n;
 	ino_t top;
-	struct super_block *sb;
+	काष्ठा super_block *sb;
 
 	jfs_info("txCommit, tid = %d, flag = %d", tid, flag);
-	/* is read-only file system ? */
-	if (isReadOnly(iplist[0])) {
+	/* is पढ़ो-only file प्रणाली ? */
+	अगर (isReadOnly(iplist[0])) अणु
 		rc = -EROFS;
-		goto TheEnd;
-	}
+		जाओ TheEnd;
+	पूर्ण
 
 	sb = cd.sb = iplist[0]->i_sb;
 	cd.tid = tid;
 
-	if (tid == 0)
+	अगर (tid == 0)
 		tid = txBegin(sb, 0);
 	tblk = tid_to_tblock(tid);
 
 	/*
-	 * initialize commit structure
+	 * initialize commit काष्ठाure
 	 */
 	log = JFS_SBI(sb)->log;
 	cd.log = log;
@@ -1162,14 +1163,14 @@ int txCommit(tid_t tid,		/* transaction identifier */
 
 	tblk->xflag |= flag;
 
-	if ((flag & (COMMIT_FORCE | COMMIT_SYNC)) == 0)
+	अगर ((flag & (COMMIT_FORCE | COMMIT_SYNC)) == 0)
 		tblk->xflag |= COMMIT_LAZY;
 	/*
-	 *	prepare non-journaled objects for commit
+	 *	prepare non-journaled objects क्रम commit
 	 *
 	 * flush data pages of non-journaled file
 	 * to prevent the file getting non-initialized disk blocks
-	 * in case of crash.
+	 * in हाल of crash.
 	 * (new blocks - )
 	 */
 	cd.iplist = iplist;
@@ -1179,7 +1180,7 @@ int txCommit(tid_t tid,		/* transaction identifier */
 	 *	acquire transaction lock on (on-disk) inodes
 	 *
 	 * update on-disk inode from in-memory inode
-	 * acquiring transaction locks for AFTER records
+	 * acquiring transaction locks क्रम AFTER records
 	 * on the on-disk inode of file object
 	 *
 	 * sort the inodes array by inode number in descending order
@@ -1187,114 +1188,114 @@ int txCommit(tid_t tid,		/* transaction identifier */
 	 * of on-disk inodes on multiple on-disk inode pages by
 	 * multiple concurrent transactions
 	 */
-	for (k = 0; k < cd.nip; k++) {
+	क्रम (k = 0; k < cd.nip; k++) अणु
 		top = (cd.iplist[k])->i_ino;
-		for (n = k + 1; n < cd.nip; n++) {
+		क्रम (n = k + 1; n < cd.nip; n++) अणु
 			ip = cd.iplist[n];
-			if (ip->i_ino > top) {
+			अगर (ip->i_ino > top) अणु
 				top = ip->i_ino;
 				cd.iplist[n] = cd.iplist[k];
 				cd.iplist[k] = ip;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		ip = cd.iplist[k];
 		jfs_ip = JFS_IP(ip);
 
 		/*
-		 * BUGBUG - This code has temporarily been removed.  The
-		 * intent is to ensure that any file data is written before
+		 * BUGBUG - This code has temporarily been हटाओd.  The
+		 * पूर्णांकent is to ensure that any file data is written beक्रमe
 		 * the metadata is committed to the journal.  This prevents
 		 * uninitialized data from appearing in a file after the
 		 * journal has been replayed.  (The uninitialized data
-		 * could be sensitive data removed by another user.)
+		 * could be sensitive data हटाओd by another user.)
 		 *
 		 * The problem now is that we are holding the IWRITELOCK
-		 * on the inode, and calling filemap_fdatawrite on an
+		 * on the inode, and calling filemap_fdataग_लिखो on an
 		 * unmapped page will cause a deadlock in jfs_get_block.
 		 *
-		 * The long term solution is to pare down the use of
-		 * IWRITELOCK.  We are currently holding it too long.
+		 * The दीर्घ term solution is to pare करोwn the use of
+		 * IWRITELOCK.  We are currently holding it too दीर्घ.
 		 * We could also be smarter about which data pages need
-		 * to be written before the transaction is committed and
-		 * when we don't need to worry about it at all.
+		 * to be written beक्रमe the transaction is committed and
+		 * when we करोn't need to worry about it at all.
 		 *
-		 * if ((!S_ISDIR(ip->i_mode))
+		 * अगर ((!S_ISसूची(ip->i_mode))
 		 *    && (tblk->flag & COMMIT_DELETE) == 0)
-		 *	filemap_write_and_wait(ip->i_mapping);
+		 *	filemap_ग_लिखो_and_रुको(ip->i_mapping);
 		 */
 
 		/*
 		 * Mark inode as not dirty.  It will still be on the dirty
 		 * inode list, but we'll know not to commit it again unless
-		 * it gets marked dirty again
+		 * it माला_लो marked dirty again
 		 */
 		clear_cflag(COMMIT_Dirty, ip);
 
 		/* inherit anonymous tlock(s) of inode */
-		if (jfs_ip->atlhead) {
+		अगर (jfs_ip->atlhead) अणु
 			lid_to_tlock(jfs_ip->atltail)->next = tblk->next;
 			tblk->next = jfs_ip->atlhead;
-			if (!tblk->last)
+			अगर (!tblk->last)
 				tblk->last = jfs_ip->atltail;
 			jfs_ip->atlhead = jfs_ip->atltail = 0;
 			TXN_LOCK();
 			list_del_init(&jfs_ip->anon_inode_list);
 			TXN_UNLOCK();
-		}
+		पूर्ण
 
 		/*
 		 * acquire transaction lock on on-disk inode page
 		 * (become first tlock of the tblk's tlock list)
 		 */
-		if (((rc = diWrite(tid, ip))))
-			goto out;
-	}
+		अगर (((rc = diWrite(tid, ip))))
+			जाओ out;
+	पूर्ण
 
 	/*
-	 *	write log records from transaction locks
+	 *	ग_लिखो log records from transaction locks
 	 *
 	 * txUpdateMap() resets XAD_NEW in XAD.
 	 */
 	txLog(log, tblk, &cd);
 
 	/*
-	 * Ensure that inode isn't reused before
-	 * lazy commit thread finishes processing
+	 * Ensure that inode isn't reused beक्रमe
+	 * lazy commit thपढ़ो finishes processing
 	 */
-	if (tblk->xflag & COMMIT_DELETE) {
+	अगर (tblk->xflag & COMMIT_DELETE) अणु
 		ihold(tblk->u.ip);
 		/*
-		 * Avoid a rare deadlock
+		 * Aव्योम a rare deadlock
 		 *
 		 * If the inode is locked, we may be blocked in
-		 * jfs_commit_inode.  If so, we don't want the
-		 * lazy_commit thread doing the last iput() on the inode
+		 * jfs_commit_inode.  If so, we करोn't want the
+		 * lazy_commit thपढ़ो करोing the last iput() on the inode
 		 * since that may block on the locked inode.  Instead,
 		 * commit the transaction synchronously, so the last iput
-		 * will be done by the calling thread (or later)
+		 * will be करोne by the calling thपढ़ो (or later)
 		 */
 		/*
-		 * I believe this code is no longer needed.  Splitting I_LOCK
-		 * into two bits, I_NEW and I_SYNC should prevent this
-		 * deadlock as well.  But since I don't have a JFS testload
-		 * to verify this, only a trivial s/I_LOCK/I_SYNC/ was done.
+		 * I believe this code is no दीर्घer needed.  Splitting I_LOCK
+		 * पूर्णांकo two bits, I_NEW and I_SYNC should prevent this
+		 * deadlock as well.  But since I करोn't have a JFS testload
+		 * to verअगरy this, only a trivial s/I_LOCK/I_SYNC/ was करोne.
 		 * Joern
 		 */
-		if (tblk->u.ip->i_state & I_SYNC)
+		अगर (tblk->u.ip->i_state & I_SYNC)
 			tblk->xflag &= ~COMMIT_LAZY;
-	}
+	पूर्ण
 
 	ASSERT((!(tblk->xflag & COMMIT_DELETE)) ||
 	       ((tblk->u.ip->i_nlink == 0) &&
 		!test_cflag(COMMIT_Nolink, tblk->u.ip)));
 
 	/*
-	 *	write COMMIT log record
+	 *	ग_लिखो COMMIT log record
 	 */
 	lrd->type = cpu_to_le16(LOG_COMMIT);
 	lrd->length = 0;
-	lmLog(log, tblk, lrd, NULL);
+	lmLog(log, tblk, lrd, शून्य);
 
 	lmGroupCommit(log, tblk);
 
@@ -1303,37 +1304,37 @@ int txCommit(tid_t tid,		/* transaction identifier */
 	 */
 
 	/*
-	 * force pages in careful update
-	 * (imap addressing structure update)
+	 * क्रमce pages in careful update
+	 * (imap addressing काष्ठाure update)
 	 */
-	if (flag & COMMIT_FORCE)
+	अगर (flag & COMMIT_FORCE)
 		txForce(tblk);
 
 	/*
 	 *	update allocation map.
 	 *
 	 * update inode allocation map and inode:
-	 * free pager lock on memory object of inode if any.
+	 * मुक्त pager lock on memory object of inode अगर any.
 	 * update block allocation map.
 	 *
 	 * txUpdateMap() resets XAD_NEW in XAD.
 	 */
-	if (tblk->xflag & COMMIT_FORCE)
+	अगर (tblk->xflag & COMMIT_FORCE)
 		txUpdateMap(tblk);
 
 	/*
-	 *	free transaction locks and pageout/free pages
+	 *	मुक्त transaction locks and pageout/मुक्त pages
 	 */
 	txRelease(tblk);
 
-	if ((tblk->flag & tblkGC_LAZY) == 0)
+	अगर ((tblk->flag & tblkGC_LAZY) == 0)
 		txUnlock(tblk);
 
 
 	/*
 	 *	reset in-memory object state
 	 */
-	for (k = 0; k < cd.nip; k++) {
+	क्रम (k = 0; k < cd.nip; k++) अणु
 		ip = cd.iplist[k];
 		jfs_ip = JFS_IP(ip);
 
@@ -1342,39 +1343,39 @@ int txCommit(tid_t tid,		/* transaction identifier */
 		 */
 		jfs_ip->bxflag = 0;
 		jfs_ip->blid = 0;
-	}
+	पूर्ण
 
       out:
-	if (rc != 0)
+	अगर (rc != 0)
 		txAbort(tid, 1);
 
       TheEnd:
 	jfs_info("txCommit: tid = %d, returning %d", tid, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * NAME:	txLog()
  *
- * FUNCTION:	Writes AFTER log records for all lines modified
- *		by tid for segments specified by inodes in comdata.
+ * FUNCTION:	Writes AFTER log records क्रम all lines modअगरied
+ *		by tid क्रम segments specअगरied by inodes in comdata.
  *		Code assumes only WRITELOCKS are recorded in lockwords.
  *
  * PARAMETERS:
  *
  * RETURN :
  */
-static void txLog(struct jfs_log *log, struct tblock *tblk, struct commit *cd)
-{
-	struct inode *ip;
+अटल व्योम txLog(काष्ठा jfs_log *log, काष्ठा tblock *tblk, काष्ठा commit *cd)
+अणु
+	काष्ठा inode *ip;
 	lid_t lid;
-	struct tlock *tlck;
-	struct lrd *lrd = &cd->lrd;
+	काष्ठा tlock *tlck;
+	काष्ठा lrd *lrd = &cd->lrd;
 
 	/*
-	 * write log record(s) for each tlock of transaction,
+	 * ग_लिखो log record(s) क्रम each tlock of transaction,
 	 */
-	for (lid = tblk->next; lid; lid = tlck->next) {
+	क्रम (lid = tblk->next; lid; lid = tlck->next) अणु
 		tlck = lid_to_tlock(lid);
 
 		tlck->flag |= tlckLOG;
@@ -1382,64 +1383,64 @@ static void txLog(struct jfs_log *log, struct tblock *tblk, struct commit *cd)
 		/* initialize lrd common */
 		ip = tlck->ip;
 		lrd->aggregate = cpu_to_le32(JFS_SBI(ip->i_sb)->aggregate);
-		lrd->log.redopage.fileset = cpu_to_le32(JFS_IP(ip)->fileset);
-		lrd->log.redopage.inode = cpu_to_le32(ip->i_ino);
+		lrd->log.reकरोpage.fileset = cpu_to_le32(JFS_IP(ip)->fileset);
+		lrd->log.reकरोpage.inode = cpu_to_le32(ip->i_ino);
 
-		/* write log record of page from the tlock */
-		switch (tlck->type & tlckTYPE) {
-		case tlckXTREE:
+		/* ग_लिखो log record of page from the tlock */
+		चयन (tlck->type & tlckTYPE) अणु
+		हाल tlckXTREE:
 			xtLog(log, tblk, lrd, tlck);
-			break;
+			अवरोध;
 
-		case tlckDTREE:
+		हाल tlckDTREE:
 			dtLog(log, tblk, lrd, tlck);
-			break;
+			अवरोध;
 
-		case tlckINODE:
+		हाल tlckINODE:
 			diLog(log, tblk, lrd, tlck, cd);
-			break;
+			अवरोध;
 
-		case tlckMAP:
+		हाल tlckMAP:
 			mapLog(log, tblk, lrd, tlck);
-			break;
+			अवरोध;
 
-		case tlckDATA:
+		हाल tlckDATA:
 			dataLog(log, tblk, lrd, tlck);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			jfs_err("UFO tlock:0x%p", tlck);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  *	diLog()
  *
- * function:	log inode tlock and format maplock to update bmap;
+ * function:	log inode tlock and क्रमmat maplock to update bmap;
  */
-static void diLog(struct jfs_log *log, struct tblock *tblk, struct lrd *lrd,
-		 struct tlock *tlck, struct commit *cd)
-{
-	struct metapage *mp;
+अटल व्योम diLog(काष्ठा jfs_log *log, काष्ठा tblock *tblk, काष्ठा lrd *lrd,
+		 काष्ठा tlock *tlck, काष्ठा commit *cd)
+अणु
+	काष्ठा metapage *mp;
 	pxd_t *pxd;
-	struct pxd_lock *pxdlock;
+	काष्ठा pxd_lock *pxdlock;
 
 	mp = tlck->mp;
 
-	/* initialize as REDOPAGE record format */
-	lrd->log.redopage.type = cpu_to_le16(LOG_INODE);
-	lrd->log.redopage.l2linesize = cpu_to_le16(L2INODESLOTSIZE);
+	/* initialize as REDOPAGE record क्रमmat */
+	lrd->log.reकरोpage.type = cpu_to_le16(LOG_INODE);
+	lrd->log.reकरोpage.l2linesize = cpu_to_le16(L2INODESLOTSIZE);
 
-	pxd = &lrd->log.redopage.pxd;
+	pxd = &lrd->log.reकरोpage.pxd;
 
 	/*
 	 *	inode after image
 	 */
-	if (tlck->type & tlckENTRY) {
-		/* log after-image for logredo(): */
+	अगर (tlck->type & tlckENTRY) अणु
+		/* log after-image क्रम logreकरो(): */
 		lrd->type = cpu_to_le16(LOG_REDOPAGE);
 		PXDaddress(pxd, mp->index);
 		PXDlength(pxd,
@@ -1448,23 +1449,23 @@ static void diLog(struct jfs_log *log, struct tblock *tblk, struct lrd *lrd,
 
 		/* mark page as homeward bound */
 		tlck->flag |= tlckWRITEPAGE;
-	} else if (tlck->type & tlckFREE) {
+	पूर्ण अन्यथा अगर (tlck->type & tlckFREE) अणु
 		/*
-		 *	free inode extent
+		 *	मुक्त inode extent
 		 *
-		 * (pages of the freed inode extent have been invalidated and
-		 * a maplock for free of the extent has been formatted at
-		 * txLock() time);
+		 * (pages of the मुक्तd inode extent have been invalidated and
+		 * a maplock क्रम मुक्त of the extent has been क्रमmatted at
+		 * txLock() समय);
 		 *
 		 * the tlock had been acquired on the inode allocation map page
-		 * (iag) that specifies the freed extent, even though the map
+		 * (iag) that specअगरies the मुक्तd extent, even though the map
 		 * page is not itself logged, to prevent pageout of the map
-		 * page before the log;
+		 * page beक्रमe the log;
 		 */
 
-		/* log LOG_NOREDOINOEXT of the freed inode extent for
-		 * logredo() to start NoRedoPage filters, and to update
-		 * imap and bmap for free of the extent;
+		/* log LOG_NOREDOINOEXT of the मुक्तd inode extent क्रम
+		 * logreकरो() to start NoReकरोPage filters, and to update
+		 * imap and bmap क्रम मुक्त of the extent;
 		 */
 		lrd->type = cpu_to_le16(LOG_NOREDOINOEXT);
 		/*
@@ -1474,93 +1475,93 @@ static void diLog(struct jfs_log *log, struct tblock *tblk, struct lrd *lrd,
 		 * extent is being released.  These have been
 		 * passed to us in the iplist[1] and iplist[2].
 		 */
-		lrd->log.noredoinoext.iagnum =
-		    cpu_to_le32((u32) (size_t) cd->iplist[1]);
-		lrd->log.noredoinoext.inoext_idx =
-		    cpu_to_le32((u32) (size_t) cd->iplist[2]);
+		lrd->log.noreकरोinoext.iagnum =
+		    cpu_to_le32((u32) (माप_प्रकार) cd->iplist[1]);
+		lrd->log.noreकरोinoext.inoext_idx =
+		    cpu_to_le32((u32) (माप_प्रकार) cd->iplist[2]);
 
-		pxdlock = (struct pxd_lock *) & tlck->lock;
+		pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
 		*pxd = pxdlock->pxd;
-		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, NULL));
+		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, शून्य));
 
 		/* update bmap */
 		tlck->flag |= tlckUPDATEMAP;
 
 		/* mark page as homeward bound */
 		tlck->flag |= tlckWRITEPAGE;
-	} else
+	पूर्ण अन्यथा
 		jfs_err("diLog: UFO type tlck:0x%p", tlck);
-#ifdef  _JFS_WIP
+#अगर_घोषित  _JFS_WIP
 	/*
-	 *	alloc/free external EA extent
+	 *	alloc/मुक्त बाह्यal EA extent
 	 *
-	 * a maplock for txUpdateMap() to update bPWMAP for alloc/free
-	 * of the extent has been formatted at txLock() time;
+	 * a maplock क्रम txUpdateMap() to update bPWMAP क्रम alloc/मुक्त
+	 * of the extent has been क्रमmatted at txLock() समय;
 	 */
-	else {
-		assert(tlck->type & tlckEA);
+	अन्यथा अणु
+		निश्चित(tlck->type & tlckEA);
 
-		/* log LOG_UPDATEMAP for logredo() to update bmap for
-		 * alloc of new (and free of old) external EA extent;
+		/* log LOG_UPDATEMAP क्रम logreकरो() to update bmap क्रम
+		 * alloc of new (and मुक्त of old) बाह्यal EA extent;
 		 */
 		lrd->type = cpu_to_le16(LOG_UPDATEMAP);
-		pxdlock = (struct pxd_lock *) & tlck->lock;
+		pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
 		nlock = pxdlock->index;
-		for (i = 0; i < nlock; i++, pxdlock++) {
-			if (pxdlock->flag & mlckALLOCPXD)
+		क्रम (i = 0; i < nlock; i++, pxdlock++) अणु
+			अगर (pxdlock->flag & mlckALLOCPXD)
 				lrd->log.updatemap.type =
 				    cpu_to_le16(LOG_ALLOCPXD);
-			else
+			अन्यथा
 				lrd->log.updatemap.type =
 				    cpu_to_le16(LOG_FREEPXD);
 			lrd->log.updatemap.nxd = cpu_to_le16(1);
 			lrd->log.updatemap.pxd = pxdlock->pxd;
 			lrd->backchain =
-			    cpu_to_le32(lmLog(log, tblk, lrd, NULL));
-		}
+			    cpu_to_le32(lmLog(log, tblk, lrd, शून्य));
+		पूर्ण
 
 		/* update bmap */
 		tlck->flag |= tlckUPDATEMAP;
-	}
-#endif				/* _JFS_WIP */
+	पूर्ण
+#पूर्ण_अगर				/* _JFS_WIP */
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  *	dataLog()
  *
  * function:	log data tlock
  */
-static void dataLog(struct jfs_log *log, struct tblock *tblk, struct lrd *lrd,
-	    struct tlock *tlck)
-{
-	struct metapage *mp;
+अटल व्योम dataLog(काष्ठा jfs_log *log, काष्ठा tblock *tblk, काष्ठा lrd *lrd,
+	    काष्ठा tlock *tlck)
+अणु
+	काष्ठा metapage *mp;
 	pxd_t *pxd;
 
 	mp = tlck->mp;
 
-	/* initialize as REDOPAGE record format */
-	lrd->log.redopage.type = cpu_to_le16(LOG_DATA);
-	lrd->log.redopage.l2linesize = cpu_to_le16(L2DATASLOTSIZE);
+	/* initialize as REDOPAGE record क्रमmat */
+	lrd->log.reकरोpage.type = cpu_to_le16(LOG_DATA);
+	lrd->log.reकरोpage.l2linesize = cpu_to_le16(L2DATASLOTSIZE);
 
-	pxd = &lrd->log.redopage.pxd;
+	pxd = &lrd->log.reकरोpage.pxd;
 
-	/* log after-image for logredo(): */
+	/* log after-image क्रम logreकरो(): */
 	lrd->type = cpu_to_le16(LOG_REDOPAGE);
 
-	if (jfs_dirtable_inline(tlck->ip)) {
+	अगर (jfs_dirtable_अंतरभूत(tlck->ip)) अणु
 		/*
 		 * The table has been truncated, we've must have deleted
-		 * the last entry, so don't bother logging this
+		 * the last entry, so करोn't bother logging this
 		 */
 		mp->lid = 0;
 		grab_metapage(mp);
 		metapage_homeok(mp);
 		discard_metapage(mp);
-		tlck->mp = NULL;
-		return;
-	}
+		tlck->mp = शून्य;
+		वापस;
+	पूर्ण
 
 	PXDaddress(pxd, mp->index);
 	PXDlength(pxd, mp->logical_size >> tblk->sb->s_blocksize_bits);
@@ -1570,31 +1571,31 @@ static void dataLog(struct jfs_log *log, struct tblock *tblk, struct lrd *lrd,
 	/* mark page as homeward bound */
 	tlck->flag |= tlckWRITEPAGE;
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  *	dtLog()
  *
- * function:	log dtree tlock and format maplock to update bmap;
+ * function:	log dtree tlock and क्रमmat maplock to update bmap;
  */
-static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
-	   struct tlock * tlck)
-{
-	struct metapage *mp;
-	struct pxd_lock *pxdlock;
+अटल व्योम dtLog(काष्ठा jfs_log * log, काष्ठा tblock * tblk, काष्ठा lrd * lrd,
+	   काष्ठा tlock * tlck)
+अणु
+	काष्ठा metapage *mp;
+	काष्ठा pxd_lock *pxdlock;
 	pxd_t *pxd;
 
 	mp = tlck->mp;
 
-	/* initialize as REDOPAGE/NOREDOPAGE record format */
-	lrd->log.redopage.type = cpu_to_le16(LOG_DTREE);
-	lrd->log.redopage.l2linesize = cpu_to_le16(L2DTSLOTSIZE);
+	/* initialize as REDOPAGE/NOREDOPAGE record क्रमmat */
+	lrd->log.reकरोpage.type = cpu_to_le16(LOG_DTREE);
+	lrd->log.reकरोpage.l2linesize = cpu_to_le16(L2DTSLOTSIZE);
 
-	pxd = &lrd->log.redopage.pxd;
+	pxd = &lrd->log.reकरोpage.pxd;
 
-	if (tlck->type & tlckBTROOT)
-		lrd->log.redopage.type |= cpu_to_le16(LOG_BTROOT);
+	अगर (tlck->type & tlckBTROOT)
+		lrd->log.reकरोpage.type |= cpu_to_le16(LOG_BTROOT);
 
 	/*
 	 *	page extension via relocation: entry insertion;
@@ -1602,28 +1603,28 @@ static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	 *	new right page from page split, reinitialized in-line
 	 *	root from root page split: entry insertion;
 	 */
-	if (tlck->type & (tlckNEW | tlckEXTEND)) {
-		/* log after-image of the new page for logredo():
-		 * mark log (LOG_NEW) for logredo() to initialize
-		 * freelist and update bmap for alloc of the new page;
+	अगर (tlck->type & (tlckNEW | tlckEXTEND)) अणु
+		/* log after-image of the new page क्रम logreकरो():
+		 * mark log (LOG_NEW) क्रम logreकरो() to initialize
+		 * मुक्तlist and update bmap क्रम alloc of the new page;
 		 */
 		lrd->type = cpu_to_le16(LOG_REDOPAGE);
-		if (tlck->type & tlckEXTEND)
-			lrd->log.redopage.type |= cpu_to_le16(LOG_EXTEND);
-		else
-			lrd->log.redopage.type |= cpu_to_le16(LOG_NEW);
+		अगर (tlck->type & tlckEXTEND)
+			lrd->log.reकरोpage.type |= cpu_to_le16(LOG_EXTEND);
+		अन्यथा
+			lrd->log.reकरोpage.type |= cpu_to_le16(LOG_NEW);
 		PXDaddress(pxd, mp->index);
 		PXDlength(pxd,
 			  mp->logical_size >> tblk->sb->s_blocksize_bits);
 		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, tlck));
 
-		/* format a maplock for txUpdateMap() to update bPMAP for
+		/* क्रमmat a maplock क्रम txUpdateMap() to update bPMAP क्रम
 		 * alloc of the new page;
 		 */
-		if (tlck->type & tlckBTROOT)
-			return;
+		अगर (tlck->type & tlckBTROOT)
+			वापस;
 		tlck->flag |= tlckUPDATEMAP;
-		pxdlock = (struct pxd_lock *) & tlck->lock;
+		pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
 		pxdlock->flag = mlckALLOCPXD;
 		pxdlock->pxd = *pxd;
 
@@ -1631,15 +1632,15 @@ static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 
 		/* mark page as homeward bound */
 		tlck->flag |= tlckWRITEPAGE;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 *	entry insertion/deletion,
-	 *	sibling page link update (old right page before split);
+	 *	sibling page link update (old right page beक्रमe split);
 	 */
-	if (tlck->type & (tlckENTRY | tlckRELINK)) {
-		/* log after-image for logredo(): */
+	अगर (tlck->type & (tlckENTRY | tlckRELINK)) अणु
+		/* log after-image क्रम logreकरो(): */
 		lrd->type = cpu_to_le16(LOG_REDOPAGE);
 		PXDaddress(pxd, mp->index);
 		PXDlength(pxd,
@@ -1648,86 +1649,86 @@ static void dtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 
 		/* mark page as homeward bound */
 		tlck->flag |= tlckWRITEPAGE;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 *	page deletion: page has been invalidated
 	 *	page relocation: source extent
 	 *
-	 *	a maplock for free of the page has been formatted
-	 *	at txLock() time);
+	 *	a maplock क्रम मुक्त of the page has been क्रमmatted
+	 *	at txLock() समय);
 	 */
-	if (tlck->type & (tlckFREE | tlckRELOCATE)) {
-		/* log LOG_NOREDOPAGE of the deleted page for logredo()
-		 * to start NoRedoPage filter and to update bmap for free
+	अगर (tlck->type & (tlckFREE | tlckRELOCATE)) अणु
+		/* log LOG_NOREDOPAGE of the deleted page क्रम logreकरो()
+		 * to start NoReकरोPage filter and to update bmap क्रम मुक्त
 		 * of the deletd page
 		 */
 		lrd->type = cpu_to_le16(LOG_NOREDOPAGE);
-		pxdlock = (struct pxd_lock *) & tlck->lock;
+		pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
 		*pxd = pxdlock->pxd;
-		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, NULL));
+		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, शून्य));
 
-		/* a maplock for txUpdateMap() for free of the page
-		 * has been formatted at txLock() time;
+		/* a maplock क्रम txUpdateMap() क्रम मुक्त of the page
+		 * has been क्रमmatted at txLock() समय;
 		 */
 		tlck->flag |= tlckUPDATEMAP;
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
 /*
  *	xtLog()
  *
- * function:	log xtree tlock and format maplock to update bmap;
+ * function:	log xtree tlock and क्रमmat maplock to update bmap;
  */
-static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
-	   struct tlock * tlck)
-{
-	struct inode *ip;
-	struct metapage *mp;
+अटल व्योम xtLog(काष्ठा jfs_log * log, काष्ठा tblock * tblk, काष्ठा lrd * lrd,
+	   काष्ठा tlock * tlck)
+अणु
+	काष्ठा inode *ip;
+	काष्ठा metapage *mp;
 	xtpage_t *p;
-	struct xtlock *xtlck;
-	struct maplock *maplock;
-	struct xdlistlock *xadlock;
-	struct pxd_lock *pxdlock;
+	काष्ठा xtlock *xtlck;
+	काष्ठा maplock *maplock;
+	काष्ठा xdlistlock *xadlock;
+	काष्ठा pxd_lock *pxdlock;
 	pxd_t *page_pxd;
-	int next, lwm, hwm;
+	पूर्णांक next, lwm, hwm;
 
 	ip = tlck->ip;
 	mp = tlck->mp;
 
-	/* initialize as REDOPAGE/NOREDOPAGE record format */
-	lrd->log.redopage.type = cpu_to_le16(LOG_XTREE);
-	lrd->log.redopage.l2linesize = cpu_to_le16(L2XTSLOTSIZE);
+	/* initialize as REDOPAGE/NOREDOPAGE record क्रमmat */
+	lrd->log.reकरोpage.type = cpu_to_le16(LOG_XTREE);
+	lrd->log.reकरोpage.l2linesize = cpu_to_le16(L2XTSLOTSIZE);
 
-	page_pxd = &lrd->log.redopage.pxd;
+	page_pxd = &lrd->log.reकरोpage.pxd;
 
-	if (tlck->type & tlckBTROOT) {
-		lrd->log.redopage.type |= cpu_to_le16(LOG_BTROOT);
+	अगर (tlck->type & tlckBTROOT) अणु
+		lrd->log.reकरोpage.type |= cpu_to_le16(LOG_BTROOT);
 		p = &JFS_IP(ip)->i_xtroot;
-		if (S_ISDIR(ip->i_mode))
-			lrd->log.redopage.type |=
-			    cpu_to_le16(LOG_DIR_XTREE);
-	} else
+		अगर (S_ISसूची(ip->i_mode))
+			lrd->log.reकरोpage.type |=
+			    cpu_to_le16(LOG_सूची_XTREE);
+	पूर्ण अन्यथा
 		p = (xtpage_t *) mp->data;
 	next = le16_to_cpu(p->header.nextindex);
 
-	xtlck = (struct xtlock *) & tlck->lock;
+	xtlck = (काष्ठा xtlock *) & tlck->lock;
 
-	maplock = (struct maplock *) & tlck->lock;
-	xadlock = (struct xdlistlock *) maplock;
+	maplock = (काष्ठा maplock *) & tlck->lock;
+	xadlock = (काष्ठा xdlistlock *) maplock;
 
 	/*
 	 *	entry insertion/extension;
-	 *	sibling page link update (old right page before split);
+	 *	sibling page link update (old right page beक्रमe split);
 	 */
-	if (tlck->type & (tlckNEW | tlckGROW | tlckRELINK)) {
-		/* log after-image for logredo():
-		 * logredo() will update bmap for alloc of new/extended
+	अगर (tlck->type & (tlckNEW | tlckGROW | tlckRELINK)) अणु
+		/* log after-image क्रम logreकरो():
+		 * logreकरो() will update bmap क्रम alloc of new/extended
 		 * extents (XAD_NEW|XAD_EXTEND) of XAD[lwm:next) from
 		 * after-image of XADlist;
-		 * logredo() resets (XAD_NEW|XAD_EXTEND) flag when
+		 * logreकरो() resets (XAD_NEW|XAD_EXTEND) flag when
 		 * applying the after-image to the meta-data page.
 		 */
 		lrd->type = cpu_to_le16(LOG_REDOPAGE);
@@ -1736,52 +1737,52 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 			  mp->logical_size >> tblk->sb->s_blocksize_bits);
 		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, tlck));
 
-		/* format a maplock for txUpdateMap() to update bPMAP
-		 * for alloc of new/extended extents of XAD[lwm:next)
+		/* क्रमmat a maplock क्रम txUpdateMap() to update bPMAP
+		 * क्रम alloc of new/extended extents of XAD[lwm:next)
 		 * from the page itself;
 		 * txUpdateMap() resets (XAD_NEW|XAD_EXTEND) flag.
 		 */
 		lwm = xtlck->lwm.offset;
-		if (lwm == 0)
+		अगर (lwm == 0)
 			lwm = XTPAGEMAXSLOT;
 
-		if (lwm == next)
-			goto out;
-		if (lwm > next) {
+		अगर (lwm == next)
+			जाओ out;
+		अगर (lwm > next) अणु
 			jfs_err("xtLog: lwm > next");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		tlck->flag |= tlckUPDATEMAP;
 		xadlock->flag = mlckALLOCXADLIST;
 		xadlock->count = next - lwm;
-		if ((xadlock->count <= 4) && (tblk->xflag & COMMIT_LAZY)) {
-			int i;
+		अगर ((xadlock->count <= 4) && (tblk->xflag & COMMIT_LAZY)) अणु
+			पूर्णांक i;
 			pxd_t *pxd;
 			/*
-			 * Lazy commit may allow xtree to be modified before
-			 * txUpdateMap runs.  Copy xad into linelock to
+			 * Lazy commit may allow xtree to be modअगरied beक्रमe
+			 * txUpdateMap runs.  Copy xad पूर्णांकo linelock to
 			 * preserve correct data.
 			 *
 			 * We can fit twice as may pxd's as xads in the lock
 			 */
 			xadlock->flag = mlckALLOCPXDLIST;
 			pxd = xadlock->xdlist = &xtlck->pxdlock;
-			for (i = 0; i < xadlock->count; i++) {
+			क्रम (i = 0; i < xadlock->count; i++) अणु
 				PXDaddress(pxd, addressXAD(&p->xad[lwm + i]));
 				PXDlength(pxd, lengthXAD(&p->xad[lwm + i]));
 				p->xad[lwm + i].flag &=
 				    ~(XAD_NEW | XAD_EXTENDED);
 				pxd++;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/*
-			 * xdlist will point to into inode's xtree, ensure
+			 * xdlist will poपूर्णांक to पूर्णांकo inode's xtree, ensure
 			 * that transaction is not committed lazily.
 			 */
 			xadlock->flag = mlckALLOCXADLIST;
 			xadlock->xdlist = &p->xad[lwm];
 			tblk->xflag &= ~COMMIT_LAZY;
-		}
+		पूर्ण
 		jfs_info("xtLog: alloc ip:0x%p mp:0x%p tlck:0x%p lwm:%d count:%d",
 			 tlck->ip, mp, tlck, lwm, xadlock->count);
 
@@ -1791,8 +1792,8 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 		/* mark page as homeward bound */
 		tlck->flag |= tlckWRITEPAGE;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 *	page deletion: file deletion/truncation (ref. xtTruncate())
@@ -1800,144 +1801,144 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 	 * (page will be invalidated after log is written and bmap
 	 * is updated from the page);
 	 */
-	if (tlck->type & tlckFREE) {
-		/* LOG_NOREDOPAGE log for NoRedoPage filter:
-		 * if page free from file delete, NoRedoFile filter from
-		 * inode image of zero link count will subsume NoRedoPage
-		 * filters for each page;
-		 * if page free from file truncattion, write NoRedoPage
+	अगर (tlck->type & tlckFREE) अणु
+		/* LOG_NOREDOPAGE log क्रम NoReकरोPage filter:
+		 * अगर page मुक्त from file delete, NoReकरोFile filter from
+		 * inode image of zero link count will subsume NoReकरोPage
+		 * filters क्रम each page;
+		 * अगर page मुक्त from file truncattion, ग_लिखो NoReकरोPage
 		 * filter;
 		 *
-		 * upadte of block allocation map for the page itself:
-		 * if page free from deletion and truncation, LOG_UPDATEMAP
-		 * log for the page itself is generated from processing
+		 * upadte of block allocation map क्रम the page itself:
+		 * अगर page मुक्त from deletion and truncation, LOG_UPDATEMAP
+		 * log क्रम the page itself is generated from processing
 		 * its parent page xad entries;
 		 */
-		/* if page free from file truncation, log LOG_NOREDOPAGE
-		 * of the deleted page for logredo() to start NoRedoPage
-		 * filter for the page;
+		/* अगर page मुक्त from file truncation, log LOG_NOREDOPAGE
+		 * of the deleted page क्रम logreकरो() to start NoReकरोPage
+		 * filter क्रम the page;
 		 */
-		if (tblk->xflag & COMMIT_TRUNCATE) {
-			/* write NOREDOPAGE for the page */
+		अगर (tblk->xflag & COMMIT_TRUNCATE) अणु
+			/* ग_लिखो NOREDOPAGE क्रम the page */
 			lrd->type = cpu_to_le16(LOG_NOREDOPAGE);
 			PXDaddress(page_pxd, mp->index);
 			PXDlength(page_pxd,
 				  mp->logical_size >> tblk->sb->
 				  s_blocksize_bits);
 			lrd->backchain =
-			    cpu_to_le32(lmLog(log, tblk, lrd, NULL));
+			    cpu_to_le32(lmLog(log, tblk, lrd, शून्य));
 
-			if (tlck->type & tlckBTROOT) {
+			अगर (tlck->type & tlckBTROOT) अणु
 				/* Empty xtree must be logged */
 				lrd->type = cpu_to_le16(LOG_REDOPAGE);
 				lrd->backchain =
 				    cpu_to_le32(lmLog(log, tblk, lrd, tlck));
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* init LOG_UPDATEMAP of the freed extents
+		/* init LOG_UPDATEMAP of the मुक्तd extents
 		 * XAD[XTENTRYSTART:hwm) from the deleted page itself
-		 * for logredo() to update bmap;
+		 * क्रम logreकरो() to update bmap;
 		 */
 		lrd->type = cpu_to_le16(LOG_UPDATEMAP);
 		lrd->log.updatemap.type = cpu_to_le16(LOG_FREEXADLIST);
-		xtlck = (struct xtlock *) & tlck->lock;
+		xtlck = (काष्ठा xtlock *) & tlck->lock;
 		hwm = xtlck->hwm.offset;
 		lrd->log.updatemap.nxd =
 		    cpu_to_le16(hwm - XTENTRYSTART + 1);
-		/* reformat linelock for lmLog() */
+		/* reक्रमmat linelock क्रम lmLog() */
 		xtlck->header.offset = XTENTRYSTART;
 		xtlck->header.length = hwm - XTENTRYSTART + 1;
 		xtlck->index = 1;
 		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, tlck));
 
-		/* format a maplock for txUpdateMap() to update bmap
-		 * to free extents of XAD[XTENTRYSTART:hwm) from the
+		/* क्रमmat a maplock क्रम txUpdateMap() to update bmap
+		 * to मुक्त extents of XAD[XTENTRYSTART:hwm) from the
 		 * deleted page itself;
 		 */
 		tlck->flag |= tlckUPDATEMAP;
 		xadlock->count = hwm - XTENTRYSTART + 1;
-		if ((xadlock->count <= 4) && (tblk->xflag & COMMIT_LAZY)) {
-			int i;
+		अगर ((xadlock->count <= 4) && (tblk->xflag & COMMIT_LAZY)) अणु
+			पूर्णांक i;
 			pxd_t *pxd;
 			/*
-			 * Lazy commit may allow xtree to be modified before
-			 * txUpdateMap runs.  Copy xad into linelock to
+			 * Lazy commit may allow xtree to be modअगरied beक्रमe
+			 * txUpdateMap runs.  Copy xad पूर्णांकo linelock to
 			 * preserve correct data.
 			 *
 			 * We can fit twice as may pxd's as xads in the lock
 			 */
 			xadlock->flag = mlckFREEPXDLIST;
 			pxd = xadlock->xdlist = &xtlck->pxdlock;
-			for (i = 0; i < xadlock->count; i++) {
+			क्रम (i = 0; i < xadlock->count; i++) अणु
 				PXDaddress(pxd,
 					addressXAD(&p->xad[XTENTRYSTART + i]));
 				PXDlength(pxd,
 					lengthXAD(&p->xad[XTENTRYSTART + i]));
 				pxd++;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/*
-			 * xdlist will point to into inode's xtree, ensure
+			 * xdlist will poपूर्णांक to पूर्णांकo inode's xtree, ensure
 			 * that transaction is not committed lazily.
 			 */
 			xadlock->flag = mlckFREEXADLIST;
 			xadlock->xdlist = &p->xad[XTENTRYSTART];
 			tblk->xflag &= ~COMMIT_LAZY;
-		}
+		पूर्ण
 		jfs_info("xtLog: free ip:0x%p mp:0x%p count:%d lwm:2",
 			 tlck->ip, mp, xadlock->count);
 
 		maplock->index = 1;
 
 		/* mark page as invalid */
-		if (((tblk->xflag & COMMIT_PWMAP) || S_ISDIR(ip->i_mode))
+		अगर (((tblk->xflag & COMMIT_PWMAP) || S_ISसूची(ip->i_mode))
 		    && !(tlck->type & tlckBTROOT))
 			tlck->flag |= tlckFREEPAGE;
 		/*
-		   else (tblk->xflag & COMMIT_PMAP)
+		   अन्यथा (tblk->xflag & COMMIT_PMAP)
 		   ? release the page;
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 *	page/entry truncation: file truncation (ref. xtTruncate())
 	 *
 	 *	|----------+------+------+---------------|
 	 *		   |      |      |
-	 *		   |      |     hwm - hwm before truncation
-	 *		   |     next - truncation point
-	 *		  lwm - lwm before truncation
+	 *		   |      |     hwm - hwm beक्रमe truncation
+	 *		   |     next - truncation poपूर्णांक
+	 *		  lwm - lwm beक्रमe truncation
 	 * header ?
 	 */
-	if (tlck->type & tlckTRUNCATE) {
+	अगर (tlck->type & tlckTRUNCATE) अणु
 		pxd_t pxd;	/* truncated extent of xad */
-		int twm;
+		पूर्णांक twm;
 
 		/*
 		 * For truncation the entire linelock may be used, so it would
-		 * be difficult to store xad list in linelock itself.
-		 * Therefore, we'll just force transaction to be committed
-		 * synchronously, so that xtree pages won't be changed before
+		 * be dअगरficult to store xad list in linelock itself.
+		 * Thereक्रमe, we'll just क्रमce transaction to be committed
+		 * synchronously, so that xtree pages won't be changed beक्रमe
 		 * txUpdateMap runs.
 		 */
 		tblk->xflag &= ~COMMIT_LAZY;
 		lwm = xtlck->lwm.offset;
-		if (lwm == 0)
+		अगर (lwm == 0)
 			lwm = XTPAGEMAXSLOT;
 		hwm = xtlck->hwm.offset;
 		twm = xtlck->twm.offset;
 
 		/*
-		 *	write log records
+		 *	ग_लिखो log records
 		 */
-		/* log after-image for logredo():
+		/* log after-image क्रम logreकरो():
 		 *
-		 * logredo() will update bmap for alloc of new/extended
+		 * logreकरो() will update bmap क्रम alloc of new/extended
 		 * extents (XAD_NEW|XAD_EXTEND) of XAD[lwm:next) from
 		 * after-image of XADlist;
-		 * logredo() resets (XAD_NEW|XAD_EXTEND) flag when
+		 * logreकरो() resets (XAD_NEW|XAD_EXTEND) flag when
 		 * applying the after-image to the meta-data page.
 		 */
 		lrd->type = cpu_to_le16(LOG_REDOPAGE);
@@ -1949,57 +1950,57 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 		/*
 		 * truncate entry XAD[twm == next - 1]:
 		 */
-		if (twm == next - 1) {
-			/* init LOG_UPDATEMAP for logredo() to update bmap for
-			 * free of truncated delta extent of the truncated
+		अगर (twm == next - 1) अणु
+			/* init LOG_UPDATEMAP क्रम logreकरो() to update bmap क्रम
+			 * मुक्त of truncated delta extent of the truncated
 			 * entry XAD[next - 1]:
 			 * (xtlck->pxdlock = truncated delta extent);
 			 */
-			pxdlock = (struct pxd_lock *) & xtlck->pxdlock;
-			/* assert(pxdlock->type & tlckTRUNCATE); */
+			pxdlock = (काष्ठा pxd_lock *) & xtlck->pxdlock;
+			/* निश्चित(pxdlock->type & tlckTRUNCATE); */
 			lrd->type = cpu_to_le16(LOG_UPDATEMAP);
 			lrd->log.updatemap.type = cpu_to_le16(LOG_FREEPXD);
 			lrd->log.updatemap.nxd = cpu_to_le16(1);
 			lrd->log.updatemap.pxd = pxdlock->pxd;
-			pxd = pxdlock->pxd;	/* save to format maplock */
+			pxd = pxdlock->pxd;	/* save to क्रमmat maplock */
 			lrd->backchain =
-			    cpu_to_le32(lmLog(log, tblk, lrd, NULL));
-		}
+			    cpu_to_le32(lmLog(log, tblk, lrd, शून्य));
+		पूर्ण
 
 		/*
-		 * free entries XAD[next:hwm]:
+		 * मुक्त entries XAD[next:hwm]:
 		 */
-		if (hwm >= next) {
-			/* init LOG_UPDATEMAP of the freed extents
+		अगर (hwm >= next) अणु
+			/* init LOG_UPDATEMAP of the मुक्तd extents
 			 * XAD[next:hwm] from the deleted page itself
-			 * for logredo() to update bmap;
+			 * क्रम logreकरो() to update bmap;
 			 */
 			lrd->type = cpu_to_le16(LOG_UPDATEMAP);
 			lrd->log.updatemap.type =
 			    cpu_to_le16(LOG_FREEXADLIST);
-			xtlck = (struct xtlock *) & tlck->lock;
+			xtlck = (काष्ठा xtlock *) & tlck->lock;
 			hwm = xtlck->hwm.offset;
 			lrd->log.updatemap.nxd =
 			    cpu_to_le16(hwm - next + 1);
-			/* reformat linelock for lmLog() */
+			/* reक्रमmat linelock क्रम lmLog() */
 			xtlck->header.offset = next;
 			xtlck->header.length = hwm - next + 1;
 			xtlck->index = 1;
 			lrd->backchain =
 			    cpu_to_le32(lmLog(log, tblk, lrd, tlck));
-		}
+		पूर्ण
 
 		/*
-		 *	format maplock(s) for txUpdateMap() to update bmap
+		 *	क्रमmat maplock(s) क्रम txUpdateMap() to update bmap
 		 */
 		maplock->index = 0;
 
 		/*
 		 * allocate entries XAD[lwm:next):
 		 */
-		if (lwm < next) {
-			/* format a maplock for txUpdateMap() to update bPMAP
-			 * for alloc of new/extended extents of XAD[lwm:next)
+		अगर (lwm < next) अणु
+			/* क्रमmat a maplock क्रम txUpdateMap() to update bPMAP
+			 * क्रम alloc of new/extended extents of XAD[lwm:next)
 			 * from the page itself;
 			 * txUpdateMap() resets (XAD_NEW|XAD_EXTEND) flag.
 			 */
@@ -2012,19 +2013,19 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 				 tlck->ip, mp, xadlock->count, lwm, next);
 			maplock->index++;
 			xadlock++;
-		}
+		पूर्ण
 
 		/*
 		 * truncate entry XAD[twm == next - 1]:
 		 */
-		if (twm == next - 1) {
-			/* format a maplock for txUpdateMap() to update bmap
-			 * to free truncated delta extent of the truncated
+		अगर (twm == next - 1) अणु
+			/* क्रमmat a maplock क्रम txUpdateMap() to update bmap
+			 * to मुक्त truncated delta extent of the truncated
 			 * entry XAD[next - 1];
 			 * (xtlck->pxdlock = truncated delta extent);
 			 */
 			tlck->flag |= tlckUPDATEMAP;
-			pxdlock = (struct pxd_lock *) xadlock;
+			pxdlock = (काष्ठा pxd_lock *) xadlock;
 			pxdlock->flag = mlckFREEPXD;
 			pxdlock->count = 1;
 			pxdlock->pxd = pxd;
@@ -2033,14 +2034,14 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 				 ip, mp, pxdlock->count, hwm);
 			maplock->index++;
 			xadlock++;
-		}
+		पूर्ण
 
 		/*
-		 * free entries XAD[next:hwm]:
+		 * मुक्त entries XAD[next:hwm]:
 		 */
-		if (hwm >= next) {
-			/* format a maplock for txUpdateMap() to update bmap
-			 * to free extents of XAD[next:hwm] from thedeleted
+		अगर (hwm >= next) अणु
+			/* क्रमmat a maplock क्रम txUpdateMap() to update bmap
+			 * to मुक्त extents of XAD[next:hwm] from thedeleted
 			 * page itself;
 			 */
 			tlck->flag |= tlckUPDATEMAP;
@@ -2051,163 +2052,163 @@ static void xtLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
 			jfs_info("xtLog: free ip:0x%p mp:0x%p count:%d next:%d hwm:%d",
 				 tlck->ip, mp, xadlock->count, next, hwm);
 			maplock->index++;
-		}
+		पूर्ण
 
 		/* mark page as homeward bound */
 		tlck->flag |= tlckWRITEPAGE;
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
 /*
  *	mapLog()
  *
- * function:	log from maplock of freed data extents;
+ * function:	log from maplock of मुक्तd data extents;
  */
-static void mapLog(struct jfs_log * log, struct tblock * tblk, struct lrd * lrd,
-		   struct tlock * tlck)
-{
-	struct pxd_lock *pxdlock;
-	int i, nlock;
+अटल व्योम mapLog(काष्ठा jfs_log * log, काष्ठा tblock * tblk, काष्ठा lrd * lrd,
+		   काष्ठा tlock * tlck)
+अणु
+	काष्ठा pxd_lock *pxdlock;
+	पूर्णांक i, nlock;
 	pxd_t *pxd;
 
 	/*
-	 *	page relocation: free the source page extent
+	 *	page relocation: मुक्त the source page extent
 	 *
-	 * a maplock for txUpdateMap() for free of the page
-	 * has been formatted at txLock() time saving the src
+	 * a maplock क्रम txUpdateMap() क्रम मुक्त of the page
+	 * has been क्रमmatted at txLock() समय saving the src
 	 * relocated page address;
 	 */
-	if (tlck->type & tlckRELOCATE) {
+	अगर (tlck->type & tlckRELOCATE) अणु
 		/* log LOG_NOREDOPAGE of the old relocated page
-		 * for logredo() to start NoRedoPage filter;
+		 * क्रम logreकरो() to start NoReकरोPage filter;
 		 */
 		lrd->type = cpu_to_le16(LOG_NOREDOPAGE);
-		pxdlock = (struct pxd_lock *) & tlck->lock;
-		pxd = &lrd->log.redopage.pxd;
+		pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
+		pxd = &lrd->log.reकरोpage.pxd;
 		*pxd = pxdlock->pxd;
-		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, NULL));
+		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, शून्य));
 
-		/* (N.B. currently, logredo() does NOT update bmap
-		 * for free of the page itself for (LOG_XTREE|LOG_NOREDOPAGE);
-		 * if page free from relocation, LOG_UPDATEMAP log is
-		 * specifically generated now for logredo()
-		 * to update bmap for free of src relocated page;
-		 * (new flag LOG_RELOCATE may be introduced which will
-		 * inform logredo() to start NORedoPage filter and also
-		 * update block allocation map at the same time, thus
-		 * avoiding an extra log write);
+		/* (N.B. currently, logreकरो() करोes NOT update bmap
+		 * क्रम मुक्त of the page itself क्रम (LOG_XTREE|LOG_NOREDOPAGE);
+		 * अगर page मुक्त from relocation, LOG_UPDATEMAP log is
+		 * specअगरically generated now क्रम logreकरो()
+		 * to update bmap क्रम मुक्त of src relocated page;
+		 * (new flag LOG_RELOCATE may be पूर्णांकroduced which will
+		 * inक्रमm logreकरो() to start NOReकरोPage filter and also
+		 * update block allocation map at the same समय, thus
+		 * aव्योमing an extra log ग_लिखो);
 		 */
 		lrd->type = cpu_to_le16(LOG_UPDATEMAP);
 		lrd->log.updatemap.type = cpu_to_le16(LOG_FREEPXD);
 		lrd->log.updatemap.nxd = cpu_to_le16(1);
 		lrd->log.updatemap.pxd = pxdlock->pxd;
-		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, NULL));
+		lrd->backchain = cpu_to_le32(lmLog(log, tblk, lrd, शून्य));
 
-		/* a maplock for txUpdateMap() for free of the page
-		 * has been formatted at txLock() time;
+		/* a maplock क्रम txUpdateMap() क्रम मुक्त of the page
+		 * has been क्रमmatted at txLock() समय;
 		 */
 		tlck->flag |= tlckUPDATEMAP;
-		return;
-	}
+		वापस;
+	पूर्ण
 	/*
 
 	 * Otherwise it's not a relocate request
 	 *
 	 */
-	else {
-		/* log LOG_UPDATEMAP for logredo() to update bmap for
-		 * free of truncated/relocated delta extent of the data;
-		 * e.g.: external EA extent, relocated/truncated extent
+	अन्यथा अणु
+		/* log LOG_UPDATEMAP क्रम logreकरो() to update bmap क्रम
+		 * मुक्त of truncated/relocated delta extent of the data;
+		 * e.g.: बाह्यal EA extent, relocated/truncated extent
 		 * from xtTailgate();
 		 */
 		lrd->type = cpu_to_le16(LOG_UPDATEMAP);
-		pxdlock = (struct pxd_lock *) & tlck->lock;
+		pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
 		nlock = pxdlock->index;
-		for (i = 0; i < nlock; i++, pxdlock++) {
-			if (pxdlock->flag & mlckALLOCPXD)
+		क्रम (i = 0; i < nlock; i++, pxdlock++) अणु
+			अगर (pxdlock->flag & mlckALLOCPXD)
 				lrd->log.updatemap.type =
 				    cpu_to_le16(LOG_ALLOCPXD);
-			else
+			अन्यथा
 				lrd->log.updatemap.type =
 				    cpu_to_le16(LOG_FREEPXD);
 			lrd->log.updatemap.nxd = cpu_to_le16(1);
 			lrd->log.updatemap.pxd = pxdlock->pxd;
 			lrd->backchain =
-			    cpu_to_le32(lmLog(log, tblk, lrd, NULL));
+			    cpu_to_le32(lmLog(log, tblk, lrd, शून्य));
 			jfs_info("mapLog: xaddr:0x%lx xlen:0x%x",
-				 (ulong) addressPXD(&pxdlock->pxd),
+				 (uदीर्घ) addressPXD(&pxdlock->pxd),
 				 lengthPXD(&pxdlock->pxd));
-		}
+		पूर्ण
 
 		/* update bmap */
 		tlck->flag |= tlckUPDATEMAP;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	txEA()
  *
- * function:	acquire maplock for EA/ACL extents or
+ * function:	acquire maplock क्रम EA/ACL extents or
  *		set COMMIT_INLINE flag;
  */
-void txEA(tid_t tid, struct inode *ip, dxd_t * oldea, dxd_t * newea)
-{
-	struct tlock *tlck = NULL;
-	struct pxd_lock *maplock = NULL, *pxdlock = NULL;
+व्योम txEA(tid_t tid, काष्ठा inode *ip, dxd_t * oldea, dxd_t * newea)
+अणु
+	काष्ठा tlock *tlck = शून्य;
+	काष्ठा pxd_lock *maplock = शून्य, *pxdlock = शून्य;
 
 	/*
-	 * format maplock for alloc of new EA extent
+	 * क्रमmat maplock क्रम alloc of new EA extent
 	 */
-	if (newea) {
+	अगर (newea) अणु
 		/* Since the newea could be a completely zeroed entry we need to
-		 * check for the two flags which indicate we should actually
+		 * check क्रम the two flags which indicate we should actually
 		 * commit new EA data
 		 */
-		if (newea->flag & DXD_EXTENT) {
+		अगर (newea->flag & DXD_EXTENT) अणु
 			tlck = txMaplock(tid, ip, tlckMAP);
-			maplock = (struct pxd_lock *) & tlck->lock;
-			pxdlock = (struct pxd_lock *) maplock;
+			maplock = (काष्ठा pxd_lock *) & tlck->lock;
+			pxdlock = (काष्ठा pxd_lock *) maplock;
 			pxdlock->flag = mlckALLOCPXD;
 			PXDaddress(&pxdlock->pxd, addressDXD(newea));
 			PXDlength(&pxdlock->pxd, lengthDXD(newea));
 			pxdlock++;
 			maplock->index = 1;
-		} else if (newea->flag & DXD_INLINE) {
-			tlck = NULL;
+		पूर्ण अन्यथा अगर (newea->flag & DXD_INLINE) अणु
+			tlck = शून्य;
 
 			set_cflag(COMMIT_Inlineea, ip);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * format maplock for free of old EA extent
+	 * क्रमmat maplock क्रम मुक्त of old EA extent
 	 */
-	if (!test_cflag(COMMIT_Nolink, ip) && oldea->flag & DXD_EXTENT) {
-		if (tlck == NULL) {
+	अगर (!test_cflag(COMMIT_Nolink, ip) && oldea->flag & DXD_EXTENT) अणु
+		अगर (tlck == शून्य) अणु
 			tlck = txMaplock(tid, ip, tlckMAP);
-			maplock = (struct pxd_lock *) & tlck->lock;
-			pxdlock = (struct pxd_lock *) maplock;
+			maplock = (काष्ठा pxd_lock *) & tlck->lock;
+			pxdlock = (काष्ठा pxd_lock *) maplock;
 			maplock->index = 0;
-		}
+		पूर्ण
 		pxdlock->flag = mlckFREEPXD;
 		PXDaddress(&pxdlock->pxd, addressDXD(oldea));
 		PXDlength(&pxdlock->pxd, lengthDXD(oldea));
 		maplock->index++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	txForce()
  *
- * function: synchronously write pages locked by transaction
- *	     after txLog() but before txUpdateMap();
+ * function: synchronously ग_लिखो pages locked by transaction
+ *	     after txLog() but beक्रमe txUpdateMap();
  */
-static void txForce(struct tblock * tblk)
-{
-	struct tlock *tlck;
+अटल व्योम txForce(काष्ठा tblock * tblk)
+अणु
+	काष्ठा tlock *tlck;
 	lid_t lid, next;
-	struct metapage *mp;
+	काष्ठा metapage *mp;
 
 	/*
 	 * reverse the order of transaction tlocks in
@@ -2217,71 +2218,71 @@ static void txForce(struct tblock * tblk)
 	tlck = lid_to_tlock(tblk->next);
 	lid = tlck->next;
 	tlck->next = 0;
-	while (lid) {
+	जबतक (lid) अणु
 		tlck = lid_to_tlock(lid);
 		next = tlck->next;
 		tlck->next = tblk->next;
 		tblk->next = lid;
 		lid = next;
-	}
+	पूर्ण
 
 	/*
-	 * synchronously write the page, and
-	 * hold the page for txUpdateMap();
+	 * synchronously ग_लिखो the page, and
+	 * hold the page क्रम txUpdateMap();
 	 */
-	for (lid = tblk->next; lid; lid = next) {
+	क्रम (lid = tblk->next; lid; lid = next) अणु
 		tlck = lid_to_tlock(lid);
 		next = tlck->next;
 
-		if ((mp = tlck->mp) != NULL &&
-		    (tlck->type & tlckBTROOT) == 0) {
-			assert(mp->xflag & COMMIT_PAGE);
+		अगर ((mp = tlck->mp) != शून्य &&
+		    (tlck->type & tlckBTROOT) == 0) अणु
+			निश्चित(mp->xflag & COMMIT_PAGE);
 
-			if (tlck->flag & tlckWRITEPAGE) {
+			अगर (tlck->flag & tlckWRITEPAGE) अणु
 				tlck->flag &= ~tlckWRITEPAGE;
 
-				/* do not release page to freelist */
-				force_metapage(mp);
-#if 0
+				/* करो not release page to मुक्तlist */
+				क्रमce_metapage(mp);
+#अगर 0
 				/*
-				 * The "right" thing to do here is to
-				 * synchronously write the metadata.
+				 * The "right" thing to करो here is to
+				 * synchronously ग_लिखो the metadata.
 				 * With the current implementation this
-				 * is hard since write_metapage requires
+				 * is hard since ग_लिखो_metapage requires
 				 * us to kunmap & remap the page.  If we
-				 * have tlocks pointing into the metadata
-				 * pages, we don't want to do this.  I think
+				 * have tlocks poपूर्णांकing पूर्णांकo the metadata
+				 * pages, we करोn't want to करो this.  I think
 				 * we can get by with synchronously writing
 				 * the pages when they are released.
 				 */
-				assert(mp->nohomeok);
+				निश्चित(mp->nohomeok);
 				set_bit(META_dirty, &mp->flag);
 				set_bit(META_sync, &mp->flag);
-#endif
-			}
-		}
-	}
-}
+#पूर्ण_अगर
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  *	txUpdateMap()
  *
  * function:	update persistent allocation map (and working map
- *		if appropriate);
+ *		अगर appropriate);
  *
  * parameter:
  */
-static void txUpdateMap(struct tblock * tblk)
-{
-	struct inode *ip;
-	struct inode *ipimap;
+अटल व्योम txUpdateMap(काष्ठा tblock * tblk)
+अणु
+	काष्ठा inode *ip;
+	काष्ठा inode *ipimap;
 	lid_t lid;
-	struct tlock *tlck;
-	struct maplock *maplock;
-	struct pxd_lock pxdlock;
-	int maptype;
-	int k, nlock;
-	struct metapage *mp = NULL;
+	काष्ठा tlock *tlck;
+	काष्ठा maplock *maplock;
+	काष्ठा pxd_lock pxdlock;
+	पूर्णांक maptype;
+	पूर्णांक k, nlock;
+	काष्ठा metapage *mp = शून्य;
 
 	ipimap = JFS_SBI(tblk->sb)->ipimap;
 
@@ -2295,83 +2296,83 @@ static void txUpdateMap(struct tblock * tblk)
 	 * update lsn of the pmap page;
 	 */
 	/*
-	 * scan each tlock/page of transaction for block allocation/free:
+	 * scan each tlock/page of transaction क्रम block allocation/मुक्त:
 	 *
-	 * for each tlock/page of transaction, update map.
-	 *  ? are there tlock for pmap and pwmap at the same time ?
+	 * क्रम each tlock/page of transaction, update map.
+	 *  ? are there tlock क्रम pmap and pwmap at the same समय ?
 	 */
-	for (lid = tblk->next; lid; lid = tlck->next) {
+	क्रम (lid = tblk->next; lid; lid = tlck->next) अणु
 		tlck = lid_to_tlock(lid);
 
-		if ((tlck->flag & tlckUPDATEMAP) == 0)
-			continue;
+		अगर ((tlck->flag & tlckUPDATEMAP) == 0)
+			जारी;
 
-		if (tlck->flag & tlckFREEPAGE) {
+		अगर (tlck->flag & tlckFREEPAGE) अणु
 			/*
-			 * Another thread may attempt to reuse freed space
+			 * Another thपढ़ो may attempt to reuse मुक्तd space
 			 * immediately, so we want to get rid of the metapage
-			 * before anyone else has a chance to get it.
+			 * beक्रमe anyone अन्यथा has a chance to get it.
 			 * Lock metapage, update maps, then invalidate
 			 * the metapage.
 			 */
 			mp = tlck->mp;
 			ASSERT(mp->xflag & COMMIT_PAGE);
 			grab_metapage(mp);
-		}
+		पूर्ण
 
 		/*
 		 * extent list:
 		 * . in-line PXD list:
 		 * . out-of-line XAD list:
 		 */
-		maplock = (struct maplock *) & tlck->lock;
+		maplock = (काष्ठा maplock *) & tlck->lock;
 		nlock = maplock->index;
 
-		for (k = 0; k < nlock; k++, maplock++) {
+		क्रम (k = 0; k < nlock; k++, maplock++) अणु
 			/*
 			 * allocate blocks in persistent map:
 			 *
-			 * blocks have been allocated from wmap at alloc time;
+			 * blocks have been allocated from wmap at alloc समय;
 			 */
-			if (maplock->flag & mlckALLOC) {
+			अगर (maplock->flag & mlckALLOC) अणु
 				txAllocPMap(ipimap, maplock, tblk);
-			}
+			पूर्ण
 			/*
-			 * free blocks in persistent and working map:
-			 * blocks will be freed in pmap and then in wmap;
+			 * मुक्त blocks in persistent and working map:
+			 * blocks will be मुक्तd in pmap and then in wmap;
 			 *
-			 * ? tblock specifies the PMAP/PWMAP based upon
+			 * ? tblock specअगरies the PMAP/PWMAP based upon
 			 * transaction
 			 *
-			 * free blocks in persistent map:
-			 * blocks will be freed from wmap at last reference
-			 * release of the object for regular files;
+			 * मुक्त blocks in persistent map:
+			 * blocks will be मुक्तd from wmap at last reference
+			 * release of the object क्रम regular files;
 			 *
-			 * Alway free blocks from both persistent & working
-			 * maps for directories
+			 * Alway मुक्त blocks from both persistent & working
+			 * maps क्रम directories
 			 */
-			else {	/* (maplock->flag & mlckFREE) */
+			अन्यथा अणु	/* (maplock->flag & mlckFREE) */
 
-				if (tlck->flag & tlckDIRECTORY)
+				अगर (tlck->flag & tlckसूचीECTORY)
 					txFreeMap(ipimap, maplock,
 						  tblk, COMMIT_PWMAP);
-				else
+				अन्यथा
 					txFreeMap(ipimap, maplock,
 						  tblk, maptype);
-			}
-		}
-		if (tlck->flag & tlckFREEPAGE) {
-			if (!(tblk->flag & tblkGC_LAZY)) {
+			पूर्ण
+		पूर्ण
+		अगर (tlck->flag & tlckFREEPAGE) अणु
+			अगर (!(tblk->flag & tblkGC_LAZY)) अणु
 				/* This is equivalent to txRelease */
 				ASSERT(mp->lid == lid);
 				tlck->mp->lid = 0;
-			}
-			assert(mp->nohomeok == 1);
+			पूर्ण
+			निश्चित(mp->nohomeok == 1);
 			metapage_homeok(mp);
 			discard_metapage(mp);
-			tlck->mp = NULL;
-		}
-	}
+			tlck->mp = शून्य;
+		पूर्ण
+	पूर्ण
 	/*
 	 *	update inode allocation map
 	 *
@@ -2379,23 +2380,23 @@ static void txUpdateMap(struct tblock * tblk)
 	 * update lsn of the pmap page;
 	 * update in-memory inode flag/state
 	 *
-	 * unlock mapper/write lock
+	 * unlock mapper/ग_लिखो lock
 	 */
-	if (tblk->xflag & COMMIT_CREATE) {
+	अगर (tblk->xflag & COMMIT_CREATE) अणु
 		diUpdatePMap(ipimap, tblk->ino, false, tblk);
 		/* update persistent block allocation map
-		 * for the allocation of inode extent;
+		 * क्रम the allocation of inode extent;
 		 */
 		pxdlock.flag = mlckALLOCPXD;
 		pxdlock.pxd = tblk->u.ixpxd;
 		pxdlock.index = 1;
-		txAllocPMap(ipimap, (struct maplock *) & pxdlock, tblk);
-	} else if (tblk->xflag & COMMIT_DELETE) {
+		txAllocPMap(ipimap, (काष्ठा maplock *) & pxdlock, tblk);
+	पूर्ण अन्यथा अगर (tblk->xflag & COMMIT_DELETE) अणु
 		ip = tblk->u.ip;
 		diUpdatePMap(ipimap, ip->i_ino, true, tblk);
 		iput(ip);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  *	txAllocPMap()
@@ -2410,344 +2411,344 @@ static void txUpdateMap(struct tblock * tblk)
  *
  *	maptype -
  *		allocate from persistent map;
- *		free from persistent map;
- *		(e.g., tmp file - free from working map at releae
+ *		मुक्त from persistent map;
+ *		(e.g., पंचांगp file - मुक्त from working map at releae
  *		 of last reference);
- *		free from persistent and working map;
+ *		मुक्त from persistent and working map;
  *
  *	lsn	- log sequence number;
  */
-static void txAllocPMap(struct inode *ip, struct maplock * maplock,
-			struct tblock * tblk)
-{
-	struct inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
-	struct xdlistlock *xadlistlock;
+अटल व्योम txAllocPMap(काष्ठा inode *ip, काष्ठा maplock * maplock,
+			काष्ठा tblock * tblk)
+अणु
+	काष्ठा inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
+	काष्ठा xdlistlock *xadlistlock;
 	xad_t *xad;
 	s64 xaddr;
-	int xlen;
-	struct pxd_lock *pxdlock;
-	struct xdlistlock *pxdlistlock;
+	पूर्णांक xlen;
+	काष्ठा pxd_lock *pxdlock;
+	काष्ठा xdlistlock *pxdlistlock;
 	pxd_t *pxd;
-	int n;
+	पूर्णांक n;
 
 	/*
 	 * allocate from persistent map;
 	 */
-	if (maplock->flag & mlckALLOCXADLIST) {
-		xadlistlock = (struct xdlistlock *) maplock;
+	अगर (maplock->flag & mlckALLOCXADLIST) अणु
+		xadlistlock = (काष्ठा xdlistlock *) maplock;
 		xad = xadlistlock->xdlist;
-		for (n = 0; n < xadlistlock->count; n++, xad++) {
-			if (xad->flag & (XAD_NEW | XAD_EXTENDED)) {
+		क्रम (n = 0; n < xadlistlock->count; n++, xad++) अणु
+			अगर (xad->flag & (XAD_NEW | XAD_EXTENDED)) अणु
 				xaddr = addressXAD(xad);
 				xlen = lengthXAD(xad);
 				dbUpdatePMap(ipbmap, false, xaddr,
 					     (s64) xlen, tblk);
 				xad->flag &= ~(XAD_NEW | XAD_EXTENDED);
 				jfs_info("allocPMap: xaddr:0x%lx xlen:%d",
-					 (ulong) xaddr, xlen);
-			}
-		}
-	} else if (maplock->flag & mlckALLOCPXD) {
-		pxdlock = (struct pxd_lock *) maplock;
+					 (uदीर्घ) xaddr, xlen);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अगर (maplock->flag & mlckALLOCPXD) अणु
+		pxdlock = (काष्ठा pxd_lock *) maplock;
 		xaddr = addressPXD(&pxdlock->pxd);
 		xlen = lengthPXD(&pxdlock->pxd);
 		dbUpdatePMap(ipbmap, false, xaddr, (s64) xlen, tblk);
-		jfs_info("allocPMap: xaddr:0x%lx xlen:%d", (ulong) xaddr, xlen);
-	} else {		/* (maplock->flag & mlckALLOCPXDLIST) */
+		jfs_info("allocPMap: xaddr:0x%lx xlen:%d", (uदीर्घ) xaddr, xlen);
+	पूर्ण अन्यथा अणु		/* (maplock->flag & mlckALLOCPXDLIST) */
 
-		pxdlistlock = (struct xdlistlock *) maplock;
+		pxdlistlock = (काष्ठा xdlistlock *) maplock;
 		pxd = pxdlistlock->xdlist;
-		for (n = 0; n < pxdlistlock->count; n++, pxd++) {
+		क्रम (n = 0; n < pxdlistlock->count; n++, pxd++) अणु
 			xaddr = addressPXD(pxd);
 			xlen = lengthPXD(pxd);
 			dbUpdatePMap(ipbmap, false, xaddr, (s64) xlen,
 				     tblk);
 			jfs_info("allocPMap: xaddr:0x%lx xlen:%d",
-				 (ulong) xaddr, xlen);
-		}
-	}
-}
+				 (uदीर्घ) xaddr, xlen);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  *	txFreeMap()
  *
- * function:	free from persistent and/or working map;
+ * function:	मुक्त from persistent and/or working map;
  *
- * todo: optimization
+ * toकरो: optimization
  */
-void txFreeMap(struct inode *ip,
-	       struct maplock * maplock, struct tblock * tblk, int maptype)
-{
-	struct inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
-	struct xdlistlock *xadlistlock;
+व्योम txFreeMap(काष्ठा inode *ip,
+	       काष्ठा maplock * maplock, काष्ठा tblock * tblk, पूर्णांक maptype)
+अणु
+	काष्ठा inode *ipbmap = JFS_SBI(ip->i_sb)->ipbmap;
+	काष्ठा xdlistlock *xadlistlock;
 	xad_t *xad;
 	s64 xaddr;
-	int xlen;
-	struct pxd_lock *pxdlock;
-	struct xdlistlock *pxdlistlock;
+	पूर्णांक xlen;
+	काष्ठा pxd_lock *pxdlock;
+	काष्ठा xdlistlock *pxdlistlock;
 	pxd_t *pxd;
-	int n;
+	पूर्णांक n;
 
 	jfs_info("txFreeMap: tblk:0x%p maplock:0x%p maptype:0x%x",
 		 tblk, maplock, maptype);
 
 	/*
-	 * free from persistent map;
+	 * मुक्त from persistent map;
 	 */
-	if (maptype == COMMIT_PMAP || maptype == COMMIT_PWMAP) {
-		if (maplock->flag & mlckFREEXADLIST) {
-			xadlistlock = (struct xdlistlock *) maplock;
+	अगर (maptype == COMMIT_PMAP || maptype == COMMIT_PWMAP) अणु
+		अगर (maplock->flag & mlckFREEXADLIST) अणु
+			xadlistlock = (काष्ठा xdlistlock *) maplock;
 			xad = xadlistlock->xdlist;
-			for (n = 0; n < xadlistlock->count; n++, xad++) {
-				if (!(xad->flag & XAD_NEW)) {
+			क्रम (n = 0; n < xadlistlock->count; n++, xad++) अणु
+				अगर (!(xad->flag & XAD_NEW)) अणु
 					xaddr = addressXAD(xad);
 					xlen = lengthXAD(xad);
 					dbUpdatePMap(ipbmap, true, xaddr,
 						     (s64) xlen, tblk);
 					jfs_info("freePMap: xaddr:0x%lx xlen:%d",
-						 (ulong) xaddr, xlen);
-				}
-			}
-		} else if (maplock->flag & mlckFREEPXD) {
-			pxdlock = (struct pxd_lock *) maplock;
+						 (uदीर्घ) xaddr, xlen);
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अगर (maplock->flag & mlckFREEPXD) अणु
+			pxdlock = (काष्ठा pxd_lock *) maplock;
 			xaddr = addressPXD(&pxdlock->pxd);
 			xlen = lengthPXD(&pxdlock->pxd);
 			dbUpdatePMap(ipbmap, true, xaddr, (s64) xlen,
 				     tblk);
 			jfs_info("freePMap: xaddr:0x%lx xlen:%d",
-				 (ulong) xaddr, xlen);
-		} else {	/* (maplock->flag & mlckALLOCPXDLIST) */
+				 (uदीर्घ) xaddr, xlen);
+		पूर्ण अन्यथा अणु	/* (maplock->flag & mlckALLOCPXDLIST) */
 
-			pxdlistlock = (struct xdlistlock *) maplock;
+			pxdlistlock = (काष्ठा xdlistlock *) maplock;
 			pxd = pxdlistlock->xdlist;
-			for (n = 0; n < pxdlistlock->count; n++, pxd++) {
+			क्रम (n = 0; n < pxdlistlock->count; n++, pxd++) अणु
 				xaddr = addressPXD(pxd);
 				xlen = lengthPXD(pxd);
 				dbUpdatePMap(ipbmap, true, xaddr,
 					     (s64) xlen, tblk);
 				jfs_info("freePMap: xaddr:0x%lx xlen:%d",
-					 (ulong) xaddr, xlen);
-			}
-		}
-	}
+					 (uदीर्घ) xaddr, xlen);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * free from working map;
+	 * मुक्त from working map;
 	 */
-	if (maptype == COMMIT_PWMAP || maptype == COMMIT_WMAP) {
-		if (maplock->flag & mlckFREEXADLIST) {
-			xadlistlock = (struct xdlistlock *) maplock;
+	अगर (maptype == COMMIT_PWMAP || maptype == COMMIT_WMAP) अणु
+		अगर (maplock->flag & mlckFREEXADLIST) अणु
+			xadlistlock = (काष्ठा xdlistlock *) maplock;
 			xad = xadlistlock->xdlist;
-			for (n = 0; n < xadlistlock->count; n++, xad++) {
+			क्रम (n = 0; n < xadlistlock->count; n++, xad++) अणु
 				xaddr = addressXAD(xad);
 				xlen = lengthXAD(xad);
 				dbFree(ip, xaddr, (s64) xlen);
 				xad->flag = 0;
 				jfs_info("freeWMap: xaddr:0x%lx xlen:%d",
-					 (ulong) xaddr, xlen);
-			}
-		} else if (maplock->flag & mlckFREEPXD) {
-			pxdlock = (struct pxd_lock *) maplock;
+					 (uदीर्घ) xaddr, xlen);
+			पूर्ण
+		पूर्ण अन्यथा अगर (maplock->flag & mlckFREEPXD) अणु
+			pxdlock = (काष्ठा pxd_lock *) maplock;
 			xaddr = addressPXD(&pxdlock->pxd);
 			xlen = lengthPXD(&pxdlock->pxd);
 			dbFree(ip, xaddr, (s64) xlen);
 			jfs_info("freeWMap: xaddr:0x%lx xlen:%d",
-				 (ulong) xaddr, xlen);
-		} else {	/* (maplock->flag & mlckFREEPXDLIST) */
+				 (uदीर्घ) xaddr, xlen);
+		पूर्ण अन्यथा अणु	/* (maplock->flag & mlckFREEPXDLIST) */
 
-			pxdlistlock = (struct xdlistlock *) maplock;
+			pxdlistlock = (काष्ठा xdlistlock *) maplock;
 			pxd = pxdlistlock->xdlist;
-			for (n = 0; n < pxdlistlock->count; n++, pxd++) {
+			क्रम (n = 0; n < pxdlistlock->count; n++, pxd++) अणु
 				xaddr = addressPXD(pxd);
 				xlen = lengthPXD(pxd);
 				dbFree(ip, xaddr, (s64) xlen);
 				jfs_info("freeWMap: xaddr:0x%lx xlen:%d",
-					 (ulong) xaddr, xlen);
-			}
-		}
-	}
-}
+					 (uदीर्घ) xaddr, xlen);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  *	txFreelock()
  *
- * function:	remove tlock from inode anonymous locklist
+ * function:	हटाओ tlock from inode anonymous locklist
  */
-void txFreelock(struct inode *ip)
-{
-	struct jfs_inode_info *jfs_ip = JFS_IP(ip);
-	struct tlock *xtlck, *tlck;
+व्योम txFreelock(काष्ठा inode *ip)
+अणु
+	काष्ठा jfs_inode_info *jfs_ip = JFS_IP(ip);
+	काष्ठा tlock *xtlck, *tlck;
 	lid_t xlid = 0, lid;
 
-	if (!jfs_ip->atlhead)
-		return;
+	अगर (!jfs_ip->atlhead)
+		वापस;
 
 	TXN_LOCK();
-	xtlck = (struct tlock *) &jfs_ip->atlhead;
+	xtlck = (काष्ठा tlock *) &jfs_ip->atlhead;
 
-	while ((lid = xtlck->next) != 0) {
+	जबतक ((lid = xtlck->next) != 0) अणु
 		tlck = lid_to_tlock(lid);
-		if (tlck->flag & tlckFREELOCK) {
+		अगर (tlck->flag & tlckFREELOCK) अणु
 			xtlck->next = tlck->next;
 			txLockFree(lid);
-		} else {
+		पूर्ण अन्यथा अणु
 			xtlck = tlck;
 			xlid = lid;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (jfs_ip->atlhead)
+	अगर (jfs_ip->atlhead)
 		jfs_ip->atltail = xlid;
-	else {
+	अन्यथा अणु
 		jfs_ip->atltail = 0;
 		/*
-		 * If inode was on anon_list, remove it
+		 * If inode was on anon_list, हटाओ it
 		 */
 		list_del_init(&jfs_ip->anon_inode_list);
-	}
+	पूर्ण
 	TXN_UNLOCK();
-}
+पूर्ण
 
 /*
  *	txAbort()
  *
- * function: abort tx before commit;
+ * function: पात tx beक्रमe commit;
  *
- * frees line-locks and segment locks for all
- * segments in comdata structure.
- * Optionally sets state of file-system to FM_DIRTY in super-block.
- * log age of page-frames in memory for which caller has
- * are reset to 0 (to avoid logwarap).
+ * मुक्तs line-locks and segment locks क्रम all
+ * segments in comdata काष्ठाure.
+ * Optionally sets state of file-प्रणाली to FM_सूचीTY in super-block.
+ * log age of page-frames in memory क्रम which caller has
+ * are reset to 0 (to aव्योम logwarap).
  */
-void txAbort(tid_t tid, int dirty)
-{
+व्योम txAbort(tid_t tid, पूर्णांक dirty)
+अणु
 	lid_t lid, next;
-	struct metapage *mp;
-	struct tblock *tblk = tid_to_tblock(tid);
-	struct tlock *tlck;
+	काष्ठा metapage *mp;
+	काष्ठा tblock *tblk = tid_to_tblock(tid);
+	काष्ठा tlock *tlck;
 
 	/*
-	 * free tlocks of the transaction
+	 * मुक्त tlocks of the transaction
 	 */
-	for (lid = tblk->next; lid; lid = next) {
+	क्रम (lid = tblk->next; lid; lid = next) अणु
 		tlck = lid_to_tlock(lid);
 		next = tlck->next;
 		mp = tlck->mp;
 		JFS_IP(tlck->ip)->xtlid = 0;
 
-		if (mp) {
+		अगर (mp) अणु
 			mp->lid = 0;
 
 			/*
-			 * reset lsn of page to avoid logwarap:
+			 * reset lsn of page to aव्योम logwarap:
 			 *
 			 * (page may have been previously committed by another
 			 * transaction(s) but has not been paged, i.e.,
 			 * it may be on logsync list even though it has not
-			 * been logged for the current tx.)
+			 * been logged क्रम the current tx.)
 			 */
-			if (mp->xflag & COMMIT_PAGE && mp->lsn)
+			अगर (mp->xflag & COMMIT_PAGE && mp->lsn)
 				LogSyncRelease(mp);
-		}
-		/* insert tlock at head of freelist */
+		पूर्ण
+		/* insert tlock at head of मुक्तlist */
 		TXN_LOCK();
 		txLockFree(lid);
 		TXN_UNLOCK();
-	}
+	पूर्ण
 
-	/* caller will free the transaction block */
+	/* caller will मुक्त the transaction block */
 
 	tblk->next = tblk->last = 0;
 
 	/*
-	 * mark filesystem dirty
+	 * mark fileप्रणाली dirty
 	 */
-	if (dirty)
+	अगर (dirty)
 		jfs_error(tblk->sb, "\n");
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
- *	txLazyCommit(void)
+ *	txLazyCommit(व्योम)
  *
  *	All transactions except those changing ipimap (COMMIT_FORCE) are
  *	processed by this routine.  This insures that the inode and block
  *	allocation maps are updated in order.  For synchronous transactions,
- *	let the user thread finish processing after txUpdateMap() is called.
+ *	let the user thपढ़ो finish processing after txUpdateMap() is called.
  */
-static void txLazyCommit(struct tblock * tblk)
-{
-	struct jfs_log *log;
+अटल व्योम txLazyCommit(काष्ठा tblock * tblk)
+अणु
+	काष्ठा jfs_log *log;
 
-	while (((tblk->flag & tblkGC_READY) == 0) &&
-	       ((tblk->flag & tblkGC_UNLOCKED) == 0)) {
-		/* We must have gotten ahead of the user thread
+	जबतक (((tblk->flag & tblkGC_READY) == 0) &&
+	       ((tblk->flag & tblkGC_UNLOCKED) == 0)) अणु
+		/* We must have gotten ahead of the user thपढ़ो
 		 */
 		jfs_info("jfs_lazycommit: tblk 0x%p not unlocked", tblk);
 		yield();
-	}
+	पूर्ण
 
 	jfs_info("txLazyCommit: processing tblk 0x%p", tblk);
 
 	txUpdateMap(tblk);
 
-	log = (struct jfs_log *) JFS_SBI(tblk->sb)->log;
+	log = (काष्ठा jfs_log *) JFS_SBI(tblk->sb)->log;
 
-	spin_lock_irq(&log->gclock);	// LOGGC_LOCK
+	spin_lock_irq(&log->gघड़ी);	// LOGGC_LOCK
 
 	tblk->flag |= tblkGC_COMMITTED;
 
-	if (tblk->flag & tblkGC_READY)
+	अगर (tblk->flag & tblkGC_READY)
 		log->gcrtc--;
 
-	wake_up_all(&tblk->gcwait);	// LOGGC_WAKEUP
+	wake_up_all(&tblk->gcरुको);	// LOGGC_WAKEUP
 
 	/*
 	 * Can't release log->gclock until we've tested tblk->flag
 	 */
-	if (tblk->flag & tblkGC_LAZY) {
-		spin_unlock_irq(&log->gclock);	// LOGGC_UNLOCK
+	अगर (tblk->flag & tblkGC_LAZY) अणु
+		spin_unlock_irq(&log->gघड़ी);	// LOGGC_UNLOCK
 		txUnlock(tblk);
 		tblk->flag &= ~tblkGC_LAZY;
 		txEnd(tblk - TxBlock);	/* Convert back to tid */
-	} else
-		spin_unlock_irq(&log->gclock);	// LOGGC_UNLOCK
+	पूर्ण अन्यथा
+		spin_unlock_irq(&log->gघड़ी);	// LOGGC_UNLOCK
 
 	jfs_info("txLazyCommit: done: tblk = 0x%p", tblk);
-}
+पूर्ण
 
 /*
- *	jfs_lazycommit(void)
+ *	jfs_lazycommit(व्योम)
  *
- *	To be run as a kernel daemon.  If lbmIODone is called in an interrupt
+ *	To be run as a kernel daemon.  If lbmIODone is called in an पूर्णांकerrupt
  *	context, or where blocking is not wanted, this routine will process
  *	committed transactions from the unlock queue.
  */
-int jfs_lazycommit(void *arg)
-{
-	int WorkDone;
-	struct tblock *tblk;
-	unsigned long flags;
-	struct jfs_sb_info *sbi;
+पूर्णांक jfs_lazycommit(व्योम *arg)
+अणु
+	पूर्णांक WorkDone;
+	काष्ठा tblock *tblk;
+	अचिन्हित दीर्घ flags;
+	काष्ठा jfs_sb_info *sbi;
 
-	do {
+	करो अणु
 		LAZY_LOCK(flags);
-		jfs_commit_thread_waking = 0;	/* OK to wake another thread */
-		while (!list_empty(&TxAnchor.unlock_queue)) {
+		jfs_commit_thपढ़ो_waking = 0;	/* OK to wake another thपढ़ो */
+		जबतक (!list_empty(&TxAnchor.unlock_queue)) अणु
 			WorkDone = 0;
-			list_for_each_entry(tblk, &TxAnchor.unlock_queue,
-					    cqueue) {
+			list_क्रम_each_entry(tblk, &TxAnchor.unlock_queue,
+					    cqueue) अणु
 
 				sbi = JFS_SBI(tblk->sb);
 				/*
 				 * For each volume, the transactions must be
-				 * handled in order.  If another commit thread
-				 * is handling a tblk for this superblock,
+				 * handled in order.  If another commit thपढ़ो
+				 * is handling a tblk क्रम this superblock,
 				 * skip it
 				 */
-				if (sbi->commit_state & IN_LAZYCOMMIT)
-					continue;
+				अगर (sbi->commit_state & IN_LAZYCOMMIT)
+					जारी;
 
 				sbi->commit_state |= IN_LAZYCOMMIT;
 				WorkDone = 1;
@@ -2767,64 +2768,64 @@ int jfs_lazycommit(void *arg)
 				 * anyway, it's unsafe!)  We want to go back to
 				 * the beginning of the list.
 				 */
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			/* If there was nothing to do, don't continue */
-			if (!WorkDone)
-				break;
-		}
-		/* In case a wakeup came while all threads were active */
-		jfs_commit_thread_waking = 0;
+			/* If there was nothing to करो, करोn't जारी */
+			अगर (!WorkDone)
+				अवरोध;
+		पूर्ण
+		/* In हाल a wakeup came जबतक all thपढ़ोs were active */
+		jfs_commit_thपढ़ो_waking = 0;
 
-		if (freezing(current)) {
+		अगर (मुक्तzing(current)) अणु
 			LAZY_UNLOCK(flags);
-			try_to_freeze();
-		} else {
+			try_to_मुक्तze();
+		पूर्ण अन्यथा अणु
 			DECLARE_WAITQUEUE(wq, current);
 
-			add_wait_queue(&jfs_commit_thread_wait, &wq);
+			add_रुको_queue(&jfs_commit_thपढ़ो_रुको, &wq);
 			set_current_state(TASK_INTERRUPTIBLE);
 			LAZY_UNLOCK(flags);
 			schedule();
-			remove_wait_queue(&jfs_commit_thread_wait, &wq);
-		}
-	} while (!kthread_should_stop());
+			हटाओ_रुको_queue(&jfs_commit_thपढ़ो_रुको, &wq);
+		पूर्ण
+	पूर्ण जबतक (!kthपढ़ो_should_stop());
 
-	if (!list_empty(&TxAnchor.unlock_queue))
+	अगर (!list_empty(&TxAnchor.unlock_queue))
 		jfs_err("jfs_lazycommit being killed w/pending transactions!");
-	else
+	अन्यथा
 		jfs_info("jfs_lazycommit being killed");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void txLazyUnlock(struct tblock * tblk)
-{
-	unsigned long flags;
+व्योम txLazyUnlock(काष्ठा tblock * tblk)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	LAZY_LOCK(flags);
 
 	list_add_tail(&tblk->cqueue, &TxAnchor.unlock_queue);
 	/*
-	 * Don't wake up a commit thread if there is already one servicing
-	 * this superblock, or if the last one we woke up hasn't started yet.
+	 * Don't wake up a commit thपढ़ो अगर there is alपढ़ोy one servicing
+	 * this superblock, or अगर the last one we woke up hasn't started yet.
 	 */
-	if (!(JFS_SBI(tblk->sb)->commit_state & IN_LAZYCOMMIT) &&
-	    !jfs_commit_thread_waking) {
-		jfs_commit_thread_waking = 1;
-		wake_up(&jfs_commit_thread_wait);
-	}
+	अगर (!(JFS_SBI(tblk->sb)->commit_state & IN_LAZYCOMMIT) &&
+	    !jfs_commit_thपढ़ो_waking) अणु
+		jfs_commit_thपढ़ो_waking = 1;
+		wake_up(&jfs_commit_thपढ़ो_रुको);
+	पूर्ण
 	LAZY_UNLOCK(flags);
-}
+पूर्ण
 
-static void LogSyncRelease(struct metapage * mp)
-{
-	struct jfs_log *log = mp->log;
+अटल व्योम LogSyncRelease(काष्ठा metapage * mp)
+अणु
+	काष्ठा jfs_log *log = mp->log;
 
-	assert(mp->nohomeok);
-	assert(log);
+	निश्चित(mp->nohomeok);
+	निश्चित(log);
 	metapage_homeok(mp);
-}
+पूर्ण
 
 /*
  *	txQuiesce
@@ -2832,29 +2833,29 @@ static void LogSyncRelease(struct metapage * mp)
  *	Block all new transactions and push anonymous transactions to
  *	completion
  *
- *	This does almost the same thing as jfs_sync below.  We don't
+ *	This करोes almost the same thing as jfs_sync below.  We करोn't
  *	worry about deadlocking when jfs_tlocks_low is set, since we would
  *	expect jfs_sync to get us out of that jam.
  */
-void txQuiesce(struct super_block *sb)
-{
-	struct inode *ip;
-	struct jfs_inode_info *jfs_ip;
-	struct jfs_log *log = JFS_SBI(sb)->log;
+व्योम txQuiesce(काष्ठा super_block *sb)
+अणु
+	काष्ठा inode *ip;
+	काष्ठा jfs_inode_info *jfs_ip;
+	काष्ठा jfs_log *log = JFS_SBI(sb)->log;
 	tid_t tid;
 
 	set_bit(log_QUIESCE, &log->flag);
 
 	TXN_LOCK();
 restart:
-	while (!list_empty(&TxAnchor.anon_list)) {
+	जबतक (!list_empty(&TxAnchor.anon_list)) अणु
 		jfs_ip = list_entry(TxAnchor.anon_list.next,
-				    struct jfs_inode_info,
+				    काष्ठा jfs_inode_info,
 				    anon_inode_list);
 		ip = &jfs_ip->vfs_inode;
 
 		/*
-		 * inode will be removed from anonymous list
+		 * inode will be हटाओd from anonymous list
 		 * when it is committed
 		 */
 		TXN_UNLOCK();
@@ -2864,74 +2865,74 @@ restart:
 		txEnd(tid);
 		mutex_unlock(&jfs_ip->commit_mutex);
 		/*
-		 * Just to be safe.  I don't know how
-		 * long we can run without blocking
+		 * Just to be safe.  I करोn't know how
+		 * दीर्घ we can run without blocking
 		 */
 		cond_resched();
 		TXN_LOCK();
-	}
+	पूर्ण
 
 	/*
 	 * If jfs_sync is running in parallel, there could be some inodes
 	 * on anon_list2.  Let's check.
 	 */
-	if (!list_empty(&TxAnchor.anon_list2)) {
+	अगर (!list_empty(&TxAnchor.anon_list2)) अणु
 		list_splice_init(&TxAnchor.anon_list2, &TxAnchor.anon_list);
-		goto restart;
-	}
+		जाओ restart;
+	पूर्ण
 	TXN_UNLOCK();
 
 	/*
 	 * We may need to kick off the group commit
 	 */
 	jfs_flush_journal(log, 0);
-}
+पूर्ण
 
 /*
  * txResume()
  *
  * Allows transactions to start again following txQuiesce
  */
-void txResume(struct super_block *sb)
-{
-	struct jfs_log *log = JFS_SBI(sb)->log;
+व्योम txResume(काष्ठा super_block *sb)
+अणु
+	काष्ठा jfs_log *log = JFS_SBI(sb)->log;
 
 	clear_bit(log_QUIESCE, &log->flag);
-	TXN_WAKEUP(&log->syncwait);
-}
+	TXN_WAKEUP(&log->syncरुको);
+पूर्ण
 
 /*
- *	jfs_sync(void)
+ *	jfs_sync(व्योम)
  *
  *	To be run as a kernel daemon.  This is awakened when tlocks run low.
- *	We write any inodes that have anonymous tlocks so they will become
+ *	We ग_लिखो any inodes that have anonymous tlocks so they will become
  *	available.
  */
-int jfs_sync(void *arg)
-{
-	struct inode *ip;
-	struct jfs_inode_info *jfs_ip;
+पूर्णांक jfs_sync(व्योम *arg)
+अणु
+	काष्ठा inode *ip;
+	काष्ठा jfs_inode_info *jfs_ip;
 	tid_t tid;
 
-	do {
+	करो अणु
 		/*
-		 * write each inode on the anonymous inode list
+		 * ग_लिखो each inode on the anonymous inode list
 		 */
 		TXN_LOCK();
-		while (jfs_tlocks_low && !list_empty(&TxAnchor.anon_list)) {
+		जबतक (jfs_tlocks_low && !list_empty(&TxAnchor.anon_list)) अणु
 			jfs_ip = list_entry(TxAnchor.anon_list.next,
-					    struct jfs_inode_info,
+					    काष्ठा jfs_inode_info,
 					    anon_inode_list);
 			ip = &jfs_ip->vfs_inode;
 
-			if (! igrab(ip)) {
+			अगर (! igrab(ip)) अणु
 				/*
-				 * Inode is being freed
+				 * Inode is being मुक्तd
 				 */
 				list_del_init(&jfs_ip->anon_inode_list);
-			} else if (mutex_trylock(&jfs_ip->commit_mutex)) {
+			पूर्ण अन्यथा अगर (mutex_trylock(&jfs_ip->commit_mutex)) अणु
 				/*
-				 * inode will be removed from anonymous list
+				 * inode will be हटाओd from anonymous list
 				 * when it is committed
 				 */
 				TXN_UNLOCK();
@@ -2942,14 +2943,14 @@ int jfs_sync(void *arg)
 
 				iput(ip);
 				/*
-				 * Just to be safe.  I don't know how
-				 * long we can run without blocking
+				 * Just to be safe.  I करोn't know how
+				 * दीर्घ we can run without blocking
 				 */
 				cond_resched();
 				TXN_LOCK();
-			} else {
+			पूर्ण अन्यथा अणु
 				/* We can't get the commit mutex.  It may
-				 * be held by a thread waiting for tlock's
+				 * be held by a thपढ़ो रुकोing क्रम tlock's
 				 * so let's not block here.  Save it to
 				 * put back on the anon_list.
 				 */
@@ -2961,40 +2962,40 @@ int jfs_sync(void *arg)
 				TXN_UNLOCK();
 				iput(ip);
 				TXN_LOCK();
-			}
-		}
+			पूर्ण
+		पूर्ण
 		/* Add anon_list2 back to anon_list */
 		list_splice_init(&TxAnchor.anon_list2, &TxAnchor.anon_list);
 
-		if (freezing(current)) {
+		अगर (मुक्तzing(current)) अणु
 			TXN_UNLOCK();
-			try_to_freeze();
-		} else {
+			try_to_मुक्तze();
+		पूर्ण अन्यथा अणु
 			set_current_state(TASK_INTERRUPTIBLE);
 			TXN_UNLOCK();
 			schedule();
-		}
-	} while (!kthread_should_stop());
+		पूर्ण
+	पूर्ण जबतक (!kthपढ़ो_should_stop());
 
 	jfs_info("jfs_sync being killed");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#if defined(CONFIG_PROC_FS) && defined(CONFIG_JFS_DEBUG)
-int jfs_txanchor_proc_show(struct seq_file *m, void *v)
-{
-	char *freewait;
-	char *freelockwait;
-	char *lowlockwait;
+#अगर defined(CONFIG_PROC_FS) && defined(CONFIG_JFS_DEBUG)
+पूर्णांक jfs_txanchor_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	अक्षर *मुक्तरुको;
+	अक्षर *मुक्तlockरुको;
+	अक्षर *lowlockरुको;
 
-	freewait =
-	    waitqueue_active(&TxAnchor.freewait) ? "active" : "empty";
-	freelockwait =
-	    waitqueue_active(&TxAnchor.freelockwait) ? "active" : "empty";
-	lowlockwait =
-	    waitqueue_active(&TxAnchor.lowlockwait) ? "active" : "empty";
+	मुक्तरुको =
+	    रुकोqueue_active(&TxAnchor.मुक्तरुको) ? "active" : "empty";
+	मुक्तlockरुको =
+	    रुकोqueue_active(&TxAnchor.मुक्तlockरुको) ? "active" : "empty";
+	lowlockरुको =
+	    रुकोqueue_active(&TxAnchor.lowlockरुको) ? "active" : "empty";
 
-	seq_printf(m,
+	seq_म_लिखो(m,
 		       "JFS TxAnchor\n"
 		       "============\n"
 		       "freetid = %d\n"
@@ -3005,22 +3006,22 @@ int jfs_txanchor_proc_show(struct seq_file *m, void *v)
 		       "tlocksInUse = %d\n"
 		       "jfs_tlocks_low = %d\n"
 		       "unlock_queue is %sempty\n",
-		       TxAnchor.freetid,
-		       freewait,
-		       TxAnchor.freelock,
-		       freelockwait,
-		       lowlockwait,
+		       TxAnchor.मुक्तtid,
+		       मुक्तरुको,
+		       TxAnchor.मुक्तlock,
+		       मुक्तlockरुको,
+		       lowlockरुको,
 		       TxAnchor.tlocksInUse,
 		       jfs_tlocks_low,
 		       list_empty(&TxAnchor.unlock_queue) ? "" : "not ");
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#if defined(CONFIG_PROC_FS) && defined(CONFIG_JFS_STATISTICS)
-int jfs_txstats_proc_show(struct seq_file *m, void *v)
-{
-	seq_printf(m,
+#अगर defined(CONFIG_PROC_FS) && defined(CONFIG_JFS_STATISTICS)
+पूर्णांक jfs_txstats_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	seq_म_लिखो(m,
 		       "JFS TxStats\n"
 		       "===========\n"
 		       "calls to txBegin = %d\n"
@@ -3035,12 +3036,12 @@ int jfs_txstats_proc_show(struct seq_file *m, void *v)
 		       TxStat.txBegin,
 		       TxStat.txBegin_barrier,
 		       TxStat.txBegin_lockslow,
-		       TxStat.txBegin_freetid,
+		       TxStat.txBegin_मुक्तtid,
 		       TxStat.txBeginAnon,
 		       TxStat.txBeginAnon_barrier,
 		       TxStat.txBeginAnon_lockslow,
 		       TxStat.txLockAlloc,
-		       TxStat.txLockAlloc_freelock);
-	return 0;
-}
-#endif
+		       TxStat.txLockAlloc_मुक्तlock);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Fault Injection Test harness (FI)
  *  Copyright (C) Intel Crop.
@@ -6,133 +7,133 @@
 
 /*  Id: pf_in.c,v 1.1.1.1 2002/11/12 05:56:32 brlock Exp
  *  Copyright by Intel Crop., 2002
- *  Louis Zhuang (louis.zhuang@intel.com)
+ *  Louis Zhuang (louis.zhuang@पूर्णांकel.com)
  *
  *  Bjorn Steinbrink (B.Steinbrink@gmx.de), 2007
  */
 
-#include <linux/ptrace.h> /* struct pt_regs */
-#include "pf_in.h"
+#समावेश <linux/ptrace.h> /* काष्ठा pt_regs */
+#समावेश "pf_in.h"
 
-#ifdef __i386__
+#अगर_घोषित __i386__
 /* IA32 Manual 3, 2-1 */
-static unsigned char prefix_codes[] = {
+अटल अचिन्हित अक्षर prefix_codes[] = अणु
 	0xF0, 0xF2, 0xF3, 0x2E, 0x36, 0x3E, 0x26, 0x64,
 	0x65, 0x66, 0x67
-};
+पूर्ण;
 /* IA32 Manual 3, 3-432*/
-static unsigned int reg_rop[] = {
+अटल अचिन्हित पूर्णांक reg_rop[] = अणु
 	0x8A, 0x8B, 0xB60F, 0xB70F, 0xBE0F, 0xBF0F
-};
-static unsigned int reg_wop[] = { 0x88, 0x89, 0xAA, 0xAB };
-static unsigned int imm_wop[] = { 0xC6, 0xC7 };
+पूर्ण;
+अटल अचिन्हित पूर्णांक reg_wop[] = अणु 0x88, 0x89, 0xAA, 0xAB पूर्ण;
+अटल अचिन्हित पूर्णांक imm_wop[] = अणु 0xC6, 0xC7 पूर्ण;
 /* IA32 Manual 3, 3-432*/
-static unsigned int rw8[] = { 0x88, 0x8A, 0xC6, 0xAA };
-static unsigned int rw32[] = {
+अटल अचिन्हित पूर्णांक rw8[] = अणु 0x88, 0x8A, 0xC6, 0xAA पूर्ण;
+अटल अचिन्हित पूर्णांक rw32[] = अणु
 	0x89, 0x8B, 0xC7, 0xB60F, 0xB70F, 0xBE0F, 0xBF0F, 0xAB
-};
-static unsigned int mw8[] = { 0x88, 0x8A, 0xC6, 0xB60F, 0xBE0F, 0xAA };
-static unsigned int mw16[] = { 0xB70F, 0xBF0F };
-static unsigned int mw32[] = { 0x89, 0x8B, 0xC7, 0xAB };
-static unsigned int mw64[] = {};
-#else /* not __i386__ */
-static unsigned char prefix_codes[] = {
+पूर्ण;
+अटल अचिन्हित पूर्णांक mw8[] = अणु 0x88, 0x8A, 0xC6, 0xB60F, 0xBE0F, 0xAA पूर्ण;
+अटल अचिन्हित पूर्णांक mw16[] = अणु 0xB70F, 0xBF0F पूर्ण;
+अटल अचिन्हित पूर्णांक mw32[] = अणु 0x89, 0x8B, 0xC7, 0xAB पूर्ण;
+अटल अचिन्हित पूर्णांक mw64[] = अणुपूर्ण;
+#अन्यथा /* not __i386__ */
+अटल अचिन्हित अक्षर prefix_codes[] = अणु
 	0x66, 0x67, 0x2E, 0x3E, 0x26, 0x64, 0x65, 0x36,
 	0xF0, 0xF3, 0xF2,
 	/* REX Prefixes */
 	0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
 	0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f
-};
+पूर्ण;
 /* AMD64 Manual 3, Appendix A*/
-static unsigned int reg_rop[] = {
+अटल अचिन्हित पूर्णांक reg_rop[] = अणु
 	0x8A, 0x8B, 0xB60F, 0xB70F, 0xBE0F, 0xBF0F
-};
-static unsigned int reg_wop[] = { 0x88, 0x89, 0xAA, 0xAB };
-static unsigned int imm_wop[] = { 0xC6, 0xC7 };
-static unsigned int rw8[] = { 0xC6, 0x88, 0x8A, 0xAA };
-static unsigned int rw32[] = {
+पूर्ण;
+अटल अचिन्हित पूर्णांक reg_wop[] = अणु 0x88, 0x89, 0xAA, 0xAB पूर्ण;
+अटल अचिन्हित पूर्णांक imm_wop[] = अणु 0xC6, 0xC7 पूर्ण;
+अटल अचिन्हित पूर्णांक rw8[] = अणु 0xC6, 0x88, 0x8A, 0xAA पूर्ण;
+अटल अचिन्हित पूर्णांक rw32[] = अणु
 	0xC7, 0x89, 0x8B, 0xB60F, 0xB70F, 0xBE0F, 0xBF0F, 0xAB
-};
+पूर्ण;
 /* 8 bit only */
-static unsigned int mw8[] = { 0xC6, 0x88, 0x8A, 0xB60F, 0xBE0F, 0xAA };
+अटल अचिन्हित पूर्णांक mw8[] = अणु 0xC6, 0x88, 0x8A, 0xB60F, 0xBE0F, 0xAA पूर्ण;
 /* 16 bit only */
-static unsigned int mw16[] = { 0xB70F, 0xBF0F };
+अटल अचिन्हित पूर्णांक mw16[] = अणु 0xB70F, 0xBF0F पूर्ण;
 /* 16 or 32 bit */
-static unsigned int mw32[] = { 0xC7 };
+अटल अचिन्हित पूर्णांक mw32[] = अणु 0xC7 पूर्ण;
 /* 16, 32 or 64 bit */
-static unsigned int mw64[] = { 0x89, 0x8B, 0xAB };
-#endif /* not __i386__ */
+अटल अचिन्हित पूर्णांक mw64[] = अणु 0x89, 0x8B, 0xAB पूर्ण;
+#पूर्ण_अगर /* not __i386__ */
 
-struct prefix_bits {
-	unsigned shorted:1;
-	unsigned enlarged:1;
-	unsigned rexr:1;
-	unsigned rex:1;
-};
+काष्ठा prefix_bits अणु
+	अचिन्हित लघुed:1;
+	अचिन्हित enlarged:1;
+	अचिन्हित rexr:1;
+	अचिन्हित rex:1;
+पूर्ण;
 
-static int skip_prefix(unsigned char *addr, struct prefix_bits *prf)
-{
-	int i;
-	unsigned char *p = addr;
-	prf->shorted = 0;
+अटल पूर्णांक skip_prefix(अचिन्हित अक्षर *addr, काष्ठा prefix_bits *prf)
+अणु
+	पूर्णांक i;
+	अचिन्हित अक्षर *p = addr;
+	prf->लघुed = 0;
 	prf->enlarged = 0;
 	prf->rexr = 0;
 	prf->rex = 0;
 
 restart:
-	for (i = 0; i < ARRAY_SIZE(prefix_codes); i++) {
-		if (*p == prefix_codes[i]) {
-			if (*p == 0x66)
-				prf->shorted = 1;
-#ifdef __amd64__
-			if ((*p & 0xf8) == 0x48)
+	क्रम (i = 0; i < ARRAY_SIZE(prefix_codes); i++) अणु
+		अगर (*p == prefix_codes[i]) अणु
+			अगर (*p == 0x66)
+				prf->लघुed = 1;
+#अगर_घोषित __amd64__
+			अगर ((*p & 0xf8) == 0x48)
 				prf->enlarged = 1;
-			if ((*p & 0xf4) == 0x44)
+			अगर ((*p & 0xf4) == 0x44)
 				prf->rexr = 1;
-			if ((*p & 0xf0) == 0x40)
+			अगर ((*p & 0xf0) == 0x40)
 				prf->rex = 1;
-#endif
+#पूर्ण_अगर
 			p++;
-			goto restart;
-		}
-	}
+			जाओ restart;
+		पूर्ण
+	पूर्ण
 
-	return (p - addr);
-}
+	वापस (p - addr);
+पूर्ण
 
-static int get_opcode(unsigned char *addr, unsigned int *opcode)
-{
-	int len;
+अटल पूर्णांक get_opcode(अचिन्हित अक्षर *addr, अचिन्हित पूर्णांक *opcode)
+अणु
+	पूर्णांक len;
 
-	if (*addr == 0x0F) {
-		/* 0x0F is extension instruction */
-		*opcode = *(unsigned short *)addr;
+	अगर (*addr == 0x0F) अणु
+		/* 0x0F is extension inकाष्ठाion */
+		*opcode = *(अचिन्हित लघु *)addr;
 		len = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		*opcode = *addr;
 		len = 1;
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-#define CHECK_OP_TYPE(opcode, array, type) \
-	for (i = 0; i < ARRAY_SIZE(array); i++) { \
-		if (array[i] == opcode) { \
+#घोषणा CHECK_OP_TYPE(opcode, array, type) \
+	क्रम (i = 0; i < ARRAY_SIZE(array); i++) अणु \
+		अगर (array[i] == opcode) अणु \
 			rv = type; \
-			goto exit; \
-		} \
-	}
+			जाओ निकास; \
+		पूर्ण \
+	पूर्ण
 
-enum reason_type get_ins_type(unsigned long ins_addr)
-{
-	unsigned int opcode;
-	unsigned char *p;
-	struct prefix_bits prf;
-	int i;
-	enum reason_type rv = OTHERS;
+क्रमागत reason_type get_ins_type(अचिन्हित दीर्घ ins_addr)
+अणु
+	अचिन्हित पूर्णांक opcode;
+	अचिन्हित अक्षर *p;
+	काष्ठा prefix_bits prf;
+	पूर्णांक i;
+	क्रमागत reason_type rv = OTHERS;
 
-	p = (unsigned char *)ins_addr;
+	p = (अचिन्हित अक्षर *)ins_addr;
 	p += skip_prefix(p, &prf);
 	p += get_opcode(p, &opcode);
 
@@ -140,70 +141,70 @@ enum reason_type get_ins_type(unsigned long ins_addr)
 	CHECK_OP_TYPE(opcode, reg_wop, REG_WRITE);
 	CHECK_OP_TYPE(opcode, imm_wop, IMM_WRITE);
 
-exit:
-	return rv;
-}
-#undef CHECK_OP_TYPE
+निकास:
+	वापस rv;
+पूर्ण
+#अघोषित CHECK_OP_TYPE
 
-static unsigned int get_ins_reg_width(unsigned long ins_addr)
-{
-	unsigned int opcode;
-	unsigned char *p;
-	struct prefix_bits prf;
-	int i;
+अटल अचिन्हित पूर्णांक get_ins_reg_width(अचिन्हित दीर्घ ins_addr)
+अणु
+	अचिन्हित पूर्णांक opcode;
+	अचिन्हित अक्षर *p;
+	काष्ठा prefix_bits prf;
+	पूर्णांक i;
 
-	p = (unsigned char *)ins_addr;
+	p = (अचिन्हित अक्षर *)ins_addr;
 	p += skip_prefix(p, &prf);
 	p += get_opcode(p, &opcode);
 
-	for (i = 0; i < ARRAY_SIZE(rw8); i++)
-		if (rw8[i] == opcode)
-			return 1;
+	क्रम (i = 0; i < ARRAY_SIZE(rw8); i++)
+		अगर (rw8[i] == opcode)
+			वापस 1;
 
-	for (i = 0; i < ARRAY_SIZE(rw32); i++)
-		if (rw32[i] == opcode)
-			return prf.shorted ? 2 : (prf.enlarged ? 8 : 4);
+	क्रम (i = 0; i < ARRAY_SIZE(rw32); i++)
+		अगर (rw32[i] == opcode)
+			वापस prf.लघुed ? 2 : (prf.enlarged ? 8 : 4);
 
-	printk(KERN_ERR "mmiotrace: Unknown opcode 0x%02x\n", opcode);
-	return 0;
-}
+	prपूर्णांकk(KERN_ERR "mmiotrace: Unknown opcode 0x%02x\n", opcode);
+	वापस 0;
+पूर्ण
 
-unsigned int get_ins_mem_width(unsigned long ins_addr)
-{
-	unsigned int opcode;
-	unsigned char *p;
-	struct prefix_bits prf;
-	int i;
+अचिन्हित पूर्णांक get_ins_mem_width(अचिन्हित दीर्घ ins_addr)
+अणु
+	अचिन्हित पूर्णांक opcode;
+	अचिन्हित अक्षर *p;
+	काष्ठा prefix_bits prf;
+	पूर्णांक i;
 
-	p = (unsigned char *)ins_addr;
+	p = (अचिन्हित अक्षर *)ins_addr;
 	p += skip_prefix(p, &prf);
 	p += get_opcode(p, &opcode);
 
-	for (i = 0; i < ARRAY_SIZE(mw8); i++)
-		if (mw8[i] == opcode)
-			return 1;
+	क्रम (i = 0; i < ARRAY_SIZE(mw8); i++)
+		अगर (mw8[i] == opcode)
+			वापस 1;
 
-	for (i = 0; i < ARRAY_SIZE(mw16); i++)
-		if (mw16[i] == opcode)
-			return 2;
+	क्रम (i = 0; i < ARRAY_SIZE(mw16); i++)
+		अगर (mw16[i] == opcode)
+			वापस 2;
 
-	for (i = 0; i < ARRAY_SIZE(mw32); i++)
-		if (mw32[i] == opcode)
-			return prf.shorted ? 2 : 4;
+	क्रम (i = 0; i < ARRAY_SIZE(mw32); i++)
+		अगर (mw32[i] == opcode)
+			वापस prf.लघुed ? 2 : 4;
 
-	for (i = 0; i < ARRAY_SIZE(mw64); i++)
-		if (mw64[i] == opcode)
-			return prf.shorted ? 2 : (prf.enlarged ? 8 : 4);
+	क्रम (i = 0; i < ARRAY_SIZE(mw64); i++)
+		अगर (mw64[i] == opcode)
+			वापस prf.लघुed ? 2 : (prf.enlarged ? 8 : 4);
 
-	printk(KERN_ERR "mmiotrace: Unknown opcode 0x%02x\n", opcode);
-	return 0;
-}
+	prपूर्णांकk(KERN_ERR "mmiotrace: Unknown opcode 0x%02x\n", opcode);
+	वापस 0;
+पूर्ण
 
 /*
- * Define register ident in mod/rm byte.
+ * Define रेजिस्टर ident in mod/rm byte.
  * Note: these are NOT the same as in ptrace-abi.h.
  */
-enum {
+क्रमागत अणु
 	arg_AL = 0,
 	arg_CL = 1,
 	arg_DL = 2,
@@ -221,7 +222,7 @@ enum {
 	arg_BP = 5,
 	arg_SI = 6,
 	arg_DI = 7,
-#ifdef __amd64__
+#अगर_घोषित __amd64__
 	arg_R8  = 8,
 	arg_R9  = 9,
 	arg_R10 = 10,
@@ -230,287 +231,287 @@ enum {
 	arg_R13 = 13,
 	arg_R14 = 14,
 	arg_R15 = 15
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static unsigned char *get_reg_w8(int no, int rex, struct pt_regs *regs)
-{
-	unsigned char *rv = NULL;
+अटल अचिन्हित अक्षर *get_reg_w8(पूर्णांक no, पूर्णांक rex, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित अक्षर *rv = शून्य;
 
-	switch (no) {
-	case arg_AL:
-		rv = (unsigned char *)&regs->ax;
-		break;
-	case arg_BL:
-		rv = (unsigned char *)&regs->bx;
-		break;
-	case arg_CL:
-		rv = (unsigned char *)&regs->cx;
-		break;
-	case arg_DL:
-		rv = (unsigned char *)&regs->dx;
-		break;
-#ifdef __amd64__
-	case arg_R8:
-		rv = (unsigned char *)&regs->r8;
-		break;
-	case arg_R9:
-		rv = (unsigned char *)&regs->r9;
-		break;
-	case arg_R10:
-		rv = (unsigned char *)&regs->r10;
-		break;
-	case arg_R11:
-		rv = (unsigned char *)&regs->r11;
-		break;
-	case arg_R12:
-		rv = (unsigned char *)&regs->r12;
-		break;
-	case arg_R13:
-		rv = (unsigned char *)&regs->r13;
-		break;
-	case arg_R14:
-		rv = (unsigned char *)&regs->r14;
-		break;
-	case arg_R15:
-		rv = (unsigned char *)&regs->r15;
-		break;
-#endif
-	default:
-		break;
-	}
+	चयन (no) अणु
+	हाल arg_AL:
+		rv = (अचिन्हित अक्षर *)&regs->ax;
+		अवरोध;
+	हाल arg_BL:
+		rv = (अचिन्हित अक्षर *)&regs->bx;
+		अवरोध;
+	हाल arg_CL:
+		rv = (अचिन्हित अक्षर *)&regs->cx;
+		अवरोध;
+	हाल arg_DL:
+		rv = (अचिन्हित अक्षर *)&regs->dx;
+		अवरोध;
+#अगर_घोषित __amd64__
+	हाल arg_R8:
+		rv = (अचिन्हित अक्षर *)&regs->r8;
+		अवरोध;
+	हाल arg_R9:
+		rv = (अचिन्हित अक्षर *)&regs->r9;
+		अवरोध;
+	हाल arg_R10:
+		rv = (अचिन्हित अक्षर *)&regs->r10;
+		अवरोध;
+	हाल arg_R11:
+		rv = (अचिन्हित अक्षर *)&regs->r11;
+		अवरोध;
+	हाल arg_R12:
+		rv = (अचिन्हित अक्षर *)&regs->r12;
+		अवरोध;
+	हाल arg_R13:
+		rv = (अचिन्हित अक्षर *)&regs->r13;
+		अवरोध;
+	हाल arg_R14:
+		rv = (अचिन्हित अक्षर *)&regs->r14;
+		अवरोध;
+	हाल arg_R15:
+		rv = (अचिन्हित अक्षर *)&regs->r15;
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (rv)
-		return rv;
+	अगर (rv)
+		वापस rv;
 
-	if (rex) {
+	अगर (rex) अणु
 		/*
 		 * If REX prefix exists, access low bytes of SI etc.
 		 * instead of AH etc.
 		 */
-		switch (no) {
-		case arg_SI:
-			rv = (unsigned char *)&regs->si;
-			break;
-		case arg_DI:
-			rv = (unsigned char *)&regs->di;
-			break;
-		case arg_BP:
-			rv = (unsigned char *)&regs->bp;
-			break;
-		case arg_SP:
-			rv = (unsigned char *)&regs->sp;
-			break;
-		default:
-			break;
-		}
-	} else {
-		switch (no) {
-		case arg_AH:
-			rv = 1 + (unsigned char *)&regs->ax;
-			break;
-		case arg_BH:
-			rv = 1 + (unsigned char *)&regs->bx;
-			break;
-		case arg_CH:
-			rv = 1 + (unsigned char *)&regs->cx;
-			break;
-		case arg_DH:
-			rv = 1 + (unsigned char *)&regs->dx;
-			break;
-		default:
-			break;
-		}
-	}
+		चयन (no) अणु
+		हाल arg_SI:
+			rv = (अचिन्हित अक्षर *)&regs->si;
+			अवरोध;
+		हाल arg_DI:
+			rv = (अचिन्हित अक्षर *)&regs->di;
+			अवरोध;
+		हाल arg_BP:
+			rv = (अचिन्हित अक्षर *)&regs->bp;
+			अवरोध;
+		हाल arg_SP:
+			rv = (अचिन्हित अक्षर *)&regs->sp;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (no) अणु
+		हाल arg_AH:
+			rv = 1 + (अचिन्हित अक्षर *)&regs->ax;
+			अवरोध;
+		हाल arg_BH:
+			rv = 1 + (अचिन्हित अक्षर *)&regs->bx;
+			अवरोध;
+		हाल arg_CH:
+			rv = 1 + (अचिन्हित अक्षर *)&regs->cx;
+			अवरोध;
+		हाल arg_DH:
+			rv = 1 + (अचिन्हित अक्षर *)&regs->dx;
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!rv)
-		printk(KERN_ERR "mmiotrace: Error reg no# %d\n", no);
+	अगर (!rv)
+		prपूर्णांकk(KERN_ERR "mmiotrace: Error reg no# %d\n", no);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static unsigned long *get_reg_w32(int no, struct pt_regs *regs)
-{
-	unsigned long *rv = NULL;
+अटल अचिन्हित दीर्घ *get_reg_w32(पूर्णांक no, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित दीर्घ *rv = शून्य;
 
-	switch (no) {
-	case arg_AX:
+	चयन (no) अणु
+	हाल arg_AX:
 		rv = &regs->ax;
-		break;
-	case arg_BX:
+		अवरोध;
+	हाल arg_BX:
 		rv = &regs->bx;
-		break;
-	case arg_CX:
+		अवरोध;
+	हाल arg_CX:
 		rv = &regs->cx;
-		break;
-	case arg_DX:
+		अवरोध;
+	हाल arg_DX:
 		rv = &regs->dx;
-		break;
-	case arg_SP:
+		अवरोध;
+	हाल arg_SP:
 		rv = &regs->sp;
-		break;
-	case arg_BP:
+		अवरोध;
+	हाल arg_BP:
 		rv = &regs->bp;
-		break;
-	case arg_SI:
+		अवरोध;
+	हाल arg_SI:
 		rv = &regs->si;
-		break;
-	case arg_DI:
+		अवरोध;
+	हाल arg_DI:
 		rv = &regs->di;
-		break;
-#ifdef __amd64__
-	case arg_R8:
+		अवरोध;
+#अगर_घोषित __amd64__
+	हाल arg_R8:
 		rv = &regs->r8;
-		break;
-	case arg_R9:
+		अवरोध;
+	हाल arg_R9:
 		rv = &regs->r9;
-		break;
-	case arg_R10:
+		अवरोध;
+	हाल arg_R10:
 		rv = &regs->r10;
-		break;
-	case arg_R11:
+		अवरोध;
+	हाल arg_R11:
 		rv = &regs->r11;
-		break;
-	case arg_R12:
+		अवरोध;
+	हाल arg_R12:
 		rv = &regs->r12;
-		break;
-	case arg_R13:
+		अवरोध;
+	हाल arg_R13:
 		rv = &regs->r13;
-		break;
-	case arg_R14:
+		अवरोध;
+	हाल arg_R14:
 		rv = &regs->r14;
-		break;
-	case arg_R15:
+		अवरोध;
+	हाल arg_R15:
 		rv = &regs->r15;
-		break;
-#endif
-	default:
-		printk(KERN_ERR "mmiotrace: Error reg no# %d\n", no);
-	}
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
+		prपूर्णांकk(KERN_ERR "mmiotrace: Error reg no# %d\n", no);
+	पूर्ण
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-unsigned long get_ins_reg_val(unsigned long ins_addr, struct pt_regs *regs)
-{
-	unsigned int opcode;
-	int reg;
-	unsigned char *p;
-	struct prefix_bits prf;
-	int i;
+अचिन्हित दीर्घ get_ins_reg_val(अचिन्हित दीर्घ ins_addr, काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित पूर्णांक opcode;
+	पूर्णांक reg;
+	अचिन्हित अक्षर *p;
+	काष्ठा prefix_bits prf;
+	पूर्णांक i;
 
-	p = (unsigned char *)ins_addr;
+	p = (अचिन्हित अक्षर *)ins_addr;
 	p += skip_prefix(p, &prf);
 	p += get_opcode(p, &opcode);
-	for (i = 0; i < ARRAY_SIZE(reg_rop); i++)
-		if (reg_rop[i] == opcode)
-			goto do_work;
+	क्रम (i = 0; i < ARRAY_SIZE(reg_rop); i++)
+		अगर (reg_rop[i] == opcode)
+			जाओ करो_work;
 
-	for (i = 0; i < ARRAY_SIZE(reg_wop); i++)
-		if (reg_wop[i] == opcode)
-			goto do_work;
+	क्रम (i = 0; i < ARRAY_SIZE(reg_wop); i++)
+		अगर (reg_wop[i] == opcode)
+			जाओ करो_work;
 
-	printk(KERN_ERR "mmiotrace: Not a register instruction, opcode "
+	prपूर्णांकk(KERN_ERR "mmiotrace: Not a register instruction, opcode "
 							"0x%02x\n", opcode);
-	goto err;
+	जाओ err;
 
-do_work:
-	/* for STOS, source register is fixed */
-	if (opcode == 0xAA || opcode == 0xAB) {
+करो_work:
+	/* क्रम STOS, source रेजिस्टर is fixed */
+	अगर (opcode == 0xAA || opcode == 0xAB) अणु
 		reg = arg_AX;
-	} else {
-		unsigned char mod_rm = *p;
+	पूर्ण अन्यथा अणु
+		अचिन्हित अक्षर mod_rm = *p;
 		reg = ((mod_rm >> 3) & 0x7) | (prf.rexr << 3);
-	}
-	switch (get_ins_reg_width(ins_addr)) {
-	case 1:
-		return *get_reg_w8(reg, prf.rex, regs);
+	पूर्ण
+	चयन (get_ins_reg_width(ins_addr)) अणु
+	हाल 1:
+		वापस *get_reg_w8(reg, prf.rex, regs);
 
-	case 2:
-		return *(unsigned short *)get_reg_w32(reg, regs);
+	हाल 2:
+		वापस *(अचिन्हित लघु *)get_reg_w32(reg, regs);
 
-	case 4:
-		return *(unsigned int *)get_reg_w32(reg, regs);
+	हाल 4:
+		वापस *(अचिन्हित पूर्णांक *)get_reg_w32(reg, regs);
 
-#ifdef __amd64__
-	case 8:
-		return *(unsigned long *)get_reg_w32(reg, regs);
-#endif
+#अगर_घोषित __amd64__
+	हाल 8:
+		वापस *(अचिन्हित दीर्घ *)get_reg_w32(reg, regs);
+#पूर्ण_अगर
 
-	default:
-		printk(KERN_ERR "mmiotrace: Error width# %d\n", reg);
-	}
+	शेष:
+		prपूर्णांकk(KERN_ERR "mmiotrace: Error width# %d\n", reg);
+	पूर्ण
 
 err:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long get_ins_imm_val(unsigned long ins_addr)
-{
-	unsigned int opcode;
-	unsigned char mod_rm;
-	unsigned char mod;
-	unsigned char *p;
-	struct prefix_bits prf;
-	int i;
+अचिन्हित दीर्घ get_ins_imm_val(अचिन्हित दीर्घ ins_addr)
+अणु
+	अचिन्हित पूर्णांक opcode;
+	अचिन्हित अक्षर mod_rm;
+	अचिन्हित अक्षर mod;
+	अचिन्हित अक्षर *p;
+	काष्ठा prefix_bits prf;
+	पूर्णांक i;
 
-	p = (unsigned char *)ins_addr;
+	p = (अचिन्हित अक्षर *)ins_addr;
 	p += skip_prefix(p, &prf);
 	p += get_opcode(p, &opcode);
-	for (i = 0; i < ARRAY_SIZE(imm_wop); i++)
-		if (imm_wop[i] == opcode)
-			goto do_work;
+	क्रम (i = 0; i < ARRAY_SIZE(imm_wop); i++)
+		अगर (imm_wop[i] == opcode)
+			जाओ करो_work;
 
-	printk(KERN_ERR "mmiotrace: Not an immediate instruction, opcode "
+	prपूर्णांकk(KERN_ERR "mmiotrace: Not an immediate instruction, opcode "
 							"0x%02x\n", opcode);
-	goto err;
+	जाओ err;
 
-do_work:
+करो_work:
 	mod_rm = *p;
 	mod = mod_rm >> 6;
 	p++;
-	switch (mod) {
-	case 0:
-		/* if r/m is 5 we have a 32 disp (IA32 Manual 3, Table 2-2)  */
-		/* AMD64: XXX Check for address size prefix? */
-		if ((mod_rm & 0x7) == 0x5)
+	चयन (mod) अणु
+	हाल 0:
+		/* अगर r/m is 5 we have a 32 disp (IA32 Manual 3, Table 2-2)  */
+		/* AMD64: XXX Check क्रम address size prefix? */
+		अगर ((mod_rm & 0x7) == 0x5)
 			p += 4;
-		break;
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		p += 1;
-		break;
+		अवरोध;
 
-	case 2:
+	हाल 2:
 		p += 4;
-		break;
+		अवरोध;
 
-	case 3:
-	default:
-		printk(KERN_ERR "mmiotrace: not a memory access instruction "
+	हाल 3:
+	शेष:
+		prपूर्णांकk(KERN_ERR "mmiotrace: not a memory access instruction "
 						"at 0x%lx, rm_mod=0x%02x\n",
 						ins_addr, mod_rm);
-	}
+	पूर्ण
 
-	switch (get_ins_reg_width(ins_addr)) {
-	case 1:
-		return *(unsigned char *)p;
+	चयन (get_ins_reg_width(ins_addr)) अणु
+	हाल 1:
+		वापस *(अचिन्हित अक्षर *)p;
 
-	case 2:
-		return *(unsigned short *)p;
+	हाल 2:
+		वापस *(अचिन्हित लघु *)p;
 
-	case 4:
-		return *(unsigned int *)p;
+	हाल 4:
+		वापस *(अचिन्हित पूर्णांक *)p;
 
-#ifdef __amd64__
-	case 8:
-		return *(unsigned long *)p;
-#endif
+#अगर_घोषित __amd64__
+	हाल 8:
+		वापस *(अचिन्हित दीर्घ *)p;
+#पूर्ण_अगर
 
-	default:
-		printk(KERN_ERR "mmiotrace: Error: width.\n");
-	}
+	शेष:
+		prपूर्णांकk(KERN_ERR "mmiotrace: Error: width.\n");
+	पूर्ण
 
 err:
-	return 0;
-}
+	वापस 0;
+पूर्ण

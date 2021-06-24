@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /* Copyright 2017-2019 Qiang Yu <yuq825@gmail.com> */
 
-#include <linux/slab.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/dma-mapping.h>
 
-#include "lima_device.h"
-#include "lima_vm.h"
-#include "lima_gem.h"
-#include "lima_regs.h"
+#समावेश "lima_device.h"
+#समावेश "lima_vm.h"
+#समावेश "lima_gem.h"
+#समावेश "lima_regs.h"
 
-struct lima_bo_va {
-	struct list_head list;
-	unsigned int ref_count;
+काष्ठा lima_bo_va अणु
+	काष्ठा list_head list;
+	अचिन्हित पूर्णांक ref_count;
 
-	struct drm_mm_node node;
+	काष्ठा drm_mm_node node;
 
-	struct lima_vm *vm;
-};
+	काष्ठा lima_vm *vm;
+पूर्ण;
 
-#define LIMA_VM_PD_SHIFT 22
-#define LIMA_VM_PT_SHIFT 12
-#define LIMA_VM_PB_SHIFT (LIMA_VM_PD_SHIFT + LIMA_VM_NUM_PT_PER_BT_SHIFT)
-#define LIMA_VM_BT_SHIFT LIMA_VM_PT_SHIFT
+#घोषणा LIMA_VM_PD_SHIFT 22
+#घोषणा LIMA_VM_PT_SHIFT 12
+#घोषणा LIMA_VM_PB_SHIFT (LIMA_VM_PD_SHIFT + LIMA_VM_NUM_PT_PER_BT_SHIFT)
+#घोषणा LIMA_VM_BT_SHIFT LIMA_VM_PT_SHIFT
 
-#define LIMA_VM_PT_MASK ((1 << LIMA_VM_PD_SHIFT) - 1)
-#define LIMA_VM_BT_MASK ((1 << LIMA_VM_PB_SHIFT) - 1)
+#घोषणा LIMA_VM_PT_MASK ((1 << LIMA_VM_PD_SHIFT) - 1)
+#घोषणा LIMA_VM_BT_MASK ((1 << LIMA_VM_PB_SHIFT) - 1)
 
-#define LIMA_PDE(va) (va >> LIMA_VM_PD_SHIFT)
-#define LIMA_PTE(va) ((va & LIMA_VM_PT_MASK) >> LIMA_VM_PT_SHIFT)
-#define LIMA_PBE(va) (va >> LIMA_VM_PB_SHIFT)
-#define LIMA_BTE(va) ((va & LIMA_VM_BT_MASK) >> LIMA_VM_BT_SHIFT)
+#घोषणा LIMA_PDE(va) (va >> LIMA_VM_PD_SHIFT)
+#घोषणा LIMA_PTE(va) ((va & LIMA_VM_PT_MASK) >> LIMA_VM_PT_SHIFT)
+#घोषणा LIMA_PBE(va) (va >> LIMA_VM_PB_SHIFT)
+#घोषणा LIMA_BTE(va) ((va & LIMA_VM_BT_MASK) >> LIMA_VM_BT_SHIFT)
 
 
-static void lima_vm_unmap_range(struct lima_vm *vm, u32 start, u32 end)
-{
+अटल व्योम lima_vm_unmap_range(काष्ठा lima_vm *vm, u32 start, u32 end)
+अणु
 	u32 addr;
 
-	for (addr = start; addr <= end; addr += LIMA_PAGE_SIZE) {
+	क्रम (addr = start; addr <= end; addr += LIMA_PAGE_SIZE) अणु
 		u32 pbe = LIMA_PBE(addr);
 		u32 bte = LIMA_BTE(addr);
 
 		vm->bts[pbe].cpu[bte] = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int lima_vm_map_page(struct lima_vm *vm, dma_addr_t pa, u32 va)
-{
+अटल पूर्णांक lima_vm_map_page(काष्ठा lima_vm *vm, dma_addr_t pa, u32 va)
+अणु
 	u32 pbe = LIMA_PBE(va);
 	u32 bte = LIMA_BTE(va);
 
-	if (!vm->bts[pbe].cpu) {
+	अगर (!vm->bts[pbe].cpu) अणु
 		dma_addr_t pts;
 		u32 *pd;
-		int j;
+		पूर्णांक j;
 
 		vm->bts[pbe].cpu = dma_alloc_wc(
 			vm->dev->dev, LIMA_PAGE_SIZE << LIMA_VM_NUM_PT_PER_BT_SHIFT,
 			&vm->bts[pbe].dma, GFP_KERNEL | __GFP_NOWARN | __GFP_ZERO);
-		if (!vm->bts[pbe].cpu)
-			return -ENOMEM;
+		अगर (!vm->bts[pbe].cpu)
+			वापस -ENOMEM;
 
 		pts = vm->bts[pbe].dma;
 		pd = vm->pd.cpu + (pbe << LIMA_VM_NUM_PT_PER_BT_SHIFT);
-		for (j = 0; j < LIMA_VM_NUM_PT_PER_BT; j++) {
+		क्रम (j = 0; j < LIMA_VM_NUM_PT_PER_BT; j++) अणु
 			pd[j] = pts | LIMA_VM_FLAG_PRESENT;
 			pts += LIMA_PAGE_SIZE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	vm->bts[pbe].cpu[bte] = pa | LIMA_VM_FLAGS_CACHE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct lima_bo_va *
-lima_vm_bo_find(struct lima_vm *vm, struct lima_bo *bo)
-{
-	struct lima_bo_va *bo_va, *ret = NULL;
+अटल काष्ठा lima_bo_va *
+lima_vm_bo_find(काष्ठा lima_vm *vm, काष्ठा lima_bo *bo)
+अणु
+	काष्ठा lima_bo_va *bo_va, *ret = शून्य;
 
-	list_for_each_entry(bo_va, &bo->va, list) {
-		if (bo_va->vm == vm) {
+	list_क्रम_each_entry(bo_va, &bo->va, list) अणु
+		अगर (bo_va->vm == vm) अणु
 			ret = bo_va;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int lima_vm_bo_add(struct lima_vm *vm, struct lima_bo *bo, bool create)
-{
-	struct lima_bo_va *bo_va;
-	struct sg_dma_page_iter sg_iter;
-	int offset = 0, err;
+पूर्णांक lima_vm_bo_add(काष्ठा lima_vm *vm, काष्ठा lima_bo *bo, bool create)
+अणु
+	काष्ठा lima_bo_va *bo_va;
+	काष्ठा sg_dma_page_iter sg_iter;
+	पूर्णांक offset = 0, err;
 
 	mutex_lock(&bo->lock);
 
 	bo_va = lima_vm_bo_find(vm, bo);
-	if (bo_va) {
+	अगर (bo_va) अणु
 		bo_va->ref_count++;
 		mutex_unlock(&bo->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* should not create new bo_va if not asked by caller */
-	if (!create) {
+	/* should not create new bo_va अगर not asked by caller */
+	अगर (!create) अणु
 		mutex_unlock(&bo->lock);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	bo_va = kzalloc(sizeof(*bo_va), GFP_KERNEL);
-	if (!bo_va) {
+	bo_va = kzalloc(माप(*bo_va), GFP_KERNEL);
+	अगर (!bo_va) अणु
 		err = -ENOMEM;
-		goto err_out0;
-	}
+		जाओ err_out0;
+	पूर्ण
 
 	bo_va->vm = vm;
 	bo_va->ref_count = 1;
@@ -121,49 +122,49 @@ int lima_vm_bo_add(struct lima_vm *vm, struct lima_bo *bo, bool create)
 	mutex_lock(&vm->lock);
 
 	err = drm_mm_insert_node(&vm->mm, &bo_va->node, lima_bo_size(bo));
-	if (err)
-		goto err_out1;
+	अगर (err)
+		जाओ err_out1;
 
-	for_each_sgtable_dma_page(bo->base.sgt, &sg_iter, 0) {
+	क्रम_each_sgtable_dma_page(bo->base.sgt, &sg_iter, 0) अणु
 		err = lima_vm_map_page(vm, sg_page_iter_dma_address(&sg_iter),
 				       bo_va->node.start + offset);
-		if (err)
-			goto err_out2;
+		अगर (err)
+			जाओ err_out2;
 
 		offset += PAGE_SIZE;
-	}
+	पूर्ण
 
 	mutex_unlock(&vm->lock);
 
 	list_add_tail(&bo_va->list, &bo->va);
 
 	mutex_unlock(&bo->lock);
-	return 0;
+	वापस 0;
 
 err_out2:
-	if (offset)
+	अगर (offset)
 		lima_vm_unmap_range(vm, bo_va->node.start, bo_va->node.start + offset - 1);
-	drm_mm_remove_node(&bo_va->node);
+	drm_mm_हटाओ_node(&bo_va->node);
 err_out1:
 	mutex_unlock(&vm->lock);
-	kfree(bo_va);
+	kमुक्त(bo_va);
 err_out0:
 	mutex_unlock(&bo->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void lima_vm_bo_del(struct lima_vm *vm, struct lima_bo *bo)
-{
-	struct lima_bo_va *bo_va;
+व्योम lima_vm_bo_del(काष्ठा lima_vm *vm, काष्ठा lima_bo *bo)
+अणु
+	काष्ठा lima_bo_va *bo_va;
 	u32 size;
 
 	mutex_lock(&bo->lock);
 
 	bo_va = lima_vm_bo_find(vm, bo);
-	if (--bo_va->ref_count > 0) {
+	अगर (--bo_va->ref_count > 0) अणु
 		mutex_unlock(&bo->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	mutex_lock(&vm->lock);
 
@@ -171,7 +172,7 @@ void lima_vm_bo_del(struct lima_vm *vm, struct lima_bo *bo)
 	lima_vm_unmap_range(vm, bo_va->node.start,
 			    bo_va->node.start + size - 1);
 
-	drm_mm_remove_node(&bo_va->node);
+	drm_mm_हटाओ_node(&bo_va->node);
 
 	mutex_unlock(&vm->lock);
 
@@ -179,12 +180,12 @@ void lima_vm_bo_del(struct lima_vm *vm, struct lima_bo *bo)
 
 	mutex_unlock(&bo->lock);
 
-	kfree(bo_va);
-}
+	kमुक्त(bo_va);
+पूर्ण
 
-u32 lima_vm_get_va(struct lima_vm *vm, struct lima_bo *bo)
-{
-	struct lima_bo_va *bo_va;
+u32 lima_vm_get_va(काष्ठा lima_vm *vm, काष्ठा lima_bo *bo)
+अणु
+	काष्ठा lima_bo_va *bo_va;
 	u32 ret;
 
 	mutex_lock(&bo->lock);
@@ -194,16 +195,16 @@ u32 lima_vm_get_va(struct lima_vm *vm, struct lima_bo *bo)
 
 	mutex_unlock(&bo->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct lima_vm *lima_vm_create(struct lima_device *dev)
-{
-	struct lima_vm *vm;
+काष्ठा lima_vm *lima_vm_create(काष्ठा lima_device *dev)
+अणु
+	काष्ठा lima_vm *vm;
 
-	vm = kzalloc(sizeof(*vm), GFP_KERNEL);
-	if (!vm)
-		return NULL;
+	vm = kzalloc(माप(*vm), GFP_KERNEL);
+	अगर (!vm)
+		वापस शून्य;
 
 	vm->dev = dev;
 	mutex_init(&vm->lock);
@@ -211,112 +212,112 @@ struct lima_vm *lima_vm_create(struct lima_device *dev)
 
 	vm->pd.cpu = dma_alloc_wc(dev->dev, LIMA_PAGE_SIZE, &vm->pd.dma,
 				  GFP_KERNEL | __GFP_NOWARN | __GFP_ZERO);
-	if (!vm->pd.cpu)
-		goto err_out0;
+	अगर (!vm->pd.cpu)
+		जाओ err_out0;
 
-	if (dev->dlbu_cpu) {
-		int err = lima_vm_map_page(
+	अगर (dev->dlbu_cpu) अणु
+		पूर्णांक err = lima_vm_map_page(
 			vm, dev->dlbu_dma, LIMA_VA_RESERVE_DLBU);
-		if (err)
-			goto err_out1;
-	}
+		अगर (err)
+			जाओ err_out1;
+	पूर्ण
 
-	drm_mm_init(&vm->mm, dev->va_start, dev->va_end - dev->va_start);
+	drm_mm_init(&vm->mm, dev->बहु_शुरू, dev->बहु_पूर्ण - dev->बहु_शुरू);
 
-	return vm;
+	वापस vm;
 
 err_out1:
-	dma_free_wc(dev->dev, LIMA_PAGE_SIZE, vm->pd.cpu, vm->pd.dma);
+	dma_मुक्त_wc(dev->dev, LIMA_PAGE_SIZE, vm->pd.cpu, vm->pd.dma);
 err_out0:
-	kfree(vm);
-	return NULL;
-}
+	kमुक्त(vm);
+	वापस शून्य;
+पूर्ण
 
-void lima_vm_release(struct kref *kref)
-{
-	struct lima_vm *vm = container_of(kref, struct lima_vm, refcount);
-	int i;
+व्योम lima_vm_release(काष्ठा kref *kref)
+अणु
+	काष्ठा lima_vm *vm = container_of(kref, काष्ठा lima_vm, refcount);
+	पूर्णांक i;
 
-	drm_mm_takedown(&vm->mm);
+	drm_mm_takeकरोwn(&vm->mm);
 
-	for (i = 0; i < LIMA_VM_NUM_BT; i++) {
-		if (vm->bts[i].cpu)
-			dma_free_wc(vm->dev->dev, LIMA_PAGE_SIZE << LIMA_VM_NUM_PT_PER_BT_SHIFT,
+	क्रम (i = 0; i < LIMA_VM_NUM_BT; i++) अणु
+		अगर (vm->bts[i].cpu)
+			dma_मुक्त_wc(vm->dev->dev, LIMA_PAGE_SIZE << LIMA_VM_NUM_PT_PER_BT_SHIFT,
 				    vm->bts[i].cpu, vm->bts[i].dma);
-	}
+	पूर्ण
 
-	if (vm->pd.cpu)
-		dma_free_wc(vm->dev->dev, LIMA_PAGE_SIZE, vm->pd.cpu, vm->pd.dma);
+	अगर (vm->pd.cpu)
+		dma_मुक्त_wc(vm->dev->dev, LIMA_PAGE_SIZE, vm->pd.cpu, vm->pd.dma);
 
-	kfree(vm);
-}
+	kमुक्त(vm);
+पूर्ण
 
-void lima_vm_print(struct lima_vm *vm)
-{
-	int i, j, k;
+व्योम lima_vm_prपूर्णांक(काष्ठा lima_vm *vm)
+अणु
+	पूर्णांक i, j, k;
 	u32 *pd, *pt;
 
-	if (!vm->pd.cpu)
-		return;
+	अगर (!vm->pd.cpu)
+		वापस;
 
 	pd = vm->pd.cpu;
-	for (i = 0; i < LIMA_VM_NUM_BT; i++) {
-		if (!vm->bts[i].cpu)
-			continue;
+	क्रम (i = 0; i < LIMA_VM_NUM_BT; i++) अणु
+		अगर (!vm->bts[i].cpu)
+			जारी;
 
 		pt = vm->bts[i].cpu;
-		for (j = 0; j < LIMA_VM_NUM_PT_PER_BT; j++) {
-			int idx = (i << LIMA_VM_NUM_PT_PER_BT_SHIFT) + j;
+		क्रम (j = 0; j < LIMA_VM_NUM_PT_PER_BT; j++) अणु
+			पूर्णांक idx = (i << LIMA_VM_NUM_PT_PER_BT_SHIFT) + j;
 
-			printk(KERN_INFO "lima vm pd %03x:%08x\n", idx, pd[idx]);
+			prपूर्णांकk(KERN_INFO "lima vm pd %03x:%08x\n", idx, pd[idx]);
 
-			for (k = 0; k < LIMA_PAGE_ENT_NUM; k++) {
+			क्रम (k = 0; k < LIMA_PAGE_ENT_NUM; k++) अणु
 				u32 pte = *pt++;
 
-				if (pte)
-					printk(KERN_INFO "  pt %03x:%08x\n", k, pte);
-			}
-		}
-	}
-}
+				अगर (pte)
+					prपूर्णांकk(KERN_INFO "  pt %03x:%08x\n", k, pte);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int lima_vm_map_bo(struct lima_vm *vm, struct lima_bo *bo, int pageoff)
-{
-	struct lima_bo_va *bo_va;
-	struct sg_dma_page_iter sg_iter;
-	int offset = 0, err;
+पूर्णांक lima_vm_map_bo(काष्ठा lima_vm *vm, काष्ठा lima_bo *bo, पूर्णांक pageoff)
+अणु
+	काष्ठा lima_bo_va *bo_va;
+	काष्ठा sg_dma_page_iter sg_iter;
+	पूर्णांक offset = 0, err;
 	u32 base;
 
 	mutex_lock(&bo->lock);
 
 	bo_va = lima_vm_bo_find(vm, bo);
-	if (!bo_va) {
+	अगर (!bo_va) अणु
 		err = -ENOENT;
-		goto err_out0;
-	}
+		जाओ err_out0;
+	पूर्ण
 
 	mutex_lock(&vm->lock);
 
 	base = bo_va->node.start + (pageoff << PAGE_SHIFT);
-	for_each_sgtable_dma_page(bo->base.sgt, &sg_iter, pageoff) {
+	क्रम_each_sgtable_dma_page(bo->base.sgt, &sg_iter, pageoff) अणु
 		err = lima_vm_map_page(vm, sg_page_iter_dma_address(&sg_iter),
 				       base + offset);
-		if (err)
-			goto err_out1;
+		अगर (err)
+			जाओ err_out1;
 
 		offset += PAGE_SIZE;
-	}
+	पूर्ण
 
 	mutex_unlock(&vm->lock);
 
 	mutex_unlock(&bo->lock);
-	return 0;
+	वापस 0;
 
 err_out1:
-	if (offset)
+	अगर (offset)
 		lima_vm_unmap_range(vm, base, base + offset - 1);
 	mutex_unlock(&vm->lock);
 err_out0:
 	mutex_unlock(&bo->lock);
-	return err;
-}
+	वापस err;
+पूर्ण

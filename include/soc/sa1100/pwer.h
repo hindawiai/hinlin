@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
-#ifndef SOC_SA1100_PWER_H
-#define SOC_SA1100_PWER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
+#अगर_अघोषित SOC_SA1100_PWER_H
+#घोषणा SOC_SA1100_PWER_H
 
 /*
  * Copyright (C) 2015, Dmitry Eremin-Solenikov
  */
 
-int sa11x0_gpio_set_wake(unsigned int gpio, unsigned int on);
-int sa11x0_sc_set_wake(unsigned int irq, unsigned int on);
+पूर्णांक sa11x0_gpio_set_wake(अचिन्हित पूर्णांक gpio, अचिन्हित पूर्णांक on);
+पूर्णांक sa11x0_sc_set_wake(अचिन्हित पूर्णांक irq, अचिन्हित पूर्णांक on);
 
-#endif
+#पूर्ण_अगर

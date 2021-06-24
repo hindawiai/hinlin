@@ -1,63 +1,64 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * reservations.h
  *
- * Allocation reservations function prototypes and structures.
+ * Allocation reservations function prototypes and काष्ठाures.
  *
  * Copyright (C) 2010 Novell.  All rights reserved.
  */
 
-#ifndef	OCFS2_RESERVATIONS_H
-#define	OCFS2_RESERVATIONS_H
+#अगर_अघोषित	OCFS2_RESERVATIONS_H
+#घोषणा	OCFS2_RESERVATIONS_H
 
-#include <linux/rbtree.h>
+#समावेश <linux/rbtree.h>
 
-#define OCFS2_DEFAULT_RESV_LEVEL	2
-#define OCFS2_MAX_RESV_LEVEL	9
-#define OCFS2_MIN_RESV_LEVEL	0
+#घोषणा OCFS2_DEFAULT_RESV_LEVEL	2
+#घोषणा OCFS2_MAX_RESV_LEVEL	9
+#घोषणा OCFS2_MIN_RESV_LEVEL	0
 
-struct ocfs2_alloc_reservation {
-	struct rb_node	r_node;
+काष्ठा ocfs2_alloc_reservation अणु
+	काष्ठा rb_node	r_node;
 
-	unsigned int	r_start;	/* Beginning of current window */
-	unsigned int	r_len;		/* Length of the window */
+	अचिन्हित पूर्णांक	r_start;	/* Beginning of current winकरोw */
+	अचिन्हित पूर्णांक	r_len;		/* Length of the winकरोw */
 
-	unsigned int	r_last_len;	/* Length of most recent alloc */
-	unsigned int	r_last_start;	/* Start of most recent alloc */
-	struct list_head	r_lru;	/* LRU list head */
+	अचिन्हित पूर्णांक	r_last_len;	/* Length of most recent alloc */
+	अचिन्हित पूर्णांक	r_last_start;	/* Start of most recent alloc */
+	काष्ठा list_head	r_lru;	/* LRU list head */
 
-	unsigned int	r_flags;
-};
+	अचिन्हित पूर्णांक	r_flags;
+पूर्ण;
 
-#define	OCFS2_RESV_FLAG_INUSE	0x01	/* Set when r_node is part of a btree */
-#define	OCFS2_RESV_FLAG_TMP	0x02	/* Temporary reservation, will be
+#घोषणा	OCFS2_RESV_FLAG_INUSE	0x01	/* Set when r_node is part of a btree */
+#घोषणा	OCFS2_RESV_FLAG_TMP	0x02	/* Temporary reservation, will be
 					 * destroyed immedately after use */
-#define	OCFS2_RESV_FLAG_DIR	0x04	/* Reservation is for an unindexed
+#घोषणा	OCFS2_RESV_FLAG_सूची	0x04	/* Reservation is क्रम an unindexed
 					 * directory btree */
 
-struct ocfs2_reservation_map {
-	struct rb_root		m_reservations;
-	char			*m_disk_bitmap;
+काष्ठा ocfs2_reservation_map अणु
+	काष्ठा rb_root		m_reservations;
+	अक्षर			*m_disk_biपंचांगap;
 
-	struct ocfs2_super	*m_osb;
+	काष्ठा ocfs2_super	*m_osb;
 
 	/* The following are not initialized to meaningful values until a disk
-	 * bitmap is provided. */
-	u32			m_bitmap_len;	/* Number of valid
+	 * biपंचांगap is provided. */
+	u32			m_biपंचांगap_len;	/* Number of valid
 						 * bits available */
 
-	struct list_head	m_lru;		/* LRU of reservations
-						 * structures. */
+	काष्ठा list_head	m_lru;		/* LRU of reservations
+						 * काष्ठाures. */
 
-};
+पूर्ण;
 
-void ocfs2_resv_init_once(struct ocfs2_alloc_reservation *resv);
+व्योम ocfs2_resv_init_once(काष्ठा ocfs2_alloc_reservation *resv);
 
-#define OCFS2_RESV_TYPES	(OCFS2_RESV_FLAG_TMP|OCFS2_RESV_FLAG_DIR)
-void ocfs2_resv_set_type(struct ocfs2_alloc_reservation *resv,
-			 unsigned int flags);
+#घोषणा OCFS2_RESV_TYPES	(OCFS2_RESV_FLAG_TMP|OCFS2_RESV_FLAG_सूची)
+व्योम ocfs2_resv_set_type(काष्ठा ocfs2_alloc_reservation *resv,
+			 अचिन्हित पूर्णांक flags);
 
-int ocfs2_dir_resv_allowed(struct ocfs2_super *osb);
+पूर्णांक ocfs2_dir_resv_allowed(काष्ठा ocfs2_super *osb);
 
 /**
  * ocfs2_resv_discard() - truncate a reservation
@@ -67,83 +68,83 @@ int ocfs2_dir_resv_allowed(struct ocfs2_super *osb);
  * After this function is called, the reservation will be empty, and
  * unlinked from the rbtree.
  */
-void ocfs2_resv_discard(struct ocfs2_reservation_map *resmap,
-			struct ocfs2_alloc_reservation *resv);
+व्योम ocfs2_resv_discard(काष्ठा ocfs2_reservation_map *resmap,
+			काष्ठा ocfs2_alloc_reservation *resv);
 
 
 /**
- * ocfs2_resmap_init() - Initialize fields of a reservations bitmap
- * @resmap: struct ocfs2_reservation_map to initialize
- * @obj: unused for now
- * @ops: unused for now
- * @max_bitmap_bytes: Maximum size of the bitmap (typically blocksize)
+ * ocfs2_resmap_init() - Initialize fields of a reservations biपंचांगap
+ * @resmap: काष्ठा ocfs2_reservation_map to initialize
+ * @obj: unused क्रम now
+ * @ops: unused क्रम now
+ * @max_biपंचांगap_bytes: Maximum size of the biपंचांगap (typically blocksize)
  *
- * Only possible return value other than '0' is -ENOMEM for failure to
- * allocation mirror bitmap.
+ * Only possible वापस value other than '0' is -ENOMEM क्रम failure to
+ * allocation mirror biपंचांगap.
  */
-int ocfs2_resmap_init(struct ocfs2_super *osb,
-		      struct ocfs2_reservation_map *resmap);
+पूर्णांक ocfs2_resmap_init(काष्ठा ocfs2_super *osb,
+		      काष्ठा ocfs2_reservation_map *resmap);
 
 /**
- * ocfs2_resmap_restart() - "restart" a reservation bitmap
- * @resmap: reservations bitmap
- * @clen: Number of valid bits in the bitmap
- * @disk_bitmap: the disk bitmap this resmap should refer to.
+ * ocfs2_resmap_restart() - "restart" a reservation biपंचांगap
+ * @resmap: reservations biपंचांगap
+ * @clen: Number of valid bits in the biपंचांगap
+ * @disk_biपंचांगap: the disk biपंचांगap this resmap should refer to.
  *
- * Re-initialize the parameters of a reservation bitmap. This is
- * useful for local alloc window slides.
+ * Re-initialize the parameters of a reservation biपंचांगap. This is
+ * useful क्रम local alloc winकरोw slides.
  *
  * This function will call ocfs2_trunc_resv against all existing
  * reservations. A future version will recalculate existing
- * reservations based on the new bitmap.
+ * reservations based on the new biपंचांगap.
  */
-void ocfs2_resmap_restart(struct ocfs2_reservation_map *resmap,
-			  unsigned int clen, char *disk_bitmap);
+व्योम ocfs2_resmap_restart(काष्ठा ocfs2_reservation_map *resmap,
+			  अचिन्हित पूर्णांक clen, अक्षर *disk_biपंचांगap);
 
 /**
- * ocfs2_resmap_uninit() - uninitialize a reservation bitmap structure
- * @resmap: the struct ocfs2_reservation_map to uninitialize
+ * ocfs2_resmap_uninit() - uninitialize a reservation biपंचांगap काष्ठाure
+ * @resmap: the काष्ठा ocfs2_reservation_map to uninitialize
  */
-void ocfs2_resmap_uninit(struct ocfs2_reservation_map *resmap);
+व्योम ocfs2_resmap_uninit(काष्ठा ocfs2_reservation_map *resmap);
 
 /**
  * ocfs2_resmap_resv_bits() - Return still-valid reservation bits
- * @resmap: reservations bitmap
+ * @resmap: reservations biपंचांगap
  * @resv: reservation to base search from
  * @cstart: start of proposed allocation
  * @clen: length (in clusters) of proposed allocation
  *
  * Using the reservation data from resv, this function will compare
- * resmap and resmap->m_disk_bitmap to determine what part (if any) of
- * the reservation window is still clear to use. If resv is empty,
- * this function will try to allocate a window for it.
+ * resmap and resmap->m_disk_biपंचांगap to determine what part (अगर any) of
+ * the reservation winकरोw is still clear to use. If resv is empty,
+ * this function will try to allocate a winकरोw क्रम it.
  *
- * On success, zero is returned and the valid allocation area is set in cstart
+ * On success, zero is वापसed and the valid allocation area is set in cstart
  * and clen.
  *
- * Returns -ENOSPC if reservations are disabled.
+ * Returns -ENOSPC अगर reservations are disabled.
  */
-int ocfs2_resmap_resv_bits(struct ocfs2_reservation_map *resmap,
-			   struct ocfs2_alloc_reservation *resv,
-			   int *cstart, int *clen);
+पूर्णांक ocfs2_resmap_resv_bits(काष्ठा ocfs2_reservation_map *resmap,
+			   काष्ठा ocfs2_alloc_reservation *resv,
+			   पूर्णांक *cstart, पूर्णांक *clen);
 
 /**
  * ocfs2_resmap_claimed_bits() - Tell the reservation code that bits were used.
- * @resmap: reservations bitmap
- * @resv: optional reservation to recalulate based on new bitmap
+ * @resmap: reservations biपंचांगap
+ * @resv: optional reservation to recalulate based on new biपंचांगap
  * @cstart: start of allocation in clusters
  * @clen: end of allocation in clusters.
  *
  * Tell the reservation code that bits were used to fulfill allocation in
- * resmap. The bits don't have to have been part of any existing
+ * resmap. The bits करोn't have to have been part of any existing
  * reservation. But we must always call this function when bits are claimed.
- * Internally, the reservations code will use this information to mark the
- * reservations bitmap. If resv is passed, it's next allocation window will be
+ * Internally, the reservations code will use this inक्रमmation to mark the
+ * reservations biपंचांगap. If resv is passed, it's next allocation winकरोw will be
  * calculated. It also expects that 'cstart' is the same as we passed back
  * from ocfs2_resmap_resv_bits().
  */
-void ocfs2_resmap_claimed_bits(struct ocfs2_reservation_map *resmap,
-			       struct ocfs2_alloc_reservation *resv,
+व्योम ocfs2_resmap_claimed_bits(काष्ठा ocfs2_reservation_map *resmap,
+			       काष्ठा ocfs2_alloc_reservation *resv,
 			       u32 cstart, u32 clen);
 
-#endif	/* OCFS2_RESERVATIONS_H */
+#पूर्ण_अगर	/* OCFS2_RESERVATIONS_H */

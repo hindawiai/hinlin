@@ -1,203 +1,204 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2017 Red Hat, Inc.
  */
 
-#include <linux/cred.h>
-#include <linux/file.h>
-#include <linux/mount.h>
-#include <linux/xattr.h>
-#include <linux/uio.h>
-#include <linux/uaccess.h>
-#include <linux/splice.h>
-#include <linux/security.h>
-#include <linux/mm.h>
-#include <linux/fs.h>
-#include "overlayfs.h"
+#समावेश <linux/cred.h>
+#समावेश <linux/file.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/xattr.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/splice.h>
+#समावेश <linux/security.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/fs.h>
+#समावेश "overlayfs.h"
 
-struct ovl_aio_req {
-	struct kiocb iocb;
-	struct kiocb *orig_iocb;
-	struct fd fd;
-};
+काष्ठा ovl_aio_req अणु
+	काष्ठा kiocb iocb;
+	काष्ठा kiocb *orig_iocb;
+	काष्ठा fd fd;
+पूर्ण;
 
-static struct kmem_cache *ovl_aio_request_cachep;
+अटल काष्ठा kmem_cache *ovl_aio_request_cachep;
 
-static char ovl_whatisit(struct inode *inode, struct inode *realinode)
-{
-	if (realinode != ovl_inode_upper(inode))
-		return 'l';
-	if (ovl_has_upperdata(inode))
-		return 'u';
-	else
-		return 'm';
-}
+अटल अक्षर ovl_whatisit(काष्ठा inode *inode, काष्ठा inode *realinode)
+अणु
+	अगर (realinode != ovl_inode_upper(inode))
+		वापस 'l';
+	अगर (ovl_has_upperdata(inode))
+		वापस 'u';
+	अन्यथा
+		वापस 'm';
+पूर्ण
 
-/* No atime modificaton nor notify on underlying */
-#define OVL_OPEN_FLAGS (O_NOATIME | FMODE_NONOTIFY)
+/* No aसमय modअगरicaton nor notअगरy on underlying */
+#घोषणा OVL_OPEN_FLAGS (O_NOATIME | FMODE_NONOTIFY)
 
-static struct file *ovl_open_realfile(const struct file *file,
-				      struct inode *realinode)
-{
-	struct inode *inode = file_inode(file);
-	struct file *realfile;
-	const struct cred *old_cred;
-	int flags = file->f_flags | OVL_OPEN_FLAGS;
-	int acc_mode = ACC_MODE(flags);
-	int err;
+अटल काष्ठा file *ovl_खोलो_realfile(स्थिर काष्ठा file *file,
+				      काष्ठा inode *realinode)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा file *realfile;
+	स्थिर काष्ठा cred *old_cred;
+	पूर्णांक flags = file->f_flags | OVL_OPEN_FLAGS;
+	पूर्णांक acc_mode = ACC_MODE(flags);
+	पूर्णांक err;
 
-	if (flags & O_APPEND)
+	अगर (flags & O_APPEND)
 		acc_mode |= MAY_APPEND;
 
 	old_cred = ovl_override_creds(inode->i_sb);
 	err = inode_permission(&init_user_ns, realinode, MAY_OPEN | acc_mode);
-	if (err) {
+	अगर (err) अणु
 		realfile = ERR_PTR(err);
-	} else {
-		if (!inode_owner_or_capable(&init_user_ns, realinode))
+	पूर्ण अन्यथा अणु
+		अगर (!inode_owner_or_capable(&init_user_ns, realinode))
 			flags &= ~O_NOATIME;
 
-		realfile = open_with_fake_path(&file->f_path, flags, realinode,
+		realfile = खोलो_with_fake_path(&file->f_path, flags, realinode,
 					       current_cred());
-	}
+	पूर्ण
 	revert_creds(old_cred);
 
 	pr_debug("open(%p[%pD2/%c], 0%o) -> (%p, 0%o)\n",
 		 file, file, ovl_whatisit(inode, realinode), file->f_flags,
 		 realfile, IS_ERR(realfile) ? 0 : realfile->f_flags);
 
-	return realfile;
-}
+	वापस realfile;
+पूर्ण
 
-#define OVL_SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_DIRECT)
+#घोषणा OVL_SETFL_MASK (O_APPEND | O_NONBLOCK | O_NDELAY | O_सूचीECT)
 
-static int ovl_change_flags(struct file *file, unsigned int flags)
-{
-	struct inode *inode = file_inode(file);
-	int err;
+अटल पूर्णांक ovl_change_flags(काष्ठा file *file, अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	पूर्णांक err;
 
 	flags &= OVL_SETFL_MASK;
 
-	if (((flags ^ file->f_flags) & O_APPEND) && IS_APPEND(inode))
-		return -EPERM;
+	अगर (((flags ^ file->f_flags) & O_APPEND) && IS_APPEND(inode))
+		वापस -EPERM;
 
-	if (flags & O_DIRECT) {
-		if (!file->f_mapping->a_ops ||
+	अगर (flags & O_सूचीECT) अणु
+		अगर (!file->f_mapping->a_ops ||
 		    !file->f_mapping->a_ops->direct_IO)
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	if (file->f_op->check_flags) {
+	अगर (file->f_op->check_flags) अणु
 		err = file->f_op->check_flags(flags);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	spin_lock(&file->f_lock);
 	file->f_flags = (file->f_flags & ~OVL_SETFL_MASK) | flags;
 	spin_unlock(&file->f_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovl_real_fdget_meta(const struct file *file, struct fd *real,
+अटल पूर्णांक ovl_real_fdget_meta(स्थिर काष्ठा file *file, काष्ठा fd *real,
 			       bool allow_meta)
-{
-	struct inode *inode = file_inode(file);
-	struct inode *realinode;
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा inode *realinode;
 
 	real->flags = 0;
-	real->file = file->private_data;
+	real->file = file->निजी_data;
 
-	if (allow_meta)
+	अगर (allow_meta)
 		realinode = ovl_inode_real(inode);
-	else
+	अन्यथा
 		realinode = ovl_inode_realdata(inode);
 
-	/* Has it been copied up since we'd opened it? */
-	if (unlikely(file_inode(real->file) != realinode)) {
+	/* Has it been copied up since we'd खोलोed it? */
+	अगर (unlikely(file_inode(real->file) != realinode)) अणु
 		real->flags = FDPUT_FPUT;
-		real->file = ovl_open_realfile(file, realinode);
+		real->file = ovl_खोलो_realfile(file, realinode);
 
-		return PTR_ERR_OR_ZERO(real->file);
-	}
+		वापस PTR_ERR_OR_ZERO(real->file);
+	पूर्ण
 
-	/* Did the flags change since open? */
-	if (unlikely((file->f_flags ^ real->file->f_flags) & ~OVL_OPEN_FLAGS))
-		return ovl_change_flags(real->file, file->f_flags);
+	/* Did the flags change since खोलो? */
+	अगर (unlikely((file->f_flags ^ real->file->f_flags) & ~OVL_OPEN_FLAGS))
+		वापस ovl_change_flags(real->file, file->f_flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovl_real_fdget(const struct file *file, struct fd *real)
-{
-	if (d_is_dir(file_dentry(file))) {
+अटल पूर्णांक ovl_real_fdget(स्थिर काष्ठा file *file, काष्ठा fd *real)
+अणु
+	अगर (d_is_dir(file_dentry(file))) अणु
 		real->flags = 0;
 		real->file = ovl_dir_real_file(file, false);
 
-		return PTR_ERR_OR_ZERO(real->file);
-	}
+		वापस PTR_ERR_OR_ZERO(real->file);
+	पूर्ण
 
-	return ovl_real_fdget_meta(file, real, false);
-}
+	वापस ovl_real_fdget_meta(file, real, false);
+पूर्ण
 
-static int ovl_open(struct inode *inode, struct file *file)
-{
-	struct file *realfile;
-	int err;
+अटल पूर्णांक ovl_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा file *realfile;
+	पूर्णांक err;
 
 	err = ovl_maybe_copy_up(file_dentry(file), file->f_flags);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* No longer need these flags, so don't pass them on to underlying fs */
+	/* No दीर्घer need these flags, so करोn't pass them on to underlying fs */
 	file->f_flags &= ~(O_CREAT | O_EXCL | O_NOCTTY | O_TRUNC);
 
-	realfile = ovl_open_realfile(file, ovl_inode_realdata(inode));
-	if (IS_ERR(realfile))
-		return PTR_ERR(realfile);
+	realfile = ovl_खोलो_realfile(file, ovl_inode_realdata(inode));
+	अगर (IS_ERR(realfile))
+		वापस PTR_ERR(realfile);
 
-	file->private_data = realfile;
+	file->निजी_data = realfile;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ovl_release(struct inode *inode, struct file *file)
-{
-	fput(file->private_data);
+अटल पूर्णांक ovl_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	fput(file->निजी_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static loff_t ovl_llseek(struct file *file, loff_t offset, int whence)
-{
-	struct inode *inode = file_inode(file);
-	struct fd real;
-	const struct cred *old_cred;
+अटल loff_t ovl_llseek(काष्ठा file *file, loff_t offset, पूर्णांक whence)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा fd real;
+	स्थिर काष्ठा cred *old_cred;
 	loff_t ret;
 
 	/*
-	 * The two special cases below do not need to involve real fs,
+	 * The two special हालs below करो not need to involve real fs,
 	 * so we can optimizing concurrent callers.
 	 */
-	if (offset == 0) {
-		if (whence == SEEK_CUR)
-			return file->f_pos;
+	अगर (offset == 0) अणु
+		अगर (whence == प्रस्तुत_से)
+			वापस file->f_pos;
 
-		if (whence == SEEK_SET)
-			return vfs_setpos(file, 0, 0);
-	}
+		अगर (whence == शुरू_से)
+			वापस vfs_setpos(file, 0, 0);
+	पूर्ण
 
 	ret = ovl_real_fdget(file, &real);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
 	 * Overlay file f_pos is the master copy that is preserved
-	 * through copy up and modified on read/write, but only real
+	 * through copy up and modअगरied on पढ़ो/ग_लिखो, but only real
 	 * fs knows how to SEEK_HOLE/SEEK_DATA and real fs may impose
-	 * limitations that are more strict than ->s_maxbytes for specific
-	 * files, so we use the real file to perform seeks.
+	 * limitations that are more strict than ->s_maxbytes क्रम specअगरic
+	 * files, so we use the real file to perक्रमm seeks.
 	 */
 	ovl_inode_lock(inode);
 	real.file->f_pos = file->f_pos;
@@ -211,177 +212,177 @@ static loff_t ovl_llseek(struct file *file, loff_t offset, int whence)
 
 	fdput(real);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void ovl_file_accessed(struct file *file)
-{
-	struct inode *inode, *upperinode;
+अटल व्योम ovl_file_accessed(काष्ठा file *file)
+अणु
+	काष्ठा inode *inode, *upperinode;
 
-	if (file->f_flags & O_NOATIME)
-		return;
+	अगर (file->f_flags & O_NOATIME)
+		वापस;
 
 	inode = file_inode(file);
 	upperinode = ovl_inode_upper(inode);
 
-	if (!upperinode)
-		return;
+	अगर (!upperinode)
+		वापस;
 
-	if ((!timespec64_equal(&inode->i_mtime, &upperinode->i_mtime) ||
-	     !timespec64_equal(&inode->i_ctime, &upperinode->i_ctime))) {
-		inode->i_mtime = upperinode->i_mtime;
-		inode->i_ctime = upperinode->i_ctime;
-	}
+	अगर ((!बारpec64_equal(&inode->i_mसमय, &upperinode->i_mसमय) ||
+	     !बारpec64_equal(&inode->i_स_समय, &upperinode->i_स_समय))) अणु
+		inode->i_mसमय = upperinode->i_mसमय;
+		inode->i_स_समय = upperinode->i_स_समय;
+	पूर्ण
 
-	touch_atime(&file->f_path);
-}
+	touch_aसमय(&file->f_path);
+पूर्ण
 
-static rwf_t ovl_iocb_to_rwf(int ifl)
-{
+अटल rwf_t ovl_iocb_to_rwf(पूर्णांक अगरl)
+अणु
 	rwf_t flags = 0;
 
-	if (ifl & IOCB_NOWAIT)
+	अगर (अगरl & IOCB_NOWAIT)
 		flags |= RWF_NOWAIT;
-	if (ifl & IOCB_HIPRI)
+	अगर (अगरl & IOCB_HIPRI)
 		flags |= RWF_HIPRI;
-	if (ifl & IOCB_DSYNC)
+	अगर (अगरl & IOCB_DSYNC)
 		flags |= RWF_DSYNC;
-	if (ifl & IOCB_SYNC)
+	अगर (अगरl & IOCB_SYNC)
 		flags |= RWF_SYNC;
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static void ovl_aio_cleanup_handler(struct ovl_aio_req *aio_req)
-{
-	struct kiocb *iocb = &aio_req->iocb;
-	struct kiocb *orig_iocb = aio_req->orig_iocb;
+अटल व्योम ovl_aio_cleanup_handler(काष्ठा ovl_aio_req *aio_req)
+अणु
+	काष्ठा kiocb *iocb = &aio_req->iocb;
+	काष्ठा kiocb *orig_iocb = aio_req->orig_iocb;
 
-	if (iocb->ki_flags & IOCB_WRITE) {
-		struct inode *inode = file_inode(orig_iocb->ki_filp);
+	अगर (iocb->ki_flags & IOCB_WRITE) अणु
+		काष्ठा inode *inode = file_inode(orig_iocb->ki_filp);
 
-		/* Actually acquired in ovl_write_iter() */
-		__sb_writers_acquired(file_inode(iocb->ki_filp)->i_sb,
+		/* Actually acquired in ovl_ग_लिखो_iter() */
+		__sb_ग_लिखोrs_acquired(file_inode(iocb->ki_filp)->i_sb,
 				      SB_FREEZE_WRITE);
-		file_end_write(iocb->ki_filp);
+		file_end_ग_लिखो(iocb->ki_filp);
 		ovl_copyattr(ovl_inode_real(inode), inode);
-	}
+	पूर्ण
 
 	orig_iocb->ki_pos = iocb->ki_pos;
 	fdput(aio_req->fd);
-	kmem_cache_free(ovl_aio_request_cachep, aio_req);
-}
+	kmem_cache_मुक्त(ovl_aio_request_cachep, aio_req);
+पूर्ण
 
-static void ovl_aio_rw_complete(struct kiocb *iocb, long res, long res2)
-{
-	struct ovl_aio_req *aio_req = container_of(iocb,
-						   struct ovl_aio_req, iocb);
-	struct kiocb *orig_iocb = aio_req->orig_iocb;
+अटल व्योम ovl_aio_rw_complete(काष्ठा kiocb *iocb, दीर्घ res, दीर्घ res2)
+अणु
+	काष्ठा ovl_aio_req *aio_req = container_of(iocb,
+						   काष्ठा ovl_aio_req, iocb);
+	काष्ठा kiocb *orig_iocb = aio_req->orig_iocb;
 
 	ovl_aio_cleanup_handler(aio_req);
 	orig_iocb->ki_complete(orig_iocb, res, res2);
-}
+पूर्ण
 
-static ssize_t ovl_read_iter(struct kiocb *iocb, struct iov_iter *iter)
-{
-	struct file *file = iocb->ki_filp;
-	struct fd real;
-	const struct cred *old_cred;
-	ssize_t ret;
+अटल sमाप_प्रकार ovl_पढ़ो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा fd real;
+	स्थिर काष्ठा cred *old_cred;
+	sमाप_प्रकार ret;
 
-	if (!iov_iter_count(iter))
-		return 0;
+	अगर (!iov_iter_count(iter))
+		वापस 0;
 
 	ret = ovl_real_fdget(file, &real);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	old_cred = ovl_override_creds(file_inode(file)->i_sb);
-	if (is_sync_kiocb(iocb)) {
-		ret = vfs_iter_read(real.file, iter, &iocb->ki_pos,
+	अगर (is_sync_kiocb(iocb)) अणु
+		ret = vfs_iter_पढ़ो(real.file, iter, &iocb->ki_pos,
 				    ovl_iocb_to_rwf(iocb->ki_flags));
-	} else {
-		struct ovl_aio_req *aio_req;
+	पूर्ण अन्यथा अणु
+		काष्ठा ovl_aio_req *aio_req;
 
 		ret = -ENOMEM;
 		aio_req = kmem_cache_zalloc(ovl_aio_request_cachep, GFP_KERNEL);
-		if (!aio_req)
-			goto out;
+		अगर (!aio_req)
+			जाओ out;
 
 		aio_req->fd = real;
 		real.flags = 0;
 		aio_req->orig_iocb = iocb;
 		kiocb_clone(&aio_req->iocb, iocb, real.file);
 		aio_req->iocb.ki_complete = ovl_aio_rw_complete;
-		ret = vfs_iocb_iter_read(real.file, &aio_req->iocb, iter);
-		if (ret != -EIOCBQUEUED)
+		ret = vfs_iocb_iter_पढ़ो(real.file, &aio_req->iocb, iter);
+		अगर (ret != -EIOCBQUEUED)
 			ovl_aio_cleanup_handler(aio_req);
-	}
+	पूर्ण
 out:
 	revert_creds(old_cred);
 	ovl_file_accessed(file);
 
 	fdput(real);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ovl_write_iter(struct kiocb *iocb, struct iov_iter *iter)
-{
-	struct file *file = iocb->ki_filp;
-	struct inode *inode = file_inode(file);
-	struct fd real;
-	const struct cred *old_cred;
-	ssize_t ret;
-	int ifl = iocb->ki_flags;
+अटल sमाप_प्रकार ovl_ग_लिखो_iter(काष्ठा kiocb *iocb, काष्ठा iov_iter *iter)
+अणु
+	काष्ठा file *file = iocb->ki_filp;
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा fd real;
+	स्थिर काष्ठा cred *old_cred;
+	sमाप_प्रकार ret;
+	पूर्णांक अगरl = iocb->ki_flags;
 
-	if (!iov_iter_count(iter))
-		return 0;
+	अगर (!iov_iter_count(iter))
+		वापस 0;
 
 	inode_lock(inode);
 	/* Update mode */
 	ovl_copyattr(ovl_inode_real(inode), inode);
-	ret = file_remove_privs(file);
-	if (ret)
-		goto out_unlock;
+	ret = file_हटाओ_privs(file);
+	अगर (ret)
+		जाओ out_unlock;
 
 	ret = ovl_real_fdget(file, &real);
-	if (ret)
-		goto out_unlock;
+	अगर (ret)
+		जाओ out_unlock;
 
-	if (!ovl_should_sync(OVL_FS(inode->i_sb)))
-		ifl &= ~(IOCB_DSYNC | IOCB_SYNC);
+	अगर (!ovl_should_sync(OVL_FS(inode->i_sb)))
+		अगरl &= ~(IOCB_DSYNC | IOCB_SYNC);
 
 	old_cred = ovl_override_creds(file_inode(file)->i_sb);
-	if (is_sync_kiocb(iocb)) {
-		file_start_write(real.file);
-		ret = vfs_iter_write(real.file, iter, &iocb->ki_pos,
-				     ovl_iocb_to_rwf(ifl));
-		file_end_write(real.file);
+	अगर (is_sync_kiocb(iocb)) अणु
+		file_start_ग_लिखो(real.file);
+		ret = vfs_iter_ग_लिखो(real.file, iter, &iocb->ki_pos,
+				     ovl_iocb_to_rwf(अगरl));
+		file_end_ग_लिखो(real.file);
 		/* Update size */
 		ovl_copyattr(ovl_inode_real(inode), inode);
-	} else {
-		struct ovl_aio_req *aio_req;
+	पूर्ण अन्यथा अणु
+		काष्ठा ovl_aio_req *aio_req;
 
 		ret = -ENOMEM;
 		aio_req = kmem_cache_zalloc(ovl_aio_request_cachep, GFP_KERNEL);
-		if (!aio_req)
-			goto out;
+		अगर (!aio_req)
+			जाओ out;
 
-		file_start_write(real.file);
-		/* Pacify lockdep, same trick as done in aio_write() */
-		__sb_writers_release(file_inode(real.file)->i_sb,
+		file_start_ग_लिखो(real.file);
+		/* Pacअगरy lockdep, same trick as करोne in aio_ग_लिखो() */
+		__sb_ग_लिखोrs_release(file_inode(real.file)->i_sb,
 				     SB_FREEZE_WRITE);
 		aio_req->fd = real;
 		real.flags = 0;
 		aio_req->orig_iocb = iocb;
 		kiocb_clone(&aio_req->iocb, iocb, real.file);
-		aio_req->iocb.ki_flags = ifl;
+		aio_req->iocb.ki_flags = अगरl;
 		aio_req->iocb.ki_complete = ovl_aio_rw_complete;
-		ret = vfs_iocb_iter_write(real.file, &aio_req->iocb, iter);
-		if (ret != -EIOCBQUEUED)
+		ret = vfs_iocb_iter_ग_लिखो(real.file, &aio_req->iocb, iter);
+		अगर (ret != -EIOCBQUEUED)
 			ovl_aio_cleanup_handler(aio_req);
-	}
+	पूर्ण
 out:
 	revert_creds(old_cred);
 	fdput(real);
@@ -389,46 +390,46 @@ out:
 out_unlock:
 	inode_unlock(inode);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ovl_fsync(struct file *file, loff_t start, loff_t end, int datasync)
-{
-	struct fd real;
-	const struct cred *old_cred;
-	int ret;
+अटल पूर्णांक ovl_fsync(काष्ठा file *file, loff_t start, loff_t end, पूर्णांक datasync)
+अणु
+	काष्ठा fd real;
+	स्थिर काष्ठा cred *old_cred;
+	पूर्णांक ret;
 
 	ret = ovl_sync_status(OVL_FS(file_inode(file)->i_sb));
-	if (ret <= 0)
-		return ret;
+	अगर (ret <= 0)
+		वापस ret;
 
 	ret = ovl_real_fdget_meta(file, &real, !datasync);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Don't sync lower file for fear of receiving EROFS error */
-	if (file_inode(real.file) == ovl_inode_upper(file_inode(file))) {
+	/* Don't sync lower file क्रम fear of receiving EROFS error */
+	अगर (file_inode(real.file) == ovl_inode_upper(file_inode(file))) अणु
 		old_cred = ovl_override_creds(file_inode(file)->i_sb);
 		ret = vfs_fsync_range(real.file, start, end, datasync);
 		revert_creds(old_cred);
-	}
+	पूर्ण
 
 	fdput(real);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ovl_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	struct file *realfile = file->private_data;
-	const struct cred *old_cred;
-	int ret;
+अटल पूर्णांक ovl_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा file *realfile = file->निजी_data;
+	स्थिर काष्ठा cred *old_cred;
+	पूर्णांक ret;
 
-	if (!realfile->f_op->mmap)
-		return -ENODEV;
+	अगर (!realfile->f_op->mmap)
+		वापस -ENODEV;
 
-	if (WARN_ON(file != vma->vm_file))
-		return -EIO;
+	अगर (WARN_ON(file != vma->vm_file))
+		वापस -EIO;
 
 	vma_set_file(vma, realfile);
 
@@ -437,19 +438,19 @@ static int ovl_mmap(struct file *file, struct vm_area_struct *vma)
 	revert_creds(old_cred);
 	ovl_file_accessed(file);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static long ovl_fallocate(struct file *file, int mode, loff_t offset, loff_t len)
-{
-	struct inode *inode = file_inode(file);
-	struct fd real;
-	const struct cred *old_cred;
-	int ret;
+अटल दीर्घ ovl_fallocate(काष्ठा file *file, पूर्णांक mode, loff_t offset, loff_t len)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा fd real;
+	स्थिर काष्ठा cred *old_cred;
+	पूर्णांक ret;
 
 	ret = ovl_real_fdget(file, &real);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	old_cred = ovl_override_creds(file_inode(file)->i_sb);
 	ret = vfs_fallocate(real.file, mode, offset, len);
@@ -460,18 +461,18 @@ static long ovl_fallocate(struct file *file, int mode, loff_t offset, loff_t len
 
 	fdput(real);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ovl_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
-{
-	struct fd real;
-	const struct cred *old_cred;
-	int ret;
+अटल पूर्णांक ovl_fadvise(काष्ठा file *file, loff_t offset, loff_t len, पूर्णांक advice)
+अणु
+	काष्ठा fd real;
+	स्थिर काष्ठा cred *old_cred;
+	पूर्णांक ret;
 
 	ret = ovl_real_fdget(file, &real);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	old_cred = ovl_override_creds(file_inode(file)->i_sb);
 	ret = vfs_fadvise(real.file, offset, len, advice);
@@ -479,52 +480,52 @@ static int ovl_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
 
 	fdput(real);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-enum ovl_copyop {
+क्रमागत ovl_copyop अणु
 	OVL_COPY,
 	OVL_CLONE,
 	OVL_DEDUPE,
-};
+पूर्ण;
 
-static loff_t ovl_copyfile(struct file *file_in, loff_t pos_in,
-			    struct file *file_out, loff_t pos_out,
-			    loff_t len, unsigned int flags, enum ovl_copyop op)
-{
-	struct inode *inode_out = file_inode(file_out);
-	struct fd real_in, real_out;
-	const struct cred *old_cred;
+अटल loff_t ovl_copyfile(काष्ठा file *file_in, loff_t pos_in,
+			    काष्ठा file *file_out, loff_t pos_out,
+			    loff_t len, अचिन्हित पूर्णांक flags, क्रमागत ovl_copyop op)
+अणु
+	काष्ठा inode *inode_out = file_inode(file_out);
+	काष्ठा fd real_in, real_out;
+	स्थिर काष्ठा cred *old_cred;
 	loff_t ret;
 
 	ret = ovl_real_fdget(file_out, &real_out);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = ovl_real_fdget(file_in, &real_in);
-	if (ret) {
+	अगर (ret) अणु
 		fdput(real_out);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	old_cred = ovl_override_creds(file_inode(file_out)->i_sb);
-	switch (op) {
-	case OVL_COPY:
+	चयन (op) अणु
+	हाल OVL_COPY:
 		ret = vfs_copy_file_range(real_in.file, pos_in,
 					  real_out.file, pos_out, len, flags);
-		break;
+		अवरोध;
 
-	case OVL_CLONE:
+	हाल OVL_CLONE:
 		ret = vfs_clone_file_range(real_in.file, pos_in,
 					   real_out.file, pos_out, len, flags);
-		break;
+		अवरोध;
 
-	case OVL_DEDUPE:
+	हाल OVL_DEDUPE:
 		ret = vfs_dedupe_file_range_one(real_in.file, pos_in,
 						real_out.file, pos_out, len,
 						flags);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	revert_creds(old_cred);
 
 	/* Update size */
@@ -533,94 +534,94 @@ static loff_t ovl_copyfile(struct file *file_in, loff_t pos_in,
 	fdput(real_in);
 	fdput(real_out);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t ovl_copy_file_range(struct file *file_in, loff_t pos_in,
-				   struct file *file_out, loff_t pos_out,
-				   size_t len, unsigned int flags)
-{
-	return ovl_copyfile(file_in, pos_in, file_out, pos_out, len, flags,
+अटल sमाप_प्रकार ovl_copy_file_range(काष्ठा file *file_in, loff_t pos_in,
+				   काष्ठा file *file_out, loff_t pos_out,
+				   माप_प्रकार len, अचिन्हित पूर्णांक flags)
+अणु
+	वापस ovl_copyfile(file_in, pos_in, file_out, pos_out, len, flags,
 			    OVL_COPY);
-}
+पूर्ण
 
-static loff_t ovl_remap_file_range(struct file *file_in, loff_t pos_in,
-				   struct file *file_out, loff_t pos_out,
-				   loff_t len, unsigned int remap_flags)
-{
-	enum ovl_copyop op;
+अटल loff_t ovl_remap_file_range(काष्ठा file *file_in, loff_t pos_in,
+				   काष्ठा file *file_out, loff_t pos_out,
+				   loff_t len, अचिन्हित पूर्णांक remap_flags)
+अणु
+	क्रमागत ovl_copyop op;
 
-	if (remap_flags & ~(REMAP_FILE_DEDUP | REMAP_FILE_ADVISORY))
-		return -EINVAL;
+	अगर (remap_flags & ~(REMAP_खाता_DEDUP | REMAP_खाता_ADVISORY))
+		वापस -EINVAL;
 
-	if (remap_flags & REMAP_FILE_DEDUP)
+	अगर (remap_flags & REMAP_खाता_DEDUP)
 		op = OVL_DEDUPE;
-	else
+	अन्यथा
 		op = OVL_CLONE;
 
 	/*
 	 * Don't copy up because of a dedupe request, this wouldn't make sense
-	 * most of the time (data would be duplicated instead of deduplicated).
+	 * most of the समय (data would be duplicated instead of deduplicated).
 	 */
-	if (op == OVL_DEDUPE &&
+	अगर (op == OVL_DEDUPE &&
 	    (!ovl_inode_upper(file_inode(file_in)) ||
 	     !ovl_inode_upper(file_inode(file_out))))
-		return -EPERM;
+		वापस -EPERM;
 
-	return ovl_copyfile(file_in, pos_in, file_out, pos_out, len,
+	वापस ovl_copyfile(file_in, pos_in, file_out, pos_out, len,
 			    remap_flags, op);
-}
+पूर्ण
 
-static int ovl_flush(struct file *file, fl_owner_t id)
-{
-	struct fd real;
-	const struct cred *old_cred;
-	int err;
+अटल पूर्णांक ovl_flush(काष्ठा file *file, fl_owner_t id)
+अणु
+	काष्ठा fd real;
+	स्थिर काष्ठा cred *old_cred;
+	पूर्णांक err;
 
 	err = ovl_real_fdget(file, &real);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (real.file->f_op->flush) {
+	अगर (real.file->f_op->flush) अणु
 		old_cred = ovl_override_creds(file_inode(file)->i_sb);
 		err = real.file->f_op->flush(real.file, id);
 		revert_creds(old_cred);
-	}
+	पूर्ण
 	fdput(real);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct file_operations ovl_file_operations = {
-	.open		= ovl_open,
+स्थिर काष्ठा file_operations ovl_file_operations = अणु
+	.खोलो		= ovl_खोलो,
 	.release	= ovl_release,
 	.llseek		= ovl_llseek,
-	.read_iter	= ovl_read_iter,
-	.write_iter	= ovl_write_iter,
+	.पढ़ो_iter	= ovl_पढ़ो_iter,
+	.ग_लिखो_iter	= ovl_ग_लिखो_iter,
 	.fsync		= ovl_fsync,
 	.mmap		= ovl_mmap,
 	.fallocate	= ovl_fallocate,
 	.fadvise	= ovl_fadvise,
 	.flush		= ovl_flush,
-	.splice_read    = generic_file_splice_read,
-	.splice_write   = iter_file_splice_write,
+	.splice_पढ़ो    = generic_file_splice_पढ़ो,
+	.splice_ग_लिखो   = iter_file_splice_ग_लिखो,
 
 	.copy_file_range	= ovl_copy_file_range,
 	.remap_file_range	= ovl_remap_file_range,
-};
+पूर्ण;
 
-int __init ovl_aio_request_cache_init(void)
-{
+पूर्णांक __init ovl_aio_request_cache_init(व्योम)
+अणु
 	ovl_aio_request_cachep = kmem_cache_create("ovl_aio_req",
-						   sizeof(struct ovl_aio_req),
-						   0, SLAB_HWCACHE_ALIGN, NULL);
-	if (!ovl_aio_request_cachep)
-		return -ENOMEM;
+						   माप(काष्ठा ovl_aio_req),
+						   0, SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (!ovl_aio_request_cachep)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ovl_aio_request_cache_destroy(void)
-{
+व्योम ovl_aio_request_cache_destroy(व्योम)
+अणु
 	kmem_cache_destroy(ovl_aio_request_cachep);
-}
+पूर्ण

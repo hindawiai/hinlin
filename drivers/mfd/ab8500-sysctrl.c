@@ -1,171 +1,172 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * AB8500 system control driver
+ * AB8500 प्रणाली control driver
  *
  * Copyright (C) ST-Ericsson SA 2010
- * Author: Mattias Nilsson <mattias.i.nilsson@stericsson.com> for ST Ericsson.
+ * Author: Mattias Nilsson <mattias.i.nilsson@stericsson.com> क्रम ST Ericsson.
  */
 
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/platform_device.h>
-#include <linux/pm.h>
-#include <linux/reboot.h>
-#include <linux/signal.h>
-#include <linux/power_supply.h>
-#include <linux/mfd/abx500.h>
-#include <linux/mfd/abx500/ab8500.h>
-#include <linux/mfd/abx500/ab8500-sysctrl.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/mfd/abx500.h>
+#समावेश <linux/mfd/abx500/ab8500.h>
+#समावेश <linux/mfd/abx500/ab8500-sysctrl.h>
 
 /* RtcCtrl bits */
-#define AB8500_ALARM_MIN_LOW  0x08
-#define AB8500_ALARM_MIN_MID 0x09
-#define RTC_CTRL 0x0B
-#define RTC_ALARM_ENABLE 0x4
+#घोषणा AB8500_ALARM_MIN_LOW  0x08
+#घोषणा AB8500_ALARM_MIN_MID 0x09
+#घोषणा RTC_CTRL 0x0B
+#घोषणा RTC_ALARM_ENABLE 0x4
 
-static struct device *sysctrl_dev;
+अटल काष्ठा device *sysctrl_dev;
 
-static void ab8500_power_off(void)
-{
+अटल व्योम ab8500_घातer_off(व्योम)
+अणु
 	sigset_t old;
 	sigset_t all;
-	static const char * const pss[] = {"ab8500_ac", "pm2301", "ab8500_usb"};
-	int i;
-	bool charger_present = false;
-	union power_supply_propval val;
-	struct power_supply *psy;
-	int ret;
+	अटल स्थिर अक्षर * स्थिर pss[] = अणु"ab8500_ac", "pm2301", "ab8500_usb"पूर्ण;
+	पूर्णांक i;
+	bool अक्षरger_present = false;
+	जोड़ घातer_supply_propval val;
+	काष्ठा घातer_supply *psy;
+	पूर्णांक ret;
 
-	if (sysctrl_dev == NULL) {
+	अगर (sysctrl_dev == शून्य) अणु
 		pr_err("%s: sysctrl not initialized\n", __func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * If we have a charger connected and we're powering off,
-	 * reboot into charge-only mode.
+	 * If we have a अक्षरger connected and we're घातering off,
+	 * reboot पूर्णांकo अक्षरge-only mode.
 	 */
 
-	for (i = 0; i < ARRAY_SIZE(pss); i++) {
-		psy = power_supply_get_by_name(pss[i]);
-		if (!psy)
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(pss); i++) अणु
+		psy = घातer_supply_get_by_name(pss[i]);
+		अगर (!psy)
+			जारी;
 
-		ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE,
+		ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_ONLINE,
 				&val);
-		power_supply_put(psy);
+		घातer_supply_put(psy);
 
-		if (!ret && val.intval) {
-			charger_present = true;
-			break;
-		}
-	}
+		अगर (!ret && val.पूर्णांकval) अणु
+			अक्षरger_present = true;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!charger_present)
-		goto shutdown;
+	अगर (!अक्षरger_present)
+		जाओ shutकरोwn;
 
-	/* Check if battery is known */
-	psy = power_supply_get_by_name("ab8500_btemp");
-	if (psy) {
-		ret = power_supply_get_property(psy,
+	/* Check अगर battery is known */
+	psy = घातer_supply_get_by_name("ab8500_btemp");
+	अगर (psy) अणु
+		ret = घातer_supply_get_property(psy,
 				POWER_SUPPLY_PROP_TECHNOLOGY, &val);
-		if (!ret && val.intval != POWER_SUPPLY_TECHNOLOGY_UNKNOWN) {
+		अगर (!ret && val.पूर्णांकval != POWER_SUPPLY_TECHNOLOGY_UNKNOWN) अणु
 			pr_info("Charger '%s' is connected with known battery",
 				pss[i]);
 			pr_info(" - Rebooting.\n");
 			machine_restart("charging");
-		}
-		power_supply_put(psy);
-	}
+		पूर्ण
+		घातer_supply_put(psy);
+	पूर्ण
 
-shutdown:
+shutकरोwn:
 	sigfillset(&all);
 
-	if (!sigprocmask(SIG_BLOCK, &all, &old)) {
-		(void)ab8500_sysctrl_set(AB8500_STW4500CTRL1,
+	अगर (!sigprocmask(SIG_BLOCK, &all, &old)) अणु
+		(व्योम)ab8500_sysctrl_set(AB8500_STW4500CTRL1,
 					 AB8500_STW4500CTRL1_SWOFF |
 					 AB8500_STW4500CTRL1_SWRESET4500N);
-		(void)sigprocmask(SIG_SETMASK, &old, NULL);
-	}
-}
+		(व्योम)sigprocmask(SIG_SETMASK, &old, शून्य);
+	पूर्ण
+पूर्ण
 
-static inline bool valid_bank(u8 bank)
-{
-	return ((bank == AB8500_SYS_CTRL1_BLOCK) ||
+अटल अंतरभूत bool valid_bank(u8 bank)
+अणु
+	वापस ((bank == AB8500_SYS_CTRL1_BLOCK) ||
 		(bank == AB8500_SYS_CTRL2_BLOCK));
-}
+पूर्ण
 
-int ab8500_sysctrl_read(u16 reg, u8 *value)
-{
+पूर्णांक ab8500_sysctrl_पढ़ो(u16 reg, u8 *value)
+अणु
 	u8 bank;
 
-	if (sysctrl_dev == NULL)
-		return -EPROBE_DEFER;
+	अगर (sysctrl_dev == शून्य)
+		वापस -EPROBE_DEFER;
 
 	bank = (reg >> 8);
-	if (!valid_bank(bank))
-		return -EINVAL;
+	अगर (!valid_bank(bank))
+		वापस -EINVAL;
 
-	return abx500_get_register_interruptible(sysctrl_dev, bank,
+	वापस abx500_get_रेजिस्टर_पूर्णांकerruptible(sysctrl_dev, bank,
 		(u8)(reg & 0xFF), value);
-}
-EXPORT_SYMBOL(ab8500_sysctrl_read);
+पूर्ण
+EXPORT_SYMBOL(ab8500_sysctrl_पढ़ो);
 
-int ab8500_sysctrl_write(u16 reg, u8 mask, u8 value)
-{
+पूर्णांक ab8500_sysctrl_ग_लिखो(u16 reg, u8 mask, u8 value)
+अणु
 	u8 bank;
 
-	if (sysctrl_dev == NULL)
-		return -EPROBE_DEFER;
+	अगर (sysctrl_dev == शून्य)
+		वापस -EPROBE_DEFER;
 
 	bank = (reg >> 8);
-	if (!valid_bank(bank)) {
+	अगर (!valid_bank(bank)) अणु
 		pr_err("invalid bank\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return abx500_mask_and_set_register_interruptible(sysctrl_dev, bank,
+	वापस abx500_mask_and_set_रेजिस्टर_पूर्णांकerruptible(sysctrl_dev, bank,
 		(u8)(reg & 0xFF), mask, value);
-}
-EXPORT_SYMBOL(ab8500_sysctrl_write);
+पूर्ण
+EXPORT_SYMBOL(ab8500_sysctrl_ग_लिखो);
 
-static int ab8500_sysctrl_probe(struct platform_device *pdev)
-{
+अटल पूर्णांक ab8500_sysctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	sysctrl_dev = &pdev->dev;
 
-	if (!pm_power_off)
-		pm_power_off = ab8500_power_off;
+	अगर (!pm_घातer_off)
+		pm_घातer_off = ab8500_घातer_off;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ab8500_sysctrl_remove(struct platform_device *pdev)
-{
-	sysctrl_dev = NULL;
+अटल पूर्णांक ab8500_sysctrl_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	sysctrl_dev = शून्य;
 
-	if (pm_power_off == ab8500_power_off)
-		pm_power_off = NULL;
+	अगर (pm_घातer_off == ab8500_घातer_off)
+		pm_घातer_off = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ab8500_sysctrl_match[] = {
-	{ .compatible = "stericsson,ab8500-sysctrl", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id ab8500_sysctrl_match[] = अणु
+	अणु .compatible = "stericsson,ab8500-sysctrl", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct platform_driver ab8500_sysctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ab8500_sysctrl_driver = अणु
+	.driver = अणु
 		.name = "ab8500-sysctrl",
 		.of_match_table = ab8500_sysctrl_match,
-	},
+	पूर्ण,
 	.probe = ab8500_sysctrl_probe,
-	.remove = ab8500_sysctrl_remove,
-};
+	.हटाओ = ab8500_sysctrl_हटाओ,
+पूर्ण;
 
-static int __init ab8500_sysctrl_init(void)
-{
-	return platform_driver_register(&ab8500_sysctrl_driver);
-}
+अटल पूर्णांक __init ab8500_sysctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&ab8500_sysctrl_driver);
+पूर्ण
 arch_initcall(ab8500_sysctrl_init);

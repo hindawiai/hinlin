@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef INTEL_ENGINE_HEARTBEAT_H
-#define INTEL_ENGINE_HEARTBEAT_H
+#अगर_अघोषित INTEL_ENGINE_HEARTBEAT_H
+#घोषणा INTEL_ENGINE_HEARTBEAT_H
 
-struct intel_engine_cs;
+काष्ठा पूर्णांकel_engine_cs;
 
-void intel_engine_init_heartbeat(struct intel_engine_cs *engine);
+व्योम पूर्णांकel_engine_init_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine);
 
-int intel_engine_set_heartbeat(struct intel_engine_cs *engine,
-			       unsigned long delay);
+पूर्णांक पूर्णांकel_engine_set_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine,
+			       अचिन्हित दीर्घ delay);
 
-void intel_engine_park_heartbeat(struct intel_engine_cs *engine);
-void intel_engine_unpark_heartbeat(struct intel_engine_cs *engine);
+व्योम पूर्णांकel_engine_park_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine);
+व्योम पूर्णांकel_engine_unpark_heartbeat(काष्ठा पूर्णांकel_engine_cs *engine);
 
-int intel_engine_pulse(struct intel_engine_cs *engine);
-int intel_engine_flush_barriers(struct intel_engine_cs *engine);
+पूर्णांक पूर्णांकel_engine_pulse(काष्ठा पूर्णांकel_engine_cs *engine);
+पूर्णांक पूर्णांकel_engine_flush_barriers(काष्ठा पूर्णांकel_engine_cs *engine);
 
-#endif /* INTEL_ENGINE_HEARTBEAT_H */
+#पूर्ण_अगर /* INTEL_ENGINE_HEARTBEAT_H */

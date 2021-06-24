@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * c8sectpfe-common.h - C8SECTPFE STi DVB driver
  *
  * Copyright (c) STMicroelectronics 2015
  *
- *   Author: Peter Griffin <peter.griffin@linaro.org>
+ *   Author: Peter Grअगरfin <peter.grअगरfin@linaro.org>
  *
  */
-#ifndef _C8SECTPFE_COMMON_H_
-#define _C8SECTPFE_COMMON_H_
+#अगर_अघोषित _C8SECTPFE_COMMON_H_
+#घोषणा _C8SECTPFE_COMMON_H_
 
-#include <linux/dvb/dmx.h>
-#include <linux/dvb/frontend.h>
-#include <linux/gpio.h>
-#include <linux/version.h>
+#समावेश <linux/dvb/dmx.h>
+#समावेश <linux/dvb/frontend.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/version.h>
 
-#include <media/dmxdev.h>
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include <media/dvb_net.h>
+#समावेश <media/dmxdev.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश <media/dvb_net.h>
 
 /* Maximum number of channels */
-#define C8SECTPFE_MAXADAPTER (4)
-#define C8SECTPFE_MAXCHANNEL 64
-#define STPTI_MAXCHANNEL 64
+#घोषणा C8SECTPFE_MAXADAPTER (4)
+#घोषणा C8SECTPFE_MAXCHANNEL 64
+#घोषणा STPTI_MAXCHANNEL 64
 
-#define MAX_INPUTBLOCKS 7
+#घोषणा MAX_INPUTBLOCKS 7
 
-struct c8sectpfe;
-struct stdemux;
+काष्ठा c8sectpfe;
+काष्ठा stdemux;
 
-struct stdemux {
-	struct dvb_demux	dvb_demux;
-	struct dmxdev		dmxdev;
-	struct dmx_frontend	hw_frontend;
-	struct dmx_frontend	mem_frontend;
-	int			tsin_index;
-	int			running_feed_count;
-	struct			c8sectpfei *c8sectpfei;
-};
+काष्ठा stdemux अणु
+	काष्ठा dvb_demux	dvb_demux;
+	काष्ठा dmxdev		dmxdev;
+	काष्ठा dmx_frontend	hw_frontend;
+	काष्ठा dmx_frontend	mem_frontend;
+	पूर्णांक			tsin_index;
+	पूर्णांक			running_feed_count;
+	काष्ठा			c8sectpfei *c8sectpfei;
+पूर्ण;
 
-struct c8sectpfe {
-	struct stdemux demux[MAX_INPUTBLOCKS];
-	struct mutex lock;
-	struct dvb_adapter adapter;
-	struct device *device;
-	int mapping;
-	int num_feeds;
-};
+काष्ठा c8sectpfe अणु
+	काष्ठा stdemux demux[MAX_INPUTBLOCKS];
+	काष्ठा mutex lock;
+	काष्ठा dvb_adapter adapter;
+	काष्ठा device *device;
+	पूर्णांक mapping;
+	पूर्णांक num_feeds;
+पूर्ण;
 
 /* Channel registration */
-int c8sectpfe_tuner_register_frontend(struct c8sectpfe **c8sectpfe,
-					struct c8sectpfei *fei,
-					void *start_feed,
-					void *stop_feed);
+पूर्णांक c8sectpfe_tuner_रेजिस्टर_frontend(काष्ठा c8sectpfe **c8sectpfe,
+					काष्ठा c8sectpfei *fei,
+					व्योम *start_feed,
+					व्योम *stop_feed);
 
-void c8sectpfe_tuner_unregister_frontend(struct c8sectpfe *c8sectpfe,
-						struct c8sectpfei *fei);
+व्योम c8sectpfe_tuner_unरेजिस्टर_frontend(काष्ठा c8sectpfe *c8sectpfe,
+						काष्ठा c8sectpfei *fei);
 
-#endif
+#पूर्ण_अगर

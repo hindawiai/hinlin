@@ -1,447 +1,448 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * drivers/clk/clkdev.c
  *
  *  Copyright (C) 2008 Russell King.
  *
- * Helper for the clk API to assist looking up a struct clk.
+ * Helper क्रम the clk API to assist looking up a काष्ठा clk.
  */
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/list.h>
-#include <linux/errno.h>
-#include <linux/err.h>
-#include <linux/string.h>
-#include <linux/mutex.h>
-#include <linux/clk.h>
-#include <linux/clkdev.h>
-#include <linux/clk-provider.h>
-#include <linux/of.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/list.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/err.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/of.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 
-static LIST_HEAD(clocks);
-static DEFINE_MUTEX(clocks_mutex);
+अटल LIST_HEAD(घड़ीs);
+अटल DEFINE_MUTEX(घड़ीs_mutex);
 
 /*
- * Find the correct struct clk for the device and connection ID.
- * We do slightly fuzzy matching here:
- *  An entry with a NULL ID is assumed to be a wildcard.
+ * Find the correct काष्ठा clk क्रम the device and connection ID.
+ * We करो slightly fuzzy matching here:
+ *  An entry with a शून्य ID is assumed to be a wildcard.
  *  If an entry has a device ID, it must match
  *  If an entry has a connection ID, it must match
- * Then we take the most specific entry - with the following
+ * Then we take the most specअगरic entry - with the following
  * order of precedence: dev+con > dev only > con only.
  */
-static struct clk_lookup *clk_find(const char *dev_id, const char *con_id)
-{
-	struct clk_lookup *p, *cl = NULL;
-	int match, best_found = 0, best_possible = 0;
+अटल काष्ठा clk_lookup *clk_find(स्थिर अक्षर *dev_id, स्थिर अक्षर *con_id)
+अणु
+	काष्ठा clk_lookup *p, *cl = शून्य;
+	पूर्णांक match, best_found = 0, best_possible = 0;
 
-	if (dev_id)
+	अगर (dev_id)
 		best_possible += 2;
-	if (con_id)
+	अगर (con_id)
 		best_possible += 1;
 
-	lockdep_assert_held(&clocks_mutex);
+	lockdep_निश्चित_held(&घड़ीs_mutex);
 
-	list_for_each_entry(p, &clocks, node) {
+	list_क्रम_each_entry(p, &घड़ीs, node) अणु
 		match = 0;
-		if (p->dev_id) {
-			if (!dev_id || strcmp(p->dev_id, dev_id))
-				continue;
+		अगर (p->dev_id) अणु
+			अगर (!dev_id || म_भेद(p->dev_id, dev_id))
+				जारी;
 			match += 2;
-		}
-		if (p->con_id) {
-			if (!con_id || strcmp(p->con_id, con_id))
-				continue;
+		पूर्ण
+		अगर (p->con_id) अणु
+			अगर (!con_id || म_भेद(p->con_id, con_id))
+				जारी;
 			match += 1;
-		}
+		पूर्ण
 
-		if (match > best_found) {
+		अगर (match > best_found) अणु
 			cl = p;
-			if (match != best_possible)
+			अगर (match != best_possible)
 				best_found = match;
-			else
-				break;
-		}
-	}
-	return cl;
-}
+			अन्यथा
+				अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस cl;
+पूर्ण
 
-struct clk_hw *clk_find_hw(const char *dev_id, const char *con_id)
-{
-	struct clk_lookup *cl;
-	struct clk_hw *hw = ERR_PTR(-ENOENT);
+काष्ठा clk_hw *clk_find_hw(स्थिर अक्षर *dev_id, स्थिर अक्षर *con_id)
+अणु
+	काष्ठा clk_lookup *cl;
+	काष्ठा clk_hw *hw = ERR_PTR(-ENOENT);
 
-	mutex_lock(&clocks_mutex);
+	mutex_lock(&घड़ीs_mutex);
 	cl = clk_find(dev_id, con_id);
-	if (cl)
+	अगर (cl)
 		hw = cl->clk_hw;
-	mutex_unlock(&clocks_mutex);
+	mutex_unlock(&घड़ीs_mutex);
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static struct clk *__clk_get_sys(struct device *dev, const char *dev_id,
-				 const char *con_id)
-{
-	struct clk_hw *hw = clk_find_hw(dev_id, con_id);
+अटल काष्ठा clk *__clk_get_sys(काष्ठा device *dev, स्थिर अक्षर *dev_id,
+				 स्थिर अक्षर *con_id)
+अणु
+	काष्ठा clk_hw *hw = clk_find_hw(dev_id, con_id);
 
-	return clk_hw_create_clk(dev, hw, dev_id, con_id);
-}
+	वापस clk_hw_create_clk(dev, hw, dev_id, con_id);
+पूर्ण
 
-struct clk *clk_get_sys(const char *dev_id, const char *con_id)
-{
-	return __clk_get_sys(NULL, dev_id, con_id);
-}
+काष्ठा clk *clk_get_sys(स्थिर अक्षर *dev_id, स्थिर अक्षर *con_id)
+अणु
+	वापस __clk_get_sys(शून्य, dev_id, con_id);
+पूर्ण
 EXPORT_SYMBOL(clk_get_sys);
 
-struct clk *clk_get(struct device *dev, const char *con_id)
-{
-	const char *dev_id = dev ? dev_name(dev) : NULL;
-	struct clk_hw *hw;
+काष्ठा clk *clk_get(काष्ठा device *dev, स्थिर अक्षर *con_id)
+अणु
+	स्थिर अक्षर *dev_id = dev ? dev_name(dev) : शून्य;
+	काष्ठा clk_hw *hw;
 
-	if (dev && dev->of_node) {
+	अगर (dev && dev->of_node) अणु
 		hw = of_clk_get_hw(dev->of_node, 0, con_id);
-		if (!IS_ERR(hw) || PTR_ERR(hw) == -EPROBE_DEFER)
-			return clk_hw_create_clk(dev, hw, dev_id, con_id);
-	}
+		अगर (!IS_ERR(hw) || PTR_ERR(hw) == -EPROBE_DEFER)
+			वापस clk_hw_create_clk(dev, hw, dev_id, con_id);
+	पूर्ण
 
-	return __clk_get_sys(dev, dev_id, con_id);
-}
+	वापस __clk_get_sys(dev, dev_id, con_id);
+पूर्ण
 EXPORT_SYMBOL(clk_get);
 
-void clk_put(struct clk *clk)
-{
+व्योम clk_put(काष्ठा clk *clk)
+अणु
 	__clk_put(clk);
-}
+पूर्ण
 EXPORT_SYMBOL(clk_put);
 
-static void __clkdev_add(struct clk_lookup *cl)
-{
-	mutex_lock(&clocks_mutex);
-	list_add_tail(&cl->node, &clocks);
-	mutex_unlock(&clocks_mutex);
-}
+अटल व्योम __clkdev_add(काष्ठा clk_lookup *cl)
+अणु
+	mutex_lock(&घड़ीs_mutex);
+	list_add_tail(&cl->node, &घड़ीs);
+	mutex_unlock(&घड़ीs_mutex);
+पूर्ण
 
-void clkdev_add(struct clk_lookup *cl)
-{
-	if (!cl->clk_hw)
+व्योम clkdev_add(काष्ठा clk_lookup *cl)
+अणु
+	अगर (!cl->clk_hw)
 		cl->clk_hw = __clk_get_hw(cl->clk);
 	__clkdev_add(cl);
-}
+पूर्ण
 EXPORT_SYMBOL(clkdev_add);
 
-void clkdev_add_table(struct clk_lookup *cl, size_t num)
-{
-	mutex_lock(&clocks_mutex);
-	while (num--) {
+व्योम clkdev_add_table(काष्ठा clk_lookup *cl, माप_प्रकार num)
+अणु
+	mutex_lock(&घड़ीs_mutex);
+	जबतक (num--) अणु
 		cl->clk_hw = __clk_get_hw(cl->clk);
-		list_add_tail(&cl->node, &clocks);
+		list_add_tail(&cl->node, &घड़ीs);
 		cl++;
-	}
-	mutex_unlock(&clocks_mutex);
-}
+	पूर्ण
+	mutex_unlock(&घड़ीs_mutex);
+पूर्ण
 
-#define MAX_DEV_ID	20
-#define MAX_CON_ID	16
+#घोषणा MAX_DEV_ID	20
+#घोषणा MAX_CON_ID	16
 
-struct clk_lookup_alloc {
-	struct clk_lookup cl;
-	char	dev_id[MAX_DEV_ID];
-	char	con_id[MAX_CON_ID];
-};
+काष्ठा clk_lookup_alloc अणु
+	काष्ठा clk_lookup cl;
+	अक्षर	dev_id[MAX_DEV_ID];
+	अक्षर	con_id[MAX_CON_ID];
+पूर्ण;
 
-static struct clk_lookup * __ref
-vclkdev_alloc(struct clk_hw *hw, const char *con_id, const char *dev_fmt,
-	va_list ap)
-{
-	struct clk_lookup_alloc *cla;
+अटल काष्ठा clk_lookup * __ref
+vclkdev_alloc(काष्ठा clk_hw *hw, स्थिर अक्षर *con_id, स्थिर अक्षर *dev_fmt,
+	बहु_सूची ap)
+अणु
+	काष्ठा clk_lookup_alloc *cla;
 
-	cla = kzalloc(sizeof(*cla), GFP_KERNEL);
-	if (!cla)
-		return NULL;
+	cla = kzalloc(माप(*cla), GFP_KERNEL);
+	अगर (!cla)
+		वापस शून्य;
 
 	cla->cl.clk_hw = hw;
-	if (con_id) {
-		strlcpy(cla->con_id, con_id, sizeof(cla->con_id));
+	अगर (con_id) अणु
+		strlcpy(cla->con_id, con_id, माप(cla->con_id));
 		cla->cl.con_id = cla->con_id;
-	}
+	पूर्ण
 
-	if (dev_fmt) {
-		vscnprintf(cla->dev_id, sizeof(cla->dev_id), dev_fmt, ap);
+	अगर (dev_fmt) अणु
+		vscnम_लिखो(cla->dev_id, माप(cla->dev_id), dev_fmt, ap);
 		cla->cl.dev_id = cla->dev_id;
-	}
+	पूर्ण
 
-	return &cla->cl;
-}
+	वापस &cla->cl;
+पूर्ण
 
-static struct clk_lookup *
-vclkdev_create(struct clk_hw *hw, const char *con_id, const char *dev_fmt,
-	va_list ap)
-{
-	struct clk_lookup *cl;
+अटल काष्ठा clk_lookup *
+vclkdev_create(काष्ठा clk_hw *hw, स्थिर अक्षर *con_id, स्थिर अक्षर *dev_fmt,
+	बहु_सूची ap)
+अणु
+	काष्ठा clk_lookup *cl;
 
 	cl = vclkdev_alloc(hw, con_id, dev_fmt, ap);
-	if (cl)
+	अगर (cl)
 		__clkdev_add(cl);
 
-	return cl;
-}
+	वापस cl;
+पूर्ण
 
-struct clk_lookup * __ref
-clkdev_alloc(struct clk *clk, const char *con_id, const char *dev_fmt, ...)
-{
-	struct clk_lookup *cl;
-	va_list ap;
+काष्ठा clk_lookup * __ref
+clkdev_alloc(काष्ठा clk *clk, स्थिर अक्षर *con_id, स्थिर अक्षर *dev_fmt, ...)
+अणु
+	काष्ठा clk_lookup *cl;
+	बहु_सूची ap;
 
-	va_start(ap, dev_fmt);
+	बहु_शुरू(ap, dev_fmt);
 	cl = vclkdev_alloc(__clk_get_hw(clk), con_id, dev_fmt, ap);
-	va_end(ap);
+	बहु_पूर्ण(ap);
 
-	return cl;
-}
+	वापस cl;
+पूर्ण
 EXPORT_SYMBOL(clkdev_alloc);
 
-struct clk_lookup *
-clkdev_hw_alloc(struct clk_hw *hw, const char *con_id, const char *dev_fmt, ...)
-{
-	struct clk_lookup *cl;
-	va_list ap;
+काष्ठा clk_lookup *
+clkdev_hw_alloc(काष्ठा clk_hw *hw, स्थिर अक्षर *con_id, स्थिर अक्षर *dev_fmt, ...)
+अणु
+	काष्ठा clk_lookup *cl;
+	बहु_सूची ap;
 
-	va_start(ap, dev_fmt);
+	बहु_शुरू(ap, dev_fmt);
 	cl = vclkdev_alloc(hw, con_id, dev_fmt, ap);
-	va_end(ap);
+	बहु_पूर्ण(ap);
 
-	return cl;
-}
+	वापस cl;
+पूर्ण
 EXPORT_SYMBOL(clkdev_hw_alloc);
 
 /**
- * clkdev_create - allocate and add a clkdev lookup structure
- * @clk: struct clk to associate with all clk_lookups
+ * clkdev_create - allocate and add a clkdev lookup काष्ठाure
+ * @clk: काष्ठा clk to associate with all clk_lookups
  * @con_id: connection ID string on device
- * @dev_fmt: format string describing device name
+ * @dev_fmt: क्रमmat string describing device name
  *
- * Returns a clk_lookup structure, which can be later unregistered and
- * freed.
+ * Returns a clk_lookup काष्ठाure, which can be later unरेजिस्टरed and
+ * मुक्तd.
  */
-struct clk_lookup *clkdev_create(struct clk *clk, const char *con_id,
-	const char *dev_fmt, ...)
-{
-	struct clk_lookup *cl;
-	va_list ap;
+काष्ठा clk_lookup *clkdev_create(काष्ठा clk *clk, स्थिर अक्षर *con_id,
+	स्थिर अक्षर *dev_fmt, ...)
+अणु
+	काष्ठा clk_lookup *cl;
+	बहु_सूची ap;
 
-	va_start(ap, dev_fmt);
+	बहु_शुरू(ap, dev_fmt);
 	cl = vclkdev_create(__clk_get_hw(clk), con_id, dev_fmt, ap);
-	va_end(ap);
+	बहु_पूर्ण(ap);
 
-	return cl;
-}
+	वापस cl;
+पूर्ण
 EXPORT_SYMBOL_GPL(clkdev_create);
 
 /**
- * clkdev_hw_create - allocate and add a clkdev lookup structure
- * @hw: struct clk_hw to associate with all clk_lookups
+ * clkdev_hw_create - allocate and add a clkdev lookup काष्ठाure
+ * @hw: काष्ठा clk_hw to associate with all clk_lookups
  * @con_id: connection ID string on device
- * @dev_fmt: format string describing device name
+ * @dev_fmt: क्रमmat string describing device name
  *
- * Returns a clk_lookup structure, which can be later unregistered and
- * freed.
+ * Returns a clk_lookup काष्ठाure, which can be later unरेजिस्टरed and
+ * मुक्तd.
  */
-struct clk_lookup *clkdev_hw_create(struct clk_hw *hw, const char *con_id,
-	const char *dev_fmt, ...)
-{
-	struct clk_lookup *cl;
-	va_list ap;
+काष्ठा clk_lookup *clkdev_hw_create(काष्ठा clk_hw *hw, स्थिर अक्षर *con_id,
+	स्थिर अक्षर *dev_fmt, ...)
+अणु
+	काष्ठा clk_lookup *cl;
+	बहु_सूची ap;
 
-	va_start(ap, dev_fmt);
+	बहु_शुरू(ap, dev_fmt);
 	cl = vclkdev_create(hw, con_id, dev_fmt, ap);
-	va_end(ap);
+	बहु_पूर्ण(ap);
 
-	return cl;
-}
+	वापस cl;
+पूर्ण
 EXPORT_SYMBOL_GPL(clkdev_hw_create);
 
-int clk_add_alias(const char *alias, const char *alias_dev_name,
-	const char *con_id, struct device *dev)
-{
-	struct clk *r = clk_get(dev, con_id);
-	struct clk_lookup *l;
+पूर्णांक clk_add_alias(स्थिर अक्षर *alias, स्थिर अक्षर *alias_dev_name,
+	स्थिर अक्षर *con_id, काष्ठा device *dev)
+अणु
+	काष्ठा clk *r = clk_get(dev, con_id);
+	काष्ठा clk_lookup *l;
 
-	if (IS_ERR(r))
-		return PTR_ERR(r);
+	अगर (IS_ERR(r))
+		वापस PTR_ERR(r);
 
-	l = clkdev_create(r, alias, alias_dev_name ? "%s" : NULL,
+	l = clkdev_create(r, alias, alias_dev_name ? "%s" : शून्य,
 			  alias_dev_name);
 	clk_put(r);
 
-	return l ? 0 : -ENODEV;
-}
+	वापस l ? 0 : -ENODEV;
+पूर्ण
 EXPORT_SYMBOL(clk_add_alias);
 
 /*
- * clkdev_drop - remove a clock dynamically allocated
+ * clkdev_drop - हटाओ a घड़ी dynamically allocated
  */
-void clkdev_drop(struct clk_lookup *cl)
-{
-	mutex_lock(&clocks_mutex);
+व्योम clkdev_drop(काष्ठा clk_lookup *cl)
+अणु
+	mutex_lock(&घड़ीs_mutex);
 	list_del(&cl->node);
-	mutex_unlock(&clocks_mutex);
-	kfree(cl);
-}
+	mutex_unlock(&घड़ीs_mutex);
+	kमुक्त(cl);
+पूर्ण
 EXPORT_SYMBOL(clkdev_drop);
 
-static struct clk_lookup *__clk_register_clkdev(struct clk_hw *hw,
-						const char *con_id,
-						const char *dev_id, ...)
-{
-	struct clk_lookup *cl;
-	va_list ap;
+अटल काष्ठा clk_lookup *__clk_रेजिस्टर_clkdev(काष्ठा clk_hw *hw,
+						स्थिर अक्षर *con_id,
+						स्थिर अक्षर *dev_id, ...)
+अणु
+	काष्ठा clk_lookup *cl;
+	बहु_सूची ap;
 
-	va_start(ap, dev_id);
+	बहु_शुरू(ap, dev_id);
 	cl = vclkdev_create(hw, con_id, dev_id, ap);
-	va_end(ap);
+	बहु_पूर्ण(ap);
 
-	return cl;
-}
+	वापस cl;
+पूर्ण
 
-static int do_clk_register_clkdev(struct clk_hw *hw,
-	struct clk_lookup **cl, const char *con_id, const char *dev_id)
-{
-	if (IS_ERR(hw))
-		return PTR_ERR(hw);
+अटल पूर्णांक करो_clk_रेजिस्टर_clkdev(काष्ठा clk_hw *hw,
+	काष्ठा clk_lookup **cl, स्थिर अक्षर *con_id, स्थिर अक्षर *dev_id)
+अणु
+	अगर (IS_ERR(hw))
+		वापस PTR_ERR(hw);
 	/*
-	 * Since dev_id can be NULL, and NULL is handled specially, we must
-	 * pass it as either a NULL format string, or with "%s".
+	 * Since dev_id can be शून्य, and शून्य is handled specially, we must
+	 * pass it as either a शून्य क्रमmat string, or with "%s".
 	 */
-	if (dev_id)
-		*cl = __clk_register_clkdev(hw, con_id, "%s", dev_id);
-	else
-		*cl = __clk_register_clkdev(hw, con_id, NULL);
+	अगर (dev_id)
+		*cl = __clk_रेजिस्टर_clkdev(hw, con_id, "%s", dev_id);
+	अन्यथा
+		*cl = __clk_रेजिस्टर_clkdev(hw, con_id, शून्य);
 
-	return *cl ? 0 : -ENOMEM;
-}
+	वापस *cl ? 0 : -ENOMEM;
+पूर्ण
 
 /**
- * clk_register_clkdev - register one clock lookup for a struct clk
- * @clk: struct clk to associate with all clk_lookups
+ * clk_रेजिस्टर_clkdev - रेजिस्टर one घड़ी lookup क्रम a काष्ठा clk
+ * @clk: काष्ठा clk to associate with all clk_lookups
  * @con_id: connection ID string on device
  * @dev_id: string describing device name
  *
- * con_id or dev_id may be NULL as a wildcard, just as in the rest of
+ * con_id or dev_id may be शून्य as a wildcard, just as in the rest of
  * clkdev.
  *
- * To make things easier for mass registration, we detect error clks
- * from a previous clk_register() call, and return the error code for
+ * To make things easier क्रम mass registration, we detect error clks
+ * from a previous clk_रेजिस्टर() call, and वापस the error code क्रम
  * those.  This is to permit this function to be called immediately
- * after clk_register().
+ * after clk_रेजिस्टर().
  */
-int clk_register_clkdev(struct clk *clk, const char *con_id,
-	const char *dev_id)
-{
-	struct clk_lookup *cl;
+पूर्णांक clk_रेजिस्टर_clkdev(काष्ठा clk *clk, स्थिर अक्षर *con_id,
+	स्थिर अक्षर *dev_id)
+अणु
+	काष्ठा clk_lookup *cl;
 
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
-	return do_clk_register_clkdev(__clk_get_hw(clk), &cl, con_id,
+	वापस करो_clk_रेजिस्टर_clkdev(__clk_get_hw(clk), &cl, con_id,
 					      dev_id);
-}
-EXPORT_SYMBOL(clk_register_clkdev);
+पूर्ण
+EXPORT_SYMBOL(clk_रेजिस्टर_clkdev);
 
 /**
- * clk_hw_register_clkdev - register one clock lookup for a struct clk_hw
- * @hw: struct clk_hw to associate with all clk_lookups
+ * clk_hw_रेजिस्टर_clkdev - रेजिस्टर one घड़ी lookup क्रम a काष्ठा clk_hw
+ * @hw: काष्ठा clk_hw to associate with all clk_lookups
  * @con_id: connection ID string on device
- * @dev_id: format string describing device name
+ * @dev_id: क्रमmat string describing device name
  *
- * con_id or dev_id may be NULL as a wildcard, just as in the rest of
+ * con_id or dev_id may be शून्य as a wildcard, just as in the rest of
  * clkdev.
  *
- * To make things easier for mass registration, we detect error clk_hws
- * from a previous clk_hw_register_*() call, and return the error code for
+ * To make things easier क्रम mass registration, we detect error clk_hws
+ * from a previous clk_hw_रेजिस्टर_*() call, and वापस the error code क्रम
  * those.  This is to permit this function to be called immediately
- * after clk_hw_register_*().
+ * after clk_hw_रेजिस्टर_*().
  */
-int clk_hw_register_clkdev(struct clk_hw *hw, const char *con_id,
-	const char *dev_id)
-{
-	struct clk_lookup *cl;
+पूर्णांक clk_hw_रेजिस्टर_clkdev(काष्ठा clk_hw *hw, स्थिर अक्षर *con_id,
+	स्थिर अक्षर *dev_id)
+अणु
+	काष्ठा clk_lookup *cl;
 
-	return do_clk_register_clkdev(hw, &cl, con_id, dev_id);
-}
-EXPORT_SYMBOL(clk_hw_register_clkdev);
+	वापस करो_clk_रेजिस्टर_clkdev(hw, &cl, con_id, dev_id);
+पूर्ण
+EXPORT_SYMBOL(clk_hw_रेजिस्टर_clkdev);
 
-static void devm_clkdev_release(struct device *dev, void *res)
-{
-	clkdev_drop(*(struct clk_lookup **)res);
-}
+अटल व्योम devm_clkdev_release(काष्ठा device *dev, व्योम *res)
+अणु
+	clkdev_drop(*(काष्ठा clk_lookup **)res);
+पूर्ण
 
-static int devm_clk_match_clkdev(struct device *dev, void *res, void *data)
-{
-	struct clk_lookup **l = res;
+अटल पूर्णांक devm_clk_match_clkdev(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा clk_lookup **l = res;
 
-	return *l == data;
-}
+	वापस *l == data;
+पूर्ण
 
 /**
  * devm_clk_release_clkdev - Resource managed clkdev lookup release
  * @dev: device this lookup is bound
  * @con_id: connection ID string on device
- * @dev_id: format string describing device name
+ * @dev_id: क्रमmat string describing device name
  *
- * Drop the clkdev lookup created with devm_clk_hw_register_clkdev.
+ * Drop the clkdev lookup created with devm_clk_hw_रेजिस्टर_clkdev.
  * Normally this function will not need to be called and the resource
- * management code will ensure that the resource is freed.
+ * management code will ensure that the resource is मुक्तd.
  */
-void devm_clk_release_clkdev(struct device *dev, const char *con_id,
-			     const char *dev_id)
-{
-	struct clk_lookup *cl;
-	int rval;
+व्योम devm_clk_release_clkdev(काष्ठा device *dev, स्थिर अक्षर *con_id,
+			     स्थिर अक्षर *dev_id)
+अणु
+	काष्ठा clk_lookup *cl;
+	पूर्णांक rval;
 
-	mutex_lock(&clocks_mutex);
+	mutex_lock(&घड़ीs_mutex);
 	cl = clk_find(dev_id, con_id);
-	mutex_unlock(&clocks_mutex);
+	mutex_unlock(&घड़ीs_mutex);
 
 	WARN_ON(!cl);
 	rval = devres_release(dev, devm_clkdev_release,
 			      devm_clk_match_clkdev, cl);
 	WARN_ON(rval);
-}
+पूर्ण
 EXPORT_SYMBOL(devm_clk_release_clkdev);
 
 /**
- * devm_clk_hw_register_clkdev - managed clk lookup registration for clk_hw
+ * devm_clk_hw_रेजिस्टर_clkdev - managed clk lookup registration क्रम clk_hw
  * @dev: device this lookup is bound
- * @hw: struct clk_hw to associate with all clk_lookups
+ * @hw: काष्ठा clk_hw to associate with all clk_lookups
  * @con_id: connection ID string on device
- * @dev_id: format string describing device name
+ * @dev_id: क्रमmat string describing device name
  *
- * con_id or dev_id may be NULL as a wildcard, just as in the rest of
+ * con_id or dev_id may be शून्य as a wildcard, just as in the rest of
  * clkdev.
  *
- * To make things easier for mass registration, we detect error clk_hws
- * from a previous clk_hw_register_*() call, and return the error code for
+ * To make things easier क्रम mass registration, we detect error clk_hws
+ * from a previous clk_hw_रेजिस्टर_*() call, and वापस the error code क्रम
  * those.  This is to permit this function to be called immediately
- * after clk_hw_register_*().
+ * after clk_hw_रेजिस्टर_*().
  */
-int devm_clk_hw_register_clkdev(struct device *dev, struct clk_hw *hw,
-				const char *con_id, const char *dev_id)
-{
-	int rval = -ENOMEM;
-	struct clk_lookup **cl;
+पूर्णांक devm_clk_hw_रेजिस्टर_clkdev(काष्ठा device *dev, काष्ठा clk_hw *hw,
+				स्थिर अक्षर *con_id, स्थिर अक्षर *dev_id)
+अणु
+	पूर्णांक rval = -ENOMEM;
+	काष्ठा clk_lookup **cl;
 
-	cl = devres_alloc(devm_clkdev_release, sizeof(*cl), GFP_KERNEL);
-	if (cl) {
-		rval = do_clk_register_clkdev(hw, cl, con_id, dev_id);
-		if (!rval)
+	cl = devres_alloc(devm_clkdev_release, माप(*cl), GFP_KERNEL);
+	अगर (cl) अणु
+		rval = करो_clk_रेजिस्टर_clkdev(hw, cl, con_id, dev_id);
+		अगर (!rval)
 			devres_add(dev, cl);
-		else
-			devres_free(cl);
-	}
-	return rval;
-}
-EXPORT_SYMBOL(devm_clk_hw_register_clkdev);
+		अन्यथा
+			devres_मुक्त(cl);
+	पूर्ण
+	वापस rval;
+पूर्ण
+EXPORT_SYMBOL(devm_clk_hw_रेजिस्टर_clkdev);

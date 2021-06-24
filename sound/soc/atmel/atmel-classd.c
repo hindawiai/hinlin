@@ -1,105 +1,106 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Atmel ALSA SoC Audio Class D Amplifier (CLASSD) driver
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Aपंचांगel ALSA SoC Audio Class D Amplअगरier (CLASSD) driver
  *
- * Copyright (C) 2015 Atmel
+ * Copyright (C) 2015 Aपंचांगel
  *
- * Author: Songjun Wu <songjun.wu@atmel.com>
+ * Author: Songjun Wu <songjun.wu@aपंचांगel.com>
  */
 
-#include <linux/of.h>
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <sound/core.h>
-#include <sound/dmaengine_pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/tlv.h>
-#include "atmel-classd.h"
+#समावेश <linux/of.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <sound/core.h>
+#समावेश <sound/dmaengine_pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/tlv.h>
+#समावेश "atmel-classd.h"
 
-struct atmel_classd_pdata {
+काष्ठा aपंचांगel_classd_pdata अणु
 	bool non_overlap_enable;
-	int non_overlap_time;
-	int pwm_type;
-	const char *card_name;
-};
+	पूर्णांक non_overlap_समय;
+	पूर्णांक pwm_type;
+	स्थिर अक्षर *card_name;
+पूर्ण;
 
-struct atmel_classd {
+काष्ठा aपंचांगel_classd अणु
 	dma_addr_t phy_base;
-	struct regmap *regmap;
-	struct clk *pclk;
-	struct clk *gclk;
-	struct device *dev;
-	int irq;
-	const struct atmel_classd_pdata *pdata;
-};
+	काष्ठा regmap *regmap;
+	काष्ठा clk *pclk;
+	काष्ठा clk *gclk;
+	काष्ठा device *dev;
+	पूर्णांक irq;
+	स्थिर काष्ठा aपंचांगel_classd_pdata *pdata;
+पूर्ण;
 
-#ifdef CONFIG_OF
-static const struct of_device_id atmel_classd_of_match[] = {
-	{
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id aपंचांगel_classd_of_match[] = अणु
+	अणु
 		.compatible = "atmel,sama5d2-classd",
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
-MODULE_DEVICE_TABLE(of, atmel_classd_of_match);
+	पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, aपंचांगel_classd_of_match);
 
-static struct atmel_classd_pdata *atmel_classd_dt_init(struct device *dev)
-{
-	struct device_node *np = dev->of_node;
-	struct atmel_classd_pdata *pdata;
-	const char *pwm_type_s;
-	int ret;
+अटल काष्ठा aपंचांगel_classd_pdata *aपंचांगel_classd_dt_init(काष्ठा device *dev)
+अणु
+	काष्ठा device_node *np = dev->of_node;
+	काष्ठा aपंचांगel_classd_pdata *pdata;
+	स्थिर अक्षर *pwm_type_s;
+	पूर्णांक ret;
 
-	if (!np) {
+	अगर (!np) अणु
 		dev_err(dev, "device node not found\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
 
-	ret = of_property_read_string(np, "atmel,pwm-type", &pwm_type_s);
-	if ((ret == 0) && (strcmp(pwm_type_s, "diff") == 0))
+	ret = of_property_पढ़ो_string(np, "atmel,pwm-type", &pwm_type_s);
+	अगर ((ret == 0) && (म_भेद(pwm_type_s, "diff") == 0))
 		pdata->pwm_type = CLASSD_MR_PWMTYP_DIFF;
-	else
+	अन्यथा
 		pdata->pwm_type = CLASSD_MR_PWMTYP_SINGLE;
 
-	ret = of_property_read_u32(np,
-			"atmel,non-overlap-time", &pdata->non_overlap_time);
-	if (ret)
+	ret = of_property_पढ़ो_u32(np,
+			"atmel,non-overlap-time", &pdata->non_overlap_समय);
+	अगर (ret)
 		pdata->non_overlap_enable = false;
-	else
+	अन्यथा
 		pdata->non_overlap_enable = true;
 
-	ret = of_property_read_string(np, "atmel,model", &pdata->card_name);
-	if (ret)
+	ret = of_property_पढ़ो_string(np, "atmel,model", &pdata->card_name);
+	अगर (ret)
 		pdata->card_name = "CLASSD";
 
-	return pdata;
-}
-#else
-static inline struct atmel_classd_pdata *
-atmel_classd_dt_init(struct device *dev)
-{
-	return ERR_PTR(-EINVAL);
-}
-#endif
+	वापस pdata;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत काष्ठा aपंचांगel_classd_pdata *
+aपंचांगel_classd_dt_init(काष्ठा device *dev)
+अणु
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
+#पूर्ण_अगर
 
-#define ATMEL_CLASSD_RATES (SNDRV_PCM_RATE_8000 \
+#घोषणा ATMEL_CLASSD_RATES (SNDRV_PCM_RATE_8000 \
 			| SNDRV_PCM_RATE_16000	| SNDRV_PCM_RATE_22050 \
 			| SNDRV_PCM_RATE_32000	| SNDRV_PCM_RATE_44100 \
 			| SNDRV_PCM_RATE_48000	| SNDRV_PCM_RATE_88200 \
 			| SNDRV_PCM_RATE_96000)
 
-static const struct snd_pcm_hardware atmel_classd_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware aपंचांगel_classd_hw = अणु
 	.info			= SNDRV_PCM_INFO_MMAP
 				| SNDRV_PCM_INFO_MMAP_VALID
 				| SNDRV_PCM_INFO_INTERLEAVED
 				| SNDRV_PCM_INFO_RESUME
 				| SNDRV_PCM_INFO_PAUSE,
-	.formats		= (SNDRV_PCM_FMTBIT_S16_LE),
+	.क्रमmats		= (SNDRV_PCM_FMTBIT_S16_LE),
 	.rates			= ATMEL_CLASSD_RATES,
 	.rate_min		= 8000,
 	.rate_max		= 96000,
@@ -110,49 +111,49 @@ static const struct snd_pcm_hardware atmel_classd_hw = {
 	.period_bytes_max	= 32 * 1024,
 	.periods_min		= 2,
 	.periods_max		= 256,
-};
+पूर्ण;
 
-#define ATMEL_CLASSD_PREALLOC_BUF_SIZE  (64 * 1024)
+#घोषणा ATMEL_CLASSD_PREALLOC_BUF_SIZE  (64 * 1024)
 
 /* cpu dai component */
-static int atmel_classd_cpu_dai_startup(struct snd_pcm_substream *substream,
-					struct snd_soc_dai *cpu_dai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct atmel_classd *dd = snd_soc_card_get_drvdata(rtd->card);
-	int err;
+अटल पूर्णांक aपंचांगel_classd_cpu_dai_startup(काष्ठा snd_pcm_substream *substream,
+					काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा aपंचांगel_classd *dd = snd_soc_card_get_drvdata(rtd->card);
+	पूर्णांक err;
 
-	regmap_write(dd->regmap, CLASSD_THR, 0x0);
+	regmap_ग_लिखो(dd->regmap, CLASSD_THR, 0x0);
 
 	err = clk_prepare_enable(dd->pclk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = clk_prepare_enable(dd->gclk);
-	if (err) {
+	अगर (err) अणु
 		clk_disable_unprepare(dd->pclk);
-		return err;
-	}
-	return 0;
-}
+		वापस err;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* platform */
-static int
-atmel_classd_platform_configure_dma(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params,
-	struct dma_slave_config *slave_config)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct atmel_classd *dd = snd_soc_card_get_drvdata(rtd->card);
+/* platक्रमm */
+अटल पूर्णांक
+aपंचांगel_classd_platक्रमm_configure_dma(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_pcm_hw_params *params,
+	काष्ठा dma_slave_config *slave_config)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा aपंचांगel_classd *dd = snd_soc_card_get_drvdata(rtd->card);
 
-	if (params_physical_width(params) != 16) {
+	अगर (params_physical_width(params) != 16) अणु
 		dev_err(dd->dev,
 			"only supports 16-bit audio data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (params_channels(params) == 1)
+	अगर (params_channels(params) == 1)
 		slave_config->dst_addr_width = DMA_SLAVE_BUSWIDTH_2_BYTES;
-	else
+	अन्यथा
 		slave_config->dst_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
 
 	slave_config->direction		= DMA_MEM_TO_DEV;
@@ -161,26 +162,26 @@ atmel_classd_platform_configure_dma(struct snd_pcm_substream *substream,
 	slave_config->src_maxburst	= 1;
 	slave_config->device_fc		= false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_dmaengine_pcm_config
-atmel_classd_dmaengine_pcm_config = {
-	.prepare_slave_config	= atmel_classd_platform_configure_dma,
-	.pcm_hardware		= &atmel_classd_hw,
-	.prealloc_buffer_size	= ATMEL_CLASSD_PREALLOC_BUF_SIZE,
-};
+अटल स्थिर काष्ठा snd_dmaengine_pcm_config
+aपंचांगel_classd_dmaengine_pcm_config = अणु
+	.prepare_slave_config	= aपंचांगel_classd_platक्रमm_configure_dma,
+	.pcm_hardware		= &aपंचांगel_classd_hw,
+	.pपुनः_स्मृति_buffer_size	= ATMEL_CLASSD_PREALLOC_BUF_SIZE,
+पूर्ण;
 
 /* codec */
-static const char * const mono_mode_text[] = {
+अटल स्थिर अक्षर * स्थिर mono_mode_text[] = अणु
 	"mix", "sat", "left", "right"
-};
+पूर्ण;
 
-static SOC_ENUM_SINGLE_DECL(classd_mono_mode_enum,
+अटल SOC_ENUM_SINGLE_DECL(classd_mono_mode_क्रमागत,
 			CLASSD_INTPMR, CLASSD_INTPMR_MONO_MODE_SHIFT,
 			mono_mode_text);
 
-static const char * const eqcfg_text[] = {
+अटल स्थिर अक्षर * स्थिर eqcfg_text[] = अणु
 	"Treble-12dB", "Treble-6dB",
 	"Medium-8dB", "Medium-3dB",
 	"Bass-12dB", "Bass-6dB",
@@ -188,9 +189,9 @@ static const char * const eqcfg_text[] = {
 	"Bass+6dB", "Bass+12dB",
 	"Medium+3dB", "Medium+8dB",
 	"Treble+6dB", "Treble+12dB",
-};
+पूर्ण;
 
-static const unsigned int eqcfg_value[] = {
+अटल स्थिर अचिन्हित पूर्णांक eqcfg_value[] = अणु
 	CLASSD_INTPMR_EQCFG_T_CUT_12, CLASSD_INTPMR_EQCFG_T_CUT_6,
 	CLASSD_INTPMR_EQCFG_M_CUT_8, CLASSD_INTPMR_EQCFG_M_CUT_3,
 	CLASSD_INTPMR_EQCFG_B_CUT_12, CLASSD_INTPMR_EQCFG_B_CUT_6,
@@ -198,15 +199,15 @@ static const unsigned int eqcfg_value[] = {
 	CLASSD_INTPMR_EQCFG_B_BOOST_6, CLASSD_INTPMR_EQCFG_B_BOOST_12,
 	CLASSD_INTPMR_EQCFG_M_BOOST_3, CLASSD_INTPMR_EQCFG_M_BOOST_8,
 	CLASSD_INTPMR_EQCFG_T_BOOST_6, CLASSD_INTPMR_EQCFG_T_BOOST_12,
-};
+पूर्ण;
 
-static SOC_VALUE_ENUM_SINGLE_DECL(classd_eqcfg_enum,
+अटल SOC_VALUE_ENUM_SINGLE_DECL(classd_eqcfg_क्रमागत,
 		CLASSD_INTPMR, CLASSD_INTPMR_EQCFG_SHIFT, 0xf,
 		eqcfg_text, eqcfg_value);
 
-static const DECLARE_TLV_DB_SCALE(classd_digital_tlv, -7800, 100, 1);
+अटल स्थिर DECLARE_TLV_DB_SCALE(classd_digital_tlv, -7800, 100, 1);
 
-static const struct snd_kcontrol_new atmel_classd_snd_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new aपंचांगel_classd_snd_controls[] = अणु
 SOC_DOUBLE_TLV("Playback Volume", CLASSD_INTPMR,
 		CLASSD_INTPMR_ATTL_SHIFT, CLASSD_INTPMR_ATTR_SHIFT,
 		78, 1, classd_digital_tlv),
@@ -218,57 +219,57 @@ SOC_SINGLE("Mono Switch", CLASSD_INTPMR, CLASSD_INTPMR_MONO_SHIFT, 1, 0),
 
 SOC_SINGLE("Swap Switch", CLASSD_INTPMR, CLASSD_INTPMR_SWAP_SHIFT, 1, 0),
 
-SOC_ENUM("Mono Mode", classd_mono_mode_enum),
+SOC_ENUM("Mono Mode", classd_mono_mode_क्रमागत),
 
-SOC_ENUM("EQ", classd_eqcfg_enum),
-};
+SOC_ENUM("EQ", classd_eqcfg_क्रमागत),
+पूर्ण;
 
-static const char * const pwm_type[] = {
+अटल स्थिर अक्षर * स्थिर pwm_type[] = अणु
 	"Single ended", "Differential"
-};
+पूर्ण;
 
-static int atmel_classd_component_probe(struct snd_soc_component *component)
-{
-	struct snd_soc_card *card = snd_soc_component_get_drvdata(component);
-	struct atmel_classd *dd = snd_soc_card_get_drvdata(card);
-	const struct atmel_classd_pdata *pdata = dd->pdata;
+अटल पूर्णांक aपंचांगel_classd_component_probe(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा snd_soc_card *card = snd_soc_component_get_drvdata(component);
+	काष्ठा aपंचांगel_classd *dd = snd_soc_card_get_drvdata(card);
+	स्थिर काष्ठा aपंचांगel_classd_pdata *pdata = dd->pdata;
 	u32 mask, val;
 
 	mask = CLASSD_MR_PWMTYP_MASK;
 	val = pdata->pwm_type << CLASSD_MR_PWMTYP_SHIFT;
 
 	mask |= CLASSD_MR_NON_OVERLAP_MASK;
-	if (pdata->non_overlap_enable) {
+	अगर (pdata->non_overlap_enable) अणु
 		val |= (CLASSD_MR_NON_OVERLAP_EN
 			<< CLASSD_MR_NON_OVERLAP_SHIFT);
 
 		mask |= CLASSD_MR_NOVR_VAL_MASK;
-		switch (pdata->non_overlap_time) {
-		case 5:
+		चयन (pdata->non_overlap_समय) अणु
+		हाल 5:
 			val |= (CLASSD_MR_NOVR_VAL_5NS
 				<< CLASSD_MR_NOVR_VAL_SHIFT);
-			break;
-		case 10:
+			अवरोध;
+		हाल 10:
 			val |= (CLASSD_MR_NOVR_VAL_10NS
 				<< CLASSD_MR_NOVR_VAL_SHIFT);
-			break;
-		case 15:
+			अवरोध;
+		हाल 15:
 			val |= (CLASSD_MR_NOVR_VAL_15NS
 				<< CLASSD_MR_NOVR_VAL_SHIFT);
-			break;
-		case 20:
+			अवरोध;
+		हाल 20:
 			val |= (CLASSD_MR_NOVR_VAL_20NS
 				<< CLASSD_MR_NOVR_VAL_SHIFT);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			val |= (CLASSD_MR_NOVR_VAL_10NS
 				<< CLASSD_MR_NOVR_VAL_SHIFT);
 			dev_warn(component->dev,
 				"non-overlapping value %d is invalid, the default value 10 is specified\n",
-				pdata->non_overlap_time);
-			break;
-		}
-	}
+				pdata->non_overlap_समय);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	snd_soc_component_update_bits(component, CLASSD_MR, mask, val);
 
@@ -277,86 +278,86 @@ static int atmel_classd_component_probe(struct snd_soc_component *component)
 		pwm_type[pdata->pwm_type],
 		pdata->non_overlap_enable?"enabled":"disabled");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_classd_component_resume(struct snd_soc_component *component)
-{
-	struct snd_soc_card *card = snd_soc_component_get_drvdata(component);
-	struct atmel_classd *dd = snd_soc_card_get_drvdata(card);
+अटल पूर्णांक aपंचांगel_classd_component_resume(काष्ठा snd_soc_component *component)
+अणु
+	काष्ठा snd_soc_card *card = snd_soc_component_get_drvdata(component);
+	काष्ठा aपंचांगel_classd *dd = snd_soc_card_get_drvdata(card);
 
-	return regcache_sync(dd->regmap);
-}
+	वापस regcache_sync(dd->regmap);
+पूर्ण
 
-static int atmel_classd_cpu_dai_mute_stream(struct snd_soc_dai *cpu_dai,
-					    int mute, int direction)
-{
-	struct snd_soc_component *component = cpu_dai->component;
+अटल पूर्णांक aपंचांगel_classd_cpu_dai_mute_stream(काष्ठा snd_soc_dai *cpu_dai,
+					    पूर्णांक mute, पूर्णांक direction)
+अणु
+	काष्ठा snd_soc_component *component = cpu_dai->component;
 	u32 mask, val;
 
 	mask = CLASSD_MR_LMUTE_MASK | CLASSD_MR_RMUTE_MASK;
 
-	if (mute)
+	अगर (mute)
 		val = mask;
-	else
+	अन्यथा
 		val = 0;
 
 	snd_soc_component_update_bits(component, CLASSD_MR, mask, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define CLASSD_GCLK_RATE_11M2896_MPY_8 (112896 * 100 * 8)
-#define CLASSD_GCLK_RATE_12M288_MPY_8  (12288 * 1000 * 8)
+#घोषणा CLASSD_GCLK_RATE_11M2896_MPY_8 (112896 * 100 * 8)
+#घोषणा CLASSD_GCLK_RATE_12M288_MPY_8  (12288 * 1000 * 8)
 
-static struct {
-	int rate;
-	int sample_rate;
-	int dsp_clk;
-	unsigned long gclk_rate;
-} const sample_rates[] = {
-	{ 8000,  CLASSD_INTPMR_FRAME_8K,
-	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 },
-	{ 16000, CLASSD_INTPMR_FRAME_16K,
-	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 },
-	{ 32000, CLASSD_INTPMR_FRAME_32K,
-	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 },
-	{ 48000, CLASSD_INTPMR_FRAME_48K,
-	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 },
-	{ 96000, CLASSD_INTPMR_FRAME_96K,
-	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 },
-	{ 22050, CLASSD_INTPMR_FRAME_22K,
-	CLASSD_INTPMR_DSP_CLK_FREQ_11M2896, CLASSD_GCLK_RATE_11M2896_MPY_8 },
-	{ 44100, CLASSD_INTPMR_FRAME_44K,
-	CLASSD_INTPMR_DSP_CLK_FREQ_11M2896, CLASSD_GCLK_RATE_11M2896_MPY_8 },
-	{ 88200, CLASSD_INTPMR_FRAME_88K,
-	CLASSD_INTPMR_DSP_CLK_FREQ_11M2896, CLASSD_GCLK_RATE_11M2896_MPY_8 },
-};
+अटल काष्ठा अणु
+	पूर्णांक rate;
+	पूर्णांक sample_rate;
+	पूर्णांक dsp_clk;
+	अचिन्हित दीर्घ gclk_rate;
+पूर्ण स्थिर sample_rates[] = अणु
+	अणु 8000,  CLASSD_INTPMR_FRAME_8K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 पूर्ण,
+	अणु 16000, CLASSD_INTPMR_FRAME_16K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 पूर्ण,
+	अणु 32000, CLASSD_INTPMR_FRAME_32K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 पूर्ण,
+	अणु 48000, CLASSD_INTPMR_FRAME_48K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 पूर्ण,
+	अणु 96000, CLASSD_INTPMR_FRAME_96K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_12M288, CLASSD_GCLK_RATE_12M288_MPY_8 पूर्ण,
+	अणु 22050, CLASSD_INTPMR_FRAME_22K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_11M2896, CLASSD_GCLK_RATE_11M2896_MPY_8 पूर्ण,
+	अणु 44100, CLASSD_INTPMR_FRAME_44K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_11M2896, CLASSD_GCLK_RATE_11M2896_MPY_8 पूर्ण,
+	अणु 88200, CLASSD_INTPMR_FRAME_88K,
+	CLASSD_INTPMR_DSP_CLK_FREQ_11M2896, CLASSD_GCLK_RATE_11M2896_MPY_8 पूर्ण,
+पूर्ण;
 
-static int
-atmel_classd_cpu_dai_hw_params(struct snd_pcm_substream *substream,
-			       struct snd_pcm_hw_params *params,
-			       struct snd_soc_dai *cpu_dai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct atmel_classd *dd = snd_soc_card_get_drvdata(rtd->card);
-	struct snd_soc_component *component = cpu_dai->component;
-	int fs;
-	int i, best, best_val, cur_val, ret;
+अटल पूर्णांक
+aपंचांगel_classd_cpu_dai_hw_params(काष्ठा snd_pcm_substream *substream,
+			       काष्ठा snd_pcm_hw_params *params,
+			       काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा aपंचांगel_classd *dd = snd_soc_card_get_drvdata(rtd->card);
+	काष्ठा snd_soc_component *component = cpu_dai->component;
+	पूर्णांक fs;
+	पूर्णांक i, best, best_val, cur_val, ret;
 	u32 mask, val;
 
 	fs = params_rate(params);
 
 	best = 0;
-	best_val = abs(fs - sample_rates[0].rate);
-	for (i = 1; i < ARRAY_SIZE(sample_rates); i++) {
+	best_val = असल(fs - sample_rates[0].rate);
+	क्रम (i = 1; i < ARRAY_SIZE(sample_rates); i++) अणु
 		/* Closest match */
-		cur_val = abs(fs - sample_rates[i].rate);
-		if (cur_val < best_val) {
+		cur_val = असल(fs - sample_rates[i].rate);
+		अगर (cur_val < best_val) अणु
 			best = i;
 			best_val = cur_val;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(component->dev,
 		"Selected SAMPLE_RATE of %dHz, GCLK_RATE of %ldHz\n",
@@ -365,8 +366,8 @@ atmel_classd_cpu_dai_hw_params(struct snd_pcm_substream *substream,
 	clk_disable_unprepare(dd->gclk);
 
 	ret = clk_set_rate(dd->gclk, sample_rates[best].gclk_rate);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mask = CLASSD_INTPMR_DSP_CLK_FREQ_MASK | CLASSD_INTPMR_FRAME_MASK;
 	val = (sample_rates[best].dsp_clk << CLASSD_INTPMR_DSP_CLK_FREQ_SHIFT)
@@ -374,264 +375,264 @@ atmel_classd_cpu_dai_hw_params(struct snd_pcm_substream *substream,
 
 	snd_soc_component_update_bits(component, CLASSD_INTPMR, mask, val);
 
-	return clk_prepare_enable(dd->gclk);
-}
+	वापस clk_prepare_enable(dd->gclk);
+पूर्ण
 
-static void
-atmel_classd_cpu_dai_shutdown(struct snd_pcm_substream *substream,
-			      struct snd_soc_dai *cpu_dai)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct atmel_classd *dd = snd_soc_card_get_drvdata(rtd->card);
+अटल व्योम
+aपंचांगel_classd_cpu_dai_shutकरोwn(काष्ठा snd_pcm_substream *substream,
+			      काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा aपंचांगel_classd *dd = snd_soc_card_get_drvdata(rtd->card);
 
 	clk_disable_unprepare(dd->gclk);
-}
+पूर्ण
 
-static int atmel_classd_cpu_dai_prepare(struct snd_pcm_substream *substream,
-					struct snd_soc_dai *cpu_dai)
-{
-	struct snd_soc_component *component = cpu_dai->component;
+अटल पूर्णांक aपंचांगel_classd_cpu_dai_prepare(काष्ठा snd_pcm_substream *substream,
+					काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा snd_soc_component *component = cpu_dai->component;
 
 	snd_soc_component_update_bits(component, CLASSD_MR,
 				CLASSD_MR_LEN_MASK | CLASSD_MR_REN_MASK,
 				(CLASSD_MR_LEN_DIS << CLASSD_MR_LEN_SHIFT)
 				|(CLASSD_MR_REN_DIS << CLASSD_MR_REN_SHIFT));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int atmel_classd_cpu_dai_trigger(struct snd_pcm_substream *substream,
-					int cmd, struct snd_soc_dai *cpu_dai)
-{
-	struct snd_soc_component *component = cpu_dai->component;
+अटल पूर्णांक aपंचांगel_classd_cpu_dai_trigger(काष्ठा snd_pcm_substream *substream,
+					पूर्णांक cmd, काष्ठा snd_soc_dai *cpu_dai)
+अणु
+	काष्ठा snd_soc_component *component = cpu_dai->component;
 	u32 mask, val;
 
 	mask = CLASSD_MR_LEN_MASK | CLASSD_MR_REN_MASK;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		val = mask;
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		val = (CLASSD_MR_LEN_DIS << CLASSD_MR_LEN_SHIFT)
 			| (CLASSD_MR_REN_DIS << CLASSD_MR_REN_SHIFT);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	snd_soc_component_update_bits(component, CLASSD_MR, mask, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops atmel_classd_cpu_dai_ops = {
-	.startup        = atmel_classd_cpu_dai_startup,
-	.shutdown       = atmel_classd_cpu_dai_shutdown,
-	.mute_stream	= atmel_classd_cpu_dai_mute_stream,
-	.hw_params	= atmel_classd_cpu_dai_hw_params,
-	.prepare	= atmel_classd_cpu_dai_prepare,
-	.trigger	= atmel_classd_cpu_dai_trigger,
+अटल स्थिर काष्ठा snd_soc_dai_ops aपंचांगel_classd_cpu_dai_ops = अणु
+	.startup        = aपंचांगel_classd_cpu_dai_startup,
+	.shutकरोwn       = aपंचांगel_classd_cpu_dai_shutकरोwn,
+	.mute_stream	= aपंचांगel_classd_cpu_dai_mute_stream,
+	.hw_params	= aपंचांगel_classd_cpu_dai_hw_params,
+	.prepare	= aपंचांगel_classd_cpu_dai_prepare,
+	.trigger	= aपंचांगel_classd_cpu_dai_trigger,
 	.no_capture_mute = 1,
-};
+पूर्ण;
 
-static struct snd_soc_dai_driver atmel_classd_cpu_dai = {
-	.playback = {
+अटल काष्ठा snd_soc_dai_driver aपंचांगel_classd_cpu_dai = अणु
+	.playback = अणु
 		.stream_name	= "Playback",
 		.channels_min	= 1,
 		.channels_max	= 2,
 		.rates		= ATMEL_CLASSD_RATES,
-		.formats	= SNDRV_PCM_FMTBIT_S16_LE,
-	},
-	.ops = &atmel_classd_cpu_dai_ops,
-};
+		.क्रमmats	= SNDRV_PCM_FMTBIT_S16_LE,
+	पूर्ण,
+	.ops = &aपंचांगel_classd_cpu_dai_ops,
+पूर्ण;
 
-static const struct snd_soc_component_driver atmel_classd_cpu_dai_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver aपंचांगel_classd_cpu_dai_component = अणु
 	.name			= "atmel-classd",
-	.probe			= atmel_classd_component_probe,
-	.resume			= atmel_classd_component_resume,
-	.controls		= atmel_classd_snd_controls,
-	.num_controls		= ARRAY_SIZE(atmel_classd_snd_controls),
+	.probe			= aपंचांगel_classd_component_probe,
+	.resume			= aपंचांगel_classd_component_resume,
+	.controls		= aपंचांगel_classd_snd_controls,
+	.num_controls		= ARRAY_SIZE(aपंचांगel_classd_snd_controls),
 	.idle_bias_on		= 1,
-	.use_pmdown_time	= 1,
+	.use_pmकरोwn_समय	= 1,
 	.endianness		= 1,
-};
+पूर्ण;
 
 /* ASoC sound card */
-static int atmel_classd_asoc_card_init(struct device *dev,
-					struct snd_soc_card *card)
-{
-	struct snd_soc_dai_link *dai_link;
-	struct atmel_classd *dd = snd_soc_card_get_drvdata(card);
-	struct snd_soc_dai_link_component *comp;
+अटल पूर्णांक aपंचांगel_classd_asoc_card_init(काष्ठा device *dev,
+					काष्ठा snd_soc_card *card)
+अणु
+	काष्ठा snd_soc_dai_link *dai_link;
+	काष्ठा aपंचांगel_classd *dd = snd_soc_card_get_drvdata(card);
+	काष्ठा snd_soc_dai_link_component *comp;
 
-	dai_link = devm_kzalloc(dev, sizeof(*dai_link), GFP_KERNEL);
-	if (!dai_link)
-		return -ENOMEM;
+	dai_link = devm_kzalloc(dev, माप(*dai_link), GFP_KERNEL);
+	अगर (!dai_link)
+		वापस -ENOMEM;
 
-	comp = devm_kzalloc(dev, 3 * sizeof(*comp), GFP_KERNEL);
-	if (!comp)
-		return -ENOMEM;
+	comp = devm_kzalloc(dev, 3 * माप(*comp), GFP_KERNEL);
+	अगर (!comp)
+		वापस -ENOMEM;
 
 	dai_link->cpus		= &comp[0];
 	dai_link->codecs	= &comp[1];
-	dai_link->platforms	= &comp[2];
+	dai_link->platक्रमms	= &comp[2];
 
 	dai_link->num_cpus	= 1;
 	dai_link->num_codecs	= 1;
-	dai_link->num_platforms	= 1;
+	dai_link->num_platक्रमms	= 1;
 
 	dai_link->name			= "CLASSD";
 	dai_link->stream_name		= "CLASSD PCM";
 	dai_link->codecs->dai_name	= "snd-soc-dummy-dai";
 	dai_link->cpus->dai_name	= dev_name(dev);
 	dai_link->codecs->name		= "snd-soc-dummy";
-	dai_link->platforms->name	= dev_name(dev);
+	dai_link->platक्रमms->name	= dev_name(dev);
 
 	card->dai_link	= dai_link;
 	card->num_links	= 1;
 	card->name	= dd->pdata->card_name;
 	card->dev	= dev;
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
 /* regmap configuration */
-static const struct reg_default atmel_classd_reg_defaults[] = {
-	{ CLASSD_INTPMR,   0x00301212 },
-};
+अटल स्थिर काष्ठा reg_शेष aपंचांगel_classd_reg_शेषs[] = अणु
+	अणु CLASSD_INTPMR,   0x00301212 पूर्ण,
+पूर्ण;
 
-#define ATMEL_CLASSD_REG_MAX    0xE4
-static const struct regmap_config atmel_classd_regmap_config = {
+#घोषणा ATMEL_CLASSD_REG_MAX    0xE4
+अटल स्थिर काष्ठा regmap_config aपंचांगel_classd_regmap_config = अणु
 	.reg_bits	= 32,
 	.reg_stride	= 4,
 	.val_bits	= 32,
-	.max_register	= ATMEL_CLASSD_REG_MAX,
+	.max_रेजिस्टर	= ATMEL_CLASSD_REG_MAX,
 
 	.cache_type		= REGCACHE_FLAT,
-	.reg_defaults		= atmel_classd_reg_defaults,
-	.num_reg_defaults	= ARRAY_SIZE(atmel_classd_reg_defaults),
-};
+	.reg_शेषs		= aपंचांगel_classd_reg_शेषs,
+	.num_reg_शेषs	= ARRAY_SIZE(aपंचांगel_classd_reg_शेषs),
+पूर्ण;
 
-static int atmel_classd_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct atmel_classd *dd;
-	struct resource *res;
-	void __iomem *io_base;
-	const struct atmel_classd_pdata *pdata;
-	struct snd_soc_card *card;
-	int ret;
+अटल पूर्णांक aपंचांगel_classd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा aपंचांगel_classd *dd;
+	काष्ठा resource *res;
+	व्योम __iomem *io_base;
+	स्थिर काष्ठा aपंचांगel_classd_pdata *pdata;
+	काष्ठा snd_soc_card *card;
+	पूर्णांक ret;
 
 	pdata = dev_get_platdata(dev);
-	if (!pdata) {
-		pdata = atmel_classd_dt_init(dev);
-		if (IS_ERR(pdata))
-			return PTR_ERR(pdata);
-	}
+	अगर (!pdata) अणु
+		pdata = aपंचांगel_classd_dt_init(dev);
+		अगर (IS_ERR(pdata))
+			वापस PTR_ERR(pdata);
+	पूर्ण
 
-	dd = devm_kzalloc(dev, sizeof(*dd), GFP_KERNEL);
-	if (!dd)
-		return -ENOMEM;
+	dd = devm_kzalloc(dev, माप(*dd), GFP_KERNEL);
+	अगर (!dd)
+		वापस -ENOMEM;
 
 	dd->pdata = pdata;
 
-	dd->irq = platform_get_irq(pdev, 0);
-	if (dd->irq < 0)
-		return dd->irq;
+	dd->irq = platक्रमm_get_irq(pdev, 0);
+	अगर (dd->irq < 0)
+		वापस dd->irq;
 
 	dd->pclk = devm_clk_get(dev, "pclk");
-	if (IS_ERR(dd->pclk)) {
+	अगर (IS_ERR(dd->pclk)) अणु
 		ret = PTR_ERR(dd->pclk);
 		dev_err(dev, "failed to get peripheral clock: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	dd->gclk = devm_clk_get(dev, "gclk");
-	if (IS_ERR(dd->gclk)) {
+	अगर (IS_ERR(dd->gclk)) अणु
 		ret = PTR_ERR(dd->gclk);
 		dev_err(dev, "failed to get GCK clock: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	io_base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(io_base))
-		return PTR_ERR(io_base);
+	अगर (IS_ERR(io_base))
+		वापस PTR_ERR(io_base);
 
 	dd->phy_base = res->start;
 	dd->dev = dev;
 
 	dd->regmap = devm_regmap_init_mmio(dev, io_base,
-					&atmel_classd_regmap_config);
-	if (IS_ERR(dd->regmap)) {
+					&aपंचांगel_classd_regmap_config);
+	अगर (IS_ERR(dd->regmap)) अणु
 		ret = PTR_ERR(dd->regmap);
 		dev_err(dev, "failed to init register map: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_snd_soc_register_component(dev,
-					&atmel_classd_cpu_dai_component,
-					&atmel_classd_cpu_dai, 1);
-	if (ret) {
+	ret = devm_snd_soc_रेजिस्टर_component(dev,
+					&aपंचांगel_classd_cpu_dai_component,
+					&aपंचांगel_classd_cpu_dai, 1);
+	अगर (ret) अणु
 		dev_err(dev, "could not register CPU DAI: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_snd_dmaengine_pcm_register(dev,
-					&atmel_classd_dmaengine_pcm_config,
+	ret = devm_snd_dmaengine_pcm_रेजिस्टर(dev,
+					&aपंचांगel_classd_dmaengine_pcm_config,
 					0);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "could not register platform: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	/* register sound card */
-	card = devm_kzalloc(dev, sizeof(*card), GFP_KERNEL);
-	if (!card) {
+	/* रेजिस्टर sound card */
+	card = devm_kzalloc(dev, माप(*card), GFP_KERNEL);
+	अगर (!card) अणु
 		ret = -ENOMEM;
-		goto unregister_codec;
-	}
+		जाओ unरेजिस्टर_codec;
+	पूर्ण
 
 	snd_soc_card_set_drvdata(card, dd);
 
-	ret = atmel_classd_asoc_card_init(dev, card);
-	if (ret) {
+	ret = aपंचांगel_classd_asoc_card_init(dev, card);
+	अगर (ret) अणु
 		dev_err(dev, "failed to init sound card\n");
-		goto unregister_codec;
-	}
+		जाओ unरेजिस्टर_codec;
+	पूर्ण
 
-	ret = devm_snd_soc_register_card(dev, card);
-	if (ret) {
+	ret = devm_snd_soc_रेजिस्टर_card(dev, card);
+	अगर (ret) अणु
 		dev_err(dev, "failed to register sound card: %d\n", ret);
-		goto unregister_codec;
-	}
+		जाओ unरेजिस्टर_codec;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-unregister_codec:
-	return ret;
-}
+unरेजिस्टर_codec:
+	वापस ret;
+पूर्ण
 
-static int atmel_classd_remove(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक aपंचांगel_classd_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct platform_driver atmel_classd_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver aपंचांगel_classd_driver = अणु
+	.driver	= अणु
 		.name		= "atmel-classd",
-		.of_match_table	= of_match_ptr(atmel_classd_of_match),
+		.of_match_table	= of_match_ptr(aपंचांगel_classd_of_match),
 		.pm		= &snd_soc_pm_ops,
-	},
-	.probe	= atmel_classd_probe,
-	.remove	= atmel_classd_remove,
-};
-module_platform_driver(atmel_classd_driver);
+	पूर्ण,
+	.probe	= aपंचांगel_classd_probe,
+	.हटाओ	= aपंचांगel_classd_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(aपंचांगel_classd_driver);
 
 MODULE_DESCRIPTION("Atmel ClassD driver under ALSA SoC architecture");
 MODULE_AUTHOR("Songjun Wu <songjun.wu@atmel.com>");

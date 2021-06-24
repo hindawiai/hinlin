@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * MIPI-DSI Sony ACX424AKP panel driver. This is a 480x864
- * AMOLED panel with a command-only DSI interface.
+ * AMOLED panel with a command-only DSI पूर्णांकerface.
  *
  * Copyright (C) Linaro Ltd. 2019
  * Author: Linus Walleij
  * Based on code and know-how from Marcus Lorentzon
  * Copyright (C) ST-Ericsson SA 2010
  */
-#include <linux/backlight.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/regulator/consumer.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regulator/consumer.h>
 
-#include <video/mipi_display.h>
+#समावेश <video/mipi_display.h>
 
-#include <drm/drm_mipi_dsi.h>
-#include <drm/drm_modes.h>
-#include <drm/drm_panel.h>
+#समावेश <drm/drm_mipi_dsi.h>
+#समावेश <drm/drm_modes.h>
+#समावेश <drm/drm_panel.h>
 
-#define ACX424_DCS_READ_ID1		0xDA
-#define ACX424_DCS_READ_ID2		0xDB
-#define ACX424_DCS_READ_ID3		0xDC
-#define ACX424_DCS_SET_MDDI		0xAE
+#घोषणा ACX424_DCS_READ_ID1		0xDA
+#घोषणा ACX424_DCS_READ_ID2		0xDB
+#घोषणा ACX424_DCS_READ_ID3		0xDC
+#घोषणा ACX424_DCS_SET_MDDI		0xAE
 
 /*
- * Sony seems to use vendor ID 0x81
+ * Sony seems to use venकरोr ID 0x81
  */
-#define DISPLAY_SONY_ACX424AKP_ID1	0x811b
-#define DISPLAY_SONY_ACX424AKP_ID2	0x811a
+#घोषणा DISPLAY_SONY_ACX424AKP_ID1	0x811b
+#घोषणा DISPLAY_SONY_ACX424AKP_ID2	0x811a
 /*
- * The third ID looks like a bug, vendor IDs begin at 0x80
- * and panel 00 ... seems like default values.
+ * The third ID looks like a bug, venकरोr IDs begin at 0x80
+ * and panel 00 ... seems like शेष values.
  */
-#define DISPLAY_SONY_ACX424AKP_ID3	0x8000
+#घोषणा DISPLAY_SONY_ACX424AKP_ID3	0x8000
 
-struct acx424akp {
-	struct drm_panel panel;
-	struct device *dev;
-	struct backlight_device *bl;
-	struct regulator *supply;
-	struct gpio_desc *reset_gpio;
+काष्ठा acx424akp अणु
+	काष्ठा drm_panel panel;
+	काष्ठा device *dev;
+	काष्ठा backlight_device *bl;
+	काष्ठा regulator *supply;
+	काष्ठा gpio_desc *reset_gpio;
 	bool video_mode;
-};
+पूर्ण;
 
-static const struct drm_display_mode sony_acx424akp_vid_mode = {
-	.clock = 27234,
+अटल स्थिर काष्ठा drm_display_mode sony_acx424akp_vid_mode = अणु
+	.घड़ी = 27234,
 	.hdisplay = 480,
 	.hsync_start = 480 + 15,
 	.hsync_end = 480 + 15 + 0,
@@ -59,14 +60,14 @@ static const struct drm_display_mode sony_acx424akp_vid_mode = {
 	.width_mm = 48,
 	.height_mm = 84,
 	.flags = DRM_MODE_FLAG_PVSYNC,
-};
+पूर्ण;
 
 /*
  * The timings are not very helpful as the display is used in
  * command mode using the maximum HS frequency.
  */
-static const struct drm_display_mode sony_acx424akp_cmd_mode = {
-	.clock = 35478,
+अटल स्थिर काष्ठा drm_display_mode sony_acx424akp_cmd_mode = अणु
+	.घड़ी = 35478,
 	.hdisplay = 480,
 	.hsync_start = 480 + 154,
 	.hsync_end = 480 + 154 + 16,
@@ -77,48 +78,48 @@ static const struct drm_display_mode sony_acx424akp_cmd_mode = {
 	.vtotal = 864 + 1 + 1 + 1,
 	/*
 	 * Some desired refresh rate, experiments at the maximum "pixel"
-	 * clock speed (HS clock 420 MHz) yields around 117Hz.
+	 * घड़ी speed (HS घड़ी 420 MHz) yields around 117Hz.
 	 */
 	.width_mm = 48,
 	.height_mm = 84,
-};
+पूर्ण;
 
-static inline struct acx424akp *panel_to_acx424akp(struct drm_panel *panel)
-{
-	return container_of(panel, struct acx424akp, panel);
-}
+अटल अंतरभूत काष्ठा acx424akp *panel_to_acx424akp(काष्ठा drm_panel *panel)
+अणु
+	वापस container_of(panel, काष्ठा acx424akp, panel);
+पूर्ण
 
-#define FOSC			20 /* 20Mhz */
-#define SCALE_FACTOR_NS_DIV_MHZ	1000
+#घोषणा FOSC			20 /* 20Mhz */
+#घोषणा SCALE_FACTOR_NS_DIV_MHZ	1000
 
-static int acx424akp_set_brightness(struct backlight_device *bl)
-{
-	struct acx424akp *acx = bl_get_data(bl);
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(acx->dev);
-	int period_ns = 1023;
-	int duty_ns = bl->props.brightness;
+अटल पूर्णांक acx424akp_set_brightness(काष्ठा backlight_device *bl)
+अणु
+	काष्ठा acx424akp *acx = bl_get_data(bl);
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(acx->dev);
+	पूर्णांक period_ns = 1023;
+	पूर्णांक duty_ns = bl->props.brightness;
 	u8 pwm_ratio;
-	u8 pwm_div;
+	u8 pwm_भाग;
 	u8 par;
-	int ret;
+	पूर्णांक ret;
 
 	/* Calculate the PWM duty cycle in n/256's */
 	pwm_ratio = max(((duty_ns * 256) / period_ns) - 1, 1);
-	pwm_div = max(1,
+	pwm_भाग = max(1,
 		      ((FOSC * period_ns) / 256) /
 		      SCALE_FACTOR_NS_DIV_MHZ);
 
-	/* Set up PWM dutycycle ONE byte (differs from the standard) */
+	/* Set up PWM dutycycle ONE byte (dअगरfers from the standard) */
 	dev_dbg(acx->dev, "calculated duty cycle %02x\n", pwm_ratio);
-	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_SET_DISPLAY_BRIGHTNESS,
 				 &pwm_ratio, 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "failed to set display PWM ratio (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Sequence to write PWMDIV:
+	 * Sequence to ग_लिखो PWMDIV:
 	 *	address		data
 	 *	0xF3		0xAA   CMD2 Unlock
 	 *	0x00		0x01   Enter CMD2 page 0
@@ -127,276 +128,276 @@ static int acx424akp_set_brightness(struct backlight_device *bl)
 	 *	0x7F		0xAA   CMD2 page 1 lock
 	 */
 	par = 0xaa;
-	ret = mipi_dsi_dcs_write(dsi, 0xf3, &par, 1);
-	if (ret < 0) {
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, 0xf3, &par, 1);
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "failed to unlock CMD 2 (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	par = 0x01;
-	ret = mipi_dsi_dcs_write(dsi, 0x00, &par, 1);
-	if (ret < 0) {
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, 0x00, &par, 1);
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "failed to enter page 1 (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	par = 0x01;
-	ret = mipi_dsi_dcs_write(dsi, 0x7d, &par, 1);
-	if (ret < 0) {
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, 0x7d, &par, 1);
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "failed to disable MTP reload (%d)\n", ret);
-		return ret;
-	}
-	ret = mipi_dsi_dcs_write(dsi, 0x22, &pwm_div, 1);
-	if (ret < 0) {
+		वापस ret;
+	पूर्ण
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, 0x22, &pwm_भाग, 1);
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "failed to set PWM divisor (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	par = 0xaa;
-	ret = mipi_dsi_dcs_write(dsi, 0x7f, &par, 1);
-	if (ret < 0) {
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, 0x7f, &par, 1);
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "failed to lock CMD 2 (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Enable backlight */
 	par = 0x24;
-	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY,
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY,
 				 &par, 1);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "failed to enable display backlight (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct backlight_ops acx424akp_bl_ops = {
+अटल स्थिर काष्ठा backlight_ops acx424akp_bl_ops = अणु
 	.update_status = acx424akp_set_brightness,
-};
+पूर्ण;
 
-static int acx424akp_read_id(struct acx424akp *acx)
-{
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(acx->dev);
-	u8 vendor, version, panel;
+अटल पूर्णांक acx424akp_पढ़ो_id(काष्ठा acx424akp *acx)
+अणु
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(acx->dev);
+	u8 venकरोr, version, panel;
 	u16 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = mipi_dsi_dcs_read(dsi, ACX424_DCS_READ_ID1, &vendor, 1);
-	if (ret < 0) {
+	ret = mipi_dsi_dcs_पढ़ो(dsi, ACX424_DCS_READ_ID1, &venकरोr, 1);
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "could not vendor ID byte\n");
-		return ret;
-	}
-	ret = mipi_dsi_dcs_read(dsi, ACX424_DCS_READ_ID2, &version, 1);
-	if (ret < 0) {
+		वापस ret;
+	पूर्ण
+	ret = mipi_dsi_dcs_पढ़ो(dsi, ACX424_DCS_READ_ID2, &version, 1);
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "could not read device version byte\n");
-		return ret;
-	}
-	ret = mipi_dsi_dcs_read(dsi, ACX424_DCS_READ_ID3, &panel, 1);
-	if (ret < 0) {
+		वापस ret;
+	पूर्ण
+	ret = mipi_dsi_dcs_पढ़ो(dsi, ACX424_DCS_READ_ID3, &panel, 1);
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "could not read panel ID byte\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (vendor == 0x00) {
+	अगर (venकरोr == 0x00) अणु
 		dev_err(acx->dev, "device vendor ID is zero\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	val = (vendor << 8) | panel;
-	switch (val) {
-	case DISPLAY_SONY_ACX424AKP_ID1:
-	case DISPLAY_SONY_ACX424AKP_ID2:
-	case DISPLAY_SONY_ACX424AKP_ID3:
+	val = (venकरोr << 8) | panel;
+	चयन (val) अणु
+	हाल DISPLAY_SONY_ACX424AKP_ID1:
+	हाल DISPLAY_SONY_ACX424AKP_ID2:
+	हाल DISPLAY_SONY_ACX424AKP_ID3:
 		dev_info(acx->dev, "MTP vendor: %02x, version: %02x, panel: %02x\n",
-			 vendor, version, panel);
-		break;
-	default:
+			 venकरोr, version, panel);
+		अवरोध;
+	शेष:
 		dev_info(acx->dev, "unknown vendor: %02x, version: %02x, panel: %02x\n",
-			 vendor, version, panel);
-		break;
-	}
+			 venकरोr, version, panel);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acx424akp_power_on(struct acx424akp *acx)
-{
-	int ret;
+अटल पूर्णांक acx424akp_घातer_on(काष्ठा acx424akp *acx)
+अणु
+	पूर्णांक ret;
 
 	ret = regulator_enable(acx->supply);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(acx->dev, "failed to enable supply (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Assert RESET */
 	gpiod_set_value_cansleep(acx->reset_gpio, 1);
 	udelay(20);
-	/* De-assert RESET */
+	/* De-निश्चित RESET */
 	gpiod_set_value_cansleep(acx->reset_gpio, 0);
 	usleep_range(11000, 20000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void acx424akp_power_off(struct acx424akp *acx)
-{
+अटल व्योम acx424akp_घातer_off(काष्ठा acx424akp *acx)
+अणु
 	/* Assert RESET */
 	gpiod_set_value_cansleep(acx->reset_gpio, 1);
 	usleep_range(11000, 20000);
 
 	regulator_disable(acx->supply);
-}
+पूर्ण
 
-static int acx424akp_prepare(struct drm_panel *panel)
-{
-	struct acx424akp *acx = panel_to_acx424akp(panel);
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(acx->dev);
-	const u8 mddi = 3;
-	int ret;
+अटल पूर्णांक acx424akp_prepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा acx424akp *acx = panel_to_acx424akp(panel);
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(acx->dev);
+	स्थिर u8 mddi = 3;
+	पूर्णांक ret;
 
-	ret = acx424akp_power_on(acx);
-	if (ret)
-		return ret;
+	ret = acx424akp_घातer_on(acx);
+	अगर (ret)
+		वापस ret;
 
-	ret = acx424akp_read_id(acx);
-	if (ret) {
+	ret = acx424akp_पढ़ो_id(acx);
+	अगर (ret) अणु
 		dev_err(acx->dev, "failed to read panel ID (%d)\n", ret);
-		goto err_power_off;
-	}
+		जाओ err_घातer_off;
+	पूर्ण
 
 	/* Enabe tearing mode: send TE (tearing effect) at VBLANK */
 	ret = mipi_dsi_dcs_set_tear_on(dsi,
 				       MIPI_DSI_DCS_TEAR_MODE_VBLANK);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(acx->dev, "failed to enable vblank TE (%d)\n", ret);
-		goto err_power_off;
-	}
+		जाओ err_घातer_off;
+	पूर्ण
 
 	/*
 	 * Set MDDI
 	 *
-	 * This presumably deactivates the Qualcomm MDDI interface and
+	 * This presumably deactivates the Qualcomm MDDI पूर्णांकerface and
 	 * selects DSI, similar code is found in other drivers such as the
 	 * Sharp LS043T1LE01 which makes us suspect that this panel may be
 	 * using a Novatek NT35565 or similar display driver chip that shares
-	 * this command. Due to the lack of documentation we cannot know for
+	 * this command. Due to the lack of करोcumentation we cannot know क्रम
 	 * sure.
 	 */
-	ret = mipi_dsi_dcs_write(dsi, ACX424_DCS_SET_MDDI,
-				 &mddi, sizeof(mddi));
-	if (ret < 0) {
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, ACX424_DCS_SET_MDDI,
+				 &mddi, माप(mddi));
+	अगर (ret < 0) अणु
 		dev_err(acx->dev, "failed to set MDDI (%d)\n", ret);
-		goto err_power_off;
-	}
+		जाओ err_घातer_off;
+	पूर्ण
 
 	/* Exit sleep mode */
-	ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
-	if (ret) {
+	ret = mipi_dsi_dcs_निकास_sleep_mode(dsi);
+	अगर (ret) अणु
 		dev_err(acx->dev, "failed to exit sleep mode (%d)\n", ret);
-		goto err_power_off;
-	}
+		जाओ err_घातer_off;
+	पूर्ण
 	msleep(140);
 
 	ret = mipi_dsi_dcs_set_display_on(dsi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(acx->dev, "failed to turn display on (%d)\n", ret);
-		goto err_power_off;
-	}
-	if (acx->video_mode) {
+		जाओ err_घातer_off;
+	पूर्ण
+	अगर (acx->video_mode) अणु
 		/* In video mode turn peripheral on */
 		ret = mipi_dsi_turn_on_peripheral(dsi);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(acx->dev, "failed to turn on peripheral\n");
-			goto err_power_off;
-		}
-	}
+			जाओ err_घातer_off;
+		पूर्ण
+	पूर्ण
 
-	acx->bl->props.power = FB_BLANK_NORMAL;
+	acx->bl->props.घातer = FB_BLANK_NORMAL;
 
-	return 0;
+	वापस 0;
 
-err_power_off:
-	acx424akp_power_off(acx);
-	return ret;
-}
+err_घातer_off:
+	acx424akp_घातer_off(acx);
+	वापस ret;
+पूर्ण
 
-static int acx424akp_unprepare(struct drm_panel *panel)
-{
-	struct acx424akp *acx = panel_to_acx424akp(panel);
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(acx->dev);
+अटल पूर्णांक acx424akp_unprepare(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा acx424akp *acx = panel_to_acx424akp(panel);
+	काष्ठा mipi_dsi_device *dsi = to_mipi_dsi_device(acx->dev);
 	u8 par;
-	int ret;
+	पूर्णांक ret;
 
 	/* Disable backlight */
 	par = 0x00;
-	ret = mipi_dsi_dcs_write(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY,
+	ret = mipi_dsi_dcs_ग_लिखो(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY,
 				 &par, 1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(acx->dev, "failed to disable display backlight (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = mipi_dsi_dcs_set_display_off(dsi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(acx->dev, "failed to turn display off (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Enter sleep mode */
 	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(acx->dev, "failed to enter sleep mode (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	msleep(85);
 
-	acx424akp_power_off(acx);
-	acx->bl->props.power = FB_BLANK_POWERDOWN;
+	acx424akp_घातer_off(acx);
+	acx->bl->props.घातer = FB_BLANK_POWERDOWN;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acx424akp_enable(struct drm_panel *panel)
-{
-	struct acx424akp *acx = panel_to_acx424akp(panel);
+अटल पूर्णांक acx424akp_enable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा acx424akp *acx = panel_to_acx424akp(panel);
 
 	/*
-	 * The backlight is on as long as the display is on
+	 * The backlight is on as दीर्घ as the display is on
 	 * so no use to call backlight_enable() here.
 	 */
-	acx->bl->props.power = FB_BLANK_UNBLANK;
+	acx->bl->props.घातer = FB_BLANK_UNBLANK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acx424akp_disable(struct drm_panel *panel)
-{
-	struct acx424akp *acx = panel_to_acx424akp(panel);
+अटल पूर्णांक acx424akp_disable(काष्ठा drm_panel *panel)
+अणु
+	काष्ठा acx424akp *acx = panel_to_acx424akp(panel);
 
 	/*
-	 * The backlight is on as long as the display is on
+	 * The backlight is on as दीर्घ as the display is on
 	 * so no use to call backlight_disable() here.
 	 */
-	acx->bl->props.power = FB_BLANK_NORMAL;
+	acx->bl->props.घातer = FB_BLANK_NORMAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acx424akp_get_modes(struct drm_panel *panel,
-			       struct drm_connector *connector)
-{
-	struct acx424akp *acx = panel_to_acx424akp(panel);
-	struct drm_display_mode *mode;
+अटल पूर्णांक acx424akp_get_modes(काष्ठा drm_panel *panel,
+			       काष्ठा drm_connector *connector)
+अणु
+	काष्ठा acx424akp *acx = panel_to_acx424akp(panel);
+	काष्ठा drm_display_mode *mode;
 
-	if (acx->video_mode)
+	अगर (acx->video_mode)
 		mode = drm_mode_duplicate(connector->dev,
 					  &sony_acx424akp_vid_mode);
-	else
+	अन्यथा
 		mode = drm_mode_duplicate(connector->dev,
 					  &sony_acx424akp_cmd_mode);
-	if (!mode) {
+	अगर (!mode) अणु
 		dev_err(panel->dev, "bad mode or failed to add mode\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	drm_mode_set_name(mode);
 	mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
 
@@ -405,114 +406,114 @@ static int acx424akp_get_modes(struct drm_panel *panel,
 
 	drm_mode_probed_add(connector, mode);
 
-	return 1; /* Number of modes */
-}
+	वापस 1; /* Number of modes */
+पूर्ण
 
-static const struct drm_panel_funcs acx424akp_drm_funcs = {
+अटल स्थिर काष्ठा drm_panel_funcs acx424akp_drm_funcs = अणु
 	.disable = acx424akp_disable,
 	.unprepare = acx424akp_unprepare,
 	.prepare = acx424akp_prepare,
 	.enable = acx424akp_enable,
 	.get_modes = acx424akp_get_modes,
-};
+पूर्ण;
 
-static int acx424akp_probe(struct mipi_dsi_device *dsi)
-{
-	struct device *dev = &dsi->dev;
-	struct acx424akp *acx;
-	int ret;
+अटल पूर्णांक acx424akp_probe(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा device *dev = &dsi->dev;
+	काष्ठा acx424akp *acx;
+	पूर्णांक ret;
 
-	acx = devm_kzalloc(dev, sizeof(struct acx424akp), GFP_KERNEL);
-	if (!acx)
-		return -ENOMEM;
-	acx->video_mode = of_property_read_bool(dev->of_node,
+	acx = devm_kzalloc(dev, माप(काष्ठा acx424akp), GFP_KERNEL);
+	अगर (!acx)
+		वापस -ENOMEM;
+	acx->video_mode = of_property_पढ़ो_bool(dev->of_node,
 						"enforce-video-mode");
 
 	mipi_dsi_set_drvdata(dsi, acx);
 	acx->dev = dev;
 
 	dsi->lanes = 2;
-	dsi->format = MIPI_DSI_FMT_RGB888;
+	dsi->क्रमmat = MIPI_DSI_FMT_RGB888;
 	/*
-	 * FIXME: these come from the ST-Ericsson vendor driver for the
+	 * FIXME: these come from the ST-Ericsson venकरोr driver क्रम the
 	 * HREF520 and seems to reflect limitations in the PLLs on that
-	 * platform, if you have the datasheet, please cross-check the
+	 * platक्रमm, अगर you have the datasheet, please cross-check the
 	 * actual max rates.
 	 */
 	dsi->lp_rate = 19200000;
 	dsi->hs_rate = 420160000;
 
-	if (acx->video_mode)
-		/* Burst mode using event for sync */
+	अगर (acx->video_mode)
+		/* Burst mode using event क्रम sync */
 		dsi->mode_flags =
 			MIPI_DSI_MODE_VIDEO |
 			MIPI_DSI_MODE_VIDEO_BURST;
-	else
+	अन्यथा
 		dsi->mode_flags =
 			MIPI_DSI_CLOCK_NON_CONTINUOUS;
 
 	acx->supply = devm_regulator_get(dev, "vddi");
-	if (IS_ERR(acx->supply))
-		return PTR_ERR(acx->supply);
+	अगर (IS_ERR(acx->supply))
+		वापस PTR_ERR(acx->supply);
 
-	/* This asserts RESET by default */
+	/* This निश्चितs RESET by शेष */
 	acx->reset_gpio = devm_gpiod_get_optional(dev, "reset",
 						  GPIOD_OUT_HIGH);
-	if (IS_ERR(acx->reset_gpio)) {
+	अगर (IS_ERR(acx->reset_gpio)) अणु
 		ret = PTR_ERR(acx->reset_gpio);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(dev, "failed to request GPIO (%d)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	drm_panel_init(&acx->panel, dev, &acx424akp_drm_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
 
-	acx->bl = devm_backlight_device_register(dev, "acx424akp", dev, acx,
-						 &acx424akp_bl_ops, NULL);
-	if (IS_ERR(acx->bl)) {
+	acx->bl = devm_backlight_device_रेजिस्टर(dev, "acx424akp", dev, acx,
+						 &acx424akp_bl_ops, शून्य);
+	अगर (IS_ERR(acx->bl)) अणु
 		dev_err(dev, "failed to register backlight device\n");
-		return PTR_ERR(acx->bl);
-	}
+		वापस PTR_ERR(acx->bl);
+	पूर्ण
 	acx->bl->props.max_brightness = 1023;
 	acx->bl->props.brightness = 512;
-	acx->bl->props.power = FB_BLANK_POWERDOWN;
+	acx->bl->props.घातer = FB_BLANK_POWERDOWN;
 
 	drm_panel_add(&acx->panel);
 
 	ret = mipi_dsi_attach(dsi);
-	if (ret < 0) {
-		drm_panel_remove(&acx->panel);
-		return ret;
-	}
+	अगर (ret < 0) अणु
+		drm_panel_हटाओ(&acx->panel);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acx424akp_remove(struct mipi_dsi_device *dsi)
-{
-	struct acx424akp *acx = mipi_dsi_get_drvdata(dsi);
+अटल पूर्णांक acx424akp_हटाओ(काष्ठा mipi_dsi_device *dsi)
+अणु
+	काष्ठा acx424akp *acx = mipi_dsi_get_drvdata(dsi);
 
 	mipi_dsi_detach(dsi);
-	drm_panel_remove(&acx->panel);
+	drm_panel_हटाओ(&acx->panel);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id acx424akp_of_match[] = {
-	{ .compatible = "sony,acx424akp" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id acx424akp_of_match[] = अणु
+	अणु .compatible = "sony,acx424akp" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, acx424akp_of_match);
 
-static struct mipi_dsi_driver acx424akp_driver = {
+अटल काष्ठा mipi_dsi_driver acx424akp_driver = अणु
 	.probe = acx424akp_probe,
-	.remove = acx424akp_remove,
-	.driver = {
+	.हटाओ = acx424akp_हटाओ,
+	.driver = अणु
 		.name = "panel-sony-acx424akp",
 		.of_match_table = acx424akp_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_mipi_dsi_driver(acx424akp_driver);
 
 MODULE_AUTHOR("Linus Wallei <linus.walleij@linaro.org>");

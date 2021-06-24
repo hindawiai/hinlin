@@ -1,212 +1,213 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Consumer interface the pin control subsystem
+ * Consumer पूर्णांकerface the pin control subप्रणाली
  *
  * Copyright (C) 2012 ST-Ericsson SA
- * Written on behalf of Linaro for ST-Ericsson
+ * Written on behalf of Linaro क्रम ST-Ericsson
  * Based on bits of regulator core, gpio core and clk core
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
-#ifndef __LINUX_PINCTRL_CONSUMER_H
-#define __LINUX_PINCTRL_CONSUMER_H
+#अगर_अघोषित __LINUX_PINCTRL_CONSUMER_H
+#घोषणा __LINUX_PINCTRL_CONSUMER_H
 
-#include <linux/err.h>
-#include <linux/list.h>
-#include <linux/seq_file.h>
-#include <linux/pinctrl/pinctrl-state.h>
+#समावेश <linux/err.h>
+#समावेश <linux/list.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/pinctrl/pinctrl-state.h>
 
-/* This struct is private to the core and should be regarded as a cookie */
-struct pinctrl;
-struct pinctrl_state;
-struct device;
+/* This काष्ठा is निजी to the core and should be regarded as a cookie */
+काष्ठा pinctrl;
+काष्ठा pinctrl_state;
+काष्ठा device;
 
-#ifdef CONFIG_PINCTRL
+#अगर_घोषित CONFIG_PINCTRL
 
-/* External interface to pin control */
-extern bool pinctrl_gpio_can_use_line(unsigned gpio);
-extern int pinctrl_gpio_request(unsigned gpio);
-extern void pinctrl_gpio_free(unsigned gpio);
-extern int pinctrl_gpio_direction_input(unsigned gpio);
-extern int pinctrl_gpio_direction_output(unsigned gpio);
-extern int pinctrl_gpio_set_config(unsigned gpio, unsigned long config);
+/* External पूर्णांकerface to pin control */
+बाह्य bool pinctrl_gpio_can_use_line(अचिन्हित gpio);
+बाह्य पूर्णांक pinctrl_gpio_request(अचिन्हित gpio);
+बाह्य व्योम pinctrl_gpio_मुक्त(अचिन्हित gpio);
+बाह्य पूर्णांक pinctrl_gpio_direction_input(अचिन्हित gpio);
+बाह्य पूर्णांक pinctrl_gpio_direction_output(अचिन्हित gpio);
+बाह्य पूर्णांक pinctrl_gpio_set_config(अचिन्हित gpio, अचिन्हित दीर्घ config);
 
-extern struct pinctrl * __must_check pinctrl_get(struct device *dev);
-extern void pinctrl_put(struct pinctrl *p);
-extern struct pinctrl_state * __must_check pinctrl_lookup_state(
-							struct pinctrl *p,
-							const char *name);
-extern int pinctrl_select_state(struct pinctrl *p, struct pinctrl_state *s);
+बाह्य काष्ठा pinctrl * __must_check pinctrl_get(काष्ठा device *dev);
+बाह्य व्योम pinctrl_put(काष्ठा pinctrl *p);
+बाह्य काष्ठा pinctrl_state * __must_check pinctrl_lookup_state(
+							काष्ठा pinctrl *p,
+							स्थिर अक्षर *name);
+बाह्य पूर्णांक pinctrl_select_state(काष्ठा pinctrl *p, काष्ठा pinctrl_state *s);
 
-extern struct pinctrl * __must_check devm_pinctrl_get(struct device *dev);
-extern void devm_pinctrl_put(struct pinctrl *p);
-extern int pinctrl_select_default_state(struct device *dev);
+बाह्य काष्ठा pinctrl * __must_check devm_pinctrl_get(काष्ठा device *dev);
+बाह्य व्योम devm_pinctrl_put(काष्ठा pinctrl *p);
+बाह्य पूर्णांक pinctrl_select_शेष_state(काष्ठा device *dev);
 
-#ifdef CONFIG_PM
-extern int pinctrl_pm_select_default_state(struct device *dev);
-extern int pinctrl_pm_select_sleep_state(struct device *dev);
-extern int pinctrl_pm_select_idle_state(struct device *dev);
-#else
-static inline int pinctrl_pm_select_default_state(struct device *dev)
-{
-	return 0;
-}
-static inline int pinctrl_pm_select_sleep_state(struct device *dev)
-{
-	return 0;
-}
-static inline int pinctrl_pm_select_idle_state(struct device *dev)
-{
-	return 0;
-}
-#endif
+#अगर_घोषित CONFIG_PM
+बाह्य पूर्णांक pinctrl_pm_select_शेष_state(काष्ठा device *dev);
+बाह्य पूर्णांक pinctrl_pm_select_sleep_state(काष्ठा device *dev);
+बाह्य पूर्णांक pinctrl_pm_select_idle_state(काष्ठा device *dev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक pinctrl_pm_select_शेष_state(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक pinctrl_pm_select_sleep_state(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत पूर्णांक pinctrl_pm_select_idle_state(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#else /* !CONFIG_PINCTRL */
+#अन्यथा /* !CONFIG_PINCTRL */
 
-static inline bool pinctrl_gpio_can_use_line(unsigned gpio)
-{
-	return true;
-}
+अटल अंतरभूत bool pinctrl_gpio_can_use_line(अचिन्हित gpio)
+अणु
+	वापस true;
+पूर्ण
 
-static inline int pinctrl_gpio_request(unsigned gpio)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_gpio_request(अचिन्हित gpio)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void pinctrl_gpio_free(unsigned gpio)
-{
-}
+अटल अंतरभूत व्योम pinctrl_gpio_मुक्त(अचिन्हित gpio)
+अणु
+पूर्ण
 
-static inline int pinctrl_gpio_direction_input(unsigned gpio)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_gpio_direction_input(अचिन्हित gpio)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pinctrl_gpio_direction_output(unsigned gpio)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_gpio_direction_output(अचिन्हित gpio)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pinctrl_gpio_set_config(unsigned gpio, unsigned long config)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_gpio_set_config(अचिन्हित gpio, अचिन्हित दीर्घ config)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct pinctrl * __must_check pinctrl_get(struct device *dev)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा pinctrl * __must_check pinctrl_get(काष्ठा device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void pinctrl_put(struct pinctrl *p)
-{
-}
+अटल अंतरभूत व्योम pinctrl_put(काष्ठा pinctrl *p)
+अणु
+पूर्ण
 
-static inline struct pinctrl_state * __must_check pinctrl_lookup_state(
-							struct pinctrl *p,
-							const char *name)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा pinctrl_state * __must_check pinctrl_lookup_state(
+							काष्ठा pinctrl *p,
+							स्थिर अक्षर *name)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline int pinctrl_select_state(struct pinctrl *p,
-				       struct pinctrl_state *s)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_select_state(काष्ठा pinctrl *p,
+				       काष्ठा pinctrl_state *s)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct pinctrl * __must_check devm_pinctrl_get(struct device *dev)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा pinctrl * __must_check devm_pinctrl_get(काष्ठा device *dev)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void devm_pinctrl_put(struct pinctrl *p)
-{
-}
+अटल अंतरभूत व्योम devm_pinctrl_put(काष्ठा pinctrl *p)
+अणु
+पूर्ण
 
-static inline int pinctrl_select_default_state(struct device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_select_शेष_state(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pinctrl_pm_select_default_state(struct device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_pm_select_शेष_state(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pinctrl_pm_select_sleep_state(struct device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_pm_select_sleep_state(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int pinctrl_pm_select_idle_state(struct device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक pinctrl_pm_select_idle_state(काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* CONFIG_PINCTRL */
+#पूर्ण_अगर /* CONFIG_PINCTRL */
 
-static inline struct pinctrl * __must_check pinctrl_get_select(
-					struct device *dev, const char *name)
-{
-	struct pinctrl *p;
-	struct pinctrl_state *s;
-	int ret;
+अटल अंतरभूत काष्ठा pinctrl * __must_check pinctrl_get_select(
+					काष्ठा device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा pinctrl *p;
+	काष्ठा pinctrl_state *s;
+	पूर्णांक ret;
 
 	p = pinctrl_get(dev);
-	if (IS_ERR(p))
-		return p;
+	अगर (IS_ERR(p))
+		वापस p;
 
 	s = pinctrl_lookup_state(p, name);
-	if (IS_ERR(s)) {
+	अगर (IS_ERR(s)) अणु
 		pinctrl_put(p);
-		return ERR_CAST(s);
-	}
+		वापस ERR_CAST(s);
+	पूर्ण
 
 	ret = pinctrl_select_state(p, s);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pinctrl_put(p);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static inline struct pinctrl * __must_check pinctrl_get_select_default(
-					struct device *dev)
-{
-	return pinctrl_get_select(dev, PINCTRL_STATE_DEFAULT);
-}
+अटल अंतरभूत काष्ठा pinctrl * __must_check pinctrl_get_select_शेष(
+					काष्ठा device *dev)
+अणु
+	वापस pinctrl_get_select(dev, PINCTRL_STATE_DEFAULT);
+पूर्ण
 
-static inline struct pinctrl * __must_check devm_pinctrl_get_select(
-					struct device *dev, const char *name)
-{
-	struct pinctrl *p;
-	struct pinctrl_state *s;
-	int ret;
+अटल अंतरभूत काष्ठा pinctrl * __must_check devm_pinctrl_get_select(
+					काष्ठा device *dev, स्थिर अक्षर *name)
+अणु
+	काष्ठा pinctrl *p;
+	काष्ठा pinctrl_state *s;
+	पूर्णांक ret;
 
 	p = devm_pinctrl_get(dev);
-	if (IS_ERR(p))
-		return p;
+	अगर (IS_ERR(p))
+		वापस p;
 
 	s = pinctrl_lookup_state(p, name);
-	if (IS_ERR(s)) {
+	अगर (IS_ERR(s)) अणु
 		devm_pinctrl_put(p);
-		return ERR_CAST(s);
-	}
+		वापस ERR_CAST(s);
+	पूर्ण
 
 	ret = pinctrl_select_state(p, s);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		devm_pinctrl_put(p);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static inline struct pinctrl * __must_check devm_pinctrl_get_select_default(
-					struct device *dev)
-{
-	return devm_pinctrl_get_select(dev, PINCTRL_STATE_DEFAULT);
-}
+अटल अंतरभूत काष्ठा pinctrl * __must_check devm_pinctrl_get_select_शेष(
+					काष्ठा device *dev)
+अणु
+	वापस devm_pinctrl_get_select(dev, PINCTRL_STATE_DEFAULT);
+पूर्ण
 
-#endif /* __LINUX_PINCTRL_CONSUMER_H */
+#पूर्ण_अगर /* __LINUX_PINCTRL_CONSUMER_H */

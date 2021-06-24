@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_MIGRATE_H
-#define _LINUX_MIGRATE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_MIGRATE_H
+#घोषणा _LINUX_MIGRATE_H
 
-#include <linux/mm.h>
-#include <linux/mempolicy.h>
-#include <linux/migrate_mode.h>
-#include <linux/hugetlb.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/mempolicy.h>
+#समावेश <linux/migrate_mode.h>
+#समावेश <linux/hugetlb.h>
 
-typedef struct page *new_page_t(struct page *page, unsigned long private);
-typedef void free_page_t(struct page *page, unsigned long private);
+प्रकार काष्ठा page *new_page_t(काष्ठा page *page, अचिन्हित दीर्घ निजी);
+प्रकार व्योम मुक्त_page_t(काष्ठा page *page, अचिन्हित दीर्घ निजी);
 
-struct migration_target_control;
+काष्ठा migration_target_control;
 
 /*
  * Return values from addresss_space_operations.migratepage():
- * - negative errno on page migration failure;
+ * - negative त्रुटि_सं on page migration failure;
  * - zero on page migration success;
  */
-#define MIGRATEPAGE_SUCCESS		0
+#घोषणा MIGRATEPAGE_SUCCESS		0
 
-enum migrate_reason {
+क्रमागत migrate_reason अणु
 	MR_COMPACTION,
 	MR_MEMORY_FAILURE,
 	MR_MEMORY_HOTPLUG,
@@ -29,168 +30,168 @@ enum migrate_reason {
 	MR_CONTIG_RANGE,
 	MR_LONGTERM_PIN,
 	MR_TYPES
-};
+पूर्ण;
 
 /* In mm/debug.c; also keep sync with include/trace/events/migrate.h */
-extern const char *migrate_reason_names[MR_TYPES];
+बाह्य स्थिर अक्षर *migrate_reason_names[MR_TYPES];
 
-#ifdef CONFIG_MIGRATION
+#अगर_घोषित CONFIG_MIGRATION
 
-extern void putback_movable_pages(struct list_head *l);
-extern int migrate_page(struct address_space *mapping,
-			struct page *newpage, struct page *page,
-			enum migrate_mode mode);
-extern int migrate_pages(struct list_head *l, new_page_t new, free_page_t free,
-		unsigned long private, enum migrate_mode mode, int reason);
-extern struct page *alloc_migration_target(struct page *page, unsigned long private);
-extern int isolate_movable_page(struct page *page, isolate_mode_t mode);
+बाह्य व्योम putback_movable_pages(काष्ठा list_head *l);
+बाह्य पूर्णांक migrate_page(काष्ठा address_space *mapping,
+			काष्ठा page *newpage, काष्ठा page *page,
+			क्रमागत migrate_mode mode);
+बाह्य पूर्णांक migrate_pages(काष्ठा list_head *l, new_page_t new, मुक्त_page_t मुक्त,
+		अचिन्हित दीर्घ निजी, क्रमागत migrate_mode mode, पूर्णांक reason);
+बाह्य काष्ठा page *alloc_migration_target(काष्ठा page *page, अचिन्हित दीर्घ निजी);
+बाह्य पूर्णांक isolate_movable_page(काष्ठा page *page, isolate_mode_t mode);
 
-extern void migrate_page_states(struct page *newpage, struct page *page);
-extern void migrate_page_copy(struct page *newpage, struct page *page);
-extern int migrate_huge_page_move_mapping(struct address_space *mapping,
-				  struct page *newpage, struct page *page);
-extern int migrate_page_move_mapping(struct address_space *mapping,
-		struct page *newpage, struct page *page, int extra_count);
-#else
+बाह्य व्योम migrate_page_states(काष्ठा page *newpage, काष्ठा page *page);
+बाह्य व्योम migrate_page_copy(काष्ठा page *newpage, काष्ठा page *page);
+बाह्य पूर्णांक migrate_huge_page_move_mapping(काष्ठा address_space *mapping,
+				  काष्ठा page *newpage, काष्ठा page *page);
+बाह्य पूर्णांक migrate_page_move_mapping(काष्ठा address_space *mapping,
+		काष्ठा page *newpage, काष्ठा page *page, पूर्णांक extra_count);
+#अन्यथा
 
-static inline void putback_movable_pages(struct list_head *l) {}
-static inline int migrate_pages(struct list_head *l, new_page_t new,
-		free_page_t free, unsigned long private, enum migrate_mode mode,
-		int reason)
-	{ return -ENOSYS; }
-static inline struct page *alloc_migration_target(struct page *page,
-		unsigned long private)
-	{ return NULL; }
-static inline int isolate_movable_page(struct page *page, isolate_mode_t mode)
-	{ return -EBUSY; }
+अटल अंतरभूत व्योम putback_movable_pages(काष्ठा list_head *l) अणुपूर्ण
+अटल अंतरभूत पूर्णांक migrate_pages(काष्ठा list_head *l, new_page_t new,
+		मुक्त_page_t मुक्त, अचिन्हित दीर्घ निजी, क्रमागत migrate_mode mode,
+		पूर्णांक reason)
+	अणु वापस -ENOSYS; पूर्ण
+अटल अंतरभूत काष्ठा page *alloc_migration_target(काष्ठा page *page,
+		अचिन्हित दीर्घ निजी)
+	अणु वापस शून्य; पूर्ण
+अटल अंतरभूत पूर्णांक isolate_movable_page(काष्ठा page *page, isolate_mode_t mode)
+	अणु वापस -EBUSY; पूर्ण
 
-static inline void migrate_page_states(struct page *newpage, struct page *page)
-{
-}
+अटल अंतरभूत व्योम migrate_page_states(काष्ठा page *newpage, काष्ठा page *page)
+अणु
+पूर्ण
 
-static inline void migrate_page_copy(struct page *newpage,
-				     struct page *page) {}
+अटल अंतरभूत व्योम migrate_page_copy(काष्ठा page *newpage,
+				     काष्ठा page *page) अणुपूर्ण
 
-static inline int migrate_huge_page_move_mapping(struct address_space *mapping,
-				  struct page *newpage, struct page *page)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक migrate_huge_page_move_mapping(काष्ठा address_space *mapping,
+				  काष्ठा page *newpage, काष्ठा page *page)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-#endif /* CONFIG_MIGRATION */
+#पूर्ण_अगर /* CONFIG_MIGRATION */
 
-#ifdef CONFIG_COMPACTION
-extern int PageMovable(struct page *page);
-extern void __SetPageMovable(struct page *page, struct address_space *mapping);
-extern void __ClearPageMovable(struct page *page);
-#else
-static inline int PageMovable(struct page *page) { return 0; }
-static inline void __SetPageMovable(struct page *page,
-				struct address_space *mapping)
-{
-}
-static inline void __ClearPageMovable(struct page *page)
-{
-}
-#endif
+#अगर_घोषित CONFIG_COMPACTION
+बाह्य पूर्णांक PageMovable(काष्ठा page *page);
+बाह्य व्योम __SetPageMovable(काष्ठा page *page, काष्ठा address_space *mapping);
+बाह्य व्योम __ClearPageMovable(काष्ठा page *page);
+#अन्यथा
+अटल अंतरभूत पूर्णांक PageMovable(काष्ठा page *page) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम __SetPageMovable(काष्ठा page *page,
+				काष्ठा address_space *mapping)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम __ClearPageMovable(काष्ठा page *page)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_NUMA_BALANCING
-extern bool pmd_trans_migrating(pmd_t pmd);
-extern int migrate_misplaced_page(struct page *page,
-				  struct vm_area_struct *vma, int node);
-#else
-static inline bool pmd_trans_migrating(pmd_t pmd)
-{
-	return false;
-}
-static inline int migrate_misplaced_page(struct page *page,
-					 struct vm_area_struct *vma, int node)
-{
-	return -EAGAIN; /* can't migrate now */
-}
-#endif /* CONFIG_NUMA_BALANCING */
+#अगर_घोषित CONFIG_NUMA_BALANCING
+बाह्य bool pmd_trans_migrating(pmd_t pmd);
+बाह्य पूर्णांक migrate_misplaced_page(काष्ठा page *page,
+				  काष्ठा vm_area_काष्ठा *vma, पूर्णांक node);
+#अन्यथा
+अटल अंतरभूत bool pmd_trans_migrating(pmd_t pmd)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत पूर्णांक migrate_misplaced_page(काष्ठा page *page,
+					 काष्ठा vm_area_काष्ठा *vma, पूर्णांक node)
+अणु
+	वापस -EAGAIN; /* can't migrate now */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NUMA_BALANCING */
 
-#if defined(CONFIG_NUMA_BALANCING) && defined(CONFIG_TRANSPARENT_HUGEPAGE)
-extern int migrate_misplaced_transhuge_page(struct mm_struct *mm,
-			struct vm_area_struct *vma,
+#अगर defined(CONFIG_NUMA_BALANCING) && defined(CONFIG_TRANSPARENT_HUGEPAGE)
+बाह्य पूर्णांक migrate_misplaced_transhuge_page(काष्ठा mm_काष्ठा *mm,
+			काष्ठा vm_area_काष्ठा *vma,
 			pmd_t *pmd, pmd_t entry,
-			unsigned long address,
-			struct page *page, int node);
-#else
-static inline int migrate_misplaced_transhuge_page(struct mm_struct *mm,
-			struct vm_area_struct *vma,
+			अचिन्हित दीर्घ address,
+			काष्ठा page *page, पूर्णांक node);
+#अन्यथा
+अटल अंतरभूत पूर्णांक migrate_misplaced_transhuge_page(काष्ठा mm_काष्ठा *mm,
+			काष्ठा vm_area_काष्ठा *vma,
 			pmd_t *pmd, pmd_t entry,
-			unsigned long address,
-			struct page *page, int node)
-{
-	return -EAGAIN;
-}
-#endif /* CONFIG_NUMA_BALANCING && CONFIG_TRANSPARENT_HUGEPAGE*/
+			अचिन्हित दीर्घ address,
+			काष्ठा page *page, पूर्णांक node)
+अणु
+	वापस -EAGAIN;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_NUMA_BALANCING && CONFIG_TRANSPARENT_HUGEPAGE*/
 
 
-#ifdef CONFIG_MIGRATION
+#अगर_घोषित CONFIG_MIGRATION
 
 /*
- * Watch out for PAE architecture, which has an unsigned long, and might not
+ * Watch out क्रम PAE architecture, which has an अचिन्हित दीर्घ, and might not
  * have enough bits to store all physical address and flags. So far we have
- * enough room for all our flags.
+ * enough room क्रम all our flags.
  */
-#define MIGRATE_PFN_VALID	(1UL << 0)
-#define MIGRATE_PFN_MIGRATE	(1UL << 1)
-#define MIGRATE_PFN_LOCKED	(1UL << 2)
-#define MIGRATE_PFN_WRITE	(1UL << 3)
-#define MIGRATE_PFN_SHIFT	6
+#घोषणा MIGRATE_PFN_VALID	(1UL << 0)
+#घोषणा MIGRATE_PFN_MIGRATE	(1UL << 1)
+#घोषणा MIGRATE_PFN_LOCKED	(1UL << 2)
+#घोषणा MIGRATE_PFN_WRITE	(1UL << 3)
+#घोषणा MIGRATE_PFN_SHIFT	6
 
-static inline struct page *migrate_pfn_to_page(unsigned long mpfn)
-{
-	if (!(mpfn & MIGRATE_PFN_VALID))
-		return NULL;
-	return pfn_to_page(mpfn >> MIGRATE_PFN_SHIFT);
-}
+अटल अंतरभूत काष्ठा page *migrate_pfn_to_page(अचिन्हित दीर्घ mpfn)
+अणु
+	अगर (!(mpfn & MIGRATE_PFN_VALID))
+		वापस शून्य;
+	वापस pfn_to_page(mpfn >> MIGRATE_PFN_SHIFT);
+पूर्ण
 
-static inline unsigned long migrate_pfn(unsigned long pfn)
-{
-	return (pfn << MIGRATE_PFN_SHIFT) | MIGRATE_PFN_VALID;
-}
+अटल अंतरभूत अचिन्हित दीर्घ migrate_pfn(अचिन्हित दीर्घ pfn)
+अणु
+	वापस (pfn << MIGRATE_PFN_SHIFT) | MIGRATE_PFN_VALID;
+पूर्ण
 
-enum migrate_vma_direction {
+क्रमागत migrate_vma_direction अणु
 	MIGRATE_VMA_SELECT_SYSTEM = 1 << 0,
 	MIGRATE_VMA_SELECT_DEVICE_PRIVATE = 1 << 1,
-};
+पूर्ण;
 
-struct migrate_vma {
-	struct vm_area_struct	*vma;
+काष्ठा migrate_vma अणु
+	काष्ठा vm_area_काष्ठा	*vma;
 	/*
-	 * Both src and dst array must be big enough for
+	 * Both src and dst array must be big enough क्रम
 	 * (end - start) >> PAGE_SHIFT entries.
 	 *
-	 * The src array must not be modified by the caller after
+	 * The src array must not be modअगरied by the caller after
 	 * migrate_vma_setup(), and must not change the dst array after
-	 * migrate_vma_pages() returns.
+	 * migrate_vma_pages() वापसs.
 	 */
-	unsigned long		*dst;
-	unsigned long		*src;
-	unsigned long		cpages;
-	unsigned long		npages;
-	unsigned long		start;
-	unsigned long		end;
+	अचिन्हित दीर्घ		*dst;
+	अचिन्हित दीर्घ		*src;
+	अचिन्हित दीर्घ		cpages;
+	अचिन्हित दीर्घ		npages;
+	अचिन्हित दीर्घ		start;
+	अचिन्हित दीर्घ		end;
 
 	/*
-	 * Set to the owner value also stored in page->pgmap->owner for
-	 * migrating out of device private memory. The flags also need to
+	 * Set to the owner value also stored in page->pgmap->owner क्रम
+	 * migrating out of device निजी memory. The flags also need to
 	 * be set to MIGRATE_VMA_SELECT_DEVICE_PRIVATE.
-	 * The caller should always set this field when using mmu notifier
-	 * callbacks to avoid device MMU invalidations for device private
+	 * The caller should always set this field when using mmu notअगरier
+	 * callbacks to aव्योम device MMU invalidations क्रम device निजी
 	 * pages that are not being migrated.
 	 */
-	void			*pgmap_owner;
-	unsigned long		flags;
-};
+	व्योम			*pgmap_owner;
+	अचिन्हित दीर्घ		flags;
+पूर्ण;
 
-int migrate_vma_setup(struct migrate_vma *args);
-void migrate_vma_pages(struct migrate_vma *migrate);
-void migrate_vma_finalize(struct migrate_vma *migrate);
+पूर्णांक migrate_vma_setup(काष्ठा migrate_vma *args);
+व्योम migrate_vma_pages(काष्ठा migrate_vma *migrate);
+व्योम migrate_vma_finalize(काष्ठा migrate_vma *migrate);
 
-#endif /* CONFIG_MIGRATION */
+#पूर्ण_अगर /* CONFIG_MIGRATION */
 
-#endif /* _LINUX_MIGRATE_H */
+#पूर्ण_अगर /* _LINUX_MIGRATE_H */

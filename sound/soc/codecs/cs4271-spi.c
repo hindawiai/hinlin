@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * CS4271 SPI audio driver
  *
  * Copyright (c) 2010 Alexander Sverdlin <subaparts@yandex.ru>
  */
 
-#include <linux/module.h>
-#include <linux/spi/spi.h>
-#include <linux/regmap.h>
-#include <sound/soc.h>
-#include "cs4271.h"
+#समावेश <linux/module.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/regmap.h>
+#समावेश <sound/soc.h>
+#समावेश "cs4271.h"
 
-static int cs4271_spi_probe(struct spi_device *spi)
-{
-	struct regmap_config config;
+अटल पूर्णांक cs4271_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap_config config;
 
 	config = cs4271_regmap_config;
 	config.reg_bits = 16;
 	config.val_bits = 8;
-	config.read_flag_mask = 0x21;
-	config.write_flag_mask = 0x20;
+	config.पढ़ो_flag_mask = 0x21;
+	config.ग_लिखो_flag_mask = 0x20;
 
-	return cs4271_probe(&spi->dev, devm_regmap_init_spi(spi, &config));
-}
+	वापस cs4271_probe(&spi->dev, devm_regmap_init_spi(spi, &config));
+पूर्ण
 
-static struct spi_driver cs4271_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver cs4271_spi_driver = अणु
+	.driver = अणु
 		.name	= "cs4271",
 		.of_match_table = of_match_ptr(cs4271_dt_ids),
-	},
+	पूर्ण,
 	.probe		= cs4271_spi_probe,
-};
+पूर्ण;
 module_spi_driver(cs4271_spi_driver);
 
 MODULE_DESCRIPTION("ASoC CS4271 SPI Driver");

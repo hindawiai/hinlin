@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <linux/module.h>
-#include <linux/ptrace.h>
-#include <linux/sched.h>
-#include <linux/ftrace.h>
-#include <asm/siginfo.h>
-#include <asm/signal.h>
-#include <asm/unistd.h>
-#include <frame_kern.h>
-#include <kern_util.h>
-#include <os.h>
+#समावेश <linux/module.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/ftrace.h>
+#समावेश <यंत्र/siginfo.h>
+#समावेश <यंत्र/संकेत.स>
+#समावेश <यंत्र/unistd.h>
+#समावेश <frame_kern.h>
+#समावेश <kern_util.h>
+#समावेश <os.h>
 
-EXPORT_SYMBOL(block_signals);
-EXPORT_SYMBOL(unblock_signals);
+EXPORT_SYMBOL(block_संकेतs);
+EXPORT_SYMBOL(unblock_संकेतs);
 
-void block_signals_trace(void)
-{
-	block_signals();
-	if (current_thread_info())
+व्योम block_संकेतs_trace(व्योम)
+अणु
+	block_संकेतs();
+	अगर (current_thपढ़ो_info())
 		trace_hardirqs_off();
-}
+पूर्ण
 
-void unblock_signals_trace(void)
-{
-	if (current_thread_info())
+व्योम unblock_संकेतs_trace(व्योम)
+अणु
+	अगर (current_thपढ़ो_info())
 		trace_hardirqs_on();
-	unblock_signals();
-}
+	unblock_संकेतs();
+पूर्ण
 
-void um_trace_signals_on(void)
-{
-	if (current_thread_info())
+व्योम um_trace_संकेतs_on(व्योम)
+अणु
+	अगर (current_thपढ़ो_info())
 		trace_hardirqs_on();
-}
+पूर्ण
 
-void um_trace_signals_off(void)
-{
-	if (current_thread_info())
+व्योम um_trace_संकेतs_off(व्योम)
+अणु
+	अगर (current_thपढ़ो_info())
 		trace_hardirqs_off();
-}
+पूर्ण
 
 /*
  * OK, we're invoking a handler
  */
-static void handle_signal(struct ksignal *ksig, struct pt_regs *regs)
-{
+अटल व्योम handle_संकेत(काष्ठा kसंकेत *ksig, काष्ठा pt_regs *regs)
+अणु
 	sigset_t *oldset = sigmask_to_save();
-	int singlestep = 0;
-	unsigned long sp;
-	int err;
+	पूर्णांक singlestep = 0;
+	अचिन्हित दीर्घ sp;
+	पूर्णांक err;
 
-	if ((current->ptrace & PT_DTRACE) && (current->ptrace & PT_PTRACED))
+	अगर ((current->ptrace & PT_DTRACE) && (current->ptrace & PT_PTRACED))
 		singlestep = 1;
 
-	/* Did we come from a system call? */
-	if (PT_REGS_SYSCALL_NR(regs) >= 0) {
-		/* If so, check system call restarting.. */
-		switch (PT_REGS_SYSCALL_RET(regs)) {
-		case -ERESTART_RESTARTBLOCK:
-		case -ERESTARTNOHAND:
+	/* Did we come from a प्रणाली call? */
+	अगर (PT_REGS_SYSCALL_NR(regs) >= 0) अणु
+		/* If so, check प्रणाली call restarting.. */
+		चयन (PT_REGS_SYSCALL_RET(regs)) अणु
+		हाल -ERESTART_RESTARTBLOCK:
+		हाल -ERESTARTNOHAND:
 			PT_REGS_SYSCALL_RET(regs) = -EINTR;
-			break;
+			अवरोध;
 
-		case -ERESTARTSYS:
-			if (!(ksig->ka.sa.sa_flags & SA_RESTART)) {
+		हाल -ERESTARTSYS:
+			अगर (!(ksig->ka.sa.sa_flags & SA_RESTART)) अणु
 				PT_REGS_SYSCALL_RET(regs) = -EINTR;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			fallthrough;
-		case -ERESTARTNOINTR:
+		हाल -ERESTARTNOINTR:
 			PT_REGS_RESTART_SYSCALL(regs);
 			PT_REGS_ORIG_SYSCALL(regs) = PT_REGS_SYSCALL_NR(regs);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	sp = PT_REGS_SP(regs);
-	if ((ksig->ka.sa.sa_flags & SA_ONSTACK) && (sas_ss_flags(sp) == 0))
+	अगर ((ksig->ka.sa.sa_flags & SA_ONSTACK) && (sas_ss_flags(sp) == 0))
 		sp = current->sas_ss_sp + current->sas_ss_size;
 
-#ifdef CONFIG_ARCH_HAS_SC_SIGNALS
-	if (!(ksig->ka.sa.sa_flags & SA_SIGINFO))
-		err = setup_signal_stack_sc(sp, ksig, regs, oldset);
-	else
-#endif
-		err = setup_signal_stack_si(sp, ksig, regs, oldset);
+#अगर_घोषित CONFIG_ARCH_HAS_SC_SIGNALS
+	अगर (!(ksig->ka.sa.sa_flags & SA_SIGINFO))
+		err = setup_संकेत_stack_sc(sp, ksig, regs, oldset);
+	अन्यथा
+#पूर्ण_अगर
+		err = setup_संकेत_stack_si(sp, ksig, regs, oldset);
 
-	signal_setup_done(err, ksig, singlestep);
-}
+	संकेत_setup_करोne(err, ksig, singlestep);
+पूर्ण
 
-void do_signal(struct pt_regs *regs)
-{
-	struct ksignal ksig;
-	int handled_sig = 0;
+व्योम करो_संकेत(काष्ठा pt_regs *regs)
+अणु
+	काष्ठा kसंकेत ksig;
+	पूर्णांक handled_sig = 0;
 
-	while (get_signal(&ksig)) {
+	जबतक (get_संकेत(&ksig)) अणु
 		handled_sig = 1;
-		/* Whee!  Actually deliver the signal.  */
-		handle_signal(&ksig, regs);
-	}
+		/* Whee!  Actually deliver the संकेत.  */
+		handle_संकेत(&ksig, regs);
+	पूर्ण
 
-	/* Did we come from a system call? */
-	if (!handled_sig && (PT_REGS_SYSCALL_NR(regs) >= 0)) {
-		/* Restart the system call - no handlers present */
-		switch (PT_REGS_SYSCALL_RET(regs)) {
-		case -ERESTARTNOHAND:
-		case -ERESTARTSYS:
-		case -ERESTARTNOINTR:
+	/* Did we come from a प्रणाली call? */
+	अगर (!handled_sig && (PT_REGS_SYSCALL_NR(regs) >= 0)) अणु
+		/* Restart the प्रणाली call - no handlers present */
+		चयन (PT_REGS_SYSCALL_RET(regs)) अणु
+		हाल -ERESTARTNOHAND:
+		हाल -ERESTARTSYS:
+		हाल -ERESTARTNOINTR:
 			PT_REGS_ORIG_SYSCALL(regs) = PT_REGS_SYSCALL_NR(regs);
 			PT_REGS_RESTART_SYSCALL(regs);
-			break;
-		case -ERESTART_RESTARTBLOCK:
+			अवरोध;
+		हाल -ERESTART_RESTARTBLOCK:
 			PT_REGS_ORIG_SYSCALL(regs) = __NR_restart_syscall;
 			PT_REGS_RESTART_SYSCALL(regs);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * This closes a way to execute a system call on the host.  If
-	 * you set a breakpoint on a system call instruction and singlestep
-	 * from it, the tracing thread used to PTRACE_SINGLESTEP the process
-	 * rather than PTRACE_SYSCALL it, allowing the system call to execute
-	 * on the host.  The tracing thread will check this flag and
-	 * PTRACE_SYSCALL if necessary.
+	 * This बंदs a way to execute a प्रणाली call on the host.  If
+	 * you set a अवरोधpoपूर्णांक on a प्रणाली call inकाष्ठाion and singlestep
+	 * from it, the tracing thपढ़ो used to PTRACE_SINGLESTEP the process
+	 * rather than PTRACE_SYSCALL it, allowing the प्रणाली call to execute
+	 * on the host.  The tracing thपढ़ो will check this flag and
+	 * PTRACE_SYSCALL अगर necessary.
 	 */
-	if (current->ptrace & PT_DTRACE)
-		current->thread.singlestep_syscall =
-			is_syscall(PT_REGS_IP(&current->thread.regs));
+	अगर (current->ptrace & PT_DTRACE)
+		current->thपढ़ो.singlestep_syscall =
+			is_syscall(PT_REGS_IP(&current->thपढ़ो.regs));
 
 	/*
-	 * if there's no signal to deliver, we just put the saved sigmask
+	 * अगर there's no संकेत to deliver, we just put the saved sigmask
 	 * back
 	 */
-	if (!handled_sig)
+	अगर (!handled_sig)
 		restore_saved_sigmask();
-}
+पूर्ण

@@ -1,93 +1,94 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_FUTEX_H
-#define _LINUX_FUTEX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_FUTEX_H
+#घोषणा _LINUX_FUTEX_H
 
-#include <linux/sched.h>
-#include <linux/ktime.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kसमय.स>
 
-#include <uapi/linux/futex.h>
+#समावेश <uapi/linux/futex.h>
 
-struct inode;
-struct mm_struct;
-struct task_struct;
+काष्ठा inode;
+काष्ठा mm_काष्ठा;
+काष्ठा task_काष्ठा;
 
 /*
  * Futexes are matched on equal values of this key.
- * The key type depends on whether it's a shared or private mapping.
+ * The key type depends on whether it's a shared or निजी mapping.
  * Don't rearrange members without looking at hash_futex().
  *
- * offset is aligned to a multiple of sizeof(u32) (== 4) by definition.
+ * offset is aligned to a multiple of माप(u32) (== 4) by definition.
  * We use the two low order bits of offset to tell what is the kind of key :
  *  00 : Private process futex (PTHREAD_PROCESS_PRIVATE)
  *       (no reference on an inode or mm)
  *  01 : Shared futex (PTHREAD_PROCESS_SHARED)
  *	mapped on a file (reference on the underlying inode)
  *  10 : Shared futex (PTHREAD_PROCESS_SHARED)
- *       (but private mapping on an mm, and reference taken on it)
+ *       (but निजी mapping on an mm, and reference taken on it)
 */
 
-#define FUT_OFF_INODE    1 /* We set bit 0 if key has a reference on inode */
-#define FUT_OFF_MMSHARED 2 /* We set bit 1 if key has a reference on mm */
+#घोषणा FUT_OFF_INODE    1 /* We set bit 0 अगर key has a reference on inode */
+#घोषणा FUT_OFF_MMSHARED 2 /* We set bit 1 अगर key has a reference on mm */
 
-union futex_key {
-	struct {
+जोड़ futex_key अणु
+	काष्ठा अणु
 		u64 i_seq;
-		unsigned long pgoff;
-		unsigned int offset;
-	} shared;
-	struct {
-		union {
-			struct mm_struct *mm;
-			u64 __tmp;
-		};
-		unsigned long address;
-		unsigned int offset;
-	} private;
-	struct {
+		अचिन्हित दीर्घ pgoff;
+		अचिन्हित पूर्णांक offset;
+	पूर्ण shared;
+	काष्ठा अणु
+		जोड़ अणु
+			काष्ठा mm_काष्ठा *mm;
+			u64 __पंचांगp;
+		पूर्ण;
+		अचिन्हित दीर्घ address;
+		अचिन्हित पूर्णांक offset;
+	पूर्ण निजी;
+	काष्ठा अणु
 		u64 ptr;
-		unsigned long word;
-		unsigned int offset;
-	} both;
-};
+		अचिन्हित दीर्घ word;
+		अचिन्हित पूर्णांक offset;
+	पूर्ण both;
+पूर्ण;
 
-#define FUTEX_KEY_INIT (union futex_key) { .both = { .ptr = 0ULL } }
+#घोषणा FUTEX_KEY_INIT (जोड़ futex_key) अणु .both = अणु .ptr = 0ULL पूर्ण पूर्ण
 
-#ifdef CONFIG_FUTEX
-enum {
+#अगर_घोषित CONFIG_FUTEX
+क्रमागत अणु
 	FUTEX_STATE_OK,
 	FUTEX_STATE_EXITING,
 	FUTEX_STATE_DEAD,
-};
+पूर्ण;
 
-static inline void futex_init_task(struct task_struct *tsk)
-{
-	tsk->robust_list = NULL;
-#ifdef CONFIG_COMPAT
-	tsk->compat_robust_list = NULL;
-#endif
+अटल अंतरभूत व्योम futex_init_task(काष्ठा task_काष्ठा *tsk)
+अणु
+	tsk->robust_list = शून्य;
+#अगर_घोषित CONFIG_COMPAT
+	tsk->compat_robust_list = शून्य;
+#पूर्ण_अगर
 	INIT_LIST_HEAD(&tsk->pi_state_list);
-	tsk->pi_state_cache = NULL;
+	tsk->pi_state_cache = शून्य;
 	tsk->futex_state = FUTEX_STATE_OK;
-	mutex_init(&tsk->futex_exit_mutex);
-}
+	mutex_init(&tsk->futex_निकास_mutex);
+पूर्ण
 
-void futex_exit_recursive(struct task_struct *tsk);
-void futex_exit_release(struct task_struct *tsk);
-void futex_exec_release(struct task_struct *tsk);
+व्योम futex_निकास_recursive(काष्ठा task_काष्ठा *tsk);
+व्योम futex_निकास_release(काष्ठा task_काष्ठा *tsk);
+व्योम futex_exec_release(काष्ठा task_काष्ठा *tsk);
 
-long do_futex(u32 __user *uaddr, int op, u32 val, ktime_t *timeout,
+दीर्घ करो_futex(u32 __user *uaddr, पूर्णांक op, u32 val, kसमय_प्रकार *समयout,
 	      u32 __user *uaddr2, u32 val2, u32 val3);
-#else
-static inline void futex_init_task(struct task_struct *tsk) { }
-static inline void futex_exit_recursive(struct task_struct *tsk) { }
-static inline void futex_exit_release(struct task_struct *tsk) { }
-static inline void futex_exec_release(struct task_struct *tsk) { }
-static inline long do_futex(u32 __user *uaddr, int op, u32 val,
-			    ktime_t *timeout, u32 __user *uaddr2,
+#अन्यथा
+अटल अंतरभूत व्योम futex_init_task(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम futex_निकास_recursive(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम futex_निकास_release(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत व्योम futex_exec_release(काष्ठा task_काष्ठा *tsk) अणु पूर्ण
+अटल अंतरभूत दीर्घ करो_futex(u32 __user *uaddr, पूर्णांक op, u32 val,
+			    kसमय_प्रकार *समयout, u32 __user *uaddr2,
 			    u32 val2, u32 val3)
-{
-	return -EINVAL;
-}
-#endif
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

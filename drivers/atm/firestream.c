@@ -1,130 +1,131 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-/* drivers/atm/firestream.c - FireStream 155 (MB86697) and
+/* drivers/aपंचांग/firestream.c - FireStream 155 (MB86697) and
  *                            FireStream  50 (MB86695) device driver 
  */
  
 /* Written & (C) 2000 by R.E.Wolff@BitWizard.nl 
- * Copied snippets from zatm.c by Werner Almesberger, EPFL LRC/ICA 
- * and ambassador.c Copyright (C) 1995-1999  Madge Networks Ltd 
+ * Copied snippets from zaपंचांग.c by Werner Almesberger, EPFL LRC/ICA 
+ * and ambassaकरोr.c Copyright (C) 1995-1999  Madge Networks Ltd 
  */
 
 /*
 */
 
 
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/pci.h>
-#include <linux/poison.h>
-#include <linux/errno.h>
-#include <linux/atm.h>
-#include <linux/atmdev.h>
-#include <linux/sonet.h>
-#include <linux/skbuff.h>
-#include <linux/netdevice.h>
-#include <linux/delay.h>
-#include <linux/ioport.h> /* for request_region */
-#include <linux/uio.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/capability.h>
-#include <linux/bitops.h>
-#include <linux/slab.h>
-#include <asm/byteorder.h>
-#include <asm/string.h>
-#include <asm/io.h>
-#include <linux/atomic.h>
-#include <linux/uaccess.h>
-#include <linux/wait.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/poison.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/aपंचांग.h>
+#समावेश <linux/aपंचांगdev.h>
+#समावेश <linux/sonet.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ioport.h> /* क्रम request_region */
+#समावेश <linux/uपन.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/माला.स>
+#समावेश <यंत्र/पन.स>
+#समावेश <linux/atomic.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/रुको.h>
 
-#include "firestream.h"
+#समावेश "firestream.h"
 
-static int loopback = 0;
-static int num=0x5a;
+अटल पूर्णांक loopback = 0;
+अटल पूर्णांक num=0x5a;
 
-/* According to measurements (but they look suspicious to me!) done in
+/* According to measurements (but they look suspicious to me!) करोne in
  * '97, 37% of the packets are one cell in size. So it pays to have
  * buffers allocated at that size. A large jump in percentage of
  * packets occurs at packets around 536 bytes in length. So it also
- * pays to have those pre-allocated. Unfortunately, we can't fully
+ * pays to have those pre-allocated. Unक्रमtunately, we can't fully
  * take advantage of this as the majority of the packets is likely to
  * be TCP/IP (As where obviously the measurement comes from) There the
- * link would be opened with say a 1500 byte MTU, and we can't handle
+ * link would be खोलोed with say a 1500 byte MTU, and we can't handle
  * smaller buffers more efficiently than the larger ones. -- REW
  */
 
-/* Due to the way Linux memory management works, specifying "576" as
+/* Due to the way Linux memory management works, specअगरying "576" as
  * an allocation size here isn't going to help. They are allocated
  * from 1024-byte regions anyway. With the size of the sk_buffs (quite
- * large), it doesn't pay to allocate the smallest size (64) -- REW */
+ * large), it करोesn't pay to allocate the smallest size (64) -- REW */
 
 /* This is all guesswork. Hard numbers to back this up or disprove this, 
  * are appreciated. -- REW */
 
 /* The last entry should be about 64k. However, the "buffer size" is
- * passed to the chip in a 16 bit field. I don't know how "65536"
- * would be interpreted. -- REW */
+ * passed to the chip in a 16 bit field. I करोn't know how "65536"
+ * would be पूर्णांकerpreted. -- REW */
 
-#define NP FS_NR_FREE_POOLS
-static int rx_buf_sizes[NP]  = {128,  256,  512, 1024, 2048, 4096, 16384, 65520};
+#घोषणा NP FS_NR_FREE_POOLS
+अटल पूर्णांक rx_buf_sizes[NP]  = अणु128,  256,  512, 1024, 2048, 4096, 16384, 65520पूर्ण;
 /* log2:                 7     8     9    10    11    12    14     16 */
 
-#if 0
-static int rx_pool_sizes[NP] = {1024, 1024, 512, 256,  128,  64,   32,    32};
-#else
+#अगर 0
+अटल पूर्णांक rx_pool_sizes[NP] = अणु1024, 1024, 512, 256,  128,  64,   32,    32पूर्ण;
+#अन्यथा
 /* debug */
-static int rx_pool_sizes[NP] = {128,  128,  128, 64,   64,   64,   32,    32};
-#endif
+अटल पूर्णांक rx_pool_sizes[NP] = अणु128,  128,  128, 64,   64,   64,   32,    32पूर्ण;
+#पूर्ण_अगर
 /* log2:                 10    10    9    8     7     6     5      5  */
 /* sumlog2:              17    18    18   18    18    18    19     21 */
 /* mem allocated:        128k  256k  256k 256k  256k  256k  512k   2M */
 /* tot mem: almost 4M */
 
-/* NP is shorter, so that it fits on a single line. */
-#undef NP
+/* NP is लघुer, so that it fits on a single line. */
+#अघोषित NP
 
 
 /* Small hardware gotcha:
 
-   The FS50 CAM (VP/VC match registers) always take the lowest channel
+   The FS50 CAM (VP/VC match रेजिस्टरs) always take the lowest channel
    number that matches. This is not a problem.
 
    However, they also ignore whether the channel is enabled or
-   not. This means that if you allocate channel 0 to 1.2 and then
+   not. This means that अगर you allocate channel 0 to 1.2 and then
    channel 1 to 0.0, then disabeling channel 0 and writing 0 to the
-   match channel for channel 0 will "steal" the traffic from channel
-   1, even if you correctly disable channel 0.
+   match channel क्रम channel 0 will "steal" the traffic from channel
+   1, even अगर you correctly disable channel 0.
 
    Workaround: 
 
-   - When disabling channels, write an invalid VP/VC value to the
-   match register. (We use 0xffffffff, which in the worst case 
+   - When disabling channels, ग_लिखो an invalid VP/VC value to the
+   match रेजिस्टर. (We use 0xffffffff, which in the worst हाल 
    matches VP/VC = <maxVP>/<maxVC>, but I expect it not to match
    anything as some "when not in use, program to 0" bits are now
    programmed to 1...)
 
-   - Don't initialize the match registers to 0, as 0.0 is a valid
+   - Don't initialize the match रेजिस्टरs to 0, as 0.0 is a valid
    channel.
 */
 
 
-/* Optimization hints and tips.
+/* Optimization hपूर्णांकs and tips.
 
    The FireStream chips are very capable of reducing the amount of
-   "interrupt-traffic" for the CPU. This driver requests an interrupt on EVERY
+   "interrupt-traffic" क्रम the CPU. This driver requests an पूर्णांकerrupt on EVERY
    action. You could try to minimize this a bit. 
 
    Besides that, the userspace->kernel copy and the PCI bus are the
-   performance limiting issues for this driver.
+   perक्रमmance limiting issues क्रम this driver.
 
    You could queue up a bunch of outgoing packets without telling the
    FireStream. I'm not sure that's going to win you much though. The
    Linux layer won't tell us in advance when it's not going to give us
-   any more packets in a while. So this is tricky to implement right without
-   introducing extra delays. 
+   any more packets in a जबतक. So this is tricky to implement right without
+   पूर्णांकroducing extra delays. 
   
    -- REW
  */
@@ -133,9 +134,9 @@ static int rx_pool_sizes[NP] = {128,  128,  128, 64,   64,   64,   32,    32};
 
 
 /* The strings that define what the RX queue entry is all about. */
-/* Fujitsu: Please tell me which ones can have a pointer to a 
-   freepool descriptor! */
-static char *res_strings[] = {
+/* Fujitsu: Please tell me which ones can have a poपूर्णांकer to a 
+   मुक्तpool descriptor! */
+अटल अक्षर *res_strings[] = अणु
 	"RX OK: streaming not EOP", 
 	"RX OK: streaming EOP", 
 	"RX OK: Single buffer packet", 
@@ -200,9 +201,9 @@ static char *res_strings[] = {
 	"reserved 61", 
 	"reserved 62", 
 	"reserved 63", 
-};  
+पूर्ण;  
 
-static char *irq_bitname[] = {
+अटल अक्षर *irq_bitname[] = अणु
 	"LPCO",
 	"DPCO",
 	"RBRQ0_W",
@@ -230,218 +231,218 @@ static char *irq_bitname[] = {
 	"CSQ_NF",
 	"EXT_INT",
 	"RXDMA_S"
-};
+पूर्ण;
 
 
-#define PHY_EOF -1
-#define PHY_CLEARALL -2
+#घोषणा PHY_खातापूर्ण -1
+#घोषणा PHY_CLEARALL -2
 
-struct reginit_item {
-	int reg, val;
-};
-
-
-static struct reginit_item PHY_NTC_INIT[] = {
-	{ PHY_CLEARALL, 0x40 }, 
-	{ 0x12,  0x0001 },
-	{ 0x13,  0x7605 },
-	{ 0x1A,  0x0001 },
-	{ 0x1B,  0x0005 },
-	{ 0x38,  0x0003 },
-	{ 0x39,  0x0006 },   /* changed here to make loopback */
-	{ 0x01,  0x5262 },
-	{ 0x15,  0x0213 },
-	{ 0x00,  0x0003 },
-	{ PHY_EOF, 0},    /* -1 signals end of list */
-};
+काष्ठा reginit_item अणु
+	पूर्णांक reg, val;
+पूर्ण;
 
 
-/* Safetyfeature: If the card interrupts more than this number of times
-   in a jiffy (1/100th of a second) then we just disable the interrupt and
-   print a message. This prevents the system from hanging. 
+अटल काष्ठा reginit_item PHY_NTC_INIT[] = अणु
+	अणु PHY_CLEARALL, 0x40 पूर्ण, 
+	अणु 0x12,  0x0001 पूर्ण,
+	अणु 0x13,  0x7605 पूर्ण,
+	अणु 0x1A,  0x0001 पूर्ण,
+	अणु 0x1B,  0x0005 पूर्ण,
+	अणु 0x38,  0x0003 पूर्ण,
+	अणु 0x39,  0x0006 पूर्ण,   /* changed here to make loopback */
+	अणु 0x01,  0x5262 पूर्ण,
+	अणु 0x15,  0x0213 पूर्ण,
+	अणु 0x00,  0x0003 पूर्ण,
+	अणु PHY_खातापूर्ण, 0पूर्ण,    /* -1 संकेतs end of list */
+पूर्ण;
 
-   150000 packets per second is close to the limit a PC is going to have
-   anyway. We therefore have to disable this for production. -- REW */
-#undef IRQ_RATE_LIMIT // 100
 
-/* Interrupts work now. Unlike serial cards, ATM cards don't work all
-   that great without interrupts. -- REW */
-#undef FS_POLL_FREQ // 100
+/* Safetyfeature: If the card पूर्णांकerrupts more than this number of बार
+   in a jअगरfy (1/100th of a second) then we just disable the पूर्णांकerrupt and
+   prपूर्णांक a message. This prevents the प्रणाली from hanging. 
+
+   150000 packets per second is बंद to the limit a PC is going to have
+   anyway. We thereक्रमe have to disable this क्रम production. -- REW */
+#अघोषित IRQ_RATE_LIMIT // 100
+
+/* Interrupts work now. Unlike serial cards, ATM cards करोn't work all
+   that great without पूर्णांकerrupts. -- REW */
+#अघोषित FS_POLL_FREQ // 100
 
 /* 
    This driver can spew a whole lot of debugging output at you. If you
-   need maximum performance, you should disable the DEBUG define. To
-   aid in debugging in the field, I'm leaving the compile-time debug
+   need maximum perक्रमmance, you should disable the DEBUG define. To
+   aid in debugging in the field, I'm leaving the compile-समय debug
    features enabled, and disable them "runtime". That allows me to
-   instruct people with problems to enable debugging without requiring
+   inकाष्ठा people with problems to enable debugging without requiring
    them to recompile... -- REW
 */
-#define DEBUG
+#घोषणा DEBUG
 
-#ifdef DEBUG
-#define fs_dprintk(f, str...) if (fs_debug & f) printk (str)
-#else
-#define fs_dprintk(f, str...) /* nothing */
-#endif
+#अगर_घोषित DEBUG
+#घोषणा fs_dprपूर्णांकk(f, str...) अगर (fs_debug & f) prपूर्णांकk (str)
+#अन्यथा
+#घोषणा fs_dprपूर्णांकk(f, str...) /* nothing */
+#पूर्ण_अगर
 
 
-static int fs_keystream = 0;
+अटल पूर्णांक fs_keystream = 0;
 
-#ifdef DEBUG
-/* I didn't forget to set this to zero before shipping. Hit me with a stick 
-   if you get this with the debug default not set to zero again. -- REW */
-static int fs_debug = 0;
-#else
-#define fs_debug 0
-#endif
+#अगर_घोषित DEBUG
+/* I didn't क्रमget to set this to zero beक्रमe shipping. Hit me with a stick 
+   अगर you get this with the debug शेष not set to zero again. -- REW */
+अटल पूर्णांक fs_debug = 0;
+#अन्यथा
+#घोषणा fs_debug 0
+#पूर्ण_अगर
 
-#ifdef MODULE
-#ifdef DEBUG 
-module_param(fs_debug, int, 0644);
-#endif
-module_param(loopback, int, 0);
-module_param(num, int, 0);
-module_param(fs_keystream, int, 0);
+#अगर_घोषित MODULE
+#अगर_घोषित DEBUG 
+module_param(fs_debug, पूर्णांक, 0644);
+#पूर्ण_अगर
+module_param(loopback, पूर्णांक, 0);
+module_param(num, पूर्णांक, 0);
+module_param(fs_keystream, पूर्णांक, 0);
 /* XXX Add rx_buf_sizes, and rx_pool_sizes As per request Amar. -- REW */
-#endif
+#पूर्ण_अगर
 
 
-#define FS_DEBUG_FLOW    0x00000001
-#define FS_DEBUG_OPEN    0x00000002
-#define FS_DEBUG_QUEUE   0x00000004
-#define FS_DEBUG_IRQ     0x00000008
-#define FS_DEBUG_INIT    0x00000010
-#define FS_DEBUG_SEND    0x00000020
-#define FS_DEBUG_PHY     0x00000040
-#define FS_DEBUG_CLEANUP 0x00000080
-#define FS_DEBUG_QOS     0x00000100
-#define FS_DEBUG_TXQ     0x00000200
-#define FS_DEBUG_ALLOC   0x00000400
-#define FS_DEBUG_TXMEM   0x00000800
-#define FS_DEBUG_QSIZE   0x00001000
+#घोषणा FS_DEBUG_FLOW    0x00000001
+#घोषणा FS_DEBUG_OPEN    0x00000002
+#घोषणा FS_DEBUG_QUEUE   0x00000004
+#घोषणा FS_DEBUG_IRQ     0x00000008
+#घोषणा FS_DEBUG_INIT    0x00000010
+#घोषणा FS_DEBUG_SEND    0x00000020
+#घोषणा FS_DEBUG_PHY     0x00000040
+#घोषणा FS_DEBUG_CLEANUP 0x00000080
+#घोषणा FS_DEBUG_QOS     0x00000100
+#घोषणा FS_DEBUG_TXQ     0x00000200
+#घोषणा FS_DEBUG_ALLOC   0x00000400
+#घोषणा FS_DEBUG_TXMEM   0x00000800
+#घोषणा FS_DEBUG_QSIZE   0x00001000
 
 
-#define func_enter() fs_dprintk(FS_DEBUG_FLOW, "fs: enter %s\n", __func__)
-#define func_exit()  fs_dprintk(FS_DEBUG_FLOW, "fs: exit  %s\n", __func__)
+#घोषणा func_enter() fs_dprपूर्णांकk(FS_DEBUG_FLOW, "fs: enter %s\n", __func__)
+#घोषणा func_निकास()  fs_dprपूर्णांकk(FS_DEBUG_FLOW, "fs: exit  %s\n", __func__)
 
 
-static struct fs_dev *fs_boards = NULL;
+अटल काष्ठा fs_dev *fs_boards = शून्य;
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 
-static void my_hd (void *addr, int len)
-{
-	int j, ch;
-	unsigned char *ptr = addr;
+अटल व्योम my_hd (व्योम *addr, पूर्णांक len)
+अणु
+	पूर्णांक j, ch;
+	अचिन्हित अक्षर *ptr = addr;
 
-	while (len > 0) {
-		printk ("%p ", ptr);
-		for (j=0;j < ((len < 16)?len:16);j++) {
-			printk ("%02x %s", ptr[j], (j==7)?" ":"");
-		}
-		for (  ;j < 16;j++) {
-			printk ("   %s", (j==7)?" ":"");
-		}
-		for (j=0;j < ((len < 16)?len:16);j++) {
+	जबतक (len > 0) अणु
+		prपूर्णांकk ("%p ", ptr);
+		क्रम (j=0;j < ((len < 16)?len:16);j++) अणु
+			prपूर्णांकk ("%02x %s", ptr[j], (j==7)?" ":"");
+		पूर्ण
+		क्रम (  ;j < 16;j++) अणु
+			prपूर्णांकk ("   %s", (j==7)?" ":"");
+		पूर्ण
+		क्रम (j=0;j < ((len < 16)?len:16);j++) अणु
 			ch = ptr[j];
-			printk ("%c", (ch < 0x20)?'.':((ch > 0x7f)?'.':ch));
-		}
-		printk ("\n");
+			prपूर्णांकk ("%c", (ch < 0x20)?'.':((ch > 0x7f)?'.':ch));
+		पूर्ण
+		prपूर्णांकk ("\n");
 		ptr += 16;
 		len -= 16;
-	}
-}
-#else /* DEBUG */
-static void my_hd (void *addr, int len){}
-#endif /* DEBUG */
+	पूर्ण
+पूर्ण
+#अन्यथा /* DEBUG */
+अटल व्योम my_hd (व्योम *addr, पूर्णांक len)अणुपूर्ण
+#पूर्ण_अगर /* DEBUG */
 
-/********** free an skb (as per ATM device driver documentation) **********/
+/********** मुक्त an skb (as per ATM device driver करोcumentation) **********/
 
-/* Hmm. If this is ATM specific, why isn't there an ATM routine for this?
- * I copied it over from the ambassador driver. -- REW */
+/* Hmm. If this is ATM specअगरic, why isn't there an ATM routine क्रम this?
+ * I copied it over from the ambassaकरोr driver. -- REW */
 
-static inline void fs_kfree_skb (struct sk_buff * skb) 
-{
-	if (ATM_SKB(skb)->vcc->pop)
+अटल अंतरभूत व्योम fs_kमुक्त_skb (काष्ठा sk_buff * skb) 
+अणु
+	अगर (ATM_SKB(skb)->vcc->pop)
 		ATM_SKB(skb)->vcc->pop (ATM_SKB(skb)->vcc, skb);
-	else
-		dev_kfree_skb_any (skb);
-}
+	अन्यथा
+		dev_kमुक्त_skb_any (skb);
+पूर्ण
 
 
 
 
-/* It seems the ATM forum recommends this horribly complicated 16bit
- * floating point format. Turns out the Ambassador uses the exact same
+/* It seems the ATM क्रमum recommends this horribly complicated 16bit
+ * भग्नing poपूर्णांक क्रमmat. Turns out the Ambassaकरोr uses the exact same
  * encoding. I just copied it over. If Mitch agrees, I'll move it over
- * to the atm_misc file or something like that. (and remove it from 
- * here and the ambassador driver) -- REW
+ * to the aपंचांग_misc file or something like that. (and हटाओ it from 
+ * here and the ambassaकरोr driver) -- REW
  */
 
-/* The good thing about this format is that it is monotonic. So, 
+/* The good thing about this क्रमmat is that it is monotonic. So, 
    a conversion routine need not be very complicated. To be able to
-   round "nearest" we need to take along a few extra bits. Lets
-   put these after 16 bits, so that we can just return the top 16
+   round "nearest" we need to take aदीर्घ a few extra bits. Lets
+   put these after 16 bits, so that we can just वापस the top 16
    bits of the 32bit number as the result:
 
-   int mr (unsigned int rate, int r) 
-     {
-     int e = 16+9;
-     static int round[4]={0, 0, 0xffff, 0x8000};
-     if (!rate) return 0;
-     while (rate & 0xfc000000) {
+   पूर्णांक mr (अचिन्हित पूर्णांक rate, पूर्णांक r) 
+     अणु
+     पूर्णांक e = 16+9;
+     अटल पूर्णांक round[4]=अणु0, 0, 0xffff, 0x8000पूर्ण;
+     अगर (!rate) वापस 0;
+     जबतक (rate & 0xfc000000) अणु
        rate >>= 1;
        e++;
-     }
-     while (! (rate & 0xfe000000)) {
+     पूर्ण
+     जबतक (! (rate & 0xfe000000)) अणु
        rate <<= 1;
        e--;
-     }
+     पूर्ण
 
-// Now the mantissa is in positions bit 16-25. Excepf for the "hidden 1" that's in bit 26.
+// Now the mantissa is in positions bit 16-25. Excepf क्रम the "hidden 1" that's in bit 26.
      rate &= ~0x02000000;
 // Next add in the exponent
      rate |= e << (16+9);
-// And perform the rounding:
-     return (rate + round[r]) >> 16;
-   }
+// And perक्रमm the rounding:
+     वापस (rate + round[r]) >> 16;
+   पूर्ण
 
-   14 lines-of-code. Compare that with the 120 that the Ambassador
-   guys needed. (would be 8 lines shorter if I'd try to really reduce
+   14 lines-of-code. Compare that with the 120 that the Ambassaकरोr
+   guys needed. (would be 8 lines लघुer अगर I'd try to really reduce
    the number of lines:
 
-   int mr (unsigned int rate, int r) 
-   {
-     int e = 16+9;
-     static int round[4]={0, 0, 0xffff, 0x8000};
-     if (!rate) return 0;
-     for (;  rate & 0xfc000000 ;rate >>= 1, e++);
-     for (;!(rate & 0xfe000000);rate <<= 1, e--);
-     return ((rate & ~0x02000000) | (e << (16+9)) + round[r]) >> 16;
-   }
+   पूर्णांक mr (अचिन्हित पूर्णांक rate, पूर्णांक r) 
+   अणु
+     पूर्णांक e = 16+9;
+     अटल पूर्णांक round[4]=अणु0, 0, 0xffff, 0x8000पूर्ण;
+     अगर (!rate) वापस 0;
+     क्रम (;  rate & 0xfc000000 ;rate >>= 1, e++);
+     क्रम (;!(rate & 0xfe000000);rate <<= 1, e--);
+     वापस ((rate & ~0x02000000) | (e << (16+9)) + round[r]) >> 16;
+   पूर्ण
 
-   Exercise for the reader: Remove one more line-of-code, without
+   Exercise क्रम the पढ़ोer: Remove one more line-of-code, without
    cheating. (Just joining two lines is cheating). (I know it's
-   possible, don't think you've beat me if you found it... If you
+   possible, करोn't think you've beat me अगर you found it... If you
    manage to lose two lines or more, keep me updated! ;-)
 
    -- REW */
 
 
-#define ROUND_UP      1
-#define ROUND_DOWN    2
-#define ROUND_NEAREST 3
+#घोषणा ROUND_UP      1
+#घोषणा ROUND_DOWN    2
+#घोषणा ROUND_NEAREST 3
 /********** make rate (not quite as much fun as Horizon) **********/
 
-static int make_rate(unsigned int rate, int r,
-		      u16 *bits, unsigned int *actual)
-{
-	unsigned char exp = -1; /* hush gcc */
-	unsigned int man = -1;  /* hush gcc */
+अटल पूर्णांक make_rate(अचिन्हित पूर्णांक rate, पूर्णांक r,
+		      u16 *bits, अचिन्हित पूर्णांक *actual)
+अणु
+	अचिन्हित अक्षर exp = -1; /* hush gcc */
+	अचिन्हित पूर्णांक man = -1;  /* hush gcc */
   
-	fs_dprintk (FS_DEBUG_QOS, "make_rate %u", rate);
+	fs_dprपूर्णांकk (FS_DEBUG_QOS, "make_rate %u", rate);
   
-	/* rates in cells per second, ITU format (nasty 16-bit floating-point)
+	/* rates in cells per second, ITU क्रमmat (nasty 16-bit भग्नing-poपूर्णांक)
 	   given 5-bit e and 9-bit m:
 	   rate = EITHER (1+m/2^9)*2^e    OR 0
 	   bits = EITHER 1<<14 | e<<9 | m OR 0
@@ -451,183 +452,183 @@ static int make_rate(unsigned int rate, int r,
 	   smallest non-zero rate is (1+0/512)*2^0 = 1 (> 0)
 	   simple algorithm:
 	   find position of top bit, this gives e
-	   remove top bit and shift (rounding if feeling clever) by 9-e
+	   हटाओ top bit and shअगरt (rounding अगर feeling clever) by 9-e
 	*/
-	/* Ambassador ucode bug: please don't set bit 14! so 0 rate not
-	   representable. // This should move into the ambassador driver
+	/* Ambassaकरोr ucode bug: please करोn't set bit 14! so 0 rate not
+	   representable. // This should move पूर्णांकo the ambassaकरोr driver
 	   when properly merged. -- REW */
   
-	if (rate > 0xffc00000U) {
+	अगर (rate > 0xffc00000U) अणु
 		/* larger than largest representable rate */
     
-		if (r == ROUND_UP) {
-			return -EINVAL;
-		} else {
+		अगर (r == ROUND_UP) अणु
+			वापस -EINVAL;
+		पूर्ण अन्यथा अणु
 			exp = 31;
 			man = 511;
-		}
+		पूर्ण
     
-	} else if (rate) {
+	पूर्ण अन्यथा अगर (rate) अणु
 		/* representable rate */
     
 		exp = 31;
 		man = rate;
     
 		/* invariant: rate = man*2^(exp-31) */
-		while (!(man & (1<<31))) {
+		जबतक (!(man & (1<<31))) अणु
 			exp = exp - 1;
 			man = man<<1;
-		}
+		पूर्ण
     
 		/* man has top bit set
 		   rate = (2^31+(man-2^31))*2^(exp-31)
 		   rate = (1+(man-2^31)/2^31)*2^exp 
 		*/
 		man = man<<1;
-		man &= 0xffffffffU; /* a nop on 32-bit systems */
+		man &= 0xffffffffU; /* a nop on 32-bit प्रणालीs */
 		/* rate = (1+man/2^32)*2^exp
     
 		   exp is in the range 0 to 31, man is in the range 0 to 2^32-1
-		   time to lose significance... we want m in the range 0 to 2^9-1
+		   समय to lose signअगरicance... we want m in the range 0 to 2^9-1
 		   rounding presents a minor problem... we first decide which way
 		   we are rounding (based on given rounding direction and possibly
 		   the bits of the mantissa that are to be discarded).
 		*/
 
-		switch (r) {
-		case ROUND_DOWN: {
+		चयन (r) अणु
+		हाल ROUND_DOWN: अणु
 			/* just truncate */
 			man = man>>(32-9);
-			break;
-		}
-		case ROUND_UP: {
+			अवरोध;
+		पूर्ण
+		हाल ROUND_UP: अणु
 			/* check all bits that we are discarding */
-			if (man & (~0U>>9)) {
+			अगर (man & (~0U>>9)) अणु
 				man = (man>>(32-9)) + 1;
-				if (man == (1<<9)) {
-					/* no need to check for round up outside of range */
+				अगर (man == (1<<9)) अणु
+					/* no need to check क्रम round up outside of range */
 					man = 0;
 					exp += 1;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				man = (man>>(32-9));
-			}
-			break;
-		}
-		case ROUND_NEAREST: {
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		हाल ROUND_NEAREST: अणु
 			/* check msb that we are discarding */
-			if (man & (1<<(32-9-1))) {
+			अगर (man & (1<<(32-9-1))) अणु
 				man = (man>>(32-9)) + 1;
-				if (man == (1<<9)) {
-					/* no need to check for round up outside of range */
+				अगर (man == (1<<9)) अणु
+					/* no need to check क्रम round up outside of range */
 					man = 0;
 					exp += 1;
-				}
-			} else {
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				man = (man>>(32-9));
-			}
-			break;
-		}
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		पूर्ण
     
-	} else {
+	पूर्ण अन्यथा अणु
 		/* zero rate - not representable */
     
-		if (r == ROUND_DOWN) {
-			return -EINVAL;
-		} else {
+		अगर (r == ROUND_DOWN) अणु
+			वापस -EINVAL;
+		पूर्ण अन्यथा अणु
 			exp = 0;
 			man = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
   
-	fs_dprintk (FS_DEBUG_QOS, "rate: man=%u, exp=%hu", man, exp);
+	fs_dprपूर्णांकk (FS_DEBUG_QOS, "rate: man=%u, exp=%hu", man, exp);
   
-	if (bits)
+	अगर (bits)
 		*bits = /* (1<<14) | */ (exp<<9) | man;
   
-	if (actual)
+	अगर (actual)
 		*actual = (exp >= 9)
 			? (1 << exp) + (man << (exp-9))
 			: (1 << exp) + ((man + (1<<(9-exp-1))) >> (9-exp));
   
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
 
 /* FireStream access routines */
-/* For DEEP-DOWN debugging these can be rigged to intercept accesses to
-   certain registers or to just log all accesses. */
+/* For DEEP-DOWN debugging these can be rigged to पूर्णांकercept accesses to
+   certain रेजिस्टरs or to just log all accesses. */
 
-static inline void write_fs (struct fs_dev *dev, int offset, u32 val)
-{
-	writel (val, dev->base + offset);
-}
-
-
-static inline u32  read_fs (struct fs_dev *dev, int offset)
-{
-	return readl (dev->base + offset);
-}
+अटल अंतरभूत व्योम ग_लिखो_fs (काष्ठा fs_dev *dev, पूर्णांक offset, u32 val)
+अणु
+	ग_लिखोl (val, dev->base + offset);
+पूर्ण
 
 
+अटल अंतरभूत u32  पढ़ो_fs (काष्ठा fs_dev *dev, पूर्णांक offset)
+अणु
+	वापस पढ़ोl (dev->base + offset);
+पूर्ण
 
-static inline struct FS_QENTRY *get_qentry (struct fs_dev *dev, struct queue *q)
-{
-	return bus_to_virt (read_fs (dev, Q_WP(q->offset)) & Q_ADDR_MASK);
-}
 
 
-static void submit_qentry (struct fs_dev *dev, struct queue *q, struct FS_QENTRY *qe)
-{
+अटल अंतरभूत काष्ठा FS_QENTRY *get_qentry (काष्ठा fs_dev *dev, काष्ठा queue *q)
+अणु
+	वापस bus_to_virt (पढ़ो_fs (dev, Q_WP(q->offset)) & Q_ADDR_MASK);
+पूर्ण
+
+
+अटल व्योम submit_qentry (काष्ठा fs_dev *dev, काष्ठा queue *q, काष्ठा FS_QENTRY *qe)
+अणु
 	u32 wp;
-	struct FS_QENTRY *cqe;
+	काष्ठा FS_QENTRY *cqe;
 
-	/* XXX Sanity check: the write pointer can be checked to be 
+	/* XXX Sanity check: the ग_लिखो poपूर्णांकer can be checked to be 
 	   still the same as the value passed as qe... -- REW */
 	/*  udelay (5); */
-	while ((wp = read_fs (dev, Q_WP (q->offset))) & Q_FULL) {
-		fs_dprintk (FS_DEBUG_TXQ, "Found queue at %x full. Waiting.\n", 
+	जबतक ((wp = पढ़ो_fs (dev, Q_WP (q->offset))) & Q_FULL) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_TXQ, "Found queue at %x full. Waiting.\n", 
 			    q->offset);
 		schedule ();
-	}
+	पूर्ण
 
 	wp &= ~0xf;
 	cqe = bus_to_virt (wp);
-	if (qe != cqe) {
-		fs_dprintk (FS_DEBUG_TXQ, "q mismatch! %p %p\n", qe, cqe);
-	}
+	अगर (qe != cqe) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_TXQ, "q mismatch! %p %p\n", qe, cqe);
+	पूर्ण
 
-	write_fs (dev, Q_WP(q->offset), Q_INCWRAP);
+	ग_लिखो_fs (dev, Q_WP(q->offset), Q_INCWRAP);
 
-	{
-		static int c;
-		if (!(c++ % 100))
-			{
-				int rp, wp;
-				rp =  read_fs (dev, Q_RP(q->offset));
-				wp =  read_fs (dev, Q_WP(q->offset));
-				fs_dprintk (FS_DEBUG_TXQ, "q at %d: %x-%x: %x entries.\n", 
+	अणु
+		अटल पूर्णांक c;
+		अगर (!(c++ % 100))
+			अणु
+				पूर्णांक rp, wp;
+				rp =  पढ़ो_fs (dev, Q_RP(q->offset));
+				wp =  पढ़ो_fs (dev, Q_WP(q->offset));
+				fs_dprपूर्णांकk (FS_DEBUG_TXQ, "q at %d: %x-%x: %x entries.\n", 
 					    q->offset, rp, wp, wp-rp);
-			}
-	}
-}
+			पूर्ण
+	पूर्ण
+पूर्ण
 
-#ifdef DEBUG_EXTRA
-static struct FS_QENTRY pq[60];
-static int qp;
+#अगर_घोषित DEBUG_EXTRA
+अटल काष्ठा FS_QENTRY pq[60];
+अटल पूर्णांक qp;
 
-static struct FS_BPENTRY dq[60];
-static int qd;
-static void *da[60];
-#endif 
+अटल काष्ठा FS_BPENTRY dq[60];
+अटल पूर्णांक qd;
+अटल व्योम *da[60];
+#पूर्ण_अगर 
 
-static void submit_queue (struct fs_dev *dev, struct queue *q, 
+अटल व्योम submit_queue (काष्ठा fs_dev *dev, काष्ठा queue *q, 
 			  u32 cmd, u32 p1, u32 p2, u32 p3)
-{
-	struct FS_QENTRY *qe;
+अणु
+	काष्ठा FS_QENTRY *qe;
 
 	qe = get_qentry (dev, q);
 	qe->cmd = cmd;
@@ -636,400 +637,400 @@ static void submit_queue (struct fs_dev *dev, struct queue *q,
 	qe->p2 = p3;
 	submit_qentry (dev,  q, qe);
 
-#ifdef DEBUG_EXTRA
+#अगर_घोषित DEBUG_EXTRA
 	pq[qp].cmd = cmd;
 	pq[qp].p0 = p1;
 	pq[qp].p1 = p2;
 	pq[qp].p2 = p3;
 	qp++;
-	if (qp >= 60) qp = 0;
-#endif
-}
+	अगर (qp >= 60) qp = 0;
+#पूर्ण_अगर
+पूर्ण
 
 /* Test the "other" way one day... -- REW */
-#if 1
-#define submit_command submit_queue
-#else
+#अगर 1
+#घोषणा submit_command submit_queue
+#अन्यथा
 
-static void submit_command (struct fs_dev *dev, struct queue *q, 
+अटल व्योम submit_command (काष्ठा fs_dev *dev, काष्ठा queue *q, 
 			    u32 cmd, u32 p1, u32 p2, u32 p3)
-{
-	write_fs (dev, CMDR0, cmd);
-	write_fs (dev, CMDR1, p1);
-	write_fs (dev, CMDR2, p2);
-	write_fs (dev, CMDR3, p3);
-}
-#endif
+अणु
+	ग_लिखो_fs (dev, CMDR0, cmd);
+	ग_लिखो_fs (dev, CMDR1, p1);
+	ग_लिखो_fs (dev, CMDR2, p2);
+	ग_लिखो_fs (dev, CMDR3, p3);
+पूर्ण
+#पूर्ण_अगर
 
 
 
-static void process_return_queue (struct fs_dev *dev, struct queue *q)
-{
-	long rq;
-	struct FS_QENTRY *qe;
-	void *tc;
+अटल व्योम process_वापस_queue (काष्ठा fs_dev *dev, काष्ठा queue *q)
+अणु
+	दीर्घ rq;
+	काष्ठा FS_QENTRY *qe;
+	व्योम *tc;
   
-	while (!((rq = read_fs (dev, Q_RP(q->offset))) & Q_EMPTY)) {
-		fs_dprintk (FS_DEBUG_QUEUE, "reaping return queue entry at %lx\n", rq); 
+	जबतक (!((rq = पढ़ो_fs (dev, Q_RP(q->offset))) & Q_EMPTY)) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "reaping return queue entry at %lx\n", rq); 
 		qe = bus_to_virt (rq);
     
-		fs_dprintk (FS_DEBUG_QUEUE, "queue entry: %08x %08x %08x %08x. (%d)\n", 
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "queue entry: %08x %08x %08x %08x. (%d)\n", 
 			    qe->cmd, qe->p0, qe->p1, qe->p2, STATUS_CODE (qe));
 
-		switch (STATUS_CODE (qe)) {
-		case 5:
+		चयन (STATUS_CODE (qe)) अणु
+		हाल 5:
 			tc = bus_to_virt (qe->p0);
-			fs_dprintk (FS_DEBUG_ALLOC, "Free tc: %p\n", tc);
-			kfree (tc);
-			break;
-		}
+			fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free tc: %p\n", tc);
+			kमुक्त (tc);
+			अवरोध;
+		पूर्ण
     
-		write_fs (dev, Q_RP(q->offset), Q_INCWRAP);
-	}
-}
+		ग_लिखो_fs (dev, Q_RP(q->offset), Q_INCWRAP);
+	पूर्ण
+पूर्ण
 
 
-static void process_txdone_queue (struct fs_dev *dev, struct queue *q)
-{
-	long rq;
-	long tmp;
-	struct FS_QENTRY *qe;
-	struct sk_buff *skb;
-	struct FS_BPENTRY *td;
+अटल व्योम process_txकरोne_queue (काष्ठा fs_dev *dev, काष्ठा queue *q)
+अणु
+	दीर्घ rq;
+	दीर्घ पंचांगp;
+	काष्ठा FS_QENTRY *qe;
+	काष्ठा sk_buff *skb;
+	काष्ठा FS_BPENTRY *td;
 
-	while (!((rq = read_fs (dev, Q_RP(q->offset))) & Q_EMPTY)) {
-		fs_dprintk (FS_DEBUG_QUEUE, "reaping txdone entry at %lx\n", rq); 
+	जबतक (!((rq = पढ़ो_fs (dev, Q_RP(q->offset))) & Q_EMPTY)) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "reaping txdone entry at %lx\n", rq); 
 		qe = bus_to_virt (rq);
     
-		fs_dprintk (FS_DEBUG_QUEUE, "queue entry: %08x %08x %08x %08x: %d\n", 
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "queue entry: %08x %08x %08x %08x: %d\n", 
 			    qe->cmd, qe->p0, qe->p1, qe->p2, STATUS_CODE (qe));
 
-		if (STATUS_CODE (qe) != 2)
-			fs_dprintk (FS_DEBUG_TXMEM, "queue entry: %08x %08x %08x %08x: %d\n", 
+		अगर (STATUS_CODE (qe) != 2)
+			fs_dprपूर्णांकk (FS_DEBUG_TXMEM, "queue entry: %08x %08x %08x %08x: %d\n", 
 				    qe->cmd, qe->p0, qe->p1, qe->p2, STATUS_CODE (qe));
 
 
-		switch (STATUS_CODE (qe)) {
-		case 0x01: /* This is for AAL0 where we put the chip in streaming mode */
+		चयन (STATUS_CODE (qe)) अणु
+		हाल 0x01: /* This is क्रम AAL0 where we put the chip in streaming mode */
 			fallthrough;
-		case 0x02:
-			/* Process a real txdone entry. */
-			tmp = qe->p0;
-			if (tmp & 0x0f)
-				printk (KERN_WARNING "td not aligned: %ld\n", tmp);
-			tmp &= ~0x0f;
-			td = bus_to_virt (tmp);
+		हाल 0x02:
+			/* Process a real txकरोne entry. */
+			पंचांगp = qe->p0;
+			अगर (पंचांगp & 0x0f)
+				prपूर्णांकk (KERN_WARNING "td not aligned: %ld\n", पंचांगp);
+			पंचांगp &= ~0x0f;
+			td = bus_to_virt (पंचांगp);
 
-			fs_dprintk (FS_DEBUG_QUEUE, "Pool entry: %08x %08x %08x %08x %p.\n", 
+			fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "Pool entry: %08x %08x %08x %08x %p.\n", 
 				    td->flags, td->next, td->bsa, td->aal_bufsize, td->skb );
       
 			skb = td->skb;
-			if (skb == FS_VCC (ATM_SKB(skb)->vcc)->last_skb) {
-				FS_VCC (ATM_SKB(skb)->vcc)->last_skb = NULL;
-				wake_up_interruptible (& FS_VCC (ATM_SKB(skb)->vcc)->close_wait);
-			}
+			अगर (skb == FS_VCC (ATM_SKB(skb)->vcc)->last_skb) अणु
+				FS_VCC (ATM_SKB(skb)->vcc)->last_skb = शून्य;
+				wake_up_पूर्णांकerruptible (& FS_VCC (ATM_SKB(skb)->vcc)->बंद_रुको);
+			पूर्ण
 			td->dev->ntxpckts--;
 
-			{
-				static int c=0;
+			अणु
+				अटल पूर्णांक c=0;
 	
-				if (!(c++ % 100)) {
-					fs_dprintk (FS_DEBUG_QSIZE, "[%d]", td->dev->ntxpckts);
-				}
-			}
+				अगर (!(c++ % 100)) अणु
+					fs_dprपूर्णांकk (FS_DEBUG_QSIZE, "[%d]", td->dev->ntxpckts);
+				पूर्ण
+			पूर्ण
 
 			atomic_inc(&ATM_SKB(skb)->vcc->stats->tx);
 
-			fs_dprintk (FS_DEBUG_TXMEM, "i");
-			fs_dprintk (FS_DEBUG_ALLOC, "Free t-skb: %p\n", skb);
-			fs_kfree_skb (skb);
+			fs_dprपूर्णांकk (FS_DEBUG_TXMEM, "i");
+			fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free t-skb: %p\n", skb);
+			fs_kमुक्त_skb (skb);
 
-			fs_dprintk (FS_DEBUG_ALLOC, "Free trans-d: %p\n", td); 
-			memset (td, ATM_POISON_FREE, sizeof(struct FS_BPENTRY));
-			kfree (td);
-			break;
-		default:
+			fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free trans-d: %p\n", td); 
+			स_रखो (td, ATM_POISON_FREE, माप(काष्ठा FS_BPENTRY));
+			kमुक्त (td);
+			अवरोध;
+		शेष:
 			/* Here we get the tx purge inhibit command ... */
 			/* Action, I believe, is "don't do anything". -- REW */
 			;
-		}
+		पूर्ण
     
-		write_fs (dev, Q_RP(q->offset), Q_INCWRAP);
-	}
-}
+		ग_लिखो_fs (dev, Q_RP(q->offset), Q_INCWRAP);
+	पूर्ण
+पूर्ण
 
 
-static void process_incoming (struct fs_dev *dev, struct queue *q)
-{
-	long rq;
-	struct FS_QENTRY *qe;
-	struct FS_BPENTRY *pe;    
-	struct sk_buff *skb;
-	unsigned int channo;
-	struct atm_vcc *atm_vcc;
+अटल व्योम process_incoming (काष्ठा fs_dev *dev, काष्ठा queue *q)
+अणु
+	दीर्घ rq;
+	काष्ठा FS_QENTRY *qe;
+	काष्ठा FS_BPENTRY *pe;    
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक channo;
+	काष्ठा aपंचांग_vcc *aपंचांग_vcc;
 
-	while (!((rq = read_fs (dev, Q_RP(q->offset))) & Q_EMPTY)) {
-		fs_dprintk (FS_DEBUG_QUEUE, "reaping incoming queue entry at %lx\n", rq); 
+	जबतक (!((rq = पढ़ो_fs (dev, Q_RP(q->offset))) & Q_EMPTY)) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "reaping incoming queue entry at %lx\n", rq); 
 		qe = bus_to_virt (rq);
     
-		fs_dprintk (FS_DEBUG_QUEUE, "queue entry: %08x %08x %08x %08x.  ", 
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "queue entry: %08x %08x %08x %08x.  ", 
 			    qe->cmd, qe->p0, qe->p1, qe->p2);
 
-		fs_dprintk (FS_DEBUG_QUEUE, "-> %x: %s\n", 
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "-> %x: %s\n", 
 			    STATUS_CODE (qe), 
 			    res_strings[STATUS_CODE(qe)]);
 
 		pe = bus_to_virt (qe->p0);
-		fs_dprintk (FS_DEBUG_QUEUE, "Pool entry: %08x %08x %08x %08x %p %p.\n", 
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "Pool entry: %08x %08x %08x %08x %p %p.\n", 
 			    pe->flags, pe->next, pe->bsa, pe->aal_bufsize, 
 			    pe->skb, pe->fp);
       
 		channo = qe->cmd & 0xffff;
 
-		if (channo < dev->nchannels)
-			atm_vcc = dev->atm_vccs[channo];
-		else
-			atm_vcc = NULL;
+		अगर (channo < dev->nchannels)
+			aपंचांग_vcc = dev->aपंचांग_vccs[channo];
+		अन्यथा
+			aपंचांग_vcc = शून्य;
 
 		/* Single buffer packet */
-		switch (STATUS_CODE (qe)) {
-		case 0x1:
-			/* Fall through for streaming mode */
+		चयन (STATUS_CODE (qe)) अणु
+		हाल 0x1:
+			/* Fall through क्रम streaming mode */
 			fallthrough;
-		case 0x2:/* Packet received OK.... */
-			if (atm_vcc) {
+		हाल 0x2:/* Packet received OK.... */
+			अगर (aपंचांग_vcc) अणु
 				skb = pe->skb;
 				pe->fp->n--;
-#if 0
-				fs_dprintk (FS_DEBUG_QUEUE, "Got skb: %p\n", skb);
-				if (FS_DEBUG_QUEUE & fs_debug) my_hd (bus_to_virt (pe->bsa), 0x20);
-#endif
+#अगर 0
+				fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "Got skb: %p\n", skb);
+				अगर (FS_DEBUG_QUEUE & fs_debug) my_hd (bus_to_virt (pe->bsa), 0x20);
+#पूर्ण_अगर
 				skb_put (skb, qe->p1 & 0xffff); 
-				ATM_SKB(skb)->vcc = atm_vcc;
-				atomic_inc(&atm_vcc->stats->rx);
-				__net_timestamp(skb);
-				fs_dprintk (FS_DEBUG_ALLOC, "Free rec-skb: %p (pushed)\n", skb);
-				atm_vcc->push (atm_vcc, skb);
-				fs_dprintk (FS_DEBUG_ALLOC, "Free rec-d: %p\n", pe);
-				kfree (pe);
-			} else {
-				printk (KERN_ERR "Got a receive on a non-open channel %d.\n", channo);
-			}
-			break;
-		case 0x17:/* AAL 5 CRC32 error. IFF the length field is nonzero, a buffer
+				ATM_SKB(skb)->vcc = aपंचांग_vcc;
+				atomic_inc(&aपंचांग_vcc->stats->rx);
+				__net_बारtamp(skb);
+				fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free rec-skb: %p (pushed)\n", skb);
+				aपंचांग_vcc->push (aपंचांग_vcc, skb);
+				fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free rec-d: %p\n", pe);
+				kमुक्त (pe);
+			पूर्ण अन्यथा अणु
+				prपूर्णांकk (KERN_ERR "Got a receive on a non-open channel %d.\n", channo);
+			पूर्ण
+			अवरोध;
+		हाल 0x17:/* AAL 5 CRC32 error. IFF the length field is nonzero, a buffer
 			     has been consumed and needs to be processed. -- REW */
-			if (qe->p1 & 0xffff) {
+			अगर (qe->p1 & 0xffff) अणु
 				pe = bus_to_virt (qe->p0);
 				pe->fp->n--;
-				fs_dprintk (FS_DEBUG_ALLOC, "Free rec-skb: %p\n", pe->skb);
-				dev_kfree_skb_any (pe->skb);
-				fs_dprintk (FS_DEBUG_ALLOC, "Free rec-d: %p\n", pe);
-				kfree (pe);
-			}
-			if (atm_vcc)
-				atomic_inc(&atm_vcc->stats->rx_drop);
-			break;
-		case 0x1f: /*  Reassembly abort: no buffers. */
+				fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free rec-skb: %p\n", pe->skb);
+				dev_kमुक्त_skb_any (pe->skb);
+				fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free rec-d: %p\n", pe);
+				kमुक्त (pe);
+			पूर्ण
+			अगर (aपंचांग_vcc)
+				atomic_inc(&aपंचांग_vcc->stats->rx_drop);
+			अवरोध;
+		हाल 0x1f: /*  Reassembly पात: no buffers. */
 			/* Silently increment error counter. */
-			if (atm_vcc)
-				atomic_inc(&atm_vcc->stats->rx_drop);
-			break;
-		default: /* Hmm. Haven't written the code to handle the others yet... -- REW */
-			printk (KERN_WARNING "Don't know what to do with RX status %x: %s.\n", 
+			अगर (aपंचांग_vcc)
+				atomic_inc(&aपंचांग_vcc->stats->rx_drop);
+			अवरोध;
+		शेष: /* Hmm. Haven't written the code to handle the others yet... -- REW */
+			prपूर्णांकk (KERN_WARNING "Don't know what to do with RX status %x: %s.\n", 
 				STATUS_CODE(qe), res_strings[STATUS_CODE (qe)]);
-		}
-		write_fs (dev, Q_RP(q->offset), Q_INCWRAP);
-	}
-}
+		पूर्ण
+		ग_लिखो_fs (dev, Q_RP(q->offset), Q_INCWRAP);
+	पूर्ण
+पूर्ण
 
 
 
-#define DO_DIRECTION(tp) ((tp)->traffic_class != ATM_NONE)
+#घोषणा DO_सूचीECTION(tp) ((tp)->traffic_class != ATM_NONE)
 
-static int fs_open(struct atm_vcc *atm_vcc)
-{
-	struct fs_dev *dev;
-	struct fs_vcc *vcc;
-	struct fs_transmit_config *tc;
-	struct atm_trafprm * txtp;
-	struct atm_trafprm * rxtp;
-	/*  struct fs_receive_config *rc;*/
-	/*  struct FS_QENTRY *qe; */
-	int error;
-	int bfp;
-	int to;
-	unsigned short tmc0;
-	short vpi = atm_vcc->vpi;
-	int vci = atm_vcc->vci;
+अटल पूर्णांक fs_खोलो(काष्ठा aपंचांग_vcc *aपंचांग_vcc)
+अणु
+	काष्ठा fs_dev *dev;
+	काष्ठा fs_vcc *vcc;
+	काष्ठा fs_transmit_config *tc;
+	काष्ठा aपंचांग_trafprm * txtp;
+	काष्ठा aपंचांग_trafprm * rxtp;
+	/*  काष्ठा fs_receive_config *rc;*/
+	/*  काष्ठा FS_QENTRY *qe; */
+	पूर्णांक error;
+	पूर्णांक bfp;
+	पूर्णांक to;
+	अचिन्हित लघु पंचांगc0;
+	लघु vpi = aपंचांग_vcc->vpi;
+	पूर्णांक vci = aपंचांग_vcc->vci;
 
 	func_enter ();
 
-	dev = FS_DEV(atm_vcc->dev);
-	fs_dprintk (FS_DEBUG_OPEN, "fs: open on dev: %p, vcc at %p\n", 
-		    dev, atm_vcc);
+	dev = FS_DEV(aपंचांग_vcc->dev);
+	fs_dprपूर्णांकk (FS_DEBUG_OPEN, "fs: open on dev: %p, vcc at %p\n", 
+		    dev, aपंचांग_vcc);
 
-	if (vci != ATM_VPI_UNSPEC && vpi != ATM_VCI_UNSPEC)
-		set_bit(ATM_VF_ADDR, &atm_vcc->flags);
+	अगर (vci != ATM_VPI_UNSPEC && vpi != ATM_VCI_UNSPEC)
+		set_bit(ATM_VF_ADDR, &aपंचांग_vcc->flags);
 
-	if ((atm_vcc->qos.aal != ATM_AAL5) &&
-	    (atm_vcc->qos.aal != ATM_AAL2))
-	  return -EINVAL; /* XXX AAL0 */
+	अगर ((aपंचांग_vcc->qos.aal != ATM_AAL5) &&
+	    (aपंचांग_vcc->qos.aal != ATM_AAL2))
+	  वापस -EINVAL; /* XXX AAL0 */
 
-	fs_dprintk (FS_DEBUG_OPEN, "fs: (itf %d): open %d.%d\n", 
-		    atm_vcc->dev->number, atm_vcc->vpi, atm_vcc->vci);	
+	fs_dprपूर्णांकk (FS_DEBUG_OPEN, "fs: (itf %d): open %d.%d\n", 
+		    aपंचांग_vcc->dev->number, aपंचांग_vcc->vpi, aपंचांग_vcc->vci);	
 
 	/* XXX handle qos parameters (rate limiting) ? */
 
-	vcc = kmalloc(sizeof(struct fs_vcc), GFP_KERNEL);
-	fs_dprintk (FS_DEBUG_ALLOC, "Alloc VCC: %p(%zd)\n", vcc, sizeof(struct fs_vcc));
-	if (!vcc) {
-		clear_bit(ATM_VF_ADDR, &atm_vcc->flags);
-		return -ENOMEM;
-	}
+	vcc = kदो_स्मृति(माप(काष्ठा fs_vcc), GFP_KERNEL);
+	fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc VCC: %p(%zd)\n", vcc, माप(काष्ठा fs_vcc));
+	अगर (!vcc) अणु
+		clear_bit(ATM_VF_ADDR, &aपंचांग_vcc->flags);
+		वापस -ENOMEM;
+	पूर्ण
   
-	atm_vcc->dev_data = vcc;
-	vcc->last_skb = NULL;
+	aपंचांग_vcc->dev_data = vcc;
+	vcc->last_skb = शून्य;
 
-	init_waitqueue_head (&vcc->close_wait);
+	init_रुकोqueue_head (&vcc->बंद_रुको);
 
-	txtp = &atm_vcc->qos.txtp;
-	rxtp = &atm_vcc->qos.rxtp;
+	txtp = &aपंचांग_vcc->qos.txtp;
+	rxtp = &aपंचांग_vcc->qos.rxtp;
 
-	if (!test_bit(ATM_VF_PARTIAL, &atm_vcc->flags)) {
-		if (IS_FS50(dev)) {
-			/* Increment the channel numer: take a free one next time.  */
-			for (to=33;to;to--, dev->channo++) {
+	अगर (!test_bit(ATM_VF_PARTIAL, &aपंचांग_vcc->flags)) अणु
+		अगर (IS_FS50(dev)) अणु
+			/* Increment the channel numer: take a मुक्त one next समय.  */
+			क्रम (to=33;to;to--, dev->channo++) अणु
 				/* We only have 32 channels */
-				if (dev->channo >= 32)
+				अगर (dev->channo >= 32)
 					dev->channo = 0;
-				/* If we need to do RX, AND the RX is inuse, try the next */
-				if (DO_DIRECTION(rxtp) && dev->atm_vccs[dev->channo])
-					continue;
-				/* If we need to do TX, AND the TX is inuse, try the next */
-				if (DO_DIRECTION(txtp) && test_bit (dev->channo, dev->tx_inuse))
-					continue;
-				/* Ok, both are free! (or not needed) */
-				break;
-			}
-			if (!to) {
-				printk ("No more free channels for FS50..\n");
-				kfree(vcc);
-				return -EBUSY;
-			}
+				/* If we need to करो RX, AND the RX is inuse, try the next */
+				अगर (DO_सूचीECTION(rxtp) && dev->aपंचांग_vccs[dev->channo])
+					जारी;
+				/* If we need to करो TX, AND the TX is inuse, try the next */
+				अगर (DO_सूचीECTION(txtp) && test_bit (dev->channo, dev->tx_inuse))
+					जारी;
+				/* Ok, both are मुक्त! (or not needed) */
+				अवरोध;
+			पूर्ण
+			अगर (!to) अणु
+				prपूर्णांकk ("No more free channels for FS50..\n");
+				kमुक्त(vcc);
+				वापस -EBUSY;
+			पूर्ण
 			vcc->channo = dev->channo;
 			dev->channo &= dev->channel_mask;
       
-		} else {
+		पूर्ण अन्यथा अणु
 			vcc->channo = (vpi << FS155_VCI_BITS) | (vci);
-			if (((DO_DIRECTION(rxtp) && dev->atm_vccs[vcc->channo])) ||
-			    ( DO_DIRECTION(txtp) && test_bit (vcc->channo, dev->tx_inuse))) {
-				printk ("Channel is in use for FS155.\n");
-				kfree(vcc);
-				return -EBUSY;
-			}
-		}
-		fs_dprintk (FS_DEBUG_OPEN, "OK. Allocated channel %x(%d).\n", 
+			अगर (((DO_सूचीECTION(rxtp) && dev->aपंचांग_vccs[vcc->channo])) ||
+			    ( DO_सूचीECTION(txtp) && test_bit (vcc->channo, dev->tx_inuse))) अणु
+				prपूर्णांकk ("Channel is in use for FS155.\n");
+				kमुक्त(vcc);
+				वापस -EBUSY;
+			पूर्ण
+		पूर्ण
+		fs_dprपूर्णांकk (FS_DEBUG_OPEN, "OK. Allocated channel %x(%d).\n", 
 			    vcc->channo, vcc->channo);
-	}
+	पूर्ण
 
-	if (DO_DIRECTION (txtp)) {
-		tc = kmalloc (sizeof (struct fs_transmit_config), GFP_KERNEL);
-		fs_dprintk (FS_DEBUG_ALLOC, "Alloc tc: %p(%zd)\n",
-			    tc, sizeof (struct fs_transmit_config));
-		if (!tc) {
-			fs_dprintk (FS_DEBUG_OPEN, "fs: can't alloc transmit_config.\n");
-			kfree(vcc);
-			return -ENOMEM;
-		}
+	अगर (DO_सूचीECTION (txtp)) अणु
+		tc = kदो_स्मृति (माप (काष्ठा fs_transmit_config), GFP_KERNEL);
+		fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc tc: %p(%zd)\n",
+			    tc, माप (काष्ठा fs_transmit_config));
+		अगर (!tc) अणु
+			fs_dprपूर्णांकk (FS_DEBUG_OPEN, "fs: can't alloc transmit_config.\n");
+			kमुक्त(vcc);
+			वापस -ENOMEM;
+		पूर्ण
 
 		/* Allocate the "open" entry from the high priority txq. This makes
 		   it most likely that the chip will notice it. It also prevents us
-		   from having to wait for completion. On the other hand, we may
-		   need to wait for completion anyway, to see if it completed
+		   from having to रुको क्रम completion. On the other hand, we may
+		   need to रुको क्रम completion anyway, to see अगर it completed
 		   successfully. */
 
-		switch (atm_vcc->qos.aal) {
-		case ATM_AAL2:
-		case ATM_AAL0:
+		चयन (aपंचांग_vcc->qos.aal) अणु
+		हाल ATM_AAL2:
+		हाल ATM_AAL0:
 		  tc->flags = 0
 		    | TC_FLAGS_TRANSPARENT_PAYLOAD
 		    | TC_FLAGS_PACKET
 		    | (1 << 28)
 		    | TC_FLAGS_TYPE_UBR /* XXX Change to VBR -- PVDL */
 		    | TC_FLAGS_CAL0;
-		  break;
-		case ATM_AAL5:
+		  अवरोध;
+		हाल ATM_AAL5:
 		  tc->flags = 0
 			| TC_FLAGS_AAL5
 			| TC_FLAGS_PACKET  /* ??? */
 			| TC_FLAGS_TYPE_CBR
 			| TC_FLAGS_CAL0;
-		  break;
-		default:
-			printk ("Unknown aal: %d\n", atm_vcc->qos.aal);
+		  अवरोध;
+		शेष:
+			prपूर्णांकk ("Unknown aal: %d\n", aपंचांग_vcc->qos.aal);
 			tc->flags = 0;
-		}
-		/* Docs are vague about this atm_hdr field. By the way, the FS
-		 * chip makes odd errors if lower bits are set.... -- REW */
-		tc->atm_hdr =  (vpi << 20) | (vci << 4); 
-		tmc0 = 0;
-		{
-			int pcr = atm_pcr_goal (txtp);
+		पूर्ण
+		/* Docs are vague about this aपंचांग_hdr field. By the way, the FS
+		 * chip makes odd errors अगर lower bits are set.... -- REW */
+		tc->aपंचांग_hdr =  (vpi << 20) | (vci << 4); 
+		पंचांगc0 = 0;
+		अणु
+			पूर्णांक pcr = aपंचांग_pcr_goal (txtp);
 
-			fs_dprintk (FS_DEBUG_OPEN, "pcr = %d.\n", pcr);
+			fs_dprपूर्णांकk (FS_DEBUG_OPEN, "pcr = %d.\n", pcr);
 
-			/* XXX Hmm. officially we're only allowed to do this if rounding 
-			   is round_down -- REW */
-			if (IS_FS50(dev)) {
-				if (pcr > 51840000/53/8)  pcr = 51840000/53/8;
-			} else {
-				if (pcr > 155520000/53/8) pcr = 155520000/53/8;
-			}
-			if (!pcr) {
+			/* XXX Hmm. officially we're only allowed to करो this अगर rounding 
+			   is round_करोwn -- REW */
+			अगर (IS_FS50(dev)) अणु
+				अगर (pcr > 51840000/53/8)  pcr = 51840000/53/8;
+			पूर्ण अन्यथा अणु
+				अगर (pcr > 155520000/53/8) pcr = 155520000/53/8;
+			पूर्ण
+			अगर (!pcr) अणु
 				/* no rate cap */
-				tmc0 = IS_FS50(dev)?0x61BE:0x64c9; /* Just copied over the bits from Fujitsu -- REW */
-			} else {
-				int r;
-				if (pcr < 0) {
+				पंचांगc0 = IS_FS50(dev)?0x61BE:0x64c9; /* Just copied over the bits from Fujitsu -- REW */
+			पूर्ण अन्यथा अणु
+				पूर्णांक r;
+				अगर (pcr < 0) अणु
 					r = ROUND_DOWN;
 					pcr = -pcr;
-				} else {
+				पूर्ण अन्यथा अणु
 					r = ROUND_UP;
-				}
-				error = make_rate (pcr, r, &tmc0, NULL);
-				if (error) {
-					kfree(tc);
-					kfree(vcc);
-					return error;
-				}
-			}
-			fs_dprintk (FS_DEBUG_OPEN, "pcr = %d.\n", pcr);
-		}
+				पूर्ण
+				error = make_rate (pcr, r, &पंचांगc0, शून्य);
+				अगर (error) अणु
+					kमुक्त(tc);
+					kमुक्त(vcc);
+					वापस error;
+				पूर्ण
+			पूर्ण
+			fs_dprपूर्णांकk (FS_DEBUG_OPEN, "pcr = %d.\n", pcr);
+		पूर्ण
       
-		tc->TMC[0] = tmc0 | 0x4000;
+		tc->TMC[0] = पंचांगc0 | 0x4000;
 		tc->TMC[1] = 0; /* Unused */
 		tc->TMC[2] = 0; /* Unused */
 		tc->TMC[3] = 0; /* Unused */
     
 		tc->spec = 0;    /* UTOPIA address, UDF, HEC: Unused -> 0 */
-		tc->rtag[0] = 0; /* What should I do with routing tags??? 
+		tc->rtag[0] = 0; /* What should I करो with routing tags??? 
 				    -- Not used -- AS -- Thanks -- REW*/
 		tc->rtag[1] = 0;
 		tc->rtag[2] = 0;
 
-		if (fs_debug & FS_DEBUG_OPEN) {
-			fs_dprintk (FS_DEBUG_OPEN, "TX config record:\n");
-			my_hd (tc, sizeof (*tc));
-		}
+		अगर (fs_debug & FS_DEBUG_OPEN) अणु
+			fs_dprपूर्णांकk (FS_DEBUG_OPEN, "TX config record:\n");
+			my_hd (tc, माप (*tc));
+		पूर्ण
 
 		/* We now use the "submit_command" function to submit commands to
 		   the firestream. There is a define up near the definition of
-		   that routine that switches this routine between immediate write
-		   to the immediate command registers and queuing the commands in
-		   the HPTXQ for execution. This last technique might be more
-		   efficient if we know we're going to submit a whole lot of
+		   that routine that चयनes this routine between immediate ग_लिखो
+		   to the immediate command रेजिस्टरs and queuing the commands in
+		   the HPTXQ क्रम execution. This last technique might be more
+		   efficient अगर we know we're going to submit a whole lot of
 		   commands in one go, but this driver is not setup to be able to
-		   use such a construct. So it probably doen't matter much right
+		   use such a स्थिरruct. So it probably करोen't matter much right
 		   now. -- REW */
     
 		/* The command is IMMediate and INQueue. The parameters are out-of-line.. */
@@ -1041,148 +1042,148 @@ static int fs_open(struct atm_vcc *atm_vcc)
 				QE_CMD_TX_EN | QE_CMD_IMM_INQ | vcc->channo,
 				0, 0, 0);
 		set_bit (vcc->channo, dev->tx_inuse);
-	}
+	पूर्ण
 
-	if (DO_DIRECTION (rxtp)) {
-		dev->atm_vccs[vcc->channo] = atm_vcc;
+	अगर (DO_सूचीECTION (rxtp)) अणु
+		dev->aपंचांग_vccs[vcc->channo] = aपंचांग_vcc;
 
-		for (bfp = 0;bfp < FS_NR_FREE_POOLS; bfp++)
-			if (atm_vcc->qos.rxtp.max_sdu <= dev->rx_fp[bfp].bufsize) break;
-		if (bfp >= FS_NR_FREE_POOLS) {
-			fs_dprintk (FS_DEBUG_OPEN, "No free pool fits sdu: %d.\n", 
-				    atm_vcc->qos.rxtp.max_sdu);
-			/* XXX Cleanup? -- Would just calling fs_close work??? -- REW */
+		क्रम (bfp = 0;bfp < FS_NR_FREE_POOLS; bfp++)
+			अगर (aपंचांग_vcc->qos.rxtp.max_sdu <= dev->rx_fp[bfp].bufsize) अवरोध;
+		अगर (bfp >= FS_NR_FREE_POOLS) अणु
+			fs_dprपूर्णांकk (FS_DEBUG_OPEN, "No free pool fits sdu: %d.\n", 
+				    aपंचांग_vcc->qos.rxtp.max_sdu);
+			/* XXX Cleanup? -- Would just calling fs_बंद work??? -- REW */
 
 			/* XXX clear tx inuse. Close TX part? */
-			dev->atm_vccs[vcc->channo] = NULL;
-			kfree (vcc);
-			return -EINVAL;
-		}
+			dev->aपंचांग_vccs[vcc->channo] = शून्य;
+			kमुक्त (vcc);
+			वापस -EINVAL;
+		पूर्ण
 
-		switch (atm_vcc->qos.aal) {
-		case ATM_AAL0:
-		case ATM_AAL2:
+		चयन (aपंचांग_vcc->qos.aal) अणु
+		हाल ATM_AAL0:
+		हाल ATM_AAL2:
 			submit_command (dev, &dev->hp_txq,
 					QE_CMD_CONFIG_RX | QE_CMD_IMM_INQ | vcc->channo,
 					RC_FLAGS_TRANSP |
 					RC_FLAGS_BFPS_BFP * bfp |
 					RC_FLAGS_RXBM_PSB, 0, 0);
-			break;
-		case ATM_AAL5:
+			अवरोध;
+		हाल ATM_AAL5:
 			submit_command (dev, &dev->hp_txq,
 					QE_CMD_CONFIG_RX | QE_CMD_IMM_INQ | vcc->channo,
 					RC_FLAGS_AAL5 |
 					RC_FLAGS_BFPS_BFP * bfp |
 					RC_FLAGS_RXBM_PSB, 0, 0);
-			break;
-		}
-		if (IS_FS50 (dev)) {
+			अवरोध;
+		पूर्ण
+		अगर (IS_FS50 (dev)) अणु
 			submit_command (dev, &dev->hp_txq, 
 					QE_CMD_REG_WR | QE_CMD_IMM_INQ,
 					0x80 + vcc->channo,
 					(vpi << 16) | vci, 0 ); /* XXX -- Use defines. */
-		}
+		पूर्ण
 		submit_command (dev, &dev->hp_txq, 
 				QE_CMD_RX_EN | QE_CMD_IMM_INQ | vcc->channo,
 				0, 0, 0);
-	}
+	पूर्ण
     
-	/* Indicate we're done! */
-	set_bit(ATM_VF_READY, &atm_vcc->flags);
+	/* Indicate we're करोne! */
+	set_bit(ATM_VF_READY, &aपंचांग_vcc->flags);
 
-	func_exit ();
-	return 0;
-}
+	func_निकास ();
+	वापस 0;
+पूर्ण
 
 
-static void fs_close(struct atm_vcc *atm_vcc)
-{
-	struct fs_dev *dev = FS_DEV (atm_vcc->dev);
-	struct fs_vcc *vcc = FS_VCC (atm_vcc);
-	struct atm_trafprm * txtp;
-	struct atm_trafprm * rxtp;
+अटल व्योम fs_बंद(काष्ठा aपंचांग_vcc *aपंचांग_vcc)
+अणु
+	काष्ठा fs_dev *dev = FS_DEV (aपंचांग_vcc->dev);
+	काष्ठा fs_vcc *vcc = FS_VCC (aपंचांग_vcc);
+	काष्ठा aपंचांग_trafprm * txtp;
+	काष्ठा aपंचांग_trafprm * rxtp;
 
 	func_enter ();
 
-	clear_bit(ATM_VF_READY, &atm_vcc->flags);
+	clear_bit(ATM_VF_READY, &aपंचांग_vcc->flags);
 
-	fs_dprintk (FS_DEBUG_QSIZE, "--==**[%d]**==--", dev->ntxpckts);
-	if (vcc->last_skb) {
-		fs_dprintk (FS_DEBUG_QUEUE, "Waiting for skb %p to be sent.\n", 
+	fs_dprपूर्णांकk (FS_DEBUG_QSIZE, "--==**[%d]**==--", dev->ntxpckts);
+	अगर (vcc->last_skb) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "Waiting for skb %p to be sent.\n", 
 			    vcc->last_skb);
-		/* We're going to wait for the last packet to get sent on this VC. It would
-		   be impolite not to send them don't you think? 
+		/* We're going to रुको क्रम the last packet to get sent on this VC. It would
+		   be impolite not to send them करोn't you think? 
 		   XXX
-		   We don't know which packets didn't get sent. So if we get interrupted in 
+		   We करोn't know which packets didn't get sent. So अगर we get पूर्णांकerrupted in 
 		   this sleep_on, we'll lose any reference to these packets. Memory leak!
-		   On the other hand, it's awfully convenient that we can abort a "close" that
-		   is taking too long. Maybe just use non-interruptible sleep on? -- REW */
-		wait_event_interruptible(vcc->close_wait, !vcc->last_skb);
-	}
+		   On the other hand, it's awfully convenient that we can पात a "close" that
+		   is taking too दीर्घ. Maybe just use non-पूर्णांकerruptible sleep on? -- REW */
+		रुको_event_पूर्णांकerruptible(vcc->बंद_रुको, !vcc->last_skb);
+	पूर्ण
 
-	txtp = &atm_vcc->qos.txtp;
-	rxtp = &atm_vcc->qos.rxtp;
+	txtp = &aपंचांग_vcc->qos.txtp;
+	rxtp = &aपंचांग_vcc->qos.rxtp;
   
 
-	/* See App note XXX (Unpublished as of now) for the reason for the 
+	/* See App note XXX (Unpublished as of now) क्रम the reason क्रम the 
 	   removal of the "CMD_IMM_INQ" part of the TX_PURGE_INH... -- REW */
 
-	if (DO_DIRECTION (txtp)) {
+	अगर (DO_सूचीECTION (txtp)) अणु
 		submit_command (dev,  &dev->hp_txq,
 				QE_CMD_TX_PURGE_INH | /*QE_CMD_IMM_INQ|*/ vcc->channo, 0,0,0);
 		clear_bit (vcc->channo, dev->tx_inuse);
-	}
+	पूर्ण
 
-	if (DO_DIRECTION (rxtp)) {
+	अगर (DO_सूचीECTION (rxtp)) अणु
 		submit_command (dev,  &dev->hp_txq,
 				QE_CMD_RX_PURGE_INH | QE_CMD_IMM_INQ | vcc->channo, 0,0,0);
-		dev->atm_vccs [vcc->channo] = NULL;
+		dev->aपंचांग_vccs [vcc->channo] = शून्य;
   
 		/* This means that this is configured as a receive channel */
-		if (IS_FS50 (dev)) {
+		अगर (IS_FS50 (dev)) अणु
 			/* Disable the receive filter. Is 0/0 indeed an invalid receive
 			   channel? -- REW.  Yes it is. -- Hang. Ok. I'll use -1
 			   (0xfff...) -- REW */
 			submit_command (dev, &dev->hp_txq, 
 					QE_CMD_REG_WR | QE_CMD_IMM_INQ,
 					0x80 + vcc->channo, -1, 0 ); 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	fs_dprintk (FS_DEBUG_ALLOC, "Free vcc: %p\n", vcc);
-	kfree (vcc);
+	fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free vcc: %p\n", vcc);
+	kमुक्त (vcc);
 
-	func_exit ();
-}
+	func_निकास ();
+पूर्ण
 
 
-static int fs_send (struct atm_vcc *atm_vcc, struct sk_buff *skb)
-{
-	struct fs_dev *dev = FS_DEV (atm_vcc->dev);
-	struct fs_vcc *vcc = FS_VCC (atm_vcc);
-	struct FS_BPENTRY *td;
+अटल पूर्णांक fs_send (काष्ठा aपंचांग_vcc *aपंचांग_vcc, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा fs_dev *dev = FS_DEV (aपंचांग_vcc->dev);
+	काष्ठा fs_vcc *vcc = FS_VCC (aपंचांग_vcc);
+	काष्ठा FS_BPENTRY *td;
 
 	func_enter ();
 
-	fs_dprintk (FS_DEBUG_TXMEM, "I");
-	fs_dprintk (FS_DEBUG_SEND, "Send: atm_vcc %p skb %p vcc %p dev %p\n", 
-		    atm_vcc, skb, vcc, dev);
+	fs_dprपूर्णांकk (FS_DEBUG_TXMEM, "I");
+	fs_dprपूर्णांकk (FS_DEBUG_SEND, "Send: atm_vcc %p skb %p vcc %p dev %p\n", 
+		    aपंचांग_vcc, skb, vcc, dev);
 
-	fs_dprintk (FS_DEBUG_ALLOC, "Alloc t-skb: %p (atm_send)\n", skb);
+	fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc t-skb: %p (atm_send)\n", skb);
 
-	ATM_SKB(skb)->vcc = atm_vcc;
+	ATM_SKB(skb)->vcc = aपंचांग_vcc;
 
 	vcc->last_skb = skb;
 
-	td = kmalloc (sizeof (struct FS_BPENTRY), GFP_ATOMIC);
-	fs_dprintk (FS_DEBUG_ALLOC, "Alloc transd: %p(%zd)\n", td, sizeof (struct FS_BPENTRY));
-	if (!td) {
+	td = kदो_स्मृति (माप (काष्ठा FS_BPENTRY), GFP_ATOMIC);
+	fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc transd: %p(%zd)\n", td, माप (काष्ठा FS_BPENTRY));
+	अगर (!td) अणु
 		/* Oops out of mem */
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	fs_dprintk (FS_DEBUG_SEND, "first word in buffer: %x\n", 
-		    *(int *) skb->data);
+	fs_dprपूर्णांकk (FS_DEBUG_SEND, "first word in buffer: %x\n", 
+		    *(पूर्णांक *) skb->data);
 
 	td->flags =  TD_EPI | TD_DATA | skb->len;
 	td->next = 0;
@@ -1191,7 +1192,7 @@ static int fs_send (struct atm_vcc *atm_vcc, struct sk_buff *skb)
 	td->dev = dev;
 	dev->ntxpckts++;
 
-#ifdef DEBUG_EXTRA
+#अगर_घोषित DEBUG_EXTRA
 	da[qd] = td;
 	dq[qd].flags = td->flags;
 	dq[qd].next  = td->next;
@@ -1199,111 +1200,111 @@ static int fs_send (struct atm_vcc *atm_vcc, struct sk_buff *skb)
 	dq[qd].skb   = td->skb;
 	dq[qd].dev   = td->dev;
 	qd++;
-	if (qd >= 60) qd = 0;
-#endif
+	अगर (qd >= 60) qd = 0;
+#पूर्ण_अगर
 
 	submit_queue (dev, &dev->hp_txq, 
 		      QE_TRANSMIT_DE | vcc->channo,
 		      virt_to_bus (td), 0, 
 		      virt_to_bus (td));
 
-	fs_dprintk (FS_DEBUG_QUEUE, "in send: txq %d txrq %d\n", 
-		    read_fs (dev, Q_EA (dev->hp_txq.offset)) -
-		    read_fs (dev, Q_SA (dev->hp_txq.offset)),
-		    read_fs (dev, Q_EA (dev->tx_relq.offset)) -
-		    read_fs (dev, Q_SA (dev->tx_relq.offset)));
+	fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "in send: txq %d txrq %d\n", 
+		    पढ़ो_fs (dev, Q_EA (dev->hp_txq.offset)) -
+		    पढ़ो_fs (dev, Q_SA (dev->hp_txq.offset)),
+		    पढ़ो_fs (dev, Q_EA (dev->tx_relq.offset)) -
+		    पढ़ो_fs (dev, Q_SA (dev->tx_relq.offset)));
 
-	func_exit ();
-	return 0;
-}
+	func_निकास ();
+	वापस 0;
+पूर्ण
 
 
-/* Some function placeholders for functions we don't yet support. */
+/* Some function placeholders क्रम functions we करोn't yet support. */
 
-#if 0
-static int fs_ioctl(struct atm_dev *dev,unsigned int cmd,void __user *arg)
-{
+#अगर 0
+अटल पूर्णांक fs_ioctl(काष्ठा aपंचांग_dev *dev,अचिन्हित पूर्णांक cmd,व्योम __user *arg)
+अणु
 	func_enter ();
-	func_exit ();
-	return -ENOIOCTLCMD;
-}
+	func_निकास ();
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
 
-static int fs_getsockopt(struct atm_vcc *vcc,int level,int optname,
-			 void __user *optval,int optlen)
-{
+अटल पूर्णांक fs_माला_लोockopt(काष्ठा aपंचांग_vcc *vcc,पूर्णांक level,पूर्णांक optname,
+			 व्योम __user *optval,पूर्णांक optlen)
+अणु
 	func_enter ();
-	func_exit ();
-	return 0;
-}
+	func_निकास ();
+	वापस 0;
+पूर्ण
 
 
-static int fs_setsockopt(struct atm_vcc *vcc,int level,int optname,
-			 void __user *optval,unsigned int optlen)
-{
+अटल पूर्णांक fs_setsockopt(काष्ठा aपंचांग_vcc *vcc,पूर्णांक level,पूर्णांक optname,
+			 व्योम __user *optval,अचिन्हित पूर्णांक optlen)
+अणु
 	func_enter ();
-	func_exit ();
-	return 0;
-}
+	func_निकास ();
+	वापस 0;
+पूर्ण
 
 
-static void fs_phy_put(struct atm_dev *dev,unsigned char value,
-		       unsigned long addr)
-{
+अटल व्योम fs_phy_put(काष्ठा aपंचांग_dev *dev,अचिन्हित अक्षर value,
+		       अचिन्हित दीर्घ addr)
+अणु
 	func_enter ();
-	func_exit ();
-}
+	func_निकास ();
+पूर्ण
 
 
-static unsigned char fs_phy_get(struct atm_dev *dev,unsigned long addr)
-{
+अटल अचिन्हित अक्षर fs_phy_get(काष्ठा aपंचांग_dev *dev,अचिन्हित दीर्घ addr)
+अणु
 	func_enter ();
-	func_exit ();
-	return 0;
-}
+	func_निकास ();
+	वापस 0;
+पूर्ण
 
 
-static int fs_change_qos(struct atm_vcc *vcc,struct atm_qos *qos,int flags)
-{
+अटल पूर्णांक fs_change_qos(काष्ठा aपंचांग_vcc *vcc,काष्ठा aपंचांग_qos *qos,पूर्णांक flags)
+अणु
 	func_enter ();
-	func_exit ();
-	return 0;
-};
+	func_निकास ();
+	वापस 0;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर
 
 
-static const struct atmdev_ops ops = {
-	.open =         fs_open,
-	.close =        fs_close,
+अटल स्थिर काष्ठा aपंचांगdev_ops ops = अणु
+	.खोलो =         fs_खोलो,
+	.बंद =        fs_बंद,
 	.send =         fs_send,
 	.owner =        THIS_MODULE,
 	/* ioctl:          fs_ioctl, */
 	/* change_qos:     fs_change_qos, */
 
-	/* For now implement these internally here... */  
+	/* For now implement these पूर्णांकernally here... */  
 	/* phy_put:        fs_phy_put, */
 	/* phy_get:        fs_phy_get, */
-};
+पूर्ण;
 
 
-static void undocumented_pci_fix(struct pci_dev *pdev)
-{
-	u32 tint;
+अटल व्योम unकरोcumented_pci_fix(काष्ठा pci_dev *pdev)
+अणु
+	u32 tपूर्णांक;
 
-	/* The Windows driver says: */
+	/* The Winकरोws driver says: */
 	/* Switch off FireStream Retry Limit Threshold 
 	 */
 
-	/* The register at 0x28 is documented as "reserved", no further
+	/* The रेजिस्टर at 0x28 is करोcumented as "reserved", no further
 	   comments. */
 
-	pci_read_config_dword (pdev, 0x28, &tint);
-	if (tint != 0x80) {
-		tint = 0x80;
-		pci_write_config_dword (pdev, 0x28, tint);
-	}
-}
+	pci_पढ़ो_config_dword (pdev, 0x28, &tपूर्णांक);
+	अगर (tपूर्णांक != 0x80) अणु
+		tपूर्णांक = 0x80;
+		pci_ग_लिखो_config_dword (pdev, 0x28, tपूर्णांक);
+	पूर्ण
+पूर्ण
 
 
 
@@ -1311,187 +1312,187 @@ static void undocumented_pci_fix(struct pci_dev *pdev)
  *                              PHY routines                              *
  **************************************************************************/
 
-static void write_phy(struct fs_dev *dev, int regnum, int val)
-{
+अटल व्योम ग_लिखो_phy(काष्ठा fs_dev *dev, पूर्णांक regnum, पूर्णांक val)
+अणु
 	submit_command (dev,  &dev->hp_txq, QE_CMD_PRP_WR | QE_CMD_IMM_INQ,
 			regnum, val, 0);
-}
+पूर्ण
 
-static int init_phy(struct fs_dev *dev, struct reginit_item *reginit)
-{
-	int i;
+अटल पूर्णांक init_phy(काष्ठा fs_dev *dev, काष्ठा reginit_item *reginit)
+अणु
+	पूर्णांक i;
 
 	func_enter ();
-	while (reginit->reg != PHY_EOF) {
-		if (reginit->reg == PHY_CLEARALL) {
+	जबतक (reginit->reg != PHY_खातापूर्ण) अणु
+		अगर (reginit->reg == PHY_CLEARALL) अणु
 			/* "PHY_CLEARALL means clear all registers. Numregisters is in "val". */
-			for (i=0;i<reginit->val;i++) {
-				write_phy (dev, i, 0);
-			}
-		} else {
-			write_phy (dev, reginit->reg, reginit->val);
-		}
+			क्रम (i=0;i<reginit->val;i++) अणु
+				ग_लिखो_phy (dev, i, 0);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			ग_लिखो_phy (dev, reginit->reg, reginit->val);
+		पूर्ण
 		reginit++;
-	}
-	func_exit ();
-	return 0;
-}
+	पूर्ण
+	func_निकास ();
+	वापस 0;
+पूर्ण
 
-static void reset_chip (struct fs_dev *dev)
-{
-	int i;
+अटल व्योम reset_chip (काष्ठा fs_dev *dev)
+अणु
+	पूर्णांक i;
 
-	write_fs (dev, SARMODE0, SARMODE0_SRTS0);
+	ग_लिखो_fs (dev, SARMODE0, SARMODE0_SRTS0);
 
-	/* Undocumented delay */
+	/* Unकरोcumented delay */
 	udelay (128);
 
-	/* The "internal registers are documented to all reset to zero, but 
-	   comments & code in the Windows driver indicates that the pools are
+	/* The "पूर्णांकernal रेजिस्टरs are करोcumented to all reset to zero, but 
+	   comments & code in the Winकरोws driver indicates that the pools are
 	   NOT reset. */
-	for (i=0;i < FS_NR_FREE_POOLS;i++) {
-		write_fs (dev, FP_CNF (RXB_FP(i)), 0);
-		write_fs (dev, FP_SA  (RXB_FP(i)), 0);
-		write_fs (dev, FP_EA  (RXB_FP(i)), 0);
-		write_fs (dev, FP_CNT (RXB_FP(i)), 0);
-		write_fs (dev, FP_CTU (RXB_FP(i)), 0);
-	}
+	क्रम (i=0;i < FS_NR_FREE_POOLS;i++) अणु
+		ग_लिखो_fs (dev, FP_CNF (RXB_FP(i)), 0);
+		ग_लिखो_fs (dev, FP_SA  (RXB_FP(i)), 0);
+		ग_लिखो_fs (dev, FP_EA  (RXB_FP(i)), 0);
+		ग_लिखो_fs (dev, FP_CNT (RXB_FP(i)), 0);
+		ग_लिखो_fs (dev, FP_CTU (RXB_FP(i)), 0);
+	पूर्ण
 
-	/* The same goes for the match channel registers, although those are
-	   NOT documented that way in the Windows driver. -- REW */
-	/* The Windows driver DOES write 0 to these registers somewhere in
+	/* The same goes क्रम the match channel रेजिस्टरs, although those are
+	   NOT करोcumented that way in the Winकरोws driver. -- REW */
+	/* The Winकरोws driver DOES ग_लिखो 0 to these रेजिस्टरs somewhere in
 	   the init sequence. However, a small hardware-feature, will
 	   prevent reception of data on VPI/VCI = 0/0 (Unless the channel
 	   allocated happens to have no disabled channels that have a lower
 	   number. -- REW */
 
-	/* Clear the match channel registers. */
-	if (IS_FS50 (dev)) {
-		for (i=0;i<FS50_NR_CHANNELS;i++) {
-			write_fs (dev, 0x200 + i * 4, -1);
-		}
-	}
-}
+	/* Clear the match channel रेजिस्टरs. */
+	अगर (IS_FS50 (dev)) अणु
+		क्रम (i=0;i<FS50_NR_CHANNELS;i++) अणु
+			ग_लिखो_fs (dev, 0x200 + i * 4, -1);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void *aligned_kmalloc(int size, gfp_t flags, int alignment)
-{
-	void  *t;
+अटल व्योम *aligned_kदो_स्मृति(पूर्णांक size, gfp_t flags, पूर्णांक alignment)
+अणु
+	व्योम  *t;
 
-	if (alignment <= 0x10) {
-		t = kmalloc (size, flags);
-		if ((unsigned long)t & (alignment-1)) {
-			printk ("Kmalloc doesn't align things correctly! %p\n", t);
-			kfree (t);
-			return aligned_kmalloc (size, flags, alignment * 4);
-		}
-		return t;
-	}
-	printk (KERN_ERR "Request for > 0x10 alignment not yet implemented (hard!)\n");
-	return NULL;
-}
+	अगर (alignment <= 0x10) अणु
+		t = kदो_स्मृति (size, flags);
+		अगर ((अचिन्हित दीर्घ)t & (alignment-1)) अणु
+			prपूर्णांकk ("Kmalloc doesn't align things correctly! %p\n", t);
+			kमुक्त (t);
+			वापस aligned_kदो_स्मृति (size, flags, alignment * 4);
+		पूर्ण
+		वापस t;
+	पूर्ण
+	prपूर्णांकk (KERN_ERR "Request for > 0x10 alignment not yet implemented (hard!)\n");
+	वापस शून्य;
+पूर्ण
 
-static int init_q(struct fs_dev *dev, struct queue *txq, int queue,
-		  int nentries, int is_rq)
-{
-	int sz = nentries * sizeof (struct FS_QENTRY);
-	struct FS_QENTRY *p;
+अटल पूर्णांक init_q(काष्ठा fs_dev *dev, काष्ठा queue *txq, पूर्णांक queue,
+		  पूर्णांक nentries, पूर्णांक is_rq)
+अणु
+	पूर्णांक sz = nentries * माप (काष्ठा FS_QENTRY);
+	काष्ठा FS_QENTRY *p;
 
 	func_enter ();
 
-	fs_dprintk (FS_DEBUG_INIT, "Initializing queue at %x: %d entries:\n",
+	fs_dprपूर्णांकk (FS_DEBUG_INIT, "Initializing queue at %x: %d entries:\n",
 		    queue, nentries);
 
-	p = aligned_kmalloc (sz, GFP_KERNEL, 0x10);
-	fs_dprintk (FS_DEBUG_ALLOC, "Alloc queue: %p(%d)\n", p, sz);
+	p = aligned_kदो_स्मृति (sz, GFP_KERNEL, 0x10);
+	fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc queue: %p(%d)\n", p, sz);
 
-	if (!p) return 0;
+	अगर (!p) वापस 0;
 
-	write_fs (dev, Q_SA(queue), virt_to_bus(p));
-	write_fs (dev, Q_EA(queue), virt_to_bus(p+nentries-1));
-	write_fs (dev, Q_WP(queue), virt_to_bus(p));
-	write_fs (dev, Q_RP(queue), virt_to_bus(p));
-	if (is_rq) {
-		/* Configuration for the receive queue: 0: interrupt immediately,
-		   no pre-warning to empty queues: We do our best to keep the
+	ग_लिखो_fs (dev, Q_SA(queue), virt_to_bus(p));
+	ग_लिखो_fs (dev, Q_EA(queue), virt_to_bus(p+nentries-1));
+	ग_लिखो_fs (dev, Q_WP(queue), virt_to_bus(p));
+	ग_लिखो_fs (dev, Q_RP(queue), virt_to_bus(p));
+	अगर (is_rq) अणु
+		/* Configuration क्रम the receive queue: 0: पूर्णांकerrupt immediately,
+		   no pre-warning to empty queues: We करो our best to keep the
 		   queue filled anyway. */
-		write_fs (dev, Q_CNF(queue), 0 ); 
-	}
+		ग_लिखो_fs (dev, Q_CNF(queue), 0 ); 
+	पूर्ण
 
 	txq->sa = p;
 	txq->ea = p;
 	txq->offset = queue; 
 
-	func_exit ();
-	return 1;
-}
+	func_निकास ();
+	वापस 1;
+पूर्ण
 
 
-static int init_fp(struct fs_dev *dev, struct freepool *fp, int queue,
-		   int bufsize, int nr_buffers)
-{
+अटल पूर्णांक init_fp(काष्ठा fs_dev *dev, काष्ठा मुक्तpool *fp, पूर्णांक queue,
+		   पूर्णांक bufsize, पूर्णांक nr_buffers)
+अणु
 	func_enter ();
 
-	fs_dprintk (FS_DEBUG_INIT, "Initializing free pool at %x:\n", queue);
+	fs_dprपूर्णांकk (FS_DEBUG_INIT, "Initializing free pool at %x:\n", queue);
 
-	write_fs (dev, FP_CNF(queue), (bufsize * RBFP_RBS) | RBFP_RBSVAL | RBFP_CME);
-	write_fs (dev, FP_SA(queue),  0);
-	write_fs (dev, FP_EA(queue),  0);
-	write_fs (dev, FP_CTU(queue), 0);
-	write_fs (dev, FP_CNT(queue), 0);
+	ग_लिखो_fs (dev, FP_CNF(queue), (bufsize * RBFP_RBS) | RBFP_RBSVAL | RBFP_CME);
+	ग_लिखो_fs (dev, FP_SA(queue),  0);
+	ग_लिखो_fs (dev, FP_EA(queue),  0);
+	ग_लिखो_fs (dev, FP_CTU(queue), 0);
+	ग_लिखो_fs (dev, FP_CNT(queue), 0);
 
 	fp->offset = queue; 
 	fp->bufsize = bufsize;
 	fp->nr_buffers = nr_buffers;
 
-	func_exit ();
-	return 1;
-}
+	func_निकास ();
+	वापस 1;
+पूर्ण
 
 
-static inline int nr_buffers_in_freepool (struct fs_dev *dev, struct freepool *fp)
-{
-#if 0
+अटल अंतरभूत पूर्णांक nr_buffers_in_मुक्तpool (काष्ठा fs_dev *dev, काष्ठा मुक्तpool *fp)
+अणु
+#अगर 0
 	/* This seems to be unreliable.... */
-	return read_fs (dev, FP_CNT (fp->offset));
-#else
-	return fp->n;
-#endif
-}
+	वापस पढ़ो_fs (dev, FP_CNT (fp->offset));
+#अन्यथा
+	वापस fp->n;
+#पूर्ण_अगर
+पूर्ण
 
 
-/* Check if this gets going again if a pool ever runs out.  -- Yes, it
-   does. I've seen "receive abort: no buffers" and things started
+/* Check अगर this माला_लो going again अगर a pool ever runs out.  -- Yes, it
+   करोes. I've seen "receive abort: no buffers" and things started
    working again after that...  -- REW */
 
-static void top_off_fp (struct fs_dev *dev, struct freepool *fp,
+अटल व्योम top_off_fp (काष्ठा fs_dev *dev, काष्ठा मुक्तpool *fp,
 			gfp_t gfp_flags)
-{
-	struct FS_BPENTRY *qe, *ne;
-	struct sk_buff *skb;
-	int n = 0;
-	u32 qe_tmp;
+अणु
+	काष्ठा FS_BPENTRY *qe, *ne;
+	काष्ठा sk_buff *skb;
+	पूर्णांक n = 0;
+	u32 qe_पंचांगp;
 
-	fs_dprintk (FS_DEBUG_QUEUE, "Topping off queue at %x (%d-%d/%d)\n", 
-		    fp->offset, read_fs (dev, FP_CNT (fp->offset)), fp->n, 
+	fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "Topping off queue at %x (%d-%d/%d)\n", 
+		    fp->offset, पढ़ो_fs (dev, FP_CNT (fp->offset)), fp->n, 
 		    fp->nr_buffers);
-	while (nr_buffers_in_freepool(dev, fp) < fp->nr_buffers) {
+	जबतक (nr_buffers_in_मुक्तpool(dev, fp) < fp->nr_buffers) अणु
 
 		skb = alloc_skb (fp->bufsize, gfp_flags);
-		fs_dprintk (FS_DEBUG_ALLOC, "Alloc rec-skb: %p(%d)\n", skb, fp->bufsize);
-		if (!skb) break;
-		ne = kmalloc (sizeof (struct FS_BPENTRY), gfp_flags);
-		fs_dprintk (FS_DEBUG_ALLOC, "Alloc rec-d: %p(%zd)\n", ne, sizeof (struct FS_BPENTRY));
-		if (!ne) {
-			fs_dprintk (FS_DEBUG_ALLOC, "Free rec-skb: %p\n", skb);
-			dev_kfree_skb_any (skb);
-			break;
-		}
+		fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc rec-skb: %p(%d)\n", skb, fp->bufsize);
+		अगर (!skb) अवरोध;
+		ne = kदो_स्मृति (माप (काष्ठा FS_BPENTRY), gfp_flags);
+		fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc rec-d: %p(%zd)\n", ne, माप (काष्ठा FS_BPENTRY));
+		अगर (!ne) अणु
+			fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free rec-skb: %p\n", skb);
+			dev_kमुक्त_skb_any (skb);
+			अवरोध;
+		पूर्ण
 
-		fs_dprintk (FS_DEBUG_QUEUE, "Adding skb %p desc %p -> %p(%p) ", 
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "Adding skb %p desc %p -> %p(%p) ", 
 			    skb, ne, skb->data, skb->head);
 		n++;
 		ne->flags = FP_FLAGS_EPI | fp->bufsize;
-		ne->next  = virt_to_bus (NULL);
+		ne->next  = virt_to_bus (शून्य);
 		ne->bsa   = virt_to_bus (skb->data);
 		ne->aal_bufsize = fp->bufsize;
 		ne->skb = skb;
@@ -1499,179 +1500,179 @@ static void top_off_fp (struct fs_dev *dev, struct freepool *fp,
 
 		/*
 		 * FIXME: following code encodes and decodes
-		 * machine pointers (could be 64-bit) into a
-		 * 32-bit register.
+		 * machine poपूर्णांकers (could be 64-bit) पूर्णांकo a
+		 * 32-bit रेजिस्टर.
 		 */
 
-		qe_tmp = read_fs (dev, FP_EA(fp->offset));
-		fs_dprintk (FS_DEBUG_QUEUE, "link at %x\n", qe_tmp);
-		if (qe_tmp) {
-			qe = bus_to_virt ((long) qe_tmp);
+		qe_पंचांगp = पढ़ो_fs (dev, FP_EA(fp->offset));
+		fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "link at %x\n", qe_पंचांगp);
+		अगर (qe_पंचांगp) अणु
+			qe = bus_to_virt ((दीर्घ) qe_पंचांगp);
 			qe->next = virt_to_bus(ne);
 			qe->flags &= ~FP_FLAGS_EPI;
-		} else
-			write_fs (dev, FP_SA(fp->offset), virt_to_bus(ne));
+		पूर्ण अन्यथा
+			ग_लिखो_fs (dev, FP_SA(fp->offset), virt_to_bus(ne));
 
-		write_fs (dev, FP_EA(fp->offset), virt_to_bus (ne));
+		ग_लिखो_fs (dev, FP_EA(fp->offset), virt_to_bus (ne));
 		fp->n++;   /* XXX Atomic_inc? */
-		write_fs (dev, FP_CTU(fp->offset), 1);
-	}
+		ग_लिखो_fs (dev, FP_CTU(fp->offset), 1);
+	पूर्ण
 
-	fs_dprintk (FS_DEBUG_QUEUE, "Added %d entries. \n", n);
-}
+	fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "Added %d entries. \n", n);
+पूर्ण
 
-static void free_queue(struct fs_dev *dev, struct queue *txq)
-{
+अटल व्योम मुक्त_queue(काष्ठा fs_dev *dev, काष्ठा queue *txq)
+अणु
 	func_enter ();
 
-	write_fs (dev, Q_SA(txq->offset), 0);
-	write_fs (dev, Q_EA(txq->offset), 0);
-	write_fs (dev, Q_RP(txq->offset), 0);
-	write_fs (dev, Q_WP(txq->offset), 0);
+	ग_लिखो_fs (dev, Q_SA(txq->offset), 0);
+	ग_लिखो_fs (dev, Q_EA(txq->offset), 0);
+	ग_लिखो_fs (dev, Q_RP(txq->offset), 0);
+	ग_लिखो_fs (dev, Q_WP(txq->offset), 0);
 	/* Configuration ? */
 
-	fs_dprintk (FS_DEBUG_ALLOC, "Free queue: %p\n", txq->sa);
-	kfree (txq->sa);
+	fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free queue: %p\n", txq->sa);
+	kमुक्त (txq->sa);
 
-	func_exit ();
-}
+	func_निकास ();
+पूर्ण
 
-static void free_freepool(struct fs_dev *dev, struct freepool *fp)
-{
+अटल व्योम मुक्त_मुक्तpool(काष्ठा fs_dev *dev, काष्ठा मुक्तpool *fp)
+अणु
 	func_enter ();
 
-	write_fs (dev, FP_CNF(fp->offset), 0);
-	write_fs (dev, FP_SA (fp->offset), 0);
-	write_fs (dev, FP_EA (fp->offset), 0);
-	write_fs (dev, FP_CNT(fp->offset), 0);
-	write_fs (dev, FP_CTU(fp->offset), 0);
+	ग_लिखो_fs (dev, FP_CNF(fp->offset), 0);
+	ग_लिखो_fs (dev, FP_SA (fp->offset), 0);
+	ग_लिखो_fs (dev, FP_EA (fp->offset), 0);
+	ग_लिखो_fs (dev, FP_CNT(fp->offset), 0);
+	ग_लिखो_fs (dev, FP_CTU(fp->offset), 0);
 
-	func_exit ();
-}
+	func_निकास ();
+पूर्ण
 
 
 
-static irqreturn_t fs_irq (int irq, void *dev_id) 
-{
-	int i;
+अटल irqवापस_t fs_irq (पूर्णांक irq, व्योम *dev_id) 
+अणु
+	पूर्णांक i;
 	u32 status;
-	struct fs_dev *dev = dev_id;
+	काष्ठा fs_dev *dev = dev_id;
 
-	status = read_fs (dev, ISR);
-	if (!status)
-		return IRQ_NONE;
+	status = पढ़ो_fs (dev, ISR);
+	अगर (!status)
+		वापस IRQ_NONE;
 
 	func_enter ();
 
-#ifdef IRQ_RATE_LIMIT
+#अगर_घोषित IRQ_RATE_LIMIT
 	/* Aaargh! I'm ashamed. This costs more lines-of-code than the actual 
-	   interrupt routine!. (Well, used to when I wrote that comment) -- REW */
-	{
-		static int lastjif;
-		static int nintr=0;
+	   पूर्णांकerrupt routine!. (Well, used to when I wrote that comment) -- REW */
+	अणु
+		अटल पूर्णांक lastjअगर;
+		अटल पूर्णांक nपूर्णांकr=0;
     
-		if (lastjif == jiffies) {
-			if (++nintr > IRQ_RATE_LIMIT) {
-				free_irq (dev->irq, dev_id);
-				printk (KERN_ERR "fs: Too many interrupts. Turning off interrupt %d.\n", 
+		अगर (lastjअगर == jअगरfies) अणु
+			अगर (++nपूर्णांकr > IRQ_RATE_LIMIT) अणु
+				मुक्त_irq (dev->irq, dev_id);
+				prपूर्णांकk (KERN_ERR "fs: Too many interrupts. Turning off interrupt %d.\n", 
 					dev->irq);
-			}
-		} else {
-			lastjif = jiffies;
-			nintr = 0;
-		}
-	}
-#endif
-	fs_dprintk (FS_DEBUG_QUEUE, "in intr: txq %d txrq %d\n", 
-		    read_fs (dev, Q_EA (dev->hp_txq.offset)) -
-		    read_fs (dev, Q_SA (dev->hp_txq.offset)),
-		    read_fs (dev, Q_EA (dev->tx_relq.offset)) -
-		    read_fs (dev, Q_SA (dev->tx_relq.offset)));
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			lastjअगर = jअगरfies;
+			nपूर्णांकr = 0;
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	fs_dprपूर्णांकk (FS_DEBUG_QUEUE, "in intr: txq %d txrq %d\n", 
+		    पढ़ो_fs (dev, Q_EA (dev->hp_txq.offset)) -
+		    पढ़ो_fs (dev, Q_SA (dev->hp_txq.offset)),
+		    पढ़ो_fs (dev, Q_EA (dev->tx_relq.offset)) -
+		    पढ़ो_fs (dev, Q_SA (dev->tx_relq.offset)));
 
-	/* print the bits in the ISR register. */
-	if (fs_debug & FS_DEBUG_IRQ) {
+	/* prपूर्णांक the bits in the ISR रेजिस्टर. */
+	अगर (fs_debug & FS_DEBUG_IRQ) अणु
 		/* The FS_DEBUG things are unnecessary here. But this way it is
-		   clear for grep that these are debug prints. */
-		fs_dprintk (FS_DEBUG_IRQ,  "IRQ status:");
-		for (i=0;i<27;i++) 
-			if (status & (1 << i)) 
-				fs_dprintk (FS_DEBUG_IRQ, " %s", irq_bitname[i]);
-		fs_dprintk (FS_DEBUG_IRQ, "\n");
-	}
+		   clear क्रम grep that these are debug prपूर्णांकs. */
+		fs_dprपूर्णांकk (FS_DEBUG_IRQ,  "IRQ status:");
+		क्रम (i=0;i<27;i++) 
+			अगर (status & (1 << i)) 
+				fs_dprपूर्णांकk (FS_DEBUG_IRQ, " %s", irq_bitname[i]);
+		fs_dprपूर्णांकk (FS_DEBUG_IRQ, "\n");
+	पूर्ण
   
-	if (status & ISR_RBRQ0_W) {
-		fs_dprintk (FS_DEBUG_IRQ, "Iiiin-coming (0)!!!!\n");
+	अगर (status & ISR_RBRQ0_W) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_IRQ, "Iiiin-coming (0)!!!!\n");
 		process_incoming (dev, &dev->rx_rq[0]);
 		/* items mentioned on RBRQ0 are from FP 0 or 1. */
 		top_off_fp (dev, &dev->rx_fp[0], GFP_ATOMIC);
 		top_off_fp (dev, &dev->rx_fp[1], GFP_ATOMIC);
-	}
+	पूर्ण
 
-	if (status & ISR_RBRQ1_W) {
-		fs_dprintk (FS_DEBUG_IRQ, "Iiiin-coming (1)!!!!\n");
+	अगर (status & ISR_RBRQ1_W) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_IRQ, "Iiiin-coming (1)!!!!\n");
 		process_incoming (dev, &dev->rx_rq[1]);
 		top_off_fp (dev, &dev->rx_fp[2], GFP_ATOMIC);
 		top_off_fp (dev, &dev->rx_fp[3], GFP_ATOMIC);
-	}
+	पूर्ण
 
-	if (status & ISR_RBRQ2_W) {
-		fs_dprintk (FS_DEBUG_IRQ, "Iiiin-coming (2)!!!!\n");
+	अगर (status & ISR_RBRQ2_W) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_IRQ, "Iiiin-coming (2)!!!!\n");
 		process_incoming (dev, &dev->rx_rq[2]);
 		top_off_fp (dev, &dev->rx_fp[4], GFP_ATOMIC);
 		top_off_fp (dev, &dev->rx_fp[5], GFP_ATOMIC);
-	}
+	पूर्ण
 
-	if (status & ISR_RBRQ3_W) {
-		fs_dprintk (FS_DEBUG_IRQ, "Iiiin-coming (3)!!!!\n");
+	अगर (status & ISR_RBRQ3_W) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_IRQ, "Iiiin-coming (3)!!!!\n");
 		process_incoming (dev, &dev->rx_rq[3]);
 		top_off_fp (dev, &dev->rx_fp[6], GFP_ATOMIC);
 		top_off_fp (dev, &dev->rx_fp[7], GFP_ATOMIC);
-	}
+	पूर्ण
 
-	if (status & ISR_CSQ_W) {
-		fs_dprintk (FS_DEBUG_IRQ, "Command executed ok!\n");
-		process_return_queue (dev, &dev->st_q);
-	}
+	अगर (status & ISR_CSQ_W) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_IRQ, "Command executed ok!\n");
+		process_वापस_queue (dev, &dev->st_q);
+	पूर्ण
 
-	if (status & ISR_TBRQ_W) {
-		fs_dprintk (FS_DEBUG_IRQ, "Data transmitted!\n");
-		process_txdone_queue (dev, &dev->tx_relq);
-	}
+	अगर (status & ISR_TBRQ_W) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_IRQ, "Data transmitted!\n");
+		process_txकरोne_queue (dev, &dev->tx_relq);
+	पूर्ण
 
-	func_exit ();
-	return IRQ_HANDLED;
-}
+	func_निकास ();
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-#ifdef FS_POLL_FREQ
-static void fs_poll (struct timer_list *t)
-{
-	struct fs_dev *dev = from_timer(dev, t, timer);
+#अगर_घोषित FS_POLL_FREQ
+अटल व्योम fs_poll (काष्ठा समयr_list *t)
+अणु
+	काष्ठा fs_dev *dev = from_समयr(dev, t, समयr);
   
 	fs_irq (0, dev);
-	dev->timer.expires = jiffies + FS_POLL_FREQ;
-	add_timer (&dev->timer);
-}
-#endif
+	dev->समयr.expires = jअगरfies + FS_POLL_FREQ;
+	add_समयr (&dev->समयr);
+पूर्ण
+#पूर्ण_अगर
 
-static int fs_init(struct fs_dev *dev)
-{
-	struct pci_dev  *pci_dev;
-	int isr, to;
-	int i;
+अटल पूर्णांक fs_init(काष्ठा fs_dev *dev)
+अणु
+	काष्ठा pci_dev  *pci_dev;
+	पूर्णांक isr, to;
+	पूर्णांक i;
 
 	func_enter ();
 	pci_dev = dev->pci_dev;
 
-	printk (KERN_INFO "found a FireStream %d card, base %16llx, irq%d.\n",
+	prपूर्णांकk (KERN_INFO "found a FireStream %d card, base %16llx, irq%d.\n",
 		IS_FS50(dev)?50:155,
-		(unsigned long long)pci_resource_start(pci_dev, 0),
+		(अचिन्हित दीर्घ दीर्घ)pci_resource_start(pci_dev, 0),
 		dev->pci_dev->irq);
 
-	if (fs_debug & FS_DEBUG_INIT)
-		my_hd ((unsigned char *) dev, sizeof (*dev));
+	अगर (fs_debug & FS_DEBUG_INIT)
+		my_hd ((अचिन्हित अक्षर *) dev, माप (*dev));
 
-	undocumented_pci_fix (pci_dev);
+	unकरोcumented_pci_fix (pci_dev);
 
 	dev->hw_base = pci_resource_start(pci_dev, 0);
 
@@ -1679,8 +1680,8 @@ static int fs_init(struct fs_dev *dev)
 
 	reset_chip (dev);
   
-	write_fs (dev, SARMODE0, 0 
-		  | (0 * SARMODE0_SHADEN) /* We don't use shadow registers. */
+	ग_लिखो_fs (dev, SARMODE0, 0 
+		  | (0 * SARMODE0_SHADEN) /* We करोn't use shaकरोw रेजिस्टरs. */
 		  | (1 * SARMODE0_INTMODE_READCLEAR)
 		  | (1 * SARMODE0_CWRE)
 		  | (IS_FS50(dev) ? SARMODE0_PRPWT_FS50_5:
@@ -1698,34 +1699,34 @@ static int fs_init(struct fs_dev *dev)
 	/* 10ms * 100 is 1 second. That should be enough, as AN3:9 says it takes
 	   1ms. */
 	to = 100;
-	while (--to) {
-		isr = read_fs (dev, ISR);
+	जबतक (--to) अणु
+		isr = पढ़ो_fs (dev, ISR);
 
-		/* This bit is documented as "RESERVED" */
-		if (isr & ISR_INIT_ERR) {
-			printk (KERN_ERR "Error initializing the FS... \n");
-			goto unmap;
-		}
-		if (isr & ISR_INIT) {
-			fs_dprintk (FS_DEBUG_INIT, "Ha! Initialized OK!\n");
-			break;
-		}
+		/* This bit is करोcumented as "RESERVED" */
+		अगर (isr & ISR_INIT_ERR) अणु
+			prपूर्णांकk (KERN_ERR "Error initializing the FS... \n");
+			जाओ unmap;
+		पूर्ण
+		अगर (isr & ISR_INIT) अणु
+			fs_dprपूर्णांकk (FS_DEBUG_INIT, "Ha! Initialized OK!\n");
+			अवरोध;
+		पूर्ण
 
 		/* Try again after 10ms. */
 		msleep(10);
-	}
+	पूर्ण
 
-	if (!to) {
-		printk (KERN_ERR "timeout initializing the FS... \n");
-		goto unmap;
-	}
+	अगर (!to) अणु
+		prपूर्णांकk (KERN_ERR "timeout initializing the FS... \n");
+		जाओ unmap;
+	पूर्ण
 
-	/* XXX fix for fs155 */
+	/* XXX fix क्रम fs155 */
 	dev->channel_mask = 0x1f; 
 	dev->channo = 0;
 
 	/* AN3: 10 */
-	write_fs (dev, SARMODE1, 0 
+	ग_लिखो_fs (dev, SARMODE1, 0 
 		  | (fs_keystream * SARMODE1_DEFHEC) /* XXX PHY */
 		  | ((loopback == 1) * SARMODE1_TSTLP) /* XXX Loopback mode enable... */
 		  | (1 * SARMODE1_DCRM)
@@ -1742,105 +1743,105 @@ static int fs_init(struct fs_dev *dev)
 		  | (1 * SARMODE1_HECM2)
 		  | (1 * SARMODE1_HECM1)
 		  | (1 * SARMODE1_HECM0)
-		  | (1 << 12) /* That's what hang's driver does. Program to 0 */
+		  | (1 << 12) /* That's what hang's driver करोes. Program to 0 */
 		  | (0 * 0xff) /* XXX FS155 */);
 
 
 	/* Cal prescale etc */
 
 	/* AN3: 11 */
-	write_fs (dev, TMCONF, 0x0000000f);
-	write_fs (dev, CALPRESCALE, 0x01010101 * num);
-	write_fs (dev, 0x80, 0x000F00E4);
+	ग_लिखो_fs (dev, TMCONF, 0x0000000f);
+	ग_लिखो_fs (dev, CALPRESCALE, 0x01010101 * num);
+	ग_लिखो_fs (dev, 0x80, 0x000F00E4);
 
 	/* AN3: 12 */
-	write_fs (dev, CELLOSCONF, 0
+	ग_लिखो_fs (dev, CELLOSCONF, 0
 		  | (   0 * CELLOSCONF_CEN)
 		  | (       CELLOSCONF_SC1)
 		  | (0x80 * CELLOSCONF_COBS)
 		  | (num  * CELLOSCONF_COPK)  /* Changed from 0xff to 0x5a */
-		  | (num  * CELLOSCONF_COST));/* after a hint from Hang. 
-					       * performance jumped 50->70... */
+		  | (num  * CELLOSCONF_COST));/* after a hपूर्णांक from Hang. 
+					       * perक्रमmance jumped 50->70... */
 
 	/* Magic value by Hang */
-	write_fs (dev, CELLOSCONF_COST, 0x0B809191);
+	ग_लिखो_fs (dev, CELLOSCONF_COST, 0x0B809191);
 
-	if (IS_FS50 (dev)) {
-		write_fs (dev, RAS0, RAS0_DCD_XHLT);
-		dev->atm_dev->ci_range.vpi_bits = 12;
-		dev->atm_dev->ci_range.vci_bits = 16;
+	अगर (IS_FS50 (dev)) अणु
+		ग_लिखो_fs (dev, RAS0, RAS0_DCD_XHLT);
+		dev->aपंचांग_dev->ci_range.vpi_bits = 12;
+		dev->aपंचांग_dev->ci_range.vci_bits = 16;
 		dev->nchannels = FS50_NR_CHANNELS;
-	} else {
-		write_fs (dev, RAS0, RAS0_DCD_XHLT 
+	पूर्ण अन्यथा अणु
+		ग_लिखो_fs (dev, RAS0, RAS0_DCD_XHLT 
 			  | (((1 << FS155_VPI_BITS) - 1) * RAS0_VPSEL)
 			  | (((1 << FS155_VCI_BITS) - 1) * RAS0_VCSEL));
 		/* We can chose the split arbitrarily. We might be able to 
-		   support more. Whatever. This should do for now. */
-		dev->atm_dev->ci_range.vpi_bits = FS155_VPI_BITS;
-		dev->atm_dev->ci_range.vci_bits = FS155_VCI_BITS;
+		   support more. Whatever. This should करो क्रम now. */
+		dev->aपंचांग_dev->ci_range.vpi_bits = FS155_VPI_BITS;
+		dev->aपंचांग_dev->ci_range.vci_bits = FS155_VCI_BITS;
     
 		/* Address bits we can't use should be compared to 0. */
-		write_fs (dev, RAC, 0);
+		ग_लिखो_fs (dev, RAC, 0);
 
 		/* Manual (AN9, page 6) says ASF1=0 means compare Utopia address
 		 * too.  I can't find ASF1 anywhere. Anyway, we AND with just the
 		 * other bits, then compare with 0, which is exactly what we
 		 * want. */
-		write_fs (dev, RAM, (1 << (28 - FS155_VPI_BITS - FS155_VCI_BITS)) - 1);
+		ग_लिखो_fs (dev, RAM, (1 << (28 - FS155_VPI_BITS - FS155_VCI_BITS)) - 1);
 		dev->nchannels = FS155_NR_CHANNELS;
-	}
-	dev->atm_vccs = kcalloc (dev->nchannels, sizeof (struct atm_vcc *),
+	पूर्ण
+	dev->aपंचांग_vccs = kसुस्मृति (dev->nchannels, माप (काष्ठा aपंचांग_vcc *),
 				 GFP_KERNEL);
-	fs_dprintk (FS_DEBUG_ALLOC, "Alloc atmvccs: %p(%zd)\n",
-		    dev->atm_vccs, dev->nchannels * sizeof (struct atm_vcc *));
+	fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc atmvccs: %p(%zd)\n",
+		    dev->aपंचांग_vccs, dev->nchannels * माप (काष्ठा aपंचांग_vcc *));
 
-	if (!dev->atm_vccs) {
-		printk (KERN_WARNING "Couldn't allocate memory for VCC buffers. Woops!\n");
+	अगर (!dev->aपंचांग_vccs) अणु
+		prपूर्णांकk (KERN_WARNING "Couldn't allocate memory for VCC buffers. Woops!\n");
 		/* XXX Clean up..... */
-		goto unmap;
-	}
+		जाओ unmap;
+	पूर्ण
 
 	dev->tx_inuse = kzalloc (dev->nchannels / 8 /* bits/byte */ , GFP_KERNEL);
-	fs_dprintk (FS_DEBUG_ALLOC, "Alloc tx_inuse: %p(%d)\n", 
-		    dev->atm_vccs, dev->nchannels / 8);
+	fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc tx_inuse: %p(%d)\n", 
+		    dev->aपंचांग_vccs, dev->nchannels / 8);
 
-	if (!dev->tx_inuse) {
-		printk (KERN_WARNING "Couldn't allocate memory for tx_inuse bits!\n");
+	अगर (!dev->tx_inuse) अणु
+		prपूर्णांकk (KERN_WARNING "Couldn't allocate memory for tx_inuse bits!\n");
 		/* XXX Clean up..... */
-		goto unmap;
-	}
-	/* -- RAS1 : FS155 and 50 differ. Default (0) should be OK for both */
+		जाओ unmap;
+	पूर्ण
+	/* -- RAS1 : FS155 and 50 dअगरfer. Default (0) should be OK क्रम both */
 	/* -- RAS2 : FS50 only: Default is OK. */
 
-	/* DMAMODE, default should be OK. -- REW */
-	write_fs (dev, DMAMR, DMAMR_TX_MODE_FULL);
+	/* DMAMODE, शेष should be OK. -- REW */
+	ग_लिखो_fs (dev, DMAMR, DMAMR_TX_MODE_FULL);
 
 	init_q (dev, &dev->hp_txq, TX_PQ(TXQ_HP), TXQ_NENTRIES, 0);
 	init_q (dev, &dev->lp_txq, TX_PQ(TXQ_LP), TXQ_NENTRIES, 0);
 	init_q (dev, &dev->tx_relq, TXB_RQ, TXQ_NENTRIES, 1);
 	init_q (dev, &dev->st_q, ST_Q, TXQ_NENTRIES, 1);
 
-	for (i=0;i < FS_NR_FREE_POOLS;i++) {
+	क्रम (i=0;i < FS_NR_FREE_POOLS;i++) अणु
 		init_fp (dev, &dev->rx_fp[i], RXB_FP(i), 
 			 rx_buf_sizes[i], rx_pool_sizes[i]);
 		top_off_fp (dev, &dev->rx_fp[i], GFP_KERNEL);
-	}
+	पूर्ण
 
 
-	for (i=0;i < FS_NR_RX_QUEUES;i++)
+	क्रम (i=0;i < FS_NR_RX_QUEUES;i++)
 		init_q (dev, &dev->rx_rq[i], RXB_RQ(i), RXRQ_NENTRIES, 1);
 
 	dev->irq = pci_dev->irq;
-	if (request_irq (dev->irq, fs_irq, IRQF_SHARED, "firestream", dev)) {
-		printk (KERN_WARNING "couldn't get irq %d for firestream.\n", pci_dev->irq);
-		/* XXX undo all previous stuff... */
-		goto unmap;
-	}
-	fs_dprintk (FS_DEBUG_INIT, "Grabbed irq %d for dev at %p.\n", dev->irq, dev);
+	अगर (request_irq (dev->irq, fs_irq, IRQF_SHARED, "firestream", dev)) अणु
+		prपूर्णांकk (KERN_WARNING "couldn't get irq %d for firestream.\n", pci_dev->irq);
+		/* XXX unकरो all previous stuff... */
+		जाओ unmap;
+	पूर्ण
+	fs_dprपूर्णांकk (FS_DEBUG_INIT, "Grabbed irq %d for dev at %p.\n", dev->irq, dev);
   
-	/* We want to be notified of most things. Just the statistics count
-	   overflows are not interesting */
-	write_fs (dev, IMR, 0
+	/* We want to be notअगरied of most things. Just the statistics count
+	   overflows are not पूर्णांकeresting */
+	ग_लिखो_fs (dev, IMR, 0
 		  | ISR_RBRQ0_W 
 		  | ISR_RBRQ1_W 
 		  | ISR_RBRQ2_W 
@@ -1848,8 +1849,8 @@ static int fs_init(struct fs_dev *dev)
 		  | ISR_TBRQ_W
 		  | ISR_CSQ_W);
 
-	write_fs (dev, SARMODE0, 0 
-		  | (0 * SARMODE0_SHADEN) /* We don't use shadow registers. */
+	ग_लिखो_fs (dev, SARMODE0, 0 
+		  | (0 * SARMODE0_SHADEN) /* We करोn't use shaकरोw रेजिस्टरs. */
 		  | (1 * SARMODE0_GINT)
 		  | (1 * SARMODE0_INTMODE_READCLEAR)
 		  | (0 * SARMODE0_CWRE)
@@ -1868,186 +1869,186 @@ static int fs_init(struct fs_dev *dev)
 
 	init_phy (dev, PHY_NTC_INIT);
 
-	if (loopback == 2) {
-		write_phy (dev, 0x39, 0x000e);
-	}
+	अगर (loopback == 2) अणु
+		ग_लिखो_phy (dev, 0x39, 0x000e);
+	पूर्ण
 
-#ifdef FS_POLL_FREQ
-	timer_setup(&dev->timer, fs_poll, 0);
-	dev->timer.expires = jiffies + FS_POLL_FREQ;
-	add_timer (&dev->timer);
-#endif
+#अगर_घोषित FS_POLL_FREQ
+	समयr_setup(&dev->समयr, fs_poll, 0);
+	dev->समयr.expires = jअगरfies + FS_POLL_FREQ;
+	add_समयr (&dev->समयr);
+#पूर्ण_अगर
 
-	dev->atm_dev->dev_data = dev;
+	dev->aपंचांग_dev->dev_data = dev;
   
-	func_exit ();
-	return 0;
+	func_निकास ();
+	वापस 0;
 unmap:
 	iounmap(dev->base);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int firestream_init_one(struct pci_dev *pci_dev,
-			       const struct pci_device_id *ent)
-{
-	struct atm_dev *atm_dev;
-	struct fs_dev *fs_dev;
+अटल पूर्णांक firestream_init_one(काष्ठा pci_dev *pci_dev,
+			       स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा aपंचांग_dev *aपंचांग_dev;
+	काष्ठा fs_dev *fs_dev;
 	
-	if (pci_enable_device(pci_dev)) 
-		goto err_out;
+	अगर (pci_enable_device(pci_dev)) 
+		जाओ err_out;
 
-	fs_dev = kzalloc (sizeof (struct fs_dev), GFP_KERNEL);
-	fs_dprintk (FS_DEBUG_ALLOC, "Alloc fs-dev: %p(%zd)\n",
-		    fs_dev, sizeof (struct fs_dev));
-	if (!fs_dev)
-		goto err_out;
-	atm_dev = atm_dev_register("fs", &pci_dev->dev, &ops, -1, NULL);
-	if (!atm_dev)
-		goto err_out_free_fs_dev;
+	fs_dev = kzalloc (माप (काष्ठा fs_dev), GFP_KERNEL);
+	fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Alloc fs-dev: %p(%zd)\n",
+		    fs_dev, माप (काष्ठा fs_dev));
+	अगर (!fs_dev)
+		जाओ err_out;
+	aपंचांग_dev = aपंचांग_dev_रेजिस्टर("fs", &pci_dev->dev, &ops, -1, शून्य);
+	अगर (!aपंचांग_dev)
+		जाओ err_out_मुक्त_fs_dev;
   
 	fs_dev->pci_dev = pci_dev;
-	fs_dev->atm_dev = atm_dev;
+	fs_dev->aपंचांग_dev = aपंचांग_dev;
 	fs_dev->flags = ent->driver_data;
 
-	if (fs_init(fs_dev))
-		goto err_out_free_atm_dev;
+	अगर (fs_init(fs_dev))
+		जाओ err_out_मुक्त_aपंचांग_dev;
 
 	fs_dev->next = fs_boards;
 	fs_boards = fs_dev;
-	return 0;
+	वापस 0;
 
- err_out_free_atm_dev:
-	atm_dev_deregister(atm_dev);
- err_out_free_fs_dev:
- 	kfree(fs_dev);
+ err_out_मुक्त_aपंचांग_dev:
+	aपंचांग_dev_deरेजिस्टर(aपंचांग_dev);
+ err_out_मुक्त_fs_dev:
+ 	kमुक्त(fs_dev);
  err_out:
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void firestream_remove_one(struct pci_dev *pdev)
-{
-	int i;
-	struct fs_dev *dev, *nxtdev;
-	struct fs_vcc *vcc;
-	struct FS_BPENTRY *fp, *nxt;
+अटल व्योम firestream_हटाओ_one(काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक i;
+	काष्ठा fs_dev *dev, *nxtdev;
+	काष्ठा fs_vcc *vcc;
+	काष्ठा FS_BPENTRY *fp, *nxt;
   
 	func_enter ();
 
-#if 0
-	printk ("hptxq:\n");
-	for (i=0;i<60;i++) {
-		printk ("%d: %08x %08x %08x %08x \n", 
+#अगर 0
+	prपूर्णांकk ("hptxq:\n");
+	क्रम (i=0;i<60;i++) अणु
+		prपूर्णांकk ("%d: %08x %08x %08x %08x \n", 
 			i, pq[qp].cmd, pq[qp].p0, pq[qp].p1, pq[qp].p2);
 		qp++;
-		if (qp >= 60) qp = 0;
-	}
+		अगर (qp >= 60) qp = 0;
+	पूर्ण
 
-	printk ("descriptors:\n");
-	for (i=0;i<60;i++) {
-		printk ("%d: %p: %08x %08x %p %p\n", 
+	prपूर्णांकk ("descriptors:\n");
+	क्रम (i=0;i<60;i++) अणु
+		prपूर्णांकk ("%d: %p: %08x %08x %p %p\n", 
 			i, da[qd], dq[qd].flags, dq[qd].bsa, dq[qd].skb, dq[qd].dev);
 		qd++;
-		if (qd >= 60) qd = 0;
-	}
-#endif
+		अगर (qd >= 60) qd = 0;
+	पूर्ण
+#पूर्ण_अगर
 
-	for (dev = fs_boards;dev != NULL;dev=nxtdev) {
-		fs_dprintk (FS_DEBUG_CLEANUP, "Releasing resources for dev at %p.\n", dev);
+	क्रम (dev = fs_boards;dev != शून्य;dev=nxtdev) अणु
+		fs_dprपूर्णांकk (FS_DEBUG_CLEANUP, "Releasing resources for dev at %p.\n", dev);
 
 		/* XXX Hit all the tx channels too! */
 
-		for (i=0;i < dev->nchannels;i++) {
-			if (dev->atm_vccs[i]) {
-				vcc = FS_VCC (dev->atm_vccs[i]);
+		क्रम (i=0;i < dev->nchannels;i++) अणु
+			अगर (dev->aपंचांग_vccs[i]) अणु
+				vcc = FS_VCC (dev->aपंचांग_vccs[i]);
 				submit_command (dev,  &dev->hp_txq,
 						QE_CMD_TX_PURGE_INH | QE_CMD_IMM_INQ | vcc->channo, 0,0,0);
 				submit_command (dev,  &dev->hp_txq,
 						QE_CMD_RX_PURGE_INH | QE_CMD_IMM_INQ | vcc->channo, 0,0,0);
 
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* XXX Wait a while for the chip to release all buffers. */
+		/* XXX Wait a जबतक क्रम the chip to release all buffers. */
 
-		for (i=0;i < FS_NR_FREE_POOLS;i++) {
-			for (fp=bus_to_virt (read_fs (dev, FP_SA(dev->rx_fp[i].offset)));
-			     !(fp->flags & FP_FLAGS_EPI);fp = nxt) {
-				fs_dprintk (FS_DEBUG_ALLOC, "Free rec-skb: %p\n", fp->skb);
-				dev_kfree_skb_any (fp->skb);
+		क्रम (i=0;i < FS_NR_FREE_POOLS;i++) अणु
+			क्रम (fp=bus_to_virt (पढ़ो_fs (dev, FP_SA(dev->rx_fp[i].offset)));
+			     !(fp->flags & FP_FLAGS_EPI);fp = nxt) अणु
+				fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free rec-skb: %p\n", fp->skb);
+				dev_kमुक्त_skb_any (fp->skb);
 				nxt = bus_to_virt (fp->next);
-				fs_dprintk (FS_DEBUG_ALLOC, "Free rec-d: %p\n", fp);
-				kfree (fp);
-			}
-			fs_dprintk (FS_DEBUG_ALLOC, "Free rec-skb: %p\n", fp->skb);
-			dev_kfree_skb_any (fp->skb);
-			fs_dprintk (FS_DEBUG_ALLOC, "Free rec-d: %p\n", fp);
-			kfree (fp);
-		}
+				fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free rec-d: %p\n", fp);
+				kमुक्त (fp);
+			पूर्ण
+			fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free rec-skb: %p\n", fp->skb);
+			dev_kमुक्त_skb_any (fp->skb);
+			fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free rec-d: %p\n", fp);
+			kमुक्त (fp);
+		पूर्ण
 
 		/* Hang the chip in "reset", prevent it clobbering memory that is
-		   no longer ours. */
+		   no दीर्घer ours. */
 		reset_chip (dev);
 
-		fs_dprintk (FS_DEBUG_CLEANUP, "Freeing irq%d.\n", dev->irq);
-		free_irq (dev->irq, dev);
-		del_timer_sync (&dev->timer);
+		fs_dprपूर्णांकk (FS_DEBUG_CLEANUP, "Freeing irq%d.\n", dev->irq);
+		मुक्त_irq (dev->irq, dev);
+		del_समयr_sync (&dev->समयr);
 
-		atm_dev_deregister(dev->atm_dev);
-		free_queue (dev, &dev->hp_txq);
-		free_queue (dev, &dev->lp_txq);
-		free_queue (dev, &dev->tx_relq);
-		free_queue (dev, &dev->st_q);
+		aपंचांग_dev_deरेजिस्टर(dev->aपंचांग_dev);
+		मुक्त_queue (dev, &dev->hp_txq);
+		मुक्त_queue (dev, &dev->lp_txq);
+		मुक्त_queue (dev, &dev->tx_relq);
+		मुक्त_queue (dev, &dev->st_q);
 
-		fs_dprintk (FS_DEBUG_ALLOC, "Free atmvccs: %p\n", dev->atm_vccs);
-		kfree (dev->atm_vccs);
+		fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free atmvccs: %p\n", dev->aपंचांग_vccs);
+		kमुक्त (dev->aपंचांग_vccs);
 
-		for (i=0;i< FS_NR_FREE_POOLS;i++)
-			free_freepool (dev, &dev->rx_fp[i]);
+		क्रम (i=0;i< FS_NR_FREE_POOLS;i++)
+			मुक्त_मुक्तpool (dev, &dev->rx_fp[i]);
     
-		for (i=0;i < FS_NR_RX_QUEUES;i++)
-			free_queue (dev, &dev->rx_rq[i]);
+		क्रम (i=0;i < FS_NR_RX_QUEUES;i++)
+			मुक्त_queue (dev, &dev->rx_rq[i]);
 
 		iounmap(dev->base);
-		fs_dprintk (FS_DEBUG_ALLOC, "Free fs-dev: %p\n", dev);
+		fs_dprपूर्णांकk (FS_DEBUG_ALLOC, "Free fs-dev: %p\n", dev);
 		nxtdev = dev->next;
-		kfree (dev);
-	}
+		kमुक्त (dev);
+	पूर्ण
 
-	func_exit ();
-}
+	func_निकास ();
+पूर्ण
 
-static const struct pci_device_id firestream_pci_tbl[] = {
-	{ PCI_VDEVICE(FUJITSU_ME, PCI_DEVICE_ID_FUJITSU_FS50), FS_IS50},
-	{ PCI_VDEVICE(FUJITSU_ME, PCI_DEVICE_ID_FUJITSU_FS155), FS_IS155},
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id firestream_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(FUJITSU_ME, PCI_DEVICE_ID_FUJITSU_FS50), FS_IS50पूर्ण,
+	अणु PCI_VDEVICE(FUJITSU_ME, PCI_DEVICE_ID_FUJITSU_FS155), FS_IS155पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, firestream_pci_tbl);
 
-static struct pci_driver firestream_driver = {
+अटल काष्ठा pci_driver firestream_driver = अणु
 	.name		= "firestream",
 	.id_table	= firestream_pci_tbl,
 	.probe		= firestream_init_one,
-	.remove		= firestream_remove_one,
-};
+	.हटाओ		= firestream_हटाओ_one,
+पूर्ण;
 
-static int __init firestream_init_module (void)
-{
-	int error;
+अटल पूर्णांक __init firestream_init_module (व्योम)
+अणु
+	पूर्णांक error;
 
 	func_enter ();
-	error = pci_register_driver(&firestream_driver);
-	func_exit ();
-	return error;
-}
+	error = pci_रेजिस्टर_driver(&firestream_driver);
+	func_निकास ();
+	वापस error;
+पूर्ण
 
-static void __exit firestream_cleanup_module(void)
-{
-	pci_unregister_driver(&firestream_driver);
-}
+अटल व्योम __निकास firestream_cleanup_module(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&firestream_driver);
+पूर्ण
 
 module_init(firestream_init_module);
-module_exit(firestream_cleanup_module);
+module_निकास(firestream_cleanup_module);
 
 MODULE_LICENSE("GPL");
 

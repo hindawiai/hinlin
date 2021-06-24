@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * PCI IRQ handling code
  *
@@ -6,69 +7,69 @@
  * Copyright (C) 2017 Christoph Hellwig.
  */
 
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/pci.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/pci.h>
 
 /**
- * pci_request_irq - allocate an interrupt line for a PCI device
+ * pci_request_irq - allocate an पूर्णांकerrupt line क्रम a PCI device
  * @dev:	PCI device to operate on
- * @nr:		device-relative interrupt vector index (0-based).
+ * @nr:		device-relative पूर्णांकerrupt vector index (0-based).
  * @handler:	Function to be called when the IRQ occurs.
- *		Primary handler for threaded interrupts.
- *		If NULL and thread_fn != NULL the default primary handler is
+ *		Primary handler क्रम thपढ़ोed पूर्णांकerrupts.
+ *		If शून्य and thपढ़ो_fn != शून्य the शेष primary handler is
  *		installed.
- * @thread_fn:	Function called from the IRQ handler thread
- *		If NULL, no IRQ thread is created
+ * @thपढ़ो_fn:	Function called from the IRQ handler thपढ़ो
+ *		If शून्य, no IRQ thपढ़ो is created
  * @dev_id:	Cookie passed back to the handler function
- * @fmt:	Printf-like format string naming the handler
+ * @fmt:	Prपूर्णांकf-like क्रमmat string naming the handler
  *
- * This call allocates interrupt resources and enables the interrupt line and
- * IRQ handling. From the point this call is made @handler and @thread_fn may
- * be invoked.  All interrupts requested using this function might be shared.
+ * This call allocates पूर्णांकerrupt resources and enables the पूर्णांकerrupt line and
+ * IRQ handling. From the poपूर्णांक this call is made @handler and @thपढ़ो_fn may
+ * be invoked.  All पूर्णांकerrupts requested using this function might be shared.
  *
- * @dev_id must not be NULL and must be globally unique.
+ * @dev_id must not be शून्य and must be globally unique.
  */
-int pci_request_irq(struct pci_dev *dev, unsigned int nr, irq_handler_t handler,
-		irq_handler_t thread_fn, void *dev_id, const char *fmt, ...)
-{
-	va_list ap;
-	int ret;
-	char *devname;
-	unsigned long irqflags = IRQF_SHARED;
+पूर्णांक pci_request_irq(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक nr, irq_handler_t handler,
+		irq_handler_t thपढ़ो_fn, व्योम *dev_id, स्थिर अक्षर *fmt, ...)
+अणु
+	बहु_सूची ap;
+	पूर्णांक ret;
+	अक्षर *devname;
+	अचिन्हित दीर्घ irqflags = IRQF_SHARED;
 
-	if (!handler)
+	अगर (!handler)
 		irqflags |= IRQF_ONESHOT;
 
-	va_start(ap, fmt);
-	devname = kvasprintf(GFP_KERNEL, fmt, ap);
-	va_end(ap);
+	बहु_शुरू(ap, fmt);
+	devname = kvaप्र_लिखो(GFP_KERNEL, fmt, ap);
+	बहु_पूर्ण(ap);
 
-	ret = request_threaded_irq(pci_irq_vector(dev, nr), handler, thread_fn,
+	ret = request_thपढ़ोed_irq(pci_irq_vector(dev, nr), handler, thपढ़ो_fn,
 				   irqflags, devname, dev_id);
-	if (ret)
-		kfree(devname);
-	return ret;
-}
+	अगर (ret)
+		kमुक्त(devname);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(pci_request_irq);
 
 /**
- * pci_free_irq - free an interrupt allocated with pci_request_irq
+ * pci_मुक्त_irq - मुक्त an पूर्णांकerrupt allocated with pci_request_irq
  * @dev:	PCI device to operate on
- * @nr:		device-relative interrupt vector index (0-based).
- * @dev_id:	Device identity to free
+ * @nr:		device-relative पूर्णांकerrupt vector index (0-based).
+ * @dev_id:	Device identity to मुक्त
  *
- * Remove an interrupt handler. The handler is removed and if the interrupt
- * line is no longer in use by any driver it is disabled.  The caller must
- * ensure the interrupt is disabled on the device before calling this function.
- * The function does not return until any executing interrupts for this IRQ
+ * Remove an पूर्णांकerrupt handler. The handler is हटाओd and अगर the पूर्णांकerrupt
+ * line is no दीर्घer in use by any driver it is disabled.  The caller must
+ * ensure the पूर्णांकerrupt is disabled on the device beक्रमe calling this function.
+ * The function करोes not वापस until any executing पूर्णांकerrupts क्रम this IRQ
  * have completed.
  *
- * This function must not be called from interrupt context.
+ * This function must not be called from पूर्णांकerrupt context.
  */
-void pci_free_irq(struct pci_dev *dev, unsigned int nr, void *dev_id)
-{
-	kfree(free_irq(pci_irq_vector(dev, nr), dev_id));
-}
-EXPORT_SYMBOL(pci_free_irq);
+व्योम pci_मुक्त_irq(काष्ठा pci_dev *dev, अचिन्हित पूर्णांक nr, व्योम *dev_id)
+अणु
+	kमुक्त(मुक्त_irq(pci_irq_vector(dev, nr), dev_id));
+पूर्ण
+EXPORT_SYMBOL(pci_मुक्त_irq);

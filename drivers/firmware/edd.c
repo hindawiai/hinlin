@@ -1,589 +1,590 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/drivers/firmware/edd.c
  *  Copyright (C) 2002, 2003, 2004 Dell Inc.
  *  by Matt Domsch <Matt_Domsch@dell.com>
  *  disk signature by Matt Domsch, Andrew Wilks, and Sandeep K. Shandilya
- *  legacy CHS by Patrick J. LoPresti <patl@users.sourceforge.net>
+ *  legacy CHS by Patrick J. LoPresti <patl@users.sourceक्रमge.net>
  *
  * BIOS Enhanced Disk Drive Services (EDD)
- * conformant to T13 Committee www.t13.org
+ * conक्रमmant to T13 Committee www.t13.org
  *   projects 1572D, 1484D, 1386D, 1226DT
  *
- * This code takes information provided by BIOS EDD calls
+ * This code takes inक्रमmation provided by BIOS EDD calls
  * fn41 - Check Extensions Present and
  * fn48 - Get Device Parameters with EDD extensions
- * made in setup.S, copied to safe structures in setup.c,
+ * made in setup.S, copied to safe काष्ठाures in setup.c,
  * and presents it in sysfs.
  *
- * Please see http://linux.dell.com/edd/results.html for
+ * Please see http://linux.dell.com/edd/results.hपंचांगl क्रम
  * the list of BIOSs which have been reported to implement EDD.
  */
 
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/stat.h>
-#include <linux/err.h>
-#include <linux/ctype.h>
-#include <linux/slab.h>
-#include <linux/limits.h>
-#include <linux/device.h>
-#include <linux/pci.h>
-#include <linux/blkdev.h>
-#include <linux/edd.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/err.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/edd.h>
 
-#define EDD_VERSION "0.16"
-#define EDD_DATE    "2004-Jun-25"
+#घोषणा EDD_VERSION "0.16"
+#घोषणा EDD_DATE    "2004-Jun-25"
 
 MODULE_AUTHOR("Matt Domsch <Matt_Domsch@Dell.com>");
 MODULE_DESCRIPTION("sysfs interface to BIOS EDD information");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(EDD_VERSION);
 
-#define left (PAGE_SIZE - (p - buf) - 1)
+#घोषणा left (PAGE_SIZE - (p - buf) - 1)
 
-struct edd_device {
-	unsigned int index;
-	unsigned int mbr_signature;
-	struct edd_info *info;
-	struct kobject kobj;
-};
+काष्ठा edd_device अणु
+	अचिन्हित पूर्णांक index;
+	अचिन्हित पूर्णांक mbr_signature;
+	काष्ठा edd_info *info;
+	काष्ठा kobject kobj;
+पूर्ण;
 
-struct edd_attribute {
-	struct attribute attr;
-	ssize_t(*show) (struct edd_device * edev, char *buf);
-	int (*test) (struct edd_device * edev);
-};
+काष्ठा edd_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार(*show) (काष्ठा edd_device * edev, अक्षर *buf);
+	पूर्णांक (*test) (काष्ठा edd_device * edev);
+पूर्ण;
 
-/* forward declarations */
-static int edd_dev_is_type(struct edd_device *edev, const char *type);
-static struct pci_dev *edd_get_pci_dev(struct edd_device *edev);
+/* क्रमward declarations */
+अटल पूर्णांक edd_dev_is_type(काष्ठा edd_device *edev, स्थिर अक्षर *type);
+अटल काष्ठा pci_dev *edd_get_pci_dev(काष्ठा edd_device *edev);
 
-static struct edd_device *edd_devices[EDD_MBR_SIG_MAX];
+अटल काष्ठा edd_device *edd_devices[EDD_MBR_SIG_MAX];
 
-#define EDD_DEVICE_ATTR(_name,_mode,_show,_test) \
-struct edd_attribute edd_attr_##_name = { 	\
-	.attr = {.name = __stringify(_name), .mode = _mode },	\
+#घोषणा EDD_DEVICE_ATTR(_name,_mode,_show,_test) \
+काष्ठा edd_attribute edd_attr_##_name = अणु 	\
+	.attr = अणु.name = __stringअगरy(_name), .mode = _mode पूर्ण,	\
 	.show	= _show,				\
 	.test	= _test,				\
-};
+पूर्ण;
 
-static int
-edd_has_mbr_signature(struct edd_device *edev)
-{
-	return edev->index < min_t(unsigned char, edd.mbr_signature_nr, EDD_MBR_SIG_MAX);
-}
+अटल पूर्णांक
+edd_has_mbr_signature(काष्ठा edd_device *edev)
+अणु
+	वापस edev->index < min_t(अचिन्हित अक्षर, edd.mbr_signature_nr, EDD_MBR_SIG_MAX);
+पूर्ण
 
-static int
-edd_has_edd_info(struct edd_device *edev)
-{
-	return edev->index < min_t(unsigned char, edd.edd_info_nr, EDDMAXNR);
-}
+अटल पूर्णांक
+edd_has_edd_info(काष्ठा edd_device *edev)
+अणु
+	वापस edev->index < min_t(अचिन्हित अक्षर, edd.edd_info_nr, EDDMAXNR);
+पूर्ण
 
-static inline struct edd_info *
-edd_dev_get_info(struct edd_device *edev)
-{
-	return edev->info;
-}
+अटल अंतरभूत काष्ठा edd_info *
+edd_dev_get_info(काष्ठा edd_device *edev)
+अणु
+	वापस edev->info;
+पूर्ण
 
-static inline void
-edd_dev_set_info(struct edd_device *edev, int i)
-{
+अटल अंतरभूत व्योम
+edd_dev_set_info(काष्ठा edd_device *edev, पूर्णांक i)
+अणु
 	edev->index = i;
-	if (edd_has_mbr_signature(edev))
+	अगर (edd_has_mbr_signature(edev))
 		edev->mbr_signature = edd.mbr_signature[i];
-	if (edd_has_edd_info(edev))
+	अगर (edd_has_edd_info(edev))
 		edev->info = &edd.edd_info[i];
-}
+पूर्ण
 
-#define to_edd_attr(_attr) container_of(_attr,struct edd_attribute,attr)
-#define to_edd_device(obj) container_of(obj,struct edd_device,kobj)
+#घोषणा to_edd_attr(_attr) container_of(_attr,काष्ठा edd_attribute,attr)
+#घोषणा to_edd_device(obj) container_of(obj,काष्ठा edd_device,kobj)
 
-static ssize_t
-edd_attr_show(struct kobject * kobj, struct attribute *attr, char *buf)
-{
-	struct edd_device *dev = to_edd_device(kobj);
-	struct edd_attribute *edd_attr = to_edd_attr(attr);
-	ssize_t ret = -EIO;
+अटल sमाप_प्रकार
+edd_attr_show(काष्ठा kobject * kobj, काष्ठा attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा edd_device *dev = to_edd_device(kobj);
+	काष्ठा edd_attribute *edd_attr = to_edd_attr(attr);
+	sमाप_प्रकार ret = -EIO;
 
-	if (edd_attr->show)
+	अगर (edd_attr->show)
 		ret = edd_attr->show(dev, buf);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct sysfs_ops edd_attr_ops = {
+अटल स्थिर काष्ठा sysfs_ops edd_attr_ops = अणु
 	.show = edd_attr_show,
-};
+पूर्ण;
 
-static ssize_t
-edd_show_host_bus(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	int i;
+अटल sमाप_प्रकार
+edd_show_host_bus(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	पूर्णांक i;
 
-	if (!edev)
-		return -EINVAL;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	for (i = 0; i < 4; i++) {
-		if (isprint(info->params.host_bus_type[i])) {
-			p += scnprintf(p, left, "%c", info->params.host_bus_type[i]);
-		} else {
-			p += scnprintf(p, left, " ");
-		}
-	}
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (है_छाप(info->params.host_bus_type[i])) अणु
+			p += scnम_लिखो(p, left, "%c", info->params.host_bus_type[i]);
+		पूर्ण अन्यथा अणु
+			p += scnम_लिखो(p, left, " ");
+		पूर्ण
+	पूर्ण
 
-	if (!strncmp(info->params.host_bus_type, "ISA", 3)) {
-		p += scnprintf(p, left, "\tbase_address: %x\n",
-			     info->params.interface_path.isa.base_address);
-	} else if (!strncmp(info->params.host_bus_type, "PCIX", 4) ||
-		   !strncmp(info->params.host_bus_type, "PCI", 3) ||
-		   !strncmp(info->params.host_bus_type, "XPRS", 4)) {
-		p += scnprintf(p, left,
+	अगर (!म_भेदन(info->params.host_bus_type, "ISA", 3)) अणु
+		p += scnम_लिखो(p, left, "\tbase_address: %x\n",
+			     info->params.पूर्णांकerface_path.isa.base_address);
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.host_bus_type, "PCIX", 4) ||
+		   !म_भेदन(info->params.host_bus_type, "PCI", 3) ||
+		   !म_भेदन(info->params.host_bus_type, "XPRS", 4)) अणु
+		p += scnम_लिखो(p, left,
 			     "\t%02x:%02x.%d  channel: %u\n",
-			     info->params.interface_path.pci.bus,
-			     info->params.interface_path.pci.slot,
-			     info->params.interface_path.pci.function,
-			     info->params.interface_path.pci.channel);
-	} else if (!strncmp(info->params.host_bus_type, "IBND", 4) ||
-		   !strncmp(info->params.host_bus_type, "HTPT", 4)) {
-		p += scnprintf(p, left,
+			     info->params.पूर्णांकerface_path.pci.bus,
+			     info->params.पूर्णांकerface_path.pci.slot,
+			     info->params.पूर्णांकerface_path.pci.function,
+			     info->params.पूर्णांकerface_path.pci.channel);
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.host_bus_type, "IBND", 4) ||
+		   !म_भेदन(info->params.host_bus_type, "HTPT", 4)) अणु
+		p += scnम_लिखो(p, left,
 			     "\tTBD: %llx\n",
-			     info->params.interface_path.ibnd.reserved);
+			     info->params.पूर्णांकerface_path.ibnd.reserved);
 
-	} else {
-		p += scnprintf(p, left, "\tunknown: %llx\n",
-			     info->params.interface_path.unknown.reserved);
-	}
-	return (p - buf);
-}
+	पूर्ण अन्यथा अणु
+		p += scnम_लिखो(p, left, "\tunknown: %llx\n",
+			     info->params.पूर्णांकerface_path.unknown.reserved);
+	पूर्ण
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_interface(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	int i;
+अटल sमाप_प्रकार
+edd_show_पूर्णांकerface(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	पूर्णांक i;
 
-	if (!edev)
-		return -EINVAL;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	for (i = 0; i < 8; i++) {
-		if (isprint(info->params.interface_type[i])) {
-			p += scnprintf(p, left, "%c", info->params.interface_type[i]);
-		} else {
-			p += scnprintf(p, left, " ");
-		}
-	}
-	if (!strncmp(info->params.interface_type, "ATAPI", 5)) {
-		p += scnprintf(p, left, "\tdevice: %u  lun: %u\n",
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर (है_छाप(info->params.पूर्णांकerface_type[i])) अणु
+			p += scnम_लिखो(p, left, "%c", info->params.पूर्णांकerface_type[i]);
+		पूर्ण अन्यथा अणु
+			p += scnम_लिखो(p, left, " ");
+		पूर्ण
+	पूर्ण
+	अगर (!म_भेदन(info->params.पूर्णांकerface_type, "ATAPI", 5)) अणु
+		p += scnम_लिखो(p, left, "\tdevice: %u  lun: %u\n",
 			     info->params.device_path.atapi.device,
 			     info->params.device_path.atapi.lun);
-	} else if (!strncmp(info->params.interface_type, "ATA", 3)) {
-		p += scnprintf(p, left, "\tdevice: %u\n",
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.पूर्णांकerface_type, "ATA", 3)) अणु
+		p += scnम_लिखो(p, left, "\tdevice: %u\n",
 			     info->params.device_path.ata.device);
-	} else if (!strncmp(info->params.interface_type, "SCSI", 4)) {
-		p += scnprintf(p, left, "\tid: %u  lun: %llu\n",
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.पूर्णांकerface_type, "SCSI", 4)) अणु
+		p += scnम_लिखो(p, left, "\tid: %u  lun: %llu\n",
 			     info->params.device_path.scsi.id,
 			     info->params.device_path.scsi.lun);
-	} else if (!strncmp(info->params.interface_type, "USB", 3)) {
-		p += scnprintf(p, left, "\tserial_number: %llx\n",
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.पूर्णांकerface_type, "USB", 3)) अणु
+		p += scnम_लिखो(p, left, "\tserial_number: %llx\n",
 			     info->params.device_path.usb.serial_number);
-	} else if (!strncmp(info->params.interface_type, "1394", 4)) {
-		p += scnprintf(p, left, "\teui: %llx\n",
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.पूर्णांकerface_type, "1394", 4)) अणु
+		p += scnम_लिखो(p, left, "\teui: %llx\n",
 			     info->params.device_path.i1394.eui);
-	} else if (!strncmp(info->params.interface_type, "FIBRE", 5)) {
-		p += scnprintf(p, left, "\twwid: %llx lun: %llx\n",
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.पूर्णांकerface_type, "FIBRE", 5)) अणु
+		p += scnम_लिखो(p, left, "\twwid: %llx lun: %llx\n",
 			     info->params.device_path.fibre.wwid,
 			     info->params.device_path.fibre.lun);
-	} else if (!strncmp(info->params.interface_type, "I2O", 3)) {
-		p += scnprintf(p, left, "\tidentity_tag: %llx\n",
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.पूर्णांकerface_type, "I2O", 3)) अणु
+		p += scnम_लिखो(p, left, "\tidentity_tag: %llx\n",
 			     info->params.device_path.i2o.identity_tag);
-	} else if (!strncmp(info->params.interface_type, "RAID", 4)) {
-		p += scnprintf(p, left, "\tidentity_tag: %x\n",
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.पूर्णांकerface_type, "RAID", 4)) अणु
+		p += scnम_लिखो(p, left, "\tidentity_tag: %x\n",
 			     info->params.device_path.raid.array_number);
-	} else if (!strncmp(info->params.interface_type, "SATA", 4)) {
-		p += scnprintf(p, left, "\tdevice: %u\n",
+	पूर्ण अन्यथा अगर (!म_भेदन(info->params.पूर्णांकerface_type, "SATA", 4)) अणु
+		p += scnम_लिखो(p, left, "\tdevice: %u\n",
 			     info->params.device_path.sata.device);
-	} else {
-		p += scnprintf(p, left, "\tunknown: %llx %llx\n",
+	पूर्ण अन्यथा अणु
+		p += scnम_लिखो(p, left, "\tunknown: %llx %llx\n",
 			     info->params.device_path.unknown.reserved1,
 			     info->params.device_path.unknown.reserved2);
-	}
+	पूर्ण
 
-	return (p - buf);
-}
+	वापस (p - buf);
+पूर्ण
 
 /**
- * edd_show_raw_data() - copies raw data to buffer for userspace to parse
+ * edd_show_raw_data() - copies raw data to buffer क्रम userspace to parse
  * @edev: target edd_device
  * @buf: output buffer
  *
  * Returns: number of bytes written, or -EINVAL on failure
  */
-static ssize_t
-edd_show_raw_data(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	ssize_t len = sizeof (info->params);
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_raw_data(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	sमाप_प्रकार len = माप (info->params);
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	if (!(info->params.key == 0xBEDD || info->params.key == 0xDDBE))
+	अगर (!(info->params.key == 0xBEDD || info->params.key == 0xDDBE))
 		len = info->params.length;
 
-	/* In case of buggy BIOSs */
-	if (len > (sizeof(info->params)))
-		len = sizeof(info->params);
+	/* In हाल of buggy BIOSs */
+	अगर (len > (माप(info->params)))
+		len = माप(info->params);
 
-	memcpy(buf, &info->params, len);
-	return len;
-}
+	स_नकल(buf, &info->params, len);
+	वापस len;
+पूर्ण
 
-static ssize_t
-edd_show_version(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_version(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	p += scnprintf(p, left, "0x%02x\n", info->version);
-	return (p - buf);
-}
+	p += scnम_लिखो(p, left, "0x%02x\n", info->version);
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_mbr_signature(struct edd_device *edev, char *buf)
-{
-	char *p = buf;
-	p += scnprintf(p, left, "0x%08x\n", edev->mbr_signature);
-	return (p - buf);
-}
+अटल sमाप_प्रकार
+edd_show_mbr_signature(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	अक्षर *p = buf;
+	p += scnम_लिखो(p, left, "0x%08x\n", edev->mbr_signature);
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_extensions(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_extensions(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	if (info->interface_support & EDD_EXT_FIXED_DISK_ACCESS) {
-		p += scnprintf(p, left, "Fixed disk access\n");
-	}
-	if (info->interface_support & EDD_EXT_DEVICE_LOCKING_AND_EJECTING) {
-		p += scnprintf(p, left, "Device locking and ejecting\n");
-	}
-	if (info->interface_support & EDD_EXT_ENHANCED_DISK_DRIVE_SUPPORT) {
-		p += scnprintf(p, left, "Enhanced Disk Drive support\n");
-	}
-	if (info->interface_support & EDD_EXT_64BIT_EXTENSIONS) {
-		p += scnprintf(p, left, "64-bit extensions\n");
-	}
-	return (p - buf);
-}
+	अगर (info->पूर्णांकerface_support & EDD_EXT_FIXED_DISK_ACCESS) अणु
+		p += scnम_लिखो(p, left, "Fixed disk access\n");
+	पूर्ण
+	अगर (info->पूर्णांकerface_support & EDD_EXT_DEVICE_LOCKING_AND_EJECTING) अणु
+		p += scnम_लिखो(p, left, "Device locking and ejecting\n");
+	पूर्ण
+	अगर (info->पूर्णांकerface_support & EDD_EXT_ENHANCED_DISK_DRIVE_SUPPORT) अणु
+		p += scnम_लिखो(p, left, "Enhanced Disk Drive support\n");
+	पूर्ण
+	अगर (info->पूर्णांकerface_support & EDD_EXT_64BIT_EXTENSIONS) अणु
+		p += scnम_लिखो(p, left, "64-bit extensions\n");
+	पूर्ण
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_info_flags(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_info_flags(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	if (info->params.info_flags & EDD_INFO_DMA_BOUNDARY_ERROR_TRANSPARENT)
-		p += scnprintf(p, left, "DMA boundary error transparent\n");
-	if (info->params.info_flags & EDD_INFO_GEOMETRY_VALID)
-		p += scnprintf(p, left, "geometry valid\n");
-	if (info->params.info_flags & EDD_INFO_REMOVABLE)
-		p += scnprintf(p, left, "removable\n");
-	if (info->params.info_flags & EDD_INFO_WRITE_VERIFY)
-		p += scnprintf(p, left, "write verify\n");
-	if (info->params.info_flags & EDD_INFO_MEDIA_CHANGE_NOTIFICATION)
-		p += scnprintf(p, left, "media change notification\n");
-	if (info->params.info_flags & EDD_INFO_LOCKABLE)
-		p += scnprintf(p, left, "lockable\n");
-	if (info->params.info_flags & EDD_INFO_NO_MEDIA_PRESENT)
-		p += scnprintf(p, left, "no media present\n");
-	if (info->params.info_flags & EDD_INFO_USE_INT13_FN50)
-		p += scnprintf(p, left, "use int13 fn50\n");
-	return (p - buf);
-}
+	अगर (info->params.info_flags & EDD_INFO_DMA_BOUNDARY_ERROR_TRANSPARENT)
+		p += scnम_लिखो(p, left, "DMA boundary error transparent\n");
+	अगर (info->params.info_flags & EDD_INFO_GEOMETRY_VALID)
+		p += scnम_लिखो(p, left, "geometry valid\n");
+	अगर (info->params.info_flags & EDD_INFO_REMOVABLE)
+		p += scnम_लिखो(p, left, "removable\n");
+	अगर (info->params.info_flags & EDD_INFO_WRITE_VERIFY)
+		p += scnम_लिखो(p, left, "write verify\n");
+	अगर (info->params.info_flags & EDD_INFO_MEDIA_CHANGE_NOTIFICATION)
+		p += scnम_लिखो(p, left, "media change notification\n");
+	अगर (info->params.info_flags & EDD_INFO_LOCKABLE)
+		p += scnम_लिखो(p, left, "lockable\n");
+	अगर (info->params.info_flags & EDD_INFO_NO_MEDIA_PRESENT)
+		p += scnम_लिखो(p, left, "no media present\n");
+	अगर (info->params.info_flags & EDD_INFO_USE_INT13_FN50)
+		p += scnम_लिखो(p, left, "use int13 fn50\n");
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_legacy_max_cylinder(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_legacy_max_cylinder(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	p += scnprintf(p, left, "%u\n", info->legacy_max_cylinder);
-	return (p - buf);
-}
+	p += scnम_लिखो(p, left, "%u\n", info->legacy_max_cylinder);
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_legacy_max_head(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_legacy_max_head(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	p += scnprintf(p, left, "%u\n", info->legacy_max_head);
-	return (p - buf);
-}
+	p += scnम_लिखो(p, left, "%u\n", info->legacy_max_head);
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_legacy_sectors_per_track(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_legacy_sectors_per_track(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	p += scnprintf(p, left, "%u\n", info->legacy_sectors_per_track);
-	return (p - buf);
-}
+	p += scnम_लिखो(p, left, "%u\n", info->legacy_sectors_per_track);
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_default_cylinders(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_शेष_cylinders(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	p += scnprintf(p, left, "%u\n", info->params.num_default_cylinders);
-	return (p - buf);
-}
+	p += scnम_लिखो(p, left, "%u\n", info->params.num_शेष_cylinders);
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_default_heads(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_शेष_heads(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	p += scnprintf(p, left, "%u\n", info->params.num_default_heads);
-	return (p - buf);
-}
+	p += scnम_लिखो(p, left, "%u\n", info->params.num_शेष_heads);
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_default_sectors_per_track(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_शेष_sectors_per_track(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	p += scnprintf(p, left, "%u\n", info->params.sectors_per_track);
-	return (p - buf);
-}
+	p += scnम_लिखो(p, left, "%u\n", info->params.sectors_per_track);
+	वापस (p - buf);
+पूर्ण
 
-static ssize_t
-edd_show_sectors(struct edd_device *edev, char *buf)
-{
-	struct edd_info *info;
-	char *p = buf;
-	if (!edev)
-		return -EINVAL;
+अटल sमाप_प्रकार
+edd_show_sectors(काष्ठा edd_device *edev, अक्षर *buf)
+अणु
+	काष्ठा edd_info *info;
+	अक्षर *p = buf;
+	अगर (!edev)
+		वापस -EINVAL;
 	info = edd_dev_get_info(edev);
-	if (!info || !buf)
-		return -EINVAL;
+	अगर (!info || !buf)
+		वापस -EINVAL;
 
-	p += scnprintf(p, left, "%llu\n", info->params.number_of_sectors);
-	return (p - buf);
-}
+	p += scnम_लिखो(p, left, "%llu\n", info->params.number_of_sectors);
+	वापस (p - buf);
+पूर्ण
 
 
 /*
  * Some device instances may not have all the above attributes,
- * or the attribute values may be meaningless (i.e. if
- * the device is < EDD 3.0, it won't have host_bus and interface
- * information), so don't bother making files for them.  Likewise
- * if the default_{cylinders,heads,sectors_per_track} values
- * are zero, the BIOS doesn't provide sane values, don't bother
- * creating files for them either.
+ * or the attribute values may be meaningless (i.e. अगर
+ * the device is < EDD 3.0, it won't have host_bus and पूर्णांकerface
+ * inक्रमmation), so करोn't bother making files क्रम them.  Likewise
+ * अगर the शेष_अणुcylinders,heads,sectors_per_trackपूर्ण values
+ * are zero, the BIOS करोesn't provide sane values, don't bother
+ * creating files क्रम them either.
  */
 
-static int
-edd_has_legacy_max_cylinder(struct edd_device *edev)
-{
-	struct edd_info *info;
-	if (!edev)
-		return 0;
+अटल पूर्णांक
+edd_has_legacy_max_cylinder(काष्ठा edd_device *edev)
+अणु
+	काष्ठा edd_info *info;
+	अगर (!edev)
+		वापस 0;
 	info = edd_dev_get_info(edev);
-	if (!info)
-		return 0;
-	return info->legacy_max_cylinder > 0;
-}
+	अगर (!info)
+		वापस 0;
+	वापस info->legacy_max_cylinder > 0;
+पूर्ण
 
-static int
-edd_has_legacy_max_head(struct edd_device *edev)
-{
-	struct edd_info *info;
-	if (!edev)
-		return 0;
+अटल पूर्णांक
+edd_has_legacy_max_head(काष्ठा edd_device *edev)
+अणु
+	काष्ठा edd_info *info;
+	अगर (!edev)
+		वापस 0;
 	info = edd_dev_get_info(edev);
-	if (!info)
-		return 0;
-	return info->legacy_max_head > 0;
-}
+	अगर (!info)
+		वापस 0;
+	वापस info->legacy_max_head > 0;
+पूर्ण
 
-static int
-edd_has_legacy_sectors_per_track(struct edd_device *edev)
-{
-	struct edd_info *info;
-	if (!edev)
-		return 0;
+अटल पूर्णांक
+edd_has_legacy_sectors_per_track(काष्ठा edd_device *edev)
+अणु
+	काष्ठा edd_info *info;
+	अगर (!edev)
+		वापस 0;
 	info = edd_dev_get_info(edev);
-	if (!info)
-		return 0;
-	return info->legacy_sectors_per_track > 0;
-}
+	अगर (!info)
+		वापस 0;
+	वापस info->legacy_sectors_per_track > 0;
+पूर्ण
 
-static int
-edd_has_default_cylinders(struct edd_device *edev)
-{
-	struct edd_info *info;
-	if (!edev)
-		return 0;
+अटल पूर्णांक
+edd_has_शेष_cylinders(काष्ठा edd_device *edev)
+अणु
+	काष्ठा edd_info *info;
+	अगर (!edev)
+		वापस 0;
 	info = edd_dev_get_info(edev);
-	if (!info)
-		return 0;
-	return info->params.num_default_cylinders > 0;
-}
+	अगर (!info)
+		वापस 0;
+	वापस info->params.num_शेष_cylinders > 0;
+पूर्ण
 
-static int
-edd_has_default_heads(struct edd_device *edev)
-{
-	struct edd_info *info;
-	if (!edev)
-		return 0;
+अटल पूर्णांक
+edd_has_शेष_heads(काष्ठा edd_device *edev)
+अणु
+	काष्ठा edd_info *info;
+	अगर (!edev)
+		वापस 0;
 	info = edd_dev_get_info(edev);
-	if (!info)
-		return 0;
-	return info->params.num_default_heads > 0;
-}
+	अगर (!info)
+		वापस 0;
+	वापस info->params.num_शेष_heads > 0;
+पूर्ण
 
-static int
-edd_has_default_sectors_per_track(struct edd_device *edev)
-{
-	struct edd_info *info;
-	if (!edev)
-		return 0;
+अटल पूर्णांक
+edd_has_शेष_sectors_per_track(काष्ठा edd_device *edev)
+अणु
+	काष्ठा edd_info *info;
+	अगर (!edev)
+		वापस 0;
 	info = edd_dev_get_info(edev);
-	if (!info)
-		return 0;
-	return info->params.sectors_per_track > 0;
-}
+	अगर (!info)
+		वापस 0;
+	वापस info->params.sectors_per_track > 0;
+पूर्ण
 
-static int
-edd_has_edd30(struct edd_device *edev)
-{
-	struct edd_info *info;
-	int i;
+अटल पूर्णांक
+edd_has_edd30(काष्ठा edd_device *edev)
+अणु
+	काष्ठा edd_info *info;
+	पूर्णांक i;
 	u8 csum = 0;
 
-	if (!edev)
-		return 0;
+	अगर (!edev)
+		वापस 0;
 	info = edd_dev_get_info(edev);
-	if (!info)
-		return 0;
+	अगर (!info)
+		वापस 0;
 
-	if (!(info->params.key == 0xBEDD || info->params.key == 0xDDBE)) {
-		return 0;
-	}
+	अगर (!(info->params.key == 0xBEDD || info->params.key == 0xDDBE)) अणु
+		वापस 0;
+	पूर्ण
 
 
 	/* We support only T13 spec */
-	if (info->params.device_path_info_length != 44)
-		return 0;
+	अगर (info->params.device_path_info_length != 44)
+		वापस 0;
 
-	for (i = 30; i < info->params.device_path_info_length + 30; i++)
+	क्रम (i = 30; i < info->params.device_path_info_length + 30; i++)
 		csum += *(((u8 *)&info->params) + i);
 
-	if (csum)
-		return 0;
+	अगर (csum)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 
-static EDD_DEVICE_ATTR(raw_data, 0444, edd_show_raw_data, edd_has_edd_info);
-static EDD_DEVICE_ATTR(version, 0444, edd_show_version, edd_has_edd_info);
-static EDD_DEVICE_ATTR(extensions, 0444, edd_show_extensions, edd_has_edd_info);
-static EDD_DEVICE_ATTR(info_flags, 0444, edd_show_info_flags, edd_has_edd_info);
-static EDD_DEVICE_ATTR(sectors, 0444, edd_show_sectors, edd_has_edd_info);
-static EDD_DEVICE_ATTR(legacy_max_cylinder, 0444,
+अटल EDD_DEVICE_ATTR(raw_data, 0444, edd_show_raw_data, edd_has_edd_info);
+अटल EDD_DEVICE_ATTR(version, 0444, edd_show_version, edd_has_edd_info);
+अटल EDD_DEVICE_ATTR(extensions, 0444, edd_show_extensions, edd_has_edd_info);
+अटल EDD_DEVICE_ATTR(info_flags, 0444, edd_show_info_flags, edd_has_edd_info);
+अटल EDD_DEVICE_ATTR(sectors, 0444, edd_show_sectors, edd_has_edd_info);
+अटल EDD_DEVICE_ATTR(legacy_max_cylinder, 0444,
                        edd_show_legacy_max_cylinder,
 		       edd_has_legacy_max_cylinder);
-static EDD_DEVICE_ATTR(legacy_max_head, 0444, edd_show_legacy_max_head,
+अटल EDD_DEVICE_ATTR(legacy_max_head, 0444, edd_show_legacy_max_head,
 		       edd_has_legacy_max_head);
-static EDD_DEVICE_ATTR(legacy_sectors_per_track, 0444,
+अटल EDD_DEVICE_ATTR(legacy_sectors_per_track, 0444,
                        edd_show_legacy_sectors_per_track,
 		       edd_has_legacy_sectors_per_track);
-static EDD_DEVICE_ATTR(default_cylinders, 0444, edd_show_default_cylinders,
-		       edd_has_default_cylinders);
-static EDD_DEVICE_ATTR(default_heads, 0444, edd_show_default_heads,
-		       edd_has_default_heads);
-static EDD_DEVICE_ATTR(default_sectors_per_track, 0444,
-		       edd_show_default_sectors_per_track,
-		       edd_has_default_sectors_per_track);
-static EDD_DEVICE_ATTR(interface, 0444, edd_show_interface, edd_has_edd30);
-static EDD_DEVICE_ATTR(host_bus, 0444, edd_show_host_bus, edd_has_edd30);
-static EDD_DEVICE_ATTR(mbr_signature, 0444, edd_show_mbr_signature, edd_has_mbr_signature);
+अटल EDD_DEVICE_ATTR(शेष_cylinders, 0444, edd_show_शेष_cylinders,
+		       edd_has_शेष_cylinders);
+अटल EDD_DEVICE_ATTR(शेष_heads, 0444, edd_show_शेष_heads,
+		       edd_has_शेष_heads);
+अटल EDD_DEVICE_ATTR(शेष_sectors_per_track, 0444,
+		       edd_show_शेष_sectors_per_track,
+		       edd_has_शेष_sectors_per_track);
+अटल EDD_DEVICE_ATTR(पूर्णांकerface, 0444, edd_show_पूर्णांकerface, edd_has_edd30);
+अटल EDD_DEVICE_ATTR(host_bus, 0444, edd_show_host_bus, edd_has_edd30);
+अटल EDD_DEVICE_ATTR(mbr_signature, 0444, edd_show_mbr_signature, edd_has_mbr_signature);
 
 
-/* These are default attributes that are added for every edd
+/* These are शेष attributes that are added क्रम every edd
  * device discovered.  There are none.
  */
-static struct attribute * def_attrs[] = {
-	NULL,
-};
+अटल काष्ठा attribute * def_attrs[] = अणु
+	शून्य,
+पूर्ण;
 
-/* These attributes are conditional and only added for some devices. */
-static struct edd_attribute * edd_attrs[] = {
+/* These attributes are conditional and only added क्रम some devices. */
+अटल काष्ठा edd_attribute * edd_attrs[] = अणु
 	&edd_attr_raw_data,
 	&edd_attr_version,
 	&edd_attr_extensions,
@@ -592,199 +593,199 @@ static struct edd_attribute * edd_attrs[] = {
 	&edd_attr_legacy_max_cylinder,
 	&edd_attr_legacy_max_head,
 	&edd_attr_legacy_sectors_per_track,
-	&edd_attr_default_cylinders,
-	&edd_attr_default_heads,
-	&edd_attr_default_sectors_per_track,
-	&edd_attr_interface,
+	&edd_attr_शेष_cylinders,
+	&edd_attr_शेष_heads,
+	&edd_attr_शेष_sectors_per_track,
+	&edd_attr_पूर्णांकerface,
 	&edd_attr_host_bus,
 	&edd_attr_mbr_signature,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /**
- *	edd_release - free edd structure
- *	@kobj:	kobject of edd structure
+ *	edd_release - मुक्त edd काष्ठाure
+ *	@kobj:	kobject of edd काष्ठाure
  *
- *	This is called when the refcount of the edd structure
- *	reaches 0. This should happen right after we unregister,
- *	but just in case, we use the release callback anyway.
+ *	This is called when the refcount of the edd काष्ठाure
+ *	reaches 0. This should happen right after we unरेजिस्टर,
+ *	but just in हाल, we use the release callback anyway.
  */
 
-static void edd_release(struct kobject * kobj)
-{
-	struct edd_device * dev = to_edd_device(kobj);
-	kfree(dev);
-}
+अटल व्योम edd_release(काष्ठा kobject * kobj)
+अणु
+	काष्ठा edd_device * dev = to_edd_device(kobj);
+	kमुक्त(dev);
+पूर्ण
 
-static struct kobj_type edd_ktype = {
+अटल काष्ठा kobj_type edd_ktype = अणु
 	.release	= edd_release,
 	.sysfs_ops	= &edd_attr_ops,
-	.default_attrs	= def_attrs,
-};
+	.शेष_attrs	= def_attrs,
+पूर्ण;
 
-static struct kset *edd_kset;
+अटल काष्ठा kset *edd_kset;
 
 
 /**
  * edd_dev_is_type() - is this EDD device a 'type' device?
  * @edev: target edd_device
- * @type: a host bus or interface identifier string per the EDD spec
+ * @type: a host bus or पूर्णांकerface identअगरier string per the EDD spec
  *
- * Returns 1 (TRUE) if it is a 'type' device, 0 otherwise.
+ * Returns 1 (TRUE) अगर it is a 'type' device, 0 otherwise.
  */
-static int
-edd_dev_is_type(struct edd_device *edev, const char *type)
-{
-	struct edd_info *info;
-	if (!edev)
-		return 0;
+अटल पूर्णांक
+edd_dev_is_type(काष्ठा edd_device *edev, स्थिर अक्षर *type)
+अणु
+	काष्ठा edd_info *info;
+	अगर (!edev)
+		वापस 0;
 	info = edd_dev_get_info(edev);
 
-	if (type && info) {
-		if (!strncmp(info->params.host_bus_type, type, strlen(type)) ||
-		    !strncmp(info->params.interface_type, type, strlen(type)))
-			return 1;
-	}
-	return 0;
-}
+	अगर (type && info) अणु
+		अगर (!म_भेदन(info->params.host_bus_type, type, म_माप(type)) ||
+		    !म_भेदन(info->params.पूर्णांकerface_type, type, म_माप(type)))
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * edd_get_pci_dev() - finds pci_dev that matches edev
  * @edev: edd_device
  *
- * Returns pci_dev if found, or NULL
+ * Returns pci_dev अगर found, or शून्य
  */
-static struct pci_dev *
-edd_get_pci_dev(struct edd_device *edev)
-{
-	struct edd_info *info = edd_dev_get_info(edev);
+अटल काष्ठा pci_dev *
+edd_get_pci_dev(काष्ठा edd_device *edev)
+अणु
+	काष्ठा edd_info *info = edd_dev_get_info(edev);
 
-	if (edd_dev_is_type(edev, "PCI") || edd_dev_is_type(edev, "XPRS")) {
-		return pci_get_domain_bus_and_slot(0,
-				info->params.interface_path.pci.bus,
-				PCI_DEVFN(info->params.interface_path.pci.slot,
-				info->params.interface_path.pci.function));
-	}
-	return NULL;
-}
+	अगर (edd_dev_is_type(edev, "PCI") || edd_dev_is_type(edev, "XPRS")) अणु
+		वापस pci_get_करोमुख्य_bus_and_slot(0,
+				info->params.पूर्णांकerface_path.pci.bus,
+				PCI_DEVFN(info->params.पूर्णांकerface_path.pci.slot,
+				info->params.पूर्णांकerface_path.pci.function));
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static int
-edd_create_symlink_to_pcidev(struct edd_device *edev)
-{
+अटल पूर्णांक
+edd_create_symlink_to_pcidev(काष्ठा edd_device *edev)
+अणु
 
-	struct pci_dev *pci_dev = edd_get_pci_dev(edev);
-	int ret;
-	if (!pci_dev)
-		return 1;
+	काष्ठा pci_dev *pci_dev = edd_get_pci_dev(edev);
+	पूर्णांक ret;
+	अगर (!pci_dev)
+		वापस 1;
 	ret = sysfs_create_link(&edev->kobj,&pci_dev->dev.kobj,"pci_dev");
 	pci_dev_put(pci_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void
-edd_device_unregister(struct edd_device *edev)
-{
+अटल अंतरभूत व्योम
+edd_device_unरेजिस्टर(काष्ठा edd_device *edev)
+अणु
 	kobject_put(&edev->kobj);
-}
+पूर्ण
 
-static void edd_populate_dir(struct edd_device * edev)
-{
-	struct edd_attribute * attr;
-	int error = 0;
-	int i;
+अटल व्योम edd_populate_dir(काष्ठा edd_device * edev)
+अणु
+	काष्ठा edd_attribute * attr;
+	पूर्णांक error = 0;
+	पूर्णांक i;
 
-	for (i = 0; (attr = edd_attrs[i]) && !error; i++) {
-		if (!attr->test ||
+	क्रम (i = 0; (attr = edd_attrs[i]) && !error; i++) अणु
+		अगर (!attr->test ||
 		    (attr->test && attr->test(edev)))
 			error = sysfs_create_file(&edev->kobj,&attr->attr);
-	}
+	पूर्ण
 
-	if (!error) {
+	अगर (!error) अणु
 		edd_create_symlink_to_pcidev(edev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-edd_device_register(struct edd_device *edev, int i)
-{
-	int error;
+अटल पूर्णांक
+edd_device_रेजिस्टर(काष्ठा edd_device *edev, पूर्णांक i)
+अणु
+	पूर्णांक error;
 
-	if (!edev)
-		return 1;
+	अगर (!edev)
+		वापस 1;
 	edd_dev_set_info(edev, i);
 	edev->kobj.kset = edd_kset;
-	error = kobject_init_and_add(&edev->kobj, &edd_ktype, NULL,
+	error = kobject_init_and_add(&edev->kobj, &edd_ktype, शून्य,
 				     "int13_dev%02x", 0x80 + i);
-	if (!error) {
+	अगर (!error) अणु
 		edd_populate_dir(edev);
 		kobject_uevent(&edev->kobj, KOBJ_ADD);
-	}
-	return error;
-}
+	पूर्ण
+	वापस error;
+पूर्ण
 
-static inline int edd_num_devices(void)
-{
-	return max_t(unsigned char,
-		     min_t(unsigned char, EDD_MBR_SIG_MAX, edd.mbr_signature_nr),
-		     min_t(unsigned char, EDDMAXNR, edd.edd_info_nr));
-}
+अटल अंतरभूत पूर्णांक edd_num_devices(व्योम)
+अणु
+	वापस max_t(अचिन्हित अक्षर,
+		     min_t(अचिन्हित अक्षर, EDD_MBR_SIG_MAX, edd.mbr_signature_nr),
+		     min_t(अचिन्हित अक्षर, EDDMAXNR, edd.edd_info_nr));
+पूर्ण
 
 /**
  * edd_init() - creates sysfs tree of EDD data
  */
-static int __init
-edd_init(void)
-{
-	int i;
-	int rc=0;
-	struct edd_device *edev;
+अटल पूर्णांक __init
+edd_init(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक rc=0;
+	काष्ठा edd_device *edev;
 
-	if (!edd_num_devices())
-		return -ENODEV;
+	अगर (!edd_num_devices())
+		वापस -ENODEV;
 
-	printk(KERN_INFO "BIOS EDD facility v%s %s, %d devices found\n",
+	prपूर्णांकk(KERN_INFO "BIOS EDD facility v%s %s, %d devices found\n",
 	       EDD_VERSION, EDD_DATE, edd_num_devices());
 
-	edd_kset = kset_create_and_add("edd", NULL, firmware_kobj);
-	if (!edd_kset)
-		return -ENOMEM;
+	edd_kset = kset_create_and_add("edd", शून्य, firmware_kobj);
+	अगर (!edd_kset)
+		वापस -ENOMEM;
 
-	for (i = 0; i < edd_num_devices(); i++) {
-		edev = kzalloc(sizeof (*edev), GFP_KERNEL);
-		if (!edev) {
+	क्रम (i = 0; i < edd_num_devices(); i++) अणु
+		edev = kzalloc(माप (*edev), GFP_KERNEL);
+		अगर (!edev) अणु
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		rc = edd_device_register(edev, i);
-		if (rc) {
-			kfree(edev);
-			goto out;
-		}
+		rc = edd_device_रेजिस्टर(edev, i);
+		अगर (rc) अणु
+			kमुक्त(edev);
+			जाओ out;
+		पूर्ण
 		edd_devices[i] = edev;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
-	while (--i >= 0)
-		edd_device_unregister(edd_devices[i]);
-	kset_unregister(edd_kset);
-	return rc;
-}
+	जबतक (--i >= 0)
+		edd_device_unरेजिस्टर(edd_devices[i]);
+	kset_unरेजिस्टर(edd_kset);
+	वापस rc;
+पूर्ण
 
-static void __exit
-edd_exit(void)
-{
-	int i;
-	struct edd_device *edev;
+अटल व्योम __निकास
+edd_निकास(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा edd_device *edev;
 
-	for (i = 0; i < edd_num_devices(); i++) {
-		if ((edev = edd_devices[i]))
-			edd_device_unregister(edev);
-	}
-	kset_unregister(edd_kset);
-}
+	क्रम (i = 0; i < edd_num_devices(); i++) अणु
+		अगर ((edev = edd_devices[i]))
+			edd_device_unरेजिस्टर(edev);
+	पूर्ण
+	kset_unरेजिस्टर(edd_kset);
+पूर्ण
 
 late_initcall(edd_init);
-module_exit(edd_exit);
+module_निकास(edd_निकास);

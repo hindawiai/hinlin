@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_DDI_H__
-#define __INTEL_DDI_H__
+#अगर_अघोषित __INTEL_DDI_H__
+#घोषणा __INTEL_DDI_H__
 
-#include "intel_display.h"
-#include "i915_reg.h"
+#समावेश "intel_display.h"
+#समावेश "i915_reg.h"
 
-struct drm_connector_state;
-struct drm_i915_private;
-struct intel_connector;
-struct intel_crtc;
-struct intel_crtc_state;
-struct intel_dp;
-struct intel_dpll_hw_state;
-struct intel_encoder;
-struct intel_shared_dpll;
-enum transcoder;
+काष्ठा drm_connector_state;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_connector;
+काष्ठा पूर्णांकel_crtc;
+काष्ठा पूर्णांकel_crtc_state;
+काष्ठा पूर्णांकel_dp;
+काष्ठा पूर्णांकel_dpll_hw_state;
+काष्ठा पूर्णांकel_encoder;
+काष्ठा पूर्णांकel_shared_dpll;
+क्रमागत transcoder;
 
-i915_reg_t dp_tp_ctl_reg(struct intel_encoder *encoder,
-			 const struct intel_crtc_state *crtc_state);
-i915_reg_t dp_tp_status_reg(struct intel_encoder *encoder,
-			    const struct intel_crtc_state *crtc_state);
-void intel_ddi_fdi_post_disable(struct intel_atomic_state *state,
-				struct intel_encoder *intel_encoder,
-				const struct intel_crtc_state *old_crtc_state,
-				const struct drm_connector_state *old_conn_state);
-void intel_ddi_enable_clock(struct intel_encoder *encoder,
-			    const struct intel_crtc_state *crtc_state);
-void intel_ddi_get_clock(struct intel_encoder *encoder,
-			 struct intel_crtc_state *crtc_state,
-			 struct intel_shared_dpll *pll);
-void hsw_ddi_enable_clock(struct intel_encoder *encoder,
-			  const struct intel_crtc_state *crtc_state);
-void hsw_ddi_disable_clock(struct intel_encoder *encoder);
-bool hsw_ddi_is_clock_enabled(struct intel_encoder *encoder);
-void hsw_ddi_get_config(struct intel_encoder *encoder,
-			struct intel_crtc_state *crtc_state);
-struct intel_shared_dpll *icl_ddi_combo_get_pll(struct intel_encoder *encoder);
-void intel_prepare_dp_ddi_buffers(struct intel_encoder *encoder,
-				  const struct intel_crtc_state *crtc_state);
-void intel_wait_ddi_buf_idle(struct drm_i915_private *dev_priv,
-			     enum port port);
-void intel_ddi_init(struct drm_i915_private *dev_priv, enum port port);
-bool intel_ddi_get_hw_state(struct intel_encoder *encoder, enum pipe *pipe);
-void intel_ddi_enable_transcoder_func(struct intel_encoder *encoder,
-				      const struct intel_crtc_state *crtc_state);
-void intel_ddi_disable_transcoder_func(const struct intel_crtc_state *crtc_state);
-void intel_ddi_enable_pipe_clock(struct intel_encoder *encoder,
-				 const struct intel_crtc_state *crtc_state);
-void intel_ddi_disable_pipe_clock(const  struct intel_crtc_state *crtc_state);
-void intel_ddi_set_dp_msa(const struct intel_crtc_state *crtc_state,
-			  const struct drm_connector_state *conn_state);
-bool intel_ddi_connector_get_hw_state(struct intel_connector *intel_connector);
-void intel_ddi_set_vc_payload_alloc(const struct intel_crtc_state *crtc_state,
+i915_reg_t dp_tp_ctl_reg(काष्ठा पूर्णांकel_encoder *encoder,
+			 स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+i915_reg_t dp_tp_status_reg(काष्ठा पूर्णांकel_encoder *encoder,
+			    स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_ddi_fdi_post_disable(काष्ठा पूर्णांकel_atomic_state *state,
+				काष्ठा पूर्णांकel_encoder *पूर्णांकel_encoder,
+				स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state,
+				स्थिर काष्ठा drm_connector_state *old_conn_state);
+व्योम पूर्णांकel_ddi_enable_घड़ी(काष्ठा पूर्णांकel_encoder *encoder,
+			    स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_ddi_get_घड़ी(काष्ठा पूर्णांकel_encoder *encoder,
+			 काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			 काष्ठा पूर्णांकel_shared_dpll *pll);
+व्योम hsw_ddi_enable_घड़ी(काष्ठा पूर्णांकel_encoder *encoder,
+			  स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम hsw_ddi_disable_घड़ी(काष्ठा पूर्णांकel_encoder *encoder);
+bool hsw_ddi_is_घड़ी_enabled(काष्ठा पूर्णांकel_encoder *encoder);
+व्योम hsw_ddi_get_config(काष्ठा पूर्णांकel_encoder *encoder,
+			काष्ठा पूर्णांकel_crtc_state *crtc_state);
+काष्ठा पूर्णांकel_shared_dpll *icl_ddi_combo_get_pll(काष्ठा पूर्णांकel_encoder *encoder);
+व्योम पूर्णांकel_prepare_dp_ddi_buffers(काष्ठा पूर्णांकel_encoder *encoder,
+				  स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_रुको_ddi_buf_idle(काष्ठा drm_i915_निजी *dev_priv,
+			     क्रमागत port port);
+व्योम पूर्णांकel_ddi_init(काष्ठा drm_i915_निजी *dev_priv, क्रमागत port port);
+bool पूर्णांकel_ddi_get_hw_state(काष्ठा पूर्णांकel_encoder *encoder, क्रमागत pipe *pipe);
+व्योम पूर्णांकel_ddi_enable_transcoder_func(काष्ठा पूर्णांकel_encoder *encoder,
+				      स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_ddi_disable_transcoder_func(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_ddi_enable_pipe_घड़ी(काष्ठा पूर्णांकel_encoder *encoder,
+				 स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_ddi_disable_pipe_घड़ी(स्थिर  काष्ठा पूर्णांकel_crtc_state *crtc_state);
+व्योम पूर्णांकel_ddi_set_dp_msa(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+			  स्थिर काष्ठा drm_connector_state *conn_state);
+bool पूर्णांकel_ddi_connector_get_hw_state(काष्ठा पूर्णांकel_connector *पूर्णांकel_connector);
+व्योम पूर्णांकel_ddi_set_vc_payload_alloc(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
 				    bool state);
-void intel_ddi_compute_min_voltage_level(struct drm_i915_private *dev_priv,
-					 struct intel_crtc_state *crtc_state);
-u32 bxt_signal_levels(struct intel_dp *intel_dp,
-		      const struct intel_crtc_state *crtc_state);
-u32 ddi_signal_levels(struct intel_dp *intel_dp,
-		      const struct intel_crtc_state *crtc_state);
-int intel_ddi_toggle_hdcp_bits(struct intel_encoder *intel_encoder,
-			       enum transcoder cpu_transcoder,
+व्योम पूर्णांकel_ddi_compute_min_voltage_level(काष्ठा drm_i915_निजी *dev_priv,
+					 काष्ठा पूर्णांकel_crtc_state *crtc_state);
+u32 bxt_संकेत_levels(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp,
+		      स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+u32 ddi_संकेत_levels(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp,
+		      स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+पूर्णांक पूर्णांकel_ddi_toggle_hdcp_bits(काष्ठा पूर्णांकel_encoder *पूर्णांकel_encoder,
+			       क्रमागत transcoder cpu_transcoder,
 			       bool enable, u32 hdcp_mask);
-void intel_ddi_sanitize_encoder_pll_mapping(struct intel_encoder *encoder);
+व्योम पूर्णांकel_ddi_sanitize_encoder_pll_mapping(काष्ठा पूर्णांकel_encoder *encoder);
 
-#endif /* __INTEL_DDI_H__ */
+#पूर्ण_अगर /* __INTEL_DDI_H__ */

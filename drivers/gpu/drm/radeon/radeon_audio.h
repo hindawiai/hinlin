@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,75 +23,75 @@
  * Authors: Slava Grigorev <slava.grigorev@amd.com>
  */
 
-#ifndef __RADEON_AUDIO_H__
-#define __RADEON_AUDIO_H__
+#अगर_अघोषित __RADEON_AUDIO_H__
+#घोषणा __RADEON_AUDIO_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#define RREG32_ENDPOINT(block, reg)		\
-	radeon_audio_endpoint_rreg(rdev, (block), (reg))
-#define WREG32_ENDPOINT(block, reg, v)	\
-	radeon_audio_endpoint_wreg(rdev, (block), (reg), (v))
+#घोषणा RREG32_ENDPOINT(block, reg)		\
+	radeon_audio_endpoपूर्णांक_rreg(rdev, (block), (reg))
+#घोषणा WREG32_ENDPOINT(block, reg, v)	\
+	radeon_audio_endpoपूर्णांक_wreg(rdev, (block), (reg), (v))
 
-struct radeon_audio_basic_funcs
-{
-	u32  (*endpoint_rreg)(struct radeon_device *rdev, u32 offset, u32 reg);
-	void (*endpoint_wreg)(struct radeon_device *rdev,
+काष्ठा radeon_audio_basic_funcs
+अणु
+	u32  (*endpoपूर्णांक_rreg)(काष्ठा radeon_device *rdev, u32 offset, u32 reg);
+	व्योम (*endpoपूर्णांक_wreg)(काष्ठा radeon_device *rdev,
 		u32 offset, u32 reg, u32 v);
-	void (*enable)(struct radeon_device *rdev,
-		struct r600_audio_pin *pin, u8 enable_mask);
-};
+	व्योम (*enable)(काष्ठा radeon_device *rdev,
+		काष्ठा r600_audio_pin *pin, u8 enable_mask);
+पूर्ण;
 
-struct radeon_audio_funcs
-{
-	void (*select_pin)(struct drm_encoder *encoder);
-	struct r600_audio_pin* (*get_pin)(struct radeon_device *rdev);
-	void (*write_latency_fields)(struct drm_encoder *encoder,
-		struct drm_connector *connector, struct drm_display_mode *mode);
-	void (*write_sad_regs)(struct drm_encoder *encoder,
-		struct cea_sad *sads, int sad_count);
-	void (*write_speaker_allocation)(struct drm_encoder *encoder,
-		u8 *sadb, int sad_count);
-	void (*set_dto)(struct radeon_device *rdev,
-		struct radeon_crtc *crtc, unsigned int clock);
-	void (*update_acr)(struct drm_encoder *encoder, long offset,
-		const struct radeon_hdmi_acr *acr);
-	void (*set_vbi_packet)(struct drm_encoder *encoder, u32 offset);
-	void (*set_color_depth)(struct drm_encoder *encoder, u32 offset, int bpc);
-	void (*set_avi_packet)(struct radeon_device *rdev, u32 offset,
-		unsigned char *buffer, size_t size);
-	void (*set_audio_packet)(struct drm_encoder *encoder, u32 offset);
-	void (*set_mute)(struct drm_encoder *encoder, u32 offset, bool mute);
-	void (*mode_set)(struct drm_encoder *encoder,
-		struct drm_display_mode *mode);
-	void (*dpms)(struct drm_encoder *encoder, bool mode);
-};
+काष्ठा radeon_audio_funcs
+अणु
+	व्योम (*select_pin)(काष्ठा drm_encoder *encoder);
+	काष्ठा r600_audio_pin* (*get_pin)(काष्ठा radeon_device *rdev);
+	व्योम (*ग_लिखो_latency_fields)(काष्ठा drm_encoder *encoder,
+		काष्ठा drm_connector *connector, काष्ठा drm_display_mode *mode);
+	व्योम (*ग_लिखो_sad_regs)(काष्ठा drm_encoder *encoder,
+		काष्ठा cea_sad *sads, पूर्णांक sad_count);
+	व्योम (*ग_लिखो_speaker_allocation)(काष्ठा drm_encoder *encoder,
+		u8 *sadb, पूर्णांक sad_count);
+	व्योम (*set_dto)(काष्ठा radeon_device *rdev,
+		काष्ठा radeon_crtc *crtc, अचिन्हित पूर्णांक घड़ी);
+	व्योम (*update_acr)(काष्ठा drm_encoder *encoder, दीर्घ offset,
+		स्थिर काष्ठा radeon_hdmi_acr *acr);
+	व्योम (*set_vbi_packet)(काष्ठा drm_encoder *encoder, u32 offset);
+	व्योम (*set_color_depth)(काष्ठा drm_encoder *encoder, u32 offset, पूर्णांक bpc);
+	व्योम (*set_avi_packet)(काष्ठा radeon_device *rdev, u32 offset,
+		अचिन्हित अक्षर *buffer, माप_प्रकार size);
+	व्योम (*set_audio_packet)(काष्ठा drm_encoder *encoder, u32 offset);
+	व्योम (*set_mute)(काष्ठा drm_encoder *encoder, u32 offset, bool mute);
+	व्योम (*mode_set)(काष्ठा drm_encoder *encoder,
+		काष्ठा drm_display_mode *mode);
+	व्योम (*dpms)(काष्ठा drm_encoder *encoder, bool mode);
+पूर्ण;
 
-int radeon_audio_init(struct radeon_device *rdev);
-void radeon_audio_detect(struct drm_connector *connector,
-			 struct drm_encoder *encoder,
-			 enum drm_connector_status status);
-u32 radeon_audio_endpoint_rreg(struct radeon_device *rdev,
+पूर्णांक radeon_audio_init(काष्ठा radeon_device *rdev);
+व्योम radeon_audio_detect(काष्ठा drm_connector *connector,
+			 काष्ठा drm_encoder *encoder,
+			 क्रमागत drm_connector_status status);
+u32 radeon_audio_endpoपूर्णांक_rreg(काष्ठा radeon_device *rdev,
 	u32 offset, u32 reg);
-void radeon_audio_endpoint_wreg(struct radeon_device *rdev,
+व्योम radeon_audio_endpoपूर्णांक_wreg(काष्ठा radeon_device *rdev,
 	u32 offset,	u32 reg, u32 v);
-struct r600_audio_pin *radeon_audio_get_pin(struct drm_encoder *encoder);
-void radeon_audio_fini(struct radeon_device *rdev);
-void radeon_audio_mode_set(struct drm_encoder *encoder,
-	struct drm_display_mode *mode);
-void radeon_audio_dpms(struct drm_encoder *encoder, int mode);
-unsigned int radeon_audio_decode_dfs_div(unsigned int div);
+काष्ठा r600_audio_pin *radeon_audio_get_pin(काष्ठा drm_encoder *encoder);
+व्योम radeon_audio_fini(काष्ठा radeon_device *rdev);
+व्योम radeon_audio_mode_set(काष्ठा drm_encoder *encoder,
+	काष्ठा drm_display_mode *mode);
+व्योम radeon_audio_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode);
+अचिन्हित पूर्णांक radeon_audio_decode_dfs_भाग(अचिन्हित पूर्णांक भाग);
 
-void dce3_2_afmt_write_sad_regs(struct drm_encoder *encoder,
-				struct cea_sad *sads, int sad_count);
-void dce3_2_afmt_hdmi_write_speaker_allocation(struct drm_encoder *encoder,
-					       u8 *sadb, int sad_count);
-void dce3_2_afmt_dp_write_speaker_allocation(struct drm_encoder *encoder,
-					     u8 *sadb, int sad_count);
-void dce3_2_audio_set_dto(struct radeon_device *rdev,
-			  struct radeon_crtc *crtc, unsigned int clock);
-void dce3_2_hdmi_update_acr(struct drm_encoder *encoder, long offset,
-			    const struct radeon_hdmi_acr *acr);
-void dce3_2_set_audio_packet(struct drm_encoder *encoder, u32 offset);
-void dce3_2_set_mute(struct drm_encoder *encoder, u32 offset, bool mute);
-#endif
+व्योम dce3_2_afmt_ग_लिखो_sad_regs(काष्ठा drm_encoder *encoder,
+				काष्ठा cea_sad *sads, पूर्णांक sad_count);
+व्योम dce3_2_afmt_hdmi_ग_लिखो_speaker_allocation(काष्ठा drm_encoder *encoder,
+					       u8 *sadb, पूर्णांक sad_count);
+व्योम dce3_2_afmt_dp_ग_लिखो_speaker_allocation(काष्ठा drm_encoder *encoder,
+					     u8 *sadb, पूर्णांक sad_count);
+व्योम dce3_2_audio_set_dto(काष्ठा radeon_device *rdev,
+			  काष्ठा radeon_crtc *crtc, अचिन्हित पूर्णांक घड़ी);
+व्योम dce3_2_hdmi_update_acr(काष्ठा drm_encoder *encoder, दीर्घ offset,
+			    स्थिर काष्ठा radeon_hdmi_acr *acr);
+व्योम dce3_2_set_audio_packet(काष्ठा drm_encoder *encoder, u32 offset);
+व्योम dce3_2_set_mute(काष्ठा drm_encoder *encoder, u32 offset, bool mute);
+#पूर्ण_अगर

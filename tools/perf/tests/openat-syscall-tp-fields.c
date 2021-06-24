@@ -1,144 +1,145 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdbool.h>
-#include <linux/err.h>
-#include <linux/string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include "evlist.h"
-#include "evsel.h"
-#include "thread_map.h"
-#include "record.h"
-#include "tests.h"
-#include "debug.h"
-#include "util/mmap.h"
-#include <errno.h>
-#include <perf/mmap.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <stdbool.h>
+#समावेश <linux/err.h>
+#समावेश <linux/माला.स>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश "evlist.h"
+#समावेश "evsel.h"
+#समावेश "thread_map.h"
+#समावेश "record.h"
+#समावेश "tests.h"
+#समावेश "debug.h"
+#समावेश "util/mmap.h"
+#समावेश <त्रुटिसं.स>
+#समावेश <perf/mmap.h>
 
-#ifndef O_DIRECTORY
-#define O_DIRECTORY    00200000
-#endif
-#ifndef AT_FDCWD
-#define AT_FDCWD       -100
-#endif
+#अगर_अघोषित O_सूचीECTORY
+#घोषणा O_सूचीECTORY    00200000
+#पूर्ण_अगर
+#अगर_अघोषित AT_FDCWD
+#घोषणा AT_FDCWD       -100
+#पूर्ण_अगर
 
-int test__syscall_openat_tp_fields(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	struct record_opts opts = {
-		.target = {
-			.uid = UINT_MAX,
+पूर्णांक test__syscall_खोलोat_tp_fields(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	काष्ठा record_opts opts = अणु
+		.target = अणु
+			.uid = अच_पूर्णांक_उच्च,
 			.uses_mmap = true,
-		},
+		पूर्ण,
 		.no_buffering = true,
 		.freq	      = 1,
 		.mmap_pages   = 256,
 		.raw_samples  = true,
-	};
-	const char *filename = "/etc/passwd";
-	int flags = O_RDONLY | O_DIRECTORY;
-	struct evlist *evlist = evlist__new();
-	struct evsel *evsel;
-	int err = -1, i, nr_events = 0, nr_polls = 0;
-	char sbuf[STRERR_BUFSIZE];
+	पूर्ण;
+	स्थिर अक्षर *filename = "/etc/passwd";
+	पूर्णांक flags = O_RDONLY | O_सूचीECTORY;
+	काष्ठा evlist *evlist = evlist__new();
+	काष्ठा evsel *evsel;
+	पूर्णांक err = -1, i, nr_events = 0, nr_polls = 0;
+	अक्षर sbuf[STRERR_बफ_मानE];
 
-	if (evlist == NULL) {
+	अगर (evlist == शून्य) अणु
 		pr_debug("%s: evlist__new\n", __func__);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	evsel = evsel__newtp("syscalls", "sys_enter_openat");
-	if (IS_ERR(evsel)) {
+	अगर (IS_ERR(evsel)) अणु
 		pr_debug("%s: evsel__newtp\n", __func__);
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	evlist__add(evlist, evsel);
 
 	err = evlist__create_maps(evlist, &opts.target);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_debug("%s: evlist__create_maps\n", __func__);
-		goto out_delete_evlist;
-	}
+		जाओ out_delete_evlist;
+	पूर्ण
 
-	evsel__config(evsel, &opts, NULL);
+	evsel__config(evsel, &opts, शून्य);
 
-	perf_thread_map__set_pid(evlist->core.threads, 0, getpid());
+	perf_thपढ़ो_map__set_pid(evlist->core.thपढ़ोs, 0, getpid());
 
-	err = evlist__open(evlist);
-	if (err < 0) {
+	err = evlist__खोलो(evlist);
+	अगर (err < 0) अणु
 		pr_debug("perf_evlist__open: %s\n",
-			 str_error_r(errno, sbuf, sizeof(sbuf)));
-		goto out_delete_evlist;
-	}
+			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		जाओ out_delete_evlist;
+	पूर्ण
 
-	err = evlist__mmap(evlist, UINT_MAX);
-	if (err < 0) {
+	err = evlist__mmap(evlist, अच_पूर्णांक_उच्च);
+	अगर (err < 0) अणु
 		pr_debug("evlist__mmap: %s\n",
-			 str_error_r(errno, sbuf, sizeof(sbuf)));
-		goto out_delete_evlist;
-	}
+			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		जाओ out_delete_evlist;
+	पूर्ण
 
 	evlist__enable(evlist);
 
 	/*
 	 * Generate the event:
 	 */
-	openat(AT_FDCWD, filename, flags);
+	खोलोat(AT_FDCWD, filename, flags);
 
-	while (1) {
-		int before = nr_events;
+	जबतक (1) अणु
+		पूर्णांक beक्रमe = nr_events;
 
-		for (i = 0; i < evlist->core.nr_mmaps; i++) {
-			union perf_event *event;
-			struct mmap *md;
+		क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
+			जोड़ perf_event *event;
+			काष्ठा mmap *md;
 
 			md = &evlist->mmap[i];
-			if (perf_mmap__read_init(&md->core) < 0)
-				continue;
+			अगर (perf_mmap__पढ़ो_init(&md->core) < 0)
+				जारी;
 
-			while ((event = perf_mmap__read_event(&md->core)) != NULL) {
-				const u32 type = event->header.type;
-				int tp_flags;
-				struct perf_sample sample;
+			जबतक ((event = perf_mmap__पढ़ो_event(&md->core)) != शून्य) अणु
+				स्थिर u32 type = event->header.type;
+				पूर्णांक tp_flags;
+				काष्ठा perf_sample sample;
 
 				++nr_events;
 
-				if (type != PERF_RECORD_SAMPLE) {
+				अगर (type != PERF_RECORD_SAMPLE) अणु
 					perf_mmap__consume(&md->core);
-					continue;
-				}
+					जारी;
+				पूर्ण
 
 				err = evsel__parse_sample(evsel, event, &sample);
-				if (err) {
+				अगर (err) अणु
 					pr_debug("Can't parse sample, err = %d\n", err);
-					goto out_delete_evlist;
-				}
+					जाओ out_delete_evlist;
+				पूर्ण
 
-				tp_flags = evsel__intval(evsel, &sample, "flags");
+				tp_flags = evsel__पूर्णांकval(evsel, &sample, "flags");
 
-				if (flags != tp_flags) {
+				अगर (flags != tp_flags) अणु
 					pr_debug("%s: Expected flags=%#x, got %#x\n",
 						 __func__, flags, tp_flags);
-					goto out_delete_evlist;
-				}
+					जाओ out_delete_evlist;
+				पूर्ण
 
-				goto out_ok;
-			}
-			perf_mmap__read_done(&md->core);
-		}
+				जाओ out_ok;
+			पूर्ण
+			perf_mmap__पढ़ो_करोne(&md->core);
+		पूर्ण
 
-		if (nr_events == before)
+		अगर (nr_events == beक्रमe)
 			evlist__poll(evlist, 10);
 
-		if (++nr_polls > 5) {
+		अगर (++nr_polls > 5) अणु
 			pr_debug("%s: no events!\n", __func__);
-			goto out_delete_evlist;
-		}
-	}
+			जाओ out_delete_evlist;
+		पूर्ण
+	पूर्ण
 out_ok:
 	err = 0;
 out_delete_evlist:
 	evlist__delete(evlist);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण

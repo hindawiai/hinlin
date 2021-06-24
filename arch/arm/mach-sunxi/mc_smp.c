@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2018 Chen-Yu Tsai
  *
@@ -7,443 +8,443 @@
  * arch/arm/mach-sunxi/mc_smp.c
  *
  * Based on Allwinner code, arch/arm/mach-exynos/mcpm-exynos.c, and
- * arch/arm/mach-hisi/platmcpm.c
+ * arch/arm/mach-hisi/plaपंचांगcpm.c
  * Cluster cache enable trampoline code adapted from MCPM framework
  */
 
-#include <linux/arm-cci.h>
-#include <linux/cpu_pm.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/irqchip/arm-gic.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/smp.h>
+#समावेश <linux/arm-cci.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/irqchip/arm-gic.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/smp.h>
 
-#include <asm/cacheflush.h>
-#include <asm/cp15.h>
-#include <asm/cputype.h>
-#include <asm/idmap.h>
-#include <asm/smp_plat.h>
-#include <asm/suspend.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/idmap.h>
+#समावेश <यंत्र/smp_plat.h>
+#समावेश <यंत्र/suspend.h>
 
-#define SUNXI_CPUS_PER_CLUSTER		4
-#define SUNXI_NR_CLUSTERS		2
+#घोषणा SUNXI_CPUS_PER_CLUSTER		4
+#घोषणा SUNXI_NR_CLUSTERS		2
 
-#define POLL_USEC	100
-#define TIMEOUT_USEC	100000
+#घोषणा POLL_USEC	100
+#घोषणा TIMEOUT_USEC	100000
 
-#define CPUCFG_CX_CTRL_REG0(c)		(0x10 * (c))
-#define CPUCFG_CX_CTRL_REG0_L1_RST_DISABLE(n)	BIT(n)
-#define CPUCFG_CX_CTRL_REG0_L1_RST_DISABLE_ALL	0xf
-#define CPUCFG_CX_CTRL_REG0_L2_RST_DISABLE_A7	BIT(4)
-#define CPUCFG_CX_CTRL_REG0_L2_RST_DISABLE_A15	BIT(0)
-#define CPUCFG_CX_CTRL_REG1(c)		(0x10 * (c) + 0x4)
-#define CPUCFG_CX_CTRL_REG1_ACINACTM	BIT(0)
-#define CPUCFG_CX_STATUS(c)		(0x30 + 0x4 * (c))
-#define CPUCFG_CX_STATUS_STANDBYWFI(n)	BIT(16 + (n))
-#define CPUCFG_CX_STATUS_STANDBYWFIL2	BIT(0)
-#define CPUCFG_CX_RST_CTRL(c)		(0x80 + 0x4 * (c))
-#define CPUCFG_CX_RST_CTRL_DBG_SOC_RST	BIT(24)
-#define CPUCFG_CX_RST_CTRL_ETM_RST(n)	BIT(20 + (n))
-#define CPUCFG_CX_RST_CTRL_ETM_RST_ALL	(0xf << 20)
-#define CPUCFG_CX_RST_CTRL_DBG_RST(n)	BIT(16 + (n))
-#define CPUCFG_CX_RST_CTRL_DBG_RST_ALL	(0xf << 16)
-#define CPUCFG_CX_RST_CTRL_H_RST	BIT(12)
-#define CPUCFG_CX_RST_CTRL_L2_RST	BIT(8)
-#define CPUCFG_CX_RST_CTRL_CX_RST(n)	BIT(4 + (n))
-#define CPUCFG_CX_RST_CTRL_CORE_RST(n)	BIT(n)
-#define CPUCFG_CX_RST_CTRL_CORE_RST_ALL	(0xf << 0)
+#घोषणा CPUCFG_CX_CTRL_REG0(c)		(0x10 * (c))
+#घोषणा CPUCFG_CX_CTRL_REG0_L1_RST_DISABLE(n)	BIT(n)
+#घोषणा CPUCFG_CX_CTRL_REG0_L1_RST_DISABLE_ALL	0xf
+#घोषणा CPUCFG_CX_CTRL_REG0_L2_RST_DISABLE_A7	BIT(4)
+#घोषणा CPUCFG_CX_CTRL_REG0_L2_RST_DISABLE_A15	BIT(0)
+#घोषणा CPUCFG_CX_CTRL_REG1(c)		(0x10 * (c) + 0x4)
+#घोषणा CPUCFG_CX_CTRL_REG1_ACINACTM	BIT(0)
+#घोषणा CPUCFG_CX_STATUS(c)		(0x30 + 0x4 * (c))
+#घोषणा CPUCFG_CX_STATUS_STANDBYWFI(n)	BIT(16 + (n))
+#घोषणा CPUCFG_CX_STATUS_STANDBYWFIL2	BIT(0)
+#घोषणा CPUCFG_CX_RST_CTRL(c)		(0x80 + 0x4 * (c))
+#घोषणा CPUCFG_CX_RST_CTRL_DBG_SOC_RST	BIT(24)
+#घोषणा CPUCFG_CX_RST_CTRL_ETM_RST(n)	BIT(20 + (n))
+#घोषणा CPUCFG_CX_RST_CTRL_ETM_RST_ALL	(0xf << 20)
+#घोषणा CPUCFG_CX_RST_CTRL_DBG_RST(n)	BIT(16 + (n))
+#घोषणा CPUCFG_CX_RST_CTRL_DBG_RST_ALL	(0xf << 16)
+#घोषणा CPUCFG_CX_RST_CTRL_H_RST	BIT(12)
+#घोषणा CPUCFG_CX_RST_CTRL_L2_RST	BIT(8)
+#घोषणा CPUCFG_CX_RST_CTRL_CX_RST(n)	BIT(4 + (n))
+#घोषणा CPUCFG_CX_RST_CTRL_CORE_RST(n)	BIT(n)
+#घोषणा CPUCFG_CX_RST_CTRL_CORE_RST_ALL	(0xf << 0)
 
-#define PRCM_CPU_PO_RST_CTRL(c)		(0x4 + 0x4 * (c))
-#define PRCM_CPU_PO_RST_CTRL_CORE(n)	BIT(n)
-#define PRCM_CPU_PO_RST_CTRL_CORE_ALL	0xf
-#define PRCM_PWROFF_GATING_REG(c)	(0x100 + 0x4 * (c))
-/* The power off register for clusters are different from a80 and a83t */
-#define PRCM_PWROFF_GATING_REG_CLUSTER_SUN8I	BIT(0)
-#define PRCM_PWROFF_GATING_REG_CLUSTER_SUN9I	BIT(4)
-#define PRCM_PWROFF_GATING_REG_CORE(n)	BIT(n)
-#define PRCM_PWR_SWITCH_REG(c, cpu)	(0x140 + 0x10 * (c) + 0x4 * (cpu))
-#define PRCM_CPU_SOFT_ENTRY_REG		0x164
+#घोषणा PRCM_CPU_PO_RST_CTRL(c)		(0x4 + 0x4 * (c))
+#घोषणा PRCM_CPU_PO_RST_CTRL_CORE(n)	BIT(n)
+#घोषणा PRCM_CPU_PO_RST_CTRL_CORE_ALL	0xf
+#घोषणा PRCM_PWROFF_GATING_REG(c)	(0x100 + 0x4 * (c))
+/* The घातer off रेजिस्टर क्रम clusters are dअगरferent from a80 and a83t */
+#घोषणा PRCM_PWROFF_GATING_REG_CLUSTER_SUN8I	BIT(0)
+#घोषणा PRCM_PWROFF_GATING_REG_CLUSTER_SUN9I	BIT(4)
+#घोषणा PRCM_PWROFF_GATING_REG_CORE(n)	BIT(n)
+#घोषणा PRCM_PWR_SWITCH_REG(c, cpu)	(0x140 + 0x10 * (c) + 0x4 * (cpu))
+#घोषणा PRCM_CPU_SOFT_ENTRY_REG		0x164
 
-/* R_CPUCFG registers, specific to sun8i-a83t */
-#define R_CPUCFG_CLUSTER_PO_RST_CTRL(c)	(0x30 + (c) * 0x4)
-#define R_CPUCFG_CLUSTER_PO_RST_CTRL_CORE(n)	BIT(n)
-#define R_CPUCFG_CPU_SOFT_ENTRY_REG		0x01a4
+/* R_CPUCFG रेजिस्टरs, specअगरic to sun8i-a83t */
+#घोषणा R_CPUCFG_CLUSTER_PO_RST_CTRL(c)	(0x30 + (c) * 0x4)
+#घोषणा R_CPUCFG_CLUSTER_PO_RST_CTRL_CORE(n)	BIT(n)
+#घोषणा R_CPUCFG_CPU_SOFT_ENTRY_REG		0x01a4
 
-#define CPU0_SUPPORT_HOTPLUG_MAGIC0	0xFA50392F
-#define CPU0_SUPPORT_HOTPLUG_MAGIC1	0x790DCA3A
+#घोषणा CPU0_SUPPORT_HOTPLUG_MAGIC0	0xFA50392F
+#घोषणा CPU0_SUPPORT_HOTPLUG_MAGIC1	0x790DCA3A
 
-static void __iomem *cpucfg_base;
-static void __iomem *prcm_base;
-static void __iomem *sram_b_smp_base;
-static void __iomem *r_cpucfg_base;
+अटल व्योम __iomem *cpucfg_base;
+अटल व्योम __iomem *prcm_base;
+अटल व्योम __iomem *sram_b_smp_base;
+अटल व्योम __iomem *r_cpucfg_base;
 
-extern void sunxi_mc_smp_secondary_startup(void);
-extern void sunxi_mc_smp_resume(void);
-static bool is_a83t;
+बाह्य व्योम sunxi_mc_smp_secondary_startup(व्योम);
+बाह्य व्योम sunxi_mc_smp_resume(व्योम);
+अटल bool is_a83t;
 
-static bool sunxi_core_is_cortex_a15(unsigned int core, unsigned int cluster)
-{
-	struct device_node *node;
-	int cpu = cluster * SUNXI_CPUS_PER_CLUSTER + core;
+अटल bool sunxi_core_is_cortex_a15(अचिन्हित पूर्णांक core, अचिन्हित पूर्णांक cluster)
+अणु
+	काष्ठा device_node *node;
+	पूर्णांक cpu = cluster * SUNXI_CPUS_PER_CLUSTER + core;
 	bool is_compatible;
 
 	node = of_cpu_device_node_get(cpu);
 
-	/* In case of_cpu_device_node_get fails */
-	if (!node)
-		node = of_get_cpu_node(cpu, NULL);
+	/* In हाल of_cpu_device_node_get fails */
+	अगर (!node)
+		node = of_get_cpu_node(cpu, शून्य);
 
-	if (!node) {
+	अगर (!node) अणु
 		/*
-		 * There's no point in returning an error, since we
-		 * would be mid way in a core or cluster power sequence.
+		 * There's no poपूर्णांक in वापसing an error, since we
+		 * would be mid way in a core or cluster घातer sequence.
 		 */
 		pr_err("%s: Couldn't get CPU cluster %u core %u device node\n",
 		       __func__, cluster, core);
 
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	is_compatible = of_device_is_compatible(node, "arm,cortex-a15");
 	of_node_put(node);
-	return is_compatible;
-}
+	वापस is_compatible;
+पूर्ण
 
-static int sunxi_cpu_power_switch_set(unsigned int cpu, unsigned int cluster,
+अटल पूर्णांक sunxi_cpu_घातer_चयन_set(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक cluster,
 				      bool enable)
-{
+अणु
 	u32 reg;
 
 	/* control sequence from Allwinner A80 user manual v1.2 PRCM section */
-	reg = readl(prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
-	if (enable) {
-		if (reg == 0x00) {
+	reg = पढ़ोl(prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
+	अगर (enable) अणु
+		अगर (reg == 0x00) अणु
 			pr_debug("power clamp for cluster %u cpu %u already open\n",
 				 cluster, cpu);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		writel(0xff, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
+		ग_लिखोl(0xff, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
 		udelay(10);
-		writel(0xfe, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
+		ग_लिखोl(0xfe, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
 		udelay(10);
-		writel(0xf8, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
+		ग_लिखोl(0xf8, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
 		udelay(10);
-		writel(0xf0, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
+		ग_लिखोl(0xf0, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
 		udelay(10);
-		writel(0x00, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
+		ग_लिखोl(0x00, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
 		udelay(10);
-	} else {
-		writel(0xff, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(0xff, prcm_base + PRCM_PWR_SWITCH_REG(cluster, cpu));
 		udelay(10);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sunxi_cpu0_hotplug_support_set(bool enable)
-{
-	if (enable) {
-		writel(CPU0_SUPPORT_HOTPLUG_MAGIC0, sram_b_smp_base);
-		writel(CPU0_SUPPORT_HOTPLUG_MAGIC1, sram_b_smp_base + 0x4);
-	} else {
-		writel(0x0, sram_b_smp_base);
-		writel(0x0, sram_b_smp_base + 0x4);
-	}
-}
+अटल व्योम sunxi_cpu0_hotplug_support_set(bool enable)
+अणु
+	अगर (enable) अणु
+		ग_लिखोl(CPU0_SUPPORT_HOTPLUG_MAGIC0, sram_b_smp_base);
+		ग_लिखोl(CPU0_SUPPORT_HOTPLUG_MAGIC1, sram_b_smp_base + 0x4);
+	पूर्ण अन्यथा अणु
+		ग_लिखोl(0x0, sram_b_smp_base);
+		ग_लिखोl(0x0, sram_b_smp_base + 0x4);
+	पूर्ण
+पूर्ण
 
-static int sunxi_cpu_powerup(unsigned int cpu, unsigned int cluster)
-{
+अटल पूर्णांक sunxi_cpu_घातerup(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक cluster)
+अणु
 	u32 reg;
 
 	pr_debug("%s: cluster %u cpu %u\n", __func__, cluster, cpu);
-	if (cpu >= SUNXI_CPUS_PER_CLUSTER || cluster >= SUNXI_NR_CLUSTERS)
-		return -EINVAL;
+	अगर (cpu >= SUNXI_CPUS_PER_CLUSTER || cluster >= SUNXI_NR_CLUSTERS)
+		वापस -EINVAL;
 
-	/* Set hotplug support magic flags for cpu0 */
-	if (cluster == 0 && cpu == 0)
+	/* Set hotplug support magic flags क्रम cpu0 */
+	अगर (cluster == 0 && cpu == 0)
 		sunxi_cpu0_hotplug_support_set(true);
 
-	/* assert processor power-on reset */
-	reg = readl(prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
+	/* निश्चित processor घातer-on reset */
+	reg = पढ़ोl(prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
 	reg &= ~PRCM_CPU_PO_RST_CTRL_CORE(cpu);
-	writel(reg, prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
+	ग_लिखोl(reg, prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
 
-	if (is_a83t) {
-		/* assert cpu power-on reset */
-		reg  = readl(r_cpucfg_base +
+	अगर (is_a83t) अणु
+		/* निश्चित cpu घातer-on reset */
+		reg  = पढ़ोl(r_cpucfg_base +
 			     R_CPUCFG_CLUSTER_PO_RST_CTRL(cluster));
 		reg &= ~(R_CPUCFG_CLUSTER_PO_RST_CTRL_CORE(cpu));
-		writel(reg, r_cpucfg_base +
+		ग_लिखोl(reg, r_cpucfg_base +
 		       R_CPUCFG_CLUSTER_PO_RST_CTRL(cluster));
 		udelay(10);
-	}
+	पूर्ण
 
-	/* Cortex-A7: hold L1 reset disable signal low */
-	if (!sunxi_core_is_cortex_a15(cpu, cluster)) {
-		reg = readl(cpucfg_base + CPUCFG_CX_CTRL_REG0(cluster));
+	/* Cortex-A7: hold L1 reset disable संकेत low */
+	अगर (!sunxi_core_is_cortex_a15(cpu, cluster)) अणु
+		reg = पढ़ोl(cpucfg_base + CPUCFG_CX_CTRL_REG0(cluster));
 		reg &= ~CPUCFG_CX_CTRL_REG0_L1_RST_DISABLE(cpu);
-		writel(reg, cpucfg_base + CPUCFG_CX_CTRL_REG0(cluster));
-	}
+		ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_CTRL_REG0(cluster));
+	पूर्ण
 
-	/* assert processor related resets */
-	reg = readl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	/* निश्चित processor related resets */
+	reg = पढ़ोl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 	reg &= ~CPUCFG_CX_RST_CTRL_DBG_RST(cpu);
 
 	/*
-	 * Allwinner code also asserts resets for NEON on A15. According
-	 * to ARM manuals, asserting power-on reset is sufficient.
+	 * Allwinner code also निश्चितs resets क्रम NEON on A15. According
+	 * to ARM manuals, निश्चितing घातer-on reset is sufficient.
 	 */
-	if (!sunxi_core_is_cortex_a15(cpu, cluster))
+	अगर (!sunxi_core_is_cortex_a15(cpu, cluster))
 		reg &= ~CPUCFG_CX_RST_CTRL_ETM_RST(cpu);
 
-	writel(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 
-	/* open power switch */
-	sunxi_cpu_power_switch_set(cpu, cluster, true);
+	/* खोलो घातer चयन */
+	sunxi_cpu_घातer_चयन_set(cpu, cluster, true);
 
 	/* Handle A83T bit swap */
-	if (is_a83t) {
-		if (cpu == 0)
+	अगर (is_a83t) अणु
+		अगर (cpu == 0)
 			cpu = 4;
-	}
+	पूर्ण
 
-	/* clear processor power gate */
-	reg = readl(prcm_base + PRCM_PWROFF_GATING_REG(cluster));
+	/* clear processor घातer gate */
+	reg = पढ़ोl(prcm_base + PRCM_PWROFF_GATING_REG(cluster));
 	reg &= ~PRCM_PWROFF_GATING_REG_CORE(cpu);
-	writel(reg, prcm_base + PRCM_PWROFF_GATING_REG(cluster));
+	ग_लिखोl(reg, prcm_base + PRCM_PWROFF_GATING_REG(cluster));
 	udelay(20);
 
 	/* Handle A83T bit swap */
-	if (is_a83t) {
-		if (cpu == 4)
+	अगर (is_a83t) अणु
+		अगर (cpu == 4)
 			cpu = 0;
-	}
+	पूर्ण
 
-	/* de-assert processor power-on reset */
-	reg = readl(prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
+	/* de-निश्चित processor घातer-on reset */
+	reg = पढ़ोl(prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
 	reg |= PRCM_CPU_PO_RST_CTRL_CORE(cpu);
-	writel(reg, prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
+	ग_लिखोl(reg, prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
 
-	if (is_a83t) {
-		reg  = readl(r_cpucfg_base +
+	अगर (is_a83t) अणु
+		reg  = पढ़ोl(r_cpucfg_base +
 			     R_CPUCFG_CLUSTER_PO_RST_CTRL(cluster));
 		reg |= R_CPUCFG_CLUSTER_PO_RST_CTRL_CORE(cpu);
-		writel(reg, r_cpucfg_base +
+		ग_लिखोl(reg, r_cpucfg_base +
 		       R_CPUCFG_CLUSTER_PO_RST_CTRL(cluster));
 		udelay(10);
-	}
+	पूर्ण
 
-	/* de-assert all processor resets */
-	reg = readl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	/* de-निश्चित all processor resets */
+	reg = पढ़ोl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 	reg |= CPUCFG_CX_RST_CTRL_DBG_RST(cpu);
 	reg |= CPUCFG_CX_RST_CTRL_CORE_RST(cpu);
-	if (!sunxi_core_is_cortex_a15(cpu, cluster))
+	अगर (!sunxi_core_is_cortex_a15(cpu, cluster))
 		reg |= CPUCFG_CX_RST_CTRL_ETM_RST(cpu);
-	else
+	अन्यथा
 		reg |= CPUCFG_CX_RST_CTRL_CX_RST(cpu); /* NEON */
-	writel(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_cluster_powerup(unsigned int cluster)
-{
+अटल पूर्णांक sunxi_cluster_घातerup(अचिन्हित पूर्णांक cluster)
+अणु
 	u32 reg;
 
 	pr_debug("%s: cluster %u\n", __func__, cluster);
-	if (cluster >= SUNXI_NR_CLUSTERS)
-		return -EINVAL;
+	अगर (cluster >= SUNXI_NR_CLUSTERS)
+		वापस -EINVAL;
 
-	/* For A83T, assert cluster cores resets */
-	if (is_a83t) {
-		reg = readl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	/* For A83T, निश्चित cluster cores resets */
+	अगर (is_a83t) अणु
+		reg = पढ़ोl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 		reg &= ~CPUCFG_CX_RST_CTRL_CORE_RST_ALL;   /* Core Reset    */
-		writel(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+		ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 		udelay(10);
-	}
+	पूर्ण
 
-	/* assert ACINACTM */
-	reg = readl(cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
+	/* निश्चित ACINACTM */
+	reg = पढ़ोl(cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
 	reg |= CPUCFG_CX_CTRL_REG1_ACINACTM;
-	writel(reg, cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
+	ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
 
-	/* assert cluster processor power-on resets */
-	reg = readl(prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
+	/* निश्चित cluster processor घातer-on resets */
+	reg = पढ़ोl(prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
 	reg &= ~PRCM_CPU_PO_RST_CTRL_CORE_ALL;
-	writel(reg, prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
+	ग_लिखोl(reg, prcm_base + PRCM_CPU_PO_RST_CTRL(cluster));
 
-	/* assert cluster cores resets */
-	if (is_a83t) {
-		reg  = readl(r_cpucfg_base +
+	/* निश्चित cluster cores resets */
+	अगर (is_a83t) अणु
+		reg  = पढ़ोl(r_cpucfg_base +
 			     R_CPUCFG_CLUSTER_PO_RST_CTRL(cluster));
 		reg &= ~CPUCFG_CX_RST_CTRL_CORE_RST_ALL;
-		writel(reg, r_cpucfg_base +
+		ग_लिखोl(reg, r_cpucfg_base +
 		       R_CPUCFG_CLUSTER_PO_RST_CTRL(cluster));
 		udelay(10);
-	}
+	पूर्ण
 
-	/* assert cluster resets */
-	reg = readl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	/* निश्चित cluster resets */
+	reg = पढ़ोl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 	reg &= ~CPUCFG_CX_RST_CTRL_DBG_SOC_RST;
 	reg &= ~CPUCFG_CX_RST_CTRL_DBG_RST_ALL;
 	reg &= ~CPUCFG_CX_RST_CTRL_H_RST;
 	reg &= ~CPUCFG_CX_RST_CTRL_L2_RST;
 
 	/*
-	 * Allwinner code also asserts resets for NEON on A15. According
-	 * to ARM manuals, asserting power-on reset is sufficient.
+	 * Allwinner code also निश्चितs resets क्रम NEON on A15. According
+	 * to ARM manuals, निश्चितing घातer-on reset is sufficient.
 	 */
-	if (!sunxi_core_is_cortex_a15(0, cluster))
+	अगर (!sunxi_core_is_cortex_a15(0, cluster))
 		reg &= ~CPUCFG_CX_RST_CTRL_ETM_RST_ALL;
 
-	writel(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 
-	/* hold L1/L2 reset disable signals low */
-	reg = readl(cpucfg_base + CPUCFG_CX_CTRL_REG0(cluster));
-	if (sunxi_core_is_cortex_a15(0, cluster)) {
+	/* hold L1/L2 reset disable संकेतs low */
+	reg = पढ़ोl(cpucfg_base + CPUCFG_CX_CTRL_REG0(cluster));
+	अगर (sunxi_core_is_cortex_a15(0, cluster)) अणु
 		/* Cortex-A15: hold L2RSTDISABLE low */
 		reg &= ~CPUCFG_CX_CTRL_REG0_L2_RST_DISABLE_A15;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Cortex-A7: hold L1RSTDISABLE and L2RSTDISABLE low */
 		reg &= ~CPUCFG_CX_CTRL_REG0_L1_RST_DISABLE_ALL;
 		reg &= ~CPUCFG_CX_CTRL_REG0_L2_RST_DISABLE_A7;
-	}
-	writel(reg, cpucfg_base + CPUCFG_CX_CTRL_REG0(cluster));
+	पूर्ण
+	ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_CTRL_REG0(cluster));
 
-	/* clear cluster power gate */
-	reg = readl(prcm_base + PRCM_PWROFF_GATING_REG(cluster));
-	if (is_a83t)
+	/* clear cluster घातer gate */
+	reg = पढ़ोl(prcm_base + PRCM_PWROFF_GATING_REG(cluster));
+	अगर (is_a83t)
 		reg &= ~PRCM_PWROFF_GATING_REG_CLUSTER_SUN8I;
-	else
+	अन्यथा
 		reg &= ~PRCM_PWROFF_GATING_REG_CLUSTER_SUN9I;
-	writel(reg, prcm_base + PRCM_PWROFF_GATING_REG(cluster));
+	ग_लिखोl(reg, prcm_base + PRCM_PWROFF_GATING_REG(cluster));
 	udelay(20);
 
-	/* de-assert cluster resets */
-	reg = readl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	/* de-निश्चित cluster resets */
+	reg = पढ़ोl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 	reg |= CPUCFG_CX_RST_CTRL_DBG_SOC_RST;
 	reg |= CPUCFG_CX_RST_CTRL_H_RST;
 	reg |= CPUCFG_CX_RST_CTRL_L2_RST;
-	writel(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 
-	/* de-assert ACINACTM */
-	reg = readl(cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
+	/* de-निश्चित ACINACTM */
+	reg = पढ़ोl(cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
 	reg &= ~CPUCFG_CX_CTRL_REG1_ACINACTM;
-	writel(reg, cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
+	ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This bit is shared between the initial nocache_trampoline call to
- * enable CCI-400 and proper cluster cache disable before power down.
+ * enable CCI-400 and proper cluster cache disable beक्रमe घातer करोwn.
  */
-static void sunxi_cluster_cache_disable_without_axi(void)
-{
-	if (read_cpuid_part() == ARM_CPU_PART_CORTEX_A15) {
+अटल व्योम sunxi_cluster_cache_disable_without_axi(व्योम)
+अणु
+	अगर (पढ़ो_cpuid_part() == ARM_CPU_PART_CORTEX_A15) अणु
 		/*
 		 * On the Cortex-A15 we need to disable
-		 * L2 prefetching before flushing the cache.
+		 * L2 prefetching beक्रमe flushing the cache.
 		 */
-		asm volatile(
+		यंत्र अस्थिर(
 		"mcr	p15, 1, %0, c15, c0, 3\n"
 		"isb\n"
 		"dsb"
 		: : "r" (0x400));
-	}
+	पूर्ण
 
-	/* Flush all cache levels for this cluster. */
-	v7_exit_coherency_flush(all);
+	/* Flush all cache levels क्रम this cluster. */
+	v7_निकास_coherency_flush(all);
 
 	/*
 	 * Disable cluster-level coherency by masking
 	 * incoming snoops and DVM messages:
 	 */
-	cci_disable_port_by_cpu(read_cpuid_mpidr());
-}
+	cci_disable_port_by_cpu(पढ़ो_cpuid_mpidr());
+पूर्ण
 
-static int sunxi_mc_smp_cpu_table[SUNXI_NR_CLUSTERS][SUNXI_CPUS_PER_CLUSTER];
-int sunxi_mc_smp_first_comer;
+अटल पूर्णांक sunxi_mc_smp_cpu_table[SUNXI_NR_CLUSTERS][SUNXI_CPUS_PER_CLUSTER];
+पूर्णांक sunxi_mc_smp_first_comer;
 
-static DEFINE_SPINLOCK(boot_lock);
+अटल DEFINE_SPINLOCK(boot_lock);
 
-static bool sunxi_mc_smp_cluster_is_down(unsigned int cluster)
-{
-	int i;
+अटल bool sunxi_mc_smp_cluster_is_करोwn(अचिन्हित पूर्णांक cluster)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < SUNXI_CPUS_PER_CLUSTER; i++)
-		if (sunxi_mc_smp_cpu_table[cluster][i])
-			return false;
-	return true;
-}
+	क्रम (i = 0; i < SUNXI_CPUS_PER_CLUSTER; i++)
+		अगर (sunxi_mc_smp_cpu_table[cluster][i])
+			वापस false;
+	वापस true;
+पूर्ण
 
-static void sunxi_mc_smp_secondary_init(unsigned int cpu)
-{
-	/* Clear hotplug support magic flags for cpu0 */
-	if (cpu == 0)
+अटल व्योम sunxi_mc_smp_secondary_init(अचिन्हित पूर्णांक cpu)
+अणु
+	/* Clear hotplug support magic flags क्रम cpu0 */
+	अगर (cpu == 0)
 		sunxi_cpu0_hotplug_support_set(false);
-}
+पूर्ण
 
-static int sunxi_mc_smp_boot_secondary(unsigned int l_cpu, struct task_struct *idle)
-{
-	unsigned int mpidr, cpu, cluster;
+अटल पूर्णांक sunxi_mc_smp_boot_secondary(अचिन्हित पूर्णांक l_cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	अचिन्हित पूर्णांक mpidr, cpu, cluster;
 
 	mpidr = cpu_logical_map(l_cpu);
 	cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 	cluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
-	if (!cpucfg_base)
-		return -ENODEV;
-	if (cluster >= SUNXI_NR_CLUSTERS || cpu >= SUNXI_CPUS_PER_CLUSTER)
-		return -EINVAL;
+	अगर (!cpucfg_base)
+		वापस -ENODEV;
+	अगर (cluster >= SUNXI_NR_CLUSTERS || cpu >= SUNXI_CPUS_PER_CLUSTER)
+		वापस -EINVAL;
 
 	spin_lock_irq(&boot_lock);
 
-	if (sunxi_mc_smp_cpu_table[cluster][cpu])
-		goto out;
+	अगर (sunxi_mc_smp_cpu_table[cluster][cpu])
+		जाओ out;
 
-	if (sunxi_mc_smp_cluster_is_down(cluster)) {
+	अगर (sunxi_mc_smp_cluster_is_करोwn(cluster)) अणु
 		sunxi_mc_smp_first_comer = true;
-		sunxi_cluster_powerup(cluster);
-	} else {
+		sunxi_cluster_घातerup(cluster);
+	पूर्ण अन्यथा अणु
 		sunxi_mc_smp_first_comer = false;
-	}
+	पूर्ण
 
-	/* This is read by incoming CPUs with their cache and MMU disabled */
+	/* This is पढ़ो by incoming CPUs with their cache and MMU disabled */
 	sync_cache_w(&sunxi_mc_smp_first_comer);
-	sunxi_cpu_powerup(cpu, cluster);
+	sunxi_cpu_घातerup(cpu, cluster);
 
 out:
 	sunxi_mc_smp_cpu_table[cluster][cpu]++;
 	spin_unlock_irq(&boot_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_HOTPLUG_CPU
-static void sunxi_cluster_cache_disable(void)
-{
-	unsigned int cluster = MPIDR_AFFINITY_LEVEL(read_cpuid_mpidr(), 1);
+#अगर_घोषित CONFIG_HOTPLUG_CPU
+अटल व्योम sunxi_cluster_cache_disable(व्योम)
+अणु
+	अचिन्हित पूर्णांक cluster = MPIDR_AFFINITY_LEVEL(पढ़ो_cpuid_mpidr(), 1);
 	u32 reg;
 
 	pr_debug("%s: cluster %u\n", __func__, cluster);
 
 	sunxi_cluster_cache_disable_without_axi();
 
-	/* last man standing, assert ACINACTM */
-	reg = readl(cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
+	/* last man standing, निश्चित ACINACTM */
+	reg = पढ़ोl(cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
 	reg |= CPUCFG_CX_CTRL_REG1_ACINACTM;
-	writel(reg, cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
-}
+	ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_CTRL_REG1(cluster));
+पूर्ण
 
-static void sunxi_mc_smp_cpu_die(unsigned int l_cpu)
-{
-	unsigned int mpidr, cpu, cluster;
+अटल व्योम sunxi_mc_smp_cpu_die(अचिन्हित पूर्णांक l_cpu)
+अणु
+	अचिन्हित पूर्णांक mpidr, cpu, cluster;
 	bool last_man;
 
 	mpidr = cpu_logical_map(l_cpu);
@@ -453,89 +454,89 @@ static void sunxi_mc_smp_cpu_die(unsigned int l_cpu)
 
 	spin_lock(&boot_lock);
 	sunxi_mc_smp_cpu_table[cluster][cpu]--;
-	if (sunxi_mc_smp_cpu_table[cluster][cpu] == 1) {
-		/* A power_up request went ahead of us. */
+	अगर (sunxi_mc_smp_cpu_table[cluster][cpu] == 1) अणु
+		/* A घातer_up request went ahead of us. */
 		pr_debug("%s: aborting due to a power up request\n",
 			 __func__);
 		spin_unlock(&boot_lock);
-		return;
-	} else if (sunxi_mc_smp_cpu_table[cluster][cpu] > 1) {
+		वापस;
+	पूर्ण अन्यथा अगर (sunxi_mc_smp_cpu_table[cluster][cpu] > 1) अणु
 		pr_err("Cluster %d CPU%d boots multiple times\n",
 		       cluster, cpu);
 		BUG();
-	}
+	पूर्ण
 
-	last_man = sunxi_mc_smp_cluster_is_down(cluster);
+	last_man = sunxi_mc_smp_cluster_is_करोwn(cluster);
 	spin_unlock(&boot_lock);
 
-	gic_cpu_if_down(0);
-	if (last_man)
+	gic_cpu_अगर_करोwn(0);
+	अगर (last_man)
 		sunxi_cluster_cache_disable();
-	else
-		v7_exit_coherency_flush(louis);
+	अन्यथा
+		v7_निकास_coherency_flush(louis);
 
-	for (;;)
+	क्रम (;;)
 		wfi();
-}
+पूर्ण
 
-static int sunxi_cpu_powerdown(unsigned int cpu, unsigned int cluster)
-{
+अटल पूर्णांक sunxi_cpu_घातerकरोwn(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक cluster)
+अणु
 	u32 reg;
-	int gating_bit = cpu;
+	पूर्णांक gating_bit = cpu;
 
 	pr_debug("%s: cluster %u cpu %u\n", __func__, cluster, cpu);
-	if (cpu >= SUNXI_CPUS_PER_CLUSTER || cluster >= SUNXI_NR_CLUSTERS)
-		return -EINVAL;
+	अगर (cpu >= SUNXI_CPUS_PER_CLUSTER || cluster >= SUNXI_NR_CLUSTERS)
+		वापस -EINVAL;
 
-	if (is_a83t && cpu == 0)
+	अगर (is_a83t && cpu == 0)
 		gating_bit = 4;
 
-	/* gate processor power */
-	reg = readl(prcm_base + PRCM_PWROFF_GATING_REG(cluster));
+	/* gate processor घातer */
+	reg = पढ़ोl(prcm_base + PRCM_PWROFF_GATING_REG(cluster));
 	reg |= PRCM_PWROFF_GATING_REG_CORE(gating_bit);
-	writel(reg, prcm_base + PRCM_PWROFF_GATING_REG(cluster));
+	ग_लिखोl(reg, prcm_base + PRCM_PWROFF_GATING_REG(cluster));
 	udelay(20);
 
-	/* close power switch */
-	sunxi_cpu_power_switch_set(cpu, cluster, false);
+	/* बंद घातer चयन */
+	sunxi_cpu_घातer_चयन_set(cpu, cluster, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_cluster_powerdown(unsigned int cluster)
-{
+अटल पूर्णांक sunxi_cluster_घातerकरोwn(अचिन्हित पूर्णांक cluster)
+अणु
 	u32 reg;
 
 	pr_debug("%s: cluster %u\n", __func__, cluster);
-	if (cluster >= SUNXI_NR_CLUSTERS)
-		return -EINVAL;
+	अगर (cluster >= SUNXI_NR_CLUSTERS)
+		वापस -EINVAL;
 
-	/* assert cluster resets or system will hang */
+	/* निश्चित cluster resets or प्रणाली will hang */
 	pr_debug("%s: assert cluster reset\n", __func__);
-	reg = readl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	reg = पढ़ोl(cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 	reg &= ~CPUCFG_CX_RST_CTRL_DBG_SOC_RST;
 	reg &= ~CPUCFG_CX_RST_CTRL_H_RST;
 	reg &= ~CPUCFG_CX_RST_CTRL_L2_RST;
-	writel(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
+	ग_लिखोl(reg, cpucfg_base + CPUCFG_CX_RST_CTRL(cluster));
 
-	/* gate cluster power */
+	/* gate cluster घातer */
 	pr_debug("%s: gate cluster power\n", __func__);
-	reg = readl(prcm_base + PRCM_PWROFF_GATING_REG(cluster));
-	if (is_a83t)
+	reg = पढ़ोl(prcm_base + PRCM_PWROFF_GATING_REG(cluster));
+	अगर (is_a83t)
 		reg |= PRCM_PWROFF_GATING_REG_CLUSTER_SUN8I;
-	else
+	अन्यथा
 		reg |= PRCM_PWROFF_GATING_REG_CLUSTER_SUN9I;
-	writel(reg, prcm_base + PRCM_PWROFF_GATING_REG(cluster));
+	ग_लिखोl(reg, prcm_base + PRCM_PWROFF_GATING_REG(cluster));
 	udelay(20);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sunxi_mc_smp_cpu_kill(unsigned int l_cpu)
-{
-	unsigned int mpidr, cpu, cluster;
-	unsigned int tries, count;
-	int ret = 0;
+अटल पूर्णांक sunxi_mc_smp_cpu_समाप्त(अचिन्हित पूर्णांक l_cpu)
+अणु
+	अचिन्हित पूर्णांक mpidr, cpu, cluster;
+	अचिन्हित पूर्णांक tries, count;
+	पूर्णांक ret = 0;
 	u32 reg;
 
 	mpidr = cpu_logical_map(l_cpu);
@@ -543,362 +544,362 @@ static int sunxi_mc_smp_cpu_kill(unsigned int l_cpu)
 	cluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
 	/* This should never happen */
-	if (WARN_ON(cluster >= SUNXI_NR_CLUSTERS ||
+	अगर (WARN_ON(cluster >= SUNXI_NR_CLUSTERS ||
 		    cpu >= SUNXI_CPUS_PER_CLUSTER))
-		return 0;
+		वापस 0;
 
-	/* wait for CPU core to die and enter WFI */
+	/* रुको क्रम CPU core to die and enter WFI */
 	count = TIMEOUT_USEC / POLL_USEC;
 	spin_lock_irq(&boot_lock);
-	for (tries = 0; tries < count; tries++) {
+	क्रम (tries = 0; tries < count; tries++) अणु
 		spin_unlock_irq(&boot_lock);
 		usleep_range(POLL_USEC / 2, POLL_USEC);
 		spin_lock_irq(&boot_lock);
 
 		/*
 		 * If the user turns off a bunch of cores at the same
-		 * time, the kernel might call cpu_kill before some of
-		 * them are ready. This is because boot_lock serializes
-		 * both cpu_die and cpu_kill callbacks. Either one could
-		 * run first. We should wait for cpu_die to complete.
+		 * समय, the kernel might call cpu_समाप्त beक्रमe some of
+		 * them are पढ़ोy. This is because boot_lock serializes
+		 * both cpu_die and cpu_समाप्त callbacks. Either one could
+		 * run first. We should रुको क्रम cpu_die to complete.
 		 */
-		if (sunxi_mc_smp_cpu_table[cluster][cpu])
-			continue;
+		अगर (sunxi_mc_smp_cpu_table[cluster][cpu])
+			जारी;
 
-		reg = readl(cpucfg_base + CPUCFG_CX_STATUS(cluster));
-		if (reg & CPUCFG_CX_STATUS_STANDBYWFI(cpu))
-			break;
-	}
+		reg = पढ़ोl(cpucfg_base + CPUCFG_CX_STATUS(cluster));
+		अगर (reg & CPUCFG_CX_STATUS_STANDBYWFI(cpu))
+			अवरोध;
+	पूर्ण
 
-	if (tries >= count) {
+	अगर (tries >= count) अणु
 		ret = ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* power down CPU core */
-	sunxi_cpu_powerdown(cpu, cluster);
+	/* घातer करोwn CPU core */
+	sunxi_cpu_घातerकरोwn(cpu, cluster);
 
-	if (!sunxi_mc_smp_cluster_is_down(cluster))
-		goto out;
+	अगर (!sunxi_mc_smp_cluster_is_करोwn(cluster))
+		जाओ out;
 
-	/* wait for cluster L2 WFI */
-	ret = readl_poll_timeout(cpucfg_base + CPUCFG_CX_STATUS(cluster), reg,
+	/* रुको क्रम cluster L2 WFI */
+	ret = पढ़ोl_poll_समयout(cpucfg_base + CPUCFG_CX_STATUS(cluster), reg,
 				 reg & CPUCFG_CX_STATUS_STANDBYWFIL2,
 				 POLL_USEC, TIMEOUT_USEC);
-	if (ret) {
+	अगर (ret) अणु
 		/*
-		 * Ignore timeout on the cluster. Leaving the cluster on
-		 * will not affect system execution, just use a bit more
-		 * power. But returning an error here will only confuse
-		 * the user as the CPU has already been shutdown.
+		 * Ignore समयout on the cluster. Leaving the cluster on
+		 * will not affect प्रणाली execution, just use a bit more
+		 * घातer. But वापसing an error here will only confuse
+		 * the user as the CPU has alपढ़ोy been shutकरोwn.
 		 */
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Power down cluster */
-	sunxi_cluster_powerdown(cluster);
+	/* Power करोwn cluster */
+	sunxi_cluster_घातerकरोwn(cluster);
 
 out:
 	spin_unlock_irq(&boot_lock);
 	pr_debug("%s: cluster %u cpu %u powerdown: %d\n",
 		 __func__, cluster, cpu, ret);
-	return !ret;
-}
+	वापस !ret;
+पूर्ण
 
-static bool sunxi_mc_smp_cpu_can_disable(unsigned int cpu)
-{
-	/* CPU0 hotplug not handled for sun8i-a83t */
-	if (is_a83t)
-		if (cpu == 0)
-			return false;
-	return true;
-}
-#endif
+अटल bool sunxi_mc_smp_cpu_can_disable(अचिन्हित पूर्णांक cpu)
+अणु
+	/* CPU0 hotplug not handled क्रम sun8i-a83t */
+	अगर (is_a83t)
+		अगर (cpu == 0)
+			वापस false;
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct smp_operations sunxi_mc_smp_smp_ops __initconst = {
+अटल स्थिर काष्ठा smp_operations sunxi_mc_smp_smp_ops __initस्थिर = अणु
 	.smp_secondary_init	= sunxi_mc_smp_secondary_init,
 	.smp_boot_secondary	= sunxi_mc_smp_boot_secondary,
-#ifdef CONFIG_HOTPLUG_CPU
+#अगर_घोषित CONFIG_HOTPLUG_CPU
 	.cpu_die		= sunxi_mc_smp_cpu_die,
-	.cpu_kill		= sunxi_mc_smp_cpu_kill,
+	.cpu_समाप्त		= sunxi_mc_smp_cpu_समाप्त,
 	.cpu_can_disable	= sunxi_mc_smp_cpu_can_disable,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static bool __init sunxi_mc_smp_cpu_table_init(void)
-{
-	unsigned int mpidr, cpu, cluster;
+अटल bool __init sunxi_mc_smp_cpu_table_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक mpidr, cpu, cluster;
 
-	mpidr = read_cpuid_mpidr();
+	mpidr = पढ़ो_cpuid_mpidr();
 	cpu = MPIDR_AFFINITY_LEVEL(mpidr, 0);
 	cluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
-	if (cluster >= SUNXI_NR_CLUSTERS || cpu >= SUNXI_CPUS_PER_CLUSTER) {
+	अगर (cluster >= SUNXI_NR_CLUSTERS || cpu >= SUNXI_CPUS_PER_CLUSTER) अणु
 		pr_err("%s: boot CPU is out of bounds!\n", __func__);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 	sunxi_mc_smp_cpu_table[cluster][cpu] = 1;
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Adapted from arch/arm/common/mc_smp_entry.c
  *
  * We need the trampoline code to enable CCI-400 on the first cluster
  */
-typedef typeof(cpu_reset) phys_reset_t;
+प्रकार typeof(cpu_reset) phys_reset_t;
 
-static int __init nocache_trampoline(unsigned long __unused)
-{
+अटल पूर्णांक __init nocache_trampoline(अचिन्हित दीर्घ __unused)
+अणु
 	phys_reset_t phys_reset;
 
-	setup_mm_for_reboot();
+	setup_mm_क्रम_reboot();
 	sunxi_cluster_cache_disable_without_axi();
 
-	phys_reset = (phys_reset_t)(unsigned long)__pa_symbol(cpu_reset);
+	phys_reset = (phys_reset_t)(अचिन्हित दीर्घ)__pa_symbol(cpu_reset);
 	phys_reset(__pa_symbol(sunxi_mc_smp_resume), false);
 	BUG();
-}
+पूर्ण
 
-static int __init sunxi_mc_smp_loopback(void)
-{
-	int ret;
+अटल पूर्णांक __init sunxi_mc_smp_loopback(व्योम)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * We're going to soft-restart the current CPU through the
 	 * low-level MCPM code by leveraging the suspend/resume
-	 * infrastructure. Let's play it safe by using cpu_pm_enter()
-	 * in case the CPU init code path resets the VFP or similar.
+	 * infraकाष्ठाure. Let's play it safe by using cpu_pm_enter()
+	 * in हाल the CPU init code path resets the VFP or similar.
 	 */
 	sunxi_mc_smp_first_comer = true;
 	local_irq_disable();
 	local_fiq_disable();
 	ret = cpu_pm_enter();
-	if (!ret) {
+	अगर (!ret) अणु
 		ret = cpu_suspend(0, nocache_trampoline);
-		cpu_pm_exit();
-	}
+		cpu_pm_निकास();
+	पूर्ण
 	local_fiq_enable();
 	local_irq_enable();
 	sunxi_mc_smp_first_comer = false;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This holds any device nodes that we requested resources for,
+ * This holds any device nodes that we requested resources क्रम,
  * so that we may easily release resources in the error path.
  */
-struct sunxi_mc_smp_nodes {
-	struct device_node *prcm_node;
-	struct device_node *cpucfg_node;
-	struct device_node *sram_node;
-	struct device_node *r_cpucfg_node;
-};
+काष्ठा sunxi_mc_smp_nodes अणु
+	काष्ठा device_node *prcm_node;
+	काष्ठा device_node *cpucfg_node;
+	काष्ठा device_node *sram_node;
+	काष्ठा device_node *r_cpucfg_node;
+पूर्ण;
 
-/* This structure holds SoC-specific bits tied to an enable-method string. */
-struct sunxi_mc_smp_data {
-	const char *enable_method;
-	int (*get_smp_nodes)(struct sunxi_mc_smp_nodes *nodes);
+/* This काष्ठाure holds SoC-specअगरic bits tied to an enable-method string. */
+काष्ठा sunxi_mc_smp_data अणु
+	स्थिर अक्षर *enable_method;
+	पूर्णांक (*get_smp_nodes)(काष्ठा sunxi_mc_smp_nodes *nodes);
 	bool is_a83t;
-};
+पूर्ण;
 
-static void __init sunxi_mc_smp_put_nodes(struct sunxi_mc_smp_nodes *nodes)
-{
+अटल व्योम __init sunxi_mc_smp_put_nodes(काष्ठा sunxi_mc_smp_nodes *nodes)
+अणु
 	of_node_put(nodes->prcm_node);
 	of_node_put(nodes->cpucfg_node);
 	of_node_put(nodes->sram_node);
 	of_node_put(nodes->r_cpucfg_node);
-	memset(nodes, 0, sizeof(*nodes));
-}
+	स_रखो(nodes, 0, माप(*nodes));
+पूर्ण
 
-static int __init sun9i_a80_get_smp_nodes(struct sunxi_mc_smp_nodes *nodes)
-{
-	nodes->prcm_node = of_find_compatible_node(NULL, NULL,
+अटल पूर्णांक __init sun9i_a80_get_smp_nodes(काष्ठा sunxi_mc_smp_nodes *nodes)
+अणु
+	nodes->prcm_node = of_find_compatible_node(शून्य, शून्य,
 						   "allwinner,sun9i-a80-prcm");
-	if (!nodes->prcm_node) {
+	अगर (!nodes->prcm_node) अणु
 		pr_err("%s: PRCM not available\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	nodes->cpucfg_node = of_find_compatible_node(NULL, NULL,
+	nodes->cpucfg_node = of_find_compatible_node(शून्य, शून्य,
 						     "allwinner,sun9i-a80-cpucfg");
-	if (!nodes->cpucfg_node) {
+	अगर (!nodes->cpucfg_node) अणु
 		pr_err("%s: CPUCFG not available\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	nodes->sram_node = of_find_compatible_node(NULL, NULL,
+	nodes->sram_node = of_find_compatible_node(शून्य, शून्य,
 						   "allwinner,sun9i-a80-smp-sram");
-	if (!nodes->sram_node) {
+	अगर (!nodes->sram_node) अणु
 		pr_err("%s: Secure SRAM not available\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init sun8i_a83t_get_smp_nodes(struct sunxi_mc_smp_nodes *nodes)
-{
-	nodes->prcm_node = of_find_compatible_node(NULL, NULL,
+अटल पूर्णांक __init sun8i_a83t_get_smp_nodes(काष्ठा sunxi_mc_smp_nodes *nodes)
+अणु
+	nodes->prcm_node = of_find_compatible_node(शून्य, शून्य,
 						   "allwinner,sun8i-a83t-r-ccu");
-	if (!nodes->prcm_node) {
+	अगर (!nodes->prcm_node) अणु
 		pr_err("%s: PRCM not available\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	nodes->cpucfg_node = of_find_compatible_node(NULL, NULL,
+	nodes->cpucfg_node = of_find_compatible_node(शून्य, शून्य,
 						     "allwinner,sun8i-a83t-cpucfg");
-	if (!nodes->cpucfg_node) {
+	अगर (!nodes->cpucfg_node) अणु
 		pr_err("%s: CPUCFG not available\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	nodes->r_cpucfg_node = of_find_compatible_node(NULL, NULL,
+	nodes->r_cpucfg_node = of_find_compatible_node(शून्य, शून्य,
 						       "allwinner,sun8i-a83t-r-cpucfg");
-	if (!nodes->r_cpucfg_node) {
+	अगर (!nodes->r_cpucfg_node) अणु
 		pr_err("%s: RCPUCFG not available\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct sunxi_mc_smp_data sunxi_mc_smp_data[] __initconst = {
-	{
+अटल स्थिर काष्ठा sunxi_mc_smp_data sunxi_mc_smp_data[] __initस्थिर = अणु
+	अणु
 		.enable_method	= "allwinner,sun9i-a80-smp",
 		.get_smp_nodes	= sun9i_a80_get_smp_nodes,
-	},
-	{
+	पूर्ण,
+	अणु
 		.enable_method	= "allwinner,sun8i-a83t-smp",
 		.get_smp_nodes	= sun8i_a83t_get_smp_nodes,
 		.is_a83t	= true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init sunxi_mc_smp_init(void)
-{
-	struct sunxi_mc_smp_nodes nodes = { 0 };
-	struct device_node *node;
-	struct resource res;
-	void __iomem *addr;
-	int i, ret;
+अटल पूर्णांक __init sunxi_mc_smp_init(व्योम)
+अणु
+	काष्ठा sunxi_mc_smp_nodes nodes = अणु 0 पूर्ण;
+	काष्ठा device_node *node;
+	काष्ठा resource res;
+	व्योम __iomem *addr;
+	पूर्णांक i, ret;
 
 	/*
 	 * Don't bother checking the "cpus" node, as an enable-method
-	 * property in that node is undocumented.
+	 * property in that node is unकरोcumented.
 	 */
 	node = of_cpu_device_node_get(0);
-	if (!node)
-		return -ENODEV;
+	अगर (!node)
+		वापस -ENODEV;
 
 	/*
 	 * We can't actually use the enable-method magic in the kernel.
 	 * Our loopback / trampoline code uses the CPU suspend framework,
 	 * which requires the identity mapping be available. It would not
-	 * yet be available if we used the .init_cpus or .prepare_cpus
-	 * callbacks in smp_operations, which we would use if we were to
+	 * yet be available अगर we used the .init_cpus or .prepare_cpus
+	 * callbacks in smp_operations, which we would use अगर we were to
 	 * use CPU_METHOD_OF_DECLARE
 	 */
-	for (i = 0; i < ARRAY_SIZE(sunxi_mc_smp_data); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(sunxi_mc_smp_data); i++) अणु
 		ret = of_property_match_string(node, "enable-method",
 					       sunxi_mc_smp_data[i].enable_method);
-		if (!ret)
-			break;
-	}
+		अगर (!ret)
+			अवरोध;
+	पूर्ण
 
 	is_a83t = sunxi_mc_smp_data[i].is_a83t;
 
 	of_node_put(node);
-	if (ret)
-		return -ENODEV;
+	अगर (ret)
+		वापस -ENODEV;
 
-	if (!sunxi_mc_smp_cpu_table_init())
-		return -EINVAL;
+	अगर (!sunxi_mc_smp_cpu_table_init())
+		वापस -EINVAL;
 
-	if (!cci_probed()) {
+	अगर (!cci_probed()) अणु
 		pr_err("%s: CCI-400 not available\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Get needed device tree nodes */
 	ret = sunxi_mc_smp_data[i].get_smp_nodes(&nodes);
-	if (ret)
-		goto err_put_nodes;
+	अगर (ret)
+		जाओ err_put_nodes;
 
 	/*
-	 * Unfortunately we can not request the I/O region for the PRCM.
-	 * It is shared with the PRCM clock.
+	 * Unक्रमtunately we can not request the I/O region क्रम the PRCM.
+	 * It is shared with the PRCM घड़ी.
 	 */
 	prcm_base = of_iomap(nodes.prcm_node, 0);
-	if (!prcm_base) {
+	अगर (!prcm_base) अणु
 		pr_err("%s: failed to map PRCM registers\n", __func__);
 		ret = -ENOMEM;
-		goto err_put_nodes;
-	}
+		जाओ err_put_nodes;
+	पूर्ण
 
 	cpucfg_base = of_io_request_and_map(nodes.cpucfg_node, 0,
 					    "sunxi-mc-smp");
-	if (IS_ERR(cpucfg_base)) {
+	अगर (IS_ERR(cpucfg_base)) अणु
 		ret = PTR_ERR(cpucfg_base);
 		pr_err("%s: failed to map CPUCFG registers: %d\n",
 		       __func__, ret);
-		goto err_unmap_prcm;
-	}
+		जाओ err_unmap_prcm;
+	पूर्ण
 
-	if (is_a83t) {
+	अगर (is_a83t) अणु
 		r_cpucfg_base = of_io_request_and_map(nodes.r_cpucfg_node,
 						      0, "sunxi-mc-smp");
-		if (IS_ERR(r_cpucfg_base)) {
+		अगर (IS_ERR(r_cpucfg_base)) अणु
 			ret = PTR_ERR(r_cpucfg_base);
 			pr_err("%s: failed to map R-CPUCFG registers\n",
 			       __func__);
-			goto err_unmap_release_cpucfg;
-		}
-	} else {
+			जाओ err_unmap_release_cpucfg;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sram_b_smp_base = of_io_request_and_map(nodes.sram_node, 0,
 							"sunxi-mc-smp");
-		if (IS_ERR(sram_b_smp_base)) {
+		अगर (IS_ERR(sram_b_smp_base)) अणु
 			ret = PTR_ERR(sram_b_smp_base);
 			pr_err("%s: failed to map secure SRAM\n", __func__);
-			goto err_unmap_release_cpucfg;
-		}
-	}
+			जाओ err_unmap_release_cpucfg;
+		पूर्ण
+	पूर्ण
 
-	/* Configure CCI-400 for boot cluster */
+	/* Configure CCI-400 क्रम boot cluster */
 	ret = sunxi_mc_smp_loopback();
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: failed to configure boot cluster: %d\n",
 		       __func__, ret);
-		goto err_unmap_release_sram_rcpucfg;
-	}
+		जाओ err_unmap_release_sram_rcpucfg;
+	पूर्ण
 
-	/* We don't need the device nodes anymore */
+	/* We करोn't need the device nodes anymore */
 	sunxi_mc_smp_put_nodes(&nodes);
 
-	/* Set the hardware entry point address */
-	if (is_a83t)
+	/* Set the hardware entry poपूर्णांक address */
+	अगर (is_a83t)
 		addr = r_cpucfg_base + R_CPUCFG_CPU_SOFT_ENTRY_REG;
-	else
+	अन्यथा
 		addr = prcm_base + PRCM_CPU_SOFT_ENTRY_REG;
-	writel(__pa_symbol(sunxi_mc_smp_secondary_startup), addr);
+	ग_लिखोl(__pa_symbol(sunxi_mc_smp_secondary_startup), addr);
 
 	/* Actually enable multi cluster SMP */
 	smp_set_ops(&sunxi_mc_smp_smp_ops);
 
 	pr_info("sunxi multi cluster SMP support installed\n");
 
-	return 0;
+	वापस 0;
 
 err_unmap_release_sram_rcpucfg:
-	if (is_a83t) {
+	अगर (is_a83t) अणु
 		iounmap(r_cpucfg_base);
 		of_address_to_resource(nodes.r_cpucfg_node, 0, &res);
-	} else {
+	पूर्ण अन्यथा अणु
 		iounmap(sram_b_smp_base);
 		of_address_to_resource(nodes.sram_node, 0, &res);
-	}
+	पूर्ण
 	release_mem_region(res.start, resource_size(&res));
 err_unmap_release_cpucfg:
 	iounmap(cpucfg_base);
@@ -908,7 +909,7 @@ err_unmap_prcm:
 	iounmap(prcm_base);
 err_put_nodes:
 	sunxi_mc_smp_put_nodes(&nodes);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 early_initcall(sunxi_mc_smp_init);

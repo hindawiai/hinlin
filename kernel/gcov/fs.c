@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  This code exports profiling data as debugfs files to userspace.
  *
  *    Copyright IBM Corp. 2009
  *    Author(s): Peter Oberparleiter <oberpar@linux.vnet.ibm.com>
  *
- *    Uses gcc-internal data definitions.
+ *    Uses gcc-पूर्णांकernal data definitions.
  *    Based on the gcov-kernel patch by:
  *		 Hubertus Franke <frankeh@us.ibm.com>
  *		 Nigel Hinds <nhinds@us.ibm.com>
@@ -15,868 +16,868 @@
  *		 Yi CDL Yang
  */
 
-#define pr_fmt(fmt)	"gcov: " fmt
+#घोषणा pr_fmt(fmt)	"gcov: " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/debugfs.h>
-#include <linux/fs.h>
-#include <linux/list.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/seq_file.h>
-#include <linux/mm.h>
-#include "gcov.h"
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/list.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/mm.h>
+#समावेश "gcov.h"
 
 /**
- * struct gcov_node - represents a debugfs entry
- * @list: list head for child node list
+ * काष्ठा gcov_node - represents a debugfs entry
+ * @list: list head क्रम child node list
  * @children: child nodes
- * @all: list head for list of all nodes
+ * @all: list head क्रम list of all nodes
  * @parent: parent node
- * @loaded_info: array of pointers to profiling data sets for loaded object
+ * @loaded_info: array of poपूर्णांकers to profiling data sets क्रम loaded object
  *   files.
- * @num_loaded: number of profiling data sets for loaded object files.
- * @unloaded_info: accumulated copy of profiling data sets for unloaded
+ * @num_loaded: number of profiling data sets क्रम loaded object files.
+ * @unloaded_info: accumulated copy of profiling data sets क्रम unloaded
  *   object files. Used only when gcov_persist=1.
- * @dentry: main debugfs entry, either a directory or data file
+ * @dentry: मुख्य debugfs entry, either a directory or data file
  * @links: associated symbolic links
  * @name: data file basename
  *
- * struct gcov_node represents an entity within the gcov/ subdirectory
+ * काष्ठा gcov_node represents an entity within the gcov/ subdirectory
  * of debugfs. There are directory and data file nodes. The latter represent
  * the actual synthesized data file plus any associated symbolic links which
  * are needed by the gcov tool to work correctly.
  */
-struct gcov_node {
-	struct list_head list;
-	struct list_head children;
-	struct list_head all;
-	struct gcov_node *parent;
-	struct gcov_info **loaded_info;
-	struct gcov_info *unloaded_info;
-	struct dentry *dentry;
-	struct dentry **links;
-	int num_loaded;
-	char name[];
-};
+काष्ठा gcov_node अणु
+	काष्ठा list_head list;
+	काष्ठा list_head children;
+	काष्ठा list_head all;
+	काष्ठा gcov_node *parent;
+	काष्ठा gcov_info **loaded_info;
+	काष्ठा gcov_info *unloaded_info;
+	काष्ठा dentry *dentry;
+	काष्ठा dentry **links;
+	पूर्णांक num_loaded;
+	अक्षर name[];
+पूर्ण;
 
-static const char objtree[] = OBJTREE;
-static const char srctree[] = SRCTREE;
-static struct gcov_node root_node;
-static LIST_HEAD(all_head);
-static DEFINE_MUTEX(node_lock);
+अटल स्थिर अक्षर objtree[] = OBJTREE;
+अटल स्थिर अक्षर srctree[] = SRCTREE;
+अटल काष्ठा gcov_node root_node;
+अटल LIST_HEAD(all_head);
+अटल DEFINE_MUTEX(node_lock);
 
-/* If non-zero, keep copies of profiling data for unloaded modules. */
-static int gcov_persist = 1;
+/* If non-zero, keep copies of profiling data क्रम unloaded modules. */
+अटल पूर्णांक gcov_persist = 1;
 
-static int __init gcov_persist_setup(char *str)
-{
-	unsigned long val;
+अटल पूर्णांक __init gcov_persist_setup(अक्षर *str)
+अणु
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(str, 0, &val)) {
+	अगर (kम_से_अदीर्घ(str, 0, &val)) अणु
 		pr_warn("invalid gcov_persist parameter '%s'\n", str);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	gcov_persist = val;
 	pr_info("setting gcov_persist to %d\n", gcov_persist);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 __setup("gcov_persist=", gcov_persist_setup);
 
-#define ITER_STRIDE	PAGE_SIZE
+#घोषणा ITER_STRIDE	PAGE_SIZE
 
 /**
- * struct gcov_iterator - specifies current file position in logical records
+ * काष्ठा gcov_iterator - specअगरies current file position in logical records
  * @info: associated profiling data
  * @buffer: buffer containing file data
  * @size: size of buffer
  * @pos: current position in file
  */
-struct gcov_iterator {
-	struct gcov_info *info;
-	size_t size;
+काष्ठा gcov_iterator अणु
+	काष्ठा gcov_info *info;
+	माप_प्रकार size;
 	loff_t pos;
-	char buffer[];
-};
+	अक्षर buffer[];
+पूर्ण;
 
 /**
  * gcov_iter_new - allocate and initialize profiling data iterator
  * @info: profiling data set to be iterated
  *
- * Return file iterator on success, %NULL otherwise.
+ * Return file iterator on success, %शून्य otherwise.
  */
-static struct gcov_iterator *gcov_iter_new(struct gcov_info *info)
-{
-	struct gcov_iterator *iter;
-	size_t size;
+अटल काष्ठा gcov_iterator *gcov_iter_new(काष्ठा gcov_info *info)
+अणु
+	काष्ठा gcov_iterator *iter;
+	माप_प्रकार size;
 
 	/* Dry-run to get the actual buffer size. */
-	size = convert_to_gcda(NULL, info);
+	size = convert_to_gcda(शून्य, info);
 
-	iter = kvmalloc(struct_size(iter, buffer, size), GFP_KERNEL);
-	if (!iter)
-		return NULL;
+	iter = kvदो_स्मृति(काष्ठा_size(iter, buffer, size), GFP_KERNEL);
+	अगर (!iter)
+		वापस शून्य;
 
 	iter->info = info;
 	iter->size = size;
 	convert_to_gcda(iter->buffer, info);
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
 
 /**
- * gcov_iter_free - free iterator data
+ * gcov_iter_मुक्त - मुक्त iterator data
  * @iter: file iterator
  */
-static void gcov_iter_free(struct gcov_iterator *iter)
-{
-	kvfree(iter);
-}
+अटल व्योम gcov_iter_मुक्त(काष्ठा gcov_iterator *iter)
+अणु
+	kvमुक्त(iter);
+पूर्ण
 
 /**
- * gcov_iter_get_info - return profiling data set for given file iterator
+ * gcov_iter_get_info - वापस profiling data set क्रम given file iterator
  * @iter: file iterator
  */
-static struct gcov_info *gcov_iter_get_info(struct gcov_iterator *iter)
-{
-	return iter->info;
-}
+अटल काष्ठा gcov_info *gcov_iter_get_info(काष्ठा gcov_iterator *iter)
+अणु
+	वापस iter->info;
+पूर्ण
 
 /**
  * gcov_iter_start - reset file iterator to starting position
  * @iter: file iterator
  */
-static void gcov_iter_start(struct gcov_iterator *iter)
-{
+अटल व्योम gcov_iter_start(काष्ठा gcov_iterator *iter)
+अणु
 	iter->pos = 0;
-}
+पूर्ण
 
 /**
  * gcov_iter_next - advance file iterator to next logical record
  * @iter: file iterator
  *
- * Return zero if new position is valid, non-zero if iterator has reached end.
+ * Return zero अगर new position is valid, non-zero अगर iterator has reached end.
  */
-static int gcov_iter_next(struct gcov_iterator *iter)
-{
-	if (iter->pos < iter->size)
+अटल पूर्णांक gcov_iter_next(काष्ठा gcov_iterator *iter)
+अणु
+	अगर (iter->pos < iter->size)
 		iter->pos += ITER_STRIDE;
 
-	if (iter->pos >= iter->size)
-		return -EINVAL;
+	अगर (iter->pos >= iter->size)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * gcov_iter_write - write data for current pos to seq_file
+ * gcov_iter_ग_लिखो - ग_लिखो data क्रम current pos to seq_file
  * @iter: file iterator
  * @seq: seq_file handle
  *
  * Return zero on success, non-zero otherwise.
  */
-static int gcov_iter_write(struct gcov_iterator *iter, struct seq_file *seq)
-{
-	size_t len;
+अटल पूर्णांक gcov_iter_ग_लिखो(काष्ठा gcov_iterator *iter, काष्ठा seq_file *seq)
+अणु
+	माप_प्रकार len;
 
-	if (iter->pos >= iter->size)
-		return -EINVAL;
+	अगर (iter->pos >= iter->size)
+		वापस -EINVAL;
 
 	len = ITER_STRIDE;
-	if (iter->pos + len > iter->size)
+	अगर (iter->pos + len > iter->size)
 		len = iter->size - iter->pos;
 
-	seq_write(seq, iter->buffer + iter->pos, len);
+	seq_ग_लिखो(seq, iter->buffer + iter->pos, len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * seq_file.start() implementation for gcov data files. Note that the
- * gcov_iterator interface is designed to be more restrictive than seq_file
- * (no start from arbitrary position, etc.), to simplify the iterator
+ * seq_file.start() implementation क्रम gcov data files. Note that the
+ * gcov_iterator पूर्णांकerface is deचिन्हित to be more restrictive than seq_file
+ * (no start from arbitrary position, etc.), to simplअगरy the iterator
  * implementation.
  */
-static void *gcov_seq_start(struct seq_file *seq, loff_t *pos)
-{
+अटल व्योम *gcov_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
 	loff_t i;
 
-	gcov_iter_start(seq->private);
-	for (i = 0; i < *pos; i++) {
-		if (gcov_iter_next(seq->private))
-			return NULL;
-	}
-	return seq->private;
-}
+	gcov_iter_start(seq->निजी);
+	क्रम (i = 0; i < *pos; i++) अणु
+		अगर (gcov_iter_next(seq->निजी))
+			वापस शून्य;
+	पूर्ण
+	वापस seq->निजी;
+पूर्ण
 
-/* seq_file.next() implementation for gcov data files. */
-static void *gcov_seq_next(struct seq_file *seq, void *data, loff_t *pos)
-{
-	struct gcov_iterator *iter = data;
+/* seq_file.next() implementation क्रम gcov data files. */
+अटल व्योम *gcov_seq_next(काष्ठा seq_file *seq, व्योम *data, loff_t *pos)
+अणु
+	काष्ठा gcov_iterator *iter = data;
 
 	(*pos)++;
-	if (gcov_iter_next(iter))
-		return NULL;
+	अगर (gcov_iter_next(iter))
+		वापस शून्य;
 
-	return iter;
-}
+	वापस iter;
+पूर्ण
 
-/* seq_file.show() implementation for gcov data files. */
-static int gcov_seq_show(struct seq_file *seq, void *data)
-{
-	struct gcov_iterator *iter = data;
+/* seq_file.show() implementation क्रम gcov data files. */
+अटल पूर्णांक gcov_seq_show(काष्ठा seq_file *seq, व्योम *data)
+अणु
+	काष्ठा gcov_iterator *iter = data;
 
-	if (gcov_iter_write(iter, seq))
-		return -EINVAL;
-	return 0;
-}
+	अगर (gcov_iter_ग_लिखो(iter, seq))
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static void gcov_seq_stop(struct seq_file *seq, void *data)
-{
+अटल व्योम gcov_seq_stop(काष्ठा seq_file *seq, व्योम *data)
+अणु
 	/* Unused. */
-}
+पूर्ण
 
-static const struct seq_operations gcov_seq_ops = {
+अटल स्थिर काष्ठा seq_operations gcov_seq_ops = अणु
 	.start	= gcov_seq_start,
 	.next	= gcov_seq_next,
 	.show	= gcov_seq_show,
 	.stop	= gcov_seq_stop,
-};
+पूर्ण;
 
 /*
  * Return a profiling data set associated with the given node. This is
- * either a data set for a loaded object file or a data set copy in case
+ * either a data set क्रम a loaded object file or a data set copy in हाल
  * all associated object files have been unloaded.
  */
-static struct gcov_info *get_node_info(struct gcov_node *node)
-{
-	if (node->num_loaded > 0)
-		return node->loaded_info[0];
+अटल काष्ठा gcov_info *get_node_info(काष्ठा gcov_node *node)
+अणु
+	अगर (node->num_loaded > 0)
+		वापस node->loaded_info[0];
 
-	return node->unloaded_info;
-}
+	वापस node->unloaded_info;
+पूर्ण
 
 /*
  * Return a newly allocated profiling data set which contains the sum of
  * all profiling data associated with the given node.
  */
-static struct gcov_info *get_accumulated_info(struct gcov_node *node)
-{
-	struct gcov_info *info;
-	int i = 0;
+अटल काष्ठा gcov_info *get_accumulated_info(काष्ठा gcov_node *node)
+अणु
+	काष्ठा gcov_info *info;
+	पूर्णांक i = 0;
 
-	if (node->unloaded_info)
+	अगर (node->unloaded_info)
 		info = gcov_info_dup(node->unloaded_info);
-	else
+	अन्यथा
 		info = gcov_info_dup(node->loaded_info[i++]);
-	if (!info)
-		return NULL;
-	for (; i < node->num_loaded; i++)
+	अगर (!info)
+		वापस शून्य;
+	क्रम (; i < node->num_loaded; i++)
 		gcov_info_add(info, node->loaded_info[i]);
 
-	return info;
-}
+	वापस info;
+पूर्ण
 
 /*
- * open() implementation for gcov data files. Create a copy of the profiling
- * data set and initialize the iterator and seq_file interface.
+ * खोलो() implementation क्रम gcov data files. Create a copy of the profiling
+ * data set and initialize the iterator and seq_file पूर्णांकerface.
  */
-static int gcov_seq_open(struct inode *inode, struct file *file)
-{
-	struct gcov_node *node = inode->i_private;
-	struct gcov_iterator *iter;
-	struct seq_file *seq;
-	struct gcov_info *info;
-	int rc = -ENOMEM;
+अटल पूर्णांक gcov_seq_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा gcov_node *node = inode->i_निजी;
+	काष्ठा gcov_iterator *iter;
+	काष्ठा seq_file *seq;
+	काष्ठा gcov_info *info;
+	पूर्णांक rc = -ENOMEM;
 
 	mutex_lock(&node_lock);
 	/*
 	 * Read from a profiling data copy to minimize reference tracking
-	 * complexity and concurrent access and to keep accumulating multiple
+	 * complनिकासy and concurrent access and to keep accumulating multiple
 	 * profiling data sets associated with one node simple.
 	 */
 	info = get_accumulated_info(node);
-	if (!info)
-		goto out_unlock;
+	अगर (!info)
+		जाओ out_unlock;
 	iter = gcov_iter_new(info);
-	if (!iter)
-		goto err_free_info;
-	rc = seq_open(file, &gcov_seq_ops);
-	if (rc)
-		goto err_free_iter_info;
-	seq = file->private_data;
-	seq->private = iter;
+	अगर (!iter)
+		जाओ err_मुक्त_info;
+	rc = seq_खोलो(file, &gcov_seq_ops);
+	अगर (rc)
+		जाओ err_मुक्त_iter_info;
+	seq = file->निजी_data;
+	seq->निजी = iter;
 out_unlock:
 	mutex_unlock(&node_lock);
-	return rc;
+	वापस rc;
 
-err_free_iter_info:
-	gcov_iter_free(iter);
-err_free_info:
-	gcov_info_free(info);
-	goto out_unlock;
-}
+err_मुक्त_iter_info:
+	gcov_iter_मुक्त(iter);
+err_मुक्त_info:
+	gcov_info_मुक्त(info);
+	जाओ out_unlock;
+पूर्ण
 
 /*
- * release() implementation for gcov data files. Release resources allocated
- * by open().
+ * release() implementation क्रम gcov data files. Release resources allocated
+ * by खोलो().
  */
-static int gcov_seq_release(struct inode *inode, struct file *file)
-{
-	struct gcov_iterator *iter;
-	struct gcov_info *info;
-	struct seq_file *seq;
+अटल पूर्णांक gcov_seq_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा gcov_iterator *iter;
+	काष्ठा gcov_info *info;
+	काष्ठा seq_file *seq;
 
-	seq = file->private_data;
-	iter = seq->private;
+	seq = file->निजी_data;
+	iter = seq->निजी;
 	info = gcov_iter_get_info(iter);
-	gcov_iter_free(iter);
-	gcov_info_free(info);
+	gcov_iter_मुक्त(iter);
+	gcov_info_मुक्त(info);
 	seq_release(inode, file);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Find a node by the associated data file name. Needs to be called with
  * node_lock held.
  */
-static struct gcov_node *get_node_by_name(const char *name)
-{
-	struct gcov_node *node;
-	struct gcov_info *info;
+अटल काष्ठा gcov_node *get_node_by_name(स्थिर अक्षर *name)
+अणु
+	काष्ठा gcov_node *node;
+	काष्ठा gcov_info *info;
 
-	list_for_each_entry(node, &all_head, all) {
+	list_क्रम_each_entry(node, &all_head, all) अणु
 		info = get_node_info(node);
-		if (info && (strcmp(gcov_info_filename(info), name) == 0))
-			return node;
-	}
+		अगर (info && (म_भेद(gcov_info_filename(info), name) == 0))
+			वापस node;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * Reset all profiling data associated with the specified node.
+ * Reset all profiling data associated with the specअगरied node.
  */
-static void reset_node(struct gcov_node *node)
-{
-	int i;
+अटल व्योम reset_node(काष्ठा gcov_node *node)
+अणु
+	पूर्णांक i;
 
-	if (node->unloaded_info)
+	अगर (node->unloaded_info)
 		gcov_info_reset(node->unloaded_info);
-	for (i = 0; i < node->num_loaded; i++)
+	क्रम (i = 0; i < node->num_loaded; i++)
 		gcov_info_reset(node->loaded_info[i]);
-}
+पूर्ण
 
-static void remove_node(struct gcov_node *node);
+अटल व्योम हटाओ_node(काष्ठा gcov_node *node);
 
 /*
- * write() implementation for gcov data files. Reset profiling data for the
+ * ग_लिखो() implementation क्रम gcov data files. Reset profiling data क्रम the
  * corresponding file. If all associated object files have been unloaded,
- * remove the debug fs node as well.
+ * हटाओ the debug fs node as well.
  */
-static ssize_t gcov_seq_write(struct file *file, const char __user *addr,
-			      size_t len, loff_t *pos)
-{
-	struct seq_file *seq;
-	struct gcov_info *info;
-	struct gcov_node *node;
+अटल sमाप_प्रकार gcov_seq_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *addr,
+			      माप_प्रकार len, loff_t *pos)
+अणु
+	काष्ठा seq_file *seq;
+	काष्ठा gcov_info *info;
+	काष्ठा gcov_node *node;
 
-	seq = file->private_data;
-	info = gcov_iter_get_info(seq->private);
+	seq = file->निजी_data;
+	info = gcov_iter_get_info(seq->निजी);
 	mutex_lock(&node_lock);
 	node = get_node_by_name(gcov_info_filename(info));
-	if (node) {
-		/* Reset counts or remove node for unloaded modules. */
-		if (node->num_loaded == 0)
-			remove_node(node);
-		else
+	अगर (node) अणु
+		/* Reset counts or हटाओ node क्रम unloaded modules. */
+		अगर (node->num_loaded == 0)
+			हटाओ_node(node);
+		अन्यथा
 			reset_node(node);
-	}
-	/* Reset counts for open file. */
+	पूर्ण
+	/* Reset counts क्रम खोलो file. */
 	gcov_info_reset(info);
 	mutex_unlock(&node_lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 /*
- * Given a string <path> representing a file path of format:
+ * Given a string <path> representing a file path of क्रमmat:
  *   path/to/file.gcda
- * construct and return a new string:
+ * स्थिरruct and वापस a new string:
  *   <dir/>path/to/file.<ext>
  */
-static char *link_target(const char *dir, const char *path, const char *ext)
-{
-	char *target;
-	char *old_ext;
-	char *copy;
+अटल अक्षर *link_target(स्थिर अक्षर *dir, स्थिर अक्षर *path, स्थिर अक्षर *ext)
+अणु
+	अक्षर *target;
+	अक्षर *old_ext;
+	अक्षर *copy;
 
 	copy = kstrdup(path, GFP_KERNEL);
-	if (!copy)
-		return NULL;
-	old_ext = strrchr(copy, '.');
-	if (old_ext)
+	अगर (!copy)
+		वापस शून्य;
+	old_ext = म_खोजप(copy, '.');
+	अगर (old_ext)
 		*old_ext = '\0';
-	if (dir)
-		target = kasprintf(GFP_KERNEL, "%s/%s.%s", dir, copy, ext);
-	else
-		target = kasprintf(GFP_KERNEL, "%s.%s", copy, ext);
-	kfree(copy);
+	अगर (dir)
+		target = kaप्र_लिखो(GFP_KERNEL, "%s/%s.%s", dir, copy, ext);
+	अन्यथा
+		target = kaप्र_लिखो(GFP_KERNEL, "%s.%s", copy, ext);
+	kमुक्त(copy);
 
-	return target;
-}
+	वापस target;
+पूर्ण
 
 /*
- * Construct a string representing the symbolic link target for the given
+ * Conकाष्ठा a string representing the symbolic link target क्रम the given
  * gcov data file name and link type. Depending on the link type and the
- * location of the data file, the link target can either point to a
- * subdirectory of srctree, objtree or in an external location.
+ * location of the data file, the link target can either poपूर्णांक to a
+ * subdirectory of srctree, objtree or in an बाह्यal location.
  */
-static char *get_link_target(const char *filename, const struct gcov_link *ext)
-{
-	const char *rel;
-	char *result;
+अटल अक्षर *get_link_target(स्थिर अक्षर *filename, स्थिर काष्ठा gcov_link *ext)
+अणु
+	स्थिर अक्षर *rel;
+	अक्षर *result;
 
-	if (strncmp(filename, objtree, strlen(objtree)) == 0) {
-		rel = filename + strlen(objtree) + 1;
-		if (ext->dir == SRC_TREE)
+	अगर (म_भेदन(filename, objtree, म_माप(objtree)) == 0) अणु
+		rel = filename + म_माप(objtree) + 1;
+		अगर (ext->dir == SRC_TREE)
 			result = link_target(srctree, rel, ext->ext);
-		else
+		अन्यथा
 			result = link_target(objtree, rel, ext->ext);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* External compilation. */
-		result = link_target(NULL, filename, ext->ext);
-	}
+		result = link_target(शून्य, filename, ext->ext);
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-#define SKEW_PREFIX	".tmp_"
+#घोषणा SKEW_PREFIX	".tmp_"
 
 /*
- * For a filename .tmp_filename.ext return filename.ext. Needed to compensate
- * for filename skewing caused by the mod-versioning mechanism.
+ * For a filename .पंचांगp_filename.ext वापस filename.ext. Needed to compensate
+ * क्रम filename skewing caused by the mod-versioning mechanism.
  */
-static const char *deskew(const char *basename)
-{
-	if (strncmp(basename, SKEW_PREFIX, sizeof(SKEW_PREFIX) - 1) == 0)
-		return basename + sizeof(SKEW_PREFIX) - 1;
-	return basename;
-}
+अटल स्थिर अक्षर *deskew(स्थिर अक्षर *basename)
+अणु
+	अगर (म_भेदन(basename, SKEW_PREFIX, माप(SKEW_PREFIX) - 1) == 0)
+		वापस basename + माप(SKEW_PREFIX) - 1;
+	वापस basename;
+पूर्ण
 
 /*
  * Create links to additional files (usually .c and .gcno files) which the
  * gcov tool expects to find in the same directory as the gcov data file.
  */
-static void add_links(struct gcov_node *node, struct dentry *parent)
-{
-	const char *basename;
-	char *target;
-	int num;
-	int i;
+अटल व्योम add_links(काष्ठा gcov_node *node, काष्ठा dentry *parent)
+अणु
+	स्थिर अक्षर *basename;
+	अक्षर *target;
+	पूर्णांक num;
+	पूर्णांक i;
 
-	for (num = 0; gcov_link[num].ext; num++)
+	क्रम (num = 0; gcov_link[num].ext; num++)
 		/* Nothing. */;
-	node->links = kcalloc(num, sizeof(struct dentry *), GFP_KERNEL);
-	if (!node->links)
-		return;
-	for (i = 0; i < num; i++) {
+	node->links = kसुस्मृति(num, माप(काष्ठा dentry *), GFP_KERNEL);
+	अगर (!node->links)
+		वापस;
+	क्रम (i = 0; i < num; i++) अणु
 		target = get_link_target(
 				gcov_info_filename(get_node_info(node)),
 				&gcov_link[i]);
-		if (!target)
-			goto out_err;
+		अगर (!target)
+			जाओ out_err;
 		basename = kbasename(target);
-		if (basename == target)
-			goto out_err;
+		अगर (basename == target)
+			जाओ out_err;
 		node->links[i] = debugfs_create_symlink(deskew(basename),
 							parent,	target);
-		kfree(target);
-	}
+		kमुक्त(target);
+	पूर्ण
 
-	return;
+	वापस;
 out_err:
-	kfree(target);
-	while (i-- > 0)
-		debugfs_remove(node->links[i]);
-	kfree(node->links);
-	node->links = NULL;
-}
+	kमुक्त(target);
+	जबतक (i-- > 0)
+		debugfs_हटाओ(node->links[i]);
+	kमुक्त(node->links);
+	node->links = शून्य;
+पूर्ण
 
-static const struct file_operations gcov_data_fops = {
-	.open		= gcov_seq_open,
+अटल स्थिर काष्ठा file_operations gcov_data_fops = अणु
+	.खोलो		= gcov_seq_खोलो,
 	.release	= gcov_seq_release,
-	.read		= seq_read,
+	.पढ़ो		= seq_पढ़ो,
 	.llseek		= seq_lseek,
-	.write		= gcov_seq_write,
-};
+	.ग_लिखो		= gcov_seq_ग_लिखो,
+पूर्ण;
 
 /* Basic initialization of a new node. */
-static void init_node(struct gcov_node *node, struct gcov_info *info,
-		      const char *name, struct gcov_node *parent)
-{
+अटल व्योम init_node(काष्ठा gcov_node *node, काष्ठा gcov_info *info,
+		      स्थिर अक्षर *name, काष्ठा gcov_node *parent)
+अणु
 	INIT_LIST_HEAD(&node->list);
 	INIT_LIST_HEAD(&node->children);
 	INIT_LIST_HEAD(&node->all);
-	if (node->loaded_info) {
+	अगर (node->loaded_info) अणु
 		node->loaded_info[0] = info;
 		node->num_loaded = 1;
-	}
+	पूर्ण
 	node->parent = parent;
-	if (name)
-		strcpy(node->name, name);
-}
+	अगर (name)
+		म_नकल(node->name, name);
+पूर्ण
 
 /*
  * Create a new node and associated debugfs entry. Needs to be called with
  * node_lock held.
  */
-static struct gcov_node *new_node(struct gcov_node *parent,
-				  struct gcov_info *info, const char *name)
-{
-	struct gcov_node *node;
+अटल काष्ठा gcov_node *new_node(काष्ठा gcov_node *parent,
+				  काष्ठा gcov_info *info, स्थिर अक्षर *name)
+अणु
+	काष्ठा gcov_node *node;
 
-	node = kzalloc(sizeof(struct gcov_node) + strlen(name) + 1, GFP_KERNEL);
-	if (!node)
-		goto err_nomem;
-	if (info) {
-		node->loaded_info = kcalloc(1, sizeof(struct gcov_info *),
+	node = kzalloc(माप(काष्ठा gcov_node) + म_माप(name) + 1, GFP_KERNEL);
+	अगर (!node)
+		जाओ err_nomem;
+	अगर (info) अणु
+		node->loaded_info = kसुस्मृति(1, माप(काष्ठा gcov_info *),
 					   GFP_KERNEL);
-		if (!node->loaded_info)
-			goto err_nomem;
-	}
+		अगर (!node->loaded_info)
+			जाओ err_nomem;
+	पूर्ण
 	init_node(node, info, name, parent);
-	/* Differentiate between gcov data file nodes and directory nodes. */
-	if (info) {
+	/* Dअगरferentiate between gcov data file nodes and directory nodes. */
+	अगर (info) अणु
 		node->dentry = debugfs_create_file(deskew(node->name), 0600,
 					parent->dentry, node, &gcov_data_fops);
-	} else
+	पूर्ण अन्यथा
 		node->dentry = debugfs_create_dir(node->name, parent->dentry);
-	if (info)
+	अगर (info)
 		add_links(node, parent->dentry);
 	list_add(&node->list, &parent->children);
 	list_add(&node->all, &all_head);
 
-	return node;
+	वापस node;
 
 err_nomem:
-	kfree(node);
+	kमुक्त(node);
 	pr_warn("out of memory\n");
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* Remove symbolic links associated with node. */
-static void remove_links(struct gcov_node *node)
-{
-	int i;
+अटल व्योम हटाओ_links(काष्ठा gcov_node *node)
+अणु
+	पूर्णांक i;
 
-	if (!node->links)
-		return;
-	for (i = 0; gcov_link[i].ext; i++)
-		debugfs_remove(node->links[i]);
-	kfree(node->links);
-	node->links = NULL;
-}
+	अगर (!node->links)
+		वापस;
+	क्रम (i = 0; gcov_link[i].ext; i++)
+		debugfs_हटाओ(node->links[i]);
+	kमुक्त(node->links);
+	node->links = शून्य;
+पूर्ण
 
 /*
  * Remove node from all lists and debugfs and release associated resources.
  * Needs to be called with node_lock held.
  */
-static void release_node(struct gcov_node *node)
-{
+अटल व्योम release_node(काष्ठा gcov_node *node)
+अणु
 	list_del(&node->list);
 	list_del(&node->all);
-	debugfs_remove(node->dentry);
-	remove_links(node);
-	kfree(node->loaded_info);
-	if (node->unloaded_info)
-		gcov_info_free(node->unloaded_info);
-	kfree(node);
-}
+	debugfs_हटाओ(node->dentry);
+	हटाओ_links(node);
+	kमुक्त(node->loaded_info);
+	अगर (node->unloaded_info)
+		gcov_info_मुक्त(node->unloaded_info);
+	kमुक्त(node);
+पूर्ण
 
 /* Release node and empty parents. Needs to be called with node_lock held. */
-static void remove_node(struct gcov_node *node)
-{
-	struct gcov_node *parent;
+अटल व्योम हटाओ_node(काष्ठा gcov_node *node)
+अणु
+	काष्ठा gcov_node *parent;
 
-	while ((node != &root_node) && list_empty(&node->children)) {
+	जबतक ((node != &root_node) && list_empty(&node->children)) अणु
 		parent = node->parent;
 		release_node(node);
 		node = parent;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Find child node with given basename. Needs to be called with node_lock
  * held.
  */
-static struct gcov_node *get_child_by_name(struct gcov_node *parent,
-					   const char *name)
-{
-	struct gcov_node *node;
+अटल काष्ठा gcov_node *get_child_by_name(काष्ठा gcov_node *parent,
+					   स्थिर अक्षर *name)
+अणु
+	काष्ठा gcov_node *node;
 
-	list_for_each_entry(node, &parent->children, list) {
-		if (strcmp(node->name, name) == 0)
-			return node;
-	}
+	list_क्रम_each_entry(node, &parent->children, list) अणु
+		अगर (म_भेद(node->name, name) == 0)
+			वापस node;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
- * write() implementation for reset file. Reset all profiling data to zero
- * and remove nodes for which all associated object files are unloaded.
+ * ग_लिखो() implementation क्रम reset file. Reset all profiling data to zero
+ * and हटाओ nodes क्रम which all associated object files are unloaded.
  */
-static ssize_t reset_write(struct file *file, const char __user *addr,
-			   size_t len, loff_t *pos)
-{
-	struct gcov_node *node;
+अटल sमाप_प्रकार reset_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *addr,
+			   माप_प्रकार len, loff_t *pos)
+अणु
+	काष्ठा gcov_node *node;
 
 	mutex_lock(&node_lock);
 restart:
-	list_for_each_entry(node, &all_head, all) {
-		if (node->num_loaded > 0)
+	list_क्रम_each_entry(node, &all_head, all) अणु
+		अगर (node->num_loaded > 0)
 			reset_node(node);
-		else if (list_empty(&node->children)) {
-			remove_node(node);
+		अन्यथा अगर (list_empty(&node->children)) अणु
+			हटाओ_node(node);
 			/* Several nodes may have gone - restart loop. */
-			goto restart;
-		}
-	}
+			जाओ restart;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&node_lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-/* read() implementation for reset file. Unused. */
-static ssize_t reset_read(struct file *file, char __user *addr, size_t len,
+/* पढ़ो() implementation क्रम reset file. Unused. */
+अटल sमाप_प्रकार reset_पढ़ो(काष्ठा file *file, अक्षर __user *addr, माप_प्रकार len,
 			  loff_t *pos)
-{
-	/* Allow read operation so that a recursive copy won't fail. */
-	return 0;
-}
+अणु
+	/* Allow पढ़ो operation so that a recursive copy won't fail. */
+	वापस 0;
+पूर्ण
 
-static const struct file_operations gcov_reset_fops = {
-	.write	= reset_write,
-	.read	= reset_read,
+अटल स्थिर काष्ठा file_operations gcov_reset_fops = अणु
+	.ग_लिखो	= reset_ग_लिखो,
+	.पढ़ो	= reset_पढ़ो,
 	.llseek = noop_llseek,
-};
+पूर्ण;
 
 /*
- * Create a node for a given profiling data set and add it to all lists and
+ * Create a node क्रम a given profiling data set and add it to all lists and
  * debugfs. Needs to be called with node_lock held.
  */
-static void add_node(struct gcov_info *info)
-{
-	char *filename;
-	char *curr;
-	char *next;
-	struct gcov_node *parent;
-	struct gcov_node *node;
+अटल व्योम add_node(काष्ठा gcov_info *info)
+अणु
+	अक्षर *filename;
+	अक्षर *curr;
+	अक्षर *next;
+	काष्ठा gcov_node *parent;
+	काष्ठा gcov_node *node;
 
 	filename = kstrdup(gcov_info_filename(info), GFP_KERNEL);
-	if (!filename)
-		return;
+	अगर (!filename)
+		वापस;
 	parent = &root_node;
-	/* Create directory nodes along the path. */
-	for (curr = filename; (next = strchr(curr, '/')); curr = next + 1) {
-		if (curr == next)
-			continue;
+	/* Create directory nodes aदीर्घ the path. */
+	क्रम (curr = filename; (next = म_अक्षर(curr, '/')); curr = next + 1) अणु
+		अगर (curr == next)
+			जारी;
 		*next = 0;
-		if (strcmp(curr, ".") == 0)
-			continue;
-		if (strcmp(curr, "..") == 0) {
-			if (!parent->parent)
-				goto err_remove;
+		अगर (म_भेद(curr, ".") == 0)
+			जारी;
+		अगर (म_भेद(curr, "..") == 0) अणु
+			अगर (!parent->parent)
+				जाओ err_हटाओ;
 			parent = parent->parent;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		node = get_child_by_name(parent, curr);
-		if (!node) {
-			node = new_node(parent, NULL, curr);
-			if (!node)
-				goto err_remove;
-		}
+		अगर (!node) अणु
+			node = new_node(parent, शून्य, curr);
+			अगर (!node)
+				जाओ err_हटाओ;
+		पूर्ण
 		parent = node;
-	}
+	पूर्ण
 	/* Create file node. */
 	node = new_node(parent, info, curr);
-	if (!node)
-		goto err_remove;
+	अगर (!node)
+		जाओ err_हटाओ;
 out:
-	kfree(filename);
-	return;
+	kमुक्त(filename);
+	वापस;
 
-err_remove:
-	remove_node(parent);
-	goto out;
-}
+err_हटाओ:
+	हटाओ_node(parent);
+	जाओ out;
+पूर्ण
 
 /*
  * Associate a profiling data set with an existing node. Needs to be called
  * with node_lock held.
  */
-static void add_info(struct gcov_node *node, struct gcov_info *info)
-{
-	struct gcov_info **loaded_info;
-	int num = node->num_loaded;
+अटल व्योम add_info(काष्ठा gcov_node *node, काष्ठा gcov_info *info)
+अणु
+	काष्ठा gcov_info **loaded_info;
+	पूर्णांक num = node->num_loaded;
 
 	/*
-	 * Prepare new array. This is done first to simplify cleanup in
-	 * case the new data set is incompatible, the node only contains
-	 * unloaded data sets and there's not enough memory for the array.
+	 * Prepare new array. This is करोne first to simplअगरy cleanup in
+	 * हाल the new data set is incompatible, the node only contains
+	 * unloaded data sets and there's not enough memory क्रम the array.
 	 */
-	loaded_info = kcalloc(num + 1, sizeof(struct gcov_info *), GFP_KERNEL);
-	if (!loaded_info) {
+	loaded_info = kसुस्मृति(num + 1, माप(काष्ठा gcov_info *), GFP_KERNEL);
+	अगर (!loaded_info) अणु
 		pr_warn("could not add '%s' (out of memory)\n",
 			gcov_info_filename(info));
-		return;
-	}
-	memcpy(loaded_info, node->loaded_info,
-	       num * sizeof(struct gcov_info *));
+		वापस;
+	पूर्ण
+	स_नकल(loaded_info, node->loaded_info,
+	       num * माप(काष्ठा gcov_info *));
 	loaded_info[num] = info;
-	/* Check if the new data set is compatible. */
-	if (num == 0) {
+	/* Check अगर the new data set is compatible. */
+	अगर (num == 0) अणु
 		/*
-		 * A module was unloaded, modified and reloaded. The new
+		 * A module was unloaded, modअगरied and reloaded. The new
 		 * data set replaces the copy of the last one.
 		 */
-		if (!gcov_info_is_compatible(node->unloaded_info, info)) {
+		अगर (!gcov_info_is_compatible(node->unloaded_info, info)) अणु
 			pr_warn("discarding saved data for %s "
 				"(incompatible version)\n",
 				gcov_info_filename(info));
-			gcov_info_free(node->unloaded_info);
-			node->unloaded_info = NULL;
-		}
-	} else {
+			gcov_info_मुक्त(node->unloaded_info);
+			node->unloaded_info = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * Two different versions of the same object file are loaded.
+		 * Two dअगरferent versions of the same object file are loaded.
 		 * The initial one takes precedence.
 		 */
-		if (!gcov_info_is_compatible(node->loaded_info[0], info)) {
+		अगर (!gcov_info_is_compatible(node->loaded_info[0], info)) अणु
 			pr_warn("could not add '%s' (incompatible "
 				"version)\n", gcov_info_filename(info));
-			kfree(loaded_info);
-			return;
-		}
-	}
-	/* Overwrite previous array. */
-	kfree(node->loaded_info);
+			kमुक्त(loaded_info);
+			वापस;
+		पूर्ण
+	पूर्ण
+	/* Overग_लिखो previous array. */
+	kमुक्त(node->loaded_info);
 	node->loaded_info = loaded_info;
 	node->num_loaded = num + 1;
-}
+पूर्ण
 
 /*
  * Return the index of a profiling data set associated with a node.
  */
-static int get_info_index(struct gcov_node *node, struct gcov_info *info)
-{
-	int i;
+अटल पूर्णांक get_info_index(काष्ठा gcov_node *node, काष्ठा gcov_info *info)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < node->num_loaded; i++) {
-		if (node->loaded_info[i] == info)
-			return i;
-	}
-	return -ENOENT;
-}
+	क्रम (i = 0; i < node->num_loaded; i++) अणु
+		अगर (node->loaded_info[i] == info)
+			वापस i;
+	पूर्ण
+	वापस -ENOENT;
+पूर्ण
 
 /*
  * Save the data of a profiling data set which is being unloaded.
  */
-static void save_info(struct gcov_node *node, struct gcov_info *info)
-{
-	if (node->unloaded_info)
+अटल व्योम save_info(काष्ठा gcov_node *node, काष्ठा gcov_info *info)
+अणु
+	अगर (node->unloaded_info)
 		gcov_info_add(node->unloaded_info, info);
-	else {
+	अन्यथा अणु
 		node->unloaded_info = gcov_info_dup(info);
-		if (!node->unloaded_info) {
+		अगर (!node->unloaded_info) अणु
 			pr_warn("could not save data for '%s' "
 				"(out of memory)\n",
 				gcov_info_filename(info));
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Disassociate a profiling data set from a node. Needs to be called with
  * node_lock held.
  */
-static void remove_info(struct gcov_node *node, struct gcov_info *info)
-{
-	int i;
+अटल व्योम हटाओ_info(काष्ठा gcov_node *node, काष्ठा gcov_info *info)
+अणु
+	पूर्णांक i;
 
 	i = get_info_index(node, info);
-	if (i < 0) {
+	अगर (i < 0) अणु
 		pr_warn("could not remove '%s' (not found)\n",
 			gcov_info_filename(info));
-		return;
-	}
-	if (gcov_persist)
+		वापस;
+	पूर्ण
+	अगर (gcov_persist)
 		save_info(node, info);
 	/* Shrink array. */
 	node->loaded_info[i] = node->loaded_info[node->num_loaded - 1];
 	node->num_loaded--;
-	if (node->num_loaded > 0)
-		return;
-	/* Last loaded data set was removed. */
-	kfree(node->loaded_info);
-	node->loaded_info = NULL;
+	अगर (node->num_loaded > 0)
+		वापस;
+	/* Last loaded data set was हटाओd. */
+	kमुक्त(node->loaded_info);
+	node->loaded_info = शून्य;
 	node->num_loaded = 0;
-	if (!node->unloaded_info)
-		remove_node(node);
-}
+	अगर (!node->unloaded_info)
+		हटाओ_node(node);
+पूर्ण
 
 /*
- * Callback to create/remove profiling files when code compiled with
+ * Callback to create/हटाओ profiling files when code compiled with
  * -fprofile-arcs is loaded/unloaded.
  */
-void gcov_event(enum gcov_action action, struct gcov_info *info)
-{
-	struct gcov_node *node;
+व्योम gcov_event(क्रमागत gcov_action action, काष्ठा gcov_info *info)
+अणु
+	काष्ठा gcov_node *node;
 
 	mutex_lock(&node_lock);
 	node = get_node_by_name(gcov_info_filename(info));
-	switch (action) {
-	case GCOV_ADD:
-		if (node)
+	चयन (action) अणु
+	हाल GCOV_ADD:
+		अगर (node)
 			add_info(node, info);
-		else
+		अन्यथा
 			add_node(info);
-		break;
-	case GCOV_REMOVE:
-		if (node)
-			remove_info(node, info);
-		else {
+		अवरोध;
+	हाल GCOV_REMOVE:
+		अगर (node)
+			हटाओ_info(node, info);
+		अन्यथा अणु
 			pr_warn("could not remove '%s' (not found)\n",
 				gcov_info_filename(info));
-		}
-		break;
-	}
+		पूर्ण
+		अवरोध;
+	पूर्ण
 	mutex_unlock(&node_lock);
-}
+पूर्ण
 
 /* Create debugfs entries. */
-static __init int gcov_fs_init(void)
-{
-	init_node(&root_node, NULL, NULL, NULL);
+अटल __init पूर्णांक gcov_fs_init(व्योम)
+अणु
+	init_node(&root_node, शून्य, शून्य, शून्य);
 	/*
-	 * /sys/kernel/debug/gcov will be parent for the reset control file
+	 * /sys/kernel/debug/gcov will be parent क्रम the reset control file
 	 * and all profiling files.
 	 */
-	root_node.dentry = debugfs_create_dir("gcov", NULL);
+	root_node.dentry = debugfs_create_dir("gcov", शून्य);
 	/*
 	 * Create reset file which resets all profiling counts when written
 	 * to.
 	 */
-	debugfs_create_file("reset", 0600, root_node.dentry, NULL,
+	debugfs_create_file("reset", 0600, root_node.dentry, शून्य,
 			    &gcov_reset_fops);
 	/* Replay previous events to get our fs hierarchy up-to-date. */
 	gcov_enable_events();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(gcov_fs_init);

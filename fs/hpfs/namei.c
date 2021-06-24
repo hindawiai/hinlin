@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/fs/hpfs/namei.c
  *
@@ -6,158 +7,158 @@
  *
  *  adding & removing files & directories
  */
-#include <linux/sched.h>
-#include "hpfs_fn.h"
+#समावेश <linux/sched.h>
+#समावेश "hpfs_fn.h"
 
-static void hpfs_update_directory_times(struct inode *dir)
-{
-	time64_t t = local_to_gmt(dir->i_sb, local_get_seconds(dir->i_sb));
-	if (t == dir->i_mtime.tv_sec &&
-	    t == dir->i_ctime.tv_sec)
-		return;
-	dir->i_mtime.tv_sec = dir->i_ctime.tv_sec = t;
-	dir->i_mtime.tv_nsec = dir->i_ctime.tv_nsec = 0;
-	hpfs_write_inode_nolock(dir);
-}
+अटल व्योम hpfs_update_directory_बार(काष्ठा inode *dir)
+अणु
+	समय64_t t = local_to_gmt(dir->i_sb, local_get_seconds(dir->i_sb));
+	अगर (t == dir->i_mसमय.tv_sec &&
+	    t == dir->i_स_समय.tv_sec)
+		वापस;
+	dir->i_mसमय.tv_sec = dir->i_स_समय.tv_sec = t;
+	dir->i_mसमय.tv_nsec = dir->i_स_समय.tv_nsec = 0;
+	hpfs_ग_लिखो_inode_nolock(dir);
+पूर्ण
 
-static int hpfs_mkdir(struct user_namespace *mnt_userns, struct inode *dir,
-		      struct dentry *dentry, umode_t mode)
-{
-	const unsigned char *name = dentry->d_name.name;
-	unsigned len = dentry->d_name.len;
-	struct quad_buffer_head qbh0;
-	struct buffer_head *bh;
-	struct hpfs_dirent *de;
-	struct fnode *fnode;
-	struct dnode *dnode;
-	struct inode *result;
+अटल पूर्णांक hpfs_सूची_गढ़ो(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		      काष्ठा dentry *dentry, umode_t mode)
+अणु
+	स्थिर अचिन्हित अक्षर *name = dentry->d_name.name;
+	अचिन्हित len = dentry->d_name.len;
+	काष्ठा quad_buffer_head qbh0;
+	काष्ठा buffer_head *bh;
+	काष्ठा hpfs_dirent *de;
+	काष्ठा fnode *fnode;
+	काष्ठा dnode *dnode;
+	काष्ठा inode *result;
 	fnode_secno fno;
 	dnode_secno dno;
-	int r;
-	struct hpfs_dirent dee;
-	int err;
-	if ((err = hpfs_chk_name(name, &len))) return err==-ENOENT ? -EINVAL : err;
+	पूर्णांक r;
+	काष्ठा hpfs_dirent dee;
+	पूर्णांक err;
+	अगर ((err = hpfs_chk_name(name, &len))) वापस err==-ENOENT ? -EINVAL : err;
 	hpfs_lock(dir->i_sb);
 	err = -ENOSPC;
 	fnode = hpfs_alloc_fnode(dir->i_sb, hpfs_i(dir)->i_dno, &fno, &bh);
-	if (!fnode)
-		goto bail;
+	अगर (!fnode)
+		जाओ bail;
 	dnode = hpfs_alloc_dnode(dir->i_sb, fno, &dno, &qbh0);
-	if (!dnode)
-		goto bail1;
-	memset(&dee, 0, sizeof dee);
+	अगर (!dnode)
+		जाओ bail1;
+	स_रखो(&dee, 0, माप dee);
 	dee.directory = 1;
-	if (!(mode & 0222)) dee.read_only = 1;
+	अगर (!(mode & 0222)) dee.पढ़ो_only = 1;
 	/*dee.archive = 0;*/
 	dee.hidden = name[0] == '.';
 	dee.fnode = cpu_to_le32(fno);
-	dee.creation_date = dee.write_date = dee.read_date = cpu_to_le32(local_get_seconds(dir->i_sb));
+	dee.creation_date = dee.ग_लिखो_date = dee.पढ़ो_date = cpu_to_le32(local_get_seconds(dir->i_sb));
 	result = new_inode(dir->i_sb);
-	if (!result)
-		goto bail2;
+	अगर (!result)
+		जाओ bail2;
 	hpfs_init_inode(result);
 	result->i_ino = fno;
 	hpfs_i(result)->i_parent_dir = dir->i_ino;
 	hpfs_i(result)->i_dno = dno;
-	result->i_ctime.tv_sec = result->i_mtime.tv_sec = result->i_atime.tv_sec = local_to_gmt(dir->i_sb, le32_to_cpu(dee.creation_date));
-	result->i_ctime.tv_nsec = 0; 
-	result->i_mtime.tv_nsec = 0; 
-	result->i_atime.tv_nsec = 0; 
+	result->i_स_समय.tv_sec = result->i_mसमय.tv_sec = result->i_aसमय.tv_sec = local_to_gmt(dir->i_sb, le32_to_cpu(dee.creation_date));
+	result->i_स_समय.tv_nsec = 0; 
+	result->i_mसमय.tv_nsec = 0; 
+	result->i_aसमय.tv_nsec = 0; 
 	hpfs_i(result)->i_ea_size = 0;
-	result->i_mode |= S_IFDIR;
+	result->i_mode |= S_IFसूची;
 	result->i_op = &hpfs_dir_iops;
 	result->i_fop = &hpfs_dir_ops;
 	result->i_blocks = 4;
 	result->i_size = 2048;
 	set_nlink(result, 2);
-	if (dee.read_only)
+	अगर (dee.पढ़ो_only)
 		result->i_mode &= ~0222;
 
 	r = hpfs_add_dirent(dir, name, len, &dee);
-	if (r == 1)
-		goto bail3;
-	if (r == -1) {
+	अगर (r == 1)
+		जाओ bail3;
+	अगर (r == -1) अणु
 		err = -EEXIST;
-		goto bail3;
-	}
+		जाओ bail3;
+	पूर्ण
 	fnode->len = len;
-	memcpy(fnode->name, name, len > 15 ? 15 : len);
+	स_नकल(fnode->name, name, len > 15 ? 15 : len);
 	fnode->up = cpu_to_le32(dir->i_ino);
 	fnode->flags |= FNODE_dir;
-	fnode->btree.n_free_nodes = 7;
+	fnode->btree.n_मुक्त_nodes = 7;
 	fnode->btree.n_used_nodes = 1;
-	fnode->btree.first_free = cpu_to_le16(0x14);
-	fnode->u.external[0].disk_secno = cpu_to_le32(dno);
-	fnode->u.external[0].file_secno = cpu_to_le32(-1);
+	fnode->btree.first_मुक्त = cpu_to_le16(0x14);
+	fnode->u.बाह्यal[0].disk_secno = cpu_to_le32(dno);
+	fnode->u.बाह्यal[0].file_secno = cpu_to_le32(-1);
 	dnode->root_dnode = 1;
 	dnode->up = cpu_to_le32(fno);
 	de = hpfs_add_de(dir->i_sb, dnode, "\001\001", 2, 0);
-	de->creation_date = de->write_date = de->read_date = cpu_to_le32(local_get_seconds(dir->i_sb));
-	if (!(mode & 0222)) de->read_only = 1;
+	de->creation_date = de->ग_लिखो_date = de->पढ़ो_date = cpu_to_le32(local_get_seconds(dir->i_sb));
+	अगर (!(mode & 0222)) de->पढ़ो_only = 1;
 	de->first = de->directory = 1;
-	/*de->hidden = de->system = 0;*/
+	/*de->hidden = de->प्रणाली = 0;*/
 	de->fnode = cpu_to_le32(fno);
 	mark_buffer_dirty(bh);
-	brelse(bh);
+	brअन्यथा(bh);
 	hpfs_mark_4buffers_dirty(&qbh0);
-	hpfs_brelse4(&qbh0);
+	hpfs_brअन्यथा4(&qbh0);
 	inc_nlink(dir);
 	insert_inode_hash(result);
 
-	if (!uid_eq(result->i_uid, current_fsuid()) ||
+	अगर (!uid_eq(result->i_uid, current_fsuid()) ||
 	    !gid_eq(result->i_gid, current_fsgid()) ||
-	    result->i_mode != (mode | S_IFDIR)) {
+	    result->i_mode != (mode | S_IFसूची)) अणु
 		result->i_uid = current_fsuid();
 		result->i_gid = current_fsgid();
-		result->i_mode = mode | S_IFDIR;
-		hpfs_write_inode_nolock(result);
-	}
-	hpfs_update_directory_times(dir);
+		result->i_mode = mode | S_IFसूची;
+		hpfs_ग_लिखो_inode_nolock(result);
+	पूर्ण
+	hpfs_update_directory_बार(dir);
 	d_instantiate(dentry, result);
 	hpfs_unlock(dir->i_sb);
-	return 0;
+	वापस 0;
 bail3:
 	iput(result);
 bail2:
-	hpfs_brelse4(&qbh0);
-	hpfs_free_dnode(dir->i_sb, dno);
+	hpfs_brअन्यथा4(&qbh0);
+	hpfs_मुक्त_dnode(dir->i_sb, dno);
 bail1:
-	brelse(bh);
-	hpfs_free_sectors(dir->i_sb, fno, 1);
+	brअन्यथा(bh);
+	hpfs_मुक्त_sectors(dir->i_sb, fno, 1);
 bail:
 	hpfs_unlock(dir->i_sb);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hpfs_create(struct user_namespace *mnt_userns, struct inode *dir,
-		       struct dentry *dentry, umode_t mode, bool excl)
-{
-	const unsigned char *name = dentry->d_name.name;
-	unsigned len = dentry->d_name.len;
-	struct inode *result = NULL;
-	struct buffer_head *bh;
-	struct fnode *fnode;
+अटल पूर्णांक hpfs_create(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		       काष्ठा dentry *dentry, umode_t mode, bool excl)
+अणु
+	स्थिर अचिन्हित अक्षर *name = dentry->d_name.name;
+	अचिन्हित len = dentry->d_name.len;
+	काष्ठा inode *result = शून्य;
+	काष्ठा buffer_head *bh;
+	काष्ठा fnode *fnode;
 	fnode_secno fno;
-	int r;
-	struct hpfs_dirent dee;
-	int err;
-	if ((err = hpfs_chk_name(name, &len)))
-		return err==-ENOENT ? -EINVAL : err;
+	पूर्णांक r;
+	काष्ठा hpfs_dirent dee;
+	पूर्णांक err;
+	अगर ((err = hpfs_chk_name(name, &len)))
+		वापस err==-ENOENT ? -EINVAL : err;
 	hpfs_lock(dir->i_sb);
 	err = -ENOSPC;
 	fnode = hpfs_alloc_fnode(dir->i_sb, hpfs_i(dir)->i_dno, &fno, &bh);
-	if (!fnode)
-		goto bail;
-	memset(&dee, 0, sizeof dee);
-	if (!(mode & 0222)) dee.read_only = 1;
+	अगर (!fnode)
+		जाओ bail;
+	स_रखो(&dee, 0, माप dee);
+	अगर (!(mode & 0222)) dee.पढ़ो_only = 1;
 	dee.archive = 1;
 	dee.hidden = name[0] == '.';
 	dee.fnode = cpu_to_le32(fno);
-	dee.creation_date = dee.write_date = dee.read_date = cpu_to_le32(local_get_seconds(dir->i_sb));
+	dee.creation_date = dee.ग_लिखो_date = dee.पढ़ो_date = cpu_to_le32(local_get_seconds(dir->i_sb));
 
 	result = new_inode(dir->i_sb);
-	if (!result)
-		goto bail1;
+	अगर (!result)
+		जाओ bail1;
 	
 	hpfs_init_inode(result);
 	result->i_ino = fno;
@@ -167,93 +168,93 @@ static int hpfs_create(struct user_namespace *mnt_userns, struct inode *dir,
 	result->i_fop = &hpfs_file_ops;
 	set_nlink(result, 1);
 	hpfs_i(result)->i_parent_dir = dir->i_ino;
-	result->i_ctime.tv_sec = result->i_mtime.tv_sec = result->i_atime.tv_sec = local_to_gmt(dir->i_sb, le32_to_cpu(dee.creation_date));
-	result->i_ctime.tv_nsec = 0;
-	result->i_mtime.tv_nsec = 0;
-	result->i_atime.tv_nsec = 0;
+	result->i_स_समय.tv_sec = result->i_mसमय.tv_sec = result->i_aसमय.tv_sec = local_to_gmt(dir->i_sb, le32_to_cpu(dee.creation_date));
+	result->i_स_समय.tv_nsec = 0;
+	result->i_mसमय.tv_nsec = 0;
+	result->i_aसमय.tv_nsec = 0;
 	hpfs_i(result)->i_ea_size = 0;
-	if (dee.read_only)
+	अगर (dee.पढ़ो_only)
 		result->i_mode &= ~0222;
 	result->i_blocks = 1;
 	result->i_size = 0;
 	result->i_data.a_ops = &hpfs_aops;
-	hpfs_i(result)->mmu_private = 0;
+	hpfs_i(result)->mmu_निजी = 0;
 
 	r = hpfs_add_dirent(dir, name, len, &dee);
-	if (r == 1)
-		goto bail2;
-	if (r == -1) {
+	अगर (r == 1)
+		जाओ bail2;
+	अगर (r == -1) अणु
 		err = -EEXIST;
-		goto bail2;
-	}
+		जाओ bail2;
+	पूर्ण
 	fnode->len = len;
-	memcpy(fnode->name, name, len > 15 ? 15 : len);
+	स_नकल(fnode->name, name, len > 15 ? 15 : len);
 	fnode->up = cpu_to_le32(dir->i_ino);
 	mark_buffer_dirty(bh);
-	brelse(bh);
+	brअन्यथा(bh);
 
 	insert_inode_hash(result);
 
-	if (!uid_eq(result->i_uid, current_fsuid()) ||
+	अगर (!uid_eq(result->i_uid, current_fsuid()) ||
 	    !gid_eq(result->i_gid, current_fsgid()) ||
-	    result->i_mode != (mode | S_IFREG)) {
+	    result->i_mode != (mode | S_IFREG)) अणु
 		result->i_uid = current_fsuid();
 		result->i_gid = current_fsgid();
 		result->i_mode = mode | S_IFREG;
-		hpfs_write_inode_nolock(result);
-	}
-	hpfs_update_directory_times(dir);
+		hpfs_ग_लिखो_inode_nolock(result);
+	पूर्ण
+	hpfs_update_directory_बार(dir);
 	d_instantiate(dentry, result);
 	hpfs_unlock(dir->i_sb);
-	return 0;
+	वापस 0;
 
 bail2:
 	iput(result);
 bail1:
-	brelse(bh);
-	hpfs_free_sectors(dir->i_sb, fno, 1);
+	brअन्यथा(bh);
+	hpfs_मुक्त_sectors(dir->i_sb, fno, 1);
 bail:
 	hpfs_unlock(dir->i_sb);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hpfs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
-		      struct dentry *dentry, umode_t mode, dev_t rdev)
-{
-	const unsigned char *name = dentry->d_name.name;
-	unsigned len = dentry->d_name.len;
-	struct buffer_head *bh;
-	struct fnode *fnode;
+अटल पूर्णांक hpfs_mknod(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+		      काष्ठा dentry *dentry, umode_t mode, dev_t rdev)
+अणु
+	स्थिर अचिन्हित अक्षर *name = dentry->d_name.name;
+	अचिन्हित len = dentry->d_name.len;
+	काष्ठा buffer_head *bh;
+	काष्ठा fnode *fnode;
 	fnode_secno fno;
-	int r;
-	struct hpfs_dirent dee;
-	struct inode *result = NULL;
-	int err;
-	if ((err = hpfs_chk_name(name, &len))) return err==-ENOENT ? -EINVAL : err;
-	if (hpfs_sb(dir->i_sb)->sb_eas < 2) return -EPERM;
+	पूर्णांक r;
+	काष्ठा hpfs_dirent dee;
+	काष्ठा inode *result = शून्य;
+	पूर्णांक err;
+	अगर ((err = hpfs_chk_name(name, &len))) वापस err==-ENOENT ? -EINVAL : err;
+	अगर (hpfs_sb(dir->i_sb)->sb_eas < 2) वापस -EPERM;
 	hpfs_lock(dir->i_sb);
 	err = -ENOSPC;
 	fnode = hpfs_alloc_fnode(dir->i_sb, hpfs_i(dir)->i_dno, &fno, &bh);
-	if (!fnode)
-		goto bail;
-	memset(&dee, 0, sizeof dee);
-	if (!(mode & 0222)) dee.read_only = 1;
+	अगर (!fnode)
+		जाओ bail;
+	स_रखो(&dee, 0, माप dee);
+	अगर (!(mode & 0222)) dee.पढ़ो_only = 1;
 	dee.archive = 1;
 	dee.hidden = name[0] == '.';
 	dee.fnode = cpu_to_le32(fno);
-	dee.creation_date = dee.write_date = dee.read_date = cpu_to_le32(local_get_seconds(dir->i_sb));
+	dee.creation_date = dee.ग_लिखो_date = dee.पढ़ो_date = cpu_to_le32(local_get_seconds(dir->i_sb));
 
 	result = new_inode(dir->i_sb);
-	if (!result)
-		goto bail1;
+	अगर (!result)
+		जाओ bail1;
 
 	hpfs_init_inode(result);
 	result->i_ino = fno;
 	hpfs_i(result)->i_parent_dir = dir->i_ino;
-	result->i_ctime.tv_sec = result->i_mtime.tv_sec = result->i_atime.tv_sec = local_to_gmt(dir->i_sb, le32_to_cpu(dee.creation_date));
-	result->i_ctime.tv_nsec = 0;
-	result->i_mtime.tv_nsec = 0;
-	result->i_atime.tv_nsec = 0;
+	result->i_स_समय.tv_sec = result->i_mसमय.tv_sec = result->i_aसमय.tv_sec = local_to_gmt(dir->i_sb, le32_to_cpu(dee.creation_date));
+	result->i_स_समय.tv_nsec = 0;
+	result->i_mसमय.tv_nsec = 0;
+	result->i_aसमय.tv_nsec = 0;
 	hpfs_i(result)->i_ea_size = 0;
 	result->i_uid = current_fsuid();
 	result->i_gid = current_fsgid();
@@ -263,370 +264,370 @@ static int hpfs_mknod(struct user_namespace *mnt_userns, struct inode *dir,
 	init_special_inode(result, mode, rdev);
 
 	r = hpfs_add_dirent(dir, name, len, &dee);
-	if (r == 1)
-		goto bail2;
-	if (r == -1) {
+	अगर (r == 1)
+		जाओ bail2;
+	अगर (r == -1) अणु
 		err = -EEXIST;
-		goto bail2;
-	}
+		जाओ bail2;
+	पूर्ण
 	fnode->len = len;
-	memcpy(fnode->name, name, len > 15 ? 15 : len);
+	स_नकल(fnode->name, name, len > 15 ? 15 : len);
 	fnode->up = cpu_to_le32(dir->i_ino);
 	mark_buffer_dirty(bh);
 
 	insert_inode_hash(result);
 
-	hpfs_write_inode_nolock(result);
-	hpfs_update_directory_times(dir);
+	hpfs_ग_लिखो_inode_nolock(result);
+	hpfs_update_directory_बार(dir);
 	d_instantiate(dentry, result);
-	brelse(bh);
+	brअन्यथा(bh);
 	hpfs_unlock(dir->i_sb);
-	return 0;
+	वापस 0;
 bail2:
 	iput(result);
 bail1:
-	brelse(bh);
-	hpfs_free_sectors(dir->i_sb, fno, 1);
+	brअन्यथा(bh);
+	hpfs_मुक्त_sectors(dir->i_sb, fno, 1);
 bail:
 	hpfs_unlock(dir->i_sb);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hpfs_symlink(struct user_namespace *mnt_userns, struct inode *dir,
-			struct dentry *dentry, const char *symlink)
-{
-	const unsigned char *name = dentry->d_name.name;
-	unsigned len = dentry->d_name.len;
-	struct buffer_head *bh;
-	struct fnode *fnode;
+अटल पूर्णांक hpfs_symlink(काष्ठा user_namespace *mnt_userns, काष्ठा inode *dir,
+			काष्ठा dentry *dentry, स्थिर अक्षर *symlink)
+अणु
+	स्थिर अचिन्हित अक्षर *name = dentry->d_name.name;
+	अचिन्हित len = dentry->d_name.len;
+	काष्ठा buffer_head *bh;
+	काष्ठा fnode *fnode;
 	fnode_secno fno;
-	int r;
-	struct hpfs_dirent dee;
-	struct inode *result;
-	int err;
-	if ((err = hpfs_chk_name(name, &len))) return err==-ENOENT ? -EINVAL : err;
+	पूर्णांक r;
+	काष्ठा hpfs_dirent dee;
+	काष्ठा inode *result;
+	पूर्णांक err;
+	अगर ((err = hpfs_chk_name(name, &len))) वापस err==-ENOENT ? -EINVAL : err;
 	hpfs_lock(dir->i_sb);
-	if (hpfs_sb(dir->i_sb)->sb_eas < 2) {
+	अगर (hpfs_sb(dir->i_sb)->sb_eas < 2) अणु
 		hpfs_unlock(dir->i_sb);
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 	err = -ENOSPC;
 	fnode = hpfs_alloc_fnode(dir->i_sb, hpfs_i(dir)->i_dno, &fno, &bh);
-	if (!fnode)
-		goto bail;
-	memset(&dee, 0, sizeof dee);
+	अगर (!fnode)
+		जाओ bail;
+	स_रखो(&dee, 0, माप dee);
 	dee.archive = 1;
 	dee.hidden = name[0] == '.';
 	dee.fnode = cpu_to_le32(fno);
-	dee.creation_date = dee.write_date = dee.read_date = cpu_to_le32(local_get_seconds(dir->i_sb));
+	dee.creation_date = dee.ग_लिखो_date = dee.पढ़ो_date = cpu_to_le32(local_get_seconds(dir->i_sb));
 
 	result = new_inode(dir->i_sb);
-	if (!result)
-		goto bail1;
+	अगर (!result)
+		जाओ bail1;
 	result->i_ino = fno;
 	hpfs_init_inode(result);
 	hpfs_i(result)->i_parent_dir = dir->i_ino;
-	result->i_ctime.tv_sec = result->i_mtime.tv_sec = result->i_atime.tv_sec = local_to_gmt(dir->i_sb, le32_to_cpu(dee.creation_date));
-	result->i_ctime.tv_nsec = 0;
-	result->i_mtime.tv_nsec = 0;
-	result->i_atime.tv_nsec = 0;
+	result->i_स_समय.tv_sec = result->i_mसमय.tv_sec = result->i_aसमय.tv_sec = local_to_gmt(dir->i_sb, le32_to_cpu(dee.creation_date));
+	result->i_स_समय.tv_nsec = 0;
+	result->i_mसमय.tv_nsec = 0;
+	result->i_aसमय.tv_nsec = 0;
 	hpfs_i(result)->i_ea_size = 0;
 	result->i_mode = S_IFLNK | 0777;
 	result->i_uid = current_fsuid();
 	result->i_gid = current_fsgid();
 	result->i_blocks = 1;
 	set_nlink(result, 1);
-	result->i_size = strlen(symlink);
+	result->i_size = म_माप(symlink);
 	inode_nohighmem(result);
 	result->i_op = &page_symlink_inode_operations;
 	result->i_data.a_ops = &hpfs_symlink_aops;
 
 	r = hpfs_add_dirent(dir, name, len, &dee);
-	if (r == 1)
-		goto bail2;
-	if (r == -1) {
+	अगर (r == 1)
+		जाओ bail2;
+	अगर (r == -1) अणु
 		err = -EEXIST;
-		goto bail2;
-	}
+		जाओ bail2;
+	पूर्ण
 	fnode->len = len;
-	memcpy(fnode->name, name, len > 15 ? 15 : len);
+	स_नकल(fnode->name, name, len > 15 ? 15 : len);
 	fnode->up = cpu_to_le32(dir->i_ino);
-	hpfs_set_ea(result, fnode, "SYMLINK", symlink, strlen(symlink));
+	hpfs_set_ea(result, fnode, "SYMLINK", symlink, म_माप(symlink));
 	mark_buffer_dirty(bh);
-	brelse(bh);
+	brअन्यथा(bh);
 
 	insert_inode_hash(result);
 
-	hpfs_write_inode_nolock(result);
-	hpfs_update_directory_times(dir);
+	hpfs_ग_लिखो_inode_nolock(result);
+	hpfs_update_directory_बार(dir);
 	d_instantiate(dentry, result);
 	hpfs_unlock(dir->i_sb);
-	return 0;
+	वापस 0;
 bail2:
 	iput(result);
 bail1:
-	brelse(bh);
-	hpfs_free_sectors(dir->i_sb, fno, 1);
+	brअन्यथा(bh);
+	hpfs_मुक्त_sectors(dir->i_sb, fno, 1);
 bail:
 	hpfs_unlock(dir->i_sb);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hpfs_unlink(struct inode *dir, struct dentry *dentry)
-{
-	const unsigned char *name = dentry->d_name.name;
-	unsigned len = dentry->d_name.len;
-	struct quad_buffer_head qbh;
-	struct hpfs_dirent *de;
-	struct inode *inode = d_inode(dentry);
+अटल पूर्णांक hpfs_unlink(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	स्थिर अचिन्हित अक्षर *name = dentry->d_name.name;
+	अचिन्हित len = dentry->d_name.len;
+	काष्ठा quad_buffer_head qbh;
+	काष्ठा hpfs_dirent *de;
+	काष्ठा inode *inode = d_inode(dentry);
 	dnode_secno dno;
-	int r;
-	int err;
+	पूर्णांक r;
+	पूर्णांक err;
 
 	hpfs_lock(dir->i_sb);
 	hpfs_adjust_length(name, &len);
 
 	err = -ENOENT;
 	de = map_dirent(dir, hpfs_i(dir)->i_dno, name, len, &dno, &qbh);
-	if (!de)
-		goto out;
+	अगर (!de)
+		जाओ out;
 
 	err = -EPERM;
-	if (de->first)
-		goto out1;
+	अगर (de->first)
+		जाओ out1;
 
-	err = -EISDIR;
-	if (de->directory)
-		goto out1;
+	err = -EISसूची;
+	अगर (de->directory)
+		जाओ out1;
 
-	r = hpfs_remove_dirent(dir, dno, de, &qbh, 1);
-	switch (r) {
-	case 1:
+	r = hpfs_हटाओ_dirent(dir, dno, de, &qbh, 1);
+	चयन (r) अणु
+	हाल 1:
 		hpfs_error(dir->i_sb, "there was error when removing dirent");
 		err = -EFSERROR;
-		break;
-	case 2:		/* no space for deleting */
+		अवरोध;
+	हाल 2:		/* no space क्रम deleting */
 		err = -ENOSPC;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		drop_nlink(inode);
 		err = 0;
-	}
-	goto out;
+	पूर्ण
+	जाओ out;
 
 out1:
-	hpfs_brelse4(&qbh);
+	hpfs_brअन्यथा4(&qbh);
 out:
-	if (!err)
-		hpfs_update_directory_times(dir);
+	अगर (!err)
+		hpfs_update_directory_बार(dir);
 	hpfs_unlock(dir->i_sb);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hpfs_rmdir(struct inode *dir, struct dentry *dentry)
-{
-	const unsigned char *name = dentry->d_name.name;
-	unsigned len = dentry->d_name.len;
-	struct quad_buffer_head qbh;
-	struct hpfs_dirent *de;
-	struct inode *inode = d_inode(dentry);
+अटल पूर्णांक hpfs_सूची_हटाओ(काष्ठा inode *dir, काष्ठा dentry *dentry)
+अणु
+	स्थिर अचिन्हित अक्षर *name = dentry->d_name.name;
+	अचिन्हित len = dentry->d_name.len;
+	काष्ठा quad_buffer_head qbh;
+	काष्ठा hpfs_dirent *de;
+	काष्ठा inode *inode = d_inode(dentry);
 	dnode_secno dno;
-	int n_items = 0;
-	int err;
-	int r;
+	पूर्णांक n_items = 0;
+	पूर्णांक err;
+	पूर्णांक r;
 
 	hpfs_adjust_length(name, &len);
 	hpfs_lock(dir->i_sb);
 	err = -ENOENT;
 	de = map_dirent(dir, hpfs_i(dir)->i_dno, name, len, &dno, &qbh);
-	if (!de)
-		goto out;
+	अगर (!de)
+		जाओ out;
 
 	err = -EPERM;
-	if (de->first)
-		goto out1;
+	अगर (de->first)
+		जाओ out1;
 
-	err = -ENOTDIR;
-	if (!de->directory)
-		goto out1;
+	err = -ENOTसूची;
+	अगर (!de->directory)
+		जाओ out1;
 
-	hpfs_count_dnodes(dir->i_sb, hpfs_i(inode)->i_dno, NULL, NULL, &n_items);
+	hpfs_count_dnodes(dir->i_sb, hpfs_i(inode)->i_dno, शून्य, शून्य, &n_items);
 	err = -ENOTEMPTY;
-	if (n_items)
-		goto out1;
+	अगर (n_items)
+		जाओ out1;
 
-	r = hpfs_remove_dirent(dir, dno, de, &qbh, 1);
-	switch (r) {
-	case 1:
+	r = hpfs_हटाओ_dirent(dir, dno, de, &qbh, 1);
+	चयन (r) अणु
+	हाल 1:
 		hpfs_error(dir->i_sb, "there was error when removing dirent");
 		err = -EFSERROR;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		err = -ENOSPC;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		drop_nlink(dir);
 		clear_nlink(inode);
 		err = 0;
-	}
-	goto out;
+	पूर्ण
+	जाओ out;
 out1:
-	hpfs_brelse4(&qbh);
+	hpfs_brअन्यथा4(&qbh);
 out:
-	if (!err)
-		hpfs_update_directory_times(dir);
+	अगर (!err)
+		hpfs_update_directory_बार(dir);
 	hpfs_unlock(dir->i_sb);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int hpfs_symlink_readpage(struct file *file, struct page *page)
-{
-	char *link = page_address(page);
-	struct inode *i = page->mapping->host;
-	struct fnode *fnode;
-	struct buffer_head *bh;
-	int err;
+अटल पूर्णांक hpfs_symlink_पढ़ोpage(काष्ठा file *file, काष्ठा page *page)
+अणु
+	अक्षर *link = page_address(page);
+	काष्ठा inode *i = page->mapping->host;
+	काष्ठा fnode *fnode;
+	काष्ठा buffer_head *bh;
+	पूर्णांक err;
 
 	err = -EIO;
 	hpfs_lock(i->i_sb);
-	if (!(fnode = hpfs_map_fnode(i->i_sb, i->i_ino, &bh)))
-		goto fail;
-	err = hpfs_read_ea(i->i_sb, fnode, "SYMLINK", link, PAGE_SIZE);
-	brelse(bh);
-	if (err)
-		goto fail;
+	अगर (!(fnode = hpfs_map_fnode(i->i_sb, i->i_ino, &bh)))
+		जाओ fail;
+	err = hpfs_पढ़ो_ea(i->i_sb, fnode, "SYMLINK", link, PAGE_SIZE);
+	brअन्यथा(bh);
+	अगर (err)
+		जाओ fail;
 	hpfs_unlock(i->i_sb);
 	SetPageUptodate(page);
 	unlock_page(page);
-	return 0;
+	वापस 0;
 
 fail:
 	hpfs_unlock(i->i_sb);
 	SetPageError(page);
 	unlock_page(page);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct address_space_operations hpfs_symlink_aops = {
-	.readpage	= hpfs_symlink_readpage
-};
+स्थिर काष्ठा address_space_operations hpfs_symlink_aops = अणु
+	.पढ़ोpage	= hpfs_symlink_पढ़ोpage
+पूर्ण;
 
-static int hpfs_rename(struct user_namespace *mnt_userns, struct inode *old_dir,
-		       struct dentry *old_dentry, struct inode *new_dir,
-		       struct dentry *new_dentry, unsigned int flags)
-{
-	const unsigned char *old_name = old_dentry->d_name.name;
-	unsigned old_len = old_dentry->d_name.len;
-	const unsigned char *new_name = new_dentry->d_name.name;
-	unsigned new_len = new_dentry->d_name.len;
-	struct inode *i = d_inode(old_dentry);
-	struct inode *new_inode = d_inode(new_dentry);
-	struct quad_buffer_head qbh, qbh1;
-	struct hpfs_dirent *dep, *nde;
-	struct hpfs_dirent de;
+अटल पूर्णांक hpfs_नाम(काष्ठा user_namespace *mnt_userns, काष्ठा inode *old_dir,
+		       काष्ठा dentry *old_dentry, काष्ठा inode *new_dir,
+		       काष्ठा dentry *new_dentry, अचिन्हित पूर्णांक flags)
+अणु
+	स्थिर अचिन्हित अक्षर *old_name = old_dentry->d_name.name;
+	अचिन्हित old_len = old_dentry->d_name.len;
+	स्थिर अचिन्हित अक्षर *new_name = new_dentry->d_name.name;
+	अचिन्हित new_len = new_dentry->d_name.len;
+	काष्ठा inode *i = d_inode(old_dentry);
+	काष्ठा inode *new_inode = d_inode(new_dentry);
+	काष्ठा quad_buffer_head qbh, qbh1;
+	काष्ठा hpfs_dirent *dep, *nde;
+	काष्ठा hpfs_dirent de;
 	dnode_secno dno;
-	int r;
-	struct buffer_head *bh;
-	struct fnode *fnode;
-	int err;
+	पूर्णांक r;
+	काष्ठा buffer_head *bh;
+	काष्ठा fnode *fnode;
+	पूर्णांक err;
 
-	if (flags & ~RENAME_NOREPLACE)
-		return -EINVAL;
+	अगर (flags & ~RENAME_NOREPLACE)
+		वापस -EINVAL;
 
-	if ((err = hpfs_chk_name(new_name, &new_len))) return err;
+	अगर ((err = hpfs_chk_name(new_name, &new_len))) वापस err;
 	err = 0;
 	hpfs_adjust_length(old_name, &old_len);
 
 	hpfs_lock(i->i_sb);
-	/* order doesn't matter, due to VFS exclusion */
+	/* order करोesn't matter, due to VFS exclusion */
 	
 	/* Erm? Moving over the empty non-busy directory is perfectly legal */
-	if (new_inode && S_ISDIR(new_inode->i_mode)) {
+	अगर (new_inode && S_ISसूची(new_inode->i_mode)) अणु
 		err = -EINVAL;
-		goto end1;
-	}
+		जाओ end1;
+	पूर्ण
 
-	if (!(dep = map_dirent(old_dir, hpfs_i(old_dir)->i_dno, old_name, old_len, &dno, &qbh))) {
+	अगर (!(dep = map_dirent(old_dir, hpfs_i(old_dir)->i_dno, old_name, old_len, &dno, &qbh))) अणु
 		hpfs_error(i->i_sb, "lookup succeeded but map dirent failed");
 		err = -ENOENT;
-		goto end1;
-	}
+		जाओ end1;
+	पूर्ण
 	copy_de(&de, dep);
 	de.hidden = new_name[0] == '.';
 
-	if (new_inode) {
-		int r;
-		if ((r = hpfs_remove_dirent(old_dir, dno, dep, &qbh, 1)) != 2) {
-			if ((nde = map_dirent(new_dir, hpfs_i(new_dir)->i_dno, new_name, new_len, NULL, &qbh1))) {
+	अगर (new_inode) अणु
+		पूर्णांक r;
+		अगर ((r = hpfs_हटाओ_dirent(old_dir, dno, dep, &qbh, 1)) != 2) अणु
+			अगर ((nde = map_dirent(new_dir, hpfs_i(new_dir)->i_dno, new_name, new_len, शून्य, &qbh1))) अणु
 				clear_nlink(new_inode);
 				copy_de(nde, &de);
-				memcpy(nde->name, new_name, new_len);
+				स_नकल(nde->name, new_name, new_len);
 				hpfs_mark_4buffers_dirty(&qbh1);
-				hpfs_brelse4(&qbh1);
-				goto end;
-			}
+				hpfs_brअन्यथा4(&qbh1);
+				जाओ end;
+			पूर्ण
 			hpfs_error(new_dir->i_sb, "hpfs_rename: could not find dirent");
 			err = -EFSERROR;
-			goto end1;
-		}
+			जाओ end1;
+		पूर्ण
 		err = -ENOSPC;
-		goto end1;
-	}
+		जाओ end1;
+	पूर्ण
 
-	if (new_dir == old_dir) hpfs_brelse4(&qbh);
+	अगर (new_dir == old_dir) hpfs_brअन्यथा4(&qbh);
 
-	if ((r = hpfs_add_dirent(new_dir, new_name, new_len, &de))) {
-		if (r == -1) hpfs_error(new_dir->i_sb, "hpfs_rename: dirent already exists!");
+	अगर ((r = hpfs_add_dirent(new_dir, new_name, new_len, &de))) अणु
+		अगर (r == -1) hpfs_error(new_dir->i_sb, "hpfs_rename: dirent already exists!");
 		err = r == 1 ? -ENOSPC : -EFSERROR;
-		if (new_dir != old_dir) hpfs_brelse4(&qbh);
-		goto end1;
-	}
+		अगर (new_dir != old_dir) hpfs_brअन्यथा4(&qbh);
+		जाओ end1;
+	पूर्ण
 	
-	if (new_dir == old_dir)
-		if (!(dep = map_dirent(old_dir, hpfs_i(old_dir)->i_dno, old_name, old_len, &dno, &qbh))) {
+	अगर (new_dir == old_dir)
+		अगर (!(dep = map_dirent(old_dir, hpfs_i(old_dir)->i_dno, old_name, old_len, &dno, &qbh))) अणु
 			hpfs_error(i->i_sb, "lookup succeeded but map dirent failed at #2");
 			err = -ENOENT;
-			goto end1;
-		}
+			जाओ end1;
+		पूर्ण
 
-	if ((r = hpfs_remove_dirent(old_dir, dno, dep, &qbh, 0))) {
+	अगर ((r = hpfs_हटाओ_dirent(old_dir, dno, dep, &qbh, 0))) अणु
 		hpfs_error(i->i_sb, "hpfs_rename: could not remove dirent");
 		err = r == 2 ? -ENOSPC : -EFSERROR;
-		goto end1;
-	}
+		जाओ end1;
+	पूर्ण
 
 end:
 	hpfs_i(i)->i_parent_dir = new_dir->i_ino;
-	if (S_ISDIR(i->i_mode)) {
+	अगर (S_ISसूची(i->i_mode)) अणु
 		inc_nlink(new_dir);
 		drop_nlink(old_dir);
-	}
-	if ((fnode = hpfs_map_fnode(i->i_sb, i->i_ino, &bh))) {
+	पूर्ण
+	अगर ((fnode = hpfs_map_fnode(i->i_sb, i->i_ino, &bh))) अणु
 		fnode->up = cpu_to_le32(new_dir->i_ino);
 		fnode->len = new_len;
-		memcpy(fnode->name, new_name, new_len>15?15:new_len);
-		if (new_len < 15) memset(&fnode->name[new_len], 0, 15 - new_len);
+		स_नकल(fnode->name, new_name, new_len>15?15:new_len);
+		अगर (new_len < 15) स_रखो(&fnode->name[new_len], 0, 15 - new_len);
 		mark_buffer_dirty(bh);
-		brelse(bh);
-	}
+		brअन्यथा(bh);
+	पूर्ण
 end1:
-	if (!err) {
-		hpfs_update_directory_times(old_dir);
-		hpfs_update_directory_times(new_dir);
-	}
+	अगर (!err) अणु
+		hpfs_update_directory_बार(old_dir);
+		hpfs_update_directory_बार(new_dir);
+	पूर्ण
 	hpfs_unlock(i->i_sb);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-const struct inode_operations hpfs_dir_iops =
-{
+स्थिर काष्ठा inode_operations hpfs_dir_iops =
+अणु
 	.create		= hpfs_create,
 	.lookup		= hpfs_lookup,
 	.unlink		= hpfs_unlink,
 	.symlink	= hpfs_symlink,
-	.mkdir		= hpfs_mkdir,
-	.rmdir		= hpfs_rmdir,
+	.सूची_गढ़ो		= hpfs_सूची_गढ़ो,
+	.सूची_हटाओ		= hpfs_सूची_हटाओ,
 	.mknod		= hpfs_mknod,
-	.rename		= hpfs_rename,
+	.नाम		= hpfs_नाम,
 	.setattr	= hpfs_setattr,
-};
+पूर्ण;

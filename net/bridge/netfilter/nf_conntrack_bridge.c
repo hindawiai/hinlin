@@ -1,47 +1,48 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/types.h>
-#include <linux/ip.h>
-#include <linux/netfilter.h>
-#include <linux/netfilter_ipv6.h>
-#include <linux/netfilter_bridge.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/icmp.h>
-#include <linux/sysctl.h>
-#include <net/route.h>
-#include <net/ip.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/types.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/netfilter.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <linux/netfilter_bridge.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/icmp.h>
+#समावेश <linux/sysctl.h>
+#समावेश <net/route.h>
+#समावेश <net/ip.h>
 
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_core.h>
-#include <net/netfilter/nf_conntrack_helper.h>
-#include <net/netfilter/nf_conntrack_bridge.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_core.h>
+#समावेश <net/netfilter/nf_conntrack_helper.h>
+#समावेश <net/netfilter/nf_conntrack_bridge.h>
 
-#include <linux/netfilter/nf_tables.h>
-#include <net/netfilter/nf_tables.h>
+#समावेश <linux/netfilter/nf_tables.h>
+#समावेश <net/netfilter/nf_tables.h>
 
-#include "../br_private.h"
+#समावेश "../br_private.h"
 
-/* Best effort variant of ip_do_fragment which preserves geometry, unless skbuff
+/* Best efक्रमt variant of ip_करो_fragment which preserves geometry, unless skbuff
  * has been linearized or cloned.
  */
-static int nf_br_ip_fragment(struct net *net, struct sock *sk,
-			     struct sk_buff *skb,
-			     struct nf_bridge_frag_data *data,
-			     int (*output)(struct net *, struct sock *sk,
-					   const struct nf_bridge_frag_data *data,
-					   struct sk_buff *))
-{
-	int frag_max_size = BR_INPUT_SKB_CB(skb)->frag_max_size;
-	unsigned int hlen, ll_rs, mtu;
-	ktime_t tstamp = skb->tstamp;
-	struct ip_frag_state state;
-	struct iphdr *iph;
-	int err;
+अटल पूर्णांक nf_br_ip_fragment(काष्ठा net *net, काष्ठा sock *sk,
+			     काष्ठा sk_buff *skb,
+			     काष्ठा nf_bridge_frag_data *data,
+			     पूर्णांक (*output)(काष्ठा net *, काष्ठा sock *sk,
+					   स्थिर काष्ठा nf_bridge_frag_data *data,
+					   काष्ठा sk_buff *))
+अणु
+	पूर्णांक frag_max_size = BR_INPUT_SKB_CB(skb)->frag_max_size;
+	अचिन्हित पूर्णांक hlen, ll_rs, mtu;
+	kसमय_प्रकार tstamp = skb->tstamp;
+	काष्ठा ip_frag_state state;
+	काष्ठा iphdr *iph;
+	पूर्णांक err;
 
-	/* for offloaded checksums cleanup checksum before fragmentation */
-	if (skb->ip_summed == CHECKSUM_PARTIAL &&
+	/* क्रम offloaded checksums cleanup checksum beक्रमe fragmentation */
+	अगर (skb->ip_summed == CHECKSUM_PARTIAL &&
 	    (err = skb_checksum_help(skb)))
-		goto blackhole;
+		जाओ blackhole;
 
 	iph = ip_hdr(skb);
 
@@ -54,388 +55,388 @@ static int nf_br_ip_fragment(struct net *net, struct sock *sk,
 	ll_rs = LL_RESERVED_SPACE(skb->dev);
 	mtu = skb->dev->mtu;
 
-	if (skb_has_frag_list(skb)) {
-		unsigned int first_len = skb_pagelen(skb);
-		struct ip_fraglist_iter iter;
-		struct sk_buff *frag;
+	अगर (skb_has_frag_list(skb)) अणु
+		अचिन्हित पूर्णांक first_len = skb_pagelen(skb);
+		काष्ठा ip_fraglist_iter iter;
+		काष्ठा sk_buff *frag;
 
-		if (first_len - hlen > mtu ||
+		अगर (first_len - hlen > mtu ||
 		    skb_headroom(skb) < ll_rs)
-			goto blackhole;
+			जाओ blackhole;
 
-		if (skb_cloned(skb))
-			goto slow_path;
+		अगर (skb_cloned(skb))
+			जाओ slow_path;
 
-		skb_walk_frags(skb, frag) {
-			if (frag->len > mtu ||
+		skb_walk_frags(skb, frag) अणु
+			अगर (frag->len > mtu ||
 			    skb_headroom(frag) < hlen + ll_rs)
-				goto blackhole;
+				जाओ blackhole;
 
-			if (skb_shared(frag))
-				goto slow_path;
-		}
+			अगर (skb_shared(frag))
+				जाओ slow_path;
+		पूर्ण
 
 		ip_fraglist_init(skb, iph, hlen, &iter);
 
-		for (;;) {
-			if (iter.frag)
+		क्रम (;;) अणु
+			अगर (iter.frag)
 				ip_fraglist_prepare(skb, &iter);
 
 			skb->tstamp = tstamp;
 			err = output(net, sk, data, skb);
-			if (err || !iter.frag)
-				break;
+			अगर (err || !iter.frag)
+				अवरोध;
 
 			skb = ip_fraglist_next(&iter);
-		}
-		return err;
-	}
+		पूर्ण
+		वापस err;
+	पूर्ण
 slow_path:
-	/* This is a linearized skbuff, the original geometry is lost for us.
-	 * This may also be a clone skbuff, we could preserve the geometry for
-	 * the copies but probably not worth the effort.
+	/* This is a linearized skbuff, the original geometry is lost क्रम us.
+	 * This may also be a clone skbuff, we could preserve the geometry क्रम
+	 * the copies but probably not worth the efक्रमt.
 	 */
 	ip_frag_init(skb, hlen, ll_rs, frag_max_size, false, &state);
 
-	while (state.left > 0) {
-		struct sk_buff *skb2;
+	जबतक (state.left > 0) अणु
+		काष्ठा sk_buff *skb2;
 
 		skb2 = ip_frag_next(skb, &state);
-		if (IS_ERR(skb2)) {
+		अगर (IS_ERR(skb2)) अणु
 			err = PTR_ERR(skb2);
-			goto blackhole;
-		}
+			जाओ blackhole;
+		पूर्ण
 
 		skb2->tstamp = tstamp;
 		err = output(net, sk, data, skb2);
-		if (err)
-			goto blackhole;
-	}
+		अगर (err)
+			जाओ blackhole;
+	पूर्ण
 	consume_skb(skb);
-	return err;
+	वापस err;
 
 blackhole:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
 /* ip_defrag() expects IPCB() in place. */
-static void br_skb_cb_save(struct sk_buff *skb, struct br_input_skb_cb *cb,
-			   size_t inet_skb_parm_size)
-{
-	memcpy(cb, skb->cb, sizeof(*cb));
-	memset(skb->cb, 0, inet_skb_parm_size);
-}
+अटल व्योम br_skb_cb_save(काष्ठा sk_buff *skb, काष्ठा br_input_skb_cb *cb,
+			   माप_प्रकार inet_skb_parm_size)
+अणु
+	स_नकल(cb, skb->cb, माप(*cb));
+	स_रखो(skb->cb, 0, inet_skb_parm_size);
+पूर्ण
 
-static void br_skb_cb_restore(struct sk_buff *skb,
-			      const struct br_input_skb_cb *cb,
+अटल व्योम br_skb_cb_restore(काष्ठा sk_buff *skb,
+			      स्थिर काष्ठा br_input_skb_cb *cb,
 			      u16 fragsz)
-{
-	memcpy(skb->cb, cb, sizeof(*cb));
+अणु
+	स_नकल(skb->cb, cb, माप(*cb));
 	BR_INPUT_SKB_CB(skb)->frag_max_size = fragsz;
-}
+पूर्ण
 
-static unsigned int nf_ct_br_defrag4(struct sk_buff *skb,
-				     const struct nf_hook_state *state)
-{
+अटल अचिन्हित पूर्णांक nf_ct_br_defrag4(काष्ठा sk_buff *skb,
+				     स्थिर काष्ठा nf_hook_state *state)
+अणु
 	u16 zone_id = NF_CT_DEFAULT_ZONE_ID;
-	enum ip_conntrack_info ctinfo;
-	struct br_input_skb_cb cb;
-	const struct nf_conn *ct;
-	int err;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा br_input_skb_cb cb;
+	स्थिर काष्ठा nf_conn *ct;
+	पूर्णांक err;
 
-	if (!ip_is_fragment(ip_hdr(skb)))
-		return NF_ACCEPT;
+	अगर (!ip_is_fragment(ip_hdr(skb)))
+		वापस NF_ACCEPT;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (ct)
-		zone_id = nf_ct_zone_id(nf_ct_zone(ct), CTINFO2DIR(ctinfo));
+	अगर (ct)
+		zone_id = nf_ct_zone_id(nf_ct_zone(ct), CTINFO2सूची(ctinfo));
 
-	br_skb_cb_save(skb, &cb, sizeof(struct inet_skb_parm));
+	br_skb_cb_save(skb, &cb, माप(काष्ठा inet_skb_parm));
 	local_bh_disable();
 	err = ip_defrag(state->net, skb,
 			IP_DEFRAG_CONNTRACK_BRIDGE_IN + zone_id);
 	local_bh_enable();
-	if (!err) {
+	अगर (!err) अणु
 		br_skb_cb_restore(skb, &cb, IPCB(skb)->frag_max_size);
 		skb->ignore_df = 1;
-		return NF_ACCEPT;
-	}
+		वापस NF_ACCEPT;
+	पूर्ण
 
-	return NF_STOLEN;
-}
+	वापस NF_STOLEN;
+पूर्ण
 
-static unsigned int nf_ct_br_defrag6(struct sk_buff *skb,
-				     const struct nf_hook_state *state)
-{
-#if IS_ENABLED(CONFIG_NF_DEFRAG_IPV6)
+अटल अचिन्हित पूर्णांक nf_ct_br_defrag6(काष्ठा sk_buff *skb,
+				     स्थिर काष्ठा nf_hook_state *state)
+अणु
+#अगर IS_ENABLED(CONFIG_NF_DEFRAG_IPV6)
 	u16 zone_id = NF_CT_DEFAULT_ZONE_ID;
-	enum ip_conntrack_info ctinfo;
-	struct br_input_skb_cb cb;
-	const struct nf_conn *ct;
-	int err;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा br_input_skb_cb cb;
+	स्थिर काष्ठा nf_conn *ct;
+	पूर्णांक err;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (ct)
-		zone_id = nf_ct_zone_id(nf_ct_zone(ct), CTINFO2DIR(ctinfo));
+	अगर (ct)
+		zone_id = nf_ct_zone_id(nf_ct_zone(ct), CTINFO2सूची(ctinfo));
 
-	br_skb_cb_save(skb, &cb, sizeof(struct inet6_skb_parm));
+	br_skb_cb_save(skb, &cb, माप(काष्ठा inet6_skb_parm));
 
 	err = nf_ct_frag6_gather(state->net, skb,
 				 IP_DEFRAG_CONNTRACK_BRIDGE_IN + zone_id);
 	/* queued */
-	if (err == -EINPROGRESS)
-		return NF_STOLEN;
+	अगर (err == -EINPROGRESS)
+		वापस NF_STOLEN;
 
 	br_skb_cb_restore(skb, &cb, IP6CB(skb)->frag_max_size);
-	return err == 0 ? NF_ACCEPT : NF_DROP;
-#else
-	return NF_ACCEPT;
-#endif
-}
+	वापस err == 0 ? NF_ACCEPT : NF_DROP;
+#अन्यथा
+	वापस NF_ACCEPT;
+#पूर्ण_अगर
+पूर्ण
 
-static int nf_ct_br_ip_check(const struct sk_buff *skb)
-{
-	const struct iphdr *iph;
-	int nhoff, len;
+अटल पूर्णांक nf_ct_br_ip_check(स्थिर काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा iphdr *iph;
+	पूर्णांक nhoff, len;
 
 	nhoff = skb_network_offset(skb);
 	iph = ip_hdr(skb);
-	if (iph->ihl < 5 ||
+	अगर (iph->ihl < 5 ||
 	    iph->version != 4)
-		return -1;
+		वापस -1;
 
 	len = ntohs(iph->tot_len);
-	if (skb->len < nhoff + len ||
+	अगर (skb->len < nhoff + len ||
 	    len < (iph->ihl * 4))
-                return -1;
+                वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nf_ct_br_ipv6_check(const struct sk_buff *skb)
-{
-	const struct ipv6hdr *hdr;
-	int nhoff, len;
+अटल पूर्णांक nf_ct_br_ipv6_check(स्थिर काष्ठा sk_buff *skb)
+अणु
+	स्थिर काष्ठा ipv6hdr *hdr;
+	पूर्णांक nhoff, len;
 
 	nhoff = skb_network_offset(skb);
 	hdr = ipv6_hdr(skb);
-	if (hdr->version != 6)
-		return -1;
+	अगर (hdr->version != 6)
+		वापस -1;
 
-	len = ntohs(hdr->payload_len) + sizeof(struct ipv6hdr) + nhoff;
-	if (skb->len < len)
-		return -1;
+	len = ntohs(hdr->payload_len) + माप(काष्ठा ipv6hdr) + nhoff;
+	अगर (skb->len < len)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int nf_ct_bridge_pre(void *priv, struct sk_buff *skb,
-				     const struct nf_hook_state *state)
-{
-	struct nf_hook_state bridge_state = *state;
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
+अटल अचिन्हित पूर्णांक nf_ct_bridge_pre(व्योम *priv, काष्ठा sk_buff *skb,
+				     स्थिर काष्ठा nf_hook_state *state)
+अणु
+	काष्ठा nf_hook_state bridge_state = *state;
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
 	u32 len;
-	int ret;
+	पूर्णांक ret;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if ((ct && !nf_ct_is_template(ct)) ||
+	अगर ((ct && !nf_ct_is_ढाँचा(ct)) ||
 	    ctinfo == IP_CT_UNTRACKED)
-		return NF_ACCEPT;
+		वापस NF_ACCEPT;
 
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
-		if (!pskb_may_pull(skb, sizeof(struct iphdr)))
-			return NF_ACCEPT;
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
+		अगर (!pskb_may_pull(skb, माप(काष्ठा iphdr)))
+			वापस NF_ACCEPT;
 
 		len = ntohs(ip_hdr(skb)->tot_len);
-		if (pskb_trim_rcsum(skb, len))
-			return NF_ACCEPT;
+		अगर (pskb_trim_rcsum(skb, len))
+			वापस NF_ACCEPT;
 
-		if (nf_ct_br_ip_check(skb))
-			return NF_ACCEPT;
+		अगर (nf_ct_br_ip_check(skb))
+			वापस NF_ACCEPT;
 
 		bridge_state.pf = NFPROTO_IPV4;
 		ret = nf_ct_br_defrag4(skb, &bridge_state);
-		break;
-	case htons(ETH_P_IPV6):
-		if (!pskb_may_pull(skb, sizeof(struct ipv6hdr)))
-			return NF_ACCEPT;
+		अवरोध;
+	हाल htons(ETH_P_IPV6):
+		अगर (!pskb_may_pull(skb, माप(काष्ठा ipv6hdr)))
+			वापस NF_ACCEPT;
 
-		len = sizeof(struct ipv6hdr) + ntohs(ipv6_hdr(skb)->payload_len);
-		if (pskb_trim_rcsum(skb, len))
-			return NF_ACCEPT;
+		len = माप(काष्ठा ipv6hdr) + ntohs(ipv6_hdr(skb)->payload_len);
+		अगर (pskb_trim_rcsum(skb, len))
+			वापस NF_ACCEPT;
 
-		if (nf_ct_br_ipv6_check(skb))
-			return NF_ACCEPT;
+		अगर (nf_ct_br_ipv6_check(skb))
+			वापस NF_ACCEPT;
 
 		bridge_state.pf = NFPROTO_IPV6;
 		ret = nf_ct_br_defrag6(skb, &bridge_state);
-		break;
-	default:
-		nf_ct_set(skb, NULL, IP_CT_UNTRACKED);
-		return NF_ACCEPT;
-	}
+		अवरोध;
+	शेष:
+		nf_ct_set(skb, शून्य, IP_CT_UNTRACKED);
+		वापस NF_ACCEPT;
+	पूर्ण
 
-	if (ret != NF_ACCEPT)
-		return ret;
+	अगर (ret != NF_ACCEPT)
+		वापस ret;
 
-	return nf_conntrack_in(skb, &bridge_state);
-}
+	वापस nf_conntrack_in(skb, &bridge_state);
+पूर्ण
 
-static void nf_ct_bridge_frag_save(struct sk_buff *skb,
-				   struct nf_bridge_frag_data *data)
-{
-	if (skb_vlan_tag_present(skb)) {
+अटल व्योम nf_ct_bridge_frag_save(काष्ठा sk_buff *skb,
+				   काष्ठा nf_bridge_frag_data *data)
+अणु
+	अगर (skb_vlan_tag_present(skb)) अणु
 		data->vlan_present = true;
 		data->vlan_tci = skb->vlan_tci;
 		data->vlan_proto = skb->vlan_proto;
-	} else {
+	पूर्ण अन्यथा अणु
 		data->vlan_present = false;
-	}
+	पूर्ण
 	skb_copy_from_linear_data_offset(skb, -ETH_HLEN, data->mac, ETH_HLEN);
-}
+पूर्ण
 
-static unsigned int
-nf_ct_bridge_refrag(struct sk_buff *skb, const struct nf_hook_state *state,
-		    int (*output)(struct net *, struct sock *sk,
-				  const struct nf_bridge_frag_data *data,
-				  struct sk_buff *))
-{
-	struct nf_bridge_frag_data data;
+अटल अचिन्हित पूर्णांक
+nf_ct_bridge_refrag(काष्ठा sk_buff *skb, स्थिर काष्ठा nf_hook_state *state,
+		    पूर्णांक (*output)(काष्ठा net *, काष्ठा sock *sk,
+				  स्थिर काष्ठा nf_bridge_frag_data *data,
+				  काष्ठा sk_buff *))
+अणु
+	काष्ठा nf_bridge_frag_data data;
 
-	if (!BR_INPUT_SKB_CB(skb)->frag_max_size)
-		return NF_ACCEPT;
+	अगर (!BR_INPUT_SKB_CB(skb)->frag_max_size)
+		वापस NF_ACCEPT;
 
 	nf_ct_bridge_frag_save(skb, &data);
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
 		nf_br_ip_fragment(state->net, state->sk, skb, &data, output);
-		break;
-	case htons(ETH_P_IPV6):
+		अवरोध;
+	हाल htons(ETH_P_IPV6):
 		nf_br_ip6_fragment(state->net, state->sk, skb, &data, output);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON_ONCE(1);
-		return NF_DROP;
-	}
+		वापस NF_DROP;
+	पूर्ण
 
-	return NF_STOLEN;
-}
+	वापस NF_STOLEN;
+पूर्ण
 
 /* Actually only slow path refragmentation needs this. */
-static int nf_ct_bridge_frag_restore(struct sk_buff *skb,
-				     const struct nf_bridge_frag_data *data)
-{
-	int err;
+अटल पूर्णांक nf_ct_bridge_frag_restore(काष्ठा sk_buff *skb,
+				     स्थिर काष्ठा nf_bridge_frag_data *data)
+अणु
+	पूर्णांक err;
 
 	err = skb_cow_head(skb, ETH_HLEN);
-	if (err) {
-		kfree_skb(skb);
-		return -ENOMEM;
-	}
-	if (data->vlan_present)
+	अगर (err) अणु
+		kमुक्त_skb(skb);
+		वापस -ENOMEM;
+	पूर्ण
+	अगर (data->vlan_present)
 		__vlan_hwaccel_put_tag(skb, data->vlan_proto, data->vlan_tci);
-	else if (skb_vlan_tag_present(skb))
+	अन्यथा अगर (skb_vlan_tag_present(skb))
 		__vlan_hwaccel_clear_tag(skb);
 
 	skb_copy_to_linear_data_offset(skb, -ETH_HLEN, data->mac, ETH_HLEN);
 	skb_reset_mac_header(skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nf_ct_bridge_refrag_post(struct net *net, struct sock *sk,
-				    const struct nf_bridge_frag_data *data,
-				    struct sk_buff *skb)
-{
-	int err;
+अटल पूर्णांक nf_ct_bridge_refrag_post(काष्ठा net *net, काष्ठा sock *sk,
+				    स्थिर काष्ठा nf_bridge_frag_data *data,
+				    काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक err;
 
 	err = nf_ct_bridge_frag_restore(skb, data);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return br_dev_queue_push_xmit(net, sk, skb);
-}
+	वापस br_dev_queue_push_xmit(net, sk, skb);
+पूर्ण
 
-static unsigned int nf_ct_bridge_confirm(struct sk_buff *skb)
-{
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
-	int protoff;
+अटल अचिन्हित पूर्णांक nf_ct_bridge_confirm(काष्ठा sk_buff *skb)
+अणु
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
+	पूर्णांक protoff;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct || ctinfo == IP_CT_RELATED_REPLY)
-		return nf_conntrack_confirm(skb);
+	अगर (!ct || ctinfo == IP_CT_RELATED_REPLY)
+		वापस nf_conntrack_confirm(skb);
 
-	switch (skb->protocol) {
-	case htons(ETH_P_IP):
+	चयन (skb->protocol) अणु
+	हाल htons(ETH_P_IP):
 		protoff = skb_network_offset(skb) + ip_hdrlen(skb);
-		break;
-	case htons(ETH_P_IPV6): {
-		 unsigned char pnum = ipv6_hdr(skb)->nexthdr;
+		अवरोध;
+	हाल htons(ETH_P_IPV6): अणु
+		 अचिन्हित अक्षर pnum = ipv6_hdr(skb)->nexthdr;
 		__be16 frag_off;
 
-		protoff = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &pnum,
+		protoff = ipv6_skip_exthdr(skb, माप(काष्ठा ipv6hdr), &pnum,
 					   &frag_off);
-		if (protoff < 0 || (frag_off & htons(~0x7)) != 0)
-			return nf_conntrack_confirm(skb);
-		}
-		break;
-	default:
-		return NF_ACCEPT;
-	}
-	return nf_confirm(skb, protoff, ct, ctinfo);
-}
+		अगर (protoff < 0 || (frag_off & htons(~0x7)) != 0)
+			वापस nf_conntrack_confirm(skb);
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस NF_ACCEPT;
+	पूर्ण
+	वापस nf_confirm(skb, protoff, ct, ctinfo);
+पूर्ण
 
-static unsigned int nf_ct_bridge_post(void *priv, struct sk_buff *skb,
-				      const struct nf_hook_state *state)
-{
-	int ret;
+अटल अचिन्हित पूर्णांक nf_ct_bridge_post(व्योम *priv, काष्ठा sk_buff *skb,
+				      स्थिर काष्ठा nf_hook_state *state)
+अणु
+	पूर्णांक ret;
 
 	ret = nf_ct_bridge_confirm(skb);
-	if (ret != NF_ACCEPT)
-		return ret;
+	अगर (ret != NF_ACCEPT)
+		वापस ret;
 
-	return nf_ct_bridge_refrag(skb, state, nf_ct_bridge_refrag_post);
-}
+	वापस nf_ct_bridge_refrag(skb, state, nf_ct_bridge_refrag_post);
+पूर्ण
 
-static struct nf_hook_ops nf_ct_bridge_hook_ops[] __read_mostly = {
-	{
+अटल काष्ठा nf_hook_ops nf_ct_bridge_hook_ops[] __पढ़ो_mostly = अणु
+	अणु
 		.hook		= nf_ct_bridge_pre,
 		.pf		= NFPROTO_BRIDGE,
 		.hooknum	= NF_BR_PRE_ROUTING,
 		.priority	= NF_IP_PRI_CONNTRACK,
-	},
-	{
+	पूर्ण,
+	अणु
 		.hook		= nf_ct_bridge_post,
 		.pf		= NFPROTO_BRIDGE,
 		.hooknum	= NF_BR_POST_ROUTING,
 		.priority	= NF_IP_PRI_CONNTRACK_CONFIRM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct nf_ct_bridge_info bridge_info = {
+अटल काष्ठा nf_ct_bridge_info bridge_info = अणु
 	.ops		= nf_ct_bridge_hook_ops,
 	.ops_size	= ARRAY_SIZE(nf_ct_bridge_hook_ops),
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init nf_conntrack_l3proto_bridge_init(void)
-{
-	nf_ct_bridge_register(&bridge_info);
+अटल पूर्णांक __init nf_conntrack_l3proto_bridge_init(व्योम)
+अणु
+	nf_ct_bridge_रेजिस्टर(&bridge_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit nf_conntrack_l3proto_bridge_fini(void)
-{
-	nf_ct_bridge_unregister(&bridge_info);
-}
+अटल व्योम __निकास nf_conntrack_l3proto_bridge_fini(व्योम)
+अणु
+	nf_ct_bridge_unरेजिस्टर(&bridge_info);
+पूर्ण
 
 module_init(nf_conntrack_l3proto_bridge_init);
-module_exit(nf_conntrack_l3proto_bridge_fini);
+module_निकास(nf_conntrack_l3proto_bridge_fini);
 
-MODULE_ALIAS("nf_conntrack-" __stringify(AF_BRIDGE));
+MODULE_ALIAS("nf_conntrack-" __stringअगरy(AF_BRIDGE));
 MODULE_LICENSE("GPL");

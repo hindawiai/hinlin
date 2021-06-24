@@ -1,90 +1,91 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Jump label s390 support
  *
  * Copyright IBM Corp. 2011
  * Author(s): Jan Glauber <jang@linux.vnet.ibm.com>
  */
-#include <linux/uaccess.h>
-#include <linux/stop_machine.h>
-#include <linux/jump_label.h>
-#include <asm/ipl.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/stop_machine.h>
+#समावेश <linux/jump_label.h>
+#समावेश <यंत्र/ipl.h>
 
-struct insn {
+काष्ठा insn अणु
 	u16 opcode;
 	s32 offset;
-} __packed;
+पूर्ण __packed;
 
-static void jump_label_make_nop(struct jump_entry *entry, struct insn *insn)
-{
+अटल व्योम jump_label_make_nop(काष्ठा jump_entry *entry, काष्ठा insn *insn)
+अणु
 	/* brcl 0,offset */
 	insn->opcode = 0xc004;
 	insn->offset = (jump_entry_target(entry) - jump_entry_code(entry)) >> 1;
-}
+पूर्ण
 
-static void jump_label_make_branch(struct jump_entry *entry, struct insn *insn)
-{
+अटल व्योम jump_label_make_branch(काष्ठा jump_entry *entry, काष्ठा insn *insn)
+अणु
 	/* brcl 15,offset */
 	insn->opcode = 0xc0f4;
 	insn->offset = (jump_entry_target(entry) - jump_entry_code(entry)) >> 1;
-}
+पूर्ण
 
-static void jump_label_bug(struct jump_entry *entry, struct insn *expected,
-			   struct insn *new)
-{
-	unsigned char *ipc = (unsigned char *)jump_entry_code(entry);
-	unsigned char *ipe = (unsigned char *)expected;
-	unsigned char *ipn = (unsigned char *)new;
+अटल व्योम jump_label_bug(काष्ठा jump_entry *entry, काष्ठा insn *expected,
+			   काष्ठा insn *new)
+अणु
+	अचिन्हित अक्षर *ipc = (अचिन्हित अक्षर *)jump_entry_code(entry);
+	अचिन्हित अक्षर *ipe = (अचिन्हित अक्षर *)expected;
+	अचिन्हित अक्षर *ipn = (अचिन्हित अक्षर *)new;
 
 	pr_emerg("Jump label code mismatch at %pS [%p]\n", ipc, ipc);
 	pr_emerg("Found:    %6ph\n", ipc);
 	pr_emerg("Expected: %6ph\n", ipe);
 	pr_emerg("New:      %6ph\n", ipn);
 	panic("Corrupted kernel text");
-}
+पूर्ण
 
-static struct insn orignop = {
+अटल काष्ठा insn orignop = अणु
 	.opcode = 0xc004,
 	.offset = JUMP_LABEL_NOP_OFFSET >> 1,
-};
+पूर्ण;
 
-static void __jump_label_transform(struct jump_entry *entry,
-				   enum jump_label_type type,
-				   int init)
-{
-	void *code = (void *)jump_entry_code(entry);
-	struct insn old, new;
+अटल व्योम __jump_label_transक्रमm(काष्ठा jump_entry *entry,
+				   क्रमागत jump_label_type type,
+				   पूर्णांक init)
+अणु
+	व्योम *code = (व्योम *)jump_entry_code(entry);
+	काष्ठा insn old, new;
 
-	if (type == JUMP_LABEL_JMP) {
+	अगर (type == JUMP_LABEL_JMP) अणु
 		jump_label_make_nop(entry, &old);
 		jump_label_make_branch(entry, &new);
-	} else {
+	पूर्ण अन्यथा अणु
 		jump_label_make_branch(entry, &old);
 		jump_label_make_nop(entry, &new);
-	}
-	if (init) {
-		if (memcmp(code, &orignop, sizeof(orignop)))
+	पूर्ण
+	अगर (init) अणु
+		अगर (स_भेद(code, &orignop, माप(orignop)))
 			jump_label_bug(entry, &orignop, &new);
-	} else {
-		if (memcmp(code, &old, sizeof(old)))
+	पूर्ण अन्यथा अणु
+		अगर (स_भेद(code, &old, माप(old)))
 			jump_label_bug(entry, &old, &new);
-	}
-	s390_kernel_write(code, &new, sizeof(new));
-}
+	पूर्ण
+	s390_kernel_ग_लिखो(code, &new, माप(new));
+पूर्ण
 
-static void __jump_label_sync(void *dummy)
-{
-}
+अटल व्योम __jump_label_sync(व्योम *dummy)
+अणु
+पूर्ण
 
-void arch_jump_label_transform(struct jump_entry *entry,
-			       enum jump_label_type type)
-{
-	__jump_label_transform(entry, type, 0);
-	smp_call_function(__jump_label_sync, NULL, 1);
-}
+व्योम arch_jump_label_transक्रमm(काष्ठा jump_entry *entry,
+			       क्रमागत jump_label_type type)
+अणु
+	__jump_label_transक्रमm(entry, type, 0);
+	smp_call_function(__jump_label_sync, शून्य, 1);
+पूर्ण
 
-void arch_jump_label_transform_static(struct jump_entry *entry,
-				      enum jump_label_type type)
-{
-	__jump_label_transform(entry, type, 1);
-}
+व्योम arch_jump_label_transक्रमm_अटल(काष्ठा jump_entry *entry,
+				      क्रमागत jump_label_type type)
+अणु
+	__jump_label_transक्रमm(entry, type, 1);
+पूर्ण

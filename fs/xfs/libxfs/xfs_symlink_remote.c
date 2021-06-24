@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2006 Silicon Graphics, Inc.
  * Copyright (c) 2012-2013 Red Hat, Inc.
  * All rights reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_shared.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_error.h"
-#include "xfs_trans.h"
-#include "xfs_buf_item.h"
-#include "xfs_log.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_error.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_buf_item.h"
+#समावेश "xfs_log.h"
 
 
 /*
  * Each contiguous block has a header, so it is not just a simple pathlen
  * to FSB conversion.
  */
-int
+पूर्णांक
 xfs_symlink_blocks(
-	struct xfs_mount *mp,
-	int		pathlen)
-{
-	int buflen = XFS_SYMLINK_BUF_SPACE(mp, mp->m_sb.sb_blocksize);
+	काष्ठा xfs_mount *mp,
+	पूर्णांक		pathlen)
+अणु
+	पूर्णांक buflen = XFS_SYMLINK_BUF_SPACE(mp, mp->m_sb.sb_blocksize);
 
-	return (pathlen + buflen - 1) / buflen;
-}
+	वापस (pathlen + buflen - 1) / buflen;
+पूर्ण
 
-int
+पूर्णांक
 xfs_symlink_hdr_set(
-	struct xfs_mount	*mp,
+	काष्ठा xfs_mount	*mp,
 	xfs_ino_t		ino,
-	uint32_t		offset,
-	uint32_t		size,
-	struct xfs_buf		*bp)
-{
-	struct xfs_dsymlink_hdr	*dsl = bp->b_addr;
+	uपूर्णांक32_t		offset,
+	uपूर्णांक32_t		size,
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_dsymlink_hdr	*dsl = bp->b_addr;
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
-		return 0;
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+		वापस 0;
 
-	memset(dsl, 0, sizeof(struct xfs_dsymlink_hdr));
+	स_रखो(dsl, 0, माप(काष्ठा xfs_dsymlink_hdr));
 	dsl->sl_magic = cpu_to_be32(XFS_SYMLINK_MAGIC);
 	dsl->sl_offset = cpu_to_be32(offset);
 	dsl->sl_bytes = cpu_to_be32(size);
@@ -54,180 +55,180 @@ xfs_symlink_hdr_set(
 	dsl->sl_blkno = cpu_to_be64(bp->b_bn);
 	bp->b_ops = &xfs_symlink_buf_ops;
 
-	return sizeof(struct xfs_dsymlink_hdr);
-}
+	वापस माप(काष्ठा xfs_dsymlink_hdr);
+पूर्ण
 
 /*
- * Checking of the symlink header is split into two parts. the verifier does
+ * Checking of the symlink header is split पूर्णांकo two parts. the verअगरier करोes
  * CRC, location and bounds checking, the unpacking function checks the path
  * parameters and owner.
  */
 bool
 xfs_symlink_hdr_ok(
 	xfs_ino_t		ino,
-	uint32_t		offset,
-	uint32_t		size,
-	struct xfs_buf		*bp)
-{
-	struct xfs_dsymlink_hdr *dsl = bp->b_addr;
+	uपूर्णांक32_t		offset,
+	uपूर्णांक32_t		size,
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_dsymlink_hdr *dsl = bp->b_addr;
 
-	if (offset != be32_to_cpu(dsl->sl_offset))
-		return false;
-	if (size != be32_to_cpu(dsl->sl_bytes))
-		return false;
-	if (ino != be64_to_cpu(dsl->sl_owner))
-		return false;
+	अगर (offset != be32_to_cpu(dsl->sl_offset))
+		वापस false;
+	अगर (size != be32_to_cpu(dsl->sl_bytes))
+		वापस false;
+	अगर (ino != be64_to_cpu(dsl->sl_owner))
+		वापस false;
 
 	/* ok */
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static xfs_failaddr_t
-xfs_symlink_verify(
-	struct xfs_buf		*bp)
-{
-	struct xfs_mount	*mp = bp->b_mount;
-	struct xfs_dsymlink_hdr	*dsl = bp->b_addr;
+अटल xfs_failaddr_t
+xfs_symlink_verअगरy(
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_mount	*mp = bp->b_mount;
+	काष्ठा xfs_dsymlink_hdr	*dsl = bp->b_addr;
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
-		return __this_address;
-	if (!xfs_verify_magic(bp, dsl->sl_magic))
-		return __this_address;
-	if (!uuid_equal(&dsl->sl_uuid, &mp->m_sb.sb_meta_uuid))
-		return __this_address;
-	if (bp->b_bn != be64_to_cpu(dsl->sl_blkno))
-		return __this_address;
-	if (be32_to_cpu(dsl->sl_offset) +
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+		वापस __this_address;
+	अगर (!xfs_verअगरy_magic(bp, dsl->sl_magic))
+		वापस __this_address;
+	अगर (!uuid_equal(&dsl->sl_uuid, &mp->m_sb.sb_meta_uuid))
+		वापस __this_address;
+	अगर (bp->b_bn != be64_to_cpu(dsl->sl_blkno))
+		वापस __this_address;
+	अगर (be32_to_cpu(dsl->sl_offset) +
 				be32_to_cpu(dsl->sl_bytes) >= XFS_SYMLINK_MAXLEN)
-		return __this_address;
-	if (dsl->sl_owner == 0)
-		return __this_address;
-	if (!xfs_log_check_lsn(mp, be64_to_cpu(dsl->sl_lsn)))
-		return __this_address;
+		वापस __this_address;
+	अगर (dsl->sl_owner == 0)
+		वापस __this_address;
+	अगर (!xfs_log_check_lsn(mp, be64_to_cpu(dsl->sl_lsn)))
+		वापस __this_address;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void
-xfs_symlink_read_verify(
-	struct xfs_buf	*bp)
-{
-	struct xfs_mount *mp = bp->b_mount;
+अटल व्योम
+xfs_symlink_पढ़ो_verअगरy(
+	काष्ठा xfs_buf	*bp)
+अणु
+	काष्ठा xfs_mount *mp = bp->b_mount;
 	xfs_failaddr_t	fa;
 
-	/* no verification of non-crc buffers */
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
-		return;
+	/* no verअगरication of non-crc buffers */
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+		वापस;
 
-	if (!xfs_buf_verify_cksum(bp, XFS_SYMLINK_CRC_OFF))
-		xfs_verifier_error(bp, -EFSBADCRC, __this_address);
-	else {
-		fa = xfs_symlink_verify(bp);
-		if (fa)
-			xfs_verifier_error(bp, -EFSCORRUPTED, fa);
-	}
-}
+	अगर (!xfs_buf_verअगरy_cksum(bp, XFS_SYMLINK_CRC_OFF))
+		xfs_verअगरier_error(bp, -EFSBADCRC, __this_address);
+	अन्यथा अणु
+		fa = xfs_symlink_verअगरy(bp);
+		अगर (fa)
+			xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
+	पूर्ण
+पूर्ण
 
-static void
-xfs_symlink_write_verify(
-	struct xfs_buf	*bp)
-{
-	struct xfs_mount *mp = bp->b_mount;
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+अटल व्योम
+xfs_symlink_ग_लिखो_verअगरy(
+	काष्ठा xfs_buf	*bp)
+अणु
+	काष्ठा xfs_mount *mp = bp->b_mount;
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 	xfs_failaddr_t		fa;
 
-	/* no verification of non-crc buffers */
-	if (!xfs_sb_version_hascrc(&mp->m_sb))
-		return;
+	/* no verअगरication of non-crc buffers */
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb))
+		वापस;
 
-	fa = xfs_symlink_verify(bp);
-	if (fa) {
-		xfs_verifier_error(bp, -EFSCORRUPTED, fa);
-		return;
-	}
+	fa = xfs_symlink_verअगरy(bp);
+	अगर (fa) अणु
+		xfs_verअगरier_error(bp, -EFSCORRUPTED, fa);
+		वापस;
+	पूर्ण
 
-	if (bip) {
-		struct xfs_dsymlink_hdr *dsl = bp->b_addr;
+	अगर (bip) अणु
+		काष्ठा xfs_dsymlink_hdr *dsl = bp->b_addr;
 		dsl->sl_lsn = cpu_to_be64(bip->bli_item.li_lsn);
-	}
+	पूर्ण
 	xfs_buf_update_cksum(bp, XFS_SYMLINK_CRC_OFF);
-}
+पूर्ण
 
-const struct xfs_buf_ops xfs_symlink_buf_ops = {
+स्थिर काष्ठा xfs_buf_ops xfs_symlink_buf_ops = अणु
 	.name = "xfs_symlink",
-	.magic = { 0, cpu_to_be32(XFS_SYMLINK_MAGIC) },
-	.verify_read = xfs_symlink_read_verify,
-	.verify_write = xfs_symlink_write_verify,
-	.verify_struct = xfs_symlink_verify,
-};
+	.magic = अणु 0, cpu_to_be32(XFS_SYMLINK_MAGIC) पूर्ण,
+	.verअगरy_पढ़ो = xfs_symlink_पढ़ो_verअगरy,
+	.verअगरy_ग_लिखो = xfs_symlink_ग_लिखो_verअगरy,
+	.verअगरy_काष्ठा = xfs_symlink_verअगरy,
+पूर्ण;
 
-void
+व्योम
 xfs_symlink_local_to_remote(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*bp,
-	struct xfs_inode	*ip,
-	struct xfs_ifork	*ifp)
-{
-	struct xfs_mount	*mp = ip->i_mount;
-	char			*buf;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buf		*bp,
+	काष्ठा xfs_inode	*ip,
+	काष्ठा xfs_अगरork	*अगरp)
+अणु
+	काष्ठा xfs_mount	*mp = ip->i_mount;
+	अक्षर			*buf;
 
 	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_SYMLINK_BUF);
 
-	if (!xfs_sb_version_hascrc(&mp->m_sb)) {
-		bp->b_ops = NULL;
-		memcpy(bp->b_addr, ifp->if_u1.if_data, ifp->if_bytes);
-		xfs_trans_log_buf(tp, bp, 0, ifp->if_bytes - 1);
-		return;
-	}
+	अगर (!xfs_sb_version_hascrc(&mp->m_sb)) अणु
+		bp->b_ops = शून्य;
+		स_नकल(bp->b_addr, अगरp->अगर_u1.अगर_data, अगरp->अगर_bytes);
+		xfs_trans_log_buf(tp, bp, 0, अगरp->अगर_bytes - 1);
+		वापस;
+	पूर्ण
 
 	/*
 	 * As this symlink fits in an inode literal area, it must also fit in
-	 * the smallest buffer the filesystem supports.
+	 * the smallest buffer the fileप्रणाली supports.
 	 */
 	ASSERT(BBTOB(bp->b_length) >=
-			ifp->if_bytes + sizeof(struct xfs_dsymlink_hdr));
+			अगरp->अगर_bytes + माप(काष्ठा xfs_dsymlink_hdr));
 
 	bp->b_ops = &xfs_symlink_buf_ops;
 
 	buf = bp->b_addr;
-	buf += xfs_symlink_hdr_set(mp, ip->i_ino, 0, ifp->if_bytes, bp);
-	memcpy(buf, ifp->if_u1.if_data, ifp->if_bytes);
-	xfs_trans_log_buf(tp, bp, 0, sizeof(struct xfs_dsymlink_hdr) +
-					ifp->if_bytes - 1);
-}
+	buf += xfs_symlink_hdr_set(mp, ip->i_ino, 0, अगरp->अगर_bytes, bp);
+	स_नकल(buf, अगरp->अगर_u1.अगर_data, अगरp->अगर_bytes);
+	xfs_trans_log_buf(tp, bp, 0, माप(काष्ठा xfs_dsymlink_hdr) +
+					अगरp->अगर_bytes - 1);
+पूर्ण
 
 /*
- * Verify the in-memory consistency of an inline symlink data fork. This
- * does not do on-disk format checks.
+ * Verअगरy the in-memory consistency of an अंतरभूत symlink data विभाजन. This
+ * करोes not करो on-disk क्रमmat checks.
  */
 xfs_failaddr_t
-xfs_symlink_shortform_verify(
-	struct xfs_inode	*ip)
-{
-	struct xfs_ifork	*ifp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
-	char			*sfp = (char *)ifp->if_u1.if_data;
-	int			size = ifp->if_bytes;
-	char			*endp = sfp + size;
+xfs_symlink_लघुक्रमm_verअगरy(
+	काष्ठा xfs_inode	*ip)
+अणु
+	काष्ठा xfs_अगरork	*अगरp = XFS_IFORK_PTR(ip, XFS_DATA_FORK);
+	अक्षर			*sfp = (अक्षर *)अगरp->अगर_u1.अगर_data;
+	पूर्णांक			size = अगरp->अगर_bytes;
+	अक्षर			*endp = sfp + size;
 
-	ASSERT(ifp->if_format == XFS_DINODE_FMT_LOCAL);
+	ASSERT(अगरp->अगर_क्रमmat == XFS_DINODE_FMT_LOCAL);
 
 	/*
 	 * Zero length symlinks should never occur in memory as they are
 	 * never alllowed to exist on disk.
 	 */
-	if (!size)
-		return __this_address;
+	अगर (!size)
+		वापस __this_address;
 
-	/* No negative sizes or overly long symlink targets. */
-	if (size < 0 || size > XFS_SYMLINK_MAXLEN)
-		return __this_address;
+	/* No negative sizes or overly दीर्घ symlink tarमाला_लो. */
+	अगर (size < 0 || size > XFS_SYMLINK_MAXLEN)
+		वापस __this_address;
 
-	/* No NULLs in the target either. */
-	if (memchr(sfp, 0, size - 1))
-		return __this_address;
+	/* No शून्यs in the target either. */
+	अगर (स_प्रथम(sfp, 0, size - 1))
+		वापस __this_address;
 
 	/* We /did/ null-terminate the buffer, right? */
-	if (*endp != 0)
-		return __this_address;
-	return NULL;
-}
+	अगर (*endp != 0)
+		वापस __this_address;
+	वापस शून्य;
+पूर्ण

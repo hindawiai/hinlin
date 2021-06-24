@@ -1,352 +1,353 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *
- * v4l2 device driver for philips saa7134 based TV cards
+ * v4l2 device driver क्रम philips saa7134 based TV cards
  *
  * (c) 2001,02 Gerd Knorr <kraxel@bytesex.org>
  */
 
-#define SAA7134_VERSION "0, 2, 17"
+#घोषणा SAA7134_VERSION "0, 2, 17"
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/pci.h>
-#include <linux/i2c.h>
-#include <linux/videodev2.h>
-#include <linux/kdev_t.h>
-#include <linux/input.h>
-#include <linux/notifier.h>
-#include <linux/delay.h>
-#include <linux/mutex.h>
-#include <linux/pm_qos.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/input.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pm_qos.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#include <media/v4l2-common.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-fh.h>
-#include <media/v4l2-ctrls.h>
-#include <media/tuner.h>
-#include <media/rc-core.h>
-#include <media/i2c/ir-kbd-i2c.h>
-#include <media/videobuf2-dma-sg.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#if IS_ENABLED(CONFIG_VIDEO_SAA7134_DVB)
-#include <media/videobuf2-dvb.h>
-#endif
-#include "tda8290.h"
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-fh.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/tuner.h>
+#समावेश <media/rc-core.h>
+#समावेश <media/i2c/ir-kbd-i2c.h>
+#समावेश <media/videobuf2-dma-sg.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#अगर IS_ENABLED(CONFIG_VIDEO_SAA7134_DVB)
+#समावेश <media/videobuf2-dvb.h>
+#पूर्ण_अगर
+#समावेश "tda8290.h"
 
-#define UNSET (-1U)
+#घोषणा UNSET (-1U)
 
 /* ----------------------------------------------------------- */
-/* enums                                                       */
+/* क्रमागतs                                                       */
 
-enum saa7134_tvaudio_mode {
+क्रमागत saa7134_tvaudio_mode अणु
 	TVAUDIO_FM_MONO       = 1,
 	TVAUDIO_FM_BG_STEREO  = 2,
 	TVAUDIO_FM_SAT_STEREO = 3,
 	TVAUDIO_FM_K_STEREO   = 4,
 	TVAUDIO_NICAM_AM      = 5,
 	TVAUDIO_NICAM_FM      = 6,
-};
+पूर्ण;
 
-enum saa7134_audio_in {
+क्रमागत saa7134_audio_in अणु
 	TV    = 1,
 	LINE1 = 2,
 	LINE2 = 3,
 	LINE2_LEFT,
-};
+पूर्ण;
 
-enum saa7134_video_out {
+क्रमागत saa7134_video_out अणु
 	CCIR656 = 1,
-};
+पूर्ण;
 
 /* ----------------------------------------------------------- */
-/* static data                                                 */
+/* अटल data                                                 */
 
-struct saa7134_tvnorm {
-	char          *name;
+काष्ठा saa7134_tvnorm अणु
+	अक्षर          *name;
 	v4l2_std_id   id;
 
 	/* video decoder */
-	unsigned int  sync_control;
-	unsigned int  luma_control;
-	unsigned int  chroma_ctrl1;
-	unsigned int  chroma_gain;
-	unsigned int  chroma_ctrl2;
-	unsigned int  vgate_misc;
+	अचिन्हित पूर्णांक  sync_control;
+	अचिन्हित पूर्णांक  luma_control;
+	अचिन्हित पूर्णांक  chroma_ctrl1;
+	अचिन्हित पूर्णांक  chroma_gain;
+	अचिन्हित पूर्णांक  chroma_ctrl2;
+	अचिन्हित पूर्णांक  vgate_misc;
 
 	/* video scaler */
-	unsigned int  h_start;
-	unsigned int  h_stop;
-	unsigned int  video_v_start;
-	unsigned int  video_v_stop;
-	unsigned int  vbi_v_start_0;
-	unsigned int  vbi_v_stop_0;
-	unsigned int  src_timing;
-	unsigned int  vbi_v_start_1;
-};
+	अचिन्हित पूर्णांक  h_start;
+	अचिन्हित पूर्णांक  h_stop;
+	अचिन्हित पूर्णांक  video_v_start;
+	अचिन्हित पूर्णांक  video_v_stop;
+	अचिन्हित पूर्णांक  vbi_v_start_0;
+	अचिन्हित पूर्णांक  vbi_v_stop_0;
+	अचिन्हित पूर्णांक  src_timing;
+	अचिन्हित पूर्णांक  vbi_v_start_1;
+पूर्ण;
 
-struct saa7134_tvaudio {
-	char         *name;
+काष्ठा saa7134_tvaudio अणु
+	अक्षर         *name;
 	v4l2_std_id  std;
-	enum         saa7134_tvaudio_mode mode;
-	int          carr1;
-	int          carr2;
-};
+	क्रमागत         saa7134_tvaudio_mode mode;
+	पूर्णांक          carr1;
+	पूर्णांक          carr2;
+पूर्ण;
 
-struct saa7134_format {
-	unsigned int   fourcc;
-	unsigned int   depth;
-	unsigned int   pm;
-	unsigned int   vshift;   /* vertical downsampling (for planar yuv) */
-	unsigned int   hshift;   /* horizontal downsampling (for planar yuv) */
-	unsigned int   bswap:1;
-	unsigned int   wswap:1;
-	unsigned int   yuv:1;
-	unsigned int   planar:1;
-	unsigned int   uvswap:1;
-};
+काष्ठा saa7134_क्रमmat अणु
+	अचिन्हित पूर्णांक   fourcc;
+	अचिन्हित पूर्णांक   depth;
+	अचिन्हित पूर्णांक   pm;
+	अचिन्हित पूर्णांक   vshअगरt;   /* vertical करोwnsampling (क्रम planar yuv) */
+	अचिन्हित पूर्णांक   hshअगरt;   /* horizontal करोwnsampling (क्रम planar yuv) */
+	अचिन्हित पूर्णांक   bswap:1;
+	अचिन्हित पूर्णांक   wswap:1;
+	अचिन्हित पूर्णांक   yuv:1;
+	अचिन्हित पूर्णांक   planar:1;
+	अचिन्हित पूर्णांक   uvswap:1;
+पूर्ण;
 
-struct saa7134_card_ir {
-	struct rc_dev		*dev;
+काष्ठा saa7134_card_ir अणु
+	काष्ठा rc_dev		*dev;
 
-	char                    phys[32];
+	अक्षर                    phys[32];
 
 	u32			polling;
 	u32			last_gpio;
-	u32			mask_keycode, mask_keydown, mask_keyup;
+	u32			mask_keycode, mask_keyकरोwn, mask_keyup;
 
 	bool                    running;
 
-	struct timer_list       timer;
+	काष्ठा समयr_list       समयr;
 
 	/* IR core raw decoding */
 	u32                     raw_decode;
-};
+पूर्ण;
 
 /* ----------------------------------------------------------- */
 /* card configuration                                          */
 
-#define SAA7134_BOARD_NOAUTO        UNSET
-#define SAA7134_BOARD_UNKNOWN           0
-#define SAA7134_BOARD_PROTEUS_PRO       1
-#define SAA7134_BOARD_FLYVIDEO3000      2
-#define SAA7134_BOARD_FLYVIDEO2000      3
-#define SAA7134_BOARD_EMPRESS           4
-#define SAA7134_BOARD_MONSTERTV         5
-#define SAA7134_BOARD_MD9717            6
-#define SAA7134_BOARD_TVSTATION_RDS     7
-#define SAA7134_BOARD_CINERGY400	8
-#define SAA7134_BOARD_MD5044		9
-#define SAA7134_BOARD_KWORLD           10
-#define SAA7134_BOARD_CINERGY600       11
-#define SAA7134_BOARD_MD7134           12
-#define SAA7134_BOARD_TYPHOON_90031    13
-#define SAA7134_BOARD_ELSA             14
-#define SAA7134_BOARD_ELSA_500TV       15
-#define SAA7134_BOARD_ASUSTeK_TVFM7134 16
-#define SAA7134_BOARD_VA1000POWER      17
-#define SAA7134_BOARD_BMK_MPEX_NOTUNER 18
-#define SAA7134_BOARD_VIDEOMATE_TV     19
-#define SAA7134_BOARD_CRONOS_PLUS      20
-#define SAA7134_BOARD_10MOONSTVMASTER  21
-#define SAA7134_BOARD_MD2819           22
-#define SAA7134_BOARD_BMK_MPEX_TUNER   23
-#define SAA7134_BOARD_TVSTATION_DVR    24
-#define SAA7134_BOARD_ASUSTEK_TVFM7133	25
-#define SAA7134_BOARD_PINNACLE_PCTV_STEREO 26
-#define SAA7134_BOARD_MANLI_MTV002     27
-#define SAA7134_BOARD_MANLI_MTV001     28
-#define SAA7134_BOARD_TG3000TV         29
-#define SAA7134_BOARD_ECS_TVP3XP       30
-#define SAA7134_BOARD_ECS_TVP3XP_4CB5  31
-#define SAA7134_BOARD_AVACSSMARTTV     32
-#define SAA7134_BOARD_AVERMEDIA_DVD_EZMAKER 33
-#define SAA7134_BOARD_NOVAC_PRIMETV7133 34
-#define SAA7134_BOARD_AVERMEDIA_STUDIO_305 35
-#define SAA7134_BOARD_UPMOST_PURPLE_TV 36
-#define SAA7134_BOARD_ITEMS_MTV005     37
-#define SAA7134_BOARD_CINERGY200       38
-#define SAA7134_BOARD_FLYTVPLATINUM_MINI 39
-#define SAA7134_BOARD_VIDEOMATE_TV_PVR 40
-#define SAA7134_BOARD_VIDEOMATE_TV_GOLD_PLUS 41
-#define SAA7134_BOARD_SABRENT_SBTTVFM  42
-#define SAA7134_BOARD_ZOLID_XPERT_TV7134 43
-#define SAA7134_BOARD_EMPIRE_PCI_TV_RADIO_LE 44
-#define SAA7134_BOARD_AVERMEDIA_STUDIO_307    45
-#define SAA7134_BOARD_AVERMEDIA_CARDBUS 46
-#define SAA7134_BOARD_CINERGY400_CARDBUS 47
-#define SAA7134_BOARD_CINERGY600_MK3   48
-#define SAA7134_BOARD_VIDEOMATE_GOLD_PLUS 49
-#define SAA7134_BOARD_PINNACLE_300I_DVBT_PAL 50
-#define SAA7134_BOARD_PROVIDEO_PV952   51
-#define SAA7134_BOARD_AVERMEDIA_305    52
-#define SAA7134_BOARD_ASUSTeK_TVFM7135 53
-#define SAA7134_BOARD_FLYTVPLATINUM_FM 54
-#define SAA7134_BOARD_FLYDVBTDUO 55
-#define SAA7134_BOARD_AVERMEDIA_307    56
-#define SAA7134_BOARD_AVERMEDIA_GO_007_FM 57
-#define SAA7134_BOARD_ADS_INSTANT_TV 58
-#define SAA7134_BOARD_KWORLD_VSTREAM_XPERT 59
-#define SAA7134_BOARD_FLYDVBT_DUO_CARDBUS 60
-#define SAA7134_BOARD_PHILIPS_TOUGH 61
-#define SAA7134_BOARD_VIDEOMATE_TV_GOLD_PLUSII 62
-#define SAA7134_BOARD_KWORLD_XPERT 63
-#define SAA7134_BOARD_FLYTV_DIGIMATRIX 64
-#define SAA7134_BOARD_KWORLD_TERMINATOR 65
-#define SAA7134_BOARD_YUAN_TUN900 66
-#define SAA7134_BOARD_BEHOLD_409FM 67
-#define SAA7134_BOARD_GOTVIEW_7135 68
-#define SAA7134_BOARD_PHILIPS_EUROPA  69
-#define SAA7134_BOARD_VIDEOMATE_DVBT_300 70
-#define SAA7134_BOARD_VIDEOMATE_DVBT_200 71
-#define SAA7134_BOARD_RTD_VFG7350 72
-#define SAA7134_BOARD_RTD_VFG7330 73
-#define SAA7134_BOARD_FLYTVPLATINUM_MINI2 74
-#define SAA7134_BOARD_AVERMEDIA_AVERTVHD_A180 75
-#define SAA7134_BOARD_MONSTERTV_MOBILE 76
-#define SAA7134_BOARD_PINNACLE_PCTV_110i 77
-#define SAA7134_BOARD_ASUSTeK_P7131_DUAL 78
-#define SAA7134_BOARD_SEDNA_PC_TV_CARDBUS     79
-#define SAA7134_BOARD_ASUSTEK_DIGIMATRIX_TV 80
-#define SAA7134_BOARD_PHILIPS_TIGER  81
-#define SAA7134_BOARD_MSI_TVATANYWHERE_PLUS  82
-#define SAA7134_BOARD_CINERGY250PCI 83
-#define SAA7134_BOARD_FLYDVB_TRIO 84
-#define SAA7134_BOARD_AVERMEDIA_777 85
-#define SAA7134_BOARD_FLYDVBT_LR301 86
-#define SAA7134_BOARD_ADS_DUO_CARDBUS_PTV331 87
-#define SAA7134_BOARD_TEVION_DVBT_220RF 88
-#define SAA7134_BOARD_ELSA_700TV       89
-#define SAA7134_BOARD_KWORLD_ATSC110   90
-#define SAA7134_BOARD_AVERMEDIA_A169_B 91
-#define SAA7134_BOARD_AVERMEDIA_A169_B1 92
-#define SAA7134_BOARD_MD7134_BRIDGE_2     93
-#define SAA7134_BOARD_FLYDVBT_HYBRID_CARDBUS 94
-#define SAA7134_BOARD_FLYVIDEO3000_NTSC 95
-#define SAA7134_BOARD_MEDION_MD8800_QUADRO 96
-#define SAA7134_BOARD_FLYDVBS_LR300 97
-#define SAA7134_BOARD_PROTEUS_2309 98
-#define SAA7134_BOARD_AVERMEDIA_A16AR   99
-#define SAA7134_BOARD_ASUS_EUROPA2_HYBRID 100
-#define SAA7134_BOARD_PINNACLE_PCTV_310i  101
-#define SAA7134_BOARD_AVERMEDIA_STUDIO_507 102
-#define SAA7134_BOARD_VIDEOMATE_DVBT_200A  103
-#define SAA7134_BOARD_HAUPPAUGE_HVR1110    104
-#define SAA7134_BOARD_CINERGY_HT_PCMCIA    105
-#define SAA7134_BOARD_ENCORE_ENLTV         106
-#define SAA7134_BOARD_ENCORE_ENLTV_FM      107
-#define SAA7134_BOARD_CINERGY_HT_PCI       108
-#define SAA7134_BOARD_PHILIPS_TIGER_S      109
-#define SAA7134_BOARD_AVERMEDIA_M102	   110
-#define SAA7134_BOARD_ASUS_P7131_4871	   111
-#define SAA7134_BOARD_ASUSTeK_P7131_HYBRID_LNA 112
-#define SAA7134_BOARD_ECS_TVP3XP_4CB6  113
-#define SAA7134_BOARD_KWORLD_DVBT_210 114
-#define SAA7134_BOARD_SABRENT_TV_PCB05     115
-#define SAA7134_BOARD_10MOONSTVMASTER3     116
-#define SAA7134_BOARD_AVERMEDIA_SUPER_007  117
-#define SAA7134_BOARD_BEHOLD_401	118
-#define SAA7134_BOARD_BEHOLD_403	119
-#define SAA7134_BOARD_BEHOLD_403FM	120
-#define SAA7134_BOARD_BEHOLD_405	121
-#define SAA7134_BOARD_BEHOLD_405FM	122
-#define SAA7134_BOARD_BEHOLD_407	123
-#define SAA7134_BOARD_BEHOLD_407FM	124
-#define SAA7134_BOARD_BEHOLD_409	125
-#define SAA7134_BOARD_BEHOLD_505FM	126
-#define SAA7134_BOARD_BEHOLD_507_9FM	127
-#define SAA7134_BOARD_BEHOLD_COLUMBUS_TVFM 128
-#define SAA7134_BOARD_BEHOLD_607FM_MK3	129
-#define SAA7134_BOARD_BEHOLD_M6		130
-#define SAA7134_BOARD_TWINHAN_DTV_DVB_3056 131
-#define SAA7134_BOARD_GENIUS_TVGO_A11MCE   132
-#define SAA7134_BOARD_PHILIPS_SNAKE        133
-#define SAA7134_BOARD_CREATIX_CTX953       134
-#define SAA7134_BOARD_MSI_TVANYWHERE_AD11  135
-#define SAA7134_BOARD_AVERMEDIA_CARDBUS_506 136
-#define SAA7134_BOARD_AVERMEDIA_A16D       137
-#define SAA7134_BOARD_AVERMEDIA_M115       138
-#define SAA7134_BOARD_VIDEOMATE_T750       139
-#define SAA7134_BOARD_AVERMEDIA_A700_PRO    140
-#define SAA7134_BOARD_AVERMEDIA_A700_HYBRID 141
-#define SAA7134_BOARD_BEHOLD_H6      142
-#define SAA7134_BOARD_BEHOLD_M63      143
-#define SAA7134_BOARD_BEHOLD_M6_EXTRA    144
-#define SAA7134_BOARD_AVERMEDIA_M103    145
-#define SAA7134_BOARD_ASUSTeK_P7131_ANALOG 146
-#define SAA7134_BOARD_ASUSTeK_TIGER_3IN1   147
-#define SAA7134_BOARD_ENCORE_ENLTV_FM53 148
-#define SAA7134_BOARD_AVERMEDIA_M135A    149
-#define SAA7134_BOARD_REAL_ANGEL_220     150
-#define SAA7134_BOARD_ADS_INSTANT_HDTV_PCI  151
-#define SAA7134_BOARD_ASUSTeK_TIGER         152
-#define SAA7134_BOARD_KWORLD_PLUS_TV_ANALOG 153
-#define SAA7134_BOARD_AVERMEDIA_GO_007_FM_PLUS 154
-#define SAA7134_BOARD_HAUPPAUGE_HVR1150     155
-#define SAA7134_BOARD_HAUPPAUGE_HVR1120   156
-#define SAA7134_BOARD_AVERMEDIA_STUDIO_507UA 157
-#define SAA7134_BOARD_AVERMEDIA_CARDBUS_501 158
-#define SAA7134_BOARD_BEHOLD_505RDS_MK5     159
-#define SAA7134_BOARD_BEHOLD_507RDS_MK3     160
-#define SAA7134_BOARD_BEHOLD_507RDS_MK5     161
-#define SAA7134_BOARD_BEHOLD_607FM_MK5      162
-#define SAA7134_BOARD_BEHOLD_609FM_MK3      163
-#define SAA7134_BOARD_BEHOLD_609FM_MK5      164
-#define SAA7134_BOARD_BEHOLD_607RDS_MK3     165
-#define SAA7134_BOARD_BEHOLD_607RDS_MK5     166
-#define SAA7134_BOARD_BEHOLD_609RDS_MK3     167
-#define SAA7134_BOARD_BEHOLD_609RDS_MK5     168
-#define SAA7134_BOARD_VIDEOMATE_S350        169
-#define SAA7134_BOARD_AVERMEDIA_STUDIO_505  170
-#define SAA7134_BOARD_BEHOLD_X7             171
-#define SAA7134_BOARD_ROVERMEDIA_LINK_PRO_FM 172
-#define SAA7134_BOARD_ZOLID_HYBRID_PCI		173
-#define SAA7134_BOARD_ASUS_EUROPA_HYBRID	174
-#define SAA7134_BOARD_LEADTEK_WINFAST_DTV1000S 175
-#define SAA7134_BOARD_BEHOLD_505RDS_MK3     176
-#define SAA7134_BOARD_HAWELL_HW_404M7		177
-#define SAA7134_BOARD_BEHOLD_H7             178
-#define SAA7134_BOARD_BEHOLD_A7             179
-#define SAA7134_BOARD_AVERMEDIA_M733A       180
-#define SAA7134_BOARD_TECHNOTREND_BUDGET_T3000 181
-#define SAA7134_BOARD_KWORLD_PCI_SBTVD_FULLSEG 182
-#define SAA7134_BOARD_VIDEOMATE_M1F         183
-#define SAA7134_BOARD_ENCORE_ENLTV_FM3      184
-#define SAA7134_BOARD_MAGICPRO_PROHDTV_PRO2 185
-#define SAA7134_BOARD_BEHOLD_501            186
-#define SAA7134_BOARD_BEHOLD_503FM          187
-#define SAA7134_BOARD_SENSORAY811_911       188
-#define SAA7134_BOARD_KWORLD_PC150U         189
-#define SAA7134_BOARD_ASUSTeK_PS3_100      190
-#define SAA7134_BOARD_HAWELL_HW_9004V1      191
-#define SAA7134_BOARD_AVERMEDIA_A706		192
-#define SAA7134_BOARD_WIS_VOYAGER           193
-#define SAA7134_BOARD_AVERMEDIA_505         194
-#define SAA7134_BOARD_LEADTEK_WINFAST_TV2100_FM 195
-#define SAA7134_BOARD_SNAZIO_TVPVR_PRO      196
+#घोषणा SAA7134_BOARD_NOAUTO        UNSET
+#घोषणा SAA7134_BOARD_UNKNOWN           0
+#घोषणा SAA7134_BOARD_PROTEUS_PRO       1
+#घोषणा SAA7134_BOARD_FLYVIDEO3000      2
+#घोषणा SAA7134_BOARD_FLYVIDEO2000      3
+#घोषणा SAA7134_BOARD_EMPRESS           4
+#घोषणा SAA7134_BOARD_MONSTERTV         5
+#घोषणा SAA7134_BOARD_MD9717            6
+#घोषणा SAA7134_BOARD_TVSTATION_RDS     7
+#घोषणा SAA7134_BOARD_CINERGY400	8
+#घोषणा SAA7134_BOARD_MD5044		9
+#घोषणा SAA7134_BOARD_KWORLD           10
+#घोषणा SAA7134_BOARD_CINERGY600       11
+#घोषणा SAA7134_BOARD_MD7134           12
+#घोषणा SAA7134_BOARD_TYPHOON_90031    13
+#घोषणा SAA7134_BOARD_ELSA             14
+#घोषणा SAA7134_BOARD_ELSA_500TV       15
+#घोषणा SAA7134_BOARD_ASUSTeK_TVFM7134 16
+#घोषणा SAA7134_BOARD_VA1000POWER      17
+#घोषणा SAA7134_BOARD_BMK_MPEX_NOTUNER 18
+#घोषणा SAA7134_BOARD_VIDEOMATE_TV     19
+#घोषणा SAA7134_BOARD_CRONOS_PLUS      20
+#घोषणा SAA7134_BOARD_10MOONSTVMASTER  21
+#घोषणा SAA7134_BOARD_MD2819           22
+#घोषणा SAA7134_BOARD_BMK_MPEX_TUNER   23
+#घोषणा SAA7134_BOARD_TVSTATION_DVR    24
+#घोषणा SAA7134_BOARD_ASUSTEK_TVFM7133	25
+#घोषणा SAA7134_BOARD_PINNACLE_PCTV_STEREO 26
+#घोषणा SAA7134_BOARD_MANLI_MTV002     27
+#घोषणा SAA7134_BOARD_MANLI_MTV001     28
+#घोषणा SAA7134_BOARD_TG3000TV         29
+#घोषणा SAA7134_BOARD_ECS_TVP3XP       30
+#घोषणा SAA7134_BOARD_ECS_TVP3XP_4CB5  31
+#घोषणा SAA7134_BOARD_AVACSSMARTTV     32
+#घोषणा SAA7134_BOARD_AVERMEDIA_DVD_EZMAKER 33
+#घोषणा SAA7134_BOARD_NOVAC_PRIMETV7133 34
+#घोषणा SAA7134_BOARD_AVERMEDIA_STUDIO_305 35
+#घोषणा SAA7134_BOARD_UPMOST_PURPLE_TV 36
+#घोषणा SAA7134_BOARD_ITEMS_MTV005     37
+#घोषणा SAA7134_BOARD_CINERGY200       38
+#घोषणा SAA7134_BOARD_FLYTVPLATINUM_MINI 39
+#घोषणा SAA7134_BOARD_VIDEOMATE_TV_PVR 40
+#घोषणा SAA7134_BOARD_VIDEOMATE_TV_GOLD_PLUS 41
+#घोषणा SAA7134_BOARD_SABRENT_SBTTVFM  42
+#घोषणा SAA7134_BOARD_ZOLID_XPERT_TV7134 43
+#घोषणा SAA7134_BOARD_EMPIRE_PCI_TV_RADIO_LE 44
+#घोषणा SAA7134_BOARD_AVERMEDIA_STUDIO_307    45
+#घोषणा SAA7134_BOARD_AVERMEDIA_CARDBUS 46
+#घोषणा SAA7134_BOARD_CINERGY400_CARDBUS 47
+#घोषणा SAA7134_BOARD_CINERGY600_MK3   48
+#घोषणा SAA7134_BOARD_VIDEOMATE_GOLD_PLUS 49
+#घोषणा SAA7134_BOARD_PINNACLE_300I_DVBT_PAL 50
+#घोषणा SAA7134_BOARD_PROVIDEO_PV952   51
+#घोषणा SAA7134_BOARD_AVERMEDIA_305    52
+#घोषणा SAA7134_BOARD_ASUSTeK_TVFM7135 53
+#घोषणा SAA7134_BOARD_FLYTVPLATINUM_FM 54
+#घोषणा SAA7134_BOARD_FLYDVBTDUO 55
+#घोषणा SAA7134_BOARD_AVERMEDIA_307    56
+#घोषणा SAA7134_BOARD_AVERMEDIA_GO_007_FM 57
+#घोषणा SAA7134_BOARD_ADS_INSTANT_TV 58
+#घोषणा SAA7134_BOARD_KWORLD_VSTREAM_XPERT 59
+#घोषणा SAA7134_BOARD_FLYDVBT_DUO_CARDBUS 60
+#घोषणा SAA7134_BOARD_PHILIPS_TOUGH 61
+#घोषणा SAA7134_BOARD_VIDEOMATE_TV_GOLD_PLUSII 62
+#घोषणा SAA7134_BOARD_KWORLD_XPERT 63
+#घोषणा SAA7134_BOARD_FLYTV_DIGIMATRIX 64
+#घोषणा SAA7134_BOARD_KWORLD_TERMINATOR 65
+#घोषणा SAA7134_BOARD_YUAN_TUN900 66
+#घोषणा SAA7134_BOARD_BEHOLD_409FM 67
+#घोषणा SAA7134_BOARD_GOTVIEW_7135 68
+#घोषणा SAA7134_BOARD_PHILIPS_EUROPA  69
+#घोषणा SAA7134_BOARD_VIDEOMATE_DVBT_300 70
+#घोषणा SAA7134_BOARD_VIDEOMATE_DVBT_200 71
+#घोषणा SAA7134_BOARD_RTD_VFG7350 72
+#घोषणा SAA7134_BOARD_RTD_VFG7330 73
+#घोषणा SAA7134_BOARD_FLYTVPLATINUM_MINI2 74
+#घोषणा SAA7134_BOARD_AVERMEDIA_AVERTVHD_A180 75
+#घोषणा SAA7134_BOARD_MONSTERTV_MOBILE 76
+#घोषणा SAA7134_BOARD_PINNACLE_PCTV_110i 77
+#घोषणा SAA7134_BOARD_ASUSTeK_P7131_DUAL 78
+#घोषणा SAA7134_BOARD_SEDNA_PC_TV_CARDBUS     79
+#घोषणा SAA7134_BOARD_ASUSTEK_DIGIMATRIX_TV 80
+#घोषणा SAA7134_BOARD_PHILIPS_TIGER  81
+#घोषणा SAA7134_BOARD_MSI_TVATANYWHERE_PLUS  82
+#घोषणा SAA7134_BOARD_CINERGY250PCI 83
+#घोषणा SAA7134_BOARD_FLYDVB_TRIO 84
+#घोषणा SAA7134_BOARD_AVERMEDIA_777 85
+#घोषणा SAA7134_BOARD_FLYDVBT_LR301 86
+#घोषणा SAA7134_BOARD_ADS_DUO_CARDBUS_PTV331 87
+#घोषणा SAA7134_BOARD_TEVION_DVBT_220RF 88
+#घोषणा SAA7134_BOARD_ELSA_700TV       89
+#घोषणा SAA7134_BOARD_KWORLD_ATSC110   90
+#घोषणा SAA7134_BOARD_AVERMEDIA_A169_B 91
+#घोषणा SAA7134_BOARD_AVERMEDIA_A169_B1 92
+#घोषणा SAA7134_BOARD_MD7134_BRIDGE_2     93
+#घोषणा SAA7134_BOARD_FLYDVBT_HYBRID_CARDBUS 94
+#घोषणा SAA7134_BOARD_FLYVIDEO3000_NTSC 95
+#घोषणा SAA7134_BOARD_MEDION_MD8800_QUADRO 96
+#घोषणा SAA7134_BOARD_FLYDVBS_LR300 97
+#घोषणा SAA7134_BOARD_PROTEUS_2309 98
+#घोषणा SAA7134_BOARD_AVERMEDIA_A16AR   99
+#घोषणा SAA7134_BOARD_ASUS_EUROPA2_HYBRID 100
+#घोषणा SAA7134_BOARD_PINNACLE_PCTV_310i  101
+#घोषणा SAA7134_BOARD_AVERMEDIA_STUDIO_507 102
+#घोषणा SAA7134_BOARD_VIDEOMATE_DVBT_200A  103
+#घोषणा SAA7134_BOARD_HAUPPAUGE_HVR1110    104
+#घोषणा SAA7134_BOARD_CINERGY_HT_PCMCIA    105
+#घोषणा SAA7134_BOARD_ENCORE_ENLTV         106
+#घोषणा SAA7134_BOARD_ENCORE_ENLTV_FM      107
+#घोषणा SAA7134_BOARD_CINERGY_HT_PCI       108
+#घोषणा SAA7134_BOARD_PHILIPS_TIGER_S      109
+#घोषणा SAA7134_BOARD_AVERMEDIA_M102	   110
+#घोषणा SAA7134_BOARD_ASUS_P7131_4871	   111
+#घोषणा SAA7134_BOARD_ASUSTeK_P7131_HYBRID_LNA 112
+#घोषणा SAA7134_BOARD_ECS_TVP3XP_4CB6  113
+#घोषणा SAA7134_BOARD_KWORLD_DVBT_210 114
+#घोषणा SAA7134_BOARD_SABRENT_TV_PCB05     115
+#घोषणा SAA7134_BOARD_10MOONSTVMASTER3     116
+#घोषणा SAA7134_BOARD_AVERMEDIA_SUPER_007  117
+#घोषणा SAA7134_BOARD_BEHOLD_401	118
+#घोषणा SAA7134_BOARD_BEHOLD_403	119
+#घोषणा SAA7134_BOARD_BEHOLD_403FM	120
+#घोषणा SAA7134_BOARD_BEHOLD_405	121
+#घोषणा SAA7134_BOARD_BEHOLD_405FM	122
+#घोषणा SAA7134_BOARD_BEHOLD_407	123
+#घोषणा SAA7134_BOARD_BEHOLD_407FM	124
+#घोषणा SAA7134_BOARD_BEHOLD_409	125
+#घोषणा SAA7134_BOARD_BEHOLD_505FM	126
+#घोषणा SAA7134_BOARD_BEHOLD_507_9FM	127
+#घोषणा SAA7134_BOARD_BEHOLD_COLUMBUS_TVFM 128
+#घोषणा SAA7134_BOARD_BEHOLD_607FM_MK3	129
+#घोषणा SAA7134_BOARD_BEHOLD_M6		130
+#घोषणा SAA7134_BOARD_TWINHAN_DTV_DVB_3056 131
+#घोषणा SAA7134_BOARD_GENIUS_TVGO_A11MCE   132
+#घोषणा SAA7134_BOARD_PHILIPS_SNAKE        133
+#घोषणा SAA7134_BOARD_CREATIX_CTX953       134
+#घोषणा SAA7134_BOARD_MSI_TVANYWHERE_AD11  135
+#घोषणा SAA7134_BOARD_AVERMEDIA_CARDBUS_506 136
+#घोषणा SAA7134_BOARD_AVERMEDIA_A16D       137
+#घोषणा SAA7134_BOARD_AVERMEDIA_M115       138
+#घोषणा SAA7134_BOARD_VIDEOMATE_T750       139
+#घोषणा SAA7134_BOARD_AVERMEDIA_A700_PRO    140
+#घोषणा SAA7134_BOARD_AVERMEDIA_A700_HYBRID 141
+#घोषणा SAA7134_BOARD_BEHOLD_H6      142
+#घोषणा SAA7134_BOARD_BEHOLD_M63      143
+#घोषणा SAA7134_BOARD_BEHOLD_M6_EXTRA    144
+#घोषणा SAA7134_BOARD_AVERMEDIA_M103    145
+#घोषणा SAA7134_BOARD_ASUSTeK_P7131_ANALOG 146
+#घोषणा SAA7134_BOARD_ASUSTeK_TIGER_3IN1   147
+#घोषणा SAA7134_BOARD_ENCORE_ENLTV_FM53 148
+#घोषणा SAA7134_BOARD_AVERMEDIA_M135A    149
+#घोषणा SAA7134_BOARD_REAL_ANGEL_220     150
+#घोषणा SAA7134_BOARD_ADS_INSTANT_HDTV_PCI  151
+#घोषणा SAA7134_BOARD_ASUSTeK_TIGER         152
+#घोषणा SAA7134_BOARD_KWORLD_PLUS_TV_ANALOG 153
+#घोषणा SAA7134_BOARD_AVERMEDIA_GO_007_FM_PLUS 154
+#घोषणा SAA7134_BOARD_HAUPPAUGE_HVR1150     155
+#घोषणा SAA7134_BOARD_HAUPPAUGE_HVR1120   156
+#घोषणा SAA7134_BOARD_AVERMEDIA_STUDIO_507UA 157
+#घोषणा SAA7134_BOARD_AVERMEDIA_CARDBUS_501 158
+#घोषणा SAA7134_BOARD_BEHOLD_505RDS_MK5     159
+#घोषणा SAA7134_BOARD_BEHOLD_507RDS_MK3     160
+#घोषणा SAA7134_BOARD_BEHOLD_507RDS_MK5     161
+#घोषणा SAA7134_BOARD_BEHOLD_607FM_MK5      162
+#घोषणा SAA7134_BOARD_BEHOLD_609FM_MK3      163
+#घोषणा SAA7134_BOARD_BEHOLD_609FM_MK5      164
+#घोषणा SAA7134_BOARD_BEHOLD_607RDS_MK3     165
+#घोषणा SAA7134_BOARD_BEHOLD_607RDS_MK5     166
+#घोषणा SAA7134_BOARD_BEHOLD_609RDS_MK3     167
+#घोषणा SAA7134_BOARD_BEHOLD_609RDS_MK5     168
+#घोषणा SAA7134_BOARD_VIDEOMATE_S350        169
+#घोषणा SAA7134_BOARD_AVERMEDIA_STUDIO_505  170
+#घोषणा SAA7134_BOARD_BEHOLD_X7             171
+#घोषणा SAA7134_BOARD_ROVERMEDIA_LINK_PRO_FM 172
+#घोषणा SAA7134_BOARD_ZOLID_HYBRID_PCI		173
+#घोषणा SAA7134_BOARD_ASUS_EUROPA_HYBRID	174
+#घोषणा SAA7134_BOARD_LEADTEK_WINFAST_DTV1000S 175
+#घोषणा SAA7134_BOARD_BEHOLD_505RDS_MK3     176
+#घोषणा SAA7134_BOARD_HAWELL_HW_404M7		177
+#घोषणा SAA7134_BOARD_BEHOLD_H7             178
+#घोषणा SAA7134_BOARD_BEHOLD_A7             179
+#घोषणा SAA7134_BOARD_AVERMEDIA_M733A       180
+#घोषणा SAA7134_BOARD_TECHNOTREND_BUDGET_T3000 181
+#घोषणा SAA7134_BOARD_KWORLD_PCI_SBTVD_FULLSEG 182
+#घोषणा SAA7134_BOARD_VIDEOMATE_M1F         183
+#घोषणा SAA7134_BOARD_ENCORE_ENLTV_FM3      184
+#घोषणा SAA7134_BOARD_MAGICPRO_PROHDTV_PRO2 185
+#घोषणा SAA7134_BOARD_BEHOLD_501            186
+#घोषणा SAA7134_BOARD_BEHOLD_503FM          187
+#घोषणा SAA7134_BOARD_SENSORAY811_911       188
+#घोषणा SAA7134_BOARD_KWORLD_PC150U         189
+#घोषणा SAA7134_BOARD_ASUSTeK_PS3_100      190
+#घोषणा SAA7134_BOARD_HAWELL_HW_9004V1      191
+#घोषणा SAA7134_BOARD_AVERMEDIA_A706		192
+#घोषणा SAA7134_BOARD_WIS_VOYAGER           193
+#घोषणा SAA7134_BOARD_AVERMEDIA_505         194
+#घोषणा SAA7134_BOARD_LEADTEK_WINFAST_TV2100_FM 195
+#घोषणा SAA7134_BOARD_SNAZIO_TVPVR_PRO      196
 
-#define SAA7134_MAXBOARDS 32
-#define SAA7134_INPUT_MAX 8
+#घोषणा SAA7134_MAXBOARDS 32
+#घोषणा SAA7134_INPUT_MAX 8
 
 /* ----------------------------------------------------------- */
 /* Since we support 2 remote types, lets tell them apart       */
 
-#define SAA7134_REMOTE_GPIO  1
-#define SAA7134_REMOTE_I2C   2
+#घोषणा SAA7134_REMOTE_GPIO  1
+#घोषणा SAA7134_REMOTE_I2C   2
 
 /* ----------------------------------------------------------- */
 /* Video Output Port Register Initialization Options           */
 
-#define SET_T_CODE_POLARITY_NON_INVERTED	(1 << 0)
-#define SET_CLOCK_NOT_DELAYED			(1 << 1)
-#define SET_CLOCK_INVERTED			(1 << 2)
-#define SET_VSYNC_OFF				(1 << 3)
+#घोषणा SET_T_CODE_POLARITY_NON_INVERTED	(1 << 0)
+#घोषणा SET_CLOCK_NOT_DELAYED			(1 << 1)
+#घोषणा SET_CLOCK_INVERTED			(1 << 2)
+#घोषणा SET_VSYNC_OFF				(1 << 3)
 
-enum saa7134_input_types {
+क्रमागत saa7134_input_types अणु
 	SAA7134_NO_INPUT = 0,
 	SAA7134_INPUT_MUTE,
 	SAA7134_INPUT_RADIO,
@@ -362,562 +363,562 @@ enum saa7134_input_types {
 	SAA7134_INPUT_SVIDEO0,
 	SAA7134_INPUT_SVIDEO1,
 	SAA7134_INPUT_COMPOSITE_OVER_SVIDEO,
-};
+पूर्ण;
 
-struct saa7134_input {
-	enum saa7134_input_types type;
-	unsigned int             vmux;
-	enum saa7134_audio_in    amux;
-	unsigned int             gpio;
-};
+काष्ठा saa7134_input अणु
+	क्रमागत saa7134_input_types type;
+	अचिन्हित पूर्णांक             vmux;
+	क्रमागत saa7134_audio_in    amux;
+	अचिन्हित पूर्णांक             gpio;
+पूर्ण;
 
-enum saa7134_mpeg_type {
+क्रमागत saa7134_mpeg_type अणु
 	SAA7134_MPEG_UNUSED,
 	SAA7134_MPEG_EMPRESS,
 	SAA7134_MPEG_DVB,
 	SAA7134_MPEG_GO7007,
-};
+पूर्ण;
 
-enum saa7134_mpeg_ts_type {
+क्रमागत saa7134_mpeg_ts_type अणु
 	SAA7134_MPEG_TS_PARALLEL = 0,
 	SAA7134_MPEG_TS_SERIAL,
-};
+पूर्ण;
 
-struct saa7134_board {
-	char                    *name;
-	unsigned int            audio_clock;
+काष्ठा saa7134_board अणु
+	अक्षर                    *name;
+	अचिन्हित पूर्णांक            audio_घड़ी;
 
-	/* input switching */
-	unsigned int            gpiomask;
-	struct saa7134_input    inputs[SAA7134_INPUT_MAX];
-	struct saa7134_input    radio;
-	struct saa7134_input    mute;
+	/* input चयनing */
+	अचिन्हित पूर्णांक            gpiomask;
+	काष्ठा saa7134_input    inमाला_दो[SAA7134_INPUT_MAX];
+	काष्ठा saa7134_input    radio;
+	काष्ठा saa7134_input    mute;
 
 	/* i2c chip info */
-	unsigned int            tuner_type;
-	unsigned int		radio_type;
-	unsigned char		tuner_addr;
-	unsigned char		radio_addr;
-	unsigned char		empress_addr;
-	unsigned char		rds_addr;
+	अचिन्हित पूर्णांक            tuner_type;
+	अचिन्हित पूर्णांक		radio_type;
+	अचिन्हित अक्षर		tuner_addr;
+	अचिन्हित अक्षर		radio_addr;
+	अचिन्हित अक्षर		empress_addr;
+	अचिन्हित अक्षर		rds_addr;
 
-	unsigned int            tda9887_conf;
-	struct tda829x_config   tda829x_conf;
+	अचिन्हित पूर्णांक            tda9887_conf;
+	काष्ठा tda829x_config   tda829x_conf;
 
 	/* peripheral I/O */
-	enum saa7134_video_out  video_out;
-	enum saa7134_mpeg_type  mpeg;
-	enum saa7134_mpeg_ts_type ts_type;
-	unsigned int            vid_port_opts;
-	unsigned int            ts_force_val:1;
-};
+	क्रमागत saa7134_video_out  video_out;
+	क्रमागत saa7134_mpeg_type  mpeg;
+	क्रमागत saa7134_mpeg_ts_type ts_type;
+	अचिन्हित पूर्णांक            vid_port_opts;
+	अचिन्हित पूर्णांक            ts_क्रमce_val:1;
+पूर्ण;
 
-#define card_has_radio(dev)   (SAA7134_NO_INPUT != saa7134_boards[dev->board].radio.type)
-#define card_is_empress(dev)  (SAA7134_MPEG_EMPRESS == saa7134_boards[dev->board].mpeg)
-#define card_is_dvb(dev)      (SAA7134_MPEG_DVB     == saa7134_boards[dev->board].mpeg)
-#define card_is_go7007(dev)   (SAA7134_MPEG_GO7007  == saa7134_boards[dev->board].mpeg)
-#define card_has_mpeg(dev)    (SAA7134_MPEG_UNUSED  != saa7134_boards[dev->board].mpeg)
-#define card(dev)             (saa7134_boards[dev->board])
-#define card_in(dev,n)        (saa7134_boards[dev->board].inputs[n])
+#घोषणा card_has_radio(dev)   (SAA7134_NO_INPUT != saa7134_boards[dev->board].radio.type)
+#घोषणा card_is_empress(dev)  (SAA7134_MPEG_EMPRESS == saa7134_boards[dev->board].mpeg)
+#घोषणा card_is_dvb(dev)      (SAA7134_MPEG_DVB     == saa7134_boards[dev->board].mpeg)
+#घोषणा card_is_go7007(dev)   (SAA7134_MPEG_GO7007  == saa7134_boards[dev->board].mpeg)
+#घोषणा card_has_mpeg(dev)    (SAA7134_MPEG_UNUSED  != saa7134_boards[dev->board].mpeg)
+#घोषणा card(dev)             (saa7134_boards[dev->board])
+#घोषणा card_in(dev,n)        (saa7134_boards[dev->board].inमाला_दो[n])
 
-#define V4L2_CID_PRIVATE_INVERT      (V4L2_CID_USER_SAA7134_BASE + 0)
-#define V4L2_CID_PRIVATE_Y_ODD       (V4L2_CID_USER_SAA7134_BASE + 1)
-#define V4L2_CID_PRIVATE_Y_EVEN      (V4L2_CID_USER_SAA7134_BASE + 2)
-#define V4L2_CID_PRIVATE_AUTOMUTE    (V4L2_CID_USER_SAA7134_BASE + 3)
+#घोषणा V4L2_CID_PRIVATE_INVERT      (V4L2_CID_USER_SAA7134_BASE + 0)
+#घोषणा V4L2_CID_PRIVATE_Y_ODD       (V4L2_CID_USER_SAA7134_BASE + 1)
+#घोषणा V4L2_CID_PRIVATE_Y_EVEN      (V4L2_CID_USER_SAA7134_BASE + 2)
+#घोषणा V4L2_CID_PRIVATE_AUTOMUTE    (V4L2_CID_USER_SAA7134_BASE + 3)
 
 /* ----------------------------------------------------------- */
 /* device / file handle status                                 */
 
-#define RESOURCE_OVERLAY       1
-#define RESOURCE_VIDEO         2
-#define RESOURCE_VBI           4
-#define RESOURCE_EMPRESS       8
+#घोषणा RESOURCE_OVERLAY       1
+#घोषणा RESOURCE_VIDEO         2
+#घोषणा RESOURCE_VBI           4
+#घोषणा RESOURCE_EMPRESS       8
 
-#define INTERLACE_AUTO         0
-#define INTERLACE_ON           1
-#define INTERLACE_OFF          2
+#घोषणा INTERLACE_AUTO         0
+#घोषणा INTERLACE_ON           1
+#घोषणा INTERLACE_OFF          2
 
-#define BUFFER_TIMEOUT     msecs_to_jiffies(500)  /* 0.5 seconds */
-#define TS_BUFFER_TIMEOUT  msecs_to_jiffies(1000)  /* 1 second */
+#घोषणा BUFFER_TIMEOUT     msecs_to_jअगरfies(500)  /* 0.5 seconds */
+#घोषणा TS_BUFFER_TIMEOUT  msecs_to_jअगरfies(1000)  /* 1 second */
 
-struct saa7134_dev;
-struct saa7134_dma;
+काष्ठा saa7134_dev;
+काष्ठा saa7134_dma;
 
 /* saa7134 page table */
-struct saa7134_pgtable {
-	unsigned int               size;
+काष्ठा saa7134_pgtable अणु
+	अचिन्हित पूर्णांक               size;
 	__le32                     *cpu;
 	dma_addr_t                 dma;
-};
+पूर्ण;
 
-/* tvaudio thread status */
-struct saa7134_thread {
-	struct task_struct         *thread;
-	unsigned int               scan1;
-	unsigned int               scan2;
-	unsigned int               mode;
-	unsigned int		   stopped;
-};
+/* tvaudio thपढ़ो status */
+काष्ठा saa7134_thपढ़ो अणु
+	काष्ठा task_काष्ठा         *thपढ़ो;
+	अचिन्हित पूर्णांक               scan1;
+	अचिन्हित पूर्णांक               scan2;
+	अचिन्हित पूर्णांक               mode;
+	अचिन्हित पूर्णांक		   stopped;
+पूर्ण;
 
-/* buffer for one video/vbi/ts frame */
-struct saa7134_buf {
+/* buffer क्रम one video/vbi/ts frame */
+काष्ठा saa7134_buf अणु
 	/* common v4l buffer stuff -- must be first */
-	struct vb2_v4l2_buffer vb2;
+	काष्ठा vb2_v4l2_buffer vb2;
 
-	/* saa7134 specific */
-	unsigned int            top_seen;
-	int (*activate)(struct saa7134_dev *dev,
-			struct saa7134_buf *buf,
-			struct saa7134_buf *next);
+	/* saa7134 specअगरic */
+	अचिन्हित पूर्णांक            top_seen;
+	पूर्णांक (*activate)(काष्ठा saa7134_dev *dev,
+			काष्ठा saa7134_buf *buf,
+			काष्ठा saa7134_buf *next);
 
-	struct list_head	entry;
-};
+	काष्ठा list_head	entry;
+पूर्ण;
 
-struct saa7134_dmaqueue {
-	struct saa7134_dev         *dev;
-	struct saa7134_buf         *curr;
-	struct list_head           queue;
-	struct timer_list          timeout;
-	unsigned int               need_two;
-	unsigned int               seq_nr;
-	struct saa7134_pgtable     pt;
-};
+काष्ठा saa7134_dmaqueue अणु
+	काष्ठा saa7134_dev         *dev;
+	काष्ठा saa7134_buf         *curr;
+	काष्ठा list_head           queue;
+	काष्ठा समयr_list          समयout;
+	अचिन्हित पूर्णांक               need_two;
+	अचिन्हित पूर्णांक               seq_nr;
+	काष्ठा saa7134_pgtable     pt;
+पूर्ण;
 
 /* dmasound dsp status */
-struct saa7134_dmasound {
-	struct mutex               lock;
-	int                        minor_mixer;
-	int                        minor_dsp;
-	unsigned int               users_dsp;
+काष्ठा saa7134_dmasound अणु
+	काष्ठा mutex               lock;
+	पूर्णांक                        minor_mixer;
+	पूर्णांक                        minor_dsp;
+	अचिन्हित पूर्णांक               users_dsp;
 
 	/* mixer */
-	enum saa7134_audio_in      input;
-	unsigned int               count;
-	unsigned int               line1;
-	unsigned int               line2;
+	क्रमागत saa7134_audio_in      input;
+	अचिन्हित पूर्णांक               count;
+	अचिन्हित पूर्णांक               line1;
+	अचिन्हित पूर्णांक               line2;
 
 	/* dsp */
-	unsigned int               afmt;
-	unsigned int               rate;
-	unsigned int               channels;
-	unsigned int               recording_on;
-	unsigned int               dma_running;
-	unsigned int               blocks;
-	unsigned int               blksize;
-	unsigned int               bufsize;
-	struct saa7134_pgtable     pt;
-	void			   *vaddr;
-	struct scatterlist	   *sglist;
-	int                        sglen;
-	unsigned long              nr_pages;
-	unsigned int               dma_blk;
-	unsigned int               read_offset;
-	unsigned int               read_count;
-	void *			   priv_data;
-	struct snd_pcm_substream   *substream;
-};
+	अचिन्हित पूर्णांक               afmt;
+	अचिन्हित पूर्णांक               rate;
+	अचिन्हित पूर्णांक               channels;
+	अचिन्हित पूर्णांक               recording_on;
+	अचिन्हित पूर्णांक               dma_running;
+	अचिन्हित पूर्णांक               blocks;
+	अचिन्हित पूर्णांक               blksize;
+	अचिन्हित पूर्णांक               bufsize;
+	काष्ठा saa7134_pgtable     pt;
+	व्योम			   *vaddr;
+	काष्ठा scatterlist	   *sglist;
+	पूर्णांक                        sglen;
+	अचिन्हित दीर्घ              nr_pages;
+	अचिन्हित पूर्णांक               dma_blk;
+	अचिन्हित पूर्णांक               पढ़ो_offset;
+	अचिन्हित पूर्णांक               पढ़ो_count;
+	व्योम *			   priv_data;
+	काष्ठा snd_pcm_substream   *substream;
+पूर्ण;
 
 /* ts/mpeg status */
-struct saa7134_ts {
+काष्ठा saa7134_ts अणु
 	/* TS capture */
-	int                        nr_packets;
-	int                        nr_bufs;
-};
+	पूर्णांक                        nr_packets;
+	पूर्णांक                        nr_bufs;
+पूर्ण;
 
 /* ts/mpeg ops */
-struct saa7134_mpeg_ops {
-	enum saa7134_mpeg_type     type;
-	struct list_head           next;
-	int                        (*init)(struct saa7134_dev *dev);
-	int                        (*fini)(struct saa7134_dev *dev);
-	void                       (*signal_change)(struct saa7134_dev *dev);
-	void                       (*irq_ts_done)(struct saa7134_dev *dev,
-						  unsigned long status);
-};
+काष्ठा saa7134_mpeg_ops अणु
+	क्रमागत saa7134_mpeg_type     type;
+	काष्ठा list_head           next;
+	पूर्णांक                        (*init)(काष्ठा saa7134_dev *dev);
+	पूर्णांक                        (*fini)(काष्ठा saa7134_dev *dev);
+	व्योम                       (*संकेत_change)(काष्ठा saa7134_dev *dev);
+	व्योम                       (*irq_ts_करोne)(काष्ठा saa7134_dev *dev,
+						  अचिन्हित दीर्घ status);
+पूर्ण;
 
-enum saa7134_pads {
+क्रमागत saa7134_pads अणु
 	SAA7134_PAD_IF_INPUT,
 	SAA7134_PAD_VID_OUT,
 	SAA7134_NUM_PADS
-};
+पूर्ण;
 
 /* global device status */
-struct saa7134_dev {
-	struct list_head           devlist;
-	struct mutex               lock;
+काष्ठा saa7134_dev अणु
+	काष्ठा list_head           devlist;
+	काष्ठा mutex               lock;
 	spinlock_t                 slock;
-	struct v4l2_device         v4l2_dev;
-	/* workstruct for loading modules */
-	struct work_struct request_module_wk;
+	काष्ठा v4l2_device         v4l2_dev;
+	/* workकाष्ठा क्रम loading modules */
+	काष्ठा work_काष्ठा request_module_wk;
 
-	/* insmod option/autodetected */
-	int                        autodetected;
+	/* insmod option/स्वतःdetected */
+	पूर्णांक                        स्वतःdetected;
 
 	/* various device info */
-	unsigned int               resources;
-	struct video_device        *video_dev;
-	struct video_device        *radio_dev;
-	struct video_device        *vbi_dev;
-	struct saa7134_dmasound    dmasound;
+	अचिन्हित पूर्णांक               resources;
+	काष्ठा video_device        *video_dev;
+	काष्ठा video_device        *radio_dev;
+	काष्ठा video_device        *vbi_dev;
+	काष्ठा saa7134_dmasound    dmasound;
 
 	/* infrared remote */
-	int                        has_remote;
-	struct saa7134_card_ir     *remote;
+	पूर्णांक                        has_remote;
+	काष्ठा saa7134_card_ir     *remote;
 
 	/* pci i/o */
-	char                       name[32];
-	int                        nr;
-	struct pci_dev             *pci;
-	unsigned char              pci_rev,pci_lat;
+	अक्षर                       name[32];
+	पूर्णांक                        nr;
+	काष्ठा pci_dev             *pci;
+	अचिन्हित अक्षर              pci_rev,pci_lat;
 	__u32                      __iomem *lmmio;
 	__u8                       __iomem *bmmio;
 
 	/* config info */
-	unsigned int               board;
-	unsigned int               tuner_type;
-	unsigned int		   radio_type;
-	unsigned char		   tuner_addr;
-	unsigned char		   radio_addr;
+	अचिन्हित पूर्णांक               board;
+	अचिन्हित पूर्णांक               tuner_type;
+	अचिन्हित पूर्णांक		   radio_type;
+	अचिन्हित अक्षर		   tuner_addr;
+	अचिन्हित अक्षर		   radio_addr;
 
-	unsigned int               tda9887_conf;
-	unsigned int               gpio_value;
+	अचिन्हित पूर्णांक               tda9887_conf;
+	अचिन्हित पूर्णांक               gpio_value;
 
 	/* i2c i/o */
-	struct i2c_adapter         i2c_adap;
-	struct i2c_client          i2c_client;
-	unsigned char              eedata[256];
-	int			   has_rds;
+	काष्ठा i2c_adapter         i2c_adap;
+	काष्ठा i2c_client          i2c_client;
+	अचिन्हित अक्षर              eedata[256];
+	पूर्णांक			   has_rds;
 
 	/* video overlay */
-	struct v4l2_framebuffer    ovbuf;
-	struct saa7134_format      *ovfmt;
-	unsigned int               ovenable;
-	enum v4l2_field            ovfield;
-	struct v4l2_window         win;
-	struct v4l2_clip           clips[8];
-	unsigned int               nclips;
-	struct v4l2_fh		   *overlay_owner;
+	काष्ठा v4l2_framebuffer    ovbuf;
+	काष्ठा saa7134_क्रमmat      *ovfmt;
+	अचिन्हित पूर्णांक               ovenable;
+	क्रमागत v4l2_field            ovfield;
+	काष्ठा v4l2_winकरोw         win;
+	काष्ठा v4l2_clip           clips[8];
+	अचिन्हित पूर्णांक               nclips;
+	काष्ठा v4l2_fh		   *overlay_owner;
 
 
 	/* video+ts+vbi capture */
-	struct saa7134_dmaqueue    video_q;
-	struct vb2_queue           video_vbq;
-	struct saa7134_dmaqueue    vbi_q;
-	struct vb2_queue           vbi_vbq;
-	enum v4l2_field		   field;
-	struct saa7134_format      *fmt;
-	unsigned int               width, height;
-	unsigned int               vbi_hlen, vbi_vlen;
-	struct pm_qos_request	   qos_request;
+	काष्ठा saa7134_dmaqueue    video_q;
+	काष्ठा vb2_queue           video_vbq;
+	काष्ठा saa7134_dmaqueue    vbi_q;
+	काष्ठा vb2_queue           vbi_vbq;
+	क्रमागत v4l2_field		   field;
+	काष्ठा saa7134_क्रमmat      *fmt;
+	अचिन्हित पूर्णांक               width, height;
+	अचिन्हित पूर्णांक               vbi_hlen, vbi_vlen;
+	काष्ठा pm_qos_request	   qos_request;
 
 	/* SAA7134_MPEG_* */
-	struct saa7134_ts          ts;
-	struct saa7134_dmaqueue    ts_q;
-	enum v4l2_field		   ts_field;
-	int                        ts_started;
-	struct saa7134_mpeg_ops    *mops;
+	काष्ठा saa7134_ts          ts;
+	काष्ठा saa7134_dmaqueue    ts_q;
+	क्रमागत v4l2_field		   ts_field;
+	पूर्णांक                        ts_started;
+	काष्ठा saa7134_mpeg_ops    *mops;
 
 	/* SAA7134_MPEG_EMPRESS only */
-	struct video_device        *empress_dev;
-	struct v4l2_subdev	   *empress_sd;
-	struct vb2_queue           empress_vbq;
-	struct work_struct         empress_workqueue;
-	int                        empress_started;
-	struct v4l2_ctrl_handler   empress_ctrl_handler;
+	काष्ठा video_device        *empress_dev;
+	काष्ठा v4l2_subdev	   *empress_sd;
+	काष्ठा vb2_queue           empress_vbq;
+	काष्ठा work_काष्ठा         empress_workqueue;
+	पूर्णांक                        empress_started;
+	काष्ठा v4l2_ctrl_handler   empress_ctrl_handler;
 
 	/* various v4l controls */
-	struct saa7134_tvnorm      *tvnorm;              /* video */
-	struct saa7134_tvaudio     *tvaudio;
-	struct v4l2_ctrl_handler   ctrl_handler;
-	unsigned int               ctl_input;
-	int                        ctl_bright;
-	int                        ctl_contrast;
-	int                        ctl_hue;
-	int                        ctl_saturation;
-	int                        ctl_mute;             /* audio */
-	int                        ctl_volume;
-	int                        ctl_invert;           /* private */
-	int                        ctl_mirror;
-	int                        ctl_y_odd;
-	int                        ctl_y_even;
-	int                        ctl_automute;
+	काष्ठा saa7134_tvnorm      *tvnorm;              /* video */
+	काष्ठा saa7134_tvaudio     *tvaudio;
+	काष्ठा v4l2_ctrl_handler   ctrl_handler;
+	अचिन्हित पूर्णांक               ctl_input;
+	पूर्णांक                        ctl_bright;
+	पूर्णांक                        ctl_contrast;
+	पूर्णांक                        ctl_hue;
+	पूर्णांक                        ctl_saturation;
+	पूर्णांक                        ctl_mute;             /* audio */
+	पूर्णांक                        ctl_volume;
+	पूर्णांक                        ctl_invert;           /* निजी */
+	पूर्णांक                        ctl_mirror;
+	पूर्णांक                        ctl_y_odd;
+	पूर्णांक                        ctl_y_even;
+	पूर्णांक                        ctl_स्वतःmute;
 
 	/* crop */
-	struct v4l2_rect           crop_bounds;
-	struct v4l2_rect           crop_defrect;
-	struct v4l2_rect           crop_current;
+	काष्ठा v4l2_rect           crop_bounds;
+	काष्ठा v4l2_rect           crop_defrect;
+	काष्ठा v4l2_rect           crop_current;
 
 	/* other global state info */
-	unsigned int               automute;
-	struct saa7134_thread      thread;
-	struct saa7134_input       *input;
-	struct saa7134_input       *hw_input;
-	unsigned int               hw_mute;
-	int                        last_carrier;
-	int                        nosignal;
-	unsigned int               insuspend;
-	struct v4l2_ctrl_handler   radio_ctrl_handler;
+	अचिन्हित पूर्णांक               स्वतःmute;
+	काष्ठा saa7134_thपढ़ो      thपढ़ो;
+	काष्ठा saa7134_input       *input;
+	काष्ठा saa7134_input       *hw_input;
+	अचिन्हित पूर्णांक               hw_mute;
+	पूर्णांक                        last_carrier;
+	पूर्णांक                        noसंकेत;
+	अचिन्हित पूर्णांक               insuspend;
+	काष्ठा v4l2_ctrl_handler   radio_ctrl_handler;
 
 	/* I2C keyboard data */
-	struct IR_i2c_init_data    init_data;
+	काष्ठा IR_i2c_init_data    init_data;
 
-#ifdef CONFIG_MEDIA_CONTROLLER
-	struct media_device *media_dev;
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
+	काष्ठा media_device *media_dev;
 
-	struct media_entity input_ent[SAA7134_INPUT_MAX + 1];
-	struct media_pad input_pad[SAA7134_INPUT_MAX + 1];
+	काष्ठा media_entity input_ent[SAA7134_INPUT_MAX + 1];
+	काष्ठा media_pad input_pad[SAA7134_INPUT_MAX + 1];
 
-	struct media_entity demod;
-	struct media_pad demod_pad[SAA7134_NUM_PADS];
+	काष्ठा media_entity demod;
+	काष्ठा media_pad demod_pad[SAA7134_NUM_PADS];
 
-	struct media_pad video_pad, vbi_pad;
-	struct media_entity *decoder;
-#endif
+	काष्ठा media_pad video_pad, vbi_pad;
+	काष्ठा media_entity *decoder;
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_VIDEO_SAA7134_DVB)
+#अगर IS_ENABLED(CONFIG_VIDEO_SAA7134_DVB)
 	/* SAA7134_MPEG_DVB only */
-	struct vb2_dvb_frontends frontends;
-	int (*original_demod_sleep)(struct dvb_frontend *fe);
-	int (*original_set_voltage)(struct dvb_frontend *fe,
-				    enum fe_sec_voltage voltage);
-	int (*original_set_high_voltage)(struct dvb_frontend *fe, long arg);
-#endif
-	void (*gate_ctrl)(struct saa7134_dev *dev, int open);
-};
+	काष्ठा vb2_dvb_frontends frontends;
+	पूर्णांक (*original_demod_sleep)(काष्ठा dvb_frontend *fe);
+	पूर्णांक (*original_set_voltage)(काष्ठा dvb_frontend *fe,
+				    क्रमागत fe_sec_voltage voltage);
+	पूर्णांक (*original_set_high_voltage)(काष्ठा dvb_frontend *fe, दीर्घ arg);
+#पूर्ण_अगर
+	व्योम (*gate_ctrl)(काष्ठा saa7134_dev *dev, पूर्णांक खोलो);
+पूर्ण;
 
 /* ----------------------------------------------------------- */
 
-#define saa_readl(reg)             readl(dev->lmmio + (reg))
-#define saa_writel(reg,value)      writel((value), dev->lmmio + (reg));
-#define saa_andorl(reg,mask,value) \
-  writel((readl(dev->lmmio+(reg)) & ~(mask)) |\
+#घोषणा saa_पढ़ोl(reg)             पढ़ोl(dev->lmmio + (reg))
+#घोषणा saa_ग_लिखोl(reg,value)      ग_लिखोl((value), dev->lmmio + (reg));
+#घोषणा saa_anकरोrl(reg,mask,value) \
+  ग_लिखोl((पढ़ोl(dev->lmmio+(reg)) & ~(mask)) |\
   ((value) & (mask)), dev->lmmio+(reg))
-#define saa_setl(reg,bit)          saa_andorl((reg),(bit),(bit))
-#define saa_clearl(reg,bit)        saa_andorl((reg),(bit),0)
+#घोषणा saa_setl(reg,bit)          saa_anकरोrl((reg),(bit),(bit))
+#घोषणा saa_clearl(reg,bit)        saa_anकरोrl((reg),(bit),0)
 
-#define saa_readb(reg)             readb(dev->bmmio + (reg))
-#define saa_writeb(reg,value)      writeb((value), dev->bmmio + (reg));
-#define saa_andorb(reg,mask,value) \
-  writeb((readb(dev->bmmio+(reg)) & ~(mask)) |\
+#घोषणा saa_पढ़ोb(reg)             पढ़ोb(dev->bmmio + (reg))
+#घोषणा saa_ग_लिखोb(reg,value)      ग_लिखोb((value), dev->bmmio + (reg));
+#घोषणा saa_anकरोrb(reg,mask,value) \
+  ग_लिखोb((पढ़ोb(dev->bmmio+(reg)) & ~(mask)) |\
   ((value) & (mask)), dev->bmmio+(reg))
-#define saa_setb(reg,bit)          saa_andorb((reg),(bit),(bit))
-#define saa_clearb(reg,bit)        saa_andorb((reg),(bit),0)
+#घोषणा saa_setb(reg,bit)          saa_anकरोrb((reg),(bit),(bit))
+#घोषणा saa_clearb(reg,bit)        saa_anकरोrb((reg),(bit),0)
 
-#define saa_wait(us) { udelay(us); }
+#घोषणा saa_रुको(us) अणु udelay(us); पूर्ण
 
-#define SAA7134_NORMS	(\
+#घोषणा SAA7134_NORMS	(\
 		V4L2_STD_PAL    | V4L2_STD_PAL_N | \
 		V4L2_STD_PAL_Nc | V4L2_STD_SECAM | \
 		V4L2_STD_NTSC   | V4L2_STD_PAL_M | \
 		V4L2_STD_PAL_60)
 
-#define GRP_EMPRESS (1)
-#define saa_call_all(dev, o, f, args...) do {				\
-	if (dev->gate_ctrl)						\
+#घोषणा GRP_EMPRESS (1)
+#घोषणा saa_call_all(dev, o, f, args...) करो अणु				\
+	अगर (dev->gate_ctrl)						\
 		dev->gate_ctrl(dev, 1);					\
 	v4l2_device_call_all(&(dev)->v4l2_dev, 0, o, f , ##args);	\
-	if (dev->gate_ctrl)						\
+	अगर (dev->gate_ctrl)						\
 		dev->gate_ctrl(dev, 0);					\
-} while (0)
+पूर्ण जबतक (0)
 
-#define saa_call_empress(dev, o, f, args...) ({				\
-	long _rc;							\
-	if (dev->gate_ctrl)						\
+#घोषणा saa_call_empress(dev, o, f, args...) (अणु				\
+	दीर्घ _rc;							\
+	अगर (dev->gate_ctrl)						\
 		dev->gate_ctrl(dev, 1);					\
 	_rc = v4l2_device_call_until_err(&(dev)->v4l2_dev,		\
 					 GRP_EMPRESS, o, f , ##args);	\
-	if (dev->gate_ctrl)						\
+	अगर (dev->gate_ctrl)						\
 		dev->gate_ctrl(dev, 0);					\
 	_rc;								\
-})
+पूर्ण)
 
-static inline bool is_empress(struct file *file)
-{
-	struct video_device *vdev = video_devdata(file);
-	struct saa7134_dev *dev = video_get_drvdata(vdev);
+अटल अंतरभूत bool is_empress(काष्ठा file *file)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
+	काष्ठा saa7134_dev *dev = video_get_drvdata(vdev);
 
-	return vdev->queue == &dev->empress_vbq;
-}
+	वापस vdev->queue == &dev->empress_vbq;
+पूर्ण
 
 /* ----------------------------------------------------------- */
 /* saa7134-core.c                                              */
 
-extern struct list_head  saa7134_devlist;
-extern struct mutex saa7134_devlist_lock;
-extern int saa7134_no_overlay;
-extern bool saa7134_userptr;
+बाह्य काष्ठा list_head  saa7134_devlist;
+बाह्य काष्ठा mutex saa7134_devlist_lock;
+बाह्य पूर्णांक saa7134_no_overlay;
+बाह्य bool saa7134_userptr;
 
-void saa7134_track_gpio(struct saa7134_dev *dev, const char *msg);
-void saa7134_set_gpio(struct saa7134_dev *dev, int bit_no, int value);
+व्योम saa7134_track_gpio(काष्ठा saa7134_dev *dev, स्थिर अक्षर *msg);
+व्योम saa7134_set_gpio(काष्ठा saa7134_dev *dev, पूर्णांक bit_no, पूर्णांक value);
 
-#define SAA7134_PGTABLE_SIZE 4096
+#घोषणा SAA7134_PGTABLE_SIZE 4096
 
-int saa7134_pgtable_alloc(struct pci_dev *pci, struct saa7134_pgtable *pt);
-int  saa7134_pgtable_build(struct pci_dev *pci, struct saa7134_pgtable *pt,
-			   struct scatterlist *list, unsigned int length,
-			   unsigned int startpage);
-void saa7134_pgtable_free(struct pci_dev *pci, struct saa7134_pgtable *pt);
+पूर्णांक saa7134_pgtable_alloc(काष्ठा pci_dev *pci, काष्ठा saa7134_pgtable *pt);
+पूर्णांक  saa7134_pgtable_build(काष्ठा pci_dev *pci, काष्ठा saa7134_pgtable *pt,
+			   काष्ठा scatterlist *list, अचिन्हित पूर्णांक length,
+			   अचिन्हित पूर्णांक startpage);
+व्योम saa7134_pgtable_मुक्त(काष्ठा pci_dev *pci, काष्ठा saa7134_pgtable *pt);
 
-int saa7134_buffer_count(unsigned int size, unsigned int count);
-int saa7134_buffer_startpage(struct saa7134_buf *buf);
-unsigned long saa7134_buffer_base(struct saa7134_buf *buf);
+पूर्णांक saa7134_buffer_count(अचिन्हित पूर्णांक size, अचिन्हित पूर्णांक count);
+पूर्णांक saa7134_buffer_startpage(काष्ठा saa7134_buf *buf);
+अचिन्हित दीर्घ saa7134_buffer_base(काष्ठा saa7134_buf *buf);
 
-int saa7134_buffer_queue(struct saa7134_dev *dev, struct saa7134_dmaqueue *q,
-			 struct saa7134_buf *buf);
-void saa7134_buffer_finish(struct saa7134_dev *dev, struct saa7134_dmaqueue *q,
-			   unsigned int state);
-void saa7134_buffer_next(struct saa7134_dev *dev, struct saa7134_dmaqueue *q);
-void saa7134_buffer_timeout(struct timer_list *t);
-void saa7134_stop_streaming(struct saa7134_dev *dev, struct saa7134_dmaqueue *q);
+पूर्णांक saa7134_buffer_queue(काष्ठा saa7134_dev *dev, काष्ठा saa7134_dmaqueue *q,
+			 काष्ठा saa7134_buf *buf);
+व्योम saa7134_buffer_finish(काष्ठा saa7134_dev *dev, काष्ठा saa7134_dmaqueue *q,
+			   अचिन्हित पूर्णांक state);
+व्योम saa7134_buffer_next(काष्ठा saa7134_dev *dev, काष्ठा saa7134_dmaqueue *q);
+व्योम saa7134_buffer_समयout(काष्ठा समयr_list *t);
+व्योम saa7134_stop_streaming(काष्ठा saa7134_dev *dev, काष्ठा saa7134_dmaqueue *q);
 
-int saa7134_set_dmabits(struct saa7134_dev *dev);
+पूर्णांक saa7134_set_dmabits(काष्ठा saa7134_dev *dev);
 
-extern int (*saa7134_dmasound_init)(struct saa7134_dev *dev);
-extern int (*saa7134_dmasound_exit)(struct saa7134_dev *dev);
+बाह्य पूर्णांक (*saa7134_dmasound_init)(काष्ठा saa7134_dev *dev);
+बाह्य पूर्णांक (*saa7134_dmasound_निकास)(काष्ठा saa7134_dev *dev);
 
 
 /* ----------------------------------------------------------- */
 /* saa7134-cards.c                                             */
 
-extern struct saa7134_board saa7134_boards[];
-extern const char * const saa7134_input_name[];
-extern const unsigned int saa7134_bcount;
-extern struct pci_device_id saa7134_pci_tbl[];
+बाह्य काष्ठा saa7134_board saa7134_boards[];
+बाह्य स्थिर अक्षर * स्थिर saa7134_input_name[];
+बाह्य स्थिर अचिन्हित पूर्णांक saa7134_bcount;
+बाह्य काष्ठा pci_device_id saa7134_pci_tbl[];
 
-extern int saa7134_board_init1(struct saa7134_dev *dev);
-extern int saa7134_board_init2(struct saa7134_dev *dev);
-int saa7134_tuner_callback(void *priv, int component, int command, int arg);
+बाह्य पूर्णांक saa7134_board_init1(काष्ठा saa7134_dev *dev);
+बाह्य पूर्णांक saa7134_board_init2(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_tuner_callback(व्योम *priv, पूर्णांक component, पूर्णांक command, पूर्णांक arg);
 
 
 /* ----------------------------------------------------------- */
 /* saa7134-i2c.c                                               */
 
-int saa7134_i2c_register(struct saa7134_dev *dev);
-int saa7134_i2c_unregister(struct saa7134_dev *dev);
+पूर्णांक saa7134_i2c_रेजिस्टर(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_i2c_unरेजिस्टर(काष्ठा saa7134_dev *dev);
 
 
 /* ----------------------------------------------------------- */
 /* saa7134-video.c                                             */
 
-extern unsigned int video_debug;
-extern struct video_device saa7134_video_template;
-extern struct video_device saa7134_radio_template;
+बाह्य अचिन्हित पूर्णांक video_debug;
+बाह्य काष्ठा video_device saa7134_video_ढाँचा;
+बाह्य काष्ठा video_device saa7134_radio_ढाँचा;
 
-void saa7134_vb2_buffer_queue(struct vb2_buffer *vb);
-int saa7134_vb2_start_streaming(struct vb2_queue *vq, unsigned int count);
-void saa7134_vb2_stop_streaming(struct vb2_queue *vq);
+व्योम saa7134_vb2_buffer_queue(काष्ठा vb2_buffer *vb);
+पूर्णांक saa7134_vb2_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count);
+व्योम saa7134_vb2_stop_streaming(काष्ठा vb2_queue *vq);
 
-int saa7134_s_std(struct file *file, void *priv, v4l2_std_id id);
-int saa7134_g_std(struct file *file, void *priv, v4l2_std_id *id);
-int saa7134_querystd(struct file *file, void *priv, v4l2_std_id *std);
-int saa7134_enum_input(struct file *file, void *priv, struct v4l2_input *i);
-int saa7134_g_input(struct file *file, void *priv, unsigned int *i);
-int saa7134_s_input(struct file *file, void *priv, unsigned int i);
-int saa7134_querycap(struct file *file, void  *priv,
-					struct v4l2_capability *cap);
-int saa7134_g_tuner(struct file *file, void *priv,
-					struct v4l2_tuner *t);
-int saa7134_s_tuner(struct file *file, void *priv,
-					const struct v4l2_tuner *t);
-int saa7134_g_frequency(struct file *file, void *priv,
-					struct v4l2_frequency *f);
-int saa7134_s_frequency(struct file *file, void *priv,
-					const struct v4l2_frequency *f);
+पूर्णांक saa7134_s_std(काष्ठा file *file, व्योम *priv, v4l2_std_id id);
+पूर्णांक saa7134_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *id);
+पूर्णांक saa7134_querystd(काष्ठा file *file, व्योम *priv, v4l2_std_id *std);
+पूर्णांक saa7134_क्रमागत_input(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_input *i);
+पूर्णांक saa7134_g_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *i);
+पूर्णांक saa7134_s_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक i);
+पूर्णांक saa7134_querycap(काष्ठा file *file, व्योम  *priv,
+					काष्ठा v4l2_capability *cap);
+पूर्णांक saa7134_g_tuner(काष्ठा file *file, व्योम *priv,
+					काष्ठा v4l2_tuner *t);
+पूर्णांक saa7134_s_tuner(काष्ठा file *file, व्योम *priv,
+					स्थिर काष्ठा v4l2_tuner *t);
+पूर्णांक saa7134_g_frequency(काष्ठा file *file, व्योम *priv,
+					काष्ठा v4l2_frequency *f);
+पूर्णांक saa7134_s_frequency(काष्ठा file *file, व्योम *priv,
+					स्थिर काष्ठा v4l2_frequency *f);
 
-int saa7134_videoport_init(struct saa7134_dev *dev);
-void saa7134_set_tvnorm_hw(struct saa7134_dev *dev);
+पूर्णांक saa7134_videoport_init(काष्ठा saa7134_dev *dev);
+व्योम saa7134_set_tvnorm_hw(काष्ठा saa7134_dev *dev);
 
-int saa7134_video_init1(struct saa7134_dev *dev);
-int saa7134_video_init2(struct saa7134_dev *dev);
-void saa7134_irq_video_signalchange(struct saa7134_dev *dev);
-void saa7134_irq_video_done(struct saa7134_dev *dev, unsigned long status);
-void saa7134_video_fini(struct saa7134_dev *dev);
+पूर्णांक saa7134_video_init1(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_video_init2(काष्ठा saa7134_dev *dev);
+व्योम saa7134_irq_video_संकेतchange(काष्ठा saa7134_dev *dev);
+व्योम saa7134_irq_video_करोne(काष्ठा saa7134_dev *dev, अचिन्हित दीर्घ status);
+व्योम saa7134_video_fini(काष्ठा saa7134_dev *dev);
 
 
 /* ----------------------------------------------------------- */
 /* saa7134-ts.c                                                */
 
-#define TS_PACKET_SIZE 188 /* TS packets 188 bytes */
+#घोषणा TS_PACKET_SIZE 188 /* TS packets 188 bytes */
 
-int saa7134_ts_buffer_init(struct vb2_buffer *vb2);
-int saa7134_ts_buffer_prepare(struct vb2_buffer *vb2);
-int saa7134_ts_queue_setup(struct vb2_queue *q,
-			   unsigned int *nbuffers, unsigned int *nplanes,
-			   unsigned int sizes[], struct device *alloc_devs[]);
-int saa7134_ts_start_streaming(struct vb2_queue *vq, unsigned int count);
-void saa7134_ts_stop_streaming(struct vb2_queue *vq);
+पूर्णांक saa7134_ts_buffer_init(काष्ठा vb2_buffer *vb2);
+पूर्णांक saa7134_ts_buffer_prepare(काष्ठा vb2_buffer *vb2);
+पूर्णांक saa7134_ts_queue_setup(काष्ठा vb2_queue *q,
+			   अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
+			   अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[]);
+पूर्णांक saa7134_ts_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count);
+व्योम saa7134_ts_stop_streaming(काष्ठा vb2_queue *vq);
 
-extern struct vb2_ops saa7134_ts_qops;
+बाह्य काष्ठा vb2_ops saa7134_ts_qops;
 
-int saa7134_ts_init1(struct saa7134_dev *dev);
-int saa7134_ts_fini(struct saa7134_dev *dev);
-void saa7134_irq_ts_done(struct saa7134_dev *dev, unsigned long status);
+पूर्णांक saa7134_ts_init1(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_ts_fini(काष्ठा saa7134_dev *dev);
+व्योम saa7134_irq_ts_करोne(काष्ठा saa7134_dev *dev, अचिन्हित दीर्घ status);
 
-int saa7134_ts_register(struct saa7134_mpeg_ops *ops);
-void saa7134_ts_unregister(struct saa7134_mpeg_ops *ops);
+पूर्णांक saa7134_ts_रेजिस्टर(काष्ठा saa7134_mpeg_ops *ops);
+व्योम saa7134_ts_unरेजिस्टर(काष्ठा saa7134_mpeg_ops *ops);
 
-int saa7134_ts_init_hw(struct saa7134_dev *dev);
+पूर्णांक saa7134_ts_init_hw(काष्ठा saa7134_dev *dev);
 
-int saa7134_ts_start(struct saa7134_dev *dev);
-int saa7134_ts_stop(struct saa7134_dev *dev);
+पूर्णांक saa7134_ts_start(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_ts_stop(काष्ठा saa7134_dev *dev);
 
 /* ----------------------------------------------------------- */
 /* saa7134-vbi.c                                               */
 
-extern const struct vb2_ops saa7134_vbi_qops;
-extern struct video_device saa7134_vbi_template;
+बाह्य स्थिर काष्ठा vb2_ops saa7134_vbi_qops;
+बाह्य काष्ठा video_device saa7134_vbi_ढाँचा;
 
-int saa7134_vbi_init1(struct saa7134_dev *dev);
-int saa7134_vbi_fini(struct saa7134_dev *dev);
-void saa7134_irq_vbi_done(struct saa7134_dev *dev, unsigned long status);
+पूर्णांक saa7134_vbi_init1(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_vbi_fini(काष्ठा saa7134_dev *dev);
+व्योम saa7134_irq_vbi_करोne(काष्ठा saa7134_dev *dev, अचिन्हित दीर्घ status);
 
 
 /* ----------------------------------------------------------- */
 /* saa7134-tvaudio.c                                           */
 
-int saa7134_tvaudio_rx2mode(u32 rx);
+पूर्णांक saa7134_tvaudio_rx2mode(u32 rx);
 
-void saa7134_tvaudio_setmute(struct saa7134_dev *dev);
-void saa7134_tvaudio_setinput(struct saa7134_dev *dev,
-			      struct saa7134_input *in);
-void saa7134_tvaudio_setvolume(struct saa7134_dev *dev, int level);
-int saa7134_tvaudio_getstereo(struct saa7134_dev *dev);
+व्योम saa7134_tvaudio_seपंचांगute(काष्ठा saa7134_dev *dev);
+व्योम saa7134_tvaudio_setinput(काष्ठा saa7134_dev *dev,
+			      काष्ठा saa7134_input *in);
+व्योम saa7134_tvaudio_setvolume(काष्ठा saa7134_dev *dev, पूर्णांक level);
+पूर्णांक saa7134_tvaudio_माला_लोtereo(काष्ठा saa7134_dev *dev);
 
-void saa7134_tvaudio_init(struct saa7134_dev *dev);
-int saa7134_tvaudio_init2(struct saa7134_dev *dev);
-int saa7134_tvaudio_fini(struct saa7134_dev *dev);
-int saa7134_tvaudio_do_scan(struct saa7134_dev *dev);
-int saa7134_tvaudio_close(struct saa7134_dev *dev);
+व्योम saa7134_tvaudio_init(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_tvaudio_init2(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_tvaudio_fini(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_tvaudio_करो_scan(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_tvaudio_बंद(काष्ठा saa7134_dev *dev);
 
-int saa_dsp_writel(struct saa7134_dev *dev, int reg, u32 value);
+पूर्णांक saa_dsp_ग_लिखोl(काष्ठा saa7134_dev *dev, पूर्णांक reg, u32 value);
 
-void saa7134_enable_i2s(struct saa7134_dev *dev);
+व्योम saa7134_enable_i2s(काष्ठा saa7134_dev *dev);
 
 /* ----------------------------------------------------------- */
 /* saa7134-oss.c                                               */
 
-extern const struct file_operations saa7134_dsp_fops;
-extern const struct file_operations saa7134_mixer_fops;
+बाह्य स्थिर काष्ठा file_operations saa7134_dsp_fops;
+बाह्य स्थिर काष्ठा file_operations saa7134_mixer_fops;
 
-int saa7134_oss_init1(struct saa7134_dev *dev);
-int saa7134_oss_fini(struct saa7134_dev *dev);
-void saa7134_irq_oss_done(struct saa7134_dev *dev, unsigned long status);
+पूर्णांक saa7134_oss_init1(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_oss_fini(काष्ठा saa7134_dev *dev);
+व्योम saa7134_irq_oss_करोne(काष्ठा saa7134_dev *dev, अचिन्हित दीर्घ status);
 
 /* ----------------------------------------------------------- */
 /* saa7134-input.c                                             */
 
-#if defined(CONFIG_VIDEO_SAA7134_RC)
-int  saa7134_input_init1(struct saa7134_dev *dev);
-void saa7134_input_fini(struct saa7134_dev *dev);
-void saa7134_input_irq(struct saa7134_dev *dev);
-void saa7134_probe_i2c_ir(struct saa7134_dev *dev);
-int saa7134_ir_open(struct rc_dev *dev);
-void saa7134_ir_close(struct rc_dev *dev);
-#else
-#define saa7134_input_init1(dev)	((void)0)
-#define saa7134_input_fini(dev)		((void)0)
-#define saa7134_input_irq(dev)		((void)0)
-#define saa7134_probe_i2c_ir(dev)	((void)0)
-#define saa7134_ir_open(dev)		((void)0)
-#define saa7134_ir_close(dev)		((void)0)
-#endif
+#अगर defined(CONFIG_VIDEO_SAA7134_RC)
+पूर्णांक  saa7134_input_init1(काष्ठा saa7134_dev *dev);
+व्योम saa7134_input_fini(काष्ठा saa7134_dev *dev);
+व्योम saa7134_input_irq(काष्ठा saa7134_dev *dev);
+व्योम saa7134_probe_i2c_ir(काष्ठा saa7134_dev *dev);
+पूर्णांक saa7134_ir_खोलो(काष्ठा rc_dev *dev);
+व्योम saa7134_ir_बंद(काष्ठा rc_dev *dev);
+#अन्यथा
+#घोषणा saa7134_input_init1(dev)	((व्योम)0)
+#घोषणा saa7134_input_fini(dev)		((व्योम)0)
+#घोषणा saa7134_input_irq(dev)		((व्योम)0)
+#घोषणा saa7134_probe_i2c_ir(dev)	((व्योम)0)
+#घोषणा saa7134_ir_खोलो(dev)		((व्योम)0)
+#घोषणा saa7134_ir_बंद(dev)		((व्योम)0)
+#पूर्ण_अगर

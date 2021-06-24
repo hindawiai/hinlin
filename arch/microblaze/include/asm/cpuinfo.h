@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Generic support for queying CPU info
+ * Generic support क्रम queying CPU info
  *
  * Copyright (C) 2007-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2007-2009 PetaLogix
  * Copyright (C) 2007 John Williams <jwilliams@itee.uq.edu.au>
  */
 
-#ifndef _ASM_MICROBLAZE_CPUINFO_H
-#define _ASM_MICROBLAZE_CPUINFO_H
+#अगर_अघोषित _ASM_MICROBLAZE_CPUINFO_H
+#घोषणा _ASM_MICROBLAZE_CPUINFO_H
 
-#include <linux/of.h>
+#समावेश <linux/of.h>
 
 /* CPU Version and FPGA Family code conversion table type */
-struct cpu_ver_key {
-	const char *s;
-	const unsigned k;
-};
+काष्ठा cpu_ver_key अणु
+	स्थिर अक्षर *s;
+	स्थिर अचिन्हित k;
+पूर्ण;
 
-extern const struct cpu_ver_key cpu_ver_lookup[];
+बाह्य स्थिर काष्ठा cpu_ver_key cpu_ver_lookup[];
 
-struct family_string_key {
-	const char *s;
-	const unsigned k;
-};
+काष्ठा family_string_key अणु
+	स्थिर अक्षर *s;
+	स्थिर अचिन्हित k;
+पूर्ण;
 
-extern const struct family_string_key family_string_lookup[];
+बाह्य स्थिर काष्ठा family_string_key family_string_lookup[];
 
-struct cpuinfo {
+काष्ठा cpuinfo अणु
 	/* Core CPU configuration */
 	u32 use_instr;
 	u32 use_mult;
@@ -41,29 +42,29 @@ struct cpuinfo {
 	/* CPU caches */
 	u32 use_icache;
 	u32 icache_tagbits;
-	u32 icache_write;
+	u32 icache_ग_लिखो;
 	u32 icache_line_length;
 	u32 icache_size;
-	unsigned long icache_base;
-	unsigned long icache_high;
+	अचिन्हित दीर्घ icache_base;
+	अचिन्हित दीर्घ icache_high;
 
 	u32 use_dcache;
 	u32 dcache_tagbits;
-	u32 dcache_write;
+	u32 dcache_ग_लिखो;
 	u32 dcache_line_length;
 	u32 dcache_size;
 	u32 dcache_wb;
-	unsigned long dcache_base;
-	unsigned long dcache_high;
+	अचिन्हित दीर्घ dcache_base;
+	अचिन्हित दीर्घ dcache_high;
 
 	/* Bus connections */
-	u32 use_dopb;
+	u32 use_करोpb;
 	u32 use_iopb;
 	u32 use_dlmb;
 	u32 use_ilmb;
 	u32 num_fsl;
 
-	/* CPU interrupt line info */
+	/* CPU पूर्णांकerrupt line info */
 	u32 irq_edge;
 	u32 irq_positive;
 
@@ -74,7 +75,7 @@ struct cpuinfo {
 	u32 num_pc_brk;
 	u32 num_rd_brk;
 	u32 num_wr_brk;
-	u32 cpu_clock_freq; /* store real freq of cpu */
+	u32 cpu_घड़ी_freq; /* store real freq of cpu */
 
 	/* FPGA family */
 	u32 fpga_family_code;
@@ -82,24 +83,24 @@ struct cpuinfo {
 	/* User define */
 	u32 pvr_user1;
 	u32 pvr_user2;
-};
+पूर्ण;
 
-extern struct cpuinfo cpuinfo;
+बाह्य काष्ठा cpuinfo cpuinfo;
 
 /* fwd declarations of the various CPUinfo populators */
-void setup_cpuinfo(void);
-void setup_cpuinfo_clk(void);
+व्योम setup_cpuinfo(व्योम);
+व्योम setup_cpuinfo_clk(व्योम);
 
-void set_cpuinfo_static(struct cpuinfo *ci, struct device_node *cpu);
-void set_cpuinfo_pvr_full(struct cpuinfo *ci, struct device_node *cpu);
+व्योम set_cpuinfo_अटल(काष्ठा cpuinfo *ci, काष्ठा device_node *cpu);
+व्योम set_cpuinfo_pvr_full(काष्ठा cpuinfo *ci, काष्ठा device_node *cpu);
 
-static inline unsigned int fcpu(struct device_node *cpu, char *n)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक fcpu(काष्ठा device_node *cpu, अक्षर *n)
+अणु
 	u32 val = 0;
 
-	of_property_read_u32(cpu, n, &val);
+	of_property_पढ़ो_u32(cpu, n, &val);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-#endif /* _ASM_MICROBLAZE_CPUINFO_H */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_CPUINFO_H */

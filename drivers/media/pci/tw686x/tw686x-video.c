@@ -1,345 +1,346 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015 VanguardiaSur - www.vanguardiasur.com.ar
  *
  * Based on original driver by Krzysztof Ha?asa:
- * Copyright (C) 2015 Industrial Research Institute for Automation
+ * Copyright (C) 2015 Industrial Research Institute क्रम Automation
  * and Measurements PIAP
  */
 
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-event.h>
-#include <media/videobuf2-dma-contig.h>
-#include <media/videobuf2-dma-sg.h>
-#include <media/videobuf2-vmalloc.h>
-#include "tw686x.h"
-#include "tw686x-regs.h"
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/videobuf2-dma-contig.h>
+#समावेश <media/videobuf2-dma-sg.h>
+#समावेश <media/videobuf2-vदो_स्मृति.h>
+#समावेश "tw686x.h"
+#समावेश "tw686x-regs.h"
 
-#define TW686X_INPUTS_PER_CH		4
-#define TW686X_VIDEO_WIDTH		720
-#define TW686X_VIDEO_HEIGHT(id)		((id & V4L2_STD_525_60) ? 480 : 576)
-#define TW686X_MAX_FPS(id)		((id & V4L2_STD_525_60) ? 30 : 25)
+#घोषणा TW686X_INPUTS_PER_CH		4
+#घोषणा TW686X_VIDEO_WIDTH		720
+#घोषणा TW686X_VIDEO_HEIGHT(id)		((id & V4L2_STD_525_60) ? 480 : 576)
+#घोषणा TW686X_MAX_FPS(id)		((id & V4L2_STD_525_60) ? 30 : 25)
 
-#define TW686X_MAX_SG_ENTRY_SIZE	4096
-#define TW686X_MAX_SG_DESC_COUNT	256 /* PAL 720x576 needs 203 4-KB pages */
-#define TW686X_SG_TABLE_SIZE		(TW686X_MAX_SG_DESC_COUNT * sizeof(struct tw686x_sg_desc))
+#घोषणा TW686X_MAX_SG_ENTRY_SIZE	4096
+#घोषणा TW686X_MAX_SG_DESC_COUNT	256 /* PAL 720x576 needs 203 4-KB pages */
+#घोषणा TW686X_SG_TABLE_SIZE		(TW686X_MAX_SG_DESC_COUNT * माप(काष्ठा tw686x_sg_desc))
 
-static const struct tw686x_format formats[] = {
-	{
+अटल स्थिर काष्ठा tw686x_क्रमmat क्रमmats[] = अणु
+	अणु
 		.fourcc = V4L2_PIX_FMT_UYVY,
 		.mode = 0,
 		.depth = 16,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_RGB565,
 		.mode = 5,
 		.depth = 16,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_YUYV,
 		.mode = 6,
 		.depth = 16,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static void tw686x_buf_done(struct tw686x_video_channel *vc,
-			    unsigned int pb)
-{
-	struct tw686x_dma_desc *desc = &vc->dma_descs[pb];
-	struct tw686x_dev *dev = vc->dev;
-	struct vb2_v4l2_buffer *vb;
-	struct vb2_buffer *vb2_buf;
+अटल व्योम tw686x_buf_करोne(काष्ठा tw686x_video_channel *vc,
+			    अचिन्हित पूर्णांक pb)
+अणु
+	काष्ठा tw686x_dma_desc *desc = &vc->dma_descs[pb];
+	काष्ठा tw686x_dev *dev = vc->dev;
+	काष्ठा vb2_v4l2_buffer *vb;
+	काष्ठा vb2_buffer *vb2_buf;
 
-	if (vc->curr_bufs[pb]) {
+	अगर (vc->curr_bufs[pb]) अणु
 		vb = &vc->curr_bufs[pb]->vb;
 
 		vb->field = dev->dma_ops->field;
 		vb->sequence = vc->sequence++;
 		vb2_buf = &vb->vb2_buf;
 
-		if (dev->dma_mode == TW686X_DMA_MODE_MEMCPY)
-			memcpy(vb2_plane_vaddr(vb2_buf, 0), desc->virt,
+		अगर (dev->dma_mode == TW686X_DMA_MODE_MEMCPY)
+			स_नकल(vb2_plane_vaddr(vb2_buf, 0), desc->virt,
 			       desc->size);
-		vb2_buf->timestamp = ktime_get_ns();
-		vb2_buffer_done(vb2_buf, VB2_BUF_STATE_DONE);
-	}
+		vb2_buf->बारtamp = kसमय_get_ns();
+		vb2_buffer_करोne(vb2_buf, VB2_BUF_STATE_DONE);
+	पूर्ण
 
 	vc->pb = !pb;
-}
+पूर्ण
 
 /*
- * We can call this even when alloc_dma failed for the given channel
+ * We can call this even when alloc_dma failed क्रम the given channel
  */
-static void tw686x_memcpy_dma_free(struct tw686x_video_channel *vc,
-				   unsigned int pb)
-{
-	struct tw686x_dma_desc *desc = &vc->dma_descs[pb];
-	struct tw686x_dev *dev = vc->dev;
-	struct pci_dev *pci_dev;
-	unsigned long flags;
+अटल व्योम tw686x_स_नकल_dma_मुक्त(काष्ठा tw686x_video_channel *vc,
+				   अचिन्हित पूर्णांक pb)
+अणु
+	काष्ठा tw686x_dma_desc *desc = &vc->dma_descs[pb];
+	काष्ठा tw686x_dev *dev = vc->dev;
+	काष्ठा pci_dev *pci_dev;
+	अचिन्हित दीर्घ flags;
 
 	/* Check device presence. Shouldn't really happen! */
 	spin_lock_irqsave(&dev->lock, flags);
 	pci_dev = dev->pci_dev;
 	spin_unlock_irqrestore(&dev->lock, flags);
-	if (!pci_dev) {
+	अगर (!pci_dev) अणु
 		WARN(1, "trying to deallocate on missing device\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (desc->virt) {
-		dma_free_coherent(&dev->pci_dev->dev, desc->size, desc->virt,
+	अगर (desc->virt) अणु
+		dma_मुक्त_coherent(&dev->pci_dev->dev, desc->size, desc->virt,
 				  desc->phys);
-		desc->virt = NULL;
-	}
-}
+		desc->virt = शून्य;
+	पूर्ण
+पूर्ण
 
-static int tw686x_memcpy_dma_alloc(struct tw686x_video_channel *vc,
-				   unsigned int pb)
-{
-	struct tw686x_dev *dev = vc->dev;
+अटल पूर्णांक tw686x_स_नकल_dma_alloc(काष्ठा tw686x_video_channel *vc,
+				   अचिन्हित पूर्णांक pb)
+अणु
+	काष्ठा tw686x_dev *dev = vc->dev;
 	u32 reg = pb ? VDMA_B_ADDR[vc->ch] : VDMA_P_ADDR[vc->ch];
-	unsigned int len;
-	void *virt;
+	अचिन्हित पूर्णांक len;
+	व्योम *virt;
 
 	WARN(vc->dma_descs[pb].virt,
 	     "Allocating buffer but previous still here\n");
 
-	len = (vc->width * vc->height * vc->format->depth) >> 3;
+	len = (vc->width * vc->height * vc->क्रमmat->depth) >> 3;
 	virt = dma_alloc_coherent(&dev->pci_dev->dev, len,
 				  &vc->dma_descs[pb].phys, GFP_KERNEL);
-	if (!virt) {
+	अगर (!virt) अणु
 		v4l2_err(&dev->v4l2_dev,
 			 "dma%d: unable to allocate %s-buffer\n",
 			 vc->ch, pb ? "B" : "P");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	vc->dma_descs[pb].size = len;
 	vc->dma_descs[pb].virt = virt;
-	reg_write(dev, reg, vc->dma_descs[pb].phys);
+	reg_ग_लिखो(dev, reg, vc->dma_descs[pb].phys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tw686x_memcpy_buf_refill(struct tw686x_video_channel *vc,
-				     unsigned int pb)
-{
-	struct tw686x_v4l2_buf *buf;
+अटल व्योम tw686x_स_नकल_buf_refill(काष्ठा tw686x_video_channel *vc,
+				     अचिन्हित पूर्णांक pb)
+अणु
+	काष्ठा tw686x_v4l2_buf *buf;
 
-	while (!list_empty(&vc->vidq_queued)) {
+	जबतक (!list_empty(&vc->vidq_queued)) अणु
 
 		buf = list_first_entry(&vc->vidq_queued,
-			struct tw686x_v4l2_buf, list);
+			काष्ठा tw686x_v4l2_buf, list);
 		list_del(&buf->list);
 
 		vc->curr_bufs[pb] = buf;
-		return;
-	}
-	vc->curr_bufs[pb] = NULL;
-}
+		वापस;
+	पूर्ण
+	vc->curr_bufs[pb] = शून्य;
+पूर्ण
 
-static const struct tw686x_dma_ops memcpy_dma_ops = {
-	.alloc		= tw686x_memcpy_dma_alloc,
-	.free		= tw686x_memcpy_dma_free,
-	.buf_refill	= tw686x_memcpy_buf_refill,
-	.mem_ops	= &vb2_vmalloc_memops,
+अटल स्थिर काष्ठा tw686x_dma_ops स_नकल_dma_ops = अणु
+	.alloc		= tw686x_स_नकल_dma_alloc,
+	.मुक्त		= tw686x_स_नकल_dma_मुक्त,
+	.buf_refill	= tw686x_स_नकल_buf_refill,
+	.mem_ops	= &vb2_vदो_स्मृति_memops,
 	.hw_dma_mode	= TW686X_FRAME_MODE,
 	.field		= V4L2_FIELD_INTERLACED,
-};
+पूर्ण;
 
-static void tw686x_contig_buf_refill(struct tw686x_video_channel *vc,
-				     unsigned int pb)
-{
-	struct tw686x_v4l2_buf *buf;
+अटल व्योम tw686x_contig_buf_refill(काष्ठा tw686x_video_channel *vc,
+				     अचिन्हित पूर्णांक pb)
+अणु
+	काष्ठा tw686x_v4l2_buf *buf;
 
-	while (!list_empty(&vc->vidq_queued)) {
+	जबतक (!list_empty(&vc->vidq_queued)) अणु
 		u32 reg = pb ? VDMA_B_ADDR[vc->ch] : VDMA_P_ADDR[vc->ch];
 		dma_addr_t phys;
 
 		buf = list_first_entry(&vc->vidq_queued,
-			struct tw686x_v4l2_buf, list);
+			काष्ठा tw686x_v4l2_buf, list);
 		list_del(&buf->list);
 
 		phys = vb2_dma_contig_plane_dma_addr(&buf->vb.vb2_buf, 0);
-		reg_write(vc->dev, reg, phys);
+		reg_ग_लिखो(vc->dev, reg, phys);
 
 		buf->vb.vb2_buf.state = VB2_BUF_STATE_ACTIVE;
 		vc->curr_bufs[pb] = buf;
-		return;
-	}
-	vc->curr_bufs[pb] = NULL;
-}
+		वापस;
+	पूर्ण
+	vc->curr_bufs[pb] = शून्य;
+पूर्ण
 
-static const struct tw686x_dma_ops contig_dma_ops = {
+अटल स्थिर काष्ठा tw686x_dma_ops contig_dma_ops = अणु
 	.buf_refill	= tw686x_contig_buf_refill,
 	.mem_ops	= &vb2_dma_contig_memops,
 	.hw_dma_mode	= TW686X_FRAME_MODE,
 	.field		= V4L2_FIELD_INTERLACED,
-};
+पूर्ण;
 
-static int tw686x_sg_desc_fill(struct tw686x_sg_desc *descs,
-			       struct tw686x_v4l2_buf *buf,
-			       unsigned int buf_len)
-{
-	struct sg_table *vbuf = vb2_dma_sg_plane_desc(&buf->vb.vb2_buf, 0);
-	unsigned int len, entry_len;
-	struct scatterlist *sg;
-	int i, count;
+अटल पूर्णांक tw686x_sg_desc_fill(काष्ठा tw686x_sg_desc *descs,
+			       काष्ठा tw686x_v4l2_buf *buf,
+			       अचिन्हित पूर्णांक buf_len)
+अणु
+	काष्ठा sg_table *vbuf = vb2_dma_sg_plane_desc(&buf->vb.vb2_buf, 0);
+	अचिन्हित पूर्णांक len, entry_len;
+	काष्ठा scatterlist *sg;
+	पूर्णांक i, count;
 
 	/* Clear the scatter-gather table */
-	memset(descs, 0, TW686X_SG_TABLE_SIZE);
+	स_रखो(descs, 0, TW686X_SG_TABLE_SIZE);
 
 	count = 0;
-	for_each_sg(vbuf->sgl, sg, vbuf->nents, i) {
+	क्रम_each_sg(vbuf->sgl, sg, vbuf->nents, i) अणु
 		dma_addr_t phys = sg_dma_address(sg);
 		len = sg_dma_len(sg);
 
-		while (len && buf_len) {
+		जबतक (len && buf_len) अणु
 
-			if (count == TW686X_MAX_SG_DESC_COUNT)
-				return -ENOMEM;
+			अगर (count == TW686X_MAX_SG_DESC_COUNT)
+				वापस -ENOMEM;
 
-			entry_len = min_t(unsigned int, len,
+			entry_len = min_t(अचिन्हित पूर्णांक, len,
 					  TW686X_MAX_SG_ENTRY_SIZE);
-			entry_len = min_t(unsigned int, entry_len, buf_len);
+			entry_len = min_t(अचिन्हित पूर्णांक, entry_len, buf_len);
 			descs[count].phys = cpu_to_le32(phys);
 			descs[count++].flags_length =
 					cpu_to_le32(BIT(30) | entry_len);
 			phys += entry_len;
 			len -= entry_len;
 			buf_len -= entry_len;
-		}
+		पूर्ण
 
-		if (!buf_len)
-			return 0;
-	}
+		अगर (!buf_len)
+			वापस 0;
+	पूर्ण
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void tw686x_sg_buf_refill(struct tw686x_video_channel *vc,
-				 unsigned int pb)
-{
-	struct tw686x_dev *dev = vc->dev;
-	struct tw686x_v4l2_buf *buf;
+अटल व्योम tw686x_sg_buf_refill(काष्ठा tw686x_video_channel *vc,
+				 अचिन्हित पूर्णांक pb)
+अणु
+	काष्ठा tw686x_dev *dev = vc->dev;
+	काष्ठा tw686x_v4l2_buf *buf;
 
-	while (!list_empty(&vc->vidq_queued)) {
-		unsigned int buf_len;
+	जबतक (!list_empty(&vc->vidq_queued)) अणु
+		अचिन्हित पूर्णांक buf_len;
 
 		buf = list_first_entry(&vc->vidq_queued,
-			struct tw686x_v4l2_buf, list);
+			काष्ठा tw686x_v4l2_buf, list);
 		list_del(&buf->list);
 
-		buf_len = (vc->width * vc->height * vc->format->depth) >> 3;
-		if (tw686x_sg_desc_fill(vc->sg_descs[pb], buf, buf_len)) {
+		buf_len = (vc->width * vc->height * vc->क्रमmat->depth) >> 3;
+		अगर (tw686x_sg_desc_fill(vc->sg_descs[pb], buf, buf_len)) अणु
 			v4l2_err(&dev->v4l2_dev,
 				 "dma%d: unable to fill %s-buffer\n",
 				 vc->ch, pb ? "B" : "P");
-			vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-			continue;
-		}
+			vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+			जारी;
+		पूर्ण
 
 		buf->vb.vb2_buf.state = VB2_BUF_STATE_ACTIVE;
 		vc->curr_bufs[pb] = buf;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	vc->curr_bufs[pb] = NULL;
-}
+	vc->curr_bufs[pb] = शून्य;
+पूर्ण
 
-static void tw686x_sg_dma_free(struct tw686x_video_channel *vc,
-			       unsigned int pb)
-{
-	struct tw686x_dma_desc *desc = &vc->dma_descs[pb];
-	struct tw686x_dev *dev = vc->dev;
+अटल व्योम tw686x_sg_dma_मुक्त(काष्ठा tw686x_video_channel *vc,
+			       अचिन्हित पूर्णांक pb)
+अणु
+	काष्ठा tw686x_dma_desc *desc = &vc->dma_descs[pb];
+	काष्ठा tw686x_dev *dev = vc->dev;
 
-	if (desc->size) {
-		dma_free_coherent(&dev->pci_dev->dev, desc->size, desc->virt,
+	अगर (desc->size) अणु
+		dma_मुक्त_coherent(&dev->pci_dev->dev, desc->size, desc->virt,
 				  desc->phys);
-		desc->virt = NULL;
-	}
+		desc->virt = शून्य;
+	पूर्ण
 
-	vc->sg_descs[pb] = NULL;
-}
+	vc->sg_descs[pb] = शून्य;
+पूर्ण
 
-static int tw686x_sg_dma_alloc(struct tw686x_video_channel *vc,
-			       unsigned int pb)
-{
-	struct tw686x_dma_desc *desc = &vc->dma_descs[pb];
-	struct tw686x_dev *dev = vc->dev;
+अटल पूर्णांक tw686x_sg_dma_alloc(काष्ठा tw686x_video_channel *vc,
+			       अचिन्हित पूर्णांक pb)
+अणु
+	काष्ठा tw686x_dma_desc *desc = &vc->dma_descs[pb];
+	काष्ठा tw686x_dev *dev = vc->dev;
 	u32 reg = pb ? DMA_PAGE_TABLE1_ADDR[vc->ch] :
 		       DMA_PAGE_TABLE0_ADDR[vc->ch];
-	void *virt;
+	व्योम *virt;
 
-	if (desc->size) {
+	अगर (desc->size) अणु
 		virt = dma_alloc_coherent(&dev->pci_dev->dev, desc->size,
 					  &desc->phys, GFP_KERNEL);
-		if (!virt) {
+		अगर (!virt) अणु
 			v4l2_err(&dev->v4l2_dev,
 				 "dma%d: unable to allocate %s-buffer\n",
 				 vc->ch, pb ? "B" : "P");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		desc->virt = virt;
-		reg_write(dev, reg, desc->phys);
-	} else {
+		reg_ग_लिखो(dev, reg, desc->phys);
+	पूर्ण अन्यथा अणु
 		virt = dev->video_channels[0].dma_descs[pb].virt +
 		       vc->ch * TW686X_SG_TABLE_SIZE;
-	}
+	पूर्ण
 
 	vc->sg_descs[pb] = virt;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_sg_setup(struct tw686x_dev *dev)
-{
-	unsigned int sg_table_size, pb, ch, channels;
+अटल पूर्णांक tw686x_sg_setup(काष्ठा tw686x_dev *dev)
+अणु
+	अचिन्हित पूर्णांक sg_table_size, pb, ch, channels;
 
-	if (is_second_gen(dev)) {
+	अगर (is_second_gen(dev)) अणु
 		/*
 		 * TW6865/TW6869: each channel needs a pair of
 		 * P-B descriptor tables.
 		 */
 		channels = max_channels(dev);
 		sg_table_size = TW686X_SG_TABLE_SIZE;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * TW6864/TW6868: we need to allocate a pair of
-		 * P-B descriptor tables, common for all channels.
+		 * P-B descriptor tables, common क्रम all channels.
 		 * Each table will be bigger than 4 KB.
 		 */
 		channels = 1;
 		sg_table_size = max_channels(dev) * TW686X_SG_TABLE_SIZE;
-	}
+	पूर्ण
 
-	for (ch = 0; ch < channels; ch++) {
-		struct tw686x_video_channel *vc = &dev->video_channels[ch];
+	क्रम (ch = 0; ch < channels; ch++) अणु
+		काष्ठा tw686x_video_channel *vc = &dev->video_channels[ch];
 
-		for (pb = 0; pb < 2; pb++)
+		क्रम (pb = 0; pb < 2; pb++)
 			vc->dma_descs[pb].size = sg_table_size;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct tw686x_dma_ops sg_dma_ops = {
+अटल स्थिर काष्ठा tw686x_dma_ops sg_dma_ops = अणु
 	.setup		= tw686x_sg_setup,
 	.alloc		= tw686x_sg_dma_alloc,
-	.free		= tw686x_sg_dma_free,
+	.मुक्त		= tw686x_sg_dma_मुक्त,
 	.buf_refill	= tw686x_sg_buf_refill,
 	.mem_ops	= &vb2_dma_sg_memops,
 	.hw_dma_mode	= TW686X_SG_MODE,
 	.field		= V4L2_FIELD_SEQ_TB,
-};
+पूर्ण;
 
-static const unsigned int fps_map[15] = {
+अटल स्थिर अचिन्हित पूर्णांक fps_map[15] = अणु
 	/*
-	 * bit 31 enables selecting the field control register
-	 * bits 0-29 are a bitmask with fields that will be output.
+	 * bit 31 enables selecting the field control रेजिस्टर
+	 * bits 0-29 are a biपंचांगask with fields that will be output.
 	 * For NTSC (and PAL-M, PAL-60), all 30 bits are used.
 	 * For other PAL standards, only the first 25 bits are used.
 	 */
@@ -358,168 +359,168 @@ static const unsigned int fps_map[15] = {
 	0x9fe7f9fe, /* 24 fps (60Hz), 20 fps (50Hz) */
 	0x9ffe7ffe, /* 26 fps (60Hz), 22 fps (50Hz) */
 	0x9ffffffe, /* 28 fps (60Hz), 24 fps (50Hz) */
-};
+पूर्ण;
 
-static unsigned int tw686x_real_fps(unsigned int index, unsigned int max_fps)
-{
-	unsigned long mask;
+अटल अचिन्हित पूर्णांक tw686x_real_fps(अचिन्हित पूर्णांक index, अचिन्हित पूर्णांक max_fps)
+अणु
+	अचिन्हित दीर्घ mask;
 
-	if (!index || index >= ARRAY_SIZE(fps_map))
-		return max_fps;
+	अगर (!index || index >= ARRAY_SIZE(fps_map))
+		वापस max_fps;
 
 	mask = GENMASK(max_fps - 1, 0);
-	return hweight_long(fps_map[index] & mask);
-}
+	वापस hweight_दीर्घ(fps_map[index] & mask);
+पूर्ण
 
-static unsigned int tw686x_fps_idx(unsigned int fps, unsigned int max_fps)
-{
-	unsigned int idx, real_fps;
-	int delta;
+अटल अचिन्हित पूर्णांक tw686x_fps_idx(अचिन्हित पूर्णांक fps, अचिन्हित पूर्णांक max_fps)
+अणु
+	अचिन्हित पूर्णांक idx, real_fps;
+	पूर्णांक delta;
 
 	/* First guess */
 	idx = (12 + 15 * fps) / max_fps;
 
 	/* Minimal possible framerate is 2 frames per second */
-	if (!idx)
-		return 1;
+	अगर (!idx)
+		वापस 1;
 
-	/* Check if the difference is bigger than abs(1) and adjust */
+	/* Check अगर the dअगरference is bigger than असल(1) and adjust */
 	real_fps = tw686x_real_fps(idx, max_fps);
 	delta = real_fps - fps;
-	if (delta < -1)
+	अगर (delta < -1)
 		idx++;
-	else if (delta > 1)
+	अन्यथा अगर (delta > 1)
 		idx--;
 
 	/* Max framerate */
-	if (idx >= 15)
-		return 0;
+	अगर (idx >= 15)
+		वापस 0;
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static void tw686x_set_framerate(struct tw686x_video_channel *vc,
-				 unsigned int fps)
-{
-	unsigned int i;
+अटल व्योम tw686x_set_framerate(काष्ठा tw686x_video_channel *vc,
+				 अचिन्हित पूर्णांक fps)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	i = tw686x_fps_idx(fps, TW686X_MAX_FPS(vc->video_standard));
-	reg_write(vc->dev, VIDEO_FIELD_CTRL[vc->ch], fps_map[i]);
+	reg_ग_लिखो(vc->dev, VIDEO_FIELD_CTRL[vc->ch], fps_map[i]);
 	vc->fps = tw686x_real_fps(i, TW686X_MAX_FPS(vc->video_standard));
-}
+पूर्ण
 
-static const struct tw686x_format *format_by_fourcc(unsigned int fourcc)
-{
-	unsigned int cnt;
+अटल स्थिर काष्ठा tw686x_क्रमmat *क्रमmat_by_fourcc(अचिन्हित पूर्णांक fourcc)
+अणु
+	अचिन्हित पूर्णांक cnt;
 
-	for (cnt = 0; cnt < ARRAY_SIZE(formats); cnt++)
-		if (formats[cnt].fourcc == fourcc)
-			return &formats[cnt];
-	return NULL;
-}
+	क्रम (cnt = 0; cnt < ARRAY_SIZE(क्रमmats); cnt++)
+		अगर (क्रमmats[cnt].fourcc == fourcc)
+			वापस &क्रमmats[cnt];
+	वापस शून्य;
+पूर्ण
 
-static int tw686x_queue_setup(struct vb2_queue *vq,
-			      unsigned int *nbuffers, unsigned int *nplanes,
-			      unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct tw686x_video_channel *vc = vb2_get_drv_priv(vq);
-	unsigned int szimage =
-		(vc->width * vc->height * vc->format->depth) >> 3;
+अटल पूर्णांक tw686x_queue_setup(काष्ठा vb2_queue *vq,
+			      अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
+			      अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा tw686x_video_channel *vc = vb2_get_drv_priv(vq);
+	अचिन्हित पूर्णांक szimage =
+		(vc->width * vc->height * vc->क्रमmat->depth) >> 3;
 
 	/*
-	 * Let's request at least three buffers: two for the
-	 * DMA engine and one for userspace.
+	 * Let's request at least three buffers: two क्रम the
+	 * DMA engine and one क्रम userspace.
 	 */
-	if (vq->num_buffers + *nbuffers < 3)
+	अगर (vq->num_buffers + *nbuffers < 3)
 		*nbuffers = 3 - vq->num_buffers;
 
-	if (*nplanes) {
-		if (*nplanes != 1 || sizes[0] < szimage)
-			return -EINVAL;
-		return 0;
-	}
+	अगर (*nplanes) अणु
+		अगर (*nplanes != 1 || sizes[0] < szimage)
+			वापस -EINVAL;
+		वापस 0;
+	पूर्ण
 
 	sizes[0] = szimage;
 	*nplanes = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tw686x_buf_queue(struct vb2_buffer *vb)
-{
-	struct tw686x_video_channel *vc = vb2_get_drv_priv(vb->vb2_queue);
-	struct tw686x_dev *dev = vc->dev;
-	struct pci_dev *pci_dev;
-	unsigned long flags;
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct tw686x_v4l2_buf *buf =
-		container_of(vbuf, struct tw686x_v4l2_buf, vb);
+अटल व्योम tw686x_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा tw686x_video_channel *vc = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा tw686x_dev *dev = vc->dev;
+	काष्ठा pci_dev *pci_dev;
+	अचिन्हित दीर्घ flags;
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा tw686x_v4l2_buf *buf =
+		container_of(vbuf, काष्ठा tw686x_v4l2_buf, vb);
 
 	/* Check device presence */
 	spin_lock_irqsave(&dev->lock, flags);
 	pci_dev = dev->pci_dev;
 	spin_unlock_irqrestore(&dev->lock, flags);
-	if (!pci_dev) {
-		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-		return;
-	}
+	अगर (!pci_dev) अणु
+		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&vc->qlock, flags);
 	list_add_tail(&buf->list, &vc->vidq_queued);
 	spin_unlock_irqrestore(&vc->qlock, flags);
-}
+पूर्ण
 
-static void tw686x_clear_queue(struct tw686x_video_channel *vc,
-			       enum vb2_buffer_state state)
-{
-	unsigned int pb;
+अटल व्योम tw686x_clear_queue(काष्ठा tw686x_video_channel *vc,
+			       क्रमागत vb2_buffer_state state)
+अणु
+	अचिन्हित पूर्णांक pb;
 
-	while (!list_empty(&vc->vidq_queued)) {
-		struct tw686x_v4l2_buf *buf;
+	जबतक (!list_empty(&vc->vidq_queued)) अणु
+		काष्ठा tw686x_v4l2_buf *buf;
 
 		buf = list_first_entry(&vc->vidq_queued,
-			struct tw686x_v4l2_buf, list);
+			काष्ठा tw686x_v4l2_buf, list);
 		list_del(&buf->list);
-		vb2_buffer_done(&buf->vb.vb2_buf, state);
-	}
+		vb2_buffer_करोne(&buf->vb.vb2_buf, state);
+	पूर्ण
 
-	for (pb = 0; pb < 2; pb++) {
-		if (vc->curr_bufs[pb])
-			vb2_buffer_done(&vc->curr_bufs[pb]->vb.vb2_buf, state);
-		vc->curr_bufs[pb] = NULL;
-	}
-}
+	क्रम (pb = 0; pb < 2; pb++) अणु
+		अगर (vc->curr_bufs[pb])
+			vb2_buffer_करोne(&vc->curr_bufs[pb]->vb.vb2_buf, state);
+		vc->curr_bufs[pb] = शून्य;
+	पूर्ण
+पूर्ण
 
-static int tw686x_start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct tw686x_video_channel *vc = vb2_get_drv_priv(vq);
-	struct tw686x_dev *dev = vc->dev;
-	struct pci_dev *pci_dev;
-	unsigned long flags;
-	int pb, err;
+अटल पूर्णांक tw686x_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा tw686x_video_channel *vc = vb2_get_drv_priv(vq);
+	काष्ठा tw686x_dev *dev = vc->dev;
+	काष्ठा pci_dev *pci_dev;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक pb, err;
 
 	/* Check device presence */
 	spin_lock_irqsave(&dev->lock, flags);
 	pci_dev = dev->pci_dev;
 	spin_unlock_irqrestore(&dev->lock, flags);
-	if (!pci_dev) {
+	अगर (!pci_dev) अणु
 		err = -ENODEV;
-		goto err_clear_queue;
-	}
+		जाओ err_clear_queue;
+	पूर्ण
 
 	spin_lock_irqsave(&vc->qlock, flags);
 
 	/* Sanity check */
-	if (dev->dma_mode == TW686X_DMA_MODE_MEMCPY &&
-	    (!vc->dma_descs[0].virt || !vc->dma_descs[1].virt)) {
+	अगर (dev->dma_mode == TW686X_DMA_MODE_MEMCPY &&
+	    (!vc->dma_descs[0].virt || !vc->dma_descs[1].virt)) अणु
 		spin_unlock_irqrestore(&vc->qlock, flags);
 		v4l2_err(&dev->v4l2_dev,
 			 "video%d: refusing to start without DMA buffers\n",
 			 vc->num);
 		err = -ENOMEM;
-		goto err_clear_queue;
-	}
+		जाओ err_clear_queue;
+	पूर्ण
 
-	for (pb = 0; pb < 2; pb++)
+	क्रम (pb = 0; pb < 2; pb++)
 		dev->dma_ops->buf_refill(vc, pb);
 	spin_unlock_irqrestore(&vc->qlock, flags);
 
@@ -530,186 +531,186 @@ static int tw686x_start_streaming(struct vb2_queue *vq, unsigned int count)
 	tw686x_enable_channel(dev, vc->ch);
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	mod_timer(&dev->dma_delay_timer, jiffies + msecs_to_jiffies(100));
+	mod_समयr(&dev->dma_delay_समयr, jअगरfies + msecs_to_jअगरfies(100));
 
-	return 0;
+	वापस 0;
 
 err_clear_queue:
 	spin_lock_irqsave(&vc->qlock, flags);
 	tw686x_clear_queue(vc, VB2_BUF_STATE_QUEUED);
 	spin_unlock_irqrestore(&vc->qlock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void tw686x_stop_streaming(struct vb2_queue *vq)
-{
-	struct tw686x_video_channel *vc = vb2_get_drv_priv(vq);
-	struct tw686x_dev *dev = vc->dev;
-	struct pci_dev *pci_dev;
-	unsigned long flags;
+अटल व्योम tw686x_stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा tw686x_video_channel *vc = vb2_get_drv_priv(vq);
+	काष्ठा tw686x_dev *dev = vc->dev;
+	काष्ठा pci_dev *pci_dev;
+	अचिन्हित दीर्घ flags;
 
 	/* Check device presence */
 	spin_lock_irqsave(&dev->lock, flags);
 	pci_dev = dev->pci_dev;
 	spin_unlock_irqrestore(&dev->lock, flags);
-	if (pci_dev)
+	अगर (pci_dev)
 		tw686x_disable_channel(dev, vc->ch);
 
 	spin_lock_irqsave(&vc->qlock, flags);
 	tw686x_clear_queue(vc, VB2_BUF_STATE_ERROR);
 	spin_unlock_irqrestore(&vc->qlock, flags);
-}
+पूर्ण
 
-static int tw686x_buf_prepare(struct vb2_buffer *vb)
-{
-	struct tw686x_video_channel *vc = vb2_get_drv_priv(vb->vb2_queue);
-	unsigned int size =
-		(vc->width * vc->height * vc->format->depth) >> 3;
+अटल पूर्णांक tw686x_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा tw686x_video_channel *vc = vb2_get_drv_priv(vb->vb2_queue);
+	अचिन्हित पूर्णांक size =
+		(vc->width * vc->height * vc->क्रमmat->depth) >> 3;
 
-	if (vb2_plane_size(vb, 0) < size)
-		return -EINVAL;
+	अगर (vb2_plane_size(vb, 0) < size)
+		वापस -EINVAL;
 	vb2_set_plane_payload(vb, 0, size);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct vb2_ops tw686x_video_qops = {
+अटल स्थिर काष्ठा vb2_ops tw686x_video_qops = अणु
 	.queue_setup		= tw686x_queue_setup,
 	.buf_queue		= tw686x_buf_queue,
 	.buf_prepare		= tw686x_buf_prepare,
 	.start_streaming	= tw686x_start_streaming,
 	.stop_streaming		= tw686x_stop_streaming,
-	.wait_prepare		= vb2_ops_wait_prepare,
-	.wait_finish		= vb2_ops_wait_finish,
-};
+	.रुको_prepare		= vb2_ops_रुको_prepare,
+	.रुको_finish		= vb2_ops_रुको_finish,
+पूर्ण;
 
-static int tw686x_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct tw686x_video_channel *vc;
-	struct tw686x_dev *dev;
-	unsigned int ch;
+अटल पूर्णांक tw686x_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा tw686x_video_channel *vc;
+	काष्ठा tw686x_dev *dev;
+	अचिन्हित पूर्णांक ch;
 
-	vc = container_of(ctrl->handler, struct tw686x_video_channel,
+	vc = container_of(ctrl->handler, काष्ठा tw686x_video_channel,
 			  ctrl_handler);
 	dev = vc->dev;
 	ch = vc->ch;
 
-	switch (ctrl->id) {
-	case V4L2_CID_BRIGHTNESS:
-		reg_write(dev, BRIGHT[ch], ctrl->val & 0xff);
-		return 0;
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_BRIGHTNESS:
+		reg_ग_लिखो(dev, BRIGHT[ch], ctrl->val & 0xff);
+		वापस 0;
 
-	case V4L2_CID_CONTRAST:
-		reg_write(dev, CONTRAST[ch], ctrl->val);
-		return 0;
+	हाल V4L2_CID_CONTRAST:
+		reg_ग_लिखो(dev, CONTRAST[ch], ctrl->val);
+		वापस 0;
 
-	case V4L2_CID_SATURATION:
-		reg_write(dev, SAT_U[ch], ctrl->val);
-		reg_write(dev, SAT_V[ch], ctrl->val);
-		return 0;
+	हाल V4L2_CID_SATURATION:
+		reg_ग_लिखो(dev, SAT_U[ch], ctrl->val);
+		reg_ग_लिखो(dev, SAT_V[ch], ctrl->val);
+		वापस 0;
 
-	case V4L2_CID_HUE:
-		reg_write(dev, HUE[ch], ctrl->val & 0xff);
-		return 0;
-	}
+	हाल V4L2_CID_HUE:
+		reg_ग_लिखो(dev, HUE[ch], ctrl->val & 0xff);
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct v4l2_ctrl_ops ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops ctrl_ops = अणु
 	.s_ctrl = tw686x_s_ctrl,
-};
+पूर्ण;
 
-static int tw686x_g_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	struct tw686x_dev *dev = vc->dev;
+अटल पूर्णांक tw686x_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	काष्ठा tw686x_dev *dev = vc->dev;
 
 	f->fmt.pix.width = vc->width;
 	f->fmt.pix.height = vc->height;
 	f->fmt.pix.field = dev->dma_ops->field;
-	f->fmt.pix.pixelformat = vc->format->fourcc;
+	f->fmt.pix.pixelक्रमmat = vc->क्रमmat->fourcc;
 	f->fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
-	f->fmt.pix.bytesperline = (f->fmt.pix.width * vc->format->depth) / 8;
+	f->fmt.pix.bytesperline = (f->fmt.pix.width * vc->क्रमmat->depth) / 8;
 	f->fmt.pix.sizeimage = f->fmt.pix.height * f->fmt.pix.bytesperline;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_try_fmt_vid_cap(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	struct tw686x_dev *dev = vc->dev;
-	unsigned int video_height = TW686X_VIDEO_HEIGHT(vc->video_standard);
-	const struct tw686x_format *format;
+अटल पूर्णांक tw686x_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	काष्ठा tw686x_dev *dev = vc->dev;
+	अचिन्हित पूर्णांक video_height = TW686X_VIDEO_HEIGHT(vc->video_standard);
+	स्थिर काष्ठा tw686x_क्रमmat *क्रमmat;
 
-	format = format_by_fourcc(f->fmt.pix.pixelformat);
-	if (!format) {
-		format = &formats[0];
-		f->fmt.pix.pixelformat = format->fourcc;
-	}
+	क्रमmat = क्रमmat_by_fourcc(f->fmt.pix.pixelक्रमmat);
+	अगर (!क्रमmat) अणु
+		क्रमmat = &क्रमmats[0];
+		f->fmt.pix.pixelक्रमmat = क्रमmat->fourcc;
+	पूर्ण
 
-	if (f->fmt.pix.width <= TW686X_VIDEO_WIDTH / 2)
+	अगर (f->fmt.pix.width <= TW686X_VIDEO_WIDTH / 2)
 		f->fmt.pix.width = TW686X_VIDEO_WIDTH / 2;
-	else
+	अन्यथा
 		f->fmt.pix.width = TW686X_VIDEO_WIDTH;
 
-	if (f->fmt.pix.height <= video_height / 2)
+	अगर (f->fmt.pix.height <= video_height / 2)
 		f->fmt.pix.height = video_height / 2;
-	else
+	अन्यथा
 		f->fmt.pix.height = video_height;
 
-	f->fmt.pix.bytesperline = (f->fmt.pix.width * format->depth) / 8;
+	f->fmt.pix.bytesperline = (f->fmt.pix.width * क्रमmat->depth) / 8;
 	f->fmt.pix.sizeimage = f->fmt.pix.height * f->fmt.pix.bytesperline;
 	f->fmt.pix.colorspace = V4L2_COLORSPACE_SMPTE170M;
 	f->fmt.pix.field = dev->dma_ops->field;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_set_format(struct tw686x_video_channel *vc,
-			     unsigned int pixelformat, unsigned int width,
-			     unsigned int height, bool realloc)
-{
-	struct tw686x_dev *dev = vc->dev;
+अटल पूर्णांक tw686x_set_क्रमmat(काष्ठा tw686x_video_channel *vc,
+			     अचिन्हित पूर्णांक pixelक्रमmat, अचिन्हित पूर्णांक width,
+			     अचिन्हित पूर्णांक height, bool पुनः_स्मृति)
+अणु
+	काष्ठा tw686x_dev *dev = vc->dev;
 	u32 val, dma_width, dma_height, dma_line_width;
-	int err, pb;
+	पूर्णांक err, pb;
 
-	vc->format = format_by_fourcc(pixelformat);
+	vc->क्रमmat = क्रमmat_by_fourcc(pixelक्रमmat);
 	vc->width = width;
 	vc->height = height;
 
-	/* We need new DMA buffers if the framesize has changed */
-	if (dev->dma_ops->alloc && realloc) {
-		for (pb = 0; pb < 2; pb++)
-			dev->dma_ops->free(vc, pb);
+	/* We need new DMA buffers अगर the framesize has changed */
+	अगर (dev->dma_ops->alloc && पुनः_स्मृति) अणु
+		क्रम (pb = 0; pb < 2; pb++)
+			dev->dma_ops->मुक्त(vc, pb);
 
-		for (pb = 0; pb < 2; pb++) {
+		क्रम (pb = 0; pb < 2; pb++) अणु
 			err = dev->dma_ops->alloc(vc, pb);
-			if (err) {
-				if (pb > 0)
-					dev->dma_ops->free(vc, 0);
-				return err;
-			}
-		}
-	}
+			अगर (err) अणु
+				अगर (pb > 0)
+					dev->dma_ops->मुक्त(vc, 0);
+				वापस err;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	val = reg_read(vc->dev, VDMA_CHANNEL_CONFIG[vc->ch]);
+	val = reg_पढ़ो(vc->dev, VDMA_CHANNEL_CONFIG[vc->ch]);
 
-	if (vc->width <= TW686X_VIDEO_WIDTH / 2)
+	अगर (vc->width <= TW686X_VIDEO_WIDTH / 2)
 		val |= BIT(23);
-	else
+	अन्यथा
 		val &= ~BIT(23);
 
-	if (vc->height <= TW686X_VIDEO_HEIGHT(vc->video_standard) / 2)
+	अगर (vc->height <= TW686X_VIDEO_HEIGHT(vc->video_standard) / 2)
 		val |= BIT(24);
-	else
+	अन्यथा
 		val &= ~BIT(24);
 
 	val &= ~0x7ffff;
 
 	/* Program the DMA scatter-gather */
-	if (dev->dma_mode == TW686X_DMA_MODE_SG) {
+	अगर (dev->dma_mode == TW686X_DMA_MODE_SG) अणु
 		u32 start_idx, end_idx;
 
 		start_idx = is_second_gen(dev) ?
@@ -717,107 +718,107 @@ static int tw686x_set_format(struct tw686x_video_channel *vc,
 		end_idx = start_idx + TW686X_MAX_SG_DESC_COUNT - 1;
 
 		val |= (end_idx << 10) | start_idx;
-	}
+	पूर्ण
 
 	val &= ~(0x7 << 20);
-	val |= vc->format->mode << 20;
-	reg_write(vc->dev, VDMA_CHANNEL_CONFIG[vc->ch], val);
+	val |= vc->क्रमmat->mode << 20;
+	reg_ग_लिखो(vc->dev, VDMA_CHANNEL_CONFIG[vc->ch], val);
 
 	/* Program the DMA frame size */
 	dma_width = (vc->width * 2) & 0x7ff;
 	dma_height = vc->height / 2;
 	dma_line_width = (vc->width * 2) & 0x7ff;
 	val = (dma_height << 22) | (dma_line_width << 11)  | dma_width;
-	reg_write(vc->dev, VDMA_WHP[vc->ch], val);
-	return 0;
-}
+	reg_ग_लिखो(vc->dev, VDMA_WHP[vc->ch], val);
+	वापस 0;
+पूर्ण
 
-static int tw686x_s_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	unsigned long area;
-	bool realloc;
-	int err;
+अटल पूर्णांक tw686x_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	अचिन्हित दीर्घ area;
+	bool पुनः_स्मृति;
+	पूर्णांक err;
 
-	if (vb2_is_busy(&vc->vidq))
-		return -EBUSY;
+	अगर (vb2_is_busy(&vc->vidq))
+		वापस -EBUSY;
 
 	area = vc->width * vc->height;
 	err = tw686x_try_fmt_vid_cap(file, priv, f);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	realloc = area != (f->fmt.pix.width * f->fmt.pix.height);
-	return tw686x_set_format(vc, f->fmt.pix.pixelformat,
+	पुनः_स्मृति = area != (f->fmt.pix.width * f->fmt.pix.height);
+	वापस tw686x_set_क्रमmat(vc, f->fmt.pix.pixelक्रमmat,
 				 f->fmt.pix.width, f->fmt.pix.height,
-				 realloc);
-}
+				 पुनः_स्मृति);
+पूर्ण
 
-static int tw686x_querycap(struct file *file, void *priv,
-			   struct v4l2_capability *cap)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	struct tw686x_dev *dev = vc->dev;
+अटल पूर्णांक tw686x_querycap(काष्ठा file *file, व्योम *priv,
+			   काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	काष्ठा tw686x_dev *dev = vc->dev;
 
-	strscpy(cap->driver, "tw686x", sizeof(cap->driver));
-	strscpy(cap->card, dev->name, sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info),
+	strscpy(cap->driver, "tw686x", माप(cap->driver));
+	strscpy(cap->card, dev->name, माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info),
 		 "PCI:%s", pci_name(dev->pci_dev));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_set_standard(struct tw686x_video_channel *vc, v4l2_std_id id)
-{
+अटल पूर्णांक tw686x_set_standard(काष्ठा tw686x_video_channel *vc, v4l2_std_id id)
+अणु
 	u32 val;
 
-	if (id & V4L2_STD_NTSC)
+	अगर (id & V4L2_STD_NTSC)
 		val = 0;
-	else if (id & V4L2_STD_PAL)
+	अन्यथा अगर (id & V4L2_STD_PAL)
 		val = 1;
-	else if (id & V4L2_STD_SECAM)
+	अन्यथा अगर (id & V4L2_STD_SECAM)
 		val = 2;
-	else if (id & V4L2_STD_NTSC_443)
+	अन्यथा अगर (id & V4L2_STD_NTSC_443)
 		val = 3;
-	else if (id & V4L2_STD_PAL_M)
+	अन्यथा अगर (id & V4L2_STD_PAL_M)
 		val = 4;
-	else if (id & V4L2_STD_PAL_Nc)
+	अन्यथा अगर (id & V4L2_STD_PAL_Nc)
 		val = 5;
-	else if (id & V4L2_STD_PAL_60)
+	अन्यथा अगर (id & V4L2_STD_PAL_60)
 		val = 6;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
 	vc->video_standard = id;
-	reg_write(vc->dev, SDT[vc->ch], val);
+	reg_ग_लिखो(vc->dev, SDT[vc->ch], val);
 
-	val = reg_read(vc->dev, VIDEO_CONTROL1);
-	if (id & V4L2_STD_525_60)
+	val = reg_पढ़ो(vc->dev, VIDEO_CONTROL1);
+	अगर (id & V4L2_STD_525_60)
 		val &= ~(1 << (SYS_MODE_DMA_SHIFT + vc->ch));
-	else
+	अन्यथा
 		val |= (1 << (SYS_MODE_DMA_SHIFT + vc->ch));
-	reg_write(vc->dev, VIDEO_CONTROL1, val);
+	reg_ग_लिखो(vc->dev, VIDEO_CONTROL1, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_s_std(struct file *file, void *priv, v4l2_std_id id)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	struct v4l2_format f;
-	int ret;
+अटल पूर्णांक tw686x_s_std(काष्ठा file *file, व्योम *priv, v4l2_std_id id)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	काष्ठा v4l2_क्रमmat f;
+	पूर्णांक ret;
 
-	if (vc->video_standard == id)
-		return 0;
+	अगर (vc->video_standard == id)
+		वापस 0;
 
-	if (vb2_is_busy(&vc->vidq))
-		return -EBUSY;
+	अगर (vb2_is_busy(&vc->vidq))
+		वापस -EBUSY;
 
 	ret = tw686x_set_standard(vc, id);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	/*
-	 * Adjust format after V4L2_STD_525_60/V4L2_STD_625_50 change,
+	 * Adjust क्रमmat after V4L2_STD_525_60/V4L2_STD_625_50 change,
 	 * calling g_fmt and s_fmt will sanitize the height
 	 * according to the standard.
 	 */
@@ -829,82 +830,82 @@ static int tw686x_s_std(struct file *file, void *priv, v4l2_std_id id)
 	 * so reset it to the current value.
 	 */
 	tw686x_set_framerate(vc, vc->fps);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_querystd(struct file *file, void *priv, v4l2_std_id *std)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	struct tw686x_dev *dev = vc->dev;
-	unsigned int old_std, detected_std = 0;
-	unsigned long end;
+अटल पूर्णांक tw686x_querystd(काष्ठा file *file, व्योम *priv, v4l2_std_id *std)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	काष्ठा tw686x_dev *dev = vc->dev;
+	अचिन्हित पूर्णांक old_std, detected_std = 0;
+	अचिन्हित दीर्घ end;
 
-	if (vb2_is_streaming(&vc->vidq))
-		return -EBUSY;
+	अगर (vb2_is_streaming(&vc->vidq))
+		वापस -EBUSY;
 
 	/* Enable and start standard detection */
-	old_std = reg_read(dev, SDT[vc->ch]);
-	reg_write(dev, SDT[vc->ch], 0x7);
-	reg_write(dev, SDT_EN[vc->ch], 0xff);
+	old_std = reg_पढ़ो(dev, SDT[vc->ch]);
+	reg_ग_लिखो(dev, SDT[vc->ch], 0x7);
+	reg_ग_लिखो(dev, SDT_EN[vc->ch], 0xff);
 
-	end = jiffies + msecs_to_jiffies(500);
-	while (time_is_after_jiffies(end)) {
+	end = jअगरfies + msecs_to_jअगरfies(500);
+	जबतक (समय_is_after_jअगरfies(end)) अणु
 
-		detected_std = reg_read(dev, SDT[vc->ch]);
-		if (!(detected_std & BIT(7)))
-			break;
+		detected_std = reg_पढ़ो(dev, SDT[vc->ch]);
+		अगर (!(detected_std & BIT(7)))
+			अवरोध;
 		msleep(100);
-	}
-	reg_write(dev, SDT[vc->ch], old_std);
+	पूर्ण
+	reg_ग_लिखो(dev, SDT[vc->ch], old_std);
 
-	/* Exit if still busy */
-	if (detected_std & BIT(7))
-		return 0;
+	/* Exit अगर still busy */
+	अगर (detected_std & BIT(7))
+		वापस 0;
 
 	detected_std = (detected_std >> 4) & 0x7;
-	switch (detected_std) {
-	case TW686X_STD_NTSC_M:
+	चयन (detected_std) अणु
+	हाल TW686X_STD_NTSC_M:
 		*std &= V4L2_STD_NTSC;
-		break;
-	case TW686X_STD_NTSC_443:
+		अवरोध;
+	हाल TW686X_STD_NTSC_443:
 		*std &= V4L2_STD_NTSC_443;
-		break;
-	case TW686X_STD_PAL_M:
+		अवरोध;
+	हाल TW686X_STD_PAL_M:
 		*std &= V4L2_STD_PAL_M;
-		break;
-	case TW686X_STD_PAL_60:
+		अवरोध;
+	हाल TW686X_STD_PAL_60:
 		*std &= V4L2_STD_PAL_60;
-		break;
-	case TW686X_STD_PAL:
+		अवरोध;
+	हाल TW686X_STD_PAL:
 		*std &= V4L2_STD_PAL;
-		break;
-	case TW686X_STD_PAL_CN:
+		अवरोध;
+	हाल TW686X_STD_PAL_CN:
 		*std &= V4L2_STD_PAL_Nc;
-		break;
-	case TW686X_STD_SECAM:
+		अवरोध;
+	हाल TW686X_STD_SECAM:
 		*std &= V4L2_STD_SECAM;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*std = 0;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int tw686x_g_std(struct file *file, void *priv, v4l2_std_id *id)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
+अटल पूर्णांक tw686x_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *id)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
 
 	*id = vc->video_standard;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_enum_framesizes(struct file *file, void *priv,
-				  struct v4l2_frmsizeenum *fsize)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
+अटल पूर्णांक tw686x_क्रमागत_framesizes(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_frmsizeक्रमागत *fsize)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
 
-	if (fsize->index)
-		return -EINVAL;
+	अगर (fsize->index)
+		वापस -EINVAL;
 	fsize->type = V4L2_FRMSIZE_TYPE_STEPWISE;
 	fsize->stepwise.max_width = TW686X_VIDEO_WIDTH;
 	fsize->stepwise.min_width = fsize->stepwise.max_width / 2;
@@ -912,148 +913,148 @@ static int tw686x_enum_framesizes(struct file *file, void *priv,
 	fsize->stepwise.max_height = TW686X_VIDEO_HEIGHT(vc->video_standard);
 	fsize->stepwise.min_height = fsize->stepwise.max_height / 2;
 	fsize->stepwise.step_height = fsize->stepwise.min_height;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_enum_frameintervals(struct file *file, void *priv,
-				      struct v4l2_frmivalenum *ival)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	int max_fps = TW686X_MAX_FPS(vc->video_standard);
-	int max_rates = DIV_ROUND_UP(max_fps, 2);
+अटल पूर्णांक tw686x_क्रमागत_frameपूर्णांकervals(काष्ठा file *file, व्योम *priv,
+				      काष्ठा v4l2_frmivalक्रमागत *ival)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	पूर्णांक max_fps = TW686X_MAX_FPS(vc->video_standard);
+	पूर्णांक max_rates = DIV_ROUND_UP(max_fps, 2);
 
-	if (ival->index >= max_rates)
-		return -EINVAL;
+	अगर (ival->index >= max_rates)
+		वापस -EINVAL;
 
 	ival->type = V4L2_FRMIVAL_TYPE_DISCRETE;
 	ival->discrete.numerator = 1;
-	if (ival->index < (max_rates - 1))
+	अगर (ival->index < (max_rates - 1))
 		ival->discrete.denominator = (ival->index + 1) * 2;
-	else
+	अन्यथा
 		ival->discrete.denominator = max_fps;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_g_parm(struct file *file, void *priv,
-			 struct v4l2_streamparm *sp)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	struct v4l2_captureparm *cp = &sp->parm.capture;
+अटल पूर्णांक tw686x_g_parm(काष्ठा file *file, व्योम *priv,
+			 काष्ठा v4l2_streamparm *sp)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	काष्ठा v4l2_captureparm *cp = &sp->parm.capture;
 
-	if (sp->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
-	sp->parm.capture.readbuffers = 3;
+	अगर (sp->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
+	sp->parm.capture.पढ़ोbuffers = 3;
 
 	cp->capability = V4L2_CAP_TIMEPERFRAME;
-	cp->timeperframe.numerator = 1;
-	cp->timeperframe.denominator = vc->fps;
-	return 0;
-}
+	cp->समयperframe.numerator = 1;
+	cp->समयperframe.denominator = vc->fps;
+	वापस 0;
+पूर्ण
 
-static int tw686x_s_parm(struct file *file, void *priv,
-			 struct v4l2_streamparm *sp)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	struct v4l2_captureparm *cp = &sp->parm.capture;
-	unsigned int denominator = cp->timeperframe.denominator;
-	unsigned int numerator = cp->timeperframe.numerator;
-	unsigned int fps;
+अटल पूर्णांक tw686x_s_parm(काष्ठा file *file, व्योम *priv,
+			 काष्ठा v4l2_streamparm *sp)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	काष्ठा v4l2_captureparm *cp = &sp->parm.capture;
+	अचिन्हित पूर्णांक denominator = cp->समयperframe.denominator;
+	अचिन्हित पूर्णांक numerator = cp->समयperframe.numerator;
+	अचिन्हित पूर्णांक fps;
 
-	if (vb2_is_busy(&vc->vidq))
-		return -EBUSY;
+	अगर (vb2_is_busy(&vc->vidq))
+		वापस -EBUSY;
 
 	fps = (!numerator || !denominator) ? 0 : denominator / numerator;
-	if (vc->fps != fps)
+	अगर (vc->fps != fps)
 		tw686x_set_framerate(vc, fps);
-	return tw686x_g_parm(file, priv, sp);
-}
+	वापस tw686x_g_parm(file, priv, sp);
+पूर्ण
 
-static int tw686x_enum_fmt_vid_cap(struct file *file, void *priv,
-				   struct v4l2_fmtdesc *f)
-{
-	if (f->index >= ARRAY_SIZE(formats))
-		return -EINVAL;
-	f->pixelformat = formats[f->index].fourcc;
-	return 0;
-}
+अटल पूर्णांक tw686x_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				   काष्ठा v4l2_fmtdesc *f)
+अणु
+	अगर (f->index >= ARRAY_SIZE(क्रमmats))
+		वापस -EINVAL;
+	f->pixelक्रमmat = क्रमmats[f->index].fourcc;
+	वापस 0;
+पूर्ण
 
-static void tw686x_set_input(struct tw686x_video_channel *vc, unsigned int i)
-{
+अटल व्योम tw686x_set_input(काष्ठा tw686x_video_channel *vc, अचिन्हित पूर्णांक i)
+अणु
 	u32 val;
 
 	vc->input = i;
 
-	val = reg_read(vc->dev, VDMA_CHANNEL_CONFIG[vc->ch]);
+	val = reg_पढ़ो(vc->dev, VDMA_CHANNEL_CONFIG[vc->ch]);
 	val &= ~(0x3 << 30);
 	val |= i << 30;
-	reg_write(vc->dev, VDMA_CHANNEL_CONFIG[vc->ch], val);
-}
+	reg_ग_लिखो(vc->dev, VDMA_CHANNEL_CONFIG[vc->ch], val);
+पूर्ण
 
-static int tw686x_s_input(struct file *file, void *priv, unsigned int i)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
+अटल पूर्णांक tw686x_s_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक i)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
 
-	if (i >= TW686X_INPUTS_PER_CH)
-		return -EINVAL;
-	if (i == vc->input)
-		return 0;
+	अगर (i >= TW686X_INPUTS_PER_CH)
+		वापस -EINVAL;
+	अगर (i == vc->input)
+		वापस 0;
 	/*
 	 * Not sure we are able to support on the fly input change
 	 */
-	if (vb2_is_busy(&vc->vidq))
-		return -EBUSY;
+	अगर (vb2_is_busy(&vc->vidq))
+		वापस -EBUSY;
 
 	tw686x_set_input(vc, i);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_g_input(struct file *file, void *priv, unsigned int *i)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
+अटल पूर्णांक tw686x_g_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *i)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
 
 	*i = vc->input;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tw686x_enum_input(struct file *file, void *priv,
-			     struct v4l2_input *i)
-{
-	struct tw686x_video_channel *vc = video_drvdata(file);
-	unsigned int vidstat;
+अटल पूर्णांक tw686x_क्रमागत_input(काष्ठा file *file, व्योम *priv,
+			     काष्ठा v4l2_input *i)
+अणु
+	काष्ठा tw686x_video_channel *vc = video_drvdata(file);
+	अचिन्हित पूर्णांक vidstat;
 
-	if (i->index >= TW686X_INPUTS_PER_CH)
-		return -EINVAL;
+	अगर (i->index >= TW686X_INPUTS_PER_CH)
+		वापस -EINVAL;
 
-	snprintf(i->name, sizeof(i->name), "Composite%d", i->index);
+	snम_लिखो(i->name, माप(i->name), "Composite%d", i->index);
 	i->type = V4L2_INPUT_TYPE_CAMERA;
 	i->std = vc->device->tvnorms;
 	i->capabilities = V4L2_IN_CAP_STD;
 
-	vidstat = reg_read(vc->dev, VIDSTAT[vc->ch]);
+	vidstat = reg_पढ़ो(vc->dev, VIDSTAT[vc->ch]);
 	i->status = 0;
-	if (vidstat & TW686X_VIDSTAT_VDLOSS)
+	अगर (vidstat & TW686X_VIDSTAT_VDLOSS)
 		i->status |= V4L2_IN_ST_NO_SIGNAL;
-	if (!(vidstat & TW686X_VIDSTAT_HLOCK))
+	अगर (!(vidstat & TW686X_VIDSTAT_HLOCK))
 		i->status |= V4L2_IN_ST_NO_H_LOCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_file_operations tw686x_video_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations tw686x_video_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= v4l2_fh_open,
+	.खोलो		= v4l2_fh_खोलो,
 	.unlocked_ioctl	= video_ioctl2,
 	.release	= vb2_fop_release,
 	.poll		= vb2_fop_poll,
-	.read		= vb2_fop_read,
+	.पढ़ो		= vb2_fop_पढ़ो,
 	.mmap		= vb2_fop_mmap,
-};
+पूर्ण;
 
-static const struct v4l2_ioctl_ops tw686x_video_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops tw686x_video_ioctl_ops = अणु
 	.vidioc_querycap		= tw686x_querycap,
 	.vidioc_g_fmt_vid_cap		= tw686x_g_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap		= tw686x_s_fmt_vid_cap,
-	.vidioc_enum_fmt_vid_cap	= tw686x_enum_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_cap	= tw686x_क्रमागत_fmt_vid_cap,
 	.vidioc_try_fmt_vid_cap		= tw686x_try_fmt_vid_cap,
 
 	.vidioc_querystd		= tw686x_querystd,
@@ -1062,10 +1063,10 @@ static const struct v4l2_ioctl_ops tw686x_video_ioctl_ops = {
 
 	.vidioc_g_parm			= tw686x_g_parm,
 	.vidioc_s_parm			= tw686x_s_parm,
-	.vidioc_enum_framesizes		= tw686x_enum_framesizes,
-	.vidioc_enum_frameintervals	= tw686x_enum_frameintervals,
+	.vidioc_क्रमागत_framesizes		= tw686x_क्रमागत_framesizes,
+	.vidioc_क्रमागत_frameपूर्णांकervals	= tw686x_क्रमागत_frameपूर्णांकervals,
 
-	.vidioc_enum_input		= tw686x_enum_input,
+	.vidioc_क्रमागत_input		= tw686x_क्रमागत_input,
 	.vidioc_g_input			= tw686x_g_input,
 	.vidioc_s_input			= tw686x_s_input,
 
@@ -1081,148 +1082,148 @@ static const struct v4l2_ioctl_ops tw686x_video_ioctl_ops = {
 	.vidioc_log_status		= v4l2_ctrl_log_status,
 	.vidioc_subscribe_event		= v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-};
+पूर्ण;
 
-void tw686x_video_irq(struct tw686x_dev *dev, unsigned long requests,
-		      unsigned int pb_status, unsigned int fifo_status,
-		      unsigned int *reset_ch)
-{
-	struct tw686x_video_channel *vc;
-	unsigned long flags;
-	unsigned int ch, pb;
+व्योम tw686x_video_irq(काष्ठा tw686x_dev *dev, अचिन्हित दीर्घ requests,
+		      अचिन्हित पूर्णांक pb_status, अचिन्हित पूर्णांक fअगरo_status,
+		      अचिन्हित पूर्णांक *reset_ch)
+अणु
+	काष्ठा tw686x_video_channel *vc;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक ch, pb;
 
-	for_each_set_bit(ch, &requests, max_channels(dev)) {
+	क्रम_each_set_bit(ch, &requests, max_channels(dev)) अणु
 		vc = &dev->video_channels[ch];
 
 		/*
-		 * This can either be a blue frame (with signal-lost bit set)
-		 * or a good frame (with signal-lost bit clear). If we have just
-		 * got signal, then this channel needs resetting.
+		 * This can either be a blue frame (with संकेत-lost bit set)
+		 * or a good frame (with संकेत-lost bit clear). If we have just
+		 * got संकेत, then this channel needs resetting.
 		 */
-		if (vc->no_signal && !(fifo_status & BIT(ch))) {
-			v4l2_printk(KERN_DEBUG, &dev->v4l2_dev,
+		अगर (vc->no_संकेत && !(fअगरo_status & BIT(ch))) अणु
+			v4l2_prपूर्णांकk(KERN_DEBUG, &dev->v4l2_dev,
 				    "video%d: signal recovered\n", vc->num);
-			vc->no_signal = false;
+			vc->no_संकेत = false;
 			*reset_ch |= BIT(ch);
 			vc->pb = 0;
-			continue;
-		}
-		vc->no_signal = !!(fifo_status & BIT(ch));
+			जारी;
+		पूर्ण
+		vc->no_संकेत = !!(fअगरo_status & BIT(ch));
 
-		/* Check FIFO errors only if there's signal */
-		if (!vc->no_signal) {
-			u32 fifo_ov, fifo_bad;
+		/* Check FIFO errors only अगर there's संकेत */
+		अगर (!vc->no_संकेत) अणु
+			u32 fअगरo_ov, fअगरo_bad;
 
-			fifo_ov = (fifo_status >> 24) & BIT(ch);
-			fifo_bad = (fifo_status >> 16) & BIT(ch);
-			if (fifo_ov || fifo_bad) {
-				/* Mark this channel for reset */
-				v4l2_printk(KERN_DEBUG, &dev->v4l2_dev,
+			fअगरo_ov = (fअगरo_status >> 24) & BIT(ch);
+			fअगरo_bad = (fअगरo_status >> 16) & BIT(ch);
+			अगर (fअगरo_ov || fअगरo_bad) अणु
+				/* Mark this channel क्रम reset */
+				v4l2_prपूर्णांकk(KERN_DEBUG, &dev->v4l2_dev,
 					    "video%d: FIFO error\n", vc->num);
 				*reset_ch |= BIT(ch);
 				vc->pb = 0;
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		pb = !!(pb_status & BIT(ch));
-		if (vc->pb != pb) {
-			/* Mark this channel for reset */
-			v4l2_printk(KERN_DEBUG, &dev->v4l2_dev,
+		अगर (vc->pb != pb) अणु
+			/* Mark this channel क्रम reset */
+			v4l2_prपूर्णांकk(KERN_DEBUG, &dev->v4l2_dev,
 				    "video%d: unexpected p-b buffer!\n",
 				    vc->num);
 			*reset_ch |= BIT(ch);
 			vc->pb = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		spin_lock_irqsave(&vc->qlock, flags);
-		tw686x_buf_done(vc, pb);
+		tw686x_buf_करोne(vc, pb);
 		dev->dma_ops->buf_refill(vc, pb);
 		spin_unlock_irqrestore(&vc->qlock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void tw686x_video_free(struct tw686x_dev *dev)
-{
-	unsigned int ch, pb;
+व्योम tw686x_video_मुक्त(काष्ठा tw686x_dev *dev)
+अणु
+	अचिन्हित पूर्णांक ch, pb;
 
-	for (ch = 0; ch < max_channels(dev); ch++) {
-		struct tw686x_video_channel *vc = &dev->video_channels[ch];
+	क्रम (ch = 0; ch < max_channels(dev); ch++) अणु
+		काष्ठा tw686x_video_channel *vc = &dev->video_channels[ch];
 
-		video_unregister_device(vc->device);
+		video_unरेजिस्टर_device(vc->device);
 
-		if (dev->dma_ops->free)
-			for (pb = 0; pb < 2; pb++)
-				dev->dma_ops->free(vc, pb);
-	}
-}
+		अगर (dev->dma_ops->मुक्त)
+			क्रम (pb = 0; pb < 2; pb++)
+				dev->dma_ops->मुक्त(vc, pb);
+	पूर्ण
+पूर्ण
 
-int tw686x_video_init(struct tw686x_dev *dev)
-{
-	unsigned int ch, val;
-	int err;
+पूर्णांक tw686x_video_init(काष्ठा tw686x_dev *dev)
+अणु
+	अचिन्हित पूर्णांक ch, val;
+	पूर्णांक err;
 
-	if (dev->dma_mode == TW686X_DMA_MODE_MEMCPY)
-		dev->dma_ops = &memcpy_dma_ops;
-	else if (dev->dma_mode == TW686X_DMA_MODE_CONTIG)
+	अगर (dev->dma_mode == TW686X_DMA_MODE_MEMCPY)
+		dev->dma_ops = &स_नकल_dma_ops;
+	अन्यथा अगर (dev->dma_mode == TW686X_DMA_MODE_CONTIG)
 		dev->dma_ops = &contig_dma_ops;
-	else if (dev->dma_mode == TW686X_DMA_MODE_SG)
+	अन्यथा अगर (dev->dma_mode == TW686X_DMA_MODE_SG)
 		dev->dma_ops = &sg_dma_ops;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	err = v4l2_device_register(&dev->pci_dev->dev, &dev->v4l2_dev);
-	if (err)
-		return err;
+	err = v4l2_device_रेजिस्टर(&dev->pci_dev->dev, &dev->v4l2_dev);
+	अगर (err)
+		वापस err;
 
-	if (dev->dma_ops->setup) {
+	अगर (dev->dma_ops->setup) अणु
 		err = dev->dma_ops->setup(dev);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	/* Initialize vc->dev and vc->ch for the error path */
-	for (ch = 0; ch < max_channels(dev); ch++) {
-		struct tw686x_video_channel *vc = &dev->video_channels[ch];
+	/* Initialize vc->dev and vc->ch क्रम the error path */
+	क्रम (ch = 0; ch < max_channels(dev); ch++) अणु
+		काष्ठा tw686x_video_channel *vc = &dev->video_channels[ch];
 
 		vc->dev = dev;
 		vc->ch = ch;
-	}
+	पूर्ण
 
-	for (ch = 0; ch < max_channels(dev); ch++) {
-		struct tw686x_video_channel *vc = &dev->video_channels[ch];
-		struct video_device *vdev;
+	क्रम (ch = 0; ch < max_channels(dev); ch++) अणु
+		काष्ठा tw686x_video_channel *vc = &dev->video_channels[ch];
+		काष्ठा video_device *vdev;
 
 		mutex_init(&vc->vb_mutex);
 		spin_lock_init(&vc->qlock);
 		INIT_LIST_HEAD(&vc->vidq_queued);
 
-		/* default settings */
+		/* शेष settings */
 		err = tw686x_set_standard(vc, V4L2_STD_NTSC);
-		if (err)
-			goto error;
+		अगर (err)
+			जाओ error;
 
-		err = tw686x_set_format(vc, formats[0].fourcc,
+		err = tw686x_set_क्रमmat(vc, क्रमmats[0].fourcc,
 				TW686X_VIDEO_WIDTH,
 				TW686X_VIDEO_HEIGHT(vc->video_standard),
 				true);
-		if (err)
-			goto error;
+		अगर (err)
+			जाओ error;
 
 		tw686x_set_input(vc, 0);
 		tw686x_set_framerate(vc, 30);
-		reg_write(dev, VDELAY_LO[ch], 0x14);
-		reg_write(dev, HACTIVE_LO[ch], 0xd0);
-		reg_write(dev, VIDEO_SIZE[ch], 0);
+		reg_ग_लिखो(dev, VDELAY_LO[ch], 0x14);
+		reg_ग_लिखो(dev, HACTIVE_LO[ch], 0xd0);
+		reg_ग_लिखो(dev, VIDEO_SIZE[ch], 0);
 
 		vc->vidq.io_modes = VB2_READ | VB2_MMAP | VB2_DMABUF;
 		vc->vidq.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		vc->vidq.drv_priv = vc;
-		vc->vidq.buf_struct_size = sizeof(struct tw686x_v4l2_buf);
+		vc->vidq.buf_काष्ठा_size = माप(काष्ठा tw686x_v4l2_buf);
 		vc->vidq.ops = &tw686x_video_qops;
 		vc->vidq.mem_ops = dev->dma_ops->mem_ops;
-		vc->vidq.timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+		vc->vidq.बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 		vc->vidq.min_buffers_needed = 2;
 		vc->vidq.lock = &vc->vb_mutex;
 		vc->vidq.gfp_flags = dev->dma_mode != TW686X_DMA_MODE_MEMCPY ?
@@ -1230,18 +1231,18 @@ int tw686x_video_init(struct tw686x_dev *dev)
 		vc->vidq.dev = &dev->pci_dev->dev;
 
 		err = vb2_queue_init(&vc->vidq);
-		if (err) {
+		अगर (err) अणु
 			v4l2_err(&dev->v4l2_dev,
 				 "dma%d: cannot init vb2 queue\n", ch);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		err = v4l2_ctrl_handler_init(&vc->ctrl_handler, 4);
-		if (err) {
+		अगर (err) अणु
 			v4l2_err(&dev->v4l2_dev,
 				 "dma%d: cannot init ctrl handler\n", ch);
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 		v4l2_ctrl_new_std(&vc->ctrl_handler, &ctrl_ops,
 				  V4L2_CID_BRIGHTNESS, -128, 127, 1, 0);
 		v4l2_ctrl_new_std(&vc->ctrl_handler, &ctrl_ops,
@@ -1251,22 +1252,22 @@ int tw686x_video_init(struct tw686x_dev *dev)
 		v4l2_ctrl_new_std(&vc->ctrl_handler, &ctrl_ops,
 				  V4L2_CID_HUE, -128, 127, 1, 0);
 		err = vc->ctrl_handler.error;
-		if (err)
-			goto error;
+		अगर (err)
+			जाओ error;
 
 		err = v4l2_ctrl_handler_setup(&vc->ctrl_handler);
-		if (err)
-			goto error;
+		अगर (err)
+			जाओ error;
 
 		vdev = video_device_alloc();
-		if (!vdev) {
+		अगर (!vdev) अणु
 			v4l2_err(&dev->v4l2_dev,
 				 "dma%d: unable to allocate device\n", ch);
 			err = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		snprintf(vdev->name, sizeof(vdev->name), "%s video", dev->name);
+		snम_लिखो(vdev->name, माप(vdev->name), "%s video", dev->name);
 		vdev->fops = &tw686x_video_fops;
 		vdev->ioctl_ops = &tw686x_video_ioctl_ops;
 		vdev->release = video_device_release;
@@ -1281,28 +1282,28 @@ int tw686x_video_init(struct tw686x_dev *dev)
 		vc->device = vdev;
 		video_set_drvdata(vdev, vc);
 
-		err = video_register_device(vdev, VFL_TYPE_VIDEO, -1);
-		if (err < 0)
-			goto error;
+		err = video_रेजिस्टर_device(vdev, VFL_TYPE_VIDEO, -1);
+		अगर (err < 0)
+			जाओ error;
 		vc->num = vdev->num;
-	}
+	पूर्ण
 
 	val = TW686X_DEF_PHASE_REF;
-	for (ch = 0; ch < max_channels(dev); ch++)
+	क्रम (ch = 0; ch < max_channels(dev); ch++)
 		val |= dev->dma_ops->hw_dma_mode << (16 + ch * 2);
-	reg_write(dev, PHASE_REF, val);
+	reg_ग_लिखो(dev, PHASE_REF, val);
 
-	reg_write(dev, MISC2[0], 0xe7);
-	reg_write(dev, VCTRL1[0], 0xcc);
-	reg_write(dev, LOOP[0], 0xa5);
-	if (max_channels(dev) > 4) {
-		reg_write(dev, VCTRL1[1], 0xcc);
-		reg_write(dev, LOOP[1], 0xa5);
-		reg_write(dev, MISC2[1], 0xe7);
-	}
-	return 0;
+	reg_ग_लिखो(dev, MISC2[0], 0xe7);
+	reg_ग_लिखो(dev, VCTRL1[0], 0xcc);
+	reg_ग_लिखो(dev, LOOP[0], 0xa5);
+	अगर (max_channels(dev) > 4) अणु
+		reg_ग_लिखो(dev, VCTRL1[1], 0xcc);
+		reg_ग_लिखो(dev, LOOP[1], 0xa5);
+		reg_ग_लिखो(dev, MISC2[1], 0xe7);
+	पूर्ण
+	वापस 0;
 
 error:
-	tw686x_video_free(dev);
-	return err;
-}
+	tw686x_video_मुक्त(dev);
+	वापस err;
+पूर्ण

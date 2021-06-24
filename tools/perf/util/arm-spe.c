@@ -1,51 +1,52 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Arm Statistical Profiling Extensions (SPE) support
  * Copyright (c) 2017-2018, Arm Ltd.
  */
 
-#include <byteswap.h>
-#include <endian.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <linux/bitops.h>
-#include <linux/kernel.h>
-#include <linux/log2.h>
-#include <linux/types.h>
-#include <linux/zalloc.h>
-#include <stdlib.h>
-#include <unistd.h>
+#समावेश <byteswap.h>
+#समावेश <endian.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/log2.h>
+#समावेश <linux/types.h>
+#समावेश <linux/zभाग.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
 
-#include "auxtrace.h"
-#include "color.h"
-#include "debug.h"
-#include "evlist.h"
-#include "evsel.h"
-#include "machine.h"
-#include "session.h"
-#include "symbol.h"
-#include "thread.h"
-#include "thread-stack.h"
-#include "tool.h"
-#include "util/synthetic-events.h"
+#समावेश "auxtrace.h"
+#समावेश "color.h"
+#समावेश "debug.h"
+#समावेश "evlist.h"
+#समावेश "evsel.h"
+#समावेश "machine.h"
+#समावेश "session.h"
+#समावेश "symbol.h"
+#समावेश "thread.h"
+#समावेश "thread-stack.h"
+#समावेश "tool.h"
+#समावेश "util/synthetic-events.h"
 
-#include "arm-spe.h"
-#include "arm-spe-decoder/arm-spe-decoder.h"
-#include "arm-spe-decoder/arm-spe-pkt-decoder.h"
+#समावेश "arm-spe.h"
+#समावेश "arm-spe-decoder/arm-spe-decoder.h"
+#समावेश "arm-spe-decoder/arm-spe-pkt-decoder.h"
 
-#define MAX_TIMESTAMP (~0ULL)
+#घोषणा MAX_TIMESTAMP (~0ULL)
 
-struct arm_spe {
-	struct auxtrace			auxtrace;
-	struct auxtrace_queues		queues;
-	struct auxtrace_heap		heap;
-	struct itrace_synth_opts        synth_opts;
+काष्ठा arm_spe अणु
+	काष्ठा auxtrace			auxtrace;
+	काष्ठा auxtrace_queues		queues;
+	काष्ठा auxtrace_heap		heap;
+	काष्ठा itrace_synth_opts        synth_opts;
 	u32				auxtrace_type;
-	struct perf_session		*session;
-	struct machine			*machine;
+	काष्ठा perf_session		*session;
+	काष्ठा machine			*machine;
 	u32				pmu_type;
 
-	u8				timeless_decoding;
+	u8				समयless_decoding;
 	u8				data_queued;
 
 	u8				sample_flc;
@@ -67,130 +68,130 @@ struct arm_spe {
 
 	u64				kernel_start;
 
-	unsigned long			num_events;
-};
+	अचिन्हित दीर्घ			num_events;
+पूर्ण;
 
-struct arm_spe_queue {
-	struct arm_spe			*spe;
-	unsigned int			queue_nr;
-	struct auxtrace_buffer		*buffer;
-	struct auxtrace_buffer		*old_buffer;
-	union perf_event		*event_buf;
+काष्ठा arm_spe_queue अणु
+	काष्ठा arm_spe			*spe;
+	अचिन्हित पूर्णांक			queue_nr;
+	काष्ठा auxtrace_buffer		*buffer;
+	काष्ठा auxtrace_buffer		*old_buffer;
+	जोड़ perf_event		*event_buf;
 	bool				on_heap;
-	bool				done;
+	bool				करोne;
 	pid_t				pid;
 	pid_t				tid;
-	int				cpu;
-	struct arm_spe_decoder		*decoder;
-	u64				time;
-	u64				timestamp;
-	struct thread			*thread;
-};
+	पूर्णांक				cpu;
+	काष्ठा arm_spe_decoder		*decoder;
+	u64				समय;
+	u64				बारtamp;
+	काष्ठा thपढ़ो			*thपढ़ो;
+पूर्ण;
 
-static void arm_spe_dump(struct arm_spe *spe __maybe_unused,
-			 unsigned char *buf, size_t len)
-{
-	struct arm_spe_pkt packet;
-	size_t pos = 0;
-	int ret, pkt_len, i;
-	char desc[ARM_SPE_PKT_DESC_MAX];
-	const char *color = PERF_COLOR_BLUE;
+अटल व्योम arm_spe_dump(काष्ठा arm_spe *spe __maybe_unused,
+			 अचिन्हित अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा arm_spe_pkt packet;
+	माप_प्रकार pos = 0;
+	पूर्णांक ret, pkt_len, i;
+	अक्षर desc[ARM_SPE_PKT_DESC_MAX];
+	स्थिर अक्षर *color = PERF_COLOR_BLUE;
 
-	color_fprintf(stdout, color,
+	color_ख_लिखो(मानक_निकास, color,
 		      ". ... ARM SPE data: size %zu bytes\n",
 		      len);
 
-	while (len) {
+	जबतक (len) अणु
 		ret = arm_spe_get_packet(buf, len, &packet);
-		if (ret > 0)
+		अगर (ret > 0)
 			pkt_len = ret;
-		else
+		अन्यथा
 			pkt_len = 1;
-		printf(".");
-		color_fprintf(stdout, color, "  %08x: ", pos);
-		for (i = 0; i < pkt_len; i++)
-			color_fprintf(stdout, color, " %02x", buf[i]);
-		for (; i < 16; i++)
-			color_fprintf(stdout, color, "   ");
-		if (ret > 0) {
+		म_लिखो(".");
+		color_ख_लिखो(मानक_निकास, color, "  %08x: ", pos);
+		क्रम (i = 0; i < pkt_len; i++)
+			color_ख_लिखो(मानक_निकास, color, " %02x", buf[i]);
+		क्रम (; i < 16; i++)
+			color_ख_लिखो(मानक_निकास, color, "   ");
+		अगर (ret > 0) अणु
 			ret = arm_spe_pkt_desc(&packet, desc,
 					       ARM_SPE_PKT_DESC_MAX);
-			if (!ret)
-				color_fprintf(stdout, color, " %s\n", desc);
-		} else {
-			color_fprintf(stdout, color, " Bad packet!\n");
-		}
+			अगर (!ret)
+				color_ख_लिखो(मानक_निकास, color, " %s\n", desc);
+		पूर्ण अन्यथा अणु
+			color_ख_लिखो(मानक_निकास, color, " Bad packet!\n");
+		पूर्ण
 		pos += pkt_len;
 		buf += pkt_len;
 		len -= pkt_len;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void arm_spe_dump_event(struct arm_spe *spe, unsigned char *buf,
-			       size_t len)
-{
-	printf(".\n");
+अटल व्योम arm_spe_dump_event(काष्ठा arm_spe *spe, अचिन्हित अक्षर *buf,
+			       माप_प्रकार len)
+अणु
+	म_लिखो(".\n");
 	arm_spe_dump(spe, buf, len);
-}
+पूर्ण
 
-static int arm_spe_get_trace(struct arm_spe_buffer *b, void *data)
-{
-	struct arm_spe_queue *speq = data;
-	struct auxtrace_buffer *buffer = speq->buffer;
-	struct auxtrace_buffer *old_buffer = speq->old_buffer;
-	struct auxtrace_queue *queue;
+अटल पूर्णांक arm_spe_get_trace(काष्ठा arm_spe_buffer *b, व्योम *data)
+अणु
+	काष्ठा arm_spe_queue *speq = data;
+	काष्ठा auxtrace_buffer *buffer = speq->buffer;
+	काष्ठा auxtrace_buffer *old_buffer = speq->old_buffer;
+	काष्ठा auxtrace_queue *queue;
 
 	queue = &speq->spe->queues.queue_array[speq->queue_nr];
 
 	buffer = auxtrace_buffer__next(queue, buffer);
-	/* If no more data, drop the previous auxtrace_buffer and return */
-	if (!buffer) {
-		if (old_buffer)
+	/* If no more data, drop the previous auxtrace_buffer and वापस */
+	अगर (!buffer) अणु
+		अगर (old_buffer)
 			auxtrace_buffer__drop_data(old_buffer);
 		b->len = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	speq->buffer = buffer;
 
-	/* If the aux_buffer doesn't have data associated, try to load it */
-	if (!buffer->data) {
+	/* If the aux_buffer करोesn't have data associated, try to load it */
+	अगर (!buffer->data) अणु
 		/* get the file desc associated with the perf data file */
-		int fd = perf_data__fd(speq->spe->session->data);
+		पूर्णांक fd = perf_data__fd(speq->spe->session->data);
 
 		buffer->data = auxtrace_buffer__get_data(buffer, fd);
-		if (!buffer->data)
-			return -ENOMEM;
-	}
+		अगर (!buffer->data)
+			वापस -ENOMEM;
+	पूर्ण
 
 	b->len = buffer->size;
 	b->buf = buffer->data;
 
-	if (b->len) {
-		if (old_buffer)
+	अगर (b->len) अणु
+		अगर (old_buffer)
 			auxtrace_buffer__drop_data(old_buffer);
 		speq->old_buffer = buffer;
-	} else {
+	पूर्ण अन्यथा अणु
 		auxtrace_buffer__drop_data(buffer);
-		return arm_spe_get_trace(b, data);
-	}
+		वापस arm_spe_get_trace(b, data);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct arm_spe_queue *arm_spe__alloc_queue(struct arm_spe *spe,
-		unsigned int queue_nr)
-{
-	struct arm_spe_params params = { .get_trace = 0, };
-	struct arm_spe_queue *speq;
+अटल काष्ठा arm_spe_queue *arm_spe__alloc_queue(काष्ठा arm_spe *spe,
+		अचिन्हित पूर्णांक queue_nr)
+अणु
+	काष्ठा arm_spe_params params = अणु .get_trace = 0, पूर्ण;
+	काष्ठा arm_spe_queue *speq;
 
-	speq = zalloc(sizeof(*speq));
-	if (!speq)
-		return NULL;
+	speq = zalloc(माप(*speq));
+	अगर (!speq)
+		वापस शून्य;
 
-	speq->event_buf = malloc(PERF_SAMPLE_MAX_SIZE);
-	if (!speq->event_buf)
-		goto out_free;
+	speq->event_buf = दो_स्मृति(PERF_SAMPLE_MAX_SIZE);
+	अगर (!speq->event_buf)
+		जाओ out_मुक्त;
 
 	speq->spe = spe;
 	speq->queue_nr = queue_nr;
@@ -204,34 +205,34 @@ static struct arm_spe_queue *arm_spe__alloc_queue(struct arm_spe *spe,
 
 	/* create new decoder */
 	speq->decoder = arm_spe_decoder_new(&params);
-	if (!speq->decoder)
-		goto out_free;
+	अगर (!speq->decoder)
+		जाओ out_मुक्त;
 
-	return speq;
+	वापस speq;
 
-out_free:
-	zfree(&speq->event_buf);
-	free(speq);
+out_मुक्त:
+	zमुक्त(&speq->event_buf);
+	मुक्त(speq);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline u8 arm_spe_cpumode(struct arm_spe *spe, u64 ip)
-{
-	return ip >= spe->kernel_start ?
+अटल अंतरभूत u8 arm_spe_cpumode(काष्ठा arm_spe *spe, u64 ip)
+अणु
+	वापस ip >= spe->kernel_start ?
 		PERF_RECORD_MISC_KERNEL :
 		PERF_RECORD_MISC_USER;
-}
+पूर्ण
 
-static void arm_spe_prep_sample(struct arm_spe *spe,
-				struct arm_spe_queue *speq,
-				union perf_event *event,
-				struct perf_sample *sample)
-{
-	struct arm_spe_record *record = &speq->decoder->record;
+अटल व्योम arm_spe_prep_sample(काष्ठा arm_spe *spe,
+				काष्ठा arm_spe_queue *speq,
+				जोड़ perf_event *event,
+				काष्ठा perf_sample *sample)
+अणु
+	काष्ठा arm_spe_record *record = &speq->decoder->record;
 
-	if (!spe->timeless_decoding)
-		sample->time = speq->timestamp;
+	अगर (!spe->समयless_decoding)
+		sample->समय = speq->बारtamp;
 
 	sample->ip = record->from_ip;
 	sample->cpumode = arm_spe_cpumode(spe, sample->ip);
@@ -242,31 +243,31 @@ static void arm_spe_prep_sample(struct arm_spe *spe,
 
 	event->sample.header.type = PERF_RECORD_SAMPLE;
 	event->sample.header.misc = sample->cpumode;
-	event->sample.header.size = sizeof(struct perf_event_header);
-}
+	event->sample.header.size = माप(काष्ठा perf_event_header);
+पूर्ण
 
-static inline int
-arm_spe_deliver_synth_event(struct arm_spe *spe,
-			    struct arm_spe_queue *speq __maybe_unused,
-			    union perf_event *event,
-			    struct perf_sample *sample)
-{
-	int ret;
+अटल अंतरभूत पूर्णांक
+arm_spe_deliver_synth_event(काष्ठा arm_spe *spe,
+			    काष्ठा arm_spe_queue *speq __maybe_unused,
+			    जोड़ perf_event *event,
+			    काष्ठा perf_sample *sample)
+अणु
+	पूर्णांक ret;
 
 	ret = perf_session__deliver_synth_event(spe->session, event, sample);
-	if (ret)
+	अगर (ret)
 		pr_err("ARM SPE: failed to deliver event, error %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int arm_spe__synth_mem_sample(struct arm_spe_queue *speq,
+अटल पूर्णांक arm_spe__synth_mem_sample(काष्ठा arm_spe_queue *speq,
 				     u64 spe_events_id, u64 data_src)
-{
-	struct arm_spe *spe = speq->spe;
-	struct arm_spe_record *record = &speq->decoder->record;
-	union perf_event *event = speq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
+अणु
+	काष्ठा arm_spe *spe = speq->spe;
+	काष्ठा arm_spe_record *record = &speq->decoder->record;
+	जोड़ perf_event *event = speq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
 
 	arm_spe_prep_sample(spe, speq, event, &sample);
 
@@ -276,16 +277,16 @@ static int arm_spe__synth_mem_sample(struct arm_spe_queue *speq,
 	sample.phys_addr = record->phys_addr;
 	sample.data_src = data_src;
 
-	return arm_spe_deliver_synth_event(spe, speq, event, &sample);
-}
+	वापस arm_spe_deliver_synth_event(spe, speq, event, &sample);
+पूर्ण
 
-static int arm_spe__synth_branch_sample(struct arm_spe_queue *speq,
+अटल पूर्णांक arm_spe__synth_branch_sample(काष्ठा arm_spe_queue *speq,
 					u64 spe_events_id)
-{
-	struct arm_spe *spe = speq->spe;
-	struct arm_spe_record *record = &speq->decoder->record;
-	union perf_event *event = speq->event_buf;
-	struct perf_sample sample = { .ip = 0, };
+अणु
+	काष्ठा arm_spe *spe = speq->spe;
+	काष्ठा arm_spe_record *record = &speq->decoder->record;
+	जोड़ perf_event *event = speq->event_buf;
+	काष्ठा perf_sample sample = अणु .ip = 0, पूर्ण;
 
 	arm_spe_prep_sample(spe, speq, event, &sample);
 
@@ -293,305 +294,305 @@ static int arm_spe__synth_branch_sample(struct arm_spe_queue *speq,
 	sample.stream_id = spe_events_id;
 	sample.addr = record->to_ip;
 
-	return arm_spe_deliver_synth_event(spe, speq, event, &sample);
-}
+	वापस arm_spe_deliver_synth_event(spe, speq, event, &sample);
+पूर्ण
 
-#define SPE_MEM_TYPE	(ARM_SPE_L1D_ACCESS | ARM_SPE_L1D_MISS | \
+#घोषणा SPE_MEM_TYPE	(ARM_SPE_L1D_ACCESS | ARM_SPE_L1D_MISS | \
 			 ARM_SPE_LLC_ACCESS | ARM_SPE_LLC_MISS | \
 			 ARM_SPE_REMOTE_ACCESS)
 
-static bool arm_spe__is_memory_event(enum arm_spe_sample_type type)
-{
-	if (type & SPE_MEM_TYPE)
-		return true;
+अटल bool arm_spe__is_memory_event(क्रमागत arm_spe_sample_type type)
+अणु
+	अगर (type & SPE_MEM_TYPE)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static u64 arm_spe__synth_data_source(const struct arm_spe_record *record)
-{
-	union perf_mem_data_src	data_src = { 0 };
+अटल u64 arm_spe__synth_data_source(स्थिर काष्ठा arm_spe_record *record)
+अणु
+	जोड़ perf_mem_data_src	data_src = अणु 0 पूर्ण;
 
-	if (record->op == ARM_SPE_LD)
+	अगर (record->op == ARM_SPE_LD)
 		data_src.mem_op = PERF_MEM_OP_LOAD;
-	else
+	अन्यथा
 		data_src.mem_op = PERF_MEM_OP_STORE;
 
-	if (record->type & (ARM_SPE_LLC_ACCESS | ARM_SPE_LLC_MISS)) {
+	अगर (record->type & (ARM_SPE_LLC_ACCESS | ARM_SPE_LLC_MISS)) अणु
 		data_src.mem_lvl = PERF_MEM_LVL_L3;
 
-		if (record->type & ARM_SPE_LLC_MISS)
+		अगर (record->type & ARM_SPE_LLC_MISS)
 			data_src.mem_lvl |= PERF_MEM_LVL_MISS;
-		else
+		अन्यथा
 			data_src.mem_lvl |= PERF_MEM_LVL_HIT;
-	} else if (record->type & (ARM_SPE_L1D_ACCESS | ARM_SPE_L1D_MISS)) {
+	पूर्ण अन्यथा अगर (record->type & (ARM_SPE_L1D_ACCESS | ARM_SPE_L1D_MISS)) अणु
 		data_src.mem_lvl = PERF_MEM_LVL_L1;
 
-		if (record->type & ARM_SPE_L1D_MISS)
+		अगर (record->type & ARM_SPE_L1D_MISS)
 			data_src.mem_lvl |= PERF_MEM_LVL_MISS;
-		else
+		अन्यथा
 			data_src.mem_lvl |= PERF_MEM_LVL_HIT;
-	}
+	पूर्ण
 
-	if (record->type & ARM_SPE_REMOTE_ACCESS)
+	अगर (record->type & ARM_SPE_REMOTE_ACCESS)
 		data_src.mem_lvl |= PERF_MEM_LVL_REM_CCE1;
 
-	if (record->type & (ARM_SPE_TLB_ACCESS | ARM_SPE_TLB_MISS)) {
+	अगर (record->type & (ARM_SPE_TLB_ACCESS | ARM_SPE_TLB_MISS)) अणु
 		data_src.mem_dtlb = PERF_MEM_TLB_WK;
 
-		if (record->type & ARM_SPE_TLB_MISS)
+		अगर (record->type & ARM_SPE_TLB_MISS)
 			data_src.mem_dtlb |= PERF_MEM_TLB_MISS;
-		else
+		अन्यथा
 			data_src.mem_dtlb |= PERF_MEM_TLB_HIT;
-	}
+	पूर्ण
 
-	return data_src.val;
-}
+	वापस data_src.val;
+पूर्ण
 
-static int arm_spe_sample(struct arm_spe_queue *speq)
-{
-	const struct arm_spe_record *record = &speq->decoder->record;
-	struct arm_spe *spe = speq->spe;
+अटल पूर्णांक arm_spe_sample(काष्ठा arm_spe_queue *speq)
+अणु
+	स्थिर काष्ठा arm_spe_record *record = &speq->decoder->record;
+	काष्ठा arm_spe *spe = speq->spe;
 	u64 data_src;
-	int err;
+	पूर्णांक err;
 
 	data_src = arm_spe__synth_data_source(record);
 
-	if (spe->sample_flc) {
-		if (record->type & ARM_SPE_L1D_MISS) {
+	अगर (spe->sample_flc) अणु
+		अगर (record->type & ARM_SPE_L1D_MISS) अणु
 			err = arm_spe__synth_mem_sample(speq, spe->l1d_miss_id,
 							data_src);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		if (record->type & ARM_SPE_L1D_ACCESS) {
+		अगर (record->type & ARM_SPE_L1D_ACCESS) अणु
 			err = arm_spe__synth_mem_sample(speq, spe->l1d_access_id,
 							data_src);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (spe->sample_llc) {
-		if (record->type & ARM_SPE_LLC_MISS) {
+	अगर (spe->sample_llc) अणु
+		अगर (record->type & ARM_SPE_LLC_MISS) अणु
 			err = arm_spe__synth_mem_sample(speq, spe->llc_miss_id,
 							data_src);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		if (record->type & ARM_SPE_LLC_ACCESS) {
+		अगर (record->type & ARM_SPE_LLC_ACCESS) अणु
 			err = arm_spe__synth_mem_sample(speq, spe->llc_access_id,
 							data_src);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (spe->sample_tlb) {
-		if (record->type & ARM_SPE_TLB_MISS) {
+	अगर (spe->sample_tlb) अणु
+		अगर (record->type & ARM_SPE_TLB_MISS) अणु
 			err = arm_spe__synth_mem_sample(speq, spe->tlb_miss_id,
 							data_src);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		if (record->type & ARM_SPE_TLB_ACCESS) {
+		अगर (record->type & ARM_SPE_TLB_ACCESS) अणु
 			err = arm_spe__synth_mem_sample(speq, spe->tlb_access_id,
 							data_src);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (spe->sample_branch && (record->type & ARM_SPE_BRANCH_MISS)) {
+	अगर (spe->sample_branch && (record->type & ARM_SPE_BRANCH_MISS)) अणु
 		err = arm_spe__synth_branch_sample(speq, spe->branch_miss_id);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (spe->sample_remote_access &&
-	    (record->type & ARM_SPE_REMOTE_ACCESS)) {
+	अगर (spe->sample_remote_access &&
+	    (record->type & ARM_SPE_REMOTE_ACCESS)) अणु
 		err = arm_spe__synth_mem_sample(speq, spe->remote_access_id,
 						data_src);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (spe->sample_memory && arm_spe__is_memory_event(record->type)) {
+	अगर (spe->sample_memory && arm_spe__is_memory_event(record->type)) अणु
 		err = arm_spe__synth_mem_sample(speq, spe->memory_id, data_src);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arm_spe_run_decoder(struct arm_spe_queue *speq, u64 *timestamp)
-{
-	struct arm_spe *spe = speq->spe;
-	int ret;
+अटल पूर्णांक arm_spe_run_decoder(काष्ठा arm_spe_queue *speq, u64 *बारtamp)
+अणु
+	काष्ठा arm_spe *spe = speq->spe;
+	पूर्णांक ret;
 
-	if (!spe->kernel_start)
+	अगर (!spe->kernel_start)
 		spe->kernel_start = machine__kernel_start(spe->machine);
 
-	while (1) {
+	जबतक (1) अणु
 		ret = arm_spe_decode(speq->decoder);
-		if (!ret) {
+		अगर (!ret) अणु
 			pr_debug("No data or all data has been processed.\n");
-			return 1;
-		}
+			वापस 1;
+		पूर्ण
 
 		/*
-		 * Error is detected when decode SPE trace data, continue to
+		 * Error is detected when decode SPE trace data, जारी to
 		 * the next trace data and find out more records.
 		 */
-		if (ret < 0)
-			continue;
+		अगर (ret < 0)
+			जारी;
 
 		ret = arm_spe_sample(speq);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		if (!spe->timeless_decoding && speq->timestamp >= *timestamp) {
-			*timestamp = speq->timestamp;
-			return 0;
-		}
-	}
+		अगर (!spe->समयless_decoding && speq->बारtamp >= *बारtamp) अणु
+			*बारtamp = speq->बारtamp;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arm_spe__setup_queue(struct arm_spe *spe,
-			       struct auxtrace_queue *queue,
-			       unsigned int queue_nr)
-{
-	struct arm_spe_queue *speq = queue->priv;
-	struct arm_spe_record *record;
+अटल पूर्णांक arm_spe__setup_queue(काष्ठा arm_spe *spe,
+			       काष्ठा auxtrace_queue *queue,
+			       अचिन्हित पूर्णांक queue_nr)
+अणु
+	काष्ठा arm_spe_queue *speq = queue->priv;
+	काष्ठा arm_spe_record *record;
 
-	if (list_empty(&queue->head) || speq)
-		return 0;
+	अगर (list_empty(&queue->head) || speq)
+		वापस 0;
 
 	speq = arm_spe__alloc_queue(spe, queue_nr);
 
-	if (!speq)
-		return -ENOMEM;
+	अगर (!speq)
+		वापस -ENOMEM;
 
 	queue->priv = speq;
 
-	if (queue->cpu != -1)
+	अगर (queue->cpu != -1)
 		speq->cpu = queue->cpu;
 
-	if (!speq->on_heap) {
-		int ret;
+	अगर (!speq->on_heap) अणु
+		पूर्णांक ret;
 
-		if (spe->timeless_decoding)
-			return 0;
+		अगर (spe->समयless_decoding)
+			वापस 0;
 
 retry:
 		ret = arm_spe_decode(speq->decoder);
 
-		if (!ret)
-			return 0;
+		अगर (!ret)
+			वापस 0;
 
-		if (ret < 0)
-			goto retry;
+		अगर (ret < 0)
+			जाओ retry;
 
 		record = &speq->decoder->record;
 
-		speq->timestamp = record->timestamp;
-		ret = auxtrace_heap__add(&spe->heap, queue_nr, speq->timestamp);
-		if (ret)
-			return ret;
+		speq->बारtamp = record->बारtamp;
+		ret = auxtrace_heap__add(&spe->heap, queue_nr, speq->बारtamp);
+		अगर (ret)
+			वापस ret;
 		speq->on_heap = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arm_spe__setup_queues(struct arm_spe *spe)
-{
-	unsigned int i;
-	int ret;
+अटल पूर्णांक arm_spe__setup_queues(काष्ठा arm_spe *spe)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
-	for (i = 0; i < spe->queues.nr_queues; i++) {
+	क्रम (i = 0; i < spe->queues.nr_queues; i++) अणु
 		ret = arm_spe__setup_queue(spe, &spe->queues.queue_array[i], i);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arm_spe__update_queues(struct arm_spe *spe)
-{
-	if (spe->queues.new_data) {
+अटल पूर्णांक arm_spe__update_queues(काष्ठा arm_spe *spe)
+अणु
+	अगर (spe->queues.new_data) अणु
 		spe->queues.new_data = false;
-		return arm_spe__setup_queues(spe);
-	}
+		वापस arm_spe__setup_queues(spe);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool arm_spe__is_timeless_decoding(struct arm_spe *spe)
-{
-	struct evsel *evsel;
-	struct evlist *evlist = spe->session->evlist;
-	bool timeless_decoding = true;
+अटल bool arm_spe__is_समयless_decoding(काष्ठा arm_spe *spe)
+अणु
+	काष्ठा evsel *evsel;
+	काष्ठा evlist *evlist = spe->session->evlist;
+	bool समयless_decoding = true;
 
 	/*
-	 * Circle through the list of event and complain if we find one
-	 * with the time bit set.
+	 * Circle through the list of event and complain अगर we find one
+	 * with the समय bit set.
 	 */
-	evlist__for_each_entry(evlist, evsel) {
-		if ((evsel->core.attr.sample_type & PERF_SAMPLE_TIME))
-			timeless_decoding = false;
-	}
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर ((evsel->core.attr.sample_type & PERF_SAMPLE_TIME))
+			समयless_decoding = false;
+	पूर्ण
 
-	return timeless_decoding;
-}
+	वापस समयless_decoding;
+पूर्ण
 
-static void arm_spe_set_pid_tid_cpu(struct arm_spe *spe,
-				    struct auxtrace_queue *queue)
-{
-	struct arm_spe_queue *speq = queue->priv;
+अटल व्योम arm_spe_set_pid_tid_cpu(काष्ठा arm_spe *spe,
+				    काष्ठा auxtrace_queue *queue)
+अणु
+	काष्ठा arm_spe_queue *speq = queue->priv;
 	pid_t tid;
 
 	tid = machine__get_current_tid(spe->machine, speq->cpu);
-	if (tid != -1) {
+	अगर (tid != -1) अणु
 		speq->tid = tid;
-		thread__zput(speq->thread);
-	} else
+		thपढ़ो__zput(speq->thपढ़ो);
+	पूर्ण अन्यथा
 		speq->tid = queue->tid;
 
-	if ((!speq->thread) && (speq->tid != -1)) {
-		speq->thread = machine__find_thread(spe->machine, -1,
+	अगर ((!speq->thपढ़ो) && (speq->tid != -1)) अणु
+		speq->thपढ़ो = machine__find_thपढ़ो(spe->machine, -1,
 						    speq->tid);
-	}
+	पूर्ण
 
-	if (speq->thread) {
-		speq->pid = speq->thread->pid_;
-		if (queue->cpu == -1)
-			speq->cpu = speq->thread->cpu;
-	}
-}
+	अगर (speq->thपढ़ो) अणु
+		speq->pid = speq->thपढ़ो->pid_;
+		अगर (queue->cpu == -1)
+			speq->cpu = speq->thपढ़ो->cpu;
+	पूर्ण
+पूर्ण
 
-static int arm_spe_process_queues(struct arm_spe *spe, u64 timestamp)
-{
-	unsigned int queue_nr;
+अटल पूर्णांक arm_spe_process_queues(काष्ठा arm_spe *spe, u64 बारtamp)
+अणु
+	अचिन्हित पूर्णांक queue_nr;
 	u64 ts;
-	int ret;
+	पूर्णांक ret;
 
-	while (1) {
-		struct auxtrace_queue *queue;
-		struct arm_spe_queue *speq;
+	जबतक (1) अणु
+		काष्ठा auxtrace_queue *queue;
+		काष्ठा arm_spe_queue *speq;
 
-		if (!spe->heap.heap_cnt)
-			return 0;
+		अगर (!spe->heap.heap_cnt)
+			वापस 0;
 
-		if (spe->heap.heap_array[0].ordinal >= timestamp)
-			return 0;
+		अगर (spe->heap.heap_array[0].ordinal >= बारtamp)
+			वापस 0;
 
 		queue_nr = spe->heap.heap_array[0].queue_nr;
 		queue = &spe->queues.queue_array[queue_nr];
@@ -599,295 +600,295 @@ static int arm_spe_process_queues(struct arm_spe *spe, u64 timestamp)
 
 		auxtrace_heap__pop(&spe->heap);
 
-		if (spe->heap.heap_cnt) {
+		अगर (spe->heap.heap_cnt) अणु
 			ts = spe->heap.heap_array[0].ordinal + 1;
-			if (ts > timestamp)
-				ts = timestamp;
-		} else {
-			ts = timestamp;
-		}
+			अगर (ts > बारtamp)
+				ts = बारtamp;
+		पूर्ण अन्यथा अणु
+			ts = बारtamp;
+		पूर्ण
 
 		arm_spe_set_pid_tid_cpu(spe, queue);
 
 		ret = arm_spe_run_decoder(speq, &ts);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			auxtrace_heap__add(&spe->heap, queue_nr, ts);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = auxtrace_heap__add(&spe->heap, queue_nr, ts);
-			if (ret < 0)
-				return ret;
-		} else {
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण अन्यथा अणु
 			speq->on_heap = false;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arm_spe_process_timeless_queues(struct arm_spe *spe, pid_t tid,
-					    u64 time_)
-{
-	struct auxtrace_queues *queues = &spe->queues;
-	unsigned int i;
+अटल पूर्णांक arm_spe_process_समयless_queues(काष्ठा arm_spe *spe, pid_t tid,
+					    u64 समय_)
+अणु
+	काष्ठा auxtrace_queues *queues = &spe->queues;
+	अचिन्हित पूर्णांक i;
 	u64 ts = 0;
 
-	for (i = 0; i < queues->nr_queues; i++) {
-		struct auxtrace_queue *queue = &spe->queues.queue_array[i];
-		struct arm_spe_queue *speq = queue->priv;
+	क्रम (i = 0; i < queues->nr_queues; i++) अणु
+		काष्ठा auxtrace_queue *queue = &spe->queues.queue_array[i];
+		काष्ठा arm_spe_queue *speq = queue->priv;
 
-		if (speq && (tid == -1 || speq->tid == tid)) {
-			speq->time = time_;
+		अगर (speq && (tid == -1 || speq->tid == tid)) अणु
+			speq->समय = समय_;
 			arm_spe_set_pid_tid_cpu(spe, queue);
 			arm_spe_run_decoder(speq, &ts);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int arm_spe_process_event(struct perf_session *session,
-				 union perf_event *event,
-				 struct perf_sample *sample,
-				 struct perf_tool *tool)
-{
-	int err = 0;
-	u64 timestamp;
-	struct arm_spe *spe = container_of(session->auxtrace,
-			struct arm_spe, auxtrace);
+अटल पूर्णांक arm_spe_process_event(काष्ठा perf_session *session,
+				 जोड़ perf_event *event,
+				 काष्ठा perf_sample *sample,
+				 काष्ठा perf_tool *tool)
+अणु
+	पूर्णांक err = 0;
+	u64 बारtamp;
+	काष्ठा arm_spe *spe = container_of(session->auxtrace,
+			काष्ठा arm_spe, auxtrace);
 
-	if (dump_trace)
-		return 0;
+	अगर (dump_trace)
+		वापस 0;
 
-	if (!tool->ordered_events) {
+	अगर (!tool->ordered_events) अणु
 		pr_err("SPE trace requires ordered events\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (sample->time && (sample->time != (u64) -1))
-		timestamp = sample->time;
-	else
-		timestamp = 0;
+	अगर (sample->समय && (sample->समय != (u64) -1))
+		बारtamp = sample->समय;
+	अन्यथा
+		बारtamp = 0;
 
-	if (timestamp || spe->timeless_decoding) {
+	अगर (बारtamp || spe->समयless_decoding) अणु
 		err = arm_spe__update_queues(spe);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (spe->timeless_decoding) {
-		if (event->header.type == PERF_RECORD_EXIT) {
-			err = arm_spe_process_timeless_queues(spe,
-					event->fork.tid,
-					sample->time);
-		}
-	} else if (timestamp) {
-		if (event->header.type == PERF_RECORD_EXIT) {
-			err = arm_spe_process_queues(spe, timestamp);
-			if (err)
-				return err;
-		}
-	}
+	अगर (spe->समयless_decoding) अणु
+		अगर (event->header.type == PERF_RECORD_EXIT) अणु
+			err = arm_spe_process_समयless_queues(spe,
+					event->विभाजन.tid,
+					sample->समय);
+		पूर्ण
+	पूर्ण अन्यथा अगर (बारtamp) अणु
+		अगर (event->header.type == PERF_RECORD_EXIT) अणु
+			err = arm_spe_process_queues(spe, बारtamp);
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int arm_spe_process_auxtrace_event(struct perf_session *session,
-					  union perf_event *event,
-					  struct perf_tool *tool __maybe_unused)
-{
-	struct arm_spe *spe = container_of(session->auxtrace, struct arm_spe,
+अटल पूर्णांक arm_spe_process_auxtrace_event(काष्ठा perf_session *session,
+					  जोड़ perf_event *event,
+					  काष्ठा perf_tool *tool __maybe_unused)
+अणु
+	काष्ठा arm_spe *spe = container_of(session->auxtrace, काष्ठा arm_spe,
 					     auxtrace);
 
-	if (!spe->data_queued) {
-		struct auxtrace_buffer *buffer;
+	अगर (!spe->data_queued) अणु
+		काष्ठा auxtrace_buffer *buffer;
 		off_t data_offset;
-		int fd = perf_data__fd(session->data);
-		int err;
+		पूर्णांक fd = perf_data__fd(session->data);
+		पूर्णांक err;
 
-		if (perf_data__is_pipe(session->data)) {
+		अगर (perf_data__is_pipe(session->data)) अणु
 			data_offset = 0;
-		} else {
-			data_offset = lseek(fd, 0, SEEK_CUR);
-			if (data_offset == -1)
-				return -errno;
-		}
+		पूर्ण अन्यथा अणु
+			data_offset = lseek(fd, 0, प्रस्तुत_से);
+			अगर (data_offset == -1)
+				वापस -त्रुटि_सं;
+		पूर्ण
 
 		err = auxtrace_queues__add_event(&spe->queues, session, event,
 				data_offset, &buffer);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		/* Dump here now we have copied a piped trace out of the pipe */
-		if (dump_trace) {
-			if (auxtrace_buffer__get_data(buffer, fd)) {
+		अगर (dump_trace) अणु
+			अगर (auxtrace_buffer__get_data(buffer, fd)) अणु
 				arm_spe_dump_event(spe, buffer->data,
 						buffer->size);
 				auxtrace_buffer__put_data(buffer);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int arm_spe_flush(struct perf_session *session __maybe_unused,
-			 struct perf_tool *tool __maybe_unused)
-{
-	struct arm_spe *spe = container_of(session->auxtrace, struct arm_spe,
+अटल पूर्णांक arm_spe_flush(काष्ठा perf_session *session __maybe_unused,
+			 काष्ठा perf_tool *tool __maybe_unused)
+अणु
+	काष्ठा arm_spe *spe = container_of(session->auxtrace, काष्ठा arm_spe,
 			auxtrace);
-	int ret;
+	पूर्णांक ret;
 
-	if (dump_trace)
-		return 0;
+	अगर (dump_trace)
+		वापस 0;
 
-	if (!tool->ordered_events)
-		return -EINVAL;
+	अगर (!tool->ordered_events)
+		वापस -EINVAL;
 
 	ret = arm_spe__update_queues(spe);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (spe->timeless_decoding)
-		return arm_spe_process_timeless_queues(spe, -1,
+	अगर (spe->समयless_decoding)
+		वापस arm_spe_process_समयless_queues(spe, -1,
 				MAX_TIMESTAMP - 1);
 
-	return arm_spe_process_queues(spe, MAX_TIMESTAMP);
-}
+	वापस arm_spe_process_queues(spe, MAX_TIMESTAMP);
+पूर्ण
 
-static void arm_spe_free_queue(void *priv)
-{
-	struct arm_spe_queue *speq = priv;
+अटल व्योम arm_spe_मुक्त_queue(व्योम *priv)
+अणु
+	काष्ठा arm_spe_queue *speq = priv;
 
-	if (!speq)
-		return;
-	thread__zput(speq->thread);
-	arm_spe_decoder_free(speq->decoder);
-	zfree(&speq->event_buf);
-	free(speq);
-}
+	अगर (!speq)
+		वापस;
+	thपढ़ो__zput(speq->thपढ़ो);
+	arm_spe_decoder_मुक्त(speq->decoder);
+	zमुक्त(&speq->event_buf);
+	मुक्त(speq);
+पूर्ण
 
-static void arm_spe_free_events(struct perf_session *session)
-{
-	struct arm_spe *spe = container_of(session->auxtrace, struct arm_spe,
+अटल व्योम arm_spe_मुक्त_events(काष्ठा perf_session *session)
+अणु
+	काष्ठा arm_spe *spe = container_of(session->auxtrace, काष्ठा arm_spe,
 					     auxtrace);
-	struct auxtrace_queues *queues = &spe->queues;
-	unsigned int i;
+	काष्ठा auxtrace_queues *queues = &spe->queues;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < queues->nr_queues; i++) {
-		arm_spe_free_queue(queues->queue_array[i].priv);
-		queues->queue_array[i].priv = NULL;
-	}
-	auxtrace_queues__free(queues);
-}
+	क्रम (i = 0; i < queues->nr_queues; i++) अणु
+		arm_spe_मुक्त_queue(queues->queue_array[i].priv);
+		queues->queue_array[i].priv = शून्य;
+	पूर्ण
+	auxtrace_queues__मुक्त(queues);
+पूर्ण
 
-static void arm_spe_free(struct perf_session *session)
-{
-	struct arm_spe *spe = container_of(session->auxtrace, struct arm_spe,
+अटल व्योम arm_spe_मुक्त(काष्ठा perf_session *session)
+अणु
+	काष्ठा arm_spe *spe = container_of(session->auxtrace, काष्ठा arm_spe,
 					     auxtrace);
 
-	auxtrace_heap__free(&spe->heap);
-	arm_spe_free_events(session);
-	session->auxtrace = NULL;
-	free(spe);
-}
+	auxtrace_heap__मुक्त(&spe->heap);
+	arm_spe_मुक्त_events(session);
+	session->auxtrace = शून्य;
+	मुक्त(spe);
+पूर्ण
 
-static bool arm_spe_evsel_is_auxtrace(struct perf_session *session,
-				      struct evsel *evsel)
-{
-	struct arm_spe *spe = container_of(session->auxtrace, struct arm_spe, auxtrace);
+अटल bool arm_spe_evsel_is_auxtrace(काष्ठा perf_session *session,
+				      काष्ठा evsel *evsel)
+अणु
+	काष्ठा arm_spe *spe = container_of(session->auxtrace, काष्ठा arm_spe, auxtrace);
 
-	return evsel->core.attr.type == spe->pmu_type;
-}
+	वापस evsel->core.attr.type == spe->pmu_type;
+पूर्ण
 
-static const char * const arm_spe_info_fmts[] = {
+अटल स्थिर अक्षर * स्थिर arm_spe_info_fmts[] = अणु
 	[ARM_SPE_PMU_TYPE]		= "  PMU Type           %"PRId64"\n",
-};
+पूर्ण;
 
-static void arm_spe_print_info(__u64 *arr)
-{
-	if (!dump_trace)
-		return;
+अटल व्योम arm_spe_prपूर्णांक_info(__u64 *arr)
+अणु
+	अगर (!dump_trace)
+		वापस;
 
-	fprintf(stdout, arm_spe_info_fmts[ARM_SPE_PMU_TYPE], arr[ARM_SPE_PMU_TYPE]);
-}
+	ख_लिखो(मानक_निकास, arm_spe_info_fmts[ARM_SPE_PMU_TYPE], arr[ARM_SPE_PMU_TYPE]);
+पूर्ण
 
-struct arm_spe_synth {
-	struct perf_tool dummy_tool;
-	struct perf_session *session;
-};
+काष्ठा arm_spe_synth अणु
+	काष्ठा perf_tool dummy_tool;
+	काष्ठा perf_session *session;
+पूर्ण;
 
-static int arm_spe_event_synth(struct perf_tool *tool,
-			       union perf_event *event,
-			       struct perf_sample *sample __maybe_unused,
-			       struct machine *machine __maybe_unused)
-{
-	struct arm_spe_synth *arm_spe_synth =
-		      container_of(tool, struct arm_spe_synth, dummy_tool);
+अटल पूर्णांक arm_spe_event_synth(काष्ठा perf_tool *tool,
+			       जोड़ perf_event *event,
+			       काष्ठा perf_sample *sample __maybe_unused,
+			       काष्ठा machine *machine __maybe_unused)
+अणु
+	काष्ठा arm_spe_synth *arm_spe_synth =
+		      container_of(tool, काष्ठा arm_spe_synth, dummy_tool);
 
-	return perf_session__deliver_synth_event(arm_spe_synth->session,
-						 event, NULL);
-}
+	वापस perf_session__deliver_synth_event(arm_spe_synth->session,
+						 event, शून्य);
+पूर्ण
 
-static int arm_spe_synth_event(struct perf_session *session,
-			       struct perf_event_attr *attr, u64 id)
-{
-	struct arm_spe_synth arm_spe_synth;
+अटल पूर्णांक arm_spe_synth_event(काष्ठा perf_session *session,
+			       काष्ठा perf_event_attr *attr, u64 id)
+अणु
+	काष्ठा arm_spe_synth arm_spe_synth;
 
-	memset(&arm_spe_synth, 0, sizeof(struct arm_spe_synth));
+	स_रखो(&arm_spe_synth, 0, माप(काष्ठा arm_spe_synth));
 	arm_spe_synth.session = session;
 
-	return perf_event__synthesize_attr(&arm_spe_synth.dummy_tool, attr, 1,
+	वापस perf_event__synthesize_attr(&arm_spe_synth.dummy_tool, attr, 1,
 					   &id, arm_spe_event_synth);
-}
+पूर्ण
 
-static void arm_spe_set_event_name(struct evlist *evlist, u64 id,
-				    const char *name)
-{
-	struct evsel *evsel;
+अटल व्योम arm_spe_set_event_name(काष्ठा evlist *evlist, u64 id,
+				    स्थिर अक्षर *name)
+अणु
+	काष्ठा evsel *evsel;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->core.id && evsel->core.id[0] == id) {
-			if (evsel->name)
-				zfree(&evsel->name);
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->core.id && evsel->core.id[0] == id) अणु
+			अगर (evsel->name)
+				zमुक्त(&evsel->name);
 			evsel->name = strdup(name);
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int
-arm_spe_synth_events(struct arm_spe *spe, struct perf_session *session)
-{
-	struct evlist *evlist = session->evlist;
-	struct evsel *evsel;
-	struct perf_event_attr attr;
+अटल पूर्णांक
+arm_spe_synth_events(काष्ठा arm_spe *spe, काष्ठा perf_session *session)
+अणु
+	काष्ठा evlist *evlist = session->evlist;
+	काष्ठा evsel *evsel;
+	काष्ठा perf_event_attr attr;
 	bool found = false;
 	u64 id;
-	int err;
+	पूर्णांक err;
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (evsel->core.attr.type == spe->pmu_type) {
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (evsel->core.attr.type == spe->pmu_type) अणु
 			found = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found) {
+	अगर (!found) अणु
 		pr_debug("No selected events with SPE trace data\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	memset(&attr, 0, sizeof(struct perf_event_attr));
-	attr.size = sizeof(struct perf_event_attr);
+	स_रखो(&attr, 0, माप(काष्ठा perf_event_attr));
+	attr.size = माप(काष्ठा perf_event_attr);
 	attr.type = PERF_TYPE_HARDWARE;
 	attr.sample_type = evsel->core.attr.sample_type & PERF_SAMPLE_MASK;
 	attr.sample_type |= PERF_SAMPLE_IP | PERF_SAMPLE_TID |
 			    PERF_SAMPLE_PERIOD | PERF_SAMPLE_DATA_SRC;
-	if (spe->timeless_decoding)
+	अगर (spe->समयless_decoding)
 		attr.sample_type &= ~(u64)PERF_SAMPLE_TIME;
-	else
+	अन्यथा
 		attr.sample_type |= PERF_SAMPLE_TIME;
 
 	attr.exclude_user = evsel->core.attr.exclude_user;
@@ -896,172 +897,172 @@ arm_spe_synth_events(struct arm_spe *spe, struct perf_session *session)
 	attr.exclude_host = evsel->core.attr.exclude_host;
 	attr.exclude_guest = evsel->core.attr.exclude_guest;
 	attr.sample_id_all = evsel->core.attr.sample_id_all;
-	attr.read_format = evsel->core.attr.read_format;
+	attr.पढ़ो_क्रमmat = evsel->core.attr.पढ़ो_क्रमmat;
 
 	/* create new id val to be a fixed offset from evsel id */
 	id = evsel->core.id[0] + 1000000000;
 
-	if (!id)
+	अगर (!id)
 		id = 1;
 
-	if (spe->synth_opts.flc) {
+	अगर (spe->synth_opts.flc) अणु
 		spe->sample_flc = true;
 
 		/* Level 1 data cache miss */
 		err = arm_spe_synth_event(session, &attr, id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		spe->l1d_miss_id = id;
 		arm_spe_set_event_name(evlist, id, "l1d-miss");
 		id += 1;
 
 		/* Level 1 data cache access */
 		err = arm_spe_synth_event(session, &attr, id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		spe->l1d_access_id = id;
 		arm_spe_set_event_name(evlist, id, "l1d-access");
 		id += 1;
-	}
+	पूर्ण
 
-	if (spe->synth_opts.llc) {
+	अगर (spe->synth_opts.llc) अणु
 		spe->sample_llc = true;
 
 		/* Last level cache miss */
 		err = arm_spe_synth_event(session, &attr, id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		spe->llc_miss_id = id;
 		arm_spe_set_event_name(evlist, id, "llc-miss");
 		id += 1;
 
 		/* Last level cache access */
 		err = arm_spe_synth_event(session, &attr, id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		spe->llc_access_id = id;
 		arm_spe_set_event_name(evlist, id, "llc-access");
 		id += 1;
-	}
+	पूर्ण
 
-	if (spe->synth_opts.tlb) {
+	अगर (spe->synth_opts.tlb) अणु
 		spe->sample_tlb = true;
 
 		/* TLB miss */
 		err = arm_spe_synth_event(session, &attr, id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		spe->tlb_miss_id = id;
 		arm_spe_set_event_name(evlist, id, "tlb-miss");
 		id += 1;
 
 		/* TLB access */
 		err = arm_spe_synth_event(session, &attr, id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		spe->tlb_access_id = id;
 		arm_spe_set_event_name(evlist, id, "tlb-access");
 		id += 1;
-	}
+	पूर्ण
 
-	if (spe->synth_opts.branches) {
+	अगर (spe->synth_opts.branches) अणु
 		spe->sample_branch = true;
 
 		/* Branch miss */
 		err = arm_spe_synth_event(session, &attr, id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		spe->branch_miss_id = id;
 		arm_spe_set_event_name(evlist, id, "branch-miss");
 		id += 1;
-	}
+	पूर्ण
 
-	if (spe->synth_opts.remote_access) {
+	अगर (spe->synth_opts.remote_access) अणु
 		spe->sample_remote_access = true;
 
 		/* Remote access */
 		err = arm_spe_synth_event(session, &attr, id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		spe->remote_access_id = id;
 		arm_spe_set_event_name(evlist, id, "remote-access");
 		id += 1;
-	}
+	पूर्ण
 
-	if (spe->synth_opts.mem) {
+	अगर (spe->synth_opts.mem) अणु
 		spe->sample_memory = true;
 
 		err = arm_spe_synth_event(session, &attr, id);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		spe->memory_id = id;
 		arm_spe_set_event_name(evlist, id, "memory");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int arm_spe_process_auxtrace_info(union perf_event *event,
-				  struct perf_session *session)
-{
-	struct perf_record_auxtrace_info *auxtrace_info = &event->auxtrace_info;
-	size_t min_sz = sizeof(u64) * ARM_SPE_AUXTRACE_PRIV_MAX;
-	struct arm_spe *spe;
-	int err;
+पूर्णांक arm_spe_process_auxtrace_info(जोड़ perf_event *event,
+				  काष्ठा perf_session *session)
+अणु
+	काष्ठा perf_record_auxtrace_info *auxtrace_info = &event->auxtrace_info;
+	माप_प्रकार min_sz = माप(u64) * ARM_SPE_AUXTRACE_PRIV_MAX;
+	काष्ठा arm_spe *spe;
+	पूर्णांक err;
 
-	if (auxtrace_info->header.size < sizeof(struct perf_record_auxtrace_info) +
+	अगर (auxtrace_info->header.size < माप(काष्ठा perf_record_auxtrace_info) +
 					min_sz)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	spe = zalloc(sizeof(struct arm_spe));
-	if (!spe)
-		return -ENOMEM;
+	spe = zalloc(माप(काष्ठा arm_spe));
+	अगर (!spe)
+		वापस -ENOMEM;
 
 	err = auxtrace_queues__init(&spe->queues);
-	if (err)
-		goto err_free;
+	अगर (err)
+		जाओ err_मुक्त;
 
 	spe->session = session;
 	spe->machine = &session->machines.host; /* No kvm support */
 	spe->auxtrace_type = auxtrace_info->type;
 	spe->pmu_type = auxtrace_info->priv[ARM_SPE_PMU_TYPE];
 
-	spe->timeless_decoding = arm_spe__is_timeless_decoding(spe);
+	spe->समयless_decoding = arm_spe__is_समयless_decoding(spe);
 	spe->auxtrace.process_event = arm_spe_process_event;
 	spe->auxtrace.process_auxtrace_event = arm_spe_process_auxtrace_event;
 	spe->auxtrace.flush_events = arm_spe_flush;
-	spe->auxtrace.free_events = arm_spe_free_events;
-	spe->auxtrace.free = arm_spe_free;
+	spe->auxtrace.मुक्त_events = arm_spe_मुक्त_events;
+	spe->auxtrace.मुक्त = arm_spe_मुक्त;
 	spe->auxtrace.evsel_is_auxtrace = arm_spe_evsel_is_auxtrace;
 	session->auxtrace = &spe->auxtrace;
 
-	arm_spe_print_info(&auxtrace_info->priv[0]);
+	arm_spe_prपूर्णांक_info(&auxtrace_info->priv[0]);
 
-	if (dump_trace)
-		return 0;
+	अगर (dump_trace)
+		वापस 0;
 
-	if (session->itrace_synth_opts && session->itrace_synth_opts->set)
+	अगर (session->itrace_synth_opts && session->itrace_synth_opts->set)
 		spe->synth_opts = *session->itrace_synth_opts;
-	else
-		itrace_synth_opts__set_default(&spe->synth_opts, false);
+	अन्यथा
+		itrace_synth_opts__set_शेष(&spe->synth_opts, false);
 
 	err = arm_spe_synth_events(spe, session);
-	if (err)
-		goto err_free_queues;
+	अगर (err)
+		जाओ err_मुक्त_queues;
 
 	err = auxtrace_queues__process_index(&spe->queues, session);
-	if (err)
-		goto err_free_queues;
+	अगर (err)
+		जाओ err_मुक्त_queues;
 
-	if (spe->queues.populated)
+	अगर (spe->queues.populated)
 		spe->data_queued = true;
 
-	return 0;
+	वापस 0;
 
-err_free_queues:
-	auxtrace_queues__free(&spe->queues);
-	session->auxtrace = NULL;
-err_free:
-	free(spe);
-	return err;
-}
+err_मुक्त_queues:
+	auxtrace_queues__मुक्त(&spe->queues);
+	session->auxtrace = शून्य;
+err_मुक्त:
+	मुक्त(spe);
+	वापस err;
+पूर्ण

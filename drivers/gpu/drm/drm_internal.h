@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
- * Copyright © 2014 Intel Corporation
+ * Copyright तऊ 2014 Intel Corporation
  *   Daniel Vetter <daniel.vetter@ffwll.ch>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,250 +22,250 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <linux/kthread.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include <drm/drm_ioctl.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_ioctl.h>
+#समावेश <drm/drm_vblank.h>
 
-#define DRM_IF_MAJOR 1
-#define DRM_IF_MINOR 4
+#घोषणा DRM_IF_MAJOR 1
+#घोषणा DRM_IF_MINOR 4
 
-#define DRM_IF_VERSION(maj, min) (maj << 16 | min)
+#घोषणा DRM_IF_VERSION(maj, min) (maj << 16 | min)
 
-struct dentry;
-struct dma_buf;
-struct dma_buf_map;
-struct drm_connector;
-struct drm_crtc;
-struct drm_framebuffer;
-struct drm_gem_object;
-struct drm_master;
-struct drm_minor;
-struct drm_prime_file_private;
-struct drm_printer;
-struct drm_vblank_crtc;
+काष्ठा dentry;
+काष्ठा dma_buf;
+काष्ठा dma_buf_map;
+काष्ठा drm_connector;
+काष्ठा drm_crtc;
+काष्ठा drm_framebuffer;
+काष्ठा drm_gem_object;
+काष्ठा drm_master;
+काष्ठा drm_minor;
+काष्ठा drm_prime_file_निजी;
+काष्ठा drm_prपूर्णांकer;
+काष्ठा drm_vblank_crtc;
 
 /* drm_file.c */
-extern struct mutex drm_global_mutex;
-bool drm_dev_needs_global_mutex(struct drm_device *dev);
-struct drm_file *drm_file_alloc(struct drm_minor *minor);
-void drm_file_free(struct drm_file *file);
-void drm_lastclose(struct drm_device *dev);
+बाह्य काष्ठा mutex drm_global_mutex;
+bool drm_dev_needs_global_mutex(काष्ठा drm_device *dev);
+काष्ठा drm_file *drm_file_alloc(काष्ठा drm_minor *minor);
+व्योम drm_file_मुक्त(काष्ठा drm_file *file);
+व्योम drm_lastबंद(काष्ठा drm_device *dev);
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 
 /* drm_pci.c */
-int drm_legacy_irq_by_busid(struct drm_device *dev, void *data,
-			    struct drm_file *file_priv);
-void drm_pci_agp_destroy(struct drm_device *dev);
-int drm_pci_set_busid(struct drm_device *dev, struct drm_master *master);
+पूर्णांक drm_legacy_irq_by_busid(काष्ठा drm_device *dev, व्योम *data,
+			    काष्ठा drm_file *file_priv);
+व्योम drm_pci_agp_destroy(काष्ठा drm_device *dev);
+पूर्णांक drm_pci_set_busid(काष्ठा drm_device *dev, काष्ठा drm_master *master);
 
-#else
+#अन्यथा
 
-static inline int drm_legacy_irq_by_busid(struct drm_device *dev, void *data,
-					  struct drm_file *file_priv)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक drm_legacy_irq_by_busid(काष्ठा drm_device *dev, व्योम *data,
+					  काष्ठा drm_file *file_priv)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline void drm_pci_agp_destroy(struct drm_device *dev)
-{
-}
+अटल अंतरभूत व्योम drm_pci_agp_destroy(काष्ठा drm_device *dev)
+अणु
+पूर्ण
 
-static inline int drm_pci_set_busid(struct drm_device *dev,
-				    struct drm_master *master)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक drm_pci_set_busid(काष्ठा drm_device *dev,
+				    काष्ठा drm_master *master)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 /* drm_prime.c */
-int drm_prime_handle_to_fd_ioctl(struct drm_device *dev, void *data,
-				 struct drm_file *file_priv);
-int drm_prime_fd_to_handle_ioctl(struct drm_device *dev, void *data,
-				 struct drm_file *file_priv);
+पूर्णांक drm_prime_handle_to_fd_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				 काष्ठा drm_file *file_priv);
+पूर्णांक drm_prime_fd_to_handle_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				 काष्ठा drm_file *file_priv);
 
-void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv);
-void drm_prime_destroy_file_private(struct drm_prime_file_private *prime_fpriv);
-void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpriv,
-					struct dma_buf *dma_buf);
+व्योम drm_prime_init_file_निजी(काष्ठा drm_prime_file_निजी *prime_fpriv);
+व्योम drm_prime_destroy_file_निजी(काष्ठा drm_prime_file_निजी *prime_fpriv);
+व्योम drm_prime_हटाओ_buf_handle_locked(काष्ठा drm_prime_file_निजी *prime_fpriv,
+					काष्ठा dma_buf *dma_buf);
 
 /* drm_drv.c */
-struct drm_minor *drm_minor_acquire(unsigned int minor_id);
-void drm_minor_release(struct drm_minor *minor);
+काष्ठा drm_minor *drm_minor_acquire(अचिन्हित पूर्णांक minor_id);
+व्योम drm_minor_release(काष्ठा drm_minor *minor);
 
 /* drm_managed.c */
-void drm_managed_release(struct drm_device *dev);
-void drmm_add_final_kfree(struct drm_device *dev, void *container);
+व्योम drm_managed_release(काष्ठा drm_device *dev);
+व्योम drmm_add_final_kमुक्त(काष्ठा drm_device *dev, व्योम *container);
 
 /* drm_vblank.c */
-static inline bool drm_vblank_passed(u64 seq, u64 ref)
-{
-	return (seq - ref) <= (1 << 23);
-}
+अटल अंतरभूत bool drm_vblank_passed(u64 seq, u64 ref)
+अणु
+	वापस (seq - ref) <= (1 << 23);
+पूर्ण
 
-void drm_vblank_disable_and_save(struct drm_device *dev, unsigned int pipe);
-int drm_vblank_get(struct drm_device *dev, unsigned int pipe);
-void drm_vblank_put(struct drm_device *dev, unsigned int pipe);
-u64 drm_vblank_count(struct drm_device *dev, unsigned int pipe);
+व्योम drm_vblank_disable_and_save(काष्ठा drm_device *dev, अचिन्हित पूर्णांक pipe);
+पूर्णांक drm_vblank_get(काष्ठा drm_device *dev, अचिन्हित पूर्णांक pipe);
+व्योम drm_vblank_put(काष्ठा drm_device *dev, अचिन्हित पूर्णांक pipe);
+u64 drm_vblank_count(काष्ठा drm_device *dev, अचिन्हित पूर्णांक pipe);
 
 /* drm_vblank_work.c */
-static inline void drm_vblank_flush_worker(struct drm_vblank_crtc *vblank)
-{
-	kthread_flush_worker(vblank->worker);
-}
+अटल अंतरभूत व्योम drm_vblank_flush_worker(काष्ठा drm_vblank_crtc *vblank)
+अणु
+	kthपढ़ो_flush_worker(vblank->worker);
+पूर्ण
 
-static inline void drm_vblank_destroy_worker(struct drm_vblank_crtc *vblank)
-{
-	kthread_destroy_worker(vblank->worker);
-}
+अटल अंतरभूत व्योम drm_vblank_destroy_worker(काष्ठा drm_vblank_crtc *vblank)
+अणु
+	kthपढ़ो_destroy_worker(vblank->worker);
+पूर्ण
 
-int drm_vblank_worker_init(struct drm_vblank_crtc *vblank);
-void drm_vblank_cancel_pending_works(struct drm_vblank_crtc *vblank);
-void drm_handle_vblank_works(struct drm_vblank_crtc *vblank);
+पूर्णांक drm_vblank_worker_init(काष्ठा drm_vblank_crtc *vblank);
+व्योम drm_vblank_cancel_pending_works(काष्ठा drm_vblank_crtc *vblank);
+व्योम drm_handle_vblank_works(काष्ठा drm_vblank_crtc *vblank);
 
 /* IOCTLS */
-int drm_wait_vblank_ioctl(struct drm_device *dev, void *data,
-			  struct drm_file *filp);
-int drm_legacy_modeset_ctl_ioctl(struct drm_device *dev, void *data,
-				 struct drm_file *file_priv);
+पूर्णांक drm_रुको_vblank_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			  काष्ठा drm_file *filp);
+पूर्णांक drm_legacy_modeset_ctl_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				 काष्ठा drm_file *file_priv);
 
 /* drm_irq.c */
 
 /* IOCTLS */
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-int drm_legacy_irq_control(struct drm_device *dev, void *data,
-			   struct drm_file *file_priv);
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+पूर्णांक drm_legacy_irq_control(काष्ठा drm_device *dev, व्योम *data,
+			   काष्ठा drm_file *file_priv);
+#पूर्ण_अगर
 
-int drm_crtc_get_sequence_ioctl(struct drm_device *dev, void *data,
-				struct drm_file *filp);
+पूर्णांक drm_crtc_get_sequence_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				काष्ठा drm_file *filp);
 
-int drm_crtc_queue_sequence_ioctl(struct drm_device *dev, void *data,
-				  struct drm_file *filp);
+पूर्णांक drm_crtc_queue_sequence_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				  काष्ठा drm_file *filp);
 
 /* drm_auth.c */
-int drm_getmagic(struct drm_device *dev, void *data,
-		 struct drm_file *file_priv);
-int drm_authmagic(struct drm_device *dev, void *data,
-		  struct drm_file *file_priv);
-int drm_setmaster_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *file_priv);
-int drm_dropmaster_ioctl(struct drm_device *dev, void *data,
-			 struct drm_file *file_priv);
-int drm_master_open(struct drm_file *file_priv);
-void drm_master_release(struct drm_file *file_priv);
-bool drm_master_internal_acquire(struct drm_device *dev);
-void drm_master_internal_release(struct drm_device *dev);
+पूर्णांक drm_geपंचांगagic(काष्ठा drm_device *dev, व्योम *data,
+		 काष्ठा drm_file *file_priv);
+पूर्णांक drm_authmagic(काष्ठा drm_device *dev, व्योम *data,
+		  काष्ठा drm_file *file_priv);
+पूर्णांक drm_seपंचांगaster_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv);
+पूर्णांक drm_dropmaster_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			 काष्ठा drm_file *file_priv);
+पूर्णांक drm_master_खोलो(काष्ठा drm_file *file_priv);
+व्योम drm_master_release(काष्ठा drm_file *file_priv);
+bool drm_master_पूर्णांकernal_acquire(काष्ठा drm_device *dev);
+व्योम drm_master_पूर्णांकernal_release(काष्ठा drm_device *dev);
 
 /* drm_sysfs.c */
-extern struct class *drm_class;
+बाह्य काष्ठा class *drm_class;
 
-int drm_sysfs_init(void);
-void drm_sysfs_destroy(void);
-struct device *drm_sysfs_minor_alloc(struct drm_minor *minor);
-int drm_sysfs_connector_add(struct drm_connector *connector);
-void drm_sysfs_connector_remove(struct drm_connector *connector);
+पूर्णांक drm_sysfs_init(व्योम);
+व्योम drm_sysfs_destroy(व्योम);
+काष्ठा device *drm_sysfs_minor_alloc(काष्ठा drm_minor *minor);
+पूर्णांक drm_sysfs_connector_add(काष्ठा drm_connector *connector);
+व्योम drm_sysfs_connector_हटाओ(काष्ठा drm_connector *connector);
 
-void drm_sysfs_lease_event(struct drm_device *dev);
+व्योम drm_sysfs_lease_event(काष्ठा drm_device *dev);
 
 /* drm_gem.c */
-int drm_gem_init(struct drm_device *dev);
-int drm_gem_handle_create_tail(struct drm_file *file_priv,
-			       struct drm_gem_object *obj,
+पूर्णांक drm_gem_init(काष्ठा drm_device *dev);
+पूर्णांक drm_gem_handle_create_tail(काष्ठा drm_file *file_priv,
+			       काष्ठा drm_gem_object *obj,
 			       u32 *handlep);
-int drm_gem_close_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *file_priv);
-int drm_gem_flink_ioctl(struct drm_device *dev, void *data,
-			struct drm_file *file_priv);
-int drm_gem_open_ioctl(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv);
-void drm_gem_open(struct drm_device *dev, struct drm_file *file_private);
-void drm_gem_release(struct drm_device *dev, struct drm_file *file_private);
-void drm_gem_print_info(struct drm_printer *p, unsigned int indent,
-			const struct drm_gem_object *obj);
+पूर्णांक drm_gem_बंद_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv);
+पूर्णांक drm_gem_flink_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv);
+पूर्णांक drm_gem_खोलो_ioctl(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv);
+व्योम drm_gem_खोलो(काष्ठा drm_device *dev, काष्ठा drm_file *file_निजी);
+व्योम drm_gem_release(काष्ठा drm_device *dev, काष्ठा drm_file *file_निजी);
+व्योम drm_gem_prपूर्णांक_info(काष्ठा drm_prपूर्णांकer *p, अचिन्हित पूर्णांक indent,
+			स्थिर काष्ठा drm_gem_object *obj);
 
-int drm_gem_pin(struct drm_gem_object *obj);
-void drm_gem_unpin(struct drm_gem_object *obj);
-int drm_gem_vmap(struct drm_gem_object *obj, struct dma_buf_map *map);
-void drm_gem_vunmap(struct drm_gem_object *obj, struct dma_buf_map *map);
+पूर्णांक drm_gem_pin(काष्ठा drm_gem_object *obj);
+व्योम drm_gem_unpin(काष्ठा drm_gem_object *obj);
+पूर्णांक drm_gem_vmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map);
+व्योम drm_gem_vunmap(काष्ठा drm_gem_object *obj, काष्ठा dma_buf_map *map);
 
-int drm_gem_dumb_destroy(struct drm_file *file, struct drm_device *dev,
+पूर्णांक drm_gem_dumb_destroy(काष्ठा drm_file *file, काष्ठा drm_device *dev,
 			 u32 handle);
 
 /* drm_debugfs.c drm_debugfs_crc.c */
-#if defined(CONFIG_DEBUG_FS)
-int drm_debugfs_init(struct drm_minor *minor, int minor_id,
-		     struct dentry *root);
-void drm_debugfs_cleanup(struct drm_minor *minor);
-void drm_debugfs_connector_add(struct drm_connector *connector);
-void drm_debugfs_connector_remove(struct drm_connector *connector);
-void drm_debugfs_crtc_add(struct drm_crtc *crtc);
-void drm_debugfs_crtc_remove(struct drm_crtc *crtc);
-void drm_debugfs_crtc_crc_add(struct drm_crtc *crtc);
-#else
-static inline int drm_debugfs_init(struct drm_minor *minor, int minor_id,
-				   struct dentry *root)
-{
-	return 0;
-}
+#अगर defined(CONFIG_DEBUG_FS)
+पूर्णांक drm_debugfs_init(काष्ठा drm_minor *minor, पूर्णांक minor_id,
+		     काष्ठा dentry *root);
+व्योम drm_debugfs_cleanup(काष्ठा drm_minor *minor);
+व्योम drm_debugfs_connector_add(काष्ठा drm_connector *connector);
+व्योम drm_debugfs_connector_हटाओ(काष्ठा drm_connector *connector);
+व्योम drm_debugfs_crtc_add(काष्ठा drm_crtc *crtc);
+व्योम drm_debugfs_crtc_हटाओ(काष्ठा drm_crtc *crtc);
+व्योम drm_debugfs_crtc_crc_add(काष्ठा drm_crtc *crtc);
+#अन्यथा
+अटल अंतरभूत पूर्णांक drm_debugfs_init(काष्ठा drm_minor *minor, पूर्णांक minor_id,
+				   काष्ठा dentry *root)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void drm_debugfs_cleanup(struct drm_minor *minor)
-{
-}
+अटल अंतरभूत व्योम drm_debugfs_cleanup(काष्ठा drm_minor *minor)
+अणु
+पूर्ण
 
-static inline void drm_debugfs_connector_add(struct drm_connector *connector)
-{
-}
-static inline void drm_debugfs_connector_remove(struct drm_connector *connector)
-{
-}
+अटल अंतरभूत व्योम drm_debugfs_connector_add(काष्ठा drm_connector *connector)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम drm_debugfs_connector_हटाओ(काष्ठा drm_connector *connector)
+अणु
+पूर्ण
 
-static inline void drm_debugfs_crtc_add(struct drm_crtc *crtc)
-{
-}
-static inline void drm_debugfs_crtc_remove(struct drm_crtc *crtc)
-{
-}
+अटल अंतरभूत व्योम drm_debugfs_crtc_add(काष्ठा drm_crtc *crtc)
+अणु
+पूर्ण
+अटल अंतरभूत व्योम drm_debugfs_crtc_हटाओ(काष्ठा drm_crtc *crtc)
+अणु
+पूर्ण
 
-static inline void drm_debugfs_crtc_crc_add(struct drm_crtc *crtc)
-{
-}
+अटल अंतरभूत व्योम drm_debugfs_crtc_crc_add(काष्ठा drm_crtc *crtc)
+अणु
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 drm_ioctl_t drm_version;
 drm_ioctl_t drm_getunique;
-drm_ioctl_t drm_getclient;
+drm_ioctl_t drm_अ_लोlient;
 
 /* drm_syncobj.c */
-void drm_syncobj_open(struct drm_file *file_private);
-void drm_syncobj_release(struct drm_file *file_private);
-int drm_syncobj_create_ioctl(struct drm_device *dev, void *data,
-			     struct drm_file *file_private);
-int drm_syncobj_destroy_ioctl(struct drm_device *dev, void *data,
-			      struct drm_file *file_private);
-int drm_syncobj_handle_to_fd_ioctl(struct drm_device *dev, void *data,
-				   struct drm_file *file_private);
-int drm_syncobj_fd_to_handle_ioctl(struct drm_device *dev, void *data,
-				   struct drm_file *file_private);
-int drm_syncobj_transfer_ioctl(struct drm_device *dev, void *data,
-			       struct drm_file *file_private);
-int drm_syncobj_wait_ioctl(struct drm_device *dev, void *data,
-			   struct drm_file *file_private);
-int drm_syncobj_timeline_wait_ioctl(struct drm_device *dev, void *data,
-				    struct drm_file *file_private);
-int drm_syncobj_reset_ioctl(struct drm_device *dev, void *data,
-			    struct drm_file *file_private);
-int drm_syncobj_signal_ioctl(struct drm_device *dev, void *data,
-			     struct drm_file *file_private);
-int drm_syncobj_timeline_signal_ioctl(struct drm_device *dev, void *data,
-				      struct drm_file *file_private);
-int drm_syncobj_query_ioctl(struct drm_device *dev, void *data,
-			    struct drm_file *file_private);
+व्योम drm_syncobj_खोलो(काष्ठा drm_file *file_निजी);
+व्योम drm_syncobj_release(काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_create_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			     काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_destroy_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			      काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_handle_to_fd_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				   काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_fd_to_handle_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				   काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_transfer_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			       काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_रुको_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			   काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_समयline_रुको_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				    काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_reset_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			    काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_संकेत_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			     काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_समयline_संकेत_ioctl(काष्ठा drm_device *dev, व्योम *data,
+				      काष्ठा drm_file *file_निजी);
+पूर्णांक drm_syncobj_query_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			    काष्ठा drm_file *file_निजी);
 
 /* drm_framebuffer.c */
-void drm_framebuffer_print_info(struct drm_printer *p, unsigned int indent,
-				const struct drm_framebuffer *fb);
-void drm_framebuffer_debugfs_init(struct drm_minor *minor);
+व्योम drm_framebuffer_prपूर्णांक_info(काष्ठा drm_prपूर्णांकer *p, अचिन्हित पूर्णांक indent,
+				स्थिर काष्ठा drm_framebuffer *fb);
+व्योम drm_framebuffer_debugfs_init(काष्ठा drm_minor *minor);

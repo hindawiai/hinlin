@@ -1,104 +1,105 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Silicon Labs C2 port Linux support for Eurotech Duramar 2150
+ *  Silicon Lअसल C2 port Linux support क्रम Eurotech Duramar 2150
  *
- *  Copyright (c) 2008 Rodolfo Giometti <giometti@linux.it>
+ *  Copyright (c) 2008 Roकरोlfo Giometti <giometti@linux.it>
  *  Copyright (c) 2008 Eurotech S.p.A. <info@eurotech.it>
  */
 
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/c2port.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/c2port.h>
 
-#define DATA_PORT	0x325
-#define DIR_PORT	0x326
-#define    C2D		   (1 << 0)
-#define    C2CK		   (1 << 1)
+#घोषणा DATA_PORT	0x325
+#घोषणा सूची_PORT	0x326
+#घोषणा    C2D		   (1 << 0)
+#घोषणा    C2CK		   (1 << 1)
 
-static DEFINE_MUTEX(update_lock);
+अटल DEFINE_MUTEX(update_lock);
 
 /*
  * C2 port operations
  */
 
-static void duramar2150_c2port_access(struct c2port_device *dev, int status)
-{
+अटल व्योम duramar2150_c2port_access(काष्ठा c2port_device *dev, पूर्णांक status)
+अणु
 	u8 v;
 
 	mutex_lock(&update_lock);
 
-	v = inb(DIR_PORT);
+	v = inb(सूची_PORT);
 
 	/* 0 = input, 1 = output */
-	if (status)
-		outb(v | (C2D | C2CK), DIR_PORT);
-	else
+	अगर (status)
+		outb(v | (C2D | C2CK), सूची_PORT);
+	अन्यथा
 		/* When access is "off" is important that both lines are set
-		 * as inputs or hi-impedance */
-		outb(v & ~(C2D | C2CK), DIR_PORT);
+		 * as inमाला_दो or hi-impedance */
+		outb(v & ~(C2D | C2CK), सूची_PORT);
 
 	mutex_unlock(&update_lock);
-}
+पूर्ण
 
-static void duramar2150_c2port_c2d_dir(struct c2port_device *dev, int dir)
-{
+अटल व्योम duramar2150_c2port_c2d_dir(काष्ठा c2port_device *dev, पूर्णांक dir)
+अणु
 	u8 v;
 
 	mutex_lock(&update_lock);
 
-	v = inb(DIR_PORT);
+	v = inb(सूची_PORT);
 
-	if (dir)
-		outb(v & ~C2D, DIR_PORT);
-	else
-		outb(v | C2D, DIR_PORT);
+	अगर (dir)
+		outb(v & ~C2D, सूची_PORT);
+	अन्यथा
+		outb(v | C2D, सूची_PORT);
 
 	mutex_unlock(&update_lock);
-}
+पूर्ण
 
-static int duramar2150_c2port_c2d_get(struct c2port_device *dev)
-{
-	return inb(DATA_PORT) & C2D;
-}
+अटल पूर्णांक duramar2150_c2port_c2d_get(काष्ठा c2port_device *dev)
+अणु
+	वापस inb(DATA_PORT) & C2D;
+पूर्ण
 
-static void duramar2150_c2port_c2d_set(struct c2port_device *dev, int status)
-{
+अटल व्योम duramar2150_c2port_c2d_set(काष्ठा c2port_device *dev, पूर्णांक status)
+अणु
 	u8 v;
 
 	mutex_lock(&update_lock);
 
 	v = inb(DATA_PORT);
 
-	if (status)
+	अगर (status)
 		outb(v | C2D, DATA_PORT);
-	else
+	अन्यथा
 		outb(v & ~C2D, DATA_PORT);
 
 	mutex_unlock(&update_lock);
-}
+पूर्ण
 
-static void duramar2150_c2port_c2ck_set(struct c2port_device *dev, int status)
-{
+अटल व्योम duramar2150_c2port_c2ck_set(काष्ठा c2port_device *dev, पूर्णांक status)
+अणु
 	u8 v;
 
 	mutex_lock(&update_lock);
 
 	v = inb(DATA_PORT);
 
-	if (status)
+	अगर (status)
 		outb(v | C2CK, DATA_PORT);
-	else
+	अन्यथा
 		outb(v & ~C2CK, DATA_PORT);
 
 	mutex_unlock(&update_lock);
-}
+पूर्ण
 
-static struct c2port_ops duramar2150_c2port_ops = {
+अटल काष्ठा c2port_ops duramar2150_c2port_ops = अणु
 	.block_size	= 512,	/* bytes */
 	.blocks_num	= 30,	/* total flash size: 15360 bytes */
 
@@ -107,49 +108,49 @@ static struct c2port_ops duramar2150_c2port_ops = {
 	.c2d_get	= duramar2150_c2port_c2d_get,
 	.c2d_set	= duramar2150_c2port_c2d_set,
 	.c2ck_set	= duramar2150_c2port_c2ck_set,
-};
+पूर्ण;
 
-static struct c2port_device *duramar2150_c2port_dev;
+अटल काष्ठा c2port_device *duramar2150_c2port_dev;
 
 /*
  * Module stuff
  */
 
-static int __init duramar2150_c2port_init(void)
-{
-	struct resource *res;
-	int ret = 0;
+अटल पूर्णांक __init duramar2150_c2port_init(व्योम)
+अणु
+	काष्ठा resource *res;
+	पूर्णांक ret = 0;
 
 	res = request_region(0x325, 2, "c2port");
-	if (!res)
-		return -EBUSY;
+	अगर (!res)
+		वापस -EBUSY;
 
-	duramar2150_c2port_dev = c2port_device_register("uc",
-					&duramar2150_c2port_ops, NULL);
-	if (IS_ERR(duramar2150_c2port_dev)) {
+	duramar2150_c2port_dev = c2port_device_रेजिस्टर("uc",
+					&duramar2150_c2port_ops, शून्य);
+	अगर (IS_ERR(duramar2150_c2port_dev)) अणु
 		ret = PTR_ERR(duramar2150_c2port_dev);
-		goto free_region;
-	}
+		जाओ मुक्त_region;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-free_region:
+मुक्त_region:
 	release_region(0x325, 2);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit duramar2150_c2port_exit(void)
-{
-	/* Setup the GPIOs as input by default (access = 0) */
+अटल व्योम __निकास duramar2150_c2port_निकास(व्योम)
+अणु
+	/* Setup the GPIOs as input by शेष (access = 0) */
 	duramar2150_c2port_access(duramar2150_c2port_dev, 0);
 
-	c2port_device_unregister(duramar2150_c2port_dev);
+	c2port_device_unरेजिस्टर(duramar2150_c2port_dev);
 
 	release_region(0x325, 2);
-}
+पूर्ण
 
 module_init(duramar2150_c2port_init);
-module_exit(duramar2150_c2port_exit);
+module_निकास(duramar2150_c2port_निकास);
 
 MODULE_AUTHOR("Rodolfo Giometti <giometti@linux.it>");
 MODULE_DESCRIPTION("Silicon Labs C2 port Linux support for Duramar 2150");

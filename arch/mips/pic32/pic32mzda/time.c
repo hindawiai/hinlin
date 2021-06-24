@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Joshua Henderson <joshua.henderson@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
-#include <linux/clocksource.h>
-#include <linux/init.h>
-#include <linux/irqdomain.h>
-#include <linux/of.h>
-#include <linux/of_clk.h>
-#include <linux/of_irq.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/init.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/of_irq.h>
 
-#include <asm/time.h>
+#समावेश <यंत्र/समय.स>
 
-#include "pic32mzda.h"
+#समावेश "pic32mzda.h"
 
-static const struct of_device_id pic32_infra_match[] = {
-	{ .compatible = "microchip,pic32mzda-infra", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id pic32_infra_match[] = अणु
+	अणु .compatible = "microchip,pic32mzda-infra", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-#define DEFAULT_CORE_TIMER_INTERRUPT 0
+#घोषणा DEFAULT_CORE_TIMER_INTERRUPT 0
 
-static unsigned int pic32_xlate_core_timer_irq(void)
-{
-	struct device_node *node;
-	unsigned int irq;
+अटल अचिन्हित पूर्णांक pic32_xlate_core_समयr_irq(व्योम)
+अणु
+	काष्ठा device_node *node;
+	अचिन्हित पूर्णांक irq;
 
-	node = of_find_matching_node(NULL, pic32_infra_match);
+	node = of_find_matching_node(शून्य, pic32_infra_match);
 
-	if (WARN_ON(!node))
-		goto default_map;
+	अगर (WARN_ON(!node))
+		जाओ शेष_map;
 
 	irq = irq_of_parse_and_map(node, 0);
-	if (!irq)
-		goto default_map;
+	अगर (!irq)
+		जाओ शेष_map;
 
-	return irq;
+	वापस irq;
 
-default_map:
+शेष_map:
 
-	return irq_create_mapping(NULL, DEFAULT_CORE_TIMER_INTERRUPT);
-}
+	वापस irq_create_mapping(शून्य, DEFAULT_CORE_TIMER_INTERRUPT);
+पूर्ण
 
-unsigned int get_c0_compare_int(void)
-{
-	return pic32_xlate_core_timer_irq();
-}
+अचिन्हित पूर्णांक get_c0_compare_पूर्णांक(व्योम)
+अणु
+	वापस pic32_xlate_core_समयr_irq();
+पूर्ण
 
-void __init plat_time_init(void)
-{
-	unsigned long rate = pic32_get_pbclk(7);
+व्योम __init plat_समय_init(व्योम)
+अणु
+	अचिन्हित दीर्घ rate = pic32_get_pbclk(7);
 
-	of_clk_init(NULL);
+	of_clk_init(शून्य);
 
 	pr_info("CPU Clock: %ldMHz\n", rate / 1000000);
 	mips_hpt_frequency = rate / 2;
 
-	timer_probe();
-}
+	समयr_probe();
+पूर्ण

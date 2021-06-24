@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * serial.c -- USB gadget serial driver
  *
- * Copyright (C) 2003 Al Borchers (alborchers@steinerpoint.com)
+ * Copyright (C) 2003 Al Borchers (alborchers@steinerpoपूर्णांक.com)
  * Copyright (C) 2008 by David Brownell
  * Copyright (C) 2008 by Nokia Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
 
-#include "u_serial.h"
+#समावेश "u_serial.h"
 
 
 /* Defines */
 
-#define GS_VERSION_STR			"v2.4"
-#define GS_VERSION_NUM			0x2400
+#घोषणा GS_VERSION_STR			"v2.4"
+#घोषणा GS_VERSION_NUM			0x2400
 
-#define GS_LONG_NAME			"Gadget Serial"
-#define GS_VERSION_NAME			GS_LONG_NAME " " GS_VERSION_STR
+#घोषणा GS_LONG_NAME			"Gadget Serial"
+#घोषणा GS_VERSION_NAME			GS_LONG_NAME " " GS_VERSION_STR
 
 /*-------------------------------------------------------------------------*/
 USB_GADGET_COMPOSITE_OPTIONS();
 
-/* Thanks to NetChip Technologies for donating this product ID.
+/* Thanks to NetChip Technologies क्रम करोnating this product ID.
 *
 * DO NOT REUSE THESE IDs with a protocol-incompatible driver!!  Ever!!
 * Instead:  allocate your own, using normal USB-IF procedures.
 */
-#define GS_VENDOR_ID			0x0525	/* NetChip */
-#define GS_PRODUCT_ID			0xa4a6	/* Linux-USB Serial Gadget */
-#define GS_CDC_PRODUCT_ID		0xa4a7	/* ... as CDC-ACM */
-#define GS_CDC_OBEX_PRODUCT_ID		0xa4a9	/* ... as CDC-OBEX */
+#घोषणा GS_VENDOR_ID			0x0525	/* NetChip */
+#घोषणा GS_PRODUCT_ID			0xa4a6	/* Linux-USB Serial Gadget */
+#घोषणा GS_CDC_PRODUCT_ID		0xa4a7	/* ... as CDC-ACM */
+#घोषणा GS_CDC_OBEX_PRODUCT_ID		0xa4a9	/* ... as CDC-OBEX */
 
-/* string IDs are assigned dynamically */
+/* string IDs are asचिन्हित dynamically */
 
-#define STRING_DESCRIPTION_IDX		USB_GADGET_FIRST_AVAIL_IDX
+#घोषणा STRING_DESCRIPTION_IDX		USB_GADGET_FIRST_AVAIL_IDX
 
-static struct usb_string strings_dev[] = {
+अटल काष्ठा usb_string strings_dev[] = अणु
 	[USB_GADGET_MANUFACTURER_IDX].s = "",
 	[USB_GADGET_PRODUCT_IDX].s = GS_VERSION_NAME,
 	[USB_GADGET_SERIAL_IDX].s = "",
-	[STRING_DESCRIPTION_IDX].s = NULL /* updated; f(use_acm) */,
-	{  } /* end of list */
-};
+	[STRING_DESCRIPTION_IDX].s = शून्य /* updated; f(use_acm) */,
+	अणु  पूर्ण /* end of list */
+पूर्ण;
 
-static struct usb_gadget_strings stringtab_dev = {
+अटल काष्ठा usb_gadget_strings stringtab_dev = अणु
 	.language	= 0x0409,	/* en-us */
 	.strings	= strings_dev,
-};
+पूर्ण;
 
-static struct usb_gadget_strings *dev_strings[] = {
+अटल काष्ठा usb_gadget_strings *dev_strings[] = अणु
 	&stringtab_dev,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static struct usb_device_descriptor device_desc = {
+अटल काष्ठा usb_device_descriptor device_desc = अणु
 	.bLength =		USB_DT_DEVICE_SIZE,
 	.bDescriptorType =	USB_DT_DEVICE,
 	/* .bcdUSB = DYNAMIC */
@@ -67,15 +68,15 @@ static struct usb_device_descriptor device_desc = {
 	.bDeviceSubClass =	0,
 	.bDeviceProtocol =	0,
 	/* .bMaxPacketSize0 = f(hardware) */
-	.idVendor =		cpu_to_le16(GS_VENDOR_ID),
+	.idVenकरोr =		cpu_to_le16(GS_VENDOR_ID),
 	/* .idProduct =	f(use_acm) */
 	.bcdDevice = cpu_to_le16(GS_VERSION_NUM),
 	/* .iManufacturer = DYNAMIC */
 	/* .iProduct = DYNAMIC */
 	.bNumConfigurations =	1,
-};
+पूर्ण;
 
-static const struct usb_descriptor_header *otg_desc[2];
+अटल स्थिर काष्ठा usb_descriptor_header *otg_desc[2];
 
 /*-------------------------------------------------------------------------*/
 
@@ -85,90 +86,90 @@ MODULE_AUTHOR("Al Borchers");
 MODULE_AUTHOR("David Brownell");
 MODULE_LICENSE("GPL");
 
-static bool use_acm = true;
+अटल bool use_acm = true;
 module_param(use_acm, bool, 0);
 MODULE_PARM_DESC(use_acm, "Use CDC ACM, default=yes");
 
-static bool use_obex = false;
+अटल bool use_obex = false;
 module_param(use_obex, bool, 0);
 MODULE_PARM_DESC(use_obex, "Use CDC OBEX, default=no");
 
-static unsigned n_ports = 1;
-module_param(n_ports, uint, 0);
+अटल अचिन्हित n_ports = 1;
+module_param(n_ports, uपूर्णांक, 0);
 MODULE_PARM_DESC(n_ports, "number of ports to create, default=1");
 
-static bool enable = true;
+अटल bool enable = true;
 
-static int switch_gserial_enable(bool do_enable);
+अटल पूर्णांक चयन_gserial_enable(bool करो_enable);
 
-static int enable_set(const char *s, const struct kernel_param *kp)
-{
-	bool do_enable;
-	int ret;
+अटल पूर्णांक enable_set(स्थिर अक्षर *s, स्थिर काष्ठा kernel_param *kp)
+अणु
+	bool करो_enable;
+	पूर्णांक ret;
 
-	if (!s)	/* called for no-arg enable == default */
-		return 0;
+	अगर (!s)	/* called क्रम no-arg enable == शेष */
+		वापस 0;
 
-	ret = strtobool(s, &do_enable);
-	if (ret || enable == do_enable)
-		return ret;
+	ret = strtobool(s, &करो_enable);
+	अगर (ret || enable == करो_enable)
+		वापस ret;
 
-	ret = switch_gserial_enable(do_enable);
-	if (!ret)
-		enable = do_enable;
+	ret = चयन_gserial_enable(करो_enable);
+	अगर (!ret)
+		enable = करो_enable;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct kernel_param_ops enable_ops = {
+अटल स्थिर काष्ठा kernel_param_ops enable_ops = अणु
 	.set = enable_set,
 	.get = param_get_bool,
-};
+पूर्ण;
 
 module_param_cb(enable, &enable_ops, &enable, 0644);
 
 /*-------------------------------------------------------------------------*/
 
-static struct usb_configuration serial_config_driver = {
+अटल काष्ठा usb_configuration serial_config_driver = अणु
 	/* .label = f(use_acm) */
 	/* .bConfigurationValue = f(use_acm) */
 	/* .iConfiguration = DYNAMIC */
 	.bmAttributes	= USB_CONFIG_ATT_SELFPOWER,
-};
+पूर्ण;
 
-static struct usb_function_instance *fi_serial[MAX_U_SERIAL_PORTS];
-static struct usb_function *f_serial[MAX_U_SERIAL_PORTS];
+अटल काष्ठा usb_function_instance *fi_serial[MAX_U_SERIAL_PORTS];
+अटल काष्ठा usb_function *f_serial[MAX_U_SERIAL_PORTS];
 
-static int serial_register_ports(struct usb_composite_dev *cdev,
-		struct usb_configuration *c, const char *f_name)
-{
-	int i;
-	int ret;
+अटल पूर्णांक serial_रेजिस्टर_ports(काष्ठा usb_composite_dev *cdev,
+		काष्ठा usb_configuration *c, स्थिर अक्षर *f_name)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret;
 
 	ret = usb_add_config_only(cdev, c);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	for (i = 0; i < n_ports; i++) {
+	क्रम (i = 0; i < n_ports; i++) अणु
 
 		fi_serial[i] = usb_get_function_instance(f_name);
-		if (IS_ERR(fi_serial[i])) {
+		अगर (IS_ERR(fi_serial[i])) अणु
 			ret = PTR_ERR(fi_serial[i]);
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 
 		f_serial[i] = usb_get_function(fi_serial[i]);
-		if (IS_ERR(f_serial[i])) {
+		अगर (IS_ERR(f_serial[i])) अणु
 			ret = PTR_ERR(f_serial[i]);
-			goto err_get_func;
-		}
+			जाओ err_get_func;
+		पूर्ण
 
 		ret = usb_add_function(c, f_serial[i]);
-		if (ret)
-			goto err_add_func;
-	}
+		अगर (ret)
+			जाओ err_add_func;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_add_func:
 	usb_put_function(f_serial[i]);
@@ -177,148 +178,148 @@ err_get_func:
 
 fail:
 	i--;
-	while (i >= 0) {
-		usb_remove_function(c, f_serial[i]);
+	जबतक (i >= 0) अणु
+		usb_हटाओ_function(c, f_serial[i]);
 		usb_put_function(f_serial[i]);
 		usb_put_function_instance(fi_serial[i]);
 		i--;
-	}
+	पूर्ण
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int gs_bind(struct usb_composite_dev *cdev)
-{
-	int			status;
+अटल पूर्णांक gs_bind(काष्ठा usb_composite_dev *cdev)
+अणु
+	पूर्णांक			status;
 
 	/* Allocate string descriptor numbers ... note that string
 	 * contents can be overridden by the composite_dev glue.
 	 */
 
 	status = usb_string_ids_tab(cdev, strings_dev);
-	if (status < 0)
-		goto fail;
+	अगर (status < 0)
+		जाओ fail;
 	device_desc.iManufacturer = strings_dev[USB_GADGET_MANUFACTURER_IDX].id;
 	device_desc.iProduct = strings_dev[USB_GADGET_PRODUCT_IDX].id;
 	status = strings_dev[STRING_DESCRIPTION_IDX].id;
 	serial_config_driver.iConfiguration = status;
 
-	if (gadget_is_otg(cdev->gadget)) {
-		if (!otg_desc[0]) {
-			struct usb_descriptor_header *usb_desc;
+	अगर (gadget_is_otg(cdev->gadget)) अणु
+		अगर (!otg_desc[0]) अणु
+			काष्ठा usb_descriptor_header *usb_desc;
 
 			usb_desc = usb_otg_descriptor_alloc(cdev->gadget);
-			if (!usb_desc) {
+			अगर (!usb_desc) अणु
 				status = -ENOMEM;
-				goto fail;
-			}
+				जाओ fail;
+			पूर्ण
 			usb_otg_descriptor_init(cdev->gadget, usb_desc);
 			otg_desc[0] = usb_desc;
-			otg_desc[1] = NULL;
-		}
+			otg_desc[1] = शून्य;
+		पूर्ण
 		serial_config_driver.descriptors = otg_desc;
 		serial_config_driver.bmAttributes |= USB_CONFIG_ATT_WAKEUP;
-	}
+	पूर्ण
 
-	/* register our configuration */
-	if (use_acm) {
-		status  = serial_register_ports(cdev, &serial_config_driver,
+	/* रेजिस्टर our configuration */
+	अगर (use_acm) अणु
+		status  = serial_रेजिस्टर_ports(cdev, &serial_config_driver,
 				"acm");
-		usb_ep_autoconfig_reset(cdev->gadget);
-	} else if (use_obex)
-		status = serial_register_ports(cdev, &serial_config_driver,
+		usb_ep_स्वतःconfig_reset(cdev->gadget);
+	पूर्ण अन्यथा अगर (use_obex)
+		status = serial_रेजिस्टर_ports(cdev, &serial_config_driver,
 				"obex");
-	else {
-		status = serial_register_ports(cdev, &serial_config_driver,
+	अन्यथा अणु
+		status = serial_रेजिस्टर_ports(cdev, &serial_config_driver,
 				"gser");
-	}
-	if (status < 0)
-		goto fail1;
+	पूर्ण
+	अगर (status < 0)
+		जाओ fail1;
 
-	usb_composite_overwrite_options(cdev, &coverwrite);
+	usb_composite_overग_लिखो_options(cdev, &coverग_लिखो);
 	INFO(cdev, "%s\n", GS_VERSION_NAME);
 
-	return 0;
+	वापस 0;
 fail1:
-	kfree(otg_desc[0]);
-	otg_desc[0] = NULL;
+	kमुक्त(otg_desc[0]);
+	otg_desc[0] = शून्य;
 fail:
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int gs_unbind(struct usb_composite_dev *cdev)
-{
-	int i;
+अटल पूर्णांक gs_unbind(काष्ठा usb_composite_dev *cdev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < n_ports; i++) {
+	क्रम (i = 0; i < n_ports; i++) अणु
 		usb_put_function(f_serial[i]);
 		usb_put_function_instance(fi_serial[i]);
-	}
+	पूर्ण
 
-	kfree(otg_desc[0]);
-	otg_desc[0] = NULL;
+	kमुक्त(otg_desc[0]);
+	otg_desc[0] = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct usb_composite_driver gserial_driver = {
+अटल काष्ठा usb_composite_driver gserial_driver = अणु
 	.name		= "g_serial",
 	.dev		= &device_desc,
 	.strings	= dev_strings,
 	.max_speed	= USB_SPEED_SUPER,
 	.bind		= gs_bind,
 	.unbind		= gs_unbind,
-};
+पूर्ण;
 
-static int switch_gserial_enable(bool do_enable)
-{
-	if (!serial_config_driver.label)
+अटल पूर्णांक चयन_gserial_enable(bool करो_enable)
+अणु
+	अगर (!serial_config_driver.label)
 		/* init() was not called, yet */
-		return 0;
+		वापस 0;
 
-	if (do_enable)
-		return usb_composite_probe(&gserial_driver);
+	अगर (करो_enable)
+		वापस usb_composite_probe(&gserial_driver);
 
-	usb_composite_unregister(&gserial_driver);
-	return 0;
-}
+	usb_composite_unरेजिस्टर(&gserial_driver);
+	वापस 0;
+पूर्ण
 
-static int __init init(void)
-{
+अटल पूर्णांक __init init(व्योम)
+अणु
 	/* We *could* export two configs; that'd be much cleaner...
 	 * but neither of these product IDs was defined that way.
 	 */
-	if (use_acm) {
+	अगर (use_acm) अणु
 		serial_config_driver.label = "CDC ACM config";
 		serial_config_driver.bConfigurationValue = 2;
 		device_desc.bDeviceClass = USB_CLASS_COMM;
 		device_desc.idProduct =
 				cpu_to_le16(GS_CDC_PRODUCT_ID);
-	} else if (use_obex) {
+	पूर्ण अन्यथा अगर (use_obex) अणु
 		serial_config_driver.label = "CDC OBEX config";
 		serial_config_driver.bConfigurationValue = 3;
 		device_desc.bDeviceClass = USB_CLASS_COMM;
 		device_desc.idProduct =
 			cpu_to_le16(GS_CDC_OBEX_PRODUCT_ID);
-	} else {
+	पूर्ण अन्यथा अणु
 		serial_config_driver.label = "Generic Serial config";
 		serial_config_driver.bConfigurationValue = 1;
 		device_desc.bDeviceClass = USB_CLASS_VENDOR_SPEC;
 		device_desc.idProduct =
 				cpu_to_le16(GS_PRODUCT_ID);
-	}
+	पूर्ण
 	strings_dev[STRING_DESCRIPTION_IDX].s = serial_config_driver.label;
 
-	if (!enable)
-		return 0;
+	अगर (!enable)
+		वापस 0;
 
-	return usb_composite_probe(&gserial_driver);
-}
+	वापस usb_composite_probe(&gserial_driver);
+पूर्ण
 module_init(init);
 
-static void __exit cleanup(void)
-{
-	if (enable)
-		usb_composite_unregister(&gserial_driver);
-}
-module_exit(cleanup);
+अटल व्योम __निकास cleanup(व्योम)
+अणु
+	अगर (enable)
+		usb_composite_unरेजिस्टर(&gserial_driver);
+पूर्ण
+module_निकास(cleanup);

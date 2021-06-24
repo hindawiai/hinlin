@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: BSD-3-Clause-Clear */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause-Clear */
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  */
-#include "core.h"
+#समावेश "core.h"
 
-#ifndef ATH11K_HAL_DESC_H
-#define ATH11K_HAL_DESC_H
+#अगर_अघोषित ATH11K_HAL_DESC_H
+#घोषणा ATH11K_HAL_DESC_H
 
-#define BUFFER_ADDR_INFO0_ADDR         GENMASK(31, 0)
+#घोषणा BUFFER_ADDR_INFO0_ADDR         GENMASK(31, 0)
 
-#define BUFFER_ADDR_INFO1_ADDR         GENMASK(7, 0)
-#define BUFFER_ADDR_INFO1_RET_BUF_MGR  GENMASK(10, 8)
-#define BUFFER_ADDR_INFO1_SW_COOKIE    GENMASK(31, 11)
+#घोषणा BUFFER_ADDR_INFO1_ADDR         GENMASK(7, 0)
+#घोषणा BUFFER_ADDR_INFO1_RET_BUF_MGR  GENMASK(10, 8)
+#घोषणा BUFFER_ADDR_INFO1_SW_COOKIE    GENMASK(31, 11)
 
-struct ath11k_buffer_addr {
+काष्ठा ath11k_buffer_addr अणु
 	u32 info0;
 	u32 info1;
-} __packed;
+पूर्ण __packed;
 
 /* ath11k_buffer_addr
  *
@@ -28,26 +29,26 @@ struct ath11k_buffer_addr {
  *		Address (upper 8 bits) of the msdu buffer or msdu extension
  *		descriptor or Link descriptor
  *
- * return_buffer_manager (RBM)
+ * वापस_buffer_manager (RBM)
  *		Consumer: WBM
  *		Producer: SW/FW
  *		Indicates to which buffer manager the buffer or MSDU_EXTENSION
- *		descriptor or link descriptor that is being pointed to shall be
- *		returned after the frame has been processed. It is used by WBM
- *		for routing purposes.
+ *		descriptor or link descriptor that is being poपूर्णांकed to shall be
+ *		वापसed after the frame has been processed. It is used by WBM
+ *		क्रम routing purposes.
  *
- *		Values are defined in enum %HAL_RX_BUF_RBM_
+ *		Values are defined in क्रमागत %HAL_RX_BUF_RBM_
  *
  * sw_buffer_cookie
  *		Cookie field exclusively used by SW. HW ignores the contents,
  *		accept that it passes the programmed value on to other
  *		descriptors together with the physical address.
  *
- *		Field can be used by SW to for example associate the buffers
- *		physical address with the virtual address.
+ *		Field can be used by SW to क्रम example associate the buffers
+ *		physical address with the भव address.
  */
 
-enum hal_tlv_tag {
+क्रमागत hal_tlv_tag अणु
 	HAL_MACTX_CBF_START                    =   0 /* 0x0 */,
 	HAL_PHYRX_DATA                         =   1 /* 0x1 */,
 	HAL_PHYRX_CBF_DATA_RESP                =   2 /* 0x2 */,
@@ -470,36 +471,36 @@ enum hal_tlv_tag {
 	HAL_REO_UPDATE_RX_REO_QUEUE            = 419 /* 0x1a3 */,
 	HAL_CE_DST_DESC			       = 420 /* 0x1a4 */,
 	HAL_TLV_BASE                           = 511 /* 0x1ff */,
-};
+पूर्ण;
 
-#define HAL_TLV_HDR_TAG		GENMASK(9, 1)
-#define HAL_TLV_HDR_LEN		GENMASK(25, 10)
+#घोषणा HAL_TLV_HDR_TAG		GENMASK(9, 1)
+#घोषणा HAL_TLV_HDR_LEN		GENMASK(25, 10)
 
-#define HAL_TLV_ALIGN	4
+#घोषणा HAL_TLV_ALIGN	4
 
-struct hal_tlv_hdr {
+काष्ठा hal_tlv_hdr अणु
 	u32 tl;
 	u8 value[];
-} __packed;
+पूर्ण __packed;
 
-#define RX_MPDU_DESC_INFO0_MSDU_COUNT		GENMASK(7, 0)
-#define RX_MPDU_DESC_INFO0_SEQ_NUM		GENMASK(19, 8)
-#define RX_MPDU_DESC_INFO0_FRAG_FLAG		BIT(20)
-#define RX_MPDU_DESC_INFO0_MPDU_RETRY		BIT(21)
-#define RX_MPDU_DESC_INFO0_AMPDU_FLAG		BIT(22)
-#define RX_MPDU_DESC_INFO0_BAR_FRAME		BIT(23)
-#define RX_MPDU_DESC_INFO0_VALID_PN		BIT(24)
-#define RX_MPDU_DESC_INFO0_VALID_SA		BIT(25)
-#define RX_MPDU_DESC_INFO0_SA_IDX_TIMEOUT	BIT(26)
-#define RX_MPDU_DESC_INFO0_VALID_DA		BIT(27)
-#define RX_MPDU_DESC_INFO0_DA_MCBC		BIT(28)
-#define RX_MPDU_DESC_INFO0_DA_IDX_TIMEOUT	BIT(29)
-#define RX_MPDU_DESC_INFO0_RAW_MPDU		BIT(30)
+#घोषणा RX_MPDU_DESC_INFO0_MSDU_COUNT		GENMASK(7, 0)
+#घोषणा RX_MPDU_DESC_INFO0_SEQ_NUM		GENMASK(19, 8)
+#घोषणा RX_MPDU_DESC_INFO0_FRAG_FLAG		BIT(20)
+#घोषणा RX_MPDU_DESC_INFO0_MPDU_RETRY		BIT(21)
+#घोषणा RX_MPDU_DESC_INFO0_AMPDU_FLAG		BIT(22)
+#घोषणा RX_MPDU_DESC_INFO0_BAR_FRAME		BIT(23)
+#घोषणा RX_MPDU_DESC_INFO0_VALID_PN		BIT(24)
+#घोषणा RX_MPDU_DESC_INFO0_VALID_SA		BIT(25)
+#घोषणा RX_MPDU_DESC_INFO0_SA_IDX_TIMEOUT	BIT(26)
+#घोषणा RX_MPDU_DESC_INFO0_VALID_DA		BIT(27)
+#घोषणा RX_MPDU_DESC_INFO0_DA_MCBC		BIT(28)
+#घोषणा RX_MPDU_DESC_INFO0_DA_IDX_TIMEOUT	BIT(29)
+#घोषणा RX_MPDU_DESC_INFO0_RAW_MPDU		BIT(30)
 
-struct rx_mpdu_desc {
+काष्ठा rx_mpdu_desc अणु
 	u32 info0; /* %RX_MPDU_DESC_INFO */
 	u32 meta_data;
-} __packed;
+पूर्ण __packed;
 
 /* rx_mpdu_desc
  *		Producer: RXDMA
@@ -509,16 +510,16 @@ struct rx_mpdu_desc {
  *		The number of MSDUs within the MPDU
  *
  * mpdu_sequence_number
- *		The field can have two different meanings based on the setting
+ *		The field can have two dअगरferent meanings based on the setting
  *		of field 'bar_frame'. If 'bar_frame' is set, it means the MPDU
  *		start sequence number from the BAR frame otherwise it means
  *		the MPDU sequence number of the received frame.
  *
  * fragment_flag
- *		When set, this MPDU is a fragment and REO should forward this
+ *		When set, this MPDU is a fragment and REO should क्रमward this
  *		fragment MPDU to the REO destination ring without any reorder
- *		checks, pn checks or bitmap update. This implies that REO is
- *		forwarding the pointer to the MSDU link descriptor.
+ *		checks, pn checks or biपंचांगap update. This implies that REO is
+ *		क्रमwarding the poपूर्णांकer to the MSDU link descriptor.
  *
  * mpdu_retry_bit
  *		The retry bit setting from the MPDU header of the received frame
@@ -531,33 +532,33 @@ struct rx_mpdu_desc {
  *		this frame shall be pushed to SW or deleted.
  *
  * valid_pn
- *		When not set, REO will not perform a PN sequence number check.
+ *		When not set, REO will not perक्रमm a PN sequence number check.
  *
  * valid_sa
- *		Indicates OLE found a valid SA entry for all MSDUs in this MPDU.
+ *		Indicates OLE found a valid SA entry क्रम all MSDUs in this MPDU.
  *
- * sa_idx_timeout
+ * sa_idx_समयout
  *		Indicates, at least 1 MSDU within the MPDU has an unsuccessful
- *		MAC source address search due to the expiration of search timer.
+ *		MAC source address search due to the expiration of search समयr.
  *
  * valid_da
- *		When set, OLE found a valid DA entry for all MSDUs in this MPDU.
+ *		When set, OLE found a valid DA entry क्रम all MSDUs in this MPDU.
  *
  * da_mcbc
- *		Field Only valid if valid_da is set. Indicates at least one of
+ *		Field Only valid अगर valid_da is set. Indicates at least one of
  *		the DA addresses is a Multicast or Broadcast address.
  *
- * da_idx_timeout
+ * da_idx_समयout
  *		Indicates, at least 1 MSDU within the MPDU has an unsuccessful
  *		MAC destination address search due to the expiration of search
- *		timer.
+ *		समयr.
  *
  * raw_mpdu
  *		Field only valid when first_msdu_in_mpdu_flag is set. Indicates
  *		the contents in the MSDU buffer contains a 'RAW' MPDU.
  */
 
-enum hal_rx_msdu_desc_reo_dest_ind {
+क्रमागत hal_rx_msdu_desc_reo_dest_ind अणु
 	HAL_RX_MSDU_DESC_REO_DEST_IND_TCL,
 	HAL_RX_MSDU_DESC_REO_DEST_IND_SW1,
 	HAL_RX_MSDU_DESC_REO_DEST_IND_SW2,
@@ -565,27 +566,27 @@ enum hal_rx_msdu_desc_reo_dest_ind {
 	HAL_RX_MSDU_DESC_REO_DEST_IND_SW4,
 	HAL_RX_MSDU_DESC_REO_DEST_IND_RELEASE,
 	HAL_RX_MSDU_DESC_REO_DEST_IND_FW,
-};
+पूर्ण;
 
-#define RX_MSDU_DESC_INFO0_FIRST_MSDU_IN_MPDU	BIT(0)
-#define RX_MSDU_DESC_INFO0_LAST_MSDU_IN_MPDU	BIT(1)
-#define RX_MSDU_DESC_INFO0_MSDU_CONTINUATION	BIT(2)
-#define RX_MSDU_DESC_INFO0_MSDU_LENGTH		GENMASK(16, 3)
-#define RX_MSDU_DESC_INFO0_REO_DEST_IND		GENMASK(21, 17)
-#define RX_MSDU_DESC_INFO0_MSDU_DROP		BIT(22)
-#define RX_MSDU_DESC_INFO0_VALID_SA		BIT(23)
-#define RX_MSDU_DESC_INFO0_SA_IDX_TIMEOUT	BIT(24)
-#define RX_MSDU_DESC_INFO0_VALID_DA		BIT(25)
-#define RX_MSDU_DESC_INFO0_DA_MCBC		BIT(26)
-#define RX_MSDU_DESC_INFO0_DA_IDX_TIMEOUT	BIT(27)
+#घोषणा RX_MSDU_DESC_INFO0_FIRST_MSDU_IN_MPDU	BIT(0)
+#घोषणा RX_MSDU_DESC_INFO0_LAST_MSDU_IN_MPDU	BIT(1)
+#घोषणा RX_MSDU_DESC_INFO0_MSDU_CONTINUATION	BIT(2)
+#घोषणा RX_MSDU_DESC_INFO0_MSDU_LENGTH		GENMASK(16, 3)
+#घोषणा RX_MSDU_DESC_INFO0_REO_DEST_IND		GENMASK(21, 17)
+#घोषणा RX_MSDU_DESC_INFO0_MSDU_DROP		BIT(22)
+#घोषणा RX_MSDU_DESC_INFO0_VALID_SA		BIT(23)
+#घोषणा RX_MSDU_DESC_INFO0_SA_IDX_TIMEOUT	BIT(24)
+#घोषणा RX_MSDU_DESC_INFO0_VALID_DA		BIT(25)
+#घोषणा RX_MSDU_DESC_INFO0_DA_MCBC		BIT(26)
+#घोषणा RX_MSDU_DESC_INFO0_DA_IDX_TIMEOUT	BIT(27)
 
-#define HAL_RX_MSDU_PKT_LENGTH_GET(val)		\
+#घोषणा HAL_RX_MSDU_PKT_LENGTH_GET(val)		\
 	(FIELD_GET(RX_MSDU_DESC_INFO0_MSDU_LENGTH, (val)))
 
-struct rx_msdu_desc {
+काष्ठा rx_msdu_desc अणु
 	u32 info0;
 	u32 rsvd0;
-} __packed;
+पूर्ण __packed;
 
 /* rx_msdu_desc
  *
@@ -595,65 +596,65 @@ struct rx_msdu_desc {
  * last_msdu_in_mpdu
  *		Indicates last msdu in mpdu. This flag can be true only when
  *		'Msdu_continuation' set to 0. This implies that when an msdu
- *		is spread out over multiple buffers and thus msdu_continuation
- *		is set, only for the very last buffer of the msdu, can the
+ *		is spपढ़ो out over multiple buffers and thus msdu_continuation
+ *		is set, only क्रम the very last buffer of the msdu, can the
  *		'last_msdu_in_mpdu' be set.
  *
  *		When both first_msdu_in_mpdu and last_msdu_in_mpdu are set,
- *		the MPDU that this MSDU belongs to only contains a single MSDU.
+ *		the MPDU that this MSDU beदीर्घs to only contains a single MSDU.
  *
  * msdu_continuation
  *		When set, this MSDU buffer was not able to hold the entire MSDU.
- *		The next buffer will therefor contain additional information
+ *		The next buffer will thereक्रम contain additional inक्रमmation
  *		related to this MSDU.
  *
  * msdu_length
  *		Field is only valid in combination with the 'first_msdu_in_mpdu'
  *		being set. Full MSDU length in bytes after decapsulation. This
- *		field is still valid for MPDU frames without A-MSDU. It still
- *		represents MSDU length after decapsulation Or in case of RAW
+ *		field is still valid क्रम MPDU frames without A-MSDU. It still
+ *		represents MSDU length after decapsulation Or in हाल of RAW
  *		MPDUs, it indicates the length of the entire MPDU (without FCS
  *		field).
  *
  * reo_destination_indication
- *		The id of the reo exit ring where the msdu frame shall push
+ *		The id of the reo निकास ring where the msdu frame shall push
  *		after (MPDU level) reordering has finished. Values are defined
- *		in enum %HAL_RX_MSDU_DESC_REO_DEST_IND_.
+ *		in क्रमागत %HAL_RX_MSDU_DESC_REO_DEST_IND_.
  *
  * msdu_drop
- *		Indicates that REO shall drop this MSDU and not forward it to
+ *		Indicates that REO shall drop this MSDU and not क्रमward it to
  *		any other ring.
  *
  * valid_sa
- *		Indicates OLE found a valid SA entry for this MSDU.
+ *		Indicates OLE found a valid SA entry क्रम this MSDU.
  *
- * sa_idx_timeout
+ * sa_idx_समयout
  *		Indicates, an unsuccessful MAC source address search due to
- *		the expiration of search timer for this MSDU.
+ *		the expiration of search समयr क्रम this MSDU.
  *
  * valid_da
- *		When set, OLE found a valid DA entry for this MSDU.
+ *		When set, OLE found a valid DA entry क्रम this MSDU.
  *
  * da_mcbc
- *		Field Only valid if valid_da is set. Indicates the DA address
- *		is a Multicast or Broadcast address for this MSDU.
+ *		Field Only valid अगर valid_da is set. Indicates the DA address
+ *		is a Multicast or Broadcast address क्रम this MSDU.
  *
- * da_idx_timeout
+ * da_idx_समयout
  *		Indicates, an unsuccessful MAC destination address search due
- *		to the expiration of search timer fot this MSDU.
+ *		to the expiration of search समयr fot this MSDU.
  */
 
-enum hal_reo_dest_ring_buffer_type {
+क्रमागत hal_reo_dest_ring_buffer_type अणु
 	HAL_REO_DEST_RING_BUFFER_TYPE_MSDU,
 	HAL_REO_DEST_RING_BUFFER_TYPE_LINK_DESC,
-};
+पूर्ण;
 
-enum hal_reo_dest_ring_push_reason {
+क्रमागत hal_reo_dest_ring_push_reason अणु
 	HAL_REO_DEST_RING_PUSH_REASON_ERR_DETECTED,
 	HAL_REO_DEST_RING_PUSH_REASON_ROUTING_INSTRUCTION,
-};
+पूर्ण;
 
-enum hal_reo_dest_ring_error_code {
+क्रमागत hal_reo_dest_ring_error_code अणु
 	HAL_REO_DEST_RING_ERROR_CODE_DESC_ADDR_ZERO,
 	HAL_REO_DEST_RING_ERROR_CODE_DESC_INVALID,
 	HAL_REO_DEST_RING_ERROR_CODE_AMPDU_IN_NON_BA,
@@ -670,25 +671,25 @@ enum hal_reo_dest_ring_error_code {
 	HAL_REO_DEST_RING_ERROR_CODE_PN_ERR_FLAG_SET,
 	HAL_REO_DEST_RING_ERROR_CODE_DESC_BLOCKED,
 	HAL_REO_DEST_RING_ERROR_CODE_MAX,
-};
+पूर्ण;
 
-#define HAL_REO_DEST_RING_INFO0_QUEUE_ADDR_HI		GENMASK(7, 0)
-#define HAL_REO_DEST_RING_INFO0_BUFFER_TYPE		BIT(8)
-#define HAL_REO_DEST_RING_INFO0_PUSH_REASON		GENMASK(10, 9)
-#define HAL_REO_DEST_RING_INFO0_ERROR_CODE		GENMASK(15, 11)
-#define HAL_REO_DEST_RING_INFO0_RX_QUEUE_NUM		GENMASK(31, 16)
+#घोषणा HAL_REO_DEST_RING_INFO0_QUEUE_ADDR_HI		GENMASK(7, 0)
+#घोषणा HAL_REO_DEST_RING_INFO0_BUFFER_TYPE		BIT(8)
+#घोषणा HAL_REO_DEST_RING_INFO0_PUSH_REASON		GENMASK(10, 9)
+#घोषणा HAL_REO_DEST_RING_INFO0_ERROR_CODE		GENMASK(15, 11)
+#घोषणा HAL_REO_DEST_RING_INFO0_RX_QUEUE_NUM		GENMASK(31, 16)
 
-#define HAL_REO_DEST_RING_INFO1_REORDER_INFO_VALID	BIT(0)
-#define HAL_REO_DEST_RING_INFO1_REORDER_OPCODE		GENMASK(4, 1)
-#define HAL_REO_DEST_RING_INFO1_REORDER_SLOT_IDX	GENMASK(12, 5)
+#घोषणा HAL_REO_DEST_RING_INFO1_REORDER_INFO_VALID	BIT(0)
+#घोषणा HAL_REO_DEST_RING_INFO1_REORDER_OPCODE		GENMASK(4, 1)
+#घोषणा HAL_REO_DEST_RING_INFO1_REORDER_SLOT_IDX	GENMASK(12, 5)
 
-#define HAL_REO_DEST_RING_INFO2_RING_ID			GENMASK(27, 20)
-#define HAL_REO_DEST_RING_INFO2_LOOPING_COUNT		GENMASK(31, 28)
+#घोषणा HAL_REO_DEST_RING_INFO2_RING_ID			GENMASK(27, 20)
+#घोषणा HAL_REO_DEST_RING_INFO2_LOOPING_COUNT		GENMASK(31, 28)
 
-struct hal_reo_dest_ring {
-	struct ath11k_buffer_addr buf_addr_info;
-	struct rx_mpdu_desc rx_mpdu_info;
-	struct rx_msdu_desc rx_msdu_info;
+काष्ठा hal_reo_dest_ring अणु
+	काष्ठा ath11k_buffer_addr buf_addr_info;
+	काष्ठा rx_mpdu_desc rx_mpdu_info;
+	काष्ठा rx_msdu_desc rx_msdu_info;
 	u32 queue_addr_lo;
 	u32 info0; /* %HAL_REO_DEST_RING_INFO0_ */
 	u32 info1; /* %HAL_REO_DEST_RING_INFO1_ */
@@ -699,7 +700,7 @@ struct hal_reo_dest_ring {
 	u32 rsvd4;
 	u32 rsvd5;
 	u32 info2; /* %HAL_REO_DEST_RING_INFO2_ */
-} __packed;
+पूर्ण __packed;
 
 /* hal_reo_dest_ring
  *
@@ -711,11 +712,11 @@ struct hal_reo_dest_ring {
  *		link descriptor.
  *
  * rx_mpdu_info
- *		General information related to the MPDU that is passed
+ *		General inक्रमmation related to the MPDU that is passed
  *		on from REO entrance ring to the REO destination ring.
  *
  * rx_msdu_info
- *		General information related to the MSDU that is passed
+ *		General inक्रमmation related to the MSDU that is passed
  *		on from RXDMA all the way to the REO destination ring.
  *
  * queue_addr_lo
@@ -726,43 +727,43 @@ struct hal_reo_dest_ring {
  *
  * buffer_type
  *		Indicates the type of address provided in the buf_addr_info.
- *		Values are defined in enum %HAL_REO_DEST_RING_BUFFER_TYPE_.
+ *		Values are defined in क्रमागत %HAL_REO_DEST_RING_BUFFER_TYPE_.
  *
  * push_reason
- *		Reason for pushing this frame to this exit ring. Values are
- *		defined in enum %HAL_REO_DEST_RING_PUSH_REASON_.
+ *		Reason क्रम pushing this frame to this निकास ring. Values are
+ *		defined in क्रमागत %HAL_REO_DEST_RING_PUSH_REASON_.
  *
  * error_code
  *		Valid only when 'push_reason' is set. All error codes are
- *		defined in enum %HAL_REO_DEST_RING_ERROR_CODE_.
+ *		defined in क्रमागत %HAL_REO_DEST_RING_ERROR_CODE_.
  *
  * rx_queue_num
  *		Indicates the REO MPDU reorder queue id from which this frame
  *		originated.
  *
  * reorder_info_valid
- *		When set, REO has been instructed to not perform the actual
- *		re-ordering of frames for this queue, but just to insert
+ *		When set, REO has been inकाष्ठाed to not perक्रमm the actual
+ *		re-ordering of frames क्रम this queue, but just to insert
  *		the reorder opcodes.
  *
  * reorder_opcode
  *		Field is valid when 'reorder_info_valid' is set. This field is
- *		always valid for debug purpose as well.
+ *		always valid क्रम debug purpose as well.
  *
  * reorder_slot_idx
  *		Valid only when 'reorder_info_valid' is set.
  *
  * ring_id
- *		The buffer pointer ring id.
+ *		The buffer poपूर्णांकer ring id.
  *		0 - Idle ring
  *		1 - N refers to other rings.
  *
  * looping_count
- *		Indicates the number of times the producer of entries into
+ *		Indicates the number of बार the producer of entries पूर्णांकo
  *		this ring has looped around the ring.
  */
 
-enum hal_reo_entr_rxdma_ecode {
+क्रमागत hal_reo_entr_rxdma_ecode अणु
 	HAL_REO_ENTR_RING_RXDMA_ECODE_OVERFLOW_ERR,
 	HAL_REO_ENTR_RING_RXDMA_ECODE_MPDU_LEN_ERR,
 	HAL_REO_ENTR_RING_RXDMA_ECODE_FCS_ERR,
@@ -778,25 +779,25 @@ enum hal_reo_entr_rxdma_ecode {
 	HAL_REO_ENTR_RING_RXDMA_ECODE_FLOW_TIMEOUT_ERR,
 	HAL_REO_ENTR_RING_RXDMA_ECODE_FLUSH_REQUEST_ERR,
 	HAL_REO_ENTR_RING_RXDMA_ECODE_MAX,
-};
+पूर्ण;
 
-#define HAL_REO_ENTR_RING_INFO0_QUEUE_ADDR_HI		GENMASK(7, 0)
-#define HAL_REO_ENTR_RING_INFO0_MPDU_BYTE_COUNT		GENMASK(21, 8)
-#define HAL_REO_ENTR_RING_INFO0_DEST_IND		GENMASK(26, 22)
-#define HAL_REO_ENTR_RING_INFO0_FRAMELESS_BAR		BIT(27)
+#घोषणा HAL_REO_ENTR_RING_INFO0_QUEUE_ADDR_HI		GENMASK(7, 0)
+#घोषणा HAL_REO_ENTR_RING_INFO0_MPDU_BYTE_COUNT		GENMASK(21, 8)
+#घोषणा HAL_REO_ENTR_RING_INFO0_DEST_IND		GENMASK(26, 22)
+#घोषणा HAL_REO_ENTR_RING_INFO0_FRAMELESS_BAR		BIT(27)
 
-#define HAL_REO_ENTR_RING_INFO1_RXDMA_PUSH_REASON	GENMASK(1, 0)
-#define HAL_REO_ENTR_RING_INFO1_RXDMA_ERROR_CODE	GENMASK(6, 2)
+#घोषणा HAL_REO_ENTR_RING_INFO1_RXDMA_PUSH_REASON	GENMASK(1, 0)
+#घोषणा HAL_REO_ENTR_RING_INFO1_RXDMA_ERROR_CODE	GENMASK(6, 2)
 
-struct hal_reo_entrance_ring {
-	struct ath11k_buffer_addr buf_addr_info;
-	struct rx_mpdu_desc rx_mpdu_info;
+काष्ठा hal_reo_entrance_ring अणु
+	काष्ठा ath11k_buffer_addr buf_addr_info;
+	काष्ठा rx_mpdu_desc rx_mpdu_info;
 	u32 queue_addr_lo;
 	u32 info0; /* %HAL_REO_ENTR_RING_INFO0_ */
 	u32 info1; /* %HAL_REO_ENTR_RING_INFO1_ */
 	u32 info2; /* %HAL_REO_DEST_RING_INFO2_ */
 
-} __packed;
+पूर्ण __packed;
 
 /* hal_reo_entrance_ring
  *
@@ -808,7 +809,7 @@ struct hal_reo_entrance_ring {
  *		link descriptor.
  *
  * rx_mpdu_info
- *		General information related to the MPDU that is passed
+ *		General inक्रमmation related to the MPDU that is passed
  *		on from REO entrance ring to the REO destination ring.
  *
  * queue_addr_lo
@@ -823,62 +824,62 @@ struct hal_reo_entrance_ring {
  *		through a queue.
  *
  * reo_destination_indication
- *		The id of the reo exit ring where the msdu frame shall push
+ *		The id of the reo निकास ring where the msdu frame shall push
  *		after (MPDU level) reordering has finished. Values are defined
- *		in enum %HAL_RX_MSDU_DESC_REO_DEST_IND_.
+ *		in क्रमागत %HAL_RX_MSDU_DESC_REO_DEST_IND_.
  *
  * frameless_bar
- *		Indicates that this REO entrance ring struct contains BAR info
+ *		Indicates that this REO entrance ring काष्ठा contains BAR info
  *		from a multi TID BAR frame. The original multi TID BAR frame
- *		itself contained all the REO info for the first TID, but all
+ *		itself contained all the REO info क्रम the first TID, but all
  *		the subsequent TID info and their linkage to the REO descriptors
- *		is passed down as 'frameless' BAR info.
+ *		is passed करोwn as 'frameless' BAR info.
  *
  *		The only fields valid in this descriptor when this bit is set
  *		are queue_addr_lo, queue_addr_hi, mpdu_sequence_number,
  *		bar_frame and peer_meta_data.
  *
  * rxdma_push_reason
- *		Reason for pushing this frame to this exit ring. Values are
- *		defined in enum %HAL_REO_DEST_RING_PUSH_REASON_.
+ *		Reason क्रम pushing this frame to this निकास ring. Values are
+ *		defined in क्रमागत %HAL_REO_DEST_RING_PUSH_REASON_.
  *
  * rxdma_error_code
  *		Valid only when 'push_reason' is set. All error codes are
- *		defined in enum %HAL_REO_ENTR_RING_RXDMA_ECODE_.
+ *		defined in क्रमागत %HAL_REO_ENTR_RING_RXDMA_ECODE_.
  *
  * ring_id
- *		The buffer pointer ring id.
+ *		The buffer poपूर्णांकer ring id.
  *		0 - Idle ring
  *		1 - N refers to other rings.
  *
  * looping_count
- *		Indicates the number of times the producer of entries into
+ *		Indicates the number of बार the producer of entries पूर्णांकo
  *		this ring has looped around the ring.
  */
 
-#define HAL_REO_CMD_HDR_INFO0_CMD_NUMBER	GENMASK(15, 0)
-#define HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED	BIT(16)
+#घोषणा HAL_REO_CMD_HDR_INFO0_CMD_NUMBER	GENMASK(15, 0)
+#घोषणा HAL_REO_CMD_HDR_INFO0_STATUS_REQUIRED	BIT(16)
 
-struct hal_reo_cmd_hdr {
+काष्ठा hal_reo_cmd_hdr अणु
 	u32 info0;
-} __packed;
+पूर्ण __packed;
 
-#define HAL_REO_GET_QUEUE_STATS_INFO0_QUEUE_ADDR_HI	GENMASK(7, 0)
-#define HAL_REO_GET_QUEUE_STATS_INFO0_CLEAR_STATS	BIT(8)
+#घोषणा HAL_REO_GET_QUEUE_STATS_INFO0_QUEUE_ADDR_HI	GENMASK(7, 0)
+#घोषणा HAL_REO_GET_QUEUE_STATS_INFO0_CLEAR_STATS	BIT(8)
 
-struct hal_reo_get_queue_stats {
-	struct hal_reo_cmd_hdr cmd;
+काष्ठा hal_reo_get_queue_stats अणु
+	काष्ठा hal_reo_cmd_hdr cmd;
 	u32 queue_addr_lo;
 	u32 info0;
 	u32 rsvd0[6];
-} __packed;
+पूर्ण __packed;
 
 /* hal_reo_get_queue_stats
  *		Producer: SW
  *		Consumer: REO
  *
  * cmd
- *		Details for command execution tracking purposes.
+ *		Details क्रम command execution tracking purposes.
  *
  * queue_addr_lo
  *		Address (lower 32 bits) of the REO queue descriptor.
@@ -900,71 +901,71 @@ struct hal_reo_get_queue_stats {
  *		MSDU_Frames_processed_count
  *		Total_processed_byte_count
  *		Late_receive_MPDU_count
- *		window_jump_2k
+ *		winकरोw_jump_2k
  *		Hole_count
  */
 
-#define HAL_REO_FLUSH_QUEUE_INFO0_DESC_ADDR_HI		GENMASK(7, 0)
-#define HAL_REO_FLUSH_QUEUE_INFO0_BLOCK_DESC_ADDR	BIT(8)
-#define HAL_REO_FLUSH_QUEUE_INFO0_BLOCK_RESRC_IDX	GENMASK(10, 9)
+#घोषणा HAL_REO_FLUSH_QUEUE_INFO0_DESC_ADDR_HI		GENMASK(7, 0)
+#घोषणा HAL_REO_FLUSH_QUEUE_INFO0_BLOCK_DESC_ADDR	BIT(8)
+#घोषणा HAL_REO_FLUSH_QUEUE_INFO0_BLOCK_RESRC_IDX	GENMASK(10, 9)
 
-struct hal_reo_flush_queue {
-	struct hal_reo_cmd_hdr cmd;
+काष्ठा hal_reo_flush_queue अणु
+	काष्ठा hal_reo_cmd_hdr cmd;
 	u32 desc_addr_lo;
 	u32 info0;
 	u32 rsvd0[6];
-} __packed;
+पूर्ण __packed;
 
-#define HAL_REO_FLUSH_CACHE_INFO0_CACHE_ADDR_HI		GENMASK(7, 0)
-#define HAL_REO_FLUSH_CACHE_INFO0_FWD_ALL_MPDUS		BIT(8)
-#define HAL_REO_FLUSH_CACHE_INFO0_RELEASE_BLOCK_IDX	BIT(9)
-#define HAL_REO_FLUSH_CACHE_INFO0_BLOCK_RESRC_IDX	GENMASK(11, 10)
-#define HAL_REO_FLUSH_CACHE_INFO0_FLUSH_WO_INVALIDATE	BIT(12)
-#define HAL_REO_FLUSH_CACHE_INFO0_BLOCK_CACHE_USAGE	BIT(13)
-#define HAL_REO_FLUSH_CACHE_INFO0_FLUSH_ALL		BIT(14)
+#घोषणा HAL_REO_FLUSH_CACHE_INFO0_CACHE_ADDR_HI		GENMASK(7, 0)
+#घोषणा HAL_REO_FLUSH_CACHE_INFO0_FWD_ALL_MPDUS		BIT(8)
+#घोषणा HAL_REO_FLUSH_CACHE_INFO0_RELEASE_BLOCK_IDX	BIT(9)
+#घोषणा HAL_REO_FLUSH_CACHE_INFO0_BLOCK_RESRC_IDX	GENMASK(11, 10)
+#घोषणा HAL_REO_FLUSH_CACHE_INFO0_FLUSH_WO_INVALIDATE	BIT(12)
+#घोषणा HAL_REO_FLUSH_CACHE_INFO0_BLOCK_CACHE_USAGE	BIT(13)
+#घोषणा HAL_REO_FLUSH_CACHE_INFO0_FLUSH_ALL		BIT(14)
 
-struct hal_reo_flush_cache {
-	struct hal_reo_cmd_hdr cmd;
+काष्ठा hal_reo_flush_cache अणु
+	काष्ठा hal_reo_cmd_hdr cmd;
 	u32 cache_addr_lo;
 	u32 info0;
 	u32 rsvd0[6];
-} __packed;
+पूर्ण __packed;
 
-#define HAL_TCL_DATA_CMD_INFO0_DESC_TYPE	BIT(0)
-#define HAL_TCL_DATA_CMD_INFO0_EPD		BIT(1)
-#define HAL_TCL_DATA_CMD_INFO0_ENCAP_TYPE	GENMASK(3, 2)
-#define HAL_TCL_DATA_CMD_INFO0_ENCRYPT_TYPE	GENMASK(7, 4)
-#define HAL_TCL_DATA_CMD_INFO0_SRC_BUF_SWAP	BIT(8)
-#define HAL_TCL_DATA_CMD_INFO0_LNK_META_SWAP	BIT(9)
-#define HAL_TCL_DATA_CMD_INFO0_SEARCH_TYPE	GENMASK(13, 12)
-#define HAL_TCL_DATA_CMD_INFO0_ADDR_EN		GENMASK(15, 14)
-#define HAL_TCL_DATA_CMD_INFO0_CMD_NUM		GENMASK(31, 16)
+#घोषणा HAL_TCL_DATA_CMD_INFO0_DESC_TYPE	BIT(0)
+#घोषणा HAL_TCL_DATA_CMD_INFO0_EPD		BIT(1)
+#घोषणा HAL_TCL_DATA_CMD_INFO0_ENCAP_TYPE	GENMASK(3, 2)
+#घोषणा HAL_TCL_DATA_CMD_INFO0_ENCRYPT_TYPE	GENMASK(7, 4)
+#घोषणा HAL_TCL_DATA_CMD_INFO0_SRC_BUF_SWAP	BIT(8)
+#घोषणा HAL_TCL_DATA_CMD_INFO0_LNK_META_SWAP	BIT(9)
+#घोषणा HAL_TCL_DATA_CMD_INFO0_SEARCH_TYPE	GENMASK(13, 12)
+#घोषणा HAL_TCL_DATA_CMD_INFO0_ADDR_EN		GENMASK(15, 14)
+#घोषणा HAL_TCL_DATA_CMD_INFO0_CMD_NUM		GENMASK(31, 16)
 
-#define HAL_TCL_DATA_CMD_INFO1_DATA_LEN		GENMASK(15, 0)
-#define HAL_TCL_DATA_CMD_INFO1_IP4_CKSUM_EN	BIT(16)
-#define HAL_TCL_DATA_CMD_INFO1_UDP4_CKSUM_EN	BIT(17)
-#define HAL_TCL_DATA_CMD_INFO1_UDP6_CKSUM_EN	BIT(18)
-#define HAL_TCL_DATA_CMD_INFO1_TCP4_CKSUM_EN	BIT(19)
-#define HAL_TCL_DATA_CMD_INFO1_TCP6_CKSUM_EN	BIT(20)
-#define HAL_TCL_DATA_CMD_INFO1_TO_FW		BIT(21)
-#define HAL_TCL_DATA_CMD_INFO1_PKT_OFFSET	GENMASK(31, 23)
+#घोषणा HAL_TCL_DATA_CMD_INFO1_DATA_LEN		GENMASK(15, 0)
+#घोषणा HAL_TCL_DATA_CMD_INFO1_IP4_CKSUM_EN	BIT(16)
+#घोषणा HAL_TCL_DATA_CMD_INFO1_UDP4_CKSUM_EN	BIT(17)
+#घोषणा HAL_TCL_DATA_CMD_INFO1_UDP6_CKSUM_EN	BIT(18)
+#घोषणा HAL_TCL_DATA_CMD_INFO1_TCP4_CKSUM_EN	BIT(19)
+#घोषणा HAL_TCL_DATA_CMD_INFO1_TCP6_CKSUM_EN	BIT(20)
+#घोषणा HAL_TCL_DATA_CMD_INFO1_TO_FW		BIT(21)
+#घोषणा HAL_TCL_DATA_CMD_INFO1_PKT_OFFSET	GENMASK(31, 23)
 
-#define HAL_TCL_DATA_CMD_INFO2_BUF_TIMESTAMP		GENMASK(18, 0)
-#define HAL_TCL_DATA_CMD_INFO2_BUF_T_VALID		BIT(19)
-#define HAL_IPQ8074_TCL_DATA_CMD_INFO2_MESH_ENABLE	BIT(20)
-#define HAL_TCL_DATA_CMD_INFO2_TID_OVERWRITE		BIT(21)
-#define HAL_TCL_DATA_CMD_INFO2_TID			GENMASK(25, 22)
-#define HAL_TCL_DATA_CMD_INFO2_LMAC_ID			GENMASK(27, 26)
+#घोषणा HAL_TCL_DATA_CMD_INFO2_BUF_TIMESTAMP		GENMASK(18, 0)
+#घोषणा HAL_TCL_DATA_CMD_INFO2_BUF_T_VALID		BIT(19)
+#घोषणा HAL_IPQ8074_TCL_DATA_CMD_INFO2_MESH_ENABLE	BIT(20)
+#घोषणा HAL_TCL_DATA_CMD_INFO2_TID_OVERWRITE		BIT(21)
+#घोषणा HAL_TCL_DATA_CMD_INFO2_TID			GENMASK(25, 22)
+#घोषणा HAL_TCL_DATA_CMD_INFO2_LMAC_ID			GENMASK(27, 26)
 
-#define HAL_TCL_DATA_CMD_INFO3_DSCP_TID_TABLE_IDX	GENMASK(5, 0)
-#define HAL_TCL_DATA_CMD_INFO3_SEARCH_INDEX		GENMASK(25, 6)
-#define HAL_TCL_DATA_CMD_INFO3_CACHE_SET_NUM		GENMASK(29, 26)
-#define HAL_QCN9074_TCL_DATA_CMD_INFO3_MESH_ENABLE	GENMASK(31, 30)
+#घोषणा HAL_TCL_DATA_CMD_INFO3_DSCP_TID_TABLE_IDX	GENMASK(5, 0)
+#घोषणा HAL_TCL_DATA_CMD_INFO3_SEARCH_INDEX		GENMASK(25, 6)
+#घोषणा HAL_TCL_DATA_CMD_INFO3_CACHE_SET_NUM		GENMASK(29, 26)
+#घोषणा HAL_QCN9074_TCL_DATA_CMD_INFO3_MESH_ENABLE	GENMASK(31, 30)
 
-#define HAL_TCL_DATA_CMD_INFO4_RING_ID			GENMASK(27, 20)
-#define HAL_TCL_DATA_CMD_INFO4_LOOPING_COUNT		GENMASK(31, 28)
+#घोषणा HAL_TCL_DATA_CMD_INFO4_RING_ID			GENMASK(27, 20)
+#घोषणा HAL_TCL_DATA_CMD_INFO4_LOOPING_COUNT		GENMASK(31, 28)
 
-enum hal_encrypt_type {
+क्रमागत hal_encrypt_type अणु
 	HAL_ENCRYPT_TYPE_WEP_40,
 	HAL_ENCRYPT_TYPE_WEP_104,
 	HAL_ENCRYPT_TYPE_TKIP_NO_MIC,
@@ -977,37 +978,37 @@ enum hal_encrypt_type {
 	HAL_ENCRYPT_TYPE_GCMP_128,
 	HAL_ENCRYPT_TYPE_AES_GCMP_256,
 	HAL_ENCRYPT_TYPE_WAPI_GCM_SM4,
-};
+पूर्ण;
 
-enum hal_tcl_encap_type {
+क्रमागत hal_tcl_encap_type अणु
 	HAL_TCL_ENCAP_TYPE_RAW,
 	HAL_TCL_ENCAP_TYPE_NATIVE_WIFI,
 	HAL_TCL_ENCAP_TYPE_ETHERNET,
 	HAL_TCL_ENCAP_TYPE_802_3 = 3,
-};
+पूर्ण;
 
-enum hal_tcl_desc_type {
+क्रमागत hal_tcl_desc_type अणु
 	HAL_TCL_DESC_TYPE_BUFFER,
 	HAL_TCL_DESC_TYPE_EXT_DESC,
-};
+पूर्ण;
 
-enum hal_wbm_htt_tx_comp_status {
+क्रमागत hal_wbm_htt_tx_comp_status अणु
 	HAL_WBM_REL_HTT_TX_COMP_STATUS_OK,
 	HAL_WBM_REL_HTT_TX_COMP_STATUS_DROP,
 	HAL_WBM_REL_HTT_TX_COMP_STATUS_TTL,
 	HAL_WBM_REL_HTT_TX_COMP_STATUS_REINJ,
 	HAL_WBM_REL_HTT_TX_COMP_STATUS_INSPECT,
 	HAL_WBM_REL_HTT_TX_COMP_STATUS_MEC_NOTIFY,
-};
+पूर्ण;
 
-struct hal_tcl_data_cmd {
-	struct ath11k_buffer_addr buf_addr_info;
+काष्ठा hal_tcl_data_cmd अणु
+	काष्ठा ath11k_buffer_addr buf_addr_info;
 	u32 info0;
 	u32 info1;
 	u32 info2;
 	u32 info3;
 	u32 info4;
-} __packed;
+पूर्ण __packed;
 
 /* hal_tcl_data_cmd
  *
@@ -1017,18 +1018,18 @@ struct hal_tcl_data_cmd {
  *
  * desc_type
  *		Indicates the type of address provided in the buf_addr_info.
- *		Values are defined in enum %HAL_REO_DEST_RING_BUFFER_TYPE_.
+ *		Values are defined in क्रमागत %HAL_REO_DEST_RING_BUFFER_TYPE_.
  *
  * epd
  *		When this bit is set then input packet is an EPD type.
  *
  * encap_type
- *		Indicates the encapsulation that HW will perform. Values are
- *		defined in enum %HAL_TCL_ENCAP_TYPE_.
+ *		Indicates the encapsulation that HW will perक्रमm. Values are
+ *		defined in क्रमागत %HAL_TCL_ENCAP_TYPE_.
  *
  * encrypt_type
- *		Field only valid for encap_type: RAW
- *		Values are defined in enum %HAL_ENCRYPT_TYPE_.
+ *		Field only valid क्रम encap_type: RAW
+ *		Values are defined in क्रमागत %HAL_ENCRYPT_TYPE_.
  *
  * src_buffer_swap
  *		Treats source memory (packet buffer) organization as big-endian.
@@ -1055,35 +1056,35 @@ struct hal_tcl_data_cmd {
  *		This number can be used to match against status.
  *
  * data_length
- *		MSDU length in case of direct descriptor. Length of link
- *		extension descriptor in case of Link extension descriptor.
+ *		MSDU length in हाल of direct descriptor. Length of link
+ *		extension descriptor in हाल of Link extension descriptor.
  *
  * *_checksum_en
- *		Enable checksum replacement for ipv4, udp_over_ipv4, ipv6,
+ *		Enable checksum replacement क्रम ipv4, udp_over_ipv4, ipv6,
  *		udp_over_ipv6, tcp_over_ipv4 and tcp_over_ipv6.
  *
  * to_fw
- *		Forward packet to FW along with classification result. The
- *		packet will not be forward to TQM when this bit is set.
- *		1'b0: Use classification result to forward the packet.
- *		1'b1: Override classification result & forward packet only to fw
+ *		Forward packet to FW aदीर्घ with classअगरication result. The
+ *		packet will not be क्रमward to TQM when this bit is set.
+ *		1'b0: Use classअगरication result to क्रमward the packet.
+ *		1'b1: Override classअगरication result & क्रमward packet only to fw
  *
  * packet_offset
- *		Packet offset from Metadata in case of direct buffer descriptor.
+ *		Packet offset from Metadata in हाल of direct buffer descriptor.
  *
- * buffer_timestamp
- * buffer_timestamp_valid
- *		Frame system entrance timestamp. It shall be filled by first
+ * buffer_बारtamp
+ * buffer_बारtamp_valid
+ *		Frame प्रणाली entrance बारtamp. It shall be filled by first
  *		module (SW, TCL or TQM) that sees the frames first.
  *
  * mesh_enable
  *		For raw WiFi frames, this indicates transmission to a mesh STA,
- *		enabling the interpretation of the 'Mesh Control Present' bit
+ *		enabling the पूर्णांकerpretation of the 'Mesh Control Present' bit
  *		(bit 8) of QoS Control.
  *		For native WiFi frames, this indicates that a 'Mesh Control'
  *		field is present between the header and the LLC.
  *
- * hlos_tid_overwrite
+ * hlos_tid_overग_लिखो
  *
  *		When set, TCL shall ignore the IP DSCP and VLAN PCP
  *		fields and use HLOS_TID as the final TID. Otherwise TCL
@@ -1092,64 +1093,64 @@ struct hal_tcl_data_cmd {
  *
  * hlos_tid
  *		HLOS MSDU priority
- *		Field is used when HLOS_TID_overwrite is set.
+ *		Field is used when HLOS_TID_overग_लिखो is set.
  *
  * lmac_id
- *		TCL uses this LMAC_ID in address search, i.e, while
- *		finding matching entry for the packet in AST corresponding
+ *		TCL uses this LMAC_ID in address search, i.e, जबतक
+ *		finding matching entry क्रम the packet in AST corresponding
  *		to given LMAC_ID
  *
  *		If LMAC ID is all 1s (=> value 3), it indicates wildcard
- *		match for any MAC
+ *		match क्रम any MAC
  *
  * dscp_tid_table_num
  *		DSCP to TID mapping table number that need to be used
- *		for the MSDU.
+ *		क्रम the MSDU.
  *
  * search_index
- *		The index that will be used for index based address or
+ *		The index that will be used क्रम index based address or
  *		flow search. The field is valid when 'search_type' is  1 or 2.
  *
  * cache_set_num
  *
  *		Cache set number that should be used to cache the index
- *		based search results, for address and flow search. This
+ *		based search results, क्रम address and flow search. This
  *		value should be equal to LSB four bits of the hash value of
- *		match data, in case of search index points to an entry which
+ *		match data, in हाल of search index poपूर्णांकs to an entry which
  *		may be used in content based search also. The value can be
- *		anything when the entry pointed by search index will not be
- *		used for content based search.
+ *		anything when the entry poपूर्णांकed by search index will not be
+ *		used क्रम content based search.
  *
  * ring_id
- *		The buffer pointer ring ID.
+ *		The buffer poपूर्णांकer ring ID.
  *		0 refers to the IDLE ring
  *		1 - N refers to other rings
  *
  * looping_count
  *
- *		A count value that indicates the number of times the
- *		producer of entries into the Ring has looped around the
+ *		A count value that indicates the number of बार the
+ *		producer of entries पूर्णांकo the Ring has looped around the
  *		ring.
  *
- *		At initialization time, this value is set to 0. On the
+ *		At initialization समय, this value is set to 0. On the
  *		first loop, this value is set to 1. After the max value is
- *		reached allowed by the number of bits for this field, the
- *		count value continues with 0 again.
+ *		reached allowed by the number of bits क्रम this field, the
+ *		count value जारीs with 0 again.
  *
- *		In case SW is the consumer of the ring entries, it can
+ *		In हाल SW is the consumer of the ring entries, it can
  *		use this field to figure out up to where the producer of
  *		entries has created new entries. This eliminates the need to
- *		check where the head pointer' of the ring is located once
- *		the SW starts processing an interrupt indicating that new
- *		entries have been put into this ring...
+ *		check where the head poपूर्णांकer' of the ring is located once
+ *		the SW starts processing an पूर्णांकerrupt indicating that new
+ *		entries have been put पूर्णांकo this ring...
  *
- *		Also note that SW if it wants only needs to look at the
+ *		Also note that SW अगर it wants only needs to look at the
  *		LSB bit of this count value.
  */
 
-#define HAL_TCL_DESC_LEN sizeof(struct hal_tcl_data_cmd)
+#घोषणा HAL_TCL_DESC_LEN माप(काष्ठा hal_tcl_data_cmd)
 
-enum hal_tcl_gse_ctrl {
+क्रमागत hal_tcl_gse_ctrl अणु
 	HAL_TCL_GSE_CTRL_RD_STAT,
 	HAL_TCL_GSE_CTRL_SRCH_DIS,
 	HAL_TCL_GSE_CTRL_WR_BK_SINGLE,
@@ -1159,7 +1160,7 @@ enum hal_tcl_gse_ctrl {
 	HAL_TCL_GSE_CTRL_WR_BK_INVAL_SINGLE,
 	HAL_TCL_GSE_CTRL_WR_BK_INVAL_ALL,
 	HAL_TCL_GSE_CTRL_CLR_STAT_SINGLE,
-};
+पूर्ण;
 
 /* hal_tcl_gse_ctrl
  *
@@ -1180,39 +1181,39 @@ enum hal_tcl_gse_ctrl {
  * wr_bk_inval_all
  *		Write back and invalidate entire cache
  * clr_stat_single
- *		Clear statistics for single entry
+ *		Clear statistics क्रम single entry
  */
 
-#define HAL_TCL_GSE_CMD_INFO0_CTRL_BUF_ADDR_HI		GENMASK(7, 0)
-#define HAL_TCL_GSE_CMD_INFO0_GSE_CTRL			GENMASK(11, 8)
-#define HAL_TCL_GSE_CMD_INFO0_GSE_SEL			BIT(12)
-#define HAL_TCL_GSE_CMD_INFO0_STATUS_DEST_RING_ID	BIT(13)
-#define HAL_TCL_GSE_CMD_INFO0_SWAP			BIT(14)
+#घोषणा HAL_TCL_GSE_CMD_INFO0_CTRL_BUF_ADDR_HI		GENMASK(7, 0)
+#घोषणा HAL_TCL_GSE_CMD_INFO0_GSE_CTRL			GENMASK(11, 8)
+#घोषणा HAL_TCL_GSE_CMD_INFO0_GSE_SEL			BIT(12)
+#घोषणा HAL_TCL_GSE_CMD_INFO0_STATUS_DEST_RING_ID	BIT(13)
+#घोषणा HAL_TCL_GSE_CMD_INFO0_SWAP			BIT(14)
 
-#define HAL_TCL_GSE_CMD_INFO1_RING_ID			GENMASK(27, 20)
-#define HAL_TCL_GSE_CMD_INFO1_LOOPING_COUNT		GENMASK(31, 28)
+#घोषणा HAL_TCL_GSE_CMD_INFO1_RING_ID			GENMASK(27, 20)
+#घोषणा HAL_TCL_GSE_CMD_INFO1_LOOPING_COUNT		GENMASK(31, 28)
 
-struct hal_tcl_gse_cmd {
+काष्ठा hal_tcl_gse_cmd अणु
 	u32 ctrl_buf_addr_lo;
 	u32 info0;
 	u32 meta_data[2];
 	u32 rsvd0[2];
 	u32 info1;
-} __packed;
+पूर्ण __packed;
 
 /* hal_tcl_gse_cmd
  *
  * ctrl_buf_addr_lo, ctrl_buf_addr_hi
  *		Address of a control buffer containing additional info needed
- *		for this command execution.
+ *		क्रम this command execution.
  *
  * gse_ctrl
  *		GSE control operations. This includes cache operations and table
- *		entry statistics read/clear operation. Values are defined in
- *		enum %HAL_TCL_GSE_CTRL.
+ *		entry statistics पढ़ो/clear operation. Values are defined in
+ *		क्रमागत %HAL_TCL_GSE_CTRL.
  *
  * gse_sel
- *		To select the ASE/FSE to do the operation mention by GSE_ctrl.
+ *		To select the ASE/FSE to करो the operation mention by GSE_ctrl.
  *		0: FSE select 1: ASE select
  *
  * status_destination_ring_id
@@ -1222,104 +1223,104 @@ struct hal_tcl_gse_cmd {
  *		Bit to enable byte swapping of contents of buffer.
  *
  * meta_data
- *		Meta data to be returned in the status descriptor
+ *		Meta data to be वापसed in the status descriptor
  */
 
-enum hal_tcl_cache_op_res {
+क्रमागत hal_tcl_cache_op_res अणु
 	HAL_TCL_CACHE_OP_RES_DONE,
 	HAL_TCL_CACHE_OP_RES_NOT_FOUND,
 	HAL_TCL_CACHE_OP_RES_TIMEOUT,
-};
+पूर्ण;
 
-#define HAL_TCL_STATUS_RING_INFO0_GSE_CTRL		GENMASK(3, 0)
-#define HAL_TCL_STATUS_RING_INFO0_GSE_SEL		BIT(4)
-#define HAL_TCL_STATUS_RING_INFO0_CACHE_OP_RES		GENMASK(6, 5)
-#define HAL_TCL_STATUS_RING_INFO0_MSDU_CNT		GENMASK(31, 8)
+#घोषणा HAL_TCL_STATUS_RING_INFO0_GSE_CTRL		GENMASK(3, 0)
+#घोषणा HAL_TCL_STATUS_RING_INFO0_GSE_SEL		BIT(4)
+#घोषणा HAL_TCL_STATUS_RING_INFO0_CACHE_OP_RES		GENMASK(6, 5)
+#घोषणा HAL_TCL_STATUS_RING_INFO0_MSDU_CNT		GENMASK(31, 8)
 
-#define HAL_TCL_STATUS_RING_INFO1_HASH_IDX		GENMASK(19, 0)
+#घोषणा HAL_TCL_STATUS_RING_INFO1_HASH_IDX		GENMASK(19, 0)
 
-#define HAL_TCL_STATUS_RING_INFO2_RING_ID		GENMASK(27, 20)
-#define HAL_TCL_STATUS_RING_INFO2_LOOPING_COUNT		GENMASK(31, 28)
+#घोषणा HAL_TCL_STATUS_RING_INFO2_RING_ID		GENMASK(27, 20)
+#घोषणा HAL_TCL_STATUS_RING_INFO2_LOOPING_COUNT		GENMASK(31, 28)
 
-struct hal_tcl_status_ring {
+काष्ठा hal_tcl_status_ring अणु
 	u32 info0;
 	u32 msdu_byte_count;
-	u32 msdu_timestamp;
+	u32 msdu_बारtamp;
 	u32 meta_data[2];
 	u32 info1;
 	u32 rsvd0;
 	u32 info2;
-} __packed;
+पूर्ण __packed;
 
 /* hal_tcl_status_ring
  *
  * gse_ctrl
  *		GSE control operations. This includes cache operations and table
- *		entry statistics read/clear operation. Values are defined in
- *		enum %HAL_TCL_GSE_CTRL.
+ *		entry statistics पढ़ो/clear operation. Values are defined in
+ *		क्रमागत %HAL_TCL_GSE_CTRL.
  *
  * gse_sel
- *		To select the ASE/FSE to do the operation mention by GSE_ctrl.
+ *		To select the ASE/FSE to करो the operation mention by GSE_ctrl.
  *		0: FSE select 1: ASE select
  *
  * cache_op_res
- *		Cache operation result. Values are defined in enum
+ *		Cache operation result. Values are defined in क्रमागत
  *		%HAL_TCL_CACHE_OP_RES_.
  *
  * msdu_cnt
  * msdu_byte_count
- *		MSDU count of Entry and MSDU byte count for entry 1.
+ *		MSDU count of Entry and MSDU byte count क्रम entry 1.
  *
  * hash_indx
- *		Hash value of the entry in case of search failed or disabled.
+ *		Hash value of the entry in हाल of search failed or disabled.
  */
 
-#define HAL_CE_SRC_DESC_ADDR_INFO_ADDR_HI	GENMASK(7, 0)
-#define HAL_CE_SRC_DESC_ADDR_INFO_HASH_EN	BIT(8)
-#define HAL_CE_SRC_DESC_ADDR_INFO_BYTE_SWAP	BIT(9)
-#define HAL_CE_SRC_DESC_ADDR_INFO_DEST_SWAP	BIT(10)
-#define HAL_CE_SRC_DESC_ADDR_INFO_GATHER	BIT(11)
-#define HAL_CE_SRC_DESC_ADDR_INFO_LEN		GENMASK(31, 16)
+#घोषणा HAL_CE_SRC_DESC_ADDR_INFO_ADDR_HI	GENMASK(7, 0)
+#घोषणा HAL_CE_SRC_DESC_ADDR_INFO_HASH_EN	BIT(8)
+#घोषणा HAL_CE_SRC_DESC_ADDR_INFO_BYTE_SWAP	BIT(9)
+#घोषणा HAL_CE_SRC_DESC_ADDR_INFO_DEST_SWAP	BIT(10)
+#घोषणा HAL_CE_SRC_DESC_ADDR_INFO_GATHER	BIT(11)
+#घोषणा HAL_CE_SRC_DESC_ADDR_INFO_LEN		GENMASK(31, 16)
 
-#define HAL_CE_SRC_DESC_META_INFO_DATA		GENMASK(15, 0)
+#घोषणा HAL_CE_SRC_DESC_META_INFO_DATA		GENMASK(15, 0)
 
-#define HAL_CE_SRC_DESC_FLAGS_RING_ID		GENMASK(27, 20)
-#define HAL_CE_SRC_DESC_FLAGS_LOOP_CNT		HAL_SRNG_DESC_LOOP_CNT
+#घोषणा HAL_CE_SRC_DESC_FLAGS_RING_ID		GENMASK(27, 20)
+#घोषणा HAL_CE_SRC_DESC_FLAGS_LOOP_CNT		HAL_SRNG_DESC_LOOP_CNT
 
-struct hal_ce_srng_src_desc {
+काष्ठा hal_ce_srng_src_desc अणु
 	u32 buffer_addr_low;
 	u32 buffer_addr_info; /* %HAL_CE_SRC_DESC_ADDR_INFO_ */
 	u32 meta_info; /* %HAL_CE_SRC_DESC_META_INFO_ */
 	u32 flags; /* %HAL_CE_SRC_DESC_FLAGS_ */
-} __packed;
+पूर्ण __packed;
 
 /*
  * hal_ce_srng_src_desc
  *
  * buffer_addr_lo
- *		LSB 32 bits of the 40 Bit Pointer to the source buffer
+ *		LSB 32 bits of the 40 Bit Poपूर्णांकer to the source buffer
  *
  * buffer_addr_hi
- *		MSB 8 bits of the 40 Bit Pointer to the source buffer
+ *		MSB 8 bits of the 40 Bit Poपूर्णांकer to the source buffer
  *
  * toeplitz_en
- *		Enable generation of 32-bit Toeplitz-LFSR hash for
- *		data transfer. In case of gather field in first source
- *		ring entry of the gather copy cycle in taken into account.
+ *		Enable generation of 32-bit Toeplitz-LFSR hash क्रम
+ *		data transfer. In हाल of gather field in first source
+ *		ring entry of the gather copy cycle in taken पूर्णांकo account.
  *
  * src_swap
  *		Treats source memory organization as big-endian. For
- *		each dword read (4 bytes), the byte 0 is swapped with byte 3
+ *		each dword पढ़ो (4 bytes), the byte 0 is swapped with byte 3
  *		and byte 1 is swapped with byte 2.
- *		In case of gather field in first source ring entry of
- *		the gather copy cycle in taken into account.
+ *		In हाल of gather field in first source ring entry of
+ *		the gather copy cycle in taken पूर्णांकo account.
  *
  * dest_swap
  *		Treats destination memory organization as big-endian.
- *		For each dword write (4 bytes), the byte 0 is swapped with
+ *		For each dword ग_लिखो (4 bytes), the byte 0 is swapped with
  *		byte 3 and byte 1 is swapped with byte 2.
- *		In case of gather field in first source ring entry of
- *		the gather copy cycle in taken into account.
+ *		In हाल of gather field in first source ring entry of
+ *		the gather copy cycle in taken पूर्णांकo account.
  *
  * gather
  *		Enables gather of multiple copy engine source
@@ -1335,8 +1336,8 @@ struct hal_ce_srng_src_desc {
  *
  * fw_metadata
  *		Meta data used by FW.
- *		In case of gather field in first source ring entry of
- *		the gather copy cycle in taken into account.
+ *		In हाल of gather field in first source ring entry of
+ *		the gather copy cycle in taken पूर्णांकo account.
  *
  * ce_res_1
  *		Reserved
@@ -1345,97 +1346,97 @@ struct hal_ce_srng_src_desc {
  *		Reserved
  *
  * ring_id
- *		The buffer pointer ring ID.
+ *		The buffer poपूर्णांकer ring ID.
  *		0 refers to the IDLE ring
  *		1 - N refers to other rings
  *		Helps with debugging when dumping ring contents.
  *
  * looping_count
- *		A count value that indicates the number of times the
- *		producer of entries into the Ring has looped around the
+ *		A count value that indicates the number of बार the
+ *		producer of entries पूर्णांकo the Ring has looped around the
  *		ring.
  *
- *		At initialization time, this value is set to 0. On the
+ *		At initialization समय, this value is set to 0. On the
  *		first loop, this value is set to 1. After the max value is
- *		reached allowed by the number of bits for this field, the
- *		count value continues with 0 again.
+ *		reached allowed by the number of bits क्रम this field, the
+ *		count value जारीs with 0 again.
  *
- *		In case SW is the consumer of the ring entries, it can
+ *		In हाल SW is the consumer of the ring entries, it can
  *		use this field to figure out up to where the producer of
  *		entries has created new entries. This eliminates the need to
- *		check where the head pointer' of the ring is located once
- *		the SW starts processing an interrupt indicating that new
- *		entries have been put into this ring...
+ *		check where the head poपूर्णांकer' of the ring is located once
+ *		the SW starts processing an पूर्णांकerrupt indicating that new
+ *		entries have been put पूर्णांकo this ring...
  *
- *		Also note that SW if it wants only needs to look at the
+ *		Also note that SW अगर it wants only needs to look at the
  *		LSB bit of this count value.
  */
 
-#define HAL_CE_DEST_DESC_ADDR_INFO_ADDR_HI		GENMASK(7, 0)
-#define HAL_CE_DEST_DESC_ADDR_INFO_RING_ID		GENMASK(27, 20)
-#define HAL_CE_DEST_DESC_ADDR_INFO_LOOP_CNT		HAL_SRNG_DESC_LOOP_CNT
+#घोषणा HAL_CE_DEST_DESC_ADDR_INFO_ADDR_HI		GENMASK(7, 0)
+#घोषणा HAL_CE_DEST_DESC_ADDR_INFO_RING_ID		GENMASK(27, 20)
+#घोषणा HAL_CE_DEST_DESC_ADDR_INFO_LOOP_CNT		HAL_SRNG_DESC_LOOP_CNT
 
-struct hal_ce_srng_dest_desc {
+काष्ठा hal_ce_srng_dest_desc अणु
 	u32 buffer_addr_low;
 	u32 buffer_addr_info; /* %HAL_CE_DEST_DESC_ADDR_INFO_ */
-} __packed;
+पूर्ण __packed;
 
 /* hal_ce_srng_dest_desc
  *
  * dst_buffer_low
- *		LSB 32 bits of the 40 Bit Pointer to the Destination
+ *		LSB 32 bits of the 40 Bit Poपूर्णांकer to the Destination
  *		buffer
  *
  * dst_buffer_high
- *		MSB 8 bits of the 40 Bit Pointer to the Destination
+ *		MSB 8 bits of the 40 Bit Poपूर्णांकer to the Destination
  *		buffer
  *
  * ce_res_4
  *		Reserved
  *
  * ring_id
- *		The buffer pointer ring ID.
+ *		The buffer poपूर्णांकer ring ID.
  *		0 refers to the IDLE ring
  *		1 - N refers to other rings
  *		Helps with debugging when dumping ring contents.
  *
  * looping_count
- *		A count value that indicates the number of times the
- *		producer of entries into the Ring has looped around the
+ *		A count value that indicates the number of बार the
+ *		producer of entries पूर्णांकo the Ring has looped around the
  *		ring.
  *
- *		At initialization time, this value is set to 0. On the
+ *		At initialization समय, this value is set to 0. On the
  *		first loop, this value is set to 1. After the max value is
- *		reached allowed by the number of bits for this field, the
- *		count value continues with 0 again.
+ *		reached allowed by the number of bits क्रम this field, the
+ *		count value जारीs with 0 again.
  *
- *		In case SW is the consumer of the ring entries, it can
+ *		In हाल SW is the consumer of the ring entries, it can
  *		use this field to figure out up to where the producer of
  *		entries has created new entries. This eliminates the need to
- *		check where the head pointer' of the ring is located once
- *		the SW starts processing an interrupt indicating that new
- *		entries have been put into this ring...
+ *		check where the head poपूर्णांकer' of the ring is located once
+ *		the SW starts processing an पूर्णांकerrupt indicating that new
+ *		entries have been put पूर्णांकo this ring...
  *
- *		Also note that SW if it wants only needs to look at the
+ *		Also note that SW अगर it wants only needs to look at the
  *		LSB bit of this count value.
  */
 
-#define HAL_CE_DST_STATUS_DESC_FLAGS_HASH_EN		BIT(8)
-#define HAL_CE_DST_STATUS_DESC_FLAGS_BYTE_SWAP		BIT(9)
-#define HAL_CE_DST_STATUS_DESC_FLAGS_DEST_SWAP		BIT(10)
-#define HAL_CE_DST_STATUS_DESC_FLAGS_GATHER		BIT(11)
-#define HAL_CE_DST_STATUS_DESC_FLAGS_LEN		GENMASK(31, 16)
+#घोषणा HAL_CE_DST_STATUS_DESC_FLAGS_HASH_EN		BIT(8)
+#घोषणा HAL_CE_DST_STATUS_DESC_FLAGS_BYTE_SWAP		BIT(9)
+#घोषणा HAL_CE_DST_STATUS_DESC_FLAGS_DEST_SWAP		BIT(10)
+#घोषणा HAL_CE_DST_STATUS_DESC_FLAGS_GATHER		BIT(11)
+#घोषणा HAL_CE_DST_STATUS_DESC_FLAGS_LEN		GENMASK(31, 16)
 
-#define HAL_CE_DST_STATUS_DESC_META_INFO_DATA		GENMASK(15, 0)
-#define HAL_CE_DST_STATUS_DESC_META_INFO_RING_ID	GENMASK(27, 20)
-#define HAL_CE_DST_STATUS_DESC_META_INFO_LOOP_CNT	HAL_SRNG_DESC_LOOP_CNT
+#घोषणा HAL_CE_DST_STATUS_DESC_META_INFO_DATA		GENMASK(15, 0)
+#घोषणा HAL_CE_DST_STATUS_DESC_META_INFO_RING_ID	GENMASK(27, 20)
+#घोषणा HAL_CE_DST_STATUS_DESC_META_INFO_LOOP_CNT	HAL_SRNG_DESC_LOOP_CNT
 
-struct hal_ce_srng_dst_status_desc {
+काष्ठा hal_ce_srng_dst_status_desc अणु
 	u32 flags; /* %HAL_CE_DST_STATUS_DESC_FLAGS_ */
 	u32 toeplitz_hash0;
 	u32 toeplitz_hash1;
 	u32 meta_info; /* HAL_CE_DST_STATUS_DESC_META_INFO_ */
-} __packed;
+पूर्ण __packed;
 
 /* hal_ce_srng_dst_status_desc
  *
@@ -1469,79 +1470,79 @@ struct hal_ce_srng_dst_status_desc {
  *
  * fw_metadata
  *		Meta data used by FW
- *		In case of gather field in first source ring entry of
- *		the gather copy cycle in taken into account.
+ *		In हाल of gather field in first source ring entry of
+ *		the gather copy cycle in taken पूर्णांकo account.
  *
  * ce_res_7
  *		Reserved
  *
  * ring_id
- *		The buffer pointer ring ID.
+ *		The buffer poपूर्णांकer ring ID.
  *		0 refers to the IDLE ring
  *		1 - N refers to other rings
  *		Helps with debugging when dumping ring contents.
  *
  * looping_count
- *		A count value that indicates the number of times the
- *		producer of entries into the Ring has looped around the
+ *		A count value that indicates the number of बार the
+ *		producer of entries पूर्णांकo the Ring has looped around the
  *		ring.
  *
- *		At initialization time, this value is set to 0. On the
+ *		At initialization समय, this value is set to 0. On the
  *		first loop, this value is set to 1. After the max value is
- *		reached allowed by the number of bits for this field, the
- *		count value continues with 0 again.
+ *		reached allowed by the number of bits क्रम this field, the
+ *		count value जारीs with 0 again.
  *
- *		In case SW is the consumer of the ring entries, it can
+ *		In हाल SW is the consumer of the ring entries, it can
  *		use this field to figure out up to where the producer of
  *		entries has created new entries. This eliminates the need to
- *		check where the head pointer' of the ring is located once
- *		the SW starts processing an interrupt indicating that new
- *		entries have been put into this ring...
+ *		check where the head poपूर्णांकer' of the ring is located once
+ *		the SW starts processing an पूर्णांकerrupt indicating that new
+ *		entries have been put पूर्णांकo this ring...
  *
- *		Also note that SW if it wants only needs to look at the
+ *		Also note that SW अगर it wants only needs to look at the
  *			LSB bit of this count value.
  */
 
-#define HAL_TX_RATE_STATS_INFO0_VALID		BIT(0)
-#define HAL_TX_RATE_STATS_INFO0_BW		GENMASK(2, 1)
-#define HAL_TX_RATE_STATS_INFO0_PKT_TYPE	GENMASK(6, 3)
-#define HAL_TX_RATE_STATS_INFO0_STBC		BIT(7)
-#define HAL_TX_RATE_STATS_INFO0_LDPC		BIT(8)
-#define HAL_TX_RATE_STATS_INFO0_SGI		GENMASK(10, 9)
-#define HAL_TX_RATE_STATS_INFO0_MCS		GENMASK(14, 11)
-#define HAL_TX_RATE_STATS_INFO0_OFDMA_TX	BIT(15)
-#define HAL_TX_RATE_STATS_INFO0_TONES_IN_RU	GENMASK(27, 16)
+#घोषणा HAL_TX_RATE_STATS_INFO0_VALID		BIT(0)
+#घोषणा HAL_TX_RATE_STATS_INFO0_BW		GENMASK(2, 1)
+#घोषणा HAL_TX_RATE_STATS_INFO0_PKT_TYPE	GENMASK(6, 3)
+#घोषणा HAL_TX_RATE_STATS_INFO0_STBC		BIT(7)
+#घोषणा HAL_TX_RATE_STATS_INFO0_LDPC		BIT(8)
+#घोषणा HAL_TX_RATE_STATS_INFO0_SGI		GENMASK(10, 9)
+#घोषणा HAL_TX_RATE_STATS_INFO0_MCS		GENMASK(14, 11)
+#घोषणा HAL_TX_RATE_STATS_INFO0_OFDMA_TX	BIT(15)
+#घोषणा HAL_TX_RATE_STATS_INFO0_TONES_IN_RU	GENMASK(27, 16)
 
-enum hal_tx_rate_stats_bw {
+क्रमागत hal_tx_rate_stats_bw अणु
 	HAL_TX_RATE_STATS_BW_20,
 	HAL_TX_RATE_STATS_BW_40,
 	HAL_TX_RATE_STATS_BW_80,
 	HAL_TX_RATE_STATS_BW_160,
-};
+पूर्ण;
 
-enum hal_tx_rate_stats_pkt_type {
+क्रमागत hal_tx_rate_stats_pkt_type अणु
 	HAL_TX_RATE_STATS_PKT_TYPE_11A,
 	HAL_TX_RATE_STATS_PKT_TYPE_11B,
 	HAL_TX_RATE_STATS_PKT_TYPE_11N,
 	HAL_TX_RATE_STATS_PKT_TYPE_11AC,
 	HAL_TX_RATE_STATS_PKT_TYPE_11AX,
-};
+पूर्ण;
 
-enum hal_tx_rate_stats_sgi {
+क्रमागत hal_tx_rate_stats_sgi अणु
 	HAL_TX_RATE_STATS_SGI_08US,
 	HAL_TX_RATE_STATS_SGI_04US,
 	HAL_TX_RATE_STATS_SGI_16US,
 	HAL_TX_RATE_STATS_SGI_32US,
-};
+पूर्ण;
 
-struct hal_tx_rate_stats {
+काष्ठा hal_tx_rate_stats अणु
 	u32 info0;
 	u32 tsf;
-} __packed;
+पूर्ण __packed;
 
-struct hal_wbm_link_desc {
-	struct ath11k_buffer_addr buf_addr_info;
-} __packed;
+काष्ठा hal_wbm_link_desc अणु
+	काष्ठा ath11k_buffer_addr buf_addr_info;
+पूर्ण __packed;
 
 /* hal_wbm_link_desc
  *
@@ -1553,103 +1554,103 @@ struct hal_wbm_link_desc {
  *		link descriptor.
  */
 
-enum hal_wbm_rel_src_module {
+क्रमागत hal_wbm_rel_src_module अणु
 	HAL_WBM_REL_SRC_MODULE_TQM,
 	HAL_WBM_REL_SRC_MODULE_RXDMA,
 	HAL_WBM_REL_SRC_MODULE_REO,
 	HAL_WBM_REL_SRC_MODULE_FW,
 	HAL_WBM_REL_SRC_MODULE_SW,
-};
+पूर्ण;
 
-enum hal_wbm_rel_desc_type {
+क्रमागत hal_wbm_rel_desc_type अणु
 	HAL_WBM_REL_DESC_TYPE_REL_MSDU,
 	HAL_WBM_REL_DESC_TYPE_MSDU_LINK,
 	HAL_WBM_REL_DESC_TYPE_MPDU_LINK,
 	HAL_WBM_REL_DESC_TYPE_MSDU_EXT,
 	HAL_WBM_REL_DESC_TYPE_QUEUE_EXT,
-};
+पूर्ण;
 
 /* hal_wbm_rel_desc_type
  *
  * msdu_buffer
- *	The address points to an MSDU buffer
+ *	The address poपूर्णांकs to an MSDU buffer
  *
  * msdu_link_descriptor
- *	The address points to an Tx MSDU link descriptor
+ *	The address poपूर्णांकs to an Tx MSDU link descriptor
  *
  * mpdu_link_descriptor
- *	The address points to an MPDU link descriptor
+ *	The address poपूर्णांकs to an MPDU link descriptor
  *
  * msdu_ext_descriptor
- *	The address points to an MSDU extension descriptor
+ *	The address poपूर्णांकs to an MSDU extension descriptor
  *
  * queue_ext_descriptor
- *	The address points to an TQM queue extension descriptor. WBM should
+ *	The address poपूर्णांकs to an TQM queue extension descriptor. WBM should
  *	treat this is the same way as a link descriptor.
  */
 
-enum hal_wbm_rel_bm_act {
+क्रमागत hal_wbm_rel_bm_act अणु
 	HAL_WBM_REL_BM_ACT_PUT_IN_IDLE,
 	HAL_WBM_REL_BM_ACT_REL_MSDU,
-};
+पूर्ण;
 
 /* hal_wbm_rel_bm_act
  *
  * put_in_idle_list
- *	Put the buffer or descriptor back in the idle list. In case of MSDU or
- *	MDPU link descriptor, BM does not need to check to release any
- *	individual MSDU buffers.
+ *	Put the buffer or descriptor back in the idle list. In हाल of MSDU or
+ *	MDPU link descriptor, BM करोes not need to check to release any
+ *	inभागidual MSDU buffers.
  *
  * release_msdu_list
  *	This BM action can only be used in combination with desc_type being
- *	msdu_link_descriptor. Field first_msdu_index points out which MSDU
- *	pointer in the MSDU link descriptor is the first of an MPDU that is
+ *	msdu_link_descriptor. Field first_msdu_index poपूर्णांकs out which MSDU
+ *	poपूर्णांकer in the MSDU link descriptor is the first of an MPDU that is
  *	released. BM shall release all the MSDU buffers linked to this first
- *	MSDU buffer pointer. All related MSDU buffer pointer entries shall be
- *	set to value 0, which represents the 'NULL' pointer. When all MSDU
- *	buffer pointers in the MSDU link descriptor are 'NULL', the MSDU link
+ *	MSDU buffer poपूर्णांकer. All related MSDU buffer poपूर्णांकer entries shall be
+ *	set to value 0, which represents the 'NULL' poपूर्णांकer. When all MSDU
+ *	buffer poपूर्णांकers in the MSDU link descriptor are 'NULL', the MSDU link
  *	descriptor itself shall also be released.
  */
 
-#define HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE		GENMASK(2, 0)
-#define HAL_WBM_RELEASE_INFO0_BM_ACTION			GENMASK(5, 3)
-#define HAL_WBM_RELEASE_INFO0_DESC_TYPE			GENMASK(8, 6)
-#define HAL_WBM_RELEASE_INFO0_FIRST_MSDU_IDX		GENMASK(12, 9)
-#define HAL_WBM_RELEASE_INFO0_TQM_RELEASE_REASON	GENMASK(16, 13)
-#define HAL_WBM_RELEASE_INFO0_RXDMA_PUSH_REASON		GENMASK(18, 17)
-#define HAL_WBM_RELEASE_INFO0_RXDMA_ERROR_CODE		GENMASK(23, 19)
-#define HAL_WBM_RELEASE_INFO0_REO_PUSH_REASON		GENMASK(25, 24)
-#define HAL_WBM_RELEASE_INFO0_REO_ERROR_CODE		GENMASK(30, 26)
-#define HAL_WBM_RELEASE_INFO0_WBM_INTERNAL_ERROR	BIT(31)
+#घोषणा HAL_WBM_RELEASE_INFO0_REL_SRC_MODULE		GENMASK(2, 0)
+#घोषणा HAL_WBM_RELEASE_INFO0_BM_ACTION			GENMASK(5, 3)
+#घोषणा HAL_WBM_RELEASE_INFO0_DESC_TYPE			GENMASK(8, 6)
+#घोषणा HAL_WBM_RELEASE_INFO0_FIRST_MSDU_IDX		GENMASK(12, 9)
+#घोषणा HAL_WBM_RELEASE_INFO0_TQM_RELEASE_REASON	GENMASK(16, 13)
+#घोषणा HAL_WBM_RELEASE_INFO0_RXDMA_PUSH_REASON		GENMASK(18, 17)
+#घोषणा HAL_WBM_RELEASE_INFO0_RXDMA_ERROR_CODE		GENMASK(23, 19)
+#घोषणा HAL_WBM_RELEASE_INFO0_REO_PUSH_REASON		GENMASK(25, 24)
+#घोषणा HAL_WBM_RELEASE_INFO0_REO_ERROR_CODE		GENMASK(30, 26)
+#घोषणा HAL_WBM_RELEASE_INFO0_WBM_INTERNAL_ERROR	BIT(31)
 
-#define HAL_WBM_RELEASE_INFO1_TQM_STATUS_NUMBER		GENMASK(23, 0)
-#define HAL_WBM_RELEASE_INFO1_TRANSMIT_COUNT		GENMASK(30, 24)
+#घोषणा HAL_WBM_RELEASE_INFO1_TQM_STATUS_NUMBER		GENMASK(23, 0)
+#घोषणा HAL_WBM_RELEASE_INFO1_TRANSMIT_COUNT		GENMASK(30, 24)
 
-#define HAL_WBM_RELEASE_INFO2_ACK_FRAME_RSSI		GENMASK(7, 0)
-#define HAL_WBM_RELEASE_INFO2_SW_REL_DETAILS_VALID	BIT(8)
-#define HAL_WBM_RELEASE_INFO2_FIRST_MSDU		BIT(9)
-#define HAL_WBM_RELEASE_INFO2_LAST_MSDU			BIT(10)
-#define HAL_WBM_RELEASE_INFO2_MSDU_IN_AMSDU		BIT(11)
-#define HAL_WBM_RELEASE_INFO2_FW_TX_NOTIF_FRAME		BIT(12)
-#define HAL_WBM_RELEASE_INFO2_BUFFER_TIMESTAMP		GENMASK(31, 13)
+#घोषणा HAL_WBM_RELEASE_INFO2_ACK_FRAME_RSSI		GENMASK(7, 0)
+#घोषणा HAL_WBM_RELEASE_INFO2_SW_REL_DETAILS_VALID	BIT(8)
+#घोषणा HAL_WBM_RELEASE_INFO2_FIRST_MSDU		BIT(9)
+#घोषणा HAL_WBM_RELEASE_INFO2_LAST_MSDU			BIT(10)
+#घोषणा HAL_WBM_RELEASE_INFO2_MSDU_IN_AMSDU		BIT(11)
+#घोषणा HAL_WBM_RELEASE_INFO2_FW_TX_NOTIF_FRAME		BIT(12)
+#घोषणा HAL_WBM_RELEASE_INFO2_BUFFER_TIMESTAMP		GENMASK(31, 13)
 
-#define HAL_WBM_RELEASE_INFO3_PEER_ID			GENMASK(15, 0)
-#define HAL_WBM_RELEASE_INFO3_TID			GENMASK(19, 16)
-#define HAL_WBM_RELEASE_INFO3_RING_ID			GENMASK(27, 20)
-#define HAL_WBM_RELEASE_INFO3_LOOPING_COUNT		GENMASK(31, 28)
+#घोषणा HAL_WBM_RELEASE_INFO3_PEER_ID			GENMASK(15, 0)
+#घोषणा HAL_WBM_RELEASE_INFO3_TID			GENMASK(19, 16)
+#घोषणा HAL_WBM_RELEASE_INFO3_RING_ID			GENMASK(27, 20)
+#घोषणा HAL_WBM_RELEASE_INFO3_LOOPING_COUNT		GENMASK(31, 28)
 
-#define HAL_WBM_REL_HTT_TX_COMP_INFO0_STATUS		GENMASK(12, 9)
-#define HAL_WBM_REL_HTT_TX_COMP_INFO0_REINJ_REASON	GENMASK(16, 13)
-#define HAL_WBM_REL_HTT_TX_COMP_INFO0_EXP_FRAME		BIT(17)
+#घोषणा HAL_WBM_REL_HTT_TX_COMP_INFO0_STATUS		GENMASK(12, 9)
+#घोषणा HAL_WBM_REL_HTT_TX_COMP_INFO0_REINJ_REASON	GENMASK(16, 13)
+#घोषणा HAL_WBM_REL_HTT_TX_COMP_INFO0_EXP_FRAME		BIT(17)
 
-struct hal_wbm_release_ring {
-	struct ath11k_buffer_addr buf_addr_info;
+काष्ठा hal_wbm_release_ring अणु
+	काष्ठा ath11k_buffer_addr buf_addr_info;
 	u32 info0;
 	u32 info1;
 	u32 info2;
-	struct hal_tx_rate_stats rate_stats;
+	काष्ठा hal_tx_rate_stats rate_stats;
 	u32 info3;
-} __packed;
+पूर्ण __packed;
 
 /* hal_wbm_release_ring
  *
@@ -1657,51 +1658,51 @@ struct hal_wbm_release_ring {
  *	Consumer: WBM/SW/FW
  *
  * HTT tx status is overlayed on wbm_release ring on 4-byte words 2, 3, 4 and 5
- * for software based completions.
+ * क्रम software based completions.
  *
  * buf_addr_info
  *	Details of the physical address of the buffer or link descriptor.
  *
  * release_source_module
  *	Indicates which module initiated the release of this buffer/descriptor.
- *	Values are defined in enum %HAL_WBM_REL_SRC_MODULE_.
+ *	Values are defined in क्रमागत %HAL_WBM_REL_SRC_MODULE_.
  *
  * bm_action
- *	Field only valid when the field return_buffer_manager in
+ *	Field only valid when the field वापस_buffer_manager in
  *	Released_buff_or_desc_addr_info indicates:
  *		WBM_IDLE_BUF_LIST / WBM_IDLE_DESC_LIST
- *	Values are defined in enum %HAL_WBM_REL_BM_ACT_.
+ *	Values are defined in क्रमागत %HAL_WBM_REL_BM_ACT_.
  *
  * buffer_or_desc_type
- *	Field only valid when WBM is marked as the return_buffer_manager in
+ *	Field only valid when WBM is marked as the वापस_buffer_manager in
  *	the Released_Buffer_address_info. Indicates that type of buffer or
- *	descriptor is being released. Values are in enum %HAL_WBM_REL_DESC_TYPE.
+ *	descriptor is being released. Values are in क्रमागत %HAL_WBM_REL_DESC_TYPE.
  *
  * first_msdu_index
- *	Field only valid for the bm_action release_msdu_list. The index of the
- *	first MSDU in an MSDU link descriptor all belonging to the same MPDU.
+ *	Field only valid क्रम the bm_action release_msdu_list. The index of the
+ *	first MSDU in an MSDU link descriptor all beदीर्घing to the same MPDU.
  *
  * tqm_release_reason
  *	Field only valid when Release_source_module is set to release_source_TQM
- *	Release reasons are defined in enum %HAL_WBM_TQM_REL_REASON_.
+ *	Release reasons are defined in क्रमागत %HAL_WBM_TQM_REL_REASON_.
  *
  * rxdma_push_reason
  * reo_push_reason
  *	Indicates why rxdma/reo pushed the frame to this ring and values are
- *	defined in enum %HAL_REO_DEST_RING_PUSH_REASON_.
+ *	defined in क्रमागत %HAL_REO_DEST_RING_PUSH_REASON_.
  *
  * rxdma_error_code
  *	Field only valid when 'rxdma_push_reason' set to 'error_detected'.
- *	Values are defined in enum %HAL_REO_ENTR_RING_RXDMA_ECODE_.
+ *	Values are defined in क्रमागत %HAL_REO_ENTR_RING_RXDMA_ECODE_.
  *
  * reo_error_code
  *	Field only valid when 'reo_push_reason' set to 'error_detected'. Values
- *	are defined in enum %HAL_REO_DEST_RING_ERROR_CODE_.
+ *	are defined in क्रमागत %HAL_REO_DEST_RING_ERROR_CODE_.
  *
- * wbm_internal_error
- *	Is set when WBM got a buffer pointer but the action was to push it to
- *	the idle link descriptor ring or do link related activity OR
- *	Is set when WBM got a link buffer pointer but the action was to push it
+ * wbm_पूर्णांकernal_error
+ *	Is set when WBM got a buffer poपूर्णांकer but the action was to push it to
+ *	the idle link descriptor ring or करो link related activity OR
+ *	Is set when WBM got a link buffer poपूर्णांकer but the action was to push it
  *	to the buffer descriptor ring.
  *
  * tqm_status_number
@@ -1710,43 +1711,43 @@ struct hal_wbm_release_ring {
  *	release_source_module is TQM.
  *
  * transmit_count
- *	The number of times the frame has been transmitted, valid only when
+ *	The number of बार the frame has been transmitted, valid only when
  *	release source in TQM.
  *
  * ack_frame_rssi
  *	This field is only valid when the source is TQM. If this frame is
- *	removed as the result of the reception of an ACK or BA, this field
+ *	हटाओd as the result of the reception of an ACK or BA, this field
  *	indicates the RSSI of the received ACK or BA frame.
  *
  * sw_release_details_valid
  *	This is set when WMB got a 'release_msdu_list' command from TQM and
- *	return buffer manager is not WMB. WBM will then de-aggregate all MSDUs
- *	and pass them one at a time on to the 'buffer owner'.
+ *	वापस buffer manager is not WMB. WBM will then de-aggregate all MSDUs
+ *	and pass them one at a समय on to the 'buffer owner'.
  *
  * first_msdu
  *	Field only valid when SW_release_details_valid is set.
- *	When set, this MSDU is the first MSDU pointed to in the
+ *	When set, this MSDU is the first MSDU poपूर्णांकed to in the
  *	'release_msdu_list' command.
  *
  * last_msdu
  *	Field only valid when SW_release_details_valid is set.
- *	When set, this MSDU is the last MSDU pointed to in the
+ *	When set, this MSDU is the last MSDU poपूर्णांकed to in the
  *	'release_msdu_list' command.
  *
  * msdu_part_of_amsdu
  *	Field only valid when SW_release_details_valid is set.
  *	When set, this MSDU was part of an A-MSDU in MPDU
  *
- * fw_tx_notify_frame
+ * fw_tx_notअगरy_frame
  *	Field only valid when SW_release_details_valid is set.
  *
- * buffer_timestamp
+ * buffer_बारtamp
  *	Field only valid when SW_release_details_valid is set.
- *	This is the Buffer_timestamp field from the
+ *	This is the Buffer_बारtamp field from the
  *	Timestamp in units of 1024 us
  *
- * struct hal_tx_rate_stats rate_stats
- *	Details for command execution tracking purposes.
+ * काष्ठा hal_tx_rate_stats rate_stats
+ *	Details क्रम command execution tracking purposes.
  *
  * sw_peer_id
  * tid
@@ -1767,7 +1768,7 @@ struct hal_wbm_release_ring {
  *	MSDU_rel_buffertqm_release_reason = e_num 1
  *	tqm_rr_rem_cmd_rem
  *
- *	3) Release of msdu link due to remove_mpdu or acked_mpdu
+ *	3) Release of msdu link due to हटाओ_mpdu or acked_mpdu
  *	command.
  *
  *	buffer_or_desc_type = e_num1
@@ -1781,38 +1782,38 @@ struct hal_wbm_release_ring {
  * rind_id
  *	For debugging.
  *	This field is filled in by the SRNG module.
- *	It help to identify the ring that is being looked
+ *	It help to identअगरy the ring that is being looked
  *
  * looping_count
- *	A count value that indicates the number of times the
- *	producer of entries into the Buffer Manager Ring has looped
+ *	A count value that indicates the number of बार the
+ *	producer of entries पूर्णांकo the Buffer Manager Ring has looped
  *	around the ring.
  *
- *	At initialization time, this value is set to 0. On the
+ *	At initialization समय, this value is set to 0. On the
  *	first loop, this value is set to 1. After the max value is
- *	reached allowed by the number of bits for this field, the
- *	count value continues with 0 again.
+ *	reached allowed by the number of bits क्रम this field, the
+ *	count value जारीs with 0 again.
  *
- *	In case SW is the consumer of the ring entries, it can
+ *	In हाल SW is the consumer of the ring entries, it can
  *	use this field to figure out up to where the producer of
  *	entries has created new entries. This eliminates the need to
- *	check where the head pointer' of the ring is located once
- *	the SW starts processing an interrupt indicating that new
- *	entries have been put into this ring...
+ *	check where the head poपूर्णांकer' of the ring is located once
+ *	the SW starts processing an पूर्णांकerrupt indicating that new
+ *	entries have been put पूर्णांकo this ring...
  *
- *	Also note that SW if it wants only needs to look at the
+ *	Also note that SW अगर it wants only needs to look at the
  *	LSB bit of this count value.
  */
 
 /**
- * enum hal_wbm_tqm_rel_reason - TQM release reason code
- * @HAL_WBM_TQM_REL_REASON_FRAME_ACKED: ACK or BACK received for the frame
- * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_MPDU: Command remove_mpdus initiated by SW
- * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_TX: Command remove transmitted_mpdus
+ * क्रमागत hal_wbm_tqm_rel_reason - TQM release reason code
+ * @HAL_WBM_TQM_REL_REASON_FRAME_ACKED: ACK or BACK received क्रम the frame
+ * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_MPDU: Command हटाओ_mpdus initiated by SW
+ * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_TX: Command हटाओ transmitted_mpdus
  *	initiated by sw.
- * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_NOTX: Command remove untransmitted_mpdus
+ * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_NOTX: Command हटाओ untransmitted_mpdus
  *	initiated by sw.
- * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_AGED_FRAMES: Command remove aged msdus or
+ * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_AGED_FRAMES: Command हटाओ aged msdus or
  *	mpdus.
  * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_RESEAON1: Remove command initiated by
  *	fw with fw_reason1.
@@ -1821,7 +1822,7 @@ struct hal_wbm_release_ring {
  * @HAL_WBM_TQM_REL_REASON_CMD_REMOVE_RESEAON3: Remove command initiated by
  *	fw with fw_reason3.
  */
-enum hal_wbm_tqm_rel_reason {
+क्रमागत hal_wbm_tqm_rel_reason अणु
 	HAL_WBM_TQM_REL_REASON_FRAME_ACKED,
 	HAL_WBM_TQM_REL_REASON_CMD_REMOVE_MPDU,
 	HAL_WBM_TQM_REL_REASON_CMD_REMOVE_TX,
@@ -1830,22 +1831,22 @@ enum hal_wbm_tqm_rel_reason {
 	HAL_WBM_TQM_REL_REASON_CMD_REMOVE_RESEAON1,
 	HAL_WBM_TQM_REL_REASON_CMD_REMOVE_RESEAON2,
 	HAL_WBM_TQM_REL_REASON_CMD_REMOVE_RESEAON3,
-};
+पूर्ण;
 
-struct hal_wbm_buffer_ring {
-	struct ath11k_buffer_addr buf_addr_info;
-};
+काष्ठा hal_wbm_buffer_ring अणु
+	काष्ठा ath11k_buffer_addr buf_addr_info;
+पूर्ण;
 
-enum hal_desc_owner {
+क्रमागत hal_desc_owner अणु
 	HAL_DESC_OWNER_WBM,
 	HAL_DESC_OWNER_SW,
 	HAL_DESC_OWNER_TQM,
 	HAL_DESC_OWNER_RXDMA,
 	HAL_DESC_OWNER_REO,
 	HAL_DESC_OWNER_SWITCH,
-};
+पूर्ण;
 
-enum hal_desc_buf_type {
+क्रमागत hal_desc_buf_type अणु
 	HAL_DESC_BUF_TYPE_TX_MSDU_LINK,
 	HAL_DESC_BUF_TYPE_TX_MPDU_LINK,
 	HAL_DESC_BUF_TYPE_TX_MPDU_QUEUE_HEAD,
@@ -1858,115 +1859,115 @@ enum hal_desc_buf_type {
 	HAL_DESC_BUF_TYPE_RX_REO_QUEUE_EXT,
 	HAL_DESC_BUF_TYPE_RX_BUFFER,
 	HAL_DESC_BUF_TYPE_IDLE_LINK,
-};
+पूर्ण;
 
-#define HAL_DESC_REO_OWNED		4
-#define HAL_DESC_REO_QUEUE_DESC		8
-#define HAL_DESC_REO_QUEUE_EXT_DESC	9
-#define HAL_DESC_REO_NON_QOS_TID	16
+#घोषणा HAL_DESC_REO_OWNED		4
+#घोषणा HAL_DESC_REO_QUEUE_DESC		8
+#घोषणा HAL_DESC_REO_QUEUE_EXT_DESC	9
+#घोषणा HAL_DESC_REO_NON_QOS_TID	16
 
-#define HAL_DESC_HDR_INFO0_OWNER	GENMASK(3, 0)
-#define HAL_DESC_HDR_INFO0_BUF_TYPE	GENMASK(7, 4)
-#define HAL_DESC_HDR_INFO0_DBG_RESERVED	GENMASK(31, 8)
+#घोषणा HAL_DESC_HDR_INFO0_OWNER	GENMASK(3, 0)
+#घोषणा HAL_DESC_HDR_INFO0_BUF_TYPE	GENMASK(7, 4)
+#घोषणा HAL_DESC_HDR_INFO0_DBG_RESERVED	GENMASK(31, 8)
 
-struct hal_desc_header {
+काष्ठा hal_desc_header अणु
 	u32 info0;
-} __packed;
+पूर्ण __packed;
 
-struct hal_rx_mpdu_link_ptr {
-	struct ath11k_buffer_addr addr_info;
-} __packed;
+काष्ठा hal_rx_mpdu_link_ptr अणु
+	काष्ठा ath11k_buffer_addr addr_info;
+पूर्ण __packed;
 
-struct hal_rx_msdu_details {
-	struct ath11k_buffer_addr buf_addr_info;
-	struct rx_msdu_desc rx_msdu_info;
-} __packed;
+काष्ठा hal_rx_msdu_details अणु
+	काष्ठा ath11k_buffer_addr buf_addr_info;
+	काष्ठा rx_msdu_desc rx_msdu_info;
+पूर्ण __packed;
 
-#define HAL_RX_MSDU_LNK_INFO0_RX_QUEUE_NUMBER		GENMASK(15, 0)
-#define HAL_RX_MSDU_LNK_INFO0_FIRST_MSDU_LNK		BIT(16)
+#घोषणा HAL_RX_MSDU_LNK_INFO0_RX_QUEUE_NUMBER		GENMASK(15, 0)
+#घोषणा HAL_RX_MSDU_LNK_INFO0_FIRST_MSDU_LNK		BIT(16)
 
-struct hal_rx_msdu_link {
-	struct hal_desc_header desc_hdr;
-	struct ath11k_buffer_addr buf_addr_info;
+काष्ठा hal_rx_msdu_link अणु
+	काष्ठा hal_desc_header desc_hdr;
+	काष्ठा ath11k_buffer_addr buf_addr_info;
 	u32 info0;
 	u32 pn[4];
-	struct hal_rx_msdu_details msdu_link[6];
-} __packed;
+	काष्ठा hal_rx_msdu_details msdu_link[6];
+पूर्ण __packed;
 
-struct hal_rx_reo_queue_ext {
-	struct hal_desc_header desc_hdr;
+काष्ठा hal_rx_reo_queue_ext अणु
+	काष्ठा hal_desc_header desc_hdr;
 	u32 rsvd;
-	struct hal_rx_mpdu_link_ptr mpdu_link[15];
-} __packed;
+	काष्ठा hal_rx_mpdu_link_ptr mpdu_link[15];
+पूर्ण __packed;
 
 /* hal_rx_reo_queue_ext
  *	Consumer: REO
  *	Producer: REO
  *
  * descriptor_header
- *	Details about which module owns this struct.
+ *	Details about which module owns this काष्ठा.
  *
  * mpdu_link
- *	Pointer to the next MPDU_link descriptor in the MPDU queue.
+ *	Poपूर्णांकer to the next MPDU_link descriptor in the MPDU queue.
  */
 
-enum hal_rx_reo_queue_pn_size {
+क्रमागत hal_rx_reo_queue_pn_size अणु
 	HAL_RX_REO_QUEUE_PN_SIZE_24,
 	HAL_RX_REO_QUEUE_PN_SIZE_48,
 	HAL_RX_REO_QUEUE_PN_SIZE_128,
-};
+पूर्ण;
 
-#define HAL_RX_REO_QUEUE_RX_QUEUE_NUMBER		GENMASK(15, 0)
+#घोषणा HAL_RX_REO_QUEUE_RX_QUEUE_NUMBER		GENMASK(15, 0)
 
-#define HAL_RX_REO_QUEUE_INFO0_VLD			BIT(0)
-#define HAL_RX_REO_QUEUE_INFO0_ASSOC_LNK_DESC_COUNTER	GENMASK(2, 1)
-#define HAL_RX_REO_QUEUE_INFO0_DIS_DUP_DETECTION	BIT(3)
-#define HAL_RX_REO_QUEUE_INFO0_SOFT_REORDER_EN		BIT(4)
-#define HAL_RX_REO_QUEUE_INFO0_AC			GENMASK(6, 5)
-#define HAL_RX_REO_QUEUE_INFO0_BAR			BIT(7)
-#define HAL_RX_REO_QUEUE_INFO0_RETRY			BIT(8)
-#define HAL_RX_REO_QUEUE_INFO0_CHECK_2K_MODE		BIT(9)
-#define HAL_RX_REO_QUEUE_INFO0_OOR_MODE			BIT(10)
-#define HAL_RX_REO_QUEUE_INFO0_BA_WINDOW_SIZE		GENMASK(18, 11)
-#define HAL_RX_REO_QUEUE_INFO0_PN_CHECK			BIT(19)
-#define HAL_RX_REO_QUEUE_INFO0_EVEN_PN			BIT(20)
-#define HAL_RX_REO_QUEUE_INFO0_UNEVEN_PN		BIT(21)
-#define HAL_RX_REO_QUEUE_INFO0_PN_HANDLE_ENABLE		BIT(22)
-#define HAL_RX_REO_QUEUE_INFO0_PN_SIZE			GENMASK(24, 23)
-#define HAL_RX_REO_QUEUE_INFO0_IGNORE_AMPDU_FLG		BIT(25)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_VLD			BIT(0)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_ASSOC_LNK_DESC_COUNTER	GENMASK(2, 1)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_DIS_DUP_DETECTION	BIT(3)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_SOFT_REORDER_EN		BIT(4)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_AC			GENMASK(6, 5)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_BAR			BIT(7)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_RETRY			BIT(8)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_CHECK_2K_MODE		BIT(9)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_OOR_MODE			BIT(10)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_BA_WINDOW_SIZE		GENMASK(18, 11)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_PN_CHECK			BIT(19)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_EVEN_PN			BIT(20)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_UNEVEN_PN		BIT(21)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_PN_HANDLE_ENABLE		BIT(22)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_PN_SIZE			GENMASK(24, 23)
+#घोषणा HAL_RX_REO_QUEUE_INFO0_IGNORE_AMPDU_FLG		BIT(25)
 
-#define HAL_RX_REO_QUEUE_INFO1_SVLD			BIT(0)
-#define HAL_RX_REO_QUEUE_INFO1_SSN			GENMASK(12, 1)
-#define HAL_RX_REO_QUEUE_INFO1_CURRENT_IDX		GENMASK(20, 13)
-#define HAL_RX_REO_QUEUE_INFO1_SEQ_2K_ERR		BIT(21)
-#define HAL_RX_REO_QUEUE_INFO1_PN_ERR			BIT(22)
-#define HAL_RX_REO_QUEUE_INFO1_PN_VALID			BIT(31)
+#घोषणा HAL_RX_REO_QUEUE_INFO1_SVLD			BIT(0)
+#घोषणा HAL_RX_REO_QUEUE_INFO1_SSN			GENMASK(12, 1)
+#घोषणा HAL_RX_REO_QUEUE_INFO1_CURRENT_IDX		GENMASK(20, 13)
+#घोषणा HAL_RX_REO_QUEUE_INFO1_SEQ_2K_ERR		BIT(21)
+#घोषणा HAL_RX_REO_QUEUE_INFO1_PN_ERR			BIT(22)
+#घोषणा HAL_RX_REO_QUEUE_INFO1_PN_VALID			BIT(31)
 
-#define HAL_RX_REO_QUEUE_INFO2_MPDU_COUNT		GENMASK(6, 0)
-#define HAL_RX_REO_QUEUE_INFO2_MSDU_COUNT		(31, 7)
+#घोषणा HAL_RX_REO_QUEUE_INFO2_MPDU_COUNT		GENMASK(6, 0)
+#घोषणा HAL_RX_REO_QUEUE_INFO2_MSDU_COUNT		(31, 7)
 
-#define HAL_RX_REO_QUEUE_INFO3_TIMEOUT_COUNT		GENMASK(9, 4)
-#define HAL_RX_REO_QUEUE_INFO3_FWD_DUE_TO_BAR_CNT	GENMASK(15, 10)
-#define HAL_RX_REO_QUEUE_INFO3_DUPLICATE_COUNT		GENMASK(31, 16)
+#घोषणा HAL_RX_REO_QUEUE_INFO3_TIMEOUT_COUNT		GENMASK(9, 4)
+#घोषणा HAL_RX_REO_QUEUE_INFO3_FWD_DUE_TO_BAR_CNT	GENMASK(15, 10)
+#घोषणा HAL_RX_REO_QUEUE_INFO3_DUPLICATE_COUNT		GENMASK(31, 16)
 
-#define HAL_RX_REO_QUEUE_INFO4_FRAME_IN_ORD_COUNT	GENMASK(23, 0)
-#define HAL_RX_REO_QUEUE_INFO4_BAR_RECVD_COUNT		GENMASK(31, 24)
+#घोषणा HAL_RX_REO_QUEUE_INFO4_FRAME_IN_ORD_COUNT	GENMASK(23, 0)
+#घोषणा HAL_RX_REO_QUEUE_INFO4_BAR_RECVD_COUNT		GENMASK(31, 24)
 
-#define HAL_RX_REO_QUEUE_INFO5_LATE_RX_MPDU_COUNT	GENMASK(11, 0)
-#define HAL_RX_REO_QUEUE_INFO5_WINDOW_JUMP_2K		GENMASK(15, 12)
-#define HAL_RX_REO_QUEUE_INFO5_HOLE_COUNT		GENMASK(31, 16)
+#घोषणा HAL_RX_REO_QUEUE_INFO5_LATE_RX_MPDU_COUNT	GENMASK(11, 0)
+#घोषणा HAL_RX_REO_QUEUE_INFO5_WINDOW_JUMP_2K		GENMASK(15, 12)
+#घोषणा HAL_RX_REO_QUEUE_INFO5_HOLE_COUNT		GENMASK(31, 16)
 
-struct hal_rx_reo_queue {
-	struct hal_desc_header desc_hdr;
+काष्ठा hal_rx_reo_queue अणु
+	काष्ठा hal_desc_header desc_hdr;
 	u32 rx_queue_num;
 	u32 info0;
 	u32 info1;
 	u32 pn[4];
-	u32 last_rx_enqueue_timestamp;
-	u32 last_rx_dequeue_timestamp;
+	u32 last_rx_enqueue_बारtamp;
+	u32 last_rx_dequeue_बारtamp;
 	u32 next_aging_queue[2];
 	u32 prev_aging_queue[2];
-	u32 rx_bitmap[8];
+	u32 rx_biपंचांगap[8];
 	u32 info2;
 	u32 info3;
 	u32 info4;
@@ -1975,157 +1976,157 @@ struct hal_rx_reo_queue {
 	u32 processed_total_bytes;
 	u32 info5;
 	u32 rsvd[3];
-	struct hal_rx_reo_queue_ext ext_desc[];
-} __packed;
+	काष्ठा hal_rx_reo_queue_ext ext_desc[];
+पूर्ण __packed;
 
 /* hal_rx_reo_queue
  *
  * descriptor_header
- *	Details about which module owns this struct. Note that sub field
+ *	Details about which module owns this काष्ठा. Note that sub field
  *	Buffer_type shall be set to receive_reo_queue_descriptor.
  *
  * receive_queue_number
- *	Indicates the MPDU queue ID to which this MPDU link descriptor belongs.
+ *	Indicates the MPDU queue ID to which this MPDU link descriptor beदीर्घs.
  *
  * vld
  *	Valid bit indicating a session is established and the queue descriptor
  *	is valid.
  * associated_link_descriptor_counter
  *	Indicates which of the 3 link descriptor counters shall be incremented
- *	or decremented when link descriptors are added or removed from this
+ *	or decremented when link descriptors are added or हटाओd from this
  *	flow queue.
  * disable_duplicate_detection
- *	When set, do not perform any duplicate detection.
+ *	When set, करो not perक्रमm any duplicate detection.
  * soft_reorder_enable
- *	When set, REO has been instructed to not perform the actual re-ordering
- *	of frames for this queue, but just to insert the reorder opcodes.
+ *	When set, REO has been inकाष्ठाed to not perक्रमm the actual re-ordering
+ *	of frames क्रम this queue, but just to insert the reorder opcodes.
  * ac
  *	Indicates the access category of the queue descriptor.
  * bar
- *	Indicates if BAR has been received.
+ *	Indicates अगर BAR has been received.
  * retry
- *	Retry bit is checked if this bit is set.
+ *	Retry bit is checked अगर this bit is set.
  * chk_2k_mode
  *	Indicates what type of operation is expected from Reo when the received
- *	frame SN falls within the 2K window.
+ *	frame SN falls within the 2K winकरोw.
  * oor_mode
  *	Indicates what type of operation is expected when the received frame
- *	falls within the OOR window.
- * ba_window_size
- *	Indicates the negotiated (window size + 1). Max of 256 bits.
+ *	falls within the OOR winकरोw.
+ * ba_winकरोw_size
+ *	Indicates the negotiated (winकरोw size + 1). Max of 256 bits.
  *
- *	A value 255 means 256 bitmap, 63 means 64 bitmap, 0 (means non-BA
- *	session, with window size of 0). The 3 values here are the main values
+ *	A value 255 means 256 biपंचांगap, 63 means 64 biपंचांगap, 0 (means non-BA
+ *	session, with winकरोw size of 0). The 3 values here are the मुख्य values
  *	validated, but other values should work as well.
  *
- *	A BA window size of 0 (=> one frame entry bitmat), means that there is
+ *	A BA winकरोw size of 0 (=> one frame entry biपंचांगat), means that there is
  *	no additional rx_reo_queue_ext desc. following rx_reo_queue in memory.
- *	A BA window size of 1 - 105, means that there is 1 rx_reo_queue_ext.
- *	A BA window size of 106 - 210, means that there are 2 rx_reo_queue_ext.
- *	A BA window size of 211 - 256, means that there are 3 rx_reo_queue_ext.
+ *	A BA winकरोw size of 1 - 105, means that there is 1 rx_reo_queue_ext.
+ *	A BA winकरोw size of 106 - 210, means that there are 2 rx_reo_queue_ext.
+ *	A BA winकरोw size of 211 - 256, means that there are 3 rx_reo_queue_ext.
  * pn_check_needed, pn_shall_be_even, pn_shall_be_uneven, pn_handling_enable,
  * pn_size
- *	REO shall perform the PN increment check, even number check, uneven
+ *	REO shall perक्रमm the PN increment check, even number check, uneven
  *	number check, PN error check and size of the PN field check.
  * ignore_ampdu_flag
- *	REO shall ignore the ampdu_flag on entrance descriptor for this queue.
+ *	REO shall ignore the ampdu_flag on entrance descriptor क्रम this queue.
  *
  * svld
  *	Sequence number in next field is valid one.
  * ssn
  *	 Starting Sequence number of the session.
  * current_index
- *	Points to last forwarded packet
+ *	Poपूर्णांकs to last क्रमwarded packet
  * seq_2k_error_detected_flag
  *	REO has detected a 2k error jump in the sequence number and from that
- *	moment forward, all new frames are forwarded directly to FW, without
+ *	moment क्रमward, all new frames are क्रमwarded directly to FW, without
  *	duplicate detect, reordering, etc.
  * pn_error_detected_flag
  *	REO has detected a PN error.
  */
 
-#define HAL_REO_UPD_RX_QUEUE_INFO0_QUEUE_ADDR_HI		GENMASK(7, 0)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_RX_QUEUE_NUM		BIT(8)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_VLD			BIT(9)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_ASSOC_LNK_DESC_CNT	BIT(10)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_DIS_DUP_DETECTION	BIT(11)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_SOFT_REORDER_EN		BIT(12)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_AC			BIT(13)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_BAR			BIT(14)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_RETRY			BIT(15)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_CHECK_2K_MODE		BIT(16)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_OOR_MODE			BIT(17)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_BA_WINDOW_SIZE		BIT(18)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_CHECK			BIT(19)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_EVEN_PN			BIT(20)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_UNEVEN_PN		BIT(21)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_HANDLE_ENABLE		BIT(22)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_SIZE			BIT(23)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_IGNORE_AMPDU_FLG		BIT(24)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_SVLD			BIT(25)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_SSN			BIT(26)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_SEQ_2K_ERR		BIT(27)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_ERR			BIT(28)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_VALID			BIT(29)
-#define HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN			BIT(30)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_QUEUE_ADDR_HI		GENMASK(7, 0)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_RX_QUEUE_NUM		BIT(8)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_VLD			BIT(9)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_ASSOC_LNK_DESC_CNT	BIT(10)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_DIS_DUP_DETECTION	BIT(11)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_SOFT_REORDER_EN		BIT(12)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_AC			BIT(13)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_BAR			BIT(14)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_RETRY			BIT(15)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_CHECK_2K_MODE		BIT(16)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_OOR_MODE			BIT(17)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_BA_WINDOW_SIZE		BIT(18)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_CHECK			BIT(19)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_EVEN_PN			BIT(20)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_UNEVEN_PN		BIT(21)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_HANDLE_ENABLE		BIT(22)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_SIZE			BIT(23)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_IGNORE_AMPDU_FLG		BIT(24)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_SVLD			BIT(25)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_SSN			BIT(26)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_SEQ_2K_ERR		BIT(27)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_ERR			BIT(28)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN_VALID			BIT(29)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO0_UPD_PN			BIT(30)
 
-#define HAL_REO_UPD_RX_QUEUE_INFO1_RX_QUEUE_NUMBER		GENMASK(15, 0)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_VLD				BIT(16)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_ASSOC_LNK_DESC_COUNTER	GENMASK(18, 17)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_DIS_DUP_DETECTION		BIT(19)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_SOFT_REORDER_EN		BIT(20)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_AC				GENMASK(22, 21)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_BAR				BIT(23)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_RETRY			BIT(24)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_CHECK_2K_MODE		BIT(25)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_OOR_MODE			BIT(26)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_PN_CHECK			BIT(27)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_EVEN_PN			BIT(28)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_UNEVEN_PN			BIT(29)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_PN_HANDLE_ENABLE		BIT(30)
-#define HAL_REO_UPD_RX_QUEUE_INFO1_IGNORE_AMPDU_FLG		BIT(31)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_RX_QUEUE_NUMBER		GENMASK(15, 0)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_VLD				BIT(16)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_ASSOC_LNK_DESC_COUNTER	GENMASK(18, 17)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_DIS_DUP_DETECTION		BIT(19)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_SOFT_REORDER_EN		BIT(20)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_AC				GENMASK(22, 21)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_BAR				BIT(23)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_RETRY			BIT(24)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_CHECK_2K_MODE		BIT(25)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_OOR_MODE			BIT(26)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_PN_CHECK			BIT(27)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_EVEN_PN			BIT(28)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_UNEVEN_PN			BIT(29)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_PN_HANDLE_ENABLE		BIT(30)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO1_IGNORE_AMPDU_FLG		BIT(31)
 
-#define HAL_REO_UPD_RX_QUEUE_INFO2_BA_WINDOW_SIZE		GENMASK(7, 0)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_PN_SIZE			GENMASK(9, 8)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_SVLD				BIT(10)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_SSN				GENMASK(22, 11)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_SEQ_2K_ERR			BIT(23)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_PN_ERR			BIT(24)
-#define HAL_REO_UPD_RX_QUEUE_INFO2_PN_VALID			BIT(25)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO2_BA_WINDOW_SIZE		GENMASK(7, 0)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO2_PN_SIZE			GENMASK(9, 8)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO2_SVLD				BIT(10)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO2_SSN				GENMASK(22, 11)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO2_SEQ_2K_ERR			BIT(23)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO2_PN_ERR			BIT(24)
+#घोषणा HAL_REO_UPD_RX_QUEUE_INFO2_PN_VALID			BIT(25)
 
-struct hal_reo_update_rx_queue {
-	struct hal_reo_cmd_hdr cmd;
+काष्ठा hal_reo_update_rx_queue अणु
+	काष्ठा hal_reo_cmd_hdr cmd;
 	u32 queue_addr_lo;
 	u32 info0;
 	u32 info1;
 	u32 info2;
 	u32 pn[4];
-} __packed;
+पूर्ण __packed;
 
-#define HAL_REO_UNBLOCK_CACHE_INFO0_UNBLK_CACHE		BIT(0)
-#define HAL_REO_UNBLOCK_CACHE_INFO0_RESOURCE_IDX	GENMASK(2, 1)
+#घोषणा HAL_REO_UNBLOCK_CACHE_INFO0_UNBLK_CACHE		BIT(0)
+#घोषणा HAL_REO_UNBLOCK_CACHE_INFO0_RESOURCE_IDX	GENMASK(2, 1)
 
-struct hal_reo_unblock_cache {
-	struct hal_reo_cmd_hdr cmd;
+काष्ठा hal_reo_unblock_cache अणु
+	काष्ठा hal_reo_cmd_hdr cmd;
 	u32 info0;
 	u32 rsvd[7];
-} __packed;
+पूर्ण __packed;
 
-enum hal_reo_exec_status {
+क्रमागत hal_reo_exec_status अणु
 	HAL_REO_EXEC_STATUS_SUCCESS,
 	HAL_REO_EXEC_STATUS_BLOCKED,
 	HAL_REO_EXEC_STATUS_FAILED,
 	HAL_REO_EXEC_STATUS_RESOURCE_BLOCKED,
-};
+पूर्ण;
 
-#define HAL_REO_STATUS_HDR_INFO0_STATUS_NUM	GENMASK(15, 0)
-#define HAL_REO_STATUS_HDR_INFO0_EXEC_TIME	GENMASK(25, 16)
-#define HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS	GENMASK(27, 26)
+#घोषणा HAL_REO_STATUS_HDR_INFO0_STATUS_NUM	GENMASK(15, 0)
+#घोषणा HAL_REO_STATUS_HDR_INFO0_EXEC_TIME	GENMASK(25, 16)
+#घोषणा HAL_REO_STATUS_HDR_INFO0_EXEC_STATUS	GENMASK(27, 26)
 
-struct hal_reo_status_hdr {
+काष्ठा hal_reo_status_hdr अणु
 	u32 info0;
-	u32 timestamp;
-} __packed;
+	u32 बारtamp;
+पूर्ण __packed;
 
 /* hal_reo_status_hdr
  *		Producer: REO
@@ -2136,41 +2137,41 @@ struct hal_reo_status_hdr {
  *		number. This field helps to correlate the statuses with the REO
  *		commands.
  *
- * execution_time (in us)
- *		The amount of time REO took to excecute the command. Note that
- *		this time does not include the duration of the command waiting
- *		in the command ring, before the execution started.
+ * execution_समय (in us)
+ *		The amount of समय REO took to excecute the command. Note that
+ *		this समय करोes not include the duration of the command रुकोing
+ *		in the command ring, beक्रमe the execution started.
  *
  * execution_status
  *		Execution status of the command. Values are defined in
- *		enum %HAL_REO_EXEC_STATUS_.
+ *		क्रमागत %HAL_REO_EXEC_STATUS_.
  */
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO0_SSN		GENMASK(11, 0)
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO0_CUR_IDX		GENMASK(19, 12)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO0_SSN		GENMASK(11, 0)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO0_CUR_IDX		GENMASK(19, 12)
 
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO1_MPDU_COUNT		GENMASK(6, 0)
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO1_MSDU_COUNT		GENMASK(31, 7)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO1_MPDU_COUNT		GENMASK(6, 0)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO1_MSDU_COUNT		GENMASK(31, 7)
 
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO2_TIMEOUT_COUNT	GENMASK(9, 4)
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO2_FDTB_COUNT		GENMASK(15, 10)
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO2_DUPLICATE_COUNT	GENMASK(31, 16)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO2_TIMEOUT_COUNT	GENMASK(9, 4)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO2_FDTB_COUNT		GENMASK(15, 10)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO2_DUPLICATE_COUNT	GENMASK(31, 16)
 
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO3_FIO_COUNT		GENMASK(23, 0)
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO3_BAR_RCVD_CNT	GENMASK(31, 24)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO3_FIO_COUNT		GENMASK(23, 0)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO3_BAR_RCVD_CNT	GENMASK(31, 24)
 
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_LATE_RX_MPDU	GENMASK(11, 0)
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_WINDOW_JMP2K	GENMASK(15, 12)
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_HOLE_COUNT		GENMASK(31, 16)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_LATE_RX_MPDU	GENMASK(11, 0)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_WINDOW_JMP2K	GENMASK(15, 12)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO4_HOLE_COUNT		GENMASK(31, 16)
 
-#define HAL_REO_GET_QUEUE_STATS_STATUS_INFO5_LOOPING_CNT	GENMASK(31, 28)
+#घोषणा HAL_REO_GET_QUEUE_STATS_STATUS_INFO5_LOOPING_CNT	GENMASK(31, 28)
 
-struct hal_reo_get_queue_stats_status {
-	struct hal_reo_status_hdr hdr;
+काष्ठा hal_reo_get_queue_stats_status अणु
+	काष्ठा hal_reo_status_hdr hdr;
 	u32 info0;
 	u32 pn[4];
-	u32 last_rx_enqueue_timestamp;
-	u32 last_rx_dequeue_timestamp;
-	u32 rx_bitmap[8];
+	u32 last_rx_enqueue_बारtamp;
+	u32 last_rx_dequeue_बारtamp;
+	u32 rx_biपंचांगap[8];
 	u32 info1;
 	u32 info2;
 	u32 info3;
@@ -2179,7 +2180,7 @@ struct hal_reo_get_queue_stats_status {
 	u32 total_bytes;
 	u32 info4;
 	u32 info5;
-} __packed;
+पूर्ण __packed;
 
 /* hal_reo_get_queue_stats_status
  *		Producer: REO
@@ -2187,84 +2188,84 @@ struct hal_reo_get_queue_stats_status {
  *
  * status_hdr
  *		Details that can link this status with the original command. It
- *		also contains info on how long REO took to execute this command.
+ *		also contains info on how दीर्घ REO took to execute this command.
  *
  * ssn
  *		Starting Sequence number of the session, this changes whenever
- *		window moves (can be filled by SW then maintained by REO).
+ *		winकरोw moves (can be filled by SW then मुख्यtained by REO).
  *
  * current_index
- *		Points to last forwarded packet.
+ *		Poपूर्णांकs to last क्रमwarded packet.
  *
  * pn
  *		Bits of the PN number.
  *
- * last_rx_enqueue_timestamp
- * last_rx_dequeue_timestamp
- *		Timestamp of arrival of the last MPDU for this queue and
- *		Timestamp of forwarding an MPDU accordingly.
+ * last_rx_enqueue_बारtamp
+ * last_rx_dequeue_बारtamp
+ *		Timestamp of arrival of the last MPDU क्रम this queue and
+ *		Timestamp of क्रमwarding an MPDU accordingly.
  *
- * rx_bitmap
+ * rx_biपंचांगap
  *		When a bit is set, the corresponding frame is currently held
- *		in the re-order queue. The bitmap  is Fully managed by HW.
+ *		in the re-order queue. The biपंचांगap  is Fully managed by HW.
  *
  * current_mpdu_count
  * current_msdu_count
  *		The number of MPDUs and MSDUs in the queue.
  *
- * timeout_count
- *		The number of times REO started forwarding frames even though
- *		there is a hole in the bitmap. Forwarding reason is timeout.
+ * समयout_count
+ *		The number of बार REO started क्रमwarding frames even though
+ *		there is a hole in the biपंचांगap. Forwarding reason is समयout.
  *
- * forward_due_to_bar_count
- *		The number of times REO started forwarding frames even though
- *		there is a hole in the bitmap. Fwd reason is reception of BAR.
+ * क्रमward_due_to_bar_count
+ *		The number of बार REO started क्रमwarding frames even though
+ *		there is a hole in the biपंचांगap. Fwd reason is reception of BAR.
  *
  * duplicate_count
  *		The number of duplicate frames that have been detected.
  *
  * frames_in_order_count
  *		The number of frames that have been received in order (without
- *		a hole that prevented them from being forwarded immediately).
+ *		a hole that prevented them from being क्रमwarded immediately).
  *
  * bar_received_count
- *		The number of times a BAR frame is received.
+ *		The number of बार a BAR frame is received.
  *
  * mpdu_frames_processed_count
  * msdu_frames_processed_count
  *		The total number of MPDU/MSDU frames that have been processed.
  *
  * total_bytes
- *		An approximation of the number of bytes received for this queue.
+ *		An approximation of the number of bytes received क्रम this queue.
  *
  * late_receive_mpdu_count
- *		The number of MPDUs received after the window had already moved
- *		on. The 'late' sequence window is defined as
- *		(Window SSN - 256) - (Window SSN - 1).
+ *		The number of MPDUs received after the winकरोw had alपढ़ोy moved
+ *		on. The 'late' sequence winकरोw is defined as
+ *		(Winकरोw SSN - 256) - (Winकरोw SSN - 1).
  *
- * window_jump_2k
- *		The number of times the window moved more than 2K
+ * winकरोw_jump_2k
+ *		The number of बार the winकरोw moved more than 2K
  *
  * hole_count
- *		The number of times a hole was created in the receive bitmap.
+ *		The number of बार a hole was created in the receive biपंचांगap.
  *
  * looping_count
- *		A count value that indicates the number of times the producer of
- *		entries into this Ring has looped around the ring.
+ *		A count value that indicates the number of बार the producer of
+ *		entries पूर्णांकo this Ring has looped around the ring.
  */
 
-#define HAL_REO_STATUS_LOOP_CNT			GENMASK(31, 28)
+#घोषणा HAL_REO_STATUS_LOOP_CNT			GENMASK(31, 28)
 
-#define HAL_REO_FLUSH_QUEUE_INFO0_ERR_DETECTED	BIT(0)
-#define HAL_REO_FLUSH_QUEUE_INFO0_RSVD		GENMASK(31, 1)
-#define HAL_REO_FLUSH_QUEUE_INFO1_RSVD		GENMASK(27, 0)
+#घोषणा HAL_REO_FLUSH_QUEUE_INFO0_ERR_DETECTED	BIT(0)
+#घोषणा HAL_REO_FLUSH_QUEUE_INFO0_RSVD		GENMASK(31, 1)
+#घोषणा HAL_REO_FLUSH_QUEUE_INFO1_RSVD		GENMASK(27, 0)
 
-struct hal_reo_flush_queue_status {
-	struct hal_reo_status_hdr hdr;
+काष्ठा hal_reo_flush_queue_status अणु
+	काष्ठा hal_reo_status_hdr hdr;
 	u32 info0;
 	u32 rsvd0[21];
 	u32 info1;
-} __packed;
+पूर्ण __packed;
 
 /* hal_reo_flush_queue_status
  *		Producer: REO
@@ -2272,34 +2273,34 @@ struct hal_reo_flush_queue_status {
  *
  * status_hdr
  *		Details that can link this status with the original command. It
- *		also contains info on how long REO took to execute this command.
+ *		also contains info on how दीर्घ REO took to execute this command.
  *
  * error_detected
  *		Status of blocking resource
  *
- *		0 - No error has been detected while executing this command
- *		1 - Error detected. The resource to be used for blocking was
- *		    already in use.
+ *		0 - No error has been detected जबतक executing this command
+ *		1 - Error detected. The resource to be used क्रम blocking was
+ *		    alपढ़ोy in use.
  *
  * looping_count
- *		A count value that indicates the number of times the producer of
- *		entries into this Ring has looped around the ring.
+ *		A count value that indicates the number of बार the producer of
+ *		entries पूर्णांकo this Ring has looped around the ring.
  */
 
-#define HAL_REO_FLUSH_CACHE_STATUS_INFO0_IS_ERR			BIT(0)
-#define HAL_REO_FLUSH_CACHE_STATUS_INFO0_BLOCK_ERR_CODE		GENMASK(2, 1)
-#define HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_STATUS_HIT	BIT(8)
-#define HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_DESC_TYPE	GENMASK(11, 9)
-#define HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_CLIENT_ID	GENMASK(15, 12)
-#define HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_ERR		GENMASK(17, 16)
-#define HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_COUNT		GENMASK(25, 18)
+#घोषणा HAL_REO_FLUSH_CACHE_STATUS_INFO0_IS_ERR			BIT(0)
+#घोषणा HAL_REO_FLUSH_CACHE_STATUS_INFO0_BLOCK_ERR_CODE		GENMASK(2, 1)
+#घोषणा HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_STATUS_HIT	BIT(8)
+#घोषणा HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_DESC_TYPE	GENMASK(11, 9)
+#घोषणा HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_CLIENT_ID	GENMASK(15, 12)
+#घोषणा HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_ERR		GENMASK(17, 16)
+#घोषणा HAL_REO_FLUSH_CACHE_STATUS_INFO0_FLUSH_COUNT		GENMASK(25, 18)
 
-struct hal_reo_flush_cache_status {
-	struct hal_reo_status_hdr hdr;
+काष्ठा hal_reo_flush_cache_status अणु
+	काष्ठा hal_reo_status_hdr hdr;
 	u32 info0;
 	u32 rsvd0[21];
 	u32 info1;
-} __packed;
+पूर्ण __packed;
 
 /* hal_reo_flush_cache_status
  *		Producer: REO
@@ -2307,23 +2308,23 @@ struct hal_reo_flush_cache_status {
  *
  * status_hdr
  *		Details that can link this status with the original command. It
- *		also contains info on how long REO took to execute this command.
+ *		also contains info on how दीर्घ REO took to execute this command.
  *
  * error_detected
- *		Status for blocking resource handling
+ *		Status क्रम blocking resource handling
  *
- *		0 - No error has been detected while executing this command
+ *		0 - No error has been detected जबतक executing this command
  *		1 - An error in the blocking resource management was detected
  *
  * block_error_details
  *		only valid when error_detected is set
  *
  *		0 - No blocking related errors found
- *		1 - Blocking resource is already in use
+ *		1 - Blocking resource is alपढ़ोy in use
  *		2 - Resource requested to be unblocked, was not blocked
  *
  * cache_controller_flush_status_hit
- *		The status that the cache controller returned on executing the
+ *		The status that the cache controller वापसed on executing the
  *		flush command.
  *
  *		0 - miss; 1 - hit
@@ -2340,28 +2341,28 @@ struct hal_reo_flush_cache_status {
  *		Error condition
  *
  *		0 - No error found
- *		1 - HW interface is still busy
- *		2 - Line currently locked. Used for one line flush command
+ *		1 - HW पूर्णांकerface is still busy
+ *		2 - Line currently locked. Used क्रम one line flush command
  *		3 - At least one line is still locked.
- *		    Used for cache flush command.
+ *		    Used क्रम cache flush command.
  *
  * cache_controller_flush_count
  *		The number of lines that were actually flushed out
  *
  * looping_count
- *		A count value that indicates the number of times the producer of
- *		entries into this Ring has looped around the ring.
+ *		A count value that indicates the number of बार the producer of
+ *		entries पूर्णांकo this Ring has looped around the ring.
  */
 
-#define HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_IS_ERR	BIT(0)
-#define HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_TYPE		BIT(1)
+#घोषणा HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_IS_ERR	BIT(0)
+#घोषणा HAL_REO_UNBLOCK_CACHE_STATUS_INFO0_TYPE		BIT(1)
 
-struct hal_reo_unblock_cache_status {
-	struct hal_reo_status_hdr hdr;
+काष्ठा hal_reo_unblock_cache_status अणु
+	काष्ठा hal_reo_status_hdr hdr;
 	u32 info0;
 	u32 rsvd0[21];
 	u32 info1;
-} __packed;
+पूर्ण __packed;
 
 /* hal_reo_unblock_cache_status
  *		Producer: REO
@@ -2369,11 +2370,11 @@ struct hal_reo_unblock_cache_status {
  *
  * status_hdr
  *		Details that can link this status with the original command. It
- *		also contains info on how long REO took to execute this command.
+ *		also contains info on how दीर्घ REO took to execute this command.
  *
  * error_detected
- *		0 - No error has been detected while executing this command
- *		1 - The blocking resource was not in use, and therefore it could
+ *		0 - No error has been detected जबतक executing this command
+ *		1 - The blocking resource was not in use, and thereक्रमe it could
  *		    not be unblocked.
  *
  * unblock_type
@@ -2382,61 +2383,61 @@ struct hal_reo_unblock_cache_status {
  *		1 - The entire cache usage is unblock
  *
  * looping_count
- *		A count value that indicates the number of times the producer of
- *		entries into this Ring has looped around the ring.
+ *		A count value that indicates the number of बार the producer of
+ *		entries पूर्णांकo this Ring has looped around the ring.
  */
 
-#define HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_IS_ERR		BIT(0)
-#define HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_LIST_EMPTY		BIT(1)
+#घोषणा HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_IS_ERR		BIT(0)
+#घोषणा HAL_REO_FLUSH_TIMEOUT_STATUS_INFO0_LIST_EMPTY		BIT(1)
 
-#define HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_REL_DESC_COUNT	GENMASK(15, 0)
-#define HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_FWD_BUF_COUNT	GENMASK(31, 16)
+#घोषणा HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_REL_DESC_COUNT	GENMASK(15, 0)
+#घोषणा HAL_REO_FLUSH_TIMEOUT_STATUS_INFO1_FWD_BUF_COUNT	GENMASK(31, 16)
 
-struct hal_reo_flush_timeout_list_status {
-	struct hal_reo_status_hdr hdr;
+काष्ठा hal_reo_flush_समयout_list_status अणु
+	काष्ठा hal_reo_status_hdr hdr;
 	u32 info0;
 	u32 info1;
 	u32 rsvd0[20];
 	u32 info2;
-} __packed;
+पूर्ण __packed;
 
-/* hal_reo_flush_timeout_list_status
+/* hal_reo_flush_समयout_list_status
  *		Producer: REO
  *		Consumer: SW
  *
  * status_hdr
  *		Details that can link this status with the original command. It
- *		also contains info on how long REO took to execute this command.
+ *		also contains info on how दीर्घ REO took to execute this command.
  *
  * error_detected
- *		0 - No error has been detected while executing this command
- *		1 - Command not properly executed and returned with error
+ *		0 - No error has been detected जबतक executing this command
+ *		1 - Command not properly executed and वापसed with error
  *
- * timeout_list_empty
- *		When set, REO has depleted the timeout list and all entries are
+ * समयout_list_empty
+ *		When set, REO has depleted the समयout list and all entries are
  *		gone.
  *
  * release_desc_count
  *		Producer: SW; Consumer: REO
  *		The number of link descriptor released
  *
- * forward_buf_count
+ * क्रमward_buf_count
  *		Producer: SW; Consumer: REO
- *		The number of buffers forwarded to the REO destination rings
+ *		The number of buffers क्रमwarded to the REO destination rings
  *
  * looping_count
- *		A count value that indicates the number of times the producer of
- *		entries into this Ring has looped around the ring.
+ *		A count value that indicates the number of बार the producer of
+ *		entries पूर्णांकo this Ring has looped around the ring.
  */
 
-#define HAL_REO_DESC_THRESH_STATUS_INFO0_THRESH_INDEX		GENMASK(1, 0)
-#define HAL_REO_DESC_THRESH_STATUS_INFO1_LINK_DESC_COUNTER0	GENMASK(23, 0)
-#define HAL_REO_DESC_THRESH_STATUS_INFO2_LINK_DESC_COUNTER1	GENMASK(23, 0)
-#define HAL_REO_DESC_THRESH_STATUS_INFO3_LINK_DESC_COUNTER2	GENMASK(23, 0)
-#define HAL_REO_DESC_THRESH_STATUS_INFO4_LINK_DESC_COUNTER_SUM	GENMASK(25, 0)
+#घोषणा HAL_REO_DESC_THRESH_STATUS_INFO0_THRESH_INDEX		GENMASK(1, 0)
+#घोषणा HAL_REO_DESC_THRESH_STATUS_INFO1_LINK_DESC_COUNTER0	GENMASK(23, 0)
+#घोषणा HAL_REO_DESC_THRESH_STATUS_INFO2_LINK_DESC_COUNTER1	GENMASK(23, 0)
+#घोषणा HAL_REO_DESC_THRESH_STATUS_INFO3_LINK_DESC_COUNTER2	GENMASK(23, 0)
+#घोषणा HAL_REO_DESC_THRESH_STATUS_INFO4_LINK_DESC_COUNTER_SUM	GENMASK(25, 0)
 
-struct hal_reo_desc_thresh_reached_status {
-	struct hal_reo_status_hdr hdr;
+काष्ठा hal_reo_desc_thresh_reached_status अणु
+	काष्ठा hal_reo_status_hdr hdr;
 	u32 info0;
 	u32 info1;
 	u32 info2;
@@ -2444,7 +2445,7 @@ struct hal_reo_desc_thresh_reached_status {
 	u32 info4;
 	u32 rsvd0[17];
 	u32 info5;
-} __packed;
+पूर्ण __packed;
 
 /* hal_reo_desc_thresh_reached_status
  *		Producer: REO
@@ -2452,10 +2453,10 @@ struct hal_reo_desc_thresh_reached_status {
  *
  * status_hdr
  *		Details that can link this status with the original command. It
- *		also contains info on how long REO took to execute this command.
+ *		also contains info on how दीर्घ REO took to execute this command.
  *
  * threshold_index
- *		The index of the threshold register whose value got reached
+ *		The index of the threshold रेजिस्टर whose value got reached
  *
  * link_descriptor_counter0
  * link_descriptor_counter1
@@ -2464,8 +2465,8 @@ struct hal_reo_desc_thresh_reached_status {
  *		Value of the respective counters at generation of this message
  *
  * looping_count
- *		A count value that indicates the number of times the producer of
- *		entries into this Ring has looped around the ring.
+ *		A count value that indicates the number of बार the producer of
+ *		entries पूर्णांकo this Ring has looped around the ring.
  */
 
-#endif /* ATH11K_HAL_DESC_H */
+#पूर्ण_अगर /* ATH11K_HAL_DESC_H */

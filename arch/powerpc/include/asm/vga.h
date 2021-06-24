@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_VGA_H_
-#define _ASM_POWERPC_VGA_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_VGA_H_
+#घोषणा _ASM_POWERPC_VGA_H_
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
 /*
  *	Access to VGA videoram
@@ -11,50 +12,50 @@
  */
 
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
 
-#if defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_MDA_CONSOLE)
+#अगर defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_MDA_CONSOLE)
 
-#define VT_BUF_HAVE_RW
+#घोषणा VT_BUF_HAVE_RW
 /*
- *  These are only needed for supporting VGA or MDA text mode, which use little
+ *  These are only needed क्रम supporting VGA or MDA text mode, which use little
  *  endian byte ordering.
- *  In other cases, we can optimize by using native byte ordering and
- *  <linux/vt_buffer.h> has already done the right job for us.
+ *  In other हालs, we can optimize by using native byte ordering and
+ *  <linux/vt_buffer.h> has alपढ़ोy करोne the right job क्रम us.
  */
 
-static inline void scr_writew(u16 val, volatile u16 *addr)
-{
+अटल अंतरभूत व्योम scr_ग_लिखोw(u16 val, अस्थिर u16 *addr)
+अणु
 	*addr = cpu_to_le16(val);
-}
+पूर्ण
 
-static inline u16 scr_readw(volatile const u16 *addr)
-{
-	return le16_to_cpu(*addr);
-}
+अटल अंतरभूत u16 scr_पढ़ोw(अस्थिर स्थिर u16 *addr)
+अणु
+	वापस le16_to_cpu(*addr);
+पूर्ण
 
-#define VT_BUF_HAVE_MEMSETW
-static inline void scr_memsetw(u16 *s, u16 v, unsigned int n)
-{
-	memset16(s, cpu_to_le16(v), n / 2);
-}
+#घोषणा VT_BUF_HAVE_MEMSETW
+अटल अंतरभूत व्योम scr_स_रखोw(u16 *s, u16 v, अचिन्हित पूर्णांक n)
+अणु
+	स_रखो16(s, cpu_to_le16(v), n / 2);
+पूर्ण
 
-#define VT_BUF_HAVE_MEMCPYW
-#define VT_BUF_HAVE_MEMMOVEW
-#define scr_memcpyw	memcpy
-#define scr_memmovew	memmove
+#घोषणा VT_BUF_HAVE_MEMCPYW
+#घोषणा VT_BUF_HAVE_MEMMOVEW
+#घोषणा scr_स_नकलw	स_नकल
+#घोषणा scr_स_हटाओw	स_हटाओ
 
-#endif /* !CONFIG_VGA_CONSOLE && !CONFIG_MDA_CONSOLE */
+#पूर्ण_अगर /* !CONFIG_VGA_CONSOLE && !CONFIG_MDA_CONSOLE */
 
-#ifdef __powerpc64__
-#define VGA_MAP_MEM(x,s) ((unsigned long) ioremap((x), s))
-#else
-#define VGA_MAP_MEM(x,s) (x)
-#endif
+#अगर_घोषित __घातerpc64__
+#घोषणा VGA_MAP_MEM(x,s) ((अचिन्हित दीर्घ) ioremap((x), s))
+#अन्यथा
+#घोषणा VGA_MAP_MEM(x,s) (x)
+#पूर्ण_अगर
 
-#define vga_readb(x) (*(x))
-#define vga_writeb(x,y) (*(y) = (x))
+#घोषणा vga_पढ़ोb(x) (*(x))
+#घोषणा vga_ग_लिखोb(x,y) (*(y) = (x))
 
-#endif	/* __KERNEL__ */
-#endif	/* _ASM_POWERPC_VGA_H_ */
+#पूर्ण_अगर	/* __KERNEL__ */
+#पूर्ण_अगर	/* _ASM_POWERPC_VGA_H_ */

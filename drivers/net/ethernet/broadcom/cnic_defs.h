@@ -1,310 +1,311 @@
+<शैली गुरु>
 
 /* cnic.c: QLogic CNIC core network driver.
  *
  * Copyright (c) 2006-2014 Broadcom Corporation
  * Copyright (c) 2014 QLogic Corporation
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  *
  */
 
-#ifndef CNIC_DEFS_H
-#define CNIC_DEFS_H
+#अगर_अघोषित CNIC_DEFS_H
+#घोषणा CNIC_DEFS_H
 
 /* KWQ (kernel work queue) request op codes */
-#define L2_KWQE_OPCODE_VALUE_FLUSH                  (4)
-#define L2_KWQE_OPCODE_VALUE_VM_FREE_RX_QUEUE       (8)
+#घोषणा L2_KWQE_OPCODE_VALUE_FLUSH                  (4)
+#घोषणा L2_KWQE_OPCODE_VALUE_VM_FREE_RX_QUEUE       (8)
 
-#define L4_KWQE_OPCODE_VALUE_CONNECT1               (50)
-#define L4_KWQE_OPCODE_VALUE_CONNECT2               (51)
-#define L4_KWQE_OPCODE_VALUE_CONNECT3               (52)
-#define L4_KWQE_OPCODE_VALUE_RESET                  (53)
-#define L4_KWQE_OPCODE_VALUE_CLOSE                  (54)
-#define L4_KWQE_OPCODE_VALUE_UPDATE_SECRET          (60)
-#define L4_KWQE_OPCODE_VALUE_INIT_ULP               (61)
+#घोषणा L4_KWQE_OPCODE_VALUE_CONNECT1               (50)
+#घोषणा L4_KWQE_OPCODE_VALUE_CONNECT2               (51)
+#घोषणा L4_KWQE_OPCODE_VALUE_CONNECT3               (52)
+#घोषणा L4_KWQE_OPCODE_VALUE_RESET                  (53)
+#घोषणा L4_KWQE_OPCODE_VALUE_CLOSE                  (54)
+#घोषणा L4_KWQE_OPCODE_VALUE_UPDATE_SECRET          (60)
+#घोषणा L4_KWQE_OPCODE_VALUE_INIT_ULP               (61)
 
-#define L4_KWQE_OPCODE_VALUE_OFFLOAD_PG             (1)
-#define L4_KWQE_OPCODE_VALUE_UPDATE_PG              (9)
-#define L4_KWQE_OPCODE_VALUE_UPLOAD_PG              (14)
+#घोषणा L4_KWQE_OPCODE_VALUE_OFFLOAD_PG             (1)
+#घोषणा L4_KWQE_OPCODE_VALUE_UPDATE_PG              (9)
+#घोषणा L4_KWQE_OPCODE_VALUE_UPLOAD_PG              (14)
 
-#define L5CM_RAMROD_CMD_ID_BASE			(0x80)
-#define L5CM_RAMROD_CMD_ID_TCP_CONNECT		(L5CM_RAMROD_CMD_ID_BASE + 3)
-#define L5CM_RAMROD_CMD_ID_CLOSE		(L5CM_RAMROD_CMD_ID_BASE + 12)
-#define L5CM_RAMROD_CMD_ID_ABORT		(L5CM_RAMROD_CMD_ID_BASE + 13)
-#define L5CM_RAMROD_CMD_ID_SEARCHER_DELETE	(L5CM_RAMROD_CMD_ID_BASE + 14)
-#define L5CM_RAMROD_CMD_ID_TERMINATE_OFFLOAD	(L5CM_RAMROD_CMD_ID_BASE + 15)
+#घोषणा L5CM_RAMROD_CMD_ID_BASE			(0x80)
+#घोषणा L5CM_RAMROD_CMD_ID_TCP_CONNECT		(L5CM_RAMROD_CMD_ID_BASE + 3)
+#घोषणा L5CM_RAMROD_CMD_ID_CLOSE		(L5CM_RAMROD_CMD_ID_BASE + 12)
+#घोषणा L5CM_RAMROD_CMD_ID_ABORT		(L5CM_RAMROD_CMD_ID_BASE + 13)
+#घोषणा L5CM_RAMROD_CMD_ID_SEARCHER_DELETE	(L5CM_RAMROD_CMD_ID_BASE + 14)
+#घोषणा L5CM_RAMROD_CMD_ID_TERMINATE_OFFLOAD	(L5CM_RAMROD_CMD_ID_BASE + 15)
 
-#define FCOE_RAMROD_CMD_ID_INIT_FUNC		(FCOE_KCQE_OPCODE_INIT_FUNC)
-#define FCOE_RAMROD_CMD_ID_DESTROY_FUNC		(FCOE_KCQE_OPCODE_DESTROY_FUNC)
-#define FCOE_RAMROD_CMD_ID_STAT_FUNC		(FCOE_KCQE_OPCODE_STAT_FUNC)
-#define FCOE_RAMROD_CMD_ID_OFFLOAD_CONN		(FCOE_KCQE_OPCODE_OFFLOAD_CONN)
-#define FCOE_RAMROD_CMD_ID_ENABLE_CONN		(FCOE_KCQE_OPCODE_ENABLE_CONN)
-#define FCOE_RAMROD_CMD_ID_DISABLE_CONN		(FCOE_KCQE_OPCODE_DISABLE_CONN)
-#define FCOE_RAMROD_CMD_ID_DESTROY_CONN		(FCOE_KCQE_OPCODE_DESTROY_CONN)
-#define FCOE_RAMROD_CMD_ID_TERMINATE_CONN	(0x81)
+#घोषणा FCOE_RAMROD_CMD_ID_INIT_FUNC		(FCOE_KCQE_OPCODE_INIT_FUNC)
+#घोषणा FCOE_RAMROD_CMD_ID_DESTROY_FUNC		(FCOE_KCQE_OPCODE_DESTROY_FUNC)
+#घोषणा FCOE_RAMROD_CMD_ID_STAT_FUNC		(FCOE_KCQE_OPCODE_STAT_FUNC)
+#घोषणा FCOE_RAMROD_CMD_ID_OFFLOAD_CONN		(FCOE_KCQE_OPCODE_OFFLOAD_CONN)
+#घोषणा FCOE_RAMROD_CMD_ID_ENABLE_CONN		(FCOE_KCQE_OPCODE_ENABLE_CONN)
+#घोषणा FCOE_RAMROD_CMD_ID_DISABLE_CONN		(FCOE_KCQE_OPCODE_DISABLE_CONN)
+#घोषणा FCOE_RAMROD_CMD_ID_DESTROY_CONN		(FCOE_KCQE_OPCODE_DESTROY_CONN)
+#घोषणा FCOE_RAMROD_CMD_ID_TERMINATE_CONN	(0x81)
 
 /* KCQ (kernel completion queue) response op codes */
-#define L4_KCQE_OPCODE_VALUE_CLOSE_COMP             (53)
-#define L4_KCQE_OPCODE_VALUE_RESET_COMP             (54)
-#define L4_KCQE_OPCODE_VALUE_FW_TCP_UPDATE          (55)
-#define L4_KCQE_OPCODE_VALUE_CONNECT_COMPLETE       (56)
-#define L4_KCQE_OPCODE_VALUE_RESET_RECEIVED         (57)
-#define L4_KCQE_OPCODE_VALUE_CLOSE_RECEIVED         (58)
-#define L4_KCQE_OPCODE_VALUE_INIT_ULP               (61)
+#घोषणा L4_KCQE_OPCODE_VALUE_CLOSE_COMP             (53)
+#घोषणा L4_KCQE_OPCODE_VALUE_RESET_COMP             (54)
+#घोषणा L4_KCQE_OPCODE_VALUE_FW_TCP_UPDATE          (55)
+#घोषणा L4_KCQE_OPCODE_VALUE_CONNECT_COMPLETE       (56)
+#घोषणा L4_KCQE_OPCODE_VALUE_RESET_RECEIVED         (57)
+#घोषणा L4_KCQE_OPCODE_VALUE_CLOSE_RECEIVED         (58)
+#घोषणा L4_KCQE_OPCODE_VALUE_INIT_ULP               (61)
 
-#define L4_KCQE_OPCODE_VALUE_OFFLOAD_PG             (1)
-#define L4_KCQE_OPCODE_VALUE_UPDATE_PG              (9)
-#define L4_KCQE_OPCODE_VALUE_UPLOAD_PG              (14)
+#घोषणा L4_KCQE_OPCODE_VALUE_OFFLOAD_PG             (1)
+#घोषणा L4_KCQE_OPCODE_VALUE_UPDATE_PG              (9)
+#घोषणा L4_KCQE_OPCODE_VALUE_UPLOAD_PG              (14)
 
 /* KCQ (kernel completion queue) completion status */
-#define L4_KCQE_COMPLETION_STATUS_SUCCESS           (0)
-#define L4_KCQE_COMPLETION_STATUS_NIC_ERROR         (4)
-#define L4_KCQE_COMPLETION_STATUS_PARITY_ERROR	    (0x81)
-#define L4_KCQE_COMPLETION_STATUS_TIMEOUT           (0x93)
+#घोषणा L4_KCQE_COMPLETION_STATUS_SUCCESS           (0)
+#घोषणा L4_KCQE_COMPLETION_STATUS_NIC_ERROR         (4)
+#घोषणा L4_KCQE_COMPLETION_STATUS_PARITY_ERROR	    (0x81)
+#घोषणा L4_KCQE_COMPLETION_STATUS_TIMEOUT           (0x93)
 
-#define L4_KCQE_COMPLETION_STATUS_CTX_ALLOC_FAIL    (0x83)
-#define L4_KCQE_COMPLETION_STATUS_OFFLOADED_PG      (0x89)
+#घोषणा L4_KCQE_COMPLETION_STATUS_CTX_ALLOC_FAIL    (0x83)
+#घोषणा L4_KCQE_COMPLETION_STATUS_OFFLOADED_PG      (0x89)
 
-#define L4_KCQE_OPCODE_VALUE_OOO_EVENT_NOTIFICATION (0xa0)
-#define L4_KCQE_OPCODE_VALUE_OOO_FLUSH              (0xa1)
+#घोषणा L4_KCQE_OPCODE_VALUE_OOO_EVENT_NOTIFICATION (0xa0)
+#घोषणा L4_KCQE_OPCODE_VALUE_OOO_FLUSH              (0xa1)
 
-#define L4_LAYER_CODE (4)
-#define L2_LAYER_CODE (2)
+#घोषणा L4_LAYER_CODE (4)
+#घोषणा L2_LAYER_CODE (2)
 
 /*
  * L4 KCQ CQE
  */
-struct l4_kcq {
+काष्ठा l4_kcq अणु
 	u32 cid;
 	u32 pg_cid;
 	u32 conn_id;
 	u32 pg_host_opaque;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 status;
 	u16 reserved1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 reserved1;
 	u16 status;
-#endif
+#पूर्ण_अगर
 	u32 reserved2[2];
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KCQ_RESERVED3 (0x7<<0)
-#define L4_KCQ_RESERVED3_SHIFT 0
-#define L4_KCQ_RAMROD_COMPLETION (0x1<<3) /* Everest only */
-#define L4_KCQ_RAMROD_COMPLETION_SHIFT 3
-#define L4_KCQ_LAYER_CODE (0x7<<4)
-#define L4_KCQ_LAYER_CODE_SHIFT 4
-#define L4_KCQ_RESERVED4 (0x1<<7)
-#define L4_KCQ_RESERVED4_SHIFT 7
+#घोषणा L4_KCQ_RESERVED3 (0x7<<0)
+#घोषणा L4_KCQ_RESERVED3_SHIFT 0
+#घोषणा L4_KCQ_RAMROD_COMPLETION (0x1<<3) /* Everest only */
+#घोषणा L4_KCQ_RAMROD_COMPLETION_SHIFT 3
+#घोषणा L4_KCQ_LAYER_CODE (0x7<<4)
+#घोषणा L4_KCQ_LAYER_CODE_SHIFT 4
+#घोषणा L4_KCQ_RESERVED4 (0x1<<7)
+#घोषणा L4_KCQ_RESERVED4_SHIFT 7
 	u8 op_code;
 	u16 qe_self_seq;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 qe_self_seq;
 	u8 op_code;
 	u8 flags;
-#define L4_KCQ_RESERVED3 (0xF<<0)
-#define L4_KCQ_RESERVED3_SHIFT 0
-#define L4_KCQ_RAMROD_COMPLETION (0x1<<3) /* Everest only */
-#define L4_KCQ_RAMROD_COMPLETION_SHIFT 3
-#define L4_KCQ_LAYER_CODE (0x7<<4)
-#define L4_KCQ_LAYER_CODE_SHIFT 4
-#define L4_KCQ_RESERVED4 (0x1<<7)
-#define L4_KCQ_RESERVED4_SHIFT 7
-#endif
-};
+#घोषणा L4_KCQ_RESERVED3 (0xF<<0)
+#घोषणा L4_KCQ_RESERVED3_SHIFT 0
+#घोषणा L4_KCQ_RAMROD_COMPLETION (0x1<<3) /* Everest only */
+#घोषणा L4_KCQ_RAMROD_COMPLETION_SHIFT 3
+#घोषणा L4_KCQ_LAYER_CODE (0x7<<4)
+#घोषणा L4_KCQ_LAYER_CODE_SHIFT 4
+#घोषणा L4_KCQ_RESERVED4 (0x1<<7)
+#घोषणा L4_KCQ_RESERVED4_SHIFT 7
+#पूर्ण_अगर
+पूर्ण;
 
 
 /*
  * L4 KCQ CQE PG upload
  */
-struct l4_kcq_upload_pg {
+काष्ठा l4_kcq_upload_pg अणु
 	u32 pg_cid;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 pg_status;
 	u16 pg_ipid_count;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 pg_ipid_count;
 	u16 pg_status;
-#endif
+#पूर्ण_अगर
 	u32 reserved1[5];
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KCQ_UPLOAD_PG_RESERVED3 (0xF<<0)
-#define L4_KCQ_UPLOAD_PG_RESERVED3_SHIFT 0
-#define L4_KCQ_UPLOAD_PG_LAYER_CODE (0x7<<4)
-#define L4_KCQ_UPLOAD_PG_LAYER_CODE_SHIFT 4
-#define L4_KCQ_UPLOAD_PG_RESERVED4 (0x1<<7)
-#define L4_KCQ_UPLOAD_PG_RESERVED4_SHIFT 7
+#घोषणा L4_KCQ_UPLOAD_PG_RESERVED3 (0xF<<0)
+#घोषणा L4_KCQ_UPLOAD_PG_RESERVED3_SHIFT 0
+#घोषणा L4_KCQ_UPLOAD_PG_LAYER_CODE (0x7<<4)
+#घोषणा L4_KCQ_UPLOAD_PG_LAYER_CODE_SHIFT 4
+#घोषणा L4_KCQ_UPLOAD_PG_RESERVED4 (0x1<<7)
+#घोषणा L4_KCQ_UPLOAD_PG_RESERVED4_SHIFT 7
 	u8 op_code;
 	u16 qe_self_seq;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 qe_self_seq;
 	u8 op_code;
 	u8 flags;
-#define L4_KCQ_UPLOAD_PG_RESERVED3 (0xF<<0)
-#define L4_KCQ_UPLOAD_PG_RESERVED3_SHIFT 0
-#define L4_KCQ_UPLOAD_PG_LAYER_CODE (0x7<<4)
-#define L4_KCQ_UPLOAD_PG_LAYER_CODE_SHIFT 4
-#define L4_KCQ_UPLOAD_PG_RESERVED4 (0x1<<7)
-#define L4_KCQ_UPLOAD_PG_RESERVED4_SHIFT 7
-#endif
-};
+#घोषणा L4_KCQ_UPLOAD_PG_RESERVED3 (0xF<<0)
+#घोषणा L4_KCQ_UPLOAD_PG_RESERVED3_SHIFT 0
+#घोषणा L4_KCQ_UPLOAD_PG_LAYER_CODE (0x7<<4)
+#घोषणा L4_KCQ_UPLOAD_PG_LAYER_CODE_SHIFT 4
+#घोषणा L4_KCQ_UPLOAD_PG_RESERVED4 (0x1<<7)
+#घोषणा L4_KCQ_UPLOAD_PG_RESERVED4_SHIFT 7
+#पूर्ण_अगर
+पूर्ण;
 
 
 /*
- * Gracefully close the connection request
+ * Gracefully बंद the connection request
  */
-struct l4_kwq_close_req {
-#if defined(__BIG_ENDIAN)
+काष्ठा l4_kwq_बंद_req अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KWQ_CLOSE_REQ_RESERVED1 (0xF<<0)
-#define L4_KWQ_CLOSE_REQ_RESERVED1_SHIFT 0
-#define L4_KWQ_CLOSE_REQ_LAYER_CODE (0x7<<4)
-#define L4_KWQ_CLOSE_REQ_LAYER_CODE_SHIFT 4
-#define L4_KWQ_CLOSE_REQ_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_CLOSE_REQ_LINKED_WITH_NEXT_SHIFT 7
+#घोषणा L4_KWQ_CLOSE_REQ_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_CLOSE_REQ_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_CLOSE_REQ_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_CLOSE_REQ_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_CLOSE_REQ_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_CLOSE_REQ_LINKED_WITH_NEXT_SHIFT 7
 	u8 op_code;
 	u16 reserved0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 reserved0;
 	u8 op_code;
 	u8 flags;
-#define L4_KWQ_CLOSE_REQ_RESERVED1 (0xF<<0)
-#define L4_KWQ_CLOSE_REQ_RESERVED1_SHIFT 0
-#define L4_KWQ_CLOSE_REQ_LAYER_CODE (0x7<<4)
-#define L4_KWQ_CLOSE_REQ_LAYER_CODE_SHIFT 4
-#define L4_KWQ_CLOSE_REQ_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_CLOSE_REQ_LINKED_WITH_NEXT_SHIFT 7
-#endif
+#घोषणा L4_KWQ_CLOSE_REQ_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_CLOSE_REQ_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_CLOSE_REQ_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_CLOSE_REQ_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_CLOSE_REQ_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_CLOSE_REQ_LINKED_WITH_NEXT_SHIFT 7
+#पूर्ण_अगर
 	u32 cid;
 	u32 reserved2[6];
-};
+पूर्ण;
 
 
 /*
  * The first request to be passed in order to establish connection in option2
  */
-struct l4_kwq_connect_req1 {
-#if defined(__BIG_ENDIAN)
+काष्ठा l4_kwq_connect_req1 अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KWQ_CONNECT_REQ1_RESERVED1 (0xF<<0)
-#define L4_KWQ_CONNECT_REQ1_RESERVED1_SHIFT 0
-#define L4_KWQ_CONNECT_REQ1_LAYER_CODE (0x7<<4)
-#define L4_KWQ_CONNECT_REQ1_LAYER_CODE_SHIFT 4
-#define L4_KWQ_CONNECT_REQ1_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_CONNECT_REQ1_LINKED_WITH_NEXT_SHIFT 7
+#घोषणा L4_KWQ_CONNECT_REQ1_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_CONNECT_REQ1_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ1_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_CONNECT_REQ1_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_CONNECT_REQ1_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_CONNECT_REQ1_LINKED_WITH_NEXT_SHIFT 7
 	u8 op_code;
 	u8 reserved0;
 	u8 conn_flags;
-#define L4_KWQ_CONNECT_REQ1_IS_PG_HOST_OPAQUE (0x1<<0)
-#define L4_KWQ_CONNECT_REQ1_IS_PG_HOST_OPAQUE_SHIFT 0
-#define L4_KWQ_CONNECT_REQ1_IP_V6 (0x1<<1)
-#define L4_KWQ_CONNECT_REQ1_IP_V6_SHIFT 1
-#define L4_KWQ_CONNECT_REQ1_PASSIVE_FLAG (0x1<<2)
-#define L4_KWQ_CONNECT_REQ1_PASSIVE_FLAG_SHIFT 2
-#define L4_KWQ_CONNECT_REQ1_RSRV (0x1F<<3)
-#define L4_KWQ_CONNECT_REQ1_RSRV_SHIFT 3
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा L4_KWQ_CONNECT_REQ1_IS_PG_HOST_OPAQUE (0x1<<0)
+#घोषणा L4_KWQ_CONNECT_REQ1_IS_PG_HOST_OPAQUE_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ1_IP_V6 (0x1<<1)
+#घोषणा L4_KWQ_CONNECT_REQ1_IP_V6_SHIFT 1
+#घोषणा L4_KWQ_CONNECT_REQ1_PASSIVE_FLAG (0x1<<2)
+#घोषणा L4_KWQ_CONNECT_REQ1_PASSIVE_FLAG_SHIFT 2
+#घोषणा L4_KWQ_CONNECT_REQ1_RSRV (0x1F<<3)
+#घोषणा L4_KWQ_CONNECT_REQ1_RSRV_SHIFT 3
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 conn_flags;
-#define L4_KWQ_CONNECT_REQ1_IS_PG_HOST_OPAQUE (0x1<<0)
-#define L4_KWQ_CONNECT_REQ1_IS_PG_HOST_OPAQUE_SHIFT 0
-#define L4_KWQ_CONNECT_REQ1_IP_V6 (0x1<<1)
-#define L4_KWQ_CONNECT_REQ1_IP_V6_SHIFT 1
-#define L4_KWQ_CONNECT_REQ1_PASSIVE_FLAG (0x1<<2)
-#define L4_KWQ_CONNECT_REQ1_PASSIVE_FLAG_SHIFT 2
-#define L4_KWQ_CONNECT_REQ1_RSRV (0x1F<<3)
-#define L4_KWQ_CONNECT_REQ1_RSRV_SHIFT 3
+#घोषणा L4_KWQ_CONNECT_REQ1_IS_PG_HOST_OPAQUE (0x1<<0)
+#घोषणा L4_KWQ_CONNECT_REQ1_IS_PG_HOST_OPAQUE_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ1_IP_V6 (0x1<<1)
+#घोषणा L4_KWQ_CONNECT_REQ1_IP_V6_SHIFT 1
+#घोषणा L4_KWQ_CONNECT_REQ1_PASSIVE_FLAG (0x1<<2)
+#घोषणा L4_KWQ_CONNECT_REQ1_PASSIVE_FLAG_SHIFT 2
+#घोषणा L4_KWQ_CONNECT_REQ1_RSRV (0x1F<<3)
+#घोषणा L4_KWQ_CONNECT_REQ1_RSRV_SHIFT 3
 	u8 reserved0;
 	u8 op_code;
 	u8 flags;
-#define L4_KWQ_CONNECT_REQ1_RESERVED1 (0xF<<0)
-#define L4_KWQ_CONNECT_REQ1_RESERVED1_SHIFT 0
-#define L4_KWQ_CONNECT_REQ1_LAYER_CODE (0x7<<4)
-#define L4_KWQ_CONNECT_REQ1_LAYER_CODE_SHIFT 4
-#define L4_KWQ_CONNECT_REQ1_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_CONNECT_REQ1_LINKED_WITH_NEXT_SHIFT 7
-#endif
+#घोषणा L4_KWQ_CONNECT_REQ1_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_CONNECT_REQ1_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ1_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_CONNECT_REQ1_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_CONNECT_REQ1_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_CONNECT_REQ1_LINKED_WITH_NEXT_SHIFT 7
+#पूर्ण_अगर
 	u32 cid;
 	u32 pg_cid;
 	u32 src_ip;
 	u32 dst_ip;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 dst_port;
 	u16 src_port;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 src_port;
 	u16 dst_port;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 rsrv1[3];
 	u8 tcp_flags;
-#define L4_KWQ_CONNECT_REQ1_NO_DELAY_ACK (0x1<<0)
-#define L4_KWQ_CONNECT_REQ1_NO_DELAY_ACK_SHIFT 0
-#define L4_KWQ_CONNECT_REQ1_KEEP_ALIVE (0x1<<1)
-#define L4_KWQ_CONNECT_REQ1_KEEP_ALIVE_SHIFT 1
-#define L4_KWQ_CONNECT_REQ1_NAGLE_ENABLE (0x1<<2)
-#define L4_KWQ_CONNECT_REQ1_NAGLE_ENABLE_SHIFT 2
-#define L4_KWQ_CONNECT_REQ1_TIME_STAMP (0x1<<3)
-#define L4_KWQ_CONNECT_REQ1_TIME_STAMP_SHIFT 3
-#define L4_KWQ_CONNECT_REQ1_SACK (0x1<<4)
-#define L4_KWQ_CONNECT_REQ1_SACK_SHIFT 4
-#define L4_KWQ_CONNECT_REQ1_SEG_SCALING (0x1<<5)
-#define L4_KWQ_CONNECT_REQ1_SEG_SCALING_SHIFT 5
-#define L4_KWQ_CONNECT_REQ1_RESERVED2 (0x3<<6)
-#define L4_KWQ_CONNECT_REQ1_RESERVED2_SHIFT 6
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा L4_KWQ_CONNECT_REQ1_NO_DELAY_ACK (0x1<<0)
+#घोषणा L4_KWQ_CONNECT_REQ1_NO_DELAY_ACK_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ1_KEEP_ALIVE (0x1<<1)
+#घोषणा L4_KWQ_CONNECT_REQ1_KEEP_ALIVE_SHIFT 1
+#घोषणा L4_KWQ_CONNECT_REQ1_NAGLE_ENABLE (0x1<<2)
+#घोषणा L4_KWQ_CONNECT_REQ1_NAGLE_ENABLE_SHIFT 2
+#घोषणा L4_KWQ_CONNECT_REQ1_TIME_STAMP (0x1<<3)
+#घोषणा L4_KWQ_CONNECT_REQ1_TIME_STAMP_SHIFT 3
+#घोषणा L4_KWQ_CONNECT_REQ1_SACK (0x1<<4)
+#घोषणा L4_KWQ_CONNECT_REQ1_SACK_SHIFT 4
+#घोषणा L4_KWQ_CONNECT_REQ1_SEG_SCALING (0x1<<5)
+#घोषणा L4_KWQ_CONNECT_REQ1_SEG_SCALING_SHIFT 5
+#घोषणा L4_KWQ_CONNECT_REQ1_RESERVED2 (0x3<<6)
+#घोषणा L4_KWQ_CONNECT_REQ1_RESERVED2_SHIFT 6
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 tcp_flags;
-#define L4_KWQ_CONNECT_REQ1_NO_DELAY_ACK (0x1<<0)
-#define L4_KWQ_CONNECT_REQ1_NO_DELAY_ACK_SHIFT 0
-#define L4_KWQ_CONNECT_REQ1_KEEP_ALIVE (0x1<<1)
-#define L4_KWQ_CONNECT_REQ1_KEEP_ALIVE_SHIFT 1
-#define L4_KWQ_CONNECT_REQ1_NAGLE_ENABLE (0x1<<2)
-#define L4_KWQ_CONNECT_REQ1_NAGLE_ENABLE_SHIFT 2
-#define L4_KWQ_CONNECT_REQ1_TIME_STAMP (0x1<<3)
-#define L4_KWQ_CONNECT_REQ1_TIME_STAMP_SHIFT 3
-#define L4_KWQ_CONNECT_REQ1_SACK (0x1<<4)
-#define L4_KWQ_CONNECT_REQ1_SACK_SHIFT 4
-#define L4_KWQ_CONNECT_REQ1_SEG_SCALING (0x1<<5)
-#define L4_KWQ_CONNECT_REQ1_SEG_SCALING_SHIFT 5
-#define L4_KWQ_CONNECT_REQ1_RESERVED2 (0x3<<6)
-#define L4_KWQ_CONNECT_REQ1_RESERVED2_SHIFT 6
+#घोषणा L4_KWQ_CONNECT_REQ1_NO_DELAY_ACK (0x1<<0)
+#घोषणा L4_KWQ_CONNECT_REQ1_NO_DELAY_ACK_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ1_KEEP_ALIVE (0x1<<1)
+#घोषणा L4_KWQ_CONNECT_REQ1_KEEP_ALIVE_SHIFT 1
+#घोषणा L4_KWQ_CONNECT_REQ1_NAGLE_ENABLE (0x1<<2)
+#घोषणा L4_KWQ_CONNECT_REQ1_NAGLE_ENABLE_SHIFT 2
+#घोषणा L4_KWQ_CONNECT_REQ1_TIME_STAMP (0x1<<3)
+#घोषणा L4_KWQ_CONNECT_REQ1_TIME_STAMP_SHIFT 3
+#घोषणा L4_KWQ_CONNECT_REQ1_SACK (0x1<<4)
+#घोषणा L4_KWQ_CONNECT_REQ1_SACK_SHIFT 4
+#घोषणा L4_KWQ_CONNECT_REQ1_SEG_SCALING (0x1<<5)
+#घोषणा L4_KWQ_CONNECT_REQ1_SEG_SCALING_SHIFT 5
+#घोषणा L4_KWQ_CONNECT_REQ1_RESERVED2 (0x3<<6)
+#घोषणा L4_KWQ_CONNECT_REQ1_RESERVED2_SHIFT 6
 	u8 rsrv1[3];
-#endif
+#पूर्ण_अगर
 	u32 rsrv2;
-};
+पूर्ण;
 
 
 /*
  * The second ( optional )request to be passed in order to establish
- * connection in option2 - for IPv6 only
+ * connection in option2 - क्रम IPv6 only
  */
-struct l4_kwq_connect_req2 {
-#if defined(__BIG_ENDIAN)
+काष्ठा l4_kwq_connect_req2 अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KWQ_CONNECT_REQ2_RESERVED1 (0xF<<0)
-#define L4_KWQ_CONNECT_REQ2_RESERVED1_SHIFT 0
-#define L4_KWQ_CONNECT_REQ2_LAYER_CODE (0x7<<4)
-#define L4_KWQ_CONNECT_REQ2_LAYER_CODE_SHIFT 4
-#define L4_KWQ_CONNECT_REQ2_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_CONNECT_REQ2_LINKED_WITH_NEXT_SHIFT 7
+#घोषणा L4_KWQ_CONNECT_REQ2_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_CONNECT_REQ2_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ2_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_CONNECT_REQ2_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_CONNECT_REQ2_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_CONNECT_REQ2_LINKED_WITH_NEXT_SHIFT 7
 	u8 op_code;
 	u8 reserved0;
 	u8 rsrv;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 rsrv;
 	u8 reserved0;
 	u8 op_code;
 	u8 flags;
-#define L4_KWQ_CONNECT_REQ2_RESERVED1 (0xF<<0)
-#define L4_KWQ_CONNECT_REQ2_RESERVED1_SHIFT 0
-#define L4_KWQ_CONNECT_REQ2_LAYER_CODE (0x7<<4)
-#define L4_KWQ_CONNECT_REQ2_LAYER_CODE_SHIFT 4
-#define L4_KWQ_CONNECT_REQ2_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_CONNECT_REQ2_LINKED_WITH_NEXT_SHIFT 7
-#endif
+#घोषणा L4_KWQ_CONNECT_REQ2_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_CONNECT_REQ2_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ2_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_CONNECT_REQ2_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_CONNECT_REQ2_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_CONNECT_REQ2_LINKED_WITH_NEXT_SHIFT 7
+#पूर्ण_अगर
 	u32 reserved2;
 	u32 src_ip_v6_2;
 	u32 src_ip_v6_3;
@@ -312,2165 +313,2165 @@ struct l4_kwq_connect_req2 {
 	u32 dst_ip_v6_2;
 	u32 dst_ip_v6_3;
 	u32 dst_ip_v6_4;
-};
+पूर्ण;
 
 
 /*
  * The third ( and last )request to be passed in order to establish
  * connection in option2
  */
-struct l4_kwq_connect_req3 {
-#if defined(__BIG_ENDIAN)
+काष्ठा l4_kwq_connect_req3 अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KWQ_CONNECT_REQ3_RESERVED1 (0xF<<0)
-#define L4_KWQ_CONNECT_REQ3_RESERVED1_SHIFT 0
-#define L4_KWQ_CONNECT_REQ3_LAYER_CODE (0x7<<4)
-#define L4_KWQ_CONNECT_REQ3_LAYER_CODE_SHIFT 4
-#define L4_KWQ_CONNECT_REQ3_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_CONNECT_REQ3_LINKED_WITH_NEXT_SHIFT 7
+#घोषणा L4_KWQ_CONNECT_REQ3_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_CONNECT_REQ3_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ3_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_CONNECT_REQ3_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_CONNECT_REQ3_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_CONNECT_REQ3_LINKED_WITH_NEXT_SHIFT 7
 	u8 op_code;
 	u16 reserved0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 reserved0;
 	u8 op_code;
 	u8 flags;
-#define L4_KWQ_CONNECT_REQ3_RESERVED1 (0xF<<0)
-#define L4_KWQ_CONNECT_REQ3_RESERVED1_SHIFT 0
-#define L4_KWQ_CONNECT_REQ3_LAYER_CODE (0x7<<4)
-#define L4_KWQ_CONNECT_REQ3_LAYER_CODE_SHIFT 4
-#define L4_KWQ_CONNECT_REQ3_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_CONNECT_REQ3_LINKED_WITH_NEXT_SHIFT 7
-#endif
-	u32 ka_timeout;
-	u32 ka_interval ;
-#if defined(__BIG_ENDIAN)
+#घोषणा L4_KWQ_CONNECT_REQ3_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_CONNECT_REQ3_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_CONNECT_REQ3_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_CONNECT_REQ3_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_CONNECT_REQ3_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_CONNECT_REQ3_LINKED_WITH_NEXT_SHIFT 7
+#पूर्ण_अगर
+	u32 ka_समयout;
+	u32 ka_पूर्णांकerval ;
+#अगर defined(__BIG_ENDIAN)
 	u8 snd_seq_scale;
 	u8 ttl;
 	u8 tos;
 	u8 ka_max_probe_count;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 ka_max_probe_count;
 	u8 tos;
 	u8 ttl;
 	u8 snd_seq_scale;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 pmtu;
 	u16 mss;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 mss;
 	u16 pmtu;
-#endif
+#पूर्ण_अगर
 	u32 rcv_buf;
 	u32 snd_buf;
 	u32 seed;
-};
+पूर्ण;
 
 
 /*
  * a KWQE request to offload a PG connection
  */
-struct l4_kwq_offload_pg {
-#if defined(__BIG_ENDIAN)
+काष्ठा l4_kwq_offload_pg अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KWQ_OFFLOAD_PG_RESERVED1 (0xF<<0)
-#define L4_KWQ_OFFLOAD_PG_RESERVED1_SHIFT 0
-#define L4_KWQ_OFFLOAD_PG_LAYER_CODE (0x7<<4)
-#define L4_KWQ_OFFLOAD_PG_LAYER_CODE_SHIFT 4
-#define L4_KWQ_OFFLOAD_PG_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_OFFLOAD_PG_LINKED_WITH_NEXT_SHIFT 7
+#घोषणा L4_KWQ_OFFLOAD_PG_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_OFFLOAD_PG_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_OFFLOAD_PG_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_OFFLOAD_PG_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_OFFLOAD_PG_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_OFFLOAD_PG_LINKED_WITH_NEXT_SHIFT 7
 	u8 op_code;
 	u16 reserved0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 reserved0;
 	u8 op_code;
 	u8 flags;
-#define L4_KWQ_OFFLOAD_PG_RESERVED1 (0xF<<0)
-#define L4_KWQ_OFFLOAD_PG_RESERVED1_SHIFT 0
-#define L4_KWQ_OFFLOAD_PG_LAYER_CODE (0x7<<4)
-#define L4_KWQ_OFFLOAD_PG_LAYER_CODE_SHIFT 4
-#define L4_KWQ_OFFLOAD_PG_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_OFFLOAD_PG_LINKED_WITH_NEXT_SHIFT 7
-#endif
-#if defined(__BIG_ENDIAN)
+#घोषणा L4_KWQ_OFFLOAD_PG_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_OFFLOAD_PG_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_OFFLOAD_PG_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_OFFLOAD_PG_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_OFFLOAD_PG_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_OFFLOAD_PG_LINKED_WITH_NEXT_SHIFT 7
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 l2hdr_nbytes;
 	u8 pg_flags;
-#define L4_KWQ_OFFLOAD_PG_SNAP_ENCAP (0x1<<0)
-#define L4_KWQ_OFFLOAD_PG_SNAP_ENCAP_SHIFT 0
-#define L4_KWQ_OFFLOAD_PG_VLAN_TAGGING (0x1<<1)
-#define L4_KWQ_OFFLOAD_PG_VLAN_TAGGING_SHIFT 1
-#define L4_KWQ_OFFLOAD_PG_RESERVED2 (0x3F<<2)
-#define L4_KWQ_OFFLOAD_PG_RESERVED2_SHIFT 2
+#घोषणा L4_KWQ_OFFLOAD_PG_SNAP_ENCAP (0x1<<0)
+#घोषणा L4_KWQ_OFFLOAD_PG_SNAP_ENCAP_SHIFT 0
+#घोषणा L4_KWQ_OFFLOAD_PG_VLAN_TAGGING (0x1<<1)
+#घोषणा L4_KWQ_OFFLOAD_PG_VLAN_TAGGING_SHIFT 1
+#घोषणा L4_KWQ_OFFLOAD_PG_RESERVED2 (0x3F<<2)
+#घोषणा L4_KWQ_OFFLOAD_PG_RESERVED2_SHIFT 2
 	u8 da0;
 	u8 da1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 da1;
 	u8 da0;
 	u8 pg_flags;
-#define L4_KWQ_OFFLOAD_PG_SNAP_ENCAP (0x1<<0)
-#define L4_KWQ_OFFLOAD_PG_SNAP_ENCAP_SHIFT 0
-#define L4_KWQ_OFFLOAD_PG_VLAN_TAGGING (0x1<<1)
-#define L4_KWQ_OFFLOAD_PG_VLAN_TAGGING_SHIFT 1
-#define L4_KWQ_OFFLOAD_PG_RESERVED2 (0x3F<<2)
-#define L4_KWQ_OFFLOAD_PG_RESERVED2_SHIFT 2
+#घोषणा L4_KWQ_OFFLOAD_PG_SNAP_ENCAP (0x1<<0)
+#घोषणा L4_KWQ_OFFLOAD_PG_SNAP_ENCAP_SHIFT 0
+#घोषणा L4_KWQ_OFFLOAD_PG_VLAN_TAGGING (0x1<<1)
+#घोषणा L4_KWQ_OFFLOAD_PG_VLAN_TAGGING_SHIFT 1
+#घोषणा L4_KWQ_OFFLOAD_PG_RESERVED2 (0x3F<<2)
+#घोषणा L4_KWQ_OFFLOAD_PG_RESERVED2_SHIFT 2
 	u8 l2hdr_nbytes;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 da2;
 	u8 da3;
 	u8 da4;
 	u8 da5;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 da5;
 	u8 da4;
 	u8 da3;
 	u8 da2;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 sa0;
 	u8 sa1;
 	u8 sa2;
 	u8 sa3;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 sa3;
 	u8 sa2;
 	u8 sa1;
 	u8 sa0;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 sa4;
 	u8 sa5;
 	u16 etype;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 etype;
 	u8 sa5;
 	u8 sa4;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 vlan_tag;
 	u16 ipid_start;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 ipid_start;
 	u16 vlan_tag;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 ipid_count;
 	u16 reserved3;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 reserved3;
 	u16 ipid_count;
-#endif
+#पूर्ण_अगर
 	u32 host_opaque;
-};
+पूर्ण;
 
 
 /*
- * Abortively close the connection request
+ * Abortively बंद the connection request
  */
-struct l4_kwq_reset_req {
-#if defined(__BIG_ENDIAN)
+काष्ठा l4_kwq_reset_req अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KWQ_RESET_REQ_RESERVED1 (0xF<<0)
-#define L4_KWQ_RESET_REQ_RESERVED1_SHIFT 0
-#define L4_KWQ_RESET_REQ_LAYER_CODE (0x7<<4)
-#define L4_KWQ_RESET_REQ_LAYER_CODE_SHIFT 4
-#define L4_KWQ_RESET_REQ_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_RESET_REQ_LINKED_WITH_NEXT_SHIFT 7
+#घोषणा L4_KWQ_RESET_REQ_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_RESET_REQ_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_RESET_REQ_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_RESET_REQ_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_RESET_REQ_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_RESET_REQ_LINKED_WITH_NEXT_SHIFT 7
 	u8 op_code;
 	u16 reserved0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 reserved0;
 	u8 op_code;
 	u8 flags;
-#define L4_KWQ_RESET_REQ_RESERVED1 (0xF<<0)
-#define L4_KWQ_RESET_REQ_RESERVED1_SHIFT 0
-#define L4_KWQ_RESET_REQ_LAYER_CODE (0x7<<4)
-#define L4_KWQ_RESET_REQ_LAYER_CODE_SHIFT 4
-#define L4_KWQ_RESET_REQ_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_RESET_REQ_LINKED_WITH_NEXT_SHIFT 7
-#endif
+#घोषणा L4_KWQ_RESET_REQ_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_RESET_REQ_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_RESET_REQ_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_RESET_REQ_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_RESET_REQ_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_RESET_REQ_LINKED_WITH_NEXT_SHIFT 7
+#पूर्ण_अगर
 	u32 cid;
 	u32 reserved2[6];
-};
+पूर्ण;
 
 
 /*
  * a KWQE request to update a PG connection
  */
-struct l4_kwq_update_pg {
-#if defined(__BIG_ENDIAN)
+काष्ठा l4_kwq_update_pg अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KWQ_UPDATE_PG_RESERVED1 (0xF<<0)
-#define L4_KWQ_UPDATE_PG_RESERVED1_SHIFT 0
-#define L4_KWQ_UPDATE_PG_LAYER_CODE (0x7<<4)
-#define L4_KWQ_UPDATE_PG_LAYER_CODE_SHIFT 4
-#define L4_KWQ_UPDATE_PG_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_UPDATE_PG_LINKED_WITH_NEXT_SHIFT 7
+#घोषणा L4_KWQ_UPDATE_PG_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_UPDATE_PG_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_UPDATE_PG_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_UPDATE_PG_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_UPDATE_PG_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_UPDATE_PG_LINKED_WITH_NEXT_SHIFT 7
 	u8 opcode;
 	u16 oper16;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 oper16;
 	u8 opcode;
 	u8 flags;
-#define L4_KWQ_UPDATE_PG_RESERVED1 (0xF<<0)
-#define L4_KWQ_UPDATE_PG_RESERVED1_SHIFT 0
-#define L4_KWQ_UPDATE_PG_LAYER_CODE (0x7<<4)
-#define L4_KWQ_UPDATE_PG_LAYER_CODE_SHIFT 4
-#define L4_KWQ_UPDATE_PG_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_UPDATE_PG_LINKED_WITH_NEXT_SHIFT 7
-#endif
+#घोषणा L4_KWQ_UPDATE_PG_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_UPDATE_PG_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_UPDATE_PG_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_UPDATE_PG_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_UPDATE_PG_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_UPDATE_PG_LINKED_WITH_NEXT_SHIFT 7
+#पूर्ण_अगर
 	u32 pg_cid;
 	u32 pg_host_opaque;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 pg_valids;
-#define L4_KWQ_UPDATE_PG_VALIDS_IPID_COUNT (0x1<<0)
-#define L4_KWQ_UPDATE_PG_VALIDS_IPID_COUNT_SHIFT 0
-#define L4_KWQ_UPDATE_PG_VALIDS_DA (0x1<<1)
-#define L4_KWQ_UPDATE_PG_VALIDS_DA_SHIFT 1
-#define L4_KWQ_UPDATE_PG_RESERVERD2 (0x3F<<2)
-#define L4_KWQ_UPDATE_PG_RESERVERD2_SHIFT 2
+#घोषणा L4_KWQ_UPDATE_PG_VALIDS_IPID_COUNT (0x1<<0)
+#घोषणा L4_KWQ_UPDATE_PG_VALIDS_IPID_COUNT_SHIFT 0
+#घोषणा L4_KWQ_UPDATE_PG_VALIDS_DA (0x1<<1)
+#घोषणा L4_KWQ_UPDATE_PG_VALIDS_DA_SHIFT 1
+#घोषणा L4_KWQ_UPDATE_PG_RESERVERD2 (0x3F<<2)
+#घोषणा L4_KWQ_UPDATE_PG_RESERVERD2_SHIFT 2
 	u8 pg_unused_a;
 	u16 pg_ipid_count;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 pg_ipid_count;
 	u8 pg_unused_a;
 	u8 pg_valids;
-#define L4_KWQ_UPDATE_PG_VALIDS_IPID_COUNT (0x1<<0)
-#define L4_KWQ_UPDATE_PG_VALIDS_IPID_COUNT_SHIFT 0
-#define L4_KWQ_UPDATE_PG_VALIDS_DA (0x1<<1)
-#define L4_KWQ_UPDATE_PG_VALIDS_DA_SHIFT 1
-#define L4_KWQ_UPDATE_PG_RESERVERD2 (0x3F<<2)
-#define L4_KWQ_UPDATE_PG_RESERVERD2_SHIFT 2
-#endif
-#if defined(__BIG_ENDIAN)
+#घोषणा L4_KWQ_UPDATE_PG_VALIDS_IPID_COUNT (0x1<<0)
+#घोषणा L4_KWQ_UPDATE_PG_VALIDS_IPID_COUNT_SHIFT 0
+#घोषणा L4_KWQ_UPDATE_PG_VALIDS_DA (0x1<<1)
+#घोषणा L4_KWQ_UPDATE_PG_VALIDS_DA_SHIFT 1
+#घोषणा L4_KWQ_UPDATE_PG_RESERVERD2 (0x3F<<2)
+#घोषणा L4_KWQ_UPDATE_PG_RESERVERD2_SHIFT 2
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 reserved3;
 	u8 da0;
 	u8 da1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 da1;
 	u8 da0;
 	u16 reserved3;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 da2;
 	u8 da3;
 	u8 da4;
 	u8 da5;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 da5;
 	u8 da4;
 	u8 da3;
 	u8 da2;
-#endif
+#पूर्ण_अगर
 	u32 reserved4;
 	u32 reserved5;
-};
+पूर्ण;
 
 
 /*
  * a KWQE request to upload a PG or L4 context
  */
-struct l4_kwq_upload {
-#if defined(__BIG_ENDIAN)
+काष्ठा l4_kwq_upload अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 flags;
-#define L4_KWQ_UPLOAD_RESERVED1 (0xF<<0)
-#define L4_KWQ_UPLOAD_RESERVED1_SHIFT 0
-#define L4_KWQ_UPLOAD_LAYER_CODE (0x7<<4)
-#define L4_KWQ_UPLOAD_LAYER_CODE_SHIFT 4
-#define L4_KWQ_UPLOAD_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_UPLOAD_LINKED_WITH_NEXT_SHIFT 7
+#घोषणा L4_KWQ_UPLOAD_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_UPLOAD_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_UPLOAD_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_UPLOAD_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_UPLOAD_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_UPLOAD_LINKED_WITH_NEXT_SHIFT 7
 	u8 opcode;
 	u16 oper16;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 oper16;
 	u8 opcode;
 	u8 flags;
-#define L4_KWQ_UPLOAD_RESERVED1 (0xF<<0)
-#define L4_KWQ_UPLOAD_RESERVED1_SHIFT 0
-#define L4_KWQ_UPLOAD_LAYER_CODE (0x7<<4)
-#define L4_KWQ_UPLOAD_LAYER_CODE_SHIFT 4
-#define L4_KWQ_UPLOAD_LINKED_WITH_NEXT (0x1<<7)
-#define L4_KWQ_UPLOAD_LINKED_WITH_NEXT_SHIFT 7
-#endif
+#घोषणा L4_KWQ_UPLOAD_RESERVED1 (0xF<<0)
+#घोषणा L4_KWQ_UPLOAD_RESERVED1_SHIFT 0
+#घोषणा L4_KWQ_UPLOAD_LAYER_CODE (0x7<<4)
+#घोषणा L4_KWQ_UPLOAD_LAYER_CODE_SHIFT 4
+#घोषणा L4_KWQ_UPLOAD_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा L4_KWQ_UPLOAD_LINKED_WITH_NEXT_SHIFT 7
+#पूर्ण_अगर
 	u32 cid;
 	u32 reserved2[6];
-};
+पूर्ण;
 
 /*
- * bnx2x structures
+ * bnx2x काष्ठाures
  */
 
 /*
  * The iscsi aggregative context of Cstorm
  */
-struct cstorm_iscsi_ag_context {
+काष्ठा cstorm_iscsi_ag_context अणु
 	u32 agg_vars1;
-#define CSTORM_ISCSI_AG_CONTEXT_STATE (0xFF<<0)
-#define CSTORM_ISCSI_AG_CONTEXT_STATE_SHIFT 0
-#define __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<8)
-#define __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 8
-#define __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<9)
-#define __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 9
-#define __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<10)
-#define __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 10
-#define __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<11)
-#define __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 11
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED_ULP_RX_SE_CF_EN (0x1<<12)
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED_ULP_RX_SE_CF_EN_SHIFT 12
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED_ULP_RX_INV_CF_EN (0x1<<13)
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED_ULP_RX_INV_CF_EN_SHIFT 13
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX4_CF (0x3<<14)
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX4_CF_SHIFT 14
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED66 (0x3<<16)
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED66_SHIFT 16
-#define __CSTORM_ISCSI_AG_CONTEXT_FIN_RECEIVED_CF_EN (0x1<<18)
-#define __CSTORM_ISCSI_AG_CONTEXT_FIN_RECEIVED_CF_EN_SHIFT 18
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN (0x1<<19)
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN_SHIFT 19
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX2_CF_EN (0x1<<20)
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX2_CF_EN_SHIFT 20
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN (0x1<<21)
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN_SHIFT 21
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX4_CF_EN (0x1<<22)
-#define __CSTORM_ISCSI_AG_CONTEXT_AUX4_CF_EN_SHIFT 22
-#define __CSTORM_ISCSI_AG_CONTEXT_REL_SEQ_RULE (0x7<<23)
-#define __CSTORM_ISCSI_AG_CONTEXT_REL_SEQ_RULE_SHIFT 23
-#define CSTORM_ISCSI_AG_CONTEXT_HQ_PROD_RULE (0x3<<26)
-#define CSTORM_ISCSI_AG_CONTEXT_HQ_PROD_RULE_SHIFT 26
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED52 (0x3<<28)
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED52_SHIFT 28
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED53 (0x3<<30)
-#define __CSTORM_ISCSI_AG_CONTEXT_RESERVED53_SHIFT 30
-#if defined(__BIG_ENDIAN)
+#घोषणा CSTORM_ISCSI_AG_CONTEXT_STATE (0xFF<<0)
+#घोषणा CSTORM_ISCSI_AG_CONTEXT_STATE_SHIFT 0
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<8)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 8
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<9)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 9
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<10)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 10
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<11)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 11
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED_ULP_RX_SE_CF_EN (0x1<<12)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED_ULP_RX_SE_CF_EN_SHIFT 12
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED_ULP_RX_INV_CF_EN (0x1<<13)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED_ULP_RX_INV_CF_EN_SHIFT 13
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX4_CF (0x3<<14)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX4_CF_SHIFT 14
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED66 (0x3<<16)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED66_SHIFT 16
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_FIN_RECEIVED_CF_EN (0x1<<18)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_FIN_RECEIVED_CF_EN_SHIFT 18
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN (0x1<<19)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN_SHIFT 19
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX2_CF_EN (0x1<<20)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX2_CF_EN_SHIFT 20
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN (0x1<<21)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN_SHIFT 21
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX4_CF_EN (0x1<<22)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_AUX4_CF_EN_SHIFT 22
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_REL_SEQ_RULE (0x7<<23)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_REL_SEQ_RULE_SHIFT 23
+#घोषणा CSTORM_ISCSI_AG_CONTEXT_HQ_PROD_RULE (0x3<<26)
+#घोषणा CSTORM_ISCSI_AG_CONTEXT_HQ_PROD_RULE_SHIFT 26
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED52 (0x3<<28)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED52_SHIFT 28
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED53 (0x3<<30)
+#घोषणा __CSTORM_ISCSI_AG_CONTEXT_RESERVED53_SHIFT 30
+#अगर defined(__BIG_ENDIAN)
 	u8 __aux1_th;
 	u8 __aux1_val;
 	u16 __agg_vars2;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __agg_vars2;
 	u8 __aux1_val;
 	u8 __aux1_th;
-#endif
+#पूर्ण_अगर
 	u32 rel_seq;
 	u32 rel_seq_th;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 hq_cons;
 	u16 hq_prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 hq_prod;
 	u16 hq_cons;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 __reserved62;
 	u8 __reserved61;
 	u8 __reserved60;
 	u8 __reserved59;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 __reserved59;
 	u8 __reserved60;
 	u8 __reserved61;
 	u8 __reserved62;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __reserved64;
 	u16 cq_u_prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 cq_u_prod;
 	u16 __reserved64;
-#endif
+#पूर्ण_अगर
 	u32 __cq_u_prod1;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_vars3;
 	u16 cq_u_pend;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 cq_u_pend;
 	u16 __agg_vars3;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __aux2_th;
 	u16 aux2_val;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 aux2_val;
 	u16 __aux2_th;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * The fcoe extra aggregative context section of Tstorm
  */
-struct tstorm_fcoe_extra_ag_context_section {
+काष्ठा tstorm_fcoe_extra_ag_context_section अणु
 	u32 __agg_val1;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 __tcp_agg_vars2;
 	u8 __agg_val3;
 	u16 __agg_val2;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __agg_val2;
 	u8 __agg_val3;
 	u8 __tcp_agg_vars2;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_val5;
 	u8 __agg_val6;
 	u8 __tcp_agg_vars3;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 __tcp_agg_vars3;
 	u8 __agg_val6;
 	u16 __agg_val5;
-#endif
+#पूर्ण_अगर
 	u32 __lcq_prod;
 	u32 rtt_seq;
-	u32 rtt_time;
+	u32 rtt_समय;
 	u32 __reserved66;
 	u32 wnd_right_edge;
 	u32 tcp_agg_vars1;
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_FIN_SENT_FLAG (0x1<<0)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_FIN_SENT_FLAG_SHIFT 0
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_LAST_PACKET_FIN_FLAG (0x1<<1)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_LAST_PACKET_FIN_FLAG_SHIFT 1
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_WND_UPD_CF (0x3<<2)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_WND_UPD_CF_SHIFT 2
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TIMEOUT_CF (0x3<<4)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TIMEOUT_CF_SHIFT 4
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_WND_UPD_CF_EN (0x1<<6)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_WND_UPD_CF_EN_SHIFT 6
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TIMEOUT_CF_EN (0x1<<7)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TIMEOUT_CF_EN_SHIFT 7
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_SEQ_EN (0x1<<8)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_SEQ_EN_SHIFT 8
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_LCQ_SND_EN (0x1<<9)
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_LCQ_SND_EN_SHIFT 9
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<10)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 10
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_FLAG (0x1<<11)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_FLAG_SHIFT 11
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_CF_EN (0x1<<12)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_CF_EN_SHIFT 12
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_CF_EN (0x1<<13)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_CF_EN_SHIFT 13
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_CF (0x3<<14)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_CF_SHIFT 14
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_CF (0x3<<16)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_CF_SHIFT 16
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_BLOCKED (0x1<<18)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_BLOCKED_SHIFT 18
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX10_CF_EN (0x1<<19)
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX10_CF_EN_SHIFT 19
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX11_CF_EN (0x1<<20)
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX11_CF_EN_SHIFT 20
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX12_CF_EN (0x1<<21)
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX12_CF_EN_SHIFT 21
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED1 (0x3<<22)
-#define __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED1_SHIFT 22
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_PEND_SEQ (0xF<<24)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_PEND_SEQ_SHIFT 24
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_DONE_SEQ (0xF<<28)
-#define TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_DONE_SEQ_SHIFT 28
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_FIN_SENT_FLAG (0x1<<0)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_FIN_SENT_FLAG_SHIFT 0
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_LAST_PACKET_FIN_FLAG (0x1<<1)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_LAST_PACKET_FIN_FLAG_SHIFT 1
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_WND_UPD_CF (0x3<<2)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_WND_UPD_CF_SHIFT 2
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TIMEOUT_CF (0x3<<4)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TIMEOUT_CF_SHIFT 4
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_WND_UPD_CF_EN (0x1<<6)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_WND_UPD_CF_EN_SHIFT 6
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TIMEOUT_CF_EN (0x1<<7)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TIMEOUT_CF_EN_SHIFT 7
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_SEQ_EN (0x1<<8)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_SEQ_EN_SHIFT 8
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_LCQ_SND_EN (0x1<<9)
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_LCQ_SND_EN_SHIFT 9
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<10)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 10
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_FLAG (0x1<<11)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_FLAG_SHIFT 11
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_CF_EN (0x1<<12)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_CF_EN_SHIFT 12
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_CF_EN (0x1<<13)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_CF_EN_SHIFT 13
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_CF (0x3<<14)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_CF_SHIFT 14
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_CF (0x3<<16)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX2_CF_SHIFT 16
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_BLOCKED (0x1<<18)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_BLOCKED_SHIFT 18
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX10_CF_EN (0x1<<19)
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX10_CF_EN_SHIFT 19
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX11_CF_EN (0x1<<20)
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX11_CF_EN_SHIFT 20
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX12_CF_EN (0x1<<21)
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX12_CF_EN_SHIFT 21
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED1 (0x3<<22)
+#घोषणा __TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED1_SHIFT 22
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_PEND_SEQ (0xF<<24)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_PEND_SEQ_SHIFT 24
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_DONE_SEQ (0xF<<28)
+#घोषणा TSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RETRANSMIT_DONE_SEQ_SHIFT 28
 	u32 snd_max;
 	u32 __lcq_cons;
 	u32 __reserved2;
-};
+पूर्ण;
 
 /*
  * The fcoe aggregative context of Tstorm
  */
-struct tstorm_fcoe_ag_context {
-#if defined(__BIG_ENDIAN)
+काष्ठा tstorm_fcoe_ag_context अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 ulp_credit;
 	u8 agg_vars1;
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF (0x3<<4)
-#define __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_SHIFT 4
-#define __TSTORM_FCOE_AG_CONTEXT_AUX3_FLAG (0x1<<6)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX3_FLAG_SHIFT 6
-#define __TSTORM_FCOE_AG_CONTEXT_AUX4_FLAG (0x1<<7)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX4_FLAG_SHIFT 7
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF (0x3<<4)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_SHIFT 4
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX3_FLAG (0x1<<6)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX3_FLAG_SHIFT 6
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX4_FLAG (0x1<<7)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX4_FLAG_SHIFT 7
 	u8 state;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 state;
 	u8 agg_vars1;
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF (0x3<<4)
-#define __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_SHIFT 4
-#define __TSTORM_FCOE_AG_CONTEXT_AUX3_FLAG (0x1<<6)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX3_FLAG_SHIFT 6
-#define __TSTORM_FCOE_AG_CONTEXT_AUX4_FLAG (0x1<<7)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX4_FLAG_SHIFT 7
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF (0x3<<4)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_SHIFT 4
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX3_FLAG (0x1<<6)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX3_FLAG_SHIFT 6
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX4_FLAG (0x1<<7)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX4_FLAG_SHIFT 7
 	u16 ulp_credit;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_val4;
 	u16 agg_vars2;
-#define __TSTORM_FCOE_AG_CONTEXT_AUX5_FLAG (0x1<<0)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX5_FLAG_SHIFT 0
-#define __TSTORM_FCOE_AG_CONTEXT_AUX6_FLAG (0x1<<1)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX6_FLAG_SHIFT 1
-#define __TSTORM_FCOE_AG_CONTEXT_AUX4_CF (0x3<<2)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX4_CF_SHIFT 2
-#define __TSTORM_FCOE_AG_CONTEXT_AUX5_CF (0x3<<4)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX5_CF_SHIFT 4
-#define __TSTORM_FCOE_AG_CONTEXT_AUX6_CF (0x3<<6)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX6_CF_SHIFT 6
-#define __TSTORM_FCOE_AG_CONTEXT_AUX7_CF (0x3<<8)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX7_CF_SHIFT 8
-#define __TSTORM_FCOE_AG_CONTEXT_AUX7_FLAG (0x1<<10)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX7_FLAG_SHIFT 10
-#define __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_EN (0x1<<11)
-#define __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_EN_SHIFT 11
-#define TSTORM_FCOE_AG_CONTEXT_AUX4_CF_EN (0x1<<12)
-#define TSTORM_FCOE_AG_CONTEXT_AUX4_CF_EN_SHIFT 12
-#define TSTORM_FCOE_AG_CONTEXT_AUX5_CF_EN (0x1<<13)
-#define TSTORM_FCOE_AG_CONTEXT_AUX5_CF_EN_SHIFT 13
-#define TSTORM_FCOE_AG_CONTEXT_AUX6_CF_EN (0x1<<14)
-#define TSTORM_FCOE_AG_CONTEXT_AUX6_CF_EN_SHIFT 14
-#define TSTORM_FCOE_AG_CONTEXT_AUX7_CF_EN (0x1<<15)
-#define TSTORM_FCOE_AG_CONTEXT_AUX7_CF_EN_SHIFT 15
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX5_FLAG (0x1<<0)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX5_FLAG_SHIFT 0
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX6_FLAG (0x1<<1)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX6_FLAG_SHIFT 1
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX4_CF (0x3<<2)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX4_CF_SHIFT 2
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX5_CF (0x3<<4)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX5_CF_SHIFT 4
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX6_CF (0x3<<6)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX6_CF_SHIFT 6
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX7_CF (0x3<<8)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX7_CF_SHIFT 8
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX7_FLAG (0x1<<10)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX7_FLAG_SHIFT 10
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_EN (0x1<<11)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_EN_SHIFT 11
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX4_CF_EN (0x1<<12)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX4_CF_EN_SHIFT 12
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX5_CF_EN (0x1<<13)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX5_CF_EN_SHIFT 13
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX6_CF_EN (0x1<<14)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX6_CF_EN_SHIFT 14
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX7_CF_EN (0x1<<15)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX7_CF_EN_SHIFT 15
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_vars2;
-#define __TSTORM_FCOE_AG_CONTEXT_AUX5_FLAG (0x1<<0)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX5_FLAG_SHIFT 0
-#define __TSTORM_FCOE_AG_CONTEXT_AUX6_FLAG (0x1<<1)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX6_FLAG_SHIFT 1
-#define __TSTORM_FCOE_AG_CONTEXT_AUX4_CF (0x3<<2)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX4_CF_SHIFT 2
-#define __TSTORM_FCOE_AG_CONTEXT_AUX5_CF (0x3<<4)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX5_CF_SHIFT 4
-#define __TSTORM_FCOE_AG_CONTEXT_AUX6_CF (0x3<<6)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX6_CF_SHIFT 6
-#define __TSTORM_FCOE_AG_CONTEXT_AUX7_CF (0x3<<8)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX7_CF_SHIFT 8
-#define __TSTORM_FCOE_AG_CONTEXT_AUX7_FLAG (0x1<<10)
-#define __TSTORM_FCOE_AG_CONTEXT_AUX7_FLAG_SHIFT 10
-#define __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_EN (0x1<<11)
-#define __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_EN_SHIFT 11
-#define TSTORM_FCOE_AG_CONTEXT_AUX4_CF_EN (0x1<<12)
-#define TSTORM_FCOE_AG_CONTEXT_AUX4_CF_EN_SHIFT 12
-#define TSTORM_FCOE_AG_CONTEXT_AUX5_CF_EN (0x1<<13)
-#define TSTORM_FCOE_AG_CONTEXT_AUX5_CF_EN_SHIFT 13
-#define TSTORM_FCOE_AG_CONTEXT_AUX6_CF_EN (0x1<<14)
-#define TSTORM_FCOE_AG_CONTEXT_AUX6_CF_EN_SHIFT 14
-#define TSTORM_FCOE_AG_CONTEXT_AUX7_CF_EN (0x1<<15)
-#define TSTORM_FCOE_AG_CONTEXT_AUX7_CF_EN_SHIFT 15
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX5_FLAG (0x1<<0)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX5_FLAG_SHIFT 0
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX6_FLAG (0x1<<1)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX6_FLAG_SHIFT 1
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX4_CF (0x3<<2)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX4_CF_SHIFT 2
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX5_CF (0x3<<4)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX5_CF_SHIFT 4
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX6_CF (0x3<<6)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX6_CF_SHIFT 6
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX7_CF (0x3<<8)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX7_CF_SHIFT 8
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX7_FLAG (0x1<<10)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_AUX7_FLAG_SHIFT 10
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_EN (0x1<<11)
+#घोषणा __TSTORM_FCOE_AG_CONTEXT_QUEUE0_FLUSH_CF_EN_SHIFT 11
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX4_CF_EN (0x1<<12)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX4_CF_EN_SHIFT 12
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX5_CF_EN (0x1<<13)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX5_CF_EN_SHIFT 13
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX6_CF_EN (0x1<<14)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX6_CF_EN_SHIFT 14
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX7_CF_EN (0x1<<15)
+#घोषणा TSTORM_FCOE_AG_CONTEXT_AUX7_CF_EN_SHIFT 15
 	u16 __agg_val4;
-#endif
-	struct tstorm_fcoe_extra_ag_context_section __extra_section;
-};
+#पूर्ण_अगर
+	काष्ठा tstorm_fcoe_extra_ag_context_section __extra_section;
+पूर्ण;
 
 
 
 /*
  * The tcp aggregative context section of Tstorm
  */
-struct tstorm_tcp_tcp_ag_context_section {
+काष्ठा tstorm_tcp_tcp_ag_context_section अणु
 	u32 __agg_val1;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 __tcp_agg_vars2;
 	u8 __agg_val3;
 	u16 __agg_val2;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __agg_val2;
 	u8 __agg_val3;
 	u8 __tcp_agg_vars2;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_val5;
 	u8 __agg_val6;
 	u8 __tcp_agg_vars3;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 __tcp_agg_vars3;
 	u8 __agg_val6;
 	u16 __agg_val5;
-#endif
+#पूर्ण_अगर
 	u32 snd_nxt;
 	u32 rtt_seq;
-	u32 rtt_time;
+	u32 rtt_समय;
 	u32 wnd_right_edge_local;
 	u32 wnd_right_edge;
 	u32 tcp_agg_vars1;
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_FIN_SENT_FLAG (0x1<<0)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_FIN_SENT_FLAG_SHIFT 0
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_LAST_PACKET_FIN_FLAG (0x1<<1)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_LAST_PACKET_FIN_FLAG_SHIFT 1
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_WND_UPD_CF (0x3<<2)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_WND_UPD_CF_SHIFT 2
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TIMEOUT_CF (0x3<<4)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TIMEOUT_CF_SHIFT 4
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_WND_UPD_CF_EN (0x1<<6)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_WND_UPD_CF_EN_SHIFT 6
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TIMEOUT_CF_EN (0x1<<7)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TIMEOUT_CF_EN_SHIFT 7
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_SEQ_EN (0x1<<8)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_SEQ_EN_SHIFT 8
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_SND_NXT_EN (0x1<<9)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_SND_NXT_EN_SHIFT 9
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<10)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 10
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_FLAG (0x1<<11)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_FLAG_SHIFT 11
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_CF_EN (0x1<<12)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_CF_EN_SHIFT 12
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_CF_EN (0x1<<13)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_CF_EN_SHIFT 13
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_CF (0x3<<14)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_CF_SHIFT 14
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_CF (0x3<<16)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_CF_SHIFT 16
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_BLOCKED (0x1<<18)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_BLOCKED_SHIFT 18
-#define __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_EN (0x1<<19)
-#define __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_EN_SHIFT 19
-#define __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX11_CF_EN (0x1<<20)
-#define __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX11_CF_EN_SHIFT 20
-#define __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX12_CF_EN (0x1<<21)
-#define __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX12_CF_EN_SHIFT 21
-#define __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RESERVED1 (0x3<<22)
-#define __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RESERVED1_SHIFT 22
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_PEND_SEQ (0xF<<24)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_PEND_SEQ_SHIFT 24
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_DONE_SEQ (0xF<<28)
-#define TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_DONE_SEQ_SHIFT 28
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_FIN_SENT_FLAG (0x1<<0)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_FIN_SENT_FLAG_SHIFT 0
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_LAST_PACKET_FIN_FLAG (0x1<<1)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_LAST_PACKET_FIN_FLAG_SHIFT 1
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_WND_UPD_CF (0x3<<2)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_WND_UPD_CF_SHIFT 2
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TIMEOUT_CF (0x3<<4)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TIMEOUT_CF_SHIFT 4
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_WND_UPD_CF_EN (0x1<<6)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_WND_UPD_CF_EN_SHIFT 6
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TIMEOUT_CF_EN (0x1<<7)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TIMEOUT_CF_EN_SHIFT 7
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_SEQ_EN (0x1<<8)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_SEQ_EN_SHIFT 8
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_SND_NXT_EN (0x1<<9)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_SND_NXT_EN_SHIFT 9
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<10)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 10
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_FLAG (0x1<<11)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_FLAG_SHIFT 11
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_CF_EN (0x1<<12)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_CF_EN_SHIFT 12
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_CF_EN (0x1<<13)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_CF_EN_SHIFT 13
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_CF (0x3<<14)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_CF_SHIFT 14
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_CF (0x3<<16)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX2_CF_SHIFT 16
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_BLOCKED (0x1<<18)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_BLOCKED_SHIFT 18
+#घोषणा __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_EN (0x1<<19)
+#घोषणा __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_EN_SHIFT 19
+#घोषणा __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX11_CF_EN (0x1<<20)
+#घोषणा __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX11_CF_EN_SHIFT 20
+#घोषणा __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX12_CF_EN (0x1<<21)
+#घोषणा __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX12_CF_EN_SHIFT 21
+#घोषणा __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RESERVED1 (0x3<<22)
+#घोषणा __TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RESERVED1_SHIFT 22
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_PEND_SEQ (0xF<<24)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_PEND_SEQ_SHIFT 24
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_DONE_SEQ (0xF<<28)
+#घोषणा TSTORM_TCP_TCP_AG_CONTEXT_SECTION_RETRANSMIT_DONE_SEQ_SHIFT 28
 	u32 snd_max;
 	u32 snd_una;
 	u32 __reserved2;
-};
+पूर्ण;
 
 /*
  * The iscsi aggregative context of Tstorm
  */
-struct tstorm_iscsi_ag_context {
-#if defined(__BIG_ENDIAN)
+काष्ठा tstorm_iscsi_ag_context अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 ulp_credit;
 	u8 agg_vars1;
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF (0x3<<4)
-#define __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_SHIFT 4
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX3_FLAG (0x1<<6)
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX3_FLAG_SHIFT 6
-#define __TSTORM_ISCSI_AG_CONTEXT_ACK_ON_FIN_SENT_FLAG (0x1<<7)
-#define __TSTORM_ISCSI_AG_CONTEXT_ACK_ON_FIN_SENT_FLAG_SHIFT 7
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF (0x3<<4)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_SHIFT 4
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX3_FLAG (0x1<<6)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX3_FLAG_SHIFT 6
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_ACK_ON_FIN_SENT_FLAG (0x1<<7)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_ACK_ON_FIN_SENT_FLAG_SHIFT 7
 	u8 state;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 state;
 	u8 agg_vars1;
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF (0x3<<4)
-#define __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_SHIFT 4
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX3_FLAG (0x1<<6)
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX3_FLAG_SHIFT 6
-#define __TSTORM_ISCSI_AG_CONTEXT_ACK_ON_FIN_SENT_FLAG (0x1<<7)
-#define __TSTORM_ISCSI_AG_CONTEXT_ACK_ON_FIN_SENT_FLAG_SHIFT 7
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF (0x3<<4)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_SHIFT 4
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX3_FLAG (0x1<<6)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX3_FLAG_SHIFT 6
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_ACK_ON_FIN_SENT_FLAG (0x1<<7)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_ACK_ON_FIN_SENT_FLAG_SHIFT 7
 	u16 ulp_credit;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_val4;
 	u16 agg_vars2;
-#define __TSTORM_ISCSI_AG_CONTEXT_MSL_TIMER_SET_FLAG (0x1<<0)
-#define __TSTORM_ISCSI_AG_CONTEXT_MSL_TIMER_SET_FLAG_SHIFT 0
-#define __TSTORM_ISCSI_AG_CONTEXT_FIN_SENT_FIRST_FLAG (0x1<<1)
-#define __TSTORM_ISCSI_AG_CONTEXT_FIN_SENT_FIRST_FLAG_SHIFT 1
-#define __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF (0x3<<2)
-#define __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_SHIFT 2
-#define __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF (0x3<<4)
-#define __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_SHIFT 4
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX6_CF (0x3<<6)
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_SHIFT 6
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX7_CF (0x3<<8)
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_SHIFT 8
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX7_FLAG (0x1<<10)
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX7_FLAG_SHIFT 10
-#define __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN (0x1<<11)
-#define __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN_SHIFT 11
-#define __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_EN (0x1<<12)
-#define __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_EN_SHIFT 12
-#define __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_EN (0x1<<13)
-#define __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_EN_SHIFT 13
-#define TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_EN (0x1<<14)
-#define TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_EN_SHIFT 14
-#define TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_EN (0x1<<15)
-#define TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_EN_SHIFT 15
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_MSL_TIMER_SET_FLAG (0x1<<0)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_MSL_TIMER_SET_FLAG_SHIFT 0
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_FIN_SENT_FIRST_FLAG (0x1<<1)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_FIN_SENT_FIRST_FLAG_SHIFT 1
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF (0x3<<2)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_SHIFT 2
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF (0x3<<4)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_SHIFT 4
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX6_CF (0x3<<6)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_SHIFT 6
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX7_CF (0x3<<8)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_SHIFT 8
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX7_FLAG (0x1<<10)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX7_FLAG_SHIFT 10
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN (0x1<<11)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN_SHIFT 11
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_EN (0x1<<12)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_EN_SHIFT 12
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_EN (0x1<<13)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_EN_SHIFT 13
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_EN (0x1<<14)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_EN_SHIFT 14
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_EN (0x1<<15)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_EN_SHIFT 15
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_vars2;
-#define __TSTORM_ISCSI_AG_CONTEXT_MSL_TIMER_SET_FLAG (0x1<<0)
-#define __TSTORM_ISCSI_AG_CONTEXT_MSL_TIMER_SET_FLAG_SHIFT 0
-#define __TSTORM_ISCSI_AG_CONTEXT_FIN_SENT_FIRST_FLAG (0x1<<1)
-#define __TSTORM_ISCSI_AG_CONTEXT_FIN_SENT_FIRST_FLAG_SHIFT 1
-#define __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF (0x3<<2)
-#define __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_SHIFT 2
-#define __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF (0x3<<4)
-#define __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_SHIFT 4
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX6_CF (0x3<<6)
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_SHIFT 6
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX7_CF (0x3<<8)
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_SHIFT 8
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX7_FLAG (0x1<<10)
-#define __TSTORM_ISCSI_AG_CONTEXT_AUX7_FLAG_SHIFT 10
-#define __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN (0x1<<11)
-#define __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN_SHIFT 11
-#define __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_EN (0x1<<12)
-#define __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_EN_SHIFT 12
-#define __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_EN (0x1<<13)
-#define __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_EN_SHIFT 13
-#define TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_EN (0x1<<14)
-#define TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_EN_SHIFT 14
-#define TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_EN (0x1<<15)
-#define TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_EN_SHIFT 15
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_MSL_TIMER_SET_FLAG (0x1<<0)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_MSL_TIMER_SET_FLAG_SHIFT 0
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_FIN_SENT_FIRST_FLAG (0x1<<1)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_FIN_SENT_FIRST_FLAG_SHIFT 1
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF (0x3<<2)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_SHIFT 2
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF (0x3<<4)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_SHIFT 4
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX6_CF (0x3<<6)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_SHIFT 6
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX7_CF (0x3<<8)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_SHIFT 8
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX7_FLAG (0x1<<10)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_AUX7_FLAG_SHIFT 10
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN (0x1<<11)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN_SHIFT 11
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_EN (0x1<<12)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_RST_SENT_CF_EN_SHIFT 12
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_EN (0x1<<13)
+#घोषणा __TSTORM_ISCSI_AG_CONTEXT_WAKEUP_CALL_CF_EN_SHIFT 13
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_EN (0x1<<14)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_AUX6_CF_EN_SHIFT 14
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_EN (0x1<<15)
+#घोषणा TSTORM_ISCSI_AG_CONTEXT_AUX7_CF_EN_SHIFT 15
 	u16 __agg_val4;
-#endif
-	struct tstorm_tcp_tcp_ag_context_section tcp;
-};
+#पूर्ण_अगर
+	काष्ठा tstorm_tcp_tcp_ag_context_section tcp;
+पूर्ण;
 
 
 
 /*
  * The fcoe aggregative context of Ustorm
  */
-struct ustorm_fcoe_ag_context {
-#if defined(__BIG_ENDIAN)
+काष्ठा ustorm_fcoe_ag_context अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 __aux_counter_flags;
 	u8 agg_vars2;
-#define USTORM_FCOE_AG_CONTEXT_TX_CF (0x3<<0)
-#define USTORM_FCOE_AG_CONTEXT_TX_CF_SHIFT 0
-#define __USTORM_FCOE_AG_CONTEXT_TIMER_CF (0x3<<2)
-#define __USTORM_FCOE_AG_CONTEXT_TIMER_CF_SHIFT 2
-#define USTORM_FCOE_AG_CONTEXT_AGG_MISC4_RULE (0x7<<4)
-#define USTORM_FCOE_AG_CONTEXT_AGG_MISC4_RULE_SHIFT 4
-#define __USTORM_FCOE_AG_CONTEXT_AGG_VAL2_MASK (0x1<<7)
-#define __USTORM_FCOE_AG_CONTEXT_AGG_VAL2_MASK_SHIFT 7
+#घोषणा USTORM_FCOE_AG_CONTEXT_TX_CF (0x3<<0)
+#घोषणा USTORM_FCOE_AG_CONTEXT_TX_CF_SHIFT 0
+#घोषणा __USTORM_FCOE_AG_CONTEXT_TIMER_CF (0x3<<2)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_TIMER_CF_SHIFT 2
+#घोषणा USTORM_FCOE_AG_CONTEXT_AGG_MISC4_RULE (0x7<<4)
+#घोषणा USTORM_FCOE_AG_CONTEXT_AGG_MISC4_RULE_SHIFT 4
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AGG_VAL2_MASK (0x1<<7)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AGG_VAL2_MASK_SHIFT 7
 	u8 agg_vars1;
-#define __USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define USTORM_FCOE_AG_CONTEXT_INV_CF (0x3<<4)
-#define USTORM_FCOE_AG_CONTEXT_INV_CF_SHIFT 4
-#define USTORM_FCOE_AG_CONTEXT_COMPLETION_CF (0x3<<6)
-#define USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_SHIFT 6
+#घोषणा __USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा USTORM_FCOE_AG_CONTEXT_INV_CF (0x3<<4)
+#घोषणा USTORM_FCOE_AG_CONTEXT_INV_CF_SHIFT 4
+#घोषणा USTORM_FCOE_AG_CONTEXT_COMPLETION_CF (0x3<<6)
+#घोषणा USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_SHIFT 6
 	u8 state;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 state;
 	u8 agg_vars1;
-#define __USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define USTORM_FCOE_AG_CONTEXT_INV_CF (0x3<<4)
-#define USTORM_FCOE_AG_CONTEXT_INV_CF_SHIFT 4
-#define USTORM_FCOE_AG_CONTEXT_COMPLETION_CF (0x3<<6)
-#define USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_SHIFT 6
+#घोषणा __USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा USTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा USTORM_FCOE_AG_CONTEXT_INV_CF (0x3<<4)
+#घोषणा USTORM_FCOE_AG_CONTEXT_INV_CF_SHIFT 4
+#घोषणा USTORM_FCOE_AG_CONTEXT_COMPLETION_CF (0x3<<6)
+#घोषणा USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_SHIFT 6
 	u8 agg_vars2;
-#define USTORM_FCOE_AG_CONTEXT_TX_CF (0x3<<0)
-#define USTORM_FCOE_AG_CONTEXT_TX_CF_SHIFT 0
-#define __USTORM_FCOE_AG_CONTEXT_TIMER_CF (0x3<<2)
-#define __USTORM_FCOE_AG_CONTEXT_TIMER_CF_SHIFT 2
-#define USTORM_FCOE_AG_CONTEXT_AGG_MISC4_RULE (0x7<<4)
-#define USTORM_FCOE_AG_CONTEXT_AGG_MISC4_RULE_SHIFT 4
-#define __USTORM_FCOE_AG_CONTEXT_AGG_VAL2_MASK (0x1<<7)
-#define __USTORM_FCOE_AG_CONTEXT_AGG_VAL2_MASK_SHIFT 7
+#घोषणा USTORM_FCOE_AG_CONTEXT_TX_CF (0x3<<0)
+#घोषणा USTORM_FCOE_AG_CONTEXT_TX_CF_SHIFT 0
+#घोषणा __USTORM_FCOE_AG_CONTEXT_TIMER_CF (0x3<<2)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_TIMER_CF_SHIFT 2
+#घोषणा USTORM_FCOE_AG_CONTEXT_AGG_MISC4_RULE (0x7<<4)
+#घोषणा USTORM_FCOE_AG_CONTEXT_AGG_MISC4_RULE_SHIFT 4
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AGG_VAL2_MASK (0x1<<7)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AGG_VAL2_MASK_SHIFT 7
 	u8 __aux_counter_flags;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 cdu_usage;
 	u8 agg_misc2;
 	u16 pbf_tx_seq_ack;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 pbf_tx_seq_ack;
 	u8 agg_misc2;
 	u8 cdu_usage;
-#endif
+#पूर्ण_अगर
 	u32 agg_misc4;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 agg_val3_th;
 	u8 agg_val3;
 	u16 agg_misc3;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_misc3;
 	u8 agg_val3;
 	u8 agg_val3_th;
-#endif
+#पूर्ण_अगर
 	u32 expired_task_id;
 	u32 agg_misc4_th;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 cq_prod;
 	u16 cq_cons;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 cq_cons;
 	u16 cq_prod;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __reserved2;
 	u8 decision_rules;
-#define USTORM_FCOE_AG_CONTEXT_CQ_DEC_RULE (0x7<<0)
-#define USTORM_FCOE_AG_CONTEXT_CQ_DEC_RULE_SHIFT 0
-#define __USTORM_FCOE_AG_CONTEXT_AGG_VAL3_RULE (0x7<<3)
-#define __USTORM_FCOE_AG_CONTEXT_AGG_VAL3_RULE_SHIFT 3
-#define USTORM_FCOE_AG_CONTEXT_CQ_ARM_N_FLAG (0x1<<6)
-#define USTORM_FCOE_AG_CONTEXT_CQ_ARM_N_FLAG_SHIFT 6
-#define __USTORM_FCOE_AG_CONTEXT_RESERVED1 (0x1<<7)
-#define __USTORM_FCOE_AG_CONTEXT_RESERVED1_SHIFT 7
+#घोषणा USTORM_FCOE_AG_CONTEXT_CQ_DEC_RULE (0x7<<0)
+#घोषणा USTORM_FCOE_AG_CONTEXT_CQ_DEC_RULE_SHIFT 0
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AGG_VAL3_RULE (0x7<<3)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AGG_VAL3_RULE_SHIFT 3
+#घोषणा USTORM_FCOE_AG_CONTEXT_CQ_ARM_N_FLAG (0x1<<6)
+#घोषणा USTORM_FCOE_AG_CONTEXT_CQ_ARM_N_FLAG_SHIFT 6
+#घोषणा __USTORM_FCOE_AG_CONTEXT_RESERVED1 (0x1<<7)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_RESERVED1_SHIFT 7
 	u8 decision_rule_enable_bits;
-#define __USTORM_FCOE_AG_CONTEXT_RESERVED_INV_CF_EN (0x1<<0)
-#define __USTORM_FCOE_AG_CONTEXT_RESERVED_INV_CF_EN_SHIFT 0
-#define USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_EN (0x1<<1)
-#define USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_EN_SHIFT 1
-#define USTORM_FCOE_AG_CONTEXT_TX_CF_EN (0x1<<2)
-#define USTORM_FCOE_AG_CONTEXT_TX_CF_EN_SHIFT 2
-#define __USTORM_FCOE_AG_CONTEXT_TIMER_CF_EN (0x1<<3)
-#define __USTORM_FCOE_AG_CONTEXT_TIMER_CF_EN_SHIFT 3
-#define __USTORM_FCOE_AG_CONTEXT_AUX1_CF_EN (0x1<<4)
-#define __USTORM_FCOE_AG_CONTEXT_AUX1_CF_EN_SHIFT 4
-#define __USTORM_FCOE_AG_CONTEXT_QUEUE0_CF_EN (0x1<<5)
-#define __USTORM_FCOE_AG_CONTEXT_QUEUE0_CF_EN_SHIFT 5
-#define __USTORM_FCOE_AG_CONTEXT_AUX3_CF_EN (0x1<<6)
-#define __USTORM_FCOE_AG_CONTEXT_AUX3_CF_EN_SHIFT 6
-#define __USTORM_FCOE_AG_CONTEXT_DQ_CF_EN (0x1<<7)
-#define __USTORM_FCOE_AG_CONTEXT_DQ_CF_EN_SHIFT 7
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_RESERVED_INV_CF_EN (0x1<<0)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_RESERVED_INV_CF_EN_SHIFT 0
+#घोषणा USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_EN (0x1<<1)
+#घोषणा USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_EN_SHIFT 1
+#घोषणा USTORM_FCOE_AG_CONTEXT_TX_CF_EN (0x1<<2)
+#घोषणा USTORM_FCOE_AG_CONTEXT_TX_CF_EN_SHIFT 2
+#घोषणा __USTORM_FCOE_AG_CONTEXT_TIMER_CF_EN (0x1<<3)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_TIMER_CF_EN_SHIFT 3
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AUX1_CF_EN (0x1<<4)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AUX1_CF_EN_SHIFT 4
+#घोषणा __USTORM_FCOE_AG_CONTEXT_QUEUE0_CF_EN (0x1<<5)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_QUEUE0_CF_EN_SHIFT 5
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AUX3_CF_EN (0x1<<6)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AUX3_CF_EN_SHIFT 6
+#घोषणा __USTORM_FCOE_AG_CONTEXT_DQ_CF_EN (0x1<<7)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_DQ_CF_EN_SHIFT 7
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 decision_rule_enable_bits;
-#define __USTORM_FCOE_AG_CONTEXT_RESERVED_INV_CF_EN (0x1<<0)
-#define __USTORM_FCOE_AG_CONTEXT_RESERVED_INV_CF_EN_SHIFT 0
-#define USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_EN (0x1<<1)
-#define USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_EN_SHIFT 1
-#define USTORM_FCOE_AG_CONTEXT_TX_CF_EN (0x1<<2)
-#define USTORM_FCOE_AG_CONTEXT_TX_CF_EN_SHIFT 2
-#define __USTORM_FCOE_AG_CONTEXT_TIMER_CF_EN (0x1<<3)
-#define __USTORM_FCOE_AG_CONTEXT_TIMER_CF_EN_SHIFT 3
-#define __USTORM_FCOE_AG_CONTEXT_AUX1_CF_EN (0x1<<4)
-#define __USTORM_FCOE_AG_CONTEXT_AUX1_CF_EN_SHIFT 4
-#define __USTORM_FCOE_AG_CONTEXT_QUEUE0_CF_EN (0x1<<5)
-#define __USTORM_FCOE_AG_CONTEXT_QUEUE0_CF_EN_SHIFT 5
-#define __USTORM_FCOE_AG_CONTEXT_AUX3_CF_EN (0x1<<6)
-#define __USTORM_FCOE_AG_CONTEXT_AUX3_CF_EN_SHIFT 6
-#define __USTORM_FCOE_AG_CONTEXT_DQ_CF_EN (0x1<<7)
-#define __USTORM_FCOE_AG_CONTEXT_DQ_CF_EN_SHIFT 7
+#घोषणा __USTORM_FCOE_AG_CONTEXT_RESERVED_INV_CF_EN (0x1<<0)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_RESERVED_INV_CF_EN_SHIFT 0
+#घोषणा USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_EN (0x1<<1)
+#घोषणा USTORM_FCOE_AG_CONTEXT_COMPLETION_CF_EN_SHIFT 1
+#घोषणा USTORM_FCOE_AG_CONTEXT_TX_CF_EN (0x1<<2)
+#घोषणा USTORM_FCOE_AG_CONTEXT_TX_CF_EN_SHIFT 2
+#घोषणा __USTORM_FCOE_AG_CONTEXT_TIMER_CF_EN (0x1<<3)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_TIMER_CF_EN_SHIFT 3
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AUX1_CF_EN (0x1<<4)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AUX1_CF_EN_SHIFT 4
+#घोषणा __USTORM_FCOE_AG_CONTEXT_QUEUE0_CF_EN (0x1<<5)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_QUEUE0_CF_EN_SHIFT 5
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AUX3_CF_EN (0x1<<6)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AUX3_CF_EN_SHIFT 6
+#घोषणा __USTORM_FCOE_AG_CONTEXT_DQ_CF_EN (0x1<<7)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_DQ_CF_EN_SHIFT 7
 	u8 decision_rules;
-#define USTORM_FCOE_AG_CONTEXT_CQ_DEC_RULE (0x7<<0)
-#define USTORM_FCOE_AG_CONTEXT_CQ_DEC_RULE_SHIFT 0
-#define __USTORM_FCOE_AG_CONTEXT_AGG_VAL3_RULE (0x7<<3)
-#define __USTORM_FCOE_AG_CONTEXT_AGG_VAL3_RULE_SHIFT 3
-#define USTORM_FCOE_AG_CONTEXT_CQ_ARM_N_FLAG (0x1<<6)
-#define USTORM_FCOE_AG_CONTEXT_CQ_ARM_N_FLAG_SHIFT 6
-#define __USTORM_FCOE_AG_CONTEXT_RESERVED1 (0x1<<7)
-#define __USTORM_FCOE_AG_CONTEXT_RESERVED1_SHIFT 7
+#घोषणा USTORM_FCOE_AG_CONTEXT_CQ_DEC_RULE (0x7<<0)
+#घोषणा USTORM_FCOE_AG_CONTEXT_CQ_DEC_RULE_SHIFT 0
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AGG_VAL3_RULE (0x7<<3)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_AGG_VAL3_RULE_SHIFT 3
+#घोषणा USTORM_FCOE_AG_CONTEXT_CQ_ARM_N_FLAG (0x1<<6)
+#घोषणा USTORM_FCOE_AG_CONTEXT_CQ_ARM_N_FLAG_SHIFT 6
+#घोषणा __USTORM_FCOE_AG_CONTEXT_RESERVED1 (0x1<<7)
+#घोषणा __USTORM_FCOE_AG_CONTEXT_RESERVED1_SHIFT 7
 	u16 __reserved2;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 
 /*
  * The iscsi aggregative context of Ustorm
  */
-struct ustorm_iscsi_ag_context {
-#if defined(__BIG_ENDIAN)
+काष्ठा ustorm_iscsi_ag_context अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 __aux_counter_flags;
 	u8 agg_vars2;
-#define USTORM_ISCSI_AG_CONTEXT_TX_CF (0x3<<0)
-#define USTORM_ISCSI_AG_CONTEXT_TX_CF_SHIFT 0
-#define __USTORM_ISCSI_AG_CONTEXT_TIMER_CF (0x3<<2)
-#define __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_SHIFT 2
-#define USTORM_ISCSI_AG_CONTEXT_AGG_MISC4_RULE (0x7<<4)
-#define USTORM_ISCSI_AG_CONTEXT_AGG_MISC4_RULE_SHIFT 4
-#define __USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_MASK (0x1<<7)
-#define __USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_MASK_SHIFT 7
+#घोषणा USTORM_ISCSI_AG_CONTEXT_TX_CF (0x3<<0)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_TX_CF_SHIFT 0
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_TIMER_CF (0x3<<2)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_SHIFT 2
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_MISC4_RULE (0x7<<4)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_MISC4_RULE_SHIFT 4
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_MASK (0x1<<7)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_MASK_SHIFT 7
 	u8 agg_vars1;
-#define __USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define USTORM_ISCSI_AG_CONTEXT_INV_CF (0x3<<4)
-#define USTORM_ISCSI_AG_CONTEXT_INV_CF_SHIFT 4
-#define USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF (0x3<<6)
-#define USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_SHIFT 6
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा USTORM_ISCSI_AG_CONTEXT_INV_CF (0x3<<4)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_INV_CF_SHIFT 4
+#घोषणा USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF (0x3<<6)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_SHIFT 6
 	u8 state;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 state;
 	u8 agg_vars1;
-#define __USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define USTORM_ISCSI_AG_CONTEXT_INV_CF (0x3<<4)
-#define USTORM_ISCSI_AG_CONTEXT_INV_CF_SHIFT 4
-#define USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF (0x3<<6)
-#define USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_SHIFT 6
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा USTORM_ISCSI_AG_CONTEXT_INV_CF (0x3<<4)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_INV_CF_SHIFT 4
+#घोषणा USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF (0x3<<6)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_SHIFT 6
 	u8 agg_vars2;
-#define USTORM_ISCSI_AG_CONTEXT_TX_CF (0x3<<0)
-#define USTORM_ISCSI_AG_CONTEXT_TX_CF_SHIFT 0
-#define __USTORM_ISCSI_AG_CONTEXT_TIMER_CF (0x3<<2)
-#define __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_SHIFT 2
-#define USTORM_ISCSI_AG_CONTEXT_AGG_MISC4_RULE (0x7<<4)
-#define USTORM_ISCSI_AG_CONTEXT_AGG_MISC4_RULE_SHIFT 4
-#define __USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_MASK (0x1<<7)
-#define __USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_MASK_SHIFT 7
+#घोषणा USTORM_ISCSI_AG_CONTEXT_TX_CF (0x3<<0)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_TX_CF_SHIFT 0
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_TIMER_CF (0x3<<2)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_SHIFT 2
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_MISC4_RULE (0x7<<4)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_MISC4_RULE_SHIFT 4
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_MASK (0x1<<7)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_MASK_SHIFT 7
 	u8 __aux_counter_flags;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 cdu_usage;
 	u8 agg_misc2;
 	u16 __cq_local_comp_itt_val;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __cq_local_comp_itt_val;
 	u8 agg_misc2;
 	u8 cdu_usage;
-#endif
+#पूर्ण_अगर
 	u32 agg_misc4;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 agg_val3_th;
 	u8 agg_val3;
 	u16 agg_misc3;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_misc3;
 	u8 agg_val3;
 	u8 agg_val3_th;
-#endif
+#पूर्ण_अगर
 	u32 agg_val1;
 	u32 agg_misc4_th;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_val2_th;
 	u16 agg_val2;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_val2;
 	u16 agg_val2_th;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __reserved2;
 	u8 decision_rules;
-#define USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_RULE (0x7<<0)
-#define USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_RULE_SHIFT 0
-#define __USTORM_ISCSI_AG_CONTEXT_AGG_VAL3_RULE (0x7<<3)
-#define __USTORM_ISCSI_AG_CONTEXT_AGG_VAL3_RULE_SHIFT 3
-#define USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_ARM_N_FLAG (0x1<<6)
-#define USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_ARM_N_FLAG_SHIFT 6
-#define __USTORM_ISCSI_AG_CONTEXT_RESERVED1 (0x1<<7)
-#define __USTORM_ISCSI_AG_CONTEXT_RESERVED1_SHIFT 7
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_RULE (0x7<<0)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_RULE_SHIFT 0
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AGG_VAL3_RULE (0x7<<3)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AGG_VAL3_RULE_SHIFT 3
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_ARM_N_FLAG (0x1<<6)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_ARM_N_FLAG_SHIFT 6
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_RESERVED1 (0x1<<7)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_RESERVED1_SHIFT 7
 	u8 decision_rule_enable_bits;
-#define USTORM_ISCSI_AG_CONTEXT_INV_CF_EN (0x1<<0)
-#define USTORM_ISCSI_AG_CONTEXT_INV_CF_EN_SHIFT 0
-#define USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_EN (0x1<<1)
-#define USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_EN_SHIFT 1
-#define USTORM_ISCSI_AG_CONTEXT_TX_CF_EN (0x1<<2)
-#define USTORM_ISCSI_AG_CONTEXT_TX_CF_EN_SHIFT 2
-#define __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_EN (0x1<<3)
-#define __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_EN_SHIFT 3
-#define __USTORM_ISCSI_AG_CONTEXT_CQ_LOCAL_COMP_CF_EN (0x1<<4)
-#define __USTORM_ISCSI_AG_CONTEXT_CQ_LOCAL_COMP_CF_EN_SHIFT 4
-#define __USTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN (0x1<<5)
-#define __USTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN_SHIFT 5
-#define __USTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN (0x1<<6)
-#define __USTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN_SHIFT 6
-#define __USTORM_ISCSI_AG_CONTEXT_DQ_CF_EN (0x1<<7)
-#define __USTORM_ISCSI_AG_CONTEXT_DQ_CF_EN_SHIFT 7
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_INV_CF_EN (0x1<<0)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_INV_CF_EN_SHIFT 0
+#घोषणा USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_EN (0x1<<1)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_EN_SHIFT 1
+#घोषणा USTORM_ISCSI_AG_CONTEXT_TX_CF_EN (0x1<<2)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_TX_CF_EN_SHIFT 2
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_EN (0x1<<3)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_EN_SHIFT 3
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_CQ_LOCAL_COMP_CF_EN (0x1<<4)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_CQ_LOCAL_COMP_CF_EN_SHIFT 4
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN (0x1<<5)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN_SHIFT 5
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN (0x1<<6)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN_SHIFT 6
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_DQ_CF_EN (0x1<<7)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_DQ_CF_EN_SHIFT 7
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 decision_rule_enable_bits;
-#define USTORM_ISCSI_AG_CONTEXT_INV_CF_EN (0x1<<0)
-#define USTORM_ISCSI_AG_CONTEXT_INV_CF_EN_SHIFT 0
-#define USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_EN (0x1<<1)
-#define USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_EN_SHIFT 1
-#define USTORM_ISCSI_AG_CONTEXT_TX_CF_EN (0x1<<2)
-#define USTORM_ISCSI_AG_CONTEXT_TX_CF_EN_SHIFT 2
-#define __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_EN (0x1<<3)
-#define __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_EN_SHIFT 3
-#define __USTORM_ISCSI_AG_CONTEXT_CQ_LOCAL_COMP_CF_EN (0x1<<4)
-#define __USTORM_ISCSI_AG_CONTEXT_CQ_LOCAL_COMP_CF_EN_SHIFT 4
-#define __USTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN (0x1<<5)
-#define __USTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN_SHIFT 5
-#define __USTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN (0x1<<6)
-#define __USTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN_SHIFT 6
-#define __USTORM_ISCSI_AG_CONTEXT_DQ_CF_EN (0x1<<7)
-#define __USTORM_ISCSI_AG_CONTEXT_DQ_CF_EN_SHIFT 7
+#घोषणा USTORM_ISCSI_AG_CONTEXT_INV_CF_EN (0x1<<0)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_INV_CF_EN_SHIFT 0
+#घोषणा USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_EN (0x1<<1)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_COMPLETION_CF_EN_SHIFT 1
+#घोषणा USTORM_ISCSI_AG_CONTEXT_TX_CF_EN (0x1<<2)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_TX_CF_EN_SHIFT 2
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_EN (0x1<<3)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_TIMER_CF_EN_SHIFT 3
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_CQ_LOCAL_COMP_CF_EN (0x1<<4)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_CQ_LOCAL_COMP_CF_EN_SHIFT 4
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN (0x1<<5)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_QUEUES_FLUSH_Q0_CF_EN_SHIFT 5
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN (0x1<<6)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AUX3_CF_EN_SHIFT 6
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_DQ_CF_EN (0x1<<7)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_DQ_CF_EN_SHIFT 7
 	u8 decision_rules;
-#define USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_RULE (0x7<<0)
-#define USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_RULE_SHIFT 0
-#define __USTORM_ISCSI_AG_CONTEXT_AGG_VAL3_RULE (0x7<<3)
-#define __USTORM_ISCSI_AG_CONTEXT_AGG_VAL3_RULE_SHIFT 3
-#define USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_ARM_N_FLAG (0x1<<6)
-#define USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_ARM_N_FLAG_SHIFT 6
-#define __USTORM_ISCSI_AG_CONTEXT_RESERVED1 (0x1<<7)
-#define __USTORM_ISCSI_AG_CONTEXT_RESERVED1_SHIFT 7
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_RULE (0x7<<0)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_RULE_SHIFT 0
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AGG_VAL3_RULE (0x7<<3)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_AGG_VAL3_RULE_SHIFT 3
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_ARM_N_FLAG (0x1<<6)
+#घोषणा USTORM_ISCSI_AG_CONTEXT_AGG_VAL2_ARM_N_FLAG_SHIFT 6
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_RESERVED1 (0x1<<7)
+#घोषणा __USTORM_ISCSI_AG_CONTEXT_RESERVED1_SHIFT 7
 	u16 __reserved2;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 
 /*
  * The fcoe aggregative context section of Xstorm
  */
-struct xstorm_fcoe_extra_ag_context_section {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_fcoe_extra_ag_context_section अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 tcp_agg_vars1;
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED51 (0x3<<0)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED51_SHIFT 0
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED (0x3<<2)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_SHIFT 2
-#define XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF (0x3<<4)
-#define XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_SHIFT 4
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_CLEAR_DA_TIMER_EN (0x1<<6)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_CLEAR_DA_TIMER_EN_SHIFT 6
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_DA_EXPIRATION_FLAG (0x1<<7)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_DA_EXPIRATION_FLAG_SHIFT 7
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED51 (0x3<<0)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED51_SHIFT 0
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED (0x3<<2)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_SHIFT 2
+#घोषणा XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF (0x3<<4)
+#घोषणा XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_SHIFT 4
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_CLEAR_DA_TIMER_EN (0x1<<6)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_CLEAR_DA_TIMER_EN_SHIFT 6
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_DA_EXPIRATION_FLAG (0x1<<7)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_DA_EXPIRATION_FLAG_SHIFT 7
 	u8 __reserved_da_cnt;
 	u16 __mtu;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __mtu;
 	u8 __reserved_da_cnt;
 	u8 tcp_agg_vars1;
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED51 (0x3<<0)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED51_SHIFT 0
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED (0x3<<2)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_SHIFT 2
-#define XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF (0x3<<4)
-#define XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_SHIFT 4
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_CLEAR_DA_TIMER_EN (0x1<<6)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_CLEAR_DA_TIMER_EN_SHIFT 6
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_DA_EXPIRATION_FLAG (0x1<<7)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_DA_EXPIRATION_FLAG_SHIFT 7
-#endif
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED51 (0x3<<0)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED51_SHIFT 0
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED (0x3<<2)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_SHIFT 2
+#घोषणा XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF (0x3<<4)
+#घोषणा XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_SHIFT 4
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_CLEAR_DA_TIMER_EN (0x1<<6)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_CLEAR_DA_TIMER_EN_SHIFT 6
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_DA_EXPIRATION_FLAG (0x1<<7)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_DA_EXPIRATION_FLAG_SHIFT 7
+#पूर्ण_अगर
 	u32 snd_nxt;
 	u32 __xfrqe_bd_addr_lo;
 	u32 __xfrqe_bd_addr_hi;
 	u32 __xfrqe_data1;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 __agg_val8_th;
 	u8 __tx_dest;
 	u16 tcp_agg_vars2;
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED57 (0x1<<0)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED57_SHIFT 0
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED58 (0x1<<1)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED58_SHIFT 1
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED59 (0x1<<2)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED59_SHIFT 2
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX3_FLAG (0x1<<3)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX3_FLAG_SHIFT 3
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX4_FLAG (0x1<<4)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX4_FLAG_SHIFT 4
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED60 (0x1<<5)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED60_SHIFT 5
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_ACK_TO_FE_UPDATED_EN (0x1<<6)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_ACK_TO_FE_UPDATED_EN_SHIFT 6
-#define XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN (0x1<<7)
-#define XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN_SHIFT 7
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_TX_FIN_FLAG_EN (0x1<<8)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_TX_FIN_FLAG_EN_SHIFT 8
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<9)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 9
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SET_RTO_CF (0x3<<10)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SET_RTO_CF_SHIFT 10
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF (0x3<<12)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF_SHIFT 12
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF (0x3<<14)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_SHIFT 14
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED57 (0x1<<0)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED57_SHIFT 0
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED58 (0x1<<1)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED58_SHIFT 1
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED59 (0x1<<2)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED59_SHIFT 2
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX3_FLAG (0x1<<3)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX3_FLAG_SHIFT 3
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX4_FLAG (0x1<<4)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX4_FLAG_SHIFT 4
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED60 (0x1<<5)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED60_SHIFT 5
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_ACK_TO_FE_UPDATED_EN (0x1<<6)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_ACK_TO_FE_UPDATED_EN_SHIFT 6
+#घोषणा XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN (0x1<<7)
+#घोषणा XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN_SHIFT 7
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_TX_FIN_FLAG_EN (0x1<<8)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_TX_FIN_FLAG_EN_SHIFT 8
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<9)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 9
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SET_RTO_CF (0x3<<10)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SET_RTO_CF_SHIFT 10
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF (0x3<<12)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF_SHIFT 12
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF (0x3<<14)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_SHIFT 14
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 tcp_agg_vars2;
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED57 (0x1<<0)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED57_SHIFT 0
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED58 (0x1<<1)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED58_SHIFT 1
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED59 (0x1<<2)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED59_SHIFT 2
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX3_FLAG (0x1<<3)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX3_FLAG_SHIFT 3
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX4_FLAG (0x1<<4)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX4_FLAG_SHIFT 4
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED60 (0x1<<5)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED60_SHIFT 5
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_ACK_TO_FE_UPDATED_EN (0x1<<6)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_ACK_TO_FE_UPDATED_EN_SHIFT 6
-#define XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN (0x1<<7)
-#define XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN_SHIFT 7
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_TX_FIN_FLAG_EN (0x1<<8)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_TX_FIN_FLAG_EN_SHIFT 8
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<9)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 9
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SET_RTO_CF (0x3<<10)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SET_RTO_CF_SHIFT 10
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF (0x3<<12)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF_SHIFT 12
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF (0x3<<14)
-#define __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_SHIFT 14
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED57 (0x1<<0)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED57_SHIFT 0
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED58 (0x1<<1)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED58_SHIFT 1
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED59 (0x1<<2)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED59_SHIFT 2
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX3_FLAG (0x1<<3)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX3_FLAG_SHIFT 3
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX4_FLAG (0x1<<4)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX4_FLAG_SHIFT 4
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED60 (0x1<<5)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED60_SHIFT 5
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_ACK_TO_FE_UPDATED_EN (0x1<<6)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_ACK_TO_FE_UPDATED_EN_SHIFT 6
+#घोषणा XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN (0x1<<7)
+#घोषणा XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN_SHIFT 7
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_TX_FIN_FLAG_EN (0x1<<8)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_RESERVED_TX_FIN_FLAG_EN_SHIFT 8
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<9)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 9
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SET_RTO_CF (0x3<<10)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_SET_RTO_CF_SHIFT 10
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF (0x3<<12)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF_SHIFT 12
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF (0x3<<14)
+#घोषणा __XSTORM_FCOE_EXTRA_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_SHIFT 14
 	u8 __tx_dest;
 	u8 __agg_val8_th;
-#endif
+#पूर्ण_अगर
 	u32 __sq_base_addr_lo;
 	u32 __sq_base_addr_hi;
 	u32 __xfrq_base_addr_lo;
 	u32 __xfrq_base_addr_hi;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 __xfrq_cons;
 	u16 __xfrq_prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __xfrq_prod;
 	u16 __xfrq_cons;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 __tcp_agg_vars5;
 	u8 __tcp_agg_vars4;
 	u8 __tcp_agg_vars3;
-	u8 __reserved_force_pure_ack_cnt;
-#elif defined(__LITTLE_ENDIAN)
-	u8 __reserved_force_pure_ack_cnt;
+	u8 __reserved_क्रमce_pure_ack_cnt;
+#या_अगर defined(__LITTLE_ENDIAN)
+	u8 __reserved_क्रमce_pure_ack_cnt;
 	u8 __tcp_agg_vars3;
 	u8 __tcp_agg_vars4;
 	u8 __tcp_agg_vars5;
-#endif
+#पूर्ण_अगर
 	u32 __tcp_agg_vars6;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 __xfrqe_mng;
 	u16 __tcp_agg_vars7;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __tcp_agg_vars7;
 	u16 __xfrqe_mng;
-#endif
+#पूर्ण_अगर
 	u32 __xfrqe_data0;
 	u32 __agg_val10_th;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 __reserved3;
 	u8 __reserved2;
 	u8 __da_only_cnt;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 __da_only_cnt;
 	u8 __reserved2;
 	u16 __reserved3;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * The fcoe aggregative context of Xstorm
  */
-struct xstorm_fcoe_ag_context {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_fcoe_ag_context अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_val1;
 	u8 agg_vars1;
-#define __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED51 (0x1<<2)
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED51_SHIFT 2
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED52 (0x1<<3)
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED52_SHIFT 3
-#define __XSTORM_FCOE_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
-#define __XSTORM_FCOE_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
-#define XSTORM_FCOE_AG_CONTEXT_NAGLE_EN (0x1<<5)
-#define XSTORM_FCOE_AG_CONTEXT_NAGLE_EN_SHIFT 5
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED_UNA_GT_NXT_EN (0x1<<7)
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED_UNA_GT_NXT_EN_SHIFT 7
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED51 (0x1<<2)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED51_SHIFT 2
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED52 (0x1<<3)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED52_SHIFT 3
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
+#घोषणा XSTORM_FCOE_AG_CONTEXT_NAGLE_EN (0x1<<5)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_NAGLE_EN_SHIFT 5
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED_UNA_GT_NXT_EN (0x1<<7)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED_UNA_GT_NXT_EN_SHIFT 7
 	u8 __state;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 __state;
 	u8 agg_vars1;
-#define __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED51 (0x1<<2)
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED51_SHIFT 2
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED52 (0x1<<3)
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED52_SHIFT 3
-#define __XSTORM_FCOE_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
-#define __XSTORM_FCOE_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
-#define XSTORM_FCOE_AG_CONTEXT_NAGLE_EN (0x1<<5)
-#define XSTORM_FCOE_AG_CONTEXT_NAGLE_EN_SHIFT 5
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED_UNA_GT_NXT_EN (0x1<<7)
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED_UNA_GT_NXT_EN_SHIFT 7
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED51 (0x1<<2)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED51_SHIFT 2
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED52 (0x1<<3)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED52_SHIFT 3
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
+#घोषणा XSTORM_FCOE_AG_CONTEXT_NAGLE_EN (0x1<<5)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_NAGLE_EN_SHIFT 5
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED_UNA_GT_NXT_EN (0x1<<7)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED_UNA_GT_NXT_EN_SHIFT 7
 	u16 agg_val1;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 cdu_reserved;
 	u8 __agg_vars4;
 	u8 agg_vars3;
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_AUX19_CF (0x3<<6)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX19_CF_SHIFT 6
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX19_CF (0x3<<6)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX19_CF_SHIFT 6
 	u8 agg_vars2;
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_CF (0x3<<0)
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_CF_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
-#define __XSTORM_FCOE_AG_CONTEXT_AUX8_FLAG (0x1<<3)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX8_FLAG_SHIFT 3
-#define __XSTORM_FCOE_AG_CONTEXT_AUX9_FLAG (0x1<<4)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX9_FLAG_SHIFT 4
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE1_SHIFT 5
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_CF_EN (0x1<<7)
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_CF_EN_SHIFT 7
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_CF (0x3<<0)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_CF_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX8_FLAG (0x1<<3)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX8_FLAG_SHIFT 3
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX9_FLAG (0x1<<4)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX9_FLAG_SHIFT 4
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE1_SHIFT 5
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_CF_EN (0x1<<7)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_CF_EN_SHIFT 7
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 agg_vars2;
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_CF (0x3<<0)
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_CF_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
-#define __XSTORM_FCOE_AG_CONTEXT_AUX8_FLAG (0x1<<3)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX8_FLAG_SHIFT 3
-#define __XSTORM_FCOE_AG_CONTEXT_AUX9_FLAG (0x1<<4)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX9_FLAG_SHIFT 4
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE1_SHIFT 5
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_CF_EN (0x1<<7)
-#define __XSTORM_FCOE_AG_CONTEXT_DQ_CF_EN_SHIFT 7
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_CF (0x3<<0)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_CF_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX8_FLAG (0x1<<3)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX8_FLAG_SHIFT 3
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX9_FLAG (0x1<<4)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX9_FLAG_SHIFT 4
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE1_SHIFT 5
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_CF_EN (0x1<<7)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_DQ_CF_EN_SHIFT 7
 	u8 agg_vars3;
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_AUX19_CF (0x3<<6)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX19_CF_SHIFT 6
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX19_CF (0x3<<6)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX19_CF_SHIFT 6
 	u8 __agg_vars4;
 	u8 cdu_reserved;
-#endif
+#पूर्ण_अगर
 	u32 more_to_send;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_vars5;
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE5_SHIFT 0
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
-#define __XSTORM_FCOE_AG_CONTEXT_CONFQ_DEC_RULE (0x3<<14)
-#define __XSTORM_FCOE_AG_CONTEXT_CONFQ_DEC_RULE_SHIFT 14
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE5_SHIFT 0
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_CONFQ_DEC_RULE (0x3<<14)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_CONFQ_DEC_RULE_SHIFT 14
 	u16 sq_cons;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 sq_cons;
 	u16 agg_vars5;
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE5_SHIFT 0
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
-#define XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
-#define __XSTORM_FCOE_AG_CONTEXT_CONFQ_DEC_RULE (0x3<<14)
-#define __XSTORM_FCOE_AG_CONTEXT_CONFQ_DEC_RULE_SHIFT 14
-#endif
-	struct xstorm_fcoe_extra_ag_context_section __extra_section;
-#if defined(__BIG_ENDIAN)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE5_SHIFT 0
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_CONFQ_DEC_RULE (0x3<<14)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_CONFQ_DEC_RULE_SHIFT 14
+#पूर्ण_अगर
+	काष्ठा xstorm_fcoe_extra_ag_context_section __extra_section;
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_vars7;
-#define __XSTORM_FCOE_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
-#define __XSTORM_FCOE_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_AUX13_FLAG (0x1<<3)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX13_FLAG_SHIFT 3
-#define __XSTORM_FCOE_AG_CONTEXT_QUEUE0_CF (0x3<<4)
-#define __XSTORM_FCOE_AG_CONTEXT_QUEUE0_CF_SHIFT 4
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE3_SHIFT 6
-#define XSTORM_FCOE_AG_CONTEXT_AUX1_CF (0x3<<8)
-#define XSTORM_FCOE_AG_CONTEXT_AUX1_CF_SHIFT 8
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED62 (0x1<<10)
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED62_SHIFT 10
-#define __XSTORM_FCOE_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
-#define __XSTORM_FCOE_AG_CONTEXT_AUX10_FLAG (0x1<<12)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX10_FLAG_SHIFT 12
-#define __XSTORM_FCOE_AG_CONTEXT_AUX11_FLAG (0x1<<13)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX11_FLAG_SHIFT 13
-#define __XSTORM_FCOE_AG_CONTEXT_AUX12_FLAG (0x1<<14)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX12_FLAG_SHIFT 14
-#define __XSTORM_FCOE_AG_CONTEXT_AUX2_FLAG (0x1<<15)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX2_FLAG_SHIFT 15
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX13_FLAG (0x1<<3)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX13_FLAG_SHIFT 3
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_QUEUE0_CF (0x3<<4)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_QUEUE0_CF_SHIFT 4
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE3_SHIFT 6
+#घोषणा XSTORM_FCOE_AG_CONTEXT_AUX1_CF (0x3<<8)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_AUX1_CF_SHIFT 8
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED62 (0x1<<10)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED62_SHIFT 10
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX10_FLAG (0x1<<12)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX10_FLAG_SHIFT 12
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX11_FLAG (0x1<<13)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX11_FLAG_SHIFT 13
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX12_FLAG (0x1<<14)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX12_FLAG_SHIFT 14
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX2_FLAG (0x1<<15)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX2_FLAG_SHIFT 15
 	u8 agg_val3_th;
 	u8 agg_vars6;
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE6_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_XFRQ_DEC_RULE (0x7<<3)
-#define __XSTORM_FCOE_AG_CONTEXT_XFRQ_DEC_RULE_SHIFT 3
-#define __XSTORM_FCOE_AG_CONTEXT_SQ_DEC_RULE (0x3<<6)
-#define __XSTORM_FCOE_AG_CONTEXT_SQ_DEC_RULE_SHIFT 6
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE6_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_XFRQ_DEC_RULE (0x7<<3)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_XFRQ_DEC_RULE_SHIFT 3
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_SQ_DEC_RULE (0x3<<6)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_SQ_DEC_RULE_SHIFT 6
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 agg_vars6;
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE6_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_XFRQ_DEC_RULE (0x7<<3)
-#define __XSTORM_FCOE_AG_CONTEXT_XFRQ_DEC_RULE_SHIFT 3
-#define __XSTORM_FCOE_AG_CONTEXT_SQ_DEC_RULE (0x3<<6)
-#define __XSTORM_FCOE_AG_CONTEXT_SQ_DEC_RULE_SHIFT 6
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE6_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_XFRQ_DEC_RULE (0x7<<3)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_XFRQ_DEC_RULE_SHIFT 3
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_SQ_DEC_RULE (0x3<<6)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_SQ_DEC_RULE_SHIFT 6
 	u8 agg_val3_th;
 	u16 agg_vars7;
-#define __XSTORM_FCOE_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
-#define __XSTORM_FCOE_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
-#define __XSTORM_FCOE_AG_CONTEXT_AUX13_FLAG (0x1<<3)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX13_FLAG_SHIFT 3
-#define __XSTORM_FCOE_AG_CONTEXT_QUEUE0_CF (0x3<<4)
-#define __XSTORM_FCOE_AG_CONTEXT_QUEUE0_CF_SHIFT 4
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
-#define XSTORM_FCOE_AG_CONTEXT_DECISION_RULE3_SHIFT 6
-#define XSTORM_FCOE_AG_CONTEXT_AUX1_CF (0x3<<8)
-#define XSTORM_FCOE_AG_CONTEXT_AUX1_CF_SHIFT 8
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED62 (0x1<<10)
-#define __XSTORM_FCOE_AG_CONTEXT_RESERVED62_SHIFT 10
-#define __XSTORM_FCOE_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
-#define __XSTORM_FCOE_AG_CONTEXT_AUX10_FLAG (0x1<<12)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX10_FLAG_SHIFT 12
-#define __XSTORM_FCOE_AG_CONTEXT_AUX11_FLAG (0x1<<13)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX11_FLAG_SHIFT 13
-#define __XSTORM_FCOE_AG_CONTEXT_AUX12_FLAG (0x1<<14)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX12_FLAG_SHIFT 14
-#define __XSTORM_FCOE_AG_CONTEXT_AUX2_FLAG (0x1<<15)
-#define __XSTORM_FCOE_AG_CONTEXT_AUX2_FLAG_SHIFT 15
-#endif
-#if defined(__BIG_ENDIAN)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX13_FLAG (0x1<<3)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX13_FLAG_SHIFT 3
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_QUEUE0_CF (0x3<<4)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_QUEUE0_CF_SHIFT 4
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_DECISION_RULE3_SHIFT 6
+#घोषणा XSTORM_FCOE_AG_CONTEXT_AUX1_CF (0x3<<8)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_AUX1_CF_SHIFT 8
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED62 (0x1<<10)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_RESERVED62_SHIFT 10
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX10_FLAG (0x1<<12)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX10_FLAG_SHIFT 12
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX11_FLAG (0x1<<13)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX11_FLAG_SHIFT 13
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX12_FLAG (0x1<<14)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX12_FLAG_SHIFT 14
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX2_FLAG (0x1<<15)
+#घोषणा __XSTORM_FCOE_AG_CONTEXT_AUX2_FLAG_SHIFT 15
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_val11_th;
 	u16 __agg_val11;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __agg_val11;
 	u16 __agg_val11_th;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 __reserved1;
 	u8 __agg_val6_th;
 	u16 __agg_val9;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __agg_val9;
 	u8 __agg_val6_th;
 	u8 __reserved1;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 confq_cons;
 	u16 confq_prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 confq_prod;
 	u16 confq_cons;
-#endif
+#पूर्ण_अगर
 	u32 agg_vars8;
-#define XSTORM_FCOE_AG_CONTEXT_AGG_MISC2 (0xFFFFFF<<0)
-#define XSTORM_FCOE_AG_CONTEXT_AGG_MISC2_SHIFT 0
-#define XSTORM_FCOE_AG_CONTEXT_AGG_MISC3 (0xFF<<24)
-#define XSTORM_FCOE_AG_CONTEXT_AGG_MISC3_SHIFT 24
-#if defined(__BIG_ENDIAN)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_AGG_MISC2 (0xFFFFFF<<0)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_AGG_MISC2_SHIFT 0
+#घोषणा XSTORM_FCOE_AG_CONTEXT_AGG_MISC3 (0xFF<<24)
+#घोषणा XSTORM_FCOE_AG_CONTEXT_AGG_MISC3_SHIFT 24
+#अगर defined(__BIG_ENDIAN)
 	u16 __cache_wqe_db;
 	u16 sq_prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 sq_prod;
 	u16 __cache_wqe_db;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 agg_val3;
 	u8 agg_val6;
 	u8 agg_val5_th;
 	u8 agg_val5;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 agg_val5;
 	u8 agg_val5_th;
 	u8 agg_val6;
 	u8 agg_val3;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_misc1;
 	u16 agg_limit1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_limit1;
 	u16 __agg_misc1;
-#endif
+#पूर्ण_अगर
 	u32 completion_seq;
 	u32 confq_pbl_base_lo;
 	u32 confq_pbl_base_hi;
-};
+पूर्ण;
 
 
 
 /*
  * The tcp aggregative context section of Xstorm
  */
-struct xstorm_tcp_tcp_ag_context_section {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_tcp_tcp_ag_context_section अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 tcp_agg_vars1;
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_DA_TIMER_CF (0x3<<0)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_DA_TIMER_CF_SHIFT 0
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED (0x3<<2)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_SHIFT 2
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF (0x3<<4)
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_SHIFT 4
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CLEAR_DA_TIMER_EN (0x1<<6)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CLEAR_DA_TIMER_EN_SHIFT 6
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_EXPIRATION_FLAG (0x1<<7)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_EXPIRATION_FLAG_SHIFT 7
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_DA_TIMER_CF (0x3<<0)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_DA_TIMER_CF_SHIFT 0
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED (0x3<<2)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_SHIFT 2
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF (0x3<<4)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_SHIFT 4
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CLEAR_DA_TIMER_EN (0x1<<6)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CLEAR_DA_TIMER_EN_SHIFT 6
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_EXPIRATION_FLAG (0x1<<7)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_EXPIRATION_FLAG_SHIFT 7
 	u8 __da_cnt;
 	u16 mss;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 mss;
 	u8 __da_cnt;
 	u8 tcp_agg_vars1;
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_DA_TIMER_CF (0x3<<0)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_DA_TIMER_CF_SHIFT 0
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED (0x3<<2)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_SHIFT 2
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF (0x3<<4)
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_SHIFT 4
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CLEAR_DA_TIMER_EN (0x1<<6)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CLEAR_DA_TIMER_EN_SHIFT 6
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_EXPIRATION_FLAG (0x1<<7)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_EXPIRATION_FLAG_SHIFT 7
-#endif
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_DA_TIMER_CF (0x3<<0)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_DA_TIMER_CF_SHIFT 0
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED (0x3<<2)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_SHIFT 2
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF (0x3<<4)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_SHIFT 4
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CLEAR_DA_TIMER_EN (0x1<<6)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CLEAR_DA_TIMER_EN_SHIFT 6
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_EXPIRATION_FLAG (0x1<<7)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_EXPIRATION_FLAG_SHIFT 7
+#पूर्ण_अगर
 	u32 snd_nxt;
 	u32 tx_wnd;
 	u32 snd_una;
 	u32 local_adv_wnd;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 __agg_val8_th;
 	u8 __tx_dest;
 	u16 tcp_agg_vars2;
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG (0x1<<0)
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_SHIFT 0
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_UNBLOCKED (0x1<<1)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_UNBLOCKED_SHIFT 1
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_TIMER_ACTIVE (0x1<<2)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_TIMER_ACTIVE_SHIFT 2
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX3_FLAG (0x1<<3)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX3_FLAG_SHIFT 3
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX4_FLAG (0x1<<4)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX4_FLAG_SHIFT 4
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_ENABLE (0x1<<5)
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_ENABLE_SHIFT 5
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_EN (0x1<<6)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_EN_SHIFT 6
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN (0x1<<7)
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN_SHIFT 7
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_EN (0x1<<8)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_EN_SHIFT 8
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<9)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 9
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_RTO_CF (0x3<<10)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_RTO_CF_SHIFT 10
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF (0x3<<12)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF_SHIFT 12
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF (0x3<<14)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_SHIFT 14
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG (0x1<<0)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_SHIFT 0
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_UNBLOCKED (0x1<<1)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_UNBLOCKED_SHIFT 1
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_TIMER_ACTIVE (0x1<<2)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_TIMER_ACTIVE_SHIFT 2
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX3_FLAG (0x1<<3)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX3_FLAG_SHIFT 3
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX4_FLAG (0x1<<4)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX4_FLAG_SHIFT 4
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_ENABLE (0x1<<5)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_ENABLE_SHIFT 5
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_EN (0x1<<6)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_EN_SHIFT 6
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN (0x1<<7)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN_SHIFT 7
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_EN (0x1<<8)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_EN_SHIFT 8
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<9)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 9
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_RTO_CF (0x3<<10)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_RTO_CF_SHIFT 10
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF (0x3<<12)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF_SHIFT 12
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF (0x3<<14)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_SHIFT 14
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 tcp_agg_vars2;
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG (0x1<<0)
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_SHIFT 0
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_UNBLOCKED (0x1<<1)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_UNBLOCKED_SHIFT 1
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_TIMER_ACTIVE (0x1<<2)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_TIMER_ACTIVE_SHIFT 2
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX3_FLAG (0x1<<3)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX3_FLAG_SHIFT 3
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX4_FLAG (0x1<<4)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX4_FLAG_SHIFT 4
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_ENABLE (0x1<<5)
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_ENABLE_SHIFT 5
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_EN (0x1<<6)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_EN_SHIFT 6
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN (0x1<<7)
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN_SHIFT 7
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_EN (0x1<<8)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_EN_SHIFT 8
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<9)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 9
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_RTO_CF (0x3<<10)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_RTO_CF_SHIFT 10
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF (0x3<<12)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF_SHIFT 12
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF (0x3<<14)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_SHIFT 14
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG (0x1<<0)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_SHIFT 0
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_UNBLOCKED (0x1<<1)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_UNBLOCKED_SHIFT 1
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_TIMER_ACTIVE (0x1<<2)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_TIMER_ACTIVE_SHIFT 2
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX3_FLAG (0x1<<3)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX3_FLAG_SHIFT 3
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX4_FLAG (0x1<<4)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX4_FLAG_SHIFT 4
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_ENABLE (0x1<<5)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DA_ENABLE_SHIFT 5
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_EN (0x1<<6)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ACK_TO_FE_UPDATED_EN_SHIFT 6
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN (0x1<<7)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SIDEBAND_SENT_CF_EN_SHIFT 7
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_EN (0x1<<8)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_FIN_FLAG_EN_SHIFT 8
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG (0x1<<9)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX1_FLAG_SHIFT 9
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_RTO_CF (0x3<<10)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_SET_RTO_CF_SHIFT 10
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF (0x3<<12)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_UPDATED_CF_SHIFT 12
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF (0x3<<14)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_SHIFT 14
 	u8 __tx_dest;
 	u8 __agg_val8_th;
-#endif
+#पूर्ण_अगर
 	u32 ack_to_far_end;
-	u32 rto_timer;
-	u32 ka_timer;
+	u32 rto_समयr;
+	u32 ka_समयr;
 	u32 ts_to_echo;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_val7_th;
 	u16 __agg_val7;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __agg_val7;
 	u16 __agg_val7_th;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 __tcp_agg_vars5;
 	u8 __tcp_agg_vars4;
 	u8 __tcp_agg_vars3;
-	u8 __force_pure_ack_cnt;
-#elif defined(__LITTLE_ENDIAN)
-	u8 __force_pure_ack_cnt;
+	u8 __क्रमce_pure_ack_cnt;
+#या_अगर defined(__LITTLE_ENDIAN)
+	u8 __क्रमce_pure_ack_cnt;
 	u8 __tcp_agg_vars3;
 	u8 __tcp_agg_vars4;
 	u8 __tcp_agg_vars5;
-#endif
+#पूर्ण_अगर
 	u32 tcp_agg_vars6;
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_CF_EN (0x1<<0)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_CF_EN_SHIFT 0
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_EN (0x1<<1)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_EN_SHIFT 1
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX9_CF_EN (0x1<<2)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX9_CF_EN_SHIFT 2
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_EN (0x1<<3)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_EN_SHIFT 3
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX6_FLAG (0x1<<4)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX6_FLAG_SHIFT 4
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX7_FLAG (0x1<<5)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX7_FLAG_SHIFT 5
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX5_CF (0x3<<6)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX5_CF_SHIFT 6
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX9_CF (0x3<<8)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX9_CF_SHIFT 8
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF (0x3<<10)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_SHIFT 10
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX11_CF (0x3<<12)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX11_CF_SHIFT 12
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX12_CF (0x3<<14)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX12_CF_SHIFT 14
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX13_CF (0x3<<16)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX13_CF_SHIFT 16
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX14_CF (0x3<<18)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX14_CF_SHIFT 18
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX15_CF (0x3<<20)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX15_CF_SHIFT 20
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX16_CF (0x3<<22)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX16_CF_SHIFT 22
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX17_CF (0x3<<24)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX17_CF_SHIFT 24
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ECE_FLAG (0x1<<26)
-#define XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ECE_FLAG_SHIFT 26
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_RESERVED71 (0x1<<27)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_RESERVED71_SHIFT 27
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_FORCE_PURE_ACK_CNT_DIRTY (0x1<<28)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_FORCE_PURE_ACK_CNT_DIRTY_SHIFT 28
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TCP_AUTO_STOP_FLAG (0x1<<29)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TCP_AUTO_STOP_FLAG_SHIFT 29
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DO_TS_UPDATE_FLAG (0x1<<30)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DO_TS_UPDATE_FLAG_SHIFT 30
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CANCEL_RETRANSMIT_FLAG (0x1<<31)
-#define __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CANCEL_RETRANSMIT_FLAG_SHIFT 31
-#if defined(__BIG_ENDIAN)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_CF_EN (0x1<<0)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TS_TO_ECHO_CF_EN_SHIFT 0
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_EN (0x1<<1)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TX_DEST_UPDATED_CF_EN_SHIFT 1
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX9_CF_EN (0x1<<2)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX9_CF_EN_SHIFT 2
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_EN (0x1<<3)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_EN_SHIFT 3
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX6_FLAG (0x1<<4)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX6_FLAG_SHIFT 4
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX7_FLAG (0x1<<5)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX7_FLAG_SHIFT 5
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX5_CF (0x3<<6)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX5_CF_SHIFT 6
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX9_CF (0x3<<8)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX9_CF_SHIFT 8
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF (0x3<<10)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX10_CF_SHIFT 10
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX11_CF (0x3<<12)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX11_CF_SHIFT 12
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX12_CF (0x3<<14)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX12_CF_SHIFT 14
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX13_CF (0x3<<16)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX13_CF_SHIFT 16
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX14_CF (0x3<<18)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX14_CF_SHIFT 18
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX15_CF (0x3<<20)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX15_CF_SHIFT 20
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX16_CF (0x3<<22)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX16_CF_SHIFT 22
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX17_CF (0x3<<24)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_AUX17_CF_SHIFT 24
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ECE_FLAG (0x1<<26)
+#घोषणा XSTORM_TCP_TCP_AG_CONTEXT_SECTION_ECE_FLAG_SHIFT 26
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_RESERVED71 (0x1<<27)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_RESERVED71_SHIFT 27
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_FORCE_PURE_ACK_CNT_सूचीTY (0x1<<28)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_FORCE_PURE_ACK_CNT_सूचीTY_SHIFT 28
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TCP_AUTO_STOP_FLAG (0x1<<29)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_TCP_AUTO_STOP_FLAG_SHIFT 29
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DO_TS_UPDATE_FLAG (0x1<<30)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_DO_TS_UPDATE_FLAG_SHIFT 30
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CANCEL_RETRANSMIT_FLAG (0x1<<31)
+#घोषणा __XSTORM_TCP_TCP_AG_CONTEXT_SECTION_CANCEL_RETRANSMIT_FLAG_SHIFT 31
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_misc6;
 	u16 __tcp_agg_vars7;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __tcp_agg_vars7;
 	u16 __agg_misc6;
-#endif
+#पूर्ण_अगर
 	u32 __agg_val10;
 	u32 __agg_val10_th;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 __reserved3;
 	u8 __reserved2;
 	u8 __da_only_cnt;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 __da_only_cnt;
 	u8 __reserved2;
 	u16 __reserved3;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * The iscsi aggregative context of Xstorm
  */
-struct xstorm_iscsi_ag_context {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_iscsi_ag_context अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_val1;
 	u8 agg_vars1;
-#define __XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define __XSTORM_ISCSI_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
-#define __XSTORM_ISCSI_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
-#define XSTORM_ISCSI_AG_CONTEXT_NAGLE_EN (0x1<<5)
-#define XSTORM_ISCSI_AG_CONTEXT_NAGLE_EN_SHIFT 5
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
-#define __XSTORM_ISCSI_AG_CONTEXT_UNA_GT_NXT_EN (0x1<<7)
-#define __XSTORM_ISCSI_AG_CONTEXT_UNA_GT_NXT_EN_SHIFT 7
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_NAGLE_EN (0x1<<5)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_NAGLE_EN_SHIFT 5
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_UNA_GT_NXT_EN (0x1<<7)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_UNA_GT_NXT_EN_SHIFT 7
 	u8 state;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 state;
 	u8 agg_vars1;
-#define __XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define __XSTORM_ISCSI_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
-#define __XSTORM_ISCSI_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
-#define XSTORM_ISCSI_AG_CONTEXT_NAGLE_EN (0x1<<5)
-#define XSTORM_ISCSI_AG_CONTEXT_NAGLE_EN_SHIFT 5
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
-#define __XSTORM_ISCSI_AG_CONTEXT_UNA_GT_NXT_EN (0x1<<7)
-#define __XSTORM_ISCSI_AG_CONTEXT_UNA_GT_NXT_EN_SHIFT 7
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_NAGLE_EN (0x1<<5)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_NAGLE_EN_SHIFT 5
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_UNA_GT_NXT_EN (0x1<<7)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_UNA_GT_NXT_EN_SHIFT 7
 	u16 agg_val1;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 cdu_reserved;
 	u8 __agg_vars4;
 	u8 agg_vars3;
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
-#define __XSTORM_ISCSI_AG_CONTEXT_RX_TS_EN_CF (0x3<<6)
-#define __XSTORM_ISCSI_AG_CONTEXT_RX_TS_EN_CF_SHIFT 6
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_RX_TS_EN_CF (0x3<<6)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_RX_TS_EN_CF_SHIFT 6
 	u8 agg_vars2;
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_CF (0x3<<0)
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_SHIFT 0
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX8_FLAG (0x1<<3)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX8_FLAG_SHIFT 3
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX9_FLAG (0x1<<4)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX9_FLAG_SHIFT 4
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE1_SHIFT 5
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_EN (0x1<<7)
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_EN_SHIFT 7
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_CF (0x3<<0)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_SHIFT 0
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX8_FLAG (0x1<<3)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX8_FLAG_SHIFT 3
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX9_FLAG (0x1<<4)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX9_FLAG_SHIFT 4
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE1_SHIFT 5
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_EN (0x1<<7)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_EN_SHIFT 7
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 agg_vars2;
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_CF (0x3<<0)
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_SHIFT 0
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX8_FLAG (0x1<<3)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX8_FLAG_SHIFT 3
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX9_FLAG (0x1<<4)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX9_FLAG_SHIFT 4
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE1_SHIFT 5
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_EN (0x1<<7)
-#define __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_EN_SHIFT 7
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_CF (0x3<<0)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_SHIFT 0
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX8_FLAG (0x1<<3)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX8_FLAG_SHIFT 3
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX9_FLAG (0x1<<4)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX9_FLAG_SHIFT 4
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE1_SHIFT 5
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_EN (0x1<<7)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_DQ_CF_EN_SHIFT 7
 	u8 agg_vars3;
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
-#define __XSTORM_ISCSI_AG_CONTEXT_RX_TS_EN_CF (0x3<<6)
-#define __XSTORM_ISCSI_AG_CONTEXT_RX_TS_EN_CF_SHIFT 6
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_RX_TS_EN_CF (0x3<<6)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_RX_TS_EN_CF_SHIFT 6
 	u8 __agg_vars4;
 	u8 cdu_reserved;
-#endif
+#पूर्ण_अगर
 	u32 more_to_send;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_vars5;
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE5_SHIFT 0
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE2 (0x3<<14)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE2_SHIFT 14
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE5_SHIFT 0
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE2 (0x3<<14)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE2_SHIFT 14
 	u16 sq_cons;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 sq_cons;
 	u16 agg_vars5;
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE5_SHIFT 0
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
-#define XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE2 (0x3<<14)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE2_SHIFT 14
-#endif
-	struct xstorm_tcp_tcp_ag_context_section tcp;
-#if defined(__BIG_ENDIAN)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE5_SHIFT 0
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE2 (0x3<<14)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE2_SHIFT 14
+#पूर्ण_अगर
+	काष्ठा xstorm_tcp_tcp_ag_context_section tcp;
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_vars7;
-#define __XSTORM_ISCSI_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
-#define __XSTORM_ISCSI_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX13_FLAG (0x1<<3)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX13_FLAG_SHIFT 3
-#define __XSTORM_ISCSI_AG_CONTEXT_STORMS_SYNC_CF (0x3<<4)
-#define __XSTORM_ISCSI_AG_CONTEXT_STORMS_SYNC_CF_SHIFT 4
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE3_SHIFT 6
-#define XSTORM_ISCSI_AG_CONTEXT_AUX1_CF (0x3<<8)
-#define XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_SHIFT 8
-#define __XSTORM_ISCSI_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK (0x1<<10)
-#define __XSTORM_ISCSI_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK_SHIFT 10
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX10_FLAG (0x1<<12)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX10_FLAG_SHIFT 12
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX11_FLAG (0x1<<13)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX11_FLAG_SHIFT 13
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX12_FLAG (0x1<<14)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX12_FLAG_SHIFT 14
-#define __XSTORM_ISCSI_AG_CONTEXT_RX_WND_SCL_EN (0x1<<15)
-#define __XSTORM_ISCSI_AG_CONTEXT_RX_WND_SCL_EN_SHIFT 15
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX13_FLAG (0x1<<3)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX13_FLAG_SHIFT 3
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_STORMS_SYNC_CF (0x3<<4)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_STORMS_SYNC_CF_SHIFT 4
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE3_SHIFT 6
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_AUX1_CF (0x3<<8)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_SHIFT 8
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK (0x1<<10)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK_SHIFT 10
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX10_FLAG (0x1<<12)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX10_FLAG_SHIFT 12
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX11_FLAG (0x1<<13)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX11_FLAG_SHIFT 13
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX12_FLAG (0x1<<14)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX12_FLAG_SHIFT 14
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_RX_WND_SCL_EN (0x1<<15)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_RX_WND_SCL_EN_SHIFT 15
 	u8 agg_val3_th;
 	u8 agg_vars6;
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE6_SHIFT 0
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE7 (0x7<<3)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE7_SHIFT 3
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE4 (0x3<<6)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE4_SHIFT 6
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE6_SHIFT 0
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE7 (0x7<<3)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE7_SHIFT 3
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE4 (0x3<<6)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE4_SHIFT 6
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 agg_vars6;
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE6_SHIFT 0
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE7 (0x7<<3)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE7_SHIFT 3
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE4 (0x3<<6)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE4_SHIFT 6
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE6_SHIFT 0
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE7 (0x7<<3)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE7_SHIFT 3
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE4 (0x3<<6)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE4_SHIFT 6
 	u8 agg_val3_th;
 	u16 agg_vars7;
-#define __XSTORM_ISCSI_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
-#define __XSTORM_ISCSI_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX13_FLAG (0x1<<3)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX13_FLAG_SHIFT 3
-#define __XSTORM_ISCSI_AG_CONTEXT_STORMS_SYNC_CF (0x3<<4)
-#define __XSTORM_ISCSI_AG_CONTEXT_STORMS_SYNC_CF_SHIFT 4
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
-#define XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE3_SHIFT 6
-#define XSTORM_ISCSI_AG_CONTEXT_AUX1_CF (0x3<<8)
-#define XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_SHIFT 8
-#define __XSTORM_ISCSI_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK (0x1<<10)
-#define __XSTORM_ISCSI_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK_SHIFT 10
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX10_FLAG (0x1<<12)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX10_FLAG_SHIFT 12
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX11_FLAG (0x1<<13)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX11_FLAG_SHIFT 13
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX12_FLAG (0x1<<14)
-#define __XSTORM_ISCSI_AG_CONTEXT_AUX12_FLAG_SHIFT 14
-#define __XSTORM_ISCSI_AG_CONTEXT_RX_WND_SCL_EN (0x1<<15)
-#define __XSTORM_ISCSI_AG_CONTEXT_RX_WND_SCL_EN_SHIFT 15
-#endif
-#if defined(__BIG_ENDIAN)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX13_FLAG (0x1<<3)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX13_FLAG_SHIFT 3
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_STORMS_SYNC_CF (0x3<<4)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_STORMS_SYNC_CF_SHIFT 4
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_DECISION_RULE3_SHIFT 6
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_AUX1_CF (0x3<<8)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_SHIFT 8
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK (0x1<<10)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK_SHIFT 10
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX10_FLAG (0x1<<12)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX10_FLAG_SHIFT 12
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX11_FLAG (0x1<<13)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX11_FLAG_SHIFT 13
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX12_FLAG (0x1<<14)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_AUX12_FLAG_SHIFT 14
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_RX_WND_SCL_EN (0x1<<15)
+#घोषणा __XSTORM_ISCSI_AG_CONTEXT_RX_WND_SCL_EN_SHIFT 15
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_val11_th;
 	u16 __gen_data;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __gen_data;
 	u16 __agg_val11_th;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 __reserved1;
 	u8 __agg_val6_th;
 	u16 __agg_val9;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __agg_val9;
 	u8 __agg_val6_th;
 	u8 __reserved1;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 hq_prod;
 	u16 hq_cons;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 hq_cons;
 	u16 hq_prod;
-#endif
+#पूर्ण_अगर
 	u32 agg_vars8;
-#define XSTORM_ISCSI_AG_CONTEXT_AGG_MISC2 (0xFFFFFF<<0)
-#define XSTORM_ISCSI_AG_CONTEXT_AGG_MISC2_SHIFT 0
-#define XSTORM_ISCSI_AG_CONTEXT_AGG_MISC3 (0xFF<<24)
-#define XSTORM_ISCSI_AG_CONTEXT_AGG_MISC3_SHIFT 24
-#if defined(__BIG_ENDIAN)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_AGG_MISC2 (0xFFFFFF<<0)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_AGG_MISC2_SHIFT 0
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_AGG_MISC3 (0xFF<<24)
+#घोषणा XSTORM_ISCSI_AG_CONTEXT_AGG_MISC3_SHIFT 24
+#अगर defined(__BIG_ENDIAN)
 	u16 r2tq_prod;
 	u16 sq_prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 sq_prod;
 	u16 r2tq_prod;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 agg_val3;
 	u8 agg_val6;
 	u8 agg_val5_th;
 	u8 agg_val5;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 agg_val5;
 	u8 agg_val5_th;
 	u8 agg_val6;
 	u8 agg_val3;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_misc1;
 	u16 agg_limit1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_limit1;
 	u16 __agg_misc1;
-#endif
+#पूर्ण_अगर
 	u32 hq_cons_tcp_seq;
 	u32 exp_stat_sn;
 	u32 rst_seq_num;
-};
+पूर्ण;
 
 
 /*
  * The L5cm aggregative context of XStorm
  */
-struct xstorm_l5cm_ag_context {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_l5cm_ag_context अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_val1;
 	u8 agg_vars1;
-#define __XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define __XSTORM_L5CM_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
-#define __XSTORM_L5CM_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
-#define XSTORM_L5CM_AG_CONTEXT_NAGLE_EN (0x1<<5)
-#define XSTORM_L5CM_AG_CONTEXT_NAGLE_EN_SHIFT 5
-#define __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
-#define __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
-#define __XSTORM_L5CM_AG_CONTEXT_UNA_GT_NXT_EN (0x1<<7)
-#define __XSTORM_L5CM_AG_CONTEXT_UNA_GT_NXT_EN_SHIFT 7
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
+#घोषणा XSTORM_L5CM_AG_CONTEXT_NAGLE_EN (0x1<<5)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_NAGLE_EN_SHIFT 5
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_UNA_GT_NXT_EN (0x1<<7)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_UNA_GT_NXT_EN_SHIFT 7
 	u8 state;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 state;
 	u8 agg_vars1;
-#define __XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
-#define __XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
-#define XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
-#define __XSTORM_L5CM_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
-#define __XSTORM_L5CM_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
-#define XSTORM_L5CM_AG_CONTEXT_NAGLE_EN (0x1<<5)
-#define XSTORM_L5CM_AG_CONTEXT_NAGLE_EN_SHIFT 5
-#define __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
-#define __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
-#define __XSTORM_L5CM_AG_CONTEXT_UNA_GT_NXT_EN (0x1<<7)
-#define __XSTORM_L5CM_AG_CONTEXT_UNA_GT_NXT_EN_SHIFT 7
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM0 (0x1<<0)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM0_SHIFT 0
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM1 (0x1<<1)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM1_SHIFT 1
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM2 (0x1<<2)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM2_SHIFT 2
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM3 (0x1<<3)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_EXISTS_IN_QM3_SHIFT 3
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_MORE_TO_SEND_EN (0x1<<4)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_MORE_TO_SEND_EN_SHIFT 4
+#घोषणा XSTORM_L5CM_AG_CONTEXT_NAGLE_EN (0x1<<5)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_NAGLE_EN_SHIFT 5
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG (0x1<<6)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_SHIFT 6
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_UNA_GT_NXT_EN (0x1<<7)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_UNA_GT_NXT_EN_SHIFT 7
 	u16 agg_val1;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 cdu_reserved;
 	u8 __agg_vars4;
 	u8 agg_vars3;
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
-#define __XSTORM_L5CM_AG_CONTEXT_RX_TS_EN_CF (0x3<<6)
-#define __XSTORM_L5CM_AG_CONTEXT_RX_TS_EN_CF_SHIFT 6
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_RX_TS_EN_CF (0x3<<6)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_RX_TS_EN_CF_SHIFT 6
 	u8 agg_vars2;
-#define XSTORM_L5CM_AG_CONTEXT_AUX4_CF (0x3<<0)
-#define XSTORM_L5CM_AG_CONTEXT_AUX4_CF_SHIFT 0
-#define __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
-#define __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
-#define __XSTORM_L5CM_AG_CONTEXT_AUX8_FLAG (0x1<<3)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX8_FLAG_SHIFT 3
-#define __XSTORM_L5CM_AG_CONTEXT_AUX9_FLAG (0x1<<4)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX9_FLAG_SHIFT 4
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE1_SHIFT 5
-#define XSTORM_L5CM_AG_CONTEXT_AUX4_CF_EN (0x1<<7)
-#define XSTORM_L5CM_AG_CONTEXT_AUX4_CF_EN_SHIFT 7
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX4_CF (0x3<<0)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX4_CF_SHIFT 0
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX8_FLAG (0x1<<3)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX8_FLAG_SHIFT 3
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX9_FLAG (0x1<<4)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX9_FLAG_SHIFT 4
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE1_SHIFT 5
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX4_CF_EN (0x1<<7)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX4_CF_EN_SHIFT 7
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 agg_vars2;
-#define XSTORM_L5CM_AG_CONTEXT_AUX4_CF (0x3<<0)
-#define XSTORM_L5CM_AG_CONTEXT_AUX4_CF_SHIFT 0
-#define __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
-#define __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
-#define __XSTORM_L5CM_AG_CONTEXT_AUX8_FLAG (0x1<<3)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX8_FLAG_SHIFT 3
-#define __XSTORM_L5CM_AG_CONTEXT_AUX9_FLAG (0x1<<4)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX9_FLAG_SHIFT 4
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE1_SHIFT 5
-#define XSTORM_L5CM_AG_CONTEXT_AUX4_CF_EN (0x1<<7)
-#define XSTORM_L5CM_AG_CONTEXT_AUX4_CF_EN_SHIFT 7
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX4_CF (0x3<<0)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX4_CF_SHIFT 0
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_EN (0x1<<2)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_DQ_SPARE_FLAG_EN_SHIFT 2
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX8_FLAG (0x1<<3)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX8_FLAG_SHIFT 3
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX9_FLAG (0x1<<4)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX9_FLAG_SHIFT 4
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE1 (0x3<<5)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE1_SHIFT 5
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX4_CF_EN (0x1<<7)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX4_CF_EN_SHIFT 7
 	u8 agg_vars3;
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
-#define __XSTORM_L5CM_AG_CONTEXT_RX_TS_EN_CF (0x3<<6)
-#define __XSTORM_L5CM_AG_CONTEXT_RX_TS_EN_CF_SHIFT 6
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM2 (0x3F<<0)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM2_SHIFT 0
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_RX_TS_EN_CF (0x3<<6)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_RX_TS_EN_CF_SHIFT 6
 	u8 __agg_vars4;
 	u8 cdu_reserved;
-#endif
+#पूर्ण_अगर
 	u32 more_to_send;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_vars5;
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE5_SHIFT 0
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE2 (0x3<<14)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE2_SHIFT 14
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE5_SHIFT 0
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE2 (0x3<<14)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE2_SHIFT 14
 	u16 agg_val4_th;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_val4_th;
 	u16 agg_vars5;
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE5_SHIFT 0
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
-#define XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE2 (0x3<<14)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE2_SHIFT 14
-#endif
-	struct xstorm_tcp_tcp_ag_context_section tcp;
-#if defined(__BIG_ENDIAN)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE5 (0x3<<0)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE5_SHIFT 0
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM0 (0x3F<<2)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM0_SHIFT 2
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM1 (0x3F<<8)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_PHYSICAL_QUEUE_NUM1_SHIFT 8
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE2 (0x3<<14)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE2_SHIFT 14
+#पूर्ण_अगर
+	काष्ठा xstorm_tcp_tcp_ag_context_section tcp;
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_vars7;
-#define __XSTORM_L5CM_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
-#define __XSTORM_L5CM_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
-#define __XSTORM_L5CM_AG_CONTEXT_AUX13_FLAG (0x1<<3)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX13_FLAG_SHIFT 3
-#define __XSTORM_L5CM_AG_CONTEXT_STORMS_SYNC_CF (0x3<<4)
-#define __XSTORM_L5CM_AG_CONTEXT_STORMS_SYNC_CF_SHIFT 4
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE3_SHIFT 6
-#define XSTORM_L5CM_AG_CONTEXT_AUX1_CF (0x3<<8)
-#define XSTORM_L5CM_AG_CONTEXT_AUX1_CF_SHIFT 8
-#define __XSTORM_L5CM_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK (0x1<<10)
-#define __XSTORM_L5CM_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK_SHIFT 10
-#define __XSTORM_L5CM_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
-#define __XSTORM_L5CM_AG_CONTEXT_AUX10_FLAG (0x1<<12)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX10_FLAG_SHIFT 12
-#define __XSTORM_L5CM_AG_CONTEXT_AUX11_FLAG (0x1<<13)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX11_FLAG_SHIFT 13
-#define __XSTORM_L5CM_AG_CONTEXT_AUX12_FLAG (0x1<<14)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX12_FLAG_SHIFT 14
-#define __XSTORM_L5CM_AG_CONTEXT_RX_WND_SCL_EN (0x1<<15)
-#define __XSTORM_L5CM_AG_CONTEXT_RX_WND_SCL_EN_SHIFT 15
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX13_FLAG (0x1<<3)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX13_FLAG_SHIFT 3
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_STORMS_SYNC_CF (0x3<<4)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_STORMS_SYNC_CF_SHIFT 4
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE3_SHIFT 6
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX1_CF (0x3<<8)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX1_CF_SHIFT 8
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK (0x1<<10)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK_SHIFT 10
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX10_FLAG (0x1<<12)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX10_FLAG_SHIFT 12
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX11_FLAG (0x1<<13)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX11_FLAG_SHIFT 13
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX12_FLAG (0x1<<14)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX12_FLAG_SHIFT 14
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_RX_WND_SCL_EN (0x1<<15)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_RX_WND_SCL_EN_SHIFT 15
 	u8 agg_val3_th;
 	u8 agg_vars6;
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE6_SHIFT 0
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE7 (0x7<<3)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE7_SHIFT 3
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE4 (0x3<<6)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE4_SHIFT 6
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE6_SHIFT 0
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE7 (0x7<<3)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE7_SHIFT 3
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE4 (0x3<<6)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE4_SHIFT 6
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 agg_vars6;
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE6_SHIFT 0
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE7 (0x7<<3)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE7_SHIFT 3
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE4 (0x3<<6)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE4_SHIFT 6
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE6 (0x7<<0)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE6_SHIFT 0
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE7 (0x7<<3)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE7_SHIFT 3
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE4 (0x3<<6)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE4_SHIFT 6
 	u8 agg_val3_th;
 	u16 agg_vars7;
-#define __XSTORM_L5CM_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
-#define __XSTORM_L5CM_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
-#define __XSTORM_L5CM_AG_CONTEXT_AUX13_FLAG (0x1<<3)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX13_FLAG_SHIFT 3
-#define __XSTORM_L5CM_AG_CONTEXT_STORMS_SYNC_CF (0x3<<4)
-#define __XSTORM_L5CM_AG_CONTEXT_STORMS_SYNC_CF_SHIFT 4
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
-#define XSTORM_L5CM_AG_CONTEXT_DECISION_RULE3_SHIFT 6
-#define XSTORM_L5CM_AG_CONTEXT_AUX1_CF (0x3<<8)
-#define XSTORM_L5CM_AG_CONTEXT_AUX1_CF_SHIFT 8
-#define __XSTORM_L5CM_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK (0x1<<10)
-#define __XSTORM_L5CM_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK_SHIFT 10
-#define __XSTORM_L5CM_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
-#define __XSTORM_L5CM_AG_CONTEXT_AUX10_FLAG (0x1<<12)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX10_FLAG_SHIFT 12
-#define __XSTORM_L5CM_AG_CONTEXT_AUX11_FLAG (0x1<<13)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX11_FLAG_SHIFT 13
-#define __XSTORM_L5CM_AG_CONTEXT_AUX12_FLAG (0x1<<14)
-#define __XSTORM_L5CM_AG_CONTEXT_AUX12_FLAG_SHIFT 14
-#define __XSTORM_L5CM_AG_CONTEXT_RX_WND_SCL_EN (0x1<<15)
-#define __XSTORM_L5CM_AG_CONTEXT_RX_WND_SCL_EN_SHIFT 15
-#endif
-#if defined(__BIG_ENDIAN)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AGG_VAL11_DECISION_RULE (0x7<<0)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AGG_VAL11_DECISION_RULE_SHIFT 0
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX13_FLAG (0x1<<3)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX13_FLAG_SHIFT 3
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_STORMS_SYNC_CF (0x3<<4)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_STORMS_SYNC_CF_SHIFT 4
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE3 (0x3<<6)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_DECISION_RULE3_SHIFT 6
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX1_CF (0x3<<8)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AUX1_CF_SHIFT 8
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK (0x1<<10)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_COMPLETION_SEQ_DECISION_MASK_SHIFT 10
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX1_CF_EN (0x1<<11)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX1_CF_EN_SHIFT 11
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX10_FLAG (0x1<<12)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX10_FLAG_SHIFT 12
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX11_FLAG (0x1<<13)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX11_FLAG_SHIFT 13
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX12_FLAG (0x1<<14)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_AUX12_FLAG_SHIFT 14
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_RX_WND_SCL_EN (0x1<<15)
+#घोषणा __XSTORM_L5CM_AG_CONTEXT_RX_WND_SCL_EN_SHIFT 15
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_val11_th;
 	u16 __gen_data;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __gen_data;
 	u16 __agg_val11_th;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 __reserved1;
 	u8 __agg_val6_th;
 	u16 __agg_val9;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __agg_val9;
 	u8 __agg_val6_th;
 	u8 __reserved1;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_val2_th;
 	u16 agg_val2;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_val2;
 	u16 agg_val2_th;
-#endif
+#पूर्ण_अगर
 	u32 agg_vars8;
-#define XSTORM_L5CM_AG_CONTEXT_AGG_MISC2 (0xFFFFFF<<0)
-#define XSTORM_L5CM_AG_CONTEXT_AGG_MISC2_SHIFT 0
-#define XSTORM_L5CM_AG_CONTEXT_AGG_MISC3 (0xFF<<24)
-#define XSTORM_L5CM_AG_CONTEXT_AGG_MISC3_SHIFT 24
-#if defined(__BIG_ENDIAN)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AGG_MISC2 (0xFFFFFF<<0)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AGG_MISC2_SHIFT 0
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AGG_MISC3 (0xFF<<24)
+#घोषणा XSTORM_L5CM_AG_CONTEXT_AGG_MISC3_SHIFT 24
+#अगर defined(__BIG_ENDIAN)
 	u16 agg_misc0;
 	u16 agg_val4;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_val4;
 	u16 agg_misc0;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 agg_val3;
 	u8 agg_val6;
 	u8 agg_val5_th;
 	u8 agg_val5;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 agg_val5;
 	u8 agg_val5_th;
 	u8 agg_val6;
 	u8 agg_val3;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 __agg_misc1;
 	u16 agg_limit1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 agg_limit1;
 	u16 __agg_misc1;
-#endif
+#पूर्ण_अगर
 	u32 completion_seq;
 	u32 agg_misc4;
 	u32 rst_seq_num;
-};
+पूर्ण;
 
 /*
  * ABTS info $$KEEP_ENDIANNESS$$
  */
-struct fcoe_abts_info {
-	__le16 aborted_task_id;
+काष्ठा fcoe_abts_info अणु
+	__le16 पातed_task_id;
 	__le16 reserved0;
 	__le32 reserved1;
-};
+पूर्ण;
 
 
 /*
- * Fixed size structure in order to plant it in Union structure
+ * Fixed size काष्ठाure in order to plant it in Union काष्ठाure
  * $$KEEP_ENDIANNESS$$
  */
-struct fcoe_abts_rsp_union {
+काष्ठा fcoe_abts_rsp_जोड़ अणु
 	u8 r_ctl;
 	u8 rsrv[3];
 	__le32 abts_rsp_payload[7];
-};
+पूर्ण;
 
 
 /*
  * 4 regs size $$KEEP_ENDIANNESS$$
  */
-struct fcoe_bd_ctx {
+काष्ठा fcoe_bd_ctx अणु
 	__le32 buf_addr_hi;
 	__le32 buf_addr_lo;
 	__le16 buf_len;
 	__le16 rsrv0;
 	__le16 flags;
 	__le16 rsrv1;
-};
+पूर्ण;
 
 
 /*
  * FCoE cached sges context $$KEEP_ENDIANNESS$$
  */
-struct fcoe_cached_sge_ctx {
-	struct regpair cur_buf_addr;
+काष्ठा fcoe_cached_sge_ctx अणु
+	काष्ठा regpair cur_buf_addr;
 	__le16 cur_buf_rem;
 	__le16 second_buf_rem;
-	struct regpair second_buf_addr;
-};
+	काष्ठा regpair second_buf_addr;
+पूर्ण;
 
 
 /*
  * Cleanup info $$KEEP_ENDIANNESS$$
  */
-struct fcoe_cleanup_info {
+काष्ठा fcoe_cleanup_info अणु
 	__le16 cleaned_task_id;
 	__le16 rolled_tx_seq_cnt;
 	__le32 rolled_tx_data_offset;
-};
+पूर्ण;
 
 
 /*
  * Fcp RSP flags $$KEEP_ENDIANNESS$$
  */
-struct fcoe_fcp_rsp_flags {
+काष्ठा fcoe_fcp_rsp_flags अणु
 	u8 flags;
-#define FCOE_FCP_RSP_FLAGS_FCP_RSP_LEN_VALID (0x1<<0)
-#define FCOE_FCP_RSP_FLAGS_FCP_RSP_LEN_VALID_SHIFT 0
-#define FCOE_FCP_RSP_FLAGS_FCP_SNS_LEN_VALID (0x1<<1)
-#define FCOE_FCP_RSP_FLAGS_FCP_SNS_LEN_VALID_SHIFT 1
-#define FCOE_FCP_RSP_FLAGS_FCP_RESID_OVER (0x1<<2)
-#define FCOE_FCP_RSP_FLAGS_FCP_RESID_OVER_SHIFT 2
-#define FCOE_FCP_RSP_FLAGS_FCP_RESID_UNDER (0x1<<3)
-#define FCOE_FCP_RSP_FLAGS_FCP_RESID_UNDER_SHIFT 3
-#define FCOE_FCP_RSP_FLAGS_FCP_CONF_REQ (0x1<<4)
-#define FCOE_FCP_RSP_FLAGS_FCP_CONF_REQ_SHIFT 4
-#define FCOE_FCP_RSP_FLAGS_FCP_BIDI_FLAGS (0x7<<5)
-#define FCOE_FCP_RSP_FLAGS_FCP_BIDI_FLAGS_SHIFT 5
-};
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_RSP_LEN_VALID (0x1<<0)
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_RSP_LEN_VALID_SHIFT 0
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_SNS_LEN_VALID (0x1<<1)
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_SNS_LEN_VALID_SHIFT 1
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_RESID_OVER (0x1<<2)
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_RESID_OVER_SHIFT 2
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_RESID_UNDER (0x1<<3)
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_RESID_UNDER_SHIFT 3
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_CONF_REQ (0x1<<4)
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_CONF_REQ_SHIFT 4
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_BIDI_FLAGS (0x7<<5)
+#घोषणा FCOE_FCP_RSP_FLAGS_FCP_BIDI_FLAGS_SHIFT 5
+पूर्ण;
 
 /*
  * Fcp RSP payload $$KEEP_ENDIANNESS$$
  */
-struct fcoe_fcp_rsp_payload {
-	struct regpair reserved0;
+काष्ठा fcoe_fcp_rsp_payload अणु
+	काष्ठा regpair reserved0;
 	__le32 fcp_resid;
 	u8 scsi_status_code;
-	struct fcoe_fcp_rsp_flags fcp_flags;
-	__le16 retry_delay_timer;
+	काष्ठा fcoe_fcp_rsp_flags fcp_flags;
+	__le16 retry_delay_समयr;
 	__le32 fcp_rsp_len;
 	__le32 fcp_sns_len;
-};
+पूर्ण;
 
 /*
- * Fixed size structure in order to plant it in Union structure
+ * Fixed size काष्ठाure in order to plant it in Union काष्ठाure
  * $$KEEP_ENDIANNESS$$
  */
-struct fcoe_fcp_rsp_union {
-	struct fcoe_fcp_rsp_payload payload;
-	struct regpair reserved0;
-};
+काष्ठा fcoe_fcp_rsp_जोड़ अणु
+	काष्ठा fcoe_fcp_rsp_payload payload;
+	काष्ठा regpair reserved0;
+पूर्ण;
 
 /*
  * FC header $$KEEP_ENDIANNESS$$
  */
-struct fcoe_fc_hdr {
+काष्ठा fcoe_fc_hdr अणु
 	u8 s_id[3];
 	u8 cs_ctl;
 	u8 d_id[3];
@@ -2483,89 +2484,89 @@ struct fcoe_fc_hdr {
 	__le32 parameters;
 	__le16 rx_id;
 	__le16 ox_id;
-};
+पूर्ण;
 
 /*
- * FC header union $$KEEP_ENDIANNESS$$
+ * FC header जोड़ $$KEEP_ENDIANNESS$$
  */
-struct fcoe_mp_rsp_union {
-	struct fcoe_fc_hdr fc_hdr;
+काष्ठा fcoe_mp_rsp_जोड़ अणु
+	काष्ठा fcoe_fc_hdr fc_hdr;
 	__le32 mp_payload_len;
 	__le32 rsrv;
-};
+पूर्ण;
 
 /*
- * Completion information $$KEEP_ENDIANNESS$$
+ * Completion inक्रमmation $$KEEP_ENDIANNESS$$
  */
-union fcoe_comp_flow_info {
-	struct fcoe_fcp_rsp_union fcp_rsp;
-	struct fcoe_abts_rsp_union abts_rsp;
-	struct fcoe_mp_rsp_union mp_rsp;
+जोड़ fcoe_comp_flow_info अणु
+	काष्ठा fcoe_fcp_rsp_जोड़ fcp_rsp;
+	काष्ठा fcoe_abts_rsp_जोड़ abts_rsp;
+	काष्ठा fcoe_mp_rsp_जोड़ mp_rsp;
 	__le32 opaque[8];
-};
+पूर्ण;
 
 
 /*
  * External ABTS info $$KEEP_ENDIANNESS$$
  */
-struct fcoe_ext_abts_info {
+काष्ठा fcoe_ext_abts_info अणु
 	__le32 rsrv0[6];
-	struct fcoe_abts_info ctx;
-};
+	काष्ठा fcoe_abts_info ctx;
+पूर्ण;
 
 
 /*
  * External cleanup info $$KEEP_ENDIANNESS$$
  */
-struct fcoe_ext_cleanup_info {
+काष्ठा fcoe_ext_cleanup_info अणु
 	__le32 rsrv0[6];
-	struct fcoe_cleanup_info ctx;
-};
+	काष्ठा fcoe_cleanup_info ctx;
+पूर्ण;
 
 
 /*
  * Fcoe FW Tx sequence context $$KEEP_ENDIANNESS$$
  */
-struct fcoe_fw_tx_seq_ctx {
+काष्ठा fcoe_fw_tx_seq_ctx अणु
 	__le32 data_offset;
 	__le16 seq_cnt;
 	__le16 rsrv0;
-};
+पूर्ण;
 
 /*
- * Fcoe external FW Tx sequence context $$KEEP_ENDIANNESS$$
+ * Fcoe बाह्यal FW Tx sequence context $$KEEP_ENDIANNESS$$
  */
-struct fcoe_ext_fw_tx_seq_ctx {
+काष्ठा fcoe_ext_fw_tx_seq_ctx अणु
 	__le32 rsrv0[6];
-	struct fcoe_fw_tx_seq_ctx ctx;
-};
+	काष्ठा fcoe_fw_tx_seq_ctx ctx;
+पूर्ण;
 
 
 /*
  * FCoE multiple sges context $$KEEP_ENDIANNESS$$
  */
-struct fcoe_mul_sges_ctx {
-	struct regpair cur_sge_addr;
+काष्ठा fcoe_mul_sges_ctx अणु
+	काष्ठा regpair cur_sge_addr;
 	__le16 cur_sge_off;
 	u8 cur_sge_idx;
 	u8 sgl_size;
-};
+पूर्ण;
 
 /*
- * FCoE external multiple sges context $$KEEP_ENDIANNESS$$
+ * FCoE बाह्यal multiple sges context $$KEEP_ENDIANNESS$$
  */
-struct fcoe_ext_mul_sges_ctx {
-	struct fcoe_mul_sges_ctx mul_sgl;
-	struct regpair rsrv0;
-};
+काष्ठा fcoe_ext_mul_sges_ctx अणु
+	काष्ठा fcoe_mul_sges_ctx mul_sgl;
+	काष्ठा regpair rsrv0;
+पूर्ण;
 
 
 /*
  * FCP CMD payload $$KEEP_ENDIANNESS$$
  */
-struct fcoe_fcp_cmd_payload {
+काष्ठा fcoe_fcp_cmd_payload अणु
 	__le32 opaque[8];
-};
+पूर्ण;
 
 
 
@@ -2574,19 +2575,19 @@ struct fcoe_fcp_cmd_payload {
 /*
  * Fcp xfr rdy payload $$KEEP_ENDIANNESS$$
  */
-struct fcoe_fcp_xfr_rdy_payload {
+काष्ठा fcoe_fcp_xfr_rdy_payload अणु
 	__le32 burst_len;
 	__le32 data_ro;
-};
+पूर्ण;
 
 
 /*
  * FC frame $$KEEP_ENDIANNESS$$
  */
-struct fcoe_fc_frame {
-	struct fcoe_fc_hdr fc_hdr;
+काष्ठा fcoe_fc_frame अणु
+	काष्ठा fcoe_fc_hdr fc_hdr;
 	__le32 reserved0[2];
-};
+पूर्ण;
 
 
 
@@ -2594,53 +2595,53 @@ struct fcoe_fc_frame {
 /*
  * FCoE KCQ CQE parameters $$KEEP_ENDIANNESS$$
  */
-union fcoe_kcqe_params {
+जोड़ fcoe_kcqe_params अणु
 	__le32 reserved0[4];
-};
+पूर्ण;
 
 /*
  * FCoE KCQ CQE $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kcqe {
+काष्ठा fcoe_kcqe अणु
 	__le32 fcoe_conn_id;
 	__le32 completion_status;
 	__le32 fcoe_conn_context_id;
-	union fcoe_kcqe_params params;
+	जोड़ fcoe_kcqe_params params;
 	__le16 qe_self_seq;
 	u8 op_code;
 	u8 flags;
-#define FCOE_KCQE_RESERVED0 (0x7<<0)
-#define FCOE_KCQE_RESERVED0_SHIFT 0
-#define FCOE_KCQE_RAMROD_COMPLETION (0x1<<3)
-#define FCOE_KCQE_RAMROD_COMPLETION_SHIFT 3
-#define FCOE_KCQE_LAYER_CODE (0x7<<4)
-#define FCOE_KCQE_LAYER_CODE_SHIFT 4
-#define FCOE_KCQE_LINKED_WITH_NEXT (0x1<<7)
-#define FCOE_KCQE_LINKED_WITH_NEXT_SHIFT 7
-};
+#घोषणा FCOE_KCQE_RESERVED0 (0x7<<0)
+#घोषणा FCOE_KCQE_RESERVED0_SHIFT 0
+#घोषणा FCOE_KCQE_RAMROD_COMPLETION (0x1<<3)
+#घोषणा FCOE_KCQE_RAMROD_COMPLETION_SHIFT 3
+#घोषणा FCOE_KCQE_LAYER_CODE (0x7<<4)
+#घोषणा FCOE_KCQE_LAYER_CODE_SHIFT 4
+#घोषणा FCOE_KCQE_LINKED_WITH_NEXT (0x1<<7)
+#घोषणा FCOE_KCQE_LINKED_WITH_NEXT_SHIFT 7
+पूर्ण;
 
 
 
 /*
  * FCoE KWQE header $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_header {
+काष्ठा fcoe_kwqe_header अणु
 	u8 op_code;
 	u8 flags;
-#define FCOE_KWQE_HEADER_RESERVED0 (0xF<<0)
-#define FCOE_KWQE_HEADER_RESERVED0_SHIFT 0
-#define FCOE_KWQE_HEADER_LAYER_CODE (0x7<<4)
-#define FCOE_KWQE_HEADER_LAYER_CODE_SHIFT 4
-#define FCOE_KWQE_HEADER_RESERVED1 (0x1<<7)
-#define FCOE_KWQE_HEADER_RESERVED1_SHIFT 7
-};
+#घोषणा FCOE_KWQE_HEADER_RESERVED0 (0xF<<0)
+#घोषणा FCOE_KWQE_HEADER_RESERVED0_SHIFT 0
+#घोषणा FCOE_KWQE_HEADER_LAYER_CODE (0x7<<4)
+#घोषणा FCOE_KWQE_HEADER_LAYER_CODE_SHIFT 4
+#घोषणा FCOE_KWQE_HEADER_RESERVED1 (0x1<<7)
+#घोषणा FCOE_KWQE_HEADER_RESERVED1_SHIFT 7
+पूर्ण;
 
 /*
  * FCoE firmware init request 1 $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_init1 {
+काष्ठा fcoe_kwqe_init1 अणु
 	__le16 num_tasks;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	__le32 task_list_pbl_addr_lo;
 	__le32 task_list_pbl_addr_hi;
 	__le32 dummy_buffer_addr_lo;
@@ -2652,49 +2653,49 @@ struct fcoe_kwqe_init1 {
 	__le16 mtu;
 	u8 num_sessions_log;
 	u8 flags;
-#define FCOE_KWQE_INIT1_LOG_PAGE_SIZE (0xF<<0)
-#define FCOE_KWQE_INIT1_LOG_PAGE_SIZE_SHIFT 0
-#define FCOE_KWQE_INIT1_LOG_CACHED_PBES_PER_FUNC (0x7<<4)
-#define FCOE_KWQE_INIT1_LOG_CACHED_PBES_PER_FUNC_SHIFT 4
-#define FCOE_KWQE_INIT1_RESERVED1 (0x1<<7)
-#define FCOE_KWQE_INIT1_RESERVED1_SHIFT 7
-};
+#घोषणा FCOE_KWQE_INIT1_LOG_PAGE_SIZE (0xF<<0)
+#घोषणा FCOE_KWQE_INIT1_LOG_PAGE_SIZE_SHIFT 0
+#घोषणा FCOE_KWQE_INIT1_LOG_CACHED_PBES_PER_FUNC (0x7<<4)
+#घोषणा FCOE_KWQE_INIT1_LOG_CACHED_PBES_PER_FUNC_SHIFT 4
+#घोषणा FCOE_KWQE_INIT1_RESERVED1 (0x1<<7)
+#घोषणा FCOE_KWQE_INIT1_RESERVED1_SHIFT 7
+पूर्ण;
 
 /*
  * FCoE firmware init request 2 $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_init2 {
+काष्ठा fcoe_kwqe_init2 अणु
 	u8 hsi_major_version;
 	u8 hsi_minor_version;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	__le32 hash_tbl_pbl_addr_lo;
 	__le32 hash_tbl_pbl_addr_hi;
 	__le32 t2_hash_tbl_addr_lo;
 	__le32 t2_hash_tbl_addr_hi;
 	__le32 t2_ptr_hash_tbl_addr_lo;
 	__le32 t2_ptr_hash_tbl_addr_hi;
-	__le32 free_list_count;
-};
+	__le32 मुक्त_list_count;
+पूर्ण;
 
 /*
  * FCoE firmware init request 3 $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_init3 {
+काष्ठा fcoe_kwqe_init3 अणु
 	__le16 reserved0;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	__le32 error_bit_map_lo;
 	__le32 error_bit_map_hi;
 	u8 perf_config;
 	u8 reserved21[3];
 	__le32 reserved2[4];
-};
+पूर्ण;
 
 /*
  * FCoE connection offload request 1 $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_conn_offload1 {
+काष्ठा fcoe_kwqe_conn_offload1 अणु
 	__le16 fcoe_conn_id;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	__le32 sq_addr_lo;
 	__le32 sq_addr_hi;
 	__le32 rq_pbl_addr_lo;
@@ -2703,14 +2704,14 @@ struct fcoe_kwqe_conn_offload1 {
 	__le32 rq_first_pbe_addr_hi;
 	__le16 rq_prod;
 	__le16 reserved0;
-};
+पूर्ण;
 
 /*
  * FCoE connection offload request 2 $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_conn_offload2 {
+काष्ठा fcoe_kwqe_conn_offload2 अणु
 	__le16 tx_max_fc_pay_len;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	__le32 cq_addr_lo;
 	__le32 cq_addr_hi;
 	__le32 xferq_addr_lo;
@@ -2718,40 +2719,40 @@ struct fcoe_kwqe_conn_offload2 {
 	__le32 conn_db_addr_lo;
 	__le32 conn_db_addr_hi;
 	__le32 reserved1;
-};
+पूर्ण;
 
 /*
  * FCoE connection offload request 3 $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_conn_offload3 {
+काष्ठा fcoe_kwqe_conn_offload3 अणु
 	__le16 vlan_tag;
-#define FCOE_KWQE_CONN_OFFLOAD3_VLAN_ID (0xFFF<<0)
-#define FCOE_KWQE_CONN_OFFLOAD3_VLAN_ID_SHIFT 0
-#define FCOE_KWQE_CONN_OFFLOAD3_CFI (0x1<<12)
-#define FCOE_KWQE_CONN_OFFLOAD3_CFI_SHIFT 12
-#define FCOE_KWQE_CONN_OFFLOAD3_PRIORITY (0x7<<13)
-#define FCOE_KWQE_CONN_OFFLOAD3_PRIORITY_SHIFT 13
-	struct fcoe_kwqe_header hdr;
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_VLAN_ID (0xFFF<<0)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_VLAN_ID_SHIFT 0
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_CFI (0x1<<12)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_CFI_SHIFT 12
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_PRIORITY (0x7<<13)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_PRIORITY_SHIFT 13
+	काष्ठा fcoe_kwqe_header hdr;
 	u8 s_id[3];
 	u8 tx_max_conc_seqs_c3;
 	u8 d_id[3];
 	u8 flags;
-#define FCOE_KWQE_CONN_OFFLOAD3_B_MUL_N_PORT_IDS (0x1<<0)
-#define FCOE_KWQE_CONN_OFFLOAD3_B_MUL_N_PORT_IDS_SHIFT 0
-#define FCOE_KWQE_CONN_OFFLOAD3_B_E_D_TOV_RES (0x1<<1)
-#define FCOE_KWQE_CONN_OFFLOAD3_B_E_D_TOV_RES_SHIFT 1
-#define FCOE_KWQE_CONN_OFFLOAD3_B_CONT_INCR_SEQ_CNT (0x1<<2)
-#define FCOE_KWQE_CONN_OFFLOAD3_B_CONT_INCR_SEQ_CNT_SHIFT 2
-#define FCOE_KWQE_CONN_OFFLOAD3_B_CONF_REQ (0x1<<3)
-#define FCOE_KWQE_CONN_OFFLOAD3_B_CONF_REQ_SHIFT 3
-#define FCOE_KWQE_CONN_OFFLOAD3_B_REC_VALID (0x1<<4)
-#define FCOE_KWQE_CONN_OFFLOAD3_B_REC_VALID_SHIFT 4
-#define FCOE_KWQE_CONN_OFFLOAD3_B_C2_VALID (0x1<<5)
-#define FCOE_KWQE_CONN_OFFLOAD3_B_C2_VALID_SHIFT 5
-#define FCOE_KWQE_CONN_OFFLOAD3_B_ACK_0 (0x1<<6)
-#define FCOE_KWQE_CONN_OFFLOAD3_B_ACK_0_SHIFT 6
-#define FCOE_KWQE_CONN_OFFLOAD3_B_VLAN_FLAG (0x1<<7)
-#define FCOE_KWQE_CONN_OFFLOAD3_B_VLAN_FLAG_SHIFT 7
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_MUL_N_PORT_IDS (0x1<<0)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_MUL_N_PORT_IDS_SHIFT 0
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_E_D_TOV_RES (0x1<<1)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_E_D_TOV_RES_SHIFT 1
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_CONT_INCR_SEQ_CNT (0x1<<2)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_CONT_INCR_SEQ_CNT_SHIFT 2
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_CONF_REQ (0x1<<3)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_CONF_REQ_SHIFT 3
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_REC_VALID (0x1<<4)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_REC_VALID_SHIFT 4
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_C2_VALID (0x1<<5)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_C2_VALID_SHIFT 5
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_ACK_0 (0x1<<6)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_ACK_0_SHIFT 6
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_VLAN_FLAG (0x1<<7)
+#घोषणा FCOE_KWQE_CONN_OFFLOAD3_B_VLAN_FLAG_SHIFT 7
 	__le32 reserved;
 	__le32 confq_first_pbe_addr_lo;
 	__le32 confq_first_pbe_addr_hi;
@@ -2759,16 +2760,16 @@ struct fcoe_kwqe_conn_offload3 {
 	__le16 rx_max_fc_pay_len;
 	__le16 rx_total_conc_seqs;
 	u8 rx_max_conc_seqs_c3;
-	u8 rx_open_seqs_exch_c3;
-};
+	u8 rx_खोलो_seqs_exch_c3;
+पूर्ण;
 
 /*
  * FCoE connection offload request 4 $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_conn_offload4 {
-	u8 e_d_tov_timer_val;
+काष्ठा fcoe_kwqe_conn_offload4 अणु
+	u8 e_d_tov_समयr_val;
 	u8 reserved2;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	u8 src_mac_addr_lo[2];
 	u8 src_mac_addr_mid[2];
 	u8 src_mac_addr_hi[2];
@@ -2779,24 +2780,24 @@ struct fcoe_kwqe_conn_offload4 {
 	__le32 lcq_addr_hi;
 	__le32 confq_pbl_base_addr_lo;
 	__le32 confq_pbl_base_addr_hi;
-};
+पूर्ण;
 
 /*
  * FCoE connection enable request $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_conn_enable_disable {
+काष्ठा fcoe_kwqe_conn_enable_disable अणु
 	__le16 reserved0;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	u8 src_mac_addr_lo[2];
 	u8 src_mac_addr_mid[2];
 	u8 src_mac_addr_hi[2];
 	u16 vlan_tag;
-#define FCOE_KWQE_CONN_ENABLE_DISABLE_VLAN_ID (0xFFF<<0)
-#define FCOE_KWQE_CONN_ENABLE_DISABLE_VLAN_ID_SHIFT 0
-#define FCOE_KWQE_CONN_ENABLE_DISABLE_CFI (0x1<<12)
-#define FCOE_KWQE_CONN_ENABLE_DISABLE_CFI_SHIFT 12
-#define FCOE_KWQE_CONN_ENABLE_DISABLE_PRIORITY (0x7<<13)
-#define FCOE_KWQE_CONN_ENABLE_DISABLE_PRIORITY_SHIFT 13
+#घोषणा FCOE_KWQE_CONN_ENABLE_DISABLE_VLAN_ID (0xFFF<<0)
+#घोषणा FCOE_KWQE_CONN_ENABLE_DISABLE_VLAN_ID_SHIFT 0
+#घोषणा FCOE_KWQE_CONN_ENABLE_DISABLE_CFI (0x1<<12)
+#घोषणा FCOE_KWQE_CONN_ENABLE_DISABLE_CFI_SHIFT 12
+#घोषणा FCOE_KWQE_CONN_ENABLE_DISABLE_PRIORITY (0x7<<13)
+#घोषणा FCOE_KWQE_CONN_ENABLE_DISABLE_PRIORITY_SHIFT 13
 	u8 dst_mac_addr_lo[2];
 	u8 dst_mac_addr_mid[2];
 	u8 dst_mac_addr_hi[2];
@@ -2808,55 +2809,55 @@ struct fcoe_kwqe_conn_enable_disable {
 	__le32 context_id;
 	__le32 conn_id;
 	__le32 reserved4;
-};
+पूर्ण;
 
 /*
  * FCoE connection destroy request $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_conn_destroy {
+काष्ठा fcoe_kwqe_conn_destroy अणु
 	__le16 reserved0;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	__le32 context_id;
 	__le32 conn_id;
 	__le32 reserved1[5];
-};
+पूर्ण;
 
 /*
  * FCoe destroy request $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_destroy {
+काष्ठा fcoe_kwqe_destroy अणु
 	__le16 reserved0;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	__le32 reserved1[7];
-};
+पूर्ण;
 
 /*
  * FCoe statistics request $$KEEP_ENDIANNESS$$
  */
-struct fcoe_kwqe_stat {
+काष्ठा fcoe_kwqe_stat अणु
 	__le16 reserved0;
-	struct fcoe_kwqe_header hdr;
+	काष्ठा fcoe_kwqe_header hdr;
 	__le32 stat_params_addr_lo;
 	__le32 stat_params_addr_hi;
 	__le32 reserved1[5];
-};
+पूर्ण;
 
 /*
  * FCoE KWQ WQE $$KEEP_ENDIANNESS$$
  */
-union fcoe_kwqe {
-	struct fcoe_kwqe_init1 init1;
-	struct fcoe_kwqe_init2 init2;
-	struct fcoe_kwqe_init3 init3;
-	struct fcoe_kwqe_conn_offload1 conn_offload1;
-	struct fcoe_kwqe_conn_offload2 conn_offload2;
-	struct fcoe_kwqe_conn_offload3 conn_offload3;
-	struct fcoe_kwqe_conn_offload4 conn_offload4;
-	struct fcoe_kwqe_conn_enable_disable conn_enable_disable;
-	struct fcoe_kwqe_conn_destroy conn_destroy;
-	struct fcoe_kwqe_destroy destroy;
-	struct fcoe_kwqe_stat statistics;
-};
+जोड़ fcoe_kwqe अणु
+	काष्ठा fcoe_kwqe_init1 init1;
+	काष्ठा fcoe_kwqe_init2 init2;
+	काष्ठा fcoe_kwqe_init3 init3;
+	काष्ठा fcoe_kwqe_conn_offload1 conn_offload1;
+	काष्ठा fcoe_kwqe_conn_offload2 conn_offload2;
+	काष्ठा fcoe_kwqe_conn_offload3 conn_offload3;
+	काष्ठा fcoe_kwqe_conn_offload4 conn_offload4;
+	काष्ठा fcoe_kwqe_conn_enable_disable conn_enable_disable;
+	काष्ठा fcoe_kwqe_conn_destroy conn_destroy;
+	काष्ठा fcoe_kwqe_destroy destroy;
+	काष्ठा fcoe_kwqe_stat statistics;
+पूर्ण;
 
 
 
@@ -2876,198 +2877,198 @@ union fcoe_kwqe {
 /*
  * TX SGL context $$KEEP_ENDIANNESS$$
  */
-union fcoe_sgl_union_ctx {
-	struct fcoe_cached_sge_ctx cached_sge;
-	struct fcoe_ext_mul_sges_ctx sgl;
+जोड़ fcoe_sgl_जोड़_ctx अणु
+	काष्ठा fcoe_cached_sge_ctx cached_sge;
+	काष्ठा fcoe_ext_mul_sges_ctx sgl;
 	__le32 opaque[5];
-};
+पूर्ण;
 
 /*
- * Data-In/ELS/BLS information $$KEEP_ENDIANNESS$$
+ * Data-In/ELS/BLS inक्रमmation $$KEEP_ENDIANNESS$$
  */
-struct fcoe_read_flow_info {
-	union fcoe_sgl_union_ctx sgl_ctx;
+काष्ठा fcoe_पढ़ो_flow_info अणु
+	जोड़ fcoe_sgl_जोड़_ctx sgl_ctx;
 	__le32 rsrv0[3];
-};
+पूर्ण;
 
 
 /*
  * Fcoe stat context $$KEEP_ENDIANNESS$$
  */
-struct fcoe_s_stat_ctx {
+काष्ठा fcoe_s_stat_ctx अणु
 	u8 flags;
-#define FCOE_S_STAT_CTX_ACTIVE (0x1<<0)
-#define FCOE_S_STAT_CTX_ACTIVE_SHIFT 0
-#define FCOE_S_STAT_CTX_ACK_ABORT_SEQ_COND (0x1<<1)
-#define FCOE_S_STAT_CTX_ACK_ABORT_SEQ_COND_SHIFT 1
-#define FCOE_S_STAT_CTX_ABTS_PERFORMED (0x1<<2)
-#define FCOE_S_STAT_CTX_ABTS_PERFORMED_SHIFT 2
-#define FCOE_S_STAT_CTX_SEQ_TIMEOUT (0x1<<3)
-#define FCOE_S_STAT_CTX_SEQ_TIMEOUT_SHIFT 3
-#define FCOE_S_STAT_CTX_P_RJT (0x1<<4)
-#define FCOE_S_STAT_CTX_P_RJT_SHIFT 4
-#define FCOE_S_STAT_CTX_ACK_EOFT (0x1<<5)
-#define FCOE_S_STAT_CTX_ACK_EOFT_SHIFT 5
-#define FCOE_S_STAT_CTX_RSRV1 (0x3<<6)
-#define FCOE_S_STAT_CTX_RSRV1_SHIFT 6
-};
+#घोषणा FCOE_S_STAT_CTX_ACTIVE (0x1<<0)
+#घोषणा FCOE_S_STAT_CTX_ACTIVE_SHIFT 0
+#घोषणा FCOE_S_STAT_CTX_ACK_ABORT_SEQ_COND (0x1<<1)
+#घोषणा FCOE_S_STAT_CTX_ACK_ABORT_SEQ_COND_SHIFT 1
+#घोषणा FCOE_S_STAT_CTX_ABTS_PERFORMED (0x1<<2)
+#घोषणा FCOE_S_STAT_CTX_ABTS_PERFORMED_SHIFT 2
+#घोषणा FCOE_S_STAT_CTX_SEQ_TIMEOUT (0x1<<3)
+#घोषणा FCOE_S_STAT_CTX_SEQ_TIMEOUT_SHIFT 3
+#घोषणा FCOE_S_STAT_CTX_P_RJT (0x1<<4)
+#घोषणा FCOE_S_STAT_CTX_P_RJT_SHIFT 4
+#घोषणा FCOE_S_STAT_CTX_ACK_खातापूर्णT (0x1<<5)
+#घोषणा FCOE_S_STAT_CTX_ACK_खातापूर्णT_SHIFT 5
+#घोषणा FCOE_S_STAT_CTX_RSRV1 (0x3<<6)
+#घोषणा FCOE_S_STAT_CTX_RSRV1_SHIFT 6
+पूर्ण;
 
 /*
  * Fcoe rx seq context $$KEEP_ENDIANNESS$$
  */
-struct fcoe_rx_seq_ctx {
+काष्ठा fcoe_rx_seq_ctx अणु
 	u8 seq_id;
-	struct fcoe_s_stat_ctx s_stat;
+	काष्ठा fcoe_s_stat_ctx s_stat;
 	__le16 seq_cnt;
 	__le32 low_exp_ro;
 	__le32 high_exp_ro;
-};
+पूर्ण;
 
 
 /*
- * Fcoe rx_wr union context $$KEEP_ENDIANNESS$$
+ * Fcoe rx_wr जोड़ context $$KEEP_ENDIANNESS$$
  */
-union fcoe_rx_wr_union_ctx {
-	struct fcoe_read_flow_info read_info;
-	union fcoe_comp_flow_info comp_info;
+जोड़ fcoe_rx_wr_जोड़_ctx अणु
+	काष्ठा fcoe_पढ़ो_flow_info पढ़ो_info;
+	जोड़ fcoe_comp_flow_info comp_info;
 	__le32 opaque[8];
-};
+पूर्ण;
 
 
 
 /*
  * FCoE SQ element $$KEEP_ENDIANNESS$$
  */
-struct fcoe_sqe {
+काष्ठा fcoe_sqe अणु
 	__le16 wqe;
-#define FCOE_SQE_TASK_ID (0x7FFF<<0)
-#define FCOE_SQE_TASK_ID_SHIFT 0
-#define FCOE_SQE_TOGGLE_BIT (0x1<<15)
-#define FCOE_SQE_TOGGLE_BIT_SHIFT 15
-};
+#घोषणा FCOE_SQE_TASK_ID (0x7FFF<<0)
+#घोषणा FCOE_SQE_TASK_ID_SHIFT 0
+#घोषणा FCOE_SQE_TOGGLE_BIT (0x1<<15)
+#घोषणा FCOE_SQE_TOGGLE_BIT_SHIFT 15
+पूर्ण;
 
 
 
 /*
  * 14 regs $$KEEP_ENDIANNESS$$
  */
-struct fcoe_tce_tx_only {
-	union fcoe_sgl_union_ctx sgl_ctx;
+काष्ठा fcoe_tce_tx_only अणु
+	जोड़ fcoe_sgl_जोड़_ctx sgl_ctx;
 	__le32 rsrv0;
-};
+पूर्ण;
 
 /*
- * 32 bytes (8 regs) used for TX only purposes $$KEEP_ENDIANNESS$$
+ * 32 bytes (8 regs) used क्रम TX only purposes $$KEEP_ENDIANNESS$$
  */
-union fcoe_tx_wr_rx_rd_union_ctx {
-	struct fcoe_fc_frame tx_frame;
-	struct fcoe_fcp_cmd_payload fcp_cmd;
-	struct fcoe_ext_cleanup_info cleanup;
-	struct fcoe_ext_abts_info abts;
-	struct fcoe_ext_fw_tx_seq_ctx tx_seq;
+जोड़ fcoe_tx_wr_rx_rd_जोड़_ctx अणु
+	काष्ठा fcoe_fc_frame tx_frame;
+	काष्ठा fcoe_fcp_cmd_payload fcp_cmd;
+	काष्ठा fcoe_ext_cleanup_info cleanup;
+	काष्ठा fcoe_ext_abts_info abts;
+	काष्ठा fcoe_ext_fw_tx_seq_ctx tx_seq;
 	__le32 opaque[8];
-};
+पूर्ण;
 
 /*
- * tce_tx_wr_rx_rd_const $$KEEP_ENDIANNESS$$
+ * tce_tx_wr_rx_rd_स्थिर $$KEEP_ENDIANNESS$$
  */
-struct fcoe_tce_tx_wr_rx_rd_const {
+काष्ठा fcoe_tce_tx_wr_rx_rd_स्थिर अणु
 	u8 init_flags;
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TASK_TYPE (0x7<<0)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TASK_TYPE_SHIFT 0
-#define FCOE_TCE_TX_WR_RX_RD_CONST_DEV_TYPE (0x1<<3)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_DEV_TYPE_SHIFT 3
-#define FCOE_TCE_TX_WR_RX_RD_CONST_CLASS_TYPE (0x1<<4)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_CLASS_TYPE_SHIFT 4
-#define FCOE_TCE_TX_WR_RX_RD_CONST_CACHED_SGE (0x3<<5)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_CACHED_SGE_SHIFT 5
-#define FCOE_TCE_TX_WR_RX_RD_CONST_SUPPORT_REC_TOV (0x1<<7)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_SUPPORT_REC_TOV_SHIFT 7
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TASK_TYPE (0x7<<0)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TASK_TYPE_SHIFT 0
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_DEV_TYPE (0x1<<3)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_DEV_TYPE_SHIFT 3
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_CLASS_TYPE (0x1<<4)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_CLASS_TYPE_SHIFT 4
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_CACHED_SGE (0x3<<5)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_CACHED_SGE_SHIFT 5
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_SUPPORT_REC_TOV (0x1<<7)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_SUPPORT_REC_TOV_SHIFT 7
 	u8 tx_flags;
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TX_VALID (0x1<<0)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TX_VALID_SHIFT 0
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TX_STATE (0xF<<1)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TX_STATE_SHIFT 1
-#define FCOE_TCE_TX_WR_RX_RD_CONST_RSRV1 (0x1<<5)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_RSRV1_SHIFT 5
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TX_SEQ_INIT (0x1<<6)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TX_SEQ_INIT_SHIFT 6
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TX_COMP_TRNS (0x1<<7)
-#define FCOE_TCE_TX_WR_RX_RD_CONST_TX_COMP_TRNS_SHIFT 7
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TX_VALID (0x1<<0)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TX_VALID_SHIFT 0
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TX_STATE (0xF<<1)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TX_STATE_SHIFT 1
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_RSRV1 (0x1<<5)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_RSRV1_SHIFT 5
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TX_SEQ_INIT (0x1<<6)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TX_SEQ_INIT_SHIFT 6
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TX_COMP_TRNS (0x1<<7)
+#घोषणा FCOE_TCE_TX_WR_RX_RD_CONST_TX_COMP_TRNS_SHIFT 7
 	__le16 rsrv3;
-	__le32 verify_tx_seq;
-};
+	__le32 verअगरy_tx_seq;
+पूर्ण;
 
 /*
  * tce_tx_wr_rx_rd $$KEEP_ENDIANNESS$$
  */
-struct fcoe_tce_tx_wr_rx_rd {
-	union fcoe_tx_wr_rx_rd_union_ctx union_ctx;
-	struct fcoe_tce_tx_wr_rx_rd_const const_ctx;
-};
+काष्ठा fcoe_tce_tx_wr_rx_rd अणु
+	जोड़ fcoe_tx_wr_rx_rd_जोड़_ctx जोड़_ctx;
+	काष्ठा fcoe_tce_tx_wr_rx_rd_स्थिर स्थिर_ctx;
+पूर्ण;
 
 /*
- * tce_rx_wr_tx_rd_const $$KEEP_ENDIANNESS$$
+ * tce_rx_wr_tx_rd_स्थिर $$KEEP_ENDIANNESS$$
  */
-struct fcoe_tce_rx_wr_tx_rd_const {
+काष्ठा fcoe_tce_rx_wr_tx_rd_स्थिर अणु
 	__le32 data_2_trns;
 	__le32 init_flags;
-#define FCOE_TCE_RX_WR_TX_RD_CONST_CID (0xFFFFFF<<0)
-#define FCOE_TCE_RX_WR_TX_RD_CONST_CID_SHIFT 0
-#define FCOE_TCE_RX_WR_TX_RD_CONST_RSRV0 (0xFF<<24)
-#define FCOE_TCE_RX_WR_TX_RD_CONST_RSRV0_SHIFT 24
-};
+#घोषणा FCOE_TCE_RX_WR_TX_RD_CONST_CID (0xFFFFFF<<0)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_CONST_CID_SHIFT 0
+#घोषणा FCOE_TCE_RX_WR_TX_RD_CONST_RSRV0 (0xFF<<24)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_CONST_RSRV0_SHIFT 24
+पूर्ण;
 
 /*
  * tce_rx_wr_tx_rd_var $$KEEP_ENDIANNESS$$
  */
-struct fcoe_tce_rx_wr_tx_rd_var {
+काष्ठा fcoe_tce_rx_wr_tx_rd_var अणु
 	__le16 rx_flags;
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RSRV1 (0xF<<0)
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RSRV1_SHIFT 0
-#define FCOE_TCE_RX_WR_TX_RD_VAR_NUM_RQ_WQE (0x7<<4)
-#define FCOE_TCE_RX_WR_TX_RD_VAR_NUM_RQ_WQE_SHIFT 4
-#define FCOE_TCE_RX_WR_TX_RD_VAR_CONF_REQ (0x1<<7)
-#define FCOE_TCE_RX_WR_TX_RD_VAR_CONF_REQ_SHIFT 7
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RX_STATE (0xF<<8)
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RX_STATE_SHIFT 8
-#define FCOE_TCE_RX_WR_TX_RD_VAR_EXP_FIRST_FRAME (0x1<<12)
-#define FCOE_TCE_RX_WR_TX_RD_VAR_EXP_FIRST_FRAME_SHIFT 12
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RX_SEQ_INIT (0x1<<13)
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RX_SEQ_INIT_SHIFT 13
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RSRV2 (0x1<<14)
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RSRV2_SHIFT 14
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RX_VALID (0x1<<15)
-#define FCOE_TCE_RX_WR_TX_RD_VAR_RX_VALID_SHIFT 15
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RSRV1 (0xF<<0)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RSRV1_SHIFT 0
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_NUM_RQ_WQE (0x7<<4)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_NUM_RQ_WQE_SHIFT 4
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_CONF_REQ (0x1<<7)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_CONF_REQ_SHIFT 7
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RX_STATE (0xF<<8)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RX_STATE_SHIFT 8
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_EXP_FIRST_FRAME (0x1<<12)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_EXP_FIRST_FRAME_SHIFT 12
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RX_SEQ_INIT (0x1<<13)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RX_SEQ_INIT_SHIFT 13
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RSRV2 (0x1<<14)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RSRV2_SHIFT 14
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RX_VALID (0x1<<15)
+#घोषणा FCOE_TCE_RX_WR_TX_RD_VAR_RX_VALID_SHIFT 15
 	__le16 rx_id;
-	struct fcoe_fcp_xfr_rdy_payload fcp_xfr_rdy;
-};
+	काष्ठा fcoe_fcp_xfr_rdy_payload fcp_xfr_rdy;
+पूर्ण;
 
 /*
  * tce_rx_wr_tx_rd $$KEEP_ENDIANNESS$$
  */
-struct fcoe_tce_rx_wr_tx_rd {
-	struct fcoe_tce_rx_wr_tx_rd_const const_ctx;
-	struct fcoe_tce_rx_wr_tx_rd_var var_ctx;
-};
+काष्ठा fcoe_tce_rx_wr_tx_rd अणु
+	काष्ठा fcoe_tce_rx_wr_tx_rd_स्थिर स्थिर_ctx;
+	काष्ठा fcoe_tce_rx_wr_tx_rd_var var_ctx;
+पूर्ण;
 
 /*
  * tce_rx_only $$KEEP_ENDIANNESS$$
  */
-struct fcoe_tce_rx_only {
-	struct fcoe_rx_seq_ctx rx_seq_ctx;
-	union fcoe_rx_wr_union_ctx union_ctx;
-};
+काष्ठा fcoe_tce_rx_only अणु
+	काष्ठा fcoe_rx_seq_ctx rx_seq_ctx;
+	जोड़ fcoe_rx_wr_जोड़_ctx जोड़_ctx;
+पूर्ण;
 
 /*
  * task_ctx_entry $$KEEP_ENDIANNESS$$
  */
-struct fcoe_task_ctx_entry {
-	struct fcoe_tce_tx_only txwr_only;
-	struct fcoe_tce_tx_wr_rx_rd txwr_rxrd;
-	struct fcoe_tce_rx_wr_tx_rd rxwr_txrd;
-	struct fcoe_tce_rx_only rxwr_only;
-};
+काष्ठा fcoe_task_ctx_entry अणु
+	काष्ठा fcoe_tce_tx_only txwr_only;
+	काष्ठा fcoe_tce_tx_wr_rx_rd txwr_rxrd;
+	काष्ठा fcoe_tce_rx_wr_tx_rd rxwr_txrd;
+	काष्ठा fcoe_tce_rx_only rxwr_only;
+पूर्ण;
 
 
 
@@ -3081,613 +3082,613 @@ struct fcoe_task_ctx_entry {
 /*
  * FCoE XFRQ element $$KEEP_ENDIANNESS$$
  */
-struct fcoe_xfrqe {
+काष्ठा fcoe_xfrqe अणु
 	__le16 wqe;
-#define FCOE_XFRQE_TASK_ID (0x7FFF<<0)
-#define FCOE_XFRQE_TASK_ID_SHIFT 0
-#define FCOE_XFRQE_TOGGLE_BIT (0x1<<15)
-#define FCOE_XFRQE_TOGGLE_BIT_SHIFT 15
-};
+#घोषणा FCOE_XFRQE_TASK_ID (0x7FFF<<0)
+#घोषणा FCOE_XFRQE_TASK_ID_SHIFT 0
+#घोषणा FCOE_XFRQE_TOGGLE_BIT (0x1<<15)
+#घोषणा FCOE_XFRQE_TOGGLE_BIT_SHIFT 15
+पूर्ण;
 
 
 /*
  * Cached SGEs $$KEEP_ENDIANNESS$$
  */
-struct common_fcoe_sgl {
-	struct fcoe_bd_ctx sge[3];
-};
+काष्ठा common_fcoe_sgl अणु
+	काष्ठा fcoe_bd_ctx sge[3];
+पूर्ण;
 
 
 /*
  * FCoE SQ\XFRQ element
  */
-struct fcoe_cached_wqe {
-	struct fcoe_sqe sqe;
-	struct fcoe_xfrqe xfrqe;
-};
+काष्ठा fcoe_cached_wqe अणु
+	काष्ठा fcoe_sqe sqe;
+	काष्ठा fcoe_xfrqe xfrqe;
+पूर्ण;
 
 
 /*
  * FCoE connection enable\disable params passed by driver to FW in FCoE enable
  * ramrod $$KEEP_ENDIANNESS$$
  */
-struct fcoe_conn_enable_disable_ramrod_params {
-	struct fcoe_kwqe_conn_enable_disable enable_disable_kwqe;
-};
+काष्ठा fcoe_conn_enable_disable_ramrod_params अणु
+	काष्ठा fcoe_kwqe_conn_enable_disable enable_disable_kwqe;
+पूर्ण;
 
 
 /*
  * FCoE connection offload params passed by driver to FW in FCoE offload ramrod
  * $$KEEP_ENDIANNESS$$
  */
-struct fcoe_conn_offload_ramrod_params {
-	struct fcoe_kwqe_conn_offload1 offload_kwqe1;
-	struct fcoe_kwqe_conn_offload2 offload_kwqe2;
-	struct fcoe_kwqe_conn_offload3 offload_kwqe3;
-	struct fcoe_kwqe_conn_offload4 offload_kwqe4;
-};
+काष्ठा fcoe_conn_offload_ramrod_params अणु
+	काष्ठा fcoe_kwqe_conn_offload1 offload_kwqe1;
+	काष्ठा fcoe_kwqe_conn_offload2 offload_kwqe2;
+	काष्ठा fcoe_kwqe_conn_offload3 offload_kwqe3;
+	काष्ठा fcoe_kwqe_conn_offload4 offload_kwqe4;
+पूर्ण;
 
 
-struct ustorm_fcoe_mng_ctx {
-#if defined(__BIG_ENDIAN)
+काष्ठा ustorm_fcoe_mng_ctx अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 mid_seq_proc_flag;
 	u8 tce_in_cam_flag;
 	u8 tce_on_ior_flag;
 	u8 en_cached_tce_flag;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 en_cached_tce_flag;
 	u8 tce_on_ior_flag;
 	u8 tce_in_cam_flag;
 	u8 mid_seq_proc_flag;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 tce_cam_addr;
 	u8 cached_conn_flag;
 	u16 rsrv0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv0;
 	u8 cached_conn_flag;
 	u8 tce_cam_addr;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 dma_tce_ram_addr;
 	u16 tce_ram_addr;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 tce_ram_addr;
 	u16 dma_tce_ram_addr;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 ox_id;
-	u16 wr_done_seq;
-#elif defined(__LITTLE_ENDIAN)
-	u16 wr_done_seq;
+	u16 wr_करोne_seq;
+#या_अगर defined(__LITTLE_ENDIAN)
+	u16 wr_करोne_seq;
 	u16 ox_id;
-#endif
-	struct regpair task_addr;
-};
+#पूर्ण_अगर
+	काष्ठा regpair task_addr;
+पूर्ण;
 
 /*
  * Parameters initialized during offloaded according to FLOGI/PLOGI/PRLI and
  * used in FCoE context section
  */
-struct ustorm_fcoe_params {
-#if defined(__BIG_ENDIAN)
+काष्ठा ustorm_fcoe_params अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 fcoe_conn_id;
 	u16 flags;
-#define USTORM_FCOE_PARAMS_B_MUL_N_PORT_IDS (0x1<<0)
-#define USTORM_FCOE_PARAMS_B_MUL_N_PORT_IDS_SHIFT 0
-#define USTORM_FCOE_PARAMS_B_E_D_TOV_RES (0x1<<1)
-#define USTORM_FCOE_PARAMS_B_E_D_TOV_RES_SHIFT 1
-#define USTORM_FCOE_PARAMS_B_CONT_INCR_SEQ_CNT (0x1<<2)
-#define USTORM_FCOE_PARAMS_B_CONT_INCR_SEQ_CNT_SHIFT 2
-#define USTORM_FCOE_PARAMS_B_CONF_REQ (0x1<<3)
-#define USTORM_FCOE_PARAMS_B_CONF_REQ_SHIFT 3
-#define USTORM_FCOE_PARAMS_B_REC_VALID (0x1<<4)
-#define USTORM_FCOE_PARAMS_B_REC_VALID_SHIFT 4
-#define USTORM_FCOE_PARAMS_B_CQ_TOGGLE_BIT (0x1<<5)
-#define USTORM_FCOE_PARAMS_B_CQ_TOGGLE_BIT_SHIFT 5
-#define USTORM_FCOE_PARAMS_B_XFRQ_TOGGLE_BIT (0x1<<6)
-#define USTORM_FCOE_PARAMS_B_XFRQ_TOGGLE_BIT_SHIFT 6
-#define USTORM_FCOE_PARAMS_RSRV0 (0x1FF<<7)
-#define USTORM_FCOE_PARAMS_RSRV0_SHIFT 7
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा USTORM_FCOE_PARAMS_B_MUL_N_PORT_IDS (0x1<<0)
+#घोषणा USTORM_FCOE_PARAMS_B_MUL_N_PORT_IDS_SHIFT 0
+#घोषणा USTORM_FCOE_PARAMS_B_E_D_TOV_RES (0x1<<1)
+#घोषणा USTORM_FCOE_PARAMS_B_E_D_TOV_RES_SHIFT 1
+#घोषणा USTORM_FCOE_PARAMS_B_CONT_INCR_SEQ_CNT (0x1<<2)
+#घोषणा USTORM_FCOE_PARAMS_B_CONT_INCR_SEQ_CNT_SHIFT 2
+#घोषणा USTORM_FCOE_PARAMS_B_CONF_REQ (0x1<<3)
+#घोषणा USTORM_FCOE_PARAMS_B_CONF_REQ_SHIFT 3
+#घोषणा USTORM_FCOE_PARAMS_B_REC_VALID (0x1<<4)
+#घोषणा USTORM_FCOE_PARAMS_B_REC_VALID_SHIFT 4
+#घोषणा USTORM_FCOE_PARAMS_B_CQ_TOGGLE_BIT (0x1<<5)
+#घोषणा USTORM_FCOE_PARAMS_B_CQ_TOGGLE_BIT_SHIFT 5
+#घोषणा USTORM_FCOE_PARAMS_B_XFRQ_TOGGLE_BIT (0x1<<6)
+#घोषणा USTORM_FCOE_PARAMS_B_XFRQ_TOGGLE_BIT_SHIFT 6
+#घोषणा USTORM_FCOE_PARAMS_RSRV0 (0x1FF<<7)
+#घोषणा USTORM_FCOE_PARAMS_RSRV0_SHIFT 7
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 flags;
-#define USTORM_FCOE_PARAMS_B_MUL_N_PORT_IDS (0x1<<0)
-#define USTORM_FCOE_PARAMS_B_MUL_N_PORT_IDS_SHIFT 0
-#define USTORM_FCOE_PARAMS_B_E_D_TOV_RES (0x1<<1)
-#define USTORM_FCOE_PARAMS_B_E_D_TOV_RES_SHIFT 1
-#define USTORM_FCOE_PARAMS_B_CONT_INCR_SEQ_CNT (0x1<<2)
-#define USTORM_FCOE_PARAMS_B_CONT_INCR_SEQ_CNT_SHIFT 2
-#define USTORM_FCOE_PARAMS_B_CONF_REQ (0x1<<3)
-#define USTORM_FCOE_PARAMS_B_CONF_REQ_SHIFT 3
-#define USTORM_FCOE_PARAMS_B_REC_VALID (0x1<<4)
-#define USTORM_FCOE_PARAMS_B_REC_VALID_SHIFT 4
-#define USTORM_FCOE_PARAMS_B_CQ_TOGGLE_BIT (0x1<<5)
-#define USTORM_FCOE_PARAMS_B_CQ_TOGGLE_BIT_SHIFT 5
-#define USTORM_FCOE_PARAMS_B_XFRQ_TOGGLE_BIT (0x1<<6)
-#define USTORM_FCOE_PARAMS_B_XFRQ_TOGGLE_BIT_SHIFT 6
-#define USTORM_FCOE_PARAMS_RSRV0 (0x1FF<<7)
-#define USTORM_FCOE_PARAMS_RSRV0_SHIFT 7
+#घोषणा USTORM_FCOE_PARAMS_B_MUL_N_PORT_IDS (0x1<<0)
+#घोषणा USTORM_FCOE_PARAMS_B_MUL_N_PORT_IDS_SHIFT 0
+#घोषणा USTORM_FCOE_PARAMS_B_E_D_TOV_RES (0x1<<1)
+#घोषणा USTORM_FCOE_PARAMS_B_E_D_TOV_RES_SHIFT 1
+#घोषणा USTORM_FCOE_PARAMS_B_CONT_INCR_SEQ_CNT (0x1<<2)
+#घोषणा USTORM_FCOE_PARAMS_B_CONT_INCR_SEQ_CNT_SHIFT 2
+#घोषणा USTORM_FCOE_PARAMS_B_CONF_REQ (0x1<<3)
+#घोषणा USTORM_FCOE_PARAMS_B_CONF_REQ_SHIFT 3
+#घोषणा USTORM_FCOE_PARAMS_B_REC_VALID (0x1<<4)
+#घोषणा USTORM_FCOE_PARAMS_B_REC_VALID_SHIFT 4
+#घोषणा USTORM_FCOE_PARAMS_B_CQ_TOGGLE_BIT (0x1<<5)
+#घोषणा USTORM_FCOE_PARAMS_B_CQ_TOGGLE_BIT_SHIFT 5
+#घोषणा USTORM_FCOE_PARAMS_B_XFRQ_TOGGLE_BIT (0x1<<6)
+#घोषणा USTORM_FCOE_PARAMS_B_XFRQ_TOGGLE_BIT_SHIFT 6
+#घोषणा USTORM_FCOE_PARAMS_RSRV0 (0x1FF<<7)
+#घोषणा USTORM_FCOE_PARAMS_RSRV0_SHIFT 7
 	u16 fcoe_conn_id;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 hc_csdm_byte_en;
 	u8 func_id;
 	u8 port_id;
 	u8 vnic_id;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 vnic_id;
 	u8 port_id;
 	u8 func_id;
 	u8 hc_csdm_byte_en;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 rx_total_conc_seqs;
 	u16 rx_max_fc_pay_len;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rx_max_fc_pay_len;
 	u16 rx_total_conc_seqs;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 task_pbe_idx_off;
 	u8 task_in_page_log_size;
 	u16 rx_max_conc_seqs;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rx_max_conc_seqs;
 	u8 task_in_page_log_size;
 	u8 task_pbe_idx_off;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * FCoE 16-bits index structure
+ * FCoE 16-bits index काष्ठाure
  */
-struct fcoe_idx16_fields {
+काष्ठा fcoe_idx16_fields अणु
 	u16 fields;
-#define FCOE_IDX16_FIELDS_IDX (0x7FFF<<0)
-#define FCOE_IDX16_FIELDS_IDX_SHIFT 0
-#define FCOE_IDX16_FIELDS_MSB (0x1<<15)
-#define FCOE_IDX16_FIELDS_MSB_SHIFT 15
-};
+#घोषणा FCOE_IDX16_FIELDS_IDX (0x7FFF<<0)
+#घोषणा FCOE_IDX16_FIELDS_IDX_SHIFT 0
+#घोषणा FCOE_IDX16_FIELDS_MSB (0x1<<15)
+#घोषणा FCOE_IDX16_FIELDS_MSB_SHIFT 15
+पूर्ण;
 
 /*
- * FCoE 16-bits index union
+ * FCoE 16-bits index जोड़
  */
-union fcoe_idx16_field_union {
-	struct fcoe_idx16_fields fields;
+जोड़ fcoe_idx16_field_जोड़ अणु
+	काष्ठा fcoe_idx16_fields fields;
 	u16 val;
-};
+पूर्ण;
 
 /*
- * Parameters required for placement according to SGL
+ * Parameters required क्रम placement according to SGL
  */
-struct ustorm_fcoe_data_place_mng {
-#if defined(__BIG_ENDIAN)
+काष्ठा ustorm_fcoe_data_place_mng अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 sge_off;
 	u8 num_sges;
 	u8 sge_idx;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 sge_idx;
 	u8 num_sges;
 	u16 sge_off;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * Parameters required for placement according to SGL
+ * Parameters required क्रम placement according to SGL
  */
-struct ustorm_fcoe_data_place {
-	struct ustorm_fcoe_data_place_mng cached_mng;
-	struct fcoe_bd_ctx cached_sge[2];
-};
+काष्ठा ustorm_fcoe_data_place अणु
+	काष्ठा ustorm_fcoe_data_place_mng cached_mng;
+	काष्ठा fcoe_bd_ctx cached_sge[2];
+पूर्ण;
 
 /*
- * TX processing shall write and RX processing shall read from this section
+ * TX processing shall ग_लिखो and RX processing shall पढ़ो from this section
  */
-union fcoe_u_tce_tx_wr_rx_rd_union {
-	struct fcoe_abts_info abts;
-	struct fcoe_cleanup_info cleanup;
-	struct fcoe_fw_tx_seq_ctx tx_seq_ctx;
+जोड़ fcoe_u_tce_tx_wr_rx_rd_जोड़ अणु
+	काष्ठा fcoe_abts_info abts;
+	काष्ठा fcoe_cleanup_info cleanup;
+	काष्ठा fcoe_fw_tx_seq_ctx tx_seq_ctx;
 	u32 opaque[2];
-};
+पूर्ण;
 
 /*
- * TX processing shall write and RX processing shall read from this section
+ * TX processing shall ग_लिखो and RX processing shall पढ़ो from this section
  */
-struct fcoe_u_tce_tx_wr_rx_rd {
-	union fcoe_u_tce_tx_wr_rx_rd_union union_ctx;
-	struct fcoe_tce_tx_wr_rx_rd_const const_ctx;
-};
+काष्ठा fcoe_u_tce_tx_wr_rx_rd अणु
+	जोड़ fcoe_u_tce_tx_wr_rx_rd_जोड़ जोड़_ctx;
+	काष्ठा fcoe_tce_tx_wr_rx_rd_स्थिर स्थिर_ctx;
+पूर्ण;
 
-struct ustorm_fcoe_tce {
-	struct fcoe_u_tce_tx_wr_rx_rd txwr_rxrd;
-	struct fcoe_tce_rx_wr_tx_rd rxwr_txrd;
-	struct fcoe_tce_rx_only rxwr;
-};
+काष्ठा ustorm_fcoe_tce अणु
+	काष्ठा fcoe_u_tce_tx_wr_rx_rd txwr_rxrd;
+	काष्ठा fcoe_tce_rx_wr_tx_rd rxwr_txrd;
+	काष्ठा fcoe_tce_rx_only rxwr;
+पूर्ण;
 
-struct ustorm_fcoe_cache_ctx {
+काष्ठा ustorm_fcoe_cache_ctx अणु
 	u32 rsrv0;
-	struct ustorm_fcoe_data_place data_place;
-	struct ustorm_fcoe_tce tce;
-};
+	काष्ठा ustorm_fcoe_data_place data_place;
+	काष्ठा ustorm_fcoe_tce tce;
+पूर्ण;
 
 /*
  * Ustorm FCoE Storm Context
  */
-struct ustorm_fcoe_st_context {
-	struct ustorm_fcoe_mng_ctx mng_ctx;
-	struct ustorm_fcoe_params fcoe_params;
-	struct regpair cq_base_addr;
-	struct regpair rq_pbl_base;
-	struct regpair rq_cur_page_addr;
-	struct regpair confq_pbl_base_addr;
-	struct regpair conn_db_base;
-	struct regpair xfrq_base_addr;
-	struct regpair lcq_base_addr;
-#if defined(__BIG_ENDIAN)
-	union fcoe_idx16_field_union rq_cons;
-	union fcoe_idx16_field_union rq_prod;
-#elif defined(__LITTLE_ENDIAN)
-	union fcoe_idx16_field_union rq_prod;
-	union fcoe_idx16_field_union rq_cons;
-#endif
-#if defined(__BIG_ENDIAN)
+काष्ठा ustorm_fcoe_st_context अणु
+	काष्ठा ustorm_fcoe_mng_ctx mng_ctx;
+	काष्ठा ustorm_fcoe_params fcoe_params;
+	काष्ठा regpair cq_base_addr;
+	काष्ठा regpair rq_pbl_base;
+	काष्ठा regpair rq_cur_page_addr;
+	काष्ठा regpair confq_pbl_base_addr;
+	काष्ठा regpair conn_db_base;
+	काष्ठा regpair xfrq_base_addr;
+	काष्ठा regpair lcq_base_addr;
+#अगर defined(__BIG_ENDIAN)
+	जोड़ fcoe_idx16_field_जोड़ rq_cons;
+	जोड़ fcoe_idx16_field_जोड़ rq_prod;
+#या_अगर defined(__LITTLE_ENDIAN)
+	जोड़ fcoe_idx16_field_जोड़ rq_prod;
+	जोड़ fcoe_idx16_field_जोड़ rq_cons;
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 xfrq_prod;
 	u16 cq_cons;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 cq_cons;
 	u16 xfrq_prod;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 lcq_cons;
 	u16 hc_cram_address;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 hc_cram_address;
 	u16 lcq_cons;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 sq_xfrq_lcq_confq_size;
 	u16 confq_prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 confq_prod;
 	u16 sq_xfrq_lcq_confq_size;
-#endif
-#if defined(__BIG_ENDIAN)
-	u8 hc_csdm_agg_int;
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
+	u8 hc_csdm_agg_पूर्णांक;
 	u8 rsrv2;
 	u8 available_rqes;
 	u8 sp_q_flush_cnt;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 sp_q_flush_cnt;
 	u8 available_rqes;
 	u8 rsrv2;
-	u8 hc_csdm_agg_int;
-#endif
-#if defined(__BIG_ENDIAN)
+	u8 hc_csdm_agg_पूर्णांक;
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 num_pend_tasks;
 	u16 pbf_ack_ram_addr;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 pbf_ack_ram_addr;
 	u16 num_pend_tasks;
-#endif
-	struct ustorm_fcoe_cache_ctx cache_ctx;
-};
+#पूर्ण_अगर
+	काष्ठा ustorm_fcoe_cache_ctx cache_ctx;
+पूर्ण;
 
 /*
  * The FCoE non-aggregative context of Tstorm
  */
-struct tstorm_fcoe_st_context {
-	struct regpair reserved0;
-	struct regpair reserved1;
-};
+काष्ठा tstorm_fcoe_st_context अणु
+	काष्ठा regpair reserved0;
+	काष्ठा regpair reserved1;
+पूर्ण;
 
 /*
  * Ethernet context section
  */
-struct xstorm_fcoe_eth_context_section {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_fcoe_eth_context_section अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 remote_addr_4;
 	u8 remote_addr_5;
 	u8 local_addr_0;
 	u8 local_addr_1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 local_addr_1;
 	u8 local_addr_0;
 	u8 remote_addr_5;
 	u8 remote_addr_4;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 remote_addr_0;
 	u8 remote_addr_1;
 	u8 remote_addr_2;
 	u8 remote_addr_3;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 remote_addr_3;
 	u8 remote_addr_2;
 	u8 remote_addr_1;
 	u8 remote_addr_0;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 reserved_vlan_type;
 	u16 params;
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_VLAN_ID (0xFFF<<0)
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_VLAN_ID_SHIFT 0
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_CFI (0x1<<12)
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_CFI_SHIFT 12
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_PRIORITY (0x7<<13)
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_PRIORITY_SHIFT 13
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_VLAN_ID (0xFFF<<0)
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_VLAN_ID_SHIFT 0
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_CFI (0x1<<12)
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_CFI_SHIFT 12
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_PRIORITY (0x7<<13)
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_PRIORITY_SHIFT 13
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 params;
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_VLAN_ID (0xFFF<<0)
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_VLAN_ID_SHIFT 0
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_CFI (0x1<<12)
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_CFI_SHIFT 12
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_PRIORITY (0x7<<13)
-#define XSTORM_FCOE_ETH_CONTEXT_SECTION_PRIORITY_SHIFT 13
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_VLAN_ID (0xFFF<<0)
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_VLAN_ID_SHIFT 0
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_CFI (0x1<<12)
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_CFI_SHIFT 12
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_PRIORITY (0x7<<13)
+#घोषणा XSTORM_FCOE_ETH_CONTEXT_SECTION_PRIORITY_SHIFT 13
 	u16 reserved_vlan_type;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 local_addr_2;
 	u8 local_addr_3;
 	u8 local_addr_4;
 	u8 local_addr_5;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 local_addr_5;
 	u8 local_addr_4;
 	u8 local_addr_3;
 	u8 local_addr_2;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * Flags used in FCoE context section - 1 byte
  */
-struct xstorm_fcoe_context_flags {
+काष्ठा xstorm_fcoe_context_flags अणु
 	u8 flags;
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_PROC_Q (0x3<<0)
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_PROC_Q_SHIFT 0
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_MID_SEQ (0x1<<2)
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_MID_SEQ_SHIFT 2
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_BLOCK_SQ (0x1<<3)
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_BLOCK_SQ_SHIFT 3
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_REC_SUPPORT (0x1<<4)
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_REC_SUPPORT_SHIFT 4
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_SQ_TOGGLE (0x1<<5)
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_SQ_TOGGLE_SHIFT 5
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_XFRQ_TOGGLE (0x1<<6)
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_XFRQ_TOGGLE_SHIFT 6
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_VNTAG_VLAN (0x1<<7)
-#define XSTORM_FCOE_CONTEXT_FLAGS_B_VNTAG_VLAN_SHIFT 7
-};
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_PROC_Q (0x3<<0)
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_PROC_Q_SHIFT 0
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_MID_SEQ (0x1<<2)
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_MID_SEQ_SHIFT 2
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_BLOCK_SQ (0x1<<3)
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_BLOCK_SQ_SHIFT 3
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_REC_SUPPORT (0x1<<4)
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_REC_SUPPORT_SHIFT 4
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_SQ_TOGGLE (0x1<<5)
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_SQ_TOGGLE_SHIFT 5
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_XFRQ_TOGGLE (0x1<<6)
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_XFRQ_TOGGLE_SHIFT 6
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_VNTAG_VLAN (0x1<<7)
+#घोषणा XSTORM_FCOE_CONTEXT_FLAGS_B_VNTAG_VLAN_SHIFT 7
+पूर्ण;
 
-struct xstorm_fcoe_tce {
-	struct fcoe_tce_tx_only txwr;
-	struct fcoe_tce_tx_wr_rx_rd txwr_rxrd;
-};
+काष्ठा xstorm_fcoe_tce अणु
+	काष्ठा fcoe_tce_tx_only txwr;
+	काष्ठा fcoe_tce_tx_wr_rx_rd txwr_rxrd;
+पूर्ण;
 
 /*
- * FCP_DATA parameters required for transmission
+ * FCP_DATA parameters required क्रम transmission
  */
-struct xstorm_fcoe_fcp_data {
+काष्ठा xstorm_fcoe_fcp_data अणु
 	u32 io_rem;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 cached_sge_off;
 	u8 cached_num_sges;
 	u8 cached_sge_idx;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 cached_sge_idx;
 	u8 cached_num_sges;
 	u16 cached_sge_off;
-#endif
+#पूर्ण_अगर
 	u32 buf_addr_hi_0;
 	u32 buf_addr_lo_0;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 num_of_pending_tasks;
 	u16 buf_len_0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 buf_len_0;
 	u16 num_of_pending_tasks;
-#endif
+#पूर्ण_अगर
 	u32 buf_addr_hi_1;
 	u32 buf_addr_lo_1;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 task_pbe_idx_off;
 	u16 buf_len_1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 buf_len_1;
 	u16 task_pbe_idx_off;
-#endif
+#पूर्ण_अगर
 	u32 buf_addr_hi_2;
 	u32 buf_addr_lo_2;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 ox_id;
 	u16 buf_len_2;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 buf_len_2;
 	u16 ox_id;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * vlan configuration
  */
-struct xstorm_fcoe_vlan_conf {
+काष्ठा xstorm_fcoe_vlan_conf अणु
 	u8 vlan_conf;
-#define XSTORM_FCOE_VLAN_CONF_PRIORITY (0x7<<0)
-#define XSTORM_FCOE_VLAN_CONF_PRIORITY_SHIFT 0
-#define XSTORM_FCOE_VLAN_CONF_INNER_VLAN_FLAG (0x1<<3)
-#define XSTORM_FCOE_VLAN_CONF_INNER_VLAN_FLAG_SHIFT 3
-#define XSTORM_FCOE_VLAN_CONF_RESERVED (0xF<<4)
-#define XSTORM_FCOE_VLAN_CONF_RESERVED_SHIFT 4
-};
+#घोषणा XSTORM_FCOE_VLAN_CONF_PRIORITY (0x7<<0)
+#घोषणा XSTORM_FCOE_VLAN_CONF_PRIORITY_SHIFT 0
+#घोषणा XSTORM_FCOE_VLAN_CONF_INNER_VLAN_FLAG (0x1<<3)
+#घोषणा XSTORM_FCOE_VLAN_CONF_INNER_VLAN_FLAG_SHIFT 3
+#घोषणा XSTORM_FCOE_VLAN_CONF_RESERVED (0xF<<4)
+#घोषणा XSTORM_FCOE_VLAN_CONF_RESERVED_SHIFT 4
+पूर्ण;
 
 /*
- * FCoE 16-bits vlan structure
+ * FCoE 16-bits vlan काष्ठाure
  */
-struct fcoe_vlan_fields {
+काष्ठा fcoe_vlan_fields अणु
 	u16 fields;
-#define FCOE_VLAN_FIELDS_VID (0xFFF<<0)
-#define FCOE_VLAN_FIELDS_VID_SHIFT 0
-#define FCOE_VLAN_FIELDS_CLI (0x1<<12)
-#define FCOE_VLAN_FIELDS_CLI_SHIFT 12
-#define FCOE_VLAN_FIELDS_PRI (0x7<<13)
-#define FCOE_VLAN_FIELDS_PRI_SHIFT 13
-};
+#घोषणा FCOE_VLAN_FIELDS_VID (0xFFF<<0)
+#घोषणा FCOE_VLAN_FIELDS_VID_SHIFT 0
+#घोषणा FCOE_VLAN_FIELDS_CLI (0x1<<12)
+#घोषणा FCOE_VLAN_FIELDS_CLI_SHIFT 12
+#घोषणा FCOE_VLAN_FIELDS_PRI (0x7<<13)
+#घोषणा FCOE_VLAN_FIELDS_PRI_SHIFT 13
+पूर्ण;
 
 /*
- * FCoE 16-bits vlan union
+ * FCoE 16-bits vlan जोड़
  */
-union fcoe_vlan_field_union {
-	struct fcoe_vlan_fields fields;
+जोड़ fcoe_vlan_field_जोड़ अणु
+	काष्ठा fcoe_vlan_fields fields;
 	u16 val;
-};
+पूर्ण;
 
 /*
- * FCoE 16-bits vlan, vif union
+ * FCoE 16-bits vlan, vअगर जोड़
  */
-union fcoe_vlan_vif_field_union {
-	union fcoe_vlan_field_union vlan;
-	u16 vif;
-};
+जोड़ fcoe_vlan_vअगर_field_जोड़ अणु
+	जोड़ fcoe_vlan_field_जोड़ vlan;
+	u16 vअगर;
+पूर्ण;
 
 /*
  * FCoE context section
  */
-struct xstorm_fcoe_context_section {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_fcoe_context_section अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 cs_ctl;
 	u8 s_id[3];
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 s_id[3];
 	u8 cs_ctl;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 rctl;
 	u8 d_id[3];
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 d_id[3];
 	u8 rctl;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 sq_xfrq_lcq_confq_size;
 	u16 tx_max_fc_pay_len;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 tx_max_fc_pay_len;
 	u16 sq_xfrq_lcq_confq_size;
-#endif
+#पूर्ण_अगर
 	u32 lcq_prod;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 port_id;
 	u8 func_id;
 	u8 seq_id;
-	struct xstorm_fcoe_context_flags tx_flags;
-#elif defined(__LITTLE_ENDIAN)
-	struct xstorm_fcoe_context_flags tx_flags;
+	काष्ठा xstorm_fcoe_context_flags tx_flags;
+#या_अगर defined(__LITTLE_ENDIAN)
+	काष्ठा xstorm_fcoe_context_flags tx_flags;
 	u8 seq_id;
 	u8 func_id;
 	u8 port_id;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 mtu;
 	u8 func_mode;
 	u8 vnic_id;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 vnic_id;
 	u8 func_mode;
 	u16 mtu;
-#endif
-	struct regpair confq_curr_page_addr;
-	struct fcoe_cached_wqe cached_wqe[8];
-	struct regpair lcq_base_addr;
-	struct xstorm_fcoe_tce tce;
-	struct xstorm_fcoe_fcp_data fcp_data;
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+	काष्ठा regpair confq_curr_page_addr;
+	काष्ठा fcoe_cached_wqe cached_wqe[8];
+	काष्ठा regpair lcq_base_addr;
+	काष्ठा xstorm_fcoe_tce tce;
+	काष्ठा xstorm_fcoe_fcp_data fcp_data;
+#अगर defined(__BIG_ENDIAN)
 	u8 tx_max_conc_seqs_c3;
 	u8 vlan_flag;
 	u8 dcb_val;
 	u8 data_pb_cmd_size;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 data_pb_cmd_size;
 	u8 dcb_val;
 	u8 vlan_flag;
 	u8 tx_max_conc_seqs_c3;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 fcoe_tx_stat_params_ram_addr;
 	u16 fcoe_tx_fc_seq_ram_addr;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 fcoe_tx_fc_seq_ram_addr;
 	u16 fcoe_tx_stat_params_ram_addr;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 fcp_cmd_line_credit;
 	u8 eth_hdr_size;
 	u16 pbf_addr;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 pbf_addr;
 	u8 eth_hdr_size;
 	u8 fcp_cmd_line_credit;
-#endif
-#if defined(__BIG_ENDIAN)
-	union fcoe_vlan_vif_field_union multi_func_val;
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
+	जोड़ fcoe_vlan_vअगर_field_जोड़ multi_func_val;
 	u8 page_log_size;
-	struct xstorm_fcoe_vlan_conf orig_vlan_conf;
-#elif defined(__LITTLE_ENDIAN)
-	struct xstorm_fcoe_vlan_conf orig_vlan_conf;
+	काष्ठा xstorm_fcoe_vlan_conf orig_vlan_conf;
+#या_अगर defined(__LITTLE_ENDIAN)
+	काष्ठा xstorm_fcoe_vlan_conf orig_vlan_conf;
 	u8 page_log_size;
-	union fcoe_vlan_vif_field_union multi_func_val;
-#endif
-#if defined(__BIG_ENDIAN)
+	जोड़ fcoe_vlan_vअगर_field_जोड़ multi_func_val;
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 fcp_cmd_frame_size;
 	u16 pbf_addr_ff;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 pbf_addr_ff;
 	u16 fcp_cmd_frame_size;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 vlan_num;
 	u8 cos;
 	u8 cache_xfrq_cons;
 	u8 cache_sq_cons;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 cache_sq_cons;
 	u8 cache_xfrq_cons;
 	u8 cos;
 	u8 vlan_num;
-#endif
-	u32 verify_tx_seq;
-};
+#पूर्ण_अगर
+	u32 verअगरy_tx_seq;
+पूर्ण;
 
 /*
  * Xstorm FCoE Storm Context
  */
-struct xstorm_fcoe_st_context {
-	struct xstorm_fcoe_eth_context_section eth;
-	struct xstorm_fcoe_context_section fcoe;
-};
+काष्ठा xstorm_fcoe_st_context अणु
+	काष्ठा xstorm_fcoe_eth_context_section eth;
+	काष्ठा xstorm_fcoe_context_section fcoe;
+पूर्ण;
 
 /*
  * Fcoe connection context
  */
-struct fcoe_context {
-	struct ustorm_fcoe_st_context ustorm_st_context;
-	struct tstorm_fcoe_st_context tstorm_st_context;
-	struct xstorm_fcoe_ag_context xstorm_ag_context;
-	struct tstorm_fcoe_ag_context tstorm_ag_context;
-	struct ustorm_fcoe_ag_context ustorm_ag_context;
-	struct timers_block_context timers_context;
-	struct xstorm_fcoe_st_context xstorm_st_context;
-};
+काष्ठा fcoe_context अणु
+	काष्ठा ustorm_fcoe_st_context ustorm_st_context;
+	काष्ठा tstorm_fcoe_st_context tstorm_st_context;
+	काष्ठा xstorm_fcoe_ag_context xstorm_ag_context;
+	काष्ठा tstorm_fcoe_ag_context tstorm_ag_context;
+	काष्ठा ustorm_fcoe_ag_context ustorm_ag_context;
+	काष्ठा समयrs_block_context समयrs_context;
+	काष्ठा xstorm_fcoe_st_context xstorm_st_context;
+पूर्ण;
 
 /*
  * FCoE init params passed by driver to FW in FCoE init ramrod
  * $$KEEP_ENDIANNESS$$
  */
-struct fcoe_init_ramrod_params {
-	struct fcoe_kwqe_init1 init_kwqe1;
-	struct fcoe_kwqe_init2 init_kwqe2;
-	struct fcoe_kwqe_init3 init_kwqe3;
-	struct regpair eq_pbl_base;
+काष्ठा fcoe_init_ramrod_params अणु
+	काष्ठा fcoe_kwqe_init1 init_kwqe1;
+	काष्ठा fcoe_kwqe_init2 init_kwqe2;
+	काष्ठा fcoe_kwqe_init3 init_kwqe3;
+	काष्ठा regpair eq_pbl_base;
 	__le32 eq_pbl_size;
 	__le32 reserved2;
 	__le16 eq_prod;
@@ -3695,677 +3696,677 @@ struct fcoe_init_ramrod_params {
 	u8 sb_id;
 	u8 reserved0;
 	__le16 reserved1;
-};
+पूर्ण;
 
 /*
  * FCoE statistics params buffer passed by driver to FW in FCoE statistics
  * ramrod $$KEEP_ENDIANNESS$$
  */
-struct fcoe_stat_ramrod_params {
-	struct fcoe_kwqe_stat stat_kwqe;
-};
+काष्ठा fcoe_stat_ramrod_params अणु
+	काष्ठा fcoe_kwqe_stat stat_kwqe;
+पूर्ण;
 
 /*
  * CQ DB CQ producer and pending completion counter
  */
-struct iscsi_cq_db_prod_pnd_cmpltn_cnt {
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_cq_db_prod_pnd_cmpltn_cnt अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 cntr;
 	u16 prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 prod;
 	u16 cntr;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * CQ DB pending completion ITT array
  */
-struct iscsi_cq_db_prod_pnd_cmpltn_cnt_arr {
-	struct iscsi_cq_db_prod_pnd_cmpltn_cnt prod_pend_comp[8];
-};
+काष्ठा iscsi_cq_db_prod_pnd_cmpltn_cnt_arr अणु
+	काष्ठा iscsi_cq_db_prod_pnd_cmpltn_cnt prod_pend_comp[8];
+पूर्ण;
 
 /*
- * Cstorm CQ sequence to notify array, updated by driver
+ * Cstorm CQ sequence to notअगरy array, updated by driver
  */
-struct iscsi_cq_db_sqn_2_notify_arr {
+काष्ठा iscsi_cq_db_sqn_2_notअगरy_arr अणु
 	u16 sqn[8];
-};
+पूर्ण;
 
 /*
  * Cstorm iSCSI Storm Context
  */
-struct cstorm_iscsi_st_context {
-	struct iscsi_cq_db_prod_pnd_cmpltn_cnt_arr cq_c_prod_pend_comp_ctr_arr;
-	struct iscsi_cq_db_sqn_2_notify_arr cq_c_prod_sqn_arr;
-	struct iscsi_cq_db_sqn_2_notify_arr cq_c_sqn_2_notify_arr;
-	struct regpair hq_pbl_base;
-	struct regpair hq_curr_pbe;
-	struct regpair task_pbl_base;
-	struct regpair cq_db_base;
-#if defined(__BIG_ENDIAN)
+काष्ठा cstorm_iscsi_st_context अणु
+	काष्ठा iscsi_cq_db_prod_pnd_cmpltn_cnt_arr cq_c_prod_pend_comp_ctr_arr;
+	काष्ठा iscsi_cq_db_sqn_2_notअगरy_arr cq_c_prod_sqn_arr;
+	काष्ठा iscsi_cq_db_sqn_2_notअगरy_arr cq_c_sqn_2_notअगरy_arr;
+	काष्ठा regpair hq_pbl_base;
+	काष्ठा regpair hq_curr_pbe;
+	काष्ठा regpair task_pbl_base;
+	काष्ठा regpair cq_db_base;
+#अगर defined(__BIG_ENDIAN)
 	u16 hq_bd_itt;
 	u16 iscsi_conn_id;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 iscsi_conn_id;
 	u16 hq_bd_itt;
-#endif
+#पूर्ण_अगर
 	u32 hq_bd_data_segment_len;
 	u32 hq_bd_buffer_offset;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 rsrv;
 	u8 cq_proc_en_bit_map;
 	u8 cq_pend_comp_itt_valid_bit_map;
 	u8 hq_bd_opcode;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 hq_bd_opcode;
 	u8 cq_pend_comp_itt_valid_bit_map;
 	u8 cq_proc_en_bit_map;
 	u8 rsrv;
-#endif
+#पूर्ण_अगर
 	u32 hq_tcp_seq;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 flags;
-#define CSTORM_ISCSI_ST_CONTEXT_DATA_DIGEST_EN (0x1<<0)
-#define CSTORM_ISCSI_ST_CONTEXT_DATA_DIGEST_EN_SHIFT 0
-#define CSTORM_ISCSI_ST_CONTEXT_HDR_DIGEST_EN (0x1<<1)
-#define CSTORM_ISCSI_ST_CONTEXT_HDR_DIGEST_EN_SHIFT 1
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_CTXT_VALID (0x1<<2)
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_CTXT_VALID_SHIFT 2
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_LCL_CMPLN_FLG (0x1<<3)
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_LCL_CMPLN_FLG_SHIFT 3
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_WRITE_TASK (0x1<<4)
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_WRITE_TASK_SHIFT 4
-#define CSTORM_ISCSI_ST_CONTEXT_CTRL_FLAGS_RSRV (0x7FF<<5)
-#define CSTORM_ISCSI_ST_CONTEXT_CTRL_FLAGS_RSRV_SHIFT 5
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_DATA_DIGEST_EN (0x1<<0)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_DATA_DIGEST_EN_SHIFT 0
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HDR_DIGEST_EN (0x1<<1)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HDR_DIGEST_EN_SHIFT 1
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_CTXT_VALID (0x1<<2)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_CTXT_VALID_SHIFT 2
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_LCL_CMPLN_FLG (0x1<<3)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_LCL_CMPLN_FLG_SHIFT 3
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_WRITE_TASK (0x1<<4)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_WRITE_TASK_SHIFT 4
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_CTRL_FLAGS_RSRV (0x7FF<<5)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_CTRL_FLAGS_RSRV_SHIFT 5
 	u16 hq_cons;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 hq_cons;
 	u16 flags;
-#define CSTORM_ISCSI_ST_CONTEXT_DATA_DIGEST_EN (0x1<<0)
-#define CSTORM_ISCSI_ST_CONTEXT_DATA_DIGEST_EN_SHIFT 0
-#define CSTORM_ISCSI_ST_CONTEXT_HDR_DIGEST_EN (0x1<<1)
-#define CSTORM_ISCSI_ST_CONTEXT_HDR_DIGEST_EN_SHIFT 1
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_CTXT_VALID (0x1<<2)
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_CTXT_VALID_SHIFT 2
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_LCL_CMPLN_FLG (0x1<<3)
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_LCL_CMPLN_FLG_SHIFT 3
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_WRITE_TASK (0x1<<4)
-#define CSTORM_ISCSI_ST_CONTEXT_HQ_BD_WRITE_TASK_SHIFT 4
-#define CSTORM_ISCSI_ST_CONTEXT_CTRL_FLAGS_RSRV (0x7FF<<5)
-#define CSTORM_ISCSI_ST_CONTEXT_CTRL_FLAGS_RSRV_SHIFT 5
-#endif
-	struct regpair rsrv1;
-};
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_DATA_DIGEST_EN (0x1<<0)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_DATA_DIGEST_EN_SHIFT 0
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HDR_DIGEST_EN (0x1<<1)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HDR_DIGEST_EN_SHIFT 1
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_CTXT_VALID (0x1<<2)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_CTXT_VALID_SHIFT 2
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_LCL_CMPLN_FLG (0x1<<3)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_LCL_CMPLN_FLG_SHIFT 3
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_WRITE_TASK (0x1<<4)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_HQ_BD_WRITE_TASK_SHIFT 4
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_CTRL_FLAGS_RSRV (0x7FF<<5)
+#घोषणा CSTORM_ISCSI_ST_CONTEXT_CTRL_FLAGS_RSRV_SHIFT 5
+#पूर्ण_अगर
+	काष्ठा regpair rsrv1;
+पूर्ण;
 
 
 /*
- * SCSI read/write SQ WQE
+ * SCSI पढ़ो/ग_लिखो SQ WQE
  */
-struct iscsi_cmd_pdu_hdr_little_endian {
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_cmd_pdu_hdr_little_endian अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 opcode;
 	u8 op_attr;
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_ATTRIBUTES (0x7<<0)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_ATTRIBUTES_SHIFT 0
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_RSRV1 (0x3<<3)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 3
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_WRITE_FLAG (0x1<<5)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_WRITE_FLAG_SHIFT 5
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_READ_FLAG (0x1<<6)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_READ_FLAG_SHIFT 6
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG (0x1<<7)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG_SHIFT 7
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_ATTRIBUTES (0x7<<0)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_ATTRIBUTES_SHIFT 0
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_RSRV1 (0x3<<3)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 3
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_WRITE_FLAG (0x1<<5)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_WRITE_FLAG_SHIFT 5
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_READ_FLAG (0x1<<6)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_READ_FLAG_SHIFT 6
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG (0x1<<7)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG_SHIFT 7
 	u16 rsrv0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv0;
 	u8 op_attr;
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_ATTRIBUTES (0x7<<0)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_ATTRIBUTES_SHIFT 0
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_RSRV1 (0x3<<3)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 3
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_WRITE_FLAG (0x1<<5)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_WRITE_FLAG_SHIFT 5
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_READ_FLAG (0x1<<6)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_READ_FLAG_SHIFT 6
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG (0x1<<7)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG_SHIFT 7
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_ATTRIBUTES (0x7<<0)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_ATTRIBUTES_SHIFT 0
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_RSRV1 (0x3<<3)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 3
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_WRITE_FLAG (0x1<<5)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_WRITE_FLAG_SHIFT 5
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_READ_FLAG (0x1<<6)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_READ_FLAG_SHIFT 6
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG (0x1<<7)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG_SHIFT 7
 	u8 opcode;
-#endif
+#पूर्ण_अगर
 	u32 data_fields;
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
-#define ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
-	struct regpair lun;
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
+#घोषणा ISCSI_CMD_PDU_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
+	काष्ठा regpair lun;
 	u32 itt;
 	u32 expected_data_transfer_length;
 	u32 cmd_sn;
 	u32 exp_stat_sn;
 	u32 scsi_command_block[4];
-};
+पूर्ण;
 
 
 /*
  * Buffer per connection, used in Tstorm
  */
-struct iscsi_conn_buf {
-	struct regpair reserved[8];
-};
+काष्ठा iscsi_conn_buf अणु
+	काष्ठा regpair reserved[8];
+पूर्ण;
 
 
 /*
  * iSCSI context region, used only in iSCSI
  */
-struct ustorm_iscsi_rq_db {
-	struct regpair pbl_base;
-	struct regpair curr_pbe;
-};
+काष्ठा ustorm_iscsi_rq_db अणु
+	काष्ठा regpair pbl_base;
+	काष्ठा regpair curr_pbe;
+पूर्ण;
 
 /*
  * iSCSI context region, used only in iSCSI
  */
-struct ustorm_iscsi_r2tq_db {
-	struct regpair pbl_base;
-	struct regpair curr_pbe;
-};
+काष्ठा ustorm_iscsi_r2tq_db अणु
+	काष्ठा regpair pbl_base;
+	काष्ठा regpair curr_pbe;
+पूर्ण;
 
 /*
  * iSCSI context region, used only in iSCSI
  */
-struct ustorm_iscsi_cq_db {
-#if defined(__BIG_ENDIAN)
+काष्ठा ustorm_iscsi_cq_db अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 cq_sn;
 	u16 prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 prod;
 	u16 cq_sn;
-#endif
-	struct regpair curr_pbe;
-};
+#पूर्ण_अगर
+	काष्ठा regpair curr_pbe;
+पूर्ण;
 
 /*
  * iSCSI context region, used only in iSCSI
  */
-struct rings_db {
-	struct ustorm_iscsi_rq_db rq;
-	struct ustorm_iscsi_r2tq_db r2tq;
-	struct ustorm_iscsi_cq_db cq[8];
-#if defined(__BIG_ENDIAN)
+काष्ठा rings_db अणु
+	काष्ठा ustorm_iscsi_rq_db rq;
+	काष्ठा ustorm_iscsi_r2tq_db r2tq;
+	काष्ठा ustorm_iscsi_cq_db cq[8];
+#अगर defined(__BIG_ENDIAN)
 	u16 rq_prod;
 	u16 r2tq_prod;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 r2tq_prod;
 	u16 rq_prod;
-#endif
-	struct regpair cq_pbl_base;
-};
+#पूर्ण_अगर
+	काष्ठा regpair cq_pbl_base;
+पूर्ण;
 
 /*
  * iSCSI context region, used only in iSCSI
  */
-struct ustorm_iscsi_placement_db {
+काष्ठा ustorm_iscsi_placement_db अणु
 	u32 sgl_base_lo;
 	u32 sgl_base_hi;
 	u32 local_sge_0_address_hi;
 	u32 local_sge_0_address_lo;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 curr_sge_offset;
 	u16 local_sge_0_size;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 local_sge_0_size;
 	u16 curr_sge_offset;
-#endif
+#पूर्ण_अगर
 	u32 local_sge_1_address_hi;
 	u32 local_sge_1_address_lo;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 exp_padding_2b;
 	u8 nal_len_3b;
 	u16 local_sge_1_size;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 local_sge_1_size;
 	u8 nal_len_3b;
 	u8 exp_padding_2b;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 sgl_size;
 	u8 local_sge_index_2b;
 	u16 reserved7;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 reserved7;
 	u8 local_sge_index_2b;
 	u8 sgl_size;
-#endif
+#पूर्ण_अगर
 	u32 rem_pdu;
 	u32 place_db_bitfield_1;
-#define USTORM_ISCSI_PLACEMENT_DB_REM_PDU_PAYLOAD (0xFFFFFF<<0)
-#define USTORM_ISCSI_PLACEMENT_DB_REM_PDU_PAYLOAD_SHIFT 0
-#define USTORM_ISCSI_PLACEMENT_DB_CQ_ID (0xFF<<24)
-#define USTORM_ISCSI_PLACEMENT_DB_CQ_ID_SHIFT 24
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_REM_PDU_PAYLOAD (0xFFFFFF<<0)
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_REM_PDU_PAYLOAD_SHIFT 0
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_CQ_ID (0xFF<<24)
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_CQ_ID_SHIFT 24
 	u32 place_db_bitfield_2;
-#define USTORM_ISCSI_PLACEMENT_DB_BYTES_2_TRUNCATE (0xFFFFFF<<0)
-#define USTORM_ISCSI_PLACEMENT_DB_BYTES_2_TRUNCATE_SHIFT 0
-#define USTORM_ISCSI_PLACEMENT_DB_HOST_SGE_INDEX (0xFF<<24)
-#define USTORM_ISCSI_PLACEMENT_DB_HOST_SGE_INDEX_SHIFT 24
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_BYTES_2_TRUNCATE (0xFFFFFF<<0)
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_BYTES_2_TRUNCATE_SHIFT 0
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_HOST_SGE_INDEX (0xFF<<24)
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_HOST_SGE_INDEX_SHIFT 24
 	u32 nal;
-#define USTORM_ISCSI_PLACEMENT_DB_REM_SGE_SIZE (0xFFFFFF<<0)
-#define USTORM_ISCSI_PLACEMENT_DB_REM_SGE_SIZE_SHIFT 0
-#define USTORM_ISCSI_PLACEMENT_DB_EXP_DIGEST_3B (0xFF<<24)
-#define USTORM_ISCSI_PLACEMENT_DB_EXP_DIGEST_3B_SHIFT 24
-};
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_REM_SGE_SIZE (0xFFFFFF<<0)
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_REM_SGE_SIZE_SHIFT 0
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_EXP_DIGEST_3B (0xFF<<24)
+#घोषणा USTORM_ISCSI_PLACEMENT_DB_EXP_DIGEST_3B_SHIFT 24
+पूर्ण;
 
 /*
  * Ustorm iSCSI Storm Context
  */
-struct ustorm_iscsi_st_context {
+काष्ठा ustorm_iscsi_st_context अणु
 	u32 exp_stat_sn;
 	u32 exp_data_sn;
-	struct rings_db ring;
-	struct regpair task_pbl_base;
-	struct regpair tce_phy_addr;
-	struct ustorm_iscsi_placement_db place_db;
+	काष्ठा rings_db ring;
+	काष्ठा regpair task_pbl_base;
+	काष्ठा regpair tce_phy_addr;
+	काष्ठा ustorm_iscsi_placement_db place_db;
 	u32 reserved8;
 	u32 rem_rcv_len;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 hdr_itt;
 	u16 iscsi_conn_id;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 iscsi_conn_id;
 	u16 hdr_itt;
-#endif
+#पूर्ण_अगर
 	u32 nal_bytes;
-#if defined(__BIG_ENDIAN)
-	u8 hdr_second_byte_union;
+#अगर defined(__BIG_ENDIAN)
+	u8 hdr_second_byte_जोड़;
 	u8 bitfield_0;
-#define USTORM_ISCSI_ST_CONTEXT_BMIDDLEOFPDU (0x1<<0)
-#define USTORM_ISCSI_ST_CONTEXT_BMIDDLEOFPDU_SHIFT 0
-#define USTORM_ISCSI_ST_CONTEXT_BFENCECQE (0x1<<1)
-#define USTORM_ISCSI_ST_CONTEXT_BFENCECQE_SHIFT 1
-#define USTORM_ISCSI_ST_CONTEXT_BRESETCRC (0x1<<2)
-#define USTORM_ISCSI_ST_CONTEXT_BRESETCRC_SHIFT 2
-#define USTORM_ISCSI_ST_CONTEXT_RESERVED1 (0x1F<<3)
-#define USTORM_ISCSI_ST_CONTEXT_RESERVED1_SHIFT 3
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BMIDDLखातापूर्णPDU (0x1<<0)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BMIDDLखातापूर्णPDU_SHIFT 0
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BFENCECQE (0x1<<1)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BFENCECQE_SHIFT 1
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BRESETCRC (0x1<<2)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BRESETCRC_SHIFT 2
+#घोषणा USTORM_ISCSI_ST_CONTEXT_RESERVED1 (0x1F<<3)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_RESERVED1_SHIFT 3
 	u8 task_pdu_cache_index;
 	u8 task_pbe_cache_index;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 task_pbe_cache_index;
 	u8 task_pdu_cache_index;
 	u8 bitfield_0;
-#define USTORM_ISCSI_ST_CONTEXT_BMIDDLEOFPDU (0x1<<0)
-#define USTORM_ISCSI_ST_CONTEXT_BMIDDLEOFPDU_SHIFT 0
-#define USTORM_ISCSI_ST_CONTEXT_BFENCECQE (0x1<<1)
-#define USTORM_ISCSI_ST_CONTEXT_BFENCECQE_SHIFT 1
-#define USTORM_ISCSI_ST_CONTEXT_BRESETCRC (0x1<<2)
-#define USTORM_ISCSI_ST_CONTEXT_BRESETCRC_SHIFT 2
-#define USTORM_ISCSI_ST_CONTEXT_RESERVED1 (0x1F<<3)
-#define USTORM_ISCSI_ST_CONTEXT_RESERVED1_SHIFT 3
-	u8 hdr_second_byte_union;
-#endif
-#if defined(__BIG_ENDIAN)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BMIDDLखातापूर्णPDU (0x1<<0)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BMIDDLखातापूर्णPDU_SHIFT 0
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BFENCECQE (0x1<<1)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BFENCECQE_SHIFT 1
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BRESETCRC (0x1<<2)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_BRESETCRC_SHIFT 2
+#घोषणा USTORM_ISCSI_ST_CONTEXT_RESERVED1 (0x1F<<3)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_RESERVED1_SHIFT 3
+	u8 hdr_second_byte_जोड़;
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 reserved3;
 	u8 reserved2;
 	u8 acDecrement;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 acDecrement;
 	u8 reserved2;
 	u16 reserved3;
-#endif
+#पूर्ण_अगर
 	u32 task_stat;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 hdr_opcode;
 	u8 num_cqs;
 	u16 reserved5;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 reserved5;
 	u8 num_cqs;
 	u8 hdr_opcode;
-#endif
+#पूर्ण_अगर
 	u32 negotiated_rx;
-#define USTORM_ISCSI_ST_CONTEXT_MAX_RECV_PDU_LENGTH (0xFFFFFF<<0)
-#define USTORM_ISCSI_ST_CONTEXT_MAX_RECV_PDU_LENGTH_SHIFT 0
-#define USTORM_ISCSI_ST_CONTEXT_MAX_OUTSTANDING_R2TS (0xFF<<24)
-#define USTORM_ISCSI_ST_CONTEXT_MAX_OUTSTANDING_R2TS_SHIFT 24
+#घोषणा USTORM_ISCSI_ST_CONTEXT_MAX_RECV_PDU_LENGTH (0xFFFFFF<<0)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_MAX_RECV_PDU_LENGTH_SHIFT 0
+#घोषणा USTORM_ISCSI_ST_CONTEXT_MAX_OUTSTANDING_R2TS (0xFF<<24)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_MAX_OUTSTANDING_R2TS_SHIFT 24
 	u32 negotiated_rx_and_flags;
-#define USTORM_ISCSI_ST_CONTEXT_MAX_BURST_LENGTH (0xFFFFFF<<0)
-#define USTORM_ISCSI_ST_CONTEXT_MAX_BURST_LENGTH_SHIFT 0
-#define USTORM_ISCSI_ST_CONTEXT_B_CQE_POSTED_OR_HEADER_CACHED (0x1<<24)
-#define USTORM_ISCSI_ST_CONTEXT_B_CQE_POSTED_OR_HEADER_CACHED_SHIFT 24
-#define USTORM_ISCSI_ST_CONTEXT_B_HDR_DIGEST_EN (0x1<<25)
-#define USTORM_ISCSI_ST_CONTEXT_B_HDR_DIGEST_EN_SHIFT 25
-#define USTORM_ISCSI_ST_CONTEXT_B_DATA_DIGEST_EN (0x1<<26)
-#define USTORM_ISCSI_ST_CONTEXT_B_DATA_DIGEST_EN_SHIFT 26
-#define USTORM_ISCSI_ST_CONTEXT_B_PROTOCOL_ERROR (0x1<<27)
-#define USTORM_ISCSI_ST_CONTEXT_B_PROTOCOL_ERROR_SHIFT 27
-#define USTORM_ISCSI_ST_CONTEXT_B_TASK_VALID (0x1<<28)
-#define USTORM_ISCSI_ST_CONTEXT_B_TASK_VALID_SHIFT 28
-#define USTORM_ISCSI_ST_CONTEXT_TASK_TYPE (0x3<<29)
-#define USTORM_ISCSI_ST_CONTEXT_TASK_TYPE_SHIFT 29
-#define USTORM_ISCSI_ST_CONTEXT_B_ALL_DATA_ACKED (0x1<<31)
-#define USTORM_ISCSI_ST_CONTEXT_B_ALL_DATA_ACKED_SHIFT 31
-};
+#घोषणा USTORM_ISCSI_ST_CONTEXT_MAX_BURST_LENGTH (0xFFFFFF<<0)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_MAX_BURST_LENGTH_SHIFT 0
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_CQE_POSTED_OR_HEADER_CACHED (0x1<<24)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_CQE_POSTED_OR_HEADER_CACHED_SHIFT 24
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_HDR_DIGEST_EN (0x1<<25)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_HDR_DIGEST_EN_SHIFT 25
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_DATA_DIGEST_EN (0x1<<26)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_DATA_DIGEST_EN_SHIFT 26
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_PROTOCOL_ERROR (0x1<<27)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_PROTOCOL_ERROR_SHIFT 27
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_TASK_VALID (0x1<<28)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_TASK_VALID_SHIFT 28
+#घोषणा USTORM_ISCSI_ST_CONTEXT_TASK_TYPE (0x3<<29)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_TASK_TYPE_SHIFT 29
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_ALL_DATA_ACKED (0x1<<31)
+#घोषणा USTORM_ISCSI_ST_CONTEXT_B_ALL_DATA_ACKED_SHIFT 31
+पूर्ण;
 
 /*
  * TCP context region, shared in TOE, RDMA and ISCSI
  */
-struct tstorm_tcp_st_context_section {
+काष्ठा tstorm_tcp_st_context_section अणु
 	u32 flags1;
-#define TSTORM_TCP_ST_CONTEXT_SECTION_RTT_SRTT (0xFFFFFF<<0)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_RTT_SRTT_SHIFT 0
-#define TSTORM_TCP_ST_CONTEXT_SECTION_PAWS_INVALID (0x1<<24)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_PAWS_INVALID_SHIFT 24
-#define TSTORM_TCP_ST_CONTEXT_SECTION_TIMESTAMP_EXISTS (0x1<<25)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_TIMESTAMP_EXISTS_SHIFT 25
-#define TSTORM_TCP_ST_CONTEXT_SECTION_RESERVED0 (0x1<<26)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_RESERVED0_SHIFT 26
-#define TSTORM_TCP_ST_CONTEXT_SECTION_STOP_RX_PAYLOAD (0x1<<27)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_STOP_RX_PAYLOAD_SHIFT 27
-#define TSTORM_TCP_ST_CONTEXT_SECTION_KA_ENABLED (0x1<<28)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_KA_ENABLED_SHIFT 28
-#define TSTORM_TCP_ST_CONTEXT_SECTION_FIRST_RTO_ESTIMATE (0x1<<29)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_FIRST_RTO_ESTIMATE_SHIFT 29
-#define TSTORM_TCP_ST_CONTEXT_SECTION_MAX_SEG_RETRANSMIT_EN (0x1<<30)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_MAX_SEG_RETRANSMIT_EN_SHIFT 30
-#define TSTORM_TCP_ST_CONTEXT_SECTION_LAST_ISLE_HAS_FIN (0x1<<31)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_LAST_ISLE_HAS_FIN_SHIFT 31
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_RTT_SRTT (0xFFFFFF<<0)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_RTT_SRTT_SHIFT 0
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_PAWS_INVALID (0x1<<24)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_PAWS_INVALID_SHIFT 24
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_TIMESTAMP_EXISTS (0x1<<25)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_TIMESTAMP_EXISTS_SHIFT 25
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_RESERVED0 (0x1<<26)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_RESERVED0_SHIFT 26
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_STOP_RX_PAYLOAD (0x1<<27)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_STOP_RX_PAYLOAD_SHIFT 27
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_KA_ENABLED (0x1<<28)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_KA_ENABLED_SHIFT 28
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_FIRST_RTO_ESTIMATE (0x1<<29)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_FIRST_RTO_ESTIMATE_SHIFT 29
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_MAX_SEG_RETRANSMIT_EN (0x1<<30)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_MAX_SEG_RETRANSMIT_EN_SHIFT 30
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_LAST_ISLE_HAS_FIN (0x1<<31)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_LAST_ISLE_HAS_FIN_SHIFT 31
 	u32 flags2;
-#define TSTORM_TCP_ST_CONTEXT_SECTION_RTT_VARIATION (0xFFFFFF<<0)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_RTT_VARIATION_SHIFT 0
-#define TSTORM_TCP_ST_CONTEXT_SECTION_DA_EN (0x1<<24)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_DA_EN_SHIFT 24
-#define TSTORM_TCP_ST_CONTEXT_SECTION_DA_COUNTER_EN (0x1<<25)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_DA_COUNTER_EN_SHIFT 25
-#define __TSTORM_TCP_ST_CONTEXT_SECTION_KA_PROBE_SENT (0x1<<26)
-#define __TSTORM_TCP_ST_CONTEXT_SECTION_KA_PROBE_SENT_SHIFT 26
-#define __TSTORM_TCP_ST_CONTEXT_SECTION_PERSIST_PROBE_SENT (0x1<<27)
-#define __TSTORM_TCP_ST_CONTEXT_SECTION_PERSIST_PROBE_SENT_SHIFT 27
-#define TSTORM_TCP_ST_CONTEXT_SECTION_UPDATE_L2_STATSTICS (0x1<<28)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_UPDATE_L2_STATSTICS_SHIFT 28
-#define TSTORM_TCP_ST_CONTEXT_SECTION_UPDATE_L4_STATSTICS (0x1<<29)
-#define TSTORM_TCP_ST_CONTEXT_SECTION_UPDATE_L4_STATSTICS_SHIFT 29
-#define __TSTORM_TCP_ST_CONTEXT_SECTION_IN_WINDOW_RST_ATTACK (0x1<<30)
-#define __TSTORM_TCP_ST_CONTEXT_SECTION_IN_WINDOW_RST_ATTACK_SHIFT 30
-#define __TSTORM_TCP_ST_CONTEXT_SECTION_IN_WINDOW_SYN_ATTACK (0x1<<31)
-#define __TSTORM_TCP_ST_CONTEXT_SECTION_IN_WINDOW_SYN_ATTACK_SHIFT 31
-#if defined(__BIG_ENDIAN)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_RTT_VARIATION (0xFFFFFF<<0)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_RTT_VARIATION_SHIFT 0
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_DA_EN (0x1<<24)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_DA_EN_SHIFT 24
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_DA_COUNTER_EN (0x1<<25)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_DA_COUNTER_EN_SHIFT 25
+#घोषणा __TSTORM_TCP_ST_CONTEXT_SECTION_KA_PROBE_SENT (0x1<<26)
+#घोषणा __TSTORM_TCP_ST_CONTEXT_SECTION_KA_PROBE_SENT_SHIFT 26
+#घोषणा __TSTORM_TCP_ST_CONTEXT_SECTION_PERSIST_PROBE_SENT (0x1<<27)
+#घोषणा __TSTORM_TCP_ST_CONTEXT_SECTION_PERSIST_PROBE_SENT_SHIFT 27
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_UPDATE_L2_STATSTICS (0x1<<28)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_UPDATE_L2_STATSTICS_SHIFT 28
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_UPDATE_L4_STATSTICS (0x1<<29)
+#घोषणा TSTORM_TCP_ST_CONTEXT_SECTION_UPDATE_L4_STATSTICS_SHIFT 29
+#घोषणा __TSTORM_TCP_ST_CONTEXT_SECTION_IN_WINDOW_RST_ATTACK (0x1<<30)
+#घोषणा __TSTORM_TCP_ST_CONTEXT_SECTION_IN_WINDOW_RST_ATTACK_SHIFT 30
+#घोषणा __TSTORM_TCP_ST_CONTEXT_SECTION_IN_WINDOW_SYN_ATTACK (0x1<<31)
+#घोषणा __TSTORM_TCP_ST_CONTEXT_SECTION_IN_WINDOW_SYN_ATTACK_SHIFT 31
+#अगर defined(__BIG_ENDIAN)
 	u16 mss;
 	u8 tcp_sm_state;
 	u8 rto_exp;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 rto_exp;
 	u8 tcp_sm_state;
 	u16 mss;
-#endif
+#पूर्ण_अगर
 	u32 rcv_nxt;
-	u32 timestamp_recent;
-	u32 timestamp_recent_time;
+	u32 बारtamp_recent;
+	u32 बारtamp_recent_समय;
 	u32 cwnd;
 	u32 ss_thresh;
 	u32 cwnd_accum;
 	u32 prev_seg_seq;
 	u32 expected_rel_seq;
 	u32 recover;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 retransmit_count;
 	u8 ka_max_probe_count;
 	u8 persist_probe_count;
 	u8 ka_probe_count;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 ka_probe_count;
 	u8 persist_probe_count;
 	u8 ka_max_probe_count;
 	u8 retransmit_count;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 statistics_counter_id;
 	u8 ooo_support_mode;
 	u8 snd_wnd_scale;
 	u8 dup_ack_count;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 dup_ack_count;
 	u8 snd_wnd_scale;
 	u8 ooo_support_mode;
 	u8 statistics_counter_id;
-#endif
-	u32 retransmit_start_time;
-	u32 ka_timeout;
-	u32 ka_interval;
+#पूर्ण_अगर
+	u32 retransmit_start_समय;
+	u32 ka_समयout;
+	u32 ka_पूर्णांकerval;
 	u32 isle_start_seq;
 	u32 isle_end_seq;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 second_isle_address;
 	u16 recent_seg_wnd;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 recent_seg_wnd;
 	u16 second_isle_address;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 max_isles_ever_happened;
 	u8 isles_number;
 	u16 last_isle_address;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 last_isle_address;
 	u8 isles_number;
 	u8 max_isles_ever_happened;
-#endif
-	u32 max_rt_time;
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+	u32 max_rt_समय;
+#अगर defined(__BIG_ENDIAN)
 	u16 lsb_mac_address;
 	u16 vlan_id;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 vlan_id;
 	u16 lsb_mac_address;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 msb_mac_address;
 	u16 mid_mac_address;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 mid_mac_address;
 	u16 msb_mac_address;
-#endif
-	u32 rightmost_received_seq;
-};
+#पूर्ण_अगर
+	u32 righपंचांगost_received_seq;
+पूर्ण;
 
 /*
  * Termination variables
  */
-struct iscsi_term_vars {
+काष्ठा iscsi_term_vars अणु
 	u8 BitMap;
-#define ISCSI_TERM_VARS_TCP_STATE (0xF<<0)
-#define ISCSI_TERM_VARS_TCP_STATE_SHIFT 0
-#define ISCSI_TERM_VARS_FIN_RECEIVED_SBIT (0x1<<4)
-#define ISCSI_TERM_VARS_FIN_RECEIVED_SBIT_SHIFT 4
-#define ISCSI_TERM_VARS_ACK_ON_FIN_RECEIVED_SBIT (0x1<<5)
-#define ISCSI_TERM_VARS_ACK_ON_FIN_RECEIVED_SBIT_SHIFT 5
-#define ISCSI_TERM_VARS_TERM_ON_CHIP (0x1<<6)
-#define ISCSI_TERM_VARS_TERM_ON_CHIP_SHIFT 6
-#define ISCSI_TERM_VARS_RSRV (0x1<<7)
-#define ISCSI_TERM_VARS_RSRV_SHIFT 7
-};
+#घोषणा ISCSI_TERM_VARS_TCP_STATE (0xF<<0)
+#घोषणा ISCSI_TERM_VARS_TCP_STATE_SHIFT 0
+#घोषणा ISCSI_TERM_VARS_FIN_RECEIVED_SBIT (0x1<<4)
+#घोषणा ISCSI_TERM_VARS_FIN_RECEIVED_SBIT_SHIFT 4
+#घोषणा ISCSI_TERM_VARS_ACK_ON_FIN_RECEIVED_SBIT (0x1<<5)
+#घोषणा ISCSI_TERM_VARS_ACK_ON_FIN_RECEIVED_SBIT_SHIFT 5
+#घोषणा ISCSI_TERM_VARS_TERM_ON_CHIP (0x1<<6)
+#घोषणा ISCSI_TERM_VARS_TERM_ON_CHIP_SHIFT 6
+#घोषणा ISCSI_TERM_VARS_RSRV (0x1<<7)
+#घोषणा ISCSI_TERM_VARS_RSRV_SHIFT 7
+पूर्ण;
 
 /*
  * iSCSI context region, used only in iSCSI
  */
-struct tstorm_iscsi_st_context_section {
+काष्ठा tstorm_iscsi_st_context_section अणु
 	u32 nalPayload;
 	u32 b2nh;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 rq_cons;
 	u8 flags;
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_HDR_DIGEST_EN (0x1<<0)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_HDR_DIGEST_EN_SHIFT 0
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DATA_DIGEST_EN (0x1<<1)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DATA_DIGEST_EN_SHIFT 1
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_PARTIAL_HEADER (0x1<<2)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_PARTIAL_HEADER_SHIFT 2
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_FULL_FEATURE (0x1<<3)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_FULL_FEATURE_SHIFT 3
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DROP_ALL_PDUS (0x1<<4)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DROP_ALL_PDUS_SHIFT 4
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_NALLEN (0x3<<5)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_NALLEN_SHIFT 5
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_RSRV0 (0x1<<7)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_RSRV0_SHIFT 7
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_HDR_DIGEST_EN (0x1<<0)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_HDR_DIGEST_EN_SHIFT 0
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DATA_DIGEST_EN (0x1<<1)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DATA_DIGEST_EN_SHIFT 1
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_PARTIAL_HEADER (0x1<<2)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_PARTIAL_HEADER_SHIFT 2
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_FULL_FEATURE (0x1<<3)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_FULL_FEATURE_SHIFT 3
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DROP_ALL_PDUS (0x1<<4)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DROP_ALL_PDUS_SHIFT 4
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_NALLEN (0x3<<5)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_NALLEN_SHIFT 5
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_RSRV0 (0x1<<7)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_RSRV0_SHIFT 7
 	u8 hdr_bytes_2_fetch;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 hdr_bytes_2_fetch;
 	u8 flags;
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_HDR_DIGEST_EN (0x1<<0)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_HDR_DIGEST_EN_SHIFT 0
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DATA_DIGEST_EN (0x1<<1)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DATA_DIGEST_EN_SHIFT 1
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_PARTIAL_HEADER (0x1<<2)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_PARTIAL_HEADER_SHIFT 2
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_FULL_FEATURE (0x1<<3)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_FULL_FEATURE_SHIFT 3
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DROP_ALL_PDUS (0x1<<4)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DROP_ALL_PDUS_SHIFT 4
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_NALLEN (0x3<<5)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_NALLEN_SHIFT 5
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_RSRV0 (0x1<<7)
-#define TSTORM_ISCSI_ST_CONTEXT_SECTION_RSRV0_SHIFT 7
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_HDR_DIGEST_EN (0x1<<0)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_HDR_DIGEST_EN_SHIFT 0
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DATA_DIGEST_EN (0x1<<1)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DATA_DIGEST_EN_SHIFT 1
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_PARTIAL_HEADER (0x1<<2)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_PARTIAL_HEADER_SHIFT 2
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_FULL_FEATURE (0x1<<3)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_FULL_FEATURE_SHIFT 3
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DROP_ALL_PDUS (0x1<<4)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_B_DROP_ALL_PDUS_SHIFT 4
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_NALLEN (0x3<<5)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_NALLEN_SHIFT 5
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_RSRV0 (0x1<<7)
+#घोषणा TSTORM_ISCSI_ST_CONTEXT_SECTION_RSRV0_SHIFT 7
 	u16 rq_cons;
-#endif
-	struct regpair rq_db_phy_addr;
-#if defined(__BIG_ENDIAN)
-	struct iscsi_term_vars term_vars;
+#पूर्ण_अगर
+	काष्ठा regpair rq_db_phy_addr;
+#अगर defined(__BIG_ENDIAN)
+	काष्ठा iscsi_term_vars term_vars;
 	u8 rsrv1;
 	u16 iscsi_conn_id;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 iscsi_conn_id;
 	u8 rsrv1;
-	struct iscsi_term_vars term_vars;
-#endif
+	काष्ठा iscsi_term_vars term_vars;
+#पूर्ण_अगर
 	u32 process_nxt;
-};
+पूर्ण;
 
 /*
  * The iSCSI non-aggregative context of Tstorm
  */
-struct tstorm_iscsi_st_context {
-	struct tstorm_tcp_st_context_section tcp;
-	struct tstorm_iscsi_st_context_section iscsi;
-};
+काष्ठा tstorm_iscsi_st_context अणु
+	काष्ठा tstorm_tcp_st_context_section tcp;
+	काष्ठा tstorm_iscsi_st_context_section iscsi;
+पूर्ण;
 
 /*
  * Ethernet context section, shared in TOE, RDMA and ISCSI
  */
-struct xstorm_eth_context_section {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_eth_context_section अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 remote_addr_4;
 	u8 remote_addr_5;
 	u8 local_addr_0;
 	u8 local_addr_1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 local_addr_1;
 	u8 local_addr_0;
 	u8 remote_addr_5;
 	u8 remote_addr_4;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 remote_addr_0;
 	u8 remote_addr_1;
 	u8 remote_addr_2;
 	u8 remote_addr_3;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 remote_addr_3;
 	u8 remote_addr_2;
 	u8 remote_addr_1;
 	u8 remote_addr_0;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 reserved_vlan_type;
 	u16 vlan_params;
-#define XSTORM_ETH_CONTEXT_SECTION_VLAN_ID (0xFFF<<0)
-#define XSTORM_ETH_CONTEXT_SECTION_VLAN_ID_SHIFT 0
-#define XSTORM_ETH_CONTEXT_SECTION_CFI (0x1<<12)
-#define XSTORM_ETH_CONTEXT_SECTION_CFI_SHIFT 12
-#define XSTORM_ETH_CONTEXT_SECTION_PRIORITY (0x7<<13)
-#define XSTORM_ETH_CONTEXT_SECTION_PRIORITY_SHIFT 13
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_VLAN_ID (0xFFF<<0)
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_VLAN_ID_SHIFT 0
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_CFI (0x1<<12)
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_CFI_SHIFT 12
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_PRIORITY (0x7<<13)
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_PRIORITY_SHIFT 13
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 vlan_params;
-#define XSTORM_ETH_CONTEXT_SECTION_VLAN_ID (0xFFF<<0)
-#define XSTORM_ETH_CONTEXT_SECTION_VLAN_ID_SHIFT 0
-#define XSTORM_ETH_CONTEXT_SECTION_CFI (0x1<<12)
-#define XSTORM_ETH_CONTEXT_SECTION_CFI_SHIFT 12
-#define XSTORM_ETH_CONTEXT_SECTION_PRIORITY (0x7<<13)
-#define XSTORM_ETH_CONTEXT_SECTION_PRIORITY_SHIFT 13
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_VLAN_ID (0xFFF<<0)
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_VLAN_ID_SHIFT 0
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_CFI (0x1<<12)
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_CFI_SHIFT 12
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_PRIORITY (0x7<<13)
+#घोषणा XSTORM_ETH_CONTEXT_SECTION_PRIORITY_SHIFT 13
 	u16 reserved_vlan_type;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 local_addr_2;
 	u8 local_addr_3;
 	u8 local_addr_4;
 	u8 local_addr_5;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 local_addr_5;
 	u8 local_addr_4;
 	u8 local_addr_3;
 	u8 local_addr_2;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * IpV4 context section, shared in TOE, RDMA and ISCSI
  */
-struct xstorm_ip_v4_context_section {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_ip_v4_context_section अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 __pbf_hdr_cmd_rsvd_id;
 	u16 __pbf_hdr_cmd_rsvd_flags_offset;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __pbf_hdr_cmd_rsvd_flags_offset;
 	u16 __pbf_hdr_cmd_rsvd_id;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 __pbf_hdr_cmd_rsvd_ver_ihl;
 	u8 tos;
 	u16 __pbf_hdr_cmd_rsvd_length;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __pbf_hdr_cmd_rsvd_length;
 	u8 tos;
 	u8 __pbf_hdr_cmd_rsvd_ver_ihl;
-#endif
+#पूर्ण_अगर
 	u32 ip_local_addr;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 ttl;
 	u8 __pbf_hdr_cmd_rsvd_protocol;
 	u16 __pbf_hdr_cmd_rsvd_csum;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __pbf_hdr_cmd_rsvd_csum;
 	u8 __pbf_hdr_cmd_rsvd_protocol;
 	u8 ttl;
-#endif
+#पूर्ण_अगर
 	u32 __pbf_hdr_cmd_rsvd_1;
 	u32 ip_remote_addr;
-};
+पूर्ण;
 
 /*
  * context section, shared in TOE, RDMA and ISCSI
  */
-struct xstorm_padded_ip_v4_context_section {
-	struct xstorm_ip_v4_context_section ip_v4;
+काष्ठा xstorm_padded_ip_v4_context_section अणु
+	काष्ठा xstorm_ip_v4_context_section ip_v4;
 	u32 reserved1[4];
-};
+पूर्ण;
 
 /*
  * IpV6 context section, shared in TOE, RDMA and ISCSI
  */
-struct xstorm_ip_v6_context_section {
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_ip_v6_context_section अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 pbf_hdr_cmd_rsvd_payload_len;
 	u8 pbf_hdr_cmd_rsvd_nxt_hdr;
 	u8 hop_limit;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 hop_limit;
 	u8 pbf_hdr_cmd_rsvd_nxt_hdr;
 	u16 pbf_hdr_cmd_rsvd_payload_len;
-#endif
+#पूर्ण_अगर
 	u32 priority_flow_label;
-#define XSTORM_IP_V6_CONTEXT_SECTION_FLOW_LABEL (0xFFFFF<<0)
-#define XSTORM_IP_V6_CONTEXT_SECTION_FLOW_LABEL_SHIFT 0
-#define XSTORM_IP_V6_CONTEXT_SECTION_TRAFFIC_CLASS (0xFF<<20)
-#define XSTORM_IP_V6_CONTEXT_SECTION_TRAFFIC_CLASS_SHIFT 20
-#define XSTORM_IP_V6_CONTEXT_SECTION_PBF_HDR_CMD_RSVD_VER (0xF<<28)
-#define XSTORM_IP_V6_CONTEXT_SECTION_PBF_HDR_CMD_RSVD_VER_SHIFT 28
+#घोषणा XSTORM_IP_V6_CONTEXT_SECTION_FLOW_LABEL (0xFFFFF<<0)
+#घोषणा XSTORM_IP_V6_CONTEXT_SECTION_FLOW_LABEL_SHIFT 0
+#घोषणा XSTORM_IP_V6_CONTEXT_SECTION_TRAFFIC_CLASS (0xFF<<20)
+#घोषणा XSTORM_IP_V6_CONTEXT_SECTION_TRAFFIC_CLASS_SHIFT 20
+#घोषणा XSTORM_IP_V6_CONTEXT_SECTION_PBF_HDR_CMD_RSVD_VER (0xF<<28)
+#घोषणा XSTORM_IP_V6_CONTEXT_SECTION_PBF_HDR_CMD_RSVD_VER_SHIFT 28
 	u32 ip_local_addr_lo_hi;
 	u32 ip_local_addr_lo_lo;
 	u32 ip_local_addr_hi_hi;
@@ -4374,312 +4375,312 @@ struct xstorm_ip_v6_context_section {
 	u32 ip_remote_addr_lo_lo;
 	u32 ip_remote_addr_hi_hi;
 	u32 ip_remote_addr_hi_lo;
-};
+पूर्ण;
 
-union xstorm_ip_context_section_types {
-	struct xstorm_padded_ip_v4_context_section padded_ip_v4;
-	struct xstorm_ip_v6_context_section ip_v6;
-};
+जोड़ xstorm_ip_context_section_types अणु
+	काष्ठा xstorm_padded_ip_v4_context_section padded_ip_v4;
+	काष्ठा xstorm_ip_v6_context_section ip_v6;
+पूर्ण;
 
 /*
  * TCP context section, shared in TOE, RDMA and ISCSI
  */
-struct xstorm_tcp_context_section {
+काष्ठा xstorm_tcp_context_section अणु
 	u32 snd_max;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 remote_port;
 	u16 local_port;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 local_port;
 	u16 remote_port;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u8 original_nagle_1b;
 	u8 ts_enabled;
 	u16 tcp_params;
-#define XSTORM_TCP_CONTEXT_SECTION_TOTAL_HEADER_SIZE (0xFF<<0)
-#define XSTORM_TCP_CONTEXT_SECTION_TOTAL_HEADER_SIZE_SHIFT 0
-#define __XSTORM_TCP_CONTEXT_SECTION_ECT_BIT (0x1<<8)
-#define __XSTORM_TCP_CONTEXT_SECTION_ECT_BIT_SHIFT 8
-#define __XSTORM_TCP_CONTEXT_SECTION_ECN_ENABLED (0x1<<9)
-#define __XSTORM_TCP_CONTEXT_SECTION_ECN_ENABLED_SHIFT 9
-#define XSTORM_TCP_CONTEXT_SECTION_SACK_ENABLED (0x1<<10)
-#define XSTORM_TCP_CONTEXT_SECTION_SACK_ENABLED_SHIFT 10
-#define XSTORM_TCP_CONTEXT_SECTION_SMALL_WIN_ADV (0x1<<11)
-#define XSTORM_TCP_CONTEXT_SECTION_SMALL_WIN_ADV_SHIFT 11
-#define XSTORM_TCP_CONTEXT_SECTION_FIN_SENT_FLAG (0x1<<12)
-#define XSTORM_TCP_CONTEXT_SECTION_FIN_SENT_FLAG_SHIFT 12
-#define XSTORM_TCP_CONTEXT_SECTION_WINDOW_SATURATED (0x1<<13)
-#define XSTORM_TCP_CONTEXT_SECTION_WINDOW_SATURATED_SHIFT 13
-#define XSTORM_TCP_CONTEXT_SECTION_SLOWPATH_QUEUES_FLUSH_COUNTER (0x3<<14)
-#define XSTORM_TCP_CONTEXT_SECTION_SLOWPATH_QUEUES_FLUSH_COUNTER_SHIFT 14
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_TOTAL_HEADER_SIZE (0xFF<<0)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_TOTAL_HEADER_SIZE_SHIFT 0
+#घोषणा __XSTORM_TCP_CONTEXT_SECTION_ECT_BIT (0x1<<8)
+#घोषणा __XSTORM_TCP_CONTEXT_SECTION_ECT_BIT_SHIFT 8
+#घोषणा __XSTORM_TCP_CONTEXT_SECTION_ECN_ENABLED (0x1<<9)
+#घोषणा __XSTORM_TCP_CONTEXT_SECTION_ECN_ENABLED_SHIFT 9
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SACK_ENABLED (0x1<<10)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SACK_ENABLED_SHIFT 10
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SMALL_WIN_ADV (0x1<<11)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SMALL_WIN_ADV_SHIFT 11
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_FIN_SENT_FLAG (0x1<<12)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_FIN_SENT_FLAG_SHIFT 12
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_WINDOW_SATURATED (0x1<<13)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_WINDOW_SATURATED_SHIFT 13
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SLOWPATH_QUEUES_FLUSH_COUNTER (0x3<<14)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SLOWPATH_QUEUES_FLUSH_COUNTER_SHIFT 14
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 tcp_params;
-#define XSTORM_TCP_CONTEXT_SECTION_TOTAL_HEADER_SIZE (0xFF<<0)
-#define XSTORM_TCP_CONTEXT_SECTION_TOTAL_HEADER_SIZE_SHIFT 0
-#define __XSTORM_TCP_CONTEXT_SECTION_ECT_BIT (0x1<<8)
-#define __XSTORM_TCP_CONTEXT_SECTION_ECT_BIT_SHIFT 8
-#define __XSTORM_TCP_CONTEXT_SECTION_ECN_ENABLED (0x1<<9)
-#define __XSTORM_TCP_CONTEXT_SECTION_ECN_ENABLED_SHIFT 9
-#define XSTORM_TCP_CONTEXT_SECTION_SACK_ENABLED (0x1<<10)
-#define XSTORM_TCP_CONTEXT_SECTION_SACK_ENABLED_SHIFT 10
-#define XSTORM_TCP_CONTEXT_SECTION_SMALL_WIN_ADV (0x1<<11)
-#define XSTORM_TCP_CONTEXT_SECTION_SMALL_WIN_ADV_SHIFT 11
-#define XSTORM_TCP_CONTEXT_SECTION_FIN_SENT_FLAG (0x1<<12)
-#define XSTORM_TCP_CONTEXT_SECTION_FIN_SENT_FLAG_SHIFT 12
-#define XSTORM_TCP_CONTEXT_SECTION_WINDOW_SATURATED (0x1<<13)
-#define XSTORM_TCP_CONTEXT_SECTION_WINDOW_SATURATED_SHIFT 13
-#define XSTORM_TCP_CONTEXT_SECTION_SLOWPATH_QUEUES_FLUSH_COUNTER (0x3<<14)
-#define XSTORM_TCP_CONTEXT_SECTION_SLOWPATH_QUEUES_FLUSH_COUNTER_SHIFT 14
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_TOTAL_HEADER_SIZE (0xFF<<0)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_TOTAL_HEADER_SIZE_SHIFT 0
+#घोषणा __XSTORM_TCP_CONTEXT_SECTION_ECT_BIT (0x1<<8)
+#घोषणा __XSTORM_TCP_CONTEXT_SECTION_ECT_BIT_SHIFT 8
+#घोषणा __XSTORM_TCP_CONTEXT_SECTION_ECN_ENABLED (0x1<<9)
+#घोषणा __XSTORM_TCP_CONTEXT_SECTION_ECN_ENABLED_SHIFT 9
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SACK_ENABLED (0x1<<10)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SACK_ENABLED_SHIFT 10
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SMALL_WIN_ADV (0x1<<11)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SMALL_WIN_ADV_SHIFT 11
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_FIN_SENT_FLAG (0x1<<12)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_FIN_SENT_FLAG_SHIFT 12
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_WINDOW_SATURATED (0x1<<13)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_WINDOW_SATURATED_SHIFT 13
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SLOWPATH_QUEUES_FLUSH_COUNTER (0x3<<14)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_SLOWPATH_QUEUES_FLUSH_COUNTER_SHIFT 14
 	u8 ts_enabled;
 	u8 original_nagle_1b;
-#endif
-#if defined(__BIG_ENDIAN)
-	u16 pseudo_csum;
-	u16 window_scaling_factor;
-#elif defined(__LITTLE_ENDIAN)
-	u16 window_scaling_factor;
-	u16 pseudo_csum;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
+	u16 pseuकरो_csum;
+	u16 winकरोw_scaling_factor;
+#या_अगर defined(__LITTLE_ENDIAN)
+	u16 winकरोw_scaling_factor;
+	u16 pseuकरो_csum;
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 reserved2;
 	u8 statistics_counter_id;
 	u8 statistics_params;
-#define XSTORM_TCP_CONTEXT_SECTION_UPDATE_L2_STATSTICS (0x1<<0)
-#define XSTORM_TCP_CONTEXT_SECTION_UPDATE_L2_STATSTICS_SHIFT 0
-#define XSTORM_TCP_CONTEXT_SECTION_UPDATE_L4_STATSTICS (0x1<<1)
-#define XSTORM_TCP_CONTEXT_SECTION_UPDATE_L4_STATSTICS_SHIFT 1
-#define XSTORM_TCP_CONTEXT_SECTION_RESERVED (0x3F<<2)
-#define XSTORM_TCP_CONTEXT_SECTION_RESERVED_SHIFT 2
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_UPDATE_L2_STATSTICS (0x1<<0)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_UPDATE_L2_STATSTICS_SHIFT 0
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_UPDATE_L4_STATSTICS (0x1<<1)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_UPDATE_L4_STATSTICS_SHIFT 1
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_RESERVED (0x3F<<2)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_RESERVED_SHIFT 2
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 statistics_params;
-#define XSTORM_TCP_CONTEXT_SECTION_UPDATE_L2_STATSTICS (0x1<<0)
-#define XSTORM_TCP_CONTEXT_SECTION_UPDATE_L2_STATSTICS_SHIFT 0
-#define XSTORM_TCP_CONTEXT_SECTION_UPDATE_L4_STATSTICS (0x1<<1)
-#define XSTORM_TCP_CONTEXT_SECTION_UPDATE_L4_STATSTICS_SHIFT 1
-#define XSTORM_TCP_CONTEXT_SECTION_RESERVED (0x3F<<2)
-#define XSTORM_TCP_CONTEXT_SECTION_RESERVED_SHIFT 2
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_UPDATE_L2_STATSTICS (0x1<<0)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_UPDATE_L2_STATSTICS_SHIFT 0
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_UPDATE_L4_STATSTICS (0x1<<1)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_UPDATE_L4_STATSTICS_SHIFT 1
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_RESERVED (0x3F<<2)
+#घोषणा XSTORM_TCP_CONTEXT_SECTION_RESERVED_SHIFT 2
 	u8 statistics_counter_id;
 	u16 reserved2;
-#endif
-	u32 ts_time_diff;
-	u32 __next_timer_expir;
-};
+#पूर्ण_अगर
+	u32 ts_समय_dअगरf;
+	u32 __next_समयr_expir;
+पूर्ण;
 
 /*
  * Common context section, shared in TOE, RDMA and ISCSI
  */
-struct xstorm_common_context_section {
-	struct xstorm_eth_context_section ethernet;
-	union xstorm_ip_context_section_types ip_union;
-	struct xstorm_tcp_context_section tcp;
-#if defined(__BIG_ENDIAN)
+काष्ठा xstorm_common_context_section अणु
+	काष्ठा xstorm_eth_context_section ethernet;
+	जोड़ xstorm_ip_context_section_types ip_जोड़;
+	काष्ठा xstorm_tcp_context_section tcp;
+#अगर defined(__BIG_ENDIAN)
 	u8 __dcb_val;
 	u8 flags;
-#define XSTORM_COMMON_CONTEXT_SECTION_PHYSQ_INITIALIZED (0x1<<0)
-#define XSTORM_COMMON_CONTEXT_SECTION_PHYSQ_INITIALIZED_SHIFT 0
-#define XSTORM_COMMON_CONTEXT_SECTION_PBF_PORT (0x7<<1)
-#define XSTORM_COMMON_CONTEXT_SECTION_PBF_PORT_SHIFT 1
-#define XSTORM_COMMON_CONTEXT_SECTION_VLAN_MODE (0x1<<4)
-#define XSTORM_COMMON_CONTEXT_SECTION_VLAN_MODE_SHIFT 4
-#define XSTORM_COMMON_CONTEXT_SECTION_ORIGINAL_PRIORITY (0x7<<5)
-#define XSTORM_COMMON_CONTEXT_SECTION_ORIGINAL_PRIORITY_SHIFT 5
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_PHYSQ_INITIALIZED (0x1<<0)
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_PHYSQ_INITIALIZED_SHIFT 0
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_PBF_PORT (0x7<<1)
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_PBF_PORT_SHIFT 1
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_VLAN_MODE (0x1<<4)
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_VLAN_MODE_SHIFT 4
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_ORIGINAL_PRIORITY (0x7<<5)
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_ORIGINAL_PRIORITY_SHIFT 5
 	u8 reserved;
 	u8 ip_version_1b;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 ip_version_1b;
 	u8 reserved;
 	u8 flags;
-#define XSTORM_COMMON_CONTEXT_SECTION_PHYSQ_INITIALIZED (0x1<<0)
-#define XSTORM_COMMON_CONTEXT_SECTION_PHYSQ_INITIALIZED_SHIFT 0
-#define XSTORM_COMMON_CONTEXT_SECTION_PBF_PORT (0x7<<1)
-#define XSTORM_COMMON_CONTEXT_SECTION_PBF_PORT_SHIFT 1
-#define XSTORM_COMMON_CONTEXT_SECTION_VLAN_MODE (0x1<<4)
-#define XSTORM_COMMON_CONTEXT_SECTION_VLAN_MODE_SHIFT 4
-#define XSTORM_COMMON_CONTEXT_SECTION_ORIGINAL_PRIORITY (0x7<<5)
-#define XSTORM_COMMON_CONTEXT_SECTION_ORIGINAL_PRIORITY_SHIFT 5
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_PHYSQ_INITIALIZED (0x1<<0)
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_PHYSQ_INITIALIZED_SHIFT 0
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_PBF_PORT (0x7<<1)
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_PBF_PORT_SHIFT 1
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_VLAN_MODE (0x1<<4)
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_VLAN_MODE_SHIFT 4
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_ORIGINAL_PRIORITY (0x7<<5)
+#घोषणा XSTORM_COMMON_CONTEXT_SECTION_ORIGINAL_PRIORITY_SHIFT 5
 	u8 __dcb_val;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * Flags used in ISCSI context section
  */
-struct xstorm_iscsi_context_flags {
+काष्ठा xstorm_iscsi_context_flags अणु
 	u8 flags;
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_IMMEDIATE_DATA (0x1<<0)
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_IMMEDIATE_DATA_SHIFT 0
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_INITIAL_R2T (0x1<<1)
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_INITIAL_R2T_SHIFT 1
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_EN_HEADER_DIGEST (0x1<<2)
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_EN_HEADER_DIGEST_SHIFT 2
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_EN_DATA_DIGEST (0x1<<3)
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_EN_DATA_DIGEST_SHIFT 3
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_HQ_BD_WRITTEN (0x1<<4)
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_HQ_BD_WRITTEN_SHIFT 4
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_LAST_OP_SQ (0x1<<5)
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_LAST_OP_SQ_SHIFT 5
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_UPDATE_SND_NXT (0x1<<6)
-#define XSTORM_ISCSI_CONTEXT_FLAGS_B_UPDATE_SND_NXT_SHIFT 6
-#define XSTORM_ISCSI_CONTEXT_FLAGS_RESERVED4 (0x1<<7)
-#define XSTORM_ISCSI_CONTEXT_FLAGS_RESERVED4_SHIFT 7
-};
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_IMMEDIATE_DATA (0x1<<0)
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_IMMEDIATE_DATA_SHIFT 0
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_INITIAL_R2T (0x1<<1)
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_INITIAL_R2T_SHIFT 1
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_EN_HEADER_DIGEST (0x1<<2)
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_EN_HEADER_DIGEST_SHIFT 2
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_EN_DATA_DIGEST (0x1<<3)
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_EN_DATA_DIGEST_SHIFT 3
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_HQ_BD_WRITTEN (0x1<<4)
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_HQ_BD_WRITTEN_SHIFT 4
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_LAST_OP_SQ (0x1<<5)
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_LAST_OP_SQ_SHIFT 5
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_UPDATE_SND_NXT (0x1<<6)
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_B_UPDATE_SND_NXT_SHIFT 6
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_RESERVED4 (0x1<<7)
+#घोषणा XSTORM_ISCSI_CONTEXT_FLAGS_RESERVED4_SHIFT 7
+पूर्ण;
 
-struct iscsi_task_context_entry_x {
+काष्ठा iscsi_task_context_entry_x अणु
 	u32 data_out_buffer_offset;
 	u32 itt;
 	u32 data_sn;
-};
+पूर्ण;
 
-struct iscsi_task_context_entry_xuc_x_write_only {
+काष्ठा iscsi_task_context_entry_xuc_x_ग_लिखो_only अणु
 	u32 tx_r2t_sn;
-};
+पूर्ण;
 
-struct iscsi_task_context_entry_xuc_xu_write_both {
+काष्ठा iscsi_task_context_entry_xuc_xu_ग_लिखो_both अणु
 	u32 sgl_base_lo;
 	u32 sgl_base_hi;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 sgl_size;
 	u8 sge_index;
 	u16 sge_offset;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 sge_offset;
 	u8 sge_index;
 	u8 sgl_size;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * iSCSI context section
  */
-struct xstorm_iscsi_context_section {
+काष्ठा xstorm_iscsi_context_section अणु
 	u32 first_burst_length;
 	u32 max_send_pdu_length;
-	struct regpair sq_pbl_base;
-	struct regpair sq_curr_pbe;
-	struct regpair hq_pbl_base;
-	struct regpair hq_curr_pbe_base;
-	struct regpair r2tq_pbl_base;
-	struct regpair r2tq_curr_pbe_base;
-	struct regpair task_pbl_base;
-#if defined(__BIG_ENDIAN)
+	काष्ठा regpair sq_pbl_base;
+	काष्ठा regpair sq_curr_pbe;
+	काष्ठा regpair hq_pbl_base;
+	काष्ठा regpair hq_curr_pbe_base;
+	काष्ठा regpair r2tq_pbl_base;
+	काष्ठा regpair r2tq_curr_pbe_base;
+	काष्ठा regpair task_pbl_base;
+#अगर defined(__BIG_ENDIAN)
 	u16 data_out_count;
-	struct xstorm_iscsi_context_flags flags;
+	काष्ठा xstorm_iscsi_context_flags flags;
 	u8 task_pbl_cache_idx;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 task_pbl_cache_idx;
-	struct xstorm_iscsi_context_flags flags;
+	काष्ठा xstorm_iscsi_context_flags flags;
 	u16 data_out_count;
-#endif
+#पूर्ण_अगर
 	u32 seq_more_2_send;
 	u32 pdu_more_2_send;
-	struct iscsi_task_context_entry_x temp_tce_x;
-	struct iscsi_task_context_entry_xuc_x_write_only temp_tce_x_wr;
-	struct iscsi_task_context_entry_xuc_xu_write_both temp_tce_xu_wr;
-	struct regpair lun;
+	काष्ठा iscsi_task_context_entry_x temp_tce_x;
+	काष्ठा iscsi_task_context_entry_xuc_x_ग_लिखो_only temp_tce_x_wr;
+	काष्ठा iscsi_task_context_entry_xuc_xu_ग_लिखो_both temp_tce_xu_wr;
+	काष्ठा regpair lun;
 	u32 exp_data_transfer_len_ttt;
 	u32 pdu_data_2_rxmit;
 	u32 rxmit_bytes_2_dr;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 rxmit_sge_offset;
 	u16 hq_rxmit_cons;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 hq_rxmit_cons;
 	u16 rxmit_sge_offset;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 r2tq_cons;
 	u8 rxmit_flags;
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_NEW_HQ_BD (0x1<<0)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_NEW_HQ_BD_SHIFT 0
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PDU_HDR (0x1<<1)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PDU_HDR_SHIFT 1
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_END_PDU (0x1<<2)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_END_PDU_SHIFT 2
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_DR (0x1<<3)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_DR_SHIFT 3
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_START_DR (0x1<<4)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_START_DR_SHIFT 4
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PADDING (0x3<<5)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PADDING_SHIFT 5
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_ISCSI_CONT_FAST_RXMIT (0x1<<7)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_ISCSI_CONT_FAST_RXMIT_SHIFT 7
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_NEW_HQ_BD (0x1<<0)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_NEW_HQ_BD_SHIFT 0
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PDU_HDR (0x1<<1)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PDU_HDR_SHIFT 1
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_END_PDU (0x1<<2)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_END_PDU_SHIFT 2
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_DR (0x1<<3)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_DR_SHIFT 3
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_START_DR (0x1<<4)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_START_DR_SHIFT 4
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PADDING (0x3<<5)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PADDING_SHIFT 5
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_ISCSI_CONT_FAST_RXMIT (0x1<<7)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_ISCSI_CONT_FAST_RXMIT_SHIFT 7
 	u8 rxmit_sge_idx;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 rxmit_sge_idx;
 	u8 rxmit_flags;
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_NEW_HQ_BD (0x1<<0)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_NEW_HQ_BD_SHIFT 0
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PDU_HDR (0x1<<1)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PDU_HDR_SHIFT 1
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_END_PDU (0x1<<2)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_END_PDU_SHIFT 2
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_DR (0x1<<3)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_DR_SHIFT 3
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_START_DR (0x1<<4)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_START_DR_SHIFT 4
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PADDING (0x3<<5)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PADDING_SHIFT 5
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_ISCSI_CONT_FAST_RXMIT (0x1<<7)
-#define XSTORM_ISCSI_CONTEXT_SECTION_B_ISCSI_CONT_FAST_RXMIT_SHIFT 7
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_NEW_HQ_BD (0x1<<0)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_NEW_HQ_BD_SHIFT 0
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PDU_HDR (0x1<<1)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PDU_HDR_SHIFT 1
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_END_PDU (0x1<<2)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_END_PDU_SHIFT 2
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_DR (0x1<<3)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_DR_SHIFT 3
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_START_DR (0x1<<4)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_START_DR_SHIFT 4
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PADDING (0x3<<5)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_RXMIT_PADDING_SHIFT 5
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_ISCSI_CONT_FAST_RXMIT (0x1<<7)
+#घोषणा XSTORM_ISCSI_CONTEXT_SECTION_B_ISCSI_CONT_FAST_RXMIT_SHIFT 7
 	u16 r2tq_cons;
-#endif
+#पूर्ण_अगर
 	u32 hq_rxmit_tcp_seq;
-};
+पूर्ण;
 
 /*
  * Xstorm iSCSI Storm Context
  */
-struct xstorm_iscsi_st_context {
-	struct xstorm_common_context_section common;
-	struct xstorm_iscsi_context_section iscsi;
-};
+काष्ठा xstorm_iscsi_st_context अणु
+	काष्ठा xstorm_common_context_section common;
+	काष्ठा xstorm_iscsi_context_section iscsi;
+पूर्ण;
 
 /*
  * Iscsi connection context
  */
-struct iscsi_context {
-	struct ustorm_iscsi_st_context ustorm_st_context;
-	struct tstorm_iscsi_st_context tstorm_st_context;
-	struct xstorm_iscsi_ag_context xstorm_ag_context;
-	struct tstorm_iscsi_ag_context tstorm_ag_context;
-	struct cstorm_iscsi_ag_context cstorm_ag_context;
-	struct ustorm_iscsi_ag_context ustorm_ag_context;
-	struct timers_block_context timers_context;
-	struct regpair upb_context;
-	struct xstorm_iscsi_st_context xstorm_st_context;
-	struct regpair xpb_context;
-	struct cstorm_iscsi_st_context cstorm_st_context;
-};
+काष्ठा iscsi_context अणु
+	काष्ठा ustorm_iscsi_st_context ustorm_st_context;
+	काष्ठा tstorm_iscsi_st_context tstorm_st_context;
+	काष्ठा xstorm_iscsi_ag_context xstorm_ag_context;
+	काष्ठा tstorm_iscsi_ag_context tstorm_ag_context;
+	काष्ठा cstorm_iscsi_ag_context cstorm_ag_context;
+	काष्ठा ustorm_iscsi_ag_context ustorm_ag_context;
+	काष्ठा समयrs_block_context समयrs_context;
+	काष्ठा regpair upb_context;
+	काष्ठा xstorm_iscsi_st_context xstorm_st_context;
+	काष्ठा regpair xpb_context;
+	काष्ठा cstorm_iscsi_st_context cstorm_st_context;
+पूर्ण;
 
 
 /*
  * PDU header of an iSCSI DATA-OUT
  */
-struct iscsi_data_pdu_hdr_little_endian {
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_data_pdu_hdr_little_endian अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 opcode;
 	u8 op_attr;
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_RSRV1 (0x7F<<0)
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG (0x1<<7)
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG_SHIFT 7
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_RSRV1 (0x7F<<0)
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG (0x1<<7)
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG_SHIFT 7
 	u16 rsrv0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv0;
 	u8 op_attr;
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_RSRV1 (0x7F<<0)
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG (0x1<<7)
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG_SHIFT 7
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_RSRV1 (0x7F<<0)
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG (0x1<<7)
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_FINAL_FLAG_SHIFT 7
 	u8 opcode;
-#endif
+#पूर्ण_अगर
 	u32 data_fields;
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
-#define ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
-	struct regpair lun;
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
+#घोषणा ISCSI_DATA_PDU_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
+	काष्ठा regpair lun;
 	u32 itt;
 	u32 ttt;
 	u32 rsrv2;
@@ -4688,137 +4689,137 @@ struct iscsi_data_pdu_hdr_little_endian {
 	u32 data_sn;
 	u32 buffer_offset;
 	u32 rsrv4;
-};
+पूर्ण;
 
 
 /*
  * PDU header of an iSCSI login request
  */
-struct iscsi_login_req_hdr_little_endian {
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_login_req_hdr_little_endian अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 opcode;
 	u8 op_attr;
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_NSG (0x3<<0)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_NSG_SHIFT 0
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CSG (0x3<<2)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CSG_SHIFT 2
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_RSRV0 (0x3<<4)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_RSRV0_SHIFT 4
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG (0x1<<6)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG_SHIFT 6
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TRANSIT (0x1<<7)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TRANSIT_SHIFT 7
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_NSG (0x3<<0)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_NSG_SHIFT 0
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CSG (0x3<<2)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CSG_SHIFT 2
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_RSRV0 (0x3<<4)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_RSRV0_SHIFT 4
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG (0x1<<6)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG_SHIFT 6
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TRANSIT (0x1<<7)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TRANSIT_SHIFT 7
 	u8 version_max;
 	u8 version_min;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 version_min;
 	u8 version_max;
 	u8 op_attr;
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_NSG (0x3<<0)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_NSG_SHIFT 0
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CSG (0x3<<2)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CSG_SHIFT 2
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_RSRV0 (0x3<<4)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_RSRV0_SHIFT 4
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG (0x1<<6)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG_SHIFT 6
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TRANSIT (0x1<<7)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TRANSIT_SHIFT 7
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_NSG (0x3<<0)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_NSG_SHIFT 0
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CSG (0x3<<2)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CSG_SHIFT 2
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_RSRV0 (0x3<<4)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_RSRV0_SHIFT 4
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG (0x1<<6)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG_SHIFT 6
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TRANSIT (0x1<<7)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TRANSIT_SHIFT 7
 	u8 opcode;
-#endif
+#पूर्ण_अगर
 	u32 data_fields;
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
-#define ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
+#घोषणा ISCSI_LOGIN_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
 	u32 isid_lo;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 isid_hi;
 	u16 tsih;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 tsih;
 	u16 isid_hi;
-#endif
+#पूर्ण_अगर
 	u32 itt;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 cid;
 	u16 rsrv1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv1;
 	u16 cid;
-#endif
+#पूर्ण_अगर
 	u32 cmd_sn;
 	u32 exp_stat_sn;
 	u32 rsrv2[4];
-};
+पूर्ण;
 
 /*
  * PDU header of an iSCSI logout request
  */
-struct iscsi_logout_req_hdr_little_endian {
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_logout_req_hdr_little_endian अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 opcode;
 	u8 op_attr;
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_REASON_CODE (0x7F<<0)
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_REASON_CODE_SHIFT 0
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_RSRV1_1 (0x1<<7)
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_RSRV1_1_SHIFT 7
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_REASON_CODE (0x7F<<0)
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_REASON_CODE_SHIFT 0
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_RSRV1_1 (0x1<<7)
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_RSRV1_1_SHIFT 7
 	u16 rsrv0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv0;
 	u8 op_attr;
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_REASON_CODE (0x7F<<0)
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_REASON_CODE_SHIFT 0
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_RSRV1_1 (0x1<<7)
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_RSRV1_1_SHIFT 7
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_REASON_CODE (0x7F<<0)
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_REASON_CODE_SHIFT 0
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_RSRV1_1 (0x1<<7)
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_RSRV1_1_SHIFT 7
 	u8 opcode;
-#endif
+#पूर्ण_अगर
 	u32 data_fields;
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
-#define ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
+#घोषणा ISCSI_LOGOUT_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
 	u32 rsrv2[2];
 	u32 itt;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 cid;
 	u16 rsrv1;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv1;
 	u16 cid;
-#endif
+#पूर्ण_अगर
 	u32 cmd_sn;
 	u32 exp_stat_sn;
 	u32 rsrv3[4];
-};
+पूर्ण;
 
 /*
  * PDU header of an iSCSI TMF request
  */
-struct iscsi_tmf_req_hdr_little_endian {
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_पंचांगf_req_hdr_little_endian अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 opcode;
 	u8 op_attr;
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_FUNCTION (0x7F<<0)
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_FUNCTION_SHIFT 0
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_RSRV1_1 (0x1<<7)
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_RSRV1_1_SHIFT 7
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_FUNCTION (0x7F<<0)
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_FUNCTION_SHIFT 0
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_RSRV1_1 (0x1<<7)
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_RSRV1_1_SHIFT 7
 	u16 rsrv0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv0;
 	u8 op_attr;
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_FUNCTION (0x7F<<0)
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_FUNCTION_SHIFT 0
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_RSRV1_1 (0x1<<7)
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_RSRV1_1_SHIFT 7
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_FUNCTION (0x7F<<0)
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_FUNCTION_SHIFT 0
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_RSRV1_1 (0x1<<7)
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_RSRV1_1_SHIFT 7
 	u8 opcode;
-#endif
+#पूर्ण_अगर
 	u32 data_fields;
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
-#define ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
-	struct regpair lun;
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
+#घोषणा ISCSI_TMF_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
+	काष्ठा regpair lun;
 	u32 itt;
 	u32 referenced_task_tag;
 	u32 cmd_sn;
@@ -4826,186 +4827,186 @@ struct iscsi_tmf_req_hdr_little_endian {
 	u32 ref_cmd_sn;
 	u32 exp_data_sn;
 	u32 rsrv2[2];
-};
+पूर्ण;
 
 /*
  * PDU header of an iSCSI Text request
  */
-struct iscsi_text_req_hdr_little_endian {
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_text_req_hdr_little_endian अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 opcode;
 	u8 op_attr;
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_RSRV1 (0x3F<<0)
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG (0x1<<6)
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG_SHIFT 6
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_FINAL (0x1<<7)
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_FINAL_SHIFT 7
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_RSRV1 (0x3F<<0)
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG (0x1<<6)
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG_SHIFT 6
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_FINAL (0x1<<7)
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_FINAL_SHIFT 7
 	u16 rsrv0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv0;
 	u8 op_attr;
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_RSRV1 (0x3F<<0)
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG (0x1<<6)
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG_SHIFT 6
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_FINAL (0x1<<7)
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_FINAL_SHIFT 7
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_RSRV1 (0x3F<<0)
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG (0x1<<6)
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_CONTINUE_FLG_SHIFT 6
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_FINAL (0x1<<7)
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_FINAL_SHIFT 7
 	u8 opcode;
-#endif
+#पूर्ण_अगर
 	u32 data_fields;
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
-#define ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
-	struct regpair lun;
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
+#घोषणा ISCSI_TEXT_REQ_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
+	काष्ठा regpair lun;
 	u32 itt;
 	u32 ttt;
 	u32 cmd_sn;
 	u32 exp_stat_sn;
 	u32 rsrv3[4];
-};
+पूर्ण;
 
 /*
  * PDU header of an iSCSI Nop-Out
  */
-struct iscsi_nop_out_hdr_little_endian {
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_nop_out_hdr_little_endian अणु
+#अगर defined(__BIG_ENDIAN)
 	u8 opcode;
 	u8 op_attr;
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV1 (0x7F<<0)
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV2_1 (0x1<<7)
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV2_1_SHIFT 7
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV1 (0x7F<<0)
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV2_1 (0x1<<7)
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV2_1_SHIFT 7
 	u16 rsrv0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv0;
 	u8 op_attr;
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV1 (0x7F<<0)
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV2_1 (0x1<<7)
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV2_1_SHIFT 7
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV1 (0x7F<<0)
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV1_SHIFT 0
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV2_1 (0x1<<7)
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_RSRV2_1_SHIFT 7
 	u8 opcode;
-#endif
+#पूर्ण_अगर
 	u32 data_fields;
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
-#define ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
-	struct regpair lun;
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH (0xFFFFFF<<0)
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_DATA_SEGMENT_LENGTH_SHIFT 0
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH (0xFF<<24)
+#घोषणा ISCSI_NOP_OUT_HDR_LITTLE_ENDIAN_TOTAL_AHS_LENGTH_SHIFT 24
+	काष्ठा regpair lun;
 	u32 itt;
 	u32 ttt;
 	u32 cmd_sn;
 	u32 exp_stat_sn;
 	u32 rsrv3[4];
-};
+पूर्ण;
 
 /*
- * iscsi pdu headers in little endian form.
+ * iscsi pdu headers in little endian क्रमm.
  */
-union iscsi_pdu_headers_little_endian {
+जोड़ iscsi_pdu_headers_little_endian अणु
 	u32 fullHeaderSize[12];
-	struct iscsi_cmd_pdu_hdr_little_endian command_pdu_hdr;
-	struct iscsi_data_pdu_hdr_little_endian data_out_pdu_hdr;
-	struct iscsi_login_req_hdr_little_endian login_req_pdu_hdr;
-	struct iscsi_logout_req_hdr_little_endian logout_req_pdu_hdr;
-	struct iscsi_tmf_req_hdr_little_endian tmf_req_pdu_hdr;
-	struct iscsi_text_req_hdr_little_endian text_req_pdu_hdr;
-	struct iscsi_nop_out_hdr_little_endian nop_out_pdu_hdr;
-};
+	काष्ठा iscsi_cmd_pdu_hdr_little_endian command_pdu_hdr;
+	काष्ठा iscsi_data_pdu_hdr_little_endian data_out_pdu_hdr;
+	काष्ठा iscsi_login_req_hdr_little_endian login_req_pdu_hdr;
+	काष्ठा iscsi_logout_req_hdr_little_endian logout_req_pdu_hdr;
+	काष्ठा iscsi_पंचांगf_req_hdr_little_endian पंचांगf_req_pdu_hdr;
+	काष्ठा iscsi_text_req_hdr_little_endian text_req_pdu_hdr;
+	काष्ठा iscsi_nop_out_hdr_little_endian nop_out_pdu_hdr;
+पूर्ण;
 
-struct iscsi_hq_bd {
-	union iscsi_pdu_headers_little_endian pdu_header;
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_hq_bd अणु
+	जोड़ iscsi_pdu_headers_little_endian pdu_header;
+#अगर defined(__BIG_ENDIAN)
 	u16 reserved1;
 	u16 lcl_cmp_flg;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 lcl_cmp_flg;
 	u16 reserved1;
-#endif
+#पूर्ण_अगर
 	u32 sgl_base_lo;
 	u32 sgl_base_hi;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 sgl_size;
 	u8 sge_index;
 	u16 sge_offset;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 sge_offset;
 	u8 sge_index;
 	u8 sgl_size;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 
 /*
- * CQE data for L2 OOO connection $$KEEP_ENDIANNESS$$
+ * CQE data क्रम L2 OOO connection $$KEEP_ENDIANNESS$$
  */
-struct iscsi_l2_ooo_data {
+काष्ठा iscsi_l2_ooo_data अणु
 	__le32 iscsi_cid;
 	u8 drop_isle;
 	u8 drop_size;
 	u8 ooo_opcode;
 	u8 ooo_isle;
 	u8 reserved[8];
-};
+पूर्ण;
 
 
 
 
 
 
-struct iscsi_task_context_entry_xuc_c_write_only {
+काष्ठा iscsi_task_context_entry_xuc_c_ग_लिखो_only अणु
 	u32 total_data_acked;
-};
+पूर्ण;
 
-struct iscsi_task_context_r2t_table_entry {
+काष्ठा iscsi_task_context_r2t_table_entry अणु
 	u32 ttt;
 	u32 desired_data_len;
-};
+पूर्ण;
 
-struct iscsi_task_context_entry_xuc_u_write_only {
+काष्ठा iscsi_task_context_entry_xuc_u_ग_लिखो_only अणु
 	u32 exp_r2t_sn;
-	struct iscsi_task_context_r2t_table_entry r2t_table[4];
-#if defined(__BIG_ENDIAN)
+	काष्ठा iscsi_task_context_r2t_table_entry r2t_table[4];
+#अगर defined(__BIG_ENDIAN)
 	u16 data_in_count;
 	u8 cq_id;
 	u8 valid_1b;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 valid_1b;
 	u8 cq_id;
 	u16 data_in_count;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-struct iscsi_task_context_entry_xuc {
-	struct iscsi_task_context_entry_xuc_c_write_only write_c;
+काष्ठा iscsi_task_context_entry_xuc अणु
+	काष्ठा iscsi_task_context_entry_xuc_c_ग_लिखो_only ग_लिखो_c;
 	u32 exp_data_transfer_len;
-	struct iscsi_task_context_entry_xuc_x_write_only write_x;
+	काष्ठा iscsi_task_context_entry_xuc_x_ग_लिखो_only ग_लिखो_x;
 	u32 lun_lo;
-	struct iscsi_task_context_entry_xuc_xu_write_both write_xu;
+	काष्ठा iscsi_task_context_entry_xuc_xu_ग_लिखो_both ग_लिखो_xu;
 	u32 lun_hi;
-	struct iscsi_task_context_entry_xuc_u_write_only write_u;
-};
+	काष्ठा iscsi_task_context_entry_xuc_u_ग_लिखो_only ग_लिखो_u;
+पूर्ण;
 
-struct iscsi_task_context_entry_u {
+काष्ठा iscsi_task_context_entry_u अणु
 	u32 exp_r2t_buff_offset;
 	u32 rem_rcv_len;
 	u32 exp_data_sn;
-};
+पूर्ण;
 
-struct iscsi_task_context_entry {
-	struct iscsi_task_context_entry_x tce_x;
-#if defined(__BIG_ENDIAN)
+काष्ठा iscsi_task_context_entry अणु
+	काष्ठा iscsi_task_context_entry_x tce_x;
+#अगर defined(__BIG_ENDIAN)
 	u16 data_out_count;
 	u16 rsrv0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rsrv0;
 	u16 data_out_count;
-#endif
-	struct iscsi_task_context_entry_xuc tce_xuc;
-	struct iscsi_task_context_entry_u tce_u;
+#पूर्ण_अगर
+	काष्ठा iscsi_task_context_entry_xuc tce_xuc;
+	काष्ठा iscsi_task_context_entry_u tce_u;
 	u32 rsrv1[7];
-};
+पूर्ण;
 
 
 
@@ -5014,10 +5015,10 @@ struct iscsi_task_context_entry {
 
 
 
-struct iscsi_task_context_entry_xuc_x_init_only {
-	struct regpair lun;
+काष्ठा iscsi_task_context_entry_xuc_x_init_only अणु
+	काष्ठा regpair lun;
 	u32 exp_data_transfer_len;
-};
+पूर्ण;
 
 
 
@@ -5036,303 +5037,303 @@ struct iscsi_task_context_entry_xuc_x_init_only {
 
 
 /*
- * ipv6 structure
+ * ipv6 काष्ठाure
  */
-struct ip_v6_addr {
+काष्ठा ip_v6_addr अणु
 	u32 ip_addr_lo_lo;
 	u32 ip_addr_lo_hi;
 	u32 ip_addr_hi_lo;
 	u32 ip_addr_hi_hi;
-};
+पूर्ण;
 
 
 
 /*
- * l5cm- connection identification params
+ * l5cm- connection identअगरication params
  */
-struct l5cm_conn_addr_params {
+काष्ठा l5cm_conn_addr_params अणु
 	u32 pmtu;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u8 remote_addr_3;
 	u8 remote_addr_2;
 	u8 remote_addr_1;
 	u8 remote_addr_0;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 remote_addr_0;
 	u8 remote_addr_1;
 	u8 remote_addr_2;
 	u8 remote_addr_3;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 params;
-#define L5CM_CONN_ADDR_PARAMS_IP_VERSION (0x1<<0)
-#define L5CM_CONN_ADDR_PARAMS_IP_VERSION_SHIFT 0
-#define L5CM_CONN_ADDR_PARAMS_RSRV (0x7FFF<<1)
-#define L5CM_CONN_ADDR_PARAMS_RSRV_SHIFT 1
+#घोषणा L5CM_CONN_ADDR_PARAMS_IP_VERSION (0x1<<0)
+#घोषणा L5CM_CONN_ADDR_PARAMS_IP_VERSION_SHIFT 0
+#घोषणा L5CM_CONN_ADDR_PARAMS_RSRV (0x7FFF<<1)
+#घोषणा L5CM_CONN_ADDR_PARAMS_RSRV_SHIFT 1
 	u8 remote_addr_5;
 	u8 remote_addr_4;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 remote_addr_4;
 	u8 remote_addr_5;
 	u16 params;
-#define L5CM_CONN_ADDR_PARAMS_IP_VERSION (0x1<<0)
-#define L5CM_CONN_ADDR_PARAMS_IP_VERSION_SHIFT 0
-#define L5CM_CONN_ADDR_PARAMS_RSRV (0x7FFF<<1)
-#define L5CM_CONN_ADDR_PARAMS_RSRV_SHIFT 1
-#endif
-	struct ip_v6_addr local_ip_addr;
-	struct ip_v6_addr remote_ip_addr;
+#घोषणा L5CM_CONN_ADDR_PARAMS_IP_VERSION (0x1<<0)
+#घोषणा L5CM_CONN_ADDR_PARAMS_IP_VERSION_SHIFT 0
+#घोषणा L5CM_CONN_ADDR_PARAMS_RSRV (0x7FFF<<1)
+#घोषणा L5CM_CONN_ADDR_PARAMS_RSRV_SHIFT 1
+#पूर्ण_अगर
+	काष्ठा ip_v6_addr local_ip_addr;
+	काष्ठा ip_v6_addr remote_ip_addr;
 	u32 ipv6_flow_label_20b;
 	u32 reserved1;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 remote_tcp_port;
 	u16 local_tcp_port;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 local_tcp_port;
 	u16 remote_tcp_port;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
  * l5cm-xstorm connection buffer
  */
-struct l5cm_xstorm_conn_buffer {
-#if defined(__BIG_ENDIAN)
+काष्ठा l5cm_xstorm_conn_buffer अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 rsrv1;
 	u16 params;
-#define L5CM_XSTORM_CONN_BUFFER_NAGLE_ENABLE (0x1<<0)
-#define L5CM_XSTORM_CONN_BUFFER_NAGLE_ENABLE_SHIFT 0
-#define L5CM_XSTORM_CONN_BUFFER_RSRV (0x7FFF<<1)
-#define L5CM_XSTORM_CONN_BUFFER_RSRV_SHIFT 1
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा L5CM_XSTORM_CONN_BUFFER_NAGLE_ENABLE (0x1<<0)
+#घोषणा L5CM_XSTORM_CONN_BUFFER_NAGLE_ENABLE_SHIFT 0
+#घोषणा L5CM_XSTORM_CONN_BUFFER_RSRV (0x7FFF<<1)
+#घोषणा L5CM_XSTORM_CONN_BUFFER_RSRV_SHIFT 1
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 params;
-#define L5CM_XSTORM_CONN_BUFFER_NAGLE_ENABLE (0x1<<0)
-#define L5CM_XSTORM_CONN_BUFFER_NAGLE_ENABLE_SHIFT 0
-#define L5CM_XSTORM_CONN_BUFFER_RSRV (0x7FFF<<1)
-#define L5CM_XSTORM_CONN_BUFFER_RSRV_SHIFT 1
+#घोषणा L5CM_XSTORM_CONN_BUFFER_NAGLE_ENABLE (0x1<<0)
+#घोषणा L5CM_XSTORM_CONN_BUFFER_NAGLE_ENABLE_SHIFT 0
+#घोषणा L5CM_XSTORM_CONN_BUFFER_RSRV (0x7FFF<<1)
+#घोषणा L5CM_XSTORM_CONN_BUFFER_RSRV_SHIFT 1
 	u16 rsrv1;
-#endif
-#if defined(__BIG_ENDIAN)
+#पूर्ण_अगर
+#अगर defined(__BIG_ENDIAN)
 	u16 mss;
-	u16 pseudo_header_checksum;
-#elif defined(__LITTLE_ENDIAN)
-	u16 pseudo_header_checksum;
+	u16 pseuकरो_header_checksum;
+#या_अगर defined(__LITTLE_ENDIAN)
+	u16 pseuकरो_header_checksum;
 	u16 mss;
-#endif
+#पूर्ण_अगर
 	u32 rcv_buf;
 	u32 rsrv2;
-	struct regpair context_addr;
-};
+	काष्ठा regpair context_addr;
+पूर्ण;
 
 /*
  * l5cm-tstorm connection buffer
  */
-struct l5cm_tstorm_conn_buffer {
+काष्ठा l5cm_tstorm_conn_buffer अणु
 	u32 rsrv1[2];
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 params;
-#define L5CM_TSTORM_CONN_BUFFER_DELAYED_ACK_ENABLE (0x1<<0)
-#define L5CM_TSTORM_CONN_BUFFER_DELAYED_ACK_ENABLE_SHIFT 0
-#define L5CM_TSTORM_CONN_BUFFER_RSRV (0x7FFF<<1)
-#define L5CM_TSTORM_CONN_BUFFER_RSRV_SHIFT 1
+#घोषणा L5CM_TSTORM_CONN_BUFFER_DELAYED_ACK_ENABLE (0x1<<0)
+#घोषणा L5CM_TSTORM_CONN_BUFFER_DELAYED_ACK_ENABLE_SHIFT 0
+#घोषणा L5CM_TSTORM_CONN_BUFFER_RSRV (0x7FFF<<1)
+#घोषणा L5CM_TSTORM_CONN_BUFFER_RSRV_SHIFT 1
 	u8 ka_max_probe_count;
 	u8 ka_enable;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 ka_enable;
 	u8 ka_max_probe_count;
 	u16 params;
-#define L5CM_TSTORM_CONN_BUFFER_DELAYED_ACK_ENABLE (0x1<<0)
-#define L5CM_TSTORM_CONN_BUFFER_DELAYED_ACK_ENABLE_SHIFT 0
-#define L5CM_TSTORM_CONN_BUFFER_RSRV (0x7FFF<<1)
-#define L5CM_TSTORM_CONN_BUFFER_RSRV_SHIFT 1
-#endif
-	u32 ka_timeout;
-	u32 ka_interval;
-	u32 max_rt_time;
-};
+#घोषणा L5CM_TSTORM_CONN_BUFFER_DELAYED_ACK_ENABLE (0x1<<0)
+#घोषणा L5CM_TSTORM_CONN_BUFFER_DELAYED_ACK_ENABLE_SHIFT 0
+#घोषणा L5CM_TSTORM_CONN_BUFFER_RSRV (0x7FFF<<1)
+#घोषणा L5CM_TSTORM_CONN_BUFFER_RSRV_SHIFT 1
+#पूर्ण_अगर
+	u32 ka_समयout;
+	u32 ka_पूर्णांकerval;
+	u32 max_rt_समय;
+पूर्ण;
 
 /*
- * l5cm connection buffer for active side
+ * l5cm connection buffer क्रम active side
  */
-struct l5cm_active_conn_buffer {
-	struct l5cm_conn_addr_params conn_addr_buf;
-	struct l5cm_xstorm_conn_buffer xstorm_conn_buffer;
-	struct l5cm_tstorm_conn_buffer tstorm_conn_buffer;
-};
+काष्ठा l5cm_active_conn_buffer अणु
+	काष्ठा l5cm_conn_addr_params conn_addr_buf;
+	काष्ठा l5cm_xstorm_conn_buffer xstorm_conn_buffer;
+	काष्ठा l5cm_tstorm_conn_buffer tstorm_conn_buffer;
+पूर्ण;
 
 
 
 /*
  * The l5cm opaque buffer passed in add new connection ramrod passive side
  */
-struct l5cm_hash_input_string {
+काष्ठा l5cm_hash_input_string अणु
 	u32 __opaque1;
-#if defined(__BIG_ENDIAN)
+#अगर defined(__BIG_ENDIAN)
 	u16 __opaque3;
 	u16 __opaque2;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 __opaque2;
 	u16 __opaque3;
-#endif
-	struct ip_v6_addr __opaque4;
-	struct ip_v6_addr __opaque5;
+#पूर्ण_अगर
+	काष्ठा ip_v6_addr __opaque4;
+	काष्ठा ip_v6_addr __opaque5;
 	u32 __opaque6;
 	u32 __opaque7[5];
-};
+पूर्ण;
 
 
 /*
  * syn cookie component
  */
-struct l5cm_syn_cookie_comp {
+काष्ठा l5cm_syn_cookie_comp अणु
 	u32 __opaque;
-};
+पूर्ण;
 
 /*
  * data related to listeners of a TCP port
  */
-struct l5cm_port_listener_data {
+काष्ठा l5cm_port_listener_data अणु
 	u8 params;
-#define L5CM_PORT_LISTENER_DATA_ENABLE (0x1<<0)
-#define L5CM_PORT_LISTENER_DATA_ENABLE_SHIFT 0
-#define L5CM_PORT_LISTENER_DATA_IP_INDEX (0xF<<1)
-#define L5CM_PORT_LISTENER_DATA_IP_INDEX_SHIFT 1
-#define L5CM_PORT_LISTENER_DATA_NET_FILTER (0x1<<5)
-#define L5CM_PORT_LISTENER_DATA_NET_FILTER_SHIFT 5
-#define L5CM_PORT_LISTENER_DATA_DEFFERED_MODE (0x1<<6)
-#define L5CM_PORT_LISTENER_DATA_DEFFERED_MODE_SHIFT 6
-#define L5CM_PORT_LISTENER_DATA_MPA_MODE (0x1<<7)
-#define L5CM_PORT_LISTENER_DATA_MPA_MODE_SHIFT 7
-};
+#घोषणा L5CM_PORT_LISTENER_DATA_ENABLE (0x1<<0)
+#घोषणा L5CM_PORT_LISTENER_DATA_ENABLE_SHIFT 0
+#घोषणा L5CM_PORT_LISTENER_DATA_IP_INDEX (0xF<<1)
+#घोषणा L5CM_PORT_LISTENER_DATA_IP_INDEX_SHIFT 1
+#घोषणा L5CM_PORT_LISTENER_DATA_NET_FILTER (0x1<<5)
+#घोषणा L5CM_PORT_LISTENER_DATA_NET_FILTER_SHIFT 5
+#घोषणा L5CM_PORT_LISTENER_DATA_DEFFERED_MODE (0x1<<6)
+#घोषणा L5CM_PORT_LISTENER_DATA_DEFFERED_MODE_SHIFT 6
+#घोषणा L5CM_PORT_LISTENER_DATA_MPA_MODE (0x1<<7)
+#घोषणा L5CM_PORT_LISTENER_DATA_MPA_MODE_SHIFT 7
+पूर्ण;
 
 /*
- * Opaque structure passed from U to X when final ack arrives
+ * Opaque काष्ठाure passed from U to X when final ack arrives
  */
-struct l5cm_opaque_buf {
+काष्ठा l5cm_opaque_buf अणु
 	u32 __opaque1;
 	u32 __opaque2;
 	u32 __opaque3;
 	u32 __opaque4;
-	struct l5cm_syn_cookie_comp __opaque5;
-#if defined(__BIG_ENDIAN)
+	काष्ठा l5cm_syn_cookie_comp __opaque5;
+#अगर defined(__BIG_ENDIAN)
 	u16 rsrv2;
 	u8 rsrv;
-	struct l5cm_port_listener_data __opaque6;
-#elif defined(__LITTLE_ENDIAN)
-	struct l5cm_port_listener_data __opaque6;
+	काष्ठा l5cm_port_listener_data __opaque6;
+#या_अगर defined(__LITTLE_ENDIAN)
+	काष्ठा l5cm_port_listener_data __opaque6;
 	u8 rsrv;
 	u16 rsrv2;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 
 /*
  * l5cm slow path element
  */
-struct l5cm_packet_size {
+काष्ठा l5cm_packet_size अणु
 	u32 size;
 	u32 rsrv;
-};
+पूर्ण;
 
 
 /*
- * The final-ack union structure in PCS entry after final ack arrived
+ * The final-ack जोड़ काष्ठाure in PCS entry after final ack arrived
  */
-struct l5cm_pcse_ack {
-	struct l5cm_xstorm_conn_buffer tx_socket_params;
-	struct l5cm_opaque_buf opaque_buf;
-	struct l5cm_tstorm_conn_buffer rx_socket_params;
-};
+काष्ठा l5cm_pcse_ack अणु
+	काष्ठा l5cm_xstorm_conn_buffer tx_socket_params;
+	काष्ठा l5cm_opaque_buf opaque_buf;
+	काष्ठा l5cm_tstorm_conn_buffer rx_socket_params;
+पूर्ण;
 
 
 /*
- * The syn union structure in PCS entry after syn arrived
+ * The syn जोड़ काष्ठाure in PCS entry after syn arrived
  */
-struct l5cm_pcse_syn {
-	struct l5cm_opaque_buf opaque_buf;
+काष्ठा l5cm_pcse_syn अणु
+	काष्ठा l5cm_opaque_buf opaque_buf;
 	u32 rsrv[12];
-};
+पूर्ण;
 
 
 /*
- * pcs entry data for passive connections
+ * pcs entry data क्रम passive connections
  */
-struct l5cm_pcs_attributes {
-#if defined(__BIG_ENDIAN)
+काष्ठा l5cm_pcs_attributes अणु
+#अगर defined(__BIG_ENDIAN)
 	u16 pcs_id;
 	u8 status;
 	u8 flags;
-#define L5CM_PCS_ATTRIBUTES_NET_FILTER (0x1<<0)
-#define L5CM_PCS_ATTRIBUTES_NET_FILTER_SHIFT 0
-#define L5CM_PCS_ATTRIBUTES_CALCULATE_HASH (0x1<<1)
-#define L5CM_PCS_ATTRIBUTES_CALCULATE_HASH_SHIFT 1
-#define L5CM_PCS_ATTRIBUTES_COMPARE_HASH_RESULT (0x1<<2)
-#define L5CM_PCS_ATTRIBUTES_COMPARE_HASH_RESULT_SHIFT 2
-#define L5CM_PCS_ATTRIBUTES_QUERY_ULP_ACCEPT (0x1<<3)
-#define L5CM_PCS_ATTRIBUTES_QUERY_ULP_ACCEPT_SHIFT 3
-#define L5CM_PCS_ATTRIBUTES_FIND_DEST_MAC (0x1<<4)
-#define L5CM_PCS_ATTRIBUTES_FIND_DEST_MAC_SHIFT 4
-#define L5CM_PCS_ATTRIBUTES_L4_OFFLOAD (0x1<<5)
-#define L5CM_PCS_ATTRIBUTES_L4_OFFLOAD_SHIFT 5
-#define L5CM_PCS_ATTRIBUTES_FORWARD_PACKET (0x1<<6)
-#define L5CM_PCS_ATTRIBUTES_FORWARD_PACKET_SHIFT 6
-#define L5CM_PCS_ATTRIBUTES_RSRV (0x1<<7)
-#define L5CM_PCS_ATTRIBUTES_RSRV_SHIFT 7
-#elif defined(__LITTLE_ENDIAN)
+#घोषणा L5CM_PCS_ATTRIBUTES_NET_FILTER (0x1<<0)
+#घोषणा L5CM_PCS_ATTRIBUTES_NET_FILTER_SHIFT 0
+#घोषणा L5CM_PCS_ATTRIBUTES_CALCULATE_HASH (0x1<<1)
+#घोषणा L5CM_PCS_ATTRIBUTES_CALCULATE_HASH_SHIFT 1
+#घोषणा L5CM_PCS_ATTRIBUTES_COMPARE_HASH_RESULT (0x1<<2)
+#घोषणा L5CM_PCS_ATTRIBUTES_COMPARE_HASH_RESULT_SHIFT 2
+#घोषणा L5CM_PCS_ATTRIBUTES_QUERY_ULP_ACCEPT (0x1<<3)
+#घोषणा L5CM_PCS_ATTRIBUTES_QUERY_ULP_ACCEPT_SHIFT 3
+#घोषणा L5CM_PCS_ATTRIBUTES_FIND_DEST_MAC (0x1<<4)
+#घोषणा L5CM_PCS_ATTRIBUTES_FIND_DEST_MAC_SHIFT 4
+#घोषणा L5CM_PCS_ATTRIBUTES_L4_OFFLOAD (0x1<<5)
+#घोषणा L5CM_PCS_ATTRIBUTES_L4_OFFLOAD_SHIFT 5
+#घोषणा L5CM_PCS_ATTRIBUTES_FORWARD_PACKET (0x1<<6)
+#घोषणा L5CM_PCS_ATTRIBUTES_FORWARD_PACKET_SHIFT 6
+#घोषणा L5CM_PCS_ATTRIBUTES_RSRV (0x1<<7)
+#घोषणा L5CM_PCS_ATTRIBUTES_RSRV_SHIFT 7
+#या_अगर defined(__LITTLE_ENDIAN)
 	u8 flags;
-#define L5CM_PCS_ATTRIBUTES_NET_FILTER (0x1<<0)
-#define L5CM_PCS_ATTRIBUTES_NET_FILTER_SHIFT 0
-#define L5CM_PCS_ATTRIBUTES_CALCULATE_HASH (0x1<<1)
-#define L5CM_PCS_ATTRIBUTES_CALCULATE_HASH_SHIFT 1
-#define L5CM_PCS_ATTRIBUTES_COMPARE_HASH_RESULT (0x1<<2)
-#define L5CM_PCS_ATTRIBUTES_COMPARE_HASH_RESULT_SHIFT 2
-#define L5CM_PCS_ATTRIBUTES_QUERY_ULP_ACCEPT (0x1<<3)
-#define L5CM_PCS_ATTRIBUTES_QUERY_ULP_ACCEPT_SHIFT 3
-#define L5CM_PCS_ATTRIBUTES_FIND_DEST_MAC (0x1<<4)
-#define L5CM_PCS_ATTRIBUTES_FIND_DEST_MAC_SHIFT 4
-#define L5CM_PCS_ATTRIBUTES_L4_OFFLOAD (0x1<<5)
-#define L5CM_PCS_ATTRIBUTES_L4_OFFLOAD_SHIFT 5
-#define L5CM_PCS_ATTRIBUTES_FORWARD_PACKET (0x1<<6)
-#define L5CM_PCS_ATTRIBUTES_FORWARD_PACKET_SHIFT 6
-#define L5CM_PCS_ATTRIBUTES_RSRV (0x1<<7)
-#define L5CM_PCS_ATTRIBUTES_RSRV_SHIFT 7
+#घोषणा L5CM_PCS_ATTRIBUTES_NET_FILTER (0x1<<0)
+#घोषणा L5CM_PCS_ATTRIBUTES_NET_FILTER_SHIFT 0
+#घोषणा L5CM_PCS_ATTRIBUTES_CALCULATE_HASH (0x1<<1)
+#घोषणा L5CM_PCS_ATTRIBUTES_CALCULATE_HASH_SHIFT 1
+#घोषणा L5CM_PCS_ATTRIBUTES_COMPARE_HASH_RESULT (0x1<<2)
+#घोषणा L5CM_PCS_ATTRIBUTES_COMPARE_HASH_RESULT_SHIFT 2
+#घोषणा L5CM_PCS_ATTRIBUTES_QUERY_ULP_ACCEPT (0x1<<3)
+#घोषणा L5CM_PCS_ATTRIBUTES_QUERY_ULP_ACCEPT_SHIFT 3
+#घोषणा L5CM_PCS_ATTRIBUTES_FIND_DEST_MAC (0x1<<4)
+#घोषणा L5CM_PCS_ATTRIBUTES_FIND_DEST_MAC_SHIFT 4
+#घोषणा L5CM_PCS_ATTRIBUTES_L4_OFFLOAD (0x1<<5)
+#घोषणा L5CM_PCS_ATTRIBUTES_L4_OFFLOAD_SHIFT 5
+#घोषणा L5CM_PCS_ATTRIBUTES_FORWARD_PACKET (0x1<<6)
+#घोषणा L5CM_PCS_ATTRIBUTES_FORWARD_PACKET_SHIFT 6
+#घोषणा L5CM_PCS_ATTRIBUTES_RSRV (0x1<<7)
+#घोषणा L5CM_PCS_ATTRIBUTES_RSRV_SHIFT 7
 	u8 status;
 	u16 pcs_id;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 
-union l5cm_seg_params {
-	struct l5cm_pcse_syn syn_seg_params;
-	struct l5cm_pcse_ack ack_seg_params;
-};
+जोड़ l5cm_seg_params अणु
+	काष्ठा l5cm_pcse_syn syn_seg_params;
+	काष्ठा l5cm_pcse_ack ack_seg_params;
+पूर्ण;
 
 /*
- * pcs entry data for passive connections
+ * pcs entry data क्रम passive connections
  */
-struct l5cm_pcs_hdr {
-	struct l5cm_hash_input_string hash_input_string;
-	struct l5cm_conn_addr_params conn_addr_buf;
+काष्ठा l5cm_pcs_hdr अणु
+	काष्ठा l5cm_hash_input_string hash_input_string;
+	काष्ठा l5cm_conn_addr_params conn_addr_buf;
 	u32 cid;
 	u32 hash_result;
-	union l5cm_seg_params seg_params;
-	struct l5cm_pcs_attributes att;
-#if defined(__BIG_ENDIAN)
+	जोड़ l5cm_seg_params seg_params;
+	काष्ठा l5cm_pcs_attributes att;
+#अगर defined(__BIG_ENDIAN)
 	u16 rsrv;
 	u16 rx_seg_size;
-#elif defined(__LITTLE_ENDIAN)
+#या_अगर defined(__LITTLE_ENDIAN)
 	u16 rx_seg_size;
 	u16 rsrv;
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 /*
- * pcs entry for passive connections
+ * pcs entry क्रम passive connections
  */
-struct l5cm_pcs_entry {
-	struct l5cm_pcs_hdr hdr;
+काष्ठा l5cm_pcs_entry अणु
+	काष्ठा l5cm_pcs_hdr hdr;
 	u8 rx_segment[1516];
-};
+पूर्ण;
 
 
 
@@ -5340,36 +5341,36 @@ struct l5cm_pcs_entry {
 /*
  * l5cm connection parameters
  */
-union l5cm_reduce_param_union {
+जोड़ l5cm_reduce_param_जोड़ अणु
 	u32 opaque1;
 	u32 opaque2;
-};
+पूर्ण;
 
 /*
  * l5cm connection parameters
  */
-struct l5cm_reduce_conn {
-	union l5cm_reduce_param_union opaque1;
+काष्ठा l5cm_reduce_conn अणु
+	जोड़ l5cm_reduce_param_जोड़ opaque1;
 	u32 opaque2;
-};
+पूर्ण;
 
 /*
  * l5cm slow path element
  */
-union l5cm_specific_data {
+जोड़ l5cm_specअगरic_data अणु
 	u8 protocol_data[8];
-	struct regpair phy_address;
-	struct l5cm_packet_size packet_size;
-	struct l5cm_reduce_conn reduced_conn;
-};
+	काष्ठा regpair phy_address;
+	काष्ठा l5cm_packet_size packet_size;
+	काष्ठा l5cm_reduce_conn reduced_conn;
+पूर्ण;
 
 /*
  * l5 slow path element
  */
-struct l5cm_spe {
-	struct spe_hdr hdr;
-	union l5cm_specific_data data;
-};
+काष्ठा l5cm_spe अणु
+	काष्ठा spe_hdr hdr;
+	जोड़ l5cm_specअगरic_data data;
+पूर्ण;
 
 
 
@@ -5377,19 +5378,19 @@ struct l5cm_spe {
 /*
  * Termination variables
  */
-struct l5cm_term_vars {
+काष्ठा l5cm_term_vars अणु
 	u8 BitMap;
-#define L5CM_TERM_VARS_TCP_STATE (0xF<<0)
-#define L5CM_TERM_VARS_TCP_STATE_SHIFT 0
-#define L5CM_TERM_VARS_FIN_RECEIVED_SBIT (0x1<<4)
-#define L5CM_TERM_VARS_FIN_RECEIVED_SBIT_SHIFT 4
-#define L5CM_TERM_VARS_ACK_ON_FIN_RECEIVED_SBIT (0x1<<5)
-#define L5CM_TERM_VARS_ACK_ON_FIN_RECEIVED_SBIT_SHIFT 5
-#define L5CM_TERM_VARS_TERM_ON_CHIP (0x1<<6)
-#define L5CM_TERM_VARS_TERM_ON_CHIP_SHIFT 6
-#define L5CM_TERM_VARS_RSRV (0x1<<7)
-#define L5CM_TERM_VARS_RSRV_SHIFT 7
-};
+#घोषणा L5CM_TERM_VARS_TCP_STATE (0xF<<0)
+#घोषणा L5CM_TERM_VARS_TCP_STATE_SHIFT 0
+#घोषणा L5CM_TERM_VARS_FIN_RECEIVED_SBIT (0x1<<4)
+#घोषणा L5CM_TERM_VARS_FIN_RECEIVED_SBIT_SHIFT 4
+#घोषणा L5CM_TERM_VARS_ACK_ON_FIN_RECEIVED_SBIT (0x1<<5)
+#घोषणा L5CM_TERM_VARS_ACK_ON_FIN_RECEIVED_SBIT_SHIFT 5
+#घोषणा L5CM_TERM_VARS_TERM_ON_CHIP (0x1<<6)
+#घोषणा L5CM_TERM_VARS_TERM_ON_CHIP_SHIFT 6
+#घोषणा L5CM_TERM_VARS_RSRV (0x1<<7)
+#घोषणा L5CM_TERM_VARS_RSRV_SHIFT 7
+पूर्ण;
 
 
 
@@ -5397,40 +5398,40 @@ struct l5cm_term_vars {
 /*
  * Tstorm Tcp flags
  */
-struct tstorm_l5cm_tcp_flags {
+काष्ठा tstorm_l5cm_tcp_flags अणु
 	u16 flags;
-#define TSTORM_L5CM_TCP_FLAGS_VLAN_ID (0xFFF<<0)
-#define TSTORM_L5CM_TCP_FLAGS_VLAN_ID_SHIFT 0
-#define TSTORM_L5CM_TCP_FLAGS_DELAYED_ACK_EN (0x1<<12)
-#define TSTORM_L5CM_TCP_FLAGS_DELAYED_ACK_SHIFT 12
-#define TSTORM_L5CM_TCP_FLAGS_TS_ENABLED (0x1<<13)
-#define TSTORM_L5CM_TCP_FLAGS_TS_ENABLED_SHIFT 13
-#define TSTORM_L5CM_TCP_FLAGS_RSRV1 (0x3<<14)
-#define TSTORM_L5CM_TCP_FLAGS_RSRV1_SHIFT 14
-};
+#घोषणा TSTORM_L5CM_TCP_FLAGS_VLAN_ID (0xFFF<<0)
+#घोषणा TSTORM_L5CM_TCP_FLAGS_VLAN_ID_SHIFT 0
+#घोषणा TSTORM_L5CM_TCP_FLAGS_DELAYED_ACK_EN (0x1<<12)
+#घोषणा TSTORM_L5CM_TCP_FLAGS_DELAYED_ACK_SHIFT 12
+#घोषणा TSTORM_L5CM_TCP_FLAGS_TS_ENABLED (0x1<<13)
+#घोषणा TSTORM_L5CM_TCP_FLAGS_TS_ENABLED_SHIFT 13
+#घोषणा TSTORM_L5CM_TCP_FLAGS_RSRV1 (0x3<<14)
+#घोषणा TSTORM_L5CM_TCP_FLAGS_RSRV1_SHIFT 14
+पूर्ण;
 
 
 /*
  * Xstorm Tcp flags
  */
-struct xstorm_l5cm_tcp_flags {
+काष्ठा xstorm_l5cm_tcp_flags अणु
 	u8 flags;
-#define XSTORM_L5CM_TCP_FLAGS_ENC_ENABLED (0x1<<0)
-#define XSTORM_L5CM_TCP_FLAGS_ENC_ENABLED_SHIFT 0
-#define XSTORM_L5CM_TCP_FLAGS_TS_ENABLED (0x1<<1)
-#define XSTORM_L5CM_TCP_FLAGS_TS_ENABLED_SHIFT 1
-#define XSTORM_L5CM_TCP_FLAGS_WND_SCL_EN (0x1<<2)
-#define XSTORM_L5CM_TCP_FLAGS_WND_SCL_EN_SHIFT 2
-#define XSTORM_L5CM_TCP_FLAGS_RSRV (0x1F<<3)
-#define XSTORM_L5CM_TCP_FLAGS_RSRV_SHIFT 3
-};
+#घोषणा XSTORM_L5CM_TCP_FLAGS_ENC_ENABLED (0x1<<0)
+#घोषणा XSTORM_L5CM_TCP_FLAGS_ENC_ENABLED_SHIFT 0
+#घोषणा XSTORM_L5CM_TCP_FLAGS_TS_ENABLED (0x1<<1)
+#घोषणा XSTORM_L5CM_TCP_FLAGS_TS_ENABLED_SHIFT 1
+#घोषणा XSTORM_L5CM_TCP_FLAGS_WND_SCL_EN (0x1<<2)
+#घोषणा XSTORM_L5CM_TCP_FLAGS_WND_SCL_EN_SHIFT 2
+#घोषणा XSTORM_L5CM_TCP_FLAGS_RSRV (0x1F<<3)
+#घोषणा XSTORM_L5CM_TCP_FLAGS_RSRV_SHIFT 3
+पूर्ण;
 
 
 
 /*
  * Out-of-order states
  */
-enum tcp_ooo_event {
+क्रमागत tcp_ooo_event अणु
 	TCP_EVENT_ADD_PEN = 0,
 	TCP_EVENT_ADD_NEW_ISLE = 1,
 	TCP_EVENT_ADD_ISLE_RIGHT = 2,
@@ -5438,18 +5439,18 @@ enum tcp_ooo_event {
 	TCP_EVENT_JOIN = 4,
 	TCP_EVENT_NOP = 5,
 	MAX_TCP_OOO_EVENT
-};
+पूर्ण;
 
 
 /*
  * OOO support modes
  */
-enum tcp_tstorm_ooo {
+क्रमागत tcp_tstorm_ooo अणु
 	TCP_TSTORM_OOO_DROP_AND_PROC_ACK = 0,
 	TCP_TSTORM_OOO_SEND_PURE_ACK = 1,
 	TCP_TSTORM_OOO_SUPPORTED = 2,
 	MAX_TCP_TSTORM_OOO
-};
+पूर्ण;
 
 
 
@@ -5459,4 +5460,4 @@ enum tcp_tstorm_ooo {
 
 
 
-#endif /* __5710_HSI_CNIC_LE__ */
+#पूर्ण_अगर /* __5710_HSI_CNIC_LE__ */

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,23 +24,23 @@
  *
  */
 
-#ifndef __DC_LINK_ENCODER__DCN10_H__
-#define __DC_LINK_ENCODER__DCN10_H__
+#अगर_अघोषित __DC_LINK_ENCODER__DCN10_H__
+#घोषणा __DC_LINK_ENCODER__DCN10_H__
 
-#include "link_encoder.h"
+#समावेश "link_encoder.h"
 
-#define TO_DCN10_LINK_ENC(link_encoder)\
-	container_of(link_encoder, struct dcn10_link_encoder, base)
+#घोषणा TO_DCN10_LINK_ENC(link_encoder)\
+	container_of(link_encoder, काष्ठा dcn10_link_encoder, base)
 
-#define AUX_REG_LIST(id)\
+#घोषणा AUX_REG_LIST(id)\
 	SRI(AUX_CONTROL, DP_AUX, id), \
 	SRI(AUX_DPHY_RX_CONTROL0, DP_AUX, id), \
 	SRI(AUX_DPHY_RX_CONTROL1, DP_AUX, id)
 
-#define HPD_REG_LIST(id)\
+#घोषणा HPD_REG_LIST(id)\
 	SRI(DC_HPD_CONTROL, HPD, id)
 
-#define LE_DCN_COMMON_REG_LIST(id) \
+#घोषणा LE_DCN_COMMON_REG_LIST(id) \
 	SRI(DIG_BE_CNTL, DIG, id), \
 	SRI(DIG_BE_EN_CNTL, DIG, id), \
 	SRI(DIG_CLOCK_PATTERN, DIG, id), \
@@ -66,106 +67,106 @@
 	SRI(DP_DPHY_HBR2_PATTERN_CONTROL, DP, id)
 
 
-#define LE_DCN10_REG_LIST(id)\
+#घोषणा LE_DCN10_REG_LIST(id)\
 	SRI(DP_DPHY_INTERNAL_CTRL, DP, id), \
 	LE_DCN_COMMON_REG_LIST(id)
 
-struct dcn10_link_enc_aux_registers {
-	uint32_t AUX_CONTROL;
-	uint32_t AUX_DPHY_RX_CONTROL0;
-	uint32_t AUX_DPHY_TX_CONTROL;
-	uint32_t AUX_DPHY_RX_CONTROL1;
-};
+काष्ठा dcn10_link_enc_aux_रेजिस्टरs अणु
+	uपूर्णांक32_t AUX_CONTROL;
+	uपूर्णांक32_t AUX_DPHY_RX_CONTROL0;
+	uपूर्णांक32_t AUX_DPHY_TX_CONTROL;
+	uपूर्णांक32_t AUX_DPHY_RX_CONTROL1;
+पूर्ण;
 
-struct dcn10_link_enc_hpd_registers {
-	uint32_t DC_HPD_CONTROL;
-};
+काष्ठा dcn10_link_enc_hpd_रेजिस्टरs अणु
+	uपूर्णांक32_t DC_HPD_CONTROL;
+पूर्ण;
 
-struct dcn10_link_enc_registers {
-	uint32_t DIG_BE_CNTL;
-	uint32_t DIG_BE_EN_CNTL;
-	uint32_t DIG_CLOCK_PATTERN;
-	uint32_t DP_CONFIG;
-	uint32_t DP_DPHY_CNTL;
-	uint32_t DP_DPHY_INTERNAL_CTRL;
-	uint32_t DP_DPHY_PRBS_CNTL;
-	uint32_t DP_DPHY_SCRAM_CNTL;
-	uint32_t DP_DPHY_SYM0;
-	uint32_t DP_DPHY_SYM1;
-	uint32_t DP_DPHY_SYM2;
-	uint32_t DP_DPHY_TRAINING_PATTERN_SEL;
-	uint32_t DP_LINK_CNTL;
-	uint32_t DP_LINK_FRAMING_CNTL;
-	uint32_t DP_MSE_SAT0;
-	uint32_t DP_MSE_SAT1;
-	uint32_t DP_MSE_SAT2;
-	uint32_t DP_MSE_SAT_UPDATE;
-	uint32_t DP_SEC_CNTL;
-	uint32_t DP_VID_STREAM_CNTL;
-	uint32_t DP_DPHY_FAST_TRAINING;
-	uint32_t DP_DPHY_BS_SR_SWAP_CNTL;
-	uint32_t DP_DPHY_HBR2_PATTERN_CONTROL;
-	uint32_t DP_SEC_CNTL1;
-	uint32_t TMDS_CTL_BITS;
+काष्ठा dcn10_link_enc_रेजिस्टरs अणु
+	uपूर्णांक32_t DIG_BE_CNTL;
+	uपूर्णांक32_t DIG_BE_EN_CNTL;
+	uपूर्णांक32_t DIG_CLOCK_PATTERN;
+	uपूर्णांक32_t DP_CONFIG;
+	uपूर्णांक32_t DP_DPHY_CNTL;
+	uपूर्णांक32_t DP_DPHY_INTERNAL_CTRL;
+	uपूर्णांक32_t DP_DPHY_PRBS_CNTL;
+	uपूर्णांक32_t DP_DPHY_SCRAM_CNTL;
+	uपूर्णांक32_t DP_DPHY_SYM0;
+	uपूर्णांक32_t DP_DPHY_SYM1;
+	uपूर्णांक32_t DP_DPHY_SYM2;
+	uपूर्णांक32_t DP_DPHY_TRAINING_PATTERN_SEL;
+	uपूर्णांक32_t DP_LINK_CNTL;
+	uपूर्णांक32_t DP_LINK_FRAMING_CNTL;
+	uपूर्णांक32_t DP_MSE_SAT0;
+	uपूर्णांक32_t DP_MSE_SAT1;
+	uपूर्णांक32_t DP_MSE_SAT2;
+	uपूर्णांक32_t DP_MSE_SAT_UPDATE;
+	uपूर्णांक32_t DP_SEC_CNTL;
+	uपूर्णांक32_t DP_VID_STREAM_CNTL;
+	uपूर्णांक32_t DP_DPHY_FAST_TRAINING;
+	uपूर्णांक32_t DP_DPHY_BS_SR_SWAP_CNTL;
+	uपूर्णांक32_t DP_DPHY_HBR2_PATTERN_CONTROL;
+	uपूर्णांक32_t DP_SEC_CNTL1;
+	uपूर्णांक32_t TMDS_CTL_BITS;
 	/* DCCG  */
-	uint32_t CLOCK_ENABLE;
+	uपूर्णांक32_t CLOCK_ENABLE;
 	/* DIG */
-	uint32_t DIG_LANE_ENABLE;
+	uपूर्णांक32_t DIG_LANE_ENABLE;
 	/* UNIPHY */
-	uint32_t CHANNEL_XBAR_CNTL;
+	uपूर्णांक32_t CHANNEL_XBAR_CNTL;
 	/* DPCS */
-	uint32_t RDPCSTX_PHY_CNTL3;
-	uint32_t RDPCSTX_PHY_CNTL4;
-	uint32_t RDPCSTX_PHY_CNTL5;
-	uint32_t RDPCSTX_PHY_CNTL6;
-	uint32_t RDPCSTX_PHY_CNTL7;
-	uint32_t RDPCSTX_PHY_CNTL8;
-	uint32_t RDPCSTX_PHY_CNTL9;
-	uint32_t RDPCSTX_PHY_CNTL10;
-	uint32_t RDPCSTX_PHY_CNTL11;
-	uint32_t RDPCSTX_PHY_CNTL12;
-	uint32_t RDPCSTX_PHY_CNTL13;
-	uint32_t RDPCSTX_PHY_CNTL14;
-	uint32_t RDPCSTX_PHY_CNTL15;
-	uint32_t RDPCSTX_CNTL;
-	uint32_t RDPCSTX_CLOCK_CNTL;
-	uint32_t RDPCSTX_PHY_CNTL0;
-	uint32_t RDPCSTX_PHY_CNTL2;
-	uint32_t RDPCSTX_PLL_UPDATE_DATA;
-	uint32_t RDPCS_TX_CR_ADDR;
-	uint32_t RDPCS_TX_CR_DATA;
-	uint32_t DPCSTX_TX_CLOCK_CNTL;
-	uint32_t DPCSTX_TX_CNTL;
-	uint32_t RDPCSTX_INTERRUPT_CONTROL;
-	uint32_t RDPCSTX_PHY_FUSE0;
-	uint32_t RDPCSTX_PHY_FUSE1;
-	uint32_t RDPCSTX_PHY_FUSE2;
-	uint32_t RDPCSTX_PHY_FUSE3;
-	uint32_t RDPCSTX_PHY_RX_LD_VAL;
-	uint32_t DPCSTX_DEBUG_CONFIG;
-	uint32_t RDPCSTX_DEBUG_CONFIG;
-	uint32_t RDPCSTX0_RDPCSTX_SCRATCH;
-	uint32_t RDPCSTX_DMCU_DPALT_DIS_BLOCK_REG;
-	uint32_t DCIO_SOFT_RESET;
-	/* indirect registers */
-	uint32_t RAWLANE0_DIG_PCS_XF_RX_OVRD_IN_2;
-	uint32_t RAWLANE0_DIG_PCS_XF_RX_OVRD_IN_3;
-	uint32_t RAWLANE1_DIG_PCS_XF_RX_OVRD_IN_2;
-	uint32_t RAWLANE1_DIG_PCS_XF_RX_OVRD_IN_3;
-	uint32_t RAWLANE2_DIG_PCS_XF_RX_OVRD_IN_2;
-	uint32_t RAWLANE2_DIG_PCS_XF_RX_OVRD_IN_3;
-	uint32_t RAWLANE3_DIG_PCS_XF_RX_OVRD_IN_2;
-	uint32_t RAWLANE3_DIG_PCS_XF_RX_OVRD_IN_3;
-	uint32_t TMDS_DCBALANCER_CONTROL;
-	uint32_t PHYA_LINK_CNTL2;
-	uint32_t PHYB_LINK_CNTL2;
-	uint32_t PHYC_LINK_CNTL2;
-};
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL3;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL4;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL5;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL6;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL7;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL8;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL9;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL10;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL11;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL12;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL13;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL14;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL15;
+	uपूर्णांक32_t RDPCSTX_CNTL;
+	uपूर्णांक32_t RDPCSTX_CLOCK_CNTL;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL0;
+	uपूर्णांक32_t RDPCSTX_PHY_CNTL2;
+	uपूर्णांक32_t RDPCSTX_PLL_UPDATE_DATA;
+	uपूर्णांक32_t RDPCS_TX_CR_ADDR;
+	uपूर्णांक32_t RDPCS_TX_CR_DATA;
+	uपूर्णांक32_t DPCSTX_TX_CLOCK_CNTL;
+	uपूर्णांक32_t DPCSTX_TX_CNTL;
+	uपूर्णांक32_t RDPCSTX_INTERRUPT_CONTROL;
+	uपूर्णांक32_t RDPCSTX_PHY_FUSE0;
+	uपूर्णांक32_t RDPCSTX_PHY_FUSE1;
+	uपूर्णांक32_t RDPCSTX_PHY_FUSE2;
+	uपूर्णांक32_t RDPCSTX_PHY_FUSE3;
+	uपूर्णांक32_t RDPCSTX_PHY_RX_LD_VAL;
+	uपूर्णांक32_t DPCSTX_DEBUG_CONFIG;
+	uपूर्णांक32_t RDPCSTX_DEBUG_CONFIG;
+	uपूर्णांक32_t RDPCSTX0_RDPCSTX_SCRATCH;
+	uपूर्णांक32_t RDPCSTX_DMCU_DPALT_DIS_BLOCK_REG;
+	uपूर्णांक32_t DCIO_SOFT_RESET;
+	/* indirect रेजिस्टरs */
+	uपूर्णांक32_t RAWLANE0_DIG_PCS_XF_RX_OVRD_IN_2;
+	uपूर्णांक32_t RAWLANE0_DIG_PCS_XF_RX_OVRD_IN_3;
+	uपूर्णांक32_t RAWLANE1_DIG_PCS_XF_RX_OVRD_IN_2;
+	uपूर्णांक32_t RAWLANE1_DIG_PCS_XF_RX_OVRD_IN_3;
+	uपूर्णांक32_t RAWLANE2_DIG_PCS_XF_RX_OVRD_IN_2;
+	uपूर्णांक32_t RAWLANE2_DIG_PCS_XF_RX_OVRD_IN_3;
+	uपूर्णांक32_t RAWLANE3_DIG_PCS_XF_RX_OVRD_IN_2;
+	uपूर्णांक32_t RAWLANE3_DIG_PCS_XF_RX_OVRD_IN_3;
+	uपूर्णांक32_t TMDS_DCBALANCER_CONTROL;
+	uपूर्णांक32_t PHYA_LINK_CNTL2;
+	uपूर्णांक32_t PHYB_LINK_CNTL2;
+	uपूर्णांक32_t PHYC_LINK_CNTL2;
+पूर्ण;
 
-#define LE_SF(reg_name, field_name, post_fix)\
+#घोषणा LE_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#define LINK_ENCODER_MASK_SH_LIST_DCN10(mask_sh)\
+#घोषणा LINK_ENCODER_MASK_SH_LIST_DCN10(mask_sh)\
 	LE_SF(DIG0_DIG_BE_EN_CNTL, DIG_ENABLE, mask_sh),\
 	LE_SF(DIG0_DIG_BE_CNTL, DIG_HPD_SELECT, mask_sh),\
 	LE_SF(DIG0_DIG_BE_CNTL, DIG_MODE, mask_sh),\
@@ -216,7 +217,7 @@ struct dcn10_link_enc_registers {
 	LE_SF(DP_AUX0_AUX_DPHY_RX_CONTROL0, AUX_RX_RECEIVE_WINDOW, mask_sh),\
 	LE_SF(HPD0_DC_HPD_CONTROL, DC_HPD_EN, mask_sh)
 
-#define DCN_LINK_ENCODER_REG_FIELD_LIST(type) \
+#घोषणा DCN_LINK_ENCODER_REG_FIELD_LIST(type) \
 	type DIG_ENABLE;\
 	type DIG_HPD_SELECT;\
 	type DIG_MODE;\
@@ -268,7 +269,7 @@ struct dcn10_link_enc_registers {
 	type AUX_RX_RECEIVE_WINDOW
 
 
-#define DCN20_LINK_ENCODER_DPCS_REG_FIELD_LIST(type) \
+#घोषणा DCN20_LINK_ENCODER_DPCS_REG_FIELD_LIST(type) \
 		type RDPCS_PHY_DP_TX0_DATA_EN;\
 		type RDPCS_PHY_DP_TX1_DATA_EN;\
 		type RDPCS_PHY_DP_TX2_DATA_EN;\
@@ -420,7 +421,7 @@ struct dcn10_link_enc_registers {
 		type UNIPHYE_SOFT_RESET;\
 		type UNIPHYF_SOFT_RESET
 
-#define DCN20_LINK_ENCODER_REG_FIELD_LIST(type) \
+#घोषणा DCN20_LINK_ENCODER_REG_FIELD_LIST(type) \
 	type DIG_LANE0EN;\
 	type DIG_LANE1EN;\
 	type DIG_LANE2EN;\
@@ -451,7 +452,7 @@ struct dcn10_link_enc_registers {
 	type AUX_RX_TIMEOUT_LEN;\
 	type AUX_RX_TIMEOUT_LEN_MUL
 
-#define DCN30_LINK_ENCODER_REG_FIELD_LIST(type) \
+#घोषणा DCN30_LINK_ENCODER_REG_FIELD_LIST(type) \
 	type TMDS_SYNC_DCBAL_EN;\
 	type PHY_HPO_DIG_SRC_SEL;\
 	type PHY_HPO_ENC_SRC_SEL;\
@@ -460,152 +461,152 @@ struct dcn10_link_enc_registers {
 	type DPCS_TX_DATA_ORDER_INVERT_18_BIT;\
 	type RDPCS_TX_CLK_EN
 
-struct dcn10_link_enc_shift {
-	DCN_LINK_ENCODER_REG_FIELD_LIST(uint8_t);
-	DCN20_LINK_ENCODER_REG_FIELD_LIST(uint8_t);
-	DCN30_LINK_ENCODER_REG_FIELD_LIST(uint8_t);
-};
+काष्ठा dcn10_link_enc_shअगरt अणु
+	DCN_LINK_ENCODER_REG_FIELD_LIST(uपूर्णांक8_t);
+	DCN20_LINK_ENCODER_REG_FIELD_LIST(uपूर्णांक8_t);
+	DCN30_LINK_ENCODER_REG_FIELD_LIST(uपूर्णांक8_t);
+पूर्ण;
 
-struct dcn10_link_enc_mask {
-	DCN_LINK_ENCODER_REG_FIELD_LIST(uint32_t);
-	DCN20_LINK_ENCODER_REG_FIELD_LIST(uint32_t);
-	DCN30_LINK_ENCODER_REG_FIELD_LIST(uint32_t);
-};
+काष्ठा dcn10_link_enc_mask अणु
+	DCN_LINK_ENCODER_REG_FIELD_LIST(uपूर्णांक32_t);
+	DCN20_LINK_ENCODER_REG_FIELD_LIST(uपूर्णांक32_t);
+	DCN30_LINK_ENCODER_REG_FIELD_LIST(uपूर्णांक32_t);
+पूर्ण;
 
-struct dcn10_link_encoder {
-	struct link_encoder base;
-	const struct dcn10_link_enc_registers *link_regs;
-	const struct dcn10_link_enc_aux_registers *aux_regs;
-	const struct dcn10_link_enc_hpd_registers *hpd_regs;
-	const struct dcn10_link_enc_shift *link_shift;
-	const struct dcn10_link_enc_mask *link_mask;
-};
+काष्ठा dcn10_link_encoder अणु
+	काष्ठा link_encoder base;
+	स्थिर काष्ठा dcn10_link_enc_रेजिस्टरs *link_regs;
+	स्थिर काष्ठा dcn10_link_enc_aux_रेजिस्टरs *aux_regs;
+	स्थिर काष्ठा dcn10_link_enc_hpd_रेजिस्टरs *hpd_regs;
+	स्थिर काष्ठा dcn10_link_enc_shअगरt *link_shअगरt;
+	स्थिर काष्ठा dcn10_link_enc_mask *link_mask;
+पूर्ण;
 
 
-void dcn10_link_encoder_construct(
-	struct dcn10_link_encoder *enc10,
-	const struct encoder_init_data *init_data,
-	const struct encoder_feature_support *enc_features,
-	const struct dcn10_link_enc_registers *link_regs,
-	const struct dcn10_link_enc_aux_registers *aux_regs,
-	const struct dcn10_link_enc_hpd_registers *hpd_regs,
-	const struct dcn10_link_enc_shift *link_shift,
-	const struct dcn10_link_enc_mask *link_mask);
+व्योम dcn10_link_encoder_स्थिरruct(
+	काष्ठा dcn10_link_encoder *enc10,
+	स्थिर काष्ठा encoder_init_data *init_data,
+	स्थिर काष्ठा encoder_feature_support *enc_features,
+	स्थिर काष्ठा dcn10_link_enc_रेजिस्टरs *link_regs,
+	स्थिर काष्ठा dcn10_link_enc_aux_रेजिस्टरs *aux_regs,
+	स्थिर काष्ठा dcn10_link_enc_hpd_रेजिस्टरs *hpd_regs,
+	स्थिर काष्ठा dcn10_link_enc_shअगरt *link_shअगरt,
+	स्थिर काष्ठा dcn10_link_enc_mask *link_mask);
 
 bool dcn10_link_encoder_validate_dvi_output(
-	const struct dcn10_link_encoder *enc10,
-	enum signal_type connector_signal,
-	enum signal_type signal,
-	const struct dc_crtc_timing *crtc_timing);
+	स्थिर काष्ठा dcn10_link_encoder *enc10,
+	क्रमागत संकेत_type connector_संकेत,
+	क्रमागत संकेत_type संकेत,
+	स्थिर काष्ठा dc_crtc_timing *crtc_timing);
 
 bool dcn10_link_encoder_validate_rgb_output(
-	const struct dcn10_link_encoder *enc10,
-	const struct dc_crtc_timing *crtc_timing);
+	स्थिर काष्ठा dcn10_link_encoder *enc10,
+	स्थिर काष्ठा dc_crtc_timing *crtc_timing);
 
 bool dcn10_link_encoder_validate_dp_output(
-	const struct dcn10_link_encoder *enc10,
-	const struct dc_crtc_timing *crtc_timing);
+	स्थिर काष्ठा dcn10_link_encoder *enc10,
+	स्थिर काष्ठा dc_crtc_timing *crtc_timing);
 
 bool dcn10_link_encoder_validate_wireless_output(
-	const struct dcn10_link_encoder *enc10,
-	const struct dc_crtc_timing *crtc_timing);
+	स्थिर काष्ठा dcn10_link_encoder *enc10,
+	स्थिर काष्ठा dc_crtc_timing *crtc_timing);
 
 bool dcn10_link_encoder_validate_output_with_stream(
-	struct link_encoder *enc,
-	const struct dc_stream_state *stream);
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा dc_stream_state *stream);
 
 /****************** HW programming ************************/
 
-/* initialize HW */  /* why do we initialze aux in here? */
-void dcn10_link_encoder_hw_init(struct link_encoder *enc);
+/* initialize HW */  /* why करो we initialze aux in here? */
+व्योम dcn10_link_encoder_hw_init(काष्ठा link_encoder *enc);
 
-void dcn10_link_encoder_destroy(struct link_encoder **enc);
+व्योम dcn10_link_encoder_destroy(काष्ठा link_encoder **enc);
 
 /* program DIG_MODE in DIG_BE */
 /* TODO can this be combined with enable_output? */
-void dcn10_link_encoder_setup(
-	struct link_encoder *enc,
-	enum signal_type signal);
+व्योम dcn10_link_encoder_setup(
+	काष्ठा link_encoder *enc,
+	क्रमागत संकेत_type संकेत);
 
-void enc1_configure_encoder(
-	struct dcn10_link_encoder *enc10,
-	const struct dc_link_settings *link_settings);
+व्योम enc1_configure_encoder(
+	काष्ठा dcn10_link_encoder *enc10,
+	स्थिर काष्ठा dc_link_settings *link_settings);
 
 /* enables TMDS PHY output */
-/* TODO: still need depth or just pass in adjusted pixel clock? */
-void dcn10_link_encoder_enable_tmds_output(
-	struct link_encoder *enc,
-	enum clock_source_id clock_source,
-	enum dc_color_depth color_depth,
-	enum signal_type signal,
-	uint32_t pixel_clock);
+/* TODO: still need depth or just pass in adjusted pixel घड़ी? */
+व्योम dcn10_link_encoder_enable_पंचांगds_output(
+	काष्ठा link_encoder *enc,
+	क्रमागत घड़ी_source_id घड़ी_source,
+	क्रमागत dc_color_depth color_depth,
+	क्रमागत संकेत_type संकेत,
+	uपूर्णांक32_t pixel_घड़ी);
 
-void dcn10_link_encoder_enable_tmds_output_with_clk_pattern_wa(
-	struct link_encoder *enc,
-	enum clock_source_id clock_source,
-	enum dc_color_depth color_depth,
-	enum signal_type signal,
-	uint32_t pixel_clock);
+व्योम dcn10_link_encoder_enable_पंचांगds_output_with_clk_pattern_wa(
+	काष्ठा link_encoder *enc,
+	क्रमागत घड़ी_source_id घड़ी_source,
+	क्रमागत dc_color_depth color_depth,
+	क्रमागत संकेत_type संकेत,
+	uपूर्णांक32_t pixel_घड़ी);
 
 /* enables DP PHY output */
-void dcn10_link_encoder_enable_dp_output(
-	struct link_encoder *enc,
-	const struct dc_link_settings *link_settings,
-	enum clock_source_id clock_source);
+व्योम dcn10_link_encoder_enable_dp_output(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा dc_link_settings *link_settings,
+	क्रमागत घड़ी_source_id घड़ी_source);
 
 /* enables DP PHY output in MST mode */
-void dcn10_link_encoder_enable_dp_mst_output(
-	struct link_encoder *enc,
-	const struct dc_link_settings *link_settings,
-	enum clock_source_id clock_source);
+व्योम dcn10_link_encoder_enable_dp_mst_output(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा dc_link_settings *link_settings,
+	क्रमागत घड़ी_source_id घड़ी_source);
 
 /* disable PHY output */
-void dcn10_link_encoder_disable_output(
-	struct link_encoder *enc,
-	enum signal_type signal);
+व्योम dcn10_link_encoder_disable_output(
+	काष्ठा link_encoder *enc,
+	क्रमागत संकेत_type संकेत);
 
 /* set DP lane settings */
-void dcn10_link_encoder_dp_set_lane_settings(
-	struct link_encoder *enc,
-	const struct link_training_settings *link_settings);
+व्योम dcn10_link_encoder_dp_set_lane_settings(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा link_training_settings *link_settings);
 
-void dcn10_link_encoder_dp_set_phy_pattern(
-	struct link_encoder *enc,
-	const struct encoder_set_dp_phy_pattern_param *param);
+व्योम dcn10_link_encoder_dp_set_phy_pattern(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा encoder_set_dp_phy_pattern_param *param);
 
 /* programs DP MST VC payload allocation */
-void dcn10_link_encoder_update_mst_stream_allocation_table(
-	struct link_encoder *enc,
-	const struct link_mst_stream_allocation_table *table);
+व्योम dcn10_link_encoder_update_mst_stream_allocation_table(
+	काष्ठा link_encoder *enc,
+	स्थिर काष्ठा link_mst_stream_allocation_table *table);
 
-void dcn10_link_encoder_connect_dig_be_to_fe(
-	struct link_encoder *enc,
-	enum engine_id engine,
+व्योम dcn10_link_encoder_connect_dig_be_to_fe(
+	काष्ठा link_encoder *enc,
+	क्रमागत engine_id engine,
 	bool connect);
 
-void dcn10_link_encoder_set_dp_phy_pattern_training_pattern(
-	struct link_encoder *enc,
-	uint32_t index);
+व्योम dcn10_link_encoder_set_dp_phy_pattern_training_pattern(
+	काष्ठा link_encoder *enc,
+	uपूर्णांक32_t index);
 
-void dcn10_link_encoder_enable_hpd(struct link_encoder *enc);
+व्योम dcn10_link_encoder_enable_hpd(काष्ठा link_encoder *enc);
 
-void dcn10_link_encoder_disable_hpd(struct link_encoder *enc);
+व्योम dcn10_link_encoder_disable_hpd(काष्ठा link_encoder *enc);
 
-void dcn10_psr_program_dp_dphy_fast_training(struct link_encoder *enc,
-			bool exit_link_training_required);
+व्योम dcn10_psr_program_dp_dphy_fast_training(काष्ठा link_encoder *enc,
+			bool निकास_link_training_required);
 
-void dcn10_psr_program_secondary_packet(struct link_encoder *enc,
-			unsigned int sdp_transmit_line_num_deadline);
+व्योम dcn10_psr_program_secondary_packet(काष्ठा link_encoder *enc,
+			अचिन्हित पूर्णांक sdp_transmit_line_num_deadline);
 
-bool dcn10_is_dig_enabled(struct link_encoder *enc);
+bool dcn10_is_dig_enabled(काष्ठा link_encoder *enc);
 
-unsigned int dcn10_get_dig_frontend(struct link_encoder *enc);
+अचिन्हित पूर्णांक dcn10_get_dig_frontend(काष्ठा link_encoder *enc);
 
-void dcn10_aux_initialize(struct dcn10_link_encoder *enc10);
+व्योम dcn10_aux_initialize(काष्ठा dcn10_link_encoder *enc10);
 
-enum signal_type dcn10_get_dig_mode(
-	struct link_encoder *enc);
+क्रमागत संकेत_type dcn10_get_dig_mode(
+	काष्ठा link_encoder *enc);
 
-void dcn10_link_encoder_get_max_link_cap(struct link_encoder *enc,
-	struct dc_link_settings *link_settings);
-#endif /* __DC_LINK_ENCODER__DCN10_H__ */
+व्योम dcn10_link_encoder_get_max_link_cap(काष्ठा link_encoder *enc,
+	काष्ठा dc_link_settings *link_settings);
+#पूर्ण_अगर /* __DC_LINK_ENCODER__DCN10_H__ */

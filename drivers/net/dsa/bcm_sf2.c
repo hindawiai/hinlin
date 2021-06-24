@@ -1,616 +1,617 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Broadcom Starfighter 2 DSA switch driver
+ * Broadcom Starfighter 2 DSA चयन driver
  *
  * Copyright (C) 2014, Broadcom Corporation
  */
 
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/phy.h>
-#include <linux/phy_fixed.h>
-#include <linux/phylink.h>
-#include <linux/mii.h>
-#include <linux/clk.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/of_address.h>
-#include <linux/of_net.h>
-#include <linux/of_mdio.h>
-#include <net/dsa.h>
-#include <linux/ethtool.h>
-#include <linux/if_bridge.h>
-#include <linux/brcmphy.h>
-#include <linux/etherdevice.h>
-#include <linux/platform_data/b53.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/phy_fixed.h>
+#समावेश <linux/phylink.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <net/dsa.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/brcmphy.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/platक्रमm_data/b53.h>
 
-#include "bcm_sf2.h"
-#include "bcm_sf2_regs.h"
-#include "b53/b53_priv.h"
-#include "b53/b53_regs.h"
+#समावेश "bcm_sf2.h"
+#समावेश "bcm_sf2_regs.h"
+#समावेश "b53/b53_priv.h"
+#समावेश "b53/b53_regs.h"
 
-static u16 bcm_sf2_reg_rgmii_cntrl(struct bcm_sf2_priv *priv, int port)
-{
-	switch (priv->type) {
-	case BCM4908_DEVICE_ID:
-		switch (port) {
-		case 7:
-			return REG_RGMII_11_CNTRL;
-		default:
-			break;
-		}
-		break;
-	default:
-		switch (port) {
-		case 0:
-			return REG_RGMII_0_CNTRL;
-		case 1:
-			return REG_RGMII_1_CNTRL;
-		case 2:
-			return REG_RGMII_2_CNTRL;
-		default:
-			break;
-		}
-	}
+अटल u16 bcm_sf2_reg_rgmii_cntrl(काष्ठा bcm_sf2_priv *priv, पूर्णांक port)
+अणु
+	चयन (priv->type) अणु
+	हाल BCM4908_DEVICE_ID:
+		चयन (port) अणु
+		हाल 7:
+			वापस REG_RGMII_11_CNTRL;
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		चयन (port) अणु
+		हाल 0:
+			वापस REG_RGMII_0_CNTRL;
+		हाल 1:
+			वापस REG_RGMII_1_CNTRL;
+		हाल 2:
+			वापस REG_RGMII_2_CNTRL;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	WARN_ONCE(1, "Unsupported port %d\n", port);
 
 	/* RO fallback reg */
-	return REG_SWITCH_STATUS;
-}
+	वापस REG_SWITCH_STATUS;
+पूर्ण
 
 /* Return the number of active ports, not counting the IMP (CPU) port */
-static unsigned int bcm_sf2_num_active_ports(struct dsa_switch *ds)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	unsigned int port, count = 0;
+अटल अचिन्हित पूर्णांक bcm_sf2_num_active_ports(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	अचिन्हित पूर्णांक port, count = 0;
 
-	for (port = 0; port < ARRAY_SIZE(priv->port_sts); port++) {
-		if (dsa_is_cpu_port(ds, port))
-			continue;
-		if (priv->port_sts[port].enabled)
+	क्रम (port = 0; port < ARRAY_SIZE(priv->port_sts); port++) अणु
+		अगर (dsa_is_cpu_port(ds, port))
+			जारी;
+		अगर (priv->port_sts[port].enabled)
 			count++;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void bcm_sf2_recalc_clock(struct dsa_switch *ds)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	unsigned long new_rate;
-	unsigned int ports_active;
+अटल व्योम bcm_sf2_recalc_घड़ी(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	अचिन्हित दीर्घ new_rate;
+	अचिन्हित पूर्णांक ports_active;
 	/* Frequenty in Mhz */
-	static const unsigned long rate_table[] = {
+	अटल स्थिर अचिन्हित दीर्घ rate_table[] = अणु
 		59220000,
 		60820000,
 		62500000,
 		62500000,
-	};
+	पूर्ण;
 
 	ports_active = bcm_sf2_num_active_ports(ds);
-	if (ports_active == 0 || !priv->clk_mdiv)
-		return;
+	अगर (ports_active == 0 || !priv->clk_mभाग)
+		वापस;
 
 	/* If we overflow our table, just use the recommended operational
 	 * frequency
 	 */
-	if (ports_active > ARRAY_SIZE(rate_table))
+	अगर (ports_active > ARRAY_SIZE(rate_table))
 		new_rate = 90000000;
-	else
+	अन्यथा
 		new_rate = rate_table[ports_active - 1];
-	clk_set_rate(priv->clk_mdiv, new_rate);
-}
+	clk_set_rate(priv->clk_mभाग, new_rate);
+पूर्ण
 
-static void bcm_sf2_imp_setup(struct dsa_switch *ds, int port)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	unsigned int i;
+अटल व्योम bcm_sf2_imp_setup(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	अचिन्हित पूर्णांक i;
 	u32 reg, offset;
 
 	/* Enable the port memories */
-	reg = core_readl(priv, CORE_MEM_PSM_VDD_CTRL);
+	reg = core_पढ़ोl(priv, CORE_MEM_PSM_VDD_CTRL);
 	reg &= ~P_TXQ_PSM_VDD(port);
-	core_writel(priv, reg, CORE_MEM_PSM_VDD_CTRL);
+	core_ग_लिखोl(priv, reg, CORE_MEM_PSM_VDD_CTRL);
 
-	/* Enable forwarding */
-	core_writel(priv, SW_FWDG_EN, CORE_SWMODE);
+	/* Enable क्रमwarding */
+	core_ग_लिखोl(priv, SW_FWDG_EN, CORE_SWMODE);
 
 	/* Enable IMP port in dumb mode */
-	reg = core_readl(priv, CORE_SWITCH_CTRL);
+	reg = core_पढ़ोl(priv, CORE_SWITCH_CTRL);
 	reg |= MII_DUMB_FWDG_EN;
-	core_writel(priv, reg, CORE_SWITCH_CTRL);
+	core_ग_लिखोl(priv, reg, CORE_SWITCH_CTRL);
 
 	/* Configure Traffic Class to QoS mapping, allow each priority to map
-	 * to a different queue number
+	 * to a dअगरferent queue number
 	 */
-	reg = core_readl(priv, CORE_PORT_TC2_QOS_MAP_PORT(port));
-	for (i = 0; i < SF2_NUM_EGRESS_QUEUES; i++)
+	reg = core_पढ़ोl(priv, CORE_PORT_TC2_QOS_MAP_PORT(port));
+	क्रम (i = 0; i < SF2_NUM_EGRESS_QUEUES; i++)
 		reg |= i << (PRT_TO_QID_SHIFT * i);
-	core_writel(priv, reg, CORE_PORT_TC2_QOS_MAP_PORT(port));
+	core_ग_लिखोl(priv, reg, CORE_PORT_TC2_QOS_MAP_PORT(port));
 
 	b53_brcm_hdr_setup(ds, port);
 
-	if (port == 8) {
-		if (priv->type == BCM4908_DEVICE_ID ||
+	अगर (port == 8) अणु
+		अगर (priv->type == BCM4908_DEVICE_ID ||
 		    priv->type == BCM7445_DEVICE_ID)
 			offset = CORE_STS_OVERRIDE_IMP;
-		else
+		अन्यथा
 			offset = CORE_STS_OVERRIDE_IMP2;
 
-		/* Force link status for IMP port */
-		reg = core_readl(priv, offset);
+		/* Force link status क्रम IMP port */
+		reg = core_पढ़ोl(priv, offset);
 		reg |= (MII_SW_OR | LINK_STS);
-		if (priv->type == BCM4908_DEVICE_ID)
+		अगर (priv->type == BCM4908_DEVICE_ID)
 			reg |= GMII_SPEED_UP_2G;
-		else
+		अन्यथा
 			reg &= ~GMII_SPEED_UP_2G;
-		core_writel(priv, reg, offset);
+		core_ग_लिखोl(priv, reg, offset);
 
-		/* Enable Broadcast, Multicast, Unicast forwarding to IMP port */
-		reg = core_readl(priv, CORE_IMP_CTL);
+		/* Enable Broadcast, Multicast, Unicast क्रमwarding to IMP port */
+		reg = core_पढ़ोl(priv, CORE_IMP_CTL);
 		reg |= (RX_BCST_EN | RX_MCST_EN | RX_UCST_EN);
 		reg &= ~(RX_DIS | TX_DIS);
-		core_writel(priv, reg, CORE_IMP_CTL);
-	} else {
-		reg = core_readl(priv, CORE_G_PCTL_PORT(port));
+		core_ग_लिखोl(priv, reg, CORE_IMP_CTL);
+	पूर्ण अन्यथा अणु
+		reg = core_पढ़ोl(priv, CORE_G_PCTL_PORT(port));
 		reg &= ~(RX_DIS | TX_DIS);
-		core_writel(priv, reg, CORE_G_PCTL_PORT(port));
-	}
+		core_ग_लिखोl(priv, reg, CORE_G_PCTL_PORT(port));
+	पूर्ण
 
 	priv->port_sts[port].enabled = true;
-}
+पूर्ण
 
-static void bcm_sf2_gphy_enable_set(struct dsa_switch *ds, bool enable)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल व्योम bcm_sf2_gphy_enable_set(काष्ठा dsa_चयन *ds, bool enable)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 	u32 reg;
 
-	reg = reg_readl(priv, REG_SPHY_CNTRL);
-	if (enable) {
+	reg = reg_पढ़ोl(priv, REG_SPHY_CNTRL);
+	अगर (enable) अणु
 		reg |= PHY_RESET;
 		reg &= ~(EXT_PWR_DOWN | IDDQ_BIAS | IDDQ_GLOBAL_PWR | CK25_DIS);
-		reg_writel(priv, reg, REG_SPHY_CNTRL);
+		reg_ग_लिखोl(priv, reg, REG_SPHY_CNTRL);
 		udelay(21);
-		reg = reg_readl(priv, REG_SPHY_CNTRL);
+		reg = reg_पढ़ोl(priv, REG_SPHY_CNTRL);
 		reg &= ~PHY_RESET;
-	} else {
+	पूर्ण अन्यथा अणु
 		reg |= EXT_PWR_DOWN | IDDQ_BIAS | PHY_RESET;
-		reg_writel(priv, reg, REG_SPHY_CNTRL);
+		reg_ग_लिखोl(priv, reg, REG_SPHY_CNTRL);
 		mdelay(1);
 		reg |= CK25_DIS;
-	}
-	reg_writel(priv, reg, REG_SPHY_CNTRL);
+	पूर्ण
+	reg_ग_लिखोl(priv, reg, REG_SPHY_CNTRL);
 
-	/* Use PHY-driven LED signaling */
-	if (!enable) {
-		reg = reg_readl(priv, REG_LED_CNTRL(0));
+	/* Use PHY-driven LED संकेतing */
+	अगर (!enable) अणु
+		reg = reg_पढ़ोl(priv, REG_LED_CNTRL(0));
 		reg |= SPDLNK_SRC_SEL;
-		reg_writel(priv, reg, REG_LED_CNTRL(0));
-	}
-}
+		reg_ग_लिखोl(priv, reg, REG_LED_CNTRL(0));
+	पूर्ण
+पूर्ण
 
-static inline void bcm_sf2_port_intr_enable(struct bcm_sf2_priv *priv,
-					    int port)
-{
-	unsigned int off;
+अटल अंतरभूत व्योम bcm_sf2_port_पूर्णांकr_enable(काष्ठा bcm_sf2_priv *priv,
+					    पूर्णांक port)
+अणु
+	अचिन्हित पूर्णांक off;
 
-	switch (port) {
-	case 7:
+	चयन (port) अणु
+	हाल 7:
 		off = P7_IRQ_OFF;
-		break;
-	case 0:
-		/* Port 0 interrupts are located on the first bank */
-		intrl2_0_mask_clear(priv, P_IRQ_MASK(P0_IRQ_OFF));
-		return;
-	default:
+		अवरोध;
+	हाल 0:
+		/* Port 0 पूर्णांकerrupts are located on the first bank */
+		पूर्णांकrl2_0_mask_clear(priv, P_IRQ_MASK(P0_IRQ_OFF));
+		वापस;
+	शेष:
 		off = P_IRQ_OFF(port);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	intrl2_1_mask_clear(priv, P_IRQ_MASK(off));
-}
+	पूर्णांकrl2_1_mask_clear(priv, P_IRQ_MASK(off));
+पूर्ण
 
-static inline void bcm_sf2_port_intr_disable(struct bcm_sf2_priv *priv,
-					     int port)
-{
-	unsigned int off;
+अटल अंतरभूत व्योम bcm_sf2_port_पूर्णांकr_disable(काष्ठा bcm_sf2_priv *priv,
+					     पूर्णांक port)
+अणु
+	अचिन्हित पूर्णांक off;
 
-	switch (port) {
-	case 7:
+	चयन (port) अणु
+	हाल 7:
 		off = P7_IRQ_OFF;
-		break;
-	case 0:
-		/* Port 0 interrupts are located on the first bank */
-		intrl2_0_mask_set(priv, P_IRQ_MASK(P0_IRQ_OFF));
-		intrl2_0_writel(priv, P_IRQ_MASK(P0_IRQ_OFF), INTRL2_CPU_CLEAR);
-		return;
-	default:
+		अवरोध;
+	हाल 0:
+		/* Port 0 पूर्णांकerrupts are located on the first bank */
+		पूर्णांकrl2_0_mask_set(priv, P_IRQ_MASK(P0_IRQ_OFF));
+		पूर्णांकrl2_0_ग_लिखोl(priv, P_IRQ_MASK(P0_IRQ_OFF), INTRL2_CPU_CLEAR);
+		वापस;
+	शेष:
 		off = P_IRQ_OFF(port);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	intrl2_1_mask_set(priv, P_IRQ_MASK(off));
-	intrl2_1_writel(priv, P_IRQ_MASK(off), INTRL2_CPU_CLEAR);
-}
+	पूर्णांकrl2_1_mask_set(priv, P_IRQ_MASK(off));
+	पूर्णांकrl2_1_ग_लिखोl(priv, P_IRQ_MASK(off), INTRL2_CPU_CLEAR);
+पूर्ण
 
-static int bcm_sf2_port_setup(struct dsa_switch *ds, int port,
-			      struct phy_device *phy)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	unsigned int i;
+अटल पूर्णांक bcm_sf2_port_setup(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      काष्ठा phy_device *phy)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	अचिन्हित पूर्णांक i;
 	u32 reg;
 
-	if (!dsa_is_user_port(ds, port))
-		return 0;
+	अगर (!dsa_is_user_port(ds, port))
+		वापस 0;
 
 	priv->port_sts[port].enabled = true;
 
-	bcm_sf2_recalc_clock(ds);
+	bcm_sf2_recalc_घड़ी(ds);
 
-	/* Clear the memory power down */
-	reg = core_readl(priv, CORE_MEM_PSM_VDD_CTRL);
+	/* Clear the memory घातer करोwn */
+	reg = core_पढ़ोl(priv, CORE_MEM_PSM_VDD_CTRL);
 	reg &= ~P_TXQ_PSM_VDD(port);
-	core_writel(priv, reg, CORE_MEM_PSM_VDD_CTRL);
+	core_ग_लिखोl(priv, reg, CORE_MEM_PSM_VDD_CTRL);
 
-	/* Enable Broadcom tags for that port if requested */
-	if (priv->brcm_tag_mask & BIT(port))
+	/* Enable Broadcom tags क्रम that port अगर requested */
+	अगर (priv->brcm_tag_mask & BIT(port))
 		b53_brcm_hdr_setup(ds, port);
 
 	/* Configure Traffic Class to QoS mapping, allow each priority to map
-	 * to a different queue number
+	 * to a dअगरferent queue number
 	 */
-	reg = core_readl(priv, CORE_PORT_TC2_QOS_MAP_PORT(port));
-	for (i = 0; i < SF2_NUM_EGRESS_QUEUES; i++)
+	reg = core_पढ़ोl(priv, CORE_PORT_TC2_QOS_MAP_PORT(port));
+	क्रम (i = 0; i < SF2_NUM_EGRESS_QUEUES; i++)
 		reg |= i << (PRT_TO_QID_SHIFT * i);
-	core_writel(priv, reg, CORE_PORT_TC2_QOS_MAP_PORT(port));
+	core_ग_लिखोl(priv, reg, CORE_PORT_TC2_QOS_MAP_PORT(port));
 
 	/* Re-enable the GPHY and re-apply workarounds */
-	if (priv->int_phy_mask & 1 << port && priv->hw_params.num_gphy == 1) {
+	अगर (priv->पूर्णांक_phy_mask & 1 << port && priv->hw_params.num_gphy == 1) अणु
 		bcm_sf2_gphy_enable_set(ds, true);
-		if (phy) {
-			/* if phy_stop() has been called before, phy
+		अगर (phy) अणु
+			/* अगर phy_stop() has been called beक्रमe, phy
 			 * will be in halted state, and phy_start()
 			 * will call resume.
 			 *
-			 * the resume path does not configure back
-			 * autoneg settings, and since we hard reset
+			 * the resume path करोes not configure back
+			 * स्वतःneg settings, and since we hard reset
 			 * the phy manually here, we need to reset the
 			 * state machine also.
 			 */
 			phy->state = PHY_READY;
 			phy_init_hw(phy);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Enable MoCA port interrupts to get notified */
-	if (port == priv->moca_port)
-		bcm_sf2_port_intr_enable(priv, port);
+	/* Enable MoCA port पूर्णांकerrupts to get notअगरied */
+	अगर (port == priv->moca_port)
+		bcm_sf2_port_पूर्णांकr_enable(priv, port);
 
-	/* Set per-queue pause threshold to 32 */
-	core_writel(priv, 32, CORE_TXQ_THD_PAUSE_QN_PORT(port));
+	/* Set per-queue छोड़ो threshold to 32 */
+	core_ग_लिखोl(priv, 32, CORE_TXQ_THD_PAUSE_QN_PORT(port));
 
 	/* Set ACB threshold to 24 */
-	for (i = 0; i < SF2_NUM_EGRESS_QUEUES; i++) {
-		reg = acb_readl(priv, ACB_QUEUE_CFG(port *
+	क्रम (i = 0; i < SF2_NUM_EGRESS_QUEUES; i++) अणु
+		reg = acb_पढ़ोl(priv, ACB_QUEUE_CFG(port *
 						    SF2_NUM_EGRESS_QUEUES + i));
 		reg &= ~XOFF_THRESHOLD_MASK;
 		reg |= 24;
-		acb_writel(priv, reg, ACB_QUEUE_CFG(port *
+		acb_ग_लिखोl(priv, reg, ACB_QUEUE_CFG(port *
 						    SF2_NUM_EGRESS_QUEUES + i));
-	}
+	पूर्ण
 
-	return b53_enable_port(ds, port, phy);
-}
+	वापस b53_enable_port(ds, port, phy);
+पूर्ण
 
-static void bcm_sf2_port_disable(struct dsa_switch *ds, int port)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल व्योम bcm_sf2_port_disable(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 	u32 reg;
 
-	/* Disable learning while in WoL mode */
-	if (priv->wol_ports_mask & (1 << port)) {
-		reg = core_readl(priv, CORE_DIS_LEARN);
+	/* Disable learning जबतक in WoL mode */
+	अगर (priv->wol_ports_mask & (1 << port)) अणु
+		reg = core_पढ़ोl(priv, CORE_DIS_LEARN);
 		reg |= BIT(port);
-		core_writel(priv, reg, CORE_DIS_LEARN);
-		return;
-	}
+		core_ग_लिखोl(priv, reg, CORE_DIS_LEARN);
+		वापस;
+	पूर्ण
 
-	if (port == priv->moca_port)
-		bcm_sf2_port_intr_disable(priv, port);
+	अगर (port == priv->moca_port)
+		bcm_sf2_port_पूर्णांकr_disable(priv, port);
 
-	if (priv->int_phy_mask & 1 << port && priv->hw_params.num_gphy == 1)
+	अगर (priv->पूर्णांक_phy_mask & 1 << port && priv->hw_params.num_gphy == 1)
 		bcm_sf2_gphy_enable_set(ds, false);
 
 	b53_disable_port(ds, port);
 
-	/* Power down the port memory */
-	reg = core_readl(priv, CORE_MEM_PSM_VDD_CTRL);
+	/* Power करोwn the port memory */
+	reg = core_पढ़ोl(priv, CORE_MEM_PSM_VDD_CTRL);
 	reg |= P_TXQ_PSM_VDD(port);
-	core_writel(priv, reg, CORE_MEM_PSM_VDD_CTRL);
+	core_ग_लिखोl(priv, reg, CORE_MEM_PSM_VDD_CTRL);
 
 	priv->port_sts[port].enabled = false;
 
-	bcm_sf2_recalc_clock(ds);
-}
+	bcm_sf2_recalc_घड़ी(ds);
+पूर्ण
 
 
-static int bcm_sf2_sw_indir_rw(struct bcm_sf2_priv *priv, int op, int addr,
-			       int regnum, u16 val)
-{
-	int ret = 0;
+अटल पूर्णांक bcm_sf2_sw_indir_rw(काष्ठा bcm_sf2_priv *priv, पूर्णांक op, पूर्णांक addr,
+			       पूर्णांक regnum, u16 val)
+अणु
+	पूर्णांक ret = 0;
 	u32 reg;
 
-	reg = reg_readl(priv, REG_SWITCH_CNTRL);
+	reg = reg_पढ़ोl(priv, REG_SWITCH_CNTRL);
 	reg |= MDIO_MASTER_SEL;
-	reg_writel(priv, reg, REG_SWITCH_CNTRL);
+	reg_ग_लिखोl(priv, reg, REG_SWITCH_CNTRL);
 
 	/* Page << 8 | offset */
 	reg = 0x70;
 	reg <<= 2;
-	core_writel(priv, addr, reg);
+	core_ग_लिखोl(priv, addr, reg);
 
 	/* Page << 8 | offset */
 	reg = 0x80 << 8 | regnum << 1;
 	reg <<= 2;
 
-	if (op)
-		ret = core_readl(priv, reg);
-	else
-		core_writel(priv, val, reg);
+	अगर (op)
+		ret = core_पढ़ोl(priv, reg);
+	अन्यथा
+		core_ग_लिखोl(priv, val, reg);
 
-	reg = reg_readl(priv, REG_SWITCH_CNTRL);
+	reg = reg_पढ़ोl(priv, REG_SWITCH_CNTRL);
 	reg &= ~MDIO_MASTER_SEL;
-	reg_writel(priv, reg, REG_SWITCH_CNTRL);
+	reg_ग_लिखोl(priv, reg, REG_SWITCH_CNTRL);
 
-	return ret & 0xffff;
-}
+	वापस ret & 0xffff;
+पूर्ण
 
-static int bcm_sf2_sw_mdio_read(struct mii_bus *bus, int addr, int regnum)
-{
-	struct bcm_sf2_priv *priv = bus->priv;
+अटल पूर्णांक bcm_sf2_sw_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक addr, पूर्णांक regnum)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bus->priv;
 
-	/* Intercept reads from Broadcom pseudo-PHY address, else, send
+	/* Intercept पढ़ोs from Broadcom pseuकरो-PHY address, अन्यथा, send
 	 * them to our master MDIO bus controller
 	 */
-	if (addr == BRCM_PSEUDO_PHY_ADDR && priv->indir_phy_mask & BIT(addr))
-		return bcm_sf2_sw_indir_rw(priv, 1, addr, regnum, 0);
-	else
-		return mdiobus_read_nested(priv->master_mii_bus, addr, regnum);
-}
+	अगर (addr == BRCM_PSEUDO_PHY_ADDR && priv->indir_phy_mask & BIT(addr))
+		वापस bcm_sf2_sw_indir_rw(priv, 1, addr, regnum, 0);
+	अन्यथा
+		वापस mdiobus_पढ़ो_nested(priv->master_mii_bus, addr, regnum);
+पूर्ण
 
-static int bcm_sf2_sw_mdio_write(struct mii_bus *bus, int addr, int regnum,
+अटल पूर्णांक bcm_sf2_sw_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक addr, पूर्णांक regnum,
 				 u16 val)
-{
-	struct bcm_sf2_priv *priv = bus->priv;
+अणु
+	काष्ठा bcm_sf2_priv *priv = bus->priv;
 
-	/* Intercept writes to the Broadcom pseudo-PHY address, else,
+	/* Intercept ग_लिखोs to the Broadcom pseuकरो-PHY address, अन्यथा,
 	 * send them to our master MDIO bus controller
 	 */
-	if (addr == BRCM_PSEUDO_PHY_ADDR && priv->indir_phy_mask & BIT(addr))
-		return bcm_sf2_sw_indir_rw(priv, 0, addr, regnum, val);
-	else
-		return mdiobus_write_nested(priv->master_mii_bus, addr,
+	अगर (addr == BRCM_PSEUDO_PHY_ADDR && priv->indir_phy_mask & BIT(addr))
+		वापस bcm_sf2_sw_indir_rw(priv, 0, addr, regnum, val);
+	अन्यथा
+		वापस mdiobus_ग_लिखो_nested(priv->master_mii_bus, addr,
 				regnum, val);
-}
+पूर्ण
 
-static irqreturn_t bcm_sf2_switch_0_isr(int irq, void *dev_id)
-{
-	struct dsa_switch *ds = dev_id;
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल irqवापस_t bcm_sf2_चयन_0_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा dsa_चयन *ds = dev_id;
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 
-	priv->irq0_stat = intrl2_0_readl(priv, INTRL2_CPU_STATUS) &
+	priv->irq0_stat = पूर्णांकrl2_0_पढ़ोl(priv, INTRL2_CPU_STATUS) &
 				~priv->irq0_mask;
-	intrl2_0_writel(priv, priv->irq0_stat, INTRL2_CPU_CLEAR);
+	पूर्णांकrl2_0_ग_लिखोl(priv, priv->irq0_stat, INTRL2_CPU_CLEAR);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t bcm_sf2_switch_1_isr(int irq, void *dev_id)
-{
-	struct dsa_switch *ds = dev_id;
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल irqवापस_t bcm_sf2_चयन_1_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा dsa_चयन *ds = dev_id;
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 
-	priv->irq1_stat = intrl2_1_readl(priv, INTRL2_CPU_STATUS) &
+	priv->irq1_stat = पूर्णांकrl2_1_पढ़ोl(priv, INTRL2_CPU_STATUS) &
 				~priv->irq1_mask;
-	intrl2_1_writel(priv, priv->irq1_stat, INTRL2_CPU_CLEAR);
+	पूर्णांकrl2_1_ग_लिखोl(priv, priv->irq1_stat, INTRL2_CPU_CLEAR);
 
-	if (priv->irq1_stat & P_LINK_UP_IRQ(P7_IRQ_OFF)) {
+	अगर (priv->irq1_stat & P_LINK_UP_IRQ(P7_IRQ_OFF)) अणु
 		priv->port_sts[7].link = true;
 		dsa_port_phylink_mac_change(ds, 7, true);
-	}
-	if (priv->irq1_stat & P_LINK_DOWN_IRQ(P7_IRQ_OFF)) {
+	पूर्ण
+	अगर (priv->irq1_stat & P_LINK_DOWN_IRQ(P7_IRQ_OFF)) अणु
 		priv->port_sts[7].link = false;
 		dsa_port_phylink_mac_change(ds, 7, false);
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int bcm_sf2_sw_rst(struct bcm_sf2_priv *priv)
-{
-	unsigned int timeout = 1000;
+अटल पूर्णांक bcm_sf2_sw_rst(काष्ठा bcm_sf2_priv *priv)
+अणु
+	अचिन्हित पूर्णांक समयout = 1000;
 	u32 reg;
-	int ret;
+	पूर्णांक ret;
 
-	/* The watchdog reset does not work on 7278, we need to hit the
+	/* The watchकरोg reset करोes not work on 7278, we need to hit the
 	 * "external" reset line through the reset controller.
 	 */
-	if (priv->type == BCM7278_DEVICE_ID) {
-		ret = reset_control_assert(priv->rcdev);
-		if (ret)
-			return ret;
+	अगर (priv->type == BCM7278_DEVICE_ID) अणु
+		ret = reset_control_निश्चित(priv->rcdev);
+		अगर (ret)
+			वापस ret;
 
-		return reset_control_deassert(priv->rcdev);
-	}
+		वापस reset_control_deनिश्चित(priv->rcdev);
+	पूर्ण
 
-	reg = core_readl(priv, CORE_WATCHDOG_CTRL);
+	reg = core_पढ़ोl(priv, CORE_WATCHDOG_CTRL);
 	reg |= SOFTWARE_RESET | EN_CHIP_RST | EN_SW_RESET;
-	core_writel(priv, reg, CORE_WATCHDOG_CTRL);
+	core_ग_लिखोl(priv, reg, CORE_WATCHDOG_CTRL);
 
-	do {
-		reg = core_readl(priv, CORE_WATCHDOG_CTRL);
-		if (!(reg & SOFTWARE_RESET))
-			break;
+	करो अणु
+		reg = core_पढ़ोl(priv, CORE_WATCHDOG_CTRL);
+		अगर (!(reg & SOFTWARE_RESET))
+			अवरोध;
 
 		usleep_range(1000, 2000);
-	} while (timeout-- > 0);
+	पूर्ण जबतक (समयout-- > 0);
 
-	if (timeout == 0)
-		return -ETIMEDOUT;
+	अगर (समयout == 0)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bcm_sf2_crossbar_setup(struct bcm_sf2_priv *priv)
-{
-	struct device *dev = priv->dev->ds->dev;
-	int shift;
+अटल व्योम bcm_sf2_crossbar_setup(काष्ठा bcm_sf2_priv *priv)
+अणु
+	काष्ठा device *dev = priv->dev->ds->dev;
+	पूर्णांक shअगरt;
 	u32 mask;
 	u32 reg;
-	int i;
+	पूर्णांक i;
 
-	mask = BIT(priv->num_crossbar_int_ports) - 1;
+	mask = BIT(priv->num_crossbar_पूर्णांक_ports) - 1;
 
-	reg = reg_readl(priv, REG_CROSSBAR);
-	switch (priv->type) {
-	case BCM4908_DEVICE_ID:
-		shift = CROSSBAR_BCM4908_INT_P7 * priv->num_crossbar_int_ports;
-		reg &= ~(mask << shift);
-		if (0) /* FIXME */
-			reg |= CROSSBAR_BCM4908_EXT_SERDES << shift;
-		else if (priv->int_phy_mask & BIT(7))
-			reg |= CROSSBAR_BCM4908_EXT_GPHY4 << shift;
-		else if (phy_interface_mode_is_rgmii(priv->port_sts[7].mode))
-			reg |= CROSSBAR_BCM4908_EXT_RGMII << shift;
-		else if (WARN(1, "Invalid port mode\n"))
-			return;
-		break;
-	default:
-		return;
-	}
-	reg_writel(priv, reg, REG_CROSSBAR);
+	reg = reg_पढ़ोl(priv, REG_CROSSBAR);
+	चयन (priv->type) अणु
+	हाल BCM4908_DEVICE_ID:
+		shअगरt = CROSSBAR_BCM4908_INT_P7 * priv->num_crossbar_पूर्णांक_ports;
+		reg &= ~(mask << shअगरt);
+		अगर (0) /* FIXME */
+			reg |= CROSSBAR_BCM4908_EXT_SERDES << shअगरt;
+		अन्यथा अगर (priv->पूर्णांक_phy_mask & BIT(7))
+			reg |= CROSSBAR_BCM4908_EXT_GPHY4 << shअगरt;
+		अन्यथा अगर (phy_पूर्णांकerface_mode_is_rgmii(priv->port_sts[7].mode))
+			reg |= CROSSBAR_BCM4908_EXT_RGMII << shअगरt;
+		अन्यथा अगर (WARN(1, "Invalid port mode\n"))
+			वापस;
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
+	reg_ग_लिखोl(priv, reg, REG_CROSSBAR);
 
-	reg = reg_readl(priv, REG_CROSSBAR);
-	for (i = 0; i < priv->num_crossbar_int_ports; i++) {
-		shift = i * priv->num_crossbar_int_ports;
+	reg = reg_पढ़ोl(priv, REG_CROSSBAR);
+	क्रम (i = 0; i < priv->num_crossbar_पूर्णांक_ports; i++) अणु
+		shअगरt = i * priv->num_crossbar_पूर्णांक_ports;
 
 		dev_dbg(dev, "crossbar int port #%d - ext port #%d\n", i,
-			(reg >> shift) & mask);
-	}
-}
+			(reg >> shअगरt) & mask);
+	पूर्ण
+पूर्ण
 
-static void bcm_sf2_intr_disable(struct bcm_sf2_priv *priv)
-{
-	intrl2_0_mask_set(priv, 0xffffffff);
-	intrl2_0_writel(priv, 0xffffffff, INTRL2_CPU_CLEAR);
-	intrl2_1_mask_set(priv, 0xffffffff);
-	intrl2_1_writel(priv, 0xffffffff, INTRL2_CPU_CLEAR);
-}
+अटल व्योम bcm_sf2_पूर्णांकr_disable(काष्ठा bcm_sf2_priv *priv)
+अणु
+	पूर्णांकrl2_0_mask_set(priv, 0xffffffff);
+	पूर्णांकrl2_0_ग_लिखोl(priv, 0xffffffff, INTRL2_CPU_CLEAR);
+	पूर्णांकrl2_1_mask_set(priv, 0xffffffff);
+	पूर्णांकrl2_1_ग_लिखोl(priv, 0xffffffff, INTRL2_CPU_CLEAR);
+पूर्ण
 
-static void bcm_sf2_identify_ports(struct bcm_sf2_priv *priv,
-				   struct device_node *dn)
-{
-	struct device *dev = priv->dev->ds->dev;
-	struct bcm_sf2_port_status *port_st;
-	struct device_node *port;
-	unsigned int port_num;
-	struct property *prop;
-	int err;
+अटल व्योम bcm_sf2_identअगरy_ports(काष्ठा bcm_sf2_priv *priv,
+				   काष्ठा device_node *dn)
+अणु
+	काष्ठा device *dev = priv->dev->ds->dev;
+	काष्ठा bcm_sf2_port_status *port_st;
+	काष्ठा device_node *port;
+	अचिन्हित पूर्णांक port_num;
+	काष्ठा property *prop;
+	पूर्णांक err;
 
 	priv->moca_port = -1;
 
-	for_each_available_child_of_node(dn, port) {
-		if (of_property_read_u32(port, "reg", &port_num))
-			continue;
+	क्रम_each_available_child_of_node(dn, port) अणु
+		अगर (of_property_पढ़ो_u32(port, "reg", &port_num))
+			जारी;
 
-		if (port_num >= DSA_MAX_PORTS) {
+		अगर (port_num >= DSA_MAX_PORTS) अणु
 			dev_err(dev, "Invalid port number %d\n", port_num);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		port_st = &priv->port_sts[port_num];
 
-		/* Internal PHYs get assigned a specific 'phy-mode' property
-		 * value: "internal" to help flag them before MDIO probing
+		/* Internal PHYs get asचिन्हित a specअगरic 'phy-mode' property
+		 * value: "internal" to help flag them beक्रमe MDIO probing
 		 * has completed, since they might be turned off at that
-		 * time
+		 * समय
 		 */
 		err = of_get_phy_mode(port, &port_st->mode);
-		if (err)
-			continue;
+		अगर (err)
+			जारी;
 
-		if (port_st->mode == PHY_INTERFACE_MODE_INTERNAL)
-			priv->int_phy_mask |= 1 << port_num;
+		अगर (port_st->mode == PHY_INTERFACE_MODE_INTERNAL)
+			priv->पूर्णांक_phy_mask |= 1 << port_num;
 
-		if (port_st->mode == PHY_INTERFACE_MODE_MOCA)
+		अगर (port_st->mode == PHY_INTERFACE_MODE_MOCA)
 			priv->moca_port = port_num;
 
-		if (of_property_read_bool(port, "brcm,use-bcm-hdr"))
+		अगर (of_property_पढ़ो_bool(port, "brcm,use-bcm-hdr"))
 			priv->brcm_tag_mask |= 1 << port_num;
 
 		/* Ensure that port 5 is not picked up as a DSA CPU port
 		 * flavour but a regular port instead. We should be using
 		 * devlink to be able to set the port flavour.
 		 */
-		if (port_num == 5 && priv->type == BCM7278_DEVICE_ID) {
-			prop = of_find_property(port, "ethernet", NULL);
-			if (prop)
-				of_remove_property(port, prop);
-		}
-	}
-}
+		अगर (port_num == 5 && priv->type == BCM7278_DEVICE_ID) अणु
+			prop = of_find_property(port, "ethernet", शून्य);
+			अगर (prop)
+				of_हटाओ_property(port, prop);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int bcm_sf2_mdio_register(struct dsa_switch *ds)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	struct device_node *dn, *child;
-	struct phy_device *phydev;
-	struct property *prop;
-	static int index;
-	int err, reg;
+अटल पूर्णांक bcm_sf2_mdio_रेजिस्टर(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	काष्ठा device_node *dn, *child;
+	काष्ठा phy_device *phydev;
+	काष्ठा property *prop;
+	अटल पूर्णांक index;
+	पूर्णांक err, reg;
 
-	/* Find our integrated MDIO bus node */
-	dn = of_find_compatible_node(NULL, NULL, "brcm,unimac-mdio");
+	/* Find our पूर्णांकegrated MDIO bus node */
+	dn = of_find_compatible_node(शून्य, शून्य, "brcm,unimac-mdio");
 	priv->master_mii_bus = of_mdio_find_bus(dn);
-	if (!priv->master_mii_bus) {
+	अगर (!priv->master_mii_bus) अणु
 		of_node_put(dn);
-		return -EPROBE_DEFER;
-	}
+		वापस -EPROBE_DEFER;
+	पूर्ण
 
 	get_device(&priv->master_mii_bus->dev);
 	priv->master_mii_dn = dn;
 
 	priv->slave_mii_bus = devm_mdiobus_alloc(ds->dev);
-	if (!priv->slave_mii_bus) {
+	अगर (!priv->slave_mii_bus) अणु
 		of_node_put(dn);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	priv->slave_mii_bus->priv = priv;
 	priv->slave_mii_bus->name = "sf2 slave mii";
-	priv->slave_mii_bus->read = bcm_sf2_sw_mdio_read;
-	priv->slave_mii_bus->write = bcm_sf2_sw_mdio_write;
-	snprintf(priv->slave_mii_bus->id, MII_BUS_ID_SIZE, "sf2-%d",
+	priv->slave_mii_bus->पढ़ो = bcm_sf2_sw_mdio_पढ़ो;
+	priv->slave_mii_bus->ग_लिखो = bcm_sf2_sw_mdio_ग_लिखो;
+	snम_लिखो(priv->slave_mii_bus->id, MII_BUS_ID_SIZE, "sf2-%d",
 		 index++);
 	priv->slave_mii_bus->dev.of_node = dn;
 
-	/* Include the pseudo-PHY address to divert reads towards our
-	 * workaround. This is only required for 7445D0, since 7445E0
-	 * disconnects the internal switch pseudo-PHY such that we can use the
+	/* Include the pseuकरो-PHY address to भागert पढ़ोs towards our
+	 * workaround. This is only required क्रम 7445D0, since 7445E0
+	 * disconnects the पूर्णांकernal चयन pseuकरो-PHY such that we can use the
 	 * regular SWITCH_MDIO master controller instead.
 	 *
-	 * Here we flag the pseudo PHY as needing special treatment and would
-	 * otherwise make all other PHY read/writes go to the master MDIO bus
-	 * controller that comes with this switch backed by the "mdio-unimac"
+	 * Here we flag the pseuकरो PHY as needing special treaपंचांगent and would
+	 * otherwise make all other PHY पढ़ो/ग_लिखोs go to the master MDIO bus
+	 * controller that comes with this चयन backed by the "mdio-unimac"
 	 * driver.
 	 */
-	if (of_machine_is_compatible("brcm,bcm7445d0"))
+	अगर (of_machine_is_compatible("brcm,bcm7445d0"))
 		priv->indir_phy_mask |= (1 << BRCM_PSEUDO_PHY_ADDR) | (1 << 0);
-	else
+	अन्यथा
 		priv->indir_phy_mask = 0;
 
 	ds->phys_mii_mask = priv->indir_phy_mask;
@@ -620,76 +621,76 @@ static int bcm_sf2_mdio_register(struct dsa_switch *ds)
 
 	/* We need to make sure that of_phy_connect() will not work by
 	 * removing the 'phandle' and 'linux,phandle' properties and
-	 * unregister the existing PHY device that was already registered.
+	 * unरेजिस्टर the existing PHY device that was alपढ़ोy रेजिस्टरed.
 	 */
-	for_each_available_child_of_node(dn, child) {
-		if (of_property_read_u32(child, "reg", &reg) ||
+	क्रम_each_available_child_of_node(dn, child) अणु
+		अगर (of_property_पढ़ो_u32(child, "reg", &reg) ||
 		    reg >= PHY_MAX_ADDR)
-			continue;
+			जारी;
 
-		if (!(priv->indir_phy_mask & BIT(reg)))
-			continue;
+		अगर (!(priv->indir_phy_mask & BIT(reg)))
+			जारी;
 
-		prop = of_find_property(child, "phandle", NULL);
-		if (prop)
-			of_remove_property(child, prop);
+		prop = of_find_property(child, "phandle", शून्य);
+		अगर (prop)
+			of_हटाओ_property(child, prop);
 
-		prop = of_find_property(child, "linux,phandle", NULL);
-		if (prop)
-			of_remove_property(child, prop);
+		prop = of_find_property(child, "linux,phandle", शून्य);
+		अगर (prop)
+			of_हटाओ_property(child, prop);
 
 		phydev = of_phy_find_device(child);
-		if (phydev)
-			phy_device_remove(phydev);
-	}
+		अगर (phydev)
+			phy_device_हटाओ(phydev);
+	पूर्ण
 
-	err = mdiobus_register(priv->slave_mii_bus);
-	if (err && dn)
+	err = mdiobus_रेजिस्टर(priv->slave_mii_bus);
+	अगर (err && dn)
 		of_node_put(dn);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void bcm_sf2_mdio_unregister(struct bcm_sf2_priv *priv)
-{
-	mdiobus_unregister(priv->slave_mii_bus);
+अटल व्योम bcm_sf2_mdio_unरेजिस्टर(काष्ठा bcm_sf2_priv *priv)
+अणु
+	mdiobus_unरेजिस्टर(priv->slave_mii_bus);
 	of_node_put(priv->master_mii_dn);
-}
+पूर्ण
 
-static u32 bcm_sf2_sw_get_phy_flags(struct dsa_switch *ds, int port)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल u32 bcm_sf2_sw_get_phy_flags(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 
-	/* The BCM7xxx PHY driver expects to find the integrated PHY revision
+	/* The BCM7xxx PHY driver expects to find the पूर्णांकegrated PHY revision
 	 * in bits 15:8 and the patch level in bits 7:0 which is exactly what
-	 * the REG_PHY_REVISION register layout is.
+	 * the REG_PHY_REVISION रेजिस्टर layout is.
 	 */
-	if (priv->int_phy_mask & BIT(port))
-		return priv->hw_params.gphy_rev;
-	else
-		return 0;
-}
+	अगर (priv->पूर्णांक_phy_mask & BIT(port))
+		वापस priv->hw_params.gphy_rev;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static void bcm_sf2_sw_validate(struct dsa_switch *ds, int port,
-				unsigned long *supported,
-				struct phylink_link_state *state)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = { 0, };
+अटल व्योम bcm_sf2_sw_validate(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				अचिन्हित दीर्घ *supported,
+				काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	__ETHTOOL_DECLARE_LINK_MODE_MASK(mask) = अणु 0, पूर्ण;
 
-	if (!phy_interface_mode_is_rgmii(state->interface) &&
-	    state->interface != PHY_INTERFACE_MODE_MII &&
-	    state->interface != PHY_INTERFACE_MODE_REVMII &&
-	    state->interface != PHY_INTERFACE_MODE_GMII &&
-	    state->interface != PHY_INTERFACE_MODE_INTERNAL &&
-	    state->interface != PHY_INTERFACE_MODE_MOCA) {
-		bitmap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
-		if (port != core_readl(priv, CORE_IMP0_PRT_ID))
+	अगर (!phy_पूर्णांकerface_mode_is_rgmii(state->पूर्णांकerface) &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_MII &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_REVMII &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_GMII &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_INTERNAL &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_MOCA) अणु
+		biपंचांगap_zero(supported, __ETHTOOL_LINK_MODE_MASK_NBITS);
+		अगर (port != core_पढ़ोl(priv, CORE_IMP0_PRT_ID))
 			dev_err(ds->dev,
 				"Unsupported interface: %d for port %d\n",
-				state->interface, port);
-		return;
-	}
+				state->पूर्णांकerface, port);
+		वापस;
+	पूर्ण
 
 	/* Allow all the expected bits */
 	phylink_set(mask, Autoneg);
@@ -700,482 +701,482 @@ static void bcm_sf2_sw_validate(struct dsa_switch *ds, int port,
 	/* With the exclusion of MII and Reverse MII, we support Gigabit,
 	 * including Half duplex
 	 */
-	if (state->interface != PHY_INTERFACE_MODE_MII &&
-	    state->interface != PHY_INTERFACE_MODE_REVMII) {
+	अगर (state->पूर्णांकerface != PHY_INTERFACE_MODE_MII &&
+	    state->पूर्णांकerface != PHY_INTERFACE_MODE_REVMII) अणु
 		phylink_set(mask, 1000baseT_Full);
 		phylink_set(mask, 1000baseT_Half);
-	}
+	पूर्ण
 
 	phylink_set(mask, 10baseT_Half);
 	phylink_set(mask, 10baseT_Full);
 	phylink_set(mask, 100baseT_Half);
 	phylink_set(mask, 100baseT_Full);
 
-	bitmap_and(supported, supported, mask,
+	biपंचांगap_and(supported, supported, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-	bitmap_and(state->advertising, state->advertising, mask,
+	biपंचांगap_and(state->advertising, state->advertising, mask,
 		   __ETHTOOL_LINK_MODE_MASK_NBITS);
-}
+पूर्ण
 
-static void bcm_sf2_sw_mac_config(struct dsa_switch *ds, int port,
-				  unsigned int mode,
-				  const struct phylink_link_state *state)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल व्योम bcm_sf2_sw_mac_config(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				  अचिन्हित पूर्णांक mode,
+				  स्थिर काष्ठा phylink_link_state *state)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 	u32 id_mode_dis = 0, port_mode;
 	u32 reg_rgmii_ctrl;
 	u32 reg;
 
-	if (port == core_readl(priv, CORE_IMP0_PRT_ID))
-		return;
+	अगर (port == core_पढ़ोl(priv, CORE_IMP0_PRT_ID))
+		वापस;
 
-	switch (state->interface) {
-	case PHY_INTERFACE_MODE_RGMII:
+	चयन (state->पूर्णांकerface) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
 		id_mode_dis = 1;
 		fallthrough;
-	case PHY_INTERFACE_MODE_RGMII_TXID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
 		port_mode = EXT_GPHY;
-		break;
-	case PHY_INTERFACE_MODE_MII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_MII:
 		port_mode = EXT_EPHY;
-		break;
-	case PHY_INTERFACE_MODE_REVMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_REVMII:
 		port_mode = EXT_REVMII;
-		break;
-	default:
-		/* Nothing required for all other PHYs: internal and MoCA */
-		return;
-	}
+		अवरोध;
+	शेष:
+		/* Nothing required क्रम all other PHYs: पूर्णांकernal and MoCA */
+		वापस;
+	पूर्ण
 
 	reg_rgmii_ctrl = bcm_sf2_reg_rgmii_cntrl(priv, port);
 
 	/* Clear id_mode_dis bit, and the existing port mode, let
-	 * RGMII_MODE_EN bet set by mac_link_{up,down}
+	 * RGMII_MODE_EN bet set by mac_link_अणुup,करोwnपूर्ण
 	 */
-	reg = reg_readl(priv, reg_rgmii_ctrl);
+	reg = reg_पढ़ोl(priv, reg_rgmii_ctrl);
 	reg &= ~ID_MODE_DIS;
 	reg &= ~(PORT_MODE_MASK << PORT_MODE_SHIFT);
 
 	reg |= port_mode;
-	if (id_mode_dis)
+	अगर (id_mode_dis)
 		reg |= ID_MODE_DIS;
 
-	reg_writel(priv, reg, reg_rgmii_ctrl);
-}
+	reg_ग_लिखोl(priv, reg, reg_rgmii_ctrl);
+पूर्ण
 
-static void bcm_sf2_sw_mac_link_set(struct dsa_switch *ds, int port,
-				    phy_interface_t interface, bool link)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल व्योम bcm_sf2_sw_mac_link_set(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				    phy_पूर्णांकerface_t पूर्णांकerface, bool link)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 	u32 reg_rgmii_ctrl;
 	u32 reg;
 
-	if (!phy_interface_mode_is_rgmii(interface) &&
-	    interface != PHY_INTERFACE_MODE_MII &&
-	    interface != PHY_INTERFACE_MODE_REVMII)
-		return;
+	अगर (!phy_पूर्णांकerface_mode_is_rgmii(पूर्णांकerface) &&
+	    पूर्णांकerface != PHY_INTERFACE_MODE_MII &&
+	    पूर्णांकerface != PHY_INTERFACE_MODE_REVMII)
+		वापस;
 
 	reg_rgmii_ctrl = bcm_sf2_reg_rgmii_cntrl(priv, port);
 
-	/* If the link is down, just disable the interface to conserve power */
-	reg = reg_readl(priv, reg_rgmii_ctrl);
-	if (link)
+	/* If the link is करोwn, just disable the पूर्णांकerface to conserve घातer */
+	reg = reg_पढ़ोl(priv, reg_rgmii_ctrl);
+	अगर (link)
 		reg |= RGMII_MODE_EN;
-	else
+	अन्यथा
 		reg &= ~RGMII_MODE_EN;
-	reg_writel(priv, reg, reg_rgmii_ctrl);
-}
+	reg_ग_लिखोl(priv, reg, reg_rgmii_ctrl);
+पूर्ण
 
-static void bcm_sf2_sw_mac_link_down(struct dsa_switch *ds, int port,
-				     unsigned int mode,
-				     phy_interface_t interface)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल व्योम bcm_sf2_sw_mac_link_करोwn(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				     अचिन्हित पूर्णांक mode,
+				     phy_पूर्णांकerface_t पूर्णांकerface)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 	u32 reg, offset;
 
-	if (port != core_readl(priv, CORE_IMP0_PRT_ID)) {
-		if (priv->type == BCM4908_DEVICE_ID ||
+	अगर (port != core_पढ़ोl(priv, CORE_IMP0_PRT_ID)) अणु
+		अगर (priv->type == BCM4908_DEVICE_ID ||
 		    priv->type == BCM7445_DEVICE_ID)
 			offset = CORE_STS_OVERRIDE_GMIIP_PORT(port);
-		else
+		अन्यथा
 			offset = CORE_STS_OVERRIDE_GMIIP2_PORT(port);
 
-		reg = core_readl(priv, offset);
+		reg = core_पढ़ोl(priv, offset);
 		reg &= ~LINK_STS;
-		core_writel(priv, reg, offset);
-	}
+		core_ग_लिखोl(priv, reg, offset);
+	पूर्ण
 
-	bcm_sf2_sw_mac_link_set(ds, port, interface, false);
-}
+	bcm_sf2_sw_mac_link_set(ds, port, पूर्णांकerface, false);
+पूर्ण
 
-static void bcm_sf2_sw_mac_link_up(struct dsa_switch *ds, int port,
-				   unsigned int mode,
-				   phy_interface_t interface,
-				   struct phy_device *phydev,
-				   int speed, int duplex,
-				   bool tx_pause, bool rx_pause)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	struct ethtool_eee *p = &priv->dev->ports[port].eee;
+अटल व्योम bcm_sf2_sw_mac_link_up(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				   अचिन्हित पूर्णांक mode,
+				   phy_पूर्णांकerface_t पूर्णांकerface,
+				   काष्ठा phy_device *phydev,
+				   पूर्णांक speed, पूर्णांक duplex,
+				   bool tx_छोड़ो, bool rx_छोड़ो)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	काष्ठा ethtool_eee *p = &priv->dev->ports[port].eee;
 
-	bcm_sf2_sw_mac_link_set(ds, port, interface, true);
+	bcm_sf2_sw_mac_link_set(ds, port, पूर्णांकerface, true);
 
-	if (port != core_readl(priv, CORE_IMP0_PRT_ID)) {
+	अगर (port != core_पढ़ोl(priv, CORE_IMP0_PRT_ID)) अणु
 		u32 reg_rgmii_ctrl = 0;
 		u32 reg, offset;
 
-		if (priv->type == BCM4908_DEVICE_ID ||
+		अगर (priv->type == BCM4908_DEVICE_ID ||
 		    priv->type == BCM7445_DEVICE_ID)
 			offset = CORE_STS_OVERRIDE_GMIIP_PORT(port);
-		else
+		अन्यथा
 			offset = CORE_STS_OVERRIDE_GMIIP2_PORT(port);
 
-		if (interface == PHY_INTERFACE_MODE_RGMII ||
-		    interface == PHY_INTERFACE_MODE_RGMII_TXID ||
-		    interface == PHY_INTERFACE_MODE_MII ||
-		    interface == PHY_INTERFACE_MODE_REVMII) {
+		अगर (पूर्णांकerface == PHY_INTERFACE_MODE_RGMII ||
+		    पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_TXID ||
+		    पूर्णांकerface == PHY_INTERFACE_MODE_MII ||
+		    पूर्णांकerface == PHY_INTERFACE_MODE_REVMII) अणु
 			reg_rgmii_ctrl = bcm_sf2_reg_rgmii_cntrl(priv, port);
-			reg = reg_readl(priv, reg_rgmii_ctrl);
+			reg = reg_पढ़ोl(priv, reg_rgmii_ctrl);
 			reg &= ~(RX_PAUSE_EN | TX_PAUSE_EN);
 
-			if (tx_pause)
+			अगर (tx_छोड़ो)
 				reg |= TX_PAUSE_EN;
-			if (rx_pause)
+			अगर (rx_छोड़ो)
 				reg |= RX_PAUSE_EN;
 
-			reg_writel(priv, reg, reg_rgmii_ctrl);
-		}
+			reg_ग_लिखोl(priv, reg, reg_rgmii_ctrl);
+		पूर्ण
 
 		reg = SW_OVERRIDE | LINK_STS;
-		switch (speed) {
-		case SPEED_1000:
+		चयन (speed) अणु
+		हाल SPEED_1000:
 			reg |= SPDSTS_1000 << SPEED_SHIFT;
-			break;
-		case SPEED_100:
+			अवरोध;
+		हाल SPEED_100:
 			reg |= SPDSTS_100 << SPEED_SHIFT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (duplex == DUPLEX_FULL)
+		अगर (duplex == DUPLEX_FULL)
 			reg |= DUPLX_MODE;
 
-		core_writel(priv, reg, offset);
-	}
+		core_ग_लिखोl(priv, reg, offset);
+	पूर्ण
 
-	if (mode == MLO_AN_PHY && phydev)
+	अगर (mode == MLO_AN_PHY && phydev)
 		p->eee_enabled = b53_eee_init(ds, port, phydev);
-}
+पूर्ण
 
-static void bcm_sf2_sw_fixed_state(struct dsa_switch *ds, int port,
-				   struct phylink_link_state *status)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल व्योम bcm_sf2_sw_fixed_state(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				   काष्ठा phylink_link_state *status)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 
 	status->link = false;
 
-	/* MoCA port is special as we do not get link status from CORE_LNKSTS,
-	 * which means that we need to force the link at the port override
-	 * level to get the data to flow. We do use what the interrupt handler
-	 * did determine before.
+	/* MoCA port is special as we करो not get link status from CORE_LNKSTS,
+	 * which means that we need to क्रमce the link at the port override
+	 * level to get the data to flow. We करो use what the पूर्णांकerrupt handler
+	 * did determine beक्रमe.
 	 *
-	 * For the other ports, we just force the link status, since this is
+	 * For the other ports, we just क्रमce the link status, since this is
 	 * a fixed PHY device.
 	 */
-	if (port == priv->moca_port) {
+	अगर (port == priv->moca_port) अणु
 		status->link = priv->port_sts[port].link;
-		/* For MoCA interfaces, also force a link down notification
+		/* For MoCA पूर्णांकerfaces, also क्रमce a link करोwn notअगरication
 		 * since some version of the user-space daemon (mocad) use
-		 * cmd->autoneg to force the link, which messes up the PHY
+		 * cmd->स्वतःneg to क्रमce the link, which messes up the PHY
 		 * state machine and make it go in PHY_FORCING state instead.
 		 */
-		if (!status->link)
-			netif_carrier_off(dsa_to_port(ds, port)->slave);
+		अगर (!status->link)
+			netअगर_carrier_off(dsa_to_port(ds, port)->slave);
 		status->duplex = DUPLEX_FULL;
-	} else {
+	पूर्ण अन्यथा अणु
 		status->link = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void bcm_sf2_enable_acb(struct dsa_switch *ds)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल व्योम bcm_sf2_enable_acb(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 	u32 reg;
 
 	/* Enable ACB globally */
-	reg = acb_readl(priv, ACB_CONTROL);
+	reg = acb_पढ़ोl(priv, ACB_CONTROL);
 	reg |= (ACB_FLUSH_MASK << ACB_FLUSH_SHIFT);
-	acb_writel(priv, reg, ACB_CONTROL);
+	acb_ग_लिखोl(priv, reg, ACB_CONTROL);
 	reg &= ~(ACB_FLUSH_MASK << ACB_FLUSH_SHIFT);
 	reg |= ACB_EN | ACB_ALGORITHM;
-	acb_writel(priv, reg, ACB_CONTROL);
-}
+	acb_ग_लिखोl(priv, reg, ACB_CONTROL);
+पूर्ण
 
-static int bcm_sf2_sw_suspend(struct dsa_switch *ds)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	unsigned int port;
+अटल पूर्णांक bcm_sf2_sw_suspend(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	अचिन्हित पूर्णांक port;
 
-	bcm_sf2_intr_disable(priv);
+	bcm_sf2_पूर्णांकr_disable(priv);
 
 	/* Disable all ports physically present including the IMP
-	 * port, the other ones have already been disabled during
+	 * port, the other ones have alपढ़ोy been disabled during
 	 * bcm_sf2_sw_setup
 	 */
-	for (port = 0; port < ds->num_ports; port++) {
-		if (dsa_is_user_port(ds, port) || dsa_is_cpu_port(ds, port))
+	क्रम (port = 0; port < ds->num_ports; port++) अणु
+		अगर (dsa_is_user_port(ds, port) || dsa_is_cpu_port(ds, port))
 			bcm_sf2_port_disable(ds, port);
-	}
+	पूर्ण
 
-	if (!priv->wol_ports_mask)
+	अगर (!priv->wol_ports_mask)
 		clk_disable_unprepare(priv->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_sf2_sw_resume(struct dsa_switch *ds)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	int ret;
+अटल पूर्णांक bcm_sf2_sw_resume(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	पूर्णांक ret;
 
-	if (!priv->wol_ports_mask)
+	अगर (!priv->wol_ports_mask)
 		clk_prepare_enable(priv->clk);
 
 	ret = bcm_sf2_sw_rst(priv);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s: failed to software reset switch\n", __func__);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	bcm_sf2_crossbar_setup(priv);
 
 	ret = bcm_sf2_cfp_resume(ds);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (priv->hw_params.num_gphy == 1)
+	अगर (priv->hw_params.num_gphy == 1)
 		bcm_sf2_gphy_enable_set(ds, true);
 
 	ds->ops->setup(ds);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bcm_sf2_sw_get_wol(struct dsa_switch *ds, int port,
-			       struct ethtool_wolinfo *wol)
-{
-	struct net_device *p = dsa_to_port(ds, port)->cpu_dp->master;
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	struct ethtool_wolinfo pwol = { };
+अटल व्योम bcm_sf2_sw_get_wol(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			       काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा net_device *p = dsa_to_port(ds, port)->cpu_dp->master;
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	काष्ठा ethtool_wolinfo pwol = अणु पूर्ण;
 
 	/* Get the parent device WoL settings */
-	if (p->ethtool_ops->get_wol)
+	अगर (p->ethtool_ops->get_wol)
 		p->ethtool_ops->get_wol(p, &pwol);
 
 	/* Advertise the parent device supported settings */
 	wol->supported = pwol.supported;
-	memset(&wol->sopass, 0, sizeof(wol->sopass));
+	स_रखो(&wol->sopass, 0, माप(wol->sopass));
 
-	if (pwol.wolopts & WAKE_MAGICSECURE)
-		memcpy(&wol->sopass, pwol.sopass, sizeof(wol->sopass));
+	अगर (pwol.wolopts & WAKE_MAGICSECURE)
+		स_नकल(&wol->sopass, pwol.sopass, माप(wol->sopass));
 
-	if (priv->wol_ports_mask & (1 << port))
+	अगर (priv->wol_ports_mask & (1 << port))
 		wol->wolopts = pwol.wolopts;
-	else
+	अन्यथा
 		wol->wolopts = 0;
-}
+पूर्ण
 
-static int bcm_sf2_sw_set_wol(struct dsa_switch *ds, int port,
-			      struct ethtool_wolinfo *wol)
-{
-	struct net_device *p = dsa_to_port(ds, port)->cpu_dp->master;
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+अटल पूर्णांक bcm_sf2_sw_set_wol(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा net_device *p = dsa_to_port(ds, port)->cpu_dp->master;
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
 	s8 cpu_port = dsa_to_port(ds, port)->cpu_dp->index;
-	struct ethtool_wolinfo pwol =  { };
+	काष्ठा ethtool_wolinfo pwol =  अणु पूर्ण;
 
-	if (p->ethtool_ops->get_wol)
+	अगर (p->ethtool_ops->get_wol)
 		p->ethtool_ops->get_wol(p, &pwol);
-	if (wol->wolopts & ~pwol.supported)
-		return -EINVAL;
+	अगर (wol->wolopts & ~pwol.supported)
+		वापस -EINVAL;
 
-	if (wol->wolopts)
+	अगर (wol->wolopts)
 		priv->wol_ports_mask |= (1 << port);
-	else
+	अन्यथा
 		priv->wol_ports_mask &= ~(1 << port);
 
 	/* If we have at least one port enabled, make sure the CPU port
 	 * is also enabled. If the CPU port is the last one enabled, we disable
-	 * it since this configuration does not make sense.
+	 * it since this configuration करोes not make sense.
 	 */
-	if (priv->wol_ports_mask && priv->wol_ports_mask != (1 << cpu_port))
+	अगर (priv->wol_ports_mask && priv->wol_ports_mask != (1 << cpu_port))
 		priv->wol_ports_mask |= (1 << cpu_port);
-	else
+	अन्यथा
 		priv->wol_ports_mask &= ~(1 << cpu_port);
 
-	return p->ethtool_ops->set_wol(p, wol);
-}
+	वापस p->ethtool_ops->set_wol(p, wol);
+पूर्ण
 
-static int bcm_sf2_sw_setup(struct dsa_switch *ds)
-{
-	struct bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
-	unsigned int port;
+अटल पूर्णांक bcm_sf2_sw_setup(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा bcm_sf2_priv *priv = bcm_sf2_to_priv(ds);
+	अचिन्हित पूर्णांक port;
 
 	/* Enable all valid ports and disable those unused */
-	for (port = 0; port < priv->hw_params.num_ports; port++) {
-		/* IMP port receives special treatment */
-		if (dsa_is_user_port(ds, port))
-			bcm_sf2_port_setup(ds, port, NULL);
-		else if (dsa_is_cpu_port(ds, port))
+	क्रम (port = 0; port < priv->hw_params.num_ports; port++) अणु
+		/* IMP port receives special treaपंचांगent */
+		अगर (dsa_is_user_port(ds, port))
+			bcm_sf2_port_setup(ds, port, शून्य);
+		अन्यथा अगर (dsa_is_cpu_port(ds, port))
 			bcm_sf2_imp_setup(ds, port);
-		else
+		अन्यथा
 			bcm_sf2_port_disable(ds, port);
-	}
+	पूर्ण
 
 	b53_configure_vlan(ds);
 	bcm_sf2_enable_acb(ds);
 
-	return b53_setup_devlink_resources(ds);
-}
+	वापस b53_setup_devlink_resources(ds);
+पूर्ण
 
-static void bcm_sf2_sw_teardown(struct dsa_switch *ds)
-{
-	dsa_devlink_resources_unregister(ds);
-}
+अटल व्योम bcm_sf2_sw_tearकरोwn(काष्ठा dsa_चयन *ds)
+अणु
+	dsa_devlink_resources_unरेजिस्टर(ds);
+पूर्ण
 
-/* The SWITCH_CORE register space is managed by b53 but operates on a page +
- * register basis so we need to translate that into an address that the
+/* The SWITCH_CORE रेजिस्टर space is managed by b53 but operates on a page +
+ * रेजिस्टर basis so we need to translate that पूर्णांकo an address that the
  * bus-glue understands.
  */
-#define SF2_PAGE_REG_MKADDR(page, reg)	((page) << 10 | (reg) << 2)
+#घोषणा SF2_PAGE_REG_MKADDR(page, reg)	((page) << 10 | (reg) << 2)
 
-static int bcm_sf2_core_read8(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक bcm_sf2_core_पढ़ो8(काष्ठा b53_device *dev, u8 page, u8 reg,
 			      u8 *val)
-{
-	struct bcm_sf2_priv *priv = dev->priv;
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev->priv;
 
-	*val = core_readl(priv, SF2_PAGE_REG_MKADDR(page, reg));
+	*val = core_पढ़ोl(priv, SF2_PAGE_REG_MKADDR(page, reg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_sf2_core_read16(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक bcm_sf2_core_पढ़ो16(काष्ठा b53_device *dev, u8 page, u8 reg,
 			       u16 *val)
-{
-	struct bcm_sf2_priv *priv = dev->priv;
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev->priv;
 
-	*val = core_readl(priv, SF2_PAGE_REG_MKADDR(page, reg));
+	*val = core_पढ़ोl(priv, SF2_PAGE_REG_MKADDR(page, reg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_sf2_core_read32(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक bcm_sf2_core_पढ़ो32(काष्ठा b53_device *dev, u8 page, u8 reg,
 			       u32 *val)
-{
-	struct bcm_sf2_priv *priv = dev->priv;
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev->priv;
 
-	*val = core_readl(priv, SF2_PAGE_REG_MKADDR(page, reg));
+	*val = core_पढ़ोl(priv, SF2_PAGE_REG_MKADDR(page, reg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_sf2_core_read64(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक bcm_sf2_core_पढ़ो64(काष्ठा b53_device *dev, u8 page, u8 reg,
 			       u64 *val)
-{
-	struct bcm_sf2_priv *priv = dev->priv;
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev->priv;
 
-	*val = core_readq(priv, SF2_PAGE_REG_MKADDR(page, reg));
+	*val = core_पढ़ोq(priv, SF2_PAGE_REG_MKADDR(page, reg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_sf2_core_write8(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक bcm_sf2_core_ग_लिखो8(काष्ठा b53_device *dev, u8 page, u8 reg,
 			       u8 value)
-{
-	struct bcm_sf2_priv *priv = dev->priv;
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev->priv;
 
-	core_writel(priv, value, SF2_PAGE_REG_MKADDR(page, reg));
+	core_ग_लिखोl(priv, value, SF2_PAGE_REG_MKADDR(page, reg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_sf2_core_write16(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक bcm_sf2_core_ग_लिखो16(काष्ठा b53_device *dev, u8 page, u8 reg,
 				u16 value)
-{
-	struct bcm_sf2_priv *priv = dev->priv;
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev->priv;
 
-	core_writel(priv, value, SF2_PAGE_REG_MKADDR(page, reg));
+	core_ग_लिखोl(priv, value, SF2_PAGE_REG_MKADDR(page, reg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_sf2_core_write32(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक bcm_sf2_core_ग_लिखो32(काष्ठा b53_device *dev, u8 page, u8 reg,
 				u32 value)
-{
-	struct bcm_sf2_priv *priv = dev->priv;
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev->priv;
 
-	core_writel(priv, value, SF2_PAGE_REG_MKADDR(page, reg));
+	core_ग_लिखोl(priv, value, SF2_PAGE_REG_MKADDR(page, reg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_sf2_core_write64(struct b53_device *dev, u8 page, u8 reg,
+अटल पूर्णांक bcm_sf2_core_ग_लिखो64(काष्ठा b53_device *dev, u8 page, u8 reg,
 				u64 value)
-{
-	struct bcm_sf2_priv *priv = dev->priv;
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev->priv;
 
-	core_writeq(priv, value, SF2_PAGE_REG_MKADDR(page, reg));
+	core_ग_लिखोq(priv, value, SF2_PAGE_REG_MKADDR(page, reg));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct b53_io_ops bcm_sf2_io_ops = {
-	.read8	= bcm_sf2_core_read8,
-	.read16	= bcm_sf2_core_read16,
-	.read32	= bcm_sf2_core_read32,
-	.read48	= bcm_sf2_core_read64,
-	.read64	= bcm_sf2_core_read64,
-	.write8	= bcm_sf2_core_write8,
-	.write16 = bcm_sf2_core_write16,
-	.write32 = bcm_sf2_core_write32,
-	.write48 = bcm_sf2_core_write64,
-	.write64 = bcm_sf2_core_write64,
-};
+अटल स्थिर काष्ठा b53_io_ops bcm_sf2_io_ops = अणु
+	.पढ़ो8	= bcm_sf2_core_पढ़ो8,
+	.पढ़ो16	= bcm_sf2_core_पढ़ो16,
+	.पढ़ो32	= bcm_sf2_core_पढ़ो32,
+	.पढ़ो48	= bcm_sf2_core_पढ़ो64,
+	.पढ़ो64	= bcm_sf2_core_पढ़ो64,
+	.ग_लिखो8	= bcm_sf2_core_ग_लिखो8,
+	.ग_लिखो16 = bcm_sf2_core_ग_लिखो16,
+	.ग_लिखो32 = bcm_sf2_core_ग_लिखो32,
+	.ग_लिखो48 = bcm_sf2_core_ग_लिखो64,
+	.ग_लिखो64 = bcm_sf2_core_ग_लिखो64,
+पूर्ण;
 
-static void bcm_sf2_sw_get_strings(struct dsa_switch *ds, int port,
-				   u32 stringset, uint8_t *data)
-{
-	int cnt = b53_get_sset_count(ds, port, stringset);
+अटल व्योम bcm_sf2_sw_get_strings(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				   u32 stringset, uपूर्णांक8_t *data)
+अणु
+	पूर्णांक cnt = b53_get_sset_count(ds, port, stringset);
 
 	b53_get_strings(ds, port, stringset, data);
 	bcm_sf2_cfp_get_strings(ds, port, stringset,
 				data + cnt * ETH_GSTRING_LEN);
-}
+पूर्ण
 
-static void bcm_sf2_sw_get_ethtool_stats(struct dsa_switch *ds, int port,
-					 uint64_t *data)
-{
-	int cnt = b53_get_sset_count(ds, port, ETH_SS_STATS);
+अटल व्योम bcm_sf2_sw_get_ethtool_stats(काष्ठा dsa_चयन *ds, पूर्णांक port,
+					 uपूर्णांक64_t *data)
+अणु
+	पूर्णांक cnt = b53_get_sset_count(ds, port, ETH_SS_STATS);
 
 	b53_get_ethtool_stats(ds, port, data);
 	bcm_sf2_cfp_get_ethtool_stats(ds, port, data + cnt);
-}
+पूर्ण
 
-static int bcm_sf2_sw_get_sset_count(struct dsa_switch *ds, int port,
-				     int sset)
-{
-	int cnt = b53_get_sset_count(ds, port, sset);
+अटल पूर्णांक bcm_sf2_sw_get_sset_count(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				     पूर्णांक sset)
+अणु
+	पूर्णांक cnt = b53_get_sset_count(ds, port, sset);
 
-	if (cnt < 0)
-		return cnt;
+	अगर (cnt < 0)
+		वापस cnt;
 
 	cnt += bcm_sf2_cfp_get_sset_count(ds, port, sset);
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-static const struct dsa_switch_ops bcm_sf2_ops = {
+अटल स्थिर काष्ठा dsa_चयन_ops bcm_sf2_ops = अणु
 	.get_tag_protocol	= b53_get_tag_protocol,
 	.setup			= bcm_sf2_sw_setup,
-	.teardown		= bcm_sf2_sw_teardown,
+	.tearकरोwn		= bcm_sf2_sw_tearकरोwn,
 	.get_strings		= bcm_sf2_sw_get_strings,
 	.get_ethtool_stats	= bcm_sf2_sw_get_ethtool_stats,
 	.get_sset_count		= bcm_sf2_sw_get_sset_count,
@@ -1183,7 +1184,7 @@ static const struct dsa_switch_ops bcm_sf2_ops = {
 	.get_phy_flags		= bcm_sf2_sw_get_phy_flags,
 	.phylink_validate	= bcm_sf2_sw_validate,
 	.phylink_mac_config	= bcm_sf2_sw_mac_config,
-	.phylink_mac_link_down	= bcm_sf2_sw_mac_link_down,
+	.phylink_mac_link_करोwn	= bcm_sf2_sw_mac_link_करोwn,
 	.phylink_mac_link_up	= bcm_sf2_sw_mac_link_up,
 	.phylink_fixed_state	= bcm_sf2_sw_fixed_state,
 	.suspend		= bcm_sf2_sw_suspend,
@@ -1213,21 +1214,21 @@ static const struct dsa_switch_ops bcm_sf2_ops = {
 	.port_mirror_del	= b53_mirror_del,
 	.port_mdb_add		= b53_mdb_add,
 	.port_mdb_del		= b53_mdb_del,
-};
+पूर्ण;
 
-struct bcm_sf2_of_data {
+काष्ठा bcm_sf2_of_data अणु
 	u32 type;
-	const u16 *reg_offsets;
-	unsigned int core_reg_align;
-	unsigned int num_cfp_rules;
-	unsigned int num_crossbar_int_ports;
-};
+	स्थिर u16 *reg_offsets;
+	अचिन्हित पूर्णांक core_reg_align;
+	अचिन्हित पूर्णांक num_cfp_rules;
+	अचिन्हित पूर्णांक num_crossbar_पूर्णांक_ports;
+पूर्ण;
 
-static const u16 bcm_sf2_4908_reg_offsets[] = {
+अटल स्थिर u16 bcm_sf2_4908_reg_offsets[] = अणु
 	[REG_SWITCH_CNTRL]	= 0x00,
 	[REG_SWITCH_STATUS]	= 0x04,
-	[REG_DIR_DATA_WRITE]	= 0x08,
-	[REG_DIR_DATA_READ]	= 0x0c,
+	[REG_सूची_DATA_WRITE]	= 0x08,
+	[REG_सूची_DATA_READ]	= 0x0c,
 	[REG_SWITCH_REVISION]	= 0x10,
 	[REG_PHY_REVISION]	= 0x14,
 	[REG_SPHY_CNTRL]	= 0x24,
@@ -1236,22 +1237,22 @@ static const u16 bcm_sf2_4908_reg_offsets[] = {
 	[REG_LED_0_CNTRL]	= 0x40,
 	[REG_LED_1_CNTRL]	= 0x4c,
 	[REG_LED_2_CNTRL]	= 0x58,
-};
+पूर्ण;
 
-static const struct bcm_sf2_of_data bcm_sf2_4908_data = {
+अटल स्थिर काष्ठा bcm_sf2_of_data bcm_sf2_4908_data = अणु
 	.type		= BCM4908_DEVICE_ID,
 	.core_reg_align	= 0,
 	.reg_offsets	= bcm_sf2_4908_reg_offsets,
 	.num_cfp_rules	= 256,
-	.num_crossbar_int_ports = 2,
-};
+	.num_crossbar_पूर्णांक_ports = 2,
+पूर्ण;
 
-/* Register offsets for the SWITCH_REG_* block */
-static const u16 bcm_sf2_7445_reg_offsets[] = {
+/* Register offsets क्रम the SWITCH_REG_* block */
+अटल स्थिर u16 bcm_sf2_7445_reg_offsets[] = अणु
 	[REG_SWITCH_CNTRL]	= 0x00,
 	[REG_SWITCH_STATUS]	= 0x04,
-	[REG_DIR_DATA_WRITE]	= 0x08,
-	[REG_DIR_DATA_READ]	= 0x0C,
+	[REG_सूची_DATA_WRITE]	= 0x08,
+	[REG_सूची_DATA_READ]	= 0x0C,
 	[REG_SWITCH_REVISION]	= 0x18,
 	[REG_PHY_REVISION]	= 0x1C,
 	[REG_SPHY_CNTRL]	= 0x2C,
@@ -1261,20 +1262,20 @@ static const u16 bcm_sf2_7445_reg_offsets[] = {
 	[REG_LED_0_CNTRL]	= 0x90,
 	[REG_LED_1_CNTRL]	= 0x94,
 	[REG_LED_2_CNTRL]	= 0x98,
-};
+पूर्ण;
 
-static const struct bcm_sf2_of_data bcm_sf2_7445_data = {
+अटल स्थिर काष्ठा bcm_sf2_of_data bcm_sf2_7445_data = अणु
 	.type		= BCM7445_DEVICE_ID,
 	.core_reg_align	= 0,
 	.reg_offsets	= bcm_sf2_7445_reg_offsets,
 	.num_cfp_rules	= 256,
-};
+पूर्ण;
 
-static const u16 bcm_sf2_7278_reg_offsets[] = {
+अटल स्थिर u16 bcm_sf2_7278_reg_offsets[] = अणु
 	[REG_SWITCH_CNTRL]	= 0x00,
 	[REG_SWITCH_STATUS]	= 0x04,
-	[REG_DIR_DATA_WRITE]	= 0x08,
-	[REG_DIR_DATA_READ]	= 0x0c,
+	[REG_सूची_DATA_WRITE]	= 0x08,
+	[REG_सूची_DATA_READ]	= 0x0c,
 	[REG_SWITCH_REVISION]	= 0x10,
 	[REG_PHY_REVISION]	= 0x14,
 	[REG_SPHY_CNTRL]	= 0x24,
@@ -1284,85 +1285,85 @@ static const u16 bcm_sf2_7278_reg_offsets[] = {
 	[REG_LED_0_CNTRL]	= 0x40,
 	[REG_LED_1_CNTRL]	= 0x4c,
 	[REG_LED_2_CNTRL]	= 0x58,
-};
+पूर्ण;
 
-static const struct bcm_sf2_of_data bcm_sf2_7278_data = {
+अटल स्थिर काष्ठा bcm_sf2_of_data bcm_sf2_7278_data = अणु
 	.type		= BCM7278_DEVICE_ID,
 	.core_reg_align	= 1,
 	.reg_offsets	= bcm_sf2_7278_reg_offsets,
 	.num_cfp_rules	= 128,
-};
+पूर्ण;
 
-static const struct of_device_id bcm_sf2_of_match[] = {
-	{ .compatible = "brcm,bcm4908-switch",
+अटल स्थिर काष्ठा of_device_id bcm_sf2_of_match[] = अणु
+	अणु .compatible = "brcm,bcm4908-switch",
 	  .data = &bcm_sf2_4908_data
-	},
-	{ .compatible = "brcm,bcm7445-switch-v4.0",
+	पूर्ण,
+	अणु .compatible = "brcm,bcm7445-switch-v4.0",
 	  .data = &bcm_sf2_7445_data
-	},
-	{ .compatible = "brcm,bcm7278-switch-v4.0",
+	पूर्ण,
+	अणु .compatible = "brcm,bcm7278-switch-v4.0",
 	  .data = &bcm_sf2_7278_data
-	},
-	{ .compatible = "brcm,bcm7278-switch-v4.8",
+	पूर्ण,
+	अणु .compatible = "brcm,bcm7278-switch-v4.8",
 	  .data = &bcm_sf2_7278_data
-	},
-	{ /* sentinel */ },
-};
+	पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcm_sf2_of_match);
 
-static int bcm_sf2_sw_probe(struct platform_device *pdev)
-{
-	const char *reg_names[BCM_SF2_REGS_NUM] = BCM_SF2_REGS_NAME;
-	struct device_node *dn = pdev->dev.of_node;
-	const struct of_device_id *of_id = NULL;
-	const struct bcm_sf2_of_data *data;
-	struct b53_platform_data *pdata;
-	struct dsa_switch_ops *ops;
-	struct device_node *ports;
-	struct bcm_sf2_priv *priv;
-	struct b53_device *dev;
-	struct dsa_switch *ds;
-	void __iomem **base;
-	unsigned int i;
+अटल पूर्णांक bcm_sf2_sw_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर अक्षर *reg_names[BCM_SF2_REGS_NUM] = BCM_SF2_REGS_NAME;
+	काष्ठा device_node *dn = pdev->dev.of_node;
+	स्थिर काष्ठा of_device_id *of_id = शून्य;
+	स्थिर काष्ठा bcm_sf2_of_data *data;
+	काष्ठा b53_platक्रमm_data *pdata;
+	काष्ठा dsa_चयन_ops *ops;
+	काष्ठा device_node *ports;
+	काष्ठा bcm_sf2_priv *priv;
+	काष्ठा b53_device *dev;
+	काष्ठा dsa_चयन *ds;
+	व्योम __iomem **base;
+	अचिन्हित पूर्णांक i;
 	u32 reg, rev;
-	int ret;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(&pdev->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&pdev->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	ops = devm_kzalloc(&pdev->dev, sizeof(*ops), GFP_KERNEL);
-	if (!ops)
-		return -ENOMEM;
+	ops = devm_kzalloc(&pdev->dev, माप(*ops), GFP_KERNEL);
+	अगर (!ops)
+		वापस -ENOMEM;
 
-	dev = b53_switch_alloc(&pdev->dev, &bcm_sf2_io_ops, priv);
-	if (!dev)
-		return -ENOMEM;
+	dev = b53_चयन_alloc(&pdev->dev, &bcm_sf2_io_ops, priv);
+	अगर (!dev)
+		वापस -ENOMEM;
 
-	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस -ENOMEM;
 
 	of_id = of_match_node(bcm_sf2_of_match, dn);
-	if (!of_id || !of_id->data)
-		return -EINVAL;
+	अगर (!of_id || !of_id->data)
+		वापस -EINVAL;
 
 	data = of_id->data;
 
-	/* Set SWITCH_REG register offsets and SWITCH_CORE align factor */
+	/* Set SWITCH_REG रेजिस्टर offsets and SWITCH_CORE align factor */
 	priv->type = data->type;
 	priv->reg_offsets = data->reg_offsets;
 	priv->core_reg_align = data->core_reg_align;
 	priv->num_cfp_rules = data->num_cfp_rules;
-	priv->num_crossbar_int_ports = data->num_crossbar_int_ports;
+	priv->num_crossbar_पूर्णांक_ports = data->num_crossbar_पूर्णांक_ports;
 
 	priv->rcdev = devm_reset_control_get_optional_exclusive(&pdev->dev,
 								"switch");
-	if (IS_ERR(priv->rcdev))
-		return PTR_ERR(priv->rcdev);
+	अगर (IS_ERR(priv->rcdev))
+		वापस PTR_ERR(priv->rcdev);
 
-	/* Auto-detection using standard registers will not work, so
-	 * provide an indication of what kind of device we are for
+	/* Auto-detection using standard रेजिस्टरs will not work, so
+	 * provide an indication of what kind of device we are क्रम
 	 * b53_common to work with
 	 */
 	pdata->chip_id = priv->type;
@@ -1381,116 +1382,116 @@ static int bcm_sf2_sw_probe(struct platform_device *pdev)
 	mutex_init(&priv->cfp.lock);
 	INIT_LIST_HEAD(&priv->cfp.rules_list);
 
-	/* CFP rule #0 cannot be used for specific classifications, flag it as
+	/* CFP rule #0 cannot be used क्रम specअगरic classअगरications, flag it as
 	 * permanently used
 	 */
 	set_bit(0, priv->cfp.used);
 	set_bit(0, priv->cfp.unique);
 
-	/* Balance of_node_put() done by of_find_node_by_name() */
+	/* Balance of_node_put() करोne by of_find_node_by_name() */
 	of_node_get(dn);
 	ports = of_find_node_by_name(dn, "ports");
-	if (ports) {
-		bcm_sf2_identify_ports(priv, ports);
+	अगर (ports) अणु
+		bcm_sf2_identअगरy_ports(priv, ports);
 		of_node_put(ports);
-	}
+	पूर्ण
 
 	priv->irq0 = irq_of_parse_and_map(dn, 0);
 	priv->irq1 = irq_of_parse_and_map(dn, 1);
 
 	base = &priv->core;
-	for (i = 0; i < BCM_SF2_REGS_NUM; i++) {
-		*base = devm_platform_ioremap_resource(pdev, i);
-		if (IS_ERR(*base)) {
+	क्रम (i = 0; i < BCM_SF2_REGS_NUM; i++) अणु
+		*base = devm_platक्रमm_ioremap_resource(pdev, i);
+		अगर (IS_ERR(*base)) अणु
 			pr_err("unable to find register: %s\n", reg_names[i]);
-			return PTR_ERR(*base);
-		}
+			वापस PTR_ERR(*base);
+		पूर्ण
 		base++;
-	}
+	पूर्ण
 
 	priv->clk = devm_clk_get_optional(&pdev->dev, "sw_switch");
-	if (IS_ERR(priv->clk))
-		return PTR_ERR(priv->clk);
+	अगर (IS_ERR(priv->clk))
+		वापस PTR_ERR(priv->clk);
 
 	clk_prepare_enable(priv->clk);
 
-	priv->clk_mdiv = devm_clk_get_optional(&pdev->dev, "sw_switch_mdiv");
-	if (IS_ERR(priv->clk_mdiv)) {
-		ret = PTR_ERR(priv->clk_mdiv);
-		goto out_clk;
-	}
+	priv->clk_mभाग = devm_clk_get_optional(&pdev->dev, "sw_switch_mdiv");
+	अगर (IS_ERR(priv->clk_mभाग)) अणु
+		ret = PTR_ERR(priv->clk_mभाग);
+		जाओ out_clk;
+	पूर्ण
 
-	clk_prepare_enable(priv->clk_mdiv);
+	clk_prepare_enable(priv->clk_mभाग);
 
 	ret = bcm_sf2_sw_rst(priv);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("unable to software reset switch: %d\n", ret);
-		goto out_clk_mdiv;
-	}
+		जाओ out_clk_mभाग;
+	पूर्ण
 
 	bcm_sf2_crossbar_setup(priv);
 
 	bcm_sf2_gphy_enable_set(priv->dev->ds, true);
 
-	ret = bcm_sf2_mdio_register(ds);
-	if (ret) {
+	ret = bcm_sf2_mdio_रेजिस्टर(ds);
+	अगर (ret) अणु
 		pr_err("failed to register MDIO bus\n");
-		goto out_clk_mdiv;
-	}
+		जाओ out_clk_mभाग;
+	पूर्ण
 
 	bcm_sf2_gphy_enable_set(priv->dev->ds, false);
 
 	ret = bcm_sf2_cfp_rst(priv);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("failed to reset CFP\n");
-		goto out_mdio;
-	}
+		जाओ out_mdio;
+	पूर्ण
 
-	/* Disable all interrupts and request them */
-	bcm_sf2_intr_disable(priv);
+	/* Disable all पूर्णांकerrupts and request them */
+	bcm_sf2_पूर्णांकr_disable(priv);
 
-	ret = devm_request_irq(&pdev->dev, priv->irq0, bcm_sf2_switch_0_isr, 0,
+	ret = devm_request_irq(&pdev->dev, priv->irq0, bcm_sf2_चयन_0_isr, 0,
 			       "switch_0", ds);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("failed to request switch_0 IRQ\n");
-		goto out_mdio;
-	}
+		जाओ out_mdio;
+	पूर्ण
 
-	ret = devm_request_irq(&pdev->dev, priv->irq1, bcm_sf2_switch_1_isr, 0,
+	ret = devm_request_irq(&pdev->dev, priv->irq1, bcm_sf2_चयन_1_isr, 0,
 			       "switch_1", ds);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("failed to request switch_1 IRQ\n");
-		goto out_mdio;
-	}
+		जाओ out_mdio;
+	पूर्ण
 
 	/* Reset the MIB counters */
-	reg = core_readl(priv, CORE_GMNCFGCFG);
+	reg = core_पढ़ोl(priv, CORE_GMNCFGCFG);
 	reg |= RST_MIB_CNT;
-	core_writel(priv, reg, CORE_GMNCFGCFG);
+	core_ग_लिखोl(priv, reg, CORE_GMNCFGCFG);
 	reg &= ~RST_MIB_CNT;
-	core_writel(priv, reg, CORE_GMNCFGCFG);
+	core_ग_लिखोl(priv, reg, CORE_GMNCFGCFG);
 
-	/* Get the maximum number of ports for this switch */
-	priv->hw_params.num_ports = core_readl(priv, CORE_IMP0_PRT_ID) + 1;
-	if (priv->hw_params.num_ports > DSA_MAX_PORTS)
+	/* Get the maximum number of ports क्रम this चयन */
+	priv->hw_params.num_ports = core_पढ़ोl(priv, CORE_IMP0_PRT_ID) + 1;
+	अगर (priv->hw_params.num_ports > DSA_MAX_PORTS)
 		priv->hw_params.num_ports = DSA_MAX_PORTS;
 
-	/* Assume a single GPHY setup if we can't read that property */
-	if (of_property_read_u32(dn, "brcm,num-gphy",
+	/* Assume a single GPHY setup अगर we can't पढ़ो that property */
+	अगर (of_property_पढ़ो_u32(dn, "brcm,num-gphy",
 				 &priv->hw_params.num_gphy))
 		priv->hw_params.num_gphy = 1;
 
-	rev = reg_readl(priv, REG_SWITCH_REVISION);
+	rev = reg_पढ़ोl(priv, REG_SWITCH_REVISION);
 	priv->hw_params.top_rev = (rev >> SWITCH_TOP_REV_SHIFT) &
 					SWITCH_TOP_REV_MASK;
 	priv->hw_params.core_rev = (rev & SF2_REV_MASK);
 
-	rev = reg_readl(priv, REG_PHY_REVISION);
+	rev = reg_पढ़ोl(priv, REG_PHY_REVISION);
 	priv->hw_params.gphy_rev = rev & PHY_REVISION_MASK;
 
-	ret = b53_switch_register(dev);
-	if (ret)
-		goto out_mdio;
+	ret = b53_चयन_रेजिस्टर(dev);
+	अगर (ret)
+		जाओ out_mdio;
 
 	dev_info(&pdev->dev,
 		 "Starfighter 2 top: %x.%02x, core: %x.%02x, IRQs: %d, %d\n",
@@ -1498,80 +1499,80 @@ static int bcm_sf2_sw_probe(struct platform_device *pdev)
 		 priv->hw_params.core_rev >> 8, priv->hw_params.core_rev & 0xff,
 		 priv->irq0, priv->irq1);
 
-	return 0;
+	वापस 0;
 
 out_mdio:
-	bcm_sf2_mdio_unregister(priv);
-out_clk_mdiv:
-	clk_disable_unprepare(priv->clk_mdiv);
+	bcm_sf2_mdio_unरेजिस्टर(priv);
+out_clk_mभाग:
+	clk_disable_unprepare(priv->clk_mभाग);
 out_clk:
 	clk_disable_unprepare(priv->clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int bcm_sf2_sw_remove(struct platform_device *pdev)
-{
-	struct bcm_sf2_priv *priv = platform_get_drvdata(pdev);
+अटल पूर्णांक bcm_sf2_sw_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm_sf2_priv *priv = platक्रमm_get_drvdata(pdev);
 
 	priv->wol_ports_mask = 0;
-	/* Disable interrupts */
-	bcm_sf2_intr_disable(priv);
-	dsa_unregister_switch(priv->dev->ds);
-	bcm_sf2_cfp_exit(priv->dev->ds);
-	bcm_sf2_mdio_unregister(priv);
-	clk_disable_unprepare(priv->clk_mdiv);
+	/* Disable पूर्णांकerrupts */
+	bcm_sf2_पूर्णांकr_disable(priv);
+	dsa_unरेजिस्टर_चयन(priv->dev->ds);
+	bcm_sf2_cfp_निकास(priv->dev->ds);
+	bcm_sf2_mdio_unरेजिस्टर(priv);
+	clk_disable_unprepare(priv->clk_mभाग);
 	clk_disable_unprepare(priv->clk);
-	if (priv->type == BCM7278_DEVICE_ID)
-		reset_control_assert(priv->rcdev);
+	अगर (priv->type == BCM7278_DEVICE_ID)
+		reset_control_निश्चित(priv->rcdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bcm_sf2_sw_shutdown(struct platform_device *pdev)
-{
-	struct bcm_sf2_priv *priv = platform_get_drvdata(pdev);
+अटल व्योम bcm_sf2_sw_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm_sf2_priv *priv = platक्रमm_get_drvdata(pdev);
 
-	/* For a kernel about to be kexec'd we want to keep the GPHY on for a
+	/* For a kernel about to be kexec'd we want to keep the GPHY on क्रम a
 	 * successful MDIO bus scan to occur. If we did turn off the GPHY
-	 * before (e.g: port_disable), this will also power it back on.
+	 * beक्रमe (e.g: port_disable), this will also घातer it back on.
 	 *
-	 * Do not rely on kexec_in_progress, just power the PHY on.
+	 * Do not rely on kexec_in_progress, just घातer the PHY on.
 	 */
-	if (priv->hw_params.num_gphy == 1)
+	अगर (priv->hw_params.num_gphy == 1)
 		bcm_sf2_gphy_enable_set(priv->dev->ds, true);
-}
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int bcm_sf2_suspend(struct device *dev)
-{
-	struct bcm_sf2_priv *priv = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक bcm_sf2_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev_get_drvdata(dev);
 
-	return dsa_switch_suspend(priv->dev->ds);
-}
+	वापस dsa_चयन_suspend(priv->dev->ds);
+पूर्ण
 
-static int bcm_sf2_resume(struct device *dev)
-{
-	struct bcm_sf2_priv *priv = dev_get_drvdata(dev);
+अटल पूर्णांक bcm_sf2_resume(काष्ठा device *dev)
+अणु
+	काष्ठा bcm_sf2_priv *priv = dev_get_drvdata(dev);
 
-	return dsa_switch_resume(priv->dev->ds);
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस dsa_चयन_resume(priv->dev->ds);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static SIMPLE_DEV_PM_OPS(bcm_sf2_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(bcm_sf2_pm_ops,
 			 bcm_sf2_suspend, bcm_sf2_resume);
 
 
-static struct platform_driver bcm_sf2_driver = {
+अटल काष्ठा platक्रमm_driver bcm_sf2_driver = अणु
 	.probe	= bcm_sf2_sw_probe,
-	.remove	= bcm_sf2_sw_remove,
-	.shutdown = bcm_sf2_sw_shutdown,
-	.driver = {
+	.हटाओ	= bcm_sf2_sw_हटाओ,
+	.shutकरोwn = bcm_sf2_sw_shutकरोwn,
+	.driver = अणु
 		.name = "brcm-sf2",
 		.of_match_table = bcm_sf2_of_match,
 		.pm = &bcm_sf2_pm_ops,
-	},
-};
-module_platform_driver(bcm_sf2_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(bcm_sf2_driver);
 
 MODULE_AUTHOR("Broadcom Corporation");
 MODULE_DESCRIPTION("Driver for Broadcom Starfighter 2 ethernet switch chip");

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *    Copyright IBM Corp. 2002, 2007
  *    Author(s): Ingo Adlung <adlung@de.ibm.com>
@@ -7,102 +8,102 @@
  *		 Peter Oberparleiter <peter.oberparleiter@de.ibm.com>
  */
 
-#ifndef _ASM_S390_AIRQ_H
-#define _ASM_S390_AIRQ_H
+#अगर_अघोषित _ASM_S390_AIRQ_H
+#घोषणा _ASM_S390_AIRQ_H
 
-#include <linux/bit_spinlock.h>
-#include <linux/dma-mapping.h>
+#समावेश <linux/bit_spinlock.h>
+#समावेश <linux/dma-mapping.h>
 
-struct airq_struct {
-	struct hlist_node list;		/* Handler queueing. */
-	void (*handler)(struct airq_struct *airq, bool floating);
-	u8 *lsi_ptr;			/* Local-Summary-Indicator pointer */
+काष्ठा airq_काष्ठा अणु
+	काष्ठा hlist_node list;		/* Handler queueing. */
+	व्योम (*handler)(काष्ठा airq_काष्ठा *airq, bool भग्नing);
+	u8 *lsi_ptr;			/* Local-Summary-Indicator poपूर्णांकer */
 	u8 lsi_mask;			/* Local-Summary-Indicator mask */
 	u8 isc;				/* Interrupt-subclass */
 	u8 flags;
-};
+पूर्ण;
 
-#define AIRQ_PTR_ALLOCATED	0x01
+#घोषणा AIRQ_PTR_ALLOCATED	0x01
 
-int register_adapter_interrupt(struct airq_struct *airq);
-void unregister_adapter_interrupt(struct airq_struct *airq);
+पूर्णांक रेजिस्टर_adapter_पूर्णांकerrupt(काष्ठा airq_काष्ठा *airq);
+व्योम unरेजिस्टर_adapter_पूर्णांकerrupt(काष्ठा airq_काष्ठा *airq);
 
-/* Adapter interrupt bit vector */
-struct airq_iv {
-	unsigned long *vector;	/* Adapter interrupt bit vector */
-	dma_addr_t vector_dma; /* Adapter interrupt bit vector dma */
-	unsigned long *avail;	/* Allocation bit mask for the bit vector */
-	unsigned long *bitlock;	/* Lock bit mask for the bit vector */
-	unsigned long *ptr;	/* Pointer associated with each bit */
-	unsigned int *data;	/* 32 bit value associated with each bit */
-	unsigned long bits;	/* Number of bits in the vector */
-	unsigned long end;	/* Number of highest allocated bit + 1 */
-	unsigned long flags;	/* Allocation flags */
-	spinlock_t lock;	/* Lock to protect alloc & free */
-};
+/* Adapter पूर्णांकerrupt bit vector */
+काष्ठा airq_iv अणु
+	अचिन्हित दीर्घ *vector;	/* Adapter पूर्णांकerrupt bit vector */
+	dma_addr_t vector_dma; /* Adapter पूर्णांकerrupt bit vector dma */
+	अचिन्हित दीर्घ *avail;	/* Allocation bit mask क्रम the bit vector */
+	अचिन्हित दीर्घ *bitlock;	/* Lock bit mask क्रम the bit vector */
+	अचिन्हित दीर्घ *ptr;	/* Poपूर्णांकer associated with each bit */
+	अचिन्हित पूर्णांक *data;	/* 32 bit value associated with each bit */
+	अचिन्हित दीर्घ bits;	/* Number of bits in the vector */
+	अचिन्हित दीर्घ end;	/* Number of highest allocated bit + 1 */
+	अचिन्हित दीर्घ flags;	/* Allocation flags */
+	spinlock_t lock;	/* Lock to protect alloc & मुक्त */
+पूर्ण;
 
-#define AIRQ_IV_ALLOC		1	/* Use an allocation bit mask */
-#define AIRQ_IV_BITLOCK		2	/* Allocate the lock bit mask */
-#define AIRQ_IV_PTR		4	/* Allocate the ptr array */
-#define AIRQ_IV_DATA		8	/* Allocate the data array */
-#define AIRQ_IV_CACHELINE	16	/* Cacheline alignment for the vector */
+#घोषणा AIRQ_IV_ALLOC		1	/* Use an allocation bit mask */
+#घोषणा AIRQ_IV_BITLOCK		2	/* Allocate the lock bit mask */
+#घोषणा AIRQ_IV_PTR		4	/* Allocate the ptr array */
+#घोषणा AIRQ_IV_DATA		8	/* Allocate the data array */
+#घोषणा AIRQ_IV_CACHELINE	16	/* Cacheline alignment क्रम the vector */
 
-struct airq_iv *airq_iv_create(unsigned long bits, unsigned long flags);
-void airq_iv_release(struct airq_iv *iv);
-unsigned long airq_iv_alloc(struct airq_iv *iv, unsigned long num);
-void airq_iv_free(struct airq_iv *iv, unsigned long bit, unsigned long num);
-unsigned long airq_iv_scan(struct airq_iv *iv, unsigned long start,
-			   unsigned long end);
+काष्ठा airq_iv *airq_iv_create(अचिन्हित दीर्घ bits, अचिन्हित दीर्घ flags);
+व्योम airq_iv_release(काष्ठा airq_iv *iv);
+अचिन्हित दीर्घ airq_iv_alloc(काष्ठा airq_iv *iv, अचिन्हित दीर्घ num);
+व्योम airq_iv_मुक्त(काष्ठा airq_iv *iv, अचिन्हित दीर्घ bit, अचिन्हित दीर्घ num);
+अचिन्हित दीर्घ airq_iv_scan(काष्ठा airq_iv *iv, अचिन्हित दीर्घ start,
+			   अचिन्हित दीर्घ end);
 
-static inline unsigned long airq_iv_alloc_bit(struct airq_iv *iv)
-{
-	return airq_iv_alloc(iv, 1);
-}
+अटल अंतरभूत अचिन्हित दीर्घ airq_iv_alloc_bit(काष्ठा airq_iv *iv)
+अणु
+	वापस airq_iv_alloc(iv, 1);
+पूर्ण
 
-static inline void airq_iv_free_bit(struct airq_iv *iv, unsigned long bit)
-{
-	airq_iv_free(iv, bit, 1);
-}
+अटल अंतरभूत व्योम airq_iv_मुक्त_bit(काष्ठा airq_iv *iv, अचिन्हित दीर्घ bit)
+अणु
+	airq_iv_मुक्त(iv, bit, 1);
+पूर्ण
 
-static inline unsigned long airq_iv_end(struct airq_iv *iv)
-{
-	return iv->end;
-}
+अटल अंतरभूत अचिन्हित दीर्घ airq_iv_end(काष्ठा airq_iv *iv)
+अणु
+	वापस iv->end;
+पूर्ण
 
-static inline void airq_iv_lock(struct airq_iv *iv, unsigned long bit)
-{
-	const unsigned long be_to_le = BITS_PER_LONG - 1;
+अटल अंतरभूत व्योम airq_iv_lock(काष्ठा airq_iv *iv, अचिन्हित दीर्घ bit)
+अणु
+	स्थिर अचिन्हित दीर्घ be_to_le = BITS_PER_LONG - 1;
 	bit_spin_lock(bit ^ be_to_le, iv->bitlock);
-}
+पूर्ण
 
-static inline void airq_iv_unlock(struct airq_iv *iv, unsigned long bit)
-{
-	const unsigned long be_to_le = BITS_PER_LONG - 1;
+अटल अंतरभूत व्योम airq_iv_unlock(काष्ठा airq_iv *iv, अचिन्हित दीर्घ bit)
+अणु
+	स्थिर अचिन्हित दीर्घ be_to_le = BITS_PER_LONG - 1;
 	bit_spin_unlock(bit ^ be_to_le, iv->bitlock);
-}
+पूर्ण
 
-static inline void airq_iv_set_data(struct airq_iv *iv, unsigned long bit,
-				    unsigned int data)
-{
+अटल अंतरभूत व्योम airq_iv_set_data(काष्ठा airq_iv *iv, अचिन्हित दीर्घ bit,
+				    अचिन्हित पूर्णांक data)
+अणु
 	iv->data[bit] = data;
-}
+पूर्ण
 
-static inline unsigned int airq_iv_get_data(struct airq_iv *iv,
-					    unsigned long bit)
-{
-	return iv->data[bit];
-}
+अटल अंतरभूत अचिन्हित पूर्णांक airq_iv_get_data(काष्ठा airq_iv *iv,
+					    अचिन्हित दीर्घ bit)
+अणु
+	वापस iv->data[bit];
+पूर्ण
 
-static inline void airq_iv_set_ptr(struct airq_iv *iv, unsigned long bit,
-				   unsigned long ptr)
-{
+अटल अंतरभूत व्योम airq_iv_set_ptr(काष्ठा airq_iv *iv, अचिन्हित दीर्घ bit,
+				   अचिन्हित दीर्घ ptr)
+अणु
 	iv->ptr[bit] = ptr;
-}
+पूर्ण
 
-static inline unsigned long airq_iv_get_ptr(struct airq_iv *iv,
-					    unsigned long bit)
-{
-	return iv->ptr[bit];
-}
+अटल अंतरभूत अचिन्हित दीर्घ airq_iv_get_ptr(काष्ठा airq_iv *iv,
+					    अचिन्हित दीर्घ bit)
+अणु
+	वापस iv->ptr[bit];
+पूर्ण
 
-#endif /* _ASM_S390_AIRQ_H */
+#पूर्ण_अगर /* _ASM_S390_AIRQ_H */

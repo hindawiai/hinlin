@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2015, The Linux Foundation. All rights reserved.
  */
 
-#ifndef UFSHCD_PLTFRM_H_
-#define UFSHCD_PLTFRM_H_
+#अगर_अघोषित UFSHCD_PLTFRM_H_
+#घोषणा UFSHCD_PLTFRM_H_
 
-#include "ufshcd.h"
+#समावेश "ufshcd.h"
 
-#define UFS_PWM_MODE 1
-#define UFS_HS_MODE  2
+#घोषणा UFS_PWM_MODE 1
+#घोषणा UFS_HS_MODE  2
 
-struct ufs_dev_params {
+काष्ठा ufs_dev_params अणु
 	u32 pwm_rx_gear;        /* pwm rx gear to work in */
 	u32 pwm_tx_gear;        /* pwm tx gear to work in */
 	u32 hs_rx_gear;         /* hs rx gear to work in */
@@ -23,32 +24,32 @@ struct ufs_dev_params {
 	u32 tx_pwr_hs;          /* tx hs working pwr */
 	u32 hs_rate;            /* rate A/B to work in HS */
 	u32 desired_working_mode;
-};
+पूर्ण;
 
-int ufshcd_get_pwr_dev_param(struct ufs_dev_params *dev_param,
-			     struct ufs_pa_layer_attr *dev_max,
-			     struct ufs_pa_layer_attr *agreed_pwr);
-void ufshcd_init_pwr_dev_param(struct ufs_dev_params *dev_param);
-int ufshcd_pltfrm_init(struct platform_device *pdev,
-		       const struct ufs_hba_variant_ops *vops);
-void ufshcd_pltfrm_shutdown(struct platform_device *pdev);
+पूर्णांक ufshcd_get_pwr_dev_param(काष्ठा ufs_dev_params *dev_param,
+			     काष्ठा ufs_pa_layer_attr *dev_max,
+			     काष्ठा ufs_pa_layer_attr *agreed_pwr);
+व्योम ufshcd_init_pwr_dev_param(काष्ठा ufs_dev_params *dev_param);
+पूर्णांक ufshcd_pltfrm_init(काष्ठा platक्रमm_device *pdev,
+		       स्थिर काष्ठा ufs_hba_variant_ops *vops);
+व्योम ufshcd_pltfrm_shutकरोwn(काष्ठा platक्रमm_device *pdev);
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 
-int ufshcd_pltfrm_suspend(struct device *dev);
-int ufshcd_pltfrm_resume(struct device *dev);
-int ufshcd_pltfrm_runtime_suspend(struct device *dev);
-int ufshcd_pltfrm_runtime_resume(struct device *dev);
-int ufshcd_pltfrm_runtime_idle(struct device *dev);
+पूर्णांक ufshcd_pltfrm_suspend(काष्ठा device *dev);
+पूर्णांक ufshcd_pltfrm_resume(काष्ठा device *dev);
+पूर्णांक ufshcd_pltfrm_runसमय_suspend(काष्ठा device *dev);
+पूर्णांक ufshcd_pltfrm_runसमय_resume(काष्ठा device *dev);
+पूर्णांक ufshcd_pltfrm_runसमय_idle(काष्ठा device *dev);
 
-#else /* !CONFIG_PM */
+#अन्यथा /* !CONFIG_PM */
 
-#define ufshcd_pltfrm_suspend	NULL
-#define ufshcd_pltfrm_resume	NULL
-#define ufshcd_pltfrm_runtime_suspend	NULL
-#define ufshcd_pltfrm_runtime_resume	NULL
-#define ufshcd_pltfrm_runtime_idle	NULL
+#घोषणा ufshcd_pltfrm_suspend	शून्य
+#घोषणा ufshcd_pltfrm_resume	शून्य
+#घोषणा ufshcd_pltfrm_runसमय_suspend	शून्य
+#घोषणा ufshcd_pltfrm_runसमय_resume	शून्य
+#घोषणा ufshcd_pltfrm_runसमय_idle	शून्य
 
-#endif /* CONFIG_PM */
+#पूर्ण_अगर /* CONFIG_PM */
 
-#endif /* UFSHCD_PLTFRM_H_ */
+#पूर्ण_अगर /* UFSHCD_PLTFRM_H_ */

@@ -1,87 +1,88 @@
-/* Copyright (c) 2012 Coraid, Inc.  See COPYING for GPL terms. */
+<शैली गुरु>
+/* Copyright (c) 2012 Coraid, Inc.  See COPYING क्रम GPL terms. */
 /*
- * aoemain.c
- * Module initialization routines, discover timer
+ * aoeमुख्य.c
+ * Module initialization routines, discover समयr
  */
 
-#include <linux/hdreg.h>
-#include <linux/blkdev.h>
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include "aoe.h"
+#समावेश <linux/hdreg.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश "aoe.h"
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Sam Hopkins <sah@coraid.com>");
 MODULE_DESCRIPTION("AoE block/char driver for 2.6.2 and newer 2.6 kernels");
 MODULE_VERSION(VERSION);
 
-static struct timer_list timer;
+अटल काष्ठा समयr_list समयr;
 
-static void discover_timer(struct timer_list *t)
-{
-	mod_timer(t, jiffies + HZ * 60); /* one minute */
+अटल व्योम discover_समयr(काष्ठा समयr_list *t)
+अणु
+	mod_समयr(t, jअगरfies + HZ * 60); /* one minute */
 
 	aoecmd_cfg(0xffff, 0xff);
-}
+पूर्ण
 
-static void __exit
-aoe_exit(void)
-{
-	del_timer_sync(&timer);
+अटल व्योम __निकास
+aoe_निकास(व्योम)
+अणु
+	del_समयr_sync(&समयr);
 
-	aoenet_exit();
-	unregister_blkdev(AOE_MAJOR, DEVICE_NAME);
-	aoecmd_exit();
-	aoechr_exit();
-	aoedev_exit();
-	aoeblk_exit();		/* free cache after de-allocating bufs */
-}
+	aoenet_निकास();
+	unरेजिस्टर_blkdev(AOE_MAJOR, DEVICE_NAME);
+	aoecmd_निकास();
+	aoechr_निकास();
+	aoedev_निकास();
+	aoeblk_निकास();		/* मुक्त cache after de-allocating bufs */
+पूर्ण
 
-static int __init
-aoe_init(void)
-{
-	int ret;
+अटल पूर्णांक __init
+aoe_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = aoedev_init();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = aoechr_init();
-	if (ret)
-		goto chr_fail;
+	अगर (ret)
+		जाओ chr_fail;
 	ret = aoeblk_init();
-	if (ret)
-		goto blk_fail;
+	अगर (ret)
+		जाओ blk_fail;
 	ret = aoenet_init();
-	if (ret)
-		goto net_fail;
+	अगर (ret)
+		जाओ net_fail;
 	ret = aoecmd_init();
-	if (ret)
-		goto cmd_fail;
-	ret = register_blkdev(AOE_MAJOR, DEVICE_NAME);
-	if (ret < 0) {
-		printk(KERN_ERR "aoe: can't register major\n");
-		goto blkreg_fail;
-	}
-	printk(KERN_INFO "aoe: AoE v%s initialised.\n", VERSION);
+	अगर (ret)
+		जाओ cmd_fail;
+	ret = रेजिस्टर_blkdev(AOE_MAJOR, DEVICE_NAME);
+	अगर (ret < 0) अणु
+		prपूर्णांकk(KERN_ERR "aoe: can't register major\n");
+		जाओ blkreg_fail;
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "aoe: AoE v%s initialised.\n", VERSION);
 
-	timer_setup(&timer, discover_timer, 0);
-	discover_timer(&timer);
-	return 0;
+	समयr_setup(&समयr, discover_समयr, 0);
+	discover_समयr(&समयr);
+	वापस 0;
  blkreg_fail:
-	aoecmd_exit();
+	aoecmd_निकास();
  cmd_fail:
-	aoenet_exit();
+	aoenet_निकास();
  net_fail:
-	aoeblk_exit();
+	aoeblk_निकास();
  blk_fail:
-	aoechr_exit();
+	aoechr_निकास();
  chr_fail:
-	aoedev_exit();
+	aoedev_निकास();
 
-	printk(KERN_INFO "aoe: initialisation failure.\n");
-	return ret;
-}
+	prपूर्णांकk(KERN_INFO "aoe: initialisation failure.\n");
+	वापस ret;
+पूर्ण
 
 module_init(aoe_init);
-module_exit(aoe_exit);
+module_निकास(aoe_निकास);
 

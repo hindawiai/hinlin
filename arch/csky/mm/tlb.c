@@ -1,198 +1,199 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
 
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
 
-#include <asm/mmu_context.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/setup.h>
 
 /*
  * One C-SKY MMU TLB entry contain two PFN/page entry, ie:
  * 1VPN -> 2PFN
  */
-#define TLB_ENTRY_SIZE		(PAGE_SIZE * 2)
-#define TLB_ENTRY_SIZE_MASK	(PAGE_MASK << 1)
+#घोषणा TLB_ENTRY_SIZE		(PAGE_SIZE * 2)
+#घोषणा TLB_ENTRY_SIZE_MASK	(PAGE_MASK << 1)
 
-void flush_tlb_all(void)
-{
+व्योम flush_tlb_all(व्योम)
+अणु
 	tlb_invalid_all();
-}
+पूर्ण
 
-void flush_tlb_mm(struct mm_struct *mm)
-{
-#ifdef CONFIG_CPU_HAS_TLBI
+व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+#अगर_घोषित CONFIG_CPU_HAS_TLBI
 	sync_is();
-	asm volatile(
+	यंत्र अस्थिर(
 		"tlbi.asids %0	\n"
 		"sync.i		\n"
 		:
 		: "r" (cpu_asid(mm))
 		: "memory");
-#else
+#अन्यथा
 	tlb_invalid_all();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*
  * MMU operation regs only could invalid tlb entry in jtlb and we
  * need change asid field to invalid I-utlb & D-utlb.
  */
-#ifndef CONFIG_CPU_HAS_TLBI
-#define restore_asid_inv_utlb(oldpid, newpid) \
-do { \
-	if (oldpid == newpid) \
-		write_mmu_entryhi(oldpid + 1); \
-	write_mmu_entryhi(oldpid); \
-} while (0)
-#endif
+#अगर_अघोषित CONFIG_CPU_HAS_TLBI
+#घोषणा restore_asid_inv_utlb(oldpid, newpid) \
+करो अणु \
+	अगर (oldpid == newpid) \
+		ग_लिखो_mmu_entryhi(oldpid + 1); \
+	ग_लिखो_mmu_entryhi(oldpid); \
+पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-void flush_tlb_range(struct vm_area_struct *vma, unsigned long start,
-			unsigned long end)
-{
-	unsigned long newpid = cpu_asid(vma->vm_mm);
+व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+			अचिन्हित दीर्घ end)
+अणु
+	अचिन्हित दीर्घ newpid = cpu_asid(vma->vm_mm);
 
 	start &= TLB_ENTRY_SIZE_MASK;
 	end   += TLB_ENTRY_SIZE - 1;
 	end   &= TLB_ENTRY_SIZE_MASK;
 
-#ifdef CONFIG_CPU_HAS_TLBI
+#अगर_घोषित CONFIG_CPU_HAS_TLBI
 	sync_is();
-	while (start < end) {
-		asm volatile(
+	जबतक (start < end) अणु
+		यंत्र अस्थिर(
 			"tlbi.vas %0	\n"
 			:
 			: "r" (start | newpid)
 			: "memory");
 
 		start += 2*PAGE_SIZE;
-	}
-	asm volatile("sync.i\n");
-#else
-	{
-	unsigned long flags, oldpid;
+	पूर्ण
+	यंत्र अस्थिर("sync.i\n");
+#अन्यथा
+	अणु
+	अचिन्हित दीर्घ flags, oldpid;
 
 	local_irq_save(flags);
-	oldpid = read_mmu_entryhi() & ASID_MASK;
-	while (start < end) {
-		int idx;
+	oldpid = पढ़ो_mmu_entryhi() & ASID_MASK;
+	जबतक (start < end) अणु
+		पूर्णांक idx;
 
-		write_mmu_entryhi(start | newpid);
+		ग_लिखो_mmu_entryhi(start | newpid);
 		start += 2*PAGE_SIZE;
 		tlb_probe();
-		idx = read_mmu_index();
-		if (idx >= 0)
+		idx = पढ़ो_mmu_index();
+		अगर (idx >= 0)
 			tlb_invalid_indexed();
-	}
+	पूर्ण
 	restore_asid_inv_utlb(oldpid, newpid);
 	local_irq_restore(flags);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-void flush_tlb_kernel_range(unsigned long start, unsigned long end)
-{
+व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	start &= TLB_ENTRY_SIZE_MASK;
 	end   += TLB_ENTRY_SIZE - 1;
 	end   &= TLB_ENTRY_SIZE_MASK;
 
-#ifdef CONFIG_CPU_HAS_TLBI
+#अगर_घोषित CONFIG_CPU_HAS_TLBI
 	sync_is();
-	while (start < end) {
-		asm volatile(
+	जबतक (start < end) अणु
+		यंत्र अस्थिर(
 			"tlbi.vaas %0	\n"
 			:
 			: "r" (start)
 			: "memory");
 
 		start += 2*PAGE_SIZE;
-	}
-	asm volatile("sync.i\n");
-#else
-	{
-	unsigned long flags, oldpid;
+	पूर्ण
+	यंत्र अस्थिर("sync.i\n");
+#अन्यथा
+	अणु
+	अचिन्हित दीर्घ flags, oldpid;
 
 	local_irq_save(flags);
-	oldpid = read_mmu_entryhi() & ASID_MASK;
-	while (start < end) {
-		int idx;
+	oldpid = पढ़ो_mmu_entryhi() & ASID_MASK;
+	जबतक (start < end) अणु
+		पूर्णांक idx;
 
-		write_mmu_entryhi(start | oldpid);
+		ग_लिखो_mmu_entryhi(start | oldpid);
 		start += 2*PAGE_SIZE;
 		tlb_probe();
-		idx = read_mmu_index();
-		if (idx >= 0)
+		idx = पढ़ो_mmu_index();
+		अगर (idx >= 0)
 			tlb_invalid_indexed();
-	}
+	पूर्ण
 	restore_asid_inv_utlb(oldpid, oldpid);
 	local_irq_restore(flags);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-void flush_tlb_page(struct vm_area_struct *vma, unsigned long addr)
-{
-	int newpid = cpu_asid(vma->vm_mm);
+व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक newpid = cpu_asid(vma->vm_mm);
 
 	addr &= TLB_ENTRY_SIZE_MASK;
 
-#ifdef CONFIG_CPU_HAS_TLBI
+#अगर_घोषित CONFIG_CPU_HAS_TLBI
 	sync_is();
-	asm volatile(
+	यंत्र अस्थिर(
 		"tlbi.vas %0	\n"
 		"sync.i		\n"
 		:
 		: "r" (addr | newpid)
 		: "memory");
-#else
-	{
-	int oldpid, idx;
-	unsigned long flags;
+#अन्यथा
+	अणु
+	पूर्णांक oldpid, idx;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	oldpid = read_mmu_entryhi() & ASID_MASK;
-	write_mmu_entryhi(addr | newpid);
+	oldpid = पढ़ो_mmu_entryhi() & ASID_MASK;
+	ग_लिखो_mmu_entryhi(addr | newpid);
 	tlb_probe();
-	idx = read_mmu_index();
-	if (idx >= 0)
+	idx = पढ़ो_mmu_index();
+	अगर (idx >= 0)
 		tlb_invalid_indexed();
 
 	restore_asid_inv_utlb(oldpid, newpid);
 	local_irq_restore(flags);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-void flush_tlb_one(unsigned long addr)
-{
+व्योम flush_tlb_one(अचिन्हित दीर्घ addr)
+अणु
 	addr &= TLB_ENTRY_SIZE_MASK;
 
-#ifdef CONFIG_CPU_HAS_TLBI
+#अगर_घोषित CONFIG_CPU_HAS_TLBI
 	sync_is();
-	asm volatile(
+	यंत्र अस्थिर(
 		"tlbi.vaas %0	\n"
 		"sync.i		\n"
 		:
 		: "r" (addr)
 		: "memory");
-#else
-	{
-	int oldpid, idx;
-	unsigned long flags;
+#अन्यथा
+	अणु
+	पूर्णांक oldpid, idx;
+	अचिन्हित दीर्घ flags;
 
 	local_irq_save(flags);
-	oldpid = read_mmu_entryhi() & ASID_MASK;
-	write_mmu_entryhi(addr | oldpid);
+	oldpid = पढ़ो_mmu_entryhi() & ASID_MASK;
+	ग_लिखो_mmu_entryhi(addr | oldpid);
 	tlb_probe();
-	idx = read_mmu_index();
-	if (idx >= 0)
+	idx = पढ़ो_mmu_index();
+	अगर (idx >= 0)
 		tlb_invalid_indexed();
 
 	restore_asid_inv_utlb(oldpid, oldpid);
 	local_irq_restore(flags);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 EXPORT_SYMBOL(flush_tlb_one);

@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <numa.h>
-#include <numaif.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <numa.h>
+#समावेश <numaअगर.h>
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	numa_available();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

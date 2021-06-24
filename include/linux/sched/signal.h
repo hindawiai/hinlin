@@ -1,734 +1,735 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_SCHED_SIGNAL_H
-#define _LINUX_SCHED_SIGNAL_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_SCHED_SIGNAL_H
+#घोषणा _LINUX_SCHED_SIGNAL_H
 
-#include <linux/rculist.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/sched/jobctl.h>
-#include <linux/sched/task.h>
-#include <linux/cred.h>
-#include <linux/refcount.h>
-#include <linux/posix-timers.h>
-#include <linux/mm_types.h>
-#include <asm/ptrace.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/jobctl.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/posix-समयrs.h>
+#समावेश <linux/mm_types.h>
+#समावेश <यंत्र/ptrace.h>
 
 /*
- * Types defining task->signal and task->sighand and APIs using them:
+ * Types defining task->संकेत and task->sighand and APIs using them:
  */
 
-struct sighand_struct {
+काष्ठा sighand_काष्ठा अणु
 	spinlock_t		siglock;
 	refcount_t		count;
-	wait_queue_head_t	signalfd_wqh;
-	struct k_sigaction	action[_NSIG];
-};
+	रुको_queue_head_t	संकेतfd_wqh;
+	काष्ठा k_sigaction	action[_NSIG];
+पूर्ण;
 
 /*
  * Per-process accounting stats:
  */
-struct pacct_struct {
-	int			ac_flag;
-	long			ac_exitcode;
-	unsigned long		ac_mem;
-	u64			ac_utime, ac_stime;
-	unsigned long		ac_minflt, ac_majflt;
-};
+काष्ठा pacct_काष्ठा अणु
+	पूर्णांक			ac_flag;
+	दीर्घ			ac_निकासcode;
+	अचिन्हित दीर्घ		ac_mem;
+	u64			ac_uसमय, ac_sसमय;
+	अचिन्हित दीर्घ		ac_minflt, ac_majflt;
+पूर्ण;
 
-struct cpu_itimer {
+काष्ठा cpu_iसमयr अणु
 	u64 expires;
 	u64 incr;
-};
+पूर्ण;
 
 /*
- * This is the atomic variant of task_cputime, which can be used for
- * storing and updating task_cputime statistics without locking.
+ * This is the atomic variant of task_cpuसमय, which can be used क्रम
+ * storing and updating task_cpuसमय statistics without locking.
  */
-struct task_cputime_atomic {
-	atomic64_t utime;
-	atomic64_t stime;
-	atomic64_t sum_exec_runtime;
-};
+काष्ठा task_cpuसमय_atomic अणु
+	atomic64_t uसमय;
+	atomic64_t sसमय;
+	atomic64_t sum_exec_runसमय;
+पूर्ण;
 
-#define INIT_CPUTIME_ATOMIC \
-	(struct task_cputime_atomic) {				\
-		.utime = ATOMIC64_INIT(0),			\
-		.stime = ATOMIC64_INIT(0),			\
-		.sum_exec_runtime = ATOMIC64_INIT(0),		\
-	}
+#घोषणा INIT_CPUTIME_ATOMIC \
+	(काष्ठा task_cpuसमय_atomic) अणु				\
+		.uसमय = ATOMIC64_INIT(0),			\
+		.sसमय = ATOMIC64_INIT(0),			\
+		.sum_exec_runसमय = ATOMIC64_INIT(0),		\
+	पूर्ण
 /**
- * struct thread_group_cputimer - thread group interval timer counts
- * @cputime_atomic:	atomic thread group interval timers.
+ * काष्ठा thपढ़ो_group_cpuसमयr - thपढ़ो group पूर्णांकerval समयr counts
+ * @cpuसमय_atomic:	atomic thपढ़ो group पूर्णांकerval समयrs.
  *
- * This structure contains the version of task_cputime, above, that is
- * used for thread group CPU timer calculations.
+ * This काष्ठाure contains the version of task_cpuसमय, above, that is
+ * used क्रम thपढ़ो group CPU समयr calculations.
  */
-struct thread_group_cputimer {
-	struct task_cputime_atomic cputime_atomic;
-};
+काष्ठा thपढ़ो_group_cpuसमयr अणु
+	काष्ठा task_cpuसमय_atomic cpuसमय_atomic;
+पूर्ण;
 
-struct multiprocess_signals {
-	sigset_t signal;
-	struct hlist_node node;
-};
+काष्ठा multiprocess_संकेतs अणु
+	sigset_t संकेत;
+	काष्ठा hlist_node node;
+पूर्ण;
 
 /*
- * NOTE! "signal_struct" does not have its own
- * locking, because a shared signal_struct always
- * implies a shared sighand_struct, so locking
- * sighand_struct is always a proper superset of
- * the locking of signal_struct.
+ * NOTE! "signal_struct" करोes not have its own
+ * locking, because a shared संकेत_काष्ठा always
+ * implies a shared sighand_काष्ठा, so locking
+ * sighand_काष्ठा is always a proper superset of
+ * the locking of संकेत_काष्ठा.
  */
-struct signal_struct {
+काष्ठा संकेत_काष्ठा अणु
 	refcount_t		sigcnt;
 	atomic_t		live;
-	int			nr_threads;
-	struct list_head	thread_head;
+	पूर्णांक			nr_thपढ़ोs;
+	काष्ठा list_head	thपढ़ो_head;
 
-	wait_queue_head_t	wait_chldexit;	/* for wait4() */
+	रुको_queue_head_t	रुको_chldनिकास;	/* क्रम रुको4() */
 
-	/* current thread group signal load-balancing target: */
-	struct task_struct	*curr_target;
+	/* current thपढ़ो group संकेत load-balancing target: */
+	काष्ठा task_काष्ठा	*curr_target;
 
-	/* shared signal handling: */
-	struct sigpending	shared_pending;
+	/* shared संकेत handling: */
+	काष्ठा संक_बाकी	shared_pending;
 
-	/* For collecting multiprocess signals during fork */
-	struct hlist_head	multiprocess;
+	/* For collecting multiprocess संकेतs during विभाजन */
+	काष्ठा hlist_head	multiprocess;
 
-	/* thread group exit support */
-	int			group_exit_code;
+	/* thपढ़ो group निकास support */
+	पूर्णांक			group_निकास_code;
 	/* overloaded:
-	 * - notify group_exit_task when ->count is equal to notify_count
-	 * - everyone except group_exit_task is stopped during signal delivery
-	 *   of fatal signals, group_exit_task processes the signal.
+	 * - notअगरy group_निकास_task when ->count is equal to notअगरy_count
+	 * - everyone except group_निकास_task is stopped during संकेत delivery
+	 *   of fatal संकेतs, group_निकास_task processes the संकेत.
 	 */
-	int			notify_count;
-	struct task_struct	*group_exit_task;
+	पूर्णांक			notअगरy_count;
+	काष्ठा task_काष्ठा	*group_निकास_task;
 
-	/* thread group stop support, overloads group_exit_code too */
-	int			group_stop_count;
-	unsigned int		flags; /* see SIGNAL_* flags below */
+	/* thपढ़ो group stop support, overloads group_निकास_code too */
+	पूर्णांक			group_stop_count;
+	अचिन्हित पूर्णांक		flags; /* see SIGNAL_* flags below */
 
 	/*
 	 * PR_SET_CHILD_SUBREAPER marks a process, like a service
-	 * manager, to re-parent orphan (double-forking) child processes
+	 * manager, to re-parent orphan (द्विगुन-विभाजनing) child processes
 	 * to this process instead of 'init'. The service manager is
-	 * able to receive SIGCHLD signals and is able to investigate
-	 * the process until it calls wait(). All children of this
-	 * process will inherit a flag if they should look for a
-	 * child_subreaper process at exit.
+	 * able to receive SIGCHLD संकेतs and is able to investigate
+	 * the process until it calls रुको(). All children of this
+	 * process will inherit a flag अगर they should look क्रम a
+	 * child_subreaper process at निकास.
 	 */
-	unsigned int		is_child_subreaper:1;
-	unsigned int		has_child_subreaper:1;
+	अचिन्हित पूर्णांक		is_child_subreaper:1;
+	अचिन्हित पूर्णांक		has_child_subreaper:1;
 
-#ifdef CONFIG_POSIX_TIMERS
+#अगर_घोषित CONFIG_POSIX_TIMERS
 
 	/* POSIX.1b Interval Timers */
-	int			posix_timer_id;
-	struct list_head	posix_timers;
+	पूर्णांक			posix_समयr_id;
+	काष्ठा list_head	posix_समयrs;
 
-	/* ITIMER_REAL timer for the process */
-	struct hrtimer real_timer;
-	ktime_t it_real_incr;
+	/* ITIMER_REAL समयr क्रम the process */
+	काष्ठा hrसमयr real_समयr;
+	kसमय_प्रकार it_real_incr;
 
 	/*
-	 * ITIMER_PROF and ITIMER_VIRTUAL timers for the process, we use
-	 * CPUCLOCK_PROF and CPUCLOCK_VIRT for indexing array as these
+	 * ITIMER_PROF and ITIMER_VIRTUAL समयrs क्रम the process, we use
+	 * CPUCLOCK_PROF and CPUCLOCK_VIRT क्रम indexing array as these
 	 * values are defined to 0 and 1 respectively
 	 */
-	struct cpu_itimer it[2];
+	काष्ठा cpu_iसमयr it[2];
 
 	/*
-	 * Thread group totals for process CPU timers.
-	 * See thread_group_cputimer(), et al, for details.
+	 * Thपढ़ो group totals क्रम process CPU समयrs.
+	 * See thपढ़ो_group_cpuसमयr(), et al, क्रम details.
 	 */
-	struct thread_group_cputimer cputimer;
+	काष्ठा thपढ़ो_group_cpuसमयr cpuसमयr;
 
-#endif
-	/* Empty if CONFIG_POSIX_TIMERS=n */
-	struct posix_cputimers posix_cputimers;
+#पूर्ण_अगर
+	/* Empty अगर CONFIG_POSIX_TIMERS=n */
+	काष्ठा posix_cpuसमयrs posix_cpuसमयrs;
 
 	/* PID/PID hash table linkage. */
-	struct pid *pids[PIDTYPE_MAX];
+	काष्ठा pid *pids[PIDTYPE_MAX];
 
-#ifdef CONFIG_NO_HZ_FULL
+#अगर_घोषित CONFIG_NO_HZ_FULL
 	atomic_t tick_dep_mask;
-#endif
+#पूर्ण_अगर
 
-	struct pid *tty_old_pgrp;
+	काष्ठा pid *tty_old_pgrp;
 
-	/* boolean value for session group leader */
-	int leader;
+	/* boolean value क्रम session group leader */
+	पूर्णांक leader;
 
-	struct tty_struct *tty; /* NULL if no tty */
+	काष्ठा tty_काष्ठा *tty; /* शून्य अगर no tty */
 
-#ifdef CONFIG_SCHED_AUTOGROUP
-	struct autogroup *autogroup;
-#endif
+#अगर_घोषित CONFIG_SCHED_AUTOGROUP
+	काष्ठा स्वतःgroup *स्वतःgroup;
+#पूर्ण_अगर
 	/*
-	 * Cumulative resource counters for dead threads in the group,
-	 * and for reaped dead child processes forked by this group.
-	 * Live threads maintain their own counters and add to these
-	 * in __exit_signal, except for the group leader.
+	 * Cumulative resource counters क्रम dead thपढ़ोs in the group,
+	 * and क्रम reaped dead child processes विभाजनed by this group.
+	 * Live thपढ़ोs मुख्यtain their own counters and add to these
+	 * in __निकास_संकेत, except क्रम the group leader.
 	 */
 	seqlock_t stats_lock;
-	u64 utime, stime, cutime, cstime;
-	u64 gtime;
-	u64 cgtime;
-	struct prev_cputime prev_cputime;
-	unsigned long nvcsw, nivcsw, cnvcsw, cnivcsw;
-	unsigned long min_flt, maj_flt, cmin_flt, cmaj_flt;
-	unsigned long inblock, oublock, cinblock, coublock;
-	unsigned long maxrss, cmaxrss;
-	struct task_io_accounting ioac;
+	u64 uसमय, sसमय, cuसमय, csसमय;
+	u64 gसमय;
+	u64 cgसमय;
+	काष्ठा prev_cpuसमय prev_cpuसमय;
+	अचिन्हित दीर्घ nvcsw, nivcsw, cnvcsw, cnivcsw;
+	अचिन्हित दीर्घ min_flt, maj_flt, cmin_flt, cmaj_flt;
+	अचिन्हित दीर्घ inblock, oublock, cinblock, coublock;
+	अचिन्हित दीर्घ maxrss, cmaxrss;
+	काष्ठा task_io_accounting ioac;
 
 	/*
-	 * Cumulative ns of schedule CPU time fo dead threads in the
-	 * group, not including a zombie group leader, (This only differs
-	 * from jiffies_to_ns(utime + stime) if sched_clock uses something
-	 * other than jiffies.)
+	 * Cumulative ns of schedule CPU समय fo dead thपढ़ोs in the
+	 * group, not including a zombie group leader, (This only dअगरfers
+	 * from jअगरfies_to_ns(uसमय + sसमय) अगर sched_घड़ी uses something
+	 * other than jअगरfies.)
 	 */
-	unsigned long long sum_sched_runtime;
+	अचिन्हित दीर्घ दीर्घ sum_sched_runसमय;
 
 	/*
-	 * We don't bother to synchronize most readers of this at all,
-	 * because there is no reader checking a limit that actually needs
+	 * We करोn't bother to synchronize most पढ़ोers of this at all,
+	 * because there is no पढ़ोer checking a limit that actually needs
 	 * to get both rlim_cur and rlim_max atomically, and either one
-	 * alone is a single word that can safely be read normally.
+	 * alone is a single word that can safely be पढ़ो normally.
 	 * getrlimit/setrlimit use task_lock(current->group_leader) to
 	 * protect this instead of the siglock, because they really
 	 * have no need to disable irqs.
 	 */
-	struct rlimit rlim[RLIM_NLIMITS];
+	काष्ठा rlimit rlim[RLIM_NLIMITS];
 
-#ifdef CONFIG_BSD_PROCESS_ACCT
-	struct pacct_struct pacct;	/* per-process accounting information */
-#endif
-#ifdef CONFIG_TASKSTATS
-	struct taskstats *stats;
-#endif
-#ifdef CONFIG_AUDIT
-	unsigned audit_tty;
-	struct tty_audit_buf *tty_audit_buf;
-#endif
+#अगर_घोषित CONFIG_BSD_PROCESS_ACCT
+	काष्ठा pacct_काष्ठा pacct;	/* per-process accounting inक्रमmation */
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_TASKSTATS
+	काष्ठा taskstats *stats;
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_AUDIT
+	अचिन्हित audit_tty;
+	काष्ठा tty_audit_buf *tty_audit_buf;
+#पूर्ण_अगर
 
 	/*
-	 * Thread is the potential origin of an oom condition; kill first on
+	 * Thपढ़ो is the potential origin of an oom condition; समाप्त first on
 	 * oom
 	 */
 	bool oom_flag_origin;
-	short oom_score_adj;		/* OOM kill score adjustment */
-	short oom_score_adj_min;	/* OOM kill score adjustment min value.
+	लघु oom_score_adj;		/* OOM समाप्त score adjusपंचांगent */
+	लघु oom_score_adj_min;	/* OOM समाप्त score adjusपंचांगent min value.
 					 * Only settable by CAP_SYS_RESOURCE. */
-	struct mm_struct *oom_mm;	/* recorded mm when the thread group got
-					 * killed by the oom killer */
+	काष्ठा mm_काष्ठा *oom_mm;	/* recorded mm when the thपढ़ो group got
+					 * समाप्तed by the oom समाप्तer */
 
-	struct mutex cred_guard_mutex;	/* guard against foreign influences on
+	काष्ठा mutex cred_guard_mutex;	/* guard against क्रमeign influences on
 					 * credential calculations
 					 * (notably. ptrace)
-					 * Deprecated do not use in new code.
+					 * Deprecated करो not use in new code.
 					 * Use exec_update_lock instead.
 					 */
-	struct rw_semaphore exec_update_lock;	/* Held while task_struct is
+	काष्ठा rw_semaphore exec_update_lock;	/* Held जबतक task_काष्ठा is
 						 * being updated during exec,
 						 * and may have inconsistent
 						 * permissions.
 						 */
-} __randomize_layout;
+पूर्ण __अक्रमomize_layout;
 
 /*
- * Bits in flags field of signal_struct.
+ * Bits in flags field of संकेत_काष्ठा.
  */
-#define SIGNAL_STOP_STOPPED	0x00000001 /* job control stop in effect */
-#define SIGNAL_STOP_CONTINUED	0x00000002 /* SIGCONT since WCONTINUED reap */
-#define SIGNAL_GROUP_EXIT	0x00000004 /* group exit in progress */
-#define SIGNAL_GROUP_COREDUMP	0x00000008 /* coredump in progress */
+#घोषणा SIGNAL_STOP_STOPPED	0x00000001 /* job control stop in effect */
+#घोषणा SIGNAL_STOP_CONTINUED	0x00000002 /* SIGCONT since WCONTINUED reap */
+#घोषणा SIGNAL_GROUP_EXIT	0x00000004 /* group निकास in progress */
+#घोषणा SIGNAL_GROUP_COREDUMP	0x00000008 /* coredump in progress */
 /*
- * Pending notifications to parent.
+ * Pending notअगरications to parent.
  */
-#define SIGNAL_CLD_STOPPED	0x00000010
-#define SIGNAL_CLD_CONTINUED	0x00000020
-#define SIGNAL_CLD_MASK		(SIGNAL_CLD_STOPPED|SIGNAL_CLD_CONTINUED)
+#घोषणा SIGNAL_CLD_STOPPED	0x00000010
+#घोषणा SIGNAL_CLD_CONTINUED	0x00000020
+#घोषणा SIGNAL_CLD_MASK		(SIGNAL_CLD_STOPPED|SIGNAL_CLD_CONTINUED)
 
-#define SIGNAL_UNKILLABLE	0x00000040 /* for init: ignore fatal signals */
+#घोषणा SIGNAL_UNKILLABLE	0x00000040 /* क्रम init: ignore fatal संकेतs */
 
-#define SIGNAL_STOP_MASK (SIGNAL_CLD_MASK | SIGNAL_STOP_STOPPED | \
+#घोषणा SIGNAL_STOP_MASK (SIGNAL_CLD_MASK | SIGNAL_STOP_STOPPED | \
 			  SIGNAL_STOP_CONTINUED)
 
-static inline void signal_set_stop_flags(struct signal_struct *sig,
-					 unsigned int flags)
-{
+अटल अंतरभूत व्योम संकेत_set_stop_flags(काष्ठा संकेत_काष्ठा *sig,
+					 अचिन्हित पूर्णांक flags)
+अणु
 	WARN_ON(sig->flags & (SIGNAL_GROUP_EXIT|SIGNAL_GROUP_COREDUMP));
 	sig->flags = (sig->flags & ~SIGNAL_STOP_MASK) | flags;
-}
+पूर्ण
 
-/* If true, all threads except ->group_exit_task have pending SIGKILL */
-static inline int signal_group_exit(const struct signal_struct *sig)
-{
-	return	(sig->flags & SIGNAL_GROUP_EXIT) ||
-		(sig->group_exit_task != NULL);
-}
+/* If true, all thपढ़ोs except ->group_निकास_task have pending SIGKILL */
+अटल अंतरभूत पूर्णांक संकेत_group_निकास(स्थिर काष्ठा संकेत_काष्ठा *sig)
+अणु
+	वापस	(sig->flags & SIGNAL_GROUP_EXIT) ||
+		(sig->group_निकास_task != शून्य);
+पूर्ण
 
-extern void flush_signals(struct task_struct *);
-extern void ignore_signals(struct task_struct *);
-extern void flush_signal_handlers(struct task_struct *, int force_default);
-extern int dequeue_signal(struct task_struct *task,
+बाह्य व्योम flush_संकेतs(काष्ठा task_काष्ठा *);
+बाह्य व्योम ignore_संकेतs(काष्ठा task_काष्ठा *);
+बाह्य व्योम flush_संकेत_handlers(काष्ठा task_काष्ठा *, पूर्णांक क्रमce_शेष);
+बाह्य पूर्णांक dequeue_संकेत(काष्ठा task_काष्ठा *task,
 			  sigset_t *mask, kernel_siginfo_t *info);
 
-static inline int kernel_dequeue_signal(void)
-{
-	struct task_struct *task = current;
+अटल अंतरभूत पूर्णांक kernel_dequeue_संकेत(व्योम)
+अणु
+	काष्ठा task_काष्ठा *task = current;
 	kernel_siginfo_t __info;
-	int ret;
+	पूर्णांक ret;
 
 	spin_lock_irq(&task->sighand->siglock);
-	ret = dequeue_signal(task, &task->blocked, &__info);
+	ret = dequeue_संकेत(task, &task->blocked, &__info);
 	spin_unlock_irq(&task->sighand->siglock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void kernel_signal_stop(void)
-{
+अटल अंतरभूत व्योम kernel_संकेत_stop(व्योम)
+अणु
 	spin_lock_irq(&current->sighand->siglock);
-	if (current->jobctl & JOBCTL_STOP_DEQUEUED)
+	अगर (current->jobctl & JOBCTL_STOP_DEQUEUED)
 		set_special_state(TASK_STOPPED);
 	spin_unlock_irq(&current->sighand->siglock);
 
 	schedule();
-}
-#ifdef __ARCH_SI_TRAPNO
+पूर्ण
+#अगर_घोषित __ARCH_SI_TRAPNO
 # define ___ARCH_SI_TRAPNO(_a1) , _a1
-#else
+#अन्यथा
 # define ___ARCH_SI_TRAPNO(_a1)
-#endif
-#ifdef __ia64__
+#पूर्ण_अगर
+#अगर_घोषित __ia64__
 # define ___ARCH_SI_IA64(_a1, _a2, _a3) , _a1, _a2, _a3
-#else
+#अन्यथा
 # define ___ARCH_SI_IA64(_a1, _a2, _a3)
-#endif
+#पूर्ण_अगर
 
-int force_sig_fault_to_task(int sig, int code, void __user *addr
-	___ARCH_SI_TRAPNO(int trapno)
-	___ARCH_SI_IA64(int imm, unsigned int flags, unsigned long isr)
-	, struct task_struct *t);
-int force_sig_fault(int sig, int code, void __user *addr
-	___ARCH_SI_TRAPNO(int trapno)
-	___ARCH_SI_IA64(int imm, unsigned int flags, unsigned long isr));
-int send_sig_fault(int sig, int code, void __user *addr
-	___ARCH_SI_TRAPNO(int trapno)
-	___ARCH_SI_IA64(int imm, unsigned int flags, unsigned long isr)
-	, struct task_struct *t);
+पूर्णांक क्रमce_sig_fault_to_task(पूर्णांक sig, पूर्णांक code, व्योम __user *addr
+	___ARCH_SI_TRAPNO(पूर्णांक trapno)
+	___ARCH_SI_IA64(पूर्णांक imm, अचिन्हित पूर्णांक flags, अचिन्हित दीर्घ isr)
+	, काष्ठा task_काष्ठा *t);
+पूर्णांक क्रमce_sig_fault(पूर्णांक sig, पूर्णांक code, व्योम __user *addr
+	___ARCH_SI_TRAPNO(पूर्णांक trapno)
+	___ARCH_SI_IA64(पूर्णांक imm, अचिन्हित पूर्णांक flags, अचिन्हित दीर्घ isr));
+पूर्णांक send_sig_fault(पूर्णांक sig, पूर्णांक code, व्योम __user *addr
+	___ARCH_SI_TRAPNO(पूर्णांक trapno)
+	___ARCH_SI_IA64(पूर्णांक imm, अचिन्हित पूर्णांक flags, अचिन्हित दीर्घ isr)
+	, काष्ठा task_काष्ठा *t);
 
-int force_sig_mceerr(int code, void __user *, short);
-int send_sig_mceerr(int code, void __user *, short, struct task_struct *);
+पूर्णांक क्रमce_sig_mceerr(पूर्णांक code, व्योम __user *, लघु);
+पूर्णांक send_sig_mceerr(पूर्णांक code, व्योम __user *, लघु, काष्ठा task_काष्ठा *);
 
-int force_sig_bnderr(void __user *addr, void __user *lower, void __user *upper);
-int force_sig_pkuerr(void __user *addr, u32 pkey);
-int force_sig_perf(void __user *addr, u32 type, u64 sig_data);
+पूर्णांक क्रमce_sig_bnderr(व्योम __user *addr, व्योम __user *lower, व्योम __user *upper);
+पूर्णांक क्रमce_sig_pkuerr(व्योम __user *addr, u32 pkey);
+पूर्णांक क्रमce_sig_perf(व्योम __user *addr, u32 type, u64 sig_data);
 
-int force_sig_ptrace_errno_trap(int errno, void __user *addr);
+पूर्णांक क्रमce_sig_ptrace_त्रुटि_सं_trap(पूर्णांक त्रुटि_सं, व्योम __user *addr);
 
-extern int send_sig_info(int, struct kernel_siginfo *, struct task_struct *);
-extern void force_sigsegv(int sig);
-extern int force_sig_info(struct kernel_siginfo *);
-extern int __kill_pgrp_info(int sig, struct kernel_siginfo *info, struct pid *pgrp);
-extern int kill_pid_info(int sig, struct kernel_siginfo *info, struct pid *pid);
-extern int kill_pid_usb_asyncio(int sig, int errno, sigval_t addr, struct pid *,
-				const struct cred *);
-extern int kill_pgrp(struct pid *pid, int sig, int priv);
-extern int kill_pid(struct pid *pid, int sig, int priv);
-extern __must_check bool do_notify_parent(struct task_struct *, int);
-extern void __wake_up_parent(struct task_struct *p, struct task_struct *parent);
-extern void force_sig(int);
-extern int send_sig(int, struct task_struct *, int);
-extern int zap_other_threads(struct task_struct *p);
-extern struct sigqueue *sigqueue_alloc(void);
-extern void sigqueue_free(struct sigqueue *);
-extern int send_sigqueue(struct sigqueue *, struct pid *, enum pid_type);
-extern int do_sigaction(int, struct k_sigaction *, struct k_sigaction *);
+बाह्य पूर्णांक send_sig_info(पूर्णांक, काष्ठा kernel_siginfo *, काष्ठा task_काष्ठा *);
+बाह्य व्योम क्रमce_sigsegv(पूर्णांक sig);
+बाह्य पूर्णांक क्रमce_sig_info(काष्ठा kernel_siginfo *);
+बाह्य पूर्णांक __समाप्त_pgrp_info(पूर्णांक sig, काष्ठा kernel_siginfo *info, काष्ठा pid *pgrp);
+बाह्य पूर्णांक समाप्त_pid_info(पूर्णांक sig, काष्ठा kernel_siginfo *info, काष्ठा pid *pid);
+बाह्य पूर्णांक समाप्त_pid_usb_asyncio(पूर्णांक sig, पूर्णांक त्रुटि_सं, sigval_t addr, काष्ठा pid *,
+				स्थिर काष्ठा cred *);
+बाह्य पूर्णांक समाप्त_pgrp(काष्ठा pid *pid, पूर्णांक sig, पूर्णांक priv);
+बाह्य पूर्णांक समाप्त_pid(काष्ठा pid *pid, पूर्णांक sig, पूर्णांक priv);
+बाह्य __must_check bool करो_notअगरy_parent(काष्ठा task_काष्ठा *, पूर्णांक);
+बाह्य व्योम __wake_up_parent(काष्ठा task_काष्ठा *p, काष्ठा task_काष्ठा *parent);
+बाह्य व्योम क्रमce_sig(पूर्णांक);
+बाह्य पूर्णांक send_sig(पूर्णांक, काष्ठा task_काष्ठा *, पूर्णांक);
+बाह्य पूर्णांक zap_other_thपढ़ोs(काष्ठा task_काष्ठा *p);
+बाह्य काष्ठा sigqueue *sigqueue_alloc(व्योम);
+बाह्य व्योम sigqueue_मुक्त(काष्ठा sigqueue *);
+बाह्य पूर्णांक send_sigqueue(काष्ठा sigqueue *, काष्ठा pid *, क्रमागत pid_type);
+बाह्य पूर्णांक करो_sigaction(पूर्णांक, काष्ठा k_sigaction *, काष्ठा k_sigaction *);
 
-static inline int restart_syscall(void)
-{
-	set_tsk_thread_flag(current, TIF_SIGPENDING);
-	return -ERESTARTNOINTR;
-}
+अटल अंतरभूत पूर्णांक restart_syscall(व्योम)
+अणु
+	set_tsk_thपढ़ो_flag(current, TIF_SIGPENDING);
+	वापस -ERESTARTNOINTR;
+पूर्ण
 
-static inline int task_sigpending(struct task_struct *p)
-{
-	return unlikely(test_tsk_thread_flag(p,TIF_SIGPENDING));
-}
+अटल अंतरभूत पूर्णांक task_संक_बाकी(काष्ठा task_काष्ठा *p)
+अणु
+	वापस unlikely(test_tsk_thपढ़ो_flag(p,TIF_SIGPENDING));
+पूर्ण
 
-static inline int signal_pending(struct task_struct *p)
-{
+अटल अंतरभूत पूर्णांक संकेत_pending(काष्ठा task_काष्ठा *p)
+अणु
 	/*
-	 * TIF_NOTIFY_SIGNAL isn't really a signal, but it requires the same
-	 * behavior in terms of ensuring that we break out of wait loops
-	 * so that notify signal callbacks can be processed.
+	 * TIF_NOTIFY_SIGNAL isn't really a संकेत, but it requires the same
+	 * behavior in terms of ensuring that we अवरोध out of रुको loops
+	 * so that notअगरy संकेत callbacks can be processed.
 	 */
-	if (unlikely(test_tsk_thread_flag(p, TIF_NOTIFY_SIGNAL)))
-		return 1;
-	return task_sigpending(p);
-}
+	अगर (unlikely(test_tsk_thपढ़ो_flag(p, TIF_NOTIFY_SIGNAL)))
+		वापस 1;
+	वापस task_संक_बाकी(p);
+पूर्ण
 
-static inline int __fatal_signal_pending(struct task_struct *p)
-{
-	return unlikely(sigismember(&p->pending.signal, SIGKILL));
-}
+अटल अंतरभूत पूर्णांक __fatal_संकेत_pending(काष्ठा task_काष्ठा *p)
+अणु
+	वापस unlikely(sigismember(&p->pending.संकेत, SIGKILL));
+पूर्ण
 
-static inline int fatal_signal_pending(struct task_struct *p)
-{
-	return task_sigpending(p) && __fatal_signal_pending(p);
-}
+अटल अंतरभूत पूर्णांक fatal_संकेत_pending(काष्ठा task_काष्ठा *p)
+अणु
+	वापस task_संक_बाकी(p) && __fatal_संकेत_pending(p);
+पूर्ण
 
-static inline int signal_pending_state(long state, struct task_struct *p)
-{
-	if (!(state & (TASK_INTERRUPTIBLE | TASK_WAKEKILL)))
-		return 0;
-	if (!signal_pending(p))
-		return 0;
+अटल अंतरभूत पूर्णांक संकेत_pending_state(दीर्घ state, काष्ठा task_काष्ठा *p)
+अणु
+	अगर (!(state & (TASK_INTERRUPTIBLE | TASK_WAKEKILL)))
+		वापस 0;
+	अगर (!संकेत_pending(p))
+		वापस 0;
 
-	return (state & TASK_INTERRUPTIBLE) || __fatal_signal_pending(p);
-}
+	वापस (state & TASK_INTERRUPTIBLE) || __fatal_संकेत_pending(p);
+पूर्ण
 
 /*
  * This should only be used in fault handlers to decide whether we
- * should stop the current fault routine to handle the signals
- * instead, especially with the case where we've got interrupted with
+ * should stop the current fault routine to handle the संकेतs
+ * instead, especially with the हाल where we've got पूर्णांकerrupted with
  * a VM_FAULT_RETRY.
  */
-static inline bool fault_signal_pending(vm_fault_t fault_flags,
-					struct pt_regs *regs)
-{
-	return unlikely((fault_flags & VM_FAULT_RETRY) &&
-			(fatal_signal_pending(current) ||
-			 (user_mode(regs) && signal_pending(current))));
-}
+अटल अंतरभूत bool fault_संकेत_pending(vm_fault_t fault_flags,
+					काष्ठा pt_regs *regs)
+अणु
+	वापस unlikely((fault_flags & VM_FAULT_RETRY) &&
+			(fatal_संकेत_pending(current) ||
+			 (user_mode(regs) && संकेत_pending(current))));
+पूर्ण
 
 /*
- * Reevaluate whether the task has signals pending delivery.
- * Wake the task if so.
- * This is required every time the blocked sigset_t changes.
+ * Reevaluate whether the task has संकेतs pending delivery.
+ * Wake the task अगर so.
+ * This is required every समय the blocked sigset_t changes.
  * callers must hold sighand->siglock.
  */
-extern void recalc_sigpending_and_wake(struct task_struct *t);
-extern void recalc_sigpending(void);
-extern void calculate_sigpending(void);
+बाह्य व्योम recalc_संक_बाकी_and_wake(काष्ठा task_काष्ठा *t);
+बाह्य व्योम recalc_संक_बाकी(व्योम);
+बाह्य व्योम calculate_संक_बाकी(व्योम);
 
-extern void signal_wake_up_state(struct task_struct *t, unsigned int state);
+बाह्य व्योम संकेत_wake_up_state(काष्ठा task_काष्ठा *t, अचिन्हित पूर्णांक state);
 
-static inline void signal_wake_up(struct task_struct *t, bool resume)
-{
-	signal_wake_up_state(t, resume ? TASK_WAKEKILL : 0);
-}
-static inline void ptrace_signal_wake_up(struct task_struct *t, bool resume)
-{
-	signal_wake_up_state(t, resume ? __TASK_TRACED : 0);
-}
+अटल अंतरभूत व्योम संकेत_wake_up(काष्ठा task_काष्ठा *t, bool resume)
+अणु
+	संकेत_wake_up_state(t, resume ? TASK_WAKEKILL : 0);
+पूर्ण
+अटल अंतरभूत व्योम ptrace_संकेत_wake_up(काष्ठा task_काष्ठा *t, bool resume)
+अणु
+	संकेत_wake_up_state(t, resume ? __TASK_TRACED : 0);
+पूर्ण
 
-void task_join_group_stop(struct task_struct *task);
+व्योम task_join_group_stop(काष्ठा task_काष्ठा *task);
 
-#ifdef TIF_RESTORE_SIGMASK
+#अगर_घोषित TIF_RESTORE_SIGMASK
 /*
  * Legacy restore_sigmask accessors.  These are inefficient on
  * SMP architectures because they require atomic operations.
  */
 
 /**
- * set_restore_sigmask() - make sure saved_sigmask processing gets done
+ * set_restore_sigmask() - make sure saved_sigmask processing माला_लो करोne
  *
- * This sets TIF_RESTORE_SIGMASK and ensures that the arch signal code
- * will run before returning to user mode, to process the flag.  For
- * all callers, TIF_SIGPENDING is already set or it's no harm to set
+ * This sets TIF_RESTORE_SIGMASK and ensures that the arch संकेत code
+ * will run beक्रमe वापसing to user mode, to process the flag.  For
+ * all callers, TIF_SIGPENDING is alपढ़ोy set or it's no harm to set
  * it.  TIF_RESTORE_SIGMASK need not be in the set of bits that the
- * arch code will notice on return to user mode, in case those bits
+ * arch code will notice on वापस to user mode, in हाल those bits
  * are scarce.  We set TIF_SIGPENDING here to ensure that the arch
- * signal code always gets run when TIF_RESTORE_SIGMASK is set.
+ * संकेत code always माला_लो run when TIF_RESTORE_SIGMASK is set.
  */
-static inline void set_restore_sigmask(void)
-{
-	set_thread_flag(TIF_RESTORE_SIGMASK);
-}
+अटल अंतरभूत व्योम set_restore_sigmask(व्योम)
+अणु
+	set_thपढ़ो_flag(TIF_RESTORE_SIGMASK);
+पूर्ण
 
-static inline void clear_tsk_restore_sigmask(struct task_struct *task)
-{
-	clear_tsk_thread_flag(task, TIF_RESTORE_SIGMASK);
-}
+अटल अंतरभूत व्योम clear_tsk_restore_sigmask(काष्ठा task_काष्ठा *task)
+अणु
+	clear_tsk_thपढ़ो_flag(task, TIF_RESTORE_SIGMASK);
+पूर्ण
 
-static inline void clear_restore_sigmask(void)
-{
-	clear_thread_flag(TIF_RESTORE_SIGMASK);
-}
-static inline bool test_tsk_restore_sigmask(struct task_struct *task)
-{
-	return test_tsk_thread_flag(task, TIF_RESTORE_SIGMASK);
-}
-static inline bool test_restore_sigmask(void)
-{
-	return test_thread_flag(TIF_RESTORE_SIGMASK);
-}
-static inline bool test_and_clear_restore_sigmask(void)
-{
-	return test_and_clear_thread_flag(TIF_RESTORE_SIGMASK);
-}
+अटल अंतरभूत व्योम clear_restore_sigmask(व्योम)
+अणु
+	clear_thपढ़ो_flag(TIF_RESTORE_SIGMASK);
+पूर्ण
+अटल अंतरभूत bool test_tsk_restore_sigmask(काष्ठा task_काष्ठा *task)
+अणु
+	वापस test_tsk_thपढ़ो_flag(task, TIF_RESTORE_SIGMASK);
+पूर्ण
+अटल अंतरभूत bool test_restore_sigmask(व्योम)
+अणु
+	वापस test_thपढ़ो_flag(TIF_RESTORE_SIGMASK);
+पूर्ण
+अटल अंतरभूत bool test_and_clear_restore_sigmask(व्योम)
+अणु
+	वापस test_and_clear_thपढ़ो_flag(TIF_RESTORE_SIGMASK);
+पूर्ण
 
-#else	/* TIF_RESTORE_SIGMASK */
+#अन्यथा	/* TIF_RESTORE_SIGMASK */
 
-/* Higher-quality implementation, used if TIF_RESTORE_SIGMASK doesn't exist. */
-static inline void set_restore_sigmask(void)
-{
+/* Higher-quality implementation, used अगर TIF_RESTORE_SIGMASK करोesn't exist. */
+अटल अंतरभूत व्योम set_restore_sigmask(व्योम)
+अणु
 	current->restore_sigmask = true;
-}
-static inline void clear_tsk_restore_sigmask(struct task_struct *task)
-{
+पूर्ण
+अटल अंतरभूत व्योम clear_tsk_restore_sigmask(काष्ठा task_काष्ठा *task)
+अणु
 	task->restore_sigmask = false;
-}
-static inline void clear_restore_sigmask(void)
-{
+पूर्ण
+अटल अंतरभूत व्योम clear_restore_sigmask(व्योम)
+अणु
 	current->restore_sigmask = false;
-}
-static inline bool test_restore_sigmask(void)
-{
-	return current->restore_sigmask;
-}
-static inline bool test_tsk_restore_sigmask(struct task_struct *task)
-{
-	return task->restore_sigmask;
-}
-static inline bool test_and_clear_restore_sigmask(void)
-{
-	if (!current->restore_sigmask)
-		return false;
+पूर्ण
+अटल अंतरभूत bool test_restore_sigmask(व्योम)
+अणु
+	वापस current->restore_sigmask;
+पूर्ण
+अटल अंतरभूत bool test_tsk_restore_sigmask(काष्ठा task_काष्ठा *task)
+अणु
+	वापस task->restore_sigmask;
+पूर्ण
+अटल अंतरभूत bool test_and_clear_restore_sigmask(व्योम)
+अणु
+	अगर (!current->restore_sigmask)
+		वापस false;
 	current->restore_sigmask = false;
-	return true;
-}
-#endif
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-static inline void restore_saved_sigmask(void)
-{
-	if (test_and_clear_restore_sigmask())
+अटल अंतरभूत व्योम restore_saved_sigmask(व्योम)
+अणु
+	अगर (test_and_clear_restore_sigmask())
 		__set_current_blocked(&current->saved_sigmask);
-}
+पूर्ण
 
-extern int set_user_sigmask(const sigset_t __user *umask, size_t sigsetsize);
+बाह्य पूर्णांक set_user_sigmask(स्थिर sigset_t __user *umask, माप_प्रकार sigsetsize);
 
-static inline void restore_saved_sigmask_unless(bool interrupted)
-{
-	if (interrupted)
-		WARN_ON(!signal_pending(current));
-	else
+अटल अंतरभूत व्योम restore_saved_sigmask_unless(bool पूर्णांकerrupted)
+अणु
+	अगर (पूर्णांकerrupted)
+		WARN_ON(!संकेत_pending(current));
+	अन्यथा
 		restore_saved_sigmask();
-}
+पूर्ण
 
-static inline sigset_t *sigmask_to_save(void)
-{
+अटल अंतरभूत sigset_t *sigmask_to_save(व्योम)
+अणु
 	sigset_t *res = &current->blocked;
-	if (unlikely(test_restore_sigmask()))
+	अगर (unlikely(test_restore_sigmask()))
 		res = &current->saved_sigmask;
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static inline int kill_cad_pid(int sig, int priv)
-{
-	return kill_pid(cad_pid, sig, priv);
-}
+अटल अंतरभूत पूर्णांक समाप्त_cad_pid(पूर्णांक sig, पूर्णांक priv)
+अणु
+	वापस समाप्त_pid(cad_pid, sig, priv);
+पूर्ण
 
 /* These can be the second arg to send_sig_info/send_group_sig_info.  */
-#define SEND_SIG_NOINFO ((struct kernel_siginfo *) 0)
-#define SEND_SIG_PRIV	((struct kernel_siginfo *) 1)
+#घोषणा SEND_SIG_NOINFO ((काष्ठा kernel_siginfo *) 0)
+#घोषणा SEND_SIG_PRIV	((काष्ठा kernel_siginfo *) 1)
 
 /*
- * True if we are on the alternate signal stack.
+ * True अगर we are on the alternate संकेत stack.
  */
-static inline int on_sig_stack(unsigned long sp)
-{
+अटल अंतरभूत पूर्णांक on_sig_stack(अचिन्हित दीर्घ sp)
+अणु
 	/*
-	 * If the signal stack is SS_AUTODISARM then, by construction, we
-	 * can't be on the signal stack unless user code deliberately set
-	 * SS_AUTODISARM when we were already on it.
+	 * If the संकेत stack is SS_AUTODISARM then, by स्थिरruction, we
+	 * can't be on the संकेत stack unless user code deliberately set
+	 * SS_AUTODISARM when we were alपढ़ोy on it.
 	 *
-	 * This improves reliability: if user state gets corrupted such that
-	 * the stack pointer points very close to the end of the signal stack,
-	 * then this check will enable the signal to be handled anyway.
+	 * This improves reliability: अगर user state माला_लो corrupted such that
+	 * the stack poपूर्णांकer poपूर्णांकs very बंद to the end of the संकेत stack,
+	 * then this check will enable the संकेत to be handled anyway.
 	 */
-	if (current->sas_ss_flags & SS_AUTODISARM)
-		return 0;
+	अगर (current->sas_ss_flags & SS_AUTODISARM)
+		वापस 0;
 
-#ifdef CONFIG_STACK_GROWSUP
-	return sp >= current->sas_ss_sp &&
+#अगर_घोषित CONFIG_STACK_GROWSUP
+	वापस sp >= current->sas_ss_sp &&
 		sp - current->sas_ss_sp < current->sas_ss_size;
-#else
-	return sp > current->sas_ss_sp &&
+#अन्यथा
+	वापस sp > current->sas_ss_sp &&
 		sp - current->sas_ss_sp <= current->sas_ss_size;
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static inline int sas_ss_flags(unsigned long sp)
-{
-	if (!current->sas_ss_size)
-		return SS_DISABLE;
+अटल अंतरभूत पूर्णांक sas_ss_flags(अचिन्हित दीर्घ sp)
+अणु
+	अगर (!current->sas_ss_size)
+		वापस SS_DISABLE;
 
-	return on_sig_stack(sp) ? SS_ONSTACK : 0;
-}
+	वापस on_sig_stack(sp) ? SS_ONSTACK : 0;
+पूर्ण
 
-static inline void sas_ss_reset(struct task_struct *p)
-{
+अटल अंतरभूत व्योम sas_ss_reset(काष्ठा task_काष्ठा *p)
+अणु
 	p->sas_ss_sp = 0;
 	p->sas_ss_size = 0;
 	p->sas_ss_flags = SS_DISABLE;
-}
+पूर्ण
 
-static inline unsigned long sigsp(unsigned long sp, struct ksignal *ksig)
-{
-	if (unlikely((ksig->ka.sa.sa_flags & SA_ONSTACK)) && ! sas_ss_flags(sp))
-#ifdef CONFIG_STACK_GROWSUP
-		return current->sas_ss_sp;
-#else
-		return current->sas_ss_sp + current->sas_ss_size;
-#endif
-	return sp;
-}
+अटल अंतरभूत अचिन्हित दीर्घ sigsp(अचिन्हित दीर्घ sp, काष्ठा kसंकेत *ksig)
+अणु
+	अगर (unlikely((ksig->ka.sa.sa_flags & SA_ONSTACK)) && ! sas_ss_flags(sp))
+#अगर_घोषित CONFIG_STACK_GROWSUP
+		वापस current->sas_ss_sp;
+#अन्यथा
+		वापस current->sas_ss_sp + current->sas_ss_size;
+#पूर्ण_अगर
+	वापस sp;
+पूर्ण
 
-extern void __cleanup_sighand(struct sighand_struct *);
-extern void flush_itimer_signals(void);
+बाह्य व्योम __cleanup_sighand(काष्ठा sighand_काष्ठा *);
+बाह्य व्योम flush_iसमयr_संकेतs(व्योम);
 
-#define tasklist_empty() \
+#घोषणा tasklist_empty() \
 	list_empty(&init_task.tasks)
 
-#define next_task(p) \
-	list_entry_rcu((p)->tasks.next, struct task_struct, tasks)
+#घोषणा next_task(p) \
+	list_entry_rcu((p)->tasks.next, काष्ठा task_काष्ठा, tasks)
 
-#define for_each_process(p) \
-	for (p = &init_task ; (p = next_task(p)) != &init_task ; )
+#घोषणा क्रम_each_process(p) \
+	क्रम (p = &init_task ; (p = next_task(p)) != &init_task ; )
 
-extern bool current_is_single_threaded(void);
+बाह्य bool current_is_single_thपढ़ोed(व्योम);
 
 /*
- * Careful: do_each_thread/while_each_thread is a double loop so
- *          'break' will not work as expected - use goto instead.
+ * Careful: करो_each_thपढ़ो/जबतक_each_thपढ़ो is a द्विगुन loop so
+ *          'break' will not work as expected - use जाओ instead.
  */
-#define do_each_thread(g, t) \
-	for (g = t = &init_task ; (g = t = next_task(g)) != &init_task ; ) do
+#घोषणा करो_each_thपढ़ो(g, t) \
+	क्रम (g = t = &init_task ; (g = t = next_task(g)) != &init_task ; ) करो
 
-#define while_each_thread(g, t) \
-	while ((t = next_thread(t)) != g)
+#घोषणा जबतक_each_thपढ़ो(g, t) \
+	जबतक ((t = next_thपढ़ो(t)) != g)
 
-#define __for_each_thread(signal, t)	\
-	list_for_each_entry_rcu(t, &(signal)->thread_head, thread_node)
+#घोषणा __क्रम_each_thपढ़ो(संकेत, t)	\
+	list_क्रम_each_entry_rcu(t, &(संकेत)->thपढ़ो_head, thपढ़ो_node)
 
-#define for_each_thread(p, t)		\
-	__for_each_thread((p)->signal, t)
+#घोषणा क्रम_each_thपढ़ो(p, t)		\
+	__क्रम_each_thपढ़ो((p)->संकेत, t)
 
-/* Careful: this is a double loop, 'break' won't work as expected. */
-#define for_each_process_thread(p, t)	\
-	for_each_process(p) for_each_thread(p, t)
+/* Careful: this is a द्विगुन loop, 'break' won't work as expected. */
+#घोषणा क्रम_each_process_thपढ़ो(p, t)	\
+	क्रम_each_process(p) क्रम_each_thपढ़ो(p, t)
 
-typedef int (*proc_visitor)(struct task_struct *p, void *data);
-void walk_process_tree(struct task_struct *top, proc_visitor, void *);
+प्रकार पूर्णांक (*proc_visitor)(काष्ठा task_काष्ठा *p, व्योम *data);
+व्योम walk_process_tree(काष्ठा task_काष्ठा *top, proc_visitor, व्योम *);
 
-static inline
-struct pid *task_pid_type(struct task_struct *task, enum pid_type type)
-{
-	struct pid *pid;
-	if (type == PIDTYPE_PID)
+अटल अंतरभूत
+काष्ठा pid *task_pid_type(काष्ठा task_काष्ठा *task, क्रमागत pid_type type)
+अणु
+	काष्ठा pid *pid;
+	अगर (type == PIDTYPE_PID)
 		pid = task_pid(task);
-	else
-		pid = task->signal->pids[type];
-	return pid;
-}
+	अन्यथा
+		pid = task->संकेत->pids[type];
+	वापस pid;
+पूर्ण
 
-static inline struct pid *task_tgid(struct task_struct *task)
-{
-	return task->signal->pids[PIDTYPE_TGID];
-}
+अटल अंतरभूत काष्ठा pid *task_tgid(काष्ठा task_काष्ठा *task)
+अणु
+	वापस task->संकेत->pids[PIDTYPE_TGID];
+पूर्ण
 
 /*
  * Without tasklist or RCU lock it is not safe to dereference
- * the result of task_pgrp/task_session even if task == current,
- * we can race with another thread doing sys_setsid/sys_setpgid.
+ * the result of task_pgrp/task_session even अगर task == current,
+ * we can race with another thपढ़ो करोing sys_setsid/sys_setpgid.
  */
-static inline struct pid *task_pgrp(struct task_struct *task)
-{
-	return task->signal->pids[PIDTYPE_PGID];
-}
+अटल अंतरभूत काष्ठा pid *task_pgrp(काष्ठा task_काष्ठा *task)
+अणु
+	वापस task->संकेत->pids[PIDTYPE_PGID];
+पूर्ण
 
-static inline struct pid *task_session(struct task_struct *task)
-{
-	return task->signal->pids[PIDTYPE_SID];
-}
+अटल अंतरभूत काष्ठा pid *task_session(काष्ठा task_काष्ठा *task)
+अणु
+	वापस task->संकेत->pids[PIDTYPE_SID];
+पूर्ण
 
-static inline int get_nr_threads(struct task_struct *task)
-{
-	return task->signal->nr_threads;
-}
+अटल अंतरभूत पूर्णांक get_nr_thपढ़ोs(काष्ठा task_काष्ठा *task)
+अणु
+	वापस task->संकेत->nr_thपढ़ोs;
+पूर्ण
 
-static inline bool thread_group_leader(struct task_struct *p)
-{
-	return p->exit_signal >= 0;
-}
+अटल अंतरभूत bool thपढ़ो_group_leader(काष्ठा task_काष्ठा *p)
+अणु
+	वापस p->निकास_संकेत >= 0;
+पूर्ण
 
-static inline
-bool same_thread_group(struct task_struct *p1, struct task_struct *p2)
-{
-	return p1->signal == p2->signal;
-}
+अटल अंतरभूत
+bool same_thपढ़ो_group(काष्ठा task_काष्ठा *p1, काष्ठा task_काष्ठा *p2)
+अणु
+	वापस p1->संकेत == p2->संकेत;
+पूर्ण
 
-static inline struct task_struct *next_thread(const struct task_struct *p)
-{
-	return list_entry_rcu(p->thread_group.next,
-			      struct task_struct, thread_group);
-}
+अटल अंतरभूत काष्ठा task_काष्ठा *next_thपढ़ो(स्थिर काष्ठा task_काष्ठा *p)
+अणु
+	वापस list_entry_rcu(p->thपढ़ो_group.next,
+			      काष्ठा task_काष्ठा, thपढ़ो_group);
+पूर्ण
 
-static inline int thread_group_empty(struct task_struct *p)
-{
-	return list_empty(&p->thread_group);
-}
+अटल अंतरभूत पूर्णांक thपढ़ो_group_empty(काष्ठा task_काष्ठा *p)
+अणु
+	वापस list_empty(&p->thपढ़ो_group);
+पूर्ण
 
-#define delay_group_leader(p) \
-		(thread_group_leader(p) && !thread_group_empty(p))
+#घोषणा delay_group_leader(p) \
+		(thपढ़ो_group_leader(p) && !thपढ़ो_group_empty(p))
 
-extern bool thread_group_exited(struct pid *pid);
+बाह्य bool thपढ़ो_group_निकासed(काष्ठा pid *pid);
 
-extern struct sighand_struct *__lock_task_sighand(struct task_struct *task,
-							unsigned long *flags);
+बाह्य काष्ठा sighand_काष्ठा *__lock_task_sighand(काष्ठा task_काष्ठा *task,
+							अचिन्हित दीर्घ *flags);
 
-static inline struct sighand_struct *lock_task_sighand(struct task_struct *task,
-						       unsigned long *flags)
-{
-	struct sighand_struct *ret;
+अटल अंतरभूत काष्ठा sighand_काष्ठा *lock_task_sighand(काष्ठा task_काष्ठा *task,
+						       अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा sighand_काष्ठा *ret;
 
 	ret = __lock_task_sighand(task, flags);
-	(void)__cond_lock(&task->sighand->siglock, ret);
-	return ret;
-}
+	(व्योम)__cond_lock(&task->sighand->siglock, ret);
+	वापस ret;
+पूर्ण
 
-static inline void unlock_task_sighand(struct task_struct *task,
-						unsigned long *flags)
-{
+अटल अंतरभूत व्योम unlock_task_sighand(काष्ठा task_काष्ठा *task,
+						अचिन्हित दीर्घ *flags)
+अणु
 	spin_unlock_irqrestore(&task->sighand->siglock, *flags);
-}
+पूर्ण
 
-static inline unsigned long task_rlimit(const struct task_struct *task,
-		unsigned int limit)
-{
-	return READ_ONCE(task->signal->rlim[limit].rlim_cur);
-}
+अटल अंतरभूत अचिन्हित दीर्घ task_rlimit(स्थिर काष्ठा task_काष्ठा *task,
+		अचिन्हित पूर्णांक limit)
+अणु
+	वापस READ_ONCE(task->संकेत->rlim[limit].rlim_cur);
+पूर्ण
 
-static inline unsigned long task_rlimit_max(const struct task_struct *task,
-		unsigned int limit)
-{
-	return READ_ONCE(task->signal->rlim[limit].rlim_max);
-}
+अटल अंतरभूत अचिन्हित दीर्घ task_rlimit_max(स्थिर काष्ठा task_काष्ठा *task,
+		अचिन्हित पूर्णांक limit)
+अणु
+	वापस READ_ONCE(task->संकेत->rlim[limit].rlim_max);
+पूर्ण
 
-static inline unsigned long rlimit(unsigned int limit)
-{
-	return task_rlimit(current, limit);
-}
+अटल अंतरभूत अचिन्हित दीर्घ rlimit(अचिन्हित पूर्णांक limit)
+अणु
+	वापस task_rlimit(current, limit);
+पूर्ण
 
-static inline unsigned long rlimit_max(unsigned int limit)
-{
-	return task_rlimit_max(current, limit);
-}
+अटल अंतरभूत अचिन्हित दीर्घ rlimit_max(अचिन्हित पूर्णांक limit)
+अणु
+	वापस task_rlimit_max(current, limit);
+पूर्ण
 
-#endif /* _LINUX_SCHED_SIGNAL_H */
+#पूर्ण_अगर /* _LINUX_SCHED_SIGNAL_H */

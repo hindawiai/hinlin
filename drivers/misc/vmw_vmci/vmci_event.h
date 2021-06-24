@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * VMware VMCI Driver
  *
  * Copyright (C) 2012 VMware, Inc. All rights reserved.
  */
 
-#ifndef __VMCI_EVENT_H__
-#define __VMCI_EVENT_H__
+#अगर_अघोषित __VMCI_EVENT_H__
+#घोषणा __VMCI_EVENT_H__
 
-#include <linux/vmw_vmci_api.h>
+#समावेश <linux/vmw_vmci_api.h>
 
-int vmci_event_init(void);
-void vmci_event_exit(void);
-int vmci_event_dispatch(struct vmci_datagram *msg);
+पूर्णांक vmci_event_init(व्योम);
+व्योम vmci_event_निकास(व्योम);
+पूर्णांक vmci_event_dispatch(काष्ठा vmci_datagram *msg);
 
-#endif /*__VMCI_EVENT_H__ */
+#पूर्ण_अगर /*__VMCI_EVENT_H__ */

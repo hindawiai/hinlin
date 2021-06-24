@@ -1,200 +1,201 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * PCI I/O adapter configuration related functions.
  *
  * Copyright IBM Corp. 2016
  */
-#define KMSG_COMPONENT "sclp_cmd"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "sclp_cmd"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/completion.h>
-#include <linux/export.h>
-#include <linux/mutex.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <linux/err.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
 
-#include <asm/sclp.h>
+#समावेश <यंत्र/sclp.h>
 
-#include "sclp.h"
+#समावेश "sclp.h"
 
-#define SCLP_CMDW_CONFIGURE_PCI			0x001a0001
-#define SCLP_CMDW_DECONFIGURE_PCI		0x001b0001
+#घोषणा SCLP_CMDW_CONFIGURE_PCI			0x001a0001
+#घोषणा SCLP_CMDW_DECONFIGURE_PCI		0x001b0001
 
-#define SCLP_ATYPE_PCI				2
+#घोषणा SCLP_ATYPE_PCI				2
 
-#define SCLP_ERRNOTIFY_AQ_RESET			0
-#define SCLP_ERRNOTIFY_AQ_REPAIR		1
-#define SCLP_ERRNOTIFY_AQ_INFO_LOG		2
+#घोषणा SCLP_ERRNOTIFY_AQ_RESET			0
+#घोषणा SCLP_ERRNOTIFY_AQ_REPAIR		1
+#घोषणा SCLP_ERRNOTIFY_AQ_INFO_LOG		2
 
-static DEFINE_MUTEX(sclp_pci_mutex);
-static struct sclp_register sclp_pci_event = {
+अटल DEFINE_MUTEX(sclp_pci_mutex);
+अटल काष्ठा sclp_रेजिस्टर sclp_pci_event = अणु
 	.send_mask = EVTYP_ERRNOTIFY_MASK,
-};
+पूर्ण;
 
-struct err_notify_evbuf {
-	struct evbuf_header header;
+काष्ठा err_notअगरy_evbuf अणु
+	काष्ठा evbuf_header header;
 	u8 action;
 	u8 atype;
 	u32 fh;
 	u32 fid;
 	u8 data[];
-} __packed;
+पूर्ण __packed;
 
-struct err_notify_sccb {
-	struct sccb_header header;
-	struct err_notify_evbuf evbuf;
-} __packed;
+काष्ठा err_notअगरy_sccb अणु
+	काष्ठा sccb_header header;
+	काष्ठा err_notअगरy_evbuf evbuf;
+पूर्ण __packed;
 
-struct pci_cfg_sccb {
-	struct sccb_header header;
+काष्ठा pci_cfg_sccb अणु
+	काष्ठा sccb_header header;
 	u8 atype;		/* adapter type */
 	u8 reserved1;
 	u16 reserved2;
-	u32 aid;		/* adapter identifier */
-} __packed;
+	u32 aid;		/* adapter identअगरier */
+पूर्ण __packed;
 
-static int do_pci_configure(sclp_cmdw_t cmd, u32 fid)
-{
-	struct pci_cfg_sccb *sccb;
-	int rc;
+अटल पूर्णांक करो_pci_configure(sclp_cmdw_t cmd, u32 fid)
+अणु
+	काष्ठा pci_cfg_sccb *sccb;
+	पूर्णांक rc;
 
-	if (!SCLP_HAS_PCI_RECONFIG)
-		return -EOPNOTSUPP;
+	अगर (!SCLP_HAS_PCI_RECONFIG)
+		वापस -EOPNOTSUPP;
 
-	sccb = (struct pci_cfg_sccb *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
-	if (!sccb)
-		return -ENOMEM;
+	sccb = (काष्ठा pci_cfg_sccb *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+	अगर (!sccb)
+		वापस -ENOMEM;
 
 	sccb->header.length = PAGE_SIZE;
 	sccb->atype = SCLP_ATYPE_PCI;
 	sccb->aid = fid;
 	rc = sclp_sync_request(cmd, sccb);
-	if (rc)
-		goto out;
-	switch (sccb->header.response_code) {
-	case 0x0020:
-	case 0x0120:
-		break;
-	default:
+	अगर (rc)
+		जाओ out;
+	चयन (sccb->header.response_code) अणु
+	हाल 0x0020:
+	हाल 0x0120:
+		अवरोध;
+	शेष:
 		pr_warn("configure PCI I/O adapter failed: cmd=0x%08x  response=0x%04x\n",
 			cmd, sccb->header.response_code);
 		rc = -EIO;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 out:
-	free_page((unsigned long) sccb);
-	return rc;
-}
+	मुक्त_page((अचिन्हित दीर्घ) sccb);
+	वापस rc;
+पूर्ण
 
-int sclp_pci_configure(u32 fid)
-{
-	return do_pci_configure(SCLP_CMDW_CONFIGURE_PCI, fid);
-}
+पूर्णांक sclp_pci_configure(u32 fid)
+अणु
+	वापस करो_pci_configure(SCLP_CMDW_CONFIGURE_PCI, fid);
+पूर्ण
 EXPORT_SYMBOL(sclp_pci_configure);
 
-int sclp_pci_deconfigure(u32 fid)
-{
-	return do_pci_configure(SCLP_CMDW_DECONFIGURE_PCI, fid);
-}
+पूर्णांक sclp_pci_deconfigure(u32 fid)
+अणु
+	वापस करो_pci_configure(SCLP_CMDW_DECONFIGURE_PCI, fid);
+पूर्ण
 EXPORT_SYMBOL(sclp_pci_deconfigure);
 
-static void sclp_pci_callback(struct sclp_req *req, void *data)
-{
-	struct completion *completion = data;
+अटल व्योम sclp_pci_callback(काष्ठा sclp_req *req, व्योम *data)
+अणु
+	काष्ठा completion *completion = data;
 
 	complete(completion);
-}
+पूर्ण
 
-static int sclp_pci_check_report(struct zpci_report_error_header *report)
-{
-	if (report->version != 1)
-		return -EINVAL;
+अटल पूर्णांक sclp_pci_check_report(काष्ठा zpci_report_error_header *report)
+अणु
+	अगर (report->version != 1)
+		वापस -EINVAL;
 
-	switch (report->action) {
-	case SCLP_ERRNOTIFY_AQ_RESET:
-	case SCLP_ERRNOTIFY_AQ_REPAIR:
-	case SCLP_ERRNOTIFY_AQ_INFO_LOG:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (report->action) अणु
+	हाल SCLP_ERRNOTIFY_AQ_RESET:
+	हाल SCLP_ERRNOTIFY_AQ_REPAIR:
+	हाल SCLP_ERRNOTIFY_AQ_INFO_LOG:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (report->length > (PAGE_SIZE - sizeof(struct err_notify_sccb)))
-		return -EINVAL;
+	अगर (report->length > (PAGE_SIZE - माप(काष्ठा err_notअगरy_sccb)))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sclp_pci_report(struct zpci_report_error_header *report, u32 fh, u32 fid)
-{
+पूर्णांक sclp_pci_report(काष्ठा zpci_report_error_header *report, u32 fh, u32 fid)
+अणु
 	DECLARE_COMPLETION_ONSTACK(completion);
-	struct err_notify_sccb *sccb;
-	struct sclp_req req;
-	int ret;
+	काष्ठा err_notअगरy_sccb *sccb;
+	काष्ठा sclp_req req;
+	पूर्णांक ret;
 
 	ret = sclp_pci_check_report(report);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	mutex_lock(&sclp_pci_mutex);
-	ret = sclp_register(&sclp_pci_event);
-	if (ret)
-		goto out_unlock;
+	ret = sclp_रेजिस्टर(&sclp_pci_event);
+	अगर (ret)
+		जाओ out_unlock;
 
-	if (!(sclp_pci_event.sclp_receive_mask & EVTYP_ERRNOTIFY_MASK)) {
+	अगर (!(sclp_pci_event.sclp_receive_mask & EVTYP_ERRNOTIFY_MASK)) अणु
 		ret = -EOPNOTSUPP;
-		goto out_unregister;
-	}
+		जाओ out_unरेजिस्टर;
+	पूर्ण
 
-	sccb = (void *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
-	if (!sccb) {
+	sccb = (व्योम *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+	अगर (!sccb) अणु
 		ret = -ENOMEM;
-		goto out_unregister;
-	}
+		जाओ out_unरेजिस्टर;
+	पूर्ण
 
-	memset(&req, 0, sizeof(req));
+	स_रखो(&req, 0, माप(req));
 	req.callback_data = &completion;
 	req.callback = sclp_pci_callback;
 	req.command = SCLP_CMDW_WRITE_EVENT_DATA;
 	req.status = SCLP_REQ_FILLED;
 	req.sccb = sccb;
 
-	sccb->evbuf.header.length = sizeof(sccb->evbuf) + report->length;
+	sccb->evbuf.header.length = माप(sccb->evbuf) + report->length;
 	sccb->evbuf.header.type = EVTYP_ERRNOTIFY;
-	sccb->header.length = sizeof(sccb->header) + sccb->evbuf.header.length;
+	sccb->header.length = माप(sccb->header) + sccb->evbuf.header.length;
 
 	sccb->evbuf.action = report->action;
 	sccb->evbuf.atype = SCLP_ATYPE_PCI;
 	sccb->evbuf.fh = fh;
 	sccb->evbuf.fid = fid;
 
-	memcpy(sccb->evbuf.data, report->data, report->length);
+	स_नकल(sccb->evbuf.data, report->data, report->length);
 
 	ret = sclp_add_request(&req);
-	if (ret)
-		goto out_free_req;
+	अगर (ret)
+		जाओ out_मुक्त_req;
 
-	wait_for_completion(&completion);
-	if (req.status != SCLP_REQ_DONE) {
+	रुको_क्रम_completion(&completion);
+	अगर (req.status != SCLP_REQ_DONE) अणु
 		pr_warn("request failed (status=0x%02x)\n",
 			req.status);
 		ret = -EIO;
-		goto out_free_req;
-	}
+		जाओ out_मुक्त_req;
+	पूर्ण
 
-	if (sccb->header.response_code != 0x0020) {
+	अगर (sccb->header.response_code != 0x0020) अणु
 		pr_warn("request failed with response code 0x%x\n",
 			sccb->header.response_code);
 		ret = -EIO;
-	}
+	पूर्ण
 
-out_free_req:
-	free_page((unsigned long) sccb);
-out_unregister:
-	sclp_unregister(&sclp_pci_event);
+out_मुक्त_req:
+	मुक्त_page((अचिन्हित दीर्घ) sccb);
+out_unरेजिस्टर:
+	sclp_unरेजिस्टर(&sclp_pci_event);
 out_unlock:
 	mutex_unlock(&sclp_pci_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_STRING_H
-#define __ASM_SH_STRING_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_STRING_H
+#घोषणा __ASM_SH_STRING_H
 
 /*
  * Copyright (C) 1999 Niibe Yutaka
- * But consider these trivial functions to be public domain.
+ * But consider these trivial functions to be खुला करोमुख्य.
  */
 
-#define __HAVE_ARCH_STRCPY
-static inline char *strcpy(char *__dest, const char *__src)
-{
-	register char *__xdest = __dest;
-	unsigned long __dummy;
+#घोषणा __HAVE_ARCH_STRCPY
+अटल अंतरभूत अक्षर *म_नकल(अक्षर *__dest, स्थिर अक्षर *__src)
+अणु
+	रेजिस्टर अक्षर *__xdest = __dest;
+	अचिन्हित दीर्घ __dummy;
 
-	__asm__ __volatile__("1:\n\t"
+	__यंत्र__ __अस्थिर__("1:\n\t"
 			     "mov.b	@%1+, %2\n\t"
 			     "mov.b	%2, @%0\n\t"
 			     "cmp/eq	#0, %2\n\t"
@@ -23,16 +24,16 @@ static inline char *strcpy(char *__dest, const char *__src)
 			     : "0" (__dest), "1" (__src)
 			     : "memory", "t");
 
-	return __xdest;
-}
+	वापस __xdest;
+पूर्ण
 
-#define __HAVE_ARCH_STRCMP
-static inline int strcmp(const char *__cs, const char *__ct)
-{
-	register int __res;
-	unsigned long __dummy;
+#घोषणा __HAVE_ARCH_STRCMP
+अटल अंतरभूत पूर्णांक म_भेद(स्थिर अक्षर *__cs, स्थिर अक्षर *__ct)
+अणु
+	रेजिस्टर पूर्णांक __res;
+	अचिन्हित दीर्घ __dummy;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 		"mov.b	@%1+, %3\n"
 		"1:\n\t"
 		"mov.b	@%0+, %2\n\t"
@@ -49,19 +50,19 @@ static inline int strcmp(const char *__cs, const char *__ct)
 		: "0" (__cs), "1" (__ct)
 		: "t");
 
-	return __res;
-}
+	वापस __res;
+पूर्ण
 
-#define __HAVE_ARCH_STRNCMP
-static inline int strncmp(const char *__cs, const char *__ct, size_t __n)
-{
-	register int __res;
-	unsigned long __dummy;
+#घोषणा __HAVE_ARCH_STRNCMP
+अटल अंतरभूत पूर्णांक म_भेदन(स्थिर अक्षर *__cs, स्थिर अक्षर *__ct, माप_प्रकार __n)
+अणु
+	रेजिस्टर पूर्णांक __res;
+	अचिन्हित दीर्घ __dummy;
 
-	if (__n == 0)
-		return 0;
+	अगर (__n == 0)
+		वापस 0;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 		"mov.b	@%1+, %3\n"
 		"1:\n\t"
 		"mov.b	@%0+, %2\n\t"
@@ -81,22 +82,22 @@ static inline int strncmp(const char *__cs, const char *__ct, size_t __n)
 		: "0" (__cs), "1" (__ct), "r" (__cs+__n)
 		: "t");
 
-	return __res;
-}
+	वापस __res;
+पूर्ण
 
-#define __HAVE_ARCH_MEMSET
-extern void *memset(void *__s, int __c, size_t __count);
+#घोषणा __HAVE_ARCH_MEMSET
+बाह्य व्योम *स_रखो(व्योम *__s, पूर्णांक __c, माप_प्रकार __count);
 
-#define __HAVE_ARCH_MEMCPY
-extern void *memcpy(void *__to, __const__ void *__from, size_t __n);
+#घोषणा __HAVE_ARCH_MEMCPY
+बाह्य व्योम *स_नकल(व्योम *__to, __स्थिर__ व्योम *__from, माप_प्रकार __n);
 
-#define __HAVE_ARCH_MEMMOVE
-extern void *memmove(void *__dest, __const__ void *__src, size_t __n);
+#घोषणा __HAVE_ARCH_MEMMOVE
+बाह्य व्योम *स_हटाओ(व्योम *__dest, __स्थिर__ व्योम *__src, माप_प्रकार __n);
 
-#define __HAVE_ARCH_MEMCHR
-extern void *memchr(const void *__s, int __c, size_t __n);
+#घोषणा __HAVE_ARCH_MEMCHR
+बाह्य व्योम *स_प्रथम(स्थिर व्योम *__s, पूर्णांक __c, माप_प्रकार __n);
 
-#define __HAVE_ARCH_STRLEN
-extern size_t strlen(const char *);
+#घोषणा __HAVE_ARCH_STRLEN
+बाह्य माप_प्रकार म_माप(स्थिर अक्षर *);
 
-#endif /* __ASM_SH_STRING_H */
+#पूर्ण_अगर /* __ASM_SH_STRING_H */

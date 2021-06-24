@@ -1,109 +1,110 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright(C) 2015 Linaro Limited. All rights reserved.
  * Author: Mathieu Poirier <mathieu.poirier@linaro.org>
  */
 
-#include <stdbool.h>
-#include <linux/coresight-pmu.h>
-#include <linux/zalloc.h>
+#समावेश <stdbool.h>
+#समावेश <linux/coresight-pmu.h>
+#समावेश <linux/zभाग.स>
 
-#include "../../util/auxtrace.h"
-#include "../../util/debug.h"
-#include "../../util/evlist.h"
-#include "../../util/pmu.h"
-#include "cs-etm.h"
-#include "arm-spe.h"
+#समावेश "../../util/auxtrace.h"
+#समावेश "../../util/debug.h"
+#समावेश "../../util/evlist.h"
+#समावेश "../../util/pmu.h"
+#समावेश "cs-etm.h"
+#समावेश "arm-spe.h"
 
-static struct perf_pmu **find_all_arm_spe_pmus(int *nr_spes, int *err)
-{
-	struct perf_pmu **arm_spe_pmus = NULL;
-	int ret, i, nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
+अटल काष्ठा perf_pmu **find_all_arm_spe_pmus(पूर्णांक *nr_spes, पूर्णांक *err)
+अणु
+	काष्ठा perf_pmu **arm_spe_pmus = शून्य;
+	पूर्णांक ret, i, nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
 	/* arm_spe_xxxxxxxxx\0 */
-	char arm_spe_pmu_name[sizeof(ARM_SPE_PMU_NAME) + 10];
+	अक्षर arm_spe_pmu_name[माप(ARM_SPE_PMU_NAME) + 10];
 
-	arm_spe_pmus = zalloc(sizeof(struct perf_pmu *) * nr_cpus);
-	if (!arm_spe_pmus) {
+	arm_spe_pmus = zalloc(माप(काष्ठा perf_pmu *) * nr_cpus);
+	अगर (!arm_spe_pmus) अणु
 		pr_err("spes alloc failed\n");
 		*err = -ENOMEM;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	for (i = 0; i < nr_cpus; i++) {
-		ret = sprintf(arm_spe_pmu_name, "%s%d", ARM_SPE_PMU_NAME, i);
-		if (ret < 0) {
+	क्रम (i = 0; i < nr_cpus; i++) अणु
+		ret = प्र_लिखो(arm_spe_pmu_name, "%s%d", ARM_SPE_PMU_NAME, i);
+		अगर (ret < 0) अणु
 			pr_err("sprintf failed\n");
 			*err = -ENOMEM;
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
 		arm_spe_pmus[*nr_spes] = perf_pmu__find(arm_spe_pmu_name);
-		if (arm_spe_pmus[*nr_spes]) {
+		अगर (arm_spe_pmus[*nr_spes]) अणु
 			pr_debug2("%s %d: arm_spe_pmu %d type %d name %s\n",
 				 __func__, __LINE__, *nr_spes,
 				 arm_spe_pmus[*nr_spes]->type,
 				 arm_spe_pmus[*nr_spes]->name);
 			(*nr_spes)++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return arm_spe_pmus;
-}
+	वापस arm_spe_pmus;
+पूर्ण
 
-struct auxtrace_record
-*auxtrace_record__init(struct evlist *evlist, int *err)
-{
-	struct perf_pmu	*cs_etm_pmu;
-	struct evsel *evsel;
-	bool found_etm = false;
-	struct perf_pmu *found_spe = NULL;
-	struct perf_pmu **arm_spe_pmus = NULL;
-	int nr_spes = 0;
-	int i = 0;
+काष्ठा auxtrace_record
+*auxtrace_record__init(काष्ठा evlist *evlist, पूर्णांक *err)
+अणु
+	काष्ठा perf_pmu	*cs_eपंचांग_pmu;
+	काष्ठा evsel *evsel;
+	bool found_eपंचांग = false;
+	काष्ठा perf_pmu *found_spe = शून्य;
+	काष्ठा perf_pmu **arm_spe_pmus = शून्य;
+	पूर्णांक nr_spes = 0;
+	पूर्णांक i = 0;
 
-	if (!evlist)
-		return NULL;
+	अगर (!evlist)
+		वापस शून्य;
 
-	cs_etm_pmu = perf_pmu__find(CORESIGHT_ETM_PMU_NAME);
+	cs_eपंचांग_pmu = perf_pmu__find(CORESIGHT_ETM_PMU_NAME);
 	arm_spe_pmus = find_all_arm_spe_pmus(&nr_spes, err);
 
-	evlist__for_each_entry(evlist, evsel) {
-		if (cs_etm_pmu &&
-		    evsel->core.attr.type == cs_etm_pmu->type)
-			found_etm = true;
+	evlist__क्रम_each_entry(evlist, evsel) अणु
+		अगर (cs_eपंचांग_pmu &&
+		    evsel->core.attr.type == cs_eपंचांग_pmu->type)
+			found_eपंचांग = true;
 
-		if (!nr_spes || found_spe)
-			continue;
+		अगर (!nr_spes || found_spe)
+			जारी;
 
-		for (i = 0; i < nr_spes; i++) {
-			if (evsel->core.attr.type == arm_spe_pmus[i]->type) {
+		क्रम (i = 0; i < nr_spes; i++) अणु
+			अगर (evsel->core.attr.type == arm_spe_pmus[i]->type) अणु
 				found_spe = arm_spe_pmus[i];
-				break;
-			}
-		}
-	}
-	free(arm_spe_pmus);
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	मुक्त(arm_spe_pmus);
 
-	if (found_etm && found_spe) {
+	अगर (found_eपंचांग && found_spe) अणु
 		pr_err("Concurrent ARM Coresight ETM and SPE operation not currently supported\n");
 		*err = -EOPNOTSUPP;
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (found_etm)
-		return cs_etm_record_init(err);
+	अगर (found_eपंचांग)
+		वापस cs_eपंचांग_record_init(err);
 
-#if defined(__aarch64__)
-	if (found_spe)
-		return arm_spe_recording_init(err, found_spe);
-#endif
+#अगर defined(__aarch64__)
+	अगर (found_spe)
+		वापस arm_spe_recording_init(err, found_spe);
+#पूर्ण_अगर
 
 	/*
 	 * Clear 'err' even if we haven't found an event - that way perf
-	 * record can still be used even if tracers aren't present.  The NULL
-	 * return value will take care of telling the infrastructure HW tracing
+	 * record can still be used even अगर tracers aren't present.  The शून्य
+	 * वापस value will take care of telling the infraकाष्ठाure HW tracing
 	 * isn't available.
 	 */
 	*err = 0;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

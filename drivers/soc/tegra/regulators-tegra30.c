@@ -1,323 +1,324 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Voltage regulators coupler for NVIDIA Tegra30
+ * Voltage regulators coupler क्रम NVIDIA Tegra30
  * Copyright (C) 2019 GRATE-DRIVER project
  *
- * Voltage constraints borrowed from downstream kernel sources
+ * Voltage स्थिरraपूर्णांकs borrowed from करोwnstream kernel sources
  * Copyright (C) 2010-2011 NVIDIA Corporation
  */
 
-#define pr_fmt(fmt)	"tegra voltage-coupler: " fmt
+#घोषणा pr_fmt(fmt)	"tegra voltage-coupler: " fmt
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/of.h>
-#include <linux/regulator/coupler.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regulator/coupler.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
 
-#include <soc/tegra/fuse.h>
+#समावेश <soc/tegra/fuse.h>
 
-struct tegra_regulator_coupler {
-	struct regulator_coupler coupler;
-	struct regulator_dev *core_rdev;
-	struct regulator_dev *cpu_rdev;
-	int core_min_uV;
-};
+काष्ठा tegra_regulator_coupler अणु
+	काष्ठा regulator_coupler coupler;
+	काष्ठा regulator_dev *core_rdev;
+	काष्ठा regulator_dev *cpu_rdev;
+	पूर्णांक core_min_uV;
+पूर्ण;
 
-static inline struct tegra_regulator_coupler *
-to_tegra_coupler(struct regulator_coupler *coupler)
-{
-	return container_of(coupler, struct tegra_regulator_coupler, coupler);
-}
+अटल अंतरभूत काष्ठा tegra_regulator_coupler *
+to_tegra_coupler(काष्ठा regulator_coupler *coupler)
+अणु
+	वापस container_of(coupler, काष्ठा tegra_regulator_coupler, coupler);
+पूर्ण
 
-static int tegra30_core_limit(struct tegra_regulator_coupler *tegra,
-			      struct regulator_dev *core_rdev)
-{
-	int core_min_uV = 0;
-	int core_max_uV;
-	int core_cur_uV;
-	int err;
+अटल पूर्णांक tegra30_core_limit(काष्ठा tegra_regulator_coupler *tegra,
+			      काष्ठा regulator_dev *core_rdev)
+अणु
+	पूर्णांक core_min_uV = 0;
+	पूर्णांक core_max_uV;
+	पूर्णांक core_cur_uV;
+	पूर्णांक err;
 
-	if (tegra->core_min_uV > 0)
-		return tegra->core_min_uV;
+	अगर (tegra->core_min_uV > 0)
+		वापस tegra->core_min_uV;
 
 	core_cur_uV = regulator_get_voltage_rdev(core_rdev);
-	if (core_cur_uV < 0)
-		return core_cur_uV;
+	अगर (core_cur_uV < 0)
+		वापस core_cur_uV;
 
 	core_max_uV = max(core_cur_uV, 1200000);
 
 	err = regulator_check_voltage(core_rdev, &core_min_uV, &core_max_uV);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/*
 	 * Limit minimum CORE voltage to a value left from bootloader or,
-	 * if it's unreasonably low value, to the most common 1.2v or to
+	 * अगर it's unreasonably low value, to the most common 1.2v or to
 	 * whatever maximum value defined via board's device-tree.
 	 */
 	tegra->core_min_uV = core_max_uV;
 
 	pr_info("core minimum voltage limited to %duV\n", tegra->core_min_uV);
 
-	return tegra->core_min_uV;
-}
+	वापस tegra->core_min_uV;
+पूर्ण
 
-static int tegra30_core_cpu_limit(int cpu_uV)
-{
-	if (cpu_uV < 800000)
-		return 950000;
+अटल पूर्णांक tegra30_core_cpu_limit(पूर्णांक cpu_uV)
+अणु
+	अगर (cpu_uV < 800000)
+		वापस 950000;
 
-	if (cpu_uV < 900000)
-		return 1000000;
+	अगर (cpu_uV < 900000)
+		वापस 1000000;
 
-	if (cpu_uV < 1000000)
-		return 1100000;
+	अगर (cpu_uV < 1000000)
+		वापस 1100000;
 
-	if (cpu_uV < 1100000)
-		return 1200000;
+	अगर (cpu_uV < 1100000)
+		वापस 1200000;
 
-	if (cpu_uV < 1250000) {
-		switch (tegra_sku_info.cpu_speedo_id) {
-		case 0 ... 1:
-		case 4:
-		case 7 ... 8:
-			return 1200000;
+	अगर (cpu_uV < 1250000) अणु
+		चयन (tegra_sku_info.cpu_speeकरो_id) अणु
+		हाल 0 ... 1:
+		हाल 4:
+		हाल 7 ... 8:
+			वापस 1200000;
 
-		default:
-			return 1300000;
-		}
-	}
+		शेष:
+			वापस 1300000;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int tegra30_voltage_update(struct tegra_regulator_coupler *tegra,
-				  struct regulator_dev *cpu_rdev,
-				  struct regulator_dev *core_rdev)
-{
-	int core_min_uV, core_max_uV = INT_MAX;
-	int cpu_min_uV, cpu_max_uV = INT_MAX;
-	int cpu_min_uV_consumers = 0;
-	int core_min_limited_uV;
-	int core_target_uV;
-	int cpu_target_uV;
-	int core_max_step;
-	int cpu_max_step;
-	int max_spread;
-	int core_uV;
-	int cpu_uV;
-	int err;
+अटल पूर्णांक tegra30_voltage_update(काष्ठा tegra_regulator_coupler *tegra,
+				  काष्ठा regulator_dev *cpu_rdev,
+				  काष्ठा regulator_dev *core_rdev)
+अणु
+	पूर्णांक core_min_uV, core_max_uV = पूर्णांक_उच्च;
+	पूर्णांक cpu_min_uV, cpu_max_uV = पूर्णांक_उच्च;
+	पूर्णांक cpu_min_uV_consumers = 0;
+	पूर्णांक core_min_limited_uV;
+	पूर्णांक core_target_uV;
+	पूर्णांक cpu_target_uV;
+	पूर्णांक core_max_step;
+	पूर्णांक cpu_max_step;
+	पूर्णांक max_spपढ़ो;
+	पूर्णांक core_uV;
+	पूर्णांक cpu_uV;
+	पूर्णांक err;
 
 	/*
 	 * CPU voltage should not got lower than 300mV from the CORE.
 	 * CPU voltage should stay below the CORE by 100mV+, depending
 	 * by the CORE voltage. This applies to all Tegra30 SoC's.
 	 */
-	max_spread = cpu_rdev->constraints->max_spread[0];
-	cpu_max_step = cpu_rdev->constraints->max_uV_step;
-	core_max_step = core_rdev->constraints->max_uV_step;
+	max_spपढ़ो = cpu_rdev->स्थिरraपूर्णांकs->max_spपढ़ो[0];
+	cpu_max_step = cpu_rdev->स्थिरraपूर्णांकs->max_uV_step;
+	core_max_step = core_rdev->स्थिरraपूर्णांकs->max_uV_step;
 
-	if (!max_spread) {
+	अगर (!max_spपढ़ो) अणु
 		pr_err_once("cpu-core max-spread is undefined in device-tree\n");
-		max_spread = 300000;
-	}
+		max_spपढ़ो = 300000;
+	पूर्ण
 
-	if (!cpu_max_step) {
+	अगर (!cpu_max_step) अणु
 		pr_err_once("cpu max-step is undefined in device-tree\n");
 		cpu_max_step = 150000;
-	}
+	पूर्ण
 
-	if (!core_max_step) {
+	अगर (!core_max_step) अणु
 		pr_err_once("core max-step is undefined in device-tree\n");
 		core_max_step = 150000;
-	}
+	पूर्ण
 
 	/*
 	 * The CORE voltage scaling is currently not hooked up in drivers,
 	 * hence we will limit the minimum CORE voltage to a reasonable value.
-	 * This should be good enough for the time being.
+	 * This should be good enough क्रम the समय being.
 	 */
 	core_min_uV = tegra30_core_limit(tegra, core_rdev);
-	if (core_min_uV < 0)
-		return core_min_uV;
+	अगर (core_min_uV < 0)
+		वापस core_min_uV;
 
 	err = regulator_check_consumers(core_rdev, &core_min_uV, &core_max_uV,
 					PM_SUSPEND_ON);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	core_uV = regulator_get_voltage_rdev(core_rdev);
-	if (core_uV < 0)
-		return core_uV;
+	अगर (core_uV < 0)
+		वापस core_uV;
 
-	cpu_min_uV = core_min_uV - max_spread;
+	cpu_min_uV = core_min_uV - max_spपढ़ो;
 
 	err = regulator_check_consumers(cpu_rdev, &cpu_min_uV, &cpu_max_uV,
 					PM_SUSPEND_ON);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = regulator_check_consumers(cpu_rdev, &cpu_min_uV_consumers,
 					&cpu_max_uV, PM_SUSPEND_ON);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = regulator_check_voltage(cpu_rdev, &cpu_min_uV, &cpu_max_uV);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	cpu_uV = regulator_get_voltage_rdev(cpu_rdev);
-	if (cpu_uV < 0)
-		return cpu_uV;
+	अगर (cpu_uV < 0)
+		वापस cpu_uV;
 
 	/*
 	 * CPU's regulator may not have any consumers, hence the voltage
-	 * must not be changed in that case because CPU simply won't
-	 * survive the voltage drop if it's running on a higher frequency.
+	 * must not be changed in that हाल because CPU simply won't
+	 * survive the voltage drop अगर it's running on a higher frequency.
 	 */
-	if (!cpu_min_uV_consumers)
+	अगर (!cpu_min_uV_consumers)
 		cpu_min_uV = max(cpu_uV, cpu_min_uV);
 
 	/*
-	 * Bootloader shall set up voltages correctly, but if it
+	 * Bootloader shall set up voltages correctly, but अगर it
 	 * happens that there is a violation, then try to fix it
 	 * at first.
 	 */
 	core_min_limited_uV = tegra30_core_cpu_limit(cpu_uV);
-	if (core_min_limited_uV < 0)
-		return core_min_limited_uV;
+	अगर (core_min_limited_uV < 0)
+		वापस core_min_limited_uV;
 
 	core_min_uV = max(core_min_uV, tegra30_core_cpu_limit(cpu_min_uV));
 
 	err = regulator_check_voltage(core_rdev, &core_min_uV, &core_max_uV);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (core_min_limited_uV > core_uV) {
+	अगर (core_min_limited_uV > core_uV) अणु
 		pr_err("core voltage constraint violated: %d %d %d\n",
 		       core_uV, core_min_limited_uV, cpu_uV);
-		goto update_core;
-	}
+		जाओ update_core;
+	पूर्ण
 
-	while (cpu_uV != cpu_min_uV || core_uV != core_min_uV) {
-		if (cpu_uV < cpu_min_uV) {
+	जबतक (cpu_uV != cpu_min_uV || core_uV != core_min_uV) अणु
+		अगर (cpu_uV < cpu_min_uV) अणु
 			cpu_target_uV = min(cpu_uV + cpu_max_step, cpu_min_uV);
-		} else {
+		पूर्ण अन्यथा अणु
 			cpu_target_uV = max(cpu_uV - cpu_max_step, cpu_min_uV);
-			cpu_target_uV = max(core_uV - max_spread, cpu_target_uV);
-		}
+			cpu_target_uV = max(core_uV - max_spपढ़ो, cpu_target_uV);
+		पूर्ण
 
-		if (cpu_uV == cpu_target_uV)
-			goto update_core;
+		अगर (cpu_uV == cpu_target_uV)
+			जाओ update_core;
 
 		err = regulator_set_voltage_rdev(cpu_rdev,
 						 cpu_target_uV,
 						 cpu_max_uV,
 						 PM_SUSPEND_ON);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		cpu_uV = cpu_target_uV;
 update_core:
 		core_min_limited_uV = tegra30_core_cpu_limit(cpu_uV);
-		if (core_min_limited_uV < 0)
-			return core_min_limited_uV;
+		अगर (core_min_limited_uV < 0)
+			वापस core_min_limited_uV;
 
 		core_target_uV = max(core_min_limited_uV, core_min_uV);
 
-		if (core_uV < core_target_uV) {
+		अगर (core_uV < core_target_uV) अणु
 			core_target_uV = min(core_target_uV, core_uV + core_max_step);
-			core_target_uV = min(core_target_uV, cpu_uV + max_spread);
-		} else {
+			core_target_uV = min(core_target_uV, cpu_uV + max_spपढ़ो);
+		पूर्ण अन्यथा अणु
 			core_target_uV = max(core_target_uV, core_uV - core_max_step);
-		}
+		पूर्ण
 
-		if (core_uV == core_target_uV)
-			continue;
+		अगर (core_uV == core_target_uV)
+			जारी;
 
 		err = regulator_set_voltage_rdev(core_rdev,
 						 core_target_uV,
 						 core_max_uV,
 						 PM_SUSPEND_ON);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		core_uV = core_target_uV;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tegra30_regulator_balance_voltage(struct regulator_coupler *coupler,
-					     struct regulator_dev *rdev,
+अटल पूर्णांक tegra30_regulator_balance_voltage(काष्ठा regulator_coupler *coupler,
+					     काष्ठा regulator_dev *rdev,
 					     suspend_state_t state)
-{
-	struct tegra_regulator_coupler *tegra = to_tegra_coupler(coupler);
-	struct regulator_dev *core_rdev = tegra->core_rdev;
-	struct regulator_dev *cpu_rdev = tegra->cpu_rdev;
+अणु
+	काष्ठा tegra_regulator_coupler *tegra = to_tegra_coupler(coupler);
+	काष्ठा regulator_dev *core_rdev = tegra->core_rdev;
+	काष्ठा regulator_dev *cpu_rdev = tegra->cpu_rdev;
 
-	if ((core_rdev != rdev && cpu_rdev != rdev) || state != PM_SUSPEND_ON) {
+	अगर ((core_rdev != rdev && cpu_rdev != rdev) || state != PM_SUSPEND_ON) अणु
 		pr_err("regulators are not coupled properly\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return tegra30_voltage_update(tegra, cpu_rdev, core_rdev);
-}
+	वापस tegra30_voltage_update(tegra, cpu_rdev, core_rdev);
+पूर्ण
 
-static int tegra30_regulator_attach(struct regulator_coupler *coupler,
-				    struct regulator_dev *rdev)
-{
-	struct tegra_regulator_coupler *tegra = to_tegra_coupler(coupler);
-	struct device_node *np = rdev->dev.of_node;
+अटल पूर्णांक tegra30_regulator_attach(काष्ठा regulator_coupler *coupler,
+				    काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा tegra_regulator_coupler *tegra = to_tegra_coupler(coupler);
+	काष्ठा device_node *np = rdev->dev.of_node;
 
-	if (of_property_read_bool(np, "nvidia,tegra-core-regulator") &&
-	    !tegra->core_rdev) {
+	अगर (of_property_पढ़ो_bool(np, "nvidia,tegra-core-regulator") &&
+	    !tegra->core_rdev) अणु
 		tegra->core_rdev = rdev;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (of_property_read_bool(np, "nvidia,tegra-cpu-regulator") &&
-	    !tegra->cpu_rdev) {
+	अगर (of_property_पढ़ो_bool(np, "nvidia,tegra-cpu-regulator") &&
+	    !tegra->cpu_rdev) अणु
 		tegra->cpu_rdev = rdev;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int tegra30_regulator_detach(struct regulator_coupler *coupler,
-				    struct regulator_dev *rdev)
-{
-	struct tegra_regulator_coupler *tegra = to_tegra_coupler(coupler);
+अटल पूर्णांक tegra30_regulator_detach(काष्ठा regulator_coupler *coupler,
+				    काष्ठा regulator_dev *rdev)
+अणु
+	काष्ठा tegra_regulator_coupler *tegra = to_tegra_coupler(coupler);
 
-	if (tegra->core_rdev == rdev) {
-		tegra->core_rdev = NULL;
-		return 0;
-	}
+	अगर (tegra->core_rdev == rdev) अणु
+		tegra->core_rdev = शून्य;
+		वापस 0;
+	पूर्ण
 
-	if (tegra->cpu_rdev == rdev) {
-		tegra->cpu_rdev = NULL;
-		return 0;
-	}
+	अगर (tegra->cpu_rdev == rdev) अणु
+		tegra->cpu_rdev = शून्य;
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static struct tegra_regulator_coupler tegra30_coupler = {
-	.coupler = {
+अटल काष्ठा tegra_regulator_coupler tegra30_coupler = अणु
+	.coupler = अणु
 		.attach_regulator = tegra30_regulator_attach,
 		.detach_regulator = tegra30_regulator_detach,
 		.balance_voltage = tegra30_regulator_balance_voltage,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init tegra_regulator_coupler_init(void)
-{
-	if (!of_machine_is_compatible("nvidia,tegra30"))
-		return 0;
+अटल पूर्णांक __init tegra_regulator_coupler_init(व्योम)
+अणु
+	अगर (!of_machine_is_compatible("nvidia,tegra30"))
+		वापस 0;
 
-	return regulator_coupler_register(&tegra30_coupler.coupler);
-}
+	वापस regulator_coupler_रेजिस्टर(&tegra30_coupler.coupler);
+पूर्ण
 arch_initcall(tegra_regulator_coupler_init);

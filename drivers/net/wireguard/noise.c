@@ -1,315 +1,316 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  */
 
-#include "noise.h"
-#include "device.h"
-#include "peer.h"
-#include "messages.h"
-#include "queueing.h"
-#include "peerlookup.h"
+#समावेश "noise.h"
+#समावेश "device.h"
+#समावेश "peer.h"
+#समावेश "messages.h"
+#समावेश "queueing.h"
+#समावेश "peerlookup.h"
 
-#include <linux/rcupdate.h>
-#include <linux/slab.h>
-#include <linux/bitmap.h>
-#include <linux/scatterlist.h>
-#include <linux/highmem.h>
-#include <crypto/algapi.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <crypto/algapi.h>
 
 /* This implements Noise_IKpsk2:
  *
  * <- s
  * ******
- * -> e, es, s, ss, {t}
- * <- e, ee, se, psk, {}
+ * -> e, es, s, ss, अणुtपूर्ण
+ * <- e, ee, se, psk, अणुपूर्ण
  */
 
-static const u8 handshake_name[37] = "Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s";
-static const u8 identifier_name[34] = "WireGuard v1 zx2c4 Jason@zx2c4.com";
-static u8 handshake_init_hash[NOISE_HASH_LEN] __ro_after_init;
-static u8 handshake_init_chaining_key[NOISE_HASH_LEN] __ro_after_init;
-static atomic64_t keypair_counter = ATOMIC64_INIT(0);
+अटल स्थिर u8 handshake_name[37] = "Noise_IKpsk2_25519_ChaChaPoly_BLAKE2s";
+अटल स्थिर u8 identअगरier_name[34] = "WireGuard v1 zx2c4 Jason@zx2c4.com";
+अटल u8 handshake_init_hash[NOISE_HASH_LEN] __ro_after_init;
+अटल u8 handshake_init_chaining_key[NOISE_HASH_LEN] __ro_after_init;
+अटल atomic64_t keypair_counter = ATOMIC64_INIT(0);
 
-void __init wg_noise_init(void)
-{
-	struct blake2s_state blake;
+व्योम __init wg_noise_init(व्योम)
+अणु
+	काष्ठा blake2s_state blake;
 
-	blake2s(handshake_init_chaining_key, handshake_name, NULL,
-		NOISE_HASH_LEN, sizeof(handshake_name), 0);
+	blake2s(handshake_init_chaining_key, handshake_name, शून्य,
+		NOISE_HASH_LEN, माप(handshake_name), 0);
 	blake2s_init(&blake, NOISE_HASH_LEN);
 	blake2s_update(&blake, handshake_init_chaining_key, NOISE_HASH_LEN);
-	blake2s_update(&blake, identifier_name, sizeof(identifier_name));
+	blake2s_update(&blake, identअगरier_name, माप(identअगरier_name));
 	blake2s_final(&blake, handshake_init_hash);
-}
+पूर्ण
 
-/* Must hold peer->handshake.static_identity->lock */
-void wg_noise_precompute_static_static(struct wg_peer *peer)
-{
-	down_write(&peer->handshake.lock);
-	if (!peer->handshake.static_identity->has_identity ||
-	    !curve25519(peer->handshake.precomputed_static_static,
-			peer->handshake.static_identity->static_private,
-			peer->handshake.remote_static))
-		memset(peer->handshake.precomputed_static_static, 0,
+/* Must hold peer->handshake.अटल_identity->lock */
+व्योम wg_noise_precompute_अटल_अटल(काष्ठा wg_peer *peer)
+अणु
+	करोwn_ग_लिखो(&peer->handshake.lock);
+	अगर (!peer->handshake.अटल_identity->has_identity ||
+	    !curve25519(peer->handshake.precomputed_अटल_अटल,
+			peer->handshake.अटल_identity->अटल_निजी,
+			peer->handshake.remote_अटल))
+		स_रखो(peer->handshake.precomputed_अटल_अटल, 0,
 		       NOISE_PUBLIC_KEY_LEN);
-	up_write(&peer->handshake.lock);
-}
+	up_ग_लिखो(&peer->handshake.lock);
+पूर्ण
 
-void wg_noise_handshake_init(struct noise_handshake *handshake,
-			     struct noise_static_identity *static_identity,
-			     const u8 peer_public_key[NOISE_PUBLIC_KEY_LEN],
-			     const u8 peer_preshared_key[NOISE_SYMMETRIC_KEY_LEN],
-			     struct wg_peer *peer)
-{
-	memset(handshake, 0, sizeof(*handshake));
+व्योम wg_noise_handshake_init(काष्ठा noise_handshake *handshake,
+			     काष्ठा noise_अटल_identity *अटल_identity,
+			     स्थिर u8 peer_खुला_key[NOISE_PUBLIC_KEY_LEN],
+			     स्थिर u8 peer_preshared_key[NOISE_SYMMETRIC_KEY_LEN],
+			     काष्ठा wg_peer *peer)
+अणु
+	स_रखो(handshake, 0, माप(*handshake));
 	init_rwsem(&handshake->lock);
 	handshake->entry.type = INDEX_HASHTABLE_HANDSHAKE;
 	handshake->entry.peer = peer;
-	memcpy(handshake->remote_static, peer_public_key, NOISE_PUBLIC_KEY_LEN);
-	if (peer_preshared_key)
-		memcpy(handshake->preshared_key, peer_preshared_key,
+	स_नकल(handshake->remote_अटल, peer_खुला_key, NOISE_PUBLIC_KEY_LEN);
+	अगर (peer_preshared_key)
+		स_नकल(handshake->preshared_key, peer_preshared_key,
 		       NOISE_SYMMETRIC_KEY_LEN);
-	handshake->static_identity = static_identity;
+	handshake->अटल_identity = अटल_identity;
 	handshake->state = HANDSHAKE_ZEROED;
-	wg_noise_precompute_static_static(peer);
-}
+	wg_noise_precompute_अटल_अटल(peer);
+पूर्ण
 
-static void handshake_zero(struct noise_handshake *handshake)
-{
-	memset(&handshake->ephemeral_private, 0, NOISE_PUBLIC_KEY_LEN);
-	memset(&handshake->remote_ephemeral, 0, NOISE_PUBLIC_KEY_LEN);
-	memset(&handshake->hash, 0, NOISE_HASH_LEN);
-	memset(&handshake->chaining_key, 0, NOISE_HASH_LEN);
+अटल व्योम handshake_zero(काष्ठा noise_handshake *handshake)
+अणु
+	स_रखो(&handshake->ephemeral_निजी, 0, NOISE_PUBLIC_KEY_LEN);
+	स_रखो(&handshake->remote_ephemeral, 0, NOISE_PUBLIC_KEY_LEN);
+	स_रखो(&handshake->hash, 0, NOISE_HASH_LEN);
+	स_रखो(&handshake->chaining_key, 0, NOISE_HASH_LEN);
 	handshake->remote_index = 0;
 	handshake->state = HANDSHAKE_ZEROED;
-}
+पूर्ण
 
-void wg_noise_handshake_clear(struct noise_handshake *handshake)
-{
-	down_write(&handshake->lock);
-	wg_index_hashtable_remove(
+व्योम wg_noise_handshake_clear(काष्ठा noise_handshake *handshake)
+अणु
+	करोwn_ग_लिखो(&handshake->lock);
+	wg_index_hashtable_हटाओ(
 			handshake->entry.peer->device->index_hashtable,
 			&handshake->entry);
 	handshake_zero(handshake);
-	up_write(&handshake->lock);
-}
+	up_ग_लिखो(&handshake->lock);
+पूर्ण
 
-static struct noise_keypair *keypair_create(struct wg_peer *peer)
-{
-	struct noise_keypair *keypair = kzalloc(sizeof(*keypair), GFP_KERNEL);
+अटल काष्ठा noise_keypair *keypair_create(काष्ठा wg_peer *peer)
+अणु
+	काष्ठा noise_keypair *keypair = kzalloc(माप(*keypair), GFP_KERNEL);
 
-	if (unlikely(!keypair))
-		return NULL;
+	अगर (unlikely(!keypair))
+		वापस शून्य;
 	spin_lock_init(&keypair->receiving_counter.lock);
-	keypair->internal_id = atomic64_inc_return(&keypair_counter);
+	keypair->पूर्णांकernal_id = atomic64_inc_वापस(&keypair_counter);
 	keypair->entry.type = INDEX_HASHTABLE_KEYPAIR;
 	keypair->entry.peer = peer;
 	kref_init(&keypair->refcount);
-	return keypair;
-}
+	वापस keypair;
+पूर्ण
 
-static void keypair_free_rcu(struct rcu_head *rcu)
-{
-	kfree_sensitive(container_of(rcu, struct noise_keypair, rcu));
-}
+अटल व्योम keypair_मुक्त_rcu(काष्ठा rcu_head *rcu)
+अणु
+	kमुक्त_sensitive(container_of(rcu, काष्ठा noise_keypair, rcu));
+पूर्ण
 
-static void keypair_free_kref(struct kref *kref)
-{
-	struct noise_keypair *keypair =
-		container_of(kref, struct noise_keypair, refcount);
+अटल व्योम keypair_मुक्त_kref(काष्ठा kref *kref)
+अणु
+	काष्ठा noise_keypair *keypair =
+		container_of(kref, काष्ठा noise_keypair, refcount);
 
 	net_dbg_ratelimited("%s: Keypair %llu destroyed for peer %llu\n",
 			    keypair->entry.peer->device->dev->name,
-			    keypair->internal_id,
-			    keypair->entry.peer->internal_id);
-	wg_index_hashtable_remove(keypair->entry.peer->device->index_hashtable,
+			    keypair->पूर्णांकernal_id,
+			    keypair->entry.peer->पूर्णांकernal_id);
+	wg_index_hashtable_हटाओ(keypair->entry.peer->device->index_hashtable,
 				  &keypair->entry);
-	call_rcu(&keypair->rcu, keypair_free_rcu);
-}
+	call_rcu(&keypair->rcu, keypair_मुक्त_rcu);
+पूर्ण
 
-void wg_noise_keypair_put(struct noise_keypair *keypair, bool unreference_now)
-{
-	if (unlikely(!keypair))
-		return;
-	if (unlikely(unreference_now))
-		wg_index_hashtable_remove(
+व्योम wg_noise_keypair_put(काष्ठा noise_keypair *keypair, bool unreference_now)
+अणु
+	अगर (unlikely(!keypair))
+		वापस;
+	अगर (unlikely(unreference_now))
+		wg_index_hashtable_हटाओ(
 			keypair->entry.peer->device->index_hashtable,
 			&keypair->entry);
-	kref_put(&keypair->refcount, keypair_free_kref);
-}
+	kref_put(&keypair->refcount, keypair_मुक्त_kref);
+पूर्ण
 
-struct noise_keypair *wg_noise_keypair_get(struct noise_keypair *keypair)
-{
-	RCU_LOCKDEP_WARN(!rcu_read_lock_bh_held(),
+काष्ठा noise_keypair *wg_noise_keypair_get(काष्ठा noise_keypair *keypair)
+अणु
+	RCU_LOCKDEP_WARN(!rcu_पढ़ो_lock_bh_held(),
 		"Taking noise keypair reference without holding the RCU BH read lock");
-	if (unlikely(!keypair || !kref_get_unless_zero(&keypair->refcount)))
-		return NULL;
-	return keypair;
-}
+	अगर (unlikely(!keypair || !kref_get_unless_zero(&keypair->refcount)))
+		वापस शून्य;
+	वापस keypair;
+पूर्ण
 
-void wg_noise_keypairs_clear(struct noise_keypairs *keypairs)
-{
-	struct noise_keypair *old;
+व्योम wg_noise_keypairs_clear(काष्ठा noise_keypairs *keypairs)
+अणु
+	काष्ठा noise_keypair *old;
 
 	spin_lock_bh(&keypairs->keypair_update_lock);
 
-	/* We zero the next_keypair before zeroing the others, so that
-	 * wg_noise_received_with_keypair returns early before subsequent ones
+	/* We zero the next_keypair beक्रमe zeroing the others, so that
+	 * wg_noise_received_with_keypair वापसs early beक्रमe subsequent ones
 	 * are zeroed.
 	 */
-	old = rcu_dereference_protected(keypairs->next_keypair,
+	old = rcu_dereference_रक्षित(keypairs->next_keypair,
 		lockdep_is_held(&keypairs->keypair_update_lock));
-	RCU_INIT_POINTER(keypairs->next_keypair, NULL);
+	RCU_INIT_POINTER(keypairs->next_keypair, शून्य);
 	wg_noise_keypair_put(old, true);
 
-	old = rcu_dereference_protected(keypairs->previous_keypair,
+	old = rcu_dereference_रक्षित(keypairs->previous_keypair,
 		lockdep_is_held(&keypairs->keypair_update_lock));
-	RCU_INIT_POINTER(keypairs->previous_keypair, NULL);
+	RCU_INIT_POINTER(keypairs->previous_keypair, शून्य);
 	wg_noise_keypair_put(old, true);
 
-	old = rcu_dereference_protected(keypairs->current_keypair,
+	old = rcu_dereference_रक्षित(keypairs->current_keypair,
 		lockdep_is_held(&keypairs->keypair_update_lock));
-	RCU_INIT_POINTER(keypairs->current_keypair, NULL);
+	RCU_INIT_POINTER(keypairs->current_keypair, शून्य);
 	wg_noise_keypair_put(old, true);
 
 	spin_unlock_bh(&keypairs->keypair_update_lock);
-}
+पूर्ण
 
-void wg_noise_expire_current_peer_keypairs(struct wg_peer *peer)
-{
-	struct noise_keypair *keypair;
+व्योम wg_noise_expire_current_peer_keypairs(काष्ठा wg_peer *peer)
+अणु
+	काष्ठा noise_keypair *keypair;
 
 	wg_noise_handshake_clear(&peer->handshake);
 	wg_noise_reset_last_sent_handshake(&peer->last_sent_handshake);
 
 	spin_lock_bh(&peer->keypairs.keypair_update_lock);
-	keypair = rcu_dereference_protected(peer->keypairs.next_keypair,
+	keypair = rcu_dereference_रक्षित(peer->keypairs.next_keypair,
 			lockdep_is_held(&peer->keypairs.keypair_update_lock));
-	if (keypair)
+	अगर (keypair)
 		keypair->sending.is_valid = false;
-	keypair = rcu_dereference_protected(peer->keypairs.current_keypair,
+	keypair = rcu_dereference_रक्षित(peer->keypairs.current_keypair,
 			lockdep_is_held(&peer->keypairs.keypair_update_lock));
-	if (keypair)
+	अगर (keypair)
 		keypair->sending.is_valid = false;
 	spin_unlock_bh(&peer->keypairs.keypair_update_lock);
-}
+पूर्ण
 
-static void add_new_keypair(struct noise_keypairs *keypairs,
-			    struct noise_keypair *new_keypair)
-{
-	struct noise_keypair *previous_keypair, *next_keypair, *current_keypair;
+अटल व्योम add_new_keypair(काष्ठा noise_keypairs *keypairs,
+			    काष्ठा noise_keypair *new_keypair)
+अणु
+	काष्ठा noise_keypair *previous_keypair, *next_keypair, *current_keypair;
 
 	spin_lock_bh(&keypairs->keypair_update_lock);
-	previous_keypair = rcu_dereference_protected(keypairs->previous_keypair,
+	previous_keypair = rcu_dereference_रक्षित(keypairs->previous_keypair,
 		lockdep_is_held(&keypairs->keypair_update_lock));
-	next_keypair = rcu_dereference_protected(keypairs->next_keypair,
+	next_keypair = rcu_dereference_रक्षित(keypairs->next_keypair,
 		lockdep_is_held(&keypairs->keypair_update_lock));
-	current_keypair = rcu_dereference_protected(keypairs->current_keypair,
+	current_keypair = rcu_dereference_रक्षित(keypairs->current_keypair,
 		lockdep_is_held(&keypairs->keypair_update_lock));
-	if (new_keypair->i_am_the_initiator) {
+	अगर (new_keypair->i_am_the_initiator) अणु
 		/* If we're the initiator, it means we've sent a handshake, and
 		 * received a confirmation response, which means this new
 		 * keypair can now be used.
 		 */
-		if (next_keypair) {
-			/* If there already was a next keypair pending, we
-			 * demote it to be the previous keypair, and free the
+		अगर (next_keypair) अणु
+			/* If there alपढ़ोy was a next keypair pending, we
+			 * demote it to be the previous keypair, and मुक्त the
 			 * existing current. Note that this means KCI can result
 			 * in this transition. It would perhaps be more sound to
 			 * always just get rid of the unused next keypair
 			 * instead of putting it in the previous slot, but this
 			 * might be a bit less robust. Something to think about
-			 * for the future.
+			 * क्रम the future.
 			 */
-			RCU_INIT_POINTER(keypairs->next_keypair, NULL);
-			rcu_assign_pointer(keypairs->previous_keypair,
+			RCU_INIT_POINTER(keypairs->next_keypair, शून्य);
+			rcu_assign_poपूर्णांकer(keypairs->previous_keypair,
 					   next_keypair);
 			wg_noise_keypair_put(current_keypair, true);
-		} else /* If there wasn't an existing next keypair, we replace
+		पूर्ण अन्यथा /* If there wasn't an existing next keypair, we replace
 			* the previous with the current one.
 			*/
-			rcu_assign_pointer(keypairs->previous_keypair,
+			rcu_assign_poपूर्णांकer(keypairs->previous_keypair,
 					   current_keypair);
-		/* At this point we can get rid of the old previous keypair, and
+		/* At this poपूर्णांक we can get rid of the old previous keypair, and
 		 * set up the new keypair.
 		 */
 		wg_noise_keypair_put(previous_keypair, true);
-		rcu_assign_pointer(keypairs->current_keypair, new_keypair);
-	} else {
+		rcu_assign_poपूर्णांकer(keypairs->current_keypair, new_keypair);
+	पूर्ण अन्यथा अणु
 		/* If we're the responder, it means we can't use the new keypair
 		 * until we receive confirmation via the first data packet, so
 		 * we get rid of the existing previous one, the possibly
 		 * existing next one, and slide in the new next one.
 		 */
-		rcu_assign_pointer(keypairs->next_keypair, new_keypair);
+		rcu_assign_poपूर्णांकer(keypairs->next_keypair, new_keypair);
 		wg_noise_keypair_put(next_keypair, true);
-		RCU_INIT_POINTER(keypairs->previous_keypair, NULL);
+		RCU_INIT_POINTER(keypairs->previous_keypair, शून्य);
 		wg_noise_keypair_put(previous_keypair, true);
-	}
+	पूर्ण
 	spin_unlock_bh(&keypairs->keypair_update_lock);
-}
+पूर्ण
 
-bool wg_noise_received_with_keypair(struct noise_keypairs *keypairs,
-				    struct noise_keypair *received_keypair)
-{
-	struct noise_keypair *old_keypair;
+bool wg_noise_received_with_keypair(काष्ठा noise_keypairs *keypairs,
+				    काष्ठा noise_keypair *received_keypair)
+अणु
+	काष्ठा noise_keypair *old_keypair;
 	bool key_is_new;
 
 	/* We first check without taking the spinlock. */
 	key_is_new = received_keypair ==
-		     rcu_access_pointer(keypairs->next_keypair);
-	if (likely(!key_is_new))
-		return false;
+		     rcu_access_poपूर्णांकer(keypairs->next_keypair);
+	अगर (likely(!key_is_new))
+		वापस false;
 
 	spin_lock_bh(&keypairs->keypair_update_lock);
-	/* After locking, we double check that things didn't change from
+	/* After locking, we द्विगुन check that things didn't change from
 	 * beneath us.
 	 */
-	if (unlikely(received_keypair !=
-		    rcu_dereference_protected(keypairs->next_keypair,
-			    lockdep_is_held(&keypairs->keypair_update_lock)))) {
+	अगर (unlikely(received_keypair !=
+		    rcu_dereference_रक्षित(keypairs->next_keypair,
+			    lockdep_is_held(&keypairs->keypair_update_lock)))) अणु
 		spin_unlock_bh(&keypairs->keypair_update_lock);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* When we've finally received the confirmation, we slide the next
-	 * into the current, the current into the previous, and get rid of
+	 * पूर्णांकo the current, the current पूर्णांकo the previous, and get rid of
 	 * the old previous.
 	 */
-	old_keypair = rcu_dereference_protected(keypairs->previous_keypair,
+	old_keypair = rcu_dereference_रक्षित(keypairs->previous_keypair,
 		lockdep_is_held(&keypairs->keypair_update_lock));
-	rcu_assign_pointer(keypairs->previous_keypair,
-		rcu_dereference_protected(keypairs->current_keypair,
+	rcu_assign_poपूर्णांकer(keypairs->previous_keypair,
+		rcu_dereference_रक्षित(keypairs->current_keypair,
 			lockdep_is_held(&keypairs->keypair_update_lock)));
 	wg_noise_keypair_put(old_keypair, true);
-	rcu_assign_pointer(keypairs->current_keypair, received_keypair);
-	RCU_INIT_POINTER(keypairs->next_keypair, NULL);
+	rcu_assign_poपूर्णांकer(keypairs->current_keypair, received_keypair);
+	RCU_INIT_POINTER(keypairs->next_keypair, शून्य);
 
 	spin_unlock_bh(&keypairs->keypair_update_lock);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-/* Must hold static_identity->lock */
-void wg_noise_set_static_identity_private_key(
-	struct noise_static_identity *static_identity,
-	const u8 private_key[NOISE_PUBLIC_KEY_LEN])
-{
-	memcpy(static_identity->static_private, private_key,
+/* Must hold अटल_identity->lock */
+व्योम wg_noise_set_अटल_identity_निजी_key(
+	काष्ठा noise_अटल_identity *अटल_identity,
+	स्थिर u8 निजी_key[NOISE_PUBLIC_KEY_LEN])
+अणु
+	स_नकल(अटल_identity->अटल_निजी, निजी_key,
 	       NOISE_PUBLIC_KEY_LEN);
-	curve25519_clamp_secret(static_identity->static_private);
-	static_identity->has_identity = curve25519_generate_public(
-		static_identity->static_public, private_key);
-}
+	curve25519_clamp_secret(अटल_identity->अटल_निजी);
+	अटल_identity->has_identity = curve25519_generate_खुला(
+		अटल_identity->अटल_खुला, निजी_key);
+पूर्ण
 
 /* This is Hugo Krawczyk's HKDF:
- *  - https://eprint.iacr.org/2010/264.pdf
- *  - https://tools.ietf.org/html/rfc5869
+ *  - https://eprपूर्णांक.iacr.org/2010/264.pdf
+ *  - https://tools.ietf.org/hपंचांगl/rfc5869
  */
-static void kdf(u8 *first_dst, u8 *second_dst, u8 *third_dst, const u8 *data,
-		size_t first_len, size_t second_len, size_t third_len,
-		size_t data_len, const u8 chaining_key[NOISE_HASH_LEN])
-{
+अटल व्योम kdf(u8 *first_dst, u8 *second_dst, u8 *third_dst, स्थिर u8 *data,
+		माप_प्रकार first_len, माप_प्रकार second_len, माप_प्रकार third_len,
+		माप_प्रकार data_len, स्थिर u8 chaining_key[NOISE_HASH_LEN])
+अणु
 	u8 output[BLAKE2S_HASH_SIZE + 1];
 	u8 secret[BLAKE2S_HASH_SIZE];
 
@@ -321,216 +322,216 @@ static void kdf(u8 *first_dst, u8 *second_dst, u8 *third_dst, const u8 *data,
 		  (!first_len || !first_dst)) ||
 		 ((third_len || third_dst) && (!second_len || !second_dst))));
 
-	/* Extract entropy from data into secret */
+	/* Extract entropy from data पूर्णांकo secret */
 	blake2s256_hmac(secret, data, chaining_key, data_len, NOISE_HASH_LEN);
 
-	if (!first_dst || !first_len)
-		goto out;
+	अगर (!first_dst || !first_len)
+		जाओ out;
 
 	/* Expand first key: key = secret, data = 0x1 */
 	output[0] = 1;
 	blake2s256_hmac(output, output, secret, 1, BLAKE2S_HASH_SIZE);
-	memcpy(first_dst, output, first_len);
+	स_नकल(first_dst, output, first_len);
 
-	if (!second_dst || !second_len)
-		goto out;
+	अगर (!second_dst || !second_len)
+		जाओ out;
 
 	/* Expand second key: key = secret, data = first-key || 0x2 */
 	output[BLAKE2S_HASH_SIZE] = 2;
 	blake2s256_hmac(output, output, secret, BLAKE2S_HASH_SIZE + 1,
 			BLAKE2S_HASH_SIZE);
-	memcpy(second_dst, output, second_len);
+	स_नकल(second_dst, output, second_len);
 
-	if (!third_dst || !third_len)
-		goto out;
+	अगर (!third_dst || !third_len)
+		जाओ out;
 
 	/* Expand third key: key = secret, data = second-key || 0x3 */
 	output[BLAKE2S_HASH_SIZE] = 3;
 	blake2s256_hmac(output, output, secret, BLAKE2S_HASH_SIZE + 1,
 			BLAKE2S_HASH_SIZE);
-	memcpy(third_dst, output, third_len);
+	स_नकल(third_dst, output, third_len);
 
 out:
 	/* Clear sensitive data from stack */
 	memzero_explicit(secret, BLAKE2S_HASH_SIZE);
 	memzero_explicit(output, BLAKE2S_HASH_SIZE + 1);
-}
+पूर्ण
 
-static void derive_keys(struct noise_symmetric_key *first_dst,
-			struct noise_symmetric_key *second_dst,
-			const u8 chaining_key[NOISE_HASH_LEN])
-{
-	u64 birthdate = ktime_get_coarse_boottime_ns();
-	kdf(first_dst->key, second_dst->key, NULL, NULL,
+अटल व्योम derive_keys(काष्ठा noise_symmetric_key *first_dst,
+			काष्ठा noise_symmetric_key *second_dst,
+			स्थिर u8 chaining_key[NOISE_HASH_LEN])
+अणु
+	u64 birthdate = kसमय_get_coarse_bootसमय_ns();
+	kdf(first_dst->key, second_dst->key, शून्य, शून्य,
 	    NOISE_SYMMETRIC_KEY_LEN, NOISE_SYMMETRIC_KEY_LEN, 0, 0,
 	    chaining_key);
 	first_dst->birthdate = second_dst->birthdate = birthdate;
 	first_dst->is_valid = second_dst->is_valid = true;
-}
+पूर्ण
 
-static bool __must_check mix_dh(u8 chaining_key[NOISE_HASH_LEN],
+अटल bool __must_check mix_dh(u8 chaining_key[NOISE_HASH_LEN],
 				u8 key[NOISE_SYMMETRIC_KEY_LEN],
-				const u8 private[NOISE_PUBLIC_KEY_LEN],
-				const u8 public[NOISE_PUBLIC_KEY_LEN])
-{
+				स्थिर u8 निजी[NOISE_PUBLIC_KEY_LEN],
+				स्थिर u8 खुला[NOISE_PUBLIC_KEY_LEN])
+अणु
 	u8 dh_calculation[NOISE_PUBLIC_KEY_LEN];
 
-	if (unlikely(!curve25519(dh_calculation, private, public)))
-		return false;
-	kdf(chaining_key, key, NULL, dh_calculation, NOISE_HASH_LEN,
+	अगर (unlikely(!curve25519(dh_calculation, निजी, खुला)))
+		वापस false;
+	kdf(chaining_key, key, शून्य, dh_calculation, NOISE_HASH_LEN,
 	    NOISE_SYMMETRIC_KEY_LEN, 0, NOISE_PUBLIC_KEY_LEN, chaining_key);
 	memzero_explicit(dh_calculation, NOISE_PUBLIC_KEY_LEN);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool __must_check mix_precomputed_dh(u8 chaining_key[NOISE_HASH_LEN],
+अटल bool __must_check mix_precomputed_dh(u8 chaining_key[NOISE_HASH_LEN],
 					    u8 key[NOISE_SYMMETRIC_KEY_LEN],
-					    const u8 precomputed[NOISE_PUBLIC_KEY_LEN])
-{
-	static u8 zero_point[NOISE_PUBLIC_KEY_LEN];
-	if (unlikely(!crypto_memneq(precomputed, zero_point, NOISE_PUBLIC_KEY_LEN)))
-		return false;
-	kdf(chaining_key, key, NULL, precomputed, NOISE_HASH_LEN,
+					    स्थिर u8 precomputed[NOISE_PUBLIC_KEY_LEN])
+अणु
+	अटल u8 zero_poपूर्णांक[NOISE_PUBLIC_KEY_LEN];
+	अगर (unlikely(!crypto_memneq(precomputed, zero_poपूर्णांक, NOISE_PUBLIC_KEY_LEN)))
+		वापस false;
+	kdf(chaining_key, key, शून्य, precomputed, NOISE_HASH_LEN,
 	    NOISE_SYMMETRIC_KEY_LEN, 0, NOISE_PUBLIC_KEY_LEN,
 	    chaining_key);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void mix_hash(u8 hash[NOISE_HASH_LEN], const u8 *src, size_t src_len)
-{
-	struct blake2s_state blake;
+अटल व्योम mix_hash(u8 hash[NOISE_HASH_LEN], स्थिर u8 *src, माप_प्रकार src_len)
+अणु
+	काष्ठा blake2s_state blake;
 
 	blake2s_init(&blake, NOISE_HASH_LEN);
 	blake2s_update(&blake, hash, NOISE_HASH_LEN);
 	blake2s_update(&blake, src, src_len);
 	blake2s_final(&blake, hash);
-}
+पूर्ण
 
-static void mix_psk(u8 chaining_key[NOISE_HASH_LEN], u8 hash[NOISE_HASH_LEN],
+अटल व्योम mix_psk(u8 chaining_key[NOISE_HASH_LEN], u8 hash[NOISE_HASH_LEN],
 		    u8 key[NOISE_SYMMETRIC_KEY_LEN],
-		    const u8 psk[NOISE_SYMMETRIC_KEY_LEN])
-{
+		    स्थिर u8 psk[NOISE_SYMMETRIC_KEY_LEN])
+अणु
 	u8 temp_hash[NOISE_HASH_LEN];
 
 	kdf(chaining_key, temp_hash, key, psk, NOISE_HASH_LEN, NOISE_HASH_LEN,
 	    NOISE_SYMMETRIC_KEY_LEN, NOISE_SYMMETRIC_KEY_LEN, chaining_key);
 	mix_hash(hash, temp_hash, NOISE_HASH_LEN);
 	memzero_explicit(temp_hash, NOISE_HASH_LEN);
-}
+पूर्ण
 
-static void handshake_init(u8 chaining_key[NOISE_HASH_LEN],
+अटल व्योम handshake_init(u8 chaining_key[NOISE_HASH_LEN],
 			   u8 hash[NOISE_HASH_LEN],
-			   const u8 remote_static[NOISE_PUBLIC_KEY_LEN])
-{
-	memcpy(hash, handshake_init_hash, NOISE_HASH_LEN);
-	memcpy(chaining_key, handshake_init_chaining_key, NOISE_HASH_LEN);
-	mix_hash(hash, remote_static, NOISE_PUBLIC_KEY_LEN);
-}
+			   स्थिर u8 remote_अटल[NOISE_PUBLIC_KEY_LEN])
+अणु
+	स_नकल(hash, handshake_init_hash, NOISE_HASH_LEN);
+	स_नकल(chaining_key, handshake_init_chaining_key, NOISE_HASH_LEN);
+	mix_hash(hash, remote_अटल, NOISE_PUBLIC_KEY_LEN);
+पूर्ण
 
-static void message_encrypt(u8 *dst_ciphertext, const u8 *src_plaintext,
-			    size_t src_len, u8 key[NOISE_SYMMETRIC_KEY_LEN],
+अटल व्योम message_encrypt(u8 *dst_ciphertext, स्थिर u8 *src_plaपूर्णांकext,
+			    माप_प्रकार src_len, u8 key[NOISE_SYMMETRIC_KEY_LEN],
 			    u8 hash[NOISE_HASH_LEN])
-{
-	chacha20poly1305_encrypt(dst_ciphertext, src_plaintext, src_len, hash,
+अणु
+	chacha20poly1305_encrypt(dst_ciphertext, src_plaपूर्णांकext, src_len, hash,
 				 NOISE_HASH_LEN,
-				 0 /* Always zero for Noise_IK */, key);
+				 0 /* Always zero क्रम Noise_IK */, key);
 	mix_hash(hash, dst_ciphertext, noise_encrypted_len(src_len));
-}
+पूर्ण
 
-static bool message_decrypt(u8 *dst_plaintext, const u8 *src_ciphertext,
-			    size_t src_len, u8 key[NOISE_SYMMETRIC_KEY_LEN],
+अटल bool message_decrypt(u8 *dst_plaपूर्णांकext, स्थिर u8 *src_ciphertext,
+			    माप_प्रकार src_len, u8 key[NOISE_SYMMETRIC_KEY_LEN],
 			    u8 hash[NOISE_HASH_LEN])
-{
-	if (!chacha20poly1305_decrypt(dst_plaintext, src_ciphertext, src_len,
+अणु
+	अगर (!chacha20poly1305_decrypt(dst_plaपूर्णांकext, src_ciphertext, src_len,
 				      hash, NOISE_HASH_LEN,
-				      0 /* Always zero for Noise_IK */, key))
-		return false;
+				      0 /* Always zero क्रम Noise_IK */, key))
+		वापस false;
 	mix_hash(hash, src_ciphertext, src_len);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void message_ephemeral(u8 ephemeral_dst[NOISE_PUBLIC_KEY_LEN],
-			      const u8 ephemeral_src[NOISE_PUBLIC_KEY_LEN],
+अटल व्योम message_ephemeral(u8 ephemeral_dst[NOISE_PUBLIC_KEY_LEN],
+			      स्थिर u8 ephemeral_src[NOISE_PUBLIC_KEY_LEN],
 			      u8 chaining_key[NOISE_HASH_LEN],
 			      u8 hash[NOISE_HASH_LEN])
-{
-	if (ephemeral_dst != ephemeral_src)
-		memcpy(ephemeral_dst, ephemeral_src, NOISE_PUBLIC_KEY_LEN);
+अणु
+	अगर (ephemeral_dst != ephemeral_src)
+		स_नकल(ephemeral_dst, ephemeral_src, NOISE_PUBLIC_KEY_LEN);
 	mix_hash(hash, ephemeral_src, NOISE_PUBLIC_KEY_LEN);
-	kdf(chaining_key, NULL, NULL, ephemeral_src, NOISE_HASH_LEN, 0, 0,
+	kdf(chaining_key, शून्य, शून्य, ephemeral_src, NOISE_HASH_LEN, 0, 0,
 	    NOISE_PUBLIC_KEY_LEN, chaining_key);
-}
+पूर्ण
 
-static void tai64n_now(u8 output[NOISE_TIMESTAMP_LEN])
-{
-	struct timespec64 now;
+अटल व्योम tai64n_now(u8 output[NOISE_TIMESTAMP_LEN])
+अणु
+	काष्ठा बारpec64 now;
 
-	ktime_get_real_ts64(&now);
+	kसमय_get_real_ts64(&now);
 
-	/* In order to prevent some sort of infoleak from precise timers, we
-	 * round down the nanoseconds part to the closest rounded-down power of
+	/* In order to prevent some sort of infoleak from precise समयrs, we
+	 * round करोwn the nanoseconds part to the बंदst rounded-करोwn घातer of
 	 * two to the maximum initiations per second allowed anyway by the
 	 * implementation.
 	 */
 	now.tv_nsec = ALIGN_DOWN(now.tv_nsec,
-		rounddown_pow_of_two(NSEC_PER_SEC / INITIATIONS_PER_SECOND));
+		roundकरोwn_घात_of_two(NSEC_PER_SEC / INITIATIONS_PER_SECOND));
 
-	/* https://cr.yp.to/libtai/tai64.html */
+	/* https://cr.yp.to/libtai/tai64.hपंचांगl */
 	*(__be64 *)output = cpu_to_be64(0x400000000000000aULL + now.tv_sec);
-	*(__be32 *)(output + sizeof(__be64)) = cpu_to_be32(now.tv_nsec);
-}
+	*(__be32 *)(output + माप(__be64)) = cpu_to_be32(now.tv_nsec);
+पूर्ण
 
 bool
-wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
-				     struct noise_handshake *handshake)
-{
-	u8 timestamp[NOISE_TIMESTAMP_LEN];
+wg_noise_handshake_create_initiation(काष्ठा message_handshake_initiation *dst,
+				     काष्ठा noise_handshake *handshake)
+अणु
+	u8 बारtamp[NOISE_TIMESTAMP_LEN];
 	u8 key[NOISE_SYMMETRIC_KEY_LEN];
 	bool ret = false;
 
-	/* We need to wait for crng _before_ taking any locks, since
-	 * curve25519_generate_secret uses get_random_bytes_wait.
+	/* We need to रुको क्रम crng _beक्रमe_ taking any locks, since
+	 * curve25519_generate_secret uses get_अक्रमom_bytes_रुको.
 	 */
-	wait_for_random_bytes();
+	रुको_क्रम_अक्रमom_bytes();
 
-	down_read(&handshake->static_identity->lock);
-	down_write(&handshake->lock);
+	करोwn_पढ़ो(&handshake->अटल_identity->lock);
+	करोwn_ग_लिखो(&handshake->lock);
 
-	if (unlikely(!handshake->static_identity->has_identity))
-		goto out;
+	अगर (unlikely(!handshake->अटल_identity->has_identity))
+		जाओ out;
 
 	dst->header.type = cpu_to_le32(MESSAGE_HANDSHAKE_INITIATION);
 
 	handshake_init(handshake->chaining_key, handshake->hash,
-		       handshake->remote_static);
+		       handshake->remote_अटल);
 
 	/* e */
-	curve25519_generate_secret(handshake->ephemeral_private);
-	if (!curve25519_generate_public(dst->unencrypted_ephemeral,
-					handshake->ephemeral_private))
-		goto out;
+	curve25519_generate_secret(handshake->ephemeral_निजी);
+	अगर (!curve25519_generate_खुला(dst->unencrypted_ephemeral,
+					handshake->ephemeral_निजी))
+		जाओ out;
 	message_ephemeral(dst->unencrypted_ephemeral,
 			  dst->unencrypted_ephemeral, handshake->chaining_key,
 			  handshake->hash);
 
 	/* es */
-	if (!mix_dh(handshake->chaining_key, key, handshake->ephemeral_private,
-		    handshake->remote_static))
-		goto out;
+	अगर (!mix_dh(handshake->chaining_key, key, handshake->ephemeral_निजी,
+		    handshake->remote_अटल))
+		जाओ out;
 
 	/* s */
-	message_encrypt(dst->encrypted_static,
-			handshake->static_identity->static_public,
+	message_encrypt(dst->encrypted_अटल,
+			handshake->अटल_identity->अटल_खुला,
 			NOISE_PUBLIC_KEY_LEN, key, handshake->hash);
 
 	/* ss */
-	if (!mix_precomputed_dh(handshake->chaining_key, key,
-				handshake->precomputed_static_static))
-		goto out;
+	अगर (!mix_precomputed_dh(handshake->chaining_key, key,
+				handshake->precomputed_अटल_अटल))
+		जाओ out;
 
-	/* {t} */
-	tai64n_now(timestamp);
-	message_encrypt(dst->encrypted_timestamp, timestamp,
+	/* अणुtपूर्ण */
+	tai64n_now(बारtamp);
+	message_encrypt(dst->encrypted_बारtamp, बारtamp,
 			NOISE_TIMESTAMP_LEN, key, handshake->hash);
 
 	dst->sender_index = wg_index_hashtable_insert(
@@ -541,18 +542,18 @@ wg_noise_handshake_create_initiation(struct message_handshake_initiation *dst,
 	ret = true;
 
 out:
-	up_write(&handshake->lock);
-	up_read(&handshake->static_identity->lock);
+	up_ग_लिखो(&handshake->lock);
+	up_पढ़ो(&handshake->अटल_identity->lock);
 	memzero_explicit(key, NOISE_SYMMETRIC_KEY_LEN);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct wg_peer *
-wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
-				      struct wg_device *wg)
-{
-	struct wg_peer *peer = NULL, *ret_peer = NULL;
-	struct noise_handshake *handshake;
+काष्ठा wg_peer *
+wg_noise_handshake_consume_initiation(काष्ठा message_handshake_initiation *src,
+				      काष्ठा wg_device *wg)
+अणु
+	काष्ठा wg_peer *peer = शून्य, *ret_peer = शून्य;
+	काष्ठा noise_handshake *handshake;
 	bool replay_attack, flood_attack;
 	u8 key[NOISE_SYMMETRIC_KEY_LEN];
 	u8 chaining_key[NOISE_HASH_LEN];
@@ -562,120 +563,120 @@ wg_noise_handshake_consume_initiation(struct message_handshake_initiation *src,
 	u8 t[NOISE_TIMESTAMP_LEN];
 	u64 initiation_consumption;
 
-	down_read(&wg->static_identity.lock);
-	if (unlikely(!wg->static_identity.has_identity))
-		goto out;
+	करोwn_पढ़ो(&wg->अटल_identity.lock);
+	अगर (unlikely(!wg->अटल_identity.has_identity))
+		जाओ out;
 
-	handshake_init(chaining_key, hash, wg->static_identity.static_public);
+	handshake_init(chaining_key, hash, wg->अटल_identity.अटल_खुला);
 
 	/* e */
 	message_ephemeral(e, src->unencrypted_ephemeral, chaining_key, hash);
 
 	/* es */
-	if (!mix_dh(chaining_key, key, wg->static_identity.static_private, e))
-		goto out;
+	अगर (!mix_dh(chaining_key, key, wg->अटल_identity.अटल_निजी, e))
+		जाओ out;
 
 	/* s */
-	if (!message_decrypt(s, src->encrypted_static,
-			     sizeof(src->encrypted_static), key, hash))
-		goto out;
+	अगर (!message_decrypt(s, src->encrypted_अटल,
+			     माप(src->encrypted_अटल), key, hash))
+		जाओ out;
 
 	/* Lookup which peer we're actually talking to */
 	peer = wg_pubkey_hashtable_lookup(wg->peer_hashtable, s);
-	if (!peer)
-		goto out;
+	अगर (!peer)
+		जाओ out;
 	handshake = &peer->handshake;
 
 	/* ss */
-	if (!mix_precomputed_dh(chaining_key, key,
-				handshake->precomputed_static_static))
-	    goto out;
+	अगर (!mix_precomputed_dh(chaining_key, key,
+				handshake->precomputed_अटल_अटल))
+	    जाओ out;
 
-	/* {t} */
-	if (!message_decrypt(t, src->encrypted_timestamp,
-			     sizeof(src->encrypted_timestamp), key, hash))
-		goto out;
+	/* अणुtपूर्ण */
+	अगर (!message_decrypt(t, src->encrypted_बारtamp,
+			     माप(src->encrypted_बारtamp), key, hash))
+		जाओ out;
 
-	down_read(&handshake->lock);
-	replay_attack = memcmp(t, handshake->latest_timestamp,
+	करोwn_पढ़ो(&handshake->lock);
+	replay_attack = स_भेद(t, handshake->latest_बारtamp,
 			       NOISE_TIMESTAMP_LEN) <= 0;
 	flood_attack = (s64)handshake->last_initiation_consumption +
 			       NSEC_PER_SEC / INITIATIONS_PER_SECOND >
-		       (s64)ktime_get_coarse_boottime_ns();
-	up_read(&handshake->lock);
-	if (replay_attack || flood_attack)
-		goto out;
+		       (s64)kसमय_get_coarse_bootसमय_ns();
+	up_पढ़ो(&handshake->lock);
+	अगर (replay_attack || flood_attack)
+		जाओ out;
 
 	/* Success! Copy everything to peer */
-	down_write(&handshake->lock);
-	memcpy(handshake->remote_ephemeral, e, NOISE_PUBLIC_KEY_LEN);
-	if (memcmp(t, handshake->latest_timestamp, NOISE_TIMESTAMP_LEN) > 0)
-		memcpy(handshake->latest_timestamp, t, NOISE_TIMESTAMP_LEN);
-	memcpy(handshake->hash, hash, NOISE_HASH_LEN);
-	memcpy(handshake->chaining_key, chaining_key, NOISE_HASH_LEN);
+	करोwn_ग_लिखो(&handshake->lock);
+	स_नकल(handshake->remote_ephemeral, e, NOISE_PUBLIC_KEY_LEN);
+	अगर (स_भेद(t, handshake->latest_बारtamp, NOISE_TIMESTAMP_LEN) > 0)
+		स_नकल(handshake->latest_बारtamp, t, NOISE_TIMESTAMP_LEN);
+	स_नकल(handshake->hash, hash, NOISE_HASH_LEN);
+	स_नकल(handshake->chaining_key, chaining_key, NOISE_HASH_LEN);
 	handshake->remote_index = src->sender_index;
-	initiation_consumption = ktime_get_coarse_boottime_ns();
-	if ((s64)(handshake->last_initiation_consumption - initiation_consumption) < 0)
+	initiation_consumption = kसमय_get_coarse_bootसमय_ns();
+	अगर ((s64)(handshake->last_initiation_consumption - initiation_consumption) < 0)
 		handshake->last_initiation_consumption = initiation_consumption;
 	handshake->state = HANDSHAKE_CONSUMED_INITIATION;
-	up_write(&handshake->lock);
+	up_ग_लिखो(&handshake->lock);
 	ret_peer = peer;
 
 out:
 	memzero_explicit(key, NOISE_SYMMETRIC_KEY_LEN);
 	memzero_explicit(hash, NOISE_HASH_LEN);
 	memzero_explicit(chaining_key, NOISE_HASH_LEN);
-	up_read(&wg->static_identity.lock);
-	if (!ret_peer)
+	up_पढ़ो(&wg->अटल_identity.lock);
+	अगर (!ret_peer)
 		wg_peer_put(peer);
-	return ret_peer;
-}
+	वापस ret_peer;
+पूर्ण
 
-bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
-					struct noise_handshake *handshake)
-{
+bool wg_noise_handshake_create_response(काष्ठा message_handshake_response *dst,
+					काष्ठा noise_handshake *handshake)
+अणु
 	u8 key[NOISE_SYMMETRIC_KEY_LEN];
 	bool ret = false;
 
-	/* We need to wait for crng _before_ taking any locks, since
-	 * curve25519_generate_secret uses get_random_bytes_wait.
+	/* We need to रुको क्रम crng _beक्रमe_ taking any locks, since
+	 * curve25519_generate_secret uses get_अक्रमom_bytes_रुको.
 	 */
-	wait_for_random_bytes();
+	रुको_क्रम_अक्रमom_bytes();
 
-	down_read(&handshake->static_identity->lock);
-	down_write(&handshake->lock);
+	करोwn_पढ़ो(&handshake->अटल_identity->lock);
+	करोwn_ग_लिखो(&handshake->lock);
 
-	if (handshake->state != HANDSHAKE_CONSUMED_INITIATION)
-		goto out;
+	अगर (handshake->state != HANDSHAKE_CONSUMED_INITIATION)
+		जाओ out;
 
 	dst->header.type = cpu_to_le32(MESSAGE_HANDSHAKE_RESPONSE);
 	dst->receiver_index = handshake->remote_index;
 
 	/* e */
-	curve25519_generate_secret(handshake->ephemeral_private);
-	if (!curve25519_generate_public(dst->unencrypted_ephemeral,
-					handshake->ephemeral_private))
-		goto out;
+	curve25519_generate_secret(handshake->ephemeral_निजी);
+	अगर (!curve25519_generate_खुला(dst->unencrypted_ephemeral,
+					handshake->ephemeral_निजी))
+		जाओ out;
 	message_ephemeral(dst->unencrypted_ephemeral,
 			  dst->unencrypted_ephemeral, handshake->chaining_key,
 			  handshake->hash);
 
 	/* ee */
-	if (!mix_dh(handshake->chaining_key, NULL, handshake->ephemeral_private,
+	अगर (!mix_dh(handshake->chaining_key, शून्य, handshake->ephemeral_निजी,
 		    handshake->remote_ephemeral))
-		goto out;
+		जाओ out;
 
 	/* se */
-	if (!mix_dh(handshake->chaining_key, NULL, handshake->ephemeral_private,
-		    handshake->remote_static))
-		goto out;
+	अगर (!mix_dh(handshake->chaining_key, शून्य, handshake->ephemeral_निजी,
+		    handshake->remote_अटल))
+		जाओ out;
 
 	/* psk */
 	mix_psk(handshake->chaining_key, handshake->hash, key,
 		handshake->preshared_key);
 
-	/* {} */
-	message_encrypt(dst->encrypted_nothing, NULL, 0, key, handshake->hash);
+	/* अणुपूर्ण */
+	message_encrypt(dst->encrypted_nothing, शून्य, 0, key, handshake->hash);
 
 	dst->sender_index = wg_index_hashtable_insert(
 		handshake->entry.peer->device->index_hashtable,
@@ -685,87 +686,87 @@ bool wg_noise_handshake_create_response(struct message_handshake_response *dst,
 	ret = true;
 
 out:
-	up_write(&handshake->lock);
-	up_read(&handshake->static_identity->lock);
+	up_ग_लिखो(&handshake->lock);
+	up_पढ़ो(&handshake->अटल_identity->lock);
 	memzero_explicit(key, NOISE_SYMMETRIC_KEY_LEN);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct wg_peer *
-wg_noise_handshake_consume_response(struct message_handshake_response *src,
-				    struct wg_device *wg)
-{
-	enum noise_handshake_state state = HANDSHAKE_ZEROED;
-	struct wg_peer *peer = NULL, *ret_peer = NULL;
-	struct noise_handshake *handshake;
+काष्ठा wg_peer *
+wg_noise_handshake_consume_response(काष्ठा message_handshake_response *src,
+				    काष्ठा wg_device *wg)
+अणु
+	क्रमागत noise_handshake_state state = HANDSHAKE_ZEROED;
+	काष्ठा wg_peer *peer = शून्य, *ret_peer = शून्य;
+	काष्ठा noise_handshake *handshake;
 	u8 key[NOISE_SYMMETRIC_KEY_LEN];
 	u8 hash[NOISE_HASH_LEN];
 	u8 chaining_key[NOISE_HASH_LEN];
 	u8 e[NOISE_PUBLIC_KEY_LEN];
-	u8 ephemeral_private[NOISE_PUBLIC_KEY_LEN];
-	u8 static_private[NOISE_PUBLIC_KEY_LEN];
+	u8 ephemeral_निजी[NOISE_PUBLIC_KEY_LEN];
+	u8 अटल_निजी[NOISE_PUBLIC_KEY_LEN];
 	u8 preshared_key[NOISE_SYMMETRIC_KEY_LEN];
 
-	down_read(&wg->static_identity.lock);
+	करोwn_पढ़ो(&wg->अटल_identity.lock);
 
-	if (unlikely(!wg->static_identity.has_identity))
-		goto out;
+	अगर (unlikely(!wg->अटल_identity.has_identity))
+		जाओ out;
 
-	handshake = (struct noise_handshake *)wg_index_hashtable_lookup(
+	handshake = (काष्ठा noise_handshake *)wg_index_hashtable_lookup(
 		wg->index_hashtable, INDEX_HASHTABLE_HANDSHAKE,
 		src->receiver_index, &peer);
-	if (unlikely(!handshake))
-		goto out;
+	अगर (unlikely(!handshake))
+		जाओ out;
 
-	down_read(&handshake->lock);
+	करोwn_पढ़ो(&handshake->lock);
 	state = handshake->state;
-	memcpy(hash, handshake->hash, NOISE_HASH_LEN);
-	memcpy(chaining_key, handshake->chaining_key, NOISE_HASH_LEN);
-	memcpy(ephemeral_private, handshake->ephemeral_private,
+	स_नकल(hash, handshake->hash, NOISE_HASH_LEN);
+	स_नकल(chaining_key, handshake->chaining_key, NOISE_HASH_LEN);
+	स_नकल(ephemeral_निजी, handshake->ephemeral_निजी,
 	       NOISE_PUBLIC_KEY_LEN);
-	memcpy(preshared_key, handshake->preshared_key,
+	स_नकल(preshared_key, handshake->preshared_key,
 	       NOISE_SYMMETRIC_KEY_LEN);
-	up_read(&handshake->lock);
+	up_पढ़ो(&handshake->lock);
 
-	if (state != HANDSHAKE_CREATED_INITIATION)
-		goto fail;
+	अगर (state != HANDSHAKE_CREATED_INITIATION)
+		जाओ fail;
 
 	/* e */
 	message_ephemeral(e, src->unencrypted_ephemeral, chaining_key, hash);
 
 	/* ee */
-	if (!mix_dh(chaining_key, NULL, ephemeral_private, e))
-		goto fail;
+	अगर (!mix_dh(chaining_key, शून्य, ephemeral_निजी, e))
+		जाओ fail;
 
 	/* se */
-	if (!mix_dh(chaining_key, NULL, wg->static_identity.static_private, e))
-		goto fail;
+	अगर (!mix_dh(chaining_key, शून्य, wg->अटल_identity.अटल_निजी, e))
+		जाओ fail;
 
 	/* psk */
 	mix_psk(chaining_key, hash, key, preshared_key);
 
-	/* {} */
-	if (!message_decrypt(NULL, src->encrypted_nothing,
-			     sizeof(src->encrypted_nothing), key, hash))
-		goto fail;
+	/* अणुपूर्ण */
+	अगर (!message_decrypt(शून्य, src->encrypted_nothing,
+			     माप(src->encrypted_nothing), key, hash))
+		जाओ fail;
 
 	/* Success! Copy everything to peer */
-	down_write(&handshake->lock);
-	/* It's important to check that the state is still the same, while we
+	करोwn_ग_लिखो(&handshake->lock);
+	/* It's important to check that the state is still the same, जबतक we
 	 * have an exclusive lock.
 	 */
-	if (handshake->state != state) {
-		up_write(&handshake->lock);
-		goto fail;
-	}
-	memcpy(handshake->remote_ephemeral, e, NOISE_PUBLIC_KEY_LEN);
-	memcpy(handshake->hash, hash, NOISE_HASH_LEN);
-	memcpy(handshake->chaining_key, chaining_key, NOISE_HASH_LEN);
+	अगर (handshake->state != state) अणु
+		up_ग_लिखो(&handshake->lock);
+		जाओ fail;
+	पूर्ण
+	स_नकल(handshake->remote_ephemeral, e, NOISE_PUBLIC_KEY_LEN);
+	स_नकल(handshake->hash, hash, NOISE_HASH_LEN);
+	स_नकल(handshake->chaining_key, chaining_key, NOISE_HASH_LEN);
 	handshake->remote_index = src->sender_index;
 	handshake->state = HANDSHAKE_CONSUMED_RESPONSE;
-	up_write(&handshake->lock);
+	up_ग_लिखो(&handshake->lock);
 	ret_peer = peer;
-	goto out;
+	जाओ out;
 
 fail:
 	wg_peer_put(peer);
@@ -773,56 +774,56 @@ out:
 	memzero_explicit(key, NOISE_SYMMETRIC_KEY_LEN);
 	memzero_explicit(hash, NOISE_HASH_LEN);
 	memzero_explicit(chaining_key, NOISE_HASH_LEN);
-	memzero_explicit(ephemeral_private, NOISE_PUBLIC_KEY_LEN);
-	memzero_explicit(static_private, NOISE_PUBLIC_KEY_LEN);
+	memzero_explicit(ephemeral_निजी, NOISE_PUBLIC_KEY_LEN);
+	memzero_explicit(अटल_निजी, NOISE_PUBLIC_KEY_LEN);
 	memzero_explicit(preshared_key, NOISE_SYMMETRIC_KEY_LEN);
-	up_read(&wg->static_identity.lock);
-	return ret_peer;
-}
+	up_पढ़ो(&wg->अटल_identity.lock);
+	वापस ret_peer;
+पूर्ण
 
-bool wg_noise_handshake_begin_session(struct noise_handshake *handshake,
-				      struct noise_keypairs *keypairs)
-{
-	struct noise_keypair *new_keypair;
+bool wg_noise_handshake_begin_session(काष्ठा noise_handshake *handshake,
+				      काष्ठा noise_keypairs *keypairs)
+अणु
+	काष्ठा noise_keypair *new_keypair;
 	bool ret = false;
 
-	down_write(&handshake->lock);
-	if (handshake->state != HANDSHAKE_CREATED_RESPONSE &&
+	करोwn_ग_लिखो(&handshake->lock);
+	अगर (handshake->state != HANDSHAKE_CREATED_RESPONSE &&
 	    handshake->state != HANDSHAKE_CONSUMED_RESPONSE)
-		goto out;
+		जाओ out;
 
 	new_keypair = keypair_create(handshake->entry.peer);
-	if (!new_keypair)
-		goto out;
+	अगर (!new_keypair)
+		जाओ out;
 	new_keypair->i_am_the_initiator = handshake->state ==
 					  HANDSHAKE_CONSUMED_RESPONSE;
 	new_keypair->remote_index = handshake->remote_index;
 
-	if (new_keypair->i_am_the_initiator)
+	अगर (new_keypair->i_am_the_initiator)
 		derive_keys(&new_keypair->sending, &new_keypair->receiving,
 			    handshake->chaining_key);
-	else
+	अन्यथा
 		derive_keys(&new_keypair->receiving, &new_keypair->sending,
 			    handshake->chaining_key);
 
 	handshake_zero(handshake);
-	rcu_read_lock_bh();
-	if (likely(!READ_ONCE(container_of(handshake, struct wg_peer,
-					   handshake)->is_dead))) {
+	rcu_पढ़ो_lock_bh();
+	अगर (likely(!READ_ONCE(container_of(handshake, काष्ठा wg_peer,
+					   handshake)->is_dead))) अणु
 		add_new_keypair(keypairs, new_keypair);
 		net_dbg_ratelimited("%s: Keypair %llu created for peer %llu\n",
 				    handshake->entry.peer->device->dev->name,
-				    new_keypair->internal_id,
-				    handshake->entry.peer->internal_id);
+				    new_keypair->पूर्णांकernal_id,
+				    handshake->entry.peer->पूर्णांकernal_id);
 		ret = wg_index_hashtable_replace(
 			handshake->entry.peer->device->index_hashtable,
 			&handshake->entry, &new_keypair->entry);
-	} else {
-		kfree_sensitive(new_keypair);
-	}
-	rcu_read_unlock_bh();
+	पूर्ण अन्यथा अणु
+		kमुक्त_sensitive(new_keypair);
+	पूर्ण
+	rcu_पढ़ो_unlock_bh();
 
 out:
-	up_write(&handshake->lock);
-	return ret;
-}
+	up_ग_लिखो(&handshake->lock);
+	वापस ret;
+पूर्ण

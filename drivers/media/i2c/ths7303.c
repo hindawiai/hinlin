@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * ths7303/53- THS7303/53 Video Amplifier driver
+ * ths7303/53- THS7303/53 Video Amplअगरier driver
  *
  * Copyright (C) 2009 Texas Instruments Incorporated - http://www.ti.com/
  * Copyright 2013 Cisco Systems, Inc. and/or its affiliates.
@@ -11,246 +12,246 @@
  *     Lad, Prabhakar <prabhakar.lad@ti.com>
  *     Martin Bugge <marbugge@cisco.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed .as is. WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include <media/i2c/ths7303.h>
-#include <media/v4l2-device.h>
+#समावेश <media/i2c/ths7303.h>
+#समावेश <media/v4l2-device.h>
 
-#define THS7303_CHANNEL_1	1
-#define THS7303_CHANNEL_2	2
-#define THS7303_CHANNEL_3	3
+#घोषणा THS7303_CHANNEL_1	1
+#घोषणा THS7303_CHANNEL_2	2
+#घोषणा THS7303_CHANNEL_3	3
 
-struct ths7303_state {
-	struct v4l2_subdev		sd;
-	const struct ths7303_platform_data *pdata;
-	struct v4l2_bt_timings		bt;
-	int std_id;
-	int stream_on;
-};
+काष्ठा ths7303_state अणु
+	काष्ठा v4l2_subdev		sd;
+	स्थिर काष्ठा ths7303_platक्रमm_data *pdata;
+	काष्ठा v4l2_bt_timings		bt;
+	पूर्णांक std_id;
+	पूर्णांक stream_on;
+पूर्ण;
 
-enum ths7303_filter_mode {
+क्रमागत ths7303_filter_mode अणु
 	THS7303_FILTER_MODE_480I_576I,
 	THS7303_FILTER_MODE_480P_576P,
 	THS7303_FILTER_MODE_720P_1080I,
 	THS7303_FILTER_MODE_1080P,
 	THS7303_FILTER_MODE_DISABLE
-};
+पूर्ण;
 
 MODULE_DESCRIPTION("TI THS7303 video amplifier driver");
 MODULE_AUTHOR("Chaithrika U S");
 MODULE_LICENSE("GPL");
 
-static inline struct ths7303_state *to_state(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct ths7303_state, sd);
-}
+अटल अंतरभूत काष्ठा ths7303_state *to_state(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा ths7303_state, sd);
+पूर्ण
 
-static int ths7303_read(struct v4l2_subdev *sd, u8 reg)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल पूर्णांक ths7303_पढ़ो(काष्ठा v4l2_subdev *sd, u8 reg)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 
-	return i2c_smbus_read_byte_data(client, reg);
-}
+	वापस i2c_smbus_पढ़ो_byte_data(client, reg);
+पूर्ण
 
-static int ths7303_write(struct v4l2_subdev *sd, u8 reg, u8 val)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	int ret;
-	int i;
+अटल पूर्णांक ths7303_ग_लिखो(काष्ठा v4l2_subdev *sd, u8 reg, u8 val)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < 3; i++) {
-		ret = i2c_smbus_write_byte_data(client, reg, val);
-		if (ret == 0)
-			return 0;
-	}
-	return ret;
-}
+	क्रम (i = 0; i < 3; i++) अणु
+		ret = i2c_smbus_ग_लिखो_byte_data(client, reg, val);
+		अगर (ret == 0)
+			वापस 0;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /* following function is used to set ths7303 */
-static int ths7303_setval(struct v4l2_subdev *sd,
-			  enum ths7303_filter_mode mode)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
-	struct ths7303_state *state = to_state(sd);
-	const struct ths7303_platform_data *pdata = state->pdata;
+अटल पूर्णांक ths7303_setval(काष्ठा v4l2_subdev *sd,
+			  क्रमागत ths7303_filter_mode mode)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
+	काष्ठा ths7303_state *state = to_state(sd);
+	स्थिर काष्ठा ths7303_platक्रमm_data *pdata = state->pdata;
 	u8 val, sel = 0;
-	int err, disable = 0;
+	पूर्णांक err, disable = 0;
 
-	if (!client)
-		return -EINVAL;
+	अगर (!client)
+		वापस -EINVAL;
 
-	switch (mode) {
-	case THS7303_FILTER_MODE_1080P:
+	चयन (mode) अणु
+	हाल THS7303_FILTER_MODE_1080P:
 		sel = 0x3;	/*1080p and SXGA/UXGA */
-		break;
-	case THS7303_FILTER_MODE_720P_1080I:
+		अवरोध;
+	हाल THS7303_FILTER_MODE_720P_1080I:
 		sel = 0x2;	/*720p, 1080i and SVGA/XGA */
-		break;
-	case THS7303_FILTER_MODE_480P_576P:
+		अवरोध;
+	हाल THS7303_FILTER_MODE_480P_576P:
 		sel = 0x1;	/* EDTV 480p/576p and VGA */
-		break;
-	case THS7303_FILTER_MODE_480I_576I:
+		अवरोध;
+	हाल THS7303_FILTER_MODE_480I_576I:
 		sel = 0x0;	/* SDTV, S-Video, 480i/576i */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* disable all channels */
 		disable = 1;
-	}
+	पूर्ण
 
 	val = (sel << 6) | (sel << 3);
-	if (!disable)
+	अगर (!disable)
 		val |= (pdata->ch_1 & 0x27);
-	err = ths7303_write(sd, THS7303_CHANNEL_1, val);
-	if (err)
-		goto out;
+	err = ths7303_ग_लिखो(sd, THS7303_CHANNEL_1, val);
+	अगर (err)
+		जाओ out;
 
 	val = (sel << 6) | (sel << 3);
-	if (!disable)
+	अगर (!disable)
 		val |= (pdata->ch_2 & 0x27);
-	err = ths7303_write(sd, THS7303_CHANNEL_2, val);
-	if (err)
-		goto out;
+	err = ths7303_ग_लिखो(sd, THS7303_CHANNEL_2, val);
+	अगर (err)
+		जाओ out;
 
 	val = (sel << 6) | (sel << 3);
-	if (!disable)
+	अगर (!disable)
 		val |= (pdata->ch_3 & 0x27);
-	err = ths7303_write(sd, THS7303_CHANNEL_3, val);
-	if (err)
-		goto out;
+	err = ths7303_ग_लिखो(sd, THS7303_CHANNEL_3, val);
+	अगर (err)
+		जाओ out;
 
-	return 0;
+	वापस 0;
 out:
 	pr_info("write byte data failed\n");
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ths7303_s_std_output(struct v4l2_subdev *sd, v4l2_std_id norm)
-{
-	struct ths7303_state *state = to_state(sd);
+अटल पूर्णांक ths7303_s_std_output(काष्ठा v4l2_subdev *sd, v4l2_std_id norm)
+अणु
+	काष्ठा ths7303_state *state = to_state(sd);
 
-	if (norm & (V4L2_STD_ALL & ~V4L2_STD_SECAM)) {
+	अगर (norm & (V4L2_STD_ALL & ~V4L2_STD_SECAM)) अणु
 		state->std_id = 1;
-		state->bt.pixelclock = 0;
-		return ths7303_setval(sd, THS7303_FILTER_MODE_480I_576I);
-	}
+		state->bt.pixelघड़ी = 0;
+		वापस ths7303_setval(sd, THS7303_FILTER_MODE_480I_576I);
+	पूर्ण
 
-	return ths7303_setval(sd, THS7303_FILTER_MODE_DISABLE);
-}
+	वापस ths7303_setval(sd, THS7303_FILTER_MODE_DISABLE);
+पूर्ण
 
-static int ths7303_config(struct v4l2_subdev *sd)
-{
-	struct ths7303_state *state = to_state(sd);
-	int res;
+अटल पूर्णांक ths7303_config(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा ths7303_state *state = to_state(sd);
+	पूर्णांक res;
 
-	if (!state->stream_on) {
-		ths7303_write(sd, THS7303_CHANNEL_1,
-			      (ths7303_read(sd, THS7303_CHANNEL_1) & 0xf8) |
+	अगर (!state->stream_on) अणु
+		ths7303_ग_लिखो(sd, THS7303_CHANNEL_1,
+			      (ths7303_पढ़ो(sd, THS7303_CHANNEL_1) & 0xf8) |
 			      0x00);
-		ths7303_write(sd, THS7303_CHANNEL_2,
-			      (ths7303_read(sd, THS7303_CHANNEL_2) & 0xf8) |
+		ths7303_ग_लिखो(sd, THS7303_CHANNEL_2,
+			      (ths7303_पढ़ो(sd, THS7303_CHANNEL_2) & 0xf8) |
 			      0x00);
-		ths7303_write(sd, THS7303_CHANNEL_3,
-			      (ths7303_read(sd, THS7303_CHANNEL_3) & 0xf8) |
+		ths7303_ग_लिखो(sd, THS7303_CHANNEL_3,
+			      (ths7303_पढ़ो(sd, THS7303_CHANNEL_3) & 0xf8) |
 			      0x00);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (state->bt.pixelclock > 120000000)
+	अगर (state->bt.pixelघड़ी > 120000000)
 		res = ths7303_setval(sd, THS7303_FILTER_MODE_1080P);
-	else if (state->bt.pixelclock > 70000000)
+	अन्यथा अगर (state->bt.pixelघड़ी > 70000000)
 		res = ths7303_setval(sd, THS7303_FILTER_MODE_720P_1080I);
-	else if (state->bt.pixelclock > 20000000)
+	अन्यथा अगर (state->bt.pixelघड़ी > 20000000)
 		res = ths7303_setval(sd, THS7303_FILTER_MODE_480P_576P);
-	else if (state->std_id)
+	अन्यथा अगर (state->std_id)
 		res = ths7303_setval(sd, THS7303_FILTER_MODE_480I_576I);
-	else
+	अन्यथा
 		/* disable all channels */
 		res = ths7303_setval(sd, THS7303_FILTER_MODE_DISABLE);
 
-	return res;
+	वापस res;
 
-}
+पूर्ण
 
-static int ths7303_s_stream(struct v4l2_subdev *sd, int enable)
-{
-	struct ths7303_state *state = to_state(sd);
+अटल पूर्णांक ths7303_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
+अणु
+	काष्ठा ths7303_state *state = to_state(sd);
 
 	state->stream_on = enable;
 
-	return ths7303_config(sd);
-}
+	वापस ths7303_config(sd);
+पूर्ण
 
-/* for setting filter for HD output */
-static int ths7303_s_dv_timings(struct v4l2_subdev *sd,
-			       struct v4l2_dv_timings *dv_timings)
-{
-	struct ths7303_state *state = to_state(sd);
+/* क्रम setting filter क्रम HD output */
+अटल पूर्णांक ths7303_s_dv_timings(काष्ठा v4l2_subdev *sd,
+			       काष्ठा v4l2_dv_timings *dv_timings)
+अणु
+	काष्ठा ths7303_state *state = to_state(sd);
 
-	if (!dv_timings || dv_timings->type != V4L2_DV_BT_656_1120)
-		return -EINVAL;
+	अगर (!dv_timings || dv_timings->type != V4L2_DV_BT_656_1120)
+		वापस -EINVAL;
 
 	state->bt = dv_timings->bt;
 	state->std_id = 0;
 
-	return ths7303_config(sd);
-}
+	वापस ths7303_config(sd);
+पूर्ण
 
-static const struct v4l2_subdev_video_ops ths7303_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops ths7303_video_ops = अणु
 	.s_stream	= ths7303_s_stream,
 	.s_std_output	= ths7303_s_std_output,
 	.s_dv_timings   = ths7303_s_dv_timings,
-};
+पूर्ण;
 
-#ifdef CONFIG_VIDEO_ADV_DEBUG
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
 
-static int ths7303_g_register(struct v4l2_subdev *sd,
-			      struct v4l2_dbg_register *reg)
-{
+अटल पूर्णांक ths7303_g_रेजिस्टर(काष्ठा v4l2_subdev *sd,
+			      काष्ठा v4l2_dbg_रेजिस्टर *reg)
+अणु
 	reg->size = 1;
-	reg->val = ths7303_read(sd, reg->reg);
-	return 0;
-}
+	reg->val = ths7303_पढ़ो(sd, reg->reg);
+	वापस 0;
+पूर्ण
 
-static int ths7303_s_register(struct v4l2_subdev *sd,
-			      const struct v4l2_dbg_register *reg)
-{
-	ths7303_write(sd, reg->reg, reg->val);
-	return 0;
-}
-#endif
+अटल पूर्णांक ths7303_s_रेजिस्टर(काष्ठा v4l2_subdev *sd,
+			      स्थिर काष्ठा v4l2_dbg_रेजिस्टर *reg)
+अणु
+	ths7303_ग_लिखो(sd, reg->reg, reg->val);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const char * const stc_lpf_sel_txt[4] = {
+अटल स्थिर अक्षर * स्थिर stc_lpf_sel_txt[4] = अणु
 	"500-kHz Filter",
 	"2.5-MHz Filter",
 	"5-MHz Filter",
 	"5-MHz Filter",
-};
+पूर्ण;
 
-static const char * const in_mux_sel_txt[2] = {
+अटल स्थिर अक्षर * स्थिर in_mux_sel_txt[2] = अणु
 	"Input A Select",
 	"Input B Select",
-};
+पूर्ण;
 
-static const char * const lpf_freq_sel_txt[4] = {
+अटल स्थिर अक्षर * स्थिर lpf_freq_sel_txt[4] = अणु
 	"9-MHz LPF",
 	"16-MHz LPF",
 	"35-MHz LPF",
 	"Bypass LPF",
-};
+पूर्ण;
 
-static const char * const in_bias_sel_dis_cont_txt[8] = {
+अटल स्थिर अक्षर * स्थिर in_bias_sel_dis_cont_txt[8] = अणु
 	"Disable Channel",
 	"Mute Function - No Output",
 	"DC Bias Select",
@@ -259,16 +260,16 @@ static const char * const in_bias_sel_dis_cont_txt[8] = {
 	"Sync Tip Clamp with low bias",
 	"Sync Tip Clamp with mid bias",
 	"Sync Tip Clamp with high bias",
-};
+पूर्ण;
 
-static void ths7303_log_channel_status(struct v4l2_subdev *sd, u8 reg)
-{
-	u8 val = ths7303_read(sd, reg);
+अटल व्योम ths7303_log_channel_status(काष्ठा v4l2_subdev *sd, u8 reg)
+अणु
+	u8 val = ths7303_पढ़ो(sd, reg);
 
-	if ((val & 0x7) == 0) {
+	अगर ((val & 0x7) == 0) अणु
 		v4l2_info(sd, "Channel %d Off\n", reg);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	v4l2_info(sd, "Channel %d On\n", reg);
 	v4l2_info(sd, "  value 0x%x\n", val);
@@ -276,112 +277,112 @@ static void ths7303_log_channel_status(struct v4l2_subdev *sd, u8 reg)
 	v4l2_info(sd, "  %s\n", in_mux_sel_txt[(val >> 5) & 0x1]);
 	v4l2_info(sd, "  %s\n", lpf_freq_sel_txt[(val >> 3) & 0x3]);
 	v4l2_info(sd, "  %s\n", in_bias_sel_dis_cont_txt[(val >> 0) & 0x7]);
-}
+पूर्ण
 
-static int ths7303_log_status(struct v4l2_subdev *sd)
-{
-	struct ths7303_state *state = to_state(sd);
+अटल पूर्णांक ths7303_log_status(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा ths7303_state *state = to_state(sd);
 
 	v4l2_info(sd, "stream %s\n", state->stream_on ? "On" : "Off");
 
-	if (state->bt.pixelclock) {
-		struct v4l2_bt_timings *bt = &state->bt;
+	अगर (state->bt.pixelघड़ी) अणु
+		काष्ठा v4l2_bt_timings *bt = &state->bt;
 		u32 frame_width, frame_height;
 
 		frame_width = V4L2_DV_BT_FRAME_WIDTH(bt);
 		frame_height = V4L2_DV_BT_FRAME_HEIGHT(bt);
 		v4l2_info(sd,
 			  "timings: %dx%d%s%d (%dx%d). Pix freq. = %d Hz. Polarities = 0x%x\n",
-			  bt->width, bt->height, bt->interlaced ? "i" : "p",
+			  bt->width, bt->height, bt->पूर्णांकerlaced ? "i" : "p",
 			  (frame_height * frame_width) > 0 ?
-			  (int)bt->pixelclock /
+			  (पूर्णांक)bt->pixelघड़ी /
 			  (frame_height * frame_width) : 0,
 			  frame_width, frame_height,
-			  (int)bt->pixelclock, bt->polarities);
-	} else {
+			  (पूर्णांक)bt->pixelघड़ी, bt->polarities);
+	पूर्ण अन्यथा अणु
 		v4l2_info(sd, "no timings set\n");
-	}
+	पूर्ण
 
 	ths7303_log_channel_status(sd, THS7303_CHANNEL_1);
 	ths7303_log_channel_status(sd, THS7303_CHANNEL_2);
 	ths7303_log_channel_status(sd, THS7303_CHANNEL_3);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_core_ops ths7303_core_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_core_ops ths7303_core_ops = अणु
 	.log_status = ths7303_log_status,
-#ifdef CONFIG_VIDEO_ADV_DEBUG
-	.g_register = ths7303_g_register,
-	.s_register = ths7303_s_register,
-#endif
-};
+#अगर_घोषित CONFIG_VIDEO_ADV_DEBUG
+	.g_रेजिस्टर = ths7303_g_रेजिस्टर,
+	.s_रेजिस्टर = ths7303_s_रेजिस्टर,
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct v4l2_subdev_ops ths7303_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops ths7303_ops = अणु
 	.core	= &ths7303_core_ops,
 	.video	= &ths7303_video_ops,
-};
+पूर्ण;
 
-static int ths7303_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	struct ths7303_platform_data *pdata = client->dev.platform_data;
-	struct ths7303_state *state;
-	struct v4l2_subdev *sd;
+अटल पूर्णांक ths7303_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा ths7303_platक्रमm_data *pdata = client->dev.platक्रमm_data;
+	काष्ठा ths7303_state *state;
+	काष्ठा v4l2_subdev *sd;
 
-	if (pdata == NULL) {
+	अगर (pdata == शून्य) अणु
 		dev_err(&client->dev, "No platform data\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -ENODEV;
 
 	v4l_info(client, "chip found @ 0x%x (%s)\n",
 			client->addr << 1, client->adapter->name);
 
-	state = devm_kzalloc(&client->dev, sizeof(struct ths7303_state),
+	state = devm_kzalloc(&client->dev, माप(काष्ठा ths7303_state),
 			     GFP_KERNEL);
-	if (!state)
-		return -ENOMEM;
+	अगर (!state)
+		वापस -ENOMEM;
 
 	state->pdata = pdata;
 	sd = &state->sd;
 	v4l2_i2c_subdev_init(sd, client, &ths7303_ops);
 
-	/* set to default 480I_576I filter mode */
-	if (ths7303_setval(sd, THS7303_FILTER_MODE_480I_576I) < 0) {
+	/* set to शेष 480I_576I filter mode */
+	अगर (ths7303_setval(sd, THS7303_FILTER_MODE_480I_576I) < 0) अणु
 		v4l_err(client, "Setting to 480I_576I filter mode failed!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ths7303_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+अटल पूर्णांक ths7303_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
 
-	v4l2_device_unregister_subdev(sd);
+	v4l2_device_unरेजिस्टर_subdev(sd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id ths7303_id[] = {
-	{"ths7303", 0},
-	{"ths7353", 0},
-	{},
-};
+अटल स्थिर काष्ठा i2c_device_id ths7303_id[] = अणु
+	अणु"ths7303", 0पूर्ण,
+	अणु"ths7353", 0पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, ths7303_id);
 
-static struct i2c_driver ths7303_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ths7303_driver = अणु
+	.driver = अणु
 		.name	= "ths73x3",
-	},
+	पूर्ण,
 	.probe		= ths7303_probe,
-	.remove		= ths7303_remove,
+	.हटाओ		= ths7303_हटाओ,
 	.id_table	= ths7303_id,
-};
+पूर्ण;
 
 module_i2c_driver(ths7303_driver);

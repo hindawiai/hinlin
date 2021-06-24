@@ -1,337 +1,338 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <asm/apicdef.h>
-#include <linux/io-64-nonatomic-lo-hi.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <यंत्र/apicdef.h>
+#समावेश <linux/io-64-nonatomic-lo-hi.h>
 
-#include <linux/perf_event.h>
-#include "../perf_event.h"
+#समावेश <linux/perf_event.h>
+#समावेश "../perf_event.h"
 
-#define UNCORE_PMU_NAME_LEN		32
-#define UNCORE_PMU_HRTIMER_INTERVAL	(60LL * NSEC_PER_SEC)
-#define UNCORE_SNB_IMC_HRTIMER_INTERVAL (5ULL * NSEC_PER_SEC)
+#घोषणा UNCORE_PMU_NAME_LEN		32
+#घोषणा UNCORE_PMU_HRTIMER_INTERVAL	(60LL * NSEC_PER_SEC)
+#घोषणा UNCORE_SNB_IMC_HRTIMER_INTERVAL (5ULL * NSEC_PER_SEC)
 
-#define UNCORE_FIXED_EVENT		0xff
-#define UNCORE_PMC_IDX_MAX_GENERIC	8
-#define UNCORE_PMC_IDX_MAX_FIXED	1
-#define UNCORE_PMC_IDX_MAX_FREERUNNING	1
-#define UNCORE_PMC_IDX_FIXED		UNCORE_PMC_IDX_MAX_GENERIC
-#define UNCORE_PMC_IDX_FREERUNNING	(UNCORE_PMC_IDX_FIXED + \
+#घोषणा UNCORE_FIXED_EVENT		0xff
+#घोषणा UNCORE_PMC_IDX_MAX_GENERIC	8
+#घोषणा UNCORE_PMC_IDX_MAX_FIXED	1
+#घोषणा UNCORE_PMC_IDX_MAX_FREERUNNING	1
+#घोषणा UNCORE_PMC_IDX_FIXED		UNCORE_PMC_IDX_MAX_GENERIC
+#घोषणा UNCORE_PMC_IDX_FREERUNNING	(UNCORE_PMC_IDX_FIXED + \
 					UNCORE_PMC_IDX_MAX_FIXED)
-#define UNCORE_PMC_IDX_MAX		(UNCORE_PMC_IDX_FREERUNNING + \
+#घोषणा UNCORE_PMC_IDX_MAX		(UNCORE_PMC_IDX_FREERUNNING + \
 					UNCORE_PMC_IDX_MAX_FREERUNNING)
 
-#define UNCORE_PCI_DEV_FULL_DATA(dev, func, type, idx)	\
+#घोषणा UNCORE_PCI_DEV_FULL_DATA(dev, func, type, idx)	\
 		((dev << 24) | (func << 16) | (type << 8) | idx)
-#define UNCORE_PCI_DEV_DATA(type, idx)	((type << 8) | idx)
-#define UNCORE_PCI_DEV_DEV(data)	((data >> 24) & 0xff)
-#define UNCORE_PCI_DEV_FUNC(data)	((data >> 16) & 0xff)
-#define UNCORE_PCI_DEV_TYPE(data)	((data >> 8) & 0xff)
-#define UNCORE_PCI_DEV_IDX(data)	(data & 0xff)
-#define UNCORE_EXTRA_PCI_DEV		0xff
-#define UNCORE_EXTRA_PCI_DEV_MAX	4
+#घोषणा UNCORE_PCI_DEV_DATA(type, idx)	((type << 8) | idx)
+#घोषणा UNCORE_PCI_DEV_DEV(data)	((data >> 24) & 0xff)
+#घोषणा UNCORE_PCI_DEV_FUNC(data)	((data >> 16) & 0xff)
+#घोषणा UNCORE_PCI_DEV_TYPE(data)	((data >> 8) & 0xff)
+#घोषणा UNCORE_PCI_DEV_IDX(data)	(data & 0xff)
+#घोषणा UNCORE_EXTRA_PCI_DEV		0xff
+#घोषणा UNCORE_EXTRA_PCI_DEV_MAX	4
 
-#define UNCORE_EVENT_CONSTRAINT(c, n) EVENT_CONSTRAINT(c, n, 0xff)
+#घोषणा UNCORE_EVENT_CONSTRAINT(c, n) EVENT_CONSTRAINT(c, n, 0xff)
 
-struct pci_extra_dev {
-	struct pci_dev *dev[UNCORE_EXTRA_PCI_DEV_MAX];
-};
+काष्ठा pci_extra_dev अणु
+	काष्ठा pci_dev *dev[UNCORE_EXTRA_PCI_DEV_MAX];
+पूर्ण;
 
-struct intel_uncore_ops;
-struct intel_uncore_pmu;
-struct intel_uncore_box;
-struct uncore_event_desc;
-struct freerunning_counters;
-struct intel_uncore_topology;
+काष्ठा पूर्णांकel_uncore_ops;
+काष्ठा पूर्णांकel_uncore_pmu;
+काष्ठा पूर्णांकel_uncore_box;
+काष्ठा uncore_event_desc;
+काष्ठा मुक्तrunning_counters;
+काष्ठा पूर्णांकel_uncore_topology;
 
-struct intel_uncore_type {
-	const char *name;
-	int num_counters;
-	int num_boxes;
-	int perf_ctr_bits;
-	int fixed_ctr_bits;
-	int num_freerunning_types;
-	int type_id;
-	unsigned perf_ctr;
-	unsigned event_ctl;
-	unsigned event_mask;
-	unsigned event_mask_ext;
-	unsigned fixed_ctr;
-	unsigned fixed_ctl;
-	unsigned box_ctl;
+काष्ठा पूर्णांकel_uncore_type अणु
+	स्थिर अक्षर *name;
+	पूर्णांक num_counters;
+	पूर्णांक num_boxes;
+	पूर्णांक perf_ctr_bits;
+	पूर्णांक fixed_ctr_bits;
+	पूर्णांक num_मुक्तrunning_types;
+	पूर्णांक type_id;
+	अचिन्हित perf_ctr;
+	अचिन्हित event_ctl;
+	अचिन्हित event_mask;
+	अचिन्हित event_mask_ext;
+	अचिन्हित fixed_ctr;
+	अचिन्हित fixed_ctl;
+	अचिन्हित box_ctl;
 	u64 *box_ctls;	/* Unit ctrl addr of the first box of each die */
-	union {
-		unsigned msr_offset;
-		unsigned mmio_offset;
-	};
-	unsigned mmio_map_size;
-	unsigned num_shared_regs:8;
-	unsigned single_fixed:1;
-	unsigned pair_ctr_ctl:1;
-	union {
-		unsigned *msr_offsets;
-		unsigned *pci_offsets;
-		unsigned *mmio_offsets;
-	};
-	unsigned *box_ids;
-	struct event_constraint unconstrainted;
-	struct event_constraint *constraints;
-	struct intel_uncore_pmu *pmus;
-	struct intel_uncore_ops *ops;
-	struct uncore_event_desc *event_descs;
-	struct freerunning_counters *freerunning;
-	const struct attribute_group *attr_groups[4];
-	const struct attribute_group **attr_update;
-	struct pmu *pmu; /* for custom pmu ops */
+	जोड़ अणु
+		अचिन्हित msr_offset;
+		अचिन्हित mmio_offset;
+	पूर्ण;
+	अचिन्हित mmio_map_size;
+	अचिन्हित num_shared_regs:8;
+	अचिन्हित single_fixed:1;
+	अचिन्हित pair_ctr_ctl:1;
+	जोड़ अणु
+		अचिन्हित *msr_offsets;
+		अचिन्हित *pci_offsets;
+		अचिन्हित *mmio_offsets;
+	पूर्ण;
+	अचिन्हित *box_ids;
+	काष्ठा event_स्थिरraपूर्णांक unस्थिरraपूर्णांकed;
+	काष्ठा event_स्थिरraपूर्णांक *स्थिरraपूर्णांकs;
+	काष्ठा पूर्णांकel_uncore_pmu *pmus;
+	काष्ठा पूर्णांकel_uncore_ops *ops;
+	काष्ठा uncore_event_desc *event_descs;
+	काष्ठा मुक्तrunning_counters *मुक्तrunning;
+	स्थिर काष्ठा attribute_group *attr_groups[4];
+	स्थिर काष्ठा attribute_group **attr_update;
+	काष्ठा pmu *pmu; /* क्रम custom pmu ops */
 	/*
-	 * Uncore PMU would store relevant platform topology configuration here
-	 * to identify which platform component each PMON block of that type is
+	 * Uncore PMU would store relevant platक्रमm topology configuration here
+	 * to identअगरy which platक्रमm component each PMON block of that type is
 	 * supposed to monitor.
 	 */
-	struct intel_uncore_topology *topology;
+	काष्ठा पूर्णांकel_uncore_topology *topology;
 	/*
-	 * Optional callbacks for managing mapping of Uncore units to PMONs
+	 * Optional callbacks क्रम managing mapping of Uncore units to PMONs
 	 */
-	int (*set_mapping)(struct intel_uncore_type *type);
-	void (*cleanup_mapping)(struct intel_uncore_type *type);
-};
+	पूर्णांक (*set_mapping)(काष्ठा पूर्णांकel_uncore_type *type);
+	व्योम (*cleanup_mapping)(काष्ठा पूर्णांकel_uncore_type *type);
+पूर्ण;
 
-#define pmu_group attr_groups[0]
-#define format_group attr_groups[1]
-#define events_group attr_groups[2]
+#घोषणा pmu_group attr_groups[0]
+#घोषणा क्रमmat_group attr_groups[1]
+#घोषणा events_group attr_groups[2]
 
-struct intel_uncore_ops {
-	void (*init_box)(struct intel_uncore_box *);
-	void (*exit_box)(struct intel_uncore_box *);
-	void (*disable_box)(struct intel_uncore_box *);
-	void (*enable_box)(struct intel_uncore_box *);
-	void (*disable_event)(struct intel_uncore_box *, struct perf_event *);
-	void (*enable_event)(struct intel_uncore_box *, struct perf_event *);
-	u64 (*read_counter)(struct intel_uncore_box *, struct perf_event *);
-	int (*hw_config)(struct intel_uncore_box *, struct perf_event *);
-	struct event_constraint *(*get_constraint)(struct intel_uncore_box *,
-						   struct perf_event *);
-	void (*put_constraint)(struct intel_uncore_box *, struct perf_event *);
-};
+काष्ठा पूर्णांकel_uncore_ops अणु
+	व्योम (*init_box)(काष्ठा पूर्णांकel_uncore_box *);
+	व्योम (*निकास_box)(काष्ठा पूर्णांकel_uncore_box *);
+	व्योम (*disable_box)(काष्ठा पूर्णांकel_uncore_box *);
+	व्योम (*enable_box)(काष्ठा पूर्णांकel_uncore_box *);
+	व्योम (*disable_event)(काष्ठा पूर्णांकel_uncore_box *, काष्ठा perf_event *);
+	व्योम (*enable_event)(काष्ठा पूर्णांकel_uncore_box *, काष्ठा perf_event *);
+	u64 (*पढ़ो_counter)(काष्ठा पूर्णांकel_uncore_box *, काष्ठा perf_event *);
+	पूर्णांक (*hw_config)(काष्ठा पूर्णांकel_uncore_box *, काष्ठा perf_event *);
+	काष्ठा event_स्थिरraपूर्णांक *(*get_स्थिरraपूर्णांक)(काष्ठा पूर्णांकel_uncore_box *,
+						   काष्ठा perf_event *);
+	व्योम (*put_स्थिरraपूर्णांक)(काष्ठा पूर्णांकel_uncore_box *, काष्ठा perf_event *);
+पूर्ण;
 
-struct intel_uncore_pmu {
-	struct pmu			pmu;
-	char				name[UNCORE_PMU_NAME_LEN];
-	int				pmu_idx;
-	int				func_id;
-	bool				registered;
+काष्ठा पूर्णांकel_uncore_pmu अणु
+	काष्ठा pmu			pmu;
+	अक्षर				name[UNCORE_PMU_NAME_LEN];
+	पूर्णांक				pmu_idx;
+	पूर्णांक				func_id;
+	bool				रेजिस्टरed;
 	atomic_t			activeboxes;
-	struct intel_uncore_type	*type;
-	struct intel_uncore_box		**boxes;
-};
+	काष्ठा पूर्णांकel_uncore_type	*type;
+	काष्ठा पूर्णांकel_uncore_box		**boxes;
+पूर्ण;
 
-struct intel_uncore_extra_reg {
+काष्ठा पूर्णांकel_uncore_extra_reg अणु
 	raw_spinlock_t lock;
 	u64 config, config1, config2;
 	atomic_t ref;
-};
+पूर्ण;
 
-struct intel_uncore_box {
-	int dieid;	/* Logical die ID */
-	int n_active;	/* number of active events */
-	int n_events;
-	int cpu;	/* cpu to collect events */
-	unsigned long flags;
+काष्ठा पूर्णांकel_uncore_box अणु
+	पूर्णांक dieid;	/* Logical die ID */
+	पूर्णांक n_active;	/* number of active events */
+	पूर्णांक n_events;
+	पूर्णांक cpu;	/* cpu to collect events */
+	अचिन्हित दीर्घ flags;
 	atomic_t refcnt;
-	struct perf_event *events[UNCORE_PMC_IDX_MAX];
-	struct perf_event *event_list[UNCORE_PMC_IDX_MAX];
-	struct event_constraint *event_constraint[UNCORE_PMC_IDX_MAX];
-	unsigned long active_mask[BITS_TO_LONGS(UNCORE_PMC_IDX_MAX)];
+	काष्ठा perf_event *events[UNCORE_PMC_IDX_MAX];
+	काष्ठा perf_event *event_list[UNCORE_PMC_IDX_MAX];
+	काष्ठा event_स्थिरraपूर्णांक *event_स्थिरraपूर्णांक[UNCORE_PMC_IDX_MAX];
+	अचिन्हित दीर्घ active_mask[BITS_TO_LONGS(UNCORE_PMC_IDX_MAX)];
 	u64 tags[UNCORE_PMC_IDX_MAX];
-	struct pci_dev *pci_dev;
-	struct intel_uncore_pmu *pmu;
-	u64 hrtimer_duration; /* hrtimer timeout for this box */
-	struct hrtimer hrtimer;
-	struct list_head list;
-	struct list_head active_list;
-	void __iomem *io_addr;
-	struct intel_uncore_extra_reg shared_regs[];
-};
+	काष्ठा pci_dev *pci_dev;
+	काष्ठा पूर्णांकel_uncore_pmu *pmu;
+	u64 hrसमयr_duration; /* hrसमयr समयout क्रम this box */
+	काष्ठा hrसमयr hrसमयr;
+	काष्ठा list_head list;
+	काष्ठा list_head active_list;
+	व्योम __iomem *io_addr;
+	काष्ठा पूर्णांकel_uncore_extra_reg shared_regs[];
+पूर्ण;
 
 /* CFL uncore 8th cbox MSRs */
-#define CFL_UNC_CBO_7_PERFEVTSEL0		0xf70
-#define CFL_UNC_CBO_7_PER_CTR0			0xf76
+#घोषणा CFL_UNC_CBO_7_PERFEVTSEL0		0xf70
+#घोषणा CFL_UNC_CBO_7_PER_CTR0			0xf76
 
-#define UNCORE_BOX_FLAG_INITIATED		0
-/* event config registers are 8-byte apart */
-#define UNCORE_BOX_FLAG_CTL_OFFS8		1
-/* CFL 8th CBOX has different MSR space */
-#define UNCORE_BOX_FLAG_CFL8_CBOX_MSR_OFFS	2
+#घोषणा UNCORE_BOX_FLAG_INITIATED		0
+/* event config रेजिस्टरs are 8-byte apart */
+#घोषणा UNCORE_BOX_FLAG_CTL_OFFS8		1
+/* CFL 8th CBOX has dअगरferent MSR space */
+#घोषणा UNCORE_BOX_FLAG_CFL8_CBOX_MSR_OFFS	2
 
-struct uncore_event_desc {
-	struct device_attribute attr;
-	const char *config;
-};
+काष्ठा uncore_event_desc अणु
+	काष्ठा device_attribute attr;
+	स्थिर अक्षर *config;
+पूर्ण;
 
-struct freerunning_counters {
-	unsigned int counter_base;
-	unsigned int counter_offset;
-	unsigned int box_offset;
-	unsigned int num_counters;
-	unsigned int bits;
-	unsigned *box_offsets;
-};
+काष्ठा मुक्तrunning_counters अणु
+	अचिन्हित पूर्णांक counter_base;
+	अचिन्हित पूर्णांक counter_offset;
+	अचिन्हित पूर्णांक box_offset;
+	अचिन्हित पूर्णांक num_counters;
+	अचिन्हित पूर्णांक bits;
+	अचिन्हित *box_offsets;
+पूर्ण;
 
-struct intel_uncore_topology {
+काष्ठा पूर्णांकel_uncore_topology अणु
 	u64 configuration;
-	int segment;
-};
+	पूर्णांक segment;
+पूर्ण;
 
-struct pci2phy_map {
-	struct list_head list;
-	int segment;
-	int pbus_to_dieid[256];
-};
+काष्ठा pci2phy_map अणु
+	काष्ठा list_head list;
+	पूर्णांक segment;
+	पूर्णांक pbus_to_dieid[256];
+पूर्ण;
 
-struct pci2phy_map *__find_pci2phy_map(int segment);
-int uncore_pcibus_to_dieid(struct pci_bus *bus);
-int uncore_die_to_segment(int die);
+काष्ठा pci2phy_map *__find_pci2phy_map(पूर्णांक segment);
+पूर्णांक uncore_pcibus_to_dieid(काष्ठा pci_bus *bus);
+पूर्णांक uncore_die_to_segment(पूर्णांक die);
 
-ssize_t uncore_event_show(struct device *dev,
-			  struct device_attribute *attr, char *buf);
+sमाप_प्रकार uncore_event_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf);
 
-static inline struct intel_uncore_pmu *dev_to_uncore_pmu(struct device *dev)
-{
-	return container_of(dev_get_drvdata(dev), struct intel_uncore_pmu, pmu);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_uncore_pmu *dev_to_uncore_pmu(काष्ठा device *dev)
+अणु
+	वापस container_of(dev_get_drvdata(dev), काष्ठा पूर्णांकel_uncore_pmu, pmu);
+पूर्ण
 
-#define to_device_attribute(n)	container_of(n, struct device_attribute, attr)
-#define to_dev_ext_attribute(n)	container_of(n, struct dev_ext_attribute, attr)
-#define attr_to_ext_attr(n)	to_dev_ext_attribute(to_device_attribute(n))
+#घोषणा to_device_attribute(n)	container_of(n, काष्ठा device_attribute, attr)
+#घोषणा to_dev_ext_attribute(n)	container_of(n, काष्ठा dev_ext_attribute, attr)
+#घोषणा attr_to_ext_attr(n)	to_dev_ext_attribute(to_device_attribute(n))
 
-extern int __uncore_max_dies;
-#define uncore_max_dies()	(__uncore_max_dies)
+बाह्य पूर्णांक __uncore_max_dies;
+#घोषणा uncore_max_dies()	(__uncore_max_dies)
 
-#define INTEL_UNCORE_EVENT_DESC(_name, _config)			\
-{								\
-	.attr	= __ATTR(_name, 0444, uncore_event_show, NULL),	\
+#घोषणा INTEL_UNCORE_EVENT_DESC(_name, _config)			\
+अणु								\
+	.attr	= __ATTR(_name, 0444, uncore_event_show, शून्य),	\
 	.config	= _config,					\
-}
+पूर्ण
 
-#define DEFINE_UNCORE_FORMAT_ATTR(_var, _name, _format)			\
-static ssize_t __uncore_##_var##_show(struct device *dev,		\
-				struct device_attribute *attr,		\
-				char *page)				\
-{									\
-	BUILD_BUG_ON(sizeof(_format) >= PAGE_SIZE);			\
-	return sprintf(page, _format "\n");				\
-}									\
-static struct device_attribute format_attr_##_var =			\
-	__ATTR(_name, 0444, __uncore_##_var##_show, NULL)
+#घोषणा DEFINE_UNCORE_FORMAT_ATTR(_var, _name, _क्रमmat)			\
+अटल sमाप_प्रकार __uncore_##_var##_show(काष्ठा device *dev,		\
+				काष्ठा device_attribute *attr,		\
+				अक्षर *page)				\
+अणु									\
+	BUILD_BUG_ON(माप(_क्रमmat) >= PAGE_SIZE);			\
+	वापस प्र_लिखो(page, _क्रमmat "\n");				\
+पूर्ण									\
+अटल काष्ठा device_attribute क्रमmat_attr_##_var =			\
+	__ATTR(_name, 0444, __uncore_##_var##_show, शून्य)
 
-static inline bool uncore_pmc_fixed(int idx)
-{
-	return idx == UNCORE_PMC_IDX_FIXED;
-}
+अटल अंतरभूत bool uncore_pmc_fixed(पूर्णांक idx)
+अणु
+	वापस idx == UNCORE_PMC_IDX_FIXED;
+पूर्ण
 
-static inline bool uncore_pmc_freerunning(int idx)
-{
-	return idx == UNCORE_PMC_IDX_FREERUNNING;
-}
+अटल अंतरभूत bool uncore_pmc_मुक्तrunning(पूर्णांक idx)
+अणु
+	वापस idx == UNCORE_PMC_IDX_FREERUNNING;
+पूर्ण
 
-static inline bool uncore_mmio_is_valid_offset(struct intel_uncore_box *box,
-					       unsigned long offset)
-{
-	if (offset < box->pmu->type->mmio_map_size)
-		return true;
+अटल अंतरभूत bool uncore_mmio_is_valid_offset(काष्ठा पूर्णांकel_uncore_box *box,
+					       अचिन्हित दीर्घ offset)
+अणु
+	अगर (offset < box->pmu->type->mmio_map_size)
+		वापस true;
 
 	pr_warn_once("perf uncore: Invalid offset 0x%lx exceeds mapped area of %s.\n",
 		     offset, box->pmu->type->name);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline
-unsigned int uncore_mmio_box_ctl(struct intel_uncore_box *box)
-{
-	return box->pmu->type->box_ctl +
+अटल अंतरभूत
+अचिन्हित पूर्णांक uncore_mmio_box_ctl(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	वापस box->pmu->type->box_ctl +
 	       box->pmu->type->mmio_offset * box->pmu->pmu_idx;
-}
+पूर्ण
 
-static inline unsigned uncore_pci_box_ctl(struct intel_uncore_box *box)
-{
-	return box->pmu->type->box_ctl;
-}
+अटल अंतरभूत अचिन्हित uncore_pci_box_ctl(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	वापस box->pmu->type->box_ctl;
+पूर्ण
 
-static inline unsigned uncore_pci_fixed_ctl(struct intel_uncore_box *box)
-{
-	return box->pmu->type->fixed_ctl;
-}
+अटल अंतरभूत अचिन्हित uncore_pci_fixed_ctl(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	वापस box->pmu->type->fixed_ctl;
+पूर्ण
 
-static inline unsigned uncore_pci_fixed_ctr(struct intel_uncore_box *box)
-{
-	return box->pmu->type->fixed_ctr;
-}
+अटल अंतरभूत अचिन्हित uncore_pci_fixed_ctr(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	वापस box->pmu->type->fixed_ctr;
+पूर्ण
 
-static inline
-unsigned uncore_pci_event_ctl(struct intel_uncore_box *box, int idx)
-{
-	if (test_bit(UNCORE_BOX_FLAG_CTL_OFFS8, &box->flags))
-		return idx * 8 + box->pmu->type->event_ctl;
+अटल अंतरभूत
+अचिन्हित uncore_pci_event_ctl(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx)
+अणु
+	अगर (test_bit(UNCORE_BOX_FLAG_CTL_OFFS8, &box->flags))
+		वापस idx * 8 + box->pmu->type->event_ctl;
 
-	return idx * 4 + box->pmu->type->event_ctl;
-}
+	वापस idx * 4 + box->pmu->type->event_ctl;
+पूर्ण
 
-static inline
-unsigned uncore_pci_perf_ctr(struct intel_uncore_box *box, int idx)
-{
-	return idx * 8 + box->pmu->type->perf_ctr;
-}
+अटल अंतरभूत
+अचिन्हित uncore_pci_perf_ctr(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx)
+अणु
+	वापस idx * 8 + box->pmu->type->perf_ctr;
+पूर्ण
 
-static inline unsigned uncore_msr_box_offset(struct intel_uncore_box *box)
-{
-	struct intel_uncore_pmu *pmu = box->pmu;
-	return pmu->type->msr_offsets ?
+अटल अंतरभूत अचिन्हित uncore_msr_box_offset(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	काष्ठा पूर्णांकel_uncore_pmu *pmu = box->pmu;
+	वापस pmu->type->msr_offsets ?
 		pmu->type->msr_offsets[pmu->pmu_idx] :
 		pmu->type->msr_offset * pmu->pmu_idx;
-}
+पूर्ण
 
-static inline unsigned uncore_msr_box_ctl(struct intel_uncore_box *box)
-{
-	if (!box->pmu->type->box_ctl)
-		return 0;
-	return box->pmu->type->box_ctl + uncore_msr_box_offset(box);
-}
+अटल अंतरभूत अचिन्हित uncore_msr_box_ctl(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	अगर (!box->pmu->type->box_ctl)
+		वापस 0;
+	वापस box->pmu->type->box_ctl + uncore_msr_box_offset(box);
+पूर्ण
 
-static inline unsigned uncore_msr_fixed_ctl(struct intel_uncore_box *box)
-{
-	if (!box->pmu->type->fixed_ctl)
-		return 0;
-	return box->pmu->type->fixed_ctl + uncore_msr_box_offset(box);
-}
+अटल अंतरभूत अचिन्हित uncore_msr_fixed_ctl(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	अगर (!box->pmu->type->fixed_ctl)
+		वापस 0;
+	वापस box->pmu->type->fixed_ctl + uncore_msr_box_offset(box);
+पूर्ण
 
-static inline unsigned uncore_msr_fixed_ctr(struct intel_uncore_box *box)
-{
-	return box->pmu->type->fixed_ctr + uncore_msr_box_offset(box);
-}
+अटल अंतरभूत अचिन्हित uncore_msr_fixed_ctr(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	वापस box->pmu->type->fixed_ctr + uncore_msr_box_offset(box);
+पूर्ण
 
 
 /*
- * In the uncore document, there is no event-code assigned to free running
- * counters. Some events need to be defined to indicate the free running
+ * In the uncore करोcument, there is no event-code asचिन्हित to मुक्त running
+ * counters. Some events need to be defined to indicate the मुक्त running
  * counters. The events are encoded as event-code + umask-code.
  *
- * The event-code for all free running counters is 0xff, which is the same as
+ * The event-code क्रम all मुक्त running counters is 0xff, which is the same as
  * the fixed counters.
  *
- * The umask-code is used to distinguish a fixed counter and a free running
- * counter, and different types of free running counters.
+ * The umask-code is used to distinguish a fixed counter and a मुक्त running
+ * counter, and dअगरferent types of मुक्त running counters.
  * - For fixed counters, the umask-code is 0x0X.
  *   X indicates the index of the fixed counter, which starts from 0.
- * - For free running counters, the umask-code uses the rest of the space.
- *   It would bare the format of 0xXY.
- *   X stands for the type of free running counters, which starts from 1.
- *   Y stands for the index of free running counters of same type, which
+ * - For मुक्त running counters, the umask-code uses the rest of the space.
+ *   It would bare the क्रमmat of 0xXY.
+ *   X stands क्रम the type of मुक्त running counters, which starts from 1.
+ *   Y stands क्रम the index of मुक्त running counters of same type, which
  *   starts from 0.
  *
- * For example, there are three types of IIO free running counters on Skylake
+ * For example, there are three types of IIO मुक्त running counters on Skylake
  * server, IO CLOCKS counters, BANDWIDTH counters and UTILIZATION counters.
- * The event-code for all the free running counters is 0xff.
+ * The event-code क्रम all the मुक्त running counters is 0xff.
  * 'ioclk' is the first counter of IO CLOCKS. IO CLOCKS is the first type,
  * which umask-code starts from 0x10.
  * So 'ioclk' is encoded as event=0xff,umask=0x10
@@ -339,274 +340,274 @@ static inline unsigned uncore_msr_fixed_ctr(struct intel_uncore_box *box)
  * the second type, which umask-code starts from 0x20.
  * So 'bw_in_port2' is encoded as event=0xff,umask=0x22
  */
-static inline unsigned int uncore_freerunning_idx(u64 config)
-{
-	return ((config >> 8) & 0xf);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक uncore_मुक्तrunning_idx(u64 config)
+अणु
+	वापस ((config >> 8) & 0xf);
+पूर्ण
 
-#define UNCORE_FREERUNNING_UMASK_START		0x10
+#घोषणा UNCORE_FREERUNNING_UMASK_START		0x10
 
-static inline unsigned int uncore_freerunning_type(u64 config)
-{
-	return ((((config >> 8) - UNCORE_FREERUNNING_UMASK_START) >> 4) & 0xf);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक uncore_मुक्तrunning_type(u64 config)
+अणु
+	वापस ((((config >> 8) - UNCORE_FREERUNNING_UMASK_START) >> 4) & 0xf);
+पूर्ण
 
-static inline
-unsigned int uncore_freerunning_counter(struct intel_uncore_box *box,
-					struct perf_event *event)
-{
-	unsigned int type = uncore_freerunning_type(event->hw.config);
-	unsigned int idx = uncore_freerunning_idx(event->hw.config);
-	struct intel_uncore_pmu *pmu = box->pmu;
+अटल अंतरभूत
+अचिन्हित पूर्णांक uncore_मुक्तrunning_counter(काष्ठा पूर्णांकel_uncore_box *box,
+					काष्ठा perf_event *event)
+अणु
+	अचिन्हित पूर्णांक type = uncore_मुक्तrunning_type(event->hw.config);
+	अचिन्हित पूर्णांक idx = uncore_मुक्तrunning_idx(event->hw.config);
+	काष्ठा पूर्णांकel_uncore_pmu *pmu = box->pmu;
 
-	return pmu->type->freerunning[type].counter_base +
-	       pmu->type->freerunning[type].counter_offset * idx +
-	       (pmu->type->freerunning[type].box_offsets ?
-	        pmu->type->freerunning[type].box_offsets[pmu->pmu_idx] :
-	        pmu->type->freerunning[type].box_offset * pmu->pmu_idx);
-}
+	वापस pmu->type->मुक्तrunning[type].counter_base +
+	       pmu->type->मुक्तrunning[type].counter_offset * idx +
+	       (pmu->type->मुक्तrunning[type].box_offsets ?
+	        pmu->type->मुक्तrunning[type].box_offsets[pmu->pmu_idx] :
+	        pmu->type->मुक्तrunning[type].box_offset * pmu->pmu_idx);
+पूर्ण
 
-static inline
-unsigned uncore_msr_event_ctl(struct intel_uncore_box *box, int idx)
-{
-	if (test_bit(UNCORE_BOX_FLAG_CFL8_CBOX_MSR_OFFS, &box->flags)) {
-		return CFL_UNC_CBO_7_PERFEVTSEL0 +
+अटल अंतरभूत
+अचिन्हित uncore_msr_event_ctl(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx)
+अणु
+	अगर (test_bit(UNCORE_BOX_FLAG_CFL8_CBOX_MSR_OFFS, &box->flags)) अणु
+		वापस CFL_UNC_CBO_7_PERFEVTSEL0 +
 		       (box->pmu->type->pair_ctr_ctl ? 2 * idx : idx);
-	} else {
-		return box->pmu->type->event_ctl +
+	पूर्ण अन्यथा अणु
+		वापस box->pmu->type->event_ctl +
 		       (box->pmu->type->pair_ctr_ctl ? 2 * idx : idx) +
 		       uncore_msr_box_offset(box);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline
-unsigned uncore_msr_perf_ctr(struct intel_uncore_box *box, int idx)
-{
-	if (test_bit(UNCORE_BOX_FLAG_CFL8_CBOX_MSR_OFFS, &box->flags)) {
-		return CFL_UNC_CBO_7_PER_CTR0 +
+अटल अंतरभूत
+अचिन्हित uncore_msr_perf_ctr(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx)
+अणु
+	अगर (test_bit(UNCORE_BOX_FLAG_CFL8_CBOX_MSR_OFFS, &box->flags)) अणु
+		वापस CFL_UNC_CBO_7_PER_CTR0 +
 		       (box->pmu->type->pair_ctr_ctl ? 2 * idx : idx);
-	} else {
-		return box->pmu->type->perf_ctr +
+	पूर्ण अन्यथा अणु
+		वापस box->pmu->type->perf_ctr +
 		       (box->pmu->type->pair_ctr_ctl ? 2 * idx : idx) +
 		       uncore_msr_box_offset(box);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline
-unsigned uncore_fixed_ctl(struct intel_uncore_box *box)
-{
-	if (box->pci_dev || box->io_addr)
-		return uncore_pci_fixed_ctl(box);
-	else
-		return uncore_msr_fixed_ctl(box);
-}
+अटल अंतरभूत
+अचिन्हित uncore_fixed_ctl(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	अगर (box->pci_dev || box->io_addr)
+		वापस uncore_pci_fixed_ctl(box);
+	अन्यथा
+		वापस uncore_msr_fixed_ctl(box);
+पूर्ण
 
-static inline
-unsigned uncore_fixed_ctr(struct intel_uncore_box *box)
-{
-	if (box->pci_dev || box->io_addr)
-		return uncore_pci_fixed_ctr(box);
-	else
-		return uncore_msr_fixed_ctr(box);
-}
+अटल अंतरभूत
+अचिन्हित uncore_fixed_ctr(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	अगर (box->pci_dev || box->io_addr)
+		वापस uncore_pci_fixed_ctr(box);
+	अन्यथा
+		वापस uncore_msr_fixed_ctr(box);
+पूर्ण
 
-static inline
-unsigned uncore_event_ctl(struct intel_uncore_box *box, int idx)
-{
-	if (box->pci_dev || box->io_addr)
-		return uncore_pci_event_ctl(box, idx);
-	else
-		return uncore_msr_event_ctl(box, idx);
-}
+अटल अंतरभूत
+अचिन्हित uncore_event_ctl(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx)
+अणु
+	अगर (box->pci_dev || box->io_addr)
+		वापस uncore_pci_event_ctl(box, idx);
+	अन्यथा
+		वापस uncore_msr_event_ctl(box, idx);
+पूर्ण
 
-static inline
-unsigned uncore_perf_ctr(struct intel_uncore_box *box, int idx)
-{
-	if (box->pci_dev || box->io_addr)
-		return uncore_pci_perf_ctr(box, idx);
-	else
-		return uncore_msr_perf_ctr(box, idx);
-}
+अटल अंतरभूत
+अचिन्हित uncore_perf_ctr(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx)
+अणु
+	अगर (box->pci_dev || box->io_addr)
+		वापस uncore_pci_perf_ctr(box, idx);
+	अन्यथा
+		वापस uncore_msr_perf_ctr(box, idx);
+पूर्ण
 
-static inline int uncore_perf_ctr_bits(struct intel_uncore_box *box)
-{
-	return box->pmu->type->perf_ctr_bits;
-}
+अटल अंतरभूत पूर्णांक uncore_perf_ctr_bits(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	वापस box->pmu->type->perf_ctr_bits;
+पूर्ण
 
-static inline int uncore_fixed_ctr_bits(struct intel_uncore_box *box)
-{
-	return box->pmu->type->fixed_ctr_bits;
-}
+अटल अंतरभूत पूर्णांक uncore_fixed_ctr_bits(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	वापस box->pmu->type->fixed_ctr_bits;
+पूर्ण
 
-static inline
-unsigned int uncore_freerunning_bits(struct intel_uncore_box *box,
-				     struct perf_event *event)
-{
-	unsigned int type = uncore_freerunning_type(event->hw.config);
+अटल अंतरभूत
+अचिन्हित पूर्णांक uncore_मुक्तrunning_bits(काष्ठा पूर्णांकel_uncore_box *box,
+				     काष्ठा perf_event *event)
+अणु
+	अचिन्हित पूर्णांक type = uncore_मुक्तrunning_type(event->hw.config);
 
-	return box->pmu->type->freerunning[type].bits;
-}
+	वापस box->pmu->type->मुक्तrunning[type].bits;
+पूर्ण
 
-static inline int uncore_num_freerunning(struct intel_uncore_box *box,
-					 struct perf_event *event)
-{
-	unsigned int type = uncore_freerunning_type(event->hw.config);
+अटल अंतरभूत पूर्णांक uncore_num_मुक्तrunning(काष्ठा पूर्णांकel_uncore_box *box,
+					 काष्ठा perf_event *event)
+अणु
+	अचिन्हित पूर्णांक type = uncore_मुक्तrunning_type(event->hw.config);
 
-	return box->pmu->type->freerunning[type].num_counters;
-}
+	वापस box->pmu->type->मुक्तrunning[type].num_counters;
+पूर्ण
 
-static inline int uncore_num_freerunning_types(struct intel_uncore_box *box,
-					       struct perf_event *event)
-{
-	return box->pmu->type->num_freerunning_types;
-}
+अटल अंतरभूत पूर्णांक uncore_num_मुक्तrunning_types(काष्ठा पूर्णांकel_uncore_box *box,
+					       काष्ठा perf_event *event)
+अणु
+	वापस box->pmu->type->num_मुक्तrunning_types;
+पूर्ण
 
-static inline bool check_valid_freerunning_event(struct intel_uncore_box *box,
-						 struct perf_event *event)
-{
-	unsigned int type = uncore_freerunning_type(event->hw.config);
-	unsigned int idx = uncore_freerunning_idx(event->hw.config);
+अटल अंतरभूत bool check_valid_मुक्तrunning_event(काष्ठा पूर्णांकel_uncore_box *box,
+						 काष्ठा perf_event *event)
+अणु
+	अचिन्हित पूर्णांक type = uncore_मुक्तrunning_type(event->hw.config);
+	अचिन्हित पूर्णांक idx = uncore_मुक्तrunning_idx(event->hw.config);
 
-	return (type < uncore_num_freerunning_types(box, event)) &&
-	       (idx < uncore_num_freerunning(box, event));
-}
+	वापस (type < uncore_num_मुक्तrunning_types(box, event)) &&
+	       (idx < uncore_num_मुक्तrunning(box, event));
+पूर्ण
 
-static inline int uncore_num_counters(struct intel_uncore_box *box)
-{
-	return box->pmu->type->num_counters;
-}
+अटल अंतरभूत पूर्णांक uncore_num_counters(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	वापस box->pmu->type->num_counters;
+पूर्ण
 
-static inline bool is_freerunning_event(struct perf_event *event)
-{
+अटल अंतरभूत bool is_मुक्तrunning_event(काष्ठा perf_event *event)
+अणु
 	u64 cfg = event->attr.config;
 
-	return ((cfg & UNCORE_FIXED_EVENT) == UNCORE_FIXED_EVENT) &&
+	वापस ((cfg & UNCORE_FIXED_EVENT) == UNCORE_FIXED_EVENT) &&
 	       (((cfg >> 8) & 0xff) >= UNCORE_FREERUNNING_UMASK_START);
-}
+पूर्ण
 
 /* Check and reject invalid config */
-static inline int uncore_freerunning_hw_config(struct intel_uncore_box *box,
-					       struct perf_event *event)
-{
-	if (is_freerunning_event(event))
-		return 0;
+अटल अंतरभूत पूर्णांक uncore_मुक्तrunning_hw_config(काष्ठा पूर्णांकel_uncore_box *box,
+					       काष्ठा perf_event *event)
+अणु
+	अगर (is_मुक्तrunning_event(event))
+		वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static inline void uncore_disable_event(struct intel_uncore_box *box,
-				struct perf_event *event)
-{
+अटल अंतरभूत व्योम uncore_disable_event(काष्ठा पूर्णांकel_uncore_box *box,
+				काष्ठा perf_event *event)
+अणु
 	box->pmu->type->ops->disable_event(box, event);
-}
+पूर्ण
 
-static inline void uncore_enable_event(struct intel_uncore_box *box,
-				struct perf_event *event)
-{
+अटल अंतरभूत व्योम uncore_enable_event(काष्ठा पूर्णांकel_uncore_box *box,
+				काष्ठा perf_event *event)
+अणु
 	box->pmu->type->ops->enable_event(box, event);
-}
+पूर्ण
 
-static inline u64 uncore_read_counter(struct intel_uncore_box *box,
-				struct perf_event *event)
-{
-	return box->pmu->type->ops->read_counter(box, event);
-}
+अटल अंतरभूत u64 uncore_पढ़ो_counter(काष्ठा पूर्णांकel_uncore_box *box,
+				काष्ठा perf_event *event)
+अणु
+	वापस box->pmu->type->ops->पढ़ो_counter(box, event);
+पूर्ण
 
-static inline void uncore_box_init(struct intel_uncore_box *box)
-{
-	if (!test_and_set_bit(UNCORE_BOX_FLAG_INITIATED, &box->flags)) {
-		if (box->pmu->type->ops->init_box)
+अटल अंतरभूत व्योम uncore_box_init(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	अगर (!test_and_set_bit(UNCORE_BOX_FLAG_INITIATED, &box->flags)) अणु
+		अगर (box->pmu->type->ops->init_box)
 			box->pmu->type->ops->init_box(box);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void uncore_box_exit(struct intel_uncore_box *box)
-{
-	if (test_and_clear_bit(UNCORE_BOX_FLAG_INITIATED, &box->flags)) {
-		if (box->pmu->type->ops->exit_box)
-			box->pmu->type->ops->exit_box(box);
-	}
-}
+अटल अंतरभूत व्योम uncore_box_निकास(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	अगर (test_and_clear_bit(UNCORE_BOX_FLAG_INITIATED, &box->flags)) अणु
+		अगर (box->pmu->type->ops->निकास_box)
+			box->pmu->type->ops->निकास_box(box);
+	पूर्ण
+पूर्ण
 
-static inline bool uncore_box_is_fake(struct intel_uncore_box *box)
-{
-	return (box->dieid < 0);
-}
+अटल अंतरभूत bool uncore_box_is_fake(काष्ठा पूर्णांकel_uncore_box *box)
+अणु
+	वापस (box->dieid < 0);
+पूर्ण
 
-static inline struct intel_uncore_pmu *uncore_event_to_pmu(struct perf_event *event)
-{
-	return container_of(event->pmu, struct intel_uncore_pmu, pmu);
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_uncore_pmu *uncore_event_to_pmu(काष्ठा perf_event *event)
+अणु
+	वापस container_of(event->pmu, काष्ठा पूर्णांकel_uncore_pmu, pmu);
+पूर्ण
 
-static inline struct intel_uncore_box *uncore_event_to_box(struct perf_event *event)
-{
-	return event->pmu_private;
-}
+अटल अंतरभूत काष्ठा पूर्णांकel_uncore_box *uncore_event_to_box(काष्ठा perf_event *event)
+अणु
+	वापस event->pmu_निजी;
+पूर्ण
 
-struct intel_uncore_box *uncore_pmu_to_box(struct intel_uncore_pmu *pmu, int cpu);
-u64 uncore_msr_read_counter(struct intel_uncore_box *box, struct perf_event *event);
-void uncore_mmio_exit_box(struct intel_uncore_box *box);
-u64 uncore_mmio_read_counter(struct intel_uncore_box *box,
-			     struct perf_event *event);
-void uncore_pmu_start_hrtimer(struct intel_uncore_box *box);
-void uncore_pmu_cancel_hrtimer(struct intel_uncore_box *box);
-void uncore_pmu_event_start(struct perf_event *event, int flags);
-void uncore_pmu_event_stop(struct perf_event *event, int flags);
-int uncore_pmu_event_add(struct perf_event *event, int flags);
-void uncore_pmu_event_del(struct perf_event *event, int flags);
-void uncore_pmu_event_read(struct perf_event *event);
-void uncore_perf_event_update(struct intel_uncore_box *box, struct perf_event *event);
-struct event_constraint *
-uncore_get_constraint(struct intel_uncore_box *box, struct perf_event *event);
-void uncore_put_constraint(struct intel_uncore_box *box, struct perf_event *event);
-u64 uncore_shared_reg_config(struct intel_uncore_box *box, int idx);
+काष्ठा पूर्णांकel_uncore_box *uncore_pmu_to_box(काष्ठा पूर्णांकel_uncore_pmu *pmu, पूर्णांक cpu);
+u64 uncore_msr_पढ़ो_counter(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event);
+व्योम uncore_mmio_निकास_box(काष्ठा पूर्णांकel_uncore_box *box);
+u64 uncore_mmio_पढ़ो_counter(काष्ठा पूर्णांकel_uncore_box *box,
+			     काष्ठा perf_event *event);
+व्योम uncore_pmu_start_hrसमयr(काष्ठा पूर्णांकel_uncore_box *box);
+व्योम uncore_pmu_cancel_hrसमयr(काष्ठा पूर्णांकel_uncore_box *box);
+व्योम uncore_pmu_event_start(काष्ठा perf_event *event, पूर्णांक flags);
+व्योम uncore_pmu_event_stop(काष्ठा perf_event *event, पूर्णांक flags);
+पूर्णांक uncore_pmu_event_add(काष्ठा perf_event *event, पूर्णांक flags);
+व्योम uncore_pmu_event_del(काष्ठा perf_event *event, पूर्णांक flags);
+व्योम uncore_pmu_event_पढ़ो(काष्ठा perf_event *event);
+व्योम uncore_perf_event_update(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event);
+काष्ठा event_स्थिरraपूर्णांक *
+uncore_get_स्थिरraपूर्णांक(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event);
+व्योम uncore_put_स्थिरraपूर्णांक(काष्ठा पूर्णांकel_uncore_box *box, काष्ठा perf_event *event);
+u64 uncore_shared_reg_config(काष्ठा पूर्णांकel_uncore_box *box, पूर्णांक idx);
 
-extern struct intel_uncore_type *empty_uncore[];
-extern struct intel_uncore_type **uncore_msr_uncores;
-extern struct intel_uncore_type **uncore_pci_uncores;
-extern struct intel_uncore_type **uncore_mmio_uncores;
-extern struct pci_driver *uncore_pci_driver;
-extern struct pci_driver *uncore_pci_sub_driver;
-extern raw_spinlock_t pci2phy_map_lock;
-extern struct list_head pci2phy_map_head;
-extern struct pci_extra_dev *uncore_extra_pci_dev;
-extern struct event_constraint uncore_constraint_empty;
+बाह्य काष्ठा पूर्णांकel_uncore_type *empty_uncore[];
+बाह्य काष्ठा पूर्णांकel_uncore_type **uncore_msr_uncores;
+बाह्य काष्ठा पूर्णांकel_uncore_type **uncore_pci_uncores;
+बाह्य काष्ठा पूर्णांकel_uncore_type **uncore_mmio_uncores;
+बाह्य काष्ठा pci_driver *uncore_pci_driver;
+बाह्य काष्ठा pci_driver *uncore_pci_sub_driver;
+बाह्य raw_spinlock_t pci2phy_map_lock;
+बाह्य काष्ठा list_head pci2phy_map_head;
+बाह्य काष्ठा pci_extra_dev *uncore_extra_pci_dev;
+बाह्य काष्ठा event_स्थिरraपूर्णांक uncore_स्थिरraपूर्णांक_empty;
 
 /* uncore_snb.c */
-int snb_uncore_pci_init(void);
-int ivb_uncore_pci_init(void);
-int hsw_uncore_pci_init(void);
-int bdw_uncore_pci_init(void);
-int skl_uncore_pci_init(void);
-void snb_uncore_cpu_init(void);
-void nhm_uncore_cpu_init(void);
-void skl_uncore_cpu_init(void);
-void icl_uncore_cpu_init(void);
-void adl_uncore_cpu_init(void);
-void tgl_uncore_cpu_init(void);
-void tgl_uncore_mmio_init(void);
-void tgl_l_uncore_mmio_init(void);
-int snb_pci2phy_map_init(int devid);
+पूर्णांक snb_uncore_pci_init(व्योम);
+पूर्णांक ivb_uncore_pci_init(व्योम);
+पूर्णांक hsw_uncore_pci_init(व्योम);
+पूर्णांक bdw_uncore_pci_init(व्योम);
+पूर्णांक skl_uncore_pci_init(व्योम);
+व्योम snb_uncore_cpu_init(व्योम);
+व्योम nhm_uncore_cpu_init(व्योम);
+व्योम skl_uncore_cpu_init(व्योम);
+व्योम icl_uncore_cpu_init(व्योम);
+व्योम adl_uncore_cpu_init(व्योम);
+व्योम tgl_uncore_cpu_init(व्योम);
+व्योम tgl_uncore_mmio_init(व्योम);
+व्योम tgl_l_uncore_mmio_init(व्योम);
+पूर्णांक snb_pci2phy_map_init(पूर्णांक devid);
 
 /* uncore_snbep.c */
-int snbep_uncore_pci_init(void);
-void snbep_uncore_cpu_init(void);
-int ivbep_uncore_pci_init(void);
-void ivbep_uncore_cpu_init(void);
-int hswep_uncore_pci_init(void);
-void hswep_uncore_cpu_init(void);
-int bdx_uncore_pci_init(void);
-void bdx_uncore_cpu_init(void);
-int knl_uncore_pci_init(void);
-void knl_uncore_cpu_init(void);
-int skx_uncore_pci_init(void);
-void skx_uncore_cpu_init(void);
-int snr_uncore_pci_init(void);
-void snr_uncore_cpu_init(void);
-void snr_uncore_mmio_init(void);
-int icx_uncore_pci_init(void);
-void icx_uncore_cpu_init(void);
-void icx_uncore_mmio_init(void);
+पूर्णांक snbep_uncore_pci_init(व्योम);
+व्योम snbep_uncore_cpu_init(व्योम);
+पूर्णांक ivbep_uncore_pci_init(व्योम);
+व्योम ivbep_uncore_cpu_init(व्योम);
+पूर्णांक hswep_uncore_pci_init(व्योम);
+व्योम hswep_uncore_cpu_init(व्योम);
+पूर्णांक bdx_uncore_pci_init(व्योम);
+व्योम bdx_uncore_cpu_init(व्योम);
+पूर्णांक knl_uncore_pci_init(व्योम);
+व्योम knl_uncore_cpu_init(व्योम);
+पूर्णांक skx_uncore_pci_init(व्योम);
+व्योम skx_uncore_cpu_init(व्योम);
+पूर्णांक snr_uncore_pci_init(व्योम);
+व्योम snr_uncore_cpu_init(व्योम);
+व्योम snr_uncore_mmio_init(व्योम);
+पूर्णांक icx_uncore_pci_init(व्योम);
+व्योम icx_uncore_cpu_init(व्योम);
+व्योम icx_uncore_mmio_init(व्योम);
 
 /* uncore_nhmex.c */
-void nhmex_uncore_cpu_init(void);
+व्योम nhmex_uncore_cpu_init(व्योम);

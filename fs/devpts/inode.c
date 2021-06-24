@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* -*- linux-c -*- --------------------------------------------------------- *
  *
  * linux/fs/devpts/inode.c
@@ -7,217 +8,217 @@
  *
  * ------------------------------------------------------------------------- */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/sched.h>
-#include <linux/namei.h>
-#include <linux/slab.h>
-#include <linux/mount.h>
-#include <linux/tty.h>
-#include <linux/mutex.h>
-#include <linux/magic.h>
-#include <linux/idr.h>
-#include <linux/devpts_fs.h>
-#include <linux/parser.h>
-#include <linux/fsnotify.h>
-#include <linux/seq_file.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/devpts_fs.h>
+#समावेश <linux/parser.h>
+#समावेश <linux/fsnotअगरy.h>
+#समावेश <linux/seq_file.h>
 
-#define DEVPTS_DEFAULT_MODE 0600
+#घोषणा DEVPTS_DEFAULT_MODE 0600
 /*
- * ptmx is a new node in /dev/pts and will be unused in legacy (single-
+ * pपंचांगx is a new node in /dev/pts and will be unused in legacy (single-
  * instance) mode. To prevent surprises in user space, set permissions of
- * ptmx to 0. Use 'chmod' or remount with '-o ptmxmode' to set meaningful
+ * pपंचांगx to 0. Use 'chmod' or remount with '-o ptmxmode' to set meaningful
  * permissions.
  */
-#define DEVPTS_DEFAULT_PTMX_MODE 0000
-#define PTMX_MINOR	2
+#घोषणा DEVPTS_DEFAULT_PTMX_MODE 0000
+#घोषणा PTMX_MINOR	2
 
 /*
- * sysctl support for setting limits on the number of Unix98 ptys allocated.
- * Otherwise one can eat up all kernel memory by opening /dev/ptmx repeatedly.
+ * sysctl support क्रम setting limits on the number of Unix98 ptys allocated.
+ * Otherwise one can eat up all kernel memory by खोलोing /dev/pपंचांगx repeatedly.
  */
-static int pty_limit = NR_UNIX98_PTY_DEFAULT;
-static int pty_reserve = NR_UNIX98_PTY_RESERVE;
-static int pty_limit_min;
-static int pty_limit_max = INT_MAX;
-static atomic_t pty_count = ATOMIC_INIT(0);
+अटल पूर्णांक pty_limit = NR_UNIX98_PTY_DEFAULT;
+अटल पूर्णांक pty_reserve = NR_UNIX98_PTY_RESERVE;
+अटल पूर्णांक pty_limit_min;
+अटल पूर्णांक pty_limit_max = पूर्णांक_उच्च;
+अटल atomic_t pty_count = ATOMIC_INIT(0);
 
-static struct ctl_table pty_table[] = {
-	{
+अटल काष्ठा ctl_table pty_table[] = अणु
+	अणु
 		.procname	= "max",
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.data		= &pty_limit,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= &pty_limit_min,
 		.extra2		= &pty_limit_max,
-	}, {
+	पूर्ण, अणु
 		.procname	= "reserve",
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
 		.data		= &pty_reserve,
-		.proc_handler	= proc_dointvec_minmax,
+		.proc_handler	= proc_करोपूर्णांकvec_minmax,
 		.extra1		= &pty_limit_min,
 		.extra2		= &pty_limit_max,
-	}, {
+	पूर्ण, अणु
 		.procname	= "nr",
-		.maxlen		= sizeof(int),
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0444,
 		.data		= &pty_count,
-		.proc_handler	= proc_dointvec,
-	},
-	{}
-};
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct ctl_table pty_kern_table[] = {
-	{
+अटल काष्ठा ctl_table pty_kern_table[] = अणु
+	अणु
 		.procname	= "pty",
 		.mode		= 0555,
 		.child		= pty_table,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct ctl_table pty_root_table[] = {
-	{
+अटल काष्ठा ctl_table pty_root_table[] = अणु
+	अणु
 		.procname	= "kernel",
 		.mode		= 0555,
 		.child		= pty_kern_table,
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-struct pts_mount_opts {
-	int setuid;
-	int setgid;
+काष्ठा pts_mount_opts अणु
+	पूर्णांक setuid;
+	पूर्णांक setgid;
 	kuid_t   uid;
 	kgid_t   gid;
 	umode_t mode;
-	umode_t ptmxmode;
-	int reserve;
-	int max;
-};
+	umode_t pपंचांगxmode;
+	पूर्णांक reserve;
+	पूर्णांक max;
+पूर्ण;
 
-enum {
-	Opt_uid, Opt_gid, Opt_mode, Opt_ptmxmode, Opt_newinstance,  Opt_max,
+क्रमागत अणु
+	Opt_uid, Opt_gid, Opt_mode, Opt_pपंचांगxmode, Opt_newinstance,  Opt_max,
 	Opt_err
-};
+पूर्ण;
 
-static const match_table_t tokens = {
-	{Opt_uid, "uid=%u"},
-	{Opt_gid, "gid=%u"},
-	{Opt_mode, "mode=%o"},
-	{Opt_ptmxmode, "ptmxmode=%o"},
-	{Opt_newinstance, "newinstance"},
-	{Opt_max, "max=%d"},
-	{Opt_err, NULL}
-};
+अटल स्थिर match_table_t tokens = अणु
+	अणुOpt_uid, "uid=%u"पूर्ण,
+	अणुOpt_gid, "gid=%u"पूर्ण,
+	अणुOpt_mode, "mode=%o"पूर्ण,
+	अणुOpt_pपंचांगxmode, "ptmxmode=%o"पूर्ण,
+	अणुOpt_newinstance, "newinstance"पूर्ण,
+	अणुOpt_max, "max=%d"पूर्ण,
+	अणुOpt_err, शून्यपूर्ण
+पूर्ण;
 
-struct pts_fs_info {
-	struct ida allocated_ptys;
-	struct pts_mount_opts mount_opts;
-	struct super_block *sb;
-	struct dentry *ptmx_dentry;
-};
+काष्ठा pts_fs_info अणु
+	काष्ठा ida allocated_ptys;
+	काष्ठा pts_mount_opts mount_opts;
+	काष्ठा super_block *sb;
+	काष्ठा dentry *pपंचांगx_dentry;
+पूर्ण;
 
-static inline struct pts_fs_info *DEVPTS_SB(struct super_block *sb)
-{
-	return sb->s_fs_info;
-}
+अटल अंतरभूत काष्ठा pts_fs_info *DEVPTS_SB(काष्ठा super_block *sb)
+अणु
+	वापस sb->s_fs_info;
+पूर्ण
 
-static int devpts_ptmx_path(struct path *path)
-{
-	struct super_block *sb;
-	int err;
+अटल पूर्णांक devpts_pपंचांगx_path(काष्ठा path *path)
+अणु
+	काष्ठा super_block *sb;
+	पूर्णांक err;
 
-	/* Is a devpts filesystem at "pts" in the same directory? */
+	/* Is a devpts fileप्रणाली at "pts" in the same directory? */
 	err = path_pts(path);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* Is the path the root of a devpts filesystem? */
+	/* Is the path the root of a devpts fileप्रणाली? */
 	sb = path->mnt->mnt_sb;
-	if ((sb->s_magic != DEVPTS_SUPER_MAGIC) ||
+	अगर ((sb->s_magic != DEVPTS_SUPER_MAGIC) ||
 	    (path->mnt->mnt_root != sb->s_root))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Try to find a suitable devpts filesystem. We support the following
+ * Try to find a suitable devpts fileप्रणाली. We support the following
  * scenarios:
- * - The ptmx device node is located in the same directory as the devpts
+ * - The pपंचांगx device node is located in the same directory as the devpts
  *   mount where the pts device nodes are located.
- *   This is e.g. the case when calling open on the /dev/pts/ptmx device
- *   node when the devpts filesystem is mounted at /dev/pts.
- * - The ptmx device node is located outside the devpts filesystem mount
- *   where the pts device nodes are located. For example, the ptmx device
+ *   This is e.g. the हाल when calling खोलो on the /dev/pts/pपंचांगx device
+ *   node when the devpts fileप्रणाली is mounted at /dev/pts.
+ * - The pपंचांगx device node is located outside the devpts fileप्रणाली mount
+ *   where the pts device nodes are located. For example, the pपंचांगx device
  *   is a symlink, separate device node, or bind-mount.
- *   A supported scenario is bind-mounting /dev/pts/ptmx to /dev/ptmx and
- *   then calling open on /dev/ptmx. In this case a suitable pts
+ *   A supported scenario is bind-mounting /dev/pts/pपंचांगx to /dev/pपंचांगx and
+ *   then calling खोलो on /dev/pपंचांगx. In this हाल a suitable pts
  *   subdirectory can be found in the common parent directory /dev of the
- *   devpts mount and the ptmx bind-mount, after resolving the /dev/ptmx
+ *   devpts mount and the pपंचांगx bind-mount, after resolving the /dev/pपंचांगx
  *   bind-mount.
  *   If no suitable pts subdirectory can be found this function will fail.
- *   This is e.g. the case when bind-mounting /dev/pts/ptmx to /ptmx.
+ *   This is e.g. the हाल when bind-mounting /dev/pts/pपंचांगx to /pपंचांगx.
  */
-struct vfsmount *devpts_mntget(struct file *filp, struct pts_fs_info *fsi)
-{
-	struct path path;
-	int err = 0;
+काष्ठा vfsmount *devpts_mntget(काष्ठा file *filp, काष्ठा pts_fs_info *fsi)
+अणु
+	काष्ठा path path;
+	पूर्णांक err = 0;
 
 	path = filp->f_path;
 	path_get(&path);
 
-	/* Walk upward while the start point is a bind mount of
+	/* Walk upward जबतक the start poपूर्णांक is a bind mount of
 	 * a single file.
 	 */
-	while (path.mnt->mnt_root == path.dentry)
-		if (follow_up(&path) == 0)
-			break;
+	जबतक (path.mnt->mnt_root == path.dentry)
+		अगर (follow_up(&path) == 0)
+			अवरोध;
 
-	/* devpts_ptmx_path() finds a devpts fs or returns an error. */
-	if ((path.mnt->mnt_sb->s_magic != DEVPTS_SUPER_MAGIC) ||
+	/* devpts_pपंचांगx_path() finds a devpts fs or वापसs an error. */
+	अगर ((path.mnt->mnt_sb->s_magic != DEVPTS_SUPER_MAGIC) ||
 	    (DEVPTS_SB(path.mnt->mnt_sb) != fsi))
-		err = devpts_ptmx_path(&path);
+		err = devpts_pपंचांगx_path(&path);
 	dput(path.dentry);
-	if (!err) {
-		if (DEVPTS_SB(path.mnt->mnt_sb) == fsi)
-			return path.mnt;
+	अगर (!err) अणु
+		अगर (DEVPTS_SB(path.mnt->mnt_sb) == fsi)
+			वापस path.mnt;
 
 		err = -ENODEV;
-	}
+	पूर्ण
 
 	mntput(path.mnt);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-struct pts_fs_info *devpts_acquire(struct file *filp)
-{
-	struct pts_fs_info *result;
-	struct path path;
-	struct super_block *sb;
+काष्ठा pts_fs_info *devpts_acquire(काष्ठा file *filp)
+अणु
+	काष्ठा pts_fs_info *result;
+	काष्ठा path path;
+	काष्ठा super_block *sb;
 
 	path = filp->f_path;
 	path_get(&path);
 
-	/* Has the devpts filesystem already been found? */
-	if (path.mnt->mnt_sb->s_magic != DEVPTS_SUPER_MAGIC) {
-		int err;
+	/* Has the devpts fileप्रणाली alपढ़ोy been found? */
+	अगर (path.mnt->mnt_sb->s_magic != DEVPTS_SUPER_MAGIC) अणु
+		पूर्णांक err;
 
-		err = devpts_ptmx_path(&path);
-		if (err) {
+		err = devpts_pपंचांगx_path(&path);
+		अगर (err) अणु
 			result = ERR_PTR(err);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * pty code needs to hold extra references in case of last /dev/tty close
+	 * pty code needs to hold extra references in हाल of last /dev/tty बंद
 	 */
 	sb = path.mnt->mnt_sb;
 	atomic_inc(&sb->s_active);
@@ -225,27 +226,27 @@ struct pts_fs_info *devpts_acquire(struct file *filp)
 
 out:
 	path_put(&path);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-void devpts_release(struct pts_fs_info *fsi)
-{
+व्योम devpts_release(काष्ठा pts_fs_info *fsi)
+अणु
 	deactivate_super(fsi->sb);
-}
+पूर्ण
 
-#define PARSE_MOUNT	0
-#define PARSE_REMOUNT	1
+#घोषणा PARSE_MOUNT	0
+#घोषणा PARSE_REMOUNT	1
 
 /*
  * parse_mount_options():
- *	Set @opts to mount options specified in @data. If an option is not
- *	specified in @data, set it to its default value.
+ *	Set @opts to mount options specअगरied in @data. If an option is not
+ *	specअगरied in @data, set it to its शेष value.
  *
- * Note: @data may be NULL (in which case all options are set to default).
+ * Note: @data may be शून्य (in which हाल all options are set to शेष).
  */
-static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
-{
-	char *p;
+अटल पूर्णांक parse_mount_options(अक्षर *data, पूर्णांक op, काष्ठा pts_mount_opts *opts)
+अणु
+	अक्षर *p;
 	kuid_t uid;
 	kgid_t gid;
 
@@ -254,384 +255,384 @@ static int parse_mount_options(char *data, int op, struct pts_mount_opts *opts)
 	opts->uid     = GLOBAL_ROOT_UID;
 	opts->gid     = GLOBAL_ROOT_GID;
 	opts->mode    = DEVPTS_DEFAULT_MODE;
-	opts->ptmxmode = DEVPTS_DEFAULT_PTMX_MODE;
+	opts->pपंचांगxmode = DEVPTS_DEFAULT_PTMX_MODE;
 	opts->max     = NR_UNIX98_PTY_MAX;
 
 	/* Only allow instances mounted from the initial mount
 	 * namespace to tap the reserve pool of ptys.
 	 */
-	if (op == PARSE_MOUNT)
+	अगर (op == PARSE_MOUNT)
 		opts->reserve =
 			(current->nsproxy->mnt_ns == init_task.nsproxy->mnt_ns);
 
-	while ((p = strsep(&data, ",")) != NULL) {
+	जबतक ((p = strsep(&data, ",")) != शून्य) अणु
 		substring_t args[MAX_OPT_ARGS];
-		int token;
-		int option;
+		पूर्णांक token;
+		पूर्णांक option;
 
-		if (!*p)
-			continue;
+		अगर (!*p)
+			जारी;
 
 		token = match_token(p, tokens, args);
-		switch (token) {
-		case Opt_uid:
-			if (match_int(&args[0], &option))
-				return -EINVAL;
+		चयन (token) अणु
+		हाल Opt_uid:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस -EINVAL;
 			uid = make_kuid(current_user_ns(), option);
-			if (!uid_valid(uid))
-				return -EINVAL;
+			अगर (!uid_valid(uid))
+				वापस -EINVAL;
 			opts->uid = uid;
 			opts->setuid = 1;
-			break;
-		case Opt_gid:
-			if (match_int(&args[0], &option))
-				return -EINVAL;
+			अवरोध;
+		हाल Opt_gid:
+			अगर (match_पूर्णांक(&args[0], &option))
+				वापस -EINVAL;
 			gid = make_kgid(current_user_ns(), option);
-			if (!gid_valid(gid))
-				return -EINVAL;
+			अगर (!gid_valid(gid))
+				वापस -EINVAL;
 			opts->gid = gid;
 			opts->setgid = 1;
-			break;
-		case Opt_mode:
-			if (match_octal(&args[0], &option))
-				return -EINVAL;
+			अवरोध;
+		हाल Opt_mode:
+			अगर (match_octal(&args[0], &option))
+				वापस -EINVAL;
 			opts->mode = option & S_IALLUGO;
-			break;
-		case Opt_ptmxmode:
-			if (match_octal(&args[0], &option))
-				return -EINVAL;
-			opts->ptmxmode = option & S_IALLUGO;
-			break;
-		case Opt_newinstance:
-			break;
-		case Opt_max:
-			if (match_int(&args[0], &option) ||
+			अवरोध;
+		हाल Opt_pपंचांगxmode:
+			अगर (match_octal(&args[0], &option))
+				वापस -EINVAL;
+			opts->pपंचांगxmode = option & S_IALLUGO;
+			अवरोध;
+		हाल Opt_newinstance:
+			अवरोध;
+		हाल Opt_max:
+			अगर (match_पूर्णांक(&args[0], &option) ||
 			    option < 0 || option > NR_UNIX98_PTY_MAX)
-				return -EINVAL;
+				वापस -EINVAL;
 			opts->max = option;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pr_err("called with bogus options\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mknod_ptmx(struct super_block *sb)
-{
-	int mode;
-	int rc = -ENOMEM;
-	struct dentry *dentry;
-	struct inode *inode;
-	struct dentry *root = sb->s_root;
-	struct pts_fs_info *fsi = DEVPTS_SB(sb);
-	struct pts_mount_opts *opts = &fsi->mount_opts;
-	kuid_t ptmx_uid = current_fsuid();
-	kgid_t ptmx_gid = current_fsgid();
+अटल पूर्णांक mknod_pपंचांगx(काष्ठा super_block *sb)
+अणु
+	पूर्णांक mode;
+	पूर्णांक rc = -ENOMEM;
+	काष्ठा dentry *dentry;
+	काष्ठा inode *inode;
+	काष्ठा dentry *root = sb->s_root;
+	काष्ठा pts_fs_info *fsi = DEVPTS_SB(sb);
+	काष्ठा pts_mount_opts *opts = &fsi->mount_opts;
+	kuid_t pपंचांगx_uid = current_fsuid();
+	kgid_t pपंचांगx_gid = current_fsgid();
 
 	inode_lock(d_inode(root));
 
-	/* If we have already created ptmx node, return */
-	if (fsi->ptmx_dentry) {
+	/* If we have alपढ़ोy created pपंचांगx node, वापस */
+	अगर (fsi->pपंचांगx_dentry) अणु
 		rc = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	dentry = d_alloc_name(root, "ptmx");
-	if (!dentry) {
+	अगर (!dentry) अणु
 		pr_err("Unable to alloc dentry for ptmx node\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Create a new 'ptmx' node in this mount of devpts.
 	 */
 	inode = new_inode(sb);
-	if (!inode) {
+	अगर (!inode) अणु
 		pr_err("Unable to alloc inode for ptmx node\n");
 		dput(dentry);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	inode->i_ino = 2;
-	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
 
-	mode = S_IFCHR|opts->ptmxmode;
+	mode = S_IFCHR|opts->pपंचांगxmode;
 	init_special_inode(inode, mode, MKDEV(TTYAUX_MAJOR, 2));
-	inode->i_uid = ptmx_uid;
-	inode->i_gid = ptmx_gid;
+	inode->i_uid = pपंचांगx_uid;
+	inode->i_gid = pपंचांगx_gid;
 
 	d_add(dentry, inode);
 
-	fsi->ptmx_dentry = dentry;
+	fsi->pपंचांगx_dentry = dentry;
 	rc = 0;
 out:
 	inode_unlock(d_inode(root));
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void update_ptmx_mode(struct pts_fs_info *fsi)
-{
-	struct inode *inode;
-	if (fsi->ptmx_dentry) {
-		inode = d_inode(fsi->ptmx_dentry);
-		inode->i_mode = S_IFCHR|fsi->mount_opts.ptmxmode;
-	}
-}
+अटल व्योम update_pपंचांगx_mode(काष्ठा pts_fs_info *fsi)
+अणु
+	काष्ठा inode *inode;
+	अगर (fsi->pपंचांगx_dentry) अणु
+		inode = d_inode(fsi->pपंचांगx_dentry);
+		inode->i_mode = S_IFCHR|fsi->mount_opts.pपंचांगxmode;
+	पूर्ण
+पूर्ण
 
-static int devpts_remount(struct super_block *sb, int *flags, char *data)
-{
-	int err;
-	struct pts_fs_info *fsi = DEVPTS_SB(sb);
-	struct pts_mount_opts *opts = &fsi->mount_opts;
+अटल पूर्णांक devpts_remount(काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data)
+अणु
+	पूर्णांक err;
+	काष्ठा pts_fs_info *fsi = DEVPTS_SB(sb);
+	काष्ठा pts_mount_opts *opts = &fsi->mount_opts;
 
 	err = parse_mount_options(data, PARSE_REMOUNT, opts);
 
 	/*
-	 * parse_mount_options() restores options to default values
-	 * before parsing and may have changed ptmxmode. So, update the
-	 * mode in the inode too. Bogus options don't fail the remount,
-	 * so do this even on error return.
+	 * parse_mount_options() restores options to शेष values
+	 * beक्रमe parsing and may have changed pपंचांगxmode. So, update the
+	 * mode in the inode too. Bogus options करोn't fail the remount,
+	 * so करो this even on error वापस.
 	 */
-	update_ptmx_mode(fsi);
+	update_pपंचांगx_mode(fsi);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int devpts_show_options(struct seq_file *seq, struct dentry *root)
-{
-	struct pts_fs_info *fsi = DEVPTS_SB(root->d_sb);
-	struct pts_mount_opts *opts = &fsi->mount_opts;
+अटल पूर्णांक devpts_show_options(काष्ठा seq_file *seq, काष्ठा dentry *root)
+अणु
+	काष्ठा pts_fs_info *fsi = DEVPTS_SB(root->d_sb);
+	काष्ठा pts_mount_opts *opts = &fsi->mount_opts;
 
-	if (opts->setuid)
-		seq_printf(seq, ",uid=%u",
+	अगर (opts->setuid)
+		seq_म_लिखो(seq, ",uid=%u",
 			   from_kuid_munged(&init_user_ns, opts->uid));
-	if (opts->setgid)
-		seq_printf(seq, ",gid=%u",
+	अगर (opts->setgid)
+		seq_म_लिखो(seq, ",gid=%u",
 			   from_kgid_munged(&init_user_ns, opts->gid));
-	seq_printf(seq, ",mode=%03o", opts->mode);
-	seq_printf(seq, ",ptmxmode=%03o", opts->ptmxmode);
-	if (opts->max < NR_UNIX98_PTY_MAX)
-		seq_printf(seq, ",max=%d", opts->max);
+	seq_म_लिखो(seq, ",mode=%03o", opts->mode);
+	seq_म_लिखो(seq, ",ptmxmode=%03o", opts->pपंचांगxmode);
+	अगर (opts->max < NR_UNIX98_PTY_MAX)
+		seq_म_लिखो(seq, ",max=%d", opts->max);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct super_operations devpts_sops = {
+अटल स्थिर काष्ठा super_operations devpts_sops = अणु
 	.statfs		= simple_statfs,
 	.remount_fs	= devpts_remount,
 	.show_options	= devpts_show_options,
-};
+पूर्ण;
 
-static void *new_pts_fs_info(struct super_block *sb)
-{
-	struct pts_fs_info *fsi;
+अटल व्योम *new_pts_fs_info(काष्ठा super_block *sb)
+अणु
+	काष्ठा pts_fs_info *fsi;
 
-	fsi = kzalloc(sizeof(struct pts_fs_info), GFP_KERNEL);
-	if (!fsi)
-		return NULL;
+	fsi = kzalloc(माप(काष्ठा pts_fs_info), GFP_KERNEL);
+	अगर (!fsi)
+		वापस शून्य;
 
 	ida_init(&fsi->allocated_ptys);
 	fsi->mount_opts.mode = DEVPTS_DEFAULT_MODE;
-	fsi->mount_opts.ptmxmode = DEVPTS_DEFAULT_PTMX_MODE;
+	fsi->mount_opts.pपंचांगxmode = DEVPTS_DEFAULT_PTMX_MODE;
 	fsi->sb = sb;
 
-	return fsi;
-}
+	वापस fsi;
+पूर्ण
 
-static int
-devpts_fill_super(struct super_block *s, void *data, int silent)
-{
-	struct inode *inode;
-	int error;
+अटल पूर्णांक
+devpts_fill_super(काष्ठा super_block *s, व्योम *data, पूर्णांक silent)
+अणु
+	काष्ठा inode *inode;
+	पूर्णांक error;
 
-	s->s_iflags &= ~SB_I_NODEV;
+	s->s_अगरlags &= ~SB_I_NODEV;
 	s->s_blocksize = 1024;
 	s->s_blocksize_bits = 10;
 	s->s_magic = DEVPTS_SUPER_MAGIC;
 	s->s_op = &devpts_sops;
 	s->s_d_op = &simple_dentry_operations;
-	s->s_time_gran = 1;
+	s->s_समय_gran = 1;
 
 	error = -ENOMEM;
 	s->s_fs_info = new_pts_fs_info(s);
-	if (!s->s_fs_info)
-		goto fail;
+	अगर (!s->s_fs_info)
+		जाओ fail;
 
 	error = parse_mount_options(data, PARSE_MOUNT, &DEVPTS_SB(s)->mount_opts);
-	if (error)
-		goto fail;
+	अगर (error)
+		जाओ fail;
 
 	error = -ENOMEM;
 	inode = new_inode(s);
-	if (!inode)
-		goto fail;
+	अगर (!inode)
+		जाओ fail;
 	inode->i_ino = 1;
-	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
-	inode->i_mode = S_IFDIR | S_IRUGO | S_IXUGO | S_IWUSR;
+	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
+	inode->i_mode = S_IFसूची | S_IRUGO | S_IXUGO | S_IWUSR;
 	inode->i_op = &simple_dir_inode_operations;
 	inode->i_fop = &simple_dir_operations;
 	set_nlink(inode, 2);
 
 	s->s_root = d_make_root(inode);
-	if (!s->s_root) {
+	अगर (!s->s_root) अणु
 		pr_err("get root dentry failed\n");
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	error = mknod_ptmx(s);
-	if (error)
-		goto fail_dput;
+	error = mknod_pपंचांगx(s);
+	अगर (error)
+		जाओ fail_dput;
 
-	return 0;
+	वापस 0;
 fail_dput:
 	dput(s->s_root);
-	s->s_root = NULL;
+	s->s_root = शून्य;
 fail:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * devpts_mount()
  *
- *     Mount a new (private) instance of devpts.  PTYs created in this
+ *     Mount a new (निजी) instance of devpts.  PTYs created in this
  *     instance are independent of the PTYs in other devpts instances.
  */
-static struct dentry *devpts_mount(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data)
-{
-	return mount_nodev(fs_type, flags, data, devpts_fill_super);
-}
+अटल काष्ठा dentry *devpts_mount(काष्ठा file_प्रणाली_type *fs_type,
+	पूर्णांक flags, स्थिर अक्षर *dev_name, व्योम *data)
+अणु
+	वापस mount_nodev(fs_type, flags, data, devpts_fill_super);
+पूर्ण
 
-static void devpts_kill_sb(struct super_block *sb)
-{
-	struct pts_fs_info *fsi = DEVPTS_SB(sb);
+अटल व्योम devpts_समाप्त_sb(काष्ठा super_block *sb)
+अणु
+	काष्ठा pts_fs_info *fsi = DEVPTS_SB(sb);
 
-	if (fsi)
+	अगर (fsi)
 		ida_destroy(&fsi->allocated_ptys);
-	kfree(fsi);
-	kill_litter_super(sb);
-}
+	kमुक्त(fsi);
+	समाप्त_litter_super(sb);
+पूर्ण
 
-static struct file_system_type devpts_fs_type = {
+अटल काष्ठा file_प्रणाली_type devpts_fs_type = अणु
 	.name		= "devpts",
 	.mount		= devpts_mount,
-	.kill_sb	= devpts_kill_sb,
+	.समाप्त_sb	= devpts_समाप्त_sb,
 	.fs_flags	= FS_USERNS_MOUNT,
-};
+पूर्ण;
 
 /*
- * The normal naming convention is simply /dev/pts/<number>; this conforms
+ * The normal naming convention is simply /dev/pts/<number>; this conक्रमms
  * to the System V naming convention
  */
 
-int devpts_new_index(struct pts_fs_info *fsi)
-{
-	int index = -ENOSPC;
+पूर्णांक devpts_new_index(काष्ठा pts_fs_info *fsi)
+अणु
+	पूर्णांक index = -ENOSPC;
 
-	if (atomic_inc_return(&pty_count) >= (pty_limit -
+	अगर (atomic_inc_वापस(&pty_count) >= (pty_limit -
 			  (fsi->mount_opts.reserve ? 0 : pty_reserve)))
-		goto out;
+		जाओ out;
 
 	index = ida_alloc_max(&fsi->allocated_ptys, fsi->mount_opts.max - 1,
 			GFP_KERNEL);
 
 out:
-	if (index < 0)
+	अगर (index < 0)
 		atomic_dec(&pty_count);
-	return index;
-}
+	वापस index;
+पूर्ण
 
-void devpts_kill_index(struct pts_fs_info *fsi, int idx)
-{
-	ida_free(&fsi->allocated_ptys, idx);
+व्योम devpts_समाप्त_index(काष्ठा pts_fs_info *fsi, पूर्णांक idx)
+अणु
+	ida_मुक्त(&fsi->allocated_ptys, idx);
 	atomic_dec(&pty_count);
-}
+पूर्ण
 
 /**
  * devpts_pty_new -- create a new inode in /dev/pts/
- * @ptmx_inode: inode of the master
+ * @pपंचांगx_inode: inode of the master
  * @device: major+minor of the node to be created
  * @index: used as a name of the node
  * @priv: what's given back by devpts_get_priv
  *
- * The created inode is returned. Remove it from /dev/pts/ by devpts_pty_kill.
+ * The created inode is वापसed. Remove it from /dev/pts/ by devpts_pty_समाप्त.
  */
-struct dentry *devpts_pty_new(struct pts_fs_info *fsi, int index, void *priv)
-{
-	struct dentry *dentry;
-	struct super_block *sb = fsi->sb;
-	struct inode *inode;
-	struct dentry *root;
-	struct pts_mount_opts *opts;
-	char s[12];
+काष्ठा dentry *devpts_pty_new(काष्ठा pts_fs_info *fsi, पूर्णांक index, व्योम *priv)
+अणु
+	काष्ठा dentry *dentry;
+	काष्ठा super_block *sb = fsi->sb;
+	काष्ठा inode *inode;
+	काष्ठा dentry *root;
+	काष्ठा pts_mount_opts *opts;
+	अक्षर s[12];
 
 	root = sb->s_root;
 	opts = &fsi->mount_opts;
 
 	inode = new_inode(sb);
-	if (!inode)
-		return ERR_PTR(-ENOMEM);
+	अगर (!inode)
+		वापस ERR_PTR(-ENOMEM);
 
 	inode->i_ino = index + 3;
 	inode->i_uid = opts->setuid ? opts->uid : current_fsuid();
 	inode->i_gid = opts->setgid ? opts->gid : current_fsgid();
-	inode->i_mtime = inode->i_atime = inode->i_ctime = current_time(inode);
+	inode->i_mसमय = inode->i_aसमय = inode->i_स_समय = current_समय(inode);
 	init_special_inode(inode, S_IFCHR|opts->mode, MKDEV(UNIX98_PTY_SLAVE_MAJOR, index));
 
-	sprintf(s, "%d", index);
+	प्र_लिखो(s, "%d", index);
 
 	dentry = d_alloc_name(root, s);
-	if (dentry) {
+	अगर (dentry) अणु
 		dentry->d_fsdata = priv;
 		d_add(dentry, inode);
-		fsnotify_create(d_inode(root), dentry);
-	} else {
+		fsnotअगरy_create(d_inode(root), dentry);
+	पूर्ण अन्यथा अणु
 		iput(inode);
 		dentry = ERR_PTR(-ENOMEM);
-	}
+	पूर्ण
 
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
 /**
- * devpts_get_priv -- get private data for a slave
+ * devpts_get_priv -- get निजी data क्रम a slave
  * @pts_inode: inode of the slave
  *
- * Returns whatever was passed as priv in devpts_pty_new for a given inode.
+ * Returns whatever was passed as priv in devpts_pty_new क्रम a given inode.
  */
-void *devpts_get_priv(struct dentry *dentry)
-{
-	if (dentry->d_sb->s_magic != DEVPTS_SUPER_MAGIC)
-		return NULL;
-	return dentry->d_fsdata;
-}
+व्योम *devpts_get_priv(काष्ठा dentry *dentry)
+अणु
+	अगर (dentry->d_sb->s_magic != DEVPTS_SUPER_MAGIC)
+		वापस शून्य;
+	वापस dentry->d_fsdata;
+पूर्ण
 
 /**
- * devpts_pty_kill -- remove inode form /dev/pts/
- * @inode: inode of the slave to be removed
+ * devpts_pty_समाप्त -- हटाओ inode क्रमm /dev/pts/
+ * @inode: inode of the slave to be हटाओd
  *
  * This is an inverse operation of devpts_pty_new.
  */
-void devpts_pty_kill(struct dentry *dentry)
-{
+व्योम devpts_pty_समाप्त(काष्ठा dentry *dentry)
+अणु
 	WARN_ON_ONCE(dentry->d_sb->s_magic != DEVPTS_SUPER_MAGIC);
 
-	dentry->d_fsdata = NULL;
+	dentry->d_fsdata = शून्य;
 	drop_nlink(dentry->d_inode);
-	fsnotify_unlink(d_inode(dentry->d_parent), dentry);
+	fsnotअगरy_unlink(d_inode(dentry->d_parent), dentry);
 	d_drop(dentry);
 	dput(dentry);	/* d_alloc_name() in devpts_pty_new() */
-}
+पूर्ण
 
-static int __init init_devpts_fs(void)
-{
-	int err = register_filesystem(&devpts_fs_type);
-	if (!err) {
-		register_sysctl_table(pty_root_table);
-	}
-	return err;
-}
+अटल पूर्णांक __init init_devpts_fs(व्योम)
+अणु
+	पूर्णांक err = रेजिस्टर_fileप्रणाली(&devpts_fs_type);
+	अगर (!err) अणु
+		रेजिस्टर_sysctl_table(pty_root_table);
+	पूर्ण
+	वापस err;
+पूर्ण
 module_init(init_devpts_fs)

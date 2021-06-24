@@ -1,140 +1,141 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2001, 2002, 2003 Broadcom Corporation
  */
 
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/smp.h>
-#include <linux/kernel_stat.h>
-#include <linux/sched/task_stack.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/sched/task_stack.h>
 
-#include <asm/mmu_context.h>
-#include <asm/io.h>
-#include <asm/fw/cfe/cfe_api.h>
-#include <asm/sibyte/sb1250.h>
-#include <asm/sibyte/sb1250_regs.h>
-#include <asm/sibyte/sb1250_int.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/fw/cfe/cfe_api.h>
+#समावेश <यंत्र/sibyte/sb1250.h>
+#समावेश <यंत्र/sibyte/sb1250_regs.h>
+#समावेश <यंत्र/sibyte/sb1250_पूर्णांक.h>
 
-static void *mailbox_set_regs[] = {
+अटल व्योम *mailbox_set_regs[] = अणु
 	IOADDR(A_IMR_CPU0_BASE + R_IMR_MAILBOX_SET_CPU),
 	IOADDR(A_IMR_CPU1_BASE + R_IMR_MAILBOX_SET_CPU)
-};
+पूर्ण;
 
-static void *mailbox_clear_regs[] = {
+अटल व्योम *mailbox_clear_regs[] = अणु
 	IOADDR(A_IMR_CPU0_BASE + R_IMR_MAILBOX_CLR_CPU),
 	IOADDR(A_IMR_CPU1_BASE + R_IMR_MAILBOX_CLR_CPU)
-};
+पूर्ण;
 
-static void *mailbox_regs[] = {
+अटल व्योम *mailbox_regs[] = अणु
 	IOADDR(A_IMR_CPU0_BASE + R_IMR_MAILBOX_CPU),
 	IOADDR(A_IMR_CPU1_BASE + R_IMR_MAILBOX_CPU)
-};
+पूर्ण;
 
 /*
  * SMP init and finish on secondary CPUs
  */
-void sb1250_smp_init(void)
-{
-	unsigned int imask = STATUSF_IP4 | STATUSF_IP3 | STATUSF_IP2 |
+व्योम sb1250_smp_init(व्योम)
+अणु
+	अचिन्हित पूर्णांक imask = STATUSF_IP4 | STATUSF_IP3 | STATUSF_IP2 |
 		STATUSF_IP1 | STATUSF_IP0;
 
-	/* Set interrupt mask, but don't enable */
+	/* Set पूर्णांकerrupt mask, but करोn't enable */
 	change_c0_status(ST0_IM, imask);
-}
+पूर्ण
 
 /*
- * These are routines for dealing with the sb1250 smp capabilities
+ * These are routines क्रम dealing with the sb1250 smp capabilities
  * independent of board/firmware
  */
 
 /*
  * Simple enough; everything is set up, so just poke the appropriate mailbox
- * register, and we should be set
+ * रेजिस्टर, and we should be set
  */
-static void sb1250_send_ipi_single(int cpu, unsigned int action)
-{
-	__raw_writeq((((u64)action) << 48), mailbox_set_regs[cpu]);
-}
+अटल व्योम sb1250_send_ipi_single(पूर्णांक cpu, अचिन्हित पूर्णांक action)
+अणु
+	__raw_ग_लिखोq((((u64)action) << 48), mailbox_set_regs[cpu]);
+पूर्ण
 
-static inline void sb1250_send_ipi_mask(const struct cpumask *mask,
-					unsigned int action)
-{
-	unsigned int i;
+अटल अंतरभूत व्योम sb1250_send_ipi_mask(स्थिर काष्ठा cpumask *mask,
+					अचिन्हित पूर्णांक action)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for_each_cpu(i, mask)
+	क्रम_each_cpu(i, mask)
 		sb1250_send_ipi_single(i, action);
-}
+पूर्ण
 
 /*
  * Code to run on secondary just after probing the CPU
  */
-static void sb1250_init_secondary(void)
-{
-	extern void sb1250_smp_init(void);
+अटल व्योम sb1250_init_secondary(व्योम)
+अणु
+	बाह्य व्योम sb1250_smp_init(व्योम);
 
 	sb1250_smp_init();
-}
+पूर्ण
 
 /*
- * Do any tidying up before marking online and running the idle
+ * Do any tidying up beक्रमe marking online and running the idle
  * loop
  */
-static void sb1250_smp_finish(void)
-{
-	extern void sb1250_clockevent_init(void);
+अटल व्योम sb1250_smp_finish(व्योम)
+अणु
+	बाह्य व्योम sb1250_घड़ीevent_init(व्योम);
 
-	sb1250_clockevent_init();
+	sb1250_घड़ीevent_init();
 	local_irq_enable();
-}
+पूर्ण
 
 /*
  * Setup the PC, SP, and GP of a secondary processor and start it
  * running!
  */
-static int sb1250_boot_secondary(int cpu, struct task_struct *idle)
-{
-	int retval;
+अटल पूर्णांक sb1250_boot_secondary(पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
+अणु
+	पूर्णांक retval;
 
 	retval = cfe_cpu_start(cpu_logical_map(cpu), &smp_bootstrap,
 			       __KSTK_TOS(idle),
-			       (unsigned long)task_thread_info(idle), 0);
-	if (retval != 0)
-		printk("cfe_start_cpu(%i) returned %i\n" , cpu, retval);
-	return retval;
-}
+			       (अचिन्हित दीर्घ)task_thपढ़ो_info(idle), 0);
+	अगर (retval != 0)
+		prपूर्णांकk("cfe_start_cpu(%i) returned %i\n" , cpu, retval);
+	वापस retval;
+पूर्ण
 
 /*
  * Use CFE to find out how many CPUs are available, setting up
  * cpu_possible_mask and the logical/physical mappings.
  * XXXKW will the boot CPU ever not be physical 0?
  *
- * Common setup before any secondaries are started
+ * Common setup beक्रमe any secondaries are started
  */
-static void __init sb1250_smp_setup(void)
-{
-	int i, num;
+अटल व्योम __init sb1250_smp_setup(व्योम)
+अणु
+	पूर्णांक i, num;
 
 	init_cpu_possible(cpumask_of(0));
 	__cpu_number_map[0] = 0;
 	__cpu_logical_map[0] = 0;
 
-	for (i = 1, num = 0; i < NR_CPUS; i++) {
-		if (cfe_cpu_stop(i) == 0) {
+	क्रम (i = 1, num = 0; i < NR_CPUS; i++) अणु
+		अगर (cfe_cpu_stop(i) == 0) अणु
 			set_cpu_possible(i, true);
 			__cpu_number_map[i] = ++num;
 			__cpu_logical_map[num] = i;
-		}
-	}
-	printk(KERN_INFO "Detected %i available secondary CPU(s)\n", num);
-}
+		पूर्ण
+	पूर्ण
+	prपूर्णांकk(KERN_INFO "Detected %i available secondary CPU(s)\n", num);
+पूर्ण
 
-static void __init sb1250_prepare_cpus(unsigned int max_cpus)
-{
-}
+अटल व्योम __init sb1250_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
+अणु
+पूर्ण
 
-const struct plat_smp_ops sb_smp_ops = {
+स्थिर काष्ठा plat_smp_ops sb_smp_ops = अणु
 	.send_ipi_single	= sb1250_send_ipi_single,
 	.send_ipi_mask		= sb1250_send_ipi_mask,
 	.init_secondary		= sb1250_init_secondary,
@@ -142,27 +143,27 @@ const struct plat_smp_ops sb_smp_ops = {
 	.boot_secondary		= sb1250_boot_secondary,
 	.smp_setup		= sb1250_smp_setup,
 	.prepare_cpus		= sb1250_prepare_cpus,
-};
+पूर्ण;
 
-void sb1250_mailbox_interrupt(void)
-{
-	int cpu = smp_processor_id();
-	int irq = K_INT_MBOX_0;
-	unsigned int action;
+व्योम sb1250_mailbox_पूर्णांकerrupt(व्योम)
+अणु
+	पूर्णांक cpu = smp_processor_id();
+	पूर्णांक irq = K_INT_MBOX_0;
+	अचिन्हित पूर्णांक action;
 
 	kstat_incr_irq_this_cpu(irq);
-	/* Load the mailbox register to figure out what we're supposed to do */
-	action = (____raw_readq(mailbox_regs[cpu]) >> 48) & 0xffff;
+	/* Load the mailbox रेजिस्टर to figure out what we're supposed to करो */
+	action = (____raw_पढ़ोq(mailbox_regs[cpu]) >> 48) & 0xffff;
 
-	/* Clear the mailbox to clear the interrupt */
-	____raw_writeq(((u64)action) << 48, mailbox_clear_regs[cpu]);
+	/* Clear the mailbox to clear the पूर्णांकerrupt */
+	____raw_ग_लिखोq(((u64)action) << 48, mailbox_clear_regs[cpu]);
 
-	if (action & SMP_RESCHEDULE_YOURSELF)
+	अगर (action & SMP_RESCHEDULE_YOURSELF)
 		scheduler_ipi();
 
-	if (action & SMP_CALL_FUNCTION) {
+	अगर (action & SMP_CALL_FUNCTION) अणु
 		irq_enter();
-		generic_smp_call_function_interrupt();
-		irq_exit();
-	}
-}
+		generic_smp_call_function_पूर्णांकerrupt();
+		irq_निकास();
+	पूर्ण
+पूर्ण

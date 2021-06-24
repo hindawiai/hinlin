@@ -1,982 +1,983 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * ACPI support for Intel Lynxpoint LPSS.
+ * ACPI support क्रम Intel Lynxpoपूर्णांक LPSS.
  *
  * Copyright (C) 2013, Intel Corporation
- * Authors: Mika Westerberg <mika.westerberg@linux.intel.com>
- *          Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+ * Authors: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
+ *          Rafael J. Wysocki <rafael.j.wysocki@पूर्णांकel.com>
  */
 
-#include <linux/acpi.h>
-#include <linux/clkdev.h>
-#include <linux/clk-provider.h>
-#include <linux/dmi.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/mutex.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/x86/clk-lpss.h>
-#include <linux/platform_data/x86/pmc_atom.h>
-#include <linux/pm_domain.h>
-#include <linux/pm_runtime.h>
-#include <linux/pwm.h>
-#include <linux/suspend.h>
-#include <linux/delay.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/clkdev.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/mutex.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/x86/clk-lpss.h>
+#समावेश <linux/platक्रमm_data/x86/pmc_atom.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/pwm.h>
+#समावेश <linux/suspend.h>
+#समावेश <linux/delay.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-#ifdef CONFIG_X86_INTEL_LPSS
+#अगर_घोषित CONFIG_X86_INTEL_LPSS
 
-#include <asm/cpu_device_id.h>
-#include <asm/intel-family.h>
-#include <asm/iosf_mbi.h>
+#समावेश <यंत्र/cpu_device_id.h>
+#समावेश <यंत्र/पूर्णांकel-family.h>
+#समावेश <यंत्र/iosf_mbi.h>
 
-#define LPSS_ADDR(desc) ((unsigned long)&desc)
+#घोषणा LPSS_ADDR(desc) ((अचिन्हित दीर्घ)&desc)
 
-#define LPSS_CLK_SIZE	0x04
-#define LPSS_LTR_SIZE	0x18
+#घोषणा LPSS_CLK_SIZE	0x04
+#घोषणा LPSS_LTR_SIZE	0x18
 
 /* Offsets relative to LPSS_PRIVATE_OFFSET */
-#define LPSS_CLK_DIVIDER_DEF_MASK	(BIT(1) | BIT(16))
-#define LPSS_RESETS			0x04
-#define LPSS_RESETS_RESET_FUNC		BIT(0)
-#define LPSS_RESETS_RESET_APB		BIT(1)
-#define LPSS_GENERAL			0x08
-#define LPSS_GENERAL_LTR_MODE_SW	BIT(2)
-#define LPSS_GENERAL_UART_RTS_OVRD	BIT(3)
-#define LPSS_SW_LTR			0x10
-#define LPSS_AUTO_LTR			0x14
-#define LPSS_LTR_SNOOP_REQ		BIT(15)
-#define LPSS_LTR_SNOOP_MASK		0x0000FFFF
-#define LPSS_LTR_SNOOP_LAT_1US		0x800
-#define LPSS_LTR_SNOOP_LAT_32US		0xC00
-#define LPSS_LTR_SNOOP_LAT_SHIFT	5
-#define LPSS_LTR_SNOOP_LAT_CUTOFF	3000
-#define LPSS_LTR_MAX_VAL		0x3FF
-#define LPSS_TX_INT			0x20
-#define LPSS_TX_INT_MASK		BIT(1)
+#घोषणा LPSS_CLK_DIVIDER_DEF_MASK	(BIT(1) | BIT(16))
+#घोषणा LPSS_RESETS			0x04
+#घोषणा LPSS_RESETS_RESET_FUNC		BIT(0)
+#घोषणा LPSS_RESETS_RESET_APB		BIT(1)
+#घोषणा LPSS_GENERAL			0x08
+#घोषणा LPSS_GENERAL_LTR_MODE_SW	BIT(2)
+#घोषणा LPSS_GENERAL_UART_RTS_OVRD	BIT(3)
+#घोषणा LPSS_SW_LTR			0x10
+#घोषणा LPSS_AUTO_LTR			0x14
+#घोषणा LPSS_LTR_SNOOP_REQ		BIT(15)
+#घोषणा LPSS_LTR_SNOOP_MASK		0x0000FFFF
+#घोषणा LPSS_LTR_SNOOP_LAT_1US		0x800
+#घोषणा LPSS_LTR_SNOOP_LAT_32US		0xC00
+#घोषणा LPSS_LTR_SNOOP_LAT_SHIFT	5
+#घोषणा LPSS_LTR_SNOOP_LAT_CUTOFF	3000
+#घोषणा LPSS_LTR_MAX_VAL		0x3FF
+#घोषणा LPSS_TX_INT			0x20
+#घोषणा LPSS_TX_INT_MASK		BIT(1)
 
-#define LPSS_PRV_REG_COUNT		9
+#घोषणा LPSS_PRV_REG_COUNT		9
 
 /* LPSS Flags */
-#define LPSS_CLK			BIT(0)
-#define LPSS_CLK_GATE			BIT(1)
-#define LPSS_CLK_DIVIDER		BIT(2)
-#define LPSS_LTR			BIT(3)
-#define LPSS_SAVE_CTX			BIT(4)
+#घोषणा LPSS_CLK			BIT(0)
+#घोषणा LPSS_CLK_GATE			BIT(1)
+#घोषणा LPSS_CLK_DIVIDER		BIT(2)
+#घोषणा LPSS_LTR			BIT(3)
+#घोषणा LPSS_SAVE_CTX			BIT(4)
 /*
- * For some devices the DSDT AML code for another device turns off the device
- * before our suspend handler runs, causing us to read/save all 1-s (0xffffffff)
- * as ctx register values.
- * Luckily these devices always use the same ctx register values, so we can
- * work around this by saving the ctx registers once on activation.
+ * For some devices the DSDT AML code क्रम another device turns off the device
+ * beक्रमe our suspend handler runs, causing us to पढ़ो/save all 1-s (0xffffffff)
+ * as ctx रेजिस्टर values.
+ * Luckily these devices always use the same ctx रेजिस्टर values, so we can
+ * work around this by saving the ctx रेजिस्टरs once on activation.
  */
-#define LPSS_SAVE_CTX_ONCE		BIT(5)
-#define LPSS_NO_D3_DELAY		BIT(6)
+#घोषणा LPSS_SAVE_CTX_ONCE		BIT(5)
+#घोषणा LPSS_NO_D3_DELAY		BIT(6)
 
-struct lpss_private_data;
+काष्ठा lpss_निजी_data;
 
-struct lpss_device_desc {
-	unsigned int flags;
-	const char *clk_con_id;
-	unsigned int prv_offset;
-	size_t prv_size_override;
-	struct property_entry *properties;
-	void (*setup)(struct lpss_private_data *pdata);
+काष्ठा lpss_device_desc अणु
+	अचिन्हित पूर्णांक flags;
+	स्थिर अक्षर *clk_con_id;
+	अचिन्हित पूर्णांक prv_offset;
+	माप_प्रकार prv_size_override;
+	काष्ठा property_entry *properties;
+	व्योम (*setup)(काष्ठा lpss_निजी_data *pdata);
 	bool resume_from_noirq;
-};
+पूर्ण;
 
-static const struct lpss_device_desc lpss_dma_desc = {
+अटल स्थिर काष्ठा lpss_device_desc lpss_dma_desc = अणु
 	.flags = LPSS_CLK,
-};
+पूर्ण;
 
-struct lpss_private_data {
-	struct acpi_device *adev;
-	void __iomem *mmio_base;
-	resource_size_t mmio_size;
-	unsigned int fixed_clk_rate;
-	struct clk *clk;
-	const struct lpss_device_desc *dev_desc;
+काष्ठा lpss_निजी_data अणु
+	काष्ठा acpi_device *adev;
+	व्योम __iomem *mmio_base;
+	resource_माप_प्रकार mmio_size;
+	अचिन्हित पूर्णांक fixed_clk_rate;
+	काष्ठा clk *clk;
+	स्थिर काष्ठा lpss_device_desc *dev_desc;
 	u32 prv_reg_ctx[LPSS_PRV_REG_COUNT];
-};
+पूर्ण;
 
-/* Devices which need to be in D3 before lpss_iosf_enter_d3_state() proceeds */
-static u32 pmc_atom_d3_mask = 0xfe000ffe;
+/* Devices which need to be in D3 beक्रमe lpss_iosf_enter_d3_state() proceeds */
+अटल u32 pmc_atom_d3_mask = 0xfe000ffe;
 
-/* LPSS run time quirks */
-static unsigned int lpss_quirks;
+/* LPSS run समय quirks */
+अटल अचिन्हित पूर्णांक lpss_quirks;
 
 /*
- * LPSS_QUIRK_ALWAYS_POWER_ON: override power state for LPSS DMA device.
+ * LPSS_QUIRK_ALWAYS_POWER_ON: override घातer state क्रम LPSS DMA device.
  *
  * The LPSS DMA controller has neither _PS0 nor _PS3 method. Moreover
- * it can be powered off automatically whenever the last LPSS device goes down.
- * In case of no power any access to the DMA controller will hang the system.
+ * it can be घातered off स्वतःmatically whenever the last LPSS device goes करोwn.
+ * In हाल of no घातer any access to the DMA controller will hang the प्रणाली.
  * The behaviour is reproduced on some HP laptops based on Intel BayTrail as
- * well as on ASuS T100TA transformer.
+ * well as on ASuS T100TA transक्रमmer.
  *
- * This quirk overrides power state of entire LPSS island to keep DMA powered
+ * This quirk overrides घातer state of entire LPSS island to keep DMA घातered
  * on whenever we have at least one other device in use.
  */
-#define LPSS_QUIRK_ALWAYS_POWER_ON	BIT(0)
+#घोषणा LPSS_QUIRK_ALWAYS_POWER_ON	BIT(0)
 
 /* UART Component Parameter Register */
-#define LPSS_UART_CPR			0xF4
-#define LPSS_UART_CPR_AFCE		BIT(4)
+#घोषणा LPSS_UART_CPR			0xF4
+#घोषणा LPSS_UART_CPR_AFCE		BIT(4)
 
-static void lpss_uart_setup(struct lpss_private_data *pdata)
-{
-	unsigned int offset;
+अटल व्योम lpss_uart_setup(काष्ठा lpss_निजी_data *pdata)
+अणु
+	अचिन्हित पूर्णांक offset;
 	u32 val;
 
 	offset = pdata->dev_desc->prv_offset + LPSS_TX_INT;
-	val = readl(pdata->mmio_base + offset);
-	writel(val | LPSS_TX_INT_MASK, pdata->mmio_base + offset);
+	val = पढ़ोl(pdata->mmio_base + offset);
+	ग_लिखोl(val | LPSS_TX_INT_MASK, pdata->mmio_base + offset);
 
-	val = readl(pdata->mmio_base + LPSS_UART_CPR);
-	if (!(val & LPSS_UART_CPR_AFCE)) {
+	val = पढ़ोl(pdata->mmio_base + LPSS_UART_CPR);
+	अगर (!(val & LPSS_UART_CPR_AFCE)) अणु
 		offset = pdata->dev_desc->prv_offset + LPSS_GENERAL;
-		val = readl(pdata->mmio_base + offset);
+		val = पढ़ोl(pdata->mmio_base + offset);
 		val |= LPSS_GENERAL_UART_RTS_OVRD;
-		writel(val, pdata->mmio_base + offset);
-	}
-}
+		ग_लिखोl(val, pdata->mmio_base + offset);
+	पूर्ण
+पूर्ण
 
-static void lpss_deassert_reset(struct lpss_private_data *pdata)
-{
-	unsigned int offset;
+अटल व्योम lpss_deनिश्चित_reset(काष्ठा lpss_निजी_data *pdata)
+अणु
+	अचिन्हित पूर्णांक offset;
 	u32 val;
 
 	offset = pdata->dev_desc->prv_offset + LPSS_RESETS;
-	val = readl(pdata->mmio_base + offset);
+	val = पढ़ोl(pdata->mmio_base + offset);
 	val |= LPSS_RESETS_RESET_APB | LPSS_RESETS_RESET_FUNC;
-	writel(val, pdata->mmio_base + offset);
-}
+	ग_लिखोl(val, pdata->mmio_base + offset);
+पूर्ण
 
 /*
- * BYT PWM used for backlight control by the i915 driver on systems without
+ * BYT PWM used क्रम backlight control by the i915 driver on प्रणालीs without
  * the Crystal Cove PMIC.
  */
-static struct pwm_lookup byt_pwm_lookup[] = {
+अटल काष्ठा pwm_lookup byt_pwm_lookup[] = अणु
 	PWM_LOOKUP_WITH_MODULE("80860F09:00", 0, "0000:00:02.0",
 			       "pwm_soc_backlight", 0, PWM_POLARITY_NORMAL,
 			       "pwm-lpss-platform"),
-};
+पूर्ण;
 
-static void byt_pwm_setup(struct lpss_private_data *pdata)
-{
-	struct acpi_device *adev = pdata->adev;
+अटल व्योम byt_pwm_setup(काष्ठा lpss_निजी_data *pdata)
+अणु
+	काष्ठा acpi_device *adev = pdata->adev;
 
-	/* Only call pwm_add_table for the first PWM controller */
-	if (!adev->pnp.unique_id || strcmp(adev->pnp.unique_id, "1"))
-		return;
+	/* Only call pwm_add_table क्रम the first PWM controller */
+	अगर (!adev->pnp.unique_id || म_भेद(adev->pnp.unique_id, "1"))
+		वापस;
 
 	pwm_add_table(byt_pwm_lookup, ARRAY_SIZE(byt_pwm_lookup));
-}
+पूर्ण
 
-#define LPSS_I2C_ENABLE			0x6c
+#घोषणा LPSS_I2C_ENABLE			0x6c
 
-static void byt_i2c_setup(struct lpss_private_data *pdata)
-{
-	const char *uid_str = acpi_device_uid(pdata->adev);
+अटल व्योम byt_i2c_setup(काष्ठा lpss_निजी_data *pdata)
+अणु
+	स्थिर अक्षर *uid_str = acpi_device_uid(pdata->adev);
 	acpi_handle handle = pdata->adev->handle;
-	unsigned long long shared_host = 0;
+	अचिन्हित दीर्घ दीर्घ shared_host = 0;
 	acpi_status status;
-	long uid = 0;
+	दीर्घ uid = 0;
 
 	/* Expected to always be true, but better safe then sorry */
-	if (uid_str)
-		uid = simple_strtol(uid_str, NULL, 10);
+	अगर (uid_str)
+		uid = simple_म_से_दीर्घ(uid_str, शून्य, 10);
 
 	/* Detect I2C bus shared with PUNIT and ignore its d3 status */
-	status = acpi_evaluate_integer(handle, "_SEM", NULL, &shared_host);
-	if (ACPI_SUCCESS(status) && shared_host && uid)
+	status = acpi_evaluate_पूर्णांकeger(handle, "_SEM", शून्य, &shared_host);
+	अगर (ACPI_SUCCESS(status) && shared_host && uid)
 		pmc_atom_d3_mask &= ~(BIT_LPSS2_F1_I2C1 << (uid - 1));
 
-	lpss_deassert_reset(pdata);
+	lpss_deनिश्चित_reset(pdata);
 
-	if (readl(pdata->mmio_base + pdata->dev_desc->prv_offset))
+	अगर (पढ़ोl(pdata->mmio_base + pdata->dev_desc->prv_offset))
 		pdata->fixed_clk_rate = 133000000;
 
-	writel(0, pdata->mmio_base + LPSS_I2C_ENABLE);
-}
+	ग_लिखोl(0, pdata->mmio_base + LPSS_I2C_ENABLE);
+पूर्ण
 
-/* BSW PWM used for backlight control by the i915 driver */
-static struct pwm_lookup bsw_pwm_lookup[] = {
+/* BSW PWM used क्रम backlight control by the i915 driver */
+अटल काष्ठा pwm_lookup bsw_pwm_lookup[] = अणु
 	PWM_LOOKUP_WITH_MODULE("80862288:00", 0, "0000:00:02.0",
 			       "pwm_soc_backlight", 0, PWM_POLARITY_NORMAL,
 			       "pwm-lpss-platform"),
-};
+पूर्ण;
 
-static void bsw_pwm_setup(struct lpss_private_data *pdata)
-{
-	struct acpi_device *adev = pdata->adev;
+अटल व्योम bsw_pwm_setup(काष्ठा lpss_निजी_data *pdata)
+अणु
+	काष्ठा acpi_device *adev = pdata->adev;
 
-	/* Only call pwm_add_table for the first PWM controller */
-	if (!adev->pnp.unique_id || strcmp(adev->pnp.unique_id, "1"))
-		return;
+	/* Only call pwm_add_table क्रम the first PWM controller */
+	अगर (!adev->pnp.unique_id || म_भेद(adev->pnp.unique_id, "1"))
+		वापस;
 
 	pwm_add_table(bsw_pwm_lookup, ARRAY_SIZE(bsw_pwm_lookup));
-}
+पूर्ण
 
-static const struct lpss_device_desc lpt_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc lpt_dev_desc = अणु
 	.flags = LPSS_CLK | LPSS_CLK_GATE | LPSS_CLK_DIVIDER | LPSS_LTR
 			| LPSS_SAVE_CTX,
 	.prv_offset = 0x800,
-};
+पूर्ण;
 
-static const struct lpss_device_desc lpt_i2c_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc lpt_i2c_dev_desc = अणु
 	.flags = LPSS_CLK | LPSS_CLK_GATE | LPSS_LTR | LPSS_SAVE_CTX,
 	.prv_offset = 0x800,
-};
+पूर्ण;
 
-static struct property_entry uart_properties[] = {
+अटल काष्ठा property_entry uart_properties[] = अणु
 	PROPERTY_ENTRY_U32("reg-io-width", 4),
 	PROPERTY_ENTRY_U32("reg-shift", 2),
 	PROPERTY_ENTRY_BOOL("snps,uart-16550-compatible"),
-	{ },
-};
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct lpss_device_desc lpt_uart_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc lpt_uart_dev_desc = अणु
 	.flags = LPSS_CLK | LPSS_CLK_GATE | LPSS_CLK_DIVIDER | LPSS_LTR
 			| LPSS_SAVE_CTX,
 	.clk_con_id = "baudclk",
 	.prv_offset = 0x800,
 	.setup = lpss_uart_setup,
 	.properties = uart_properties,
-};
+पूर्ण;
 
-static const struct lpss_device_desc lpt_sdio_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc lpt_sdio_dev_desc = अणु
 	.flags = LPSS_LTR,
 	.prv_offset = 0x1000,
 	.prv_size_override = 0x1018,
-};
+पूर्ण;
 
-static const struct lpss_device_desc byt_pwm_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc byt_pwm_dev_desc = अणु
 	.flags = LPSS_SAVE_CTX,
 	.prv_offset = 0x800,
 	.setup = byt_pwm_setup,
-};
+पूर्ण;
 
-static const struct lpss_device_desc bsw_pwm_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc bsw_pwm_dev_desc = अणु
 	.flags = LPSS_SAVE_CTX_ONCE | LPSS_NO_D3_DELAY,
 	.prv_offset = 0x800,
 	.setup = bsw_pwm_setup,
 	.resume_from_noirq = true,
-};
+पूर्ण;
 
-static const struct lpss_device_desc byt_uart_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc byt_uart_dev_desc = अणु
 	.flags = LPSS_CLK | LPSS_CLK_GATE | LPSS_CLK_DIVIDER | LPSS_SAVE_CTX,
 	.clk_con_id = "baudclk",
 	.prv_offset = 0x800,
 	.setup = lpss_uart_setup,
 	.properties = uart_properties,
-};
+पूर्ण;
 
-static const struct lpss_device_desc bsw_uart_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc bsw_uart_dev_desc = अणु
 	.flags = LPSS_CLK | LPSS_CLK_GATE | LPSS_CLK_DIVIDER | LPSS_SAVE_CTX
 			| LPSS_NO_D3_DELAY,
 	.clk_con_id = "baudclk",
 	.prv_offset = 0x800,
 	.setup = lpss_uart_setup,
 	.properties = uart_properties,
-};
+पूर्ण;
 
-static const struct lpss_device_desc byt_spi_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc byt_spi_dev_desc = अणु
 	.flags = LPSS_CLK | LPSS_CLK_GATE | LPSS_CLK_DIVIDER | LPSS_SAVE_CTX,
 	.prv_offset = 0x400,
-};
+पूर्ण;
 
-static const struct lpss_device_desc byt_sdio_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc byt_sdio_dev_desc = अणु
 	.flags = LPSS_CLK,
-};
+पूर्ण;
 
-static const struct lpss_device_desc byt_i2c_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc byt_i2c_dev_desc = अणु
 	.flags = LPSS_CLK | LPSS_SAVE_CTX,
 	.prv_offset = 0x800,
 	.setup = byt_i2c_setup,
 	.resume_from_noirq = true,
-};
+पूर्ण;
 
-static const struct lpss_device_desc bsw_i2c_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc bsw_i2c_dev_desc = अणु
 	.flags = LPSS_CLK | LPSS_SAVE_CTX | LPSS_NO_D3_DELAY,
 	.prv_offset = 0x800,
 	.setup = byt_i2c_setup,
 	.resume_from_noirq = true,
-};
+पूर्ण;
 
-static const struct lpss_device_desc bsw_spi_dev_desc = {
+अटल स्थिर काष्ठा lpss_device_desc bsw_spi_dev_desc = अणु
 	.flags = LPSS_CLK | LPSS_CLK_GATE | LPSS_CLK_DIVIDER | LPSS_SAVE_CTX
 			| LPSS_NO_D3_DELAY,
 	.prv_offset = 0x400,
-	.setup = lpss_deassert_reset,
-};
+	.setup = lpss_deनिश्चित_reset,
+पूर्ण;
 
-static const struct x86_cpu_id lpss_cpu_ids[] = {
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT,	NULL),
-	X86_MATCH_INTEL_FAM6_MODEL(ATOM_AIRMONT,	NULL),
-	{}
-};
+अटल स्थिर काष्ठा x86_cpu_id lpss_cpu_ids[] = अणु
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_SILVERMONT,	शून्य),
+	X86_MATCH_INTEL_FAM6_MODEL(ATOM_AIRMONT,	शून्य),
+	अणुपूर्ण
+पूर्ण;
 
-#else
+#अन्यथा
 
-#define LPSS_ADDR(desc) (0UL)
+#घोषणा LPSS_ADDR(desc) (0UL)
 
-#endif /* CONFIG_X86_INTEL_LPSS */
+#पूर्ण_अगर /* CONFIG_X86_INTEL_LPSS */
 
-static const struct acpi_device_id acpi_lpss_device_ids[] = {
+अटल स्थिर काष्ठा acpi_device_id acpi_lpss_device_ids[] = अणु
 	/* Generic LPSS devices */
-	{ "INTL9C60", LPSS_ADDR(lpss_dma_desc) },
+	अणु "INTL9C60", LPSS_ADDR(lpss_dma_desc) पूर्ण,
 
-	/* Lynxpoint LPSS devices */
-	{ "INT33C0", LPSS_ADDR(lpt_dev_desc) },
-	{ "INT33C1", LPSS_ADDR(lpt_dev_desc) },
-	{ "INT33C2", LPSS_ADDR(lpt_i2c_dev_desc) },
-	{ "INT33C3", LPSS_ADDR(lpt_i2c_dev_desc) },
-	{ "INT33C4", LPSS_ADDR(lpt_uart_dev_desc) },
-	{ "INT33C5", LPSS_ADDR(lpt_uart_dev_desc) },
-	{ "INT33C6", LPSS_ADDR(lpt_sdio_dev_desc) },
-	{ "INT33C7", },
+	/* Lynxpoपूर्णांक LPSS devices */
+	अणु "INT33C0", LPSS_ADDR(lpt_dev_desc) पूर्ण,
+	अणु "INT33C1", LPSS_ADDR(lpt_dev_desc) पूर्ण,
+	अणु "INT33C2", LPSS_ADDR(lpt_i2c_dev_desc) पूर्ण,
+	अणु "INT33C3", LPSS_ADDR(lpt_i2c_dev_desc) पूर्ण,
+	अणु "INT33C4", LPSS_ADDR(lpt_uart_dev_desc) पूर्ण,
+	अणु "INT33C5", LPSS_ADDR(lpt_uart_dev_desc) पूर्ण,
+	अणु "INT33C6", LPSS_ADDR(lpt_sdio_dev_desc) पूर्ण,
+	अणु "INT33C7", पूर्ण,
 
 	/* BayTrail LPSS devices */
-	{ "80860F09", LPSS_ADDR(byt_pwm_dev_desc) },
-	{ "80860F0A", LPSS_ADDR(byt_uart_dev_desc) },
-	{ "80860F0E", LPSS_ADDR(byt_spi_dev_desc) },
-	{ "80860F14", LPSS_ADDR(byt_sdio_dev_desc) },
-	{ "80860F41", LPSS_ADDR(byt_i2c_dev_desc) },
-	{ "INT33B2", },
-	{ "INT33FC", },
+	अणु "80860F09", LPSS_ADDR(byt_pwm_dev_desc) पूर्ण,
+	अणु "80860F0A", LPSS_ADDR(byt_uart_dev_desc) पूर्ण,
+	अणु "80860F0E", LPSS_ADDR(byt_spi_dev_desc) पूर्ण,
+	अणु "80860F14", LPSS_ADDR(byt_sdio_dev_desc) पूर्ण,
+	अणु "80860F41", LPSS_ADDR(byt_i2c_dev_desc) पूर्ण,
+	अणु "INT33B2", पूर्ण,
+	अणु "INT33FC", पूर्ण,
 
 	/* Braswell LPSS devices */
-	{ "80862286", LPSS_ADDR(lpss_dma_desc) },
-	{ "80862288", LPSS_ADDR(bsw_pwm_dev_desc) },
-	{ "8086228A", LPSS_ADDR(bsw_uart_dev_desc) },
-	{ "8086228E", LPSS_ADDR(bsw_spi_dev_desc) },
-	{ "808622C0", LPSS_ADDR(lpss_dma_desc) },
-	{ "808622C1", LPSS_ADDR(bsw_i2c_dev_desc) },
+	अणु "80862286", LPSS_ADDR(lpss_dma_desc) पूर्ण,
+	अणु "80862288", LPSS_ADDR(bsw_pwm_dev_desc) पूर्ण,
+	अणु "8086228A", LPSS_ADDR(bsw_uart_dev_desc) पूर्ण,
+	अणु "8086228E", LPSS_ADDR(bsw_spi_dev_desc) पूर्ण,
+	अणु "808622C0", LPSS_ADDR(lpss_dma_desc) पूर्ण,
+	अणु "808622C1", LPSS_ADDR(bsw_i2c_dev_desc) पूर्ण,
 
 	/* Broadwell LPSS devices */
-	{ "INT3430", LPSS_ADDR(lpt_dev_desc) },
-	{ "INT3431", LPSS_ADDR(lpt_dev_desc) },
-	{ "INT3432", LPSS_ADDR(lpt_i2c_dev_desc) },
-	{ "INT3433", LPSS_ADDR(lpt_i2c_dev_desc) },
-	{ "INT3434", LPSS_ADDR(lpt_uart_dev_desc) },
-	{ "INT3435", LPSS_ADDR(lpt_uart_dev_desc) },
-	{ "INT3436", LPSS_ADDR(lpt_sdio_dev_desc) },
-	{ "INT3437", },
+	अणु "INT3430", LPSS_ADDR(lpt_dev_desc) पूर्ण,
+	अणु "INT3431", LPSS_ADDR(lpt_dev_desc) पूर्ण,
+	अणु "INT3432", LPSS_ADDR(lpt_i2c_dev_desc) पूर्ण,
+	अणु "INT3433", LPSS_ADDR(lpt_i2c_dev_desc) पूर्ण,
+	अणु "INT3434", LPSS_ADDR(lpt_uart_dev_desc) पूर्ण,
+	अणु "INT3435", LPSS_ADDR(lpt_uart_dev_desc) पूर्ण,
+	अणु "INT3436", LPSS_ADDR(lpt_sdio_dev_desc) पूर्ण,
+	अणु "INT3437", पूर्ण,
 
-	/* Wildcat Point LPSS devices */
-	{ "INT3438", LPSS_ADDR(lpt_dev_desc) },
+	/* Wildcat Poपूर्णांक LPSS devices */
+	अणु "INT3438", LPSS_ADDR(lpt_dev_desc) पूर्ण,
 
-	{ }
-};
+	अणु पूर्ण
+पूर्ण;
 
-#ifdef CONFIG_X86_INTEL_LPSS
+#अगर_घोषित CONFIG_X86_INTEL_LPSS
 
-static int is_memory(struct acpi_resource *res, void *not_used)
-{
-	struct resource r;
+अटल पूर्णांक is_memory(काष्ठा acpi_resource *res, व्योम *not_used)
+अणु
+	काष्ठा resource r;
 
-	return !acpi_dev_resource_memory(res, &r);
-}
+	वापस !acpi_dev_resource_memory(res, &r);
+पूर्ण
 
-/* LPSS main clock device. */
-static struct platform_device *lpss_clk_dev;
+/* LPSS मुख्य घड़ी device. */
+अटल काष्ठा platक्रमm_device *lpss_clk_dev;
 
-static inline void lpt_register_clock_device(void)
-{
-	lpss_clk_dev = platform_device_register_simple("clk-lpt", -1, NULL, 0);
-}
+अटल अंतरभूत व्योम lpt_रेजिस्टर_घड़ी_device(व्योम)
+अणु
+	lpss_clk_dev = platक्रमm_device_रेजिस्टर_simple("clk-lpt", -1, शून्य, 0);
+पूर्ण
 
-static int register_device_clock(struct acpi_device *adev,
-				 struct lpss_private_data *pdata)
-{
-	const struct lpss_device_desc *dev_desc = pdata->dev_desc;
-	const char *devname = dev_name(&adev->dev);
-	struct clk *clk;
-	struct lpss_clk_data *clk_data;
-	const char *parent, *clk_name;
-	void __iomem *prv_base;
+अटल पूर्णांक रेजिस्टर_device_घड़ी(काष्ठा acpi_device *adev,
+				 काष्ठा lpss_निजी_data *pdata)
+अणु
+	स्थिर काष्ठा lpss_device_desc *dev_desc = pdata->dev_desc;
+	स्थिर अक्षर *devname = dev_name(&adev->dev);
+	काष्ठा clk *clk;
+	काष्ठा lpss_clk_data *clk_data;
+	स्थिर अक्षर *parent, *clk_name;
+	व्योम __iomem *prv_base;
 
-	if (!lpss_clk_dev)
-		lpt_register_clock_device();
+	अगर (!lpss_clk_dev)
+		lpt_रेजिस्टर_घड़ी_device();
 
-	clk_data = platform_get_drvdata(lpss_clk_dev);
-	if (!clk_data)
-		return -ENODEV;
+	clk_data = platक्रमm_get_drvdata(lpss_clk_dev);
+	अगर (!clk_data)
+		वापस -ENODEV;
 	clk = clk_data->clk;
 
-	if (!pdata->mmio_base
+	अगर (!pdata->mmio_base
 	    || pdata->mmio_size < dev_desc->prv_offset + LPSS_CLK_SIZE)
-		return -ENODATA;
+		वापस -ENODATA;
 
 	parent = clk_data->name;
 	prv_base = pdata->mmio_base + dev_desc->prv_offset;
 
-	if (pdata->fixed_clk_rate) {
-		clk = clk_register_fixed_rate(NULL, devname, parent, 0,
+	अगर (pdata->fixed_clk_rate) अणु
+		clk = clk_रेजिस्टर_fixed_rate(शून्य, devname, parent, 0,
 					      pdata->fixed_clk_rate);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (dev_desc->flags & LPSS_CLK_GATE) {
-		clk = clk_register_gate(NULL, devname, parent, 0,
-					prv_base, 0, 0, NULL);
+	अगर (dev_desc->flags & LPSS_CLK_GATE) अणु
+		clk = clk_रेजिस्टर_gate(शून्य, devname, parent, 0,
+					prv_base, 0, 0, शून्य);
 		parent = devname;
-	}
+	पूर्ण
 
-	if (dev_desc->flags & LPSS_CLK_DIVIDER) {
-		/* Prevent division by zero */
-		if (!readl(prv_base))
-			writel(LPSS_CLK_DIVIDER_DEF_MASK, prv_base);
+	अगर (dev_desc->flags & LPSS_CLK_DIVIDER) अणु
+		/* Prevent भागision by zero */
+		अगर (!पढ़ोl(prv_base))
+			ग_लिखोl(LPSS_CLK_DIVIDER_DEF_MASK, prv_base);
 
-		clk_name = kasprintf(GFP_KERNEL, "%s-div", devname);
-		if (!clk_name)
-			return -ENOMEM;
-		clk = clk_register_fractional_divider(NULL, clk_name, parent,
+		clk_name = kaप्र_लिखो(GFP_KERNEL, "%s-div", devname);
+		अगर (!clk_name)
+			वापस -ENOMEM;
+		clk = clk_रेजिस्टर_fractional_भागider(शून्य, clk_name, parent,
 						      0, prv_base,
-						      1, 15, 16, 15, 0, NULL);
+						      1, 15, 16, 15, 0, शून्य);
 		parent = clk_name;
 
-		clk_name = kasprintf(GFP_KERNEL, "%s-update", devname);
-		if (!clk_name) {
-			kfree(parent);
-			return -ENOMEM;
-		}
-		clk = clk_register_gate(NULL, clk_name, parent,
+		clk_name = kaप्र_लिखो(GFP_KERNEL, "%s-update", devname);
+		अगर (!clk_name) अणु
+			kमुक्त(parent);
+			वापस -ENOMEM;
+		पूर्ण
+		clk = clk_रेजिस्टर_gate(शून्य, clk_name, parent,
 					CLK_SET_RATE_PARENT | CLK_SET_RATE_GATE,
-					prv_base, 31, 0, NULL);
-		kfree(parent);
-		kfree(clk_name);
-	}
+					prv_base, 31, 0, शून्य);
+		kमुक्त(parent);
+		kमुक्त(clk_name);
+	पूर्ण
 out:
-	if (IS_ERR(clk))
-		return PTR_ERR(clk);
+	अगर (IS_ERR(clk))
+		वापस PTR_ERR(clk);
 
 	pdata->clk = clk;
-	clk_register_clkdev(clk, dev_desc->clk_con_id, devname);
-	return 0;
-}
+	clk_रेजिस्टर_clkdev(clk, dev_desc->clk_con_id, devname);
+	वापस 0;
+पूर्ण
 
-struct lpss_device_links {
-	const char *supplier_hid;
-	const char *supplier_uid;
-	const char *consumer_hid;
-	const char *consumer_uid;
+काष्ठा lpss_device_links अणु
+	स्थिर अक्षर *supplier_hid;
+	स्थिर अक्षर *supplier_uid;
+	स्थिर अक्षर *consumer_hid;
+	स्थिर अक्षर *consumer_uid;
 	u32 flags;
-	const struct dmi_system_id *dep_missing_ids;
-};
+	स्थिर काष्ठा dmi_प्रणाली_id *dep_missing_ids;
+पूर्ण;
 
-/* Please keep this list sorted alphabetically by vendor and model */
-static const struct dmi_system_id i2c1_dep_missing_dmi_ids[] = {
-	{
-		.matches = {
+/* Please keep this list sorted alphabetically by venकरोr and model */
+अटल स्थिर काष्ठा dmi_प्रणाली_id i2c1_dep_missing_dmi_ids[] = अणु
+	अणु
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "ASUSTeK COMPUTER INC."),
 			DMI_MATCH(DMI_PRODUCT_NAME, "T200TA"),
-		},
-	},
-	{}
-};
+		पूर्ण,
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*
- * The _DEP method is used to identify dependencies but instead of creating
- * device links for every handle in _DEP, only links in the following list are
- * created. That is necessary because, in the general case, _DEP can refer to
- * devices that might not have drivers, or that are on different buses, or where
- * the supplier is not enumerated until after the consumer is probed.
+ * The _DEP method is used to identअगरy dependencies but instead of creating
+ * device links क्रम every handle in _DEP, only links in the following list are
+ * created. That is necessary because, in the general हाल, _DEP can refer to
+ * devices that might not have drivers, or that are on dअगरferent buses, or where
+ * the supplier is not क्रमागतerated until after the consumer is probed.
  */
-static const struct lpss_device_links lpss_device_links[] = {
+अटल स्थिर काष्ठा lpss_device_links lpss_device_links[] = अणु
 	/* CHT External sdcard slot controller depends on PMIC I2C ctrl */
-	{"808622C1", "7", "80860F14", "3", DL_FLAG_PM_RUNTIME},
+	अणु"808622C1", "7", "80860F14", "3", DL_FLAG_PM_RUNTIMEपूर्ण,
 	/* CHT iGPU depends on PMIC I2C controller */
-	{"808622C1", "7", "LNXVIDEO", NULL, DL_FLAG_PM_RUNTIME},
+	अणु"808622C1", "7", "LNXVIDEO", शून्य, DL_FLAG_PM_RUNTIMEपूर्ण,
 	/* BYT iGPU depends on the Embedded Controller I2C controller (UID 1) */
-	{"80860F41", "1", "LNXVIDEO", NULL, DL_FLAG_PM_RUNTIME,
-	 i2c1_dep_missing_dmi_ids},
+	अणु"80860F41", "1", "LNXVIDEO", शून्य, DL_FLAG_PM_RUNTIME,
+	 i2c1_dep_missing_dmi_idsपूर्ण,
 	/* BYT CR iGPU depends on PMIC I2C controller (UID 5 on CR) */
-	{"80860F41", "5", "LNXVIDEO", NULL, DL_FLAG_PM_RUNTIME},
+	अणु"80860F41", "5", "LNXVIDEO", शून्य, DL_FLAG_PM_RUNTIMEपूर्ण,
 	/* BYT iGPU depends on PMIC I2C controller (UID 7 on non CR) */
-	{"80860F41", "7", "LNXVIDEO", NULL, DL_FLAG_PM_RUNTIME},
-};
+	अणु"80860F41", "7", "LNXVIDEO", शून्य, DL_FLAG_PM_RUNTIMEपूर्ण,
+पूर्ण;
 
-static bool acpi_lpss_is_supplier(struct acpi_device *adev,
-				  const struct lpss_device_links *link)
-{
-	return acpi_dev_hid_uid_match(adev, link->supplier_hid, link->supplier_uid);
-}
+अटल bool acpi_lpss_is_supplier(काष्ठा acpi_device *adev,
+				  स्थिर काष्ठा lpss_device_links *link)
+अणु
+	वापस acpi_dev_hid_uid_match(adev, link->supplier_hid, link->supplier_uid);
+पूर्ण
 
-static bool acpi_lpss_is_consumer(struct acpi_device *adev,
-				  const struct lpss_device_links *link)
-{
-	return acpi_dev_hid_uid_match(adev, link->consumer_hid, link->consumer_uid);
-}
+अटल bool acpi_lpss_is_consumer(काष्ठा acpi_device *adev,
+				  स्थिर काष्ठा lpss_device_links *link)
+अणु
+	वापस acpi_dev_hid_uid_match(adev, link->consumer_hid, link->consumer_uid);
+पूर्ण
 
-struct hid_uid {
-	const char *hid;
-	const char *uid;
-};
+काष्ठा hid_uid अणु
+	स्थिर अक्षर *hid;
+	स्थिर अक्षर *uid;
+पूर्ण;
 
-static int match_hid_uid(struct device *dev, const void *data)
-{
-	struct acpi_device *adev = ACPI_COMPANION(dev);
-	const struct hid_uid *id = data;
+अटल पूर्णांक match_hid_uid(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
+	स्थिर काष्ठा hid_uid *id = data;
 
-	if (!adev)
-		return 0;
+	अगर (!adev)
+		वापस 0;
 
-	return acpi_dev_hid_uid_match(adev, id->hid, id->uid);
-}
+	वापस acpi_dev_hid_uid_match(adev, id->hid, id->uid);
+पूर्ण
 
-static struct device *acpi_lpss_find_device(const char *hid, const char *uid)
-{
-	struct device *dev;
+अटल काष्ठा device *acpi_lpss_find_device(स्थिर अक्षर *hid, स्थिर अक्षर *uid)
+अणु
+	काष्ठा device *dev;
 
-	struct hid_uid data = {
+	काष्ठा hid_uid data = अणु
 		.hid = hid,
 		.uid = uid,
-	};
+	पूर्ण;
 
-	dev = bus_find_device(&platform_bus_type, NULL, &data, match_hid_uid);
-	if (dev)
-		return dev;
+	dev = bus_find_device(&platक्रमm_bus_type, शून्य, &data, match_hid_uid);
+	अगर (dev)
+		वापस dev;
 
-	return bus_find_device(&pci_bus_type, NULL, &data, match_hid_uid);
-}
+	वापस bus_find_device(&pci_bus_type, शून्य, &data, match_hid_uid);
+पूर्ण
 
-static bool acpi_lpss_dep(struct acpi_device *adev, acpi_handle handle)
-{
-	struct acpi_handle_list dep_devices;
+अटल bool acpi_lpss_dep(काष्ठा acpi_device *adev, acpi_handle handle)
+अणु
+	काष्ठा acpi_handle_list dep_devices;
 	acpi_status status;
-	int i;
+	पूर्णांक i;
 
-	if (!acpi_has_method(adev->handle, "_DEP"))
-		return false;
+	अगर (!acpi_has_method(adev->handle, "_DEP"))
+		वापस false;
 
-	status = acpi_evaluate_reference(adev->handle, "_DEP", NULL,
+	status = acpi_evaluate_reference(adev->handle, "_DEP", शून्य,
 					 &dep_devices);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_dbg(&adev->dev, "Failed to evaluate _DEP.\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	for (i = 0; i < dep_devices.count; i++) {
-		if (dep_devices.handles[i] == handle)
-			return true;
-	}
+	क्रम (i = 0; i < dep_devices.count; i++) अणु
+		अगर (dep_devices.handles[i] == handle)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void acpi_lpss_link_consumer(struct device *dev1,
-				    const struct lpss_device_links *link)
-{
-	struct device *dev2;
+अटल व्योम acpi_lpss_link_consumer(काष्ठा device *dev1,
+				    स्थिर काष्ठा lpss_device_links *link)
+अणु
+	काष्ठा device *dev2;
 
 	dev2 = acpi_lpss_find_device(link->consumer_hid, link->consumer_uid);
-	if (!dev2)
-		return;
+	अगर (!dev2)
+		वापस;
 
-	if ((link->dep_missing_ids && dmi_check_system(link->dep_missing_ids))
+	अगर ((link->dep_missing_ids && dmi_check_प्रणाली(link->dep_missing_ids))
 	    || acpi_lpss_dep(ACPI_COMPANION(dev2), ACPI_HANDLE(dev1)))
 		device_link_add(dev2, dev1, link->flags);
 
 	put_device(dev2);
-}
+पूर्ण
 
-static void acpi_lpss_link_supplier(struct device *dev1,
-				    const struct lpss_device_links *link)
-{
-	struct device *dev2;
+अटल व्योम acpi_lpss_link_supplier(काष्ठा device *dev1,
+				    स्थिर काष्ठा lpss_device_links *link)
+अणु
+	काष्ठा device *dev2;
 
 	dev2 = acpi_lpss_find_device(link->supplier_hid, link->supplier_uid);
-	if (!dev2)
-		return;
+	अगर (!dev2)
+		वापस;
 
-	if ((link->dep_missing_ids && dmi_check_system(link->dep_missing_ids))
+	अगर ((link->dep_missing_ids && dmi_check_प्रणाली(link->dep_missing_ids))
 	    || acpi_lpss_dep(ACPI_COMPANION(dev1), ACPI_HANDLE(dev2)))
 		device_link_add(dev1, dev2, link->flags);
 
 	put_device(dev2);
-}
+पूर्ण
 
-static void acpi_lpss_create_device_links(struct acpi_device *adev,
-					  struct platform_device *pdev)
-{
-	int i;
+अटल व्योम acpi_lpss_create_device_links(काष्ठा acpi_device *adev,
+					  काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(lpss_device_links); i++) {
-		const struct lpss_device_links *link = &lpss_device_links[i];
+	क्रम (i = 0; i < ARRAY_SIZE(lpss_device_links); i++) अणु
+		स्थिर काष्ठा lpss_device_links *link = &lpss_device_links[i];
 
-		if (acpi_lpss_is_supplier(adev, link))
+		अगर (acpi_lpss_is_supplier(adev, link))
 			acpi_lpss_link_consumer(&pdev->dev, link);
 
-		if (acpi_lpss_is_consumer(adev, link))
+		अगर (acpi_lpss_is_consumer(adev, link))
 			acpi_lpss_link_supplier(&pdev->dev, link);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int acpi_lpss_create_device(struct acpi_device *adev,
-				   const struct acpi_device_id *id)
-{
-	const struct lpss_device_desc *dev_desc;
-	struct lpss_private_data *pdata;
-	struct resource_entry *rentry;
-	struct list_head resource_list;
-	struct platform_device *pdev;
-	int ret;
+अटल पूर्णांक acpi_lpss_create_device(काष्ठा acpi_device *adev,
+				   स्थिर काष्ठा acpi_device_id *id)
+अणु
+	स्थिर काष्ठा lpss_device_desc *dev_desc;
+	काष्ठा lpss_निजी_data *pdata;
+	काष्ठा resource_entry *rentry;
+	काष्ठा list_head resource_list;
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक ret;
 
-	dev_desc = (const struct lpss_device_desc *)id->driver_data;
-	if (!dev_desc) {
-		pdev = acpi_create_platform_device(adev, NULL);
-		return IS_ERR_OR_NULL(pdev) ? PTR_ERR(pdev) : 1;
-	}
-	pdata = kzalloc(sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return -ENOMEM;
+	dev_desc = (स्थिर काष्ठा lpss_device_desc *)id->driver_data;
+	अगर (!dev_desc) अणु
+		pdev = acpi_create_platक्रमm_device(adev, शून्य);
+		वापस IS_ERR_OR_शून्य(pdev) ? PTR_ERR(pdev) : 1;
+	पूर्ण
+	pdata = kzalloc(माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&resource_list);
-	ret = acpi_dev_get_resources(adev, &resource_list, is_memory, NULL);
-	if (ret < 0)
-		goto err_out;
+	ret = acpi_dev_get_resources(adev, &resource_list, is_memory, शून्य);
+	अगर (ret < 0)
+		जाओ err_out;
 
-	list_for_each_entry(rentry, &resource_list, node)
-		if (resource_type(rentry->res) == IORESOURCE_MEM) {
-			if (dev_desc->prv_size_override)
+	list_क्रम_each_entry(rentry, &resource_list, node)
+		अगर (resource_type(rentry->res) == IORESOURCE_MEM) अणु
+			अगर (dev_desc->prv_size_override)
 				pdata->mmio_size = dev_desc->prv_size_override;
-			else
+			अन्यथा
 				pdata->mmio_size = resource_size(rentry->res);
 			pdata->mmio_base = ioremap(rentry->res->start,
 						   pdata->mmio_size);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	acpi_dev_free_resource_list(&resource_list);
+	acpi_dev_मुक्त_resource_list(&resource_list);
 
-	if (!pdata->mmio_base) {
-		/* Avoid acpi_bus_attach() instantiating a pdev for this dev. */
-		adev->pnp.type.platform_id = 0;
-		/* Skip the device, but continue the namespace scan. */
+	अगर (!pdata->mmio_base) अणु
+		/* Aव्योम acpi_bus_attach() instantiating a pdev क्रम this dev. */
+		adev->pnp.type.platक्रमm_id = 0;
+		/* Skip the device, but जारी the namespace scan. */
 		ret = 0;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	pdata->adev = adev;
 	pdata->dev_desc = dev_desc;
 
-	if (dev_desc->setup)
+	अगर (dev_desc->setup)
 		dev_desc->setup(pdata);
 
-	if (dev_desc->flags & LPSS_CLK) {
-		ret = register_device_clock(adev, pdata);
-		if (ret) {
-			/* Skip the device, but continue the namespace scan. */
+	अगर (dev_desc->flags & LPSS_CLK) अणु
+		ret = रेजिस्टर_device_घड़ी(adev, pdata);
+		अगर (ret) अणु
+			/* Skip the device, but जारी the namespace scan. */
 			ret = 0;
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * This works around a known issue in ACPI tables where LPSS devices
-	 * have _PS0 and _PS3 without _PSC (and no power resources), so
-	 * acpi_bus_init_power() will assume that the BIOS has put them into D0.
+	 * have _PS0 and _PS3 without _PSC (and no घातer resources), so
+	 * acpi_bus_init_घातer() will assume that the BIOS has put them पूर्णांकo D0.
 	 */
-	acpi_device_fix_up_power(adev);
+	acpi_device_fix_up_घातer(adev);
 
 	adev->driver_data = pdata;
-	pdev = acpi_create_platform_device(adev, dev_desc->properties);
-	if (!IS_ERR_OR_NULL(pdev)) {
+	pdev = acpi_create_platक्रमm_device(adev, dev_desc->properties);
+	अगर (!IS_ERR_OR_शून्य(pdev)) अणु
 		acpi_lpss_create_device_links(adev, pdev);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	ret = PTR_ERR(pdev);
-	adev->driver_data = NULL;
+	adev->driver_data = शून्य;
 
  err_out:
-	kfree(pdata);
-	return ret;
-}
+	kमुक्त(pdata);
+	वापस ret;
+पूर्ण
 
-static u32 __lpss_reg_read(struct lpss_private_data *pdata, unsigned int reg)
-{
-	return readl(pdata->mmio_base + pdata->dev_desc->prv_offset + reg);
-}
+अटल u32 __lpss_reg_पढ़ो(काष्ठा lpss_निजी_data *pdata, अचिन्हित पूर्णांक reg)
+अणु
+	वापस पढ़ोl(pdata->mmio_base + pdata->dev_desc->prv_offset + reg);
+पूर्ण
 
-static void __lpss_reg_write(u32 val, struct lpss_private_data *pdata,
-			     unsigned int reg)
-{
-	writel(val, pdata->mmio_base + pdata->dev_desc->prv_offset + reg);
-}
+अटल व्योम __lpss_reg_ग_लिखो(u32 val, काष्ठा lpss_निजी_data *pdata,
+			     अचिन्हित पूर्णांक reg)
+अणु
+	ग_लिखोl(val, pdata->mmio_base + pdata->dev_desc->prv_offset + reg);
+पूर्ण
 
-static int lpss_reg_read(struct device *dev, unsigned int reg, u32 *val)
-{
-	struct acpi_device *adev;
-	struct lpss_private_data *pdata;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक lpss_reg_पढ़ो(काष्ठा device *dev, अचिन्हित पूर्णांक reg, u32 *val)
+अणु
+	काष्ठा acpi_device *adev;
+	काष्ठा lpss_निजी_data *pdata;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	ret = acpi_bus_get_device(ACPI_HANDLE(dev), &adev);
-	if (WARN_ON(ret))
-		return ret;
+	अगर (WARN_ON(ret))
+		वापस ret;
 
-	spin_lock_irqsave(&dev->power.lock, flags);
-	if (pm_runtime_suspended(dev)) {
+	spin_lock_irqsave(&dev->घातer.lock, flags);
+	अगर (pm_runसमय_suspended(dev)) अणु
 		ret = -EAGAIN;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	pdata = acpi_driver_data(adev);
-	if (WARN_ON(!pdata || !pdata->mmio_base)) {
+	अगर (WARN_ON(!pdata || !pdata->mmio_base)) अणु
 		ret = -ENODEV;
-		goto out;
-	}
-	*val = __lpss_reg_read(pdata, reg);
+		जाओ out;
+	पूर्ण
+	*val = __lpss_reg_पढ़ो(pdata, reg);
 
  out:
-	spin_unlock_irqrestore(&dev->power.lock, flags);
-	return ret;
-}
+	spin_unlock_irqrestore(&dev->घातer.lock, flags);
+	वापस ret;
+पूर्ण
 
-static ssize_t lpss_ltr_show(struct device *dev, struct device_attribute *attr,
-			     char *buf)
-{
+अटल sमाप_प्रकार lpss_ltr_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
 	u32 ltr_value = 0;
-	unsigned int reg;
-	int ret;
+	अचिन्हित पूर्णांक reg;
+	पूर्णांक ret;
 
-	reg = strcmp(attr->attr.name, "auto_ltr") ? LPSS_SW_LTR : LPSS_AUTO_LTR;
-	ret = lpss_reg_read(dev, reg, &ltr_value);
-	if (ret)
-		return ret;
+	reg = म_भेद(attr->attr.name, "auto_ltr") ? LPSS_SW_LTR : LPSS_AUTO_LTR;
+	ret = lpss_reg_पढ़ो(dev, reg, &ltr_value);
+	अगर (ret)
+		वापस ret;
 
-	return snprintf(buf, PAGE_SIZE, "%08x\n", ltr_value);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%08x\n", ltr_value);
+पूर्ण
 
-static ssize_t lpss_ltr_mode_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
+अटल sमाप_प्रकार lpss_ltr_mode_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
 	u32 ltr_mode = 0;
-	char *outstr;
-	int ret;
+	अक्षर *outstr;
+	पूर्णांक ret;
 
-	ret = lpss_reg_read(dev, LPSS_GENERAL, &ltr_mode);
-	if (ret)
-		return ret;
+	ret = lpss_reg_पढ़ो(dev, LPSS_GENERAL, &ltr_mode);
+	अगर (ret)
+		वापस ret;
 
 	outstr = (ltr_mode & LPSS_GENERAL_LTR_MODE_SW) ? "sw" : "auto";
-	return sprintf(buf, "%s\n", outstr);
-}
+	वापस प्र_लिखो(buf, "%s\n", outstr);
+पूर्ण
 
-static DEVICE_ATTR(auto_ltr, S_IRUSR, lpss_ltr_show, NULL);
-static DEVICE_ATTR(sw_ltr, S_IRUSR, lpss_ltr_show, NULL);
-static DEVICE_ATTR(ltr_mode, S_IRUSR, lpss_ltr_mode_show, NULL);
+अटल DEVICE_ATTR(स्वतः_ltr, S_IRUSR, lpss_ltr_show, शून्य);
+अटल DEVICE_ATTR(sw_ltr, S_IRUSR, lpss_ltr_show, शून्य);
+अटल DEVICE_ATTR(ltr_mode, S_IRUSR, lpss_ltr_mode_show, शून्य);
 
-static struct attribute *lpss_attrs[] = {
-	&dev_attr_auto_ltr.attr,
+अटल काष्ठा attribute *lpss_attrs[] = अणु
+	&dev_attr_स्वतः_ltr.attr,
 	&dev_attr_sw_ltr.attr,
 	&dev_attr_ltr_mode.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group lpss_attr_group = {
+अटल स्थिर काष्ठा attribute_group lpss_attr_group = अणु
 	.attrs = lpss_attrs,
 	.name = "lpss_ltr",
-};
+पूर्ण;
 
-static void acpi_lpss_set_ltr(struct device *dev, s32 val)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+अटल व्योम acpi_lpss_set_ltr(काष्ठा device *dev, s32 val)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
 	u32 ltr_mode, ltr_val;
 
-	ltr_mode = __lpss_reg_read(pdata, LPSS_GENERAL);
-	if (val < 0) {
-		if (ltr_mode & LPSS_GENERAL_LTR_MODE_SW) {
+	ltr_mode = __lpss_reg_पढ़ो(pdata, LPSS_GENERAL);
+	अगर (val < 0) अणु
+		अगर (ltr_mode & LPSS_GENERAL_LTR_MODE_SW) अणु
 			ltr_mode &= ~LPSS_GENERAL_LTR_MODE_SW;
-			__lpss_reg_write(ltr_mode, pdata, LPSS_GENERAL);
-		}
-		return;
-	}
-	ltr_val = __lpss_reg_read(pdata, LPSS_SW_LTR) & ~LPSS_LTR_SNOOP_MASK;
-	if (val >= LPSS_LTR_SNOOP_LAT_CUTOFF) {
+			__lpss_reg_ग_लिखो(ltr_mode, pdata, LPSS_GENERAL);
+		पूर्ण
+		वापस;
+	पूर्ण
+	ltr_val = __lpss_reg_पढ़ो(pdata, LPSS_SW_LTR) & ~LPSS_LTR_SNOOP_MASK;
+	अगर (val >= LPSS_LTR_SNOOP_LAT_CUTOFF) अणु
 		ltr_val |= LPSS_LTR_SNOOP_LAT_32US;
 		val = LPSS_LTR_MAX_VAL;
-	} else if (val > LPSS_LTR_MAX_VAL) {
+	पूर्ण अन्यथा अगर (val > LPSS_LTR_MAX_VAL) अणु
 		ltr_val |= LPSS_LTR_SNOOP_LAT_32US | LPSS_LTR_SNOOP_REQ;
 		val >>= LPSS_LTR_SNOOP_LAT_SHIFT;
-	} else {
+	पूर्ण अन्यथा अणु
 		ltr_val |= LPSS_LTR_SNOOP_LAT_1US | LPSS_LTR_SNOOP_REQ;
-	}
+	पूर्ण
 	ltr_val |= val;
-	__lpss_reg_write(ltr_val, pdata, LPSS_SW_LTR);
-	if (!(ltr_mode & LPSS_GENERAL_LTR_MODE_SW)) {
+	__lpss_reg_ग_लिखो(ltr_val, pdata, LPSS_SW_LTR);
+	अगर (!(ltr_mode & LPSS_GENERAL_LTR_MODE_SW)) अणु
 		ltr_mode |= LPSS_GENERAL_LTR_MODE_SW;
-		__lpss_reg_write(ltr_mode, pdata, LPSS_GENERAL);
-	}
-}
+		__lpss_reg_ग_लिखो(ltr_mode, pdata, LPSS_GENERAL);
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 /**
- * acpi_lpss_save_ctx() - Save the private registers of LPSS device
+ * acpi_lpss_save_ctx() - Save the निजी रेजिस्टरs of LPSS device
  * @dev: LPSS device
- * @pdata: pointer to the private data of the LPSS device
+ * @pdata: poपूर्णांकer to the निजी data of the LPSS device
  *
- * Most LPSS devices have private registers which may loose their context when
- * the device is powered down. acpi_lpss_save_ctx() saves those registers into
+ * Most LPSS devices have निजी रेजिस्टरs which may loose their context when
+ * the device is घातered करोwn. acpi_lpss_save_ctx() saves those रेजिस्टरs पूर्णांकo
  * prv_reg_ctx array.
  */
-static void acpi_lpss_save_ctx(struct device *dev,
-			       struct lpss_private_data *pdata)
-{
-	unsigned int i;
+अटल व्योम acpi_lpss_save_ctx(काष्ठा device *dev,
+			       काष्ठा lpss_निजी_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < LPSS_PRV_REG_COUNT; i++) {
-		unsigned long offset = i * sizeof(u32);
+	क्रम (i = 0; i < LPSS_PRV_REG_COUNT; i++) अणु
+		अचिन्हित दीर्घ offset = i * माप(u32);
 
-		pdata->prv_reg_ctx[i] = __lpss_reg_read(pdata, offset);
+		pdata->prv_reg_ctx[i] = __lpss_reg_पढ़ो(pdata, offset);
 		dev_dbg(dev, "saving 0x%08x from LPSS reg at offset 0x%02lx\n",
 			pdata->prv_reg_ctx[i], offset);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * acpi_lpss_restore_ctx() - Restore the private registers of LPSS device
+ * acpi_lpss_restore_ctx() - Restore the निजी रेजिस्टरs of LPSS device
  * @dev: LPSS device
- * @pdata: pointer to the private data of the LPSS device
+ * @pdata: poपूर्णांकer to the निजी data of the LPSS device
  *
- * Restores the registers that were previously stored with acpi_lpss_save_ctx().
+ * Restores the रेजिस्टरs that were previously stored with acpi_lpss_save_ctx().
  */
-static void acpi_lpss_restore_ctx(struct device *dev,
-				  struct lpss_private_data *pdata)
-{
-	unsigned int i;
+अटल व्योम acpi_lpss_restore_ctx(काष्ठा device *dev,
+				  काष्ठा lpss_निजी_data *pdata)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < LPSS_PRV_REG_COUNT; i++) {
-		unsigned long offset = i * sizeof(u32);
+	क्रम (i = 0; i < LPSS_PRV_REG_COUNT; i++) अणु
+		अचिन्हित दीर्घ offset = i * माप(u32);
 
-		__lpss_reg_write(pdata->prv_reg_ctx[i], pdata, offset);
+		__lpss_reg_ग_लिखो(pdata->prv_reg_ctx[i], pdata, offset);
 		dev_dbg(dev, "restoring 0x%08x to LPSS reg at offset 0x%02lx\n",
 			pdata->prv_reg_ctx[i], offset);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void acpi_lpss_d3_to_d0_delay(struct lpss_private_data *pdata)
-{
+अटल व्योम acpi_lpss_d3_to_d0_delay(काष्ठा lpss_निजी_data *pdata)
+अणु
 	/*
-	 * The following delay is needed or the subsequent write operations may
+	 * The following delay is needed or the subsequent ग_लिखो operations may
 	 * fail. The LPSS devices are actually PCI devices and the PCI spec
-	 * expects 10ms delay before the device can be accessed after D3 to D0
-	 * transition. However some platforms like BSW does not need this delay.
+	 * expects 10ms delay beक्रमe the device can be accessed after D3 to D0
+	 * transition. However some platक्रमms like BSW करोes not need this delay.
 	 */
-	unsigned int delay = 10;	/* default 10ms delay */
+	अचिन्हित पूर्णांक delay = 10;	/* शेष 10ms delay */
 
-	if (pdata->dev_desc->flags & LPSS_NO_D3_DELAY)
+	अगर (pdata->dev_desc->flags & LPSS_NO_D3_DELAY)
 		delay = 0;
 
 	msleep(delay);
-}
+पूर्ण
 
-static int acpi_lpss_activate(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
-	int ret;
+अटल पूर्णांक acpi_lpss_activate(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+	पूर्णांक ret;
 
 	ret = acpi_dev_resume(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	acpi_lpss_d3_to_d0_delay(pdata);
 
 	/*
 	 * This is called only on ->probe() stage where a device is either in
-	 * known state defined by BIOS or most likely powered off. Due to this
-	 * we have to deassert reset line to be sure that ->probe() will
+	 * known state defined by BIOS or most likely घातered off. Due to this
+	 * we have to deनिश्चित reset line to be sure that ->probe() will
 	 * recognize the device.
 	 */
-	if (pdata->dev_desc->flags & (LPSS_SAVE_CTX | LPSS_SAVE_CTX_ONCE))
-		lpss_deassert_reset(pdata);
+	अगर (pdata->dev_desc->flags & (LPSS_SAVE_CTX | LPSS_SAVE_CTX_ONCE))
+		lpss_deनिश्चित_reset(pdata);
 
-#ifdef CONFIG_PM
-	if (pdata->dev_desc->flags & LPSS_SAVE_CTX_ONCE)
+#अगर_घोषित CONFIG_PM
+	अगर (pdata->dev_desc->flags & LPSS_SAVE_CTX_ONCE)
 		acpi_lpss_save_ctx(dev, pdata);
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void acpi_lpss_dismiss(struct device *dev)
-{
+अटल व्योम acpi_lpss_dismiss(काष्ठा device *dev)
+अणु
 	acpi_dev_suspend(dev, false);
-}
+पूर्ण
 
-/* IOSF SB for LPSS island */
-#define LPSS_IOSF_UNIT_LPIOEP		0xA0
-#define LPSS_IOSF_UNIT_LPIO1		0xAB
-#define LPSS_IOSF_UNIT_LPIO2		0xAC
+/* IOSF SB क्रम LPSS island */
+#घोषणा LPSS_IOSF_UNIT_LPIOEP		0xA0
+#घोषणा LPSS_IOSF_UNIT_LPIO1		0xAB
+#घोषणा LPSS_IOSF_UNIT_LPIO2		0xAC
 
-#define LPSS_IOSF_PMCSR			0x84
-#define LPSS_PMCSR_D0			0
-#define LPSS_PMCSR_D3hot		3
-#define LPSS_PMCSR_Dx_MASK		GENMASK(1, 0)
+#घोषणा LPSS_IOSF_PMCSR			0x84
+#घोषणा LPSS_PMCSR_D0			0
+#घोषणा LPSS_PMCSR_D3hot		3
+#घोषणा LPSS_PMCSR_Dx_MASK		GENMASK(1, 0)
 
-#define LPSS_IOSF_GPIODEF0		0x154
-#define LPSS_GPIODEF0_DMA1_D3		BIT(2)
-#define LPSS_GPIODEF0_DMA2_D3		BIT(3)
-#define LPSS_GPIODEF0_DMA_D3_MASK	GENMASK(3, 2)
-#define LPSS_GPIODEF0_DMA_LLP		BIT(13)
+#घोषणा LPSS_IOSF_GPIODEF0		0x154
+#घोषणा LPSS_GPIODEF0_DMA1_D3		BIT(2)
+#घोषणा LPSS_GPIODEF0_DMA2_D3		BIT(3)
+#घोषणा LPSS_GPIODEF0_DMA_D3_MASK	GENMASK(3, 2)
+#घोषणा LPSS_GPIODEF0_DMA_LLP		BIT(13)
 
-static DEFINE_MUTEX(lpss_iosf_mutex);
-static bool lpss_iosf_d3_entered = true;
+अटल DEFINE_MUTEX(lpss_iosf_mutex);
+अटल bool lpss_iosf_d3_entered = true;
 
-static void lpss_iosf_enter_d3_state(void)
-{
+अटल व्योम lpss_iosf_enter_d3_state(व्योम)
+अणु
 	u32 value1 = 0;
 	u32 mask1 = LPSS_GPIODEF0_DMA_D3_MASK | LPSS_GPIODEF0_DMA_LLP;
 	u32 value2 = LPSS_PMCSR_D3hot;
 	u32 mask2 = LPSS_PMCSR_Dx_MASK;
 	/*
-	 * PMC provides an information about actual status of the LPSS devices.
-	 * Here we read the values related to LPSS power island, i.e. LPSS
-	 * devices, excluding both LPSS DMA controllers, along with SCC domain.
+	 * PMC provides an inक्रमmation about actual status of the LPSS devices.
+	 * Here we पढ़ो the values related to LPSS घातer island, i.e. LPSS
+	 * devices, excluding both LPSS DMA controllers, aदीर्घ with SCC करोमुख्य.
 	 */
 	u32 func_dis, d3_sts_0, pmc_status;
-	int ret;
+	पूर्णांक ret;
 
-	ret = pmc_atom_read(PMC_FUNC_DIS, &func_dis);
-	if (ret)
-		return;
+	ret = pmc_atom_पढ़ो(PMC_FUNC_DIS, &func_dis);
+	अगर (ret)
+		वापस;
 
 	mutex_lock(&lpss_iosf_mutex);
 
-	ret = pmc_atom_read(PMC_D3_STS_0, &d3_sts_0);
-	if (ret)
-		goto exit;
+	ret = pmc_atom_पढ़ो(PMC_D3_STS_0, &d3_sts_0);
+	अगर (ret)
+		जाओ निकास;
 
 	/*
-	 * Get the status of entire LPSS power island per device basis.
-	 * Shutdown both LPSS DMA controllers if and only if all other devices
-	 * are already in D3hot.
+	 * Get the status of entire LPSS घातer island per device basis.
+	 * Shutकरोwn both LPSS DMA controllers अगर and only अगर all other devices
+	 * are alपढ़ोy in D3hot.
 	 */
 	pmc_status = (~(d3_sts_0 | func_dis)) & pmc_atom_d3_mask;
-	if (pmc_status)
-		goto exit;
+	अगर (pmc_status)
+		जाओ निकास;
 
-	iosf_mbi_modify(LPSS_IOSF_UNIT_LPIO1, MBI_CFG_WRITE,
+	iosf_mbi_modअगरy(LPSS_IOSF_UNIT_LPIO1, MBI_CFG_WRITE,
 			LPSS_IOSF_PMCSR, value2, mask2);
 
-	iosf_mbi_modify(LPSS_IOSF_UNIT_LPIO2, MBI_CFG_WRITE,
+	iosf_mbi_modअगरy(LPSS_IOSF_UNIT_LPIO2, MBI_CFG_WRITE,
 			LPSS_IOSF_PMCSR, value2, mask2);
 
-	iosf_mbi_modify(LPSS_IOSF_UNIT_LPIOEP, MBI_CR_WRITE,
+	iosf_mbi_modअगरy(LPSS_IOSF_UNIT_LPIOEP, MBI_CR_WRITE,
 			LPSS_IOSF_GPIODEF0, value1, mask1);
 
 	lpss_iosf_d3_entered = true;
 
-exit:
+निकास:
 	mutex_unlock(&lpss_iosf_mutex);
-}
+पूर्ण
 
-static void lpss_iosf_exit_d3_state(void)
-{
+अटल व्योम lpss_iosf_निकास_d3_state(व्योम)
+अणु
 	u32 value1 = LPSS_GPIODEF0_DMA1_D3 | LPSS_GPIODEF0_DMA2_D3 |
 		     LPSS_GPIODEF0_DMA_LLP;
 	u32 mask1 = LPSS_GPIODEF0_DMA_D3_MASK | LPSS_GPIODEF0_DMA_LLP;
@@ -985,254 +986,254 @@ static void lpss_iosf_exit_d3_state(void)
 
 	mutex_lock(&lpss_iosf_mutex);
 
-	if (!lpss_iosf_d3_entered)
-		goto exit;
+	अगर (!lpss_iosf_d3_entered)
+		जाओ निकास;
 
 	lpss_iosf_d3_entered = false;
 
-	iosf_mbi_modify(LPSS_IOSF_UNIT_LPIOEP, MBI_CR_WRITE,
+	iosf_mbi_modअगरy(LPSS_IOSF_UNIT_LPIOEP, MBI_CR_WRITE,
 			LPSS_IOSF_GPIODEF0, value1, mask1);
 
-	iosf_mbi_modify(LPSS_IOSF_UNIT_LPIO2, MBI_CFG_WRITE,
+	iosf_mbi_modअगरy(LPSS_IOSF_UNIT_LPIO2, MBI_CFG_WRITE,
 			LPSS_IOSF_PMCSR, value2, mask2);
 
-	iosf_mbi_modify(LPSS_IOSF_UNIT_LPIO1, MBI_CFG_WRITE,
+	iosf_mbi_modअगरy(LPSS_IOSF_UNIT_LPIO1, MBI_CFG_WRITE,
 			LPSS_IOSF_PMCSR, value2, mask2);
 
-exit:
+निकास:
 	mutex_unlock(&lpss_iosf_mutex);
-}
+पूर्ण
 
-static int acpi_lpss_suspend(struct device *dev, bool wakeup)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
-	int ret;
+अटल पूर्णांक acpi_lpss_suspend(काष्ठा device *dev, bool wakeup)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+	पूर्णांक ret;
 
-	if (pdata->dev_desc->flags & LPSS_SAVE_CTX)
+	अगर (pdata->dev_desc->flags & LPSS_SAVE_CTX)
 		acpi_lpss_save_ctx(dev, pdata);
 
 	ret = acpi_dev_suspend(dev, wakeup);
 
 	/*
-	 * This call must be last in the sequence, otherwise PMC will return
-	 * wrong status for devices being about to be powered off. See
-	 * lpss_iosf_enter_d3_state() for further information.
+	 * This call must be last in the sequence, otherwise PMC will वापस
+	 * wrong status क्रम devices being about to be घातered off. See
+	 * lpss_iosf_enter_d3_state() क्रम further inक्रमmation.
 	 */
-	if (acpi_target_system_state() == ACPI_STATE_S0 &&
+	अगर (acpi_target_प्रणाली_state() == ACPI_STATE_S0 &&
 	    lpss_quirks & LPSS_QUIRK_ALWAYS_POWER_ON && iosf_mbi_available())
 		lpss_iosf_enter_d3_state();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int acpi_lpss_resume(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
-	int ret;
+अटल पूर्णांक acpi_lpss_resume(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+	पूर्णांक ret;
 
 	/*
 	 * This call is kept first to be in symmetry with
-	 * acpi_lpss_runtime_suspend() one.
+	 * acpi_lpss_runसमय_suspend() one.
 	 */
-	if (lpss_quirks & LPSS_QUIRK_ALWAYS_POWER_ON && iosf_mbi_available())
-		lpss_iosf_exit_d3_state();
+	अगर (lpss_quirks & LPSS_QUIRK_ALWAYS_POWER_ON && iosf_mbi_available())
+		lpss_iosf_निकास_d3_state();
 
 	ret = acpi_dev_resume(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	acpi_lpss_d3_to_d0_delay(pdata);
 
-	if (pdata->dev_desc->flags & (LPSS_SAVE_CTX | LPSS_SAVE_CTX_ONCE))
+	अगर (pdata->dev_desc->flags & (LPSS_SAVE_CTX | LPSS_SAVE_CTX_ONCE))
 		acpi_lpss_restore_ctx(dev, pdata);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int acpi_lpss_do_suspend_late(struct device *dev)
-{
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक acpi_lpss_करो_suspend_late(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
 
-	if (dev_pm_skip_suspend(dev))
-		return 0;
+	अगर (dev_pm_skip_suspend(dev))
+		वापस 0;
 
 	ret = pm_generic_suspend_late(dev);
-	return ret ? ret : acpi_lpss_suspend(dev, device_may_wakeup(dev));
-}
+	वापस ret ? ret : acpi_lpss_suspend(dev, device_may_wakeup(dev));
+पूर्ण
 
-static int acpi_lpss_suspend_late(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+अटल पूर्णांक acpi_lpss_suspend_late(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
 
-	if (pdata->dev_desc->resume_from_noirq)
-		return 0;
+	अगर (pdata->dev_desc->resume_from_noirq)
+		वापस 0;
 
-	return acpi_lpss_do_suspend_late(dev);
-}
+	वापस acpi_lpss_करो_suspend_late(dev);
+पूर्ण
 
-static int acpi_lpss_suspend_noirq(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
-	int ret;
+अटल पूर्णांक acpi_lpss_suspend_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+	पूर्णांक ret;
 
-	if (pdata->dev_desc->resume_from_noirq) {
+	अगर (pdata->dev_desc->resume_from_noirq) अणु
 		/*
 		 * The driver's ->suspend_late callback will be invoked by
-		 * acpi_lpss_do_suspend_late(), with the assumption that the
+		 * acpi_lpss_करो_suspend_late(), with the assumption that the
 		 * driver really wanted to run that code in ->suspend_noirq, but
 		 * it could not run after acpi_dev_suspend() and the driver
 		 * expected the latter to be called in the "late" phase.
 		 */
-		ret = acpi_lpss_do_suspend_late(dev);
-		if (ret)
-			return ret;
-	}
+		ret = acpi_lpss_करो_suspend_late(dev);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return acpi_subsys_suspend_noirq(dev);
-}
+	वापस acpi_subsys_suspend_noirq(dev);
+पूर्ण
 
-static int acpi_lpss_do_resume_early(struct device *dev)
-{
-	int ret = acpi_lpss_resume(dev);
+अटल पूर्णांक acpi_lpss_करो_resume_early(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = acpi_lpss_resume(dev);
 
-	return ret ? ret : pm_generic_resume_early(dev);
-}
+	वापस ret ? ret : pm_generic_resume_early(dev);
+पूर्ण
 
-static int acpi_lpss_resume_early(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+अटल पूर्णांक acpi_lpss_resume_early(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
 
-	if (pdata->dev_desc->resume_from_noirq)
-		return 0;
+	अगर (pdata->dev_desc->resume_from_noirq)
+		वापस 0;
 
-	if (dev_pm_skip_resume(dev))
-		return 0;
+	अगर (dev_pm_skip_resume(dev))
+		वापस 0;
 
-	return acpi_lpss_do_resume_early(dev);
-}
+	वापस acpi_lpss_करो_resume_early(dev);
+पूर्ण
 
-static int acpi_lpss_resume_noirq(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
-	int ret;
+अटल पूर्णांक acpi_lpss_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+	पूर्णांक ret;
 
 	/* Follow acpi_subsys_resume_noirq(). */
-	if (dev_pm_skip_resume(dev))
-		return 0;
+	अगर (dev_pm_skip_resume(dev))
+		वापस 0;
 
 	ret = pm_generic_resume_noirq(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!pdata->dev_desc->resume_from_noirq)
-		return 0;
+	अगर (!pdata->dev_desc->resume_from_noirq)
+		वापस 0;
 
 	/*
 	 * The driver's ->resume_early callback will be invoked by
-	 * acpi_lpss_do_resume_early(), with the assumption that the driver
+	 * acpi_lpss_करो_resume_early(), with the assumption that the driver
 	 * really wanted to run that code in ->resume_noirq, but it could not
-	 * run before acpi_dev_resume() and the driver expected the latter to be
+	 * run beक्रमe acpi_dev_resume() and the driver expected the latter to be
 	 * called in the "early" phase.
 	 */
-	return acpi_lpss_do_resume_early(dev);
-}
+	वापस acpi_lpss_करो_resume_early(dev);
+पूर्ण
 
-static int acpi_lpss_do_restore_early(struct device *dev)
-{
-	int ret = acpi_lpss_resume(dev);
+अटल पूर्णांक acpi_lpss_करो_restore_early(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = acpi_lpss_resume(dev);
 
-	return ret ? ret : pm_generic_restore_early(dev);
-}
+	वापस ret ? ret : pm_generic_restore_early(dev);
+पूर्ण
 
-static int acpi_lpss_restore_early(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+अटल पूर्णांक acpi_lpss_restore_early(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
 
-	if (pdata->dev_desc->resume_from_noirq)
-		return 0;
+	अगर (pdata->dev_desc->resume_from_noirq)
+		वापस 0;
 
-	return acpi_lpss_do_restore_early(dev);
-}
+	वापस acpi_lpss_करो_restore_early(dev);
+पूर्ण
 
-static int acpi_lpss_restore_noirq(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
-	int ret;
+अटल पूर्णांक acpi_lpss_restore_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+	पूर्णांक ret;
 
 	ret = pm_generic_restore_noirq(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!pdata->dev_desc->resume_from_noirq)
-		return 0;
+	अगर (!pdata->dev_desc->resume_from_noirq)
+		वापस 0;
 
 	/* This is analogous to what happens in acpi_lpss_resume_noirq(). */
-	return acpi_lpss_do_restore_early(dev);
-}
+	वापस acpi_lpss_करो_restore_early(dev);
+पूर्ण
 
-static int acpi_lpss_do_poweroff_late(struct device *dev)
-{
-	int ret = pm_generic_poweroff_late(dev);
+अटल पूर्णांक acpi_lpss_करो_घातeroff_late(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = pm_generic_घातeroff_late(dev);
 
-	return ret ? ret : acpi_lpss_suspend(dev, device_may_wakeup(dev));
-}
+	वापस ret ? ret : acpi_lpss_suspend(dev, device_may_wakeup(dev));
+पूर्ण
 
-static int acpi_lpss_poweroff_late(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+अटल पूर्णांक acpi_lpss_घातeroff_late(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
 
-	if (dev_pm_skip_suspend(dev))
-		return 0;
+	अगर (dev_pm_skip_suspend(dev))
+		वापस 0;
 
-	if (pdata->dev_desc->resume_from_noirq)
-		return 0;
+	अगर (pdata->dev_desc->resume_from_noirq)
+		वापस 0;
 
-	return acpi_lpss_do_poweroff_late(dev);
-}
+	वापस acpi_lpss_करो_घातeroff_late(dev);
+पूर्ण
 
-static int acpi_lpss_poweroff_noirq(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+अटल पूर्णांक acpi_lpss_घातeroff_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
 
-	if (dev_pm_skip_suspend(dev))
-		return 0;
+	अगर (dev_pm_skip_suspend(dev))
+		वापस 0;
 
-	if (pdata->dev_desc->resume_from_noirq) {
-		/* This is analogous to the acpi_lpss_suspend_noirq() case. */
-		int ret = acpi_lpss_do_poweroff_late(dev);
+	अगर (pdata->dev_desc->resume_from_noirq) अणु
+		/* This is analogous to the acpi_lpss_suspend_noirq() हाल. */
+		पूर्णांक ret = acpi_lpss_करो_घातeroff_late(dev);
 
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return pm_generic_poweroff_noirq(dev);
-}
-#endif /* CONFIG_PM_SLEEP */
+	वापस pm_generic_घातeroff_noirq(dev);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static int acpi_lpss_runtime_suspend(struct device *dev)
-{
-	int ret = pm_generic_runtime_suspend(dev);
+अटल पूर्णांक acpi_lpss_runसमय_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = pm_generic_runसमय_suspend(dev);
 
-	return ret ? ret : acpi_lpss_suspend(dev, true);
-}
+	वापस ret ? ret : acpi_lpss_suspend(dev, true);
+पूर्ण
 
-static int acpi_lpss_runtime_resume(struct device *dev)
-{
-	int ret = acpi_lpss_resume(dev);
+अटल पूर्णांक acpi_lpss_runसमय_resume(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = acpi_lpss_resume(dev);
 
-	return ret ? ret : pm_generic_runtime_resume(dev);
-}
-#endif /* CONFIG_PM */
+	वापस ret ? ret : pm_generic_runसमय_resume(dev);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PM */
 
-static struct dev_pm_domain acpi_lpss_pm_domain = {
-#ifdef CONFIG_PM
+अटल काष्ठा dev_pm_करोमुख्य acpi_lpss_pm_करोमुख्य = अणु
+#अगर_घोषित CONFIG_PM
 	.activate = acpi_lpss_activate,
 	.dismiss = acpi_lpss_dismiss,
-#endif
-	.ops = {
-#ifdef CONFIG_PM
-#ifdef CONFIG_PM_SLEEP
+#पूर्ण_अगर
+	.ops = अणु
+#अगर_घोषित CONFIG_PM
+#अगर_घोषित CONFIG_PM_SLEEP
 		.prepare = acpi_subsys_prepare,
 		.complete = acpi_subsys_complete,
 		.suspend = acpi_subsys_suspend,
@@ -1240,125 +1241,125 @@ static struct dev_pm_domain acpi_lpss_pm_domain = {
 		.suspend_noirq = acpi_lpss_suspend_noirq,
 		.resume_noirq = acpi_lpss_resume_noirq,
 		.resume_early = acpi_lpss_resume_early,
-		.freeze = acpi_subsys_freeze,
-		.poweroff = acpi_subsys_poweroff,
-		.poweroff_late = acpi_lpss_poweroff_late,
-		.poweroff_noirq = acpi_lpss_poweroff_noirq,
+		.मुक्तze = acpi_subsys_मुक्तze,
+		.घातeroff = acpi_subsys_घातeroff,
+		.घातeroff_late = acpi_lpss_घातeroff_late,
+		.घातeroff_noirq = acpi_lpss_घातeroff_noirq,
 		.restore_noirq = acpi_lpss_restore_noirq,
 		.restore_early = acpi_lpss_restore_early,
-#endif
-		.runtime_suspend = acpi_lpss_runtime_suspend,
-		.runtime_resume = acpi_lpss_runtime_resume,
-#endif
-	},
-};
+#पूर्ण_अगर
+		.runसमय_suspend = acpi_lpss_runसमय_suspend,
+		.runसमय_resume = acpi_lpss_runसमय_resume,
+#पूर्ण_अगर
+	पूर्ण,
+पूर्ण;
 
-static int acpi_lpss_platform_notify(struct notifier_block *nb,
-				     unsigned long action, void *data)
-{
-	struct platform_device *pdev = to_platform_device(data);
-	struct lpss_private_data *pdata;
-	struct acpi_device *adev;
-	const struct acpi_device_id *id;
+अटल पूर्णांक acpi_lpss_platक्रमm_notअगरy(काष्ठा notअगरier_block *nb,
+				     अचिन्हित दीर्घ action, व्योम *data)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(data);
+	काष्ठा lpss_निजी_data *pdata;
+	काष्ठा acpi_device *adev;
+	स्थिर काष्ठा acpi_device_id *id;
 
 	id = acpi_match_device(acpi_lpss_device_ids, &pdev->dev);
-	if (!id || !id->driver_data)
-		return 0;
+	अगर (!id || !id->driver_data)
+		वापस 0;
 
-	if (acpi_bus_get_device(ACPI_HANDLE(&pdev->dev), &adev))
-		return 0;
+	अगर (acpi_bus_get_device(ACPI_HANDLE(&pdev->dev), &adev))
+		वापस 0;
 
 	pdata = acpi_driver_data(adev);
-	if (!pdata)
-		return 0;
+	अगर (!pdata)
+		वापस 0;
 
-	if (pdata->mmio_base &&
-	    pdata->mmio_size < pdata->dev_desc->prv_offset + LPSS_LTR_SIZE) {
+	अगर (pdata->mmio_base &&
+	    pdata->mmio_size < pdata->dev_desc->prv_offset + LPSS_LTR_SIZE) अणु
 		dev_err(&pdev->dev, "MMIO size insufficient to access LTR\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (action) {
-	case BUS_NOTIFY_BIND_DRIVER:
-		dev_pm_domain_set(&pdev->dev, &acpi_lpss_pm_domain);
-		break;
-	case BUS_NOTIFY_DRIVER_NOT_BOUND:
-	case BUS_NOTIFY_UNBOUND_DRIVER:
-		dev_pm_domain_set(&pdev->dev, NULL);
-		break;
-	case BUS_NOTIFY_ADD_DEVICE:
-		dev_pm_domain_set(&pdev->dev, &acpi_lpss_pm_domain);
-		if (pdata->dev_desc->flags & LPSS_LTR)
-			return sysfs_create_group(&pdev->dev.kobj,
+	चयन (action) अणु
+	हाल BUS_NOTIFY_BIND_DRIVER:
+		dev_pm_करोमुख्य_set(&pdev->dev, &acpi_lpss_pm_करोमुख्य);
+		अवरोध;
+	हाल BUS_NOTIFY_DRIVER_NOT_BOUND:
+	हाल BUS_NOTIFY_UNBOUND_DRIVER:
+		dev_pm_करोमुख्य_set(&pdev->dev, शून्य);
+		अवरोध;
+	हाल BUS_NOTIFY_ADD_DEVICE:
+		dev_pm_करोमुख्य_set(&pdev->dev, &acpi_lpss_pm_करोमुख्य);
+		अगर (pdata->dev_desc->flags & LPSS_LTR)
+			वापस sysfs_create_group(&pdev->dev.kobj,
 						  &lpss_attr_group);
-		break;
-	case BUS_NOTIFY_DEL_DEVICE:
-		if (pdata->dev_desc->flags & LPSS_LTR)
-			sysfs_remove_group(&pdev->dev.kobj, &lpss_attr_group);
-		dev_pm_domain_set(&pdev->dev, NULL);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	हाल BUS_NOTIFY_DEL_DEVICE:
+		अगर (pdata->dev_desc->flags & LPSS_LTR)
+			sysfs_हटाओ_group(&pdev->dev.kobj, &lpss_attr_group);
+		dev_pm_करोमुख्य_set(&pdev->dev, शून्य);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct notifier_block acpi_lpss_nb = {
-	.notifier_call = acpi_lpss_platform_notify,
-};
+अटल काष्ठा notअगरier_block acpi_lpss_nb = अणु
+	.notअगरier_call = acpi_lpss_platक्रमm_notअगरy,
+पूर्ण;
 
-static void acpi_lpss_bind(struct device *dev)
-{
-	struct lpss_private_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
+अटल व्योम acpi_lpss_bind(काष्ठा device *dev)
+अणु
+	काष्ठा lpss_निजी_data *pdata = acpi_driver_data(ACPI_COMPANION(dev));
 
-	if (!pdata || !pdata->mmio_base || !(pdata->dev_desc->flags & LPSS_LTR))
-		return;
+	अगर (!pdata || !pdata->mmio_base || !(pdata->dev_desc->flags & LPSS_LTR))
+		वापस;
 
-	if (pdata->mmio_size >= pdata->dev_desc->prv_offset + LPSS_LTR_SIZE)
-		dev->power.set_latency_tolerance = acpi_lpss_set_ltr;
-	else
+	अगर (pdata->mmio_size >= pdata->dev_desc->prv_offset + LPSS_LTR_SIZE)
+		dev->घातer.set_latency_tolerance = acpi_lpss_set_ltr;
+	अन्यथा
 		dev_err(dev, "MMIO size insufficient to access LTR\n");
-}
+पूर्ण
 
-static void acpi_lpss_unbind(struct device *dev)
-{
-	dev->power.set_latency_tolerance = NULL;
-}
+अटल व्योम acpi_lpss_unbind(काष्ठा device *dev)
+अणु
+	dev->घातer.set_latency_tolerance = शून्य;
+पूर्ण
 
-static struct acpi_scan_handler lpss_handler = {
+अटल काष्ठा acpi_scan_handler lpss_handler = अणु
 	.ids = acpi_lpss_device_ids,
 	.attach = acpi_lpss_create_device,
 	.bind = acpi_lpss_bind,
 	.unbind = acpi_lpss_unbind,
-};
+पूर्ण;
 
-void __init acpi_lpss_init(void)
-{
-	const struct x86_cpu_id *id;
-	int ret;
+व्योम __init acpi_lpss_init(व्योम)
+अणु
+	स्थिर काष्ठा x86_cpu_id *id;
+	पूर्णांक ret;
 
 	ret = lpt_clk_init();
-	if (ret)
-		return;
+	अगर (ret)
+		वापस;
 
 	id = x86_match_cpu(lpss_cpu_ids);
-	if (id)
+	अगर (id)
 		lpss_quirks |= LPSS_QUIRK_ALWAYS_POWER_ON;
 
-	bus_register_notifier(&platform_bus_type, &acpi_lpss_nb);
+	bus_रेजिस्टर_notअगरier(&platक्रमm_bus_type, &acpi_lpss_nb);
 	acpi_scan_add_handler(&lpss_handler);
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-static struct acpi_scan_handler lpss_handler = {
+अटल काष्ठा acpi_scan_handler lpss_handler = अणु
 	.ids = acpi_lpss_device_ids,
-};
+पूर्ण;
 
-void __init acpi_lpss_init(void)
-{
+व्योम __init acpi_lpss_init(व्योम)
+अणु
 	acpi_scan_add_handler(&lpss_handler);
-}
+पूर्ण
 
-#endif /* CONFIG_X86_INTEL_LPSS */
+#पूर्ण_अगर /* CONFIG_X86_INTEL_LPSS */

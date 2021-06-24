@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Plantronics USB HID Driver
  *
@@ -9,217 +10,217 @@
 /*
  */
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
-#include <linux/hid.h>
-#include <linux/module.h>
-#include <linux/jiffies.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/module.h>
+#समावेश <linux/jअगरfies.h>
 
-#define PLT_HID_1_0_PAGE	0xffa00000
-#define PLT_HID_2_0_PAGE	0xffa20000
+#घोषणा PLT_HID_1_0_PAGE	0xffa00000
+#घोषणा PLT_HID_2_0_PAGE	0xffa20000
 
-#define PLT_BASIC_TELEPHONY	0x0003
-#define PLT_BASIC_EXCEPTION	0x0005
+#घोषणा PLT_BASIC_TELEPHONY	0x0003
+#घोषणा PLT_BASIC_EXCEPTION	0x0005
 
-#define PLT_VOL_UP		0x00b1
-#define PLT_VOL_DOWN		0x00b2
+#घोषणा PLT_VOL_UP		0x00b1
+#घोषणा PLT_VOL_DOWN		0x00b2
 
-#define PLT1_VOL_UP		(PLT_HID_1_0_PAGE | PLT_VOL_UP)
-#define PLT1_VOL_DOWN		(PLT_HID_1_0_PAGE | PLT_VOL_DOWN)
-#define PLT2_VOL_UP		(PLT_HID_2_0_PAGE | PLT_VOL_UP)
-#define PLT2_VOL_DOWN		(PLT_HID_2_0_PAGE | PLT_VOL_DOWN)
+#घोषणा PLT1_VOL_UP		(PLT_HID_1_0_PAGE | PLT_VOL_UP)
+#घोषणा PLT1_VOL_DOWN		(PLT_HID_1_0_PAGE | PLT_VOL_DOWN)
+#घोषणा PLT2_VOL_UP		(PLT_HID_2_0_PAGE | PLT_VOL_UP)
+#घोषणा PLT2_VOL_DOWN		(PLT_HID_2_0_PAGE | PLT_VOL_DOWN)
 
-#define PLT_DA60		0xda60
-#define PLT_BT300_MIN		0x0413
-#define PLT_BT300_MAX		0x0418
+#घोषणा PLT_DA60		0xda60
+#घोषणा PLT_BT300_MIN		0x0413
+#घोषणा PLT_BT300_MAX		0x0418
 
 
-#define PLT_ALLOW_CONSUMER (field->application == HID_CP_CONSUMERCONTROL && \
+#घोषणा PLT_ALLOW_CONSUMER (field->application == HID_CP_CONSUMERCONTROL && \
 			    (usage->hid & HID_USAGE_PAGE) == HID_UP_CONSUMER)
 
-#define PLT_QUIRK_DOUBLE_VOLUME_KEYS BIT(0)
+#घोषणा PLT_QUIRK_DOUBLE_VOLUME_KEYS BIT(0)
 
-#define PLT_DOUBLE_KEY_TIMEOUT 5 /* ms */
+#घोषणा PLT_DOUBLE_KEY_TIMEOUT 5 /* ms */
 
-struct plt_drv_data {
-	unsigned long device_type;
-	unsigned long last_volume_key_ts;
+काष्ठा plt_drv_data अणु
+	अचिन्हित दीर्घ device_type;
+	अचिन्हित दीर्घ last_volume_key_ts;
 	u32 quirks;
-};
+पूर्ण;
 
-static int plantronics_input_mapping(struct hid_device *hdev,
-				     struct hid_input *hi,
-				     struct hid_field *field,
-				     struct hid_usage *usage,
-				     unsigned long **bit, int *max)
-{
-	unsigned short mapped_key;
-	struct plt_drv_data *drv_data = hid_get_drvdata(hdev);
-	unsigned long plt_type = drv_data->device_type;
+अटल पूर्णांक plantronics_input_mapping(काष्ठा hid_device *hdev,
+				     काष्ठा hid_input *hi,
+				     काष्ठा hid_field *field,
+				     काष्ठा hid_usage *usage,
+				     अचिन्हित दीर्घ **bit, पूर्णांक *max)
+अणु
+	अचिन्हित लघु mapped_key;
+	काष्ठा plt_drv_data *drv_data = hid_get_drvdata(hdev);
+	अचिन्हित दीर्घ plt_type = drv_data->device_type;
 
-	/* special case for PTT products */
-	if (field->application == HID_GD_JOYSTICK)
-		goto defaulted;
+	/* special हाल क्रम PTT products */
+	अगर (field->application == HID_GD_JOYSTICK)
+		जाओ शेषed;
 
-	/* handle volume up/down mapping */
-	/* non-standard types or multi-HID interfaces - plt_type is PID */
-	if (!(plt_type & HID_USAGE_PAGE)) {
-		switch (plt_type) {
-		case PLT_DA60:
-			if (PLT_ALLOW_CONSUMER)
-				goto defaulted;
-			goto ignored;
-		default:
-			if (PLT_ALLOW_CONSUMER)
-				goto defaulted;
-		}
-	}
+	/* handle volume up/करोwn mapping */
+	/* non-standard types or multi-HID पूर्णांकerfaces - plt_type is PID */
+	अगर (!(plt_type & HID_USAGE_PAGE)) अणु
+		चयन (plt_type) अणु
+		हाल PLT_DA60:
+			अगर (PLT_ALLOW_CONSUMER)
+				जाओ शेषed;
+			जाओ ignored;
+		शेष:
+			अगर (PLT_ALLOW_CONSUMER)
+				जाओ शेषed;
+		पूर्ण
+	पूर्ण
 	/* handle standard types - plt_type is 0xffa0uuuu or 0xffa2uuuu */
-	/* 'basic telephony compliant' - allow default consumer page map */
-	else if ((plt_type & HID_USAGE) >= PLT_BASIC_TELEPHONY &&
-		 (plt_type & HID_USAGE) != PLT_BASIC_EXCEPTION) {
-		if (PLT_ALLOW_CONSUMER)
-			goto defaulted;
-	}
+	/* 'basic telephony compliant' - allow शेष consumer page map */
+	अन्यथा अगर ((plt_type & HID_USAGE) >= PLT_BASIC_TELEPHONY &&
+		 (plt_type & HID_USAGE) != PLT_BASIC_EXCEPTION) अणु
+		अगर (PLT_ALLOW_CONSUMER)
+			जाओ शेषed;
+	पूर्ण
 	/* not 'basic telephony' - apply legacy mapping */
-	/* only map if the field is in the device's primary vendor page */
-	else if (!((field->application ^ plt_type) & HID_USAGE_PAGE)) {
-		switch (usage->hid) {
-		case PLT1_VOL_UP:
-		case PLT2_VOL_UP:
+	/* only map अगर the field is in the device's primary venकरोr page */
+	अन्यथा अगर (!((field->application ^ plt_type) & HID_USAGE_PAGE)) अणु
+		चयन (usage->hid) अणु
+		हाल PLT1_VOL_UP:
+		हाल PLT2_VOL_UP:
 			mapped_key = KEY_VOLUMEUP;
-			goto mapped;
-		case PLT1_VOL_DOWN:
-		case PLT2_VOL_DOWN:
+			जाओ mapped;
+		हाल PLT1_VOL_DOWN:
+		हाल PLT2_VOL_DOWN:
 			mapped_key = KEY_VOLUMEDOWN;
-			goto mapped;
-		}
-	}
+			जाओ mapped;
+		पूर्ण
+	पूर्ण
 
 /*
  * Future mapping of call control or other usages,
- * if and when keys are defined would go here
- * otherwise, ignore everything else that was not mapped
+ * अगर and when keys are defined would go here
+ * otherwise, ignore everything अन्यथा that was not mapped
  */
 
 ignored:
-	return -1;
+	वापस -1;
 
-defaulted:
+शेषed:
 	hid_dbg(hdev, "usage: %08x (appl: %08x) - defaulted\n",
 		usage->hid, field->application);
-	return 0;
+	वापस 0;
 
 mapped:
 	hid_map_usage_clear(hi, usage, bit, max, EV_KEY, mapped_key);
 	hid_dbg(hdev, "usage: %08x (appl: %08x) - mapped to key %d\n",
 		usage->hid, field->application, mapped_key);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int plantronics_event(struct hid_device *hdev, struct hid_field *field,
-			     struct hid_usage *usage, __s32 value)
-{
-	struct plt_drv_data *drv_data = hid_get_drvdata(hdev);
+अटल पूर्णांक plantronics_event(काष्ठा hid_device *hdev, काष्ठा hid_field *field,
+			     काष्ठा hid_usage *usage, __s32 value)
+अणु
+	काष्ठा plt_drv_data *drv_data = hid_get_drvdata(hdev);
 
-	if (drv_data->quirks & PLT_QUIRK_DOUBLE_VOLUME_KEYS) {
-		unsigned long prev_ts, cur_ts;
+	अगर (drv_data->quirks & PLT_QUIRK_DOUBLE_VOLUME_KEYS) अणु
+		अचिन्हित दीर्घ prev_ts, cur_ts;
 
 		/* Usages are filtered in plantronics_usages. */
 
-		if (!value) /* Handle key presses only. */
-			return 0;
+		अगर (!value) /* Handle key presses only. */
+			वापस 0;
 
 		prev_ts = drv_data->last_volume_key_ts;
-		cur_ts = jiffies;
-		if (jiffies_to_msecs(cur_ts - prev_ts) <= PLT_DOUBLE_KEY_TIMEOUT)
-			return 1; /* Ignore the repeated key. */
+		cur_ts = jअगरfies;
+		अगर (jअगरfies_to_msecs(cur_ts - prev_ts) <= PLT_DOUBLE_KEY_TIMEOUT)
+			वापस 1; /* Ignore the repeated key. */
 
 		drv_data->last_volume_key_ts = cur_ts;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long plantronics_device_type(struct hid_device *hdev)
-{
-	unsigned i, col_page;
-	unsigned long plt_type = hdev->product;
+अटल अचिन्हित दीर्घ plantronics_device_type(काष्ठा hid_device *hdev)
+अणु
+	अचिन्हित i, col_page;
+	अचिन्हित दीर्घ plt_type = hdev->product;
 
-	/* multi-HID interfaces? - plt_type is PID */
-	if (plt_type >= PLT_BT300_MIN && plt_type <= PLT_BT300_MAX)
-		goto exit;
+	/* multi-HID पूर्णांकerfaces? - plt_type is PID */
+	अगर (plt_type >= PLT_BT300_MIN && plt_type <= PLT_BT300_MAX)
+		जाओ निकास;
 
-	/* determine primary vendor page */
-	for (i = 0; i < hdev->maxcollection; i++) {
+	/* determine primary venकरोr page */
+	क्रम (i = 0; i < hdev->maxcollection; i++) अणु
 		col_page = hdev->collection[i].usage & HID_USAGE_PAGE;
-		if (col_page == PLT_HID_2_0_PAGE) {
+		अगर (col_page == PLT_HID_2_0_PAGE) अणु
 			plt_type = hdev->collection[i].usage;
-			break;
-		}
-		if (col_page == PLT_HID_1_0_PAGE)
+			अवरोध;
+		पूर्ण
+		अगर (col_page == PLT_HID_1_0_PAGE)
 			plt_type = hdev->collection[i].usage;
-	}
+	पूर्ण
 
-exit:
+निकास:
 	hid_dbg(hdev, "plt_type decoded as: %08lx\n", plt_type);
-	return plt_type;
-}
+	वापस plt_type;
+पूर्ण
 
-static int plantronics_probe(struct hid_device *hdev,
-			     const struct hid_device_id *id)
-{
-	struct plt_drv_data *drv_data;
-	int ret;
+अटल पूर्णांक plantronics_probe(काष्ठा hid_device *hdev,
+			     स्थिर काष्ठा hid_device_id *id)
+अणु
+	काष्ठा plt_drv_data *drv_data;
+	पूर्णांक ret;
 
-	drv_data = devm_kzalloc(&hdev->dev, sizeof(*drv_data), GFP_KERNEL);
-	if (!drv_data)
-		return -ENOMEM;
+	drv_data = devm_kzalloc(&hdev->dev, माप(*drv_data), GFP_KERNEL);
+	अगर (!drv_data)
+		वापस -ENOMEM;
 
 	ret = hid_parse(hdev);
-	if (ret) {
+	अगर (ret) अणु
 		hid_err(hdev, "parse failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	drv_data->device_type = plantronics_device_type(hdev);
 	drv_data->quirks = id->driver_data;
-	drv_data->last_volume_key_ts = jiffies - msecs_to_jiffies(PLT_DOUBLE_KEY_TIMEOUT);
+	drv_data->last_volume_key_ts = jअगरfies - msecs_to_jअगरfies(PLT_DOUBLE_KEY_TIMEOUT);
 
 	hid_set_drvdata(hdev, drv_data);
 
 	ret = hid_hw_start(hdev, HID_CONNECT_DEFAULT |
 		HID_CONNECT_HIDINPUT_FORCE | HID_CONNECT_HIDDEV_FORCE);
-	if (ret)
+	अगर (ret)
 		hid_err(hdev, "hw start failed\n");
 
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct hid_device_id plantronics_devices[] = {
-	{ HID_USB_DEVICE(USB_VENDOR_ID_PLANTRONICS,
+अटल स्थिर काष्ठा hid_device_id plantronics_devices[] = अणु
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_PLANTRONICS,
 					 USB_DEVICE_ID_PLANTRONICS_BLACKWIRE_3220_SERIES),
-		.driver_data = PLT_QUIRK_DOUBLE_VOLUME_KEYS },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_PLANTRONICS, HID_ANY_ID) },
-	{ }
-};
+		.driver_data = PLT_QUIRK_DOUBLE_VOLUME_KEYS पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_PLANTRONICS, HID_ANY_ID) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(hid, plantronics_devices);
 
-static const struct hid_usage_id plantronics_usages[] = {
-	{ HID_CP_VOLUMEUP, EV_KEY, HID_ANY_ID },
-	{ HID_CP_VOLUMEDOWN, EV_KEY, HID_ANY_ID },
-	{ HID_TERMINATOR, HID_TERMINATOR, HID_TERMINATOR }
-};
+अटल स्थिर काष्ठा hid_usage_id plantronics_usages[] = अणु
+	अणु HID_CP_VOLUMEUP, EV_KEY, HID_ANY_ID पूर्ण,
+	अणु HID_CP_VOLUMEDOWN, EV_KEY, HID_ANY_ID पूर्ण,
+	अणु HID_TERMINATOR, HID_TERMINATOR, HID_TERMINATOR पूर्ण
+पूर्ण;
 
-static struct hid_driver plantronics_driver = {
+अटल काष्ठा hid_driver plantronics_driver = अणु
 	.name = "plantronics",
 	.id_table = plantronics_devices,
 	.usage_table = plantronics_usages,
 	.input_mapping = plantronics_input_mapping,
 	.event = plantronics_event,
 	.probe = plantronics_probe,
-};
+पूर्ण;
 module_hid_driver(plantronics_driver);
 
 MODULE_AUTHOR("JD Cole <jd.cole@plantronics.com>");

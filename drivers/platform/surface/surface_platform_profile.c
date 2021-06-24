@@ -1,189 +1,190 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Surface Platform Profile / Performance Mode driver for Surface System
- * Aggregator Module (thermal subsystem).
+ * Surface Platक्रमm Profile / Perक्रमmance Mode driver क्रम Surface System
+ * Aggregator Module (thermal subप्रणाली).
  *
  * Copyright (C) 2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#include <asm/unaligned.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_profile.h>
-#include <linux/types.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_profile.h>
+#समावेश <linux/types.h>
 
-#include <linux/surface_aggregator/device.h>
+#समावेश <linux/surface_aggregator/device.h>
 
-enum ssam_tmp_profile {
-	SSAM_TMP_PROFILE_NORMAL             = 1,
-	SSAM_TMP_PROFILE_BATTERY_SAVER      = 2,
-	SSAM_TMP_PROFILE_BETTER_PERFORMANCE = 3,
-	SSAM_TMP_PROFILE_BEST_PERFORMANCE   = 4,
-};
+क्रमागत ssam_पंचांगp_profile अणु
+	SSAM_TMP_PROखाता_NORMAL             = 1,
+	SSAM_TMP_PROखाता_BATTERY_SAVER      = 2,
+	SSAM_TMP_PROखाता_BETTER_PERFORMANCE = 3,
+	SSAM_TMP_PROखाता_BEST_PERFORMANCE   = 4,
+पूर्ण;
 
-struct ssam_tmp_profile_info {
+काष्ठा ssam_पंचांगp_profile_info अणु
 	__le32 profile;
 	__le16 unknown1;
 	__le16 unknown2;
-} __packed;
+पूर्ण __packed;
 
-struct ssam_tmp_profile_device {
-	struct ssam_device *sdev;
-	struct platform_profile_handler handler;
-};
+काष्ठा ssam_पंचांगp_profile_device अणु
+	काष्ठा ssam_device *sdev;
+	काष्ठा platक्रमm_profile_handler handler;
+पूर्ण;
 
-SSAM_DEFINE_SYNC_REQUEST_CL_R(__ssam_tmp_profile_get, struct ssam_tmp_profile_info, {
+SSAM_DEFINE_SYNC_REQUEST_CL_R(__ssam_पंचांगp_profile_get, काष्ठा ssam_पंचांगp_profile_info, अणु
 	.target_category = SSAM_SSH_TC_TMP,
 	.command_id      = 0x02,
-});
+पूर्ण);
 
-SSAM_DEFINE_SYNC_REQUEST_CL_W(__ssam_tmp_profile_set, __le32, {
+SSAM_DEFINE_SYNC_REQUEST_CL_W(__ssam_पंचांगp_profile_set, __le32, अणु
 	.target_category = SSAM_SSH_TC_TMP,
 	.command_id      = 0x03,
-});
+पूर्ण);
 
-static int ssam_tmp_profile_get(struct ssam_device *sdev, enum ssam_tmp_profile *p)
-{
-	struct ssam_tmp_profile_info info;
-	int status;
+अटल पूर्णांक ssam_पंचांगp_profile_get(काष्ठा ssam_device *sdev, क्रमागत ssam_पंचांगp_profile *p)
+अणु
+	काष्ठा ssam_पंचांगp_profile_info info;
+	पूर्णांक status;
 
-	status = ssam_retry(__ssam_tmp_profile_get, sdev, &info);
-	if (status < 0)
-		return status;
+	status = ssam_retry(__ssam_पंचांगp_profile_get, sdev, &info);
+	अगर (status < 0)
+		वापस status;
 
 	*p = le32_to_cpu(info.profile);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ssam_tmp_profile_set(struct ssam_device *sdev, enum ssam_tmp_profile p)
-{
+अटल पूर्णांक ssam_पंचांगp_profile_set(काष्ठा ssam_device *sdev, क्रमागत ssam_पंचांगp_profile p)
+अणु
 	__le32 profile_le = cpu_to_le32(p);
 
-	return ssam_retry(__ssam_tmp_profile_set, sdev, &profile_le);
-}
+	वापस ssam_retry(__ssam_पंचांगp_profile_set, sdev, &profile_le);
+पूर्ण
 
-static int convert_ssam_to_profile(struct ssam_device *sdev, enum ssam_tmp_profile p)
-{
-	switch (p) {
-	case SSAM_TMP_PROFILE_NORMAL:
-		return PLATFORM_PROFILE_BALANCED;
+अटल पूर्णांक convert_ssam_to_profile(काष्ठा ssam_device *sdev, क्रमागत ssam_पंचांगp_profile p)
+अणु
+	चयन (p) अणु
+	हाल SSAM_TMP_PROखाता_NORMAL:
+		वापस PLATFORM_PROखाता_BALANCED;
 
-	case SSAM_TMP_PROFILE_BATTERY_SAVER:
-		return PLATFORM_PROFILE_LOW_POWER;
+	हाल SSAM_TMP_PROखाता_BATTERY_SAVER:
+		वापस PLATFORM_PROखाता_LOW_POWER;
 
-	case SSAM_TMP_PROFILE_BETTER_PERFORMANCE:
-		return PLATFORM_PROFILE_BALANCED_PERFORMANCE;
+	हाल SSAM_TMP_PROखाता_BETTER_PERFORMANCE:
+		वापस PLATFORM_PROखाता_BALANCED_PERFORMANCE;
 
-	case SSAM_TMP_PROFILE_BEST_PERFORMANCE:
-		return PLATFORM_PROFILE_PERFORMANCE;
+	हाल SSAM_TMP_PROखाता_BEST_PERFORMANCE:
+		वापस PLATFORM_PROखाता_PERFORMANCE;
 
-	default:
+	शेष:
 		dev_err(&sdev->dev, "invalid performance profile: %d", p);
-		return -EINVAL;
-	}
-}
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int convert_profile_to_ssam(struct ssam_device *sdev, enum platform_profile_option p)
-{
-	switch (p) {
-	case PLATFORM_PROFILE_LOW_POWER:
-		return SSAM_TMP_PROFILE_BATTERY_SAVER;
+अटल पूर्णांक convert_profile_to_ssam(काष्ठा ssam_device *sdev, क्रमागत platक्रमm_profile_option p)
+अणु
+	चयन (p) अणु
+	हाल PLATFORM_PROखाता_LOW_POWER:
+		वापस SSAM_TMP_PROखाता_BATTERY_SAVER;
 
-	case PLATFORM_PROFILE_BALANCED:
-		return SSAM_TMP_PROFILE_NORMAL;
+	हाल PLATFORM_PROखाता_BALANCED:
+		वापस SSAM_TMP_PROखाता_NORMAL;
 
-	case PLATFORM_PROFILE_BALANCED_PERFORMANCE:
-		return SSAM_TMP_PROFILE_BETTER_PERFORMANCE;
+	हाल PLATFORM_PROखाता_BALANCED_PERFORMANCE:
+		वापस SSAM_TMP_PROखाता_BETTER_PERFORMANCE;
 
-	case PLATFORM_PROFILE_PERFORMANCE:
-		return SSAM_TMP_PROFILE_BEST_PERFORMANCE;
+	हाल PLATFORM_PROखाता_PERFORMANCE:
+		वापस SSAM_TMP_PROखाता_BEST_PERFORMANCE;
 
-	default:
-		/* This should have already been caught by platform_profile_store(). */
+	शेष:
+		/* This should have alपढ़ोy been caught by platक्रमm_profile_store(). */
 		WARN(true, "unsupported platform profile");
-		return -EOPNOTSUPP;
-	}
-}
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int ssam_platform_profile_get(struct platform_profile_handler *pprof,
-				     enum platform_profile_option *profile)
-{
-	struct ssam_tmp_profile_device *tpd;
-	enum ssam_tmp_profile tp;
-	int status;
+अटल पूर्णांक ssam_platक्रमm_profile_get(काष्ठा platक्रमm_profile_handler *pprof,
+				     क्रमागत platक्रमm_profile_option *profile)
+अणु
+	काष्ठा ssam_पंचांगp_profile_device *tpd;
+	क्रमागत ssam_पंचांगp_profile tp;
+	पूर्णांक status;
 
-	tpd = container_of(pprof, struct ssam_tmp_profile_device, handler);
+	tpd = container_of(pprof, काष्ठा ssam_पंचांगp_profile_device, handler);
 
-	status = ssam_tmp_profile_get(tpd->sdev, &tp);
-	if (status)
-		return status;
+	status = ssam_पंचांगp_profile_get(tpd->sdev, &tp);
+	अगर (status)
+		वापस status;
 
 	status = convert_ssam_to_profile(tpd->sdev, tp);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
 	*profile = status;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ssam_platform_profile_set(struct platform_profile_handler *pprof,
-				     enum platform_profile_option profile)
-{
-	struct ssam_tmp_profile_device *tpd;
-	int tp;
+अटल पूर्णांक ssam_platक्रमm_profile_set(काष्ठा platक्रमm_profile_handler *pprof,
+				     क्रमागत platक्रमm_profile_option profile)
+अणु
+	काष्ठा ssam_पंचांगp_profile_device *tpd;
+	पूर्णांक tp;
 
-	tpd = container_of(pprof, struct ssam_tmp_profile_device, handler);
+	tpd = container_of(pprof, काष्ठा ssam_पंचांगp_profile_device, handler);
 
 	tp = convert_profile_to_ssam(tpd->sdev, profile);
-	if (tp < 0)
-		return tp;
+	अगर (tp < 0)
+		वापस tp;
 
-	return ssam_tmp_profile_set(tpd->sdev, tp);
-}
+	वापस ssam_पंचांगp_profile_set(tpd->sdev, tp);
+पूर्ण
 
-static int surface_platform_profile_probe(struct ssam_device *sdev)
-{
-	struct ssam_tmp_profile_device *tpd;
+अटल पूर्णांक surface_platक्रमm_profile_probe(काष्ठा ssam_device *sdev)
+अणु
+	काष्ठा ssam_पंचांगp_profile_device *tpd;
 
-	tpd = devm_kzalloc(&sdev->dev, sizeof(*tpd), GFP_KERNEL);
-	if (!tpd)
-		return -ENOMEM;
+	tpd = devm_kzalloc(&sdev->dev, माप(*tpd), GFP_KERNEL);
+	अगर (!tpd)
+		वापस -ENOMEM;
 
 	tpd->sdev = sdev;
 
-	tpd->handler.profile_get = ssam_platform_profile_get;
-	tpd->handler.profile_set = ssam_platform_profile_set;
+	tpd->handler.profile_get = ssam_platक्रमm_profile_get;
+	tpd->handler.profile_set = ssam_platक्रमm_profile_set;
 
-	set_bit(PLATFORM_PROFILE_LOW_POWER, tpd->handler.choices);
-	set_bit(PLATFORM_PROFILE_BALANCED, tpd->handler.choices);
-	set_bit(PLATFORM_PROFILE_BALANCED_PERFORMANCE, tpd->handler.choices);
-	set_bit(PLATFORM_PROFILE_PERFORMANCE, tpd->handler.choices);
+	set_bit(PLATFORM_PROखाता_LOW_POWER, tpd->handler.choices);
+	set_bit(PLATFORM_PROखाता_BALANCED, tpd->handler.choices);
+	set_bit(PLATFORM_PROखाता_BALANCED_PERFORMANCE, tpd->handler.choices);
+	set_bit(PLATFORM_PROखाता_PERFORMANCE, tpd->handler.choices);
 
-	platform_profile_register(&tpd->handler);
-	return 0;
-}
+	platक्रमm_profile_रेजिस्टर(&tpd->handler);
+	वापस 0;
+पूर्ण
 
-static void surface_platform_profile_remove(struct ssam_device *sdev)
-{
-	platform_profile_remove();
-}
+अटल व्योम surface_platक्रमm_profile_हटाओ(काष्ठा ssam_device *sdev)
+अणु
+	platक्रमm_profile_हटाओ();
+पूर्ण
 
-static const struct ssam_device_id ssam_platform_profile_match[] = {
-	{ SSAM_SDEV(TMP, 0x01, 0x00, 0x01) },
-	{ },
-};
-MODULE_DEVICE_TABLE(ssam, ssam_platform_profile_match);
+अटल स्थिर काष्ठा ssam_device_id ssam_platक्रमm_profile_match[] = अणु
+	अणु SSAM_SDEV(TMP, 0x01, 0x00, 0x01) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(ssam, ssam_platक्रमm_profile_match);
 
-static struct ssam_device_driver surface_platform_profile = {
-	.probe = surface_platform_profile_probe,
-	.remove = surface_platform_profile_remove,
-	.match_table = ssam_platform_profile_match,
-	.driver = {
+अटल काष्ठा ssam_device_driver surface_platक्रमm_profile = अणु
+	.probe = surface_platक्रमm_profile_probe,
+	.हटाओ = surface_platक्रमm_profile_हटाओ,
+	.match_table = ssam_platक्रमm_profile_match,
+	.driver = अणु
 		.name = "surface_platform_profile",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
-};
-module_ssam_device_driver(surface_platform_profile);
+	पूर्ण,
+पूर्ण;
+module_ssam_device_driver(surface_platक्रमm_profile);
 
 MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");
 MODULE_DESCRIPTION("Platform Profile Support for Surface System Aggregator Module");

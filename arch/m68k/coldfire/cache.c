@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /***************************************************************************/
 
 /*
- *	cache.c -- general ColdFire Cache maintenance code
+ *	cache.c -- general ColdFire Cache मुख्यtenance code
  *
  *	Copyright (C) 2010, Greg Ungerer (gerg@snapgear.com)
  */
 
 /***************************************************************************/
 
-#include <linux/kernel.h>
-#include <asm/coldfire.h>
-#include <asm/mcfsim.h>
+#समावेश <linux/kernel.h>
+#समावेश <यंत्र/coldfire.h>
+#समावेश <यंत्र/mcfsim.h>
 
 /***************************************************************************/
-#ifdef CACHE_PUSH
+#अगर_घोषित CACHE_PUSH
 /***************************************************************************/
 
 /*
  *	Use cpushl to push all dirty cache lines back to memory.
- *	Older versions of GAS don't seem to know how to generate the
- *	ColdFire cpushl instruction... Oh well, bit stuff it for now.
+ *	Older versions of GAS करोn't seem to know how to generate the
+ *	ColdFire cpushl inकाष्ठाion... Oh well, bit stuff it क्रम now.
  */
 
-void mcf_cache_push(void)
-{
-	__asm__ __volatile__ (
+व्योम mcf_cache_push(व्योम)
+अणु
+	__यंत्र__ __अस्थिर__ (
 		"clrl	%%d0\n\t"
 		"1:\n\t"
 		"movel	%%d0,%%a0\n\t"
@@ -42,8 +43,8 @@ void mcf_cache_push(void)
 		  "i" (DCACHE_SIZE / CACHE_WAYS),
 		  "i" (CACHE_WAYS)
 		: "d0", "a0" );
-}
+पूर्ण
 
 /***************************************************************************/
-#endif /* CACHE_PUSH */
+#पूर्ण_अगर /* CACHE_PUSH */
 /***************************************************************************/

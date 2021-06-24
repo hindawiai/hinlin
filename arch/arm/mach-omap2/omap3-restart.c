@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * omap3-restart.c - Code common to all OMAP3xxx machines.
  *
@@ -7,26 +8,26 @@
  * Tony Lindgren <tony@atomide.com>
  * Santosh Shilimkar <santosh.shilimkar@ti.com>
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/reboot.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/reboot.h>
 
-#include "common.h"
-#include "control.h"
-#include "prm.h"
+#समावेश "common.h"
+#समावेश "control.h"
+#समावेश "prm.h"
 
 /* Global address base setup code */
 
 /**
  * omap3xxx_restart - trigger a software restart of the SoC
- * @mode: the "reboot mode", see arch/arm/kernel/{setup,process}.c
- * @cmd: passed from the userspace program rebooting the system (if provided)
+ * @mode: the "reboot mode", see arch/arm/kernel/अणुsetup,processपूर्ण.c
+ * @cmd: passed from the userspace program rebooting the प्रणाली (अगर provided)
  *
  * Resets the SoC.  For @cmd, see the 'reboot' syscall in
- * kernel/sys.c.  No return value.
+ * kernel/sys.c.  No वापस value.
  */
-void omap3xxx_restart(enum reboot_mode mode, const char *cmd)
-{
-	omap3_ctrl_write_boot_mode((cmd ? (u8)*cmd : 0));
-	omap_prm_reset_system();
-}
+व्योम omap3xxx_restart(क्रमागत reboot_mode mode, स्थिर अक्षर *cmd)
+अणु
+	omap3_ctrl_ग_लिखो_boot_mode((cmd ? (u8)*cmd : 0));
+	omap_prm_reset_प्रणाली();
+पूर्ण

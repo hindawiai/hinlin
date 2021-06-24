@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  ezx.c - Common code for the EZX platform.
+ *  ezx.c - Common code क्रम the EZX platक्रमm.
  *
- *  Copyright (C) 2005-2006 Harald Welte <laforge@openezx.org>,
+ *  Copyright (C) 2005-2006 Harald Welte <laक्रमge@खोलोezx.org>,
  *		  2007-2008 Daniel Ribeiro <drwyrm@gmail.com>,
  *		  2007-2008 Stefan Schmidt <stefan@datenfreihafen.org>
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/pwm.h>
-#include <linux/pwm_backlight.h>
-#include <linux/regulator/machine.h>
-#include <linux/regulator/fixed.h>
-#include <linux/input.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/gpio_keys.h>
-#include <linux/leds-lp3944.h>
-#include <linux/platform_data/i2c-pxa.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/pwm.h>
+#समावेश <linux/pwm_backlight.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/regulator/fixed.h>
+#समावेश <linux/input.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/leds-lp3944.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
 
-#include <asm/setup.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "pxa27x.h"
-#include <linux/platform_data/video-pxafb.h>
-#include <linux/platform_data/usb-ohci-pxa27x.h>
-#include <mach/hardware.h>
-#include <linux/platform_data/keypad-pxa27x.h>
-#include <linux/platform_data/media/camera-pxa.h>
+#समावेश "pxa27x.h"
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <linux/platक्रमm_data/usb-ohci-pxa27x.h>
+#समावेश <mach/hardware.h>
+#समावेश <linux/platक्रमm_data/keypad-pxa27x.h>
+#समावेश <linux/platक्रमm_data/media/camera-pxa.h>
 
-#include "devices.h"
-#include "generic.h"
+#समावेश "devices.h"
+#समावेश "generic.h"
 
-#define EZX_NR_IRQS			(IRQ_BOARD_START + 24)
+#घोषणा EZX_NR_IRQS			(IRQ_BOARD_START + 24)
 
-#define GPIO12_A780_FLIP_LID 		12
-#define GPIO15_A1200_FLIP_LID 		15
-#define GPIO15_A910_FLIP_LID 		15
-#define GPIO12_E680_LOCK_SWITCH 	12
-#define GPIO15_E6_LOCK_SWITCH 		15
-#define GPIO50_nCAM_EN			50
-#define GPIO19_GEN1_CAM_RST		19
-#define GPIO28_GEN2_CAM_RST		28
+#घोषणा GPIO12_A780_FLIP_LID 		12
+#घोषणा GPIO15_A1200_FLIP_LID 		15
+#घोषणा GPIO15_A910_FLIP_LID 		15
+#घोषणा GPIO12_E680_LOCK_SWITCH 	12
+#घोषणा GPIO15_E6_LOCK_SWITCH 		15
+#घोषणा GPIO50_nCAM_EN			50
+#घोषणा GPIO19_GEN1_CAM_RST		19
+#घोषणा GPIO28_GEN2_CAM_RST		28
 
-static struct pwm_lookup ezx_pwm_lookup[] __maybe_unused = {
-	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight.0", NULL, 78700,
+अटल काष्ठा pwm_lookup ezx_pwm_lookup[] __maybe_unused = अणु
+	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight.0", शून्य, 78700,
 		   PWM_POLARITY_NORMAL),
-};
+पूर्ण;
 
-static struct platform_pwm_backlight_data ezx_backlight_data = {
+अटल काष्ठा platक्रमm_pwm_backlight_data ezx_backlight_data = अणु
 	.max_brightness	= 1023,
 	.dft_brightness	= 1023,
-};
+पूर्ण;
 
-static struct platform_device ezx_backlight_device = {
+अटल काष्ठा platक्रमm_device ezx_backlight_device = अणु
 	.name		= "pwm-backlight",
-	.dev		= {
+	.dev		= अणु
 		.parent	= &pxa27x_device_pwm0.dev,
-		.platform_data = &ezx_backlight_data,
-	},
-};
+		.platक्रमm_data = &ezx_backlight_data,
+	पूर्ण,
+पूर्ण;
 
-static struct pxafb_mode_info mode_ezx_old = {
-	.pixclock		= 150000,
+अटल काष्ठा pxafb_mode_info mode_ezx_old = अणु
+	.pixघड़ी		= 150000,
 	.xres			= 240,
 	.yres			= 320,
 	.bpp			= 16,
@@ -77,16 +78,16 @@ static struct pxafb_mode_info mode_ezx_old = {
 	.upper_margin		= 3,
 	.lower_margin		= 2,
 	.sync			= 0,
-};
+पूर्ण;
 
-static struct pxafb_mach_info ezx_fb_info_1 __maybe_unused = {
+अटल काष्ठा pxafb_mach_info ezx_fb_info_1 __maybe_unused = अणु
 	.modes		= &mode_ezx_old,
 	.num_modes	= 1,
 	.lcd_conn	= LCD_COLOR_TFT_16BPP,
-};
+पूर्ण;
 
-static struct pxafb_mode_info mode_72r89803y01 = {
-	.pixclock		= 192308,
+अटल काष्ठा pxafb_mode_info mode_72r89803y01 = अणु
+	.pixघड़ी		= 192308,
 	.xres			= 240,
 	.yres			= 320,
 	.bpp			= 32,
@@ -98,19 +99,19 @@ static struct pxafb_mode_info mode_72r89803y01 = {
 	.upper_margin		= 3,
 	.lower_margin		= 2,
 	.sync			= 0,
-};
+पूर्ण;
 
-static struct pxafb_mach_info ezx_fb_info_2 __maybe_unused = {
+अटल काष्ठा pxafb_mach_info ezx_fb_info_2 __maybe_unused = अणु
 	.modes		= &mode_72r89803y01,
 	.num_modes	= 1,
 	.lcd_conn	= LCD_COLOR_TFT_18BPP,
-};
+पूर्ण;
 
-static struct platform_device *ezx_devices[] __initdata __maybe_unused = {
+अटल काष्ठा platक्रमm_device *ezx_devices[] __initdata __maybe_unused = अणु
 	&ezx_backlight_device,
-};
+पूर्ण;
 
-static unsigned long ezx_pin_config[] __initdata __maybe_unused = {
+अटल अचिन्हित दीर्घ ezx_pin_config[] __initdata __maybe_unused = अणु
 	/* PWM backlight */
 	GPIO16_PWM0_OUT,
 
@@ -129,7 +130,7 @@ static unsigned long ezx_pin_config[] __initdata __maybe_unused = {
 	GPIO25_SSP1_TXD,
 	GPIO26_SSP1_RXD,
 	GPIO24_GPIO,				/* pcap chip select */
-	GPIO1_GPIO | WAKEUP_ON_EDGE_RISE,	/* pcap interrupt */
+	GPIO1_GPIO | WAKEUP_ON_EDGE_RISE,	/* pcap पूर्णांकerrupt */
 	GPIO4_GPIO | MFP_LPM_DRIVE_HIGH,	/* WDI_AP */
 	GPIO55_GPIO | MFP_LPM_DRIVE_HIGH,	/* SYS_RESTART */
 
@@ -142,7 +143,7 @@ static unsigned long ezx_pin_config[] __initdata __maybe_unused = {
 	GPIO112_MMC_CMD,
 	GPIO11_GPIO,				/* mmc detect */
 
-	/* usb to external transceiver */
+	/* usb to बाह्यal transceiver */
 	GPIO34_USB_P2_2,
 	GPIO35_USB_P2_1,
 	GPIO36_USB_P2_4,
@@ -157,11 +158,11 @@ static unsigned long ezx_pin_config[] __initdata __maybe_unused = {
 	GPIO91_USB_P3_1,
 	GPIO56_USB_P3_4,
 	GPIO113_USB_P3_3,
-};
+पूर्ण;
 
-#if defined(CONFIG_MACH_EZX_A780) || defined(CONFIG_MACH_EZX_E680)
-static unsigned long gen1_pin_config[] __initdata = {
-	/* flip / lockswitch */
+#अगर defined(CONFIG_MACH_EZX_A780) || defined(CONFIG_MACH_EZX_E680)
+अटल अचिन्हित दीर्घ gen1_pin_config[] __initdata = अणु
+	/* flip / lockचयन */
 	GPIO12_GPIO | WAKEUP_ON_EDGE_BOTH,
 
 	/* bluetooth (bcm2035) */
@@ -210,13 +211,13 @@ static unsigned long gen1_pin_config[] __initdata = {
 	GPIO119_GPIO,				/* EMU_MUX2 */
 	GPIO86_GPIO,				/* SNP_INT_CTL */
 	GPIO87_GPIO,				/* SNP_INT_IN */
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#if defined(CONFIG_MACH_EZX_A1200) || defined(CONFIG_MACH_EZX_A910) || \
+#अगर defined(CONFIG_MACH_EZX_A1200) || defined(CONFIG_MACH_EZX_A910) || \
 	defined(CONFIG_MACH_EZX_E2) || defined(CONFIG_MACH_EZX_E6)
-static unsigned long gen2_pin_config[] __initdata = {
-	/* flip / lockswitch */
+अटल अचिन्हित दीर्घ gen2_pin_config[] __initdata = अणु
+	/* flip / lockचयन */
 	GPIO15_GPIO | WAKEUP_ON_EDGE_BOTH,
 
 	/* EOC */
@@ -262,11 +263,11 @@ static unsigned long gen2_pin_config[] __initdata = {
 	GPIO50_GPIO | MFP_LPM_DRIVE_HIGH,	/* CAM_EN */
 	GPIO28_GPIO | MFP_LPM_DRIVE_HIGH,	/* CAM_RST */
 	GPIO17_GPIO,				/* CAM_FLASH */
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_A780
-static unsigned long a780_pin_config[] __initdata = {
+#अगर_घोषित CONFIG_MACH_EZX_A780
+अटल अचिन्हित दीर्घ a780_pin_config[] __initdata = अणु
 	/* keypad */
 	GPIO93_KP_DKIN_0 | WAKEUP_ON_LEVEL_HIGH,
 	GPIO100_KP_MKIN_0 | WAKEUP_ON_LEVEL_HIGH,
@@ -282,11 +283,11 @@ static unsigned long a780_pin_config[] __initdata = {
 
 	/* attenuate sound */
 	GPIO96_GPIO,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_E680
-static unsigned long e680_pin_config[] __initdata = {
+#अगर_घोषित CONFIG_MACH_EZX_E680
+अटल अचिन्हित दीर्घ e680_pin_config[] __initdata = अणु
 	/* keypad */
 	GPIO93_KP_DKIN_0 | WAKEUP_ON_LEVEL_HIGH,
 	GPIO96_KP_DKIN_3 | WAKEUP_ON_LEVEL_HIGH,
@@ -312,11 +313,11 @@ static unsigned long e680_pin_config[] __initdata = {
 	/* leds */
 	GPIO46_GPIO,
 	GPIO47_GPIO,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_A1200
-static unsigned long a1200_pin_config[] __initdata = {
+#अगर_घोषित CONFIG_MACH_EZX_A1200
+अटल अचिन्हित दीर्घ a1200_pin_config[] __initdata = अणु
 	/* keypad */
 	GPIO100_KP_MKIN_0 | WAKEUP_ON_LEVEL_HIGH,
 	GPIO101_KP_MKIN_1 | WAKEUP_ON_LEVEL_HIGH,
@@ -329,11 +330,11 @@ static unsigned long a1200_pin_config[] __initdata = {
 	GPIO106_KP_MKOUT_3,
 	GPIO107_KP_MKOUT_4,
 	GPIO108_KP_MKOUT_5,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_A910
-static unsigned long a910_pin_config[] __initdata = {
+#अगर_घोषित CONFIG_MACH_EZX_A910
+अटल अचिन्हित दीर्घ a910_pin_config[] __initdata = अणु
 	/* keypad */
 	GPIO100_KP_MKIN_0 | WAKEUP_ON_LEVEL_HIGH,
 	GPIO101_KP_MKIN_1 | WAKEUP_ON_LEVEL_HIGH,
@@ -354,11 +355,11 @@ static unsigned long a910_pin_config[] __initdata = {
 
 	/* MMC CS */
 	GPIO20_GPIO,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_E2
-static unsigned long e2_pin_config[] __initdata = {
+#अगर_घोषित CONFIG_MACH_EZX_E2
+अटल अचिन्हित दीर्घ e2_pin_config[] __initdata = अणु
 	/* keypad */
 	GPIO100_KP_MKIN_0 | WAKEUP_ON_LEVEL_HIGH,
 	GPIO101_KP_MKIN_1 | WAKEUP_ON_LEVEL_HIGH,
@@ -371,11 +372,11 @@ static unsigned long e2_pin_config[] __initdata = {
 	GPIO106_KP_MKOUT_3,
 	GPIO107_KP_MKOUT_4,
 	GPIO108_KP_MKOUT_5,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_E6
-static unsigned long e6_pin_config[] __initdata = {
+#अगर_घोषित CONFIG_MACH_EZX_E6
+अटल अचिन्हित दीर्घ e6_pin_config[] __initdata = अणु
 	/* keypad */
 	GPIO100_KP_MKIN_0 | WAKEUP_ON_LEVEL_HIGH,
 	GPIO101_KP_MKIN_1 | WAKEUP_ON_LEVEL_HIGH,
@@ -388,12 +389,12 @@ static unsigned long e6_pin_config[] __initdata = {
 	GPIO106_KP_MKOUT_3,
 	GPIO107_KP_MKOUT_4,
 	GPIO108_KP_MKOUT_5,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
 /* KEYPAD */
-#ifdef CONFIG_MACH_EZX_A780
-static const unsigned int a780_key_map[] = {
+#अगर_घोषित CONFIG_MACH_EZX_A780
+अटल स्थिर अचिन्हित पूर्णांक a780_key_map[] = अणु
 	KEY(0, 0, KEY_SEND),
 	KEY(0, 1, KEY_BACK),
 	KEY(0, 2, KEY_END),
@@ -423,27 +424,27 @@ static const unsigned int a780_key_map[] = {
 	KEY(4, 2, KEY_NUMERIC_POUND),
 	KEY(4, 3, KEY_PAGEDOWN),
 	KEY(4, 4, KEY_DOWN),
-};
+पूर्ण;
 
-static struct matrix_keymap_data a780_matrix_keymap_data = {
+अटल काष्ठा matrix_keymap_data a780_matrix_keymap_data = अणु
 	.keymap			= a780_key_map,
 	.keymap_size		= ARRAY_SIZE(a780_key_map),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data a780_keypad_platform_data = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data a780_keypad_platक्रमm_data = अणु
 	.matrix_key_rows = 5,
 	.matrix_key_cols = 5,
 	.matrix_keymap_data = &a780_matrix_keymap_data,
 
-	.direct_key_map = { KEY_CAMERA },
+	.direct_key_map = अणु KEY_CAMERA पूर्ण,
 	.direct_key_num = 1,
 
-	.debounce_interval = 30,
-};
-#endif /* CONFIG_MACH_EZX_A780 */
+	.debounce_पूर्णांकerval = 30,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_MACH_EZX_A780 */
 
-#ifdef CONFIG_MACH_EZX_E680
-static const unsigned int e680_key_map[] = {
+#अगर_घोषित CONFIG_MACH_EZX_E680
+अटल स्थिर अचिन्हित पूर्णांक e680_key_map[] = अणु
 	KEY(0, 0, KEY_UP),
 	KEY(0, 1, KEY_RIGHT),
 	KEY(0, 2, KEY_RESERVED),
@@ -458,34 +459,34 @@ static const unsigned int e680_key_map[] = {
 	KEY(2, 1, KEY_RESERVED),
 	KEY(2, 2, KEY_RESERVED),
 	KEY(2, 3, KEY_KPENTER),
-};
+पूर्ण;
 
-static struct matrix_keymap_data e680_matrix_keymap_data = {
+अटल काष्ठा matrix_keymap_data e680_matrix_keymap_data = अणु
 	.keymap			= e680_key_map,
 	.keymap_size		= ARRAY_SIZE(e680_key_map),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data e680_keypad_platform_data = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data e680_keypad_platक्रमm_data = अणु
 	.matrix_key_rows = 3,
 	.matrix_key_cols = 4,
 	.matrix_keymap_data = &e680_matrix_keymap_data,
 
-	.direct_key_map = {
+	.direct_key_map = अणु
 		KEY_CAMERA,
 		KEY_RESERVED,
 		KEY_RESERVED,
 		KEY_F1,
 		KEY_CANCEL,
 		KEY_F2,
-	},
+	पूर्ण,
 	.direct_key_num = 6,
 
-	.debounce_interval = 30,
-};
-#endif /* CONFIG_MACH_EZX_E680 */
+	.debounce_पूर्णांकerval = 30,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_MACH_EZX_E680 */
 
-#ifdef CONFIG_MACH_EZX_A1200
-static const unsigned int a1200_key_map[] = {
+#अगर_घोषित CONFIG_MACH_EZX_A1200
+अटल स्थिर अचिन्हित पूर्णांक a1200_key_map[] = अणु
 	KEY(0, 0, KEY_RESERVED),
 	KEY(0, 1, KEY_RIGHT),
 	KEY(0, 2, KEY_PAGEDOWN),
@@ -520,24 +521,24 @@ static const unsigned int a1200_key_map[] = {
 	KEY(4, 3, KEY_RESERVED),
 	KEY(4, 4, KEY_RESERVED),
 	KEY(4, 5, KEY_RESERVED),
-};
+पूर्ण;
 
-static struct matrix_keymap_data a1200_matrix_keymap_data = {
+अटल काष्ठा matrix_keymap_data a1200_matrix_keymap_data = अणु
 	.keymap			= a1200_key_map,
 	.keymap_size		= ARRAY_SIZE(a1200_key_map),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data a1200_keypad_platform_data = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data a1200_keypad_platक्रमm_data = अणु
 	.matrix_key_rows = 5,
 	.matrix_key_cols = 6,
 	.matrix_keymap_data = &a1200_matrix_keymap_data,
 
-	.debounce_interval = 30,
-};
-#endif /* CONFIG_MACH_EZX_A1200 */
+	.debounce_पूर्णांकerval = 30,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_MACH_EZX_A1200 */
 
-#ifdef CONFIG_MACH_EZX_E6
-static const unsigned int e6_key_map[] = {
+#अगर_घोषित CONFIG_MACH_EZX_E6
+अटल स्थिर अचिन्हित पूर्णांक e6_key_map[] = अणु
 	KEY(0, 0, KEY_RESERVED),
 	KEY(0, 1, KEY_RIGHT),
 	KEY(0, 2, KEY_PAGEDOWN),
@@ -572,24 +573,24 @@ static const unsigned int e6_key_map[] = {
 	KEY(4, 3, KEY_RESERVED),
 	KEY(4, 4, KEY_RESERVED),
 	KEY(4, 5, KEY_PREVIOUSSONG),
-};
+पूर्ण;
 
-static struct matrix_keymap_data e6_keymap_data = {
+अटल काष्ठा matrix_keymap_data e6_keymap_data = अणु
 	.keymap			= e6_key_map,
 	.keymap_size		= ARRAY_SIZE(e6_key_map),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data e6_keypad_platform_data = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data e6_keypad_platक्रमm_data = अणु
 	.matrix_key_rows = 5,
 	.matrix_key_cols = 6,
 	.matrix_keymap_data = &e6_keymap_data,
 
-	.debounce_interval = 30,
-};
-#endif /* CONFIG_MACH_EZX_E6 */
+	.debounce_पूर्णांकerval = 30,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_MACH_EZX_E6 */
 
-#ifdef CONFIG_MACH_EZX_A910
-static const unsigned int a910_key_map[] = {
+#अगर_घोषित CONFIG_MACH_EZX_A910
+अटल स्थिर अचिन्हित पूर्णांक a910_key_map[] = अणु
 	KEY(0, 0, KEY_NUMERIC_6),
 	KEY(0, 1, KEY_RIGHT),
 	KEY(0, 2, KEY_PAGEDOWN),
@@ -624,24 +625,24 @@ static const unsigned int a910_key_map[] = {
 	KEY(4, 3, KEY_NUMERIC_POUND),
 	KEY(4, 4, KEY_NUMERIC_3),
 	KEY(4, 5, KEY_RESERVED),
-};
+पूर्ण;
 
-static struct matrix_keymap_data a910_matrix_keymap_data = {
+अटल काष्ठा matrix_keymap_data a910_matrix_keymap_data = अणु
 	.keymap			= a910_key_map,
 	.keymap_size		= ARRAY_SIZE(a910_key_map),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data a910_keypad_platform_data = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data a910_keypad_platक्रमm_data = अणु
 	.matrix_key_rows = 5,
 	.matrix_key_cols = 6,
 	.matrix_keymap_data = &a910_matrix_keymap_data,
 
-	.debounce_interval = 30,
-};
-#endif /* CONFIG_MACH_EZX_A910 */
+	.debounce_पूर्णांकerval = 30,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_MACH_EZX_A910 */
 
-#ifdef CONFIG_MACH_EZX_E2
-static const unsigned int e2_key_map[] = {
+#अगर_घोषित CONFIG_MACH_EZX_E2
+अटल स्थिर अचिन्हित पूर्णांक e2_key_map[] = अणु
 	KEY(0, 0, KEY_NUMERIC_6),
 	KEY(0, 1, KEY_RIGHT),
 	KEY(0, 2, KEY_NUMERIC_9),
@@ -676,162 +677,162 @@ static const unsigned int e2_key_map[] = {
 	KEY(4, 3, KEY_PREVIOUSSONG),
 	KEY(4, 4, KEY_NUMERIC_3),
 	KEY(4, 5, KEY_RESERVED),
-};
+पूर्ण;
 
-static struct matrix_keymap_data e2_matrix_keymap_data = {
+अटल काष्ठा matrix_keymap_data e2_matrix_keymap_data = अणु
 	.keymap			= e2_key_map,
 	.keymap_size		= ARRAY_SIZE(e2_key_map),
-};
+पूर्ण;
 
-static struct pxa27x_keypad_platform_data e2_keypad_platform_data = {
+अटल काष्ठा pxa27x_keypad_platक्रमm_data e2_keypad_platक्रमm_data = अणु
 	.matrix_key_rows = 5,
 	.matrix_key_cols = 6,
 	.matrix_keymap_data = &e2_matrix_keymap_data,
 
-	.debounce_interval = 30,
-};
-#endif /* CONFIG_MACH_EZX_E2 */
+	.debounce_पूर्णांकerval = 30,
+पूर्ण;
+#पूर्ण_अगर /* CONFIG_MACH_EZX_E2 */
 
-#if defined(CONFIG_MACH_EZX_A780) || defined(CONFIG_MACH_EZX_A910)
+#अगर defined(CONFIG_MACH_EZX_A780) || defined(CONFIG_MACH_EZX_A910)
 /* camera */
-static struct regulator_consumer_supply camera_regulator_supplies[] = {
+अटल काष्ठा regulator_consumer_supply camera_regulator_supplies[] = अणु
 	REGULATOR_SUPPLY("vdd", "0-005d"),
-};
+पूर्ण;
 
-static struct regulator_init_data camera_regulator_initdata = {
+अटल काष्ठा regulator_init_data camera_regulator_initdata = अणु
 	.consumer_supplies = camera_regulator_supplies,
 	.num_consumer_supplies = ARRAY_SIZE(camera_regulator_supplies),
-	.constraints = {
+	.स्थिरraपूर्णांकs = अणु
 		.valid_ops_mask = REGULATOR_CHANGE_STATUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct fixed_voltage_config camera_regulator_config = {
+अटल काष्ठा fixed_voltage_config camera_regulator_config = अणु
 	.supply_name		= "camera_vdd",
 	.microvolts		= 2800000,
 	.init_data		= &camera_regulator_initdata,
-};
+पूर्ण;
 
-static struct platform_device camera_supply_regulator_device = {
+अटल काष्ठा platक्रमm_device camera_supply_regulator_device = अणु
 	.name	= "reg-fixed-voltage",
 	.id	= 1,
-	.dev	= {
-		.platform_data = &camera_regulator_config,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data = &camera_regulator_config,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table camera_supply_gpiod_table = {
+अटल काष्ठा gpiod_lookup_table camera_supply_gpiod_table = अणु
 	.dev_id = "reg-fixed-voltage.1",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", GPIO50_nCAM_EN,
-			    NULL, GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
-#endif
+			    शून्य, GPIO_ACTIVE_LOW),
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_A780
+#अगर_घोषित CONFIG_MACH_EZX_A780
 /* gpio_keys */
-static struct gpio_keys_button a780_buttons[] = {
-	[0] = {
+अटल काष्ठा gpio_keys_button a780_buttons[] = अणु
+	[0] = अणु
 		.code       = SW_LID,
 		.gpio       = GPIO12_A780_FLIP_LID,
 		.active_low = 0,
 		.desc       = "A780 flip lid",
 		.type       = EV_SW,
 		.wakeup     = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data a780_gpio_keys_platform_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data a780_gpio_keys_platक्रमm_data = अणु
 	.buttons  = a780_buttons,
 	.nbuttons = ARRAY_SIZE(a780_buttons),
-};
+पूर्ण;
 
-static struct platform_device a780_gpio_keys = {
+अटल काष्ठा platक्रमm_device a780_gpio_keys = अणु
 	.name = "gpio-keys",
 	.id   = -1,
-	.dev  = {
-		.platform_data = &a780_gpio_keys_platform_data,
-	},
-};
+	.dev  = अणु
+		.platक्रमm_data = &a780_gpio_keys_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
 /* camera */
-static int a780_camera_reset(struct device *dev)
-{
+अटल पूर्णांक a780_camera_reset(काष्ठा device *dev)
+अणु
 	gpio_set_value(GPIO19_GEN1_CAM_RST, 0);
 	msleep(10);
 	gpio_set_value(GPIO19_GEN1_CAM_RST, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int a780_camera_init(void)
-{
-	int err;
+अटल पूर्णांक a780_camera_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	/*
 	 * GPIO50_nCAM_EN is active low
 	 * GPIO19_GEN1_CAM_RST is active on rising edge
 	 */
 	err = gpio_request(GPIO19_GEN1_CAM_RST, "CAM_RST");
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: Failed to request CAM_RST\n", __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	gpio_direction_output(GPIO19_GEN1_CAM_RST, 0);
-	a780_camera_reset(NULL);
+	a780_camera_reset(शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct pxacamera_platform_data a780_pxacamera_platform_data = {
+काष्ठा pxacamera_platक्रमm_data a780_pxacamera_platक्रमm_data = अणु
 	.flags  = PXA_CAMERA_MASTER | PXA_CAMERA_DATAWIDTH_8 |
 		PXA_CAMERA_PCLK_EN | PXA_CAMERA_MCLK_EN |
 		PXA_CAMERA_PCP,
 	.mclk_10khz = 5000,
 	.sensor_i2c_adapter_id = 0,
 	.sensor_i2c_address = 0x5d,
-};
+पूर्ण;
 
-static struct i2c_board_info a780_i2c_board_info[] = {
-	{
+अटल काष्ठा i2c_board_info a780_i2c_board_info[] = अणु
+	अणु
 		I2C_BOARD_INFO("mt9m111", 0x5d),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *a780_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *a780_devices[] __initdata = अणु
 	&a780_gpio_keys,
 	&camera_supply_regulator_device,
-};
+पूर्ण;
 
-static void __init a780_init(void)
-{
+अटल व्योम __init a780_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(ezx_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(gen1_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(a780_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
-	pxa_set_i2c_info(NULL);
-	i2c_register_board_info(0, ARRAY_AND_SIZE(a780_i2c_board_info));
+	pxa_set_i2c_info(शून्य);
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(a780_i2c_board_info));
 
-	pxa_set_fb_info(NULL, &ezx_fb_info_1);
+	pxa_set_fb_info(शून्य, &ezx_fb_info_1);
 
-	pxa_set_keypad_info(&a780_keypad_platform_data);
+	pxa_set_keypad_info(&a780_keypad_platक्रमm_data);
 
-	if (a780_camera_init() == 0)
-		pxa_set_camera_info(&a780_pxacamera_platform_data);
+	अगर (a780_camera_init() == 0)
+		pxa_set_camera_info(&a780_pxacamera_platक्रमm_data);
 
 	gpiod_add_lookup_table(&camera_supply_gpiod_table);
 	pwm_add_table(ezx_pwm_lookup, ARRAY_SIZE(ezx_pwm_lookup));
-	platform_add_devices(ARRAY_AND_SIZE(ezx_devices));
-	platform_add_devices(ARRAY_AND_SIZE(a780_devices));
-	regulator_has_full_constraints();
-}
+	platक्रमm_add_devices(ARRAY_AND_SIZE(ezx_devices));
+	platक्रमm_add_devices(ARRAY_AND_SIZE(a780_devices));
+	regulator_has_full_स्थिरraपूर्णांकs();
+पूर्ण
 
 MACHINE_START(EZX_A780, "Motorola EZX A780")
 	.atag_offset    = 0x100,
@@ -839,67 +840,67 @@ MACHINE_START(EZX_A780, "Motorola EZX A780")
 	.nr_irqs	= EZX_NR_IRQS,
 	.init_irq       = pxa27x_init_irq,
 	.handle_irq       = pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine   = a780_init,
 	.restart	= pxa_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_E680
+#अगर_घोषित CONFIG_MACH_EZX_E680
 /* gpio_keys */
-static struct gpio_keys_button e680_buttons[] = {
-	[0] = {
+अटल काष्ठा gpio_keys_button e680_buttons[] = अणु
+	[0] = अणु
 		.code       = KEY_SCREENLOCK,
 		.gpio       = GPIO12_E680_LOCK_SWITCH,
 		.active_low = 0,
 		.desc       = "E680 lock switch",
 		.type       = EV_KEY,
 		.wakeup     = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data e680_gpio_keys_platform_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data e680_gpio_keys_platक्रमm_data = अणु
 	.buttons  = e680_buttons,
 	.nbuttons = ARRAY_SIZE(e680_buttons),
-};
+पूर्ण;
 
-static struct platform_device e680_gpio_keys = {
+अटल काष्ठा platक्रमm_device e680_gpio_keys = अणु
 	.name = "gpio-keys",
 	.id   = -1,
-	.dev  = {
-		.platform_data = &e680_gpio_keys_platform_data,
-	},
-};
+	.dev  = अणु
+		.platक्रमm_data = &e680_gpio_keys_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct i2c_board_info __initdata e680_i2c_board_info[] = {
-	{ I2C_BOARD_INFO("tea5767", 0x81) },
-};
+अटल काष्ठा i2c_board_info __initdata e680_i2c_board_info[] = अणु
+	अणु I2C_BOARD_INFO("tea5767", 0x81) पूर्ण,
+पूर्ण;
 
-static struct platform_device *e680_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *e680_devices[] __initdata = अणु
 	&e680_gpio_keys,
-};
+पूर्ण;
 
-static void __init e680_init(void)
-{
+अटल व्योम __init e680_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(ezx_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(gen1_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(e680_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
-	pxa_set_i2c_info(NULL);
-	i2c_register_board_info(0, ARRAY_AND_SIZE(e680_i2c_board_info));
+	pxa_set_i2c_info(शून्य);
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(e680_i2c_board_info));
 
-	pxa_set_fb_info(NULL, &ezx_fb_info_1);
+	pxa_set_fb_info(शून्य, &ezx_fb_info_1);
 
-	pxa_set_keypad_info(&e680_keypad_platform_data);
+	pxa_set_keypad_info(&e680_keypad_platक्रमm_data);
 
 	pwm_add_table(ezx_pwm_lookup, ARRAY_SIZE(ezx_pwm_lookup));
-	platform_add_devices(ARRAY_AND_SIZE(ezx_devices));
-	platform_add_devices(ARRAY_AND_SIZE(e680_devices));
-}
+	platक्रमm_add_devices(ARRAY_AND_SIZE(ezx_devices));
+	platक्रमm_add_devices(ARRAY_AND_SIZE(e680_devices));
+पूर्ण
 
 MACHINE_START(EZX_E680, "Motorola EZX E680")
 	.atag_offset    = 0x100,
@@ -907,67 +908,67 @@ MACHINE_START(EZX_E680, "Motorola EZX E680")
 	.nr_irqs	= EZX_NR_IRQS,
 	.init_irq       = pxa27x_init_irq,
 	.handle_irq       = pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine   = e680_init,
 	.restart	= pxa_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_A1200
+#अगर_घोषित CONFIG_MACH_EZX_A1200
 /* gpio_keys */
-static struct gpio_keys_button a1200_buttons[] = {
-	[0] = {
+अटल काष्ठा gpio_keys_button a1200_buttons[] = अणु
+	[0] = अणु
 		.code       = SW_LID,
 		.gpio       = GPIO15_A1200_FLIP_LID,
 		.active_low = 0,
 		.desc       = "A1200 flip lid",
 		.type       = EV_SW,
 		.wakeup     = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data a1200_gpio_keys_platform_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data a1200_gpio_keys_platक्रमm_data = अणु
 	.buttons  = a1200_buttons,
 	.nbuttons = ARRAY_SIZE(a1200_buttons),
-};
+पूर्ण;
 
-static struct platform_device a1200_gpio_keys = {
+अटल काष्ठा platक्रमm_device a1200_gpio_keys = अणु
 	.name = "gpio-keys",
 	.id   = -1,
-	.dev  = {
-		.platform_data = &a1200_gpio_keys_platform_data,
-	},
-};
+	.dev  = अणु
+		.platक्रमm_data = &a1200_gpio_keys_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct i2c_board_info __initdata a1200_i2c_board_info[] = {
-	{ I2C_BOARD_INFO("tea5767", 0x81) },
-};
+अटल काष्ठा i2c_board_info __initdata a1200_i2c_board_info[] = अणु
+	अणु I2C_BOARD_INFO("tea5767", 0x81) पूर्ण,
+पूर्ण;
 
-static struct platform_device *a1200_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *a1200_devices[] __initdata = अणु
 	&a1200_gpio_keys,
-};
+पूर्ण;
 
-static void __init a1200_init(void)
-{
+अटल व्योम __init a1200_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(ezx_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(gen2_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(a1200_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
-	pxa_set_i2c_info(NULL);
-	i2c_register_board_info(0, ARRAY_AND_SIZE(a1200_i2c_board_info));
+	pxa_set_i2c_info(शून्य);
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(a1200_i2c_board_info));
 
-	pxa_set_fb_info(NULL, &ezx_fb_info_2);
+	pxa_set_fb_info(शून्य, &ezx_fb_info_2);
 
-	pxa_set_keypad_info(&a1200_keypad_platform_data);
+	pxa_set_keypad_info(&a1200_keypad_platक्रमm_data);
 
 	pwm_add_table(ezx_pwm_lookup, ARRAY_SIZE(ezx_pwm_lookup));
-	platform_add_devices(ARRAY_AND_SIZE(ezx_devices));
-	platform_add_devices(ARRAY_AND_SIZE(a1200_devices));
-}
+	platक्रमm_add_devices(ARRAY_AND_SIZE(ezx_devices));
+	platक्रमm_add_devices(ARRAY_AND_SIZE(a1200_devices));
+पूर्ण
 
 MACHINE_START(EZX_A1200, "Motorola EZX A1200")
 	.atag_offset    = 0x100,
@@ -975,162 +976,162 @@ MACHINE_START(EZX_A1200, "Motorola EZX A1200")
 	.nr_irqs	= EZX_NR_IRQS,
 	.init_irq       = pxa27x_init_irq,
 	.handle_irq       = pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine   = a1200_init,
 	.restart	= pxa_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_A910
+#अगर_घोषित CONFIG_MACH_EZX_A910
 /* gpio_keys */
-static struct gpio_keys_button a910_buttons[] = {
-	[0] = {
+अटल काष्ठा gpio_keys_button a910_buttons[] = अणु
+	[0] = अणु
 		.code       = SW_LID,
 		.gpio       = GPIO15_A910_FLIP_LID,
 		.active_low = 0,
 		.desc       = "A910 flip lid",
 		.type       = EV_SW,
 		.wakeup     = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data a910_gpio_keys_platform_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data a910_gpio_keys_platक्रमm_data = अणु
 	.buttons  = a910_buttons,
 	.nbuttons = ARRAY_SIZE(a910_buttons),
-};
+पूर्ण;
 
-static struct platform_device a910_gpio_keys = {
+अटल काष्ठा platक्रमm_device a910_gpio_keys = अणु
 	.name = "gpio-keys",
 	.id   = -1,
-	.dev  = {
-		.platform_data = &a910_gpio_keys_platform_data,
-	},
-};
+	.dev  = अणु
+		.platक्रमm_data = &a910_gpio_keys_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
 /* camera */
-static int a910_camera_reset(struct device *dev)
-{
+अटल पूर्णांक a910_camera_reset(काष्ठा device *dev)
+अणु
 	gpio_set_value(GPIO28_GEN2_CAM_RST, 0);
 	msleep(10);
 	gpio_set_value(GPIO28_GEN2_CAM_RST, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int a910_camera_init(void)
-{
-	int err;
+अटल पूर्णांक a910_camera_init(व्योम)
+अणु
+	पूर्णांक err;
 
 	/*
 	 * GPIO50_nCAM_EN is active low
 	 * GPIO28_GEN2_CAM_RST is active on rising edge
 	 */
 	err = gpio_request(GPIO28_GEN2_CAM_RST, "CAM_RST");
-	if (err) {
+	अगर (err) अणु
 		pr_err("%s: Failed to request CAM_RST\n", __func__);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	gpio_direction_output(GPIO28_GEN2_CAM_RST, 0);
-	a910_camera_reset(NULL);
+	a910_camera_reset(शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct pxacamera_platform_data a910_pxacamera_platform_data = {
+काष्ठा pxacamera_platक्रमm_data a910_pxacamera_platक्रमm_data = अणु
 	.flags  = PXA_CAMERA_MASTER | PXA_CAMERA_DATAWIDTH_8 |
 		PXA_CAMERA_PCLK_EN | PXA_CAMERA_MCLK_EN |
 		PXA_CAMERA_PCP,
 	.mclk_10khz = 5000,
 	.sensor_i2c_adapter_id = 0,
 	.sensor_i2c_address = 0x5d,
-};
+पूर्ण;
 
 /* leds-lp3944 */
-static struct lp3944_platform_data a910_lp3944_leds = {
+अटल काष्ठा lp3944_platक्रमm_data a910_lp3944_leds = अणु
 	.leds_size = LP3944_LEDS_MAX,
-	.leds = {
-		[0] = {
+	.leds = अणु
+		[0] = अणु
 			.name = "a910:red:",
 			.status = LP3944_LED_STATUS_OFF,
 			.type = LP3944_LED_TYPE_LED,
-		},
-		[1] = {
+		पूर्ण,
+		[1] = अणु
 			.name = "a910:green:",
 			.status = LP3944_LED_STATUS_OFF,
 			.type = LP3944_LED_TYPE_LED,
-		},
-		[2] {
+		पूर्ण,
+		[2] अणु
 			.name = "a910:blue:",
 			.status = LP3944_LED_STATUS_OFF,
 			.type = LP3944_LED_TYPE_LED,
-		},
-		/* Leds 3 and 4 are used as display power switches */
-		[3] = {
+		पूर्ण,
+		/* Leds 3 and 4 are used as display घातer चयनes */
+		[3] = अणु
 			.name = "a910::cli_display",
 			.status = LP3944_LED_STATUS_OFF,
 			.type = LP3944_LED_TYPE_LED_INVERTED
-		},
-		[4] = {
+		पूर्ण,
+		[4] = अणु
 			.name = "a910::main_display",
 			.status = LP3944_LED_STATUS_ON,
 			.type = LP3944_LED_TYPE_LED_INVERTED
-		},
-		[5] = { .type = LP3944_LED_TYPE_NONE },
-		[6] = {
+		पूर्ण,
+		[5] = अणु .type = LP3944_LED_TYPE_NONE पूर्ण,
+		[6] = अणु
 			.name = "a910::torch",
 			.status = LP3944_LED_STATUS_OFF,
 			.type = LP3944_LED_TYPE_LED,
-		},
-		[7] = {
+		पूर्ण,
+		[7] = अणु
 			.name = "a910::flash",
 			.status = LP3944_LED_STATUS_OFF,
 			.type = LP3944_LED_TYPE_LED_INVERTED,
-		},
-	},
-};
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct i2c_board_info __initdata a910_i2c_board_info[] = {
-	{
+अटल काष्ठा i2c_board_info __initdata a910_i2c_board_info[] = अणु
+	अणु
 		I2C_BOARD_INFO("lp3944", 0x60),
-		.platform_data = &a910_lp3944_leds,
-	},
-	{
+		.platक्रमm_data = &a910_lp3944_leds,
+	पूर्ण,
+	अणु
 		I2C_BOARD_INFO("mt9m111", 0x5d),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device *a910_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *a910_devices[] __initdata = अणु
 	&a910_gpio_keys,
 	&camera_supply_regulator_device,
-};
+पूर्ण;
 
-static void __init a910_init(void)
-{
+अटल व्योम __init a910_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(ezx_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(gen2_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(a910_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
-	pxa_set_i2c_info(NULL);
-	i2c_register_board_info(0, ARRAY_AND_SIZE(a910_i2c_board_info));
+	pxa_set_i2c_info(शून्य);
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(a910_i2c_board_info));
 
-	pxa_set_fb_info(NULL, &ezx_fb_info_2);
+	pxa_set_fb_info(शून्य, &ezx_fb_info_2);
 
-	pxa_set_keypad_info(&a910_keypad_platform_data);
+	pxa_set_keypad_info(&a910_keypad_platक्रमm_data);
 
-	if (a910_camera_init() == 0)
-		pxa_set_camera_info(&a910_pxacamera_platform_data);
+	अगर (a910_camera_init() == 0)
+		pxa_set_camera_info(&a910_pxacamera_platक्रमm_data);
 
 	gpiod_add_lookup_table(&camera_supply_gpiod_table);
 	pwm_add_table(ezx_pwm_lookup, ARRAY_SIZE(ezx_pwm_lookup));
-	platform_add_devices(ARRAY_AND_SIZE(ezx_devices));
-	platform_add_devices(ARRAY_AND_SIZE(a910_devices));
-	regulator_has_full_constraints();
-}
+	platक्रमm_add_devices(ARRAY_AND_SIZE(ezx_devices));
+	platक्रमm_add_devices(ARRAY_AND_SIZE(a910_devices));
+	regulator_has_full_स्थिरraपूर्णांकs();
+पूर्ण
 
 MACHINE_START(EZX_A910, "Motorola EZX A910")
 	.atag_offset    = 0x100,
@@ -1138,67 +1139,67 @@ MACHINE_START(EZX_A910, "Motorola EZX A910")
 	.nr_irqs	= EZX_NR_IRQS,
 	.init_irq       = pxa27x_init_irq,
 	.handle_irq       = pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine   = a910_init,
 	.restart	= pxa_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_E6
+#अगर_घोषित CONFIG_MACH_EZX_E6
 /* gpio_keys */
-static struct gpio_keys_button e6_buttons[] = {
-	[0] = {
+अटल काष्ठा gpio_keys_button e6_buttons[] = अणु
+	[0] = अणु
 		.code       = KEY_SCREENLOCK,
 		.gpio       = GPIO15_E6_LOCK_SWITCH,
 		.active_low = 0,
 		.desc       = "E6 lock switch",
 		.type       = EV_KEY,
 		.wakeup     = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_keys_platform_data e6_gpio_keys_platform_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data e6_gpio_keys_platक्रमm_data = अणु
 	.buttons  = e6_buttons,
 	.nbuttons = ARRAY_SIZE(e6_buttons),
-};
+पूर्ण;
 
-static struct platform_device e6_gpio_keys = {
+अटल काष्ठा platक्रमm_device e6_gpio_keys = अणु
 	.name = "gpio-keys",
 	.id   = -1,
-	.dev  = {
-		.platform_data = &e6_gpio_keys_platform_data,
-	},
-};
+	.dev  = अणु
+		.platक्रमm_data = &e6_gpio_keys_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
-static struct i2c_board_info __initdata e6_i2c_board_info[] = {
-	{ I2C_BOARD_INFO("tea5767", 0x81) },
-};
+अटल काष्ठा i2c_board_info __initdata e6_i2c_board_info[] = अणु
+	अणु I2C_BOARD_INFO("tea5767", 0x81) पूर्ण,
+पूर्ण;
 
-static struct platform_device *e6_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *e6_devices[] __initdata = अणु
 	&e6_gpio_keys,
-};
+पूर्ण;
 
-static void __init e6_init(void)
-{
+अटल व्योम __init e6_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(ezx_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(gen2_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(e6_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
-	pxa_set_i2c_info(NULL);
-	i2c_register_board_info(0, ARRAY_AND_SIZE(e6_i2c_board_info));
+	pxa_set_i2c_info(शून्य);
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(e6_i2c_board_info));
 
-	pxa_set_fb_info(NULL, &ezx_fb_info_2);
+	pxa_set_fb_info(शून्य, &ezx_fb_info_2);
 
-	pxa_set_keypad_info(&e6_keypad_platform_data);
+	pxa_set_keypad_info(&e6_keypad_platक्रमm_data);
 
 	pwm_add_table(ezx_pwm_lookup, ARRAY_SIZE(ezx_pwm_lookup));
-	platform_add_devices(ARRAY_AND_SIZE(ezx_devices));
-	platform_add_devices(ARRAY_AND_SIZE(e6_devices));
-}
+	platक्रमm_add_devices(ARRAY_AND_SIZE(ezx_devices));
+	platक्रमm_add_devices(ARRAY_AND_SIZE(e6_devices));
+पूर्ण
 
 MACHINE_START(EZX_E6, "Motorola EZX E6")
 	.atag_offset    = 0x100,
@@ -1206,41 +1207,41 @@ MACHINE_START(EZX_E6, "Motorola EZX E6")
 	.nr_irqs	= EZX_NR_IRQS,
 	.init_irq       = pxa27x_init_irq,
 	.handle_irq       = pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine   = e6_init,
 	.restart	= pxa_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_MACH_EZX_E2
-static struct i2c_board_info __initdata e2_i2c_board_info[] = {
-	{ I2C_BOARD_INFO("tea5767", 0x81) },
-};
+#अगर_घोषित CONFIG_MACH_EZX_E2
+अटल काष्ठा i2c_board_info __initdata e2_i2c_board_info[] = अणु
+	अणु I2C_BOARD_INFO("tea5767", 0x81) पूर्ण,
+पूर्ण;
 
-static struct platform_device *e2_devices[] __initdata = {
-};
+अटल काष्ठा platक्रमm_device *e2_devices[] __initdata = अणु
+पूर्ण;
 
-static void __init e2_init(void)
-{
+अटल व्योम __init e2_init(व्योम)
+अणु
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(ezx_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(gen2_pin_config));
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(e2_pin_config));
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
-	pxa_set_stuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
+	pxa_set_stuart_info(शून्य);
 
-	pxa_set_i2c_info(NULL);
-	i2c_register_board_info(0, ARRAY_AND_SIZE(e2_i2c_board_info));
+	pxa_set_i2c_info(शून्य);
+	i2c_रेजिस्टर_board_info(0, ARRAY_AND_SIZE(e2_i2c_board_info));
 
-	pxa_set_fb_info(NULL, &ezx_fb_info_2);
+	pxa_set_fb_info(शून्य, &ezx_fb_info_2);
 
-	pxa_set_keypad_info(&e2_keypad_platform_data);
+	pxa_set_keypad_info(&e2_keypad_platक्रमm_data);
 
 	pwm_add_table(ezx_pwm_lookup, ARRAY_SIZE(ezx_pwm_lookup));
-	platform_add_devices(ARRAY_AND_SIZE(ezx_devices));
-	platform_add_devices(ARRAY_AND_SIZE(e2_devices));
-}
+	platक्रमm_add_devices(ARRAY_AND_SIZE(ezx_devices));
+	platक्रमm_add_devices(ARRAY_AND_SIZE(e2_devices));
+पूर्ण
 
 MACHINE_START(EZX_E2, "Motorola EZX E2")
 	.atag_offset    = 0x100,
@@ -1248,8 +1249,8 @@ MACHINE_START(EZX_E2, "Motorola EZX E2")
 	.nr_irqs	= EZX_NR_IRQS,
 	.init_irq       = pxa27x_init_irq,
 	.handle_irq       = pxa27x_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine   = e2_init,
 	.restart	= pxa_restart,
 MACHINE_END
-#endif
+#पूर्ण_अगर

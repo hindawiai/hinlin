@@ -1,44 +1,45 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * DivIO nw80x subdriver
  *
- * Copyright (C) 2011 Jean-François Moine (http://moinejf.free.fr)
+ * Copyright (C) 2011 Jean-Franथईois Moine (http://moinejf.मुक्त.fr)
  * Copyright (C) 2003 Sylvain Munaut <tnt@246tNt.com>
- *			Kjell Claesson <keyson@users.sourceforge.net>
+ *			Kjell Claesson <keyson@users.sourceक्रमge.net>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#define MODULE_NAME "nw80x"
+#घोषणा MODULE_NAME "nw80x"
 
-#include "gspca.h"
+#समावेश "gspca.h"
 
 MODULE_AUTHOR("Jean-Francois Moine <http://moinejf.free.fr>");
 MODULE_DESCRIPTION("NW80x USB Camera Driver");
 MODULE_LICENSE("GPL");
 
-static int webcam;
+अटल पूर्णांक webcam;
 
-/* specific webcam descriptor */
-struct sd {
-	struct gspca_dev gspca_dev;	/* !! must be the first item */
+/* specअगरic webcam descriptor */
+काष्ठा sd अणु
+	काष्ठा gspca_dev gspca_dev;	/* !! must be the first item */
 
 	u32 ae_res;
 	s8 ag_cnt;
-#define AG_CNT_START 13
+#घोषणा AG_CNT_START 13
 	u8 exp_too_low_cnt;
 	u8 exp_too_high_cnt;
 
 	u8 bridge;
 	u8 webcam;
-};
+पूर्ण;
 
-enum bridges {
+क्रमागत bridges अणु
 	BRIDGE_NW800,	/* and et31x110 */
 	BRIDGE_NW801,
 	BRIDGE_NW802,
-};
-enum webcams {
+पूर्ण;
+क्रमागत webcams अणु
 	Generic800,
 	SpaceCam,	/* Trust 120 SpaceCam */
 	SpaceCam2,	/* other Trust 120 SpaceCam */
@@ -54,9 +55,9 @@ enum webcams {
 	P35u,
 	Generic802,
 	NWEBCAMS	/* number of webcams */
-};
+पूर्ण;
 
-static const u8 webcam_chip[NWEBCAMS] = {
+अटल स्थिर u8 webcam_chip[NWEBCAMS] = अणु
 	[Generic800]	= BRIDGE_NW800,	/* 06a5:0000
 					 * Typhoon Webcam 100 USB */
 
@@ -98,7 +99,7 @@ static const u8 webcam_chip[NWEBCAMS] = {
 					 * EZCam Pro p35u */
 
 	[Generic802]	= BRIDGE_NW802,
-};
+पूर्ण;
 /*
  * other webcams:
  *	- nw801 046d:d001
@@ -114,7 +115,7 @@ static const u8 webcam_chip[NWEBCAMS] = {
  */
 
 /*
- * registers
+ * रेजिस्टरs
  *    nw800/et31x110	  nw801		  nw802
  *	0000..009e	0000..00a1	0000..009e
  *	0200..0211	   id		   id
@@ -130,46 +131,46 @@ static const u8 webcam_chip[NWEBCAMS] = {
  *	nw800: 320x240, 352x288
  *	nw801/802: 320x240, 640x480
  */
-static const struct v4l2_pix_format cif_mode[] = {
-	{320, 240, V4L2_PIX_FMT_JPGL, V4L2_FIELD_NONE,
+अटल स्थिर काष्ठा v4l2_pix_क्रमmat cअगर_mode[] = अणु
+	अणु320, 240, V4L2_PIX_FMT_JPGL, V4L2_FIELD_NONE,
 		.bytesperline = 320,
 		.sizeimage = 320 * 240 * 4 / 8,
-		.colorspace = V4L2_COLORSPACE_JPEG},
-	{352, 288, V4L2_PIX_FMT_JPGL, V4L2_FIELD_NONE,
+		.colorspace = V4L2_COLORSPACE_JPEGपूर्ण,
+	अणु352, 288, V4L2_PIX_FMT_JPGL, V4L2_FIELD_NONE,
 		.bytesperline = 352,
 		.sizeimage = 352 * 288 * 4 / 8,
-		.colorspace = V4L2_COLORSPACE_JPEG}
-};
-static const struct v4l2_pix_format vga_mode[] = {
-	{320, 240, V4L2_PIX_FMT_JPGL, V4L2_FIELD_NONE,
+		.colorspace = V4L2_COLORSPACE_JPEGपूर्ण
+पूर्ण;
+अटल स्थिर काष्ठा v4l2_pix_क्रमmat vga_mode[] = अणु
+	अणु320, 240, V4L2_PIX_FMT_JPGL, V4L2_FIELD_NONE,
 		.bytesperline = 320,
 		.sizeimage = 320 * 240 * 4 / 8,
-		.colorspace = V4L2_COLORSPACE_JPEG},
-	{640, 480, V4L2_PIX_FMT_JPGL, V4L2_FIELD_NONE,
+		.colorspace = V4L2_COLORSPACE_JPEGपूर्ण,
+	अणु640, 480, V4L2_PIX_FMT_JPGL, V4L2_FIELD_NONE,
 		.bytesperline = 640,
 		.sizeimage = 640 * 480 * 3 / 8,
-		.colorspace = V4L2_COLORSPACE_JPEG},
-};
+		.colorspace = V4L2_COLORSPACE_JPEGपूर्ण,
+पूर्ण;
 
 /*
  * The sequences below contain:
  *	- 1st and 2nd bytes: either
- *		- register number (BE)
+ *		- रेजिस्टर number (BE)
  *		- I2C0 + i2c address
- *	- 3rd byte: data length (=0 for end of sequence)
+ *	- 3rd byte: data length (=0 क्रम end of sequence)
  *	- n bytes: data
  */
-#define I2C0 0xff
+#घोषणा I2C0 0xff
 
-static const u8 nw800_init[] = {
+अटल स्थिर u8 nw800_init[] = अणु
 	0x04, 0x05, 0x01, 0x61,
 	0x04, 0x04, 0x01, 0x01,
 	0x04, 0x06, 0x01, 0x04,
 	0x04, 0x04, 0x03, 0x00, 0x00, 0x00,
 	0x05, 0x05, 0x01, 0x00,
 	0, 0, 0
-};
-static const u8 nw800_start[] = {
+पूर्ण;
+अटल स्थिर u8 nw800_start[] = अणु
 	0x04, 0x06, 0x01, 0xc0,
 	0x00, 0x00, 0x40, 0x10, 0x43, 0x00, 0xb4, 0x01, 0x10, 0x00, 0x4f,
 			  0xef, 0x0e, 0x00, 0x74, 0x01, 0x01, 0x00, 0x19,
@@ -321,11 +322,11 @@ static const u8 nw800_start[] = {
 	0x05, 0x05, 0x01, 0x20,
 	0x05, 0x05, 0x01, 0x21,
 	0, 0, 0
-};
+पूर्ण;
 
 /* 06a5:d001 - nw801 - Panasonic
  *		P35u */
-static const u8 nw801_start_1[] = {
+अटल स्थिर u8 nw801_start_1[] = अणु
 	0x05, 0x06, 0x01, 0x04,
 	0x00, 0x00, 0x40, 0x0e, 0x00, 0x00, 0xf9, 0x02, 0x11, 0x00, 0x0e,
 			  0x01, 0x1f, 0x00, 0x0d, 0x02, 0x01, 0x00, 0x19,
@@ -379,8 +380,8 @@ static const u8 nw801_start_1[] = {
 			  0xe4, 0x01, 0x40, 0x01, 0xf0, 0x00, 0x40, 0x01,
 			  0xf0, 0x00,
 	0, 0, 0,
-};
-static const u8 nw801_start_qvga[] = {
+पूर्ण;
+अटल स्थिर u8 nw801_start_qvga[] = अणु
 	0x02, 0x00, 0x10, 0x3c, 0x50, 0x9e, 0x3c, 0x50, 0x00, 0x00, 0x00,
 			  0x00, 0x78, 0x18, 0x0b, 0x06, 0xa2, 0x86, 0x78,
 	0x02, 0x0f, 0x01, 0x6b,
@@ -389,10 +390,10 @@ static const u8 nw801_start_qvga[] = {
 	0x10, 0x00, 0x01, 0x2f,
 	0x10, 0x8c, 0x08, 0x00, 0x00, 0x3f, 0x01, 0x00, 0x00, 0xef, 0x00,
 	0x10, 0x11, 0x08, 0x29, 0x00, 0x18, 0x01, 0x1f, 0x00, 0xd2, 0x00,
-							/* AE window */
+							/* AE winकरोw */
 	0, 0, 0,
-};
-static const u8 nw801_start_vga[] = {
+पूर्ण;
+अटल स्थिर u8 nw801_start_vga[] = अणु
 	0x02, 0x00, 0x10, 0x78, 0xa0, 0x97, 0x78, 0xa0, 0x00, 0x00, 0x00,
 			  0x00, 0xf0, 0x18, 0x0b, 0x06, 0x62, 0x82, 0xf0,
 	0x02, 0x0f, 0x01, 0xd5,
@@ -402,10 +403,10 @@ static const u8 nw801_start_vga[] = {
 	0x10, 0x8c, 0x08, 0x00, 0x00, 0x7f, 0x02, 0x00, 0x00, 0xdf, 0x01,
 	0x10, 0x11, 0x08, 0x51, 0x00, 0x30, 0x02, 0x3d, 0x00, 0xa4, 0x01,
 	0, 0, 0,
-};
-static const u8 nw801_start_2[] = {
+पूर्ण;
+अटल स्थिर u8 nw801_start_2[] = अणु
 	0x10, 0x04, 0x01, 0x1a,
-	0x10, 0x19, 0x01, 0x09,				/* clock */
+	0x10, 0x19, 0x01, 0x09,				/* घड़ी */
 	0x10, 0x24, 0x06, 0xc0, 0x00, 0x3f, 0x02, 0x00, 0x01,
 							 /* .. gain .. */
 	0x00, 0x03, 0x02, 0x92, 0x03,
@@ -429,10 +430,10 @@ static const u8 nw801_start_2[] = {
 	0x10, 0x0c, 0x01, 0x1f,
 	0x05, 0x06, 0x01, 0x03,
 	0, 0, 0
-};
+पूर्ण;
 
 /* nw802 (sharp IR3Y38M?) */
-static const u8 nw802_start[] = {
+अटल स्थिर u8 nw802_start[] = अणु
 	0x04, 0x06, 0x01, 0x04,
 	0x00, 0x00, 0x40, 0x10, 0x00, 0x00, 0xf9, 0x02, 0x10, 0x00, 0x4d,
 			  0x0f, 0x1f, 0x00, 0x0d, 0x02, 0x01, 0x00, 0x19,
@@ -512,17 +513,17 @@ static const u8 nw802_start[] = {
 	0x04, 0x06, 0x01, 0x03,
 	0x04, 0x04, 0x01, 0x00,
 	0, 0, 0
-};
+पूर्ण;
 /* et31x110 - Trust 120 SpaceCam */
-static const u8 spacecam_init[] = {
+अटल स्थिर u8 spacecam_init[] = अणु
 	0x04, 0x05, 0x01, 0x01,
 	0x04, 0x04, 0x01, 0x01,
 	0x04, 0x06, 0x01, 0x04,
 	0x04, 0x04, 0x03, 0x00, 0x00, 0x00,
 	0x05, 0x05, 0x01, 0x00,
 	0, 0, 0
-};
-static const u8 spacecam_start[] = {
+पूर्ण;
+अटल स्थिर u8 spacecam_start[] = अणु
 	0x04, 0x06, 0x01, 0x44,
 	0x00, 0x00, 0x40, 0x10, 0x43, 0x00, 0xb4, 0x01, 0x10, 0x00, 0x4f,
 			  0xef, 0x0e, 0x00, 0x74, 0x01, 0x01, 0x00, 0x19,
@@ -607,9 +608,9 @@ static const u8 spacecam_start[] = {
 	0x04, 0x05, 0x01, 0x40,
 	0x04, 0x04, 0x01, 0x40,
 	0, 0, 0
-};
+पूर्ण;
 /* et31x110 - pas106 - other Trust SpaceCam120 */
-static const u8 spacecam2_start[] = {
+अटल स्थिर u8 spacecam2_start[] = अणु
 	0x04, 0x06, 0x01, 0x44,
 	0x04, 0x06, 0x01, 0x00,
 	0x00, 0x00, 0x40, 0x14, 0x83, 0x00, 0xba, 0x01, 0x10, 0x00, 0x4f,
@@ -676,7 +677,7 @@ static const u8 spacecam2_start[] = {
 	0x02, 0x00, 0x11, 0x48, 0x58, 0x9e, 0x48, 0x58, 0x00, 0x00, 0x00,
 			  0x00, 0x84, 0x36, 0x05, 0x01, 0xf2, 0x86, 0x65,
 			  0x40,
-	I2C0, 0x40, 0x02, 0x02, 0x0c,		/* pixel clock */
+	I2C0, 0x40, 0x02, 0x02, 0x0c,		/* pixel घड़ी */
 	I2C0, 0x40, 0x02, 0x0f, 0x00,
 	I2C0, 0x40, 0x02, 0x13, 0x01,		/* i2c end */
 	0x10, 0x00, 0x01, 0x01,
@@ -705,10 +706,10 @@ static const u8 spacecam2_start[] = {
 	0x04, 0x05, 0x01, 0x61,
 	0x04, 0x04, 0x01, 0x00,
 	0, 0, 0
-};
+पूर्ण;
 
 /* nw802 - Conceptronic Video Pro */
-static const u8 cvideopro_start[] = {
+अटल स्थिर u8 cvideopro_start[] = अणु
 	0x04, 0x06, 0x01, 0x04,
 	0x00, 0x00, 0x40, 0x54, 0x96, 0x98, 0xf9, 0x02, 0x18, 0x00, 0x4c,
 			  0x0f, 0x1f, 0x00, 0x0d, 0x02, 0x01, 0x00, 0x19,
@@ -785,10 +786,10 @@ static const u8 cvideopro_start[] = {
 	0x04, 0x06, 0x01, 0x03,
 	0x04, 0x04, 0x01, 0x00,
 	0, 0, 0
-};
+पूर्ण;
 
 /* nw802 - D-link dru-350c cam */
-static const u8 dlink_start[] = {
+अटल स्थिर u8 dlink_start[] = अणु
 	0x04, 0x06, 0x01, 0x04,
 	0x00, 0x00, 0x40, 0x10, 0x00, 0x00, 0x92, 0x03, 0x10, 0x00, 0x4d,
 			  0x0f, 0x1f, 0x00, 0x0d, 0x02, 0x01, 0x00, 0x19,
@@ -865,12 +866,12 @@ static const u8 dlink_start[] = {
 	0x04, 0x06, 0x01, 0x03,
 	0x04, 0x04, 0x01, 0x00,
 	0, 0, 0
-};
+पूर्ण;
 
 /* 06a5:d001 - nw801 - Sony
  *		Plustek Opticam 500U or ProLink DS3303u (Hitachi HD49322BF) */
 /*fixme: 320x240 only*/
-static const u8 ds3303_start[] = {
+अटल स्थिर u8 ds3303_start[] = अणु
 	0x05, 0x06, 0x01, 0x04,
 	0x00, 0x00, 0x40, 0x16, 0x00, 0x00, 0xf9, 0x02, 0x11, 0x00, 0x0e,
 			  0x01, 0x1f, 0x00, 0x0d, 0x02, 0x01, 0x00, 0x19,
@@ -950,11 +951,11 @@ static const u8 ds3303_start[] = {
 	0x05, 0x06, 0x01, 0x03,
 	0x05, 0x04, 0x01, 0x00,
 	0, 0, 0
-};
+पूर्ण;
 
 /* 06a5:d001 - nw802 - Panasonic
  *		GP-KR651US (Philips TDA8786) */
-static const u8 kr651_start_1[] = {
+अटल स्थिर u8 kr651_start_1[] = अणु
 	0x04, 0x06, 0x01, 0x04,
 	0x00, 0x00, 0x40, 0x44, 0x96, 0x98, 0xf9, 0x02, 0x18, 0x00, 0x48,
 			  0x0f, 0x1f, 0x00, 0x0d, 0x02, 0x01, 0x00, 0x19,
@@ -1006,8 +1007,8 @@ static const u8 kr651_start_1[] = {
 			  0x02, 0xe4, 0x01, 0x40, 0x01, 0xf0, 0x00, 0x40,
 			  0x01, 0xf0, 0x00,
 	0, 0, 0
-};
-static const u8 kr651_start_qvga[] = {
+पूर्ण;
+अटल स्थिर u8 kr651_start_qvga[] = अणु
 	0x02, 0x00, 0x11, 0x3c, 0x50, 0x9e, 0x3c, 0x50, 0x00, 0x00, 0x00,
 			  0x00, 0x78, 0x3f, 0x10, 0x02, 0xf2, 0x8f, 0x78,
 			  0x40,
@@ -1019,8 +1020,8 @@ static const u8 kr651_start_qvga[] = {
 	0x10, 0x1d, 0x06, 0xe0, 0x00, 0x0c, 0x00, 0x52, 0x00,
 	0x10, 0x1d, 0x02, 0x28, 0x01,
 	0, 0, 0
-};
-static const u8 kr651_start_vga[] = {
+पूर्ण;
+अटल स्थिर u8 kr651_start_vga[] = अणु
 	0x02, 0x00, 0x11, 0x78, 0xa0, 0x8c, 0x78, 0xa0, 0x00, 0x00, 0x00,
 			  0x00, 0xf0, 0x30, 0x03, 0x01, 0x82, 0x82, 0x98,
 			  0x80,
@@ -1031,8 +1032,8 @@ static const u8 kr651_start_vga[] = {
 	0x10, 0x11, 0x08, 0x51, 0x00, 0x30, 0x02, 0x3d, 0x00, 0xa4, 0x01,
 	0x10, 0x1d, 0x06, 0xe0, 0x00, 0x0c, 0x00, 0x52, 0x00,
 	0x10, 0x1d, 0x02, 0x68, 0x00,
-};
-static const u8 kr651_start_2[] = {
+पूर्ण;
+अटल स्थिर u8 kr651_start_2[] = अणु
 	0x10, 0x0e, 0x01, 0x08,
 	0x10, 0x41, 0x11, 0x00, 0x11, 0x3c, 0x5c, 0x74, 0x88, 0x99, 0xa8,
 			  0xb7, 0xc4, 0xd0, 0xdc, 0xdc, 0xdc, 0xdc, 0xdc,
@@ -1049,10 +1050,10 @@ static const u8 kr651_start_2[] = {
 	0x04, 0x06, 0x01, 0x03,
 	0x04, 0x04, 0x01, 0x00,
 	0, 0, 0
-};
+पूर्ण;
 
 /* nw802 - iRez Kritter cam */
-static const u8 kritter_start[] = {
+अटल स्थिर u8 kritter_start[] = अणु
 	0x04, 0x06, 0x01, 0x06,
 	0x00, 0x00, 0x40, 0x44, 0x96, 0x98, 0x94, 0x03, 0x18, 0x00, 0x48,
 			  0x0f, 0x1e, 0x00, 0x0c, 0x02, 0x01, 0x00, 0x19,
@@ -1129,10 +1130,10 @@ static const u8 kritter_start[] = {
 	0x04, 0x06, 0x01, 0x03,
 	0x04, 0x04, 0x01, 0x00,
 	0, 0, 0
-};
+पूर्ण;
 
 /* nw802 - Mustek Wcam 300 mini */
-static const u8 mustek_start[] = {
+अटल स्थिर u8 mustek_start[] = अणु
 	0x04, 0x06, 0x01, 0x04,
 	0x00, 0x00, 0x40, 0x10, 0x00, 0x00, 0x92, 0x03, 0x10, 0x00, 0x4d,
 			  0x0f, 0x1f, 0x00, 0x0d, 0x02, 0x01, 0x00, 0x19,
@@ -1209,15 +1210,15 @@ static const u8 mustek_start[] = {
 	0x04, 0x04, 0x01, 0x40,
 	0x04, 0x06, 0x01, 0x03,
 	0, 0, 0
-};
+पूर्ण;
 
 /* nw802 - Scope USB Microscope M2 (ProScope) (Hitachi HD49322BF) */
-static const u8 proscope_init[] = {
+अटल स्थिर u8 proscope_init[] = अणु
 	0x04, 0x05, 0x01, 0x21,
 	0x04, 0x04, 0x01, 0x01,
 	0, 0, 0
-};
-static const u8 proscope_start_1[] = {
+पूर्ण;
+अटल स्थिर u8 proscope_start_1[] = अणु
 	0x04, 0x06, 0x01, 0x04,
 	0x00, 0x00, 0x40, 0x10, 0x01, 0x00, 0xf9, 0x02, 0x10, 0x00, 0x04,
 			  0x0f, 0x1f, 0x00, 0x0d, 0x02, 0x01, 0x00, 0x19,
@@ -1269,8 +1270,8 @@ static const u8 proscope_start_1[] = {
 			  0x02, 0xe4, 0x01, 0x40, 0x01, 0xf0, 0x00, 0x40,
 			  0x01, 0xf0, 0x00,
 	0, 0, 0
-};
-static const u8 proscope_start_qvga[] = {
+पूर्ण;
+अटल स्थिर u8 proscope_start_qvga[] = अणु
 	0x02, 0x00, 0x11, 0x3c, 0x50, 0x9e, 0x3c, 0x50, 0x00, 0x00, 0x00,
 			  0x00, 0x78, 0x3f, 0x10, 0x02, 0xf2, 0x8f, 0x78,
 			  0x40,
@@ -1282,8 +1283,8 @@ static const u8 proscope_start_qvga[] = {
 	0x10, 0x1d, 0x08, 0xc0, 0x0d, 0x01, 0x20, 0x02, 0xe8, 0x03, 0x00,
 	0x10, 0x0e, 0x01, 0x10,
 	0, 0, 0
-};
-static const u8 proscope_start_vga[] = {
+पूर्ण;
+अटल स्थिर u8 proscope_start_vga[] = अणु
 	0x00, 0x03, 0x02, 0xf9, 0x02,
 	0x10, 0x85, 0x08, 0x00, 0x00, 0x7f, 0x02, 0x00, 0x00, 0xdf, 0x01,
 	0x02, 0x00, 0x11, 0x78, 0xa0, 0x8c, 0x78, 0xa0, 0x00, 0x00, 0x00,
@@ -1300,8 +1301,8 @@ static const u8 proscope_start_vga[] = {
 			  0xf9,
 	0x10, 0x03, 0x01, 0x00,
 	0, 0, 0
-};
-static const u8 proscope_start_2[] = {
+पूर्ण;
+अटल स्थिर u8 proscope_start_2[] = अणु
 	0x10, 0x0f, 0x02, 0x0c, 0x0c,
 	0x10, 0x03, 0x01, 0x0c,
 	0x10, 0x41, 0x11, 0x00, 0x10, 0x51, 0x6e, 0x83, 0x93, 0xa1, 0xae,
@@ -1314,10 +1315,10 @@ static const u8 proscope_start_2[] = {
 	0x04, 0x05, 0x01, 0x21,
 	0x04, 0x04, 0x01, 0x00,
 	0, 0, 0
-};
+पूर्ण;
 
 /* nw800 - hv7121b? (seems pas106) - Divio Chicony TwinkleCam */
-static const u8 twinkle_start[] = {
+अटल स्थिर u8 twinkle_start[] = अणु
 	0x04, 0x06, 0x01, 0x44,
 	0x04, 0x06, 0x01, 0x00,
 	0x00, 0x00, 0x40, 0x14, 0x83, 0x00, 0xba, 0x01, 0x10, 0x00, 0x4f,
@@ -1417,10 +1418,10 @@ static const u8 twinkle_start[] = {
 	0x04, 0x05, 0x01, 0x61,
 	0x04, 0x04, 0x01, 0x41,
 	0, 0, 0
-};
+पूर्ण;
 
 /* nw802 dvc-v6 */
-static const u8 dvcv6_start[] = {
+अटल स्थिर u8 dvcv6_start[] = अणु
 	0x04, 0x06, 0x01, 0x06,
 	0x00, 0x00, 0x40, 0x54, 0x96, 0x98, 0xf9, 0x02, 0x18, 0x00, 0x4c,
 			  0x0f, 0x1f, 0x00, 0x0d, 0x02, 0x01, 0x00, 0x19,
@@ -1503,9 +1504,9 @@ static const u8 dvcv6_start[] = {
 	0x10, 0x0c, 0x01, 0x1a,
 	0x04, 0x06, 0x01, 0x03,
 	0x04, 0x04, 0x01, 0x00,
-};
+पूर्ण;
 
-static const u8 *webcam_start[] = {
+अटल स्थिर u8 *webcam_start[] = अणु
 	[Generic800] = nw800_start,
 	[SpaceCam] = spacecam_start,
 	[SpaceCam2] = spacecam2_start,
@@ -1520,81 +1521,81 @@ static const u8 *webcam_start[] = {
 	[DvcV6] = dvcv6_start,
 	[P35u] = nw801_start_1,
 	[Generic802] = nw802_start,
-};
+पूर्ण;
 
-/* -- write a register -- */
-static void reg_w(struct gspca_dev *gspca_dev,
+/* -- ग_लिखो a रेजिस्टर -- */
+अटल व्योम reg_w(काष्ठा gspca_dev *gspca_dev,
 			u16 index,
-			const u8 *data,
-			int len)
-{
-	struct usb_device *dev = gspca_dev->dev;
-	int ret;
+			स्थिर u8 *data,
+			पूर्णांक len)
+अणु
+	काष्ठा usb_device *dev = gspca_dev->dev;
+	पूर्णांक ret;
 
-	if (gspca_dev->usb_err < 0)
-		return;
-	if (len == 1)
+	अगर (gspca_dev->usb_err < 0)
+		वापस;
+	अगर (len == 1)
 		gspca_dbg(gspca_dev, D_USBO, "SET 00 0000 %04x %02x\n",
 			  index, *data);
-	else
+	अन्यथा
 		gspca_dbg(gspca_dev, D_USBO, "SET 00 0000 %04x %02x %02x ...\n",
 			  index, *data, data[1]);
-	memcpy(gspca_dev->usb_buf, data, len);
+	स_नकल(gspca_dev->usb_buf, data, len);
 	ret = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			0x00,
-			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			0x00,		/* value */
 			index,
 			gspca_dev->usb_buf,
 			len,
 			500);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("reg_w err %d\n", ret);
 		gspca_dev->usb_err = ret;
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* -- read registers in usb_buf -- */
-static void reg_r(struct gspca_dev *gspca_dev,
+/* -- पढ़ो रेजिस्टरs in usb_buf -- */
+अटल व्योम reg_r(काष्ठा gspca_dev *gspca_dev,
 			u16 index,
-			int len)
-{
-	struct usb_device *dev = gspca_dev->dev;
-	int ret;
+			पूर्णांक len)
+अणु
+	काष्ठा usb_device *dev = gspca_dev->dev;
+	पूर्णांक ret;
 
-	if (gspca_dev->usb_err < 0)
-		return;
+	अगर (gspca_dev->usb_err < 0)
+		वापस;
 	ret = usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
 			0x00,
-			USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			0x00, index,
 			gspca_dev->usb_buf, len, 500);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("reg_r err %d\n", ret);
 		gspca_dev->usb_err = ret;
 		/*
-		 * Make sure the buffer is zeroed to avoid uninitialized
+		 * Make sure the buffer is zeroed to aव्योम uninitialized
 		 * values.
 		 */
-		memset(gspca_dev->usb_buf, 0, USB_BUF_SZ);
-		return;
-	}
-	if (len == 1)
+		स_रखो(gspca_dev->usb_buf, 0, USB_BUF_SZ);
+		वापस;
+	पूर्ण
+	अगर (len == 1)
 		gspca_dbg(gspca_dev, D_USBI, "GET 00 0000 %04x %02x\n",
 			  index, gspca_dev->usb_buf[0]);
-	else
+	अन्यथा
 		gspca_dbg(gspca_dev, D_USBI, "GET 00 0000 %04x %02x %02x ..\n",
 			  index, gspca_dev->usb_buf[0],
 			  gspca_dev->usb_buf[1]);
-}
+पूर्ण
 
-static void i2c_w(struct gspca_dev *gspca_dev,
+अटल व्योम i2c_w(काष्ठा gspca_dev *gspca_dev,
 			u8 i2c_addr,
-			const u8 *data,
-			int len)
-{
+			स्थिर u8 *data,
+			पूर्णांक len)
+अणु
 	u8 val[2];
-	int i;
+	पूर्णांक i;
 
 	reg_w(gspca_dev, 0x0600, data + 1, len - 1);
 	reg_w(gspca_dev, 0x0600, data, len);
@@ -1603,138 +1604,138 @@ static void i2c_w(struct gspca_dev *gspca_dev,
 	reg_w(gspca_dev, 0x0502, val, 2);
 	val[0] = 0x01;
 	reg_w(gspca_dev, 0x0501, val, 1);
-	for (i = 5; --i >= 0; ) {
+	क्रम (i = 5; --i >= 0; ) अणु
 		msleep(4);
 		reg_r(gspca_dev, 0x0505, 1);
-		if (gspca_dev->usb_err < 0)
-			return;
-		if (gspca_dev->usb_buf[0] == 0)
-			return;
-	}
+		अगर (gspca_dev->usb_err < 0)
+			वापस;
+		अगर (gspca_dev->usb_buf[0] == 0)
+			वापस;
+	पूर्ण
 	gspca_dev->usb_err = -ETIME;
-}
+पूर्ण
 
-static void reg_w_buf(struct gspca_dev *gspca_dev,
-			const u8 *cmd)
-{
+अटल व्योम reg_w_buf(काष्ठा gspca_dev *gspca_dev,
+			स्थिर u8 *cmd)
+अणु
 	u16 reg;
-	int len;
+	पूर्णांक len;
 
-	for (;;) {
+	क्रम (;;) अणु
 		reg = *cmd++ << 8;
 		reg += *cmd++;
 		len = *cmd++;
-		if (len == 0)
-			break;
-		if (cmd[-3] != I2C0)
+		अगर (len == 0)
+			अवरोध;
+		अगर (cmd[-3] != I2C0)
 			reg_w(gspca_dev, reg, cmd, len);
-		else
+		अन्यथा
 			i2c_w(gspca_dev, reg, cmd, len);
 		cmd += len;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int swap_bits(int v)
-{
-	int r, i;
+अटल पूर्णांक swap_bits(पूर्णांक v)
+अणु
+	पूर्णांक r, i;
 
 	r = 0;
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		r <<= 1;
-		if (v & 1)
+		अगर (v & 1)
 			r++;
 		v >>= 1;
-	}
-	return r;
-}
+	पूर्ण
+	वापस r;
+पूर्ण
 
-static void setgain(struct gspca_dev *gspca_dev, u8 val)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल व्योम setgain(काष्ठा gspca_dev *gspca_dev, u8 val)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 	u8 v[2];
 
-	switch (sd->webcam) {
-	case P35u:
+	चयन (sd->webcam) अणु
+	हाल P35u:
 		reg_w(gspca_dev, 0x1026, &val, 1);
-		break;
-	case Kr651us:
+		अवरोध;
+	हाल Kr651us:
 		/* 0 - 253 */
 		val = swap_bits(val);
 		v[0] = val << 3;
 		v[1] = val >> 5;
 		reg_w(gspca_dev, 0x101d, v, 2);	/* SIF reg0/1 (AGC) */
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void setexposure(struct gspca_dev *gspca_dev, s32 val)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल व्योम setexposure(काष्ठा gspca_dev *gspca_dev, s32 val)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 	u8 v[2];
 
-	switch (sd->webcam) {
-	case P35u:
+	चयन (sd->webcam) अणु
+	हाल P35u:
 		v[0] = ((9 - val) << 3) | 0x01;
 		reg_w(gspca_dev, 0x1019, v, 1);
-		break;
-	case Cvideopro:
-	case DvcV6:
-	case Kritter:
-	case Kr651us:
+		अवरोध;
+	हाल Cvideopro:
+	हाल DvcV6:
+	हाल Kritter:
+	हाल Kr651us:
 		v[0] = val;
 		v[1] = val >> 8;
 		reg_w(gspca_dev, 0x101b, v, 2);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void setautogain(struct gspca_dev *gspca_dev, s32 val)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int w, h;
+अटल व्योम setस्वतःgain(काष्ठा gspca_dev *gspca_dev, s32 val)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक w, h;
 
-	if (!val) {
+	अगर (!val) अणु
 		sd->ag_cnt = -1;
-		return;
-	}
+		वापस;
+	पूर्ण
 	sd->ag_cnt = AG_CNT_START;
 
 	reg_r(gspca_dev, 0x1004, 1);
-	if (gspca_dev->usb_buf[0] & 0x04) {	/* if AE_FULL_FRM */
+	अगर (gspca_dev->usb_buf[0] & 0x04) अणु	/* अगर AE_FULL_FRM */
 		sd->ae_res = gspca_dev->pixfmt.width * gspca_dev->pixfmt.height;
-	} else {				/* get the AE window size */
+	पूर्ण अन्यथा अणु				/* get the AE winकरोw size */
 		reg_r(gspca_dev, 0x1011, 8);
 		w = (gspca_dev->usb_buf[1] << 8) + gspca_dev->usb_buf[0]
 		  - (gspca_dev->usb_buf[3] << 8) - gspca_dev->usb_buf[2];
 		h = (gspca_dev->usb_buf[5] << 8) + gspca_dev->usb_buf[4]
 		  - (gspca_dev->usb_buf[7] << 8) - gspca_dev->usb_buf[6];
 		sd->ae_res = h * w;
-		if (sd->ae_res == 0)
+		अगर (sd->ae_res == 0)
 			sd->ae_res = gspca_dev->pixfmt.width *
 					gspca_dev->pixfmt.height;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int nw802_test_reg(struct gspca_dev *gspca_dev,
+अटल पूर्णांक nw802_test_reg(काष्ठा gspca_dev *gspca_dev,
 			u16 index,
 			u8 value)
-{
-	/* write the value */
+अणु
+	/* ग_लिखो the value */
 	reg_w(gspca_dev, index, &value, 1);
 
-	/* read it */
+	/* पढ़ो it */
 	reg_r(gspca_dev, index, 1);
 
-	return gspca_dev->usb_buf[0] == value;
-}
+	वापस gspca_dev->usb_buf[0] == value;
+पूर्ण
 
-/* this function is called at probe time */
-static int sd_config(struct gspca_dev *gspca_dev,
-			const struct usb_device_id *id)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+/* this function is called at probe समय */
+अटल पूर्णांक sd_config(काष्ठा gspca_dev *gspca_dev,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	if ((unsigned) webcam >= NWEBCAMS)
+	अगर ((अचिन्हित) webcam >= NWEBCAMS)
 		webcam = 0;
 	sd->webcam = webcam;
 	gspca_dev->cam.needs_full_bandwidth = 1;
@@ -1742,180 +1743,180 @@ static int sd_config(struct gspca_dev *gspca_dev,
 
 	/*
 	 * Autodetect sequence inspired from some log.
-	 * We try to detect what registers exist or not.
-	 * If 0x0500 does not exist => NW802
-	 * If it does, test 0x109b. If it doesn't exist,
+	 * We try to detect what रेजिस्टरs exist or not.
+	 * If 0x0500 करोes not exist => NW802
+	 * If it करोes, test 0x109b. If it करोesn't exist,
 	 * then it's a NW801. Else, a NW800
 	 * If a et31x110 (nw800 and 06a5:d800)
 	 *	get the sensor ID
 	 */
-	if (!nw802_test_reg(gspca_dev, 0x0500, 0x55)) {
+	अगर (!nw802_test_reg(gspca_dev, 0x0500, 0x55)) अणु
 		sd->bridge = BRIDGE_NW802;
-		if (sd->webcam == Generic800)
+		अगर (sd->webcam == Generic800)
 			sd->webcam = Generic802;
-	} else if (!nw802_test_reg(gspca_dev, 0x109b, 0xaa)) {
+	पूर्ण अन्यथा अगर (!nw802_test_reg(gspca_dev, 0x109b, 0xaa)) अणु
 		sd->bridge = BRIDGE_NW801;
-		if (sd->webcam == Generic800)
+		अगर (sd->webcam == Generic800)
 			sd->webcam = P35u;
-	} else if (id->idVendor == 0x06a5 && id->idProduct == 0xd800) {
+	पूर्ण अन्यथा अगर (id->idVenकरोr == 0x06a5 && id->idProduct == 0xd800) अणु
 		reg_r(gspca_dev, 0x0403, 1);		/* GPIO */
 		gspca_dbg(gspca_dev, D_PROBE, "et31x110 sensor type %02x\n",
 			  gspca_dev->usb_buf[0]);
-		switch (gspca_dev->usb_buf[0] >> 1) {
-		case 0x00:				/* ?? */
-			if (sd->webcam == Generic800)
+		चयन (gspca_dev->usb_buf[0] >> 1) अणु
+		हाल 0x00:				/* ?? */
+			अगर (sd->webcam == Generic800)
 				sd->webcam = SpaceCam;
-			break;
-		case 0x01:				/* Hynix? */
-			if (sd->webcam == Generic800)
+			अवरोध;
+		हाल 0x01:				/* Hynix? */
+			अगर (sd->webcam == Generic800)
 				sd->webcam = Twinkle;
-			break;
-		case 0x0a:				/* Pixart */
-			if (sd->webcam == Generic800)
+			अवरोध;
+		हाल 0x0a:				/* Pixart */
+			अगर (sd->webcam == Generic800)
 				sd->webcam = SpaceCam2;
-			break;
-		}
-	}
-	if (webcam_chip[sd->webcam] != sd->bridge) {
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (webcam_chip[sd->webcam] != sd->bridge) अणु
 		pr_err("Bad webcam type %d for NW80%d\n",
 		       sd->webcam, sd->bridge);
 		gspca_dev->usb_err = -ENODEV;
-		return gspca_dev->usb_err;
-	}
+		वापस gspca_dev->usb_err;
+	पूर्ण
 	gspca_dbg(gspca_dev, D_PROBE, "Bridge nw80%d - type: %d\n",
 		  sd->bridge, sd->webcam);
 
-	if (sd->bridge == BRIDGE_NW800) {
-		switch (sd->webcam) {
-		case DS3303u:
-			gspca_dev->cam.cam_mode = cif_mode;	/* qvga */
-			break;
-		default:
-			gspca_dev->cam.cam_mode = &cif_mode[1];	/* cif */
-			break;
-		}
+	अगर (sd->bridge == BRIDGE_NW800) अणु
+		चयन (sd->webcam) अणु
+		हाल DS3303u:
+			gspca_dev->cam.cam_mode = cअगर_mode;	/* qvga */
+			अवरोध;
+		शेष:
+			gspca_dev->cam.cam_mode = &cअगर_mode[1];	/* cअगर */
+			अवरोध;
+		पूर्ण
 		gspca_dev->cam.nmodes = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		gspca_dev->cam.cam_mode = vga_mode;
-		switch (sd->webcam) {
-		case Kr651us:
-		case Proscope:
-		case P35u:
+		चयन (sd->webcam) अणु
+		हाल Kr651us:
+		हाल Proscope:
+		हाल P35u:
 			gspca_dev->cam.nmodes = ARRAY_SIZE(vga_mode);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			gspca_dev->cam.nmodes = 1;	/* qvga only */
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return gspca_dev->usb_err;
-}
+	वापस gspca_dev->usb_err;
+पूर्ण
 
-/* this function is called at probe and resume time */
-static int sd_init(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+/* this function is called at probe and resume समय */
+अटल पूर्णांक sd_init(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 
-	switch (sd->bridge) {
-	case BRIDGE_NW800:
-		switch (sd->webcam) {
-		case SpaceCam:
+	चयन (sd->bridge) अणु
+	हाल BRIDGE_NW800:
+		चयन (sd->webcam) अणु
+		हाल SpaceCam:
 			reg_w_buf(gspca_dev, spacecam_init);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			reg_w_buf(gspca_dev, nw800_init);
-			break;
-		}
-		break;
-	default:
-		switch (sd->webcam) {
-		case Mustek300:
-		case P35u:
-		case Proscope:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		चयन (sd->webcam) अणु
+		हाल Mustek300:
+		हाल P35u:
+		हाल Proscope:
 			reg_w_buf(gspca_dev, proscope_init);
-			break;
-		}
-		break;
-	}
-	return gspca_dev->usb_err;
-}
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
+	वापस gspca_dev->usb_err;
+पूर्ण
 
 /* -- start the camera -- */
-static int sd_start(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	const u8 *cmd;
+अटल पूर्णांक sd_start(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	स्थिर u8 *cmd;
 
 	cmd = webcam_start[sd->webcam];
 	reg_w_buf(gspca_dev, cmd);
-	switch (sd->webcam) {
-	case P35u:
-		if (gspca_dev->pixfmt.width == 320)
+	चयन (sd->webcam) अणु
+	हाल P35u:
+		अगर (gspca_dev->pixfmt.width == 320)
 			reg_w_buf(gspca_dev, nw801_start_qvga);
-		else
+		अन्यथा
 			reg_w_buf(gspca_dev, nw801_start_vga);
 		reg_w_buf(gspca_dev, nw801_start_2);
-		break;
-	case Kr651us:
-		if (gspca_dev->pixfmt.width == 320)
+		अवरोध;
+	हाल Kr651us:
+		अगर (gspca_dev->pixfmt.width == 320)
 			reg_w_buf(gspca_dev, kr651_start_qvga);
-		else
+		अन्यथा
 			reg_w_buf(gspca_dev, kr651_start_vga);
 		reg_w_buf(gspca_dev, kr651_start_2);
-		break;
-	case Proscope:
-		if (gspca_dev->pixfmt.width == 320)
+		अवरोध;
+	हाल Proscope:
+		अगर (gspca_dev->pixfmt.width == 320)
 			reg_w_buf(gspca_dev, proscope_start_qvga);
-		else
+		अन्यथा
 			reg_w_buf(gspca_dev, proscope_start_vga);
 		reg_w_buf(gspca_dev, proscope_start_2);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	sd->exp_too_high_cnt = 0;
 	sd->exp_too_low_cnt = 0;
-	return gspca_dev->usb_err;
-}
+	वापस gspca_dev->usb_err;
+पूर्ण
 
-static void sd_stopN(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
+अटल व्योम sd_stopN(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
 	u8 value;
 
 	/* 'go' off */
-	if (sd->bridge != BRIDGE_NW801) {
+	अगर (sd->bridge != BRIDGE_NW801) अणु
 		value = 0x02;
 		reg_w(gspca_dev, 0x0406, &value, 1);
-	}
+	पूर्ण
 
 	/* LED off */
-	switch (sd->webcam) {
-	case Cvideopro:
-	case Kr651us:
-	case DvcV6:
-	case Kritter:
+	चयन (sd->webcam) अणु
+	हाल Cvideopro:
+	हाल Kr651us:
+	हाल DvcV6:
+	हाल Kritter:
 		value = 0xff;
-		break;
-	case Dlink350c:
+		अवरोध;
+	हाल Dlink350c:
 		value = 0x21;
-		break;
-	case SpaceCam:
-	case SpaceCam2:
-	case Proscope:
-	case Twinkle:
+		अवरोध;
+	हाल SpaceCam:
+	हाल SpaceCam2:
+	हाल Proscope:
+	हाल Twinkle:
 		value = 0x01;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 	reg_w(gspca_dev, 0x0404, &value, 1);
-}
+पूर्ण
 
-static void sd_pkt_scan(struct gspca_dev *gspca_dev,
+अटल व्योम sd_pkt_scan(काष्ठा gspca_dev *gspca_dev,
 			u8 *data,			/* isoc packet */
-			int len)			/* iso packet length */
-{
+			पूर्णांक len)			/* iso packet length */
+अणु
 	/*
 	 * frame header = '00 00 hh ww ss xx ff ff'
 	 * with:
@@ -1923,24 +1924,24 @@ static void sd_pkt_scan(struct gspca_dev *gspca_dev,
 	 *	- 'ww': width / 4
 	 *	- 'ss': frame sequence number c0..dd
 	 */
-	if (data[0] == 0x00 && data[1] == 0x00
-	 && data[6] == 0xff && data[7] == 0xff) {
-		gspca_frame_add(gspca_dev, LAST_PACKET, NULL, 0);
+	अगर (data[0] == 0x00 && data[1] == 0x00
+	 && data[6] == 0xff && data[7] == 0xff) अणु
+		gspca_frame_add(gspca_dev, LAST_PACKET, शून्य, 0);
 		gspca_frame_add(gspca_dev, FIRST_PACKET, data + 8, len - 8);
-	} else {
+	पूर्ण अन्यथा अणु
 		gspca_frame_add(gspca_dev, INTER_PACKET, data, len);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_autogain(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *) gspca_dev;
-	int luma;
+अटल व्योम करो_स्वतःgain(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+	पूर्णांक luma;
 
-	if (sd->ag_cnt < 0)
-		return;
-	if (--sd->ag_cnt >= 0)
-		return;
+	अगर (sd->ag_cnt < 0)
+		वापस;
+	अगर (--sd->ag_cnt >= 0)
+		वापस;
 	sd->ag_cnt = AG_CNT_START;
 
 	/* get the average luma */
@@ -1949,98 +1950,98 @@ static void do_autogain(struct gspca_dev *gspca_dev)
 		+ (gspca_dev->usb_buf[1] << 8) + gspca_dev->usb_buf[0];
 	luma /= sd->ae_res;
 
-	switch (sd->webcam) {
-	case P35u:
-		gspca_coarse_grained_expo_autogain(gspca_dev, luma, 100, 5);
-		break;
-	default:
-		gspca_expo_autogain(gspca_dev, luma, 100, 5, 230, 0);
-		break;
-	}
-}
+	चयन (sd->webcam) अणु
+	हाल P35u:
+		gspca_coarse_grained_expo_स्वतःgain(gspca_dev, luma, 100, 5);
+		अवरोध;
+	शेष:
+		gspca_expo_स्वतःgain(gspca_dev, luma, 100, 5, 230, 0);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
 
-static int sd_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct gspca_dev *gspca_dev =
-		container_of(ctrl->handler, struct gspca_dev, ctrl_handler);
+अटल पूर्णांक sd_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा gspca_dev *gspca_dev =
+		container_of(ctrl->handler, काष्ठा gspca_dev, ctrl_handler);
 
 	gspca_dev->usb_err = 0;
 
-	if (!gspca_dev->streaming)
-		return 0;
+	अगर (!gspca_dev->streaming)
+		वापस 0;
 
-	switch (ctrl->id) {
-	/* autogain/gain/exposure control cluster */
-	case V4L2_CID_AUTOGAIN:
-		if (ctrl->is_new)
-			setautogain(gspca_dev, ctrl->val);
-		if (!ctrl->val) {
-			if (gspca_dev->gain->is_new)
+	चयन (ctrl->id) अणु
+	/* स्वतःgain/gain/exposure control cluster */
+	हाल V4L2_CID_AUTOGAIN:
+		अगर (ctrl->is_new)
+			setस्वतःgain(gspca_dev, ctrl->val);
+		अगर (!ctrl->val) अणु
+			अगर (gspca_dev->gain->is_new)
 				setgain(gspca_dev, gspca_dev->gain->val);
-			if (gspca_dev->exposure->is_new)
+			अगर (gspca_dev->exposure->is_new)
 				setexposure(gspca_dev,
 					    gspca_dev->exposure->val);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 	/* Some webcams only have exposure, so handle that separately from the
-	   autogain/gain/exposure cluster in the previous case. */
-	case V4L2_CID_EXPOSURE:
+	   स्वतःgain/gain/exposure cluster in the previous हाल. */
+	हाल V4L2_CID_EXPOSURE:
 		setexposure(gspca_dev, gspca_dev->exposure->val);
-		break;
-	}
-	return gspca_dev->usb_err;
-}
+		अवरोध;
+	पूर्ण
+	वापस gspca_dev->usb_err;
+पूर्ण
 
-static const struct v4l2_ctrl_ops sd_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops sd_ctrl_ops = अणु
 	.s_ctrl = sd_s_ctrl,
-};
+पूर्ण;
 
-static int sd_init_controls(struct gspca_dev *gspca_dev)
-{
-	struct sd *sd = (struct sd *)gspca_dev;
-	struct v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
+अटल पूर्णांक sd_init_controls(काष्ठा gspca_dev *gspca_dev)
+अणु
+	काष्ठा sd *sd = (काष्ठा sd *)gspca_dev;
+	काष्ठा v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
 
 	gspca_dev->vdev.ctrl_handler = hdl;
 	v4l2_ctrl_handler_init(hdl, 3);
-	switch (sd->webcam) {
-	case P35u:
-		gspca_dev->autogain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
+	चयन (sd->webcam) अणु
+	हाल P35u:
+		gspca_dev->स्वतःgain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_AUTOGAIN, 0, 1, 1, 1);
-		/* For P35u choose coarse expo auto gain function gain minimum,
-		 * to avoid a large settings jump the first auto adjustment */
+		/* For P35u choose coarse expo स्वतः gain function gain minimum,
+		 * to aव्योम a large settings jump the first स्वतः adjusपंचांगent */
 		gspca_dev->gain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_GAIN, 0, 127, 1, 127 / 5 * 2);
 		gspca_dev->exposure = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_EXPOSURE, 0, 9, 1, 9);
-		break;
-	case Kr651us:
-		gspca_dev->autogain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
+		अवरोध;
+	हाल Kr651us:
+		gspca_dev->स्वतःgain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_AUTOGAIN, 0, 1, 1, 1);
 		gspca_dev->gain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_GAIN, 0, 253, 1, 128);
 		fallthrough;
-	case Cvideopro:
-	case DvcV6:
-	case Kritter:
+	हाल Cvideopro:
+	हाल DvcV6:
+	हाल Kritter:
 		gspca_dev->exposure = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_EXPOSURE, 0, 315, 1, 150);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (hdl->error) {
+	अगर (hdl->error) अणु
 		pr_err("Could not initialize controls\n");
-		return hdl->error;
-	}
-	if (gspca_dev->autogain)
-		v4l2_ctrl_auto_cluster(3, &gspca_dev->autogain, 0, false);
-	return 0;
-}
+		वापस hdl->error;
+	पूर्ण
+	अगर (gspca_dev->स्वतःgain)
+		v4l2_ctrl_स्वतः_cluster(3, &gspca_dev->स्वतःgain, 0, false);
+	वापस 0;
+पूर्ण
 
 /* sub-driver description */
-static const struct sd_desc sd_desc = {
+अटल स्थिर काष्ठा sd_desc sd_desc = अणु
 	.name = MODULE_NAME,
 	.config = sd_config,
 	.init = sd_init,
@@ -2048,47 +2049,47 @@ static const struct sd_desc sd_desc = {
 	.start = sd_start,
 	.stopN = sd_stopN,
 	.pkt_scan = sd_pkt_scan,
-	.dq_callback = do_autogain,
-};
+	.dq_callback = करो_स्वतःgain,
+पूर्ण;
 
 /* -- module initialisation -- */
-static const struct usb_device_id device_table[] = {
-	{USB_DEVICE(0x046d, 0xd001)},
-	{USB_DEVICE(0x0502, 0xd001)},
-	{USB_DEVICE(0x052b, 0xd001)},
-	{USB_DEVICE(0x055f, 0xd001)},
-	{USB_DEVICE(0x06a5, 0x0000)},
-	{USB_DEVICE(0x06a5, 0xd001)},
-	{USB_DEVICE(0x06a5, 0xd800)},
-	{USB_DEVICE(0x06be, 0xd001)},
-	{USB_DEVICE(0x0728, 0xd001)},
-	{}
-};
+अटल स्थिर काष्ठा usb_device_id device_table[] = अणु
+	अणुUSB_DEVICE(0x046d, 0xd001)पूर्ण,
+	अणुUSB_DEVICE(0x0502, 0xd001)पूर्ण,
+	अणुUSB_DEVICE(0x052b, 0xd001)पूर्ण,
+	अणुUSB_DEVICE(0x055f, 0xd001)पूर्ण,
+	अणुUSB_DEVICE(0x06a5, 0x0000)पूर्ण,
+	अणुUSB_DEVICE(0x06a5, 0xd001)पूर्ण,
+	अणुUSB_DEVICE(0x06a5, 0xd800)पूर्ण,
+	अणुUSB_DEVICE(0x06be, 0xd001)पूर्ण,
+	अणुUSB_DEVICE(0x0728, 0xd001)पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, device_table);
 
 /* -- device connect -- */
-static int sd_probe(struct usb_interface *intf,
-			const struct usb_device_id *id)
-{
-	return gspca_dev_probe(intf, id, &sd_desc, sizeof(struct sd),
+अटल पूर्णांक sd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			स्थिर काष्ठा usb_device_id *id)
+अणु
+	वापस gspca_dev_probe(पूर्णांकf, id, &sd_desc, माप(काष्ठा sd),
 				THIS_MODULE);
-}
+पूर्ण
 
-static struct usb_driver sd_driver = {
+अटल काष्ठा usb_driver sd_driver = अणु
 	.name = MODULE_NAME,
 	.id_table = device_table,
 	.probe = sd_probe,
 	.disconnect = gspca_disconnect,
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	.suspend = gspca_suspend,
 	.resume = gspca_resume,
 	.reset_resume = gspca_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
 module_usb_driver(sd_driver);
 
-module_param(webcam, int, 0644);
+module_param(webcam, पूर्णांक, 0644);
 MODULE_PARM_DESC(webcam,
 	"Webcam type\n"
 	"0: generic\n"

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-2-Clause)
 /* Copyright (C) 2015-2018 Netronome Systems, Inc. */
 
 /*
@@ -10,145 +11,145 @@
  *          Brad Petrus <brad.petrus@netronome.com>
  */
 
-#include <linux/bitfield.h>
-#include <linux/kernel.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/ethtool.h>
-#include <linux/firmware.h>
-#include <linux/sfp.h>
+#समावेश <linux/bitfield.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/sfp.h>
 
-#include "nfpcore/nfp.h"
-#include "nfpcore/nfp_nsp.h"
-#include "nfp_app.h"
-#include "nfp_main.h"
-#include "nfp_net_ctrl.h"
-#include "nfp_net.h"
-#include "nfp_port.h"
+#समावेश "nfpcore/nfp.h"
+#समावेश "nfpcore/nfp_nsp.h"
+#समावेश "nfp_app.h"
+#समावेश "nfp_main.h"
+#समावेश "nfp_net_ctrl.h"
+#समावेश "nfp_net.h"
+#समावेश "nfp_port.h"
 
-struct nfp_et_stat {
-	char name[ETH_GSTRING_LEN];
-	int off;
-};
+काष्ठा nfp_et_stat अणु
+	अक्षर name[ETH_GSTRING_LEN];
+	पूर्णांक off;
+पूर्ण;
 
-static const struct nfp_et_stat nfp_net_et_stats[] = {
+अटल स्थिर काष्ठा nfp_et_stat nfp_net_et_stats[] = अणु
 	/* Stats from the device */
-	{ "dev_rx_discards",	NFP_NET_CFG_STATS_RX_DISCARDS },
-	{ "dev_rx_errors",	NFP_NET_CFG_STATS_RX_ERRORS },
-	{ "dev_rx_bytes",	NFP_NET_CFG_STATS_RX_OCTETS },
-	{ "dev_rx_uc_bytes",	NFP_NET_CFG_STATS_RX_UC_OCTETS },
-	{ "dev_rx_mc_bytes",	NFP_NET_CFG_STATS_RX_MC_OCTETS },
-	{ "dev_rx_bc_bytes",	NFP_NET_CFG_STATS_RX_BC_OCTETS },
-	{ "dev_rx_pkts",	NFP_NET_CFG_STATS_RX_FRAMES },
-	{ "dev_rx_mc_pkts",	NFP_NET_CFG_STATS_RX_MC_FRAMES },
-	{ "dev_rx_bc_pkts",	NFP_NET_CFG_STATS_RX_BC_FRAMES },
+	अणु "dev_rx_discards",	NFP_NET_CFG_STATS_RX_DISCARDS पूर्ण,
+	अणु "dev_rx_errors",	NFP_NET_CFG_STATS_RX_ERRORS पूर्ण,
+	अणु "dev_rx_bytes",	NFP_NET_CFG_STATS_RX_OCTETS पूर्ण,
+	अणु "dev_rx_uc_bytes",	NFP_NET_CFG_STATS_RX_UC_OCTETS पूर्ण,
+	अणु "dev_rx_mc_bytes",	NFP_NET_CFG_STATS_RX_MC_OCTETS पूर्ण,
+	अणु "dev_rx_bc_bytes",	NFP_NET_CFG_STATS_RX_BC_OCTETS पूर्ण,
+	अणु "dev_rx_pkts",	NFP_NET_CFG_STATS_RX_FRAMES पूर्ण,
+	अणु "dev_rx_mc_pkts",	NFP_NET_CFG_STATS_RX_MC_FRAMES पूर्ण,
+	अणु "dev_rx_bc_pkts",	NFP_NET_CFG_STATS_RX_BC_FRAMES पूर्ण,
 
-	{ "dev_tx_discards",	NFP_NET_CFG_STATS_TX_DISCARDS },
-	{ "dev_tx_errors",	NFP_NET_CFG_STATS_TX_ERRORS },
-	{ "dev_tx_bytes",	NFP_NET_CFG_STATS_TX_OCTETS },
-	{ "dev_tx_uc_bytes",	NFP_NET_CFG_STATS_TX_UC_OCTETS },
-	{ "dev_tx_mc_bytes",	NFP_NET_CFG_STATS_TX_MC_OCTETS },
-	{ "dev_tx_bc_bytes",	NFP_NET_CFG_STATS_TX_BC_OCTETS },
-	{ "dev_tx_pkts",	NFP_NET_CFG_STATS_TX_FRAMES },
-	{ "dev_tx_mc_pkts",	NFP_NET_CFG_STATS_TX_MC_FRAMES },
-	{ "dev_tx_bc_pkts",	NFP_NET_CFG_STATS_TX_BC_FRAMES },
+	अणु "dev_tx_discards",	NFP_NET_CFG_STATS_TX_DISCARDS पूर्ण,
+	अणु "dev_tx_errors",	NFP_NET_CFG_STATS_TX_ERRORS पूर्ण,
+	अणु "dev_tx_bytes",	NFP_NET_CFG_STATS_TX_OCTETS पूर्ण,
+	अणु "dev_tx_uc_bytes",	NFP_NET_CFG_STATS_TX_UC_OCTETS पूर्ण,
+	अणु "dev_tx_mc_bytes",	NFP_NET_CFG_STATS_TX_MC_OCTETS पूर्ण,
+	अणु "dev_tx_bc_bytes",	NFP_NET_CFG_STATS_TX_BC_OCTETS पूर्ण,
+	अणु "dev_tx_pkts",	NFP_NET_CFG_STATS_TX_FRAMES पूर्ण,
+	अणु "dev_tx_mc_pkts",	NFP_NET_CFG_STATS_TX_MC_FRAMES पूर्ण,
+	अणु "dev_tx_bc_pkts",	NFP_NET_CFG_STATS_TX_BC_FRAMES पूर्ण,
 
-	{ "bpf_pass_pkts",	NFP_NET_CFG_STATS_APP0_FRAMES },
-	{ "bpf_pass_bytes",	NFP_NET_CFG_STATS_APP0_BYTES },
+	अणु "bpf_pass_pkts",	NFP_NET_CFG_STATS_APP0_FRAMES पूर्ण,
+	अणु "bpf_pass_bytes",	NFP_NET_CFG_STATS_APP0_BYTES पूर्ण,
 	/* see comments in outro functions in nfp_bpf_jit.c to find out
-	 * how different BPF modes use app-specific counters
+	 * how dअगरferent BPF modes use app-specअगरic counters
 	 */
-	{ "bpf_app1_pkts",	NFP_NET_CFG_STATS_APP1_FRAMES },
-	{ "bpf_app1_bytes",	NFP_NET_CFG_STATS_APP1_BYTES },
-	{ "bpf_app2_pkts",	NFP_NET_CFG_STATS_APP2_FRAMES },
-	{ "bpf_app2_bytes",	NFP_NET_CFG_STATS_APP2_BYTES },
-	{ "bpf_app3_pkts",	NFP_NET_CFG_STATS_APP3_FRAMES },
-	{ "bpf_app3_bytes",	NFP_NET_CFG_STATS_APP3_BYTES },
-};
+	अणु "bpf_app1_pkts",	NFP_NET_CFG_STATS_APP1_FRAMES पूर्ण,
+	अणु "bpf_app1_bytes",	NFP_NET_CFG_STATS_APP1_BYTES पूर्ण,
+	अणु "bpf_app2_pkts",	NFP_NET_CFG_STATS_APP2_FRAMES पूर्ण,
+	अणु "bpf_app2_bytes",	NFP_NET_CFG_STATS_APP2_BYTES पूर्ण,
+	अणु "bpf_app3_pkts",	NFP_NET_CFG_STATS_APP3_FRAMES पूर्ण,
+	अणु "bpf_app3_bytes",	NFP_NET_CFG_STATS_APP3_BYTES पूर्ण,
+पूर्ण;
 
-static const struct nfp_et_stat nfp_mac_et_stats[] = {
-	{ "rx_octets",			NFP_MAC_STATS_RX_IN_OCTETS, },
-	{ "rx_frame_too_long_errors",
-			NFP_MAC_STATS_RX_FRAME_TOO_LONG_ERRORS, },
-	{ "rx_range_length_errors",	NFP_MAC_STATS_RX_RANGE_LENGTH_ERRORS, },
-	{ "rx_vlan_received_ok",	NFP_MAC_STATS_RX_VLAN_RECEIVED_OK, },
-	{ "rx_errors",			NFP_MAC_STATS_RX_IN_ERRORS, },
-	{ "rx_broadcast_pkts",		NFP_MAC_STATS_RX_IN_BROADCAST_PKTS, },
-	{ "rx_drop_events",		NFP_MAC_STATS_RX_DROP_EVENTS, },
-	{ "rx_alignment_errors",	NFP_MAC_STATS_RX_ALIGNMENT_ERRORS, },
-	{ "rx_pause_mac_ctrl_frames",
-			NFP_MAC_STATS_RX_PAUSE_MAC_CTRL_FRAMES, },
-	{ "rx_frames_received_ok",	NFP_MAC_STATS_RX_FRAMES_RECEIVED_OK, },
-	{ "rx_frame_check_sequence_errors",
-			NFP_MAC_STATS_RX_FRAME_CHECK_SEQUENCE_ERRORS, },
-	{ "rx_unicast_pkts",		NFP_MAC_STATS_RX_UNICAST_PKTS, },
-	{ "rx_multicast_pkts",		NFP_MAC_STATS_RX_MULTICAST_PKTS, },
-	{ "rx_pkts",			NFP_MAC_STATS_RX_PKTS, },
-	{ "rx_undersize_pkts",		NFP_MAC_STATS_RX_UNDERSIZE_PKTS, },
-	{ "rx_pkts_64_octets",		NFP_MAC_STATS_RX_PKTS_64_OCTETS, },
-	{ "rx_pkts_65_to_127_octets",
-			NFP_MAC_STATS_RX_PKTS_65_TO_127_OCTETS, },
-	{ "rx_pkts_128_to_255_octets",
-			NFP_MAC_STATS_RX_PKTS_128_TO_255_OCTETS, },
-	{ "rx_pkts_256_to_511_octets",
-			NFP_MAC_STATS_RX_PKTS_256_TO_511_OCTETS, },
-	{ "rx_pkts_512_to_1023_octets",
-			NFP_MAC_STATS_RX_PKTS_512_TO_1023_OCTETS, },
-	{ "rx_pkts_1024_to_1518_octets",
-			NFP_MAC_STATS_RX_PKTS_1024_TO_1518_OCTETS, },
-	{ "rx_pkts_1519_to_max_octets",
-			NFP_MAC_STATS_RX_PKTS_1519_TO_MAX_OCTETS, },
-	{ "rx_jabbers",			NFP_MAC_STATS_RX_JABBERS, },
-	{ "rx_fragments",		NFP_MAC_STATS_RX_FRAGMENTS, },
-	{ "rx_oversize_pkts",		NFP_MAC_STATS_RX_OVERSIZE_PKTS, },
-	{ "rx_pause_frames_class0",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS0, },
-	{ "rx_pause_frames_class1",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS1, },
-	{ "rx_pause_frames_class2",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS2, },
-	{ "rx_pause_frames_class3",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS3, },
-	{ "rx_pause_frames_class4",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS4, },
-	{ "rx_pause_frames_class5",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS5, },
-	{ "rx_pause_frames_class6",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS6, },
-	{ "rx_pause_frames_class7",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS7, },
-	{ "rx_mac_ctrl_frames_received",
-			NFP_MAC_STATS_RX_MAC_CTRL_FRAMES_RECEIVED, },
-	{ "rx_mac_head_drop",		NFP_MAC_STATS_RX_MAC_HEAD_DROP, },
-	{ "tx_queue_drop",		NFP_MAC_STATS_TX_QUEUE_DROP, },
-	{ "tx_octets",			NFP_MAC_STATS_TX_OUT_OCTETS, },
-	{ "tx_vlan_transmitted_ok",	NFP_MAC_STATS_TX_VLAN_TRANSMITTED_OK, },
-	{ "tx_errors",			NFP_MAC_STATS_TX_OUT_ERRORS, },
-	{ "tx_broadcast_pkts",		NFP_MAC_STATS_TX_BROADCAST_PKTS, },
-	{ "tx_pause_mac_ctrl_frames",
-			NFP_MAC_STATS_TX_PAUSE_MAC_CTRL_FRAMES, },
-	{ "tx_frames_transmitted_ok",
-			NFP_MAC_STATS_TX_FRAMES_TRANSMITTED_OK, },
-	{ "tx_unicast_pkts",		NFP_MAC_STATS_TX_UNICAST_PKTS, },
-	{ "tx_multicast_pkts",		NFP_MAC_STATS_TX_MULTICAST_PKTS, },
-	{ "tx_pkts_64_octets",		NFP_MAC_STATS_TX_PKTS_64_OCTETS, },
-	{ "tx_pkts_65_to_127_octets",
-			NFP_MAC_STATS_TX_PKTS_65_TO_127_OCTETS, },
-	{ "tx_pkts_128_to_255_octets",
-			NFP_MAC_STATS_TX_PKTS_128_TO_255_OCTETS, },
-	{ "tx_pkts_256_to_511_octets",
-			NFP_MAC_STATS_TX_PKTS_256_TO_511_OCTETS, },
-	{ "tx_pkts_512_to_1023_octets",
-			NFP_MAC_STATS_TX_PKTS_512_TO_1023_OCTETS, },
-	{ "tx_pkts_1024_to_1518_octets",
-			NFP_MAC_STATS_TX_PKTS_1024_TO_1518_OCTETS, },
-	{ "tx_pkts_1519_to_max_octets",
-			NFP_MAC_STATS_TX_PKTS_1519_TO_MAX_OCTETS, },
-	{ "tx_pause_frames_class0",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS0, },
-	{ "tx_pause_frames_class1",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS1, },
-	{ "tx_pause_frames_class2",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS2, },
-	{ "tx_pause_frames_class3",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS3, },
-	{ "tx_pause_frames_class4",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS4, },
-	{ "tx_pause_frames_class5",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS5, },
-	{ "tx_pause_frames_class6",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS6, },
-	{ "tx_pause_frames_class7",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS7, },
-};
+अटल स्थिर काष्ठा nfp_et_stat nfp_mac_et_stats[] = अणु
+	अणु "rx_octets",			NFP_MAC_STATS_RX_IN_OCTETS, पूर्ण,
+	अणु "rx_frame_too_long_errors",
+			NFP_MAC_STATS_RX_FRAME_TOO_LONG_ERRORS, पूर्ण,
+	अणु "rx_range_length_errors",	NFP_MAC_STATS_RX_RANGE_LENGTH_ERRORS, पूर्ण,
+	अणु "rx_vlan_received_ok",	NFP_MAC_STATS_RX_VLAN_RECEIVED_OK, पूर्ण,
+	अणु "rx_errors",			NFP_MAC_STATS_RX_IN_ERRORS, पूर्ण,
+	अणु "rx_broadcast_pkts",		NFP_MAC_STATS_RX_IN_BROADCAST_PKTS, पूर्ण,
+	अणु "rx_drop_events",		NFP_MAC_STATS_RX_DROP_EVENTS, पूर्ण,
+	अणु "rx_alignment_errors",	NFP_MAC_STATS_RX_ALIGNMENT_ERRORS, पूर्ण,
+	अणु "rx_pause_mac_ctrl_frames",
+			NFP_MAC_STATS_RX_PAUSE_MAC_CTRL_FRAMES, पूर्ण,
+	अणु "rx_frames_received_ok",	NFP_MAC_STATS_RX_FRAMES_RECEIVED_OK, पूर्ण,
+	अणु "rx_frame_check_sequence_errors",
+			NFP_MAC_STATS_RX_FRAME_CHECK_SEQUENCE_ERRORS, पूर्ण,
+	अणु "rx_unicast_pkts",		NFP_MAC_STATS_RX_UNICAST_PKTS, पूर्ण,
+	अणु "rx_multicast_pkts",		NFP_MAC_STATS_RX_MULTICAST_PKTS, पूर्ण,
+	अणु "rx_pkts",			NFP_MAC_STATS_RX_PKTS, पूर्ण,
+	अणु "rx_undersize_pkts",		NFP_MAC_STATS_RX_UNDERSIZE_PKTS, पूर्ण,
+	अणु "rx_pkts_64_octets",		NFP_MAC_STATS_RX_PKTS_64_OCTETS, पूर्ण,
+	अणु "rx_pkts_65_to_127_octets",
+			NFP_MAC_STATS_RX_PKTS_65_TO_127_OCTETS, पूर्ण,
+	अणु "rx_pkts_128_to_255_octets",
+			NFP_MAC_STATS_RX_PKTS_128_TO_255_OCTETS, पूर्ण,
+	अणु "rx_pkts_256_to_511_octets",
+			NFP_MAC_STATS_RX_PKTS_256_TO_511_OCTETS, पूर्ण,
+	अणु "rx_pkts_512_to_1023_octets",
+			NFP_MAC_STATS_RX_PKTS_512_TO_1023_OCTETS, पूर्ण,
+	अणु "rx_pkts_1024_to_1518_octets",
+			NFP_MAC_STATS_RX_PKTS_1024_TO_1518_OCTETS, पूर्ण,
+	अणु "rx_pkts_1519_to_max_octets",
+			NFP_MAC_STATS_RX_PKTS_1519_TO_MAX_OCTETS, पूर्ण,
+	अणु "rx_jabbers",			NFP_MAC_STATS_RX_JABBERS, पूर्ण,
+	अणु "rx_fragments",		NFP_MAC_STATS_RX_FRAGMENTS, पूर्ण,
+	अणु "rx_oversize_pkts",		NFP_MAC_STATS_RX_OVERSIZE_PKTS, पूर्ण,
+	अणु "rx_pause_frames_class0",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS0, पूर्ण,
+	अणु "rx_pause_frames_class1",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS1, पूर्ण,
+	अणु "rx_pause_frames_class2",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS2, पूर्ण,
+	अणु "rx_pause_frames_class3",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS3, पूर्ण,
+	अणु "rx_pause_frames_class4",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS4, पूर्ण,
+	अणु "rx_pause_frames_class5",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS5, पूर्ण,
+	अणु "rx_pause_frames_class6",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS6, पूर्ण,
+	अणु "rx_pause_frames_class7",	NFP_MAC_STATS_RX_PAUSE_FRAMES_CLASS7, पूर्ण,
+	अणु "rx_mac_ctrl_frames_received",
+			NFP_MAC_STATS_RX_MAC_CTRL_FRAMES_RECEIVED, पूर्ण,
+	अणु "rx_mac_head_drop",		NFP_MAC_STATS_RX_MAC_HEAD_DROP, पूर्ण,
+	अणु "tx_queue_drop",		NFP_MAC_STATS_TX_QUEUE_DROP, पूर्ण,
+	अणु "tx_octets",			NFP_MAC_STATS_TX_OUT_OCTETS, पूर्ण,
+	अणु "tx_vlan_transmitted_ok",	NFP_MAC_STATS_TX_VLAN_TRANSMITTED_OK, पूर्ण,
+	अणु "tx_errors",			NFP_MAC_STATS_TX_OUT_ERRORS, पूर्ण,
+	अणु "tx_broadcast_pkts",		NFP_MAC_STATS_TX_BROADCAST_PKTS, पूर्ण,
+	अणु "tx_pause_mac_ctrl_frames",
+			NFP_MAC_STATS_TX_PAUSE_MAC_CTRL_FRAMES, पूर्ण,
+	अणु "tx_frames_transmitted_ok",
+			NFP_MAC_STATS_TX_FRAMES_TRANSMITTED_OK, पूर्ण,
+	अणु "tx_unicast_pkts",		NFP_MAC_STATS_TX_UNICAST_PKTS, पूर्ण,
+	अणु "tx_multicast_pkts",		NFP_MAC_STATS_TX_MULTICAST_PKTS, पूर्ण,
+	अणु "tx_pkts_64_octets",		NFP_MAC_STATS_TX_PKTS_64_OCTETS, पूर्ण,
+	अणु "tx_pkts_65_to_127_octets",
+			NFP_MAC_STATS_TX_PKTS_65_TO_127_OCTETS, पूर्ण,
+	अणु "tx_pkts_128_to_255_octets",
+			NFP_MAC_STATS_TX_PKTS_128_TO_255_OCTETS, पूर्ण,
+	अणु "tx_pkts_256_to_511_octets",
+			NFP_MAC_STATS_TX_PKTS_256_TO_511_OCTETS, पूर्ण,
+	अणु "tx_pkts_512_to_1023_octets",
+			NFP_MAC_STATS_TX_PKTS_512_TO_1023_OCTETS, पूर्ण,
+	अणु "tx_pkts_1024_to_1518_octets",
+			NFP_MAC_STATS_TX_PKTS_1024_TO_1518_OCTETS, पूर्ण,
+	अणु "tx_pkts_1519_to_max_octets",
+			NFP_MAC_STATS_TX_PKTS_1519_TO_MAX_OCTETS, पूर्ण,
+	अणु "tx_pause_frames_class0",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS0, पूर्ण,
+	अणु "tx_pause_frames_class1",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS1, पूर्ण,
+	अणु "tx_pause_frames_class2",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS2, पूर्ण,
+	अणु "tx_pause_frames_class3",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS3, पूर्ण,
+	अणु "tx_pause_frames_class4",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS4, पूर्ण,
+	अणु "tx_pause_frames_class5",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS5, पूर्ण,
+	अणु "tx_pause_frames_class6",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS6, पूर्ण,
+	अणु "tx_pause_frames_class7",	NFP_MAC_STATS_TX_PAUSE_FRAMES_CLASS7, पूर्ण,
+पूर्ण;
 
-static const char nfp_tlv_stat_names[][ETH_GSTRING_LEN] = {
+अटल स्थिर अक्षर nfp_tlv_stat_names[][ETH_GSTRING_LEN] = अणु
 	[1]	= "dev_rx_discards",
 	[2]	= "dev_rx_errors",
 	[3]	= "dev_rx_bytes",
@@ -168,108 +169,108 @@ static const char nfp_tlv_stat_names[][ETH_GSTRING_LEN] = {
 	[16]	= "dev_tx_pkts",
 	[17]	= "dev_tx_mc_pkts",
 	[18]	= "dev_tx_bc_pkts",
-};
+पूर्ण;
 
-#define NN_ET_GLOBAL_STATS_LEN ARRAY_SIZE(nfp_net_et_stats)
-#define NN_ET_SWITCH_STATS_LEN 9
-#define NN_RVEC_GATHER_STATS	13
-#define NN_RVEC_PER_Q_STATS	3
-#define NN_CTRL_PATH_STATS	4
+#घोषणा NN_ET_GLOBAL_STATS_LEN ARRAY_SIZE(nfp_net_et_stats)
+#घोषणा NN_ET_SWITCH_STATS_LEN 9
+#घोषणा NN_RVEC_GATHER_STATS	13
+#घोषणा NN_RVEC_PER_Q_STATS	3
+#घोषणा NN_CTRL_PATH_STATS	4
 
-#define SFP_SFF_REV_COMPLIANCE	1
+#घोषणा SFP_SFF_REV_COMPLIANCE	1
 
-static void nfp_net_get_nspinfo(struct nfp_app *app, char *version)
-{
-	struct nfp_nsp *nsp;
+अटल व्योम nfp_net_get_nspinfo(काष्ठा nfp_app *app, अक्षर *version)
+अणु
+	काष्ठा nfp_nsp *nsp;
 
-	if (!app)
-		return;
+	अगर (!app)
+		वापस;
 
-	nsp = nfp_nsp_open(app->cpp);
-	if (IS_ERR(nsp))
-		return;
+	nsp = nfp_nsp_खोलो(app->cpp);
+	अगर (IS_ERR(nsp))
+		वापस;
 
-	snprintf(version, ETHTOOL_FWVERS_LEN, "%hu.%hu",
+	snम_लिखो(version, ETHTOOL_FWVERS_LEN, "%hu.%hu",
 		 nfp_nsp_get_abi_ver_major(nsp),
 		 nfp_nsp_get_abi_ver_minor(nsp));
 
-	nfp_nsp_close(nsp);
-}
+	nfp_nsp_बंद(nsp);
+पूर्ण
 
-static void
-nfp_get_drvinfo(struct nfp_app *app, struct pci_dev *pdev,
-		const char *vnic_version, struct ethtool_drvinfo *drvinfo)
-{
-	char nsp_version[ETHTOOL_FWVERS_LEN] = {};
+अटल व्योम
+nfp_get_drvinfo(काष्ठा nfp_app *app, काष्ठा pci_dev *pdev,
+		स्थिर अक्षर *vnic_version, काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	अक्षर nsp_version[ETHTOOL_FWVERS_LEN] = अणुपूर्ण;
 
-	strlcpy(drvinfo->driver, pdev->driver->name, sizeof(drvinfo->driver));
+	strlcpy(drvinfo->driver, pdev->driver->name, माप(drvinfo->driver));
 	nfp_net_get_nspinfo(app, nsp_version);
-	snprintf(drvinfo->fw_version, sizeof(drvinfo->fw_version),
+	snम_लिखो(drvinfo->fw_version, माप(drvinfo->fw_version),
 		 "%s %s %s %s", vnic_version, nsp_version,
 		 nfp_app_mip_name(app), nfp_app_name(app));
-}
+पूर्ण
 
-static void
-nfp_net_get_drvinfo(struct net_device *netdev, struct ethtool_drvinfo *drvinfo)
-{
-	char vnic_version[ETHTOOL_FWVERS_LEN] = {};
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल व्योम
+nfp_net_get_drvinfo(काष्ठा net_device *netdev, काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	अक्षर vnic_version[ETHTOOL_FWVERS_LEN] = अणुपूर्ण;
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
-	snprintf(vnic_version, sizeof(vnic_version), "%d.%d.%d.%d",
+	snम_लिखो(vnic_version, माप(vnic_version), "%d.%d.%d.%d",
 		 nn->fw_ver.resv, nn->fw_ver.class,
 		 nn->fw_ver.major, nn->fw_ver.minor);
 	strlcpy(drvinfo->bus_info, pci_name(nn->pdev),
-		sizeof(drvinfo->bus_info));
+		माप(drvinfo->bus_info));
 
 	nfp_get_drvinfo(nn->app, nn->pdev, vnic_version, drvinfo);
-}
+पूर्ण
 
-static void
-nfp_app_get_drvinfo(struct net_device *netdev, struct ethtool_drvinfo *drvinfo)
-{
-	struct nfp_app *app = nfp_app_from_netdev(netdev);
+अटल व्योम
+nfp_app_get_drvinfo(काष्ठा net_device *netdev, काष्ठा ethtool_drvinfo *drvinfo)
+अणु
+	काष्ठा nfp_app *app = nfp_app_from_netdev(netdev);
 
 	strlcpy(drvinfo->bus_info, pci_name(app->pdev),
-		sizeof(drvinfo->bus_info));
+		माप(drvinfo->bus_info));
 	nfp_get_drvinfo(app, app->pdev, "*", drvinfo);
-}
+पूर्ण
 
-static void
-nfp_net_set_fec_link_mode(struct nfp_eth_table_port *eth_port,
-			  struct ethtool_link_ksettings *c)
-{
-	unsigned int modes;
+अटल व्योम
+nfp_net_set_fec_link_mode(काष्ठा nfp_eth_table_port *eth_port,
+			  काष्ठा ethtool_link_ksettings *c)
+अणु
+	अचिन्हित पूर्णांक modes;
 
 	ethtool_link_ksettings_add_link_mode(c, supported, FEC_NONE);
-	if (!nfp_eth_can_support_fec(eth_port)) {
+	अगर (!nfp_eth_can_support_fec(eth_port)) अणु
 		ethtool_link_ksettings_add_link_mode(c, advertising, FEC_NONE);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	modes = nfp_eth_supported_fec_modes(eth_port);
-	if (modes & NFP_FEC_BASER) {
+	अगर (modes & NFP_FEC_BASER) अणु
 		ethtool_link_ksettings_add_link_mode(c, supported, FEC_BASER);
 		ethtool_link_ksettings_add_link_mode(c, advertising, FEC_BASER);
-	}
+	पूर्ण
 
-	if (modes & NFP_FEC_REED_SOLOMON) {
+	अगर (modes & NFP_FEC_REED_SOLOMON) अणु
 		ethtool_link_ksettings_add_link_mode(c, supported, FEC_RS);
 		ethtool_link_ksettings_add_link_mode(c, advertising, FEC_RS);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * nfp_net_get_link_ksettings - Get Link Speed settings
- * @netdev:	network interface device structure
+ * @netdev:	network पूर्णांकerface device काष्ठाure
  * @cmd:	ethtool command
  *
  * Reports speed settings based on info in the BAR provided by the fw.
  */
-static int
-nfp_net_get_link_ksettings(struct net_device *netdev,
-			   struct ethtool_link_ksettings *cmd)
-{
-	static const u32 ls_to_ethtool[] = {
+अटल पूर्णांक
+nfp_net_get_link_ksettings(काष्ठा net_device *netdev,
+			   काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	अटल स्थिर u32 ls_to_ethtool[] = अणु
 		[NFP_NET_CFG_STS_LINK_RATE_UNSUPPORTED]	= 0,
 		[NFP_NET_CFG_STS_LINK_RATE_UNKNOWN]	= SPEED_UNKNOWN,
 		[NFP_NET_CFG_STS_LINK_RATE_1G]		= SPEED_1000,
@@ -278,10 +279,10 @@ nfp_net_get_link_ksettings(struct net_device *netdev,
 		[NFP_NET_CFG_STS_LINK_RATE_40G]		= SPEED_40000,
 		[NFP_NET_CFG_STS_LINK_RATE_50G]		= SPEED_50000,
 		[NFP_NET_CFG_STS_LINK_RATE_100G]	= SPEED_100000,
-	};
-	struct nfp_eth_table_port *eth_port;
-	struct nfp_port *port;
-	struct nfp_net *nn;
+	पूर्ण;
+	काष्ठा nfp_eth_table_port *eth_port;
+	काष्ठा nfp_port *port;
+	काष्ठा nfp_net *nn;
 	u32 sts, ls;
 
 	/* Init to unknowns */
@@ -292,1084 +293,1084 @@ nfp_net_get_link_ksettings(struct net_device *netdev,
 
 	port = nfp_port_from_netdev(netdev);
 	eth_port = nfp_port_get_eth_port(port);
-	if (eth_port) {
-		cmd->base.autoneg = eth_port->aneg != NFP_ANEG_DISABLED ?
+	अगर (eth_port) अणु
+		cmd->base.स्वतःneg = eth_port->aneg != NFP_ANEG_DISABLED ?
 			AUTONEG_ENABLE : AUTONEG_DISABLE;
 		nfp_net_set_fec_link_mode(eth_port, cmd);
-	}
+	पूर्ण
 
-	if (!netif_carrier_ok(netdev))
-		return 0;
+	अगर (!netअगर_carrier_ok(netdev))
+		वापस 0;
 
-	/* Use link speed from ETH table if available, otherwise try the BAR */
-	if (eth_port) {
+	/* Use link speed from ETH table अगर available, otherwise try the BAR */
+	अगर (eth_port) अणु
 		cmd->base.port = eth_port->port_type;
 		cmd->base.speed = eth_port->speed;
 		cmd->base.duplex = DUPLEX_FULL;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!nfp_netdev_is_nfp_net(netdev))
-		return -EOPNOTSUPP;
+	अगर (!nfp_netdev_is_nfp_net(netdev))
+		वापस -EOPNOTSUPP;
 	nn = netdev_priv(netdev);
 
-	sts = nn_readl(nn, NFP_NET_CFG_STS);
+	sts = nn_पढ़ोl(nn, NFP_NET_CFG_STS);
 
 	ls = FIELD_GET(NFP_NET_CFG_STS_LINK_RATE, sts);
-	if (ls == NFP_NET_CFG_STS_LINK_RATE_UNSUPPORTED)
-		return -EOPNOTSUPP;
+	अगर (ls == NFP_NET_CFG_STS_LINK_RATE_UNSUPPORTED)
+		वापस -EOPNOTSUPP;
 
-	if (ls == NFP_NET_CFG_STS_LINK_RATE_UNKNOWN ||
+	अगर (ls == NFP_NET_CFG_STS_LINK_RATE_UNKNOWN ||
 	    ls >= ARRAY_SIZE(ls_to_ethtool))
-		return 0;
+		वापस 0;
 
 	cmd->base.speed = ls_to_ethtool[ls];
 	cmd->base.duplex = DUPLEX_FULL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_net_set_link_ksettings(struct net_device *netdev,
-			   const struct ethtool_link_ksettings *cmd)
-{
-	struct nfp_eth_table_port *eth_port;
-	struct nfp_port *port;
-	struct nfp_nsp *nsp;
-	int err;
+अटल पूर्णांक
+nfp_net_set_link_ksettings(काष्ठा net_device *netdev,
+			   स्थिर काष्ठा ethtool_link_ksettings *cmd)
+अणु
+	काष्ठा nfp_eth_table_port *eth_port;
+	काष्ठा nfp_port *port;
+	काष्ठा nfp_nsp *nsp;
+	पूर्णांक err;
 
 	port = nfp_port_from_netdev(netdev);
 	eth_port = __nfp_port_get_eth_port(port);
-	if (!eth_port)
-		return -EOPNOTSUPP;
+	अगर (!eth_port)
+		वापस -EOPNOTSUPP;
 
-	if (netif_running(netdev)) {
+	अगर (netअगर_running(netdev)) अणु
 		netdev_warn(netdev, "Changing settings not allowed on an active interface. It may cause the port to be disabled until driver reload.\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	nsp = nfp_eth_config_start(port->app->cpp, eth_port->index);
-	if (IS_ERR(nsp))
-		return PTR_ERR(nsp);
+	अगर (IS_ERR(nsp))
+		वापस PTR_ERR(nsp);
 
-	err = __nfp_eth_set_aneg(nsp, cmd->base.autoneg == AUTONEG_ENABLE ?
+	err = __nfp_eth_set_aneg(nsp, cmd->base.स्वतःneg == AUTONEG_ENABLE ?
 				 NFP_ANEG_AUTO : NFP_ANEG_DISABLED);
-	if (err)
-		goto err_bad_set;
-	if (cmd->base.speed != SPEED_UNKNOWN) {
+	अगर (err)
+		जाओ err_bad_set;
+	अगर (cmd->base.speed != SPEED_UNKNOWN) अणु
 		u32 speed = cmd->base.speed / eth_port->lanes;
 
 		err = __nfp_eth_set_speed(nsp, speed);
-		if (err)
-			goto err_bad_set;
-	}
+		अगर (err)
+			जाओ err_bad_set;
+	पूर्ण
 
 	err = nfp_eth_config_commit_end(nsp);
-	if (err > 0)
-		return 0; /* no change */
+	अगर (err > 0)
+		वापस 0; /* no change */
 
 	nfp_net_refresh_port_table(port);
 
-	return err;
+	वापस err;
 
 err_bad_set:
 	nfp_eth_config_cleanup_end(nsp);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void nfp_net_get_ringparam(struct net_device *netdev,
-				  struct ethtool_ringparam *ring)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल व्योम nfp_net_get_ringparam(काष्ठा net_device *netdev,
+				  काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
 	ring->rx_max_pending = NFP_NET_MAX_RX_DESCS;
 	ring->tx_max_pending = NFP_NET_MAX_TX_DESCS;
 	ring->rx_pending = nn->dp.rxd_cnt;
 	ring->tx_pending = nn->dp.txd_cnt;
-}
+पूर्ण
 
-static int nfp_net_set_ring_size(struct nfp_net *nn, u32 rxd_cnt, u32 txd_cnt)
-{
-	struct nfp_net_dp *dp;
+अटल पूर्णांक nfp_net_set_ring_size(काष्ठा nfp_net *nn, u32 rxd_cnt, u32 txd_cnt)
+अणु
+	काष्ठा nfp_net_dp *dp;
 
 	dp = nfp_net_clone_dp(nn);
-	if (!dp)
-		return -ENOMEM;
+	अगर (!dp)
+		वापस -ENOMEM;
 
 	dp->rxd_cnt = rxd_cnt;
 	dp->txd_cnt = txd_cnt;
 
-	return nfp_net_ring_reconfig(nn, dp, NULL);
-}
+	वापस nfp_net_ring_reconfig(nn, dp, शून्य);
+पूर्ण
 
-static int nfp_net_set_ringparam(struct net_device *netdev,
-				 struct ethtool_ringparam *ring)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल पूर्णांक nfp_net_set_ringparam(काष्ठा net_device *netdev,
+				 काष्ठा ethtool_ringparam *ring)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 	u32 rxd_cnt, txd_cnt;
 
-	/* We don't have separate queues/rings for small/large frames. */
-	if (ring->rx_mini_pending || ring->rx_jumbo_pending)
-		return -EINVAL;
+	/* We करोn't have separate queues/rings क्रम small/large frames. */
+	अगर (ring->rx_mini_pending || ring->rx_jumbo_pending)
+		वापस -EINVAL;
 
 	/* Round up to supported values */
-	rxd_cnt = roundup_pow_of_two(ring->rx_pending);
-	txd_cnt = roundup_pow_of_two(ring->tx_pending);
+	rxd_cnt = roundup_घात_of_two(ring->rx_pending);
+	txd_cnt = roundup_घात_of_two(ring->tx_pending);
 
-	if (rxd_cnt < NFP_NET_MIN_RX_DESCS || rxd_cnt > NFP_NET_MAX_RX_DESCS ||
+	अगर (rxd_cnt < NFP_NET_MIN_RX_DESCS || rxd_cnt > NFP_NET_MAX_RX_DESCS ||
 	    txd_cnt < NFP_NET_MIN_TX_DESCS || txd_cnt > NFP_NET_MAX_TX_DESCS)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (nn->dp.rxd_cnt == rxd_cnt && nn->dp.txd_cnt == txd_cnt)
-		return 0;
+	अगर (nn->dp.rxd_cnt == rxd_cnt && nn->dp.txd_cnt == txd_cnt)
+		वापस 0;
 
 	nn_dbg(nn, "Change ring size: RxQ %u->%u, TxQ %u->%u\n",
 	       nn->dp.rxd_cnt, rxd_cnt, nn->dp.txd_cnt, txd_cnt);
 
-	return nfp_net_set_ring_size(nn, rxd_cnt, txd_cnt);
-}
+	वापस nfp_net_set_ring_size(nn, rxd_cnt, txd_cnt);
+पूर्ण
 
-static unsigned int nfp_vnic_get_sw_stats_count(struct net_device *netdev)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल अचिन्हित पूर्णांक nfp_vnic_get_sw_stats_count(काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
-	return NN_RVEC_GATHER_STATS + nn->max_r_vecs * NN_RVEC_PER_Q_STATS +
+	वापस NN_RVEC_GATHER_STATS + nn->max_r_vecs * NN_RVEC_PER_Q_STATS +
 		NN_CTRL_PATH_STATS;
-}
+पूर्ण
 
-static u8 *nfp_vnic_get_sw_stats_strings(struct net_device *netdev, u8 *data)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
-	int i;
+अटल u8 *nfp_vnic_get_sw_stats_strings(काष्ठा net_device *netdev, u8 *data)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
+	पूर्णांक i;
 
-	for (i = 0; i < nn->max_r_vecs; i++) {
-		ethtool_sprintf(&data, "rvec_%u_rx_pkts", i);
-		ethtool_sprintf(&data, "rvec_%u_tx_pkts", i);
-		ethtool_sprintf(&data, "rvec_%u_tx_busy", i);
-	}
+	क्रम (i = 0; i < nn->max_r_vecs; i++) अणु
+		ethtool_प्र_लिखो(&data, "rvec_%u_rx_pkts", i);
+		ethtool_प्र_लिखो(&data, "rvec_%u_tx_pkts", i);
+		ethtool_प्र_लिखो(&data, "rvec_%u_tx_busy", i);
+	पूर्ण
 
-	ethtool_sprintf(&data, "hw_rx_csum_ok");
-	ethtool_sprintf(&data, "hw_rx_csum_inner_ok");
-	ethtool_sprintf(&data, "hw_rx_csum_complete");
-	ethtool_sprintf(&data, "hw_rx_csum_err");
-	ethtool_sprintf(&data, "rx_replace_buf_alloc_fail");
-	ethtool_sprintf(&data, "rx_tls_decrypted_packets");
-	ethtool_sprintf(&data, "hw_tx_csum");
-	ethtool_sprintf(&data, "hw_tx_inner_csum");
-	ethtool_sprintf(&data, "tx_gather");
-	ethtool_sprintf(&data, "tx_lso");
-	ethtool_sprintf(&data, "tx_tls_encrypted_packets");
-	ethtool_sprintf(&data, "tx_tls_ooo");
-	ethtool_sprintf(&data, "tx_tls_drop_no_sync_data");
+	ethtool_प्र_लिखो(&data, "hw_rx_csum_ok");
+	ethtool_प्र_लिखो(&data, "hw_rx_csum_inner_ok");
+	ethtool_प्र_लिखो(&data, "hw_rx_csum_complete");
+	ethtool_प्र_लिखो(&data, "hw_rx_csum_err");
+	ethtool_प्र_लिखो(&data, "rx_replace_buf_alloc_fail");
+	ethtool_प्र_लिखो(&data, "rx_tls_decrypted_packets");
+	ethtool_प्र_लिखो(&data, "hw_tx_csum");
+	ethtool_प्र_लिखो(&data, "hw_tx_inner_csum");
+	ethtool_प्र_लिखो(&data, "tx_gather");
+	ethtool_प्र_लिखो(&data, "tx_lso");
+	ethtool_प्र_लिखो(&data, "tx_tls_encrypted_packets");
+	ethtool_प्र_लिखो(&data, "tx_tls_ooo");
+	ethtool_प्र_लिखो(&data, "tx_tls_drop_no_sync_data");
 
-	ethtool_sprintf(&data, "hw_tls_no_space");
-	ethtool_sprintf(&data, "rx_tls_resync_req_ok");
-	ethtool_sprintf(&data, "rx_tls_resync_req_ign");
-	ethtool_sprintf(&data, "rx_tls_resync_sent");
+	ethtool_प्र_लिखो(&data, "hw_tls_no_space");
+	ethtool_प्र_लिखो(&data, "rx_tls_resync_req_ok");
+	ethtool_प्र_लिखो(&data, "rx_tls_resync_req_ign");
+	ethtool_प्र_लिखो(&data, "rx_tls_resync_sent");
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static u64 *nfp_vnic_get_sw_stats(struct net_device *netdev, u64 *data)
-{
-	u64 gathered_stats[NN_RVEC_GATHER_STATS] = {};
-	struct nfp_net *nn = netdev_priv(netdev);
-	u64 tmp[NN_RVEC_GATHER_STATS];
-	unsigned int i, j;
+अटल u64 *nfp_vnic_get_sw_stats(काष्ठा net_device *netdev, u64 *data)
+अणु
+	u64 gathered_stats[NN_RVEC_GATHER_STATS] = अणुपूर्ण;
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
+	u64 पंचांगp[NN_RVEC_GATHER_STATS];
+	अचिन्हित पूर्णांक i, j;
 
-	for (i = 0; i < nn->max_r_vecs; i++) {
-		unsigned int start;
+	क्रम (i = 0; i < nn->max_r_vecs; i++) अणु
+		अचिन्हित पूर्णांक start;
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin(&nn->r_vecs[i].rx_sync);
 			data[0] = nn->r_vecs[i].rx_pkts;
-			tmp[0] = nn->r_vecs[i].hw_csum_rx_ok;
-			tmp[1] = nn->r_vecs[i].hw_csum_rx_inner_ok;
-			tmp[2] = nn->r_vecs[i].hw_csum_rx_complete;
-			tmp[3] = nn->r_vecs[i].hw_csum_rx_error;
-			tmp[4] = nn->r_vecs[i].rx_replace_buf_alloc_fail;
-			tmp[5] = nn->r_vecs[i].hw_tls_rx;
-		} while (u64_stats_fetch_retry(&nn->r_vecs[i].rx_sync, start));
+			पंचांगp[0] = nn->r_vecs[i].hw_csum_rx_ok;
+			पंचांगp[1] = nn->r_vecs[i].hw_csum_rx_inner_ok;
+			पंचांगp[2] = nn->r_vecs[i].hw_csum_rx_complete;
+			पंचांगp[3] = nn->r_vecs[i].hw_csum_rx_error;
+			पंचांगp[4] = nn->r_vecs[i].rx_replace_buf_alloc_fail;
+			पंचांगp[5] = nn->r_vecs[i].hw_tls_rx;
+		पूर्ण जबतक (u64_stats_fetch_retry(&nn->r_vecs[i].rx_sync, start));
 
-		do {
+		करो अणु
 			start = u64_stats_fetch_begin(&nn->r_vecs[i].tx_sync);
 			data[1] = nn->r_vecs[i].tx_pkts;
 			data[2] = nn->r_vecs[i].tx_busy;
-			tmp[6] = nn->r_vecs[i].hw_csum_tx;
-			tmp[7] = nn->r_vecs[i].hw_csum_tx_inner;
-			tmp[8] = nn->r_vecs[i].tx_gather;
-			tmp[9] = nn->r_vecs[i].tx_lso;
-			tmp[10] = nn->r_vecs[i].hw_tls_tx;
-			tmp[11] = nn->r_vecs[i].tls_tx_fallback;
-			tmp[12] = nn->r_vecs[i].tls_tx_no_fallback;
-		} while (u64_stats_fetch_retry(&nn->r_vecs[i].tx_sync, start));
+			पंचांगp[6] = nn->r_vecs[i].hw_csum_tx;
+			पंचांगp[7] = nn->r_vecs[i].hw_csum_tx_inner;
+			पंचांगp[8] = nn->r_vecs[i].tx_gather;
+			पंचांगp[9] = nn->r_vecs[i].tx_lso;
+			पंचांगp[10] = nn->r_vecs[i].hw_tls_tx;
+			पंचांगp[11] = nn->r_vecs[i].tls_tx_fallback;
+			पंचांगp[12] = nn->r_vecs[i].tls_tx_no_fallback;
+		पूर्ण जबतक (u64_stats_fetch_retry(&nn->r_vecs[i].tx_sync, start));
 
 		data += NN_RVEC_PER_Q_STATS;
 
-		for (j = 0; j < NN_RVEC_GATHER_STATS; j++)
-			gathered_stats[j] += tmp[j];
-	}
+		क्रम (j = 0; j < NN_RVEC_GATHER_STATS; j++)
+			gathered_stats[j] += पंचांगp[j];
+	पूर्ण
 
-	for (j = 0; j < NN_RVEC_GATHER_STATS; j++)
+	क्रम (j = 0; j < NN_RVEC_GATHER_STATS; j++)
 		*data++ = gathered_stats[j];
 
-	*data++ = atomic_read(&nn->ktls_no_space);
-	*data++ = atomic_read(&nn->ktls_rx_resync_req);
-	*data++ = atomic_read(&nn->ktls_rx_resync_ign);
-	*data++ = atomic_read(&nn->ktls_rx_resync_sent);
+	*data++ = atomic_पढ़ो(&nn->ktls_no_space);
+	*data++ = atomic_पढ़ो(&nn->ktls_rx_resync_req);
+	*data++ = atomic_पढ़ो(&nn->ktls_rx_resync_ign);
+	*data++ = atomic_पढ़ो(&nn->ktls_rx_resync_sent);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static unsigned int nfp_vnic_get_hw_stats_count(unsigned int num_vecs)
-{
-	return NN_ET_GLOBAL_STATS_LEN + num_vecs * 4;
-}
+अटल अचिन्हित पूर्णांक nfp_vnic_get_hw_stats_count(अचिन्हित पूर्णांक num_vecs)
+अणु
+	वापस NN_ET_GLOBAL_STATS_LEN + num_vecs * 4;
+पूर्ण
 
-static u8 *
-nfp_vnic_get_hw_stats_strings(u8 *data, unsigned int num_vecs, bool repr)
-{
-	int swap_off, i;
+अटल u8 *
+nfp_vnic_get_hw_stats_strings(u8 *data, अचिन्हित पूर्णांक num_vecs, bool repr)
+अणु
+	पूर्णांक swap_off, i;
 
 	BUILD_BUG_ON(NN_ET_GLOBAL_STATS_LEN < NN_ET_SWITCH_STATS_LEN * 2);
 	/* If repr is true first add SWITCH_STATS_LEN and then subtract it
 	 * effectively swapping the RX and TX statistics (giving us the RX
-	 * and TX from perspective of the switch).
+	 * and TX from perspective of the चयन).
 	 */
 	swap_off = repr * NN_ET_SWITCH_STATS_LEN;
 
-	for (i = 0; i < NN_ET_SWITCH_STATS_LEN; i++)
-		ethtool_sprintf(&data, nfp_net_et_stats[i + swap_off].name);
+	क्रम (i = 0; i < NN_ET_SWITCH_STATS_LEN; i++)
+		ethtool_प्र_लिखो(&data, nfp_net_et_stats[i + swap_off].name);
 
-	for (i = NN_ET_SWITCH_STATS_LEN; i < NN_ET_SWITCH_STATS_LEN * 2; i++)
-		ethtool_sprintf(&data, nfp_net_et_stats[i - swap_off].name);
+	क्रम (i = NN_ET_SWITCH_STATS_LEN; i < NN_ET_SWITCH_STATS_LEN * 2; i++)
+		ethtool_प्र_लिखो(&data, nfp_net_et_stats[i - swap_off].name);
 
-	for (i = NN_ET_SWITCH_STATS_LEN * 2; i < NN_ET_GLOBAL_STATS_LEN; i++)
-		ethtool_sprintf(&data, nfp_net_et_stats[i].name);
+	क्रम (i = NN_ET_SWITCH_STATS_LEN * 2; i < NN_ET_GLOBAL_STATS_LEN; i++)
+		ethtool_प्र_लिखो(&data, nfp_net_et_stats[i].name);
 
-	for (i = 0; i < num_vecs; i++) {
-		ethtool_sprintf(&data, "rxq_%u_pkts", i);
-		ethtool_sprintf(&data, "rxq_%u_bytes", i);
-		ethtool_sprintf(&data, "txq_%u_pkts", i);
-		ethtool_sprintf(&data, "txq_%u_bytes", i);
-	}
+	क्रम (i = 0; i < num_vecs; i++) अणु
+		ethtool_प्र_लिखो(&data, "rxq_%u_pkts", i);
+		ethtool_प्र_लिखो(&data, "rxq_%u_bytes", i);
+		ethtool_प्र_लिखो(&data, "txq_%u_pkts", i);
+		ethtool_प्र_लिखो(&data, "txq_%u_bytes", i);
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static u64 *
-nfp_vnic_get_hw_stats(u64 *data, u8 __iomem *mem, unsigned int num_vecs)
-{
-	unsigned int i;
+अटल u64 *
+nfp_vnic_get_hw_stats(u64 *data, u8 __iomem *mem, अचिन्हित पूर्णांक num_vecs)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < NN_ET_GLOBAL_STATS_LEN; i++)
-		*data++ = readq(mem + nfp_net_et_stats[i].off);
+	क्रम (i = 0; i < NN_ET_GLOBAL_STATS_LEN; i++)
+		*data++ = पढ़ोq(mem + nfp_net_et_stats[i].off);
 
-	for (i = 0; i < num_vecs; i++) {
-		*data++ = readq(mem + NFP_NET_CFG_RXR_STATS(i));
-		*data++ = readq(mem + NFP_NET_CFG_RXR_STATS(i) + 8);
-		*data++ = readq(mem + NFP_NET_CFG_TXR_STATS(i));
-		*data++ = readq(mem + NFP_NET_CFG_TXR_STATS(i) + 8);
-	}
+	क्रम (i = 0; i < num_vecs; i++) अणु
+		*data++ = पढ़ोq(mem + NFP_NET_CFG_RXR_STATS(i));
+		*data++ = पढ़ोq(mem + NFP_NET_CFG_RXR_STATS(i) + 8);
+		*data++ = पढ़ोq(mem + NFP_NET_CFG_TXR_STATS(i));
+		*data++ = पढ़ोq(mem + NFP_NET_CFG_TXR_STATS(i) + 8);
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static unsigned int nfp_vnic_get_tlv_stats_count(struct nfp_net *nn)
-{
-	return nn->tlv_caps.vnic_stats_cnt + nn->max_r_vecs * 4;
-}
+अटल अचिन्हित पूर्णांक nfp_vnic_get_tlv_stats_count(काष्ठा nfp_net *nn)
+अणु
+	वापस nn->tlv_caps.vnic_stats_cnt + nn->max_r_vecs * 4;
+पूर्ण
 
-static u8 *nfp_vnic_get_tlv_stats_strings(struct nfp_net *nn, u8 *data)
-{
-	unsigned int i, id;
+अटल u8 *nfp_vnic_get_tlv_stats_strings(काष्ठा nfp_net *nn, u8 *data)
+अणु
+	अचिन्हित पूर्णांक i, id;
 	u8 __iomem *mem;
 	u64 id_word = 0;
 
 	mem = nn->dp.ctrl_bar + nn->tlv_caps.vnic_stats_off;
-	for (i = 0; i < nn->tlv_caps.vnic_stats_cnt; i++) {
-		if (!(i % 4))
-			id_word = readq(mem + i * 2);
+	क्रम (i = 0; i < nn->tlv_caps.vnic_stats_cnt; i++) अणु
+		अगर (!(i % 4))
+			id_word = पढ़ोq(mem + i * 2);
 
 		id = (u16)id_word;
 		id_word >>= 16;
 
-		if (id < ARRAY_SIZE(nfp_tlv_stat_names) &&
-		    nfp_tlv_stat_names[id][0]) {
-			memcpy(data, nfp_tlv_stat_names[id], ETH_GSTRING_LEN);
+		अगर (id < ARRAY_SIZE(nfp_tlv_stat_names) &&
+		    nfp_tlv_stat_names[id][0]) अणु
+			स_नकल(data, nfp_tlv_stat_names[id], ETH_GSTRING_LEN);
 			data += ETH_GSTRING_LEN;
-		} else {
-			ethtool_sprintf(&data, "dev_unknown_stat%u", id);
-		}
-	}
+		पूर्ण अन्यथा अणु
+			ethtool_प्र_लिखो(&data, "dev_unknown_stat%u", id);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < nn->max_r_vecs; i++) {
-		ethtool_sprintf(&data, "rxq_%u_pkts", i);
-		ethtool_sprintf(&data, "rxq_%u_bytes", i);
-		ethtool_sprintf(&data, "txq_%u_pkts", i);
-		ethtool_sprintf(&data, "txq_%u_bytes", i);
-	}
+	क्रम (i = 0; i < nn->max_r_vecs; i++) अणु
+		ethtool_प्र_लिखो(&data, "rxq_%u_pkts", i);
+		ethtool_प्र_लिखो(&data, "rxq_%u_bytes", i);
+		ethtool_प्र_लिखो(&data, "txq_%u_pkts", i);
+		ethtool_प्र_लिखो(&data, "txq_%u_bytes", i);
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static u64 *nfp_vnic_get_tlv_stats(struct nfp_net *nn, u64 *data)
-{
+अटल u64 *nfp_vnic_get_tlv_stats(काष्ठा nfp_net *nn, u64 *data)
+अणु
 	u8 __iomem *mem;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	mem = nn->dp.ctrl_bar + nn->tlv_caps.vnic_stats_off;
 	mem += roundup(2 * nn->tlv_caps.vnic_stats_cnt, 8);
-	for (i = 0; i < nn->tlv_caps.vnic_stats_cnt; i++)
-		*data++ = readq(mem + i * 8);
+	क्रम (i = 0; i < nn->tlv_caps.vnic_stats_cnt; i++)
+		*data++ = पढ़ोq(mem + i * 8);
 
 	mem = nn->dp.ctrl_bar;
-	for (i = 0; i < nn->max_r_vecs; i++) {
-		*data++ = readq(mem + NFP_NET_CFG_RXR_STATS(i));
-		*data++ = readq(mem + NFP_NET_CFG_RXR_STATS(i) + 8);
-		*data++ = readq(mem + NFP_NET_CFG_TXR_STATS(i));
-		*data++ = readq(mem + NFP_NET_CFG_TXR_STATS(i) + 8);
-	}
+	क्रम (i = 0; i < nn->max_r_vecs; i++) अणु
+		*data++ = पढ़ोq(mem + NFP_NET_CFG_RXR_STATS(i));
+		*data++ = पढ़ोq(mem + NFP_NET_CFG_RXR_STATS(i) + 8);
+		*data++ = पढ़ोq(mem + NFP_NET_CFG_TXR_STATS(i));
+		*data++ = पढ़ोq(mem + NFP_NET_CFG_TXR_STATS(i) + 8);
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static unsigned int nfp_mac_get_stats_count(struct net_device *netdev)
-{
-	struct nfp_port *port;
-
-	port = nfp_port_from_netdev(netdev);
-	if (!__nfp_port_get_eth_port(port) || !port->eth_stats)
-		return 0;
-
-	return ARRAY_SIZE(nfp_mac_et_stats);
-}
-
-static u8 *nfp_mac_get_stats_strings(struct net_device *netdev, u8 *data)
-{
-	struct nfp_port *port;
-	unsigned int i;
+अटल अचिन्हित पूर्णांक nfp_mac_get_stats_count(काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_port *port;
 
 	port = nfp_port_from_netdev(netdev);
-	if (!__nfp_port_get_eth_port(port) || !port->eth_stats)
-		return data;
+	अगर (!__nfp_port_get_eth_port(port) || !port->eth_stats)
+		वापस 0;
 
-	for (i = 0; i < ARRAY_SIZE(nfp_mac_et_stats); i++)
-		ethtool_sprintf(&data, "mac.%s", nfp_mac_et_stats[i].name);
+	वापस ARRAY_SIZE(nfp_mac_et_stats);
+पूर्ण
 
-	return data;
-}
-
-static u64 *nfp_mac_get_stats(struct net_device *netdev, u64 *data)
-{
-	struct nfp_port *port;
-	unsigned int i;
+अटल u8 *nfp_mac_get_stats_strings(काष्ठा net_device *netdev, u8 *data)
+अणु
+	काष्ठा nfp_port *port;
+	अचिन्हित पूर्णांक i;
 
 	port = nfp_port_from_netdev(netdev);
-	if (!__nfp_port_get_eth_port(port) || !port->eth_stats)
-		return data;
+	अगर (!__nfp_port_get_eth_port(port) || !port->eth_stats)
+		वापस data;
 
-	for (i = 0; i < ARRAY_SIZE(nfp_mac_et_stats); i++)
-		*data++ = readq(port->eth_stats + nfp_mac_et_stats[i].off);
+	क्रम (i = 0; i < ARRAY_SIZE(nfp_mac_et_stats); i++)
+		ethtool_प्र_लिखो(&data, "mac.%s", nfp_mac_et_stats[i].name);
 
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static void nfp_net_get_strings(struct net_device *netdev,
+अटल u64 *nfp_mac_get_stats(काष्ठा net_device *netdev, u64 *data)
+अणु
+	काष्ठा nfp_port *port;
+	अचिन्हित पूर्णांक i;
+
+	port = nfp_port_from_netdev(netdev);
+	अगर (!__nfp_port_get_eth_port(port) || !port->eth_stats)
+		वापस data;
+
+	क्रम (i = 0; i < ARRAY_SIZE(nfp_mac_et_stats); i++)
+		*data++ = पढ़ोq(port->eth_stats + nfp_mac_et_stats[i].off);
+
+	वापस data;
+पूर्ण
+
+अटल व्योम nfp_net_get_strings(काष्ठा net_device *netdev,
 				u32 stringset, u8 *data)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
-	switch (stringset) {
-	case ETH_SS_STATS:
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
 		data = nfp_vnic_get_sw_stats_strings(netdev, data);
-		if (!nn->tlv_caps.vnic_stats_off)
+		अगर (!nn->tlv_caps.vnic_stats_off)
 			data = nfp_vnic_get_hw_stats_strings(data,
 							     nn->max_r_vecs,
 							     false);
-		else
+		अन्यथा
 			data = nfp_vnic_get_tlv_stats_strings(nn, data);
 		data = nfp_mac_get_stats_strings(netdev, data);
 		data = nfp_app_port_get_stats_strings(nn->port, data);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-nfp_net_get_stats(struct net_device *netdev, struct ethtool_stats *stats,
+अटल व्योम
+nfp_net_get_stats(काष्ठा net_device *netdev, काष्ठा ethtool_stats *stats,
 		  u64 *data)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
 	data = nfp_vnic_get_sw_stats(netdev, data);
-	if (!nn->tlv_caps.vnic_stats_off)
+	अगर (!nn->tlv_caps.vnic_stats_off)
 		data = nfp_vnic_get_hw_stats(data, nn->dp.ctrl_bar,
 					     nn->max_r_vecs);
-	else
+	अन्यथा
 		data = nfp_vnic_get_tlv_stats(nn, data);
 	data = nfp_mac_get_stats(netdev, data);
 	data = nfp_app_port_get_stats(nn->port, data);
-}
+पूर्ण
 
-static int nfp_net_get_sset_count(struct net_device *netdev, int sset)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
-	unsigned int cnt;
+अटल पूर्णांक nfp_net_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
+	अचिन्हित पूर्णांक cnt;
 
-	switch (sset) {
-	case ETH_SS_STATS:
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
 		cnt = nfp_vnic_get_sw_stats_count(netdev);
-		if (!nn->tlv_caps.vnic_stats_off)
+		अगर (!nn->tlv_caps.vnic_stats_off)
 			cnt += nfp_vnic_get_hw_stats_count(nn->max_r_vecs);
-		else
+		अन्यथा
 			cnt += nfp_vnic_get_tlv_stats_count(nn);
 		cnt += nfp_mac_get_stats_count(netdev);
 		cnt += nfp_app_port_get_stats_count(nn->port);
-		return cnt;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस cnt;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static void nfp_port_get_strings(struct net_device *netdev,
+अटल व्योम nfp_port_get_strings(काष्ठा net_device *netdev,
 				 u32 stringset, u8 *data)
-{
-	struct nfp_port *port = nfp_port_from_netdev(netdev);
+अणु
+	काष्ठा nfp_port *port = nfp_port_from_netdev(netdev);
 
-	switch (stringset) {
-	case ETH_SS_STATS:
-		if (nfp_port_is_vnic(port))
+	चयन (stringset) अणु
+	हाल ETH_SS_STATS:
+		अगर (nfp_port_is_vnic(port))
 			data = nfp_vnic_get_hw_stats_strings(data, 0, true);
-		else
+		अन्यथा
 			data = nfp_mac_get_stats_strings(netdev, data);
 		data = nfp_app_port_get_stats_strings(port, data);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-nfp_port_get_stats(struct net_device *netdev, struct ethtool_stats *stats,
+अटल व्योम
+nfp_port_get_stats(काष्ठा net_device *netdev, काष्ठा ethtool_stats *stats,
 		   u64 *data)
-{
-	struct nfp_port *port = nfp_port_from_netdev(netdev);
+अणु
+	काष्ठा nfp_port *port = nfp_port_from_netdev(netdev);
 
-	if (nfp_port_is_vnic(port))
+	अगर (nfp_port_is_vnic(port))
 		data = nfp_vnic_get_hw_stats(data, port->vnic, 0);
-	else
+	अन्यथा
 		data = nfp_mac_get_stats(netdev, data);
 	data = nfp_app_port_get_stats(port, data);
-}
+पूर्ण
 
-static int nfp_port_get_sset_count(struct net_device *netdev, int sset)
-{
-	struct nfp_port *port = nfp_port_from_netdev(netdev);
-	unsigned int count;
+अटल पूर्णांक nfp_port_get_sset_count(काष्ठा net_device *netdev, पूर्णांक sset)
+अणु
+	काष्ठा nfp_port *port = nfp_port_from_netdev(netdev);
+	अचिन्हित पूर्णांक count;
 
-	switch (sset) {
-	case ETH_SS_STATS:
-		if (nfp_port_is_vnic(port))
+	चयन (sset) अणु
+	हाल ETH_SS_STATS:
+		अगर (nfp_port_is_vnic(port))
 			count = nfp_vnic_get_hw_stats_count(0);
-		else
+		अन्यथा
 			count = nfp_mac_get_stats_count(netdev);
 		count += nfp_app_port_get_stats_count(port);
-		return count;
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस count;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int nfp_port_fec_ethtool_to_nsp(u32 fec)
-{
-	switch (fec) {
-	case ETHTOOL_FEC_AUTO:
-		return NFP_FEC_AUTO_BIT;
-	case ETHTOOL_FEC_OFF:
-		return NFP_FEC_DISABLED_BIT;
-	case ETHTOOL_FEC_RS:
-		return NFP_FEC_REED_SOLOMON_BIT;
-	case ETHTOOL_FEC_BASER:
-		return NFP_FEC_BASER_BIT;
-	default:
-		/* NSP only supports a single mode at a time */
-		return -EOPNOTSUPP;
-	}
-}
+अटल पूर्णांक nfp_port_fec_ethtool_to_nsp(u32 fec)
+अणु
+	चयन (fec) अणु
+	हाल ETHTOOL_FEC_AUTO:
+		वापस NFP_FEC_AUTO_BIT;
+	हाल ETHTOOL_FEC_OFF:
+		वापस NFP_FEC_DISABLED_BIT;
+	हाल ETHTOOL_FEC_RS:
+		वापस NFP_FEC_REED_SOLOMON_BIT;
+	हाल ETHTOOL_FEC_BASER:
+		वापस NFP_FEC_BASER_BIT;
+	शेष:
+		/* NSP only supports a single mode at a समय */
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static u32 nfp_port_fec_nsp_to_ethtool(u32 fec)
-{
+अटल u32 nfp_port_fec_nsp_to_ethtool(u32 fec)
+अणु
 	u32 result = 0;
 
-	if (fec & NFP_FEC_AUTO)
+	अगर (fec & NFP_FEC_AUTO)
 		result |= ETHTOOL_FEC_AUTO;
-	if (fec & NFP_FEC_BASER)
+	अगर (fec & NFP_FEC_BASER)
 		result |= ETHTOOL_FEC_BASER;
-	if (fec & NFP_FEC_REED_SOLOMON)
+	अगर (fec & NFP_FEC_REED_SOLOMON)
 		result |= ETHTOOL_FEC_RS;
-	if (fec & NFP_FEC_DISABLED)
+	अगर (fec & NFP_FEC_DISABLED)
 		result |= ETHTOOL_FEC_OFF;
 
-	return result ?: ETHTOOL_FEC_NONE;
-}
+	वापस result ?: ETHTOOL_FEC_NONE;
+पूर्ण
 
-static int
-nfp_port_get_fecparam(struct net_device *netdev,
-		      struct ethtool_fecparam *param)
-{
-	struct nfp_eth_table_port *eth_port;
-	struct nfp_port *port;
+अटल पूर्णांक
+nfp_port_get_fecparam(काष्ठा net_device *netdev,
+		      काष्ठा ethtool_fecparam *param)
+अणु
+	काष्ठा nfp_eth_table_port *eth_port;
+	काष्ठा nfp_port *port;
 
 	param->active_fec = ETHTOOL_FEC_NONE;
 	param->fec = ETHTOOL_FEC_NONE;
 
 	port = nfp_port_from_netdev(netdev);
 	eth_port = nfp_port_get_eth_port(port);
-	if (!eth_port)
-		return -EOPNOTSUPP;
+	अगर (!eth_port)
+		वापस -EOPNOTSUPP;
 
-	if (!nfp_eth_can_support_fec(eth_port))
-		return 0;
+	अगर (!nfp_eth_can_support_fec(eth_port))
+		वापस 0;
 
 	param->fec = nfp_port_fec_nsp_to_ethtool(eth_port->fec_modes_supported);
 	param->active_fec = nfp_port_fec_nsp_to_ethtool(eth_port->fec);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_port_set_fecparam(struct net_device *netdev,
-		      struct ethtool_fecparam *param)
-{
-	struct nfp_eth_table_port *eth_port;
-	struct nfp_port *port;
-	int err, fec;
+अटल पूर्णांक
+nfp_port_set_fecparam(काष्ठा net_device *netdev,
+		      काष्ठा ethtool_fecparam *param)
+अणु
+	काष्ठा nfp_eth_table_port *eth_port;
+	काष्ठा nfp_port *port;
+	पूर्णांक err, fec;
 
 	port = nfp_port_from_netdev(netdev);
 	eth_port = nfp_port_get_eth_port(port);
-	if (!eth_port)
-		return -EOPNOTSUPP;
+	अगर (!eth_port)
+		वापस -EOPNOTSUPP;
 
-	if (!nfp_eth_can_support_fec(eth_port))
-		return -EOPNOTSUPP;
+	अगर (!nfp_eth_can_support_fec(eth_port))
+		वापस -EOPNOTSUPP;
 
 	fec = nfp_port_fec_ethtool_to_nsp(param->fec);
-	if (fec < 0)
-		return fec;
+	अगर (fec < 0)
+		वापस fec;
 
 	err = nfp_eth_set_fec(port->app->cpp, eth_port->index, fec);
-	if (!err)
-		/* Only refresh if we did something */
+	अगर (!err)
+		/* Only refresh अगर we did something */
 		nfp_net_refresh_port_table(port);
 
-	return err < 0 ? err : 0;
-}
+	वापस err < 0 ? err : 0;
+पूर्ण
 
-/* RX network flow classification (RSS, filters, etc)
+/* RX network flow classअगरication (RSS, filters, etc)
  */
-static u32 ethtool_flow_to_nfp_flag(u32 flow_type)
-{
-	static const u32 xlate_ethtool_to_nfp[IPV6_FLOW + 1] = {
+अटल u32 ethtool_flow_to_nfp_flag(u32 flow_type)
+अणु
+	अटल स्थिर u32 xlate_ethtool_to_nfp[IPV6_FLOW + 1] = अणु
 		[TCP_V4_FLOW]	= NFP_NET_CFG_RSS_IPV4_TCP,
 		[TCP_V6_FLOW]	= NFP_NET_CFG_RSS_IPV6_TCP,
 		[UDP_V4_FLOW]	= NFP_NET_CFG_RSS_IPV4_UDP,
 		[UDP_V6_FLOW]	= NFP_NET_CFG_RSS_IPV6_UDP,
 		[IPV4_FLOW]	= NFP_NET_CFG_RSS_IPV4,
 		[IPV6_FLOW]	= NFP_NET_CFG_RSS_IPV6,
-	};
+	पूर्ण;
 
-	if (flow_type >= ARRAY_SIZE(xlate_ethtool_to_nfp))
-		return 0;
+	अगर (flow_type >= ARRAY_SIZE(xlate_ethtool_to_nfp))
+		वापस 0;
 
-	return xlate_ethtool_to_nfp[flow_type];
-}
+	वापस xlate_ethtool_to_nfp[flow_type];
+पूर्ण
 
-static int nfp_net_get_rss_hash_opts(struct nfp_net *nn,
-				     struct ethtool_rxnfc *cmd)
-{
+अटल पूर्णांक nfp_net_get_rss_hash_opts(काष्ठा nfp_net *nn,
+				     काष्ठा ethtool_rxnfc *cmd)
+अणु
 	u32 nfp_rss_flag;
 
 	cmd->data = 0;
 
-	if (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
-		return -EOPNOTSUPP;
+	अगर (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
+		वापस -EOPNOTSUPP;
 
 	nfp_rss_flag = ethtool_flow_to_nfp_flag(cmd->flow_type);
-	if (!nfp_rss_flag)
-		return -EINVAL;
+	अगर (!nfp_rss_flag)
+		वापस -EINVAL;
 
 	cmd->data |= RXH_IP_SRC | RXH_IP_DST;
-	if (nn->rss_cfg & nfp_rss_flag)
+	अगर (nn->rss_cfg & nfp_rss_flag)
 		cmd->data |= RXH_L4_B_0_1 | RXH_L4_B_2_3;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfp_net_get_rxnfc(struct net_device *netdev,
-			     struct ethtool_rxnfc *cmd, u32 *rule_locs)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल पूर्णांक nfp_net_get_rxnfc(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_rxnfc *cmd, u32 *rule_locs)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
-	switch (cmd->cmd) {
-	case ETHTOOL_GRXRINGS:
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_GRXRINGS:
 		cmd->data = nn->dp.num_rx_rings;
-		return 0;
-	case ETHTOOL_GRXFH:
-		return nfp_net_get_rss_hash_opts(nn, cmd);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+		वापस 0;
+	हाल ETHTOOL_GRXFH:
+		वापस nfp_net_get_rss_hash_opts(nn, cmd);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int nfp_net_set_rss_hash_opt(struct nfp_net *nn,
-				    struct ethtool_rxnfc *nfc)
-{
+अटल पूर्णांक nfp_net_set_rss_hash_opt(काष्ठा nfp_net *nn,
+				    काष्ठा ethtool_rxnfc *nfc)
+अणु
 	u32 new_rss_cfg = nn->rss_cfg;
 	u32 nfp_rss_flag;
-	int err;
+	पूर्णांक err;
 
-	if (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
-		return -EOPNOTSUPP;
+	अगर (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
+		वापस -EOPNOTSUPP;
 
 	/* RSS only supports IP SA/DA and L4 src/dst ports  */
-	if (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
+	अगर (nfc->data & ~(RXH_IP_SRC | RXH_IP_DST |
 			  RXH_L4_B_0_1 | RXH_L4_B_2_3))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	/* We need at least the IP SA/DA fields for hashing */
-	if (!(nfc->data & RXH_IP_SRC) ||
+	/* We need at least the IP SA/DA fields क्रम hashing */
+	अगर (!(nfc->data & RXH_IP_SRC) ||
 	    !(nfc->data & RXH_IP_DST))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	nfp_rss_flag = ethtool_flow_to_nfp_flag(nfc->flow_type);
-	if (!nfp_rss_flag)
-		return -EINVAL;
+	अगर (!nfp_rss_flag)
+		वापस -EINVAL;
 
-	switch (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) {
-	case 0:
+	चयन (nfc->data & (RXH_L4_B_0_1 | RXH_L4_B_2_3)) अणु
+	हाल 0:
 		new_rss_cfg &= ~nfp_rss_flag;
-		break;
-	case (RXH_L4_B_0_1 | RXH_L4_B_2_3):
+		अवरोध;
+	हाल (RXH_L4_B_0_1 | RXH_L4_B_2_3):
 		new_rss_cfg |= nfp_rss_flag;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	new_rss_cfg |= FIELD_PREP(NFP_NET_CFG_RSS_HFUNC, nn->rss_hfunc);
 	new_rss_cfg |= NFP_NET_CFG_RSS_MASK;
 
-	if (new_rss_cfg == nn->rss_cfg)
-		return 0;
+	अगर (new_rss_cfg == nn->rss_cfg)
+		वापस 0;
 
-	writel(new_rss_cfg, nn->dp.ctrl_bar + NFP_NET_CFG_RSS_CTRL);
+	ग_लिखोl(new_rss_cfg, nn->dp.ctrl_bar + NFP_NET_CFG_RSS_CTRL);
 	err = nfp_net_reconfig(nn, NFP_NET_CFG_UPDATE_RSS);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	nn->rss_cfg = new_rss_cfg;
 
 	nn_dbg(nn, "Changed RSS config to 0x%x\n", nn->rss_cfg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfp_net_set_rxnfc(struct net_device *netdev,
-			     struct ethtool_rxnfc *cmd)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल पूर्णांक nfp_net_set_rxnfc(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_rxnfc *cmd)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
-	switch (cmd->cmd) {
-	case ETHTOOL_SRXFH:
-		return nfp_net_set_rss_hash_opt(nn, cmd);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (cmd->cmd) अणु
+	हाल ETHTOOL_SRXFH:
+		वापस nfp_net_set_rss_hash_opt(nn, cmd);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static u32 nfp_net_get_rxfh_indir_size(struct net_device *netdev)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल u32 nfp_net_get_rxfh_indir_size(काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
-	if (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
-		return 0;
+	अगर (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
+		वापस 0;
 
-	return ARRAY_SIZE(nn->rss_itbl);
-}
+	वापस ARRAY_SIZE(nn->rss_itbl);
+पूर्ण
 
-static u32 nfp_net_get_rxfh_key_size(struct net_device *netdev)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल u32 nfp_net_get_rxfh_key_size(काष्ठा net_device *netdev)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
-	if (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
-		return -EOPNOTSUPP;
+	अगर (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
+		वापस -EOPNOTSUPP;
 
-	return nfp_net_rss_key_sz(nn);
-}
+	वापस nfp_net_rss_key_sz(nn);
+पूर्ण
 
-static int nfp_net_get_rxfh(struct net_device *netdev, u32 *indir, u8 *key,
+अटल पूर्णांक nfp_net_get_rxfh(काष्ठा net_device *netdev, u32 *indir, u8 *key,
 			    u8 *hfunc)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
-	int i;
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
+	पूर्णांक i;
 
-	if (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
-		return -EOPNOTSUPP;
+	अगर (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY))
+		वापस -EOPNOTSUPP;
 
-	if (indir)
-		for (i = 0; i < ARRAY_SIZE(nn->rss_itbl); i++)
+	अगर (indir)
+		क्रम (i = 0; i < ARRAY_SIZE(nn->rss_itbl); i++)
 			indir[i] = nn->rss_itbl[i];
-	if (key)
-		memcpy(key, nn->rss_key, nfp_net_rss_key_sz(nn));
-	if (hfunc) {
+	अगर (key)
+		स_नकल(key, nn->rss_key, nfp_net_rss_key_sz(nn));
+	अगर (hfunc) अणु
 		*hfunc = nn->rss_hfunc;
-		if (*hfunc >= 1 << ETH_RSS_HASH_FUNCS_COUNT)
+		अगर (*hfunc >= 1 << ETH_RSS_HASH_FUNCS_COUNT)
 			*hfunc = ETH_RSS_HASH_UNKNOWN;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfp_net_set_rxfh(struct net_device *netdev,
-			    const u32 *indir, const u8 *key,
-			    const u8 hfunc)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
-	int i;
+अटल पूर्णांक nfp_net_set_rxfh(काष्ठा net_device *netdev,
+			    स्थिर u32 *indir, स्थिर u8 *key,
+			    स्थिर u8 hfunc)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
+	पूर्णांक i;
 
-	if (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY) ||
+	अगर (!(nn->cap & NFP_NET_CFG_CTRL_RSS_ANY) ||
 	    !(hfunc == ETH_RSS_HASH_NO_CHANGE || hfunc == nn->rss_hfunc))
-		return -EOPNOTSUPP;
+		वापस -EOPNOTSUPP;
 
-	if (!key && !indir)
-		return 0;
+	अगर (!key && !indir)
+		वापस 0;
 
-	if (key) {
-		memcpy(nn->rss_key, key, nfp_net_rss_key_sz(nn));
-		nfp_net_rss_write_key(nn);
-	}
-	if (indir) {
-		for (i = 0; i < ARRAY_SIZE(nn->rss_itbl); i++)
+	अगर (key) अणु
+		स_नकल(nn->rss_key, key, nfp_net_rss_key_sz(nn));
+		nfp_net_rss_ग_लिखो_key(nn);
+	पूर्ण
+	अगर (indir) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(nn->rss_itbl); i++)
 			nn->rss_itbl[i] = indir[i];
 
-		nfp_net_rss_write_itbl(nn);
-	}
+		nfp_net_rss_ग_लिखो_itbl(nn);
+	पूर्ण
 
-	return nfp_net_reconfig(nn, NFP_NET_CFG_UPDATE_RSS);
-}
+	वापस nfp_net_reconfig(nn, NFP_NET_CFG_UPDATE_RSS);
+पूर्ण
 
-/* Dump BAR registers
+/* Dump BAR रेजिस्टरs
  */
-static int nfp_net_get_regs_len(struct net_device *netdev)
-{
-	return NFP_NET_CFG_BAR_SZ;
-}
+अटल पूर्णांक nfp_net_get_regs_len(काष्ठा net_device *netdev)
+अणु
+	वापस NFP_NET_CFG_BAR_SZ;
+पूर्ण
 
-static void nfp_net_get_regs(struct net_device *netdev,
-			     struct ethtool_regs *regs, void *p)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल व्योम nfp_net_get_regs(काष्ठा net_device *netdev,
+			     काष्ठा ethtool_regs *regs, व्योम *p)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 	u32 *regs_buf = p;
-	int i;
+	पूर्णांक i;
 
-	regs->version = nn_readl(nn, NFP_NET_CFG_VERSION);
+	regs->version = nn_पढ़ोl(nn, NFP_NET_CFG_VERSION);
 
-	for (i = 0; i < NFP_NET_CFG_BAR_SZ / sizeof(u32); i++)
-		regs_buf[i] = readl(nn->dp.ctrl_bar + (i * sizeof(u32)));
-}
+	क्रम (i = 0; i < NFP_NET_CFG_BAR_SZ / माप(u32); i++)
+		regs_buf[i] = पढ़ोl(nn->dp.ctrl_bar + (i * माप(u32)));
+पूर्ण
 
-static int nfp_net_get_coalesce(struct net_device *netdev,
-				struct ethtool_coalesce *ec)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
+अटल पूर्णांक nfp_net_get_coalesce(काष्ठा net_device *netdev,
+				काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
 
-	if (!(nn->cap & NFP_NET_CFG_CTRL_IRQMOD))
-		return -EINVAL;
+	अगर (!(nn->cap & NFP_NET_CFG_CTRL_IRQMOD))
+		वापस -EINVAL;
 
 	ec->rx_coalesce_usecs       = nn->rx_coalesce_usecs;
 	ec->rx_max_coalesced_frames = nn->rx_coalesce_max_frames;
 	ec->tx_coalesce_usecs       = nn->tx_coalesce_usecs;
 	ec->tx_max_coalesced_frames = nn->tx_coalesce_max_frames;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Other debug dumps
  */
-static int
-nfp_dump_nsp_diag(struct nfp_app *app, struct ethtool_dump *dump, void *buffer)
-{
-	struct nfp_resource *res;
-	int ret;
+अटल पूर्णांक
+nfp_dump_nsp_diag(काष्ठा nfp_app *app, काष्ठा ethtool_dump *dump, व्योम *buffer)
+अणु
+	काष्ठा nfp_resource *res;
+	पूर्णांक ret;
 
-	if (!app)
-		return -EOPNOTSUPP;
+	अगर (!app)
+		वापस -EOPNOTSUPP;
 
 	dump->version = 1;
 	dump->flag = NFP_DUMP_NSP_DIAG;
 
 	res = nfp_resource_acquire(app->cpp, NFP_RESOURCE_NSP_DIAG);
-	if (IS_ERR(res))
-		return PTR_ERR(res);
+	अगर (IS_ERR(res))
+		वापस PTR_ERR(res);
 
-	if (buffer) {
-		if (dump->len != nfp_resource_size(res)) {
+	अगर (buffer) अणु
+		अगर (dump->len != nfp_resource_size(res)) अणु
 			ret = -EINVAL;
-			goto exit_release;
-		}
+			जाओ निकास_release;
+		पूर्ण
 
-		ret = nfp_cpp_read(app->cpp, nfp_resource_cpp_id(res),
+		ret = nfp_cpp_पढ़ो(app->cpp, nfp_resource_cpp_id(res),
 				   nfp_resource_address(res),
 				   buffer, dump->len);
-		if (ret != dump->len)
+		अगर (ret != dump->len)
 			ret = ret < 0 ? ret : -EIO;
-		else
+		अन्यथा
 			ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		dump->len = nfp_resource_size(res);
 		ret = 0;
-	}
-exit_release:
+	पूर्ण
+निकास_release:
 	nfp_resource_release(res);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Set the dump flag/level. Calculate the dump length for flag > 0 only (new TLV
- * based dumps), since flag 0 (default) calculates the length in
+/* Set the dump flag/level. Calculate the dump length क्रम flag > 0 only (new TLV
+ * based dumps), since flag 0 (शेष) calculates the length in
  * nfp_app_get_dump_flag(), and we need to support triggering a level 0 dump
- * without setting the flag first, for backward compatibility.
+ * without setting the flag first, क्रम backward compatibility.
  */
-static int nfp_app_set_dump(struct net_device *netdev, struct ethtool_dump *val)
-{
-	struct nfp_app *app = nfp_app_from_netdev(netdev);
+अटल पूर्णांक nfp_app_set_dump(काष्ठा net_device *netdev, काष्ठा ethtool_dump *val)
+अणु
+	काष्ठा nfp_app *app = nfp_app_from_netdev(netdev);
 	s64 len;
 
-	if (!app)
-		return -EOPNOTSUPP;
+	अगर (!app)
+		वापस -EOPNOTSUPP;
 
-	if (val->flag == NFP_DUMP_NSP_DIAG) {
+	अगर (val->flag == NFP_DUMP_NSP_DIAG) अणु
 		app->pf->dump_flag = val->flag;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (!app->pf->dumpspec)
-		return -EOPNOTSUPP;
+	अगर (!app->pf->dumpspec)
+		वापस -EOPNOTSUPP;
 
 	len = nfp_net_dump_calculate_size(app->pf, app->pf->dumpspec,
 					  val->flag);
-	if (len < 0)
-		return len;
+	अगर (len < 0)
+		वापस len;
 
 	app->pf->dump_flag = val->flag;
 	app->pf->dump_len = len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-nfp_app_get_dump_flag(struct net_device *netdev, struct ethtool_dump *dump)
-{
-	struct nfp_app *app = nfp_app_from_netdev(netdev);
+अटल पूर्णांक
+nfp_app_get_dump_flag(काष्ठा net_device *netdev, काष्ठा ethtool_dump *dump)
+अणु
+	काष्ठा nfp_app *app = nfp_app_from_netdev(netdev);
 
-	if (!app)
-		return -EOPNOTSUPP;
+	अगर (!app)
+		वापस -EOPNOTSUPP;
 
-	if (app->pf->dump_flag == NFP_DUMP_NSP_DIAG)
-		return nfp_dump_nsp_diag(app, dump, NULL);
-
-	dump->flag = app->pf->dump_flag;
-	dump->len = app->pf->dump_len;
-
-	return 0;
-}
-
-static int
-nfp_app_get_dump_data(struct net_device *netdev, struct ethtool_dump *dump,
-		      void *buffer)
-{
-	struct nfp_app *app = nfp_app_from_netdev(netdev);
-
-	if (!app)
-		return -EOPNOTSUPP;
-
-	if (app->pf->dump_flag == NFP_DUMP_NSP_DIAG)
-		return nfp_dump_nsp_diag(app, dump, buffer);
+	अगर (app->pf->dump_flag == NFP_DUMP_NSP_DIAG)
+		वापस nfp_dump_nsp_diag(app, dump, शून्य);
 
 	dump->flag = app->pf->dump_flag;
 	dump->len = app->pf->dump_len;
 
-	return nfp_net_dump_populate_buffer(app->pf, app->pf->dumpspec, dump,
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक
+nfp_app_get_dump_data(काष्ठा net_device *netdev, काष्ठा ethtool_dump *dump,
+		      व्योम *buffer)
+अणु
+	काष्ठा nfp_app *app = nfp_app_from_netdev(netdev);
+
+	अगर (!app)
+		वापस -EOPNOTSUPP;
+
+	अगर (app->pf->dump_flag == NFP_DUMP_NSP_DIAG)
+		वापस nfp_dump_nsp_diag(app, dump, buffer);
+
+	dump->flag = app->pf->dump_flag;
+	dump->len = app->pf->dump_len;
+
+	वापस nfp_net_dump_populate_buffer(app->pf, app->pf->dumpspec, dump,
 					    buffer);
-}
+पूर्ण
 
-static int
-nfp_port_get_module_info(struct net_device *netdev,
-			 struct ethtool_modinfo *modinfo)
-{
-	struct nfp_eth_table_port *eth_port;
-	struct nfp_port *port;
-	unsigned int read_len;
-	struct nfp_nsp *nsp;
-	int err = 0;
+अटल पूर्णांक
+nfp_port_get_module_info(काष्ठा net_device *netdev,
+			 काष्ठा ethtool_modinfo *modinfo)
+अणु
+	काष्ठा nfp_eth_table_port *eth_port;
+	काष्ठा nfp_port *port;
+	अचिन्हित पूर्णांक पढ़ो_len;
+	काष्ठा nfp_nsp *nsp;
+	पूर्णांक err = 0;
 	u8 data;
 
 	port = nfp_port_from_netdev(netdev);
 	eth_port = nfp_port_get_eth_port(port);
-	if (!eth_port)
-		return -EOPNOTSUPP;
+	अगर (!eth_port)
+		वापस -EOPNOTSUPP;
 
-	nsp = nfp_nsp_open(port->app->cpp);
-	if (IS_ERR(nsp)) {
+	nsp = nfp_nsp_खोलो(port->app->cpp);
+	अगर (IS_ERR(nsp)) अणु
 		err = PTR_ERR(nsp);
 		netdev_err(netdev, "Failed to access the NSP: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (!nfp_nsp_has_read_module_eeprom(nsp)) {
+	अगर (!nfp_nsp_has_पढ़ो_module_eeprom(nsp)) अणु
 		netdev_info(netdev, "reading module EEPROM not supported. Please update flash\n");
 		err = -EOPNOTSUPP;
-		goto exit_close_nsp;
-	}
+		जाओ निकास_बंद_nsp;
+	पूर्ण
 
-	switch (eth_port->interface) {
-	case NFP_INTERFACE_SFP:
-	case NFP_INTERFACE_SFP28:
-		err = nfp_nsp_read_module_eeprom(nsp, eth_port->eth_index,
+	चयन (eth_port->पूर्णांकerface) अणु
+	हाल NFP_INTERFACE_SFP:
+	हाल NFP_INTERFACE_SFP28:
+		err = nfp_nsp_पढ़ो_module_eeprom(nsp, eth_port->eth_index,
 						 SFP_SFF8472_COMPLIANCE, &data,
-						 1, &read_len);
-		if (err < 0)
-			goto exit_close_nsp;
+						 1, &पढ़ो_len);
+		अगर (err < 0)
+			जाओ निकास_बंद_nsp;
 
-		if (!data) {
+		अगर (!data) अणु
 			modinfo->type = ETH_MODULE_SFF_8079;
 			modinfo->eeprom_len = ETH_MODULE_SFF_8079_LEN;
-		} else {
+		पूर्ण अन्यथा अणु
 			modinfo->type = ETH_MODULE_SFF_8472;
 			modinfo->eeprom_len = ETH_MODULE_SFF_8472_LEN;
-		}
-		break;
-	case NFP_INTERFACE_QSFP:
-		err = nfp_nsp_read_module_eeprom(nsp, eth_port->eth_index,
+		पूर्ण
+		अवरोध;
+	हाल NFP_INTERFACE_QSFP:
+		err = nfp_nsp_पढ़ो_module_eeprom(nsp, eth_port->eth_index,
 						 SFP_SFF_REV_COMPLIANCE, &data,
-						 1, &read_len);
-		if (err < 0)
-			goto exit_close_nsp;
+						 1, &पढ़ो_len);
+		अगर (err < 0)
+			जाओ निकास_बंद_nsp;
 
-		if (data < 0x3) {
+		अगर (data < 0x3) अणु
 			modinfo->type = ETH_MODULE_SFF_8436;
 			modinfo->eeprom_len = ETH_MODULE_SFF_8436_LEN;
-		} else {
+		पूर्ण अन्यथा अणु
 			modinfo->type = ETH_MODULE_SFF_8636;
 			modinfo->eeprom_len = ETH_MODULE_SFF_8636_LEN;
-		}
-		break;
-	case NFP_INTERFACE_QSFP28:
+		पूर्ण
+		अवरोध;
+	हाल NFP_INTERFACE_QSFP28:
 		modinfo->type = ETH_MODULE_SFF_8636;
 		modinfo->eeprom_len = ETH_MODULE_SFF_8636_LEN;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		netdev_err(netdev, "Unsupported module 0x%x detected\n",
-			   eth_port->interface);
+			   eth_port->पूर्णांकerface);
 		err = -EINVAL;
-	}
+	पूर्ण
 
-exit_close_nsp:
-	nfp_nsp_close(nsp);
-	return err;
-}
+निकास_बंद_nsp:
+	nfp_nsp_बंद(nsp);
+	वापस err;
+पूर्ण
 
-static int
-nfp_port_get_module_eeprom(struct net_device *netdev,
-			   struct ethtool_eeprom *eeprom, u8 *data)
-{
-	struct nfp_eth_table_port *eth_port;
-	struct nfp_port *port;
-	struct nfp_nsp *nsp;
-	int err;
+अटल पूर्णांक
+nfp_port_get_module_eeprom(काष्ठा net_device *netdev,
+			   काष्ठा ethtool_eeprom *eeprom, u8 *data)
+अणु
+	काष्ठा nfp_eth_table_port *eth_port;
+	काष्ठा nfp_port *port;
+	काष्ठा nfp_nsp *nsp;
+	पूर्णांक err;
 
 	port = nfp_port_from_netdev(netdev);
 	eth_port = __nfp_port_get_eth_port(port);
-	if (!eth_port)
-		return -EOPNOTSUPP;
+	अगर (!eth_port)
+		वापस -EOPNOTSUPP;
 
-	nsp = nfp_nsp_open(port->app->cpp);
-	if (IS_ERR(nsp)) {
+	nsp = nfp_nsp_खोलो(port->app->cpp);
+	अगर (IS_ERR(nsp)) अणु
 		err = PTR_ERR(nsp);
 		netdev_err(netdev, "Failed to access the NSP: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (!nfp_nsp_has_read_module_eeprom(nsp)) {
+	अगर (!nfp_nsp_has_पढ़ो_module_eeprom(nsp)) अणु
 		netdev_info(netdev, "reading module EEPROM not supported. Please update flash\n");
 		err = -EOPNOTSUPP;
-		goto exit_close_nsp;
-	}
+		जाओ निकास_बंद_nsp;
+	पूर्ण
 
-	err = nfp_nsp_read_module_eeprom(nsp, eth_port->eth_index,
+	err = nfp_nsp_पढ़ो_module_eeprom(nsp, eth_port->eth_index,
 					 eeprom->offset, data, eeprom->len,
 					 &eeprom->len);
-	if (err < 0) {
-		if (eeprom->len) {
+	अगर (err < 0) अणु
+		अगर (eeprom->len) अणु
 			netdev_warn(netdev,
 				    "Incomplete read from module EEPROM: %d\n",
 				     err);
 			err = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			netdev_err(netdev,
 				   "Reading from module EEPROM failed: %d\n",
 				   err);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-exit_close_nsp:
-	nfp_nsp_close(nsp);
-	return err;
-}
+निकास_बंद_nsp:
+	nfp_nsp_बंद(nsp);
+	वापस err;
+पूर्ण
 
-static int nfp_net_set_coalesce(struct net_device *netdev,
-				struct ethtool_coalesce *ec)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
-	unsigned int factor;
+अटल पूर्णांक nfp_net_set_coalesce(काष्ठा net_device *netdev,
+				काष्ठा ethtool_coalesce *ec)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
+	अचिन्हित पूर्णांक factor;
 
 	/* Compute factor used to convert coalesce '_usecs' parameters to
-	 * ME timestamp ticks.  There are 16 ME clock cycles for each timestamp
+	 * ME बारtamp ticks.  There are 16 ME घड़ी cycles क्रम each बारtamp
 	 * count.
 	 */
 	factor = nn->me_freq_mhz / 16;
 
-	/* Each pair of (usecs, max_frames) fields specifies that interrupts
+	/* Each pair of (usecs, max_frames) fields specअगरies that पूर्णांकerrupts
 	 * should be coalesced until
-	 *      (usecs > 0 && time_since_first_completion >= usecs) ||
+	 *      (usecs > 0 && समय_since_first_completion >= usecs) ||
 	 *      (max_frames > 0 && completed_frames >= max_frames)
 	 *
 	 * It is illegal to set both usecs and max_frames to zero as this would
-	 * cause interrupts to never be generated.  To disable coalescing, set
+	 * cause पूर्णांकerrupts to never be generated.  To disable coalescing, set
 	 * usecs = 0 and max_frames = 1.
 	 *
 	 * Some implementations ignore the value of max_frames and use the
-	 * condition time_since_first_completion >= usecs
+	 * condition समय_since_first_completion >= usecs
 	 */
 
-	if (!(nn->cap & NFP_NET_CFG_CTRL_IRQMOD))
-		return -EINVAL;
+	अगर (!(nn->cap & NFP_NET_CFG_CTRL_IRQMOD))
+		वापस -EINVAL;
 
 	/* ensure valid configuration */
-	if (!ec->rx_coalesce_usecs && !ec->rx_max_coalesced_frames)
-		return -EINVAL;
+	अगर (!ec->rx_coalesce_usecs && !ec->rx_max_coalesced_frames)
+		वापस -EINVAL;
 
-	if (!ec->tx_coalesce_usecs && !ec->tx_max_coalesced_frames)
-		return -EINVAL;
+	अगर (!ec->tx_coalesce_usecs && !ec->tx_max_coalesced_frames)
+		वापस -EINVAL;
 
-	if (ec->rx_coalesce_usecs * factor >= ((1 << 16) - 1))
-		return -EINVAL;
+	अगर (ec->rx_coalesce_usecs * factor >= ((1 << 16) - 1))
+		वापस -EINVAL;
 
-	if (ec->tx_coalesce_usecs * factor >= ((1 << 16) - 1))
-		return -EINVAL;
+	अगर (ec->tx_coalesce_usecs * factor >= ((1 << 16) - 1))
+		वापस -EINVAL;
 
-	if (ec->rx_max_coalesced_frames >= ((1 << 16) - 1))
-		return -EINVAL;
+	अगर (ec->rx_max_coalesced_frames >= ((1 << 16) - 1))
+		वापस -EINVAL;
 
-	if (ec->tx_max_coalesced_frames >= ((1 << 16) - 1))
-		return -EINVAL;
+	अगर (ec->tx_max_coalesced_frames >= ((1 << 16) - 1))
+		वापस -EINVAL;
 
 	/* configuration is valid */
 	nn->rx_coalesce_usecs      = ec->rx_coalesce_usecs;
@@ -1377,19 +1378,19 @@ static int nfp_net_set_coalesce(struct net_device *netdev,
 	nn->tx_coalesce_usecs      = ec->tx_coalesce_usecs;
 	nn->tx_coalesce_max_frames = ec->tx_max_coalesced_frames;
 
-	/* write configuration to device */
-	nfp_net_coalesce_write_cfg(nn);
-	return nfp_net_reconfig(nn, NFP_NET_CFG_UPDATE_IRQMOD);
-}
+	/* ग_लिखो configuration to device */
+	nfp_net_coalesce_ग_लिखो_cfg(nn);
+	वापस nfp_net_reconfig(nn, NFP_NET_CFG_UPDATE_IRQMOD);
+पूर्ण
 
-static void nfp_net_get_channels(struct net_device *netdev,
-				 struct ethtool_channels *channel)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
-	unsigned int num_tx_rings;
+अटल व्योम nfp_net_get_channels(काष्ठा net_device *netdev,
+				 काष्ठा ethtool_channels *channel)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
+	अचिन्हित पूर्णांक num_tx_rings;
 
 	num_tx_rings = nn->dp.num_tx_rings;
-	if (nn->dp.xdp_prog)
+	अगर (nn->dp.xdp_prog)
 		num_tx_rings -= nn->dp.num_rx_rings;
 
 	channel->max_rx = min(nn->max_rx_rings, nn->max_r_vecs);
@@ -1400,48 +1401,48 @@ static void nfp_net_get_channels(struct net_device *netdev,
 	channel->rx_count = nn->dp.num_rx_rings - channel->combined_count;
 	channel->tx_count = num_tx_rings - channel->combined_count;
 	channel->other_count = NFP_NET_NON_Q_VECTORS;
-}
+पूर्ण
 
-static int nfp_net_set_num_rings(struct nfp_net *nn, unsigned int total_rx,
-				 unsigned int total_tx)
-{
-	struct nfp_net_dp *dp;
+अटल पूर्णांक nfp_net_set_num_rings(काष्ठा nfp_net *nn, अचिन्हित पूर्णांक total_rx,
+				 अचिन्हित पूर्णांक total_tx)
+अणु
+	काष्ठा nfp_net_dp *dp;
 
 	dp = nfp_net_clone_dp(nn);
-	if (!dp)
-		return -ENOMEM;
+	अगर (!dp)
+		वापस -ENOMEM;
 
 	dp->num_rx_rings = total_rx;
 	dp->num_tx_rings = total_tx;
 	/* nfp_net_check_config() will catch num_tx_rings > nn->max_tx_rings */
-	if (dp->xdp_prog)
+	अगर (dp->xdp_prog)
 		dp->num_tx_rings += total_rx;
 
-	return nfp_net_ring_reconfig(nn, dp, NULL);
-}
+	वापस nfp_net_ring_reconfig(nn, dp, शून्य);
+पूर्ण
 
-static int nfp_net_set_channels(struct net_device *netdev,
-				struct ethtool_channels *channel)
-{
-	struct nfp_net *nn = netdev_priv(netdev);
-	unsigned int total_rx, total_tx;
+अटल पूर्णांक nfp_net_set_channels(काष्ठा net_device *netdev,
+				काष्ठा ethtool_channels *channel)
+अणु
+	काष्ठा nfp_net *nn = netdev_priv(netdev);
+	अचिन्हित पूर्णांक total_rx, total_tx;
 
 	/* Reject unsupported */
-	if (channel->other_count != NFP_NET_NON_Q_VECTORS ||
+	अगर (channel->other_count != NFP_NET_NON_Q_VECTORS ||
 	    (channel->rx_count && channel->tx_count))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	total_rx = channel->combined_count + channel->rx_count;
 	total_tx = channel->combined_count + channel->tx_count;
 
-	if (total_rx > min(nn->max_rx_rings, nn->max_r_vecs) ||
+	अगर (total_rx > min(nn->max_rx_rings, nn->max_r_vecs) ||
 	    total_tx > min(nn->max_tx_rings, nn->max_r_vecs))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return nfp_net_set_num_rings(nn, total_rx, total_tx);
-}
+	वापस nfp_net_set_num_rings(nn, total_rx, total_tx);
+पूर्ण
 
-static const struct ethtool_ops nfp_net_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops nfp_net_ethtool_ops = अणु
 	.supported_coalesce_params = ETHTOOL_COALESCE_USECS |
 				     ETHTOOL_COALESCE_MAX_FRAMES,
 	.get_drvinfo		= nfp_net_get_drvinfo,
@@ -1472,9 +1473,9 @@ static const struct ethtool_ops nfp_net_ethtool_ops = {
 	.set_link_ksettings	= nfp_net_set_link_ksettings,
 	.get_fecparam		= nfp_port_get_fecparam,
 	.set_fecparam		= nfp_port_set_fecparam,
-};
+पूर्ण;
 
-const struct ethtool_ops nfp_port_ethtool_ops = {
+स्थिर काष्ठा ethtool_ops nfp_port_ethtool_ops = अणु
 	.get_drvinfo		= nfp_app_get_drvinfo,
 	.get_link		= ethtool_op_get_link,
 	.get_strings		= nfp_port_get_strings,
@@ -1489,9 +1490,9 @@ const struct ethtool_ops nfp_port_ethtool_ops = {
 	.set_link_ksettings	= nfp_net_set_link_ksettings,
 	.get_fecparam		= nfp_port_get_fecparam,
 	.set_fecparam		= nfp_port_set_fecparam,
-};
+पूर्ण;
 
-void nfp_net_set_ethtool_ops(struct net_device *netdev)
-{
+व्योम nfp_net_set_ethtool_ops(काष्ठा net_device *netdev)
+अणु
 	netdev->ethtool_ops = &nfp_net_ethtool_ops;
-}
+पूर्ण

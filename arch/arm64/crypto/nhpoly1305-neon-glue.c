@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * NHPoly1305 - ε-almost-∆-universal hash function for Adiantum
+ * NHPoly1305 - Nग-almost-ै-universal hash function क्रम Adiantum
  * (ARM64 NEON accelerated version)
  *
  * Copyright 2018 Google LLC
  */
 
-#include <asm/neon.h>
-#include <asm/simd.h>
-#include <crypto/internal/hash.h>
-#include <crypto/internal/simd.h>
-#include <crypto/nhpoly1305.h>
-#include <linux/module.h>
+#समावेश <यंत्र/neon.h>
+#समावेश <यंत्र/simd.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <crypto/nhpoly1305.h>
+#समावेश <linux/module.h>
 
-asmlinkage void nh_neon(const u32 *key, const u8 *message, size_t message_len,
+यंत्रlinkage व्योम nh_neon(स्थिर u32 *key, स्थिर u8 *message, माप_प्रकार message_len,
 			u8 hash[NH_HASH_BYTES]);
 
-/* wrapper to avoid indirect call to assembly, which doesn't work with CFI */
-static void _nh_neon(const u32 *key, const u8 *message, size_t message_len,
+/* wrapper to aव्योम indirect call to assembly, which करोesn't work with CFI */
+अटल व्योम _nh_neon(स्थिर u32 *key, स्थिर u8 *message, माप_प्रकार message_len,
 		     __le64 hash[NH_NUM_PASSES])
-{
+अणु
 	nh_neon(key, message, message_len, (u8 *)hash);
-}
+पूर्ण
 
-static int nhpoly1305_neon_update(struct shash_desc *desc,
-				  const u8 *src, unsigned int srclen)
-{
-	if (srclen < 64 || !crypto_simd_usable())
-		return crypto_nhpoly1305_update(desc, src, srclen);
+अटल पूर्णांक nhpoly1305_neon_update(काष्ठा shash_desc *desc,
+				  स्थिर u8 *src, अचिन्हित पूर्णांक srclen)
+अणु
+	अगर (srclen < 64 || !crypto_simd_usable())
+		वापस crypto_nhpoly1305_update(desc, src, srclen);
 
-	do {
-		unsigned int n = min_t(unsigned int, srclen, SZ_4K);
+	करो अणु
+		अचिन्हित पूर्णांक n = min_t(अचिन्हित पूर्णांक, srclen, SZ_4K);
 
 		kernel_neon_begin();
 		crypto_nhpoly1305_update_helper(desc, src, n, _nh_neon);
 		kernel_neon_end();
 		src += n;
 		srclen -= n;
-	} while (srclen);
-	return 0;
-}
+	पूर्ण जबतक (srclen);
+	वापस 0;
+पूर्ण
 
-static struct shash_alg nhpoly1305_alg = {
+अटल काष्ठा shash_alg nhpoly1305_alg = अणु
 	.base.cra_name		= "nhpoly1305",
 	.base.cra_driver_name	= "nhpoly1305-neon",
 	.base.cra_priority	= 200,
-	.base.cra_ctxsize	= sizeof(struct nhpoly1305_key),
+	.base.cra_ctxsize	= माप(काष्ठा nhpoly1305_key),
 	.base.cra_module	= THIS_MODULE,
 	.digestsize		= POLY1305_DIGEST_SIZE,
 	.init			= crypto_nhpoly1305_init,
 	.update			= nhpoly1305_neon_update,
 	.final			= crypto_nhpoly1305_final,
 	.setkey			= crypto_nhpoly1305_setkey,
-	.descsize		= sizeof(struct nhpoly1305_state),
-};
+	.descsize		= माप(काष्ठा nhpoly1305_state),
+पूर्ण;
 
-static int __init nhpoly1305_mod_init(void)
-{
-	if (!cpu_have_named_feature(ASIMD))
-		return -ENODEV;
+अटल पूर्णांक __init nhpoly1305_mod_init(व्योम)
+अणु
+	अगर (!cpu_have_named_feature(ASIMD))
+		वापस -ENODEV;
 
-	return crypto_register_shash(&nhpoly1305_alg);
-}
+	वापस crypto_रेजिस्टर_shash(&nhpoly1305_alg);
+पूर्ण
 
-static void __exit nhpoly1305_mod_exit(void)
-{
-	crypto_unregister_shash(&nhpoly1305_alg);
-}
+अटल व्योम __निकास nhpoly1305_mod_निकास(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&nhpoly1305_alg);
+पूर्ण
 
 module_init(nhpoly1305_mod_init);
-module_exit(nhpoly1305_mod_exit);
+module_निकास(nhpoly1305_mod_निकास);
 
-MODULE_DESCRIPTION("NHPoly1305 ε-almost-∆-universal hash function (NEON-accelerated)");
+MODULE_DESCRIPTION("NHPoly1305 Nग-almost-ै-universal hash function (NEON-accelerated)");
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Eric Biggers <ebiggers@google.com>");
 MODULE_ALIAS_CRYPTO("nhpoly1305");

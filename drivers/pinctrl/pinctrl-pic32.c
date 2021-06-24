@@ -1,86 +1,87 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * PIC32 pinctrl driver
  *
  * Joshua Henderson, <joshua.henderson@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
-#include <linux/clk.h>
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
 
-#include <asm/mach-pic32/pic32.h>
+#समावेश <यंत्र/mach-pic32/pic32.h>
 
-#include "pinctrl-utils.h"
-#include "pinctrl-pic32.h"
+#समावेश "pinctrl-utils.h"
+#समावेश "pinctrl-pic32.h"
 
-#define PINS_PER_BANK		16
+#घोषणा PINS_PER_BANK		16
 
-#define PIC32_CNCON_EDGE	11
-#define PIC32_CNCON_ON		15
+#घोषणा PIC32_CNCON_EDGE	11
+#घोषणा PIC32_CNCON_ON		15
 
-#define PIN_CONFIG_MICROCHIP_DIGITAL	(PIN_CONFIG_END + 1)
-#define PIN_CONFIG_MICROCHIP_ANALOG	(PIN_CONFIG_END + 2)
+#घोषणा PIN_CONFIG_MICROCHIP_DIGITAL	(PIN_CONFIG_END + 1)
+#घोषणा PIN_CONFIG_MICROCHIP_ANALOG	(PIN_CONFIG_END + 2)
 
-static const struct pinconf_generic_params pic32_mpp_bindings[] = {
-	{"microchip,digital",	PIN_CONFIG_MICROCHIP_DIGITAL,	0},
-	{"microchip,analog",	PIN_CONFIG_MICROCHIP_ANALOG,	0},
-};
+अटल स्थिर काष्ठा pinconf_generic_params pic32_mpp_bindings[] = अणु
+	अणु"microchip,digital",	PIN_CONFIG_MICROCHIP_DIGITAL,	0पूर्ण,
+	अणु"microchip,analog",	PIN_CONFIG_MICROCHIP_ANALOG,	0पूर्ण,
+पूर्ण;
 
-#define GPIO_BANK_START(bank)		((bank) * PINS_PER_BANK)
+#घोषणा GPIO_BANK_START(bank)		((bank) * PINS_PER_BANK)
 
-struct pic32_function {
-	const char *name;
-	const char * const *groups;
-	unsigned int ngroups;
-};
+काष्ठा pic32_function अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *groups;
+	अचिन्हित पूर्णांक ngroups;
+पूर्ण;
 
-struct pic32_pin_group {
-	const char *name;
-	unsigned int pin;
-	struct pic32_desc_function *functions;
-};
+काष्ठा pic32_pin_group अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक pin;
+	काष्ठा pic32_desc_function *functions;
+पूर्ण;
 
-struct pic32_desc_function {
-	const char *name;
+काष्ठा pic32_desc_function अणु
+	स्थिर अक्षर *name;
 	u32 muxreg;
 	u32 muxval;
-};
+पूर्ण;
 
-struct pic32_gpio_bank {
-	void __iomem *reg_base;
-	struct gpio_chip gpio_chip;
-	struct irq_chip irq_chip;
-	struct clk *clk;
-};
+काष्ठा pic32_gpio_bank अणु
+	व्योम __iomem *reg_base;
+	काष्ठा gpio_chip gpio_chip;
+	काष्ठा irq_chip irq_chip;
+	काष्ठा clk *clk;
+पूर्ण;
 
-struct pic32_pinctrl {
-	void __iomem *reg_base;
-	struct device *dev;
-	struct pinctrl_dev *pctldev;
-	const struct pinctrl_pin_desc *pins;
-	unsigned int npins;
-	const struct pic32_function *functions;
-	unsigned int nfunctions;
-	const struct pic32_pin_group *groups;
-	unsigned int ngroups;
-	struct pic32_gpio_bank *gpio_banks;
-	unsigned int nbanks;
-	struct clk *clk;
-};
+काष्ठा pic32_pinctrl अणु
+	व्योम __iomem *reg_base;
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctldev;
+	स्थिर काष्ठा pinctrl_pin_desc *pins;
+	अचिन्हित पूर्णांक npins;
+	स्थिर काष्ठा pic32_function *functions;
+	अचिन्हित पूर्णांक nfunctions;
+	स्थिर काष्ठा pic32_pin_group *groups;
+	अचिन्हित पूर्णांक ngroups;
+	काष्ठा pic32_gpio_bank *gpio_banks;
+	अचिन्हित पूर्णांक nbanks;
+	काष्ठा clk *clk;
+पूर्ण;
 
-static const struct pinctrl_pin_desc pic32_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc pic32_pins[] = अणु
 	PINCTRL_PIN(0, "A0"),
 	PINCTRL_PIN(1, "A1"),
 	PINCTRL_PIN(2, "A2"),
@@ -205,77 +206,77 @@ static const struct pinctrl_pin_desc pic32_pins[] = {
 	PINCTRL_PIN(149, "K5"),
 	PINCTRL_PIN(150, "K6"),
 	PINCTRL_PIN(151, "K7"),
-};
+पूर्ण;
 
-static const char * const pic32_input0_group[] = {
+अटल स्थिर अक्षर * स्थिर pic32_input0_group[] = अणु
 	"D2", "G8", "F4", "F1", "B9", "B10", "C14", "B5",
 	"C1", "D14", "G1", "A14", "D6",
-};
+पूर्ण;
 
-static const char * const pic32_input1_group[] = {
+अटल स्थिर अक्षर * स्थिर pic32_input1_group[] = अणु
 	"D3", "G7", "F5", "D11", "F0", "B1", "E5", "C13",
 	"B3", "C4", "G0", "A15", "D7",
-};
+पूर्ण;
 
-static const char * const pic32_input2_group[] = {
+अटल स्थिर अक्षर * स्थिर pic32_input2_group[] = अणु
 	"D9", "G6", "B8", "B15", "D4", "B0", "E3", "B7",
 	"F12", "D12", "F8", "C3", "E9",
-};
+पूर्ण;
 
-static const char * const pic32_input3_group[] = {
+अटल स्थिर अक्षर * स्थिर pic32_input3_group[] = अणु
 	"G9", "B14", "D0", "B6", "D5", "B2", "F3", "F13",
 	"F2", "C2", "E8",
-};
+पूर्ण;
 
-static const char * const pic32_output0_group[] = {
+अटल स्थिर अक्षर * स्थिर pic32_output0_group[] = अणु
 	"D2", "G8", "F4", "D10", "F1", "B9", "B10", "C14",
 	"B5", "C1", "D14", "G1", "A14", "D6",
-};
+पूर्ण;
 
-static const char * const pic32_output0_1_group[] = {
+अटल स्थिर अक्षर * स्थिर pic32_output0_1_group[] = अणु
 	"D2", "G8", "F4", "D10", "F1", "B9", "B10", "C14",
 	"B5", "C1", "D14", "G1", "A14", "D6",
 	"D3", "G7", "F5", "D11", "F0", "B1", "E5", "C13",
 	"B3", "C4", "D15", "G0", "A15", "D7",
-};
+पूर्ण;
 
-static const char *const pic32_output1_group[] = {
+अटल स्थिर अक्षर *स्थिर pic32_output1_group[] = अणु
 	"D3", "G7", "F5", "D11", "F0", "B1", "E5", "C13",
 	"B3", "C4", "D15", "G0", "A15", "D7",
-};
+पूर्ण;
 
-static const char *const pic32_output1_3_group[] = {
+अटल स्थिर अक्षर *स्थिर pic32_output1_3_group[] = अणु
 	"D3", "G7", "F5", "D11", "F0", "B1", "E5", "C13",
 	"B3", "C4", "D15", "G0", "A15", "D7",
 	"G9", "B14", "D0", "B6", "D5", "B2", "F3", "F13",
 	"C2", "E8", "F2",
-};
+पूर्ण;
 
-static const char * const pic32_output2_group[] = {
+अटल स्थिर अक्षर * स्थिर pic32_output2_group[] = अणु
 	"D9", "G6", "B8", "B15", "D4", "B0", "E3", "B7",
 	"F12", "D12", "F8", "C3", "E9",
-};
+पूर्ण;
 
-static const char * const pic32_output2_3_group[] = {
+अटल स्थिर अक्षर * स्थिर pic32_output2_3_group[] = अणु
 	"D9", "G6", "B8", "B15", "D4", "B0", "E3", "B7",
 	"F12", "D12", "F8", "C3", "E9",
 	"G9", "B14", "D0", "B6", "D5", "B2", "F3", "F13",
 	"C2", "E8", "F2",
-};
+पूर्ण;
 
-static const char * const pic32_output3_group[] = {
+अटल स्थिर अक्षर * स्थिर pic32_output3_group[] = अणु
 	"G9", "B14", "D0", "B6", "D5", "B2", "F3", "F13",
 	"C2", "E8", "F2",
-};
+पूर्ण;
 
-#define FUNCTION(_name, _gr)					\
-	{							\
+#घोषणा FUNCTION(_name, _gr)					\
+	अणु							\
 		.name = #_name,					\
 		.groups = pic32_##_gr##_group,			\
 		.ngroups = ARRAY_SIZE(pic32_##_gr##_group),	\
-	}
+	पूर्ण
 
-static const struct pic32_function pic32_functions[] = {
+अटल स्थिर काष्ठा pic32_function pic32_functions[] = अणु
 	FUNCTION(INT3, input0),
 	FUNCTION(T2CK, input0),
 	FUNCTION(T6CK, input0),
@@ -367,24 +368,24 @@ static const struct pic32_function pic32_functions[] = {
 	FUNCTION(OC1, output3),
 	FUNCTION(OC9, output3),
 	FUNCTION(C2TX, output3),
-};
+पूर्ण;
 
-#define PIC32_PINCTRL_GROUP(_pin, _name, ...)				\
-	{								\
+#घोषणा PIC32_PINCTRL_GROUP(_pin, _name, ...)				\
+	अणु								\
 		.name = #_name,						\
 		.pin = _pin,						\
-		.functions = (struct pic32_desc_function[]){		\
-			__VA_ARGS__, { } },				\
-	}
+		.functions = (काष्ठा pic32_desc_function[])अणु		\
+			__VA_ARGS__, अणु पूर्ण पूर्ण,				\
+	पूर्ण
 
-#define PIC32_PINCTRL_FUNCTION(_name, _muxreg, _muxval)	\
-	{						\
+#घोषणा PIC32_PINCTRL_FUNCTION(_name, _muxreg, _muxval)	\
+	अणु						\
 		.name = #_name,				\
 		.muxreg = _muxreg,			\
 		.muxval = _muxval,			\
-	}
+	पूर्ण
 
-static const struct pic32_pin_group pic32_groups[] = {
+अटल स्थिर काष्ठा pic32_pin_group pic32_groups[] = अणु
 	PIC32_PINCTRL_GROUP(14, A14,
 			PIC32_PINCTRL_FUNCTION(INT3, INT3R, 13),
 			PIC32_PINCTRL_FUNCTION(T2CK, T2CKR, 13),
@@ -1689,429 +1690,429 @@ static const struct pic32_pin_group pic32_groups[] = {
 			PIC32_PINCTRL_FUNCTION(OC1, RPG9R, 12),
 			PIC32_PINCTRL_FUNCTION(OC9, RPG9R, 13),
 			PIC32_PINCTRL_FUNCTION(C2TX, RPG9R, 15)),
-};
+पूर्ण;
 
-static inline struct pic32_gpio_bank *irqd_to_bank(struct irq_data *d)
-{
-	return gpiochip_get_data(irq_data_get_irq_chip_data(d));
-}
+अटल अंतरभूत काष्ठा pic32_gpio_bank *irqd_to_bank(काष्ठा irq_data *d)
+अणु
+	वापस gpiochip_get_data(irq_data_get_irq_chip_data(d));
+पूर्ण
 
-static inline struct pic32_gpio_bank *pctl_to_bank(struct pic32_pinctrl *pctl,
-						unsigned pin)
-{
-	return &pctl->gpio_banks[pin / PINS_PER_BANK];
-}
+अटल अंतरभूत काष्ठा pic32_gpio_bank *pctl_to_bank(काष्ठा pic32_pinctrl *pctl,
+						अचिन्हित pin)
+अणु
+	वापस &pctl->gpio_banks[pin / PINS_PER_BANK];
+पूर्ण
 
-static int pic32_pinctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक pic32_pinctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->ngroups;
-}
+	वापस pctl->ngroups;
+पूर्ण
 
-static const char *pic32_pinctrl_get_group_name(struct pinctrl_dev *pctldev,
-						    unsigned group)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *pic32_pinctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+						    अचिन्हित group)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->groups[group].name;
-}
+	वापस pctl->groups[group].name;
+पूर्ण
 
-static int pic32_pinctrl_get_group_pins(struct pinctrl_dev *pctldev,
-					    unsigned group,
-					    const unsigned **pins,
-					    unsigned *num_pins)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक pic32_pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+					    अचिन्हित group,
+					    स्थिर अचिन्हित **pins,
+					    अचिन्हित *num_pins)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = &pctl->groups[group].pin;
 	*num_pins = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops pic32_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops pic32_pinctrl_ops = अणु
 	.get_groups_count = pic32_pinctrl_get_groups_count,
 	.get_group_name = pic32_pinctrl_get_group_name,
 	.get_group_pins = pic32_pinctrl_get_group_pins,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_pin,
-	.dt_free_map = pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+पूर्ण;
 
-static int pic32_pinmux_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक pic32_pinmux_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->nfunctions;
-}
+	वापस pctl->nfunctions;
+पूर्ण
 
-static const char *
-pic32_pinmux_get_function_name(struct pinctrl_dev *pctldev, unsigned func)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *
+pic32_pinmux_get_function_name(काष्ठा pinctrl_dev *pctldev, अचिन्हित func)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->functions[func].name;
-}
+	वापस pctl->functions[func].name;
+पूर्ण
 
-static int pic32_pinmux_get_function_groups(struct pinctrl_dev *pctldev,
-						unsigned func,
-						const char * const **groups,
-						unsigned * const num_groups)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक pic32_pinmux_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+						अचिन्हित func,
+						स्थिर अक्षर * स्थिर **groups,
+						अचिन्हित * स्थिर num_groups)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pctl->functions[func].groups;
 	*num_groups = pctl->functions[func].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pic32_pinmux_enable(struct pinctrl_dev *pctldev,
-				   unsigned func, unsigned group)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	const struct pic32_pin_group *pg = &pctl->groups[group];
-	const struct pic32_function *pf = &pctl->functions[func];
-	const char *fname = pf->name;
-	struct pic32_desc_function *functions = pg->functions;
+अटल पूर्णांक pic32_pinmux_enable(काष्ठा pinctrl_dev *pctldev,
+				   अचिन्हित func, अचिन्हित group)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा pic32_pin_group *pg = &pctl->groups[group];
+	स्थिर काष्ठा pic32_function *pf = &pctl->functions[func];
+	स्थिर अक्षर *fname = pf->name;
+	काष्ठा pic32_desc_function *functions = pg->functions;
 
-	while (functions->name) {
-		if (!strcmp(functions->name, fname)) {
+	जबतक (functions->name) अणु
+		अगर (!म_भेद(functions->name, fname)) अणु
 			dev_dbg(pctl->dev,
 				"setting function %s reg 0x%x = %d\n",
 				fname, functions->muxreg, functions->muxval);
 
-			writel(functions->muxval, pctl->reg_base + functions->muxreg);
+			ग_लिखोl(functions->muxval, pctl->reg_base + functions->muxreg);
 
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		functions++;
-	}
+	पूर्ण
 
 	dev_err(pctl->dev, "cannot mux pin %u to function %u\n", group, func);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int pic32_gpio_request_enable(struct pinctrl_dev *pctldev,
-				     struct pinctrl_gpio_range *range,
-				     unsigned offset)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct pic32_gpio_bank *bank = gpiochip_get_data(range->gc);
+अटल पूर्णांक pic32_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+				     काष्ठा pinctrl_gpio_range *range,
+				     अचिन्हित offset)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा pic32_gpio_bank *bank = gpiochip_get_data(range->gc);
 	u32 mask = BIT(offset - bank->gpio_chip.base);
 
 	dev_dbg(pctl->dev, "requesting gpio %d in bank %d with mask 0x%x\n",
 		offset, bank->gpio_chip.base, mask);
 
-	writel(mask, bank->reg_base + PIC32_CLR(ANSEL_REG));
+	ग_लिखोl(mask, bank->reg_base + PIC32_CLR(ANSEL_REG));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pic32_gpio_direction_input(struct gpio_chip *chip,
-					  unsigned offset)
-{
-	struct pic32_gpio_bank *bank = gpiochip_get_data(chip);
+अटल पूर्णांक pic32_gpio_direction_input(काष्ठा gpio_chip *chip,
+					  अचिन्हित offset)
+अणु
+	काष्ठा pic32_gpio_bank *bank = gpiochip_get_data(chip);
 	u32 mask = BIT(offset);
 
-	writel(mask, bank->reg_base + PIC32_SET(TRIS_REG));
+	ग_लिखोl(mask, bank->reg_base + PIC32_SET(TRIS_REG));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pic32_gpio_get(struct gpio_chip *chip, unsigned offset)
-{
-	struct pic32_gpio_bank *bank = gpiochip_get_data(chip);
+अटल पूर्णांक pic32_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा pic32_gpio_bank *bank = gpiochip_get_data(chip);
 
-	return !!(readl(bank->reg_base + PORT_REG) & BIT(offset));
-}
+	वापस !!(पढ़ोl(bank->reg_base + PORT_REG) & BIT(offset));
+पूर्ण
 
-static void pic32_gpio_set(struct gpio_chip *chip, unsigned offset,
-			       int value)
-{
-	struct pic32_gpio_bank *bank = gpiochip_get_data(chip);
+अटल व्योम pic32_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित offset,
+			       पूर्णांक value)
+अणु
+	काष्ठा pic32_gpio_bank *bank = gpiochip_get_data(chip);
 	u32 mask = BIT(offset);
 
-	if (value)
-		writel(mask, bank->reg_base + PIC32_SET(PORT_REG));
-	else
-		writel(mask, bank->reg_base + PIC32_CLR(PORT_REG));
-}
+	अगर (value)
+		ग_लिखोl(mask, bank->reg_base + PIC32_SET(PORT_REG));
+	अन्यथा
+		ग_लिखोl(mask, bank->reg_base + PIC32_CLR(PORT_REG));
+पूर्ण
 
-static int pic32_gpio_direction_output(struct gpio_chip *chip,
-					   unsigned offset, int value)
-{
-	struct pic32_gpio_bank *bank = gpiochip_get_data(chip);
+अटल पूर्णांक pic32_gpio_direction_output(काष्ठा gpio_chip *chip,
+					   अचिन्हित offset, पूर्णांक value)
+अणु
+	काष्ठा pic32_gpio_bank *bank = gpiochip_get_data(chip);
 	u32 mask = BIT(offset);
 
 	pic32_gpio_set(chip, offset, value);
-	writel(mask, bank->reg_base + PIC32_CLR(TRIS_REG));
+	ग_लिखोl(mask, bank->reg_base + PIC32_CLR(TRIS_REG));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pic32_gpio_set_direction(struct pinctrl_dev *pctldev,
-					      struct pinctrl_gpio_range *range,
-					      unsigned offset, bool input)
-{
-	struct gpio_chip *chip = range->gc;
+अटल पूर्णांक pic32_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+					      काष्ठा pinctrl_gpio_range *range,
+					      अचिन्हित offset, bool input)
+अणु
+	काष्ठा gpio_chip *chip = range->gc;
 
-	if (input)
+	अगर (input)
 		pic32_gpio_direction_input(chip, offset);
-	else
+	अन्यथा
 		pic32_gpio_direction_output(chip, offset, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops pic32_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops pic32_pinmux_ops = अणु
 	.get_functions_count = pic32_pinmux_get_functions_count,
 	.get_function_name = pic32_pinmux_get_function_name,
 	.get_function_groups = pic32_pinmux_get_function_groups,
 	.set_mux = pic32_pinmux_enable,
 	.gpio_request_enable = pic32_gpio_request_enable,
 	.gpio_set_direction = pic32_gpio_set_direction,
-};
+पूर्ण;
 
-static int pic32_pinconf_get(struct pinctrl_dev *pctldev, unsigned pin,
-				 unsigned long *config)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct pic32_gpio_bank *bank = pctl_to_bank(pctl, pin);
-	unsigned param = pinconf_to_config_param(*config);
+अटल पूर्णांक pic32_pinconf_get(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+				 अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा pic32_gpio_bank *bank = pctl_to_bank(pctl, pin);
+	अचिन्हित param = pinconf_to_config_param(*config);
 	u32 mask = BIT(pin - bank->gpio_chip.base);
 	u32 arg;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_PULL_UP:
-		arg = !!(readl(bank->reg_base + CNPU_REG) & mask);
-		break;
-	case PIN_CONFIG_BIAS_PULL_DOWN:
-		arg = !!(readl(bank->reg_base + CNPD_REG) & mask);
-		break;
-	case PIN_CONFIG_MICROCHIP_DIGITAL:
-		arg = !(readl(bank->reg_base + ANSEL_REG) & mask);
-		break;
-	case PIN_CONFIG_MICROCHIP_ANALOG:
-		arg = !!(readl(bank->reg_base + ANSEL_REG) & mask);
-		break;
-	case PIN_CONFIG_DRIVE_OPEN_DRAIN:
-		arg = !!(readl(bank->reg_base + ODCU_REG) & mask);
-		break;
-	case PIN_CONFIG_INPUT_ENABLE:
-		arg = !!(readl(bank->reg_base + TRIS_REG) & mask);
-		break;
-	case PIN_CONFIG_OUTPUT:
-		arg = !(readl(bank->reg_base + TRIS_REG) & mask);
-		break;
-	default:
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		arg = !!(पढ़ोl(bank->reg_base + CNPU_REG) & mask);
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_PULL_DOWN:
+		arg = !!(पढ़ोl(bank->reg_base + CNPD_REG) & mask);
+		अवरोध;
+	हाल PIN_CONFIG_MICROCHIP_DIGITAL:
+		arg = !(पढ़ोl(bank->reg_base + ANSEL_REG) & mask);
+		अवरोध;
+	हाल PIN_CONFIG_MICROCHIP_ANALOG:
+		arg = !!(पढ़ोl(bank->reg_base + ANSEL_REG) & mask);
+		अवरोध;
+	हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
+		arg = !!(पढ़ोl(bank->reg_base + ODCU_REG) & mask);
+		अवरोध;
+	हाल PIN_CONFIG_INPUT_ENABLE:
+		arg = !!(पढ़ोl(bank->reg_base + TRIS_REG) & mask);
+		अवरोध;
+	हाल PIN_CONFIG_OUTPUT:
+		arg = !(पढ़ोl(bank->reg_base + TRIS_REG) & mask);
+		अवरोध;
+	शेष:
 		dev_err(pctl->dev, "Property %u not supported\n", param);
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pic32_pinconf_set(struct pinctrl_dev *pctldev, unsigned pin,
-				 unsigned long *configs, unsigned num_configs)
-{
-	struct pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct pic32_gpio_bank *bank = pctl_to_bank(pctl, pin);
-	unsigned param;
+अटल पूर्णांक pic32_pinconf_set(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+				 अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	काष्ठा pic32_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा pic32_gpio_bank *bank = pctl_to_bank(pctl, pin);
+	अचिन्हित param;
 	u32 arg;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 	u32 offset = pin - bank->gpio_chip.base;
 	u32 mask = BIT(offset);
 
 	dev_dbg(pctl->dev, "setting pin %d bank %d mask 0x%x\n",
 		pin, bank->gpio_chip.base, mask);
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_PULL_UP:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			dev_dbg(pctl->dev, "   pullup\n");
-			writel(mask, bank->reg_base +PIC32_SET(CNPU_REG));
-			break;
-		case PIN_CONFIG_BIAS_PULL_DOWN:
+			ग_लिखोl(mask, bank->reg_base +PIC32_SET(CNPU_REG));
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_PULL_DOWN:
 			dev_dbg(pctl->dev, "   pulldown\n");
-			writel(mask, bank->reg_base + PIC32_SET(CNPD_REG));
-			break;
-		case PIN_CONFIG_MICROCHIP_DIGITAL:
+			ग_लिखोl(mask, bank->reg_base + PIC32_SET(CNPD_REG));
+			अवरोध;
+		हाल PIN_CONFIG_MICROCHIP_DIGITAL:
 			dev_dbg(pctl->dev, "   digital\n");
-			writel(mask, bank->reg_base + PIC32_CLR(ANSEL_REG));
-			break;
-		case PIN_CONFIG_MICROCHIP_ANALOG:
+			ग_लिखोl(mask, bank->reg_base + PIC32_CLR(ANSEL_REG));
+			अवरोध;
+		हाल PIN_CONFIG_MICROCHIP_ANALOG:
 			dev_dbg(pctl->dev, "   analog\n");
-			writel(mask, bank->reg_base + PIC32_SET(ANSEL_REG));
-			break;
-		case PIN_CONFIG_DRIVE_OPEN_DRAIN:
+			ग_लिखोl(mask, bank->reg_base + PIC32_SET(ANSEL_REG));
+			अवरोध;
+		हाल PIN_CONFIG_DRIVE_OPEN_DRAIN:
 			dev_dbg(pctl->dev, "   opendrain\n");
-			writel(mask, bank->reg_base + PIC32_SET(ODCU_REG));
-			break;
-		case PIN_CONFIG_INPUT_ENABLE:
+			ग_लिखोl(mask, bank->reg_base + PIC32_SET(ODCU_REG));
+			अवरोध;
+		हाल PIN_CONFIG_INPUT_ENABLE:
 			pic32_gpio_direction_input(&bank->gpio_chip, offset);
-			break;
-		case PIN_CONFIG_OUTPUT:
+			अवरोध;
+		हाल PIN_CONFIG_OUTPUT:
 			pic32_gpio_direction_output(&bank->gpio_chip,
 						    offset, arg);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(pctl->dev, "Property %u not supported\n",
 				param);
-			return -ENOTSUPP;
-		}
-	}
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops pic32_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops pic32_pinconf_ops = अणु
 	.pin_config_get = pic32_pinconf_get,
 	.pin_config_set = pic32_pinconf_set,
 	.is_generic = true,
-};
+पूर्ण;
 
-static struct pinctrl_desc pic32_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc pic32_pinctrl_desc = अणु
 	.name = "pic32-pinctrl",
 	.pctlops = &pic32_pinctrl_ops,
 	.pmxops = &pic32_pinmux_ops,
 	.confops = &pic32_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int pic32_gpio_get_direction(struct gpio_chip *chip, unsigned offset)
-{
-	struct pic32_gpio_bank *bank = gpiochip_get_data(chip);
+अटल पूर्णांक pic32_gpio_get_direction(काष्ठा gpio_chip *chip, अचिन्हित offset)
+अणु
+	काष्ठा pic32_gpio_bank *bank = gpiochip_get_data(chip);
 
-	if (readl(bank->reg_base + TRIS_REG) & BIT(offset))
-		return GPIO_LINE_DIRECTION_IN;
+	अगर (पढ़ोl(bank->reg_base + TRIS_REG) & BIT(offset))
+		वापस GPIO_LINE_सूचीECTION_IN;
 
-	return GPIO_LINE_DIRECTION_OUT;
-}
+	वापस GPIO_LINE_सूचीECTION_OUT;
+पूर्ण
 
-static void pic32_gpio_irq_ack(struct irq_data *data)
-{
-	struct pic32_gpio_bank *bank = irqd_to_bank(data);
+अटल व्योम pic32_gpio_irq_ack(काष्ठा irq_data *data)
+अणु
+	काष्ठा pic32_gpio_bank *bank = irqd_to_bank(data);
 
-	writel(0, bank->reg_base + CNF_REG);
-}
+	ग_लिखोl(0, bank->reg_base + CNF_REG);
+पूर्ण
 
-static void pic32_gpio_irq_mask(struct irq_data *data)
-{
-	struct pic32_gpio_bank *bank = irqd_to_bank(data);
+अटल व्योम pic32_gpio_irq_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा pic32_gpio_bank *bank = irqd_to_bank(data);
 
-	writel(BIT(PIC32_CNCON_ON), bank->reg_base + PIC32_CLR(CNCON_REG));
-}
+	ग_लिखोl(BIT(PIC32_CNCON_ON), bank->reg_base + PIC32_CLR(CNCON_REG));
+पूर्ण
 
-static void pic32_gpio_irq_unmask(struct irq_data *data)
-{
-	struct pic32_gpio_bank *bank = irqd_to_bank(data);
+अटल व्योम pic32_gpio_irq_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा pic32_gpio_bank *bank = irqd_to_bank(data);
 
-	writel(BIT(PIC32_CNCON_ON), bank->reg_base + PIC32_SET(CNCON_REG));
-}
+	ग_लिखोl(BIT(PIC32_CNCON_ON), bank->reg_base + PIC32_SET(CNCON_REG));
+पूर्ण
 
-static unsigned int pic32_gpio_irq_startup(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+अटल अचिन्हित पूर्णांक pic32_gpio_irq_startup(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
 
 	pic32_gpio_direction_input(chip, data->hwirq);
 	pic32_gpio_irq_unmask(data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pic32_gpio_irq_set_type(struct irq_data *data, unsigned int type)
-{
-	struct pic32_gpio_bank *bank = irqd_to_bank(data);
+अटल पूर्णांक pic32_gpio_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
+	काष्ठा pic32_gpio_bank *bank = irqd_to_bank(data);
 	u32 mask = BIT(data->hwirq);
 
-	switch (type & IRQ_TYPE_SENSE_MASK) {
-	case IRQ_TYPE_EDGE_RISING:
+	चयन (type & IRQ_TYPE_SENSE_MASK) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
 		/* enable RISE */
-		writel(mask, bank->reg_base + PIC32_SET(CNEN_REG));
+		ग_लिखोl(mask, bank->reg_base + PIC32_SET(CNEN_REG));
 		/* disable FALL */
-		writel(mask, bank->reg_base + PIC32_CLR(CNNE_REG));
+		ग_लिखोl(mask, bank->reg_base + PIC32_CLR(CNNE_REG));
 		/* enable EDGE */
-		writel(BIT(PIC32_CNCON_EDGE), bank->reg_base + PIC32_SET(CNCON_REG));
-		break;
-	case IRQ_TYPE_EDGE_FALLING:
+		ग_लिखोl(BIT(PIC32_CNCON_EDGE), bank->reg_base + PIC32_SET(CNCON_REG));
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_FALLING:
 		/* disable RISE */
-		writel(mask, bank->reg_base + PIC32_CLR(CNEN_REG));
+		ग_लिखोl(mask, bank->reg_base + PIC32_CLR(CNEN_REG));
 		/* enable FALL */
-		writel(mask, bank->reg_base + PIC32_SET(CNNE_REG));
+		ग_लिखोl(mask, bank->reg_base + PIC32_SET(CNNE_REG));
 		/* enable EDGE */
-		writel(BIT(PIC32_CNCON_EDGE), bank->reg_base + PIC32_SET(CNCON_REG));
-		break;
-	case IRQ_TYPE_EDGE_BOTH:
+		ग_लिखोl(BIT(PIC32_CNCON_EDGE), bank->reg_base + PIC32_SET(CNCON_REG));
+		अवरोध;
+	हाल IRQ_TYPE_EDGE_BOTH:
 		/* enable RISE */
-		writel(mask, bank->reg_base + PIC32_SET(CNEN_REG));
+		ग_लिखोl(mask, bank->reg_base + PIC32_SET(CNEN_REG));
 		/* enable FALL */
-		writel(mask, bank->reg_base + PIC32_SET(CNNE_REG));
+		ग_लिखोl(mask, bank->reg_base + PIC32_SET(CNNE_REG));
 		/* enable EDGE */
-		writel(BIT(PIC32_CNCON_EDGE), bank->reg_base + PIC32_SET(CNCON_REG));
-		break;
-	default:
-		return -EINVAL;
-	}
+		ग_लिखोl(BIT(PIC32_CNCON_EDGE), bank->reg_base + PIC32_SET(CNCON_REG));
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	irq_set_handler_locked(data, handle_edge_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 pic32_gpio_get_pending(struct gpio_chip *gc, unsigned long status)
-{
-	struct pic32_gpio_bank *bank = gpiochip_get_data(gc);
+अटल u32 pic32_gpio_get_pending(काष्ठा gpio_chip *gc, अचिन्हित दीर्घ status)
+अणु
+	काष्ठा pic32_gpio_bank *bank = gpiochip_get_data(gc);
 	u32 pending = 0;
 	u32 cnen_rise, cnne_fall;
 	u32 pin;
 
-	cnen_rise = readl(bank->reg_base + CNEN_REG);
-	cnne_fall = readl(bank->reg_base + CNNE_REG);
+	cnen_rise = पढ़ोl(bank->reg_base + CNEN_REG);
+	cnne_fall = पढ़ोl(bank->reg_base + CNNE_REG);
 
-	for_each_set_bit(pin, &status, BITS_PER_LONG) {
+	क्रम_each_set_bit(pin, &status, BITS_PER_LONG) अणु
 		u32 mask = BIT(pin);
 
-		if ((mask & cnen_rise) || (mask && cnne_fall))
+		अगर ((mask & cnen_rise) || (mask && cnne_fall))
 			pending |= mask;
-	}
+	पूर्ण
 
-	return pending;
-}
+	वापस pending;
+पूर्ण
 
-static void pic32_gpio_irq_handler(struct irq_desc *desc)
-{
-	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
-	struct pic32_gpio_bank *bank = gpiochip_get_data(gc);
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	unsigned long pending;
-	unsigned int pin;
+अटल व्योम pic32_gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा gpio_chip *gc = irq_desc_get_handler_data(desc);
+	काष्ठा pic32_gpio_bank *bank = gpiochip_get_data(gc);
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	अचिन्हित दीर्घ pending;
+	अचिन्हित पूर्णांक pin;
 	u32 stat;
 
 	chained_irq_enter(chip, desc);
 
-	stat = readl(bank->reg_base + CNF_REG);
+	stat = पढ़ोl(bank->reg_base + CNF_REG);
 	pending = pic32_gpio_get_pending(gc, stat);
 
-	for_each_set_bit(pin, &pending, BITS_PER_LONG)
-		generic_handle_irq(irq_linear_revmap(gc->irq.domain, pin));
+	क्रम_each_set_bit(pin, &pending, BITS_PER_LONG)
+		generic_handle_irq(irq_linear_revmap(gc->irq.करोमुख्य, pin));
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-#define GPIO_BANK(_bank, _npins)					\
-	{								\
-		.gpio_chip = {						\
+#घोषणा GPIO_BANK(_bank, _npins)					\
+	अणु								\
+		.gpio_chip = अणु						\
 			.label = "GPIO" #_bank,				\
 			.request = gpiochip_generic_request,		\
-			.free = gpiochip_generic_free,			\
+			.मुक्त = gpiochip_generic_मुक्त,			\
 			.get_direction = pic32_gpio_get_direction,	\
 			.direction_input = pic32_gpio_direction_input,	\
 			.direction_output = pic32_gpio_direction_output, \
@@ -2121,18 +2122,18 @@ static void pic32_gpio_irq_handler(struct irq_desc *desc)
 			.base = GPIO_BANK_START(_bank),			\
 			.owner = THIS_MODULE,				\
 			.can_sleep = 0,					\
-		},							\
-		.irq_chip = {						\
+		पूर्ण,							\
+		.irq_chip = अणु						\
 			.name = "GPIO" #_bank,				\
 			.irq_startup = pic32_gpio_irq_startup,	\
 			.irq_ack = pic32_gpio_irq_ack,		\
 			.irq_mask = pic32_gpio_irq_mask,		\
 			.irq_unmask = pic32_gpio_irq_unmask,		\
 			.irq_set_type = pic32_gpio_irq_set_type,	\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-static struct pic32_gpio_bank pic32_gpio_banks[] = {
+अटल काष्ठा pic32_gpio_bank pic32_gpio_banks[] = अणु
 	GPIO_BANK(0, PINS_PER_BANK),
 	GPIO_BANK(1, PINS_PER_BANK),
 	GPIO_BANK(2, PINS_PER_BANK),
@@ -2143,37 +2144,37 @@ static struct pic32_gpio_bank pic32_gpio_banks[] = {
 	GPIO_BANK(7, PINS_PER_BANK),
 	GPIO_BANK(8, PINS_PER_BANK),
 	GPIO_BANK(9, PINS_PER_BANK),
-};
+पूर्ण;
 
-static int pic32_pinctrl_probe(struct platform_device *pdev)
-{
-	struct pic32_pinctrl *pctl;
-	struct resource *res;
-	int ret;
+अटल पूर्णांक pic32_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा pic32_pinctrl *pctl;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	pctl = devm_kzalloc(&pdev->dev, sizeof(*pctl), GFP_KERNEL);
-	if (!pctl)
-		return -ENOMEM;
+	pctl = devm_kzalloc(&pdev->dev, माप(*pctl), GFP_KERNEL);
+	अगर (!pctl)
+		वापस -ENOMEM;
 	pctl->dev = &pdev->dev;
 	dev_set_drvdata(&pdev->dev, pctl);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	pctl->reg_base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(pctl->reg_base))
-		return PTR_ERR(pctl->reg_base);
+	अगर (IS_ERR(pctl->reg_base))
+		वापस PTR_ERR(pctl->reg_base);
 
-	pctl->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(pctl->clk)) {
+	pctl->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(pctl->clk)) अणु
 		ret = PTR_ERR(pctl->clk);
 		dev_err(&pdev->dev, "clk get failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(pctl->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "clk enable failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	pctl->pins = pic32_pins;
 	pctl->npins = ARRAY_SIZE(pic32_pins);
@@ -2189,56 +2190,56 @@ static int pic32_pinctrl_probe(struct platform_device *pdev)
 	pic32_pinctrl_desc.custom_params = pic32_mpp_bindings;
 	pic32_pinctrl_desc.num_custom_params = ARRAY_SIZE(pic32_mpp_bindings);
 
-	pctl->pctldev = devm_pinctrl_register(&pdev->dev, &pic32_pinctrl_desc,
+	pctl->pctldev = devm_pinctrl_रेजिस्टर(&pdev->dev, &pic32_pinctrl_desc,
 					      pctl);
-	if (IS_ERR(pctl->pctldev)) {
+	अगर (IS_ERR(pctl->pctldev)) अणु
 		dev_err(&pdev->dev, "Failed to register pinctrl device\n");
-		return PTR_ERR(pctl->pctldev);
-	}
+		वापस PTR_ERR(pctl->pctldev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pic32_gpio_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct pic32_gpio_bank *bank;
+अटल पूर्णांक pic32_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा pic32_gpio_bank *bank;
 	u32 id;
-	int irq, ret;
-	struct gpio_irq_chip *girq;
+	पूर्णांक irq, ret;
+	काष्ठा gpio_irq_chip *girq;
 
-	if (of_property_read_u32(np, "microchip,gpio-bank", &id)) {
+	अगर (of_property_पढ़ो_u32(np, "microchip,gpio-bank", &id)) अणु
 		dev_err(&pdev->dev, "microchip,gpio-bank property not found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (id >= ARRAY_SIZE(pic32_gpio_banks)) {
+	अगर (id >= ARRAY_SIZE(pic32_gpio_banks)) अणु
 		dev_err(&pdev->dev, "invalid microchip,gpio-bank property\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bank = &pic32_gpio_banks[id];
 
-	bank->reg_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(bank->reg_base))
-		return PTR_ERR(bank->reg_base);
+	bank->reg_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(bank->reg_base))
+		वापस PTR_ERR(bank->reg_base);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	bank->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(bank->clk)) {
+	bank->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(bank->clk)) अणु
 		ret = PTR_ERR(bank->clk);
 		dev_err(&pdev->dev, "clk get failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = clk_prepare_enable(bank->clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "clk enable failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	bank->gpio_chip.parent = &pdev->dev;
 	bank->gpio_chip.of_node = np;
@@ -2246,58 +2247,58 @@ static int pic32_gpio_probe(struct platform_device *pdev)
 	girq->chip = &bank->irq_chip;
 	girq->parent_handler = pic32_gpio_irq_handler;
 	girq->num_parents = 1;
-	girq->parents = devm_kcalloc(&pdev->dev, 1, sizeof(*girq->parents),
+	girq->parents = devm_kसुस्मृति(&pdev->dev, 1, माप(*girq->parents),
 				     GFP_KERNEL);
-	if (!girq->parents)
-		return -ENOMEM;
-	girq->default_type = IRQ_TYPE_NONE;
+	अगर (!girq->parents)
+		वापस -ENOMEM;
+	girq->शेष_type = IRQ_TYPE_NONE;
 	girq->handler = handle_level_irq;
 	girq->parents[0] = irq;
 	ret = gpiochip_add_data(&bank->gpio_chip, bank);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Failed to add GPIO chip %u: %d\n",
 			id, ret);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id pic32_pinctrl_of_match[] = {
-	{ .compatible = "microchip,pic32mzda-pinctrl", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id pic32_pinctrl_of_match[] = अणु
+	अणु .compatible = "microchip,pic32mzda-pinctrl", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver pic32_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver pic32_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "pic32-pinctrl",
 		.of_match_table = pic32_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = pic32_pinctrl_probe,
-};
+पूर्ण;
 
-static const struct of_device_id pic32_gpio_of_match[] = {
-	{ .compatible = "microchip,pic32mzda-gpio", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id pic32_gpio_of_match[] = अणु
+	अणु .compatible = "microchip,pic32mzda-gpio", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver pic32_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver pic32_gpio_driver = अणु
+	.driver = अणु
 		.name = "pic32-gpio",
 		.of_match_table = pic32_gpio_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = pic32_gpio_probe,
-};
+पूर्ण;
 
-static int __init pic32_gpio_register(void)
-{
-	return platform_driver_register(&pic32_gpio_driver);
-}
-arch_initcall(pic32_gpio_register);
+अटल पूर्णांक __init pic32_gpio_रेजिस्टर(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&pic32_gpio_driver);
+पूर्ण
+arch_initcall(pic32_gpio_रेजिस्टर);
 
-static int __init pic32_pinctrl_register(void)
-{
-	return platform_driver_register(&pic32_pinctrl_driver);
-}
-arch_initcall(pic32_pinctrl_register);
+अटल पूर्णांक __init pic32_pinctrl_रेजिस्टर(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&pic32_pinctrl_driver);
+पूर्ण
+arch_initcall(pic32_pinctrl_रेजिस्टर);

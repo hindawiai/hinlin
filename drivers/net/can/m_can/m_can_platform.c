@@ -1,209 +1,210 @@
-// SPDX-License-Identifier: GPL-2.0
-// IOMapped CAN bus driver for Bosch M_CAN controller
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// IOMapped CAN bus driver क्रम Bosch M_CAN controller
 // Copyright (C) 2014 Freescale Semiconductor, Inc.
-//	Dong Aisheng <b29396@freescale.com>
+//	Dong Aisheng <b29396@मुक्तscale.com>
 //
 // Copyright (C) 2018-19 Texas Instruments Incorporated - http://www.ti.com/
 
-#include <linux/platform_device.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "m_can.h"
+#समावेश "m_can.h"
 
-struct m_can_plat_priv {
-	struct m_can_classdev cdev;
+काष्ठा m_can_plat_priv अणु
+	काष्ठा m_can_classdev cdev;
 
-	void __iomem *base;
-	void __iomem *mram_base;
-};
+	व्योम __iomem *base;
+	व्योम __iomem *mram_base;
+पूर्ण;
 
-static inline struct m_can_plat_priv *cdev_to_priv(struct m_can_classdev *cdev)
-{
-	return container_of(cdev, struct m_can_plat_priv, cdev);
-}
+अटल अंतरभूत काष्ठा m_can_plat_priv *cdev_to_priv(काष्ठा m_can_classdev *cdev)
+अणु
+	वापस container_of(cdev, काष्ठा m_can_plat_priv, cdev);
+पूर्ण
 
-static u32 iomap_read_reg(struct m_can_classdev *cdev, int reg)
-{
-	struct m_can_plat_priv *priv = cdev_to_priv(cdev);
+अटल u32 iomap_पढ़ो_reg(काष्ठा m_can_classdev *cdev, पूर्णांक reg)
+अणु
+	काष्ठा m_can_plat_priv *priv = cdev_to_priv(cdev);
 
-	return readl(priv->base + reg);
-}
+	वापस पढ़ोl(priv->base + reg);
+पूर्ण
 
-static u32 iomap_read_fifo(struct m_can_classdev *cdev, int offset)
-{
-	struct m_can_plat_priv *priv = cdev_to_priv(cdev);
+अटल u32 iomap_पढ़ो_fअगरo(काष्ठा m_can_classdev *cdev, पूर्णांक offset)
+अणु
+	काष्ठा m_can_plat_priv *priv = cdev_to_priv(cdev);
 
-	return readl(priv->mram_base + offset);
-}
+	वापस पढ़ोl(priv->mram_base + offset);
+पूर्ण
 
-static int iomap_write_reg(struct m_can_classdev *cdev, int reg, int val)
-{
-	struct m_can_plat_priv *priv = cdev_to_priv(cdev);
+अटल पूर्णांक iomap_ग_लिखो_reg(काष्ठा m_can_classdev *cdev, पूर्णांक reg, पूर्णांक val)
+अणु
+	काष्ठा m_can_plat_priv *priv = cdev_to_priv(cdev);
 
-	writel(val, priv->base + reg);
+	ग_लिखोl(val, priv->base + reg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iomap_write_fifo(struct m_can_classdev *cdev, int offset, int val)
-{
-	struct m_can_plat_priv *priv = cdev_to_priv(cdev);
+अटल पूर्णांक iomap_ग_लिखो_fअगरo(काष्ठा m_can_classdev *cdev, पूर्णांक offset, पूर्णांक val)
+अणु
+	काष्ठा m_can_plat_priv *priv = cdev_to_priv(cdev);
 
-	writel(val, priv->mram_base + offset);
+	ग_लिखोl(val, priv->mram_base + offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct m_can_ops m_can_plat_ops = {
-	.read_reg = iomap_read_reg,
-	.write_reg = iomap_write_reg,
-	.write_fifo = iomap_write_fifo,
-	.read_fifo = iomap_read_fifo,
-};
+अटल काष्ठा m_can_ops m_can_plat_ops = अणु
+	.पढ़ो_reg = iomap_पढ़ो_reg,
+	.ग_लिखो_reg = iomap_ग_लिखो_reg,
+	.ग_लिखो_fअगरo = iomap_ग_लिखो_fअगरo,
+	.पढ़ो_fअगरo = iomap_पढ़ो_fअगरo,
+पूर्ण;
 
-static int m_can_plat_probe(struct platform_device *pdev)
-{
-	struct m_can_classdev *mcan_class;
-	struct m_can_plat_priv *priv;
-	struct resource *res;
-	void __iomem *addr;
-	void __iomem *mram_addr;
-	int irq, ret = 0;
+अटल पूर्णांक m_can_plat_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा m_can_classdev *mcan_class;
+	काष्ठा m_can_plat_priv *priv;
+	काष्ठा resource *res;
+	व्योम __iomem *addr;
+	व्योम __iomem *mram_addr;
+	पूर्णांक irq, ret = 0;
 
 	mcan_class = m_can_class_allocate_dev(&pdev->dev,
-					      sizeof(struct m_can_plat_priv));
-	if (!mcan_class)
-		return -ENOMEM;
+					      माप(काष्ठा m_can_plat_priv));
+	अगर (!mcan_class)
+		वापस -ENOMEM;
 
 	priv = cdev_to_priv(mcan_class);
 
-	ret = m_can_class_get_clocks(mcan_class);
-	if (ret)
-		goto probe_fail;
+	ret = m_can_class_get_घड़ीs(mcan_class);
+	अगर (ret)
+		जाओ probe_fail;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "m_can");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "m_can");
 	addr = devm_ioremap_resource(&pdev->dev, res);
-	irq = platform_get_irq_byname(pdev, "int0");
-	if (IS_ERR(addr) || irq < 0) {
+	irq = platक्रमm_get_irq_byname(pdev, "int0");
+	अगर (IS_ERR(addr) || irq < 0) अणु
 		ret = -EINVAL;
-		goto probe_fail;
-	}
+		जाओ probe_fail;
+	पूर्ण
 
 	/* message ram could be shared */
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "message_ram");
-	if (!res) {
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "message_ram");
+	अगर (!res) अणु
 		ret = -ENODEV;
-		goto probe_fail;
-	}
+		जाओ probe_fail;
+	पूर्ण
 
 	mram_addr = devm_ioremap(&pdev->dev, res->start, resource_size(res));
-	if (!mram_addr) {
+	अगर (!mram_addr) अणु
 		ret = -ENOMEM;
-		goto probe_fail;
-	}
+		जाओ probe_fail;
+	पूर्ण
 
 	priv->base = addr;
 	priv->mram_base = mram_addr;
 
 	mcan_class->net->irq = irq;
-	mcan_class->pm_clock_support = 1;
-	mcan_class->can.clock.freq = clk_get_rate(mcan_class->cclk);
+	mcan_class->pm_घड़ी_support = 1;
+	mcan_class->can.घड़ी.freq = clk_get_rate(mcan_class->cclk);
 	mcan_class->dev = &pdev->dev;
 
 	mcan_class->ops = &m_can_plat_ops;
 
 	mcan_class->is_peripheral = false;
 
-	platform_set_drvdata(pdev, mcan_class);
+	platक्रमm_set_drvdata(pdev, mcan_class);
 
 	m_can_init_ram(mcan_class);
 
-	pm_runtime_enable(mcan_class->dev);
-	ret = m_can_class_register(mcan_class);
-	if (ret)
-		goto out_runtime_disable;
+	pm_runसमय_enable(mcan_class->dev);
+	ret = m_can_class_रेजिस्टर(mcan_class);
+	अगर (ret)
+		जाओ out_runसमय_disable;
 
-	return ret;
+	वापस ret;
 
-out_runtime_disable:
-	pm_runtime_disable(mcan_class->dev);
+out_runसमय_disable:
+	pm_runसमय_disable(mcan_class->dev);
 probe_fail:
-	m_can_class_free_dev(mcan_class->net);
-	return ret;
-}
+	m_can_class_मुक्त_dev(mcan_class->net);
+	वापस ret;
+पूर्ण
 
-static __maybe_unused int m_can_suspend(struct device *dev)
-{
-	return m_can_class_suspend(dev);
-}
+अटल __maybe_unused पूर्णांक m_can_suspend(काष्ठा device *dev)
+अणु
+	वापस m_can_class_suspend(dev);
+पूर्ण
 
-static __maybe_unused int m_can_resume(struct device *dev)
-{
-	return m_can_class_resume(dev);
-}
+अटल __maybe_unused पूर्णांक m_can_resume(काष्ठा device *dev)
+अणु
+	वापस m_can_class_resume(dev);
+पूर्ण
 
-static int m_can_plat_remove(struct platform_device *pdev)
-{
-	struct m_can_plat_priv *priv = platform_get_drvdata(pdev);
-	struct m_can_classdev *mcan_class = &priv->cdev;
+अटल पूर्णांक m_can_plat_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा m_can_plat_priv *priv = platक्रमm_get_drvdata(pdev);
+	काष्ठा m_can_classdev *mcan_class = &priv->cdev;
 
-	m_can_class_unregister(mcan_class);
+	m_can_class_unरेजिस्टर(mcan_class);
 
-	m_can_class_free_dev(mcan_class->net);
+	m_can_class_मुक्त_dev(mcan_class->net);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused m_can_runtime_suspend(struct device *dev)
-{
-	struct m_can_plat_priv *priv = dev_get_drvdata(dev);
-	struct m_can_classdev *mcan_class = &priv->cdev;
+अटल पूर्णांक __maybe_unused m_can_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा m_can_plat_priv *priv = dev_get_drvdata(dev);
+	काष्ठा m_can_classdev *mcan_class = &priv->cdev;
 
 	clk_disable_unprepare(mcan_class->cclk);
 	clk_disable_unprepare(mcan_class->hclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused m_can_runtime_resume(struct device *dev)
-{
-	struct m_can_plat_priv *priv = dev_get_drvdata(dev);
-	struct m_can_classdev *mcan_class = &priv->cdev;
-	int err;
+अटल पूर्णांक __maybe_unused m_can_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा m_can_plat_priv *priv = dev_get_drvdata(dev);
+	काष्ठा m_can_classdev *mcan_class = &priv->cdev;
+	पूर्णांक err;
 
 	err = clk_prepare_enable(mcan_class->hclk);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = clk_prepare_enable(mcan_class->cclk);
-	if (err)
+	अगर (err)
 		clk_disable_unprepare(mcan_class->hclk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct dev_pm_ops m_can_pmops = {
-	SET_RUNTIME_PM_OPS(m_can_runtime_suspend,
-			   m_can_runtime_resume, NULL)
+अटल स्थिर काष्ठा dev_pm_ops m_can_pmops = अणु
+	SET_RUNTIME_PM_OPS(m_can_runसमय_suspend,
+			   m_can_runसमय_resume, शून्य)
 	SET_SYSTEM_SLEEP_PM_OPS(m_can_suspend, m_can_resume)
-};
+पूर्ण;
 
-static const struct of_device_id m_can_of_table[] = {
-	{ .compatible = "bosch,m_can", .data = NULL },
-	{ /* sentinel */ },
-};
+अटल स्थिर काष्ठा of_device_id m_can_of_table[] = अणु
+	अणु .compatible = "bosch,m_can", .data = शून्य पूर्ण,
+	अणु /* sentinel */ पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, m_can_of_table);
 
-static struct platform_driver m_can_plat_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver m_can_plat_driver = अणु
+	.driver = अणु
 		.name = KBUILD_MODNAME,
 		.of_match_table = m_can_of_table,
 		.pm     = &m_can_pmops,
-	},
+	पूर्ण,
 	.probe = m_can_plat_probe,
-	.remove = m_can_plat_remove,
-};
+	.हटाओ = m_can_plat_हटाओ,
+पूर्ण;
 
-module_platform_driver(m_can_plat_driver);
+module_platक्रमm_driver(m_can_plat_driver);
 
 MODULE_AUTHOR("Dong Aisheng <b29396@freescale.com>");
 MODULE_AUTHOR("Dan Murphy <dmurphy@ti.com>");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * IPVS:        Locality-Based Least-Connection with Replication scheduler
  *
@@ -10,107 +11,107 @@
  */
 
 /*
- * The lblc/r algorithm is as follows (pseudo code):
+ * The lblc/r algorithm is as follows (pseuकरो code):
  *
- *       if serverSet[dest_ip] is null then
- *               n, serverSet[dest_ip] <- {weighted least-conn node};
- *       else
- *               n <- {least-conn (alive) node in serverSet[dest_ip]};
- *               if (n is null) OR
+ *       अगर serverSet[dest_ip] is null then
+ *               n, serverSet[dest_ip] <- अणुweighted least-conn nodeपूर्ण;
+ *       अन्यथा
+ *               n <- अणुleast-conn (alive) node in serverSet[dest_ip]पूर्ण;
+ *               अगर (n is null) OR
  *                  (n.conns>n.weight AND
  *                   there is a node m with m.conns<m.weight/2) then
- *                   n <- {weighted least-conn node};
+ *                   n <- अणुweighted least-conn nodeपूर्ण;
  *                   add n to serverSet[dest_ip];
- *               if |serverSet[dest_ip]| > 1 AND
+ *               अगर |serverSet[dest_ip]| > 1 AND
  *                   now - serverSet[dest_ip].lastMod > T then
- *                   m <- {most conn node in serverSet[dest_ip]};
- *                   remove m from serverSet[dest_ip];
- *       if serverSet[dest_ip] changed then
+ *                   m <- अणुmost conn node in serverSet[dest_ip]पूर्ण;
+ *                   हटाओ m from serverSet[dest_ip];
+ *       अगर serverSet[dest_ip] changed then
  *               serverSet[dest_ip].lastMod <- now;
  *
- *       return n;
+ *       वापस n;
  *
  */
 
-#define KMSG_COMPONENT "IPVS"
-#define pr_fmt(fmt) KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT "IPVS"
+#घोषणा pr_fmt(fmt) KMSG_COMPONENT ": " fmt
 
-#include <linux/ip.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/skbuff.h>
-#include <linux/jiffies.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/hash.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hash.h>
 
-/* for sysctl */
-#include <linux/fs.h>
-#include <linux/sysctl.h>
-#include <net/net_namespace.h>
+/* क्रम sysctl */
+#समावेश <linux/fs.h>
+#समावेश <linux/sysctl.h>
+#समावेश <net/net_namespace.h>
 
-#include <net/ip_vs.h>
+#समावेश <net/ip_vs.h>
 
 
 /*
- *    It is for garbage collection of stale IPVS lblcr entries,
+ *    It is क्रम garbage collection of stale IPVS lblcr entries,
  *    when the table is full.
  */
-#define CHECK_EXPIRE_INTERVAL   (60*HZ)
-#define ENTRY_TIMEOUT           (6*60*HZ)
+#घोषणा CHECK_EXPIRE_INTERVAL   (60*HZ)
+#घोषणा ENTRY_TIMEOUT           (6*60*HZ)
 
-#define DEFAULT_EXPIRATION	(24*60*60*HZ)
+#घोषणा DEFAULT_EXPIRATION	(24*60*60*HZ)
 
 /*
- *    It is for full expiration check.
+ *    It is क्रम full expiration check.
  *    When there is no partial expiration check (garbage collection)
- *    in a half hour, do a full expiration check to collect stale
- *    entries that haven't been touched for a day.
+ *    in a half hour, करो a full expiration check to collect stale
+ *    entries that haven't been touched क्रम a day.
  */
-#define COUNT_FOR_FULL_EXPIRATION   30
+#घोषणा COUNT_FOR_FULL_EXPIRATION   30
 
 /*
- *     for IPVS lblcr entry hash table
+ *     क्रम IPVS lblcr entry hash table
  */
-#ifndef CONFIG_IP_VS_LBLCR_TAB_BITS
-#define CONFIG_IP_VS_LBLCR_TAB_BITS      10
-#endif
-#define IP_VS_LBLCR_TAB_BITS     CONFIG_IP_VS_LBLCR_TAB_BITS
-#define IP_VS_LBLCR_TAB_SIZE     (1 << IP_VS_LBLCR_TAB_BITS)
-#define IP_VS_LBLCR_TAB_MASK     (IP_VS_LBLCR_TAB_SIZE - 1)
+#अगर_अघोषित CONFIG_IP_VS_LBLCR_TAB_BITS
+#घोषणा CONFIG_IP_VS_LBLCR_TAB_BITS      10
+#पूर्ण_अगर
+#घोषणा IP_VS_LBLCR_TAB_BITS     CONFIG_IP_VS_LBLCR_TAB_BITS
+#घोषणा IP_VS_LBLCR_TAB_SIZE     (1 << IP_VS_LBLCR_TAB_BITS)
+#घोषणा IP_VS_LBLCR_TAB_MASK     (IP_VS_LBLCR_TAB_SIZE - 1)
 
 
 /*
- *      IPVS destination set structure and operations
+ *      IPVS destination set काष्ठाure and operations
  */
-struct ip_vs_dest_set_elem {
-	struct list_head	list;          /* list link */
-	struct ip_vs_dest	*dest;		/* destination server */
-	struct rcu_head		rcu_head;
-};
+काष्ठा ip_vs_dest_set_elem अणु
+	काष्ठा list_head	list;          /* list link */
+	काष्ठा ip_vs_dest	*dest;		/* destination server */
+	काष्ठा rcu_head		rcu_head;
+पूर्ण;
 
-struct ip_vs_dest_set {
+काष्ठा ip_vs_dest_set अणु
 	atomic_t                size;           /* set size */
-	unsigned long           lastmod;        /* last modified time */
-	struct list_head	list;           /* destination list */
-};
+	अचिन्हित दीर्घ           lasपंचांगod;        /* last modअगरied समय */
+	काष्ठा list_head	list;           /* destination list */
+पूर्ण;
 
 
-static void ip_vs_dest_set_insert(struct ip_vs_dest_set *set,
-				  struct ip_vs_dest *dest, bool check)
-{
-	struct ip_vs_dest_set_elem *e;
+अटल व्योम ip_vs_dest_set_insert(काष्ठा ip_vs_dest_set *set,
+				  काष्ठा ip_vs_dest *dest, bool check)
+अणु
+	काष्ठा ip_vs_dest_set_elem *e;
 
-	if (check) {
-		list_for_each_entry(e, &set->list, list) {
-			if (e->dest == dest)
-				return;
-		}
-	}
+	अगर (check) अणु
+		list_क्रम_each_entry(e, &set->list, list) अणु
+			अगर (e->dest == dest)
+				वापस;
+		पूर्ण
+	पूर्ण
 
-	e = kmalloc(sizeof(*e), GFP_ATOMIC);
-	if (e == NULL)
-		return;
+	e = kदो_स्मृति(माप(*e), GFP_ATOMIC);
+	अगर (e == शून्य)
+		वापस;
 
 	ip_vs_dest_hold(dest);
 	e->dest = dest;
@@ -118,260 +119,260 @@ static void ip_vs_dest_set_insert(struct ip_vs_dest_set *set,
 	list_add_rcu(&e->list, &set->list);
 	atomic_inc(&set->size);
 
-	set->lastmod = jiffies;
-}
+	set->lasपंचांगod = jअगरfies;
+पूर्ण
 
-static void ip_vs_lblcr_elem_rcu_free(struct rcu_head *head)
-{
-	struct ip_vs_dest_set_elem *e;
+अटल व्योम ip_vs_lblcr_elem_rcu_मुक्त(काष्ठा rcu_head *head)
+अणु
+	काष्ठा ip_vs_dest_set_elem *e;
 
-	e = container_of(head, struct ip_vs_dest_set_elem, rcu_head);
-	ip_vs_dest_put_and_free(e->dest);
-	kfree(e);
-}
+	e = container_of(head, काष्ठा ip_vs_dest_set_elem, rcu_head);
+	ip_vs_dest_put_and_मुक्त(e->dest);
+	kमुक्त(e);
+पूर्ण
 
-static void
-ip_vs_dest_set_erase(struct ip_vs_dest_set *set, struct ip_vs_dest *dest)
-{
-	struct ip_vs_dest_set_elem *e;
+अटल व्योम
+ip_vs_dest_set_erase(काष्ठा ip_vs_dest_set *set, काष्ठा ip_vs_dest *dest)
+अणु
+	काष्ठा ip_vs_dest_set_elem *e;
 
-	list_for_each_entry(e, &set->list, list) {
-		if (e->dest == dest) {
+	list_क्रम_each_entry(e, &set->list, list) अणु
+		अगर (e->dest == dest) अणु
 			/* HIT */
 			atomic_dec(&set->size);
-			set->lastmod = jiffies;
+			set->lasपंचांगod = jअगरfies;
 			list_del_rcu(&e->list);
-			call_rcu(&e->rcu_head, ip_vs_lblcr_elem_rcu_free);
-			break;
-		}
-	}
-}
+			call_rcu(&e->rcu_head, ip_vs_lblcr_elem_rcu_मुक्त);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ip_vs_dest_set_eraseall(struct ip_vs_dest_set *set)
-{
-	struct ip_vs_dest_set_elem *e, *ep;
+अटल व्योम ip_vs_dest_set_eraseall(काष्ठा ip_vs_dest_set *set)
+अणु
+	काष्ठा ip_vs_dest_set_elem *e, *ep;
 
-	list_for_each_entry_safe(e, ep, &set->list, list) {
+	list_क्रम_each_entry_safe(e, ep, &set->list, list) अणु
 		list_del_rcu(&e->list);
-		call_rcu(&e->rcu_head, ip_vs_lblcr_elem_rcu_free);
-	}
-}
+		call_rcu(&e->rcu_head, ip_vs_lblcr_elem_rcu_मुक्त);
+	पूर्ण
+पूर्ण
 
 /* get weighted least-connection node in the destination set */
-static inline struct ip_vs_dest *ip_vs_dest_set_min(struct ip_vs_dest_set *set)
-{
-	struct ip_vs_dest_set_elem *e;
-	struct ip_vs_dest *dest, *least;
-	int loh, doh;
+अटल अंतरभूत काष्ठा ip_vs_dest *ip_vs_dest_set_min(काष्ठा ip_vs_dest_set *set)
+अणु
+	काष्ठा ip_vs_dest_set_elem *e;
+	काष्ठा ip_vs_dest *dest, *least;
+	पूर्णांक loh, करोh;
 
 	/* select the first destination server, whose weight > 0 */
-	list_for_each_entry_rcu(e, &set->list, list) {
+	list_क्रम_each_entry_rcu(e, &set->list, list) अणु
 		least = e->dest;
-		if (least->flags & IP_VS_DEST_F_OVERLOAD)
-			continue;
+		अगर (least->flags & IP_VS_DEST_F_OVERLOAD)
+			जारी;
 
-		if ((atomic_read(&least->weight) > 0)
-		    && (least->flags & IP_VS_DEST_F_AVAILABLE)) {
+		अगर ((atomic_पढ़ो(&least->weight) > 0)
+		    && (least->flags & IP_VS_DEST_F_AVAILABLE)) अणु
 			loh = ip_vs_dest_conn_overhead(least);
-			goto nextstage;
-		}
-	}
-	return NULL;
+			जाओ nextstage;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
 
 	/* find the destination with the weighted least load */
   nextstage:
-	list_for_each_entry_continue_rcu(e, &set->list, list) {
+	list_क्रम_each_entry_जारी_rcu(e, &set->list, list) अणु
 		dest = e->dest;
-		if (dest->flags & IP_VS_DEST_F_OVERLOAD)
-			continue;
+		अगर (dest->flags & IP_VS_DEST_F_OVERLOAD)
+			जारी;
 
-		doh = ip_vs_dest_conn_overhead(dest);
-		if (((__s64)loh * atomic_read(&dest->weight) >
-		     (__s64)doh * atomic_read(&least->weight))
-		    && (dest->flags & IP_VS_DEST_F_AVAILABLE)) {
+		करोh = ip_vs_dest_conn_overhead(dest);
+		अगर (((__s64)loh * atomic_पढ़ो(&dest->weight) >
+		     (__s64)करोh * atomic_पढ़ो(&least->weight))
+		    && (dest->flags & IP_VS_DEST_F_AVAILABLE)) अणु
 			least = dest;
-			loh = doh;
-		}
-	}
+			loh = करोh;
+		पूर्ण
+	पूर्ण
 
 	IP_VS_DBG_BUF(6, "%s(): server %s:%d "
 		      "activeconns %d refcnt %d weight %d overhead %d\n",
 		      __func__,
 		      IP_VS_DBG_ADDR(least->af, &least->addr),
 		      ntohs(least->port),
-		      atomic_read(&least->activeconns),
-		      refcount_read(&least->refcnt),
-		      atomic_read(&least->weight), loh);
-	return least;
-}
+		      atomic_पढ़ो(&least->activeconns),
+		      refcount_पढ़ो(&least->refcnt),
+		      atomic_पढ़ो(&least->weight), loh);
+	वापस least;
+पूर्ण
 
 
 /* get weighted most-connection node in the destination set */
-static inline struct ip_vs_dest *ip_vs_dest_set_max(struct ip_vs_dest_set *set)
-{
-	struct ip_vs_dest_set_elem *e;
-	struct ip_vs_dest *dest, *most;
-	int moh, doh;
+अटल अंतरभूत काष्ठा ip_vs_dest *ip_vs_dest_set_max(काष्ठा ip_vs_dest_set *set)
+अणु
+	काष्ठा ip_vs_dest_set_elem *e;
+	काष्ठा ip_vs_dest *dest, *most;
+	पूर्णांक moh, करोh;
 
-	if (set == NULL)
-		return NULL;
+	अगर (set == शून्य)
+		वापस शून्य;
 
 	/* select the first destination server, whose weight > 0 */
-	list_for_each_entry(e, &set->list, list) {
+	list_क्रम_each_entry(e, &set->list, list) अणु
 		most = e->dest;
-		if (atomic_read(&most->weight) > 0) {
+		अगर (atomic_पढ़ो(&most->weight) > 0) अणु
 			moh = ip_vs_dest_conn_overhead(most);
-			goto nextstage;
-		}
-	}
-	return NULL;
+			जाओ nextstage;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
 
 	/* find the destination with the weighted most load */
   nextstage:
-	list_for_each_entry_continue(e, &set->list, list) {
+	list_क्रम_each_entry_जारी(e, &set->list, list) अणु
 		dest = e->dest;
-		doh = ip_vs_dest_conn_overhead(dest);
-		/* moh/mw < doh/dw ==> moh*dw < doh*mw, where mw,dw>0 */
-		if (((__s64)moh * atomic_read(&dest->weight) <
-		     (__s64)doh * atomic_read(&most->weight))
-		    && (atomic_read(&dest->weight) > 0)) {
+		करोh = ip_vs_dest_conn_overhead(dest);
+		/* moh/mw < करोh/dw ==> moh*dw < करोh*mw, where mw,dw>0 */
+		अगर (((__s64)moh * atomic_पढ़ो(&dest->weight) <
+		     (__s64)करोh * atomic_पढ़ो(&most->weight))
+		    && (atomic_पढ़ो(&dest->weight) > 0)) अणु
 			most = dest;
-			moh = doh;
-		}
-	}
+			moh = करोh;
+		पूर्ण
+	पूर्ण
 
 	IP_VS_DBG_BUF(6, "%s(): server %s:%d "
 		      "activeconns %d refcnt %d weight %d overhead %d\n",
 		      __func__,
 		      IP_VS_DBG_ADDR(most->af, &most->addr), ntohs(most->port),
-		      atomic_read(&most->activeconns),
-		      refcount_read(&most->refcnt),
-		      atomic_read(&most->weight), moh);
-	return most;
-}
+		      atomic_पढ़ो(&most->activeconns),
+		      refcount_पढ़ो(&most->refcnt),
+		      atomic_पढ़ो(&most->weight), moh);
+	वापस most;
+पूर्ण
 
 
 /*
  *      IPVS lblcr entry represents an association between destination
  *      IP address and its destination server set
  */
-struct ip_vs_lblcr_entry {
-	struct hlist_node       list;
-	int			af;		/* address family */
-	union nf_inet_addr      addr;           /* destination IP address */
-	struct ip_vs_dest_set   set;            /* destination server set */
-	unsigned long           lastuse;        /* last used time */
-	struct rcu_head		rcu_head;
-};
+काष्ठा ip_vs_lblcr_entry अणु
+	काष्ठा hlist_node       list;
+	पूर्णांक			af;		/* address family */
+	जोड़ nf_inet_addr      addr;           /* destination IP address */
+	काष्ठा ip_vs_dest_set   set;            /* destination server set */
+	अचिन्हित दीर्घ           lastuse;        /* last used समय */
+	काष्ठा rcu_head		rcu_head;
+पूर्ण;
 
 
 /*
  *      IPVS lblcr hash table
  */
-struct ip_vs_lblcr_table {
-	struct rcu_head		rcu_head;
-	struct hlist_head	bucket[IP_VS_LBLCR_TAB_SIZE];  /* hash bucket */
+काष्ठा ip_vs_lblcr_table अणु
+	काष्ठा rcu_head		rcu_head;
+	काष्ठा hlist_head	bucket[IP_VS_LBLCR_TAB_SIZE];  /* hash bucket */
 	atomic_t                entries;        /* number of entries */
-	int                     max_size;       /* maximum size of entries */
-	struct timer_list       periodic_timer; /* collect stale entries */
-	struct ip_vs_service	*svc;		/* pointer back to service */
-	int                     rover;          /* rover for expire check */
-	int                     counter;        /* counter for no expire */
+	पूर्णांक                     max_size;       /* maximum size of entries */
+	काष्ठा समयr_list       periodic_समयr; /* collect stale entries */
+	काष्ठा ip_vs_service	*svc;		/* poपूर्णांकer back to service */
+	पूर्णांक                     rover;          /* rover क्रम expire check */
+	पूर्णांक                     counter;        /* counter क्रम no expire */
 	bool			dead;
-};
+पूर्ण;
 
 
-#ifdef CONFIG_SYSCTL
+#अगर_घोषित CONFIG_SYSCTL
 /*
  *      IPVS LBLCR sysctl table
  */
 
-static struct ctl_table vs_vars_table[] = {
-	{
+अटल काष्ठा ctl_table vs_vars_table[] = अणु
+	अणु
 		.procname	= "lblcr_expiration",
-		.data		= NULL,
-		.maxlen		= sizeof(int),
+		.data		= शून्य,
+		.maxlen		= माप(पूर्णांक),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec_jiffies,
-	},
-	{ }
-};
-#endif
+		.proc_handler	= proc_करोपूर्णांकvec_jअगरfies,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+#पूर्ण_अगर
 
-static inline void ip_vs_lblcr_free(struct ip_vs_lblcr_entry *en)
-{
+अटल अंतरभूत व्योम ip_vs_lblcr_मुक्त(काष्ठा ip_vs_lblcr_entry *en)
+अणु
 	hlist_del_rcu(&en->list);
 	ip_vs_dest_set_eraseall(&en->set);
-	kfree_rcu(en, rcu_head);
-}
+	kमुक्त_rcu(en, rcu_head);
+पूर्ण
 
 
 /*
- *	Returns hash value for IPVS LBLCR entry
+ *	Returns hash value क्रम IPVS LBLCR entry
  */
-static inline unsigned int
-ip_vs_lblcr_hashkey(int af, const union nf_inet_addr *addr)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक
+ip_vs_lblcr_hashkey(पूर्णांक af, स्थिर जोड़ nf_inet_addr *addr)
+अणु
 	__be32 addr_fold = addr->ip;
 
-#ifdef CONFIG_IP_VS_IPV6
-	if (af == AF_INET6)
+#अगर_घोषित CONFIG_IP_VS_IPV6
+	अगर (af == AF_INET6)
 		addr_fold = addr->ip6[0]^addr->ip6[1]^
 			    addr->ip6[2]^addr->ip6[3];
-#endif
-	return hash_32(ntohl(addr_fold), IP_VS_LBLCR_TAB_BITS);
-}
+#पूर्ण_अगर
+	वापस hash_32(ntohl(addr_fold), IP_VS_LBLCR_TAB_BITS);
+पूर्ण
 
 
 /*
  *	Hash an entry in the ip_vs_lblcr_table.
- *	returns bool success.
+ *	वापसs bool success.
  */
-static void
-ip_vs_lblcr_hash(struct ip_vs_lblcr_table *tbl, struct ip_vs_lblcr_entry *en)
-{
-	unsigned int hash = ip_vs_lblcr_hashkey(en->af, &en->addr);
+अटल व्योम
+ip_vs_lblcr_hash(काष्ठा ip_vs_lblcr_table *tbl, काष्ठा ip_vs_lblcr_entry *en)
+अणु
+	अचिन्हित पूर्णांक hash = ip_vs_lblcr_hashkey(en->af, &en->addr);
 
 	hlist_add_head_rcu(&en->list, &tbl->bucket[hash]);
 	atomic_inc(&tbl->entries);
-}
+पूर्ण
 
 
 /* Get ip_vs_lblcr_entry associated with supplied parameters. */
-static inline struct ip_vs_lblcr_entry *
-ip_vs_lblcr_get(int af, struct ip_vs_lblcr_table *tbl,
-		const union nf_inet_addr *addr)
-{
-	unsigned int hash = ip_vs_lblcr_hashkey(af, addr);
-	struct ip_vs_lblcr_entry *en;
+अटल अंतरभूत काष्ठा ip_vs_lblcr_entry *
+ip_vs_lblcr_get(पूर्णांक af, काष्ठा ip_vs_lblcr_table *tbl,
+		स्थिर जोड़ nf_inet_addr *addr)
+अणु
+	अचिन्हित पूर्णांक hash = ip_vs_lblcr_hashkey(af, addr);
+	काष्ठा ip_vs_lblcr_entry *en;
 
-	hlist_for_each_entry_rcu(en, &tbl->bucket[hash], list)
-		if (ip_vs_addr_equal(af, &en->addr, addr))
-			return en;
+	hlist_क्रम_each_entry_rcu(en, &tbl->bucket[hash], list)
+		अगर (ip_vs_addr_equal(af, &en->addr, addr))
+			वापस en;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 
 /*
  * Create or update an ip_vs_lblcr_entry, which is a mapping of a destination
  * IP address to a server. Called under spin lock.
  */
-static inline struct ip_vs_lblcr_entry *
-ip_vs_lblcr_new(struct ip_vs_lblcr_table *tbl, const union nf_inet_addr *daddr,
-		u16 af, struct ip_vs_dest *dest)
-{
-	struct ip_vs_lblcr_entry *en;
+अटल अंतरभूत काष्ठा ip_vs_lblcr_entry *
+ip_vs_lblcr_new(काष्ठा ip_vs_lblcr_table *tbl, स्थिर जोड़ nf_inet_addr *daddr,
+		u16 af, काष्ठा ip_vs_dest *dest)
+अणु
+	काष्ठा ip_vs_lblcr_entry *en;
 
 	en = ip_vs_lblcr_get(af, tbl, daddr);
-	if (!en) {
-		en = kmalloc(sizeof(*en), GFP_ATOMIC);
-		if (!en)
-			return NULL;
+	अगर (!en) अणु
+		en = kदो_स्मृति(माप(*en), GFP_ATOMIC);
+		अगर (!en)
+			वापस शून्य;
 
 		en->af = af;
 		ip_vs_addr_copy(af, &en->addr, daddr);
-		en->lastuse = jiffies;
+		en->lastuse = jअगरfies;
 
 		/* initialize its dest set */
 		atomic_set(&(en->set.size), 0);
@@ -380,151 +381,151 @@ ip_vs_lblcr_new(struct ip_vs_lblcr_table *tbl, const union nf_inet_addr *daddr,
 		ip_vs_dest_set_insert(&en->set, dest, false);
 
 		ip_vs_lblcr_hash(tbl, en);
-		return en;
-	}
+		वापस en;
+	पूर्ण
 
 	ip_vs_dest_set_insert(&en->set, dest, true);
 
-	return en;
-}
+	वापस en;
+पूर्ण
 
 
 /*
- *      Flush all the entries of the specified table.
+ *      Flush all the entries of the specअगरied table.
  */
-static void ip_vs_lblcr_flush(struct ip_vs_service *svc)
-{
-	struct ip_vs_lblcr_table *tbl = svc->sched_data;
-	int i;
-	struct ip_vs_lblcr_entry *en;
-	struct hlist_node *next;
+अटल व्योम ip_vs_lblcr_flush(काष्ठा ip_vs_service *svc)
+अणु
+	काष्ठा ip_vs_lblcr_table *tbl = svc->sched_data;
+	पूर्णांक i;
+	काष्ठा ip_vs_lblcr_entry *en;
+	काष्ठा hlist_node *next;
 
 	spin_lock_bh(&svc->sched_lock);
 	tbl->dead = true;
-	for (i = 0; i < IP_VS_LBLCR_TAB_SIZE; i++) {
-		hlist_for_each_entry_safe(en, next, &tbl->bucket[i], list) {
-			ip_vs_lblcr_free(en);
-		}
-	}
+	क्रम (i = 0; i < IP_VS_LBLCR_TAB_SIZE; i++) अणु
+		hlist_क्रम_each_entry_safe(en, next, &tbl->bucket[i], list) अणु
+			ip_vs_lblcr_मुक्त(en);
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&svc->sched_lock);
-}
+पूर्ण
 
-static int sysctl_lblcr_expiration(struct ip_vs_service *svc)
-{
-#ifdef CONFIG_SYSCTL
-	return svc->ipvs->sysctl_lblcr_expiration;
-#else
-	return DEFAULT_EXPIRATION;
-#endif
-}
+अटल पूर्णांक sysctl_lblcr_expiration(काष्ठा ip_vs_service *svc)
+अणु
+#अगर_घोषित CONFIG_SYSCTL
+	वापस svc->ipvs->sysctl_lblcr_expiration;
+#अन्यथा
+	वापस DEFAULT_EXPIRATION;
+#पूर्ण_अगर
+पूर्ण
 
-static inline void ip_vs_lblcr_full_check(struct ip_vs_service *svc)
-{
-	struct ip_vs_lblcr_table *tbl = svc->sched_data;
-	unsigned long now = jiffies;
-	int i, j;
-	struct ip_vs_lblcr_entry *en;
-	struct hlist_node *next;
+अटल अंतरभूत व्योम ip_vs_lblcr_full_check(काष्ठा ip_vs_service *svc)
+अणु
+	काष्ठा ip_vs_lblcr_table *tbl = svc->sched_data;
+	अचिन्हित दीर्घ now = jअगरfies;
+	पूर्णांक i, j;
+	काष्ठा ip_vs_lblcr_entry *en;
+	काष्ठा hlist_node *next;
 
-	for (i = 0, j = tbl->rover; i < IP_VS_LBLCR_TAB_SIZE; i++) {
+	क्रम (i = 0, j = tbl->rover; i < IP_VS_LBLCR_TAB_SIZE; i++) अणु
 		j = (j + 1) & IP_VS_LBLCR_TAB_MASK;
 
 		spin_lock(&svc->sched_lock);
-		hlist_for_each_entry_safe(en, next, &tbl->bucket[j], list) {
-			if (time_after(en->lastuse +
+		hlist_क्रम_each_entry_safe(en, next, &tbl->bucket[j], list) अणु
+			अगर (समय_after(en->lastuse +
 				       sysctl_lblcr_expiration(svc), now))
-				continue;
+				जारी;
 
-			ip_vs_lblcr_free(en);
+			ip_vs_lblcr_मुक्त(en);
 			atomic_dec(&tbl->entries);
-		}
+		पूर्ण
 		spin_unlock(&svc->sched_lock);
-	}
+	पूर्ण
 	tbl->rover = j;
-}
+पूर्ण
 
 
 /*
- *      Periodical timer handler for IPVS lblcr table
+ *      Periodical समयr handler क्रम IPVS lblcr table
  *      It is used to collect stale entries when the number of entries
  *      exceeds the maximum size of the table.
  *
  *      Fixme: we probably need more complicated algorithm to collect
- *             entries that have not been used for a long time even
- *             if the number of entries doesn't exceed the maximum size
+ *             entries that have not been used क्रम a दीर्घ समय even
+ *             अगर the number of entries करोesn't exceed the maximum size
  *             of the table.
- *      The full expiration check is for this purpose now.
+ *      The full expiration check is क्रम this purpose now.
  */
-static void ip_vs_lblcr_check_expire(struct timer_list *t)
-{
-	struct ip_vs_lblcr_table *tbl = from_timer(tbl, t, periodic_timer);
-	struct ip_vs_service *svc = tbl->svc;
-	unsigned long now = jiffies;
-	int goal;
-	int i, j;
-	struct ip_vs_lblcr_entry *en;
-	struct hlist_node *next;
+अटल व्योम ip_vs_lblcr_check_expire(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ip_vs_lblcr_table *tbl = from_समयr(tbl, t, periodic_समयr);
+	काष्ठा ip_vs_service *svc = tbl->svc;
+	अचिन्हित दीर्घ now = jअगरfies;
+	पूर्णांक goal;
+	पूर्णांक i, j;
+	काष्ठा ip_vs_lblcr_entry *en;
+	काष्ठा hlist_node *next;
 
-	if ((tbl->counter % COUNT_FOR_FULL_EXPIRATION) == 0) {
-		/* do full expiration check */
+	अगर ((tbl->counter % COUNT_FOR_FULL_EXPIRATION) == 0) अणु
+		/* करो full expiration check */
 		ip_vs_lblcr_full_check(svc);
 		tbl->counter = 1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (atomic_read(&tbl->entries) <= tbl->max_size) {
+	अगर (atomic_पढ़ो(&tbl->entries) <= tbl->max_size) अणु
 		tbl->counter++;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	goal = (atomic_read(&tbl->entries) - tbl->max_size)*4/3;
-	if (goal > tbl->max_size/2)
+	goal = (atomic_पढ़ो(&tbl->entries) - tbl->max_size)*4/3;
+	अगर (goal > tbl->max_size/2)
 		goal = tbl->max_size/2;
 
-	for (i = 0, j = tbl->rover; i < IP_VS_LBLCR_TAB_SIZE; i++) {
+	क्रम (i = 0, j = tbl->rover; i < IP_VS_LBLCR_TAB_SIZE; i++) अणु
 		j = (j + 1) & IP_VS_LBLCR_TAB_MASK;
 
 		spin_lock(&svc->sched_lock);
-		hlist_for_each_entry_safe(en, next, &tbl->bucket[j], list) {
-			if (time_before(now, en->lastuse+ENTRY_TIMEOUT))
-				continue;
+		hlist_क्रम_each_entry_safe(en, next, &tbl->bucket[j], list) अणु
+			अगर (समय_beक्रमe(now, en->lastuse+ENTRY_TIMEOUT))
+				जारी;
 
-			ip_vs_lblcr_free(en);
+			ip_vs_lblcr_मुक्त(en);
 			atomic_dec(&tbl->entries);
 			goal--;
-		}
+		पूर्ण
 		spin_unlock(&svc->sched_lock);
-		if (goal <= 0)
-			break;
-	}
+		अगर (goal <= 0)
+			अवरोध;
+	पूर्ण
 	tbl->rover = j;
 
   out:
-	mod_timer(&tbl->periodic_timer, jiffies+CHECK_EXPIRE_INTERVAL);
-}
+	mod_समयr(&tbl->periodic_समयr, jअगरfies+CHECK_EXPIRE_INTERVAL);
+पूर्ण
 
-static int ip_vs_lblcr_init_svc(struct ip_vs_service *svc)
-{
-	int i;
-	struct ip_vs_lblcr_table *tbl;
+अटल पूर्णांक ip_vs_lblcr_init_svc(काष्ठा ip_vs_service *svc)
+अणु
+	पूर्णांक i;
+	काष्ठा ip_vs_lblcr_table *tbl;
 
 	/*
-	 *    Allocate the ip_vs_lblcr_table for this service
+	 *    Allocate the ip_vs_lblcr_table क्रम this service
 	 */
-	tbl = kmalloc(sizeof(*tbl), GFP_KERNEL);
-	if (tbl == NULL)
-		return -ENOMEM;
+	tbl = kदो_स्मृति(माप(*tbl), GFP_KERNEL);
+	अगर (tbl == शून्य)
+		वापस -ENOMEM;
 
 	svc->sched_data = tbl;
 	IP_VS_DBG(6, "LBLCR hash table (memory=%zdbytes) allocated for "
-		  "current service\n", sizeof(*tbl));
+		  "current service\n", माप(*tbl));
 
 	/*
 	 *    Initialize the hash buckets
 	 */
-	for (i = 0; i < IP_VS_LBLCR_TAB_SIZE; i++) {
+	क्रम (i = 0; i < IP_VS_LBLCR_TAB_SIZE; i++) अणु
 		INIT_HLIST_HEAD(&tbl->bucket[i]);
-	}
+	पूर्ण
 	tbl->max_size = IP_VS_LBLCR_TAB_SIZE*16;
 	tbl->rover = 0;
 	tbl->counter = 1;
@@ -533,176 +534,176 @@ static int ip_vs_lblcr_init_svc(struct ip_vs_service *svc)
 	atomic_set(&tbl->entries, 0);
 
 	/*
-	 *    Hook periodic timer for garbage collection
+	 *    Hook periodic समयr क्रम garbage collection
 	 */
-	timer_setup(&tbl->periodic_timer, ip_vs_lblcr_check_expire, 0);
-	mod_timer(&tbl->periodic_timer, jiffies + CHECK_EXPIRE_INTERVAL);
+	समयr_setup(&tbl->periodic_समयr, ip_vs_lblcr_check_expire, 0);
+	mod_समयr(&tbl->periodic_समयr, jअगरfies + CHECK_EXPIRE_INTERVAL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static void ip_vs_lblcr_done_svc(struct ip_vs_service *svc)
-{
-	struct ip_vs_lblcr_table *tbl = svc->sched_data;
+अटल व्योम ip_vs_lblcr_करोne_svc(काष्ठा ip_vs_service *svc)
+अणु
+	काष्ठा ip_vs_lblcr_table *tbl = svc->sched_data;
 
-	/* remove periodic timer */
-	del_timer_sync(&tbl->periodic_timer);
+	/* हटाओ periodic समयr */
+	del_समयr_sync(&tbl->periodic_समयr);
 
 	/* got to clean up table entries here */
 	ip_vs_lblcr_flush(svc);
 
 	/* release the table itself */
-	kfree_rcu(tbl, rcu_head);
+	kमुक्त_rcu(tbl, rcu_head);
 	IP_VS_DBG(6, "LBLCR hash table (memory=%zdbytes) released\n",
-		  sizeof(*tbl));
-}
+		  माप(*tbl));
+पूर्ण
 
 
-static inline struct ip_vs_dest *
-__ip_vs_lblcr_schedule(struct ip_vs_service *svc)
-{
-	struct ip_vs_dest *dest, *least;
-	int loh, doh;
+अटल अंतरभूत काष्ठा ip_vs_dest *
+__ip_vs_lblcr_schedule(काष्ठा ip_vs_service *svc)
+अणु
+	काष्ठा ip_vs_dest *dest, *least;
+	पूर्णांक loh, करोh;
 
 	/*
-	 * We use the following formula to estimate the load:
+	 * We use the following क्रमmula to estimate the load:
 	 *                (dest overhead) / dest->weight
 	 *
-	 * Remember -- no floats in kernel mode!!!
+	 * Remember -- no भग्नs in kernel mode!!!
 	 * The comparison of h1*w2 > h2*w1 is equivalent to that of
 	 *                h1/w1 > h2/w2
-	 * if every weight is larger than zero.
+	 * अगर every weight is larger than zero.
 	 *
 	 * The server with weight=0 is quiesced and will not receive any
 	 * new connection.
 	 */
-	list_for_each_entry_rcu(dest, &svc->destinations, n_list) {
-		if (dest->flags & IP_VS_DEST_F_OVERLOAD)
-			continue;
+	list_क्रम_each_entry_rcu(dest, &svc->destinations, n_list) अणु
+		अगर (dest->flags & IP_VS_DEST_F_OVERLOAD)
+			जारी;
 
-		if (atomic_read(&dest->weight) > 0) {
+		अगर (atomic_पढ़ो(&dest->weight) > 0) अणु
 			least = dest;
 			loh = ip_vs_dest_conn_overhead(least);
-			goto nextstage;
-		}
-	}
-	return NULL;
+			जाओ nextstage;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
 
 	/*
 	 *    Find the destination with the least load.
 	 */
   nextstage:
-	list_for_each_entry_continue_rcu(dest, &svc->destinations, n_list) {
-		if (dest->flags & IP_VS_DEST_F_OVERLOAD)
-			continue;
+	list_क्रम_each_entry_जारी_rcu(dest, &svc->destinations, n_list) अणु
+		अगर (dest->flags & IP_VS_DEST_F_OVERLOAD)
+			जारी;
 
-		doh = ip_vs_dest_conn_overhead(dest);
-		if ((__s64)loh * atomic_read(&dest->weight) >
-		    (__s64)doh * atomic_read(&least->weight)) {
+		करोh = ip_vs_dest_conn_overhead(dest);
+		अगर ((__s64)loh * atomic_पढ़ो(&dest->weight) >
+		    (__s64)करोh * atomic_पढ़ो(&least->weight)) अणु
 			least = dest;
-			loh = doh;
-		}
-	}
+			loh = करोh;
+		पूर्ण
+	पूर्ण
 
 	IP_VS_DBG_BUF(6, "LBLCR: server %s:%d "
 		      "activeconns %d refcnt %d weight %d overhead %d\n",
 		      IP_VS_DBG_ADDR(least->af, &least->addr),
 		      ntohs(least->port),
-		      atomic_read(&least->activeconns),
-		      refcount_read(&least->refcnt),
-		      atomic_read(&least->weight), loh);
+		      atomic_पढ़ो(&least->activeconns),
+		      refcount_पढ़ो(&least->refcnt),
+		      atomic_पढ़ो(&least->weight), loh);
 
-	return least;
-}
+	वापस least;
+पूर्ण
 
 
 /*
  *   If this destination server is overloaded and there is a less loaded
- *   server, then return true.
+ *   server, then वापस true.
  */
-static inline int
-is_overloaded(struct ip_vs_dest *dest, struct ip_vs_service *svc)
-{
-	if (atomic_read(&dest->activeconns) > atomic_read(&dest->weight)) {
-		struct ip_vs_dest *d;
+अटल अंतरभूत पूर्णांक
+is_overloaded(काष्ठा ip_vs_dest *dest, काष्ठा ip_vs_service *svc)
+अणु
+	अगर (atomic_पढ़ो(&dest->activeconns) > atomic_पढ़ो(&dest->weight)) अणु
+		काष्ठा ip_vs_dest *d;
 
-		list_for_each_entry_rcu(d, &svc->destinations, n_list) {
-			if (atomic_read(&d->activeconns)*2
-			    < atomic_read(&d->weight)) {
-				return 1;
-			}
-		}
-	}
-	return 0;
-}
+		list_क्रम_each_entry_rcu(d, &svc->destinations, n_list) अणु
+			अगर (atomic_पढ़ो(&d->activeconns)*2
+			    < atomic_पढ़ो(&d->weight)) अणु
+				वापस 1;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 
 /*
  *    Locality-Based (weighted) Least-Connection scheduling
  */
-static struct ip_vs_dest *
-ip_vs_lblcr_schedule(struct ip_vs_service *svc, const struct sk_buff *skb,
-		     struct ip_vs_iphdr *iph)
-{
-	struct ip_vs_lblcr_table *tbl = svc->sched_data;
-	struct ip_vs_dest *dest;
-	struct ip_vs_lblcr_entry *en;
+अटल काष्ठा ip_vs_dest *
+ip_vs_lblcr_schedule(काष्ठा ip_vs_service *svc, स्थिर काष्ठा sk_buff *skb,
+		     काष्ठा ip_vs_iphdr *iph)
+अणु
+	काष्ठा ip_vs_lblcr_table *tbl = svc->sched_data;
+	काष्ठा ip_vs_dest *dest;
+	काष्ठा ip_vs_lblcr_entry *en;
 
 	IP_VS_DBG(6, "%s(): Scheduling...\n", __func__);
 
 	/* First look in our cache */
 	en = ip_vs_lblcr_get(svc->af, tbl, &iph->daddr);
-	if (en) {
-		en->lastuse = jiffies;
+	अगर (en) अणु
+		en->lastuse = jअगरfies;
 
 		/* Get the least loaded destination */
 		dest = ip_vs_dest_set_min(&en->set);
 
-		/* More than one destination + enough time passed by, cleanup */
-		if (atomic_read(&en->set.size) > 1 &&
-		    time_after(jiffies, en->set.lastmod +
-				sysctl_lblcr_expiration(svc))) {
+		/* More than one destination + enough समय passed by, cleanup */
+		अगर (atomic_पढ़ो(&en->set.size) > 1 &&
+		    समय_after(jअगरfies, en->set.lasपंचांगod +
+				sysctl_lblcr_expiration(svc))) अणु
 			spin_lock_bh(&svc->sched_lock);
-			if (atomic_read(&en->set.size) > 1) {
-				struct ip_vs_dest *m;
+			अगर (atomic_पढ़ो(&en->set.size) > 1) अणु
+				काष्ठा ip_vs_dest *m;
 
 				m = ip_vs_dest_set_max(&en->set);
-				if (m)
+				अगर (m)
 					ip_vs_dest_set_erase(&en->set, m);
-			}
+			पूर्ण
 			spin_unlock_bh(&svc->sched_lock);
-		}
+		पूर्ण
 
 		/* If the destination is not overloaded, use it */
-		if (dest && !is_overloaded(dest, svc))
-			goto out;
+		अगर (dest && !is_overloaded(dest, svc))
+			जाओ out;
 
-		/* The cache entry is invalid, time to schedule */
+		/* The cache entry is invalid, समय to schedule */
 		dest = __ip_vs_lblcr_schedule(svc);
-		if (!dest) {
+		अगर (!dest) अणु
 			ip_vs_scheduler_err(svc, "no destination available");
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
 		/* Update our cache entry */
 		spin_lock_bh(&svc->sched_lock);
-		if (!tbl->dead)
+		अगर (!tbl->dead)
 			ip_vs_dest_set_insert(&en->set, dest, true);
 		spin_unlock_bh(&svc->sched_lock);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* No cache entry, time to schedule */
+	/* No cache entry, समय to schedule */
 	dest = __ip_vs_lblcr_schedule(svc);
-	if (!dest) {
+	अगर (!dest) अणु
 		IP_VS_DBG(1, "no destination available\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	/* If we fail to create a cache entry, we'll just use the valid dest */
 	spin_lock_bh(&svc->sched_lock);
-	if (!tbl->dead)
+	अगर (!tbl->dead)
 		ip_vs_lblcr_new(tbl, &iph->daddr, svc->af, dest);
 	spin_unlock_bh(&svc->sched_lock);
 
@@ -711,105 +712,105 @@ out:
 		      IP_VS_DBG_ADDR(svc->af, &iph->daddr),
 		      IP_VS_DBG_ADDR(dest->af, &dest->addr), ntohs(dest->port));
 
-	return dest;
-}
+	वापस dest;
+पूर्ण
 
 
 /*
- *      IPVS LBLCR Scheduler structure
+ *      IPVS LBLCR Scheduler काष्ठाure
  */
-static struct ip_vs_scheduler ip_vs_lblcr_scheduler =
-{
+अटल काष्ठा ip_vs_scheduler ip_vs_lblcr_scheduler =
+अणु
 	.name =			"lblcr",
 	.refcnt =		ATOMIC_INIT(0),
 	.module =		THIS_MODULE,
 	.n_list =		LIST_HEAD_INIT(ip_vs_lblcr_scheduler.n_list),
 	.init_service =		ip_vs_lblcr_init_svc,
-	.done_service =		ip_vs_lblcr_done_svc,
+	.करोne_service =		ip_vs_lblcr_करोne_svc,
 	.schedule =		ip_vs_lblcr_schedule,
-};
+पूर्ण;
 
 /*
  *  per netns init.
  */
-#ifdef CONFIG_SYSCTL
-static int __net_init __ip_vs_lblcr_init(struct net *net)
-{
-	struct netns_ipvs *ipvs = net_ipvs(net);
+#अगर_घोषित CONFIG_SYSCTL
+अटल पूर्णांक __net_init __ip_vs_lblcr_init(काष्ठा net *net)
+अणु
+	काष्ठा netns_ipvs *ipvs = net_ipvs(net);
 
-	if (!ipvs)
-		return -ENOENT;
+	अगर (!ipvs)
+		वापस -ENOENT;
 
-	if (!net_eq(net, &init_net)) {
+	अगर (!net_eq(net, &init_net)) अणु
 		ipvs->lblcr_ctl_table = kmemdup(vs_vars_table,
-						sizeof(vs_vars_table),
+						माप(vs_vars_table),
 						GFP_KERNEL);
-		if (ipvs->lblcr_ctl_table == NULL)
-			return -ENOMEM;
+		अगर (ipvs->lblcr_ctl_table == शून्य)
+			वापस -ENOMEM;
 
 		/* Don't export sysctls to unprivileged users */
-		if (net->user_ns != &init_user_ns)
-			ipvs->lblcr_ctl_table[0].procname = NULL;
-	} else
+		अगर (net->user_ns != &init_user_ns)
+			ipvs->lblcr_ctl_table[0].procname = शून्य;
+	पूर्ण अन्यथा
 		ipvs->lblcr_ctl_table = vs_vars_table;
 	ipvs->sysctl_lblcr_expiration = DEFAULT_EXPIRATION;
 	ipvs->lblcr_ctl_table[0].data = &ipvs->sysctl_lblcr_expiration;
 
 	ipvs->lblcr_ctl_header =
-		register_net_sysctl(net, "net/ipv4/vs", ipvs->lblcr_ctl_table);
-	if (!ipvs->lblcr_ctl_header) {
-		if (!net_eq(net, &init_net))
-			kfree(ipvs->lblcr_ctl_table);
-		return -ENOMEM;
-	}
+		रेजिस्टर_net_sysctl(net, "net/ipv4/vs", ipvs->lblcr_ctl_table);
+	अगर (!ipvs->lblcr_ctl_header) अणु
+		अगर (!net_eq(net, &init_net))
+			kमुक्त(ipvs->lblcr_ctl_table);
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit __ip_vs_lblcr_exit(struct net *net)
-{
-	struct netns_ipvs *ipvs = net_ipvs(net);
+अटल व्योम __net_निकास __ip_vs_lblcr_निकास(काष्ठा net *net)
+अणु
+	काष्ठा netns_ipvs *ipvs = net_ipvs(net);
 
-	unregister_net_sysctl_table(ipvs->lblcr_ctl_header);
+	unरेजिस्टर_net_sysctl_table(ipvs->lblcr_ctl_header);
 
-	if (!net_eq(net, &init_net))
-		kfree(ipvs->lblcr_ctl_table);
-}
+	अगर (!net_eq(net, &init_net))
+		kमुक्त(ipvs->lblcr_ctl_table);
+पूर्ण
 
-#else
+#अन्यथा
 
-static int __net_init __ip_vs_lblcr_init(struct net *net) { return 0; }
-static void __net_exit __ip_vs_lblcr_exit(struct net *net) { }
+अटल पूर्णांक __net_init __ip_vs_lblcr_init(काष्ठा net *net) अणु वापस 0; पूर्ण
+अटल व्योम __net_निकास __ip_vs_lblcr_निकास(काष्ठा net *net) अणु पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static struct pernet_operations ip_vs_lblcr_ops = {
+अटल काष्ठा pernet_operations ip_vs_lblcr_ops = अणु
 	.init = __ip_vs_lblcr_init,
-	.exit = __ip_vs_lblcr_exit,
-};
+	.निकास = __ip_vs_lblcr_निकास,
+पूर्ण;
 
-static int __init ip_vs_lblcr_init(void)
-{
-	int ret;
+अटल पूर्णांक __init ip_vs_lblcr_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = register_pernet_subsys(&ip_vs_lblcr_ops);
-	if (ret)
-		return ret;
+	ret = रेजिस्टर_pernet_subsys(&ip_vs_lblcr_ops);
+	अगर (ret)
+		वापस ret;
 
-	ret = register_ip_vs_scheduler(&ip_vs_lblcr_scheduler);
-	if (ret)
-		unregister_pernet_subsys(&ip_vs_lblcr_ops);
-	return ret;
-}
+	ret = रेजिस्टर_ip_vs_scheduler(&ip_vs_lblcr_scheduler);
+	अगर (ret)
+		unरेजिस्टर_pernet_subsys(&ip_vs_lblcr_ops);
+	वापस ret;
+पूर्ण
 
-static void __exit ip_vs_lblcr_cleanup(void)
-{
-	unregister_ip_vs_scheduler(&ip_vs_lblcr_scheduler);
-	unregister_pernet_subsys(&ip_vs_lblcr_ops);
+अटल व्योम __निकास ip_vs_lblcr_cleanup(व्योम)
+अणु
+	unरेजिस्टर_ip_vs_scheduler(&ip_vs_lblcr_scheduler);
+	unरेजिस्टर_pernet_subsys(&ip_vs_lblcr_ops);
 	rcu_barrier();
-}
+पूर्ण
 
 
 module_init(ip_vs_lblcr_init);
-module_exit(ip_vs_lblcr_cleanup);
+module_निकास(ip_vs_lblcr_cleanup);
 MODULE_LICENSE("GPL");

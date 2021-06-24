@@ -1,66 +1,67 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for Motorola PCAP2 as present in EZX phones
+ * Driver क्रम Motorola PCAP2 as present in EZX phones
  *
- * Copyright (C) 2006 Harald Welte <laforge@openezx.org>
+ * Copyright (C) 2006 Harald Welte <laक्रमge@खोलोezx.org>
  * Copyright (C) 2009 Daniel Ribeiro <drwyrm@gmail.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/mfd/ezx-pcap.h>
-#include <linux/spi/spi.h>
-#include <linux/gpio.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/mfd/ezx-pcap.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/slab.h>
 
-#define PCAP_ADC_MAXQ		8
-struct pcap_adc_request {
+#घोषणा PCAP_ADC_MAXQ		8
+काष्ठा pcap_adc_request अणु
 	u8 bank;
 	u8 ch[2];
 	u32 flags;
-	void (*callback)(void *, u16[]);
-	void *data;
-};
+	व्योम (*callback)(व्योम *, u16[]);
+	व्योम *data;
+पूर्ण;
 
-struct pcap_adc_sync_request {
+काष्ठा pcap_adc_sync_request अणु
 	u16 res[2];
-	struct completion completion;
-};
+	काष्ठा completion completion;
+पूर्ण;
 
-struct pcap_chip {
-	struct spi_device *spi;
+काष्ठा pcap_chip अणु
+	काष्ठा spi_device *spi;
 
 	/* IO */
 	u32 buf;
 	spinlock_t io_lock;
 
 	/* IRQ */
-	unsigned int irq_base;
+	अचिन्हित पूर्णांक irq_base;
 	u32 msr;
-	struct work_struct isr_work;
-	struct work_struct msr_work;
-	struct workqueue_struct *workqueue;
+	काष्ठा work_काष्ठा isr_work;
+	काष्ठा work_काष्ठा msr_work;
+	काष्ठा workqueue_काष्ठा *workqueue;
 
 	/* ADC */
-	struct pcap_adc_request *adc_queue[PCAP_ADC_MAXQ];
+	काष्ठा pcap_adc_request *adc_queue[PCAP_ADC_MAXQ];
 	u8 adc_head;
 	u8 adc_tail;
 	spinlock_t adc_lock;
-};
+पूर्ण;
 
 /* IO */
-static int ezx_pcap_putget(struct pcap_chip *pcap, u32 *data)
-{
-	struct spi_transfer t;
-	struct spi_message m;
-	int status;
+अटल पूर्णांक ezx_pcap_putget(काष्ठा pcap_chip *pcap, u32 *data)
+अणु
+	काष्ठा spi_transfer t;
+	काष्ठा spi_message m;
+	पूर्णांक status;
 
-	memset(&t, 0, sizeof(t));
+	स_रखो(&t, 0, माप(t));
 	spi_message_init(&m);
-	t.len = sizeof(u32);
+	t.len = माप(u32);
 	spi_message_add_tail(&t, &m);
 
 	pcap->buf = *data;
@@ -68,16 +69,16 @@ static int ezx_pcap_putget(struct pcap_chip *pcap, u32 *data)
 	t.rx_buf = (u8 *) &pcap->buf;
 	status = spi_sync(pcap->spi, &m);
 
-	if (status == 0)
+	अगर (status == 0)
 		*data = pcap->buf;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int ezx_pcap_write(struct pcap_chip *pcap, u8 reg_num, u32 value)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक ezx_pcap_ग_लिखो(काष्ठा pcap_chip *pcap, u8 reg_num, u32 value)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&pcap->io_lock, flags);
 	value &= PCAP_REGISTER_VALUE_MASK;
@@ -86,14 +87,14 @@ int ezx_pcap_write(struct pcap_chip *pcap, u8 reg_num, u32 value)
 	ret = ezx_pcap_putget(pcap, &value);
 	spin_unlock_irqrestore(&pcap->io_lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(ezx_pcap_write);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(ezx_pcap_ग_लिखो);
 
-int ezx_pcap_read(struct pcap_chip *pcap, u8 reg_num, u32 *value)
-{
-	unsigned long flags;
-	int ret;
+पूर्णांक ezx_pcap_पढ़ो(काष्ठा pcap_chip *pcap, u8 reg_num, u32 *value)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&pcap->io_lock, flags);
 	*value = PCAP_REGISTER_READ_OP_BIT
@@ -102,216 +103,216 @@ int ezx_pcap_read(struct pcap_chip *pcap, u8 reg_num, u32 *value)
 	ret = ezx_pcap_putget(pcap, value);
 	spin_unlock_irqrestore(&pcap->io_lock, flags);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(ezx_pcap_read);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(ezx_pcap_पढ़ो);
 
-int ezx_pcap_set_bits(struct pcap_chip *pcap, u8 reg_num, u32 mask, u32 val)
-{
-	unsigned long flags;
-	int ret;
-	u32 tmp = PCAP_REGISTER_READ_OP_BIT |
+पूर्णांक ezx_pcap_set_bits(काष्ठा pcap_chip *pcap, u8 reg_num, u32 mask, u32 val)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
+	u32 पंचांगp = PCAP_REGISTER_READ_OP_BIT |
 		(reg_num << PCAP_REGISTER_ADDRESS_SHIFT);
 
 	spin_lock_irqsave(&pcap->io_lock, flags);
-	ret = ezx_pcap_putget(pcap, &tmp);
-	if (ret)
-		goto out_unlock;
+	ret = ezx_pcap_putget(pcap, &पंचांगp);
+	अगर (ret)
+		जाओ out_unlock;
 
-	tmp &= (PCAP_REGISTER_VALUE_MASK & ~mask);
-	tmp |= (val & mask) | PCAP_REGISTER_WRITE_OP_BIT |
+	पंचांगp &= (PCAP_REGISTER_VALUE_MASK & ~mask);
+	पंचांगp |= (val & mask) | PCAP_REGISTER_WRITE_OP_BIT |
 		(reg_num << PCAP_REGISTER_ADDRESS_SHIFT);
 
-	ret = ezx_pcap_putget(pcap, &tmp);
+	ret = ezx_pcap_putget(pcap, &पंचांगp);
 out_unlock:
 	spin_unlock_irqrestore(&pcap->io_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ezx_pcap_set_bits);
 
 /* IRQ */
-int irq_to_pcap(struct pcap_chip *pcap, int irq)
-{
-	return irq - pcap->irq_base;
-}
+पूर्णांक irq_to_pcap(काष्ठा pcap_chip *pcap, पूर्णांक irq)
+अणु
+	वापस irq - pcap->irq_base;
+पूर्ण
 EXPORT_SYMBOL_GPL(irq_to_pcap);
 
-int pcap_to_irq(struct pcap_chip *pcap, int irq)
-{
-	return pcap->irq_base + irq;
-}
+पूर्णांक pcap_to_irq(काष्ठा pcap_chip *pcap, पूर्णांक irq)
+अणु
+	वापस pcap->irq_base + irq;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcap_to_irq);
 
-static void pcap_mask_irq(struct irq_data *d)
-{
-	struct pcap_chip *pcap = irq_data_get_irq_chip_data(d);
+अटल व्योम pcap_mask_irq(काष्ठा irq_data *d)
+अणु
+	काष्ठा pcap_chip *pcap = irq_data_get_irq_chip_data(d);
 
 	pcap->msr |= 1 << irq_to_pcap(pcap, d->irq);
 	queue_work(pcap->workqueue, &pcap->msr_work);
-}
+पूर्ण
 
-static void pcap_unmask_irq(struct irq_data *d)
-{
-	struct pcap_chip *pcap = irq_data_get_irq_chip_data(d);
+अटल व्योम pcap_unmask_irq(काष्ठा irq_data *d)
+अणु
+	काष्ठा pcap_chip *pcap = irq_data_get_irq_chip_data(d);
 
 	pcap->msr &= ~(1 << irq_to_pcap(pcap, d->irq));
 	queue_work(pcap->workqueue, &pcap->msr_work);
-}
+पूर्ण
 
-static struct irq_chip pcap_irq_chip = {
+अटल काष्ठा irq_chip pcap_irq_chip = अणु
 	.name		= "pcap",
 	.irq_disable	= pcap_mask_irq,
 	.irq_mask	= pcap_mask_irq,
 	.irq_unmask	= pcap_unmask_irq,
-};
+पूर्ण;
 
-static void pcap_msr_work(struct work_struct *work)
-{
-	struct pcap_chip *pcap = container_of(work, struct pcap_chip, msr_work);
+अटल व्योम pcap_msr_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pcap_chip *pcap = container_of(work, काष्ठा pcap_chip, msr_work);
 
-	ezx_pcap_write(pcap, PCAP_REG_MSR, pcap->msr);
-}
+	ezx_pcap_ग_लिखो(pcap, PCAP_REG_MSR, pcap->msr);
+पूर्ण
 
-static void pcap_isr_work(struct work_struct *work)
-{
-	struct pcap_chip *pcap = container_of(work, struct pcap_chip, isr_work);
-	struct pcap_platform_data *pdata = dev_get_platdata(&pcap->spi->dev);
-	u32 msr, isr, int_sel, service;
-	int irq;
+अटल व्योम pcap_isr_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pcap_chip *pcap = container_of(work, काष्ठा pcap_chip, isr_work);
+	काष्ठा pcap_platक्रमm_data *pdata = dev_get_platdata(&pcap->spi->dev);
+	u32 msr, isr, पूर्णांक_sel, service;
+	पूर्णांक irq;
 
-	do {
-		ezx_pcap_read(pcap, PCAP_REG_MSR, &msr);
-		ezx_pcap_read(pcap, PCAP_REG_ISR, &isr);
+	करो अणु
+		ezx_pcap_पढ़ो(pcap, PCAP_REG_MSR, &msr);
+		ezx_pcap_पढ़ो(pcap, PCAP_REG_ISR, &isr);
 
-		/* We can't service/ack irqs that are assigned to port 2 */
-		if (!(pdata->config & PCAP_SECOND_PORT)) {
-			ezx_pcap_read(pcap, PCAP_REG_INT_SEL, &int_sel);
-			isr &= ~int_sel;
-		}
+		/* We can't service/ack irqs that are asचिन्हित to port 2 */
+		अगर (!(pdata->config & PCAP_SECOND_PORT)) अणु
+			ezx_pcap_पढ़ो(pcap, PCAP_REG_INT_SEL, &पूर्णांक_sel);
+			isr &= ~पूर्णांक_sel;
+		पूर्ण
 
-		ezx_pcap_write(pcap, PCAP_REG_MSR, isr | msr);
-		ezx_pcap_write(pcap, PCAP_REG_ISR, isr);
+		ezx_pcap_ग_लिखो(pcap, PCAP_REG_MSR, isr | msr);
+		ezx_pcap_ग_लिखो(pcap, PCAP_REG_ISR, isr);
 
 		local_irq_disable();
 		service = isr & ~msr;
-		for (irq = pcap->irq_base; service; service >>= 1, irq++) {
-			if (service & 1)
+		क्रम (irq = pcap->irq_base; service; service >>= 1, irq++) अणु
+			अगर (service & 1)
 				generic_handle_irq(irq);
-		}
+		पूर्ण
 		local_irq_enable();
-		ezx_pcap_write(pcap, PCAP_REG_MSR, pcap->msr);
-	} while (gpio_get_value(pdata->gpio));
-}
+		ezx_pcap_ग_लिखो(pcap, PCAP_REG_MSR, pcap->msr);
+	पूर्ण जबतक (gpio_get_value(pdata->gpio));
+पूर्ण
 
-static void pcap_irq_handler(struct irq_desc *desc)
-{
-	struct pcap_chip *pcap = irq_desc_get_handler_data(desc);
+अटल व्योम pcap_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा pcap_chip *pcap = irq_desc_get_handler_data(desc);
 
 	desc->irq_data.chip->irq_ack(&desc->irq_data);
 	queue_work(pcap->workqueue, &pcap->isr_work);
-}
+पूर्ण
 
 /* ADC */
-void pcap_set_ts_bits(struct pcap_chip *pcap, u32 bits)
-{
-	unsigned long flags;
-	u32 tmp;
+व्योम pcap_set_ts_bits(काष्ठा pcap_chip *pcap, u32 bits)
+अणु
+	अचिन्हित दीर्घ flags;
+	u32 पंचांगp;
 
 	spin_lock_irqsave(&pcap->adc_lock, flags);
-	ezx_pcap_read(pcap, PCAP_REG_ADC, &tmp);
-	tmp &= ~(PCAP_ADC_TS_M_MASK | PCAP_ADC_TS_REF_LOWPWR);
-	tmp |= bits & (PCAP_ADC_TS_M_MASK | PCAP_ADC_TS_REF_LOWPWR);
-	ezx_pcap_write(pcap, PCAP_REG_ADC, tmp);
+	ezx_pcap_पढ़ो(pcap, PCAP_REG_ADC, &पंचांगp);
+	पंचांगp &= ~(PCAP_ADC_TS_M_MASK | PCAP_ADC_TS_REF_LOWPWR);
+	पंचांगp |= bits & (PCAP_ADC_TS_M_MASK | PCAP_ADC_TS_REF_LOWPWR);
+	ezx_pcap_ग_लिखो(pcap, PCAP_REG_ADC, पंचांगp);
 	spin_unlock_irqrestore(&pcap->adc_lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(pcap_set_ts_bits);
 
-static void pcap_disable_adc(struct pcap_chip *pcap)
-{
-	u32 tmp;
+अटल व्योम pcap_disable_adc(काष्ठा pcap_chip *pcap)
+अणु
+	u32 पंचांगp;
 
-	ezx_pcap_read(pcap, PCAP_REG_ADC, &tmp);
-	tmp &= ~(PCAP_ADC_ADEN|PCAP_ADC_BATT_I_ADC|PCAP_ADC_BATT_I_POLARITY);
-	ezx_pcap_write(pcap, PCAP_REG_ADC, tmp);
-}
+	ezx_pcap_पढ़ो(pcap, PCAP_REG_ADC, &पंचांगp);
+	पंचांगp &= ~(PCAP_ADC_ADEN|PCAP_ADC_BATT_I_ADC|PCAP_ADC_BATT_I_POLARITY);
+	ezx_pcap_ग_लिखो(pcap, PCAP_REG_ADC, पंचांगp);
+पूर्ण
 
-static void pcap_adc_trigger(struct pcap_chip *pcap)
-{
-	unsigned long flags;
-	u32 tmp;
+अटल व्योम pcap_adc_trigger(काष्ठा pcap_chip *pcap)
+अणु
+	अचिन्हित दीर्घ flags;
+	u32 पंचांगp;
 	u8 head;
 
 	spin_lock_irqsave(&pcap->adc_lock, flags);
 	head = pcap->adc_head;
-	if (!pcap->adc_queue[head]) {
-		/* queue is empty, save power */
+	अगर (!pcap->adc_queue[head]) अणु
+		/* queue is empty, save घातer */
 		pcap_disable_adc(pcap);
 		spin_unlock_irqrestore(&pcap->adc_lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 	/* start conversion on requested bank, save TS_M bits */
-	ezx_pcap_read(pcap, PCAP_REG_ADC, &tmp);
-	tmp &= (PCAP_ADC_TS_M_MASK | PCAP_ADC_TS_REF_LOWPWR);
-	tmp |= pcap->adc_queue[head]->flags | PCAP_ADC_ADEN;
+	ezx_pcap_पढ़ो(pcap, PCAP_REG_ADC, &पंचांगp);
+	पंचांगp &= (PCAP_ADC_TS_M_MASK | PCAP_ADC_TS_REF_LOWPWR);
+	पंचांगp |= pcap->adc_queue[head]->flags | PCAP_ADC_ADEN;
 
-	if (pcap->adc_queue[head]->bank == PCAP_ADC_BANK_1)
-		tmp |= PCAP_ADC_AD_SEL1;
+	अगर (pcap->adc_queue[head]->bank == PCAP_ADC_BANK_1)
+		पंचांगp |= PCAP_ADC_AD_SEL1;
 
-	ezx_pcap_write(pcap, PCAP_REG_ADC, tmp);
+	ezx_pcap_ग_लिखो(pcap, PCAP_REG_ADC, पंचांगp);
 	spin_unlock_irqrestore(&pcap->adc_lock, flags);
-	ezx_pcap_write(pcap, PCAP_REG_ADR, PCAP_ADR_ASC);
-}
+	ezx_pcap_ग_लिखो(pcap, PCAP_REG_ADR, PCAP_ADR_ASC);
+पूर्ण
 
-static irqreturn_t pcap_adc_irq(int irq, void *_pcap)
-{
-	struct pcap_chip *pcap = _pcap;
-	struct pcap_adc_request *req;
+अटल irqवापस_t pcap_adc_irq(पूर्णांक irq, व्योम *_pcap)
+अणु
+	काष्ठा pcap_chip *pcap = _pcap;
+	काष्ठा pcap_adc_request *req;
 	u16 res[2];
-	u32 tmp;
+	u32 पंचांगp;
 
 	spin_lock(&pcap->adc_lock);
 	req = pcap->adc_queue[pcap->adc_head];
 
-	if (WARN(!req, "adc irq without pending request\n")) {
+	अगर (WARN(!req, "adc irq without pending request\n")) अणु
 		spin_unlock(&pcap->adc_lock);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	/* read requested channels results */
-	ezx_pcap_read(pcap, PCAP_REG_ADC, &tmp);
-	tmp &= ~(PCAP_ADC_ADA1_MASK | PCAP_ADC_ADA2_MASK);
-	tmp |= (req->ch[0] << PCAP_ADC_ADA1_SHIFT);
-	tmp |= (req->ch[1] << PCAP_ADC_ADA2_SHIFT);
-	ezx_pcap_write(pcap, PCAP_REG_ADC, tmp);
-	ezx_pcap_read(pcap, PCAP_REG_ADR, &tmp);
-	res[0] = (tmp & PCAP_ADR_ADD1_MASK) >> PCAP_ADR_ADD1_SHIFT;
-	res[1] = (tmp & PCAP_ADR_ADD2_MASK) >> PCAP_ADR_ADD2_SHIFT;
+	/* पढ़ो requested channels results */
+	ezx_pcap_पढ़ो(pcap, PCAP_REG_ADC, &पंचांगp);
+	पंचांगp &= ~(PCAP_ADC_ADA1_MASK | PCAP_ADC_ADA2_MASK);
+	पंचांगp |= (req->ch[0] << PCAP_ADC_ADA1_SHIFT);
+	पंचांगp |= (req->ch[1] << PCAP_ADC_ADA2_SHIFT);
+	ezx_pcap_ग_लिखो(pcap, PCAP_REG_ADC, पंचांगp);
+	ezx_pcap_पढ़ो(pcap, PCAP_REG_ADR, &पंचांगp);
+	res[0] = (पंचांगp & PCAP_ADR_ADD1_MASK) >> PCAP_ADR_ADD1_SHIFT;
+	res[1] = (पंचांगp & PCAP_ADR_ADD2_MASK) >> PCAP_ADR_ADD2_SHIFT;
 
-	pcap->adc_queue[pcap->adc_head] = NULL;
+	pcap->adc_queue[pcap->adc_head] = शून्य;
 	pcap->adc_head = (pcap->adc_head + 1) & (PCAP_ADC_MAXQ - 1);
 	spin_unlock(&pcap->adc_lock);
 
 	/* pass the results and release memory */
 	req->callback(req->data, res);
-	kfree(req);
+	kमुक्त(req);
 
-	/* trigger next conversion (if any) on queue */
+	/* trigger next conversion (अगर any) on queue */
 	pcap_adc_trigger(pcap);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int pcap_adc_async(struct pcap_chip *pcap, u8 bank, u32 flags, u8 ch[],
-						void *callback, void *data)
-{
-	struct pcap_adc_request *req;
-	unsigned long irq_flags;
+पूर्णांक pcap_adc_async(काष्ठा pcap_chip *pcap, u8 bank, u32 flags, u8 ch[],
+						व्योम *callback, व्योम *data)
+अणु
+	काष्ठा pcap_adc_request *req;
+	अचिन्हित दीर्घ irq_flags;
 
-	/* This will be freed after we have a result */
-	req = kmalloc(sizeof(struct pcap_adc_request), GFP_KERNEL);
-	if (!req)
-		return -ENOMEM;
+	/* This will be मुक्तd after we have a result */
+	req = kदो_स्मृति(माप(काष्ठा pcap_adc_request), GFP_KERNEL);
+	अगर (!req)
+		वापस -ENOMEM;
 
 	req->bank = bank;
 	req->flags = flags;
@@ -321,11 +322,11 @@ int pcap_adc_async(struct pcap_chip *pcap, u8 bank, u32 flags, u8 ch[],
 	req->data = data;
 
 	spin_lock_irqsave(&pcap->adc_lock, irq_flags);
-	if (pcap->adc_queue[pcap->adc_tail]) {
+	अगर (pcap->adc_queue[pcap->adc_tail]) अणु
 		spin_unlock_irqrestore(&pcap->adc_lock, irq_flags);
-		kfree(req);
-		return -EBUSY;
-	}
+		kमुक्त(req);
+		वापस -EBUSY;
+	पूर्ण
 	pcap->adc_queue[pcap->adc_tail] = req;
 	pcap->adc_tail = (pcap->adc_tail + 1) & (PCAP_ADC_MAXQ - 1);
 	spin_unlock_irqrestore(&pcap->adc_lock, irq_flags);
@@ -333,105 +334,105 @@ int pcap_adc_async(struct pcap_chip *pcap, u8 bank, u32 flags, u8 ch[],
 	/* start conversion */
 	pcap_adc_trigger(pcap);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcap_adc_async);
 
-static void pcap_adc_sync_cb(void *param, u16 res[])
-{
-	struct pcap_adc_sync_request *req = param;
+अटल व्योम pcap_adc_sync_cb(व्योम *param, u16 res[])
+अणु
+	काष्ठा pcap_adc_sync_request *req = param;
 
 	req->res[0] = res[0];
 	req->res[1] = res[1];
 	complete(&req->completion);
-}
+पूर्ण
 
-int pcap_adc_sync(struct pcap_chip *pcap, u8 bank, u32 flags, u8 ch[],
+पूर्णांक pcap_adc_sync(काष्ठा pcap_chip *pcap, u8 bank, u32 flags, u8 ch[],
 								u16 res[])
-{
-	struct pcap_adc_sync_request sync_data;
-	int ret;
+अणु
+	काष्ठा pcap_adc_sync_request sync_data;
+	पूर्णांक ret;
 
 	init_completion(&sync_data.completion);
 	ret = pcap_adc_async(pcap, bank, flags, ch, pcap_adc_sync_cb,
 								&sync_data);
-	if (ret)
-		return ret;
-	wait_for_completion(&sync_data.completion);
+	अगर (ret)
+		वापस ret;
+	रुको_क्रम_completion(&sync_data.completion);
 	res[0] = sync_data.res[0];
 	res[1] = sync_data.res[1];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(pcap_adc_sync);
 
 /* subdevs */
-static int pcap_remove_subdev(struct device *dev, void *unused)
-{
-	platform_device_unregister(to_platform_device(dev));
-	return 0;
-}
+अटल पूर्णांक pcap_हटाओ_subdev(काष्ठा device *dev, व्योम *unused)
+अणु
+	platक्रमm_device_unरेजिस्टर(to_platक्रमm_device(dev));
+	वापस 0;
+पूर्ण
 
-static int pcap_add_subdev(struct pcap_chip *pcap,
-						struct pcap_subdev *subdev)
-{
-	struct platform_device *pdev;
-	int ret;
+अटल पूर्णांक pcap_add_subdev(काष्ठा pcap_chip *pcap,
+						काष्ठा pcap_subdev *subdev)
+अणु
+	काष्ठा platक्रमm_device *pdev;
+	पूर्णांक ret;
 
-	pdev = platform_device_alloc(subdev->name, subdev->id);
-	if (!pdev)
-		return -ENOMEM;
+	pdev = platक्रमm_device_alloc(subdev->name, subdev->id);
+	अगर (!pdev)
+		वापस -ENOMEM;
 
 	pdev->dev.parent = &pcap->spi->dev;
-	pdev->dev.platform_data = subdev->platform_data;
+	pdev->dev.platक्रमm_data = subdev->platक्रमm_data;
 
-	ret = platform_device_add(pdev);
-	if (ret)
-		platform_device_put(pdev);
+	ret = platक्रमm_device_add(pdev);
+	अगर (ret)
+		platक्रमm_device_put(pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ezx_pcap_remove(struct spi_device *spi)
-{
-	struct pcap_chip *pcap = spi_get_drvdata(spi);
-	unsigned long flags;
-	int i;
+अटल पूर्णांक ezx_pcap_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा pcap_chip *pcap = spi_get_drvdata(spi);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	/* remove all registered subdevs */
-	device_for_each_child(&spi->dev, NULL, pcap_remove_subdev);
+	/* हटाओ all रेजिस्टरed subdevs */
+	device_क्रम_each_child(&spi->dev, शून्य, pcap_हटाओ_subdev);
 
 	/* cleanup ADC */
 	spin_lock_irqsave(&pcap->adc_lock, flags);
-	for (i = 0; i < PCAP_ADC_MAXQ; i++)
-		kfree(pcap->adc_queue[i]);
+	क्रम (i = 0; i < PCAP_ADC_MAXQ; i++)
+		kमुक्त(pcap->adc_queue[i]);
 	spin_unlock_irqrestore(&pcap->adc_lock, flags);
 
 	/* cleanup irqchip */
-	for (i = pcap->irq_base; i < (pcap->irq_base + PCAP_NIRQS); i++)
-		irq_set_chip_and_handler(i, NULL, NULL);
+	क्रम (i = pcap->irq_base; i < (pcap->irq_base + PCAP_NIRQS); i++)
+		irq_set_chip_and_handler(i, शून्य, शून्य);
 
 	destroy_workqueue(pcap->workqueue);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ezx_pcap_probe(struct spi_device *spi)
-{
-	struct pcap_platform_data *pdata = dev_get_platdata(&spi->dev);
-	struct pcap_chip *pcap;
-	int i, adc_irq;
-	int ret = -ENODEV;
+अटल पूर्णांक ezx_pcap_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा pcap_platक्रमm_data *pdata = dev_get_platdata(&spi->dev);
+	काष्ठा pcap_chip *pcap;
+	पूर्णांक i, adc_irq;
+	पूर्णांक ret = -ENODEV;
 
-	/* platform data is required */
-	if (!pdata)
-		goto ret;
+	/* platक्रमm data is required */
+	अगर (!pdata)
+		जाओ ret;
 
-	pcap = devm_kzalloc(&spi->dev, sizeof(*pcap), GFP_KERNEL);
-	if (!pcap) {
+	pcap = devm_kzalloc(&spi->dev, माप(*pcap), GFP_KERNEL);
+	अगर (!pcap) अणु
 		ret = -ENOMEM;
-		goto ret;
-	}
+		जाओ ret;
+	पूर्ण
 
 	spin_lock_init(&pcap->io_lock);
 	spin_lock_init(&pcap->adc_lock);
@@ -443,35 +444,35 @@ static int ezx_pcap_probe(struct spi_device *spi)
 	spi->bits_per_word = 32;
 	spi->mode = SPI_MODE_0 | (pdata->config & PCAP_CS_AH ? SPI_CS_HIGH : 0);
 	ret = spi_setup(spi);
-	if (ret)
-		goto ret;
+	अगर (ret)
+		जाओ ret;
 
 	pcap->spi = spi;
 
 	/* setup irq */
 	pcap->irq_base = pdata->irq_base;
-	pcap->workqueue = create_singlethread_workqueue("pcapd");
-	if (!pcap->workqueue) {
+	pcap->workqueue = create_singlethपढ़ो_workqueue("pcapd");
+	अगर (!pcap->workqueue) अणु
 		ret = -ENOMEM;
 		dev_err(&spi->dev, "can't create pcap thread\n");
-		goto ret;
-	}
+		जाओ ret;
+	पूर्ण
 
-	/* redirect interrupts to AP, except adcdone2 */
-	if (!(pdata->config & PCAP_SECOND_PORT))
-		ezx_pcap_write(pcap, PCAP_REG_INT_SEL,
+	/* redirect पूर्णांकerrupts to AP, except adcकरोne2 */
+	अगर (!(pdata->config & PCAP_SECOND_PORT))
+		ezx_pcap_ग_लिखो(pcap, PCAP_REG_INT_SEL,
 					(1 << PCAP_IRQ_ADCDONE2));
 
 	/* setup irq chip */
-	for (i = pcap->irq_base; i < (pcap->irq_base + PCAP_NIRQS); i++) {
+	क्रम (i = pcap->irq_base; i < (pcap->irq_base + PCAP_NIRQS); i++) अणु
 		irq_set_chip_and_handler(i, &pcap_irq_chip, handle_simple_irq);
 		irq_set_chip_data(i, pcap);
 		irq_clear_status_flags(i, IRQ_NOREQUEST | IRQ_NOPROBE);
-	}
+	पूर्ण
 
-	/* mask/ack all PCAP interrupts */
-	ezx_pcap_write(pcap, PCAP_REG_MSR, PCAP_MASK_ALL_INTERRUPT);
-	ezx_pcap_write(pcap, PCAP_REG_ISR, PCAP_CLEAR_INTERRUPT_REGISTER);
+	/* mask/ack all PCAP पूर्णांकerrupts */
+	ezx_pcap_ग_लिखो(pcap, PCAP_REG_MSR, PCAP_MASK_ALL_INTERRUPT);
+	ezx_pcap_ग_लिखो(pcap, PCAP_REG_ISR, PCAP_CLEAR_INTERRUPT_REGISTER);
 	pcap->msr = PCAP_MASK_ALL_INTERRUPT;
 
 	irq_set_irq_type(spi->irq, IRQ_TYPE_EDGE_RISING);
@@ -484,53 +485,53 @@ static int ezx_pcap_probe(struct spi_device *spi)
 
 	ret = devm_request_irq(&spi->dev, adc_irq, pcap_adc_irq, 0, "ADC",
 				pcap);
-	if (ret)
-		goto free_irqchip;
+	अगर (ret)
+		जाओ मुक्त_irqchip;
 
 	/* setup subdevs */
-	for (i = 0; i < pdata->num_subdevs; i++) {
+	क्रम (i = 0; i < pdata->num_subdevs; i++) अणु
 		ret = pcap_add_subdev(pcap, &pdata->subdevs[i]);
-		if (ret)
-			goto remove_subdevs;
-	}
+		अगर (ret)
+			जाओ हटाओ_subdevs;
+	पूर्ण
 
-	/* board specific quirks */
-	if (pdata->init)
+	/* board specअगरic quirks */
+	अगर (pdata->init)
 		pdata->init(pcap);
 
-	return 0;
+	वापस 0;
 
-remove_subdevs:
-	device_for_each_child(&spi->dev, NULL, pcap_remove_subdev);
-free_irqchip:
-	for (i = pcap->irq_base; i < (pcap->irq_base + PCAP_NIRQS); i++)
-		irq_set_chip_and_handler(i, NULL, NULL);
+हटाओ_subdevs:
+	device_क्रम_each_child(&spi->dev, शून्य, pcap_हटाओ_subdev);
+मुक्त_irqchip:
+	क्रम (i = pcap->irq_base; i < (pcap->irq_base + PCAP_NIRQS); i++)
+		irq_set_chip_and_handler(i, शून्य, शून्य);
 /* destroy_workqueue: */
 	destroy_workqueue(pcap->workqueue);
 ret:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct spi_driver ezxpcap_driver = {
+अटल काष्ठा spi_driver ezxpcap_driver = अणु
 	.probe	= ezx_pcap_probe,
-	.remove = ezx_pcap_remove,
-	.driver = {
+	.हटाओ = ezx_pcap_हटाओ,
+	.driver = अणु
 		.name	= "ezx-pcap",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init ezx_pcap_init(void)
-{
-	return spi_register_driver(&ezxpcap_driver);
-}
+अटल पूर्णांक __init ezx_pcap_init(व्योम)
+अणु
+	वापस spi_रेजिस्टर_driver(&ezxpcap_driver);
+पूर्ण
 
-static void __exit ezx_pcap_exit(void)
-{
-	spi_unregister_driver(&ezxpcap_driver);
-}
+अटल व्योम __निकास ezx_pcap_निकास(व्योम)
+अणु
+	spi_unरेजिस्टर_driver(&ezxpcap_driver);
+पूर्ण
 
 subsys_initcall(ezx_pcap_init);
-module_exit(ezx_pcap_exit);
+module_निकास(ezx_pcap_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Daniel Ribeiro / Harald Welte");

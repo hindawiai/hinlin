@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
 /* 4-byte aligned .bss */
-static volatile int static_var2;
-static volatile int static_var22;
-int var2 = 0;
+अटल अस्थिर पूर्णांक अटल_var2;
+अटल अस्थिर पूर्णांक अटल_var22;
+पूर्णांक var2 = 0;
 /* 8-byte aligned .rodata */
-const volatile long rovar2;
+स्थिर अस्थिर दीर्घ rovar2;
 
 /* same "subprog" name in both files */
-static __noinline int subprog(int x)
-{
-	/* but different formula */
-	return x * 3;
-}
+अटल __noअंतरभूत पूर्णांक subprog(पूर्णांक x)
+अणु
+	/* but dअगरferent क्रमmula */
+	वापस x * 3;
+पूर्ण
 
 SEC("raw_tp/sys_enter")
-int handler2(const void *ctx)
-{
-	var2 = subprog(rovar2) + static_var2 + static_var22;
+पूर्णांक handler2(स्थिर व्योम *ctx)
+अणु
+	var2 = subprog(rovar2) + अटल_var2 + अटल_var22;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* different name and/or type of the variable doesn't matter */
-char _license[] SEC("license") = "GPL";
-int _version SEC("version") = 1;
+/* dअगरferent name and/or type of the variable करोesn't matter */
+अक्षर _license[] SEC("license") = "GPL";
+पूर्णांक _version SEC("version") = 1;

@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_BPF_H
-#define _XT_BPF_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_BPF_H
+#घोषणा _XT_BPF_H
 
-#include <linux/filter.h>
-#include <linux/limits.h>
-#include <linux/types.h>
+#समावेश <linux/filter.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/types.h>
 
-#define XT_BPF_MAX_NUM_INSTR	64
-#define XT_BPF_PATH_MAX		(XT_BPF_MAX_NUM_INSTR * sizeof(struct sock_filter))
+#घोषणा XT_BPF_MAX_NUM_INSTR	64
+#घोषणा XT_BPF_PATH_MAX		(XT_BPF_MAX_NUM_INSTR * माप(काष्ठा sock_filter))
 
-struct bpf_prog;
+काष्ठा bpf_prog;
 
-struct xt_bpf_info {
+काष्ठा xt_bpf_info अणु
 	__u16 bpf_program_num_elem;
-	struct sock_filter bpf_program[XT_BPF_MAX_NUM_INSTR];
+	काष्ठा sock_filter bpf_program[XT_BPF_MAX_NUM_INSTR];
 
 	/* only used in the kernel */
-	struct bpf_prog *filter __attribute__((aligned(8)));
-};
+	काष्ठा bpf_prog *filter __attribute__((aligned(8)));
+पूर्ण;
 
-enum xt_bpf_modes {
+क्रमागत xt_bpf_modes अणु
 	XT_BPF_MODE_BYTECODE,
 	XT_BPF_MODE_FD_PINNED,
 	XT_BPF_MODE_FD_ELF,
-};
-#define XT_BPF_MODE_PATH_PINNED XT_BPF_MODE_FD_PINNED
+पूर्ण;
+#घोषणा XT_BPF_MODE_PATH_PINNED XT_BPF_MODE_FD_PINNED
 
-struct xt_bpf_info_v1 {
+काष्ठा xt_bpf_info_v1 अणु
 	__u16 mode;
 	__u16 bpf_program_num_elem;
 	__s32 fd;
-	union {
-		struct sock_filter bpf_program[XT_BPF_MAX_NUM_INSTR];
-		char path[XT_BPF_PATH_MAX];
-	};
+	जोड़ अणु
+		काष्ठा sock_filter bpf_program[XT_BPF_MAX_NUM_INSTR];
+		अक्षर path[XT_BPF_PATH_MAX];
+	पूर्ण;
 
 	/* only used in the kernel */
-	struct bpf_prog *filter __attribute__((aligned(8)));
-};
+	काष्ठा bpf_prog *filter __attribute__((aligned(8)));
+पूर्ण;
 
-#endif /*_XT_BPF_H */
+#पूर्ण_अगर /*_XT_BPF_H */

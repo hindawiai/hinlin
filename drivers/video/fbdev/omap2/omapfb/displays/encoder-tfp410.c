@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TFP410 DPI-to-DVI encoder driver
  *
@@ -6,122 +7,122 @@
  * Author: Tomi Valkeinen <tomi.valkeinen@ti.com>
  */
 
-#include <linux/gpio.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/of_gpio.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_gpपन.स>
 
-#include <video/omapfb_dss.h>
+#समावेश <video/omapfb_dss.h>
 
-struct panel_drv_data {
-	struct omap_dss_device dssdev;
-	struct omap_dss_device *in;
+काष्ठा panel_drv_data अणु
+	काष्ठा omap_dss_device dssdev;
+	काष्ठा omap_dss_device *in;
 
-	int pd_gpio;
-	int data_lines;
+	पूर्णांक pd_gpio;
+	पूर्णांक data_lines;
 
-	struct omap_video_timings timings;
-};
+	काष्ठा omap_video_timings timings;
+पूर्ण;
 
-#define to_panel_data(x) container_of(x, struct panel_drv_data, dssdev)
+#घोषणा to_panel_data(x) container_of(x, काष्ठा panel_drv_data, dssdev)
 
-static int tfp410_connect(struct omap_dss_device *dssdev,
-		struct omap_dss_device *dst)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
-	int r;
+अटल पूर्णांक tfp410_connect(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_dss_device *dst)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
+	पूर्णांक r;
 
-	if (omapdss_device_is_connected(dssdev))
-		return -EBUSY;
+	अगर (omapdss_device_is_connected(dssdev))
+		वापस -EBUSY;
 
 	r = in->ops.dpi->connect(in, dssdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	dst->src = dssdev;
 	dssdev->dst = dst;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tfp410_disconnect(struct omap_dss_device *dssdev,
-		struct omap_dss_device *dst)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल व्योम tfp410_disconnect(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_dss_device *dst)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
 	WARN_ON(!omapdss_device_is_connected(dssdev));
-	if (!omapdss_device_is_connected(dssdev))
-		return;
+	अगर (!omapdss_device_is_connected(dssdev))
+		वापस;
 
 	WARN_ON(dst != dssdev->dst);
-	if (dst != dssdev->dst)
-		return;
+	अगर (dst != dssdev->dst)
+		वापस;
 
-	dst->src = NULL;
-	dssdev->dst = NULL;
+	dst->src = शून्य;
+	dssdev->dst = शून्य;
 
 	in->ops.dpi->disconnect(in, &ddata->dssdev);
-}
+पूर्ण
 
-static int tfp410_enable(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
-	int r;
+अटल पूर्णांक tfp410_enable(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
+	पूर्णांक r;
 
-	if (!omapdss_device_is_connected(dssdev))
-		return -ENODEV;
+	अगर (!omapdss_device_is_connected(dssdev))
+		वापस -ENODEV;
 
-	if (omapdss_device_is_enabled(dssdev))
-		return 0;
+	अगर (omapdss_device_is_enabled(dssdev))
+		वापस 0;
 
 	in->ops.dpi->set_timings(in, &ddata->timings);
-	if (ddata->data_lines)
+	अगर (ddata->data_lines)
 		in->ops.dpi->set_data_lines(in, ddata->data_lines);
 
 	r = in->ops.dpi->enable(in);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (gpio_is_valid(ddata->pd_gpio))
+	अगर (gpio_is_valid(ddata->pd_gpio))
 		gpio_set_value_cansleep(ddata->pd_gpio, 1);
 
 	dssdev->state = OMAP_DSS_DISPLAY_ACTIVE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tfp410_disable(struct omap_dss_device *dssdev)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल व्योम tfp410_disable(काष्ठा omap_dss_device *dssdev)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	if (!omapdss_device_is_enabled(dssdev))
-		return;
+	अगर (!omapdss_device_is_enabled(dssdev))
+		वापस;
 
-	if (gpio_is_valid(ddata->pd_gpio))
+	अगर (gpio_is_valid(ddata->pd_gpio))
 		gpio_set_value_cansleep(ddata->pd_gpio, 0);
 
 	in->ops.dpi->disable(in);
 
 	dssdev->state = OMAP_DSS_DISPLAY_DISABLED;
-}
+पूर्ण
 
-static void tfp410_fix_timings(struct omap_video_timings *timings)
-{
+अटल व्योम tfp410_fix_timings(काष्ठा omap_video_timings *timings)
+अणु
 	timings->data_pclk_edge = OMAPDSS_DRIVE_SIG_RISING_EDGE;
 	timings->sync_pclk_edge = OMAPDSS_DRIVE_SIG_RISING_EDGE;
 	timings->de_level = OMAPDSS_SIG_ACTIVE_HIGH;
-}
+पूर्ण
 
-static void tfp410_set_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल व्योम tfp410_set_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
 	tfp410_fix_timings(timings);
 
@@ -129,28 +130,28 @@ static void tfp410_set_timings(struct omap_dss_device *dssdev,
 	dssdev->panel.timings = *timings;
 
 	in->ops.dpi->set_timings(in, timings);
-}
+पूर्ण
 
-static void tfp410_get_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
+अटल व्योम tfp410_get_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
 
 	*timings = ddata->timings;
-}
+पूर्ण
 
-static int tfp410_check_timings(struct omap_dss_device *dssdev,
-		struct omap_video_timings *timings)
-{
-	struct panel_drv_data *ddata = to_panel_data(dssdev);
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक tfp410_check_timings(काष्ठा omap_dss_device *dssdev,
+		काष्ठा omap_video_timings *timings)
+अणु
+	काष्ठा panel_drv_data *ddata = to_panel_data(dssdev);
+	काष्ठा omap_dss_device *in = ddata->in;
 
 	tfp410_fix_timings(timings);
 
-	return in->ops.dpi->check_timings(in, timings);
-}
+	वापस in->ops.dpi->check_timings(in, timings);
+पूर्ण
 
-static const struct omapdss_dvi_ops tfp410_dvi_ops = {
+अटल स्थिर काष्ठा omapdss_dvi_ops tfp410_dvi_ops = अणु
 	.connect	= tfp410_connect,
 	.disconnect	= tfp410_disconnect,
 
@@ -160,63 +161,63 @@ static const struct omapdss_dvi_ops tfp410_dvi_ops = {
 	.check_timings	= tfp410_check_timings,
 	.set_timings	= tfp410_set_timings,
 	.get_timings	= tfp410_get_timings,
-};
+पूर्ण;
 
-static int tfp410_probe_of(struct platform_device *pdev)
-{
-	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
-	struct device_node *node = pdev->dev.of_node;
-	struct omap_dss_device *in;
-	int gpio;
+अटल पूर्णांक tfp410_probe_of(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा omap_dss_device *in;
+	पूर्णांक gpio;
 
 	gpio = of_get_named_gpio(node, "powerdown-gpios", 0);
 
-	if (gpio_is_valid(gpio) || gpio == -ENOENT) {
+	अगर (gpio_is_valid(gpio) || gpio == -ENOENT) अणु
 		ddata->pd_gpio = gpio;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&pdev->dev, "failed to parse PD gpio\n");
-		return gpio;
-	}
+		वापस gpio;
+	पूर्ण
 
-	in = omapdss_of_find_source_for_first_ep(node);
-	if (IS_ERR(in)) {
+	in = omapdss_of_find_source_क्रम_first_ep(node);
+	अगर (IS_ERR(in)) अणु
 		dev_err(&pdev->dev, "failed to find video source\n");
-		return PTR_ERR(in);
-	}
+		वापस PTR_ERR(in);
+	पूर्ण
 
 	ddata->in = in;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tfp410_probe(struct platform_device *pdev)
-{
-	struct panel_drv_data *ddata;
-	struct omap_dss_device *dssdev;
-	int r;
+अटल पूर्णांक tfp410_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_drv_data *ddata;
+	काष्ठा omap_dss_device *dssdev;
+	पूर्णांक r;
 
-	if (!pdev->dev.of_node)
-		return -ENODEV;
+	अगर (!pdev->dev.of_node)
+		वापस -ENODEV;
 
-	ddata = devm_kzalloc(&pdev->dev, sizeof(*ddata), GFP_KERNEL);
-	if (!ddata)
-		return -ENOMEM;
+	ddata = devm_kzalloc(&pdev->dev, माप(*ddata), GFP_KERNEL);
+	अगर (!ddata)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, ddata);
+	platक्रमm_set_drvdata(pdev, ddata);
 
 	r = tfp410_probe_of(pdev);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (gpio_is_valid(ddata->pd_gpio)) {
+	अगर (gpio_is_valid(ddata->pd_gpio)) अणु
 		r = devm_gpio_request_one(&pdev->dev, ddata->pd_gpio,
 				GPIOF_OUT_INIT_LOW, "tfp410 PD");
-		if (r) {
+		अगर (r) अणु
 			dev_err(&pdev->dev, "Failed to request PD GPIO %d\n",
 					ddata->pd_gpio);
-			goto err_gpio;
-		}
-	}
+			जाओ err_gpio;
+		पूर्ण
+	पूर्ण
 
 	dssdev = &ddata->dssdev;
 	dssdev->ops.dvi = &tfp410_dvi_ops;
@@ -227,58 +228,58 @@ static int tfp410_probe(struct platform_device *pdev)
 	dssdev->phy.dpi.data_lines = ddata->data_lines;
 	dssdev->port_num = 1;
 
-	r = omapdss_register_output(dssdev);
-	if (r) {
+	r = omapdss_रेजिस्टर_output(dssdev);
+	अगर (r) अणु
 		dev_err(&pdev->dev, "Failed to register output\n");
-		goto err_reg;
-	}
+		जाओ err_reg;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err_reg:
 err_gpio:
 	omap_dss_put_device(ddata->in);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int __exit tfp410_remove(struct platform_device *pdev)
-{
-	struct panel_drv_data *ddata = platform_get_drvdata(pdev);
-	struct omap_dss_device *dssdev = &ddata->dssdev;
-	struct omap_dss_device *in = ddata->in;
+अटल पूर्णांक __निकास tfp410_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा panel_drv_data *ddata = platक्रमm_get_drvdata(pdev);
+	काष्ठा omap_dss_device *dssdev = &ddata->dssdev;
+	काष्ठा omap_dss_device *in = ddata->in;
 
-	omapdss_unregister_output(&ddata->dssdev);
+	omapdss_unरेजिस्टर_output(&ddata->dssdev);
 
 	WARN_ON(omapdss_device_is_enabled(dssdev));
-	if (omapdss_device_is_enabled(dssdev))
+	अगर (omapdss_device_is_enabled(dssdev))
 		tfp410_disable(dssdev);
 
 	WARN_ON(omapdss_device_is_connected(dssdev));
-	if (omapdss_device_is_connected(dssdev))
+	अगर (omapdss_device_is_connected(dssdev))
 		tfp410_disconnect(dssdev, dssdev->dst);
 
 	omap_dss_put_device(in);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id tfp410_of_match[] = {
-	{ .compatible = "omapdss,ti,tfp410", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id tfp410_of_match[] = अणु
+	अणु .compatible = "omapdss,ti,tfp410", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(of, tfp410_of_match);
 
-static struct platform_driver tfp410_driver = {
+अटल काष्ठा platक्रमm_driver tfp410_driver = अणु
 	.probe	= tfp410_probe,
-	.remove	= __exit_p(tfp410_remove),
-	.driver	= {
+	.हटाओ	= __निकास_p(tfp410_हटाओ),
+	.driver	= अणु
 		.name	= "tfp410",
 		.of_match_table = tfp410_of_match,
 		.suppress_bind_attrs = true,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(tfp410_driver);
+module_platक्रमm_driver(tfp410_driver);
 
 MODULE_AUTHOR("Tomi Valkeinen <tomi.valkeinen@ti.com>");
 MODULE_DESCRIPTION("TFP410 DPI to DVI encoder driver");

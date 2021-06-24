@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __KEYPAD_EP93XX_H
-#define __KEYPAD_EP93XX_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __KEYPAD_EP93XX_H
+#घोषणा __KEYPAD_EP93XX_H
 
-struct matrix_keymap_data;
+काष्ठा matrix_keymap_data;
 
-/* flags for the ep93xx_keypad driver */
-#define EP93XX_KEYPAD_DISABLE_3_KEY	(1<<0)	/* disable 3-key reset */
-#define EP93XX_KEYPAD_DIAG_MODE		(1<<1)	/* diagnostic mode */
-#define EP93XX_KEYPAD_BACK_DRIVE	(1<<2)	/* back driving mode */
-#define EP93XX_KEYPAD_TEST_MODE		(1<<3)	/* scan only column 0 */
-#define EP93XX_KEYPAD_AUTOREPEAT	(1<<4)	/* enable key autorepeat */
+/* flags क्रम the ep93xx_keypad driver */
+#घोषणा EP93XX_KEYPAD_DISABLE_3_KEY	(1<<0)	/* disable 3-key reset */
+#घोषणा EP93XX_KEYPAD_DIAG_MODE		(1<<1)	/* diagnostic mode */
+#घोषणा EP93XX_KEYPAD_BACK_DRIVE	(1<<2)	/* back driving mode */
+#घोषणा EP93XX_KEYPAD_TEST_MODE		(1<<3)	/* scan only column 0 */
+#घोषणा EP93XX_KEYPAD_AUTOREPEAT	(1<<4)	/* enable key स्वतःrepeat */
 
 /**
- * struct ep93xx_keypad_platform_data - platform specific device structure
- * @keymap_data:	pointer to &matrix_keymap_data
+ * काष्ठा ep93xx_keypad_platक्रमm_data - platक्रमm specअगरic device काष्ठाure
+ * @keymap_data:	poपूर्णांकer to &matrix_keymap_data
  * @debounce:		debounce start count; terminal count is 0xff
  * @prescale:		row/column counter pre-scaler load value
  * @flags:		see above
  */
-struct ep93xx_keypad_platform_data {
-	struct matrix_keymap_data *keymap_data;
-	unsigned int	debounce;
-	unsigned int	prescale;
-	unsigned int	flags;
-	unsigned int	clk_rate;
-};
+काष्ठा ep93xx_keypad_platक्रमm_data अणु
+	काष्ठा matrix_keymap_data *keymap_data;
+	अचिन्हित पूर्णांक	debounce;
+	अचिन्हित पूर्णांक	prescale;
+	अचिन्हित पूर्णांक	flags;
+	अचिन्हित पूर्णांक	clk_rate;
+पूर्ण;
 
-#define EP93XX_MATRIX_ROWS		(8)
-#define EP93XX_MATRIX_COLS		(8)
+#घोषणा EP93XX_MATRIX_ROWS		(8)
+#घोषणा EP93XX_MATRIX_COLS		(8)
 
-#endif	/* __KEYPAD_EP93XX_H */
+#पूर्ण_अगर	/* __KEYPAD_EP93XX_H */

@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * snps_udc_plat.c - Synopsys UDC Platform Driver
+ * snps_udc_plat.c - Synopsys UDC Platक्रमm Driver
  *
  * Copyright (C) 2016 Broadcom
  */
 
-#include <linux/extcon.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_gpio.h>
-#include <linux/platform_device.h>
-#include <linux/phy/phy.h>
-#include <linux/module.h>
-#include <linux/dmapool.h>
-#include <linux/interrupt.h>
-#include <linux/moduleparam.h>
-#include "amd5536udc.h"
+#समावेश <linux/extcon.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/module.h>
+#समावेश <linux/dmapool.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/moduleparam.h>
+#समावेश "amd5536udc.h"
 
 /* description */
-#define UDC_MOD_DESCRIPTION     "Synopsys UDC platform driver"
+#घोषणा UDC_MOD_DESCRIPTION     "Synopsys UDC platform driver"
 
-static void start_udc(struct udc *udc)
-{
-	if (udc->driver) {
+अटल व्योम start_udc(काष्ठा udc *udc)
+अणु
+	अगर (udc->driver) अणु
 		dev_info(udc->dev, "Connecting...\n");
-		udc_enable_dev_setup_interrupts(udc);
+		udc_enable_dev_setup_पूर्णांकerrupts(udc);
 		udc_basic_init(udc);
 		udc->connected = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void stop_udc(struct udc *udc)
-{
-	int tmp;
+अटल व्योम stop_udc(काष्ठा udc *udc)
+अणु
+	पूर्णांक पंचांगp;
 	u32 reg;
 
 	spin_lock(&udc->lock);
 
-	/* Flush the receieve fifo */
-	reg = readl(&udc->regs->ctl);
+	/* Flush the receieve fअगरo */
+	reg = पढ़ोl(&udc->regs->ctl);
 	reg |= AMD_BIT(UDC_DEVCTL_SRX_FLUSH);
-	writel(reg, &udc->regs->ctl);
+	ग_लिखोl(reg, &udc->regs->ctl);
 
-	reg = readl(&udc->regs->ctl);
+	reg = पढ़ोl(&udc->regs->ctl);
 	reg &= ~(AMD_BIT(UDC_DEVCTL_SRX_FLUSH));
-	writel(reg, &udc->regs->ctl);
+	ग_लिखोl(reg, &udc->regs->ctl);
 	dev_dbg(udc->dev, "ep rx queue flushed\n");
 
-	/* Mask interrupts. Required more so when the
+	/* Mask पूर्णांकerrupts. Required more so when the
 	 * UDC is connected to a DRD phy.
 	 */
-	udc_mask_unused_interrupts(udc);
+	udc_mask_unused_पूर्णांकerrupts(udc);
 
 	/* Disconnect gadget driver */
-	if (udc->driver) {
+	अगर (udc->driver) अणु
 		spin_unlock(&udc->lock);
 		udc->driver->disconnect(&udc->gadget);
 		spin_lock(&udc->lock);
 
 		/* empty queues */
-		for (tmp = 0; tmp < UDC_EP_NUM; tmp++)
-			empty_req_queue(&udc->ep[tmp]);
-	}
+		क्रम (पंचांगp = 0; पंचांगp < UDC_EP_NUM; पंचांगp++)
+			empty_req_queue(&udc->ep[पंचांगp]);
+	पूर्ण
 	udc->connected = 0;
 
 	spin_unlock(&udc->lock);
 	dev_info(udc->dev, "Device disconnected\n");
-}
+पूर्ण
 
-static void udc_drd_work(struct work_struct *work)
-{
-	struct udc *udc;
+अटल व्योम udc_drd_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा udc *udc;
 
 	udc = container_of(to_delayed_work(work),
-			   struct udc, drd_work);
+			   काष्ठा udc, drd_work);
 
-	if (udc->conn_type) {
+	अगर (udc->conn_type) अणु
 		dev_dbg(udc->dev, "idle -> device\n");
 		start_udc(udc);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(udc->dev, "device -> idle\n");
 		stop_udc(udc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int usbd_connect_notify(struct notifier_block *self,
-			       unsigned long event, void *ptr)
-{
-	struct udc *udc = container_of(self, struct udc, nb);
+अटल पूर्णांक usbd_connect_notअगरy(काष्ठा notअगरier_block *self,
+			       अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा udc *udc = container_of(self, काष्ठा udc, nb);
 
 	dev_dbg(udc->dev, "%s: event: %lu\n", __func__, event);
 
@@ -95,241 +96,241 @@ static int usbd_connect_notify(struct notifier_block *self,
 
 	schedule_delayed_work(&udc->drd_work, 0);
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static int udc_plat_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	struct udc *udc;
-	int ret;
+अटल पूर्णांक udc_plat_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	काष्ठा udc *udc;
+	पूर्णांक ret;
 
-	udc = devm_kzalloc(dev, sizeof(*udc), GFP_KERNEL);
-	if (!udc)
-		return -ENOMEM;
+	udc = devm_kzalloc(dev, माप(*udc), GFP_KERNEL);
+	अगर (!udc)
+		वापस -ENOMEM;
 
 	spin_lock_init(&udc->lock);
 	udc->dev = dev;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	udc->virt_addr = devm_ioremap_resource(dev, res);
-	if (IS_ERR(udc->virt_addr))
-		return PTR_ERR(udc->virt_addr);
+	अगर (IS_ERR(udc->virt_addr))
+		वापस PTR_ERR(udc->virt_addr);
 
-	/* udc csr registers base */
+	/* udc csr रेजिस्टरs base */
 	udc->csr = udc->virt_addr + UDC_CSR_ADDR;
 
-	/* dev registers base */
+	/* dev रेजिस्टरs base */
 	udc->regs = udc->virt_addr + UDC_DEVCFG_ADDR;
 
-	/* ep registers base */
+	/* ep रेजिस्टरs base */
 	udc->ep_regs = udc->virt_addr + UDC_EPREGS_ADDR;
 
-	/* fifo's base */
-	udc->rxfifo = (u32 __iomem *)(udc->virt_addr + UDC_RXFIFO_ADDR);
-	udc->txfifo = (u32 __iomem *)(udc->virt_addr + UDC_TXFIFO_ADDR);
+	/* fअगरo's base */
+	udc->rxfअगरo = (u32 __iomem *)(udc->virt_addr + UDC_RXFIFO_ADDR);
+	udc->txfअगरo = (u32 __iomem *)(udc->virt_addr + UDC_TXFIFO_ADDR);
 
-	udc->phys_addr = (unsigned long)res->start;
+	udc->phys_addr = (अचिन्हित दीर्घ)res->start;
 
 	udc->irq = irq_of_parse_and_map(dev->of_node, 0);
-	if (udc->irq <= 0) {
+	अगर (udc->irq <= 0) अणु
 		dev_err(dev, "Can't parse and map interrupt\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	udc->udc_phy = devm_of_phy_get_by_index(dev, dev->of_node, 0);
-	if (IS_ERR(udc->udc_phy)) {
+	अगर (IS_ERR(udc->udc_phy)) अणु
 		dev_err(dev, "Failed to obtain phy from device tree\n");
-		return PTR_ERR(udc->udc_phy);
-	}
+		वापस PTR_ERR(udc->udc_phy);
+	पूर्ण
 
 	ret = phy_init(udc->udc_phy);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "UDC phy init failed");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = phy_power_on(udc->udc_phy);
-	if (ret) {
+	ret = phy_घातer_on(udc->udc_phy);
+	अगर (ret) अणु
 		dev_err(dev, "UDC phy power on failed");
-		phy_exit(udc->udc_phy);
-		return ret;
-	}
+		phy_निकास(udc->udc_phy);
+		वापस ret;
+	पूर्ण
 
-	/* Register for extcon if supported */
-	if (of_get_property(dev->of_node, "extcon", NULL)) {
+	/* Register क्रम extcon अगर supported */
+	अगर (of_get_property(dev->of_node, "extcon", शून्य)) अणु
 		udc->edev = extcon_get_edev_by_phandle(dev, 0);
-		if (IS_ERR(udc->edev)) {
-			if (PTR_ERR(udc->edev) == -EPROBE_DEFER)
-				return -EPROBE_DEFER;
+		अगर (IS_ERR(udc->edev)) अणु
+			अगर (PTR_ERR(udc->edev) == -EPROBE_DEFER)
+				वापस -EPROBE_DEFER;
 			dev_err(dev, "Invalid or missing extcon\n");
 			ret = PTR_ERR(udc->edev);
-			goto exit_phy;
-		}
+			जाओ निकास_phy;
+		पूर्ण
 
-		udc->nb.notifier_call = usbd_connect_notify;
-		ret = extcon_register_notifier(udc->edev, EXTCON_USB,
+		udc->nb.notअगरier_call = usbd_connect_notअगरy;
+		ret = extcon_रेजिस्टर_notअगरier(udc->edev, EXTCON_USB,
 					       &udc->nb);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "Can't register extcon device\n");
-			goto exit_phy;
-		}
+			जाओ निकास_phy;
+		पूर्ण
 
 		ret = extcon_get_state(udc->edev, EXTCON_USB);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dev, "Can't get cable state\n");
-			goto exit_extcon;
-		} else if (ret) {
+			जाओ निकास_extcon;
+		पूर्ण अन्यथा अगर (ret) अणु
 			udc->conn_type = ret;
-		}
+		पूर्ण
 		INIT_DELAYED_WORK(&udc->drd_work, udc_drd_work);
-	}
+	पूर्ण
 
 	/* init dma pools */
-	if (use_dma) {
+	अगर (use_dma) अणु
 		ret = init_dma_pools(udc);
-		if (ret != 0)
-			goto exit_extcon;
-	}
+		अगर (ret != 0)
+			जाओ निकास_extcon;
+	पूर्ण
 
 	ret = devm_request_irq(dev, udc->irq, udc_irq, IRQF_SHARED,
 			       "snps-udc", udc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "Request irq %d failed for UDC\n", udc->irq);
-		goto exit_dma;
-	}
+		जाओ निकास_dma;
+	पूर्ण
 
-	platform_set_drvdata(pdev, udc);
+	platक्रमm_set_drvdata(pdev, udc);
 	udc->chiprev = UDC_BCM_REV;
 
-	if (udc_probe(udc)) {
+	अगर (udc_probe(udc)) अणु
 		ret = -ENODEV;
-		goto exit_dma;
-	}
+		जाओ निकास_dma;
+	पूर्ण
 	dev_info(dev, "Synopsys UDC platform driver probe successful\n");
 
-	return 0;
+	वापस 0;
 
-exit_dma:
-	if (use_dma)
-		free_dma_pools(udc);
-exit_extcon:
-	if (udc->edev)
-		extcon_unregister_notifier(udc->edev, EXTCON_USB, &udc->nb);
-exit_phy:
-	if (udc->udc_phy) {
-		phy_power_off(udc->udc_phy);
-		phy_exit(udc->udc_phy);
-	}
-	return ret;
-}
+निकास_dma:
+	अगर (use_dma)
+		मुक्त_dma_pools(udc);
+निकास_extcon:
+	अगर (udc->edev)
+		extcon_unरेजिस्टर_notअगरier(udc->edev, EXTCON_USB, &udc->nb);
+निकास_phy:
+	अगर (udc->udc_phy) अणु
+		phy_घातer_off(udc->udc_phy);
+		phy_निकास(udc->udc_phy);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int udc_plat_remove(struct platform_device *pdev)
-{
-	struct udc *dev;
+अटल पूर्णांक udc_plat_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा udc *dev;
 
-	dev = platform_get_drvdata(pdev);
+	dev = platक्रमm_get_drvdata(pdev);
 
 	usb_del_gadget_udc(&dev->gadget);
-	/* gadget driver must not be registered */
-	if (WARN_ON(dev->driver))
-		return 0;
+	/* gadget driver must not be रेजिस्टरed */
+	अगर (WARN_ON(dev->driver))
+		वापस 0;
 
 	/* dma pool cleanup */
-	free_dma_pools(dev);
+	मुक्त_dma_pools(dev);
 
-	udc_remove(dev);
+	udc_हटाओ(dev);
 
-	platform_set_drvdata(pdev, NULL);
+	platक्रमm_set_drvdata(pdev, शून्य);
 
-	if (dev->drd_wq) {
+	अगर (dev->drd_wq) अणु
 		flush_workqueue(dev->drd_wq);
 		destroy_workqueue(dev->drd_wq);
-	}
+	पूर्ण
 
-	phy_power_off(dev->udc_phy);
-	phy_exit(dev->udc_phy);
-	extcon_unregister_notifier(dev->edev, EXTCON_USB, &dev->nb);
+	phy_घातer_off(dev->udc_phy);
+	phy_निकास(dev->udc_phy);
+	extcon_unरेजिस्टर_notअगरier(dev->edev, EXTCON_USB, &dev->nb);
 
 	dev_info(&pdev->dev, "Synopsys UDC platform driver removed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int udc_plat_suspend(struct device *dev)
-{
-	struct udc *udc;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक udc_plat_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा udc *udc;
 
 	udc = dev_get_drvdata(dev);
 	stop_udc(udc);
 
-	if (extcon_get_state(udc->edev, EXTCON_USB) > 0) {
+	अगर (extcon_get_state(udc->edev, EXTCON_USB) > 0) अणु
 		dev_dbg(udc->dev, "device -> idle\n");
 		stop_udc(udc);
-	}
-	phy_power_off(udc->udc_phy);
-	phy_exit(udc->udc_phy);
+	पूर्ण
+	phy_घातer_off(udc->udc_phy);
+	phy_निकास(udc->udc_phy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int udc_plat_resume(struct device *dev)
-{
-	struct udc *udc;
-	int ret;
+अटल पूर्णांक udc_plat_resume(काष्ठा device *dev)
+अणु
+	काष्ठा udc *udc;
+	पूर्णांक ret;
 
 	udc = dev_get_drvdata(dev);
 
 	ret = phy_init(udc->udc_phy);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(udc->dev, "UDC phy init failure");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = phy_power_on(udc->udc_phy);
-	if (ret) {
+	ret = phy_घातer_on(udc->udc_phy);
+	अगर (ret) अणु
 		dev_err(udc->dev, "UDC phy power on failure");
-		phy_exit(udc->udc_phy);
-		return ret;
-	}
+		phy_निकास(udc->udc_phy);
+		वापस ret;
+	पूर्ण
 
-	if (extcon_get_state(udc->edev, EXTCON_USB) > 0) {
+	अगर (extcon_get_state(udc->edev, EXTCON_USB) > 0) अणु
 		dev_dbg(udc->dev, "idle -> device\n");
 		start_udc(udc);
-	}
+	पूर्ण
 
-	return 0;
-}
-static const struct dev_pm_ops udc_plat_pm_ops = {
+	वापस 0;
+पूर्ण
+अटल स्थिर काष्ठा dev_pm_ops udc_plat_pm_ops = अणु
 	.suspend	= udc_plat_suspend,
 	.resume		= udc_plat_resume,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-#if defined(CONFIG_OF)
-static const struct of_device_id of_udc_match[] = {
-	{ .compatible = "brcm,ns2-udc", },
-	{ .compatible = "brcm,cygnus-udc", },
-	{ .compatible = "brcm,iproc-udc", },
-	{ }
-};
+#अगर defined(CONFIG_OF)
+अटल स्थिर काष्ठा of_device_id of_udc_match[] = अणु
+	अणु .compatible = "brcm,ns2-udc", पूर्ण,
+	अणु .compatible = "brcm,cygnus-udc", पूर्ण,
+	अणु .compatible = "brcm,iproc-udc", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_udc_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver udc_plat_driver = {
+अटल काष्ठा platक्रमm_driver udc_plat_driver = अणु
 	.probe		= udc_plat_probe,
-	.remove		= udc_plat_remove,
-	.driver		= {
+	.हटाओ		= udc_plat_हटाओ,
+	.driver		= अणु
 		.name	= "snps-udc-plat",
 		.of_match_table = of_match_ptr(of_udc_match),
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 		.pm	= &udc_plat_pm_ops,
-#endif
-	},
-};
-module_platform_driver(udc_plat_driver);
+#पूर्ण_अगर
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(udc_plat_driver);
 
 MODULE_DESCRIPTION(UDC_MOD_DESCRIPTION);
 MODULE_AUTHOR("Broadcom");

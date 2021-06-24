@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * IPV6 GSO/GRO offload support
  * Linux INET implementation
  *
  * Copyright (C) 2016 secunet Security Networks AG
- * Author: Steffen Klassert <steffen.klassert@secunet.com>
+ * Author: Steffen Klनिश्चित <steffen.klनिश्चित@secunet.com>
  *
  * ESP GRO support
  */
 
-#include <linux/skbuff.h>
-#include <linux/init.h>
-#include <net/protocol.h>
-#include <crypto/aead.h>
-#include <crypto/authenc.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <net/ip.h>
-#include <net/xfrm.h>
-#include <net/esp.h>
-#include <linux/scatterlist.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <net/ip6_route.h>
-#include <net/ipv6.h>
-#include <linux/icmpv6.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/init.h>
+#समावेश <net/protocol.h>
+#समावेश <crypto/aead.h>
+#समावेश <crypto/authenc.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <net/ip.h>
+#समावेश <net/xfrm.h>
+#समावेश <net/esp.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/ipv6.h>
+#समावेश <linux/icmpv6.h>
 
-static __u16 esp6_nexthdr_esp_offset(struct ipv6hdr *ipv6_hdr, int nhlen)
-{
-	int off = sizeof(struct ipv6hdr);
-	struct ipv6_opt_hdr *exthdr;
+अटल __u16 esp6_nexthdr_esp_offset(काष्ठा ipv6hdr *ipv6_hdr, पूर्णांक nhlen)
+अणु
+	पूर्णांक off = माप(काष्ठा ipv6hdr);
+	काष्ठा ipv6_opt_hdr *exthdr;
 
-	if (likely(ipv6_hdr->nexthdr == NEXTHDR_ESP))
-		return offsetof(struct ipv6hdr, nexthdr);
+	अगर (likely(ipv6_hdr->nexthdr == NEXTHDR_ESP))
+		वापस दुरत्व(काष्ठा ipv6hdr, nexthdr);
 
-	while (off < nhlen) {
-		exthdr = (void *)ipv6_hdr + off;
-		if (exthdr->nexthdr == NEXTHDR_ESP)
-			return off;
+	जबतक (off < nhlen) अणु
+		exthdr = (व्योम *)ipv6_hdr + off;
+		अगर (exthdr->nexthdr == NEXTHDR_ESP)
+			वापस off;
 
 		off += ipv6_optlen(exthdr);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sk_buff *esp6_gro_receive(struct list_head *head,
-					struct sk_buff *skb)
-{
-	int offset = skb_gro_offset(skb);
-	struct xfrm_offload *xo;
-	struct xfrm_state *x;
+अटल काष्ठा sk_buff *esp6_gro_receive(काष्ठा list_head *head,
+					काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक offset = skb_gro_offset(skb);
+	काष्ठा xfrm_offload *xo;
+	काष्ठा xfrm_state *x;
 	__be32 seq;
 	__be32 spi;
-	int nhoff;
-	int err;
+	पूर्णांक nhoff;
+	पूर्णांक err;
 
-	if (!pskb_pull(skb, offset))
-		return NULL;
+	अगर (!pskb_pull(skb, offset))
+		वापस शून्य;
 
-	if ((err = xfrm_parse_spi(skb, IPPROTO_ESP, &spi, &seq)) != 0)
-		goto out;
+	अगर ((err = xfrm_parse_spi(skb, IPPROTO_ESP, &spi, &seq)) != 0)
+		जाओ out;
 
 	xo = xfrm_offload(skb);
-	if (!xo || !(xo->flags & CRYPTO_DONE)) {
-		struct sec_path *sp = secpath_set(skb);
+	अगर (!xo || !(xo->flags & CRYPTO_DONE)) अणु
+		काष्ठा sec_path *sp = secpath_set(skb);
 
-		if (!sp)
-			goto out;
+		अगर (!sp)
+			जाओ out;
 
-		if (sp->len == XFRM_MAX_DEPTH)
-			goto out_reset;
+		अगर (sp->len == XFRM_MAX_DEPTH)
+			जाओ out_reset;
 
 		x = xfrm_state_lookup(dev_net(skb->dev), skb->mark,
 				      (xfrm_address_t *)&ipv6_hdr(skb)->daddr,
 				      spi, IPPROTO_ESP, AF_INET6);
-		if (!x)
-			goto out_reset;
+		अगर (!x)
+			जाओ out_reset;
 
 		skb->mark = xfrm_smark_get(skb->mark, x);
 
@@ -85,27 +86,27 @@ static struct sk_buff *esp6_gro_receive(struct list_head *head,
 		sp->olen++;
 
 		xo = xfrm_offload(skb);
-		if (!xo)
-			goto out_reset;
-	}
+		अगर (!xo)
+			जाओ out_reset;
+	पूर्ण
 
 	xo->flags |= XFRM_GRO;
 
 	nhoff = esp6_nexthdr_esp_offset(ipv6_hdr(skb), offset);
-	if (!nhoff)
-		goto out;
+	अगर (!nhoff)
+		जाओ out;
 
 	IP6CB(skb)->nhoff = nhoff;
-	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = NULL;
+	XFRM_TUNNEL_SKB_CB(skb)->tunnel.ip6 = शून्य;
 	XFRM_SPI_SKB_CB(skb)->family = AF_INET6;
-	XFRM_SPI_SKB_CB(skb)->daddroff = offsetof(struct ipv6hdr, daddr);
+	XFRM_SPI_SKB_CB(skb)->daddroff = दुरत्व(काष्ठा ipv6hdr, daddr);
 	XFRM_SPI_SKB_CB(skb)->seq = seq;
 
-	/* We don't need to handle errors from xfrm_input, it does all
-	 * the error handling and frees the resources on error. */
+	/* We करोn't need to handle errors from xfrm_input, it करोes all
+	 * the error handling and मुक्तs the resources on error. */
 	xfrm_input(skb, IPPROTO_ESP, spi, -2);
 
-	return ERR_PTR(-EINPROGRESS);
+	वापस ERR_PTR(-EINPROGRESS);
 out_reset:
 	secpath_reset(skb);
 out:
@@ -113,23 +114,23 @@ out:
 	NAPI_GRO_CB(skb)->same_flow = 0;
 	NAPI_GRO_CB(skb)->flush = 1;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void esp6_gso_encap(struct xfrm_state *x, struct sk_buff *skb)
-{
-	struct ip_esp_hdr *esph;
-	struct ipv6hdr *iph = ipv6_hdr(skb);
-	struct xfrm_offload *xo = xfrm_offload(skb);
+अटल व्योम esp6_gso_encap(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ip_esp_hdr *esph;
+	काष्ठा ipv6hdr *iph = ipv6_hdr(skb);
+	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
 	u8 proto = iph->nexthdr;
 
 	skb_push(skb, -skb_network_offset(skb));
 
-	if (x->outer_mode.encap == XFRM_MODE_TRANSPORT) {
+	अगर (x->outer_mode.encap == XFRM_MODE_TRANSPORT) अणु
 		__be16 frag;
 
-		ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &proto, &frag);
-	}
+		ipv6_skip_exthdr(skb, माप(काष्ठा ipv6hdr), &proto, &frag);
+	पूर्ण
 
 	esph = ip_esp_hdr(skb);
 	*skb_mac_header(skb) = IPPROTO_ESP;
@@ -138,156 +139,156 @@ static void esp6_gso_encap(struct xfrm_state *x, struct sk_buff *skb)
 	esph->seq_no = htonl(XFRM_SKB_CB(skb)->seq.output.low);
 
 	xo->proto = proto;
-}
+पूर्ण
 
-static struct sk_buff *xfrm6_tunnel_gso_segment(struct xfrm_state *x,
-						struct sk_buff *skb,
+अटल काष्ठा sk_buff *xfrm6_tunnel_gso_segment(काष्ठा xfrm_state *x,
+						काष्ठा sk_buff *skb,
 						netdev_features_t features)
-{
+अणु
 	__skb_push(skb, skb->mac_len);
-	return skb_mac_gso_segment(skb, features);
-}
+	वापस skb_mac_gso_segment(skb, features);
+पूर्ण
 
-static struct sk_buff *xfrm6_transport_gso_segment(struct xfrm_state *x,
-						   struct sk_buff *skb,
+अटल काष्ठा sk_buff *xfrm6_transport_gso_segment(काष्ठा xfrm_state *x,
+						   काष्ठा sk_buff *skb,
 						   netdev_features_t features)
-{
-	const struct net_offload *ops;
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
-	struct xfrm_offload *xo = xfrm_offload(skb);
+अणु
+	स्थिर काष्ठा net_offload *ops;
+	काष्ठा sk_buff *segs = ERR_PTR(-EINVAL);
+	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
 
 	skb->transport_header += x->props.header_len;
 	ops = rcu_dereference(inet6_offloads[xo->proto]);
-	if (likely(ops && ops->callbacks.gso_segment))
+	अगर (likely(ops && ops->callbacks.gso_segment))
 		segs = ops->callbacks.gso_segment(skb, features);
 
-	return segs;
-}
+	वापस segs;
+पूर्ण
 
-static struct sk_buff *xfrm6_beet_gso_segment(struct xfrm_state *x,
-					      struct sk_buff *skb,
+अटल काष्ठा sk_buff *xfrm6_beet_gso_segment(काष्ठा xfrm_state *x,
+					      काष्ठा sk_buff *skb,
 					      netdev_features_t features)
-{
-	struct xfrm_offload *xo = xfrm_offload(skb);
-	struct sk_buff *segs = ERR_PTR(-EINVAL);
-	const struct net_offload *ops;
+अणु
+	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
+	काष्ठा sk_buff *segs = ERR_PTR(-EINVAL);
+	स्थिर काष्ठा net_offload *ops;
 	u8 proto = xo->proto;
 
 	skb->transport_header += x->props.header_len;
 
-	if (x->sel.family != AF_INET6) {
+	अगर (x->sel.family != AF_INET6) अणु
 		skb->transport_header -=
-			(sizeof(struct ipv6hdr) - sizeof(struct iphdr));
+			(माप(काष्ठा ipv6hdr) - माप(काष्ठा iphdr));
 
-		if (proto == IPPROTO_BEETPH) {
-			struct ip_beet_phdr *ph =
-				(struct ip_beet_phdr *)skb->data;
+		अगर (proto == IPPROTO_BEETPH) अणु
+			काष्ठा ip_beet_phdr *ph =
+				(काष्ठा ip_beet_phdr *)skb->data;
 
 			skb->transport_header += ph->hdrlen * 8;
 			proto = ph->nexthdr;
-		} else {
+		पूर्ण अन्यथा अणु
 			skb->transport_header -= IPV4_BEET_PHMAXLEN;
-		}
+		पूर्ण
 
-		if (proto == IPPROTO_TCP)
+		अगर (proto == IPPROTO_TCP)
 			skb_shinfo(skb)->gso_type |= SKB_GSO_TCPV6;
-	} else {
+	पूर्ण अन्यथा अणु
 		__be16 frag;
 
 		skb->transport_header +=
 			ipv6_skip_exthdr(skb, 0, &proto, &frag);
-	}
+	पूर्ण
 
 	__skb_pull(skb, skb_transport_offset(skb));
 	ops = rcu_dereference(inet6_offloads[proto]);
-	if (likely(ops && ops->callbacks.gso_segment))
+	अगर (likely(ops && ops->callbacks.gso_segment))
 		segs = ops->callbacks.gso_segment(skb, features);
 
-	return segs;
-}
+	वापस segs;
+पूर्ण
 
-static struct sk_buff *xfrm6_outer_mode_gso_segment(struct xfrm_state *x,
-						    struct sk_buff *skb,
+अटल काष्ठा sk_buff *xfrm6_outer_mode_gso_segment(काष्ठा xfrm_state *x,
+						    काष्ठा sk_buff *skb,
 						    netdev_features_t features)
-{
-	switch (x->outer_mode.encap) {
-	case XFRM_MODE_TUNNEL:
-		return xfrm6_tunnel_gso_segment(x, skb, features);
-	case XFRM_MODE_TRANSPORT:
-		return xfrm6_transport_gso_segment(x, skb, features);
-	case XFRM_MODE_BEET:
-		return xfrm6_beet_gso_segment(x, skb, features);
-	}
+अणु
+	चयन (x->outer_mode.encap) अणु
+	हाल XFRM_MODE_TUNNEL:
+		वापस xfrm6_tunnel_gso_segment(x, skb, features);
+	हाल XFRM_MODE_TRANSPORT:
+		वापस xfrm6_transport_gso_segment(x, skb, features);
+	हाल XFRM_MODE_BEET:
+		वापस xfrm6_beet_gso_segment(x, skb, features);
+	पूर्ण
 
-	return ERR_PTR(-EOPNOTSUPP);
-}
+	वापस ERR_PTR(-EOPNOTSUPP);
+पूर्ण
 
-static struct sk_buff *esp6_gso_segment(struct sk_buff *skb,
+अटल काष्ठा sk_buff *esp6_gso_segment(काष्ठा sk_buff *skb,
 				        netdev_features_t features)
-{
-	struct xfrm_state *x;
-	struct ip_esp_hdr *esph;
-	struct crypto_aead *aead;
+अणु
+	काष्ठा xfrm_state *x;
+	काष्ठा ip_esp_hdr *esph;
+	काष्ठा crypto_aead *aead;
 	netdev_features_t esp_features = features;
-	struct xfrm_offload *xo = xfrm_offload(skb);
-	struct sec_path *sp;
+	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
+	काष्ठा sec_path *sp;
 
-	if (!xo)
-		return ERR_PTR(-EINVAL);
+	अगर (!xo)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!(skb_shinfo(skb)->gso_type & SKB_GSO_ESP))
-		return ERR_PTR(-EINVAL);
+	अगर (!(skb_shinfo(skb)->gso_type & SKB_GSO_ESP))
+		वापस ERR_PTR(-EINVAL);
 
 	sp = skb_sec_path(skb);
 	x = sp->xvec[sp->len - 1];
 	aead = x->data;
 	esph = ip_esp_hdr(skb);
 
-	if (esph->spi != x->id.spi)
-		return ERR_PTR(-EINVAL);
+	अगर (esph->spi != x->id.spi)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!pskb_may_pull(skb, sizeof(*esph) + crypto_aead_ivsize(aead)))
-		return ERR_PTR(-EINVAL);
+	अगर (!pskb_may_pull(skb, माप(*esph) + crypto_aead_ivsize(aead)))
+		वापस ERR_PTR(-EINVAL);
 
-	__skb_pull(skb, sizeof(*esph) + crypto_aead_ivsize(aead));
+	__skb_pull(skb, माप(*esph) + crypto_aead_ivsize(aead));
 
 	skb->encap_hdr_csum = 1;
 
-	if (!(features & NETIF_F_HW_ESP) || x->xso.dev != skb->dev)
+	अगर (!(features & NETIF_F_HW_ESP) || x->xso.dev != skb->dev)
 		esp_features = features & ~(NETIF_F_SG | NETIF_F_CSUM_MASK |
 					    NETIF_F_SCTP_CRC);
-	else if (!(features & NETIF_F_HW_ESP_TX_CSUM))
+	अन्यथा अगर (!(features & NETIF_F_HW_ESP_TX_CSUM))
 		esp_features = features & ~(NETIF_F_CSUM_MASK |
 					    NETIF_F_SCTP_CRC);
 
 	xo->flags |= XFRM_GSO_SEGMENT;
 
-	return xfrm6_outer_mode_gso_segment(x, skb, esp_features);
-}
+	वापस xfrm6_outer_mode_gso_segment(x, skb, esp_features);
+पूर्ण
 
-static int esp6_input_tail(struct xfrm_state *x, struct sk_buff *skb)
-{
-	struct crypto_aead *aead = x->data;
-	struct xfrm_offload *xo = xfrm_offload(skb);
+अटल पूर्णांक esp6_input_tail(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा crypto_aead *aead = x->data;
+	काष्ठा xfrm_offload *xo = xfrm_offload(skb);
 
-	if (!pskb_may_pull(skb, sizeof(struct ip_esp_hdr) + crypto_aead_ivsize(aead)))
-		return -EINVAL;
+	अगर (!pskb_may_pull(skb, माप(काष्ठा ip_esp_hdr) + crypto_aead_ivsize(aead)))
+		वापस -EINVAL;
 
-	if (!(xo->flags & CRYPTO_DONE))
+	अगर (!(xo->flags & CRYPTO_DONE))
 		skb->ip_summed = CHECKSUM_NONE;
 
-	return esp6_input_done2(skb, 0);
-}
+	वापस esp6_input_करोne2(skb, 0);
+पूर्ण
 
-static int esp6_xmit(struct xfrm_state *x, struct sk_buff *skb,  netdev_features_t features)
-{
-	int len;
-	int err;
-	int alen;
-	int blksize;
-	struct xfrm_offload *xo;
-	struct crypto_aead *aead;
-	struct esp_info esp;
+अटल पूर्णांक esp6_xmit(काष्ठा xfrm_state *x, काष्ठा sk_buff *skb,  netdev_features_t features)
+अणु
+	पूर्णांक len;
+	पूर्णांक err;
+	पूर्णांक alen;
+	पूर्णांक blksize;
+	काष्ठा xfrm_offload *xo;
+	काष्ठा crypto_aead *aead;
+	काष्ठा esp_info esp;
 	bool hw_offload = true;
 	__u32 seq;
 
@@ -295,13 +296,13 @@ static int esp6_xmit(struct xfrm_state *x, struct sk_buff *skb,  netdev_features
 
 	xo = xfrm_offload(skb);
 
-	if (!xo)
-		return -EINVAL;
+	अगर (!xo)
+		वापस -EINVAL;
 
-	if (!(features & NETIF_F_HW_ESP) || x->xso.dev != skb->dev) {
+	अगर (!(features & NETIF_F_HW_ESP) || x->xso.dev != skb->dev) अणु
 		xo->flags |= CRYPTO_FALLBACK;
 		hw_offload = false;
-	}
+	पूर्ण
 
 	esp.proto = xo->proto;
 
@@ -311,18 +312,18 @@ static int esp6_xmit(struct xfrm_state *x, struct sk_buff *skb,  netdev_features
 	alen = crypto_aead_authsize(aead);
 
 	esp.tfclen = 0;
-	/* XXX: Add support for tfc padding here. */
+	/* XXX: Add support क्रम tfc padding here. */
 
 	blksize = ALIGN(crypto_aead_blocksize(aead), 4);
 	esp.clen = ALIGN(skb->len + 2 + esp.tfclen, blksize);
 	esp.plen = esp.clen - skb->len - esp.tfclen;
 	esp.tailen = esp.tfclen + esp.plen + alen;
 
-	if (!hw_offload || !skb_is_gso(skb)) {
+	अगर (!hw_offload || !skb_is_gso(skb)) अणु
 		esp.nfrags = esp6_output_head(x, skb, &esp);
-		if (esp.nfrags < 0)
-			return esp.nfrags;
-	}
+		अगर (esp.nfrags < 0)
+			वापस esp.nfrags;
+	पूर्ण
 
 	seq = xo->seq.low;
 
@@ -331,78 +332,78 @@ static int esp6_xmit(struct xfrm_state *x, struct sk_buff *skb,  netdev_features
 
 	skb_push(skb, -skb_network_offset(skb));
 
-	if (xo->flags & XFRM_GSO_SEGMENT) {
+	अगर (xo->flags & XFRM_GSO_SEGMENT) अणु
 		esp.esph->seq_no = htonl(seq);
 
-		if (!skb_is_gso(skb))
+		अगर (!skb_is_gso(skb))
 			xo->seq.low++;
-		else
+		अन्यथा
 			xo->seq.low += skb_shinfo(skb)->gso_segs;
-	}
+	पूर्ण
 
 	esp.seqno = cpu_to_be64(xo->seq.low + ((u64)xo->seq.hi << 32));
 
-	len = skb->len - sizeof(struct ipv6hdr);
-	if (len > IPV6_MAXPLEN)
+	len = skb->len - माप(काष्ठा ipv6hdr);
+	अगर (len > IPV6_MAXPLEN)
 		len = 0;
 
 	ipv6_hdr(skb)->payload_len = htons(len);
 
-	if (hw_offload) {
-		if (!skb_ext_add(skb, SKB_EXT_SEC_PATH))
-			return -ENOMEM;
+	अगर (hw_offload) अणु
+		अगर (!skb_ext_add(skb, SKB_EXT_SEC_PATH))
+			वापस -ENOMEM;
 
 		xo = xfrm_offload(skb);
-		if (!xo)
-			return -EINVAL;
+		अगर (!xo)
+			वापस -EINVAL;
 
 		xo->flags |= XFRM_XMIT;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	err = esp6_output_tail(x, skb, &esp);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	secpath_reset(skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_offload esp6_offload = {
-	.callbacks = {
+अटल स्थिर काष्ठा net_offload esp6_offload = अणु
+	.callbacks = अणु
 		.gro_receive = esp6_gro_receive,
 		.gso_segment = esp6_gso_segment,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct xfrm_type_offload esp6_type_offload = {
+अटल स्थिर काष्ठा xfrm_type_offload esp6_type_offload = अणु
 	.description	= "ESP6 OFFLOAD",
 	.owner		= THIS_MODULE,
 	.proto	     	= IPPROTO_ESP,
 	.input_tail	= esp6_input_tail,
 	.xmit		= esp6_xmit,
 	.encap		= esp6_gso_encap,
-};
+पूर्ण;
 
-static int __init esp6_offload_init(void)
-{
-	if (xfrm_register_type_offload(&esp6_type_offload, AF_INET6) < 0) {
+अटल पूर्णांक __init esp6_offload_init(व्योम)
+अणु
+	अगर (xfrm_रेजिस्टर_type_offload(&esp6_type_offload, AF_INET6) < 0) अणु
 		pr_info("%s: can't add xfrm type offload\n", __func__);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	return inet6_add_offload(&esp6_offload, IPPROTO_ESP);
-}
+	वापस inet6_add_offload(&esp6_offload, IPPROTO_ESP);
+पूर्ण
 
-static void __exit esp6_offload_exit(void)
-{
-	xfrm_unregister_type_offload(&esp6_type_offload, AF_INET6);
+अटल व्योम __निकास esp6_offload_निकास(व्योम)
+अणु
+	xfrm_unरेजिस्टर_type_offload(&esp6_type_offload, AF_INET6);
 	inet6_del_offload(&esp6_offload, IPPROTO_ESP);
-}
+पूर्ण
 
 module_init(esp6_offload_init);
-module_exit(esp6_offload_exit);
+module_निकास(esp6_offload_निकास);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Steffen Klassert <steffen.klassert@secunet.com>");
 MODULE_ALIAS_XFRM_OFFLOAD_TYPE(AF_INET6, XFRM_PROTO_ESP);

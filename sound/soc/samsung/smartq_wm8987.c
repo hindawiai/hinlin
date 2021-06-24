@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // Copyright 2010 Maurus Cuelenaere <mcuelenaere@gmail.com>
 //
@@ -6,133 +7,133 @@
 //     Copyright 2007 Wolfson Microelectronics PLC. - linux@wolfsonmicro.com
 //     Graeme Gregory - graeme.gregory@wolfsonmicro.com
 
-#include <linux/gpio/consumer.h>
-#include <linux/module.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/module.h>
 
-#include <sound/soc.h>
-#include <sound/jack.h>
+#समावेश <sound/soc.h>
+#समावेश <sound/jack.h>
 
-#include "i2s.h"
-#include "../codecs/wm8750.h"
+#समावेश "i2s.h"
+#समावेश "../codecs/wm8750.h"
 
 /*
- * WM8987 is register compatible with WM8750, so using that as base driver.
+ * WM8987 is रेजिस्टर compatible with WM8750, so using that as base driver.
  */
 
-static struct snd_soc_card snd_soc_smartq;
+अटल काष्ठा snd_soc_card snd_soc_smartq;
 
-static int smartq_hifi_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_pcm_runtime *rtd = asoc_substream_to_rtd(substream);
-	struct snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
-	struct snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
-	unsigned int clk = 0;
-	int ret;
+अटल पूर्णांक smartq_hअगरi_hw_params(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_pcm_hw_params *params)
+अणु
+	काष्ठा snd_soc_pcm_runसमय *rtd = asoc_substream_to_rtd(substream);
+	काष्ठा snd_soc_dai *codec_dai = asoc_rtd_to_codec(rtd, 0);
+	काष्ठा snd_soc_dai *cpu_dai = asoc_rtd_to_cpu(rtd, 0);
+	अचिन्हित पूर्णांक clk = 0;
+	पूर्णांक ret;
 
-	switch (params_rate(params)) {
-	case 8000:
-	case 16000:
-	case 32000:
-	case 48000:
-	case 96000:
+	चयन (params_rate(params)) अणु
+	हाल 8000:
+	हाल 16000:
+	हाल 32000:
+	हाल 48000:
+	हाल 96000:
 		clk = 12288000;
-		break;
-	case 11025:
-	case 22050:
-	case 44100:
-	case 88200:
+		अवरोध;
+	हाल 11025:
+	हाल 22050:
+	हाल 44100:
+	हाल 88200:
 		clk = 11289600;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* Use PCLK for I2S signal generation */
+	/* Use PCLK क्रम I2S संकेत generation */
 	ret = snd_soc_dai_set_sysclk(cpu_dai, SAMSUNG_I2S_RCLKSRC_0,
 					0, SND_SOC_CLOCK_IN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Gate the RCLK output on PAD */
 	ret = snd_soc_dai_set_sysclk(cpu_dai, SAMSUNG_I2S_CDCLK,
 					0, SND_SOC_CLOCK_IN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	/* set the codec system clock for DAC and ADC */
+	/* set the codec प्रणाली घड़ी क्रम DAC and ADC */
 	ret = snd_soc_dai_set_sysclk(codec_dai, WM8750_SYSCLK, clk,
 				     SND_SOC_CLOCK_IN);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * SmartQ WM8987 HiFi DAI operations.
  */
-static struct snd_soc_ops smartq_hifi_ops = {
-	.hw_params = smartq_hifi_hw_params,
-};
+अटल काष्ठा snd_soc_ops smartq_hअगरi_ops = अणु
+	.hw_params = smartq_hअगरi_hw_params,
+पूर्ण;
 
-static struct snd_soc_jack smartq_jack;
+अटल काष्ठा snd_soc_jack smartq_jack;
 
-static struct snd_soc_jack_pin smartq_jack_pins[] = {
+अटल काष्ठा snd_soc_jack_pin smartq_jack_pins[] = अणु
 	/* Disable speaker when headphone is plugged in */
-	{
+	अणु
 		.pin	= "Internal Speaker",
 		.mask	= SND_JACK_HEADPHONE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct snd_soc_jack_gpio smartq_jack_gpios[] = {
-	{
+अटल काष्ठा snd_soc_jack_gpio smartq_jack_gpios[] = अणु
+	अणु
 		.gpio		= -1,
 		.name		= "headphone detect",
 		.report		= SND_JACK_HEADPHONE,
-		.debounce_time	= 200,
-	},
-};
+		.debounce_समय	= 200,
+	पूर्ण,
+पूर्ण;
 
-static const struct snd_kcontrol_new wm8987_smartq_controls[] = {
+अटल स्थिर काष्ठा snd_kcontrol_new wm8987_smartq_controls[] = अणु
 	SOC_DAPM_PIN_SWITCH("Internal Speaker"),
 	SOC_DAPM_PIN_SWITCH("Headphone Jack"),
 	SOC_DAPM_PIN_SWITCH("Internal Mic"),
-};
+पूर्ण;
 
-static int smartq_speaker_event(struct snd_soc_dapm_widget *w,
-				struct snd_kcontrol *k,
-				int event)
-{
-	struct gpio_desc *gpio = snd_soc_card_get_drvdata(&snd_soc_smartq);
+अटल पूर्णांक smartq_speaker_event(काष्ठा snd_soc_dapm_widget *w,
+				काष्ठा snd_kcontrol *k,
+				पूर्णांक event)
+अणु
+	काष्ठा gpio_desc *gpio = snd_soc_card_get_drvdata(&snd_soc_smartq);
 
 	gpiod_set_value(gpio, SND_SOC_DAPM_EVENT_OFF(event));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dapm_widget wm8987_dapm_widgets[] = {
+अटल स्थिर काष्ठा snd_soc_dapm_widget wm8987_dapm_widमाला_लो[] = अणु
 	SND_SOC_DAPM_SPK("Internal Speaker", smartq_speaker_event),
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-	SND_SOC_DAPM_MIC("Internal Mic", NULL),
-};
+	SND_SOC_DAPM_HP("Headphone Jack", शून्य),
+	SND_SOC_DAPM_MIC("Internal Mic", शून्य),
+पूर्ण;
 
-static const struct snd_soc_dapm_route audio_map[] = {
-	{"Headphone Jack", NULL, "LOUT2"},
-	{"Headphone Jack", NULL, "ROUT2"},
+अटल स्थिर काष्ठा snd_soc_dapm_route audio_map[] = अणु
+	अणु"Headphone Jack", शून्य, "LOUT2"पूर्ण,
+	अणु"Headphone Jack", शून्य, "ROUT2"पूर्ण,
 
-	{"Internal Speaker", NULL, "LOUT2"},
-	{"Internal Speaker", NULL, "ROUT2"},
+	अणु"Internal Speaker", शून्य, "LOUT2"पूर्ण,
+	अणु"Internal Speaker", शून्य, "ROUT2"पूर्ण,
 
-	{"Mic Bias", NULL, "Internal Mic"},
-	{"LINPUT2", NULL, "Mic Bias"},
-};
+	अणु"Mic Bias", शून्य, "Internal Mic"पूर्ण,
+	अणु"LINPUT2", शून्य, "Mic Bias"पूर्ण,
+पूर्ण;
 
-static int smartq_wm8987_init(struct snd_soc_pcm_runtime *rtd)
-{
-	struct snd_soc_dapm_context *dapm = &rtd->card->dapm;
-	int err = 0;
+अटल पूर्णांक smartq_wm8987_init(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
+	काष्ठा snd_soc_dapm_context *dapm = &rtd->card->dapm;
+	पूर्णांक err = 0;
 
-	/* set endpoints to not connected */
+	/* set endpoपूर्णांकs to not connected */
 	snd_soc_dapm_nc_pin(dapm, "LINPUT1");
 	snd_soc_dapm_nc_pin(dapm, "RINPUT1");
 	snd_soc_dapm_nc_pin(dapm, "OUT3");
@@ -143,82 +144,82 @@ static int smartq_wm8987_init(struct snd_soc_pcm_runtime *rtd)
 				    SND_JACK_HEADPHONE, &smartq_jack,
 				    smartq_jack_pins,
 				    ARRAY_SIZE(smartq_jack_pins));
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = snd_soc_jack_add_gpios(&smartq_jack,
 				     ARRAY_SIZE(smartq_jack_gpios),
 				     smartq_jack_gpios);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 SND_SOC_DAILINK_DEFS(wm8987,
 	DAILINK_COMP_ARRAY(COMP_CPU("samsung-i2s.0")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("wm8750.0-0x1a", "wm8750-hifi")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("samsung-i2s.0")));
 
-static struct snd_soc_dai_link smartq_dai[] = {
-	{
+अटल काष्ठा snd_soc_dai_link smartq_dai[] = अणु
+	अणु
 		.name		= "wm8987",
 		.stream_name	= "SmartQ Hi-Fi",
 		.init		= smartq_wm8987_init,
 		.dai_fmt	= SND_SOC_DAIFMT_I2S | SND_SOC_DAIFMT_NB_NF |
 				  SND_SOC_DAIFMT_CBS_CFS,
-		.ops		= &smartq_hifi_ops,
+		.ops		= &smartq_hअगरi_ops,
 		SND_SOC_DAILINK_REG(wm8987),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct snd_soc_card snd_soc_smartq = {
+अटल काष्ठा snd_soc_card snd_soc_smartq = अणु
 	.name = "SmartQ",
 	.owner = THIS_MODULE,
 	.dai_link = smartq_dai,
 	.num_links = ARRAY_SIZE(smartq_dai),
 
-	.dapm_widgets = wm8987_dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(wm8987_dapm_widgets),
+	.dapm_widमाला_लो = wm8987_dapm_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(wm8987_dapm_widमाला_लो),
 	.dapm_routes = audio_map,
 	.num_dapm_routes = ARRAY_SIZE(audio_map),
 	.controls = wm8987_smartq_controls,
 	.num_controls = ARRAY_SIZE(wm8987_smartq_controls),
-};
+पूर्ण;
 
-static int smartq_probe(struct platform_device *pdev)
-{
-	struct gpio_desc *gpio;
-	int ret;
+अटल पूर्णांक smartq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा gpio_desc *gpio;
+	पूर्णांक ret;
 
-	platform_set_drvdata(pdev, &snd_soc_smartq);
+	platक्रमm_set_drvdata(pdev, &snd_soc_smartq);
 
-	/* Initialise GPIOs used by amplifiers */
+	/* Initialise GPIOs used by amplअगरiers */
 	gpio = devm_gpiod_get(&pdev->dev, "amplifiers shutdown",
 			      GPIOD_OUT_HIGH);
-	if (IS_ERR(gpio)) {
+	अगर (IS_ERR(gpio)) अणु
 		dev_err(&pdev->dev, "Failed to register GPK12\n");
 		ret = PTR_ERR(gpio);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	snd_soc_card_set_drvdata(&snd_soc_smartq, gpio);
 
-	ret = devm_snd_soc_register_card(&pdev->dev, &snd_soc_smartq);
-	if (ret)
+	ret = devm_snd_soc_रेजिस्टर_card(&pdev->dev, &snd_soc_smartq);
+	अगर (ret)
 		dev_err(&pdev->dev, "Failed to register card\n");
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct platform_driver smartq_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver smartq_driver = अणु
+	.driver = अणु
 		.name = "smartq-audio",
-	},
+	पूर्ण,
 	.probe = smartq_probe,
-};
+पूर्ण;
 
-module_platform_driver(smartq_driver);
+module_platक्रमm_driver(smartq_driver);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Maurus Cuelenaere <mcuelenaere@gmail.com>");
 MODULE_DESCRIPTION("ALSA SoC SmartQ WM8987");
 MODULE_LICENSE("GPL");

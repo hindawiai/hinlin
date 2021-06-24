@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2015 Broadcom
  */
@@ -6,242 +7,242 @@
 /**
  * DOC: VC4 KMS
  *
- * This is the general code for implementing KMS mode setting that
- * doesn't clearly associate with any of the other objects (plane,
+ * This is the general code क्रम implementing KMS mode setting that
+ * करोesn't clearly associate with any of the other objects (plane,
  * crtc, HDMI encoder).
  */
 
-#include <linux/clk.h>
+#समावेश <linux/clk.h>
 
-#include <drm/drm_atomic.h>
-#include <drm/drm_atomic_helper.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_plane_helper.h>
-#include <drm/drm_probe_helper.h>
-#include <drm/drm_vblank.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_atomic_helper.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_gem_framebuffer_helper.h>
+#समावेश <drm/drm_plane_helper.h>
+#समावेश <drm/drm_probe_helper.h>
+#समावेश <drm/drm_vblank.h>
 
-#include "vc4_drv.h"
-#include "vc4_regs.h"
+#समावेश "vc4_drv.h"
+#समावेश "vc4_regs.h"
 
-#define HVS_NUM_CHANNELS 3
+#घोषणा HVS_NUM_CHANNELS 3
 
-struct vc4_ctm_state {
-	struct drm_private_state base;
-	struct drm_color_ctm *ctm;
-	int fifo;
-};
+काष्ठा vc4_cपंचांग_state अणु
+	काष्ठा drm_निजी_state base;
+	काष्ठा drm_color_cपंचांग *cपंचांग;
+	पूर्णांक fअगरo;
+पूर्ण;
 
-static struct vc4_ctm_state *to_vc4_ctm_state(struct drm_private_state *priv)
-{
-	return container_of(priv, struct vc4_ctm_state, base);
-}
+अटल काष्ठा vc4_cपंचांग_state *to_vc4_cपंचांग_state(काष्ठा drm_निजी_state *priv)
+अणु
+	वापस container_of(priv, काष्ठा vc4_cपंचांग_state, base);
+पूर्ण
 
-struct vc4_hvs_state {
-	struct drm_private_state base;
+काष्ठा vc4_hvs_state अणु
+	काष्ठा drm_निजी_state base;
 
-	struct {
-		unsigned in_use: 1;
-		struct drm_crtc_commit *pending_commit;
-	} fifo_state[HVS_NUM_CHANNELS];
-};
+	काष्ठा अणु
+		अचिन्हित in_use: 1;
+		काष्ठा drm_crtc_commit *pending_commit;
+	पूर्ण fअगरo_state[HVS_NUM_CHANNELS];
+पूर्ण;
 
-static struct vc4_hvs_state *
-to_vc4_hvs_state(struct drm_private_state *priv)
-{
-	return container_of(priv, struct vc4_hvs_state, base);
-}
+अटल काष्ठा vc4_hvs_state *
+to_vc4_hvs_state(काष्ठा drm_निजी_state *priv)
+अणु
+	वापस container_of(priv, काष्ठा vc4_hvs_state, base);
+पूर्ण
 
-struct vc4_load_tracker_state {
-	struct drm_private_state base;
+काष्ठा vc4_load_tracker_state अणु
+	काष्ठा drm_निजी_state base;
 	u64 hvs_load;
 	u64 membus_load;
-};
+पूर्ण;
 
-static struct vc4_load_tracker_state *
-to_vc4_load_tracker_state(struct drm_private_state *priv)
-{
-	return container_of(priv, struct vc4_load_tracker_state, base);
-}
+अटल काष्ठा vc4_load_tracker_state *
+to_vc4_load_tracker_state(काष्ठा drm_निजी_state *priv)
+अणु
+	वापस container_of(priv, काष्ठा vc4_load_tracker_state, base);
+पूर्ण
 
-static struct vc4_ctm_state *vc4_get_ctm_state(struct drm_atomic_state *state,
-					       struct drm_private_obj *manager)
-{
-	struct drm_device *dev = state->dev;
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct drm_private_state *priv_state;
-	int ret;
+अटल काष्ठा vc4_cपंचांग_state *vc4_get_cपंचांग_state(काष्ठा drm_atomic_state *state,
+					       काष्ठा drm_निजी_obj *manager)
+अणु
+	काष्ठा drm_device *dev = state->dev;
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा drm_निजी_state *priv_state;
+	पूर्णांक ret;
 
-	ret = drm_modeset_lock(&vc4->ctm_state_lock, state->acquire_ctx);
-	if (ret)
-		return ERR_PTR(ret);
+	ret = drm_modeset_lock(&vc4->cपंचांग_state_lock, state->acquire_ctx);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	priv_state = drm_atomic_get_private_obj_state(state, manager);
-	if (IS_ERR(priv_state))
-		return ERR_CAST(priv_state);
+	priv_state = drm_atomic_get_निजी_obj_state(state, manager);
+	अगर (IS_ERR(priv_state))
+		वापस ERR_CAST(priv_state);
 
-	return to_vc4_ctm_state(priv_state);
-}
+	वापस to_vc4_cपंचांग_state(priv_state);
+पूर्ण
 
-static struct drm_private_state *
-vc4_ctm_duplicate_state(struct drm_private_obj *obj)
-{
-	struct vc4_ctm_state *state;
+अटल काष्ठा drm_निजी_state *
+vc4_cपंचांग_duplicate_state(काष्ठा drm_निजी_obj *obj)
+अणु
+	काष्ठा vc4_cपंचांग_state *state;
 
-	state = kmemdup(obj->state, sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	state = kmemdup(obj->state, माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
-	__drm_atomic_helper_private_obj_duplicate_state(obj, &state->base);
+	__drm_atomic_helper_निजी_obj_duplicate_state(obj, &state->base);
 
-	return &state->base;
-}
+	वापस &state->base;
+पूर्ण
 
-static void vc4_ctm_destroy_state(struct drm_private_obj *obj,
-				  struct drm_private_state *state)
-{
-	struct vc4_ctm_state *ctm_state = to_vc4_ctm_state(state);
+अटल व्योम vc4_cपंचांग_destroy_state(काष्ठा drm_निजी_obj *obj,
+				  काष्ठा drm_निजी_state *state)
+अणु
+	काष्ठा vc4_cपंचांग_state *cपंचांग_state = to_vc4_cपंचांग_state(state);
 
-	kfree(ctm_state);
-}
+	kमुक्त(cपंचांग_state);
+पूर्ण
 
-static const struct drm_private_state_funcs vc4_ctm_state_funcs = {
-	.atomic_duplicate_state = vc4_ctm_duplicate_state,
-	.atomic_destroy_state = vc4_ctm_destroy_state,
-};
+अटल स्थिर काष्ठा drm_निजी_state_funcs vc4_cपंचांग_state_funcs = अणु
+	.atomic_duplicate_state = vc4_cपंचांग_duplicate_state,
+	.atomic_destroy_state = vc4_cपंचांग_destroy_state,
+पूर्ण;
 
-static void vc4_ctm_obj_fini(struct drm_device *dev, void *unused)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
+अटल व्योम vc4_cपंचांग_obj_fini(काष्ठा drm_device *dev, व्योम *unused)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
 
-	drm_atomic_private_obj_fini(&vc4->ctm_manager);
-}
+	drm_atomic_निजी_obj_fini(&vc4->cपंचांग_manager);
+पूर्ण
 
-static int vc4_ctm_obj_init(struct vc4_dev *vc4)
-{
-	struct vc4_ctm_state *ctm_state;
+अटल पूर्णांक vc4_cपंचांग_obj_init(काष्ठा vc4_dev *vc4)
+अणु
+	काष्ठा vc4_cपंचांग_state *cपंचांग_state;
 
-	drm_modeset_lock_init(&vc4->ctm_state_lock);
+	drm_modeset_lock_init(&vc4->cपंचांग_state_lock);
 
-	ctm_state = kzalloc(sizeof(*ctm_state), GFP_KERNEL);
-	if (!ctm_state)
-		return -ENOMEM;
+	cपंचांग_state = kzalloc(माप(*cपंचांग_state), GFP_KERNEL);
+	अगर (!cपंचांग_state)
+		वापस -ENOMEM;
 
-	drm_atomic_private_obj_init(&vc4->base, &vc4->ctm_manager, &ctm_state->base,
-				    &vc4_ctm_state_funcs);
+	drm_atomic_निजी_obj_init(&vc4->base, &vc4->cपंचांग_manager, &cपंचांग_state->base,
+				    &vc4_cपंचांग_state_funcs);
 
-	return drmm_add_action_or_reset(&vc4->base, vc4_ctm_obj_fini, NULL);
-}
+	वापस drmm_add_action_or_reset(&vc4->base, vc4_cपंचांग_obj_fini, शून्य);
+पूर्ण
 
-/* Converts a DRM S31.32 value to the HW S0.9 format. */
-static u16 vc4_ctm_s31_32_to_s0_9(u64 in)
-{
+/* Converts a DRM S31.32 value to the HW S0.9 क्रमmat. */
+अटल u16 vc4_cपंचांग_s31_32_to_s0_9(u64 in)
+अणु
 	u16 r;
 
 	/* Sign bit. */
 	r = in & BIT_ULL(63) ? BIT(9) : 0;
 
-	if ((in & GENMASK_ULL(62, 32)) > 0) {
-		/* We have zero integer bits so we can only saturate here. */
+	अगर ((in & GENMASK_ULL(62, 32)) > 0) अणु
+		/* We have zero पूर्णांकeger bits so we can only saturate here. */
 		r |= GENMASK(8, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Otherwise take the 9 most important fractional bits. */
 		r |= (in >> 23) & GENMASK(8, 0);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void
-vc4_ctm_commit(struct vc4_dev *vc4, struct drm_atomic_state *state)
-{
-	struct vc4_ctm_state *ctm_state = to_vc4_ctm_state(vc4->ctm_manager.state);
-	struct drm_color_ctm *ctm = ctm_state->ctm;
+अटल व्योम
+vc4_cपंचांग_commit(काष्ठा vc4_dev *vc4, काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा vc4_cपंचांग_state *cपंचांग_state = to_vc4_cपंचांग_state(vc4->cपंचांग_manager.state);
+	काष्ठा drm_color_cपंचांग *cपंचांग = cपंचांग_state->cपंचांग;
 
-	if (ctm_state->fifo) {
+	अगर (cपंचांग_state->fअगरo) अणु
 		HVS_WRITE(SCALER_OLEDCOEF2,
-			  VC4_SET_FIELD(vc4_ctm_s31_32_to_s0_9(ctm->matrix[0]),
+			  VC4_SET_FIELD(vc4_cपंचांग_s31_32_to_s0_9(cपंचांग->matrix[0]),
 					SCALER_OLEDCOEF2_R_TO_R) |
-			  VC4_SET_FIELD(vc4_ctm_s31_32_to_s0_9(ctm->matrix[3]),
+			  VC4_SET_FIELD(vc4_cपंचांग_s31_32_to_s0_9(cपंचांग->matrix[3]),
 					SCALER_OLEDCOEF2_R_TO_G) |
-			  VC4_SET_FIELD(vc4_ctm_s31_32_to_s0_9(ctm->matrix[6]),
+			  VC4_SET_FIELD(vc4_cपंचांग_s31_32_to_s0_9(cपंचांग->matrix[6]),
 					SCALER_OLEDCOEF2_R_TO_B));
 		HVS_WRITE(SCALER_OLEDCOEF1,
-			  VC4_SET_FIELD(vc4_ctm_s31_32_to_s0_9(ctm->matrix[1]),
+			  VC4_SET_FIELD(vc4_cपंचांग_s31_32_to_s0_9(cपंचांग->matrix[1]),
 					SCALER_OLEDCOEF1_G_TO_R) |
-			  VC4_SET_FIELD(vc4_ctm_s31_32_to_s0_9(ctm->matrix[4]),
+			  VC4_SET_FIELD(vc4_cपंचांग_s31_32_to_s0_9(cपंचांग->matrix[4]),
 					SCALER_OLEDCOEF1_G_TO_G) |
-			  VC4_SET_FIELD(vc4_ctm_s31_32_to_s0_9(ctm->matrix[7]),
+			  VC4_SET_FIELD(vc4_cपंचांग_s31_32_to_s0_9(cपंचांग->matrix[7]),
 					SCALER_OLEDCOEF1_G_TO_B));
 		HVS_WRITE(SCALER_OLEDCOEF0,
-			  VC4_SET_FIELD(vc4_ctm_s31_32_to_s0_9(ctm->matrix[2]),
+			  VC4_SET_FIELD(vc4_cपंचांग_s31_32_to_s0_9(cपंचांग->matrix[2]),
 					SCALER_OLEDCOEF0_B_TO_R) |
-			  VC4_SET_FIELD(vc4_ctm_s31_32_to_s0_9(ctm->matrix[5]),
+			  VC4_SET_FIELD(vc4_cपंचांग_s31_32_to_s0_9(cपंचांग->matrix[5]),
 					SCALER_OLEDCOEF0_B_TO_G) |
-			  VC4_SET_FIELD(vc4_ctm_s31_32_to_s0_9(ctm->matrix[8]),
+			  VC4_SET_FIELD(vc4_cपंचांग_s31_32_to_s0_9(cपंचांग->matrix[8]),
 					SCALER_OLEDCOEF0_B_TO_B));
-	}
+	पूर्ण
 
 	HVS_WRITE(SCALER_OLEDOFFS,
-		  VC4_SET_FIELD(ctm_state->fifo, SCALER_OLEDOFFS_DISPFIFO));
-}
+		  VC4_SET_FIELD(cपंचांग_state->fअगरo, SCALER_OLEDOFFS_DISPFIFO));
+पूर्ण
 
-static struct vc4_hvs_state *
-vc4_hvs_get_new_global_state(struct drm_atomic_state *state)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(state->dev);
-	struct drm_private_state *priv_state;
+अटल काष्ठा vc4_hvs_state *
+vc4_hvs_get_new_global_state(काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(state->dev);
+	काष्ठा drm_निजी_state *priv_state;
 
-	priv_state = drm_atomic_get_new_private_obj_state(state, &vc4->hvs_channels);
-	if (IS_ERR(priv_state))
-		return ERR_CAST(priv_state);
+	priv_state = drm_atomic_get_new_निजी_obj_state(state, &vc4->hvs_channels);
+	अगर (IS_ERR(priv_state))
+		वापस ERR_CAST(priv_state);
 
-	return to_vc4_hvs_state(priv_state);
-}
+	वापस to_vc4_hvs_state(priv_state);
+पूर्ण
 
-static struct vc4_hvs_state *
-vc4_hvs_get_old_global_state(struct drm_atomic_state *state)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(state->dev);
-	struct drm_private_state *priv_state;
+अटल काष्ठा vc4_hvs_state *
+vc4_hvs_get_old_global_state(काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(state->dev);
+	काष्ठा drm_निजी_state *priv_state;
 
-	priv_state = drm_atomic_get_old_private_obj_state(state, &vc4->hvs_channels);
-	if (IS_ERR(priv_state))
-		return ERR_CAST(priv_state);
+	priv_state = drm_atomic_get_old_निजी_obj_state(state, &vc4->hvs_channels);
+	अगर (IS_ERR(priv_state))
+		वापस ERR_CAST(priv_state);
 
-	return to_vc4_hvs_state(priv_state);
-}
+	वापस to_vc4_hvs_state(priv_state);
+पूर्ण
 
-static struct vc4_hvs_state *
-vc4_hvs_get_global_state(struct drm_atomic_state *state)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(state->dev);
-	struct drm_private_state *priv_state;
+अटल काष्ठा vc4_hvs_state *
+vc4_hvs_get_global_state(काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(state->dev);
+	काष्ठा drm_निजी_state *priv_state;
 
-	priv_state = drm_atomic_get_private_obj_state(state, &vc4->hvs_channels);
-	if (IS_ERR(priv_state))
-		return ERR_CAST(priv_state);
+	priv_state = drm_atomic_get_निजी_obj_state(state, &vc4->hvs_channels);
+	अगर (IS_ERR(priv_state))
+		वापस ERR_CAST(priv_state);
 
-	return to_vc4_hvs_state(priv_state);
-}
+	वापस to_vc4_hvs_state(priv_state);
+पूर्ण
 
-static void vc4_hvs_pv_muxing_commit(struct vc4_dev *vc4,
-				     struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *crtc_state;
-	struct drm_crtc *crtc;
-	unsigned int i;
+अटल व्योम vc4_hvs_pv_muxing_commit(काष्ठा vc4_dev *vc4,
+				     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *crtc_state;
+	काष्ठा drm_crtc *crtc;
+	अचिन्हित पूर्णांक i;
 
-	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
-		struct vc4_crtc_state *vc4_state = to_vc4_crtc_state(crtc_state);
+	क्रम_each_new_crtc_in_state(state, crtc, crtc_state, i) अणु
+		काष्ठा vc4_crtc_state *vc4_state = to_vc4_crtc_state(crtc_state);
 		u32 dispctrl;
 		u32 dsp3_mux;
 
-		if (!crtc_state->active)
-			continue;
+		अगर (!crtc_state->active)
+			जारी;
 
-		if (vc4_state->assigned_channel != 2)
-			continue;
+		अगर (vc4_state->asचिन्हित_channel != 2)
+			जारी;
 
 		/*
 		 * SCALER_DISPCTRL_DSP3 = X, where X < 2 means 'connect DSP3 to
@@ -249,141 +250,141 @@ static void vc4_hvs_pv_muxing_commit(struct vc4_dev *vc4,
 		 * SCALER_DISPCTRL_DSP3 = 3 means 'disable DSP 3'.
 		 *
 		 * DSP3 is connected to FIFO2 unless the transposer is
-		 * enabled. In this case, FIFO 2 is directly accessed by the
+		 * enabled. In this हाल, FIFO 2 is directly accessed by the
 		 * TXP IP, and we need to disable the FIFO2 -> pixelvalve1
 		 * route.
 		 */
-		if (vc4_state->feed_txp)
+		अगर (vc4_state->feed_txp)
 			dsp3_mux = VC4_SET_FIELD(3, SCALER_DISPCTRL_DSP3_MUX);
-		else
+		अन्यथा
 			dsp3_mux = VC4_SET_FIELD(2, SCALER_DISPCTRL_DSP3_MUX);
 
 		dispctrl = HVS_READ(SCALER_DISPCTRL) &
 			   ~SCALER_DISPCTRL_DSP3_MUX_MASK;
 		HVS_WRITE(SCALER_DISPCTRL, dispctrl | dsp3_mux);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vc5_hvs_pv_muxing_commit(struct vc4_dev *vc4,
-				     struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *crtc_state;
-	struct drm_crtc *crtc;
-	unsigned char mux;
-	unsigned int i;
+अटल व्योम vc5_hvs_pv_muxing_commit(काष्ठा vc4_dev *vc4,
+				     काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *crtc_state;
+	काष्ठा drm_crtc *crtc;
+	अचिन्हित अक्षर mux;
+	अचिन्हित पूर्णांक i;
 	u32 reg;
 
-	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
-		struct vc4_crtc_state *vc4_state = to_vc4_crtc_state(crtc_state);
-		struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+	क्रम_each_new_crtc_in_state(state, crtc, crtc_state, i) अणु
+		काष्ठा vc4_crtc_state *vc4_state = to_vc4_crtc_state(crtc_state);
+		काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
 
-		if (!vc4_state->update_muxing)
-			continue;
+		अगर (!vc4_state->update_muxing)
+			जारी;
 
-		switch (vc4_crtc->data->hvs_output) {
-		case 2:
-			mux = (vc4_state->assigned_channel == 2) ? 0 : 1;
+		चयन (vc4_crtc->data->hvs_output) अणु
+		हाल 2:
+			mux = (vc4_state->asचिन्हित_channel == 2) ? 0 : 1;
 			reg = HVS_READ(SCALER_DISPECTRL);
 			HVS_WRITE(SCALER_DISPECTRL,
 				  (reg & ~SCALER_DISPECTRL_DSP2_MUX_MASK) |
 				  VC4_SET_FIELD(mux, SCALER_DISPECTRL_DSP2_MUX));
-			break;
+			अवरोध;
 
-		case 3:
-			if (vc4_state->assigned_channel == VC4_HVS_CHANNEL_DISABLED)
+		हाल 3:
+			अगर (vc4_state->asचिन्हित_channel == VC4_HVS_CHANNEL_DISABLED)
 				mux = 3;
-			else
-				mux = vc4_state->assigned_channel;
+			अन्यथा
+				mux = vc4_state->asचिन्हित_channel;
 
 			reg = HVS_READ(SCALER_DISPCTRL);
 			HVS_WRITE(SCALER_DISPCTRL,
 				  (reg & ~SCALER_DISPCTRL_DSP3_MUX_MASK) |
 				  VC4_SET_FIELD(mux, SCALER_DISPCTRL_DSP3_MUX));
-			break;
+			अवरोध;
 
-		case 4:
-			if (vc4_state->assigned_channel == VC4_HVS_CHANNEL_DISABLED)
+		हाल 4:
+			अगर (vc4_state->asचिन्हित_channel == VC4_HVS_CHANNEL_DISABLED)
 				mux = 3;
-			else
-				mux = vc4_state->assigned_channel;
+			अन्यथा
+				mux = vc4_state->asचिन्हित_channel;
 
 			reg = HVS_READ(SCALER_DISPEOLN);
 			HVS_WRITE(SCALER_DISPEOLN,
 				  (reg & ~SCALER_DISPEOLN_DSP4_MUX_MASK) |
 				  VC4_SET_FIELD(mux, SCALER_DISPEOLN_DSP4_MUX));
 
-			break;
+			अवरोध;
 
-		case 5:
-			if (vc4_state->assigned_channel == VC4_HVS_CHANNEL_DISABLED)
+		हाल 5:
+			अगर (vc4_state->asचिन्हित_channel == VC4_HVS_CHANNEL_DISABLED)
 				mux = 3;
-			else
-				mux = vc4_state->assigned_channel;
+			अन्यथा
+				mux = vc4_state->asचिन्हित_channel;
 
 			reg = HVS_READ(SCALER_DISPDITHER);
 			HVS_WRITE(SCALER_DISPDITHER,
 				  (reg & ~SCALER_DISPDITHER_DSP5_MUX_MASK) |
 				  VC4_SET_FIELD(mux, SCALER_DISPDITHER_DSP5_MUX));
-			break;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
-}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void vc4_atomic_commit_tail(struct drm_atomic_state *state)
-{
-	struct drm_device *dev = state->dev;
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_hvs *hvs = vc4->hvs;
-	struct drm_crtc_state *old_crtc_state;
-	struct drm_crtc_state *new_crtc_state;
-	struct drm_crtc *crtc;
-	struct vc4_hvs_state *old_hvs_state;
-	int i;
+अटल व्योम vc4_atomic_commit_tail(काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_device *dev = state->dev;
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_hvs *hvs = vc4->hvs;
+	काष्ठा drm_crtc_state *old_crtc_state;
+	काष्ठा drm_crtc_state *new_crtc_state;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा vc4_hvs_state *old_hvs_state;
+	पूर्णांक i;
 
-	for_each_new_crtc_in_state(state, crtc, new_crtc_state, i) {
-		struct vc4_crtc_state *vc4_crtc_state;
+	क्रम_each_new_crtc_in_state(state, crtc, new_crtc_state, i) अणु
+		काष्ठा vc4_crtc_state *vc4_crtc_state;
 
-		if (!new_crtc_state->commit)
-			continue;
+		अगर (!new_crtc_state->commit)
+			जारी;
 
 		vc4_crtc_state = to_vc4_crtc_state(new_crtc_state);
-		vc4_hvs_mask_underrun(dev, vc4_crtc_state->assigned_channel);
-	}
+		vc4_hvs_mask_underrun(dev, vc4_crtc_state->asचिन्हित_channel);
+	पूर्ण
 
-	if (vc4->hvs->hvs5)
+	अगर (vc4->hvs->hvs5)
 		clk_set_min_rate(hvs->core_clk, 500000000);
 
 	old_hvs_state = vc4_hvs_get_old_global_state(state);
-	if (!old_hvs_state)
-		return;
+	अगर (!old_hvs_state)
+		वापस;
 
-	for_each_old_crtc_in_state(state, crtc, old_crtc_state, i) {
-		struct vc4_crtc_state *vc4_crtc_state =
+	क्रम_each_old_crtc_in_state(state, crtc, old_crtc_state, i) अणु
+		काष्ठा vc4_crtc_state *vc4_crtc_state =
 			to_vc4_crtc_state(old_crtc_state);
-		unsigned int channel = vc4_crtc_state->assigned_channel;
-		int ret;
+		अचिन्हित पूर्णांक channel = vc4_crtc_state->asचिन्हित_channel;
+		पूर्णांक ret;
 
-		if (channel == VC4_HVS_CHANNEL_DISABLED)
-			continue;
+		अगर (channel == VC4_HVS_CHANNEL_DISABLED)
+			जारी;
 
-		if (!old_hvs_state->fifo_state[channel].in_use)
-			continue;
+		अगर (!old_hvs_state->fअगरo_state[channel].in_use)
+			जारी;
 
-		ret = drm_crtc_commit_wait(old_hvs_state->fifo_state[channel].pending_commit);
-		if (ret)
+		ret = drm_crtc_commit_रुको(old_hvs_state->fअगरo_state[channel].pending_commit);
+		अगर (ret)
 			drm_err(dev, "Timed out waiting for commit\n");
-	}
+	पूर्ण
 
 	drm_atomic_helper_commit_modeset_disables(dev, state);
 
-	vc4_ctm_commit(vc4, state);
+	vc4_cपंचांग_commit(vc4, state);
 
-	if (vc4->hvs->hvs5)
+	अगर (vc4->hvs->hvs5)
 		vc5_hvs_pv_muxing_commit(vc4, state);
-	else
+	अन्यथा
 		vc4_hvs_pv_muxing_commit(vc4, state);
 
 	drm_atomic_helper_commit_planes(dev, state, 0);
@@ -392,406 +393,406 @@ static void vc4_atomic_commit_tail(struct drm_atomic_state *state)
 
 	drm_atomic_helper_fake_vblank(state);
 
-	drm_atomic_helper_commit_hw_done(state);
+	drm_atomic_helper_commit_hw_करोne(state);
 
-	drm_atomic_helper_wait_for_flip_done(dev, state);
+	drm_atomic_helper_रुको_क्रम_flip_करोne(dev, state);
 
 	drm_atomic_helper_cleanup_planes(dev, state);
 
-	if (vc4->hvs->hvs5)
+	अगर (vc4->hvs->hvs5)
 		clk_set_min_rate(hvs->core_clk, 0);
-}
+पूर्ण
 
-static int vc4_atomic_commit_setup(struct drm_atomic_state *state)
-{
-	struct drm_crtc_state *crtc_state;
-	struct vc4_hvs_state *hvs_state;
-	struct drm_crtc *crtc;
-	unsigned int i;
+अटल पूर्णांक vc4_atomic_commit_setup(काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_crtc_state *crtc_state;
+	काष्ठा vc4_hvs_state *hvs_state;
+	काष्ठा drm_crtc *crtc;
+	अचिन्हित पूर्णांक i;
 
 	hvs_state = vc4_hvs_get_new_global_state(state);
-	if (!hvs_state)
-		return -EINVAL;
+	अगर (!hvs_state)
+		वापस -EINVAL;
 
-	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
-		struct vc4_crtc_state *vc4_crtc_state =
+	क्रम_each_new_crtc_in_state(state, crtc, crtc_state, i) अणु
+		काष्ठा vc4_crtc_state *vc4_crtc_state =
 			to_vc4_crtc_state(crtc_state);
-		unsigned int channel =
-			vc4_crtc_state->assigned_channel;
+		अचिन्हित पूर्णांक channel =
+			vc4_crtc_state->asचिन्हित_channel;
 
-		if (channel == VC4_HVS_CHANNEL_DISABLED)
-			continue;
+		अगर (channel == VC4_HVS_CHANNEL_DISABLED)
+			जारी;
 
-		if (!hvs_state->fifo_state[channel].in_use)
-			continue;
+		अगर (!hvs_state->fअगरo_state[channel].in_use)
+			जारी;
 
-		hvs_state->fifo_state[channel].pending_commit =
+		hvs_state->fअगरo_state[channel].pending_commit =
 			drm_crtc_commit_get(crtc_state->commit);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct drm_framebuffer *vc4_fb_create(struct drm_device *dev,
-					     struct drm_file *file_priv,
-					     const struct drm_mode_fb_cmd2 *mode_cmd)
-{
-	struct drm_mode_fb_cmd2 mode_cmd_local;
+अटल काष्ठा drm_framebuffer *vc4_fb_create(काष्ठा drm_device *dev,
+					     काष्ठा drm_file *file_priv,
+					     स्थिर काष्ठा drm_mode_fb_cmd2 *mode_cmd)
+अणु
+	काष्ठा drm_mode_fb_cmd2 mode_cmd_local;
 
-	/* If the user didn't specify a modifier, use the
-	 * vc4_set_tiling_ioctl() state for the BO.
+	/* If the user didn't specअगरy a modअगरier, use the
+	 * vc4_set_tiling_ioctl() state क्रम the BO.
 	 */
-	if (!(mode_cmd->flags & DRM_MODE_FB_MODIFIERS)) {
-		struct drm_gem_object *gem_obj;
-		struct vc4_bo *bo;
+	अगर (!(mode_cmd->flags & DRM_MODE_FB_MODIFIERS)) अणु
+		काष्ठा drm_gem_object *gem_obj;
+		काष्ठा vc4_bo *bo;
 
 		gem_obj = drm_gem_object_lookup(file_priv,
 						mode_cmd->handles[0]);
-		if (!gem_obj) {
+		अगर (!gem_obj) अणु
 			DRM_DEBUG("Failed to look up GEM BO %d\n",
 				  mode_cmd->handles[0]);
-			return ERR_PTR(-ENOENT);
-		}
+			वापस ERR_PTR(-ENOENT);
+		पूर्ण
 		bo = to_vc4_bo(gem_obj);
 
 		mode_cmd_local = *mode_cmd;
 
-		if (bo->t_format) {
-			mode_cmd_local.modifier[0] =
+		अगर (bo->t_क्रमmat) अणु
+			mode_cmd_local.modअगरier[0] =
 				DRM_FORMAT_MOD_BROADCOM_VC4_T_TILED;
-		} else {
-			mode_cmd_local.modifier[0] = DRM_FORMAT_MOD_NONE;
-		}
+		पूर्ण अन्यथा अणु
+			mode_cmd_local.modअगरier[0] = DRM_FORMAT_MOD_NONE;
+		पूर्ण
 
 		drm_gem_object_put(gem_obj);
 
 		mode_cmd = &mode_cmd_local;
-	}
+	पूर्ण
 
-	return drm_gem_fb_create(dev, file_priv, mode_cmd);
-}
+	वापस drm_gem_fb_create(dev, file_priv, mode_cmd);
+पूर्ण
 
-/* Our CTM has some peculiar limitations: we can only enable it for one CRTC
- * at a time and the HW only supports S0.9 scalars. To account for the latter,
- * we don't allow userland to set a CTM that we have no hope of approximating.
+/* Our CTM has some peculiar limitations: we can only enable it क्रम one CRTC
+ * at a समय and the HW only supports S0.9 scalars. To account क्रम the latter,
+ * we करोn't allow userland to set a CTM that we have no hope of approximating.
  */
-static int
-vc4_ctm_atomic_check(struct drm_device *dev, struct drm_atomic_state *state)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
-	struct vc4_ctm_state *ctm_state = NULL;
-	struct drm_crtc *crtc;
-	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
-	struct drm_color_ctm *ctm;
-	int i;
+अटल पूर्णांक
+vc4_cपंचांग_atomic_check(काष्ठा drm_device *dev, काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
+	काष्ठा vc4_cपंचांग_state *cपंचांग_state = शून्य;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_crtc_state *old_crtc_state, *new_crtc_state;
+	काष्ठा drm_color_cपंचांग *cपंचांग;
+	पूर्णांक i;
 
-	for_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) {
+	क्रम_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) अणु
 		/* CTM is being disabled. */
-		if (!new_crtc_state->ctm && old_crtc_state->ctm) {
-			ctm_state = vc4_get_ctm_state(state, &vc4->ctm_manager);
-			if (IS_ERR(ctm_state))
-				return PTR_ERR(ctm_state);
-			ctm_state->fifo = 0;
-		}
-	}
+		अगर (!new_crtc_state->cपंचांग && old_crtc_state->cपंचांग) अणु
+			cपंचांग_state = vc4_get_cपंचांग_state(state, &vc4->cपंचांग_manager);
+			अगर (IS_ERR(cपंचांग_state))
+				वापस PTR_ERR(cपंचांग_state);
+			cपंचांग_state->fअगरo = 0;
+		पूर्ण
+	पूर्ण
 
-	for_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) {
-		if (new_crtc_state->ctm == old_crtc_state->ctm)
-			continue;
+	क्रम_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) अणु
+		अगर (new_crtc_state->cपंचांग == old_crtc_state->cपंचांग)
+			जारी;
 
-		if (!ctm_state) {
-			ctm_state = vc4_get_ctm_state(state, &vc4->ctm_manager);
-			if (IS_ERR(ctm_state))
-				return PTR_ERR(ctm_state);
-		}
+		अगर (!cपंचांग_state) अणु
+			cपंचांग_state = vc4_get_cपंचांग_state(state, &vc4->cपंचांग_manager);
+			अगर (IS_ERR(cपंचांग_state))
+				वापस PTR_ERR(cपंचांग_state);
+		पूर्ण
 
 		/* CTM is being enabled or the matrix changed. */
-		if (new_crtc_state->ctm) {
-			struct vc4_crtc_state *vc4_crtc_state =
+		अगर (new_crtc_state->cपंचांग) अणु
+			काष्ठा vc4_crtc_state *vc4_crtc_state =
 				to_vc4_crtc_state(new_crtc_state);
 
-			/* fifo is 1-based since 0 disables CTM. */
-			int fifo = vc4_crtc_state->assigned_channel + 1;
+			/* fअगरo is 1-based since 0 disables CTM. */
+			पूर्णांक fअगरo = vc4_crtc_state->asचिन्हित_channel + 1;
 
-			/* Check userland isn't trying to turn on CTM for more
-			 * than one CRTC at a time.
+			/* Check userland isn't trying to turn on CTM क्रम more
+			 * than one CRTC at a समय.
 			 */
-			if (ctm_state->fifo && ctm_state->fifo != fifo) {
+			अगर (cपंचांग_state->fअगरo && cपंचांग_state->fअगरo != fअगरo) अणु
 				DRM_DEBUG_DRIVER("Too many CTM configured\n");
-				return -EINVAL;
-			}
+				वापस -EINVAL;
+			पूर्ण
 
-			/* Check we can approximate the specified CTM.
+			/* Check we can approximate the specअगरied CTM.
 			 * We disallow scalars |c| > 1.0 since the HW has
-			 * no integer bits.
+			 * no पूर्णांकeger bits.
 			 */
-			ctm = new_crtc_state->ctm->data;
-			for (i = 0; i < ARRAY_SIZE(ctm->matrix); i++) {
-				u64 val = ctm->matrix[i];
+			cपंचांग = new_crtc_state->cपंचांग->data;
+			क्रम (i = 0; i < ARRAY_SIZE(cपंचांग->matrix); i++) अणु
+				u64 val = cपंचांग->matrix[i];
 
 				val &= ~BIT_ULL(63);
-				if (val > BIT_ULL(32))
-					return -EINVAL;
-			}
+				अगर (val > BIT_ULL(32))
+					वापस -EINVAL;
+			पूर्ण
 
-			ctm_state->fifo = fifo;
-			ctm_state->ctm = ctm;
-		}
-	}
+			cपंचांग_state->fअगरo = fअगरo;
+			cपंचांग_state->cपंचांग = cपंचांग;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vc4_load_tracker_atomic_check(struct drm_atomic_state *state)
-{
-	struct drm_plane_state *old_plane_state, *new_plane_state;
-	struct vc4_dev *vc4 = to_vc4_dev(state->dev);
-	struct vc4_load_tracker_state *load_state;
-	struct drm_private_state *priv_state;
-	struct drm_plane *plane;
-	int i;
+अटल पूर्णांक vc4_load_tracker_atomic_check(काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा drm_plane_state *old_plane_state, *new_plane_state;
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(state->dev);
+	काष्ठा vc4_load_tracker_state *load_state;
+	काष्ठा drm_निजी_state *priv_state;
+	काष्ठा drm_plane *plane;
+	पूर्णांक i;
 
-	if (!vc4->load_tracker_available)
-		return 0;
+	अगर (!vc4->load_tracker_available)
+		वापस 0;
 
-	priv_state = drm_atomic_get_private_obj_state(state,
+	priv_state = drm_atomic_get_निजी_obj_state(state,
 						      &vc4->load_tracker);
-	if (IS_ERR(priv_state))
-		return PTR_ERR(priv_state);
+	अगर (IS_ERR(priv_state))
+		वापस PTR_ERR(priv_state);
 
 	load_state = to_vc4_load_tracker_state(priv_state);
-	for_each_oldnew_plane_in_state(state, plane, old_plane_state,
-				       new_plane_state, i) {
-		struct vc4_plane_state *vc4_plane_state;
+	क्रम_each_oldnew_plane_in_state(state, plane, old_plane_state,
+				       new_plane_state, i) अणु
+		काष्ठा vc4_plane_state *vc4_plane_state;
 
-		if (old_plane_state->fb && old_plane_state->crtc) {
+		अगर (old_plane_state->fb && old_plane_state->crtc) अणु
 			vc4_plane_state = to_vc4_plane_state(old_plane_state);
 			load_state->membus_load -= vc4_plane_state->membus_load;
 			load_state->hvs_load -= vc4_plane_state->hvs_load;
-		}
+		पूर्ण
 
-		if (new_plane_state->fb && new_plane_state->crtc) {
+		अगर (new_plane_state->fb && new_plane_state->crtc) अणु
 			vc4_plane_state = to_vc4_plane_state(new_plane_state);
 			load_state->membus_load += vc4_plane_state->membus_load;
 			load_state->hvs_load += vc4_plane_state->hvs_load;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Don't check the load when the tracker is disabled. */
-	if (!vc4->load_tracker_enabled)
-		return 0;
+	अगर (!vc4->load_tracker_enabled)
+		वापस 0;
 
-	/* The absolute limit is 2Gbyte/sec, but let's take a margin to let
-	 * the system work when other blocks are accessing the memory.
+	/* The असलolute limit is 2Gbyte/sec, but let's take a margin to let
+	 * the प्रणाली work when other blocks are accessing the memory.
 	 */
-	if (load_state->membus_load > SZ_1G + SZ_512M)
-		return -ENOSPC;
+	अगर (load_state->membus_load > SZ_1G + SZ_512M)
+		वापस -ENOSPC;
 
-	/* HVS clock is supposed to run @ 250Mhz, let's take a margin and
+	/* HVS घड़ी is supposed to run @ 250Mhz, let's take a margin and
 	 * consider the maximum number of cycles is 240M.
 	 */
-	if (load_state->hvs_load > 240000000ULL)
-		return -ENOSPC;
+	अगर (load_state->hvs_load > 240000000ULL)
+		वापस -ENOSPC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct drm_private_state *
-vc4_load_tracker_duplicate_state(struct drm_private_obj *obj)
-{
-	struct vc4_load_tracker_state *state;
+अटल काष्ठा drm_निजी_state *
+vc4_load_tracker_duplicate_state(काष्ठा drm_निजी_obj *obj)
+अणु
+	काष्ठा vc4_load_tracker_state *state;
 
-	state = kmemdup(obj->state, sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	state = kmemdup(obj->state, माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
-	__drm_atomic_helper_private_obj_duplicate_state(obj, &state->base);
+	__drm_atomic_helper_निजी_obj_duplicate_state(obj, &state->base);
 
-	return &state->base;
-}
+	वापस &state->base;
+पूर्ण
 
-static void vc4_load_tracker_destroy_state(struct drm_private_obj *obj,
-					   struct drm_private_state *state)
-{
-	struct vc4_load_tracker_state *load_state;
+अटल व्योम vc4_load_tracker_destroy_state(काष्ठा drm_निजी_obj *obj,
+					   काष्ठा drm_निजी_state *state)
+अणु
+	काष्ठा vc4_load_tracker_state *load_state;
 
 	load_state = to_vc4_load_tracker_state(state);
-	kfree(load_state);
-}
+	kमुक्त(load_state);
+पूर्ण
 
-static const struct drm_private_state_funcs vc4_load_tracker_state_funcs = {
+अटल स्थिर काष्ठा drm_निजी_state_funcs vc4_load_tracker_state_funcs = अणु
 	.atomic_duplicate_state = vc4_load_tracker_duplicate_state,
 	.atomic_destroy_state = vc4_load_tracker_destroy_state,
-};
+पूर्ण;
 
-static void vc4_load_tracker_obj_fini(struct drm_device *dev, void *unused)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
+अटल व्योम vc4_load_tracker_obj_fini(काष्ठा drm_device *dev, व्योम *unused)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
 
-	if (!vc4->load_tracker_available)
-		return;
+	अगर (!vc4->load_tracker_available)
+		वापस;
 
-	drm_atomic_private_obj_fini(&vc4->load_tracker);
-}
+	drm_atomic_निजी_obj_fini(&vc4->load_tracker);
+पूर्ण
 
-static int vc4_load_tracker_obj_init(struct vc4_dev *vc4)
-{
-	struct vc4_load_tracker_state *load_state;
+अटल पूर्णांक vc4_load_tracker_obj_init(काष्ठा vc4_dev *vc4)
+अणु
+	काष्ठा vc4_load_tracker_state *load_state;
 
-	if (!vc4->load_tracker_available)
-		return 0;
+	अगर (!vc4->load_tracker_available)
+		वापस 0;
 
-	load_state = kzalloc(sizeof(*load_state), GFP_KERNEL);
-	if (!load_state)
-		return -ENOMEM;
+	load_state = kzalloc(माप(*load_state), GFP_KERNEL);
+	अगर (!load_state)
+		वापस -ENOMEM;
 
-	drm_atomic_private_obj_init(&vc4->base, &vc4->load_tracker,
+	drm_atomic_निजी_obj_init(&vc4->base, &vc4->load_tracker,
 				    &load_state->base,
 				    &vc4_load_tracker_state_funcs);
 
-	return drmm_add_action_or_reset(&vc4->base, vc4_load_tracker_obj_fini, NULL);
-}
+	वापस drmm_add_action_or_reset(&vc4->base, vc4_load_tracker_obj_fini, शून्य);
+पूर्ण
 
-static struct drm_private_state *
-vc4_hvs_channels_duplicate_state(struct drm_private_obj *obj)
-{
-	struct vc4_hvs_state *old_state = to_vc4_hvs_state(obj->state);
-	struct vc4_hvs_state *state;
-	unsigned int i;
+अटल काष्ठा drm_निजी_state *
+vc4_hvs_channels_duplicate_state(काष्ठा drm_निजी_obj *obj)
+अणु
+	काष्ठा vc4_hvs_state *old_state = to_vc4_hvs_state(obj->state);
+	काष्ठा vc4_hvs_state *state;
+	अचिन्हित पूर्णांक i;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return NULL;
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस शून्य;
 
-	__drm_atomic_helper_private_obj_duplicate_state(obj, &state->base);
+	__drm_atomic_helper_निजी_obj_duplicate_state(obj, &state->base);
 
 
-	for (i = 0; i < HVS_NUM_CHANNELS; i++) {
-		state->fifo_state[i].in_use = old_state->fifo_state[i].in_use;
+	क्रम (i = 0; i < HVS_NUM_CHANNELS; i++) अणु
+		state->fअगरo_state[i].in_use = old_state->fअगरo_state[i].in_use;
 
-		if (!old_state->fifo_state[i].pending_commit)
-			continue;
+		अगर (!old_state->fअगरo_state[i].pending_commit)
+			जारी;
 
-		state->fifo_state[i].pending_commit =
-			drm_crtc_commit_get(old_state->fifo_state[i].pending_commit);
-	}
+		state->fअगरo_state[i].pending_commit =
+			drm_crtc_commit_get(old_state->fअगरo_state[i].pending_commit);
+	पूर्ण
 
-	return &state->base;
-}
+	वापस &state->base;
+पूर्ण
 
-static void vc4_hvs_channels_destroy_state(struct drm_private_obj *obj,
-					   struct drm_private_state *state)
-{
-	struct vc4_hvs_state *hvs_state = to_vc4_hvs_state(state);
-	unsigned int i;
+अटल व्योम vc4_hvs_channels_destroy_state(काष्ठा drm_निजी_obj *obj,
+					   काष्ठा drm_निजी_state *state)
+अणु
+	काष्ठा vc4_hvs_state *hvs_state = to_vc4_hvs_state(state);
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < HVS_NUM_CHANNELS; i++) {
-		if (!hvs_state->fifo_state[i].pending_commit)
-			continue;
+	क्रम (i = 0; i < HVS_NUM_CHANNELS; i++) अणु
+		अगर (!hvs_state->fअगरo_state[i].pending_commit)
+			जारी;
 
-		drm_crtc_commit_put(hvs_state->fifo_state[i].pending_commit);
-	}
+		drm_crtc_commit_put(hvs_state->fअगरo_state[i].pending_commit);
+	पूर्ण
 
-	kfree(hvs_state);
-}
+	kमुक्त(hvs_state);
+पूर्ण
 
-static const struct drm_private_state_funcs vc4_hvs_state_funcs = {
+अटल स्थिर काष्ठा drm_निजी_state_funcs vc4_hvs_state_funcs = अणु
 	.atomic_duplicate_state = vc4_hvs_channels_duplicate_state,
 	.atomic_destroy_state = vc4_hvs_channels_destroy_state,
-};
+पूर्ण;
 
-static void vc4_hvs_channels_obj_fini(struct drm_device *dev, void *unused)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
+अटल व्योम vc4_hvs_channels_obj_fini(काष्ठा drm_device *dev, व्योम *unused)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
 
-	drm_atomic_private_obj_fini(&vc4->hvs_channels);
-}
+	drm_atomic_निजी_obj_fini(&vc4->hvs_channels);
+पूर्ण
 
-static int vc4_hvs_channels_obj_init(struct vc4_dev *vc4)
-{
-	struct vc4_hvs_state *state;
+अटल पूर्णांक vc4_hvs_channels_obj_init(काष्ठा vc4_dev *vc4)
+अणु
+	काष्ठा vc4_hvs_state *state;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
-	if (!state)
-		return -ENOMEM;
+	state = kzalloc(माप(*state), GFP_KERNEL);
+	अगर (!state)
+		वापस -ENOMEM;
 
-	drm_atomic_private_obj_init(&vc4->base, &vc4->hvs_channels,
+	drm_atomic_निजी_obj_init(&vc4->base, &vc4->hvs_channels,
 				    &state->base,
 				    &vc4_hvs_state_funcs);
 
-	return drmm_add_action_or_reset(&vc4->base, vc4_hvs_channels_obj_fini, NULL);
-}
+	वापस drmm_add_action_or_reset(&vc4->base, vc4_hvs_channels_obj_fini, शून्य);
+पूर्ण
 
 /*
- * The BCM2711 HVS has up to 7 outputs connected to the pixelvalves and
- * the TXP (and therefore all the CRTCs found on that platform).
+ * The BCM2711 HVS has up to 7 outमाला_दो connected to the pixelvalves and
+ * the TXP (and thereक्रमe all the CRTCs found on that platक्रमm).
  *
  * The naive (and our initial) implementation would just iterate over
- * all the active CRTCs, try to find a suitable FIFO, and then remove it
+ * all the active CRTCs, try to find a suitable FIFO, and then हटाओ it
  * from the pool of available FIFOs. However, there are a few corner
- * cases that need to be considered:
+ * हालs that need to be considered:
  *
  * - When running in a dual-display setup (so with two CRTCs involved),
- *   we can update the state of a single CRTC (for example by changing
- *   its mode using xrandr under X11) without affecting the other. In
- *   this case, the other CRTC wouldn't be in the state at all, so we
+ *   we can update the state of a single CRTC (क्रम example by changing
+ *   its mode using xअक्रमr under X11) without affecting the other. In
+ *   this हाल, the other CRTC wouldn't be in the state at all, so we
  *   need to consider all the running CRTCs in the DRM device to assign
  *   a FIFO, not just the one in the state.
  *
  * - To fix the above, we can't use drm_atomic_get_crtc_state on all
- *   enabled CRTCs to pull their CRTC state into the global state, since
+ *   enabled CRTCs to pull their CRTC state पूर्णांकo the global state, since
  *   a page flip would start considering their vblank to complete. Since
- *   we don't have a guarantee that they are actually active, that
- *   vblank might never happen, and shouldn't even be considered if we
- *   want to do a page flip on a single CRTC. That can be tested by
- *   doing a modetest -v first on HDMI1 and then on HDMI0.
+ *   we करोn't have a guarantee that they are actually active, that
+ *   vblank might never happen, and shouldn't even be considered अगर we
+ *   want to करो a page flip on a single CRTC. That can be tested by
+ *   करोing a modetest -v first on HDMI1 and then on HDMI0.
  *
  * - Since we need the pixelvalve to be disabled and enabled back when
- *   the FIFO is changed, we should keep the FIFO assigned for as long
- *   as the CRTC is enabled, only considering it free again once that
+ *   the FIFO is changed, we should keep the FIFO asचिन्हित क्रम as दीर्घ
+ *   as the CRTC is enabled, only considering it मुक्त again once that
  *   CRTC has been disabled. This can be tested by booting X11 on a
- *   single display, and changing the resolution down and then back up.
+ *   single display, and changing the resolution करोwn and then back up.
  */
-static int vc4_pv_muxing_atomic_check(struct drm_device *dev,
-				      struct drm_atomic_state *state)
-{
-	struct vc4_hvs_state *hvs_new_state;
-	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
-	struct drm_crtc *crtc;
-	unsigned int unassigned_channels = 0;
-	unsigned int i;
+अटल पूर्णांक vc4_pv_muxing_atomic_check(काष्ठा drm_device *dev,
+				      काष्ठा drm_atomic_state *state)
+अणु
+	काष्ठा vc4_hvs_state *hvs_new_state;
+	काष्ठा drm_crtc_state *old_crtc_state, *new_crtc_state;
+	काष्ठा drm_crtc *crtc;
+	अचिन्हित पूर्णांक unasचिन्हित_channels = 0;
+	अचिन्हित पूर्णांक i;
 
 	hvs_new_state = vc4_hvs_get_global_state(state);
-	if (!hvs_new_state)
-		return -EINVAL;
+	अगर (!hvs_new_state)
+		वापस -EINVAL;
 
-	for (i = 0; i < ARRAY_SIZE(hvs_new_state->fifo_state); i++)
-		if (!hvs_new_state->fifo_state[i].in_use)
-			unassigned_channels |= BIT(i);
+	क्रम (i = 0; i < ARRAY_SIZE(hvs_new_state->fअगरo_state); i++)
+		अगर (!hvs_new_state->fअगरo_state[i].in_use)
+			unasचिन्हित_channels |= BIT(i);
 
-	for_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) {
-		struct vc4_crtc_state *old_vc4_crtc_state =
+	क्रम_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) अणु
+		काष्ठा vc4_crtc_state *old_vc4_crtc_state =
 			to_vc4_crtc_state(old_crtc_state);
-		struct vc4_crtc_state *new_vc4_crtc_state =
+		काष्ठा vc4_crtc_state *new_vc4_crtc_state =
 			to_vc4_crtc_state(new_crtc_state);
-		struct vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
-		unsigned int matching_channels;
-		unsigned int channel;
+		काष्ठा vc4_crtc *vc4_crtc = to_vc4_crtc(crtc);
+		अचिन्हित पूर्णांक matching_channels;
+		अचिन्हित पूर्णांक channel;
 
-		/* Nothing to do here, let's skip it */
-		if (old_crtc_state->enable == new_crtc_state->enable)
-			continue;
+		/* Nothing to करो here, let's skip it */
+		अगर (old_crtc_state->enable == new_crtc_state->enable)
+			जारी;
 
-		/* Muxing will need to be modified, mark it as such */
+		/* Muxing will need to be modअगरied, mark it as such */
 		new_vc4_crtc_state->update_muxing = true;
 
 		/* If we're disabling our CRTC, we put back our channel */
-		if (!new_crtc_state->enable) {
-			channel = old_vc4_crtc_state->assigned_channel;
-			hvs_new_state->fifo_state[channel].in_use = false;
-			new_vc4_crtc_state->assigned_channel = VC4_HVS_CHANNEL_DISABLED;
-			continue;
-		}
+		अगर (!new_crtc_state->enable) अणु
+			channel = old_vc4_crtc_state->asचिन्हित_channel;
+			hvs_new_state->fअगरo_state[channel].in_use = false;
+			new_vc4_crtc_state->asचिन्हित_channel = VC4_HVS_CHANNEL_DISABLED;
+			जारी;
+		पूर्ण
 
 		/*
 		 * The problem we have to solve here is that we have
@@ -799,123 +800,123 @@ static int vc4_pv_muxing_atomic_check(struct drm_device *dev,
 		 *
 		 * Those CRTCs, depending on the instance, can be
 		 * routed to 1, 2 or 3 HVS FIFOs, and we need to set
-		 * the change the muxing between FIFOs and outputs in
+		 * the change the muxing between FIFOs and outमाला_दो in
 		 * the HVS accordingly.
 		 *
 		 * It would be pretty hard to come up with an
 		 * algorithm that would generically solve
 		 * this. However, the current routing trees we support
-		 * allow us to simplify a bit the problem.
+		 * allow us to simplअगरy a bit the problem.
 		 *
-		 * Indeed, with the current supported layouts, if we
+		 * Indeed, with the current supported layouts, अगर we
 		 * try to assign in the ascending crtc index order the
-		 * FIFOs, we can't fall into the situation where an
-		 * earlier CRTC that had multiple routes is assigned
-		 * one that was the only option for a later CRTC.
+		 * FIFOs, we can't fall पूर्णांकo the situation where an
+		 * earlier CRTC that had multiple routes is asचिन्हित
+		 * one that was the only option क्रम a later CRTC.
 		 *
-		 * If the layout changes and doesn't give us that in
+		 * If the layout changes and करोesn't give us that in
 		 * the future, we will need to have something smarter,
 		 * but it works so far.
 		 */
-		matching_channels = unassigned_channels & vc4_crtc->data->hvs_available_channels;
-		if (!matching_channels)
-			return -EINVAL;
+		matching_channels = unasचिन्हित_channels & vc4_crtc->data->hvs_available_channels;
+		अगर (!matching_channels)
+			वापस -EINVAL;
 
 		channel = ffs(matching_channels) - 1;
-		new_vc4_crtc_state->assigned_channel = channel;
-		unassigned_channels &= ~BIT(channel);
-		hvs_new_state->fifo_state[channel].in_use = true;
-	}
+		new_vc4_crtc_state->asचिन्हित_channel = channel;
+		unasचिन्हित_channels &= ~BIT(channel);
+		hvs_new_state->fअगरo_state[channel].in_use = true;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-vc4_atomic_check(struct drm_device *dev, struct drm_atomic_state *state)
-{
-	int ret;
+अटल पूर्णांक
+vc4_atomic_check(काष्ठा drm_device *dev, काष्ठा drm_atomic_state *state)
+अणु
+	पूर्णांक ret;
 
 	ret = vc4_pv_muxing_atomic_check(dev, state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = vc4_ctm_atomic_check(dev, state);
-	if (ret < 0)
-		return ret;
+	ret = vc4_cपंचांग_atomic_check(dev, state);
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = drm_atomic_helper_check(dev, state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return vc4_load_tracker_atomic_check(state);
-}
+	वापस vc4_load_tracker_atomic_check(state);
+पूर्ण
 
-static struct drm_mode_config_helper_funcs vc4_mode_config_helpers = {
+अटल काष्ठा drm_mode_config_helper_funcs vc4_mode_config_helpers = अणु
 	.atomic_commit_setup	= vc4_atomic_commit_setup,
 	.atomic_commit_tail	= vc4_atomic_commit_tail,
-};
+पूर्ण;
 
-static const struct drm_mode_config_funcs vc4_mode_funcs = {
+अटल स्थिर काष्ठा drm_mode_config_funcs vc4_mode_funcs = अणु
 	.atomic_check = vc4_atomic_check,
 	.atomic_commit = drm_atomic_helper_commit,
 	.fb_create = vc4_fb_create,
-};
+पूर्ण;
 
-int vc4_kms_load(struct drm_device *dev)
-{
-	struct vc4_dev *vc4 = to_vc4_dev(dev);
+पूर्णांक vc4_kms_load(काष्ठा drm_device *dev)
+अणु
+	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
 	bool is_vc5 = of_device_is_compatible(dev->dev->of_node,
 					      "brcm,bcm2711-vc5");
-	int ret;
+	पूर्णांक ret;
 
-	if (!is_vc5) {
+	अगर (!is_vc5) अणु
 		vc4->load_tracker_available = true;
 
 		/* Start with the load tracker enabled. Can be
 		 * disabled through the debugfs load_tracker file.
 		 */
 		vc4->load_tracker_enabled = true;
-	}
+	पूर्ण
 
-	/* Set support for vblank irq fast disable, before drm_vblank_init() */
+	/* Set support क्रम vblank irq fast disable, beक्रमe drm_vblank_init() */
 	dev->vblank_disable_immediate = true;
 
 	dev->irq_enabled = true;
 	ret = drm_vblank_init(dev, dev->mode_config.num_crtc);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev->dev, "failed to initialize vblank\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (is_vc5) {
+	अगर (is_vc5) अणु
 		dev->mode_config.max_width = 7680;
 		dev->mode_config.max_height = 7680;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev->mode_config.max_width = 2048;
 		dev->mode_config.max_height = 2048;
-	}
+	पूर्ण
 
 	dev->mode_config.funcs = &vc4_mode_funcs;
-	dev->mode_config.helper_private = &vc4_mode_config_helpers;
+	dev->mode_config.helper_निजी = &vc4_mode_config_helpers;
 	dev->mode_config.preferred_depth = 24;
 	dev->mode_config.async_page_flip = true;
-	dev->mode_config.allow_fb_modifiers = true;
+	dev->mode_config.allow_fb_modअगरiers = true;
 
-	ret = vc4_ctm_obj_init(vc4);
-	if (ret)
-		return ret;
+	ret = vc4_cपंचांग_obj_init(vc4);
+	अगर (ret)
+		वापस ret;
 
 	ret = vc4_load_tracker_obj_init(vc4);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = vc4_hvs_channels_obj_init(vc4);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	drm_mode_config_reset(dev);
 
 	drm_kms_helper_poll_init(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

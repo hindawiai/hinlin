@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
     Copyright (c) 2003 Mark M. Hoffman <mhoffman@lightlink.com>
 
@@ -7,309 +8,309 @@
 /*
     This module must be considered BETA unless and until
     the chipset manufacturer releases a datasheet.
-    The register definitions are based on the SiS630.
+    The रेजिस्टर definitions are based on the SiS630.
 
     This module relies on quirk_sis_96x_smbus (drivers/pci/quirks.c)
-    for just about every machine for which users have reported.
+    क्रम just about every machine क्रम which users have reported.
     If this module isn't detecting your 96x south bridge, have a 
     look there.
 
-    We assume there can only be one SiS96x with one SMBus interface.
+    We assume there can only be one SiS96x with one SMBus पूर्णांकerface.
 */
 
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/stddef.h>
-#include <linux/ioport.h>
-#include <linux/i2c.h>
-#include <linux/acpi.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/पन.स>
 
-/* base address register in PCI config space */
-#define SIS96x_BAR 0x04
+/* base address रेजिस्टर in PCI config space */
+#घोषणा SIS96x_BAR 0x04
 
-/* SiS96x SMBus registers */
-#define SMB_STS      0x00
-#define SMB_EN       0x01
-#define SMB_CNT      0x02
-#define SMB_HOST_CNT 0x03
-#define SMB_ADDR     0x04
-#define SMB_CMD      0x05
-#define SMB_PCOUNT   0x06
-#define SMB_COUNT    0x07
-#define SMB_BYTE     0x08
-#define SMB_DEV_ADDR 0x10
-#define SMB_DB0      0x11
-#define SMB_DB1      0x12
-#define SMB_SAA      0x13
+/* SiS96x SMBus रेजिस्टरs */
+#घोषणा SMB_STS      0x00
+#घोषणा SMB_EN       0x01
+#घोषणा SMB_CNT      0x02
+#घोषणा SMB_HOST_CNT 0x03
+#घोषणा SMB_ADDR     0x04
+#घोषणा SMB_CMD      0x05
+#घोषणा SMB_PCOUNT   0x06
+#घोषणा SMB_COUNT    0x07
+#घोषणा SMB_BYTE     0x08
+#घोषणा SMB_DEV_ADDR 0x10
+#घोषणा SMB_DB0      0x11
+#घोषणा SMB_DB1      0x12
+#घोषणा SMB_SAA      0x13
 
-/* register count for request_region */
-#define SMB_IOSIZE 0x20
+/* रेजिस्टर count क्रम request_region */
+#घोषणा SMB_IOSIZE 0x20
 
 /* Other settings */
-#define MAX_TIMEOUT 500
+#घोषणा MAX_TIMEOUT 500
 
-/* SiS96x SMBus constants */
-#define SIS96x_QUICK      0x00
-#define SIS96x_BYTE       0x01
-#define SIS96x_BYTE_DATA  0x02
-#define SIS96x_WORD_DATA  0x03
-#define SIS96x_PROC_CALL  0x04
-#define SIS96x_BLOCK_DATA 0x05
+/* SiS96x SMBus स्थिरants */
+#घोषणा SIS96x_QUICK      0x00
+#घोषणा SIS96x_BYTE       0x01
+#घोषणा SIS96x_BYTE_DATA  0x02
+#घोषणा SIS96x_WORD_DATA  0x03
+#घोषणा SIS96x_PROC_CALL  0x04
+#घोषणा SIS96x_BLOCK_DATA 0x05
 
-static struct pci_driver sis96x_driver;
-static struct i2c_adapter sis96x_adapter;
-static u16 sis96x_smbus_base;
+अटल काष्ठा pci_driver sis96x_driver;
+अटल काष्ठा i2c_adapter sis96x_adapter;
+अटल u16 sis96x_smbus_base;
 
-static inline u8 sis96x_read(u8 reg)
-{
-	return inb(sis96x_smbus_base + reg) ;
-}
+अटल अंतरभूत u8 sis96x_पढ़ो(u8 reg)
+अणु
+	वापस inb(sis96x_smbus_base + reg) ;
+पूर्ण
 
-static inline void sis96x_write(u8 reg, u8 data)
-{
+अटल अंतरभूत व्योम sis96x_ग_लिखो(u8 reg, u8 data)
+अणु
 	outb(data, sis96x_smbus_base + reg) ;
-}
+पूर्ण
 
 /* Execute a SMBus transaction.
-   int size is from SIS96x_QUICK to SIS96x_BLOCK_DATA
+   पूर्णांक size is from SIS96x_QUICK to SIS96x_BLOCK_DATA
  */
-static int sis96x_transaction(int size)
-{
-	int temp;
-	int result = 0;
-	int timeout = 0;
+अटल पूर्णांक sis96x_transaction(पूर्णांक size)
+अणु
+	पूर्णांक temp;
+	पूर्णांक result = 0;
+	पूर्णांक समयout = 0;
 
 	dev_dbg(&sis96x_adapter.dev, "SMBus transaction %d\n", size);
 
-	/* Make sure the SMBus host is ready to start transmitting */
-	if (((temp = sis96x_read(SMB_CNT)) & 0x03) != 0x00) {
+	/* Make sure the SMBus host is पढ़ोy to start transmitting */
+	अगर (((temp = sis96x_पढ़ो(SMB_CNT)) & 0x03) != 0x00) अणु
 
 		dev_dbg(&sis96x_adapter.dev, "SMBus busy (0x%02x). "
 			"Resetting...\n", temp);
 
-		/* kill the transaction */
-		sis96x_write(SMB_HOST_CNT, 0x20);
+		/* समाप्त the transaction */
+		sis96x_ग_लिखो(SMB_HOST_CNT, 0x20);
 
 		/* check it again */
-		if (((temp = sis96x_read(SMB_CNT)) & 0x03) != 0x00) {
+		अगर (((temp = sis96x_पढ़ो(SMB_CNT)) & 0x03) != 0x00) अणु
 			dev_dbg(&sis96x_adapter.dev, "Failed (0x%02x)\n", temp);
-			return -EBUSY;
-		} else {
+			वापस -EBUSY;
+		पूर्ण अन्यथा अणु
 			dev_dbg(&sis96x_adapter.dev, "Successful\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Turn off timeout interrupts, set fast host clock */
-	sis96x_write(SMB_CNT, 0x20);
+	/* Turn off समयout पूर्णांकerrupts, set fast host घड़ी */
+	sis96x_ग_लिखो(SMB_CNT, 0x20);
 
 	/* clear all (sticky) status flags */
-	temp = sis96x_read(SMB_STS);
-	sis96x_write(SMB_STS, temp & 0x1e);
+	temp = sis96x_पढ़ो(SMB_STS);
+	sis96x_ग_लिखो(SMB_STS, temp & 0x1e);
 
 	/* start the transaction by setting bit 4 and size bits */
-	sis96x_write(SMB_HOST_CNT, 0x10 | (size & 0x07));
+	sis96x_ग_लिखो(SMB_HOST_CNT, 0x10 | (size & 0x07));
 
-	/* We will always wait for a fraction of a second! */
-	do {
+	/* We will always रुको क्रम a fraction of a second! */
+	करो अणु
 		msleep(1);
-		temp = sis96x_read(SMB_STS);
-	} while (!(temp & 0x0e) && (timeout++ < MAX_TIMEOUT));
+		temp = sis96x_पढ़ो(SMB_STS);
+	पूर्ण जबतक (!(temp & 0x0e) && (समयout++ < MAX_TIMEOUT));
 
 	/* If the SMBus is still busy, we give up */
-	if (timeout > MAX_TIMEOUT) {
+	अगर (समयout > MAX_TIMEOUT) अणु
 		dev_dbg(&sis96x_adapter.dev, "SMBus Timeout! (0x%02x)\n", temp);
 		result = -ETIMEDOUT;
-	}
+	पूर्ण
 
 	/* device error - probably missing ACK */
-	if (temp & 0x02) {
+	अगर (temp & 0x02) अणु
 		dev_dbg(&sis96x_adapter.dev, "Failed bus transaction!\n");
 		result = -ENXIO;
-	}
+	पूर्ण
 
 	/* bus collision */
-	if (temp & 0x04) {
+	अगर (temp & 0x04) अणु
 		dev_dbg(&sis96x_adapter.dev, "Bus collision!\n");
 		result = -EIO;
-	}
+	पूर्ण
 
 	/* Finish up by resetting the bus */
-	sis96x_write(SMB_STS, temp);
-	if ((temp = sis96x_read(SMB_STS))) {
+	sis96x_ग_लिखो(SMB_STS, temp);
+	अगर ((temp = sis96x_पढ़ो(SMB_STS))) अणु
 		dev_dbg(&sis96x_adapter.dev, "Failed reset at "
 			"end of transaction! (0x%02x)\n", temp);
-	}
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
-/* Return negative errno on error. */
-static s32 sis96x_access(struct i2c_adapter * adap, u16 addr,
-			 unsigned short flags, char read_write,
-			 u8 command, int size, union i2c_smbus_data * data)
-{
-	int status;
+/* Return negative त्रुटि_सं on error. */
+अटल s32 sis96x_access(काष्ठा i2c_adapter * adap, u16 addr,
+			 अचिन्हित लघु flags, अक्षर पढ़ो_ग_लिखो,
+			 u8 command, पूर्णांक size, जोड़ i2c_smbus_data * data)
+अणु
+	पूर्णांक status;
 
-	switch (size) {
-	case I2C_SMBUS_QUICK:
-		sis96x_write(SMB_ADDR, ((addr & 0x7f) << 1) | (read_write & 0x01));
+	चयन (size) अणु
+	हाल I2C_SMBUS_QUICK:
+		sis96x_ग_लिखो(SMB_ADDR, ((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01));
 		size = SIS96x_QUICK;
-		break;
+		अवरोध;
 
-	case I2C_SMBUS_BYTE:
-		sis96x_write(SMB_ADDR, ((addr & 0x7f) << 1) | (read_write & 0x01));
-		if (read_write == I2C_SMBUS_WRITE)
-			sis96x_write(SMB_CMD, command);
+	हाल I2C_SMBUS_BYTE:
+		sis96x_ग_लिखो(SMB_ADDR, ((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01));
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE)
+			sis96x_ग_लिखो(SMB_CMD, command);
 		size = SIS96x_BYTE;
-		break;
+		अवरोध;
 
-	case I2C_SMBUS_BYTE_DATA:
-		sis96x_write(SMB_ADDR, ((addr & 0x7f) << 1) | (read_write & 0x01));
-		sis96x_write(SMB_CMD, command);
-		if (read_write == I2C_SMBUS_WRITE)
-			sis96x_write(SMB_BYTE, data->byte);
+	हाल I2C_SMBUS_BYTE_DATA:
+		sis96x_ग_लिखो(SMB_ADDR, ((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01));
+		sis96x_ग_लिखो(SMB_CMD, command);
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE)
+			sis96x_ग_लिखो(SMB_BYTE, data->byte);
 		size = SIS96x_BYTE_DATA;
-		break;
+		अवरोध;
 
-	case I2C_SMBUS_PROC_CALL:
-	case I2C_SMBUS_WORD_DATA:
-		sis96x_write(SMB_ADDR, ((addr & 0x7f) << 1) | (read_write & 0x01));
-		sis96x_write(SMB_CMD, command);
-		if (read_write == I2C_SMBUS_WRITE) {
-			sis96x_write(SMB_BYTE, data->word & 0xff);
-			sis96x_write(SMB_BYTE + 1, (data->word & 0xff00) >> 8);
-		}
+	हाल I2C_SMBUS_PROC_CALL:
+	हाल I2C_SMBUS_WORD_DATA:
+		sis96x_ग_लिखो(SMB_ADDR, ((addr & 0x7f) << 1) | (पढ़ो_ग_लिखो & 0x01));
+		sis96x_ग_लिखो(SMB_CMD, command);
+		अगर (पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
+			sis96x_ग_लिखो(SMB_BYTE, data->word & 0xff);
+			sis96x_ग_लिखो(SMB_BYTE + 1, (data->word & 0xff00) >> 8);
+		पूर्ण
 		size = (size == I2C_SMBUS_PROC_CALL ? 
 			SIS96x_PROC_CALL : SIS96x_WORD_DATA);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_warn(&adap->dev, "Unsupported transaction %d\n", size);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	status = sis96x_transaction(size);
-	if (status)
-		return status;
+	अगर (status)
+		वापस status;
 
-	if ((size != SIS96x_PROC_CALL) &&
-		((read_write == I2C_SMBUS_WRITE) || (size == SIS96x_QUICK)))
-		return 0;
+	अगर ((size != SIS96x_PROC_CALL) &&
+		((पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) || (size == SIS96x_QUICK)))
+		वापस 0;
 
-	switch (size) {
-	case SIS96x_BYTE:
-	case SIS96x_BYTE_DATA:
-		data->byte = sis96x_read(SMB_BYTE);
-		break;
+	चयन (size) अणु
+	हाल SIS96x_BYTE:
+	हाल SIS96x_BYTE_DATA:
+		data->byte = sis96x_पढ़ो(SMB_BYTE);
+		अवरोध;
 
-	case SIS96x_WORD_DATA:
-	case SIS96x_PROC_CALL:
-		data->word = sis96x_read(SMB_BYTE) +
-				(sis96x_read(SMB_BYTE + 1) << 8);
-		break;
-	}
-	return 0;
-}
+	हाल SIS96x_WORD_DATA:
+	हाल SIS96x_PROC_CALL:
+		data->word = sis96x_पढ़ो(SMB_BYTE) +
+				(sis96x_पढ़ो(SMB_BYTE + 1) << 8);
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static u32 sis96x_func(struct i2c_adapter *adapter)
-{
-	return I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
+अटल u32 sis96x_func(काष्ठा i2c_adapter *adapter)
+अणु
+	वापस I2C_FUNC_SMBUS_QUICK | I2C_FUNC_SMBUS_BYTE |
 	    I2C_FUNC_SMBUS_BYTE_DATA | I2C_FUNC_SMBUS_WORD_DATA |
 	    I2C_FUNC_SMBUS_PROC_CALL;
-}
+पूर्ण
 
-static const struct i2c_algorithm smbus_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm smbus_algorithm = अणु
 	.smbus_xfer	= sis96x_access,
 	.functionality	= sis96x_func,
-};
+पूर्ण;
 
-static struct i2c_adapter sis96x_adapter = {
+अटल काष्ठा i2c_adapter sis96x_adapter = अणु
 	.owner		= THIS_MODULE,
 	.class		= I2C_CLASS_HWMON | I2C_CLASS_SPD,
 	.algo		= &smbus_algorithm,
-};
+पूर्ण;
 
-static const struct pci_device_id sis96x_ids[] = {
-	{ PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_SMBUS) },
-	{ 0, }
-};
+अटल स्थिर काष्ठा pci_device_id sis96x_ids[] = अणु
+	अणु PCI_DEVICE(PCI_VENDOR_ID_SI, PCI_DEVICE_ID_SI_SMBUS) पूर्ण,
+	अणु 0, पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE (pci, sis96x_ids);
 
-static int sis96x_probe(struct pci_dev *dev,
-				const struct pci_device_id *id)
-{
+अटल पूर्णांक sis96x_probe(काष्ठा pci_dev *dev,
+				स्थिर काष्ठा pci_device_id *id)
+अणु
 	u16 ww = 0;
-	int retval;
+	पूर्णांक retval;
 
-	if (sis96x_smbus_base) {
+	अगर (sis96x_smbus_base) अणु
 		dev_err(&dev->dev, "Only one device supported.\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	pci_read_config_word(dev, PCI_CLASS_DEVICE, &ww);
-	if (PCI_CLASS_SERIAL_SMBUS != ww) {
+	pci_पढ़ो_config_word(dev, PCI_CLASS_DEVICE, &ww);
+	अगर (PCI_CLASS_SERIAL_SMBUS != ww) अणु
 		dev_err(&dev->dev, "Unsupported device class 0x%04x!\n", ww);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	sis96x_smbus_base = pci_resource_start(dev, SIS96x_BAR);
-	if (!sis96x_smbus_base) {
+	अगर (!sis96x_smbus_base) अणु
 		dev_err(&dev->dev, "SiS96x SMBus base address "
 			"not initialized!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dev_info(&dev->dev, "SiS96x SMBus base address: 0x%04x\n",
 			sis96x_smbus_base);
 
 	retval = acpi_check_resource_conflict(&dev->resource[SIS96x_BAR]);
-	if (retval)
-		return -ENODEV;
+	अगर (retval)
+		वापस -ENODEV;
 
 	/* Everything is happy, let's grab the memory and set things up. */
-	if (!request_region(sis96x_smbus_base, SMB_IOSIZE,
-			    sis96x_driver.name)) {
+	अगर (!request_region(sis96x_smbus_base, SMB_IOSIZE,
+			    sis96x_driver.name)) अणु
 		dev_err(&dev->dev, "SMBus registers 0x%04x-0x%04x "
 			"already in use!\n", sis96x_smbus_base,
 			sis96x_smbus_base + SMB_IOSIZE - 1);
 
 		sis96x_smbus_base = 0;
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* set up the sysfs linkage to our parent device */
 	sis96x_adapter.dev.parent = &dev->dev;
 
-	snprintf(sis96x_adapter.name, sizeof(sis96x_adapter.name),
+	snम_लिखो(sis96x_adapter.name, माप(sis96x_adapter.name),
 		"SiS96x SMBus adapter at 0x%04x", sis96x_smbus_base);
 
-	if ((retval = i2c_add_adapter(&sis96x_adapter))) {
+	अगर ((retval = i2c_add_adapter(&sis96x_adapter))) अणु
 		dev_err(&dev->dev, "Couldn't register adapter!\n");
 		release_region(sis96x_smbus_base, SMB_IOSIZE);
 		sis96x_smbus_base = 0;
-	}
+	पूर्ण
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void sis96x_remove(struct pci_dev *dev)
-{
-	if (sis96x_smbus_base) {
+अटल व्योम sis96x_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	अगर (sis96x_smbus_base) अणु
 		i2c_del_adapter(&sis96x_adapter);
 		release_region(sis96x_smbus_base, SMB_IOSIZE);
 		sis96x_smbus_base = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct pci_driver sis96x_driver = {
+अटल काष्ठा pci_driver sis96x_driver = अणु
 	.name		= "sis96x_smbus",
 	.id_table	= sis96x_ids,
 	.probe		= sis96x_probe,
-	.remove		= sis96x_remove,
-};
+	.हटाओ		= sis96x_हटाओ,
+पूर्ण;
 
 module_pci_driver(sis96x_driver);
 

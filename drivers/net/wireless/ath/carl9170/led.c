@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Atheros CARL9170 driver
  *
@@ -6,7 +7,7 @@
  * Copyright 2008, Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2009, 2010, Christian Lamparer <chunkeey@googlemail.com>
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -14,177 +15,177 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; see the file COPYING.  If not, see
+ * aदीर्घ with this program; see the file COPYING.  If not, see
  * http://www.gnu.org/licenses/.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
  *    Copyright (c) 2007-2008 Atheros Communications, Inc.
  *
- *    Permission to use, copy, modify, and/or distribute this software for any
+ *    Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  *    purpose with or without fee is hereby granted, provided that the above
  *    copyright notice and this permission notice appear in all copies.
  *
  *    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  *    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  *    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- *    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ *    ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  *    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  *    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "carl9170.h"
-#include "cmd.h"
+#समावेश "carl9170.h"
+#समावेश "cmd.h"
 
-int carl9170_led_set_state(struct ar9170 *ar, const u32 led_state)
-{
-	return carl9170_write_reg(ar, AR9170_GPIO_REG_PORT_DATA, led_state);
-}
+पूर्णांक carl9170_led_set_state(काष्ठा ar9170 *ar, स्थिर u32 led_state)
+अणु
+	वापस carl9170_ग_लिखो_reg(ar, AR9170_GPIO_REG_PORT_DATA, led_state);
+पूर्ण
 
-int carl9170_led_init(struct ar9170 *ar)
-{
-	int err;
+पूर्णांक carl9170_led_init(काष्ठा ar9170 *ar)
+अणु
+	पूर्णांक err;
 
 	/* disable LEDs */
 	/* GPIO [0/1 mode: output, 2/3: input] */
-	err = carl9170_write_reg(ar, AR9170_GPIO_REG_PORT_TYPE, 3);
-	if (err)
-		goto out;
+	err = carl9170_ग_लिखो_reg(ar, AR9170_GPIO_REG_PORT_TYPE, 3);
+	अगर (err)
+		जाओ out;
 
 	/* GPIO 0/1 value: off */
 	err = carl9170_led_set_state(ar, 0);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_CARL9170_LEDS
-static void carl9170_led_update(struct work_struct *work)
-{
-	struct ar9170 *ar = container_of(work, struct ar9170, led_work.work);
-	int i, tmp = 300, blink_delay = 1000;
+#अगर_घोषित CONFIG_CARL9170_LEDS
+अटल व्योम carl9170_led_update(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ar9170 *ar = container_of(work, काष्ठा ar9170, led_work.work);
+	पूर्णांक i, पंचांगp = 300, blink_delay = 1000;
 	u32 led_val = 0;
 	bool rerun = false;
 
-	if (!IS_ACCEPTING_CMD(ar))
-		return;
+	अगर (!IS_ACCEPTING_CMD(ar))
+		वापस;
 
 	mutex_lock(&ar->mutex);
-	for (i = 0; i < AR9170_NUM_LEDS; i++) {
-		if (ar->leds[i].registered) {
-			if (ar->leds[i].last_state ||
-			    ar->leds[i].toggled) {
+	क्रम (i = 0; i < AR9170_NUM_LEDS; i++) अणु
+		अगर (ar->leds[i].रेजिस्टरed) अणु
+			अगर (ar->leds[i].last_state ||
+			    ar->leds[i].toggled) अणु
 
-				if (ar->leds[i].toggled)
-					tmp = 70 + 200 / (ar->leds[i].toggled);
+				अगर (ar->leds[i].toggled)
+					पंचांगp = 70 + 200 / (ar->leds[i].toggled);
 
-				if (tmp < blink_delay)
-					blink_delay = tmp;
+				अगर (पंचांगp < blink_delay)
+					blink_delay = पंचांगp;
 
 				led_val |= 1 << i;
 				ar->leds[i].toggled = 0;
 				rerun = true;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	carl9170_led_set_state(ar, led_val);
 	mutex_unlock(&ar->mutex);
 
-	if (!rerun)
-		return;
+	अगर (!rerun)
+		वापस;
 
 	ieee80211_queue_delayed_work(ar->hw,
 				     &ar->led_work,
-				     msecs_to_jiffies(blink_delay));
-}
+				     msecs_to_jअगरfies(blink_delay));
+पूर्ण
 
-static void carl9170_led_set_brightness(struct led_classdev *led,
-					enum led_brightness brightness)
-{
-	struct carl9170_led *arl = container_of(led, struct carl9170_led, l);
-	struct ar9170 *ar = arl->ar;
+अटल व्योम carl9170_led_set_brightness(काष्ठा led_classdev *led,
+					क्रमागत led_brightness brightness)
+अणु
+	काष्ठा carl9170_led *arl = container_of(led, काष्ठा carl9170_led, l);
+	काष्ठा ar9170 *ar = arl->ar;
 
-	if (!arl->registered)
-		return;
+	अगर (!arl->रेजिस्टरed)
+		वापस;
 
-	if (arl->last_state != !!brightness) {
+	अगर (arl->last_state != !!brightness) अणु
 		arl->toggled++;
 		arl->last_state = !!brightness;
-	}
+	पूर्ण
 
-	if (likely(IS_ACCEPTING_CMD(ar) && arl->toggled))
+	अगर (likely(IS_ACCEPTING_CMD(ar) && arl->toggled))
 		ieee80211_queue_delayed_work(ar->hw, &ar->led_work, HZ / 10);
-}
+पूर्ण
 
-static int carl9170_led_register_led(struct ar9170 *ar, int i, char *name,
-				     const char *trigger)
-{
-	int err;
+अटल पूर्णांक carl9170_led_रेजिस्टर_led(काष्ठा ar9170 *ar, पूर्णांक i, अक्षर *name,
+				     स्थिर अक्षर *trigger)
+अणु
+	पूर्णांक err;
 
-	snprintf(ar->leds[i].name, sizeof(ar->leds[i].name),
+	snम_लिखो(ar->leds[i].name, माप(ar->leds[i].name),
 		 "carl9170-%s::%s", wiphy_name(ar->hw->wiphy), name);
 
 	ar->leds[i].ar = ar;
 	ar->leds[i].l.name = ar->leds[i].name;
 	ar->leds[i].l.brightness_set = carl9170_led_set_brightness;
 	ar->leds[i].l.brightness = 0;
-	ar->leds[i].l.default_trigger = trigger;
+	ar->leds[i].l.शेष_trigger = trigger;
 
-	err = led_classdev_register(wiphy_dev(ar->hw->wiphy),
+	err = led_classdev_रेजिस्टर(wiphy_dev(ar->hw->wiphy),
 				    &ar->leds[i].l);
-	if (err) {
+	अगर (err) अणु
 		wiphy_err(ar->hw->wiphy, "failed to register %s LED (%d).\n",
 			ar->leds[i].name, err);
-	} else {
-		ar->leds[i].registered = true;
-	}
+	पूर्ण अन्यथा अणु
+		ar->leds[i].रेजिस्टरed = true;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void carl9170_led_unregister(struct ar9170 *ar)
-{
-	int i;
+व्योम carl9170_led_unरेजिस्टर(काष्ठा ar9170 *ar)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < AR9170_NUM_LEDS; i++)
-		if (ar->leds[i].registered) {
-			led_classdev_unregister(&ar->leds[i].l);
-			ar->leds[i].registered = false;
+	क्रम (i = 0; i < AR9170_NUM_LEDS; i++)
+		अगर (ar->leds[i].रेजिस्टरed) अणु
+			led_classdev_unरेजिस्टर(&ar->leds[i].l);
+			ar->leds[i].रेजिस्टरed = false;
 			ar->leds[i].toggled = 0;
-		}
+		पूर्ण
 
 	cancel_delayed_work_sync(&ar->led_work);
-}
+पूर्ण
 
-int carl9170_led_register(struct ar9170 *ar)
-{
-	int err;
+पूर्णांक carl9170_led_रेजिस्टर(काष्ठा ar9170 *ar)
+अणु
+	पूर्णांक err;
 
 	INIT_DELAYED_WORK(&ar->led_work, carl9170_led_update);
 
-	err = carl9170_led_register_led(ar, 0, "tx",
+	err = carl9170_led_रेजिस्टर_led(ar, 0, "tx",
 					ieee80211_get_tx_led_name(ar->hw));
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
-	if (ar->features & CARL9170_ONE_LED)
-		return 0;
+	अगर (ar->features & CARL9170_ONE_LED)
+		वापस 0;
 
-	err = carl9170_led_register_led(ar, 1, "assoc",
+	err = carl9170_led_रेजिस्टर_led(ar, 1, "assoc",
 					ieee80211_get_assoc_led_name(ar->hw));
-	if (err)
-		goto fail;
+	अगर (err)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 
 fail:
-	carl9170_led_unregister(ar);
-	return err;
-}
+	carl9170_led_unरेजिस्टर(ar);
+	वापस err;
+पूर्ण
 
-#endif /* CONFIG_CARL9170_LEDS */
+#पूर्ण_अगर /* CONFIG_CARL9170_LEDS */

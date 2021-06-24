@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __WATCHDOG_PRETIMEOUT_H
-#define __WATCHDOG_PRETIMEOUT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __WATCHDOG_PRETIMEOUT_H
+#घोषणा __WATCHDOG_PRETIMEOUT_H
 
-#define WATCHDOG_GOV_NAME_MAXLEN	20
+#घोषणा WATCHDOG_GOV_NAME_MAXLEN	20
 
-struct watchdog_device;
+काष्ठा watchकरोg_device;
 
-struct watchdog_governor {
-	const char	name[WATCHDOG_GOV_NAME_MAXLEN];
-	void		(*pretimeout)(struct watchdog_device *wdd);
-};
+काष्ठा watchकरोg_governor अणु
+	स्थिर अक्षर	name[WATCHDOG_GOV_NAME_MAXLEN];
+	व्योम		(*preसमयout)(काष्ठा watchकरोg_device *wdd);
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_WATCHDOG_PRETIMEOUT_GOV)
-/* Interfaces to watchdog pretimeout governors */
-int watchdog_register_governor(struct watchdog_governor *gov);
-void watchdog_unregister_governor(struct watchdog_governor *gov);
+#अगर IS_ENABLED(CONFIG_WATCHDOG_PRETIMEOUT_GOV)
+/* Interfaces to watchकरोg preसमयout governors */
+पूर्णांक watchकरोg_रेजिस्टर_governor(काष्ठा watchकरोg_governor *gov);
+व्योम watchकरोg_unरेजिस्टर_governor(काष्ठा watchकरोg_governor *gov);
 
-/* Interfaces to watchdog_dev.c */
-int watchdog_register_pretimeout(struct watchdog_device *wdd);
-void watchdog_unregister_pretimeout(struct watchdog_device *wdd);
-int watchdog_pretimeout_available_governors_get(char *buf);
-int watchdog_pretimeout_governor_get(struct watchdog_device *wdd, char *buf);
-int watchdog_pretimeout_governor_set(struct watchdog_device *wdd,
-				     const char *buf);
+/* Interfaces to watchकरोg_dev.c */
+पूर्णांक watchकरोg_रेजिस्टर_preसमयout(काष्ठा watchकरोg_device *wdd);
+व्योम watchकरोg_unरेजिस्टर_preसमयout(काष्ठा watchकरोg_device *wdd);
+पूर्णांक watchकरोg_preसमयout_available_governors_get(अक्षर *buf);
+पूर्णांक watchकरोg_preसमयout_governor_get(काष्ठा watchकरोg_device *wdd, अक्षर *buf);
+पूर्णांक watchकरोg_preसमयout_governor_set(काष्ठा watchकरोg_device *wdd,
+				     स्थिर अक्षर *buf);
 
-#if IS_ENABLED(CONFIG_WATCHDOG_PRETIMEOUT_DEFAULT_GOV_NOOP)
-#define WATCHDOG_PRETIMEOUT_DEFAULT_GOV		"noop"
-#elif IS_ENABLED(CONFIG_WATCHDOG_PRETIMEOUT_DEFAULT_GOV_PANIC)
-#define WATCHDOG_PRETIMEOUT_DEFAULT_GOV		"panic"
-#endif
+#अगर IS_ENABLED(CONFIG_WATCHDOG_PRETIMEOUT_DEFAULT_GOV_NOOP)
+#घोषणा WATCHDOG_PRETIMEOUT_DEFAULT_GOV		"noop"
+#या_अगर IS_ENABLED(CONFIG_WATCHDOG_PRETIMEOUT_DEFAULT_GOV_PANIC)
+#घोषणा WATCHDOG_PRETIMEOUT_DEFAULT_GOV		"panic"
+#पूर्ण_अगर
 
-#else
-static inline int watchdog_register_pretimeout(struct watchdog_device *wdd)
-{
-	return 0;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक watchकरोg_रेजिस्टर_preसमयout(काष्ठा watchकरोg_device *wdd)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void watchdog_unregister_pretimeout(struct watchdog_device *wdd)
-{
-}
+अटल अंतरभूत व्योम watchकरोg_unरेजिस्टर_preसमयout(काष्ठा watchकरोg_device *wdd)
+अणु
+पूर्ण
 
-static inline int watchdog_pretimeout_available_governors_get(char *buf)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक watchकरोg_preसमयout_available_governors_get(अक्षर *buf)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int watchdog_pretimeout_governor_get(struct watchdog_device *wdd,
-						   char *buf)
-{
-	return -EINVAL;
-}
+अटल अंतरभूत पूर्णांक watchकरोg_preसमयout_governor_get(काष्ठा watchकरोg_device *wdd,
+						   अक्षर *buf)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static inline int watchdog_pretimeout_governor_set(struct watchdog_device *wdd,
-						   const char *buf)
-{
-	return -EINVAL;
-}
-#endif
+अटल अंतरभूत पूर्णांक watchकरोg_preसमयout_governor_set(काष्ठा watchकरोg_device *wdd,
+						   स्थिर अक्षर *buf)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

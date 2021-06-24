@@ -1,533 +1,534 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Marvell OcteonTx2 RVU Admin Function driver
  *
  * Copyright (C) 2018 Marvell International Ltd.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
 
-#include <linux/module.h>
-#include <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
 
-#include "rvu_struct.h"
-#include "rvu_reg.h"
-#include "rvu.h"
+#समावेश "rvu_struct.h"
+#समावेश "rvu_reg.h"
+#समावेश "rvu.h"
 
-static int npa_aq_enqueue_wait(struct rvu *rvu, struct rvu_block *block,
-			       struct npa_aq_inst_s *inst)
-{
-	struct admin_queue *aq = block->aq;
-	struct npa_aq_res_s *result;
-	int timeout = 1000;
+अटल पूर्णांक npa_aq_enqueue_रुको(काष्ठा rvu *rvu, काष्ठा rvu_block *block,
+			       काष्ठा npa_aq_inst_s *inst)
+अणु
+	काष्ठा admin_queue *aq = block->aq;
+	काष्ठा npa_aq_res_s *result;
+	पूर्णांक समयout = 1000;
 	u64 reg, head;
 
-	result = (struct npa_aq_res_s *)aq->res->base;
+	result = (काष्ठा npa_aq_res_s *)aq->res->base;
 
-	/* Get current head pointer where to append this instruction */
-	reg = rvu_read64(rvu, block->addr, NPA_AF_AQ_STATUS);
+	/* Get current head poपूर्णांकer where to append this inकाष्ठाion */
+	reg = rvu_पढ़ो64(rvu, block->addr, NPA_AF_AQ_STATUS);
 	head = (reg >> 4) & AQ_PTR_MASK;
 
-	memcpy((void *)(aq->inst->base + (head * aq->inst->entry_sz)),
-	       (void *)inst, aq->inst->entry_sz);
-	memset(result, 0, sizeof(*result));
-	/* sync into memory */
+	स_नकल((व्योम *)(aq->inst->base + (head * aq->inst->entry_sz)),
+	       (व्योम *)inst, aq->inst->entry_sz);
+	स_रखो(result, 0, माप(*result));
+	/* sync पूर्णांकo memory */
 	wmb();
 
-	/* Ring the doorbell and wait for result */
-	rvu_write64(rvu, block->addr, NPA_AF_AQ_DOOR, 1);
-	while (result->compcode == NPA_AQ_COMP_NOTDONE) {
+	/* Ring the करोorbell and रुको क्रम result */
+	rvu_ग_लिखो64(rvu, block->addr, NPA_AF_AQ_DOOR, 1);
+	जबतक (result->compcode == NPA_AQ_COMP_NOTDONE) अणु
 		cpu_relax();
 		udelay(1);
-		timeout--;
-		if (!timeout)
-			return -EBUSY;
-	}
+		समयout--;
+		अगर (!समयout)
+			वापस -EBUSY;
+	पूर्ण
 
-	if (result->compcode != NPA_AQ_COMP_GOOD)
+	अगर (result->compcode != NPA_AQ_COMP_GOOD)
 		/* TODO: Replace this with some error code */
-		return -EBUSY;
+		वापस -EBUSY;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rvu_npa_aq_enq_inst(struct rvu *rvu, struct npa_aq_enq_req *req,
-			struct npa_aq_enq_rsp *rsp)
-{
-	struct rvu_hwinfo *hw = rvu->hw;
-	u16 pcifunc = req->hdr.pcifunc;
-	int blkaddr, npalf, rc = 0;
-	struct npa_aq_inst_s inst;
-	struct rvu_block *block;
-	struct admin_queue *aq;
-	struct rvu_pfvf *pfvf;
-	void *ctx, *mask;
+पूर्णांक rvu_npa_aq_enq_inst(काष्ठा rvu *rvu, काष्ठा npa_aq_enq_req *req,
+			काष्ठा npa_aq_enq_rsp *rsp)
+अणु
+	काष्ठा rvu_hwinfo *hw = rvu->hw;
+	u16 pcअगरunc = req->hdr.pcअगरunc;
+	पूर्णांक blkaddr, npalf, rc = 0;
+	काष्ठा npa_aq_inst_s inst;
+	काष्ठा rvu_block *block;
+	काष्ठा admin_queue *aq;
+	काष्ठा rvu_pfvf *pfvf;
+	व्योम *ctx, *mask;
 	bool ena;
 
-	pfvf = rvu_get_pfvf(rvu, pcifunc);
-	if (!pfvf->aura_ctx || req->aura_id >= pfvf->aura_ctx->qsize)
-		return NPA_AF_ERR_AQ_ENQUEUE;
+	pfvf = rvu_get_pfvf(rvu, pcअगरunc);
+	अगर (!pfvf->aura_ctx || req->aura_id >= pfvf->aura_ctx->qsize)
+		वापस NPA_AF_ERR_AQ_ENQUEUE;
 
-	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, pcifunc);
-	if (!pfvf->npalf || blkaddr < 0)
-		return NPA_AF_ERR_AF_LF_INVALID;
+	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, pcअगरunc);
+	अगर (!pfvf->npalf || blkaddr < 0)
+		वापस NPA_AF_ERR_AF_LF_INVALID;
 
 	block = &hw->block[blkaddr];
 	aq = block->aq;
-	if (!aq) {
+	अगर (!aq) अणु
 		dev_warn(rvu->dev, "%s: NPA AQ not initialized\n", __func__);
-		return NPA_AF_ERR_AQ_ENQUEUE;
-	}
+		वापस NPA_AF_ERR_AQ_ENQUEUE;
+	पूर्ण
 
-	npalf = rvu_get_lf(rvu, block, pcifunc, 0);
-	if (npalf < 0)
-		return NPA_AF_ERR_AF_LF_INVALID;
+	npalf = rvu_get_lf(rvu, block, pcअगरunc, 0);
+	अगर (npalf < 0)
+		वापस NPA_AF_ERR_AF_LF_INVALID;
 
-	memset(&inst, 0, sizeof(struct npa_aq_inst_s));
+	स_रखो(&inst, 0, माप(काष्ठा npa_aq_inst_s));
 	inst.cindex = req->aura_id;
 	inst.lf = npalf;
 	inst.ctype = req->ctype;
 	inst.op = req->op;
-	/* Currently we are not supporting enqueuing multiple instructions,
+	/* Currently we are not supporting enqueuing multiple inकाष्ठाions,
 	 * so always choose first entry in result memory.
 	 */
 	inst.res_addr = (u64)aq->res->iova;
 
-	/* Hardware uses same aq->res->base for updating result of
-	 * previous instruction hence wait here till it is done.
+	/* Hardware uses same aq->res->base क्रम updating result of
+	 * previous inकाष्ठाion hence रुको here till it is करोne.
 	 */
 	spin_lock(&aq->lock);
 
 	/* Clean result + context memory */
-	memset(aq->res->base, 0, aq->res->entry_sz);
+	स_रखो(aq->res->base, 0, aq->res->entry_sz);
 	/* Context needs to be written at RES_ADDR + 128 */
 	ctx = aq->res->base + 128;
 	/* Mask needs to be written at RES_ADDR + 256 */
 	mask = aq->res->base + 256;
 
-	switch (req->op) {
-	case NPA_AQ_INSTOP_WRITE:
-		/* Copy context and write mask */
-		if (req->ctype == NPA_AQ_CTYPE_AURA) {
-			memcpy(mask, &req->aura_mask,
-			       sizeof(struct npa_aura_s));
-			memcpy(ctx, &req->aura, sizeof(struct npa_aura_s));
-		} else {
-			memcpy(mask, &req->pool_mask,
-			       sizeof(struct npa_pool_s));
-			memcpy(ctx, &req->pool, sizeof(struct npa_pool_s));
-		}
-		break;
-	case NPA_AQ_INSTOP_INIT:
-		if (req->ctype == NPA_AQ_CTYPE_AURA) {
-			if (req->aura.pool_addr >= pfvf->pool_ctx->qsize) {
+	चयन (req->op) अणु
+	हाल NPA_AQ_INSTOP_WRITE:
+		/* Copy context and ग_लिखो mask */
+		अगर (req->ctype == NPA_AQ_CTYPE_AURA) अणु
+			स_नकल(mask, &req->aura_mask,
+			       माप(काष्ठा npa_aura_s));
+			स_नकल(ctx, &req->aura, माप(काष्ठा npa_aura_s));
+		पूर्ण अन्यथा अणु
+			स_नकल(mask, &req->pool_mask,
+			       माप(काष्ठा npa_pool_s));
+			स_नकल(ctx, &req->pool, माप(काष्ठा npa_pool_s));
+		पूर्ण
+		अवरोध;
+	हाल NPA_AQ_INSTOP_INIT:
+		अगर (req->ctype == NPA_AQ_CTYPE_AURA) अणु
+			अगर (req->aura.pool_addr >= pfvf->pool_ctx->qsize) अणु
 				rc = NPA_AF_ERR_AQ_FULL;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			/* Set pool's context address */
 			req->aura.pool_addr = pfvf->pool_ctx->iova +
 			(req->aura.pool_addr * pfvf->pool_ctx->entry_sz);
-			memcpy(ctx, &req->aura, sizeof(struct npa_aura_s));
-		} else { /* POOL's context */
-			memcpy(ctx, &req->pool, sizeof(struct npa_pool_s));
-		}
-		break;
-	case NPA_AQ_INSTOP_NOP:
-	case NPA_AQ_INSTOP_READ:
-	case NPA_AQ_INSTOP_LOCK:
-	case NPA_AQ_INSTOP_UNLOCK:
-		break;
-	default:
+			स_नकल(ctx, &req->aura, माप(काष्ठा npa_aura_s));
+		पूर्ण अन्यथा अणु /* POOL's context */
+			स_नकल(ctx, &req->pool, माप(काष्ठा npa_pool_s));
+		पूर्ण
+		अवरोध;
+	हाल NPA_AQ_INSTOP_NOP:
+	हाल NPA_AQ_INSTOP_READ:
+	हाल NPA_AQ_INSTOP_LOCK:
+	हाल NPA_AQ_INSTOP_UNLOCK:
+		अवरोध;
+	शेष:
 		rc = NPA_AF_ERR_AQ_FULL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (rc) {
+	अगर (rc) अणु
 		spin_unlock(&aq->lock);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Submit the instruction to AQ */
-	rc = npa_aq_enqueue_wait(rvu, block, &inst);
-	if (rc) {
+	/* Submit the inकाष्ठाion to AQ */
+	rc = npa_aq_enqueue_रुको(rvu, block, &inst);
+	अगर (rc) अणु
 		spin_unlock(&aq->lock);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Set aura bitmap if aura hw context is enabled */
-	if (req->ctype == NPA_AQ_CTYPE_AURA) {
-		if (req->op == NPA_AQ_INSTOP_INIT && req->aura.ena)
+	/* Set aura biपंचांगap अगर aura hw context is enabled */
+	अगर (req->ctype == NPA_AQ_CTYPE_AURA) अणु
+		अगर (req->op == NPA_AQ_INSTOP_INIT && req->aura.ena)
 			__set_bit(req->aura_id, pfvf->aura_bmap);
-		if (req->op == NPA_AQ_INSTOP_WRITE) {
+		अगर (req->op == NPA_AQ_INSTOP_WRITE) अणु
 			ena = (req->aura.ena & req->aura_mask.ena) |
 				(test_bit(req->aura_id, pfvf->aura_bmap) &
 				~req->aura_mask.ena);
-			if (ena)
+			अगर (ena)
 				__set_bit(req->aura_id, pfvf->aura_bmap);
-			else
+			अन्यथा
 				__clear_bit(req->aura_id, pfvf->aura_bmap);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Set pool bitmap if pool hw context is enabled */
-	if (req->ctype == NPA_AQ_CTYPE_POOL) {
-		if (req->op == NPA_AQ_INSTOP_INIT && req->pool.ena)
+	/* Set pool biपंचांगap अगर pool hw context is enabled */
+	अगर (req->ctype == NPA_AQ_CTYPE_POOL) अणु
+		अगर (req->op == NPA_AQ_INSTOP_INIT && req->pool.ena)
 			__set_bit(req->aura_id, pfvf->pool_bmap);
-		if (req->op == NPA_AQ_INSTOP_WRITE) {
+		अगर (req->op == NPA_AQ_INSTOP_WRITE) अणु
 			ena = (req->pool.ena & req->pool_mask.ena) |
 				(test_bit(req->aura_id, pfvf->pool_bmap) &
 				~req->pool_mask.ena);
-			if (ena)
+			अगर (ena)
 				__set_bit(req->aura_id, pfvf->pool_bmap);
-			else
+			अन्यथा
 				__clear_bit(req->aura_id, pfvf->pool_bmap);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&aq->lock);
 
-	if (rsp) {
-		/* Copy read context into mailbox */
-		if (req->op == NPA_AQ_INSTOP_READ) {
-			if (req->ctype == NPA_AQ_CTYPE_AURA)
-				memcpy(&rsp->aura, ctx,
-				       sizeof(struct npa_aura_s));
-			else
-				memcpy(&rsp->pool, ctx,
-				       sizeof(struct npa_pool_s));
-		}
-	}
+	अगर (rsp) अणु
+		/* Copy पढ़ो context पूर्णांकo mailbox */
+		अगर (req->op == NPA_AQ_INSTOP_READ) अणु
+			अगर (req->ctype == NPA_AQ_CTYPE_AURA)
+				स_नकल(&rsp->aura, ctx,
+				       माप(काष्ठा npa_aura_s));
+			अन्यथा
+				स_नकल(&rsp->pool, ctx,
+				       माप(काष्ठा npa_pool_s));
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npa_lf_hwctx_disable(struct rvu *rvu, struct hwctx_disable_req *req)
-{
-	struct rvu_pfvf *pfvf = rvu_get_pfvf(rvu, req->hdr.pcifunc);
-	struct npa_aq_enq_req aq_req;
-	unsigned long *bmap;
-	int id, cnt = 0;
-	int err = 0, rc;
+अटल पूर्णांक npa_lf_hwctx_disable(काष्ठा rvu *rvu, काष्ठा hwctx_disable_req *req)
+अणु
+	काष्ठा rvu_pfvf *pfvf = rvu_get_pfvf(rvu, req->hdr.pcअगरunc);
+	काष्ठा npa_aq_enq_req aq_req;
+	अचिन्हित दीर्घ *bmap;
+	पूर्णांक id, cnt = 0;
+	पूर्णांक err = 0, rc;
 
-	if (!pfvf->pool_ctx || !pfvf->aura_ctx)
-		return NPA_AF_ERR_AQ_ENQUEUE;
+	अगर (!pfvf->pool_ctx || !pfvf->aura_ctx)
+		वापस NPA_AF_ERR_AQ_ENQUEUE;
 
-	memset(&aq_req, 0, sizeof(struct npa_aq_enq_req));
-	aq_req.hdr.pcifunc = req->hdr.pcifunc;
+	स_रखो(&aq_req, 0, माप(काष्ठा npa_aq_enq_req));
+	aq_req.hdr.pcअगरunc = req->hdr.pcअगरunc;
 
-	if (req->ctype == NPA_AQ_CTYPE_POOL) {
+	अगर (req->ctype == NPA_AQ_CTYPE_POOL) अणु
 		aq_req.pool.ena = 0;
 		aq_req.pool_mask.ena = 1;
 		cnt = pfvf->pool_ctx->qsize;
 		bmap = pfvf->pool_bmap;
-	} else if (req->ctype == NPA_AQ_CTYPE_AURA) {
+	पूर्ण अन्यथा अगर (req->ctype == NPA_AQ_CTYPE_AURA) अणु
 		aq_req.aura.ena = 0;
 		aq_req.aura_mask.ena = 1;
 		aq_req.aura.bp_ena = 0;
 		aq_req.aura_mask.bp_ena = 1;
 		cnt = pfvf->aura_ctx->qsize;
 		bmap = pfvf->aura_bmap;
-	}
+	पूर्ण
 
 	aq_req.ctype = req->ctype;
 	aq_req.op = NPA_AQ_INSTOP_WRITE;
 
-	for (id = 0; id < cnt; id++) {
-		if (!test_bit(id, bmap))
-			continue;
+	क्रम (id = 0; id < cnt; id++) अणु
+		अगर (!test_bit(id, bmap))
+			जारी;
 		aq_req.aura_id = id;
-		rc = rvu_npa_aq_enq_inst(rvu, &aq_req, NULL);
-		if (rc) {
+		rc = rvu_npa_aq_enq_inst(rvu, &aq_req, शून्य);
+		अगर (rc) अणु
 			err = rc;
 			dev_err(rvu->dev, "Failed to disable %s:%d context\n",
 				(req->ctype == NPA_AQ_CTYPE_AURA) ?
 				"Aura" : "Pool", id);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_NDC_DIS_DYNAMIC_CACHING
-static int npa_lf_hwctx_lockdown(struct rvu *rvu, struct npa_aq_enq_req *req)
-{
-	struct npa_aq_enq_req lock_ctx_req;
-	int err;
+#अगर_घोषित CONFIG_NDC_DIS_DYNAMIC_CACHING
+अटल पूर्णांक npa_lf_hwctx_lockकरोwn(काष्ठा rvu *rvu, काष्ठा npa_aq_enq_req *req)
+अणु
+	काष्ठा npa_aq_enq_req lock_ctx_req;
+	पूर्णांक err;
 
-	if (req->op != NPA_AQ_INSTOP_INIT)
-		return 0;
+	अगर (req->op != NPA_AQ_INSTOP_INIT)
+		वापस 0;
 
-	memset(&lock_ctx_req, 0, sizeof(struct npa_aq_enq_req));
-	lock_ctx_req.hdr.pcifunc = req->hdr.pcifunc;
+	स_रखो(&lock_ctx_req, 0, माप(काष्ठा npa_aq_enq_req));
+	lock_ctx_req.hdr.pcअगरunc = req->hdr.pcअगरunc;
 	lock_ctx_req.ctype = req->ctype;
 	lock_ctx_req.op = NPA_AQ_INSTOP_LOCK;
 	lock_ctx_req.aura_id = req->aura_id;
-	err = rvu_npa_aq_enq_inst(rvu, &lock_ctx_req, NULL);
-	if (err)
+	err = rvu_npa_aq_enq_inst(rvu, &lock_ctx_req, शून्य);
+	अगर (err)
 		dev_err(rvu->dev,
 			"PFUNC 0x%x: Failed to lock NPA context %s:%d\n",
-			req->hdr.pcifunc,
+			req->hdr.pcअगरunc,
 			(req->ctype == NPA_AQ_CTYPE_AURA) ?
 			"Aura" : "Pool", req->aura_id);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int rvu_mbox_handler_npa_aq_enq(struct rvu *rvu,
-				struct npa_aq_enq_req *req,
-				struct npa_aq_enq_rsp *rsp)
-{
-	int err;
+पूर्णांक rvu_mbox_handler_npa_aq_enq(काष्ठा rvu *rvu,
+				काष्ठा npa_aq_enq_req *req,
+				काष्ठा npa_aq_enq_rsp *rsp)
+अणु
+	पूर्णांक err;
 
 	err = rvu_npa_aq_enq_inst(rvu, req, rsp);
-	if (!err)
-		err = npa_lf_hwctx_lockdown(rvu, req);
-	return err;
-}
-#else
+	अगर (!err)
+		err = npa_lf_hwctx_lockकरोwn(rvu, req);
+	वापस err;
+पूर्ण
+#अन्यथा
 
-int rvu_mbox_handler_npa_aq_enq(struct rvu *rvu,
-				struct npa_aq_enq_req *req,
-				struct npa_aq_enq_rsp *rsp)
-{
-	return rvu_npa_aq_enq_inst(rvu, req, rsp);
-}
-#endif
+पूर्णांक rvu_mbox_handler_npa_aq_enq(काष्ठा rvu *rvu,
+				काष्ठा npa_aq_enq_req *req,
+				काष्ठा npa_aq_enq_rsp *rsp)
+अणु
+	वापस rvu_npa_aq_enq_inst(rvu, req, rsp);
+पूर्ण
+#पूर्ण_अगर
 
-int rvu_mbox_handler_npa_hwctx_disable(struct rvu *rvu,
-				       struct hwctx_disable_req *req,
-				       struct msg_rsp *rsp)
-{
-	return npa_lf_hwctx_disable(rvu, req);
-}
+पूर्णांक rvu_mbox_handler_npa_hwctx_disable(काष्ठा rvu *rvu,
+				       काष्ठा hwctx_disable_req *req,
+				       काष्ठा msg_rsp *rsp)
+अणु
+	वापस npa_lf_hwctx_disable(rvu, req);
+पूर्ण
 
-static void npa_ctx_free(struct rvu *rvu, struct rvu_pfvf *pfvf)
-{
-	kfree(pfvf->aura_bmap);
-	pfvf->aura_bmap = NULL;
+अटल व्योम npa_ctx_मुक्त(काष्ठा rvu *rvu, काष्ठा rvu_pfvf *pfvf)
+अणु
+	kमुक्त(pfvf->aura_bmap);
+	pfvf->aura_bmap = शून्य;
 
-	qmem_free(rvu->dev, pfvf->aura_ctx);
-	pfvf->aura_ctx = NULL;
+	qmem_मुक्त(rvu->dev, pfvf->aura_ctx);
+	pfvf->aura_ctx = शून्य;
 
-	kfree(pfvf->pool_bmap);
-	pfvf->pool_bmap = NULL;
+	kमुक्त(pfvf->pool_bmap);
+	pfvf->pool_bmap = शून्य;
 
-	qmem_free(rvu->dev, pfvf->pool_ctx);
-	pfvf->pool_ctx = NULL;
+	qmem_मुक्त(rvu->dev, pfvf->pool_ctx);
+	pfvf->pool_ctx = शून्य;
 
-	qmem_free(rvu->dev, pfvf->npa_qints_ctx);
-	pfvf->npa_qints_ctx = NULL;
-}
+	qmem_मुक्त(rvu->dev, pfvf->npa_qपूर्णांकs_ctx);
+	pfvf->npa_qपूर्णांकs_ctx = शून्य;
+पूर्ण
 
-int rvu_mbox_handler_npa_lf_alloc(struct rvu *rvu,
-				  struct npa_lf_alloc_req *req,
-				  struct npa_lf_alloc_rsp *rsp)
-{
-	int npalf, qints, hwctx_size, err, rc = 0;
-	struct rvu_hwinfo *hw = rvu->hw;
-	u16 pcifunc = req->hdr.pcifunc;
-	struct rvu_block *block;
-	struct rvu_pfvf *pfvf;
+पूर्णांक rvu_mbox_handler_npa_lf_alloc(काष्ठा rvu *rvu,
+				  काष्ठा npa_lf_alloc_req *req,
+				  काष्ठा npa_lf_alloc_rsp *rsp)
+अणु
+	पूर्णांक npalf, qपूर्णांकs, hwctx_size, err, rc = 0;
+	काष्ठा rvu_hwinfo *hw = rvu->hw;
+	u16 pcअगरunc = req->hdr.pcअगरunc;
+	काष्ठा rvu_block *block;
+	काष्ठा rvu_pfvf *pfvf;
 	u64 cfg, ctx_cfg;
-	int blkaddr;
+	पूर्णांक blkaddr;
 
-	if (req->aura_sz > NPA_AURA_SZ_MAX ||
+	अगर (req->aura_sz > NPA_AURA_SZ_MAX ||
 	    req->aura_sz == NPA_AURA_SZ_0 || !req->nr_pools)
-		return NPA_AF_ERR_PARAM;
+		वापस NPA_AF_ERR_PARAM;
 
-	if (req->way_mask)
+	अगर (req->way_mask)
 		req->way_mask &= 0xFFFF;
 
-	pfvf = rvu_get_pfvf(rvu, pcifunc);
-	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, pcifunc);
-	if (!pfvf->npalf || blkaddr < 0)
-		return NPA_AF_ERR_AF_LF_INVALID;
+	pfvf = rvu_get_pfvf(rvu, pcअगरunc);
+	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, pcअगरunc);
+	अगर (!pfvf->npalf || blkaddr < 0)
+		वापस NPA_AF_ERR_AF_LF_INVALID;
 
 	block = &hw->block[blkaddr];
-	npalf = rvu_get_lf(rvu, block, pcifunc, 0);
-	if (npalf < 0)
-		return NPA_AF_ERR_AF_LF_INVALID;
+	npalf = rvu_get_lf(rvu, block, pcअगरunc, 0);
+	अगर (npalf < 0)
+		वापस NPA_AF_ERR_AF_LF_INVALID;
 
 	/* Reset this NPA LF */
 	err = rvu_lf_reset(rvu, block, npalf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(rvu->dev, "Failed to reset NPALF%d\n", npalf);
-		return NPA_AF_ERR_LF_RESET;
-	}
+		वापस NPA_AF_ERR_LF_RESET;
+	पूर्ण
 
-	ctx_cfg = rvu_read64(rvu, blkaddr, NPA_AF_CONST1);
+	ctx_cfg = rvu_पढ़ो64(rvu, blkaddr, NPA_AF_CONST1);
 
-	/* Alloc memory for aura HW contexts */
+	/* Alloc memory क्रम aura HW contexts */
 	hwctx_size = 1UL << (ctx_cfg & 0xF);
 	err = qmem_alloc(rvu->dev, &pfvf->aura_ctx,
 			 NPA_AURA_COUNT(req->aura_sz), hwctx_size);
-	if (err)
-		goto free_mem;
+	अगर (err)
+		जाओ मुक्त_mem;
 
-	pfvf->aura_bmap = kcalloc(NPA_AURA_COUNT(req->aura_sz), sizeof(long),
+	pfvf->aura_bmap = kसुस्मृति(NPA_AURA_COUNT(req->aura_sz), माप(दीर्घ),
 				  GFP_KERNEL);
-	if (!pfvf->aura_bmap)
-		goto free_mem;
+	अगर (!pfvf->aura_bmap)
+		जाओ मुक्त_mem;
 
-	/* Alloc memory for pool HW contexts */
+	/* Alloc memory क्रम pool HW contexts */
 	hwctx_size = 1UL << ((ctx_cfg >> 4) & 0xF);
 	err = qmem_alloc(rvu->dev, &pfvf->pool_ctx, req->nr_pools, hwctx_size);
-	if (err)
-		goto free_mem;
+	अगर (err)
+		जाओ मुक्त_mem;
 
-	pfvf->pool_bmap = kcalloc(NPA_AURA_COUNT(req->aura_sz), sizeof(long),
+	pfvf->pool_bmap = kसुस्मृति(NPA_AURA_COUNT(req->aura_sz), माप(दीर्घ),
 				  GFP_KERNEL);
-	if (!pfvf->pool_bmap)
-		goto free_mem;
+	अगर (!pfvf->pool_bmap)
+		जाओ मुक्त_mem;
 
-	/* Get no of queue interrupts supported */
-	cfg = rvu_read64(rvu, blkaddr, NPA_AF_CONST);
-	qints = (cfg >> 28) & 0xFFF;
+	/* Get no of queue पूर्णांकerrupts supported */
+	cfg = rvu_पढ़ो64(rvu, blkaddr, NPA_AF_CONST);
+	qपूर्णांकs = (cfg >> 28) & 0xFFF;
 
-	/* Alloc memory for Qints HW contexts */
+	/* Alloc memory क्रम Qपूर्णांकs HW contexts */
 	hwctx_size = 1UL << ((ctx_cfg >> 8) & 0xF);
-	err = qmem_alloc(rvu->dev, &pfvf->npa_qints_ctx, qints, hwctx_size);
-	if (err)
-		goto free_mem;
+	err = qmem_alloc(rvu->dev, &pfvf->npa_qपूर्णांकs_ctx, qपूर्णांकs, hwctx_size);
+	अगर (err)
+		जाओ मुक्त_mem;
 
-	cfg = rvu_read64(rvu, blkaddr, NPA_AF_LFX_AURAS_CFG(npalf));
+	cfg = rvu_पढ़ो64(rvu, blkaddr, NPA_AF_LFX_AURAS_CFG(npalf));
 	/* Clear way partition mask and set aura offset to '0' */
 	cfg &= ~(BIT_ULL(34) - 1);
 	/* Set aura size & enable caching of contexts */
 	cfg |= (req->aura_sz << 16) | BIT_ULL(34) | req->way_mask;
 
-	rvu_write64(rvu, blkaddr, NPA_AF_LFX_AURAS_CFG(npalf), cfg);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_LFX_AURAS_CFG(npalf), cfg);
 
 	/* Configure aura HW context's base */
-	rvu_write64(rvu, blkaddr, NPA_AF_LFX_LOC_AURAS_BASE(npalf),
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_LFX_LOC_AURAS_BASE(npalf),
 		    (u64)pfvf->aura_ctx->iova);
 
-	/* Enable caching of qints hw context */
-	rvu_write64(rvu, blkaddr, NPA_AF_LFX_QINTS_CFG(npalf),
+	/* Enable caching of qपूर्णांकs hw context */
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_LFX_QINTS_CFG(npalf),
 		    BIT_ULL(36) | req->way_mask << 20);
-	rvu_write64(rvu, blkaddr, NPA_AF_LFX_QINTS_BASE(npalf),
-		    (u64)pfvf->npa_qints_ctx->iova);
+	rvu_ग_लिखो64(rvu, blkaddr, NPA_AF_LFX_QINTS_BASE(npalf),
+		    (u64)pfvf->npa_qपूर्णांकs_ctx->iova);
 
-	goto exit;
+	जाओ निकास;
 
-free_mem:
-	npa_ctx_free(rvu, pfvf);
+मुक्त_mem:
+	npa_ctx_मुक्त(rvu, pfvf);
 	rc = -ENOMEM;
 
-exit:
+निकास:
 	/* set stack page info */
-	cfg = rvu_read64(rvu, blkaddr, NPA_AF_CONST);
+	cfg = rvu_पढ़ो64(rvu, blkaddr, NPA_AF_CONST);
 	rsp->stack_pg_ptrs = (cfg >> 8) & 0xFF;
 	rsp->stack_pg_bytes = cfg & 0xFF;
-	rsp->qints = (cfg >> 28) & 0xFFF;
-	return rc;
-}
+	rsp->qपूर्णांकs = (cfg >> 28) & 0xFFF;
+	वापस rc;
+पूर्ण
 
-int rvu_mbox_handler_npa_lf_free(struct rvu *rvu, struct msg_req *req,
-				 struct msg_rsp *rsp)
-{
-	struct rvu_hwinfo *hw = rvu->hw;
-	u16 pcifunc = req->hdr.pcifunc;
-	struct rvu_block *block;
-	struct rvu_pfvf *pfvf;
-	int npalf, err;
-	int blkaddr;
+पूर्णांक rvu_mbox_handler_npa_lf_मुक्त(काष्ठा rvu *rvu, काष्ठा msg_req *req,
+				 काष्ठा msg_rsp *rsp)
+अणु
+	काष्ठा rvu_hwinfo *hw = rvu->hw;
+	u16 pcअगरunc = req->hdr.pcअगरunc;
+	काष्ठा rvu_block *block;
+	काष्ठा rvu_pfvf *pfvf;
+	पूर्णांक npalf, err;
+	पूर्णांक blkaddr;
 
-	pfvf = rvu_get_pfvf(rvu, pcifunc);
-	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, pcifunc);
-	if (!pfvf->npalf || blkaddr < 0)
-		return NPA_AF_ERR_AF_LF_INVALID;
+	pfvf = rvu_get_pfvf(rvu, pcअगरunc);
+	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, pcअगरunc);
+	अगर (!pfvf->npalf || blkaddr < 0)
+		वापस NPA_AF_ERR_AF_LF_INVALID;
 
 	block = &hw->block[blkaddr];
-	npalf = rvu_get_lf(rvu, block, pcifunc, 0);
-	if (npalf < 0)
-		return NPA_AF_ERR_AF_LF_INVALID;
+	npalf = rvu_get_lf(rvu, block, pcअगरunc, 0);
+	अगर (npalf < 0)
+		वापस NPA_AF_ERR_AF_LF_INVALID;
 
 	/* Reset this NPA LF */
 	err = rvu_lf_reset(rvu, block, npalf);
-	if (err) {
+	अगर (err) अणु
 		dev_err(rvu->dev, "Failed to reset NPALF%d\n", npalf);
-		return NPA_AF_ERR_LF_RESET;
-	}
+		वापस NPA_AF_ERR_LF_RESET;
+	पूर्ण
 
-	npa_ctx_free(rvu, pfvf);
+	npa_ctx_मुक्त(rvu, pfvf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int npa_aq_init(struct rvu *rvu, struct rvu_block *block)
-{
+अटल पूर्णांक npa_aq_init(काष्ठा rvu *rvu, काष्ठा rvu_block *block)
+अणु
 	u64 cfg;
-	int err;
+	पूर्णांक err;
 
 	/* Set admin queue endianness */
-	cfg = rvu_read64(rvu, block->addr, NPA_AF_GEN_CFG);
-#ifdef __BIG_ENDIAN
+	cfg = rvu_पढ़ो64(rvu, block->addr, NPA_AF_GEN_CFG);
+#अगर_घोषित __BIG_ENDIAN
 	cfg |= BIT_ULL(1);
-	rvu_write64(rvu, block->addr, NPA_AF_GEN_CFG, cfg);
-#else
+	rvu_ग_लिखो64(rvu, block->addr, NPA_AF_GEN_CFG, cfg);
+#अन्यथा
 	cfg &= ~BIT_ULL(1);
-	rvu_write64(rvu, block->addr, NPA_AF_GEN_CFG, cfg);
-#endif
+	rvu_ग_लिखो64(rvu, block->addr, NPA_AF_GEN_CFG, cfg);
+#पूर्ण_अगर
 
 	/* Do not bypass NDC cache */
-	cfg = rvu_read64(rvu, block->addr, NPA_AF_NDC_CFG);
+	cfg = rvu_पढ़ो64(rvu, block->addr, NPA_AF_NDC_CFG);
 	cfg &= ~0x03DULL;
-#ifdef CONFIG_NDC_DIS_DYNAMIC_CACHING
+#अगर_घोषित CONFIG_NDC_DIS_DYNAMIC_CACHING
 	/* Disable caching of stack pages */
 	cfg |= 0x10ULL;
-#endif
-	rvu_write64(rvu, block->addr, NPA_AF_NDC_CFG, cfg);
+#पूर्ण_अगर
+	rvu_ग_लिखो64(rvu, block->addr, NPA_AF_NDC_CFG, cfg);
 
-	/* Result structure can be followed by Aura/Pool context at
-	 * RES + 128bytes and a write mask at RES + 256 bytes, depending on
-	 * operation type. Alloc sufficient result memory for all operations.
+	/* Result काष्ठाure can be followed by Aura/Pool context at
+	 * RES + 128bytes and a ग_लिखो mask at RES + 256 bytes, depending on
+	 * operation type. Alloc sufficient result memory क्रम all operations.
 	 */
 	err = rvu_aq_alloc(rvu, &block->aq,
-			   Q_COUNT(AQ_SIZE), sizeof(struct npa_aq_inst_s),
-			   ALIGN(sizeof(struct npa_aq_res_s), 128) + 256);
-	if (err)
-		return err;
+			   Q_COUNT(AQ_SIZE), माप(काष्ठा npa_aq_inst_s),
+			   ALIGN(माप(काष्ठा npa_aq_res_s), 128) + 256);
+	अगर (err)
+		वापस err;
 
-	rvu_write64(rvu, block->addr, NPA_AF_AQ_CFG, AQ_SIZE);
-	rvu_write64(rvu, block->addr,
+	rvu_ग_लिखो64(rvu, block->addr, NPA_AF_AQ_CFG, AQ_SIZE);
+	rvu_ग_लिखो64(rvu, block->addr,
 		    NPA_AF_AQ_BASE, (u64)block->aq->inst->iova);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rvu_npa_init(struct rvu *rvu)
-{
-	struct rvu_hwinfo *hw = rvu->hw;
-	int blkaddr;
+पूर्णांक rvu_npa_init(काष्ठा rvu *rvu)
+अणु
+	काष्ठा rvu_hwinfo *hw = rvu->hw;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return 0;
+	अगर (blkaddr < 0)
+		वापस 0;
 
 	/* Initialize admin queue */
-	return npa_aq_init(rvu, &hw->block[blkaddr]);
-}
+	वापस npa_aq_init(rvu, &hw->block[blkaddr]);
+पूर्ण
 
-void rvu_npa_freemem(struct rvu *rvu)
-{
-	struct rvu_hwinfo *hw = rvu->hw;
-	struct rvu_block *block;
-	int blkaddr;
+व्योम rvu_npa_मुक्तmem(काष्ठा rvu *rvu)
+अणु
+	काष्ठा rvu_hwinfo *hw = rvu->hw;
+	काष्ठा rvu_block *block;
+	पूर्णांक blkaddr;
 
 	blkaddr = rvu_get_blkaddr(rvu, BLKTYPE_NPA, 0);
-	if (blkaddr < 0)
-		return;
+	अगर (blkaddr < 0)
+		वापस;
 
 	block = &hw->block[blkaddr];
-	rvu_aq_free(rvu, block->aq);
-}
+	rvu_aq_मुक्त(rvu, block->aq);
+पूर्ण
 
-void rvu_npa_lf_teardown(struct rvu *rvu, u16 pcifunc, int npalf)
-{
-	struct rvu_pfvf *pfvf = rvu_get_pfvf(rvu, pcifunc);
-	struct hwctx_disable_req ctx_req;
+व्योम rvu_npa_lf_tearकरोwn(काष्ठा rvu *rvu, u16 pcअगरunc, पूर्णांक npalf)
+अणु
+	काष्ठा rvu_pfvf *pfvf = rvu_get_pfvf(rvu, pcअगरunc);
+	काष्ठा hwctx_disable_req ctx_req;
 
 	/* Disable all pools */
-	ctx_req.hdr.pcifunc = pcifunc;
+	ctx_req.hdr.pcअगरunc = pcअगरunc;
 	ctx_req.ctype = NPA_AQ_CTYPE_POOL;
 	npa_lf_hwctx_disable(rvu, &ctx_req);
 
@@ -535,5 +536,5 @@ void rvu_npa_lf_teardown(struct rvu *rvu, u16 pcifunc, int npalf)
 	ctx_req.ctype = NPA_AQ_CTYPE_AURA;
 	npa_lf_hwctx_disable(rvu, &ctx_req);
 
-	npa_ctx_free(rvu, pfvf);
-}
+	npa_ctx_मुक्त(rvu, pfvf);
+पूर्ण

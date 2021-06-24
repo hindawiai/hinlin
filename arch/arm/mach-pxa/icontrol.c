@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-pxa/icontrol.c
  *
- * Support for the iControl and SafeTcam platforms from TMT Services
+ * Support क्रम the iControl and SafeTcam platक्रमms from TMT Services
  * using the Embedian MXM-8x10 Computer on Module
  *
  * Copyright (C) 2009 TMT Services & Supplies (Pty) Ltd.
  *
- * 2010-01-21 Hennie van der Merve <hvdmerwe@tmtservies.co.za>
+ * 2010-01-21 Hennie van der Merve <hvdmerwe@पंचांगtservies.co.za>
  */
 
-#include <linux/irq.h>
-#include <linux/platform_device.h>
-#include <linux/property.h>
-#include <linux/gpio.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/property.h>
+#समावेश <linux/gpपन.स>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "pxa320.h"
-#include "mxm8x10.h"
+#समावेश "pxa320.h"
+#समावेश "mxm8x10.h"
 
-#include <linux/spi/spi.h>
-#include <linux/spi/pxa2xx_spi.h>
-#include <linux/regulator/machine.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/pxa2xx_spi.h>
+#समावेश <linux/regulator/machine.h>
 
-#include "generic.h"
+#समावेश "generic.h"
 
-#define ICONTROL_MCP251x_nCS1	(15)
-#define ICONTROL_MCP251x_nCS2	(16)
-#define ICONTROL_MCP251x_nCS3	(17)
-#define ICONTROL_MCP251x_nCS4	(24)
+#घोषणा ICONTROL_MCP251x_nCS1	(15)
+#घोषणा ICONTROL_MCP251x_nCS2	(16)
+#घोषणा ICONTROL_MCP251x_nCS3	(17)
+#घोषणा ICONTROL_MCP251x_nCS4	(24)
 
-#define ICONTROL_MCP251x_nIRQ1	(74)
-#define ICONTROL_MCP251x_nIRQ2	(75)
-#define ICONTROL_MCP251x_nIRQ3	(76)
-#define ICONTROL_MCP251x_nIRQ4	(77)
+#घोषणा ICONTROL_MCP251x_nIRQ1	(74)
+#घोषणा ICONTROL_MCP251x_nIRQ2	(75)
+#घोषणा ICONTROL_MCP251x_nIRQ3	(76)
+#घोषणा ICONTROL_MCP251x_nIRQ4	(77)
 
-static struct pxa2xx_spi_chip mcp251x_chip_info1 = {
+अटल काष्ठा pxa2xx_spi_chip mcp251x_chip_info1 = अणु
 	.tx_threshold   = 8,
 	.rx_threshold   = 128,
 	.dma_burst_size = 8,
-	.timeout        = 235,
+	.समयout        = 235,
 	.gpio_cs        = ICONTROL_MCP251x_nCS1
-};
+पूर्ण;
 
-static struct pxa2xx_spi_chip mcp251x_chip_info2 = {
+अटल काष्ठा pxa2xx_spi_chip mcp251x_chip_info2 = अणु
 	.tx_threshold   = 8,
 	.rx_threshold   = 128,
 	.dma_burst_size = 8,
-	.timeout        = 235,
+	.समयout        = 235,
 	.gpio_cs        = ICONTROL_MCP251x_nCS2
-};
+पूर्ण;
 
-static struct pxa2xx_spi_chip mcp251x_chip_info3 = {
+अटल काष्ठा pxa2xx_spi_chip mcp251x_chip_info3 = अणु
 	.tx_threshold   = 8,
 	.rx_threshold   = 128,
 	.dma_burst_size = 8,
-	.timeout        = 235,
+	.समयout        = 235,
 	.gpio_cs        = ICONTROL_MCP251x_nCS3
-};
+पूर्ण;
 
-static struct pxa2xx_spi_chip mcp251x_chip_info4 = {
+अटल काष्ठा pxa2xx_spi_chip mcp251x_chip_info4 = अणु
 	.tx_threshold   = 8,
 	.rx_threshold   = 128,
 	.dma_burst_size = 8,
-	.timeout        = 235,
+	.समयout        = 235,
 	.gpio_cs        = ICONTROL_MCP251x_nCS4
-};
+पूर्ण;
 
-static const struct property_entry mcp251x_properties[] = {
+अटल स्थिर काष्ठा property_entry mcp251x_properties[] = अणु
 	PROPERTY_ENTRY_U32("clock-frequency", 16000000),
-	{}
-};
+	अणुपूर्ण
+पूर्ण;
 
-static const struct software_node mcp251x_node = {
+अटल स्थिर काष्ठा software_node mcp251x_node = अणु
 	.properties = mcp251x_properties,
-};
+पूर्ण;
 
-static struct spi_board_info mcp251x_board_info[] = {
-	{
+अटल काष्ठा spi_board_info mcp251x_board_info[] = अणु
+	अणु
 		.modalias        = "mcp2515",
 		.max_speed_hz    = 6500000,
 		.bus_num         = 3,
@@ -87,8 +88,8 @@ static struct spi_board_info mcp251x_board_info[] = {
 		.swnode		 = &mcp251x_node,
 		.controller_data = &mcp251x_chip_info1,
 		.irq             = PXA_GPIO_TO_IRQ(ICONTROL_MCP251x_nIRQ1)
-	},
-	{
+	पूर्ण,
+	अणु
 		.modalias        = "mcp2515",
 		.max_speed_hz    = 6500000,
 		.bus_num         = 3,
@@ -96,8 +97,8 @@ static struct spi_board_info mcp251x_board_info[] = {
 		.swnode		 = &mcp251x_node,
 		.controller_data = &mcp251x_chip_info2,
 		.irq             = PXA_GPIO_TO_IRQ(ICONTROL_MCP251x_nIRQ2)
-	},
-	{
+	पूर्ण,
+	अणु
 		.modalias        = "mcp2515",
 		.max_speed_hz    = 6500000,
 		.bus_num         = 4,
@@ -105,8 +106,8 @@ static struct spi_board_info mcp251x_board_info[] = {
 		.swnode		 = &mcp251x_node,
 		.controller_data = &mcp251x_chip_info3,
 		.irq             = PXA_GPIO_TO_IRQ(ICONTROL_MCP251x_nIRQ3)
-	},
-	{
+	पूर्ण,
+	अणु
 		.modalias        = "mcp2515",
 		.max_speed_hz    = 6500000,
 		.bus_num         = 4,
@@ -114,41 +115,41 @@ static struct spi_board_info mcp251x_board_info[] = {
 		.swnode		 = &mcp251x_node,
 		.controller_data = &mcp251x_chip_info4,
 		.irq             = PXA_GPIO_TO_IRQ(ICONTROL_MCP251x_nIRQ4)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct pxa2xx_spi_controller pxa_ssp3_spi_master_info = {
+अटल काष्ठा pxa2xx_spi_controller pxa_ssp3_spi_master_info = अणु
 	.num_chipselect = 2,
 	.enable_dma     = 1
-};
+पूर्ण;
 
-static struct pxa2xx_spi_controller pxa_ssp4_spi_master_info = {
+अटल काष्ठा pxa2xx_spi_controller pxa_ssp4_spi_master_info = अणु
 	.num_chipselect = 2,
 	.enable_dma     = 1
-};
+पूर्ण;
 
-struct platform_device pxa_spi_ssp3 = {
+काष्ठा platक्रमm_device pxa_spi_ssp3 = अणु
 	.name          = "pxa2xx-spi",
 	.id            = 3,
-	.dev           = {
-		.platform_data = &pxa_ssp3_spi_master_info,
-	}
-};
+	.dev           = अणु
+		.platक्रमm_data = &pxa_ssp3_spi_master_info,
+	पूर्ण
+पूर्ण;
 
-struct platform_device pxa_spi_ssp4 = {
+काष्ठा platक्रमm_device pxa_spi_ssp4 = अणु
 	.name          = "pxa2xx-spi",
 	.id            = 4,
-	.dev           = {
-		.platform_data = &pxa_ssp4_spi_master_info,
-	}
-};
+	.dev           = अणु
+		.platक्रमm_data = &pxa_ssp4_spi_master_info,
+	पूर्ण
+पूर्ण;
 
-static struct platform_device *icontrol_spi_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *icontrol_spi_devices[] __initdata = अणु
 	&pxa_spi_ssp3,
 	&pxa_spi_ssp4,
-};
+पूर्ण;
 
-static mfp_cfg_t mfp_can_cfg[] __initdata = {
+अटल mfp_cfg_t mfp_can_cfg[] __initdata = अणु
 	/* CAN CS lines */
 	GPIO15_GPIO,
 	GPIO16_GPIO,
@@ -170,25 +171,25 @@ static mfp_cfg_t mfp_can_cfg[] __initdata = {
 	GPIO75_GPIO | MFP_LPM_EDGE_RISE,
 	GPIO76_GPIO | MFP_LPM_EDGE_RISE,
 	GPIO77_GPIO | MFP_LPM_EDGE_RISE
-};
+पूर्ण;
 
-static void __init icontrol_can_init(void)
-{
+अटल व्योम __init icontrol_can_init(व्योम)
+अणु
 	pxa3xx_mfp_config(ARRAY_AND_SIZE(mfp_can_cfg));
-	platform_add_devices(ARRAY_AND_SIZE(icontrol_spi_devices));
-	spi_register_board_info(ARRAY_AND_SIZE(mcp251x_board_info));
-}
+	platक्रमm_add_devices(ARRAY_AND_SIZE(icontrol_spi_devices));
+	spi_रेजिस्टर_board_info(ARRAY_AND_SIZE(mcp251x_board_info));
+पूर्ण
 
-static void __init icontrol_init(void)
-{
+अटल व्योम __init icontrol_init(व्योम)
+अणु
 	mxm_8x10_barebones_init();
 	mxm_8x10_usb_host_init();
 	mxm_8x10_mmc_init();
 
 	icontrol_can_init();
 
-	regulator_has_full_constraints();
-}
+	regulator_has_full_स्थिरraपूर्णांकs();
+पूर्ण
 
 MACHINE_START(ICONTROL, "iControl/SafeTcam boards using Embedian MXM-8x10 CoM")
 	.atag_offset	= 0x100,
@@ -196,7 +197,7 @@ MACHINE_START(ICONTROL, "iControl/SafeTcam boards using Embedian MXM-8x10 CoM")
 	.nr_irqs	= PXA_NR_IRQS,
 	.init_irq	= pxa3xx_init_irq,
 	.handle_irq	= pxa3xx_handle_irq,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.init_machine	= icontrol_init,
 	.restart	= pxa_restart,
 MACHINE_END

@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * MacBook (Pro) SPI keyboard and touchpad driver
  *
  * Copyright (c) 2015-2019 Federico Lorenzi
- * Copyright (c) 2017-2019 Ronald Tschalär
+ * Copyright (c) 2017-2019 Ronald Tschalथअr
  */
 
-#ifndef _APPLESPI_H_
-#define _APPLESPI_H_
+#अगर_अघोषित _APPLESPI_H_
+#घोषणा _APPLESPI_H_
 
-enum applespi_evt_type {
+क्रमागत applespi_evt_type अणु
 	ET_CMD_TP_INI = BIT(0),
 	ET_CMD_BL = BIT(1),
 	ET_CMD_CL = BIT(2),
@@ -18,12 +19,12 @@ enum applespi_evt_type {
 	ET_RD_UNKN = BIT(10),
 	ET_RD_IRQ = BIT(11),
 	ET_RD_CRC = BIT(12),
-};
+पूर्ण;
 
-enum applespi_pkt_type {
+क्रमागत applespi_pkt_type अणु
 	PT_READ,
 	PT_WRITE,
 	PT_STATUS,
-};
+पूर्ण;
 
-#endif /* _APPLESPI_H_ */
+#पूर्ण_अगर /* _APPLESPI_H_ */

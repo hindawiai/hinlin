@@ -1,612 +1,613 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * I2C Link Layer for ST21NFCA HCI based Driver
+ * I2C Link Layer क्रम ST21NFCA HCI based Driver
  * Copyright (C) 2014  STMicroelectronics SAS. All rights reserved.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/crc-ccitt.h>
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/gpio/consumer.h>
-#include <linux/of_irq.h>
-#include <linux/of_gpio.h>
-#include <linux/acpi.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/nfc.h>
-#include <linux/firmware.h>
+#समावेश <linux/crc-ccitt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/acpi.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/nfc.h>
+#समावेश <linux/firmware.h>
 
-#include <asm/unaligned.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <net/nfc/hci.h>
-#include <net/nfc/llc.h>
-#include <net/nfc/nfc.h>
+#समावेश <net/nfc/hci.h>
+#समावेश <net/nfc/llc.h>
+#समावेश <net/nfc/nfc.h>
 
-#include "st21nfca.h"
+#समावेश "st21nfca.h"
 
 /*
- * Every frame starts with ST21NFCA_SOF_EOF and ends with ST21NFCA_SOF_EOF.
- * Because ST21NFCA_SOF_EOF is a possible data value, there is a mecanism
- * called byte stuffing has been introduced.
+ * Every frame starts with ST21NFCA_SOF_खातापूर्ण and ends with ST21NFCA_SOF_खातापूर्ण.
+ * Because ST21NFCA_SOF_खातापूर्ण is a possible data value, there is a mecanism
+ * called byte stuffing has been पूर्णांकroduced.
  *
- * if byte == ST21NFCA_SOF_EOF or ST21NFCA_ESCAPE_BYTE_STUFFING
+ * अगर byte == ST21NFCA_SOF_खातापूर्ण or ST21NFCA_ESCAPE_BYTE_STUFFING
  * - insert ST21NFCA_ESCAPE_BYTE_STUFFING (escape byte)
  * - xor byte with ST21NFCA_BYTE_STUFFING_MASK
  */
-#define ST21NFCA_SOF_EOF		0x7e
-#define ST21NFCA_BYTE_STUFFING_MASK	0x20
-#define ST21NFCA_ESCAPE_BYTE_STUFFING	0x7d
+#घोषणा ST21NFCA_SOF_खातापूर्ण		0x7e
+#घोषणा ST21NFCA_BYTE_STUFFING_MASK	0x20
+#घोषणा ST21NFCA_ESCAPE_BYTE_STUFFING	0x7d
 
 /* SOF + 00 */
-#define ST21NFCA_FRAME_HEADROOM			2
+#घोषणा ST21NFCA_FRAME_HEADROOM			2
 
-/* 2 bytes crc + EOF */
-#define ST21NFCA_FRAME_TAILROOM 3
-#define IS_START_OF_FRAME(buf) (buf[0] == ST21NFCA_SOF_EOF && \
+/* 2 bytes crc + खातापूर्ण */
+#घोषणा ST21NFCA_FRAME_TAILROOM 3
+#घोषणा IS_START_OF_FRAME(buf) (buf[0] == ST21NFCA_SOF_खातापूर्ण && \
 				buf[1] == 0)
 
-#define ST21NFCA_HCI_DRIVER_NAME "st21nfca_hci"
-#define ST21NFCA_HCI_I2C_DRIVER_NAME "st21nfca_hci_i2c"
+#घोषणा ST21NFCA_HCI_DRIVER_NAME "st21nfca_hci"
+#घोषणा ST21NFCA_HCI_I2C_DRIVER_NAME "st21nfca_hci_i2c"
 
-struct st21nfca_i2c_phy {
-	struct i2c_client *i2c_dev;
-	struct nfc_hci_dev *hdev;
+काष्ठा st21nfca_i2c_phy अणु
+	काष्ठा i2c_client *i2c_dev;
+	काष्ठा nfc_hci_dev *hdev;
 
-	struct gpio_desc *gpiod_ena;
-	struct st21nfca_se_status se_status;
+	काष्ठा gpio_desc *gpiod_ena;
+	काष्ठा st21nfca_se_status se_status;
 
-	struct sk_buff *pending_skb;
-	int current_read_len;
+	काष्ठा sk_buff *pending_skb;
+	पूर्णांक current_पढ़ो_len;
 	/*
 	 * crc might have fail because i2c macro
-	 * is disable due to other interface activity
+	 * is disable due to other पूर्णांकerface activity
 	 */
-	int crc_trials;
+	पूर्णांक crc_trials;
 
-	int powered;
-	int run_mode;
+	पूर्णांक घातered;
+	पूर्णांक run_mode;
 
 	/*
-	 * < 0 if hardware error occured (e.g. i2c err)
+	 * < 0 अगर hardware error occured (e.g. i2c err)
 	 * and prevents normal operation.
 	 */
-	int hard_fault;
-	struct mutex phy_lock;
-};
+	पूर्णांक hard_fault;
+	काष्ठा mutex phy_lock;
+पूर्ण;
 
-static u8 len_seq[] = { 16, 24, 12, 29 };
-static u16 wait_tab[] = { 2, 3, 5, 15, 20, 40};
+अटल u8 len_seq[] = अणु 16, 24, 12, 29 पूर्ण;
+अटल u16 रुको_tab[] = अणु 2, 3, 5, 15, 20, 40पूर्ण;
 
-#define I2C_DUMP_SKB(info, skb)					\
-do {								\
+#घोषणा I2C_DUMP_SKB(info, skb)					\
+करो अणु								\
 	pr_debug("%s:\n", info);				\
-	print_hex_dump(KERN_DEBUG, "i2c: ", DUMP_PREFIX_OFFSET,	\
+	prपूर्णांक_hex_dump(KERN_DEBUG, "i2c: ", DUMP_PREFIX_OFFSET,	\
 		       16, 1, (skb)->data, (skb)->len, 0);	\
-} while (0)
+पूर्ण जबतक (0)
 
 /*
- * In order to get the CLF in a known state we generate an internal reboot
+ * In order to get the CLF in a known state we generate an पूर्णांकernal reboot
  * using a proprietary command.
- * Once the reboot is completed, we expect to receive a ST21NFCA_SOF_EOF
+ * Once the reboot is completed, we expect to receive a ST21NFCA_SOF_खातापूर्ण
  * fill buffer.
  */
-static int st21nfca_hci_platform_init(struct st21nfca_i2c_phy *phy)
-{
-	u16 wait_reboot[] = { 50, 300, 1000 };
-	char reboot_cmd[] = { 0x7E, 0x66, 0x48, 0xF6, 0x7E };
-	u8 tmp[ST21NFCA_HCI_LLC_MAX_SIZE];
-	int i, r = -1;
+अटल पूर्णांक st21nfca_hci_platक्रमm_init(काष्ठा st21nfca_i2c_phy *phy)
+अणु
+	u16 रुको_reboot[] = अणु 50, 300, 1000 पूर्ण;
+	अक्षर reboot_cmd[] = अणु 0x7E, 0x66, 0x48, 0xF6, 0x7E पूर्ण;
+	u8 पंचांगp[ST21NFCA_HCI_LLC_MAX_SIZE];
+	पूर्णांक i, r = -1;
 
-	for (i = 0; i < ARRAY_SIZE(wait_reboot) && r < 0; i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(रुको_reboot) && r < 0; i++) अणु
 		r = i2c_master_send(phy->i2c_dev, reboot_cmd,
-				    sizeof(reboot_cmd));
-		if (r < 0)
-			msleep(wait_reboot[i]);
-	}
-	if (r < 0)
-		return r;
+				    माप(reboot_cmd));
+		अगर (r < 0)
+			msleep(रुको_reboot[i]);
+	पूर्ण
+	अगर (r < 0)
+		वापस r;
 
-	/* CLF is spending about 20ms to do an internal reboot */
+	/* CLF is spending about 20ms to करो an पूर्णांकernal reboot */
 	msleep(20);
 	r = -1;
-	for (i = 0; i < ARRAY_SIZE(wait_reboot) && r < 0; i++) {
-		r = i2c_master_recv(phy->i2c_dev, tmp,
+	क्रम (i = 0; i < ARRAY_SIZE(रुको_reboot) && r < 0; i++) अणु
+		r = i2c_master_recv(phy->i2c_dev, पंचांगp,
 				    ST21NFCA_HCI_LLC_MAX_SIZE);
-		if (r < 0)
-			msleep(wait_reboot[i]);
-	}
-	if (r < 0)
-		return r;
+		अगर (r < 0)
+			msleep(रुको_reboot[i]);
+	पूर्ण
+	अगर (r < 0)
+		वापस r;
 
-	for (i = 0; i < ST21NFCA_HCI_LLC_MAX_SIZE &&
-		tmp[i] == ST21NFCA_SOF_EOF; i++)
+	क्रम (i = 0; i < ST21NFCA_HCI_LLC_MAX_SIZE &&
+		पंचांगp[i] == ST21NFCA_SOF_खातापूर्ण; i++)
 		;
 
-	if (r != ST21NFCA_HCI_LLC_MAX_SIZE)
-		return -ENODEV;
+	अगर (r != ST21NFCA_HCI_LLC_MAX_SIZE)
+		वापस -ENODEV;
 
 	usleep_range(1000, 1500);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st21nfca_hci_i2c_enable(void *phy_id)
-{
-	struct st21nfca_i2c_phy *phy = phy_id;
+अटल पूर्णांक st21nfca_hci_i2c_enable(व्योम *phy_id)
+अणु
+	काष्ठा st21nfca_i2c_phy *phy = phy_id;
 
 	gpiod_set_value(phy->gpiod_ena, 1);
-	phy->powered = 1;
+	phy->घातered = 1;
 	phy->run_mode = ST21NFCA_HCI_MODE;
 
 	usleep_range(10000, 15000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void st21nfca_hci_i2c_disable(void *phy_id)
-{
-	struct st21nfca_i2c_phy *phy = phy_id;
+अटल व्योम st21nfca_hci_i2c_disable(व्योम *phy_id)
+अणु
+	काष्ठा st21nfca_i2c_phy *phy = phy_id;
 
 	gpiod_set_value(phy->gpiod_ena, 0);
 
-	phy->powered = 0;
-}
+	phy->घातered = 0;
+पूर्ण
 
-static void st21nfca_hci_add_len_crc(struct sk_buff *skb)
-{
+अटल व्योम st21nfca_hci_add_len_crc(काष्ठा sk_buff *skb)
+अणु
 	u16 crc;
-	u8 tmp;
+	u8 पंचांगp;
 
 	*(u8 *)skb_push(skb, 1) = 0;
 
 	crc = crc_ccitt(0xffff, skb->data, skb->len);
 	crc = ~crc;
 
-	tmp = crc & 0x00ff;
-	skb_put_u8(skb, tmp);
+	पंचांगp = crc & 0x00ff;
+	skb_put_u8(skb, पंचांगp);
 
-	tmp = (crc >> 8) & 0x00ff;
-	skb_put_u8(skb, tmp);
-}
+	पंचांगp = (crc >> 8) & 0x00ff;
+	skb_put_u8(skb, पंचांगp);
+पूर्ण
 
-static void st21nfca_hci_remove_len_crc(struct sk_buff *skb)
-{
+अटल व्योम st21nfca_hci_हटाओ_len_crc(काष्ठा sk_buff *skb)
+अणु
 	skb_pull(skb, ST21NFCA_FRAME_HEADROOM);
 	skb_trim(skb, skb->len - ST21NFCA_FRAME_TAILROOM);
-}
+पूर्ण
 
 /*
- * Writing a frame must not return the number of written bytes.
- * It must return either zero for success, or <0 for error.
+ * Writing a frame must not वापस the number of written bytes.
+ * It must वापस either zero क्रम success, or <0 क्रम error.
  * In addition, it must not alter the skb
  */
-static int st21nfca_hci_i2c_write(void *phy_id, struct sk_buff *skb)
-{
-	int r = -1, i, j;
-	struct st21nfca_i2c_phy *phy = phy_id;
-	struct i2c_client *client = phy->i2c_dev;
-	u8 tmp[ST21NFCA_HCI_LLC_MAX_SIZE * 2];
+अटल पूर्णांक st21nfca_hci_i2c_ग_लिखो(व्योम *phy_id, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक r = -1, i, j;
+	काष्ठा st21nfca_i2c_phy *phy = phy_id;
+	काष्ठा i2c_client *client = phy->i2c_dev;
+	u8 पंचांगp[ST21NFCA_HCI_LLC_MAX_SIZE * 2];
 
 	I2C_DUMP_SKB("st21nfca_hci_i2c_write", skb);
 
-	if (phy->hard_fault != 0)
-		return phy->hard_fault;
+	अगर (phy->hard_fault != 0)
+		वापस phy->hard_fault;
 
 	/*
-	 * Compute CRC before byte stuffing computation on frame
-	 * Note st21nfca_hci_add_len_crc is doing a byte stuffing
+	 * Compute CRC beक्रमe byte stuffing computation on frame
+	 * Note st21nfca_hci_add_len_crc is करोing a byte stuffing
 	 * on its own value
 	 */
 	st21nfca_hci_add_len_crc(skb);
 
-	/* add ST21NFCA_SOF_EOF on tail */
-	skb_put_u8(skb, ST21NFCA_SOF_EOF);
-	/* add ST21NFCA_SOF_EOF on head */
-	*(u8 *)skb_push(skb, 1) = ST21NFCA_SOF_EOF;
+	/* add ST21NFCA_SOF_खातापूर्ण on tail */
+	skb_put_u8(skb, ST21NFCA_SOF_खातापूर्ण);
+	/* add ST21NFCA_SOF_खातापूर्ण on head */
+	*(u8 *)skb_push(skb, 1) = ST21NFCA_SOF_खातापूर्ण;
 
 	/*
 	 * Compute byte stuffing
-	 * if byte == ST21NFCA_SOF_EOF or ST21NFCA_ESCAPE_BYTE_STUFFING
+	 * अगर byte == ST21NFCA_SOF_खातापूर्ण or ST21NFCA_ESCAPE_BYTE_STUFFING
 	 * insert ST21NFCA_ESCAPE_BYTE_STUFFING (escape byte)
 	 * xor byte with ST21NFCA_BYTE_STUFFING_MASK
 	 */
-	tmp[0] = skb->data[0];
-	for (i = 1, j = 1; i < skb->len - 1; i++, j++) {
-		if (skb->data[i] == ST21NFCA_SOF_EOF
-		    || skb->data[i] == ST21NFCA_ESCAPE_BYTE_STUFFING) {
-			tmp[j] = ST21NFCA_ESCAPE_BYTE_STUFFING;
+	पंचांगp[0] = skb->data[0];
+	क्रम (i = 1, j = 1; i < skb->len - 1; i++, j++) अणु
+		अगर (skb->data[i] == ST21NFCA_SOF_खातापूर्ण
+		    || skb->data[i] == ST21NFCA_ESCAPE_BYTE_STUFFING) अणु
+			पंचांगp[j] = ST21NFCA_ESCAPE_BYTE_STUFFING;
 			j++;
-			tmp[j] = skb->data[i] ^ ST21NFCA_BYTE_STUFFING_MASK;
-		} else {
-			tmp[j] = skb->data[i];
-		}
-	}
-	tmp[j] = skb->data[i];
+			पंचांगp[j] = skb->data[i] ^ ST21NFCA_BYTE_STUFFING_MASK;
+		पूर्ण अन्यथा अणु
+			पंचांगp[j] = skb->data[i];
+		पूर्ण
+	पूर्ण
+	पंचांगp[j] = skb->data[i];
 	j++;
 
 	/*
 	 * Manage sleep mode
-	 * Try 3 times to send data with delay between each
+	 * Try 3 बार to send data with delay between each
 	 */
 	mutex_lock(&phy->phy_lock);
-	for (i = 0; i < ARRAY_SIZE(wait_tab) && r < 0; i++) {
-		r = i2c_master_send(client, tmp, j);
-		if (r < 0)
-			msleep(wait_tab[i]);
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(रुको_tab) && r < 0; i++) अणु
+		r = i2c_master_send(client, पंचांगp, j);
+		अगर (r < 0)
+			msleep(रुको_tab[i]);
+	पूर्ण
 	mutex_unlock(&phy->phy_lock);
 
-	if (r >= 0) {
-		if (r != j)
+	अगर (r >= 0) अणु
+		अगर (r != j)
 			r = -EREMOTEIO;
-		else
+		अन्यथा
 			r = 0;
-	}
+	पूर्ण
 
-	st21nfca_hci_remove_len_crc(skb);
+	st21nfca_hci_हटाओ_len_crc(skb);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int get_frame_size(u8 *buf, int buflen)
-{
-	int len = 0;
+अटल पूर्णांक get_frame_size(u8 *buf, पूर्णांक buflen)
+अणु
+	पूर्णांक len = 0;
 
-	if (buf[len + 1] == ST21NFCA_SOF_EOF)
-		return 0;
+	अगर (buf[len + 1] == ST21NFCA_SOF_खातापूर्ण)
+		वापस 0;
 
-	for (len = 1; len < buflen && buf[len] != ST21NFCA_SOF_EOF; len++)
+	क्रम (len = 1; len < buflen && buf[len] != ST21NFCA_SOF_खातापूर्ण; len++)
 		;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int check_crc(u8 *buf, int buflen)
-{
+अटल पूर्णांक check_crc(u8 *buf, पूर्णांक buflen)
+अणु
 	u16 crc;
 
 	crc = crc_ccitt(0xffff, buf, buflen - 2);
 	crc = ~crc;
 
-	if (buf[buflen - 2] != (crc & 0xff) || buf[buflen - 1] != (crc >> 8)) {
+	अगर (buf[buflen - 2] != (crc & 0xff) || buf[buflen - 1] != (crc >> 8)) अणु
 		pr_err(ST21NFCA_HCI_DRIVER_NAME
 		       ": CRC error 0x%x != 0x%x 0x%x\n", crc, buf[buflen - 1],
 		       buf[buflen - 2]);
 
 		pr_info(DRIVER_DESC ": %s : BAD CRC\n", __func__);
-		print_hex_dump(KERN_DEBUG, "crc: ", DUMP_PREFIX_NONE,
+		prपूर्णांक_hex_dump(KERN_DEBUG, "crc: ", DUMP_PREFIX_NONE,
 			       16, 2, buf, buflen, false);
-		return -EPERM;
-	}
-	return 0;
-}
+		वापस -EPERM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Prepare received data for upper layer.
+ * Prepare received data क्रम upper layer.
  * Received data include byte stuffing, crc and sof/eof
  * which is not usable by hci part.
- * returns:
+ * वापसs:
  * frame size without sof/eof, header and byte stuffing
  * -EBADMSG : frame was incorrect and discarded
  */
-static int st21nfca_hci_i2c_repack(struct sk_buff *skb)
-{
-	int i, j, r, size;
+अटल पूर्णांक st21nfca_hci_i2c_repack(काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक i, j, r, size;
 
-	if (skb->len < 1 || (skb->len > 1 && skb->data[1] != 0))
-		return -EBADMSG;
+	अगर (skb->len < 1 || (skb->len > 1 && skb->data[1] != 0))
+		वापस -EBADMSG;
 
 	size = get_frame_size(skb->data, skb->len);
-	if (size > 0) {
+	अगर (size > 0) अणु
 		skb_trim(skb, size);
-		/* remove ST21NFCA byte stuffing for upper layer */
-		for (i = 1, j = 0; i < skb->len; i++) {
-			if (skb->data[i + j] ==
-					(u8) ST21NFCA_ESCAPE_BYTE_STUFFING) {
+		/* हटाओ ST21NFCA byte stuffing क्रम upper layer */
+		क्रम (i = 1, j = 0; i < skb->len; i++) अणु
+			अगर (skb->data[i + j] ==
+					(u8) ST21NFCA_ESCAPE_BYTE_STUFFING) अणु
 				skb->data[i] = skb->data[i + j + 1]
 						| ST21NFCA_BYTE_STUFFING_MASK;
 				i++;
 				j++;
-			}
+			पूर्ण
 			skb->data[i] = skb->data[i + j];
-		}
-		/* remove byte stuffing useless byte */
+		पूर्ण
+		/* हटाओ byte stuffing useless byte */
 		skb_trim(skb, i - j);
-		/* remove ST21NFCA_SOF_EOF from head */
+		/* हटाओ ST21NFCA_SOF_खातापूर्ण from head */
 		skb_pull(skb, 1);
 
 		r = check_crc(skb->data, skb->len);
-		if (r != 0) {
+		अगर (r != 0) अणु
 			i = 0;
-			return -EBADMSG;
-		}
+			वापस -EBADMSG;
+		पूर्ण
 
-		/* remove headbyte */
+		/* हटाओ headbyte */
 		skb_pull(skb, 1);
-		/* remove crc. Byte Stuffing is already removed here */
+		/* हटाओ crc. Byte Stuffing is alपढ़ोy हटाओd here */
 		skb_trim(skb, skb->len - 2);
-		return skb->len;
-	}
-	return 0;
-}
+		वापस skb->len;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Reads an shdlc frame and returns it in a newly allocated sk_buff. Guarantees
- * that i2c bus will be flushed and that next read will start on a new frame.
- * returned skb contains only LLC header and payload.
- * returns:
- * frame size : if received frame is complete (find ST21NFCA_SOF_EOF at
- * end of read)
- * -EAGAIN : if received frame is incomplete (not find ST21NFCA_SOF_EOF
- * at end of read)
- * -EREMOTEIO : i2c read error (fatal)
+ * Reads an shdlc frame and वापसs it in a newly allocated sk_buff. Guarantees
+ * that i2c bus will be flushed and that next पढ़ो will start on a new frame.
+ * वापसed skb contains only LLC header and payload.
+ * वापसs:
+ * frame size : अगर received frame is complete (find ST21NFCA_SOF_खातापूर्ण at
+ * end of पढ़ो)
+ * -EAGAIN : अगर received frame is incomplete (not find ST21NFCA_SOF_खातापूर्ण
+ * at end of पढ़ो)
+ * -EREMOTEIO : i2c पढ़ो error (fatal)
  * -EBADMSG : frame was incorrect and discarded
- * (value returned from st21nfca_hci_i2c_repack)
- * -EIO : if no ST21NFCA_SOF_EOF is found after reaching
- * the read length end sequence
+ * (value वापसed from st21nfca_hci_i2c_repack)
+ * -EIO : अगर no ST21NFCA_SOF_खातापूर्ण is found after reaching
+ * the पढ़ो length end sequence
  */
-static int st21nfca_hci_i2c_read(struct st21nfca_i2c_phy *phy,
-				 struct sk_buff *skb)
-{
-	int r, i;
+अटल पूर्णांक st21nfca_hci_i2c_पढ़ो(काष्ठा st21nfca_i2c_phy *phy,
+				 काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक r, i;
 	u8 len;
 	u8 buf[ST21NFCA_HCI_LLC_MAX_PAYLOAD];
-	struct i2c_client *client = phy->i2c_dev;
+	काष्ठा i2c_client *client = phy->i2c_dev;
 
-	if (phy->current_read_len < ARRAY_SIZE(len_seq)) {
-		len = len_seq[phy->current_read_len];
+	अगर (phy->current_पढ़ो_len < ARRAY_SIZE(len_seq)) अणु
+		len = len_seq[phy->current_पढ़ो_len];
 
 		/*
 		 * Add retry mecanism
-		 * Operation on I2C interface may fail in case of operation on
-		 * RF or SWP interface
+		 * Operation on I2C पूर्णांकerface may fail in हाल of operation on
+		 * RF or SWP पूर्णांकerface
 		 */
 		r = 0;
 		mutex_lock(&phy->phy_lock);
-		for (i = 0; i < ARRAY_SIZE(wait_tab) && r <= 0; i++) {
+		क्रम (i = 0; i < ARRAY_SIZE(रुको_tab) && r <= 0; i++) अणु
 			r = i2c_master_recv(client, buf, len);
-			if (r < 0)
-				msleep(wait_tab[i]);
-		}
+			अगर (r < 0)
+				msleep(रुको_tab[i]);
+		पूर्ण
 		mutex_unlock(&phy->phy_lock);
 
-		if (r != len) {
-			phy->current_read_len = 0;
-			return -EREMOTEIO;
-		}
+		अगर (r != len) अणु
+			phy->current_पढ़ो_len = 0;
+			वापस -EREMOTEIO;
+		पूर्ण
 
 		/*
-		 * The first read sequence does not start with SOF.
+		 * The first पढ़ो sequence करोes not start with SOF.
 		 * Data is corrupeted so we drop it.
 		 */
-		if (!phy->current_read_len && !IS_START_OF_FRAME(buf)) {
+		अगर (!phy->current_पढ़ो_len && !IS_START_OF_FRAME(buf)) अणु
 			skb_trim(skb, 0);
-			phy->current_read_len = 0;
-			return -EIO;
-		} else if (phy->current_read_len && IS_START_OF_FRAME(buf)) {
+			phy->current_पढ़ो_len = 0;
+			वापस -EIO;
+		पूर्ण अन्यथा अगर (phy->current_पढ़ो_len && IS_START_OF_FRAME(buf)) अणु
 			/*
-			 * Previous frame transmission was interrupted and
+			 * Previous frame transmission was पूर्णांकerrupted and
 			 * the frame got repeated.
-			 * Received frame start with ST21NFCA_SOF_EOF + 00.
+			 * Received frame start with ST21NFCA_SOF_खातापूर्ण + 00.
 			 */
 			skb_trim(skb, 0);
-			phy->current_read_len = 0;
-		}
+			phy->current_पढ़ो_len = 0;
+		पूर्ण
 
 		skb_put_data(skb, buf, len);
 
-		if (skb->data[skb->len - 1] == ST21NFCA_SOF_EOF) {
-			phy->current_read_len = 0;
-			return st21nfca_hci_i2c_repack(skb);
-		}
-		phy->current_read_len++;
-		return -EAGAIN;
-	}
-	return -EIO;
-}
+		अगर (skb->data[skb->len - 1] == ST21NFCA_SOF_खातापूर्ण) अणु
+			phy->current_पढ़ो_len = 0;
+			वापस st21nfca_hci_i2c_repack(skb);
+		पूर्ण
+		phy->current_पढ़ो_len++;
+		वापस -EAGAIN;
+	पूर्ण
+	वापस -EIO;
+पूर्ण
 
 /*
- * Reads an shdlc frame from the chip. This is not as straightforward as it
- * seems. The frame format is data-crc, and corruption can occur anywhere
- * while transiting on i2c bus, such that we could read an invalid data.
- * The tricky case is when we read a corrupted data or crc. We must detect
+ * Reads an shdlc frame from the chip. This is not as straightक्रमward as it
+ * seems. The frame क्रमmat is data-crc, and corruption can occur anywhere
+ * जबतक transiting on i2c bus, such that we could पढ़ो an invalid data.
+ * The tricky हाल is when we पढ़ो a corrupted data or crc. We must detect
  * this here in order to determine that data can be transmitted to the hci
  * core. This is the reason why we check the crc here.
  * The CLF will repeat a frame until we send a RR on that frame.
  *
- * On ST21NFCA, IRQ goes in idle when read starts. As no size information are
+ * On ST21NFCA, IRQ goes in idle when पढ़ो starts. As no size inक्रमmation are
  * available in the incoming data, other IRQ might come. Every IRQ will trigger
- * a read sequence with different length and will fill the current frame.
- * The reception is complete once we reach a ST21NFCA_SOF_EOF.
+ * a पढ़ो sequence with dअगरferent length and will fill the current frame.
+ * The reception is complete once we reach a ST21NFCA_SOF_खातापूर्ण.
  */
-static irqreturn_t st21nfca_hci_irq_thread_fn(int irq, void *phy_id)
-{
-	struct st21nfca_i2c_phy *phy = phy_id;
-	struct i2c_client *client;
+अटल irqवापस_t st21nfca_hci_irq_thपढ़ो_fn(पूर्णांक irq, व्योम *phy_id)
+अणु
+	काष्ठा st21nfca_i2c_phy *phy = phy_id;
+	काष्ठा i2c_client *client;
 
-	int r;
+	पूर्णांक r;
 
-	if (!phy || irq != phy->i2c_dev->irq) {
+	अगर (!phy || irq != phy->i2c_dev->irq) अणु
 		WARN_ON_ONCE(1);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	client = phy->i2c_dev;
 	dev_dbg(&client->dev, "IRQ\n");
 
-	if (phy->hard_fault != 0)
-		return IRQ_HANDLED;
+	अगर (phy->hard_fault != 0)
+		वापस IRQ_HANDLED;
 
-	r = st21nfca_hci_i2c_read(phy, phy->pending_skb);
-	if (r == -EREMOTEIO) {
+	r = st21nfca_hci_i2c_पढ़ो(phy, phy->pending_skb);
+	अगर (r == -EREMOTEIO) अणु
 		phy->hard_fault = r;
 
-		nfc_hci_recv_frame(phy->hdev, NULL);
+		nfc_hci_recv_frame(phy->hdev, शून्य);
 
-		return IRQ_HANDLED;
-	} else if (r == -EAGAIN || r == -EIO) {
-		return IRQ_HANDLED;
-	} else if (r == -EBADMSG && phy->crc_trials < ARRAY_SIZE(wait_tab)) {
+		वापस IRQ_HANDLED;
+	पूर्ण अन्यथा अगर (r == -EAGAIN || r == -EIO) अणु
+		वापस IRQ_HANDLED;
+	पूर्ण अन्यथा अगर (r == -EBADMSG && phy->crc_trials < ARRAY_SIZE(रुको_tab)) अणु
 		/*
-		 * With ST21NFCA, only one interface (I2C, RF or SWP)
-		 * may be active at a time.
+		 * With ST21NFCA, only one पूर्णांकerface (I2C, RF or SWP)
+		 * may be active at a समय.
 		 * Having incorrect crc is usually due to i2c macrocell
 		 * deactivation in the middle of a transmission.
 		 * It may generate corrupted data on i2c.
-		 * We give sometime to get i2c back.
+		 * We give someसमय to get i2c back.
 		 * The complete frame will be repeated.
 		 */
-		msleep(wait_tab[phy->crc_trials]);
+		msleep(रुको_tab[phy->crc_trials]);
 		phy->crc_trials++;
-		phy->current_read_len = 0;
-		kfree_skb(phy->pending_skb);
-	} else if (r > 0) {
+		phy->current_पढ़ो_len = 0;
+		kमुक्त_skb(phy->pending_skb);
+	पूर्ण अन्यथा अगर (r > 0) अणु
 		/*
-		 * We succeeded to read data from the CLF and
+		 * We succeeded to पढ़ो data from the CLF and
 		 * data is valid.
 		 * Reset counter.
 		 */
 		nfc_hci_recv_frame(phy->hdev, phy->pending_skb);
 		phy->crc_trials = 0;
-	} else {
-		kfree_skb(phy->pending_skb);
-	}
+	पूर्ण अन्यथा अणु
+		kमुक्त_skb(phy->pending_skb);
+	पूर्ण
 
 	phy->pending_skb = alloc_skb(ST21NFCA_HCI_LLC_MAX_SIZE * 2, GFP_KERNEL);
-	if (phy->pending_skb == NULL) {
+	अगर (phy->pending_skb == शून्य) अणु
 		phy->hard_fault = -ENOMEM;
-		nfc_hci_recv_frame(phy->hdev, NULL);
-	}
+		nfc_hci_recv_frame(phy->hdev, शून्य);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct nfc_phy_ops i2c_phy_ops = {
-	.write = st21nfca_hci_i2c_write,
+अटल काष्ठा nfc_phy_ops i2c_phy_ops = अणु
+	.ग_लिखो = st21nfca_hci_i2c_ग_लिखो,
 	.enable = st21nfca_hci_i2c_enable,
 	.disable = st21nfca_hci_i2c_disable,
-};
+पूर्ण;
 
-static const struct acpi_gpio_params enable_gpios = { 1, 0, false };
+अटल स्थिर काष्ठा acpi_gpio_params enable_gpios = अणु 1, 0, false पूर्ण;
 
-static const struct acpi_gpio_mapping acpi_st21nfca_gpios[] = {
-	{ "enable-gpios", &enable_gpios, 1 },
-	{},
-};
+अटल स्थिर काष्ठा acpi_gpio_mapping acpi_st21nfca_gpios[] = अणु
+	अणु "enable-gpios", &enable_gpios, 1 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int st21nfca_hci_i2c_probe(struct i2c_client *client,
-				  const struct i2c_device_id *id)
-{
-	struct device *dev = &client->dev;
-	struct st21nfca_i2c_phy *phy;
-	int r;
+अटल पूर्णांक st21nfca_hci_i2c_probe(काष्ठा i2c_client *client,
+				  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा st21nfca_i2c_phy *phy;
+	पूर्णांक r;
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 	dev_dbg(&client->dev, "IRQ: %d\n", client->irq);
 
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
 		nfc_err(&client->dev, "Need I2C_FUNC_I2C\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	phy = devm_kzalloc(&client->dev, sizeof(struct st21nfca_i2c_phy),
+	phy = devm_kzalloc(&client->dev, माप(काष्ठा st21nfca_i2c_phy),
 			   GFP_KERNEL);
-	if (!phy)
-		return -ENOMEM;
+	अगर (!phy)
+		वापस -ENOMEM;
 
 	phy->i2c_dev = client;
 	phy->pending_skb = alloc_skb(ST21NFCA_HCI_LLC_MAX_SIZE * 2, GFP_KERNEL);
-	if (phy->pending_skb == NULL)
-		return -ENOMEM;
+	अगर (phy->pending_skb == शून्य)
+		वापस -ENOMEM;
 
-	phy->current_read_len = 0;
+	phy->current_पढ़ो_len = 0;
 	phy->crc_trials = 0;
 	mutex_init(&phy->phy_lock);
 	i2c_set_clientdata(client, phy);
 
 	r = devm_acpi_dev_add_driver_gpios(dev, acpi_st21nfca_gpios);
-	if (r)
+	अगर (r)
 		dev_dbg(dev, "Unable to add GPIO mapping table\n");
 
 	/* Get EN GPIO from resource provider */
 	phy->gpiod_ena = devm_gpiod_get(dev, "enable", GPIOD_OUT_LOW);
-	if (IS_ERR(phy->gpiod_ena)) {
+	अगर (IS_ERR(phy->gpiod_ena)) अणु
 		nfc_err(dev, "Unable to get ENABLE GPIO\n");
-		return PTR_ERR(phy->gpiod_ena);
-	}
+		वापस PTR_ERR(phy->gpiod_ena);
+	पूर्ण
 
 	phy->se_status.is_ese_present =
-			device_property_read_bool(&client->dev, "ese-present");
+			device_property_पढ़ो_bool(&client->dev, "ese-present");
 	phy->se_status.is_uicc_present =
-			device_property_read_bool(&client->dev, "uicc-present");
+			device_property_पढ़ो_bool(&client->dev, "uicc-present");
 
-	r = st21nfca_hci_platform_init(phy);
-	if (r < 0) {
+	r = st21nfca_hci_platक्रमm_init(phy);
+	अगर (r < 0) अणु
 		nfc_err(&client->dev, "Unable to reboot st21nfca\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	r = devm_request_threaded_irq(&client->dev, client->irq, NULL,
-				st21nfca_hci_irq_thread_fn,
+	r = devm_request_thपढ़ोed_irq(&client->dev, client->irq, शून्य,
+				st21nfca_hci_irq_thपढ़ो_fn,
 				IRQF_ONESHOT,
 				ST21NFCA_HCI_DRIVER_NAME, phy);
-	if (r < 0) {
+	अगर (r < 0) अणु
 		nfc_err(&client->dev, "Unable to register IRQ handler\n");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	return st21nfca_hci_probe(phy, &i2c_phy_ops, LLC_SHDLC_NAME,
+	वापस st21nfca_hci_probe(phy, &i2c_phy_ops, LLC_SHDLC_NAME,
 					ST21NFCA_FRAME_HEADROOM,
 					ST21NFCA_FRAME_TAILROOM,
 					ST21NFCA_HCI_LLC_MAX_PAYLOAD,
 					&phy->hdev,
 					&phy->se_status);
-}
+पूर्ण
 
-static int st21nfca_hci_i2c_remove(struct i2c_client *client)
-{
-	struct st21nfca_i2c_phy *phy = i2c_get_clientdata(client);
+अटल पूर्णांक st21nfca_hci_i2c_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा st21nfca_i2c_phy *phy = i2c_get_clientdata(client);
 
 	dev_dbg(&client->dev, "%s\n", __func__);
 
-	st21nfca_hci_remove(phy->hdev);
+	st21nfca_hci_हटाओ(phy->hdev);
 
-	if (phy->powered)
+	अगर (phy->घातered)
 		st21nfca_hci_i2c_disable(phy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id st21nfca_hci_i2c_id_table[] = {
-	{ST21NFCA_HCI_DRIVER_NAME, 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id st21nfca_hci_i2c_id_table[] = अणु
+	अणुST21NFCA_HCI_DRIVER_NAME, 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, st21nfca_hci_i2c_id_table);
 
-static const struct acpi_device_id st21nfca_hci_i2c_acpi_match[] = {
-	{"SMO2100", 0},
-	{}
-};
+अटल स्थिर काष्ठा acpi_device_id st21nfca_hci_i2c_acpi_match[] = अणु
+	अणु"SMO2100", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, st21nfca_hci_i2c_acpi_match);
 
-static const struct of_device_id of_st21nfca_i2c_match[] = {
-	{ .compatible = "st,st21nfca-i2c", },
-	{ .compatible = "st,st21nfca_i2c", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id of_st21nfca_i2c_match[] = अणु
+	अणु .compatible = "st,st21nfca-i2c", पूर्ण,
+	अणु .compatible = "st,st21nfca_i2c", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, of_st21nfca_i2c_match);
 
-static struct i2c_driver st21nfca_hci_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver st21nfca_hci_i2c_driver = अणु
+	.driver = अणु
 		.name = ST21NFCA_HCI_I2C_DRIVER_NAME,
 		.of_match_table = of_match_ptr(of_st21nfca_i2c_match),
 		.acpi_match_table = ACPI_PTR(st21nfca_hci_i2c_acpi_match),
-	},
+	पूर्ण,
 	.probe = st21nfca_hci_i2c_probe,
 	.id_table = st21nfca_hci_i2c_id_table,
-	.remove = st21nfca_hci_i2c_remove,
-};
+	.हटाओ = st21nfca_hci_i2c_हटाओ,
+पूर्ण;
 module_i2c_driver(st21nfca_hci_i2c_driver);
 
 MODULE_LICENSE("GPL");

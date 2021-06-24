@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *  Driver for CPM (SCC/SMC) serial ports; core driver
+ *  Driver क्रम CPM (SCC/SMC) serial ports; core driver
  *
  *  Based on arch/ppc/cpm2_io/uart.c by Dan Malek
  *  Based on ppc8xx.c by Thomas Gleixner
  *  Based on drivers/serial/amba.c by Russell King
  *
- *  Maintainer: Kumar Gala (galak@kernel.crashing.org) (CPM2)
- *              Pantelis Antoniou (panto@intracom.gr) (CPM1)
+ *  Maपूर्णांकainer: Kumar Gala (galak@kernel.crashing.org) (CPM2)
+ *              Pantelis Antoniou (panto@पूर्णांकracom.gr) (CPM1)
  *
  *  Copyright (C) 2004, 2007 Freescale Semiconductor, Inc.
  *            (C) 2004 Intracom, S.A.
@@ -15,736 +16,736 @@
  *		Vitaly Bordug <vbordug@ru.mvista.com>
  */
 
-#include <linux/module.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/serial.h>
-#include <linux/console.h>
-#include <linux/sysrq.h>
-#include <linux/device.h>
-#include <linux/memblock.h>
-#include <linux/dma-mapping.h>
-#include <linux/fs_uart_pd.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/gpio/consumer.h>
-#include <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/console.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/device.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/fs_uart_pd.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/clk.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/delay.h>
-#include <asm/fs_pd.h>
-#include <asm/udbg.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/delay.h>
+#समावेश <यंत्र/fs_pd.h>
+#समावेश <यंत्र/udbg.h>
 
-#include <linux/serial_core.h>
-#include <linux/kernel.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/kernel.h>
 
-#include "cpm_uart.h"
+#समावेश "cpm_uart.h"
 
-
-/**************************************************************/
-
-static int  cpm_uart_tx_pump(struct uart_port *port);
-static void cpm_uart_init_smc(struct uart_cpm_port *pinfo);
-static void cpm_uart_init_scc(struct uart_cpm_port *pinfo);
-static void cpm_uart_initbd(struct uart_cpm_port *pinfo);
 
 /**************************************************************/
 
-#define HW_BUF_SPD_THRESHOLD    2400
+अटल पूर्णांक  cpm_uart_tx_pump(काष्ठा uart_port *port);
+अटल व्योम cpm_uart_init_smc(काष्ठा uart_cpm_port *pinfo);
+अटल व्योम cpm_uart_init_scc(काष्ठा uart_cpm_port *pinfo);
+अटल व्योम cpm_uart_initbd(काष्ठा uart_cpm_port *pinfo);
+
+/**************************************************************/
+
+#घोषणा HW_BUF_SPD_THRESHOLD    2400
 
 /*
- * Check, if transmit buffers are processed
+ * Check, अगर transmit buffers are processed
 */
-static unsigned int cpm_uart_tx_empty(struct uart_port *port)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल अचिन्हित पूर्णांक cpm_uart_tx_empty(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 	cbd_t __iomem *bdp = pinfo->tx_bd_base;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	while (1) {
-		if (in_be16(&bdp->cbd_sc) & BD_SC_READY)
-			break;
+	जबतक (1) अणु
+		अगर (in_be16(&bdp->cbd_sc) & BD_SC_READY)
+			अवरोध;
 
-		if (in_be16(&bdp->cbd_sc) & BD_SC_WRAP) {
+		अगर (in_be16(&bdp->cbd_sc) & BD_SC_WRAP) अणु
 			ret = TIOCSER_TEMT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		bdp++;
-	}
+	पूर्ण
 
 	pr_debug("CPM uart[%d]:tx_empty: %d\n", port->line, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cpm_uart_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल व्योम cpm_uart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 
-	if (pinfo->gpios[GPIO_RTS])
+	अगर (pinfo->gpios[GPIO_RTS])
 		gpiod_set_value(pinfo->gpios[GPIO_RTS], !(mctrl & TIOCM_RTS));
 
-	if (pinfo->gpios[GPIO_DTR])
+	अगर (pinfo->gpios[GPIO_DTR])
 		gpiod_set_value(pinfo->gpios[GPIO_DTR], !(mctrl & TIOCM_DTR));
-}
+पूर्ण
 
-static unsigned int cpm_uart_get_mctrl(struct uart_port *port)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
-	unsigned int mctrl = TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
+अटल अचिन्हित पूर्णांक cpm_uart_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
+	अचिन्हित पूर्णांक mctrl = TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
 
-	if (pinfo->gpios[GPIO_CTS]) {
-		if (gpiod_get_value(pinfo->gpios[GPIO_CTS]))
+	अगर (pinfo->gpios[GPIO_CTS]) अणु
+		अगर (gpiod_get_value(pinfo->gpios[GPIO_CTS]))
 			mctrl &= ~TIOCM_CTS;
-	}
+	पूर्ण
 
-	if (pinfo->gpios[GPIO_DSR]) {
-		if (gpiod_get_value(pinfo->gpios[GPIO_DSR]))
+	अगर (pinfo->gpios[GPIO_DSR]) अणु
+		अगर (gpiod_get_value(pinfo->gpios[GPIO_DSR]))
 			mctrl &= ~TIOCM_DSR;
-	}
+	पूर्ण
 
-	if (pinfo->gpios[GPIO_DCD]) {
-		if (gpiod_get_value(pinfo->gpios[GPIO_DCD]))
+	अगर (pinfo->gpios[GPIO_DCD]) अणु
+		अगर (gpiod_get_value(pinfo->gpios[GPIO_DCD]))
 			mctrl &= ~TIOCM_CAR;
-	}
+	पूर्ण
 
-	if (pinfo->gpios[GPIO_RI]) {
-		if (!gpiod_get_value(pinfo->gpios[GPIO_RI]))
+	अगर (pinfo->gpios[GPIO_RI]) अणु
+		अगर (!gpiod_get_value(pinfo->gpios[GPIO_RI]))
 			mctrl |= TIOCM_RNG;
-	}
+	पूर्ण
 
-	return mctrl;
-}
+	वापस mctrl;
+पूर्ण
 
 /*
  * Stop transmitter
  */
-static void cpm_uart_stop_tx(struct uart_port *port)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल व्योम cpm_uart_stop_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 	smc_t __iomem *smcp = pinfo->smcp;
 	scc_t __iomem *sccp = pinfo->sccp;
 
 	pr_debug("CPM uart[%d]:stop tx\n", port->line);
 
-	if (IS_SMC(pinfo))
+	अगर (IS_SMC(pinfo))
 		clrbits8(&smcp->smc_smcm, SMCM_TX);
-	else
+	अन्यथा
 		clrbits16(&sccp->scc_sccm, UART_SCCM_TX);
-}
+पूर्ण
 
 /*
  * Start transmitter
  */
-static void cpm_uart_start_tx(struct uart_port *port)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल व्योम cpm_uart_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 	smc_t __iomem *smcp = pinfo->smcp;
 	scc_t __iomem *sccp = pinfo->sccp;
 
 	pr_debug("CPM uart[%d]:start tx\n", port->line);
 
-	if (IS_SMC(pinfo)) {
-		if (in_8(&smcp->smc_smcm) & SMCM_TX)
-			return;
-	} else {
-		if (in_be16(&sccp->scc_sccm) & UART_SCCM_TX)
-			return;
-	}
+	अगर (IS_SMC(pinfo)) अणु
+		अगर (in_8(&smcp->smc_smcm) & SMCM_TX)
+			वापस;
+	पूर्ण अन्यथा अणु
+		अगर (in_be16(&sccp->scc_sccm) & UART_SCCM_TX)
+			वापस;
+	पूर्ण
 
-	if (cpm_uart_tx_pump(port) != 0) {
-		if (IS_SMC(pinfo)) {
+	अगर (cpm_uart_tx_pump(port) != 0) अणु
+		अगर (IS_SMC(pinfo)) अणु
 			setbits8(&smcp->smc_smcm, SMCM_TX);
-		} else {
+		पूर्ण अन्यथा अणु
 			setbits16(&sccp->scc_sccm, UART_SCCM_TX);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * Stop receiver
  */
-static void cpm_uart_stop_rx(struct uart_port *port)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल व्योम cpm_uart_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 	smc_t __iomem *smcp = pinfo->smcp;
 	scc_t __iomem *sccp = pinfo->sccp;
 
 	pr_debug("CPM uart[%d]:stop rx\n", port->line);
 
-	if (IS_SMC(pinfo))
+	अगर (IS_SMC(pinfo))
 		clrbits8(&smcp->smc_smcm, SMCM_RX);
-	else
+	अन्यथा
 		clrbits16(&sccp->scc_sccm, UART_SCCM_RX);
-}
+पूर्ण
 
 /*
- * Generate a break.
+ * Generate a अवरोध.
  */
-static void cpm_uart_break_ctl(struct uart_port *port, int break_state)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल व्योम cpm_uart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 
 	pr_debug("CPM uart[%d]:break ctrl, break_state: %d\n", port->line,
-		break_state);
+		अवरोध_state);
 
-	if (break_state)
+	अगर (अवरोध_state)
 		cpm_line_cr_cmd(pinfo, CPM_CR_STOP_TX);
-	else
+	अन्यथा
 		cpm_line_cr_cmd(pinfo, CPM_CR_RESTART_TX);
-}
+पूर्ण
 
 /*
- * Transmit characters, refill buffer descriptor, if possible
+ * Transmit अक्षरacters, refill buffer descriptor, अगर possible
  */
-static void cpm_uart_int_tx(struct uart_port *port)
-{
+अटल व्योम cpm_uart_पूर्णांक_tx(काष्ठा uart_port *port)
+अणु
 	pr_debug("CPM uart[%d]:TX INT\n", port->line);
 
 	cpm_uart_tx_pump(port);
-}
+पूर्ण
 
-#ifdef CONFIG_CONSOLE_POLL
-static int serial_polled;
-#endif
+#अगर_घोषित CONFIG_CONSOLE_POLL
+अटल पूर्णांक serial_polled;
+#पूर्ण_अगर
 
 /*
- * Receive characters
+ * Receive अक्षरacters
  */
-static void cpm_uart_int_rx(struct uart_port *port)
-{
-	int i;
-	unsigned char ch;
+अटल व्योम cpm_uart_पूर्णांक_rx(काष्ठा uart_port *port)
+अणु
+	पूर्णांक i;
+	अचिन्हित अक्षर ch;
 	u8 *cp;
-	struct tty_port *tport = &port->state->port;
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+	काष्ठा tty_port *tport = &port->state->port;
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 	cbd_t __iomem *bdp;
 	u16 status;
-	unsigned int flg;
+	अचिन्हित पूर्णांक flg;
 
 	pr_debug("CPM uart[%d]:RX INT\n", port->line);
 
-	/* Just loop through the closed BDs and copy the characters into
+	/* Just loop through the बंदd BDs and copy the अक्षरacters पूर्णांकo
 	 * the buffer.
 	 */
 	bdp = pinfo->rx_cur;
-	for (;;) {
-#ifdef CONFIG_CONSOLE_POLL
-		if (unlikely(serial_polled)) {
+	क्रम (;;) अणु
+#अगर_घोषित CONFIG_CONSOLE_POLL
+		अगर (unlikely(serial_polled)) अणु
 			serial_polled = 0;
-			return;
-		}
-#endif
+			वापस;
+		पूर्ण
+#पूर्ण_अगर
 		/* get status */
 		status = in_be16(&bdp->cbd_sc);
-		/* If this one is empty, return happy */
-		if (status & BD_SC_EMPTY)
-			break;
+		/* If this one is empty, वापस happy */
+		अगर (status & BD_SC_EMPTY)
+			अवरोध;
 
-		/* get number of characters, and check spce in flip-buffer */
+		/* get number of अक्षरacters, and check spce in flip-buffer */
 		i = in_be16(&bdp->cbd_datlen);
 
 		/* If we have not enough room in tty flip buffer, then we try
-		 * later, which will be the next rx-interrupt or a timeout
+		 * later, which will be the next rx-पूर्णांकerrupt or a समयout
 		 */
-		if (tty_buffer_request_room(tport, i) < i) {
-			printk(KERN_WARNING "No room in flip buffer\n");
-			return;
-		}
+		अगर (tty_buffer_request_room(tport, i) < i) अणु
+			prपूर्णांकk(KERN_WARNING "No room in flip buffer\n");
+			वापस;
+		पूर्ण
 
-		/* get pointer */
+		/* get poपूर्णांकer */
 		cp = cpm2cpu_addr(in_be32(&bdp->cbd_bufaddr), pinfo);
 
 		/* loop through the buffer */
-		while (i-- > 0) {
+		जबतक (i-- > 0) अणु
 			ch = *cp++;
 			port->icount.rx++;
 			flg = TTY_NORMAL;
 
-			if (status &
+			अगर (status &
 			    (BD_SC_BR | BD_SC_FR | BD_SC_PR | BD_SC_OV))
-				goto handle_error;
-			if (uart_handle_sysrq_char(port, ch))
-				continue;
-#ifdef CONFIG_CONSOLE_POLL
-			if (unlikely(serial_polled)) {
+				जाओ handle_error;
+			अगर (uart_handle_sysrq_अक्षर(port, ch))
+				जारी;
+#अगर_घोषित CONFIG_CONSOLE_POLL
+			अगर (unlikely(serial_polled)) अणु
 				serial_polled = 0;
-				return;
-			}
-#endif
-		      error_return:
-			tty_insert_flip_char(tport, ch, flg);
+				वापस;
+			पूर्ण
+#पूर्ण_अगर
+		      error_वापस:
+			tty_insert_flip_अक्षर(tport, ch, flg);
 
-		}		/* End while (i--) */
+		पूर्ण		/* End जबतक (i--) */
 
-		/* This BD is ready to be used again. Clear status. get next */
+		/* This BD is पढ़ोy to be used again. Clear status. get next */
 		clrbits16(&bdp->cbd_sc, BD_SC_BR | BD_SC_FR | BD_SC_PR |
 		                        BD_SC_OV | BD_SC_ID);
 		setbits16(&bdp->cbd_sc, BD_SC_EMPTY);
 
-		if (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
+		अगर (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
 			bdp = pinfo->rx_bd_base;
-		else
+		अन्यथा
 			bdp++;
 
-	} /* End for (;;) */
+	पूर्ण /* End क्रम (;;) */
 
-	/* Write back buffer pointer */
+	/* Write back buffer poपूर्णांकer */
 	pinfo->rx_cur = bdp;
 
 	/* activate BH processing */
 	tty_flip_buffer_push(tport);
 
-	return;
+	वापस;
 
 	/* Error processing */
 
       handle_error:
 	/* Statistics */
-	if (status & BD_SC_BR)
+	अगर (status & BD_SC_BR)
 		port->icount.brk++;
-	if (status & BD_SC_PR)
+	अगर (status & BD_SC_PR)
 		port->icount.parity++;
-	if (status & BD_SC_FR)
+	अगर (status & BD_SC_FR)
 		port->icount.frame++;
-	if (status & BD_SC_OV)
+	अगर (status & BD_SC_OV)
 		port->icount.overrun++;
 
 	/* Mask out ignored conditions */
-	status &= port->read_status_mask;
+	status &= port->पढ़ो_status_mask;
 
-	/* Handle the remaining ones */
-	if (status & BD_SC_BR)
+	/* Handle the reमुख्यing ones */
+	अगर (status & BD_SC_BR)
 		flg = TTY_BREAK;
-	else if (status & BD_SC_PR)
+	अन्यथा अगर (status & BD_SC_PR)
 		flg = TTY_PARITY;
-	else if (status & BD_SC_FR)
+	अन्यथा अगर (status & BD_SC_FR)
 		flg = TTY_FRAME;
 
-	/* overrun does not affect the current character ! */
-	if (status & BD_SC_OV) {
+	/* overrun करोes not affect the current अक्षरacter ! */
+	अगर (status & BD_SC_OV) अणु
 		ch = 0;
 		flg = TTY_OVERRUN;
 		/* We skip this buffer */
 		/* CHECK: Is really nothing senseful there */
 		/* ASSUMPTION: it contains nothing valid */
 		i = 0;
-	}
+	पूर्ण
 	port->sysrq = 0;
-	goto error_return;
-}
+	जाओ error_वापस;
+पूर्ण
 
 /*
- * Asynchron mode interrupt handler
+ * Asynchron mode पूर्णांकerrupt handler
  */
-static irqreturn_t cpm_uart_int(int irq, void *data)
-{
+अटल irqवापस_t cpm_uart_पूर्णांक(पूर्णांक irq, व्योम *data)
+अणु
 	u8 events;
-	struct uart_port *port = data;
-	struct uart_cpm_port *pinfo = (struct uart_cpm_port *)port;
+	काष्ठा uart_port *port = data;
+	काष्ठा uart_cpm_port *pinfo = (काष्ठा uart_cpm_port *)port;
 	smc_t __iomem *smcp = pinfo->smcp;
 	scc_t __iomem *sccp = pinfo->sccp;
 
 	pr_debug("CPM uart[%d]:IRQ\n", port->line);
 
-	if (IS_SMC(pinfo)) {
+	अगर (IS_SMC(pinfo)) अणु
 		events = in_8(&smcp->smc_smce);
 		out_8(&smcp->smc_smce, events);
-		if (events & SMCM_BRKE)
-			uart_handle_break(port);
-		if (events & SMCM_RX)
-			cpm_uart_int_rx(port);
-		if (events & SMCM_TX)
-			cpm_uart_int_tx(port);
-	} else {
+		अगर (events & SMCM_BRKE)
+			uart_handle_अवरोध(port);
+		अगर (events & SMCM_RX)
+			cpm_uart_पूर्णांक_rx(port);
+		अगर (events & SMCM_TX)
+			cpm_uart_पूर्णांक_tx(port);
+	पूर्ण अन्यथा अणु
 		events = in_be16(&sccp->scc_scce);
 		out_be16(&sccp->scc_scce, events);
-		if (events & UART_SCCM_BRKE)
-			uart_handle_break(port);
-		if (events & UART_SCCM_RX)
-			cpm_uart_int_rx(port);
-		if (events & UART_SCCM_TX)
-			cpm_uart_int_tx(port);
-	}
-	return (events) ? IRQ_HANDLED : IRQ_NONE;
-}
+		अगर (events & UART_SCCM_BRKE)
+			uart_handle_अवरोध(port);
+		अगर (events & UART_SCCM_RX)
+			cpm_uart_पूर्णांक_rx(port);
+		अगर (events & UART_SCCM_TX)
+			cpm_uart_पूर्णांक_tx(port);
+	पूर्ण
+	वापस (events) ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static int cpm_uart_startup(struct uart_port *port)
-{
-	int retval;
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल पूर्णांक cpm_uart_startup(काष्ठा uart_port *port)
+अणु
+	पूर्णांक retval;
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 
 	pr_debug("CPM uart[%d]:startup\n", port->line);
 
 	/* If the port is not the console, make sure rx is disabled. */
-	if (!(pinfo->flags & FLAG_CONSOLE)) {
+	अगर (!(pinfo->flags & FLAG_CONSOLE)) अणु
 		/* Disable UART rx */
-		if (IS_SMC(pinfo)) {
+		अगर (IS_SMC(pinfo)) अणु
 			clrbits16(&pinfo->smcp->smc_smcmr, SMCMR_REN);
 			clrbits8(&pinfo->smcp->smc_smcm, SMCM_RX);
-		} else {
+		पूर्ण अन्यथा अणु
 			clrbits32(&pinfo->sccp->scc_gsmrl, SCC_GSMRL_ENR);
 			clrbits16(&pinfo->sccp->scc_sccm, UART_SCCM_RX);
-		}
+		पूर्ण
 		cpm_uart_initbd(pinfo);
-		if (IS_SMC(pinfo)) {
+		अगर (IS_SMC(pinfo)) अणु
 			out_be32(&pinfo->smcup->smc_rstate, 0);
 			out_be32(&pinfo->smcup->smc_tstate, 0);
 			out_be16(&pinfo->smcup->smc_rbptr,
 				 in_be16(&pinfo->smcup->smc_rbase));
 			out_be16(&pinfo->smcup->smc_tbptr,
 				 in_be16(&pinfo->smcup->smc_tbase));
-		} else {
+		पूर्ण अन्यथा अणु
 			cpm_line_cr_cmd(pinfo, CPM_CR_INIT_TRX);
-		}
-	}
-	/* Install interrupt handler. */
-	retval = request_irq(port->irq, cpm_uart_int, 0, "cpm_uart", port);
-	if (retval)
-		return retval;
+		पूर्ण
+	पूर्ण
+	/* Install पूर्णांकerrupt handler. */
+	retval = request_irq(port->irq, cpm_uart_पूर्णांक, 0, "cpm_uart", port);
+	अगर (retval)
+		वापस retval;
 
-	/* Startup rx-int */
-	if (IS_SMC(pinfo)) {
+	/* Startup rx-पूर्णांक */
+	अगर (IS_SMC(pinfo)) अणु
 		setbits8(&pinfo->smcp->smc_smcm, SMCM_RX);
 		setbits16(&pinfo->smcp->smc_smcmr, (SMCMR_REN | SMCMR_TEN));
-	} else {
+	पूर्ण अन्यथा अणु
 		setbits16(&pinfo->sccp->scc_sccm, UART_SCCM_RX);
 		setbits32(&pinfo->sccp->scc_gsmrl, (SCC_GSMRL_ENR | SCC_GSMRL_ENT));
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-inline void cpm_uart_wait_until_send(struct uart_cpm_port *pinfo)
-{
+अंतरभूत व्योम cpm_uart_रुको_until_send(काष्ठा uart_cpm_port *pinfo)
+अणु
 	set_current_state(TASK_UNINTERRUPTIBLE);
-	schedule_timeout(pinfo->wait_closing);
-}
+	schedule_समयout(pinfo->रुको_closing);
+पूर्ण
 
 /*
- * Shutdown the uart
+ * Shutकरोwn the uart
  */
-static void cpm_uart_shutdown(struct uart_port *port)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल व्योम cpm_uart_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 
 	pr_debug("CPM uart[%d]:shutdown\n", port->line);
 
-	/* free interrupt handler */
-	free_irq(port->irq, port);
+	/* मुक्त पूर्णांकerrupt handler */
+	मुक्त_irq(port->irq, port);
 
 	/* If the port is not the console, disable Rx and Tx. */
-	if (!(pinfo->flags & FLAG_CONSOLE)) {
-		/* Wait for all the BDs marked sent */
-		while(!cpm_uart_tx_empty(port)) {
+	अगर (!(pinfo->flags & FLAG_CONSOLE)) अणु
+		/* Wait क्रम all the BDs marked sent */
+		जबतक(!cpm_uart_tx_empty(port)) अणु
 			set_current_state(TASK_UNINTERRUPTIBLE);
-			schedule_timeout(2);
-		}
+			schedule_समयout(2);
+		पूर्ण
 
-		if (pinfo->wait_closing)
-			cpm_uart_wait_until_send(pinfo);
+		अगर (pinfo->रुको_closing)
+			cpm_uart_रुको_until_send(pinfo);
 
 		/* Stop uarts */
-		if (IS_SMC(pinfo)) {
+		अगर (IS_SMC(pinfo)) अणु
 			smc_t __iomem *smcp = pinfo->smcp;
 			clrbits16(&smcp->smc_smcmr, SMCMR_REN | SMCMR_TEN);
 			clrbits8(&smcp->smc_smcm, SMCM_RX | SMCM_TX);
-		} else {
+		पूर्ण अन्यथा अणु
 			scc_t __iomem *sccp = pinfo->sccp;
 			clrbits32(&sccp->scc_gsmrl, SCC_GSMRL_ENR | SCC_GSMRL_ENT);
 			clrbits16(&sccp->scc_sccm, UART_SCCM_TX | UART_SCCM_RX);
-		}
+		पूर्ण
 
-		/* Shut them really down and reinit buffer descriptors */
-		if (IS_SMC(pinfo)) {
+		/* Shut them really करोwn and reinit buffer descriptors */
+		अगर (IS_SMC(pinfo)) अणु
 			out_be16(&pinfo->smcup->smc_brkcr, 0);
 			cpm_line_cr_cmd(pinfo, CPM_CR_STOP_TX);
-		} else {
+		पूर्ण अन्यथा अणु
 			out_be16(&pinfo->sccup->scc_brkcr, 0);
 			cpm_line_cr_cmd(pinfo, CPM_CR_GRA_STOP_TX);
-		}
+		पूर्ण
 
 		cpm_uart_initbd(pinfo);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cpm_uart_set_termios(struct uart_port *port,
-                                 struct ktermios *termios,
-                                 struct ktermios *old)
-{
-	int baud;
-	unsigned long flags;
+अटल व्योम cpm_uart_set_termios(काष्ठा uart_port *port,
+                                 काष्ठा ktermios *termios,
+                                 काष्ठा ktermios *old)
+अणु
+	पूर्णांक baud;
+	अचिन्हित दीर्घ flags;
 	u16 cval, scval, prev_mode;
-	int bits, sbits;
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+	पूर्णांक bits, sbits;
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 	smc_t __iomem *smcp = pinfo->smcp;
 	scc_t __iomem *sccp = pinfo->sccp;
-	int maxidl;
+	पूर्णांक maxidl;
 
 	pr_debug("CPM uart[%d]:set_termios\n", port->line);
 
 	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 16);
-	if (baud < HW_BUF_SPD_THRESHOLD || port->flags & UPF_LOW_LATENCY)
-		pinfo->rx_fifosize = 1;
-	else
-		pinfo->rx_fifosize = RX_BUF_SIZE;
+	अगर (baud < HW_BUF_SPD_THRESHOLD || port->flags & UPF_LOW_LATENCY)
+		pinfo->rx_fअगरosize = 1;
+	अन्यथा
+		pinfo->rx_fअगरosize = RX_BUF_SIZE;
 
-	/* MAXIDL is the timeout after which a receive buffer is closed
-	 * when not full if no more characters are received.
+	/* MAXIDL is the समयout after which a receive buffer is बंदd
+	 * when not full अगर no more अक्षरacters are received.
 	 * We calculate it from the baudrate so that the duration is
 	 * always the same at standard rates: about 4ms.
 	 */
 	maxidl = baud / 2400;
-	if (maxidl < 1)
+	अगर (maxidl < 1)
 		maxidl = 1;
-	if (maxidl > 0x10)
+	अगर (maxidl > 0x10)
 		maxidl = 0x10;
 
-	/* Character length programmed into the mode register is the
+	/* Character length programmed पूर्णांकo the mode रेजिस्टर is the
 	 * sum of: 1 start bit, number of data bits, 0 or 1 parity bit,
 	 * 1 or 2 stop bits, minus 1.
-	 * The value 'bits' counts this for us.
+	 * The value 'bits' counts this क्रम us.
 	 */
 	cval = 0;
 	scval = 0;
 
 	/* byte size */
-	switch (termios->c_cflag & CSIZE) {
-	case CS5:
+	चयन (termios->c_cflag & CSIZE) अणु
+	हाल CS5:
 		bits = 5;
-		break;
-	case CS6:
+		अवरोध;
+	हाल CS6:
 		bits = 6;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		bits = 7;
-		break;
-	case CS8:
+		अवरोध;
+	हाल CS8:
 		bits = 8;
-		break;
+		अवरोध;
 		/* Never happens, but GCC is too dumb to figure it out */
-	default:
+	शेष:
 		bits = 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	sbits = bits - 5;
 
-	if (termios->c_cflag & CSTOPB) {
+	अगर (termios->c_cflag & CSTOPB) अणु
 		cval |= SMCMR_SL;	/* Two stops */
 		scval |= SCU_PSMR_SL;
 		bits++;
-	}
+	पूर्ण
 
-	if (termios->c_cflag & PARENB) {
+	अगर (termios->c_cflag & PARENB) अणु
 		cval |= SMCMR_PEN;
 		scval |= SCU_PSMR_PEN;
 		bits++;
-		if (!(termios->c_cflag & PARODD)) {
+		अगर (!(termios->c_cflag & PARODD)) अणु
 			cval |= SMCMR_PM_EVEN;
 			scval |= (SCU_PSMR_REVP | SCU_PSMR_TEVP);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Update the timeout
+	 * Update the समयout
 	 */
-	uart_update_timeout(port, termios->c_cflag, baud);
+	uart_update_समयout(port, termios->c_cflag, baud);
 
 	/*
 	 * Set up parity check flag
 	 */
-	port->read_status_mask = (BD_SC_EMPTY | BD_SC_OV);
-	if (termios->c_iflag & INPCK)
-		port->read_status_mask |= BD_SC_FR | BD_SC_PR;
-	if ((termios->c_iflag & BRKINT) || (termios->c_iflag & PARMRK))
-		port->read_status_mask |= BD_SC_BR;
+	port->पढ़ो_status_mask = (BD_SC_EMPTY | BD_SC_OV);
+	अगर (termios->c_अगरlag & INPCK)
+		port->पढ़ो_status_mask |= BD_SC_FR | BD_SC_PR;
+	अगर ((termios->c_अगरlag & BRKINT) || (termios->c_अगरlag & PARMRK))
+		port->पढ़ो_status_mask |= BD_SC_BR;
 
 	/*
 	 * Characters to ignore
 	 */
 	port->ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		port->ignore_status_mask |= BD_SC_PR | BD_SC_FR;
-	if (termios->c_iflag & IGNBRK) {
+	अगर (termios->c_अगरlag & IGNBRK) अणु
 		port->ignore_status_mask |= BD_SC_BR;
 		/*
-		 * If we're ignore parity and break indicators, ignore
+		 * If we're ignore parity and अवरोध indicators, ignore
 		 * overruns too.  (For real raw support).
 		 */
-		if (termios->c_iflag & IGNPAR)
+		अगर (termios->c_अगरlag & IGNPAR)
 			port->ignore_status_mask |= BD_SC_OV;
-	}
+	पूर्ण
 	/*
-	 * !!! ignore all characters if CREAD is not set
+	 * !!! ignore all अक्षरacters अगर CREAD is not set
 	 */
-	if ((termios->c_cflag & CREAD) == 0)
-		port->read_status_mask &= ~BD_SC_EMPTY;
+	अगर ((termios->c_cflag & CREAD) == 0)
+		port->पढ़ो_status_mask &= ~BD_SC_EMPTY;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Start bit has not been added (so don't, because we would just
-	 * subtract it later), and we need to add one for the number of
+	/* Start bit has not been added (so करोn't, because we would just
+	 * subtract it later), and we need to add one क्रम the number of
 	 * stops bits (there is always at least one).
 	 */
 	bits++;
-	if (IS_SMC(pinfo)) {
+	अगर (IS_SMC(pinfo)) अणु
 		/*
-		 * MRBLR can be changed while an SMC/SCC is operating only
-		 * if it is done in a single bus cycle with one 16-bit move
+		 * MRBLR can be changed जबतक an SMC/SCC is operating only
+		 * अगर it is करोne in a single bus cycle with one 16-bit move
 		 * (not two 8-bit bus cycles back-to-back). This occurs when
-		 * the cp shifts control to the next RxBD, so the change does
+		 * the cp shअगरts control to the next RxBD, so the change करोes
 		 * not take effect immediately. To guarantee the exact RxBD
-		 * on which the change occurs, change MRBLR only while the
+		 * on which the change occurs, change MRBLR only जबतक the
 		 * SMC/SCC receiver is disabled.
 		 */
-		out_be16(&pinfo->smcup->smc_mrblr, pinfo->rx_fifosize);
+		out_be16(&pinfo->smcup->smc_mrblr, pinfo->rx_fअगरosize);
 		out_be16(&pinfo->smcup->smc_maxidl, maxidl);
 
-		/* Set the mode register.  We want to keep a copy of the
-		 * enables, because we want to put them back if they were
+		/* Set the mode रेजिस्टर.  We want to keep a copy of the
+		 * enables, because we want to put them back अगर they were
 		 * present.
 		 */
 		prev_mode = in_be16(&smcp->smc_smcmr) & (SMCMR_REN | SMCMR_TEN);
-		/* Output in *one* operation, so we don't interrupt RX/TX if they
-		 * were already enabled. */
+		/* Output in *one* operation, so we करोn't पूर्णांकerrupt RX/TX अगर they
+		 * were alपढ़ोy enabled. */
 		out_be16(&smcp->smc_smcmr, smcr_mk_clen(bits) | cval |
 		    SMCMR_SM_UART | prev_mode);
-	} else {
-		out_be16(&pinfo->sccup->scc_genscc.scc_mrblr, pinfo->rx_fifosize);
+	पूर्ण अन्यथा अणु
+		out_be16(&pinfo->sccup->scc_genscc.scc_mrblr, pinfo->rx_fअगरosize);
 		out_be16(&pinfo->sccup->scc_maxidl, maxidl);
 		out_be16(&sccp->scc_psmr, (sbits << 12) | scval);
-	}
+	पूर्ण
 
-	if (pinfo->clk)
+	अगर (pinfo->clk)
 		clk_set_rate(pinfo->clk, baud);
-	else
+	अन्यथा
 		cpm_set_brg(pinfo->brg - 1, baud);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static const char *cpm_uart_type(struct uart_port *port)
-{
+अटल स्थिर अक्षर *cpm_uart_type(काष्ठा uart_port *port)
+अणु
 	pr_debug("CPM uart[%d]:uart_type\n", port->line);
 
-	return port->type == PORT_CPM ? "CPM UART" : NULL;
-}
+	वापस port->type == PORT_CPM ? "CPM UART" : शून्य;
+पूर्ण
 
 /*
- * verify the new serial_struct (for TIOCSSERIAL).
+ * verअगरy the new serial_काष्ठा (क्रम TIOCSSERIAL).
  */
-static int cpm_uart_verify_port(struct uart_port *port,
-				struct serial_struct *ser)
-{
-	int ret = 0;
+अटल पूर्णांक cpm_uart_verअगरy_port(काष्ठा uart_port *port,
+				काष्ठा serial_काष्ठा *ser)
+अणु
+	पूर्णांक ret = 0;
 
 	pr_debug("CPM uart[%d]:verify_port\n", port->line);
 
-	if (ser->type != PORT_UNKNOWN && ser->type != PORT_CPM)
+	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_CPM)
 		ret = -EINVAL;
-	if (ser->irq < 0 || ser->irq >= nr_irqs)
+	अगर (ser->irq < 0 || ser->irq >= nr_irqs)
 		ret = -EINVAL;
-	if (ser->baud_base < 9600)
+	अगर (ser->baud_base < 9600)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Transmit characters, refill buffer descriptor, if possible
+ * Transmit अक्षरacters, refill buffer descriptor, अगर possible
  */
-static int cpm_uart_tx_pump(struct uart_port *port)
-{
+अटल पूर्णांक cpm_uart_tx_pump(काष्ठा uart_port *port)
+अणु
 	cbd_t __iomem *bdp;
 	u8 *p;
-	int count;
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
-	struct circ_buf *xmit = &port->state->xmit;
+	पूर्णांक count;
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
+	काष्ठा circ_buf *xmit = &port->state->xmit;
 
 	/* Handle xon/xoff */
-	if (port->x_char) {
+	अगर (port->x_अक्षर) अणु
 		/* Pick next descriptor and fill from buffer */
 		bdp = pinfo->tx_cur;
 
 		p = cpm2cpu_addr(in_be32(&bdp->cbd_bufaddr), pinfo);
 
-		*p++ = port->x_char;
+		*p++ = port->x_अक्षर;
 
 		out_be16(&bdp->cbd_datlen, 1);
 		setbits16(&bdp->cbd_sc, BD_SC_READY);
 		/* Get next BD. */
-		if (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
+		अगर (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
 			bdp = pinfo->tx_bd_base;
-		else
+		अन्यथा
 			bdp++;
 		pinfo->tx_cur = bdp;
 
 		port->icount.tx++;
-		port->x_char = 0;
-		return 1;
-	}
+		port->x_अक्षर = 0;
+		वापस 1;
+	पूर्ण
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port)) अणु
 		cpm_uart_stop_tx(port);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* Pick next descriptor and fill from buffer */
 	bdp = pinfo->tx_cur;
 
-	while (!(in_be16(&bdp->cbd_sc) & BD_SC_READY) &&
-	       xmit->tail != xmit->head) {
+	जबतक (!(in_be16(&bdp->cbd_sc) & BD_SC_READY) &&
+	       xmit->tail != xmit->head) अणु
 		count = 0;
 		p = cpm2cpu_addr(in_be32(&bdp->cbd_bufaddr), pinfo);
-		while (count < pinfo->tx_fifosize) {
+		जबतक (count < pinfo->tx_fअगरosize) अणु
 			*p++ = xmit->buf[xmit->tail];
 			xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 			port->icount.tx++;
 			count++;
-			if (xmit->head == xmit->tail)
-				break;
-		}
+			अगर (xmit->head == xmit->tail)
+				अवरोध;
+		पूर्ण
 		out_be16(&bdp->cbd_datlen, count);
 		setbits16(&bdp->cbd_sc, BD_SC_READY);
 		/* Get next BD. */
-		if (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
+		अगर (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
 			bdp = pinfo->tx_bd_base;
-		else
+		अन्यथा
 			bdp++;
-	}
+	पूर्ण
 	pinfo->tx_cur = bdp;
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
-	if (uart_circ_empty(xmit)) {
+	अगर (uart_circ_empty(xmit)) अणु
 		cpm_uart_stop_tx(port);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * init buffer descriptors
  */
-static void cpm_uart_initbd(struct uart_cpm_port *pinfo)
-{
-	int i;
+अटल व्योम cpm_uart_initbd(काष्ठा uart_cpm_port *pinfo)
+अणु
+	पूर्णांक i;
 	u8 *mem_addr;
 	cbd_t __iomem *bdp;
 
@@ -752,37 +753,37 @@ static void cpm_uart_initbd(struct uart_cpm_port *pinfo)
 
 	/* Set the physical address of the host memory
 	 * buffers in the buffer descriptors, and the
-	 * virtual address for us to work with.
+	 * भव address क्रम us to work with.
 	 */
 	mem_addr = pinfo->mem_addr;
 	bdp = pinfo->rx_cur = pinfo->rx_bd_base;
-	for (i = 0; i < (pinfo->rx_nrfifos - 1); i++, bdp++) {
+	क्रम (i = 0; i < (pinfo->rx_nrfअगरos - 1); i++, bdp++) अणु
 		out_be32(&bdp->cbd_bufaddr, cpu2cpm_addr(mem_addr, pinfo));
 		out_be16(&bdp->cbd_sc, BD_SC_EMPTY | BD_SC_INTRPT);
-		mem_addr += pinfo->rx_fifosize;
-	}
+		mem_addr += pinfo->rx_fअगरosize;
+	पूर्ण
 
 	out_be32(&bdp->cbd_bufaddr, cpu2cpm_addr(mem_addr, pinfo));
 	out_be16(&bdp->cbd_sc, BD_SC_WRAP | BD_SC_EMPTY | BD_SC_INTRPT);
 
 	/* Set the physical address of the host memory
 	 * buffers in the buffer descriptors, and the
-	 * virtual address for us to work with.
+	 * भव address क्रम us to work with.
 	 */
-	mem_addr = pinfo->mem_addr + L1_CACHE_ALIGN(pinfo->rx_nrfifos * pinfo->rx_fifosize);
+	mem_addr = pinfo->mem_addr + L1_CACHE_ALIGN(pinfo->rx_nrfअगरos * pinfo->rx_fअगरosize);
 	bdp = pinfo->tx_cur = pinfo->tx_bd_base;
-	for (i = 0; i < (pinfo->tx_nrfifos - 1); i++, bdp++) {
+	क्रम (i = 0; i < (pinfo->tx_nrfअगरos - 1); i++, bdp++) अणु
 		out_be32(&bdp->cbd_bufaddr, cpu2cpm_addr(mem_addr, pinfo));
 		out_be16(&bdp->cbd_sc, BD_SC_INTRPT);
-		mem_addr += pinfo->tx_fifosize;
-	}
+		mem_addr += pinfo->tx_fअगरosize;
+	पूर्ण
 
 	out_be32(&bdp->cbd_bufaddr, cpu2cpm_addr(mem_addr, pinfo));
 	out_be16(&bdp->cbd_sc, BD_SC_WRAP | BD_SC_INTRPT);
-}
+पूर्ण
 
-static void cpm_uart_init_scc(struct uart_cpm_port *pinfo)
-{
+अटल व्योम cpm_uart_init_scc(काष्ठा uart_cpm_port *pinfo)
+अणु
 	scc_t __iomem *scp;
 	scc_uart_t __iomem *sup;
 
@@ -803,7 +804,7 @@ static void cpm_uart_init_scc(struct uart_cpm_port *pinfo)
 
 	cpm_set_scc_fcr(sup);
 
-	out_be16(&sup->scc_genscc.scc_mrblr, pinfo->rx_fifosize);
+	out_be16(&sup->scc_genscc.scc_mrblr, pinfo->rx_fअगरosize);
 	out_be16(&sup->scc_maxidl, 0x10);
 	out_be16(&sup->scc_brkcr, 1);
 	out_be16(&sup->scc_parec, 0);
@@ -813,14 +814,14 @@ static void cpm_uart_init_scc(struct uart_cpm_port *pinfo)
 	out_be16(&sup->scc_uaddr1, 0);
 	out_be16(&sup->scc_uaddr2, 0);
 	out_be16(&sup->scc_toseq, 0);
-	out_be16(&sup->scc_char1, 0x8000);
-	out_be16(&sup->scc_char2, 0x8000);
-	out_be16(&sup->scc_char3, 0x8000);
-	out_be16(&sup->scc_char4, 0x8000);
-	out_be16(&sup->scc_char5, 0x8000);
-	out_be16(&sup->scc_char6, 0x8000);
-	out_be16(&sup->scc_char7, 0x8000);
-	out_be16(&sup->scc_char8, 0x8000);
+	out_be16(&sup->scc_अक्षर1, 0x8000);
+	out_be16(&sup->scc_अक्षर2, 0x8000);
+	out_be16(&sup->scc_अक्षर3, 0x8000);
+	out_be16(&sup->scc_अक्षर4, 0x8000);
+	out_be16(&sup->scc_अक्षर5, 0x8000);
+	out_be16(&sup->scc_अक्षर6, 0x8000);
+	out_be16(&sup->scc_अक्षर7, 0x8000);
+	out_be16(&sup->scc_अक्षर8, 0x8000);
 	out_be16(&sup->scc_rccm, 0xc0ff);
 
 	/* Send the CPM an initialize command.
@@ -834,17 +835,17 @@ static void cpm_uart_init_scc(struct uart_cpm_port *pinfo)
 	out_be32(&scp->scc_gsmrl,
 	         SCC_GSMRL_MODE_UART | SCC_GSMRL_TDCR_16 | SCC_GSMRL_RDCR_16);
 
-	/* Enable rx interrupts  and clear all pending events.  */
+	/* Enable rx पूर्णांकerrupts  and clear all pending events.  */
 	out_be16(&scp->scc_sccm, 0);
 	out_be16(&scp->scc_scce, 0xffff);
 	out_be16(&scp->scc_dsr, 0x7e7e);
 	out_be16(&scp->scc_psmr, 0x3000);
 
 	setbits32(&scp->scc_gsmrl, SCC_GSMRL_ENR | SCC_GSMRL_ENT);
-}
+पूर्ण
 
-static void cpm_uart_init_smc(struct uart_cpm_port *pinfo)
-{
+अटल व्योम cpm_uart_init_smc(काष्ठा uart_cpm_port *pinfo)
+अणु
 	smc_t __iomem *sp;
 	smc_uart_t __iomem *up;
 
@@ -860,13 +861,13 @@ static void cpm_uart_init_smc(struct uart_cpm_port *pinfo)
 	         (u8 __iomem *)pinfo->tx_bd_base - DPRAM_BASE);
 
 /*
- *  In case SMC is being relocated...
+ *  In हाल SMC is being relocated...
  */
 	out_be16(&up->smc_rbptr, in_be16(&pinfo->smcup->smc_rbase));
 	out_be16(&up->smc_tbptr, in_be16(&pinfo->smcup->smc_tbase));
 	out_be32(&up->smc_rstate, 0);
 	out_be32(&up->smc_tstate, 0);
-	out_be16(&up->smc_brkcr, 1);              /* number of break chars */
+	out_be16(&up->smc_brkcr, 1);              /* number of अवरोध अक्षरs */
 	out_be16(&up->smc_brkec, 0);
 
 	/* Set up the uart parameters in the
@@ -874,8 +875,8 @@ static void cpm_uart_init_smc(struct uart_cpm_port *pinfo)
 	 */
 	cpm_set_smc_fcr(up);
 
-	/* Using idle character time requires some additional tuning.  */
-	out_be16(&up->smc_mrblr, pinfo->rx_fifosize);
+	/* Using idle अक्षरacter समय requires some additional tuning.  */
+	out_be16(&up->smc_mrblr, pinfo->rx_fअगरosize);
 	out_be16(&up->smc_maxidl, 0x10);
 	out_be16(&up->smc_brklen, 0);
 	out_be16(&up->smc_brkec, 0);
@@ -886,83 +887,83 @@ static void cpm_uart_init_smc(struct uart_cpm_port *pinfo)
 	 */
 	out_be16(&sp->smc_smcmr, smcr_mk_clen(9) | SMCMR_SM_UART);
 
-	/* Enable only rx interrupts clear all pending events. */
+	/* Enable only rx पूर्णांकerrupts clear all pending events. */
 	out_8(&sp->smc_smcm, 0);
 	out_8(&sp->smc_smce, 0xff);
 
 	setbits16(&sp->smc_smcmr, SMCMR_REN | SMCMR_TEN);
-}
+पूर्ण
 
 /*
  * Initialize port. This is called from early_console stuff
  * so we have to be careful here !
  */
-static int cpm_uart_request_port(struct uart_port *port)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
-	int ret;
+अटल पूर्णांक cpm_uart_request_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
+	पूर्णांक ret;
 
 	pr_debug("CPM uart[%d]:request port\n", port->line);
 
-	if (pinfo->flags & FLAG_CONSOLE)
-		return 0;
+	अगर (pinfo->flags & FLAG_CONSOLE)
+		वापस 0;
 
-	if (IS_SMC(pinfo)) {
+	अगर (IS_SMC(pinfo)) अणु
 		clrbits8(&pinfo->smcp->smc_smcm, SMCM_RX | SMCM_TX);
 		clrbits16(&pinfo->smcp->smc_smcmr, SMCMR_REN | SMCMR_TEN);
-	} else {
+	पूर्ण अन्यथा अणु
 		clrbits16(&pinfo->sccp->scc_sccm, UART_SCCM_TX | UART_SCCM_RX);
 		clrbits32(&pinfo->sccp->scc_gsmrl, SCC_GSMRL_ENR | SCC_GSMRL_ENT);
-	}
+	पूर्ण
 
 	ret = cpm_uart_allocbuf(pinfo, 0);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	cpm_uart_initbd(pinfo);
-	if (IS_SMC(pinfo))
+	अगर (IS_SMC(pinfo))
 		cpm_uart_init_smc(pinfo);
-	else
+	अन्यथा
 		cpm_uart_init_scc(pinfo);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cpm_uart_release_port(struct uart_port *port)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल व्योम cpm_uart_release_port(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 
-	if (!(pinfo->flags & FLAG_CONSOLE))
-		cpm_uart_freebuf(pinfo);
-}
+	अगर (!(pinfo->flags & FLAG_CONSOLE))
+		cpm_uart_मुक्तbuf(pinfo);
+पूर्ण
 
 /*
- * Configure/autoconfigure the port.
+ * Configure/स्वतःconfigure the port.
  */
-static void cpm_uart_config_port(struct uart_port *port, int flags)
-{
+अटल व्योम cpm_uart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
 	pr_debug("CPM uart[%d]:config_port\n", port->line);
 
-	if (flags & UART_CONFIG_TYPE) {
+	अगर (flags & UART_CONFIG_TYPE) अणु
 		port->type = PORT_CPM;
 		cpm_uart_request_port(port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_CONSOLE_POLL) || defined(CONFIG_SERIAL_CPM_CONSOLE)
+#अगर defined(CONFIG_CONSOLE_POLL) || defined(CONFIG_SERIAL_CPM_CONSOLE)
 /*
  * Write a string to the serial port
- * Note that this is called with interrupts already disabled
+ * Note that this is called with पूर्णांकerrupts alपढ़ोy disabled
  */
-static void cpm_uart_early_write(struct uart_cpm_port *pinfo,
-		const char *string, u_int count, bool handle_linefeed)
-{
-	unsigned int i;
+अटल व्योम cpm_uart_early_ग_लिखो(काष्ठा uart_cpm_port *pinfo,
+		स्थिर अक्षर *string, u_पूर्णांक count, bool handle_linefeed)
+अणु
+	अचिन्हित पूर्णांक i;
 	cbd_t __iomem *bdp, *bdbase;
-	unsigned char *cpm_outp_addr;
+	अचिन्हित अक्षर *cpm_outp_addr;
 
 	/* Get the address of the host memory buffer.
 	 */
@@ -970,21 +971,21 @@ static void cpm_uart_early_write(struct uart_cpm_port *pinfo,
 	bdbase = pinfo->tx_bd_base;
 
 	/*
-	 * Now, do each character.  This is not as bad as it looks
+	 * Now, करो each अक्षरacter.  This is not as bad as it looks
 	 * since this is a holding FIFO and not a transmitting FIFO.
-	 * We could add the complexity of filling the entire transmit
-	 * buffer, but we would just wait longer between accesses......
+	 * We could add the complनिकासy of filling the entire transmit
+	 * buffer, but we would just रुको दीर्घer between accesses......
 	 */
-	for (i = 0; i < count; i++, string++) {
-		/* Wait for transmitter fifo to empty.
-		 * Ready indicates output is ready, and xmt is doing
-		 * that, not that it is ready for us to send.
+	क्रम (i = 0; i < count; i++, string++) अणु
+		/* Wait क्रम transmitter fअगरo to empty.
+		 * Ready indicates output is पढ़ोy, and xmt is करोing
+		 * that, not that it is पढ़ोy क्रम us to send.
 		 */
-		while ((in_be16(&bdp->cbd_sc) & BD_SC_READY) != 0)
+		जबतक ((in_be16(&bdp->cbd_sc) & BD_SC_READY) != 0)
 			;
 
-		/* Send the character out.
-		 * If the buffer address is in the CPM DPRAM, don't
+		/* Send the अक्षरacter out.
+		 * If the buffer address is in the CPM DPRAM, करोn't
 		 * convert it.
 		 */
 		cpm_outp_addr = cpm2cpu_addr(in_be32(&bdp->cbd_bufaddr),
@@ -994,14 +995,14 @@ static void cpm_uart_early_write(struct uart_cpm_port *pinfo,
 		out_be16(&bdp->cbd_datlen, 1);
 		setbits16(&bdp->cbd_sc, BD_SC_READY);
 
-		if (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
+		अगर (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
 			bdp = bdbase;
-		else
+		अन्यथा
 			bdp++;
 
-		/* if a LF, also do CR... */
-		if (handle_linefeed && *string == 10) {
-			while ((in_be16(&bdp->cbd_sc) & BD_SC_READY) != 0)
+		/* अगर a LF, also करो CR... */
+		अगर (handle_linefeed && *string == 10) अणु
+			जबतक ((in_be16(&bdp->cbd_sc) & BD_SC_READY) != 0)
 				;
 
 			cpm_outp_addr = cpm2cpu_addr(in_be32(&bdp->cbd_bufaddr),
@@ -1011,264 +1012,264 @@ static void cpm_uart_early_write(struct uart_cpm_port *pinfo,
 			out_be16(&bdp->cbd_datlen, 1);
 			setbits16(&bdp->cbd_sc, BD_SC_READY);
 
-			if (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
+			अगर (in_be16(&bdp->cbd_sc) & BD_SC_WRAP)
 				bdp = bdbase;
-			else
+			अन्यथा
 				bdp++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Finally, Wait for transmitter & holding register to empty
+	 * Finally, Wait क्रम transmitter & holding रेजिस्टर to empty
 	 *  and restore the IER
 	 */
-	while ((in_be16(&bdp->cbd_sc) & BD_SC_READY) != 0)
+	जबतक ((in_be16(&bdp->cbd_sc) & BD_SC_READY) != 0)
 		;
 
 	pinfo->tx_cur = bdp;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_CONSOLE_POLL
-/* Serial polling routines for writing and reading from the uart while
- * in an interrupt or debug context.
+#अगर_घोषित CONFIG_CONSOLE_POLL
+/* Serial polling routines क्रम writing and पढ़ोing from the uart जबतक
+ * in an पूर्णांकerrupt or debug context.
  */
 
-#define GDB_BUF_SIZE	512	/* power of 2, please */
+#घोषणा GDB_BUF_SIZE	512	/* घातer of 2, please */
 
-static char poll_buf[GDB_BUF_SIZE];
-static char *pollp;
-static int poll_chars;
+अटल अक्षर poll_buf[GDB_BUF_SIZE];
+अटल अक्षर *pollp;
+अटल पूर्णांक poll_अक्षरs;
 
-static int poll_wait_key(char *obuf, struct uart_cpm_port *pinfo)
-{
-	u_char		c, *cp;
-	volatile cbd_t	*bdp;
-	int		i;
+अटल पूर्णांक poll_रुको_key(अक्षर *obuf, काष्ठा uart_cpm_port *pinfo)
+अणु
+	u_अक्षर		c, *cp;
+	अस्थिर cbd_t	*bdp;
+	पूर्णांक		i;
 
 	/* Get the address of the host memory buffer.
 	 */
 	bdp = pinfo->rx_cur;
-	if (bdp->cbd_sc & BD_SC_EMPTY)
-		return NO_POLL_CHAR;
+	अगर (bdp->cbd_sc & BD_SC_EMPTY)
+		वापस NO_POLL_CHAR;
 
-	/* If the buffer address is in the CPM DPRAM, don't
+	/* If the buffer address is in the CPM DPRAM, करोn't
 	 * convert it.
 	 */
 	cp = cpm2cpu_addr(bdp->cbd_bufaddr, pinfo);
 
-	if (obuf) {
+	अगर (obuf) अणु
 		i = c = bdp->cbd_datlen;
-		while (i-- > 0)
+		जबतक (i-- > 0)
 			*obuf++ = *cp++;
-	} else
+	पूर्ण अन्यथा
 		c = *cp;
 	bdp->cbd_sc &= ~(BD_SC_BR | BD_SC_FR | BD_SC_PR | BD_SC_OV | BD_SC_ID);
 	bdp->cbd_sc |= BD_SC_EMPTY;
 
-	if (bdp->cbd_sc & BD_SC_WRAP)
+	अगर (bdp->cbd_sc & BD_SC_WRAP)
 		bdp = pinfo->rx_bd_base;
-	else
+	अन्यथा
 		bdp++;
 	pinfo->rx_cur = (cbd_t *)bdp;
 
-	return (int)c;
-}
+	वापस (पूर्णांक)c;
+पूर्ण
 
-static int cpm_get_poll_char(struct uart_port *port)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
+अटल पूर्णांक cpm_get_poll_अक्षर(काष्ठा uart_port *port)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
 
-	if (!serial_polled) {
+	अगर (!serial_polled) अणु
 		serial_polled = 1;
-		poll_chars = 0;
-	}
-	if (poll_chars <= 0) {
-		int ret = poll_wait_key(poll_buf, pinfo);
+		poll_अक्षरs = 0;
+	पूर्ण
+	अगर (poll_अक्षरs <= 0) अणु
+		पूर्णांक ret = poll_रुको_key(poll_buf, pinfo);
 
-		if (ret == NO_POLL_CHAR)
-			return ret;
-		poll_chars = ret;
+		अगर (ret == NO_POLL_CHAR)
+			वापस ret;
+		poll_अक्षरs = ret;
 		pollp = poll_buf;
-	}
-	poll_chars--;
-	return *pollp++;
-}
+	पूर्ण
+	poll_अक्षरs--;
+	वापस *pollp++;
+पूर्ण
 
-static void cpm_put_poll_char(struct uart_port *port,
-			 unsigned char c)
-{
-	struct uart_cpm_port *pinfo =
-		container_of(port, struct uart_cpm_port, port);
-	static char ch[2];
+अटल व्योम cpm_put_poll_अक्षर(काष्ठा uart_port *port,
+			 अचिन्हित अक्षर c)
+अणु
+	काष्ठा uart_cpm_port *pinfo =
+		container_of(port, काष्ठा uart_cpm_port, port);
+	अटल अक्षर ch[2];
 
-	ch[0] = (char)c;
-	cpm_uart_early_write(pinfo, ch, 1, false);
-}
+	ch[0] = (अक्षर)c;
+	cpm_uart_early_ग_लिखो(pinfo, ch, 1, false);
+पूर्ण
 
-static struct uart_port *udbg_port;
+अटल काष्ठा uart_port *udbg_port;
 
-static void udbg_cpm_putc(char c)
-{
-	if (c == '\n')
-		cpm_put_poll_char(udbg_port, '\r');
-	cpm_put_poll_char(udbg_port, c);
-}
+अटल व्योम udbg_cpm_अ_दो(अक्षर c)
+अणु
+	अगर (c == '\n')
+		cpm_put_poll_अक्षर(udbg_port, '\r');
+	cpm_put_poll_अक्षर(udbg_port, c);
+पूर्ण
 
-static int udbg_cpm_getc_poll(void)
-{
-	int c = cpm_get_poll_char(udbg_port);
+अटल पूर्णांक udbg_cpm_अ_लो_poll(व्योम)
+अणु
+	पूर्णांक c = cpm_get_poll_अक्षर(udbg_port);
 
-	return c == NO_POLL_CHAR ? -1 : c;
-}
+	वापस c == NO_POLL_CHAR ? -1 : c;
+पूर्ण
 
-static int udbg_cpm_getc(void)
-{
-	int c;
+अटल पूर्णांक udbg_cpm_अ_लो(व्योम)
+अणु
+	पूर्णांक c;
 
-	while ((c = udbg_cpm_getc_poll()) == -1)
+	जबतक ((c = udbg_cpm_अ_लो_poll()) == -1)
 		cpu_relax();
-	return c;
-}
+	वापस c;
+पूर्ण
 
-#endif /* CONFIG_CONSOLE_POLL */
+#पूर्ण_अगर /* CONFIG_CONSOLE_POLL */
 
-static const struct uart_ops cpm_uart_pops = {
+अटल स्थिर काष्ठा uart_ops cpm_uart_pops = अणु
 	.tx_empty	= cpm_uart_tx_empty,
 	.set_mctrl	= cpm_uart_set_mctrl,
 	.get_mctrl	= cpm_uart_get_mctrl,
 	.stop_tx	= cpm_uart_stop_tx,
 	.start_tx	= cpm_uart_start_tx,
 	.stop_rx	= cpm_uart_stop_rx,
-	.break_ctl	= cpm_uart_break_ctl,
+	.अवरोध_ctl	= cpm_uart_अवरोध_ctl,
 	.startup	= cpm_uart_startup,
-	.shutdown	= cpm_uart_shutdown,
+	.shutकरोwn	= cpm_uart_shutकरोwn,
 	.set_termios	= cpm_uart_set_termios,
 	.type		= cpm_uart_type,
 	.release_port	= cpm_uart_release_port,
 	.request_port	= cpm_uart_request_port,
 	.config_port	= cpm_uart_config_port,
-	.verify_port	= cpm_uart_verify_port,
-#ifdef CONFIG_CONSOLE_POLL
-	.poll_get_char = cpm_get_poll_char,
-	.poll_put_char = cpm_put_poll_char,
-#endif
-};
+	.verअगरy_port	= cpm_uart_verअगरy_port,
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	.poll_get_अक्षर = cpm_get_poll_अक्षर,
+	.poll_put_अक्षर = cpm_put_poll_अक्षर,
+#पूर्ण_अगर
+पूर्ण;
 
-struct uart_cpm_port cpm_uart_ports[UART_NR];
+काष्ठा uart_cpm_port cpm_uart_ports[UART_NR];
 
-static int cpm_uart_init_port(struct device_node *np,
-                              struct uart_cpm_port *pinfo)
-{
-	const u32 *data;
-	void __iomem *mem, *pram;
-	struct device *dev = pinfo->port.dev;
-	int len;
-	int ret;
-	int i;
+अटल पूर्णांक cpm_uart_init_port(काष्ठा device_node *np,
+                              काष्ठा uart_cpm_port *pinfo)
+अणु
+	स्थिर u32 *data;
+	व्योम __iomem *mem, *pram;
+	काष्ठा device *dev = pinfo->port.dev;
+	पूर्णांक len;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	data = of_get_property(np, "clock", NULL);
-	if (data) {
-		struct clk *clk = clk_get(NULL, (const char*)data);
-		if (!IS_ERR(clk))
+	data = of_get_property(np, "clock", शून्य);
+	अगर (data) अणु
+		काष्ठा clk *clk = clk_get(शून्य, (स्थिर अक्षर*)data);
+		अगर (!IS_ERR(clk))
 			pinfo->clk = clk;
-	}
-	if (!pinfo->clk) {
+	पूर्ण
+	अगर (!pinfo->clk) अणु
 		data = of_get_property(np, "fsl,cpm-brg", &len);
-		if (!data || len != 4) {
-			printk(KERN_ERR "CPM UART %pOFn has no/invalid "
+		अगर (!data || len != 4) अणु
+			prपूर्णांकk(KERN_ERR "CPM UART %pOFn has no/invalid "
 			                "fsl,cpm-brg property.\n", np);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		pinfo->brg = *data;
-	}
+	पूर्ण
 
 	data = of_get_property(np, "fsl,cpm-command", &len);
-	if (!data || len != 4) {
-		printk(KERN_ERR "CPM UART %pOFn has no/invalid "
+	अगर (!data || len != 4) अणु
+		prपूर्णांकk(KERN_ERR "CPM UART %pOFn has no/invalid "
 		                "fsl,cpm-command property.\n", np);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	pinfo->command = *data;
 
 	mem = of_iomap(np, 0);
-	if (!mem)
-		return -ENOMEM;
+	अगर (!mem)
+		वापस -ENOMEM;
 
-	if (of_device_is_compatible(np, "fsl,cpm1-scc-uart") ||
-	    of_device_is_compatible(np, "fsl,cpm2-scc-uart")) {
+	अगर (of_device_is_compatible(np, "fsl,cpm1-scc-uart") ||
+	    of_device_is_compatible(np, "fsl,cpm2-scc-uart")) अणु
 		pinfo->sccp = mem;
 		pinfo->sccup = pram = cpm_uart_map_pram(pinfo, np);
-	} else if (of_device_is_compatible(np, "fsl,cpm1-smc-uart") ||
-	           of_device_is_compatible(np, "fsl,cpm2-smc-uart")) {
+	पूर्ण अन्यथा अगर (of_device_is_compatible(np, "fsl,cpm1-smc-uart") ||
+	           of_device_is_compatible(np, "fsl,cpm2-smc-uart")) अणु
 		pinfo->flags |= FLAG_SMC;
 		pinfo->smcp = mem;
 		pinfo->smcup = pram = cpm_uart_map_pram(pinfo, np);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -ENODEV;
-		goto out_mem;
-	}
+		जाओ out_mem;
+	पूर्ण
 
-	if (!pram) {
+	अगर (!pram) अणु
 		ret = -ENOMEM;
-		goto out_mem;
-	}
+		जाओ out_mem;
+	पूर्ण
 
-	pinfo->tx_nrfifos = TX_NUM_FIFO;
-	pinfo->tx_fifosize = TX_BUF_SIZE;
-	pinfo->rx_nrfifos = RX_NUM_FIFO;
-	pinfo->rx_fifosize = RX_BUF_SIZE;
+	pinfo->tx_nrfअगरos = TX_NUM_FIFO;
+	pinfo->tx_fअगरosize = TX_BUF_SIZE;
+	pinfo->rx_nrfअगरos = RX_NUM_FIFO;
+	pinfo->rx_fअगरosize = RX_BUF_SIZE;
 
 	pinfo->port.uartclk = ppc_proc_freq;
-	pinfo->port.mapbase = (unsigned long)mem;
+	pinfo->port.mapbase = (अचिन्हित दीर्घ)mem;
 	pinfo->port.type = PORT_CPM;
 	pinfo->port.ops = &cpm_uart_pops;
 	pinfo->port.has_sysrq = IS_ENABLED(CONFIG_SERIAL_CPM_CONSOLE);
 	pinfo->port.iotype = UPIO_MEM;
-	pinfo->port.fifosize = pinfo->tx_nrfifos * pinfo->tx_fifosize;
+	pinfo->port.fअगरosize = pinfo->tx_nrfअगरos * pinfo->tx_fअगरosize;
 	spin_lock_init(&pinfo->port.lock);
 
 	pinfo->port.irq = irq_of_parse_and_map(np, 0);
-	if (pinfo->port.irq == NO_IRQ) {
+	अगर (pinfo->port.irq == NO_IRQ) अणु
 		ret = -EINVAL;
-		goto out_pram;
-	}
+		जाओ out_pram;
+	पूर्ण
 
-	for (i = 0; i < NUM_GPIOS; i++) {
-		struct gpio_desc *gpiod;
+	क्रम (i = 0; i < NUM_GPIOS; i++) अणु
+		काष्ठा gpio_desc *gpiod;
 
-		pinfo->gpios[i] = NULL;
+		pinfo->gpios[i] = शून्य;
 
-		gpiod = devm_gpiod_get_index_optional(dev, NULL, i, GPIOD_ASIS);
+		gpiod = devm_gpiod_get_index_optional(dev, शून्य, i, GPIOD_ASIS);
 
-		if (IS_ERR(gpiod)) {
+		अगर (IS_ERR(gpiod)) अणु
 			ret = PTR_ERR(gpiod);
-			goto out_irq;
-		}
+			जाओ out_irq;
+		पूर्ण
 
-		if (gpiod) {
-			if (i == GPIO_RTS || i == GPIO_DTR)
+		अगर (gpiod) अणु
+			अगर (i == GPIO_RTS || i == GPIO_DTR)
 				ret = gpiod_direction_output(gpiod, 0);
-			else
+			अन्यथा
 				ret = gpiod_direction_input(gpiod);
-			if (ret) {
+			अगर (ret) अणु
 				pr_err("can't set direction for gpio #%d: %d\n",
 					i, ret);
-				continue;
-			}
+				जारी;
+			पूर्ण
 			pinfo->gpios[i] = gpiod;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_PPC_EARLY_DEBUG_CPM
-#ifdef CONFIG_CONSOLE_POLL
-	if (!udbg_port)
-#endif
-		udbg_putc = NULL;
-#endif
+#अगर_घोषित CONFIG_PPC_EARLY_DEBUG_CPM
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	अगर (!udbg_port)
+#पूर्ण_अगर
+		udbg_अ_दो = शून्य;
+#पूर्ण_अगर
 
-	return cpm_uart_request_port(&pinfo->port);
+	वापस cpm_uart_request_port(&pinfo->port);
 
 out_irq:
 	irq_dispose_mapping(pinfo->port.irq);
@@ -1276,71 +1277,71 @@ out_pram:
 	cpm_uart_unmap_pram(pinfo, pram);
 out_mem:
 	iounmap(mem);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_SERIAL_CPM_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_CPM_CONSOLE
 /*
- *	Print a string to the serial port trying not to disturb
+ *	Prपूर्णांक a string to the serial port trying not to disturb
  *	any possible real use of the port...
  *
- *	Note that this is called with interrupts already disabled
+ *	Note that this is called with पूर्णांकerrupts alपढ़ोy disabled
  */
-static void cpm_uart_console_write(struct console *co, const char *s,
-				   u_int count)
-{
-	struct uart_cpm_port *pinfo = &cpm_uart_ports[co->index];
-	unsigned long flags;
-	int nolock = oops_in_progress;
+अटल व्योम cpm_uart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+				   u_पूर्णांक count)
+अणु
+	काष्ठा uart_cpm_port *pinfo = &cpm_uart_ports[co->index];
+	अचिन्हित दीर्घ flags;
+	पूर्णांक nolock = oops_in_progress;
 
-	if (unlikely(nolock)) {
+	अगर (unlikely(nolock)) अणु
 		local_irq_save(flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_lock_irqsave(&pinfo->port.lock, flags);
-	}
+	पूर्ण
 
-	cpm_uart_early_write(pinfo, s, count, true);
+	cpm_uart_early_ग_लिखो(pinfo, s, count, true);
 
-	if (unlikely(nolock)) {
+	अगर (unlikely(nolock)) अणु
 		local_irq_restore(flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		spin_unlock_irqrestore(&pinfo->port.lock, flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static int __init cpm_uart_console_setup(struct console *co, char *options)
-{
-	int baud = 38400;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
-	int ret;
-	struct uart_cpm_port *pinfo;
-	struct uart_port *port;
+अटल पूर्णांक __init cpm_uart_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	पूर्णांक baud = 38400;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
+	पूर्णांक ret;
+	काष्ठा uart_cpm_port *pinfo;
+	काष्ठा uart_port *port;
 
-	struct device_node *np;
-	int i = 0;
+	काष्ठा device_node *np;
+	पूर्णांक i = 0;
 
-	if (co->index >= UART_NR) {
-		printk(KERN_ERR "cpm_uart: console index %d too high\n",
+	अगर (co->index >= UART_NR) अणु
+		prपूर्णांकk(KERN_ERR "cpm_uart: console index %d too high\n",
 		       co->index);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for_each_node_by_type(np, "serial") {
-		if (!of_device_is_compatible(np, "fsl,cpm1-smc-uart") &&
+	क्रम_each_node_by_type(np, "serial") अणु
+		अगर (!of_device_is_compatible(np, "fsl,cpm1-smc-uart") &&
 		    !of_device_is_compatible(np, "fsl,cpm1-scc-uart") &&
 		    !of_device_is_compatible(np, "fsl,cpm2-smc-uart") &&
 		    !of_device_is_compatible(np, "fsl,cpm2-scc-uart"))
-			continue;
+			जारी;
 
-		if (i++ == co->index)
-			break;
-	}
+		अगर (i++ == co->index)
+			अवरोध;
+	पूर्ण
 
-	if (!np)
-		return -ENODEV;
+	अगर (!np)
+		वापस -ENODEV;
 
 	pinfo = &cpm_uart_ports[co->index];
 
@@ -1349,81 +1350,81 @@ static int __init cpm_uart_console_setup(struct console *co, char *options)
 
 	ret = cpm_uart_init_port(np, pinfo);
 	of_node_put(np);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (options) {
+	अगर (options) अणु
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	} else {
-		if ((baud = uart_baudrate()) == -1)
+	पूर्ण अन्यथा अणु
+		अगर ((baud = uart_baudrate()) == -1)
 			baud = 9600;
-	}
+	पूर्ण
 
-	if (IS_SMC(pinfo)) {
+	अगर (IS_SMC(pinfo)) अणु
 		out_be16(&pinfo->smcup->smc_brkcr, 0);
 		cpm_line_cr_cmd(pinfo, CPM_CR_STOP_TX);
 		clrbits8(&pinfo->smcp->smc_smcm, SMCM_RX | SMCM_TX);
 		clrbits16(&pinfo->smcp->smc_smcmr, SMCMR_REN | SMCMR_TEN);
-	} else {
+	पूर्ण अन्यथा अणु
 		out_be16(&pinfo->sccup->scc_brkcr, 0);
 		cpm_line_cr_cmd(pinfo, CPM_CR_GRA_STOP_TX);
 		clrbits16(&pinfo->sccp->scc_sccm, UART_SCCM_TX | UART_SCCM_RX);
 		clrbits32(&pinfo->sccp->scc_gsmrl, SCC_GSMRL_ENR | SCC_GSMRL_ENT);
-	}
+	पूर्ण
 
 	ret = cpm_uart_allocbuf(pinfo, 1);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	cpm_uart_initbd(pinfo);
 
-	if (IS_SMC(pinfo))
+	अगर (IS_SMC(pinfo))
 		cpm_uart_init_smc(pinfo);
-	else
+	अन्यथा
 		cpm_uart_init_scc(pinfo);
 
 	uart_set_options(port, co, baud, parity, bits, flow);
 	cpm_line_cr_cmd(pinfo, CPM_CR_RESTART_TX);
 
-#ifdef CONFIG_CONSOLE_POLL
-	if (!udbg_port) {
+#अगर_घोषित CONFIG_CONSOLE_POLL
+	अगर (!udbg_port) अणु
 		udbg_port = &pinfo->port;
-		udbg_putc = udbg_cpm_putc;
-		udbg_getc = udbg_cpm_getc;
-		udbg_getc_poll = udbg_cpm_getc_poll;
-	}
-#endif
+		udbg_अ_दो = udbg_cpm_अ_दो;
+		udbg_अ_लो = udbg_cpm_अ_लो;
+		udbg_अ_लो_poll = udbg_cpm_अ_लो_poll;
+	पूर्ण
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct uart_driver cpm_reg;
-static struct console cpm_scc_uart_console = {
+अटल काष्ठा uart_driver cpm_reg;
+अटल काष्ठा console cpm_scc_uart_console = अणु
 	.name		= "ttyCPM",
-	.write		= cpm_uart_console_write,
+	.ग_लिखो		= cpm_uart_console_ग_लिखो,
 	.device		= uart_console_device,
 	.setup		= cpm_uart_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &cpm_reg,
-};
+पूर्ण;
 
-static int __init cpm_uart_console_init(void)
-{
+अटल पूर्णांक __init cpm_uart_console_init(व्योम)
+अणु
 	cpm_muram_init();
-	register_console(&cpm_scc_uart_console);
-	return 0;
-}
+	रेजिस्टर_console(&cpm_scc_uart_console);
+	वापस 0;
+पूर्ण
 
 console_initcall(cpm_uart_console_init);
 
-#define CPM_UART_CONSOLE	&cpm_scc_uart_console
-#else
-#define CPM_UART_CONSOLE	NULL
-#endif
+#घोषणा CPM_UART_CONSOLE	&cpm_scc_uart_console
+#अन्यथा
+#घोषणा CPM_UART_CONSOLE	शून्य
+#पूर्ण_अगर
 
-static struct uart_driver cpm_reg = {
+अटल काष्ठा uart_driver cpm_reg = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= "ttyCPM",
 	.dev_name	= "ttyCPM",
@@ -1431,86 +1432,86 @@ static struct uart_driver cpm_reg = {
 	.minor		= SERIAL_CPM_MINOR,
 	.cons		= CPM_UART_CONSOLE,
 	.nr		= UART_NR,
-};
+पूर्ण;
 
-static int probe_index;
+अटल पूर्णांक probe_index;
 
-static int cpm_uart_probe(struct platform_device *ofdev)
-{
-	int index = probe_index++;
-	struct uart_cpm_port *pinfo = &cpm_uart_ports[index];
-	int ret;
+अटल पूर्णांक cpm_uart_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	पूर्णांक index = probe_index++;
+	काष्ठा uart_cpm_port *pinfo = &cpm_uart_ports[index];
+	पूर्णांक ret;
 
 	pinfo->port.line = index;
 
-	if (index >= UART_NR)
-		return -ENODEV;
+	अगर (index >= UART_NR)
+		वापस -ENODEV;
 
-	platform_set_drvdata(ofdev, pinfo);
+	platक्रमm_set_drvdata(ofdev, pinfo);
 
-	/* initialize the device pointer for the port */
+	/* initialize the device poपूर्णांकer क्रम the port */
 	pinfo->port.dev = &ofdev->dev;
 
 	ret = cpm_uart_init_port(ofdev->dev.of_node, pinfo);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return uart_add_one_port(&cpm_reg, &pinfo->port);
-}
+	वापस uart_add_one_port(&cpm_reg, &pinfo->port);
+पूर्ण
 
-static int cpm_uart_remove(struct platform_device *ofdev)
-{
-	struct uart_cpm_port *pinfo = platform_get_drvdata(ofdev);
-	return uart_remove_one_port(&cpm_reg, &pinfo->port);
-}
+अटल पूर्णांक cpm_uart_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा uart_cpm_port *pinfo = platक्रमm_get_drvdata(ofdev);
+	वापस uart_हटाओ_one_port(&cpm_reg, &pinfo->port);
+पूर्ण
 
-static const struct of_device_id cpm_uart_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id cpm_uart_match[] = अणु
+	अणु
 		.compatible = "fsl,cpm1-smc-uart",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "fsl,cpm1-scc-uart",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "fsl,cpm2-smc-uart",
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "fsl,cpm2-scc-uart",
-	},
-	{}
-};
+	पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, cpm_uart_match);
 
-static struct platform_driver cpm_uart_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cpm_uart_driver = अणु
+	.driver = अणु
 		.name = "cpm_uart",
 		.of_match_table = cpm_uart_match,
-	},
+	पूर्ण,
 	.probe = cpm_uart_probe,
-	.remove = cpm_uart_remove,
- };
+	.हटाओ = cpm_uart_हटाओ,
+ पूर्ण;
 
-static int __init cpm_uart_init(void)
-{
-	int ret = uart_register_driver(&cpm_reg);
-	if (ret)
-		return ret;
+अटल पूर्णांक __init cpm_uart_init(व्योम)
+अणु
+	पूर्णांक ret = uart_रेजिस्टर_driver(&cpm_reg);
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&cpm_uart_driver);
-	if (ret)
-		uart_unregister_driver(&cpm_reg);
+	ret = platक्रमm_driver_रेजिस्टर(&cpm_uart_driver);
+	अगर (ret)
+		uart_unरेजिस्टर_driver(&cpm_reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit cpm_uart_exit(void)
-{
-	platform_driver_unregister(&cpm_uart_driver);
-	uart_unregister_driver(&cpm_reg);
-}
+अटल व्योम __निकास cpm_uart_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&cpm_uart_driver);
+	uart_unरेजिस्टर_driver(&cpm_reg);
+पूर्ण
 
 module_init(cpm_uart_init);
-module_exit(cpm_uart_exit);
+module_निकास(cpm_uart_निकास);
 
 MODULE_AUTHOR("Kumar Gala/Antoniou Pantelis");
 MODULE_DESCRIPTION("CPM SCC/SMC port driver $Revision: 0.01 $");

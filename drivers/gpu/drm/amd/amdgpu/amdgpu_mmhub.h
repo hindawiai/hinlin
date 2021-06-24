@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2019  Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
@@ -18,41 +19,41 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef __AMDGPU_MMHUB_H__
-#define __AMDGPU_MMHUB_H__
+#अगर_अघोषित __AMDGPU_MMHUB_H__
+#घोषणा __AMDGPU_MMHUB_H__
 
-struct amdgpu_mmhub_ras_funcs {
-	int (*ras_late_init)(struct amdgpu_device *adev);
-	void (*ras_fini)(struct amdgpu_device *adev);
-	void (*query_ras_error_count)(struct amdgpu_device *adev,
-				      void *ras_error_status);
-	void (*query_ras_error_status)(struct amdgpu_device *adev);
-	void (*reset_ras_error_count)(struct amdgpu_device *adev);
-};
+काष्ठा amdgpu_mmhub_ras_funcs अणु
+	पूर्णांक (*ras_late_init)(काष्ठा amdgpu_device *adev);
+	व्योम (*ras_fini)(काष्ठा amdgpu_device *adev);
+	व्योम (*query_ras_error_count)(काष्ठा amdgpu_device *adev,
+				      व्योम *ras_error_status);
+	व्योम (*query_ras_error_status)(काष्ठा amdgpu_device *adev);
+	व्योम (*reset_ras_error_count)(काष्ठा amdgpu_device *adev);
+पूर्ण;
 
-struct amdgpu_mmhub_funcs {
-	u64 (*get_fb_location)(struct amdgpu_device *adev);
-	void (*init)(struct amdgpu_device *adev);
-	int (*gart_enable)(struct amdgpu_device *adev);
-	void (*set_fault_enable_default)(struct amdgpu_device *adev,
+काष्ठा amdgpu_mmhub_funcs अणु
+	u64 (*get_fb_location)(काष्ठा amdgpu_device *adev);
+	व्योम (*init)(काष्ठा amdgpu_device *adev);
+	पूर्णांक (*gart_enable)(काष्ठा amdgpu_device *adev);
+	व्योम (*set_fault_enable_शेष)(काष्ठा amdgpu_device *adev,
 			bool value);
-	void (*gart_disable)(struct amdgpu_device *adev);
-	int (*set_clockgating)(struct amdgpu_device *adev,
-			       enum amd_clockgating_state state);
-	void (*get_clockgating)(struct amdgpu_device *adev, u32 *flags);
-	void (*setup_vm_pt_regs)(struct amdgpu_device *adev, uint32_t vmid,
-				uint64_t page_table_base);
-	void (*update_power_gating)(struct amdgpu_device *adev,
+	व्योम (*gart_disable)(काष्ठा amdgpu_device *adev);
+	पूर्णांक (*set_घड़ीgating)(काष्ठा amdgpu_device *adev,
+			       क्रमागत amd_घड़ीgating_state state);
+	व्योम (*get_घड़ीgating)(काष्ठा amdgpu_device *adev, u32 *flags);
+	व्योम (*setup_vm_pt_regs)(काष्ठा amdgpu_device *adev, uपूर्णांक32_t vmid,
+				uपूर्णांक64_t page_table_base);
+	व्योम (*update_घातer_gating)(काष्ठा amdgpu_device *adev,
                                 bool enable);
-};
+पूर्ण;
 
-struct amdgpu_mmhub {
-	struct ras_common_if *ras_if;
-	const struct amdgpu_mmhub_funcs *funcs;
-	const struct amdgpu_mmhub_ras_funcs *ras_funcs;
-};
+काष्ठा amdgpu_mmhub अणु
+	काष्ठा ras_common_अगर *ras_अगर;
+	स्थिर काष्ठा amdgpu_mmhub_funcs *funcs;
+	स्थिर काष्ठा amdgpu_mmhub_ras_funcs *ras_funcs;
+पूर्ण;
 
-int amdgpu_mmhub_ras_late_init(struct amdgpu_device *adev);
-void amdgpu_mmhub_ras_fini(struct amdgpu_device *adev);
-#endif
+पूर्णांक amdgpu_mmhub_ras_late_init(काष्ठा amdgpu_device *adev);
+व्योम amdgpu_mmhub_ras_fini(काष्ठा amdgpu_device *adev);
+#पूर्ण_अगर
 

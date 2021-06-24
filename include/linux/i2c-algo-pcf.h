@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* ------------------------------------------------------------------------- */
-/* adap-pcf.h i2c driver algorithms for PCF8584 adapters                     */
+/* adap-pcf.h i2c driver algorithms क्रम PCF8584 adapters                     */
 /* ------------------------------------------------------------------------- */
 /*   Copyright (C) 1995-97 Simon G. Vogl
                    1998-99 Hans Berglund
@@ -8,30 +9,30 @@
  */
 /* ------------------------------------------------------------------------- */
 
-/* With some changes from Kyösti Mälkki <kmalkki@cc.hut.fi> and even
-   Frodo Looijaard <frodol@dds.nl> */
+/* With some changes from Kyथघsti Mथअlkki <kmalkki@cc.hut.fi> and even
+   Froकरो Looijaard <froकरोl@dds.nl> */
 
-#ifndef _LINUX_I2C_ALGO_PCF_H
-#define _LINUX_I2C_ALGO_PCF_H
+#अगर_अघोषित _LINUX_I2C_ALGO_PCF_H
+#घोषणा _LINUX_I2C_ALGO_PCF_H
 
-struct i2c_algo_pcf_data {
-	void *data;		/* private data for lolevel routines	*/
-	void (*setpcf) (void *data, int ctl, int val);
-	int  (*getpcf) (void *data, int ctl);
-	int  (*getown) (void *data);
-	int  (*getclock) (void *data);
-	void (*waitforpin) (void *data);
+काष्ठा i2c_algo_pcf_data अणु
+	व्योम *data;		/* निजी data क्रम lolevel routines	*/
+	व्योम (*setpcf) (व्योम *data, पूर्णांक ctl, पूर्णांक val);
+	पूर्णांक  (*getpcf) (व्योम *data, पूर्णांक ctl);
+	पूर्णांक  (*getown) (व्योम *data);
+	पूर्णांक  (*अ_लोlock) (व्योम *data);
+	व्योम (*रुकोक्रमpin) (व्योम *data);
 
-	void (*xfer_begin) (void *data);
-	void (*xfer_end) (void *data);
+	व्योम (*xfer_begin) (व्योम *data);
+	व्योम (*xfer_end) (व्योम *data);
 
 	/* Multi-master lost arbitration back-off delay (msecs)
 	 * This should be set by the bus adapter or knowledgable client
-	 * if bus is multi-mastered, else zero
+	 * अगर bus is multi-mastered, अन्यथा zero
 	 */
-	unsigned long lab_mdelay;
-};
+	अचिन्हित दीर्घ lab_mdelay;
+पूर्ण;
 
-int i2c_pcf_add_bus(struct i2c_adapter *);
+पूर्णांक i2c_pcf_add_bus(काष्ठा i2c_adapter *);
 
-#endif /* _LINUX_I2C_ALGO_PCF_H */
+#पूर्ण_अगर /* _LINUX_I2C_ALGO_PCF_H */

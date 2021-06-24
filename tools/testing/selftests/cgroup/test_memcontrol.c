@@ -1,70 +1,71 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#define _GNU_SOURCE
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#घोषणा _GNU_SOURCE
 
-#include <linux/limits.h>
-#include <linux/oom.h>
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/wait.h>
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <errno.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/oom.h>
+#समावेश <fcntl.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
+#समावेश <unistd.h>
+#समावेश <sys/socket.h>
+#समावेश <sys/रुको.h>
+#समावेश <arpa/inet.h>
+#समावेश <netinet/in.h>
+#समावेश <netdb.h>
+#समावेश <त्रुटिसं.स>
 
-#include "../kselftest.h"
-#include "cgroup_util.h"
+#समावेश "../kselftest.h"
+#समावेश "cgroup_util.h"
 
 /*
  * This test creates two nested cgroups with and without enabling
  * the memory controller.
  */
-static int test_memcg_subtree_control(const char *root)
-{
-	char *parent, *child, *parent2 = NULL, *child2 = NULL;
-	int ret = KSFT_FAIL;
-	char buf[PAGE_SIZE];
+अटल पूर्णांक test_memcg_subtree_control(स्थिर अक्षर *root)
+अणु
+	अक्षर *parent, *child, *parent2 = शून्य, *child2 = शून्य;
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर buf[PAGE_SIZE];
 
 	/* Create two nested cgroups with the memory controller enabled */
 	parent = cg_name(root, "memcg_test_0");
 	child = cg_name(root, "memcg_test_0/memcg_test_1");
-	if (!parent || !child)
-		goto cleanup_free;
+	अगर (!parent || !child)
+		जाओ cleanup_मुक्त;
 
-	if (cg_create(parent))
-		goto cleanup_free;
+	अगर (cg_create(parent))
+		जाओ cleanup_मुक्त;
 
-	if (cg_write(parent, "cgroup.subtree_control", "+memory"))
-		goto cleanup_parent;
+	अगर (cg_ग_लिखो(parent, "cgroup.subtree_control", "+memory"))
+		जाओ cleanup_parent;
 
-	if (cg_create(child))
-		goto cleanup_parent;
+	अगर (cg_create(child))
+		जाओ cleanup_parent;
 
-	if (cg_read_strstr(child, "cgroup.controllers", "memory"))
-		goto cleanup_child;
+	अगर (cg_पढ़ो_म_माला(child, "cgroup.controllers", "memory"))
+		जाओ cleanup_child;
 
 	/* Create two nested cgroups without enabling memory controller */
 	parent2 = cg_name(root, "memcg_test_1");
 	child2 = cg_name(root, "memcg_test_1/memcg_test_1");
-	if (!parent2 || !child2)
-		goto cleanup_free2;
+	अगर (!parent2 || !child2)
+		जाओ cleanup_मुक्त2;
 
-	if (cg_create(parent2))
-		goto cleanup_free2;
+	अगर (cg_create(parent2))
+		जाओ cleanup_मुक्त2;
 
-	if (cg_create(child2))
-		goto cleanup_parent2;
+	अगर (cg_create(child2))
+		जाओ cleanup_parent2;
 
-	if (cg_read(child2, "cgroup.controllers", buf, sizeof(buf)))
-		goto cleanup_all;
+	अगर (cg_पढ़ो(child2, "cgroup.controllers", buf, माप(buf)))
+		जाओ cleanup_all;
 
-	if (!cg_read_strstr(child2, "cgroup.controllers", "memory"))
-		goto cleanup_all;
+	अगर (!cg_पढ़ो_म_माला(child2, "cgroup.controllers", "memory"))
+		जाओ cleanup_all;
 
 	ret = KSFT_PASS;
 
@@ -72,170 +73,170 @@ cleanup_all:
 	cg_destroy(child2);
 cleanup_parent2:
 	cg_destroy(parent2);
-cleanup_free2:
-	free(parent2);
-	free(child2);
+cleanup_मुक्त2:
+	मुक्त(parent2);
+	मुक्त(child2);
 cleanup_child:
 	cg_destroy(child);
 cleanup_parent:
 	cg_destroy(parent);
-cleanup_free:
-	free(parent);
-	free(child);
+cleanup_मुक्त:
+	मुक्त(parent);
+	मुक्त(child);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int alloc_anon_50M_check(const char *cgroup, void *arg)
-{
-	size_t size = MB(50);
-	char *buf, *ptr;
-	long anon, current;
-	int ret = -1;
+अटल पूर्णांक alloc_anon_50M_check(स्थिर अक्षर *cgroup, व्योम *arg)
+अणु
+	माप_प्रकार size = MB(50);
+	अक्षर *buf, *ptr;
+	दीर्घ anon, current;
+	पूर्णांक ret = -1;
 
-	buf = malloc(size);
-	for (ptr = buf; ptr < buf + size; ptr += PAGE_SIZE)
+	buf = दो_स्मृति(size);
+	क्रम (ptr = buf; ptr < buf + size; ptr += PAGE_SIZE)
 		*ptr = 0;
 
-	current = cg_read_long(cgroup, "memory.current");
-	if (current < size)
-		goto cleanup;
+	current = cg_पढ़ो_दीर्घ(cgroup, "memory.current");
+	अगर (current < size)
+		जाओ cleanup;
 
-	if (!values_close(size, current, 3))
-		goto cleanup;
+	अगर (!values_बंद(size, current, 3))
+		जाओ cleanup;
 
-	anon = cg_read_key_long(cgroup, "memory.stat", "anon ");
-	if (anon < 0)
-		goto cleanup;
+	anon = cg_पढ़ो_key_दीर्घ(cgroup, "memory.stat", "anon ");
+	अगर (anon < 0)
+		जाओ cleanup;
 
-	if (!values_close(anon, current, 3))
-		goto cleanup;
+	अगर (!values_बंद(anon, current, 3))
+		जाओ cleanup;
 
 	ret = 0;
 cleanup:
-	free(buf);
-	return ret;
-}
+	मुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static int alloc_pagecache_50M_check(const char *cgroup, void *arg)
-{
-	size_t size = MB(50);
-	int ret = -1;
-	long current, file;
-	int fd;
+अटल पूर्णांक alloc_pagecache_50M_check(स्थिर अक्षर *cgroup, व्योम *arg)
+अणु
+	माप_प्रकार size = MB(50);
+	पूर्णांक ret = -1;
+	दीर्घ current, file;
+	पूर्णांक fd;
 
 	fd = get_temp_fd();
-	if (fd < 0)
-		return -1;
+	अगर (fd < 0)
+		वापस -1;
 
-	if (alloc_pagecache(fd, size))
-		goto cleanup;
+	अगर (alloc_pagecache(fd, size))
+		जाओ cleanup;
 
-	current = cg_read_long(cgroup, "memory.current");
-	if (current < size)
-		goto cleanup;
+	current = cg_पढ़ो_दीर्घ(cgroup, "memory.current");
+	अगर (current < size)
+		जाओ cleanup;
 
-	file = cg_read_key_long(cgroup, "memory.stat", "file ");
-	if (file < 0)
-		goto cleanup;
+	file = cg_पढ़ो_key_दीर्घ(cgroup, "memory.stat", "file ");
+	अगर (file < 0)
+		जाओ cleanup;
 
-	if (!values_close(file, current, 10))
-		goto cleanup;
+	अगर (!values_बंद(file, current, 10))
+		जाओ cleanup;
 
 	ret = 0;
 
 cleanup:
-	close(fd);
-	return ret;
-}
+	बंद(fd);
+	वापस ret;
+पूर्ण
 
 /*
  * This test create a memory cgroup, allocates
  * some anonymous memory and some pagecache
  * and check memory.current and some memory.stat values.
  */
-static int test_memcg_current(const char *root)
-{
-	int ret = KSFT_FAIL;
-	long current;
-	char *memcg;
+अटल पूर्णांक test_memcg_current(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	दीर्घ current;
+	अक्षर *memcg;
 
 	memcg = cg_name(root, "memcg_test");
-	if (!memcg)
-		goto cleanup;
+	अगर (!memcg)
+		जाओ cleanup;
 
-	if (cg_create(memcg))
-		goto cleanup;
+	अगर (cg_create(memcg))
+		जाओ cleanup;
 
-	current = cg_read_long(memcg, "memory.current");
-	if (current != 0)
-		goto cleanup;
+	current = cg_पढ़ो_दीर्घ(memcg, "memory.current");
+	अगर (current != 0)
+		जाओ cleanup;
 
-	if (cg_run(memcg, alloc_anon_50M_check, NULL))
-		goto cleanup;
+	अगर (cg_run(memcg, alloc_anon_50M_check, शून्य))
+		जाओ cleanup;
 
-	if (cg_run(memcg, alloc_pagecache_50M_check, NULL))
-		goto cleanup;
+	अगर (cg_run(memcg, alloc_pagecache_50M_check, शून्य))
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
 	cg_destroy(memcg);
-	free(memcg);
+	मुक्त(memcg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int alloc_pagecache_50M(const char *cgroup, void *arg)
-{
-	int fd = (long)arg;
+अटल पूर्णांक alloc_pagecache_50M(स्थिर अक्षर *cgroup, व्योम *arg)
+अणु
+	पूर्णांक fd = (दीर्घ)arg;
 
-	return alloc_pagecache(fd, MB(50));
-}
+	वापस alloc_pagecache(fd, MB(50));
+पूर्ण
 
-static int alloc_pagecache_50M_noexit(const char *cgroup, void *arg)
-{
-	int fd = (long)arg;
-	int ppid = getppid();
+अटल पूर्णांक alloc_pagecache_50M_noनिकास(स्थिर अक्षर *cgroup, व्योम *arg)
+अणु
+	पूर्णांक fd = (दीर्घ)arg;
+	पूर्णांक ppid = getppid();
 
-	if (alloc_pagecache(fd, MB(50)))
-		return -1;
+	अगर (alloc_pagecache(fd, MB(50)))
+		वापस -1;
 
-	while (getppid() == ppid)
+	जबतक (getppid() == ppid)
 		sleep(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int alloc_anon_noexit(const char *cgroup, void *arg)
-{
-	int ppid = getppid();
+अटल पूर्णांक alloc_anon_noनिकास(स्थिर अक्षर *cgroup, व्योम *arg)
+अणु
+	पूर्णांक ppid = getppid();
 
-	if (alloc_anon(cgroup, arg))
-		return -1;
+	अगर (alloc_anon(cgroup, arg))
+		वापस -1;
 
-	while (getppid() == ppid)
+	जबतक (getppid() == ppid)
 		sleep(1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Wait until processes are killed asynchronously by the OOM killer
- * If we exceed a timeout, fail.
+ * Wait until processes are समाप्तed asynchronously by the OOM समाप्तer
+ * If we exceed a समयout, fail.
  */
-static int cg_test_proc_killed(const char *cgroup)
-{
-	int limit;
+अटल पूर्णांक cg_test_proc_समाप्तed(स्थिर अक्षर *cgroup)
+अणु
+	पूर्णांक limit;
 
-	for (limit = 10; limit > 0; limit--) {
-		if (cg_read_strcmp(cgroup, "cgroup.procs", "") == 0)
-			return 0;
+	क्रम (limit = 10; limit > 0; limit--) अणु
+		अगर (cg_पढ़ो_म_भेद(cgroup, "cgroup.procs", "") == 0)
+			वापस 0;
 
 		usleep(100000);
-	}
-	return -1;
-}
+	पूर्ण
+	वापस -1;
+पूर्ण
 
 /*
  * First, this test creates the following hierarchy:
@@ -248,7 +249,7 @@ static int cg_test_proc_killed(const char *cgroup)
  *
  * Usages are pagecache, but the test keeps a running
  * process in every leaf cgroup.
- * Then it creates A/G and creates a significant
+ * Then it creates A/G and creates a signअगरicant
  * memory pressure in it.
  *
  * A/B    memory.current ~= 50M
@@ -257,142 +258,142 @@ static int cg_test_proc_killed(const char *cgroup)
  * A/B/E  memory.current ~= 0
  *
  * After that it tries to allocate more than there is
- * unprotected memory in A available, and checks
+ * unरक्षित memory in A available, and checks
  * checks that memory.min protects pagecache even
- * in this case.
+ * in this हाल.
  */
-static int test_memcg_min(const char *root)
-{
-	int ret = KSFT_FAIL;
-	char *parent[3] = {NULL};
-	char *children[4] = {NULL};
-	long c[4];
-	int i, attempts;
-	int fd;
+अटल पूर्णांक test_memcg_min(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर *parent[3] = अणुशून्यपूर्ण;
+	अक्षर *children[4] = अणुशून्यपूर्ण;
+	दीर्घ c[4];
+	पूर्णांक i, attempts;
+	पूर्णांक fd;
 
 	fd = get_temp_fd();
-	if (fd < 0)
-		goto cleanup;
+	अगर (fd < 0)
+		जाओ cleanup;
 
 	parent[0] = cg_name(root, "memcg_test_0");
-	if (!parent[0])
-		goto cleanup;
+	अगर (!parent[0])
+		जाओ cleanup;
 
 	parent[1] = cg_name(parent[0], "memcg_test_1");
-	if (!parent[1])
-		goto cleanup;
+	अगर (!parent[1])
+		जाओ cleanup;
 
 	parent[2] = cg_name(parent[0], "memcg_test_2");
-	if (!parent[2])
-		goto cleanup;
+	अगर (!parent[2])
+		जाओ cleanup;
 
-	if (cg_create(parent[0]))
-		goto cleanup;
+	अगर (cg_create(parent[0]))
+		जाओ cleanup;
 
-	if (cg_read_long(parent[0], "memory.min")) {
+	अगर (cg_पढ़ो_दीर्घ(parent[0], "memory.min")) अणु
 		ret = KSFT_SKIP;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	if (cg_write(parent[0], "cgroup.subtree_control", "+memory"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[0], "cgroup.subtree_control", "+memory"))
+		जाओ cleanup;
 
-	if (cg_write(parent[0], "memory.max", "200M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[0], "memory.max", "200M"))
+		जाओ cleanup;
 
-	if (cg_write(parent[0], "memory.swap.max", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[0], "memory.swap.max", "0"))
+		जाओ cleanup;
 
-	if (cg_create(parent[1]))
-		goto cleanup;
+	अगर (cg_create(parent[1]))
+		जाओ cleanup;
 
-	if (cg_write(parent[1], "cgroup.subtree_control", "+memory"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[1], "cgroup.subtree_control", "+memory"))
+		जाओ cleanup;
 
-	if (cg_create(parent[2]))
-		goto cleanup;
+	अगर (cg_create(parent[2]))
+		जाओ cleanup;
 
-	for (i = 0; i < ARRAY_SIZE(children); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(children); i++) अणु
 		children[i] = cg_name_indexed(parent[1], "child_memcg", i);
-		if (!children[i])
-			goto cleanup;
+		अगर (!children[i])
+			जाओ cleanup;
 
-		if (cg_create(children[i]))
-			goto cleanup;
+		अगर (cg_create(children[i]))
+			जाओ cleanup;
 
-		if (i == 2)
-			continue;
+		अगर (i == 2)
+			जारी;
 
-		cg_run_nowait(children[i], alloc_pagecache_50M_noexit,
-			      (void *)(long)fd);
-	}
+		cg_run_noरुको(children[i], alloc_pagecache_50M_noनिकास,
+			      (व्योम *)(दीर्घ)fd);
+	पूर्ण
 
-	if (cg_write(parent[0], "memory.min", "50M"))
-		goto cleanup;
-	if (cg_write(parent[1], "memory.min", "50M"))
-		goto cleanup;
-	if (cg_write(children[0], "memory.min", "75M"))
-		goto cleanup;
-	if (cg_write(children[1], "memory.min", "25M"))
-		goto cleanup;
-	if (cg_write(children[2], "memory.min", "500M"))
-		goto cleanup;
-	if (cg_write(children[3], "memory.min", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[0], "memory.min", "50M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(parent[1], "memory.min", "50M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(children[0], "memory.min", "75M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(children[1], "memory.min", "25M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(children[2], "memory.min", "500M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(children[3], "memory.min", "0"))
+		जाओ cleanup;
 
 	attempts = 0;
-	while (!values_close(cg_read_long(parent[1], "memory.current"),
-			     MB(150), 3)) {
-		if (attempts++ > 5)
-			break;
+	जबतक (!values_बंद(cg_पढ़ो_दीर्घ(parent[1], "memory.current"),
+			     MB(150), 3)) अणु
+		अगर (attempts++ > 5)
+			अवरोध;
 		sleep(1);
-	}
+	पूर्ण
 
-	if (cg_run(parent[2], alloc_anon, (void *)MB(148)))
-		goto cleanup;
+	अगर (cg_run(parent[2], alloc_anon, (व्योम *)MB(148)))
+		जाओ cleanup;
 
-	if (!values_close(cg_read_long(parent[1], "memory.current"), MB(50), 3))
-		goto cleanup;
+	अगर (!values_बंद(cg_पढ़ो_दीर्घ(parent[1], "memory.current"), MB(50), 3))
+		जाओ cleanup;
 
-	for (i = 0; i < ARRAY_SIZE(children); i++)
-		c[i] = cg_read_long(children[i], "memory.current");
+	क्रम (i = 0; i < ARRAY_SIZE(children); i++)
+		c[i] = cg_पढ़ो_दीर्घ(children[i], "memory.current");
 
-	if (!values_close(c[0], MB(33), 10))
-		goto cleanup;
+	अगर (!values_बंद(c[0], MB(33), 10))
+		जाओ cleanup;
 
-	if (!values_close(c[1], MB(17), 10))
-		goto cleanup;
+	अगर (!values_बंद(c[1], MB(17), 10))
+		जाओ cleanup;
 
-	if (!values_close(c[2], 0, 1))
-		goto cleanup;
+	अगर (!values_बंद(c[2], 0, 1))
+		जाओ cleanup;
 
-	if (!cg_run(parent[2], alloc_anon, (void *)MB(170)))
-		goto cleanup;
+	अगर (!cg_run(parent[2], alloc_anon, (व्योम *)MB(170)))
+		जाओ cleanup;
 
-	if (!values_close(cg_read_long(parent[1], "memory.current"), MB(50), 3))
-		goto cleanup;
+	अगर (!values_बंद(cg_पढ़ो_दीर्घ(parent[1], "memory.current"), MB(50), 3))
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	for (i = ARRAY_SIZE(children) - 1; i >= 0; i--) {
-		if (!children[i])
-			continue;
+	क्रम (i = ARRAY_SIZE(children) - 1; i >= 0; i--) अणु
+		अगर (!children[i])
+			जारी;
 
 		cg_destroy(children[i]);
-		free(children[i]);
-	}
+		मुक्त(children[i]);
+	पूर्ण
 
-	for (i = ARRAY_SIZE(parent) - 1; i >= 0; i--) {
-		if (!parent[i])
-			continue;
+	क्रम (i = ARRAY_SIZE(parent) - 1; i >= 0; i--) अणु
+		अगर (!parent[i])
+			जारी;
 
 		cg_destroy(parent[i]);
-		free(parent[i]);
-	}
-	close(fd);
-	return ret;
-}
+		मुक्त(parent[i]);
+	पूर्ण
+	बंद(fd);
+	वापस ret;
+पूर्ण
 
 /*
  * First, this test creates the following hierarchy:
@@ -404,7 +405,7 @@ cleanup:
  * A/B/F   memory.low = 0,    memory.current = 50M
  *
  * Usages are pagecache.
- * Then it creates A/G an creates a significant
+ * Then it creates A/G an creates a signअगरicant
  * memory pressure in it.
  *
  * Then it checks actual memory usages and expects that:
@@ -414,418 +415,418 @@ cleanup:
  * A/B/E  memory.current ~= 0
  *
  * After that it tries to allocate more than there is
- * unprotected memory in A available,
+ * unरक्षित memory in A available,
  * and checks low and oom events in memory.events.
  */
-static int test_memcg_low(const char *root)
-{
-	int ret = KSFT_FAIL;
-	char *parent[3] = {NULL};
-	char *children[4] = {NULL};
-	long low, oom;
-	long c[4];
-	int i;
-	int fd;
+अटल पूर्णांक test_memcg_low(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर *parent[3] = अणुशून्यपूर्ण;
+	अक्षर *children[4] = अणुशून्यपूर्ण;
+	दीर्घ low, oom;
+	दीर्घ c[4];
+	पूर्णांक i;
+	पूर्णांक fd;
 
 	fd = get_temp_fd();
-	if (fd < 0)
-		goto cleanup;
+	अगर (fd < 0)
+		जाओ cleanup;
 
 	parent[0] = cg_name(root, "memcg_test_0");
-	if (!parent[0])
-		goto cleanup;
+	अगर (!parent[0])
+		जाओ cleanup;
 
 	parent[1] = cg_name(parent[0], "memcg_test_1");
-	if (!parent[1])
-		goto cleanup;
+	अगर (!parent[1])
+		जाओ cleanup;
 
 	parent[2] = cg_name(parent[0], "memcg_test_2");
-	if (!parent[2])
-		goto cleanup;
+	अगर (!parent[2])
+		जाओ cleanup;
 
-	if (cg_create(parent[0]))
-		goto cleanup;
+	अगर (cg_create(parent[0]))
+		जाओ cleanup;
 
-	if (cg_read_long(parent[0], "memory.low"))
-		goto cleanup;
+	अगर (cg_पढ़ो_दीर्घ(parent[0], "memory.low"))
+		जाओ cleanup;
 
-	if (cg_write(parent[0], "cgroup.subtree_control", "+memory"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[0], "cgroup.subtree_control", "+memory"))
+		जाओ cleanup;
 
-	if (cg_write(parent[0], "memory.max", "200M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[0], "memory.max", "200M"))
+		जाओ cleanup;
 
-	if (cg_write(parent[0], "memory.swap.max", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[0], "memory.swap.max", "0"))
+		जाओ cleanup;
 
-	if (cg_create(parent[1]))
-		goto cleanup;
+	अगर (cg_create(parent[1]))
+		जाओ cleanup;
 
-	if (cg_write(parent[1], "cgroup.subtree_control", "+memory"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[1], "cgroup.subtree_control", "+memory"))
+		जाओ cleanup;
 
-	if (cg_create(parent[2]))
-		goto cleanup;
+	अगर (cg_create(parent[2]))
+		जाओ cleanup;
 
-	for (i = 0; i < ARRAY_SIZE(children); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(children); i++) अणु
 		children[i] = cg_name_indexed(parent[1], "child_memcg", i);
-		if (!children[i])
-			goto cleanup;
+		अगर (!children[i])
+			जाओ cleanup;
 
-		if (cg_create(children[i]))
-			goto cleanup;
+		अगर (cg_create(children[i]))
+			जाओ cleanup;
 
-		if (i == 2)
-			continue;
+		अगर (i == 2)
+			जारी;
 
-		if (cg_run(children[i], alloc_pagecache_50M, (void *)(long)fd))
-			goto cleanup;
-	}
+		अगर (cg_run(children[i], alloc_pagecache_50M, (व्योम *)(दीर्घ)fd))
+			जाओ cleanup;
+	पूर्ण
 
-	if (cg_write(parent[0], "memory.low", "50M"))
-		goto cleanup;
-	if (cg_write(parent[1], "memory.low", "50M"))
-		goto cleanup;
-	if (cg_write(children[0], "memory.low", "75M"))
-		goto cleanup;
-	if (cg_write(children[1], "memory.low", "25M"))
-		goto cleanup;
-	if (cg_write(children[2], "memory.low", "500M"))
-		goto cleanup;
-	if (cg_write(children[3], "memory.low", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent[0], "memory.low", "50M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(parent[1], "memory.low", "50M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(children[0], "memory.low", "75M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(children[1], "memory.low", "25M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(children[2], "memory.low", "500M"))
+		जाओ cleanup;
+	अगर (cg_ग_लिखो(children[3], "memory.low", "0"))
+		जाओ cleanup;
 
-	if (cg_run(parent[2], alloc_anon, (void *)MB(148)))
-		goto cleanup;
+	अगर (cg_run(parent[2], alloc_anon, (व्योम *)MB(148)))
+		जाओ cleanup;
 
-	if (!values_close(cg_read_long(parent[1], "memory.current"), MB(50), 3))
-		goto cleanup;
+	अगर (!values_बंद(cg_पढ़ो_दीर्घ(parent[1], "memory.current"), MB(50), 3))
+		जाओ cleanup;
 
-	for (i = 0; i < ARRAY_SIZE(children); i++)
-		c[i] = cg_read_long(children[i], "memory.current");
+	क्रम (i = 0; i < ARRAY_SIZE(children); i++)
+		c[i] = cg_पढ़ो_दीर्घ(children[i], "memory.current");
 
-	if (!values_close(c[0], MB(33), 10))
-		goto cleanup;
+	अगर (!values_बंद(c[0], MB(33), 10))
+		जाओ cleanup;
 
-	if (!values_close(c[1], MB(17), 10))
-		goto cleanup;
+	अगर (!values_बंद(c[1], MB(17), 10))
+		जाओ cleanup;
 
-	if (!values_close(c[2], 0, 1))
-		goto cleanup;
+	अगर (!values_बंद(c[2], 0, 1))
+		जाओ cleanup;
 
-	if (cg_run(parent[2], alloc_anon, (void *)MB(166))) {
-		fprintf(stderr,
+	अगर (cg_run(parent[2], alloc_anon, (व्योम *)MB(166))) अणु
+		ख_लिखो(मानक_त्रुटि,
 			"memory.low prevents from allocating anon memory\n");
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(children); i++) {
-		oom = cg_read_key_long(children[i], "memory.events", "oom ");
-		low = cg_read_key_long(children[i], "memory.events", "low ");
+	क्रम (i = 0; i < ARRAY_SIZE(children); i++) अणु
+		oom = cg_पढ़ो_key_दीर्घ(children[i], "memory.events", "oom ");
+		low = cg_पढ़ो_key_दीर्घ(children[i], "memory.events", "low ");
 
-		if (oom)
-			goto cleanup;
-		if (i < 2 && low <= 0)
-			goto cleanup;
-		if (i >= 2 && low)
-			goto cleanup;
-	}
+		अगर (oom)
+			जाओ cleanup;
+		अगर (i < 2 && low <= 0)
+			जाओ cleanup;
+		अगर (i >= 2 && low)
+			जाओ cleanup;
+	पूर्ण
 
 	ret = KSFT_PASS;
 
 cleanup:
-	for (i = ARRAY_SIZE(children) - 1; i >= 0; i--) {
-		if (!children[i])
-			continue;
+	क्रम (i = ARRAY_SIZE(children) - 1; i >= 0; i--) अणु
+		अगर (!children[i])
+			जारी;
 
 		cg_destroy(children[i]);
-		free(children[i]);
-	}
+		मुक्त(children[i]);
+	पूर्ण
 
-	for (i = ARRAY_SIZE(parent) - 1; i >= 0; i--) {
-		if (!parent[i])
-			continue;
+	क्रम (i = ARRAY_SIZE(parent) - 1; i >= 0; i--) अणु
+		अगर (!parent[i])
+			जारी;
 
 		cg_destroy(parent[i]);
-		free(parent[i]);
-	}
-	close(fd);
-	return ret;
-}
+		मुक्त(parent[i]);
+	पूर्ण
+	बंद(fd);
+	वापस ret;
+पूर्ण
 
-static int alloc_pagecache_max_30M(const char *cgroup, void *arg)
-{
-	size_t size = MB(50);
-	int ret = -1;
-	long current;
-	int fd;
+अटल पूर्णांक alloc_pagecache_max_30M(स्थिर अक्षर *cgroup, व्योम *arg)
+अणु
+	माप_प्रकार size = MB(50);
+	पूर्णांक ret = -1;
+	दीर्घ current;
+	पूर्णांक fd;
 
 	fd = get_temp_fd();
-	if (fd < 0)
-		return -1;
+	अगर (fd < 0)
+		वापस -1;
 
-	if (alloc_pagecache(fd, size))
-		goto cleanup;
+	अगर (alloc_pagecache(fd, size))
+		जाओ cleanup;
 
-	current = cg_read_long(cgroup, "memory.current");
-	if (current <= MB(29) || current > MB(30))
-		goto cleanup;
+	current = cg_पढ़ो_दीर्घ(cgroup, "memory.current");
+	अगर (current <= MB(29) || current > MB(30))
+		जाओ cleanup;
 
 	ret = 0;
 
 cleanup:
-	close(fd);
-	return ret;
+	बंद(fd);
+	वापस ret;
 
-}
+पूर्ण
 
 /*
  * This test checks that memory.high limits the amount of
  * memory which can be consumed by either anonymous memory
  * or pagecache.
  */
-static int test_memcg_high(const char *root)
-{
-	int ret = KSFT_FAIL;
-	char *memcg;
-	long high;
+अटल पूर्णांक test_memcg_high(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर *memcg;
+	दीर्घ high;
 
 	memcg = cg_name(root, "memcg_test");
-	if (!memcg)
-		goto cleanup;
+	अगर (!memcg)
+		जाओ cleanup;
 
-	if (cg_create(memcg))
-		goto cleanup;
+	अगर (cg_create(memcg))
+		जाओ cleanup;
 
-	if (cg_read_strcmp(memcg, "memory.high", "max\n"))
-		goto cleanup;
+	अगर (cg_पढ़ो_म_भेद(memcg, "memory.high", "max\n"))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.swap.max", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.swap.max", "0"))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.high", "30M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.high", "30M"))
+		जाओ cleanup;
 
-	if (cg_run(memcg, alloc_anon, (void *)MB(100)))
-		goto cleanup;
+	अगर (cg_run(memcg, alloc_anon, (व्योम *)MB(100)))
+		जाओ cleanup;
 
-	if (!cg_run(memcg, alloc_pagecache_50M_check, NULL))
-		goto cleanup;
+	अगर (!cg_run(memcg, alloc_pagecache_50M_check, शून्य))
+		जाओ cleanup;
 
-	if (cg_run(memcg, alloc_pagecache_max_30M, NULL))
-		goto cleanup;
+	अगर (cg_run(memcg, alloc_pagecache_max_30M, शून्य))
+		जाओ cleanup;
 
-	high = cg_read_key_long(memcg, "memory.events", "high ");
-	if (high <= 0)
-		goto cleanup;
+	high = cg_पढ़ो_key_दीर्घ(memcg, "memory.events", "high ");
+	अगर (high <= 0)
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
 	cg_destroy(memcg);
-	free(memcg);
+	मुक्त(memcg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This test checks that memory.max limits the amount of
  * memory which can be consumed by either anonymous memory
  * or pagecache.
  */
-static int test_memcg_max(const char *root)
-{
-	int ret = KSFT_FAIL;
-	char *memcg;
-	long current, max;
+अटल पूर्णांक test_memcg_max(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर *memcg;
+	दीर्घ current, max;
 
 	memcg = cg_name(root, "memcg_test");
-	if (!memcg)
-		goto cleanup;
+	अगर (!memcg)
+		जाओ cleanup;
 
-	if (cg_create(memcg))
-		goto cleanup;
+	अगर (cg_create(memcg))
+		जाओ cleanup;
 
-	if (cg_read_strcmp(memcg, "memory.max", "max\n"))
-		goto cleanup;
+	अगर (cg_पढ़ो_म_भेद(memcg, "memory.max", "max\n"))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.swap.max", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.swap.max", "0"))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.max", "30M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.max", "30M"))
+		जाओ cleanup;
 
-	/* Should be killed by OOM killer */
-	if (!cg_run(memcg, alloc_anon, (void *)MB(100)))
-		goto cleanup;
+	/* Should be समाप्तed by OOM समाप्तer */
+	अगर (!cg_run(memcg, alloc_anon, (व्योम *)MB(100)))
+		जाओ cleanup;
 
-	if (cg_run(memcg, alloc_pagecache_max_30M, NULL))
-		goto cleanup;
+	अगर (cg_run(memcg, alloc_pagecache_max_30M, शून्य))
+		जाओ cleanup;
 
-	current = cg_read_long(memcg, "memory.current");
-	if (current > MB(30) || !current)
-		goto cleanup;
+	current = cg_पढ़ो_दीर्घ(memcg, "memory.current");
+	अगर (current > MB(30) || !current)
+		जाओ cleanup;
 
-	max = cg_read_key_long(memcg, "memory.events", "max ");
-	if (max <= 0)
-		goto cleanup;
+	max = cg_पढ़ो_key_दीर्घ(memcg, "memory.events", "max ");
+	अगर (max <= 0)
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
 	cg_destroy(memcg);
-	free(memcg);
+	मुक्त(memcg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int alloc_anon_50M_check_swap(const char *cgroup, void *arg)
-{
-	long mem_max = (long)arg;
-	size_t size = MB(50);
-	char *buf, *ptr;
-	long mem_current, swap_current;
-	int ret = -1;
+अटल पूर्णांक alloc_anon_50M_check_swap(स्थिर अक्षर *cgroup, व्योम *arg)
+अणु
+	दीर्घ mem_max = (दीर्घ)arg;
+	माप_प्रकार size = MB(50);
+	अक्षर *buf, *ptr;
+	दीर्घ mem_current, swap_current;
+	पूर्णांक ret = -1;
 
-	buf = malloc(size);
-	for (ptr = buf; ptr < buf + size; ptr += PAGE_SIZE)
+	buf = दो_स्मृति(size);
+	क्रम (ptr = buf; ptr < buf + size; ptr += PAGE_SIZE)
 		*ptr = 0;
 
-	mem_current = cg_read_long(cgroup, "memory.current");
-	if (!mem_current || !values_close(mem_current, mem_max, 3))
-		goto cleanup;
+	mem_current = cg_पढ़ो_दीर्घ(cgroup, "memory.current");
+	अगर (!mem_current || !values_बंद(mem_current, mem_max, 3))
+		जाओ cleanup;
 
-	swap_current = cg_read_long(cgroup, "memory.swap.current");
-	if (!swap_current ||
-	    !values_close(mem_current + swap_current, size, 3))
-		goto cleanup;
+	swap_current = cg_पढ़ो_दीर्घ(cgroup, "memory.swap.current");
+	अगर (!swap_current ||
+	    !values_बंद(mem_current + swap_current, size, 3))
+		जाओ cleanup;
 
 	ret = 0;
 cleanup:
-	free(buf);
-	return ret;
-}
+	मुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /*
  * This test checks that memory.swap.max limits the amount of
  * anonymous memory which can be swapped out.
  */
-static int test_memcg_swap_max(const char *root)
-{
-	int ret = KSFT_FAIL;
-	char *memcg;
-	long max;
+अटल पूर्णांक test_memcg_swap_max(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर *memcg;
+	दीर्घ max;
 
-	if (!is_swap_enabled())
-		return KSFT_SKIP;
+	अगर (!is_swap_enabled())
+		वापस KSFT_SKIP;
 
 	memcg = cg_name(root, "memcg_test");
-	if (!memcg)
-		goto cleanup;
+	अगर (!memcg)
+		जाओ cleanup;
 
-	if (cg_create(memcg))
-		goto cleanup;
+	अगर (cg_create(memcg))
+		जाओ cleanup;
 
-	if (cg_read_long(memcg, "memory.swap.current")) {
+	अगर (cg_पढ़ो_दीर्घ(memcg, "memory.swap.current")) अणु
 		ret = KSFT_SKIP;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	if (cg_read_strcmp(memcg, "memory.max", "max\n"))
-		goto cleanup;
+	अगर (cg_पढ़ो_म_भेद(memcg, "memory.max", "max\n"))
+		जाओ cleanup;
 
-	if (cg_read_strcmp(memcg, "memory.swap.max", "max\n"))
-		goto cleanup;
+	अगर (cg_पढ़ो_म_भेद(memcg, "memory.swap.max", "max\n"))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.swap.max", "30M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.swap.max", "30M"))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.max", "30M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.max", "30M"))
+		जाओ cleanup;
 
-	/* Should be killed by OOM killer */
-	if (!cg_run(memcg, alloc_anon, (void *)MB(100)))
-		goto cleanup;
+	/* Should be समाप्तed by OOM समाप्तer */
+	अगर (!cg_run(memcg, alloc_anon, (व्योम *)MB(100)))
+		जाओ cleanup;
 
-	if (cg_read_key_long(memcg, "memory.events", "oom ") != 1)
-		goto cleanup;
+	अगर (cg_पढ़ो_key_दीर्घ(memcg, "memory.events", "oom ") != 1)
+		जाओ cleanup;
 
-	if (cg_read_key_long(memcg, "memory.events", "oom_kill ") != 1)
-		goto cleanup;
+	अगर (cg_पढ़ो_key_दीर्घ(memcg, "memory.events", "oom_kill ") != 1)
+		जाओ cleanup;
 
-	if (cg_run(memcg, alloc_anon_50M_check_swap, (void *)MB(30)))
-		goto cleanup;
+	अगर (cg_run(memcg, alloc_anon_50M_check_swap, (व्योम *)MB(30)))
+		जाओ cleanup;
 
-	max = cg_read_key_long(memcg, "memory.events", "max ");
-	if (max <= 0)
-		goto cleanup;
+	max = cg_पढ़ो_key_दीर्घ(memcg, "memory.events", "max ");
+	अगर (max <= 0)
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
 	cg_destroy(memcg);
-	free(memcg);
+	मुक्त(memcg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This test disables swapping and tries to allocate anonymous memory
- * up to OOM. Then it checks for oom and oom_kill events in
+ * up to OOM. Then it checks क्रम oom and oom_समाप्त events in
  * memory.events.
  */
-static int test_memcg_oom_events(const char *root)
-{
-	int ret = KSFT_FAIL;
-	char *memcg;
+अटल पूर्णांक test_memcg_oom_events(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर *memcg;
 
 	memcg = cg_name(root, "memcg_test");
-	if (!memcg)
-		goto cleanup;
+	अगर (!memcg)
+		जाओ cleanup;
 
-	if (cg_create(memcg))
-		goto cleanup;
+	अगर (cg_create(memcg))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.max", "30M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.max", "30M"))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.swap.max", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.swap.max", "0"))
+		जाओ cleanup;
 
-	if (!cg_run(memcg, alloc_anon, (void *)MB(100)))
-		goto cleanup;
+	अगर (!cg_run(memcg, alloc_anon, (व्योम *)MB(100)))
+		जाओ cleanup;
 
-	if (cg_read_strcmp(memcg, "cgroup.procs", ""))
-		goto cleanup;
+	अगर (cg_पढ़ो_म_भेद(memcg, "cgroup.procs", ""))
+		जाओ cleanup;
 
-	if (cg_read_key_long(memcg, "memory.events", "oom ") != 1)
-		goto cleanup;
+	अगर (cg_पढ़ो_key_दीर्घ(memcg, "memory.events", "oom ") != 1)
+		जाओ cleanup;
 
-	if (cg_read_key_long(memcg, "memory.events", "oom_kill ") != 1)
-		goto cleanup;
+	अगर (cg_पढ़ो_key_दीर्घ(memcg, "memory.events", "oom_kill ") != 1)
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
 	cg_destroy(memcg);
-	free(memcg);
+	मुक्त(memcg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct tcp_server_args {
-	unsigned short port;
-	int ctl[2];
-};
+काष्ठा tcp_server_args अणु
+	अचिन्हित लघु port;
+	पूर्णांक ctl[2];
+पूर्ण;
 
-static int tcp_server(const char *cgroup, void *arg)
-{
-	struct tcp_server_args *srv_args = arg;
-	struct sockaddr_in6 saddr = { 0 };
-	socklen_t slen = sizeof(saddr);
-	int sk, client_sk, ctl_fd, yes = 1, ret = -1;
+अटल पूर्णांक tcp_server(स्थिर अक्षर *cgroup, व्योम *arg)
+अणु
+	काष्ठा tcp_server_args *srv_args = arg;
+	काष्ठा sockaddr_in6 saddr = अणु 0 पूर्ण;
+	socklen_t slen = माप(saddr);
+	पूर्णांक sk, client_sk, ctl_fd, yes = 1, ret = -1;
 
-	close(srv_args->ctl[0]);
+	बंद(srv_args->ctl[0]);
 	ctl_fd = srv_args->ctl[1];
 
 	saddr.sin6_family = AF_INET6;
@@ -833,348 +834,348 @@ static int tcp_server(const char *cgroup, void *arg)
 	saddr.sin6_port = htons(srv_args->port);
 
 	sk = socket(AF_INET6, SOCK_STREAM, 0);
-	if (sk < 0)
-		return ret;
+	अगर (sk < 0)
+		वापस ret;
 
-	if (setsockopt(sk, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
-		goto cleanup;
+	अगर (setsockopt(sk, SOL_SOCKET, SO_REUSEADDR, &yes, माप(yes)) < 0)
+		जाओ cleanup;
 
-	if (bind(sk, (struct sockaddr *)&saddr, slen)) {
-		write(ctl_fd, &errno, sizeof(errno));
-		goto cleanup;
-	}
+	अगर (bind(sk, (काष्ठा sockaddr *)&saddr, slen)) अणु
+		ग_लिखो(ctl_fd, &त्रुटि_सं, माप(त्रुटि_सं));
+		जाओ cleanup;
+	पूर्ण
 
-	if (listen(sk, 1))
-		goto cleanup;
+	अगर (listen(sk, 1))
+		जाओ cleanup;
 
 	ret = 0;
-	if (write(ctl_fd, &ret, sizeof(ret)) != sizeof(ret)) {
+	अगर (ग_लिखो(ctl_fd, &ret, माप(ret)) != माप(ret)) अणु
 		ret = -1;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	client_sk = accept(sk, NULL, NULL);
-	if (client_sk < 0)
-		goto cleanup;
+	client_sk = accept(sk, शून्य, शून्य);
+	अगर (client_sk < 0)
+		जाओ cleanup;
 
 	ret = -1;
-	for (;;) {
-		uint8_t buf[0x100000];
+	क्रम (;;) अणु
+		uपूर्णांक8_t buf[0x100000];
 
-		if (write(client_sk, buf, sizeof(buf)) <= 0) {
-			if (errno == ECONNRESET)
+		अगर (ग_लिखो(client_sk, buf, माप(buf)) <= 0) अणु
+			अगर (त्रुटि_सं == ECONNRESET)
 				ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	close(client_sk);
+	बंद(client_sk);
 
 cleanup:
-	close(sk);
-	return ret;
-}
+	बंद(sk);
+	वापस ret;
+पूर्ण
 
-static int tcp_client(const char *cgroup, unsigned short port)
-{
-	const char server[] = "localhost";
-	struct addrinfo *ai;
-	char servport[6];
-	int retries = 0x10; /* nice round number */
-	int sk, ret;
+अटल पूर्णांक tcp_client(स्थिर अक्षर *cgroup, अचिन्हित लघु port)
+अणु
+	स्थिर अक्षर server[] = "localhost";
+	काष्ठा addrinfo *ai;
+	अक्षर servport[6];
+	पूर्णांक retries = 0x10; /* nice round number */
+	पूर्णांक sk, ret;
 
-	snprintf(servport, sizeof(servport), "%hd", port);
-	ret = getaddrinfo(server, servport, NULL, &ai);
-	if (ret)
-		return ret;
+	snम_लिखो(servport, माप(servport), "%hd", port);
+	ret = getaddrinfo(server, servport, शून्य, &ai);
+	अगर (ret)
+		वापस ret;
 
 	sk = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-	if (sk < 0)
-		goto free_ainfo;
+	अगर (sk < 0)
+		जाओ मुक्त_ainfo;
 
 	ret = connect(sk, ai->ai_addr, ai->ai_addrlen);
-	if (ret < 0)
-		goto close_sk;
+	अगर (ret < 0)
+		जाओ बंद_sk;
 
 	ret = KSFT_FAIL;
-	while (retries--) {
-		uint8_t buf[0x100000];
-		long current, sock;
+	जबतक (retries--) अणु
+		uपूर्णांक8_t buf[0x100000];
+		दीर्घ current, sock;
 
-		if (read(sk, buf, sizeof(buf)) <= 0)
-			goto close_sk;
+		अगर (पढ़ो(sk, buf, माप(buf)) <= 0)
+			जाओ बंद_sk;
 
-		current = cg_read_long(cgroup, "memory.current");
-		sock = cg_read_key_long(cgroup, "memory.stat", "sock ");
+		current = cg_पढ़ो_दीर्घ(cgroup, "memory.current");
+		sock = cg_पढ़ो_key_दीर्घ(cgroup, "memory.stat", "sock ");
 
-		if (current < 0 || sock < 0)
-			goto close_sk;
+		अगर (current < 0 || sock < 0)
+			जाओ बंद_sk;
 
-		if (current < sock)
-			goto close_sk;
+		अगर (current < sock)
+			जाओ बंद_sk;
 
-		if (values_close(current, sock, 10)) {
+		अगर (values_बंद(current, sock, 10)) अणु
 			ret = KSFT_PASS;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-close_sk:
-	close(sk);
-free_ainfo:
-	freeaddrinfo(ai);
-	return ret;
-}
+बंद_sk:
+	बंद(sk);
+मुक्त_ainfo:
+	मुक्तaddrinfo(ai);
+	वापस ret;
+पूर्ण
 
 /*
  * This test checks socket memory accounting.
- * The test forks a TCP server listens on a random port between 1000
- * and 61000. Once it gets a client connection, it starts writing to
+ * The test विभाजनs a TCP server listens on a अक्रमom port between 1000
+ * and 61000. Once it माला_लो a client connection, it starts writing to
  * its socket.
- * The TCP client interleaves reads from the socket with check whether
+ * The TCP client पूर्णांकerleaves पढ़ोs from the socket with check whether
  * memory.current and memory.stat.sock are similar.
  */
-static int test_memcg_sock(const char *root)
-{
-	int bind_retries = 5, ret = KSFT_FAIL, pid, err;
-	unsigned short port;
-	char *memcg;
+अटल पूर्णांक test_memcg_sock(स्थिर अक्षर *root)
+अणु
+	पूर्णांक bind_retries = 5, ret = KSFT_FAIL, pid, err;
+	अचिन्हित लघु port;
+	अक्षर *memcg;
 
 	memcg = cg_name(root, "memcg_test");
-	if (!memcg)
-		goto cleanup;
+	अगर (!memcg)
+		जाओ cleanup;
 
-	if (cg_create(memcg))
-		goto cleanup;
+	अगर (cg_create(memcg))
+		जाओ cleanup;
 
-	while (bind_retries--) {
-		struct tcp_server_args args;
+	जबतक (bind_retries--) अणु
+		काष्ठा tcp_server_args args;
 
-		if (pipe(args.ctl))
-			goto cleanup;
+		अगर (pipe(args.ctl))
+			जाओ cleanup;
 
-		port = args.port = 1000 + rand() % 60000;
+		port = args.port = 1000 + अक्रम() % 60000;
 
-		pid = cg_run_nowait(memcg, tcp_server, &args);
-		if (pid < 0)
-			goto cleanup;
+		pid = cg_run_noरुको(memcg, tcp_server, &args);
+		अगर (pid < 0)
+			जाओ cleanup;
 
-		close(args.ctl[1]);
-		if (read(args.ctl[0], &err, sizeof(err)) != sizeof(err))
-			goto cleanup;
-		close(args.ctl[0]);
+		बंद(args.ctl[1]);
+		अगर (पढ़ो(args.ctl[0], &err, माप(err)) != माप(err))
+			जाओ cleanup;
+		बंद(args.ctl[0]);
 
-		if (!err)
-			break;
-		if (err != EADDRINUSE)
-			goto cleanup;
+		अगर (!err)
+			अवरोध;
+		अगर (err != EADDRINUSE)
+			जाओ cleanup;
 
-		waitpid(pid, NULL, 0);
-	}
+		रुकोpid(pid, शून्य, 0);
+	पूर्ण
 
-	if (err == EADDRINUSE) {
+	अगर (err == EADDRINUSE) अणु
 		ret = KSFT_SKIP;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
-	if (tcp_client(memcg, port) != KSFT_PASS)
-		goto cleanup;
+	अगर (tcp_client(memcg, port) != KSFT_PASS)
+		जाओ cleanup;
 
-	waitpid(pid, &err, 0);
-	if (WEXITSTATUS(err))
-		goto cleanup;
+	रुकोpid(pid, &err, 0);
+	अगर (WEXITSTATUS(err))
+		जाओ cleanup;
 
-	if (cg_read_long(memcg, "memory.current") < 0)
-		goto cleanup;
+	अगर (cg_पढ़ो_दीर्घ(memcg, "memory.current") < 0)
+		जाओ cleanup;
 
-	if (cg_read_key_long(memcg, "memory.stat", "sock "))
-		goto cleanup;
+	अगर (cg_पढ़ो_key_दीर्घ(memcg, "memory.stat", "sock "))
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
 	cg_destroy(memcg);
-	free(memcg);
+	मुक्त(memcg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This test disables swapping and tries to allocate anonymous memory
  * up to OOM with memory.group.oom set. Then it checks that all
- * processes in the leaf (but not the parent) were killed.
+ * processes in the leaf (but not the parent) were समाप्तed.
  */
-static int test_memcg_oom_group_leaf_events(const char *root)
-{
-	int ret = KSFT_FAIL;
-	char *parent, *child;
+अटल पूर्णांक test_memcg_oom_group_leaf_events(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर *parent, *child;
 
 	parent = cg_name(root, "memcg_test_0");
 	child = cg_name(root, "memcg_test_0/memcg_test_1");
 
-	if (!parent || !child)
-		goto cleanup;
+	अगर (!parent || !child)
+		जाओ cleanup;
 
-	if (cg_create(parent))
-		goto cleanup;
+	अगर (cg_create(parent))
+		जाओ cleanup;
 
-	if (cg_create(child))
-		goto cleanup;
+	अगर (cg_create(child))
+		जाओ cleanup;
 
-	if (cg_write(parent, "cgroup.subtree_control", "+memory"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent, "cgroup.subtree_control", "+memory"))
+		जाओ cleanup;
 
-	if (cg_write(child, "memory.max", "50M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(child, "memory.max", "50M"))
+		जाओ cleanup;
 
-	if (cg_write(child, "memory.swap.max", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(child, "memory.swap.max", "0"))
+		जाओ cleanup;
 
-	if (cg_write(child, "memory.oom.group", "1"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(child, "memory.oom.group", "1"))
+		जाओ cleanup;
 
-	cg_run_nowait(parent, alloc_anon_noexit, (void *) MB(60));
-	cg_run_nowait(child, alloc_anon_noexit, (void *) MB(1));
-	cg_run_nowait(child, alloc_anon_noexit, (void *) MB(1));
-	if (!cg_run(child, alloc_anon, (void *)MB(100)))
-		goto cleanup;
+	cg_run_noरुको(parent, alloc_anon_noनिकास, (व्योम *) MB(60));
+	cg_run_noरुको(child, alloc_anon_noनिकास, (व्योम *) MB(1));
+	cg_run_noरुको(child, alloc_anon_noनिकास, (व्योम *) MB(1));
+	अगर (!cg_run(child, alloc_anon, (व्योम *)MB(100)))
+		जाओ cleanup;
 
-	if (cg_test_proc_killed(child))
-		goto cleanup;
+	अगर (cg_test_proc_समाप्तed(child))
+		जाओ cleanup;
 
-	if (cg_read_key_long(child, "memory.events", "oom_kill ") <= 0)
-		goto cleanup;
+	अगर (cg_पढ़ो_key_दीर्घ(child, "memory.events", "oom_kill ") <= 0)
+		जाओ cleanup;
 
-	if (cg_read_key_long(parent, "memory.events", "oom_kill ") != 0)
-		goto cleanup;
+	अगर (cg_पढ़ो_key_दीर्घ(parent, "memory.events", "oom_kill ") != 0)
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	if (child)
+	अगर (child)
 		cg_destroy(child);
-	if (parent)
+	अगर (parent)
 		cg_destroy(parent);
-	free(child);
-	free(parent);
+	मुक्त(child);
+	मुक्त(parent);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This test disables swapping and tries to allocate anonymous memory
  * up to OOM with memory.group.oom set. Then it checks that all
- * processes in the parent and leaf were killed.
+ * processes in the parent and leaf were समाप्तed.
  */
-static int test_memcg_oom_group_parent_events(const char *root)
-{
-	int ret = KSFT_FAIL;
-	char *parent, *child;
+अटल पूर्णांक test_memcg_oom_group_parent_events(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर *parent, *child;
 
 	parent = cg_name(root, "memcg_test_0");
 	child = cg_name(root, "memcg_test_0/memcg_test_1");
 
-	if (!parent || !child)
-		goto cleanup;
+	अगर (!parent || !child)
+		जाओ cleanup;
 
-	if (cg_create(parent))
-		goto cleanup;
+	अगर (cg_create(parent))
+		जाओ cleanup;
 
-	if (cg_create(child))
-		goto cleanup;
+	अगर (cg_create(child))
+		जाओ cleanup;
 
-	if (cg_write(parent, "memory.max", "80M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent, "memory.max", "80M"))
+		जाओ cleanup;
 
-	if (cg_write(parent, "memory.swap.max", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent, "memory.swap.max", "0"))
+		जाओ cleanup;
 
-	if (cg_write(parent, "memory.oom.group", "1"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(parent, "memory.oom.group", "1"))
+		जाओ cleanup;
 
-	cg_run_nowait(parent, alloc_anon_noexit, (void *) MB(60));
-	cg_run_nowait(child, alloc_anon_noexit, (void *) MB(1));
-	cg_run_nowait(child, alloc_anon_noexit, (void *) MB(1));
+	cg_run_noरुको(parent, alloc_anon_noनिकास, (व्योम *) MB(60));
+	cg_run_noरुको(child, alloc_anon_noनिकास, (व्योम *) MB(1));
+	cg_run_noरुको(child, alloc_anon_noनिकास, (व्योम *) MB(1));
 
-	if (!cg_run(child, alloc_anon, (void *)MB(100)))
-		goto cleanup;
+	अगर (!cg_run(child, alloc_anon, (व्योम *)MB(100)))
+		जाओ cleanup;
 
-	if (cg_test_proc_killed(child))
-		goto cleanup;
-	if (cg_test_proc_killed(parent))
-		goto cleanup;
+	अगर (cg_test_proc_समाप्तed(child))
+		जाओ cleanup;
+	अगर (cg_test_proc_समाप्तed(parent))
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	if (child)
+	अगर (child)
 		cg_destroy(child);
-	if (parent)
+	अगर (parent)
 		cg_destroy(parent);
-	free(child);
-	free(parent);
+	मुक्त(child);
+	मुक्त(parent);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This test disables swapping and tries to allocate anonymous memory
  * up to OOM with memory.group.oom set. Then it checks that all
- * processes were killed except those set with OOM_SCORE_ADJ_MIN
+ * processes were समाप्तed except those set with OOM_SCORE_ADJ_MIN
  */
-static int test_memcg_oom_group_score_events(const char *root)
-{
-	int ret = KSFT_FAIL;
-	char *memcg;
-	int safe_pid;
+अटल पूर्णांक test_memcg_oom_group_score_events(स्थिर अक्षर *root)
+अणु
+	पूर्णांक ret = KSFT_FAIL;
+	अक्षर *memcg;
+	पूर्णांक safe_pid;
 
 	memcg = cg_name(root, "memcg_test_0");
 
-	if (!memcg)
-		goto cleanup;
+	अगर (!memcg)
+		जाओ cleanup;
 
-	if (cg_create(memcg))
-		goto cleanup;
+	अगर (cg_create(memcg))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.max", "50M"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.max", "50M"))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.swap.max", "0"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.swap.max", "0"))
+		जाओ cleanup;
 
-	if (cg_write(memcg, "memory.oom.group", "1"))
-		goto cleanup;
+	अगर (cg_ग_लिखो(memcg, "memory.oom.group", "1"))
+		जाओ cleanup;
 
-	safe_pid = cg_run_nowait(memcg, alloc_anon_noexit, (void *) MB(1));
-	if (set_oom_adj_score(safe_pid, OOM_SCORE_ADJ_MIN))
-		goto cleanup;
+	safe_pid = cg_run_noरुको(memcg, alloc_anon_noनिकास, (व्योम *) MB(1));
+	अगर (set_oom_adj_score(safe_pid, OOM_SCORE_ADJ_MIN))
+		जाओ cleanup;
 
-	cg_run_nowait(memcg, alloc_anon_noexit, (void *) MB(1));
-	if (!cg_run(memcg, alloc_anon, (void *)MB(100)))
-		goto cleanup;
+	cg_run_noरुको(memcg, alloc_anon_noनिकास, (व्योम *) MB(1));
+	अगर (!cg_run(memcg, alloc_anon, (व्योम *)MB(100)))
+		जाओ cleanup;
 
-	if (cg_read_key_long(memcg, "memory.events", "oom_kill ") != 3)
-		goto cleanup;
+	अगर (cg_पढ़ो_key_दीर्घ(memcg, "memory.events", "oom_kill ") != 3)
+		जाओ cleanup;
 
-	if (kill(safe_pid, SIGKILL))
-		goto cleanup;
+	अगर (समाप्त(safe_pid, SIGKILL))
+		जाओ cleanup;
 
 	ret = KSFT_PASS;
 
 cleanup:
-	if (memcg)
+	अगर (memcg)
 		cg_destroy(memcg);
-	free(memcg);
+	मुक्त(memcg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-#define T(x) { x, #x }
-struct memcg_test {
-	int (*fn)(const char *root);
-	const char *name;
-} tests[] = {
+#घोषणा T(x) अणु x, #x पूर्ण
+काष्ठा memcg_test अणु
+	पूर्णांक (*fn)(स्थिर अक्षर *root);
+	स्थिर अक्षर *name;
+पूर्ण tests[] = अणु
 	T(test_memcg_subtree_control),
 	T(test_memcg_current),
 	T(test_memcg_min),
@@ -1187,42 +1188,42 @@ struct memcg_test {
 	T(test_memcg_oom_group_leaf_events),
 	T(test_memcg_oom_group_parent_events),
 	T(test_memcg_oom_group_score_events),
-};
-#undef T
+पूर्ण;
+#अघोषित T
 
-int main(int argc, char **argv)
-{
-	char root[PATH_MAX];
-	int i, ret = EXIT_SUCCESS;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	अक्षर root[PATH_MAX];
+	पूर्णांक i, ret = निकास_सफल;
 
-	if (cg_find_unified_root(root, sizeof(root)))
-		ksft_exit_skip("cgroup v2 isn't mounted\n");
+	अगर (cg_find_unअगरied_root(root, माप(root)))
+		ksft_निकास_skip("cgroup v2 isn't mounted\n");
 
 	/*
 	 * Check that memory controller is available:
 	 * memory is listed in cgroup.controllers
 	 */
-	if (cg_read_strstr(root, "cgroup.controllers", "memory"))
-		ksft_exit_skip("memory controller isn't available\n");
+	अगर (cg_पढ़ो_म_माला(root, "cgroup.controllers", "memory"))
+		ksft_निकास_skip("memory controller isn't available\n");
 
-	if (cg_read_strstr(root, "cgroup.subtree_control", "memory"))
-		if (cg_write(root, "cgroup.subtree_control", "+memory"))
-			ksft_exit_skip("Failed to set memory controller\n");
+	अगर (cg_पढ़ो_म_माला(root, "cgroup.subtree_control", "memory"))
+		अगर (cg_ग_लिखो(root, "cgroup.subtree_control", "+memory"))
+			ksft_निकास_skip("Failed to set memory controller\n");
 
-	for (i = 0; i < ARRAY_SIZE(tests); i++) {
-		switch (tests[i].fn(root)) {
-		case KSFT_PASS:
+	क्रम (i = 0; i < ARRAY_SIZE(tests); i++) अणु
+		चयन (tests[i].fn(root)) अणु
+		हाल KSFT_PASS:
 			ksft_test_result_pass("%s\n", tests[i].name);
-			break;
-		case KSFT_SKIP:
+			अवरोध;
+		हाल KSFT_SKIP:
 			ksft_test_result_skip("%s\n", tests[i].name);
-			break;
-		default:
-			ret = EXIT_FAILURE;
+			अवरोध;
+		शेष:
+			ret = निकास_त्रुटि;
 			ksft_test_result_fail("%s\n", tests[i].name);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

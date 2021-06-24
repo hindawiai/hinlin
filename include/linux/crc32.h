@@ -1,21 +1,22 @@
+<शैली गुरु>
 /*
  * crc32.h
- * See linux/lib/crc32.c for license and changes
+ * See linux/lib/crc32.c क्रम license and changes
  */
-#ifndef _LINUX_CRC32_H
-#define _LINUX_CRC32_H
+#अगर_अघोषित _LINUX_CRC32_H
+#घोषणा _LINUX_CRC32_H
 
-#include <linux/types.h>
-#include <linux/bitrev.h>
+#समावेश <linux/types.h>
+#समावेश <linux/bitrev.h>
 
-u32 __pure crc32_le(u32 crc, unsigned char const *p, size_t len);
-u32 __pure crc32_be(u32 crc, unsigned char const *p, size_t len);
+u32 __pure crc32_le(u32 crc, अचिन्हित अक्षर स्थिर *p, माप_प्रकार len);
+u32 __pure crc32_be(u32 crc, अचिन्हित अक्षर स्थिर *p, माप_प्रकार len);
 
 /**
- * crc32_le_combine - Combine two crc32 check values into one. For two
+ * crc32_le_combine - Combine two crc32 check values पूर्णांकo one. For two
  * 		      sequences of bytes, seq1 and seq2 with lengths len1
  * 		      and len2, crc32_le() check values were calculated
- * 		      for each, crc1 and crc2.
+ * 		      क्रम each, crc1 and crc2.
  *
  * @crc1: crc32 of the first block
  * @crc2: crc32 of the second block
@@ -29,20 +30,20 @@ u32 __pure crc32_be(u32 crc, unsigned char const *p, size_t len);
  * 	   with the same initializer as crc1, and crc2 seed was 0. See
  * 	   also crc32_combine_test().
  */
-u32 __attribute_const__ crc32_le_shift(u32 crc, size_t len);
+u32 __attribute_स्थिर__ crc32_le_shअगरt(u32 crc, माप_प्रकार len);
 
-static inline u32 crc32_le_combine(u32 crc1, u32 crc2, size_t len2)
-{
-	return crc32_le_shift(crc1, len2) ^ crc2;
-}
+अटल अंतरभूत u32 crc32_le_combine(u32 crc1, u32 crc2, माप_प्रकार len2)
+अणु
+	वापस crc32_le_shअगरt(crc1, len2) ^ crc2;
+पूर्ण
 
-u32 __pure __crc32c_le(u32 crc, unsigned char const *p, size_t len);
+u32 __pure __crc32c_le(u32 crc, अचिन्हित अक्षर स्थिर *p, माप_प्रकार len);
 
 /**
- * __crc32c_le_combine - Combine two crc32c check values into one. For two
+ * __crc32c_le_combine - Combine two crc32c check values पूर्णांकo one. For two
  * 			 sequences of bytes, seq1 and seq2 with lengths len1
  * 			 and len2, __crc32c_le() check values were calculated
- * 			 for each, crc1 and crc2.
+ * 			 क्रम each, crc1 and crc2.
  *
  * @crc1: crc32c of the first block
  * @crc2: crc32c of the second block
@@ -56,24 +57,24 @@ u32 __pure __crc32c_le(u32 crc, unsigned char const *p, size_t len);
  * 	   seeded with the same initializer as crc1, and crc2 seed
  * 	   was 0. See also crc32c_combine_test().
  */
-u32 __attribute_const__ __crc32c_le_shift(u32 crc, size_t len);
+u32 __attribute_स्थिर__ __crc32c_le_shअगरt(u32 crc, माप_प्रकार len);
 
-static inline u32 __crc32c_le_combine(u32 crc1, u32 crc2, size_t len2)
-{
-	return __crc32c_le_shift(crc1, len2) ^ crc2;
-}
+अटल अंतरभूत u32 __crc32c_le_combine(u32 crc1, u32 crc2, माप_प्रकार len2)
+अणु
+	वापस __crc32c_le_shअगरt(crc1, len2) ^ crc2;
+पूर्ण
 
-#define crc32(seed, data, length)  crc32_le(seed, (unsigned char const *)(data), length)
+#घोषणा crc32(seed, data, length)  crc32_le(seed, (अचिन्हित अक्षर स्थिर *)(data), length)
 
 /*
- * Helpers for hash table generation of ethernet nics:
+ * Helpers क्रम hash table generation of ethernet nics:
  *
- * Ethernet sends the least significant bit of a byte first, thus crc32_le
- * is used. The output of crc32_le is bit reversed [most significant bit
- * is in bit nr 0], thus it must be reversed before use. Except for
- * nics that bit swap the result internally...
+ * Ethernet sends the least signअगरicant bit of a byte first, thus crc32_le
+ * is used. The output of crc32_le is bit reversed [most signअगरicant bit
+ * is in bit nr 0], thus it must be reversed beक्रमe use. Except क्रम
+ * nics that bit swap the result पूर्णांकernally...
  */
-#define ether_crc(length, data)    bitrev32(crc32_le(~0, data, length))
-#define ether_crc_le(length, data) crc32_le(~0, data, length)
+#घोषणा ether_crc(length, data)    bitrev32(crc32_le(~0, data, length))
+#घोषणा ether_crc_le(length, data) crc32_le(~0, data, length)
 
-#endif /* _LINUX_CRC32_H */
+#पूर्ण_अगर /* _LINUX_CRC32_H */

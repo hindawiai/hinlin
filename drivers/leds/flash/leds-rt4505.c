@@ -1,274 +1,275 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 
-#include <linux/bitops.h>
-#include <linux/i2c.h>
-#include <linux/kernel.h>
-#include <linux/led-class-flash.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/property.h>
-#include <linux/regmap.h>
-#include <media/v4l2-flash-led-class.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/led-class-flash.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/property.h>
+#समावेश <linux/regmap.h>
+#समावेश <media/v4l2-flash-led-class.h>
 
-#define RT4505_REG_RESET	0x0
-#define RT4505_REG_CONFIG	0x8
-#define RT4505_REG_ILED		0x9
-#define RT4505_REG_ENABLE	0xA
-#define RT4505_REG_FLAGS	0xB
+#घोषणा RT4505_REG_RESET	0x0
+#घोषणा RT4505_REG_CONFIG	0x8
+#घोषणा RT4505_REG_ILED		0x9
+#घोषणा RT4505_REG_ENABLE	0xA
+#घोषणा RT4505_REG_FLAGS	0xB
 
-#define RT4505_RESET_MASK	BIT(7)
-#define RT4505_FLASHTO_MASK	GENMASK(2, 0)
-#define RT4505_ITORCH_MASK	GENMASK(7, 5)
-#define RT4505_ITORCH_SHIFT	5
-#define RT4505_IFLASH_MASK	GENMASK(4, 0)
-#define RT4505_ENABLE_MASK	GENMASK(5, 0)
-#define RT4505_TORCH_SET	(BIT(0) | BIT(4))
-#define RT4505_FLASH_SET	(BIT(0) | BIT(1) | BIT(2) | BIT(4))
-#define RT4505_EXT_FLASH_SET	(BIT(0) | BIT(1) | BIT(4) | BIT(5))
-#define RT4505_FLASH_GET	(BIT(0) | BIT(1) | BIT(4))
-#define RT4505_OVP_MASK		BIT(3)
-#define RT4505_SHORT_MASK	BIT(2)
-#define RT4505_OTP_MASK		BIT(1)
-#define RT4505_TIMEOUT_MASK	BIT(0)
+#घोषणा RT4505_RESET_MASK	BIT(7)
+#घोषणा RT4505_FLASHTO_MASK	GENMASK(2, 0)
+#घोषणा RT4505_ITORCH_MASK	GENMASK(7, 5)
+#घोषणा RT4505_ITORCH_SHIFT	5
+#घोषणा RT4505_IFLASH_MASK	GENMASK(4, 0)
+#घोषणा RT4505_ENABLE_MASK	GENMASK(5, 0)
+#घोषणा RT4505_TORCH_SET	(BIT(0) | BIT(4))
+#घोषणा RT4505_FLASH_SET	(BIT(0) | BIT(1) | BIT(2) | BIT(4))
+#घोषणा RT4505_EXT_FLASH_SET	(BIT(0) | BIT(1) | BIT(4) | BIT(5))
+#घोषणा RT4505_FLASH_GET	(BIT(0) | BIT(1) | BIT(4))
+#घोषणा RT4505_OVP_MASK		BIT(3)
+#घोषणा RT4505_SHORT_MASK	BIT(2)
+#घोषणा RT4505_OTP_MASK		BIT(1)
+#घोषणा RT4505_TIMEOUT_MASK	BIT(0)
 
-#define RT4505_ITORCH_MINUA	46000
-#define RT4505_ITORCH_MAXUA	375000
-#define RT4505_ITORCH_STPUA	47000
-#define RT4505_IFLASH_MINUA	93750
-#define RT4505_IFLASH_MAXUA	1500000
-#define RT4505_IFLASH_STPUA	93750
-#define RT4505_FLASHTO_MINUS	100000
-#define RT4505_FLASHTO_MAXUS	800000
-#define RT4505_FLASHTO_STPUS	100000
+#घोषणा RT4505_ITORCH_MINUA	46000
+#घोषणा RT4505_ITORCH_MAXUA	375000
+#घोषणा RT4505_ITORCH_STPUA	47000
+#घोषणा RT4505_IFLASH_MINUA	93750
+#घोषणा RT4505_IFLASH_MAXUA	1500000
+#घोषणा RT4505_IFLASH_STPUA	93750
+#घोषणा RT4505_FLASHTO_MINUS	100000
+#घोषणा RT4505_FLASHTO_MAXUS	800000
+#घोषणा RT4505_FLASHTO_STPUS	100000
 
-struct rt4505_priv {
-	struct device *dev;
-	struct regmap *regmap;
-	struct mutex lock;
-	struct led_classdev_flash flash;
-	struct v4l2_flash *v4l2_flash;
-};
+काष्ठा rt4505_priv अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	काष्ठा mutex lock;
+	काष्ठा led_classdev_flash flash;
+	काष्ठा v4l2_flash *v4l2_flash;
+पूर्ण;
 
-static int rt4505_torch_brightness_set(struct led_classdev *lcdev,
-				       enum led_brightness level)
-{
-	struct rt4505_priv *priv =
-		container_of(lcdev, struct rt4505_priv, flash.led_cdev);
+अटल पूर्णांक rt4505_torch_brightness_set(काष्ठा led_classdev *lcdev,
+				       क्रमागत led_brightness level)
+अणु
+	काष्ठा rt4505_priv *priv =
+		container_of(lcdev, काष्ठा rt4505_priv, flash.led_cdev);
 	u32 val = 0;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&priv->lock);
 
-	if (level != LED_OFF) {
+	अगर (level != LED_OFF) अणु
 		ret = regmap_update_bits(priv->regmap,
 					 RT4505_REG_ILED, RT4505_ITORCH_MASK,
 					 (level - 1) << RT4505_ITORCH_SHIFT);
-		if (ret)
-			goto unlock;
+		अगर (ret)
+			जाओ unlock;
 
 		val = RT4505_TORCH_SET;
-	}
+	पूर्ण
 
 	ret = regmap_update_bits(priv->regmap, RT4505_REG_ENABLE,
 				 RT4505_ENABLE_MASK, val);
 
 unlock:
 	mutex_unlock(&priv->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum led_brightness rt4505_torch_brightness_get(
-						struct led_classdev *lcdev)
-{
-	struct rt4505_priv *priv =
-		container_of(lcdev, struct rt4505_priv, flash.led_cdev);
+अटल क्रमागत led_brightness rt4505_torch_brightness_get(
+						काष्ठा led_classdev *lcdev)
+अणु
+	काष्ठा rt4505_priv *priv =
+		container_of(lcdev, काष्ठा rt4505_priv, flash.led_cdev);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&priv->lock);
 
-	ret = regmap_read(priv->regmap, RT4505_REG_ENABLE, &val);
-	if (ret) {
+	ret = regmap_पढ़ो(priv->regmap, RT4505_REG_ENABLE, &val);
+	अगर (ret) अणु
 		dev_err(lcdev->dev, "Failed to get LED enable\n");
 		ret = LED_OFF;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	if ((val & RT4505_ENABLE_MASK) != RT4505_TORCH_SET) {
+	अगर ((val & RT4505_ENABLE_MASK) != RT4505_TORCH_SET) अणु
 		ret = LED_OFF;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	ret = regmap_read(priv->regmap, RT4505_REG_ILED, &val);
-	if (ret) {
+	ret = regmap_पढ़ो(priv->regmap, RT4505_REG_ILED, &val);
+	अगर (ret) अणु
 		dev_err(lcdev->dev, "Failed to get LED brightness\n");
 		ret = LED_OFF;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	ret = ((val & RT4505_ITORCH_MASK) >> RT4505_ITORCH_SHIFT) + 1;
 
 unlock:
 	mutex_unlock(&priv->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rt4505_flash_brightness_set(struct led_classdev_flash *fled_cdev,
+अटल पूर्णांक rt4505_flash_brightness_set(काष्ठा led_classdev_flash *fled_cdev,
 				       u32 brightness)
-{
-	struct rt4505_priv *priv =
-		container_of(fled_cdev, struct rt4505_priv, flash);
-	struct led_flash_setting *s = &fled_cdev->brightness;
+अणु
+	काष्ठा rt4505_priv *priv =
+		container_of(fled_cdev, काष्ठा rt4505_priv, flash);
+	काष्ठा led_flash_setting *s = &fled_cdev->brightness;
 	u32 val = (brightness - s->min) / s->step;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&priv->lock);
 	ret = regmap_update_bits(priv->regmap, RT4505_REG_ILED,
 				 RT4505_IFLASH_MASK, val);
 	mutex_unlock(&priv->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rt4505_flash_strobe_set(struct led_classdev_flash *fled_cdev,
+अटल पूर्णांक rt4505_flash_strobe_set(काष्ठा led_classdev_flash *fled_cdev,
 				   bool state)
-{
-	struct rt4505_priv *priv =
-		container_of(fled_cdev, struct rt4505_priv, flash);
+अणु
+	काष्ठा rt4505_priv *priv =
+		container_of(fled_cdev, काष्ठा rt4505_priv, flash);
 	u32 val = state ? RT4505_FLASH_SET : 0;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&priv->lock);
 	ret = regmap_update_bits(priv->regmap, RT4505_REG_ENABLE,
 				 RT4505_ENABLE_MASK, val);
 	mutex_unlock(&priv->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rt4505_flash_strobe_get(struct led_classdev_flash *fled_cdev,
+अटल पूर्णांक rt4505_flash_strobe_get(काष्ठा led_classdev_flash *fled_cdev,
 				   bool *state)
-{
-	struct rt4505_priv *priv =
-		container_of(fled_cdev, struct rt4505_priv, flash);
+अणु
+	काष्ठा rt4505_priv *priv =
+		container_of(fled_cdev, काष्ठा rt4505_priv, flash);
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&priv->lock);
 
-	ret = regmap_read(priv->regmap, RT4505_REG_ENABLE, &val);
-	if (ret)
-		goto unlock;
+	ret = regmap_पढ़ो(priv->regmap, RT4505_REG_ENABLE, &val);
+	अगर (ret)
+		जाओ unlock;
 
 	*state = (val & RT4505_FLASH_GET) == RT4505_FLASH_GET;
 
 unlock:
 	mutex_unlock(&priv->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rt4505_flash_timeout_set(struct led_classdev_flash *fled_cdev,
-				    u32 timeout)
-{
-	struct rt4505_priv *priv =
-		container_of(fled_cdev, struct rt4505_priv, flash);
-	struct led_flash_setting *s = &fled_cdev->timeout;
-	u32 val = (timeout - s->min) / s->step;
-	int ret;
+अटल पूर्णांक rt4505_flash_समयout_set(काष्ठा led_classdev_flash *fled_cdev,
+				    u32 समयout)
+अणु
+	काष्ठा rt4505_priv *priv =
+		container_of(fled_cdev, काष्ठा rt4505_priv, flash);
+	काष्ठा led_flash_setting *s = &fled_cdev->समयout;
+	u32 val = (समयout - s->min) / s->step;
+	पूर्णांक ret;
 
 	mutex_lock(&priv->lock);
 	ret = regmap_update_bits(priv->regmap, RT4505_REG_CONFIG,
 				 RT4505_FLASHTO_MASK, val);
 	mutex_unlock(&priv->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rt4505_fault_get(struct led_classdev_flash *fled_cdev, u32 *fault)
-{
-	struct rt4505_priv *priv =
-		container_of(fled_cdev, struct rt4505_priv, flash);
+अटल पूर्णांक rt4505_fault_get(काष्ठा led_classdev_flash *fled_cdev, u32 *fault)
+अणु
+	काष्ठा rt4505_priv *priv =
+		container_of(fled_cdev, काष्ठा rt4505_priv, flash);
 	u32 val, led_faults = 0;
-	int ret;
+	पूर्णांक ret;
 
-	ret = regmap_read(priv->regmap, RT4505_REG_FLAGS, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(priv->regmap, RT4505_REG_FLAGS, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val & RT4505_OVP_MASK)
+	अगर (val & RT4505_OVP_MASK)
 		led_faults |= LED_FAULT_OVER_VOLTAGE;
 
-	if (val & RT4505_SHORT_MASK)
+	अगर (val & RT4505_SHORT_MASK)
 		led_faults |= LED_FAULT_SHORT_CIRCUIT;
 
-	if (val & RT4505_OTP_MASK)
+	अगर (val & RT4505_OTP_MASK)
 		led_faults |= LED_FAULT_OVER_TEMPERATURE;
 
-	if (val & RT4505_TIMEOUT_MASK)
+	अगर (val & RT4505_TIMEOUT_MASK)
 		led_faults |= LED_FAULT_TIMEOUT;
 
 	*fault = led_faults;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct led_flash_ops rt4505_flash_ops = {
+अटल स्थिर काष्ठा led_flash_ops rt4505_flash_ops = अणु
 	.flash_brightness_set = rt4505_flash_brightness_set,
 	.strobe_set = rt4505_flash_strobe_set,
 	.strobe_get = rt4505_flash_strobe_get,
-	.timeout_set = rt4505_flash_timeout_set,
+	.समयout_set = rt4505_flash_समयout_set,
 	.fault_get = rt4505_fault_get,
-};
+पूर्ण;
 
-static bool rt4505_is_accessible_reg(struct device *dev, unsigned int reg)
-{
-	if (reg == RT4505_REG_RESET ||
+अटल bool rt4505_is_accessible_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	अगर (reg == RT4505_REG_RESET ||
 		(reg >= RT4505_REG_CONFIG && reg <= RT4505_REG_FLAGS))
-		return true;
-	return false;
-}
+		वापस true;
+	वापस false;
+पूर्ण
 
-static const struct regmap_config rt4505_regmap_config = {
+अटल स्थिर काष्ठा regmap_config rt4505_regmap_config = अणु
 	.reg_bits = 8,
 	.val_bits = 8,
-	.max_register = RT4505_REG_FLAGS,
+	.max_रेजिस्टर = RT4505_REG_FLAGS,
 
-	.readable_reg = rt4505_is_accessible_reg,
-	.writeable_reg = rt4505_is_accessible_reg,
-};
+	.पढ़ोable_reg = rt4505_is_accessible_reg,
+	.ग_लिखोable_reg = rt4505_is_accessible_reg,
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
-static int rt4505_flash_external_strobe_set(struct v4l2_flash *v4l2_flash,
+#अगर IS_ENABLED(CONFIG_V4L2_FLASH_LED_CLASS)
+अटल पूर्णांक rt4505_flash_बाह्यal_strobe_set(काष्ठा v4l2_flash *v4l2_flash,
 					    bool enable)
-{
-	struct led_classdev_flash *flash = v4l2_flash->fled_cdev;
-	struct rt4505_priv *priv =
-		container_of(flash, struct rt4505_priv, flash);
+अणु
+	काष्ठा led_classdev_flash *flash = v4l2_flash->fled_cdev;
+	काष्ठा rt4505_priv *priv =
+		container_of(flash, काष्ठा rt4505_priv, flash);
 	u32 val = enable ? RT4505_EXT_FLASH_SET : 0;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&priv->lock);
 	ret = regmap_update_bits(priv->regmap, RT4505_REG_ENABLE,
 				 RT4505_ENABLE_MASK, val);
 	mutex_unlock(&priv->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_flash_ops v4l2_flash_ops = {
-	.external_strobe_set = rt4505_flash_external_strobe_set,
-};
+अटल स्थिर काष्ठा v4l2_flash_ops v4l2_flash_ops = अणु
+	.बाह्यal_strobe_set = rt4505_flash_बाह्यal_strobe_set,
+पूर्ण;
 
-static void rt4505_init_v4l2_config(struct rt4505_priv *priv,
-				    struct v4l2_flash_config *config)
-{
-	struct led_classdev_flash *flash = &priv->flash;
-	struct led_classdev *lcdev = &flash->led_cdev;
-	struct led_flash_setting *s;
+अटल व्योम rt4505_init_v4l2_config(काष्ठा rt4505_priv *priv,
+				    काष्ठा v4l2_flash_config *config)
+अणु
+	काष्ठा led_classdev_flash *flash = &priv->flash;
+	काष्ठा led_classdev *lcdev = &flash->led_cdev;
+	काष्ठा led_flash_setting *s;
 
 	strscpy(config->dev_name, lcdev->dev->kobj.name,
-		sizeof(config->dev_name));
+		माप(config->dev_name));
 
-	s = &config->intensity;
+	s = &config->पूर्णांकensity;
 	s->min = RT4505_ITORCH_MINUA;
 	s->step = RT4505_ITORCH_STPUA;
 	s->max = s->val = s->min + (lcdev->max_brightness - 1) * s->step;
@@ -277,30 +278,30 @@ static void rt4505_init_v4l2_config(struct rt4505_priv *priv,
 			       LED_FAULT_SHORT_CIRCUIT |
 			       LED_FAULT_LED_OVER_TEMPERATURE |
 			       LED_FAULT_TIMEOUT;
-	config->has_external_strobe = 1;
-}
-#else
-static const struct v4l2_flash_ops v4l2_flash_ops;
-static void rt4505_init_v4l2_config(struct rt4505_priv *priv,
-				    struct v4l2_flash_config *config)
-{
-}
-#endif
+	config->has_बाह्यal_strobe = 1;
+पूर्ण
+#अन्यथा
+अटल स्थिर काष्ठा v4l2_flash_ops v4l2_flash_ops;
+अटल व्योम rt4505_init_v4l2_config(काष्ठा rt4505_priv *priv,
+				    काष्ठा v4l2_flash_config *config)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static void rt4505_init_flash_properties(struct rt4505_priv *priv,
-					 struct fwnode_handle *child)
-{
-	struct led_classdev_flash *flash = &priv->flash;
-	struct led_classdev *lcdev = &flash->led_cdev;
-	struct led_flash_setting *s;
+अटल व्योम rt4505_init_flash_properties(काष्ठा rt4505_priv *priv,
+					 काष्ठा fwnode_handle *child)
+अणु
+	काष्ठा led_classdev_flash *flash = &priv->flash;
+	काष्ठा led_classdev *lcdev = &flash->led_cdev;
+	काष्ठा led_flash_setting *s;
 	u32 val;
-	int ret;
+	पूर्णांक ret;
 
-	ret = fwnode_property_read_u32(child, "led-max-microamp", &val);
-	if (ret) {
+	ret = fwnode_property_पढ़ो_u32(child, "led-max-microamp", &val);
+	अगर (ret) अणु
 		dev_warn(priv->dev, "led-max-microamp DT property missing\n");
 		val = RT4505_ITORCH_MINUA;
-	} else
+	पूर्ण अन्यथा
 		val = clamp_val(val, RT4505_ITORCH_MINUA, RT4505_ITORCH_MAXUA);
 
 	lcdev->max_brightness =
@@ -309,11 +310,11 @@ static void rt4505_init_flash_properties(struct rt4505_priv *priv,
 	lcdev->brightness_get = rt4505_torch_brightness_get;
 	lcdev->flags |= LED_DEV_CAP_FLASH;
 
-	ret = fwnode_property_read_u32(child, "flash-max-microamp", &val);
-	if (ret) {
+	ret = fwnode_property_पढ़ो_u32(child, "flash-max-microamp", &val);
+	अगर (ret) अणु
 		dev_warn(priv->dev, "flash-max-microamp DT property missing\n");
 		val = RT4505_IFLASH_MINUA;
-	} else
+	पूर्ण अन्यथा
 		val = clamp_val(val, RT4505_IFLASH_MINUA, RT4505_IFLASH_MAXUA);
 
 	s = &flash->brightness;
@@ -321,109 +322,109 @@ static void rt4505_init_flash_properties(struct rt4505_priv *priv,
 	s->step = RT4505_IFLASH_STPUA;
 	s->max = s->val = val;
 
-	ret = fwnode_property_read_u32(child, "flash-max-timeout-us", &val);
-	if (ret) {
+	ret = fwnode_property_पढ़ो_u32(child, "flash-max-timeout-us", &val);
+	अगर (ret) अणु
 		dev_warn(priv->dev,
 			 "flash-max-timeout-us DT property missing\n");
 		val = RT4505_FLASHTO_MINUS;
-	} else
+	पूर्ण अन्यथा
 		val = clamp_val(val, RT4505_FLASHTO_MINUS,
 				RT4505_FLASHTO_MAXUS);
 
-	s = &flash->timeout;
+	s = &flash->समयout;
 	s->min = RT4505_FLASHTO_MINUS;
 	s->step = RT4505_FLASHTO_STPUS;
 	s->max = s->val = val;
 
 	flash->ops = &rt4505_flash_ops;
-}
+पूर्ण
 
-static int rt4505_probe(struct i2c_client *client)
-{
-	struct rt4505_priv *priv;
-	struct fwnode_handle *child;
-	struct led_init_data init_data = {};
-	struct v4l2_flash_config v4l2_config = {};
-	int ret;
+अटल पूर्णांक rt4505_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा rt4505_priv *priv;
+	काष्ठा fwnode_handle *child;
+	काष्ठा led_init_data init_data = अणुपूर्ण;
+	काष्ठा v4l2_flash_config v4l2_config = अणुपूर्ण;
+	पूर्णांक ret;
 
-	priv = devm_kzalloc(&client->dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(&client->dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->dev = &client->dev;
 	mutex_init(&priv->lock);
 
 	priv->regmap = devm_regmap_init_i2c(client, &rt4505_regmap_config);
-	if (IS_ERR(priv->regmap)) {
+	अगर (IS_ERR(priv->regmap)) अणु
 		dev_err(priv->dev, "Failed to allocate register map\n");
-		return PTR_ERR(priv->regmap);
-	}
+		वापस PTR_ERR(priv->regmap);
+	पूर्ण
 
-	ret = regmap_write(priv->regmap, RT4505_REG_RESET, RT4505_RESET_MASK);
-	if (ret) {
+	ret = regmap_ग_लिखो(priv->regmap, RT4505_REG_RESET, RT4505_RESET_MASK);
+	अगर (ret) अणु
 		dev_err(priv->dev, "Failed to reset registers\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	child = fwnode_get_next_available_child_node(client->dev.fwnode, NULL);
-	if (!child) {
+	child = fwnode_get_next_available_child_node(client->dev.fwnode, शून्य);
+	अगर (!child) अणु
 		dev_err(priv->dev, "Failed to get child node\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	init_data.fwnode = child;
 
 	rt4505_init_flash_properties(priv, child);
-	ret = devm_led_classdev_flash_register_ext(priv->dev, &priv->flash,
+	ret = devm_led_classdev_flash_रेजिस्टर_ext(priv->dev, &priv->flash,
 						   &init_data);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(priv->dev, "Failed to register flash\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	rt4505_init_v4l2_config(priv, &v4l2_config);
 	priv->v4l2_flash = v4l2_flash_init(priv->dev, init_data.fwnode,
 					   &priv->flash, &v4l2_flash_ops,
 					   &v4l2_config);
-	if (IS_ERR(priv->v4l2_flash)) {
+	अगर (IS_ERR(priv->v4l2_flash)) अणु
 		dev_err(priv->dev, "Failed to register v4l2 flash\n");
-		return PTR_ERR(priv->v4l2_flash);
-	}
+		वापस PTR_ERR(priv->v4l2_flash);
+	पूर्ण
 
 	i2c_set_clientdata(client, priv);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rt4505_remove(struct i2c_client *client)
-{
-	struct rt4505_priv *priv = i2c_get_clientdata(client);
+अटल पूर्णांक rt4505_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा rt4505_priv *priv = i2c_get_clientdata(client);
 
 	v4l2_flash_release(priv->v4l2_flash);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rt4505_shutdown(struct i2c_client *client)
-{
-	struct rt4505_priv *priv = i2c_get_clientdata(client);
+अटल व्योम rt4505_shutकरोwn(काष्ठा i2c_client *client)
+अणु
+	काष्ठा rt4505_priv *priv = i2c_get_clientdata(client);
 
-	/* Reset registers to make sure all off before shutdown */
-	regmap_write(priv->regmap, RT4505_REG_RESET, RT4505_RESET_MASK);
-}
+	/* Reset रेजिस्टरs to make sure all off beक्रमe shutकरोwn */
+	regmap_ग_लिखो(priv->regmap, RT4505_REG_RESET, RT4505_RESET_MASK);
+पूर्ण
 
-static const struct of_device_id __maybe_unused rt4505_leds_match[] = {
-	{ .compatible = "richtek,rt4505", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id __maybe_unused rt4505_leds_match[] = अणु
+	अणु .compatible = "richtek,rt4505", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rt4505_leds_match);
 
-static struct i2c_driver rt4505_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver rt4505_driver = अणु
+	.driver = अणु
 		.name = "rt4505",
 		.of_match_table = of_match_ptr(rt4505_leds_match),
-	},
+	पूर्ण,
 	.probe_new = rt4505_probe,
-	.remove = rt4505_remove,
-	.shutdown = rt4505_shutdown,
-};
+	.हटाओ = rt4505_हटाओ,
+	.shutकरोwn = rt4505_shutकरोwn,
+पूर्ण;
 module_i2c_driver(rt4505_driver);
 
 MODULE_AUTHOR("ChiYuan Huang <cy_huang@richtek.com>");

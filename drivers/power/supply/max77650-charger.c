@@ -1,374 +1,375 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright (C) 2018 BayLibre SAS
 // Author: Bartosz Golaszewski <bgolaszewski@baylibre.com>
 //
-// Battery charger driver for MAXIM 77650/77651 charger/power-supply.
+// Battery अक्षरger driver क्रम MAXIM 77650/77651 अक्षरger/घातer-supply.
 
-#include <linux/i2c.h>
-#include <linux/interrupt.h>
-#include <linux/mfd/max77650.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/power_supply.h>
-#include <linux/regmap.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mfd/max77650.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/regmap.h>
 
-#define MAX77650_CHARGER_ENABLED		BIT(0)
-#define MAX77650_CHARGER_DISABLED		0x00
-#define MAX77650_CHARGER_CHG_EN_MASK		BIT(0)
+#घोषणा MAX77650_CHARGER_ENABLED		BIT(0)
+#घोषणा MAX77650_CHARGER_DISABLED		0x00
+#घोषणा MAX77650_CHARGER_CHG_EN_MASK		BIT(0)
 
-#define MAX77650_CHG_DETAILS_MASK		GENMASK(7, 4)
-#define MAX77650_CHG_DETAILS_BITS(_reg) \
+#घोषणा MAX77650_CHG_DETAILS_MASK		GENMASK(7, 4)
+#घोषणा MAX77650_CHG_DETAILS_BITS(_reg) \
 		(((_reg) & MAX77650_CHG_DETAILS_MASK) >> 4)
 
 /* Charger is OFF. */
-#define MAX77650_CHG_OFF			0x00
-/* Charger is in prequalification mode. */
-#define MAX77650_CHG_PREQ			0x01
-/* Charger is in fast-charge constant current mode. */
-#define MAX77650_CHG_ON_CURR			0x02
-/* Charger is in JEITA modified fast-charge constant-current mode. */
-#define MAX77650_CHG_ON_CURR_JEITA		0x03
-/* Charger is in fast-charge constant-voltage mode. */
-#define MAX77650_CHG_ON_VOLT			0x04
-/* Charger is in JEITA modified fast-charge constant-voltage mode. */
-#define MAX77650_CHG_ON_VOLT_JEITA		0x05
+#घोषणा MAX77650_CHG_OFF			0x00
+/* Charger is in prequalअगरication mode. */
+#घोषणा MAX77650_CHG_PREQ			0x01
+/* Charger is in fast-अक्षरge स्थिरant current mode. */
+#घोषणा MAX77650_CHG_ON_CURR			0x02
+/* Charger is in JEITA modअगरied fast-अक्षरge स्थिरant-current mode. */
+#घोषणा MAX77650_CHG_ON_CURR_JEITA		0x03
+/* Charger is in fast-अक्षरge स्थिरant-voltage mode. */
+#घोषणा MAX77650_CHG_ON_VOLT			0x04
+/* Charger is in JEITA modअगरied fast-अक्षरge स्थिरant-voltage mode. */
+#घोषणा MAX77650_CHG_ON_VOLT_JEITA		0x05
 /* Charger is in top-off mode. */
-#define MAX77650_CHG_ON_TOPOFF			0x06
-/* Charger is in JEITA modified top-off mode. */
-#define MAX77650_CHG_ON_TOPOFF_JEITA		0x07
-/* Charger is done. */
-#define MAX77650_CHG_DONE			0x08
-/* Charger is JEITA modified done. */
-#define MAX77650_CHG_DONE_JEITA			0x09
-/* Charger is suspended due to a prequalification timer fault. */
-#define MAX77650_CHG_SUSP_PREQ_TIM_FAULT	0x0a
-/* Charger is suspended due to a fast-charge timer fault. */
-#define MAX77650_CHG_SUSP_FAST_CHG_TIM_FAULT	0x0b
+#घोषणा MAX77650_CHG_ON_TOPOFF			0x06
+/* Charger is in JEITA modअगरied top-off mode. */
+#घोषणा MAX77650_CHG_ON_TOPOFF_JEITA		0x07
+/* Charger is करोne. */
+#घोषणा MAX77650_CHG_DONE			0x08
+/* Charger is JEITA modअगरied करोne. */
+#घोषणा MAX77650_CHG_DONE_JEITA			0x09
+/* Charger is suspended due to a prequalअगरication समयr fault. */
+#घोषणा MAX77650_CHG_SUSP_PREQ_TIM_FAULT	0x0a
+/* Charger is suspended due to a fast-अक्षरge समयr fault. */
+#घोषणा MAX77650_CHG_SUSP_FAST_CHG_TIM_FAULT	0x0b
 /* Charger is suspended due to a battery temperature fault. */
-#define MAX77650_CHG_SUSP_BATT_TEMP_FAULT	0x0c
+#घोषणा MAX77650_CHG_SUSP_BATT_TEMP_FAULT	0x0c
 
-#define MAX77650_CHGIN_DETAILS_MASK		GENMASK(3, 2)
-#define MAX77650_CHGIN_DETAILS_BITS(_reg) \
+#घोषणा MAX77650_CHGIN_DETAILS_MASK		GENMASK(3, 2)
+#घोषणा MAX77650_CHGIN_DETAILS_BITS(_reg) \
 		(((_reg) & MAX77650_CHGIN_DETAILS_MASK) >> 2)
 
-#define MAX77650_CHGIN_UNDERVOLTAGE_LOCKOUT	0x00
-#define MAX77650_CHGIN_OVERVOLTAGE_LOCKOUT	0x01
-#define MAX77650_CHGIN_OKAY			0x11
+#घोषणा MAX77650_CHGIN_UNDERVOLTAGE_LOCKOUT	0x00
+#घोषणा MAX77650_CHGIN_OVERVOLTAGE_LOCKOUT	0x01
+#घोषणा MAX77650_CHGIN_OKAY			0x11
 
-#define MAX77650_CHARGER_CHG_MASK	BIT(1)
-#define MAX77650_CHARGER_CHG_CHARGING(_reg) \
+#घोषणा MAX77650_CHARGER_CHG_MASK	BIT(1)
+#घोषणा MAX77650_CHARGER_CHG_CHARGING(_reg) \
 		(((_reg) & MAX77650_CHARGER_CHG_MASK) > 1)
 
-#define MAX77650_CHARGER_VCHGIN_MIN_MASK	0xc0
-#define MAX77650_CHARGER_VCHGIN_MIN_SHIFT(_val)	((_val) << 5)
+#घोषणा MAX77650_CHARGER_VCHGIN_MIN_MASK	0xc0
+#घोषणा MAX77650_CHARGER_VCHGIN_MIN_SHIFT(_val)	((_val) << 5)
 
-#define MAX77650_CHARGER_ICHGIN_LIM_MASK	0x1c
-#define MAX77650_CHARGER_ICHGIN_LIM_SHIFT(_val)	((_val) << 2)
+#घोषणा MAX77650_CHARGER_ICHGIN_LIM_MASK	0x1c
+#घोषणा MAX77650_CHARGER_ICHGIN_LIM_SHIFT(_val)	((_val) << 2)
 
-struct max77650_charger_data {
-	struct regmap *map;
-	struct device *dev;
-};
+काष्ठा max77650_अक्षरger_data अणु
+	काष्ठा regmap *map;
+	काष्ठा device *dev;
+पूर्ण;
 
-static enum power_supply_property max77650_charger_properties[] = {
+अटल क्रमागत घातer_supply_property max77650_अक्षरger_properties[] = अणु
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_CHARGE_TYPE
-};
+पूर्ण;
 
-static const unsigned int max77650_charger_vchgin_min_table[] = {
+अटल स्थिर अचिन्हित पूर्णांक max77650_अक्षरger_vchgin_min_table[] = अणु
 	4000000, 4100000, 4200000, 4300000, 4400000, 4500000, 4600000, 4700000
-};
+पूर्ण;
 
-static const unsigned int max77650_charger_ichgin_lim_table[] = {
+अटल स्थिर अचिन्हित पूर्णांक max77650_अक्षरger_ichgin_lim_table[] = अणु
 	95000, 190000, 285000, 380000, 475000
-};
+पूर्ण;
 
-static int max77650_charger_set_vchgin_min(struct max77650_charger_data *chg,
-					   unsigned int val)
-{
-	int i, rv;
+अटल पूर्णांक max77650_अक्षरger_set_vchgin_min(काष्ठा max77650_अक्षरger_data *chg,
+					   अचिन्हित पूर्णांक val)
+अणु
+	पूर्णांक i, rv;
 
-	for (i = 0; i < ARRAY_SIZE(max77650_charger_vchgin_min_table); i++) {
-		if (val == max77650_charger_vchgin_min_table[i]) {
+	क्रम (i = 0; i < ARRAY_SIZE(max77650_अक्षरger_vchgin_min_table); i++) अणु
+		अगर (val == max77650_अक्षरger_vchgin_min_table[i]) अणु
 			rv = regmap_update_bits(chg->map,
 					MAX77650_REG_CNFG_CHG_B,
 					MAX77650_CHARGER_VCHGIN_MIN_MASK,
 					MAX77650_CHARGER_VCHGIN_MIN_SHIFT(i));
-			if (rv)
-				return rv;
+			अगर (rv)
+				वापस rv;
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int max77650_charger_set_ichgin_lim(struct max77650_charger_data *chg,
-					   unsigned int val)
-{
-	int i, rv;
+अटल पूर्णांक max77650_अक्षरger_set_ichgin_lim(काष्ठा max77650_अक्षरger_data *chg,
+					   अचिन्हित पूर्णांक val)
+अणु
+	पूर्णांक i, rv;
 
-	for (i = 0; i < ARRAY_SIZE(max77650_charger_ichgin_lim_table); i++) {
-		if (val == max77650_charger_ichgin_lim_table[i]) {
+	क्रम (i = 0; i < ARRAY_SIZE(max77650_अक्षरger_ichgin_lim_table); i++) अणु
+		अगर (val == max77650_अक्षरger_ichgin_lim_table[i]) अणु
 			rv = regmap_update_bits(chg->map,
 					MAX77650_REG_CNFG_CHG_B,
 					MAX77650_CHARGER_ICHGIN_LIM_MASK,
 					MAX77650_CHARGER_ICHGIN_LIM_SHIFT(i));
-			if (rv)
-				return rv;
+			अगर (rv)
+				वापस rv;
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int max77650_charger_enable(struct max77650_charger_data *chg)
-{
-	int rv;
+अटल पूर्णांक max77650_अक्षरger_enable(काष्ठा max77650_अक्षरger_data *chg)
+अणु
+	पूर्णांक rv;
 
 	rv = regmap_update_bits(chg->map,
 				MAX77650_REG_CNFG_CHG_B,
 				MAX77650_CHARGER_CHG_EN_MASK,
 				MAX77650_CHARGER_ENABLED);
-	if (rv)
+	अगर (rv)
 		dev_err(chg->dev, "unable to enable the charger: %d\n", rv);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static int max77650_charger_disable(struct max77650_charger_data *chg)
-{
-	int rv;
+अटल पूर्णांक max77650_अक्षरger_disable(काष्ठा max77650_अक्षरger_data *chg)
+अणु
+	पूर्णांक rv;
 
 	rv = regmap_update_bits(chg->map,
 				MAX77650_REG_CNFG_CHG_B,
 				MAX77650_CHARGER_CHG_EN_MASK,
 				MAX77650_CHARGER_DISABLED);
-	if (rv)
+	अगर (rv)
 		dev_err(chg->dev, "unable to disable the charger: %d\n", rv);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static irqreturn_t max77650_charger_check_status(int irq, void *data)
-{
-	struct max77650_charger_data *chg = data;
-	int rv, reg;
+अटल irqवापस_t max77650_अक्षरger_check_status(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा max77650_अक्षरger_data *chg = data;
+	पूर्णांक rv, reg;
 
-	rv = regmap_read(chg->map, MAX77650_REG_STAT_CHG_B, &reg);
-	if (rv) {
+	rv = regmap_पढ़ो(chg->map, MAX77650_REG_STAT_CHG_B, &reg);
+	अगर (rv) अणु
 		dev_err(chg->dev,
 			"unable to read the charger status: %d\n", rv);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	switch (MAX77650_CHGIN_DETAILS_BITS(reg)) {
-	case MAX77650_CHGIN_UNDERVOLTAGE_LOCKOUT:
+	चयन (MAX77650_CHGIN_DETAILS_BITS(reg)) अणु
+	हाल MAX77650_CHGIN_UNDERVOLTAGE_LOCKOUT:
 		dev_err(chg->dev, "undervoltage lockout detected, disabling charger\n");
-		max77650_charger_disable(chg);
-		break;
-	case MAX77650_CHGIN_OVERVOLTAGE_LOCKOUT:
+		max77650_अक्षरger_disable(chg);
+		अवरोध;
+	हाल MAX77650_CHGIN_OVERVOLTAGE_LOCKOUT:
 		dev_err(chg->dev, "overvoltage lockout detected, disabling charger\n");
-		max77650_charger_disable(chg);
-		break;
-	case MAX77650_CHGIN_OKAY:
-		max77650_charger_enable(chg);
-		break;
-	default:
+		max77650_अक्षरger_disable(chg);
+		अवरोध;
+	हाल MAX77650_CHGIN_OKAY:
+		max77650_अक्षरger_enable(chg);
+		अवरोध;
+	शेष:
 		/* May be 0x10 - debouncing */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int max77650_charger_get_property(struct power_supply *psy,
-					 enum power_supply_property psp,
-					 union power_supply_propval *val)
-{
-	struct max77650_charger_data *chg = power_supply_get_drvdata(psy);
-	int rv, reg;
+अटल पूर्णांक max77650_अक्षरger_get_property(काष्ठा घातer_supply *psy,
+					 क्रमागत घातer_supply_property psp,
+					 जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा max77650_अक्षरger_data *chg = घातer_supply_get_drvdata(psy);
+	पूर्णांक rv, reg;
 
-	switch (psp) {
-	case POWER_SUPPLY_PROP_STATUS:
-		rv = regmap_read(chg->map, MAX77650_REG_STAT_CHG_B, &reg);
-		if (rv)
-			return rv;
+	चयन (psp) अणु
+	हाल POWER_SUPPLY_PROP_STATUS:
+		rv = regmap_पढ़ो(chg->map, MAX77650_REG_STAT_CHG_B, &reg);
+		अगर (rv)
+			वापस rv;
 
-		if (MAX77650_CHARGER_CHG_CHARGING(reg)) {
-			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-			break;
-		}
+		अगर (MAX77650_CHARGER_CHG_CHARGING(reg)) अणु
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
+			अवरोध;
+		पूर्ण
 
-		switch (MAX77650_CHG_DETAILS_BITS(reg)) {
-		case MAX77650_CHG_OFF:
-		case MAX77650_CHG_SUSP_PREQ_TIM_FAULT:
-		case MAX77650_CHG_SUSP_FAST_CHG_TIM_FAULT:
-		case MAX77650_CHG_SUSP_BATT_TEMP_FAULT:
-			val->intval = POWER_SUPPLY_STATUS_NOT_CHARGING;
-			break;
-		case MAX77650_CHG_PREQ:
-		case MAX77650_CHG_ON_CURR:
-		case MAX77650_CHG_ON_CURR_JEITA:
-		case MAX77650_CHG_ON_VOLT:
-		case MAX77650_CHG_ON_VOLT_JEITA:
-		case MAX77650_CHG_ON_TOPOFF:
-		case MAX77650_CHG_ON_TOPOFF_JEITA:
-			val->intval = POWER_SUPPLY_STATUS_CHARGING;
-			break;
-		case MAX77650_CHG_DONE:
-			val->intval = POWER_SUPPLY_STATUS_FULL;
-			break;
-		default:
-			val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
-		}
-		break;
-	case POWER_SUPPLY_PROP_ONLINE:
-		rv = regmap_read(chg->map, MAX77650_REG_STAT_CHG_B, &reg);
-		if (rv)
-			return rv;
+		चयन (MAX77650_CHG_DETAILS_BITS(reg)) अणु
+		हाल MAX77650_CHG_OFF:
+		हाल MAX77650_CHG_SUSP_PREQ_TIM_FAULT:
+		हाल MAX77650_CHG_SUSP_FAST_CHG_TIM_FAULT:
+		हाल MAX77650_CHG_SUSP_BATT_TEMP_FAULT:
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_NOT_CHARGING;
+			अवरोध;
+		हाल MAX77650_CHG_PREQ:
+		हाल MAX77650_CHG_ON_CURR:
+		हाल MAX77650_CHG_ON_CURR_JEITA:
+		हाल MAX77650_CHG_ON_VOLT:
+		हाल MAX77650_CHG_ON_VOLT_JEITA:
+		हाल MAX77650_CHG_ON_TOPOFF:
+		हाल MAX77650_CHG_ON_TOPOFF_JEITA:
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_CHARGING;
+			अवरोध;
+		हाल MAX77650_CHG_DONE:
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
+			अवरोध;
+		शेष:
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_UNKNOWN;
+		पूर्ण
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		rv = regmap_पढ़ो(chg->map, MAX77650_REG_STAT_CHG_B, &reg);
+		अगर (rv)
+			वापस rv;
 
-		val->intval = MAX77650_CHARGER_CHG_CHARGING(reg);
-		break;
-	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-		rv = regmap_read(chg->map, MAX77650_REG_STAT_CHG_B, &reg);
-		if (rv)
-			return rv;
+		val->पूर्णांकval = MAX77650_CHARGER_CHG_CHARGING(reg);
+		अवरोध;
+	हाल POWER_SUPPLY_PROP_CHARGE_TYPE:
+		rv = regmap_पढ़ो(chg->map, MAX77650_REG_STAT_CHG_B, &reg);
+		अगर (rv)
+			वापस rv;
 
-		if (!MAX77650_CHARGER_CHG_CHARGING(reg)) {
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_NONE;
-			break;
-		}
+		अगर (!MAX77650_CHARGER_CHG_CHARGING(reg)) अणु
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_NONE;
+			अवरोध;
+		पूर्ण
 
-		switch (MAX77650_CHG_DETAILS_BITS(reg)) {
-		case MAX77650_CHG_PREQ:
-		case MAX77650_CHG_ON_CURR:
-		case MAX77650_CHG_ON_CURR_JEITA:
-		case MAX77650_CHG_ON_VOLT:
-		case MAX77650_CHG_ON_VOLT_JEITA:
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_FAST;
-			break;
-		case MAX77650_CHG_ON_TOPOFF:
-		case MAX77650_CHG_ON_TOPOFF_JEITA:
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
-			break;
-		default:
-			val->intval = POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+		चयन (MAX77650_CHG_DETAILS_BITS(reg)) अणु
+		हाल MAX77650_CHG_PREQ:
+		हाल MAX77650_CHG_ON_CURR:
+		हाल MAX77650_CHG_ON_CURR_JEITA:
+		हाल MAX77650_CHG_ON_VOLT:
+		हाल MAX77650_CHG_ON_VOLT_JEITA:
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_FAST;
+			अवरोध;
+		हाल MAX77650_CHG_ON_TOPOFF:
+		हाल MAX77650_CHG_ON_TOPOFF_JEITA:
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
+			अवरोध;
+		शेष:
+			val->पूर्णांकval = POWER_SUPPLY_CHARGE_TYPE_UNKNOWN;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct power_supply_desc max77650_battery_desc = {
+अटल स्थिर काष्ठा घातer_supply_desc max77650_battery_desc = अणु
 	.name		= "max77650",
 	.type		= POWER_SUPPLY_TYPE_USB,
-	.get_property	= max77650_charger_get_property,
-	.properties	= max77650_charger_properties,
-	.num_properties	= ARRAY_SIZE(max77650_charger_properties),
-};
+	.get_property	= max77650_अक्षरger_get_property,
+	.properties	= max77650_अक्षरger_properties,
+	.num_properties	= ARRAY_SIZE(max77650_अक्षरger_properties),
+पूर्ण;
 
-static int max77650_charger_probe(struct platform_device *pdev)
-{
-	struct power_supply_config pscfg = {};
-	struct max77650_charger_data *chg;
-	struct power_supply *battery;
-	struct device *dev, *parent;
-	int rv, chg_irq, chgin_irq;
-	unsigned int prop;
+अटल पूर्णांक max77650_अक्षरger_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा घातer_supply_config pscfg = अणुपूर्ण;
+	काष्ठा max77650_अक्षरger_data *chg;
+	काष्ठा घातer_supply *battery;
+	काष्ठा device *dev, *parent;
+	पूर्णांक rv, chg_irq, chgin_irq;
+	अचिन्हित पूर्णांक prop;
 
 	dev = &pdev->dev;
 	parent = dev->parent;
 
-	chg = devm_kzalloc(dev, sizeof(*chg), GFP_KERNEL);
-	if (!chg)
-		return -ENOMEM;
+	chg = devm_kzalloc(dev, माप(*chg), GFP_KERNEL);
+	अगर (!chg)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, chg);
+	platक्रमm_set_drvdata(pdev, chg);
 
-	chg->map = dev_get_regmap(parent, NULL);
-	if (!chg->map)
-		return -ENODEV;
+	chg->map = dev_get_regmap(parent, शून्य);
+	अगर (!chg->map)
+		वापस -ENODEV;
 
 	chg->dev = dev;
 
 	pscfg.of_node = dev->of_node;
 	pscfg.drv_data = chg;
 
-	chg_irq = platform_get_irq_byname(pdev, "CHG");
-	if (chg_irq < 0)
-		return chg_irq;
+	chg_irq = platक्रमm_get_irq_byname(pdev, "CHG");
+	अगर (chg_irq < 0)
+		वापस chg_irq;
 
-	chgin_irq = platform_get_irq_byname(pdev, "CHGIN");
-	if (chgin_irq < 0)
-		return chgin_irq;
+	chgin_irq = platक्रमm_get_irq_byname(pdev, "CHGIN");
+	अगर (chgin_irq < 0)
+		वापस chgin_irq;
 
 	rv = devm_request_any_context_irq(dev, chg_irq,
-					  max77650_charger_check_status,
+					  max77650_अक्षरger_check_status,
 					  IRQF_ONESHOT, "chg", chg);
-	if (rv < 0)
-		return rv;
+	अगर (rv < 0)
+		वापस rv;
 
 	rv = devm_request_any_context_irq(dev, chgin_irq,
-					  max77650_charger_check_status,
+					  max77650_अक्षरger_check_status,
 					  IRQF_ONESHOT, "chgin", chg);
-	if (rv < 0)
-		return rv;
+	अगर (rv < 0)
+		वापस rv;
 
-	battery = devm_power_supply_register(dev,
+	battery = devm_घातer_supply_रेजिस्टर(dev,
 					     &max77650_battery_desc, &pscfg);
-	if (IS_ERR(battery))
-		return PTR_ERR(battery);
+	अगर (IS_ERR(battery))
+		वापस PTR_ERR(battery);
 
-	rv = of_property_read_u32(dev->of_node,
+	rv = of_property_पढ़ो_u32(dev->of_node,
 				  "input-voltage-min-microvolt", &prop);
-	if (rv == 0) {
-		rv = max77650_charger_set_vchgin_min(chg, prop);
-		if (rv)
-			return rv;
-	}
+	अगर (rv == 0) अणु
+		rv = max77650_अक्षरger_set_vchgin_min(chg, prop);
+		अगर (rv)
+			वापस rv;
+	पूर्ण
 
-	rv = of_property_read_u32(dev->of_node,
+	rv = of_property_पढ़ो_u32(dev->of_node,
 				  "input-current-limit-microamp", &prop);
-	if (rv == 0) {
-		rv = max77650_charger_set_ichgin_lim(chg, prop);
-		if (rv)
-			return rv;
-	}
+	अगर (rv == 0) अणु
+		rv = max77650_अक्षरger_set_ichgin_lim(chg, prop);
+		अगर (rv)
+			वापस rv;
+	पूर्ण
 
-	return max77650_charger_enable(chg);
-}
+	वापस max77650_अक्षरger_enable(chg);
+पूर्ण
 
-static int max77650_charger_remove(struct platform_device *pdev)
-{
-	struct max77650_charger_data *chg = platform_get_drvdata(pdev);
+अटल पूर्णांक max77650_अक्षरger_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा max77650_अक्षरger_data *chg = platक्रमm_get_drvdata(pdev);
 
-	return max77650_charger_disable(chg);
-}
+	वापस max77650_अक्षरger_disable(chg);
+पूर्ण
 
-static const struct of_device_id max77650_charger_of_match[] = {
-	{ .compatible = "maxim,max77650-charger" },
-	{ }
-};
-MODULE_DEVICE_TABLE(of, max77650_charger_of_match);
+अटल स्थिर काष्ठा of_device_id max77650_अक्षरger_of_match[] = अणु
+	अणु .compatible = "maxim,max77650-charger" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, max77650_अक्षरger_of_match);
 
-static struct platform_driver max77650_charger_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver max77650_अक्षरger_driver = अणु
+	.driver = अणु
 		.name = "max77650-charger",
-		.of_match_table = max77650_charger_of_match,
-	},
-	.probe = max77650_charger_probe,
-	.remove = max77650_charger_remove,
-};
-module_platform_driver(max77650_charger_driver);
+		.of_match_table = max77650_अक्षरger_of_match,
+	पूर्ण,
+	.probe = max77650_अक्षरger_probe,
+	.हटाओ = max77650_अक्षरger_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(max77650_अक्षरger_driver);
 
 MODULE_DESCRIPTION("MAXIM 77650/77651 charger driver");
 MODULE_AUTHOR("Bartosz Golaszewski <bgolaszewski@baylibre.com>");

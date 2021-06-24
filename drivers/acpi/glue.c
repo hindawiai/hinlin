@@ -1,376 +1,377 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Link physical devices with ACPI devices support
  *
- * Copyright (c) 2005 David Shaohua Li <shaohua.li@intel.com>
+ * Copyright (c) 2005 David Shaohua Li <shaohua.li@पूर्णांकel.com>
  * Copyright (c) 2005 Intel Corp.
  */
 
-#include <linux/acpi_iort.h>
-#include <linux/export.h>
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/rwsem.h>
-#include <linux/acpi.h>
-#include <linux/dma-mapping.h>
-#include <linux/platform_device.h>
+#समावेश <linux/acpi_iort.h>
+#समावेश <linux/export.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-#define ACPI_GLUE_DEBUG	0
-#if ACPI_GLUE_DEBUG
-#define DBG(fmt, ...)						\
-	printk(KERN_DEBUG PREFIX fmt, ##__VA_ARGS__)
-#else
-#define DBG(fmt, ...)						\
-do {								\
-	if (0)							\
-		printk(KERN_DEBUG PREFIX fmt, ##__VA_ARGS__);	\
-} while (0)
-#endif
-static LIST_HEAD(bus_type_list);
-static DECLARE_RWSEM(bus_type_sem);
+#घोषणा ACPI_GLUE_DEBUG	0
+#अगर ACPI_GLUE_DEBUG
+#घोषणा DBG(fmt, ...)						\
+	prपूर्णांकk(KERN_DEBUG PREFIX fmt, ##__VA_ARGS__)
+#अन्यथा
+#घोषणा DBG(fmt, ...)						\
+करो अणु								\
+	अगर (0)							\
+		prपूर्णांकk(KERN_DEBUG PREFIX fmt, ##__VA_ARGS__);	\
+पूर्ण जबतक (0)
+#पूर्ण_अगर
+अटल LIST_HEAD(bus_type_list);
+अटल DECLARE_RWSEM(bus_type_sem);
 
-#define PHYSICAL_NODE_STRING "physical_node"
-#define PHYSICAL_NODE_NAME_SIZE (sizeof(PHYSICAL_NODE_STRING) + 10)
+#घोषणा PHYSICAL_NODE_STRING "physical_node"
+#घोषणा PHYSICAL_NODE_NAME_SIZE (माप(PHYSICAL_NODE_STRING) + 10)
 
-int register_acpi_bus_type(struct acpi_bus_type *type)
-{
-	if (acpi_disabled)
-		return -ENODEV;
-	if (type && type->match && type->find_companion) {
-		down_write(&bus_type_sem);
+पूर्णांक रेजिस्टर_acpi_bus_type(काष्ठा acpi_bus_type *type)
+अणु
+	अगर (acpi_disabled)
+		वापस -ENODEV;
+	अगर (type && type->match && type->find_companion) अणु
+		करोwn_ग_लिखो(&bus_type_sem);
 		list_add_tail(&type->list, &bus_type_list);
-		up_write(&bus_type_sem);
-		printk(KERN_INFO PREFIX "bus type %s registered\n", type->name);
-		return 0;
-	}
-	return -ENODEV;
-}
-EXPORT_SYMBOL_GPL(register_acpi_bus_type);
+		up_ग_लिखो(&bus_type_sem);
+		prपूर्णांकk(KERN_INFO PREFIX "bus type %s registered\n", type->name);
+		वापस 0;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
+EXPORT_SYMBOL_GPL(रेजिस्टर_acpi_bus_type);
 
-int unregister_acpi_bus_type(struct acpi_bus_type *type)
-{
-	if (acpi_disabled)
-		return 0;
-	if (type) {
-		down_write(&bus_type_sem);
+पूर्णांक unरेजिस्टर_acpi_bus_type(काष्ठा acpi_bus_type *type)
+अणु
+	अगर (acpi_disabled)
+		वापस 0;
+	अगर (type) अणु
+		करोwn_ग_लिखो(&bus_type_sem);
 		list_del_init(&type->list);
-		up_write(&bus_type_sem);
-		printk(KERN_INFO PREFIX "bus type %s unregistered\n",
+		up_ग_लिखो(&bus_type_sem);
+		prपूर्णांकk(KERN_INFO PREFIX "bus type %s unregistered\n",
 		       type->name);
-		return 0;
-	}
-	return -ENODEV;
-}
-EXPORT_SYMBOL_GPL(unregister_acpi_bus_type);
+		वापस 0;
+	पूर्ण
+	वापस -ENODEV;
+पूर्ण
+EXPORT_SYMBOL_GPL(unरेजिस्टर_acpi_bus_type);
 
-static struct acpi_bus_type *acpi_get_bus_type(struct device *dev)
-{
-	struct acpi_bus_type *tmp, *ret = NULL;
+अटल काष्ठा acpi_bus_type *acpi_get_bus_type(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_bus_type *पंचांगp, *ret = शून्य;
 
-	down_read(&bus_type_sem);
-	list_for_each_entry(tmp, &bus_type_list, list) {
-		if (tmp->match(dev)) {
-			ret = tmp;
-			break;
-		}
-	}
-	up_read(&bus_type_sem);
-	return ret;
-}
+	करोwn_पढ़ो(&bus_type_sem);
+	list_क्रम_each_entry(पंचांगp, &bus_type_list, list) अणु
+		अगर (पंचांगp->match(dev)) अणु
+			ret = पंचांगp;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&bus_type_sem);
+	वापस ret;
+पूर्ण
 
-#define FIND_CHILD_MIN_SCORE	1
-#define FIND_CHILD_MAX_SCORE	2
+#घोषणा FIND_CHILD_MIN_SCORE	1
+#घोषणा FIND_शिशु_उच्च_SCORE	2
 
-static int find_child_checks(struct acpi_device *adev, bool check_children)
-{
+अटल पूर्णांक find_child_checks(काष्ठा acpi_device *adev, bool check_children)
+अणु
 	bool sta_present = true;
-	unsigned long long sta;
+	अचिन्हित दीर्घ दीर्घ sta;
 	acpi_status status;
 
-	status = acpi_evaluate_integer(adev->handle, "_STA", NULL, &sta);
-	if (status == AE_NOT_FOUND)
+	status = acpi_evaluate_पूर्णांकeger(adev->handle, "_STA", शून्य, &sta);
+	अगर (status == AE_NOT_FOUND)
 		sta_present = false;
-	else if (ACPI_FAILURE(status) || !(sta & ACPI_STA_DEVICE_ENABLED))
-		return -ENODEV;
+	अन्यथा अगर (ACPI_FAILURE(status) || !(sta & ACPI_STA_DEVICE_ENABLED))
+		वापस -ENODEV;
 
-	if (check_children && list_empty(&adev->children))
-		return -ENODEV;
+	अगर (check_children && list_empty(&adev->children))
+		वापस -ENODEV;
 
 	/*
-	 * If the device has a _HID returning a valid ACPI/PNP device ID, it is
+	 * If the device has a _HID वापसing a valid ACPI/PNP device ID, it is
 	 * better to make it look less attractive here, so that the other device
 	 * with the same _ADR value (that may not have a valid device ID) can be
-	 * matched going forward.  [This means a second spec violation in a row,
-	 * so whatever we do here is best effort anyway.]
+	 * matched going क्रमward.  [This means a second spec violation in a row,
+	 * so whatever we करो here is best efक्रमt anyway.]
 	 */
-	return sta_present && !adev->pnp.type.platform_id ?
-			FIND_CHILD_MAX_SCORE : FIND_CHILD_MIN_SCORE;
-}
+	वापस sta_present && !adev->pnp.type.platक्रमm_id ?
+			FIND_शिशु_उच्च_SCORE : FIND_CHILD_MIN_SCORE;
+पूर्ण
 
-struct acpi_device *acpi_find_child_device(struct acpi_device *parent,
+काष्ठा acpi_device *acpi_find_child_device(काष्ठा acpi_device *parent,
 					   u64 address, bool check_children)
-{
-	struct acpi_device *adev, *ret = NULL;
-	int ret_score = 0;
+अणु
+	काष्ठा acpi_device *adev, *ret = शून्य;
+	पूर्णांक ret_score = 0;
 
-	if (!parent)
-		return NULL;
+	अगर (!parent)
+		वापस शून्य;
 
-	list_for_each_entry(adev, &parent->children, node) {
-		unsigned long long addr;
+	list_क्रम_each_entry(adev, &parent->children, node) अणु
+		अचिन्हित दीर्घ दीर्घ addr;
 		acpi_status status;
-		int score;
+		पूर्णांक score;
 
-		status = acpi_evaluate_integer(adev->handle, METHOD_NAME__ADR,
-					       NULL, &addr);
-		if (ACPI_FAILURE(status) || addr != address)
-			continue;
+		status = acpi_evaluate_पूर्णांकeger(adev->handle, METHOD_NAME__ADR,
+					       शून्य, &addr);
+		अगर (ACPI_FAILURE(status) || addr != address)
+			जारी;
 
-		if (!ret) {
+		अगर (!ret) अणु
 			/* This is the first matching object.  Save it. */
 			ret = adev;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		/*
 		 * There is more than one matching device object with the same
 		 * _ADR value.  That really is unexpected, so we are kind of
 		 * beyond the scope of the spec here.  We have to choose which
-		 * one to return, though.
+		 * one to वापस, though.
 		 *
-		 * First, check if the previously found object is good enough
-		 * and return it if so.  Second, do the same for the object that
+		 * First, check अगर the previously found object is good enough
+		 * and वापस it अगर so.  Second, करो the same क्रम the object that
 		 * we've just found.
 		 */
-		if (!ret_score) {
+		अगर (!ret_score) अणु
 			ret_score = find_child_checks(ret, check_children);
-			if (ret_score == FIND_CHILD_MAX_SCORE)
-				return ret;
-		}
+			अगर (ret_score == FIND_शिशु_उच्च_SCORE)
+				वापस ret;
+		पूर्ण
 		score = find_child_checks(adev, check_children);
-		if (score == FIND_CHILD_MAX_SCORE) {
-			return adev;
-		} else if (score > ret_score) {
+		अगर (score == FIND_शिशु_उच्च_SCORE) अणु
+			वापस adev;
+		पूर्ण अन्यथा अगर (score > ret_score) अणु
 			ret = adev;
 			ret_score = score;
-		}
-	}
-	return ret;
-}
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_find_child_device);
 
-static void acpi_physnode_link_name(char *buf, unsigned int node_id)
-{
-	if (node_id > 0)
-		snprintf(buf, PHYSICAL_NODE_NAME_SIZE,
+अटल व्योम acpi_physnode_link_name(अक्षर *buf, अचिन्हित पूर्णांक node_id)
+अणु
+	अगर (node_id > 0)
+		snम_लिखो(buf, PHYSICAL_NODE_NAME_SIZE,
 			 PHYSICAL_NODE_STRING "%u", node_id);
-	else
-		strcpy(buf, PHYSICAL_NODE_STRING);
-}
+	अन्यथा
+		म_नकल(buf, PHYSICAL_NODE_STRING);
+पूर्ण
 
-int acpi_bind_one(struct device *dev, struct acpi_device *acpi_dev)
-{
-	struct acpi_device_physical_node *physical_node, *pn;
-	char physical_node_name[PHYSICAL_NODE_NAME_SIZE];
-	struct list_head *physnode_list;
-	unsigned int node_id;
-	int retval = -EINVAL;
+पूर्णांक acpi_bind_one(काष्ठा device *dev, काष्ठा acpi_device *acpi_dev)
+अणु
+	काष्ठा acpi_device_physical_node *physical_node, *pn;
+	अक्षर physical_node_name[PHYSICAL_NODE_NAME_SIZE];
+	काष्ठा list_head *physnode_list;
+	अचिन्हित पूर्णांक node_id;
+	पूर्णांक retval = -EINVAL;
 
-	if (has_acpi_companion(dev)) {
-		if (acpi_dev) {
+	अगर (has_acpi_companion(dev)) अणु
+		अगर (acpi_dev) अणु
 			dev_warn(dev, "ACPI companion already set\n");
-			return -EINVAL;
-		} else {
+			वापस -EINVAL;
+		पूर्ण अन्यथा अणु
 			acpi_dev = ACPI_COMPANION(dev);
-		}
-	}
-	if (!acpi_dev)
-		return -EINVAL;
+		पूर्ण
+	पूर्ण
+	अगर (!acpi_dev)
+		वापस -EINVAL;
 
 	acpi_dev_get(acpi_dev);
 	get_device(dev);
-	physical_node = kzalloc(sizeof(*physical_node), GFP_KERNEL);
-	if (!physical_node) {
+	physical_node = kzalloc(माप(*physical_node), GFP_KERNEL);
+	अगर (!physical_node) अणु
 		retval = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	mutex_lock(&acpi_dev->physical_node_lock);
 
 	/*
-	 * Keep the list sorted by node_id so that the IDs of removed nodes can
+	 * Keep the list sorted by node_id so that the IDs of हटाओd nodes can
 	 * be recycled easily.
 	 */
 	physnode_list = &acpi_dev->physical_node_list;
 	node_id = 0;
-	list_for_each_entry(pn, &acpi_dev->physical_node_list, node) {
+	list_क्रम_each_entry(pn, &acpi_dev->physical_node_list, node) अणु
 		/* Sanity check. */
-		if (pn->dev == dev) {
+		अगर (pn->dev == dev) अणु
 			mutex_unlock(&acpi_dev->physical_node_lock);
 
 			dev_warn(dev, "Already associated with ACPI node\n");
-			kfree(physical_node);
-			if (ACPI_COMPANION(dev) != acpi_dev)
-				goto err;
+			kमुक्त(physical_node);
+			अगर (ACPI_COMPANION(dev) != acpi_dev)
+				जाओ err;
 
 			put_device(dev);
 			acpi_dev_put(acpi_dev);
-			return 0;
-		}
-		if (pn->node_id == node_id) {
+			वापस 0;
+		पूर्ण
+		अगर (pn->node_id == node_id) अणु
 			physnode_list = &pn->node;
 			node_id++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	physical_node->node_id = node_id;
 	physical_node->dev = dev;
 	list_add(&physical_node->node, physnode_list);
 	acpi_dev->physical_node_count++;
 
-	if (!has_acpi_companion(dev))
+	अगर (!has_acpi_companion(dev))
 		ACPI_COMPANION_SET(dev, acpi_dev);
 
 	acpi_physnode_link_name(physical_node_name, node_id);
 	retval = sysfs_create_link(&acpi_dev->dev.kobj, &dev->kobj,
 				   physical_node_name);
-	if (retval)
+	अगर (retval)
 		dev_err(&acpi_dev->dev, "Failed to create link %s (%d)\n",
 			physical_node_name, retval);
 
 	retval = sysfs_create_link(&dev->kobj, &acpi_dev->dev.kobj,
 				   "firmware_node");
-	if (retval)
+	अगर (retval)
 		dev_err(dev, "Failed to create link firmware_node (%d)\n",
 			retval);
 
 	mutex_unlock(&acpi_dev->physical_node_lock);
 
-	if (acpi_dev->wakeup.flags.valid)
+	अगर (acpi_dev->wakeup.flags.valid)
 		device_set_wakeup_capable(dev, true);
 
-	return 0;
+	वापस 0;
 
  err:
-	ACPI_COMPANION_SET(dev, NULL);
+	ACPI_COMPANION_SET(dev, शून्य);
 	put_device(dev);
 	acpi_dev_put(acpi_dev);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_bind_one);
 
-int acpi_unbind_one(struct device *dev)
-{
-	struct acpi_device *acpi_dev = ACPI_COMPANION(dev);
-	struct acpi_device_physical_node *entry;
+पूर्णांक acpi_unbind_one(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_device *acpi_dev = ACPI_COMPANION(dev);
+	काष्ठा acpi_device_physical_node *entry;
 
-	if (!acpi_dev)
-		return 0;
+	अगर (!acpi_dev)
+		वापस 0;
 
 	mutex_lock(&acpi_dev->physical_node_lock);
 
-	list_for_each_entry(entry, &acpi_dev->physical_node_list, node)
-		if (entry->dev == dev) {
-			char physnode_name[PHYSICAL_NODE_NAME_SIZE];
+	list_क्रम_each_entry(entry, &acpi_dev->physical_node_list, node)
+		अगर (entry->dev == dev) अणु
+			अक्षर physnode_name[PHYSICAL_NODE_NAME_SIZE];
 
 			list_del(&entry->node);
 			acpi_dev->physical_node_count--;
 
 			acpi_physnode_link_name(physnode_name, entry->node_id);
-			sysfs_remove_link(&acpi_dev->dev.kobj, physnode_name);
-			sysfs_remove_link(&dev->kobj, "firmware_node");
-			ACPI_COMPANION_SET(dev, NULL);
+			sysfs_हटाओ_link(&acpi_dev->dev.kobj, physnode_name);
+			sysfs_हटाओ_link(&dev->kobj, "firmware_node");
+			ACPI_COMPANION_SET(dev, शून्य);
 			/* Drop references taken by acpi_bind_one(). */
 			put_device(dev);
 			acpi_dev_put(acpi_dev);
-			kfree(entry);
-			break;
-		}
+			kमुक्त(entry);
+			अवरोध;
+		पूर्ण
 
 	mutex_unlock(&acpi_dev->physical_node_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(acpi_unbind_one);
 
-static int acpi_device_notify(struct device *dev)
-{
-	struct acpi_bus_type *type = acpi_get_bus_type(dev);
-	struct acpi_device *adev;
-	int ret;
+अटल पूर्णांक acpi_device_notअगरy(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_bus_type *type = acpi_get_bus_type(dev);
+	काष्ठा acpi_device *adev;
+	पूर्णांक ret;
 
-	ret = acpi_bind_one(dev, NULL);
-	if (ret && type) {
-		struct acpi_device *adev;
+	ret = acpi_bind_one(dev, शून्य);
+	अगर (ret && type) अणु
+		काष्ठा acpi_device *adev;
 
 		adev = type->find_companion(dev);
-		if (!adev) {
+		अगर (!adev) अणु
 			DBG("Unable to get handle for %s\n", dev_name(dev));
 			ret = -ENODEV;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		ret = acpi_bind_one(dev, adev);
-		if (ret)
-			goto out;
-	}
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 	adev = ACPI_COMPANION(dev);
-	if (!adev)
-		goto out;
+	अगर (!adev)
+		जाओ out;
 
-	if (dev_is_platform(dev))
-		acpi_configure_pmsi_domain(dev);
+	अगर (dev_is_platक्रमm(dev))
+		acpi_configure_pmsi_करोमुख्य(dev);
 
-	if (type && type->setup)
+	अगर (type && type->setup)
 		type->setup(dev);
-	else if (adev->handler && adev->handler->bind)
+	अन्यथा अगर (adev->handler && adev->handler->bind)
 		adev->handler->bind(dev);
 
  out:
-#if ACPI_GLUE_DEBUG
-	if (!ret) {
-		struct acpi_buffer buffer = { ACPI_ALLOCATE_BUFFER, NULL };
+#अगर ACPI_GLUE_DEBUG
+	अगर (!ret) अणु
+		काष्ठा acpi_buffer buffer = अणु ACPI_ALLOCATE_BUFFER, शून्य पूर्ण;
 
 		acpi_get_name(ACPI_HANDLE(dev), ACPI_FULL_PATHNAME, &buffer);
-		DBG("Device %s -> %s\n", dev_name(dev), (char *)buffer.pointer);
-		kfree(buffer.pointer);
-	} else
+		DBG("Device %s -> %s\n", dev_name(dev), (अक्षर *)buffer.poपूर्णांकer);
+		kमुक्त(buffer.poपूर्णांकer);
+	पूर्ण अन्यथा
 		DBG("Device %s -> No ACPI support\n", dev_name(dev));
-#endif
+#पूर्ण_अगर
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int acpi_device_notify_remove(struct device *dev)
-{
-	struct acpi_device *adev = ACPI_COMPANION(dev);
-	struct acpi_bus_type *type;
+अटल पूर्णांक acpi_device_notअगरy_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा acpi_device *adev = ACPI_COMPANION(dev);
+	काष्ठा acpi_bus_type *type;
 
-	if (!adev)
-		return 0;
+	अगर (!adev)
+		वापस 0;
 
 	type = acpi_get_bus_type(dev);
-	if (type && type->cleanup)
+	अगर (type && type->cleanup)
 		type->cleanup(dev);
-	else if (adev->handler && adev->handler->unbind)
+	अन्यथा अगर (adev->handler && adev->handler->unbind)
 		adev->handler->unbind(dev);
 
 	acpi_unbind_one(dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int acpi_platform_notify(struct device *dev, enum kobject_action action)
-{
-	switch (action) {
-	case KOBJ_ADD:
-		acpi_device_notify(dev);
-		break;
-	case KOBJ_REMOVE:
-		acpi_device_notify_remove(dev);
-		break;
-	default:
-		break;
-	}
-	return 0;
-}
+पूर्णांक acpi_platक्रमm_notअगरy(काष्ठा device *dev, क्रमागत kobject_action action)
+अणु
+	चयन (action) अणु
+	हाल KOBJ_ADD:
+		acpi_device_notअगरy(dev);
+		अवरोध;
+	हाल KOBJ_REMOVE:
+		acpi_device_notअगरy_हटाओ(dev);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण

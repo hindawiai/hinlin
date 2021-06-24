@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Support for HTC Magician PDA phones:
+ * Support क्रम HTC Magician PDA phones:
  * i-mate JAM, O2 Xda mini, Orange SPV M500, Qtek s100, Qtek s110
  * and T-Mobile MDA Compact.
  *
@@ -9,52 +10,52 @@
  * Based on hx4700.c, spitz.c and others.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/gpio.h>
-#include <linux/gpio/machine.h>
-#include <linux/gpio_keys.h>
-#include <linux/input.h>
-#include <linux/mfd/htc-pasic3.h>
-#include <linux/mtd/physmap.h>
-#include <linux/pda_power.h>
-#include <linux/platform_data/gpio-htc-egpio.h>
-#include <linux/pwm.h>
-#include <linux/pwm_backlight.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/fixed.h>
-#include <linux/regulator/gpio-regulator.h>
-#include <linux/regulator/machine.h>
-#include <linux/platform_data/i2c-pxa.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/gpio/machine.h>
+#समावेश <linux/gpio_keys.h>
+#समावेश <linux/input.h>
+#समावेश <linux/mfd/htc-pasic3.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/pda_घातer.h>
+#समावेश <linux/platक्रमm_data/gpio-htc-egpपन.स>
+#समावेश <linux/pwm.h>
+#समावेश <linux/pwm_backlight.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/fixed.h>
+#समावेश <linux/regulator/gpio-regulator.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/platक्रमm_data/i2c-pxa.h>
 
-#include <mach/hardware.h>
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/system_info.h>
+#समावेश <mach/hardware.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/प्रणाली_info.h>
 
-#include "pxa27x.h"
-#include <mach/magician.h>
-#include <linux/platform_data/video-pxafb.h>
-#include <linux/platform_data/mmc-pxamci.h>
-#include <linux/platform_data/irda-pxaficp.h>
-#include <linux/platform_data/usb-ohci-pxa27x.h>
+#समावेश "pxa27x.h"
+#समावेश <mach/magician.h>
+#समावेश <linux/platक्रमm_data/video-pxafb.h>
+#समावेश <linux/platक्रमm_data/mmc-pxamci.h>
+#समावेश <linux/platक्रमm_data/irda-pxaficp.h>
+#समावेश <linux/platक्रमm_data/usb-ohci-pxa27x.h>
 
-#include <linux/regulator/max1586.h>
+#समावेश <linux/regulator/max1586.h>
 
-#include <linux/platform_data/pxa2xx_udc.h>
+#समावेश <linux/platक्रमm_data/pxa2xx_udc.h>
 
-#include "udc.h"
-#include "pxa27x-udc.h"
-#include "devices.h"
-#include "generic.h"
+#समावेश "udc.h"
+#समावेश "pxa27x-udc.h"
+#समावेश "devices.h"
+#समावेश "generic.h"
 
-#include <linux/spi/spi.h>
-#include <linux/spi/pxa2xx_spi.h>
-#include <linux/spi/ads7846.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/pxa2xx_spi.h>
+#समावेश <linux/spi/ads7846.h>
 
-static unsigned long magician_pin_config[] __initdata = {
+अटल अचिन्हित दीर्घ magician_pin_config[] __initdata = अणु
 
 	/* SDRAM and Static Memory I/O Signals */
 	GPIO20_nSDCS_2,
@@ -100,7 +101,7 @@ static unsigned long magician_pin_config[] __initdata = {
 	/* LCD */
 	GPIOxx_LCD_TFT_16BPP,
 
-	/* QCI camera interface */
+	/* QCI camera पूर्णांकerface */
 	GPIO12_CIF_DD_7,
 	GPIO17_CIF_DD_6,
 	GPIO50_CIF_DD_3,
@@ -114,39 +115,39 @@ static unsigned long magician_pin_config[] __initdata = {
 	GPIO84_CIF_FV,
 	GPIO85_CIF_LV,
 
-	/* Magician specific input GPIOs */
+	/* Magician specअगरic input GPIOs */
 	GPIO9_GPIO,	/* unknown */
 	GPIO10_GPIO,	/* GSM_IRQ */
 	GPIO13_GPIO,	/* CPLD_IRQ */
 	GPIO107_GPIO,	/* DS1WM_IRQ */
 	GPIO108_GPIO,	/* GSM_READY */
 	GPIO115_GPIO,	/* nPEN_IRQ */
-};
+पूर्ण;
 
 /*
  * IrDA
  */
 
-static struct pxaficp_platform_data magician_ficp_info = {
-	.gpio_pwdown		= GPIO83_MAGICIAN_nIR_EN,
+अटल काष्ठा pxaficp_platक्रमm_data magician_ficp_info = अणु
+	.gpio_pwकरोwn		= GPIO83_MAGICIAN_nIR_EN,
 	.transceiver_cap	= IR_SIRMODE | IR_OFF,
-	.gpio_pwdown_inverted	= 0,
-};
+	.gpio_pwकरोwn_inverted	= 0,
+पूर्ण;
 
 /*
  * GPIO Keys
  */
 
-#define INIT_KEY(_code, _gpio, _desc)	\
-	{				\
+#घोषणा INIT_KEY(_code, _gpio, _desc)	\
+	अणु				\
 		.code	= KEY_##_code,	\
 		.gpio	= _gpio,	\
 		.desc	= _desc,	\
 		.type	= EV_KEY,	\
 		.wakeup	= 1,		\
-	}
+	पूर्ण
 
-static struct gpio_keys_button magician_button_table[] = {
+अटल काष्ठा gpio_keys_button magician_button_table[] = अणु
 	INIT_KEY(POWER,      GPIO0_MAGICIAN_KEY_POWER,      "Power button"),
 	INIT_KEY(ESC,        GPIO37_MAGICIAN_KEY_HANGUP,    "Hangup button"),
 	INIT_KEY(F10,        GPIO38_MAGICIAN_KEY_CONTACTS,  "Contacts button"),
@@ -162,44 +163,44 @@ static struct gpio_keys_button magician_button_table[] = {
 	INIT_KEY(VOLUMEDOWN, GPIO101_MAGICIAN_KEY_VOL_DOWN, "Volume down"),
 	INIT_KEY(PHONE,      GPIO102_MAGICIAN_KEY_PHONE,    "Phone button"),
 	INIT_KEY(PLAY,       GPIO99_MAGICIAN_HEADPHONE_IN,  "Headset button"),
-};
+पूर्ण;
 
-static struct gpio_keys_platform_data gpio_keys_data = {
+अटल काष्ठा gpio_keys_platक्रमm_data gpio_keys_data = अणु
 	.buttons	= magician_button_table,
 	.nbuttons	= ARRAY_SIZE(magician_button_table),
-};
+पूर्ण;
 
-static struct platform_device gpio_keys = {
+अटल काष्ठा platक्रमm_device gpio_keys = अणु
 	.name	= "gpio-keys",
-	.dev	= {
-		.platform_data = &gpio_keys_data,
-	},
+	.dev	= अणु
+		.platक्रमm_data = &gpio_keys_data,
+	पूर्ण,
 	.id	= -1,
-};
+पूर्ण;
 
 /*
  * EGPIO (Xilinx CPLD)
  *
- * 32-bit aligned 8-bit registers
- * 16 possible registers (reg windows size), only 7 used:
+ * 32-bit aligned 8-bit रेजिस्टरs
+ * 16 possible रेजिस्टरs (reg winकरोws size), only 7 used:
  * 3x output, 1x irq, 3x input
  */
 
-static struct resource egpio_resources[] = {
-	[0] = {
+अटल काष्ठा resource egpio_resources[] = अणु
+	[0] = अणु
 		.start	= PXA_CS3_PHYS,
 		.end	= PXA_CS3_PHYS + 0x20 - 1,
 		.flags	= IORESOURCE_MEM,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.start	= PXA_GPIO_TO_IRQ(GPIO13_MAGICIAN_CPLD_IRQ),
 		.end	= PXA_GPIO_TO_IRQ(GPIO13_MAGICIAN_CPLD_IRQ),
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct htc_egpio_chip egpio_chips[] = {
-	[0] = {
+अटल काष्ठा htc_egpio_chip egpio_chips[] = अणु
+	[0] = अणु
 		.reg_start	= 0,
 		.gpio_base	= MAGICIAN_EGPIO(0, 0),
 		.num_gpios	= 24,
@@ -208,42 +209,42 @@ static struct htc_egpio_chip egpio_chips[] = {
 		 * Depends on modules configuration
 		 */
 		.initial_values	= 0x40, /* EGPIO_MAGICIAN_GSM_RESET */
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.reg_start	= 4,
 		.gpio_base	= MAGICIAN_EGPIO(4, 0),
 		.num_gpios	= 24,
 		.direction	= HTC_EGPIO_INPUT,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct htc_egpio_platform_data egpio_info = {
+अटल काष्ठा htc_egpio_platक्रमm_data egpio_info = अणु
 	.reg_width	= 8,
 	.bus_width	= 32,
 	.irq_base	= IRQ_BOARD_START,
 	.num_irqs	= 4,
-	.ack_register	= 3,
+	.ack_रेजिस्टर	= 3,
 	.chip		= egpio_chips,
 	.num_chips	= ARRAY_SIZE(egpio_chips),
-};
+पूर्ण;
 
-static struct platform_device egpio = {
+अटल काष्ठा platक्रमm_device egpio = अणु
 	.name		= "htc-egpio",
 	.id		= -1,
 	.resource	= egpio_resources,
 	.num_resources	= ARRAY_SIZE(egpio_resources),
-	.dev = {
-		.platform_data = &egpio_info,
-	},
-};
+	.dev = अणु
+		.platक्रमm_data = &egpio_info,
+	पूर्ण,
+पूर्ण;
 
 /*
  * PXAFB LCD - Toppoly TD028STEB1 or Samsung LTP280QV
  */
 
-static struct pxafb_mode_info toppoly_modes[] = {
-	{
-		.pixclock	= 96153,
+अटल काष्ठा pxafb_mode_info toppoly_modes[] = अणु
+	अणु
+		.pixघड़ी	= 96153,
 		.bpp		= 16,
 		.xres		= 240,
 		.yres		= 320,
@@ -254,12 +255,12 @@ static struct pxafb_mode_info toppoly_modes[] = {
 		.right_margin	= 10,
 		.lower_margin	= 2,
 		.sync		= 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct pxafb_mode_info samsung_modes[] = {
-	{
-		.pixclock	= 226469,
+अटल काष्ठा pxafb_mode_info samsung_modes[] = अणु
+	अणु
+		.pixघड़ी	= 226469,
 		.bpp		= 16,
 		.xres		= 240,
 		.yres		= 320,
@@ -270,14 +271,14 @@ static struct pxafb_mode_info samsung_modes[] = {
 		.right_margin	= 9,
 		.lower_margin	= 4,
 		.sync	= FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void toppoly_lcd_power(int on, struct fb_var_screeninfo *si)
-{
+अटल व्योम toppoly_lcd_घातer(पूर्णांक on, काष्ठा fb_var_screeninfo *si)
+अणु
 	pr_debug("Toppoly LCD power: %s\n", on ? "on" : "off");
 
-	if (on) {
+	अगर (on) अणु
 		gpio_set_value(EGPIO_MAGICIAN_TOPPOLY_POWER, 1);
 		gpio_set_value(GPIO106_MAGICIAN_LCD_DCDC_NRESET, 1);
 		udelay(2000);
@@ -288,7 +289,7 @@ static void toppoly_lcd_power(int on, struct fb_var_screeninfo *si)
 		gpio_set_value(GPIO104_MAGICIAN_LCD_VOFF_EN, 1);
 		udelay(2000);
 		gpio_set_value(GPIO105_MAGICIAN_LCD_VON_EN, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		msleep(15);
 		gpio_set_value(GPIO105_MAGICIAN_LCD_VON_EN, 0);
 		udelay(500);
@@ -296,17 +297,17 @@ static void toppoly_lcd_power(int on, struct fb_var_screeninfo *si)
 		udelay(1000);
 		gpio_set_value(GPIO106_MAGICIAN_LCD_DCDC_NRESET, 0);
 		gpio_set_value(EGPIO_MAGICIAN_LCD_POWER, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void samsung_lcd_power(int on, struct fb_var_screeninfo *si)
-{
+अटल व्योम samsung_lcd_घातer(पूर्णांक on, काष्ठा fb_var_screeninfo *si)
+अणु
 	pr_debug("Samsung LCD power: %s\n", on ? "on" : "off");
 
-	if (on) {
-		if (system_rev < 3)
+	अगर (on) अणु
+		अगर (प्रणाली_rev < 3)
 			gpio_set_value(GPIO75_MAGICIAN_SAMSUNG_POWER, 1);
-		else
+		अन्यथा
 			gpio_set_value(EGPIO_MAGICIAN_LCD_POWER, 1);
 		mdelay(6);
 		gpio_set_value(GPIO106_MAGICIAN_LCD_DCDC_NRESET, 1);
@@ -314,348 +315,348 @@ static void samsung_lcd_power(int on, struct fb_var_screeninfo *si)
 		gpio_set_value(GPIO104_MAGICIAN_LCD_VOFF_EN, 1);
 		mdelay(16);	/* Voff -> Von >(5+10)ms */
 		gpio_set_value(GPIO105_MAGICIAN_LCD_VON_EN, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		gpio_set_value(GPIO105_MAGICIAN_LCD_VON_EN, 0);
 		mdelay(16);
 		gpio_set_value(GPIO104_MAGICIAN_LCD_VOFF_EN, 0);
 		mdelay(6);
 		gpio_set_value(GPIO106_MAGICIAN_LCD_DCDC_NRESET, 0);
 		mdelay(6);
-		if (system_rev < 3)
+		अगर (प्रणाली_rev < 3)
 			gpio_set_value(GPIO75_MAGICIAN_SAMSUNG_POWER, 0);
-		else
+		अन्यथा
 			gpio_set_value(EGPIO_MAGICIAN_LCD_POWER, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct pxafb_mach_info toppoly_info = {
+अटल काष्ठा pxafb_mach_info toppoly_info = अणु
 	.modes			= toppoly_modes,
 	.num_modes		= 1,
 	.fixed_modes		= 1,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP,
-	.pxafb_lcd_power	= toppoly_lcd_power,
-};
+	.pxafb_lcd_घातer	= toppoly_lcd_घातer,
+पूर्ण;
 
-static struct pxafb_mach_info samsung_info = {
+अटल काष्ठा pxafb_mach_info samsung_info = अणु
 	.modes			= samsung_modes,
 	.num_modes		= 1,
 	.fixed_modes		= 1,
 	.lcd_conn		= LCD_COLOR_TFT_16BPP | LCD_PCLK_EDGE_FALL |
 		LCD_ALTERNATE_MAPPING,
-	.pxafb_lcd_power	= samsung_lcd_power,
-};
+	.pxafb_lcd_घातer	= samsung_lcd_घातer,
+पूर्ण;
 
 /*
  * Backlight
  */
 
-static struct pwm_lookup magician_pwm_lookup[] = {
-	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight", NULL, 30923,
+अटल काष्ठा pwm_lookup magician_pwm_lookup[] = अणु
+	PWM_LOOKUP("pxa27x-pwm.0", 0, "pwm-backlight", शून्य, 30923,
 		   PWM_POLARITY_NORMAL),
-};
+पूर्ण;
 
  /*
- * fixed regulator for pwm_backlight
+ * fixed regulator क्रम pwm_backlight
  */
 
-static struct regulator_consumer_supply pwm_backlight_supply[] = {
+अटल काष्ठा regulator_consumer_supply pwm_backlight_supply[] = अणु
 	REGULATOR_SUPPLY("power", "pwm_backlight"),
-};
+पूर्ण;
 
 
-static struct gpio magician_bl_gpios[] = {
-	{ EGPIO_MAGICIAN_BL_POWER,	GPIOF_DIR_OUT, "Backlight power" },
-	{ EGPIO_MAGICIAN_BL_POWER2,	GPIOF_DIR_OUT, "Backlight power 2" },
-};
+अटल काष्ठा gpio magician_bl_gpios[] = अणु
+	अणु EGPIO_MAGICIAN_BL_POWER,	GPIOF_सूची_OUT, "Backlight power" पूर्ण,
+	अणु EGPIO_MAGICIAN_BL_POWER2,	GPIOF_सूची_OUT, "Backlight power 2" पूर्ण,
+पूर्ण;
 
-static int magician_backlight_init(struct device *dev)
-{
-	return gpio_request_array(ARRAY_AND_SIZE(magician_bl_gpios));
-}
+अटल पूर्णांक magician_backlight_init(काष्ठा device *dev)
+अणु
+	वापस gpio_request_array(ARRAY_AND_SIZE(magician_bl_gpios));
+पूर्ण
 
-static int magician_backlight_notify(struct device *dev, int brightness)
-{
+अटल पूर्णांक magician_backlight_notअगरy(काष्ठा device *dev, पूर्णांक brightness)
+अणु
 	pr_debug("Brightness = %i\n", brightness);
 	gpio_set_value(EGPIO_MAGICIAN_BL_POWER, brightness);
-	if (brightness >= 200) {
+	अगर (brightness >= 200) अणु
 		gpio_set_value(EGPIO_MAGICIAN_BL_POWER2, 1);
-		return brightness - 72;
-	} else {
+		वापस brightness - 72;
+	पूर्ण अन्यथा अणु
 		gpio_set_value(EGPIO_MAGICIAN_BL_POWER2, 0);
-		return brightness;
-	}
-}
+		वापस brightness;
+	पूर्ण
+पूर्ण
 
-static void magician_backlight_exit(struct device *dev)
-{
-	gpio_free_array(ARRAY_AND_SIZE(magician_bl_gpios));
-}
+अटल व्योम magician_backlight_निकास(काष्ठा device *dev)
+अणु
+	gpio_मुक्त_array(ARRAY_AND_SIZE(magician_bl_gpios));
+पूर्ण
 
 /*
- * LCD PWM backlight (main)
+ * LCD PWM backlight (मुख्य)
  *
  * MP1521 frequency should be:
- *	100-400 Hz = 2 .5*10^6 - 10 *10^6 ns
+ *	100-400 Hz = 2ै /.5*10^6 - 10ै /*10^6 ns
  */
 
-static struct platform_pwm_backlight_data backlight_data = {
+अटल काष्ठा platक्रमm_pwm_backlight_data backlight_data = अणु
 	.max_brightness	= 272,
 	.dft_brightness	= 100,
 	.init		= magician_backlight_init,
-	.notify		= magician_backlight_notify,
-	.exit		= magician_backlight_exit,
-};
+	.notअगरy		= magician_backlight_notअगरy,
+	.निकास		= magician_backlight_निकास,
+पूर्ण;
 
-static struct platform_device backlight = {
+अटल काष्ठा platक्रमm_device backlight = अणु
 	.name	= "pwm-backlight",
 	.id	= -1,
-	.dev	= {
+	.dev	= अणु
 		.parent		= &pxa27x_device_pwm0.dev,
-		.platform_data	= &backlight_data,
-	},
-};
+		.platक्रमm_data	= &backlight_data,
+	पूर्ण,
+पूर्ण;
 
 /*
  * GPIO LEDs, Phone keys backlight, vibra
  */
 
-static struct gpio_led gpio_leds[] = {
-	{
+अटल काष्ठा gpio_led gpio_leds[] = अणु
+	अणु
 		.name = "magician::vibra",
-		.default_trigger = "none",
+		.शेष_trigger = "none",
 		.gpio = GPIO22_MAGICIAN_VIBRA_EN,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "magician::phone_bl",
-		.default_trigger = "backlight",
+		.शेष_trigger = "backlight",
 		.gpio = GPIO103_MAGICIAN_LED_KP,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct gpio_led_platform_data gpio_led_info = {
+अटल काष्ठा gpio_led_platक्रमm_data gpio_led_info = अणु
 	.leds = gpio_leds,
 	.num_leds = ARRAY_SIZE(gpio_leds),
-};
+पूर्ण;
 
-static struct platform_device leds_gpio = {
+अटल काष्ठा platक्रमm_device leds_gpio = अणु
 	.name	= "leds-gpio",
 	.id	= -1,
-	.dev	= {
-		.platform_data = &gpio_led_info,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data = &gpio_led_info,
+	पूर्ण,
+पूर्ण;
 
 /*
  * PASIC3 with DS1WM
  */
 
-static struct resource pasic3_resources[] = {
-	[0] = {
+अटल काष्ठा resource pasic3_resources[] = अणु
+	[0] = अणु
 		.start	= PXA_CS2_PHYS,
 		.end	= PXA_CS2_PHYS + 0x1b,
 		.flags	= IORESOURCE_MEM,
-	},
-	/* No IRQ handler in the PASIC3, DS1WM needs an external IRQ */
-	[1] = {
+	पूर्ण,
+	/* No IRQ handler in the PASIC3, DS1WM needs an बाह्यal IRQ */
+	[1] = अणु
 		.start	= PXA_GPIO_TO_IRQ(GPIO107_MAGICIAN_DS1WM_IRQ),
 		.end	= PXA_GPIO_TO_IRQ(GPIO107_MAGICIAN_DS1WM_IRQ),
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct pasic3_platform_data pasic3_platform_data = {
-	.clock_rate = 4000000,
-};
+अटल काष्ठा pasic3_platक्रमm_data pasic3_platक्रमm_data = अणु
+	.घड़ी_rate = 4000000,
+पूर्ण;
 
-static struct platform_device pasic3 = {
+अटल काष्ठा platक्रमm_device pasic3 = अणु
 	.name		= "pasic3",
 	.id		= -1,
 	.num_resources	= ARRAY_SIZE(pasic3_resources),
 	.resource	= pasic3_resources,
-	.dev = {
-		.platform_data = &pasic3_platform_data,
-	},
-};
+	.dev = अणु
+		.platक्रमm_data = &pasic3_platक्रमm_data,
+	पूर्ण,
+पूर्ण;
 
 /*
  * PXA UDC
  */
 
-static void magician_udc_command(int cmd)
-{
-	if (cmd == PXA2XX_UDC_CMD_CONNECT)
+अटल व्योम magician_udc_command(पूर्णांक cmd)
+अणु
+	अगर (cmd == PXA2XX_UDC_CMD_CONNECT)
 		UP2OCR |= UP2OCR_DPPUE | UP2OCR_DPPUBE;
-	else if (cmd == PXA2XX_UDC_CMD_DISCONNECT)
+	अन्यथा अगर (cmd == PXA2XX_UDC_CMD_DISCONNECT)
 		UP2OCR &= ~(UP2OCR_DPPUE | UP2OCR_DPPUBE);
-}
+पूर्ण
 
-static struct pxa2xx_udc_mach_info magician_udc_info __initdata = {
+अटल काष्ठा pxa2xx_udc_mach_info magician_udc_info __initdata = अणु
 	.udc_command	= magician_udc_command,
 	.gpio_pullup	= GPIO27_MAGICIAN_USBC_PUEN,
-};
+पूर्ण;
 
 /*
  * USB device VBus detection
  */
 
-static struct resource gpio_vbus_resource = {
+अटल काष्ठा resource gpio_vbus_resource = अणु
 	.flags	= IORESOURCE_IRQ,
 	.start	= IRQ_MAGICIAN_VBUS,
 	.end	= IRQ_MAGICIAN_VBUS,
-};
+पूर्ण;
 
-static struct gpiod_lookup_table gpio_vbus_gpiod_table = {
+अटल काष्ठा gpiod_lookup_table gpio_vbus_gpiod_table = अणु
 	.dev_id = "gpio-vbus",
-	.table = {
+	.table = अणु
 		/*
-		 * EGPIO on register 4 index 1, the second EGPIO chip
-		 * starts at register 4 so this will be at index 1 on that
+		 * EGPIO on रेजिस्टर 4 index 1, the second EGPIO chip
+		 * starts at रेजिस्टर 4 so this will be at index 1 on that
 		 * chip.
 		 */
 		GPIO_LOOKUP("htc-egpio-1", 1,
 			    "vbus", GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP("gpio-pxa", GPIO27_MAGICIAN_USBC_PUEN,
 			    "pullup", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device gpio_vbus = {
+अटल काष्ठा platक्रमm_device gpio_vbus = अणु
 	.name		= "gpio-vbus",
 	.id		= -1,
 	.num_resources	= 1,
 	.resource	= &gpio_vbus_resource,
-};
+पूर्ण;
 
 /*
- * External power
+ * External घातer
  */
 
-static int magician_supply_init(struct device *dev)
-{
-	int ret = -1;
+अटल पूर्णांक magician_supply_init(काष्ठा device *dev)
+अणु
+	पूर्णांक ret = -1;
 
 	ret = gpio_request(EGPIO_MAGICIAN_CABLE_TYPE, "Cable is AC charger");
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Cannot request AC/USB charger GPIO (%i)\n", ret);
-		goto err_ac;
-	}
+		जाओ err_ac;
+	पूर्ण
 
 	ret = gpio_request(EGPIO_MAGICIAN_CABLE_INSERTED, "Cable inserted");
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Cannot request cable detection GPIO (%i)\n", ret);
-		goto err_usb;
-	}
+		जाओ err_usb;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_usb:
-	gpio_free(EGPIO_MAGICIAN_CABLE_TYPE);
+	gpio_मुक्त(EGPIO_MAGICIAN_CABLE_TYPE);
 err_ac:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void magician_set_charge(int flags)
-{
-	if (flags & PDA_POWER_CHARGE_AC) {
+अटल व्योम magician_set_अक्षरge(पूर्णांक flags)
+अणु
+	अगर (flags & PDA_POWER_CHARGE_AC) अणु
 		pr_debug("Charging from AC\n");
 		gpio_set_value(EGPIO_MAGICIAN_NICD_CHARGE, 1);
-	} else if (flags & PDA_POWER_CHARGE_USB) {
+	पूर्ण अन्यथा अगर (flags & PDA_POWER_CHARGE_USB) अणु
 		pr_debug("Charging from USB\n");
 		gpio_set_value(EGPIO_MAGICIAN_NICD_CHARGE, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_debug("Charging disabled\n");
 		gpio_set_value(EGPIO_MAGICIAN_NICD_CHARGE, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int magician_is_ac_online(void)
-{
-	return gpio_get_value(EGPIO_MAGICIAN_CABLE_INSERTED) &&
+अटल पूर्णांक magician_is_ac_online(व्योम)
+अणु
+	वापस gpio_get_value(EGPIO_MAGICIAN_CABLE_INSERTED) &&
 		gpio_get_value(EGPIO_MAGICIAN_CABLE_TYPE); /* AC=1 */
-}
+पूर्ण
 
-static int magician_is_usb_online(void)
-{
-	return gpio_get_value(EGPIO_MAGICIAN_CABLE_INSERTED) &&
+अटल पूर्णांक magician_is_usb_online(व्योम)
+अणु
+	वापस gpio_get_value(EGPIO_MAGICIAN_CABLE_INSERTED) &&
 		(!gpio_get_value(EGPIO_MAGICIAN_CABLE_TYPE)); /* USB=0 */
-}
+पूर्ण
 
-static void magician_supply_exit(struct device *dev)
-{
-	gpio_free(EGPIO_MAGICIAN_CABLE_INSERTED);
-	gpio_free(EGPIO_MAGICIAN_CABLE_TYPE);
-}
+अटल व्योम magician_supply_निकास(काष्ठा device *dev)
+अणु
+	gpio_मुक्त(EGPIO_MAGICIAN_CABLE_INSERTED);
+	gpio_मुक्त(EGPIO_MAGICIAN_CABLE_TYPE);
+पूर्ण
 
-static char *magician_supplicants[] = {
+अटल अक्षर *magician_supplicants[] = अणु
 	"ds2760-battery.0", "backup-battery"
-};
+पूर्ण;
 
-static struct pda_power_pdata power_supply_info = {
+अटल काष्ठा pda_घातer_pdata घातer_supply_info = अणु
 	.init			= magician_supply_init,
-	.exit			= magician_supply_exit,
+	.निकास			= magician_supply_निकास,
 	.is_ac_online		= magician_is_ac_online,
 	.is_usb_online		= magician_is_usb_online,
-	.set_charge		= magician_set_charge,
+	.set_अक्षरge		= magician_set_अक्षरge,
 	.supplied_to		= magician_supplicants,
 	.num_supplicants	= ARRAY_SIZE(magician_supplicants),
-};
+पूर्ण;
 
-static struct resource power_supply_resources[] = {
-	[0] = {
+अटल काष्ठा resource घातer_supply_resources[] = अणु
+	[0] = अणु
 		.name	= "ac",
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
 			IORESOURCE_IRQ_LOWEDGE,
 		.start	= IRQ_MAGICIAN_VBUS,
 		.end	= IRQ_MAGICIAN_VBUS,
-	},
-	[1] = {
+	पूर्ण,
+	[1] = अणु
 		.name	= "usb",
 		.flags	= IORESOURCE_IRQ | IORESOURCE_IRQ_HIGHEDGE |
 			IORESOURCE_IRQ_LOWEDGE,
 		.start	= IRQ_MAGICIAN_VBUS,
 		.end	= IRQ_MAGICIAN_VBUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static struct platform_device power_supply = {
+अटल काष्ठा platक्रमm_device घातer_supply = अणु
 	.name	= "pda-power",
 	.id	= -1,
-	.dev = {
-		.platform_data = &power_supply_info,
-	},
-	.resource	= power_supply_resources,
-	.num_resources	= ARRAY_SIZE(power_supply_resources),
-};
+	.dev = अणु
+		.platक्रमm_data = &घातer_supply_info,
+	पूर्ण,
+	.resource	= घातer_supply_resources,
+	.num_resources	= ARRAY_SIZE(घातer_supply_resources),
+पूर्ण;
 
 /*
- * Battery charger
+ * Battery अक्षरger
  */
 
-static struct regulator_consumer_supply bq24022_consumers[] = {
-	REGULATOR_SUPPLY("vbus_draw", NULL),
-	REGULATOR_SUPPLY("ac_draw", NULL),
-};
+अटल काष्ठा regulator_consumer_supply bq24022_consumers[] = अणु
+	REGULATOR_SUPPLY("vbus_draw", शून्य),
+	REGULATOR_SUPPLY("ac_draw", शून्य),
+पूर्ण;
 
-static struct regulator_init_data bq24022_init_data = {
-	.constraints = {
+अटल काष्ठा regulator_init_data bq24022_init_data = अणु
+	.स्थिरraपूर्णांकs = अणु
 		.max_uA		= 500000,
 		.valid_ops_mask	= REGULATOR_CHANGE_CURRENT |
 			REGULATOR_CHANGE_STATUS,
-	},
+	पूर्ण,
 	.num_consumer_supplies	= ARRAY_SIZE(bq24022_consumers),
 	.consumer_supplies	= bq24022_consumers,
-};
+पूर्ण;
 
 
-static enum gpiod_flags bq24022_gpiod_gflags[] = { GPIOD_OUT_LOW };
+अटल क्रमागत gpiod_flags bq24022_gpiod_gflags[] = अणु GPIOD_OUT_LOW पूर्ण;
 
-static struct gpio_regulator_state bq24022_states[] = {
-	{ .value = 100000, .gpios = (0 << 0) },
-	{ .value = 500000, .gpios = (1 << 0) },
-};
+अटल काष्ठा gpio_regulator_state bq24022_states[] = अणु
+	अणु .value = 100000, .gpios = (0 << 0) पूर्ण,
+	अणु .value = 500000, .gpios = (1 << 0) पूर्ण,
+पूर्ण;
 
-static struct gpio_regulator_config bq24022_info = {
+अटल काष्ठा gpio_regulator_config bq24022_info = अणु
 	.supply_name		= "bq24022",
 
 	.enabled_at_boot	= 1,
@@ -668,344 +669,344 @@ static struct gpio_regulator_config bq24022_info = {
 
 	.type			= REGULATOR_CURRENT,
 	.init_data		= &bq24022_init_data,
-};
+पूर्ण;
 
-static struct platform_device bq24022 = {
+अटल काष्ठा platक्रमm_device bq24022 = अणु
 	.name	= "gpio-regulator",
 	.id	= -1,
-	.dev	= {
-		.platform_data = &bq24022_info,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data = &bq24022_info,
+	पूर्ण,
+पूर्ण;
 
-static struct gpiod_lookup_table bq24022_gpiod_table = {
+अटल काष्ठा gpiod_lookup_table bq24022_gpiod_table = अणु
 	.dev_id = "gpio-regulator",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("gpio-pxa", EGPIO_MAGICIAN_BQ24022_ISET2,
-			    NULL, GPIO_ACTIVE_HIGH),
+			    शून्य, GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP("gpio-pxa", GPIO30_MAGICIAN_BQ24022_nCHARGE_EN,
 			    "enable", GPIO_ACTIVE_LOW),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /*
- * fixed regulator for ads7846
+ * fixed regulator क्रम ads7846
  */
 
-static struct regulator_consumer_supply ads7846_supply =
+अटल काष्ठा regulator_consumer_supply ads7846_supply =
 	REGULATOR_SUPPLY("vcc", "spi2.0");
 
-static struct regulator_init_data vads7846_regulator = {
-	.constraints	= {
+अटल काष्ठा regulator_init_data vads7846_regulator = अणु
+	.स्थिरraपूर्णांकs	= अणु
 		.valid_ops_mask	= REGULATOR_CHANGE_STATUS,
-	},
+	पूर्ण,
 	.num_consumer_supplies	= 1,
 	.consumer_supplies	= &ads7846_supply,
-};
+पूर्ण;
 
-static struct fixed_voltage_config vads7846 = {
+अटल काष्ठा fixed_voltage_config vads7846 = अणु
 	.supply_name	= "vads7846",
 	.microvolts	= 3300000, /* probably */
 	.startup_delay	= 0,
 	.init_data	= &vads7846_regulator,
-};
+पूर्ण;
 
-static struct platform_device vads7846_device = {
+अटल काष्ठा platक्रमm_device vads7846_device = अणु
 	.name	= "reg-fixed-voltage",
 	.id	= -1,
-	.dev	= {
-		.platform_data	= &vads7846,
-	},
-};
+	.dev	= अणु
+		.platक्रमm_data	= &vads7846,
+	पूर्ण,
+पूर्ण;
 
 /*
  * Vcore regulator MAX1587A
  */
 
-static struct regulator_consumer_supply magician_max1587a_consumers[] = {
-	REGULATOR_SUPPLY("vcc_core", NULL),
-};
+अटल काष्ठा regulator_consumer_supply magician_max1587a_consumers[] = अणु
+	REGULATOR_SUPPLY("vcc_core", शून्य),
+पूर्ण;
 
-static struct regulator_init_data magician_max1587a_v3_info = {
-	.constraints = {
+अटल काष्ठा regulator_init_data magician_max1587a_v3_info = अणु
+	.स्थिरraपूर्णांकs = अणु
 		.name		= "vcc_core range",
 		.min_uV		= 700000,
 		.max_uV		= 1475000,
 		.always_on	= 1,
 		.valid_ops_mask	= REGULATOR_CHANGE_VOLTAGE,
-	},
+	पूर्ण,
 	.consumer_supplies	= magician_max1587a_consumers,
 	.num_consumer_supplies	= ARRAY_SIZE(magician_max1587a_consumers),
-};
+पूर्ण;
 
-static struct max1586_subdev_data magician_max1587a_subdevs[] = {
-	{
+अटल काष्ठा max1586_subdev_data magician_max1587a_subdevs[] = अणु
+	अणु
 		.name		= "vcc_core",
 		.id		= MAX1586_V3,
-		.platform_data	= &magician_max1587a_v3_info,
-	}
-};
+		.platक्रमm_data	= &magician_max1587a_v3_info,
+	पूर्ण
+पूर्ण;
 
-static struct max1586_platform_data magician_max1587a_info = {
+अटल काष्ठा max1586_platक्रमm_data magician_max1587a_info = अणु
 	.subdevs     = magician_max1587a_subdevs,
 	.num_subdevs = ARRAY_SIZE(magician_max1587a_subdevs),
 	/*
 	 * NOTICE measured directly on the PCB (board_id == 0x3a), but
-	 * if R24 is present, it will boost the voltage
-	 * (write 1.475V, get 1.645V and smoke)
+	 * अगर R24 is present, it will boost the voltage
+	 * (ग_लिखो 1.475V, get 1.645V and smoke)
 	 */
 	.v3_gain     = MAX1586_GAIN_NO_R24,
-};
+पूर्ण;
 
-static struct i2c_board_info magician_pwr_i2c_board_info[] __initdata = {
-	{
+अटल काष्ठा i2c_board_info magician_pwr_i2c_board_info[] __initdata = अणु
+	अणु
 		I2C_BOARD_INFO("max1586", 0x14),
-		.platform_data	= &magician_max1587a_info,
-	},
-};
+		.platक्रमm_data	= &magician_max1587a_info,
+	पूर्ण,
+पूर्ण;
 
 /*
  * MMC/SD
  */
 
-static int magician_mci_init(struct device *dev,
-	irq_handler_t detect_irq, void *data)
-{
-	return request_irq(IRQ_MAGICIAN_SD, detect_irq, 0,
+अटल पूर्णांक magician_mci_init(काष्ठा device *dev,
+	irq_handler_t detect_irq, व्योम *data)
+अणु
+	वापस request_irq(IRQ_MAGICIAN_SD, detect_irq, 0,
 		"mmc card detect", data);
-}
+पूर्ण
 
-static void magician_mci_exit(struct device *dev, void *data)
-{
-	free_irq(IRQ_MAGICIAN_SD, data);
-}
+अटल व्योम magician_mci_निकास(काष्ठा device *dev, व्योम *data)
+अणु
+	मुक्त_irq(IRQ_MAGICIAN_SD, data);
+पूर्ण
 
-static struct pxamci_platform_data magician_mci_info = {
+अटल काष्ठा pxamci_platक्रमm_data magician_mci_info = अणु
 	.ocr_mask		= MMC_VDD_32_33|MMC_VDD_33_34,
 	.init			= magician_mci_init,
-	.exit			= magician_mci_exit,
+	.निकास			= magician_mci_निकास,
 	.gpio_card_ro_invert	= 1,
-};
+पूर्ण;
 
 /*
- * Write protect on EGPIO register 5 index 4, this is on the second HTC
- * EGPIO chip which starts at register 4, so we need offset 8+4=12 on that
+ * Write protect on EGPIO रेजिस्टर 5 index 4, this is on the second HTC
+ * EGPIO chip which starts at रेजिस्टर 4, so we need offset 8+4=12 on that
  * particular chip.
  */
-#define EGPIO_MAGICIAN_nSD_READONLY_OFFSET 12
+#घोषणा EGPIO_MAGICIAN_nSD_READONLY_OFFSET 12
 /*
- * Power on EGPIO register 2 index 0, so this is on the first HTC EGPIO chip
- * starting at register 0 so we need offset 2*8+0 = 16 on that chip.
+ * Power on EGPIO रेजिस्टर 2 index 0, so this is on the first HTC EGPIO chip
+ * starting at रेजिस्टर 0 so we need offset 2*8+0 = 16 on that chip.
  */
-#define EGPIO_MAGICIAN_nSD_POWER_OFFSET 16
+#घोषणा EGPIO_MAGICIAN_nSD_POWER_OFFSET 16
 
-static struct gpiod_lookup_table magician_mci_gpio_table = {
+अटल काष्ठा gpiod_lookup_table magician_mci_gpio_table = अणु
 	.dev_id = "pxa2xx-mci.0",
-	.table = {
+	.table = अणु
 		GPIO_LOOKUP("htc-egpio-1", EGPIO_MAGICIAN_nSD_READONLY_OFFSET,
 			    "wp", GPIO_ACTIVE_HIGH),
 		GPIO_LOOKUP("htc-egpio-0", EGPIO_MAGICIAN_nSD_POWER_OFFSET,
 			    "power", GPIO_ACTIVE_HIGH),
-		{ },
-	},
-};
+		अणु पूर्ण,
+	पूर्ण,
+पूर्ण;
 
 /*
  * USB OHCI
  */
 
-static struct pxaohci_platform_data magician_ohci_info = {
+अटल काष्ठा pxaohci_platक्रमm_data magician_ohci_info = अणु
 	.port_mode	= PMM_PERPORT_MODE,
 	/* port1: CSR Bluetooth, port2: OTG with UDC */
 	.flags		= ENABLE_PORT1 | ENABLE_PORT2 | POWER_CONTROL_LOW,
-	.power_budget	= 0,
-	.power_on_delay = 100,
-};
+	.घातer_budget	= 0,
+	.घातer_on_delay = 100,
+पूर्ण;
 
 /*
  * StrataFlash
  */
 
-static int magician_flash_init(struct platform_device *pdev)
-{
-	int ret = gpio_request(EGPIO_MAGICIAN_FLASH_VPP, "flash Vpp enable");
+अटल पूर्णांक magician_flash_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक ret = gpio_request(EGPIO_MAGICIAN_FLASH_VPP, "flash Vpp enable");
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Cannot request flash enable GPIO (%i)\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = gpio_direction_output(EGPIO_MAGICIAN_FLASH_VPP, 1);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Cannot set direction for flash enable (%i)\n", ret);
-		gpio_free(EGPIO_MAGICIAN_FLASH_VPP);
-	}
+		gpio_मुक्त(EGPIO_MAGICIAN_FLASH_VPP);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void magician_set_vpp(struct platform_device *pdev, int vpp)
-{
+अटल व्योम magician_set_vpp(काष्ठा platक्रमm_device *pdev, पूर्णांक vpp)
+अणु
 	gpio_set_value(EGPIO_MAGICIAN_FLASH_VPP, vpp);
-}
+पूर्ण
 
-static void magician_flash_exit(struct platform_device *pdev)
-{
-	gpio_free(EGPIO_MAGICIAN_FLASH_VPP);
-}
+अटल व्योम magician_flash_निकास(काष्ठा platक्रमm_device *pdev)
+अणु
+	gpio_मुक्त(EGPIO_MAGICIAN_FLASH_VPP);
+पूर्ण
 
-static struct resource strataflash_resource = {
+अटल काष्ठा resource strataflash_resource = अणु
 	.start	= PXA_CS0_PHYS,
 	.end	= PXA_CS0_PHYS + SZ_64M - 1,
 	.flags	= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct mtd_partition magician_flash_parts[] = {
-	{
+अटल काष्ठा mtd_partition magician_flash_parts[] = अणु
+	अणु
 		.name		= "Bootloader",
 		.offset		= 0x0,
 		.size		= 0x40000,
 		.mask_flags	= MTD_WRITEABLE, /* EXPERIMENTAL */
-	},
-	{
+	पूर्ण,
+	अणु
 		.name		= "Linux Kernel",
 		.offset		= 0x40000,
 		.size		= MTDPART_SIZ_FULL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
  * physmap-flash driver
  */
 
-static struct physmap_flash_data strataflash_data = {
+अटल काष्ठा physmap_flash_data strataflash_data = अणु
 	.width		= 4,
 	.init		= magician_flash_init,
 	.set_vpp	= magician_set_vpp,
-	.exit		= magician_flash_exit,
+	.निकास		= magician_flash_निकास,
 	.parts		= magician_flash_parts,
 	.nr_parts	= ARRAY_SIZE(magician_flash_parts),
-};
+पूर्ण;
 
-static struct platform_device strataflash = {
+अटल काष्ठा platक्रमm_device strataflash = अणु
 	.name		= "physmap-flash",
 	.id		= -1,
 	.resource	= &strataflash_resource,
 	.num_resources	= 1,
-	.dev = {
-		.platform_data = &strataflash_data,
-	},
-};
+	.dev = अणु
+		.platक्रमm_data = &strataflash_data,
+	पूर्ण,
+पूर्ण;
 
 /*
- * PXA I2C main controller
+ * PXA I2C मुख्य controller
  */
 
-static struct i2c_pxa_platform_data i2c_info = {
-	/* OV9640 I2C device doesn't support fast mode */
+अटल काष्ठा i2c_pxa_platक्रमm_data i2c_info = अणु
+	/* OV9640 I2C device करोesn't support fast mode */
 	.fast_mode	= 0,
-};
+पूर्ण;
 
 /*
- * PXA I2C power controller
+ * PXA I2C घातer controller
  */
 
-static struct i2c_pxa_platform_data magician_i2c_power_info = {
+अटल काष्ठा i2c_pxa_platक्रमm_data magician_i2c_घातer_info = अणु
 	.fast_mode	= 1,
-};
+पूर्ण;
 
 /*
  * Touchscreen
  */
 
-static struct ads7846_platform_data ads7846_pdata = {
+अटल काष्ठा ads7846_platक्रमm_data ads7846_pdata = अणु
 	.model		= 7846,
 	.x_plate_ohms	= 317,
 	.y_plate_ohms	= 500,
 	.pressure_max	= 1023,	/* with x plate ohms it will overflow 255 */
-	.debounce_max	= 3,	/* first readout is always bad */
+	.debounce_max	= 3,	/* first पढ़ोout is always bad */
 	.debounce_tol	= 30,
 	.debounce_rep	= 0,
-	.gpio_pendown	= GPIO115_MAGICIAN_nPEN_IRQ,
+	.gpio_penकरोwn	= GPIO115_MAGICIAN_nPEN_IRQ,
 	.keep_vref_on	= 1,
 	.wakeup		= true,
 	.vref_delay_usecs		= 100,
 	.penirq_recheck_delay_usecs	= 100,
-};
+पूर्ण;
 
-struct pxa2xx_spi_chip tsc2046_chip_info = {
+काष्ठा pxa2xx_spi_chip tsc2046_chip_info = अणु
 	.tx_threshold	= 1,
 	.rx_threshold	= 2,
-	.timeout	= 64,
+	.समयout	= 64,
 	/* NOTICE must be GPIO, incompatibility with hw PXA SPI framing */
 	.gpio_cs	= GPIO14_MAGICIAN_TSC2046_CS,
-};
+पूर्ण;
 
-static struct pxa2xx_spi_controller magician_spi_info = {
+अटल काष्ठा pxa2xx_spi_controller magician_spi_info = अणु
 	.num_chipselect	= 1,
 	.enable_dma	= 1,
-};
+पूर्ण;
 
-static struct spi_board_info ads7846_spi_board_info[] __initdata = {
-	{
+अटल काष्ठा spi_board_info ads7846_spi_board_info[] __initdata = अणु
+	अणु
 		.modalias		= "ads7846",
 		.bus_num		= 2,
 		.max_speed_hz		= 2500000,
-		.platform_data		= &ads7846_pdata,
+		.platक्रमm_data		= &ads7846_pdata,
 		.controller_data	= &tsc2046_chip_info,
 		.irq = PXA_GPIO_TO_IRQ(GPIO115_MAGICIAN_nPEN_IRQ),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * Platform devices
+ * Platक्रमm devices
  */
 
-static struct platform_device *devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *devices[] __initdata = अणु
 	&gpio_keys,
 	&egpio,
 	&backlight,
 	&pasic3,
 	&bq24022,
 	&gpio_vbus,
-	&power_supply,
+	&घातer_supply,
 	&strataflash,
 	&leds_gpio,
 	&vads7846_device,
-};
+पूर्ण;
 
-static struct gpio magician_global_gpios[] = {
-	{ GPIO13_MAGICIAN_CPLD_IRQ, GPIOF_IN, "CPLD_IRQ" },
-	{ GPIO107_MAGICIAN_DS1WM_IRQ, GPIOF_IN, "DS1WM_IRQ" },
+अटल काष्ठा gpio magician_global_gpios[] = अणु
+	अणु GPIO13_MAGICIAN_CPLD_IRQ, GPIOF_IN, "CPLD_IRQ" पूर्ण,
+	अणु GPIO107_MAGICIAN_DS1WM_IRQ, GPIOF_IN, "DS1WM_IRQ" पूर्ण,
 
 	/* NOTICE valid LCD init sequence */
-	{ GPIO106_MAGICIAN_LCD_DCDC_NRESET, GPIOF_OUT_INIT_LOW, "LCD DCDC nreset" },
-	{ GPIO104_MAGICIAN_LCD_VOFF_EN, GPIOF_OUT_INIT_LOW, "LCD VOFF enable" },
-	{ GPIO105_MAGICIAN_LCD_VON_EN, GPIOF_OUT_INIT_LOW, "LCD VON enable" },
-};
+	अणु GPIO106_MAGICIAN_LCD_DCDC_NRESET, GPIOF_OUT_INIT_LOW, "LCD DCDC nreset" पूर्ण,
+	अणु GPIO104_MAGICIAN_LCD_VOFF_EN, GPIOF_OUT_INIT_LOW, "LCD VOFF enable" पूर्ण,
+	अणु GPIO105_MAGICIAN_LCD_VON_EN, GPIOF_OUT_INIT_LOW, "LCD VON enable" पूर्ण,
+पूर्ण;
 
-static void __init magician_init(void)
-{
-	void __iomem *cpld;
-	int lcd_select;
-	int err;
+अटल व्योम __init magician_init(व्योम)
+अणु
+	व्योम __iomem *cpld;
+	पूर्णांक lcd_select;
+	पूर्णांक err;
 
 	pxa2xx_mfp_config(ARRAY_AND_SIZE(magician_pin_config));
 	err = gpio_request_array(ARRAY_AND_SIZE(magician_global_gpios));
-	if (err)
+	अगर (err)
 		pr_err("magician: Failed to request global GPIOs: %d\n", err);
 
-	pxa_set_ffuart_info(NULL);
-	pxa_set_btuart_info(NULL);
+	pxa_set_ffuart_info(शून्य);
+	pxa_set_btuart_info(शून्य);
 
 	pwm_add_table(magician_pwm_lookup, ARRAY_SIZE(magician_pwm_lookup));
 
 	pxa_set_ficp_info(&magician_ficp_info);
-	pxa27x_set_i2c_power_info(&magician_i2c_power_info);
+	pxa27x_set_i2c_घातer_info(&magician_i2c_घातer_info);
 	pxa_set_i2c_info(&i2c_info);
 
-	i2c_register_board_info(1,
+	i2c_रेजिस्टर_board_info(1,
 		ARRAY_AND_SIZE(magician_pwr_i2c_board_info));
 
 	gpiod_add_lookup_table(&magician_mci_gpio_table);
@@ -1015,32 +1016,32 @@ static void __init magician_init(void)
 
 	/* Check LCD type we have */
 	cpld = ioremap(PXA_CS3_PHYS, 0x1000);
-	if (cpld) {
-		u8 board_id = __raw_readb(cpld + 0x14);
+	अगर (cpld) अणु
+		u8 board_id = __raw_पढ़ोb(cpld + 0x14);
 
 		iounmap(cpld);
-		system_rev = board_id & 0x7;
+		प्रणाली_rev = board_id & 0x7;
 		lcd_select = board_id & 0x8;
 		pr_info("LCD type: %s\n", lcd_select ? "Samsung" : "Toppoly");
-		if (lcd_select && (system_rev < 3))
+		अगर (lcd_select && (प्रणाली_rev < 3))
 			/* NOTICE valid LCD init sequence */
 			gpio_request_one(GPIO75_MAGICIAN_SAMSUNG_POWER,
 				GPIOF_OUT_INIT_LOW, "Samsung LCD Power");
-		pxa_set_fb_info(NULL,
+		pxa_set_fb_info(शून्य,
 			lcd_select ? &samsung_info : &toppoly_info);
-	} else
+	पूर्ण अन्यथा
 		pr_err("LCD detection: CPLD mapping failed\n");
 
 	pxa2xx_set_spi_info(2, &magician_spi_info);
-	spi_register_board_info(ARRAY_AND_SIZE(ads7846_spi_board_info));
+	spi_रेजिस्टर_board_info(ARRAY_AND_SIZE(ads7846_spi_board_info));
 
-	regulator_register_always_on(0, "power", pwm_backlight_supply,
+	regulator_रेजिस्टर_always_on(0, "power", pwm_backlight_supply,
 		ARRAY_SIZE(pwm_backlight_supply), 5000000);
 
 	gpiod_add_lookup_table(&bq24022_gpiod_table);
 	gpiod_add_lookup_table(&gpio_vbus_gpiod_table);
-	platform_add_devices(ARRAY_AND_SIZE(devices));
-}
+	platक्रमm_add_devices(ARRAY_AND_SIZE(devices));
+पूर्ण
 
 MACHINE_START(MAGICIAN, "HTC Magician")
 	.atag_offset	= 0x100,
@@ -1049,6 +1050,6 @@ MACHINE_START(MAGICIAN, "HTC Magician")
 	.init_irq	= pxa27x_init_irq,
 	.handle_irq	= pxa27x_handle_irq,
 	.init_machine	= magician_init,
-	.init_time	= pxa_timer_init,
+	.init_समय	= pxa_समयr_init,
 	.restart	= pxa_restart,
 MACHINE_END

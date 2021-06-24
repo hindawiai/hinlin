@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
 /* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  * Copyright (C) 2019-2021 Linaro Ltd.
  */
-#ifndef _IPA_RESOURCE_H_
-#define _IPA_RESOURCE_H_
+#अगर_अघोषित _IPA_RESOURCE_H_
+#घोषणा _IPA_RESOURCE_H_
 
-struct ipa;
-struct ipa_resource_data;
+काष्ठा ipa;
+काष्ठा ipa_resource_data;
 
 /**
  * ipa_resource_config() - Configure resources
- * @ipa:	IPA pointer
+ * @ipa:	IPA poपूर्णांकer
  * @data:	IPA resource configuration data
  *
- * There is no need for a matching ipa_resource_deconfig() function.
+ * There is no need क्रम a matching ipa_resource_deconfig() function.
  *
- * Return:	true if all regions are valid, false otherwise
+ * Return:	true अगर all regions are valid, false otherwise
  */
-int ipa_resource_config(struct ipa *ipa, const struct ipa_resource_data *data);
+पूर्णांक ipa_resource_config(काष्ठा ipa *ipa, स्थिर काष्ठा ipa_resource_data *data);
 
-#endif /* _IPA_RESOURCE_H_ */
+#पूर्ण_अगर /* _IPA_RESOURCE_H_ */

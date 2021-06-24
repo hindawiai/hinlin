@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * max30100.c - Support for MAX30100 heart rate and pulse oximeter sensor
+ * max30100.c - Support क्रम MAX30100 heart rate and pulse oximeter sensor
  *
  * Copyright (C) 2015, 2018
  * Author: Matt Ranostay <matt.ranostay@konsulko.com>
@@ -8,435 +9,435 @@
  * TODO: enable pulse length controls via device tree properties
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/irq.h>
-#include <linux/i2c.h>
-#include <linux/mutex.h>
-#include <linux/property.h>
-#include <linux/regmap.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/kfifo_buf.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/property.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/kfअगरo_buf.h>
 
-#define MAX30100_REGMAP_NAME	"max30100_regmap"
-#define MAX30100_DRV_NAME	"max30100"
+#घोषणा MAX30100_REGMAP_NAME	"max30100_regmap"
+#घोषणा MAX30100_DRV_NAME	"max30100"
 
-#define MAX30100_REG_INT_STATUS			0x00
-#define MAX30100_REG_INT_STATUS_PWR_RDY		BIT(0)
-#define MAX30100_REG_INT_STATUS_SPO2_RDY	BIT(4)
-#define MAX30100_REG_INT_STATUS_HR_RDY		BIT(5)
-#define MAX30100_REG_INT_STATUS_FIFO_RDY	BIT(7)
+#घोषणा MAX30100_REG_INT_STATUS			0x00
+#घोषणा MAX30100_REG_INT_STATUS_PWR_RDY		BIT(0)
+#घोषणा MAX30100_REG_INT_STATUS_SPO2_RDY	BIT(4)
+#घोषणा MAX30100_REG_INT_STATUS_HR_RDY		BIT(5)
+#घोषणा MAX30100_REG_INT_STATUS_FIFO_RDY	BIT(7)
 
-#define MAX30100_REG_INT_ENABLE			0x01
-#define MAX30100_REG_INT_ENABLE_SPO2_EN		BIT(0)
-#define MAX30100_REG_INT_ENABLE_HR_EN		BIT(1)
-#define MAX30100_REG_INT_ENABLE_FIFO_EN		BIT(3)
-#define MAX30100_REG_INT_ENABLE_MASK		0xf0
-#define MAX30100_REG_INT_ENABLE_MASK_SHIFT	4
+#घोषणा MAX30100_REG_INT_ENABLE			0x01
+#घोषणा MAX30100_REG_INT_ENABLE_SPO2_EN		BIT(0)
+#घोषणा MAX30100_REG_INT_ENABLE_HR_EN		BIT(1)
+#घोषणा MAX30100_REG_INT_ENABLE_FIFO_EN		BIT(3)
+#घोषणा MAX30100_REG_INT_ENABLE_MASK		0xf0
+#घोषणा MAX30100_REG_INT_ENABLE_MASK_SHIFT	4
 
-#define MAX30100_REG_FIFO_WR_PTR		0x02
-#define MAX30100_REG_FIFO_OVR_CTR		0x03
-#define MAX30100_REG_FIFO_RD_PTR		0x04
-#define MAX30100_REG_FIFO_DATA			0x05
-#define MAX30100_REG_FIFO_DATA_ENTRY_COUNT	16
-#define MAX30100_REG_FIFO_DATA_ENTRY_LEN	4
+#घोषणा MAX30100_REG_FIFO_WR_PTR		0x02
+#घोषणा MAX30100_REG_FIFO_OVR_CTR		0x03
+#घोषणा MAX30100_REG_FIFO_RD_PTR		0x04
+#घोषणा MAX30100_REG_FIFO_DATA			0x05
+#घोषणा MAX30100_REG_FIFO_DATA_ENTRY_COUNT	16
+#घोषणा MAX30100_REG_FIFO_DATA_ENTRY_LEN	4
 
-#define MAX30100_REG_MODE_CONFIG		0x06
-#define MAX30100_REG_MODE_CONFIG_MODE_SPO2_EN	BIT(0)
-#define MAX30100_REG_MODE_CONFIG_MODE_HR_EN	BIT(1)
-#define MAX30100_REG_MODE_CONFIG_MODE_MASK	0x03
-#define MAX30100_REG_MODE_CONFIG_TEMP_EN	BIT(3)
-#define MAX30100_REG_MODE_CONFIG_PWR		BIT(7)
+#घोषणा MAX30100_REG_MODE_CONFIG		0x06
+#घोषणा MAX30100_REG_MODE_CONFIG_MODE_SPO2_EN	BIT(0)
+#घोषणा MAX30100_REG_MODE_CONFIG_MODE_HR_EN	BIT(1)
+#घोषणा MAX30100_REG_MODE_CONFIG_MODE_MASK	0x03
+#घोषणा MAX30100_REG_MODE_CONFIG_TEMP_EN	BIT(3)
+#घोषणा MAX30100_REG_MODE_CONFIG_PWR		BIT(7)
 
-#define MAX30100_REG_SPO2_CONFIG		0x07
-#define MAX30100_REG_SPO2_CONFIG_100HZ		BIT(2)
-#define MAX30100_REG_SPO2_CONFIG_HI_RES_EN	BIT(6)
-#define MAX30100_REG_SPO2_CONFIG_1600US		0x3
+#घोषणा MAX30100_REG_SPO2_CONFIG		0x07
+#घोषणा MAX30100_REG_SPO2_CONFIG_100HZ		BIT(2)
+#घोषणा MAX30100_REG_SPO2_CONFIG_HI_RES_EN	BIT(6)
+#घोषणा MAX30100_REG_SPO2_CONFIG_1600US		0x3
 
-#define MAX30100_REG_LED_CONFIG			0x09
-#define MAX30100_REG_LED_CONFIG_LED_MASK	0x0f
-#define MAX30100_REG_LED_CONFIG_RED_LED_SHIFT	4
+#घोषणा MAX30100_REG_LED_CONFIG			0x09
+#घोषणा MAX30100_REG_LED_CONFIG_LED_MASK	0x0f
+#घोषणा MAX30100_REG_LED_CONFIG_RED_LED_SHIFT	4
 
-#define MAX30100_REG_LED_CONFIG_24MA		0x07
-#define MAX30100_REG_LED_CONFIG_50MA		0x0f
+#घोषणा MAX30100_REG_LED_CONFIG_24MA		0x07
+#घोषणा MAX30100_REG_LED_CONFIG_50MA		0x0f
 
-#define MAX30100_REG_TEMP_INTEGER		0x16
-#define MAX30100_REG_TEMP_FRACTION		0x17
+#घोषणा MAX30100_REG_TEMP_INTEGER		0x16
+#घोषणा MAX30100_REG_TEMP_FRACTION		0x17
 
-struct max30100_data {
-	struct i2c_client *client;
-	struct iio_dev *indio_dev;
-	struct mutex lock;
-	struct regmap *regmap;
+काष्ठा max30100_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा iio_dev *indio_dev;
+	काष्ठा mutex lock;
+	काष्ठा regmap *regmap;
 
 	__be16 buffer[2]; /* 2 16-bit channels */
-};
+पूर्ण;
 
-static bool max30100_is_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case MAX30100_REG_INT_STATUS:
-	case MAX30100_REG_MODE_CONFIG:
-	case MAX30100_REG_FIFO_WR_PTR:
-	case MAX30100_REG_FIFO_OVR_CTR:
-	case MAX30100_REG_FIFO_RD_PTR:
-	case MAX30100_REG_FIFO_DATA:
-	case MAX30100_REG_TEMP_INTEGER:
-	case MAX30100_REG_TEMP_FRACTION:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool max30100_is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल MAX30100_REG_INT_STATUS:
+	हाल MAX30100_REG_MODE_CONFIG:
+	हाल MAX30100_REG_FIFO_WR_PTR:
+	हाल MAX30100_REG_FIFO_OVR_CTR:
+	हाल MAX30100_REG_FIFO_RD_PTR:
+	हाल MAX30100_REG_FIFO_DATA:
+	हाल MAX30100_REG_TEMP_INTEGER:
+	हाल MAX30100_REG_TEMP_FRACTION:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static const struct regmap_config max30100_regmap_config = {
+अटल स्थिर काष्ठा regmap_config max30100_regmap_config = अणु
 	.name = MAX30100_REGMAP_NAME,
 
 	.reg_bits = 8,
 	.val_bits = 8,
 
-	.max_register = MAX30100_REG_TEMP_FRACTION,
+	.max_रेजिस्टर = MAX30100_REG_TEMP_FRACTION,
 	.cache_type = REGCACHE_FLAT,
 
-	.volatile_reg = max30100_is_volatile_reg,
-};
+	.अस्थिर_reg = max30100_is_अस्थिर_reg,
+पूर्ण;
 
-static const unsigned int max30100_led_current_mapping[] = {
+अटल स्थिर अचिन्हित पूर्णांक max30100_led_current_mapping[] = अणु
 	4400, 7600, 11000, 14200, 17400,
 	20800, 24000, 27100, 30600, 33800,
 	37000, 40200, 43600, 46800, 50000
-};
+पूर्ण;
 
-static const unsigned long max30100_scan_masks[] = {0x3, 0};
+अटल स्थिर अचिन्हित दीर्घ max30100_scan_masks[] = अणु0x3, 0पूर्ण;
 
-static const struct iio_chan_spec max30100_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec max30100_channels[] = अणु
+	अणु
 		.type = IIO_INTENSITY,
 		.channel2 = IIO_MOD_LIGHT_IR,
-		.modified = 1,
+		.modअगरied = 1,
 
 		.scan_index = 0,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 'u',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_BE,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.type = IIO_INTENSITY,
 		.channel2 = IIO_MOD_LIGHT_RED,
-		.modified = 1,
+		.modअगरied = 1,
 
 		.scan_index = 1,
-		.scan_type = {
+		.scan_type = अणु
 			.sign = 'u',
 			.realbits = 16,
 			.storagebits = 16,
 			.endianness = IIO_BE,
-		},
-	},
-	{
+		पूर्ण,
+	पूर्ण,
+	अणु
 		.type = IIO_TEMP,
 		.info_mask_separate =
 			BIT(IIO_CHAN_INFO_RAW) | BIT(IIO_CHAN_INFO_SCALE),
 		.scan_index = -1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int max30100_set_powermode(struct max30100_data *data, bool state)
-{
-	return regmap_update_bits(data->regmap, MAX30100_REG_MODE_CONFIG,
+अटल पूर्णांक max30100_set_घातermode(काष्ठा max30100_data *data, bool state)
+अणु
+	वापस regmap_update_bits(data->regmap, MAX30100_REG_MODE_CONFIG,
 				  MAX30100_REG_MODE_CONFIG_PWR,
 				  state ? 0 : MAX30100_REG_MODE_CONFIG_PWR);
-}
+पूर्ण
 
-static int max30100_clear_fifo(struct max30100_data *data)
-{
-	int ret;
+अटल पूर्णांक max30100_clear_fअगरo(काष्ठा max30100_data *data)
+अणु
+	पूर्णांक ret;
 
-	ret = regmap_write(data->regmap, MAX30100_REG_FIFO_WR_PTR, 0);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(data->regmap, MAX30100_REG_FIFO_WR_PTR, 0);
+	अगर (ret)
+		वापस ret;
 
-	ret = regmap_write(data->regmap, MAX30100_REG_FIFO_OVR_CTR, 0);
-	if (ret)
-		return ret;
+	ret = regmap_ग_लिखो(data->regmap, MAX30100_REG_FIFO_OVR_CTR, 0);
+	अगर (ret)
+		वापस ret;
 
-	return regmap_write(data->regmap, MAX30100_REG_FIFO_RD_PTR, 0);
-}
+	वापस regmap_ग_लिखो(data->regmap, MAX30100_REG_FIFO_RD_PTR, 0);
+पूर्ण
 
-static int max30100_buffer_postenable(struct iio_dev *indio_dev)
-{
-	struct max30100_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक max30100_buffer_postenable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा max30100_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	ret = max30100_set_powermode(data, true);
-	if (ret)
-		return ret;
+	ret = max30100_set_घातermode(data, true);
+	अगर (ret)
+		वापस ret;
 
-	return max30100_clear_fifo(data);
-}
+	वापस max30100_clear_fअगरo(data);
+पूर्ण
 
-static int max30100_buffer_predisable(struct iio_dev *indio_dev)
-{
-	struct max30100_data *data = iio_priv(indio_dev);
+अटल पूर्णांक max30100_buffer_predisable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा max30100_data *data = iio_priv(indio_dev);
 
-	return max30100_set_powermode(data, false);
-}
+	वापस max30100_set_घातermode(data, false);
+पूर्ण
 
-static const struct iio_buffer_setup_ops max30100_buffer_setup_ops = {
+अटल स्थिर काष्ठा iio_buffer_setup_ops max30100_buffer_setup_ops = अणु
 	.postenable = max30100_buffer_postenable,
 	.predisable = max30100_buffer_predisable,
-};
+पूर्ण;
 
-static inline int max30100_fifo_count(struct max30100_data *data)
-{
-	unsigned int val;
-	int ret;
+अटल अंतरभूत पूर्णांक max30100_fअगरo_count(काष्ठा max30100_data *data)
+अणु
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
-	ret = regmap_read(data->regmap, MAX30100_REG_INT_STATUS, &val);
-	if (ret)
-		return ret;
+	ret = regmap_पढ़ो(data->regmap, MAX30100_REG_INT_STATUS, &val);
+	अगर (ret)
+		वापस ret;
 
 	/* FIFO is almost full */
-	if (val & MAX30100_REG_INT_STATUS_FIFO_RDY)
-		return MAX30100_REG_FIFO_DATA_ENTRY_COUNT - 1;
+	अगर (val & MAX30100_REG_INT_STATUS_FIFO_RDY)
+		वापस MAX30100_REG_FIFO_DATA_ENTRY_COUNT - 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max30100_read_measurement(struct max30100_data *data)
-{
-	int ret;
+अटल पूर्णांक max30100_पढ़ो_measurement(काष्ठा max30100_data *data)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_i2c_block_data(data->client,
+	ret = i2c_smbus_पढ़ो_i2c_block_data(data->client,
 					    MAX30100_REG_FIFO_DATA,
 					    MAX30100_REG_FIFO_DATA_ENTRY_LEN,
 					    (u8 *) &data->buffer);
 
-	return (ret == MAX30100_REG_FIFO_DATA_ENTRY_LEN) ? 0 : ret;
-}
+	वापस (ret == MAX30100_REG_FIFO_DATA_ENTRY_LEN) ? 0 : ret;
+पूर्ण
 
-static irqreturn_t max30100_interrupt_handler(int irq, void *private)
-{
-	struct iio_dev *indio_dev = private;
-	struct max30100_data *data = iio_priv(indio_dev);
-	int ret, cnt = 0;
+अटल irqवापस_t max30100_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा iio_dev *indio_dev = निजी;
+	काष्ठा max30100_data *data = iio_priv(indio_dev);
+	पूर्णांक ret, cnt = 0;
 
 	mutex_lock(&data->lock);
 
-	while (cnt || (cnt = max30100_fifo_count(data)) > 0) {
-		ret = max30100_read_measurement(data);
-		if (ret)
-			break;
+	जबतक (cnt || (cnt = max30100_fअगरo_count(data)) > 0) अणु
+		ret = max30100_पढ़ो_measurement(data);
+		अगर (ret)
+			अवरोध;
 
 		iio_push_to_buffers(data->indio_dev, data->buffer);
 		cnt--;
-	}
+	पूर्ण
 
 	mutex_unlock(&data->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int max30100_get_current_idx(unsigned int val, int *reg)
-{
-	int idx;
+अटल पूर्णांक max30100_get_current_idx(अचिन्हित पूर्णांक val, पूर्णांक *reg)
+अणु
+	पूर्णांक idx;
 
 	/* LED turned off */
-	if (val == 0) {
+	अगर (val == 0) अणु
 		*reg = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (idx = 0; idx < ARRAY_SIZE(max30100_led_current_mapping); idx++) {
-		if (max30100_led_current_mapping[idx] == val) {
+	क्रम (idx = 0; idx < ARRAY_SIZE(max30100_led_current_mapping); idx++) अणु
+		अगर (max30100_led_current_mapping[idx] == val) अणु
 			*reg = idx + 1;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int max30100_led_init(struct max30100_data *data)
-{
-	struct device *dev = &data->client->dev;
-	unsigned int val[2];
-	int reg, ret;
+अटल पूर्णांक max30100_led_init(काष्ठा max30100_data *data)
+अणु
+	काष्ठा device *dev = &data->client->dev;
+	अचिन्हित पूर्णांक val[2];
+	पूर्णांक reg, ret;
 
-	ret = device_property_read_u32_array(dev, "maxim,led-current-microamp",
-					(unsigned int *) &val, 2);
-	if (ret) {
+	ret = device_property_पढ़ो_u32_array(dev, "maxim,led-current-microamp",
+					(अचिन्हित पूर्णांक *) &val, 2);
+	अगर (ret) अणु
 		/* Default to 24 mA RED LED, 50 mA IR LED */
 		reg = (MAX30100_REG_LED_CONFIG_24MA <<
 			MAX30100_REG_LED_CONFIG_RED_LED_SHIFT) |
 			MAX30100_REG_LED_CONFIG_50MA;
 		dev_warn(dev, "no led-current-microamp set");
 
-		return regmap_write(data->regmap, MAX30100_REG_LED_CONFIG, reg);
-	}
+		वापस regmap_ग_लिखो(data->regmap, MAX30100_REG_LED_CONFIG, reg);
+	पूर्ण
 
 	/* RED LED current */
 	ret = max30100_get_current_idx(val[0], &reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "invalid RED current setting %d", val[0]);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regmap_update_bits(data->regmap, MAX30100_REG_LED_CONFIG,
 		MAX30100_REG_LED_CONFIG_LED_MASK <<
 		MAX30100_REG_LED_CONFIG_RED_LED_SHIFT,
 		reg << MAX30100_REG_LED_CONFIG_RED_LED_SHIFT);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* IR LED current */
 	ret = max30100_get_current_idx(val[1], &reg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "invalid IR current setting %d", val[1]);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return regmap_update_bits(data->regmap, MAX30100_REG_LED_CONFIG,
+	वापस regmap_update_bits(data->regmap, MAX30100_REG_LED_CONFIG,
 		MAX30100_REG_LED_CONFIG_LED_MASK, reg);
-}
+पूर्ण
 
-static int max30100_chip_init(struct max30100_data *data)
-{
-	int ret;
+अटल पूर्णांक max30100_chip_init(काष्ठा max30100_data *data)
+अणु
+	पूर्णांक ret;
 
 	/* setup LED current settings */
 	ret = max30100_led_init(data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* enable hi-res SPO2 readings at 100Hz */
-	ret = regmap_write(data->regmap, MAX30100_REG_SPO2_CONFIG,
+	/* enable hi-res SPO2 पढ़ोings at 100Hz */
+	ret = regmap_ग_लिखो(data->regmap, MAX30100_REG_SPO2_CONFIG,
 				 MAX30100_REG_SPO2_CONFIG_HI_RES_EN |
 				 MAX30100_REG_SPO2_CONFIG_100HZ);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* enable SPO2 mode */
 	ret = regmap_update_bits(data->regmap, MAX30100_REG_MODE_CONFIG,
 				 MAX30100_REG_MODE_CONFIG_MODE_MASK,
 				 MAX30100_REG_MODE_CONFIG_MODE_HR_EN |
 				 MAX30100_REG_MODE_CONFIG_MODE_SPO2_EN);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* enable FIFO interrupt */
-	return regmap_update_bits(data->regmap, MAX30100_REG_INT_ENABLE,
+	/* enable FIFO पूर्णांकerrupt */
+	वापस regmap_update_bits(data->regmap, MAX30100_REG_INT_ENABLE,
 				 MAX30100_REG_INT_ENABLE_MASK,
 				 MAX30100_REG_INT_ENABLE_FIFO_EN
 				 << MAX30100_REG_INT_ENABLE_MASK_SHIFT);
-}
+पूर्ण
 
-static int max30100_read_temp(struct max30100_data *data, int *val)
-{
-	int ret;
-	unsigned int reg;
+अटल पूर्णांक max30100_पढ़ो_temp(काष्ठा max30100_data *data, पूर्णांक *val)
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक reg;
 
-	ret = regmap_read(data->regmap, MAX30100_REG_TEMP_INTEGER, &reg);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(data->regmap, MAX30100_REG_TEMP_INTEGER, &reg);
+	अगर (ret < 0)
+		वापस ret;
 	*val = reg << 4;
 
-	ret = regmap_read(data->regmap, MAX30100_REG_TEMP_FRACTION, &reg);
-	if (ret < 0)
-		return ret;
+	ret = regmap_पढ़ो(data->regmap, MAX30100_REG_TEMP_FRACTION, &reg);
+	अगर (ret < 0)
+		वापस ret;
 
 	*val |= reg & 0xf;
 	*val = sign_extend32(*val, 11);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int max30100_get_temp(struct max30100_data *data, int *val)
-{
-	int ret;
+अटल पूर्णांक max30100_get_temp(काष्ठा max30100_data *data, पूर्णांक *val)
+अणु
+	पूर्णांक ret;
 
 	/* start acquisition */
 	ret = regmap_update_bits(data->regmap, MAX30100_REG_MODE_CONFIG,
 				 MAX30100_REG_MODE_CONFIG_TEMP_EN,
 				 MAX30100_REG_MODE_CONFIG_TEMP_EN);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	msleep(35);
 
-	return max30100_read_temp(data, val);
-}
+	वापस max30100_पढ़ो_temp(data, val);
+पूर्ण
 
-static int max30100_read_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan,
-			     int *val, int *val2, long mask)
-{
-	struct max30100_data *data = iio_priv(indio_dev);
-	int ret = -EINVAL;
+अटल पूर्णांक max30100_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan,
+			     पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा max30100_data *data = iio_priv(indio_dev);
+	पूर्णांक ret = -EINVAL;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
 		/*
-		 * Temperature reading can only be acquired while engine
+		 * Temperature पढ़ोing can only be acquired जबतक engine
 		 * is running
 		 */
 		mutex_lock(&indio_dev->mlock);
 
-		if (!iio_buffer_enabled(indio_dev))
+		अगर (!iio_buffer_enabled(indio_dev))
 			ret = -EAGAIN;
-		else {
+		अन्यथा अणु
 			ret = max30100_get_temp(data, val);
-			if (!ret)
+			अगर (!ret)
 				ret = IIO_VAL_INT;
 
-		}
+		पूर्ण
 
 		mutex_unlock(&indio_dev->mlock);
-		break;
-	case IIO_CHAN_INFO_SCALE:
+		अवरोध;
+	हाल IIO_CHAN_INFO_SCALE:
 		*val = 1;  /* 0.0625 */
 		*val2 = 16;
 		ret = IIO_VAL_FRACTIONAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct iio_info max30100_info = {
-	.read_raw = max30100_read_raw,
-};
+अटल स्थिर काष्ठा iio_info max30100_info = अणु
+	.पढ़ो_raw = max30100_पढ़ो_raw,
+पूर्ण;
 
-static int max30100_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct max30100_data *data;
-	struct iio_dev *indio_dev;
-	int ret;
+अटल पूर्णांक max30100_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा max30100_data *data;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	indio_dev->name = MAX30100_DRV_NAME;
 	indio_dev->channels = max30100_channels;
 	indio_dev->info = &max30100_info;
 	indio_dev->num_channels = ARRAY_SIZE(max30100_channels);
 	indio_dev->available_scan_masks = max30100_scan_masks;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 
-	ret = devm_iio_kfifo_buffer_setup(&client->dev, indio_dev,
+	ret = devm_iio_kfअगरo_buffer_setup(&client->dev, indio_dev,
 					  INDIO_BUFFER_SOFTWARE,
 					  &max30100_buffer_setup_ops);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	data = iio_priv(indio_dev);
 	data->indio_dev = indio_dev;
@@ -446,64 +447,64 @@ static int max30100_probe(struct i2c_client *client,
 	i2c_set_clientdata(client, indio_dev);
 
 	data->regmap = devm_regmap_init_i2c(client, &max30100_regmap_config);
-	if (IS_ERR(data->regmap)) {
+	अगर (IS_ERR(data->regmap)) अणु
 		dev_err(&client->dev, "regmap initialization failed.\n");
-		return PTR_ERR(data->regmap);
-	}
-	max30100_set_powermode(data, false);
+		वापस PTR_ERR(data->regmap);
+	पूर्ण
+	max30100_set_घातermode(data, false);
 
 	ret = max30100_chip_init(data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (client->irq <= 0) {
+	अगर (client->irq <= 0) अणु
 		dev_err(&client->dev, "no valid irq defined\n");
-		return -EINVAL;
-	}
-	ret = devm_request_threaded_irq(&client->dev, client->irq,
-					NULL, max30100_interrupt_handler,
+		वापस -EINVAL;
+	पूर्ण
+	ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+					शून्य, max30100_पूर्णांकerrupt_handler,
 					IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					"max30100_irq", indio_dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "request irq (%d) failed\n", client->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return iio_device_register(indio_dev);
-}
+	वापस iio_device_रेजिस्टर(indio_dev);
+पूर्ण
 
-static int max30100_remove(struct i2c_client *client)
-{
-	struct iio_dev *indio_dev = i2c_get_clientdata(client);
-	struct max30100_data *data = iio_priv(indio_dev);
+अटल पूर्णांक max30100_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा iio_dev *indio_dev = i2c_get_clientdata(client);
+	काष्ठा max30100_data *data = iio_priv(indio_dev);
 
-	iio_device_unregister(indio_dev);
-	max30100_set_powermode(data, false);
+	iio_device_unरेजिस्टर(indio_dev);
+	max30100_set_घातermode(data, false);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id max30100_id[] = {
-	{ "max30100", 0 },
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id max30100_id[] = अणु
+	अणु "max30100", 0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, max30100_id);
 
-static const struct of_device_id max30100_dt_ids[] = {
-	{ .compatible = "maxim,max30100" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id max30100_dt_ids[] = अणु
+	अणु .compatible = "maxim,max30100" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, max30100_dt_ids);
 
-static struct i2c_driver max30100_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max30100_driver = अणु
+	.driver = अणु
 		.name	= MAX30100_DRV_NAME,
 		.of_match_table	= max30100_dt_ids,
-	},
+	पूर्ण,
 	.probe		= max30100_probe,
-	.remove		= max30100_remove,
+	.हटाओ		= max30100_हटाओ,
 	.id_table	= max30100_id,
-};
+पूर्ण;
 module_i2c_driver(max30100_driver);
 
 MODULE_AUTHOR("Matt Ranostay <matt.ranostay@konsulko.com>");

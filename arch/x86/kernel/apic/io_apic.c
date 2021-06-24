@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *	Intel IO-APIC support for multi-Pentium hosts.
+ *	Intel IO-APIC support क्रम multi-Pentium hosts.
  *
  *	Copyright (C) 1997, 1998, 1999, 2000, 2009 Ingo Molnar, Hajnalka Szabo
  *
- *	Many thanks to Stig Venaas for trying out countless experimental
+ *	Many thanks to Stig Venaas क्रम trying out countless experimental
  *	patches and reporting/debugging problems patiently!
  *
  *	(c) 1999, Multiple IO-APIC support, developed by
@@ -14,481 +15,481 @@
  *	and Ingo Molnar <mingo@redhat.com>
  *
  *	Fixes
- *	Maciej W. Rozycki	:	Bits for genuine 82489DX APICs;
+ *	Maciej W. Rozycki	:	Bits क्रम genuine 82489DX APICs;
  *					thanks to Eric Gilmore
  *					and Rolf G. Tews
- *					for testing these extensively
+ *					क्रम testing these extensively
  *	Paul Diefenbaugh	:	Added full ACPI support
  *
- * Historical information which is worth to be preserved:
+ * Historical inक्रमmation which is worth to be preserved:
  *
  * - SiS APIC rmw bug:
  *
- *	We used to have a workaround for a bug in SiS chips which
- *	required to rewrite the index register for a read-modify-write
- *	operation as the chip lost the index information which was
- *	setup for the read already. We cache the data now, so that
- *	workaround has been removed.
+ *	We used to have a workaround क्रम a bug in SiS chips which
+ *	required to reग_लिखो the index रेजिस्टर क्रम a पढ़ो-modअगरy-ग_लिखो
+ *	operation as the chip lost the index inक्रमmation which was
+ *	setup क्रम the पढ़ो alपढ़ोy. We cache the data now, so that
+ *	workaround has been हटाओd.
  */
 
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/pci.h>
-#include <linux/mc146818rtc.h>
-#include <linux/compiler.h>
-#include <linux/acpi.h>
-#include <linux/export.h>
-#include <linux/syscore_ops.h>
-#include <linux/freezer.h>
-#include <linux/kthread.h>
-#include <linux/jiffies.h>	/* time_after() */
-#include <linux/slab.h>
-#include <linux/memblock.h>
-#include <linux/msi.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mc146818rtc.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/export.h>
+#समावेश <linux/syscore_ops.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/jअगरfies.h>	/* समय_after() */
+#समावेश <linux/slab.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/msi.h>
 
-#include <asm/irqdomain.h>
-#include <asm/io.h>
-#include <asm/smp.h>
-#include <asm/cpu.h>
-#include <asm/desc.h>
-#include <asm/proto.h>
-#include <asm/acpi.h>
-#include <asm/dma.h>
-#include <asm/timer.h>
-#include <asm/time.h>
-#include <asm/i8259.h>
-#include <asm/setup.h>
-#include <asm/irq_remapping.h>
-#include <asm/hw_irq.h>
-#include <asm/apic.h>
+#समावेश <यंत्र/irqकरोमुख्य.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/acpi.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/समयr.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/i8259.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/irq_remapping.h>
+#समावेश <यंत्र/hw_irq.h>
+#समावेश <यंत्र/apic.h>
 
-#define	for_each_ioapic(idx)		\
-	for ((idx) = 0; (idx) < nr_ioapics; (idx)++)
-#define	for_each_ioapic_reverse(idx)	\
-	for ((idx) = nr_ioapics - 1; (idx) >= 0; (idx)--)
-#define	for_each_pin(idx, pin)		\
-	for ((pin) = 0; (pin) < ioapics[(idx)].nr_registers; (pin)++)
-#define	for_each_ioapic_pin(idx, pin)	\
-	for_each_ioapic((idx))		\
-		for_each_pin((idx), (pin))
-#define for_each_irq_pin(entry, head) \
-	list_for_each_entry(entry, &head, list)
+#घोषणा	क्रम_each_ioapic(idx)		\
+	क्रम ((idx) = 0; (idx) < nr_ioapics; (idx)++)
+#घोषणा	क्रम_each_ioapic_reverse(idx)	\
+	क्रम ((idx) = nr_ioapics - 1; (idx) >= 0; (idx)--)
+#घोषणा	क्रम_each_pin(idx, pin)		\
+	क्रम ((pin) = 0; (pin) < ioapics[(idx)].nr_रेजिस्टरs; (pin)++)
+#घोषणा	क्रम_each_ioapic_pin(idx, pin)	\
+	क्रम_each_ioapic((idx))		\
+		क्रम_each_pin((idx), (pin))
+#घोषणा क्रम_each_irq_pin(entry, head) \
+	list_क्रम_each_entry(entry, &head, list)
 
-static DEFINE_RAW_SPINLOCK(ioapic_lock);
-static DEFINE_MUTEX(ioapic_mutex);
-static unsigned int ioapic_dynirq_base;
-static int ioapic_initialized;
+अटल DEFINE_RAW_SPINLOCK(ioapic_lock);
+अटल DEFINE_MUTEX(ioapic_mutex);
+अटल अचिन्हित पूर्णांक ioapic_dynirq_base;
+अटल पूर्णांक ioapic_initialized;
 
-struct irq_pin_list {
-	struct list_head list;
-	int apic, pin;
-};
+काष्ठा irq_pin_list अणु
+	काष्ठा list_head list;
+	पूर्णांक apic, pin;
+पूर्ण;
 
-struct mp_chip_data {
-	struct list_head		irq_2_pin;
-	struct IO_APIC_route_entry	entry;
+काष्ठा mp_chip_data अणु
+	काष्ठा list_head		irq_2_pin;
+	काष्ठा IO_APIC_route_entry	entry;
 	bool				is_level;
 	bool				active_low;
 	bool				isa_irq;
 	u32 count;
-};
+पूर्ण;
 
-struct mp_ioapic_gsi {
+काष्ठा mp_ioapic_gsi अणु
 	u32 gsi_base;
 	u32 gsi_end;
-};
+पूर्ण;
 
-static struct ioapic {
+अटल काष्ठा ioapic अणु
 	/*
-	 * # of IRQ routing registers
+	 * # of IRQ routing रेजिस्टरs
 	 */
-	int nr_registers;
+	पूर्णांक nr_रेजिस्टरs;
 	/*
-	 * Saved state during suspend/resume, or while enabling intr-remap.
+	 * Saved state during suspend/resume, or जबतक enabling पूर्णांकr-remap.
 	 */
-	struct IO_APIC_route_entry *saved_registers;
+	काष्ठा IO_APIC_route_entry *saved_रेजिस्टरs;
 	/* I/O APIC config */
-	struct mpc_ioapic mp_config;
+	काष्ठा mpc_ioapic mp_config;
 	/* IO APIC gsi routing info */
-	struct mp_ioapic_gsi  gsi_config;
-	struct ioapic_domain_cfg irqdomain_cfg;
-	struct irq_domain *irqdomain;
-	struct resource *iomem_res;
-} ioapics[MAX_IO_APICS];
+	काष्ठा mp_ioapic_gsi  gsi_config;
+	काष्ठा ioapic_करोमुख्य_cfg irqकरोमुख्य_cfg;
+	काष्ठा irq_करोमुख्य *irqकरोमुख्य;
+	काष्ठा resource *iomem_res;
+पूर्ण ioapics[MAX_IO_APICS];
 
-#define mpc_ioapic_ver(ioapic_idx)	ioapics[ioapic_idx].mp_config.apicver
+#घोषणा mpc_ioapic_ver(ioapic_idx)	ioapics[ioapic_idx].mp_config.apicver
 
-int mpc_ioapic_id(int ioapic_idx)
-{
-	return ioapics[ioapic_idx].mp_config.apicid;
-}
+पूर्णांक mpc_ioapic_id(पूर्णांक ioapic_idx)
+अणु
+	वापस ioapics[ioapic_idx].mp_config.apicid;
+पूर्ण
 
-unsigned int mpc_ioapic_addr(int ioapic_idx)
-{
-	return ioapics[ioapic_idx].mp_config.apicaddr;
-}
+अचिन्हित पूर्णांक mpc_ioapic_addr(पूर्णांक ioapic_idx)
+अणु
+	वापस ioapics[ioapic_idx].mp_config.apicaddr;
+पूर्ण
 
-static inline struct mp_ioapic_gsi *mp_ioapic_gsi_routing(int ioapic_idx)
-{
-	return &ioapics[ioapic_idx].gsi_config;
-}
+अटल अंतरभूत काष्ठा mp_ioapic_gsi *mp_ioapic_gsi_routing(पूर्णांक ioapic_idx)
+अणु
+	वापस &ioapics[ioapic_idx].gsi_config;
+पूर्ण
 
-static inline int mp_ioapic_pin_count(int ioapic)
-{
-	struct mp_ioapic_gsi *gsi_cfg = mp_ioapic_gsi_routing(ioapic);
+अटल अंतरभूत पूर्णांक mp_ioapic_pin_count(पूर्णांक ioapic)
+अणु
+	काष्ठा mp_ioapic_gsi *gsi_cfg = mp_ioapic_gsi_routing(ioapic);
 
-	return gsi_cfg->gsi_end - gsi_cfg->gsi_base + 1;
-}
+	वापस gsi_cfg->gsi_end - gsi_cfg->gsi_base + 1;
+पूर्ण
 
-static inline u32 mp_pin_to_gsi(int ioapic, int pin)
-{
-	return mp_ioapic_gsi_routing(ioapic)->gsi_base + pin;
-}
+अटल अंतरभूत u32 mp_pin_to_gsi(पूर्णांक ioapic, पूर्णांक pin)
+अणु
+	वापस mp_ioapic_gsi_routing(ioapic)->gsi_base + pin;
+पूर्ण
 
-static inline bool mp_is_legacy_irq(int irq)
-{
-	return irq >= 0 && irq < nr_legacy_irqs();
-}
+अटल अंतरभूत bool mp_is_legacy_irq(पूर्णांक irq)
+अणु
+	वापस irq >= 0 && irq < nr_legacy_irqs();
+पूर्ण
 
-static inline struct irq_domain *mp_ioapic_irqdomain(int ioapic)
-{
-	return ioapics[ioapic].irqdomain;
-}
+अटल अंतरभूत काष्ठा irq_करोमुख्य *mp_ioapic_irqकरोमुख्य(पूर्णांक ioapic)
+अणु
+	वापस ioapics[ioapic].irqकरोमुख्य;
+पूर्ण
 
-int nr_ioapics;
+पूर्णांक nr_ioapics;
 
 /* The one past the highest gsi number used */
 u32 gsi_top;
 
 /* MP IRQ source entries */
-struct mpc_intsrc mp_irqs[MAX_IRQ_SOURCES];
+काष्ठा mpc_पूर्णांकsrc mp_irqs[MAX_IRQ_SOURCES];
 
 /* # of MP IRQ source entries */
-int mp_irq_entries;
+पूर्णांक mp_irq_entries;
 
-#ifdef CONFIG_EISA
-int mp_bus_id_to_type[MAX_MP_BUSSES];
-#endif
+#अगर_घोषित CONFIG_EISA
+पूर्णांक mp_bus_id_to_type[MAX_MP_BUSSES];
+#पूर्ण_अगर
 
 DECLARE_BITMAP(mp_bus_not_pci, MAX_MP_BUSSES);
 
-int skip_ioapic_setup;
+पूर्णांक skip_ioapic_setup;
 
 /**
- * disable_ioapic_support() - disables ioapic support at runtime
+ * disable_ioapic_support() - disables ioapic support at runसमय
  */
-void disable_ioapic_support(void)
-{
-#ifdef CONFIG_PCI
+व्योम disable_ioapic_support(व्योम)
+अणु
+#अगर_घोषित CONFIG_PCI
 	noioapicquirk = 1;
 	noioapicreroute = -1;
-#endif
+#पूर्ण_अगर
 	skip_ioapic_setup = 1;
-}
+पूर्ण
 
-static int __init parse_noapic(char *str)
-{
+अटल पूर्णांक __init parse_noapic(अक्षर *str)
+अणु
 	/* disable IO-APIC */
 	disable_ioapic_support();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("noapic", parse_noapic);
 
-/* Will be called in mpparse/ACPI codes for saving IRQ info */
-void mp_save_irq(struct mpc_intsrc *m)
-{
-	int i;
+/* Will be called in mpparse/ACPI codes क्रम saving IRQ info */
+व्योम mp_save_irq(काष्ठा mpc_पूर्णांकsrc *m)
+अणु
+	पूर्णांक i;
 
-	apic_printk(APIC_VERBOSE, "Int: type %d, pol %d, trig %d, bus %02x,"
+	apic_prपूर्णांकk(APIC_VERBOSE, "Int: type %d, pol %d, trig %d, bus %02x,"
 		" IRQ %02x, APIC ID %x, APIC INT %02x\n",
 		m->irqtype, m->irqflag & 3, (m->irqflag >> 2) & 3, m->srcbus,
 		m->srcbusirq, m->dstapic, m->dstirq);
 
-	for (i = 0; i < mp_irq_entries; i++) {
-		if (!memcmp(&mp_irqs[i], m, sizeof(*m)))
-			return;
-	}
+	क्रम (i = 0; i < mp_irq_entries; i++) अणु
+		अगर (!स_भेद(&mp_irqs[i], m, माप(*m)))
+			वापस;
+	पूर्ण
 
-	memcpy(&mp_irqs[mp_irq_entries], m, sizeof(*m));
-	if (++mp_irq_entries == MAX_IRQ_SOURCES)
+	स_नकल(&mp_irqs[mp_irq_entries], m, माप(*m));
+	अगर (++mp_irq_entries == MAX_IRQ_SOURCES)
 		panic("Max # of irq sources exceeded!!\n");
-}
+पूर्ण
 
-static void alloc_ioapic_saved_registers(int idx)
-{
-	size_t size;
+अटल व्योम alloc_ioapic_saved_रेजिस्टरs(पूर्णांक idx)
+अणु
+	माप_प्रकार size;
 
-	if (ioapics[idx].saved_registers)
-		return;
+	अगर (ioapics[idx].saved_रेजिस्टरs)
+		वापस;
 
-	size = sizeof(struct IO_APIC_route_entry) * ioapics[idx].nr_registers;
-	ioapics[idx].saved_registers = kzalloc(size, GFP_KERNEL);
-	if (!ioapics[idx].saved_registers)
+	size = माप(काष्ठा IO_APIC_route_entry) * ioapics[idx].nr_रेजिस्टरs;
+	ioapics[idx].saved_रेजिस्टरs = kzalloc(size, GFP_KERNEL);
+	अगर (!ioapics[idx].saved_रेजिस्टरs)
 		pr_err("IOAPIC %d: suspend/resume impossible!\n", idx);
-}
+पूर्ण
 
-static void free_ioapic_saved_registers(int idx)
-{
-	kfree(ioapics[idx].saved_registers);
-	ioapics[idx].saved_registers = NULL;
-}
+अटल व्योम मुक्त_ioapic_saved_रेजिस्टरs(पूर्णांक idx)
+अणु
+	kमुक्त(ioapics[idx].saved_रेजिस्टरs);
+	ioapics[idx].saved_रेजिस्टरs = शून्य;
+पूर्ण
 
-int __init arch_early_ioapic_init(void)
-{
-	int i;
+पूर्णांक __init arch_early_ioapic_init(व्योम)
+अणु
+	पूर्णांक i;
 
-	if (!nr_legacy_irqs())
+	अगर (!nr_legacy_irqs())
 		io_apic_irqs = ~0UL;
 
-	for_each_ioapic(i)
-		alloc_ioapic_saved_registers(i);
+	क्रम_each_ioapic(i)
+		alloc_ioapic_saved_रेजिस्टरs(i);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct io_apic {
-	unsigned int index;
-	unsigned int unused[3];
-	unsigned int data;
-	unsigned int unused2[11];
-	unsigned int eoi;
-};
+काष्ठा io_apic अणु
+	अचिन्हित पूर्णांक index;
+	अचिन्हित पूर्णांक unused[3];
+	अचिन्हित पूर्णांक data;
+	अचिन्हित पूर्णांक unused2[11];
+	अचिन्हित पूर्णांक eoi;
+पूर्ण;
 
-static __attribute_const__ struct io_apic __iomem *io_apic_base(int idx)
-{
-	return (void __iomem *) __fix_to_virt(FIX_IO_APIC_BASE_0 + idx)
+अटल __attribute_स्थिर__ काष्ठा io_apic __iomem *io_apic_base(पूर्णांक idx)
+अणु
+	वापस (व्योम __iomem *) __fix_to_virt(FIX_IO_APIC_BASE_0 + idx)
 		+ (mpc_ioapic_addr(idx) & ~PAGE_MASK);
-}
+पूर्ण
 
-static inline void io_apic_eoi(unsigned int apic, unsigned int vector)
-{
-	struct io_apic __iomem *io_apic = io_apic_base(apic);
-	writel(vector, &io_apic->eoi);
-}
+अटल अंतरभूत व्योम io_apic_eoi(अचिन्हित पूर्णांक apic, अचिन्हित पूर्णांक vector)
+अणु
+	काष्ठा io_apic __iomem *io_apic = io_apic_base(apic);
+	ग_लिखोl(vector, &io_apic->eoi);
+पूर्ण
 
-unsigned int native_io_apic_read(unsigned int apic, unsigned int reg)
-{
-	struct io_apic __iomem *io_apic = io_apic_base(apic);
-	writel(reg, &io_apic->index);
-	return readl(&io_apic->data);
-}
+अचिन्हित पूर्णांक native_io_apic_पढ़ो(अचिन्हित पूर्णांक apic, अचिन्हित पूर्णांक reg)
+अणु
+	काष्ठा io_apic __iomem *io_apic = io_apic_base(apic);
+	ग_लिखोl(reg, &io_apic->index);
+	वापस पढ़ोl(&io_apic->data);
+पूर्ण
 
-static void io_apic_write(unsigned int apic, unsigned int reg,
-			  unsigned int value)
-{
-	struct io_apic __iomem *io_apic = io_apic_base(apic);
+अटल व्योम io_apic_ग_लिखो(अचिन्हित पूर्णांक apic, अचिन्हित पूर्णांक reg,
+			  अचिन्हित पूर्णांक value)
+अणु
+	काष्ठा io_apic __iomem *io_apic = io_apic_base(apic);
 
-	writel(reg, &io_apic->index);
-	writel(value, &io_apic->data);
-}
+	ग_लिखोl(reg, &io_apic->index);
+	ग_लिखोl(value, &io_apic->data);
+पूर्ण
 
-static struct IO_APIC_route_entry __ioapic_read_entry(int apic, int pin)
-{
-	struct IO_APIC_route_entry entry;
+अटल काष्ठा IO_APIC_route_entry __ioapic_पढ़ो_entry(पूर्णांक apic, पूर्णांक pin)
+अणु
+	काष्ठा IO_APIC_route_entry entry;
 
-	entry.w1 = io_apic_read(apic, 0x10 + 2 * pin);
-	entry.w2 = io_apic_read(apic, 0x11 + 2 * pin);
+	entry.w1 = io_apic_पढ़ो(apic, 0x10 + 2 * pin);
+	entry.w2 = io_apic_पढ़ो(apic, 0x11 + 2 * pin);
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
-static struct IO_APIC_route_entry ioapic_read_entry(int apic, int pin)
-{
-	struct IO_APIC_route_entry entry;
-	unsigned long flags;
+अटल काष्ठा IO_APIC_route_entry ioapic_पढ़ो_entry(पूर्णांक apic, पूर्णांक pin)
+अणु
+	काष्ठा IO_APIC_route_entry entry;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	entry = __ioapic_read_entry(apic, pin);
+	entry = __ioapic_पढ़ो_entry(apic, pin);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
-	return entry;
-}
+	वापस entry;
+पूर्ण
 
 /*
- * When we write a new IO APIC routing entry, we need to write the high
+ * When we ग_लिखो a new IO APIC routing entry, we need to ग_लिखो the high
  * word first! If the mask bit in the low word is clear, we will enable
- * the interrupt, and we need to make sure the entry is fully populated
- * before that happens.
+ * the पूर्णांकerrupt, and we need to make sure the entry is fully populated
+ * beक्रमe that happens.
  */
-static void __ioapic_write_entry(int apic, int pin, struct IO_APIC_route_entry e)
-{
-	io_apic_write(apic, 0x11 + 2*pin, e.w2);
-	io_apic_write(apic, 0x10 + 2*pin, e.w1);
-}
+अटल व्योम __ioapic_ग_लिखो_entry(पूर्णांक apic, पूर्णांक pin, काष्ठा IO_APIC_route_entry e)
+अणु
+	io_apic_ग_लिखो(apic, 0x11 + 2*pin, e.w2);
+	io_apic_ग_लिखो(apic, 0x10 + 2*pin, e.w1);
+पूर्ण
 
-static void ioapic_write_entry(int apic, int pin, struct IO_APIC_route_entry e)
-{
-	unsigned long flags;
+अटल व्योम ioapic_ग_लिखो_entry(पूर्णांक apic, पूर्णांक pin, काष्ठा IO_APIC_route_entry e)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	__ioapic_write_entry(apic, pin, e);
+	__ioapic_ग_लिखो_entry(apic, pin, e);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-}
+पूर्ण
 
 /*
- * When we mask an IO APIC routing entry, we need to write the low
- * word first, in order to set the mask bit before we change the
+ * When we mask an IO APIC routing entry, we need to ग_लिखो the low
+ * word first, in order to set the mask bit beक्रमe we change the
  * high bits!
  */
-static void ioapic_mask_entry(int apic, int pin)
-{
-	struct IO_APIC_route_entry e = { .masked = true };
-	unsigned long flags;
+अटल व्योम ioapic_mask_entry(पूर्णांक apic, पूर्णांक pin)
+अणु
+	काष्ठा IO_APIC_route_entry e = अणु .masked = true पूर्ण;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	io_apic_write(apic, 0x10 + 2*pin, e.w1);
-	io_apic_write(apic, 0x11 + 2*pin, e.w2);
+	io_apic_ग_लिखो(apic, 0x10 + 2*pin, e.w1);
+	io_apic_ग_लिखो(apic, 0x11 + 2*pin, e.w2);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-}
+पूर्ण
 
 /*
- * The common case is 1:1 IRQ<->pin mappings. Sometimes there are
+ * The common हाल is 1:1 IRQ<->pin mappings. Someबार there are
  * shared ISA-space IRQs, so we have to support them. We are super
- * fast in the common case, and fast for shared ISA-space IRQs.
+ * fast in the common हाल, and fast क्रम shared ISA-space IRQs.
  */
-static int __add_pin_to_irq_node(struct mp_chip_data *data,
-				 int node, int apic, int pin)
-{
-	struct irq_pin_list *entry;
+अटल पूर्णांक __add_pin_to_irq_node(काष्ठा mp_chip_data *data,
+				 पूर्णांक node, पूर्णांक apic, पूर्णांक pin)
+अणु
+	काष्ठा irq_pin_list *entry;
 
-	/* don't allow duplicates */
-	for_each_irq_pin(entry, data->irq_2_pin)
-		if (entry->apic == apic && entry->pin == pin)
-			return 0;
+	/* करोn't allow duplicates */
+	क्रम_each_irq_pin(entry, data->irq_2_pin)
+		अगर (entry->apic == apic && entry->pin == pin)
+			वापस 0;
 
-	entry = kzalloc_node(sizeof(struct irq_pin_list), GFP_ATOMIC, node);
-	if (!entry) {
+	entry = kzalloc_node(माप(काष्ठा irq_pin_list), GFP_ATOMIC, node);
+	अगर (!entry) अणु
 		pr_err("can not alloc irq_pin_list (%d,%d,%d)\n",
 		       node, apic, pin);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	entry->apic = apic;
 	entry->pin = pin;
 	list_add_tail(&entry->list, &data->irq_2_pin);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __remove_pin_from_irq(struct mp_chip_data *data, int apic, int pin)
-{
-	struct irq_pin_list *tmp, *entry;
+अटल व्योम __हटाओ_pin_from_irq(काष्ठा mp_chip_data *data, पूर्णांक apic, पूर्णांक pin)
+अणु
+	काष्ठा irq_pin_list *पंचांगp, *entry;
 
-	list_for_each_entry_safe(entry, tmp, &data->irq_2_pin, list)
-		if (entry->apic == apic && entry->pin == pin) {
+	list_क्रम_each_entry_safe(entry, पंचांगp, &data->irq_2_pin, list)
+		अगर (entry->apic == apic && entry->pin == pin) अणु
 			list_del(&entry->list);
-			kfree(entry);
-			return;
-		}
-}
+			kमुक्त(entry);
+			वापस;
+		पूर्ण
+पूर्ण
 
-static void add_pin_to_irq_node(struct mp_chip_data *data,
-				int node, int apic, int pin)
-{
-	if (__add_pin_to_irq_node(data, node, apic, pin))
+अटल व्योम add_pin_to_irq_node(काष्ठा mp_chip_data *data,
+				पूर्णांक node, पूर्णांक apic, पूर्णांक pin)
+अणु
+	अगर (__add_pin_to_irq_node(data, node, apic, pin))
 		panic("IO-APIC: failed to add irq-pin. Can not proceed\n");
-}
+पूर्ण
 
 /*
- * Reroute an IRQ to a different pin.
+ * Reroute an IRQ to a dअगरferent pin.
  */
-static void __init replace_pin_at_irq_node(struct mp_chip_data *data, int node,
-					   int oldapic, int oldpin,
-					   int newapic, int newpin)
-{
-	struct irq_pin_list *entry;
+अटल व्योम __init replace_pin_at_irq_node(काष्ठा mp_chip_data *data, पूर्णांक node,
+					   पूर्णांक oldapic, पूर्णांक oldpin,
+					   पूर्णांक newapic, पूर्णांक newpin)
+अणु
+	काष्ठा irq_pin_list *entry;
 
-	for_each_irq_pin(entry, data->irq_2_pin) {
-		if (entry->apic == oldapic && entry->pin == oldpin) {
+	क्रम_each_irq_pin(entry, data->irq_2_pin) अणु
+		अगर (entry->apic == oldapic && entry->pin == oldpin) अणु
 			entry->apic = newapic;
 			entry->pin = newpin;
-			/* every one is different, right? */
-			return;
-		}
-	}
+			/* every one is dअगरferent, right? */
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	/* old apic/pin didn't exist, so just add new ones */
 	add_pin_to_irq_node(data, node, newapic, newpin);
-}
+पूर्ण
 
-static void io_apic_modify_irq(struct mp_chip_data *data, bool masked,
-			       void (*final)(struct irq_pin_list *entry))
-{
-	struct irq_pin_list *entry;
+अटल व्योम io_apic_modअगरy_irq(काष्ठा mp_chip_data *data, bool masked,
+			       व्योम (*final)(काष्ठा irq_pin_list *entry))
+अणु
+	काष्ठा irq_pin_list *entry;
 
 	data->entry.masked = masked;
 
-	for_each_irq_pin(entry, data->irq_2_pin) {
-		io_apic_write(entry->apic, 0x10 + 2 * entry->pin, data->entry.w1);
-		if (final)
+	क्रम_each_irq_pin(entry, data->irq_2_pin) अणु
+		io_apic_ग_लिखो(entry->apic, 0x10 + 2 * entry->pin, data->entry.w1);
+		अगर (final)
 			final(entry);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void io_apic_sync(struct irq_pin_list *entry)
-{
+अटल व्योम io_apic_sync(काष्ठा irq_pin_list *entry)
+अणु
 	/*
-	 * Synchronize the IO-APIC and the CPU by doing
-	 * a dummy read from the IO-APIC
+	 * Synchronize the IO-APIC and the CPU by करोing
+	 * a dummy पढ़ो from the IO-APIC
 	 */
-	struct io_apic __iomem *io_apic;
+	काष्ठा io_apic __iomem *io_apic;
 
 	io_apic = io_apic_base(entry->apic);
-	readl(&io_apic->data);
-}
+	पढ़ोl(&io_apic->data);
+पूर्ण
 
-static void mask_ioapic_irq(struct irq_data *irq_data)
-{
-	struct mp_chip_data *data = irq_data->chip_data;
-	unsigned long flags;
+अटल व्योम mask_ioapic_irq(काष्ठा irq_data *irq_data)
+अणु
+	काष्ठा mp_chip_data *data = irq_data->chip_data;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	io_apic_modify_irq(data, true, &io_apic_sync);
+	io_apic_modअगरy_irq(data, true, &io_apic_sync);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-}
+पूर्ण
 
-static void __unmask_ioapic(struct mp_chip_data *data)
-{
-	io_apic_modify_irq(data, false, NULL);
-}
+अटल व्योम __unmask_ioapic(काष्ठा mp_chip_data *data)
+अणु
+	io_apic_modअगरy_irq(data, false, शून्य);
+पूर्ण
 
-static void unmask_ioapic_irq(struct irq_data *irq_data)
-{
-	struct mp_chip_data *data = irq_data->chip_data;
-	unsigned long flags;
+अटल व्योम unmask_ioapic_irq(काष्ठा irq_data *irq_data)
+अणु
+	काष्ठा mp_chip_data *data = irq_data->chip_data;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
 	__unmask_ioapic(data);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-}
+पूर्ण
 
 /*
- * IO-APIC versions below 0x20 don't support EOI register.
- * For the record, here is the information about various versions:
+ * IO-APIC versions below 0x20 करोn't support EOI रेजिस्टर.
+ * For the record, here is the inक्रमmation about various versions:
  *     0Xh     82489DX
  *     1Xh     I/OAPIC or I/O(x)APIC which are not PCI 2.2 Compliant
  *     2Xh     I/O(x)APIC which is PCI 2.2 Compliant
  *     30h-FFh Reserved
  *
- * Some of the Intel ICH Specs (ICH2 to ICH5) documents the io-apic
- * version as 0x2. This is an error with documentation and these ICH chips
+ * Some of the Intel ICH Specs (ICH2 to ICH5) करोcuments the io-apic
+ * version as 0x2. This is an error with करोcumentation and these ICH chips
  * use io-apic's of version 0x20.
  *
- * For IO-APIC's with EOI register, we use that to do an explicit EOI.
+ * For IO-APIC's with EOI रेजिस्टर, we use that to करो an explicit EOI.
  * Otherwise, we simulate the EOI message manually by changing the trigger
  * mode to edge and then back to level, with RTE being masked during this.
  */
-static void __eoi_ioapic_pin(int apic, int pin, int vector)
-{
-	if (mpc_ioapic_ver(apic) >= 0x20) {
+अटल व्योम __eoi_ioapic_pin(पूर्णांक apic, पूर्णांक pin, पूर्णांक vector)
+अणु
+	अगर (mpc_ioapic_ver(apic) >= 0x20) अणु
 		io_apic_eoi(apic, vector);
-	} else {
-		struct IO_APIC_route_entry entry, entry1;
+	पूर्ण अन्यथा अणु
+		काष्ठा IO_APIC_route_entry entry, entry1;
 
-		entry = entry1 = __ioapic_read_entry(apic, pin);
+		entry = entry1 = __ioapic_पढ़ो_entry(apic, pin);
 
 		/*
 		 * Mask the entry and change the trigger mode to edge.
@@ -496,383 +497,383 @@ static void __eoi_ioapic_pin(int apic, int pin, int vector)
 		entry1.masked = true;
 		entry1.is_level = false;
 
-		__ioapic_write_entry(apic, pin, entry1);
+		__ioapic_ग_लिखो_entry(apic, pin, entry1);
 
 		/*
 		 * Restore the previous level triggered entry.
 		 */
-		__ioapic_write_entry(apic, pin, entry);
-	}
-}
+		__ioapic_ग_लिखो_entry(apic, pin, entry);
+	पूर्ण
+पूर्ण
 
-static void eoi_ioapic_pin(int vector, struct mp_chip_data *data)
-{
-	unsigned long flags;
-	struct irq_pin_list *entry;
+अटल व्योम eoi_ioapic_pin(पूर्णांक vector, काष्ठा mp_chip_data *data)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा irq_pin_list *entry;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	for_each_irq_pin(entry, data->irq_2_pin)
+	क्रम_each_irq_pin(entry, data->irq_2_pin)
 		__eoi_ioapic_pin(entry->apic, entry->pin, vector);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-}
+पूर्ण
 
-static void clear_IO_APIC_pin(unsigned int apic, unsigned int pin)
-{
-	struct IO_APIC_route_entry entry;
+अटल व्योम clear_IO_APIC_pin(अचिन्हित पूर्णांक apic, अचिन्हित पूर्णांक pin)
+अणु
+	काष्ठा IO_APIC_route_entry entry;
 
 	/* Check delivery_mode to be sure we're not clearing an SMI pin */
-	entry = ioapic_read_entry(apic, pin);
-	if (entry.delivery_mode == APIC_DELIVERY_MODE_SMI)
-		return;
+	entry = ioapic_पढ़ो_entry(apic, pin);
+	अगर (entry.delivery_mode == APIC_DELIVERY_MODE_SMI)
+		वापस;
 
 	/*
-	 * Make sure the entry is masked and re-read the contents to check
-	 * if it is a level triggered pin and if the remote-IRR is set.
+	 * Make sure the entry is masked and re-पढ़ो the contents to check
+	 * अगर it is a level triggered pin and अगर the remote-IRR is set.
 	 */
-	if (!entry.masked) {
+	अगर (!entry.masked) अणु
 		entry.masked = true;
-		ioapic_write_entry(apic, pin, entry);
-		entry = ioapic_read_entry(apic, pin);
-	}
+		ioapic_ग_लिखो_entry(apic, pin, entry);
+		entry = ioapic_पढ़ो_entry(apic, pin);
+	पूर्ण
 
-	if (entry.irr) {
-		unsigned long flags;
+	अगर (entry.irr) अणु
+		अचिन्हित दीर्घ flags;
 
 		/*
 		 * Make sure the trigger mode is set to level. Explicit EOI
-		 * doesn't clear the remote-IRR if the trigger mode is not
+		 * करोesn't clear the remote-IRR अगर the trigger mode is not
 		 * set to level.
 		 */
-		if (!entry.is_level) {
+		अगर (!entry.is_level) अणु
 			entry.is_level = true;
-			ioapic_write_entry(apic, pin, entry);
-		}
+			ioapic_ग_लिखो_entry(apic, pin, entry);
+		पूर्ण
 		raw_spin_lock_irqsave(&ioapic_lock, flags);
 		__eoi_ioapic_pin(apic, pin, entry.vector);
 		raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-	}
+	पूर्ण
 
 	/*
-	 * Clear the rest of the bits in the IO-APIC RTE except for the mask
+	 * Clear the rest of the bits in the IO-APIC RTE except क्रम the mask
 	 * bit.
 	 */
 	ioapic_mask_entry(apic, pin);
-	entry = ioapic_read_entry(apic, pin);
-	if (entry.irr)
+	entry = ioapic_पढ़ो_entry(apic, pin);
+	अगर (entry.irr)
 		pr_err("Unable to reset IRR for apic: %d, pin :%d\n",
 		       mpc_ioapic_id(apic), pin);
-}
+पूर्ण
 
-void clear_IO_APIC (void)
-{
-	int apic, pin;
+व्योम clear_IO_APIC (व्योम)
+अणु
+	पूर्णांक apic, pin;
 
-	for_each_ioapic_pin(apic, pin)
+	क्रम_each_ioapic_pin(apic, pin)
 		clear_IO_APIC_pin(apic, pin);
-}
+पूर्ण
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 /*
- * support for broken MP BIOSs, enables hand-redirection of PIRQ0-7 to
- * specific CPU-side IRQs.
+ * support क्रम broken MP BIOSs, enables hand-redirection of PIRQ0-7 to
+ * specअगरic CPU-side IRQs.
  */
 
-#define MAX_PIRQS 8
-static int pirq_entries[MAX_PIRQS] = {
+#घोषणा MAX_PIRQS 8
+अटल पूर्णांक pirq_entries[MAX_PIRQS] = अणु
 	[0 ... MAX_PIRQS - 1] = -1
-};
+पूर्ण;
 
-static int __init ioapic_pirq_setup(char *str)
-{
-	int i, max;
-	int ints[MAX_PIRQS+1];
+अटल पूर्णांक __init ioapic_pirq_setup(अक्षर *str)
+अणु
+	पूर्णांक i, max;
+	पूर्णांक पूर्णांकs[MAX_PIRQS+1];
 
-	get_options(str, ARRAY_SIZE(ints), ints);
+	get_options(str, ARRAY_SIZE(पूर्णांकs), पूर्णांकs);
 
-	apic_printk(APIC_VERBOSE, KERN_INFO
+	apic_prपूर्णांकk(APIC_VERBOSE, KERN_INFO
 			"PIRQ redirection, working around broken MP-BIOS.\n");
 	max = MAX_PIRQS;
-	if (ints[0] < MAX_PIRQS)
-		max = ints[0];
+	अगर (पूर्णांकs[0] < MAX_PIRQS)
+		max = पूर्णांकs[0];
 
-	for (i = 0; i < max; i++) {
-		apic_printk(APIC_VERBOSE, KERN_DEBUG
-				"... PIRQ%d -> IRQ %d\n", i, ints[i+1]);
+	क्रम (i = 0; i < max; i++) अणु
+		apic_prपूर्णांकk(APIC_VERBOSE, KERN_DEBUG
+				"... PIRQ%d -> IRQ %d\n", i, पूर्णांकs[i+1]);
 		/*
-		 * PIRQs are mapped upside down, usually.
+		 * PIRQs are mapped upside करोwn, usually.
 		 */
-		pirq_entries[MAX_PIRQS-i-1] = ints[i+1];
-	}
-	return 1;
-}
+		pirq_entries[MAX_PIRQS-i-1] = पूर्णांकs[i+1];
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 __setup("pirq=", ioapic_pirq_setup);
-#endif /* CONFIG_X86_32 */
+#पूर्ण_अगर /* CONFIG_X86_32 */
 
 /*
  * Saves all the IO-APIC RTE's
  */
-int save_ioapic_entries(void)
-{
-	int apic, pin;
-	int err = 0;
+पूर्णांक save_ioapic_entries(व्योम)
+अणु
+	पूर्णांक apic, pin;
+	पूर्णांक err = 0;
 
-	for_each_ioapic(apic) {
-		if (!ioapics[apic].saved_registers) {
+	क्रम_each_ioapic(apic) अणु
+		अगर (!ioapics[apic].saved_रेजिस्टरs) अणु
 			err = -ENOMEM;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		for_each_pin(apic, pin)
-			ioapics[apic].saved_registers[pin] =
-				ioapic_read_entry(apic, pin);
-	}
+		क्रम_each_pin(apic, pin)
+			ioapics[apic].saved_रेजिस्टरs[pin] =
+				ioapic_पढ़ो_entry(apic, pin);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
  * Mask all IO APIC entries.
  */
-void mask_ioapic_entries(void)
-{
-	int apic, pin;
+व्योम mask_ioapic_entries(व्योम)
+अणु
+	पूर्णांक apic, pin;
 
-	for_each_ioapic(apic) {
-		if (!ioapics[apic].saved_registers)
-			continue;
+	क्रम_each_ioapic(apic) अणु
+		अगर (!ioapics[apic].saved_रेजिस्टरs)
+			जारी;
 
-		for_each_pin(apic, pin) {
-			struct IO_APIC_route_entry entry;
+		क्रम_each_pin(apic, pin) अणु
+			काष्ठा IO_APIC_route_entry entry;
 
-			entry = ioapics[apic].saved_registers[pin];
-			if (!entry.masked) {
+			entry = ioapics[apic].saved_रेजिस्टरs[pin];
+			अगर (!entry.masked) अणु
 				entry.masked = true;
-				ioapic_write_entry(apic, pin, entry);
-			}
-		}
-	}
-}
+				ioapic_ग_लिखो_entry(apic, pin, entry);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
- * Restore IO APIC entries which was saved in the ioapic structure.
+ * Restore IO APIC entries which was saved in the ioapic काष्ठाure.
  */
-int restore_ioapic_entries(void)
-{
-	int apic, pin;
+पूर्णांक restore_ioapic_entries(व्योम)
+अणु
+	पूर्णांक apic, pin;
 
-	for_each_ioapic(apic) {
-		if (!ioapics[apic].saved_registers)
-			continue;
+	क्रम_each_ioapic(apic) अणु
+		अगर (!ioapics[apic].saved_रेजिस्टरs)
+			जारी;
 
-		for_each_pin(apic, pin)
-			ioapic_write_entry(apic, pin,
-					   ioapics[apic].saved_registers[pin]);
-	}
-	return 0;
-}
+		क्रम_each_pin(apic, pin)
+			ioapic_ग_लिखो_entry(apic, pin,
+					   ioapics[apic].saved_रेजिस्टरs[pin]);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Find the IRQ entry number of a certain pin.
  */
-static int find_irq_entry(int ioapic_idx, int pin, int type)
-{
-	int i;
+अटल पूर्णांक find_irq_entry(पूर्णांक ioapic_idx, पूर्णांक pin, पूर्णांक type)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mp_irq_entries; i++)
-		if (mp_irqs[i].irqtype == type &&
+	क्रम (i = 0; i < mp_irq_entries; i++)
+		अगर (mp_irqs[i].irqtype == type &&
 		    (mp_irqs[i].dstapic == mpc_ioapic_id(ioapic_idx) ||
 		     mp_irqs[i].dstapic == MP_APIC_ALL) &&
 		    mp_irqs[i].dstirq == pin)
-			return i;
+			वापस i;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
  * Find the pin to which IRQ[irq] (ISA) is connected
  */
-static int __init find_isa_irq_pin(int irq, int type)
-{
-	int i;
+अटल पूर्णांक __init find_isa_irq_pin(पूर्णांक irq, पूर्णांक type)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mp_irq_entries; i++) {
-		int lbus = mp_irqs[i].srcbus;
+	क्रम (i = 0; i < mp_irq_entries; i++) अणु
+		पूर्णांक lbus = mp_irqs[i].srcbus;
 
-		if (test_bit(lbus, mp_bus_not_pci) &&
+		अगर (test_bit(lbus, mp_bus_not_pci) &&
 		    (mp_irqs[i].irqtype == type) &&
 		    (mp_irqs[i].srcbusirq == irq))
 
-			return mp_irqs[i].dstirq;
-	}
-	return -1;
-}
+			वापस mp_irqs[i].dstirq;
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int __init find_isa_irq_apic(int irq, int type)
-{
-	int i;
+अटल पूर्णांक __init find_isa_irq_apic(पूर्णांक irq, पूर्णांक type)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < mp_irq_entries; i++) {
-		int lbus = mp_irqs[i].srcbus;
+	क्रम (i = 0; i < mp_irq_entries; i++) अणु
+		पूर्णांक lbus = mp_irqs[i].srcbus;
 
-		if (test_bit(lbus, mp_bus_not_pci) &&
+		अगर (test_bit(lbus, mp_bus_not_pci) &&
 		    (mp_irqs[i].irqtype == type) &&
 		    (mp_irqs[i].srcbusirq == irq))
-			break;
-	}
+			अवरोध;
+	पूर्ण
 
-	if (i < mp_irq_entries) {
-		int ioapic_idx;
+	अगर (i < mp_irq_entries) अणु
+		पूर्णांक ioapic_idx;
 
-		for_each_ioapic(ioapic_idx)
-			if (mpc_ioapic_id(ioapic_idx) == mp_irqs[i].dstapic)
-				return ioapic_idx;
-	}
+		क्रम_each_ioapic(ioapic_idx)
+			अगर (mpc_ioapic_id(ioapic_idx) == mp_irqs[i].dstapic)
+				वापस ioapic_idx;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static bool irq_active_low(int idx)
-{
-	int bus = mp_irqs[idx].srcbus;
+अटल bool irq_active_low(पूर्णांक idx)
+अणु
+	पूर्णांक bus = mp_irqs[idx].srcbus;
 
 	/*
 	 * Determine IRQ line polarity (high active or low active):
 	 */
-	switch (mp_irqs[idx].irqflag & MP_IRQPOL_MASK) {
-	case MP_IRQPOL_DEFAULT:
+	चयन (mp_irqs[idx].irqflag & MP_IRQPOL_MASK) अणु
+	हाल MP_IRQPOL_DEFAULT:
 		/*
-		 * Conforms to spec, ie. bus-type dependent polarity.  PCI
-		 * defaults to low active. [E]ISA defaults to high active.
+		 * Conक्रमms to spec, ie. bus-type dependent polarity.  PCI
+		 * शेषs to low active. [E]ISA शेषs to high active.
 		 */
-		return !test_bit(bus, mp_bus_not_pci);
-	case MP_IRQPOL_ACTIVE_HIGH:
-		return false;
-	case MP_IRQPOL_RESERVED:
+		वापस !test_bit(bus, mp_bus_not_pci);
+	हाल MP_IRQPOL_ACTIVE_HIGH:
+		वापस false;
+	हाल MP_IRQPOL_RESERVED:
 		pr_warn("IOAPIC: Invalid polarity: 2, defaulting to low\n");
 		fallthrough;
-	case MP_IRQPOL_ACTIVE_LOW:
-	default: /* Pointless default required due to do gcc stupidity */
-		return true;
-	}
-}
+	हाल MP_IRQPOL_ACTIVE_LOW:
+	शेष: /* Poपूर्णांकless शेष required due to करो gcc stupidity */
+		वापस true;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_EISA
+#अगर_घोषित CONFIG_EISA
 /*
- * EISA Edge/Level control register, ELCR
+ * EISA Edge/Level control रेजिस्टर, ELCR
  */
-static bool EISA_ELCR(unsigned int irq)
-{
-	if (irq < nr_legacy_irqs()) {
-		unsigned int port = 0x4d0 + (irq >> 3);
-		return (inb(port) >> (irq & 7)) & 1;
-	}
-	apic_printk(APIC_VERBOSE, KERN_INFO
+अटल bool EISA_ELCR(अचिन्हित पूर्णांक irq)
+अणु
+	अगर (irq < nr_legacy_irqs()) अणु
+		अचिन्हित पूर्णांक port = 0x4d0 + (irq >> 3);
+		वापस (inb(port) >> (irq & 7)) & 1;
+	पूर्ण
+	apic_prपूर्णांकk(APIC_VERBOSE, KERN_INFO
 			"Broken MPtable reports ISA irq %d\n", irq);
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * EISA interrupts are always active high and can be edge or level
- * triggered depending on the ELCR value.  If an interrupt is listed as
- * EISA conforming in the MP table, that means its trigger type must be
- * read in from the ELCR.
+ * EISA पूर्णांकerrupts are always active high and can be edge or level
+ * triggered depending on the ELCR value.  If an पूर्णांकerrupt is listed as
+ * EISA conक्रमming in the MP table, that means its trigger type must be
+ * पढ़ो in from the ELCR.
  */
-static bool eisa_irq_is_level(int idx, int bus, bool level)
-{
-	switch (mp_bus_id_to_type[bus]) {
-	case MP_BUS_PCI:
-	case MP_BUS_ISA:
-		return level;
-	case MP_BUS_EISA:
-		return EISA_ELCR(mp_irqs[idx].srcbusirq);
-	}
+अटल bool eisa_irq_is_level(पूर्णांक idx, पूर्णांक bus, bool level)
+अणु
+	चयन (mp_bus_id_to_type[bus]) अणु
+	हाल MP_BUS_PCI:
+	हाल MP_BUS_ISA:
+		वापस level;
+	हाल MP_BUS_EISA:
+		वापस EISA_ELCR(mp_irqs[idx].srcbusirq);
+	पूर्ण
 	pr_warn("IOAPIC: Invalid srcbus: %d defaulting to level\n", bus);
-	return true;
-}
-#else
-static inline int eisa_irq_is_level(int idx, int bus, bool level)
-{
-	return level;
-}
-#endif
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक eisa_irq_is_level(पूर्णांक idx, पूर्णांक bus, bool level)
+अणु
+	वापस level;
+पूर्ण
+#पूर्ण_अगर
 
-static bool irq_is_level(int idx)
-{
-	int bus = mp_irqs[idx].srcbus;
+अटल bool irq_is_level(पूर्णांक idx)
+अणु
+	पूर्णांक bus = mp_irqs[idx].srcbus;
 	bool level;
 
 	/*
 	 * Determine IRQ trigger mode (edge or level sensitive):
 	 */
-	switch (mp_irqs[idx].irqflag & MP_IRQTRIG_MASK) {
-	case MP_IRQTRIG_DEFAULT:
+	चयन (mp_irqs[idx].irqflag & MP_IRQTRIG_MASK) अणु
+	हाल MP_IRQTRIG_DEFAULT:
 		/*
-		 * Conforms to spec, ie. bus-type dependent trigger
-		 * mode. PCI defaults to level, ISA to edge.
+		 * Conक्रमms to spec, ie. bus-type dependent trigger
+		 * mode. PCI शेषs to level, ISA to edge.
 		 */
 		level = !test_bit(bus, mp_bus_not_pci);
-		/* Take EISA into account */
-		return eisa_irq_is_level(idx, bus, level);
-	case MP_IRQTRIG_EDGE:
-		return false;
-	case MP_IRQTRIG_RESERVED:
+		/* Take EISA पूर्णांकo account */
+		वापस eisa_irq_is_level(idx, bus, level);
+	हाल MP_IRQTRIG_EDGE:
+		वापस false;
+	हाल MP_IRQTRIG_RESERVED:
 		pr_warn("IOAPIC: Invalid trigger mode 2 defaulting to level\n");
 		fallthrough;
-	case MP_IRQTRIG_LEVEL:
-	default: /* Pointless default required due to do gcc stupidity */
-		return true;
-	}
-}
+	हाल MP_IRQTRIG_LEVEL:
+	शेष: /* Poपूर्णांकless शेष required due to करो gcc stupidity */
+		वापस true;
+	पूर्ण
+पूर्ण
 
-static int __acpi_get_override_irq(u32 gsi, bool *trigger, bool *polarity)
-{
-	int ioapic, pin, idx;
+अटल पूर्णांक __acpi_get_override_irq(u32 gsi, bool *trigger, bool *polarity)
+अणु
+	पूर्णांक ioapic, pin, idx;
 
-	if (skip_ioapic_setup)
-		return -1;
+	अगर (skip_ioapic_setup)
+		वापस -1;
 
 	ioapic = mp_find_ioapic(gsi);
-	if (ioapic < 0)
-		return -1;
+	अगर (ioapic < 0)
+		वापस -1;
 
 	pin = mp_find_ioapic_pin(ioapic, gsi);
-	if (pin < 0)
-		return -1;
+	अगर (pin < 0)
+		वापस -1;
 
 	idx = find_irq_entry(ioapic, pin, mp_INT);
-	if (idx < 0)
-		return -1;
+	अगर (idx < 0)
+		वापस -1;
 
 	*trigger = irq_is_level(idx);
 	*polarity = irq_active_low(idx);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_ACPI
-int acpi_get_override_irq(u32 gsi, int *is_level, int *active_low)
-{
+#अगर_घोषित CONFIG_ACPI
+पूर्णांक acpi_get_override_irq(u32 gsi, पूर्णांक *is_level, पूर्णांक *active_low)
+अणु
 	*is_level = *active_low = 0;
-	return __acpi_get_override_irq(gsi, (bool *)is_level,
+	वापस __acpi_get_override_irq(gsi, (bool *)is_level,
 				       (bool *)active_low);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-void ioapic_set_alloc_attr(struct irq_alloc_info *info, int node,
-			   int trigger, int polarity)
-{
-	init_irq_alloc_info(info, NULL);
+व्योम ioapic_set_alloc_attr(काष्ठा irq_alloc_info *info, पूर्णांक node,
+			   पूर्णांक trigger, पूर्णांक polarity)
+अणु
+	init_irq_alloc_info(info, शून्य);
 	info->type = X86_IRQ_ALLOC_TYPE_IOAPIC;
 	info->ioapic.node = node;
 	info->ioapic.is_level = trigger;
 	info->ioapic.active_low = polarity;
 	info->ioapic.valid = 1;
-}
+पूर्ण
 
-static void ioapic_copy_alloc_attr(struct irq_alloc_info *dst,
-				   struct irq_alloc_info *src,
-				   u32 gsi, int ioapic_idx, int pin)
-{
+अटल व्योम ioapic_copy_alloc_attr(काष्ठा irq_alloc_info *dst,
+				   काष्ठा irq_alloc_info *src,
+				   u32 gsi, पूर्णांक ioapic_idx, पूर्णांक pin)
+अणु
 	bool level, pol_low;
 
 	copy_irq_alloc_info(dst, src);
@@ -880,549 +881,549 @@ static void ioapic_copy_alloc_attr(struct irq_alloc_info *dst,
 	dst->devid = mpc_ioapic_id(ioapic_idx);
 	dst->ioapic.pin = pin;
 	dst->ioapic.valid = 1;
-	if (src && src->ioapic.valid) {
+	अगर (src && src->ioapic.valid) अणु
 		dst->ioapic.node = src->ioapic.node;
 		dst->ioapic.is_level = src->ioapic.is_level;
 		dst->ioapic.active_low = src->ioapic.active_low;
-	} else {
+	पूर्ण अन्यथा अणु
 		dst->ioapic.node = NUMA_NO_NODE;
-		if (__acpi_get_override_irq(gsi, &level, &pol_low) >= 0) {
+		अगर (__acpi_get_override_irq(gsi, &level, &pol_low) >= 0) अणु
 			dst->ioapic.is_level = level;
 			dst->ioapic.active_low = pol_low;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
-			 * PCI interrupts are always active low level
+			 * PCI पूर्णांकerrupts are always active low level
 			 * triggered.
 			 */
 			dst->ioapic.is_level = true;
 			dst->ioapic.active_low = true;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int ioapic_alloc_attr_node(struct irq_alloc_info *info)
-{
-	return (info && info->ioapic.valid) ? info->ioapic.node : NUMA_NO_NODE;
-}
+अटल पूर्णांक ioapic_alloc_attr_node(काष्ठा irq_alloc_info *info)
+अणु
+	वापस (info && info->ioapic.valid) ? info->ioapic.node : NUMA_NO_NODE;
+पूर्ण
 
-static void mp_register_handler(unsigned int irq, bool level)
-{
+अटल व्योम mp_रेजिस्टर_handler(अचिन्हित पूर्णांक irq, bool level)
+अणु
 	irq_flow_handler_t hdl;
 	bool fasteoi;
 
-	if (level) {
+	अगर (level) अणु
 		irq_set_status_flags(irq, IRQ_LEVEL);
 		fasteoi = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		irq_clear_status_flags(irq, IRQ_LEVEL);
 		fasteoi = false;
-	}
+	पूर्ण
 
 	hdl = fasteoi ? handle_fasteoi_irq : handle_edge_irq;
 	__irq_set_handler(irq, hdl, 0, fasteoi ? "fasteoi" : "edge");
-}
+पूर्ण
 
-static bool mp_check_pin_attr(int irq, struct irq_alloc_info *info)
-{
-	struct mp_chip_data *data = irq_get_chip_data(irq);
+अटल bool mp_check_pin_attr(पूर्णांक irq, काष्ठा irq_alloc_info *info)
+अणु
+	काष्ठा mp_chip_data *data = irq_get_chip_data(irq);
 
 	/*
-	 * setup_IO_APIC_irqs() programs all legacy IRQs with default trigger
+	 * setup_IO_APIC_irqs() programs all legacy IRQs with शेष trigger
 	 * and polarity attributes. So allow the first user to reprogram the
 	 * pin with real trigger and polarity attributes.
 	 */
-	if (irq < nr_legacy_irqs() && data->count == 1) {
-		if (info->ioapic.is_level != data->is_level)
-			mp_register_handler(irq, info->ioapic.is_level);
+	अगर (irq < nr_legacy_irqs() && data->count == 1) अणु
+		अगर (info->ioapic.is_level != data->is_level)
+			mp_रेजिस्टर_handler(irq, info->ioapic.is_level);
 		data->entry.is_level = data->is_level = info->ioapic.is_level;
 		data->entry.active_low = data->active_low = info->ioapic.active_low;
-	}
+	पूर्ण
 
-	return data->is_level == info->ioapic.is_level &&
+	वापस data->is_level == info->ioapic.is_level &&
 	       data->active_low == info->ioapic.active_low;
-}
+पूर्ण
 
-static int alloc_irq_from_domain(struct irq_domain *domain, int ioapic, u32 gsi,
-				 struct irq_alloc_info *info)
-{
+अटल पूर्णांक alloc_irq_from_करोमुख्य(काष्ठा irq_करोमुख्य *करोमुख्य, पूर्णांक ioapic, u32 gsi,
+				 काष्ठा irq_alloc_info *info)
+अणु
 	bool legacy = false;
-	int irq = -1;
-	int type = ioapics[ioapic].irqdomain_cfg.type;
+	पूर्णांक irq = -1;
+	पूर्णांक type = ioapics[ioapic].irqकरोमुख्य_cfg.type;
 
-	switch (type) {
-	case IOAPIC_DOMAIN_LEGACY:
+	चयन (type) अणु
+	हाल IOAPIC_DOMAIN_LEGACY:
 		/*
-		 * Dynamically allocate IRQ number for non-ISA IRQs in the first
-		 * 16 GSIs on some weird platforms.
+		 * Dynamically allocate IRQ number क्रम non-ISA IRQs in the first
+		 * 16 GSIs on some weird platक्रमms.
 		 */
-		if (!ioapic_initialized || gsi >= nr_legacy_irqs())
+		अगर (!ioapic_initialized || gsi >= nr_legacy_irqs())
 			irq = gsi;
 		legacy = mp_is_legacy_irq(irq);
-		break;
-	case IOAPIC_DOMAIN_STRICT:
+		अवरोध;
+	हाल IOAPIC_DOMAIN_STRICT:
 		irq = gsi;
-		break;
-	case IOAPIC_DOMAIN_DYNAMIC:
-		break;
-	default:
+		अवरोध;
+	हाल IOAPIC_DOMAIN_DYNAMIC:
+		अवरोध;
+	शेष:
 		WARN(1, "ioapic: unknown irqdomain type %d\n", type);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return __irq_domain_alloc_irqs(domain, irq, 1,
+	वापस __irq_करोमुख्य_alloc_irqs(करोमुख्य, irq, 1,
 				       ioapic_alloc_attr_node(info),
-				       info, legacy, NULL);
-}
+				       info, legacy, शून्य);
+पूर्ण
 
 /*
- * Need special handling for ISA IRQs because there may be multiple IOAPIC pins
- * sharing the same ISA IRQ number and irqdomain only supports 1:1 mapping
+ * Need special handling क्रम ISA IRQs because there may be multiple IOAPIC pins
+ * sharing the same ISA IRQ number and irqकरोमुख्य only supports 1:1 mapping
  * between IOAPIC pin and IRQ number. A typical IOAPIC has 24 pins, pin 0-15 are
- * used for legacy IRQs and pin 16-23 are used for PCI IRQs (PIRQ A-H).
+ * used क्रम legacy IRQs and pin 16-23 are used क्रम PCI IRQs (PIRQ A-H).
  * When ACPI is disabled, only legacy IRQ numbers (IRQ0-15) are available, and
- * some BIOSes may use MP Interrupt Source records to override IRQ numbers for
- * PIRQs instead of reprogramming the interrupt routing logic. Thus there may be
+ * some BIOSes may use MP Interrupt Source records to override IRQ numbers क्रम
+ * PIRQs instead of reprogramming the पूर्णांकerrupt routing logic. Thus there may be
  * multiple pins sharing the same legacy IRQ number when ACPI is disabled.
  */
-static int alloc_isa_irq_from_domain(struct irq_domain *domain,
-				     int irq, int ioapic, int pin,
-				     struct irq_alloc_info *info)
-{
-	struct mp_chip_data *data;
-	struct irq_data *irq_data = irq_get_irq_data(irq);
-	int node = ioapic_alloc_attr_node(info);
+अटल पूर्णांक alloc_isa_irq_from_करोमुख्य(काष्ठा irq_करोमुख्य *करोमुख्य,
+				     पूर्णांक irq, पूर्णांक ioapic, पूर्णांक pin,
+				     काष्ठा irq_alloc_info *info)
+अणु
+	काष्ठा mp_chip_data *data;
+	काष्ठा irq_data *irq_data = irq_get_irq_data(irq);
+	पूर्णांक node = ioapic_alloc_attr_node(info);
 
 	/*
-	 * Legacy ISA IRQ has already been allocated, just add pin to
+	 * Legacy ISA IRQ has alपढ़ोy been allocated, just add pin to
 	 * the pin list associated with this IRQ and program the IOAPIC
 	 * entry. The IOAPIC entry
 	 */
-	if (irq_data && irq_data->parent_data) {
-		if (!mp_check_pin_attr(irq, info))
-			return -EBUSY;
-		if (__add_pin_to_irq_node(irq_data->chip_data, node, ioapic,
+	अगर (irq_data && irq_data->parent_data) अणु
+		अगर (!mp_check_pin_attr(irq, info))
+			वापस -EBUSY;
+		अगर (__add_pin_to_irq_node(irq_data->chip_data, node, ioapic,
 					  info->ioapic.pin))
-			return -ENOMEM;
-	} else {
+			वापस -ENOMEM;
+	पूर्ण अन्यथा अणु
 		info->flags |= X86_IRQ_ALLOC_LEGACY;
-		irq = __irq_domain_alloc_irqs(domain, irq, 1, node, info, true,
-					      NULL);
-		if (irq >= 0) {
-			irq_data = irq_domain_get_irq_data(domain, irq);
+		irq = __irq_करोमुख्य_alloc_irqs(करोमुख्य, irq, 1, node, info, true,
+					      शून्य);
+		अगर (irq >= 0) अणु
+			irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, irq);
 			data = irq_data->chip_data;
 			data->isa_irq = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static int mp_map_pin_to_irq(u32 gsi, int idx, int ioapic, int pin,
-			     unsigned int flags, struct irq_alloc_info *info)
-{
-	int irq;
+अटल पूर्णांक mp_map_pin_to_irq(u32 gsi, पूर्णांक idx, पूर्णांक ioapic, पूर्णांक pin,
+			     अचिन्हित पूर्णांक flags, काष्ठा irq_alloc_info *info)
+अणु
+	पूर्णांक irq;
 	bool legacy = false;
-	struct irq_alloc_info tmp;
-	struct mp_chip_data *data;
-	struct irq_domain *domain = mp_ioapic_irqdomain(ioapic);
+	काष्ठा irq_alloc_info पंचांगp;
+	काष्ठा mp_chip_data *data;
+	काष्ठा irq_करोमुख्य *करोमुख्य = mp_ioapic_irqकरोमुख्य(ioapic);
 
-	if (!domain)
-		return -ENOSYS;
+	अगर (!करोमुख्य)
+		वापस -ENOSYS;
 
-	if (idx >= 0 && test_bit(mp_irqs[idx].srcbus, mp_bus_not_pci)) {
+	अगर (idx >= 0 && test_bit(mp_irqs[idx].srcbus, mp_bus_not_pci)) अणु
 		irq = mp_irqs[idx].srcbusirq;
 		legacy = mp_is_legacy_irq(irq);
 		/*
-		 * IRQ2 is unusable for historical reasons on systems which
-		 * have a legacy PIC. See the comment vs. IRQ2 further down.
+		 * IRQ2 is unusable क्रम historical reasons on प्रणालीs which
+		 * have a legacy PIC. See the comment vs. IRQ2 further करोwn.
 		 *
-		 * If this gets removed at some point then the related code
-		 * in lapic_assign_system_vectors() needs to be adjusted as
+		 * If this माला_लो हटाओd at some poपूर्णांक then the related code
+		 * in lapic_assign_प्रणाली_vectors() needs to be adjusted as
 		 * well.
 		 */
-		if (legacy && irq == PIC_CASCADE_IR)
-			return -EINVAL;
-	}
+		अगर (legacy && irq == PIC_CASCADE_IR)
+			वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&ioapic_mutex);
-	if (!(flags & IOAPIC_MAP_ALLOC)) {
-		if (!legacy) {
-			irq = irq_find_mapping(domain, pin);
-			if (irq == 0)
+	अगर (!(flags & IOAPIC_MAP_ALLOC)) अणु
+		अगर (!legacy) अणु
+			irq = irq_find_mapping(करोमुख्य, pin);
+			अगर (irq == 0)
 				irq = -ENOENT;
-		}
-	} else {
-		ioapic_copy_alloc_attr(&tmp, info, gsi, ioapic, pin);
-		if (legacy)
-			irq = alloc_isa_irq_from_domain(domain, irq,
-							ioapic, pin, &tmp);
-		else if ((irq = irq_find_mapping(domain, pin)) == 0)
-			irq = alloc_irq_from_domain(domain, ioapic, gsi, &tmp);
-		else if (!mp_check_pin_attr(irq, &tmp))
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ioapic_copy_alloc_attr(&पंचांगp, info, gsi, ioapic, pin);
+		अगर (legacy)
+			irq = alloc_isa_irq_from_करोमुख्य(करोमुख्य, irq,
+							ioapic, pin, &पंचांगp);
+		अन्यथा अगर ((irq = irq_find_mapping(करोमुख्य, pin)) == 0)
+			irq = alloc_irq_from_करोमुख्य(करोमुख्य, ioapic, gsi, &पंचांगp);
+		अन्यथा अगर (!mp_check_pin_attr(irq, &पंचांगp))
 			irq = -EBUSY;
-		if (irq >= 0) {
+		अगर (irq >= 0) अणु
 			data = irq_get_chip_data(irq);
 			data->count++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&ioapic_mutex);
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static int pin_2_irq(int idx, int ioapic, int pin, unsigned int flags)
-{
+अटल पूर्णांक pin_2_irq(पूर्णांक idx, पूर्णांक ioapic, पूर्णांक pin, अचिन्हित पूर्णांक flags)
+अणु
 	u32 gsi = mp_pin_to_gsi(ioapic, pin);
 
 	/*
-	 * Debugging check, we are in big trouble if this message pops up!
+	 * Debugging check, we are in big trouble अगर this message pops up!
 	 */
-	if (mp_irqs[idx].dstirq != pin)
+	अगर (mp_irqs[idx].dstirq != pin)
 		pr_err("broken BIOS or MPTABLE parser, ayiee!!\n");
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 	/*
 	 * PCI IRQ command line redirection. Yes, limits are hardcoded.
 	 */
-	if ((pin >= 16) && (pin <= 23)) {
-		if (pirq_entries[pin-16] != -1) {
-			if (!pirq_entries[pin-16]) {
-				apic_printk(APIC_VERBOSE, KERN_DEBUG
+	अगर ((pin >= 16) && (pin <= 23)) अणु
+		अगर (pirq_entries[pin-16] != -1) अणु
+			अगर (!pirq_entries[pin-16]) अणु
+				apic_prपूर्णांकk(APIC_VERBOSE, KERN_DEBUG
 						"disabling PIRQ%d\n", pin-16);
-			} else {
-				int irq = pirq_entries[pin-16];
-				apic_printk(APIC_VERBOSE, KERN_DEBUG
+			पूर्ण अन्यथा अणु
+				पूर्णांक irq = pirq_entries[pin-16];
+				apic_prपूर्णांकk(APIC_VERBOSE, KERN_DEBUG
 						"using PIRQ%d -> IRQ %d\n",
 						pin-16, irq);
-				return irq;
-			}
-		}
-	}
-#endif
+				वापस irq;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
-	return  mp_map_pin_to_irq(gsi, idx, ioapic, pin, flags, NULL);
-}
+	वापस  mp_map_pin_to_irq(gsi, idx, ioapic, pin, flags, शून्य);
+पूर्ण
 
-int mp_map_gsi_to_irq(u32 gsi, unsigned int flags, struct irq_alloc_info *info)
-{
-	int ioapic, pin, idx;
+पूर्णांक mp_map_gsi_to_irq(u32 gsi, अचिन्हित पूर्णांक flags, काष्ठा irq_alloc_info *info)
+अणु
+	पूर्णांक ioapic, pin, idx;
 
 	ioapic = mp_find_ioapic(gsi);
-	if (ioapic < 0)
-		return -ENODEV;
+	अगर (ioapic < 0)
+		वापस -ENODEV;
 
 	pin = mp_find_ioapic_pin(ioapic, gsi);
 	idx = find_irq_entry(ioapic, pin, mp_INT);
-	if ((flags & IOAPIC_MAP_CHECK) && idx < 0)
-		return -ENODEV;
+	अगर ((flags & IOAPIC_MAP_CHECK) && idx < 0)
+		वापस -ENODEV;
 
-	return mp_map_pin_to_irq(gsi, idx, ioapic, pin, flags, info);
-}
+	वापस mp_map_pin_to_irq(gsi, idx, ioapic, pin, flags, info);
+पूर्ण
 
-void mp_unmap_irq(int irq)
-{
-	struct irq_data *irq_data = irq_get_irq_data(irq);
-	struct mp_chip_data *data;
+व्योम mp_unmap_irq(पूर्णांक irq)
+अणु
+	काष्ठा irq_data *irq_data = irq_get_irq_data(irq);
+	काष्ठा mp_chip_data *data;
 
-	if (!irq_data || !irq_data->domain)
-		return;
+	अगर (!irq_data || !irq_data->करोमुख्य)
+		वापस;
 
 	data = irq_data->chip_data;
-	if (!data || data->isa_irq)
-		return;
+	अगर (!data || data->isa_irq)
+		वापस;
 
 	mutex_lock(&ioapic_mutex);
-	if (--data->count == 0)
-		irq_domain_free_irqs(irq, 1);
+	अगर (--data->count == 0)
+		irq_करोमुख्य_मुक्त_irqs(irq, 1);
 	mutex_unlock(&ioapic_mutex);
-}
+पूर्ण
 
 /*
- * Find a specific PCI IRQ entry.
+ * Find a specअगरic PCI IRQ entry.
  * Not an __init, possibly needed by modules
  */
-int IO_APIC_get_PCI_irq_vector(int bus, int slot, int pin)
-{
-	int irq, i, best_ioapic = -1, best_idx = -1;
+पूर्णांक IO_APIC_get_PCI_irq_vector(पूर्णांक bus, पूर्णांक slot, पूर्णांक pin)
+अणु
+	पूर्णांक irq, i, best_ioapic = -1, best_idx = -1;
 
-	apic_printk(APIC_DEBUG,
+	apic_prपूर्णांकk(APIC_DEBUG,
 		    "querying PCI -> IRQ mapping bus:%d, slot:%d, pin:%d.\n",
 		    bus, slot, pin);
-	if (test_bit(bus, mp_bus_not_pci)) {
-		apic_printk(APIC_VERBOSE,
+	अगर (test_bit(bus, mp_bus_not_pci)) अणु
+		apic_prपूर्णांकk(APIC_VERBOSE,
 			    "PCI BIOS passed nonexistent PCI bus %d!\n", bus);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	for (i = 0; i < mp_irq_entries; i++) {
-		int lbus = mp_irqs[i].srcbus;
-		int ioapic_idx, found = 0;
+	क्रम (i = 0; i < mp_irq_entries; i++) अणु
+		पूर्णांक lbus = mp_irqs[i].srcbus;
+		पूर्णांक ioapic_idx, found = 0;
 
-		if (bus != lbus || mp_irqs[i].irqtype != mp_INT ||
+		अगर (bus != lbus || mp_irqs[i].irqtype != mp_INT ||
 		    slot != ((mp_irqs[i].srcbusirq >> 2) & 0x1f))
-			continue;
+			जारी;
 
-		for_each_ioapic(ioapic_idx)
-			if (mpc_ioapic_id(ioapic_idx) == mp_irqs[i].dstapic ||
-			    mp_irqs[i].dstapic == MP_APIC_ALL) {
+		क्रम_each_ioapic(ioapic_idx)
+			अगर (mpc_ioapic_id(ioapic_idx) == mp_irqs[i].dstapic ||
+			    mp_irqs[i].dstapic == MP_APIC_ALL) अणु
 				found = 1;
-				break;
-			}
-		if (!found)
-			continue;
+				अवरोध;
+			पूर्ण
+		अगर (!found)
+			जारी;
 
 		/* Skip ISA IRQs */
 		irq = pin_2_irq(i, ioapic_idx, mp_irqs[i].dstirq, 0);
-		if (irq > 0 && !IO_APIC_IRQ(irq))
-			continue;
+		अगर (irq > 0 && !IO_APIC_IRQ(irq))
+			जारी;
 
-		if (pin == (mp_irqs[i].srcbusirq & 3)) {
+		अगर (pin == (mp_irqs[i].srcbusirq & 3)) अणु
 			best_idx = i;
 			best_ioapic = ioapic_idx;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/*
 		 * Use the first all-but-pin matching entry as a
-		 * best-guess fuzzy result for broken mptables.
+		 * best-guess fuzzy result क्रम broken mptables.
 		 */
-		if (best_idx < 0) {
+		अगर (best_idx < 0) अणु
 			best_idx = i;
 			best_ioapic = ioapic_idx;
-		}
-	}
-	if (best_idx < 0)
-		return -1;
+		पूर्ण
+	पूर्ण
+	अगर (best_idx < 0)
+		वापस -1;
 
 out:
-	return pin_2_irq(best_idx, best_ioapic, mp_irqs[best_idx].dstirq,
+	वापस pin_2_irq(best_idx, best_ioapic, mp_irqs[best_idx].dstirq,
 			 IOAPIC_MAP_ALLOC);
-}
+पूर्ण
 EXPORT_SYMBOL(IO_APIC_get_PCI_irq_vector);
 
-static struct irq_chip ioapic_chip, ioapic_ir_chip;
+अटल काष्ठा irq_chip ioapic_chip, ioapic_ir_chip;
 
-static void __init setup_IO_APIC_irqs(void)
-{
-	unsigned int ioapic, pin;
-	int idx;
+अटल व्योम __init setup_IO_APIC_irqs(व्योम)
+अणु
+	अचिन्हित पूर्णांक ioapic, pin;
+	पूर्णांक idx;
 
-	apic_printk(APIC_VERBOSE, KERN_DEBUG "init IO_APIC IRQs\n");
+	apic_prपूर्णांकk(APIC_VERBOSE, KERN_DEBUG "init IO_APIC IRQs\n");
 
-	for_each_ioapic_pin(ioapic, pin) {
+	क्रम_each_ioapic_pin(ioapic, pin) अणु
 		idx = find_irq_entry(ioapic, pin, mp_INT);
-		if (idx < 0)
-			apic_printk(APIC_VERBOSE,
+		अगर (idx < 0)
+			apic_prपूर्णांकk(APIC_VERBOSE,
 				    KERN_DEBUG " apic %d pin %d not connected\n",
 				    mpc_ioapic_id(ioapic), pin);
-		else
+		अन्यथा
 			pin_2_irq(idx, ioapic, pin,
 				  ioapic ? 0 : IOAPIC_MAP_ALLOC);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ioapic_zap_locks(void)
-{
+व्योम ioapic_zap_locks(व्योम)
+अणु
 	raw_spin_lock_init(&ioapic_lock);
-}
+पूर्ण
 
-static void io_apic_print_entries(unsigned int apic, unsigned int nr_entries)
-{
-	struct IO_APIC_route_entry entry;
-	char buf[256];
-	int i;
+अटल व्योम io_apic_prपूर्णांक_entries(अचिन्हित पूर्णांक apic, अचिन्हित पूर्णांक nr_entries)
+अणु
+	काष्ठा IO_APIC_route_entry entry;
+	अक्षर buf[256];
+	पूर्णांक i;
 
-	printk(KERN_DEBUG "IOAPIC %d:\n", apic);
-	for (i = 0; i <= nr_entries; i++) {
-		entry = ioapic_read_entry(apic, i);
-		snprintf(buf, sizeof(buf),
+	prपूर्णांकk(KERN_DEBUG "IOAPIC %d:\n", apic);
+	क्रम (i = 0; i <= nr_entries; i++) अणु
+		entry = ioapic_पढ़ो_entry(apic, i);
+		snम_लिखो(buf, माप(buf),
 			 " pin%02x, %s, %s, %s, V(%02X), IRR(%1d), S(%1d)",
 			 i,
 			 entry.masked ? "disabled" : "enabled ",
 			 entry.is_level ? "level" : "edge ",
 			 entry.active_low ? "low " : "high",
 			 entry.vector, entry.irr, entry.delivery_status);
-		if (entry.ir_format) {
-			printk(KERN_DEBUG "%s, remapped, I(%04X),  Z(%X)\n",
+		अगर (entry.ir_क्रमmat) अणु
+			prपूर्णांकk(KERN_DEBUG "%s, remapped, I(%04X),  Z(%X)\n",
 			       buf,
 			       (entry.ir_index_15 << 15) | entry.ir_index_0_14,
 				entry.ir_zero);
-		} else {
-			printk(KERN_DEBUG "%s, %s, D(%02X%02X), M(%1d)\n", buf,
+		पूर्ण अन्यथा अणु
+			prपूर्णांकk(KERN_DEBUG "%s, %s, D(%02X%02X), M(%1d)\n", buf,
 			       entry.dest_mode_logical ? "logical " : "physical",
 			       entry.virt_destid_8_14, entry.destid_0_7,
 			       entry.delivery_mode);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void __init print_IO_APIC(int ioapic_idx)
-{
-	union IO_APIC_reg_00 reg_00;
-	union IO_APIC_reg_01 reg_01;
-	union IO_APIC_reg_02 reg_02;
-	union IO_APIC_reg_03 reg_03;
-	unsigned long flags;
+अटल व्योम __init prपूर्णांक_IO_APIC(पूर्णांक ioapic_idx)
+अणु
+	जोड़ IO_APIC_reg_00 reg_00;
+	जोड़ IO_APIC_reg_01 reg_01;
+	जोड़ IO_APIC_reg_02 reg_02;
+	जोड़ IO_APIC_reg_03 reg_03;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	reg_00.raw = io_apic_read(ioapic_idx, 0);
-	reg_01.raw = io_apic_read(ioapic_idx, 1);
-	if (reg_01.bits.version >= 0x10)
-		reg_02.raw = io_apic_read(ioapic_idx, 2);
-	if (reg_01.bits.version >= 0x20)
-		reg_03.raw = io_apic_read(ioapic_idx, 3);
+	reg_00.raw = io_apic_पढ़ो(ioapic_idx, 0);
+	reg_01.raw = io_apic_पढ़ो(ioapic_idx, 1);
+	अगर (reg_01.bits.version >= 0x10)
+		reg_02.raw = io_apic_पढ़ो(ioapic_idx, 2);
+	अगर (reg_01.bits.version >= 0x20)
+		reg_03.raw = io_apic_पढ़ो(ioapic_idx, 3);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
-	printk(KERN_DEBUG "IO APIC #%d......\n", mpc_ioapic_id(ioapic_idx));
-	printk(KERN_DEBUG ".... register #00: %08X\n", reg_00.raw);
-	printk(KERN_DEBUG ".......    : physical APIC id: %02X\n", reg_00.bits.ID);
-	printk(KERN_DEBUG ".......    : Delivery Type: %X\n", reg_00.bits.delivery_type);
-	printk(KERN_DEBUG ".......    : LTS          : %X\n", reg_00.bits.LTS);
+	prपूर्णांकk(KERN_DEBUG "IO APIC #%d......\n", mpc_ioapic_id(ioapic_idx));
+	prपूर्णांकk(KERN_DEBUG ".... register #00: %08X\n", reg_00.raw);
+	prपूर्णांकk(KERN_DEBUG ".......    : physical APIC id: %02X\n", reg_00.bits.ID);
+	prपूर्णांकk(KERN_DEBUG ".......    : Delivery Type: %X\n", reg_00.bits.delivery_type);
+	prपूर्णांकk(KERN_DEBUG ".......    : LTS          : %X\n", reg_00.bits.LTS);
 
-	printk(KERN_DEBUG ".... register #01: %08X\n", *(int *)&reg_01);
-	printk(KERN_DEBUG ".......     : max redirection entries: %02X\n",
+	prपूर्णांकk(KERN_DEBUG ".... register #01: %08X\n", *(पूर्णांक *)&reg_01);
+	prपूर्णांकk(KERN_DEBUG ".......     : max redirection entries: %02X\n",
 		reg_01.bits.entries);
 
-	printk(KERN_DEBUG ".......     : PRQ implemented: %X\n", reg_01.bits.PRQ);
-	printk(KERN_DEBUG ".......     : IO APIC version: %02X\n",
+	prपूर्णांकk(KERN_DEBUG ".......     : PRQ implemented: %X\n", reg_01.bits.PRQ);
+	prपूर्णांकk(KERN_DEBUG ".......     : IO APIC version: %02X\n",
 		reg_01.bits.version);
 
 	/*
-	 * Some Intel chipsets with IO APIC VERSION of 0x1? don't have reg_02,
-	 * but the value of reg_02 is read as the previous read register
-	 * value, so ignore it if reg_02 == reg_01.
+	 * Some Intel chipsets with IO APIC VERSION of 0x1? करोn't have reg_02,
+	 * but the value of reg_02 is पढ़ो as the previous पढ़ो रेजिस्टर
+	 * value, so ignore it अगर reg_02 == reg_01.
 	 */
-	if (reg_01.bits.version >= 0x10 && reg_02.raw != reg_01.raw) {
-		printk(KERN_DEBUG ".... register #02: %08X\n", reg_02.raw);
-		printk(KERN_DEBUG ".......     : arbitration: %02X\n", reg_02.bits.arbitration);
-	}
+	अगर (reg_01.bits.version >= 0x10 && reg_02.raw != reg_01.raw) अणु
+		prपूर्णांकk(KERN_DEBUG ".... register #02: %08X\n", reg_02.raw);
+		prपूर्णांकk(KERN_DEBUG ".......     : arbitration: %02X\n", reg_02.bits.arbitration);
+	पूर्ण
 
 	/*
-	 * Some Intel chipsets with IO APIC VERSION of 0x2? don't have reg_02
-	 * or reg_03, but the value of reg_0[23] is read as the previous read
-	 * register value, so ignore it if reg_03 == reg_0[12].
+	 * Some Intel chipsets with IO APIC VERSION of 0x2? करोn't have reg_02
+	 * or reg_03, but the value of reg_0[23] is पढ़ो as the previous पढ़ो
+	 * रेजिस्टर value, so ignore it अगर reg_03 == reg_0[12].
 	 */
-	if (reg_01.bits.version >= 0x20 && reg_03.raw != reg_02.raw &&
-	    reg_03.raw != reg_01.raw) {
-		printk(KERN_DEBUG ".... register #03: %08X\n", reg_03.raw);
-		printk(KERN_DEBUG ".......     : Boot DT    : %X\n", reg_03.bits.boot_DT);
-	}
+	अगर (reg_01.bits.version >= 0x20 && reg_03.raw != reg_02.raw &&
+	    reg_03.raw != reg_01.raw) अणु
+		prपूर्णांकk(KERN_DEBUG ".... register #03: %08X\n", reg_03.raw);
+		prपूर्णांकk(KERN_DEBUG ".......     : Boot DT    : %X\n", reg_03.bits.boot_DT);
+	पूर्ण
 
-	printk(KERN_DEBUG ".... IRQ redirection table:\n");
-	io_apic_print_entries(ioapic_idx, reg_01.bits.entries);
-}
+	prपूर्णांकk(KERN_DEBUG ".... IRQ redirection table:\n");
+	io_apic_prपूर्णांक_entries(ioapic_idx, reg_01.bits.entries);
+पूर्ण
 
-void __init print_IO_APICs(void)
-{
-	int ioapic_idx;
-	unsigned int irq;
+व्योम __init prपूर्णांक_IO_APICs(व्योम)
+अणु
+	पूर्णांक ioapic_idx;
+	अचिन्हित पूर्णांक irq;
 
-	printk(KERN_DEBUG "number of MP IRQ sources: %d.\n", mp_irq_entries);
-	for_each_ioapic(ioapic_idx)
-		printk(KERN_DEBUG "number of IO-APIC #%d registers: %d.\n",
+	prपूर्णांकk(KERN_DEBUG "number of MP IRQ sources: %d.\n", mp_irq_entries);
+	क्रम_each_ioapic(ioapic_idx)
+		prपूर्णांकk(KERN_DEBUG "number of IO-APIC #%d registers: %d.\n",
 		       mpc_ioapic_id(ioapic_idx),
-		       ioapics[ioapic_idx].nr_registers);
+		       ioapics[ioapic_idx].nr_रेजिस्टरs);
 
 	/*
 	 * We are a bit conservative about what we expect.  We have to
 	 * know about every hardware change ASAP.
 	 */
-	printk(KERN_INFO "testing the IO APIC.......................\n");
+	prपूर्णांकk(KERN_INFO "testing the IO APIC.......................\n");
 
-	for_each_ioapic(ioapic_idx)
-		print_IO_APIC(ioapic_idx);
+	क्रम_each_ioapic(ioapic_idx)
+		prपूर्णांक_IO_APIC(ioapic_idx);
 
-	printk(KERN_DEBUG "IRQ to pin mappings:\n");
-	for_each_active_irq(irq) {
-		struct irq_pin_list *entry;
-		struct irq_chip *chip;
-		struct mp_chip_data *data;
+	prपूर्णांकk(KERN_DEBUG "IRQ to pin mappings:\n");
+	क्रम_each_active_irq(irq) अणु
+		काष्ठा irq_pin_list *entry;
+		काष्ठा irq_chip *chip;
+		काष्ठा mp_chip_data *data;
 
 		chip = irq_get_chip(irq);
-		if (chip != &ioapic_chip && chip != &ioapic_ir_chip)
-			continue;
+		अगर (chip != &ioapic_chip && chip != &ioapic_ir_chip)
+			जारी;
 		data = irq_get_chip_data(irq);
-		if (!data)
-			continue;
-		if (list_empty(&data->irq_2_pin))
-			continue;
+		अगर (!data)
+			जारी;
+		अगर (list_empty(&data->irq_2_pin))
+			जारी;
 
-		printk(KERN_DEBUG "IRQ%d ", irq);
-		for_each_irq_pin(entry, data->irq_2_pin)
+		prपूर्णांकk(KERN_DEBUG "IRQ%d ", irq);
+		क्रम_each_irq_pin(entry, data->irq_2_pin)
 			pr_cont("-> %d:%d", entry->apic, entry->pin);
 		pr_cont("\n");
-	}
+	पूर्ण
 
-	printk(KERN_INFO ".................................... done.\n");
-}
+	prपूर्णांकk(KERN_INFO ".................................... done.\n");
+पूर्ण
 
-/* Where if anywhere is the i8259 connect in external int mode */
-static struct { int pin, apic; } ioapic_i8259 = { -1, -1 };
+/* Where अगर anywhere is the i8259 connect in बाह्यal पूर्णांक mode */
+अटल काष्ठा अणु पूर्णांक pin, apic; पूर्ण ioapic_i8259 = अणु -1, -1 पूर्ण;
 
-void __init enable_IO_APIC(void)
-{
-	int i8259_apic, i8259_pin;
-	int apic, pin;
+व्योम __init enable_IO_APIC(व्योम)
+अणु
+	पूर्णांक i8259_apic, i8259_pin;
+	पूर्णांक apic, pin;
 
-	if (skip_ioapic_setup)
+	अगर (skip_ioapic_setup)
 		nr_ioapics = 0;
 
-	if (!nr_legacy_irqs() || !nr_ioapics)
-		return;
+	अगर (!nr_legacy_irqs() || !nr_ioapics)
+		वापस;
 
-	for_each_ioapic_pin(apic, pin) {
-		/* See if any of the pins is in ExtINT mode */
-		struct IO_APIC_route_entry entry = ioapic_read_entry(apic, pin);
+	क्रम_each_ioapic_pin(apic, pin) अणु
+		/* See अगर any of the pins is in ExtINT mode */
+		काष्ठा IO_APIC_route_entry entry = ioapic_पढ़ो_entry(apic, pin);
 
-		/* If the interrupt line is enabled and in ExtInt mode
+		/* If the पूर्णांकerrupt line is enabled and in ExtInt mode
 		 * I have found the pin where the i8259 is connected.
 		 */
-		if (!entry.masked &&
-		    entry.delivery_mode == APIC_DELIVERY_MODE_EXTINT) {
+		अगर (!entry.masked &&
+		    entry.delivery_mode == APIC_DELIVERY_MODE_EXTINT) अणु
 			ioapic_i8259.apic = apic;
 			ioapic_i8259.pin  = pin;
-			goto found_i8259;
-		}
-	}
+			जाओ found_i8259;
+		पूर्ण
+	पूर्ण
  found_i8259:
-	/* Look to see what if the MP table has reported the ExtINT */
+	/* Look to see what अगर the MP table has reported the ExtINT */
 	/* If we could not find the appropriate pin by looking at the ioapic
 	 * the i8259 probably is not connected the ioapic but give the
 	 * mptable a chance anyway.
 	 */
 	i8259_pin  = find_isa_irq_pin(0, mp_ExtINT);
 	i8259_apic = find_isa_irq_apic(0, mp_ExtINT);
-	/* Trust the MP table if nothing is setup in the hardware */
-	if ((ioapic_i8259.pin == -1) && (i8259_pin >= 0)) {
-		printk(KERN_WARNING "ExtINT not setup in hardware but reported by MP table\n");
+	/* Trust the MP table अगर nothing is setup in the hardware */
+	अगर ((ioapic_i8259.pin == -1) && (i8259_pin >= 0)) अणु
+		prपूर्णांकk(KERN_WARNING "ExtINT not setup in hardware but reported by MP table\n");
 		ioapic_i8259.pin  = i8259_pin;
 		ioapic_i8259.apic = i8259_apic;
-	}
-	/* Complain if the MP table and the hardware disagree */
-	if (((ioapic_i8259.apic != i8259_apic) || (ioapic_i8259.pin != i8259_pin)) &&
+	पूर्ण
+	/* Complain अगर the MP table and the hardware disagree */
+	अगर (((ioapic_i8259.apic != i8259_apic) || (ioapic_i8259.pin != i8259_pin)) &&
 		(i8259_pin >= 0) && (ioapic_i8259.pin >= 0))
-	{
-		printk(KERN_WARNING "ExtINT in hardware and MP table differ\n");
-	}
+	अणु
+		prपूर्णांकk(KERN_WARNING "ExtINT in hardware and MP table differ\n");
+	पूर्ण
 
 	/*
 	 * Do not trust the IO-APIC being empty at bootup
 	 */
 	clear_IO_APIC();
-}
+पूर्ण
 
-void native_restore_boot_irq_mode(void)
-{
+व्योम native_restore_boot_irq_mode(व्योम)
+अणु
 	/*
 	 * If the i8259 is routed through an IOAPIC
-	 * Put that IOAPIC in virtual wire mode
-	 * so legacy interrupts can be delivered.
+	 * Put that IOAPIC in भव wire mode
+	 * so legacy पूर्णांकerrupts can be delivered.
 	 */
-	if (ioapic_i8259.pin != -1) {
-		struct IO_APIC_route_entry entry;
-		u32 apic_id = read_apic_id();
+	अगर (ioapic_i8259.pin != -1) अणु
+		काष्ठा IO_APIC_route_entry entry;
+		u32 apic_id = पढ़ो_apic_id();
 
-		memset(&entry, 0, sizeof(entry));
+		स_रखो(&entry, 0, माप(entry));
 		entry.masked		= false;
 		entry.is_level		= false;
 		entry.active_low	= false;
@@ -1434,36 +1435,36 @@ void native_restore_boot_irq_mode(void)
 		/*
 		 * Add it to the IO-APIC irq-routing table:
 		 */
-		ioapic_write_entry(ioapic_i8259.apic, ioapic_i8259.pin, entry);
-	}
+		ioapic_ग_लिखो_entry(ioapic_i8259.apic, ioapic_i8259.pin, entry);
+	पूर्ण
 
-	if (boot_cpu_has(X86_FEATURE_APIC) || apic_from_smp_config())
+	अगर (boot_cpu_has(X86_FEATURE_APIC) || apic_from_smp_config())
 		disconnect_bsp_APIC(ioapic_i8259.pin != -1);
-}
+पूर्ण
 
-void restore_boot_irq_mode(void)
-{
-	if (!nr_legacy_irqs())
-		return;
+व्योम restore_boot_irq_mode(व्योम)
+अणु
+	अगर (!nr_legacy_irqs())
+		वापस;
 
 	x86_apic_ops.restore();
-}
+पूर्ण
 
-#ifdef CONFIG_X86_32
+#अगर_घोषित CONFIG_X86_32
 /*
  * function to set the IO-APIC physical IDs based on the
  * values stored in the MPC table.
  *
  * by Matt Domsch <Matt_Domsch@dell.com>  Tue Dec 21 12:25:05 CST 1999
  */
-void __init setup_ioapic_ids_from_mpc_nocheck(void)
-{
-	union IO_APIC_reg_00 reg_00;
+व्योम __init setup_ioapic_ids_from_mpc_nocheck(व्योम)
+अणु
+	जोड़ IO_APIC_reg_00 reg_00;
 	physid_mask_t phys_id_present_map;
-	int ioapic_idx;
-	int i;
-	unsigned char old_id;
-	unsigned long flags;
+	पूर्णांक ioapic_idx;
+	पूर्णांक i;
+	अचिन्हित अक्षर old_id;
+	अचिन्हित दीर्घ flags;
 
 	/*
 	 * This is broken; anything with a real cpu count has to
@@ -1474,410 +1475,410 @@ void __init setup_ioapic_ids_from_mpc_nocheck(void)
 	/*
 	 * Set the IOAPIC ID to the value stored in the MPC table.
 	 */
-	for_each_ioapic(ioapic_idx) {
-		/* Read the register 0 value */
+	क्रम_each_ioapic(ioapic_idx) अणु
+		/* Read the रेजिस्टर 0 value */
 		raw_spin_lock_irqsave(&ioapic_lock, flags);
-		reg_00.raw = io_apic_read(ioapic_idx, 0);
+		reg_00.raw = io_apic_पढ़ो(ioapic_idx, 0);
 		raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
 		old_id = mpc_ioapic_id(ioapic_idx);
 
-		if (mpc_ioapic_id(ioapic_idx) >= get_physical_broadcast()) {
-			printk(KERN_ERR "BIOS bug, IO-APIC#%d ID is %d in the MPC table!...\n",
+		अगर (mpc_ioapic_id(ioapic_idx) >= get_physical_broadcast()) अणु
+			prपूर्णांकk(KERN_ERR "BIOS bug, IO-APIC#%d ID is %d in the MPC table!...\n",
 				ioapic_idx, mpc_ioapic_id(ioapic_idx));
-			printk(KERN_ERR "... fixing up to %d. (tell your hw vendor)\n",
+			prपूर्णांकk(KERN_ERR "... fixing up to %d. (tell your hw vendor)\n",
 				reg_00.bits.ID);
 			ioapics[ioapic_idx].mp_config.apicid = reg_00.bits.ID;
-		}
+		पूर्ण
 
 		/*
-		 * Sanity check, is the ID really free? Every APIC in a
-		 * system must have a unique ID or we get lots of nice
+		 * Sanity check, is the ID really मुक्त? Every APIC in a
+		 * प्रणाली must have a unique ID or we get lots of nice
 		 * 'stuck on smp_invalidate_needed IPI wait' messages.
 		 */
-		if (apic->check_apicid_used(&phys_id_present_map,
-					    mpc_ioapic_id(ioapic_idx))) {
-			printk(KERN_ERR "BIOS bug, IO-APIC#%d ID %d is already used!...\n",
+		अगर (apic->check_apicid_used(&phys_id_present_map,
+					    mpc_ioapic_id(ioapic_idx))) अणु
+			prपूर्णांकk(KERN_ERR "BIOS bug, IO-APIC#%d ID %d is already used!...\n",
 				ioapic_idx, mpc_ioapic_id(ioapic_idx));
-			for (i = 0; i < get_physical_broadcast(); i++)
-				if (!physid_isset(i, phys_id_present_map))
-					break;
-			if (i >= get_physical_broadcast())
+			क्रम (i = 0; i < get_physical_broadcast(); i++)
+				अगर (!physid_isset(i, phys_id_present_map))
+					अवरोध;
+			अगर (i >= get_physical_broadcast())
 				panic("Max APIC ID exceeded!\n");
-			printk(KERN_ERR "... fixing up to %d. (tell your hw vendor)\n",
+			prपूर्णांकk(KERN_ERR "... fixing up to %d. (tell your hw vendor)\n",
 				i);
 			physid_set(i, phys_id_present_map);
 			ioapics[ioapic_idx].mp_config.apicid = i;
-		} else {
-			physid_mask_t tmp;
+		पूर्ण अन्यथा अणु
+			physid_mask_t पंचांगp;
 			apic->apicid_to_cpu_present(mpc_ioapic_id(ioapic_idx),
-						    &tmp);
-			apic_printk(APIC_VERBOSE, "Setting %d in the "
+						    &पंचांगp);
+			apic_prपूर्णांकk(APIC_VERBOSE, "Setting %d in the "
 					"phys_id_present_map\n",
 					mpc_ioapic_id(ioapic_idx));
-			physids_or(phys_id_present_map, phys_id_present_map, tmp);
-		}
+			physids_or(phys_id_present_map, phys_id_present_map, पंचांगp);
+		पूर्ण
 
 		/*
 		 * We need to adjust the IRQ routing table
-		 * if the ID changed.
+		 * अगर the ID changed.
 		 */
-		if (old_id != mpc_ioapic_id(ioapic_idx))
-			for (i = 0; i < mp_irq_entries; i++)
-				if (mp_irqs[i].dstapic == old_id)
+		अगर (old_id != mpc_ioapic_id(ioapic_idx))
+			क्रम (i = 0; i < mp_irq_entries; i++)
+				अगर (mp_irqs[i].dstapic == old_id)
 					mp_irqs[i].dstapic
 						= mpc_ioapic_id(ioapic_idx);
 
 		/*
-		 * Update the ID register according to the right value
-		 * from the MPC table if they are different.
+		 * Update the ID रेजिस्टर according to the right value
+		 * from the MPC table अगर they are dअगरferent.
 		 */
-		if (mpc_ioapic_id(ioapic_idx) == reg_00.bits.ID)
-			continue;
+		अगर (mpc_ioapic_id(ioapic_idx) == reg_00.bits.ID)
+			जारी;
 
-		apic_printk(APIC_VERBOSE, KERN_INFO
+		apic_prपूर्णांकk(APIC_VERBOSE, KERN_INFO
 			"...changing IO-APIC physical APIC ID to %d ...",
 			mpc_ioapic_id(ioapic_idx));
 
 		reg_00.bits.ID = mpc_ioapic_id(ioapic_idx);
 		raw_spin_lock_irqsave(&ioapic_lock, flags);
-		io_apic_write(ioapic_idx, 0, reg_00.raw);
+		io_apic_ग_लिखो(ioapic_idx, 0, reg_00.raw);
 		raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
 		/*
 		 * Sanity check
 		 */
 		raw_spin_lock_irqsave(&ioapic_lock, flags);
-		reg_00.raw = io_apic_read(ioapic_idx, 0);
+		reg_00.raw = io_apic_पढ़ो(ioapic_idx, 0);
 		raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-		if (reg_00.bits.ID != mpc_ioapic_id(ioapic_idx))
+		अगर (reg_00.bits.ID != mpc_ioapic_id(ioapic_idx))
 			pr_cont("could not set ID!\n");
-		else
-			apic_printk(APIC_VERBOSE, " ok.\n");
-	}
-}
+		अन्यथा
+			apic_prपूर्णांकk(APIC_VERBOSE, " ok.\n");
+	पूर्ण
+पूर्ण
 
-void __init setup_ioapic_ids_from_mpc(void)
-{
+व्योम __init setup_ioapic_ids_from_mpc(व्योम)
+अणु
 
-	if (acpi_ioapic)
-		return;
+	अगर (acpi_ioapic)
+		वापस;
 	/*
-	 * Don't check I/O APIC IDs for xAPIC systems.  They have
+	 * Don't check I/O APIC IDs क्रम xAPIC प्रणालीs.  They have
 	 * no meaning without the serial APIC bus.
 	 */
-	if (!(boot_cpu_data.x86_vendor == X86_VENDOR_INTEL)
+	अगर (!(boot_cpu_data.x86_venकरोr == X86_VENDOR_INTEL)
 		|| APIC_XAPIC(boot_cpu_apic_version))
-		return;
+		वापस;
 	setup_ioapic_ids_from_mpc_nocheck();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-int no_timer_check __initdata;
+पूर्णांक no_समयr_check __initdata;
 
-static int __init notimercheck(char *s)
-{
-	no_timer_check = 1;
-	return 1;
-}
-__setup("no_timer_check", notimercheck);
+अटल पूर्णांक __init noसमयrcheck(अक्षर *s)
+अणु
+	no_समयr_check = 1;
+	वापस 1;
+पूर्ण
+__setup("no_timer_check", noसमयrcheck);
 
-static void __init delay_with_tsc(void)
-{
-	unsigned long long start, now;
-	unsigned long end = jiffies + 4;
+अटल व्योम __init delay_with_tsc(व्योम)
+अणु
+	अचिन्हित दीर्घ दीर्घ start, now;
+	अचिन्हित दीर्घ end = jअगरfies + 4;
 
 	start = rdtsc();
 
 	/*
-	 * We don't know the TSC frequency yet, but waiting for
+	 * We करोn't know the TSC frequency yet, but रुकोing क्रम
 	 * 40000000000/HZ TSC cycles is safe:
-	 * 4 GHz == 10 jiffies
-	 * 1 GHz == 40 jiffies
+	 * 4 GHz == 10 jअगरfies
+	 * 1 GHz == 40 jअगरfies
 	 */
-	do {
+	करो अणु
 		rep_nop();
 		now = rdtsc();
-	} while ((now - start) < 40000000000ULL / HZ &&
-		time_before_eq(jiffies, end));
-}
+	पूर्ण जबतक ((now - start) < 40000000000ULL / HZ &&
+		समय_beक्रमe_eq(jअगरfies, end));
+पूर्ण
 
-static void __init delay_without_tsc(void)
-{
-	unsigned long end = jiffies + 4;
-	int band = 1;
+अटल व्योम __init delay_without_tsc(व्योम)
+अणु
+	अचिन्हित दीर्घ end = jअगरfies + 4;
+	पूर्णांक band = 1;
 
 	/*
-	 * We don't know any frequency yet, but waiting for
+	 * We करोn't know any frequency yet, but रुकोing क्रम
 	 * 40940000000/HZ cycles is safe:
-	 * 4 GHz == 10 jiffies
-	 * 1 GHz == 40 jiffies
+	 * 4 GHz == 10 jअगरfies
+	 * 1 GHz == 40 jअगरfies
 	 * 1 << 1 + 1 << 2 +...+ 1 << 11 = 4094
 	 */
-	do {
+	करो अणु
 		__delay(((1U << band++) * 10000000UL) / HZ);
-	} while (band < 12 && time_before_eq(jiffies, end));
-}
+	पूर्ण जबतक (band < 12 && समय_beक्रमe_eq(jअगरfies, end));
+पूर्ण
 
 /*
  * There is a nasty bug in some older SMP boards, their mptable lies
- * about the timer IRQ. We do the following to work around the situation:
+ * about the समयr IRQ. We करो the following to work around the situation:
  *
- *	- timer IRQ defaults to IO-APIC IRQ
- *	- if this function detects that timer IRQs are defunct, then we fall
- *	  back to ISA timer IRQs
+ *	- समयr IRQ शेषs to IO-APIC IRQ
+ *	- अगर this function detects that समयr IRQs are defunct, then we fall
+ *	  back to ISA समयr IRQs
  */
-static int __init timer_irq_works(void)
-{
-	unsigned long t1 = jiffies;
+अटल पूर्णांक __init समयr_irq_works(व्योम)
+अणु
+	अचिन्हित दीर्घ t1 = jअगरfies;
 
-	if (no_timer_check)
-		return 1;
+	अगर (no_समयr_check)
+		वापस 1;
 
 	local_irq_enable();
-	if (boot_cpu_has(X86_FEATURE_TSC))
+	अगर (boot_cpu_has(X86_FEATURE_TSC))
 		delay_with_tsc();
-	else
+	अन्यथा
 		delay_without_tsc();
 
 	/*
 	 * Expect a few ticks at least, to be sure some possible
-	 * glue logic does not lock up after one or two first
+	 * glue logic करोes not lock up after one or two first
 	 * ticks in a non-ExtINT mode.  Also the local APIC
-	 * might have cached one ExtINT interrupt.  Finally, at
+	 * might have cached one ExtINT पूर्णांकerrupt.  Finally, at
 	 * least one tick may be lost due to delays.
 	 */
 
 	local_irq_disable();
 
-	/* Did jiffies advance? */
-	return time_after(jiffies, t1 + 4);
-}
+	/* Did jअगरfies advance? */
+	वापस समय_after(jअगरfies, t1 + 4);
+पूर्ण
 
 /*
- * In the SMP+IOAPIC case it might happen that there are an unspecified
- * number of pending IRQ events unhandled. These cases are very rare,
+ * In the SMP+IOAPIC हाल it might happen that there are an unspecअगरied
+ * number of pending IRQ events unhandled. These हालs are very rare,
  * so we 'resend' these IRQs via IPIs, to the same CPU. It's much
- * better to do it this way as thus we do not have to be aware of
- * 'pending' interrupts in the IRQ path, except at this point.
+ * better to करो it this way as thus we करो not have to be aware of
+ * 'pending' पूर्णांकerrupts in the IRQ path, except at this poपूर्णांक.
  */
 /*
- * Edge triggered needs to resend any interrupt
+ * Edge triggered needs to resend any पूर्णांकerrupt
  * that was delayed but this is now handled in the device
  * independent code.
  */
 
 /*
- * Starting up a edge-triggered IO-APIC interrupt is
+ * Starting up a edge-triggered IO-APIC पूर्णांकerrupt is
  * nasty - we need to make sure that we get the edge.
- * If it is already asserted for some reason, we need
- * return 1 to indicate that is was pending.
+ * If it is alपढ़ोy निश्चितed क्रम some reason, we need
+ * वापस 1 to indicate that is was pending.
  *
  * This is not complete - we should be able to fake
- * an edge even if it isn't on the 8259A...
+ * an edge even अगर it isn't on the 8259A...
  */
-static unsigned int startup_ioapic_irq(struct irq_data *data)
-{
-	int was_pending = 0, irq = data->irq;
-	unsigned long flags;
+अटल अचिन्हित पूर्णांक startup_ioapic_irq(काष्ठा irq_data *data)
+अणु
+	पूर्णांक was_pending = 0, irq = data->irq;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	if (irq < nr_legacy_irqs()) {
+	अगर (irq < nr_legacy_irqs()) अणु
 		legacy_pic->mask(irq);
-		if (legacy_pic->irq_pending(irq))
+		अगर (legacy_pic->irq_pending(irq))
 			was_pending = 1;
-	}
+	पूर्ण
 	__unmask_ioapic(data->chip_data);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
-	return was_pending;
-}
+	वापस was_pending;
+पूर्ण
 
 atomic_t irq_mis_count;
 
-#ifdef CONFIG_GENERIC_PENDING_IRQ
-static bool io_apic_level_ack_pending(struct mp_chip_data *data)
-{
-	struct irq_pin_list *entry;
-	unsigned long flags;
+#अगर_घोषित CONFIG_GENERIC_PENDING_IRQ
+अटल bool io_apic_level_ack_pending(काष्ठा mp_chip_data *data)
+अणु
+	काष्ठा irq_pin_list *entry;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	for_each_irq_pin(entry, data->irq_2_pin) {
-		struct IO_APIC_route_entry e;
-		int pin;
+	क्रम_each_irq_pin(entry, data->irq_2_pin) अणु
+		काष्ठा IO_APIC_route_entry e;
+		पूर्णांक pin;
 
 		pin = entry->pin;
-		e.w1 = io_apic_read(entry->apic, 0x10 + pin*2);
+		e.w1 = io_apic_पढ़ो(entry->apic, 0x10 + pin*2);
 		/* Is the remote IRR bit set? */
-		if (e.irr) {
+		अगर (e.irr) अणु
 			raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-			return true;
-		}
-	}
+			वापस true;
+		पूर्ण
+	पूर्ण
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool ioapic_prepare_move(struct irq_data *data)
-{
+अटल अंतरभूत bool ioapic_prepare_move(काष्ठा irq_data *data)
+अणु
 	/* If we are moving the IRQ we need to mask it */
-	if (unlikely(irqd_is_setaffinity_pending(data))) {
-		if (!irqd_irq_masked(data))
+	अगर (unlikely(irqd_is_setaffinity_pending(data))) अणु
+		अगर (!irqd_irq_masked(data))
 			mask_ioapic_irq(data);
-		return true;
-	}
-	return false;
-}
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static inline void ioapic_finish_move(struct irq_data *data, bool moveit)
-{
-	if (unlikely(moveit)) {
-		/* Only migrate the irq if the ack has been received.
+अटल अंतरभूत व्योम ioapic_finish_move(काष्ठा irq_data *data, bool moveit)
+अणु
+	अगर (unlikely(moveit)) अणु
+		/* Only migrate the irq अगर the ack has been received.
 		 *
-		 * On rare occasions the broadcast level triggered ack gets
-		 * delayed going to ioapics, and if we reprogram the
-		 * vector while Remote IRR is still set the irq will never
+		 * On rare occasions the broadcast level triggered ack माला_लो
+		 * delayed going to ioapics, and अगर we reprogram the
+		 * vector जबतक Remote IRR is still set the irq will never
 		 * fire again.
 		 *
-		 * To prevent this scenario we read the Remote IRR bit
+		 * To prevent this scenario we पढ़ो the Remote IRR bit
 		 * of the ioapic.  This has two effects.
-		 * - On any sane system the read of the ioapic will
-		 *   flush writes (and acks) going to the ioapic from
+		 * - On any sane प्रणाली the पढ़ो of the ioapic will
+		 *   flush ग_लिखोs (and acks) going to the ioapic from
 		 *   this cpu.
-		 * - We get to see if the ACK has actually been delivered.
+		 * - We get to see अगर the ACK has actually been delivered.
 		 *
 		 * Based on failed experiments of reprogramming the
 		 * ioapic entry from outside of irq context starting
 		 * with masking the ioapic entry and then polling until
-		 * Remote IRR was clear before reprogramming the
-		 * ioapic I don't trust the Remote IRR bit to be
+		 * Remote IRR was clear beक्रमe reprogramming the
+		 * ioapic I करोn't trust the Remote IRR bit to be
 		 * completely accurate.
 		 *
 		 * However there appears to be no other way to plug
-		 * this race, so if the Remote IRR bit is not
+		 * this race, so अगर the Remote IRR bit is not
 		 * accurate and is causing problems then it is a hardware bug
-		 * and you can go talk to the chipset vendor about it.
+		 * and you can go talk to the chipset venकरोr about it.
 		 */
-		if (!io_apic_level_ack_pending(data->chip_data))
+		अगर (!io_apic_level_ack_pending(data->chip_data))
 			irq_move_masked_irq(data);
 		/* If the IRQ is masked in the core, leave it: */
-		if (!irqd_irq_masked(data))
+		अगर (!irqd_irq_masked(data))
 			unmask_ioapic_irq(data);
-	}
-}
-#else
-static inline bool ioapic_prepare_move(struct irq_data *data)
-{
-	return false;
-}
-static inline void ioapic_finish_move(struct irq_data *data, bool moveit)
-{
-}
-#endif
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool ioapic_prepare_move(काष्ठा irq_data *data)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत व्योम ioapic_finish_move(काष्ठा irq_data *data, bool moveit)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static void ioapic_ack_level(struct irq_data *irq_data)
-{
-	struct irq_cfg *cfg = irqd_cfg(irq_data);
-	unsigned long v;
+अटल व्योम ioapic_ack_level(काष्ठा irq_data *irq_data)
+अणु
+	काष्ठा irq_cfg *cfg = irqd_cfg(irq_data);
+	अचिन्हित दीर्घ v;
 	bool moveit;
-	int i;
+	पूर्णांक i;
 
 	irq_complete_move(cfg);
 	moveit = ioapic_prepare_move(irq_data);
 
 	/*
 	 * It appears there is an erratum which affects at least version 0x11
-	 * of I/O APIC (that's the 82093AA and cores integrated into various
-	 * chipsets).  Under certain conditions a level-triggered interrupt is
+	 * of I/O APIC (that's the 82093AA and cores पूर्णांकegrated पूर्णांकo various
+	 * chipsets).  Under certain conditions a level-triggered पूर्णांकerrupt is
 	 * erroneously delivered as edge-triggered one but the respective IRR
-	 * bit gets set nevertheless.  As a result the I/O unit expects an EOI
-	 * message but it will never arrive and further interrupts are blocked
+	 * bit माला_लो set nevertheless.  As a result the I/O unit expects an EOI
+	 * message but it will never arrive and further पूर्णांकerrupts are blocked
 	 * from the source.  The exact reason is so far unknown, but the
-	 * phenomenon was observed when two consecutive interrupt requests
+	 * phenomenon was observed when two consecutive पूर्णांकerrupt requests
 	 * from a given source get delivered to the same CPU and the source is
 	 * temporarily disabled in between.
 	 *
 	 * A workaround is to simulate an EOI message manually.  We achieve it
 	 * by setting the trigger mode to edge and then to level when the edge
-	 * trigger mode gets detected in the TMR of a local APIC for a
-	 * level-triggered interrupt.  We mask the source for the time of the
-	 * operation to prevent an edge-triggered interrupt escaping meanwhile.
+	 * trigger mode माला_लो detected in the TMR of a local APIC क्रम a
+	 * level-triggered पूर्णांकerrupt.  We mask the source क्रम the समय of the
+	 * operation to prevent an edge-triggered पूर्णांकerrupt escaping meanजबतक.
 	 * The idea is from Manfred Spraul.  --macro
 	 *
-	 * Also in the case when cpu goes offline, fixup_irqs() will forward
-	 * any unhandled interrupt on the offlined cpu to the new cpu
-	 * destination that is handling the corresponding interrupt. This
-	 * interrupt forwarding is done via IPI's. Hence, in this case also
-	 * level-triggered io-apic interrupt will be seen as an edge
-	 * interrupt in the IRR. And we can't rely on the cpu's EOI
+	 * Also in the हाल when cpu goes offline, fixup_irqs() will क्रमward
+	 * any unhandled पूर्णांकerrupt on the offlined cpu to the new cpu
+	 * destination that is handling the corresponding पूर्णांकerrupt. This
+	 * पूर्णांकerrupt क्रमwarding is करोne via IPI's. Hence, in this हाल also
+	 * level-triggered io-apic पूर्णांकerrupt will be seen as an edge
+	 * पूर्णांकerrupt in the IRR. And we can't rely on the cpu's EOI
 	 * to be broadcasted to the IO-APIC's which will clear the remoteIRR
-	 * corresponding to the level-triggered interrupt. Hence on IO-APIC's
-	 * supporting EOI register, we do an explicit EOI to clear the
-	 * remote IRR and on IO-APIC's which don't have an EOI register,
+	 * corresponding to the level-triggered पूर्णांकerrupt. Hence on IO-APIC's
+	 * supporting EOI रेजिस्टर, we करो an explicit EOI to clear the
+	 * remote IRR and on IO-APIC's which don't have an EOI रेजिस्टर,
 	 * we use the above logic (mask+edge followed by unmask+level) from
 	 * Manfred Spraul to clear the remote IRR.
 	 */
 	i = cfg->vector;
-	v = apic_read(APIC_TMR + ((i & ~0x1f) >> 1));
+	v = apic_पढ़ो(APIC_TMR + ((i & ~0x1f) >> 1));
 
 	/*
-	 * We must acknowledge the irq before we move it or the acknowledge will
+	 * We must acknowledge the irq beक्रमe we move it or the acknowledge will
 	 * not propagate properly.
 	 */
 	ack_APIC_irq();
 
 	/*
 	 * Tail end of clearing remote IRR bit (either by delivering the EOI
-	 * message via io-apic EOI register write or simulating it using
+	 * message via io-apic EOI रेजिस्टर ग_लिखो or simulating it using
 	 * mask+edge followed by unmask+level logic) manually when the
-	 * level triggered interrupt is seen as the edge triggered interrupt
+	 * level triggered पूर्णांकerrupt is seen as the edge triggered पूर्णांकerrupt
 	 * at the cpu.
 	 */
-	if (!(v & (1 << (i & 0x1f)))) {
+	अगर (!(v & (1 << (i & 0x1f)))) अणु
 		atomic_inc(&irq_mis_count);
 		eoi_ioapic_pin(cfg->vector, irq_data->chip_data);
-	}
+	पूर्ण
 
 	ioapic_finish_move(irq_data, moveit);
-}
+पूर्ण
 
-static void ioapic_ir_ack_level(struct irq_data *irq_data)
-{
-	struct mp_chip_data *data = irq_data->chip_data;
+अटल व्योम ioapic_ir_ack_level(काष्ठा irq_data *irq_data)
+अणु
+	काष्ठा mp_chip_data *data = irq_data->chip_data;
 
 	/*
-	 * Intr-remapping uses pin number as the virtual vector
+	 * Intr-remapping uses pin number as the भव vector
 	 * in the RTE. Actual vector is programmed in
-	 * intr-remapping table entry. Hence for the io-apic
+	 * पूर्णांकr-remapping table entry. Hence क्रम the io-apic
 	 * EOI we use the pin number.
 	 */
 	apic_ack_irq(irq_data);
 	eoi_ioapic_pin(data->entry.vector, data);
-}
+पूर्ण
 
 /*
- * The I/OAPIC is just a device for generating MSI messages from legacy
- * interrupt pins. Various fields of the RTE translate into bits of the
+ * The I/OAPIC is just a device क्रम generating MSI messages from legacy
+ * पूर्णांकerrupt pins. Various fields of the RTE translate पूर्णांकo bits of the
  * resulting MSI which had a historical meaning.
  *
- * With interrupt remapping, many of those bits have different meanings
- * in the underlying MSI, but the way that the I/OAPIC transforms them
+ * With पूर्णांकerrupt remapping, many of those bits have dअगरferent meanings
+ * in the underlying MSI, but the way that the I/OAPIC transक्रमms them
  * from its RTE to the MSI message is the same. This function allows
- * the parent IRQ domain to compose the MSI message, then takes the
+ * the parent IRQ करोमुख्य to compose the MSI message, then takes the
  * relevant bits to put them in the appropriate places in the RTE in
  * order to generate that message when the IRQ happens.
  *
  * The setup here relies on a preconfigured route entry (is_level,
- * active_low, masked) because the parent domain is merely composing the
- * generic message routing information which is used for the MSI.
+ * active_low, masked) because the parent करोमुख्य is merely composing the
+ * generic message routing inक्रमmation which is used क्रम the MSI.
  */
-static void ioapic_setup_msg_from_msi(struct irq_data *irq_data,
-				      struct IO_APIC_route_entry *entry)
-{
-	struct msi_msg msg;
+अटल व्योम ioapic_setup_msg_from_msi(काष्ठा irq_data *irq_data,
+				      काष्ठा IO_APIC_route_entry *entry)
+अणु
+	काष्ठा msi_msg msg;
 
-	/* Let the parent domain compose the MSI message */
+	/* Let the parent करोमुख्य compose the MSI message */
 	irq_chip_compose_msi_msg(irq_data, &msg);
 
 	/*
@@ -1886,16 +1887,16 @@ static void ioapic_setup_msg_from_msi(struct irq_data *irq_data,
 	 * - AMD/IR:  8bit IRTE index
 	 */
 	entry->vector			= msg.arch_data.vector;
-	/* Delivery mode (for DMAR/IR all 0) */
+	/* Delivery mode (क्रम DMAR/IR all 0) */
 	entry->delivery_mode		= msg.arch_data.delivery_mode;
 	/* Destination mode or DMAR/IR index bit 15 */
 	entry->dest_mode_logical	= msg.arch_addr_lo.dest_mode_logical;
-	/* DMAR/IR: 1, 0 for all other modes */
-	entry->ir_format		= msg.arch_addr_lo.dmar_format;
+	/* DMAR/IR: 1, 0 क्रम all other modes */
+	entry->ir_क्रमmat		= msg.arch_addr_lo.dmar_क्रमmat;
 	/*
 	 * - DMAR/IR: index bit 0-14.
 	 *
-	 * - Virt: If the host supports x2apic without a virtualized IR
+	 * - Virt: If the host supports x2apic without a भवized IR
 	 *	   unit then bit 0-6 of dmar_index_0_14 are providing bit
 	 *	   8-14 of the destination id.
 	 *
@@ -1903,80 +1904,80 @@ static void ioapic_setup_msg_from_msi(struct irq_data *irq_data,
 	 * topmost 8 bits are destination id bit 0-7 (entry::destid_0_7).
 	 */
 	entry->ir_index_0_14		= msg.arch_addr_lo.dmar_index_0_14;
-}
+पूर्ण
 
-static void ioapic_configure_entry(struct irq_data *irqd)
-{
-	struct mp_chip_data *mpd = irqd->chip_data;
-	struct irq_pin_list *entry;
+अटल व्योम ioapic_configure_entry(काष्ठा irq_data *irqd)
+अणु
+	काष्ठा mp_chip_data *mpd = irqd->chip_data;
+	काष्ठा irq_pin_list *entry;
 
 	ioapic_setup_msg_from_msi(irqd, &mpd->entry);
 
-	for_each_irq_pin(entry, mpd->irq_2_pin)
-		__ioapic_write_entry(entry->apic, entry->pin, mpd->entry);
-}
+	क्रम_each_irq_pin(entry, mpd->irq_2_pin)
+		__ioapic_ग_लिखो_entry(entry->apic, entry->pin, mpd->entry);
+पूर्ण
 
-static int ioapic_set_affinity(struct irq_data *irq_data,
-			       const struct cpumask *mask, bool force)
-{
-	struct irq_data *parent = irq_data->parent_data;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक ioapic_set_affinity(काष्ठा irq_data *irq_data,
+			       स्थिर काष्ठा cpumask *mask, bool क्रमce)
+अणु
+	काष्ठा irq_data *parent = irq_data->parent_data;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	ret = parent->chip->irq_set_affinity(parent, mask, force);
+	ret = parent->chip->irq_set_affinity(parent, mask, क्रमce);
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	if (ret >= 0 && ret != IRQ_SET_MASK_OK_DONE)
+	अगर (ret >= 0 && ret != IRQ_SET_MASK_OK_DONE)
 		ioapic_configure_entry(irq_data);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Interrupt shutdown masks the ioapic pin, but the interrupt might already
+ * Interrupt shutकरोwn masks the ioapic pin, but the पूर्णांकerrupt might alपढ़ोy
  * be in flight, but not yet serviced by the target CPU. That means
- * __synchronize_hardirq() would return and claim that everything is calmed
- * down. So free_irq() would proceed and deactivate the interrupt and free
+ * __synchronize_hardirq() would वापस and claim that everything is calmed
+ * करोwn. So मुक्त_irq() would proceed and deactivate the पूर्णांकerrupt and मुक्त
  * resources.
  *
  * Once the target CPU comes around to service it it will find a cleared
- * vector and complain. While the spurious interrupt is harmless, the full
- * release of resources might prevent the interrupt from being acknowledged
+ * vector and complain. While the spurious पूर्णांकerrupt is harmless, the full
+ * release of resources might prevent the पूर्णांकerrupt from being acknowledged
  * which keeps the hardware in a weird state.
  *
- * Verify that the corresponding Remote-IRR bits are clear.
+ * Verअगरy that the corresponding Remote-IRR bits are clear.
  */
-static int ioapic_irq_get_chip_state(struct irq_data *irqd,
-				   enum irqchip_irq_state which,
+अटल पूर्णांक ioapic_irq_get_chip_state(काष्ठा irq_data *irqd,
+				   क्रमागत irqchip_irq_state which,
 				   bool *state)
-{
-	struct mp_chip_data *mcd = irqd->chip_data;
-	struct IO_APIC_route_entry rentry;
-	struct irq_pin_list *p;
+अणु
+	काष्ठा mp_chip_data *mcd = irqd->chip_data;
+	काष्ठा IO_APIC_route_entry rentry;
+	काष्ठा irq_pin_list *p;
 
-	if (which != IRQCHIP_STATE_ACTIVE)
-		return -EINVAL;
+	अगर (which != IRQCHIP_STATE_ACTIVE)
+		वापस -EINVAL;
 
 	*state = false;
 	raw_spin_lock(&ioapic_lock);
-	for_each_irq_pin(p, mcd->irq_2_pin) {
-		rentry = __ioapic_read_entry(p->apic, p->pin);
+	क्रम_each_irq_pin(p, mcd->irq_2_pin) अणु
+		rentry = __ioapic_पढ़ो_entry(p->apic, p->pin);
 		/*
 		 * The remote IRR is only valid in level trigger mode. It's
-		 * meaning is undefined for edge triggered interrupts and
+		 * meaning is undefined क्रम edge triggered पूर्णांकerrupts and
 		 * irrelevant because the IO-APIC treats them as fire and
-		 * forget.
+		 * क्रमget.
 		 */
-		if (rentry.irr && rentry.is_level) {
+		अगर (rentry.irr && rentry.is_level) अणु
 			*state = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	raw_spin_unlock(&ioapic_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct irq_chip ioapic_chip __read_mostly = {
+अटल काष्ठा irq_chip ioapic_chip __पढ़ो_mostly = अणु
 	.name			= "IO-APIC",
 	.irq_startup		= startup_ioapic_irq,
 	.irq_mask		= mask_ioapic_irq,
@@ -1987,9 +1988,9 @@ static struct irq_chip ioapic_chip __read_mostly = {
 	.irq_retrigger		= irq_chip_retrigger_hierarchy,
 	.irq_get_irqchip_state	= ioapic_irq_get_chip_state,
 	.flags			= IRQCHIP_SKIP_SET_WAKE,
-};
+पूर्ण;
 
-static struct irq_chip ioapic_ir_chip __read_mostly = {
+अटल काष्ठा irq_chip ioapic_ir_chip __पढ़ो_mostly = अणु
 	.name			= "IR-IO-APIC",
 	.irq_startup		= startup_ioapic_irq,
 	.irq_mask		= mask_ioapic_irq,
@@ -2000,99 +2001,99 @@ static struct irq_chip ioapic_ir_chip __read_mostly = {
 	.irq_retrigger		= irq_chip_retrigger_hierarchy,
 	.irq_get_irqchip_state	= ioapic_irq_get_chip_state,
 	.flags			= IRQCHIP_SKIP_SET_WAKE,
-};
+पूर्ण;
 
-static inline void init_IO_APIC_traps(void)
-{
-	struct irq_cfg *cfg;
-	unsigned int irq;
+अटल अंतरभूत व्योम init_IO_APIC_traps(व्योम)
+अणु
+	काष्ठा irq_cfg *cfg;
+	अचिन्हित पूर्णांक irq;
 
-	for_each_active_irq(irq) {
+	क्रम_each_active_irq(irq) अणु
 		cfg = irq_cfg(irq);
-		if (IO_APIC_IRQ(irq) && cfg && !cfg->vector) {
+		अगर (IO_APIC_IRQ(irq) && cfg && !cfg->vector) अणु
 			/*
-			 * Hmm.. We don't have an entry for this,
-			 * so default to an old-fashioned 8259
-			 * interrupt if we can..
+			 * Hmm.. We करोn't have an entry क्रम this,
+			 * so शेष to an old-fashioned 8259
+			 * पूर्णांकerrupt अगर we can..
 			 */
-			if (irq < nr_legacy_irqs())
+			अगर (irq < nr_legacy_irqs())
 				legacy_pic->make_irq(irq);
-			else
+			अन्यथा
 				/* Strange. Oh, well.. */
 				irq_set_chip(irq, &no_irq_chip);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * The local APIC irq-chip implementation:
  */
 
-static void mask_lapic_irq(struct irq_data *data)
-{
-	unsigned long v;
+अटल व्योम mask_lapic_irq(काष्ठा irq_data *data)
+अणु
+	अचिन्हित दीर्घ v;
 
-	v = apic_read(APIC_LVT0);
-	apic_write(APIC_LVT0, v | APIC_LVT_MASKED);
-}
+	v = apic_पढ़ो(APIC_LVT0);
+	apic_ग_लिखो(APIC_LVT0, v | APIC_LVT_MASKED);
+पूर्ण
 
-static void unmask_lapic_irq(struct irq_data *data)
-{
-	unsigned long v;
+अटल व्योम unmask_lapic_irq(काष्ठा irq_data *data)
+अणु
+	अचिन्हित दीर्घ v;
 
-	v = apic_read(APIC_LVT0);
-	apic_write(APIC_LVT0, v & ~APIC_LVT_MASKED);
-}
+	v = apic_पढ़ो(APIC_LVT0);
+	apic_ग_लिखो(APIC_LVT0, v & ~APIC_LVT_MASKED);
+पूर्ण
 
-static void ack_lapic_irq(struct irq_data *data)
-{
+अटल व्योम ack_lapic_irq(काष्ठा irq_data *data)
+अणु
 	ack_APIC_irq();
-}
+पूर्ण
 
-static struct irq_chip lapic_chip __read_mostly = {
+अटल काष्ठा irq_chip lapic_chip __पढ़ो_mostly = अणु
 	.name		= "local-APIC",
 	.irq_mask	= mask_lapic_irq,
 	.irq_unmask	= unmask_lapic_irq,
 	.irq_ack	= ack_lapic_irq,
-};
+पूर्ण;
 
-static void lapic_register_intr(int irq)
-{
+अटल व्योम lapic_रेजिस्टर_पूर्णांकr(पूर्णांक irq)
+अणु
 	irq_clear_status_flags(irq, IRQ_LEVEL);
 	irq_set_chip_and_handler_name(irq, &lapic_chip, handle_edge_irq,
 				      "edge");
-}
+पूर्ण
 
 /*
  * This looks a bit hackish but it's about the only one way of sending
- * a few INTA cycles to 8259As and any associated glue logic.  ICR does
- * not support the ExtINT mode, unfortunately.  We need to send these
+ * a few INTA cycles to 8259As and any associated glue logic.  ICR करोes
+ * not support the ExtINT mode, unक्रमtunately.  We need to send these
  * cycles as some i82489DX-based boards have glue logic that keeps the
- * 8259A interrupt line asserted until INTA.  --macro
+ * 8259A पूर्णांकerrupt line निश्चितed until INTA.  --macro
  */
-static inline void __init unlock_ExtINT_logic(void)
-{
-	int apic, pin, i;
-	struct IO_APIC_route_entry entry0, entry1;
-	unsigned char save_control, save_freq_select;
+अटल अंतरभूत व्योम __init unlock_ExtINT_logic(व्योम)
+अणु
+	पूर्णांक apic, pin, i;
+	काष्ठा IO_APIC_route_entry entry0, entry1;
+	अचिन्हित अक्षर save_control, save_freq_select;
 	u32 apic_id;
 
 	pin  = find_isa_irq_pin(8, mp_INT);
-	if (pin == -1) {
+	अगर (pin == -1) अणु
 		WARN_ON_ONCE(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 	apic = find_isa_irq_apic(8, mp_INT);
-	if (apic == -1) {
+	अगर (apic == -1) अणु
 		WARN_ON_ONCE(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	entry0 = ioapic_read_entry(apic, pin);
+	entry0 = ioapic_पढ़ो_entry(apic, pin);
 	clear_IO_APIC_pin(apic, pin);
 
 	apic_id = hard_smp_processor_id();
-	memset(&entry1, 0, sizeof(entry1));
+	स_रखो(&entry1, 0, माप(entry1));
 
 	entry1.dest_mode_logical	= true;
 	entry1.masked			= false;
@@ -2103,7 +2104,7 @@ static inline void __init unlock_ExtINT_logic(void)
 	entry1.is_level			= false;
 	entry1.vector = 0;
 
-	ioapic_write_entry(apic, pin, entry1);
+	ioapic_ग_लिखो_entry(apic, pin, entry1);
 
 	save_control = CMOS_READ(RTC_CONTROL);
 	save_freq_select = CMOS_READ(RTC_FREQ_SELECT);
@@ -2112,84 +2113,84 @@ static inline void __init unlock_ExtINT_logic(void)
 	CMOS_WRITE(save_control | RTC_PIE, RTC_CONTROL);
 
 	i = 100;
-	while (i-- > 0) {
+	जबतक (i-- > 0) अणु
 		mdelay(10);
-		if ((CMOS_READ(RTC_INTR_FLAGS) & RTC_PF) == RTC_PF)
+		अगर ((CMOS_READ(RTC_INTR_FLAGS) & RTC_PF) == RTC_PF)
 			i -= 10;
-	}
+	पूर्ण
 
 	CMOS_WRITE(save_control, RTC_CONTROL);
 	CMOS_WRITE(save_freq_select, RTC_FREQ_SELECT);
 	clear_IO_APIC_pin(apic, pin);
 
-	ioapic_write_entry(apic, pin, entry0);
-}
+	ioapic_ग_लिखो_entry(apic, pin, entry0);
+पूर्ण
 
-static int disable_timer_pin_1 __initdata;
-/* Actually the next is obsolete, but keep it for paranoid reasons -AK */
-static int __init disable_timer_pin_setup(char *arg)
-{
-	disable_timer_pin_1 = 1;
-	return 0;
-}
-early_param("disable_timer_pin_1", disable_timer_pin_setup);
+अटल पूर्णांक disable_समयr_pin_1 __initdata;
+/* Actually the next is obsolete, but keep it क्रम paranoid reasons -AK */
+अटल पूर्णांक __init disable_समयr_pin_setup(अक्षर *arg)
+अणु
+	disable_समयr_pin_1 = 1;
+	वापस 0;
+पूर्ण
+early_param("disable_timer_pin_1", disable_समयr_pin_setup);
 
-static int mp_alloc_timer_irq(int ioapic, int pin)
-{
-	int irq = -1;
-	struct irq_domain *domain = mp_ioapic_irqdomain(ioapic);
+अटल पूर्णांक mp_alloc_समयr_irq(पूर्णांक ioapic, पूर्णांक pin)
+अणु
+	पूर्णांक irq = -1;
+	काष्ठा irq_करोमुख्य *करोमुख्य = mp_ioapic_irqकरोमुख्य(ioapic);
 
-	if (domain) {
-		struct irq_alloc_info info;
+	अगर (करोमुख्य) अणु
+		काष्ठा irq_alloc_info info;
 
 		ioapic_set_alloc_attr(&info, NUMA_NO_NODE, 0, 0);
 		info.devid = mpc_ioapic_id(ioapic);
 		info.ioapic.pin = pin;
 		mutex_lock(&ioapic_mutex);
-		irq = alloc_isa_irq_from_domain(domain, 0, ioapic, pin, &info);
+		irq = alloc_isa_irq_from_करोमुख्य(करोमुख्य, 0, ioapic, pin, &info);
 		mutex_unlock(&ioapic_mutex);
-	}
+	पूर्ण
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
 /*
  * This code may look a bit paranoid, but it's supposed to cooperate with
- * a wide range of boards and BIOS bugs.  Fortunately only the timer IRQ
- * is so screwy.  Thanks to Brian Perkins for testing/hacking this beast
+ * a wide range of boards and BIOS bugs.  Fortunately only the समयr IRQ
+ * is so screwy.  Thanks to Brian Perkins क्रम testing/hacking this beast
  * fanatically on his truly buggy board.
  *
- * FIXME: really need to revamp this for all platforms.
+ * FIXME: really need to revamp this क्रम all platक्रमms.
  */
-static inline void __init check_timer(void)
-{
-	struct irq_data *irq_data = irq_get_irq_data(0);
-	struct mp_chip_data *data = irq_data->chip_data;
-	struct irq_cfg *cfg = irqd_cfg(irq_data);
-	int node = cpu_to_node(0);
-	int apic1, pin1, apic2, pin2;
-	int no_pin1 = 0;
+अटल अंतरभूत व्योम __init check_समयr(व्योम)
+अणु
+	काष्ठा irq_data *irq_data = irq_get_irq_data(0);
+	काष्ठा mp_chip_data *data = irq_data->chip_data;
+	काष्ठा irq_cfg *cfg = irqd_cfg(irq_data);
+	पूर्णांक node = cpu_to_node(0);
+	पूर्णांक apic1, pin1, apic2, pin2;
+	पूर्णांक no_pin1 = 0;
 
-	if (!global_clock_event)
-		return;
+	अगर (!global_घड़ी_event)
+		वापस;
 
 	local_irq_disable();
 
 	/*
-	 * get/set the timer IRQ vector:
+	 * get/set the समयr IRQ vector:
 	 */
 	legacy_pic->mask(0);
 
 	/*
-	 * As IRQ0 is to be enabled in the 8259A, the virtual
+	 * As IRQ0 is to be enabled in the 8259A, the भव
 	 * wire has to be disabled in the local APIC.  Also
-	 * timer interrupts need to be acknowledged manually in
-	 * the 8259A for the i82489DX when using the NMI
-	 * watchdog as that APIC treats NMIs as level-triggered.
+	 * समयr पूर्णांकerrupts need to be acknowledged manually in
+	 * the 8259A क्रम the i82489DX when using the NMI
+	 * watchकरोg as that APIC treats NMIs as level-triggered.
 	 * The AEOI mode will finish them in the 8259A
-	 * automatically.
+	 * स्वतःmatically.
 	 */
-	apic_write(APIC_LVT0, APIC_LVT_MASKED | APIC_DM_EXTINT);
+	apic_ग_लिखो(APIC_LVT0, APIC_LVT_MASKED | APIC_DM_EXTINT);
 	legacy_pic->init(1);
 
 	pin1  = find_isa_irq_pin(0, mp_INT);
@@ -2197,215 +2198,215 @@ static inline void __init check_timer(void)
 	pin2  = ioapic_i8259.pin;
 	apic2 = ioapic_i8259.apic;
 
-	apic_printk(APIC_QUIET, KERN_INFO "..TIMER: vector=0x%02X "
+	apic_prपूर्णांकk(APIC_QUIET, KERN_INFO "..TIMER: vector=0x%02X "
 		    "apic1=%d pin1=%d apic2=%d pin2=%d\n",
 		    cfg->vector, apic1, pin1, apic2, pin2);
 
 	/*
-	 * Some BIOS writers are clueless and report the ExtINTA
-	 * I/O APIC input from the cascaded 8259A as the timer
-	 * interrupt input.  So just in case, if only one pin
+	 * Some BIOS ग_लिखोrs are clueless and report the ExtINTA
+	 * I/O APIC input from the cascaded 8259A as the समयr
+	 * पूर्णांकerrupt input.  So just in हाल, अगर only one pin
 	 * was found above, try it both directly and through the
 	 * 8259A.
 	 */
-	if (pin1 == -1) {
-		panic_if_irq_remap("BIOS bug: timer not connected to IO-APIC");
+	अगर (pin1 == -1) अणु
+		panic_अगर_irq_remap("BIOS bug: timer not connected to IO-APIC");
 		pin1 = pin2;
 		apic1 = apic2;
 		no_pin1 = 1;
-	} else if (pin2 == -1) {
+	पूर्ण अन्यथा अगर (pin2 == -1) अणु
 		pin2 = pin1;
 		apic2 = apic1;
-	}
+	पूर्ण
 
-	if (pin1 != -1) {
-		/* Ok, does IRQ0 through the IOAPIC work? */
-		if (no_pin1) {
-			mp_alloc_timer_irq(apic1, pin1);
-		} else {
+	अगर (pin1 != -1) अणु
+		/* Ok, करोes IRQ0 through the IOAPIC work? */
+		अगर (no_pin1) अणु
+			mp_alloc_समयr_irq(apic1, pin1);
+		पूर्ण अन्यथा अणु
 			/*
-			 * for edge trigger, it's already unmasked,
-			 * so only need to unmask if it is level-trigger
-			 * do we really have level trigger timer?
+			 * क्रम edge trigger, it's alपढ़ोy unmasked,
+			 * so only need to unmask अगर it is level-trigger
+			 * करो we really have level trigger समयr?
 			 */
-			int idx = find_irq_entry(apic1, pin1, mp_INT);
+			पूर्णांक idx = find_irq_entry(apic1, pin1, mp_INT);
 
-			if (idx != -1 && irq_is_level(idx))
+			अगर (idx != -1 && irq_is_level(idx))
 				unmask_ioapic_irq(irq_get_irq_data(0));
-		}
-		irq_domain_deactivate_irq(irq_data);
-		irq_domain_activate_irq(irq_data, false);
-		if (timer_irq_works()) {
-			if (disable_timer_pin_1 > 0)
+		पूर्ण
+		irq_करोमुख्य_deactivate_irq(irq_data);
+		irq_करोमुख्य_activate_irq(irq_data, false);
+		अगर (समयr_irq_works()) अणु
+			अगर (disable_समयr_pin_1 > 0)
 				clear_IO_APIC_pin(0, pin1);
-			goto out;
-		}
-		panic_if_irq_remap("timer doesn't work through Interrupt-remapped IO-APIC");
+			जाओ out;
+		पूर्ण
+		panic_अगर_irq_remap("timer doesn't work through Interrupt-remapped IO-APIC");
 		clear_IO_APIC_pin(apic1, pin1);
-		if (!no_pin1)
-			apic_printk(APIC_QUIET, KERN_ERR "..MP-BIOS bug: "
+		अगर (!no_pin1)
+			apic_prपूर्णांकk(APIC_QUIET, KERN_ERR "..MP-BIOS bug: "
 				    "8254 timer not connected to IO-APIC\n");
 
-		apic_printk(APIC_QUIET, KERN_INFO "...trying to set up timer "
+		apic_prपूर्णांकk(APIC_QUIET, KERN_INFO "...trying to set up timer "
 			    "(IRQ0) through the 8259A ...\n");
-		apic_printk(APIC_QUIET, KERN_INFO
+		apic_prपूर्णांकk(APIC_QUIET, KERN_INFO
 			    "..... (found apic %d pin %d) ...\n", apic2, pin2);
 		/*
 		 * legacy devices should be connected to IO APIC #0
 		 */
 		replace_pin_at_irq_node(data, node, apic1, pin1, apic2, pin2);
-		irq_domain_deactivate_irq(irq_data);
-		irq_domain_activate_irq(irq_data, false);
+		irq_करोमुख्य_deactivate_irq(irq_data);
+		irq_करोमुख्य_activate_irq(irq_data, false);
 		legacy_pic->unmask(0);
-		if (timer_irq_works()) {
-			apic_printk(APIC_QUIET, KERN_INFO "....... works.\n");
-			goto out;
-		}
+		अगर (समयr_irq_works()) अणु
+			apic_prपूर्णांकk(APIC_QUIET, KERN_INFO "....... works.\n");
+			जाओ out;
+		पूर्ण
 		/*
-		 * Cleanup, just in case ...
+		 * Cleanup, just in हाल ...
 		 */
 		legacy_pic->mask(0);
 		clear_IO_APIC_pin(apic2, pin2);
-		apic_printk(APIC_QUIET, KERN_INFO "....... failed.\n");
-	}
+		apic_prपूर्णांकk(APIC_QUIET, KERN_INFO "....... failed.\n");
+	पूर्ण
 
-	apic_printk(APIC_QUIET, KERN_INFO
+	apic_prपूर्णांकk(APIC_QUIET, KERN_INFO
 		    "...trying to set up timer as Virtual Wire IRQ...\n");
 
-	lapic_register_intr(0);
-	apic_write(APIC_LVT0, APIC_DM_FIXED | cfg->vector);	/* Fixed mode */
+	lapic_रेजिस्टर_पूर्णांकr(0);
+	apic_ग_लिखो(APIC_LVT0, APIC_DM_FIXED | cfg->vector);	/* Fixed mode */
 	legacy_pic->unmask(0);
 
-	if (timer_irq_works()) {
-		apic_printk(APIC_QUIET, KERN_INFO "..... works.\n");
-		goto out;
-	}
+	अगर (समयr_irq_works()) अणु
+		apic_prपूर्णांकk(APIC_QUIET, KERN_INFO "..... works.\n");
+		जाओ out;
+	पूर्ण
 	legacy_pic->mask(0);
-	apic_write(APIC_LVT0, APIC_LVT_MASKED | APIC_DM_FIXED | cfg->vector);
-	apic_printk(APIC_QUIET, KERN_INFO "..... failed.\n");
+	apic_ग_लिखो(APIC_LVT0, APIC_LVT_MASKED | APIC_DM_FIXED | cfg->vector);
+	apic_prपूर्णांकk(APIC_QUIET, KERN_INFO "..... failed.\n");
 
-	apic_printk(APIC_QUIET, KERN_INFO
+	apic_prपूर्णांकk(APIC_QUIET, KERN_INFO
 		    "...trying to set up timer as ExtINT IRQ...\n");
 
 	legacy_pic->init(0);
 	legacy_pic->make_irq(0);
-	apic_write(APIC_LVT0, APIC_DM_EXTINT);
+	apic_ग_लिखो(APIC_LVT0, APIC_DM_EXTINT);
 	legacy_pic->unmask(0);
 
 	unlock_ExtINT_logic();
 
-	if (timer_irq_works()) {
-		apic_printk(APIC_QUIET, KERN_INFO "..... works.\n");
-		goto out;
-	}
-	apic_printk(APIC_QUIET, KERN_INFO "..... failed :(.\n");
-	if (apic_is_x2apic_enabled())
-		apic_printk(APIC_QUIET, KERN_INFO
+	अगर (समयr_irq_works()) अणु
+		apic_prपूर्णांकk(APIC_QUIET, KERN_INFO "..... works.\n");
+		जाओ out;
+	पूर्ण
+	apic_prपूर्णांकk(APIC_QUIET, KERN_INFO "..... failed :(.\n");
+	अगर (apic_is_x2apic_enabled())
+		apic_prपूर्णांकk(APIC_QUIET, KERN_INFO
 			    "Perhaps problem with the pre-enabled x2apic mode\n"
 			    "Try booting with x2apic and interrupt-remapping disabled in the bios.\n");
 	panic("IO-APIC + timer doesn't work!  Boot with apic=debug and send a "
 		"report.  Then try booting with the 'noapic' option.\n");
 out:
 	local_irq_enable();
-}
+पूर्ण
 
 /*
  * Traditionally ISA IRQ2 is the cascade IRQ, and is not available
- * to devices.  However there may be an I/O APIC pin available for
- * this interrupt regardless.  The pin may be left unconnected, but
- * typically it will be reused as an ExtINT cascade interrupt for
- * the master 8259A.  In the MPS case such a pin will normally be
- * reported as an ExtINT interrupt in the MP table.  With ACPI
- * there is no provision for ExtINT interrupts, and in the absence
+ * to devices.  However there may be an I/O APIC pin available क्रम
+ * this पूर्णांकerrupt regardless.  The pin may be left unconnected, but
+ * typically it will be reused as an ExtINT cascade पूर्णांकerrupt क्रम
+ * the master 8259A.  In the MPS हाल such a pin will normally be
+ * reported as an ExtINT पूर्णांकerrupt in the MP table.  With ACPI
+ * there is no provision क्रम ExtINT पूर्णांकerrupts, and in the असलence
  * of an override it would be treated as an ordinary ISA I/O APIC
- * interrupt, that is edge-triggered and unmasked by default.  We
- * used to do this, but it caused problems on some systems because
- * of the NMI watchdog and sometimes IRQ0 of the 8254 timer using
- * the same ExtINT cascade interrupt to drive the local APIC of the
- * bootstrap processor.  Therefore we refrain from routing IRQ2 to
- * the I/O APIC in all cases now.  No actual device should request
+ * पूर्णांकerrupt, that is edge-triggered and unmasked by शेष.  We
+ * used to करो this, but it caused problems on some प्रणालीs because
+ * of the NMI watchकरोg and someबार IRQ0 of the 8254 समयr using
+ * the same ExtINT cascade पूर्णांकerrupt to drive the local APIC of the
+ * bootstrap processor.  Thereक्रमe we refrain from routing IRQ2 to
+ * the I/O APIC in all हालs now.  No actual device should request
  * it anyway.  --macro
  */
-#define PIC_IRQS	(1UL << PIC_CASCADE_IR)
+#घोषणा PIC_IRQS	(1UL << PIC_CASCADE_IR)
 
-static int mp_irqdomain_create(int ioapic)
-{
-	struct irq_domain *parent;
-	int hwirqs = mp_ioapic_pin_count(ioapic);
-	struct ioapic *ip = &ioapics[ioapic];
-	struct ioapic_domain_cfg *cfg = &ip->irqdomain_cfg;
-	struct mp_ioapic_gsi *gsi_cfg = mp_ioapic_gsi_routing(ioapic);
-	struct fwnode_handle *fn;
-	struct irq_fwspec fwspec;
+अटल पूर्णांक mp_irqकरोमुख्य_create(पूर्णांक ioapic)
+अणु
+	काष्ठा irq_करोमुख्य *parent;
+	पूर्णांक hwirqs = mp_ioapic_pin_count(ioapic);
+	काष्ठा ioapic *ip = &ioapics[ioapic];
+	काष्ठा ioapic_करोमुख्य_cfg *cfg = &ip->irqकरोमुख्य_cfg;
+	काष्ठा mp_ioapic_gsi *gsi_cfg = mp_ioapic_gsi_routing(ioapic);
+	काष्ठा fwnode_handle *fn;
+	काष्ठा irq_fwspec fwspec;
 
-	if (cfg->type == IOAPIC_DOMAIN_INVALID)
-		return 0;
+	अगर (cfg->type == IOAPIC_DOMAIN_INVALID)
+		वापस 0;
 
-	/* Handle device tree enumerated APICs proper */
-	if (cfg->dev) {
+	/* Handle device tree क्रमागतerated APICs proper */
+	अगर (cfg->dev) अणु
 		fn = of_node_to_fwnode(cfg->dev);
-	} else {
-		fn = irq_domain_alloc_named_id_fwnode("IO-APIC", mpc_ioapic_id(ioapic));
-		if (!fn)
-			return -ENOMEM;
-	}
+	पूर्ण अन्यथा अणु
+		fn = irq_करोमुख्य_alloc_named_id_fwnode("IO-APIC", mpc_ioapic_id(ioapic));
+		अगर (!fn)
+			वापस -ENOMEM;
+	पूर्ण
 
 	fwspec.fwnode = fn;
 	fwspec.param_count = 1;
 	fwspec.param[0] = mpc_ioapic_id(ioapic);
 
 	parent = irq_find_matching_fwspec(&fwspec, DOMAIN_BUS_ANY);
-	if (!parent) {
-		if (!cfg->dev)
-			irq_domain_free_fwnode(fn);
-		return -ENODEV;
-	}
+	अगर (!parent) अणु
+		अगर (!cfg->dev)
+			irq_करोमुख्य_मुक्त_fwnode(fn);
+		वापस -ENODEV;
+	पूर्ण
 
-	ip->irqdomain = irq_domain_create_linear(fn, hwirqs, cfg->ops,
-						 (void *)(long)ioapic);
+	ip->irqकरोमुख्य = irq_करोमुख्य_create_linear(fn, hwirqs, cfg->ops,
+						 (व्योम *)(दीर्घ)ioapic);
 
-	if (!ip->irqdomain) {
-		/* Release fw handle if it was allocated above */
-		if (!cfg->dev)
-			irq_domain_free_fwnode(fn);
-		return -ENOMEM;
-	}
+	अगर (!ip->irqकरोमुख्य) अणु
+		/* Release fw handle अगर it was allocated above */
+		अगर (!cfg->dev)
+			irq_करोमुख्य_मुक्त_fwnode(fn);
+		वापस -ENOMEM;
+	पूर्ण
 
-	ip->irqdomain->parent = parent;
+	ip->irqकरोमुख्य->parent = parent;
 
-	if (cfg->type == IOAPIC_DOMAIN_LEGACY ||
+	अगर (cfg->type == IOAPIC_DOMAIN_LEGACY ||
 	    cfg->type == IOAPIC_DOMAIN_STRICT)
 		ioapic_dynirq_base = max(ioapic_dynirq_base,
 					 gsi_cfg->gsi_end + 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ioapic_destroy_irqdomain(int idx)
-{
-	struct ioapic_domain_cfg *cfg = &ioapics[idx].irqdomain_cfg;
-	struct fwnode_handle *fn = ioapics[idx].irqdomain->fwnode;
+अटल व्योम ioapic_destroy_irqकरोमुख्य(पूर्णांक idx)
+अणु
+	काष्ठा ioapic_करोमुख्य_cfg *cfg = &ioapics[idx].irqकरोमुख्य_cfg;
+	काष्ठा fwnode_handle *fn = ioapics[idx].irqकरोमुख्य->fwnode;
 
-	if (ioapics[idx].irqdomain) {
-		irq_domain_remove(ioapics[idx].irqdomain);
-		if (!cfg->dev)
-			irq_domain_free_fwnode(fn);
-		ioapics[idx].irqdomain = NULL;
-	}
-}
+	अगर (ioapics[idx].irqकरोमुख्य) अणु
+		irq_करोमुख्य_हटाओ(ioapics[idx].irqकरोमुख्य);
+		अगर (!cfg->dev)
+			irq_करोमुख्य_मुक्त_fwnode(fn);
+		ioapics[idx].irqकरोमुख्य = शून्य;
+	पूर्ण
+पूर्ण
 
-void __init setup_IO_APIC(void)
-{
-	int ioapic;
+व्योम __init setup_IO_APIC(व्योम)
+अणु
+	पूर्णांक ioapic;
 
-	if (skip_ioapic_setup || !nr_ioapics)
-		return;
+	अगर (skip_ioapic_setup || !nr_ioapics)
+		वापस;
 
 	io_apic_irqs = nr_legacy_irqs() ? ~PIC_IRQS : ~0UL;
 
-	apic_printk(APIC_VERBOSE, "ENABLING IO-APIC IRQs\n");
-	for_each_ioapic(ioapic)
-		BUG_ON(mp_irqdomain_create(ioapic));
+	apic_prपूर्णांकk(APIC_VERBOSE, "ENABLING IO-APIC IRQs\n");
+	क्रम_each_ioapic(ioapic)
+		BUG_ON(mp_irqकरोमुख्य_create(ioapic));
 
 	/*
          * Set up IO-APIC IRQ routing.
@@ -2415,300 +2416,300 @@ void __init setup_IO_APIC(void)
 	sync_Arb_IDs();
 	setup_IO_APIC_irqs();
 	init_IO_APIC_traps();
-	if (nr_legacy_irqs())
-		check_timer();
+	अगर (nr_legacy_irqs())
+		check_समयr();
 
 	ioapic_initialized = 1;
-}
+पूर्ण
 
-static void resume_ioapic_id(int ioapic_idx)
-{
-	unsigned long flags;
-	union IO_APIC_reg_00 reg_00;
+अटल व्योम resume_ioapic_id(पूर्णांक ioapic_idx)
+अणु
+	अचिन्हित दीर्घ flags;
+	जोड़ IO_APIC_reg_00 reg_00;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	reg_00.raw = io_apic_read(ioapic_idx, 0);
-	if (reg_00.bits.ID != mpc_ioapic_id(ioapic_idx)) {
+	reg_00.raw = io_apic_पढ़ो(ioapic_idx, 0);
+	अगर (reg_00.bits.ID != mpc_ioapic_id(ioapic_idx)) अणु
 		reg_00.bits.ID = mpc_ioapic_id(ioapic_idx);
-		io_apic_write(ioapic_idx, 0, reg_00.raw);
-	}
+		io_apic_ग_लिखो(ioapic_idx, 0, reg_00.raw);
+	पूर्ण
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-}
+पूर्ण
 
-static void ioapic_resume(void)
-{
-	int ioapic_idx;
+अटल व्योम ioapic_resume(व्योम)
+अणु
+	पूर्णांक ioapic_idx;
 
-	for_each_ioapic_reverse(ioapic_idx)
+	क्रम_each_ioapic_reverse(ioapic_idx)
 		resume_ioapic_id(ioapic_idx);
 
 	restore_ioapic_entries();
-}
+पूर्ण
 
-static struct syscore_ops ioapic_syscore_ops = {
+अटल काष्ठा syscore_ops ioapic_syscore_ops = अणु
 	.suspend = save_ioapic_entries,
 	.resume = ioapic_resume,
-};
+पूर्ण;
 
-static int __init ioapic_init_ops(void)
-{
-	register_syscore_ops(&ioapic_syscore_ops);
+अटल पूर्णांक __init ioapic_init_ops(व्योम)
+अणु
+	रेजिस्टर_syscore_ops(&ioapic_syscore_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 device_initcall(ioapic_init_ops);
 
-static int io_apic_get_redir_entries(int ioapic)
-{
-	union IO_APIC_reg_01	reg_01;
-	unsigned long flags;
+अटल पूर्णांक io_apic_get_redir_entries(पूर्णांक ioapic)
+अणु
+	जोड़ IO_APIC_reg_01	reg_01;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	reg_01.raw = io_apic_read(ioapic, 1);
+	reg_01.raw = io_apic_पढ़ो(ioapic, 1);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
-	/* The register returns the maximum index redir index
+	/* The रेजिस्टर वापसs the maximum index redir index
 	 * supported, which is one less than the total number of redir
 	 * entries.
 	 */
-	return reg_01.bits.entries + 1;
-}
+	वापस reg_01.bits.entries + 1;
+पूर्ण
 
-unsigned int arch_dynirq_lower_bound(unsigned int from)
-{
+अचिन्हित पूर्णांक arch_dynirq_lower_bound(अचिन्हित पूर्णांक from)
+अणु
 	/*
-	 * dmar_alloc_hwirq() may be called before setup_IO_APIC(), so use
-	 * gsi_top if ioapic_dynirq_base hasn't been initialized yet.
+	 * dmar_alloc_hwirq() may be called beक्रमe setup_IO_APIC(), so use
+	 * gsi_top अगर ioapic_dynirq_base hasn't been initialized yet.
 	 */
-	if (!ioapic_initialized)
-		return gsi_top;
+	अगर (!ioapic_initialized)
+		वापस gsi_top;
 	/*
 	 * For DT enabled machines ioapic_dynirq_base is irrelevant and not
-	 * updated. So simply return @from if ioapic_dynirq_base == 0.
+	 * updated. So simply वापस @from अगर ioapic_dynirq_base == 0.
 	 */
-	return ioapic_dynirq_base ? : from;
-}
+	वापस ioapic_dynirq_base ? : from;
+पूर्ण
 
-#ifdef CONFIG_X86_32
-static int io_apic_get_unique_id(int ioapic, int apic_id)
-{
-	union IO_APIC_reg_00 reg_00;
-	static physid_mask_t apic_id_map = PHYSID_MASK_NONE;
-	physid_mask_t tmp;
-	unsigned long flags;
-	int i = 0;
+#अगर_घोषित CONFIG_X86_32
+अटल पूर्णांक io_apic_get_unique_id(पूर्णांक ioapic, पूर्णांक apic_id)
+अणु
+	जोड़ IO_APIC_reg_00 reg_00;
+	अटल physid_mask_t apic_id_map = PHYSID_MASK_NONE;
+	physid_mask_t पंचांगp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i = 0;
 
 	/*
-	 * The P4 platform supports up to 256 APIC IDs on two separate APIC
-	 * buses (one for LAPICs, one for IOAPICs), where predecessors only
+	 * The P4 platक्रमm supports up to 256 APIC IDs on two separate APIC
+	 * buses (one क्रम LAPICs, one क्रम IOAPICs), where predecessors only
 	 * supports up to 16 on one shared APIC bus.
 	 *
-	 * TBD: Expand LAPIC/IOAPIC support on P4-class systems to take full
+	 * TBD: Expand LAPIC/IOAPIC support on P4-class प्रणालीs to take full
 	 *      advantage of new APIC bus architecture.
 	 */
 
-	if (physids_empty(apic_id_map))
+	अगर (physids_empty(apic_id_map))
 		apic->ioapic_phys_id_map(&phys_cpu_present_map, &apic_id_map);
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	reg_00.raw = io_apic_read(ioapic, 0);
+	reg_00.raw = io_apic_पढ़ो(ioapic, 0);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
-	if (apic_id >= get_physical_broadcast()) {
-		printk(KERN_WARNING "IOAPIC[%d]: Invalid apic_id %d, trying "
+	अगर (apic_id >= get_physical_broadcast()) अणु
+		prपूर्णांकk(KERN_WARNING "IOAPIC[%d]: Invalid apic_id %d, trying "
 			"%d\n", ioapic, apic_id, reg_00.bits.ID);
 		apic_id = reg_00.bits.ID;
-	}
+	पूर्ण
 
 	/*
-	 * Every APIC in a system must have a unique ID or we get lots of nice
+	 * Every APIC in a प्रणाली must have a unique ID or we get lots of nice
 	 * 'stuck on smp_invalidate_needed IPI wait' messages.
 	 */
-	if (apic->check_apicid_used(&apic_id_map, apic_id)) {
+	अगर (apic->check_apicid_used(&apic_id_map, apic_id)) अणु
 
-		for (i = 0; i < get_physical_broadcast(); i++) {
-			if (!apic->check_apicid_used(&apic_id_map, i))
-				break;
-		}
+		क्रम (i = 0; i < get_physical_broadcast(); i++) अणु
+			अगर (!apic->check_apicid_used(&apic_id_map, i))
+				अवरोध;
+		पूर्ण
 
-		if (i == get_physical_broadcast())
+		अगर (i == get_physical_broadcast())
 			panic("Max apic_id exceeded!\n");
 
-		printk(KERN_WARNING "IOAPIC[%d]: apic_id %d already used, "
+		prपूर्णांकk(KERN_WARNING "IOAPIC[%d]: apic_id %d already used, "
 			"trying %d\n", ioapic, apic_id, i);
 
 		apic_id = i;
-	}
+	पूर्ण
 
-	apic->apicid_to_cpu_present(apic_id, &tmp);
-	physids_or(apic_id_map, apic_id_map, tmp);
+	apic->apicid_to_cpu_present(apic_id, &पंचांगp);
+	physids_or(apic_id_map, apic_id_map, पंचांगp);
 
-	if (reg_00.bits.ID != apic_id) {
+	अगर (reg_00.bits.ID != apic_id) अणु
 		reg_00.bits.ID = apic_id;
 
 		raw_spin_lock_irqsave(&ioapic_lock, flags);
-		io_apic_write(ioapic, 0, reg_00.raw);
-		reg_00.raw = io_apic_read(ioapic, 0);
+		io_apic_ग_लिखो(ioapic, 0, reg_00.raw);
+		reg_00.raw = io_apic_पढ़ो(ioapic, 0);
 		raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
 		/* Sanity check */
-		if (reg_00.bits.ID != apic_id) {
+		अगर (reg_00.bits.ID != apic_id) अणु
 			pr_err("IOAPIC[%d]: Unable to change apic_id!\n",
 			       ioapic);
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	apic_printk(APIC_VERBOSE, KERN_INFO
+	apic_prपूर्णांकk(APIC_VERBOSE, KERN_INFO
 			"IOAPIC[%d]: Assigned apic_id %d\n", ioapic, apic_id);
 
-	return apic_id;
-}
+	वापस apic_id;
+पूर्ण
 
-static u8 io_apic_unique_id(int idx, u8 id)
-{
-	if ((boot_cpu_data.x86_vendor == X86_VENDOR_INTEL) &&
+अटल u8 io_apic_unique_id(पूर्णांक idx, u8 id)
+अणु
+	अगर ((boot_cpu_data.x86_venकरोr == X86_VENDOR_INTEL) &&
 	    !APIC_XAPIC(boot_cpu_apic_version))
-		return io_apic_get_unique_id(idx, id);
-	else
-		return id;
-}
-#else
-static u8 io_apic_unique_id(int idx, u8 id)
-{
-	union IO_APIC_reg_00 reg_00;
+		वापस io_apic_get_unique_id(idx, id);
+	अन्यथा
+		वापस id;
+पूर्ण
+#अन्यथा
+अटल u8 io_apic_unique_id(पूर्णांक idx, u8 id)
+अणु
+	जोड़ IO_APIC_reg_00 reg_00;
 	DECLARE_BITMAP(used, 256);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u8 new_id;
-	int i;
+	पूर्णांक i;
 
-	bitmap_zero(used, 256);
-	for_each_ioapic(i)
+	biपंचांगap_zero(used, 256);
+	क्रम_each_ioapic(i)
 		__set_bit(mpc_ioapic_id(i), used);
 
-	/* Hand out the requested id if available */
-	if (!test_bit(id, used))
-		return id;
+	/* Hand out the requested id अगर available */
+	अगर (!test_bit(id, used))
+		वापस id;
 
 	/*
-	 * Read the current id from the ioapic and keep it if
+	 * Read the current id from the ioapic and keep it अगर
 	 * available.
 	 */
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	reg_00.raw = io_apic_read(idx, 0);
+	reg_00.raw = io_apic_पढ़ो(idx, 0);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 	new_id = reg_00.bits.ID;
-	if (!test_bit(new_id, used)) {
-		apic_printk(APIC_VERBOSE, KERN_INFO
+	अगर (!test_bit(new_id, used)) अणु
+		apic_prपूर्णांकk(APIC_VERBOSE, KERN_INFO
 			"IOAPIC[%d]: Using reg apic_id %d instead of %d\n",
 			 idx, new_id, id);
-		return new_id;
-	}
+		वापस new_id;
+	पूर्ण
 
 	/*
-	 * Get the next free id and write it to the ioapic.
+	 * Get the next मुक्त id and ग_लिखो it to the ioapic.
 	 */
 	new_id = find_first_zero_bit(used, 256);
 	reg_00.bits.ID = new_id;
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	io_apic_write(idx, 0, reg_00.raw);
-	reg_00.raw = io_apic_read(idx, 0);
+	io_apic_ग_लिखो(idx, 0, reg_00.raw);
+	reg_00.raw = io_apic_पढ़ो(idx, 0);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 	/* Sanity check */
 	BUG_ON(reg_00.bits.ID != new_id);
 
-	return new_id;
-}
-#endif
+	वापस new_id;
+पूर्ण
+#पूर्ण_अगर
 
-static int io_apic_get_version(int ioapic)
-{
-	union IO_APIC_reg_01	reg_01;
-	unsigned long flags;
+अटल पूर्णांक io_apic_get_version(पूर्णांक ioapic)
+अणु
+	जोड़ IO_APIC_reg_01	reg_01;
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
-	reg_01.raw = io_apic_read(ioapic, 1);
+	reg_01.raw = io_apic_पढ़ो(ioapic, 1);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
 
-	return reg_01.bits.version;
-}
+	वापस reg_01.bits.version;
+पूर्ण
 
 /*
- * This function updates target affinity of IOAPIC interrupts to include
+ * This function updates target affinity of IOAPIC पूर्णांकerrupts to include
  * the CPUs which came online during SMP bringup.
  */
-#define IOAPIC_RESOURCE_NAME_SIZE 11
+#घोषणा IOAPIC_RESOURCE_NAME_SIZE 11
 
-static struct resource *ioapic_resources;
+अटल काष्ठा resource *ioapic_resources;
 
-static struct resource * __init ioapic_setup_resources(void)
-{
-	unsigned long n;
-	struct resource *res;
-	char *mem;
-	int i;
+अटल काष्ठा resource * __init ioapic_setup_resources(व्योम)
+अणु
+	अचिन्हित दीर्घ n;
+	काष्ठा resource *res;
+	अक्षर *mem;
+	पूर्णांक i;
 
-	if (nr_ioapics == 0)
-		return NULL;
+	अगर (nr_ioapics == 0)
+		वापस शून्य;
 
-	n = IOAPIC_RESOURCE_NAME_SIZE + sizeof(struct resource);
+	n = IOAPIC_RESOURCE_NAME_SIZE + माप(काष्ठा resource);
 	n *= nr_ioapics;
 
 	mem = memblock_alloc(n, SMP_CACHE_BYTES);
-	if (!mem)
+	अगर (!mem)
 		panic("%s: Failed to allocate %lu bytes\n", __func__, n);
-	res = (void *)mem;
+	res = (व्योम *)mem;
 
-	mem += sizeof(struct resource) * nr_ioapics;
+	mem += माप(काष्ठा resource) * nr_ioapics;
 
-	for_each_ioapic(i) {
+	क्रम_each_ioapic(i) अणु
 		res[i].name = mem;
 		res[i].flags = IORESOURCE_MEM | IORESOURCE_BUSY;
-		snprintf(mem, IOAPIC_RESOURCE_NAME_SIZE, "IOAPIC %u", i);
+		snम_लिखो(mem, IOAPIC_RESOURCE_NAME_SIZE, "IOAPIC %u", i);
 		mem += IOAPIC_RESOURCE_NAME_SIZE;
 		ioapics[i].iomem_res = &res[i];
-	}
+	पूर्ण
 
 	ioapic_resources = res;
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-void __init io_apic_init_mappings(void)
-{
-	unsigned long ioapic_phys, idx = FIX_IO_APIC_BASE_0;
-	struct resource *ioapic_res;
-	int i;
+व्योम __init io_apic_init_mappings(व्योम)
+अणु
+	अचिन्हित दीर्घ ioapic_phys, idx = FIX_IO_APIC_BASE_0;
+	काष्ठा resource *ioapic_res;
+	पूर्णांक i;
 
 	ioapic_res = ioapic_setup_resources();
-	for_each_ioapic(i) {
-		if (smp_found_config) {
+	क्रम_each_ioapic(i) अणु
+		अगर (smp_found_config) अणु
 			ioapic_phys = mpc_ioapic_addr(i);
-#ifdef CONFIG_X86_32
-			if (!ioapic_phys) {
-				printk(KERN_ERR
+#अगर_घोषित CONFIG_X86_32
+			अगर (!ioapic_phys) अणु
+				prपूर्णांकk(KERN_ERR
 				       "WARNING: bogus zero IO-APIC "
 				       "address found in MPTABLE, "
 				       "disabling IO/APIC support!\n");
 				smp_found_config = 0;
 				skip_ioapic_setup = 1;
-				goto fake_ioapic_page;
-			}
-#endif
-		} else {
-#ifdef CONFIG_X86_32
+				जाओ fake_ioapic_page;
+			पूर्ण
+#पूर्ण_अगर
+		पूर्ण अन्यथा अणु
+#अगर_घोषित CONFIG_X86_32
 fake_ioapic_page:
-#endif
-			ioapic_phys = (unsigned long)memblock_alloc(PAGE_SIZE,
+#पूर्ण_अगर
+			ioapic_phys = (अचिन्हित दीर्घ)memblock_alloc(PAGE_SIZE,
 								    PAGE_SIZE);
-			if (!ioapic_phys)
+			अगर (!ioapic_phys)
 				panic("%s: Failed to allocate %lu bytes align=0x%lx\n",
 				      __func__, PAGE_SIZE, PAGE_SIZE);
 			ioapic_phys = __pa(ioapic_phys);
-		}
+		पूर्ण
 		set_fixmap_nocache(idx, ioapic_phys);
-		apic_printk(APIC_VERBOSE, "mapped IOAPIC to %08lx (%08lx)\n",
+		apic_prपूर्णांकk(APIC_VERBOSE, "mapped IOAPIC to %08lx (%08lx)\n",
 			__fix_to_virt(idx) + (ioapic_phys & ~PAGE_MASK),
 			ioapic_phys);
 		idx++;
@@ -2716,131 +2717,131 @@ fake_ioapic_page:
 		ioapic_res->start = ioapic_phys;
 		ioapic_res->end = ioapic_phys + IO_APIC_SLOT_SIZE - 1;
 		ioapic_res++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init ioapic_insert_resources(void)
-{
-	int i;
-	struct resource *r = ioapic_resources;
+व्योम __init ioapic_insert_resources(व्योम)
+अणु
+	पूर्णांक i;
+	काष्ठा resource *r = ioapic_resources;
 
-	if (!r) {
-		if (nr_ioapics > 0)
-			printk(KERN_ERR
+	अगर (!r) अणु
+		अगर (nr_ioapics > 0)
+			prपूर्णांकk(KERN_ERR
 				"IO APIC resources couldn't be allocated.\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for_each_ioapic(i) {
+	क्रम_each_ioapic(i) अणु
 		insert_resource(&iomem_resource, r);
 		r++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int mp_find_ioapic(u32 gsi)
-{
-	int i;
+पूर्णांक mp_find_ioapic(u32 gsi)
+अणु
+	पूर्णांक i;
 
-	if (nr_ioapics == 0)
-		return -1;
+	अगर (nr_ioapics == 0)
+		वापस -1;
 
 	/* Find the IOAPIC that manages this GSI. */
-	for_each_ioapic(i) {
-		struct mp_ioapic_gsi *gsi_cfg = mp_ioapic_gsi_routing(i);
-		if (gsi >= gsi_cfg->gsi_base && gsi <= gsi_cfg->gsi_end)
-			return i;
-	}
+	क्रम_each_ioapic(i) अणु
+		काष्ठा mp_ioapic_gsi *gsi_cfg = mp_ioapic_gsi_routing(i);
+		अगर (gsi >= gsi_cfg->gsi_base && gsi <= gsi_cfg->gsi_end)
+			वापस i;
+	पूर्ण
 
-	printk(KERN_ERR "ERROR: Unable to locate IOAPIC for GSI %d\n", gsi);
-	return -1;
-}
+	prपूर्णांकk(KERN_ERR "ERROR: Unable to locate IOAPIC for GSI %d\n", gsi);
+	वापस -1;
+पूर्ण
 
-int mp_find_ioapic_pin(int ioapic, u32 gsi)
-{
-	struct mp_ioapic_gsi *gsi_cfg;
+पूर्णांक mp_find_ioapic_pin(पूर्णांक ioapic, u32 gsi)
+अणु
+	काष्ठा mp_ioapic_gsi *gsi_cfg;
 
-	if (WARN_ON(ioapic < 0))
-		return -1;
+	अगर (WARN_ON(ioapic < 0))
+		वापस -1;
 
 	gsi_cfg = mp_ioapic_gsi_routing(ioapic);
-	if (WARN_ON(gsi > gsi_cfg->gsi_end))
-		return -1;
+	अगर (WARN_ON(gsi > gsi_cfg->gsi_end))
+		वापस -1;
 
-	return gsi - gsi_cfg->gsi_base;
-}
+	वापस gsi - gsi_cfg->gsi_base;
+पूर्ण
 
-static int bad_ioapic_register(int idx)
-{
-	union IO_APIC_reg_00 reg_00;
-	union IO_APIC_reg_01 reg_01;
-	union IO_APIC_reg_02 reg_02;
+अटल पूर्णांक bad_ioapic_रेजिस्टर(पूर्णांक idx)
+अणु
+	जोड़ IO_APIC_reg_00 reg_00;
+	जोड़ IO_APIC_reg_01 reg_01;
+	जोड़ IO_APIC_reg_02 reg_02;
 
-	reg_00.raw = io_apic_read(idx, 0);
-	reg_01.raw = io_apic_read(idx, 1);
-	reg_02.raw = io_apic_read(idx, 2);
+	reg_00.raw = io_apic_पढ़ो(idx, 0);
+	reg_01.raw = io_apic_पढ़ो(idx, 1);
+	reg_02.raw = io_apic_पढ़ो(idx, 2);
 
-	if (reg_00.raw == -1 && reg_01.raw == -1 && reg_02.raw == -1) {
+	अगर (reg_00.raw == -1 && reg_01.raw == -1 && reg_02.raw == -1) अणु
 		pr_warn("I/O APIC 0x%x registers return all ones, skipping!\n",
 			mpc_ioapic_addr(idx));
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int find_free_ioapic_entry(void)
-{
-	int idx;
+अटल पूर्णांक find_मुक्त_ioapic_entry(व्योम)
+अणु
+	पूर्णांक idx;
 
-	for (idx = 0; idx < MAX_IO_APICS; idx++)
-		if (ioapics[idx].nr_registers == 0)
-			return idx;
+	क्रम (idx = 0; idx < MAX_IO_APICS; idx++)
+		अगर (ioapics[idx].nr_रेजिस्टरs == 0)
+			वापस idx;
 
-	return MAX_IO_APICS;
-}
+	वापस MAX_IO_APICS;
+पूर्ण
 
 /**
- * mp_register_ioapic - Register an IOAPIC device
+ * mp_रेजिस्टर_ioapic - Register an IOAPIC device
  * @id:		hardware IOAPIC ID
- * @address:	physical address of IOAPIC register area
+ * @address:	physical address of IOAPIC रेजिस्टर area
  * @gsi_base:	base of GSI associated with the IOAPIC
- * @cfg:	configuration information for the IOAPIC
+ * @cfg:	configuration inक्रमmation क्रम the IOAPIC
  */
-int mp_register_ioapic(int id, u32 address, u32 gsi_base,
-		       struct ioapic_domain_cfg *cfg)
-{
+पूर्णांक mp_रेजिस्टर_ioapic(पूर्णांक id, u32 address, u32 gsi_base,
+		       काष्ठा ioapic_करोमुख्य_cfg *cfg)
+अणु
 	bool hotplug = !!ioapic_initialized;
-	struct mp_ioapic_gsi *gsi_cfg;
-	int idx, ioapic, entries;
+	काष्ठा mp_ioapic_gsi *gsi_cfg;
+	पूर्णांक idx, ioapic, entries;
 	u32 gsi_end;
 
-	if (!address) {
+	अगर (!address) अणु
 		pr_warn("Bogus (zero) I/O APIC address found, skipping!\n");
-		return -EINVAL;
-	}
-	for_each_ioapic(ioapic)
-		if (ioapics[ioapic].mp_config.apicaddr == address) {
+		वापस -EINVAL;
+	पूर्ण
+	क्रम_each_ioapic(ioapic)
+		अगर (ioapics[ioapic].mp_config.apicaddr == address) अणु
 			pr_warn("address 0x%x conflicts with IOAPIC%d\n",
 				address, ioapic);
-			return -EEXIST;
-		}
+			वापस -EEXIST;
+		पूर्ण
 
-	idx = find_free_ioapic_entry();
-	if (idx >= MAX_IO_APICS) {
+	idx = find_मुक्त_ioapic_entry();
+	अगर (idx >= MAX_IO_APICS) अणु
 		pr_warn("Max # of I/O APICs (%d) exceeded (found %d), skipping\n",
 			MAX_IO_APICS, idx);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
 	ioapics[idx].mp_config.type = MP_IOAPIC;
 	ioapics[idx].mp_config.flags = MPC_APIC_USABLE;
 	ioapics[idx].mp_config.apicaddr = address;
 
 	set_fixmap_nocache(FIX_IO_APIC_BASE_0 + idx, address);
-	if (bad_ioapic_register(idx)) {
+	अगर (bad_ioapic_रेजिस्टर(idx)) अणु
 		clear_fixmap(FIX_IO_APIC_BASE_0 + idx);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	ioapics[idx].mp_config.apicid = io_apic_unique_id(idx, id);
 	ioapics[idx].mp_config.apicver = io_apic_get_version(idx);
@@ -2851,247 +2852,247 @@ int mp_register_ioapic(int id, u32 address, u32 gsi_base,
 	 */
 	entries = io_apic_get_redir_entries(idx);
 	gsi_end = gsi_base + entries - 1;
-	for_each_ioapic(ioapic) {
+	क्रम_each_ioapic(ioapic) अणु
 		gsi_cfg = mp_ioapic_gsi_routing(ioapic);
-		if ((gsi_base >= gsi_cfg->gsi_base &&
+		अगर ((gsi_base >= gsi_cfg->gsi_base &&
 		     gsi_base <= gsi_cfg->gsi_end) ||
 		    (gsi_end >= gsi_cfg->gsi_base &&
-		     gsi_end <= gsi_cfg->gsi_end)) {
+		     gsi_end <= gsi_cfg->gsi_end)) अणु
 			pr_warn("GSI range [%u-%u] for new IOAPIC conflicts with GSI[%u-%u]\n",
 				gsi_base, gsi_end,
 				gsi_cfg->gsi_base, gsi_cfg->gsi_end);
 			clear_fixmap(FIX_IO_APIC_BASE_0 + idx);
-			return -ENOSPC;
-		}
-	}
+			वापस -ENOSPC;
+		पूर्ण
+	पूर्ण
 	gsi_cfg = mp_ioapic_gsi_routing(idx);
 	gsi_cfg->gsi_base = gsi_base;
 	gsi_cfg->gsi_end = gsi_end;
 
-	ioapics[idx].irqdomain = NULL;
-	ioapics[idx].irqdomain_cfg = *cfg;
+	ioapics[idx].irqकरोमुख्य = शून्य;
+	ioapics[idx].irqकरोमुख्य_cfg = *cfg;
 
 	/*
-	 * If mp_register_ioapic() is called during early boot stage when
-	 * walking ACPI/DT tables, it's too early to create irqdomain,
-	 * we are still using bootmem allocator. So delay it to setup_IO_APIC().
+	 * If mp_रेजिस्टर_ioapic() is called during early boot stage when
+	 * walking ACPI/DT tables, it's too early to create irqकरोमुख्य,
+	 * we are still using booपंचांगem allocator. So delay it to setup_IO_APIC().
 	 */
-	if (hotplug) {
-		if (mp_irqdomain_create(idx)) {
+	अगर (hotplug) अणु
+		अगर (mp_irqकरोमुख्य_create(idx)) अणु
 			clear_fixmap(FIX_IO_APIC_BASE_0 + idx);
-			return -ENOMEM;
-		}
-		alloc_ioapic_saved_registers(idx);
-	}
+			वापस -ENOMEM;
+		पूर्ण
+		alloc_ioapic_saved_रेजिस्टरs(idx);
+	पूर्ण
 
-	if (gsi_cfg->gsi_end >= gsi_top)
+	अगर (gsi_cfg->gsi_end >= gsi_top)
 		gsi_top = gsi_cfg->gsi_end + 1;
-	if (nr_ioapics <= idx)
+	अगर (nr_ioapics <= idx)
 		nr_ioapics = idx + 1;
 
-	/* Set nr_registers to mark entry present */
-	ioapics[idx].nr_registers = entries;
+	/* Set nr_रेजिस्टरs to mark entry present */
+	ioapics[idx].nr_रेजिस्टरs = entries;
 
 	pr_info("IOAPIC[%d]: apic_id %d, version %d, address 0x%x, GSI %d-%d\n",
 		idx, mpc_ioapic_id(idx),
 		mpc_ioapic_ver(idx), mpc_ioapic_addr(idx),
 		gsi_cfg->gsi_base, gsi_cfg->gsi_end);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mp_unregister_ioapic(u32 gsi_base)
-{
-	int ioapic, pin;
-	int found = 0;
+पूर्णांक mp_unरेजिस्टर_ioapic(u32 gsi_base)
+अणु
+	पूर्णांक ioapic, pin;
+	पूर्णांक found = 0;
 
-	for_each_ioapic(ioapic)
-		if (ioapics[ioapic].gsi_config.gsi_base == gsi_base) {
+	क्रम_each_ioapic(ioapic)
+		अगर (ioapics[ioapic].gsi_config.gsi_base == gsi_base) अणु
 			found = 1;
-			break;
-		}
-	if (!found) {
+			अवरोध;
+		पूर्ण
+	अगर (!found) अणु
 		pr_warn("can't find IOAPIC for GSI %d\n", gsi_base);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for_each_pin(ioapic, pin) {
+	क्रम_each_pin(ioapic, pin) अणु
 		u32 gsi = mp_pin_to_gsi(ioapic, pin);
-		int irq = mp_map_gsi_to_irq(gsi, 0, NULL);
-		struct mp_chip_data *data;
+		पूर्णांक irq = mp_map_gsi_to_irq(gsi, 0, शून्य);
+		काष्ठा mp_chip_data *data;
 
-		if (irq >= 0) {
+		अगर (irq >= 0) अणु
 			data = irq_get_chip_data(irq);
-			if (data && data->count) {
+			अगर (data && data->count) अणु
 				pr_warn("pin%d on IOAPIC%d is still in use.\n",
 					pin, ioapic);
-				return -EBUSY;
-			}
-		}
-	}
+				वापस -EBUSY;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Mark entry not present */
-	ioapics[ioapic].nr_registers  = 0;
-	ioapic_destroy_irqdomain(ioapic);
-	free_ioapic_saved_registers(ioapic);
-	if (ioapics[ioapic].iomem_res)
+	ioapics[ioapic].nr_रेजिस्टरs  = 0;
+	ioapic_destroy_irqकरोमुख्य(ioapic);
+	मुक्त_ioapic_saved_रेजिस्टरs(ioapic);
+	अगर (ioapics[ioapic].iomem_res)
 		release_resource(ioapics[ioapic].iomem_res);
 	clear_fixmap(FIX_IO_APIC_BASE_0 + ioapic);
-	memset(&ioapics[ioapic], 0, sizeof(ioapics[ioapic]));
+	स_रखो(&ioapics[ioapic], 0, माप(ioapics[ioapic]));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mp_ioapic_registered(u32 gsi_base)
-{
-	int ioapic;
+पूर्णांक mp_ioapic_रेजिस्टरed(u32 gsi_base)
+अणु
+	पूर्णांक ioapic;
 
-	for_each_ioapic(ioapic)
-		if (ioapics[ioapic].gsi_config.gsi_base == gsi_base)
-			return 1;
+	क्रम_each_ioapic(ioapic)
+		अगर (ioapics[ioapic].gsi_config.gsi_base == gsi_base)
+			वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mp_irqdomain_get_attr(u32 gsi, struct mp_chip_data *data,
-				  struct irq_alloc_info *info)
-{
-	if (info && info->ioapic.valid) {
+अटल व्योम mp_irqकरोमुख्य_get_attr(u32 gsi, काष्ठा mp_chip_data *data,
+				  काष्ठा irq_alloc_info *info)
+अणु
+	अगर (info && info->ioapic.valid) अणु
 		data->is_level = info->ioapic.is_level;
 		data->active_low = info->ioapic.active_low;
-	} else if (__acpi_get_override_irq(gsi, &data->is_level,
-					   &data->active_low) < 0) {
-		/* PCI interrupts are always active low level triggered. */
+	पूर्ण अन्यथा अगर (__acpi_get_override_irq(gsi, &data->is_level,
+					   &data->active_low) < 0) अणु
+		/* PCI पूर्णांकerrupts are always active low level triggered. */
 		data->is_level = true;
 		data->active_low = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Configure the I/O-APIC specific fields in the routing entry.
+ * Configure the I/O-APIC specअगरic fields in the routing entry.
  *
- * This is important to setup the I/O-APIC specific bits (is_level,
- * active_low, masked) because the underlying parent domain will only
- * provide the routing information and is oblivious of the I/O-APIC
- * specific bits.
+ * This is important to setup the I/O-APIC specअगरic bits (is_level,
+ * active_low, masked) because the underlying parent करोमुख्य will only
+ * provide the routing inक्रमmation and is oblivious of the I/O-APIC
+ * specअगरic bits.
  *
- * The entry is just preconfigured at this point and not written into the
+ * The entry is just preconfigured at this poपूर्णांक and not written पूर्णांकo the
  * RTE. This happens later during activation which will fill in the actual
- * routing information.
+ * routing inक्रमmation.
  */
-static void mp_preconfigure_entry(struct mp_chip_data *data)
-{
-	struct IO_APIC_route_entry *entry = &data->entry;
+अटल व्योम mp_preconfigure_entry(काष्ठा mp_chip_data *data)
+अणु
+	काष्ठा IO_APIC_route_entry *entry = &data->entry;
 
-	memset(entry, 0, sizeof(*entry));
+	स_रखो(entry, 0, माप(*entry));
 	entry->is_level		 = data->is_level;
 	entry->active_low	 = data->active_low;
 	/*
 	 * Mask level triggered irqs. Edge triggered irqs are masked
-	 * by the irq core code in case they fire.
+	 * by the irq core code in हाल they fire.
 	 */
 	entry->masked		= data->is_level;
-}
+पूर्ण
 
-int mp_irqdomain_alloc(struct irq_domain *domain, unsigned int virq,
-		       unsigned int nr_irqs, void *arg)
-{
-	struct irq_alloc_info *info = arg;
-	struct mp_chip_data *data;
-	struct irq_data *irq_data;
-	int ret, ioapic, pin;
-	unsigned long flags;
+पूर्णांक mp_irqकरोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+		       अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
+अणु
+	काष्ठा irq_alloc_info *info = arg;
+	काष्ठा mp_chip_data *data;
+	काष्ठा irq_data *irq_data;
+	पूर्णांक ret, ioapic, pin;
+	अचिन्हित दीर्घ flags;
 
-	if (!info || nr_irqs > 1)
-		return -EINVAL;
-	irq_data = irq_domain_get_irq_data(domain, virq);
-	if (!irq_data)
-		return -EINVAL;
+	अगर (!info || nr_irqs > 1)
+		वापस -EINVAL;
+	irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, virq);
+	अगर (!irq_data)
+		वापस -EINVAL;
 
-	ioapic = mp_irqdomain_ioapic_idx(domain);
+	ioapic = mp_irqकरोमुख्य_ioapic_idx(करोमुख्य);
 	pin = info->ioapic.pin;
-	if (irq_find_mapping(domain, (irq_hw_number_t)pin) > 0)
-		return -EEXIST;
+	अगर (irq_find_mapping(करोमुख्य, (irq_hw_number_t)pin) > 0)
+		वापस -EEXIST;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	ret = irq_domain_alloc_irqs_parent(domain, virq, nr_irqs, info);
-	if (ret < 0) {
-		kfree(data);
-		return ret;
-	}
+	ret = irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, nr_irqs, info);
+	अगर (ret < 0) अणु
+		kमुक्त(data);
+		वापस ret;
+	पूर्ण
 
 	INIT_LIST_HEAD(&data->irq_2_pin);
 	irq_data->hwirq = info->ioapic.pin;
-	irq_data->chip = (domain->parent == x86_vector_domain) ?
+	irq_data->chip = (करोमुख्य->parent == x86_vector_करोमुख्य) ?
 			  &ioapic_chip : &ioapic_ir_chip;
 	irq_data->chip_data = data;
-	mp_irqdomain_get_attr(mp_pin_to_gsi(ioapic, pin), data, info);
+	mp_irqकरोमुख्य_get_attr(mp_pin_to_gsi(ioapic, pin), data, info);
 
 	add_pin_to_irq_node(data, ioapic_alloc_attr_node(info), ioapic, pin);
 
 	mp_preconfigure_entry(data);
-	mp_register_handler(virq, data->is_level);
+	mp_रेजिस्टर_handler(virq, data->is_level);
 
 	local_irq_save(flags);
-	if (virq < nr_legacy_irqs())
+	अगर (virq < nr_legacy_irqs())
 		legacy_pic->mask(virq);
 	local_irq_restore(flags);
 
-	apic_printk(APIC_VERBOSE, KERN_DEBUG
+	apic_prपूर्णांकk(APIC_VERBOSE, KERN_DEBUG
 		    "IOAPIC[%d]: Preconfigured routing entry (%d-%d -> IRQ %d Level:%i ActiveLow:%i)\n",
 		    ioapic, mpc_ioapic_id(ioapic), pin, virq,
 		    data->is_level, data->active_low);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mp_irqdomain_free(struct irq_domain *domain, unsigned int virq,
-		       unsigned int nr_irqs)
-{
-	struct irq_data *irq_data;
-	struct mp_chip_data *data;
+व्योम mp_irqकरोमुख्य_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+		       अचिन्हित पूर्णांक nr_irqs)
+अणु
+	काष्ठा irq_data *irq_data;
+	काष्ठा mp_chip_data *data;
 
 	BUG_ON(nr_irqs != 1);
-	irq_data = irq_domain_get_irq_data(domain, virq);
-	if (irq_data && irq_data->chip_data) {
+	irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, virq);
+	अगर (irq_data && irq_data->chip_data) अणु
 		data = irq_data->chip_data;
-		__remove_pin_from_irq(data, mp_irqdomain_ioapic_idx(domain),
-				      (int)irq_data->hwirq);
+		__हटाओ_pin_from_irq(data, mp_irqकरोमुख्य_ioapic_idx(करोमुख्य),
+				      (पूर्णांक)irq_data->hwirq);
 		WARN_ON(!list_empty(&data->irq_2_pin));
-		kfree(irq_data->chip_data);
-	}
-	irq_domain_free_irqs_top(domain, virq, nr_irqs);
-}
+		kमुक्त(irq_data->chip_data);
+	पूर्ण
+	irq_करोमुख्य_मुक्त_irqs_top(करोमुख्य, virq, nr_irqs);
+पूर्ण
 
-int mp_irqdomain_activate(struct irq_domain *domain,
-			  struct irq_data *irq_data, bool reserve)
-{
-	unsigned long flags;
+पूर्णांक mp_irqकरोमुख्य_activate(काष्ठा irq_करोमुख्य *करोमुख्य,
+			  काष्ठा irq_data *irq_data, bool reserve)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&ioapic_lock, flags);
 	ioapic_configure_entry(irq_data);
 	raw_spin_unlock_irqrestore(&ioapic_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void mp_irqdomain_deactivate(struct irq_domain *domain,
-			     struct irq_data *irq_data)
-{
-	/* It won't be called for IRQ with multiple IOAPIC pins associated */
-	ioapic_mask_entry(mp_irqdomain_ioapic_idx(domain),
-			  (int)irq_data->hwirq);
-}
+व्योम mp_irqकरोमुख्य_deactivate(काष्ठा irq_करोमुख्य *करोमुख्य,
+			     काष्ठा irq_data *irq_data)
+अणु
+	/* It won't be called क्रम IRQ with multiple IOAPIC pins associated */
+	ioapic_mask_entry(mp_irqकरोमुख्य_ioapic_idx(करोमुख्य),
+			  (पूर्णांक)irq_data->hwirq);
+पूर्ण
 
-int mp_irqdomain_ioapic_idx(struct irq_domain *domain)
-{
-	return (int)(long)domain->host_data;
-}
+पूर्णांक mp_irqकरोमुख्य_ioapic_idx(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस (पूर्णांक)(दीर्घ)करोमुख्य->host_data;
+पूर्ण
 
-const struct irq_domain_ops mp_ioapic_irqdomain_ops = {
-	.alloc		= mp_irqdomain_alloc,
-	.free		= mp_irqdomain_free,
-	.activate	= mp_irqdomain_activate,
-	.deactivate	= mp_irqdomain_deactivate,
-};
+स्थिर काष्ठा irq_करोमुख्य_ops mp_ioapic_irqकरोमुख्य_ops = अणु
+	.alloc		= mp_irqकरोमुख्य_alloc,
+	.मुक्त		= mp_irqकरोमुख्य_मुक्त,
+	.activate	= mp_irqकरोमुख्य_activate,
+	.deactivate	= mp_irqकरोमुख्य_deactivate,
+पूर्ण;

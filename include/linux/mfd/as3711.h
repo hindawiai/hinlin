@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AS3711 PMIC MFC driver header
  *
@@ -6,53 +7,53 @@
  * Author: Guennadi Liakhovetski, <g.liakhovetski@gmx.de>
  */
 
-#ifndef MFD_AS3711_H
-#define MFD_AS3711_H
+#अगर_अघोषित MFD_AS3711_H
+#घोषणा MFD_AS3711_H
 
 /*
  * Client data
  */
 
 /* Register addresses */
-#define AS3711_SD_1_VOLTAGE		0	/* Digital Step-Down */
-#define AS3711_SD_2_VOLTAGE		1
-#define AS3711_SD_3_VOLTAGE		2
-#define AS3711_SD_4_VOLTAGE		3
-#define AS3711_LDO_1_VOLTAGE		4	/* Analog LDO */
-#define AS3711_LDO_2_VOLTAGE		5
-#define AS3711_LDO_3_VOLTAGE		6	/* Digital LDO */
-#define AS3711_LDO_4_VOLTAGE		7
-#define AS3711_LDO_5_VOLTAGE		8
-#define AS3711_LDO_6_VOLTAGE		9
-#define AS3711_LDO_7_VOLTAGE		0xa
-#define AS3711_LDO_8_VOLTAGE		0xb
-#define AS3711_SD_CONTROL		0x10
-#define AS3711_GPIO_SIGNAL_OUT		0x20
-#define AS3711_GPIO_SIGNAL_IN		0x21
-#define AS3711_SD_CONTROL_1		0x30
-#define AS3711_SD_CONTROL_2		0x31
-#define AS3711_CURR_CONTROL		0x40
-#define AS3711_CURR1_VALUE		0x43
-#define AS3711_CURR2_VALUE		0x44
-#define AS3711_CURR3_VALUE		0x45
-#define AS3711_STEPUP_CONTROL_1		0x50
-#define AS3711_STEPUP_CONTROL_2		0x51
-#define AS3711_STEPUP_CONTROL_4		0x53
-#define AS3711_STEPUP_CONTROL_5		0x54
-#define AS3711_REG_STATUS		0x73
-#define AS3711_INTERRUPT_STATUS_1	0x77
-#define AS3711_INTERRUPT_STATUS_2	0x78
-#define AS3711_INTERRUPT_STATUS_3	0x79
-#define AS3711_CHARGER_STATUS_1		0x86
-#define AS3711_CHARGER_STATUS_2		0x87
-#define AS3711_ASIC_ID_1		0x90
-#define AS3711_ASIC_ID_2		0x91
+#घोषणा AS3711_SD_1_VOLTAGE		0	/* Digital Step-Down */
+#घोषणा AS3711_SD_2_VOLTAGE		1
+#घोषणा AS3711_SD_3_VOLTAGE		2
+#घोषणा AS3711_SD_4_VOLTAGE		3
+#घोषणा AS3711_LDO_1_VOLTAGE		4	/* Analog LDO */
+#घोषणा AS3711_LDO_2_VOLTAGE		5
+#घोषणा AS3711_LDO_3_VOLTAGE		6	/* Digital LDO */
+#घोषणा AS3711_LDO_4_VOLTAGE		7
+#घोषणा AS3711_LDO_5_VOLTAGE		8
+#घोषणा AS3711_LDO_6_VOLTAGE		9
+#घोषणा AS3711_LDO_7_VOLTAGE		0xa
+#घोषणा AS3711_LDO_8_VOLTAGE		0xb
+#घोषणा AS3711_SD_CONTROL		0x10
+#घोषणा AS3711_GPIO_SIGNAL_OUT		0x20
+#घोषणा AS3711_GPIO_SIGNAL_IN		0x21
+#घोषणा AS3711_SD_CONTROL_1		0x30
+#घोषणा AS3711_SD_CONTROL_2		0x31
+#घोषणा AS3711_CURR_CONTROL		0x40
+#घोषणा AS3711_CURR1_VALUE		0x43
+#घोषणा AS3711_CURR2_VALUE		0x44
+#घोषणा AS3711_CURR3_VALUE		0x45
+#घोषणा AS3711_STEPUP_CONTROL_1		0x50
+#घोषणा AS3711_STEPUP_CONTROL_2		0x51
+#घोषणा AS3711_STEPUP_CONTROL_4		0x53
+#घोषणा AS3711_STEPUP_CONTROL_5		0x54
+#घोषणा AS3711_REG_STATUS		0x73
+#घोषणा AS3711_INTERRUPT_STATUS_1	0x77
+#घोषणा AS3711_INTERRUPT_STATUS_2	0x78
+#घोषणा AS3711_INTERRUPT_STATUS_3	0x79
+#घोषणा AS3711_CHARGER_STATUS_1		0x86
+#घोषणा AS3711_CHARGER_STATUS_2		0x87
+#घोषणा AS3711_ASIC_ID_1		0x90
+#घोषणा AS3711_ASIC_ID_2		0x91
 
-#define AS3711_MAX_REG		AS3711_ASIC_ID_2
-#define AS3711_NUM_REGS		(AS3711_MAX_REG + 1)
+#घोषणा AS3711_MAX_REG		AS3711_ASIC_ID_2
+#घोषणा AS3711_NUM_REGS		(AS3711_MAX_REG + 1)
 
 /* Regulators */
-enum {
+क्रमागत अणु
 	AS3711_REGULATOR_SD_1,
 	AS3711_REGULATOR_SD_2,
 	AS3711_REGULATOR_SD_3,
@@ -67,58 +68,58 @@ enum {
 	AS3711_REGULATOR_LDO_8,
 
 	AS3711_REGULATOR_MAX,
-};
+पूर्ण;
 
-struct device;
-struct regmap;
+काष्ठा device;
+काष्ठा regmap;
 
-struct as3711 {
-	struct device *dev;
-	struct regmap *regmap;
-};
+काष्ठा as3711 अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+पूर्ण;
 
-#define AS3711_MAX_STEPDOWN 4
-#define AS3711_MAX_STEPUP 2
-#define AS3711_MAX_LDO 8
+#घोषणा AS3711_MAX_STEPDOWN 4
+#घोषणा AS3711_MAX_STEPUP 2
+#घोषणा AS3711_MAX_LDO 8
 
-enum as3711_su2_feedback {
+क्रमागत as3711_su2_feedback अणु
 	AS3711_SU2_VOLTAGE,
 	AS3711_SU2_CURR1,
 	AS3711_SU2_CURR2,
 	AS3711_SU2_CURR3,
 	AS3711_SU2_CURR_AUTO,
-};
+पूर्ण;
 
-enum as3711_su2_fbprot {
+क्रमागत as3711_su2_fbprot अणु
 	AS3711_SU2_LX_SD4,
 	AS3711_SU2_GPIO2,
 	AS3711_SU2_GPIO3,
 	AS3711_SU2_GPIO4,
-};
+पूर्ण;
 
 /*
- * Platform data
+ * Platक्रमm data
  */
 
-struct as3711_regulator_pdata {
-	struct regulator_init_data *init_data[AS3711_REGULATOR_MAX];
-};
+काष्ठा as3711_regulator_pdata अणु
+	काष्ठा regulator_init_data *init_data[AS3711_REGULATOR_MAX];
+पूर्ण;
 
-struct as3711_bl_pdata {
+काष्ठा as3711_bl_pdata अणु
 	bool su1_fb;
-	int su1_max_uA;
+	पूर्णांक su1_max_uA;
 	bool su2_fb;
-	int su2_max_uA;
-	enum as3711_su2_feedback su2_feedback;
-	enum as3711_su2_fbprot su2_fbprot;
-	bool su2_auto_curr1;
-	bool su2_auto_curr2;
-	bool su2_auto_curr3;
-};
+	पूर्णांक su2_max_uA;
+	क्रमागत as3711_su2_feedback su2_feedback;
+	क्रमागत as3711_su2_fbprot su2_fbprot;
+	bool su2_स्वतः_curr1;
+	bool su2_स्वतः_curr2;
+	bool su2_स्वतः_curr3;
+पूर्ण;
 
-struct as3711_platform_data {
-	struct as3711_regulator_pdata regulator;
-	struct as3711_bl_pdata backlight;
-};
+काष्ठा as3711_platक्रमm_data अणु
+	काष्ठा as3711_regulator_pdata regulator;
+	काष्ठा as3711_bl_pdata backlight;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

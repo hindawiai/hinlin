@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // sky81452-regulator.c	SKY81452 regulator driver
 //
 // Copyright 2014 Skyworks Solutions Inc.
 // Author : Gyungoh Yoo <jack.yoo@skyworksinc.com>
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/of_regulator.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/of_regulator.h>
 
-/* registers */
-#define SKY81452_REG1	0x01
-#define SKY81452_REG3	0x03
+/* रेजिस्टरs */
+#घोषणा SKY81452_REG1	0x01
+#घोषणा SKY81452_REG3	0x03
 
 /* bit mask */
-#define SKY81452_LEN	0x40
-#define SKY81452_LOUT	0x1F
+#घोषणा SKY81452_LEN	0x40
+#घोषणा SKY81452_LOUT	0x1F
 
-static const struct regulator_ops sky81452_reg_ops = {
+अटल स्थिर काष्ठा regulator_ops sky81452_reg_ops = अणु
 	.list_voltage = regulator_list_voltage_linear_range,
 	.map_voltage = regulator_map_voltage_linear_range,
 	.get_voltage_sel = regulator_get_voltage_sel_regmap,
@@ -30,14 +31,14 @@ static const struct regulator_ops sky81452_reg_ops = {
 	.enable = regulator_enable_regmap,
 	.disable = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
-};
+पूर्ण;
 
-static const struct linear_range sky81452_reg_ranges[] = {
+अटल स्थिर काष्ठा linear_range sky81452_reg_ranges[] = अणु
 	REGULATOR_LINEAR_RANGE(4500000, 0, 14, 250000),
 	REGULATOR_LINEAR_RANGE(9000000, 15, 31, 1000000),
-};
+पूर्ण;
 
-static const struct regulator_desc sky81452_reg = {
+अटल स्थिर काष्ठा regulator_desc sky81452_reg = अणु
 	.name = "LOUT",
 	.of_match = of_match_ptr("lout"),
 	.regulators_node = of_match_ptr("regulator"),
@@ -51,39 +52,39 @@ static const struct regulator_desc sky81452_reg = {
 	.vsel_mask = SKY81452_LOUT,
 	.enable_reg = SKY81452_REG1,
 	.enable_mask = SKY81452_LEN,
-};
+पूर्ण;
 
-static int sky81452_reg_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	const struct regulator_init_data *init_data = dev_get_platdata(dev);
-	struct regulator_config config = { };
-	struct regulator_dev *rdev;
+अटल पूर्णांक sky81452_reg_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	स्थिर काष्ठा regulator_init_data *init_data = dev_get_platdata(dev);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा regulator_dev *rdev;
 
 	config.dev = dev->parent;
 	config.init_data = init_data;
 	config.of_node = dev->of_node;
 	config.regmap = dev_get_drvdata(dev->parent);
 
-	rdev = devm_regulator_register(dev, &sky81452_reg, &config);
-	if (IS_ERR(rdev)) {
+	rdev = devm_regulator_रेजिस्टर(dev, &sky81452_reg, &config);
+	अगर (IS_ERR(rdev)) अणु
 		dev_err(dev, "failed to register. err=%ld\n", PTR_ERR(rdev));
-		return PTR_ERR(rdev);
-	}
+		वापस PTR_ERR(rdev);
+	पूर्ण
 
-	platform_set_drvdata(pdev, rdev);
+	platक्रमm_set_drvdata(pdev, rdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver sky81452_reg_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sky81452_reg_driver = अणु
+	.driver = अणु
 		.name = "sky81452-regulator",
-	},
+	पूर्ण,
 	.probe = sky81452_reg_probe,
-};
+पूर्ण;
 
-module_platform_driver(sky81452_reg_driver);
+module_platक्रमm_driver(sky81452_reg_driver);
 
 MODULE_DESCRIPTION("Skyworks SKY81452 Regulator driver");
 MODULE_AUTHOR("Gyungoh Yoo <jack.yoo@skyworksinc.com>");

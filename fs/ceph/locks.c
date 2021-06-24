@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/ceph/ceph_debug.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/ceph/ceph_debug.h>
 
-#include <linux/file.h>
-#include <linux/namei.h>
-#include <linux/random.h>
+#समावेश <linux/file.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/अक्रमom.h>
 
-#include "super.h"
-#include "mds_client.h"
-#include <linux/ceph/pagelist.h>
+#समावेश "super.h"
+#समावेश "mds_client.h"
+#समावेश <linux/ceph/pagelist.h>
 
-static u64 lock_secret;
-static int ceph_lock_wait_for_completion(struct ceph_mds_client *mdsc,
-                                         struct ceph_mds_request *req);
+अटल u64 lock_secret;
+अटल पूर्णांक ceph_lock_रुको_क्रम_completion(काष्ठा ceph_mds_client *mdsc,
+                                         काष्ठा ceph_mds_request *req);
 
-static inline u64 secure_addr(void *addr)
-{
-	u64 v = lock_secret ^ (u64)(unsigned long)addr;
+अटल अंतरभूत u64 secure_addr(व्योम *addr)
+अणु
+	u64 v = lock_secret ^ (u64)(अचिन्हित दीर्घ)addr;
 	/*
-	 * Set the most significant bit, so that MDS knows the 'owner'
-	 * is sufficient to identify the owner of lock. (old code uses
+	 * Set the most signअगरicant bit, so that MDS knows the 'owner'
+	 * is sufficient to identअगरy the owner of lock. (old code uses
 	 * both 'owner' and 'pid')
 	 */
 	v |= (1ULL << 63);
-	return v;
-}
+	वापस v;
+पूर्ण
 
-void __init ceph_flock_init(void)
-{
-	get_random_bytes(&lock_secret, sizeof(lock_secret));
-}
+व्योम __init ceph_flock_init(व्योम)
+अणु
+	get_अक्रमom_bytes(&lock_secret, माप(lock_secret));
+पूर्ण
 
-static void ceph_fl_copy_lock(struct file_lock *dst, struct file_lock *src)
-{
-	struct ceph_file_info *fi = dst->fl_file->private_data;
-	struct inode *inode = file_inode(dst->fl_file);
+अटल व्योम ceph_fl_copy_lock(काष्ठा file_lock *dst, काष्ठा file_lock *src)
+अणु
+	काष्ठा ceph_file_info *fi = dst->fl_file->निजी_data;
+	काष्ठा inode *inode = file_inode(dst->fl_file);
 	atomic_inc(&ceph_inode(inode)->i_filelock_ref);
 	atomic_inc(&fi->num_locks);
-}
+पूर्ण
 
-static void ceph_fl_release_lock(struct file_lock *fl)
-{
-	struct ceph_file_info *fi = fl->fl_file->private_data;
-	struct inode *inode = file_inode(fl->fl_file);
-	struct ceph_inode_info *ci = ceph_inode(inode);
+अटल व्योम ceph_fl_release_lock(काष्ठा file_lock *fl)
+अणु
+	काष्ठा ceph_file_info *fi = fl->fl_file->निजी_data;
+	काष्ठा inode *inode = file_inode(fl->fl_file);
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
 	atomic_dec(&fi->num_locks);
-	if (atomic_dec_and_test(&ci->i_filelock_ref)) {
+	अगर (atomic_dec_and_test(&ci->i_filelock_ref)) अणु
 		/* clear error when all locks are released */
 		spin_lock(&ci->i_ceph_lock);
-		ci->i_ceph_flags &= ~CEPH_I_ERROR_FILELOCK;
+		ci->i_ceph_flags &= ~CEPH_I_ERROR_खाताLOCK;
 		spin_unlock(&ci->i_ceph_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct file_lock_operations ceph_fl_lock_ops = {
+अटल स्थिर काष्ठा file_lock_operations ceph_fl_lock_ops = अणु
 	.fl_copy_lock = ceph_fl_copy_lock,
-	.fl_release_private = ceph_fl_release_lock,
-};
+	.fl_release_निजी = ceph_fl_release_lock,
+पूर्ण;
 
 /*
  * Implement fcntl and flock locking functions.
  */
-static int ceph_lock_message(u8 lock_type, u16 operation, struct inode *inode,
-			     int cmd, u8 wait, struct file_lock *fl)
-{
-	struct ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
-	struct ceph_mds_request *req;
-	int err;
+अटल पूर्णांक ceph_lock_message(u8 lock_type, u16 operation, काष्ठा inode *inode,
+			     पूर्णांक cmd, u8 रुको, काष्ठा file_lock *fl)
+अणु
+	काष्ठा ceph_mds_client *mdsc = ceph_sb_to_mdsc(inode->i_sb);
+	काष्ठा ceph_mds_request *req;
+	पूर्णांक err;
 	u64 length = 0;
 	u64 owner;
 
-	if (operation == CEPH_MDS_OP_SETFILELOCK) {
+	अगर (operation == CEPH_MDS_OP_SETखाताLOCK) अणु
 		/*
-		 * increasing i_filelock_ref closes race window between
-		 * handling request reply and adding file_lock struct to
+		 * increasing i_filelock_ref बंदs race winकरोw between
+		 * handling request reply and adding file_lock काष्ठा to
 		 * inode. Otherwise, auth caps may get trimmed in the
-		 * window. Caller function will decrease the counter.
+		 * winकरोw. Caller function will decrease the counter.
 		 */
 		fl->fl_ops = &ceph_fl_lock_ops;
-		fl->fl_ops->fl_copy_lock(fl, NULL);
-	}
+		fl->fl_ops->fl_copy_lock(fl, शून्य);
+	पूर्ण
 
-	if (operation != CEPH_MDS_OP_SETFILELOCK || cmd == CEPH_LOCK_UNLOCK)
-		wait = 0;
+	अगर (operation != CEPH_MDS_OP_SETखाताLOCK || cmd == CEPH_LOCK_UNLOCK)
+		रुको = 0;
 
 	req = ceph_mdsc_create_request(mdsc, operation, USE_AUTH_MDS);
-	if (IS_ERR(req))
-		return PTR_ERR(req);
+	अगर (IS_ERR(req))
+		वापस PTR_ERR(req);
 	req->r_inode = inode;
 	ihold(inode);
 	req->r_num_caps = 1;
 
 	/* mds requires start and length rather than start and end */
-	if (LLONG_MAX == fl->fl_end)
+	अगर (Lदीर्घ_उच्च == fl->fl_end)
 		length = 0;
-	else
+	अन्यथा
 		length = fl->fl_end - fl->fl_start + 1;
 
 	owner = secure_addr(fl->fl_owner);
 
-	dout("ceph_lock_message: rule: %d, op: %d, owner: %llx, pid: %llu, "
-	     "start: %llu, length: %llu, wait: %d, type: %d\n", (int)lock_type,
-	     (int)operation, owner, (u64)fl->fl_pid, fl->fl_start, length,
-	     wait, fl->fl_type);
+	करोut("ceph_lock_message: rule: %d, op: %d, owner: %llx, pid: %llu, "
+	     "start: %llu, length: %llu, wait: %d, type: %d\n", (पूर्णांक)lock_type,
+	     (पूर्णांक)operation, owner, (u64)fl->fl_pid, fl->fl_start, length,
+	     रुको, fl->fl_type);
 
 	req->r_args.filelock_change.rule = lock_type;
 	req->r_args.filelock_change.type = cmd;
@@ -109,68 +110,68 @@ static int ceph_lock_message(u8 lock_type, u16 operation, struct inode *inode,
 	req->r_args.filelock_change.pid = cpu_to_le64((u64)fl->fl_pid);
 	req->r_args.filelock_change.start = cpu_to_le64(fl->fl_start);
 	req->r_args.filelock_change.length = cpu_to_le64(length);
-	req->r_args.filelock_change.wait = wait;
+	req->r_args.filelock_change.रुको = रुको;
 
-	if (wait)
-		req->r_wait_for_completion = ceph_lock_wait_for_completion;
+	अगर (रुको)
+		req->r_रुको_क्रम_completion = ceph_lock_रुको_क्रम_completion;
 
-	err = ceph_mdsc_do_request(mdsc, inode, req);
-	if (!err && operation == CEPH_MDS_OP_GETFILELOCK) {
+	err = ceph_mdsc_करो_request(mdsc, inode, req);
+	अगर (!err && operation == CEPH_MDS_OP_GETखाताLOCK) अणु
 		fl->fl_pid = -le64_to_cpu(req->r_reply_info.filelock_reply->pid);
-		if (CEPH_LOCK_SHARED == req->r_reply_info.filelock_reply->type)
+		अगर (CEPH_LOCK_SHARED == req->r_reply_info.filelock_reply->type)
 			fl->fl_type = F_RDLCK;
-		else if (CEPH_LOCK_EXCL == req->r_reply_info.filelock_reply->type)
+		अन्यथा अगर (CEPH_LOCK_EXCL == req->r_reply_info.filelock_reply->type)
 			fl->fl_type = F_WRLCK;
-		else
+		अन्यथा
 			fl->fl_type = F_UNLCK;
 
 		fl->fl_start = le64_to_cpu(req->r_reply_info.filelock_reply->start);
 		length = le64_to_cpu(req->r_reply_info.filelock_reply->start) +
 						 le64_to_cpu(req->r_reply_info.filelock_reply->length);
-		if (length >= 1)
+		अगर (length >= 1)
 			fl->fl_end = length -1;
-		else
+		अन्यथा
 			fl->fl_end = 0;
 
-	}
+	पूर्ण
 	ceph_mdsc_put_request(req);
-	dout("ceph_lock_message: rule: %d, op: %d, pid: %llu, start: %llu, "
-	     "length: %llu, wait: %d, type: %d, err code %d\n", (int)lock_type,
-	     (int)operation, (u64)fl->fl_pid, fl->fl_start,
-	     length, wait, fl->fl_type, err);
-	return err;
-}
+	करोut("ceph_lock_message: rule: %d, op: %d, pid: %llu, start: %llu, "
+	     "length: %llu, wait: %d, type: %d, err code %d\n", (पूर्णांक)lock_type,
+	     (पूर्णांक)operation, (u64)fl->fl_pid, fl->fl_start,
+	     length, रुको, fl->fl_type, err);
+	वापस err;
+पूर्ण
 
-static int ceph_lock_wait_for_completion(struct ceph_mds_client *mdsc,
-                                         struct ceph_mds_request *req)
-{
-	struct ceph_mds_request *intr_req;
-	struct inode *inode = req->r_inode;
-	int err, lock_type;
+अटल पूर्णांक ceph_lock_रुको_क्रम_completion(काष्ठा ceph_mds_client *mdsc,
+                                         काष्ठा ceph_mds_request *req)
+अणु
+	काष्ठा ceph_mds_request *पूर्णांकr_req;
+	काष्ठा inode *inode = req->r_inode;
+	पूर्णांक err, lock_type;
 
-	BUG_ON(req->r_op != CEPH_MDS_OP_SETFILELOCK);
-	if (req->r_args.filelock_change.rule == CEPH_LOCK_FCNTL)
+	BUG_ON(req->r_op != CEPH_MDS_OP_SETखाताLOCK);
+	अगर (req->r_args.filelock_change.rule == CEPH_LOCK_FCNTL)
 		lock_type = CEPH_LOCK_FCNTL_INTR;
-	else if (req->r_args.filelock_change.rule == CEPH_LOCK_FLOCK)
+	अन्यथा अगर (req->r_args.filelock_change.rule == CEPH_LOCK_FLOCK)
 		lock_type = CEPH_LOCK_FLOCK_INTR;
-	else
+	अन्यथा
 		BUG_ON(1);
 	BUG_ON(req->r_args.filelock_change.type == CEPH_LOCK_UNLOCK);
 
-	err = wait_for_completion_interruptible(&req->r_completion);
-	if (!err)
-		return 0;
+	err = रुको_क्रम_completion_पूर्णांकerruptible(&req->r_completion);
+	अगर (!err)
+		वापस 0;
 
-	dout("ceph_lock_wait_for_completion: request %llu was interrupted\n",
+	करोut("ceph_lock_wait_for_completion: request %llu was interrupted\n",
 	     req->r_tid);
 
 	mutex_lock(&mdsc->mutex);
-	if (test_bit(CEPH_MDS_R_GOT_RESULT, &req->r_req_flags)) {
+	अगर (test_bit(CEPH_MDS_R_GOT_RESULT, &req->r_req_flags)) अणु
 		err = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * ensure we aren't running concurrently with
-		 * ceph_fill_trace or ceph_readdir_prepopulate, which
+		 * ceph_fill_trace or ceph_सूची_पढ़ो_prepopulate, which
 		 * rely on locks (dir mutex) held by our caller.
 		 */
 		mutex_lock(&req->r_fill_mutex);
@@ -178,320 +179,320 @@ static int ceph_lock_wait_for_completion(struct ceph_mds_client *mdsc,
 		set_bit(CEPH_MDS_R_ABORTED, &req->r_req_flags);
 		mutex_unlock(&req->r_fill_mutex);
 
-		if (!req->r_session) {
+		अगर (!req->r_session) अणु
 			// haven't sent the request
 			err = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&mdsc->mutex);
-	if (!err)
-		return 0;
+	अगर (!err)
+		वापस 0;
 
-	intr_req = ceph_mdsc_create_request(mdsc, CEPH_MDS_OP_SETFILELOCK,
+	पूर्णांकr_req = ceph_mdsc_create_request(mdsc, CEPH_MDS_OP_SETखाताLOCK,
 					    USE_AUTH_MDS);
-	if (IS_ERR(intr_req))
-		return PTR_ERR(intr_req);
+	अगर (IS_ERR(पूर्णांकr_req))
+		वापस PTR_ERR(पूर्णांकr_req);
 
-	intr_req->r_inode = inode;
+	पूर्णांकr_req->r_inode = inode;
 	ihold(inode);
-	intr_req->r_num_caps = 1;
+	पूर्णांकr_req->r_num_caps = 1;
 
-	intr_req->r_args.filelock_change = req->r_args.filelock_change;
-	intr_req->r_args.filelock_change.rule = lock_type;
-	intr_req->r_args.filelock_change.type = CEPH_LOCK_UNLOCK;
+	पूर्णांकr_req->r_args.filelock_change = req->r_args.filelock_change;
+	पूर्णांकr_req->r_args.filelock_change.rule = lock_type;
+	पूर्णांकr_req->r_args.filelock_change.type = CEPH_LOCK_UNLOCK;
 
-	err = ceph_mdsc_do_request(mdsc, inode, intr_req);
-	ceph_mdsc_put_request(intr_req);
+	err = ceph_mdsc_करो_request(mdsc, inode, पूर्णांकr_req);
+	ceph_mdsc_put_request(पूर्णांकr_req);
 
-	if (err && err != -ERESTARTSYS)
-		return err;
+	अगर (err && err != -ERESTARTSYS)
+		वापस err;
 
-	wait_for_completion_killable(&req->r_safe_completion);
-	return 0;
-}
+	रुको_क्रम_completion_समाप्तable(&req->r_safe_completion);
+	वापस 0;
+पूर्ण
 
-static int try_unlock_file(struct file *file, struct file_lock *fl)
-{
-	int err;
-	unsigned int orig_flags = fl->fl_flags;
+अटल पूर्णांक try_unlock_file(काष्ठा file *file, काष्ठा file_lock *fl)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक orig_flags = fl->fl_flags;
 	fl->fl_flags |= FL_EXISTS;
-	err = locks_lock_file_wait(file, fl);
+	err = locks_lock_file_रुको(file, fl);
 	fl->fl_flags = orig_flags;
-	if (err == -ENOENT) {
-		if (!(orig_flags & FL_EXISTS))
+	अगर (err == -ENOENT) अणु
+		अगर (!(orig_flags & FL_EXISTS))
 			err = 0;
-		return err;
-	}
-	return 1;
-}
+		वापस err;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
 /*
  * Attempt to set an fcntl lock.
  * For now, this just goes away to the server. Later it may be more awesome.
  */
-int ceph_lock(struct file *file, int cmd, struct file_lock *fl)
-{
-	struct inode *inode = file_inode(file);
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	int err = 0;
-	u16 op = CEPH_MDS_OP_SETFILELOCK;
-	u8 wait = 0;
+पूर्णांक ceph_lock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	पूर्णांक err = 0;
+	u16 op = CEPH_MDS_OP_SETखाताLOCK;
+	u8 रुको = 0;
 	u8 lock_cmd;
 
-	if (!(fl->fl_flags & FL_POSIX))
-		return -ENOLCK;
+	अगर (!(fl->fl_flags & FL_POSIX))
+		वापस -ENOLCK;
 	/* No mandatory locks */
-	if (__mandatory_lock(file->f_mapping->host) && fl->fl_type != F_UNLCK)
-		return -ENOLCK;
+	अगर (__mandatory_lock(file->f_mapping->host) && fl->fl_type != F_UNLCK)
+		वापस -ENOLCK;
 
-	dout("ceph_lock, fl_owner: %p\n", fl->fl_owner);
+	करोut("ceph_lock, fl_owner: %p\n", fl->fl_owner);
 
-	/* set wait bit as appropriate, then make command as Ceph expects it*/
-	if (IS_GETLK(cmd))
-		op = CEPH_MDS_OP_GETFILELOCK;
-	else if (IS_SETLKW(cmd))
-		wait = 1;
+	/* set रुको bit as appropriate, then make command as Ceph expects it*/
+	अगर (IS_GETLK(cmd))
+		op = CEPH_MDS_OP_GETखाताLOCK;
+	अन्यथा अगर (IS_SETLKW(cmd))
+		रुको = 1;
 
 	spin_lock(&ci->i_ceph_lock);
-	if (ci->i_ceph_flags & CEPH_I_ERROR_FILELOCK) {
+	अगर (ci->i_ceph_flags & CEPH_I_ERROR_खाताLOCK) अणु
 		err = -EIO;
-	}
+	पूर्ण
 	spin_unlock(&ci->i_ceph_lock);
-	if (err < 0) {
-		if (op == CEPH_MDS_OP_SETFILELOCK && F_UNLCK == fl->fl_type)
-			posix_lock_file(file, fl, NULL);
-		return err;
-	}
+	अगर (err < 0) अणु
+		अगर (op == CEPH_MDS_OP_SETखाताLOCK && F_UNLCK == fl->fl_type)
+			posix_lock_file(file, fl, शून्य);
+		वापस err;
+	पूर्ण
 
-	if (F_RDLCK == fl->fl_type)
+	अगर (F_RDLCK == fl->fl_type)
 		lock_cmd = CEPH_LOCK_SHARED;
-	else if (F_WRLCK == fl->fl_type)
+	अन्यथा अगर (F_WRLCK == fl->fl_type)
 		lock_cmd = CEPH_LOCK_EXCL;
-	else
+	अन्यथा
 		lock_cmd = CEPH_LOCK_UNLOCK;
 
-	if (op == CEPH_MDS_OP_SETFILELOCK && F_UNLCK == fl->fl_type) {
+	अगर (op == CEPH_MDS_OP_SETखाताLOCK && F_UNLCK == fl->fl_type) अणु
 		err = try_unlock_file(file, fl);
-		if (err <= 0)
-			return err;
-	}
+		अगर (err <= 0)
+			वापस err;
+	पूर्ण
 
-	err = ceph_lock_message(CEPH_LOCK_FCNTL, op, inode, lock_cmd, wait, fl);
-	if (!err) {
-		if (op == CEPH_MDS_OP_SETFILELOCK && F_UNLCK != fl->fl_type) {
-			dout("mds locked, locking locally\n");
-			err = posix_lock_file(file, fl, NULL);
-			if (err) {
-				/* undo! This should only happen if
+	err = ceph_lock_message(CEPH_LOCK_FCNTL, op, inode, lock_cmd, रुको, fl);
+	अगर (!err) अणु
+		अगर (op == CEPH_MDS_OP_SETखाताLOCK && F_UNLCK != fl->fl_type) अणु
+			करोut("mds locked, locking locally\n");
+			err = posix_lock_file(file, fl, शून्य);
+			अगर (err) अणु
+				/* unकरो! This should only happen अगर
 				 * the kernel detects local
 				 * deadlock. */
 				ceph_lock_message(CEPH_LOCK_FCNTL, op, inode,
 						  CEPH_LOCK_UNLOCK, 0, fl);
-				dout("got %d on posix_lock_file, undid lock\n",
+				करोut("got %d on posix_lock_file, undid lock\n",
 				     err);
-			}
-		}
-	}
-	return err;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
-int ceph_flock(struct file *file, int cmd, struct file_lock *fl)
-{
-	struct inode *inode = file_inode(file);
-	struct ceph_inode_info *ci = ceph_inode(inode);
-	int err = 0;
-	u8 wait = 0;
+पूर्णांक ceph_flock(काष्ठा file *file, पूर्णांक cmd, काष्ठा file_lock *fl)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा ceph_inode_info *ci = ceph_inode(inode);
+	पूर्णांक err = 0;
+	u8 रुको = 0;
 	u8 lock_cmd;
 
-	if (!(fl->fl_flags & FL_FLOCK))
-		return -ENOLCK;
+	अगर (!(fl->fl_flags & FL_FLOCK))
+		वापस -ENOLCK;
 	/* No mandatory locks */
-	if (fl->fl_type & LOCK_MAND)
-		return -EOPNOTSUPP;
+	अगर (fl->fl_type & LOCK_MAND)
+		वापस -EOPNOTSUPP;
 
-	dout("ceph_flock, fl_file: %p\n", fl->fl_file);
+	करोut("ceph_flock, fl_file: %p\n", fl->fl_file);
 
 	spin_lock(&ci->i_ceph_lock);
-	if (ci->i_ceph_flags & CEPH_I_ERROR_FILELOCK) {
+	अगर (ci->i_ceph_flags & CEPH_I_ERROR_खाताLOCK) अणु
 		err = -EIO;
-	}
+	पूर्ण
 	spin_unlock(&ci->i_ceph_lock);
-	if (err < 0) {
-		if (F_UNLCK == fl->fl_type)
-			locks_lock_file_wait(file, fl);
-		return err;
-	}
+	अगर (err < 0) अणु
+		अगर (F_UNLCK == fl->fl_type)
+			locks_lock_file_रुको(file, fl);
+		वापस err;
+	पूर्ण
 
-	if (IS_SETLKW(cmd))
-		wait = 1;
+	अगर (IS_SETLKW(cmd))
+		रुको = 1;
 
-	if (F_RDLCK == fl->fl_type)
+	अगर (F_RDLCK == fl->fl_type)
 		lock_cmd = CEPH_LOCK_SHARED;
-	else if (F_WRLCK == fl->fl_type)
+	अन्यथा अगर (F_WRLCK == fl->fl_type)
 		lock_cmd = CEPH_LOCK_EXCL;
-	else
+	अन्यथा
 		lock_cmd = CEPH_LOCK_UNLOCK;
 
-	if (F_UNLCK == fl->fl_type) {
+	अगर (F_UNLCK == fl->fl_type) अणु
 		err = try_unlock_file(file, fl);
-		if (err <= 0)
-			return err;
-	}
+		अगर (err <= 0)
+			वापस err;
+	पूर्ण
 
-	err = ceph_lock_message(CEPH_LOCK_FLOCK, CEPH_MDS_OP_SETFILELOCK,
-				inode, lock_cmd, wait, fl);
-	if (!err && F_UNLCK != fl->fl_type) {
-		err = locks_lock_file_wait(file, fl);
-		if (err) {
+	err = ceph_lock_message(CEPH_LOCK_FLOCK, CEPH_MDS_OP_SETखाताLOCK,
+				inode, lock_cmd, रुको, fl);
+	अगर (!err && F_UNLCK != fl->fl_type) अणु
+		err = locks_lock_file_रुको(file, fl);
+		अगर (err) अणु
 			ceph_lock_message(CEPH_LOCK_FLOCK,
-					  CEPH_MDS_OP_SETFILELOCK,
+					  CEPH_MDS_OP_SETखाताLOCK,
 					  inode, CEPH_LOCK_UNLOCK, 0, fl);
-			dout("got %d on locks_lock_file_wait, undid lock\n", err);
-		}
-	}
-	return err;
-}
+			करोut("got %d on locks_lock_file_wait, undid lock\n", err);
+		पूर्ण
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /*
  * Fills in the passed counter variables, so you can prepare pagelist metadata
- * before calling ceph_encode_locks.
+ * beक्रमe calling ceph_encode_locks.
  */
-void ceph_count_locks(struct inode *inode, int *fcntl_count, int *flock_count)
-{
-	struct file_lock *lock;
-	struct file_lock_context *ctx;
+व्योम ceph_count_locks(काष्ठा inode *inode, पूर्णांक *fcntl_count, पूर्णांक *flock_count)
+अणु
+	काष्ठा file_lock *lock;
+	काष्ठा file_lock_context *ctx;
 
 	*fcntl_count = 0;
 	*flock_count = 0;
 
 	ctx = inode->i_flctx;
-	if (ctx) {
+	अगर (ctx) अणु
 		spin_lock(&ctx->flc_lock);
-		list_for_each_entry(lock, &ctx->flc_posix, fl_list)
+		list_क्रम_each_entry(lock, &ctx->flc_posix, fl_list)
 			++(*fcntl_count);
-		list_for_each_entry(lock, &ctx->flc_flock, fl_list)
+		list_क्रम_each_entry(lock, &ctx->flc_flock, fl_list)
 			++(*flock_count);
 		spin_unlock(&ctx->flc_lock);
-	}
-	dout("counted %d flock locks and %d fcntl locks\n",
+	पूर्ण
+	करोut("counted %d flock locks and %d fcntl locks\n",
 	     *flock_count, *fcntl_count);
-}
+पूर्ण
 
 /*
- * Given a pointer to a lock, convert it to a ceph filelock
+ * Given a poपूर्णांकer to a lock, convert it to a ceph filelock
  */
-static int lock_to_ceph_filelock(struct file_lock *lock,
-				 struct ceph_filelock *cephlock)
-{
-	int err = 0;
+अटल पूर्णांक lock_to_ceph_filelock(काष्ठा file_lock *lock,
+				 काष्ठा ceph_filelock *cephlock)
+अणु
+	पूर्णांक err = 0;
 	cephlock->start = cpu_to_le64(lock->fl_start);
 	cephlock->length = cpu_to_le64(lock->fl_end - lock->fl_start + 1);
 	cephlock->client = cpu_to_le64(0);
 	cephlock->pid = cpu_to_le64((u64)lock->fl_pid);
 	cephlock->owner = cpu_to_le64(secure_addr(lock->fl_owner));
 
-	switch (lock->fl_type) {
-	case F_RDLCK:
+	चयन (lock->fl_type) अणु
+	हाल F_RDLCK:
 		cephlock->type = CEPH_LOCK_SHARED;
-		break;
-	case F_WRLCK:
+		अवरोध;
+	हाल F_WRLCK:
 		cephlock->type = CEPH_LOCK_EXCL;
-		break;
-	case F_UNLCK:
+		अवरोध;
+	हाल F_UNLCK:
 		cephlock->type = CEPH_LOCK_UNLOCK;
-		break;
-	default:
-		dout("Have unknown lock type %d\n", lock->fl_type);
+		अवरोध;
+	शेष:
+		करोut("Have unknown lock type %d\n", lock->fl_type);
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Encode the flock and fcntl locks for the given inode into the ceph_filelock
- * array. Must be called with inode->i_lock already held.
- * If we encounter more of a specific lock type than expected, return -ENOSPC.
+ * Encode the flock and fcntl locks क्रम the given inode पूर्णांकo the ceph_filelock
+ * array. Must be called with inode->i_lock alपढ़ोy held.
+ * If we encounter more of a specअगरic lock type than expected, वापस -ENOSPC.
  */
-int ceph_encode_locks_to_buffer(struct inode *inode,
-				struct ceph_filelock *flocks,
-				int num_fcntl_locks, int num_flock_locks)
-{
-	struct file_lock *lock;
-	struct file_lock_context *ctx = inode->i_flctx;
-	int err = 0;
-	int seen_fcntl = 0;
-	int seen_flock = 0;
-	int l = 0;
+पूर्णांक ceph_encode_locks_to_buffer(काष्ठा inode *inode,
+				काष्ठा ceph_filelock *flocks,
+				पूर्णांक num_fcntl_locks, पूर्णांक num_flock_locks)
+अणु
+	काष्ठा file_lock *lock;
+	काष्ठा file_lock_context *ctx = inode->i_flctx;
+	पूर्णांक err = 0;
+	पूर्णांक seen_fcntl = 0;
+	पूर्णांक seen_flock = 0;
+	पूर्णांक l = 0;
 
-	dout("encoding %d flock and %d fcntl locks\n", num_flock_locks,
+	करोut("encoding %d flock and %d fcntl locks\n", num_flock_locks,
 	     num_fcntl_locks);
 
-	if (!ctx)
-		return 0;
+	अगर (!ctx)
+		वापस 0;
 
 	spin_lock(&ctx->flc_lock);
-	list_for_each_entry(lock, &ctx->flc_posix, fl_list) {
+	list_क्रम_each_entry(lock, &ctx->flc_posix, fl_list) अणु
 		++seen_fcntl;
-		if (seen_fcntl > num_fcntl_locks) {
+		अगर (seen_fcntl > num_fcntl_locks) अणु
 			err = -ENOSPC;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		err = lock_to_ceph_filelock(lock, &flocks[l]);
-		if (err)
-			goto fail;
+		अगर (err)
+			जाओ fail;
 		++l;
-	}
-	list_for_each_entry(lock, &ctx->flc_flock, fl_list) {
+	पूर्ण
+	list_क्रम_each_entry(lock, &ctx->flc_flock, fl_list) अणु
 		++seen_flock;
-		if (seen_flock > num_flock_locks) {
+		अगर (seen_flock > num_flock_locks) अणु
 			err = -ENOSPC;
-			goto fail;
-		}
+			जाओ fail;
+		पूर्ण
 		err = lock_to_ceph_filelock(lock, &flocks[l]);
-		if (err)
-			goto fail;
+		अगर (err)
+			जाओ fail;
 		++l;
-	}
+	पूर्ण
 fail:
 	spin_unlock(&ctx->flc_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Copy the encoded flock and fcntl locks into the pagelist.
+ * Copy the encoded flock and fcntl locks पूर्णांकo the pagelist.
  * Format is: #fcntl locks, sequential fcntl locks, #flock locks,
  * sequential flock locks.
  * Returns zero on success.
  */
-int ceph_locks_to_pagelist(struct ceph_filelock *flocks,
-			   struct ceph_pagelist *pagelist,
-			   int num_fcntl_locks, int num_flock_locks)
-{
-	int err = 0;
+पूर्णांक ceph_locks_to_pagelist(काष्ठा ceph_filelock *flocks,
+			   काष्ठा ceph_pagelist *pagelist,
+			   पूर्णांक num_fcntl_locks, पूर्णांक num_flock_locks)
+अणु
+	पूर्णांक err = 0;
 	__le32 nlocks;
 
 	nlocks = cpu_to_le32(num_fcntl_locks);
-	err = ceph_pagelist_append(pagelist, &nlocks, sizeof(nlocks));
-	if (err)
-		goto out_fail;
+	err = ceph_pagelist_append(pagelist, &nlocks, माप(nlocks));
+	अगर (err)
+		जाओ out_fail;
 
-	if (num_fcntl_locks > 0) {
+	अगर (num_fcntl_locks > 0) अणु
 		err = ceph_pagelist_append(pagelist, flocks,
-					   num_fcntl_locks * sizeof(*flocks));
-		if (err)
-			goto out_fail;
-	}
+					   num_fcntl_locks * माप(*flocks));
+		अगर (err)
+			जाओ out_fail;
+	पूर्ण
 
 	nlocks = cpu_to_le32(num_flock_locks);
-	err = ceph_pagelist_append(pagelist, &nlocks, sizeof(nlocks));
-	if (err)
-		goto out_fail;
+	err = ceph_pagelist_append(pagelist, &nlocks, माप(nlocks));
+	अगर (err)
+		जाओ out_fail;
 
-	if (num_flock_locks > 0) {
+	अगर (num_flock_locks > 0) अणु
 		err = ceph_pagelist_append(pagelist, &flocks[num_fcntl_locks],
-					   num_flock_locks * sizeof(*flocks));
-	}
+					   num_flock_locks * माप(*flocks));
+	पूर्ण
 out_fail:
-	return err;
-}
+	वापस err;
+पूर्ण

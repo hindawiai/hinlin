@@ -1,549 +1,550 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2014 Intel Corp.
- * Author: Jiang Liu <jiang.liu@linux.intel.com>
+ * Author: Jiang Liu <jiang.liu@linux.पूर्णांकel.com>
  *
  * This file is licensed under GPLv2.
  *
- * This file contains common code to support Message Signaled Interrupts for
+ * This file contains common code to support Message Signaled Interrupts क्रम
  * PCI compatible and non PCI compatible devices.
  */
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/irq.h>
-#include <linux/irqdomain.h>
-#include <linux/msi.h>
-#include <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/msi.h>
+#समावेश <linux/slab.h>
 
-#include "internals.h"
+#समावेश "internals.h"
 
 /**
  * alloc_msi_entry - Allocate an initialize msi_entry
- * @dev:	Pointer to the device for which this is allocated
+ * @dev:	Poपूर्णांकer to the device क्रम which this is allocated
  * @nvec:	The number of vectors used in this entry
- * @affinity:	Optional pointer to an affinity mask array size of @nvec
+ * @affinity:	Optional poपूर्णांकer to an affinity mask array size of @nvec
  *
- * If @affinity is not NULL then an affinity array[@nvec] is allocated
+ * If @affinity is not शून्य then an affinity array[@nvec] is allocated
  * and the affinity masks and flags from @affinity are copied.
  */
-struct msi_desc *alloc_msi_entry(struct device *dev, int nvec,
-				 const struct irq_affinity_desc *affinity)
-{
-	struct msi_desc *desc;
+काष्ठा msi_desc *alloc_msi_entry(काष्ठा device *dev, पूर्णांक nvec,
+				 स्थिर काष्ठा irq_affinity_desc *affinity)
+अणु
+	काष्ठा msi_desc *desc;
 
-	desc = kzalloc(sizeof(*desc), GFP_KERNEL);
-	if (!desc)
-		return NULL;
+	desc = kzalloc(माप(*desc), GFP_KERNEL);
+	अगर (!desc)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&desc->list);
 	desc->dev = dev;
 	desc->nvec_used = nvec;
-	if (affinity) {
+	अगर (affinity) अणु
 		desc->affinity = kmemdup(affinity,
-			nvec * sizeof(*desc->affinity), GFP_KERNEL);
-		if (!desc->affinity) {
-			kfree(desc);
-			return NULL;
-		}
-	}
+			nvec * माप(*desc->affinity), GFP_KERNEL);
+		अगर (!desc->affinity) अणु
+			kमुक्त(desc);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return desc;
-}
+	वापस desc;
+पूर्ण
 
-void free_msi_entry(struct msi_desc *entry)
-{
-	kfree(entry->affinity);
-	kfree(entry);
-}
+व्योम मुक्त_msi_entry(काष्ठा msi_desc *entry)
+अणु
+	kमुक्त(entry->affinity);
+	kमुक्त(entry);
+पूर्ण
 
-void __get_cached_msi_msg(struct msi_desc *entry, struct msi_msg *msg)
-{
+व्योम __get_cached_msi_msg(काष्ठा msi_desc *entry, काष्ठा msi_msg *msg)
+अणु
 	*msg = entry->msg;
-}
+पूर्ण
 
-void get_cached_msi_msg(unsigned int irq, struct msi_msg *msg)
-{
-	struct msi_desc *entry = irq_get_msi_desc(irq);
+व्योम get_cached_msi_msg(अचिन्हित पूर्णांक irq, काष्ठा msi_msg *msg)
+अणु
+	काष्ठा msi_desc *entry = irq_get_msi_desc(irq);
 
 	__get_cached_msi_msg(entry, msg);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(get_cached_msi_msg);
 
-#ifdef CONFIG_GENERIC_MSI_IRQ_DOMAIN
-static inline void irq_chip_write_msi_msg(struct irq_data *data,
-					  struct msi_msg *msg)
-{
-	data->chip->irq_write_msi_msg(data, msg);
-}
+#अगर_घोषित CONFIG_GENERIC_MSI_IRQ_DOMAIN
+अटल अंतरभूत व्योम irq_chip_ग_लिखो_msi_msg(काष्ठा irq_data *data,
+					  काष्ठा msi_msg *msg)
+अणु
+	data->chip->irq_ग_लिखो_msi_msg(data, msg);
+पूर्ण
 
-static void msi_check_level(struct irq_domain *domain, struct msi_msg *msg)
-{
-	struct msi_domain_info *info = domain->host_data;
+अटल व्योम msi_check_level(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा msi_msg *msg)
+अणु
+	काष्ठा msi_करोमुख्य_info *info = करोमुख्य->host_data;
 
 	/*
 	 * If the MSI provider has messed with the second message and
-	 * not advertized that it is level-capable, signal the breakage.
+	 * not advertized that it is level-capable, संकेत the अवरोधage.
 	 */
 	WARN_ON(!((info->flags & MSI_FLAG_LEVEL_CAPABLE) &&
 		  (info->chip->flags & IRQCHIP_SUPPORTS_LEVEL_MSI)) &&
 		(msg[1].address_lo || msg[1].address_hi || msg[1].data));
-}
+पूर्ण
 
 /**
- * msi_domain_set_affinity - Generic affinity setter function for MSI domains
- * @irq_data:	The irq data associated to the interrupt
+ * msi_करोमुख्य_set_affinity - Generic affinity setter function क्रम MSI करोमुख्यs
+ * @irq_data:	The irq data associated to the पूर्णांकerrupt
  * @mask:	The affinity mask to set
- * @force:	Flag to enforce setting (disable online checks)
+ * @क्रमce:	Flag to enक्रमce setting (disable online checks)
  *
- * Intended to be used by MSI interrupt controllers which are
- * implemented with hierarchical domains.
+ * Intended to be used by MSI पूर्णांकerrupt controllers which are
+ * implemented with hierarchical करोमुख्यs.
  */
-int msi_domain_set_affinity(struct irq_data *irq_data,
-			    const struct cpumask *mask, bool force)
-{
-	struct irq_data *parent = irq_data->parent_data;
-	struct msi_msg msg[2] = { [1] = { }, };
-	int ret;
+पूर्णांक msi_करोमुख्य_set_affinity(काष्ठा irq_data *irq_data,
+			    स्थिर काष्ठा cpumask *mask, bool क्रमce)
+अणु
+	काष्ठा irq_data *parent = irq_data->parent_data;
+	काष्ठा msi_msg msg[2] = अणु [1] = अणु पूर्ण, पूर्ण;
+	पूर्णांक ret;
 
-	ret = parent->chip->irq_set_affinity(parent, mask, force);
-	if (ret >= 0 && ret != IRQ_SET_MASK_OK_DONE) {
+	ret = parent->chip->irq_set_affinity(parent, mask, क्रमce);
+	अगर (ret >= 0 && ret != IRQ_SET_MASK_OK_DONE) अणु
 		BUG_ON(irq_chip_compose_msi_msg(irq_data, msg));
-		msi_check_level(irq_data->domain, msg);
-		irq_chip_write_msi_msg(irq_data, msg);
-	}
+		msi_check_level(irq_data->करोमुख्य, msg);
+		irq_chip_ग_लिखो_msi_msg(irq_data, msg);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int msi_domain_activate(struct irq_domain *domain,
-			       struct irq_data *irq_data, bool early)
-{
-	struct msi_msg msg[2] = { [1] = { }, };
+अटल पूर्णांक msi_करोमुख्य_activate(काष्ठा irq_करोमुख्य *करोमुख्य,
+			       काष्ठा irq_data *irq_data, bool early)
+अणु
+	काष्ठा msi_msg msg[2] = अणु [1] = अणु पूर्ण, पूर्ण;
 
 	BUG_ON(irq_chip_compose_msi_msg(irq_data, msg));
-	msi_check_level(irq_data->domain, msg);
-	irq_chip_write_msi_msg(irq_data, msg);
-	return 0;
-}
+	msi_check_level(irq_data->करोमुख्य, msg);
+	irq_chip_ग_लिखो_msi_msg(irq_data, msg);
+	वापस 0;
+पूर्ण
 
-static void msi_domain_deactivate(struct irq_domain *domain,
-				  struct irq_data *irq_data)
-{
-	struct msi_msg msg[2];
+अटल व्योम msi_करोमुख्य_deactivate(काष्ठा irq_करोमुख्य *करोमुख्य,
+				  काष्ठा irq_data *irq_data)
+अणु
+	काष्ठा msi_msg msg[2];
 
-	memset(msg, 0, sizeof(msg));
-	irq_chip_write_msi_msg(irq_data, msg);
-}
+	स_रखो(msg, 0, माप(msg));
+	irq_chip_ग_लिखो_msi_msg(irq_data, msg);
+पूर्ण
 
-static int msi_domain_alloc(struct irq_domain *domain, unsigned int virq,
-			    unsigned int nr_irqs, void *arg)
-{
-	struct msi_domain_info *info = domain->host_data;
-	struct msi_domain_ops *ops = info->ops;
+अटल पूर्णांक msi_करोमुख्य_alloc(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+			    अचिन्हित पूर्णांक nr_irqs, व्योम *arg)
+अणु
+	काष्ठा msi_करोमुख्य_info *info = करोमुख्य->host_data;
+	काष्ठा msi_करोमुख्य_ops *ops = info->ops;
 	irq_hw_number_t hwirq = ops->get_hwirq(info, arg);
-	int i, ret;
+	पूर्णांक i, ret;
 
-	if (irq_find_mapping(domain, hwirq) > 0)
-		return -EEXIST;
+	अगर (irq_find_mapping(करोमुख्य, hwirq) > 0)
+		वापस -EEXIST;
 
-	if (domain->parent) {
-		ret = irq_domain_alloc_irqs_parent(domain, virq, nr_irqs, arg);
-		if (ret < 0)
-			return ret;
-	}
+	अगर (करोमुख्य->parent) अणु
+		ret = irq_करोमुख्य_alloc_irqs_parent(करोमुख्य, virq, nr_irqs, arg);
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	for (i = 0; i < nr_irqs; i++) {
-		ret = ops->msi_init(domain, info, virq + i, hwirq + i, arg);
-		if (ret < 0) {
-			if (ops->msi_free) {
-				for (i--; i > 0; i--)
-					ops->msi_free(domain, info, virq + i);
-			}
-			irq_domain_free_irqs_top(domain, virq, nr_irqs);
-			return ret;
-		}
-	}
+	क्रम (i = 0; i < nr_irqs; i++) अणु
+		ret = ops->msi_init(करोमुख्य, info, virq + i, hwirq + i, arg);
+		अगर (ret < 0) अणु
+			अगर (ops->msi_मुक्त) अणु
+				क्रम (i--; i > 0; i--)
+					ops->msi_मुक्त(करोमुख्य, info, virq + i);
+			पूर्ण
+			irq_करोमुख्य_मुक्त_irqs_top(करोमुख्य, virq, nr_irqs);
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void msi_domain_free(struct irq_domain *domain, unsigned int virq,
-			    unsigned int nr_irqs)
-{
-	struct msi_domain_info *info = domain->host_data;
-	int i;
+अटल व्योम msi_करोमुख्य_मुक्त(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक virq,
+			    अचिन्हित पूर्णांक nr_irqs)
+अणु
+	काष्ठा msi_करोमुख्य_info *info = करोमुख्य->host_data;
+	पूर्णांक i;
 
-	if (info->ops->msi_free) {
-		for (i = 0; i < nr_irqs; i++)
-			info->ops->msi_free(domain, info, virq + i);
-	}
-	irq_domain_free_irqs_top(domain, virq, nr_irqs);
-}
+	अगर (info->ops->msi_मुक्त) अणु
+		क्रम (i = 0; i < nr_irqs; i++)
+			info->ops->msi_मुक्त(करोमुख्य, info, virq + i);
+	पूर्ण
+	irq_करोमुख्य_मुक्त_irqs_top(करोमुख्य, virq, nr_irqs);
+पूर्ण
 
-static const struct irq_domain_ops msi_domain_ops = {
-	.alloc		= msi_domain_alloc,
-	.free		= msi_domain_free,
-	.activate	= msi_domain_activate,
-	.deactivate	= msi_domain_deactivate,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops msi_करोमुख्य_ops = अणु
+	.alloc		= msi_करोमुख्य_alloc,
+	.मुक्त		= msi_करोमुख्य_मुक्त,
+	.activate	= msi_करोमुख्य_activate,
+	.deactivate	= msi_करोमुख्य_deactivate,
+पूर्ण;
 
-static irq_hw_number_t msi_domain_ops_get_hwirq(struct msi_domain_info *info,
+अटल irq_hw_number_t msi_करोमुख्य_ops_get_hwirq(काष्ठा msi_करोमुख्य_info *info,
 						msi_alloc_info_t *arg)
-{
-	return arg->hwirq;
-}
+अणु
+	वापस arg->hwirq;
+पूर्ण
 
-static int msi_domain_ops_prepare(struct irq_domain *domain, struct device *dev,
-				  int nvec, msi_alloc_info_t *arg)
-{
-	memset(arg, 0, sizeof(*arg));
-	return 0;
-}
+अटल पूर्णांक msi_करोमुख्य_ops_prepare(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+				  पूर्णांक nvec, msi_alloc_info_t *arg)
+अणु
+	स_रखो(arg, 0, माप(*arg));
+	वापस 0;
+पूर्ण
 
-static void msi_domain_ops_set_desc(msi_alloc_info_t *arg,
-				    struct msi_desc *desc)
-{
+अटल व्योम msi_करोमुख्य_ops_set_desc(msi_alloc_info_t *arg,
+				    काष्ठा msi_desc *desc)
+अणु
 	arg->desc = desc;
-}
+पूर्ण
 
-static int msi_domain_ops_init(struct irq_domain *domain,
-			       struct msi_domain_info *info,
-			       unsigned int virq, irq_hw_number_t hwirq,
+अटल पूर्णांक msi_करोमुख्य_ops_init(काष्ठा irq_करोमुख्य *करोमुख्य,
+			       काष्ठा msi_करोमुख्य_info *info,
+			       अचिन्हित पूर्णांक virq, irq_hw_number_t hwirq,
 			       msi_alloc_info_t *arg)
-{
-	irq_domain_set_hwirq_and_chip(domain, virq, hwirq, info->chip,
+अणु
+	irq_करोमुख्य_set_hwirq_and_chip(करोमुख्य, virq, hwirq, info->chip,
 				      info->chip_data);
-	if (info->handler && info->handler_name) {
+	अगर (info->handler && info->handler_name) अणु
 		__irq_set_handler(virq, info->handler, 0, info->handler_name);
-		if (info->handler_data)
+		अगर (info->handler_data)
 			irq_set_handler_data(virq, info->handler_data);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int msi_domain_ops_check(struct irq_domain *domain,
-				struct msi_domain_info *info,
-				struct device *dev)
-{
-	return 0;
-}
+अटल पूर्णांक msi_करोमुख्य_ops_check(काष्ठा irq_करोमुख्य *करोमुख्य,
+				काष्ठा msi_करोमुख्य_info *info,
+				काष्ठा device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct msi_domain_ops msi_domain_ops_default = {
-	.get_hwirq		= msi_domain_ops_get_hwirq,
-	.msi_init		= msi_domain_ops_init,
-	.msi_check		= msi_domain_ops_check,
-	.msi_prepare		= msi_domain_ops_prepare,
-	.set_desc		= msi_domain_ops_set_desc,
-	.domain_alloc_irqs	= __msi_domain_alloc_irqs,
-	.domain_free_irqs	= __msi_domain_free_irqs,
-};
+अटल काष्ठा msi_करोमुख्य_ops msi_करोमुख्य_ops_शेष = अणु
+	.get_hwirq		= msi_करोमुख्य_ops_get_hwirq,
+	.msi_init		= msi_करोमुख्य_ops_init,
+	.msi_check		= msi_करोमुख्य_ops_check,
+	.msi_prepare		= msi_करोमुख्य_ops_prepare,
+	.set_desc		= msi_करोमुख्य_ops_set_desc,
+	.करोमुख्य_alloc_irqs	= __msi_करोमुख्य_alloc_irqs,
+	.करोमुख्य_मुक्त_irqs	= __msi_करोमुख्य_मुक्त_irqs,
+पूर्ण;
 
-static void msi_domain_update_dom_ops(struct msi_domain_info *info)
-{
-	struct msi_domain_ops *ops = info->ops;
+अटल व्योम msi_करोमुख्य_update_करोm_ops(काष्ठा msi_करोमुख्य_info *info)
+अणु
+	काष्ठा msi_करोमुख्य_ops *ops = info->ops;
 
-	if (ops == NULL) {
-		info->ops = &msi_domain_ops_default;
-		return;
-	}
+	अगर (ops == शून्य) अणु
+		info->ops = &msi_करोमुख्य_ops_शेष;
+		वापस;
+	पूर्ण
 
-	if (ops->domain_alloc_irqs == NULL)
-		ops->domain_alloc_irqs = msi_domain_ops_default.domain_alloc_irqs;
-	if (ops->domain_free_irqs == NULL)
-		ops->domain_free_irqs = msi_domain_ops_default.domain_free_irqs;
+	अगर (ops->करोमुख्य_alloc_irqs == शून्य)
+		ops->करोमुख्य_alloc_irqs = msi_करोमुख्य_ops_शेष.करोमुख्य_alloc_irqs;
+	अगर (ops->करोमुख्य_मुक्त_irqs == शून्य)
+		ops->करोमुख्य_मुक्त_irqs = msi_करोमुख्य_ops_शेष.करोमुख्य_मुक्त_irqs;
 
-	if (!(info->flags & MSI_FLAG_USE_DEF_DOM_OPS))
-		return;
+	अगर (!(info->flags & MSI_FLAG_USE_DEF_DOM_OPS))
+		वापस;
 
-	if (ops->get_hwirq == NULL)
-		ops->get_hwirq = msi_domain_ops_default.get_hwirq;
-	if (ops->msi_init == NULL)
-		ops->msi_init = msi_domain_ops_default.msi_init;
-	if (ops->msi_check == NULL)
-		ops->msi_check = msi_domain_ops_default.msi_check;
-	if (ops->msi_prepare == NULL)
-		ops->msi_prepare = msi_domain_ops_default.msi_prepare;
-	if (ops->set_desc == NULL)
-		ops->set_desc = msi_domain_ops_default.set_desc;
-}
+	अगर (ops->get_hwirq == शून्य)
+		ops->get_hwirq = msi_करोमुख्य_ops_शेष.get_hwirq;
+	अगर (ops->msi_init == शून्य)
+		ops->msi_init = msi_करोमुख्य_ops_शेष.msi_init;
+	अगर (ops->msi_check == शून्य)
+		ops->msi_check = msi_करोमुख्य_ops_शेष.msi_check;
+	अगर (ops->msi_prepare == शून्य)
+		ops->msi_prepare = msi_करोमुख्य_ops_शेष.msi_prepare;
+	अगर (ops->set_desc == शून्य)
+		ops->set_desc = msi_करोमुख्य_ops_शेष.set_desc;
+पूर्ण
 
-static void msi_domain_update_chip_ops(struct msi_domain_info *info)
-{
-	struct irq_chip *chip = info->chip;
+अटल व्योम msi_करोमुख्य_update_chip_ops(काष्ठा msi_करोमुख्य_info *info)
+अणु
+	काष्ठा irq_chip *chip = info->chip;
 
 	BUG_ON(!chip || !chip->irq_mask || !chip->irq_unmask);
-	if (!chip->irq_set_affinity)
-		chip->irq_set_affinity = msi_domain_set_affinity;
-}
+	अगर (!chip->irq_set_affinity)
+		chip->irq_set_affinity = msi_करोमुख्य_set_affinity;
+पूर्ण
 
 /**
- * msi_create_irq_domain - Create a MSI interrupt domain
- * @fwnode:	Optional fwnode of the interrupt controller
- * @info:	MSI domain info
- * @parent:	Parent irq domain
+ * msi_create_irq_करोमुख्य - Create a MSI पूर्णांकerrupt करोमुख्य
+ * @fwnode:	Optional fwnode of the पूर्णांकerrupt controller
+ * @info:	MSI करोमुख्य info
+ * @parent:	Parent irq करोमुख्य
  */
-struct irq_domain *msi_create_irq_domain(struct fwnode_handle *fwnode,
-					 struct msi_domain_info *info,
-					 struct irq_domain *parent)
-{
-	struct irq_domain *domain;
+काष्ठा irq_करोमुख्य *msi_create_irq_करोमुख्य(काष्ठा fwnode_handle *fwnode,
+					 काष्ठा msi_करोमुख्य_info *info,
+					 काष्ठा irq_करोमुख्य *parent)
+अणु
+	काष्ठा irq_करोमुख्य *करोमुख्य;
 
-	msi_domain_update_dom_ops(info);
-	if (info->flags & MSI_FLAG_USE_DEF_CHIP_OPS)
-		msi_domain_update_chip_ops(info);
+	msi_करोमुख्य_update_करोm_ops(info);
+	अगर (info->flags & MSI_FLAG_USE_DEF_CHIP_OPS)
+		msi_करोमुख्य_update_chip_ops(info);
 
-	domain = irq_domain_create_hierarchy(parent, IRQ_DOMAIN_FLAG_MSI, 0,
-					     fwnode, &msi_domain_ops, info);
+	करोमुख्य = irq_करोमुख्य_create_hierarchy(parent, IRQ_DOMAIN_FLAG_MSI, 0,
+					     fwnode, &msi_करोमुख्य_ops, info);
 
-	if (domain && !domain->name && info->chip)
-		domain->name = info->chip->name;
+	अगर (करोमुख्य && !करोमुख्य->name && info->chip)
+		करोमुख्य->name = info->chip->name;
 
-	return domain;
-}
+	वापस करोमुख्य;
+पूर्ण
 
-int msi_domain_prepare_irqs(struct irq_domain *domain, struct device *dev,
-			    int nvec, msi_alloc_info_t *arg)
-{
-	struct msi_domain_info *info = domain->host_data;
-	struct msi_domain_ops *ops = info->ops;
-	int ret;
+पूर्णांक msi_करोमुख्य_prepare_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+			    पूर्णांक nvec, msi_alloc_info_t *arg)
+अणु
+	काष्ठा msi_करोमुख्य_info *info = करोमुख्य->host_data;
+	काष्ठा msi_करोमुख्य_ops *ops = info->ops;
+	पूर्णांक ret;
 
-	ret = ops->msi_check(domain, info, dev);
-	if (ret == 0)
-		ret = ops->msi_prepare(domain, dev, nvec, arg);
+	ret = ops->msi_check(करोमुख्य, info, dev);
+	अगर (ret == 0)
+		ret = ops->msi_prepare(करोमुख्य, dev, nvec, arg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int msi_domain_populate_irqs(struct irq_domain *domain, struct device *dev,
-			     int virq, int nvec, msi_alloc_info_t *arg)
-{
-	struct msi_domain_info *info = domain->host_data;
-	struct msi_domain_ops *ops = info->ops;
-	struct msi_desc *desc;
-	int ret = 0;
+पूर्णांक msi_करोमुख्य_populate_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+			     पूर्णांक virq, पूर्णांक nvec, msi_alloc_info_t *arg)
+अणु
+	काष्ठा msi_करोमुख्य_info *info = करोमुख्य->host_data;
+	काष्ठा msi_करोमुख्य_ops *ops = info->ops;
+	काष्ठा msi_desc *desc;
+	पूर्णांक ret = 0;
 
-	for_each_msi_entry(desc, dev) {
+	क्रम_each_msi_entry(desc, dev) अणु
 		/* Don't even try the multi-MSI brain damage. */
-		if (WARN_ON(!desc->irq || desc->nvec_used != 1)) {
+		अगर (WARN_ON(!desc->irq || desc->nvec_used != 1)) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!(desc->irq >= virq && desc->irq < (virq + nvec)))
-			continue;
+		अगर (!(desc->irq >= virq && desc->irq < (virq + nvec)))
+			जारी;
 
 		ops->set_desc(arg, desc);
-		/* Assumes the domain mutex is held! */
-		ret = irq_domain_alloc_irqs_hierarchy(domain, desc->irq, 1,
+		/* Assumes the करोमुख्य mutex is held! */
+		ret = irq_करोमुख्य_alloc_irqs_hierarchy(करोमुख्य, desc->irq, 1,
 						      arg);
-		if (ret)
-			break;
+		अगर (ret)
+			अवरोध;
 
 		irq_set_msi_desc_off(desc->irq, 0, desc);
-	}
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		/* Mop up the damage */
-		for_each_msi_entry(desc, dev) {
-			if (!(desc->irq >= virq && desc->irq < (virq + nvec)))
-				continue;
+		क्रम_each_msi_entry(desc, dev) अणु
+			अगर (!(desc->irq >= virq && desc->irq < (virq + nvec)))
+				जारी;
 
-			irq_domain_free_irqs_common(domain, desc->irq, 1);
-		}
-	}
+			irq_करोमुख्य_मुक्त_irqs_common(करोमुख्य, desc->irq, 1);
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Carefully check whether the device can use reservation mode. If
  * reservation mode is enabled then the early activation will assign a
- * dummy vector to the device. If the PCI/MSI device does not support
- * masking of the entry then this can result in spurious interrupts when
- * the device driver is not absolutely careful. But even then a malfunction
- * of the hardware could result in a spurious interrupt on the dummy vector
+ * dummy vector to the device. If the PCI/MSI device करोes not support
+ * masking of the entry then this can result in spurious पूर्णांकerrupts when
+ * the device driver is not असलolutely careful. But even then a malfunction
+ * of the hardware could result in a spurious पूर्णांकerrupt on the dummy vector
  * and render the device unusable. If the entry can be masked then the core
- * logic will prevent the spurious interrupt and reservation mode can be
+ * logic will prevent the spurious पूर्णांकerrupt and reservation mode can be
  * used. For now reservation mode is restricted to PCI/MSI.
  */
-static bool msi_check_reservation_mode(struct irq_domain *domain,
-				       struct msi_domain_info *info,
-				       struct device *dev)
-{
-	struct msi_desc *desc;
+अटल bool msi_check_reservation_mode(काष्ठा irq_करोमुख्य *करोमुख्य,
+				       काष्ठा msi_करोमुख्य_info *info,
+				       काष्ठा device *dev)
+अणु
+	काष्ठा msi_desc *desc;
 
-	switch(domain->bus_token) {
-	case DOMAIN_BUS_PCI_MSI:
-	case DOMAIN_BUS_VMD_MSI:
-		break;
-	default:
-		return false;
-	}
+	चयन(करोमुख्य->bus_token) अणु
+	हाल DOMAIN_BUS_PCI_MSI:
+	हाल DOMAIN_BUS_VMD_MSI:
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
-	if (!(info->flags & MSI_FLAG_MUST_REACTIVATE))
-		return false;
+	अगर (!(info->flags & MSI_FLAG_MUST_REACTIVATE))
+		वापस false;
 
-	if (IS_ENABLED(CONFIG_PCI_MSI) && pci_msi_ignore_mask)
-		return false;
+	अगर (IS_ENABLED(CONFIG_PCI_MSI) && pci_msi_ignore_mask)
+		वापस false;
 
 	/*
 	 * Checking the first MSI descriptor is sufficient. MSIX supports
-	 * masking and MSI does so when the maskbit is set.
+	 * masking and MSI करोes so when the maskbit is set.
 	 */
 	desc = first_msi_entry(dev);
-	return desc->msi_attrib.is_msix || desc->msi_attrib.maskbit;
-}
+	वापस desc->msi_attrib.is_msix || desc->msi_attrib.maskbit;
+पूर्ण
 
-int __msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
-			    int nvec)
-{
-	struct msi_domain_info *info = domain->host_data;
-	struct msi_domain_ops *ops = info->ops;
-	struct irq_data *irq_data;
-	struct msi_desc *desc;
-	msi_alloc_info_t arg = { };
-	int i, ret, virq;
+पूर्णांक __msi_करोमुख्य_alloc_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+			    पूर्णांक nvec)
+अणु
+	काष्ठा msi_करोमुख्य_info *info = करोमुख्य->host_data;
+	काष्ठा msi_करोमुख्य_ops *ops = info->ops;
+	काष्ठा irq_data *irq_data;
+	काष्ठा msi_desc *desc;
+	msi_alloc_info_t arg = अणु पूर्ण;
+	पूर्णांक i, ret, virq;
 	bool can_reserve;
 
-	ret = msi_domain_prepare_irqs(domain, dev, nvec, &arg);
-	if (ret)
-		return ret;
+	ret = msi_करोमुख्य_prepare_irqs(करोमुख्य, dev, nvec, &arg);
+	अगर (ret)
+		वापस ret;
 
-	for_each_msi_entry(desc, dev) {
+	क्रम_each_msi_entry(desc, dev) अणु
 		ops->set_desc(&arg, desc);
 
-		virq = __irq_domain_alloc_irqs(domain, -1, desc->nvec_used,
+		virq = __irq_करोमुख्य_alloc_irqs(करोमुख्य, -1, desc->nvec_used,
 					       dev_to_node(dev), &arg, false,
 					       desc->affinity);
-		if (virq < 0) {
+		अगर (virq < 0) अणु
 			ret = -ENOSPC;
-			if (ops->handle_error)
-				ret = ops->handle_error(domain, desc, ret);
-			if (ops->msi_finish)
+			अगर (ops->handle_error)
+				ret = ops->handle_error(करोमुख्य, desc, ret);
+			अगर (ops->msi_finish)
 				ops->msi_finish(&arg, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		for (i = 0; i < desc->nvec_used; i++) {
+		क्रम (i = 0; i < desc->nvec_used; i++) अणु
 			irq_set_msi_desc_off(virq, i, desc);
 			irq_debugfs_copy_devname(virq + i, dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ops->msi_finish)
+	अगर (ops->msi_finish)
 		ops->msi_finish(&arg, 0);
 
-	can_reserve = msi_check_reservation_mode(domain, info, dev);
+	can_reserve = msi_check_reservation_mode(करोमुख्य, info, dev);
 
 	/*
 	 * This flag is set by the PCI layer as we need to activate
-	 * the MSI entries before the PCI layer enables MSI in the
-	 * card. Otherwise the card latches a random msi message.
+	 * the MSI entries beक्रमe the PCI layer enables MSI in the
+	 * card. Otherwise the card latches a अक्रमom msi message.
 	 */
-	if (!(info->flags & MSI_FLAG_ACTIVATE_EARLY))
-		goto skip_activate;
+	अगर (!(info->flags & MSI_FLAG_ACTIVATE_EARLY))
+		जाओ skip_activate;
 
-	for_each_msi_vector(desc, i, dev) {
-		if (desc->irq == i) {
+	क्रम_each_msi_vector(desc, i, dev) अणु
+		अगर (desc->irq == i) अणु
 			virq = desc->irq;
 			dev_dbg(dev, "irq [%d-%d] for MSI\n",
 				virq, virq + desc->nvec_used - 1);
-		}
+		पूर्ण
 
-		irq_data = irq_domain_get_irq_data(domain, i);
-		if (!can_reserve) {
+		irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, i);
+		अगर (!can_reserve) अणु
 			irqd_clr_can_reserve(irq_data);
-			if (domain->flags & IRQ_DOMAIN_MSI_NOMASK_QUIRK)
+			अगर (करोमुख्य->flags & IRQ_DOMAIN_MSI_NOMASK_QUIRK)
 				irqd_set_msi_nomask_quirk(irq_data);
-		}
-		ret = irq_domain_activate_irq(irq_data, can_reserve);
-		if (ret)
-			goto cleanup;
-	}
+		पूर्ण
+		ret = irq_करोमुख्य_activate_irq(irq_data, can_reserve);
+		अगर (ret)
+			जाओ cleanup;
+	पूर्ण
 
 skip_activate:
 	/*
-	 * If these interrupts use reservation mode, clear the activated bit
+	 * If these पूर्णांकerrupts use reservation mode, clear the activated bit
 	 * so request_irq() will assign the final vector.
 	 */
-	if (can_reserve) {
-		for_each_msi_vector(desc, i, dev) {
-			irq_data = irq_domain_get_irq_data(domain, i);
+	अगर (can_reserve) अणु
+		क्रम_each_msi_vector(desc, i, dev) अणु
+			irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, i);
 			irqd_clr_activated(irq_data);
-		}
-	}
-	return 0;
+		पूर्ण
+	पूर्ण
+	वापस 0;
 
 cleanup:
-	for_each_msi_vector(desc, i, dev) {
-		irq_data = irq_domain_get_irq_data(domain, i);
-		if (irqd_is_activated(irq_data))
-			irq_domain_deactivate_irq(irq_data);
-	}
-	msi_domain_free_irqs(domain, dev);
-	return ret;
-}
+	क्रम_each_msi_vector(desc, i, dev) अणु
+		irq_data = irq_करोमुख्य_get_irq_data(करोमुख्य, i);
+		अगर (irqd_is_activated(irq_data))
+			irq_करोमुख्य_deactivate_irq(irq_data);
+	पूर्ण
+	msi_करोमुख्य_मुक्त_irqs(करोमुख्य, dev);
+	वापस ret;
+पूर्ण
 
 /**
- * msi_domain_alloc_irqs - Allocate interrupts from a MSI interrupt domain
- * @domain:	The domain to allocate from
- * @dev:	Pointer to device struct of the device for which the interrupts
+ * msi_करोमुख्य_alloc_irqs - Allocate पूर्णांकerrupts from a MSI पूर्णांकerrupt करोमुख्य
+ * @करोमुख्य:	The करोमुख्य to allocate from
+ * @dev:	Poपूर्णांकer to device काष्ठा of the device क्रम which the पूर्णांकerrupts
  *		are allocated
- * @nvec:	The number of interrupts to allocate
+ * @nvec:	The number of पूर्णांकerrupts to allocate
  *
  * Returns 0 on success or an error code.
  */
-int msi_domain_alloc_irqs(struct irq_domain *domain, struct device *dev,
-			  int nvec)
-{
-	struct msi_domain_info *info = domain->host_data;
-	struct msi_domain_ops *ops = info->ops;
+पूर्णांक msi_करोमुख्य_alloc_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा device *dev,
+			  पूर्णांक nvec)
+अणु
+	काष्ठा msi_करोमुख्य_info *info = करोमुख्य->host_data;
+	काष्ठा msi_करोमुख्य_ops *ops = info->ops;
 
-	return ops->domain_alloc_irqs(domain, dev, nvec);
-}
+	वापस ops->करोमुख्य_alloc_irqs(करोमुख्य, dev, nvec);
+पूर्ण
 
-void __msi_domain_free_irqs(struct irq_domain *domain, struct device *dev)
-{
-	struct msi_desc *desc;
+व्योम __msi_करोमुख्य_मुक्त_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	काष्ठा msi_desc *desc;
 
-	for_each_msi_entry(desc, dev) {
+	क्रम_each_msi_entry(desc, dev) अणु
 		/*
 		 * We might have failed to allocate an MSI early
 		 * enough that there is no IRQ associated to this
-		 * entry. If that's the case, don't do anything.
+		 * entry. If that's the case, don't करो anything.
 		 */
-		if (desc->irq) {
-			irq_domain_free_irqs(desc->irq, desc->nvec_used);
+		अगर (desc->irq) अणु
+			irq_करोमुख्य_मुक्त_irqs(desc->irq, desc->nvec_used);
 			desc->irq = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * __msi_domain_free_irqs - Free interrupts from a MSI interrupt @domain associated tp @dev
- * @domain:	The domain to managing the interrupts
- * @dev:	Pointer to device struct of the device for which the interrupts
- *		are free
+ * __msi_करोमुख्य_मुक्त_irqs - Free पूर्णांकerrupts from a MSI पूर्णांकerrupt @करोमुख्य associated tp @dev
+ * @करोमुख्य:	The करोमुख्य to managing the पूर्णांकerrupts
+ * @dev:	Poपूर्णांकer to device काष्ठा of the device क्रम which the पूर्णांकerrupts
+ *		are मुक्त
  */
-void msi_domain_free_irqs(struct irq_domain *domain, struct device *dev)
-{
-	struct msi_domain_info *info = domain->host_data;
-	struct msi_domain_ops *ops = info->ops;
+व्योम msi_करोमुख्य_मुक्त_irqs(काष्ठा irq_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	काष्ठा msi_करोमुख्य_info *info = करोमुख्य->host_data;
+	काष्ठा msi_करोमुख्य_ops *ops = info->ops;
 
-	return ops->domain_free_irqs(domain, dev);
-}
+	वापस ops->करोमुख्य_मुक्त_irqs(करोमुख्य, dev);
+पूर्ण
 
 /**
- * msi_get_domain_info - Get the MSI interrupt domain info for @domain
- * @domain:	The interrupt domain to retrieve data from
+ * msi_get_करोमुख्य_info - Get the MSI पूर्णांकerrupt करोमुख्य info क्रम @करोमुख्य
+ * @करोमुख्य:	The पूर्णांकerrupt करोमुख्य to retrieve data from
  *
- * Returns the pointer to the msi_domain_info stored in
- * @domain->host_data.
+ * Returns the poपूर्णांकer to the msi_करोमुख्य_info stored in
+ * @करोमुख्य->host_data.
  */
-struct msi_domain_info *msi_get_domain_info(struct irq_domain *domain)
-{
-	return (struct msi_domain_info *)domain->host_data;
-}
+काष्ठा msi_करोमुख्य_info *msi_get_करोमुख्य_info(काष्ठा irq_करोमुख्य *करोमुख्य)
+अणु
+	वापस (काष्ठा msi_करोमुख्य_info *)करोमुख्य->host_data;
+पूर्ण
 
-#endif /* CONFIG_GENERIC_MSI_IRQ_DOMAIN */
+#पूर्ण_अगर /* CONFIG_GENERIC_MSI_IRQ_DOMAIN */

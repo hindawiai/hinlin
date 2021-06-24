@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * VIA IDE driver for Linux. Supported southbridges:
+ * VIA IDE driver क्रम Linux. Supported southbridges:
  *
  *   vt82c576, vt82c586, vt82c586a, vt82c586b, vt82c596a, vt82c596b,
  *   vt82c686, vt82c686a, vt82c686b, vt8231, vt8233, vt8233c, vt8233a,
@@ -15,393 +16,393 @@
  *	Andre Hedrick
  *
  * Documentation:
- *	Obsolete device documentation publicly available from via.com.tw
- *	Current device documentation available under NDA only
+ *	Obsolete device करोcumentation खुलाly available from via.com.tw
+ *	Current device करोcumentation available under NDA only
  */
 
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <linux/init.h>
-#include <linux/ide.h>
-#include <linux/dmi.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/dmi.h>
 
-#ifdef CONFIG_PPC_CHRP
-#include <asm/processor.h>
-#endif
+#अगर_घोषित CONFIG_PPC_CHRP
+#समावेश <यंत्र/processor.h>
+#पूर्ण_अगर
 
-#define DRV_NAME "via82cxxx"
+#घोषणा DRV_NAME "via82cxxx"
 
-#define VIA_IDE_ENABLE		0x40
-#define VIA_IDE_CONFIG		0x41
-#define VIA_FIFO_CONFIG		0x43
-#define VIA_MISC_1		0x44
-#define VIA_MISC_2		0x45
-#define VIA_MISC_3		0x46
-#define VIA_DRIVE_TIMING	0x48
-#define VIA_8BIT_TIMING		0x4e
-#define VIA_ADDRESS_SETUP	0x4c
-#define VIA_UDMA_TIMING		0x50
+#घोषणा VIA_IDE_ENABLE		0x40
+#घोषणा VIA_IDE_CONFIG		0x41
+#घोषणा VIA_FIFO_CONFIG		0x43
+#घोषणा VIA_MISC_1		0x44
+#घोषणा VIA_MISC_2		0x45
+#घोषणा VIA_MISC_3		0x46
+#घोषणा VIA_DRIVE_TIMING	0x48
+#घोषणा VIA_8BIT_TIMING		0x4e
+#घोषणा VIA_ADDRESS_SETUP	0x4c
+#घोषणा VIA_UDMA_TIMING		0x50
 
-#define VIA_BAD_PREQ		0x01 /* Crashes if PREQ# till DDACK# set */
-#define VIA_BAD_CLK66		0x02 /* 66 MHz clock doesn't work correctly */
-#define VIA_SET_FIFO		0x04 /* Needs to have FIFO split set */
-#define VIA_NO_UNMASK		0x08 /* Doesn't work with IRQ unmasking on */
-#define VIA_BAD_ID		0x10 /* Has wrong vendor ID (0x1107) */
-#define VIA_BAD_AST		0x20 /* Don't touch Address Setup Timing */
-#define VIA_SATA_PATA		0x80 /* SATA/PATA combined configuration */
+#घोषणा VIA_BAD_PREQ		0x01 /* Crashes अगर PREQ# till DDACK# set */
+#घोषणा VIA_BAD_CLK66		0x02 /* 66 MHz घड़ी करोesn't work correctly */
+#घोषणा VIA_SET_FIFO		0x04 /* Needs to have FIFO split set */
+#घोषणा VIA_NO_UNMASK		0x08 /* Doesn't work with IRQ unmasking on */
+#घोषणा VIA_BAD_ID		0x10 /* Has wrong venकरोr ID (0x1107) */
+#घोषणा VIA_BAD_AST		0x20 /* Don't touch Address Setup Timing */
+#घोषणा VIA_SATA_PATA		0x80 /* SATA/PATA combined configuration */
 
-enum {
+क्रमागत अणु
 	VIA_IDFLAG_SINGLE = (1 << 1), /* single channel controller */
-};
+पूर्ण;
 
 /*
  * VIA SouthBridge chips.
  */
 
-static struct via_isa_bridge {
-	char *name;
+अटल काष्ठा via_isa_bridge अणु
+	अक्षर *name;
 	u16 id;
 	u8 rev_min;
 	u8 rev_max;
 	u8 udma_mask;
 	u8 flags;
-} via_isa_bridges[] = {
-	{ "vx855",	PCI_DEVICE_ID_VIA_VX855,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST | VIA_SATA_PATA },
-	{ "vx800",	PCI_DEVICE_ID_VIA_VX800,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST | VIA_SATA_PATA },
-	{ "cx700",	PCI_DEVICE_ID_VIA_CX700,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST | VIA_SATA_PATA },
-	{ "vt8261",	PCI_DEVICE_ID_VIA_8261,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST },
-	{ "vt8237s",	PCI_DEVICE_ID_VIA_8237S,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST },
-	{ "vt6410",	PCI_DEVICE_ID_VIA_6410,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST },
-	{ "vt6415",	PCI_DEVICE_ID_VIA_6415,     0x00, 0xff, ATA_UDMA6, VIA_BAD_AST },
-	{ "vt8251",	PCI_DEVICE_ID_VIA_8251,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST },
-	{ "vt8237",	PCI_DEVICE_ID_VIA_8237,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST },
-	{ "vt8237a",	PCI_DEVICE_ID_VIA_8237A,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST },
-	{ "vt8235",	PCI_DEVICE_ID_VIA_8235,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST },
-	{ "vt8233a",	PCI_DEVICE_ID_VIA_8233A,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST },
-	{ "vt8233c",	PCI_DEVICE_ID_VIA_8233C_0,  0x00, 0x2f, ATA_UDMA5, },
-	{ "vt8233",	PCI_DEVICE_ID_VIA_8233_0,   0x00, 0x2f, ATA_UDMA5, },
-	{ "vt8231",	PCI_DEVICE_ID_VIA_8231,     0x00, 0x2f, ATA_UDMA5, },
-	{ "vt82c686b",	PCI_DEVICE_ID_VIA_82C686,   0x40, 0x4f, ATA_UDMA5, },
-	{ "vt82c686a",	PCI_DEVICE_ID_VIA_82C686,   0x10, 0x2f, ATA_UDMA4, },
-	{ "vt82c686",	PCI_DEVICE_ID_VIA_82C686,   0x00, 0x0f, ATA_UDMA2, VIA_BAD_CLK66 },
-	{ "vt82c596b",	PCI_DEVICE_ID_VIA_82C596,   0x10, 0x2f, ATA_UDMA4, },
-	{ "vt82c596a",	PCI_DEVICE_ID_VIA_82C596,   0x00, 0x0f, ATA_UDMA2, VIA_BAD_CLK66 },
-	{ "vt82c586b",	PCI_DEVICE_ID_VIA_82C586_0, 0x47, 0x4f, ATA_UDMA2, VIA_SET_FIFO },
-	{ "vt82c586b",	PCI_DEVICE_ID_VIA_82C586_0, 0x40, 0x46, ATA_UDMA2, VIA_SET_FIFO | VIA_BAD_PREQ },
-	{ "vt82c586b",	PCI_DEVICE_ID_VIA_82C586_0, 0x30, 0x3f, ATA_UDMA2, VIA_SET_FIFO },
-	{ "vt82c586a",	PCI_DEVICE_ID_VIA_82C586_0, 0x20, 0x2f, ATA_UDMA2, VIA_SET_FIFO },
-	{ "vt82c586",	PCI_DEVICE_ID_VIA_82C586_0, 0x00, 0x0f,      0x00, VIA_SET_FIFO },
-	{ "vt82c576",	PCI_DEVICE_ID_VIA_82C576,   0x00, 0x2f,      0x00, VIA_SET_FIFO | VIA_NO_UNMASK },
-	{ "vt82c576",	PCI_DEVICE_ID_VIA_82C576,   0x00, 0x2f,      0x00, VIA_SET_FIFO | VIA_NO_UNMASK | VIA_BAD_ID },
-	{ "vtxxxx",	PCI_DEVICE_ID_VIA_ANON,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST },
-	{ NULL }
-};
+पूर्ण via_isa_bridges[] = अणु
+	अणु "vx855",	PCI_DEVICE_ID_VIA_VX855,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST | VIA_SATA_PATA पूर्ण,
+	अणु "vx800",	PCI_DEVICE_ID_VIA_VX800,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST | VIA_SATA_PATA पूर्ण,
+	अणु "cx700",	PCI_DEVICE_ID_VIA_CX700,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST | VIA_SATA_PATA पूर्ण,
+	अणु "vt8261",	PCI_DEVICE_ID_VIA_8261,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु "vt8237s",	PCI_DEVICE_ID_VIA_8237S,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु "vt6410",	PCI_DEVICE_ID_VIA_6410,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु "vt6415",	PCI_DEVICE_ID_VIA_6415,     0x00, 0xff, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु "vt8251",	PCI_DEVICE_ID_VIA_8251,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु "vt8237",	PCI_DEVICE_ID_VIA_8237,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु "vt8237a",	PCI_DEVICE_ID_VIA_8237A,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु "vt8235",	PCI_DEVICE_ID_VIA_8235,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु "vt8233a",	PCI_DEVICE_ID_VIA_8233A,    0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु "vt8233c",	PCI_DEVICE_ID_VIA_8233C_0,  0x00, 0x2f, ATA_UDMA5, पूर्ण,
+	अणु "vt8233",	PCI_DEVICE_ID_VIA_8233_0,   0x00, 0x2f, ATA_UDMA5, पूर्ण,
+	अणु "vt8231",	PCI_DEVICE_ID_VIA_8231,     0x00, 0x2f, ATA_UDMA5, पूर्ण,
+	अणु "vt82c686b",	PCI_DEVICE_ID_VIA_82C686,   0x40, 0x4f, ATA_UDMA5, पूर्ण,
+	अणु "vt82c686a",	PCI_DEVICE_ID_VIA_82C686,   0x10, 0x2f, ATA_UDMA4, पूर्ण,
+	अणु "vt82c686",	PCI_DEVICE_ID_VIA_82C686,   0x00, 0x0f, ATA_UDMA2, VIA_BAD_CLK66 पूर्ण,
+	अणु "vt82c596b",	PCI_DEVICE_ID_VIA_82C596,   0x10, 0x2f, ATA_UDMA4, पूर्ण,
+	अणु "vt82c596a",	PCI_DEVICE_ID_VIA_82C596,   0x00, 0x0f, ATA_UDMA2, VIA_BAD_CLK66 पूर्ण,
+	अणु "vt82c586b",	PCI_DEVICE_ID_VIA_82C586_0, 0x47, 0x4f, ATA_UDMA2, VIA_SET_FIFO पूर्ण,
+	अणु "vt82c586b",	PCI_DEVICE_ID_VIA_82C586_0, 0x40, 0x46, ATA_UDMA2, VIA_SET_FIFO | VIA_BAD_PREQ पूर्ण,
+	अणु "vt82c586b",	PCI_DEVICE_ID_VIA_82C586_0, 0x30, 0x3f, ATA_UDMA2, VIA_SET_FIFO पूर्ण,
+	अणु "vt82c586a",	PCI_DEVICE_ID_VIA_82C586_0, 0x20, 0x2f, ATA_UDMA2, VIA_SET_FIFO पूर्ण,
+	अणु "vt82c586",	PCI_DEVICE_ID_VIA_82C586_0, 0x00, 0x0f,      0x00, VIA_SET_FIFO पूर्ण,
+	अणु "vt82c576",	PCI_DEVICE_ID_VIA_82C576,   0x00, 0x2f,      0x00, VIA_SET_FIFO | VIA_NO_UNMASK पूर्ण,
+	अणु "vt82c576",	PCI_DEVICE_ID_VIA_82C576,   0x00, 0x2f,      0x00, VIA_SET_FIFO | VIA_NO_UNMASK | VIA_BAD_ID पूर्ण,
+	अणु "vtxxxx",	PCI_DEVICE_ID_VIA_ANON,     0x00, 0x2f, ATA_UDMA6, VIA_BAD_AST पूर्ण,
+	अणु शून्य पूर्ण
+पूर्ण;
 
-static unsigned int via_clock;
-static char *via_dma[] = { "16", "25", "33", "44", "66", "100", "133" };
+अटल अचिन्हित पूर्णांक via_घड़ी;
+अटल अक्षर *via_dma[] = अणु "16", "25", "33", "44", "66", "100", "133" पूर्ण;
 
-struct via82cxxx_dev
-{
-	struct via_isa_bridge *via_config;
-	unsigned int via_80w;
-};
+काष्ठा via82cxxx_dev
+अणु
+	काष्ठा via_isa_bridge *via_config;
+	अचिन्हित पूर्णांक via_80w;
+पूर्ण;
 
 /**
- *	via_set_speed			-	write timing registers
+ *	via_set_speed			-	ग_लिखो timing रेजिस्टरs
  *	@dev: PCI device
  *	@dn: device
  *	@timing: IDE timing data to use
  *
- *	via_set_speed writes timing values to the chipset registers
+ *	via_set_speed ग_लिखोs timing values to the chipset रेजिस्टरs
  */
 
-static void via_set_speed(ide_hwif_t *hwif, u8 dn, struct ide_timing *timing)
-{
-	struct pci_dev *dev = to_pci_dev(hwif->dev);
-	struct ide_host *host = pci_get_drvdata(dev);
-	struct via82cxxx_dev *vdev = host->host_priv;
+अटल व्योम via_set_speed(ide_hwअगर_t *hwअगर, u8 dn, काष्ठा ide_timing *timing)
+अणु
+	काष्ठा pci_dev *dev = to_pci_dev(hwअगर->dev);
+	काष्ठा ide_host *host = pci_get_drvdata(dev);
+	काष्ठा via82cxxx_dev *vdev = host->host_priv;
 	u8 t;
 
-	if (~vdev->via_config->flags & VIA_BAD_AST) {
-		pci_read_config_byte(dev, VIA_ADDRESS_SETUP, &t);
+	अगर (~vdev->via_config->flags & VIA_BAD_AST) अणु
+		pci_पढ़ो_config_byte(dev, VIA_ADDRESS_SETUP, &t);
 		t = (t & ~(3 << ((3 - dn) << 1))) | ((clamp_val(timing->setup, 1, 4) - 1) << ((3 - dn) << 1));
-		pci_write_config_byte(dev, VIA_ADDRESS_SETUP, t);
-	}
+		pci_ग_लिखो_config_byte(dev, VIA_ADDRESS_SETUP, t);
+	पूर्ण
 
-	pci_write_config_byte(dev, VIA_8BIT_TIMING + (1 - (dn >> 1)),
+	pci_ग_लिखो_config_byte(dev, VIA_8BIT_TIMING + (1 - (dn >> 1)),
 		((clamp_val(timing->act8b, 1, 16) - 1) << 4) | (clamp_val(timing->rec8b, 1, 16) - 1));
 
-	pci_write_config_byte(dev, VIA_DRIVE_TIMING + (3 - dn),
+	pci_ग_लिखो_config_byte(dev, VIA_DRIVE_TIMING + (3 - dn),
 		((clamp_val(timing->active, 1, 16) - 1) << 4) | (clamp_val(timing->recover, 1, 16) - 1));
 
-	switch (vdev->via_config->udma_mask) {
-	case ATA_UDMA2: t = timing->udma ? (0xe0 | (clamp_val(timing->udma, 2, 5) - 2)) : 0x03; break;
-	case ATA_UDMA4: t = timing->udma ? (0xe8 | (clamp_val(timing->udma, 2, 9) - 2)) : 0x0f; break;
-	case ATA_UDMA5: t = timing->udma ? (0xe0 | (clamp_val(timing->udma, 2, 9) - 2)) : 0x07; break;
-	case ATA_UDMA6: t = timing->udma ? (0xe0 | (clamp_val(timing->udma, 2, 9) - 2)) : 0x07; break;
-	}
+	चयन (vdev->via_config->udma_mask) अणु
+	हाल ATA_UDMA2: t = timing->udma ? (0xe0 | (clamp_val(timing->udma, 2, 5) - 2)) : 0x03; अवरोध;
+	हाल ATA_UDMA4: t = timing->udma ? (0xe8 | (clamp_val(timing->udma, 2, 9) - 2)) : 0x0f; अवरोध;
+	हाल ATA_UDMA5: t = timing->udma ? (0xe0 | (clamp_val(timing->udma, 2, 9) - 2)) : 0x07; अवरोध;
+	हाल ATA_UDMA6: t = timing->udma ? (0xe0 | (clamp_val(timing->udma, 2, 9) - 2)) : 0x07; अवरोध;
+	पूर्ण
 
 	/* Set UDMA unless device is not UDMA capable */
-	if (vdev->via_config->udma_mask) {
+	अगर (vdev->via_config->udma_mask) अणु
 		u8 udma_etc;
 
-		pci_read_config_byte(dev, VIA_UDMA_TIMING + 3 - dn, &udma_etc);
+		pci_पढ़ो_config_byte(dev, VIA_UDMA_TIMING + 3 - dn, &udma_etc);
 
 		/* clear transfer mode bit */
 		udma_etc &= ~0x20;
 
-		if (timing->udma) {
+		अगर (timing->udma) अणु
 			/* preserve 80-wire cable detection bit */
 			udma_etc &= 0x10;
 			udma_etc |= t;
-		}
+		पूर्ण
 
-		pci_write_config_byte(dev, VIA_UDMA_TIMING + 3 - dn, udma_etc);
-	}
-}
+		pci_ग_लिखो_config_byte(dev, VIA_UDMA_TIMING + 3 - dn, udma_etc);
+	पूर्ण
+पूर्ण
 
 /**
  *	via_set_drive		-	configure transfer mode
- *	@hwif: port
+ *	@hwअगर: port
  *	@drive: Drive to set up
  *
  *	via_set_drive() computes timing values configures the chipset to
  *	a desired transfer mode.  It also can be called by upper layers.
  */
 
-static void via_set_drive(ide_hwif_t *hwif, ide_drive_t *drive)
-{
+अटल व्योम via_set_drive(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
 	ide_drive_t *peer = ide_get_pair_dev(drive);
-	struct ide_host *host = dev_get_drvdata(hwif->dev);
-	struct via82cxxx_dev *vdev = host->host_priv;
-	struct ide_timing t, p;
-	unsigned int T, UT;
-	const u8 speed = drive->dma_mode;
+	काष्ठा ide_host *host = dev_get_drvdata(hwअगर->dev);
+	काष्ठा via82cxxx_dev *vdev = host->host_priv;
+	काष्ठा ide_timing t, p;
+	अचिन्हित पूर्णांक T, UT;
+	स्थिर u8 speed = drive->dma_mode;
 
-	T = 1000000000 / via_clock;
+	T = 1000000000 / via_घड़ी;
 
-	switch (vdev->via_config->udma_mask) {
-	case ATA_UDMA2: UT = T;   break;
-	case ATA_UDMA4: UT = T/2; break;
-	case ATA_UDMA5: UT = T/3; break;
-	case ATA_UDMA6: UT = T/4; break;
-	default:	UT = T;
-	}
+	चयन (vdev->via_config->udma_mask) अणु
+	हाल ATA_UDMA2: UT = T;   अवरोध;
+	हाल ATA_UDMA4: UT = T/2; अवरोध;
+	हाल ATA_UDMA5: UT = T/3; अवरोध;
+	हाल ATA_UDMA6: UT = T/4; अवरोध;
+	शेष:	UT = T;
+	पूर्ण
 
 	ide_timing_compute(drive, speed, &t, T, UT);
 
-	if (peer) {
+	अगर (peer) अणु
 		ide_timing_compute(peer, peer->pio_mode, &p, T, UT);
 		ide_timing_merge(&p, &t, &t, IDE_TIMING_8BIT);
-	}
+	पूर्ण
 
-	via_set_speed(hwif, drive->dn, &t);
-}
+	via_set_speed(hwअगर, drive->dn, &t);
+पूर्ण
 
 /**
- *	via_set_pio_mode	-	set host controller for PIO mode
- *	@hwif: port
+ *	via_set_pio_mode	-	set host controller क्रम PIO mode
+ *	@hwअगर: port
  *	@drive: drive
  *
- *	A callback from the upper layers for PIO-only tuning.
+ *	A callback from the upper layers क्रम PIO-only tuning.
  */
 
-static void via_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
+अटल व्योम via_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
 	drive->dma_mode = drive->pio_mode;
-	via_set_drive(hwif, drive);
-}
+	via_set_drive(hwअगर, drive);
+पूर्ण
 
-static struct via_isa_bridge *via_config_find(struct pci_dev **isa)
-{
-	struct via_isa_bridge *via_config;
+अटल काष्ठा via_isa_bridge *via_config_find(काष्ठा pci_dev **isa)
+अणु
+	काष्ठा via_isa_bridge *via_config;
 
-	for (via_config = via_isa_bridges;
+	क्रम (via_config = via_isa_bridges;
 	     via_config->id != PCI_DEVICE_ID_VIA_ANON; via_config++)
-		if ((*isa = pci_get_device(PCI_VENDOR_ID_VIA +
+		अगर ((*isa = pci_get_device(PCI_VENDOR_ID_VIA +
 			!!(via_config->flags & VIA_BAD_ID),
-			via_config->id, NULL))) {
+			via_config->id, शून्य))) अणु
 
-			if ((*isa)->revision >= via_config->rev_min &&
+			अगर ((*isa)->revision >= via_config->rev_min &&
 			    (*isa)->revision <= via_config->rev_max)
-				break;
+				अवरोध;
 			pci_dev_put(*isa);
-		}
+		पूर्ण
 
-	return via_config;
-}
+	वापस via_config;
+पूर्ण
 
 /*
  * Check and handle 80-wire cable presence
  */
-static void via_cable_detect(struct via82cxxx_dev *vdev, u32 u)
-{
-	int i;
+अटल व्योम via_cable_detect(काष्ठा via82cxxx_dev *vdev, u32 u)
+अणु
+	पूर्णांक i;
 
-	switch (vdev->via_config->udma_mask) {
-		case ATA_UDMA4:
-			for (i = 24; i >= 0; i -= 8)
-				if (((u >> (i & 16)) & 8) &&
+	चयन (vdev->via_config->udma_mask) अणु
+		हाल ATA_UDMA4:
+			क्रम (i = 24; i >= 0; i -= 8)
+				अगर (((u >> (i & 16)) & 8) &&
 				    ((u >> i) & 0x20) &&
-				     (((u >> i) & 7) < 2)) {
+				     (((u >> i) & 7) < 2)) अणु
 					/*
-					 * 2x PCI clock and
+					 * 2x PCI घड़ी and
 					 * UDMA w/ < 3T/cycle
 					 */
 					vdev->via_80w |= (1 << (1 - (i >> 4)));
-				}
-			break;
+				पूर्ण
+			अवरोध;
 
-		case ATA_UDMA5:
-			for (i = 24; i >= 0; i -= 8)
-				if (((u >> i) & 0x10) ||
+		हाल ATA_UDMA5:
+			क्रम (i = 24; i >= 0; i -= 8)
+				अगर (((u >> i) & 0x10) ||
 				    (((u >> i) & 0x20) &&
-				     (((u >> i) & 7) < 4))) {
+				     (((u >> i) & 7) < 4))) अणु
 					/* BIOS 80-wire bit or
 					 * UDMA w/ < 60ns/cycle
 					 */
 					vdev->via_80w |= (1 << (1 - (i >> 4)));
-				}
-			break;
+				पूर्ण
+			अवरोध;
 
-		case ATA_UDMA6:
-			for (i = 24; i >= 0; i -= 8)
-				if (((u >> i) & 0x10) ||
+		हाल ATA_UDMA6:
+			क्रम (i = 24; i >= 0; i -= 8)
+				अगर (((u >> i) & 0x10) ||
 				    (((u >> i) & 0x20) &&
-				     (((u >> i) & 7) < 6))) {
+				     (((u >> i) & 7) < 6))) अणु
 					/* BIOS 80-wire bit or
 					 * UDMA w/ < 60ns/cycle
 					 */
 					vdev->via_80w |= (1 << (1 - (i >> 4)));
-				}
-			break;
-	}
-}
+				पूर्ण
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /**
  *	init_chipset_via82cxxx	-	initialization handler
  *	@dev: PCI device
  *
  *	The initialization callback. Here we determine the IDE chip type
- *	and initialize its drive independent registers.
+ *	and initialize its drive independent रेजिस्टरs.
  */
 
-static int init_chipset_via82cxxx(struct pci_dev *dev)
-{
-	struct ide_host *host = pci_get_drvdata(dev);
-	struct via82cxxx_dev *vdev = host->host_priv;
-	struct via_isa_bridge *via_config = vdev->via_config;
+अटल पूर्णांक init_chipset_via82cxxx(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा ide_host *host = pci_get_drvdata(dev);
+	काष्ठा via82cxxx_dev *vdev = host->host_priv;
+	काष्ठा via_isa_bridge *via_config = vdev->via_config;
 	u8 t, v;
 	u32 u;
 
 	/*
 	 * Detect cable and configure Clk66
 	 */
-	pci_read_config_dword(dev, VIA_UDMA_TIMING, &u);
+	pci_पढ़ो_config_dword(dev, VIA_UDMA_TIMING, &u);
 
 	via_cable_detect(vdev, u);
 
-	if (via_config->udma_mask == ATA_UDMA4) {
+	अगर (via_config->udma_mask == ATA_UDMA4) अणु
 		/* Enable Clk66 */
-		pci_write_config_dword(dev, VIA_UDMA_TIMING, u|0x80008);
-	} else if (via_config->flags & VIA_BAD_CLK66) {
+		pci_ग_लिखो_config_dword(dev, VIA_UDMA_TIMING, u|0x80008);
+	पूर्ण अन्यथा अगर (via_config->flags & VIA_BAD_CLK66) अणु
 		/* Would cause trouble on 596a and 686 */
-		pci_write_config_dword(dev, VIA_UDMA_TIMING, u & ~0x80008);
-	}
+		pci_ग_लिखो_config_dword(dev, VIA_UDMA_TIMING, u & ~0x80008);
+	पूर्ण
 
 	/*
-	 * Check whether interfaces are enabled.
+	 * Check whether पूर्णांकerfaces are enabled.
 	 */
 
-	pci_read_config_byte(dev, VIA_IDE_ENABLE, &v);
+	pci_पढ़ो_config_byte(dev, VIA_IDE_ENABLE, &v);
 
 	/*
 	 * Set up FIFO sizes and thresholds.
 	 */
 
-	pci_read_config_byte(dev, VIA_FIFO_CONFIG, &t);
+	pci_पढ़ो_config_byte(dev, VIA_FIFO_CONFIG, &t);
 
 	/* Disable PREQ# till DDACK# */
-	if (via_config->flags & VIA_BAD_PREQ) {
+	अगर (via_config->flags & VIA_BAD_PREQ) अणु
 		/* Would crash on 586b rev 41 */
 		t &= 0x7f;
-	}
+	पूर्ण
 
 	/* Fix FIFO split between channels */
-	if (via_config->flags & VIA_SET_FIFO) {
+	अगर (via_config->flags & VIA_SET_FIFO) अणु
 		t &= (t & 0x9f);
-		switch (v & 3) {
-			case 2: t |= 0x00; break;	/* 16 on primary */
-			case 1: t |= 0x60; break;	/* 16 on secondary */
-			case 3: t |= 0x20; break;	/* 8 pri 8 sec */
-		}
-	}
+		चयन (v & 3) अणु
+			हाल 2: t |= 0x00; अवरोध;	/* 16 on primary */
+			हाल 1: t |= 0x60; अवरोध;	/* 16 on secondary */
+			हाल 3: t |= 0x20; अवरोध;	/* 8 pri 8 sec */
+		पूर्ण
+	पूर्ण
 
-	pci_write_config_byte(dev, VIA_FIFO_CONFIG, t);
+	pci_ग_लिखो_config_byte(dev, VIA_FIFO_CONFIG, t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	Cable special cases
+ *	Cable special हालs
  */
 
-static const struct dmi_system_id cable_dmi_table[] = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id cable_dmi_table[] = अणु
+	अणु
 		.ident = "Acer Ferrari 3400",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_BOARD_VENDOR, "Acer,Inc."),
 			DMI_MATCH(DMI_BOARD_NAME, "Ferrari 3400"),
-		},
-	},
-	{ }
-};
+		पूर्ण,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static int via_cable_override(struct pci_dev *pdev)
-{
+अटल पूर्णांक via_cable_override(काष्ठा pci_dev *pdev)
+अणु
 	/* Systems by DMI */
-	if (dmi_check_system(cable_dmi_table))
-		return 1;
+	अगर (dmi_check_प्रणाली(cable_dmi_table))
+		वापस 1;
 
 	/* Arima W730-K8/Targa Visionary 811/... */
-	if (pdev->subsystem_vendor == 0x161F &&
-	    pdev->subsystem_device == 0x2032)
-		return 1;
+	अगर (pdev->subप्रणाली_venकरोr == 0x161F &&
+	    pdev->subप्रणाली_device == 0x2032)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 via82cxxx_cable_detect(ide_hwif_t *hwif)
-{
-	struct pci_dev *pdev = to_pci_dev(hwif->dev);
-	struct ide_host *host = pci_get_drvdata(pdev);
-	struct via82cxxx_dev *vdev = host->host_priv;
+अटल u8 via82cxxx_cable_detect(ide_hwअगर_t *hwअगर)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(hwअगर->dev);
+	काष्ठा ide_host *host = pci_get_drvdata(pdev);
+	काष्ठा via82cxxx_dev *vdev = host->host_priv;
 
-	if (via_cable_override(pdev))
-		return ATA_CBL_PATA40_SHORT;
+	अगर (via_cable_override(pdev))
+		वापस ATA_CBL_PATA40_SHORT;
 
-	if ((vdev->via_config->flags & VIA_SATA_PATA) && hwif->channel == 0)
-		return ATA_CBL_SATA;
+	अगर ((vdev->via_config->flags & VIA_SATA_PATA) && hwअगर->channel == 0)
+		वापस ATA_CBL_SATA;
 
-	if ((vdev->via_80w >> hwif->channel) & 1)
-		return ATA_CBL_PATA80;
-	else
-		return ATA_CBL_PATA40;
-}
+	अगर ((vdev->via_80w >> hwअगर->channel) & 1)
+		वापस ATA_CBL_PATA80;
+	अन्यथा
+		वापस ATA_CBL_PATA40;
+पूर्ण
 
-static const struct ide_port_ops via_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops via_port_ops = अणु
 	.set_pio_mode		= via_set_pio_mode,
 	.set_dma_mode		= via_set_drive,
 	.cable_detect		= via82cxxx_cable_detect,
-};
+पूर्ण;
 
-static const struct ide_port_info via82cxxx_chipset = {
+अटल स्थिर काष्ठा ide_port_info via82cxxx_chipset = अणु
 	.name		= DRV_NAME,
 	.init_chipset	= init_chipset_via82cxxx,
-	.enablebits	= { { 0x40, 0x02, 0x02 }, { 0x40, 0x01, 0x01 } },
+	.enablebits	= अणु अणु 0x40, 0x02, 0x02 पूर्ण, अणु 0x40, 0x01, 0x01 पूर्ण पूर्ण,
 	.port_ops	= &via_port_ops,
 	.host_flags	= IDE_HFLAG_PIO_NO_BLACKLIST |
 			  IDE_HFLAG_POST_SET_MODE |
@@ -409,16 +410,16 @@ static const struct ide_port_info via82cxxx_chipset = {
 	.pio_mask	= ATA_PIO5,
 	.swdma_mask	= ATA_SWDMA2,
 	.mwdma_mask	= ATA_MWDMA2,
-};
+पूर्ण;
 
-static int via_init_one(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	struct pci_dev *isa = NULL;
-	struct via_isa_bridge *via_config;
-	struct via82cxxx_dev *vdev;
-	int rc;
+अटल पूर्णांक via_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा pci_dev *isa = शून्य;
+	काष्ठा via_isa_bridge *via_config;
+	काष्ठा via82cxxx_dev *vdev;
+	पूर्णांक rc;
 	u8 idx = id->driver_data;
-	struct ide_port_info d;
+	काष्ठा ide_port_info d;
 
 	d = via82cxxx_chipset;
 
@@ -428,9 +429,9 @@ static int via_init_one(struct pci_dev *dev, const struct pci_device_id *id)
 	via_config = via_config_find(&isa);
 
 	/*
-	 * Print the boot message.
+	 * Prपूर्णांक the boot message.
 	 */
-	printk(KERN_INFO DRV_NAME " %s: VIA %s (rev %02x) IDE %sDMA%s\n",
+	prपूर्णांकk(KERN_INFO DRV_NAME " %s: VIA %s (rev %02x) IDE %sDMA%s\n",
 		pci_name(dev), via_config->name, isa->revision,
 		via_config->udma_mask ? "U" : "MW",
 		via_dma[via_config->udma_mask ?
@@ -439,93 +440,93 @@ static int via_init_one(struct pci_dev *dev, const struct pci_device_id *id)
 	pci_dev_put(isa);
 
 	/*
-	 * Determine system bus clock.
+	 * Determine प्रणाली bus घड़ी.
 	 */
-	via_clock = (ide_pci_clk ? ide_pci_clk : 33) * 1000;
+	via_घड़ी = (ide_pci_clk ? ide_pci_clk : 33) * 1000;
 
-	switch (via_clock) {
-	case 33000: via_clock = 33333; break;
-	case 37000: via_clock = 37500; break;
-	case 41000: via_clock = 41666; break;
-	}
+	चयन (via_घड़ी) अणु
+	हाल 33000: via_घड़ी = 33333; अवरोध;
+	हाल 37000: via_घड़ी = 37500; अवरोध;
+	हाल 41000: via_घड़ी = 41666; अवरोध;
+	पूर्ण
 
-	if (via_clock < 20000 || via_clock > 50000) {
-		printk(KERN_WARNING DRV_NAME ": User given PCI clock speed "
-			"impossible (%d), using 33 MHz instead.\n", via_clock);
-		via_clock = 33333;
-	}
+	अगर (via_घड़ी < 20000 || via_घड़ी > 50000) अणु
+		prपूर्णांकk(KERN_WARNING DRV_NAME ": User given PCI clock speed "
+			"impossible (%d), using 33 MHz instead.\n", via_घड़ी);
+		via_घड़ी = 33333;
+	पूर्ण
 
-	if (idx == 1)
+	अगर (idx == 1)
 		d.enablebits[1].reg = d.enablebits[0].reg = 0;
-	else
+	अन्यथा
 		d.host_flags |= IDE_HFLAG_NO_AUTODMA;
 
-	if (idx == VIA_IDFLAG_SINGLE)
+	अगर (idx == VIA_IDFLAG_SINGLE)
 		d.host_flags |= IDE_HFLAG_SINGLE;
 
-	if ((via_config->flags & VIA_NO_UNMASK) == 0)
+	अगर ((via_config->flags & VIA_NO_UNMASK) == 0)
 		d.host_flags |= IDE_HFLAG_UNMASK_IRQS;
 
 	d.udma_mask = via_config->udma_mask;
 
-	vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-	if (!vdev) {
-		printk(KERN_ERR DRV_NAME " %s: out of memory :(\n",
+	vdev = kzalloc(माप(*vdev), GFP_KERNEL);
+	अगर (!vdev) अणु
+		prपूर्णांकk(KERN_ERR DRV_NAME " %s: out of memory :(\n",
 			pci_name(dev));
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	vdev->via_config = via_config;
 
 	rc = ide_pci_init_one(dev, &d, vdev);
-	if (rc)
-		kfree(vdev);
+	अगर (rc)
+		kमुक्त(vdev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void via_remove(struct pci_dev *dev)
-{
-	struct ide_host *host = pci_get_drvdata(dev);
-	struct via82cxxx_dev *vdev = host->host_priv;
+अटल व्योम via_हटाओ(काष्ठा pci_dev *dev)
+अणु
+	काष्ठा ide_host *host = pci_get_drvdata(dev);
+	काष्ठा via82cxxx_dev *vdev = host->host_priv;
 
-	ide_pci_remove(dev);
-	kfree(vdev);
-}
+	ide_pci_हटाओ(dev);
+	kमुक्त(vdev);
+पूर्ण
 
-static const struct pci_device_id via_pci_tbl[] = {
-	{ PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_82C576_1),  0 },
-	{ PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_82C586_1),  0 },
-	{ PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_CX700_IDE), 0 },
-	{ PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_VX855_IDE), VIA_IDFLAG_SINGLE },
-	{ PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_6410),      1 },
-	{ PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_6415),      1 },
-	{ PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_SATA_EIDE), 1 },
-	{ 0, },
-};
+अटल स्थिर काष्ठा pci_device_id via_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_82C576_1),  0 पूर्ण,
+	अणु PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_82C586_1),  0 पूर्ण,
+	अणु PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_CX700_IDE), 0 पूर्ण,
+	अणु PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_VX855_IDE), VIA_IDFLAG_SINGLE पूर्ण,
+	अणु PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_6410),      1 पूर्ण,
+	अणु PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_6415),      1 पूर्ण,
+	अणु PCI_VDEVICE(VIA, PCI_DEVICE_ID_VIA_SATA_EIDE), 1 पूर्ण,
+	अणु 0, पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, via_pci_tbl);
 
-static struct pci_driver via_pci_driver = {
+अटल काष्ठा pci_driver via_pci_driver = अणु
 	.name 		= "VIA_IDE",
 	.id_table 	= via_pci_tbl,
 	.probe 		= via_init_one,
-	.remove		= via_remove,
+	.हटाओ		= via_हटाओ,
 	.suspend	= ide_pci_suspend,
 	.resume		= ide_pci_resume,
-};
+पूर्ण;
 
-static int __init via_ide_init(void)
-{
-	return ide_pci_register_driver(&via_pci_driver);
-}
+अटल पूर्णांक __init via_ide_init(व्योम)
+अणु
+	वापस ide_pci_रेजिस्टर_driver(&via_pci_driver);
+पूर्ण
 
-static void __exit via_ide_exit(void)
-{
-	pci_unregister_driver(&via_pci_driver);
-}
+अटल व्योम __निकास via_ide_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&via_pci_driver);
+पूर्ण
 
 module_init(via_ide_init);
-module_exit(via_ide_exit);
+module_निकास(via_ide_निकास);
 
 MODULE_AUTHOR("Vojtech Pavlik, Bartlomiej Zolnierkiewicz, Michel Aubry, Jeff Garzik, Andre Hedrick");
 MODULE_DESCRIPTION("PCI driver module for VIA IDE");

@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_ALIGNMENT_H
-#define __ASM_SH_ALIGNMENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_ALIGNMENT_H
+#घोषणा __ASM_SH_ALIGNMENT_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-extern void inc_unaligned_byte_access(void);
-extern void inc_unaligned_word_access(void);
-extern void inc_unaligned_dword_access(void);
-extern void inc_unaligned_multi_access(void);
-extern void inc_unaligned_user_access(void);
-extern void inc_unaligned_kernel_access(void);
+बाह्य व्योम inc_unaligned_byte_access(व्योम);
+बाह्य व्योम inc_unaligned_word_access(व्योम);
+बाह्य व्योम inc_unaligned_dword_access(व्योम);
+बाह्य व्योम inc_unaligned_multi_access(व्योम);
+बाह्य व्योम inc_unaligned_user_access(व्योम);
+बाह्य व्योम inc_unaligned_kernel_access(व्योम);
 
-#define UM_WARN		(1 << 0)
-#define UM_FIXUP	(1 << 1)
-#define UM_SIGNAL	(1 << 2)
+#घोषणा UM_WARN		(1 << 0)
+#घोषणा UM_FIXUP	(1 << 1)
+#घोषणा UM_SIGNAL	(1 << 2)
 
-extern unsigned int unaligned_user_action(void);
+बाह्य अचिन्हित पूर्णांक unaligned_user_action(व्योम);
 
-extern void unaligned_fixups_notify(struct task_struct *, insn_size_t, struct pt_regs *);
+बाह्य व्योम unaligned_fixups_notअगरy(काष्ठा task_काष्ठा *, insn_माप_प्रकार, काष्ठा pt_regs *);
 
-#endif /* __ASM_SH_ALIGNMENT_H */
+#पूर्ण_अगर /* __ASM_SH_ALIGNMENT_H */

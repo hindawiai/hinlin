@@ -1,13 +1,14 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  Copyright IBM Corp. 2012
  *  Author(s): Holger Dengler <hd@linux.vnet.ibm.com>
  */
 
-#ifndef _ZCRYPT_CEX4_H_
-#define _ZCRYPT_CEX4_H_
+#अगर_अघोषित _ZCRYPT_CEX4_H_
+#घोषणा _ZCRYPT_CEX4_H_
 
-int zcrypt_cex4_init(void);
-void zcrypt_cex4_exit(void);
+पूर्णांक zcrypt_cex4_init(व्योम);
+व्योम zcrypt_cex4_निकास(व्योम);
 
-#endif /* _ZCRYPT_CEX4_H_ */
+#पूर्ण_अगर /* _ZCRYPT_CEX4_H_ */

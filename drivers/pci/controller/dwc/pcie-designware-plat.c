@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PCIe RC driver for Synopsys DesignWare Core
+ * PCIe RC driver क्रम Synopsys DesignWare Core
  *
  * Copyright (C) 2015-2016 Synopsys, Inc. (www.synopsys.com)
  *
- * Authors: Joao Pinto <Joao.Pinto@synopsys.com>
+ * Authors: Joao Pपूर्णांकo <Joao.Pपूर्णांकo@synopsys.com>
  */
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/gpio.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/of_device.h>
-#include <linux/pci.h>
-#include <linux/platform_device.h>
-#include <linux/resource.h>
-#include <linux/types.h>
-#include <linux/regmap.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/resource.h>
+#समावेश <linux/types.h>
+#समावेश <linux/regmap.h>
 
-#include "pcie-designware.h"
+#समावेश "pcie-designware.h"
 
-struct dw_plat_pcie {
-	struct dw_pcie			*pci;
-	struct regmap			*regmap;
-	enum dw_pcie_device_mode	mode;
-};
+काष्ठा dw_plat_pcie अणु
+	काष्ठा dw_pcie			*pci;
+	काष्ठा regmap			*regmap;
+	क्रमागत dw_pcie_device_mode	mode;
+पूर्ण;
 
-struct dw_plat_pcie_of_data {
-	enum dw_pcie_device_mode	mode;
-};
+काष्ठा dw_plat_pcie_of_data अणु
+	क्रमागत dw_pcie_device_mode	mode;
+पूर्ण;
 
-static const struct of_device_id dw_plat_pcie_of_match[];
+अटल स्थिर काष्ठा of_device_id dw_plat_pcie_of_match[];
 
-static const struct dw_pcie_host_ops dw_plat_pcie_host_ops = {
-};
+अटल स्थिर काष्ठा dw_pcie_host_ops dw_plat_pcie_host_ops = अणु
+पूर्ण;
 
-static int dw_plat_pcie_establish_link(struct dw_pcie *pci)
-{
-	return 0;
-}
+अटल पूर्णांक dw_plat_pcie_establish_link(काष्ठा dw_pcie *pci)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct dw_pcie_ops dw_pcie_ops = {
+अटल स्थिर काष्ठा dw_pcie_ops dw_pcie_ops = अणु
 	.start_link = dw_plat_pcie_establish_link,
-};
+पूर्ण;
 
-static void dw_plat_pcie_ep_init(struct dw_pcie_ep *ep)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
-	enum pci_barno bar;
+अटल व्योम dw_plat_pcie_ep_init(काष्ठा dw_pcie_ep *ep)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
+	क्रमागत pci_barno bar;
 
-	for (bar = 0; bar < PCI_STD_NUM_BARS; bar++)
+	क्रम (bar = 0; bar < PCI_STD_NUM_BARS; bar++)
 		dw_pcie_ep_reset_bar(pci, bar);
-}
+पूर्ण
 
-static int dw_plat_pcie_ep_raise_irq(struct dw_pcie_ep *ep, u8 func_no,
-				     enum pci_epc_irq_type type,
-				     u16 interrupt_num)
-{
-	struct dw_pcie *pci = to_dw_pcie_from_ep(ep);
+अटल पूर्णांक dw_plat_pcie_ep_उठाओ_irq(काष्ठा dw_pcie_ep *ep, u8 func_no,
+				     क्रमागत pci_epc_irq_type type,
+				     u16 पूर्णांकerrupt_num)
+अणु
+	काष्ठा dw_pcie *pci = to_dw_pcie_from_ep(ep);
 
-	switch (type) {
-	case PCI_EPC_IRQ_LEGACY:
-		return dw_pcie_ep_raise_legacy_irq(ep, func_no);
-	case PCI_EPC_IRQ_MSI:
-		return dw_pcie_ep_raise_msi_irq(ep, func_no, interrupt_num);
-	case PCI_EPC_IRQ_MSIX:
-		return dw_pcie_ep_raise_msix_irq(ep, func_no, interrupt_num);
-	default:
+	चयन (type) अणु
+	हाल PCI_EPC_IRQ_LEGACY:
+		वापस dw_pcie_ep_उठाओ_legacy_irq(ep, func_no);
+	हाल PCI_EPC_IRQ_MSI:
+		वापस dw_pcie_ep_उठाओ_msi_irq(ep, func_no, पूर्णांकerrupt_num);
+	हाल PCI_EPC_IRQ_MSIX:
+		वापस dw_pcie_ep_उठाओ_msix_irq(ep, func_no, पूर्णांकerrupt_num);
+	शेष:
 		dev_err(pci->dev, "UNKNOWN IRQ type\n");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pci_epc_features dw_plat_pcie_epc_features = {
-	.linkup_notifier = false,
+अटल स्थिर काष्ठा pci_epc_features dw_plat_pcie_epc_features = अणु
+	.linkup_notअगरier = false,
 	.msi_capable = true,
 	.msix_capable = true,
-};
+पूर्ण;
 
-static const struct pci_epc_features*
-dw_plat_pcie_get_features(struct dw_pcie_ep *ep)
-{
-	return &dw_plat_pcie_epc_features;
-}
+अटल स्थिर काष्ठा pci_epc_features*
+dw_plat_pcie_get_features(काष्ठा dw_pcie_ep *ep)
+अणु
+	वापस &dw_plat_pcie_epc_features;
+पूर्ण
 
-static const struct dw_pcie_ep_ops pcie_ep_ops = {
+अटल स्थिर काष्ठा dw_pcie_ep_ops pcie_ep_ops = अणु
 	.ep_init = dw_plat_pcie_ep_init,
-	.raise_irq = dw_plat_pcie_ep_raise_irq,
+	.उठाओ_irq = dw_plat_pcie_ep_उठाओ_irq,
 	.get_features = dw_plat_pcie_get_features,
-};
+पूर्ण;
 
-static int dw_plat_add_pcie_port(struct dw_plat_pcie *dw_plat_pcie,
-				 struct platform_device *pdev)
-{
-	struct dw_pcie *pci = dw_plat_pcie->pci;
-	struct pcie_port *pp = &pci->pp;
-	struct device *dev = &pdev->dev;
-	int ret;
+अटल पूर्णांक dw_plat_add_pcie_port(काष्ठा dw_plat_pcie *dw_plat_pcie,
+				 काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा dw_pcie *pci = dw_plat_pcie->pci;
+	काष्ठा pcie_port *pp = &pci->pp;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret;
 
-	pp->irq = platform_get_irq(pdev, 1);
-	if (pp->irq < 0)
-		return pp->irq;
+	pp->irq = platक्रमm_get_irq(pdev, 1);
+	अगर (pp->irq < 0)
+		वापस pp->irq;
 
 	pp->num_vectors = MAX_MSI_IRQS;
 	pp->ops = &dw_plat_pcie_host_ops;
 
 	ret = dw_pcie_host_init(pp);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to initialize host\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dw_plat_pcie_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct dw_plat_pcie *dw_plat_pcie;
-	struct dw_pcie *pci;
-	int ret;
-	const struct of_device_id *match;
-	const struct dw_plat_pcie_of_data *data;
-	enum dw_pcie_device_mode mode;
+अटल पूर्णांक dw_plat_pcie_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा dw_plat_pcie *dw_plat_pcie;
+	काष्ठा dw_pcie *pci;
+	पूर्णांक ret;
+	स्थिर काष्ठा of_device_id *match;
+	स्थिर काष्ठा dw_plat_pcie_of_data *data;
+	क्रमागत dw_pcie_device_mode mode;
 
 	match = of_match_device(dw_plat_pcie_of_match, dev);
-	if (!match)
-		return -EINVAL;
+	अगर (!match)
+		वापस -EINVAL;
 
-	data = (struct dw_plat_pcie_of_data *)match->data;
-	mode = (enum dw_pcie_device_mode)data->mode;
+	data = (काष्ठा dw_plat_pcie_of_data *)match->data;
+	mode = (क्रमागत dw_pcie_device_mode)data->mode;
 
-	dw_plat_pcie = devm_kzalloc(dev, sizeof(*dw_plat_pcie), GFP_KERNEL);
-	if (!dw_plat_pcie)
-		return -ENOMEM;
+	dw_plat_pcie = devm_kzalloc(dev, माप(*dw_plat_pcie), GFP_KERNEL);
+	अगर (!dw_plat_pcie)
+		वापस -ENOMEM;
 
-	pci = devm_kzalloc(dev, sizeof(*pci), GFP_KERNEL);
-	if (!pci)
-		return -ENOMEM;
+	pci = devm_kzalloc(dev, माप(*pci), GFP_KERNEL);
+	अगर (!pci)
+		वापस -ENOMEM;
 
 	pci->dev = dev;
 	pci->ops = &dw_pcie_ops;
@@ -147,57 +148,57 @@ static int dw_plat_pcie_probe(struct platform_device *pdev)
 	dw_plat_pcie->pci = pci;
 	dw_plat_pcie->mode = mode;
 
-	platform_set_drvdata(pdev, dw_plat_pcie);
+	platक्रमm_set_drvdata(pdev, dw_plat_pcie);
 
-	switch (dw_plat_pcie->mode) {
-	case DW_PCIE_RC_TYPE:
-		if (!IS_ENABLED(CONFIG_PCIE_DW_PLAT_HOST))
-			return -ENODEV;
+	चयन (dw_plat_pcie->mode) अणु
+	हाल DW_PCIE_RC_TYPE:
+		अगर (!IS_ENABLED(CONFIG_PCIE_DW_PLAT_HOST))
+			वापस -ENODEV;
 
 		ret = dw_plat_add_pcie_port(dw_plat_pcie, pdev);
-		if (ret < 0)
-			return ret;
-		break;
-	case DW_PCIE_EP_TYPE:
-		if (!IS_ENABLED(CONFIG_PCIE_DW_PLAT_EP))
-			return -ENODEV;
+		अगर (ret < 0)
+			वापस ret;
+		अवरोध;
+	हाल DW_PCIE_EP_TYPE:
+		अगर (!IS_ENABLED(CONFIG_PCIE_DW_PLAT_EP))
+			वापस -ENODEV;
 
 		pci->ep.ops = &pcie_ep_ops;
-		return dw_pcie_ep_init(&pci->ep);
-		break;
-	default:
+		वापस dw_pcie_ep_init(&pci->ep);
+		अवरोध;
+	शेष:
 		dev_err(dev, "INVALID device type %d\n", dw_plat_pcie->mode);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dw_plat_pcie_of_data dw_plat_pcie_rc_of_data = {
+अटल स्थिर काष्ठा dw_plat_pcie_of_data dw_plat_pcie_rc_of_data = अणु
 	.mode = DW_PCIE_RC_TYPE,
-};
+पूर्ण;
 
-static const struct dw_plat_pcie_of_data dw_plat_pcie_ep_of_data = {
+अटल स्थिर काष्ठा dw_plat_pcie_of_data dw_plat_pcie_ep_of_data = अणु
 	.mode = DW_PCIE_EP_TYPE,
-};
+पूर्ण;
 
-static const struct of_device_id dw_plat_pcie_of_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id dw_plat_pcie_of_match[] = अणु
+	अणु
 		.compatible = "snps,dw-pcie",
 		.data = &dw_plat_pcie_rc_of_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "snps,dw-pcie-ep",
 		.data = &dw_plat_pcie_ep_of_data,
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver dw_plat_pcie_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver dw_plat_pcie_driver = अणु
+	.driver = अणु
 		.name	= "dw-pcie",
 		.of_match_table = dw_plat_pcie_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = dw_plat_pcie_probe,
-};
-builtin_platform_driver(dw_plat_pcie_driver);
+पूर्ण;
+builtin_platक्रमm_driver(dw_plat_pcie_driver);

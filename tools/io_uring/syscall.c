@@ -1,52 +1,53 @@
+<शैली गुरु>
 /*
  * Will go away once libc support is there
  */
-#include <unistd.h>
-#include <sys/syscall.h>
-#include <sys/uio.h>
-#include <signal.h>
-#include "liburing.h"
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
+#समावेश <sys/uपन.स>
+#समावेश <संकेत.स>
+#समावेश "liburing.h"
 
-#ifdef __alpha__
+#अगर_घोषित __alpha__
 /*
  * alpha is the only exception, all other architectures
- * have common numbers for new system calls.
+ * have common numbers क्रम new प्रणाली calls.
  */
-# ifndef __NR_io_uring_setup
+# अगरndef __NR_io_uring_setup
 #  define __NR_io_uring_setup		535
-# endif
-# ifndef __NR_io_uring_enter
+# endअगर
+# अगरndef __NR_io_uring_enter
 #  define __NR_io_uring_enter		536
-# endif
-# ifndef __NR_io_uring_register
-#  define __NR_io_uring_register	537
-# endif
-#else /* !__alpha__ */
-# ifndef __NR_io_uring_setup
+# endअगर
+# अगरndef __NR_io_uring_रेजिस्टर
+#  define __NR_io_uring_रेजिस्टर	537
+# endअगर
+#अन्यथा /* !__alpha__ */
+# अगरndef __NR_io_uring_setup
 #  define __NR_io_uring_setup		425
-# endif
-# ifndef __NR_io_uring_enter
+# endअगर
+# अगरndef __NR_io_uring_enter
 #  define __NR_io_uring_enter		426
-# endif
-# ifndef __NR_io_uring_register
-#  define __NR_io_uring_register	427
-# endif
-#endif
+# endअगर
+# अगरndef __NR_io_uring_रेजिस्टर
+#  define __NR_io_uring_रेजिस्टर	427
+# endअगर
+#पूर्ण_अगर
 
-int io_uring_register(int fd, unsigned int opcode, void *arg,
-		      unsigned int nr_args)
-{
-	return syscall(__NR_io_uring_register, fd, opcode, arg, nr_args);
-}
+पूर्णांक io_uring_रेजिस्टर(पूर्णांक fd, अचिन्हित पूर्णांक opcode, व्योम *arg,
+		      अचिन्हित पूर्णांक nr_args)
+अणु
+	वापस syscall(__NR_io_uring_रेजिस्टर, fd, opcode, arg, nr_args);
+पूर्ण
 
-int io_uring_setup(unsigned int entries, struct io_uring_params *p)
-{
-	return syscall(__NR_io_uring_setup, entries, p);
-}
+पूर्णांक io_uring_setup(अचिन्हित पूर्णांक entries, काष्ठा io_uring_params *p)
+अणु
+	वापस syscall(__NR_io_uring_setup, entries, p);
+पूर्ण
 
-int io_uring_enter(int fd, unsigned int to_submit, unsigned int min_complete,
-		   unsigned int flags, sigset_t *sig)
-{
-	return syscall(__NR_io_uring_enter, fd, to_submit, min_complete,
+पूर्णांक io_uring_enter(पूर्णांक fd, अचिन्हित पूर्णांक to_submit, अचिन्हित पूर्णांक min_complete,
+		   अचिन्हित पूर्णांक flags, sigset_t *sig)
+अणु
+	वापस syscall(__NR_io_uring_enter, fd, to_submit, min_complete,
 			flags, sig, _NSIG / 8);
-}
+पूर्ण

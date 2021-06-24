@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * LED driver for WM8350 driven LEDS.
+ * LED driver क्रम WM8350 driven LEDS.
  *
  * Copyright(C) 2007, 2008 Wolfson Microelectronics PLC.
  */
 
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/leds.h>
-#include <linux/err.h>
-#include <linux/mfd/wm8350/pmic.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/err.h>
+#समावेश <linux/mfd/wm8350/pmic.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
 
 /* Microamps */
-static const int isink_cur[] = {
+अटल स्थिर पूर्णांक isink_cur[] = अणु
 	4,
 	5,
 	6,
@@ -80,82 +81,82 @@ static const int isink_cur[] = {
 	157820,
 	187681,
 	223191
-};
+पूर्ण;
 
-#define to_wm8350_led(led_cdev) \
-	container_of(led_cdev, struct wm8350_led, cdev)
+#घोषणा to_wm8350_led(led_cdev) \
+	container_of(led_cdev, काष्ठा wm8350_led, cdev)
 
-static int wm8350_led_enable(struct wm8350_led *led)
-{
-	int ret = 0;
+अटल पूर्णांक wm8350_led_enable(काष्ठा wm8350_led *led)
+अणु
+	पूर्णांक ret = 0;
 
-	if (led->enabled)
-		return ret;
+	अगर (led->enabled)
+		वापस ret;
 
 	ret = regulator_enable(led->isink);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(led->cdev.dev, "Failed to enable ISINK: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regulator_enable(led->dcdc);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(led->cdev.dev, "Failed to enable DCDC: %d\n", ret);
 		regulator_disable(led->isink);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	led->enabled = 1;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wm8350_led_disable(struct wm8350_led *led)
-{
-	int ret = 0;
+अटल पूर्णांक wm8350_led_disable(काष्ठा wm8350_led *led)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!led->enabled)
-		return ret;
+	अगर (!led->enabled)
+		वापस ret;
 
 	ret = regulator_disable(led->dcdc);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(led->cdev.dev, "Failed to disable DCDC: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = regulator_disable(led->isink);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(led->cdev.dev, "Failed to disable ISINK: %d\n", ret);
 		ret = regulator_enable(led->dcdc);
-		if (ret != 0)
+		अगर (ret != 0)
 			dev_err(led->cdev.dev, "Failed to reenable DCDC: %d\n",
 				ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	led->enabled = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int wm8350_led_set(struct led_classdev *led_cdev,
-			   enum led_brightness value)
-{
-	struct wm8350_led *led = to_wm8350_led(led_cdev);
-	unsigned long flags;
-	int ret;
-	int uA;
+अटल पूर्णांक wm8350_led_set(काष्ठा led_classdev *led_cdev,
+			   क्रमागत led_brightness value)
+अणु
+	काष्ठा wm8350_led *led = to_wm8350_led(led_cdev);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
+	पूर्णांक uA;
 
 	led->value = value;
 
 	spin_lock_irqsave(&led->value_lock, flags);
 
-	if (led->value == LED_OFF) {
+	अगर (led->value == LED_OFF) अणु
 		spin_unlock_irqrestore(&led->value_lock, flags);
-		return wm8350_led_disable(led);
-	}
+		वापस wm8350_led_disable(led);
+	पूर्ण
 
-	/* This scales linearly into the index of valid current
+	/* This scales linearly पूर्णांकo the index of valid current
 	 * settings which results in a linear scaling of perceived
 	 * brightness due to the non-linear current settings provided
 	 * by the hardware.
@@ -166,70 +167,70 @@ static int wm8350_led_set(struct led_classdev *led_cdev,
 
 	ret = regulator_set_current_limit(led->isink, isink_cur[uA],
 					  isink_cur[uA]);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(led->cdev.dev, "Failed to set %duA: %d\n",
 			isink_cur[uA], ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return wm8350_led_enable(led);
-}
+	वापस wm8350_led_enable(led);
+पूर्ण
 
-static void wm8350_led_shutdown(struct platform_device *pdev)
-{
-	struct wm8350_led *led = platform_get_drvdata(pdev);
+अटल व्योम wm8350_led_shutकरोwn(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm8350_led *led = platक्रमm_get_drvdata(pdev);
 
 	led->value = LED_OFF;
 	wm8350_led_disable(led);
-}
+पूर्ण
 
-static int wm8350_led_probe(struct platform_device *pdev)
-{
-	struct regulator *isink, *dcdc;
-	struct wm8350_led *led;
-	struct wm8350_led_platform_data *pdata = dev_get_platdata(&pdev->dev);
-	int i;
+अटल पूर्णांक wm8350_led_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा regulator *isink, *dcdc;
+	काष्ठा wm8350_led *led;
+	काष्ठा wm8350_led_platक्रमm_data *pdata = dev_get_platdata(&pdev->dev);
+	पूर्णांक i;
 
-	if (pdata == NULL) {
+	अगर (pdata == शून्य) अणु
 		dev_err(&pdev->dev, "no platform data\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (pdata->max_uA < isink_cur[0]) {
+	अगर (pdata->max_uA < isink_cur[0]) अणु
 		dev_err(&pdev->dev, "Invalid maximum current %duA\n",
 			pdata->max_uA);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	isink = devm_regulator_get(&pdev->dev, "led_isink");
-	if (IS_ERR(isink)) {
+	अगर (IS_ERR(isink)) अणु
 		dev_err(&pdev->dev, "%s: can't get ISINK\n", __func__);
-		return PTR_ERR(isink);
-	}
+		वापस PTR_ERR(isink);
+	पूर्ण
 
 	dcdc = devm_regulator_get(&pdev->dev, "led_vcc");
-	if (IS_ERR(dcdc)) {
+	अगर (IS_ERR(dcdc)) अणु
 		dev_err(&pdev->dev, "%s: can't get DCDC\n", __func__);
-		return PTR_ERR(dcdc);
-	}
+		वापस PTR_ERR(dcdc);
+	पूर्ण
 
-	led = devm_kzalloc(&pdev->dev, sizeof(*led), GFP_KERNEL);
-	if (led == NULL)
-		return -ENOMEM;
+	led = devm_kzalloc(&pdev->dev, माप(*led), GFP_KERNEL);
+	अगर (led == शून्य)
+		वापस -ENOMEM;
 
 	led->cdev.brightness_set_blocking = wm8350_led_set;
-	led->cdev.default_trigger = pdata->default_trigger;
+	led->cdev.शेष_trigger = pdata->शेष_trigger;
 	led->cdev.name = pdata->name;
 	led->cdev.flags |= LED_CORE_SUSPENDRESUME;
 	led->enabled = regulator_is_enabled(isink);
 	led->isink = isink;
 	led->dcdc = dcdc;
 
-	for (i = 0; i < ARRAY_SIZE(isink_cur) - 1; i++)
-		if (isink_cur[i] >= pdata->max_uA)
-			break;
+	क्रम (i = 0; i < ARRAY_SIZE(isink_cur) - 1; i++)
+		अगर (isink_cur[i] >= pdata->max_uA)
+			अवरोध;
 	led->max_uA_index = i;
-	if (pdata->max_uA != isink_cur[i])
+	अगर (pdata->max_uA != isink_cur[i])
 		dev_warn(&pdev->dev,
 			 "Maximum current %duA is not directly supported,"
 			 " check platform data\n",
@@ -237,30 +238,30 @@ static int wm8350_led_probe(struct platform_device *pdev)
 
 	spin_lock_init(&led->value_lock);
 	led->value = LED_OFF;
-	platform_set_drvdata(pdev, led);
+	platक्रमm_set_drvdata(pdev, led);
 
-	return led_classdev_register(&pdev->dev, &led->cdev);
-}
+	वापस led_classdev_रेजिस्टर(&pdev->dev, &led->cdev);
+पूर्ण
 
-static int wm8350_led_remove(struct platform_device *pdev)
-{
-	struct wm8350_led *led = platform_get_drvdata(pdev);
+अटल पूर्णांक wm8350_led_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm8350_led *led = platक्रमm_get_drvdata(pdev);
 
-	led_classdev_unregister(&led->cdev);
+	led_classdev_unरेजिस्टर(&led->cdev);
 	wm8350_led_disable(led);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver wm8350_led_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver wm8350_led_driver = अणु
+	.driver = अणु
 		   .name = "wm8350-led",
-		   },
+		   पूर्ण,
 	.probe = wm8350_led_probe,
-	.remove = wm8350_led_remove,
-	.shutdown = wm8350_led_shutdown,
-};
+	.हटाओ = wm8350_led_हटाओ,
+	.shutकरोwn = wm8350_led_shutकरोwn,
+पूर्ण;
 
-module_platform_driver(wm8350_led_driver);
+module_platक्रमm_driver(wm8350_led_driver);
 
 MODULE_AUTHOR("Mark Brown");
 MODULE_DESCRIPTION("WM8350 LED driver");

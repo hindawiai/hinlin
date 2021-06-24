@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (c) 2021, Intel Corporation. */
 
-#ifndef _STMMAC_XDP_H_
-#define _STMMAC_XDP_H_
+#अगर_अघोषित _STMMAC_XDP_H_
+#घोषणा _STMMAC_XDP_H_
 
-#define STMMAC_MAX_RX_BUF_SIZE(num)	(((num) * PAGE_SIZE) - XDP_PACKET_HEADROOM)
-#define STMMAC_RX_DMA_ATTR	(DMA_ATTR_SKIP_CPU_SYNC | DMA_ATTR_WEAK_ORDERING)
+#घोषणा STMMAC_MAX_RX_BUF_SIZE(num)	(((num) * PAGE_SIZE) - XDP_PACKET_HEADROOM)
+#घोषणा STMMAC_RX_DMA_ATTR	(DMA_ATTR_SKIP_CPU_SYNC | DMA_ATTR_WEAK_ORDERING)
 
-int stmmac_xdp_setup_pool(struct stmmac_priv *priv, struct xsk_buff_pool *pool,
+पूर्णांक sपंचांगmac_xdp_setup_pool(काष्ठा sपंचांगmac_priv *priv, काष्ठा xsk_buff_pool *pool,
 			  u16 queue);
-int stmmac_xdp_set_prog(struct stmmac_priv *priv, struct bpf_prog *prog,
-			struct netlink_ext_ack *extack);
+पूर्णांक sपंचांगmac_xdp_set_prog(काष्ठा sपंचांगmac_priv *priv, काष्ठा bpf_prog *prog,
+			काष्ठा netlink_ext_ack *extack);
 
-#endif /* _STMMAC_XDP_H_ */
+#पूर्ण_अगर /* _STMMAC_XDP_H_ */

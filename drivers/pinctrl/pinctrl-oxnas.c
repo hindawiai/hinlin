@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Oxford Semiconductor OXNAS SoC Family pinctrl driver
+ * Oxक्रमd Semiconductor OXNAS SoC Family pinctrl driver
  *
  * Copyright (C) 2016 Neil Armstrong <narmstrong@baylibre.com>
  *
@@ -8,100 +9,100 @@
  * Joshua Henderson, <joshua.henderson@microchip.com>
  * Copyright (C) 2015 Microchip Technology Inc.  All rights reserved.
  */
-#include <linux/gpio/driver.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
-#include <linux/regmap.h>
-#include <linux/mfd/syscon.h>
+#समावेश <linux/gpio/driver.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
 
-#include "pinctrl-utils.h"
+#समावेश "pinctrl-utils.h"
 
-#define PINS_PER_BANK		32
+#घोषणा PINS_PER_BANK		32
 
-#define GPIO_BANK_START(bank)		((bank) * PINS_PER_BANK)
+#घोषणा GPIO_BANK_START(bank)		((bank) * PINS_PER_BANK)
 
 /* OX810 Regmap Offsets */
-#define PINMUX_810_PRIMARY_SEL0		0x0c
-#define PINMUX_810_SECONDARY_SEL0	0x14
-#define PINMUX_810_TERTIARY_SEL0	0x8c
-#define PINMUX_810_PRIMARY_SEL1		0x10
-#define PINMUX_810_SECONDARY_SEL1	0x18
-#define PINMUX_810_TERTIARY_SEL1	0x90
-#define PINMUX_810_PULLUP_CTRL0		0xac
-#define PINMUX_810_PULLUP_CTRL1		0xb0
+#घोषणा PINMUX_810_PRIMARY_SEL0		0x0c
+#घोषणा PINMUX_810_SECONDARY_SEL0	0x14
+#घोषणा PINMUX_810_TERTIARY_SEL0	0x8c
+#घोषणा PINMUX_810_PRIMARY_SEL1		0x10
+#घोषणा PINMUX_810_SECONDARY_SEL1	0x18
+#घोषणा PINMUX_810_TERTIARY_SEL1	0x90
+#घोषणा PINMUX_810_PULLUP_CTRL0		0xac
+#घोषणा PINMUX_810_PULLUP_CTRL1		0xb0
 
 /* OX820 Regmap Offsets */
-#define PINMUX_820_BANK_OFFSET		0x100000
-#define PINMUX_820_SECONDARY_SEL	0x14
-#define PINMUX_820_TERTIARY_SEL		0x8c
-#define PINMUX_820_QUATERNARY_SEL	0x94
-#define PINMUX_820_DEBUG_SEL		0x9c
-#define PINMUX_820_ALTERNATIVE_SEL	0xa4
-#define PINMUX_820_PULLUP_CTRL		0xac
+#घोषणा PINMUX_820_BANK_OFFSET		0x100000
+#घोषणा PINMUX_820_SECONDARY_SEL	0x14
+#घोषणा PINMUX_820_TERTIARY_SEL		0x8c
+#घोषणा PINMUX_820_QUATERNARY_SEL	0x94
+#घोषणा PINMUX_820_DEBUG_SEL		0x9c
+#घोषणा PINMUX_820_ALTERNATIVE_SEL	0xa4
+#घोषणा PINMUX_820_PULLUP_CTRL		0xac
 
 /* GPIO Registers */
-#define INPUT_VALUE	0x00
-#define OUTPUT_EN	0x04
-#define IRQ_PENDING	0x0c
-#define OUTPUT_SET	0x14
-#define OUTPUT_CLEAR	0x18
-#define OUTPUT_EN_SET	0x1c
-#define OUTPUT_EN_CLEAR	0x20
-#define RE_IRQ_ENABLE	0x28
-#define FE_IRQ_ENABLE	0x2c
+#घोषणा INPUT_VALUE	0x00
+#घोषणा OUTPUT_EN	0x04
+#घोषणा IRQ_PENDING	0x0c
+#घोषणा OUTPUT_SET	0x14
+#घोषणा OUTPUT_CLEAR	0x18
+#घोषणा OUTPUT_EN_SET	0x1c
+#घोषणा OUTPUT_EN_CLEAR	0x20
+#घोषणा RE_IRQ_ENABLE	0x28
+#घोषणा FE_IRQ_ENABLE	0x2c
 
-struct oxnas_function {
-	const char *name;
-	const char * const *groups;
-	unsigned int ngroups;
-};
+काष्ठा oxnas_function अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *groups;
+	अचिन्हित पूर्णांक ngroups;
+पूर्ण;
 
-struct oxnas_pin_group {
-	const char *name;
-	unsigned int pin;
-	unsigned int bank;
-	struct oxnas_desc_function *functions;
-};
+काष्ठा oxnas_pin_group अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक pin;
+	अचिन्हित पूर्णांक bank;
+	काष्ठा oxnas_desc_function *functions;
+पूर्ण;
 
-struct oxnas_desc_function {
-	const char *name;
-	unsigned int fct;
-};
+काष्ठा oxnas_desc_function अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक fct;
+पूर्ण;
 
-struct oxnas_gpio_bank {
-	void __iomem *reg_base;
-	struct gpio_chip gpio_chip;
-	struct irq_chip irq_chip;
-	unsigned int id;
-};
+काष्ठा oxnas_gpio_bank अणु
+	व्योम __iomem *reg_base;
+	काष्ठा gpio_chip gpio_chip;
+	काष्ठा irq_chip irq_chip;
+	अचिन्हित पूर्णांक id;
+पूर्ण;
 
-struct oxnas_pinctrl {
-	struct regmap *regmap;
-	struct device *dev;
-	struct pinctrl_dev *pctldev;
-	const struct oxnas_function *functions;
-	unsigned int nfunctions;
-	const struct oxnas_pin_group *groups;
-	unsigned int ngroups;
-	struct oxnas_gpio_bank *gpio_banks;
-	unsigned int nbanks;
-};
+काष्ठा oxnas_pinctrl अणु
+	काष्ठा regmap *regmap;
+	काष्ठा device *dev;
+	काष्ठा pinctrl_dev *pctldev;
+	स्थिर काष्ठा oxnas_function *functions;
+	अचिन्हित पूर्णांक nfunctions;
+	स्थिर काष्ठा oxnas_pin_group *groups;
+	अचिन्हित पूर्णांक ngroups;
+	काष्ठा oxnas_gpio_bank *gpio_banks;
+	अचिन्हित पूर्णांक nbanks;
+पूर्ण;
 
-struct oxnas_pinctrl_data {
-	struct pinctrl_desc *desc;
-	struct oxnas_pinctrl *pctl;
-};
+काष्ठा oxnas_pinctrl_data अणु
+	काष्ठा pinctrl_desc *desc;
+	काष्ठा oxnas_pinctrl *pctl;
+पूर्ण;
 
-static const struct pinctrl_pin_desc oxnas_ox810se_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc oxnas_ox810se_pins[] = अणु
 	PINCTRL_PIN(0, "gpio0"),
 	PINCTRL_PIN(1, "gpio1"),
 	PINCTRL_PIN(2, "gpio2"),
@@ -137,9 +138,9 @@ static const struct pinctrl_pin_desc oxnas_ox810se_pins[] = {
 	PINCTRL_PIN(32, "gpio32"),
 	PINCTRL_PIN(33, "gpio33"),
 	PINCTRL_PIN(34, "gpio34"),
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc oxnas_ox820_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc oxnas_ox820_pins[] = अणु
 	PINCTRL_PIN(0, "gpio0"),
 	PINCTRL_PIN(1, "gpio1"),
 	PINCTRL_PIN(2, "gpio2"),
@@ -190,9 +191,9 @@ static const struct pinctrl_pin_desc oxnas_ox820_pins[] = {
 	PINCTRL_PIN(47, "gpio47"),
 	PINCTRL_PIN(48, "gpio48"),
 	PINCTRL_PIN(49, "gpio49"),
-};
+पूर्ण;
 
-static const char * const oxnas_ox810se_fct0_group[] = {
+अटल स्थिर अक्षर * स्थिर oxnas_ox810se_fct0_group[] = अणु
 	"gpio0",  "gpio1",  "gpio2",  "gpio3",
 	"gpio4",  "gpio5",  "gpio6",  "gpio7",
 	"gpio8",  "gpio9",  "gpio10", "gpio11",
@@ -202,9 +203,9 @@ static const char * const oxnas_ox810se_fct0_group[] = {
 	"gpio24", "gpio25", "gpio26", "gpio27",
 	"gpio28", "gpio29", "gpio30", "gpio31",
 	"gpio32", "gpio33", "gpio34"
-};
+पूर्ण;
 
-static const char * const oxnas_ox810se_fct3_group[] = {
+अटल स्थिर अक्षर * स्थिर oxnas_ox810se_fct3_group[] = अणु
 	"gpio0",  "gpio1",  "gpio2",  "gpio3",
 	"gpio4",  "gpio5",  "gpio6",  "gpio7",
 	"gpio8",  "gpio9",
@@ -213,9 +214,9 @@ static const char * const oxnas_ox810se_fct3_group[] = {
 	"gpio26", "gpio27", "gpio28", "gpio29",
 	"gpio30", "gpio31", "gpio32", "gpio33",
 	"gpio34"
-};
+पूर्ण;
 
-static const char * const oxnas_ox820_fct0_group[] = {
+अटल स्थिर अक्षर * स्थिर oxnas_ox820_fct0_group[] = अणु
 	"gpio0",  "gpio1",  "gpio2",  "gpio3",
 	"gpio4",  "gpio5",  "gpio6",  "gpio7",
 	"gpio8",  "gpio9",  "gpio10", "gpio11",
@@ -229,61 +230,61 @@ static const char * const oxnas_ox820_fct0_group[] = {
 	"gpio40", "gpio41", "gpio42", "gpio43",
 	"gpio44", "gpio45", "gpio46", "gpio47",
 	"gpio48", "gpio49"
-};
+पूर्ण;
 
-static const char * const oxnas_ox820_fct1_group[] = {
+अटल स्थिर अक्षर * स्थिर oxnas_ox820_fct1_group[] = अणु
 	"gpio3", "gpio4",
 	"gpio12", "gpio13", "gpio14", "gpio15",
 	"gpio16", "gpio17", "gpio18", "gpio19",
 	"gpio20", "gpio21", "gpio22", "gpio23",
 	"gpio24"
-};
+पूर्ण;
 
-static const char * const oxnas_ox820_fct4_group[] = {
+अटल स्थिर अक्षर * स्थिर oxnas_ox820_fct4_group[] = अणु
 	"gpio5", "gpio6", "gpio7", "gpio8",
 	"gpio24", "gpio25", "gpio26", "gpio27",
 	"gpio40", "gpio41", "gpio42", "gpio43"
-};
+पूर्ण;
 
-static const char * const oxnas_ox820_fct5_group[] = {
+अटल स्थिर अक्षर * स्थिर oxnas_ox820_fct5_group[] = अणु
 	"gpio28", "gpio29", "gpio30", "gpio31"
-};
+पूर्ण;
 
-#define FUNCTION(_name, _gr)					\
-	{							\
+#घोषणा FUNCTION(_name, _gr)					\
+	अणु							\
 		.name = #_name,					\
 		.groups = oxnas_##_gr##_group,			\
 		.ngroups = ARRAY_SIZE(oxnas_##_gr##_group),	\
-	}
+	पूर्ण
 
-static const struct oxnas_function oxnas_ox810se_functions[] = {
+अटल स्थिर काष्ठा oxnas_function oxnas_ox810se_functions[] = अणु
 	FUNCTION(gpio, ox810se_fct0),
 	FUNCTION(fct3, ox810se_fct3),
-};
+पूर्ण;
 
-static const struct oxnas_function oxnas_ox820_functions[] = {
+अटल स्थिर काष्ठा oxnas_function oxnas_ox820_functions[] = अणु
 	FUNCTION(gpio, ox820_fct0),
 	FUNCTION(fct1, ox820_fct1),
 	FUNCTION(fct4, ox820_fct4),
 	FUNCTION(fct5, ox820_fct5),
-};
+पूर्ण;
 
-#define OXNAS_PINCTRL_GROUP(_pin, _name, ...)				\
-	{								\
+#घोषणा OXNAS_PINCTRL_GROUP(_pin, _name, ...)				\
+	अणु								\
 		.name = #_name,						\
 		.pin = _pin,						\
 		.bank = _pin / PINS_PER_BANK,				\
-		.functions = (struct oxnas_desc_function[]){		\
-			__VA_ARGS__, { } },				\
-	}
+		.functions = (काष्ठा oxnas_desc_function[])अणु		\
+			__VA_ARGS__, अणु पूर्ण पूर्ण,				\
+	पूर्ण
 
-#define OXNAS_PINCTRL_FUNCTION(_name, _fct)		\
-	{						\
+#घोषणा OXNAS_PINCTRL_FUNCTION(_name, _fct)		\
+	अणु						\
 		.name = #_name,				\
 		.fct = _fct,				\
-	}
+	पूर्ण
 
-static const struct oxnas_pin_group oxnas_ox810se_groups[] = {
+अटल स्थिर काष्ठा oxnas_pin_group oxnas_ox810se_groups[] = अणु
 	OXNAS_PINCTRL_GROUP(0, gpio0,
 			OXNAS_PINCTRL_FUNCTION(gpio, 0),
 			OXNAS_PINCTRL_FUNCTION(fct3, 3)),
@@ -378,9 +379,9 @@ static const struct oxnas_pin_group oxnas_ox810se_groups[] = {
 	OXNAS_PINCTRL_GROUP(34, gpio34,
 			OXNAS_PINCTRL_FUNCTION(gpio, 0),
 			OXNAS_PINCTRL_FUNCTION(fct3, 3)),
-};
+पूर्ण;
 
-static const struct oxnas_pin_group oxnas_ox820_groups[] = {
+अटल स्थिर काष्ठा oxnas_pin_group oxnas_ox820_groups[] = अणु
 	OXNAS_PINCTRL_GROUP(0, gpio0,
 			OXNAS_PINCTRL_FUNCTION(gpio, 0)),
 	OXNAS_PINCTRL_GROUP(1, gpio1,
@@ -512,110 +513,110 @@ static const struct oxnas_pin_group oxnas_ox820_groups[] = {
 			OXNAS_PINCTRL_FUNCTION(gpio, 0)),
 	OXNAS_PINCTRL_GROUP(49, gpio49,
 			OXNAS_PINCTRL_FUNCTION(gpio, 0)),
-};
+पूर्ण;
 
-static inline struct oxnas_gpio_bank *pctl_to_bank(struct oxnas_pinctrl *pctl,
-						   unsigned int pin)
-{
-	return &pctl->gpio_banks[pin / PINS_PER_BANK];
-}
+अटल अंतरभूत काष्ठा oxnas_gpio_bank *pctl_to_bank(काष्ठा oxnas_pinctrl *pctl,
+						   अचिन्हित पूर्णांक pin)
+अणु
+	वापस &pctl->gpio_banks[pin / PINS_PER_BANK];
+पूर्ण
 
-static int oxnas_pinctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक oxnas_pinctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->ngroups;
-}
+	वापस pctl->ngroups;
+पूर्ण
 
-static const char *oxnas_pinctrl_get_group_name(struct pinctrl_dev *pctldev,
-						unsigned int group)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *oxnas_pinctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+						अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->groups[group].name;
-}
+	वापस pctl->groups[group].name;
+पूर्ण
 
-static int oxnas_pinctrl_get_group_pins(struct pinctrl_dev *pctldev,
-					unsigned int group,
-					const unsigned int **pins,
-					unsigned int *num_pins)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक oxnas_pinctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+					अचिन्हित पूर्णांक group,
+					स्थिर अचिन्हित पूर्णांक **pins,
+					अचिन्हित पूर्णांक *num_pins)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = &pctl->groups[group].pin;
 	*num_pins = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops oxnas_pinctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops oxnas_pinctrl_ops = अणु
 	.get_groups_count = oxnas_pinctrl_get_groups_count,
 	.get_group_name = oxnas_pinctrl_get_group_name,
 	.get_group_pins = oxnas_pinctrl_get_group_pins,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_pin,
-	.dt_free_map = pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+पूर्ण;
 
-static int oxnas_pinmux_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक oxnas_pinmux_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->nfunctions;
-}
+	वापस pctl->nfunctions;
+पूर्ण
 
-static const char *
-oxnas_pinmux_get_function_name(struct pinctrl_dev *pctldev, unsigned int func)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *
+oxnas_pinmux_get_function_name(काष्ठा pinctrl_dev *pctldev, अचिन्हित पूर्णांक func)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctl->functions[func].name;
-}
+	वापस pctl->functions[func].name;
+पूर्ण
 
-static int oxnas_pinmux_get_function_groups(struct pinctrl_dev *pctldev,
-					    unsigned int func,
-					    const char * const **groups,
-					    unsigned int * const num_groups)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक oxnas_pinmux_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+					    अचिन्हित पूर्णांक func,
+					    स्थिर अक्षर * स्थिर **groups,
+					    अचिन्हित पूर्णांक * स्थिर num_groups)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pctl->functions[func].groups;
 	*num_groups = pctl->functions[func].ngroups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_ox810se_pinmux_enable(struct pinctrl_dev *pctldev,
-				       unsigned int func, unsigned int group)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	const struct oxnas_pin_group *pg = &pctl->groups[group];
-	const struct oxnas_function *pf = &pctl->functions[func];
-	const char *fname = pf->name;
-	struct oxnas_desc_function *functions = pg->functions;
+अटल पूर्णांक oxnas_ox810se_pinmux_enable(काष्ठा pinctrl_dev *pctldev,
+				       अचिन्हित पूर्णांक func, अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा oxnas_pin_group *pg = &pctl->groups[group];
+	स्थिर काष्ठा oxnas_function *pf = &pctl->functions[func];
+	स्थिर अक्षर *fname = pf->name;
+	काष्ठा oxnas_desc_function *functions = pg->functions;
 	u32 mask = BIT(pg->pin);
 
-	while (functions->name) {
-		if (!strcmp(functions->name, fname)) {
+	जबतक (functions->name) अणु
+		अगर (!म_भेद(functions->name, fname)) अणु
 			dev_dbg(pctl->dev,
 				"setting function %s bank %d pin %d fct %d mask %x\n",
 				fname, pg->bank, pg->pin,
 				functions->fct, mask);
 
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  (pg->bank ?
 						PINMUX_810_PRIMARY_SEL1 :
 						PINMUX_810_PRIMARY_SEL0),
 					  mask,
 					  (functions->fct == 1 ?
 						mask : 0));
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  (pg->bank ?
 						PINMUX_810_SECONDARY_SEL1 :
 						PINMUX_810_SECONDARY_SEL0),
 					  mask,
 					  (functions->fct == 2 ?
 						mask : 0));
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  (pg->bank ?
 						PINMUX_810_TERTIARY_SEL1 :
 						PINMUX_810_TERTIARY_SEL0),
@@ -623,449 +624,449 @@ static int oxnas_ox810se_pinmux_enable(struct pinctrl_dev *pctldev,
 					  (functions->fct == 3 ?
 						mask : 0));
 
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		functions++;
-	}
+	पूर्ण
 
 	dev_err(pctl->dev, "cannot mux pin %u to function %u\n", group, func);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int oxnas_ox820_pinmux_enable(struct pinctrl_dev *pctldev,
-				     unsigned int func, unsigned int group)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	const struct oxnas_pin_group *pg = &pctl->groups[group];
-	const struct oxnas_function *pf = &pctl->functions[func];
-	const char *fname = pf->name;
-	struct oxnas_desc_function *functions = pg->functions;
-	unsigned int offset = (pg->bank ? PINMUX_820_BANK_OFFSET : 0);
+अटल पूर्णांक oxnas_ox820_pinmux_enable(काष्ठा pinctrl_dev *pctldev,
+				     अचिन्हित पूर्णांक func, अचिन्हित पूर्णांक group)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा oxnas_pin_group *pg = &pctl->groups[group];
+	स्थिर काष्ठा oxnas_function *pf = &pctl->functions[func];
+	स्थिर अक्षर *fname = pf->name;
+	काष्ठा oxnas_desc_function *functions = pg->functions;
+	अचिन्हित पूर्णांक offset = (pg->bank ? PINMUX_820_BANK_OFFSET : 0);
 	u32 mask = BIT(pg->pin);
 
-	while (functions->name) {
-		if (!strcmp(functions->name, fname)) {
+	जबतक (functions->name) अणु
+		अगर (!म_भेद(functions->name, fname)) अणु
 			dev_dbg(pctl->dev,
 				"setting function %s bank %d pin %d fct %d mask %x\n",
 				fname, pg->bank, pg->pin,
 				functions->fct, mask);
 
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  offset + PINMUX_820_SECONDARY_SEL,
 					  mask,
 					  (functions->fct == 1 ?
 						mask : 0));
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  offset + PINMUX_820_TERTIARY_SEL,
 					  mask,
 					  (functions->fct == 2 ?
 						mask : 0));
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  offset + PINMUX_820_QUATERNARY_SEL,
 					  mask,
 					  (functions->fct == 3 ?
 						mask : 0));
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  offset + PINMUX_820_DEBUG_SEL,
 					  mask,
 					  (functions->fct == 4 ?
 						mask : 0));
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  offset + PINMUX_820_ALTERNATIVE_SEL,
 					  mask,
 					  (functions->fct == 5 ?
 						mask : 0));
 
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		functions++;
-	}
+	पूर्ण
 
 	dev_err(pctl->dev, "cannot mux pin %u to function %u\n", group, func);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int oxnas_ox810se_gpio_request_enable(struct pinctrl_dev *pctldev,
-					     struct pinctrl_gpio_range *range,
-					     unsigned int offset)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(range->gc);
+अटल पूर्णांक oxnas_ox810se_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+					     काष्ठा pinctrl_gpio_range *range,
+					     अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(range->gc);
 	u32 mask = BIT(offset - bank->gpio_chip.base);
 
 	dev_dbg(pctl->dev, "requesting gpio %d in bank %d (id %d) with mask 0x%x\n",
 		offset, bank->gpio_chip.base, bank->id, mask);
 
-	regmap_write_bits(pctl->regmap,
+	regmap_ग_लिखो_bits(pctl->regmap,
 			  (bank->id ?
 				PINMUX_810_PRIMARY_SEL1 :
 				PINMUX_810_PRIMARY_SEL0),
 			  mask, 0);
-	regmap_write_bits(pctl->regmap,
+	regmap_ग_लिखो_bits(pctl->regmap,
 			  (bank->id ?
 				PINMUX_810_SECONDARY_SEL1 :
 				PINMUX_810_SECONDARY_SEL0),
 			  mask, 0);
-	regmap_write_bits(pctl->regmap,
+	regmap_ग_लिखो_bits(pctl->regmap,
 			  (bank->id ?
 				PINMUX_810_TERTIARY_SEL1 :
 				PINMUX_810_TERTIARY_SEL0),
 			  mask, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_ox820_gpio_request_enable(struct pinctrl_dev *pctldev,
-					   struct pinctrl_gpio_range *range,
-					   unsigned int offset)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(range->gc);
-	unsigned int bank_offset = (bank->id ? PINMUX_820_BANK_OFFSET : 0);
+अटल पूर्णांक oxnas_ox820_gpio_request_enable(काष्ठा pinctrl_dev *pctldev,
+					   काष्ठा pinctrl_gpio_range *range,
+					   अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(range->gc);
+	अचिन्हित पूर्णांक bank_offset = (bank->id ? PINMUX_820_BANK_OFFSET : 0);
 	u32 mask = BIT(offset - bank->gpio_chip.base);
 
 	dev_dbg(pctl->dev, "requesting gpio %d in bank %d (id %d) with mask 0x%x\n",
 		offset, bank->gpio_chip.base, bank->id, mask);
 
-	regmap_write_bits(pctl->regmap,
+	regmap_ग_लिखो_bits(pctl->regmap,
 			  bank_offset + PINMUX_820_SECONDARY_SEL,
 			  mask, 0);
-	regmap_write_bits(pctl->regmap,
+	regmap_ग_लिखो_bits(pctl->regmap,
 			  bank_offset + PINMUX_820_TERTIARY_SEL,
 			  mask, 0);
-	regmap_write_bits(pctl->regmap,
+	regmap_ग_लिखो_bits(pctl->regmap,
 			  bank_offset + PINMUX_820_QUATERNARY_SEL,
 			  mask, 0);
-	regmap_write_bits(pctl->regmap,
+	regmap_ग_लिखो_bits(pctl->regmap,
 			  bank_offset + PINMUX_820_DEBUG_SEL,
 			  mask, 0);
-	regmap_write_bits(pctl->regmap,
+	regmap_ग_लिखो_bits(pctl->regmap,
 			  bank_offset + PINMUX_820_ALTERNATIVE_SEL,
 			  mask, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_gpio_get_direction(struct gpio_chip *chip,
-				      unsigned int offset)
-{
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(chip);
+अटल पूर्णांक oxnas_gpio_get_direction(काष्ठा gpio_chip *chip,
+				      अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(chip);
 	u32 mask = BIT(offset);
 
-	if (readl_relaxed(bank->reg_base + OUTPUT_EN) & mask)
-		return GPIO_LINE_DIRECTION_OUT;
+	अगर (पढ़ोl_relaxed(bank->reg_base + OUTPUT_EN) & mask)
+		वापस GPIO_LINE_सूचीECTION_OUT;
 
-	return GPIO_LINE_DIRECTION_IN;
-}
+	वापस GPIO_LINE_सूचीECTION_IN;
+पूर्ण
 
-static int oxnas_gpio_direction_input(struct gpio_chip *chip,
-				      unsigned int offset)
-{
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(chip);
+अटल पूर्णांक oxnas_gpio_direction_input(काष्ठा gpio_chip *chip,
+				      अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(chip);
 	u32 mask = BIT(offset);
 
-	writel_relaxed(mask, bank->reg_base + OUTPUT_EN_CLEAR);
+	ग_लिखोl_relaxed(mask, bank->reg_base + OUTPUT_EN_CLEAR);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_gpio_get(struct gpio_chip *chip, unsigned int offset)
-{
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(chip);
+अटल पूर्णांक oxnas_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(chip);
 	u32 mask = BIT(offset);
 
-	return (readl_relaxed(bank->reg_base + INPUT_VALUE) & mask) != 0;
-}
+	वापस (पढ़ोl_relaxed(bank->reg_base + INPUT_VALUE) & mask) != 0;
+पूर्ण
 
-static void oxnas_gpio_set(struct gpio_chip *chip, unsigned int offset,
-			       int value)
-{
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(chip);
+अटल व्योम oxnas_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित पूर्णांक offset,
+			       पूर्णांक value)
+अणु
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(chip);
 	u32 mask = BIT(offset);
 
-	if (value)
-		writel_relaxed(mask, bank->reg_base + OUTPUT_SET);
-	else
-		writel_relaxed(mask, bank->reg_base + OUTPUT_CLEAR);
-}
+	अगर (value)
+		ग_लिखोl_relaxed(mask, bank->reg_base + OUTPUT_SET);
+	अन्यथा
+		ग_लिखोl_relaxed(mask, bank->reg_base + OUTPUT_CLEAR);
+पूर्ण
 
-static int oxnas_gpio_direction_output(struct gpio_chip *chip,
-				       unsigned int offset, int value)
-{
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(chip);
+अटल पूर्णांक oxnas_gpio_direction_output(काष्ठा gpio_chip *chip,
+				       अचिन्हित पूर्णांक offset, पूर्णांक value)
+अणु
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(chip);
 	u32 mask = BIT(offset);
 
 	oxnas_gpio_set(chip, offset, value);
-	writel_relaxed(mask, bank->reg_base + OUTPUT_EN_SET);
+	ग_लिखोl_relaxed(mask, bank->reg_base + OUTPUT_EN_SET);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_gpio_set_direction(struct pinctrl_dev *pctldev,
-				    struct pinctrl_gpio_range *range,
-				    unsigned int offset, bool input)
-{
-	struct gpio_chip *chip = range->gc;
+अटल पूर्णांक oxnas_gpio_set_direction(काष्ठा pinctrl_dev *pctldev,
+				    काष्ठा pinctrl_gpio_range *range,
+				    अचिन्हित पूर्णांक offset, bool input)
+अणु
+	काष्ठा gpio_chip *chip = range->gc;
 
-	if (input)
+	अगर (input)
 		oxnas_gpio_direction_input(chip, offset);
-	else
+	अन्यथा
 		oxnas_gpio_direction_output(chip, offset, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops oxnas_ox810se_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops oxnas_ox810se_pinmux_ops = अणु
 	.get_functions_count = oxnas_pinmux_get_functions_count,
 	.get_function_name = oxnas_pinmux_get_function_name,
 	.get_function_groups = oxnas_pinmux_get_function_groups,
 	.set_mux = oxnas_ox810se_pinmux_enable,
 	.gpio_request_enable = oxnas_ox810se_gpio_request_enable,
 	.gpio_set_direction = oxnas_gpio_set_direction,
-};
+पूर्ण;
 
-static const struct pinmux_ops oxnas_ox820_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops oxnas_ox820_pinmux_ops = अणु
 	.get_functions_count = oxnas_pinmux_get_functions_count,
 	.get_function_name = oxnas_pinmux_get_function_name,
 	.get_function_groups = oxnas_pinmux_get_function_groups,
 	.set_mux = oxnas_ox820_pinmux_enable,
 	.gpio_request_enable = oxnas_ox820_gpio_request_enable,
 	.gpio_set_direction = oxnas_gpio_set_direction,
-};
+पूर्ण;
 
-static int oxnas_ox810se_pinconf_get(struct pinctrl_dev *pctldev,
-				     unsigned int pin, unsigned long *config)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct oxnas_gpio_bank *bank = pctl_to_bank(pctl, pin);
-	unsigned int param = pinconf_to_config_param(*config);
+अटल पूर्णांक oxnas_ox810se_pinconf_get(काष्ठा pinctrl_dev *pctldev,
+				     अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा oxnas_gpio_bank *bank = pctl_to_bank(pctl, pin);
+	अचिन्हित पूर्णांक param = pinconf_to_config_param(*config);
 	u32 mask = BIT(pin - bank->gpio_chip.base);
-	int ret;
+	पूर्णांक ret;
 	u32 arg;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_PULL_UP:
-		ret = regmap_read(pctl->regmap,
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		ret = regmap_पढ़ो(pctl->regmap,
 				  (bank->id ?
 					PINMUX_810_PULLUP_CTRL1 :
 					PINMUX_810_PULLUP_CTRL0),
 				  &arg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		arg = !!(arg & mask);
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_ox820_pinconf_get(struct pinctrl_dev *pctldev,
-				   unsigned int pin, unsigned long *config)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct oxnas_gpio_bank *bank = pctl_to_bank(pctl, pin);
-	unsigned int param = pinconf_to_config_param(*config);
-	unsigned int bank_offset = (bank->id ? PINMUX_820_BANK_OFFSET : 0);
+अटल पूर्णांक oxnas_ox820_pinconf_get(काष्ठा pinctrl_dev *pctldev,
+				   अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा oxnas_gpio_bank *bank = pctl_to_bank(pctl, pin);
+	अचिन्हित पूर्णांक param = pinconf_to_config_param(*config);
+	अचिन्हित पूर्णांक bank_offset = (bank->id ? PINMUX_820_BANK_OFFSET : 0);
 	u32 mask = BIT(pin - bank->gpio_chip.base);
-	int ret;
+	पूर्णांक ret;
 	u32 arg;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_PULL_UP:
-		ret = regmap_read(pctl->regmap,
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		ret = regmap_पढ़ो(pctl->regmap,
 				  bank_offset + PINMUX_820_PULLUP_CTRL,
 				  &arg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		arg = !!(arg & mask);
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_ox810se_pinconf_set(struct pinctrl_dev *pctldev,
-				     unsigned int pin, unsigned long *configs,
-				     unsigned int num_configs)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct oxnas_gpio_bank *bank = pctl_to_bank(pctl, pin);
-	unsigned int param;
-	unsigned int i;
+अटल पूर्णांक oxnas_ox810se_pinconf_set(काष्ठा pinctrl_dev *pctldev,
+				     अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *configs,
+				     अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा oxnas_gpio_bank *bank = pctl_to_bank(pctl, pin);
+	अचिन्हित पूर्णांक param;
+	अचिन्हित पूर्णांक i;
 	u32 offset = pin - bank->gpio_chip.base;
 	u32 mask = BIT(offset);
 
 	dev_dbg(pctl->dev, "setting pin %d bank %d mask 0x%x\n",
 		pin, bank->gpio_chip.base, mask);
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_PULL_UP:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			dev_dbg(pctl->dev, "   pullup\n");
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  (bank->id ?
 						PINMUX_810_PULLUP_CTRL1 :
 						PINMUX_810_PULLUP_CTRL0),
 					  mask, mask);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(pctl->dev, "Property %u not supported\n",
 				param);
-			return -ENOTSUPP;
-		}
-	}
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_ox820_pinconf_set(struct pinctrl_dev *pctldev,
-				   unsigned int pin, unsigned long *configs,
-				   unsigned int num_configs)
-{
-	struct oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
-	struct oxnas_gpio_bank *bank = pctl_to_bank(pctl, pin);
-	unsigned int bank_offset = (bank->id ? PINMUX_820_BANK_OFFSET : 0);
-	unsigned int param;
-	unsigned int i;
+अटल पूर्णांक oxnas_ox820_pinconf_set(काष्ठा pinctrl_dev *pctldev,
+				   अचिन्हित पूर्णांक pin, अचिन्हित दीर्घ *configs,
+				   अचिन्हित पूर्णांक num_configs)
+अणु
+	काष्ठा oxnas_pinctrl *pctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा oxnas_gpio_bank *bank = pctl_to_bank(pctl, pin);
+	अचिन्हित पूर्णांक bank_offset = (bank->id ? PINMUX_820_BANK_OFFSET : 0);
+	अचिन्हित पूर्णांक param;
+	अचिन्हित पूर्णांक i;
 	u32 offset = pin - bank->gpio_chip.base;
 	u32 mask = BIT(offset);
 
 	dev_dbg(pctl->dev, "setting pin %d bank %d mask 0x%x\n",
 		pin, bank->gpio_chip.base, mask);
 
-	for (i = 0; i < num_configs; i++) {
+	क्रम (i = 0; i < num_configs; i++) अणु
 		param = pinconf_to_config_param(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_PULL_UP:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			dev_dbg(pctl->dev, "   pullup\n");
-			regmap_write_bits(pctl->regmap,
+			regmap_ग_लिखो_bits(pctl->regmap,
 					  bank_offset + PINMUX_820_PULLUP_CTRL,
 					  mask, mask);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_err(pctl->dev, "Property %u not supported\n",
 				param);
-			return -ENOTSUPP;
-		}
-	}
+			वापस -ENOTSUPP;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops oxnas_ox810se_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops oxnas_ox810se_pinconf_ops = अणु
 	.pin_config_get = oxnas_ox810se_pinconf_get,
 	.pin_config_set = oxnas_ox810se_pinconf_set,
 	.is_generic = true,
-};
+पूर्ण;
 
-static const struct pinconf_ops oxnas_ox820_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops oxnas_ox820_pinconf_ops = अणु
 	.pin_config_get = oxnas_ox820_pinconf_get,
 	.pin_config_set = oxnas_ox820_pinconf_set,
 	.is_generic = true,
-};
+पूर्ण;
 
-static void oxnas_gpio_irq_ack(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(chip);
+अटल व्योम oxnas_gpio_irq_ack(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(chip);
 	u32 mask = BIT(data->hwirq);
 
-	writel(mask, bank->reg_base + IRQ_PENDING);
-}
+	ग_लिखोl(mask, bank->reg_base + IRQ_PENDING);
+पूर्ण
 
-static void oxnas_gpio_irq_mask(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(chip);
-	unsigned int type = irqd_get_trigger_type(data);
+अटल व्योम oxnas_gpio_irq_mask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक type = irqd_get_trigger_type(data);
 	u32 mask = BIT(data->hwirq);
 
-	if (type & IRQ_TYPE_EDGE_RISING)
-		writel(readl(bank->reg_base + RE_IRQ_ENABLE) & ~mask,
+	अगर (type & IRQ_TYPE_EDGE_RISING)
+		ग_लिखोl(पढ़ोl(bank->reg_base + RE_IRQ_ENABLE) & ~mask,
 		       bank->reg_base + RE_IRQ_ENABLE);
 
-	if (type & IRQ_TYPE_EDGE_FALLING)
-		writel(readl(bank->reg_base + FE_IRQ_ENABLE) & ~mask,
+	अगर (type & IRQ_TYPE_EDGE_FALLING)
+		ग_लिखोl(पढ़ोl(bank->reg_base + FE_IRQ_ENABLE) & ~mask,
 		       bank->reg_base + FE_IRQ_ENABLE);
-}
+पूर्ण
 
-static void oxnas_gpio_irq_unmask(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(chip);
-	unsigned int type = irqd_get_trigger_type(data);
+अटल व्योम oxnas_gpio_irq_unmask(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(chip);
+	अचिन्हित पूर्णांक type = irqd_get_trigger_type(data);
 	u32 mask = BIT(data->hwirq);
 
-	if (type & IRQ_TYPE_EDGE_RISING)
-		writel(readl(bank->reg_base + RE_IRQ_ENABLE) | mask,
+	अगर (type & IRQ_TYPE_EDGE_RISING)
+		ग_लिखोl(पढ़ोl(bank->reg_base + RE_IRQ_ENABLE) | mask,
 		       bank->reg_base + RE_IRQ_ENABLE);
 
-	if (type & IRQ_TYPE_EDGE_FALLING)
-		writel(readl(bank->reg_base + FE_IRQ_ENABLE) | mask,
+	अगर (type & IRQ_TYPE_EDGE_FALLING)
+		ग_लिखोl(पढ़ोl(bank->reg_base + FE_IRQ_ENABLE) | mask,
 		       bank->reg_base + FE_IRQ_ENABLE);
-}
+पूर्ण
 
-static unsigned int oxnas_gpio_irq_startup(struct irq_data *data)
-{
-	struct gpio_chip *chip = irq_data_get_irq_chip_data(data);
+अटल अचिन्हित पूर्णांक oxnas_gpio_irq_startup(काष्ठा irq_data *data)
+अणु
+	काष्ठा gpio_chip *chip = irq_data_get_irq_chip_data(data);
 
 	oxnas_gpio_direction_input(chip, data->hwirq);
 	oxnas_gpio_irq_unmask(data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_gpio_irq_set_type(struct irq_data *data, unsigned int type)
-{
-	if ((type & (IRQ_TYPE_EDGE_RISING|IRQ_TYPE_EDGE_FALLING)) == 0)
-		return -EINVAL;
+अटल पूर्णांक oxnas_gpio_irq_set_type(काष्ठा irq_data *data, अचिन्हित पूर्णांक type)
+अणु
+	अगर ((type & (IRQ_TYPE_EDGE_RISING|IRQ_TYPE_EDGE_FALLING)) == 0)
+		वापस -EINVAL;
 
 	irq_set_handler_locked(data, handle_edge_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void oxnas_gpio_irq_handler(struct irq_desc *desc)
-{
-	struct gpio_chip *gc = irq_desc_get_handler_data(desc);
-	struct oxnas_gpio_bank *bank = gpiochip_get_data(gc);
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	unsigned long stat;
-	unsigned int pin;
+अटल व्योम oxnas_gpio_irq_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा gpio_chip *gc = irq_desc_get_handler_data(desc);
+	काष्ठा oxnas_gpio_bank *bank = gpiochip_get_data(gc);
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	अचिन्हित दीर्घ stat;
+	अचिन्हित पूर्णांक pin;
 
 	chained_irq_enter(chip, desc);
 
-	stat = readl(bank->reg_base + IRQ_PENDING);
+	stat = पढ़ोl(bank->reg_base + IRQ_PENDING);
 
-	for_each_set_bit(pin, &stat, BITS_PER_LONG)
-		generic_handle_irq(irq_linear_revmap(gc->irq.domain, pin));
+	क्रम_each_set_bit(pin, &stat, BITS_PER_LONG)
+		generic_handle_irq(irq_linear_revmap(gc->irq.करोमुख्य, pin));
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-#define GPIO_BANK(_bank)						\
-	{								\
-		.gpio_chip = {						\
+#घोषणा GPIO_BANK(_bank)						\
+	अणु								\
+		.gpio_chip = अणु						\
 			.label = "GPIO" #_bank,				\
 			.request = gpiochip_generic_request,		\
-			.free = gpiochip_generic_free,			\
+			.मुक्त = gpiochip_generic_मुक्त,			\
 			.get_direction = oxnas_gpio_get_direction,	\
 			.direction_input = oxnas_gpio_direction_input,	\
 			.direction_output = oxnas_gpio_direction_output, \
@@ -1075,32 +1076,32 @@ static void oxnas_gpio_irq_handler(struct irq_desc *desc)
 			.base = GPIO_BANK_START(_bank),			\
 			.owner = THIS_MODULE,				\
 			.can_sleep = 0,					\
-		},							\
-		.irq_chip = {						\
+		पूर्ण,							\
+		.irq_chip = अणु						\
 			.name = "GPIO" #_bank,				\
 			.irq_startup = oxnas_gpio_irq_startup,	\
 			.irq_ack = oxnas_gpio_irq_ack,		\
 			.irq_mask = oxnas_gpio_irq_mask,		\
 			.irq_unmask = oxnas_gpio_irq_unmask,		\
 			.irq_set_type = oxnas_gpio_irq_set_type,	\
-		},							\
-	}
+		पूर्ण,							\
+	पूर्ण
 
-static struct oxnas_gpio_bank oxnas_gpio_banks[] = {
+अटल काष्ठा oxnas_gpio_bank oxnas_gpio_banks[] = अणु
 	GPIO_BANK(0),
 	GPIO_BANK(1),
-};
+पूर्ण;
 
-static struct oxnas_pinctrl ox810se_pinctrl = {
+अटल काष्ठा oxnas_pinctrl ox810se_pinctrl = अणु
 	.functions = oxnas_ox810se_functions,
 	.nfunctions = ARRAY_SIZE(oxnas_ox810se_functions),
 	.groups = oxnas_ox810se_groups,
 	.ngroups = ARRAY_SIZE(oxnas_ox810se_groups),
 	.gpio_banks = oxnas_gpio_banks,
 	.nbanks = ARRAY_SIZE(oxnas_gpio_banks),
-};
+पूर्ण;
 
-static struct pinctrl_desc oxnas_ox810se_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc oxnas_ox810se_pinctrl_desc = अणु
 	.name = "oxnas-pinctrl",
 	.pins = oxnas_ox810se_pins,
 	.npins = ARRAY_SIZE(oxnas_ox810se_pins),
@@ -1108,18 +1109,18 @@ static struct pinctrl_desc oxnas_ox810se_pinctrl_desc = {
 	.pmxops = &oxnas_ox810se_pinmux_ops,
 	.confops = &oxnas_ox810se_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static struct oxnas_pinctrl ox820_pinctrl = {
+अटल काष्ठा oxnas_pinctrl ox820_pinctrl = अणु
 	.functions = oxnas_ox820_functions,
 	.nfunctions = ARRAY_SIZE(oxnas_ox820_functions),
 	.groups = oxnas_ox820_groups,
 	.ngroups = ARRAY_SIZE(oxnas_ox820_groups),
 	.gpio_banks = oxnas_gpio_banks,
 	.nbanks = ARRAY_SIZE(oxnas_gpio_banks),
-};
+पूर्ण;
 
-static struct pinctrl_desc oxnas_ox820_pinctrl_desc = {
+अटल काष्ठा pinctrl_desc oxnas_ox820_pinctrl_desc = अणु
 	.name = "oxnas-pinctrl",
 	.pins = oxnas_ox820_pins,
 	.npins = ARRAY_SIZE(oxnas_ox820_pins),
@@ -1127,54 +1128,54 @@ static struct pinctrl_desc oxnas_ox820_pinctrl_desc = {
 	.pmxops = &oxnas_ox820_pinmux_ops,
 	.confops = &oxnas_ox820_pinconf_ops,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static struct oxnas_pinctrl_data oxnas_ox810se_pinctrl_data = {
+अटल काष्ठा oxnas_pinctrl_data oxnas_ox810se_pinctrl_data = अणु
 	.desc = &oxnas_ox810se_pinctrl_desc,
 	.pctl = &ox810se_pinctrl,
-};
+पूर्ण;
 
-static struct oxnas_pinctrl_data oxnas_ox820_pinctrl_data = {
+अटल काष्ठा oxnas_pinctrl_data oxnas_ox820_pinctrl_data = अणु
 	.desc = &oxnas_ox820_pinctrl_desc,
 	.pctl = &ox820_pinctrl,
-};
+पूर्ण;
 
-static const struct of_device_id oxnas_pinctrl_of_match[] = {
-	{ .compatible = "oxsemi,ox810se-pinctrl",
+अटल स्थिर काष्ठा of_device_id oxnas_pinctrl_of_match[] = अणु
+	अणु .compatible = "oxsemi,ox810se-pinctrl",
 	  .data = &oxnas_ox810se_pinctrl_data
-	},
-	{ .compatible = "oxsemi,ox820-pinctrl",
+	पूर्ण,
+	अणु .compatible = "oxsemi,ox820-pinctrl",
 	  .data = &oxnas_ox820_pinctrl_data,
-	},
-	{ },
-};
+	पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int oxnas_pinctrl_probe(struct platform_device *pdev)
-{
-	const struct of_device_id *id;
-	const struct oxnas_pinctrl_data *data;
-	struct oxnas_pinctrl *pctl;
+अटल पूर्णांक oxnas_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा of_device_id *id;
+	स्थिर काष्ठा oxnas_pinctrl_data *data;
+	काष्ठा oxnas_pinctrl *pctl;
 
 	id = of_match_node(oxnas_pinctrl_of_match, pdev->dev.of_node);
-	if (!id)
-		return -ENODEV;
+	अगर (!id)
+		वापस -ENODEV;
 
 	data = id->data;
-	if (!data || !data->pctl || !data->desc)
-		return -EINVAL;
+	अगर (!data || !data->pctl || !data->desc)
+		वापस -EINVAL;
 
-	pctl = devm_kzalloc(&pdev->dev, sizeof(*pctl), GFP_KERNEL);
-	if (!pctl)
-		return -ENOMEM;
+	pctl = devm_kzalloc(&pdev->dev, माप(*pctl), GFP_KERNEL);
+	अगर (!pctl)
+		वापस -ENOMEM;
 	pctl->dev = &pdev->dev;
 	dev_set_drvdata(&pdev->dev, pctl);
 
 	pctl->regmap = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
 						       "oxsemi,sys-ctrl");
-	if (IS_ERR(pctl->regmap)) {
+	अगर (IS_ERR(pctl->regmap)) अणु
 		dev_err(&pdev->dev, "failed to get sys ctrl regmap\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	pctl->functions = data->pctl->functions;
 	pctl->nfunctions = data->pctl->nfunctions;
@@ -1183,52 +1184,52 @@ static int oxnas_pinctrl_probe(struct platform_device *pdev)
 	pctl->gpio_banks = data->pctl->gpio_banks;
 	pctl->nbanks = data->pctl->nbanks;
 
-	pctl->pctldev = pinctrl_register(data->desc, &pdev->dev, pctl);
-	if (IS_ERR(pctl->pctldev)) {
+	pctl->pctldev = pinctrl_रेजिस्टर(data->desc, &pdev->dev, pctl);
+	अगर (IS_ERR(pctl->pctldev)) अणु
 		dev_err(&pdev->dev, "Failed to register pinctrl device\n");
-		return PTR_ERR(pctl->pctldev);
-	}
+		वापस PTR_ERR(pctl->pctldev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int oxnas_gpio_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct of_phandle_args pinspec;
-	struct oxnas_gpio_bank *bank;
-	unsigned int id, ngpios;
-	int irq, ret;
-	struct gpio_irq_chip *girq;
+अटल पूर्णांक oxnas_gpio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा of_phandle_args pinspec;
+	काष्ठा oxnas_gpio_bank *bank;
+	अचिन्हित पूर्णांक id, ngpios;
+	पूर्णांक irq, ret;
+	काष्ठा gpio_irq_chip *girq;
 
-	if (of_parse_phandle_with_fixed_args(np, "gpio-ranges",
-					     3, 0, &pinspec)) {
+	अगर (of_parse_phandle_with_fixed_args(np, "gpio-ranges",
+					     3, 0, &pinspec)) अणु
 		dev_err(&pdev->dev, "gpio-ranges property not found\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	id = pinspec.args[1] / PINS_PER_BANK;
 	ngpios = pinspec.args[2];
 
-	if (id >= ARRAY_SIZE(oxnas_gpio_banks)) {
+	अगर (id >= ARRAY_SIZE(oxnas_gpio_banks)) अणु
 		dev_err(&pdev->dev, "invalid gpio-ranges base arg\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ngpios > PINS_PER_BANK) {
+	अगर (ngpios > PINS_PER_BANK) अणु
 		dev_err(&pdev->dev, "invalid gpio-ranges count arg\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bank = &oxnas_gpio_banks[id];
 
-	bank->reg_base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(bank->reg_base))
-		return PTR_ERR(bank->reg_base);
+	bank->reg_base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(bank->reg_base))
+		वापस PTR_ERR(bank->reg_base);
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	bank->id = id;
 	bank->gpio_chip.parent = &pdev->dev;
@@ -1238,56 +1239,56 @@ static int oxnas_gpio_probe(struct platform_device *pdev)
 	girq->chip = &bank->irq_chip;
 	girq->parent_handler = oxnas_gpio_irq_handler;
 	girq->num_parents = 1;
-	girq->parents = devm_kcalloc(&pdev->dev, 1, sizeof(*girq->parents),
+	girq->parents = devm_kसुस्मृति(&pdev->dev, 1, माप(*girq->parents),
 				     GFP_KERNEL);
-	if (!girq->parents)
-		return -ENOMEM;
+	अगर (!girq->parents)
+		वापस -ENOMEM;
 	girq->parents[0] = irq;
-	girq->default_type = IRQ_TYPE_NONE;
+	girq->शेष_type = IRQ_TYPE_NONE;
 	girq->handler = handle_level_irq;
 
 	ret = gpiochip_add_data(&bank->gpio_chip, bank);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Failed to add GPIO chip %u: %d\n",
 			id, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver oxnas_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver oxnas_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "oxnas-pinctrl",
 		.of_match_table = oxnas_pinctrl_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = oxnas_pinctrl_probe,
-};
+पूर्ण;
 
-static const struct of_device_id oxnas_gpio_of_match[] = {
-	{ .compatible = "oxsemi,ox810se-gpio", },
-	{ .compatible = "oxsemi,ox820-gpio", },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id oxnas_gpio_of_match[] = अणु
+	अणु .compatible = "oxsemi,ox810se-gpio", पूर्ण,
+	अणु .compatible = "oxsemi,ox820-gpio", पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static struct platform_driver oxnas_gpio_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver oxnas_gpio_driver = अणु
+	.driver = अणु
 		.name = "oxnas-gpio",
 		.of_match_table = oxnas_gpio_of_match,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = oxnas_gpio_probe,
-};
+पूर्ण;
 
-static int __init oxnas_gpio_register(void)
-{
-	return platform_driver_register(&oxnas_gpio_driver);
-}
-arch_initcall(oxnas_gpio_register);
+अटल पूर्णांक __init oxnas_gpio_रेजिस्टर(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&oxnas_gpio_driver);
+पूर्ण
+arch_initcall(oxnas_gpio_रेजिस्टर);
 
-static int __init oxnas_pinctrl_register(void)
-{
-	return platform_driver_register(&oxnas_pinctrl_driver);
-}
-arch_initcall(oxnas_pinctrl_register);
+अटल पूर्णांक __init oxnas_pinctrl_रेजिस्टर(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&oxnas_pinctrl_driver);
+पूर्ण
+arch_initcall(oxnas_pinctrl_रेजिस्टर);

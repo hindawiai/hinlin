@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ALPHA_COMPILER_H
-#define __ALPHA_COMPILER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ALPHA_COMPILER_H
+#घोषणा __ALPHA_COMPILER_H
 
-#include <uapi/asm/compiler.h>
+#समावेश <uapi/यंत्र/compiler.h>
 
-/* Some idiots over in <linux/compiler.h> thought inline should imply
-   always_inline.  This breaks stuff.  We'll include this file whenever
-   we run into such problems.  */
+/* Some idiots over in <linux/compiler.h> thought अंतरभूत should imply
+   always_अंतरभूत.  This अवरोधs stuff.  We'll include this file whenever
+   we run पूर्णांकo such problems.  */
 
-#include <linux/compiler.h>
-#undef inline
-#undef __inline__
-#undef __inline
-#undef __always_inline
-#define __always_inline		inline __attribute__((always_inline))
+#समावेश <linux/compiler.h>
+#अघोषित अंतरभूत
+#अघोषित __अंतरभूत__
+#अघोषित __अंतरभूत
+#अघोषित __always_अंतरभूत
+#घोषणा __always_अंतरभूत		अंतरभूत __attribute__((always_अंतरभूत))
 
-#endif /* __ALPHA_COMPILER_H */
+#पूर्ण_अगर /* __ALPHA_COMPILER_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * arch/alpha/boot/tools/objstrip.c
  *
@@ -7,278 +8,278 @@
  * Copyright (C) 1996 David Mosberger-Tang.
  */
 /*
- * Converts an ECOFF or ELF object file into a bootable file.  The
+ * Converts an ECOFF or ELF object file पूर्णांकo a bootable file.  The
  * object file must be a OMAGIC file (i.e., data and bss follow immediately
  * behind the text).  See DEC "Assembly Language Programmer's Guide"
- * documentation for details.  The SRM boot process is documented in
+ * करोcumentation क्रम details.  The SRM boot process is करोcumented in
  * the Alpha AXP Architecture Reference Manual, Second Edition by
- * Richard L. Sites and Richard T. Witek.
+ * Riअक्षरd L. Sites and Riअक्षरd T. Witek.
  */
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
 
-#include <sys/fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
+#समावेश <sys/fcntl.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
 
-#include <linux/a.out.h>
-#include <linux/coff.h>
-#include <linux/param.h>
-#ifdef __ELF__
+#समावेश <linux/a.out.h>
+#समावेश <linux/coff.h>
+#समावेश <linux/param.h>
+#अगर_घोषित __ELF__
 # include <linux/elf.h>
 # define elfhdr elf64_hdr
 # define elf_phdr elf64_phdr
 # define elf_check_arch(x) ((x)->e_machine == EM_ALPHA)
-#endif
+#पूर्ण_अगर
 
 /* bootfile size must be multiple of BLOCK_SIZE: */
-#define BLOCK_SIZE	512
+#घोषणा BLOCK_SIZE	512
 
-const char * prog_name;
+स्थिर अक्षर * prog_name;
 
 
-static void
-usage (void)
-{
-    fprintf(stderr,
+अटल व्योम
+usage (व्योम)
+अणु
+    ख_लिखो(मानक_त्रुटि,
 	    "usage: %s [-v] -p file primary\n"
 	    "       %s [-vb] file [secondary]\n", prog_name, prog_name);
-    exit(1);
-}
+    निकास(1);
+पूर्ण
 
 
-int
-main (int argc, char *argv[])
-{
-    size_t nwritten, tocopy, n, mem_size, fil_size, pad = 0;
-    int fd, ofd, i, j, verbose = 0, primary = 0;
-    char buf[8192], *inname;
-    struct exec * aout;		/* includes file & aout header */
-    long offset;
-#ifdef __ELF__
-    struct elfhdr *elf;
-    struct elf_phdr *elf_phdr;	/* program header */
-    unsigned long long e_entry;
-#endif
+पूर्णांक
+मुख्य (पूर्णांक argc, अक्षर *argv[])
+अणु
+    माप_प्रकार nwritten, tocopy, n, mem_size, fil_size, pad = 0;
+    पूर्णांक fd, ofd, i, j, verbose = 0, primary = 0;
+    अक्षर buf[8192], *inname;
+    काष्ठा exec * aout;		/* includes file & aout header */
+    दीर्घ offset;
+#अगर_घोषित __ELF__
+    काष्ठा elfhdr *elf;
+    काष्ठा elf_phdr *elf_phdr;	/* program header */
+    अचिन्हित दीर्घ दीर्घ e_entry;
+#पूर्ण_अगर
 
     prog_name = argv[0];
 
-    for (i = 1; i < argc && argv[i][0] == '-'; ++i) {
-	for (j = 1; argv[i][j]; ++j) {
-	    switch (argv[i][j]) {
-	      case 'v':
+    क्रम (i = 1; i < argc && argv[i][0] == '-'; ++i) अणु
+	क्रम (j = 1; argv[i][j]; ++j) अणु
+	    चयन (argv[i][j]) अणु
+	      हाल 'v':
 		  verbose = ~verbose;
-		  break;
+		  अवरोध;
 
-	      case 'b':
+	      हाल 'b':
 		  pad = BLOCK_SIZE;
-		  break;
+		  अवरोध;
 
-	      case 'p':
+	      हाल 'p':
 		  primary = 1;		/* make primary bootblock */
-		  break;
-	    }
-	}
-    }
+		  अवरोध;
+	    पूर्ण
+	पूर्ण
+    पूर्ण
 
-    if (i >= argc) {
+    अगर (i >= argc) अणु
 	usage();
-    }
+    पूर्ण
     inname = argv[i++];
 
-    fd = open(inname, O_RDONLY);
-    if (fd == -1) {
-	perror("open");
-	exit(1);
-    }
+    fd = खोलो(inname, O_RDONLY);
+    अगर (fd == -1) अणु
+	लिखो_त्रुटि("open");
+	निकास(1);
+    पूर्ण
 
     ofd = 1;
-    if (i < argc) {
-	ofd = open(argv[i++], O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	if (ofd == -1) {
-	    perror("open");
-	    exit(1);
-	}
-    }
+    अगर (i < argc) अणु
+	ofd = खोलो(argv[i++], O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	अगर (ofd == -1) अणु
+	    लिखो_त्रुटि("open");
+	    निकास(1);
+	पूर्ण
+    पूर्ण
 
-    if (primary) {
-	/* generate bootblock for primary loader */
+    अगर (primary) अणु
+	/* generate bootblock क्रम primary loader */
 	
-	unsigned long bb[64], sum = 0;
-	struct stat st;
+	अचिन्हित दीर्घ bb[64], sum = 0;
+	काष्ठा stat st;
 	off_t size;
-	int i;
+	पूर्णांक i;
 
-	if (ofd == 1) {
+	अगर (ofd == 1) अणु
 	    usage();
-	}
+	पूर्ण
 
-	if (fstat(fd, &st) == -1) {
-	    perror("fstat");
-	    exit(1);
-	}
+	अगर (ख_स्थिति(fd, &st) == -1) अणु
+	    लिखो_त्रुटि("fstat");
+	    निकास(1);
+	पूर्ण
 
 	size = (st.st_size + BLOCK_SIZE - 1) & ~(BLOCK_SIZE - 1);
-	memset(bb, 0, sizeof(bb));
-	strcpy((char *) bb, "Linux SRM bootblock");
+	स_रखो(bb, 0, माप(bb));
+	म_नकल((अक्षर *) bb, "Linux SRM bootblock");
 	bb[60] = size / BLOCK_SIZE;	/* count */
 	bb[61] = 1;			/* starting sector # */
 	bb[62] = 0;			/* flags---must be 0 */
-	for (i = 0; i < 63; ++i) {
+	क्रम (i = 0; i < 63; ++i) अणु
 	    sum += bb[i];
-	}
+	पूर्ण
 	bb[63] = sum;
-	if (write(ofd, bb, sizeof(bb)) != sizeof(bb)) {
-	    perror("boot-block write");
-	    exit(1);
-	}
-	printf("%lu\n", size);
-	return 0;
-    }
+	अगर (ग_लिखो(ofd, bb, माप(bb)) != माप(bb)) अणु
+	    लिखो_त्रुटि("boot-block write");
+	    निकास(1);
+	पूर्ण
+	म_लिखो("%lu\n", size);
+	वापस 0;
+    पूर्ण
 
-    /* read and inspect exec header: */
+    /* पढ़ो and inspect exec header: */
 
-    if (read(fd, buf, sizeof(buf)) < 0) {
-	perror("read");
-	exit(1);
-    }
+    अगर (पढ़ो(fd, buf, माप(buf)) < 0) अणु
+	लिखो_त्रुटि("read");
+	निकास(1);
+    पूर्ण
 
-#ifdef __ELF__
-    elf = (struct elfhdr *) buf;
+#अगर_घोषित __ELF__
+    elf = (काष्ठा elfhdr *) buf;
 
-    if (elf->e_ident[0] == 0x7f && str_has_prefix((char *)elf->e_ident + 1, "ELF")) {
-	if (elf->e_type != ET_EXEC) {
-	    fprintf(stderr, "%s: %s is not an ELF executable\n",
+    अगर (elf->e_ident[0] == 0x7f && str_has_prefix((अक्षर *)elf->e_ident + 1, "ELF")) अणु
+	अगर (elf->e_type != ET_EXEC) अणु
+	    ख_लिखो(मानक_त्रुटि, "%s: %s is not an ELF executable\n",
 		    prog_name, inname);
-	    exit(1);
-	}
-	if (!elf_check_arch(elf)) {
-	    fprintf(stderr, "%s: is not for this processor (e_machine=%d)\n",
+	    निकास(1);
+	पूर्ण
+	अगर (!elf_check_arch(elf)) अणु
+	    ख_लिखो(मानक_त्रुटि, "%s: is not for this processor (e_machine=%d)\n",
 		    prog_name, elf->e_machine);
-	    exit(1);
-	}
-	if (elf->e_phnum != 1) {
-	    fprintf(stderr,
+	    निकास(1);
+	पूर्ण
+	अगर (elf->e_phnum != 1) अणु
+	    ख_लिखो(मानक_त्रुटि,
 		    "%s: %d program headers (forgot to link with -N?)\n",
 		    prog_name, elf->e_phnum);
-	}
+	पूर्ण
 
 	e_entry = elf->e_entry;
 
-	lseek(fd, elf->e_phoff, SEEK_SET);
-	if (read(fd, buf, sizeof(*elf_phdr)) != sizeof(*elf_phdr)) {
-	    perror("read");
-	    exit(1);
-	}
+	lseek(fd, elf->e_phoff, शुरू_से);
+	अगर (पढ़ो(fd, buf, माप(*elf_phdr)) != माप(*elf_phdr)) अणु
+	    लिखो_त्रुटि("read");
+	    निकास(1);
+	पूर्ण
 
-	elf_phdr = (struct elf_phdr *) buf;
+	elf_phdr = (काष्ठा elf_phdr *) buf;
 	offset	 = elf_phdr->p_offset;
 	mem_size = elf_phdr->p_memsz;
 	fil_size = elf_phdr->p_filesz;
 
 	/* work around ELF bug: */
-	if (elf_phdr->p_vaddr < e_entry) {
-	    unsigned long delta = e_entry - elf_phdr->p_vaddr;
+	अगर (elf_phdr->p_vaddr < e_entry) अणु
+	    अचिन्हित दीर्घ delta = e_entry - elf_phdr->p_vaddr;
 	    offset   += delta;
 	    mem_size -= delta;
 	    fil_size -= delta;
 	    elf_phdr->p_vaddr += delta;
-	}
+	पूर्ण
 
-	if (verbose) {
-	    fprintf(stderr, "%s: extracting %#016lx-%#016lx (at %lx)\n",
-		    prog_name, (long) elf_phdr->p_vaddr,
+	अगर (verbose) अणु
+	    ख_लिखो(मानक_त्रुटि, "%s: extracting %#016lx-%#016lx (at %lx)\n",
+		    prog_name, (दीर्घ) elf_phdr->p_vaddr,
 		    elf_phdr->p_vaddr + fil_size, offset);
-	}
-    } else
-#endif
-    {
-	aout = (struct exec *) buf;
+	पूर्ण
+    पूर्ण अन्यथा
+#पूर्ण_अगर
+    अणु
+	aout = (काष्ठा exec *) buf;
 
-	if (!(aout->fh.f_flags & COFF_F_EXEC)) {
-	    fprintf(stderr, "%s: %s is not in executable format\n",
+	अगर (!(aout->fh.f_flags & COFF_F_EXEC)) अणु
+	    ख_लिखो(मानक_त्रुटि, "%s: %s is not in executable format\n",
 		    prog_name, inname);
-	    exit(1);
-	}
+	    निकास(1);
+	पूर्ण
 
-	if (aout->fh.f_opthdr != sizeof(aout->ah)) {
-	    fprintf(stderr, "%s: %s has unexpected optional header size\n",
+	अगर (aout->fh.f_opthdr != माप(aout->ah)) अणु
+	    ख_लिखो(मानक_त्रुटि, "%s: %s has unexpected optional header size\n",
 		    prog_name, inname);
-	    exit(1);
-	}
+	    निकास(1);
+	पूर्ण
 
-	if (N_MAGIC(*aout) != OMAGIC) {
-	    fprintf(stderr, "%s: %s is not an OMAGIC file\n",
+	अगर (N_MAGIC(*aout) != OMAGIC) अणु
+	    ख_लिखो(मानक_त्रुटि, "%s: %s is not an OMAGIC file\n",
 		    prog_name, inname);
-	    exit(1);
-	}
+	    निकास(1);
+	पूर्ण
 	offset = N_TXTOFF(*aout);
 	fil_size = aout->ah.tsize + aout->ah.dsize;
 	mem_size = fil_size + aout->ah.bsize;
 
-	if (verbose) {
-	    fprintf(stderr, "%s: extracting %#016lx-%#016lx (at %lx)\n",
+	अगर (verbose) अणु
+	    ख_लिखो(मानक_त्रुटि, "%s: extracting %#016lx-%#016lx (at %lx)\n",
 		    prog_name, aout->ah.text_start,
 		    aout->ah.text_start + fil_size, offset);
-	}
-    }
+	पूर्ण
+    पूर्ण
 
-    if (lseek(fd, offset, SEEK_SET) != offset) {
-	perror("lseek");
-	exit(1);
-    }
+    अगर (lseek(fd, offset, शुरू_से) != offset) अणु
+	लिखो_त्रुटि("lseek");
+	निकास(1);
+    पूर्ण
 
-    if (verbose) {
-	fprintf(stderr, "%s: copying %lu byte from %s\n",
-		prog_name, (unsigned long) fil_size, inname);
-    }
+    अगर (verbose) अणु
+	ख_लिखो(मानक_त्रुटि, "%s: copying %lu byte from %s\n",
+		prog_name, (अचिन्हित दीर्घ) fil_size, inname);
+    पूर्ण
 
     tocopy = fil_size;
-    while (tocopy > 0) {
+    जबतक (tocopy > 0) अणु
 	n = tocopy;
-	if (n > sizeof(buf)) {
-	    n = sizeof(buf);
-	}
+	अगर (n > माप(buf)) अणु
+	    n = माप(buf);
+	पूर्ण
 	tocopy -= n;
-	if ((size_t) read(fd, buf, n) != n) {
-	    perror("read");
-	    exit(1);
-	}
-	do {
-	    nwritten = write(ofd, buf, n);
-	    if ((ssize_t) nwritten == -1) {
-		perror("write");
-		exit(1);
-	    }
+	अगर ((माप_प्रकार) पढ़ो(fd, buf, n) != n) अणु
+	    लिखो_त्रुटि("read");
+	    निकास(1);
+	पूर्ण
+	करो अणु
+	    nwritten = ग_लिखो(ofd, buf, n);
+	    अगर ((sमाप_प्रकार) nwritten == -1) अणु
+		लिखो_त्रुटि("write");
+		निकास(1);
+	    पूर्ण
 	    n -= nwritten;
-	} while (n > 0);
-    }
+	पूर्ण जबतक (n > 0);
+    पूर्ण
 
-    if (pad) {
+    अगर (pad) अणु
 	mem_size = ((mem_size + pad - 1) / pad) * pad;
-    }
+    पूर्ण
 
     tocopy = mem_size - fil_size;
-    if (tocopy > 0) {
-	fprintf(stderr,
+    अगर (tocopy > 0) अणु
+	ख_लिखो(मानक_त्रुटि,
 		"%s: zero-filling bss and aligning to %lu with %lu bytes\n",
-		prog_name, pad, (unsigned long) tocopy);
+		prog_name, pad, (अचिन्हित दीर्घ) tocopy);
 
-	memset(buf, 0x00, sizeof(buf));
-	do {
+	स_रखो(buf, 0x00, माप(buf));
+	करो अणु
 	    n = tocopy;
-	    if (n > sizeof(buf)) {
-		n = sizeof(buf);
-	    }
-	    nwritten = write(ofd, buf, n);
-	    if ((ssize_t) nwritten == -1) {
-		perror("write");
-		exit(1);
-	    }
+	    अगर (n > माप(buf)) अणु
+		n = माप(buf);
+	    पूर्ण
+	    nwritten = ग_लिखो(ofd, buf, n);
+	    अगर ((sमाप_प्रकार) nwritten == -1) अणु
+		लिखो_त्रुटि("write");
+		निकास(1);
+	    पूर्ण
 	    tocopy -= nwritten;
-	} while (tocopy > 0);
-    }
-    return 0;
-}
+	पूर्ण जबतक (tocopy > 0);
+    पूर्ण
+    वापस 0;
+पूर्ण

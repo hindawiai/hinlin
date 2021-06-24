@@ -1,203 +1,204 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/compiler.h>
-#include <linux/string.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <string.h>
-#include <sys/wait.h>
-#include <perf/cpumap.h>
-#include "tests.h"
-#include "evlist.h"
-#include "evsel.h"
-#include "debug.h"
-#include "parse-events.h"
-#include "thread_map.h"
-#include "target.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/compiler.h>
+#समावेश <linux/माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <माला.स>
+#समावेश <sys/रुको.h>
+#समावेश <perf/cpumap.h>
+#समावेश "tests.h"
+#समावेश "evlist.h"
+#समावेश "evsel.h"
+#समावेश "debug.h"
+#समावेश "parse-events.h"
+#समावेश "thread_map.h"
+#समावेश "target.h"
 
-static int attach__enable_on_exec(struct evlist *evlist)
-{
-	struct evsel *evsel = evlist__last(evlist);
-	struct target target = {
-		.uid = UINT_MAX,
-	};
-	const char *argv[] = { "true", NULL, };
-	char sbuf[STRERR_BUFSIZE];
-	int err;
+अटल पूर्णांक attach__enable_on_exec(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel = evlist__last(evlist);
+	काष्ठा target target = अणु
+		.uid = अच_पूर्णांक_उच्च,
+	पूर्ण;
+	स्थिर अक्षर *argv[] = अणु "true", शून्य, पूर्ण;
+	अक्षर sbuf[STRERR_बफ_मानE];
+	पूर्णांक err;
 
 	pr_debug("attaching to spawned child, enable on exec\n");
 
 	err = evlist__create_maps(evlist, &target);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		pr_debug("Not enough memory to create thread/cpu maps\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = evlist__prepare_workload(evlist, &target, argv, false, NULL);
-	if (err < 0) {
+	err = evlist__prepare_workload(evlist, &target, argv, false, शून्य);
+	अगर (err < 0) अणु
 		pr_debug("Couldn't run the workload!\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	evsel->core.attr.enable_on_exec = 1;
 
-	err = evlist__open(evlist);
-	if (err < 0) {
+	err = evlist__खोलो(evlist);
+	अगर (err < 0) अणु
 		pr_debug("perf_evlist__open: %s\n",
-			 str_error_r(errno, sbuf, sizeof(sbuf)));
-		return err;
-	}
+			 str_error_r(त्रुटि_सं, sbuf, माप(sbuf)));
+		वापस err;
+	पूर्ण
 
-	return evlist__start_workload(evlist) == 1 ? TEST_OK : TEST_FAIL;
-}
+	वापस evlist__start_workload(evlist) == 1 ? TEST_OK : TEST_FAIL;
+पूर्ण
 
-static int detach__enable_on_exec(struct evlist *evlist)
-{
-	waitpid(evlist->workload.pid, NULL, 0);
-	return 0;
-}
+अटल पूर्णांक detach__enable_on_exec(काष्ठा evlist *evlist)
+अणु
+	रुकोpid(evlist->workload.pid, शून्य, 0);
+	वापस 0;
+पूर्ण
 
-static int attach__current_disabled(struct evlist *evlist)
-{
-	struct evsel *evsel = evlist__last(evlist);
-	struct perf_thread_map *threads;
-	int err;
+अटल पूर्णांक attach__current_disabled(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel = evlist__last(evlist);
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+	पूर्णांक err;
 
 	pr_debug("attaching to current thread as disabled\n");
 
-	threads = thread_map__new(-1, getpid(), UINT_MAX);
-	if (threads == NULL) {
+	thपढ़ोs = thपढ़ो_map__new(-1, getpid(), अच_पूर्णांक_उच्च);
+	अगर (thपढ़ोs == शून्य) अणु
 		pr_debug("thread_map__new\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	evsel->core.attr.disabled = 1;
 
-	err = evsel__open_per_thread(evsel, threads);
-	if (err) {
+	err = evsel__खोलो_per_thपढ़ो(evsel, thपढ़ोs);
+	अगर (err) अणु
 		pr_debug("Failed to open event cpu-clock:u\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	perf_thread_map__put(threads);
-	return evsel__enable(evsel) == 0 ? TEST_OK : TEST_FAIL;
-}
+	perf_thपढ़ो_map__put(thपढ़ोs);
+	वापस evsel__enable(evsel) == 0 ? TEST_OK : TEST_FAIL;
+पूर्ण
 
-static int attach__current_enabled(struct evlist *evlist)
-{
-	struct evsel *evsel = evlist__last(evlist);
-	struct perf_thread_map *threads;
-	int err;
+अटल पूर्णांक attach__current_enabled(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel = evlist__last(evlist);
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs;
+	पूर्णांक err;
 
 	pr_debug("attaching to current thread as enabled\n");
 
-	threads = thread_map__new(-1, getpid(), UINT_MAX);
-	if (threads == NULL) {
+	thपढ़ोs = thपढ़ो_map__new(-1, getpid(), अच_पूर्णांक_उच्च);
+	अगर (thपढ़ोs == शून्य) अणु
 		pr_debug("failed to call thread_map__new\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	err = evsel__open_per_thread(evsel, threads);
+	err = evsel__खोलो_per_thपढ़ो(evsel, thपढ़ोs);
 
-	perf_thread_map__put(threads);
-	return err == 0 ? TEST_OK : TEST_FAIL;
-}
+	perf_thपढ़ो_map__put(thपढ़ोs);
+	वापस err == 0 ? TEST_OK : TEST_FAIL;
+पूर्ण
 
-static int detach__disable(struct evlist *evlist)
-{
-	struct evsel *evsel = evlist__last(evlist);
+अटल पूर्णांक detach__disable(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel = evlist__last(evlist);
 
-	return evsel__enable(evsel);
-}
+	वापस evsel__enable(evsel);
+पूर्ण
 
-static int attach__cpu_disabled(struct evlist *evlist)
-{
-	struct evsel *evsel = evlist__last(evlist);
-	struct perf_cpu_map *cpus;
-	int err;
+अटल पूर्णांक attach__cpu_disabled(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel = evlist__last(evlist);
+	काष्ठा perf_cpu_map *cpus;
+	पूर्णांक err;
 
 	pr_debug("attaching to CPU 0 as enabled\n");
 
 	cpus = perf_cpu_map__new("0");
-	if (cpus == NULL) {
+	अगर (cpus == शून्य) अणु
 		pr_debug("failed to call perf_cpu_map__new\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	evsel->core.attr.disabled = 1;
 
-	err = evsel__open_per_cpu(evsel, cpus, -1);
-	if (err) {
-		if (err == -EACCES)
-			return TEST_SKIP;
+	err = evsel__खोलो_per_cpu(evsel, cpus, -1);
+	अगर (err) अणु
+		अगर (err == -EACCES)
+			वापस TEST_SKIP;
 
 		pr_debug("Failed to open event cpu-clock:u\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	perf_cpu_map__put(cpus);
-	return evsel__enable(evsel);
-}
+	वापस evsel__enable(evsel);
+पूर्ण
 
-static int attach__cpu_enabled(struct evlist *evlist)
-{
-	struct evsel *evsel = evlist__last(evlist);
-	struct perf_cpu_map *cpus;
-	int err;
+अटल पूर्णांक attach__cpu_enabled(काष्ठा evlist *evlist)
+अणु
+	काष्ठा evsel *evsel = evlist__last(evlist);
+	काष्ठा perf_cpu_map *cpus;
+	पूर्णांक err;
 
 	pr_debug("attaching to CPU 0 as enabled\n");
 
 	cpus = perf_cpu_map__new("0");
-	if (cpus == NULL) {
+	अगर (cpus == शून्य) अणु
 		pr_debug("failed to call perf_cpu_map__new\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	err = evsel__open_per_cpu(evsel, cpus, -1);
-	if (err == -EACCES)
-		return TEST_SKIP;
+	err = evsel__खोलो_per_cpu(evsel, cpus, -1);
+	अगर (err == -EACCES)
+		वापस TEST_SKIP;
 
 	perf_cpu_map__put(cpus);
-	return err ? TEST_FAIL : TEST_OK;
-}
+	वापस err ? TEST_FAIL : TEST_OK;
+पूर्ण
 
-static int test_times(int (attach)(struct evlist *),
-		      int (detach)(struct evlist *))
-{
-	struct perf_counts_values count;
-	struct evlist *evlist = NULL;
-	struct evsel *evsel;
-	int err = -1, i;
+अटल पूर्णांक test_बार(पूर्णांक (attach)(काष्ठा evlist *),
+		      पूर्णांक (detach)(काष्ठा evlist *))
+अणु
+	काष्ठा perf_counts_values count;
+	काष्ठा evlist *evlist = शून्य;
+	काष्ठा evsel *evsel;
+	पूर्णांक err = -1, i;
 
 	evlist = evlist__new();
-	if (!evlist) {
+	अगर (!evlist) अणु
 		pr_debug("failed to create event list\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
-	err = parse_events(evlist, "cpu-clock:u", NULL);
-	if (err) {
+	err = parse_events(evlist, "cpu-clock:u", शून्य);
+	अगर (err) अणु
 		pr_debug("failed to parse event cpu-clock:u\n");
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	evsel = evlist__last(evlist);
-	evsel->core.attr.read_format |=
+	evsel->core.attr.पढ़ो_क्रमmat |=
 		PERF_FORMAT_TOTAL_TIME_ENABLED |
 		PERF_FORMAT_TOTAL_TIME_RUNNING;
 
 	err = attach(evlist);
-	if (err == TEST_SKIP) {
+	अगर (err == TEST_SKIP) अणु
 		pr_debug("  SKIP  : not enough rights\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	TEST_ASSERT_VAL("failed to attach", !err);
 
-	for (i = 0; i < 100000000; i++) { }
+	क्रम (i = 0; i < 100000000; i++) अणु पूर्ण
 
 	TEST_ASSERT_VAL("failed to detach", !detach(evlist));
 
-	perf_evsel__read(&evsel->core, 0, 0, &count);
+	perf_evsel__पढ़ो(&evsel->core, 0, 0, &count);
 
 	err = !(count.ena == count.run);
 
@@ -207,22 +208,22 @@ static int test_times(int (attach)(struct evlist *),
 
 out_err:
 	evlist__delete(evlist);
-	return !err ? TEST_OK : TEST_FAIL;
-}
+	वापस !err ? TEST_OK : TEST_FAIL;
+पूर्ण
 
 /*
  * This test creates software event 'cpu-clock'
  * attaches it in several ways (explained below)
- * and checks that enabled and running times
+ * and checks that enabled and running बार
  * match.
  */
-int test__event_times(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	int err, ret = 0;
+पूर्णांक test__event_बार(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	पूर्णांक err, ret = 0;
 
-#define _T(attach, detach)			\
-	err = test_times(attach, detach);	\
-	if (err && (ret == TEST_OK || ret == TEST_SKIP))	\
+#घोषणा _T(attach, detach)			\
+	err = test_बार(attach, detach);	\
+	अगर (err && (ret == TEST_OK || ret == TEST_SKIP))	\
 		ret = err;
 
 	/* attach on newly spawned process after exec */
@@ -236,6 +237,6 @@ int test__event_times(struct test *test __maybe_unused, int subtest __maybe_unus
 	/* attach on cpu as enabled */
 	_T(attach__cpu_enabled,      detach__disable)
 
-#undef _T
-	return ret;
-}
+#अघोषित _T
+	वापस ret;
+पूर्ण

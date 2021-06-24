@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,258 +22,258 @@
  *
  * Authors: Ben Skeggs
  */
-#include <core/gpuobj.h>
-#include <core/engine.h>
+#समावेश <core/gpuobj.h>
+#समावेश <core/engine.h>
 
-#include <subdev/instmem.h>
-#include <subdev/bar.h>
-#include <subdev/mmu.h>
+#समावेश <subdev/insपंचांगem.h>
+#समावेश <subdev/bar.h>
+#समावेश <subdev/mmu.h>
 
-/* fast-path, where backend is able to provide direct pointer to memory */
-static u32
-nvkm_gpuobj_rd32_fast(struct nvkm_gpuobj *gpuobj, u32 offset)
-{
-	return ioread32_native(gpuobj->map + offset);
-}
+/* fast-path, where backend is able to provide direct poपूर्णांकer to memory */
+अटल u32
+nvkm_gpuobj_rd32_fast(काष्ठा nvkm_gpuobj *gpuobj, u32 offset)
+अणु
+	वापस ioपढ़ो32_native(gpuobj->map + offset);
+पूर्ण
 
-static void
-nvkm_gpuobj_wr32_fast(struct nvkm_gpuobj *gpuobj, u32 offset, u32 data)
-{
-	iowrite32_native(data, gpuobj->map + offset);
-}
+अटल व्योम
+nvkm_gpuobj_wr32_fast(काष्ठा nvkm_gpuobj *gpuobj, u32 offset, u32 data)
+अणु
+	ioग_लिखो32_native(data, gpuobj->map + offset);
+पूर्ण
 
-/* accessor functions for gpuobjs allocated directly from instmem */
-static int
-nvkm_gpuobj_heap_map(struct nvkm_gpuobj *gpuobj, u64 offset,
-		     struct nvkm_vmm *vmm, struct nvkm_vma *vma,
-		     void *argv, u32 argc)
-{
-	return nvkm_memory_map(gpuobj->memory, offset, vmm, vma, argv, argc);
-}
+/* accessor functions क्रम gpuobjs allocated directly from insपंचांगem */
+अटल पूर्णांक
+nvkm_gpuobj_heap_map(काष्ठा nvkm_gpuobj *gpuobj, u64 offset,
+		     काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma,
+		     व्योम *argv, u32 argc)
+अणु
+	वापस nvkm_memory_map(gpuobj->memory, offset, vmm, vma, argv, argc);
+पूर्ण
 
-static u32
-nvkm_gpuobj_heap_rd32(struct nvkm_gpuobj *gpuobj, u32 offset)
-{
-	return nvkm_ro32(gpuobj->memory, offset);
-}
+अटल u32
+nvkm_gpuobj_heap_rd32(काष्ठा nvkm_gpuobj *gpuobj, u32 offset)
+अणु
+	वापस nvkm_ro32(gpuobj->memory, offset);
+पूर्ण
 
-static void
-nvkm_gpuobj_heap_wr32(struct nvkm_gpuobj *gpuobj, u32 offset, u32 data)
-{
+अटल व्योम
+nvkm_gpuobj_heap_wr32(काष्ठा nvkm_gpuobj *gpuobj, u32 offset, u32 data)
+अणु
 	nvkm_wo32(gpuobj->memory, offset, data);
-}
+पूर्ण
 
-static const struct nvkm_gpuobj_func nvkm_gpuobj_heap;
-static void
-nvkm_gpuobj_heap_release(struct nvkm_gpuobj *gpuobj)
-{
+अटल स्थिर काष्ठा nvkm_gpuobj_func nvkm_gpuobj_heap;
+अटल व्योम
+nvkm_gpuobj_heap_release(काष्ठा nvkm_gpuobj *gpuobj)
+अणु
 	gpuobj->func = &nvkm_gpuobj_heap;
-	nvkm_done(gpuobj->memory);
-}
+	nvkm_करोne(gpuobj->memory);
+पूर्ण
 
-static const struct nvkm_gpuobj_func
-nvkm_gpuobj_heap_fast = {
+अटल स्थिर काष्ठा nvkm_gpuobj_func
+nvkm_gpuobj_heap_fast = अणु
 	.release = nvkm_gpuobj_heap_release,
 	.rd32 = nvkm_gpuobj_rd32_fast,
 	.wr32 = nvkm_gpuobj_wr32_fast,
 	.map = nvkm_gpuobj_heap_map,
-};
+पूर्ण;
 
-static const struct nvkm_gpuobj_func
-nvkm_gpuobj_heap_slow = {
+अटल स्थिर काष्ठा nvkm_gpuobj_func
+nvkm_gpuobj_heap_slow = अणु
 	.release = nvkm_gpuobj_heap_release,
 	.rd32 = nvkm_gpuobj_heap_rd32,
 	.wr32 = nvkm_gpuobj_heap_wr32,
 	.map = nvkm_gpuobj_heap_map,
-};
+पूर्ण;
 
-static void *
-nvkm_gpuobj_heap_acquire(struct nvkm_gpuobj *gpuobj)
-{
+अटल व्योम *
+nvkm_gpuobj_heap_acquire(काष्ठा nvkm_gpuobj *gpuobj)
+अणु
 	gpuobj->map = nvkm_kmap(gpuobj->memory);
-	if (likely(gpuobj->map))
+	अगर (likely(gpuobj->map))
 		gpuobj->func = &nvkm_gpuobj_heap_fast;
-	else
+	अन्यथा
 		gpuobj->func = &nvkm_gpuobj_heap_slow;
-	return gpuobj->map;
-}
+	वापस gpuobj->map;
+पूर्ण
 
-static const struct nvkm_gpuobj_func
-nvkm_gpuobj_heap = {
+अटल स्थिर काष्ठा nvkm_gpuobj_func
+nvkm_gpuobj_heap = अणु
 	.acquire = nvkm_gpuobj_heap_acquire,
 	.map = nvkm_gpuobj_heap_map,
-};
+पूर्ण;
 
-/* accessor functions for gpuobjs sub-allocated from a parent gpuobj */
-static int
-nvkm_gpuobj_map(struct nvkm_gpuobj *gpuobj, u64 offset,
-		struct nvkm_vmm *vmm, struct nvkm_vma *vma,
-		void *argv, u32 argc)
-{
-	return nvkm_memory_map(gpuobj->parent, gpuobj->node->offset + offset,
+/* accessor functions क्रम gpuobjs sub-allocated from a parent gpuobj */
+अटल पूर्णांक
+nvkm_gpuobj_map(काष्ठा nvkm_gpuobj *gpuobj, u64 offset,
+		काष्ठा nvkm_vmm *vmm, काष्ठा nvkm_vma *vma,
+		व्योम *argv, u32 argc)
+अणु
+	वापस nvkm_memory_map(gpuobj->parent, gpuobj->node->offset + offset,
 			       vmm, vma, argv, argc);
-}
+पूर्ण
 
-static u32
-nvkm_gpuobj_rd32(struct nvkm_gpuobj *gpuobj, u32 offset)
-{
-	return nvkm_ro32(gpuobj->parent, gpuobj->node->offset + offset);
-}
+अटल u32
+nvkm_gpuobj_rd32(काष्ठा nvkm_gpuobj *gpuobj, u32 offset)
+अणु
+	वापस nvkm_ro32(gpuobj->parent, gpuobj->node->offset + offset);
+पूर्ण
 
-static void
-nvkm_gpuobj_wr32(struct nvkm_gpuobj *gpuobj, u32 offset, u32 data)
-{
+अटल व्योम
+nvkm_gpuobj_wr32(काष्ठा nvkm_gpuobj *gpuobj, u32 offset, u32 data)
+अणु
 	nvkm_wo32(gpuobj->parent, gpuobj->node->offset + offset, data);
-}
+पूर्ण
 
-static const struct nvkm_gpuobj_func nvkm_gpuobj_func;
-static void
-nvkm_gpuobj_release(struct nvkm_gpuobj *gpuobj)
-{
+अटल स्थिर काष्ठा nvkm_gpuobj_func nvkm_gpuobj_func;
+अटल व्योम
+nvkm_gpuobj_release(काष्ठा nvkm_gpuobj *gpuobj)
+अणु
 	gpuobj->func = &nvkm_gpuobj_func;
-	nvkm_done(gpuobj->parent);
-}
+	nvkm_करोne(gpuobj->parent);
+पूर्ण
 
-static const struct nvkm_gpuobj_func
-nvkm_gpuobj_fast = {
+अटल स्थिर काष्ठा nvkm_gpuobj_func
+nvkm_gpuobj_fast = अणु
 	.release = nvkm_gpuobj_release,
 	.rd32 = nvkm_gpuobj_rd32_fast,
 	.wr32 = nvkm_gpuobj_wr32_fast,
 	.map = nvkm_gpuobj_map,
-};
+पूर्ण;
 
-static const struct nvkm_gpuobj_func
-nvkm_gpuobj_slow = {
+अटल स्थिर काष्ठा nvkm_gpuobj_func
+nvkm_gpuobj_slow = अणु
 	.release = nvkm_gpuobj_release,
 	.rd32 = nvkm_gpuobj_rd32,
 	.wr32 = nvkm_gpuobj_wr32,
 	.map = nvkm_gpuobj_map,
-};
+पूर्ण;
 
-static void *
-nvkm_gpuobj_acquire(struct nvkm_gpuobj *gpuobj)
-{
+अटल व्योम *
+nvkm_gpuobj_acquire(काष्ठा nvkm_gpuobj *gpuobj)
+अणु
 	gpuobj->map = nvkm_kmap(gpuobj->parent);
-	if (likely(gpuobj->map)) {
+	अगर (likely(gpuobj->map)) अणु
 		gpuobj->map  = (u8 *)gpuobj->map + gpuobj->node->offset;
 		gpuobj->func = &nvkm_gpuobj_fast;
-	} else {
+	पूर्ण अन्यथा अणु
 		gpuobj->func = &nvkm_gpuobj_slow;
-	}
-	return gpuobj->map;
-}
+	पूर्ण
+	वापस gpuobj->map;
+पूर्ण
 
-static const struct nvkm_gpuobj_func
-nvkm_gpuobj_func = {
+अटल स्थिर काष्ठा nvkm_gpuobj_func
+nvkm_gpuobj_func = अणु
 	.acquire = nvkm_gpuobj_acquire,
 	.map = nvkm_gpuobj_map,
-};
+पूर्ण;
 
-static int
-nvkm_gpuobj_ctor(struct nvkm_device *device, u32 size, int align, bool zero,
-		 struct nvkm_gpuobj *parent, struct nvkm_gpuobj *gpuobj)
-{
+अटल पूर्णांक
+nvkm_gpuobj_ctor(काष्ठा nvkm_device *device, u32 size, पूर्णांक align, bool zero,
+		 काष्ठा nvkm_gpuobj *parent, काष्ठा nvkm_gpuobj *gpuobj)
+अणु
 	u32 offset;
-	int ret;
+	पूर्णांक ret;
 
-	if (parent) {
-		if (align >= 0) {
+	अगर (parent) अणु
+		अगर (align >= 0) अणु
 			ret = nvkm_mm_head(&parent->heap, 0, 1, size, size,
 					   max(align, 1), &gpuobj->node);
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = nvkm_mm_tail(&parent->heap, 0, 1, size, size,
 					   -align, &gpuobj->node);
-		}
-		if (ret)
-			return ret;
+		पूर्ण
+		अगर (ret)
+			वापस ret;
 
 		gpuobj->parent = parent;
 		gpuobj->func = &nvkm_gpuobj_func;
 		gpuobj->addr = parent->addr + gpuobj->node->offset;
 		gpuobj->size = gpuobj->node->length;
 
-		if (zero) {
+		अगर (zero) अणु
 			nvkm_kmap(gpuobj);
-			for (offset = 0; offset < gpuobj->size; offset += 4)
+			क्रम (offset = 0; offset < gpuobj->size; offset += 4)
 				nvkm_wo32(gpuobj, offset, 0x00000000);
-			nvkm_done(gpuobj);
-		}
-	} else {
+			nvkm_करोne(gpuobj);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = nvkm_memory_new(device, NVKM_MEM_TARGET_INST, size,
-				      abs(align), zero, &gpuobj->memory);
-		if (ret)
-			return ret;
+				      असल(align), zero, &gpuobj->memory);
+		अगर (ret)
+			वापस ret;
 
 		gpuobj->func = &nvkm_gpuobj_heap;
 		gpuobj->addr = nvkm_memory_addr(gpuobj->memory);
 		gpuobj->size = nvkm_memory_size(gpuobj->memory);
-	}
+	पूर्ण
 
-	return nvkm_mm_init(&gpuobj->heap, 0, 0, gpuobj->size, 1);
-}
+	वापस nvkm_mm_init(&gpuobj->heap, 0, 0, gpuobj->size, 1);
+पूर्ण
 
-void
-nvkm_gpuobj_del(struct nvkm_gpuobj **pgpuobj)
-{
-	struct nvkm_gpuobj *gpuobj = *pgpuobj;
-	if (gpuobj) {
-		if (gpuobj->parent)
-			nvkm_mm_free(&gpuobj->parent->heap, &gpuobj->node);
+व्योम
+nvkm_gpuobj_del(काष्ठा nvkm_gpuobj **pgpuobj)
+अणु
+	काष्ठा nvkm_gpuobj *gpuobj = *pgpuobj;
+	अगर (gpuobj) अणु
+		अगर (gpuobj->parent)
+			nvkm_mm_मुक्त(&gpuobj->parent->heap, &gpuobj->node);
 		nvkm_mm_fini(&gpuobj->heap);
 		nvkm_memory_unref(&gpuobj->memory);
-		kfree(*pgpuobj);
-		*pgpuobj = NULL;
-	}
-}
+		kमुक्त(*pgpuobj);
+		*pgpuobj = शून्य;
+	पूर्ण
+पूर्ण
 
-int
-nvkm_gpuobj_new(struct nvkm_device *device, u32 size, int align, bool zero,
-		struct nvkm_gpuobj *parent, struct nvkm_gpuobj **pgpuobj)
-{
-	struct nvkm_gpuobj *gpuobj;
-	int ret;
+पूर्णांक
+nvkm_gpuobj_new(काष्ठा nvkm_device *device, u32 size, पूर्णांक align, bool zero,
+		काष्ठा nvkm_gpuobj *parent, काष्ठा nvkm_gpuobj **pgpuobj)
+अणु
+	काष्ठा nvkm_gpuobj *gpuobj;
+	पूर्णांक ret;
 
-	if (!(gpuobj = *pgpuobj = kzalloc(sizeof(*gpuobj), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(gpuobj = *pgpuobj = kzalloc(माप(*gpuobj), GFP_KERNEL)))
+		वापस -ENOMEM;
 
 	ret = nvkm_gpuobj_ctor(device, size, align, zero, parent, gpuobj);
-	if (ret)
+	अगर (ret)
 		nvkm_gpuobj_del(pgpuobj);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* the below is basically only here to support sharing the paged dma object
- * for PCI(E)GART on <=nv4x chipsets, and should *not* be expected to work
- * anywhere else.
+ * क्रम PCI(E)GART on <=nv4x chipsets, and should *not* be expected to work
+ * anywhere अन्यथा.
  */
 
-int
-nvkm_gpuobj_wrap(struct nvkm_memory *memory, struct nvkm_gpuobj **pgpuobj)
-{
-	if (!(*pgpuobj = kzalloc(sizeof(**pgpuobj), GFP_KERNEL)))
-		return -ENOMEM;
+पूर्णांक
+nvkm_gpuobj_wrap(काष्ठा nvkm_memory *memory, काष्ठा nvkm_gpuobj **pgpuobj)
+अणु
+	अगर (!(*pgpuobj = kzalloc(माप(**pgpuobj), GFP_KERNEL)))
+		वापस -ENOMEM;
 
 	(*pgpuobj)->addr = nvkm_memory_addr(memory);
 	(*pgpuobj)->size = nvkm_memory_size(memory);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void
-nvkm_gpuobj_memcpy_to(struct nvkm_gpuobj *dst, u32 dstoffset, void *src,
+व्योम
+nvkm_gpuobj_स_नकल_to(काष्ठा nvkm_gpuobj *dst, u32 dstoffset, व्योम *src,
 		      u32 length)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < length; i += 4)
+	क्रम (i = 0; i < length; i += 4)
 		nvkm_wo32(dst, dstoffset + i, *(u32 *)(src + i));
-}
+पूर्ण
 
-void
-nvkm_gpuobj_memcpy_from(void *dst, struct nvkm_gpuobj *src, u32 srcoffset,
+व्योम
+nvkm_gpuobj_स_नकल_from(व्योम *dst, काष्ठा nvkm_gpuobj *src, u32 srcoffset,
 			u32 length)
-{
-	int i;
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < length; i += 4)
+	क्रम (i = 0; i < length; i += 4)
 		((u32 *)src)[i / 4] = nvkm_ro32(src, srcoffset + i);
-}
+पूर्ण

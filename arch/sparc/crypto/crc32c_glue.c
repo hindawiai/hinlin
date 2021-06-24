@@ -1,181 +1,182 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* Glue code for CRC32C optimized for sparc64 crypto opcodes.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* Glue code क्रम CRC32C optimized क्रम sparc64 crypto opcodes.
  *
- * This is based largely upon arch/x86/crypto/crc32c-intel.c
+ * This is based largely upon arch/x86/crypto/crc32c-पूर्णांकel.c
  *
  * Copyright (C) 2008 Intel Corporation
- * Authors: Austin Zhang <austin_zhang@linux.intel.com>
- *          Kent Liu <kent.liu@intel.com>
+ * Authors: Austin Zhang <austin_zhang@linux.पूर्णांकel.com>
+ *          Kent Liu <kent.liu@पूर्णांकel.com>
  */
 
-#define pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt)	KBUILD_MODNAME ": " fmt
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/crc32.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/crc32.h>
 
-#include <crypto/internal/hash.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
 
-#include <asm/pstate.h>
-#include <asm/elf.h>
+#समावेश <यंत्र/pstate.h>
+#समावेश <यंत्र/elf.h>
 
-#include "opcodes.h"
+#समावेश "opcodes.h"
 
 /*
  * Setting the seed allows arbitrary accumulators and flexible XOR policy
- * If your algorithm starts with ~0, then XOR with ~0 before you set
+ * If your algorithm starts with ~0, then XOR with ~0 beक्रमe you set
  * the seed.
  */
-static int crc32c_sparc64_setkey(struct crypto_shash *hash, const u8 *key,
-				 unsigned int keylen)
-{
+अटल पूर्णांक crc32c_sparc64_setkey(काष्ठा crypto_shash *hash, स्थिर u8 *key,
+				 अचिन्हित पूर्णांक keylen)
+अणु
 	u32 *mctx = crypto_shash_ctx(hash);
 
-	if (keylen != sizeof(u32))
-		return -EINVAL;
+	अगर (keylen != माप(u32))
+		वापस -EINVAL;
 	*mctx = le32_to_cpup((__le32 *)key);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crc32c_sparc64_init(struct shash_desc *desc)
-{
+अटल पूर्णांक crc32c_sparc64_init(काष्ठा shash_desc *desc)
+अणु
 	u32 *mctx = crypto_shash_ctx(desc->tfm);
 	u32 *crcp = shash_desc_ctx(desc);
 
 	*crcp = *mctx;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-extern void crc32c_sparc64(u32 *crcp, const u64 *data, unsigned int len);
+बाह्य व्योम crc32c_sparc64(u32 *crcp, स्थिर u64 *data, अचिन्हित पूर्णांक len);
 
-static void crc32c_compute(u32 *crcp, const u64 *data, unsigned int len)
-{
-	unsigned int asm_len;
+अटल व्योम crc32c_compute(u32 *crcp, स्थिर u64 *data, अचिन्हित पूर्णांक len)
+अणु
+	अचिन्हित पूर्णांक यंत्र_len;
 
-	asm_len = len & ~7U;
-	if (asm_len) {
-		crc32c_sparc64(crcp, data, asm_len);
-		data += asm_len / 8;
-		len -= asm_len;
-	}
-	if (len)
-		*crcp = __crc32c_le(*crcp, (const unsigned char *) data, len);
-}
+	यंत्र_len = len & ~7U;
+	अगर (यंत्र_len) अणु
+		crc32c_sparc64(crcp, data, यंत्र_len);
+		data += यंत्र_len / 8;
+		len -= यंत्र_len;
+	पूर्ण
+	अगर (len)
+		*crcp = __crc32c_le(*crcp, (स्थिर अचिन्हित अक्षर *) data, len);
+पूर्ण
 
-static int crc32c_sparc64_update(struct shash_desc *desc, const u8 *data,
-				 unsigned int len)
-{
+अटल पूर्णांक crc32c_sparc64_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
+				 अचिन्हित पूर्णांक len)
+अणु
 	u32 *crcp = shash_desc_ctx(desc);
 
-	crc32c_compute(crcp, (const u64 *) data, len);
+	crc32c_compute(crcp, (स्थिर u64 *) data, len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __crc32c_sparc64_finup(u32 *crcp, const u8 *data, unsigned int len,
+अटल पूर्णांक __crc32c_sparc64_finup(u32 *crcp, स्थिर u8 *data, अचिन्हित पूर्णांक len,
 				  u8 *out)
-{
-	u32 tmp = *crcp;
+अणु
+	u32 पंचांगp = *crcp;
 
-	crc32c_compute(&tmp, (const u64 *) data, len);
+	crc32c_compute(&पंचांगp, (स्थिर u64 *) data, len);
 
-	*(__le32 *) out = ~cpu_to_le32(tmp);
-	return 0;
-}
+	*(__le32 *) out = ~cpu_to_le32(पंचांगp);
+	वापस 0;
+पूर्ण
 
-static int crc32c_sparc64_finup(struct shash_desc *desc, const u8 *data,
-				unsigned int len, u8 *out)
-{
-	return __crc32c_sparc64_finup(shash_desc_ctx(desc), data, len, out);
-}
+अटल पूर्णांक crc32c_sparc64_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
+				अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	वापस __crc32c_sparc64_finup(shash_desc_ctx(desc), data, len, out);
+पूर्ण
 
-static int crc32c_sparc64_final(struct shash_desc *desc, u8 *out)
-{
+अटल पूर्णांक crc32c_sparc64_final(काष्ठा shash_desc *desc, u8 *out)
+अणु
 	u32 *crcp = shash_desc_ctx(desc);
 
 	*(__le32 *) out = ~cpu_to_le32p(crcp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int crc32c_sparc64_digest(struct shash_desc *desc, const u8 *data,
-				 unsigned int len, u8 *out)
-{
-	return __crc32c_sparc64_finup(crypto_shash_ctx(desc->tfm), data, len,
+अटल पूर्णांक crc32c_sparc64_digest(काष्ठा shash_desc *desc, स्थिर u8 *data,
+				 अचिन्हित पूर्णांक len, u8 *out)
+अणु
+	वापस __crc32c_sparc64_finup(crypto_shash_ctx(desc->tfm), data, len,
 				      out);
-}
+पूर्ण
 
-static int crc32c_sparc64_cra_init(struct crypto_tfm *tfm)
-{
+अटल पूर्णांक crc32c_sparc64_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
 	u32 *key = crypto_tfm_ctx(tfm);
 
 	*key = ~0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define CHKSUM_BLOCK_SIZE	1
-#define CHKSUM_DIGEST_SIZE	4
+#घोषणा CHKSUM_BLOCK_SIZE	1
+#घोषणा CHKSUM_DIGEST_SIZE	4
 
-static struct shash_alg alg = {
+अटल काष्ठा shash_alg alg = अणु
 	.setkey			=	crc32c_sparc64_setkey,
 	.init			=	crc32c_sparc64_init,
 	.update			=	crc32c_sparc64_update,
 	.final			=	crc32c_sparc64_final,
 	.finup			=	crc32c_sparc64_finup,
 	.digest			=	crc32c_sparc64_digest,
-	.descsize		=	sizeof(u32),
+	.descsize		=	माप(u32),
 	.digestsize		=	CHKSUM_DIGEST_SIZE,
-	.base			=	{
+	.base			=	अणु
 		.cra_name		=	"crc32c",
 		.cra_driver_name	=	"crc32c-sparc64",
 		.cra_priority		=	SPARC_CR_OPCODE_PRIORITY,
 		.cra_flags		=	CRYPTO_ALG_OPTIONAL_KEY,
 		.cra_blocksize		=	CHKSUM_BLOCK_SIZE,
-		.cra_ctxsize		=	sizeof(u32),
+		.cra_ctxsize		=	माप(u32),
 		.cra_alignmask		=	7,
 		.cra_module		=	THIS_MODULE,
 		.cra_init		=	crc32c_sparc64_cra_init,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static bool __init sparc64_has_crc32c_opcode(void)
-{
-	unsigned long cfr;
+अटल bool __init sparc64_has_crc32c_opcode(व्योम)
+अणु
+	अचिन्हित दीर्घ cfr;
 
-	if (!(sparc64_elf_hwcap & HWCAP_SPARC_CRYPTO))
-		return false;
+	अगर (!(sparc64_elf_hwcap & HWCAP_SPARC_CRYPTO))
+		वापस false;
 
-	__asm__ __volatile__("rd %%asr26, %0" : "=r" (cfr));
-	if (!(cfr & CFR_CRC32C))
-		return false;
+	__यंत्र__ __अस्थिर__("rd %%asr26, %0" : "=r" (cfr));
+	अगर (!(cfr & CFR_CRC32C))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int __init crc32c_sparc64_mod_init(void)
-{
-	if (sparc64_has_crc32c_opcode()) {
+अटल पूर्णांक __init crc32c_sparc64_mod_init(व्योम)
+अणु
+	अगर (sparc64_has_crc32c_opcode()) अणु
 		pr_info("Using sparc64 crc32c opcode optimized CRC32C implementation\n");
-		return crypto_register_shash(&alg);
-	}
+		वापस crypto_रेजिस्टर_shash(&alg);
+	पूर्ण
 	pr_info("sparc64 crc32c opcode not available.\n");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static void __exit crc32c_sparc64_mod_fini(void)
-{
-	crypto_unregister_shash(&alg);
-}
+अटल व्योम __निकास crc32c_sparc64_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_shash(&alg);
+पूर्ण
 
 module_init(crc32c_sparc64_mod_init);
-module_exit(crc32c_sparc64_mod_fini);
+module_निकास(crc32c_sparc64_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("CRC32c (Castagnoli), sparc64 crc32c opcode accelerated");
 
 MODULE_ALIAS_CRYPTO("crc32c");
 
-#include "crop_devid.c"
+#समावेश "crop_devid.c"

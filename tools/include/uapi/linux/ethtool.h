@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * ethtool.h: Defines for Linux ethtool.
+ * ethtool.h: Defines क्रम Linux ethtool.
  *
  * Copyright (C) 1998 David S. Miller (davem@redhat.com)
  * Copyright 2001 Jeff Garzik <jgarzik@pobox.com>
- * Portions Copyright 2001 Sun Microsystems (thockin@sun.com)
- * Portions Copyright 2002 Intel (eli.kupermann@intel.com,
- *                                christopher.leech@intel.com,
- *                                scott.feldman@intel.com)
- * Portions Copyright (C) Sun Microsystems 2008
+ * Portions Copyright 2001 Sun Microप्रणालीs (thockin@sun.com)
+ * Portions Copyright 2002 Intel (eli.kupermann@पूर्णांकel.com,
+ *                                christopher.leech@पूर्णांकel.com,
+ *                                scott.feldman@पूर्णांकel.com)
+ * Portions Copyright (C) Sun Microप्रणालीs 2008
  */
 
-#ifndef _UAPI_LINUX_ETHTOOL_H
-#define _UAPI_LINUX_ETHTOOL_H
+#अगर_अघोषित _UAPI_LINUX_ETHTOOL_H
+#घोषणा _UAPI_LINUX_ETHTOOL_H
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/if_ether.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/अगर_ether.h>
 
-#define ETHTOOL_GCHANNELS       0x0000003c /* Get no of channels */
+#घोषणा ETHTOOL_GCHANNELS       0x0000003c /* Get no of channels */
 
 /**
- * struct ethtool_channels - configuring number of network channel
- * @cmd: ETHTOOL_{G,S}CHANNELS
+ * काष्ठा ethtool_channels - configuring number of network channel
+ * @cmd: ETHTOOL_अणुG,Sपूर्णCHANNELS
  * @max_rx: Read only. Maximum number of receive channel the driver support.
  * @max_tx: Read only. Maximum number of transmit channel the driver support.
  * @max_other: Read only. Maximum number of other channel the driver support.
@@ -36,7 +37,7 @@
  * This can be used to configure RX, TX and other channels.
  */
 
-struct ethtool_channels {
+काष्ठा ethtool_channels अणु
 	__u32	cmd;
 	__u32	max_rx;
 	__u32	max_tx;
@@ -46,6 +47,6 @@ struct ethtool_channels {
 	__u32	tx_count;
 	__u32	other_count;
 	__u32	combined_count;
-};
+पूर्ण;
 
-#endif /* _UAPI_LINUX_ETHTOOL_H */
+#पूर्ण_अगर /* _UAPI_LINUX_ETHTOOL_H */

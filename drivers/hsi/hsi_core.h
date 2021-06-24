@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * HSI framework internal interfaces,
+ * HSI framework पूर्णांकernal पूर्णांकerfaces,
  *
  * Copyright (C) 2010 Nokia Corporation. All rights reserved.
  *
  * Contact: Carlos Chinea <carlos.chinea@nokia.com>
  */
 
-#ifndef __LINUX_HSI_CORE_H__
-#define __LINUX_HSI_CORE_H__
+#अगर_अघोषित __LINUX_HSI_CORE_H__
+#घोषणा __LINUX_HSI_CORE_H__
 
-#include <linux/hsi/hsi.h>
+#समावेश <linux/hsi/hsi.h>
 
-struct hsi_cl_info {
-	struct list_head	list;
-	struct hsi_board_info	info;
-};
+काष्ठा hsi_cl_info अणु
+	काष्ठा list_head	list;
+	काष्ठा hsi_board_info	info;
+पूर्ण;
 
-extern struct list_head hsi_board_list;
+बाह्य काष्ठा list_head hsi_board_list;
 
-#endif /* __LINUX_HSI_CORE_H__ */
+#पूर्ण_अगर /* __LINUX_HSI_CORE_H__ */

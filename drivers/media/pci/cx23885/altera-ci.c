@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * altera-ci.c
  *
@@ -13,7 +14,7 @@
  * GPIO-0 ~INT in
  * GPIO-1 TMS out
  * GPIO-2 ~reset chips out
- * GPIO-3 to GPIO-10 data/addr for CA in/out
+ * GPIO-3 to GPIO-10 data/addr क्रम CA in/out
  * GPIO-11 ~CS out
  * GPIO-12 AD_RG out
  * GPIO-13 ~WR out
@@ -24,7 +25,7 @@
  * GPIO-18 TDI out
  */
 /*
- *  Bit definitions for MC417_RWD and MC417_OEN registers
+ *  Bit definitions क्रम MC417_RWD and MC417_OEN रेजिस्टरs
  * bits 31-16
  * +-----------+
  * | Reserved  |
@@ -39,719 +40,719 @@
  * +-------+-------+-------+-------+-------+-------+-------+-------+
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <media/dvb_demux.h>
-#include <media/dvb_frontend.h>
-#include "altera-ci.h"
-#include <media/dvb_ca_en50221.h>
+#समावेश <media/dvb_demux.h>
+#समावेश <media/dvb_frontend.h>
+#समावेश "altera-ci.h"
+#समावेश <media/dvb_ca_en50221.h>
 
 /* FPGA regs */
-#define NETUP_CI_INT_CTRL	0x00
-#define NETUP_CI_BUSCTRL2	0x01
-#define NETUP_CI_ADDR0		0x04
-#define NETUP_CI_ADDR1		0x05
-#define NETUP_CI_DATA		0x06
-#define NETUP_CI_BUSCTRL	0x07
-#define NETUP_CI_PID_ADDR0	0x08
-#define NETUP_CI_PID_ADDR1	0x09
-#define NETUP_CI_PID_DATA	0x0a
-#define NETUP_CI_TSA_DIV	0x0c
-#define NETUP_CI_TSB_DIV	0x0d
-#define NETUP_CI_REVISION	0x0f
+#घोषणा NETUP_CI_INT_CTRL	0x00
+#घोषणा NETUP_CI_BUSCTRL2	0x01
+#घोषणा NETUP_CI_ADDR0		0x04
+#घोषणा NETUP_CI_ADDR1		0x05
+#घोषणा NETUP_CI_DATA		0x06
+#घोषणा NETUP_CI_BUSCTRL	0x07
+#घोषणा NETUP_CI_PID_ADDR0	0x08
+#घोषणा NETUP_CI_PID_ADDR1	0x09
+#घोषणा NETUP_CI_PID_DATA	0x0a
+#घोषणा NETUP_CI_TSA_DIV	0x0c
+#घोषणा NETUP_CI_TSB_DIV	0x0d
+#घोषणा NETUP_CI_REVISION	0x0f
 
-/* const for ci op */
-#define NETUP_CI_FLG_CTL	1
-#define NETUP_CI_FLG_RD		1
-#define NETUP_CI_FLG_AD		1
+/* स्थिर क्रम ci op */
+#घोषणा NETUP_CI_FLG_CTL	1
+#घोषणा NETUP_CI_FLG_RD		1
+#घोषणा NETUP_CI_FLG_AD		1
 
-static unsigned int ci_dbg;
-module_param(ci_dbg, int, 0644);
+अटल अचिन्हित पूर्णांक ci_dbg;
+module_param(ci_dbg, पूर्णांक, 0644);
 MODULE_PARM_DESC(ci_dbg, "Enable CI debugging");
 
-static unsigned int pid_dbg;
-module_param(pid_dbg, int, 0644);
+अटल अचिन्हित पूर्णांक pid_dbg;
+module_param(pid_dbg, पूर्णांक, 0644);
 MODULE_PARM_DESC(pid_dbg, "Enable PID filtering debugging");
 
 MODULE_DESCRIPTION("altera FPGA CI module");
 MODULE_AUTHOR("Igor M. Liplianin  <liplianin@netup.ru>");
 MODULE_LICENSE("GPL");
 
-#define ci_dbg_print(fmt, args...) \
-	do { \
-		if (ci_dbg) \
-			printk(KERN_DEBUG pr_fmt("%s: " fmt), \
+#घोषणा ci_dbg_prपूर्णांक(fmt, args...) \
+	करो अणु \
+		अगर (ci_dbg) \
+			prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt), \
 			       __func__, ##args); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-#define pid_dbg_print(fmt, args...) \
-	do { \
-		if (pid_dbg) \
-			printk(KERN_DEBUG pr_fmt("%s: " fmt), \
+#घोषणा pid_dbg_prपूर्णांक(fmt, args...) \
+	करो अणु \
+		अगर (pid_dbg) \
+			prपूर्णांकk(KERN_DEBUG pr_fmt("%s: " fmt), \
 			       __func__, ##args); \
-	} while (0)
+	पूर्ण जबतक (0)
 
-struct altera_ci_state;
-struct netup_hw_pid_filter;
+काष्ठा altera_ci_state;
+काष्ठा netup_hw_pid_filter;
 
-struct fpga_internal {
-	void *dev;
-	struct mutex fpga_mutex;/* two CI's on the same fpga */
-	struct netup_hw_pid_filter *pid_filt[2];
-	struct altera_ci_state *state[2];
-	struct work_struct work;
-	int (*fpga_rw) (void *dev, int flag, int data, int rw);
-	int cis_used;
-	int filts_used;
-	int strt_wrk;
-};
+काष्ठा fpga_पूर्णांकernal अणु
+	व्योम *dev;
+	काष्ठा mutex fpga_mutex;/* two CI's on the same fpga */
+	काष्ठा netup_hw_pid_filter *pid_filt[2];
+	काष्ठा altera_ci_state *state[2];
+	काष्ठा work_काष्ठा work;
+	पूर्णांक (*fpga_rw) (व्योम *dev, पूर्णांक flag, पूर्णांक data, पूर्णांक rw);
+	पूर्णांक cis_used;
+	पूर्णांक filts_used;
+	पूर्णांक strt_wrk;
+पूर्ण;
 
-/* stores all private variables for communication with CI */
-struct altera_ci_state {
-	struct fpga_internal *internal;
-	struct dvb_ca_en50221 ca;
-	int status;
-	int nr;
-};
+/* stores all निजी variables क्रम communication with CI */
+काष्ठा altera_ci_state अणु
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकernal;
+	काष्ठा dvb_ca_en50221 ca;
+	पूर्णांक status;
+	पूर्णांक nr;
+पूर्ण;
 
-/* stores all private variables for hardware pid filtering */
-struct netup_hw_pid_filter {
-	struct fpga_internal *internal;
-	struct dvb_demux *demux;
+/* stores all निजी variables क्रम hardware pid filtering */
+काष्ठा netup_hw_pid_filter अणु
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकernal;
+	काष्ठा dvb_demux *demux;
 	/* save old functions */
-	int (*start_feed)(struct dvb_demux_feed *feed);
-	int (*stop_feed)(struct dvb_demux_feed *feed);
+	पूर्णांक (*start_feed)(काष्ठा dvb_demux_feed *feed);
+	पूर्णांक (*stop_feed)(काष्ठा dvb_demux_feed *feed);
 
-	int status;
-	int nr;
-};
+	पूर्णांक status;
+	पूर्णांक nr;
+पूर्ण;
 
-/* internal params node */
-struct fpga_inode {
-	/* pointer for internal params, one for each pair of CI's */
-	struct fpga_internal		*internal;
-	struct fpga_inode		*next_inode;
-};
+/* पूर्णांकernal params node */
+काष्ठा fpga_inode अणु
+	/* poपूर्णांकer क्रम पूर्णांकernal params, one क्रम each pair of CI's */
+	काष्ठा fpga_पूर्णांकernal		*पूर्णांकernal;
+	काष्ठा fpga_inode		*next_inode;
+पूर्ण;
 
-/* first internal params */
-static struct fpga_inode *fpga_first_inode;
+/* first पूर्णांकernal params */
+अटल काष्ठा fpga_inode *fpga_first_inode;
 
 /* find chip by dev */
-static struct fpga_inode *find_inode(void *dev)
-{
-	struct fpga_inode *temp_chip = fpga_first_inode;
+अटल काष्ठा fpga_inode *find_inode(व्योम *dev)
+अणु
+	काष्ठा fpga_inode *temp_chip = fpga_first_inode;
 
-	if (temp_chip == NULL)
-		return temp_chip;
+	अगर (temp_chip == शून्य)
+		वापस temp_chip;
 
 	/*
-	 Search for the last fpga CI chip or
+	 Search क्रम the last fpga CI chip or
 	 find it by dev */
-	while ((temp_chip != NULL) &&
-				(temp_chip->internal->dev != dev))
+	जबतक ((temp_chip != शून्य) &&
+				(temp_chip->पूर्णांकernal->dev != dev))
 		temp_chip = temp_chip->next_inode;
 
-	return temp_chip;
-}
+	वापस temp_chip;
+पूर्ण
 /* check demux */
-static struct fpga_internal *check_filter(struct fpga_internal *temp_int,
-						void *demux_dev, int filt_nr)
-{
-	if (temp_int == NULL)
-		return NULL;
+अटल काष्ठा fpga_पूर्णांकernal *check_filter(काष्ठा fpga_पूर्णांकernal *temp_पूर्णांक,
+						व्योम *demux_dev, पूर्णांक filt_nr)
+अणु
+	अगर (temp_पूर्णांक == शून्य)
+		वापस शून्य;
 
-	if ((temp_int->pid_filt[filt_nr]) == NULL)
-		return NULL;
+	अगर ((temp_पूर्णांक->pid_filt[filt_nr]) == शून्य)
+		वापस शून्य;
 
-	if (temp_int->pid_filt[filt_nr]->demux == demux_dev)
-		return temp_int;
+	अगर (temp_पूर्णांक->pid_filt[filt_nr]->demux == demux_dev)
+		वापस temp_पूर्णांक;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /* find chip by demux */
-static struct fpga_inode *find_dinode(void *demux_dev)
-{
-	struct fpga_inode *temp_chip = fpga_first_inode;
-	struct fpga_internal *temp_int;
+अटल काष्ठा fpga_inode *find_dinode(व्योम *demux_dev)
+अणु
+	काष्ठा fpga_inode *temp_chip = fpga_first_inode;
+	काष्ठा fpga_पूर्णांकernal *temp_पूर्णांक;
 
 	/*
 	 * Search of the last fpga CI chip or
 	 * find it by demux
 	 */
-	while (temp_chip != NULL) {
-		if (temp_chip->internal != NULL) {
-			temp_int = temp_chip->internal;
-			if (check_filter(temp_int, demux_dev, 0))
-				break;
-			if (check_filter(temp_int, demux_dev, 1))
-				break;
-		}
+	जबतक (temp_chip != शून्य) अणु
+		अगर (temp_chip->पूर्णांकernal != शून्य) अणु
+			temp_पूर्णांक = temp_chip->पूर्णांकernal;
+			अगर (check_filter(temp_पूर्णांक, demux_dev, 0))
+				अवरोध;
+			अगर (check_filter(temp_पूर्णांक, demux_dev, 1))
+				अवरोध;
+		पूर्ण
 
 		temp_chip = temp_chip->next_inode;
-	}
+	पूर्ण
 
-	return temp_chip;
-}
+	वापस temp_chip;
+पूर्ण
 
 /* deallocating chip */
-static void remove_inode(struct fpga_internal *internal)
-{
-	struct fpga_inode *prev_node = fpga_first_inode;
-	struct fpga_inode *del_node = find_inode(internal->dev);
+अटल व्योम हटाओ_inode(काष्ठा fpga_पूर्णांकernal *पूर्णांकernal)
+अणु
+	काष्ठा fpga_inode *prev_node = fpga_first_inode;
+	काष्ठा fpga_inode *del_node = find_inode(पूर्णांकernal->dev);
 
-	if (del_node != NULL) {
-		if (del_node == fpga_first_inode) {
+	अगर (del_node != शून्य) अणु
+		अगर (del_node == fpga_first_inode) अणु
 			fpga_first_inode = del_node->next_inode;
-		} else {
-			while (prev_node->next_inode != del_node)
+		पूर्ण अन्यथा अणु
+			जबतक (prev_node->next_inode != del_node)
 				prev_node = prev_node->next_inode;
 
-			if (del_node->next_inode == NULL)
-				prev_node->next_inode = NULL;
-			else
+			अगर (del_node->next_inode == शून्य)
+				prev_node->next_inode = शून्य;
+			अन्यथा
 				prev_node->next_inode =
 					prev_node->next_inode->next_inode;
-		}
+		पूर्ण
 
-		kfree(del_node);
-	}
-}
+		kमुक्त(del_node);
+	पूर्ण
+पूर्ण
 
 /* allocating new chip */
-static struct fpga_inode *append_internal(struct fpga_internal *internal)
-{
-	struct fpga_inode *new_node = fpga_first_inode;
+अटल काष्ठा fpga_inode *append_पूर्णांकernal(काष्ठा fpga_पूर्णांकernal *पूर्णांकernal)
+अणु
+	काष्ठा fpga_inode *new_node = fpga_first_inode;
 
-	if (new_node == NULL) {
-		new_node = kmalloc(sizeof(struct fpga_inode), GFP_KERNEL);
+	अगर (new_node == शून्य) अणु
+		new_node = kदो_स्मृति(माप(काष्ठा fpga_inode), GFP_KERNEL);
 		fpga_first_inode = new_node;
-	} else {
-		while (new_node->next_inode != NULL)
+	पूर्ण अन्यथा अणु
+		जबतक (new_node->next_inode != शून्य)
 			new_node = new_node->next_inode;
 
 		new_node->next_inode =
-				kmalloc(sizeof(struct fpga_inode), GFP_KERNEL);
-		if (new_node->next_inode != NULL)
+				kदो_स्मृति(माप(काष्ठा fpga_inode), GFP_KERNEL);
+		अगर (new_node->next_inode != शून्य)
 			new_node = new_node->next_inode;
-		else
-			new_node = NULL;
-	}
+		अन्यथा
+			new_node = शून्य;
+	पूर्ण
 
-	if (new_node != NULL) {
-		new_node->internal = internal;
-		new_node->next_inode = NULL;
-	}
+	अगर (new_node != शून्य) अणु
+		new_node->पूर्णांकernal = पूर्णांकernal;
+		new_node->next_inode = शून्य;
+	पूर्ण
 
-	return new_node;
-}
+	वापस new_node;
+पूर्ण
 
-static int netup_fpga_op_rw(struct fpga_internal *inter, int addr,
-							u8 val, u8 read)
-{
-	inter->fpga_rw(inter->dev, NETUP_CI_FLG_AD, addr, 0);
-	return inter->fpga_rw(inter->dev, 0, val, read);
-}
+अटल पूर्णांक netup_fpga_op_rw(काष्ठा fpga_पूर्णांकernal *पूर्णांकer, पूर्णांक addr,
+							u8 val, u8 पढ़ो)
+अणु
+	पूर्णांकer->fpga_rw(पूर्णांकer->dev, NETUP_CI_FLG_AD, addr, 0);
+	वापस पूर्णांकer->fpga_rw(पूर्णांकer->dev, 0, val, पढ़ो);
+पूर्ण
 
-/* flag - mem/io, read - read/write */
-static int altera_ci_op_cam(struct dvb_ca_en50221 *en50221, int slot,
-				u8 flag, u8 read, int addr, u8 val)
-{
+/* flag - mem/io, पढ़ो - पढ़ो/ग_लिखो */
+अटल पूर्णांक altera_ci_op_cam(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot,
+				u8 flag, u8 पढ़ो, पूर्णांक addr, u8 val)
+अणु
 
-	struct altera_ci_state *state = en50221->data;
-	struct fpga_internal *inter = state->internal;
+	काष्ठा altera_ci_state *state = en50221->data;
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = state->पूर्णांकernal;
 
 	u8 store;
-	int mem = 0;
+	पूर्णांक mem = 0;
 
-	if (0 != slot)
-		return -EINVAL;
+	अगर (0 != slot)
+		वापस -EINVAL;
 
-	mutex_lock(&inter->fpga_mutex);
+	mutex_lock(&पूर्णांकer->fpga_mutex);
 
-	netup_fpga_op_rw(inter, NETUP_CI_ADDR0, ((addr << 1) & 0xfe), 0);
-	netup_fpga_op_rw(inter, NETUP_CI_ADDR1, ((addr >> 7) & 0x7f), 0);
-	store = netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL, 0, NETUP_CI_FLG_RD);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_ADDR0, ((addr << 1) & 0xfe), 0);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_ADDR1, ((addr >> 7) & 0x7f), 0);
+	store = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL, 0, NETUP_CI_FLG_RD);
 
 	store &= 0x0f;
 	store |= ((state->nr << 7) | (flag << 6));
 
-	netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL, store, 0);
-	mem = netup_fpga_op_rw(inter, NETUP_CI_DATA, val, read);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL, store, 0);
+	mem = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_DATA, val, पढ़ो);
 
-	mutex_unlock(&inter->fpga_mutex);
+	mutex_unlock(&पूर्णांकer->fpga_mutex);
 
-	ci_dbg_print("%s: %s: addr=[0x%02x], %s=%x\n", __func__,
-			(read) ? "read" : "write", addr,
+	ci_dbg_prपूर्णांक("%s: %s: addr=[0x%02x], %s=%x\n", __func__,
+			(पढ़ो) ? "read" : "write", addr,
 			(flag == NETUP_CI_FLG_CTL) ? "ctl" : "mem",
-			(read) ? mem : val);
+			(पढ़ो) ? mem : val);
 
-	return mem;
-}
+	वापस mem;
+पूर्ण
 
-static int altera_ci_read_attribute_mem(struct dvb_ca_en50221 *en50221,
-					int slot, int addr)
-{
-	return altera_ci_op_cam(en50221, slot, 0, NETUP_CI_FLG_RD, addr, 0);
-}
+अटल पूर्णांक altera_ci_पढ़ो_attribute_mem(काष्ठा dvb_ca_en50221 *en50221,
+					पूर्णांक slot, पूर्णांक addr)
+अणु
+	वापस altera_ci_op_cam(en50221, slot, 0, NETUP_CI_FLG_RD, addr, 0);
+पूर्ण
 
-static int altera_ci_write_attribute_mem(struct dvb_ca_en50221 *en50221,
-					 int slot, int addr, u8 data)
-{
-	return altera_ci_op_cam(en50221, slot, 0, 0, addr, data);
-}
+अटल पूर्णांक altera_ci_ग_लिखो_attribute_mem(काष्ठा dvb_ca_en50221 *en50221,
+					 पूर्णांक slot, पूर्णांक addr, u8 data)
+अणु
+	वापस altera_ci_op_cam(en50221, slot, 0, 0, addr, data);
+पूर्ण
 
-static int altera_ci_read_cam_ctl(struct dvb_ca_en50221 *en50221,
-				  int slot, u8 addr)
-{
-	return altera_ci_op_cam(en50221, slot, NETUP_CI_FLG_CTL,
+अटल पूर्णांक altera_ci_पढ़ो_cam_ctl(काष्ठा dvb_ca_en50221 *en50221,
+				  पूर्णांक slot, u8 addr)
+अणु
+	वापस altera_ci_op_cam(en50221, slot, NETUP_CI_FLG_CTL,
 						NETUP_CI_FLG_RD, addr, 0);
-}
+पूर्ण
 
-static int altera_ci_write_cam_ctl(struct dvb_ca_en50221 *en50221, int slot,
+अटल पूर्णांक altera_ci_ग_लिखो_cam_ctl(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot,
 				   u8 addr, u8 data)
-{
-	return altera_ci_op_cam(en50221, slot, NETUP_CI_FLG_CTL, 0, addr, data);
-}
+अणु
+	वापस altera_ci_op_cam(en50221, slot, NETUP_CI_FLG_CTL, 0, addr, data);
+पूर्ण
 
-static int altera_ci_slot_reset(struct dvb_ca_en50221 *en50221, int slot)
-{
-	struct altera_ci_state *state = en50221->data;
-	struct fpga_internal *inter = state->internal;
-	/* reasonable timeout for CI reset is 10 seconds */
-	unsigned long t_out = jiffies + msecs_to_jiffies(9999);
-	int ret;
+अटल पूर्णांक altera_ci_slot_reset(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot)
+अणु
+	काष्ठा altera_ci_state *state = en50221->data;
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = state->पूर्णांकernal;
+	/* reasonable समयout क्रम CI reset is 10 seconds */
+	अचिन्हित दीर्घ t_out = jअगरfies + msecs_to_jअगरfies(9999);
+	पूर्णांक ret;
 
-	ci_dbg_print("%s\n", __func__);
+	ci_dbg_prपूर्णांक("%s\n", __func__);
 
-	if (0 != slot)
-		return -EINVAL;
+	अगर (0 != slot)
+		वापस -EINVAL;
 
-	mutex_lock(&inter->fpga_mutex);
+	mutex_lock(&पूर्णांकer->fpga_mutex);
 
-	ret = netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL, 0, NETUP_CI_FLG_RD);
-	netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL,
+	ret = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL, 0, NETUP_CI_FLG_RD);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL,
 				(ret & 0xcf) | (1 << (5 - state->nr)), 0);
 
-	mutex_unlock(&inter->fpga_mutex);
+	mutex_unlock(&पूर्णांकer->fpga_mutex);
 
-	for (;;) {
+	क्रम (;;) अणु
 		msleep(50);
 
-		mutex_lock(&inter->fpga_mutex);
+		mutex_lock(&पूर्णांकer->fpga_mutex);
 
-		ret = netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL,
+		ret = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL,
 						0, NETUP_CI_FLG_RD);
-		mutex_unlock(&inter->fpga_mutex);
+		mutex_unlock(&पूर्णांकer->fpga_mutex);
 
-		if ((ret & (1 << (5 - state->nr))) == 0)
-			break;
-		if (time_after(jiffies, t_out))
-			break;
-	}
+		अगर ((ret & (1 << (5 - state->nr))) == 0)
+			अवरोध;
+		अगर (समय_after(jअगरfies, t_out))
+			अवरोध;
+	पूर्ण
 
 
-	ci_dbg_print("%s: %d msecs\n", __func__,
-		jiffies_to_msecs(jiffies + msecs_to_jiffies(9999) - t_out));
+	ci_dbg_prपूर्णांक("%s: %d msecs\n", __func__,
+		jअगरfies_to_msecs(jअगरfies + msecs_to_jअगरfies(9999) - t_out));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int altera_ci_slot_shutdown(struct dvb_ca_en50221 *en50221, int slot)
-{
+अटल पूर्णांक altera_ci_slot_shutकरोwn(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot)
+अणु
 	/* not implemented */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int altera_ci_slot_ts_ctl(struct dvb_ca_en50221 *en50221, int slot)
-{
-	struct altera_ci_state *state = en50221->data;
-	struct fpga_internal *inter = state->internal;
-	int ret;
+अटल पूर्णांक altera_ci_slot_ts_ctl(काष्ठा dvb_ca_en50221 *en50221, पूर्णांक slot)
+अणु
+	काष्ठा altera_ci_state *state = en50221->data;
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = state->पूर्णांकernal;
+	पूर्णांक ret;
 
-	ci_dbg_print("%s\n", __func__);
+	ci_dbg_prपूर्णांक("%s\n", __func__);
 
-	if (0 != slot)
-		return -EINVAL;
+	अगर (0 != slot)
+		वापस -EINVAL;
 
-	mutex_lock(&inter->fpga_mutex);
+	mutex_lock(&पूर्णांकer->fpga_mutex);
 
-	ret = netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL, 0, NETUP_CI_FLG_RD);
-	netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL,
+	ret = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL, 0, NETUP_CI_FLG_RD);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL,
 				(ret & 0x0f) | (1 << (3 - state->nr)), 0);
 
-	mutex_unlock(&inter->fpga_mutex);
+	mutex_unlock(&पूर्णांकer->fpga_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* work handler */
-static void netup_read_ci_status(struct work_struct *work)
-{
-	struct fpga_internal *inter =
-			container_of(work, struct fpga_internal, work);
-	int ret;
+अटल व्योम netup_पढ़ो_ci_status(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer =
+			container_of(work, काष्ठा fpga_पूर्णांकernal, work);
+	पूर्णांक ret;
 
-	ci_dbg_print("%s\n", __func__);
+	ci_dbg_prपूर्णांक("%s\n", __func__);
 
-	mutex_lock(&inter->fpga_mutex);
+	mutex_lock(&पूर्णांकer->fpga_mutex);
 	/* ack' irq */
-	ret = netup_fpga_op_rw(inter, NETUP_CI_INT_CTRL, 0, NETUP_CI_FLG_RD);
-	ret = netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL, 0, NETUP_CI_FLG_RD);
+	ret = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_INT_CTRL, 0, NETUP_CI_FLG_RD);
+	ret = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL, 0, NETUP_CI_FLG_RD);
 
-	mutex_unlock(&inter->fpga_mutex);
+	mutex_unlock(&पूर्णांकer->fpga_mutex);
 
-	if (inter->state[1] != NULL) {
-		inter->state[1]->status =
+	अगर (पूर्णांकer->state[1] != शून्य) अणु
+		पूर्णांकer->state[1]->status =
 				((ret & 1) == 0 ?
 				DVB_CA_EN50221_POLL_CAM_PRESENT |
 				DVB_CA_EN50221_POLL_CAM_READY : 0);
-		ci_dbg_print("%s: setting CI[1] status = 0x%x\n",
-				__func__, inter->state[1]->status);
-	}
+		ci_dbg_prपूर्णांक("%s: setting CI[1] status = 0x%x\n",
+				__func__, पूर्णांकer->state[1]->status);
+	पूर्ण
 
-	if (inter->state[0] != NULL) {
-		inter->state[0]->status =
+	अगर (पूर्णांकer->state[0] != शून्य) अणु
+		पूर्णांकer->state[0]->status =
 				((ret & 2) == 0 ?
 				DVB_CA_EN50221_POLL_CAM_PRESENT |
 				DVB_CA_EN50221_POLL_CAM_READY : 0);
-		ci_dbg_print("%s: setting CI[0] status = 0x%x\n",
-				__func__, inter->state[0]->status);
-	}
-}
+		ci_dbg_prपूर्णांक("%s: setting CI[0] status = 0x%x\n",
+				__func__, पूर्णांकer->state[0]->status);
+	पूर्ण
+पूर्ण
 
 /* CI irq handler */
-int altera_ci_irq(void *dev)
-{
-	struct fpga_inode *temp_int = NULL;
-	struct fpga_internal *inter = NULL;
+पूर्णांक altera_ci_irq(व्योम *dev)
+अणु
+	काष्ठा fpga_inode *temp_पूर्णांक = शून्य;
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = शून्य;
 
-	ci_dbg_print("%s\n", __func__);
+	ci_dbg_prपूर्णांक("%s\n", __func__);
 
-	if (dev != NULL) {
-		temp_int = find_inode(dev);
-		if (temp_int != NULL) {
-			inter = temp_int->internal;
-			schedule_work(&inter->work);
-		}
-	}
+	अगर (dev != शून्य) अणु
+		temp_पूर्णांक = find_inode(dev);
+		अगर (temp_पूर्णांक != शून्य) अणु
+			पूर्णांकer = temp_पूर्णांक->पूर्णांकernal;
+			schedule_work(&पूर्णांकer->work);
+		पूर्ण
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(altera_ci_irq);
 
-static int altera_poll_ci_slot_status(struct dvb_ca_en50221 *en50221,
-				      int slot, int open)
-{
-	struct altera_ci_state *state = en50221->data;
+अटल पूर्णांक altera_poll_ci_slot_status(काष्ठा dvb_ca_en50221 *en50221,
+				      पूर्णांक slot, पूर्णांक खोलो)
+अणु
+	काष्ठा altera_ci_state *state = en50221->data;
 
-	if (0 != slot)
-		return -EINVAL;
+	अगर (0 != slot)
+		वापस -EINVAL;
 
-	return state->status;
-}
+	वापस state->status;
+पूर्ण
 
-static void altera_hw_filt_release(void *main_dev, int filt_nr)
-{
-	struct fpga_inode *temp_int = find_inode(main_dev);
-	struct netup_hw_pid_filter *pid_filt = NULL;
+अटल व्योम altera_hw_filt_release(व्योम *मुख्य_dev, पूर्णांक filt_nr)
+अणु
+	काष्ठा fpga_inode *temp_पूर्णांक = find_inode(मुख्य_dev);
+	काष्ठा netup_hw_pid_filter *pid_filt = शून्य;
 
-	ci_dbg_print("%s\n", __func__);
+	ci_dbg_prपूर्णांक("%s\n", __func__);
 
-	if (temp_int != NULL) {
-		pid_filt = temp_int->internal->pid_filt[filt_nr - 1];
+	अगर (temp_पूर्णांक != शून्य) अणु
+		pid_filt = temp_पूर्णांक->पूर्णांकernal->pid_filt[filt_nr - 1];
 		/* stored old feed controls */
 		pid_filt->demux->start_feed = pid_filt->start_feed;
 		pid_filt->demux->stop_feed = pid_filt->stop_feed;
 
-		if (((--(temp_int->internal->filts_used)) <= 0) &&
-			 ((temp_int->internal->cis_used) <= 0)) {
+		अगर (((--(temp_पूर्णांक->पूर्णांकernal->filts_used)) <= 0) &&
+			 ((temp_पूर्णांक->पूर्णांकernal->cis_used) <= 0)) अणु
 
-			ci_dbg_print("%s: Actually removing\n", __func__);
+			ci_dbg_prपूर्णांक("%s: Actually removing\n", __func__);
 
-			remove_inode(temp_int->internal);
-			kfree(pid_filt->internal);
-		}
+			हटाओ_inode(temp_पूर्णांक->पूर्णांकernal);
+			kमुक्त(pid_filt->पूर्णांकernal);
+		पूर्ण
 
-		kfree(pid_filt);
+		kमुक्त(pid_filt);
 
-	}
+	पूर्ण
 
-}
+पूर्ण
 
-void altera_ci_release(void *dev, int ci_nr)
-{
-	struct fpga_inode *temp_int = find_inode(dev);
-	struct altera_ci_state *state = NULL;
+व्योम altera_ci_release(व्योम *dev, पूर्णांक ci_nr)
+अणु
+	काष्ठा fpga_inode *temp_पूर्णांक = find_inode(dev);
+	काष्ठा altera_ci_state *state = शून्य;
 
-	ci_dbg_print("%s\n", __func__);
+	ci_dbg_prपूर्णांक("%s\n", __func__);
 
-	if (temp_int != NULL) {
-		state = temp_int->internal->state[ci_nr - 1];
+	अगर (temp_पूर्णांक != शून्य) अणु
+		state = temp_पूर्णांक->पूर्णांकernal->state[ci_nr - 1];
 		altera_hw_filt_release(dev, ci_nr);
 
 
-		if (((temp_int->internal->filts_used) <= 0) &&
-				((--(temp_int->internal->cis_used)) <= 0)) {
+		अगर (((temp_पूर्णांक->पूर्णांकernal->filts_used) <= 0) &&
+				((--(temp_पूर्णांक->पूर्णांकernal->cis_used)) <= 0)) अणु
 
-			ci_dbg_print("%s: Actually removing\n", __func__);
+			ci_dbg_prपूर्णांक("%s: Actually removing\n", __func__);
 
-			remove_inode(temp_int->internal);
-			kfree(state->internal);
-		}
+			हटाओ_inode(temp_पूर्णांक->पूर्णांकernal);
+			kमुक्त(state->पूर्णांकernal);
+		पूर्ण
 
-		if (state != NULL) {
-			if (state->ca.data != NULL)
+		अगर (state != शून्य) अणु
+			अगर (state->ca.data != शून्य)
 				dvb_ca_en50221_release(&state->ca);
 
-			kfree(state);
-		}
-	}
+			kमुक्त(state);
+		पूर्ण
+	पूर्ण
 
-}
+पूर्ण
 EXPORT_SYMBOL(altera_ci_release);
 
-static void altera_pid_control(struct netup_hw_pid_filter *pid_filt,
-		u16 pid, int onoff)
-{
-	struct fpga_internal *inter = pid_filt->internal;
+अटल व्योम altera_pid_control(काष्ठा netup_hw_pid_filter *pid_filt,
+		u16 pid, पूर्णांक onoff)
+अणु
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = pid_filt->पूर्णांकernal;
 	u8 store = 0;
 
-	/* pid 0-0x1f always enabled, don't touch them */
-	if ((pid == 0x2000) || (pid < 0x20))
-		return;
+	/* pid 0-0x1f always enabled, करोn't touch them */
+	अगर ((pid == 0x2000) || (pid < 0x20))
+		वापस;
 
-	mutex_lock(&inter->fpga_mutex);
+	mutex_lock(&पूर्णांकer->fpga_mutex);
 
-	netup_fpga_op_rw(inter, NETUP_CI_PID_ADDR0, (pid >> 3) & 0xff, 0);
-	netup_fpga_op_rw(inter, NETUP_CI_PID_ADDR1,
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_PID_ADDR0, (pid >> 3) & 0xff, 0);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_PID_ADDR1,
 			((pid >> 11) & 0x03) | (pid_filt->nr << 2), 0);
 
-	store = netup_fpga_op_rw(inter, NETUP_CI_PID_DATA, 0, NETUP_CI_FLG_RD);
+	store = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_PID_DATA, 0, NETUP_CI_FLG_RD);
 
-	if (onoff)/* 0 - on, 1 - off */
+	अगर (onoff)/* 0 - on, 1 - off */
 		store |= (1 << (pid & 7));
-	else
+	अन्यथा
 		store &= ~(1 << (pid & 7));
 
-	netup_fpga_op_rw(inter, NETUP_CI_PID_DATA, store, 0);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_PID_DATA, store, 0);
 
-	mutex_unlock(&inter->fpga_mutex);
+	mutex_unlock(&पूर्णांकer->fpga_mutex);
 
-	pid_dbg_print("%s: (%d) set pid: %5d 0x%04x '%s'\n", __func__,
+	pid_dbg_prपूर्णांक("%s: (%d) set pid: %5d 0x%04x '%s'\n", __func__,
 		pid_filt->nr, pid, pid, onoff ? "off" : "on");
-}
+पूर्ण
 
-static void altera_toggle_fullts_streaming(struct netup_hw_pid_filter *pid_filt,
-					int filt_nr, int onoff)
-{
-	struct fpga_internal *inter = pid_filt->internal;
+अटल व्योम altera_toggle_fullts_streaming(काष्ठा netup_hw_pid_filter *pid_filt,
+					पूर्णांक filt_nr, पूर्णांक onoff)
+अणु
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = pid_filt->पूर्णांकernal;
 	u8 store = 0;
-	int i;
+	पूर्णांक i;
 
-	pid_dbg_print("%s: pid_filt->nr[%d]  now %s\n", __func__, pid_filt->nr,
+	pid_dbg_prपूर्णांक("%s: pid_filt->nr[%d]  now %s\n", __func__, pid_filt->nr,
 			onoff ? "off" : "on");
 
-	if (onoff)/* 0 - on, 1 - off */
+	अगर (onoff)/* 0 - on, 1 - off */
 		store = 0xff;/* ignore pid */
-	else
+	अन्यथा
 		store = 0;/* enable pid */
 
-	mutex_lock(&inter->fpga_mutex);
+	mutex_lock(&पूर्णांकer->fpga_mutex);
 
-	for (i = 0; i < 1024; i++) {
-		netup_fpga_op_rw(inter, NETUP_CI_PID_ADDR0, i & 0xff, 0);
+	क्रम (i = 0; i < 1024; i++) अणु
+		netup_fpga_op_rw(पूर्णांकer, NETUP_CI_PID_ADDR0, i & 0xff, 0);
 
-		netup_fpga_op_rw(inter, NETUP_CI_PID_ADDR1,
+		netup_fpga_op_rw(पूर्णांकer, NETUP_CI_PID_ADDR1,
 				((i >> 8) & 0x03) | (pid_filt->nr << 2), 0);
 		/* pid 0-0x1f always enabled */
-		netup_fpga_op_rw(inter, NETUP_CI_PID_DATA,
+		netup_fpga_op_rw(पूर्णांकer, NETUP_CI_PID_DATA,
 				(i > 3 ? store : 0), 0);
-	}
+	पूर्ण
 
-	mutex_unlock(&inter->fpga_mutex);
-}
+	mutex_unlock(&पूर्णांकer->fpga_mutex);
+पूर्ण
 
-static int altera_pid_feed_control(void *demux_dev, int filt_nr,
-		struct dvb_demux_feed *feed, int onoff)
-{
-	struct fpga_inode *temp_int = find_dinode(demux_dev);
-	struct fpga_internal *inter = temp_int->internal;
-	struct netup_hw_pid_filter *pid_filt = inter->pid_filt[filt_nr - 1];
+अटल पूर्णांक altera_pid_feed_control(व्योम *demux_dev, पूर्णांक filt_nr,
+		काष्ठा dvb_demux_feed *feed, पूर्णांक onoff)
+अणु
+	काष्ठा fpga_inode *temp_पूर्णांक = find_dinode(demux_dev);
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = temp_पूर्णांक->पूर्णांकernal;
+	काष्ठा netup_hw_pid_filter *pid_filt = पूर्णांकer->pid_filt[filt_nr - 1];
 
 	altera_pid_control(pid_filt, feed->pid, onoff ? 0 : 1);
 	/* call old feed proc's */
-	if (onoff)
+	अगर (onoff)
 		pid_filt->start_feed(feed);
-	else
+	अन्यथा
 		pid_filt->stop_feed(feed);
 
-	if (feed->pid == 0x2000)
+	अगर (feed->pid == 0x2000)
 		altera_toggle_fullts_streaming(pid_filt, filt_nr,
 						onoff ? 0 : 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int altera_ci_start_feed(struct dvb_demux_feed *feed, int num)
-{
+अटल पूर्णांक altera_ci_start_feed(काष्ठा dvb_demux_feed *feed, पूर्णांक num)
+अणु
 	altera_pid_feed_control(feed->demux, num, feed, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int altera_ci_stop_feed(struct dvb_demux_feed *feed, int num)
-{
+अटल पूर्णांक altera_ci_stop_feed(काष्ठा dvb_demux_feed *feed, पूर्णांक num)
+अणु
 	altera_pid_feed_control(feed->demux, num, feed, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int altera_ci_start_feed_1(struct dvb_demux_feed *feed)
-{
-	return altera_ci_start_feed(feed, 1);
-}
+अटल पूर्णांक altera_ci_start_feed_1(काष्ठा dvb_demux_feed *feed)
+अणु
+	वापस altera_ci_start_feed(feed, 1);
+पूर्ण
 
-static int altera_ci_stop_feed_1(struct dvb_demux_feed *feed)
-{
-	return altera_ci_stop_feed(feed, 1);
-}
+अटल पूर्णांक altera_ci_stop_feed_1(काष्ठा dvb_demux_feed *feed)
+अणु
+	वापस altera_ci_stop_feed(feed, 1);
+पूर्ण
 
-static int altera_ci_start_feed_2(struct dvb_demux_feed *feed)
-{
-	return altera_ci_start_feed(feed, 2);
-}
+अटल पूर्णांक altera_ci_start_feed_2(काष्ठा dvb_demux_feed *feed)
+अणु
+	वापस altera_ci_start_feed(feed, 2);
+पूर्ण
 
-static int altera_ci_stop_feed_2(struct dvb_demux_feed *feed)
-{
-	return altera_ci_stop_feed(feed, 2);
-}
+अटल पूर्णांक altera_ci_stop_feed_2(काष्ठा dvb_demux_feed *feed)
+अणु
+	वापस altera_ci_stop_feed(feed, 2);
+पूर्ण
 
-static int altera_hw_filt_init(struct altera_ci_config *config, int hw_filt_nr)
-{
-	struct netup_hw_pid_filter *pid_filt = NULL;
-	struct fpga_inode *temp_int = find_inode(config->dev);
-	struct fpga_internal *inter = NULL;
-	int ret = 0;
+अटल पूर्णांक altera_hw_filt_init(काष्ठा altera_ci_config *config, पूर्णांक hw_filt_nr)
+अणु
+	काष्ठा netup_hw_pid_filter *pid_filt = शून्य;
+	काष्ठा fpga_inode *temp_पूर्णांक = find_inode(config->dev);
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = शून्य;
+	पूर्णांक ret = 0;
 
-	pid_filt = kzalloc(sizeof(struct netup_hw_pid_filter), GFP_KERNEL);
+	pid_filt = kzalloc(माप(काष्ठा netup_hw_pid_filter), GFP_KERNEL);
 
-	ci_dbg_print("%s\n", __func__);
+	ci_dbg_prपूर्णांक("%s\n", __func__);
 
-	if (!pid_filt) {
+	अगर (!pid_filt) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (temp_int != NULL) {
-		inter = temp_int->internal;
-		(inter->filts_used)++;
-		ci_dbg_print("%s: Find Internal Structure!\n", __func__);
-	} else {
-		inter = kzalloc(sizeof(struct fpga_internal), GFP_KERNEL);
-		if (!inter) {
+	अगर (temp_पूर्णांक != शून्य) अणु
+		पूर्णांकer = temp_पूर्णांक->पूर्णांकernal;
+		(पूर्णांकer->filts_used)++;
+		ci_dbg_prपूर्णांक("%s: Find Internal Structure!\n", __func__);
+	पूर्ण अन्यथा अणु
+		पूर्णांकer = kzalloc(माप(काष्ठा fpga_पूर्णांकernal), GFP_KERNEL);
+		अगर (!पूर्णांकer) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		temp_int = append_internal(inter);
-		if (!temp_int) {
+		temp_पूर्णांक = append_पूर्णांकernal(पूर्णांकer);
+		अगर (!temp_पूर्णांक) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
-		inter->filts_used = 1;
-		inter->dev = config->dev;
-		inter->fpga_rw = config->fpga_rw;
-		mutex_init(&inter->fpga_mutex);
-		inter->strt_wrk = 1;
-		ci_dbg_print("%s: Create New Internal Structure!\n", __func__);
-	}
+			जाओ err;
+		पूर्ण
+		पूर्णांकer->filts_used = 1;
+		पूर्णांकer->dev = config->dev;
+		पूर्णांकer->fpga_rw = config->fpga_rw;
+		mutex_init(&पूर्णांकer->fpga_mutex);
+		पूर्णांकer->strt_wrk = 1;
+		ci_dbg_prपूर्णांक("%s: Create New Internal Structure!\n", __func__);
+	पूर्ण
 
-	ci_dbg_print("%s: setting hw pid filter = %p for ci = %d\n", __func__,
+	ci_dbg_prपूर्णांक("%s: setting hw pid filter = %p for ci = %d\n", __func__,
 						pid_filt, hw_filt_nr - 1);
-	inter->pid_filt[hw_filt_nr - 1] = pid_filt;
+	पूर्णांकer->pid_filt[hw_filt_nr - 1] = pid_filt;
 	pid_filt->demux = config->demux;
-	pid_filt->internal = inter;
+	pid_filt->पूर्णांकernal = पूर्णांकer;
 	pid_filt->nr = hw_filt_nr - 1;
 	/* store old feed controls */
 	pid_filt->start_feed = config->demux->start_feed;
 	pid_filt->stop_feed = config->demux->stop_feed;
 	/* replace with new feed controls */
-	if (hw_filt_nr == 1) {
+	अगर (hw_filt_nr == 1) अणु
 		pid_filt->demux->start_feed = altera_ci_start_feed_1;
 		pid_filt->demux->stop_feed = altera_ci_stop_feed_1;
-	} else if (hw_filt_nr == 2) {
+	पूर्ण अन्यथा अगर (hw_filt_nr == 2) अणु
 		pid_filt->demux->start_feed = altera_ci_start_feed_2;
 		pid_filt->demux->stop_feed = altera_ci_stop_feed_2;
-	}
+	पूर्ण
 
 	altera_toggle_fullts_streaming(pid_filt, 0, 1);
 
-	return 0;
+	वापस 0;
 err:
-	ci_dbg_print("%s: Can't init hardware filter: Error %d\n",
+	ci_dbg_prपूर्णांक("%s: Can't init hardware filter: Error %d\n",
 		     __func__, ret);
 
-	kfree(pid_filt);
-	kfree(inter);
+	kमुक्त(pid_filt);
+	kमुक्त(पूर्णांकer);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int altera_ci_init(struct altera_ci_config *config, int ci_nr)
-{
-	struct altera_ci_state *state;
-	struct fpga_inode *temp_int = find_inode(config->dev);
-	struct fpga_internal *inter = NULL;
-	int ret = 0;
+पूर्णांक altera_ci_init(काष्ठा altera_ci_config *config, पूर्णांक ci_nr)
+अणु
+	काष्ठा altera_ci_state *state;
+	काष्ठा fpga_inode *temp_पूर्णांक = find_inode(config->dev);
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = शून्य;
+	पूर्णांक ret = 0;
 	u8 store = 0;
 
-	state = kzalloc(sizeof(struct altera_ci_state), GFP_KERNEL);
+	state = kzalloc(माप(काष्ठा altera_ci_state), GFP_KERNEL);
 
-	ci_dbg_print("%s\n", __func__);
+	ci_dbg_prपूर्णांक("%s\n", __func__);
 
-	if (!state) {
+	अगर (!state) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (temp_int != NULL) {
-		inter = temp_int->internal;
-		(inter->cis_used)++;
-		inter->fpga_rw = config->fpga_rw;
-		ci_dbg_print("%s: Find Internal Structure!\n", __func__);
-	} else {
-		inter = kzalloc(sizeof(struct fpga_internal), GFP_KERNEL);
-		if (!inter) {
+	अगर (temp_पूर्णांक != शून्य) अणु
+		पूर्णांकer = temp_पूर्णांक->पूर्णांकernal;
+		(पूर्णांकer->cis_used)++;
+		पूर्णांकer->fpga_rw = config->fpga_rw;
+		ci_dbg_prपूर्णांक("%s: Find Internal Structure!\n", __func__);
+	पूर्ण अन्यथा अणु
+		पूर्णांकer = kzalloc(माप(काष्ठा fpga_पूर्णांकernal), GFP_KERNEL);
+		अगर (!पूर्णांकer) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-		temp_int = append_internal(inter);
-		if (!temp_int) {
+		temp_पूर्णांक = append_पूर्णांकernal(पूर्णांकer);
+		अगर (!temp_पूर्णांक) अणु
 			ret = -ENOMEM;
-			goto err;
-		}
-		inter->cis_used = 1;
-		inter->dev = config->dev;
-		inter->fpga_rw = config->fpga_rw;
-		mutex_init(&inter->fpga_mutex);
-		inter->strt_wrk = 1;
-		ci_dbg_print("%s: Create New Internal Structure!\n", __func__);
-	}
+			जाओ err;
+		पूर्ण
+		पूर्णांकer->cis_used = 1;
+		पूर्णांकer->dev = config->dev;
+		पूर्णांकer->fpga_rw = config->fpga_rw;
+		mutex_init(&पूर्णांकer->fpga_mutex);
+		पूर्णांकer->strt_wrk = 1;
+		ci_dbg_prपूर्णांक("%s: Create New Internal Structure!\n", __func__);
+	पूर्ण
 
-	ci_dbg_print("%s: setting state = %p for ci = %d\n", __func__,
+	ci_dbg_prपूर्णांक("%s: setting state = %p for ci = %d\n", __func__,
 						state, ci_nr - 1);
-	state->internal = inter;
+	state->पूर्णांकernal = पूर्णांकer;
 	state->nr = ci_nr - 1;
 
 	state->ca.owner = THIS_MODULE;
-	state->ca.read_attribute_mem = altera_ci_read_attribute_mem;
-	state->ca.write_attribute_mem = altera_ci_write_attribute_mem;
-	state->ca.read_cam_control = altera_ci_read_cam_ctl;
-	state->ca.write_cam_control = altera_ci_write_cam_ctl;
+	state->ca.पढ़ो_attribute_mem = altera_ci_पढ़ो_attribute_mem;
+	state->ca.ग_लिखो_attribute_mem = altera_ci_ग_लिखो_attribute_mem;
+	state->ca.पढ़ो_cam_control = altera_ci_पढ़ो_cam_ctl;
+	state->ca.ग_लिखो_cam_control = altera_ci_ग_लिखो_cam_ctl;
 	state->ca.slot_reset = altera_ci_slot_reset;
-	state->ca.slot_shutdown = altera_ci_slot_shutdown;
+	state->ca.slot_shutकरोwn = altera_ci_slot_shutकरोwn;
 	state->ca.slot_ts_enable = altera_ci_slot_ts_ctl;
 	state->ca.poll_slot_status = altera_poll_ci_slot_status;
 	state->ca.data = state;
@@ -760,79 +761,79 @@ int altera_ci_init(struct altera_ci_config *config, int ci_nr)
 				   &state->ca,
 				   /* flags */ 0,
 				   /* n_slots */ 1);
-	if (0 != ret)
-		goto err;
+	अगर (0 != ret)
+		जाओ err;
 
-	inter->state[ci_nr - 1] = state;
+	पूर्णांकer->state[ci_nr - 1] = state;
 
 	altera_hw_filt_init(config, ci_nr);
 
-	if (inter->strt_wrk) {
-		INIT_WORK(&inter->work, netup_read_ci_status);
-		inter->strt_wrk = 0;
-	}
+	अगर (पूर्णांकer->strt_wrk) अणु
+		INIT_WORK(&पूर्णांकer->work, netup_पढ़ो_ci_status);
+		पूर्णांकer->strt_wrk = 0;
+	पूर्ण
 
-	ci_dbg_print("%s: CI initialized!\n", __func__);
+	ci_dbg_prपूर्णांक("%s: CI initialized!\n", __func__);
 
-	mutex_lock(&inter->fpga_mutex);
+	mutex_lock(&पूर्णांकer->fpga_mutex);
 
-	/* Enable div */
-	netup_fpga_op_rw(inter, NETUP_CI_TSA_DIV, 0x0, 0);
-	netup_fpga_op_rw(inter, NETUP_CI_TSB_DIV, 0x0, 0);
+	/* Enable भाग */
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_TSA_DIV, 0x0, 0);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_TSB_DIV, 0x0, 0);
 
 	/* enable TS out */
-	store = netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL2, 0, NETUP_CI_FLG_RD);
+	store = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL2, 0, NETUP_CI_FLG_RD);
 	store |= (3 << 4);
-	netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL2, store, 0);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL2, store, 0);
 
-	ret = netup_fpga_op_rw(inter, NETUP_CI_REVISION, 0, NETUP_CI_FLG_RD);
+	ret = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_REVISION, 0, NETUP_CI_FLG_RD);
 	/* enable irq */
-	netup_fpga_op_rw(inter, NETUP_CI_INT_CTRL, 0x44, 0);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_INT_CTRL, 0x44, 0);
 
-	mutex_unlock(&inter->fpga_mutex);
+	mutex_unlock(&पूर्णांकer->fpga_mutex);
 
-	ci_dbg_print("%s: NetUP CI Revision = 0x%x\n", __func__, ret);
+	ci_dbg_prपूर्णांक("%s: NetUP CI Revision = 0x%x\n", __func__, ret);
 
-	schedule_work(&inter->work);
+	schedule_work(&पूर्णांकer->work);
 
-	return 0;
+	वापस 0;
 err:
-	ci_dbg_print("%s: Cannot initialize CI: Error %d.\n", __func__, ret);
+	ci_dbg_prपूर्णांक("%s: Cannot initialize CI: Error %d.\n", __func__, ret);
 
-	kfree(state);
-	kfree(inter);
+	kमुक्त(state);
+	kमुक्त(पूर्णांकer);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(altera_ci_init);
 
-int altera_ci_tuner_reset(void *dev, int ci_nr)
-{
-	struct fpga_inode *temp_int = find_inode(dev);
-	struct fpga_internal *inter = NULL;
+पूर्णांक altera_ci_tuner_reset(व्योम *dev, पूर्णांक ci_nr)
+अणु
+	काष्ठा fpga_inode *temp_पूर्णांक = find_inode(dev);
+	काष्ठा fpga_पूर्णांकernal *पूर्णांकer = शून्य;
 	u8 store;
 
-	ci_dbg_print("%s\n", __func__);
+	ci_dbg_prपूर्णांक("%s\n", __func__);
 
-	if (temp_int == NULL)
-		return -1;
+	अगर (temp_पूर्णांक == शून्य)
+		वापस -1;
 
-	if (temp_int->internal == NULL)
-		return -1;
+	अगर (temp_पूर्णांक->पूर्णांकernal == शून्य)
+		वापस -1;
 
-	inter = temp_int->internal;
+	पूर्णांकer = temp_पूर्णांक->पूर्णांकernal;
 
-	mutex_lock(&inter->fpga_mutex);
+	mutex_lock(&पूर्णांकer->fpga_mutex);
 
-	store = netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL2, 0, NETUP_CI_FLG_RD);
+	store = netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL2, 0, NETUP_CI_FLG_RD);
 	store &= ~(4 << (2 - ci_nr));
-	netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL2, store, 0);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL2, store, 0);
 	msleep(100);
 	store |= (4 << (2 - ci_nr));
-	netup_fpga_op_rw(inter, NETUP_CI_BUSCTRL2, store, 0);
+	netup_fpga_op_rw(पूर्णांकer, NETUP_CI_BUSCTRL2, store, 0);
 
-	mutex_unlock(&inter->fpga_mutex);
+	mutex_unlock(&पूर्णांकer->fpga_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(altera_ci_tuner_reset);

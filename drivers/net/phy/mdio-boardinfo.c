@@ -1,80 +1,81 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * mdio-boardinfo - Collect pre-declarations for MDIO devices
+ * mdio-boardinfo - Collect pre-declarations क्रम MDIO devices
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/mutex.h>
-#include <linux/list.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/list.h>
 
-#include "mdio-boardinfo.h"
+#समावेश "mdio-boardinfo.h"
 
-static LIST_HEAD(mdio_board_list);
-static DEFINE_MUTEX(mdio_board_lock);
+अटल LIST_HEAD(mdio_board_list);
+अटल DEFINE_MUTEX(mdio_board_lock);
 
 /**
  * mdiobus_setup_mdiodev_from_board_info - create and setup MDIO devices
- * from pre-collected board specific MDIO information
- * @bus: Bus the board_info belongs to
+ * from pre-collected board specअगरic MDIO inक्रमmation
+ * @bus: Bus the board_info beदीर्घs to
  * @cb: Callback to create device on bus
  * Context: can sleep
  */
-void mdiobus_setup_mdiodev_from_board_info(struct mii_bus *bus,
-					   int (*cb)
-					   (struct mii_bus *bus,
-					    struct mdio_board_info *bi))
-{
-	struct mdio_board_entry *be;
-	struct mdio_board_entry *tmp;
-	struct mdio_board_info *bi;
-	int ret;
+व्योम mdiobus_setup_mdiodev_from_board_info(काष्ठा mii_bus *bus,
+					   पूर्णांक (*cb)
+					   (काष्ठा mii_bus *bus,
+					    काष्ठा mdio_board_info *bi))
+अणु
+	काष्ठा mdio_board_entry *be;
+	काष्ठा mdio_board_entry *पंचांगp;
+	काष्ठा mdio_board_info *bi;
+	पूर्णांक ret;
 
 	mutex_lock(&mdio_board_lock);
-	list_for_each_entry_safe(be, tmp, &mdio_board_list, list) {
+	list_क्रम_each_entry_safe(be, पंचांगp, &mdio_board_list, list) अणु
 		bi = &be->board_info;
 
-		if (strcmp(bus->id, bi->bus_id))
-			continue;
+		अगर (म_भेद(bus->id, bi->bus_id))
+			जारी;
 
 		mutex_unlock(&mdio_board_lock);
 		ret = cb(bus, bi);
 		mutex_lock(&mdio_board_lock);
-		if (ret)
-			continue;
+		अगर (ret)
+			जारी;
 
-	}
+	पूर्ण
 	mutex_unlock(&mdio_board_lock);
-}
+पूर्ण
 EXPORT_SYMBOL(mdiobus_setup_mdiodev_from_board_info);
 
 /**
- * mdiobus_register_board_info - register MDIO devices for a given board
+ * mdiobus_रेजिस्टर_board_info - रेजिस्टर MDIO devices क्रम a given board
  * @info: array of devices descriptors
  * @n: number of descriptors provided
  * Context: can sleep
  *
- * The board info passed can be marked with __initdata but be pointers
- * such as platform_data etc. are copied as-is
+ * The board info passed can be marked with __initdata but be poपूर्णांकers
+ * such as platक्रमm_data etc. are copied as-is
  */
-int mdiobus_register_board_info(const struct mdio_board_info *info,
-				unsigned int n)
-{
-	struct mdio_board_entry *be;
-	unsigned int i;
+पूर्णांक mdiobus_रेजिस्टर_board_info(स्थिर काष्ठा mdio_board_info *info,
+				अचिन्हित पूर्णांक n)
+अणु
+	काष्ठा mdio_board_entry *be;
+	अचिन्हित पूर्णांक i;
 
-	be = kcalloc(n, sizeof(*be), GFP_KERNEL);
-	if (!be)
-		return -ENOMEM;
+	be = kसुस्मृति(n, माप(*be), GFP_KERNEL);
+	अगर (!be)
+		वापस -ENOMEM;
 
-	for (i = 0; i < n; i++, be++, info++) {
-		memcpy(&be->board_info, info, sizeof(*info));
+	क्रम (i = 0; i < n; i++, be++, info++) अणु
+		स_नकल(&be->board_info, info, माप(*info));
 		mutex_lock(&mdio_board_lock);
 		list_add_tail(&be->list, &mdio_board_list);
 		mutex_unlock(&mdio_board_lock);
-	}
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(mdiobus_register_board_info);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(mdiobus_रेजिस्टर_board_info);

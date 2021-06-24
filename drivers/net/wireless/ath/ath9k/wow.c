@@ -1,63 +1,64 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "ath9k.h"
+#समावेश "ath9k.h"
 
-static const struct wiphy_wowlan_support ath9k_wowlan_support_legacy = {
+अटल स्थिर काष्ठा wiphy_wowlan_support ath9k_wowlan_support_legacy = अणु
 	.flags = WIPHY_WOWLAN_MAGIC_PKT | WIPHY_WOWLAN_DISCONNECT,
 	.n_patterns = MAX_NUM_USER_PATTERN,
 	.pattern_min_len = 1,
 	.pattern_max_len = MAX_PATTERN_SIZE,
-};
+पूर्ण;
 
-static const struct wiphy_wowlan_support ath9k_wowlan_support = {
+अटल स्थिर काष्ठा wiphy_wowlan_support ath9k_wowlan_support = अणु
 	.flags = WIPHY_WOWLAN_MAGIC_PKT | WIPHY_WOWLAN_DISCONNECT,
 	.n_patterns = MAX_NUM_PATTERN - 2,
 	.pattern_min_len = 1,
 	.pattern_max_len = MAX_PATTERN_SIZE,
-};
+पूर्ण;
 
-static u8 ath9k_wow_map_triggers(struct ath_softc *sc,
-				 struct cfg80211_wowlan *wowlan)
-{
+अटल u8 ath9k_wow_map_triggers(काष्ठा ath_softc *sc,
+				 काष्ठा cfg80211_wowlan *wowlan)
+अणु
 	u8 wow_triggers = 0;
 
-	if (wowlan->disconnect)
+	अगर (wowlan->disconnect)
 		wow_triggers |= AH_WOW_LINK_CHANGE |
 				AH_WOW_BEACON_MISS;
-	if (wowlan->magic_pkt)
+	अगर (wowlan->magic_pkt)
 		wow_triggers |= AH_WOW_MAGIC_PATTERN_EN;
 
-	if (wowlan->n_patterns)
+	अगर (wowlan->n_patterns)
 		wow_triggers |= AH_WOW_USER_PATTERN_EN;
 
-	return wow_triggers;
-}
+	वापस wow_triggers;
+पूर्ण
 
-static int ath9k_wow_add_disassoc_deauth_pattern(struct ath_softc *sc)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
-	int pattern_count = 0;
-	int ret, i, byte_cnt = 0;
+अटल पूर्णांक ath9k_wow_add_disassoc_deauth_pattern(काष्ठा ath_softc *sc)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
+	पूर्णांक pattern_count = 0;
+	पूर्णांक ret, i, byte_cnt = 0;
 	u8 dis_deauth_pattern[MAX_PATTERN_SIZE];
 	u8 dis_deauth_mask[MAX_PATTERN_SIZE];
 
-	memset(dis_deauth_pattern, 0, MAX_PATTERN_SIZE);
-	memset(dis_deauth_mask, 0, MAX_PATTERN_SIZE);
+	स_रखो(dis_deauth_pattern, 0, MAX_PATTERN_SIZE);
+	स_रखो(dis_deauth_mask, 0, MAX_PATTERN_SIZE);
 
 	/*
 	 * Create Dissassociate / Deauthenticate packet filter
@@ -67,7 +68,7 @@ static int ath9k_wow_add_disassoc_deauth_pattern(struct ath_softc *sc)
 	 *  + Frame Control+ Duration +   DA    +  SA    +  BSSID +
 	 *  +--------------+----------+---------+--------+--------+----
 	 *
-	 * The above is the management frame format for disassociate/
+	 * The above is the management frame क्रमmat क्रम disassociate/
 	 * deauthenticate pattern, from this we need to match the first byte
 	 * of 'Frame Control' and DA, SA, and BSSID fields
 	 * (skipping 2nd byte of FC and Duration feild.
@@ -88,7 +89,7 @@ static int ath9k_wow_add_disassoc_deauth_pattern(struct ath_softc *sc)
 	 */
 
 	/* Fill out the mask with all FF's */
-	for (i = 0; i < MAX_PATTERN_MASK_SIZE; i++)
+	क्रम (i = 0; i < MAX_PATTERN_MASK_SIZE; i++)
 		dis_deauth_mask[i] = 0xff;
 
 	/* copy the first byte of frame control field */
@@ -105,12 +106,12 @@ static int ath9k_wow_add_disassoc_deauth_pattern(struct ath_softc *sc)
 	byte_cnt += 6;
 
 	/* copy the source mac address */
-	memcpy((dis_deauth_pattern + byte_cnt), common->curbssid, ETH_ALEN);
+	स_नकल((dis_deauth_pattern + byte_cnt), common->curbssid, ETH_ALEN);
 
 	byte_cnt += 6;
 
 	/* copy the bssid, its same as the source mac address */
-	memcpy((dis_deauth_pattern + byte_cnt), common->curbssid, ETH_ALEN);
+	स_नकल((dis_deauth_pattern + byte_cnt), common->curbssid, ETH_ALEN);
 
 	/* Create Disassociate pattern mask */
 	dis_deauth_mask[0] = 0xfe;
@@ -119,103 +120,103 @@ static int ath9k_wow_add_disassoc_deauth_pattern(struct ath_softc *sc)
 
 	ret = ath9k_hw_wow_apply_pattern(ah, dis_deauth_pattern, dis_deauth_mask,
 					 pattern_count, byte_cnt);
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 
 	pattern_count++;
 	/*
-	 * for de-authenticate pattern, only the first byte of the frame
-	 * control field gets changed from 0xA0 to 0xC0
+	 * क्रम de-authenticate pattern, only the first byte of the frame
+	 * control field माला_लो changed from 0xA0 to 0xC0
 	 */
 	dis_deauth_pattern[0] = 0xC0;
 
 	ret = ath9k_hw_wow_apply_pattern(ah, dis_deauth_pattern, dis_deauth_mask,
 					 pattern_count, byte_cnt);
-exit:
-	return ret;
-}
+निकास:
+	वापस ret;
+पूर्ण
 
-static int ath9k_wow_add_pattern(struct ath_softc *sc,
-				 struct cfg80211_wowlan *wowlan)
-{
-	struct ath_hw *ah = sc->sc_ah;
-	struct cfg80211_pkt_pattern *patterns = wowlan->patterns;
+अटल पूर्णांक ath9k_wow_add_pattern(काष्ठा ath_softc *sc,
+				 काष्ठा cfg80211_wowlan *wowlan)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा cfg80211_pkt_pattern *patterns = wowlan->patterns;
 	u8 wow_pattern[MAX_PATTERN_SIZE];
 	u8 wow_mask[MAX_PATTERN_SIZE];
-	int mask_len, ret = 0;
+	पूर्णांक mask_len, ret = 0;
 	s8 i = 0;
 
-	for (i = 0; i < wowlan->n_patterns; i++) {
+	क्रम (i = 0; i < wowlan->n_patterns; i++) अणु
 		mask_len = DIV_ROUND_UP(patterns[i].pattern_len, 8);
-		memset(wow_pattern, 0, MAX_PATTERN_SIZE);
-		memset(wow_mask, 0, MAX_PATTERN_SIZE);
-		memcpy(wow_pattern, patterns[i].pattern, patterns[i].pattern_len);
-		memcpy(wow_mask, patterns[i].mask, mask_len);
+		स_रखो(wow_pattern, 0, MAX_PATTERN_SIZE);
+		स_रखो(wow_mask, 0, MAX_PATTERN_SIZE);
+		स_नकल(wow_pattern, patterns[i].pattern, patterns[i].pattern_len);
+		स_नकल(wow_mask, patterns[i].mask, mask_len);
 
 		ret = ath9k_hw_wow_apply_pattern(ah,
 						 wow_pattern,
 						 wow_mask,
 						 i + 2,
 						 patterns[i].pattern_len);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ath9k_suspend(struct ieee80211_hw *hw,
-		  struct cfg80211_wowlan *wowlan)
-{
-	struct ath_softc *sc = hw->priv;
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
+पूर्णांक ath9k_suspend(काष्ठा ieee80211_hw *hw,
+		  काष्ठा cfg80211_wowlan *wowlan)
+अणु
+	काष्ठा ath_softc *sc = hw->priv;
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 	u8 triggers;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	ath9k_deinit_channel_context(sc);
 
 	mutex_lock(&sc->mutex);
 
-	if (test_bit(ATH_OP_INVALID, &common->op_flags)) {
+	अगर (test_bit(ATH_OP_INVALID, &common->op_flags)) अणु
 		ath_err(common, "Device not present\n");
 		ret = -ENODEV;
-		goto fail_wow;
-	}
+		जाओ fail_wow;
+	पूर्ण
 
-	if (WARN_ON(!wowlan)) {
+	अगर (WARN_ON(!wowlan)) अणु
 		ath_err(common, "None of the WoW triggers enabled\n");
 		ret = -EINVAL;
-		goto fail_wow;
-	}
+		जाओ fail_wow;
+	पूर्ण
 
-	if (sc->cur_chan->nvifs > 1) {
+	अगर (sc->cur_chan->nvअगरs > 1) अणु
 		ath_dbg(common, WOW, "WoW for multivif is not yet supported\n");
 		ret = 1;
-		goto fail_wow;
-	}
+		जाओ fail_wow;
+	पूर्ण
 
-	if (ath9k_is_chanctx_enabled()) {
-		if (test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags)) {
+	अगर (ath9k_is_chanctx_enabled()) अणु
+		अगर (test_bit(ATH_OP_MULTI_CHANNEL, &common->op_flags)) अणु
 			ath_dbg(common, WOW,
 				"Multi-channel WOW is not supported\n");
 			ret = 1;
-			goto fail_wow;
-		}
-	}
+			जाओ fail_wow;
+		पूर्ण
+	पूर्ण
 
-	if (!test_bit(ATH_OP_PRIM_STA_VIF, &common->op_flags)) {
+	अगर (!test_bit(ATH_OP_PRIM_STA_VIF, &common->op_flags)) अणु
 		ath_dbg(common, WOW, "None of the STA vifs are associated\n");
 		ret = 1;
-		goto fail_wow;
-	}
+		जाओ fail_wow;
+	पूर्ण
 
 	triggers = ath9k_wow_map_triggers(sc, wowlan);
-	if (!triggers) {
+	अगर (!triggers) अणु
 		ath_dbg(common, WOW, "No valid WoW triggers\n");
 		ret = 1;
-		goto fail_wow;
-	}
+		जाओ fail_wow;
+	पूर्ण
 
 	ath_cancel_work(sc);
 	ath_stop_ani(sc);
@@ -226,45 +227,45 @@ int ath9k_suspend(struct ieee80211_hw *hw,
 
 	/*
 	 * Enable wake up on recieving disassoc/deauth
-	 * frame by default.
+	 * frame by शेष.
 	 */
 	ret = ath9k_wow_add_disassoc_deauth_pattern(sc);
-	if (ret) {
+	अगर (ret) अणु
 		ath_err(common,
 			"Unable to add disassoc/deauth pattern: %d\n", ret);
-		goto fail_wow;
-	}
+		जाओ fail_wow;
+	पूर्ण
 
-	if (triggers & AH_WOW_USER_PATTERN_EN) {
+	अगर (triggers & AH_WOW_USER_PATTERN_EN) अणु
 		ret = ath9k_wow_add_pattern(sc, wowlan);
-		if (ret) {
+		अगर (ret) अणु
 			ath_err(common,
 				"Unable to add user pattern: %d\n", ret);
-			goto fail_wow;
-		}
-	}
+			जाओ fail_wow;
+		पूर्ण
+	पूर्ण
 
 	spin_lock_bh(&sc->sc_pcu_lock);
 	/*
-	 * To avoid false wake, we enable beacon miss interrupt only
-	 * when we go to sleep. We save the current interrupt mask
-	 * so we can restore it after the system wakes up
+	 * To aव्योम false wake, we enable beacon miss पूर्णांकerrupt only
+	 * when we go to sleep. We save the current पूर्णांकerrupt mask
+	 * so we can restore it after the प्रणाली wakes up
 	 */
-	sc->wow_intr_before_sleep = ah->imask;
+	sc->wow_पूर्णांकr_beक्रमe_sleep = ah->imask;
 	ah->imask &= ~ATH9K_INT_GLOBAL;
-	ath9k_hw_disable_interrupts(ah);
+	ath9k_hw_disable_पूर्णांकerrupts(ah);
 	ah->imask = ATH9K_INT_BMISS | ATH9K_INT_GLOBAL;
-	ath9k_hw_set_interrupts(ah);
-	ath9k_hw_enable_interrupts(ah);
+	ath9k_hw_set_पूर्णांकerrupts(ah);
+	ath9k_hw_enable_पूर्णांकerrupts(ah);
 
 	spin_unlock_bh(&sc->sc_pcu_lock);
 
 	/*
-	 * we can now sync irq and kill any running tasklets, since we already
-	 * disabled interrupts and not holding a spin lock
+	 * we can now sync irq and समाप्त any running tasklets, since we alपढ़ोy
+	 * disabled पूर्णांकerrupts and not holding a spin lock
 	 */
 	synchronize_irq(sc->irq);
-	tasklet_kill(&sc->intr_tq);
+	tasklet_समाप्त(&sc->पूर्णांकr_tq);
 
 	ath9k_hw_wow_enable(ah, triggers);
 
@@ -274,14 +275,14 @@ int ath9k_suspend(struct ieee80211_hw *hw,
 	set_bit(ATH_OP_WOW_ENABLED, &common->op_flags);
 fail_wow:
 	mutex_unlock(&sc->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ath9k_resume(struct ieee80211_hw *hw)
-{
-	struct ath_softc *sc = hw->priv;
-	struct ath_hw *ah = sc->sc_ah;
-	struct ath_common *common = ath9k_hw_common(ah);
+पूर्णांक ath9k_resume(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा ath_softc *sc = hw->priv;
+	काष्ठा ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_common *common = ath9k_hw_common(ah);
 	u8 status;
 
 	mutex_lock(&sc->mutex);
@@ -290,10 +291,10 @@ int ath9k_resume(struct ieee80211_hw *hw)
 
 	spin_lock_bh(&sc->sc_pcu_lock);
 
-	ath9k_hw_disable_interrupts(ah);
-	ah->imask = sc->wow_intr_before_sleep;
-	ath9k_hw_set_interrupts(ah);
-	ath9k_hw_enable_interrupts(ah);
+	ath9k_hw_disable_पूर्णांकerrupts(ah);
+	ah->imask = sc->wow_पूर्णांकr_beक्रमe_sleep;
+	ath9k_hw_set_पूर्णांकerrupts(ah);
+	ath9k_hw_enable_पूर्णांकerrupts(ah);
 
 	spin_unlock_bh(&sc->sc_pcu_lock);
 
@@ -308,13 +309,13 @@ int ath9k_resume(struct ieee80211_hw *hw)
 	ath9k_ps_restore(sc);
 	mutex_unlock(&sc->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ath9k_set_wakeup(struct ieee80211_hw *hw, bool enabled)
-{
-	struct ath_softc *sc = hw->priv;
-	struct ath_common *common = ath9k_hw_common(sc->sc_ah);
+व्योम ath9k_set_wakeup(काष्ठा ieee80211_hw *hw, bool enabled)
+अणु
+	काष्ठा ath_softc *sc = hw->priv;
+	काष्ठा ath_common *common = ath9k_hw_common(sc->sc_ah);
 
 	mutex_lock(&sc->mutex);
 	device_set_wakeup_enable(sc->dev, enabled);
@@ -322,27 +323,27 @@ void ath9k_set_wakeup(struct ieee80211_hw *hw, bool enabled)
 
 	ath_dbg(common, WOW, "WoW wakeup source is %s\n",
 		(enabled) ? "enabled" : "disabled");
-}
+पूर्ण
 
-void ath9k_init_wow(struct ieee80211_hw *hw)
-{
-	struct ath_softc *sc = hw->priv;
-	struct ath_hw *ah = sc->sc_ah;
+व्योम ath9k_init_wow(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा ath_softc *sc = hw->priv;
+	काष्ठा ath_hw *ah = sc->sc_ah;
 
-	if ((sc->driver_data & ATH9K_PCI_WOW) || sc->force_wow) {
-		if (AR_SREV_9462_20_OR_LATER(ah) || AR_SREV_9565_11_OR_LATER(ah))
+	अगर ((sc->driver_data & ATH9K_PCI_WOW) || sc->क्रमce_wow) अणु
+		अगर (AR_SREV_9462_20_OR_LATER(ah) || AR_SREV_9565_11_OR_LATER(ah))
 			hw->wiphy->wowlan = &ath9k_wowlan_support;
-		else
+		अन्यथा
 			hw->wiphy->wowlan = &ath9k_wowlan_support_legacy;
 
 		device_init_wakeup(sc->dev, 1);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ath9k_deinit_wow(struct ieee80211_hw *hw)
-{
-	struct ath_softc *sc = hw->priv;
+व्योम ath9k_deinit_wow(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा ath_softc *sc = hw->priv;
 
-	if ((sc->driver_data & ATH9K_PCI_WOW) || sc->force_wow)
+	अगर ((sc->driver_data & ATH9K_PCI_WOW) || sc->क्रमce_wow)
 		device_init_wakeup(sc->dev, 0);
-}
+पूर्ण

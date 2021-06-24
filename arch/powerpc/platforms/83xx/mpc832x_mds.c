@@ -1,103 +1,104 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2006 Freescale Semiconductor, Inc. All rights reserved.
  *
  * Description:
- * MPC832xE MDS board specific routines.
+ * MPC832xE MDS board specअगरic routines.
  */
 
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/errno.h>
-#include <linux/reboot.h>
-#include <linux/pci.h>
-#include <linux/kdev_t.h>
-#include <linux/major.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/seq_file.h>
-#include <linux/root_dev.h>
-#include <linux/initrd.h>
-#include <linux/of_platform.h>
-#include <linux/of_device.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/reboot.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/kdev_t.h>
+#समावेश <linux/major.h>
+#समावेश <linux/console.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/root_dev.h>
+#समावेश <linux/initrd.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_device.h>
 
-#include <linux/atomic.h>
-#include <asm/time.h>
-#include <asm/io.h>
-#include <asm/machdep.h>
-#include <asm/ipic.h>
-#include <asm/irq.h>
-#include <asm/prom.h>
-#include <asm/udbg.h>
-#include <sysdev/fsl_soc.h>
-#include <sysdev/fsl_pci.h>
-#include <soc/fsl/qe/qe.h>
+#समावेश <linux/atomic.h>
+#समावेश <यंत्र/समय.स>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/ipic.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <sysdev/fsl_soc.h>
+#समावेश <sysdev/fsl_pci.h>
+#समावेश <soc/fsl/qe/qe.h>
 
-#include "mpc83xx.h"
+#समावेश "mpc83xx.h"
 
-#undef DEBUG
-#ifdef DEBUG
-#define DBG(fmt...) udbg_printf(fmt)
-#else
-#define DBG(fmt...)
-#endif
+#अघोषित DEBUG
+#अगर_घोषित DEBUG
+#घोषणा DBG(fmt...) udbg_म_लिखो(fmt)
+#अन्यथा
+#घोषणा DBG(fmt...)
+#पूर्ण_अगर
 
 /* ************************************************************************
  *
  * Setup the architecture
  *
  */
-static void __init mpc832x_sys_setup_arch(void)
-{
-	struct device_node *np;
-	u8 __iomem *bcsr_regs = NULL;
+अटल व्योम __init mpc832x_sys_setup_arch(व्योम)
+अणु
+	काष्ठा device_node *np;
+	u8 __iomem *bcsr_regs = शून्य;
 
 	mpc83xx_setup_arch();
 
 	/* Map BCSR area */
-	np = of_find_node_by_name(NULL, "bcsr");
-	if (np) {
-		struct resource res;
+	np = of_find_node_by_name(शून्य, "bcsr");
+	अगर (np) अणु
+		काष्ठा resource res;
 
 		of_address_to_resource(np, 0, &res);
 		bcsr_regs = ioremap(res.start, resource_size(&res));
 		of_node_put(np);
-	}
+	पूर्ण
 
-#ifdef CONFIG_QUICC_ENGINE
-	if ((np = of_find_node_by_name(NULL, "par_io")) != NULL) {
+#अगर_घोषित CONFIG_QUICC_ENGINE
+	अगर ((np = of_find_node_by_name(शून्य, "par_io")) != शून्य) अणु
 		par_io_init(np);
 		of_node_put(np);
 
-		for_each_node_by_name(np, "ucc")
+		क्रम_each_node_by_name(np, "ucc")
 			par_io_of_config(np);
-	}
+	पूर्ण
 
-	if ((np = of_find_compatible_node(NULL, "network", "ucc_geth"))
-			!= NULL){
+	अगर ((np = of_find_compatible_node(शून्य, "network", "ucc_geth"))
+			!= शून्य)अणु
 		/* Reset the Ethernet PHYs */
-#define BCSR8_FETH_RST 0x50
+#घोषणा BCSR8_FETH_RST 0x50
 		clrbits8(&bcsr_regs[8], BCSR8_FETH_RST);
 		udelay(1000);
 		setbits8(&bcsr_regs[8], BCSR8_FETH_RST);
 		iounmap(bcsr_regs);
 		of_node_put(np);
-	}
-#endif				/* CONFIG_QUICC_ENGINE */
-}
+	पूर्ण
+#पूर्ण_अगर				/* CONFIG_QUICC_ENGINE */
+पूर्ण
 
-machine_device_initcall(mpc832x_mds, mpc83xx_declare_of_platform_devices);
+machine_device_initcall(mpc832x_mds, mpc83xx_declare_of_platक्रमm_devices);
 
 /*
  * Called very early, MMU is off, device-tree isn't unflattened
  */
-static int __init mpc832x_sys_probe(void)
-{
-	return of_machine_is_compatible("MPC832xMDS");
-}
+अटल पूर्णांक __init mpc832x_sys_probe(व्योम)
+अणु
+	वापस of_machine_is_compatible("MPC832xMDS");
+पूर्ण
 
-define_machine(mpc832x_mds) {
+define_machine(mpc832x_mds) अणु
 	.name 		= "MPC832x MDS",
 	.probe 		= mpc832x_sys_probe,
 	.setup_arch 	= mpc832x_sys_setup_arch,
@@ -105,7 +106,7 @@ define_machine(mpc832x_mds) {
 	.init_IRQ	= mpc83xx_ipic_init_IRQ,
 	.get_irq 	= ipic_get_irq,
 	.restart 	= mpc83xx_restart,
-	.time_init 	= mpc83xx_time_init,
+	.समय_init 	= mpc83xx_समय_init,
 	.calibrate_decr	= generic_calibrate_decr,
 	.progress 	= udbg_progress,
-};
+पूर्ण;

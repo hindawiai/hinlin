@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* linux/drivers/mmc/host/sdhci-s3c.c
  *
  * Copyright 2008 Openmoko Inc.
@@ -6,511 +7,511 @@
  *      Ben Dooks <ben@simtec.co.uk>
  *      http://armlinux.simtec.co.uk/
  *
- * SDHCI (HSMMC) support for Samsung SoC
+ * SDHCI (HSMMC) support क्रम Samsung SoC
  */
 
-#include <linux/spinlock.h>
-#include <linux/delay.h>
-#include <linux/dma-mapping.h>
-#include <linux/platform_device.h>
-#include <linux/platform_data/mmc-sdhci-s3c.h>
-#include <linux/slab.h>
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/gpio.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_gpio.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/platक्रमm_data/mmc-sdhci-s3c.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
 
-#include <linux/mmc/host.h>
+#समावेश <linux/mmc/host.h>
 
-#include "sdhci.h"
+#समावेश "sdhci.h"
 
-#define MAX_BUS_CLK	(4)
+#घोषणा MAX_BUS_CLK	(4)
 
-#define S3C_SDHCI_CONTROL2			(0x80)
-#define S3C_SDHCI_CONTROL3			(0x84)
-#define S3C64XX_SDHCI_CONTROL4			(0x8C)
+#घोषणा S3C_SDHCI_CONTROL2			(0x80)
+#घोषणा S3C_SDHCI_CONTROL3			(0x84)
+#घोषणा S3C64XX_SDHCI_CONTROL4			(0x8C)
 
-#define S3C64XX_SDHCI_CTRL2_ENSTAASYNCCLR	BIT(31)
-#define S3C64XX_SDHCI_CTRL2_ENCMDCNFMSK		BIT(30)
-#define S3C_SDHCI_CTRL2_CDINVRXD3		BIT(29)
-#define S3C_SDHCI_CTRL2_SLCARDOUT		BIT(28)
+#घोषणा S3C64XX_SDHCI_CTRL2_ENSTAASYNCCLR	BIT(31)
+#घोषणा S3C64XX_SDHCI_CTRL2_ENCMDCNFMSK		BIT(30)
+#घोषणा S3C_SDHCI_CTRL2_CDINVRXD3		BIT(29)
+#घोषणा S3C_SDHCI_CTRL2_SLCARDOUT		BIT(28)
 
-#define S3C_SDHCI_CTRL2_FLTCLKSEL_MASK		(0xf << 24)
-#define S3C_SDHCI_CTRL2_FLTCLKSEL_SHIFT		(24)
-#define S3C_SDHCI_CTRL2_FLTCLKSEL(_x)		((_x) << 24)
+#घोषणा S3C_SDHCI_CTRL2_FLTCLKSEL_MASK		(0xf << 24)
+#घोषणा S3C_SDHCI_CTRL2_FLTCLKSEL_SHIFT		(24)
+#घोषणा S3C_SDHCI_CTRL2_FLTCLKSEL(_x)		((_x) << 24)
 
-#define S3C_SDHCI_CTRL2_LVLDAT_MASK		(0xff << 16)
-#define S3C_SDHCI_CTRL2_LVLDAT_SHIFT		(16)
-#define S3C_SDHCI_CTRL2_LVLDAT(_x)		((_x) << 16)
+#घोषणा S3C_SDHCI_CTRL2_LVLDAT_MASK		(0xff << 16)
+#घोषणा S3C_SDHCI_CTRL2_LVLDAT_SHIFT		(16)
+#घोषणा S3C_SDHCI_CTRL2_LVLDAT(_x)		((_x) << 16)
 
-#define S3C_SDHCI_CTRL2_ENFBCLKTX		BIT(15)
-#define S3C_SDHCI_CTRL2_ENFBCLKRX		BIT(14)
-#define S3C_SDHCI_CTRL2_SDCDSEL			BIT(13)
-#define S3C_SDHCI_CTRL2_SDSIGPC			BIT(12)
-#define S3C_SDHCI_CTRL2_ENBUSYCHKTXSTART	BIT(11)
+#घोषणा S3C_SDHCI_CTRL2_ENFBCLKTX		BIT(15)
+#घोषणा S3C_SDHCI_CTRL2_ENFBCLKRX		BIT(14)
+#घोषणा S3C_SDHCI_CTRL2_SDCDSEL			BIT(13)
+#घोषणा S3C_SDHCI_CTRL2_SDSIGPC			BIT(12)
+#घोषणा S3C_SDHCI_CTRL2_ENBUSYCHKTXSTART	BIT(11)
 
-#define S3C_SDHCI_CTRL2_DFCNT_MASK		(0x3 << 9)
-#define S3C_SDHCI_CTRL2_DFCNT_SHIFT		(9)
-#define S3C_SDHCI_CTRL2_DFCNT_NONE		(0x0 << 9)
-#define S3C_SDHCI_CTRL2_DFCNT_4SDCLK		(0x1 << 9)
-#define S3C_SDHCI_CTRL2_DFCNT_16SDCLK		(0x2 << 9)
-#define S3C_SDHCI_CTRL2_DFCNT_64SDCLK		(0x3 << 9)
+#घोषणा S3C_SDHCI_CTRL2_DFCNT_MASK		(0x3 << 9)
+#घोषणा S3C_SDHCI_CTRL2_DFCNT_SHIFT		(9)
+#घोषणा S3C_SDHCI_CTRL2_DFCNT_NONE		(0x0 << 9)
+#घोषणा S3C_SDHCI_CTRL2_DFCNT_4SDCLK		(0x1 << 9)
+#घोषणा S3C_SDHCI_CTRL2_DFCNT_16SDCLK		(0x2 << 9)
+#घोषणा S3C_SDHCI_CTRL2_DFCNT_64SDCLK		(0x3 << 9)
 
-#define S3C_SDHCI_CTRL2_ENCLKOUTHOLD		BIT(8)
-#define S3C_SDHCI_CTRL2_RWAITMODE		BIT(7)
-#define S3C_SDHCI_CTRL2_DISBUFRD		BIT(6)
+#घोषणा S3C_SDHCI_CTRL2_ENCLKOUTHOLD		BIT(8)
+#घोषणा S3C_SDHCI_CTRL2_RWAITMODE		BIT(7)
+#घोषणा S3C_SDHCI_CTRL2_DISBUFRD		BIT(6)
 
-#define S3C_SDHCI_CTRL2_SELBASECLK_MASK		(0x3 << 4)
-#define S3C_SDHCI_CTRL2_SELBASECLK_SHIFT	(4)
-#define S3C_SDHCI_CTRL2_PWRSYNC			BIT(3)
-#define S3C_SDHCI_CTRL2_ENCLKOUTMSKCON		BIT(1)
-#define S3C_SDHCI_CTRL2_HWINITFIN		BIT(0)
+#घोषणा S3C_SDHCI_CTRL2_SELBASECLK_MASK		(0x3 << 4)
+#घोषणा S3C_SDHCI_CTRL2_SELBASECLK_SHIFT	(4)
+#घोषणा S3C_SDHCI_CTRL2_PWRSYNC			BIT(3)
+#घोषणा S3C_SDHCI_CTRL2_ENCLKOUTMSKCON		BIT(1)
+#घोषणा S3C_SDHCI_CTRL2_HWINITFIN		BIT(0)
 
-#define S3C_SDHCI_CTRL3_FCSEL3			BIT(31)
-#define S3C_SDHCI_CTRL3_FCSEL2			BIT(23)
-#define S3C_SDHCI_CTRL3_FCSEL1			BIT(15)
-#define S3C_SDHCI_CTRL3_FCSEL0			BIT(7)
+#घोषणा S3C_SDHCI_CTRL3_FCSEL3			BIT(31)
+#घोषणा S3C_SDHCI_CTRL3_FCSEL2			BIT(23)
+#घोषणा S3C_SDHCI_CTRL3_FCSEL1			BIT(15)
+#घोषणा S3C_SDHCI_CTRL3_FCSEL0			BIT(7)
 
-#define S3C_SDHCI_CTRL3_FIA3_MASK		(0x7f << 24)
-#define S3C_SDHCI_CTRL3_FIA3_SHIFT		(24)
-#define S3C_SDHCI_CTRL3_FIA3(_x)		((_x) << 24)
+#घोषणा S3C_SDHCI_CTRL3_FIA3_MASK		(0x7f << 24)
+#घोषणा S3C_SDHCI_CTRL3_FIA3_SHIFT		(24)
+#घोषणा S3C_SDHCI_CTRL3_FIA3(_x)		((_x) << 24)
 
-#define S3C_SDHCI_CTRL3_FIA2_MASK		(0x7f << 16)
-#define S3C_SDHCI_CTRL3_FIA2_SHIFT		(16)
-#define S3C_SDHCI_CTRL3_FIA2(_x)		((_x) << 16)
+#घोषणा S3C_SDHCI_CTRL3_FIA2_MASK		(0x7f << 16)
+#घोषणा S3C_SDHCI_CTRL3_FIA2_SHIFT		(16)
+#घोषणा S3C_SDHCI_CTRL3_FIA2(_x)		((_x) << 16)
 
-#define S3C_SDHCI_CTRL3_FIA1_MASK		(0x7f << 8)
-#define S3C_SDHCI_CTRL3_FIA1_SHIFT		(8)
-#define S3C_SDHCI_CTRL3_FIA1(_x)		((_x) << 8)
+#घोषणा S3C_SDHCI_CTRL3_FIA1_MASK		(0x7f << 8)
+#घोषणा S3C_SDHCI_CTRL3_FIA1_SHIFT		(8)
+#घोषणा S3C_SDHCI_CTRL3_FIA1(_x)		((_x) << 8)
 
-#define S3C_SDHCI_CTRL3_FIA0_MASK		(0x7f << 0)
-#define S3C_SDHCI_CTRL3_FIA0_SHIFT		(0)
-#define S3C_SDHCI_CTRL3_FIA0(_x)		((_x) << 0)
+#घोषणा S3C_SDHCI_CTRL3_FIA0_MASK		(0x7f << 0)
+#घोषणा S3C_SDHCI_CTRL3_FIA0_SHIFT		(0)
+#घोषणा S3C_SDHCI_CTRL3_FIA0(_x)		((_x) << 0)
 
-#define S3C64XX_SDHCI_CONTROL4_DRIVE_MASK	(0x3 << 16)
-#define S3C64XX_SDHCI_CONTROL4_DRIVE_SHIFT	(16)
-#define S3C64XX_SDHCI_CONTROL4_DRIVE_2mA	(0x0 << 16)
-#define S3C64XX_SDHCI_CONTROL4_DRIVE_4mA	(0x1 << 16)
-#define S3C64XX_SDHCI_CONTROL4_DRIVE_7mA	(0x2 << 16)
-#define S3C64XX_SDHCI_CONTROL4_DRIVE_9mA	(0x3 << 16)
+#घोषणा S3C64XX_SDHCI_CONTROL4_DRIVE_MASK	(0x3 << 16)
+#घोषणा S3C64XX_SDHCI_CONTROL4_DRIVE_SHIFT	(16)
+#घोषणा S3C64XX_SDHCI_CONTROL4_DRIVE_2mA	(0x0 << 16)
+#घोषणा S3C64XX_SDHCI_CONTROL4_DRIVE_4mA	(0x1 << 16)
+#घोषणा S3C64XX_SDHCI_CONTROL4_DRIVE_7mA	(0x2 << 16)
+#घोषणा S3C64XX_SDHCI_CONTROL4_DRIVE_9mA	(0x3 << 16)
 
-#define S3C64XX_SDHCI_CONTROL4_BUSY		(1)
+#घोषणा S3C64XX_SDHCI_CONTROL4_BUSY		(1)
 
 /**
- * struct sdhci_s3c - S3C SDHCI instance
+ * काष्ठा sdhci_s3c - S3C SDHCI instance
  * @host: The SDHCI host created
- * @pdev: The platform device we where created from.
+ * @pdev: The platक्रमm device we where created from.
  * @ioarea: The resource created when we claimed the IO area.
- * @pdata: The platform data for this controller.
- * @cur_clk: The index of the current bus clock.
- * @ext_cd_irq: External card detect interrupt.
- * @clk_io: The clock for the internal bus interface.
+ * @pdata: The platक्रमm data क्रम this controller.
+ * @cur_clk: The index of the current bus घड़ी.
+ * @ext_cd_irq: External card detect पूर्णांकerrupt.
+ * @clk_io: The घड़ी क्रम the पूर्णांकernal bus पूर्णांकerface.
  * @clk_rates: Clock frequencies.
- * @clk_bus: The clocks that are available for the SD/MMC bus clock.
- * @no_divider: No or non-standard internal clock divider.
+ * @clk_bus: The घड़ीs that are available क्रम the SD/MMC bus घड़ी.
+ * @no_भागider: No or non-standard पूर्णांकernal घड़ी भागider.
  */
-struct sdhci_s3c {
-	struct sdhci_host	*host;
-	struct platform_device	*pdev;
-	struct resource		*ioarea;
-	struct s3c_sdhci_platdata *pdata;
-	int			cur_clk;
-	int			ext_cd_irq;
+काष्ठा sdhci_s3c अणु
+	काष्ठा sdhci_host	*host;
+	काष्ठा platक्रमm_device	*pdev;
+	काष्ठा resource		*ioarea;
+	काष्ठा s3c_sdhci_platdata *pdata;
+	पूर्णांक			cur_clk;
+	पूर्णांक			ext_cd_irq;
 
-	struct clk		*clk_io;
-	struct clk		*clk_bus[MAX_BUS_CLK];
-	unsigned long		clk_rates[MAX_BUS_CLK];
+	काष्ठा clk		*clk_io;
+	काष्ठा clk		*clk_bus[MAX_BUS_CLK];
+	अचिन्हित दीर्घ		clk_rates[MAX_BUS_CLK];
 
-	bool			no_divider;
-};
+	bool			no_भागider;
+पूर्ण;
 
 /**
- * struct sdhci_s3c_drv_data - S3C SDHCI platform specific driver data
- * @sdhci_quirks: sdhci host specific quirks.
- * @no_divider: no or non-standard internal clock divider.
+ * काष्ठा sdhci_s3c_drv_data - S3C SDHCI platक्रमm specअगरic driver data
+ * @sdhci_quirks: sdhci host specअगरic quirks.
+ * @no_भागider: no or non-standard पूर्णांकernal घड़ी भागider.
  *
- * Specifies platform specific configuration of sdhci controller.
- * Note: A structure for driver specific platform data is used for future
+ * Specअगरies platक्रमm specअगरic configuration of sdhci controller.
+ * Note: A काष्ठाure क्रम driver specअगरic platक्रमm data is used क्रम future
  * expansion of its usage.
  */
-struct sdhci_s3c_drv_data {
-	unsigned int	sdhci_quirks;
-	bool		no_divider;
-};
+काष्ठा sdhci_s3c_drv_data अणु
+	अचिन्हित पूर्णांक	sdhci_quirks;
+	bool		no_भागider;
+पूर्ण;
 
-static inline struct sdhci_s3c *to_s3c(struct sdhci_host *host)
-{
-	return sdhci_priv(host);
-}
+अटल अंतरभूत काष्ठा sdhci_s3c *to_s3c(काष्ठा sdhci_host *host)
+अणु
+	वापस sdhci_priv(host);
+पूर्ण
 
 /**
- * sdhci_s3c_get_max_clk - callback to get maximum clock frequency.
+ * sdhci_s3c_get_max_clk - callback to get maximum घड़ी frequency.
  * @host: The SDHCI host instance.
  *
- * Callback to return the maximum clock rate acheivable by the controller.
+ * Callback to वापस the maximum घड़ी rate acheivable by the controller.
 */
-static unsigned int sdhci_s3c_get_max_clk(struct sdhci_host *host)
-{
-	struct sdhci_s3c *ourhost = to_s3c(host);
-	unsigned long rate, max = 0;
-	int src;
+अटल अचिन्हित पूर्णांक sdhci_s3c_get_max_clk(काष्ठा sdhci_host *host)
+अणु
+	काष्ठा sdhci_s3c *ourhost = to_s3c(host);
+	अचिन्हित दीर्घ rate, max = 0;
+	पूर्णांक src;
 
-	for (src = 0; src < MAX_BUS_CLK; src++) {
+	क्रम (src = 0; src < MAX_BUS_CLK; src++) अणु
 		rate = ourhost->clk_rates[src];
-		if (rate > max)
+		अगर (rate > max)
 			max = rate;
-	}
+	पूर्ण
 
-	return max;
-}
+	वापस max;
+पूर्ण
 
 /**
- * sdhci_s3c_consider_clock - consider one the bus clocks for current setting
+ * sdhci_s3c_consider_घड़ी - consider one the bus घड़ीs क्रम current setting
  * @ourhost: Our SDHCI instance.
- * @src: The source clock index.
- * @wanted: The clock frequency wanted.
+ * @src: The source घड़ी index.
+ * @wanted: The घड़ी frequency wanted.
  */
-static unsigned int sdhci_s3c_consider_clock(struct sdhci_s3c *ourhost,
-					     unsigned int src,
-					     unsigned int wanted)
-{
-	unsigned long rate;
-	struct clk *clksrc = ourhost->clk_bus[src];
-	int shift;
+अटल अचिन्हित पूर्णांक sdhci_s3c_consider_घड़ी(काष्ठा sdhci_s3c *ourhost,
+					     अचिन्हित पूर्णांक src,
+					     अचिन्हित पूर्णांक wanted)
+अणु
+	अचिन्हित दीर्घ rate;
+	काष्ठा clk *clksrc = ourhost->clk_bus[src];
+	पूर्णांक shअगरt;
 
-	if (IS_ERR(clksrc))
-		return UINT_MAX;
+	अगर (IS_ERR(clksrc))
+		वापस अच_पूर्णांक_उच्च;
 
 	/*
-	 * If controller uses a non-standard clock division, find the best clock
-	 * speed possible with selected clock source and skip the division.
+	 * If controller uses a non-standard घड़ी भागision, find the best घड़ी
+	 * speed possible with selected घड़ी source and skip the भागision.
 	 */
-	if (ourhost->no_divider) {
+	अगर (ourhost->no_भागider) अणु
 		rate = clk_round_rate(clksrc, wanted);
-		return wanted - rate;
-	}
+		वापस wanted - rate;
+	पूर्ण
 
 	rate = ourhost->clk_rates[src];
 
-	for (shift = 0; shift <= 8; ++shift) {
-		if ((rate >> shift) <= wanted)
-			break;
-	}
+	क्रम (shअगरt = 0; shअगरt <= 8; ++shअगरt) अणु
+		अगर ((rate >> shअगरt) <= wanted)
+			अवरोध;
+	पूर्ण
 
-	if (shift > 8) {
+	अगर (shअगरt > 8) अणु
 		dev_dbg(&ourhost->pdev->dev,
 			"clk %d: rate %ld, min rate %lu > wanted %u\n",
 			src, rate, rate / 256, wanted);
-		return UINT_MAX;
-	}
+		वापस अच_पूर्णांक_उच्च;
+	पूर्ण
 
 	dev_dbg(&ourhost->pdev->dev, "clk %d: rate %ld, want %d, got %ld\n",
-		src, rate, wanted, rate >> shift);
+		src, rate, wanted, rate >> shअगरt);
 
-	return wanted - (rate >> shift);
-}
+	वापस wanted - (rate >> shअगरt);
+पूर्ण
 
 /**
- * sdhci_s3c_set_clock - callback on clock change
+ * sdhci_s3c_set_घड़ी - callback on घड़ी change
  * @host: The SDHCI host being changed
- * @clock: The clock rate being requested.
+ * @घड़ी: The घड़ी rate being requested.
  *
- * When the card's clock is going to be changed, look at the new frequency
- * and find the best clock source to go with it.
+ * When the card's घड़ी is going to be changed, look at the new frequency
+ * and find the best घड़ी source to go with it.
 */
-static void sdhci_s3c_set_clock(struct sdhci_host *host, unsigned int clock)
-{
-	struct sdhci_s3c *ourhost = to_s3c(host);
-	unsigned int best = UINT_MAX;
-	unsigned int delta;
-	int best_src = 0;
-	int src;
+अटल व्योम sdhci_s3c_set_घड़ी(काष्ठा sdhci_host *host, अचिन्हित पूर्णांक घड़ी)
+अणु
+	काष्ठा sdhci_s3c *ourhost = to_s3c(host);
+	अचिन्हित पूर्णांक best = अच_पूर्णांक_उच्च;
+	अचिन्हित पूर्णांक delta;
+	पूर्णांक best_src = 0;
+	पूर्णांक src;
 	u32 ctrl;
 
-	host->mmc->actual_clock = 0;
+	host->mmc->actual_घड़ी = 0;
 
-	/* don't bother if the clock is going off. */
-	if (clock == 0) {
-		sdhci_set_clock(host, clock);
-		return;
-	}
+	/* करोn't bother अगर the घड़ी is going off. */
+	अगर (घड़ी == 0) अणु
+		sdhci_set_घड़ी(host, घड़ी);
+		वापस;
+	पूर्ण
 
-	for (src = 0; src < MAX_BUS_CLK; src++) {
-		delta = sdhci_s3c_consider_clock(ourhost, src, clock);
-		if (delta < best) {
+	क्रम (src = 0; src < MAX_BUS_CLK; src++) अणु
+		delta = sdhci_s3c_consider_घड़ी(ourhost, src, घड़ी);
+		अगर (delta < best) अणु
 			best = delta;
 			best_src = src;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	dev_dbg(&ourhost->pdev->dev,
 		"selected source %d, clock %d, delta %d\n",
-		 best_src, clock, best);
+		 best_src, घड़ी, best);
 
-	/* select the new clock source */
-	if (ourhost->cur_clk != best_src) {
-		struct clk *clk = ourhost->clk_bus[best_src];
+	/* select the new घड़ी source */
+	अगर (ourhost->cur_clk != best_src) अणु
+		काष्ठा clk *clk = ourhost->clk_bus[best_src];
 
 		clk_prepare_enable(clk);
-		if (ourhost->cur_clk >= 0)
+		अगर (ourhost->cur_clk >= 0)
 			clk_disable_unprepare(
 					ourhost->clk_bus[ourhost->cur_clk]);
 
 		ourhost->cur_clk = best_src;
 		host->max_clk = ourhost->clk_rates[best_src];
-	}
+	पूर्ण
 
-	/* turn clock off to card before changing clock source */
-	writew(0, host->ioaddr + SDHCI_CLOCK_CONTROL);
+	/* turn घड़ी off to card beक्रमe changing घड़ी source */
+	ग_लिखोw(0, host->ioaddr + SDHCI_CLOCK_CONTROL);
 
-	ctrl = readl(host->ioaddr + S3C_SDHCI_CONTROL2);
+	ctrl = पढ़ोl(host->ioaddr + S3C_SDHCI_CONTROL2);
 	ctrl &= ~S3C_SDHCI_CTRL2_SELBASECLK_MASK;
 	ctrl |= best_src << S3C_SDHCI_CTRL2_SELBASECLK_SHIFT;
-	writel(ctrl, host->ioaddr + S3C_SDHCI_CONTROL2);
+	ग_लिखोl(ctrl, host->ioaddr + S3C_SDHCI_CONTROL2);
 
-	/* reprogram default hardware configuration */
-	writel(S3C64XX_SDHCI_CONTROL4_DRIVE_9mA,
+	/* reprogram शेष hardware configuration */
+	ग_लिखोl(S3C64XX_SDHCI_CONTROL4_DRIVE_9mA,
 		host->ioaddr + S3C64XX_SDHCI_CONTROL4);
 
-	ctrl = readl(host->ioaddr + S3C_SDHCI_CONTROL2);
+	ctrl = पढ़ोl(host->ioaddr + S3C_SDHCI_CONTROL2);
 	ctrl |= (S3C64XX_SDHCI_CTRL2_ENSTAASYNCCLR |
 		  S3C64XX_SDHCI_CTRL2_ENCMDCNFMSK |
 		  S3C_SDHCI_CTRL2_ENFBCLKRX |
 		  S3C_SDHCI_CTRL2_DFCNT_NONE |
 		  S3C_SDHCI_CTRL2_ENCLKOUTHOLD);
-	writel(ctrl, host->ioaddr + S3C_SDHCI_CONTROL2);
+	ग_लिखोl(ctrl, host->ioaddr + S3C_SDHCI_CONTROL2);
 
-	/* reconfigure the controller for new clock rate */
+	/* reconfigure the controller क्रम new घड़ी rate */
 	ctrl = (S3C_SDHCI_CTRL3_FCSEL1 | S3C_SDHCI_CTRL3_FCSEL0);
-	if (clock < 25 * 1000000)
+	अगर (घड़ी < 25 * 1000000)
 		ctrl |= (S3C_SDHCI_CTRL3_FCSEL3 | S3C_SDHCI_CTRL3_FCSEL2);
-	writel(ctrl, host->ioaddr + S3C_SDHCI_CONTROL3);
+	ग_लिखोl(ctrl, host->ioaddr + S3C_SDHCI_CONTROL3);
 
-	sdhci_set_clock(host, clock);
-}
+	sdhci_set_घड़ी(host, घड़ी);
+पूर्ण
 
 /**
- * sdhci_s3c_get_min_clock - callback to get minimal supported clock value
+ * sdhci_s3c_get_min_घड़ी - callback to get minimal supported घड़ी value
  * @host: The SDHCI host being queried
  *
- * To init mmc host properly a minimal clock value is needed. For high system
- * bus clock's values the standard formula gives values out of allowed range.
- * The clock still can be set to lower values, if clock source other then
- * system bus is selected.
+ * To init mmc host properly a minimal घड़ी value is needed. For high प्रणाली
+ * bus घड़ी's values the standard क्रमmula gives values out of allowed range.
+ * The घड़ी still can be set to lower values, अगर घड़ी source other then
+ * प्रणाली bus is selected.
 */
-static unsigned int sdhci_s3c_get_min_clock(struct sdhci_host *host)
-{
-	struct sdhci_s3c *ourhost = to_s3c(host);
-	unsigned long rate, min = ULONG_MAX;
-	int src;
+अटल अचिन्हित पूर्णांक sdhci_s3c_get_min_घड़ी(काष्ठा sdhci_host *host)
+अणु
+	काष्ठा sdhci_s3c *ourhost = to_s3c(host);
+	अचिन्हित दीर्घ rate, min = अच_दीर्घ_उच्च;
+	पूर्णांक src;
 
-	for (src = 0; src < MAX_BUS_CLK; src++) {
+	क्रम (src = 0; src < MAX_BUS_CLK; src++) अणु
 		rate = ourhost->clk_rates[src] / 256;
-		if (!rate)
-			continue;
-		if (rate < min)
+		अगर (!rate)
+			जारी;
+		अगर (rate < min)
 			min = rate;
-	}
+	पूर्ण
 
-	return min;
-}
+	वापस min;
+पूर्ण
 
-/* sdhci_cmu_get_max_clk - callback to get maximum clock frequency.*/
-static unsigned int sdhci_cmu_get_max_clock(struct sdhci_host *host)
-{
-	struct sdhci_s3c *ourhost = to_s3c(host);
-	unsigned long rate, max = 0;
-	int src;
+/* sdhci_cmu_get_max_clk - callback to get maximum घड़ी frequency.*/
+अटल अचिन्हित पूर्णांक sdhci_cmu_get_max_घड़ी(काष्ठा sdhci_host *host)
+अणु
+	काष्ठा sdhci_s3c *ourhost = to_s3c(host);
+	अचिन्हित दीर्घ rate, max = 0;
+	पूर्णांक src;
 
-	for (src = 0; src < MAX_BUS_CLK; src++) {
-		struct clk *clk;
+	क्रम (src = 0; src < MAX_BUS_CLK; src++) अणु
+		काष्ठा clk *clk;
 
 		clk = ourhost->clk_bus[src];
-		if (IS_ERR(clk))
-			continue;
+		अगर (IS_ERR(clk))
+			जारी;
 
-		rate = clk_round_rate(clk, ULONG_MAX);
-		if (rate > max)
+		rate = clk_round_rate(clk, अच_दीर्घ_उच्च);
+		अगर (rate > max)
 			max = rate;
-	}
+	पूर्ण
 
-	return max;
-}
+	वापस max;
+पूर्ण
 
-/* sdhci_cmu_get_min_clock - callback to get minimal supported clock value. */
-static unsigned int sdhci_cmu_get_min_clock(struct sdhci_host *host)
-{
-	struct sdhci_s3c *ourhost = to_s3c(host);
-	unsigned long rate, min = ULONG_MAX;
-	int src;
+/* sdhci_cmu_get_min_घड़ी - callback to get minimal supported घड़ी value. */
+अटल अचिन्हित पूर्णांक sdhci_cmu_get_min_घड़ी(काष्ठा sdhci_host *host)
+अणु
+	काष्ठा sdhci_s3c *ourhost = to_s3c(host);
+	अचिन्हित दीर्घ rate, min = अच_दीर्घ_उच्च;
+	पूर्णांक src;
 
-	for (src = 0; src < MAX_BUS_CLK; src++) {
-		struct clk *clk;
+	क्रम (src = 0; src < MAX_BUS_CLK; src++) अणु
+		काष्ठा clk *clk;
 
 		clk = ourhost->clk_bus[src];
-		if (IS_ERR(clk))
-			continue;
+		अगर (IS_ERR(clk))
+			जारी;
 
 		rate = clk_round_rate(clk, 0);
-		if (rate < min)
+		अगर (rate < min)
 			min = rate;
-	}
+	पूर्ण
 
-	return min;
-}
+	वापस min;
+पूर्ण
 
-/* sdhci_cmu_set_clock - callback on clock change.*/
-static void sdhci_cmu_set_clock(struct sdhci_host *host, unsigned int clock)
-{
-	struct sdhci_s3c *ourhost = to_s3c(host);
-	struct device *dev = &ourhost->pdev->dev;
-	unsigned long timeout;
+/* sdhci_cmu_set_घड़ी - callback on घड़ी change.*/
+अटल व्योम sdhci_cmu_set_घड़ी(काष्ठा sdhci_host *host, अचिन्हित पूर्णांक घड़ी)
+अणु
+	काष्ठा sdhci_s3c *ourhost = to_s3c(host);
+	काष्ठा device *dev = &ourhost->pdev->dev;
+	अचिन्हित दीर्घ समयout;
 	u16 clk = 0;
-	int ret;
+	पूर्णांक ret;
 
-	host->mmc->actual_clock = 0;
+	host->mmc->actual_घड़ी = 0;
 
-	/* If the clock is going off, set to 0 at clock control register */
-	if (clock == 0) {
-		sdhci_writew(host, 0, SDHCI_CLOCK_CONTROL);
-		return;
-	}
+	/* If the घड़ी is going off, set to 0 at घड़ी control रेजिस्टर */
+	अगर (घड़ी == 0) अणु
+		sdhci_ग_लिखोw(host, 0, SDHCI_CLOCK_CONTROL);
+		वापस;
+	पूर्ण
 
-	sdhci_s3c_set_clock(host, clock);
+	sdhci_s3c_set_घड़ी(host, घड़ी);
 
 	/* Reset SD Clock Enable */
-	clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL);
+	clk = sdhci_पढ़ोw(host, SDHCI_CLOCK_CONTROL);
 	clk &= ~SDHCI_CLOCK_CARD_EN;
-	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
+	sdhci_ग_लिखोw(host, clk, SDHCI_CLOCK_CONTROL);
 
-	ret = clk_set_rate(ourhost->clk_bus[ourhost->cur_clk], clock);
-	if (ret != 0) {
+	ret = clk_set_rate(ourhost->clk_bus[ourhost->cur_clk], घड़ी);
+	अगर (ret != 0) अणु
 		dev_err(dev, "%s: failed to set clock rate %uHz\n",
-			mmc_hostname(host->mmc), clock);
-		return;
-	}
+			mmc_hostname(host->mmc), घड़ी);
+		वापस;
+	पूर्ण
 
 	clk = SDHCI_CLOCK_INT_EN;
-	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
+	sdhci_ग_लिखोw(host, clk, SDHCI_CLOCK_CONTROL);
 
 	/* Wait max 20 ms */
-	timeout = 20;
-	while (!((clk = sdhci_readw(host, SDHCI_CLOCK_CONTROL))
-		& SDHCI_CLOCK_INT_STABLE)) {
-		if (timeout == 0) {
+	समयout = 20;
+	जबतक (!((clk = sdhci_पढ़ोw(host, SDHCI_CLOCK_CONTROL))
+		& SDHCI_CLOCK_INT_STABLE)) अणु
+		अगर (समयout == 0) अणु
 			dev_err(dev, "%s: Internal clock never stabilised.\n",
 				mmc_hostname(host->mmc));
-			return;
-		}
-		timeout--;
+			वापस;
+		पूर्ण
+		समयout--;
 		mdelay(1);
-	}
+	पूर्ण
 
 	clk |= SDHCI_CLOCK_CARD_EN;
-	sdhci_writew(host, clk, SDHCI_CLOCK_CONTROL);
-}
+	sdhci_ग_लिखोw(host, clk, SDHCI_CLOCK_CONTROL);
+पूर्ण
 
-static struct sdhci_ops sdhci_s3c_ops = {
-	.get_max_clock		= sdhci_s3c_get_max_clk,
-	.set_clock		= sdhci_s3c_set_clock,
-	.get_min_clock		= sdhci_s3c_get_min_clock,
+अटल काष्ठा sdhci_ops sdhci_s3c_ops = अणु
+	.get_max_घड़ी		= sdhci_s3c_get_max_clk,
+	.set_घड़ी		= sdhci_s3c_set_घड़ी,
+	.get_min_घड़ी		= sdhci_s3c_get_min_घड़ी,
 	.set_bus_width		= sdhci_set_bus_width,
 	.reset			= sdhci_reset,
-	.set_uhs_signaling	= sdhci_set_uhs_signaling,
-};
+	.set_uhs_संकेतing	= sdhci_set_uhs_संकेतing,
+पूर्ण;
 
-#ifdef CONFIG_OF
-static int sdhci_s3c_parse_dt(struct device *dev,
-		struct sdhci_host *host, struct s3c_sdhci_platdata *pdata)
-{
-	struct device_node *node = dev->of_node;
+#अगर_घोषित CONFIG_OF
+अटल पूर्णांक sdhci_s3c_parse_dt(काष्ठा device *dev,
+		काष्ठा sdhci_host *host, काष्ठा s3c_sdhci_platdata *pdata)
+अणु
+	काष्ठा device_node *node = dev->of_node;
 	u32 max_width;
 
-	/* if the bus-width property is not specified, assume width as 1 */
-	if (of_property_read_u32(node, "bus-width", &max_width))
+	/* अगर the bus-width property is not specअगरied, assume width as 1 */
+	अगर (of_property_पढ़ो_u32(node, "bus-width", &max_width))
 		max_width = 1;
 	pdata->max_width = max_width;
 
 	/* get the card detection method */
-	if (of_get_property(node, "broken-cd", NULL)) {
+	अगर (of_get_property(node, "broken-cd", शून्य)) अणु
 		pdata->cd_type = S3C_SDHCI_CD_NONE;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (of_get_property(node, "non-removable", NULL)) {
+	अगर (of_get_property(node, "non-removable", शून्य)) अणु
 		pdata->cd_type = S3C_SDHCI_CD_PERMANENT;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (of_get_named_gpio(node, "cd-gpios", 0))
-		return 0;
+	अगर (of_get_named_gpio(node, "cd-gpios", 0))
+		वापस 0;
 
-	/* assuming internal card detect that will be configured by pinctrl */
+	/* assuming पूर्णांकernal card detect that will be configured by pinctrl */
 	pdata->cd_type = S3C_SDHCI_CD_INTERNAL;
-	return 0;
-}
-#else
-static int sdhci_s3c_parse_dt(struct device *dev,
-		struct sdhci_host *host, struct s3c_sdhci_platdata *pdata)
-{
-	return -EINVAL;
-}
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक sdhci_s3c_parse_dt(काष्ठा device *dev,
+		काष्ठा sdhci_host *host, काष्ठा s3c_sdhci_platdata *pdata)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर
 
-static inline const struct sdhci_s3c_drv_data *sdhci_s3c_get_driver_data(
-			struct platform_device *pdev)
-{
-#ifdef CONFIG_OF
-	if (pdev->dev.of_node)
-		return of_device_get_match_data(&pdev->dev);
-#endif
-	return (const struct sdhci_s3c_drv_data *)
-			platform_get_device_id(pdev)->driver_data;
-}
+अटल अंतरभूत स्थिर काष्ठा sdhci_s3c_drv_data *sdhci_s3c_get_driver_data(
+			काष्ठा platक्रमm_device *pdev)
+अणु
+#अगर_घोषित CONFIG_OF
+	अगर (pdev->dev.of_node)
+		वापस of_device_get_match_data(&pdev->dev);
+#पूर्ण_अगर
+	वापस (स्थिर काष्ठा sdhci_s3c_drv_data *)
+			platक्रमm_get_device_id(pdev)->driver_data;
+पूर्ण
 
-static int sdhci_s3c_probe(struct platform_device *pdev)
-{
-	struct s3c_sdhci_platdata *pdata;
-	const struct sdhci_s3c_drv_data *drv_data;
-	struct device *dev = &pdev->dev;
-	struct sdhci_host *host;
-	struct sdhci_s3c *sc;
-	int ret, irq, ptr, clks;
+अटल पूर्णांक sdhci_s3c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा s3c_sdhci_platdata *pdata;
+	स्थिर काष्ठा sdhci_s3c_drv_data *drv_data;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा sdhci_host *host;
+	काष्ठा sdhci_s3c *sc;
+	पूर्णांक ret, irq, ptr, clks;
 
-	if (!pdev->dev.platform_data && !pdev->dev.of_node) {
+	अगर (!pdev->dev.platक्रमm_data && !pdev->dev.of_node) अणु
 		dev_err(dev, "no device data specified\n");
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
-	host = sdhci_alloc_host(dev, sizeof(struct sdhci_s3c));
-	if (IS_ERR(host)) {
+	host = sdhci_alloc_host(dev, माप(काष्ठा sdhci_s3c));
+	अगर (IS_ERR(host)) अणु
 		dev_err(dev, "sdhci_alloc_host() failed\n");
-		return PTR_ERR(host);
-	}
+		वापस PTR_ERR(host);
+	पूर्ण
 	sc = sdhci_priv(host);
 
-	pdata = devm_kzalloc(&pdev->dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata) {
+	pdata = devm_kzalloc(&pdev->dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata) अणु
 		ret = -ENOMEM;
-		goto err_pdata_io_clk;
-	}
+		जाओ err_pdata_io_clk;
+	पूर्ण
 
-	if (pdev->dev.of_node) {
+	अगर (pdev->dev.of_node) अणु
 		ret = sdhci_s3c_parse_dt(&pdev->dev, host, pdata);
-		if (ret)
-			goto err_pdata_io_clk;
-	} else {
-		memcpy(pdata, pdev->dev.platform_data, sizeof(*pdata));
-	}
+		अगर (ret)
+			जाओ err_pdata_io_clk;
+	पूर्ण अन्यथा अणु
+		स_नकल(pdata, pdev->dev.platक्रमm_data, माप(*pdata));
+	पूर्ण
 
 	drv_data = sdhci_s3c_get_driver_data(pdev);
 
@@ -519,47 +520,47 @@ static int sdhci_s3c_probe(struct platform_device *pdev)
 	sc->pdata = pdata;
 	sc->cur_clk = -1;
 
-	platform_set_drvdata(pdev, host);
+	platक्रमm_set_drvdata(pdev, host);
 
 	sc->clk_io = devm_clk_get(dev, "hsmmc");
-	if (IS_ERR(sc->clk_io)) {
+	अगर (IS_ERR(sc->clk_io)) अणु
 		dev_err(dev, "failed to get io clock\n");
 		ret = PTR_ERR(sc->clk_io);
-		goto err_pdata_io_clk;
-	}
+		जाओ err_pdata_io_clk;
+	पूर्ण
 
-	/* enable the local io clock and keep it running for the moment. */
+	/* enable the local io घड़ी and keep it running क्रम the moment. */
 	clk_prepare_enable(sc->clk_io);
 
-	for (clks = 0, ptr = 0; ptr < MAX_BUS_CLK; ptr++) {
-		char name[14];
+	क्रम (clks = 0, ptr = 0; ptr < MAX_BUS_CLK; ptr++) अणु
+		अक्षर name[14];
 
-		snprintf(name, 14, "mmc_busclk.%d", ptr);
+		snम_लिखो(name, 14, "mmc_busclk.%d", ptr);
 		sc->clk_bus[ptr] = devm_clk_get(dev, name);
-		if (IS_ERR(sc->clk_bus[ptr]))
-			continue;
+		अगर (IS_ERR(sc->clk_bus[ptr]))
+			जारी;
 
 		clks++;
 		sc->clk_rates[ptr] = clk_get_rate(sc->clk_bus[ptr]);
 
 		dev_info(dev, "clock source %d: %s (%ld Hz)\n",
 				ptr, name, sc->clk_rates[ptr]);
-	}
+	पूर्ण
 
-	if (clks == 0) {
+	अगर (clks == 0) अणु
 		dev_err(dev, "failed to find any bus clocks\n");
 		ret = -ENOENT;
-		goto err_no_busclks;
-	}
+		जाओ err_no_busclks;
+	पूर्ण
 
-	host->ioaddr = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(host->ioaddr)) {
+	host->ioaddr = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(host->ioaddr)) अणु
 		ret = PTR_ERR(host->ioaddr);
-		goto err_req_regs;
-	}
+		जाओ err_req_regs;
+	पूर्ण
 
 	/* Ensure we have minimal gpio selected CMD/CLK/Detect */
-	if (pdata->cfg_gpio)
+	अगर (pdata->cfg_gpio)
 		pdata->cfg_gpio(pdev, pdata->max_width);
 
 	host->hw_name = "samsung-hsmmc";
@@ -568,24 +569,24 @@ static int sdhci_s3c_probe(struct platform_device *pdev)
 	host->quirks2 = 0;
 	host->irq = irq;
 
-	/* Setup quirks for the controller */
+	/* Setup quirks क्रम the controller */
 	host->quirks |= SDHCI_QUIRK_NO_ENDATTR_IN_NOPDESC;
 	host->quirks |= SDHCI_QUIRK_NO_HISPD_BIT;
-	if (drv_data) {
+	अगर (drv_data) अणु
 		host->quirks |= drv_data->sdhci_quirks;
-		sc->no_divider = drv_data->no_divider;
-	}
+		sc->no_भागider = drv_data->no_भागider;
+	पूर्ण
 
-#ifndef CONFIG_MMC_SDHCI_S3C_DMA
+#अगर_अघोषित CONFIG_MMC_SDHCI_S3C_DMA
 
 	/* we currently see overruns on errors, so disable the SDMA
 	 * support as well. */
 	host->quirks |= SDHCI_QUIRK_BROKEN_DMA;
 
-#endif /* CONFIG_MMC_SDHCI_S3C_DMA */
+#पूर्ण_अगर /* CONFIG_MMC_SDHCI_S3C_DMA */
 
-	/* It seems we do not get an DATA transfer complete on non-busy
-	 * transfers, not sure if this is a problem with this specific
+	/* It seems we करो not get an DATA transfer complete on non-busy
+	 * transfers, not sure अगर this is a problem with this specअगरic
 	 * SDHCI block, or a missing configuration that needs to be set. */
 	host->quirks |= SDHCI_QUIRK_NO_BUSY_IRQ;
 
@@ -595,198 +596,198 @@ static int sdhci_s3c_probe(struct platform_device *pdev)
 	/* Samsung SoCs need BROKEN_ADMA_ZEROLEN_DESC */
 	host->quirks |= SDHCI_QUIRK_BROKEN_ADMA_ZEROLEN_DESC;
 
-	if (pdata->cd_type == S3C_SDHCI_CD_NONE ||
+	अगर (pdata->cd_type == S3C_SDHCI_CD_NONE ||
 	    pdata->cd_type == S3C_SDHCI_CD_PERMANENT)
 		host->quirks |= SDHCI_QUIRK_BROKEN_CARD_DETECTION;
 
-	if (pdata->cd_type == S3C_SDHCI_CD_PERMANENT)
+	अगर (pdata->cd_type == S3C_SDHCI_CD_PERMANENT)
 		host->mmc->caps = MMC_CAP_NONREMOVABLE;
 
-	switch (pdata->max_width) {
-	case 8:
+	चयन (pdata->max_width) अणु
+	हाल 8:
 		host->mmc->caps |= MMC_CAP_8_BIT_DATA;
 		fallthrough;
-	case 4:
+	हाल 4:
 		host->mmc->caps |= MMC_CAP_4_BIT_DATA;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (pdata->pm_caps)
+	अगर (pdata->pm_caps)
 		host->mmc->pm_caps |= pdata->pm_caps;
 
 	host->quirks |= (SDHCI_QUIRK_32BIT_DMA_ADDR |
 			 SDHCI_QUIRK_32BIT_DMA_SIZE);
 
-	/* HSMMC on Samsung SoCs uses SDCLK as timeout clock */
+	/* HSMMC on Samsung SoCs uses SDCLK as समयout घड़ी */
 	host->quirks |= SDHCI_QUIRK_DATA_TIMEOUT_USES_SDCLK;
 
 	/*
-	 * If controller does not have internal clock divider,
-	 * we can use overriding functions instead of default.
+	 * If controller करोes not have पूर्णांकernal घड़ी भागider,
+	 * we can use overriding functions instead of शेष.
 	 */
-	if (sc->no_divider) {
-		sdhci_s3c_ops.set_clock = sdhci_cmu_set_clock;
-		sdhci_s3c_ops.get_min_clock = sdhci_cmu_get_min_clock;
-		sdhci_s3c_ops.get_max_clock = sdhci_cmu_get_max_clock;
-	}
+	अगर (sc->no_भागider) अणु
+		sdhci_s3c_ops.set_घड़ी = sdhci_cmu_set_घड़ी;
+		sdhci_s3c_ops.get_min_घड़ी = sdhci_cmu_get_min_घड़ी;
+		sdhci_s3c_ops.get_max_घड़ी = sdhci_cmu_get_max_घड़ी;
+	पूर्ण
 
-	/* It supports additional host capabilities if needed */
-	if (pdata->host_caps)
+	/* It supports additional host capabilities अगर needed */
+	अगर (pdata->host_caps)
 		host->mmc->caps |= pdata->host_caps;
 
-	if (pdata->host_caps2)
+	अगर (pdata->host_caps2)
 		host->mmc->caps2 |= pdata->host_caps2;
 
-	pm_runtime_enable(&pdev->dev);
-	pm_runtime_set_autosuspend_delay(&pdev->dev, 50);
-	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&pdev->dev, 50);
+	pm_runसमय_use_स्वतःsuspend(&pdev->dev);
 	pm_suspend_ignore_children(&pdev->dev, 1);
 
 	ret = mmc_of_parse(host->mmc);
-	if (ret)
-		goto err_req_regs;
+	अगर (ret)
+		जाओ err_req_regs;
 
 	ret = sdhci_add_host(host);
-	if (ret)
-		goto err_req_regs;
+	अगर (ret)
+		जाओ err_req_regs;
 
-#ifdef CONFIG_PM
-	if (pdata->cd_type != S3C_SDHCI_CD_INTERNAL)
+#अगर_घोषित CONFIG_PM
+	अगर (pdata->cd_type != S3C_SDHCI_CD_INTERNAL)
 		clk_disable_unprepare(sc->clk_io);
-#endif
-	return 0;
+#पूर्ण_अगर
+	वापस 0;
 
  err_req_regs:
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
  err_no_busclks:
 	clk_disable_unprepare(sc->clk_io);
 
  err_pdata_io_clk:
-	sdhci_free_host(host);
+	sdhci_मुक्त_host(host);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdhci_s3c_remove(struct platform_device *pdev)
-{
-	struct sdhci_host *host =  platform_get_drvdata(pdev);
-	struct sdhci_s3c *sc = sdhci_priv(host);
+अटल पूर्णांक sdhci_s3c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sdhci_host *host =  platक्रमm_get_drvdata(pdev);
+	काष्ठा sdhci_s3c *sc = sdhci_priv(host);
 
-	if (sc->ext_cd_irq)
-		free_irq(sc->ext_cd_irq, sc);
+	अगर (sc->ext_cd_irq)
+		मुक्त_irq(sc->ext_cd_irq, sc);
 
-#ifdef CONFIG_PM
-	if (sc->pdata->cd_type != S3C_SDHCI_CD_INTERNAL)
+#अगर_घोषित CONFIG_PM
+	अगर (sc->pdata->cd_type != S3C_SDHCI_CD_INTERNAL)
 		clk_prepare_enable(sc->clk_io);
-#endif
-	sdhci_remove_host(host, 1);
+#पूर्ण_अगर
+	sdhci_हटाओ_host(host, 1);
 
-	pm_runtime_dont_use_autosuspend(&pdev->dev);
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_करोnt_use_स्वतःsuspend(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
 	clk_disable_unprepare(sc->clk_io);
 
-	sdhci_free_host(host);
+	sdhci_मुक्त_host(host);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int sdhci_s3c_suspend(struct device *dev)
-{
-	struct sdhci_host *host = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक sdhci_s3c_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sdhci_host *host = dev_get_drvdata(dev);
 
-	if (host->tuning_mode != SDHCI_TUNING_MODE_3)
+	अगर (host->tuning_mode != SDHCI_TUNING_MODE_3)
 		mmc_retune_needed(host->mmc);
 
-	return sdhci_suspend_host(host);
-}
+	वापस sdhci_suspend_host(host);
+पूर्ण
 
-static int sdhci_s3c_resume(struct device *dev)
-{
-	struct sdhci_host *host = dev_get_drvdata(dev);
+अटल पूर्णांक sdhci_s3c_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sdhci_host *host = dev_get_drvdata(dev);
 
-	return sdhci_resume_host(host);
-}
-#endif
+	वापस sdhci_resume_host(host);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
-static int sdhci_s3c_runtime_suspend(struct device *dev)
-{
-	struct sdhci_host *host = dev_get_drvdata(dev);
-	struct sdhci_s3c *ourhost = to_s3c(host);
-	struct clk *busclk = ourhost->clk_io;
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक sdhci_s3c_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sdhci_host *host = dev_get_drvdata(dev);
+	काष्ठा sdhci_s3c *ourhost = to_s3c(host);
+	काष्ठा clk *busclk = ourhost->clk_io;
+	पूर्णांक ret;
 
-	ret = sdhci_runtime_suspend_host(host);
+	ret = sdhci_runसमय_suspend_host(host);
 
-	if (host->tuning_mode != SDHCI_TUNING_MODE_3)
+	अगर (host->tuning_mode != SDHCI_TUNING_MODE_3)
 		mmc_retune_needed(host->mmc);
 
-	if (ourhost->cur_clk >= 0)
+	अगर (ourhost->cur_clk >= 0)
 		clk_disable_unprepare(ourhost->clk_bus[ourhost->cur_clk]);
 	clk_disable_unprepare(busclk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int sdhci_s3c_runtime_resume(struct device *dev)
-{
-	struct sdhci_host *host = dev_get_drvdata(dev);
-	struct sdhci_s3c *ourhost = to_s3c(host);
-	struct clk *busclk = ourhost->clk_io;
-	int ret;
+अटल पूर्णांक sdhci_s3c_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sdhci_host *host = dev_get_drvdata(dev);
+	काष्ठा sdhci_s3c *ourhost = to_s3c(host);
+	काष्ठा clk *busclk = ourhost->clk_io;
+	पूर्णांक ret;
 
 	clk_prepare_enable(busclk);
-	if (ourhost->cur_clk >= 0)
+	अगर (ourhost->cur_clk >= 0)
 		clk_prepare_enable(ourhost->clk_bus[ourhost->cur_clk]);
-	ret = sdhci_runtime_resume_host(host, 0);
-	return ret;
-}
-#endif
+	ret = sdhci_runसमय_resume_host(host, 0);
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops sdhci_s3c_pmops = {
+अटल स्थिर काष्ठा dev_pm_ops sdhci_s3c_pmops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(sdhci_s3c_suspend, sdhci_s3c_resume)
-	SET_RUNTIME_PM_OPS(sdhci_s3c_runtime_suspend, sdhci_s3c_runtime_resume,
-			   NULL)
-};
+	SET_RUNTIME_PM_OPS(sdhci_s3c_runसमय_suspend, sdhci_s3c_runसमय_resume,
+			   शून्य)
+पूर्ण;
 
-static const struct platform_device_id sdhci_s3c_driver_ids[] = {
-	{
+अटल स्थिर काष्ठा platक्रमm_device_id sdhci_s3c_driver_ids[] = अणु
+	अणु
 		.name		= "s3c-sdhci",
-		.driver_data	= (kernel_ulong_t)NULL,
-	},
-	{ }
-};
-MODULE_DEVICE_TABLE(platform, sdhci_s3c_driver_ids);
+		.driver_data	= (kernel_uदीर्घ_t)शून्य,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(platक्रमm, sdhci_s3c_driver_ids);
 
-#ifdef CONFIG_OF
-static const struct sdhci_s3c_drv_data exynos4_sdhci_drv_data = {
-	.no_divider = true,
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा sdhci_s3c_drv_data exynos4_sdhci_drv_data = अणु
+	.no_भागider = true,
+पूर्ण;
 
-static const struct of_device_id sdhci_s3c_dt_match[] = {
-	{ .compatible = "samsung,s3c6410-sdhci", },
-	{ .compatible = "samsung,exynos4210-sdhci",
-		.data = &exynos4_sdhci_drv_data },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id sdhci_s3c_dt_match[] = अणु
+	अणु .compatible = "samsung,s3c6410-sdhci", पूर्ण,
+	अणु .compatible = "samsung,exynos4210-sdhci",
+		.data = &exynos4_sdhci_drv_data पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, sdhci_s3c_dt_match);
-#endif
+#पूर्ण_अगर
 
-static struct platform_driver sdhci_s3c_driver = {
+अटल काष्ठा platक्रमm_driver sdhci_s3c_driver = अणु
 	.probe		= sdhci_s3c_probe,
-	.remove		= sdhci_s3c_remove,
+	.हटाओ		= sdhci_s3c_हटाओ,
 	.id_table	= sdhci_s3c_driver_ids,
-	.driver		= {
+	.driver		= अणु
 		.name	= "s3c-sdhci",
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
 		.of_match_table = of_match_ptr(sdhci_s3c_dt_match),
 		.pm	= &sdhci_s3c_pmops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(sdhci_s3c_driver);
+module_platक्रमm_driver(sdhci_s3c_driver);
 
 MODULE_DESCRIPTION("Samsung SDHCI (HSMMC) glue");
 MODULE_AUTHOR("Ben Dooks, <ben@simtec.co.uk>");

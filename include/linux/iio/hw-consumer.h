@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Industrial I/O in kernel hardware consumer interface
+ * Industrial I/O in kernel hardware consumer पूर्णांकerface
  *
  * Copyright 2017 Analog Devices Inc.
  *  Author: Lars-Peter Clausen <lars@metafoo.de>
  */
 
-#ifndef LINUX_IIO_HW_CONSUMER_H
-#define LINUX_IIO_HW_CONSUMER_H
+#अगर_अघोषित LINUX_IIO_HW_CONSUMER_H
+#घोषणा LINUX_IIO_HW_CONSUMER_H
 
-struct iio_hw_consumer;
+काष्ठा iio_hw_consumer;
 
-struct iio_hw_consumer *iio_hw_consumer_alloc(struct device *dev);
-void iio_hw_consumer_free(struct iio_hw_consumer *hwc);
-struct iio_hw_consumer *devm_iio_hw_consumer_alloc(struct device *dev);
-int iio_hw_consumer_enable(struct iio_hw_consumer *hwc);
-void iio_hw_consumer_disable(struct iio_hw_consumer *hwc);
+काष्ठा iio_hw_consumer *iio_hw_consumer_alloc(काष्ठा device *dev);
+व्योम iio_hw_consumer_मुक्त(काष्ठा iio_hw_consumer *hwc);
+काष्ठा iio_hw_consumer *devm_iio_hw_consumer_alloc(काष्ठा device *dev);
+पूर्णांक iio_hw_consumer_enable(काष्ठा iio_hw_consumer *hwc);
+व्योम iio_hw_consumer_disable(काष्ठा iio_hw_consumer *hwc);
 
-#endif
+#पूर्ण_अगर

@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2021 Facebook */
 
-#include "vmlinux.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश "vmlinux.h"
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-/* modifiers and typedefs are ignored when comparing key/value types */
-typedef struct my_key { long x; } key_type;
-typedef struct my_value { long x; } value_type;
+/* modअगरiers and प्रकारs are ignored when comparing key/value types */
+प्रकार काष्ठा my_key अणु दीर्घ x; पूर्ण key_type;
+प्रकार काष्ठा my_value अणु दीर्घ x; पूर्ण value_type;
 
-extern struct {
-	__uint(max_entries, 16);
+बाह्य काष्ठा अणु
+	__uपूर्णांक(max_entries, 16);
 	__type(key, key_type);
 	__type(value, value_type);
-	__uint(type, BPF_MAP_TYPE_HASH);
-} map1 SEC(".maps");
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+पूर्ण map1 SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__type(key, int);
-	__type(value, int);
-	__uint(max_entries, 8);
-} map2 SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__type(key, पूर्णांक);
+	__type(value, पूर्णांक);
+	__uपूर्णांक(max_entries, 8);
+पूर्ण map2 SEC(".maps");
 
 /* this definition will lose, but it has to exactly match the winner */
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__type(key, int);
-	__type(value, int);
-	__uint(max_entries, 16);
-} map_weak __weak SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__type(key, पूर्णांक);
+	__type(value, पूर्णांक);
+	__uपूर्णांक(max_entries, 16);
+पूर्ण map_weak __weak SEC(".maps");
 
-int output_first2;
-int output_second2;
-int output_weak2;
+पूर्णांक output_first2;
+पूर्णांक output_second2;
+पूर्णांक output_weak2;
 
 SEC("raw_tp/sys_enter")
-int BPF_PROG(handler_enter2)
-{
+पूर्णांक BPF_PROG(handler_enter2)
+अणु
 	/* update values with key = 2 */
-	int key = 2, val = 2;
-	key_type key_struct = { .x = 2 };
-	value_type val_struct = { .x = 2000 };
+	पूर्णांक key = 2, val = 2;
+	key_type key_काष्ठा = अणु .x = 2 पूर्ण;
+	value_type val_काष्ठा = अणु .x = 2000 पूर्ण;
 
-	bpf_map_update_elem(&map1, &key_struct, &val_struct, 0);
+	bpf_map_update_elem(&map1, &key_काष्ठा, &val_काष्ठा, 0);
 	bpf_map_update_elem(&map2, &key, &val, 0);
 	bpf_map_update_elem(&map_weak, &key, &val, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SEC("raw_tp/sys_exit")
-int BPF_PROG(handler_exit2)
-{
+पूर्णांक BPF_PROG(handler_निकास2)
+अणु
 	/* lookup values with key = 1, set in another file */
-	int key = 1, *val;
-	key_type key_struct = { .x = 1 };
-	value_type *value_struct;
+	पूर्णांक key = 1, *val;
+	key_type key_काष्ठा = अणु .x = 1 पूर्ण;
+	value_type *value_काष्ठा;
 
-	value_struct = bpf_map_lookup_elem(&map1, &key_struct);
-	if (value_struct)
-		output_first2 = value_struct->x;
+	value_काष्ठा = bpf_map_lookup_elem(&map1, &key_काष्ठा);
+	अगर (value_काष्ठा)
+		output_first2 = value_काष्ठा->x;
 
 	val = bpf_map_lookup_elem(&map2, &key);
-	if (val)
+	अगर (val)
 		output_second2 = *val;
 
 	val = bpf_map_lookup_elem(&map_weak, &key);
-	if (val)
+	अगर (val)
 		output_weak2 = *val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char LICENSE[] SEC("license") = "GPL";
+अक्षर LICENSE[] SEC("license") = "GPL";

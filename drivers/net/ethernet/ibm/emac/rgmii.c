@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * drivers/net/ethernet/ibm/emac/rgmii.c
  *
- * Driver for PowerPC 4xx on-chip ethernet controller, RGMII bridge support.
+ * Driver क्रम PowerPC 4xx on-chip ethernet controller, RGMII bridge support.
  *
  * Copyright 2007 Benjamin Herrenschmidt, IBM Corp.
  *                <benh@kernel.crashing.org>
@@ -16,98 +17,98 @@
  * 	Matt Porter <mporter@kernel.crashing.org>
  * 	Copyright 2004 MontaVista Software, Inc.
  */
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/ethtool.h>
-#include <linux/of_address.h>
-#include <asm/io.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/of_address.h>
+#समावेश <यंत्र/पन.स>
 
-#include "emac.h"
-#include "debug.h"
+#समावेश "emac.h"
+#समावेश "debug.h"
 
 // XXX FIXME: Axon seems to support a subset of the RGMII, we
-// thus need to take that into account and possibly change some
-// of the bit settings below that don't seem to quite match the
+// thus need to take that पूर्णांकo account and possibly change some
+// of the bit settings below that करोn't seem to quite match the
 // AXON spec
 
 /* RGMIIx_FER */
-#define RGMII_FER_MASK(idx)	(0x7 << ((idx) * 4))
-#define RGMII_FER_RTBI(idx)	(0x4 << ((idx) * 4))
-#define RGMII_FER_RGMII(idx)	(0x5 << ((idx) * 4))
-#define RGMII_FER_TBI(idx)	(0x6 << ((idx) * 4))
-#define RGMII_FER_GMII(idx)	(0x7 << ((idx) * 4))
-#define RGMII_FER_MII(idx)	RGMII_FER_GMII(idx)
+#घोषणा RGMII_FER_MASK(idx)	(0x7 << ((idx) * 4))
+#घोषणा RGMII_FER_RTBI(idx)	(0x4 << ((idx) * 4))
+#घोषणा RGMII_FER_RGMII(idx)	(0x5 << ((idx) * 4))
+#घोषणा RGMII_FER_TBI(idx)	(0x6 << ((idx) * 4))
+#घोषणा RGMII_FER_GMII(idx)	(0x7 << ((idx) * 4))
+#घोषणा RGMII_FER_MII(idx)	RGMII_FER_GMII(idx)
 
 /* RGMIIx_SSR */
-#define RGMII_SSR_MASK(idx)	(0x7 << ((idx) * 8))
-#define RGMII_SSR_10(idx)	(0x1 << ((idx) * 8))
-#define RGMII_SSR_100(idx)	(0x2 << ((idx) * 8))
-#define RGMII_SSR_1000(idx)	(0x4 << ((idx) * 8))
+#घोषणा RGMII_SSR_MASK(idx)	(0x7 << ((idx) * 8))
+#घोषणा RGMII_SSR_10(idx)	(0x1 << ((idx) * 8))
+#घोषणा RGMII_SSR_100(idx)	(0x2 << ((idx) * 8))
+#घोषणा RGMII_SSR_1000(idx)	(0x4 << ((idx) * 8))
 
 /* RGMII bridge supports only GMII/TBI and RGMII/RTBI PHYs */
-static inline int rgmii_valid_mode(int phy_mode)
-{
-	return  phy_interface_mode_is_rgmii(phy_mode) ||
+अटल अंतरभूत पूर्णांक rgmii_valid_mode(पूर्णांक phy_mode)
+अणु
+	वापस  phy_पूर्णांकerface_mode_is_rgmii(phy_mode) ||
 		phy_mode == PHY_INTERFACE_MODE_GMII ||
 		phy_mode == PHY_INTERFACE_MODE_MII ||
 		phy_mode == PHY_INTERFACE_MODE_TBI ||
 		phy_mode == PHY_INTERFACE_MODE_RTBI;
-}
+पूर्ण
 
-static inline u32 rgmii_mode_mask(int mode, int input)
-{
-	switch (mode) {
-	case PHY_INTERFACE_MODE_RGMII:
-	case PHY_INTERFACE_MODE_RGMII_ID:
-	case PHY_INTERFACE_MODE_RGMII_RXID:
-	case PHY_INTERFACE_MODE_RGMII_TXID:
-		return RGMII_FER_RGMII(input);
-	case PHY_INTERFACE_MODE_TBI:
-		return RGMII_FER_TBI(input);
-	case PHY_INTERFACE_MODE_GMII:
-		return RGMII_FER_GMII(input);
-	case PHY_INTERFACE_MODE_MII:
-		return RGMII_FER_MII(input);
-	case PHY_INTERFACE_MODE_RTBI:
-		return RGMII_FER_RTBI(input);
-	default:
+अटल अंतरभूत u32 rgmii_mode_mask(पूर्णांक mode, पूर्णांक input)
+अणु
+	चयन (mode) अणु
+	हाल PHY_INTERFACE_MODE_RGMII:
+	हाल PHY_INTERFACE_MODE_RGMII_ID:
+	हाल PHY_INTERFACE_MODE_RGMII_RXID:
+	हाल PHY_INTERFACE_MODE_RGMII_TXID:
+		वापस RGMII_FER_RGMII(input);
+	हाल PHY_INTERFACE_MODE_TBI:
+		वापस RGMII_FER_TBI(input);
+	हाल PHY_INTERFACE_MODE_GMII:
+		वापस RGMII_FER_GMII(input);
+	हाल PHY_INTERFACE_MODE_MII:
+		वापस RGMII_FER_MII(input);
+	हाल PHY_INTERFACE_MODE_RTBI:
+		वापस RGMII_FER_RTBI(input);
+	शेष:
 		BUG();
-	}
-}
+	पूर्ण
+पूर्ण
 
-int rgmii_attach(struct platform_device *ofdev, int input, int mode)
-{
-	struct rgmii_instance *dev = platform_get_drvdata(ofdev);
-	struct rgmii_regs __iomem *p = dev->base;
+पूर्णांक rgmii_attach(काष्ठा platक्रमm_device *ofdev, पूर्णांक input, पूर्णांक mode)
+अणु
+	काष्ठा rgmii_instance *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा rgmii_regs __iomem *p = dev->base;
 
 	RGMII_DBG(dev, "attach(%d)" NL, input);
 
-	/* Check if we need to attach to a RGMII */
-	if (input < 0 || !rgmii_valid_mode(mode)) {
-		printk(KERN_ERR "%pOF: unsupported settings !\n",
+	/* Check अगर we need to attach to a RGMII */
+	अगर (input < 0 || !rgmii_valid_mode(mode)) अणु
+		prपूर्णांकk(KERN_ERR "%pOF: unsupported settings !\n",
 		       ofdev->dev.of_node);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	mutex_lock(&dev->lock);
 
 	/* Enable this input */
 	out_be32(&p->fer, in_be32(&p->fer) | rgmii_mode_mask(mode, input));
 
-	printk(KERN_NOTICE "%pOF: input %d in %s mode\n",
+	prपूर्णांकk(KERN_NOTICE "%pOF: input %d in %s mode\n",
 	       ofdev->dev.of_node, input, phy_modes(mode));
 
 	++dev->users;
 
 	mutex_unlock(&dev->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rgmii_set_speed(struct platform_device *ofdev, int input, int speed)
-{
-	struct rgmii_instance *dev = platform_get_drvdata(ofdev);
-	struct rgmii_regs __iomem *p = dev->base;
+व्योम rgmii_set_speed(काष्ठा platक्रमm_device *ofdev, पूर्णांक input, पूर्णांक speed)
+अणु
+	काष्ठा rgmii_instance *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा rgmii_regs __iomem *p = dev->base;
 	u32 ssr;
 
 	mutex_lock(&dev->lock);
@@ -116,64 +117,64 @@ void rgmii_set_speed(struct platform_device *ofdev, int input, int speed)
 
 	RGMII_DBG(dev, "speed(%d, %d)" NL, input, speed);
 
-	if (speed == SPEED_1000)
+	अगर (speed == SPEED_1000)
 		ssr |= RGMII_SSR_1000(input);
-	else if (speed == SPEED_100)
+	अन्यथा अगर (speed == SPEED_100)
 		ssr |= RGMII_SSR_100(input);
-	else if (speed == SPEED_10)
+	अन्यथा अगर (speed == SPEED_10)
 		ssr |= RGMII_SSR_10(input);
 
 	out_be32(&p->ssr, ssr);
 
 	mutex_unlock(&dev->lock);
-}
+पूर्ण
 
-void rgmii_get_mdio(struct platform_device *ofdev, int input)
-{
-	struct rgmii_instance *dev = platform_get_drvdata(ofdev);
-	struct rgmii_regs __iomem *p = dev->base;
+व्योम rgmii_get_mdio(काष्ठा platक्रमm_device *ofdev, पूर्णांक input)
+अणु
+	काष्ठा rgmii_instance *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा rgmii_regs __iomem *p = dev->base;
 	u32 fer;
 
 	RGMII_DBG2(dev, "get_mdio(%d)" NL, input);
 
-	if (!(dev->flags & EMAC_RGMII_FLAG_HAS_MDIO))
-		return;
+	अगर (!(dev->flags & EMAC_RGMII_FLAG_HAS_MDIO))
+		वापस;
 
 	mutex_lock(&dev->lock);
 
 	fer = in_be32(&p->fer);
 	fer |= 0x00080000u >> input;
 	out_be32(&p->fer, fer);
-	(void)in_be32(&p->fer);
+	(व्योम)in_be32(&p->fer);
 
 	DBG2(dev, " fer = 0x%08x\n", fer);
-}
+पूर्ण
 
-void rgmii_put_mdio(struct platform_device *ofdev, int input)
-{
-	struct rgmii_instance *dev = platform_get_drvdata(ofdev);
-	struct rgmii_regs __iomem *p = dev->base;
+व्योम rgmii_put_mdio(काष्ठा platक्रमm_device *ofdev, पूर्णांक input)
+अणु
+	काष्ठा rgmii_instance *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा rgmii_regs __iomem *p = dev->base;
 	u32 fer;
 
 	RGMII_DBG2(dev, "put_mdio(%d)" NL, input);
 
-	if (!(dev->flags & EMAC_RGMII_FLAG_HAS_MDIO))
-		return;
+	अगर (!(dev->flags & EMAC_RGMII_FLAG_HAS_MDIO))
+		वापस;
 
 	fer = in_be32(&p->fer);
 	fer &= ~(0x00080000u >> input);
 	out_be32(&p->fer, fer);
-	(void)in_be32(&p->fer);
+	(व्योम)in_be32(&p->fer);
 
 	DBG2(dev, " fer = 0x%08x\n", fer);
 
 	mutex_unlock(&dev->lock);
-}
+पूर्ण
 
-void rgmii_detach(struct platform_device *ofdev, int input)
-{
-	struct rgmii_instance *dev = platform_get_drvdata(ofdev);
-	struct rgmii_regs __iomem *p;
+व्योम rgmii_detach(काष्ठा platक्रमm_device *ofdev, पूर्णांक input)
+अणु
+	काष्ठा rgmii_instance *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा rgmii_regs __iomem *p;
 
 	BUG_ON(!dev || dev->users == 0);
 	p = dev->base;
@@ -188,127 +189,127 @@ void rgmii_detach(struct platform_device *ofdev, int input)
 	--dev->users;
 
 	mutex_unlock(&dev->lock);
-}
+पूर्ण
 
-int rgmii_get_regs_len(struct platform_device *ofdev)
-{
-	return sizeof(struct emac_ethtool_regs_subhdr) +
-		sizeof(struct rgmii_regs);
-}
+पूर्णांक rgmii_get_regs_len(काष्ठा platक्रमm_device *ofdev)
+अणु
+	वापस माप(काष्ठा emac_ethtool_regs_subhdr) +
+		माप(काष्ठा rgmii_regs);
+पूर्ण
 
-void *rgmii_dump_regs(struct platform_device *ofdev, void *buf)
-{
-	struct rgmii_instance *dev = platform_get_drvdata(ofdev);
-	struct emac_ethtool_regs_subhdr *hdr = buf;
-	struct rgmii_regs *regs = (struct rgmii_regs *)(hdr + 1);
+व्योम *rgmii_dump_regs(काष्ठा platक्रमm_device *ofdev, व्योम *buf)
+अणु
+	काष्ठा rgmii_instance *dev = platक्रमm_get_drvdata(ofdev);
+	काष्ठा emac_ethtool_regs_subhdr *hdr = buf;
+	काष्ठा rgmii_regs *regs = (काष्ठा rgmii_regs *)(hdr + 1);
 
 	hdr->version = 0;
-	hdr->index = 0; /* for now, are there chips with more than one
-			 * rgmii ? if yes, then we'll add a cell_index
-			 * like we do for emac
+	hdr->index = 0; /* क्रम now, are there chips with more than one
+			 * rgmii ? अगर yes, then we'll add a cell_index
+			 * like we करो क्रम emac
 			 */
-	memcpy_fromio(regs, dev->base, sizeof(struct rgmii_regs));
-	return regs + 1;
-}
+	स_नकल_fromio(regs, dev->base, माप(काष्ठा rgmii_regs));
+	वापस regs + 1;
+पूर्ण
 
 
-static int rgmii_probe(struct platform_device *ofdev)
-{
-	struct device_node *np = ofdev->dev.of_node;
-	struct rgmii_instance *dev;
-	struct resource regs;
-	int rc;
+अटल पूर्णांक rgmii_probe(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा device_node *np = ofdev->dev.of_node;
+	काष्ठा rgmii_instance *dev;
+	काष्ठा resource regs;
+	पूर्णांक rc;
 
 	rc = -ENOMEM;
-	dev = kzalloc(sizeof(struct rgmii_instance), GFP_KERNEL);
-	if (dev == NULL)
-		goto err_gone;
+	dev = kzalloc(माप(काष्ठा rgmii_instance), GFP_KERNEL);
+	अगर (dev == शून्य)
+		जाओ err_gone;
 
 	mutex_init(&dev->lock);
 	dev->ofdev = ofdev;
 
 	rc = -ENXIO;
-	if (of_address_to_resource(np, 0, &regs)) {
-		printk(KERN_ERR "%pOF: Can't get registers address\n", np);
-		goto err_free;
-	}
+	अगर (of_address_to_resource(np, 0, &regs)) अणु
+		prपूर्णांकk(KERN_ERR "%pOF: Can't get registers address\n", np);
+		जाओ err_मुक्त;
+	पूर्ण
 
 	rc = -ENOMEM;
-	dev->base = (struct rgmii_regs __iomem *)ioremap(regs.start,
-						 sizeof(struct rgmii_regs));
-	if (dev->base == NULL) {
-		printk(KERN_ERR "%pOF: Can't map device registers!\n", np);
-		goto err_free;
-	}
+	dev->base = (काष्ठा rgmii_regs __iomem *)ioremap(regs.start,
+						 माप(काष्ठा rgmii_regs));
+	अगर (dev->base == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "%pOF: Can't map device registers!\n", np);
+		जाओ err_मुक्त;
+	पूर्ण
 
-	/* Check for RGMII flags */
-	if (of_get_property(ofdev->dev.of_node, "has-mdio", NULL))
+	/* Check क्रम RGMII flags */
+	अगर (of_get_property(ofdev->dev.of_node, "has-mdio", शून्य))
 		dev->flags |= EMAC_RGMII_FLAG_HAS_MDIO;
 
 	/* CAB lacks the right properties, fix this up */
-	if (of_device_is_compatible(ofdev->dev.of_node, "ibm,rgmii-axon"))
+	अगर (of_device_is_compatible(ofdev->dev.of_node, "ibm,rgmii-axon"))
 		dev->flags |= EMAC_RGMII_FLAG_HAS_MDIO;
 
 	DBG2(dev, " Boot FER = 0x%08x, SSR = 0x%08x\n",
 	     in_be32(&dev->base->fer), in_be32(&dev->base->ssr));
 
-	/* Disable all inputs by default */
+	/* Disable all inमाला_दो by शेष */
 	out_be32(&dev->base->fer, 0);
 
-	printk(KERN_INFO
+	prपूर्णांकk(KERN_INFO
 	       "RGMII %pOF initialized with%s MDIO support\n",
 	       ofdev->dev.of_node,
 	       (dev->flags & EMAC_RGMII_FLAG_HAS_MDIO) ? "" : "out");
 
 	wmb();
-	platform_set_drvdata(ofdev, dev);
+	platक्रमm_set_drvdata(ofdev, dev);
 
-	return 0;
+	वापस 0;
 
- err_free:
-	kfree(dev);
+ err_मुक्त:
+	kमुक्त(dev);
  err_gone:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int rgmii_remove(struct platform_device *ofdev)
-{
-	struct rgmii_instance *dev = platform_get_drvdata(ofdev);
+अटल पूर्णांक rgmii_हटाओ(काष्ठा platक्रमm_device *ofdev)
+अणु
+	काष्ठा rgmii_instance *dev = platक्रमm_get_drvdata(ofdev);
 
 	WARN_ON(dev->users != 0);
 
 	iounmap(dev->base);
-	kfree(dev);
+	kमुक्त(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id rgmii_match[] =
-{
-	{
+अटल स्थिर काष्ठा of_device_id rgmii_match[] =
+अणु
+	अणु
 		.compatible	= "ibm,rgmii",
-	},
-	{
+	पूर्ण,
+	अणु
 		.type		= "emac-rgmii",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver rgmii_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver rgmii_driver = अणु
+	.driver = अणु
 		.name = "emac-rgmii",
 		.of_match_table = rgmii_match,
-	},
+	पूर्ण,
 	.probe = rgmii_probe,
-	.remove = rgmii_remove,
-};
+	.हटाओ = rgmii_हटाओ,
+पूर्ण;
 
-int __init rgmii_init(void)
-{
-	return platform_driver_register(&rgmii_driver);
-}
+पूर्णांक __init rgmii_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&rgmii_driver);
+पूर्ण
 
-void rgmii_exit(void)
-{
-	platform_driver_unregister(&rgmii_driver);
-}
+व्योम rgmii_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&rgmii_driver);
+पूर्ण

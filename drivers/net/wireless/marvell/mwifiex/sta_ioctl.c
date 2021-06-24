@@ -1,82 +1,83 @@
+<शैली गुरु>
 /*
- * NXP Wireless LAN device driver: functions for station ioctl
+ * NXP Wireless LAN device driver: functions क्रम station ioctl
  *
  * Copyright 2011-2020 NXP
  *
  * This software file (the "File") is distributed by NXP
  * under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modify this File in
+ * (the "License").  You may use, redistribute and/or modअगरy this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available by writing to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
+ * 51 Franklin Street, Fअगरth Floor, Boston, MA 02110-1301 USA or on the
  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
- * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  */
 
-#include "decl.h"
-#include "ioctl.h"
-#include "util.h"
-#include "fw.h"
-#include "main.h"
-#include "wmm.h"
-#include "11n.h"
-#include "cfg80211.h"
+#समावेश "decl.h"
+#समावेश "ioctl.h"
+#समावेश "util.h"
+#समावेश "fw.h"
+#समावेश "main.h"
+#समावेश "wmm.h"
+#समावेश "11n.h"
+#समावेश "cfg80211.h"
 
-static int disconnect_on_suspend;
-module_param(disconnect_on_suspend, int, 0644);
+अटल पूर्णांक disconnect_on_suspend;
+module_param(disconnect_on_suspend, पूर्णांक, 0644);
 
 /*
  * Copies the multicast address list from device to driver.
  *
- * This function does not validate the destination memory for
+ * This function करोes not validate the destination memory क्रम
  * size, and the calling function must ensure enough memory is
  * available.
  */
-int mwifiex_copy_mcast_addr(struct mwifiex_multicast_list *mlist,
-			    struct net_device *dev)
-{
-	int i = 0;
-	struct netdev_hw_addr *ha;
+पूर्णांक mwअगरiex_copy_mcast_addr(काष्ठा mwअगरiex_multicast_list *mlist,
+			    काष्ठा net_device *dev)
+अणु
+	पूर्णांक i = 0;
+	काष्ठा netdev_hw_addr *ha;
 
-	netdev_for_each_mc_addr(ha, dev)
-		memcpy(&mlist->mac_list[i++], ha->addr, ETH_ALEN);
+	netdev_क्रम_each_mc_addr(ha, dev)
+		स_नकल(&mlist->mac_list[i++], ha->addr, ETH_ALEN);
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
 /*
  * Wait queue completion handler.
  *
- * This function waits on a cmd wait queue. It also cancels the pending
- * request after waking up, in case of errors.
+ * This function रुकोs on a cmd रुको queue. It also cancels the pending
+ * request after waking up, in हाल of errors.
  */
-int mwifiex_wait_queue_complete(struct mwifiex_adapter *adapter,
-				struct cmd_ctrl_node *cmd_queued)
-{
-	int status;
+पूर्णांक mwअगरiex_रुको_queue_complete(काष्ठा mwअगरiex_adapter *adapter,
+				काष्ठा cmd_ctrl_node *cmd_queued)
+अणु
+	पूर्णांक status;
 
-	/* Wait for completion */
-	status = wait_event_interruptible_timeout(adapter->cmd_wait_q.wait,
+	/* Wait क्रम completion */
+	status = रुको_event_पूर्णांकerruptible_समयout(adapter->cmd_रुको_q.रुको,
 						  *(cmd_queued->condition),
 						  (12 * HZ));
-	if (status <= 0) {
-		if (status == 0)
+	अगर (status <= 0) अणु
+		अगर (status == 0)
 			status = -ETIMEDOUT;
-		mwifiex_dbg(adapter, ERROR, "cmd_wait_q terminated: %d\n",
+		mwअगरiex_dbg(adapter, ERROR, "cmd_wait_q terminated: %d\n",
 			    status);
-		mwifiex_cancel_all_pending_cmd(adapter);
-		return status;
-	}
+		mwअगरiex_cancel_all_pending_cmd(adapter);
+		वापस status;
+	पूर्ण
 
-	status = adapter->cmd_wait_q.status;
-	adapter->cmd_wait_q.status = 0;
+	status = adapter->cmd_रुको_q.status;
+	adapter->cmd_रुको_q.status = 0;
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * This function prepares the correct firmware command and
@@ -85,321 +86,321 @@ int mwifiex_wait_queue_complete(struct mwifiex_adapter *adapter,
  * This function can be used to enable promiscuous mode, or enable all
  * multicast packets, or to enable selective multicast.
  */
-int mwifiex_request_set_multicast_list(struct mwifiex_private *priv,
-				struct mwifiex_multicast_list *mcast_list)
-{
-	int ret = 0;
+पूर्णांक mwअगरiex_request_set_multicast_list(काष्ठा mwअगरiex_निजी *priv,
+				काष्ठा mwअगरiex_multicast_list *mcast_list)
+अणु
+	पूर्णांक ret = 0;
 	u16 old_pkt_filter;
 
 	old_pkt_filter = priv->curr_pkt_filter;
 
-	if (mcast_list->mode == MWIFIEX_PROMISC_MODE) {
-		mwifiex_dbg(priv->adapter, INFO,
+	अगर (mcast_list->mode == MWIFIEX_PROMISC_MODE) अणु
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "info: Enable Promiscuous mode\n");
 		priv->curr_pkt_filter |= HostCmd_ACT_MAC_PROMISCUOUS_ENABLE;
 		priv->curr_pkt_filter &=
 			~HostCmd_ACT_MAC_ALL_MULTICAST_ENABLE;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Multicast */
 		priv->curr_pkt_filter &= ~HostCmd_ACT_MAC_PROMISCUOUS_ENABLE;
-		if (mcast_list->mode == MWIFIEX_ALL_MULTI_MODE) {
-			mwifiex_dbg(priv->adapter, INFO,
+		अगर (mcast_list->mode == MWIFIEX_ALL_MULTI_MODE) अणु
+			mwअगरiex_dbg(priv->adapter, INFO,
 				    "info: Enabling All Multicast!\n");
 			priv->curr_pkt_filter |=
 				HostCmd_ACT_MAC_ALL_MULTICAST_ENABLE;
-		} else {
+		पूर्ण अन्यथा अणु
 			priv->curr_pkt_filter &=
 				~HostCmd_ACT_MAC_ALL_MULTICAST_ENABLE;
-			mwifiex_dbg(priv->adapter, INFO,
+			mwअगरiex_dbg(priv->adapter, INFO,
 				    "info: Set multicast list=%d\n",
 				    mcast_list->num_multicast_addr);
 			/* Send multicast addresses to firmware */
-			ret = mwifiex_send_cmd(priv,
+			ret = mwअगरiex_send_cmd(priv,
 					       HostCmd_CMD_MAC_MULTICAST_ADR,
 					       HostCmd_ACT_GEN_SET, 0,
 					       mcast_list, false);
-		}
-	}
-	mwifiex_dbg(priv->adapter, INFO,
+		पूर्ण
+	पूर्ण
+	mwअगरiex_dbg(priv->adapter, INFO,
 		    "info: old_pkt_filter=%#x, curr_pkt_filter=%#x\n",
 		    old_pkt_filter, priv->curr_pkt_filter);
-	if (old_pkt_filter != priv->curr_pkt_filter) {
-		ret = mwifiex_send_cmd(priv, HostCmd_CMD_MAC_CONTROL,
+	अगर (old_pkt_filter != priv->curr_pkt_filter) अणु
+		ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_MAC_CONTROL,
 				       HostCmd_ACT_GEN_SET,
 				       0, &priv->curr_pkt_filter, false);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * This function fills bss descriptor structure using provided
- * information.
+ * This function fills bss descriptor काष्ठाure using provided
+ * inक्रमmation.
  * beacon_ie buffer is allocated in this function. It is caller's
- * responsibility to free the memory.
+ * responsibility to मुक्त the memory.
  */
-int mwifiex_fill_new_bss_desc(struct mwifiex_private *priv,
-			      struct cfg80211_bss *bss,
-			      struct mwifiex_bssdescriptor *bss_desc)
-{
+पूर्णांक mwअगरiex_fill_new_bss_desc(काष्ठा mwअगरiex_निजी *priv,
+			      काष्ठा cfg80211_bss *bss,
+			      काष्ठा mwअगरiex_bssdescriptor *bss_desc)
+अणु
 	u8 *beacon_ie;
-	size_t beacon_ie_len;
-	struct mwifiex_bss_priv *bss_priv = (void *)bss->priv;
-	const struct cfg80211_bss_ies *ies;
+	माप_प्रकार beacon_ie_len;
+	काष्ठा mwअगरiex_bss_priv *bss_priv = (व्योम *)bss->priv;
+	स्थिर काष्ठा cfg80211_bss_ies *ies;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ies = rcu_dereference(bss->ies);
 	beacon_ie = kmemdup(ies->data, ies->len, GFP_ATOMIC);
 	beacon_ie_len = ies->len;
-	bss_desc->timestamp = ies->tsf;
-	rcu_read_unlock();
+	bss_desc->बारtamp = ies->tsf;
+	rcu_पढ़ो_unlock();
 
-	if (!beacon_ie) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (!beacon_ie) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    " failed to alloc beacon_ie\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(bss_desc->mac_address, bss->bssid, ETH_ALEN);
-	bss_desc->rssi = bss->signal;
-	/* The caller of this function will free beacon_ie */
+	स_नकल(bss_desc->mac_address, bss->bssid, ETH_ALEN);
+	bss_desc->rssi = bss->संकेत;
+	/* The caller of this function will मुक्त beacon_ie */
 	bss_desc->beacon_buf = beacon_ie;
 	bss_desc->beacon_buf_size = beacon_ie_len;
-	bss_desc->beacon_period = bss->beacon_interval;
-	bss_desc->cap_info_bitmap = bss->capability;
+	bss_desc->beacon_period = bss->beacon_पूर्णांकerval;
+	bss_desc->cap_info_biपंचांगap = bss->capability;
 	bss_desc->bss_band = bss_priv->band;
 	bss_desc->fw_tsf = bss_priv->fw_tsf;
-	if (bss_desc->cap_info_bitmap & WLAN_CAPABILITY_PRIVACY) {
-		mwifiex_dbg(priv->adapter, INFO,
+	अगर (bss_desc->cap_info_biपंचांगap & WLAN_CAPABILITY_PRIVACY) अणु
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "info: InterpretIE: AP WEP enabled\n");
 		bss_desc->privacy = MWIFIEX_802_11_PRIV_FILTER_8021X_WEP;
-	} else {
+	पूर्ण अन्यथा अणु
 		bss_desc->privacy = MWIFIEX_802_11_PRIV_FILTER_ACCEPT_ALL;
-	}
-	if (bss_desc->cap_info_bitmap & WLAN_CAPABILITY_IBSS)
+	पूर्ण
+	अगर (bss_desc->cap_info_biपंचांगap & WLAN_CAPABILITY_IBSS)
 		bss_desc->bss_mode = NL80211_IFTYPE_ADHOC;
-	else
+	अन्यथा
 		bss_desc->bss_mode = NL80211_IFTYPE_STATION;
 
-	/* Disable 11ac by default. Enable it only where there
+	/* Disable 11ac by शेष. Enable it only where there
 	 * exist VHT_CAP IE in AP beacon
 	 */
 	bss_desc->disable_11ac = true;
 
-	if (bss_desc->cap_info_bitmap & WLAN_CAPABILITY_SPECTRUM_MGMT)
+	अगर (bss_desc->cap_info_biपंचांगap & WLAN_CAPABILITY_SPECTRUM_MGMT)
 		bss_desc->sensed_11h = true;
 
-	return mwifiex_update_bss_desc_with_ie(priv->adapter, bss_desc);
-}
+	वापस mwअगरiex_update_bss_desc_with_ie(priv->adapter, bss_desc);
+पूर्ण
 
-void mwifiex_dnld_txpwr_table(struct mwifiex_private *priv)
-{
-	if (priv->adapter->dt_node) {
-		char txpwr[] = {"marvell,00_txpwrlimit"};
+व्योम mwअगरiex_dnld_txpwr_table(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	अगर (priv->adapter->dt_node) अणु
+		अक्षर txpwr[] = अणु"marvell,00_txpwrlimit"पूर्ण;
 
-		memcpy(&txpwr[8], priv->adapter->country_code, 2);
-		mwifiex_dnld_dt_cfgdata(priv, priv->adapter->dt_node, txpwr);
-	}
-}
+		स_नकल(&txpwr[8], priv->adapter->country_code, 2);
+		mwअगरiex_dnld_dt_cfgdata(priv, priv->adapter->dt_node, txpwr);
+	पूर्ण
+पूर्ण
 
-static int mwifiex_process_country_ie(struct mwifiex_private *priv,
-				      struct cfg80211_bss *bss)
-{
-	const u8 *country_ie;
+अटल पूर्णांक mwअगरiex_process_country_ie(काष्ठा mwअगरiex_निजी *priv,
+				      काष्ठा cfg80211_bss *bss)
+अणु
+	स्थिर u8 *country_ie;
 	u8 country_ie_len;
-	struct mwifiex_802_11d_domain_reg *domain_info =
-					&priv->adapter->domain_reg;
+	काष्ठा mwअगरiex_802_11d_करोमुख्य_reg *करोमुख्य_info =
+					&priv->adapter->करोमुख्य_reg;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	country_ie = ieee80211_bss_get_ie(bss, WLAN_EID_COUNTRY);
-	if (!country_ie) {
-		rcu_read_unlock();
-		return 0;
-	}
+	अगर (!country_ie) अणु
+		rcu_पढ़ो_unlock();
+		वापस 0;
+	पूर्ण
 
 	country_ie_len = country_ie[1];
-	if (country_ie_len < IEEE80211_COUNTRY_IE_MIN_LEN) {
-		rcu_read_unlock();
-		return 0;
-	}
+	अगर (country_ie_len < IEEE80211_COUNTRY_IE_MIN_LEN) अणु
+		rcu_पढ़ो_unlock();
+		वापस 0;
+	पूर्ण
 
-	if (!strncmp(priv->adapter->country_code, &country_ie[2], 2)) {
-		rcu_read_unlock();
-		mwifiex_dbg(priv->adapter, INFO,
+	अगर (!म_भेदन(priv->adapter->country_code, &country_ie[2], 2)) अणु
+		rcu_पढ़ो_unlock();
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "11D: skip setting domain info in FW\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (country_ie_len >
-	    (IEEE80211_COUNTRY_STRING_LEN + MWIFIEX_MAX_TRIPLET_802_11D)) {
-		rcu_read_unlock();
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (country_ie_len >
+	    (IEEE80211_COUNTRY_STRING_LEN + MWIFIEX_MAX_TRIPLET_802_11D)) अणु
+		rcu_पढ़ो_unlock();
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "11D: country_ie_len overflow!, deauth AP\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	memcpy(priv->adapter->country_code, &country_ie[2], 2);
+	स_नकल(priv->adapter->country_code, &country_ie[2], 2);
 
-	domain_info->country_code[0] = country_ie[2];
-	domain_info->country_code[1] = country_ie[3];
-	domain_info->country_code[2] = ' ';
+	करोमुख्य_info->country_code[0] = country_ie[2];
+	करोमुख्य_info->country_code[1] = country_ie[3];
+	करोमुख्य_info->country_code[2] = ' ';
 
 	country_ie_len -= IEEE80211_COUNTRY_STRING_LEN;
 
-	domain_info->no_of_triplet =
-		country_ie_len / sizeof(struct ieee80211_country_ie_triplet);
+	करोमुख्य_info->no_of_triplet =
+		country_ie_len / माप(काष्ठा ieee80211_country_ie_triplet);
 
-	memcpy((u8 *)domain_info->triplet,
+	स_नकल((u8 *)करोमुख्य_info->triplet,
 	       &country_ie[2] + IEEE80211_COUNTRY_STRING_LEN, country_ie_len);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (mwifiex_send_cmd(priv, HostCmd_CMD_802_11D_DOMAIN_INFO,
-			     HostCmd_ACT_GEN_SET, 0, NULL, false)) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11D_DOMAIN_INFO,
+			     HostCmd_ACT_GEN_SET, 0, शून्य, false)) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "11D: setting domain info in FW fail\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	mwifiex_dnld_txpwr_table(priv);
+	mwअगरiex_dnld_txpwr_table(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * In Ad-Hoc mode, the IBSS is created if not found in scan list.
- * In both Ad-Hoc and infra mode, an deauthentication is performed
+ * In Ad-Hoc mode, the IBSS is created अगर not found in scan list.
+ * In both Ad-Hoc and infra mode, an deauthentication is perक्रमmed
  * first.
  */
-int mwifiex_bss_start(struct mwifiex_private *priv, struct cfg80211_bss *bss,
-		      struct cfg80211_ssid *req_ssid)
-{
-	int ret;
-	struct mwifiex_adapter *adapter = priv->adapter;
-	struct mwifiex_bssdescriptor *bss_desc = NULL;
+पूर्णांक mwअगरiex_bss_start(काष्ठा mwअगरiex_निजी *priv, काष्ठा cfg80211_bss *bss,
+		      काष्ठा cfg80211_ssid *req_ssid)
+अणु
+	पूर्णांक ret;
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
+	काष्ठा mwअगरiex_bssdescriptor *bss_desc = शून्य;
 
 	priv->scan_block = false;
 
-	if (bss) {
-		if (adapter->region_code == 0x00 &&
-		    mwifiex_process_country_ie(priv, bss))
-			return -EINVAL;
+	अगर (bss) अणु
+		अगर (adapter->region_code == 0x00 &&
+		    mwअगरiex_process_country_ie(priv, bss))
+			वापस -EINVAL;
 
 		/* Allocate and fill new bss descriptor */
-		bss_desc = kzalloc(sizeof(struct mwifiex_bssdescriptor),
+		bss_desc = kzalloc(माप(काष्ठा mwअगरiex_bssdescriptor),
 				   GFP_KERNEL);
-		if (!bss_desc)
-			return -ENOMEM;
+		अगर (!bss_desc)
+			वापस -ENOMEM;
 
-		ret = mwifiex_fill_new_bss_desc(priv, bss, bss_desc);
-		if (ret)
-			goto done;
-	}
+		ret = mwअगरiex_fill_new_bss_desc(priv, bss, bss_desc);
+		अगर (ret)
+			जाओ करोne;
+	पूर्ण
 
-	if (priv->bss_mode == NL80211_IFTYPE_STATION ||
-	    priv->bss_mode == NL80211_IFTYPE_P2P_CLIENT) {
+	अगर (priv->bss_mode == NL80211_IFTYPE_STATION ||
+	    priv->bss_mode == NL80211_IFTYPE_P2P_CLIENT) अणु
 		u8 config_bands;
 
-		if (!bss_desc)
-			return -1;
+		अगर (!bss_desc)
+			वापस -1;
 
-		if (mwifiex_band_to_radio_type(bss_desc->bss_band) ==
-						HostCmd_SCAN_RADIO_TYPE_BG) {
+		अगर (mwअगरiex_band_to_radio_type(bss_desc->bss_band) ==
+						HostCmd_SCAN_RADIO_TYPE_BG) अणु
 			config_bands = BAND_B | BAND_G | BAND_GN;
-		} else {
+		पूर्ण अन्यथा अणु
 			config_bands = BAND_A | BAND_AN;
-			if (adapter->fw_bands & BAND_AAC)
+			अगर (adapter->fw_bands & BAND_AAC)
 				config_bands |= BAND_AAC;
-		}
+		पूर्ण
 
-		if (!((config_bands | adapter->fw_bands) & ~adapter->fw_bands))
+		अगर (!((config_bands | adapter->fw_bands) & ~adapter->fw_bands))
 			adapter->config_bands = config_bands;
 
-		ret = mwifiex_check_network_compatibility(priv, bss_desc);
-		if (ret)
-			goto done;
+		ret = mwअगरiex_check_network_compatibility(priv, bss_desc);
+		अगर (ret)
+			जाओ करोne;
 
-		if (mwifiex_11h_get_csa_closed_channel(priv) ==
-							(u8)bss_desc->channel) {
-			mwifiex_dbg(adapter, ERROR,
+		अगर (mwअगरiex_11h_get_csa_बंदd_channel(priv) ==
+							(u8)bss_desc->channel) अणु
+			mwअगरiex_dbg(adapter, ERROR,
 				    "Attempt to reconnect on csa closed chan(%d)\n",
 				    bss_desc->channel);
 			ret = -1;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		mwifiex_dbg(adapter, INFO,
+		mwअगरiex_dbg(adapter, INFO,
 			    "info: SSID found in scan list ...\t"
 			    "associating...\n");
 
-		mwifiex_stop_net_dev_queue(priv->netdev, adapter);
-		if (netif_carrier_ok(priv->netdev))
-			netif_carrier_off(priv->netdev);
+		mwअगरiex_stop_net_dev_queue(priv->netdev, adapter);
+		अगर (netअगर_carrier_ok(priv->netdev))
+			netअगर_carrier_off(priv->netdev);
 
-		/* Clear any past association response stored for
+		/* Clear any past association response stored क्रम
 		 * application retrieval */
 		priv->assoc_rsp_size = 0;
-		ret = mwifiex_associate(priv, bss_desc);
+		ret = mwअगरiex_associate(priv, bss_desc);
 
-		/* If auth type is auto and association fails using open mode,
+		/* If auth type is स्वतः and association fails using खोलो mode,
 		 * try to connect using shared mode */
-		if (ret == WLAN_STATUS_NOT_SUPPORTED_AUTH_ALG &&
-		    priv->sec_info.is_authtype_auto &&
-		    priv->sec_info.wep_enabled) {
+		अगर (ret == WLAN_STATUS_NOT_SUPPORTED_AUTH_ALG &&
+		    priv->sec_info.is_authtype_स्वतः &&
+		    priv->sec_info.wep_enabled) अणु
 			priv->sec_info.authentication_mode =
 						NL80211_AUTHTYPE_SHARED_KEY;
-			ret = mwifiex_associate(priv, bss_desc);
-		}
+			ret = mwअगरiex_associate(priv, bss_desc);
+		पूर्ण
 
-		if (bss)
+		अगर (bss)
 			cfg80211_put_bss(priv->adapter->wiphy, bss);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Adhoc mode */
-		/* If the requested SSID matches current SSID, return */
-		if (bss_desc && bss_desc->ssid.ssid_len &&
-		    (!mwifiex_ssid_cmp(&priv->curr_bss_params.bss_descriptor.
-				       ssid, &bss_desc->ssid))) {
+		/* If the requested SSID matches current SSID, वापस */
+		अगर (bss_desc && bss_desc->ssid.ssid_len &&
+		    (!mwअगरiex_ssid_cmp(&priv->curr_bss_params.bss_descriptor.
+				       ssid, &bss_desc->ssid))) अणु
 			ret = 0;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
 		priv->adhoc_is_link_sensed = false;
 
-		ret = mwifiex_check_network_compatibility(priv, bss_desc);
+		ret = mwअगरiex_check_network_compatibility(priv, bss_desc);
 
-		mwifiex_stop_net_dev_queue(priv->netdev, adapter);
-		if (netif_carrier_ok(priv->netdev))
-			netif_carrier_off(priv->netdev);
+		mwअगरiex_stop_net_dev_queue(priv->netdev, adapter);
+		अगर (netअगर_carrier_ok(priv->netdev))
+			netअगर_carrier_off(priv->netdev);
 
-		if (!ret) {
-			mwifiex_dbg(adapter, INFO,
+		अगर (!ret) अणु
+			mwअगरiex_dbg(adapter, INFO,
 				    "info: network found in scan\t"
 				    " list. Joining...\n");
-			ret = mwifiex_adhoc_join(priv, bss_desc);
-			if (bss)
+			ret = mwअगरiex_adhoc_join(priv, bss_desc);
+			अगर (bss)
 				cfg80211_put_bss(priv->adapter->wiphy, bss);
-		} else {
-			mwifiex_dbg(adapter, INFO,
+		पूर्ण अन्यथा अणु
+			mwअगरiex_dbg(adapter, INFO,
 				    "info: Network not found in\t"
 				    "the list, creating adhoc with ssid = %s\n",
 				    req_ssid->ssid);
-			ret = mwifiex_adhoc_start(priv, req_ssid);
-		}
-	}
+			ret = mwअगरiex_adhoc_start(priv, req_ssid);
+		पूर्ण
+	पूर्ण
 
-done:
+करोne:
 	/* beacon_ie buffer was allocated in function
-	 * mwifiex_fill_new_bss_desc(). Free it now.
+	 * mwअगरiex_fill_new_bss_desc(). Free it now.
 	 */
-	if (bss_desc)
-		kfree(bss_desc->beacon_buf);
-	kfree(bss_desc);
+	अगर (bss_desc)
+		kमुक्त(bss_desc->beacon_buf);
+	kमुक्त(bss_desc);
 
-	if (ret < 0)
-		priv->attempted_bss_desc = NULL;
+	अगर (ret < 0)
+		priv->attempted_bss_desc = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * IOCTL request handler to set host sleep configuration.
@@ -407,80 +408,80 @@ done:
  * This function prepares the correct firmware command and
  * issues it.
  */
-int mwifiex_set_hs_params(struct mwifiex_private *priv, u16 action,
-			  int cmd_type, struct mwifiex_ds_hs_cfg *hs_cfg)
+पूर्णांक mwअगरiex_set_hs_params(काष्ठा mwअगरiex_निजी *priv, u16 action,
+			  पूर्णांक cmd_type, काष्ठा mwअगरiex_ds_hs_cfg *hs_cfg)
 
-{
-	struct mwifiex_adapter *adapter = priv->adapter;
-	int status = 0;
+अणु
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
+	पूर्णांक status = 0;
 	u32 prev_cond = 0;
 
-	if (!hs_cfg)
-		return -ENOMEM;
+	अगर (!hs_cfg)
+		वापस -ENOMEM;
 
-	switch (action) {
-	case HostCmd_ACT_GEN_SET:
-		if (adapter->pps_uapsd_mode) {
-			mwifiex_dbg(adapter, INFO,
+	चयन (action) अणु
+	हाल HostCmd_ACT_GEN_SET:
+		अगर (adapter->pps_uapsd_mode) अणु
+			mwअगरiex_dbg(adapter, INFO,
 				    "info: Host Sleep IOCTL\t"
 				    "is blocked in UAPSD/PPS mode\n");
 			status = -1;
-			break;
-		}
-		if (hs_cfg->is_invoke_hostcmd) {
-			if (hs_cfg->conditions == HS_CFG_CANCEL) {
-				if (!test_bit(MWIFIEX_IS_HS_CONFIGURED,
+			अवरोध;
+		पूर्ण
+		अगर (hs_cfg->is_invoke_hostcmd) अणु
+			अगर (hs_cfg->conditions == HS_CFG_CANCEL) अणु
+				अगर (!test_bit(MWIFIEX_IS_HS_CONFIGURED,
 					      &adapter->work_flags))
-					/* Already cancelled */
-					break;
+					/* Alपढ़ोy cancelled */
+					अवरोध;
 				/* Save previous condition */
 				prev_cond = le32_to_cpu(adapter->hs_cfg
 							.conditions);
 				adapter->hs_cfg.conditions =
 						cpu_to_le32(hs_cfg->conditions);
-			} else if (hs_cfg->conditions) {
+			पूर्ण अन्यथा अगर (hs_cfg->conditions) अणु
 				adapter->hs_cfg.conditions =
 						cpu_to_le32(hs_cfg->conditions);
 				adapter->hs_cfg.gpio = (u8)hs_cfg->gpio;
-				if (hs_cfg->gap)
+				अगर (hs_cfg->gap)
 					adapter->hs_cfg.gap = (u8)hs_cfg->gap;
-			} else if (adapter->hs_cfg.conditions ==
-				   cpu_to_le32(HS_CFG_CANCEL)) {
-				/* Return failure if no parameters for HS
+			पूर्ण अन्यथा अगर (adapter->hs_cfg.conditions ==
+				   cpu_to_le32(HS_CFG_CANCEL)) अणु
+				/* Return failure अगर no parameters क्रम HS
 				   enable */
 				status = -1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			status = mwifiex_send_cmd(priv,
+			status = mwअगरiex_send_cmd(priv,
 						  HostCmd_CMD_802_11_HS_CFG_ENH,
 						  HostCmd_ACT_GEN_SET, 0,
 						  &adapter->hs_cfg,
 						  cmd_type == MWIFIEX_SYNC_CMD);
 
-			if (hs_cfg->conditions == HS_CFG_CANCEL)
+			अगर (hs_cfg->conditions == HS_CFG_CANCEL)
 				/* Restore previous condition */
 				adapter->hs_cfg.conditions =
 						cpu_to_le32(prev_cond);
-		} else {
+		पूर्ण अन्यथा अणु
 			adapter->hs_cfg.conditions =
 						cpu_to_le32(hs_cfg->conditions);
 			adapter->hs_cfg.gpio = (u8)hs_cfg->gpio;
 			adapter->hs_cfg.gap = (u8)hs_cfg->gap;
-		}
-		break;
-	case HostCmd_ACT_GEN_GET:
+		पूर्ण
+		अवरोध;
+	हाल HostCmd_ACT_GEN_GET:
 		hs_cfg->conditions = le32_to_cpu(adapter->hs_cfg.conditions);
 		hs_cfg->gpio = adapter->hs_cfg.gpio;
 		hs_cfg->gap = adapter->hs_cfg.gap;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		status = -1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 /*
  * Sends IOCTL request to cancel the existing Host Sleep configuration.
@@ -488,17 +489,17 @@ int mwifiex_set_hs_params(struct mwifiex_private *priv, u16 action,
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int mwifiex_cancel_hs(struct mwifiex_private *priv, int cmd_type)
-{
-	struct mwifiex_ds_hs_cfg hscfg;
+पूर्णांक mwअगरiex_cancel_hs(काष्ठा mwअगरiex_निजी *priv, पूर्णांक cmd_type)
+अणु
+	काष्ठा mwअगरiex_ds_hs_cfg hscfg;
 
 	hscfg.conditions = HS_CFG_CANCEL;
 	hscfg.is_invoke_hostcmd = true;
 
-	return mwifiex_set_hs_params(priv, HostCmd_ACT_GEN_SET,
+	वापस mwअगरiex_set_hs_params(priv, HostCmd_ACT_GEN_SET,
 				    cmd_type, &hscfg);
-}
-EXPORT_SYMBOL_GPL(mwifiex_cancel_hs);
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_cancel_hs);
 
 /*
  * Sends IOCTL request to cancel the existing Host Sleep configuration.
@@ -506,132 +507,132 @@ EXPORT_SYMBOL_GPL(mwifiex_cancel_hs);
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int mwifiex_enable_hs(struct mwifiex_adapter *adapter)
-{
-	struct mwifiex_ds_hs_cfg hscfg;
-	struct mwifiex_private *priv;
-	int i;
+पूर्णांक mwअगरiex_enable_hs(काष्ठा mwअगरiex_adapter *adapter)
+अणु
+	काष्ठा mwअगरiex_ds_hs_cfg hscfg;
+	काष्ठा mwअगरiex_निजी *priv;
+	पूर्णांक i;
 
-	if (disconnect_on_suspend) {
-		for (i = 0; i < adapter->priv_num; i++) {
+	अगर (disconnect_on_suspend) अणु
+		क्रम (i = 0; i < adapter->priv_num; i++) अणु
 			priv = adapter->priv[i];
-			if (priv)
-				mwifiex_deauthenticate(priv, NULL);
-		}
-	}
+			अगर (priv)
+				mwअगरiex_deauthenticate(priv, शून्य);
+		पूर्ण
+	पूर्ण
 
-	priv = mwifiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA);
+	priv = mwअगरiex_get_priv(adapter, MWIFIEX_BSS_ROLE_STA);
 
-	if (priv && priv->sched_scanning) {
-#ifdef CONFIG_PM
-		if (priv->wdev.wiphy->wowlan_config &&
-		    !priv->wdev.wiphy->wowlan_config->nd_config) {
-#endif
-			mwifiex_dbg(adapter, CMD, "aborting bgscan!\n");
-			mwifiex_stop_bg_scan(priv);
+	अगर (priv && priv->sched_scanning) अणु
+#अगर_घोषित CONFIG_PM
+		अगर (priv->wdev.wiphy->wowlan_config &&
+		    !priv->wdev.wiphy->wowlan_config->nd_config) अणु
+#पूर्ण_अगर
+			mwअगरiex_dbg(adapter, CMD, "aborting bgscan!\n");
+			mwअगरiex_stop_bg_scan(priv);
 			cfg80211_sched_scan_stopped(priv->wdev.wiphy, 0);
-#ifdef CONFIG_PM
-		}
-#endif
-	}
+#अगर_घोषित CONFIG_PM
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	if (adapter->hs_activated) {
-		mwifiex_dbg(adapter, CMD,
+	अगर (adapter->hs_activated) अणु
+		mwअगरiex_dbg(adapter, CMD,
 			    "cmd: HS Already activated\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	adapter->hs_activate_wait_q_woken = false;
+	adapter->hs_activate_रुको_q_woken = false;
 
-	memset(&hscfg, 0, sizeof(hscfg));
+	स_रखो(&hscfg, 0, माप(hscfg));
 	hscfg.is_invoke_hostcmd = true;
 
 	set_bit(MWIFIEX_IS_HS_ENABLING, &adapter->work_flags);
-	mwifiex_cancel_all_pending_cmd(adapter);
+	mwअगरiex_cancel_all_pending_cmd(adapter);
 
-	if (mwifiex_set_hs_params(mwifiex_get_priv(adapter,
+	अगर (mwअगरiex_set_hs_params(mwअगरiex_get_priv(adapter,
 						   MWIFIEX_BSS_ROLE_STA),
 				  HostCmd_ACT_GEN_SET, MWIFIEX_SYNC_CMD,
-				  &hscfg)) {
-		mwifiex_dbg(adapter, ERROR,
+				  &hscfg)) अणु
+		mwअगरiex_dbg(adapter, ERROR,
 			    "IOCTL request HS enable failed\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (wait_event_interruptible_timeout(adapter->hs_activate_wait_q,
-					     adapter->hs_activate_wait_q_woken,
-					     (10 * HZ)) <= 0) {
-		mwifiex_dbg(adapter, ERROR,
+	अगर (रुको_event_पूर्णांकerruptible_समयout(adapter->hs_activate_रुको_q,
+					     adapter->hs_activate_रुको_q_woken,
+					     (10 * HZ)) <= 0) अणु
+		mwअगरiex_dbg(adapter, ERROR,
 			    "hs_activate_wait_q terminated\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
-EXPORT_SYMBOL_GPL(mwifiex_enable_hs);
+	वापस true;
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_enable_hs);
 
 /*
- * IOCTL request handler to get BSS information.
+ * IOCTL request handler to get BSS inक्रमmation.
  *
- * This function collates the information from different driver structures
+ * This function collates the inक्रमmation from dअगरferent driver काष्ठाures
  * to send to the user.
  */
-int mwifiex_get_bss_info(struct mwifiex_private *priv,
-			 struct mwifiex_bss_info *info)
-{
-	struct mwifiex_adapter *adapter = priv->adapter;
-	struct mwifiex_bssdescriptor *bss_desc;
+पूर्णांक mwअगरiex_get_bss_info(काष्ठा mwअगरiex_निजी *priv,
+			 काष्ठा mwअगरiex_bss_info *info)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
+	काष्ठा mwअगरiex_bssdescriptor *bss_desc;
 
-	if (!info)
-		return -1;
+	अगर (!info)
+		वापस -1;
 
 	bss_desc = &priv->curr_bss_params.bss_descriptor;
 
 	info->bss_mode = priv->bss_mode;
 
-	memcpy(&info->ssid, &bss_desc->ssid, sizeof(struct cfg80211_ssid));
+	स_नकल(&info->ssid, &bss_desc->ssid, माप(काष्ठा cfg80211_ssid));
 
-	memcpy(&info->bssid, &bss_desc->mac_address, ETH_ALEN);
+	स_नकल(&info->bssid, &bss_desc->mac_address, ETH_ALEN);
 
 	info->bss_chan = bss_desc->channel;
 
-	memcpy(info->country_code, adapter->country_code,
+	स_नकल(info->country_code, adapter->country_code,
 	       IEEE80211_COUNTRY_STRING_LEN);
 
 	info->media_connected = priv->media_connected;
 
-	info->max_power_level = priv->max_tx_power_level;
-	info->min_power_level = priv->min_tx_power_level;
+	info->max_घातer_level = priv->max_tx_घातer_level;
+	info->min_घातer_level = priv->min_tx_घातer_level;
 
 	info->adhoc_state = priv->adhoc_state;
 
 	info->bcn_nf_last = priv->bcn_nf_last;
 
-	if (priv->sec_info.wep_enabled)
+	अगर (priv->sec_info.wep_enabled)
 		info->wep_status = true;
-	else
+	अन्यथा
 		info->wep_status = false;
 
 	info->is_hs_configured = test_bit(MWIFIEX_IS_HS_CONFIGURED,
 					  &adapter->work_flags);
 	info->is_deep_sleep = adapter->is_deep_sleep;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * The function disables auto deep sleep mode.
+ * The function disables स्वतः deep sleep mode.
  */
-int mwifiex_disable_auto_ds(struct mwifiex_private *priv)
-{
-	struct mwifiex_ds_auto_ds auto_ds = {
-		.auto_ds = DEEP_SLEEP_OFF,
-	};
+पूर्णांक mwअगरiex_disable_स्वतः_ds(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	काष्ठा mwअगरiex_ds_स्वतः_ds स्वतः_ds = अणु
+		.स्वतः_ds = DEEP_SLEEP_OFF,
+	पूर्ण;
 
-	return mwifiex_send_cmd(priv, HostCmd_CMD_802_11_PS_MODE_ENH,
-				DIS_AUTO_PS, BITMAP_AUTO_DS, &auto_ds, true);
-}
-EXPORT_SYMBOL_GPL(mwifiex_disable_auto_ds);
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_PS_MODE_ENH,
+				DIS_AUTO_PS, BITMAP_AUTO_DS, &स्वतः_ds, true);
+पूर्ण
+EXPORT_SYMBOL_GPL(mwअगरiex_disable_स्वतः_ds);
 
 /*
  * Sends IOCTL request to get the data rate.
@@ -639,143 +640,143 @@ EXPORT_SYMBOL_GPL(mwifiex_disable_auto_ds);
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int mwifiex_drv_get_data_rate(struct mwifiex_private *priv, u32 *rate)
-{
-	int ret;
+पूर्णांक mwअगरiex_drv_get_data_rate(काष्ठा mwअगरiex_निजी *priv, u32 *rate)
+अणु
+	पूर्णांक ret;
 
-	ret = mwifiex_send_cmd(priv, HostCmd_CMD_802_11_TX_RATE_QUERY,
-			       HostCmd_ACT_GEN_GET, 0, NULL, true);
+	ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_TX_RATE_QUERY,
+			       HostCmd_ACT_GEN_GET, 0, शून्य, true);
 
-	if (!ret) {
-		if (priv->is_data_rate_auto)
-			*rate = mwifiex_index_to_data_rate(priv, priv->tx_rate,
+	अगर (!ret) अणु
+		अगर (priv->is_data_rate_स्वतः)
+			*rate = mwअगरiex_index_to_data_rate(priv, priv->tx_rate,
 							   priv->tx_htinfo);
-		else
+		अन्यथा
 			*rate = priv->data_rate;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * IOCTL request handler to set tx power configuration.
+ * IOCTL request handler to set tx घातer configuration.
  *
  * This function prepares the correct firmware command and
  * issues it.
  *
- * For non-auto power mode, all the following power groups are set -
+ * For non-स्वतः घातer mode, all the following घातer groups are set -
  *      - Modulation class HR/DSSS
  *      - Modulation class OFDM
  *      - Modulation class HTBW20
  *      - Modulation class HTBW40
  */
-int mwifiex_set_tx_power(struct mwifiex_private *priv,
-			 struct mwifiex_power_cfg *power_cfg)
-{
-	int ret;
-	struct host_cmd_ds_txpwr_cfg *txp_cfg;
-	struct mwifiex_types_power_group *pg_tlv;
-	struct mwifiex_power_group *pg;
+पूर्णांक mwअगरiex_set_tx_घातer(काष्ठा mwअगरiex_निजी *priv,
+			 काष्ठा mwअगरiex_घातer_cfg *घातer_cfg)
+अणु
+	पूर्णांक ret;
+	काष्ठा host_cmd_ds_txpwr_cfg *txp_cfg;
+	काष्ठा mwअगरiex_types_घातer_group *pg_tlv;
+	काष्ठा mwअगरiex_घातer_group *pg;
 	u8 *buf;
 	u16 dbm = 0;
 
-	if (!power_cfg->is_power_auto) {
-		dbm = (u16) power_cfg->power_level;
-		if ((dbm < priv->min_tx_power_level) ||
-		    (dbm > priv->max_tx_power_level)) {
-			mwifiex_dbg(priv->adapter, ERROR,
+	अगर (!घातer_cfg->is_घातer_स्वतः) अणु
+		dbm = (u16) घातer_cfg->घातer_level;
+		अगर ((dbm < priv->min_tx_घातer_level) ||
+		    (dbm > priv->max_tx_घातer_level)) अणु
+			mwअगरiex_dbg(priv->adapter, ERROR,
 				    "txpower value %d dBm\t"
 				    "is out of range (%d dBm-%d dBm)\n",
-				    dbm, priv->min_tx_power_level,
-				    priv->max_tx_power_level);
-			return -1;
-		}
-	}
+				    dbm, priv->min_tx_घातer_level,
+				    priv->max_tx_घातer_level);
+			वापस -1;
+		पूर्ण
+	पूर्ण
 	buf = kzalloc(MWIFIEX_SIZE_OF_CMD_BUFFER, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	txp_cfg = (struct host_cmd_ds_txpwr_cfg *) buf;
+	txp_cfg = (काष्ठा host_cmd_ds_txpwr_cfg *) buf;
 	txp_cfg->action = cpu_to_le16(HostCmd_ACT_GEN_SET);
-	if (!power_cfg->is_power_auto) {
-		u16 dbm_min = power_cfg->is_power_fixed ?
-			      dbm : priv->min_tx_power_level;
+	अगर (!घातer_cfg->is_घातer_स्वतः) अणु
+		u16 dbm_min = घातer_cfg->is_घातer_fixed ?
+			      dbm : priv->min_tx_घातer_level;
 
 		txp_cfg->mode = cpu_to_le32(1);
-		pg_tlv = (struct mwifiex_types_power_group *)
-			 (buf + sizeof(struct host_cmd_ds_txpwr_cfg));
+		pg_tlv = (काष्ठा mwअगरiex_types_घातer_group *)
+			 (buf + माप(काष्ठा host_cmd_ds_txpwr_cfg));
 		pg_tlv->type = cpu_to_le16(TLV_TYPE_POWER_GROUP);
 		pg_tlv->length =
-			cpu_to_le16(4 * sizeof(struct mwifiex_power_group));
-		pg = (struct mwifiex_power_group *)
-		     (buf + sizeof(struct host_cmd_ds_txpwr_cfg)
-		      + sizeof(struct mwifiex_types_power_group));
-		/* Power group for modulation class HR/DSSS */
+			cpu_to_le16(4 * माप(काष्ठा mwअगरiex_घातer_group));
+		pg = (काष्ठा mwअगरiex_घातer_group *)
+		     (buf + माप(काष्ठा host_cmd_ds_txpwr_cfg)
+		      + माप(काष्ठा mwअगरiex_types_घातer_group));
+		/* Power group क्रम modulation class HR/DSSS */
 		pg->first_rate_code = 0x00;
 		pg->last_rate_code = 0x03;
 		pg->modulation_class = MOD_CLASS_HR_DSSS;
-		pg->power_step = 0;
-		pg->power_min = (s8) dbm_min;
-		pg->power_max = (s8) dbm;
+		pg->घातer_step = 0;
+		pg->घातer_min = (s8) dbm_min;
+		pg->घातer_max = (s8) dbm;
 		pg++;
-		/* Power group for modulation class OFDM */
+		/* Power group क्रम modulation class OFDM */
 		pg->first_rate_code = 0x00;
 		pg->last_rate_code = 0x07;
 		pg->modulation_class = MOD_CLASS_OFDM;
-		pg->power_step = 0;
-		pg->power_min = (s8) dbm_min;
-		pg->power_max = (s8) dbm;
+		pg->घातer_step = 0;
+		pg->घातer_min = (s8) dbm_min;
+		pg->घातer_max = (s8) dbm;
 		pg++;
-		/* Power group for modulation class HTBW20 */
+		/* Power group क्रम modulation class HTBW20 */
 		pg->first_rate_code = 0x00;
 		pg->last_rate_code = 0x20;
 		pg->modulation_class = MOD_CLASS_HT;
-		pg->power_step = 0;
-		pg->power_min = (s8) dbm_min;
-		pg->power_max = (s8) dbm;
+		pg->घातer_step = 0;
+		pg->घातer_min = (s8) dbm_min;
+		pg->घातer_max = (s8) dbm;
 		pg->ht_bandwidth = HT_BW_20;
 		pg++;
-		/* Power group for modulation class HTBW40 */
+		/* Power group क्रम modulation class HTBW40 */
 		pg->first_rate_code = 0x00;
 		pg->last_rate_code = 0x20;
 		pg->modulation_class = MOD_CLASS_HT;
-		pg->power_step = 0;
-		pg->power_min = (s8) dbm_min;
-		pg->power_max = (s8) dbm;
+		pg->घातer_step = 0;
+		pg->घातer_min = (s8) dbm_min;
+		pg->घातer_max = (s8) dbm;
 		pg->ht_bandwidth = HT_BW_40;
-	}
-	ret = mwifiex_send_cmd(priv, HostCmd_CMD_TXPWR_CFG,
+	पूर्ण
+	ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_TXPWR_CFG,
 			       HostCmd_ACT_GEN_SET, 0, buf, true);
 
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /*
- * IOCTL request handler to get power save mode.
+ * IOCTL request handler to get घातer save mode.
  *
  * This function prepares the correct firmware command and
  * issues it.
  */
-int mwifiex_drv_set_power(struct mwifiex_private *priv, u32 *ps_mode)
-{
-	int ret;
-	struct mwifiex_adapter *adapter = priv->adapter;
+पूर्णांक mwअगरiex_drv_set_घातer(काष्ठा mwअगरiex_निजी *priv, u32 *ps_mode)
+अणु
+	पूर्णांक ret;
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
 	u16 sub_cmd;
 
-	if (*ps_mode)
+	अगर (*ps_mode)
 		adapter->ps_mode = MWIFIEX_802_11_POWER_MODE_PSP;
-	else
+	अन्यथा
 		adapter->ps_mode = MWIFIEX_802_11_POWER_MODE_CAM;
 	sub_cmd = (*ps_mode) ? EN_AUTO_PS : DIS_AUTO_PS;
-	ret = mwifiex_send_cmd(priv, HostCmd_CMD_802_11_PS_MODE_ENH,
-			       sub_cmd, BITMAP_STA_PS, NULL, true);
-	if ((!ret) && (sub_cmd == DIS_AUTO_PS))
-		ret = mwifiex_send_cmd(priv, HostCmd_CMD_802_11_PS_MODE_ENH,
-				       GET_PS, 0, NULL, false);
+	ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_PS_MODE_ENH,
+			       sub_cmd, BITMAP_STA_PS, शून्य, true);
+	अगर ((!ret) && (sub_cmd == DIS_AUTO_PS))
+		ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_PS_MODE_ENH,
+				       GET_PS, 0, शून्य, false);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * IOCTL request handler to set/reset WPA IE.
@@ -784,111 +785,111 @@ int mwifiex_drv_set_power(struct mwifiex_private *priv, u32 *ps_mode)
  * is checked to determine WPA version. If buffer length is zero, the existing
  * WPA IE is reset.
  */
-static int mwifiex_set_wpa_ie(struct mwifiex_private *priv,
+अटल पूर्णांक mwअगरiex_set_wpa_ie(काष्ठा mwअगरiex_निजी *priv,
 			      u8 *ie_data_ptr, u16 ie_len)
-{
-	if (ie_len) {
-		if (ie_len > sizeof(priv->wpa_ie)) {
-			mwifiex_dbg(priv->adapter, ERROR,
+अणु
+	अगर (ie_len) अणु
+		अगर (ie_len > माप(priv->wpa_ie)) अणु
+			mwअगरiex_dbg(priv->adapter, ERROR,
 				    "failed to copy WPA IE, too big\n");
-			return -1;
-		}
-		memcpy(priv->wpa_ie, ie_data_ptr, ie_len);
+			वापस -1;
+		पूर्ण
+		स_नकल(priv->wpa_ie, ie_data_ptr, ie_len);
 		priv->wpa_ie_len = ie_len;
-		mwifiex_dbg(priv->adapter, CMD,
+		mwअगरiex_dbg(priv->adapter, CMD,
 			    "cmd: Set Wpa_ie_len=%d IE=%#x\n",
 			    priv->wpa_ie_len, priv->wpa_ie[0]);
 
-		if (priv->wpa_ie[0] == WLAN_EID_VENDOR_SPECIFIC) {
+		अगर (priv->wpa_ie[0] == WLAN_EID_VENDOR_SPECIFIC) अणु
 			priv->sec_info.wpa_enabled = true;
-		} else if (priv->wpa_ie[0] == WLAN_EID_RSN) {
+		पूर्ण अन्यथा अगर (priv->wpa_ie[0] == WLAN_EID_RSN) अणु
 			priv->sec_info.wpa2_enabled = true;
-		} else {
+		पूर्ण अन्यथा अणु
 			priv->sec_info.wpa_enabled = false;
 			priv->sec_info.wpa2_enabled = false;
-		}
-	} else {
-		memset(priv->wpa_ie, 0, sizeof(priv->wpa_ie));
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		स_रखो(priv->wpa_ie, 0, माप(priv->wpa_ie));
 		priv->wpa_ie_len = 0;
-		mwifiex_dbg(priv->adapter, INFO,
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "info: reset wpa_ie_len=%d IE=%#x\n",
 			    priv->wpa_ie_len, priv->wpa_ie[0]);
 		priv->sec_info.wpa_enabled = false;
 		priv->sec_info.wpa2_enabled = false;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * IOCTL request handler to set/reset WAPI IE.
  *
  * The supplied WAPI IE is treated as a opaque buffer. Only the first field
- * is checked to internally enable WAPI. If buffer length is zero, the existing
+ * is checked to पूर्णांकernally enable WAPI. If buffer length is zero, the existing
  * WAPI IE is reset.
  */
-static int mwifiex_set_wapi_ie(struct mwifiex_private *priv,
+अटल पूर्णांक mwअगरiex_set_wapi_ie(काष्ठा mwअगरiex_निजी *priv,
 			       u8 *ie_data_ptr, u16 ie_len)
-{
-	if (ie_len) {
-		if (ie_len > sizeof(priv->wapi_ie)) {
-			mwifiex_dbg(priv->adapter, ERROR,
+अणु
+	अगर (ie_len) अणु
+		अगर (ie_len > माप(priv->wapi_ie)) अणु
+			mwअगरiex_dbg(priv->adapter, ERROR,
 				    "info: failed to copy WAPI IE, too big\n");
-			return -1;
-		}
-		memcpy(priv->wapi_ie, ie_data_ptr, ie_len);
+			वापस -1;
+		पूर्ण
+		स_नकल(priv->wapi_ie, ie_data_ptr, ie_len);
 		priv->wapi_ie_len = ie_len;
-		mwifiex_dbg(priv->adapter, CMD,
+		mwअगरiex_dbg(priv->adapter, CMD,
 			    "cmd: Set wapi_ie_len=%d IE=%#x\n",
 			    priv->wapi_ie_len, priv->wapi_ie[0]);
 
-		if (priv->wapi_ie[0] == WLAN_EID_BSS_AC_ACCESS_DELAY)
+		अगर (priv->wapi_ie[0] == WLAN_EID_BSS_AC_ACCESS_DELAY)
 			priv->sec_info.wapi_enabled = true;
-	} else {
-		memset(priv->wapi_ie, 0, sizeof(priv->wapi_ie));
+	पूर्ण अन्यथा अणु
+		स_रखो(priv->wapi_ie, 0, माप(priv->wapi_ie));
 		priv->wapi_ie_len = ie_len;
-		mwifiex_dbg(priv->adapter, INFO,
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "info: Reset wapi_ie_len=%d IE=%#x\n",
 			    priv->wapi_ie_len, priv->wapi_ie[0]);
 		priv->sec_info.wapi_enabled = false;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * IOCTL request handler to set/reset WPS IE.
  *
  * The supplied WPS IE is treated as a opaque buffer. Only the first field
- * is checked to internally enable WPS. If buffer length is zero, the existing
+ * is checked to पूर्णांकernally enable WPS. If buffer length is zero, the existing
  * WPS IE is reset.
  */
-static int mwifiex_set_wps_ie(struct mwifiex_private *priv,
+अटल पूर्णांक mwअगरiex_set_wps_ie(काष्ठा mwअगरiex_निजी *priv,
 			       u8 *ie_data_ptr, u16 ie_len)
-{
-	if (ie_len) {
-		if (ie_len > MWIFIEX_MAX_VSIE_LEN) {
-			mwifiex_dbg(priv->adapter, ERROR,
+अणु
+	अगर (ie_len) अणु
+		अगर (ie_len > MWIFIEX_MAX_VSIE_LEN) अणु
+			mwअगरiex_dbg(priv->adapter, ERROR,
 				    "info: failed to copy WPS IE, too big\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		priv->wps_ie = kzalloc(MWIFIEX_MAX_VSIE_LEN, GFP_KERNEL);
-		if (!priv->wps_ie)
-			return -ENOMEM;
+		अगर (!priv->wps_ie)
+			वापस -ENOMEM;
 
-		memcpy(priv->wps_ie, ie_data_ptr, ie_len);
+		स_नकल(priv->wps_ie, ie_data_ptr, ie_len);
 		priv->wps_ie_len = ie_len;
-		mwifiex_dbg(priv->adapter, CMD,
+		mwअगरiex_dbg(priv->adapter, CMD,
 			    "cmd: Set wps_ie_len=%d IE=%#x\n",
 			    priv->wps_ie_len, priv->wps_ie[0]);
-	} else {
-		kfree(priv->wps_ie);
+	पूर्ण अन्यथा अणु
+		kमुक्त(priv->wps_ie);
 		priv->wps_ie_len = ie_len;
-		mwifiex_dbg(priv->adapter, INFO,
+		mwअगरiex_dbg(priv->adapter, INFO,
 			    "info: Reset wps_ie_len=%d\n", priv->wps_ie_len);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * IOCTL request handler to set WAPI key.
@@ -896,14 +897,14 @@ static int mwifiex_set_wps_ie(struct mwifiex_private *priv,
  * This function prepares the correct firmware command and
  * issues it.
  */
-static int mwifiex_sec_ioctl_set_wapi_key(struct mwifiex_private *priv,
-			       struct mwifiex_ds_encrypt_key *encrypt_key)
-{
+अटल पूर्णांक mwअगरiex_sec_ioctl_set_wapi_key(काष्ठा mwअगरiex_निजी *priv,
+			       काष्ठा mwअगरiex_ds_encrypt_key *encrypt_key)
+अणु
 
-	return mwifiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
 				HostCmd_ACT_GEN_SET, KEY_INFO_ENABLED,
 				encrypt_key, true);
-}
+पूर्ण
 
 /*
  * IOCTL request handler to set WEP network key.
@@ -911,81 +912,81 @@ static int mwifiex_sec_ioctl_set_wapi_key(struct mwifiex_private *priv,
  * This function prepares the correct firmware command and
  * issues it, after validation checks.
  */
-static int mwifiex_sec_ioctl_set_wep_key(struct mwifiex_private *priv,
-			      struct mwifiex_ds_encrypt_key *encrypt_key)
-{
-	struct mwifiex_adapter *adapter = priv->adapter;
-	int ret;
-	struct mwifiex_wep_key *wep_key;
-	int index;
+अटल पूर्णांक mwअगरiex_sec_ioctl_set_wep_key(काष्ठा mwअगरiex_निजी *priv,
+			      काष्ठा mwअगरiex_ds_encrypt_key *encrypt_key)
+अणु
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
+	पूर्णांक ret;
+	काष्ठा mwअगरiex_wep_key *wep_key;
+	पूर्णांक index;
 
-	if (priv->wep_key_curr_index >= NUM_WEP_KEYS)
+	अगर (priv->wep_key_curr_index >= NUM_WEP_KEYS)
 		priv->wep_key_curr_index = 0;
 	wep_key = &priv->wep_key[priv->wep_key_curr_index];
 	index = encrypt_key->key_index;
-	if (encrypt_key->key_disable) {
+	अगर (encrypt_key->key_disable) अणु
 		priv->sec_info.wep_enabled = 0;
-	} else if (!encrypt_key->key_len) {
+	पूर्ण अन्यथा अगर (!encrypt_key->key_len) अणु
 		/* Copy the required key as the current key */
 		wep_key = &priv->wep_key[index];
-		if (!wep_key->key_length) {
-			mwifiex_dbg(adapter, ERROR,
+		अगर (!wep_key->key_length) अणु
+			mwअगरiex_dbg(adapter, ERROR,
 				    "key not set, so cannot enable it\n");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		if (adapter->key_api_major_ver == KEY_API_VER_MAJOR_V2) {
-			memcpy(encrypt_key->key_material,
+		अगर (adapter->key_api_major_ver == KEY_API_VER_MAJOR_V2) अणु
+			स_नकल(encrypt_key->key_material,
 			       wep_key->key_material, wep_key->key_length);
 			encrypt_key->key_len = wep_key->key_length;
-		}
+		पूर्ण
 
 		priv->wep_key_curr_index = (u16) index;
 		priv->sec_info.wep_enabled = 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		wep_key = &priv->wep_key[index];
-		memset(wep_key, 0, sizeof(struct mwifiex_wep_key));
+		स_रखो(wep_key, 0, माप(काष्ठा mwअगरiex_wep_key));
 		/* Copy the key in the driver */
-		memcpy(wep_key->key_material,
+		स_नकल(wep_key->key_material,
 		       encrypt_key->key_material,
 		       encrypt_key->key_len);
 		wep_key->key_index = index;
 		wep_key->key_length = encrypt_key->key_len;
 		priv->sec_info.wep_enabled = 1;
-	}
-	if (wep_key->key_length) {
-		void *enc_key;
+	पूर्ण
+	अगर (wep_key->key_length) अणु
+		व्योम *enc_key;
 
-		if (encrypt_key->key_disable) {
-			memset(&priv->wep_key[index], 0,
-			       sizeof(struct mwifiex_wep_key));
-			goto done;
-		}
+		अगर (encrypt_key->key_disable) अणु
+			स_रखो(&priv->wep_key[index], 0,
+			       माप(काष्ठा mwअगरiex_wep_key));
+			जाओ करोne;
+		पूर्ण
 
-		if (adapter->key_api_major_ver == KEY_API_VER_MAJOR_V2)
+		अगर (adapter->key_api_major_ver == KEY_API_VER_MAJOR_V2)
 			enc_key = encrypt_key;
-		else
-			enc_key = NULL;
+		अन्यथा
+			enc_key = शून्य;
 
 		/* Send request to firmware */
-		ret = mwifiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
+		ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
 				       HostCmd_ACT_GEN_SET, 0, enc_key, false);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-done:
-	if (priv->sec_info.wep_enabled)
+करोne:
+	अगर (priv->sec_info.wep_enabled)
 		priv->curr_pkt_filter |= HostCmd_ACT_MAC_WEP_ENABLE;
-	else
+	अन्यथा
 		priv->curr_pkt_filter &= ~HostCmd_ACT_MAC_WEP_ENABLE;
 
-	ret = mwifiex_send_cmd(priv, HostCmd_CMD_MAC_CONTROL,
+	ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_MAC_CONTROL,
 			       HostCmd_ACT_GEN_SET, 0,
 			       &priv->curr_pkt_filter, true);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * IOCTL request handler to set WPA key.
@@ -997,63 +998,63 @@ done:
  *
  * This function can also be used to disable a currently set key.
  */
-static int mwifiex_sec_ioctl_set_wpa_key(struct mwifiex_private *priv,
-			      struct mwifiex_ds_encrypt_key *encrypt_key)
-{
-	int ret;
-	u8 remove_key = false;
-	struct host_cmd_ds_802_11_key_material *ibss_key;
+अटल पूर्णांक mwअगरiex_sec_ioctl_set_wpa_key(काष्ठा mwअगरiex_निजी *priv,
+			      काष्ठा mwअगरiex_ds_encrypt_key *encrypt_key)
+अणु
+	पूर्णांक ret;
+	u8 हटाओ_key = false;
+	काष्ठा host_cmd_ds_802_11_key_material *ibss_key;
 
 	/* Current driver only supports key length of up to 32 bytes */
-	if (encrypt_key->key_len > WLAN_MAX_KEY_LEN) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (encrypt_key->key_len > WLAN_MAX_KEY_LEN) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "key length too long\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (priv->bss_mode == NL80211_IFTYPE_ADHOC) {
+	अगर (priv->bss_mode == NL80211_IFTYPE_ADHOC) अणु
 		/*
-		 * IBSS/WPA-None uses only one key (Group) for both receiving
+		 * IBSS/WPA-None uses only one key (Group) क्रम both receiving
 		 * and sending unicast and multicast packets.
 		 */
 		/* Send the key as PTK to firmware */
 		encrypt_key->key_index = MWIFIEX_KEY_INDEX_UNICAST;
-		ret = mwifiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
+		ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
 				       HostCmd_ACT_GEN_SET,
 				       KEY_INFO_ENABLED, encrypt_key, false);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ibss_key = &priv->aes_key;
-		memset(ibss_key, 0,
-		       sizeof(struct host_cmd_ds_802_11_key_material));
+		स_रखो(ibss_key, 0,
+		       माप(काष्ठा host_cmd_ds_802_11_key_material));
 		/* Copy the key in the driver */
-		memcpy(ibss_key->key_param_set.key, encrypt_key->key_material,
+		स_नकल(ibss_key->key_param_set.key, encrypt_key->key_material,
 		       encrypt_key->key_len);
-		memcpy(&ibss_key->key_param_set.key_len, &encrypt_key->key_len,
-		       sizeof(ibss_key->key_param_set.key_len));
+		स_नकल(&ibss_key->key_param_set.key_len, &encrypt_key->key_len,
+		       माप(ibss_key->key_param_set.key_len));
 		ibss_key->key_param_set.key_type_id
 			= cpu_to_le16(KEY_TYPE_ID_TKIP);
 		ibss_key->key_param_set.key_info = cpu_to_le16(KEY_ENABLED);
 
 		/* Send the key as GTK to firmware */
 		encrypt_key->key_index = ~MWIFIEX_KEY_INDEX_UNICAST;
-	}
+	पूर्ण
 
-	if (!encrypt_key->key_index)
+	अगर (!encrypt_key->key_index)
 		encrypt_key->key_index = MWIFIEX_KEY_INDEX_UNICAST;
 
-	if (remove_key)
-		ret = mwifiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
+	अगर (हटाओ_key)
+		ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
 				       HostCmd_ACT_GEN_SET,
 				       !KEY_INFO_ENABLED, encrypt_key, true);
-	else
-		ret = mwifiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
+	अन्यथा
+		ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_KEY_MATERIAL,
 				       HostCmd_ACT_GEN_SET,
 				       KEY_INFO_ENABLED, encrypt_key, true);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * IOCTL request handler to set/get network keys.
@@ -1061,43 +1062,43 @@ static int mwifiex_sec_ioctl_set_wpa_key(struct mwifiex_private *priv,
  * This is a generic key handling function which supports WEP, WPA
  * and WAPI.
  */
-static int
-mwifiex_sec_ioctl_encrypt_key(struct mwifiex_private *priv,
-			      struct mwifiex_ds_encrypt_key *encrypt_key)
-{
-	int status;
+अटल पूर्णांक
+mwअगरiex_sec_ioctl_encrypt_key(काष्ठा mwअगरiex_निजी *priv,
+			      काष्ठा mwअगरiex_ds_encrypt_key *encrypt_key)
+अणु
+	पूर्णांक status;
 
-	if (encrypt_key->is_wapi_key)
-		status = mwifiex_sec_ioctl_set_wapi_key(priv, encrypt_key);
-	else if (encrypt_key->key_len > WLAN_KEY_LEN_WEP104)
-		status = mwifiex_sec_ioctl_set_wpa_key(priv, encrypt_key);
-	else
-		status = mwifiex_sec_ioctl_set_wep_key(priv, encrypt_key);
-	return status;
-}
+	अगर (encrypt_key->is_wapi_key)
+		status = mwअगरiex_sec_ioctl_set_wapi_key(priv, encrypt_key);
+	अन्यथा अगर (encrypt_key->key_len > WLAN_KEY_LEN_WEP104)
+		status = mwअगरiex_sec_ioctl_set_wpa_key(priv, encrypt_key);
+	अन्यथा
+		status = mwअगरiex_sec_ioctl_set_wep_key(priv, encrypt_key);
+	वापस status;
+पूर्ण
 
 /*
- * This function returns the driver version.
+ * This function वापसs the driver version.
  */
-int
-mwifiex_drv_get_driver_version(struct mwifiex_adapter *adapter, char *version,
-			       int max_len)
-{
-	union {
+पूर्णांक
+mwअगरiex_drv_get_driver_version(काष्ठा mwअगरiex_adapter *adapter, अक्षर *version,
+			       पूर्णांक max_len)
+अणु
+	जोड़ अणु
 		__le32 l;
 		u8 c[4];
-	} ver;
-	char fw_ver[32];
+	पूर्ण ver;
+	अक्षर fw_ver[32];
 
 	ver.l = cpu_to_le32(adapter->fw_release_number);
-	sprintf(fw_ver, "%u.%u.%u.p%u", ver.c[2], ver.c[1], ver.c[0], ver.c[3]);
+	प्र_लिखो(fw_ver, "%u.%u.%u.p%u", ver.c[2], ver.c[1], ver.c[0], ver.c[3]);
 
-	snprintf(version, max_len, driver_version, fw_ver);
+	snम_लिखो(version, max_len, driver_version, fw_ver);
 
-	mwifiex_dbg(adapter, MSG, "info: MWIFIEX VERSION: %s\n", version);
+	mwअगरiex_dbg(adapter, MSG, "info: MWIFIEX VERSION: %s\n", version);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Sends IOCTL request to set encoding parameters.
@@ -1105,40 +1106,40 @@ mwifiex_drv_get_driver_version(struct mwifiex_adapter *adapter, char *version,
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int mwifiex_set_encode(struct mwifiex_private *priv, struct key_params *kp,
-		       const u8 *key, int key_len, u8 key_index,
-		       const u8 *mac_addr, int disable)
-{
-	struct mwifiex_ds_encrypt_key encrypt_key;
+पूर्णांक mwअगरiex_set_encode(काष्ठा mwअगरiex_निजी *priv, काष्ठा key_params *kp,
+		       स्थिर u8 *key, पूर्णांक key_len, u8 key_index,
+		       स्थिर u8 *mac_addr, पूर्णांक disable)
+अणु
+	काष्ठा mwअगरiex_ds_encrypt_key encrypt_key;
 
-	memset(&encrypt_key, 0, sizeof(encrypt_key));
+	स_रखो(&encrypt_key, 0, माप(encrypt_key));
 	encrypt_key.key_len = key_len;
 	encrypt_key.key_index = key_index;
 
-	if (kp && kp->cipher == WLAN_CIPHER_SUITE_AES_CMAC)
+	अगर (kp && kp->cipher == WLAN_CIPHER_SUITE_AES_CMAC)
 		encrypt_key.is_igtk_key = true;
 
-	if (!disable) {
-		if (key_len)
-			memcpy(encrypt_key.key_material, key, key_len);
-		else
+	अगर (!disable) अणु
+		अगर (key_len)
+			स_नकल(encrypt_key.key_material, key, key_len);
+		अन्यथा
 			encrypt_key.is_current_wep_key = true;
 
-		if (mac_addr)
-			memcpy(encrypt_key.mac_addr, mac_addr, ETH_ALEN);
-		if (kp && kp->seq && kp->seq_len) {
-			memcpy(encrypt_key.pn, kp->seq, kp->seq_len);
+		अगर (mac_addr)
+			स_नकल(encrypt_key.mac_addr, mac_addr, ETH_ALEN);
+		अगर (kp && kp->seq && kp->seq_len) अणु
+			स_नकल(encrypt_key.pn, kp->seq, kp->seq_len);
 			encrypt_key.pn_len = kp->seq_len;
 			encrypt_key.is_rx_seq_valid = true;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		encrypt_key.key_disable = true;
-		if (mac_addr)
-			memcpy(encrypt_key.mac_addr, mac_addr, ETH_ALEN);
-	}
+		अगर (mac_addr)
+			स_नकल(encrypt_key.mac_addr, mac_addr, ETH_ALEN);
+	पूर्ण
 
-	return mwifiex_sec_ioctl_encrypt_key(priv, &encrypt_key);
-}
+	वापस mwअगरiex_sec_ioctl_encrypt_key(priv, &encrypt_key);
+पूर्ण
 
 /*
  * Sends IOCTL request to get extended version.
@@ -1146,275 +1147,275 @@ int mwifiex_set_encode(struct mwifiex_private *priv, struct key_params *kp,
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int
-mwifiex_get_ver_ext(struct mwifiex_private *priv, u32 version_str_sel)
-{
-	struct mwifiex_ver_ext ver_ext;
+पूर्णांक
+mwअगरiex_get_ver_ext(काष्ठा mwअगरiex_निजी *priv, u32 version_str_sel)
+अणु
+	काष्ठा mwअगरiex_ver_ext ver_ext;
 
-	memset(&ver_ext, 0, sizeof(ver_ext));
+	स_रखो(&ver_ext, 0, माप(ver_ext));
 	ver_ext.version_str_sel = version_str_sel;
-	if (mwifiex_send_cmd(priv, HostCmd_CMD_VERSION_EXT,
+	अगर (mwअगरiex_send_cmd(priv, HostCmd_CMD_VERSION_EXT,
 			     HostCmd_ACT_GEN_GET, 0, &ver_ext, true))
-		return -1;
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-mwifiex_remain_on_chan_cfg(struct mwifiex_private *priv, u16 action,
-			   struct ieee80211_channel *chan,
-			   unsigned int duration)
-{
-	struct host_cmd_ds_remain_on_chan roc_cfg;
+पूर्णांक
+mwअगरiex_reमुख्य_on_chan_cfg(काष्ठा mwअगरiex_निजी *priv, u16 action,
+			   काष्ठा ieee80211_channel *chan,
+			   अचिन्हित पूर्णांक duration)
+अणु
+	काष्ठा host_cmd_ds_reमुख्य_on_chan roc_cfg;
 	u8 sc;
 
-	memset(&roc_cfg, 0, sizeof(roc_cfg));
+	स_रखो(&roc_cfg, 0, माप(roc_cfg));
 	roc_cfg.action = cpu_to_le16(action);
-	if (action == HostCmd_ACT_GEN_SET) {
+	अगर (action == HostCmd_ACT_GEN_SET) अणु
 		roc_cfg.band_cfg = chan->band;
-		sc = mwifiex_chan_type_to_sec_chan_offset(NL80211_CHAN_NO_HT);
+		sc = mwअगरiex_chan_type_to_sec_chan_offset(NL80211_CHAN_NO_HT);
 		roc_cfg.band_cfg |= (sc << 2);
 
 		roc_cfg.channel =
 			ieee80211_frequency_to_channel(chan->center_freq);
 		roc_cfg.duration = cpu_to_le32(duration);
-	}
-	if (mwifiex_send_cmd(priv, HostCmd_CMD_REMAIN_ON_CHAN,
-			     action, 0, &roc_cfg, true)) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	पूर्ण
+	अगर (mwअगरiex_send_cmd(priv, HostCmd_CMD_REMAIN_ON_CHAN,
+			     action, 0, &roc_cfg, true)) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "failed to remain on channel\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return roc_cfg.status;
-}
+	वापस roc_cfg.status;
+पूर्ण
 
 /*
- * Sends IOCTL request to get statistics information.
+ * Sends IOCTL request to get statistics inक्रमmation.
  *
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int
-mwifiex_get_stats_info(struct mwifiex_private *priv,
-		       struct mwifiex_ds_get_stats *log)
-{
-	return mwifiex_send_cmd(priv, HostCmd_CMD_802_11_GET_LOG,
+पूर्णांक
+mwअगरiex_get_stats_info(काष्ठा mwअगरiex_निजी *priv,
+		       काष्ठा mwअगरiex_ds_get_stats *log)
+अणु
+	वापस mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_GET_LOG,
 				HostCmd_ACT_GEN_GET, 0, log, true);
-}
+पूर्ण
 
 /*
- * IOCTL request handler to read/write register.
+ * IOCTL request handler to पढ़ो/ग_लिखो रेजिस्टर.
  *
  * This function prepares the correct firmware command and
  * issues it.
  *
- * Access to the following registers are supported -
+ * Access to the following रेजिस्टरs are supported -
  *      - MAC
  *      - BBP
  *      - RF
  *      - PMIC
  *      - CAU
  */
-static int mwifiex_reg_mem_ioctl_reg_rw(struct mwifiex_private *priv,
-					struct mwifiex_ds_reg_rw *reg_rw,
+अटल पूर्णांक mwअगरiex_reg_mem_ioctl_reg_rw(काष्ठा mwअगरiex_निजी *priv,
+					काष्ठा mwअगरiex_ds_reg_rw *reg_rw,
 					u16 action)
-{
+अणु
 	u16 cmd_no;
 
-	switch (reg_rw->type) {
-	case MWIFIEX_REG_MAC:
+	चयन (reg_rw->type) अणु
+	हाल MWIFIEX_REG_MAC:
 		cmd_no = HostCmd_CMD_MAC_REG_ACCESS;
-		break;
-	case MWIFIEX_REG_BBP:
+		अवरोध;
+	हाल MWIFIEX_REG_BBP:
 		cmd_no = HostCmd_CMD_BBP_REG_ACCESS;
-		break;
-	case MWIFIEX_REG_RF:
+		अवरोध;
+	हाल MWIFIEX_REG_RF:
 		cmd_no = HostCmd_CMD_RF_REG_ACCESS;
-		break;
-	case MWIFIEX_REG_PMIC:
+		अवरोध;
+	हाल MWIFIEX_REG_PMIC:
 		cmd_no = HostCmd_CMD_PMIC_REG_ACCESS;
-		break;
-	case MWIFIEX_REG_CAU:
+		अवरोध;
+	हाल MWIFIEX_REG_CAU:
 		cmd_no = HostCmd_CMD_CAU_REG_ACCESS;
-		break;
-	default:
-		return -1;
-	}
+		अवरोध;
+	शेष:
+		वापस -1;
+	पूर्ण
 
-	return mwifiex_send_cmd(priv, cmd_no, action, 0, reg_rw, true);
-}
+	वापस mwअगरiex_send_cmd(priv, cmd_no, action, 0, reg_rw, true);
+पूर्ण
 
 /*
- * Sends IOCTL request to write to a register.
+ * Sends IOCTL request to ग_लिखो to a रेजिस्टर.
  *
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int
-mwifiex_reg_write(struct mwifiex_private *priv, u32 reg_type,
+पूर्णांक
+mwअगरiex_reg_ग_लिखो(काष्ठा mwअगरiex_निजी *priv, u32 reg_type,
 		  u32 reg_offset, u32 reg_value)
-{
-	struct mwifiex_ds_reg_rw reg_rw;
+अणु
+	काष्ठा mwअगरiex_ds_reg_rw reg_rw;
 
 	reg_rw.type = reg_type;
 	reg_rw.offset = reg_offset;
 	reg_rw.value = reg_value;
 
-	return mwifiex_reg_mem_ioctl_reg_rw(priv, &reg_rw, HostCmd_ACT_GEN_SET);
-}
+	वापस mwअगरiex_reg_mem_ioctl_reg_rw(priv, &reg_rw, HostCmd_ACT_GEN_SET);
+पूर्ण
 
 /*
- * Sends IOCTL request to read from a register.
+ * Sends IOCTL request to पढ़ो from a रेजिस्टर.
  *
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int
-mwifiex_reg_read(struct mwifiex_private *priv, u32 reg_type,
+पूर्णांक
+mwअगरiex_reg_पढ़ो(काष्ठा mwअगरiex_निजी *priv, u32 reg_type,
 		 u32 reg_offset, u32 *value)
-{
-	int ret;
-	struct mwifiex_ds_reg_rw reg_rw;
+अणु
+	पूर्णांक ret;
+	काष्ठा mwअगरiex_ds_reg_rw reg_rw;
 
 	reg_rw.type = reg_type;
 	reg_rw.offset = reg_offset;
-	ret = mwifiex_reg_mem_ioctl_reg_rw(priv, &reg_rw, HostCmd_ACT_GEN_GET);
+	ret = mwअगरiex_reg_mem_ioctl_reg_rw(priv, &reg_rw, HostCmd_ACT_GEN_GET);
 
-	if (ret)
-		goto done;
+	अगर (ret)
+		जाओ करोne;
 
 	*value = reg_rw.value;
 
-done:
-	return ret;
-}
+करोne:
+	वापस ret;
+पूर्ण
 
 /*
- * Sends IOCTL request to read from EEPROM.
+ * Sends IOCTL request to पढ़ो from EEPROM.
  *
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int
-mwifiex_eeprom_read(struct mwifiex_private *priv, u16 offset, u16 bytes,
+पूर्णांक
+mwअगरiex_eeprom_पढ़ो(काष्ठा mwअगरiex_निजी *priv, u16 offset, u16 bytes,
 		    u8 *value)
-{
-	int ret;
-	struct mwifiex_ds_read_eeprom rd_eeprom;
+अणु
+	पूर्णांक ret;
+	काष्ठा mwअगरiex_ds_पढ़ो_eeprom rd_eeprom;
 
 	rd_eeprom.offset =  offset;
 	rd_eeprom.byte_count = bytes;
 
 	/* Send request to firmware */
-	ret = mwifiex_send_cmd(priv, HostCmd_CMD_802_11_EEPROM_ACCESS,
+	ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_802_11_EEPROM_ACCESS,
 			       HostCmd_ACT_GEN_GET, 0, &rd_eeprom, true);
 
-	if (!ret)
-		memcpy(value, rd_eeprom.value, min((u16)MAX_EEPROM_DATA,
+	अगर (!ret)
+		स_नकल(value, rd_eeprom.value, min((u16)MAX_EEPROM_DATA,
 		       rd_eeprom.byte_count));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This function sets a generic IE. In addition to generic IE, it can
  * also handle WPA, WPA2 and WAPI IEs.
  */
-static int
-mwifiex_set_gen_ie_helper(struct mwifiex_private *priv, u8 *ie_data_ptr,
+अटल पूर्णांक
+mwअगरiex_set_gen_ie_helper(काष्ठा mwअगरiex_निजी *priv, u8 *ie_data_ptr,
 			  u16 ie_len)
-{
-	struct ieee_types_vendor_header *pvendor_ie;
-	const u8 wpa_oui[] = { 0x00, 0x50, 0xf2, 0x01 };
-	const u8 wps_oui[] = { 0x00, 0x50, 0xf2, 0x04 };
+अणु
+	काष्ठा ieee_types_venकरोr_header *pvenकरोr_ie;
+	स्थिर u8 wpa_oui[] = अणु 0x00, 0x50, 0xf2, 0x01 पूर्ण;
+	स्थिर u8 wps_oui[] = अणु 0x00, 0x50, 0xf2, 0x04 पूर्ण;
 	u16 unparsed_len = ie_len, cur_ie_len;
 
 	/* If the passed length is zero, reset the buffer */
-	if (!ie_len) {
+	अगर (!ie_len) अणु
 		priv->gen_ie_buf_len = 0;
 		priv->wps.session_enable = false;
-		return 0;
-	} else if (!ie_data_ptr ||
-		   ie_len <= sizeof(struct ieee_types_header)) {
-		return -1;
-	}
-	pvendor_ie = (struct ieee_types_vendor_header *) ie_data_ptr;
+		वापस 0;
+	पूर्ण अन्यथा अगर (!ie_data_ptr ||
+		   ie_len <= माप(काष्ठा ieee_types_header)) अणु
+		वापस -1;
+	पूर्ण
+	pvenकरोr_ie = (काष्ठा ieee_types_venकरोr_header *) ie_data_ptr;
 
-	while (pvendor_ie) {
-		cur_ie_len = pvendor_ie->len + sizeof(struct ieee_types_header);
+	जबतक (pvenकरोr_ie) अणु
+		cur_ie_len = pvenकरोr_ie->len + माप(काष्ठा ieee_types_header);
 
-		if (pvendor_ie->element_id == WLAN_EID_RSN) {
+		अगर (pvenकरोr_ie->element_id == WLAN_EID_RSN) अणु
 			/* IE is a WPA/WPA2 IE so call set_wpa function */
-			mwifiex_set_wpa_ie(priv, (u8 *)pvendor_ie, cur_ie_len);
+			mwअगरiex_set_wpa_ie(priv, (u8 *)pvenकरोr_ie, cur_ie_len);
 			priv->wps.session_enable = false;
-			goto next_ie;
-		}
+			जाओ next_ie;
+		पूर्ण
 
-		if (pvendor_ie->element_id == WLAN_EID_BSS_AC_ACCESS_DELAY) {
+		अगर (pvenकरोr_ie->element_id == WLAN_EID_BSS_AC_ACCESS_DELAY) अणु
 			/* IE is a WAPI IE so call set_wapi function */
-			mwifiex_set_wapi_ie(priv, (u8 *)pvendor_ie,
+			mwअगरiex_set_wapi_ie(priv, (u8 *)pvenकरोr_ie,
 					    cur_ie_len);
-			goto next_ie;
-		}
+			जाओ next_ie;
+		पूर्ण
 
-		if (pvendor_ie->element_id == WLAN_EID_VENDOR_SPECIFIC) {
-			/* Test to see if it is a WPA IE, if not, then
+		अगर (pvenकरोr_ie->element_id == WLAN_EID_VENDOR_SPECIFIC) अणु
+			/* Test to see अगर it is a WPA IE, अगर not, then
 			 * it is a gen IE
 			 */
-			if (!memcmp(&pvendor_ie->oui, wpa_oui,
-				    sizeof(wpa_oui))) {
+			अगर (!स_भेद(&pvenकरोr_ie->oui, wpa_oui,
+				    माप(wpa_oui))) अणु
 				/* IE is a WPA/WPA2 IE so call set_wpa function
 				 */
-				mwifiex_set_wpa_ie(priv, (u8 *)pvendor_ie,
+				mwअगरiex_set_wpa_ie(priv, (u8 *)pvenकरोr_ie,
 						   cur_ie_len);
 				priv->wps.session_enable = false;
-				goto next_ie;
-			}
+				जाओ next_ie;
+			पूर्ण
 
-			if (!memcmp(&pvendor_ie->oui, wps_oui,
-				    sizeof(wps_oui))) {
-				/* Test to see if it is a WPS IE,
-				 * if so, enable wps session flag
+			अगर (!स_भेद(&pvenकरोr_ie->oui, wps_oui,
+				    माप(wps_oui))) अणु
+				/* Test to see अगर it is a WPS IE,
+				 * अगर so, enable wps session flag
 				 */
 				priv->wps.session_enable = true;
-				mwifiex_dbg(priv->adapter, MSG,
+				mwअगरiex_dbg(priv->adapter, MSG,
 					    "WPS Session Enabled.\n");
-				mwifiex_set_wps_ie(priv, (u8 *)pvendor_ie,
+				mwअगरiex_set_wps_ie(priv, (u8 *)pvenकरोr_ie,
 						   cur_ie_len);
-				goto next_ie;
-			}
-		}
+				जाओ next_ie;
+			पूर्ण
+		पूर्ण
 
 		/* Saved in gen_ie, such as P2P IE.etc.*/
 
-		/* Verify that the passed length is not larger than the
-		 * available space remaining in the buffer
+		/* Verअगरy that the passed length is not larger than the
+		 * available space reमुख्यing in the buffer
 		 */
-		if (cur_ie_len <
-		    (sizeof(priv->gen_ie_buf) - priv->gen_ie_buf_len)) {
+		अगर (cur_ie_len <
+		    (माप(priv->gen_ie_buf) - priv->gen_ie_buf_len)) अणु
 			/* Append the passed data to the end
 			 * of the genIeBuffer
 			 */
-			memcpy(priv->gen_ie_buf + priv->gen_ie_buf_len,
-			       (u8 *)pvendor_ie, cur_ie_len);
+			स_नकल(priv->gen_ie_buf + priv->gen_ie_buf_len,
+			       (u8 *)pvenकरोr_ie, cur_ie_len);
 			/* Increment the stored buffer length by the
 			 * size passed
 			 */
 			priv->gen_ie_buf_len += cur_ie_len;
-		}
+		पूर्ण
 
 next_ie:
 		unparsed_len -= cur_ie_len;
 
-		if (unparsed_len <= sizeof(struct ieee_types_header))
-			pvendor_ie = NULL;
-		else
-			pvendor_ie = (struct ieee_types_vendor_header *)
-				(((u8 *)pvendor_ie) + cur_ie_len);
-	}
+		अगर (unparsed_len <= माप(काष्ठा ieee_types_header))
+			pvenकरोr_ie = शून्य;
+		अन्यथा
+			pvenकरोr_ie = (काष्ठा ieee_types_venकरोr_header *)
+				(((u8 *)pvenकरोr_ie) + cur_ie_len);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * IOCTL request handler to set/get generic IE.
@@ -1422,41 +1423,41 @@ next_ie:
  * In addition to various generic IEs, this function can also be
  * used to set the ARP filter.
  */
-static int mwifiex_misc_ioctl_gen_ie(struct mwifiex_private *priv,
-				     struct mwifiex_ds_misc_gen_ie *gen_ie,
+अटल पूर्णांक mwअगरiex_misc_ioctl_gen_ie(काष्ठा mwअगरiex_निजी *priv,
+				     काष्ठा mwअगरiex_ds_misc_gen_ie *gen_ie,
 				     u16 action)
-{
-	struct mwifiex_adapter *adapter = priv->adapter;
+अणु
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
 
-	switch (gen_ie->type) {
-	case MWIFIEX_IE_TYPE_GEN_IE:
-		if (action == HostCmd_ACT_GEN_GET) {
+	चयन (gen_ie->type) अणु
+	हाल MWIFIEX_IE_TYPE_GEN_IE:
+		अगर (action == HostCmd_ACT_GEN_GET) अणु
 			gen_ie->len = priv->wpa_ie_len;
-			memcpy(gen_ie->ie_data, priv->wpa_ie, gen_ie->len);
-		} else {
-			mwifiex_set_gen_ie_helper(priv, gen_ie->ie_data,
+			स_नकल(gen_ie->ie_data, priv->wpa_ie, gen_ie->len);
+		पूर्ण अन्यथा अणु
+			mwअगरiex_set_gen_ie_helper(priv, gen_ie->ie_data,
 						  (u16) gen_ie->len);
-		}
-		break;
-	case MWIFIEX_IE_TYPE_ARP_FILTER:
-		memset(adapter->arp_filter, 0, sizeof(adapter->arp_filter));
-		if (gen_ie->len > ARP_FILTER_MAX_BUF_SIZE) {
+		पूर्ण
+		अवरोध;
+	हाल MWIFIEX_IE_TYPE_ARP_FILTER:
+		स_रखो(adapter->arp_filter, 0, माप(adapter->arp_filter));
+		अगर (gen_ie->len > ARP_FILTER_MAX_BUF_SIZE) अणु
 			adapter->arp_filter_size = 0;
-			mwifiex_dbg(adapter, ERROR,
+			mwअगरiex_dbg(adapter, ERROR,
 				    "invalid ARP filter size\n");
-			return -1;
-		} else {
-			memcpy(adapter->arp_filter, gen_ie->ie_data,
+			वापस -1;
+		पूर्ण अन्यथा अणु
+			स_नकल(adapter->arp_filter, gen_ie->ie_data,
 			       gen_ie->len);
 			adapter->arp_filter_size = gen_ie->len;
-		}
-		break;
-	default:
-		mwifiex_dbg(adapter, ERROR, "invalid IE type\n");
-		return -1;
-	}
-	return 0;
-}
+		पूर्ण
+		अवरोध;
+	शेष:
+		mwअगरiex_dbg(adapter, ERROR, "invalid IE type\n");
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Sends IOCTL request to set a generic IE.
@@ -1464,47 +1465,47 @@ static int mwifiex_misc_ioctl_gen_ie(struct mwifiex_private *priv,
  * This function allocates the IOCTL request buffer, fills it
  * with requisite parameters and calls the IOCTL handler.
  */
-int
-mwifiex_set_gen_ie(struct mwifiex_private *priv, const u8 *ie, int ie_len)
-{
-	struct mwifiex_ds_misc_gen_ie gen_ie;
+पूर्णांक
+mwअगरiex_set_gen_ie(काष्ठा mwअगरiex_निजी *priv, स्थिर u8 *ie, पूर्णांक ie_len)
+अणु
+	काष्ठा mwअगरiex_ds_misc_gen_ie gen_ie;
 
-	if (ie_len > IEEE_MAX_IE_SIZE)
-		return -EFAULT;
+	अगर (ie_len > IEEE_MAX_IE_SIZE)
+		वापस -EFAULT;
 
 	gen_ie.type = MWIFIEX_IE_TYPE_GEN_IE;
 	gen_ie.len = ie_len;
-	memcpy(gen_ie.ie_data, ie, ie_len);
-	if (mwifiex_misc_ioctl_gen_ie(priv, &gen_ie, HostCmd_ACT_GEN_SET))
-		return -EFAULT;
+	स_नकल(gen_ie.ie_data, ie, ie_len);
+	अगर (mwअगरiex_misc_ioctl_gen_ie(priv, &gen_ie, HostCmd_ACT_GEN_SET))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* This function get Host Sleep wake up reason.
  *
  */
-int mwifiex_get_wakeup_reason(struct mwifiex_private *priv, u16 action,
-			      int cmd_type,
-			      struct mwifiex_ds_wakeup_reason *wakeup_reason)
-{
-	int status = 0;
+पूर्णांक mwअगरiex_get_wakeup_reason(काष्ठा mwअगरiex_निजी *priv, u16 action,
+			      पूर्णांक cmd_type,
+			      काष्ठा mwअगरiex_ds_wakeup_reason *wakeup_reason)
+अणु
+	पूर्णांक status = 0;
 
-	status = mwifiex_send_cmd(priv, HostCmd_CMD_HS_WAKEUP_REASON,
+	status = mwअगरiex_send_cmd(priv, HostCmd_CMD_HS_WAKEUP_REASON,
 				  HostCmd_ACT_GEN_GET, 0, wakeup_reason,
 				  cmd_type == MWIFIEX_SYNC_CMD);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-int mwifiex_get_chan_info(struct mwifiex_private *priv,
-			  struct mwifiex_channel_band *channel_band)
-{
-	int status = 0;
+पूर्णांक mwअगरiex_get_chan_info(काष्ठा mwअगरiex_निजी *priv,
+			  काष्ठा mwअगरiex_channel_band *channel_band)
+अणु
+	पूर्णांक status = 0;
 
-	status = mwifiex_send_cmd(priv, HostCmd_CMD_STA_CONFIGURE,
+	status = mwअगरiex_send_cmd(priv, HostCmd_CMD_STA_CONFIGURE,
 				  HostCmd_ACT_GEN_GET, 0, channel_band,
 				  MWIFIEX_SYNC_CMD);
 
-	return status;
-}
+	वापस status;
+पूर्ण

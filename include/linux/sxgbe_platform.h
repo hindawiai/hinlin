@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * 10G controller driver for Samsung Exynos SoCs
+ * 10G controller driver क्रम Samsung Exynos SoCs
  *
  * Copyright (C) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
  *
  * Author: Siva Reddy Kallam <siva.kallam@samsung.com>
  */
-#ifndef __SXGBE_PLATFORM_H__
-#define __SXGBE_PLATFORM_H__
+#अगर_अघोषित __SXGBE_PLATFORM_H__
+#घोषणा __SXGBE_PLATFORM_H__
 
-#include <linux/phy.h>
+#समावेश <linux/phy.h>
 
 /* MDC Clock Selection define*/
-#define SXGBE_CSR_100_150M	0x0	/* MDC = clk_scr_i/62 */
-#define SXGBE_CSR_150_250M	0x1	/* MDC = clk_scr_i/102 */
-#define SXGBE_CSR_250_300M	0x2	/* MDC = clk_scr_i/122 */
-#define SXGBE_CSR_300_350M	0x3	/* MDC = clk_scr_i/142 */
-#define SXGBE_CSR_350_400M	0x4	/* MDC = clk_scr_i/162 */
-#define SXGBE_CSR_400_500M	0x5	/* MDC = clk_scr_i/202 */
+#घोषणा SXGBE_CSR_100_150M	0x0	/* MDC = clk_scr_i/62 */
+#घोषणा SXGBE_CSR_150_250M	0x1	/* MDC = clk_scr_i/102 */
+#घोषणा SXGBE_CSR_250_300M	0x2	/* MDC = clk_scr_i/122 */
+#घोषणा SXGBE_CSR_300_350M	0x3	/* MDC = clk_scr_i/142 */
+#घोषणा SXGBE_CSR_350_400M	0x4	/* MDC = clk_scr_i/162 */
+#घोषणा SXGBE_CSR_400_500M	0x5	/* MDC = clk_scr_i/202 */
 
-/* Platfrom data for platform device structure's
- * platform_data field
+/* Platfrom data क्रम platक्रमm device काष्ठाure's
+ * platक्रमm_data field
  */
-struct sxgbe_mdio_bus_data {
-	unsigned int phy_mask;
-	int *irqs;
-	int probed_phy_irq;
-};
+काष्ठा sxgbe_mdio_bus_data अणु
+	अचिन्हित पूर्णांक phy_mask;
+	पूर्णांक *irqs;
+	पूर्णांक probed_phy_irq;
+पूर्ण;
 
-struct sxgbe_dma_cfg {
-	int pbl;
-	int fixed_burst;
-	int burst_map;
-	int adv_addr_mode;
-};
+काष्ठा sxgbe_dma_cfg अणु
+	पूर्णांक pbl;
+	पूर्णांक fixed_burst;
+	पूर्णांक burst_map;
+	पूर्णांक adv_addr_mode;
+पूर्ण;
 
-struct sxgbe_plat_data {
-	char *phy_bus_name;
-	int bus_id;
-	int phy_addr;
-	phy_interface_t interface;
-	struct sxgbe_mdio_bus_data *mdio_bus_data;
-	struct sxgbe_dma_cfg *dma_cfg;
-	int clk_csr;
-	int pmt;
-	int force_sf_dma_mode;
-	int force_thresh_dma_mode;
-	int riwt_off;
-};
+काष्ठा sxgbe_plat_data अणु
+	अक्षर *phy_bus_name;
+	पूर्णांक bus_id;
+	पूर्णांक phy_addr;
+	phy_पूर्णांकerface_t पूर्णांकerface;
+	काष्ठा sxgbe_mdio_bus_data *mdio_bus_data;
+	काष्ठा sxgbe_dma_cfg *dma_cfg;
+	पूर्णांक clk_csr;
+	पूर्णांक pmt;
+	पूर्णांक क्रमce_sf_dma_mode;
+	पूर्णांक क्रमce_thresh_dma_mode;
+	पूर्णांक riwt_off;
+पूर्ण;
 
-#endif /* __SXGBE_PLATFORM_H__ */
+#पूर्ण_अगर /* __SXGBE_PLATFORM_H__ */

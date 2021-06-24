@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for the Renesas R-Car I2C unit
+ * Driver क्रम the Renesas R-Car I2C unit
  *
  * Copyright (C) 2014-19 Wolfram Sang <wsa@sang-engineering.com>
  * Copyright (C) 2011-2019 Renesas Electronics Corporation
@@ -11,314 +12,314 @@
  * This file is based on the drivers/i2c/busses/i2c-sh7760.c
  * (c) 2005-2008 MSC Vertriebsges.m.b.H, Manuel Lauss <mlau@msc-ge.com>
  */
-#include <linux/bitops.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/dmaengine.h>
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/i2c.h>
-#include <linux/i2c-smbus.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/reset.h>
-#include <linux/slab.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/i2c-smbus.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/reset.h>
+#समावेश <linux/slab.h>
 
-/* register offsets */
-#define ICSCR	0x00	/* slave ctrl */
-#define ICMCR	0x04	/* master ctrl */
-#define ICSSR	0x08	/* slave status */
-#define ICMSR	0x0C	/* master status */
-#define ICSIER	0x10	/* slave irq enable */
-#define ICMIER	0x14	/* master irq enable */
-#define ICCCR	0x18	/* clock dividers */
-#define ICSAR	0x1C	/* slave address */
-#define ICMAR	0x20	/* master address */
-#define ICRXTX	0x24	/* data port */
-#define ICFBSCR	0x38	/* first bit setup cycle (Gen3) */
-#define ICDMAER	0x3c	/* DMA enable (Gen3) */
+/* रेजिस्टर offsets */
+#घोषणा ICSCR	0x00	/* slave ctrl */
+#घोषणा ICMCR	0x04	/* master ctrl */
+#घोषणा ICSSR	0x08	/* slave status */
+#घोषणा ICMSR	0x0C	/* master status */
+#घोषणा ICSIER	0x10	/* slave irq enable */
+#घोषणा ICMIER	0x14	/* master irq enable */
+#घोषणा ICCCR	0x18	/* घड़ी भागiders */
+#घोषणा ICSAR	0x1C	/* slave address */
+#घोषणा ICMAR	0x20	/* master address */
+#घोषणा ICRXTX	0x24	/* data port */
+#घोषणा ICFBSCR	0x38	/* first bit setup cycle (Gen3) */
+#घोषणा ICDMAER	0x3c	/* DMA enable (Gen3) */
 
 /* ICSCR */
-#define SDBS	(1 << 3)	/* slave data buffer select */
-#define SIE	(1 << 2)	/* slave interface enable */
-#define GCAE	(1 << 1)	/* general call address enable */
-#define FNA	(1 << 0)	/* forced non acknowledgment */
+#घोषणा SDBS	(1 << 3)	/* slave data buffer select */
+#घोषणा SIE	(1 << 2)	/* slave पूर्णांकerface enable */
+#घोषणा GCAE	(1 << 1)	/* general call address enable */
+#घोषणा FNA	(1 << 0)	/* क्रमced non acknowledgment */
 
 /* ICMCR */
-#define MDBS	(1 << 7)	/* non-fifo mode switch */
-#define FSCL	(1 << 6)	/* override SCL pin */
-#define FSDA	(1 << 5)	/* override SDA pin */
-#define OBPC	(1 << 4)	/* override pins */
-#define MIE	(1 << 3)	/* master if enable */
-#define TSBE	(1 << 2)
-#define FSB	(1 << 1)	/* force stop bit */
-#define ESG	(1 << 0)	/* enable start bit gen */
+#घोषणा MDBS	(1 << 7)	/* non-fअगरo mode चयन */
+#घोषणा FSCL	(1 << 6)	/* override SCL pin */
+#घोषणा FSDA	(1 << 5)	/* override SDA pin */
+#घोषणा OBPC	(1 << 4)	/* override pins */
+#घोषणा MIE	(1 << 3)	/* master अगर enable */
+#घोषणा TSBE	(1 << 2)
+#घोषणा FSB	(1 << 1)	/* क्रमce stop bit */
+#घोषणा ESG	(1 << 0)	/* enable start bit gen */
 
-/* ICSSR (also for ICSIER) */
-#define GCAR	(1 << 6)	/* general call received */
-#define STM	(1 << 5)	/* slave transmit mode */
-#define SSR	(1 << 4)	/* stop received */
-#define SDE	(1 << 3)	/* slave data empty */
-#define SDT	(1 << 2)	/* slave data transmitted */
-#define SDR	(1 << 1)	/* slave data received */
-#define SAR	(1 << 0)	/* slave addr received */
+/* ICSSR (also क्रम ICSIER) */
+#घोषणा GCAR	(1 << 6)	/* general call received */
+#घोषणा STM	(1 << 5)	/* slave transmit mode */
+#घोषणा SSR	(1 << 4)	/* stop received */
+#घोषणा SDE	(1 << 3)	/* slave data empty */
+#घोषणा SDT	(1 << 2)	/* slave data transmitted */
+#घोषणा SDR	(1 << 1)	/* slave data received */
+#घोषणा SAR	(1 << 0)	/* slave addr received */
 
-/* ICMSR (also for ICMIE) */
-#define MNR	(1 << 6)	/* nack received */
-#define MAL	(1 << 5)	/* arbitration lost */
-#define MST	(1 << 4)	/* sent a stop */
-#define MDE	(1 << 3)
-#define MDT	(1 << 2)
-#define MDR	(1 << 1)
-#define MAT	(1 << 0)	/* slave addr xfer done */
+/* ICMSR (also क्रम ICMIE) */
+#घोषणा MNR	(1 << 6)	/* nack received */
+#घोषणा MAL	(1 << 5)	/* arbitration lost */
+#घोषणा MST	(1 << 4)	/* sent a stop */
+#घोषणा MDE	(1 << 3)
+#घोषणा MDT	(1 << 2)
+#घोषणा MDR	(1 << 1)
+#घोषणा MAT	(1 << 0)	/* slave addr xfer करोne */
 
 /* ICDMAER */
-#define RSDMAE	(1 << 3)	/* DMA Slave Received Enable */
-#define TSDMAE	(1 << 2)	/* DMA Slave Transmitted Enable */
-#define RMDMAE	(1 << 1)	/* DMA Master Received Enable */
-#define TMDMAE	(1 << 0)	/* DMA Master Transmitted Enable */
+#घोषणा RSDMAE	(1 << 3)	/* DMA Slave Received Enable */
+#घोषणा TSDMAE	(1 << 2)	/* DMA Slave Transmitted Enable */
+#घोषणा RMDMAE	(1 << 1)	/* DMA Master Received Enable */
+#घोषणा TMDMAE	(1 << 0)	/* DMA Master Transmitted Enable */
 
 /* ICFBSCR */
-#define TCYC17	0x0f		/* 17*Tcyc delay 1st bit between SDA and SCL */
+#घोषणा TCYC17	0x0f		/* 17*Tcyc delay 1st bit between SDA and SCL */
 
-#define RCAR_MIN_DMA_LEN	8
+#घोषणा RCAR_MIN_DMA_LEN	8
 
-#define RCAR_BUS_PHASE_START	(MDBS | MIE | ESG)
-#define RCAR_BUS_PHASE_DATA	(MDBS | MIE)
-#define RCAR_BUS_PHASE_STOP	(MDBS | MIE | FSB)
+#घोषणा RCAR_BUS_PHASE_START	(MDBS | MIE | ESG)
+#घोषणा RCAR_BUS_PHASE_DATA	(MDBS | MIE)
+#घोषणा RCAR_BUS_PHASE_STOP	(MDBS | MIE | FSB)
 
-#define RCAR_IRQ_SEND	(MNR | MAL | MST | MAT | MDE)
-#define RCAR_IRQ_RECV	(MNR | MAL | MST | MAT | MDR)
-#define RCAR_IRQ_STOP	(MST)
+#घोषणा RCAR_IRQ_SEND	(MNR | MAL | MST | MAT | MDE)
+#घोषणा RCAR_IRQ_RECV	(MNR | MAL | MST | MAT | MDR)
+#घोषणा RCAR_IRQ_STOP	(MST)
 
-#define RCAR_IRQ_ACK_SEND	(~(MAT | MDE) & 0x7F)
-#define RCAR_IRQ_ACK_RECV	(~(MAT | MDR) & 0x7F)
+#घोषणा RCAR_IRQ_ACK_SEND	(~(MAT | MDE) & 0x7F)
+#घोषणा RCAR_IRQ_ACK_RECV	(~(MAT | MDR) & 0x7F)
 
-#define ID_LAST_MSG	(1 << 0)
-#define ID_FIRST_MSG	(1 << 1)
-#define ID_DONE		(1 << 2)
-#define ID_ARBLOST	(1 << 3)
-#define ID_NACK		(1 << 4)
+#घोषणा ID_LAST_MSG	(1 << 0)
+#घोषणा ID_FIRST_MSG	(1 << 1)
+#घोषणा ID_DONE		(1 << 2)
+#घोषणा ID_ARBLOST	(1 << 3)
+#घोषणा ID_NACK		(1 << 4)
 /* persistent flags */
-#define ID_P_HOST_NOTIFY	BIT(28)
-#define ID_P_REP_AFTER_RD	BIT(29)
-#define ID_P_NO_RXDMA		BIT(30) /* HW forbids RXDMA sometimes */
-#define ID_P_PM_BLOCKED		BIT(31)
-#define ID_P_MASK		GENMASK(31, 28)
+#घोषणा ID_P_HOST_NOTIFY	BIT(28)
+#घोषणा ID_P_REP_AFTER_RD	BIT(29)
+#घोषणा ID_P_NO_RXDMA		BIT(30) /* HW क्रमbids RXDMA someबार */
+#घोषणा ID_P_PM_BLOCKED		BIT(31)
+#घोषणा ID_P_MASK		GENMASK(31, 28)
 
-enum rcar_i2c_type {
+क्रमागत rcar_i2c_type अणु
 	I2C_RCAR_GEN1,
 	I2C_RCAR_GEN2,
 	I2C_RCAR_GEN3,
-};
+पूर्ण;
 
-struct rcar_i2c_priv {
+काष्ठा rcar_i2c_priv अणु
 	u32 flags;
-	void __iomem *io;
-	struct i2c_adapter adap;
-	struct i2c_msg *msg;
-	int msgs_left;
-	struct clk *clk;
+	व्योम __iomem *io;
+	काष्ठा i2c_adapter adap;
+	काष्ठा i2c_msg *msg;
+	पूर्णांक msgs_left;
+	काष्ठा clk *clk;
 
-	wait_queue_head_t wait;
+	रुको_queue_head_t रुको;
 
-	int pos;
+	पूर्णांक pos;
 	u32 icccr;
-	u8 recovery_icmcr;	/* protected by adapter lock */
-	enum rcar_i2c_type devtype;
-	struct i2c_client *slave;
+	u8 recovery_icmcr;	/* रक्षित by adapter lock */
+	क्रमागत rcar_i2c_type devtype;
+	काष्ठा i2c_client *slave;
 
-	struct resource *res;
-	struct dma_chan *dma_tx;
-	struct dma_chan *dma_rx;
-	struct scatterlist sg;
-	enum dma_data_direction dma_direction;
+	काष्ठा resource *res;
+	काष्ठा dma_chan *dma_tx;
+	काष्ठा dma_chan *dma_rx;
+	काष्ठा scatterlist sg;
+	क्रमागत dma_data_direction dma_direction;
 
-	struct reset_control *rstc;
+	काष्ठा reset_control *rstc;
 	bool atomic_xfer;
-	int irq;
+	पूर्णांक irq;
 
-	struct i2c_client *host_notify_client;
-};
+	काष्ठा i2c_client *host_notअगरy_client;
+पूर्ण;
 
-#define rcar_i2c_priv_to_dev(p)		((p)->adap.dev.parent)
-#define rcar_i2c_is_recv(p)		((p)->msg->flags & I2C_M_RD)
+#घोषणा rcar_i2c_priv_to_dev(p)		((p)->adap.dev.parent)
+#घोषणा rcar_i2c_is_recv(p)		((p)->msg->flags & I2C_M_RD)
 
-static void rcar_i2c_write(struct rcar_i2c_priv *priv, int reg, u32 val)
-{
-	writel(val, priv->io + reg);
-}
+अटल व्योम rcar_i2c_ग_लिखो(काष्ठा rcar_i2c_priv *priv, पूर्णांक reg, u32 val)
+अणु
+	ग_लिखोl(val, priv->io + reg);
+पूर्ण
 
-static u32 rcar_i2c_read(struct rcar_i2c_priv *priv, int reg)
-{
-	return readl(priv->io + reg);
-}
+अटल u32 rcar_i2c_पढ़ो(काष्ठा rcar_i2c_priv *priv, पूर्णांक reg)
+अणु
+	वापस पढ़ोl(priv->io + reg);
+पूर्ण
 
-static int rcar_i2c_get_scl(struct i2c_adapter *adap)
-{
-	struct rcar_i2c_priv *priv = i2c_get_adapdata(adap);
+अटल पूर्णांक rcar_i2c_get_scl(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा rcar_i2c_priv *priv = i2c_get_adapdata(adap);
 
-	return !!(rcar_i2c_read(priv, ICMCR) & FSCL);
+	वापस !!(rcar_i2c_पढ़ो(priv, ICMCR) & FSCL);
 
-};
+पूर्ण;
 
-static void rcar_i2c_set_scl(struct i2c_adapter *adap, int val)
-{
-	struct rcar_i2c_priv *priv = i2c_get_adapdata(adap);
+अटल व्योम rcar_i2c_set_scl(काष्ठा i2c_adapter *adap, पूर्णांक val)
+अणु
+	काष्ठा rcar_i2c_priv *priv = i2c_get_adapdata(adap);
 
-	if (val)
+	अगर (val)
 		priv->recovery_icmcr |= FSCL;
-	else
+	अन्यथा
 		priv->recovery_icmcr &= ~FSCL;
 
-	rcar_i2c_write(priv, ICMCR, priv->recovery_icmcr);
-};
+	rcar_i2c_ग_लिखो(priv, ICMCR, priv->recovery_icmcr);
+पूर्ण;
 
-static void rcar_i2c_set_sda(struct i2c_adapter *adap, int val)
-{
-	struct rcar_i2c_priv *priv = i2c_get_adapdata(adap);
+अटल व्योम rcar_i2c_set_sda(काष्ठा i2c_adapter *adap, पूर्णांक val)
+अणु
+	काष्ठा rcar_i2c_priv *priv = i2c_get_adapdata(adap);
 
-	if (val)
+	अगर (val)
 		priv->recovery_icmcr |= FSDA;
-	else
+	अन्यथा
 		priv->recovery_icmcr &= ~FSDA;
 
-	rcar_i2c_write(priv, ICMCR, priv->recovery_icmcr);
-};
+	rcar_i2c_ग_लिखो(priv, ICMCR, priv->recovery_icmcr);
+पूर्ण;
 
-static int rcar_i2c_get_bus_free(struct i2c_adapter *adap)
-{
-	struct rcar_i2c_priv *priv = i2c_get_adapdata(adap);
+अटल पूर्णांक rcar_i2c_get_bus_मुक्त(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा rcar_i2c_priv *priv = i2c_get_adapdata(adap);
 
-	return !(rcar_i2c_read(priv, ICMCR) & FSDA);
+	वापस !(rcar_i2c_पढ़ो(priv, ICMCR) & FSDA);
 
-};
+पूर्ण;
 
-static struct i2c_bus_recovery_info rcar_i2c_bri = {
+अटल काष्ठा i2c_bus_recovery_info rcar_i2c_bri = अणु
 	.get_scl = rcar_i2c_get_scl,
 	.set_scl = rcar_i2c_set_scl,
 	.set_sda = rcar_i2c_set_sda,
-	.get_bus_free = rcar_i2c_get_bus_free,
+	.get_bus_मुक्त = rcar_i2c_get_bus_मुक्त,
 	.recover_bus = i2c_generic_scl_recovery,
-};
-static void rcar_i2c_init(struct rcar_i2c_priv *priv)
-{
+पूर्ण;
+अटल व्योम rcar_i2c_init(काष्ठा rcar_i2c_priv *priv)
+अणु
 	/* reset master mode */
-	rcar_i2c_write(priv, ICMIER, 0);
-	rcar_i2c_write(priv, ICMCR, MDBS);
-	rcar_i2c_write(priv, ICMSR, 0);
-	/* start clock */
-	rcar_i2c_write(priv, ICCCR, priv->icccr);
+	rcar_i2c_ग_लिखो(priv, ICMIER, 0);
+	rcar_i2c_ग_लिखो(priv, ICMCR, MDBS);
+	rcar_i2c_ग_लिखो(priv, ICMSR, 0);
+	/* start घड़ी */
+	rcar_i2c_ग_लिखो(priv, ICCCR, priv->icccr);
 
-	if (priv->devtype == I2C_RCAR_GEN3)
-		rcar_i2c_write(priv, ICFBSCR, TCYC17);
+	अगर (priv->devtype == I2C_RCAR_GEN3)
+		rcar_i2c_ग_लिखो(priv, ICFBSCR, TCYC17);
 
-}
+पूर्ण
 
-static int rcar_i2c_bus_barrier(struct rcar_i2c_priv *priv)
-{
-	int ret;
+अटल पूर्णांक rcar_i2c_bus_barrier(काष्ठा rcar_i2c_priv *priv)
+अणु
+	पूर्णांक ret;
 	u32 val;
 
-	ret = readl_poll_timeout(priv->io + ICMCR, val, !(val & FSDA), 10,
-				 priv->adap.timeout);
-	if (ret) {
+	ret = पढ़ोl_poll_समयout(priv->io + ICMCR, val, !(val & FSDA), 10,
+				 priv->adap.समयout);
+	अगर (ret) अणु
 		/* Waiting did not help, try to recover */
 		priv->recovery_icmcr = MDBS | OBPC | FSDA | FSCL;
 		ret = i2c_recover_bus(&priv->adap);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rcar_i2c_clock_calculate(struct rcar_i2c_priv *priv)
-{
+अटल पूर्णांक rcar_i2c_घड़ी_calculate(काष्ठा rcar_i2c_priv *priv)
+अणु
 	u32 scgd, cdf, round, ick, sum, scl, cdf_width;
-	unsigned long rate;
-	struct device *dev = rcar_i2c_priv_to_dev(priv);
-	struct i2c_timings t = {
+	अचिन्हित दीर्घ rate;
+	काष्ठा device *dev = rcar_i2c_priv_to_dev(priv);
+	काष्ठा i2c_timings t = अणु
 		.bus_freq_hz		= I2C_MAX_STANDARD_MODE_FREQ,
 		.scl_fall_ns		= 35,
 		.scl_rise_ns		= 200,
-		.scl_int_delay_ns	= 50,
-	};
+		.scl_पूर्णांक_delay_ns	= 50,
+	पूर्ण;
 
-	/* Fall back to previously used values if not supplied */
+	/* Fall back to previously used values अगर not supplied */
 	i2c_parse_fw_timings(dev, &t, false);
 
-	switch (priv->devtype) {
-	case I2C_RCAR_GEN1:
+	चयन (priv->devtype) अणु
+	हाल I2C_RCAR_GEN1:
 		cdf_width = 2;
-		break;
-	case I2C_RCAR_GEN2:
-	case I2C_RCAR_GEN3:
+		अवरोध;
+	हाल I2C_RCAR_GEN2:
+	हाल I2C_RCAR_GEN3:
 		cdf_width = 3;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(dev, "device type error\n");
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	/*
-	 * calculate SCL clock
+	 * calculate SCL घड़ी
 	 * see
 	 *	ICCCR
 	 *
 	 * ick	= clkp / (1 + CDF)
-	 * SCL	= ick / (20 + SCGD * 8 + F[(ticf + tr + intd) * ick])
+	 * SCL	= ick / (20 + SCGD * 8 + F[(ticf + tr + पूर्णांकd) * ick])
 	 *
-	 * ick  : I2C internal clock < 20 MHz
-	 * ticf : I2C SCL falling time
-	 * tr   : I2C SCL rising  time
-	 * intd : LSI internal delay
+	 * ick  : I2C पूर्णांकernal घड़ी < 20 MHz
+	 * ticf : I2C SCL falling समय
+	 * tr   : I2C SCL rising  समय
+	 * पूर्णांकd : LSI पूर्णांकernal delay
 	 * clkp : peripheral_clk
-	 * F[]  : integer up-valuation
+	 * F[]  : पूर्णांकeger up-valuation
 	 */
 	rate = clk_get_rate(priv->clk);
 	cdf = rate / 20000000;
-	if (cdf >= 1U << cdf_width) {
+	अगर (cdf >= 1U << cdf_width) अणु
 		dev_err(dev, "Input clock %lu too high\n", rate);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	ick = rate / (cdf + 1);
 
 	/*
 	 * it is impossible to calculate large scale
 	 * number on u32. separate it
 	 *
-	 * F[(ticf + tr + intd) * ick] with sum = (ticf + tr + intd)
+	 * F[(ticf + tr + पूर्णांकd) * ick] with sum = (ticf + tr + पूर्णांकd)
 	 *  = F[sum * ick / 1000000000]
 	 *  = F[(ick / 1000000) * sum / 1000]
 	 */
-	sum = t.scl_fall_ns + t.scl_rise_ns + t.scl_int_delay_ns;
+	sum = t.scl_fall_ns + t.scl_rise_ns + t.scl_पूर्णांक_delay_ns;
 	round = (ick + 500000) / 1000000 * sum;
 	round = (round + 500) / 1000;
 
 	/*
-	 * SCL	= ick / (20 + SCGD * 8 + F[(ticf + tr + intd) * ick])
+	 * SCL	= ick / (20 + SCGD * 8 + F[(ticf + tr + पूर्णांकd) * ick])
 	 *
 	 * Calculation result (= SCL) should be less than
-	 * bus_speed for hardware safety
+	 * bus_speed क्रम hardware safety
 	 *
-	 * We could use something along the lines of
-	 *	div = ick / (bus_speed + 1) + 1;
-	 *	scgd = (div - 20 - round + 7) / 8;
+	 * We could use something aदीर्घ the lines of
+	 *	भाग = ick / (bus_speed + 1) + 1;
+	 *	scgd = (भाग - 20 - round + 7) / 8;
 	 *	scl = ick / (20 + (scgd * 8) + round);
-	 * (not fully verified) but that would get pretty involved
+	 * (not fully verअगरied) but that would get pretty involved
 	 */
-	for (scgd = 0; scgd < 0x40; scgd++) {
+	क्रम (scgd = 0; scgd < 0x40; scgd++) अणु
 		scl = ick / (20 + (scgd * 8) + round);
-		if (scl <= t.bus_freq_hz)
-			goto scgd_find;
-	}
+		अगर (scl <= t.bus_freq_hz)
+			जाओ scgd_find;
+	पूर्ण
 	dev_err(dev, "it is impossible to calculate best SCL\n");
-	return -EIO;
+	वापस -EIO;
 
 scgd_find:
 	dev_dbg(dev, "clk %d/%d(%lu), round %u, CDF:0x%x, SCGD: 0x%x\n",
@@ -327,124 +328,124 @@ scgd_find:
 	/* keep icccr value */
 	priv->icccr = scgd << cdf_width | cdf;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rcar_i2c_prepare_msg(struct rcar_i2c_priv *priv)
-{
-	int read = !!rcar_i2c_is_recv(priv);
+अटल व्योम rcar_i2c_prepare_msg(काष्ठा rcar_i2c_priv *priv)
+अणु
+	पूर्णांक पढ़ो = !!rcar_i2c_is_recv(priv);
 
 	priv->pos = 0;
-	if (priv->msgs_left == 1)
+	अगर (priv->msgs_left == 1)
 		priv->flags |= ID_LAST_MSG;
 
-	rcar_i2c_write(priv, ICMAR, i2c_8bit_addr_from_msg(priv->msg));
+	rcar_i2c_ग_लिखो(priv, ICMAR, i2c_8bit_addr_from_msg(priv->msg));
 	/*
-	 * We don't have a test case but the HW engineers say that the write order
+	 * We करोn't have a test हाल but the HW engineers say that the ग_लिखो order
 	 * of ICMSR and ICMCR depends on whether we issue START or REP_START. Since
 	 * it didn't cause a drawback for me, let's rather be safe than sorry.
 	 */
-	if (priv->flags & ID_FIRST_MSG) {
-		rcar_i2c_write(priv, ICMSR, 0);
-		rcar_i2c_write(priv, ICMCR, RCAR_BUS_PHASE_START);
-	} else {
-		if (priv->flags & ID_P_REP_AFTER_RD)
+	अगर (priv->flags & ID_FIRST_MSG) अणु
+		rcar_i2c_ग_लिखो(priv, ICMSR, 0);
+		rcar_i2c_ग_लिखो(priv, ICMCR, RCAR_BUS_PHASE_START);
+	पूर्ण अन्यथा अणु
+		अगर (priv->flags & ID_P_REP_AFTER_RD)
 			priv->flags &= ~ID_P_REP_AFTER_RD;
-		else
-			rcar_i2c_write(priv, ICMCR, RCAR_BUS_PHASE_START);
-		rcar_i2c_write(priv, ICMSR, 0);
-	}
+		अन्यथा
+			rcar_i2c_ग_लिखो(priv, ICMCR, RCAR_BUS_PHASE_START);
+		rcar_i2c_ग_लिखो(priv, ICMSR, 0);
+	पूर्ण
 
-	if (!priv->atomic_xfer)
-		rcar_i2c_write(priv, ICMIER, read ? RCAR_IRQ_RECV : RCAR_IRQ_SEND);
-}
+	अगर (!priv->atomic_xfer)
+		rcar_i2c_ग_लिखो(priv, ICMIER, पढ़ो ? RCAR_IRQ_RECV : RCAR_IRQ_SEND);
+पूर्ण
 
-static void rcar_i2c_next_msg(struct rcar_i2c_priv *priv)
-{
+अटल व्योम rcar_i2c_next_msg(काष्ठा rcar_i2c_priv *priv)
+अणु
 	priv->msg++;
 	priv->msgs_left--;
 	priv->flags &= ID_P_MASK;
 	rcar_i2c_prepare_msg(priv);
-}
+पूर्ण
 
-static void rcar_i2c_dma_unmap(struct rcar_i2c_priv *priv)
-{
-	struct dma_chan *chan = priv->dma_direction == DMA_FROM_DEVICE
+अटल व्योम rcar_i2c_dma_unmap(काष्ठा rcar_i2c_priv *priv)
+अणु
+	काष्ठा dma_chan *chan = priv->dma_direction == DMA_FROM_DEVICE
 		? priv->dma_rx : priv->dma_tx;
 
 	dma_unmap_single(chan->device->dev, sg_dma_address(&priv->sg),
 			 sg_dma_len(&priv->sg), priv->dma_direction);
 
-	/* Gen3 can only do one RXDMA per transfer and we just completed it */
-	if (priv->devtype == I2C_RCAR_GEN3 &&
+	/* Gen3 can only करो one RXDMA per transfer and we just completed it */
+	अगर (priv->devtype == I2C_RCAR_GEN3 &&
 	    priv->dma_direction == DMA_FROM_DEVICE)
 		priv->flags |= ID_P_NO_RXDMA;
 
 	priv->dma_direction = DMA_NONE;
 
 	/* Disable DMA Master Received/Transmitted, must be last! */
-	rcar_i2c_write(priv, ICDMAER, 0);
-}
+	rcar_i2c_ग_लिखो(priv, ICDMAER, 0);
+पूर्ण
 
-static void rcar_i2c_cleanup_dma(struct rcar_i2c_priv *priv)
-{
-	if (priv->dma_direction == DMA_NONE)
-		return;
-	else if (priv->dma_direction == DMA_FROM_DEVICE)
+अटल व्योम rcar_i2c_cleanup_dma(काष्ठा rcar_i2c_priv *priv)
+अणु
+	अगर (priv->dma_direction == DMA_NONE)
+		वापस;
+	अन्यथा अगर (priv->dma_direction == DMA_FROM_DEVICE)
 		dmaengine_terminate_all(priv->dma_rx);
-	else if (priv->dma_direction == DMA_TO_DEVICE)
+	अन्यथा अगर (priv->dma_direction == DMA_TO_DEVICE)
 		dmaengine_terminate_all(priv->dma_tx);
 
 	rcar_i2c_dma_unmap(priv);
-}
+पूर्ण
 
-static void rcar_i2c_dma_callback(void *data)
-{
-	struct rcar_i2c_priv *priv = data;
+अटल व्योम rcar_i2c_dma_callback(व्योम *data)
+अणु
+	काष्ठा rcar_i2c_priv *priv = data;
 
 	priv->pos += sg_dma_len(&priv->sg);
 
 	rcar_i2c_dma_unmap(priv);
-}
+पूर्ण
 
-static bool rcar_i2c_dma(struct rcar_i2c_priv *priv)
-{
-	struct device *dev = rcar_i2c_priv_to_dev(priv);
-	struct i2c_msg *msg = priv->msg;
-	bool read = msg->flags & I2C_M_RD;
-	enum dma_data_direction dir = read ? DMA_FROM_DEVICE : DMA_TO_DEVICE;
-	struct dma_chan *chan = read ? priv->dma_rx : priv->dma_tx;
-	struct dma_async_tx_descriptor *txdesc;
+अटल bool rcar_i2c_dma(काष्ठा rcar_i2c_priv *priv)
+अणु
+	काष्ठा device *dev = rcar_i2c_priv_to_dev(priv);
+	काष्ठा i2c_msg *msg = priv->msg;
+	bool पढ़ो = msg->flags & I2C_M_RD;
+	क्रमागत dma_data_direction dir = पढ़ो ? DMA_FROM_DEVICE : DMA_TO_DEVICE;
+	काष्ठा dma_chan *chan = पढ़ो ? priv->dma_rx : priv->dma_tx;
+	काष्ठा dma_async_tx_descriptor *txdesc;
 	dma_addr_t dma_addr;
 	dma_cookie_t cookie;
-	unsigned char *buf;
-	int len;
+	अचिन्हित अक्षर *buf;
+	पूर्णांक len;
 
-	/* Do various checks to see if DMA is feasible at all */
-	if (priv->atomic_xfer || IS_ERR(chan) || msg->len < RCAR_MIN_DMA_LEN ||
-	    !(msg->flags & I2C_M_DMA_SAFE) || (read && priv->flags & ID_P_NO_RXDMA))
-		return false;
+	/* Do various checks to see अगर DMA is feasible at all */
+	अगर (priv->atomic_xfer || IS_ERR(chan) || msg->len < RCAR_MIN_DMA_LEN ||
+	    !(msg->flags & I2C_M_DMA_SAFE) || (पढ़ो && priv->flags & ID_P_NO_RXDMA))
+		वापस false;
 
-	if (read) {
+	अगर (पढ़ो) अणु
 		/*
 		 * The last two bytes needs to be fetched using PIO in
-		 * order for the STOP phase to work.
+		 * order क्रम the STOP phase to work.
 		 */
 		buf = priv->msg->buf;
 		len = priv->msg->len - 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * First byte in message was sent using PIO.
 		 */
 		buf = priv->msg->buf + 1;
 		len = priv->msg->len - 1;
-	}
+	पूर्ण
 
 	dma_addr = dma_map_single(chan->device->dev, buf, len, dir);
-	if (dma_mapping_error(chan->device->dev, dma_addr)) {
+	अगर (dma_mapping_error(chan->device->dev, dma_addr)) अणु
 		dev_dbg(dev, "dma map failed, using PIO\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	sg_dma_len(&priv->sg) = len;
 	sg_dma_address(&priv->sg) = dma_addr;
@@ -452,387 +453,387 @@ static bool rcar_i2c_dma(struct rcar_i2c_priv *priv)
 	priv->dma_direction = dir;
 
 	txdesc = dmaengine_prep_slave_sg(chan, &priv->sg, 1,
-					 read ? DMA_DEV_TO_MEM : DMA_MEM_TO_DEV,
+					 पढ़ो ? DMA_DEV_TO_MEM : DMA_MEM_TO_DEV,
 					 DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	if (!txdesc) {
+	अगर (!txdesc) अणु
 		dev_dbg(dev, "dma prep slave sg failed, using PIO\n");
 		rcar_i2c_cleanup_dma(priv);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	txdesc->callback = rcar_i2c_dma_callback;
 	txdesc->callback_param = priv;
 
 	cookie = dmaengine_submit(txdesc);
-	if (dma_submit_error(cookie)) {
+	अगर (dma_submit_error(cookie)) अणु
 		dev_dbg(dev, "submitting dma failed, using PIO\n");
 		rcar_i2c_cleanup_dma(priv);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Enable DMA Master Received/Transmitted */
-	if (read)
-		rcar_i2c_write(priv, ICDMAER, RMDMAE);
-	else
-		rcar_i2c_write(priv, ICDMAER, TMDMAE);
+	अगर (पढ़ो)
+		rcar_i2c_ग_लिखो(priv, ICDMAER, RMDMAE);
+	अन्यथा
+		rcar_i2c_ग_लिखो(priv, ICDMAER, TMDMAE);
 
 	dma_async_issue_pending(chan);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void rcar_i2c_irq_send(struct rcar_i2c_priv *priv, u32 msr)
-{
-	struct i2c_msg *msg = priv->msg;
+अटल व्योम rcar_i2c_irq_send(काष्ठा rcar_i2c_priv *priv, u32 msr)
+अणु
+	काष्ठा i2c_msg *msg = priv->msg;
 
-	/* FIXME: sometimes, unknown interrupt happened. Do nothing */
-	if (!(msr & MDE))
-		return;
+	/* FIXME: someबार, unknown पूर्णांकerrupt happened. Do nothing */
+	अगर (!(msr & MDE))
+		वापस;
 
-	/* Check if DMA can be enabled and take over */
-	if (priv->pos == 1 && rcar_i2c_dma(priv))
-		return;
+	/* Check अगर DMA can be enabled and take over */
+	अगर (priv->pos == 1 && rcar_i2c_dma(priv))
+		वापस;
 
-	if (priv->pos < msg->len) {
+	अगर (priv->pos < msg->len) अणु
 		/*
-		 * Prepare next data to ICRXTX register.
-		 * This data will go to _SHIFT_ register.
+		 * Prepare next data to ICRXTX रेजिस्टर.
+		 * This data will go to _SHIFT_ रेजिस्टर.
 		 *
 		 *    *
 		 * [ICRXTX] -> [SHIFT] -> [I2C bus]
 		 */
-		rcar_i2c_write(priv, ICRXTX, msg->buf[priv->pos]);
+		rcar_i2c_ग_लिखो(priv, ICRXTX, msg->buf[priv->pos]);
 		priv->pos++;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * The last data was pushed to ICRXTX on _PREV_ empty irq.
-		 * It is on _SHIFT_ register, and will sent to I2C bus.
+		 * It is on _SHIFT_ रेजिस्टर, and will sent to I2C bus.
 		 *
 		 *		  *
 		 * [ICRXTX] -> [SHIFT] -> [I2C bus]
 		 */
 
-		if (priv->flags & ID_LAST_MSG) {
+		अगर (priv->flags & ID_LAST_MSG) अणु
 			/*
 			 * If current msg is the _LAST_ msg,
 			 * prepare stop condition here.
 			 * ID_DONE will be set on STOP irq.
 			 */
-			rcar_i2c_write(priv, ICMCR, RCAR_BUS_PHASE_STOP);
-		} else {
+			rcar_i2c_ग_लिखो(priv, ICMCR, RCAR_BUS_PHASE_STOP);
+		पूर्ण अन्यथा अणु
 			rcar_i2c_next_msg(priv);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	rcar_i2c_write(priv, ICMSR, RCAR_IRQ_ACK_SEND);
-}
+	rcar_i2c_ग_लिखो(priv, ICMSR, RCAR_IRQ_ACK_SEND);
+पूर्ण
 
-static void rcar_i2c_irq_recv(struct rcar_i2c_priv *priv, u32 msr)
-{
-	struct i2c_msg *msg = priv->msg;
+अटल व्योम rcar_i2c_irq_recv(काष्ठा rcar_i2c_priv *priv, u32 msr)
+अणु
+	काष्ठा i2c_msg *msg = priv->msg;
 
-	/* FIXME: sometimes, unknown interrupt happened. Do nothing */
-	if (!(msr & MDR))
-		return;
+	/* FIXME: someबार, unknown पूर्णांकerrupt happened. Do nothing */
+	अगर (!(msr & MDR))
+		वापस;
 
-	if (msr & MAT) {
+	अगर (msr & MAT) अणु
 		/*
-		 * Address transfer phase finished, but no data at this point.
+		 * Address transfer phase finished, but no data at this poपूर्णांक.
 		 * Try to use DMA to receive data.
 		 */
 		rcar_i2c_dma(priv);
-	} else if (priv->pos < msg->len) {
+	पूर्ण अन्यथा अगर (priv->pos < msg->len) अणु
 		/* get received data */
-		msg->buf[priv->pos] = rcar_i2c_read(priv, ICRXTX);
+		msg->buf[priv->pos] = rcar_i2c_पढ़ो(priv, ICRXTX);
 		priv->pos++;
-	}
+	पूर्ण
 
 	/* If next received data is the _LAST_, go to new phase. */
-	if (priv->pos + 1 == msg->len) {
-		if (priv->flags & ID_LAST_MSG) {
-			rcar_i2c_write(priv, ICMCR, RCAR_BUS_PHASE_STOP);
-		} else {
-			rcar_i2c_write(priv, ICMCR, RCAR_BUS_PHASE_START);
+	अगर (priv->pos + 1 == msg->len) अणु
+		अगर (priv->flags & ID_LAST_MSG) अणु
+			rcar_i2c_ग_लिखो(priv, ICMCR, RCAR_BUS_PHASE_STOP);
+		पूर्ण अन्यथा अणु
+			rcar_i2c_ग_लिखो(priv, ICMCR, RCAR_BUS_PHASE_START);
 			priv->flags |= ID_P_REP_AFTER_RD;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (priv->pos == msg->len && !(priv->flags & ID_LAST_MSG))
+	अगर (priv->pos == msg->len && !(priv->flags & ID_LAST_MSG))
 		rcar_i2c_next_msg(priv);
-	else
-		rcar_i2c_write(priv, ICMSR, RCAR_IRQ_ACK_RECV);
-}
+	अन्यथा
+		rcar_i2c_ग_लिखो(priv, ICMSR, RCAR_IRQ_ACK_RECV);
+पूर्ण
 
-static bool rcar_i2c_slave_irq(struct rcar_i2c_priv *priv)
-{
+अटल bool rcar_i2c_slave_irq(काष्ठा rcar_i2c_priv *priv)
+अणु
 	u32 ssr_raw, ssr_filtered;
 	u8 value;
 
-	ssr_raw = rcar_i2c_read(priv, ICSSR) & 0xff;
-	ssr_filtered = ssr_raw & rcar_i2c_read(priv, ICSIER);
+	ssr_raw = rcar_i2c_पढ़ो(priv, ICSSR) & 0xff;
+	ssr_filtered = ssr_raw & rcar_i2c_पढ़ो(priv, ICSIER);
 
-	if (!ssr_filtered)
-		return false;
+	अगर (!ssr_filtered)
+		वापस false;
 
 	/* address detected */
-	if (ssr_filtered & SAR) {
-		/* read or write request */
-		if (ssr_raw & STM) {
+	अगर (ssr_filtered & SAR) अणु
+		/* पढ़ो or ग_लिखो request */
+		अगर (ssr_raw & STM) अणु
 			i2c_slave_event(priv->slave, I2C_SLAVE_READ_REQUESTED, &value);
-			rcar_i2c_write(priv, ICRXTX, value);
-			rcar_i2c_write(priv, ICSIER, SDE | SSR | SAR);
-		} else {
+			rcar_i2c_ग_लिखो(priv, ICRXTX, value);
+			rcar_i2c_ग_लिखो(priv, ICSIER, SDE | SSR | SAR);
+		पूर्ण अन्यथा अणु
 			i2c_slave_event(priv->slave, I2C_SLAVE_WRITE_REQUESTED, &value);
-			rcar_i2c_read(priv, ICRXTX);	/* dummy read */
-			rcar_i2c_write(priv, ICSIER, SDR | SSR | SAR);
-		}
+			rcar_i2c_पढ़ो(priv, ICRXTX);	/* dummy पढ़ो */
+			rcar_i2c_ग_लिखो(priv, ICSIER, SDR | SSR | SAR);
+		पूर्ण
 
 		/* Clear SSR, too, because of old STOPs to other clients than us */
-		rcar_i2c_write(priv, ICSSR, ~(SAR | SSR) & 0xff);
-	}
+		rcar_i2c_ग_लिखो(priv, ICSSR, ~(SAR | SSR) & 0xff);
+	पूर्ण
 
 	/* master sent stop */
-	if (ssr_filtered & SSR) {
+	अगर (ssr_filtered & SSR) अणु
 		i2c_slave_event(priv->slave, I2C_SLAVE_STOP, &value);
-		rcar_i2c_write(priv, ICSCR, SIE | SDBS); /* clear our NACK */
-		rcar_i2c_write(priv, ICSIER, SAR);
-		rcar_i2c_write(priv, ICSSR, ~SSR & 0xff);
-	}
+		rcar_i2c_ग_लिखो(priv, ICSCR, SIE | SDBS); /* clear our NACK */
+		rcar_i2c_ग_लिखो(priv, ICSIER, SAR);
+		rcar_i2c_ग_लिखो(priv, ICSSR, ~SSR & 0xff);
+	पूर्ण
 
-	/* master wants to write to us */
-	if (ssr_filtered & SDR) {
-		int ret;
+	/* master wants to ग_लिखो to us */
+	अगर (ssr_filtered & SDR) अणु
+		पूर्णांक ret;
 
-		value = rcar_i2c_read(priv, ICRXTX);
+		value = rcar_i2c_पढ़ो(priv, ICRXTX);
 		ret = i2c_slave_event(priv->slave, I2C_SLAVE_WRITE_RECEIVED, &value);
-		/* Send NACK in case of error */
-		rcar_i2c_write(priv, ICSCR, SIE | SDBS | (ret < 0 ? FNA : 0));
-		rcar_i2c_write(priv, ICSSR, ~SDR & 0xff);
-	}
+		/* Send NACK in हाल of error */
+		rcar_i2c_ग_लिखो(priv, ICSCR, SIE | SDBS | (ret < 0 ? FNA : 0));
+		rcar_i2c_ग_लिखो(priv, ICSSR, ~SDR & 0xff);
+	पूर्ण
 
-	/* master wants to read from us */
-	if (ssr_filtered & SDE) {
+	/* master wants to पढ़ो from us */
+	अगर (ssr_filtered & SDE) अणु
 		i2c_slave_event(priv->slave, I2C_SLAVE_READ_PROCESSED, &value);
-		rcar_i2c_write(priv, ICRXTX, value);
-		rcar_i2c_write(priv, ICSSR, ~SDE & 0xff);
-	}
+		rcar_i2c_ग_लिखो(priv, ICRXTX, value);
+		rcar_i2c_ग_लिखो(priv, ICSSR, ~SDE & 0xff);
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * This driver has a lock-free design because there are IP cores (at least
+ * This driver has a lock-मुक्त design because there are IP cores (at least
  * R-Car Gen2) which have an inherent race condition in their hardware design.
- * There, we need to switch to RCAR_BUS_PHASE_DATA as soon as possible after
- * the interrupt was generated, otherwise an unwanted repeated message gets
+ * There, we need to चयन to RCAR_BUS_PHASE_DATA as soon as possible after
+ * the पूर्णांकerrupt was generated, otherwise an unwanted repeated message माला_लो
  * generated. It turned out that taking a spinlock at the beginning of the ISR
- * was already causing repeated messages. Thus, this driver was converted to
+ * was alपढ़ोy causing repeated messages. Thus, this driver was converted to
  * the now lockless behaviour. Please keep this in mind when hacking the driver.
  * R-Car Gen3 seems to have this fixed but earlier versions than R-Car Gen2 are
- * likely affected. Therefore, we have different interrupt handler entries.
+ * likely affected. Thereक्रमe, we have dअगरferent पूर्णांकerrupt handler entries.
  */
-static irqreturn_t rcar_i2c_irq(int irq, struct rcar_i2c_priv *priv, u32 msr)
-{
-	if (!msr) {
-		if (rcar_i2c_slave_irq(priv))
-			return IRQ_HANDLED;
+अटल irqवापस_t rcar_i2c_irq(पूर्णांक irq, काष्ठा rcar_i2c_priv *priv, u32 msr)
+अणु
+	अगर (!msr) अणु
+		अगर (rcar_i2c_slave_irq(priv))
+			वापस IRQ_HANDLED;
 
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	/* Arbitration lost */
-	if (msr & MAL) {
+	अगर (msr & MAL) अणु
 		priv->flags |= ID_DONE | ID_ARBLOST;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Nack */
-	if (msr & MNR) {
-		/* HW automatically sends STOP after received NACK */
-		if (!priv->atomic_xfer)
-			rcar_i2c_write(priv, ICMIER, RCAR_IRQ_STOP);
+	अगर (msr & MNR) अणु
+		/* HW स्वतःmatically sends STOP after received NACK */
+		अगर (!priv->atomic_xfer)
+			rcar_i2c_ग_लिखो(priv, ICMIER, RCAR_IRQ_STOP);
 		priv->flags |= ID_NACK;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Stop */
-	if (msr & MST) {
+	अगर (msr & MST) अणु
 		priv->msgs_left--; /* The last message also made it */
 		priv->flags |= ID_DONE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (rcar_i2c_is_recv(priv))
+	अगर (rcar_i2c_is_recv(priv))
 		rcar_i2c_irq_recv(priv, msr);
-	else
+	अन्यथा
 		rcar_i2c_irq_send(priv, msr);
 
 out:
-	if (priv->flags & ID_DONE) {
-		rcar_i2c_write(priv, ICMIER, 0);
-		rcar_i2c_write(priv, ICMSR, 0);
-		if (!priv->atomic_xfer)
-			wake_up(&priv->wait);
-	}
+	अगर (priv->flags & ID_DONE) अणु
+		rcar_i2c_ग_लिखो(priv, ICMIER, 0);
+		rcar_i2c_ग_लिखो(priv, ICMSR, 0);
+		अगर (!priv->atomic_xfer)
+			wake_up(&priv->रुको);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t rcar_i2c_gen2_irq(int irq, void *ptr)
-{
-	struct rcar_i2c_priv *priv = ptr;
+अटल irqवापस_t rcar_i2c_gen2_irq(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा rcar_i2c_priv *priv = ptr;
 	u32 msr;
 
-	/* Clear START or STOP immediately, except for REPSTART after read */
-	if (likely(!(priv->flags & ID_P_REP_AFTER_RD)))
-		rcar_i2c_write(priv, ICMCR, RCAR_BUS_PHASE_DATA);
+	/* Clear START or STOP immediately, except क्रम REPSTART after पढ़ो */
+	अगर (likely(!(priv->flags & ID_P_REP_AFTER_RD)))
+		rcar_i2c_ग_लिखो(priv, ICMCR, RCAR_BUS_PHASE_DATA);
 
-	/* Only handle interrupts that are currently enabled */
-	msr = rcar_i2c_read(priv, ICMSR);
-	if (!priv->atomic_xfer)
-		msr &= rcar_i2c_read(priv, ICMIER);
+	/* Only handle पूर्णांकerrupts that are currently enabled */
+	msr = rcar_i2c_पढ़ो(priv, ICMSR);
+	अगर (!priv->atomic_xfer)
+		msr &= rcar_i2c_पढ़ो(priv, ICMIER);
 
-	return rcar_i2c_irq(irq, priv, msr);
-}
+	वापस rcar_i2c_irq(irq, priv, msr);
+पूर्ण
 
-static irqreturn_t rcar_i2c_gen3_irq(int irq, void *ptr)
-{
-	struct rcar_i2c_priv *priv = ptr;
+अटल irqवापस_t rcar_i2c_gen3_irq(पूर्णांक irq, व्योम *ptr)
+अणु
+	काष्ठा rcar_i2c_priv *priv = ptr;
 	u32 msr;
 
-	/* Only handle interrupts that are currently enabled */
-	msr = rcar_i2c_read(priv, ICMSR);
-	if (!priv->atomic_xfer)
-		msr &= rcar_i2c_read(priv, ICMIER);
+	/* Only handle पूर्णांकerrupts that are currently enabled */
+	msr = rcar_i2c_पढ़ो(priv, ICMSR);
+	अगर (!priv->atomic_xfer)
+		msr &= rcar_i2c_पढ़ो(priv, ICMIER);
 
 	/*
-	 * Clear START or STOP immediately, except for REPSTART after read or
-	 * if a spurious interrupt was detected.
+	 * Clear START or STOP immediately, except क्रम REPSTART after पढ़ो or
+	 * अगर a spurious पूर्णांकerrupt was detected.
 	 */
-	if (likely(!(priv->flags & ID_P_REP_AFTER_RD) && msr))
-		rcar_i2c_write(priv, ICMCR, RCAR_BUS_PHASE_DATA);
+	अगर (likely(!(priv->flags & ID_P_REP_AFTER_RD) && msr))
+		rcar_i2c_ग_लिखो(priv, ICMCR, RCAR_BUS_PHASE_DATA);
 
-	return rcar_i2c_irq(irq, priv, msr);
-}
+	वापस rcar_i2c_irq(irq, priv, msr);
+पूर्ण
 
-static struct dma_chan *rcar_i2c_request_dma_chan(struct device *dev,
-					enum dma_transfer_direction dir,
+अटल काष्ठा dma_chan *rcar_i2c_request_dma_chan(काष्ठा device *dev,
+					क्रमागत dma_transfer_direction dir,
 					dma_addr_t port_addr)
-{
-	struct dma_chan *chan;
-	struct dma_slave_config cfg;
-	char *chan_name = dir == DMA_MEM_TO_DEV ? "tx" : "rx";
-	int ret;
+अणु
+	काष्ठा dma_chan *chan;
+	काष्ठा dma_slave_config cfg;
+	अक्षर *chan_name = dir == DMA_MEM_TO_DEV ? "tx" : "rx";
+	पूर्णांक ret;
 
 	chan = dma_request_chan(dev, chan_name);
-	if (IS_ERR(chan)) {
+	अगर (IS_ERR(chan)) अणु
 		dev_dbg(dev, "request_channel failed for %s (%ld)\n",
 			chan_name, PTR_ERR(chan));
-		return chan;
-	}
+		वापस chan;
+	पूर्ण
 
-	memset(&cfg, 0, sizeof(cfg));
+	स_रखो(&cfg, 0, माप(cfg));
 	cfg.direction = dir;
-	if (dir == DMA_MEM_TO_DEV) {
+	अगर (dir == DMA_MEM_TO_DEV) अणु
 		cfg.dst_addr = port_addr;
 		cfg.dst_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-	} else {
+	पूर्ण अन्यथा अणु
 		cfg.src_addr = port_addr;
 		cfg.src_addr_width = DMA_SLAVE_BUSWIDTH_1_BYTE;
-	}
+	पूर्ण
 
 	ret = dmaengine_slave_config(chan, &cfg);
-	if (ret) {
+	अगर (ret) अणु
 		dev_dbg(dev, "slave_config failed for %s (%d)\n",
 			chan_name, ret);
 		dma_release_channel(chan);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	dev_dbg(dev, "got DMA channel for %s\n", chan_name);
-	return chan;
-}
+	वापस chan;
+पूर्ण
 
-static void rcar_i2c_request_dma(struct rcar_i2c_priv *priv,
-				 struct i2c_msg *msg)
-{
-	struct device *dev = rcar_i2c_priv_to_dev(priv);
-	bool read;
-	struct dma_chan *chan;
-	enum dma_transfer_direction dir;
+अटल व्योम rcar_i2c_request_dma(काष्ठा rcar_i2c_priv *priv,
+				 काष्ठा i2c_msg *msg)
+अणु
+	काष्ठा device *dev = rcar_i2c_priv_to_dev(priv);
+	bool पढ़ो;
+	काष्ठा dma_chan *chan;
+	क्रमागत dma_transfer_direction dir;
 
-	read = msg->flags & I2C_M_RD;
+	पढ़ो = msg->flags & I2C_M_RD;
 
-	chan = read ? priv->dma_rx : priv->dma_tx;
-	if (PTR_ERR(chan) != -EPROBE_DEFER)
-		return;
+	chan = पढ़ो ? priv->dma_rx : priv->dma_tx;
+	अगर (PTR_ERR(chan) != -EPROBE_DEFER)
+		वापस;
 
-	dir = read ? DMA_DEV_TO_MEM : DMA_MEM_TO_DEV;
+	dir = पढ़ो ? DMA_DEV_TO_MEM : DMA_MEM_TO_DEV;
 	chan = rcar_i2c_request_dma_chan(dev, dir, priv->res->start + ICRXTX);
 
-	if (read)
+	अगर (पढ़ो)
 		priv->dma_rx = chan;
-	else
+	अन्यथा
 		priv->dma_tx = chan;
-}
+पूर्ण
 
-static void rcar_i2c_release_dma(struct rcar_i2c_priv *priv)
-{
-	if (!IS_ERR(priv->dma_tx)) {
+अटल व्योम rcar_i2c_release_dma(काष्ठा rcar_i2c_priv *priv)
+अणु
+	अगर (!IS_ERR(priv->dma_tx)) अणु
 		dma_release_channel(priv->dma_tx);
 		priv->dma_tx = ERR_PTR(-EPROBE_DEFER);
-	}
+	पूर्ण
 
-	if (!IS_ERR(priv->dma_rx)) {
+	अगर (!IS_ERR(priv->dma_rx)) अणु
 		dma_release_channel(priv->dma_rx);
 		priv->dma_rx = ERR_PTR(-EPROBE_DEFER);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* I2C is a special case, we need to poll the status of a reset */
-static int rcar_i2c_do_reset(struct rcar_i2c_priv *priv)
-{
-	int ret;
+/* I2C is a special हाल, we need to poll the status of a reset */
+अटल पूर्णांक rcar_i2c_करो_reset(काष्ठा rcar_i2c_priv *priv)
+अणु
+	पूर्णांक ret;
 
 	ret = reset_control_reset(priv->rstc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return read_poll_timeout_atomic(reset_control_status, ret, ret == 0, 1,
+	वापस पढ़ो_poll_समयout_atomic(reset_control_status, ret, ret == 0, 1,
 					100, false, priv->rstc);
-}
+पूर्ण
 
-static int rcar_i2c_master_xfer(struct i2c_adapter *adap,
-				struct i2c_msg *msgs,
-				int num)
-{
-	struct rcar_i2c_priv *priv = i2c_get_adapdata(adap);
-	struct device *dev = rcar_i2c_priv_to_dev(priv);
-	int i, ret;
-	long time_left;
+अटल पूर्णांक rcar_i2c_master_xfer(काष्ठा i2c_adapter *adap,
+				काष्ठा i2c_msg *msgs,
+				पूर्णांक num)
+अणु
+	काष्ठा rcar_i2c_priv *priv = i2c_get_adapdata(adap);
+	काष्ठा device *dev = rcar_i2c_priv_to_dev(priv);
+	पूर्णांक i, ret;
+	दीर्घ समय_left;
 
 	priv->atomic_xfer = false;
 
-	pm_runtime_get_sync(dev);
+	pm_runसमय_get_sync(dev);
 
-	/* Check bus state before init otherwise bus busy info will be lost */
+	/* Check bus state beक्रमe init otherwise bus busy info will be lost */
 	ret = rcar_i2c_bus_barrier(priv);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	/* Gen3 needs a reset before allowing RXDMA once */
-	if (priv->devtype == I2C_RCAR_GEN3) {
+	/* Gen3 needs a reset beक्रमe allowing RXDMA once */
+	अगर (priv->devtype == I2C_RCAR_GEN3) अणु
 		priv->flags |= ID_P_NO_RXDMA;
-		if (!IS_ERR(priv->rstc)) {
-			ret = rcar_i2c_do_reset(priv);
-			if (ret == 0)
+		अगर (!IS_ERR(priv->rstc)) अणु
+			ret = rcar_i2c_करो_reset(priv);
+			अगर (ret == 0)
 				priv->flags &= ~ID_P_NO_RXDMA;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rcar_i2c_init(priv);
 
-	for (i = 0; i < num; i++)
+	क्रम (i = 0; i < num; i++)
 		rcar_i2c_request_dma(priv, msgs + i);
 
 	/* init first message */
@@ -841,50 +842,50 @@ static int rcar_i2c_master_xfer(struct i2c_adapter *adap,
 	priv->flags = (priv->flags & ID_P_MASK) | ID_FIRST_MSG;
 	rcar_i2c_prepare_msg(priv);
 
-	time_left = wait_event_timeout(priv->wait, priv->flags & ID_DONE,
-				     num * adap->timeout);
+	समय_left = रुको_event_समयout(priv->रुको, priv->flags & ID_DONE,
+				     num * adap->समयout);
 
-	/* cleanup DMA if it couldn't complete properly due to an error */
-	if (priv->dma_direction != DMA_NONE)
+	/* cleanup DMA अगर it couldn't complete properly due to an error */
+	अगर (priv->dma_direction != DMA_NONE)
 		rcar_i2c_cleanup_dma(priv);
 
-	if (!time_left) {
+	अगर (!समय_left) अणु
 		rcar_i2c_init(priv);
 		ret = -ETIMEDOUT;
-	} else if (priv->flags & ID_NACK) {
+	पूर्ण अन्यथा अगर (priv->flags & ID_NACK) अणु
 		ret = -ENXIO;
-	} else if (priv->flags & ID_ARBLOST) {
+	पूर्ण अन्यथा अगर (priv->flags & ID_ARBLOST) अणु
 		ret = -EAGAIN;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = num - priv->msgs_left; /* The number of transfer */
-	}
+	पूर्ण
 out:
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
 
-	if (ret < 0 && ret != -ENXIO)
+	अगर (ret < 0 && ret != -ENXIO)
 		dev_err(dev, "error %d : %x\n", ret, priv->flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rcar_i2c_master_xfer_atomic(struct i2c_adapter *adap,
-				struct i2c_msg *msgs,
-				int num)
-{
-	struct rcar_i2c_priv *priv = i2c_get_adapdata(adap);
-	struct device *dev = rcar_i2c_priv_to_dev(priv);
-	unsigned long j;
-	bool time_left;
-	int ret;
+अटल पूर्णांक rcar_i2c_master_xfer_atomic(काष्ठा i2c_adapter *adap,
+				काष्ठा i2c_msg *msgs,
+				पूर्णांक num)
+अणु
+	काष्ठा rcar_i2c_priv *priv = i2c_get_adapdata(adap);
+	काष्ठा device *dev = rcar_i2c_priv_to_dev(priv);
+	अचिन्हित दीर्घ j;
+	bool समय_left;
+	पूर्णांक ret;
 
 	priv->atomic_xfer = true;
 
-	pm_runtime_get_sync(dev);
+	pm_runसमय_get_sync(dev);
 
-	/* Check bus state before init otherwise bus busy info will be lost */
+	/* Check bus state beक्रमe init otherwise bus busy info will be lost */
 	ret = rcar_i2c_bus_barrier(priv);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	rcar_i2c_init(priv);
 
@@ -894,161 +895,161 @@ static int rcar_i2c_master_xfer_atomic(struct i2c_adapter *adap,
 	priv->flags = (priv->flags & ID_P_MASK) | ID_FIRST_MSG;
 	rcar_i2c_prepare_msg(priv);
 
-	j = jiffies + num * adap->timeout;
-	do {
-		u32 msr = rcar_i2c_read(priv, ICMSR);
+	j = jअगरfies + num * adap->समयout;
+	करो अणु
+		u32 msr = rcar_i2c_पढ़ो(priv, ICMSR);
 
 		msr &= (rcar_i2c_is_recv(priv) ? RCAR_IRQ_RECV : RCAR_IRQ_SEND) | RCAR_IRQ_STOP;
 
-		if (msr) {
-			if (priv->devtype < I2C_RCAR_GEN3)
+		अगर (msr) अणु
+			अगर (priv->devtype < I2C_RCAR_GEN3)
 				rcar_i2c_gen2_irq(0, priv);
-			else
+			अन्यथा
 				rcar_i2c_gen3_irq(0, priv);
-		}
+		पूर्ण
 
-		time_left = time_before_eq(jiffies, j);
-	} while (!(priv->flags & ID_DONE) && time_left);
+		समय_left = समय_beक्रमe_eq(jअगरfies, j);
+	पूर्ण जबतक (!(priv->flags & ID_DONE) && समय_left);
 
-	if (!time_left) {
+	अगर (!समय_left) अणु
 		rcar_i2c_init(priv);
 		ret = -ETIMEDOUT;
-	} else if (priv->flags & ID_NACK) {
+	पूर्ण अन्यथा अगर (priv->flags & ID_NACK) अणु
 		ret = -ENXIO;
-	} else if (priv->flags & ID_ARBLOST) {
+	पूर्ण अन्यथा अगर (priv->flags & ID_ARBLOST) अणु
 		ret = -EAGAIN;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = num - priv->msgs_left; /* The number of transfer */
-	}
+	पूर्ण
 out:
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
 
-	if (ret < 0 && ret != -ENXIO)
+	अगर (ret < 0 && ret != -ENXIO)
 		dev_err(dev, "error %d : %x\n", ret, priv->flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rcar_reg_slave(struct i2c_client *slave)
-{
-	struct rcar_i2c_priv *priv = i2c_get_adapdata(slave->adapter);
+अटल पूर्णांक rcar_reg_slave(काष्ठा i2c_client *slave)
+अणु
+	काष्ठा rcar_i2c_priv *priv = i2c_get_adapdata(slave->adapter);
 
-	if (priv->slave)
-		return -EBUSY;
+	अगर (priv->slave)
+		वापस -EBUSY;
 
-	if (slave->flags & I2C_CLIENT_TEN)
-		return -EAFNOSUPPORT;
+	अगर (slave->flags & I2C_CLIENT_TEN)
+		वापस -EAFNOSUPPORT;
 
-	/* Keep device active for slave address detection logic */
-	pm_runtime_get_sync(rcar_i2c_priv_to_dev(priv));
+	/* Keep device active क्रम slave address detection logic */
+	pm_runसमय_get_sync(rcar_i2c_priv_to_dev(priv));
 
 	priv->slave = slave;
-	rcar_i2c_write(priv, ICSAR, slave->addr);
-	rcar_i2c_write(priv, ICSSR, 0);
-	rcar_i2c_write(priv, ICSIER, SAR);
-	rcar_i2c_write(priv, ICSCR, SIE | SDBS);
+	rcar_i2c_ग_लिखो(priv, ICSAR, slave->addr);
+	rcar_i2c_ग_लिखो(priv, ICSSR, 0);
+	rcar_i2c_ग_लिखो(priv, ICSIER, SAR);
+	rcar_i2c_ग_लिखो(priv, ICSCR, SIE | SDBS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rcar_unreg_slave(struct i2c_client *slave)
-{
-	struct rcar_i2c_priv *priv = i2c_get_adapdata(slave->adapter);
+अटल पूर्णांक rcar_unreg_slave(काष्ठा i2c_client *slave)
+अणु
+	काष्ठा rcar_i2c_priv *priv = i2c_get_adapdata(slave->adapter);
 
 	WARN_ON(!priv->slave);
 
-	/* ensure no irq is running before clearing ptr */
+	/* ensure no irq is running beक्रमe clearing ptr */
 	disable_irq(priv->irq);
-	rcar_i2c_write(priv, ICSIER, 0);
-	rcar_i2c_write(priv, ICSSR, 0);
+	rcar_i2c_ग_लिखो(priv, ICSIER, 0);
+	rcar_i2c_ग_लिखो(priv, ICSSR, 0);
 	enable_irq(priv->irq);
-	rcar_i2c_write(priv, ICSCR, SDBS);
-	rcar_i2c_write(priv, ICSAR, 0); /* Gen2: must be 0 if not using slave */
+	rcar_i2c_ग_लिखो(priv, ICSCR, SDBS);
+	rcar_i2c_ग_लिखो(priv, ICSAR, 0); /* Gen2: must be 0 अगर not using slave */
 
-	priv->slave = NULL;
+	priv->slave = शून्य;
 
-	pm_runtime_put(rcar_i2c_priv_to_dev(priv));
+	pm_runसमय_put(rcar_i2c_priv_to_dev(priv));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32 rcar_i2c_func(struct i2c_adapter *adap)
-{
-	struct rcar_i2c_priv *priv = i2c_get_adapdata(adap);
+अटल u32 rcar_i2c_func(काष्ठा i2c_adapter *adap)
+अणु
+	काष्ठा rcar_i2c_priv *priv = i2c_get_adapdata(adap);
 
 	/*
-	 * This HW can't do:
+	 * This HW can't करो:
 	 * I2C_SMBUS_QUICK (setting FSB during START didn't work)
-	 * I2C_M_NOSTART (automatically sends address after START)
-	 * I2C_M_IGNORE_NAK (automatically sends STOP after NAK)
+	 * I2C_M_NOSTART (स्वतःmatically sends address after START)
+	 * I2C_M_IGNORE_NAK (स्वतःmatically sends STOP after NAK)
 	 */
 	u32 func = I2C_FUNC_I2C | I2C_FUNC_SLAVE |
 		   (I2C_FUNC_SMBUS_EMUL & ~I2C_FUNC_SMBUS_QUICK);
 
-	if (priv->flags & ID_P_HOST_NOTIFY)
+	अगर (priv->flags & ID_P_HOST_NOTIFY)
 		func |= I2C_FUNC_SMBUS_HOST_NOTIFY;
 
-	return func;
-}
+	वापस func;
+पूर्ण
 
-static const struct i2c_algorithm rcar_i2c_algo = {
+अटल स्थिर काष्ठा i2c_algorithm rcar_i2c_algo = अणु
 	.master_xfer	= rcar_i2c_master_xfer,
 	.master_xfer_atomic = rcar_i2c_master_xfer_atomic,
 	.functionality	= rcar_i2c_func,
 	.reg_slave	= rcar_reg_slave,
 	.unreg_slave	= rcar_unreg_slave,
-};
+पूर्ण;
 
-static const struct i2c_adapter_quirks rcar_i2c_quirks = {
+अटल स्थिर काष्ठा i2c_adapter_quirks rcar_i2c_quirks = अणु
 	.flags = I2C_AQ_NO_ZERO_LEN,
-};
+पूर्ण;
 
-static const struct of_device_id rcar_i2c_dt_ids[] = {
-	{ .compatible = "renesas,i2c-r8a7778", .data = (void *)I2C_RCAR_GEN1 },
-	{ .compatible = "renesas,i2c-r8a7779", .data = (void *)I2C_RCAR_GEN1 },
-	{ .compatible = "renesas,i2c-r8a7790", .data = (void *)I2C_RCAR_GEN2 },
-	{ .compatible = "renesas,i2c-r8a7791", .data = (void *)I2C_RCAR_GEN2 },
-	{ .compatible = "renesas,i2c-r8a7792", .data = (void *)I2C_RCAR_GEN2 },
-	{ .compatible = "renesas,i2c-r8a7793", .data = (void *)I2C_RCAR_GEN2 },
-	{ .compatible = "renesas,i2c-r8a7794", .data = (void *)I2C_RCAR_GEN2 },
-	{ .compatible = "renesas,i2c-r8a7795", .data = (void *)I2C_RCAR_GEN3 },
-	{ .compatible = "renesas,i2c-r8a7796", .data = (void *)I2C_RCAR_GEN3 },
-	{ .compatible = "renesas,i2c-rcar", .data = (void *)I2C_RCAR_GEN1 },	/* Deprecated */
-	{ .compatible = "renesas,rcar-gen1-i2c", .data = (void *)I2C_RCAR_GEN1 },
-	{ .compatible = "renesas,rcar-gen2-i2c", .data = (void *)I2C_RCAR_GEN2 },
-	{ .compatible = "renesas,rcar-gen3-i2c", .data = (void *)I2C_RCAR_GEN3 },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id rcar_i2c_dt_ids[] = अणु
+	अणु .compatible = "renesas,i2c-r8a7778", .data = (व्योम *)I2C_RCAR_GEN1 पूर्ण,
+	अणु .compatible = "renesas,i2c-r8a7779", .data = (व्योम *)I2C_RCAR_GEN1 पूर्ण,
+	अणु .compatible = "renesas,i2c-r8a7790", .data = (व्योम *)I2C_RCAR_GEN2 पूर्ण,
+	अणु .compatible = "renesas,i2c-r8a7791", .data = (व्योम *)I2C_RCAR_GEN2 पूर्ण,
+	अणु .compatible = "renesas,i2c-r8a7792", .data = (व्योम *)I2C_RCAR_GEN2 पूर्ण,
+	अणु .compatible = "renesas,i2c-r8a7793", .data = (व्योम *)I2C_RCAR_GEN2 पूर्ण,
+	अणु .compatible = "renesas,i2c-r8a7794", .data = (व्योम *)I2C_RCAR_GEN2 पूर्ण,
+	अणु .compatible = "renesas,i2c-r8a7795", .data = (व्योम *)I2C_RCAR_GEN3 पूर्ण,
+	अणु .compatible = "renesas,i2c-r8a7796", .data = (व्योम *)I2C_RCAR_GEN3 पूर्ण,
+	अणु .compatible = "renesas,i2c-rcar", .data = (व्योम *)I2C_RCAR_GEN1 पूर्ण,	/* Deprecated */
+	अणु .compatible = "renesas,rcar-gen1-i2c", .data = (व्योम *)I2C_RCAR_GEN1 पूर्ण,
+	अणु .compatible = "renesas,rcar-gen2-i2c", .data = (व्योम *)I2C_RCAR_GEN2 पूर्ण,
+	अणु .compatible = "renesas,rcar-gen3-i2c", .data = (व्योम *)I2C_RCAR_GEN3 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rcar_i2c_dt_ids);
 
-static int rcar_i2c_probe(struct platform_device *pdev)
-{
-	struct rcar_i2c_priv *priv;
-	struct i2c_adapter *adap;
-	struct device *dev = &pdev->dev;
-	unsigned long irqflags = 0;
-	irqreturn_t (*irqhandler)(int irq, void *ptr) = rcar_i2c_gen3_irq;
-	int ret;
+अटल पूर्णांक rcar_i2c_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rcar_i2c_priv *priv;
+	काष्ठा i2c_adapter *adap;
+	काष्ठा device *dev = &pdev->dev;
+	अचिन्हित दीर्घ irqflags = 0;
+	irqवापस_t (*irqhandler)(पूर्णांक irq, व्योम *ptr) = rcar_i2c_gen3_irq;
+	पूर्णांक ret;
 
-	/* Otherwise logic will break because some bytes must always use PIO */
+	/* Otherwise logic will अवरोध because some bytes must always use PIO */
 	BUILD_BUG_ON_MSG(RCAR_MIN_DMA_LEN < 3, "Invalid min DMA length");
 
-	priv = devm_kzalloc(dev, sizeof(struct rcar_i2c_priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(काष्ठा rcar_i2c_priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	priv->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(priv->clk)) {
+	priv->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(priv->clk)) अणु
 		dev_err(dev, "cannot get clock\n");
-		return PTR_ERR(priv->clk);
-	}
+		वापस PTR_ERR(priv->clk);
+	पूर्ण
 
-	priv->io = devm_platform_get_and_ioremap_resource(pdev, 0, &priv->res);
-	if (IS_ERR(priv->io))
-		return PTR_ERR(priv->io);
+	priv->io = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, &priv->res);
+	अगर (IS_ERR(priv->io))
+		वापस PTR_ERR(priv->io);
 
-	priv->devtype = (enum rcar_i2c_type)of_device_get_match_data(dev);
-	init_waitqueue_head(&priv->wait);
+	priv->devtype = (क्रमागत rcar_i2c_type)of_device_get_match_data(dev);
+	init_रुकोqueue_head(&priv->रुको);
 
 	adap = &priv->adap;
 	adap->nr = pdev->id;
@@ -1060,135 +1061,135 @@ static int rcar_i2c_probe(struct platform_device *pdev)
 	adap->bus_recovery_info = &rcar_i2c_bri;
 	adap->quirks = &rcar_i2c_quirks;
 	i2c_set_adapdata(adap, priv);
-	strlcpy(adap->name, pdev->name, sizeof(adap->name));
+	strlcpy(adap->name, pdev->name, माप(adap->name));
 
 	/* Init DMA */
 	sg_init_table(&priv->sg, 1);
 	priv->dma_direction = DMA_NONE;
 	priv->dma_rx = priv->dma_tx = ERR_PTR(-EPROBE_DEFER);
 
-	/* Activate device for clock calculation */
-	pm_runtime_enable(dev);
-	pm_runtime_get_sync(dev);
-	ret = rcar_i2c_clock_calculate(priv);
-	if (ret < 0)
-		goto out_pm_put;
+	/* Activate device क्रम घड़ी calculation */
+	pm_runसमय_enable(dev);
+	pm_runसमय_get_sync(dev);
+	ret = rcar_i2c_घड़ी_calculate(priv);
+	अगर (ret < 0)
+		जाओ out_pm_put;
 
-	rcar_i2c_write(priv, ICSAR, 0); /* Gen2: must be 0 if not using slave */
+	rcar_i2c_ग_लिखो(priv, ICSAR, 0); /* Gen2: must be 0 अगर not using slave */
 
-	if (priv->devtype < I2C_RCAR_GEN3) {
+	अगर (priv->devtype < I2C_RCAR_GEN3) अणु
 		irqflags |= IRQF_NO_THREAD;
 		irqhandler = rcar_i2c_gen2_irq;
-	}
+	पूर्ण
 
-	if (priv->devtype == I2C_RCAR_GEN3) {
-		priv->rstc = devm_reset_control_get_exclusive(&pdev->dev, NULL);
-		if (!IS_ERR(priv->rstc)) {
+	अगर (priv->devtype == I2C_RCAR_GEN3) अणु
+		priv->rstc = devm_reset_control_get_exclusive(&pdev->dev, शून्य);
+		अगर (!IS_ERR(priv->rstc)) अणु
 			ret = reset_control_status(priv->rstc);
-			if (ret < 0)
+			अगर (ret < 0)
 				priv->rstc = ERR_PTR(-ENOTSUPP);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Stay always active when multi-master to keep arbitration working */
-	if (of_property_read_bool(dev->of_node, "multi-master"))
+	अगर (of_property_पढ़ो_bool(dev->of_node, "multi-master"))
 		priv->flags |= ID_P_PM_BLOCKED;
-	else
-		pm_runtime_put(dev);
+	अन्यथा
+		pm_runसमय_put(dev);
 
-	if (of_property_read_bool(dev->of_node, "smbus"))
+	अगर (of_property_पढ़ो_bool(dev->of_node, "smbus"))
 		priv->flags |= ID_P_HOST_NOTIFY;
 
-	ret = platform_get_irq(pdev, 0);
-	if (ret < 0)
-		goto out_pm_disable;
+	ret = platक्रमm_get_irq(pdev, 0);
+	अगर (ret < 0)
+		जाओ out_pm_disable;
 	priv->irq = ret;
 	ret = devm_request_irq(dev, priv->irq, irqhandler, irqflags, dev_name(dev), priv);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dev, "cannot get irq %d\n", priv->irq);
-		goto out_pm_disable;
-	}
+		जाओ out_pm_disable;
+	पूर्ण
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
 	ret = i2c_add_numbered_adapter(adap);
-	if (ret < 0)
-		goto out_pm_disable;
+	अगर (ret < 0)
+		जाओ out_pm_disable;
 
-	if (priv->flags & ID_P_HOST_NOTIFY) {
-		priv->host_notify_client = i2c_new_slave_host_notify_device(adap);
-		if (IS_ERR(priv->host_notify_client)) {
-			ret = PTR_ERR(priv->host_notify_client);
-			goto out_del_device;
-		}
-	}
+	अगर (priv->flags & ID_P_HOST_NOTIFY) अणु
+		priv->host_notअगरy_client = i2c_new_slave_host_notअगरy_device(adap);
+		अगर (IS_ERR(priv->host_notअगरy_client)) अणु
+			ret = PTR_ERR(priv->host_notअगरy_client);
+			जाओ out_del_device;
+		पूर्ण
+	पूर्ण
 
 	dev_info(dev, "probed\n");
 
-	return 0;
+	वापस 0;
 
  out_del_device:
 	i2c_del_adapter(&priv->adap);
  out_pm_put:
-	pm_runtime_put(dev);
+	pm_runसमय_put(dev);
  out_pm_disable:
-	pm_runtime_disable(dev);
-	return ret;
-}
+	pm_runसमय_disable(dev);
+	वापस ret;
+पूर्ण
 
-static int rcar_i2c_remove(struct platform_device *pdev)
-{
-	struct rcar_i2c_priv *priv = platform_get_drvdata(pdev);
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक rcar_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rcar_i2c_priv *priv = platक्रमm_get_drvdata(pdev);
+	काष्ठा device *dev = &pdev->dev;
 
-	if (priv->host_notify_client)
-		i2c_free_slave_host_notify_device(priv->host_notify_client);
+	अगर (priv->host_notअगरy_client)
+		i2c_मुक्त_slave_host_notअगरy_device(priv->host_notअगरy_client);
 	i2c_del_adapter(&priv->adap);
 	rcar_i2c_release_dma(priv);
-	if (priv->flags & ID_P_PM_BLOCKED)
-		pm_runtime_put(dev);
-	pm_runtime_disable(dev);
+	अगर (priv->flags & ID_P_PM_BLOCKED)
+		pm_runसमय_put(dev);
+	pm_runसमय_disable(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int rcar_i2c_suspend(struct device *dev)
-{
-	struct rcar_i2c_priv *priv = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक rcar_i2c_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा rcar_i2c_priv *priv = dev_get_drvdata(dev);
 
 	i2c_mark_adapter_suspended(&priv->adap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rcar_i2c_resume(struct device *dev)
-{
-	struct rcar_i2c_priv *priv = dev_get_drvdata(dev);
+अटल पूर्णांक rcar_i2c_resume(काष्ठा device *dev)
+अणु
+	काष्ठा rcar_i2c_priv *priv = dev_get_drvdata(dev);
 
 	i2c_mark_adapter_resumed(&priv->adap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops rcar_i2c_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops rcar_i2c_pm_ops = अणु
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(rcar_i2c_suspend, rcar_i2c_resume)
-};
+पूर्ण;
 
-#define DEV_PM_OPS (&rcar_i2c_pm_ops)
-#else
-#define DEV_PM_OPS NULL
-#endif /* CONFIG_PM_SLEEP */
+#घोषणा DEV_PM_OPS (&rcar_i2c_pm_ops)
+#अन्यथा
+#घोषणा DEV_PM_OPS शून्य
+#पूर्ण_अगर /* CONFIG_PM_SLEEP */
 
-static struct platform_driver rcar_i2c_driver = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver rcar_i2c_driver = अणु
+	.driver	= अणु
 		.name	= "i2c-rcar",
 		.of_match_table = rcar_i2c_dt_ids,
 		.pm	= DEV_PM_OPS,
-	},
+	पूर्ण,
 	.probe		= rcar_i2c_probe,
-	.remove		= rcar_i2c_remove,
-};
+	.हटाओ		= rcar_i2c_हटाओ,
+पूर्ण;
 
-module_platform_driver(rcar_i2c_driver);
+module_platक्रमm_driver(rcar_i2c_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Renesas R-Car I2C bus driver");

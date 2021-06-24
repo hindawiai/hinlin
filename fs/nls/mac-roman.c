@@ -1,41 +1,42 @@
+<शैली गुरु>
 /*
  * linux/fs/nls/mac-roman.c
  *
  * Charset macroman translation tables.
- * Generated automatically from the Unicode and charset
+ * Generated स्वतःmatically from the Unicode and अक्षरset
  * tables from the Unicode Organization (www.unicode.org).
- * The Unicode to charset table has only exact mappings.
+ * The Unicode to अक्षरset table has only exact mappings.
  */
 
 /*
  * COPYRIGHT AND PERMISSION NOTICE
  *
  * Copyright 1991-2012 Unicode, Inc.  All rights reserved.  Distributed under
- * the Terms of Use in http://www.unicode.org/copyright.html.
+ * the Terms of Use in http://www.unicode.org/copyright.hपंचांगl.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of the Unicode data files and any associated documentation (the "Data
- * Files") or Unicode software and any associated documentation (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of the Unicode data files and any associated करोcumentation (the "Data
+ * Files") or Unicode software and any associated करोcumentation (the
  * "Software") to deal in the Data Files or Software without restriction,
- * including without limitation the rights to use, copy, modify, merge,
+ * including without limitation the rights to use, copy, modअगरy, merge,
  * publish, distribute, and/or sell copies of the Data Files or Software, and
- * to permit persons to whom the Data Files or Software are furnished to do
+ * to permit persons to whom the Data Files or Software are furnished to करो
  * so, provided that (a) the above copyright notice(s) and this permission
  * notice appear with all copies of the Data Files or Software, (b) both the
  * above copyright notice(s) and this permission notice appear in associated
- * documentation, and (c) there is clear notice in each modified Data File or
- * in the Software as well as in the documentation associated with the Data
- * File(s) or Software that the data or software has been modified.
+ * करोcumentation, and (c) there is clear notice in each modअगरied Data File or
+ * in the Software as well as in the करोcumentation associated with the Data
+ * File(s) or Software that the data or software has been modअगरied.
  *
- * THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+ * THE DATA खाताS AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
  * KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF
  * THIRD PARTY RIGHTS.  IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS
- * INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT
+ * INCLUDED IN THIS NOTICE BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INसूचीECT
  * OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
  * USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
  * OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THE DATA FILES OR SOFTWARE.
+ * PERFORMANCE OF THE DATA खाताS OR SOFTWARE.
  *
  * Except as contained in this notice, the name of a copyright holder shall
  * not be used in advertising or otherwise to promote the sale, use or other
@@ -43,13 +44,13 @@
  * authorization of the copyright holder.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/nls.h>
-#include <linux/errno.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/nls.h>
+#समावेश <linux/त्रुटिसं.स>
 
-static const wchar_t charset2uni[256] = {
+अटल स्थिर ब_अक्षर_प्रकार अक्षरset2uni[256] = अणु
 	/* 0x00 */
 	0x0000, 0x0001, 0x0002, 0x0003,
 	0x0004, 0x0005, 0x0006, 0x0007,
@@ -130,9 +131,9 @@ static const wchar_t charset2uni[256] = {
 	0x00d9, 0x0131, 0x02c6, 0x02dc,
 	0x00af, 0x02d8, 0x02d9, 0x02da,
 	0x00b8, 0x02dd, 0x02db, 0x02c7,
-};
+पूर्ण;
 
-static const unsigned char page00[256] = {
+अटल स्थिर अचिन्हित अक्षर page00[256] = अणु
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, /* 0x00-0x07 */
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, /* 0x08-0x0f */
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, /* 0x10-0x17 */
@@ -165,9 +166,9 @@ static const unsigned char page00[256] = {
 	0x8f, 0x8e, 0x90, 0x91, 0x93, 0x92, 0x94, 0x95, /* 0xe8-0xef */
 	0x00, 0x96, 0x98, 0x97, 0x99, 0x9b, 0x9a, 0xd6, /* 0xf0-0xf7 */
 	0xbf, 0x9d, 0x9c, 0x9e, 0x9f, 0x00, 0x00, 0xd8, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char page01[256] = {
+अटल स्थिर अचिन्हित अक्षर page01[256] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -200,9 +201,9 @@ static const unsigned char page01[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xe8-0xef */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf0-0xf7 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char page02[256] = {
+अटल स्थिर अचिन्हित अक्षर page02[256] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -235,9 +236,9 @@ static const unsigned char page02[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xe8-0xef */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf0-0xf7 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char page03[256] = {
+अटल स्थिर अचिन्हित अक्षर page03[256] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -270,9 +271,9 @@ static const unsigned char page03[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xe8-0xef */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf0-0xf7 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char page20[256] = {
+अटल स्थिर अचिन्हित अक्षर page20[256] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0x00, 0x00, 0x00, 0xd0, 0xd1, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -305,9 +306,9 @@ static const unsigned char page20[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xe8-0xef */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf0-0xf7 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char page21[256] = {
+अटल स्थिर अचिन्हित अक्षर page21[256] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -340,9 +341,9 @@ static const unsigned char page21[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xe8-0xef */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf0-0xf7 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char page22[256] = {
+अटल स्थिर अचिन्हित अक्षर page22[256] = अणु
 	0x00, 0x00, 0xb6, 0x00, 0x00, 0x00, 0xc6, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb8, /* 0x08-0x0f */
 	0x00, 0xb7, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -375,9 +376,9 @@ static const unsigned char page22[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xe8-0xef */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf0-0xf7 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char page25[256] = {
+अटल स्थिर अचिन्हित अक्षर page25[256] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -410,9 +411,9 @@ static const unsigned char page25[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xe8-0xef */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf0-0xf7 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char pagef8[256] = {
+अटल स्थिर अचिन्हित अक्षर pagef8[256] = अणु
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -445,9 +446,9 @@ static const unsigned char pagef8[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xe8-0xef */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf0-0xf7 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xf0, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char pagefb[256] = {
+अटल स्थिर अचिन्हित अक्षर pagefb[256] = अणु
 	0x00, 0xde, 0xdf, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x00-0x07 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x08-0x0f */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0x10-0x17 */
@@ -480,44 +481,44 @@ static const unsigned char pagefb[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xe8-0xef */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf0-0xf7 */
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char *const page_uni2charset[256] = {
-	page00, page01, page02, page03, NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	page20, page21, page22, NULL,   NULL,   page25, NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,   NULL,
-	pagef8, NULL,   NULL,   pagefb, NULL,   NULL,   NULL,   NULL,
-};
+अटल स्थिर अचिन्हित अक्षर *स्थिर page_uni2अक्षरset[256] = अणु
+	page00, page01, page02, page03, शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	page20, page21, page22, शून्य,   शून्य,   page25, शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,   शून्य,
+	pagef8, शून्य,   शून्य,   pagefb, शून्य,   शून्य,   शून्य,   शून्य,
+पूर्ण;
 
-static const unsigned char charset2lower[256] = {
+अटल स्थिर अचिन्हित अक्षर अक्षरset2lower[256] = अणु
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0x00-0x07 */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0x08-0x0f */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0x10-0x17 */
@@ -550,9 +551,9 @@ static const unsigned char charset2lower[256] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0xe8-0xef */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0xf0-0xf7 */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static const unsigned char charset2upper[256] = {
+अटल स्थिर अचिन्हित अक्षर अक्षरset2upper[256] = अणु
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0x00-0x07 */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0x08-0x0f */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0x10-0x17 */
@@ -585,52 +586,52 @@ static const unsigned char charset2upper[256] = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0xe8-0xef */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0xf0-0xf7 */
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0xf8-0xff */
-};
+पूर्ण;
 
-static int uni2char(wchar_t uni, unsigned char *out, int boundlen)
-{
-	const unsigned char *uni2charset;
-	unsigned char cl = uni & 0x00ff;
-	unsigned char ch = (uni & 0xff00) >> 8;
+अटल पूर्णांक uni2अक्षर(ब_अक्षर_प्रकार uni, अचिन्हित अक्षर *out, पूर्णांक boundlen)
+अणु
+	स्थिर अचिन्हित अक्षर *uni2अक्षरset;
+	अचिन्हित अक्षर cl = uni & 0x00ff;
+	अचिन्हित अक्षर ch = (uni & 0xff00) >> 8;
 
-	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+	अगर (boundlen <= 0)
+		वापस -ENAMETOOLONG;
 
-	uni2charset = page_uni2charset[ch];
-	if (uni2charset && uni2charset[cl])
-		out[0] = uni2charset[cl];
-	else
-		return -EINVAL;
-	return 1;
-}
+	uni2अक्षरset = page_uni2अक्षरset[ch];
+	अगर (uni2अक्षरset && uni2अक्षरset[cl])
+		out[0] = uni2अक्षरset[cl];
+	अन्यथा
+		वापस -EINVAL;
+	वापस 1;
+पूर्ण
 
-static int char2uni(const unsigned char *rawstring, int boundlen, wchar_t *uni)
-{
-	*uni = charset2uni[*rawstring];
-	if (*uni == 0x0000)
-		return -EINVAL;
-	return 1;
-}
+अटल पूर्णांक अक्षर2uni(स्थिर अचिन्हित अक्षर *rawstring, पूर्णांक boundlen, ब_अक्षर_प्रकार *uni)
+अणु
+	*uni = अक्षरset2uni[*rawstring];
+	अगर (*uni == 0x0000)
+		वापस -EINVAL;
+	वापस 1;
+पूर्ण
 
-static struct nls_table table = {
-	.charset	= "macroman",
-	.uni2char	= uni2char,
-	.char2uni	= char2uni,
-	.charset2lower	= charset2lower,
-	.charset2upper	= charset2upper,
-};
+अटल काष्ठा nls_table table = अणु
+	.अक्षरset	= "macroman",
+	.uni2अक्षर	= uni2अक्षर,
+	.अक्षर2uni	= अक्षर2uni,
+	.अक्षरset2lower	= अक्षरset2lower,
+	.अक्षरset2upper	= अक्षरset2upper,
+पूर्ण;
 
-static int __init init_nls_macroman(void)
-{
-	return register_nls(&table);
-}
+अटल पूर्णांक __init init_nls_macroman(व्योम)
+अणु
+	वापस रेजिस्टर_nls(&table);
+पूर्ण
 
-static void __exit exit_nls_macroman(void)
-{
-	unregister_nls(&table);
-}
+अटल व्योम __निकास निकास_nls_macroman(व्योम)
+अणु
+	unरेजिस्टर_nls(&table);
+पूर्ण
 
 module_init(init_nls_macroman)
-module_exit(exit_nls_macroman)
+module_निकास(निकास_nls_macroman)
 
 MODULE_LICENSE("Dual BSD/GPL");

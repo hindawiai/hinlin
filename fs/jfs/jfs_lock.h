@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2001
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
-#ifndef _H_JFS_LOCK
-#define _H_JFS_LOCK
+#अगर_अघोषित _H_JFS_LOCK
+#घोषणा _H_JFS_LOCK
 
-#include <linux/spinlock.h>
-#include <linux/mutex.h>
-#include <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched.h>
 
 /*
  *	jfs_lock.h
  */
 
 /*
- * Conditional sleep where condition is protected by spinlock
+ * Conditional sleep where condition is रक्षित by spinlock
  *
  * lock_cmd and unlock_cmd take and release the spinlock
  */
-#define __SLEEP_COND(wq, cond, lock_cmd, unlock_cmd)	\
-do {							\
-	DECLARE_WAITQUEUE(__wait, current);		\
+#घोषणा __SLEEP_COND(wq, cond, lock_cmd, unlock_cmd)	\
+करो अणु							\
+	DECLARE_WAITQUEUE(__रुको, current);		\
 							\
-	add_wait_queue(&wq, &__wait);			\
-	for (;;) {					\
+	add_रुको_queue(&wq, &__रुको);			\
+	क्रम (;;) अणु					\
 		set_current_state(TASK_UNINTERRUPTIBLE);\
-		if (cond)				\
-			break;				\
+		अगर (cond)				\
+			अवरोध;				\
 		unlock_cmd;				\
 		io_schedule();				\
 		lock_cmd;				\
-	}						\
+	पूर्ण						\
 	__set_current_state(TASK_RUNNING);			\
-	remove_wait_queue(&wq, &__wait);		\
-} while (0)
+	हटाओ_रुको_queue(&wq, &__रुको);		\
+पूर्ण जबतक (0)
 
-#endif				/* _H_JFS_LOCK */
+#पूर्ण_अगर				/* _H_JFS_LOCK */

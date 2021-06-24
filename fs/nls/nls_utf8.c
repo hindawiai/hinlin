@@ -1,67 +1,68 @@
+<शैली गुरु>
 /*
- * Module for handling utf8 just like any other charset.
+ * Module क्रम handling utf8 just like any other अक्षरset.
  * By Urban Widmark 2000
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/nls.h>
-#include <linux/errno.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/nls.h>
+#समावेश <linux/त्रुटिसं.स>
 
-static unsigned char identity[256];
+अटल अचिन्हित अक्षर identity[256];
 
-static int uni2char(wchar_t uni, unsigned char *out, int boundlen)
-{
-	int n;
+अटल पूर्णांक uni2अक्षर(ब_अक्षर_प्रकार uni, अचिन्हित अक्षर *out, पूर्णांक boundlen)
+अणु
+	पूर्णांक n;
 
-	if (boundlen <= 0)
-		return -ENAMETOOLONG;
+	अगर (boundlen <= 0)
+		वापस -ENAMETOOLONG;
 
 	n = utf32_to_utf8(uni, out, boundlen);
-	if (n < 0) {
+	अगर (n < 0) अणु
 		*out = '?';
-		return -EINVAL;
-	}
-	return n;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस n;
+पूर्ण
 
-static int char2uni(const unsigned char *rawstring, int boundlen, wchar_t *uni)
-{
-	int n;
+अटल पूर्णांक अक्षर2uni(स्थिर अचिन्हित अक्षर *rawstring, पूर्णांक boundlen, ब_अक्षर_प्रकार *uni)
+अणु
+	पूर्णांक n;
 	unicode_t u;
 
 	n = utf8_to_utf32(rawstring, boundlen, &u);
-	if (n < 0 || u > MAX_WCHAR_T) {
+	अगर (n < 0 || u > MAX_WCHAR_T) अणु
 		*uni = 0x003f;	/* ? */
-		return -EINVAL;
-	}
-	*uni = (wchar_t) u;
-	return n;
-}
+		वापस -EINVAL;
+	पूर्ण
+	*uni = (ब_अक्षर_प्रकार) u;
+	वापस n;
+पूर्ण
 
-static struct nls_table table = {
-	.charset	= "utf8",
-	.uni2char	= uni2char,
-	.char2uni	= char2uni,
-	.charset2lower	= identity,	/* no conversion */
-	.charset2upper	= identity,
-};
+अटल काष्ठा nls_table table = अणु
+	.अक्षरset	= "utf8",
+	.uni2अक्षर	= uni2अक्षर,
+	.अक्षर2uni	= अक्षर2uni,
+	.अक्षरset2lower	= identity,	/* no conversion */
+	.अक्षरset2upper	= identity,
+पूर्ण;
 
-static int __init init_nls_utf8(void)
-{
-	int i;
-	for (i=0; i<256; i++)
+अटल पूर्णांक __init init_nls_utf8(व्योम)
+अणु
+	पूर्णांक i;
+	क्रम (i=0; i<256; i++)
 		identity[i] = i;
 
-        return register_nls(&table);
-}
+        वापस रेजिस्टर_nls(&table);
+पूर्ण
 
-static void __exit exit_nls_utf8(void)
-{
-        unregister_nls(&table);
-}
+अटल व्योम __निकास निकास_nls_utf8(व्योम)
+अणु
+        unरेजिस्टर_nls(&table);
+पूर्ण
 
 module_init(init_nls_utf8)
-module_exit(exit_nls_utf8)
+module_निकास(निकास_nls_utf8)
 MODULE_LICENSE("Dual BSD/GPL");

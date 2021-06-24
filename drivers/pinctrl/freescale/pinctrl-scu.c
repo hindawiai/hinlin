@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2016 Freescale Semiconductor, Inc.
  * Copyright 2017-2018 NXP
- *	Dong Aisheng <aisheng.dong@nxp.com>
+ *	Dong Aisheng <aisheng.करोng@nxp.com>
  */
 
-#include <linux/err.h>
-#include <linux/firmware/imx/sci.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/platform_device.h>
+#समावेश <linux/err.h>
+#समावेश <linux/firmware/imx/sci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include "../core.h"
-#include "pinctrl-imx.h"
+#समावेश "../core.h"
+#समावेश "pinctrl-imx.h"
 
-enum pad_func_e {
+क्रमागत pad_func_e अणु
 	IMX_SC_PAD_FUNC_SET = 15,
 	IMX_SC_PAD_FUNC_GET = 16,
-};
+पूर्ण;
 
-struct imx_sc_msg_req_pad_set {
-	struct imx_sc_rpc_msg hdr;
+काष्ठा imx_sc_msg_req_pad_set अणु
+	काष्ठा imx_sc_rpc_msg hdr;
 	u32 val;
 	u16 pad;
-} __packed __aligned(4);
+पूर्ण __packed __aligned(4);
 
-struct imx_sc_msg_req_pad_get {
-	struct imx_sc_rpc_msg hdr;
+काष्ठा imx_sc_msg_req_pad_get अणु
+	काष्ठा imx_sc_rpc_msg hdr;
 	u16 pad;
-} __packed __aligned(4);
+पूर्ण __packed __aligned(4);
 
-struct imx_sc_msg_resp_pad_get {
-	struct imx_sc_rpc_msg hdr;
+काष्ठा imx_sc_msg_resp_pad_get अणु
+	काष्ठा imx_sc_rpc_msg hdr;
 	u32 val;
-} __packed;
+पूर्ण __packed;
 
-static struct imx_sc_ipc *pinctrl_ipc_handle;
+अटल काष्ठा imx_sc_ipc *pinctrl_ipc_handle;
 
-int imx_pinctrl_sc_ipc_init(struct platform_device *pdev)
-{
-	return imx_scu_get_handle(&pinctrl_ipc_handle);
-}
+पूर्णांक imx_pinctrl_sc_ipc_init(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस imx_scu_get_handle(&pinctrl_ipc_handle);
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_pinctrl_sc_ipc_init);
 
-int imx_pinconf_get_scu(struct pinctrl_dev *pctldev, unsigned pin_id,
-			unsigned long *config)
-{
-	struct imx_sc_msg_req_pad_get msg;
-	struct imx_sc_msg_resp_pad_get *resp;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
-	int ret;
+पूर्णांक imx_pinconf_get_scu(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin_id,
+			अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा imx_sc_msg_req_pad_get msg;
+	काष्ठा imx_sc_msg_resp_pad_get *resp;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
+	पूर्णांक ret;
 
 	hdr->ver = IMX_SC_RPC_VERSION;
 	hdr->svc = IMX_SC_RPC_SVC_PAD;
@@ -60,26 +61,26 @@ int imx_pinconf_get_scu(struct pinctrl_dev *pctldev, unsigned pin_id,
 	msg.pad = pin_id;
 
 	ret = imx_scu_call_rpc(pinctrl_ipc_handle, &msg, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	resp = (struct imx_sc_msg_resp_pad_get *)&msg;
+	resp = (काष्ठा imx_sc_msg_resp_pad_get *)&msg;
 	*config = resp->val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_pinconf_get_scu);
 
-int imx_pinconf_set_scu(struct pinctrl_dev *pctldev, unsigned pin_id,
-			unsigned long *configs, unsigned num_configs)
-{
-	struct imx_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
-	struct imx_sc_msg_req_pad_set msg;
-	struct imx_sc_rpc_msg *hdr = &msg.hdr;
-	unsigned int mux = configs[0];
-	unsigned int conf = configs[1];
-	unsigned int val;
-	int ret;
+पूर्णांक imx_pinconf_set_scu(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin_id,
+			अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	काष्ठा imx_pinctrl *ipctl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा imx_sc_msg_req_pad_set msg;
+	काष्ठा imx_sc_rpc_msg *hdr = &msg.hdr;
+	अचिन्हित पूर्णांक mux = configs[0];
+	अचिन्हित पूर्णांक conf = configs[1];
+	अचिन्हित पूर्णांक val;
+	पूर्णांक ret;
 
 	/*
 	 * Set mux and conf together in one IPC call
@@ -102,17 +103,17 @@ int imx_pinconf_set_scu(struct pinctrl_dev *pctldev, unsigned pin_id,
 	dev_dbg(ipctl->dev, "write: pin_id %u config 0x%x val 0x%x\n",
 		pin_id, conf, val);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_pinconf_set_scu);
 
-void imx_pinctrl_parse_pin_scu(struct imx_pinctrl *ipctl,
-			       unsigned int *pin_id, struct imx_pin *pin,
-			       const __be32 **list_p)
-{
-	const struct imx_pinctrl_soc_info *info = ipctl->info;
-	struct imx_pin_scu *pin_scu = &pin->conf.scu;
-	const __be32 *list = *list_p;
+व्योम imx_pinctrl_parse_pin_scu(काष्ठा imx_pinctrl *ipctl,
+			       अचिन्हित पूर्णांक *pin_id, काष्ठा imx_pin *pin,
+			       स्थिर __be32 **list_p)
+अणु
+	स्थिर काष्ठा imx_pinctrl_soc_info *info = ipctl->info;
+	काष्ठा imx_pin_scu *pin_scu = &pin->conf.scu;
+	स्थिर __be32 *list = *list_p;
 
 	pin->pin = be32_to_cpu(*list++);
 	*pin_id = pin->pin;
@@ -122,7 +123,7 @@ void imx_pinctrl_parse_pin_scu(struct imx_pinctrl *ipctl,
 
 	dev_dbg(ipctl->dev, "%s: 0x%x 0x%08lx", info->pins[pin->pin].name,
 		pin_scu->mux_mode, pin_scu->config);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(imx_pinctrl_parse_pin_scu);
 
 MODULE_AUTHOR("Dong Aisheng <aisheng.dong@nxp.com>");

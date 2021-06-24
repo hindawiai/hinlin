@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __DRBD_NLA_H
-#define __DRBD_NLA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __DRBD_NLA_H
+#घोषणा __DRBD_NLA_H
 
-extern int drbd_nla_parse_nested(struct nlattr *tb[], int maxtype, struct nlattr *nla,
-				 const struct nla_policy *policy);
-extern struct nlattr *drbd_nla_find_nested(int maxtype, struct nlattr *nla, int attrtype);
+बाह्य पूर्णांक drbd_nla_parse_nested(काष्ठा nlattr *tb[], पूर्णांक maxtype, काष्ठा nlattr *nla,
+				 स्थिर काष्ठा nla_policy *policy);
+बाह्य काष्ठा nlattr *drbd_nla_find_nested(पूर्णांक maxtype, काष्ठा nlattr *nla, पूर्णांक attrtype);
 
-#endif  /* __DRBD_NLA_H */
+#पूर्ण_अगर  /* __DRBD_NLA_H */

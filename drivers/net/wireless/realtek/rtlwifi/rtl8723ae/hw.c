@@ -1,224 +1,225 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#include "../wifi.h"
-#include "../efuse.h"
-#include "../base.h"
-#include "../regd.h"
-#include "../cam.h"
-#include "../ps.h"
-#include "../pci.h"
-#include "reg.h"
-#include "def.h"
-#include "phy.h"
-#include "../rtl8723com/phy_common.h"
-#include "dm.h"
-#include "../rtl8723com/dm_common.h"
-#include "fw.h"
-#include "../rtl8723com/fw_common.h"
-#include "led.h"
-#include "hw.h"
-#include "../pwrseqcmd.h"
-#include "pwrseq.h"
-#include "btc.h"
+#समावेश "../wifi.h"
+#समावेश "../efuse.h"
+#समावेश "../base.h"
+#समावेश "../regd.h"
+#समावेश "../cam.h"
+#समावेश "../ps.h"
+#समावेश "../pci.h"
+#समावेश "reg.h"
+#समावेश "def.h"
+#समावेश "phy.h"
+#समावेश "../rtl8723com/phy_common.h"
+#समावेश "dm.h"
+#समावेश "../rtl8723com/dm_common.h"
+#समावेश "fw.h"
+#समावेश "../rtl8723com/fw_common.h"
+#समावेश "led.h"
+#समावेश "hw.h"
+#समावेश "../pwrseqcmd.h"
+#समावेश "pwrseq.h"
+#समावेश "btc.h"
 
-#define LLT_CONFIG	5
+#घोषणा LLT_CONFIG	5
 
-static void _rtl8723e_set_bcn_ctrl_reg(struct ieee80211_hw *hw,
+अटल व्योम _rtl8723e_set_bcn_ctrl_reg(काष्ठा ieee80211_hw *hw,
 				       u8 set_bits, u8 clear_bits)
-{
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अणु
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtlpci->reg_bcn_ctrl_val |= set_bits;
 	rtlpci->reg_bcn_ctrl_val &= ~clear_bits;
 
-	rtl_write_byte(rtlpriv, REG_BCN_CTRL, (u8) rtlpci->reg_bcn_ctrl_val);
-}
+	rtl_ग_लिखो_byte(rtlpriv, REG_BCN_CTRL, (u8) rtlpci->reg_bcn_ctrl_val);
+पूर्ण
 
-static void _rtl8723e_stop_tx_beacon(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	u8 tmp1byte;
+अटल व्योम _rtl8723e_stop_tx_beacon(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	u8 पंचांगp1byte;
 
-	tmp1byte = rtl_read_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2);
-	rtl_write_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2, tmp1byte & (~BIT(6)));
-	rtl_write_byte(rtlpriv, REG_TBTT_PROHIBIT + 1, 0x64);
-	tmp1byte = rtl_read_byte(rtlpriv, REG_TBTT_PROHIBIT + 2);
-	tmp1byte &= ~(BIT(0));
-	rtl_write_byte(rtlpriv, REG_TBTT_PROHIBIT + 2, tmp1byte);
-}
+	पंचांगp1byte = rtl_पढ़ो_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2);
+	rtl_ग_लिखो_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2, पंचांगp1byte & (~BIT(6)));
+	rtl_ग_लिखो_byte(rtlpriv, REG_TBTT_PROHIBIT + 1, 0x64);
+	पंचांगp1byte = rtl_पढ़ो_byte(rtlpriv, REG_TBTT_PROHIBIT + 2);
+	पंचांगp1byte &= ~(BIT(0));
+	rtl_ग_लिखो_byte(rtlpriv, REG_TBTT_PROHIBIT + 2, पंचांगp1byte);
+पूर्ण
 
-static void _rtl8723e_resume_tx_beacon(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	u8 tmp1byte;
+अटल व्योम _rtl8723e_resume_tx_beacon(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	u8 पंचांगp1byte;
 
-	tmp1byte = rtl_read_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2);
-	rtl_write_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2, tmp1byte | BIT(6));
-	rtl_write_byte(rtlpriv, REG_TBTT_PROHIBIT + 1, 0xff);
-	tmp1byte = rtl_read_byte(rtlpriv, REG_TBTT_PROHIBIT + 2);
-	tmp1byte |= BIT(1);
-	rtl_write_byte(rtlpriv, REG_TBTT_PROHIBIT + 2, tmp1byte);
-}
+	पंचांगp1byte = rtl_पढ़ो_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2);
+	rtl_ग_लिखो_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2, पंचांगp1byte | BIT(6));
+	rtl_ग_लिखो_byte(rtlpriv, REG_TBTT_PROHIBIT + 1, 0xff);
+	पंचांगp1byte = rtl_पढ़ो_byte(rtlpriv, REG_TBTT_PROHIBIT + 2);
+	पंचांगp1byte |= BIT(1);
+	rtl_ग_लिखो_byte(rtlpriv, REG_TBTT_PROHIBIT + 2, पंचांगp1byte);
+पूर्ण
 
-static void _rtl8723e_enable_bcn_sub_func(struct ieee80211_hw *hw)
-{
+अटल व्योम _rtl8723e_enable_bcn_sub_func(काष्ठा ieee80211_hw *hw)
+अणु
 	_rtl8723e_set_bcn_ctrl_reg(hw, 0, BIT(1));
-}
+पूर्ण
 
-static void _rtl8723e_disable_bcn_sub_func(struct ieee80211_hw *hw)
-{
+अटल व्योम _rtl8723e_disable_bcn_sub_func(काष्ठा ieee80211_hw *hw)
+अणु
 	_rtl8723e_set_bcn_ctrl_reg(hw, BIT(1), 0);
-}
+पूर्ण
 
-void rtl8723e_get_hw_reg(struct ieee80211_hw *hw, u8 variable, u8 *val)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+व्योम rtl8723e_get_hw_reg(काष्ठा ieee80211_hw *hw, u8 variable, u8 *val)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
-	switch (variable) {
-	case HW_VAR_RCR:
+	चयन (variable) अणु
+	हाल HW_VAR_RCR:
 		*((u32 *)(val)) = rtlpci->receive_config;
-		break;
-	case HW_VAR_RF_STATE:
-		*((enum rf_pwrstate *)(val)) = ppsc->rfpwr_state;
-		break;
-	case HW_VAR_FWLPS_RF_ON:{
-			enum rf_pwrstate rfstate;
+		अवरोध;
+	हाल HW_VAR_RF_STATE:
+		*((क्रमागत rf_pwrstate *)(val)) = ppsc->rfpwr_state;
+		अवरोध;
+	हाल HW_VAR_FWLPS_RF_ON:अणु
+			क्रमागत rf_pwrstate rख_स्थितिe;
 			u32 val_rcr;
 
 			rtlpriv->cfg->ops->get_hw_reg(hw,
 						      HW_VAR_RF_STATE,
-						      (u8 *)(&rfstate));
-			if (rfstate == ERFOFF) {
+						      (u8 *)(&rख_स्थितिe));
+			अगर (rख_स्थितिe == ERFOFF) अणु
 				*((bool *)(val)) = true;
-			} else {
-				val_rcr = rtl_read_dword(rtlpriv, REG_RCR);
+			पूर्ण अन्यथा अणु
+				val_rcr = rtl_पढ़ो_dword(rtlpriv, REG_RCR);
 				val_rcr &= 0x00070000;
-				if (val_rcr)
+				अगर (val_rcr)
 					*((bool *)(val)) = false;
-				else
+				अन्यथा
 					*((bool *)(val)) = true;
-			}
-			break;
-		}
-	case HW_VAR_FW_PSMODE_STATUS:
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_FW_PSMODE_STATUS:
 		*((bool *)(val)) = ppsc->fw_current_inpsmode;
-		break;
-	case HW_VAR_CORRECT_TSF:{
+		अवरोध;
+	हाल HW_VAR_CORRECT_TSF:अणु
 			u64 tsf;
 			u32 *ptsf_low = (u32 *)&tsf;
 			u32 *ptsf_high = ((u32 *)&tsf) + 1;
 
-			*ptsf_high = rtl_read_dword(rtlpriv, (REG_TSFTR + 4));
-			*ptsf_low = rtl_read_dword(rtlpriv, REG_TSFTR);
+			*ptsf_high = rtl_पढ़ो_dword(rtlpriv, (REG_TSFTR + 4));
+			*ptsf_low = rtl_पढ़ो_dword(rtlpriv, REG_TSFTR);
 
 			*((u64 *)(val)) = tsf;
 
-			break;
-		}
-	case HAL_DEF_WOWLAN:
-		break;
-	default:
+			अवरोध;
+		पूर्ण
+	हाल HAL_DEF_WOWLAN:
+		अवरोध;
+	शेष:
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_LOUD,
 			"switch case %#x not processed\n", variable);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void rtl8723e_set_hw_reg(struct ieee80211_hw *hw, u8 variable, u8 *val)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+व्योम rtl8723e_set_hw_reg(काष्ठा ieee80211_hw *hw, u8 variable, u8 *val)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
 	u8 idx;
 
-	switch (variable) {
-	case HW_VAR_ETHER_ADDR:{
-			for (idx = 0; idx < ETH_ALEN; idx++) {
-				rtl_write_byte(rtlpriv, (REG_MACID + idx),
+	चयन (variable) अणु
+	हाल HW_VAR_ETHER_ADDR:अणु
+			क्रम (idx = 0; idx < ETH_ALEN; idx++) अणु
+				rtl_ग_लिखो_byte(rtlpriv, (REG_MACID + idx),
 					       val[idx]);
-			}
-			break;
-		}
-	case HW_VAR_BASIC_RATE:{
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_BASIC_RATE:अणु
 			u16 b_rate_cfg = ((u16 *)val)[0];
 			u8 rate_index = 0;
 
 			b_rate_cfg = b_rate_cfg & 0x15f;
 			b_rate_cfg |= 0x01;
-			rtl_write_byte(rtlpriv, REG_RRSR, b_rate_cfg & 0xff);
-			rtl_write_byte(rtlpriv, REG_RRSR + 1,
+			rtl_ग_लिखो_byte(rtlpriv, REG_RRSR, b_rate_cfg & 0xff);
+			rtl_ग_लिखो_byte(rtlpriv, REG_RRSR + 1,
 				       (b_rate_cfg >> 8) & 0xff);
-			while (b_rate_cfg > 0x1) {
+			जबतक (b_rate_cfg > 0x1) अणु
 				b_rate_cfg = (b_rate_cfg >> 1);
 				rate_index++;
-			}
-			rtl_write_byte(rtlpriv, REG_INIRTS_RATE_SEL,
+			पूर्ण
+			rtl_ग_लिखो_byte(rtlpriv, REG_INIRTS_RATE_SEL,
 				       rate_index);
-			break;
-		}
-	case HW_VAR_BSSID:{
-			for (idx = 0; idx < ETH_ALEN; idx++) {
-				rtl_write_byte(rtlpriv, (REG_BSSID + idx),
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_BSSID:अणु
+			क्रम (idx = 0; idx < ETH_ALEN; idx++) अणु
+				rtl_ग_लिखो_byte(rtlpriv, (REG_BSSID + idx),
 					       val[idx]);
-			}
-			break;
-		}
-	case HW_VAR_SIFS:{
-			rtl_write_byte(rtlpriv, REG_SIFS_CTX + 1, val[0]);
-			rtl_write_byte(rtlpriv, REG_SIFS_TRX + 1, val[1]);
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_SIFS:अणु
+			rtl_ग_लिखो_byte(rtlpriv, REG_SIFS_CTX + 1, val[0]);
+			rtl_ग_लिखो_byte(rtlpriv, REG_SIFS_TRX + 1, val[1]);
 
-			rtl_write_byte(rtlpriv, REG_SPEC_SIFS + 1, val[0]);
-			rtl_write_byte(rtlpriv, REG_MAC_SPEC_SIFS + 1, val[0]);
+			rtl_ग_लिखो_byte(rtlpriv, REG_SPEC_SIFS + 1, val[0]);
+			rtl_ग_लिखो_byte(rtlpriv, REG_MAC_SPEC_SIFS + 1, val[0]);
 
-			if (!mac->ht_enable)
-				rtl_write_word(rtlpriv, REG_RESP_SIFS_OFDM,
+			अगर (!mac->ht_enable)
+				rtl_ग_लिखो_word(rtlpriv, REG_RESP_SIFS_OFDM,
 					       0x0e0e);
-			else
-				rtl_write_word(rtlpriv, REG_RESP_SIFS_OFDM,
+			अन्यथा
+				rtl_ग_लिखो_word(rtlpriv, REG_RESP_SIFS_OFDM,
 					       *((u16 *)val));
-			break;
-		}
-	case HW_VAR_SLOT_TIME:{
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_SLOT_TIME:अणु
 			u8 e_aci;
 
 			rtl_dbg(rtlpriv, COMP_MLME, DBG_LOUD,
 				"HW_VAR_SLOT_TIME %x\n", val[0]);
 
-			rtl_write_byte(rtlpriv, REG_SLOT, val[0]);
+			rtl_ग_लिखो_byte(rtlpriv, REG_SLOT, val[0]);
 
-			for (e_aci = 0; e_aci < AC_MAX; e_aci++) {
+			क्रम (e_aci = 0; e_aci < AC_MAX; e_aci++) अणु
 				rtlpriv->cfg->ops->set_hw_reg(hw,
 							      HW_VAR_AC_PARAM,
 							      (u8 *)(&e_aci));
-			}
-			break;
-		}
-	case HW_VAR_ACK_PREAMBLE:{
-			u8 reg_tmp;
-			u8 short_preamble = (bool)(*(u8 *)val);
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_ACK_PREAMBLE:अणु
+			u8 reg_पंचांगp;
+			u8 लघु_preamble = (bool)(*(u8 *)val);
 
-			reg_tmp = (mac->cur_40_prime_sc) << 5;
-			if (short_preamble)
-				reg_tmp |= 0x80;
+			reg_पंचांगp = (mac->cur_40_prime_sc) << 5;
+			अगर (लघु_preamble)
+				reg_पंचांगp |= 0x80;
 
-			rtl_write_byte(rtlpriv, REG_RRSR + 2, reg_tmp);
-			break;
-		}
-	case HW_VAR_AMPDU_MIN_SPACE:{
+			rtl_ग_लिखो_byte(rtlpriv, REG_RRSR + 2, reg_पंचांगp);
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_AMPDU_MIN_SPACE:अणु
 			u8 min_spacing_to_set;
 			u8 sec_min_space;
 
 			min_spacing_to_set = *((u8 *)val);
-			if (min_spacing_to_set <= 7) {
+			अगर (min_spacing_to_set <= 7) अणु
 				sec_min_space = 0;
 
-				if (min_spacing_to_set < sec_min_space)
+				अगर (min_spacing_to_set < sec_min_space)
 					min_spacing_to_set = sec_min_space;
 
 				mac->min_space_cfg = ((mac->min_space_cfg &
@@ -231,12 +232,12 @@ void rtl8723e_set_hw_reg(struct ieee80211_hw *hw, u8 variable, u8 *val)
 					"Set HW_VAR_AMPDU_MIN_SPACE: %#x\n",
 					mac->min_space_cfg);
 
-				rtl_write_byte(rtlpriv, REG_AMPDU_MIN_SPACE,
+				rtl_ग_लिखो_byte(rtlpriv, REG_AMPDU_MIN_SPACE,
 					       mac->min_space_cfg);
-			}
-			break;
-		}
-	case HW_VAR_SHORTGI_DENSITY:{
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_SHORTGI_DENSITY:अणु
 			u8 density_to_set;
 
 			density_to_set = *((u8 *)val);
@@ -246,256 +247,256 @@ void rtl8723e_set_hw_reg(struct ieee80211_hw *hw, u8 variable, u8 *val)
 				"Set HW_VAR_SHORTGI_DENSITY: %#x\n",
 				mac->min_space_cfg);
 
-			rtl_write_byte(rtlpriv, REG_AMPDU_MIN_SPACE,
+			rtl_ग_लिखो_byte(rtlpriv, REG_AMPDU_MIN_SPACE,
 				       mac->min_space_cfg);
 
-			break;
-		}
-	case HW_VAR_AMPDU_FACTOR:{
-			u8 regtoset_normal[4] = { 0x41, 0xa8, 0x72, 0xb9 };
-			u8 regtoset_bt[4] = {0x31, 0x74, 0x42, 0x97};
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_AMPDU_FACTOR:अणु
+			u8 regtoset_normal[4] = अणु 0x41, 0xa8, 0x72, 0xb9 पूर्ण;
+			u8 regtoset_bt[4] = अणु0x31, 0x74, 0x42, 0x97पूर्ण;
 			u8 factor_toset;
-			u8 *p_regtoset = NULL;
+			u8 *p_regtoset = शून्य;
 			u8 index = 0;
 
-			if ((rtlpriv->btcoexist.bt_coexistence) &&
+			अगर ((rtlpriv->btcoexist.bt_coexistence) &&
 			    (rtlpriv->btcoexist.bt_coexist_type ==
 				BT_CSR_BC4))
 				p_regtoset = regtoset_bt;
-			else
+			अन्यथा
 				p_regtoset = regtoset_normal;
 
 			factor_toset = *((u8 *)val);
-			if (factor_toset <= 3) {
+			अगर (factor_toset <= 3) अणु
 				factor_toset = (1 << (factor_toset + 2));
-				if (factor_toset > 0xf)
+				अगर (factor_toset > 0xf)
 					factor_toset = 0xf;
 
-				for (index = 0; index < 4; index++) {
-					if ((p_regtoset[index] & 0xf0) >
+				क्रम (index = 0; index < 4; index++) अणु
+					अगर ((p_regtoset[index] & 0xf0) >
 					    (factor_toset << 4))
 						p_regtoset[index] =
 						    (p_regtoset[index] & 0x0f) |
 						    (factor_toset << 4);
 
-					if ((p_regtoset[index] & 0x0f) >
+					अगर ((p_regtoset[index] & 0x0f) >
 					    factor_toset)
 						p_regtoset[index] =
 						    (p_regtoset[index] & 0xf0) |
 						    (factor_toset);
 
-					rtl_write_byte(rtlpriv,
+					rtl_ग_लिखो_byte(rtlpriv,
 						       (REG_AGGLEN_LMT + index),
 						       p_regtoset[index]);
-				}
+				पूर्ण
 
 				rtl_dbg(rtlpriv, COMP_MLME, DBG_LOUD,
 					"Set HW_VAR_AMPDU_FACTOR: %#x\n",
 					factor_toset);
-			}
-			break;
-		}
-	case HW_VAR_AC_PARAM:{
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_AC_PARAM:अणु
 			u8 e_aci = *((u8 *)val);
 
 			rtl8723_dm_init_edca_turbo(hw);
 
-			if (rtlpci->acm_method != EACMWAY2_SW)
+			अगर (rtlpci->acm_method != EACMWAY2_SW)
 				rtlpriv->cfg->ops->set_hw_reg(hw,
 							      HW_VAR_ACM_CTRL,
 							      (u8 *)(&e_aci));
-			break;
-		}
-	case HW_VAR_ACM_CTRL:{
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_ACM_CTRL:अणु
 			u8 e_aci = *((u8 *)val);
-			union aci_aifsn *p_aci_aifsn =
-			    (union aci_aifsn *)(&mac->ac[0].aifs);
-			u8 acm = p_aci_aifsn->f.acm;
-			u8 acm_ctrl = rtl_read_byte(rtlpriv, REG_ACMHWCTRL);
+			जोड़ aci_aअगरsn *p_aci_aअगरsn =
+			    (जोड़ aci_aअगरsn *)(&mac->ac[0].aअगरs);
+			u8 acm = p_aci_aअगरsn->f.acm;
+			u8 acm_ctrl = rtl_पढ़ो_byte(rtlpriv, REG_ACMHWCTRL);
 
 			acm_ctrl =
 			    acm_ctrl | ((rtlpci->acm_method == 2) ? 0x0 : 0x1);
 
-			if (acm) {
-				switch (e_aci) {
-				case AC0_BE:
+			अगर (acm) अणु
+				चयन (e_aci) अणु
+				हाल AC0_BE:
 					acm_ctrl |= ACMHW_BEQEN;
-					break;
-				case AC2_VI:
+					अवरोध;
+				हाल AC2_VI:
 					acm_ctrl |= ACMHW_VIQEN;
-					break;
-				case AC3_VO:
+					अवरोध;
+				हाल AC3_VO:
 					acm_ctrl |= ACMHW_VOQEN;
-					break;
-				default:
+					अवरोध;
+				शेष:
 					rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 						"HW_VAR_ACM_CTRL acm set failed: eACI is %d\n",
 						acm);
-					break;
-				}
-			} else {
-				switch (e_aci) {
-				case AC0_BE:
+					अवरोध;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				चयन (e_aci) अणु
+				हाल AC0_BE:
 					acm_ctrl &= (~ACMHW_BEQEN);
-					break;
-				case AC2_VI:
+					अवरोध;
+				हाल AC2_VI:
 					acm_ctrl &= (~ACMHW_VIQEN);
-					break;
-				case AC3_VO:
+					अवरोध;
+				हाल AC3_VO:
 					acm_ctrl &= (~ACMHW_VOQEN);
-					break;
-				default:
+					अवरोध;
+				शेष:
 					rtl_dbg(rtlpriv, COMP_ERR, DBG_LOUD,
 						"switch case %#x not processed\n",
 						e_aci);
-					break;
-				}
-			}
+					अवरोध;
+				पूर्ण
+			पूर्ण
 
 			rtl_dbg(rtlpriv, COMP_QOS, DBG_TRACE,
 				"SetHwReg8190pci(): [HW_VAR_ACM_CTRL] Write 0x%X\n",
 				acm_ctrl);
-			rtl_write_byte(rtlpriv, REG_ACMHWCTRL, acm_ctrl);
-			break;
-		}
-	case HW_VAR_RCR:{
-			rtl_write_dword(rtlpriv, REG_RCR, ((u32 *)(val))[0]);
+			rtl_ग_लिखो_byte(rtlpriv, REG_ACMHWCTRL, acm_ctrl);
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_RCR:अणु
+			rtl_ग_लिखो_dword(rtlpriv, REG_RCR, ((u32 *)(val))[0]);
 			rtlpci->receive_config = ((u32 *)(val))[0];
-			break;
-		}
-	case HW_VAR_RETRY_LIMIT:{
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_RETRY_LIMIT:अणु
 			u8 retry_limit = ((u8 *)(val))[0];
 
-			rtl_write_word(rtlpriv, REG_RL,
+			rtl_ग_लिखो_word(rtlpriv, REG_RL,
 				       retry_limit << RETRY_LIMIT_SHORT_SHIFT |
 				       retry_limit << RETRY_LIMIT_LONG_SHIFT);
-			break;
-		}
-	case HW_VAR_DUAL_TSF_RST:
-		rtl_write_byte(rtlpriv, REG_DUAL_TSF_RST, (BIT(0) | BIT(1)));
-		break;
-	case HW_VAR_EFUSE_BYTES:
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_DUAL_TSF_RST:
+		rtl_ग_लिखो_byte(rtlpriv, REG_DUAL_TSF_RST, (BIT(0) | BIT(1)));
+		अवरोध;
+	हाल HW_VAR_EFUSE_BYTES:
 		rtlefuse->efuse_usedbytes = *((u16 *)val);
-		break;
-	case HW_VAR_EFUSE_USAGE:
+		अवरोध;
+	हाल HW_VAR_EFUSE_USAGE:
 		rtlefuse->efuse_usedpercentage = *((u8 *)val);
-		break;
-	case HW_VAR_IO_CMD:
-		rtl8723e_phy_set_io_cmd(hw, (*(enum io_type *)val));
-		break;
-	case HW_VAR_WPA_CONFIG:
-		rtl_write_byte(rtlpriv, REG_SECCFG, *((u8 *)val));
-		break;
-	case HW_VAR_SET_RPWM:{
+		अवरोध;
+	हाल HW_VAR_IO_CMD:
+		rtl8723e_phy_set_io_cmd(hw, (*(क्रमागत io_type *)val));
+		अवरोध;
+	हाल HW_VAR_WPA_CONFIG:
+		rtl_ग_लिखो_byte(rtlpriv, REG_SECCFG, *((u8 *)val));
+		अवरोध;
+	हाल HW_VAR_SET_RPWM:अणु
 			u8 rpwm_val;
 
-			rpwm_val = rtl_read_byte(rtlpriv, REG_PCIE_HRPWM);
+			rpwm_val = rtl_पढ़ो_byte(rtlpriv, REG_PCIE_HRPWM);
 			udelay(1);
 
-			if (rpwm_val & BIT(7)) {
-				rtl_write_byte(rtlpriv, REG_PCIE_HRPWM,
+			अगर (rpwm_val & BIT(7)) अणु
+				rtl_ग_लिखो_byte(rtlpriv, REG_PCIE_HRPWM,
 					       (*(u8 *)val));
-			} else {
-				rtl_write_byte(rtlpriv, REG_PCIE_HRPWM,
+			पूर्ण अन्यथा अणु
+				rtl_ग_लिखो_byte(rtlpriv, REG_PCIE_HRPWM,
 					       ((*(u8 *)val) | BIT(7)));
-			}
+			पूर्ण
 
-			break;
-		}
-	case HW_VAR_H2C_FW_PWRMODE:{
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_H2C_FW_PWRMODE:अणु
 			u8 psmode = (*(u8 *)val);
 
-			if (psmode != FW_PS_ACTIVE_MODE)
+			अगर (psmode != FW_PS_ACTIVE_MODE)
 				rtl8723e_dm_rf_saving(hw, true);
 
 			rtl8723e_set_fw_pwrmode_cmd(hw, (*(u8 *)val));
-			break;
-		}
-	case HW_VAR_FW_PSMODE_STATUS:
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_FW_PSMODE_STATUS:
 		ppsc->fw_current_inpsmode = *((bool *)val);
-		break;
-	case HW_VAR_H2C_FW_JOINBSSRPT:{
+		अवरोध;
+	हाल HW_VAR_H2C_FW_JOINBSSRPT:अणु
 			u8 mstatus = (*(u8 *)val);
-			u8 tmp_regcr, tmp_reg422;
+			u8 पंचांगp_regcr, पंचांगp_reg422;
 			bool b_recover = false;
 
-			if (mstatus == RT_MEDIA_CONNECT) {
+			अगर (mstatus == RT_MEDIA_CONNECT) अणु
 				rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_AID,
-							      NULL);
+							      शून्य);
 
-				tmp_regcr = rtl_read_byte(rtlpriv, REG_CR + 1);
-				rtl_write_byte(rtlpriv, REG_CR + 1,
-					       (tmp_regcr | BIT(0)));
+				पंचांगp_regcr = rtl_पढ़ो_byte(rtlpriv, REG_CR + 1);
+				rtl_ग_लिखो_byte(rtlpriv, REG_CR + 1,
+					       (पंचांगp_regcr | BIT(0)));
 
 				_rtl8723e_set_bcn_ctrl_reg(hw, 0, BIT(3));
 				_rtl8723e_set_bcn_ctrl_reg(hw, BIT(4), 0);
 
-				tmp_reg422 =
-				    rtl_read_byte(rtlpriv,
+				पंचांगp_reg422 =
+				    rtl_पढ़ो_byte(rtlpriv,
 						  REG_FWHW_TXQ_CTRL + 2);
-				if (tmp_reg422 & BIT(6))
+				अगर (पंचांगp_reg422 & BIT(6))
 					b_recover = true;
-				rtl_write_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2,
-					       tmp_reg422 & (~BIT(6)));
+				rtl_ग_लिखो_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 2,
+					       पंचांगp_reg422 & (~BIT(6)));
 
 				rtl8723e_set_fw_rsvdpagepkt(hw, 0);
 
 				_rtl8723e_set_bcn_ctrl_reg(hw, BIT(3), 0);
 				_rtl8723e_set_bcn_ctrl_reg(hw, 0, BIT(4));
 
-				if (b_recover) {
-					rtl_write_byte(rtlpriv,
+				अगर (b_recover) अणु
+					rtl_ग_लिखो_byte(rtlpriv,
 						       REG_FWHW_TXQ_CTRL + 2,
-						       tmp_reg422);
-				}
+						       पंचांगp_reg422);
+				पूर्ण
 
-				rtl_write_byte(rtlpriv, REG_CR + 1,
-					       (tmp_regcr & ~(BIT(0))));
-			}
+				rtl_ग_लिखो_byte(rtlpriv, REG_CR + 1,
+					       (पंचांगp_regcr & ~(BIT(0))));
+			पूर्ण
 			rtl8723e_set_fw_joinbss_report_cmd(hw, (*(u8 *)val));
 
-			break;
-		}
-	case HW_VAR_H2C_FW_P2P_PS_OFFLOAD:{
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_H2C_FW_P2P_PS_OFFLOAD:अणु
 		rtl8723e_set_p2p_ps_offload_cmd(hw, (*(u8 *)val));
-		break;
-	}
-	case HW_VAR_AID:{
-			u16 u2btmp;
+		अवरोध;
+	पूर्ण
+	हाल HW_VAR_AID:अणु
+			u16 u2bपंचांगp;
 
-			u2btmp = rtl_read_word(rtlpriv, REG_BCN_PSR_RPT);
-			u2btmp &= 0xC000;
-			rtl_write_word(rtlpriv, REG_BCN_PSR_RPT,
-				       (u2btmp | mac->assoc_id));
+			u2bपंचांगp = rtl_पढ़ो_word(rtlpriv, REG_BCN_PSR_RPT);
+			u2bपंचांगp &= 0xC000;
+			rtl_ग_लिखो_word(rtlpriv, REG_BCN_PSR_RPT,
+				       (u2bपंचांगp | mac->assoc_id));
 
-			break;
-		}
-	case HW_VAR_CORRECT_TSF:{
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_CORRECT_TSF:अणु
 			u8 btype_ibss = ((u8 *)(val))[0];
 
-			if (btype_ibss)
+			अगर (btype_ibss)
 				_rtl8723e_stop_tx_beacon(hw);
 
 			_rtl8723e_set_bcn_ctrl_reg(hw, 0, BIT(3));
 
-			rtl_write_dword(rtlpriv, REG_TSFTR,
+			rtl_ग_लिखो_dword(rtlpriv, REG_TSFTR,
 					(u32)(mac->tsf & 0xffffffff));
-			rtl_write_dword(rtlpriv, REG_TSFTR + 4,
+			rtl_ग_लिखो_dword(rtlpriv, REG_TSFTR + 4,
 					(u32)((mac->tsf >> 32) & 0xffffffff));
 
 			_rtl8723e_set_bcn_ctrl_reg(hw, BIT(3), 0);
 
-			if (btype_ibss)
+			अगर (btype_ibss)
 				_rtl8723e_resume_tx_beacon(hw);
 
-			break;
-		}
-	case HW_VAR_FW_LPS_ACTION:{
+			अवरोध;
+		पूर्ण
+	हाल HW_VAR_FW_LPS_ACTION:अणु
 			bool b_enter_fwlps = *((bool *)val);
 			u8 rpwm_val, fw_pwrmode;
 			bool fw_current_inps;
 
-			if (b_enter_fwlps) {
+			अगर (b_enter_fwlps) अणु
 				rpwm_val = 0x02;	/* RF off */
 				fw_current_inps = true;
 				rtlpriv->cfg->ops->set_hw_reg(hw,
@@ -508,7 +509,7 @@ void rtl8723e_set_hw_reg(struct ieee80211_hw *hw, u8 variable, u8 *val)
 				rtlpriv->cfg->ops->set_hw_reg(hw,
 						HW_VAR_SET_RPWM,
 						(u8 *)(&rpwm_val));
-			} else {
+			पूर्ण अन्यथा अणु
 				rpwm_val = 0x0C;	/* RF on */
 				fw_pwrmode = FW_PS_ACTIVE_MODE;
 				fw_current_inps = false;
@@ -522,360 +523,360 @@ void rtl8723e_set_hw_reg(struct ieee80211_hw *hw, u8 variable, u8 *val)
 				rtlpriv->cfg->ops->set_hw_reg(hw,
 						HW_VAR_FW_PSMODE_STATUS,
 						(u8 *)(&fw_current_inps));
-			}
-			 break;
-		}
-	default:
+			पूर्ण
+			 अवरोध;
+		पूर्ण
+	शेष:
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_LOUD,
 			"switch case %#x not processed\n", variable);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static bool _rtl8723e_llt_write(struct ieee80211_hw *hw, u32 address, u32 data)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल bool _rtl8723e_llt_ग_लिखो(काष्ठा ieee80211_hw *hw, u32 address, u32 data)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	bool status = true;
-	long count = 0;
+	दीर्घ count = 0;
 	u32 value = _LLT_INIT_ADDR(address) |
 	    _LLT_INIT_DATA(data) | _LLT_OP(_LLT_WRITE_ACCESS);
 
-	rtl_write_dword(rtlpriv, REG_LLT_INIT, value);
+	rtl_ग_लिखो_dword(rtlpriv, REG_LLT_INIT, value);
 
-	do {
-		value = rtl_read_dword(rtlpriv, REG_LLT_INIT);
-		if (_LLT_NO_ACTIVE == _LLT_OP_VALUE(value))
-			break;
+	करो अणु
+		value = rtl_पढ़ो_dword(rtlpriv, REG_LLT_INIT);
+		अगर (_LLT_NO_ACTIVE == _LLT_OP_VALUE(value))
+			अवरोध;
 
-		if (count > POLLING_LLT_THRESHOLD) {
+		अगर (count > POLLING_LLT_THRESHOLD) अणु
 			pr_err("Failed to polling write LLT done at address %d!\n",
 			       address);
 			status = false;
-			break;
-		}
-	} while (++count);
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (++count);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static bool _rtl8723e_llt_table_init(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	unsigned short i;
+अटल bool _rtl8723e_llt_table_init(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	अचिन्हित लघु i;
 	u8 txpktbuf_bndy;
 	u8 maxpage;
 	bool status;
 	u8 ubyte;
 
-#if LLT_CONFIG == 1
+#अगर LLT_CONFIG == 1
 	maxpage = 255;
 	txpktbuf_bndy = 252;
-#elif LLT_CONFIG == 2
+#या_अगर LLT_CONFIG == 2
 	maxpage = 127;
 	txpktbuf_bndy = 124;
-#elif LLT_CONFIG == 3
+#या_अगर LLT_CONFIG == 3
 	maxpage = 255;
 	txpktbuf_bndy = 174;
-#elif LLT_CONFIG == 4
+#या_अगर LLT_CONFIG == 4
 	maxpage = 255;
 	txpktbuf_bndy = 246;
-#elif LLT_CONFIG == 5
+#या_अगर LLT_CONFIG == 5
 	maxpage = 255;
 	txpktbuf_bndy = 246;
-#endif
+#पूर्ण_अगर
 
-	rtl_write_byte(rtlpriv, REG_CR, 0x8B);
+	rtl_ग_लिखो_byte(rtlpriv, REG_CR, 0x8B);
 
-#if LLT_CONFIG == 1
-	rtl_write_byte(rtlpriv, REG_RQPN_NPQ, 0x1c);
-	rtl_write_dword(rtlpriv, REG_RQPN, 0x80a71c1c);
-#elif LLT_CONFIG == 2
-	rtl_write_dword(rtlpriv, REG_RQPN, 0x845B1010);
-#elif LLT_CONFIG == 3
-	rtl_write_dword(rtlpriv, REG_RQPN, 0x84838484);
-#elif LLT_CONFIG == 4
-	rtl_write_dword(rtlpriv, REG_RQPN, 0x80bd1c1c);
-#elif LLT_CONFIG == 5
-	rtl_write_word(rtlpriv, REG_RQPN_NPQ, 0x0000);
+#अगर LLT_CONFIG == 1
+	rtl_ग_लिखो_byte(rtlpriv, REG_RQPN_NPQ, 0x1c);
+	rtl_ग_लिखो_dword(rtlpriv, REG_RQPN, 0x80a71c1c);
+#या_अगर LLT_CONFIG == 2
+	rtl_ग_लिखो_dword(rtlpriv, REG_RQPN, 0x845B1010);
+#या_अगर LLT_CONFIG == 3
+	rtl_ग_लिखो_dword(rtlpriv, REG_RQPN, 0x84838484);
+#या_अगर LLT_CONFIG == 4
+	rtl_ग_लिखो_dword(rtlpriv, REG_RQPN, 0x80bd1c1c);
+#या_अगर LLT_CONFIG == 5
+	rtl_ग_लिखो_word(rtlpriv, REG_RQPN_NPQ, 0x0000);
 
-	rtl_write_dword(rtlpriv, REG_RQPN, 0x80ac1c29);
-	rtl_write_byte(rtlpriv, REG_RQPN_NPQ, 0x03);
-#endif
+	rtl_ग_लिखो_dword(rtlpriv, REG_RQPN, 0x80ac1c29);
+	rtl_ग_लिखो_byte(rtlpriv, REG_RQPN_NPQ, 0x03);
+#पूर्ण_अगर
 
-	rtl_write_dword(rtlpriv, REG_TRXFF_BNDY, (0x27FF0000 | txpktbuf_bndy));
-	rtl_write_byte(rtlpriv, REG_TDECTRL + 1, txpktbuf_bndy);
+	rtl_ग_लिखो_dword(rtlpriv, REG_TRXFF_BNDY, (0x27FF0000 | txpktbuf_bndy));
+	rtl_ग_लिखो_byte(rtlpriv, REG_TDECTRL + 1, txpktbuf_bndy);
 
-	rtl_write_byte(rtlpriv, REG_TXPKTBUF_BCNQ_BDNY, txpktbuf_bndy);
-	rtl_write_byte(rtlpriv, REG_TXPKTBUF_MGQ_BDNY, txpktbuf_bndy);
+	rtl_ग_लिखो_byte(rtlpriv, REG_TXPKTBUF_BCNQ_BDNY, txpktbuf_bndy);
+	rtl_ग_लिखो_byte(rtlpriv, REG_TXPKTBUF_MGQ_BDNY, txpktbuf_bndy);
 
-	rtl_write_byte(rtlpriv, 0x45D, txpktbuf_bndy);
-	rtl_write_byte(rtlpriv, REG_PBP, 0x11);
-	rtl_write_byte(rtlpriv, REG_RX_DRVINFO_SZ, 0x4);
+	rtl_ग_लिखो_byte(rtlpriv, 0x45D, txpktbuf_bndy);
+	rtl_ग_लिखो_byte(rtlpriv, REG_PBP, 0x11);
+	rtl_ग_लिखो_byte(rtlpriv, REG_RX_DRVINFO_SZ, 0x4);
 
-	for (i = 0; i < (txpktbuf_bndy - 1); i++) {
-		status = _rtl8723e_llt_write(hw, i, i + 1);
-		if (!status)
-			return status;
-	}
+	क्रम (i = 0; i < (txpktbuf_bndy - 1); i++) अणु
+		status = _rtl8723e_llt_ग_लिखो(hw, i, i + 1);
+		अगर (!status)
+			वापस status;
+	पूर्ण
 
-	status = _rtl8723e_llt_write(hw, (txpktbuf_bndy - 1), 0xFF);
-	if (!status)
-		return status;
+	status = _rtl8723e_llt_ग_लिखो(hw, (txpktbuf_bndy - 1), 0xFF);
+	अगर (!status)
+		वापस status;
 
-	for (i = txpktbuf_bndy; i < maxpage; i++) {
-		status = _rtl8723e_llt_write(hw, i, (i + 1));
-		if (!status)
-			return status;
-	}
+	क्रम (i = txpktbuf_bndy; i < maxpage; i++) अणु
+		status = _rtl8723e_llt_ग_लिखो(hw, i, (i + 1));
+		अगर (!status)
+			वापस status;
+	पूर्ण
 
-	status = _rtl8723e_llt_write(hw, maxpage, txpktbuf_bndy);
-	if (!status)
-		return status;
+	status = _rtl8723e_llt_ग_लिखो(hw, maxpage, txpktbuf_bndy);
+	अगर (!status)
+		वापस status;
 
-	rtl_write_byte(rtlpriv, REG_CR, 0xff);
-	ubyte = rtl_read_byte(rtlpriv, REG_RQPN + 3);
-	rtl_write_byte(rtlpriv, REG_RQPN + 3, ubyte | BIT(7));
+	rtl_ग_लिखो_byte(rtlpriv, REG_CR, 0xff);
+	ubyte = rtl_पढ़ो_byte(rtlpriv, REG_RQPN + 3);
+	rtl_ग_लिखो_byte(rtlpriv, REG_RQPN + 3, ubyte | BIT(7));
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void _rtl8723e_gen_refresh_led_state(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	struct rtl_led *pled0 = &rtlpriv->ledctl.sw_led0;
+अटल व्योम _rtl8723e_gen_refresh_led_state(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	काष्ठा rtl_led *pled0 = &rtlpriv->ledctl.sw_led0;
 
-	if (rtlpriv->rtlhal.up_first_time)
-		return;
+	अगर (rtlpriv->rtlhal.up_first_समय)
+		वापस;
 
-	if (ppsc->rfoff_reason == RF_CHANGE_BY_IPS)
+	अगर (ppsc->rfoff_reason == RF_CHANGE_BY_IPS)
 		rtl8723e_sw_led_on(hw, pled0);
-	else if (ppsc->rfoff_reason == RF_CHANGE_BY_INIT)
+	अन्यथा अगर (ppsc->rfoff_reason == RF_CHANGE_BY_INIT)
 		rtl8723e_sw_led_on(hw, pled0);
-	else
+	अन्यथा
 		rtl8723e_sw_led_off(hw, pled0);
-}
+पूर्ण
 
-static bool _rtl8712e_init_mac(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+अटल bool _rtl8712e_init_mac(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
-	unsigned char bytetmp;
-	unsigned short wordtmp;
+	अचिन्हित अक्षर byteपंचांगp;
+	अचिन्हित लघु wordपंचांगp;
 	u16 retry = 0;
-	u16 tmpu2b;
+	u16 पंचांगpu2b;
 	bool mac_func_enable;
 
-	rtl_write_byte(rtlpriv, REG_RSV_CTRL, 0x00);
-	bytetmp = rtl_read_byte(rtlpriv, REG_CR);
-	if (bytetmp == 0xFF)
+	rtl_ग_लिखो_byte(rtlpriv, REG_RSV_CTRL, 0x00);
+	byteपंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_CR);
+	अगर (byteपंचांगp == 0xFF)
 		mac_func_enable = true;
-	else
+	अन्यथा
 		mac_func_enable = false;
 
 	/* HW Power on sequence */
-	if (!rtl_hal_pwrseqcmdparsing(rtlpriv, PWR_CUT_ALL_MSK, PWR_FAB_ALL_MSK,
+	अगर (!rtl_hal_pwrseqcmdparsing(rtlpriv, PWR_CUT_ALL_MSK, PWR_FAB_ALL_MSK,
 		PWR_INTF_PCI_MSK, RTL8723_NIC_ENABLE_FLOW))
-		return false;
+		वापस false;
 
-	bytetmp = rtl_read_byte(rtlpriv, REG_PCIE_CTRL_REG+2);
-	rtl_write_byte(rtlpriv, REG_PCIE_CTRL_REG+2, bytetmp | BIT(4));
+	byteपंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_PCIE_CTRL_REG+2);
+	rtl_ग_लिखो_byte(rtlpriv, REG_PCIE_CTRL_REG+2, byteपंचांगp | BIT(4));
 
-	/* eMAC time out function enable, 0x369[7]=1 */
-	bytetmp = rtl_read_byte(rtlpriv, 0x369);
-	rtl_write_byte(rtlpriv, 0x369, bytetmp | BIT(7));
+	/* eMAC समय out function enable, 0x369[7]=1 */
+	byteपंचांगp = rtl_पढ़ो_byte(rtlpriv, 0x369);
+	rtl_ग_लिखो_byte(rtlpriv, 0x369, byteपंचांगp | BIT(7));
 
-	/* ePHY reg 0x1e bit[4]=1 using MDIO interface,
-	 * we should do this before Enabling ASPM backdoor.
+	/* ePHY reg 0x1e bit[4]=1 using MDIO पूर्णांकerface,
+	 * we should करो this beक्रमe Enabling ASPM backकरोor.
 	 */
-	do {
-		rtl_write_word(rtlpriv, 0x358, 0x5e);
+	करो अणु
+		rtl_ग_लिखो_word(rtlpriv, 0x358, 0x5e);
 		udelay(100);
-		rtl_write_word(rtlpriv, 0x356, 0xc280);
-		rtl_write_word(rtlpriv, 0x354, 0xc290);
-		rtl_write_word(rtlpriv, 0x358, 0x3e);
+		rtl_ग_लिखो_word(rtlpriv, 0x356, 0xc280);
+		rtl_ग_लिखो_word(rtlpriv, 0x354, 0xc290);
+		rtl_ग_लिखो_word(rtlpriv, 0x358, 0x3e);
 		udelay(100);
-		rtl_write_word(rtlpriv, 0x358, 0x5e);
+		rtl_ग_लिखो_word(rtlpriv, 0x358, 0x5e);
 		udelay(100);
-		tmpu2b = rtl_read_word(rtlpriv, 0x356);
+		पंचांगpu2b = rtl_पढ़ो_word(rtlpriv, 0x356);
 		retry++;
-	} while (tmpu2b != 0xc290 && retry < 100);
+	पूर्ण जबतक (पंचांगpu2b != 0xc290 && retry < 100);
 
-	if (retry >= 100) {
+	अगर (retry >= 100) अणु
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD,
 			"InitMAC(): ePHY configure fail!!!\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	rtl_write_word(rtlpriv, REG_CR, 0x2ff);
-	rtl_write_word(rtlpriv, REG_CR + 1, 0x06);
+	rtl_ग_लिखो_word(rtlpriv, REG_CR, 0x2ff);
+	rtl_ग_लिखो_word(rtlpriv, REG_CR + 1, 0x06);
 
-	if (!mac_func_enable) {
-		if (!_rtl8723e_llt_table_init(hw))
-			return false;
-	}
+	अगर (!mac_func_enable) अणु
+		अगर (!_rtl8723e_llt_table_init(hw))
+			वापस false;
+	पूर्ण
 
-	rtl_write_dword(rtlpriv, REG_HISR, 0xffffffff);
-	rtl_write_byte(rtlpriv, REG_HISRE, 0xff);
+	rtl_ग_लिखो_dword(rtlpriv, REG_HISR, 0xffffffff);
+	rtl_ग_लिखो_byte(rtlpriv, REG_HISRE, 0xff);
 
-	rtl_write_word(rtlpriv, REG_TRXFF_BNDY + 2, 0x27ff);
+	rtl_ग_लिखो_word(rtlpriv, REG_TRXFF_BNDY + 2, 0x27ff);
 
-	wordtmp = rtl_read_word(rtlpriv, REG_TRXDMA_CTRL);
-	wordtmp &= 0xf;
-	wordtmp |= 0xF771;
-	rtl_write_word(rtlpriv, REG_TRXDMA_CTRL, wordtmp);
+	wordपंचांगp = rtl_पढ़ो_word(rtlpriv, REG_TRXDMA_CTRL);
+	wordपंचांगp &= 0xf;
+	wordपंचांगp |= 0xF771;
+	rtl_ग_लिखो_word(rtlpriv, REG_TRXDMA_CTRL, wordपंचांगp);
 
-	rtl_write_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 1, 0x1F);
-	rtl_write_dword(rtlpriv, REG_RCR, rtlpci->receive_config);
-	rtl_write_word(rtlpriv, REG_RXFLTMAP2, 0xFFFF);
-	rtl_write_dword(rtlpriv, REG_TCR, rtlpci->transmit_config);
+	rtl_ग_लिखो_byte(rtlpriv, REG_FWHW_TXQ_CTRL + 1, 0x1F);
+	rtl_ग_लिखो_dword(rtlpriv, REG_RCR, rtlpci->receive_config);
+	rtl_ग_लिखो_word(rtlpriv, REG_RXFLTMAP2, 0xFFFF);
+	rtl_ग_लिखो_dword(rtlpriv, REG_TCR, rtlpci->transmit_config);
 
-	rtl_write_byte(rtlpriv, 0x4d0, 0x0);
+	rtl_ग_लिखो_byte(rtlpriv, 0x4d0, 0x0);
 
-	rtl_write_dword(rtlpriv, REG_BCNQ_DESA,
+	rtl_ग_लिखो_dword(rtlpriv, REG_BCNQ_DESA,
 			((u64) rtlpci->tx_ring[BEACON_QUEUE].dma) &
 			DMA_BIT_MASK(32));
-	rtl_write_dword(rtlpriv, REG_MGQ_DESA,
+	rtl_ग_लिखो_dword(rtlpriv, REG_MGQ_DESA,
 			(u64) rtlpci->tx_ring[MGNT_QUEUE].dma &
 			DMA_BIT_MASK(32));
-	rtl_write_dword(rtlpriv, REG_VOQ_DESA,
+	rtl_ग_लिखो_dword(rtlpriv, REG_VOQ_DESA,
 			(u64) rtlpci->tx_ring[VO_QUEUE].dma & DMA_BIT_MASK(32));
-	rtl_write_dword(rtlpriv, REG_VIQ_DESA,
+	rtl_ग_लिखो_dword(rtlpriv, REG_VIQ_DESA,
 			(u64) rtlpci->tx_ring[VI_QUEUE].dma & DMA_BIT_MASK(32));
-	rtl_write_dword(rtlpriv, REG_BEQ_DESA,
+	rtl_ग_लिखो_dword(rtlpriv, REG_BEQ_DESA,
 			(u64) rtlpci->tx_ring[BE_QUEUE].dma & DMA_BIT_MASK(32));
-	rtl_write_dword(rtlpriv, REG_BKQ_DESA,
+	rtl_ग_लिखो_dword(rtlpriv, REG_BKQ_DESA,
 			(u64) rtlpci->tx_ring[BK_QUEUE].dma & DMA_BIT_MASK(32));
-	rtl_write_dword(rtlpriv, REG_HQ_DESA,
+	rtl_ग_लिखो_dword(rtlpriv, REG_HQ_DESA,
 			(u64) rtlpci->tx_ring[HIGH_QUEUE].dma &
 			DMA_BIT_MASK(32));
-	rtl_write_dword(rtlpriv, REG_RX_DESA,
+	rtl_ग_लिखो_dword(rtlpriv, REG_RX_DESA,
 			(u64) rtlpci->rx_ring[RX_MPDU_QUEUE].dma &
 			DMA_BIT_MASK(32));
 
-	rtl_write_byte(rtlpriv, REG_PCIE_CTRL_REG + 3, 0x74);
+	rtl_ग_लिखो_byte(rtlpriv, REG_PCIE_CTRL_REG + 3, 0x74);
 
-	rtl_write_dword(rtlpriv, REG_INT_MIG, 0);
+	rtl_ग_लिखो_dword(rtlpriv, REG_INT_MIG, 0);
 
-	bytetmp = rtl_read_byte(rtlpriv, REG_APSD_CTRL);
-	rtl_write_byte(rtlpriv, REG_APSD_CTRL, bytetmp & ~BIT(6));
-	do {
+	byteपंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_APSD_CTRL);
+	rtl_ग_लिखो_byte(rtlpriv, REG_APSD_CTRL, byteपंचांगp & ~BIT(6));
+	करो अणु
 		retry++;
-		bytetmp = rtl_read_byte(rtlpriv, REG_APSD_CTRL);
-	} while ((retry < 200) && (bytetmp & BIT(7)));
+		byteपंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_APSD_CTRL);
+	पूर्ण जबतक ((retry < 200) && (byteपंचांगp & BIT(7)));
 
 	_rtl8723e_gen_refresh_led_state(hw);
 
-	rtl_write_dword(rtlpriv, REG_MCUTST_1, 0x0);
+	rtl_ग_लिखो_dword(rtlpriv, REG_MCUTST_1, 0x0);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void _rtl8723e_hw_configure(struct ieee80211_hw *hw)
-{
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल व्योम _rtl8723e_hw_configure(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u8 reg_bw_opmode;
 	u32 reg_prsr;
 
 	reg_bw_opmode = BW_OPMODE_20MHZ;
 	reg_prsr = RATE_ALL_CCK | RATE_ALL_OFDM_AG;
 
-	rtl_write_byte(rtlpriv, REG_INIRTS_RATE_SEL, 0x8);
+	rtl_ग_लिखो_byte(rtlpriv, REG_INIRTS_RATE_SEL, 0x8);
 
-	rtl_write_byte(rtlpriv, REG_BWOPMODE, reg_bw_opmode);
+	rtl_ग_लिखो_byte(rtlpriv, REG_BWOPMODE, reg_bw_opmode);
 
-	rtl_write_dword(rtlpriv, REG_RRSR, reg_prsr);
+	rtl_ग_लिखो_dword(rtlpriv, REG_RRSR, reg_prsr);
 
-	rtl_write_byte(rtlpriv, REG_SLOT, 0x09);
+	rtl_ग_लिखो_byte(rtlpriv, REG_SLOT, 0x09);
 
-	rtl_write_byte(rtlpriv, REG_AMPDU_MIN_SPACE, 0x0);
+	rtl_ग_लिखो_byte(rtlpriv, REG_AMPDU_MIN_SPACE, 0x0);
 
-	rtl_write_word(rtlpriv, REG_FWHW_TXQ_CTRL, 0x1F80);
+	rtl_ग_लिखो_word(rtlpriv, REG_FWHW_TXQ_CTRL, 0x1F80);
 
-	rtl_write_word(rtlpriv, REG_RL, 0x0707);
+	rtl_ग_लिखो_word(rtlpriv, REG_RL, 0x0707);
 
-	rtl_write_dword(rtlpriv, REG_BAR_MODE_CTRL, 0x02012802);
+	rtl_ग_लिखो_dword(rtlpriv, REG_BAR_MODE_CTRL, 0x02012802);
 
-	rtl_write_byte(rtlpriv, REG_HWSEQ_CTRL, 0xFF);
+	rtl_ग_लिखो_byte(rtlpriv, REG_HWSEQ_CTRL, 0xFF);
 
-	rtl_write_dword(rtlpriv, REG_DARFRC, 0x01000000);
-	rtl_write_dword(rtlpriv, REG_DARFRC + 4, 0x07060504);
-	rtl_write_dword(rtlpriv, REG_RARFRC, 0x01000000);
-	rtl_write_dword(rtlpriv, REG_RARFRC + 4, 0x07060504);
+	rtl_ग_लिखो_dword(rtlpriv, REG_DARFRC, 0x01000000);
+	rtl_ग_लिखो_dword(rtlpriv, REG_DARFRC + 4, 0x07060504);
+	rtl_ग_लिखो_dword(rtlpriv, REG_RARFRC, 0x01000000);
+	rtl_ग_लिखो_dword(rtlpriv, REG_RARFRC + 4, 0x07060504);
 
-	if ((rtlpriv->btcoexist.bt_coexistence) &&
+	अगर ((rtlpriv->btcoexist.bt_coexistence) &&
 	    (rtlpriv->btcoexist.bt_coexist_type == BT_CSR_BC4))
-		rtl_write_dword(rtlpriv, REG_AGGLEN_LMT, 0x97427431);
-	else
-		rtl_write_dword(rtlpriv, REG_AGGLEN_LMT, 0xb972a841);
+		rtl_ग_लिखो_dword(rtlpriv, REG_AGGLEN_LMT, 0x97427431);
+	अन्यथा
+		rtl_ग_लिखो_dword(rtlpriv, REG_AGGLEN_LMT, 0xb972a841);
 
-	rtl_write_byte(rtlpriv, REG_ATIMWND, 0x2);
+	rtl_ग_लिखो_byte(rtlpriv, REG_ATIMWND, 0x2);
 
-	rtl_write_byte(rtlpriv, REG_BCN_MAX_ERR, 0xff);
+	rtl_ग_लिखो_byte(rtlpriv, REG_BCN_MAX_ERR, 0xff);
 
 	rtlpci->reg_bcn_ctrl_val = 0x1f;
-	rtl_write_byte(rtlpriv, REG_BCN_CTRL, rtlpci->reg_bcn_ctrl_val);
+	rtl_ग_लिखो_byte(rtlpriv, REG_BCN_CTRL, rtlpci->reg_bcn_ctrl_val);
 
-	rtl_write_byte(rtlpriv, REG_TBTT_PROHIBIT + 1, 0xff);
+	rtl_ग_लिखो_byte(rtlpriv, REG_TBTT_PROHIBIT + 1, 0xff);
 
-	rtl_write_byte(rtlpriv, REG_TBTT_PROHIBIT + 1, 0xff);
+	rtl_ग_लिखो_byte(rtlpriv, REG_TBTT_PROHIBIT + 1, 0xff);
 
-	rtl_write_byte(rtlpriv, REG_PIFS, 0x1C);
-	rtl_write_byte(rtlpriv, REG_AGGR_BREAK_TIME, 0x16);
+	rtl_ग_लिखो_byte(rtlpriv, REG_PIFS, 0x1C);
+	rtl_ग_लिखो_byte(rtlpriv, REG_AGGR_BREAK_TIME, 0x16);
 
-	if ((rtlpriv->btcoexist.bt_coexistence) &&
-	    (rtlpriv->btcoexist.bt_coexist_type == BT_CSR_BC4)) {
-		rtl_write_word(rtlpriv, REG_NAV_PROT_LEN, 0x0020);
-		rtl_write_word(rtlpriv, REG_PROT_MODE_CTRL, 0x0402);
-	} else {
-		rtl_write_word(rtlpriv, REG_NAV_PROT_LEN, 0x0020);
-		rtl_write_word(rtlpriv, REG_NAV_PROT_LEN, 0x0020);
-	}
+	अगर ((rtlpriv->btcoexist.bt_coexistence) &&
+	    (rtlpriv->btcoexist.bt_coexist_type == BT_CSR_BC4)) अणु
+		rtl_ग_लिखो_word(rtlpriv, REG_NAV_PROT_LEN, 0x0020);
+		rtl_ग_लिखो_word(rtlpriv, REG_PROT_MODE_CTRL, 0x0402);
+	पूर्ण अन्यथा अणु
+		rtl_ग_लिखो_word(rtlpriv, REG_NAV_PROT_LEN, 0x0020);
+		rtl_ग_लिखो_word(rtlpriv, REG_NAV_PROT_LEN, 0x0020);
+	पूर्ण
 
-	if ((rtlpriv->btcoexist.bt_coexistence) &&
+	अगर ((rtlpriv->btcoexist.bt_coexistence) &&
 	    (rtlpriv->btcoexist.bt_coexist_type == BT_CSR_BC4))
-		rtl_write_dword(rtlpriv, REG_FAST_EDCA_CTRL, 0x03086666);
-	else
-		rtl_write_dword(rtlpriv, REG_FAST_EDCA_CTRL, 0x086666);
+		rtl_ग_लिखो_dword(rtlpriv, REG_FAST_EDCA_CTRL, 0x03086666);
+	अन्यथा
+		rtl_ग_लिखो_dword(rtlpriv, REG_FAST_EDCA_CTRL, 0x086666);
 
-	rtl_write_byte(rtlpriv, REG_ACKTO, 0x40);
+	rtl_ग_लिखो_byte(rtlpriv, REG_ACKTO, 0x40);
 
-	rtl_write_word(rtlpriv, REG_SPEC_SIFS, 0x1010);
-	rtl_write_word(rtlpriv, REG_MAC_SPEC_SIFS, 0x1010);
+	rtl_ग_लिखो_word(rtlpriv, REG_SPEC_SIFS, 0x1010);
+	rtl_ग_लिखो_word(rtlpriv, REG_MAC_SPEC_SIFS, 0x1010);
 
-	rtl_write_word(rtlpriv, REG_SIFS_CTX, 0x1010);
+	rtl_ग_लिखो_word(rtlpriv, REG_SIFS_CTX, 0x1010);
 
-	rtl_write_word(rtlpriv, REG_SIFS_TRX, 0x1010);
+	rtl_ग_लिखो_word(rtlpriv, REG_SIFS_TRX, 0x1010);
 
-	rtl_write_dword(rtlpriv, REG_MAR, 0xffffffff);
-	rtl_write_dword(rtlpriv, REG_MAR + 4, 0xffffffff);
+	rtl_ग_लिखो_dword(rtlpriv, REG_MAR, 0xffffffff);
+	rtl_ग_लिखो_dword(rtlpriv, REG_MAR + 4, 0xffffffff);
 
-	rtl_write_dword(rtlpriv, 0x394, 0x1);
-}
+	rtl_ग_लिखो_dword(rtlpriv, 0x394, 0x1);
+पूर्ण
 
-static void _rtl8723e_enable_aspm_back_door(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+अटल व्योम _rtl8723e_enable_aspm_back_करोor(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
 
-	rtl_write_byte(rtlpriv, 0x34b, 0x93);
-	rtl_write_word(rtlpriv, 0x350, 0x870c);
-	rtl_write_byte(rtlpriv, 0x352, 0x1);
+	rtl_ग_लिखो_byte(rtlpriv, 0x34b, 0x93);
+	rtl_ग_लिखो_word(rtlpriv, 0x350, 0x870c);
+	rtl_ग_लिखो_byte(rtlpriv, 0x352, 0x1);
 
-	if (ppsc->support_backdoor)
-		rtl_write_byte(rtlpriv, 0x349, 0x1b);
-	else
-		rtl_write_byte(rtlpriv, 0x349, 0x03);
+	अगर (ppsc->support_backकरोor)
+		rtl_ग_लिखो_byte(rtlpriv, 0x349, 0x1b);
+	अन्यथा
+		rtl_ग_लिखो_byte(rtlpriv, 0x349, 0x03);
 
-	rtl_write_word(rtlpriv, 0x350, 0x2718);
-	rtl_write_byte(rtlpriv, 0x352, 0x1);
-}
+	rtl_ग_लिखो_word(rtlpriv, 0x350, 0x2718);
+	rtl_ग_लिखो_byte(rtlpriv, 0x352, 0x1);
+पूर्ण
 
-void rtl8723e_enable_hw_security_config(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+व्योम rtl8723e_enable_hw_security_config(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u8 sec_reg_value;
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
@@ -883,100 +884,100 @@ void rtl8723e_enable_hw_security_config(struct ieee80211_hw *hw)
 		rtlpriv->sec.pairwise_enc_algorithm,
 		rtlpriv->sec.group_enc_algorithm);
 
-	if (rtlpriv->cfg->mod_params->sw_crypto || rtlpriv->sec.use_sw_sec) {
+	अगर (rtlpriv->cfg->mod_params->sw_crypto || rtlpriv->sec.use_sw_sec) अणु
 		rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 			"not open hw encryption\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	sec_reg_value = SCR_TXENCENABLE | SCR_RXDECENABLE;
 
-	if (rtlpriv->sec.use_defaultkey) {
+	अगर (rtlpriv->sec.use_शेषkey) अणु
 		sec_reg_value |= SCR_TXUSEDK;
 		sec_reg_value |= SCR_RXUSEDK;
-	}
+	पूर्ण
 
 	sec_reg_value |= (SCR_RXBCUSEDK | SCR_TXBCUSEDK);
 
-	rtl_write_byte(rtlpriv, REG_CR + 1, 0x02);
+	rtl_ग_लिखो_byte(rtlpriv, REG_CR + 1, 0x02);
 
 	rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 		"The SECR-value %x\n", sec_reg_value);
 
 	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_WPA_CONFIG, &sec_reg_value);
 
-}
+पूर्ण
 
-int rtl8723e_hw_init(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_phy *rtlphy = &(rtlpriv->phy);
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+पूर्णांक rtl8723e_hw_init(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_phy *rtlphy = &(rtlpriv->phy);
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 	bool rtstatus = true;
-	int err;
-	u8 tmp_u1b;
-	unsigned long flags;
+	पूर्णांक err;
+	u8 पंचांगp_u1b;
+	अचिन्हित दीर्घ flags;
 
 	rtlpriv->rtlhal.being_init_adapter = true;
-	/* As this function can take a very long time (up to 350 ms)
+	/* As this function can take a very दीर्घ समय (up to 350 ms)
 	 * and can be called with irqs disabled, reenable the irqs
-	 * to let the other devices continue being serviced.
+	 * to let the other devices जारी being serviced.
 	 *
-	 * It is safe doing so since our own interrupts will only be enabled
+	 * It is safe करोing so since our own पूर्णांकerrupts will only be enabled
 	 * in a subsequent step.
 	 */
 	local_save_flags(flags);
 	local_irq_enable();
-	rtlhal->fw_ready = false;
+	rtlhal->fw_पढ़ोy = false;
 
-	rtlpriv->intf_ops->disable_aspm(hw);
+	rtlpriv->पूर्णांकf_ops->disable_aspm(hw);
 	rtstatus = _rtl8712e_init_mac(hw);
-	if (!rtstatus) {
+	अगर (!rtstatus) अणु
 		pr_err("Init MAC failed\n");
 		err = 1;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	err = rtl8723_download_fw(hw, false, FW_8723A_POLLING_TIMEOUT_COUNT);
-	if (err) {
+	err = rtl8723_करोwnload_fw(hw, false, FW_8723A_POLLING_TIMEOUT_COUNT);
+	अगर (err) अणु
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 			"Failed to download FW. Init HW without FW now..\n");
 		err = 1;
-		goto exit;
-	}
-	rtlhal->fw_ready = true;
+		जाओ निकास;
+	पूर्ण
+	rtlhal->fw_पढ़ोy = true;
 
 	rtlhal->last_hmeboxnum = 0;
 	rtl8723e_phy_mac_config(hw);
-	/* because last function modify RCR, so we update
-	 * rcr var here, or TP will unstable for receive_config
+	/* because last function modअगरy RCR, so we update
+	 * rcr var here, or TP will unstable क्रम receive_config
 	 * is wrong, RX RCR_ACRC32 will cause TP unstable & Rx
-	 * RCR_APP_ICV will cause mac80211 unassoc for cisco 1252
+	 * RCR_APP_ICV will cause mac80211 unassoc क्रम cisco 1252
 	 */
-	rtlpci->receive_config = rtl_read_dword(rtlpriv, REG_RCR);
+	rtlpci->receive_config = rtl_पढ़ो_dword(rtlpriv, REG_RCR);
 	rtlpci->receive_config &= ~(RCR_ACRC32 | RCR_AICV);
-	rtl_write_dword(rtlpriv, REG_RCR, rtlpci->receive_config);
+	rtl_ग_लिखो_dword(rtlpriv, REG_RCR, rtlpci->receive_config);
 
 	rtl8723e_phy_bb_config(hw);
 	rtlphy->rf_mode = RF_OP_BY_SW_3WIRE;
 	rtl8723e_phy_rf_config(hw);
-	if (IS_VENDOR_UMC_A_CUT(rtlhal->version)) {
+	अगर (IS_VENDOR_UMC_A_CUT(rtlhal->version)) अणु
 		rtl_set_rfreg(hw, RF90_PATH_A, RF_RX_G1, MASKDWORD, 0x30255);
 		rtl_set_rfreg(hw, RF90_PATH_A, RF_RX_G2, MASKDWORD, 0x50a00);
-	} else if (IS_81XXC_VENDOR_UMC_B_CUT(rtlhal->version)) {
+	पूर्ण अन्यथा अगर (IS_81XXC_VENDOR_UMC_B_CUT(rtlhal->version)) अणु
 		rtl_set_rfreg(hw, RF90_PATH_A, 0x0C, MASKDWORD, 0x894AE);
 		rtl_set_rfreg(hw, RF90_PATH_A, 0x0A, MASKDWORD, 0x1AF31);
 		rtl_set_rfreg(hw, RF90_PATH_A, RF_IPA, MASKDWORD, 0x8F425);
 		rtl_set_rfreg(hw, RF90_PATH_A, RF_SYN_G2, MASKDWORD, 0x4F200);
 		rtl_set_rfreg(hw, RF90_PATH_A, RF_RCK1, MASKDWORD, 0x44053);
 		rtl_set_rfreg(hw, RF90_PATH_A, RF_RCK2, MASKDWORD, 0x80201);
-	}
-	rtlphy->rfreg_chnlval[0] = rtl_get_rfreg(hw, (enum radio_path)0,
+	पूर्ण
+	rtlphy->rfreg_chnlval[0] = rtl_get_rfreg(hw, (क्रमागत radio_path)0,
 						 RF_CHNLBW, RFREG_OFFSET_MASK);
-	rtlphy->rfreg_chnlval[1] = rtl_get_rfreg(hw, (enum radio_path)1,
+	rtlphy->rfreg_chnlval[1] = rtl_get_rfreg(hw, (क्रमागत radio_path)1,
 						 RF_CHNLBW, RFREG_OFFSET_MASK);
 	rtl_set_bbreg(hw, RFPGA0_RFMOD, BCCKEN, 0x1);
 	rtl_set_bbreg(hw, RFPGA0_RFMOD, BOFDMEN, 0x1);
@@ -988,275 +989,275 @@ int rtl8723e_hw_init(struct ieee80211_hw *hw)
 	ppsc->rfpwr_state = ERFON;
 
 	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_ETHER_ADDR, mac->mac_addr);
-	_rtl8723e_enable_aspm_back_door(hw);
-	rtlpriv->intf_ops->enable_aspm(hw);
+	_rtl8723e_enable_aspm_back_करोor(hw);
+	rtlpriv->पूर्णांकf_ops->enable_aspm(hw);
 
 	rtl8723e_bt_hw_init(hw);
 
-	if (ppsc->rfpwr_state == ERFON) {
-		rtl8723e_phy_set_rfpath_switch(hw, 1);
-		if (rtlphy->iqk_initialized) {
+	अगर (ppsc->rfpwr_state == ERFON) अणु
+		rtl8723e_phy_set_rfpath_चयन(hw, 1);
+		अगर (rtlphy->iqk_initialized) अणु
 			rtl8723e_phy_iq_calibrate(hw, true);
-		} else {
+		पूर्ण अन्यथा अणु
 			rtl8723e_phy_iq_calibrate(hw, false);
 			rtlphy->iqk_initialized = true;
-		}
+		पूर्ण
 
-		rtl8723e_dm_check_txpower_tracking(hw);
+		rtl8723e_dm_check_txघातer_tracking(hw);
 		rtl8723e_phy_lc_calibrate(hw);
-	}
+	पूर्ण
 
-	tmp_u1b = efuse_read_1byte(hw, 0x1FA);
-	if (!(tmp_u1b & BIT(0))) {
+	पंचांगp_u1b = efuse_पढ़ो_1byte(hw, 0x1FA);
+	अगर (!(पंचांगp_u1b & BIT(0))) अणु
 		rtl_set_rfreg(hw, RF90_PATH_A, 0x15, 0x0F, 0x05);
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE, "PA BIAS path A\n");
-	}
+	पूर्ण
 
-	if (!(tmp_u1b & BIT(4))) {
-		tmp_u1b = rtl_read_byte(rtlpriv, 0x16);
-		tmp_u1b &= 0x0F;
-		rtl_write_byte(rtlpriv, 0x16, tmp_u1b | 0x80);
+	अगर (!(पंचांगp_u1b & BIT(4))) अणु
+		पंचांगp_u1b = rtl_पढ़ो_byte(rtlpriv, 0x16);
+		पंचांगp_u1b &= 0x0F;
+		rtl_ग_लिखो_byte(rtlpriv, 0x16, पंचांगp_u1b | 0x80);
 		udelay(10);
-		rtl_write_byte(rtlpriv, 0x16, tmp_u1b | 0x90);
+		rtl_ग_लिखो_byte(rtlpriv, 0x16, पंचांगp_u1b | 0x90);
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE, "under 1.5V\n");
-	}
+	पूर्ण
 	rtl8723e_dm_init(hw);
-exit:
+निकास:
 	local_irq_restore(flags);
 	rtlpriv->rtlhal.being_init_adapter = false;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static enum version_8723e _rtl8723e_read_chip_version(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_phy *rtlphy = &(rtlpriv->phy);
-	enum version_8723e version = 0x0000;
+अटल क्रमागत version_8723e _rtl8723e_पढ़ो_chip_version(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_phy *rtlphy = &(rtlpriv->phy);
+	क्रमागत version_8723e version = 0x0000;
 	u32 value32;
 
-	value32 = rtl_read_dword(rtlpriv, REG_SYS_CFG);
-	if (value32 & TRP_VAUX_EN) {
-		version = (enum version_8723e)(version |
+	value32 = rtl_पढ़ो_dword(rtlpriv, REG_SYS_CFG);
+	अगर (value32 & TRP_VAUX_EN) अणु
+		version = (क्रमागत version_8723e)(version |
 			((value32 & VENDOR_ID) ? CHIP_VENDOR_UMC : 0));
 		/* RTL8723 with BT function. */
-		version = (enum version_8723e)(version |
+		version = (क्रमागत version_8723e)(version |
 			((value32 & BT_FUNC) ? CHIP_8723 : 0));
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Normal mass production chip. */
-		version = (enum version_8723e) NORMAL_CHIP;
-		version = (enum version_8723e)(version |
+		version = (क्रमागत version_8723e) NORMAL_CHIP;
+		version = (क्रमागत version_8723e)(version |
 			((value32 & VENDOR_ID) ? CHIP_VENDOR_UMC : 0));
 		/* RTL8723 with BT function. */
-		version = (enum version_8723e)(version |
+		version = (क्रमागत version_8723e)(version |
 			((value32 & BT_FUNC) ? CHIP_8723 : 0));
-		if (IS_CHIP_VENDOR_UMC(version))
-			version = (enum version_8723e)(version |
+		अगर (IS_CHIP_VENDOR_UMC(version))
+			version = (क्रमागत version_8723e)(version |
 			((value32 & CHIP_VER_RTL_MASK)));/* IC version (CUT) */
-		if (IS_8723_SERIES(version)) {
-			value32 = rtl_read_dword(rtlpriv, REG_GPIO_OUTSTS);
+		अगर (IS_8723_SERIES(version)) अणु
+			value32 = rtl_पढ़ो_dword(rtlpriv, REG_GPIO_OUTSTS);
 			/* ROM code version. */
-			version = (enum version_8723e)(version |
+			version = (क्रमागत version_8723e)(version |
 				((value32 & RF_RL_ID)>>20));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (IS_8723_SERIES(version)) {
-		value32 = rtl_read_dword(rtlpriv, REG_MULTI_FUNC_CTRL);
+	अगर (IS_8723_SERIES(version)) अणु
+		value32 = rtl_पढ़ो_dword(rtlpriv, REG_MULTI_FUNC_CTRL);
 		rtlphy->polarity_ctl = ((value32 & WL_HWPDN_SL) ?
 					RT_POLARITY_HIGH_ACT :
 					RT_POLARITY_LOW_ACT);
-	}
-	switch (version) {
-	case VERSION_TEST_UMC_CHIP_8723:
+	पूर्ण
+	चयन (version) अणु
+	हाल VERSION_TEST_UMC_CHIP_8723:
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 			"Chip Version ID: VERSION_TEST_UMC_CHIP_8723.\n");
-		break;
-	case VERSION_NORMAL_UMC_CHIP_8723_1T1R_A_CUT:
+		अवरोध;
+	हाल VERSION_NORMAL_UMC_CHIP_8723_1T1R_A_CUT:
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 			"Chip Version ID: VERSION_NORMAL_UMC_CHIP_8723_1T1R_A_CUT.\n");
-		break;
-	case VERSION_NORMAL_UMC_CHIP_8723_1T1R_B_CUT:
+		अवरोध;
+	हाल VERSION_NORMAL_UMC_CHIP_8723_1T1R_B_CUT:
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 			"Chip Version ID: VERSION_NORMAL_UMC_CHIP_8723_1T1R_B_CUT.\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("Chip Version ID: Unknown. Bug?\n");
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (IS_8723_SERIES(version))
+	अगर (IS_8723_SERIES(version))
 		rtlphy->rf_type = RF_1T1R;
 
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD, "Chip RF Type: %s\n",
 		(rtlphy->rf_type == RF_2T2R) ? "RF_2T2R" : "RF_1T1R");
 
-	return version;
-}
+	वापस version;
+पूर्ण
 
-static int _rtl8723e_set_media_status(struct ieee80211_hw *hw,
-				      enum nl80211_iftype type)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	u8 bt_msr = rtl_read_byte(rtlpriv, MSR) & 0xfc;
-	enum led_ctl_mode ledaction = LED_CTL_NO_LINK;
+अटल पूर्णांक _rtl8723e_set_media_status(काष्ठा ieee80211_hw *hw,
+				      क्रमागत nl80211_अगरtype type)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	u8 bt_msr = rtl_पढ़ो_byte(rtlpriv, MSR) & 0xfc;
+	क्रमागत led_ctl_mode ledaction = LED_CTL_NO_LINK;
 	u8 mode = MSR_NOLINK;
 
-	rtl_write_dword(rtlpriv, REG_BCN_CTRL, 0);
+	rtl_ग_लिखो_dword(rtlpriv, REG_BCN_CTRL, 0);
 	rtl_dbg(rtlpriv, COMP_BEACON, DBG_LOUD,
 		"clear 0x550 when set HW_VAR_MEDIA_STATUS\n");
 
-	switch (type) {
-	case NL80211_IFTYPE_UNSPECIFIED:
+	चयन (type) अणु
+	हाल NL80211_IFTYPE_UNSPECIFIED:
 		mode = MSR_NOLINK;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 			"Set Network type to NO LINK!\n");
-		break;
-	case NL80211_IFTYPE_ADHOC:
+		अवरोध;
+	हाल NL80211_IFTYPE_ADHOC:
 		mode = MSR_ADHOC;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 			"Set Network type to Ad Hoc!\n");
-		break;
-	case NL80211_IFTYPE_STATION:
+		अवरोध;
+	हाल NL80211_IFTYPE_STATION:
 		mode = MSR_INFRA;
 		ledaction = LED_CTL_LINK;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 			"Set Network type to STA!\n");
-		break;
-	case NL80211_IFTYPE_AP:
+		अवरोध;
+	हाल NL80211_IFTYPE_AP:
 		mode = MSR_AP;
 		ledaction = LED_CTL_LINK;
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_TRACE,
 			"Set Network type to AP!\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("Network type %d not support!\n", type);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	/* MSR_INFRA == Link in infrastructure network;
+	/* MSR_INFRA == Link in infraकाष्ठाure network;
 	 * MSR_ADHOC == Link in ad hoc network;
-	 * Therefore, check link state is necessary.
+	 * Thereक्रमe, check link state is necessary.
 	 *
 	 * MSR_AP == AP mode; link state is not cared here.
 	 */
-	if (mode != MSR_AP &&
-	    rtlpriv->mac80211.link_state < MAC80211_LINKED) {
+	अगर (mode != MSR_AP &&
+	    rtlpriv->mac80211.link_state < MAC80211_LINKED) अणु
 		mode = MSR_NOLINK;
 		ledaction = LED_CTL_NO_LINK;
-	}
-	if (mode == MSR_NOLINK || mode == MSR_INFRA) {
+	पूर्ण
+	अगर (mode == MSR_NOLINK || mode == MSR_INFRA) अणु
 		_rtl8723e_stop_tx_beacon(hw);
 		_rtl8723e_enable_bcn_sub_func(hw);
-	} else if (mode == MSR_ADHOC || mode == MSR_AP) {
+	पूर्ण अन्यथा अगर (mode == MSR_ADHOC || mode == MSR_AP) अणु
 		_rtl8723e_resume_tx_beacon(hw);
 		_rtl8723e_disable_bcn_sub_func(hw);
-	} else {
+	पूर्ण अन्यथा अणु
 		rtl_dbg(rtlpriv, COMP_ERR, DBG_WARNING,
 			"Set HW_VAR_MEDIA_STATUS: No such media status(%x).\n",
 			mode);
-	}
+	पूर्ण
 
-	rtl_write_byte(rtlpriv, MSR, bt_msr | mode);
+	rtl_ग_लिखो_byte(rtlpriv, MSR, bt_msr | mode);
 	rtlpriv->cfg->ops->led_control(hw, ledaction);
-	if (mode == MSR_AP)
-		rtl_write_byte(rtlpriv, REG_BCNTCFG + 1, 0x00);
-	else
-		rtl_write_byte(rtlpriv, REG_BCNTCFG + 1, 0x66);
-	return 0;
-}
+	अगर (mode == MSR_AP)
+		rtl_ग_लिखो_byte(rtlpriv, REG_BCNTCFG + 1, 0x00);
+	अन्यथा
+		rtl_ग_लिखो_byte(rtlpriv, REG_BCNTCFG + 1, 0x66);
+	वापस 0;
+पूर्ण
 
-void rtl8723e_set_check_bssid(struct ieee80211_hw *hw, bool check_bssid)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+व्योम rtl8723e_set_check_bssid(काष्ठा ieee80211_hw *hw, bool check_bssid)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 	u32 reg_rcr = rtlpci->receive_config;
 
-	if (rtlpriv->psc.rfpwr_state != ERFON)
-		return;
+	अगर (rtlpriv->psc.rfpwr_state != ERFON)
+		वापस;
 
-	if (check_bssid) {
+	अगर (check_bssid) अणु
 		reg_rcr |= (RCR_CBSSID_DATA | RCR_CBSSID_BCN);
 		rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_RCR,
 					      (u8 *)(&reg_rcr));
 		_rtl8723e_set_bcn_ctrl_reg(hw, 0, BIT(4));
-	} else if (!check_bssid) {
+	पूर्ण अन्यथा अगर (!check_bssid) अणु
 		reg_rcr &= (~(RCR_CBSSID_DATA | RCR_CBSSID_BCN));
 		_rtl8723e_set_bcn_ctrl_reg(hw, BIT(4), 0);
 		rtlpriv->cfg->ops->set_hw_reg(hw,
 			HW_VAR_RCR, (u8 *)(&reg_rcr));
-	}
-}
+	पूर्ण
+पूर्ण
 
-int rtl8723e_set_network_type(struct ieee80211_hw *hw,
-			      enum nl80211_iftype type)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+पूर्णांक rtl8723e_set_network_type(काष्ठा ieee80211_hw *hw,
+			      क्रमागत nl80211_अगरtype type)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
-	if (_rtl8723e_set_media_status(hw, type))
-		return -EOPNOTSUPP;
+	अगर (_rtl8723e_set_media_status(hw, type))
+		वापस -EOPNOTSUPP;
 
-	if (rtlpriv->mac80211.link_state == MAC80211_LINKED) {
-		if (type != NL80211_IFTYPE_AP)
+	अगर (rtlpriv->mac80211.link_state == MAC80211_LINKED) अणु
+		अगर (type != NL80211_IFTYPE_AP)
 			rtl8723e_set_check_bssid(hw, true);
-	} else {
+	पूर्ण अन्यथा अणु
 		rtl8723e_set_check_bssid(hw, false);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* don't set REG_EDCA_BE_PARAM here
+/* करोn't set REG_EDCA_BE_PARAM here
  * because mac80211 will send pkt when scan
  */
-void rtl8723e_set_qos(struct ieee80211_hw *hw, int aci)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+व्योम rtl8723e_set_qos(काष्ठा ieee80211_hw *hw, पूर्णांक aci)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtl8723_dm_init_edca_turbo(hw);
-	switch (aci) {
-	case AC1_BK:
-		rtl_write_dword(rtlpriv, REG_EDCA_BK_PARAM, 0xa44f);
-		break;
-	case AC0_BE:
-		break;
-	case AC2_VI:
-		rtl_write_dword(rtlpriv, REG_EDCA_VI_PARAM, 0x5e4322);
-		break;
-	case AC3_VO:
-		rtl_write_dword(rtlpriv, REG_EDCA_VO_PARAM, 0x2f3222);
-		break;
-	default:
+	चयन (aci) अणु
+	हाल AC1_BK:
+		rtl_ग_लिखो_dword(rtlpriv, REG_EDCA_BK_PARAM, 0xa44f);
+		अवरोध;
+	हाल AC0_BE:
+		अवरोध;
+	हाल AC2_VI:
+		rtl_ग_लिखो_dword(rtlpriv, REG_EDCA_VI_PARAM, 0x5e4322);
+		अवरोध;
+	हाल AC3_VO:
+		rtl_ग_लिखो_dword(rtlpriv, REG_EDCA_VO_PARAM, 0x2f3222);
+		अवरोध;
+	शेष:
 		WARN_ONCE(true, "rtl8723ae: invalid aci: %d !\n", aci);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-void rtl8723e_enable_interrupt(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+व्योम rtl8723e_enable_पूर्णांकerrupt(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
-	rtl_write_dword(rtlpriv, 0x3a8, rtlpci->irq_mask[0] & 0xFFFFFFFF);
-	rtl_write_dword(rtlpriv, 0x3ac, rtlpci->irq_mask[1] & 0xFFFFFFFF);
+	rtl_ग_लिखो_dword(rtlpriv, 0x3a8, rtlpci->irq_mask[0] & 0xFFFFFFFF);
+	rtl_ग_लिखो_dword(rtlpriv, 0x3ac, rtlpci->irq_mask[1] & 0xFFFFFFFF);
 	rtlpci->irq_enabled = true;
-}
+पूर्ण
 
-void rtl8723e_disable_interrupt(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	rtl_write_dword(rtlpriv, 0x3a8, IMR8190_DISABLED);
-	rtl_write_dword(rtlpriv, 0x3ac, IMR8190_DISABLED);
+व्योम rtl8723e_disable_पूर्णांकerrupt(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	rtl_ग_लिखो_dword(rtlpriv, 0x3a8, IMR8190_DISABLED);
+	rtl_ग_लिखो_dword(rtlpriv, 0x3ac, IMR8190_DISABLED);
 	rtlpci->irq_enabled = false;
 	/*synchronize_irq(rtlpci->pdev->irq);*/
-}
+पूर्ण
 
-static void _rtl8723e_poweroff_adapter(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	u8 u1b_tmp;
+अटल व्योम _rtl8723e_घातeroff_adapter(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	u8 u1b_पंचांगp;
 
 	/* Combo (PCIe + USB) Card and PCIe-MF Card */
 	/* 1. Run LPS WL RFOFF flow */
@@ -1265,186 +1266,186 @@ static void _rtl8723e_poweroff_adapter(struct ieee80211_hw *hw)
 
 	/* 2. 0x1F[7:0] = 0 */
 	/* turn off RF */
-	rtl_write_byte(rtlpriv, REG_RF_CTRL, 0x00);
-	if ((rtl_read_byte(rtlpriv, REG_MCUFWDL) & BIT(7)) &&
-	    rtlhal->fw_ready) {
+	rtl_ग_लिखो_byte(rtlpriv, REG_RF_CTRL, 0x00);
+	अगर ((rtl_पढ़ो_byte(rtlpriv, REG_MCUFWDL) & BIT(7)) &&
+	    rtlhal->fw_पढ़ोy) अणु
 		rtl8723ae_firmware_selfreset(hw);
-	}
+	पूर्ण
 
 	/* Reset MCU. Suggested by Filen. */
-	u1b_tmp = rtl_read_byte(rtlpriv, REG_SYS_FUNC_EN+1);
-	rtl_write_byte(rtlpriv, REG_SYS_FUNC_EN+1, (u1b_tmp & (~BIT(2))));
+	u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_SYS_FUNC_EN+1);
+	rtl_ग_लिखो_byte(rtlpriv, REG_SYS_FUNC_EN+1, (u1b_पंचांगp & (~BIT(2))));
 
 	/* g.	MCUFWDL 0x80[1:0]=0	 */
-	/* reset MCU ready status */
-	rtl_write_byte(rtlpriv, REG_MCUFWDL, 0x00);
+	/* reset MCU पढ़ोy status */
+	rtl_ग_लिखो_byte(rtlpriv, REG_MCUFWDL, 0x00);
 
 	/* HW card disable configuration. */
 	rtl_hal_pwrseqcmdparsing(rtlpriv, PWR_CUT_ALL_MSK, PWR_FAB_ALL_MSK,
 		PWR_INTF_PCI_MSK, RTL8723_NIC_DISABLE_FLOW);
 
 	/* Reset MCU IO Wrapper */
-	u1b_tmp = rtl_read_byte(rtlpriv, REG_RSV_CTRL + 1);
-	rtl_write_byte(rtlpriv, REG_RSV_CTRL + 1, (u1b_tmp & (~BIT(0))));
-	u1b_tmp = rtl_read_byte(rtlpriv, REG_RSV_CTRL + 1);
-	rtl_write_byte(rtlpriv, REG_RSV_CTRL + 1, u1b_tmp | BIT(0));
+	u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_RSV_CTRL + 1);
+	rtl_ग_लिखो_byte(rtlpriv, REG_RSV_CTRL + 1, (u1b_पंचांगp & (~BIT(0))));
+	u1b_पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_RSV_CTRL + 1);
+	rtl_ग_लिखो_byte(rtlpriv, REG_RSV_CTRL + 1, u1b_पंचांगp | BIT(0));
 
 	/* 7. RSV_CTRL 0x1C[7:0] = 0x0E */
-	/* lock ISO/CLK/Power control register */
-	rtl_write_byte(rtlpriv, REG_RSV_CTRL, 0x0e);
-}
+	/* lock ISO/CLK/Power control रेजिस्टर */
+	rtl_ग_लिखो_byte(rtlpriv, REG_RSV_CTRL, 0x0e);
+पूर्ण
 
-void rtl8723e_card_disable(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	enum nl80211_iftype opmode;
+व्योम rtl8723e_card_disable(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	क्रमागत nl80211_अगरtype opmode;
 
 	mac->link_state = MAC80211_NOLINK;
 	opmode = NL80211_IFTYPE_UNSPECIFIED;
 	_rtl8723e_set_media_status(hw, opmode);
-	if (rtlpriv->rtlhal.driver_is_goingto_unload ||
+	अगर (rtlpriv->rtlhal.driver_is_goingto_unload ||
 	    ppsc->rfoff_reason > RF_CHANGE_BY_PS)
 		rtlpriv->cfg->ops->led_control(hw, LED_CTL_POWER_OFF);
 	RT_SET_PS_LEVEL(ppsc, RT_RF_OFF_LEVL_HALT_NIC);
-	_rtl8723e_poweroff_adapter(hw);
+	_rtl8723e_घातeroff_adapter(hw);
 
-	/* after power off we should do iqk again */
+	/* after घातer off we should करो iqk again */
 	rtlpriv->phy.iqk_initialized = false;
-}
+पूर्ण
 
-void rtl8723e_interrupt_recognized(struct ieee80211_hw *hw,
-				   struct rtl_int *intvec)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+व्योम rtl8723e_पूर्णांकerrupt_recognized(काष्ठा ieee80211_hw *hw,
+				   काष्ठा rtl_पूर्णांक *पूर्णांकvec)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
-	intvec->inta = rtl_read_dword(rtlpriv, 0x3a0) & rtlpci->irq_mask[0];
-	rtl_write_dword(rtlpriv, 0x3a0, intvec->inta);
-}
+	पूर्णांकvec->पूर्णांकa = rtl_पढ़ो_dword(rtlpriv, 0x3a0) & rtlpci->irq_mask[0];
+	rtl_ग_लिखो_dword(rtlpriv, 0x3a0, पूर्णांकvec->पूर्णांकa);
+पूर्ण
 
-void rtl8723e_set_beacon_related_registers(struct ieee80211_hw *hw)
-{
+व्योम rtl8723e_set_beacon_related_रेजिस्टरs(काष्ठा ieee80211_hw *hw)
+अणु
 
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	u16 bcn_interval, atim_window;
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	u16 bcn_पूर्णांकerval, atim_winकरोw;
 
-	bcn_interval = mac->beacon_interval;
-	atim_window = 2;	/*FIX MERGE */
-	rtl8723e_disable_interrupt(hw);
-	rtl_write_word(rtlpriv, REG_ATIMWND, atim_window);
-	rtl_write_word(rtlpriv, REG_BCN_INTERVAL, bcn_interval);
-	rtl_write_word(rtlpriv, REG_BCNTCFG, 0x660f);
-	rtl_write_byte(rtlpriv, REG_RXTSF_OFFSET_CCK, 0x18);
-	rtl_write_byte(rtlpriv, REG_RXTSF_OFFSET_OFDM, 0x18);
-	rtl_write_byte(rtlpriv, 0x606, 0x30);
-	rtl8723e_enable_interrupt(hw);
-}
+	bcn_पूर्णांकerval = mac->beacon_पूर्णांकerval;
+	atim_winकरोw = 2;	/*FIX MERGE */
+	rtl8723e_disable_पूर्णांकerrupt(hw);
+	rtl_ग_लिखो_word(rtlpriv, REG_ATIMWND, atim_winकरोw);
+	rtl_ग_लिखो_word(rtlpriv, REG_BCN_INTERVAL, bcn_पूर्णांकerval);
+	rtl_ग_लिखो_word(rtlpriv, REG_BCNTCFG, 0x660f);
+	rtl_ग_लिखो_byte(rtlpriv, REG_RXTSF_OFFSET_CCK, 0x18);
+	rtl_ग_लिखो_byte(rtlpriv, REG_RXTSF_OFFSET_OFDM, 0x18);
+	rtl_ग_लिखो_byte(rtlpriv, 0x606, 0x30);
+	rtl8723e_enable_पूर्णांकerrupt(hw);
+पूर्ण
 
-void rtl8723e_set_beacon_interval(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	u16 bcn_interval = mac->beacon_interval;
+व्योम rtl8723e_set_beacon_पूर्णांकerval(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	u16 bcn_पूर्णांकerval = mac->beacon_पूर्णांकerval;
 
 	rtl_dbg(rtlpriv, COMP_BEACON, DBG_DMESG,
-		"beacon_interval:%d\n", bcn_interval);
-	rtl8723e_disable_interrupt(hw);
-	rtl_write_word(rtlpriv, REG_BCN_INTERVAL, bcn_interval);
-	rtl8723e_enable_interrupt(hw);
-}
+		"beacon_interval:%d\n", bcn_पूर्णांकerval);
+	rtl8723e_disable_पूर्णांकerrupt(hw);
+	rtl_ग_लिखो_word(rtlpriv, REG_BCN_INTERVAL, bcn_पूर्णांकerval);
+	rtl8723e_enable_पूर्णांकerrupt(hw);
+पूर्ण
 
-void rtl8723e_update_interrupt_mask(struct ieee80211_hw *hw,
+व्योम rtl8723e_update_पूर्णांकerrupt_mask(काष्ठा ieee80211_hw *hw,
 				    u32 add_msr, u32 rm_msr)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
 	rtl_dbg(rtlpriv, COMP_INTR, DBG_LOUD,
 		"add_msr:%x, rm_msr:%x\n", add_msr, rm_msr);
 
-	if (add_msr)
+	अगर (add_msr)
 		rtlpci->irq_mask[0] |= add_msr;
-	if (rm_msr)
+	अगर (rm_msr)
 		rtlpci->irq_mask[0] &= (~rm_msr);
-	rtl8723e_disable_interrupt(hw);
-	rtl8723e_enable_interrupt(hw);
-}
+	rtl8723e_disable_पूर्णांकerrupt(hw);
+	rtl8723e_enable_पूर्णांकerrupt(hw);
+पूर्ण
 
-static u8 _rtl8723e_get_chnl_group(u8 chnl)
-{
+अटल u8 _rtl8723e_get_chnl_group(u8 chnl)
+अणु
 	u8 group;
 
-	if (chnl < 3)
+	अगर (chnl < 3)
 		group = 0;
-	else if (chnl < 9)
+	अन्यथा अगर (chnl < 9)
 		group = 1;
-	else
+	अन्यथा
 		group = 2;
-	return group;
-}
+	वापस group;
+पूर्ण
 
-static void _rtl8723e_read_txpower_info_from_hwpg(struct ieee80211_hw *hw,
-						  bool autoload_fail,
+अटल व्योम _rtl8723e_पढ़ो_txघातer_info_from_hwpg(काष्ठा ieee80211_hw *hw,
+						  bool स्वतःload_fail,
 						  u8 *hwinfo)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
 	u8 rf_path, index, tempval;
 	u16 i;
 
-	for (rf_path = 0; rf_path < 1; rf_path++) {
-		for (i = 0; i < 3; i++) {
-			if (!autoload_fail) {
+	क्रम (rf_path = 0; rf_path < 1; rf_path++) अणु
+		क्रम (i = 0; i < 3; i++) अणु
+			अगर (!स्वतःload_fail) अणु
 				rtlefuse->eeprom_chnlarea_txpwr_cck[rf_path][i] =
 				    hwinfo[EEPROM_TXPOWERCCK + rf_path * 3 + i];
 				rtlefuse->eeprom_chnlarea_txpwr_ht40_1s[rf_path][i] =
 				    hwinfo[EEPROM_TXPOWERHT40_1S + rf_path * 3 + i];
-			} else {
+			पूर्ण अन्यथा अणु
 				rtlefuse->eeprom_chnlarea_txpwr_cck[rf_path][i] =
 				    EEPROM_DEFAULT_TXPOWERLEVEL;
 				rtlefuse->eeprom_chnlarea_txpwr_ht40_1s[rf_path][i] =
 				    EEPROM_DEFAULT_TXPOWERLEVEL;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 3; i++) {
-		if (!autoload_fail)
+	क्रम (i = 0; i < 3; i++) अणु
+		अगर (!स्वतःload_fail)
 			tempval = hwinfo[EEPROM_TXPOWERHT40_2SDIFF + i];
-		else
+		अन्यथा
 			tempval = EEPROM_DEFAULT_HT40_2SDIFF;
 		rtlefuse->eprom_chnl_txpwr_ht40_2sdf[RF90_PATH_A][i] =
 		    (tempval & 0xf);
 		rtlefuse->eprom_chnl_txpwr_ht40_2sdf[RF90_PATH_B][i] =
 		    ((tempval & 0xf0) >> 4);
-	}
+	पूर्ण
 
-	for (rf_path = 0; rf_path < 2; rf_path++)
-		for (i = 0; i < 3; i++)
+	क्रम (rf_path = 0; rf_path < 2; rf_path++)
+		क्रम (i = 0; i < 3; i++)
 			RTPRINT(rtlpriv, FINIT, INIT_EEPROM,
 				"RF(%d) EEPROM CCK Area(%d) = 0x%x\n", rf_path,
 				 i, rtlefuse->eeprom_chnlarea_txpwr_cck
 					[rf_path][i]);
-	for (rf_path = 0; rf_path < 2; rf_path++)
-		for (i = 0; i < 3; i++)
+	क्रम (rf_path = 0; rf_path < 2; rf_path++)
+		क्रम (i = 0; i < 3; i++)
 			RTPRINT(rtlpriv, FINIT, INIT_EEPROM,
 				"RF(%d) EEPROM HT40 1S Area(%d) = 0x%x\n",
 				rf_path, i,
 				rtlefuse->eeprom_chnlarea_txpwr_ht40_1s
 					[rf_path][i]);
-	for (rf_path = 0; rf_path < 2; rf_path++)
-		for (i = 0; i < 3; i++)
+	क्रम (rf_path = 0; rf_path < 2; rf_path++)
+		क्रम (i = 0; i < 3; i++)
 			RTPRINT(rtlpriv, FINIT, INIT_EEPROM,
 				"RF(%d) EEPROM HT40 2S Diff Area(%d) = 0x%x\n",
 				 rf_path, i,
 				 rtlefuse->eprom_chnl_txpwr_ht40_2sdf
 					[rf_path][i]);
 
-	for (rf_path = 0; rf_path < 2; rf_path++) {
-		for (i = 0; i < 14; i++) {
+	क्रम (rf_path = 0; rf_path < 2; rf_path++) अणु
+		क्रम (i = 0; i < 14; i++) अणु
 			index = _rtl8723e_get_chnl_group((u8)i);
 
 			rtlefuse->txpwrlevel_cck[rf_path][i] =
@@ -1454,59 +1455,59 @@ static void _rtl8723e_read_txpower_info_from_hwpg(struct ieee80211_hw *hw,
 				rtlefuse->eeprom_chnlarea_txpwr_ht40_1s
 					[rf_path][index];
 
-			if ((rtlefuse->eeprom_chnlarea_txpwr_ht40_1s
+			अगर ((rtlefuse->eeprom_chnlarea_txpwr_ht40_1s
 					[rf_path][index] -
 			     rtlefuse->eprom_chnl_txpwr_ht40_2sdf
-					[rf_path][index]) > 0) {
+					[rf_path][index]) > 0) अणु
 				rtlefuse->txpwrlevel_ht40_2s[rf_path][i] =
 				  rtlefuse->eeprom_chnlarea_txpwr_ht40_1s
 				  [rf_path][index] -
 				  rtlefuse->eprom_chnl_txpwr_ht40_2sdf
 				  [rf_path][index];
-			} else {
+			पूर्ण अन्यथा अणु
 				rtlefuse->txpwrlevel_ht40_2s[rf_path][i] = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		for (i = 0; i < 14; i++) {
+		क्रम (i = 0; i < 14; i++) अणु
 			RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
 				"RF(%d)-Ch(%d) [CCK / HT40_1S / HT40_2S] = [0x%x / 0x%x / 0x%x]\n",
 				rf_path, i,
 				rtlefuse->txpwrlevel_cck[rf_path][i],
 				rtlefuse->txpwrlevel_ht40_1s[rf_path][i],
 				rtlefuse->txpwrlevel_ht40_2s[rf_path][i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 3; i++) {
-		if (!autoload_fail) {
+	क्रम (i = 0; i < 3; i++) अणु
+		अगर (!स्वतःload_fail) अणु
 			rtlefuse->eeprom_pwrlimit_ht40[i] =
 			    hwinfo[EEPROM_TXPWR_GROUP + i];
 			rtlefuse->eeprom_pwrlimit_ht20[i] =
 			    hwinfo[EEPROM_TXPWR_GROUP + 3 + i];
-		} else {
+		पूर्ण अन्यथा अणु
 			rtlefuse->eeprom_pwrlimit_ht40[i] = 0;
 			rtlefuse->eeprom_pwrlimit_ht20[i] = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (rf_path = 0; rf_path < 2; rf_path++) {
-		for (i = 0; i < 14; i++) {
+	क्रम (rf_path = 0; rf_path < 2; rf_path++) अणु
+		क्रम (i = 0; i < 14; i++) अणु
 			index = _rtl8723e_get_chnl_group((u8)i);
 
-			if (rf_path == RF90_PATH_A) {
+			अगर (rf_path == RF90_PATH_A) अणु
 				rtlefuse->pwrgroup_ht20[rf_path][i] =
 				  (rtlefuse->eeprom_pwrlimit_ht20[index] & 0xf);
 				rtlefuse->pwrgroup_ht40[rf_path][i] =
 				  (rtlefuse->eeprom_pwrlimit_ht40[index] & 0xf);
-			} else if (rf_path == RF90_PATH_B) {
+			पूर्ण अन्यथा अगर (rf_path == RF90_PATH_B) अणु
 				rtlefuse->pwrgroup_ht20[rf_path][i] =
 				  ((rtlefuse->eeprom_pwrlimit_ht20[index] &
 				   0xf0) >> 4);
 				rtlefuse->pwrgroup_ht40[rf_path][i] =
 				  ((rtlefuse->eeprom_pwrlimit_ht40[index] &
 				   0xf0) >> 4);
-			}
+			पूर्ण
 
 			RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
 				"RF-%d pwrgroup_ht20[%d] = 0x%x\n", rf_path, i,
@@ -1514,69 +1515,69 @@ static void _rtl8723e_read_txpower_info_from_hwpg(struct ieee80211_hw *hw,
 			RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
 				"RF-%d pwrgroup_ht40[%d] = 0x%x\n", rf_path, i,
 				rtlefuse->pwrgroup_ht40[rf_path][i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 14; i++) {
+	क्रम (i = 0; i < 14; i++) अणु
 		index = _rtl8723e_get_chnl_group((u8)i);
 
-		if (!autoload_fail)
+		अगर (!स्वतःload_fail)
 			tempval = hwinfo[EEPROM_TXPOWERHT20DIFF + index];
-		else
+		अन्यथा
 			tempval = EEPROM_DEFAULT_HT20_DIFF;
 
-		rtlefuse->txpwr_ht20diff[RF90_PATH_A][i] = (tempval & 0xF);
-		rtlefuse->txpwr_ht20diff[RF90_PATH_B][i] =
+		rtlefuse->txpwr_ht20dअगरf[RF90_PATH_A][i] = (tempval & 0xF);
+		rtlefuse->txpwr_ht20dअगरf[RF90_PATH_B][i] =
 		    ((tempval >> 4) & 0xF);
 
-		if (rtlefuse->txpwr_ht20diff[RF90_PATH_A][i] & BIT(3))
-			rtlefuse->txpwr_ht20diff[RF90_PATH_A][i] |= 0xF0;
+		अगर (rtlefuse->txpwr_ht20dअगरf[RF90_PATH_A][i] & BIT(3))
+			rtlefuse->txpwr_ht20dअगरf[RF90_PATH_A][i] |= 0xF0;
 
-		if (rtlefuse->txpwr_ht20diff[RF90_PATH_B][i] & BIT(3))
-			rtlefuse->txpwr_ht20diff[RF90_PATH_B][i] |= 0xF0;
+		अगर (rtlefuse->txpwr_ht20dअगरf[RF90_PATH_B][i] & BIT(3))
+			rtlefuse->txpwr_ht20dअगरf[RF90_PATH_B][i] |= 0xF0;
 
 		index = _rtl8723e_get_chnl_group((u8)i);
 
-		if (!autoload_fail)
+		अगर (!स्वतःload_fail)
 			tempval = hwinfo[EEPROM_TXPOWER_OFDMDIFF + index];
-		else
+		अन्यथा
 			tempval = EEPROM_DEFAULT_LEGACYHTTXPOWERDIFF;
 
-		rtlefuse->txpwr_legacyhtdiff[RF90_PATH_A][i] = (tempval & 0xF);
-		rtlefuse->txpwr_legacyhtdiff[RF90_PATH_B][i] =
+		rtlefuse->txpwr_legacyhtdअगरf[RF90_PATH_A][i] = (tempval & 0xF);
+		rtlefuse->txpwr_legacyhtdअगरf[RF90_PATH_B][i] =
 		    ((tempval >> 4) & 0xF);
-	}
+	पूर्ण
 
-	rtlefuse->legacy_ht_txpowerdiff =
-	    rtlefuse->txpwr_legacyhtdiff[RF90_PATH_A][7];
+	rtlefuse->legacy_ht_txघातerdअगरf =
+	    rtlefuse->txpwr_legacyhtdअगरf[RF90_PATH_A][7];
 
-	for (i = 0; i < 14; i++)
+	क्रम (i = 0; i < 14; i++)
 		RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
 			"RF-A Ht20 to HT40 Diff[%d] = 0x%x\n", i,
-			 rtlefuse->txpwr_ht20diff[RF90_PATH_A][i]);
-	for (i = 0; i < 14; i++)
+			 rtlefuse->txpwr_ht20dअगरf[RF90_PATH_A][i]);
+	क्रम (i = 0; i < 14; i++)
 		RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
 			"RF-A Legacy to Ht40 Diff[%d] = 0x%x\n", i,
-			 rtlefuse->txpwr_legacyhtdiff[RF90_PATH_A][i]);
-	for (i = 0; i < 14; i++)
+			 rtlefuse->txpwr_legacyhtdअगरf[RF90_PATH_A][i]);
+	क्रम (i = 0; i < 14; i++)
 		RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
 			"RF-B Ht20 to HT40 Diff[%d] = 0x%x\n", i,
-			 rtlefuse->txpwr_ht20diff[RF90_PATH_B][i]);
-	for (i = 0; i < 14; i++)
+			 rtlefuse->txpwr_ht20dअगरf[RF90_PATH_B][i]);
+	क्रम (i = 0; i < 14; i++)
 		RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
 			"RF-B Legacy to HT40 Diff[%d] = 0x%x\n", i,
-			 rtlefuse->txpwr_legacyhtdiff[RF90_PATH_B][i]);
+			 rtlefuse->txpwr_legacyhtdअगरf[RF90_PATH_B][i]);
 
-	if (!autoload_fail)
+	अगर (!स्वतःload_fail)
 		rtlefuse->eeprom_regulatory = (hwinfo[RF_OPTION1] & 0x7);
-	else
+	अन्यथा
 		rtlefuse->eeprom_regulatory = 0;
 	RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
 		"eeprom_regulatory = 0x%x\n", rtlefuse->eeprom_regulatory);
 
-	if (!autoload_fail)
+	अगर (!स्वतःload_fail)
 		rtlefuse->eeprom_tssi[RF90_PATH_A] = hwinfo[EEPROM_TSSI_A];
-	else
+	अन्यथा
 		rtlefuse->eeprom_tssi[RF90_PATH_A] = EEPROM_DEFAULT_TSSI;
 
 	RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
@@ -1584,660 +1585,660 @@ static void _rtl8723e_read_txpower_info_from_hwpg(struct ieee80211_hw *hw,
 		 rtlefuse->eeprom_tssi[RF90_PATH_A],
 		 rtlefuse->eeprom_tssi[RF90_PATH_B]);
 
-	if (!autoload_fail)
+	अगर (!स्वतःload_fail)
 		tempval = hwinfo[EEPROM_THERMAL_METER];
-	else
+	अन्यथा
 		tempval = EEPROM_DEFAULT_THERMALMETER;
 	rtlefuse->eeprom_thermalmeter = (tempval & 0x1f);
 
-	if (rtlefuse->eeprom_thermalmeter == 0x1f || autoload_fail)
+	अगर (rtlefuse->eeprom_thermalmeter == 0x1f || स्वतःload_fail)
 		rtlefuse->apk_thermalmeterignore = true;
 
 	rtlefuse->thermalmeter[0] = rtlefuse->eeprom_thermalmeter;
 	RTPRINT(rtlpriv, FINIT, INIT_TXPOWER,
 		"thermalmeter = 0x%x\n", rtlefuse->eeprom_thermalmeter);
-}
+पूर्ण
 
-static void _rtl8723e_read_adapter_info(struct ieee80211_hw *hw,
-					bool b_pseudo_test)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	int params[] = {RTL8190_EEPROM_ID, EEPROM_VID, EEPROM_DID,
+अटल व्योम _rtl8723e_पढ़ो_adapter_info(काष्ठा ieee80211_hw *hw,
+					bool b_pseuकरो_test)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	पूर्णांक params[] = अणुRTL8190_EEPROM_ID, EEPROM_VID, EEPROM_DID,
 			EEPROM_SVID, EEPROM_SMID, EEPROM_MAC_ADDR,
 			EEPROM_CHANNELPLAN, EEPROM_VERSION, EEPROM_CUSTOMER_ID,
-			COUNTRY_CODE_WORLD_WIDE_13};
+			COUNTRY_CODE_WORLD_WIDE_13पूर्ण;
 	u8 *hwinfo;
 
-	if (b_pseudo_test) {
+	अगर (b_pseuकरो_test) अणु
 		/* need add */
-		return;
-	}
+		वापस;
+	पूर्ण
 	hwinfo = kzalloc(HWSET_MAX_SIZE, GFP_KERNEL);
-	if (!hwinfo)
-		return;
+	अगर (!hwinfo)
+		वापस;
 
-	if (rtl_get_hwinfo(hw, rtlpriv, HWSET_MAX_SIZE, hwinfo, params))
-		goto exit;
+	अगर (rtl_get_hwinfo(hw, rtlpriv, HWSET_MAX_SIZE, hwinfo, params))
+		जाओ निकास;
 
-	_rtl8723e_read_txpower_info_from_hwpg(hw, rtlefuse->autoload_failflag,
+	_rtl8723e_पढ़ो_txघातer_info_from_hwpg(hw, rtlefuse->स्वतःload_failflag,
 					      hwinfo);
 
-	rtl8723e_read_bt_coexist_info_from_hwpg(hw,
-			rtlefuse->autoload_failflag, hwinfo);
+	rtl8723e_पढ़ो_bt_coexist_info_from_hwpg(hw,
+			rtlefuse->स्वतःload_failflag, hwinfo);
 
-	if (rtlhal->oem_id != RT_CID_DEFAULT)
-		goto exit;
+	अगर (rtlhal->oem_id != RT_CID_DEFAULT)
+		जाओ निकास;
 
-	switch (rtlefuse->eeprom_oemid) {
-	case EEPROM_CID_DEFAULT:
-		switch (rtlefuse->eeprom_did) {
-		case 0x8176:
-			switch (rtlefuse->eeprom_svid) {
-			case 0x10EC:
-				switch (rtlefuse->eeprom_smid) {
-				case 0x6151 ... 0x6152:
-				case 0x6154 ... 0x6155:
-				case 0x6177 ... 0x6180:
-				case 0x7151 ... 0x7152:
-				case 0x7154 ... 0x7155:
-				case 0x7177 ... 0x7180:
-				case 0x8151 ... 0x8152:
-				case 0x8154 ... 0x8155:
-				case 0x8181 ... 0x8182:
-				case 0x8184 ... 0x8185:
-				case 0x9151 ... 0x9152:
-				case 0x9154 ... 0x9155:
-				case 0x9181 ... 0x9182:
-				case 0x9184 ... 0x9185:
+	चयन (rtlefuse->eeprom_oemid) अणु
+	हाल EEPROM_CID_DEFAULT:
+		चयन (rtlefuse->eeprom_did) अणु
+		हाल 0x8176:
+			चयन (rtlefuse->eeprom_svid) अणु
+			हाल 0x10EC:
+				चयन (rtlefuse->eeprom_smid) अणु
+				हाल 0x6151 ... 0x6152:
+				हाल 0x6154 ... 0x6155:
+				हाल 0x6177 ... 0x6180:
+				हाल 0x7151 ... 0x7152:
+				हाल 0x7154 ... 0x7155:
+				हाल 0x7177 ... 0x7180:
+				हाल 0x8151 ... 0x8152:
+				हाल 0x8154 ... 0x8155:
+				हाल 0x8181 ... 0x8182:
+				हाल 0x8184 ... 0x8185:
+				हाल 0x9151 ... 0x9152:
+				हाल 0x9154 ... 0x9155:
+				हाल 0x9181 ... 0x9182:
+				हाल 0x9184 ... 0x9185:
 					rtlhal->oem_id = RT_CID_TOSHIBA;
-					break;
-				case 0x6191 ... 0x6193:
-				case 0x7191 ... 0x7193:
-				case 0x8191 ... 0x8193:
-				case 0x9191 ... 0x9193:
+					अवरोध;
+				हाल 0x6191 ... 0x6193:
+				हाल 0x7191 ... 0x7193:
+				हाल 0x8191 ... 0x8193:
+				हाल 0x9191 ... 0x9193:
 					rtlhal->oem_id = RT_CID_819X_SAMSUNG;
-					break;
-				case 0x8197:
-				case 0x9196:
+					अवरोध;
+				हाल 0x8197:
+				हाल 0x9196:
 					rtlhal->oem_id = RT_CID_819X_CLEVO;
-					break;
-				case 0x8203:
+					अवरोध;
+				हाल 0x8203:
 					rtlhal->oem_id = RT_CID_819X_PRONETS;
-					break;
-				case 0x8195:
-				case 0x9195:
-				case 0x7194:
-				case 0x8200 ... 0x8202:
-				case 0x9200:
+					अवरोध;
+				हाल 0x8195:
+				हाल 0x9195:
+				हाल 0x7194:
+				हाल 0x8200 ... 0x8202:
+				हाल 0x9200:
 					rtlhal->oem_id = RT_CID_819X_LENOVO;
-					break;
-				}
-				break;
-			case 0x1025:
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			हाल 0x1025:
 				rtlhal->oem_id = RT_CID_819X_ACER;
-				break;
-			case 0x1028:
-				switch (rtlefuse->eeprom_smid) {
-				case 0x8194:
-				case 0x8198:
-				case 0x9197 ... 0x9198:
+				अवरोध;
+			हाल 0x1028:
+				चयन (rtlefuse->eeprom_smid) अणु
+				हाल 0x8194:
+				हाल 0x8198:
+				हाल 0x9197 ... 0x9198:
 					rtlhal->oem_id = RT_CID_819X_DELL;
-					break;
-				}
-				break;
-			case 0x103C:
-				switch (rtlefuse->eeprom_smid) {
-				case 0x1629:
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			हाल 0x103C:
+				चयन (rtlefuse->eeprom_smid) अणु
+				हाल 0x1629:
 					rtlhal->oem_id = RT_CID_819X_HP;
-				}
-				break;
-			case 0x1A32:
-				switch (rtlefuse->eeprom_smid) {
-				case 0x2315:
+				पूर्ण
+				अवरोध;
+			हाल 0x1A32:
+				चयन (rtlefuse->eeprom_smid) अणु
+				हाल 0x2315:
 					rtlhal->oem_id = RT_CID_819X_QMI;
-					break;
-				}
-				break;
-			case 0x1043:
-				switch (rtlefuse->eeprom_smid) {
-				case 0x84B5:
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			हाल 0x1043:
+				चयन (rtlefuse->eeprom_smid) अणु
+				हाल 0x84B5:
 					rtlhal->oem_id =
 						RT_CID_819X_EDIMAX_ASUS;
-				}
-				break;
-			}
-			break;
-		case 0x8178:
-			switch (rtlefuse->eeprom_svid) {
-			case 0x10ec:
-				switch (rtlefuse->eeprom_smid) {
-				case 0x6181 ... 0x6182:
-				case 0x6184 ... 0x6185:
-				case 0x7181 ... 0x7182:
-				case 0x7184 ... 0x7185:
-				case 0x8181 ... 0x8182:
-				case 0x8184 ... 0x8185:
-				case 0x9181 ... 0x9182:
-				case 0x9184 ... 0x9185:
+				पूर्ण
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 0x8178:
+			चयन (rtlefuse->eeprom_svid) अणु
+			हाल 0x10ec:
+				चयन (rtlefuse->eeprom_smid) अणु
+				हाल 0x6181 ... 0x6182:
+				हाल 0x6184 ... 0x6185:
+				हाल 0x7181 ... 0x7182:
+				हाल 0x7184 ... 0x7185:
+				हाल 0x8181 ... 0x8182:
+				हाल 0x8184 ... 0x8185:
+				हाल 0x9181 ... 0x9182:
+				हाल 0x9184 ... 0x9185:
 					rtlhal->oem_id = RT_CID_TOSHIBA;
-					break;
-				case 0x8186:
+					अवरोध;
+				हाल 0x8186:
 					rtlhal->oem_id =
 						RT_CID_819X_PRONETS;
-					break;
-				}
-				break;
-			case 0x1025:
+					अवरोध;
+				पूर्ण
+				अवरोध;
+			हाल 0x1025:
 				rtlhal->oem_id = RT_CID_819X_ACER;
-				break;
-			case 0x1043:
-				switch (rtlefuse->eeprom_smid) {
-				case 0x8486:
+				अवरोध;
+			हाल 0x1043:
+				चयन (rtlefuse->eeprom_smid) अणु
+				हाल 0x8486:
 					rtlhal->oem_id =
 					     RT_CID_819X_EDIMAX_ASUS;
-				}
-				break;
-			}
-			break;
-		}
-		break;
-	case EEPROM_CID_TOSHIBA:
+				पूर्ण
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल EEPROM_CID_TOSHIBA:
 		rtlhal->oem_id = RT_CID_TOSHIBA;
-		break;
-	case EEPROM_CID_CCX:
+		अवरोध;
+	हाल EEPROM_CID_CCX:
 		rtlhal->oem_id = RT_CID_CCX;
-		break;
-	case EEPROM_CID_QMI:
+		अवरोध;
+	हाल EEPROM_CID_QMI:
 		rtlhal->oem_id = RT_CID_819X_QMI;
-		break;
-	case EEPROM_CID_WHQL:
-		break;
-	default:
+		अवरोध;
+	हाल EEPROM_CID_WHQL:
+		अवरोध;
+	शेष:
 		rtlhal->oem_id = RT_CID_DEFAULT;
-		break;
-	}
-exit:
-	kfree(hwinfo);
-}
+		अवरोध;
+	पूर्ण
+निकास:
+	kमुक्त(hwinfo);
+पूर्ण
 
-static void _rtl8723e_hal_customized_behavior(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+अटल व्योम _rtl8723e_hal_customized_behavior(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 
-	rtlpriv->ledctl.led_opendrain = true;
-	switch (rtlhal->oem_id) {
-	case RT_CID_819X_HP:
-		rtlpriv->ledctl.led_opendrain = true;
-		break;
-	case RT_CID_819X_LENOVO:
-	case RT_CID_DEFAULT:
-	case RT_CID_TOSHIBA:
-	case RT_CID_CCX:
-	case RT_CID_819X_ACER:
-	case RT_CID_WHQL:
-	default:
-		break;
-	}
+	rtlpriv->ledctl.led_खोलोdrain = true;
+	चयन (rtlhal->oem_id) अणु
+	हाल RT_CID_819X_HP:
+		rtlpriv->ledctl.led_खोलोdrain = true;
+		अवरोध;
+	हाल RT_CID_819X_LENOVO:
+	हाल RT_CID_DEFAULT:
+	हाल RT_CID_TOSHIBA:
+	हाल RT_CID_CCX:
+	हाल RT_CID_819X_ACER:
+	हाल RT_CID_WHQL:
+	शेष:
+		अवरोध;
+	पूर्ण
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG,
 		"RT Customized ID: 0x%02X\n", rtlhal->oem_id);
-}
+पूर्ण
 
-void rtl8723e_read_eeprom_info(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
-	struct rtl_phy *rtlphy = &(rtlpriv->phy);
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	u8 tmp_u1b;
+व्योम rtl8723e_पढ़ो_eeprom_info(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+	काष्ठा rtl_phy *rtlphy = &(rtlpriv->phy);
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	u8 पंचांगp_u1b;
 	u32 value32;
 
-	value32 = rtl_read_dword(rtlpriv, rtlpriv->cfg->maps[EFUSE_TEST]);
+	value32 = rtl_पढ़ो_dword(rtlpriv, rtlpriv->cfg->maps[EFUSE_TEST]);
 	value32 = (value32 & ~EFUSE_SEL_MASK) | EFUSE_SEL(EFUSE_WIFI_SEL_0);
-	rtl_write_dword(rtlpriv, rtlpriv->cfg->maps[EFUSE_TEST], value32);
+	rtl_ग_लिखो_dword(rtlpriv, rtlpriv->cfg->maps[EFUSE_TEST], value32);
 
-	rtlhal->version = _rtl8723e_read_chip_version(hw);
+	rtlhal->version = _rtl8723e_पढ़ो_chip_version(hw);
 
-	if (get_rf_type(rtlphy) == RF_1T1R)
+	अगर (get_rf_type(rtlphy) == RF_1T1R)
 		rtlpriv->dm.rfpath_rxenable[0] = true;
-	else
+	अन्यथा
 		rtlpriv->dm.rfpath_rxenable[0] =
 		    rtlpriv->dm.rfpath_rxenable[1] = true;
 	rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD, "VersionID = 0x%4x\n",
 		rtlhal->version);
 
-	tmp_u1b = rtl_read_byte(rtlpriv, REG_9346CR);
-	if (tmp_u1b & BIT(4)) {
+	पंचांगp_u1b = rtl_पढ़ो_byte(rtlpriv, REG_9346CR);
+	अगर (पंचांगp_u1b & BIT(4)) अणु
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG, "Boot from EEPROM\n");
 		rtlefuse->epromtype = EEPROM_93C46;
-	} else {
+	पूर्ण अन्यथा अणु
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_DMESG, "Boot from EFUSE\n");
 		rtlefuse->epromtype = EEPROM_BOOT_EFUSE;
-	}
-	if (tmp_u1b & BIT(5)) {
+	पूर्ण
+	अगर (पंचांगp_u1b & BIT(5)) अणु
 		rtl_dbg(rtlpriv, COMP_INIT, DBG_LOUD, "Autoload OK\n");
-		rtlefuse->autoload_failflag = false;
-		_rtl8723e_read_adapter_info(hw, false);
-	} else {
-		rtlefuse->autoload_failflag = true;
-		_rtl8723e_read_adapter_info(hw, false);
+		rtlefuse->स्वतःload_failflag = false;
+		_rtl8723e_पढ़ो_adapter_info(hw, false);
+	पूर्ण अन्यथा अणु
+		rtlefuse->स्वतःload_failflag = true;
+		_rtl8723e_पढ़ो_adapter_info(hw, false);
 		pr_err("Autoload ERR!!\n");
-	}
+	पूर्ण
 	_rtl8723e_hal_customized_behavior(hw);
-}
+पूर्ण
 
-static void rtl8723e_update_hal_rate_table(struct ieee80211_hw *hw,
-					   struct ieee80211_sta *sta)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_phy *rtlphy = &(rtlpriv->phy);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+अटल व्योम rtl8723e_update_hal_rate_table(काष्ठा ieee80211_hw *hw,
+					   काष्ठा ieee80211_sta *sta)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_phy *rtlphy = &(rtlpriv->phy);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
 	u32 ratr_value;
 	u8 ratr_index = 0;
 	u8 b_nmode = mac->ht_enable;
-	u16 shortgi_rate;
-	u32 tmp_ratr_value;
+	u16 लघुgi_rate;
+	u32 पंचांगp_ratr_value;
 	u8 curtxbw_40mhz = mac->bw_40;
-	u8 curshortgi_40mhz = (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_40) ?
+	u8 curलघुgi_40mhz = (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_40) ?
 				1 : 0;
-	u8 curshortgi_20mhz = (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_20) ?
+	u8 curलघुgi_20mhz = (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_20) ?
 				1 : 0;
-	enum wireless_mode wirelessmode = mac->mode;
+	क्रमागत wireless_mode wirelessmode = mac->mode;
 	u32 ratr_mask;
 
-	if (rtlhal->current_bandtype == BAND_ON_5G)
+	अगर (rtlhal->current_bandtype == BAND_ON_5G)
 		ratr_value = sta->supp_rates[1] << 4;
-	else
+	अन्यथा
 		ratr_value = sta->supp_rates[0];
-	if (mac->opmode == NL80211_IFTYPE_ADHOC)
+	अगर (mac->opmode == NL80211_IFTYPE_ADHOC)
 		ratr_value = 0xfff;
 	ratr_value |= (sta->ht_cap.mcs.rx_mask[1] << 20 |
 			sta->ht_cap.mcs.rx_mask[0] << 12);
-	switch (wirelessmode) {
-	case WIRELESS_MODE_B:
-		if (ratr_value & 0x0000000c)
+	चयन (wirelessmode) अणु
+	हाल WIRELESS_MODE_B:
+		अगर (ratr_value & 0x0000000c)
 			ratr_value &= 0x0000000d;
-		else
+		अन्यथा
 			ratr_value &= 0x0000000f;
-		break;
-	case WIRELESS_MODE_G:
+		अवरोध;
+	हाल WIRELESS_MODE_G:
 		ratr_value &= 0x00000FF5;
-		break;
-	case WIRELESS_MODE_N_24G:
-	case WIRELESS_MODE_N_5G:
+		अवरोध;
+	हाल WIRELESS_MODE_N_24G:
+	हाल WIRELESS_MODE_N_5G:
 		b_nmode = 1;
-		if (get_rf_type(rtlphy) == RF_1T2R ||
+		अगर (get_rf_type(rtlphy) == RF_1T2R ||
 		    get_rf_type(rtlphy) == RF_1T1R)
 			ratr_mask = 0x000ff005;
-		else
+		अन्यथा
 			ratr_mask = 0x0f0ff005;
 
 		ratr_value &= ratr_mask;
-		break;
-	default:
-		if (rtlphy->rf_type == RF_1T2R)
+		अवरोध;
+	शेष:
+		अगर (rtlphy->rf_type == RF_1T2R)
 			ratr_value &= 0x000ff0ff;
-		else
+		अन्यथा
 			ratr_value &= 0x0f0ff0ff;
 
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if ((rtlpriv->btcoexist.bt_coexistence) &&
+	अगर ((rtlpriv->btcoexist.bt_coexistence) &&
 	    (rtlpriv->btcoexist.bt_coexist_type == BT_CSR_BC4) &&
 	    (rtlpriv->btcoexist.bt_cur_state) &&
 	    (rtlpriv->btcoexist.bt_ant_isolation) &&
 	    ((rtlpriv->btcoexist.bt_service == BT_SCO) ||
 	    (rtlpriv->btcoexist.bt_service == BT_BUSY)))
 		ratr_value &= 0x0fffcfc0;
-	else
+	अन्यथा
 		ratr_value &= 0x0FFFFFFF;
 
-	if (b_nmode &&
-	    ((curtxbw_40mhz && curshortgi_40mhz) ||
-	     (!curtxbw_40mhz && curshortgi_20mhz))) {
+	अगर (b_nmode &&
+	    ((curtxbw_40mhz && curलघुgi_40mhz) ||
+	     (!curtxbw_40mhz && curलघुgi_20mhz))) अणु
 		ratr_value |= 0x10000000;
-		tmp_ratr_value = (ratr_value >> 12);
+		पंचांगp_ratr_value = (ratr_value >> 12);
 
-		for (shortgi_rate = 15; shortgi_rate > 0; shortgi_rate--) {
-			if ((1 << shortgi_rate) & tmp_ratr_value)
-				break;
-		}
+		क्रम (लघुgi_rate = 15; लघुgi_rate > 0; लघुgi_rate--) अणु
+			अगर ((1 << लघुgi_rate) & पंचांगp_ratr_value)
+				अवरोध;
+		पूर्ण
 
-		shortgi_rate = (shortgi_rate << 12) | (shortgi_rate << 8) |
-		    (shortgi_rate << 4) | (shortgi_rate);
-	}
+		लघुgi_rate = (लघुgi_rate << 12) | (लघुgi_rate << 8) |
+		    (लघुgi_rate << 4) | (लघुgi_rate);
+	पूर्ण
 
-	rtl_write_dword(rtlpriv, REG_ARFR0 + ratr_index * 4, ratr_value);
+	rtl_ग_लिखो_dword(rtlpriv, REG_ARFR0 + ratr_index * 4, ratr_value);
 
 	rtl_dbg(rtlpriv, COMP_RATR, DBG_DMESG,
-		"%x\n", rtl_read_dword(rtlpriv, REG_ARFR0));
-}
+		"%x\n", rtl_पढ़ो_dword(rtlpriv, REG_ARFR0));
+पूर्ण
 
-static void rtl8723e_update_hal_rate_mask(struct ieee80211_hw *hw,
-					  struct ieee80211_sta *sta,
+अटल व्योम rtl8723e_update_hal_rate_mask(काष्ठा ieee80211_hw *hw,
+					  काष्ठा ieee80211_sta *sta,
 					  u8 rssi_level, bool update_bw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_phy *rtlphy = &(rtlpriv->phy);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	struct rtl_sta_info *sta_entry = NULL;
-	u32 ratr_bitmap;
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_phy *rtlphy = &(rtlpriv->phy);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	काष्ठा rtl_sta_info *sta_entry = शून्य;
+	u32 ratr_biपंचांगap;
 	u8 ratr_index;
 	u8 curtxbw_40mhz = (sta->ht_cap.cap & IEEE80211_HT_CAP_SUP_WIDTH_20_40)
 				? 1 : 0;
-	u8 curshortgi_40mhz = (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_40) ?
+	u8 curलघुgi_40mhz = (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_40) ?
 				1 : 0;
-	u8 curshortgi_20mhz = (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_20) ?
+	u8 curलघुgi_20mhz = (sta->ht_cap.cap & IEEE80211_HT_CAP_SGI_20) ?
 				1 : 0;
-	enum wireless_mode wirelessmode = 0;
-	bool shortgi = false;
+	क्रमागत wireless_mode wirelessmode = 0;
+	bool लघुgi = false;
 	u8 rate_mask[5];
 	u8 macid = 0;
 	/*u8 mimo_ps = IEEE80211_SMPS_OFF;*/
 
-	sta_entry = (struct rtl_sta_info *)sta->drv_priv;
+	sta_entry = (काष्ठा rtl_sta_info *)sta->drv_priv;
 	wirelessmode = sta_entry->wireless_mode;
-	if (mac->opmode == NL80211_IFTYPE_STATION)
+	अगर (mac->opmode == NL80211_IFTYPE_STATION)
 		curtxbw_40mhz = mac->bw_40;
-	else if (mac->opmode == NL80211_IFTYPE_AP ||
+	अन्यथा अगर (mac->opmode == NL80211_IFTYPE_AP ||
 		mac->opmode == NL80211_IFTYPE_ADHOC)
 		macid = sta->aid + 1;
 
-	if (rtlhal->current_bandtype == BAND_ON_5G)
-		ratr_bitmap = sta->supp_rates[1] << 4;
-	else
-		ratr_bitmap = sta->supp_rates[0];
-	if (mac->opmode == NL80211_IFTYPE_ADHOC)
-		ratr_bitmap = 0xfff;
-	ratr_bitmap |= (sta->ht_cap.mcs.rx_mask[1] << 20 |
+	अगर (rtlhal->current_bandtype == BAND_ON_5G)
+		ratr_biपंचांगap = sta->supp_rates[1] << 4;
+	अन्यथा
+		ratr_biपंचांगap = sta->supp_rates[0];
+	अगर (mac->opmode == NL80211_IFTYPE_ADHOC)
+		ratr_biपंचांगap = 0xfff;
+	ratr_biपंचांगap |= (sta->ht_cap.mcs.rx_mask[1] << 20 |
 			sta->ht_cap.mcs.rx_mask[0] << 12);
-	switch (wirelessmode) {
-	case WIRELESS_MODE_B:
+	चयन (wirelessmode) अणु
+	हाल WIRELESS_MODE_B:
 		ratr_index = RATR_INX_WIRELESS_B;
-		if (ratr_bitmap & 0x0000000c)
-			ratr_bitmap &= 0x0000000d;
-		else
-			ratr_bitmap &= 0x0000000f;
-		break;
-	case WIRELESS_MODE_G:
+		अगर (ratr_biपंचांगap & 0x0000000c)
+			ratr_biपंचांगap &= 0x0000000d;
+		अन्यथा
+			ratr_biपंचांगap &= 0x0000000f;
+		अवरोध;
+	हाल WIRELESS_MODE_G:
 		ratr_index = RATR_INX_WIRELESS_GB;
 
-		if (rssi_level == 1)
-			ratr_bitmap &= 0x00000f00;
-		else if (rssi_level == 2)
-			ratr_bitmap &= 0x00000ff0;
-		else
-			ratr_bitmap &= 0x00000ff5;
-		break;
-	case WIRELESS_MODE_A:
+		अगर (rssi_level == 1)
+			ratr_biपंचांगap &= 0x00000f00;
+		अन्यथा अगर (rssi_level == 2)
+			ratr_biपंचांगap &= 0x00000ff0;
+		अन्यथा
+			ratr_biपंचांगap &= 0x00000ff5;
+		अवरोध;
+	हाल WIRELESS_MODE_A:
 		ratr_index = RATR_INX_WIRELESS_G;
-		ratr_bitmap &= 0x00000ff0;
-		break;
-	case WIRELESS_MODE_N_24G:
-	case WIRELESS_MODE_N_5G:
+		ratr_biपंचांगap &= 0x00000ff0;
+		अवरोध;
+	हाल WIRELESS_MODE_N_24G:
+	हाल WIRELESS_MODE_N_5G:
 		ratr_index = RATR_INX_WIRELESS_NGB;
-		if (rtlphy->rf_type == RF_1T2R ||
-		    rtlphy->rf_type == RF_1T1R) {
-			if (curtxbw_40mhz) {
-				if (rssi_level == 1)
-					ratr_bitmap &= 0x000f0000;
-				else if (rssi_level == 2)
-					ratr_bitmap &= 0x000ff000;
-				else
-					ratr_bitmap &= 0x000ff015;
-			} else {
-				if (rssi_level == 1)
-					ratr_bitmap &= 0x000f0000;
-				else if (rssi_level == 2)
-					ratr_bitmap &= 0x000ff000;
-				else
-					ratr_bitmap &= 0x000ff005;
-			}
-		} else {
-			if (curtxbw_40mhz) {
-				if (rssi_level == 1)
-					ratr_bitmap &= 0x0f0f0000;
-				else if (rssi_level == 2)
-					ratr_bitmap &= 0x0f0ff000;
-				else
-					ratr_bitmap &= 0x0f0ff015;
-			} else {
-				if (rssi_level == 1)
-					ratr_bitmap &= 0x0f0f0000;
-				else if (rssi_level == 2)
-					ratr_bitmap &= 0x0f0ff000;
-				else
-					ratr_bitmap &= 0x0f0ff005;
-			}
-		}
+		अगर (rtlphy->rf_type == RF_1T2R ||
+		    rtlphy->rf_type == RF_1T1R) अणु
+			अगर (curtxbw_40mhz) अणु
+				अगर (rssi_level == 1)
+					ratr_biपंचांगap &= 0x000f0000;
+				अन्यथा अगर (rssi_level == 2)
+					ratr_biपंचांगap &= 0x000ff000;
+				अन्यथा
+					ratr_biपंचांगap &= 0x000ff015;
+			पूर्ण अन्यथा अणु
+				अगर (rssi_level == 1)
+					ratr_biपंचांगap &= 0x000f0000;
+				अन्यथा अगर (rssi_level == 2)
+					ratr_biपंचांगap &= 0x000ff000;
+				अन्यथा
+					ratr_biपंचांगap &= 0x000ff005;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (curtxbw_40mhz) अणु
+				अगर (rssi_level == 1)
+					ratr_biपंचांगap &= 0x0f0f0000;
+				अन्यथा अगर (rssi_level == 2)
+					ratr_biपंचांगap &= 0x0f0ff000;
+				अन्यथा
+					ratr_biपंचांगap &= 0x0f0ff015;
+			पूर्ण अन्यथा अणु
+				अगर (rssi_level == 1)
+					ratr_biपंचांगap &= 0x0f0f0000;
+				अन्यथा अगर (rssi_level == 2)
+					ratr_biपंचांगap &= 0x0f0ff000;
+				अन्यथा
+					ratr_biपंचांगap &= 0x0f0ff005;
+			पूर्ण
+		पूर्ण
 
-		if ((curtxbw_40mhz && curshortgi_40mhz) ||
-		    (!curtxbw_40mhz && curshortgi_20mhz)) {
-			if (macid == 0)
-				shortgi = true;
-			else if (macid == 1)
-				shortgi = false;
-		}
-		break;
-	default:
+		अगर ((curtxbw_40mhz && curलघुgi_40mhz) ||
+		    (!curtxbw_40mhz && curलघुgi_20mhz)) अणु
+			अगर (macid == 0)
+				लघुgi = true;
+			अन्यथा अगर (macid == 1)
+				लघुgi = false;
+		पूर्ण
+		अवरोध;
+	शेष:
 		ratr_index = RATR_INX_WIRELESS_NGB;
 
-		if (rtlphy->rf_type == RF_1T2R)
-			ratr_bitmap &= 0x000ff0ff;
-		else
-			ratr_bitmap &= 0x0f0ff0ff;
-		break;
-	}
+		अगर (rtlphy->rf_type == RF_1T2R)
+			ratr_biपंचांगap &= 0x000ff0ff;
+		अन्यथा
+			ratr_biपंचांगap &= 0x0f0ff0ff;
+		अवरोध;
+	पूर्ण
 	sta_entry->ratr_index = ratr_index;
 
 	rtl_dbg(rtlpriv, COMP_RATR, DBG_DMESG,
-		"ratr_bitmap :%x\n", ratr_bitmap);
-	*(u32 *)&rate_mask = (ratr_bitmap & 0x0fffffff) |
+		"ratr_bitmap :%x\n", ratr_biपंचांगap);
+	*(u32 *)&rate_mask = (ratr_biपंचांगap & 0x0fffffff) |
 			     (ratr_index << 28);
-	rate_mask[4] = macid | (shortgi ? 0x20 : 0x00) | 0x80;
+	rate_mask[4] = macid | (लघुgi ? 0x20 : 0x00) | 0x80;
 	rtl_dbg(rtlpriv, COMP_RATR, DBG_DMESG,
 		"Rate_index:%x, ratr_val:%x, %x:%x:%x:%x:%x\n",
-		ratr_index, ratr_bitmap,
+		ratr_index, ratr_biपंचांगap,
 		rate_mask[0], rate_mask[1],
 		rate_mask[2], rate_mask[3],
 		rate_mask[4]);
 	rtl8723e_fill_h2c_cmd(hw, H2C_RA_MASK, 5, rate_mask);
-}
+पूर्ण
 
-void rtl8723e_update_hal_rate_tbl(struct ieee80211_hw *hw,
-				  struct ieee80211_sta *sta, u8 rssi_level,
+व्योम rtl8723e_update_hal_rate_tbl(काष्ठा ieee80211_hw *hw,
+				  काष्ठा ieee80211_sta *sta, u8 rssi_level,
 				  bool update_bw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
-	if (rtlpriv->dm.useramask)
+	अगर (rtlpriv->dm.useramask)
 		rtl8723e_update_hal_rate_mask(hw, sta, rssi_level, update_bw);
-	else
+	अन्यथा
 		rtl8723e_update_hal_rate_table(hw, sta);
-}
+पूर्ण
 
-void rtl8723e_update_channel_access_setting(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	u16 sifs_timer;
+व्योम rtl8723e_update_channel_access_setting(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	u16 sअगरs_समयr;
 
-	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_SLOT_TIME, &mac->slot_time);
-	if (!mac->ht_enable)
-		sifs_timer = 0x0a0a;
-	else
-		sifs_timer = 0x1010;
-	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_SIFS, (u8 *)&sifs_timer);
-}
+	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_SLOT_TIME, &mac->slot_समय);
+	अगर (!mac->ht_enable)
+		sअगरs_समयr = 0x0a0a;
+	अन्यथा
+		sअगरs_समयr = 0x1010;
+	rtlpriv->cfg->ops->set_hw_reg(hw, HW_VAR_SIFS, (u8 *)&sअगरs_समयr);
+पूर्ण
 
-bool rtl8723e_gpio_radio_on_off_checking(struct ieee80211_hw *hw, u8 *valid)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
-	struct rtl_phy *rtlphy = &(rtlpriv->phy);
-	enum rf_pwrstate e_rfpowerstate_toset;
-	u8 u1tmp;
+bool rtl8723e_gpio_radio_on_off_checking(काष्ठा ieee80211_hw *hw, u8 *valid)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_ps_ctl *ppsc = rtl_psc(rtl_priv(hw));
+	काष्ठा rtl_phy *rtlphy = &(rtlpriv->phy);
+	क्रमागत rf_pwrstate e_rfघातerstate_toset;
+	u8 u1पंचांगp;
 	bool b_actuallyset = false;
 
-	if (rtlpriv->rtlhal.being_init_adapter)
-		return false;
+	अगर (rtlpriv->rtlhal.being_init_adapter)
+		वापस false;
 
-	if (ppsc->swrf_processing)
-		return false;
+	अगर (ppsc->swrf_processing)
+		वापस false;
 
 	spin_lock(&rtlpriv->locks.rf_ps_lock);
-	if (ppsc->rfchange_inprogress) {
+	अगर (ppsc->rfchange_inprogress) अणु
 		spin_unlock(&rtlpriv->locks.rf_ps_lock);
-		return false;
-	} else {
+		वापस false;
+	पूर्ण अन्यथा अणु
 		ppsc->rfchange_inprogress = true;
 		spin_unlock(&rtlpriv->locks.rf_ps_lock);
-	}
+	पूर्ण
 
-	rtl_write_byte(rtlpriv, REG_GPIO_IO_SEL_2,
-		       rtl_read_byte(rtlpriv, REG_GPIO_IO_SEL_2)&~(BIT(1)));
+	rtl_ग_लिखो_byte(rtlpriv, REG_GPIO_IO_SEL_2,
+		       rtl_पढ़ो_byte(rtlpriv, REG_GPIO_IO_SEL_2)&~(BIT(1)));
 
-	u1tmp = rtl_read_byte(rtlpriv, REG_GPIO_PIN_CTRL_2);
+	u1पंचांगp = rtl_पढ़ो_byte(rtlpriv, REG_GPIO_PIN_CTRL_2);
 
-	if (rtlphy->polarity_ctl)
-		e_rfpowerstate_toset = (u1tmp & BIT(1)) ? ERFOFF : ERFON;
-	else
-		e_rfpowerstate_toset = (u1tmp & BIT(1)) ? ERFON : ERFOFF;
+	अगर (rtlphy->polarity_ctl)
+		e_rfघातerstate_toset = (u1पंचांगp & BIT(1)) ? ERFOFF : ERFON;
+	अन्यथा
+		e_rfघातerstate_toset = (u1पंचांगp & BIT(1)) ? ERFON : ERFOFF;
 
-	if (ppsc->hwradiooff && (e_rfpowerstate_toset == ERFON)) {
+	अगर (ppsc->hwradiooff && (e_rfघातerstate_toset == ERFON)) अणु
 		rtl_dbg(rtlpriv, COMP_RF, DBG_DMESG,
 			"GPIOChangeRF  - HW Radio ON, RF ON\n");
 
-		e_rfpowerstate_toset = ERFON;
+		e_rfघातerstate_toset = ERFON;
 		ppsc->hwradiooff = false;
 		b_actuallyset = true;
-	} else if (!ppsc->hwradiooff && (e_rfpowerstate_toset == ERFOFF)) {
+	पूर्ण अन्यथा अगर (!ppsc->hwradiooff && (e_rfघातerstate_toset == ERFOFF)) अणु
 		rtl_dbg(rtlpriv, COMP_RF, DBG_DMESG,
 			"GPIOChangeRF  - HW Radio OFF, RF OFF\n");
 
-		e_rfpowerstate_toset = ERFOFF;
+		e_rfघातerstate_toset = ERFOFF;
 		ppsc->hwradiooff = true;
 		b_actuallyset = true;
-	}
+	पूर्ण
 
-	if (b_actuallyset) {
+	अगर (b_actuallyset) अणु
 		spin_lock(&rtlpriv->locks.rf_ps_lock);
 		ppsc->rfchange_inprogress = false;
 		spin_unlock(&rtlpriv->locks.rf_ps_lock);
-	} else {
-		if (ppsc->reg_rfps_level & RT_RF_OFF_LEVL_HALT_NIC)
+	पूर्ण अन्यथा अणु
+		अगर (ppsc->reg_rfps_level & RT_RF_OFF_LEVL_HALT_NIC)
 			RT_SET_PS_LEVEL(ppsc, RT_RF_OFF_LEVL_HALT_NIC);
 
 		spin_lock(&rtlpriv->locks.rf_ps_lock);
 		ppsc->rfchange_inprogress = false;
 		spin_unlock(&rtlpriv->locks.rf_ps_lock);
-	}
+	पूर्ण
 
 	*valid = 1;
-	return !ppsc->hwradiooff;
+	वापस !ppsc->hwradiooff;
 
-}
+पूर्ण
 
-void rtl8723e_set_key(struct ieee80211_hw *hw, u32 key_index,
+व्योम rtl8723e_set_key(काष्ठा ieee80211_hw *hw, u32 key_index,
 		      u8 *p_macaddr, bool is_group, u8 enc_algo,
 		      bool is_wepkey, bool clear_all)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_mac *mac = rtl_mac(rtl_priv(hw));
-	struct rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_mac *mac = rtl_mac(rtl_priv(hw));
+	काष्ठा rtl_efuse *rtlefuse = rtl_efuse(rtl_priv(hw));
 	u8 *macaddr = p_macaddr;
 	u32 entry_id = 0;
 	bool is_pairwise = false;
 
-	static u8 cam_const_addr[4][6] = {
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x01},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x02},
-		{0x00, 0x00, 0x00, 0x00, 0x00, 0x03}
-	};
-	static u8 cam_const_broad[] = {
+	अटल u8 cam_स्थिर_addr[4][6] = अणु
+		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00पूर्ण,
+		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x01पूर्ण,
+		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x02पूर्ण,
+		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x03पूर्ण
+	पूर्ण;
+	अटल u8 cam_स्थिर_broad[] = अणु
 		0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-	};
+	पूर्ण;
 
-	if (clear_all) {
+	अगर (clear_all) अणु
 		u8 idx = 0;
 		u8 cam_offset = 0;
 		u8 clear_number = 5;
 
 		rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG, "clear_all\n");
 
-		for (idx = 0; idx < clear_number; idx++) {
+		क्रम (idx = 0; idx < clear_number; idx++) अणु
 			rtl_cam_mark_invalid(hw, cam_offset + idx);
 			rtl_cam_empty_entry(hw, cam_offset + idx);
 
-			if (idx < 5) {
-				memset(rtlpriv->sec.key_buf[idx], 0,
+			अगर (idx < 5) अणु
+				स_रखो(rtlpriv->sec.key_buf[idx], 0,
 				       MAX_KEY_LEN);
 				rtlpriv->sec.key_len[idx] = 0;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-	} else {
-		switch (enc_algo) {
-		case WEP40_ENCRYPTION:
+	पूर्ण अन्यथा अणु
+		चयन (enc_algo) अणु
+		हाल WEP40_ENCRYPTION:
 			enc_algo = CAM_WEP40;
-			break;
-		case WEP104_ENCRYPTION:
+			अवरोध;
+		हाल WEP104_ENCRYPTION:
 			enc_algo = CAM_WEP104;
-			break;
-		case TKIP_ENCRYPTION:
+			अवरोध;
+		हाल TKIP_ENCRYPTION:
 			enc_algo = CAM_TKIP;
-			break;
-		case AESCCMP_ENCRYPTION:
+			अवरोध;
+		हाल AESCCMP_ENCRYPTION:
 			enc_algo = CAM_AES;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			rtl_dbg(rtlpriv, COMP_ERR, DBG_LOUD,
 				"switch case %#x not processed\n", enc_algo);
 			enc_algo = CAM_TKIP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (is_wepkey || rtlpriv->sec.use_defaultkey) {
-			macaddr = cam_const_addr[key_index];
+		अगर (is_wepkey || rtlpriv->sec.use_शेषkey) अणु
+			macaddr = cam_स्थिर_addr[key_index];
 			entry_id = key_index;
-		} else {
-			if (is_group) {
-				macaddr = cam_const_broad;
+		पूर्ण अन्यथा अणु
+			अगर (is_group) अणु
+				macaddr = cam_स्थिर_broad;
 				entry_id = key_index;
-			} else {
-				if (mac->opmode == NL80211_IFTYPE_AP) {
+			पूर्ण अन्यथा अणु
+				अगर (mac->opmode == NL80211_IFTYPE_AP) अणु
 					entry_id =
-					  rtl_cam_get_free_entry(hw, p_macaddr);
-					if (entry_id >=  TOTAL_CAM_ENTRY) {
+					  rtl_cam_get_मुक्त_entry(hw, p_macaddr);
+					अगर (entry_id >=  TOTAL_CAM_ENTRY) अणु
 						pr_err("Can not find free hw security cam entry\n");
-						return;
-					}
-				} else {
+						वापस;
+					पूर्ण
+				पूर्ण अन्यथा अणु
 					entry_id = CAM_PAIRWISE_KEY_POSITION;
-				}
+				पूर्ण
 
 				key_index = PAIRWISE_KEYIDX;
 				is_pairwise = true;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (rtlpriv->sec.key_len[key_index] == 0) {
+		अगर (rtlpriv->sec.key_len[key_index] == 0) अणु
 			rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 				"delete one entry, entry_id is %d\n",
 				entry_id);
-			if (mac->opmode == NL80211_IFTYPE_AP)
+			अगर (mac->opmode == NL80211_IFTYPE_AP)
 				rtl_cam_del_entry(hw, p_macaddr);
 			rtl_cam_delete_one_entry(hw, p_macaddr, entry_id);
-		} else {
+		पूर्ण अन्यथा अणु
 			rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 				"add one entry\n");
-			if (is_pairwise) {
+			अगर (is_pairwise) अणु
 				rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 					"set Pairwise key\n");
 
@@ -2245,11 +2246,11 @@ void rtl8723e_set_key(struct ieee80211_hw *hw, u32 key_index,
 						      entry_id, enc_algo,
 						      CAM_CONFIG_NO_USEDK,
 						      rtlpriv->sec.key_buf[key_index]);
-			} else {
+			पूर्ण अन्यथा अणु
 				rtl_dbg(rtlpriv, COMP_SEC, DBG_DMESG,
 					"set group key\n");
 
-				if (mac->opmode == NL80211_IFTYPE_ADHOC) {
+				अगर (mac->opmode == NL80211_IFTYPE_ADHOC) अणु
 					rtl_cam_add_one_entry(hw,
 							rtlefuse->dev_addr,
 							PAIRWISE_KEYIDX,
@@ -2258,21 +2259,21 @@ void rtl8723e_set_key(struct ieee80211_hw *hw, u32 key_index,
 							CAM_CONFIG_NO_USEDK,
 							rtlpriv->sec.key_buf
 							[entry_id]);
-				}
+				पूर्ण
 
 				rtl_cam_add_one_entry(hw, macaddr, key_index,
 						entry_id, enc_algo,
 						CAM_CONFIG_NO_USEDK,
 						rtlpriv->sec.key_buf[entry_id]);
-			}
+			पूर्ण
 
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void rtl8723e_bt_var_init(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल व्योम rtl8723e_bt_var_init(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
 	rtlpriv->btcoexist.bt_coexistence =
 		rtlpriv->btcoexist.eeprom_bt_coexist;
@@ -2291,7 +2292,7 @@ static void rtl8723e_bt_var_init(struct ieee80211_hw *hw)
 		"BT Coexistence = 0x%x\n",
 		rtlpriv->btcoexist.bt_coexistence);
 
-	if (rtlpriv->btcoexist.bt_coexistence) {
+	अगर (rtlpriv->btcoexist.bt_coexistence) अणु
 		rtlpriv->btcoexist.bt_busy_traffic = false;
 		rtlpriv->btcoexist.bt_traffic_mode_set = false;
 		rtlpriv->btcoexist.bt_non_traffic_mode_set = false;
@@ -2299,43 +2300,43 @@ static void rtl8723e_bt_var_init(struct ieee80211_hw *hw)
 		rtlpriv->btcoexist.cstate = 0;
 		rtlpriv->btcoexist.previous_state = 0;
 
-		if (rtlpriv->btcoexist.bt_ant_num == ANT_X2) {
+		अगर (rtlpriv->btcoexist.bt_ant_num == ANT_X2) अणु
 			rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 				"BlueTooth BT_Ant_Num = Antx2\n");
-		} else if (rtlpriv->btcoexist.bt_ant_num == ANT_X1) {
+		पूर्ण अन्यथा अगर (rtlpriv->btcoexist.bt_ant_num == ANT_X1) अणु
 			rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 				"BlueTooth BT_Ant_Num = Antx1\n");
-		}
-		switch (rtlpriv->btcoexist.bt_coexist_type) {
-		case BT_2WIRE:
+		पूर्ण
+		चयन (rtlpriv->btcoexist.bt_coexist_type) अणु
+		हाल BT_2WIRE:
 			rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 				"BlueTooth BT_CoexistType = BT_2Wire\n");
-			break;
-		case BT_ISSC_3WIRE:
+			अवरोध;
+		हाल BT_ISSC_3WIRE:
 			rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 				"BlueTooth BT_CoexistType = BT_ISSC_3Wire\n");
-			break;
-		case BT_ACCEL:
+			अवरोध;
+		हाल BT_ACCEL:
 			rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 				"BlueTooth BT_CoexistType = BT_ACCEL\n");
-			break;
-		case BT_CSR_BC4:
+			अवरोध;
+		हाल BT_CSR_BC4:
 			rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 				"BlueTooth BT_CoexistType = BT_CSR_BC4\n");
-			break;
-		case BT_CSR_BC8:
+			अवरोध;
+		हाल BT_CSR_BC8:
 			rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 				"BlueTooth BT_CoexistType = BT_CSR_BC8\n");
-			break;
-		case BT_RTL8756:
+			अवरोध;
+		हाल BT_RTL8756:
 			rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 				"BlueTooth BT_CoexistType = BT_RTL8756\n");
-			break;
-		default:
+			अवरोध;
+		शेष:
 			rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 				"BlueTooth BT_CoexistType = Unknown\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		rtl_dbg(rtlpriv, COMP_BT_COEXIST, DBG_TRACE,
 			"BlueTooth BT_Ant_isolation = %d\n",
 			 rtlpriv->btcoexist.bt_ant_isolation);
@@ -2345,21 +2346,21 @@ static void rtl8723e_bt_var_init(struct ieee80211_hw *hw)
 		rtlpriv->btcoexist.bt_active_zero_cnt = 0;
 		rtlpriv->btcoexist.cur_bt_disabled = false;
 		rtlpriv->btcoexist.pre_bt_disabled = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void rtl8723e_read_bt_coexist_info_from_hwpg(struct ieee80211_hw *hw,
-					     bool auto_load_fail, u8 *hwinfo)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+व्योम rtl8723e_पढ़ो_bt_coexist_info_from_hwpg(काष्ठा ieee80211_hw *hw,
+					     bool स्वतः_load_fail, u8 *hwinfo)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 	u8 value;
-	u32 tmpu_32;
+	u32 पंचांगpu_32;
 
-	if (!auto_load_fail) {
-		tmpu_32 = rtl_read_dword(rtlpriv, REG_MULTI_FUNC_CTRL);
-		if (tmpu_32 & BIT(18))
+	अगर (!स्वतः_load_fail) अणु
+		पंचांगpu_32 = rtl_पढ़ो_dword(rtlpriv, REG_MULTI_FUNC_CTRL);
+		अगर (पंचांगpu_32 & BIT(18))
 			rtlpriv->btcoexist.eeprom_bt_coexist = 1;
-		else
+		अन्यथा
 			rtlpriv->btcoexist.eeprom_bt_coexist = 0;
 		value = hwinfo[RF_OPTION4];
 		rtlpriv->btcoexist.eeprom_bt_type = BT_RTL8723A;
@@ -2367,20 +2368,20 @@ void rtl8723e_read_bt_coexist_info_from_hwpg(struct ieee80211_hw *hw,
 		rtlpriv->btcoexist.eeprom_bt_ant_isol = ((value & 0x10) >> 4);
 		rtlpriv->btcoexist.eeprom_bt_radio_shared =
 		  ((value & 0x20) >> 5);
-	} else {
+	पूर्ण अन्यथा अणु
 		rtlpriv->btcoexist.eeprom_bt_coexist = 0;
 		rtlpriv->btcoexist.eeprom_bt_type = BT_RTL8723A;
 		rtlpriv->btcoexist.eeprom_bt_ant_num = ANT_X2;
 		rtlpriv->btcoexist.eeprom_bt_ant_isol = 0;
 		rtlpriv->btcoexist.eeprom_bt_radio_shared = BT_RADIO_SHARED;
-	}
+	पूर्ण
 
 	rtl8723e_bt_var_init(hw);
-}
+पूर्ण
 
-void rtl8723e_bt_reg_init(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+व्योम rtl8723e_bt_reg_init(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
 	/* 0:Low, 1:High, 2:From Efuse. */
 	rtlpriv->btcoexist.reg_bt_iso = 2;
@@ -2388,20 +2389,20 @@ void rtl8723e_bt_reg_init(struct ieee80211_hw *hw)
 	rtlpriv->btcoexist.reg_bt_sco = 3;
 	/* 0:Disable BT control A-MPDU, 1:Enable BT control A-MPDU. */
 	rtlpriv->btcoexist.reg_bt_sco = 0;
-}
+पूर्ण
 
-void rtl8723e_bt_hw_init(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+व्योम rtl8723e_bt_hw_init(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
-	if (rtlpriv->cfg->ops->get_btc_status())
+	अगर (rtlpriv->cfg->ops->get_btc_status())
 		rtlpriv->btcoexist.btc_ops->btc_init_hw_config(rtlpriv);
-}
+पूर्ण
 
-void rtl8723e_suspend(struct ieee80211_hw *hw)
-{
-}
+व्योम rtl8723e_suspend(काष्ठा ieee80211_hw *hw)
+अणु
+पूर्ण
 
-void rtl8723e_resume(struct ieee80211_hw *hw)
-{
-}
+व्योम rtl8723e_resume(काष्ठा ieee80211_hw *hw)
+अणु
+पूर्ण

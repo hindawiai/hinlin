@@ -1,81 +1,82 @@
+<शैली गुरु>
 /*
  *
  * syscall.c
  *
- * syscall: Benchmark for system call performance
+ * syscall: Benchmark क्रम प्रणाली call perक्रमmance
  */
-#include "../perf.h"
-#include "../util/util.h"
-#include <subcmd/parse-options.h>
-#include "../builtin.h"
-#include "bench.h"
+#समावेश "../perf.h"
+#समावेश "../util/util.h"
+#समावेश <subcmd/parse-options.h>
+#समावेश "../builtin.h"
+#समावेश "bench.h"
 
-#include <stdio.h>
-#include <sys/time.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <stdlib.h>
+#समावेश <मानकपन.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/syscall.h>
+#समावेश <sys/types.h>
+#समावेश <unistd.h>
+#समावेश <मानककोष.स>
 
-#define LOOPS_DEFAULT 10000000
-static	int loops = LOOPS_DEFAULT;
+#घोषणा LOOPS_DEFAULT 10000000
+अटल	पूर्णांक loops = LOOPS_DEFAULT;
 
-static const struct option options[] = {
+अटल स्थिर काष्ठा option options[] = अणु
 	OPT_INTEGER('l', "loop",	&loops,		"Specify number of loops"),
 	OPT_END()
-};
+पूर्ण;
 
-static const char * const bench_syscall_usage[] = {
+अटल स्थिर अक्षर * स्थिर bench_syscall_usage[] = अणु
 	"perf bench syscall <options>",
-	NULL
-};
+	शून्य
+पूर्ण;
 
-int bench_syscall_basic(int argc, const char **argv)
-{
-	struct timeval start, stop, diff;
-	unsigned long long result_usec = 0;
-	int i;
+पूर्णांक bench_syscall_basic(पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा समयval start, stop, dअगरf;
+	अचिन्हित दीर्घ दीर्घ result_usec = 0;
+	पूर्णांक i;
 
 	argc = parse_options(argc, argv, options, bench_syscall_usage, 0);
 
-	gettimeofday(&start, NULL);
+	समय_लोofday(&start, शून्य);
 
-	for (i = 0; i < loops; i++)
+	क्रम (i = 0; i < loops; i++)
 		getppid();
 
-	gettimeofday(&stop, NULL);
-	timersub(&stop, &start, &diff);
+	समय_लोofday(&stop, शून्य);
+	समयrsub(&stop, &start, &dअगरf);
 
-	switch (bench_format) {
-	case BENCH_FORMAT_DEFAULT:
-		printf("# Executed %'d getppid() calls\n", loops);
+	चयन (bench_क्रमmat) अणु
+	हाल BENCH_FORMAT_DEFAULT:
+		म_लिखो("# Executed %'d getppid() calls\n", loops);
 
-		result_usec = diff.tv_sec * 1000000;
-		result_usec += diff.tv_usec;
+		result_usec = dअगरf.tv_sec * 1000000;
+		result_usec += dअगरf.tv_usec;
 
-		printf(" %14s: %lu.%03lu [sec]\n\n", "Total time",
-		       (unsigned long) diff.tv_sec,
-		       (unsigned long) (diff.tv_usec/1000));
+		म_लिखो(" %14s: %lu.%03lu [sec]\n\n", "Total time",
+		       (अचिन्हित दीर्घ) dअगरf.tv_sec,
+		       (अचिन्हित दीर्घ) (dअगरf.tv_usec/1000));
 
-		printf(" %14lf usecs/op\n",
-		       (double)result_usec / (double)loops);
-		printf(" %'14d ops/sec\n",
-		       (int)((double)loops /
-			     ((double)result_usec / (double)1000000)));
-		break;
+		म_लिखो(" %14lf usecs/op\n",
+		       (द्विगुन)result_usec / (द्विगुन)loops);
+		म_लिखो(" %'14d ops/sec\n",
+		       (पूर्णांक)((द्विगुन)loops /
+			     ((द्विगुन)result_usec / (द्विगुन)1000000)));
+		अवरोध;
 
-	case BENCH_FORMAT_SIMPLE:
-		printf("%lu.%03lu\n",
-		       (unsigned long) diff.tv_sec,
-		       (unsigned long) (diff.tv_usec / 1000));
-		break;
+	हाल BENCH_FORMAT_SIMPLE:
+		म_लिखो("%lu.%03lu\n",
+		       (अचिन्हित दीर्घ) dअगरf.tv_sec,
+		       (अचिन्हित दीर्घ) (dअगरf.tv_usec / 1000));
+		अवरोध;
 
-	default:
+	शेष:
 		/* reaching here is something disaster */
-		fprintf(stderr, "Unknown format:%d\n", bench_format);
-		exit(1);
-		break;
-	}
+		ख_लिखो(मानक_त्रुटि, "Unknown format:%d\n", bench_क्रमmat);
+		निकास(1);
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

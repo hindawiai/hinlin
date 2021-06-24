@@ -1,60 +1,61 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_TIMERQUEUE_H
-#define _LINUX_TIMERQUEUE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_TIMERQUEUE_H
+#घोषणा _LINUX_TIMERQUEUE_H
 
-#include <linux/rbtree.h>
-#include <linux/ktime.h>
-
-
-struct timerqueue_node {
-	struct rb_node node;
-	ktime_t expires;
-};
-
-struct timerqueue_head {
-	struct rb_root_cached rb_root;
-};
+#समावेश <linux/rbtree.h>
+#समावेश <linux/kसमय.स>
 
 
-extern bool timerqueue_add(struct timerqueue_head *head,
-			   struct timerqueue_node *node);
-extern bool timerqueue_del(struct timerqueue_head *head,
-			   struct timerqueue_node *node);
-extern struct timerqueue_node *timerqueue_iterate_next(
-						struct timerqueue_node *node);
+काष्ठा समयrqueue_node अणु
+	काष्ठा rb_node node;
+	kसमय_प्रकार expires;
+पूर्ण;
+
+काष्ठा समयrqueue_head अणु
+	काष्ठा rb_root_cached rb_root;
+पूर्ण;
+
+
+बाह्य bool समयrqueue_add(काष्ठा समयrqueue_head *head,
+			   काष्ठा समयrqueue_node *node);
+बाह्य bool समयrqueue_del(काष्ठा समयrqueue_head *head,
+			   काष्ठा समयrqueue_node *node);
+बाह्य काष्ठा समयrqueue_node *समयrqueue_iterate_next(
+						काष्ठा समयrqueue_node *node);
 
 /**
- * timerqueue_getnext - Returns the timer with the earliest expiration time
+ * समयrqueue_getnext - Returns the समयr with the earliest expiration समय
  *
- * @head: head of timerqueue
+ * @head: head of समयrqueue
  *
- * Returns a pointer to the timer node that has the earliest expiration time.
+ * Returns a poपूर्णांकer to the समयr node that has the earliest expiration समय.
  */
-static inline
-struct timerqueue_node *timerqueue_getnext(struct timerqueue_head *head)
-{
-	struct rb_node *leftmost = rb_first_cached(&head->rb_root);
+अटल अंतरभूत
+काष्ठा समयrqueue_node *समयrqueue_getnext(काष्ठा समयrqueue_head *head)
+अणु
+	काष्ठा rb_node *lefपंचांगost = rb_first_cached(&head->rb_root);
 
-	return rb_entry(leftmost, struct timerqueue_node, node);
-}
+	वापस rb_entry(lefपंचांगost, काष्ठा समयrqueue_node, node);
+पूर्ण
 
-static inline void timerqueue_init(struct timerqueue_node *node)
-{
+अटल अंतरभूत व्योम समयrqueue_init(काष्ठा समयrqueue_node *node)
+अणु
 	RB_CLEAR_NODE(&node->node);
-}
+पूर्ण
 
-static inline bool timerqueue_node_queued(struct timerqueue_node *node)
-{
-	return !RB_EMPTY_NODE(&node->node);
-}
+अटल अंतरभूत bool समयrqueue_node_queued(काष्ठा समयrqueue_node *node)
+अणु
+	वापस !RB_EMPTY_NODE(&node->node);
+पूर्ण
 
-static inline bool timerqueue_node_expires(struct timerqueue_node *node)
-{
-	return node->expires;
-}
+अटल अंतरभूत bool समयrqueue_node_expires(काष्ठा समयrqueue_node *node)
+अणु
+	वापस node->expires;
+पूर्ण
 
-static inline void timerqueue_init_head(struct timerqueue_head *head)
-{
+अटल अंतरभूत व्योम समयrqueue_init_head(काष्ठा समयrqueue_head *head)
+अणु
 	head->rb_root = RB_ROOT_CACHED;
-}
-#endif /* _LINUX_TIMERQUEUE_H */
+पूर्ण
+#पूर्ण_अगर /* _LINUX_TIMERQUEUE_H */

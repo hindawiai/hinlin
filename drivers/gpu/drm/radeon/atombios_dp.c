@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,27 +26,27 @@
  *          Jerome Glisse
  */
 
-#include <drm/radeon_drm.h>
-#include "radeon.h"
+#समावेश <drm/radeon_drm.h>
+#समावेश "radeon.h"
 
-#include "atom.h"
-#include "atom-bits.h"
-#include <drm/drm_dp_helper.h>
+#समावेश "atom.h"
+#समावेश "atom-bits.h"
+#समावेश <drm/drm_dp_helper.h>
 
 /* move these to drm_dp_helper.c/h */
-#define DP_LINK_CONFIGURATION_SIZE 9
-#define DP_DPCD_SIZE DP_RECEIVER_CAP_SIZE
+#घोषणा DP_LINK_CONFIGURATION_SIZE 9
+#घोषणा DP_DPCD_SIZE DP_RECEIVER_CAP_SIZE
 
-static char *voltage_names[] = {
+अटल अक्षर *voltage_names[] = अणु
 	"0.4V", "0.6V", "0.8V", "1.2V"
-};
-static char *pre_emph_names[] = {
+पूर्ण;
+अटल अक्षर *pre_emph_names[] = अणु
 	"0dB", "3.5dB", "6dB", "9.5dB"
-};
+पूर्ण;
 
 /***** radeon AUX functions *****/
 
-/* Atom needs data in little endian format so swap as appropriate when copying
+/* Atom needs data in little endian क्रमmat so swap as appropriate when copying
  * data to or from atom. Note that atom operates on dw units.
  *
  * Use to_le=true when sending data to atom and provide at least
@@ -54,53 +55,53 @@ static char *pre_emph_names[] = {
  * Use to_le=false when receiving data from atom and provide ALIGN(num_bytes,4)
  * byes in the src buffer.
  */
-void radeon_atom_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
-{
-#ifdef __BIG_ENDIAN
-	u32 src_tmp[5], dst_tmp[5];
-	int i;
+व्योम radeon_atom_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
+अणु
+#अगर_घोषित __BIG_ENDIAN
+	u32 src_पंचांगp[5], dst_पंचांगp[5];
+	पूर्णांक i;
 	u8 align_num_bytes = ALIGN(num_bytes, 4);
 
-	if (to_le) {
-		memcpy(src_tmp, src, num_bytes);
-		for (i = 0; i < align_num_bytes / 4; i++)
-			dst_tmp[i] = cpu_to_le32(src_tmp[i]);
-		memcpy(dst, dst_tmp, align_num_bytes);
-	} else {
-		memcpy(src_tmp, src, align_num_bytes);
-		for (i = 0; i < align_num_bytes / 4; i++)
-			dst_tmp[i] = le32_to_cpu(src_tmp[i]);
-		memcpy(dst, dst_tmp, num_bytes);
-	}
-#else
-	memcpy(dst, src, num_bytes);
-#endif
-}
+	अगर (to_le) अणु
+		स_नकल(src_पंचांगp, src, num_bytes);
+		क्रम (i = 0; i < align_num_bytes / 4; i++)
+			dst_पंचांगp[i] = cpu_to_le32(src_पंचांगp[i]);
+		स_नकल(dst, dst_पंचांगp, align_num_bytes);
+	पूर्ण अन्यथा अणु
+		स_नकल(src_पंचांगp, src, align_num_bytes);
+		क्रम (i = 0; i < align_num_bytes / 4; i++)
+			dst_पंचांगp[i] = le32_to_cpu(src_पंचांगp[i]);
+		स_नकल(dst, dst_पंचांगp, num_bytes);
+	पूर्ण
+#अन्यथा
+	स_नकल(dst, src, num_bytes);
+#पूर्ण_अगर
+पूर्ण
 
-union aux_channel_transaction {
+जोड़ aux_channel_transaction अणु
 	PROCESS_AUX_CHANNEL_TRANSACTION_PS_ALLOCATION v1;
 	PROCESS_AUX_CHANNEL_TRANSACTION_PARAMETERS_V2 v2;
-};
+पूर्ण;
 
-static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
-				 u8 *send, int send_bytes,
-				 u8 *recv, int recv_size,
+अटल पूर्णांक radeon_process_aux_ch(काष्ठा radeon_i2c_chan *chan,
+				 u8 *send, पूर्णांक send_bytes,
+				 u8 *recv, पूर्णांक recv_size,
 				 u8 delay, u8 *ack)
-{
-	struct drm_device *dev = chan->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	union aux_channel_transaction args;
-	int index = GetIndexIntoMasterTable(COMMAND, ProcessAuxChannelTransaction);
-	unsigned char *base;
-	int recv_bytes;
-	int r = 0;
+अणु
+	काष्ठा drm_device *dev = chan->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	जोड़ aux_channel_transaction args;
+	पूर्णांक index = GetIndexIntoMasterTable(COMMAND, ProcessAuxChannelTransaction);
+	अचिन्हित अक्षर *base;
+	पूर्णांक recv_bytes;
+	पूर्णांक r = 0;
 
-	memset(&args, 0, sizeof(args));
+	स_रखो(&args, 0, माप(args));
 
 	mutex_lock(&chan->mutex);
 	mutex_lock(&rdev->mode_info.atom_context->scratch_mutex);
 
-	base = (unsigned char *)(rdev->mode_info.atom_context->scratch + 1);
+	base = (अचिन्हित अक्षर *)(rdev->mode_info.atom_context->scratch + 1);
 
 	radeon_atom_copy_swap(base, send, send_bytes, true);
 
@@ -109,64 +110,64 @@ static int radeon_process_aux_ch(struct radeon_i2c_chan *chan,
 	args.v1.ucDataOutLen = 0;
 	args.v1.ucChannelID = chan->rec.i2c_id;
 	args.v1.ucDelay = delay / 10;
-	if (ASIC_IS_DCE4(rdev))
+	अगर (ASIC_IS_DCE4(rdev))
 		args.v2.ucHPD_ID = chan->rec.hpd;
 
-	atom_execute_table_scratch_unlocked(rdev->mode_info.atom_context, index, (uint32_t *)&args);
+	atom_execute_table_scratch_unlocked(rdev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
 
 	*ack = args.v1.ucReplyStatus;
 
-	/* timeout */
-	if (args.v1.ucReplyStatus == 1) {
+	/* समयout */
+	अगर (args.v1.ucReplyStatus == 1) अणु
 		DRM_DEBUG_KMS("dp_aux_ch timeout\n");
 		r = -ETIMEDOUT;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* flags not zero */
-	if (args.v1.ucReplyStatus == 2) {
+	अगर (args.v1.ucReplyStatus == 2) अणु
 		DRM_DEBUG_KMS("dp_aux_ch flags not zero\n");
 		r = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	/* error */
-	if (args.v1.ucReplyStatus == 3) {
+	अगर (args.v1.ucReplyStatus == 3) अणु
 		DRM_DEBUG_KMS("dp_aux_ch error\n");
 		r = -EIO;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	recv_bytes = args.v1.ucDataOutLen;
-	if (recv_bytes > recv_size)
+	अगर (recv_bytes > recv_size)
 		recv_bytes = recv_size;
 
-	if (recv && recv_size)
+	अगर (recv && recv_size)
 		radeon_atom_copy_swap(recv, base + 16, recv_bytes, false);
 
 	r = recv_bytes;
-done:
+करोne:
 	mutex_unlock(&rdev->mode_info.atom_context->scratch_mutex);
 	mutex_unlock(&chan->mutex);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-#define BARE_ADDRESS_SIZE 3
-#define HEADER_SIZE (BARE_ADDRESS_SIZE + 1)
+#घोषणा BARE_ADDRESS_SIZE 3
+#घोषणा HEADER_SIZE (BARE_ADDRESS_SIZE + 1)
 
-static ssize_t
-radeon_dp_aux_transfer_atom(struct drm_dp_aux *aux, struct drm_dp_aux_msg *msg)
-{
-	struct radeon_i2c_chan *chan =
-		container_of(aux, struct radeon_i2c_chan, aux);
-	int ret;
+अटल sमाप_प्रकार
+radeon_dp_aux_transfer_atom(काष्ठा drm_dp_aux *aux, काष्ठा drm_dp_aux_msg *msg)
+अणु
+	काष्ठा radeon_i2c_chan *chan =
+		container_of(aux, काष्ठा radeon_i2c_chan, aux);
+	पूर्णांक ret;
 	u8 tx_buf[20];
-	size_t tx_size;
+	माप_प्रकार tx_size;
 	u8 ack, delay = 0;
 
-	if (WARN_ON(msg->size > 16))
-		return -E2BIG;
+	अगर (WARN_ON(msg->size > 16))
+		वापस -E2BIG;
 
 	tx_buf[0] = msg->address & 0xff;
 	tx_buf[1] = (msg->address >> 8) & 0xff;
@@ -174,94 +175,94 @@ radeon_dp_aux_transfer_atom(struct drm_dp_aux *aux, struct drm_dp_aux_msg *msg)
 		((msg->address >> 16) & 0xf);
 	tx_buf[3] = msg->size ? (msg->size - 1) : 0;
 
-	switch (msg->request & ~DP_AUX_I2C_MOT) {
-	case DP_AUX_NATIVE_WRITE:
-	case DP_AUX_I2C_WRITE:
-	case DP_AUX_I2C_WRITE_STATUS_UPDATE:
-		/* The atom implementation only supports writes with a max payload of
-		 * 12 bytes since it uses 4 bits for the total count (header + payload)
-		 * in the parameter space.  The atom interface supports 16 byte
-		 * payloads for reads. The hw itself supports up to 16 bytes of payload.
+	चयन (msg->request & ~DP_AUX_I2C_MOT) अणु
+	हाल DP_AUX_NATIVE_WRITE:
+	हाल DP_AUX_I2C_WRITE:
+	हाल DP_AUX_I2C_WRITE_STATUS_UPDATE:
+		/* The atom implementation only supports ग_लिखोs with a max payload of
+		 * 12 bytes since it uses 4 bits क्रम the total count (header + payload)
+		 * in the parameter space.  The atom पूर्णांकerface supports 16 byte
+		 * payloads क्रम पढ़ोs. The hw itself supports up to 16 bytes of payload.
 		 */
-		if (WARN_ON_ONCE(msg->size > 12))
-			return -E2BIG;
-		/* tx_size needs to be 4 even for bare address packets since the atom
+		अगर (WARN_ON_ONCE(msg->size > 12))
+			वापस -E2BIG;
+		/* tx_size needs to be 4 even क्रम bare address packets since the atom
 		 * table needs the info in tx_buf[3].
 		 */
 		tx_size = HEADER_SIZE + msg->size;
-		if (msg->size == 0)
+		अगर (msg->size == 0)
 			tx_buf[3] |= BARE_ADDRESS_SIZE << 4;
-		else
+		अन्यथा
 			tx_buf[3] |= tx_size << 4;
-		memcpy(tx_buf + HEADER_SIZE, msg->buffer, msg->size);
+		स_नकल(tx_buf + HEADER_SIZE, msg->buffer, msg->size);
 		ret = radeon_process_aux_ch(chan,
-					    tx_buf, tx_size, NULL, 0, delay, &ack);
-		if (ret >= 0)
+					    tx_buf, tx_size, शून्य, 0, delay, &ack);
+		अगर (ret >= 0)
 			/* Return payload size. */
 			ret = msg->size;
-		break;
-	case DP_AUX_NATIVE_READ:
-	case DP_AUX_I2C_READ:
-		/* tx_size needs to be 4 even for bare address packets since the atom
+		अवरोध;
+	हाल DP_AUX_NATIVE_READ:
+	हाल DP_AUX_I2C_READ:
+		/* tx_size needs to be 4 even क्रम bare address packets since the atom
 		 * table needs the info in tx_buf[3].
 		 */
 		tx_size = HEADER_SIZE;
-		if (msg->size == 0)
+		अगर (msg->size == 0)
 			tx_buf[3] |= BARE_ADDRESS_SIZE << 4;
-		else
+		अन्यथा
 			tx_buf[3] |= tx_size << 4;
 		ret = radeon_process_aux_ch(chan,
 					    tx_buf, tx_size, msg->buffer, msg->size, delay, &ack);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret >= 0)
+	अगर (ret >= 0)
 		msg->reply = ack >> 4;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void radeon_dp_aux_init(struct radeon_connector *radeon_connector)
-{
-	struct drm_device *dev = radeon_connector->base.dev;
-	struct radeon_device *rdev = dev->dev_private;
-	int ret;
+व्योम radeon_dp_aux_init(काष्ठा radeon_connector *radeon_connector)
+अणु
+	काष्ठा drm_device *dev = radeon_connector->base.dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	पूर्णांक ret;
 
 	radeon_connector->ddc_bus->rec.hpd = radeon_connector->hpd.hpd;
 	radeon_connector->ddc_bus->aux.dev = radeon_connector->base.kdev;
-	if (ASIC_IS_DCE5(rdev)) {
-		if (radeon_auxch)
+	अगर (ASIC_IS_DCE5(rdev)) अणु
+		अगर (radeon_auxch)
 			radeon_connector->ddc_bus->aux.transfer = radeon_dp_aux_transfer_native;
-		else
+		अन्यथा
 			radeon_connector->ddc_bus->aux.transfer = radeon_dp_aux_transfer_atom;
-	} else {
+	पूर्ण अन्यथा अणु
 		radeon_connector->ddc_bus->aux.transfer = radeon_dp_aux_transfer_atom;
-	}
+	पूर्ण
 
-	ret = drm_dp_aux_register(&radeon_connector->ddc_bus->aux);
-	if (!ret)
+	ret = drm_dp_aux_रेजिस्टर(&radeon_connector->ddc_bus->aux);
+	अगर (!ret)
 		radeon_connector->ddc_bus->has_aux = true;
 
 	WARN(ret, "drm_dp_aux_register() failed with error %d\n", ret);
-}
+पूर्ण
 
 /***** general DP utility functions *****/
 
-#define DP_VOLTAGE_MAX         DP_TRAIN_VOLTAGE_SWING_LEVEL_3
-#define DP_PRE_EMPHASIS_MAX    DP_TRAIN_PRE_EMPH_LEVEL_3
+#घोषणा DP_VOLTAGE_MAX         DP_TRAIN_VOLTAGE_SWING_LEVEL_3
+#घोषणा DP_PRE_EMPHASIS_MAX    DP_TRAIN_PRE_EMPH_LEVEL_3
 
-static void dp_get_adjust_train(const u8 link_status[DP_LINK_STATUS_SIZE],
-				int lane_count,
+अटल व्योम dp_get_adjust_train(स्थिर u8 link_status[DP_LINK_STATUS_SIZE],
+				पूर्णांक lane_count,
 				u8 train_set[4])
-{
+अणु
 	u8 v = 0;
 	u8 p = 0;
-	int lane;
+	पूर्णांक lane;
 
-	for (lane = 0; lane < lane_count; lane++) {
+	क्रम (lane = 0; lane < lane_count; lane++) अणु
 		u8 this_v = drm_dp_get_adjust_request_voltage(link_status, lane);
 		u8 this_p = drm_dp_get_adjust_request_pre_emphasis(link_status, lane);
 
@@ -270,444 +271,444 @@ static void dp_get_adjust_train(const u8 link_status[DP_LINK_STATUS_SIZE],
 			  voltage_names[this_v >> DP_TRAIN_VOLTAGE_SWING_SHIFT],
 			  pre_emph_names[this_p >> DP_TRAIN_PRE_EMPHASIS_SHIFT]);
 
-		if (this_v > v)
+		अगर (this_v > v)
 			v = this_v;
-		if (this_p > p)
+		अगर (this_p > p)
 			p = this_p;
-	}
+	पूर्ण
 
-	if (v >= DP_VOLTAGE_MAX)
+	अगर (v >= DP_VOLTAGE_MAX)
 		v |= DP_TRAIN_MAX_SWING_REACHED;
 
-	if (p >= DP_PRE_EMPHASIS_MAX)
+	अगर (p >= DP_PRE_EMPHASIS_MAX)
 		p |= DP_TRAIN_MAX_PRE_EMPHASIS_REACHED;
 
 	DRM_DEBUG_KMS("using signal parameters: voltage %s pre_emph %s\n",
 		  voltage_names[(v & DP_TRAIN_VOLTAGE_SWING_MASK) >> DP_TRAIN_VOLTAGE_SWING_SHIFT],
 		  pre_emph_names[(p & DP_TRAIN_PRE_EMPHASIS_MASK) >> DP_TRAIN_PRE_EMPHASIS_SHIFT]);
 
-	for (lane = 0; lane < 4; lane++)
+	क्रम (lane = 0; lane < 4; lane++)
 		train_set[lane] = v | p;
-}
+पूर्ण
 
 /* convert bits per color to bits per pixel */
 /* get bpc from the EDID */
-static int convert_bpc_to_bpp(int bpc)
-{
-	if (bpc == 0)
-		return 24;
-	else
-		return bpc * 3;
-}
+अटल पूर्णांक convert_bpc_to_bpp(पूर्णांक bpc)
+अणु
+	अगर (bpc == 0)
+		वापस 24;
+	अन्यथा
+		वापस bpc * 3;
+पूर्ण
 
-/***** radeon specific DP functions *****/
+/***** radeon specअगरic DP functions *****/
 
-static int radeon_dp_get_dp_link_config(struct drm_connector *connector,
-					const u8 dpcd[DP_DPCD_SIZE],
-					unsigned pix_clock,
-					unsigned *dp_lanes, unsigned *dp_rate)
-{
-	int bpp = convert_bpc_to_bpp(radeon_get_monitor_bpc(connector));
-	static const unsigned link_rates[3] = { 162000, 270000, 540000 };
-	unsigned max_link_rate = drm_dp_max_link_rate(dpcd);
-	unsigned max_lane_num = drm_dp_max_lane_count(dpcd);
-	unsigned lane_num, i, max_pix_clock;
+अटल पूर्णांक radeon_dp_get_dp_link_config(काष्ठा drm_connector *connector,
+					स्थिर u8 dpcd[DP_DPCD_SIZE],
+					अचिन्हित pix_घड़ी,
+					अचिन्हित *dp_lanes, अचिन्हित *dp_rate)
+अणु
+	पूर्णांक bpp = convert_bpc_to_bpp(radeon_get_monitor_bpc(connector));
+	अटल स्थिर अचिन्हित link_rates[3] = अणु 162000, 270000, 540000 पूर्ण;
+	अचिन्हित max_link_rate = drm_dp_max_link_rate(dpcd);
+	अचिन्हित max_lane_num = drm_dp_max_lane_count(dpcd);
+	अचिन्हित lane_num, i, max_pix_घड़ी;
 
-	if (radeon_connector_encoder_get_dp_bridge_encoder_id(connector) ==
-	    ENCODER_OBJECT_ID_NUTMEG) {
-		for (lane_num = 1; lane_num <= max_lane_num; lane_num <<= 1) {
-			max_pix_clock = (lane_num * 270000 * 8) / bpp;
-			if (max_pix_clock >= pix_clock) {
+	अगर (radeon_connector_encoder_get_dp_bridge_encoder_id(connector) ==
+	    ENCODER_OBJECT_ID_NUTMEG) अणु
+		क्रम (lane_num = 1; lane_num <= max_lane_num; lane_num <<= 1) अणु
+			max_pix_घड़ी = (lane_num * 270000 * 8) / bpp;
+			अगर (max_pix_घड़ी >= pix_घड़ी) अणु
 				*dp_lanes = lane_num;
 				*dp_rate = 270000;
-				return 0;
-			}
-		}
-	} else {
-		for (i = 0; i < ARRAY_SIZE(link_rates) && link_rates[i] <= max_link_rate; i++) {
-			for (lane_num = 1; lane_num <= max_lane_num; lane_num <<= 1) {
-				max_pix_clock = (lane_num * link_rates[i] * 8) / bpp;
-				if (max_pix_clock >= pix_clock) {
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < ARRAY_SIZE(link_rates) && link_rates[i] <= max_link_rate; i++) अणु
+			क्रम (lane_num = 1; lane_num <= max_lane_num; lane_num <<= 1) अणु
+				max_pix_घड़ी = (lane_num * link_rates[i] * 8) / bpp;
+				अगर (max_pix_घड़ी >= pix_घड़ी) अणु
 					*dp_lanes = lane_num;
 					*dp_rate = link_rates[i];
-					return 0;
-				}
-			}
-		}
-	}
+					वापस 0;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static u8 radeon_dp_encoder_service(struct radeon_device *rdev,
-				    int action, int dp_clock,
+अटल u8 radeon_dp_encoder_service(काष्ठा radeon_device *rdev,
+				    पूर्णांक action, पूर्णांक dp_घड़ी,
 				    u8 ucconfig, u8 lane_num)
-{
+अणु
 	DP_ENCODER_SERVICE_PARAMETERS args;
-	int index = GetIndexIntoMasterTable(COMMAND, DPEncoderService);
+	पूर्णांक index = GetIndexIntoMasterTable(COMMAND, DPEncoderService);
 
-	memset(&args, 0, sizeof(args));
-	args.ucLinkClock = dp_clock / 10;
+	स_रखो(&args, 0, माप(args));
+	args.ucLinkClock = dp_घड़ी / 10;
 	args.ucConfig = ucconfig;
 	args.ucAction = action;
 	args.ucLaneNum = lane_num;
 	args.ucStatus = 0;
 
-	atom_execute_table(rdev->mode_info.atom_context, index, (uint32_t *)&args);
-	return args.ucStatus;
-}
+	atom_execute_table(rdev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
+	वापस args.ucStatus;
+पूर्ण
 
-u8 radeon_dp_getsinktype(struct radeon_connector *radeon_connector)
-{
-	struct drm_device *dev = radeon_connector->base.dev;
-	struct radeon_device *rdev = dev->dev_private;
+u8 radeon_dp_माला_लोinktype(काष्ठा radeon_connector *radeon_connector)
+अणु
+	काष्ठा drm_device *dev = radeon_connector->base.dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
 
-	return radeon_dp_encoder_service(rdev, ATOM_DP_ACTION_GET_SINK_TYPE, 0,
+	वापस radeon_dp_encoder_service(rdev, ATOM_DP_ACTION_GET_SINK_TYPE, 0,
 					 radeon_connector->ddc_bus->rec.i2c_id, 0);
-}
+पूर्ण
 
-static void radeon_dp_probe_oui(struct radeon_connector *radeon_connector)
-{
-	struct radeon_connector_atom_dig *dig_connector = radeon_connector->con_priv;
+अटल व्योम radeon_dp_probe_oui(काष्ठा radeon_connector *radeon_connector)
+अणु
+	काष्ठा radeon_connector_atom_dig *dig_connector = radeon_connector->con_priv;
 	u8 buf[3];
 
-	if (!(dig_connector->dpcd[DP_DOWN_STREAM_PORT_COUNT] & DP_OUI_SUPPORT))
-		return;
+	अगर (!(dig_connector->dpcd[DP_DOWN_STREAM_PORT_COUNT] & DP_OUI_SUPPORT))
+		वापस;
 
-	if (drm_dp_dpcd_read(&radeon_connector->ddc_bus->aux, DP_SINK_OUI, buf, 3) == 3)
+	अगर (drm_dp_dpcd_पढ़ो(&radeon_connector->ddc_bus->aux, DP_SINK_OUI, buf, 3) == 3)
 		DRM_DEBUG_KMS("Sink OUI: %02hx%02hx%02hx\n",
 			      buf[0], buf[1], buf[2]);
 
-	if (drm_dp_dpcd_read(&radeon_connector->ddc_bus->aux, DP_BRANCH_OUI, buf, 3) == 3)
+	अगर (drm_dp_dpcd_पढ़ो(&radeon_connector->ddc_bus->aux, DP_BRANCH_OUI, buf, 3) == 3)
 		DRM_DEBUG_KMS("Branch OUI: %02hx%02hx%02hx\n",
 			      buf[0], buf[1], buf[2]);
-}
+पूर्ण
 
-bool radeon_dp_getdpcd(struct radeon_connector *radeon_connector)
-{
-	struct radeon_connector_atom_dig *dig_connector = radeon_connector->con_priv;
+bool radeon_dp_getdpcd(काष्ठा radeon_connector *radeon_connector)
+अणु
+	काष्ठा radeon_connector_atom_dig *dig_connector = radeon_connector->con_priv;
 	u8 msg[DP_DPCD_SIZE];
-	int ret;
+	पूर्णांक ret;
 
-	ret = drm_dp_dpcd_read(&radeon_connector->ddc_bus->aux, DP_DPCD_REV, msg,
+	ret = drm_dp_dpcd_पढ़ो(&radeon_connector->ddc_bus->aux, DP_DPCD_REV, msg,
 			       DP_DPCD_SIZE);
-	if (ret == DP_DPCD_SIZE) {
-		memcpy(dig_connector->dpcd, msg, DP_DPCD_SIZE);
+	अगर (ret == DP_DPCD_SIZE) अणु
+		स_नकल(dig_connector->dpcd, msg, DP_DPCD_SIZE);
 
-		DRM_DEBUG_KMS("DPCD: %*ph\n", (int)sizeof(dig_connector->dpcd),
+		DRM_DEBUG_KMS("DPCD: %*ph\n", (पूर्णांक)माप(dig_connector->dpcd),
 			      dig_connector->dpcd);
 
 		radeon_dp_probe_oui(radeon_connector);
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	dig_connector->dpcd[0] = 0;
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int radeon_dp_get_panel_mode(struct drm_encoder *encoder,
-			     struct drm_connector *connector)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	int panel_mode = DP_PANEL_MODE_EXTERNAL_DP_MODE;
+पूर्णांक radeon_dp_get_panel_mode(काष्ठा drm_encoder *encoder,
+			     काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	पूर्णांक panel_mode = DP_PANEL_MODE_EXTERNAL_DP_MODE;
 	u16 dp_bridge = radeon_connector_encoder_get_dp_bridge_encoder_id(connector);
-	u8 tmp;
+	u8 पंचांगp;
 
-	if (!ASIC_IS_DCE4(rdev))
-		return panel_mode;
+	अगर (!ASIC_IS_DCE4(rdev))
+		वापस panel_mode;
 
-	if (!radeon_connector->con_priv)
-		return panel_mode;
+	अगर (!radeon_connector->con_priv)
+		वापस panel_mode;
 
-	if (dp_bridge != ENCODER_OBJECT_ID_NONE) {
+	अगर (dp_bridge != ENCODER_OBJECT_ID_NONE) अणु
 		/* DP bridge chips */
-		if (drm_dp_dpcd_readb(&radeon_connector->ddc_bus->aux,
-				      DP_EDP_CONFIGURATION_CAP, &tmp) == 1) {
-			if (tmp & 1)
+		अगर (drm_dp_dpcd_पढ़ोb(&radeon_connector->ddc_bus->aux,
+				      DP_EDP_CONFIGURATION_CAP, &पंचांगp) == 1) अणु
+			अगर (पंचांगp & 1)
 				panel_mode = DP_PANEL_MODE_INTERNAL_DP2_MODE;
-			else if ((dp_bridge == ENCODER_OBJECT_ID_NUTMEG) ||
+			अन्यथा अगर ((dp_bridge == ENCODER_OBJECT_ID_NUTMEG) ||
 				 (dp_bridge == ENCODER_OBJECT_ID_TRAVIS))
 				panel_mode = DP_PANEL_MODE_INTERNAL_DP1_MODE;
-			else
+			अन्यथा
 				panel_mode = DP_PANEL_MODE_EXTERNAL_DP_MODE;
-		}
-	} else if (connector->connector_type == DRM_MODE_CONNECTOR_eDP) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (connector->connector_type == DRM_MODE_CONNECTOR_eDP) अणु
 		/* eDP */
-		if (drm_dp_dpcd_readb(&radeon_connector->ddc_bus->aux,
-				      DP_EDP_CONFIGURATION_CAP, &tmp) == 1) {
-			if (tmp & 1)
+		अगर (drm_dp_dpcd_पढ़ोb(&radeon_connector->ddc_bus->aux,
+				      DP_EDP_CONFIGURATION_CAP, &पंचांगp) == 1) अणु
+			अगर (पंचांगp & 1)
 				panel_mode = DP_PANEL_MODE_INTERNAL_DP2_MODE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return panel_mode;
-}
+	वापस panel_mode;
+पूर्ण
 
-void radeon_dp_set_link_config(struct drm_connector *connector,
-			       const struct drm_display_mode *mode)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct radeon_connector_atom_dig *dig_connector;
-	int ret;
+व्योम radeon_dp_set_link_config(काष्ठा drm_connector *connector,
+			       स्थिर काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा radeon_connector_atom_dig *dig_connector;
+	पूर्णांक ret;
 
-	if (!radeon_connector->con_priv)
-		return;
+	अगर (!radeon_connector->con_priv)
+		वापस;
 	dig_connector = radeon_connector->con_priv;
 
-	if ((dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
-	    (dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_eDP)) {
+	अगर ((dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_DISPLAYPORT) ||
+	    (dig_connector->dp_sink_type == CONNECTOR_OBJECT_ID_eDP)) अणु
 		ret = radeon_dp_get_dp_link_config(connector, dig_connector->dpcd,
-						   mode->clock,
+						   mode->घड़ी,
 						   &dig_connector->dp_lane_count,
-						   &dig_connector->dp_clock);
-		if (ret) {
-			dig_connector->dp_clock = 0;
+						   &dig_connector->dp_घड़ी);
+		अगर (ret) अणु
+			dig_connector->dp_घड़ी = 0;
 			dig_connector->dp_lane_count = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int radeon_dp_mode_valid_helper(struct drm_connector *connector,
-				struct drm_display_mode *mode)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct radeon_connector_atom_dig *dig_connector;
-	unsigned dp_clock, dp_lanes;
-	int ret;
+पूर्णांक radeon_dp_mode_valid_helper(काष्ठा drm_connector *connector,
+				काष्ठा drm_display_mode *mode)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा radeon_connector_atom_dig *dig_connector;
+	अचिन्हित dp_घड़ी, dp_lanes;
+	पूर्णांक ret;
 
-	if ((mode->clock > 340000) &&
+	अगर ((mode->घड़ी > 340000) &&
 	    (!radeon_connector_is_dp12_capable(connector)))
-		return MODE_CLOCK_HIGH;
+		वापस MODE_CLOCK_HIGH;
 
-	if (!radeon_connector->con_priv)
-		return MODE_CLOCK_HIGH;
+	अगर (!radeon_connector->con_priv)
+		वापस MODE_CLOCK_HIGH;
 	dig_connector = radeon_connector->con_priv;
 
 	ret = radeon_dp_get_dp_link_config(connector, dig_connector->dpcd,
-					   mode->clock,
+					   mode->घड़ी,
 					   &dp_lanes,
-					   &dp_clock);
-	if (ret)
-		return MODE_CLOCK_HIGH;
+					   &dp_घड़ी);
+	अगर (ret)
+		वापस MODE_CLOCK_HIGH;
 
-	if ((dp_clock == 540000) &&
+	अगर ((dp_घड़ी == 540000) &&
 	    (!radeon_connector_is_dp12_capable(connector)))
-		return MODE_CLOCK_HIGH;
+		वापस MODE_CLOCK_HIGH;
 
-	return MODE_OK;
-}
+	वापस MODE_OK;
+पूर्ण
 
-bool radeon_dp_needs_link_train(struct radeon_connector *radeon_connector)
-{
+bool radeon_dp_needs_link_train(काष्ठा radeon_connector *radeon_connector)
+अणु
 	u8 link_status[DP_LINK_STATUS_SIZE];
-	struct radeon_connector_atom_dig *dig = radeon_connector->con_priv;
+	काष्ठा radeon_connector_atom_dig *dig = radeon_connector->con_priv;
 
-	if (drm_dp_dpcd_read_link_status(&radeon_connector->ddc_bus->aux, link_status)
+	अगर (drm_dp_dpcd_पढ़ो_link_status(&radeon_connector->ddc_bus->aux, link_status)
 	    <= 0)
-		return false;
-	if (drm_dp_channel_eq_ok(link_status, dig->dp_lane_count))
-		return false;
-	return true;
-}
+		वापस false;
+	अगर (drm_dp_channel_eq_ok(link_status, dig->dp_lane_count))
+		वापस false;
+	वापस true;
+पूर्ण
 
-void radeon_dp_set_rx_power_state(struct drm_connector *connector,
-				  u8 power_state)
-{
-	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
-	struct radeon_connector_atom_dig *dig_connector;
+व्योम radeon_dp_set_rx_घातer_state(काष्ठा drm_connector *connector,
+				  u8 घातer_state)
+अणु
+	काष्ठा radeon_connector *radeon_connector = to_radeon_connector(connector);
+	काष्ठा radeon_connector_atom_dig *dig_connector;
 
-	if (!radeon_connector->con_priv)
-		return;
+	अगर (!radeon_connector->con_priv)
+		वापस;
 
 	dig_connector = radeon_connector->con_priv;
 
-	/* power up/down the sink */
-	if (dig_connector->dpcd[0] >= 0x11) {
-		drm_dp_dpcd_writeb(&radeon_connector->ddc_bus->aux,
-				   DP_SET_POWER, power_state);
+	/* घातer up/करोwn the sink */
+	अगर (dig_connector->dpcd[0] >= 0x11) अणु
+		drm_dp_dpcd_ग_लिखोb(&radeon_connector->ddc_bus->aux,
+				   DP_SET_POWER, घातer_state);
 		usleep_range(1000, 2000);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-struct radeon_dp_link_train_info {
-	struct radeon_device *rdev;
-	struct drm_encoder *encoder;
-	struct drm_connector *connector;
-	int enc_id;
-	int dp_clock;
-	int dp_lane_count;
+काष्ठा radeon_dp_link_train_info अणु
+	काष्ठा radeon_device *rdev;
+	काष्ठा drm_encoder *encoder;
+	काष्ठा drm_connector *connector;
+	पूर्णांक enc_id;
+	पूर्णांक dp_घड़ी;
+	पूर्णांक dp_lane_count;
 	bool tp3_supported;
 	u8 dpcd[DP_RECEIVER_CAP_SIZE];
 	u8 train_set[4];
 	u8 link_status[DP_LINK_STATUS_SIZE];
 	u8 tries;
 	bool use_dpencoder;
-	struct drm_dp_aux *aux;
-};
+	काष्ठा drm_dp_aux *aux;
+पूर्ण;
 
-static void radeon_dp_update_vs_emph(struct radeon_dp_link_train_info *dp_info)
-{
+अटल व्योम radeon_dp_update_vs_emph(काष्ठा radeon_dp_link_train_info *dp_info)
+अणु
 	/* set the initial vs/emph on the source */
 	atombios_dig_transmitter_setup(dp_info->encoder,
 				       ATOM_TRANSMITTER_ACTION_SETUP_VSEMPH,
 				       0, dp_info->train_set[0]); /* sets all lanes at once */
 
 	/* set the vs/emph on the sink */
-	drm_dp_dpcd_write(dp_info->aux, DP_TRAINING_LANE0_SET,
+	drm_dp_dpcd_ग_लिखो(dp_info->aux, DP_TRAINING_LANE0_SET,
 			  dp_info->train_set, dp_info->dp_lane_count);
-}
+पूर्ण
 
-static void radeon_dp_set_tp(struct radeon_dp_link_train_info *dp_info, int tp)
-{
-	int rtp = 0;
+अटल व्योम radeon_dp_set_tp(काष्ठा radeon_dp_link_train_info *dp_info, पूर्णांक tp)
+अणु
+	पूर्णांक rtp = 0;
 
 	/* set training pattern on the source */
-	if (ASIC_IS_DCE4(dp_info->rdev) || !dp_info->use_dpencoder) {
-		switch (tp) {
-		case DP_TRAINING_PATTERN_1:
+	अगर (ASIC_IS_DCE4(dp_info->rdev) || !dp_info->use_dpencoder) अणु
+		चयन (tp) अणु
+		हाल DP_TRAINING_PATTERN_1:
 			rtp = ATOM_ENCODER_CMD_DP_LINK_TRAINING_PATTERN1;
-			break;
-		case DP_TRAINING_PATTERN_2:
+			अवरोध;
+		हाल DP_TRAINING_PATTERN_2:
 			rtp = ATOM_ENCODER_CMD_DP_LINK_TRAINING_PATTERN2;
-			break;
-		case DP_TRAINING_PATTERN_3:
+			अवरोध;
+		हाल DP_TRAINING_PATTERN_3:
 			rtp = ATOM_ENCODER_CMD_DP_LINK_TRAINING_PATTERN3;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		atombios_dig_encoder_setup(dp_info->encoder, rtp, 0);
-	} else {
-		switch (tp) {
-		case DP_TRAINING_PATTERN_1:
+	पूर्ण अन्यथा अणु
+		चयन (tp) अणु
+		हाल DP_TRAINING_PATTERN_1:
 			rtp = 0;
-			break;
-		case DP_TRAINING_PATTERN_2:
+			अवरोध;
+		हाल DP_TRAINING_PATTERN_2:
 			rtp = 1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		radeon_dp_encoder_service(dp_info->rdev, ATOM_DP_ACTION_TRAINING_PATTERN_SEL,
-					  dp_info->dp_clock, dp_info->enc_id, rtp);
-	}
+					  dp_info->dp_घड़ी, dp_info->enc_id, rtp);
+	पूर्ण
 
 	/* enable training pattern on the sink */
-	drm_dp_dpcd_writeb(dp_info->aux, DP_TRAINING_PATTERN_SET, tp);
-}
+	drm_dp_dpcd_ग_लिखोb(dp_info->aux, DP_TRAINING_PATTERN_SET, tp);
+पूर्ण
 
-static int radeon_dp_link_train_init(struct radeon_dp_link_train_info *dp_info)
-{
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(dp_info->encoder);
-	struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
-	u8 tmp;
+अटल पूर्णांक radeon_dp_link_train_init(काष्ठा radeon_dp_link_train_info *dp_info)
+अणु
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(dp_info->encoder);
+	काष्ठा radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
+	u8 पंचांगp;
 
-	/* power up the sink */
-	radeon_dp_set_rx_power_state(dp_info->connector, DP_SET_POWER_D0);
+	/* घातer up the sink */
+	radeon_dp_set_rx_घातer_state(dp_info->connector, DP_SET_POWER_D0);
 
-	/* possibly enable downspread on the sink */
-	if (dp_info->dpcd[3] & 0x1)
-		drm_dp_dpcd_writeb(dp_info->aux,
+	/* possibly enable करोwnspपढ़ो on the sink */
+	अगर (dp_info->dpcd[3] & 0x1)
+		drm_dp_dpcd_ग_लिखोb(dp_info->aux,
 				   DP_DOWNSPREAD_CTRL, DP_SPREAD_AMP_0_5);
-	else
-		drm_dp_dpcd_writeb(dp_info->aux,
+	अन्यथा
+		drm_dp_dpcd_ग_लिखोb(dp_info->aux,
 				   DP_DOWNSPREAD_CTRL, 0);
 
-	if (dig->panel_mode == DP_PANEL_MODE_INTERNAL_DP2_MODE)
-		drm_dp_dpcd_writeb(dp_info->aux, DP_EDP_CONFIGURATION_SET, 1);
+	अगर (dig->panel_mode == DP_PANEL_MODE_INTERNAL_DP2_MODE)
+		drm_dp_dpcd_ग_लिखोb(dp_info->aux, DP_EDP_CONFIGURATION_SET, 1);
 
 	/* set the lane count on the sink */
-	tmp = dp_info->dp_lane_count;
-	if (drm_dp_enhanced_frame_cap(dp_info->dpcd))
-		tmp |= DP_LANE_COUNT_ENHANCED_FRAME_EN;
-	drm_dp_dpcd_writeb(dp_info->aux, DP_LANE_COUNT_SET, tmp);
+	पंचांगp = dp_info->dp_lane_count;
+	अगर (drm_dp_enhanced_frame_cap(dp_info->dpcd))
+		पंचांगp |= DP_LANE_COUNT_ENHANCED_FRAME_EN;
+	drm_dp_dpcd_ग_लिखोb(dp_info->aux, DP_LANE_COUNT_SET, पंचांगp);
 
 	/* set the link rate on the sink */
-	tmp = drm_dp_link_rate_to_bw_code(dp_info->dp_clock);
-	drm_dp_dpcd_writeb(dp_info->aux, DP_LINK_BW_SET, tmp);
+	पंचांगp = drm_dp_link_rate_to_bw_code(dp_info->dp_घड़ी);
+	drm_dp_dpcd_ग_लिखोb(dp_info->aux, DP_LINK_BW_SET, पंचांगp);
 
 	/* start training on the source */
-	if (ASIC_IS_DCE4(dp_info->rdev) || !dp_info->use_dpencoder)
+	अगर (ASIC_IS_DCE4(dp_info->rdev) || !dp_info->use_dpencoder)
 		atombios_dig_encoder_setup(dp_info->encoder,
 					   ATOM_ENCODER_CMD_DP_LINK_TRAINING_START, 0);
-	else
+	अन्यथा
 		radeon_dp_encoder_service(dp_info->rdev, ATOM_DP_ACTION_TRAINING_START,
-					  dp_info->dp_clock, dp_info->enc_id, 0);
+					  dp_info->dp_घड़ी, dp_info->enc_id, 0);
 
 	/* disable the training pattern on the sink */
-	drm_dp_dpcd_writeb(dp_info->aux,
+	drm_dp_dpcd_ग_लिखोb(dp_info->aux,
 			   DP_TRAINING_PATTERN_SET,
 			   DP_TRAINING_PATTERN_DISABLE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int radeon_dp_link_train_finish(struct radeon_dp_link_train_info *dp_info)
-{
+अटल पूर्णांक radeon_dp_link_train_finish(काष्ठा radeon_dp_link_train_info *dp_info)
+अणु
 	udelay(400);
 
 	/* disable the training pattern on the sink */
-	drm_dp_dpcd_writeb(dp_info->aux,
+	drm_dp_dpcd_ग_लिखोb(dp_info->aux,
 			   DP_TRAINING_PATTERN_SET,
 			   DP_TRAINING_PATTERN_DISABLE);
 
 	/* disable the training pattern on the source */
-	if (ASIC_IS_DCE4(dp_info->rdev) || !dp_info->use_dpencoder)
+	अगर (ASIC_IS_DCE4(dp_info->rdev) || !dp_info->use_dpencoder)
 		atombios_dig_encoder_setup(dp_info->encoder,
 					   ATOM_ENCODER_CMD_DP_LINK_TRAINING_COMPLETE, 0);
-	else
+	अन्यथा
 		radeon_dp_encoder_service(dp_info->rdev, ATOM_DP_ACTION_TRAINING_COMPLETE,
-					  dp_info->dp_clock, dp_info->enc_id, 0);
+					  dp_info->dp_घड़ी, dp_info->enc_id, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int radeon_dp_link_train_cr(struct radeon_dp_link_train_info *dp_info)
-{
-	bool clock_recovery;
+अटल पूर्णांक radeon_dp_link_train_cr(काष्ठा radeon_dp_link_train_info *dp_info)
+अणु
+	bool घड़ी_recovery;
  	u8 voltage;
-	int i;
+	पूर्णांक i;
 
 	radeon_dp_set_tp(dp_info, DP_TRAINING_PATTERN_1);
-	memset(dp_info->train_set, 0, 4);
+	स_रखो(dp_info->train_set, 0, 4);
 	radeon_dp_update_vs_emph(dp_info);
 
 	udelay(400);
 
-	/* clock recovery loop */
-	clock_recovery = false;
+	/* घड़ी recovery loop */
+	घड़ी_recovery = false;
 	dp_info->tries = 0;
 	voltage = 0xff;
-	while (1) {
-		drm_dp_link_train_clock_recovery_delay(dp_info->dpcd);
+	जबतक (1) अणु
+		drm_dp_link_train_घड़ी_recovery_delay(dp_info->dpcd);
 
-		if (drm_dp_dpcd_read_link_status(dp_info->aux,
-						 dp_info->link_status) <= 0) {
+		अगर (drm_dp_dpcd_पढ़ो_link_status(dp_info->aux,
+						 dp_info->link_status) <= 0) अणु
 			DRM_ERROR("displayport link status failed\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (drm_dp_clock_recovery_ok(dp_info->link_status, dp_info->dp_lane_count)) {
-			clock_recovery = true;
-			break;
-		}
+		अगर (drm_dp_घड़ी_recovery_ok(dp_info->link_status, dp_info->dp_lane_count)) अणु
+			घड़ी_recovery = true;
+			अवरोध;
+		पूर्ण
 
-		for (i = 0; i < dp_info->dp_lane_count; i++) {
-			if ((dp_info->train_set[i] & DP_TRAIN_MAX_SWING_REACHED) == 0)
-				break;
-		}
-		if (i == dp_info->dp_lane_count) {
+		क्रम (i = 0; i < dp_info->dp_lane_count; i++) अणु
+			अगर ((dp_info->train_set[i] & DP_TRAIN_MAX_SWING_REACHED) == 0)
+				अवरोध;
+		पूर्ण
+		अगर (i == dp_info->dp_lane_count) अणु
 			DRM_ERROR("clock recovery reached max voltage\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if ((dp_info->train_set[0] & DP_TRAIN_VOLTAGE_SWING_MASK) == voltage) {
+		अगर ((dp_info->train_set[0] & DP_TRAIN_VOLTAGE_SWING_MASK) == voltage) अणु
 			++dp_info->tries;
-			if (dp_info->tries == 5) {
+			अगर (dp_info->tries == 5) अणु
 				DRM_ERROR("clock recovery tried 5 times\n");
-				break;
-			}
-		} else
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा
 			dp_info->tries = 0;
 
 		voltage = dp_info->train_set[0] & DP_TRAIN_VOLTAGE_SWING_MASK;
@@ -716,95 +717,95 @@ static int radeon_dp_link_train_cr(struct radeon_dp_link_train_info *dp_info)
 		dp_get_adjust_train(dp_info->link_status, dp_info->dp_lane_count, dp_info->train_set);
 
 		radeon_dp_update_vs_emph(dp_info);
-	}
-	if (!clock_recovery) {
+	पूर्ण
+	अगर (!घड़ी_recovery) अणु
 		DRM_ERROR("clock recovery failed\n");
-		return -1;
-	} else {
+		वापस -1;
+	पूर्ण अन्यथा अणु
 		DRM_DEBUG_KMS("clock recovery at voltage %d pre-emphasis %d\n",
 			  dp_info->train_set[0] & DP_TRAIN_VOLTAGE_SWING_MASK,
 			  (dp_info->train_set[0] & DP_TRAIN_PRE_EMPHASIS_MASK) >>
 			  DP_TRAIN_PRE_EMPHASIS_SHIFT);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static int radeon_dp_link_train_ce(struct radeon_dp_link_train_info *dp_info)
-{
+अटल पूर्णांक radeon_dp_link_train_ce(काष्ठा radeon_dp_link_train_info *dp_info)
+अणु
 	bool channel_eq;
 
-	if (dp_info->tp3_supported)
+	अगर (dp_info->tp3_supported)
 		radeon_dp_set_tp(dp_info, DP_TRAINING_PATTERN_3);
-	else
+	अन्यथा
 		radeon_dp_set_tp(dp_info, DP_TRAINING_PATTERN_2);
 
 	/* channel equalization loop */
 	dp_info->tries = 0;
 	channel_eq = false;
-	while (1) {
+	जबतक (1) अणु
 		drm_dp_link_train_channel_eq_delay(dp_info->dpcd);
 
-		if (drm_dp_dpcd_read_link_status(dp_info->aux,
-						 dp_info->link_status) <= 0) {
+		अगर (drm_dp_dpcd_पढ़ो_link_status(dp_info->aux,
+						 dp_info->link_status) <= 0) अणु
 			DRM_ERROR("displayport link status failed\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (drm_dp_channel_eq_ok(dp_info->link_status, dp_info->dp_lane_count)) {
+		अगर (drm_dp_channel_eq_ok(dp_info->link_status, dp_info->dp_lane_count)) अणु
 			channel_eq = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Try 5 times */
-		if (dp_info->tries > 5) {
+		/* Try 5 बार */
+		अगर (dp_info->tries > 5) अणु
 			DRM_ERROR("channel eq failed: 5 tries\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Compute new train_set as requested by sink */
 		dp_get_adjust_train(dp_info->link_status, dp_info->dp_lane_count, dp_info->train_set);
 
 		radeon_dp_update_vs_emph(dp_info);
 		dp_info->tries++;
-	}
+	पूर्ण
 
-	if (!channel_eq) {
+	अगर (!channel_eq) अणु
 		DRM_ERROR("channel eq failed\n");
-		return -1;
-	} else {
+		वापस -1;
+	पूर्ण अन्यथा अणु
 		DRM_DEBUG_KMS("channel eq at voltage %d pre-emphasis %d\n",
 			  dp_info->train_set[0] & DP_TRAIN_VOLTAGE_SWING_MASK,
 			  (dp_info->train_set[0] & DP_TRAIN_PRE_EMPHASIS_MASK)
 			  >> DP_TRAIN_PRE_EMPHASIS_SHIFT);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-void radeon_dp_link_train(struct drm_encoder *encoder,
-			  struct drm_connector *connector)
-{
-	struct drm_device *dev = encoder->dev;
-	struct radeon_device *rdev = dev->dev_private;
-	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-	struct radeon_encoder_atom_dig *dig;
-	struct radeon_connector *radeon_connector;
-	struct radeon_connector_atom_dig *dig_connector;
-	struct radeon_dp_link_train_info dp_info;
-	int index;
-	u8 tmp, frev, crev;
+व्योम radeon_dp_link_train(काष्ठा drm_encoder *encoder,
+			  काष्ठा drm_connector *connector)
+अणु
+	काष्ठा drm_device *dev = encoder->dev;
+	काष्ठा radeon_device *rdev = dev->dev_निजी;
+	काष्ठा radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
+	काष्ठा radeon_encoder_atom_dig *dig;
+	काष्ठा radeon_connector *radeon_connector;
+	काष्ठा radeon_connector_atom_dig *dig_connector;
+	काष्ठा radeon_dp_link_train_info dp_info;
+	पूर्णांक index;
+	u8 पंचांगp, frev, crev;
 
-	if (!radeon_encoder->enc_priv)
-		return;
+	अगर (!radeon_encoder->enc_priv)
+		वापस;
 	dig = radeon_encoder->enc_priv;
 
 	radeon_connector = to_radeon_connector(connector);
-	if (!radeon_connector->con_priv)
-		return;
+	अगर (!radeon_connector->con_priv)
+		वापस;
 	dig_connector = radeon_connector->con_priv;
 
-	if ((dig_connector->dp_sink_type != CONNECTOR_OBJECT_ID_DISPLAYPORT) &&
+	अगर ((dig_connector->dp_sink_type != CONNECTOR_OBJECT_ID_DISPLAYPORT) &&
 	    (dig_connector->dp_sink_type != CONNECTOR_OBJECT_ID_eDP))
-		return;
+		वापस;
 
 	/* DPEncoderService newer than 1.1 can't program properly the
 	 * training pattern. When facing such version use the
@@ -812,46 +813,46 @@ void radeon_dp_link_train(struct drm_encoder *encoder,
 	 */
 	dp_info.use_dpencoder = true;
 	index = GetIndexIntoMasterTable(COMMAND, DPEncoderService);
-	if (atom_parse_cmd_header(rdev->mode_info.atom_context, index, &frev, &crev)) {
-		if (crev > 1)
+	अगर (atom_parse_cmd_header(rdev->mode_info.atom_context, index, &frev, &crev)) अणु
+		अगर (crev > 1)
 			dp_info.use_dpencoder = false;
-	}
+	पूर्ण
 
 	dp_info.enc_id = 0;
-	if (dig->dig_encoder)
+	अगर (dig->dig_encoder)
 		dp_info.enc_id |= ATOM_DP_CONFIG_DIG2_ENCODER;
-	else
+	अन्यथा
 		dp_info.enc_id |= ATOM_DP_CONFIG_DIG1_ENCODER;
-	if (dig->linkb)
+	अगर (dig->linkb)
 		dp_info.enc_id |= ATOM_DP_CONFIG_LINK_B;
-	else
+	अन्यथा
 		dp_info.enc_id |= ATOM_DP_CONFIG_LINK_A;
 
-	if (drm_dp_dpcd_readb(&radeon_connector->ddc_bus->aux, DP_MAX_LANE_COUNT, &tmp)
-	    == 1) {
-		if (ASIC_IS_DCE5(rdev) && (tmp & DP_TPS3_SUPPORTED))
+	अगर (drm_dp_dpcd_पढ़ोb(&radeon_connector->ddc_bus->aux, DP_MAX_LANE_COUNT, &पंचांगp)
+	    == 1) अणु
+		अगर (ASIC_IS_DCE5(rdev) && (पंचांगp & DP_TPS3_SUPPORTED))
 			dp_info.tp3_supported = true;
-		else
+		अन्यथा
 			dp_info.tp3_supported = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		dp_info.tp3_supported = false;
-	}
+	पूर्ण
 
-	memcpy(dp_info.dpcd, dig_connector->dpcd, DP_RECEIVER_CAP_SIZE);
+	स_नकल(dp_info.dpcd, dig_connector->dpcd, DP_RECEIVER_CAP_SIZE);
 	dp_info.rdev = rdev;
 	dp_info.encoder = encoder;
 	dp_info.connector = connector;
 	dp_info.dp_lane_count = dig_connector->dp_lane_count;
-	dp_info.dp_clock = dig_connector->dp_clock;
+	dp_info.dp_घड़ी = dig_connector->dp_घड़ी;
 	dp_info.aux = &radeon_connector->ddc_bus->aux;
 
-	if (radeon_dp_link_train_init(&dp_info))
-		goto done;
-	if (radeon_dp_link_train_cr(&dp_info))
-		goto done;
-	if (radeon_dp_link_train_ce(&dp_info))
-		goto done;
-done:
-	if (radeon_dp_link_train_finish(&dp_info))
-		return;
-}
+	अगर (radeon_dp_link_train_init(&dp_info))
+		जाओ करोne;
+	अगर (radeon_dp_link_train_cr(&dp_info))
+		जाओ करोne;
+	अगर (radeon_dp_link_train_ce(&dp_info))
+		जाओ करोne;
+करोne:
+	अगर (radeon_dp_link_train_finish(&dp_info))
+		वापस;
+पूर्ण

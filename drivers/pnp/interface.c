@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * interface.c - contains everything related to the user interface
+ * पूर्णांकerface.c - contains everything related to the user पूर्णांकerface
  *
  * Some code, especially possible resource dumping is based on isapnp_proc.c (c) Jaroslav Kysela <perex@perex.cz>
  * Copyright 2002 Adam Belay <ambx1@neo.rr.com>
@@ -8,463 +9,463 @@
  *	Bjorn Helgaas <bjorn.helgaas@hp.com>
  */
 
-#include <linux/pnp.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/list.h>
-#include <linux/types.h>
-#include <linux/stat.h>
-#include <linux/ctype.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
+#समावेश <linux/pnp.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/list.h>
+#समावेश <linux/types.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "base.h"
+#समावेश "base.h"
 
-struct pnp_info_buffer {
-	char *buffer;		/* pointer to begin of buffer */
-	char *curr;		/* current position in buffer */
-	unsigned long size;	/* current size */
-	unsigned long len;	/* total length of buffer */
-	int stop;		/* stop flag */
-	int error;		/* error code */
-};
+काष्ठा pnp_info_buffer अणु
+	अक्षर *buffer;		/* poपूर्णांकer to begin of buffer */
+	अक्षर *curr;		/* current position in buffer */
+	अचिन्हित दीर्घ size;	/* current size */
+	अचिन्हित दीर्घ len;	/* total length of buffer */
+	पूर्णांक stop;		/* stop flag */
+	पूर्णांक error;		/* error code */
+पूर्ण;
 
-typedef struct pnp_info_buffer pnp_info_buffer_t;
+प्रकार काष्ठा pnp_info_buffer pnp_info_buffer_t;
 
-__printf(2, 3)
-static int pnp_printf(pnp_info_buffer_t * buffer, char *fmt, ...)
-{
-	va_list args;
-	int res;
+__म_लिखो(2, 3)
+अटल पूर्णांक pnp_म_लिखो(pnp_info_buffer_t * buffer, अक्षर *fmt, ...)
+अणु
+	बहु_सूची args;
+	पूर्णांक res;
 
-	if (buffer->stop || buffer->error)
-		return 0;
-	va_start(args, fmt);
-	res = vsnprintf(buffer->curr, buffer->len - buffer->size, fmt, args);
-	va_end(args);
-	if (buffer->size + res >= buffer->len) {
+	अगर (buffer->stop || buffer->error)
+		वापस 0;
+	बहु_शुरू(args, fmt);
+	res = vsnम_लिखो(buffer->curr, buffer->len - buffer->size, fmt, args);
+	बहु_पूर्ण(args);
+	अगर (buffer->size + res >= buffer->len) अणु
 		buffer->stop = 1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 	buffer->curr += res;
 	buffer->size += res;
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void pnp_print_port(pnp_info_buffer_t * buffer, char *space,
-			   struct pnp_port *port)
-{
-	pnp_printf(buffer, "%sport %#llx-%#llx, align %#llx, size %#llx, "
+अटल व्योम pnp_prपूर्णांक_port(pnp_info_buffer_t * buffer, अक्षर *space,
+			   काष्ठा pnp_port *port)
+अणु
+	pnp_म_लिखो(buffer, "%sport %#llx-%#llx, align %#llx, size %#llx, "
 		   "%i-bit address decoding\n", space,
-		   (unsigned long long) port->min,
-		   (unsigned long long) port->max,
-		   port->align ? ((unsigned long long) port->align - 1) : 0,
-		   (unsigned long long) port->size,
+		   (अचिन्हित दीर्घ दीर्घ) port->min,
+		   (अचिन्हित दीर्घ दीर्घ) port->max,
+		   port->align ? ((अचिन्हित दीर्घ दीर्घ) port->align - 1) : 0,
+		   (अचिन्हित दीर्घ दीर्घ) port->size,
 		   port->flags & IORESOURCE_IO_16BIT_ADDR ? 16 : 10);
-}
+पूर्ण
 
-static void pnp_print_irq(pnp_info_buffer_t * buffer, char *space,
-			  struct pnp_irq *irq)
-{
-	int first = 1, i;
+अटल व्योम pnp_prपूर्णांक_irq(pnp_info_buffer_t * buffer, अक्षर *space,
+			  काष्ठा pnp_irq *irq)
+अणु
+	पूर्णांक first = 1, i;
 
-	pnp_printf(buffer, "%sirq ", space);
-	for (i = 0; i < PNP_IRQ_NR; i++)
-		if (test_bit(i, irq->map.bits)) {
-			if (!first) {
-				pnp_printf(buffer, ",");
-			} else {
+	pnp_म_लिखो(buffer, "%sirq ", space);
+	क्रम (i = 0; i < PNP_IRQ_NR; i++)
+		अगर (test_bit(i, irq->map.bits)) अणु
+			अगर (!first) अणु
+				pnp_म_लिखो(buffer, ",");
+			पूर्ण अन्यथा अणु
 				first = 0;
-			}
-			if (i == 2 || i == 9)
-				pnp_printf(buffer, "2/9");
-			else
-				pnp_printf(buffer, "%i", i);
-		}
-	if (bitmap_empty(irq->map.bits, PNP_IRQ_NR))
-		pnp_printf(buffer, "<none>");
-	if (irq->flags & IORESOURCE_IRQ_HIGHEDGE)
-		pnp_printf(buffer, " High-Edge");
-	if (irq->flags & IORESOURCE_IRQ_LOWEDGE)
-		pnp_printf(buffer, " Low-Edge");
-	if (irq->flags & IORESOURCE_IRQ_HIGHLEVEL)
-		pnp_printf(buffer, " High-Level");
-	if (irq->flags & IORESOURCE_IRQ_LOWLEVEL)
-		pnp_printf(buffer, " Low-Level");
-	if (irq->flags & IORESOURCE_IRQ_OPTIONAL)
-		pnp_printf(buffer, " (optional)");
-	pnp_printf(buffer, "\n");
-}
+			पूर्ण
+			अगर (i == 2 || i == 9)
+				pnp_म_लिखो(buffer, "2/9");
+			अन्यथा
+				pnp_म_लिखो(buffer, "%i", i);
+		पूर्ण
+	अगर (biपंचांगap_empty(irq->map.bits, PNP_IRQ_NR))
+		pnp_म_लिखो(buffer, "<none>");
+	अगर (irq->flags & IORESOURCE_IRQ_HIGHEDGE)
+		pnp_म_लिखो(buffer, " High-Edge");
+	अगर (irq->flags & IORESOURCE_IRQ_LOWEDGE)
+		pnp_म_लिखो(buffer, " Low-Edge");
+	अगर (irq->flags & IORESOURCE_IRQ_HIGHLEVEL)
+		pnp_म_लिखो(buffer, " High-Level");
+	अगर (irq->flags & IORESOURCE_IRQ_LOWLEVEL)
+		pnp_म_लिखो(buffer, " Low-Level");
+	अगर (irq->flags & IORESOURCE_IRQ_OPTIONAL)
+		pnp_म_लिखो(buffer, " (optional)");
+	pnp_म_लिखो(buffer, "\n");
+पूर्ण
 
-static void pnp_print_dma(pnp_info_buffer_t * buffer, char *space,
-			  struct pnp_dma *dma)
-{
-	int first = 1, i;
-	char *s;
+अटल व्योम pnp_prपूर्णांक_dma(pnp_info_buffer_t * buffer, अक्षर *space,
+			  काष्ठा pnp_dma *dma)
+अणु
+	पूर्णांक first = 1, i;
+	अक्षर *s;
 
-	pnp_printf(buffer, "%sdma ", space);
-	for (i = 0; i < 8; i++)
-		if (dma->map & (1 << i)) {
-			if (!first) {
-				pnp_printf(buffer, ",");
-			} else {
+	pnp_म_लिखो(buffer, "%sdma ", space);
+	क्रम (i = 0; i < 8; i++)
+		अगर (dma->map & (1 << i)) अणु
+			अगर (!first) अणु
+				pnp_म_लिखो(buffer, ",");
+			पूर्ण अन्यथा अणु
 				first = 0;
-			}
-			pnp_printf(buffer, "%i", i);
-		}
-	if (!dma->map)
-		pnp_printf(buffer, "<none>");
-	switch (dma->flags & IORESOURCE_DMA_TYPE_MASK) {
-	case IORESOURCE_DMA_8BIT:
+			पूर्ण
+			pnp_म_लिखो(buffer, "%i", i);
+		पूर्ण
+	अगर (!dma->map)
+		pnp_म_लिखो(buffer, "<none>");
+	चयन (dma->flags & IORESOURCE_DMA_TYPE_MASK) अणु
+	हाल IORESOURCE_DMA_8BIT:
 		s = "8-bit";
-		break;
-	case IORESOURCE_DMA_8AND16BIT:
+		अवरोध;
+	हाल IORESOURCE_DMA_8AND16BIT:
 		s = "8-bit&16-bit";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		s = "16-bit";
-	}
-	pnp_printf(buffer, " %s", s);
-	if (dma->flags & IORESOURCE_DMA_MASTER)
-		pnp_printf(buffer, " master");
-	if (dma->flags & IORESOURCE_DMA_BYTE)
-		pnp_printf(buffer, " byte-count");
-	if (dma->flags & IORESOURCE_DMA_WORD)
-		pnp_printf(buffer, " word-count");
-	switch (dma->flags & IORESOURCE_DMA_SPEED_MASK) {
-	case IORESOURCE_DMA_TYPEA:
+	पूर्ण
+	pnp_म_लिखो(buffer, " %s", s);
+	अगर (dma->flags & IORESOURCE_DMA_MASTER)
+		pnp_म_लिखो(buffer, " master");
+	अगर (dma->flags & IORESOURCE_DMA_BYTE)
+		pnp_म_लिखो(buffer, " byte-count");
+	अगर (dma->flags & IORESOURCE_DMA_WORD)
+		pnp_म_लिखो(buffer, " word-count");
+	चयन (dma->flags & IORESOURCE_DMA_SPEED_MASK) अणु
+	हाल IORESOURCE_DMA_TYPEA:
 		s = "type-A";
-		break;
-	case IORESOURCE_DMA_TYPEB:
+		अवरोध;
+	हाल IORESOURCE_DMA_TYPEB:
 		s = "type-B";
-		break;
-	case IORESOURCE_DMA_TYPEF:
+		अवरोध;
+	हाल IORESOURCE_DMA_TYPEF:
 		s = "type-F";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		s = "compatible";
-		break;
-	}
-	pnp_printf(buffer, " %s\n", s);
-}
+		अवरोध;
+	पूर्ण
+	pnp_म_लिखो(buffer, " %s\n", s);
+पूर्ण
 
-static void pnp_print_mem(pnp_info_buffer_t * buffer, char *space,
-			  struct pnp_mem *mem)
-{
-	char *s;
+अटल व्योम pnp_prपूर्णांक_mem(pnp_info_buffer_t * buffer, अक्षर *space,
+			  काष्ठा pnp_mem *mem)
+अणु
+	अक्षर *s;
 
-	pnp_printf(buffer, "%sMemory %#llx-%#llx, align %#llx, size %#llx",
-		   space, (unsigned long long) mem->min,
-		   (unsigned long long) mem->max,
-		   (unsigned long long) mem->align,
-		   (unsigned long long) mem->size);
-	if (mem->flags & IORESOURCE_MEM_WRITEABLE)
-		pnp_printf(buffer, ", writeable");
-	if (mem->flags & IORESOURCE_MEM_CACHEABLE)
-		pnp_printf(buffer, ", cacheable");
-	if (mem->flags & IORESOURCE_MEM_RANGELENGTH)
-		pnp_printf(buffer, ", range-length");
-	if (mem->flags & IORESOURCE_MEM_SHADOWABLE)
-		pnp_printf(buffer, ", shadowable");
-	if (mem->flags & IORESOURCE_MEM_EXPANSIONROM)
-		pnp_printf(buffer, ", expansion ROM");
-	switch (mem->flags & IORESOURCE_MEM_TYPE_MASK) {
-	case IORESOURCE_MEM_8BIT:
+	pnp_म_लिखो(buffer, "%sMemory %#llx-%#llx, align %#llx, size %#llx",
+		   space, (अचिन्हित दीर्घ दीर्घ) mem->min,
+		   (अचिन्हित दीर्घ दीर्घ) mem->max,
+		   (अचिन्हित दीर्घ दीर्घ) mem->align,
+		   (अचिन्हित दीर्घ दीर्घ) mem->size);
+	अगर (mem->flags & IORESOURCE_MEM_WRITEABLE)
+		pnp_म_लिखो(buffer, ", writeable");
+	अगर (mem->flags & IORESOURCE_MEM_CACHEABLE)
+		pnp_म_लिखो(buffer, ", cacheable");
+	अगर (mem->flags & IORESOURCE_MEM_RANGELENGTH)
+		pnp_म_लिखो(buffer, ", range-length");
+	अगर (mem->flags & IORESOURCE_MEM_SHADOWABLE)
+		pnp_म_लिखो(buffer, ", shadowable");
+	अगर (mem->flags & IORESOURCE_MEM_EXPANSIONROM)
+		pnp_म_लिखो(buffer, ", expansion ROM");
+	चयन (mem->flags & IORESOURCE_MEM_TYPE_MASK) अणु
+	हाल IORESOURCE_MEM_8BIT:
 		s = "8-bit";
-		break;
-	case IORESOURCE_MEM_8AND16BIT:
+		अवरोध;
+	हाल IORESOURCE_MEM_8AND16BIT:
 		s = "8-bit&16-bit";
-		break;
-	case IORESOURCE_MEM_32BIT:
+		अवरोध;
+	हाल IORESOURCE_MEM_32BIT:
 		s = "32-bit";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		s = "16-bit";
-	}
-	pnp_printf(buffer, ", %s\n", s);
-}
+	पूर्ण
+	pnp_म_लिखो(buffer, ", %s\n", s);
+पूर्ण
 
-static void pnp_print_option(pnp_info_buffer_t * buffer, char *space,
-			     struct pnp_option *option)
-{
-	switch (option->type) {
-	case IORESOURCE_IO:
-		pnp_print_port(buffer, space, &option->u.port);
-		break;
-	case IORESOURCE_MEM:
-		pnp_print_mem(buffer, space, &option->u.mem);
-		break;
-	case IORESOURCE_IRQ:
-		pnp_print_irq(buffer, space, &option->u.irq);
-		break;
-	case IORESOURCE_DMA:
-		pnp_print_dma(buffer, space, &option->u.dma);
-		break;
-	}
-}
+अटल व्योम pnp_prपूर्णांक_option(pnp_info_buffer_t * buffer, अक्षर *space,
+			     काष्ठा pnp_option *option)
+अणु
+	चयन (option->type) अणु
+	हाल IORESOURCE_IO:
+		pnp_prपूर्णांक_port(buffer, space, &option->u.port);
+		अवरोध;
+	हाल IORESOURCE_MEM:
+		pnp_prपूर्णांक_mem(buffer, space, &option->u.mem);
+		अवरोध;
+	हाल IORESOURCE_IRQ:
+		pnp_prपूर्णांक_irq(buffer, space, &option->u.irq);
+		अवरोध;
+	हाल IORESOURCE_DMA:
+		pnp_prपूर्णांक_dma(buffer, space, &option->u.dma);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static ssize_t options_show(struct device *dmdev, struct device_attribute *attr,
-			    char *buf)
-{
-	struct pnp_dev *dev = to_pnp_dev(dmdev);
+अटल sमाप_प्रकार options_show(काष्ठा device *dmdev, काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	काष्ठा pnp_dev *dev = to_pnp_dev(dmdev);
 	pnp_info_buffer_t *buffer;
-	struct pnp_option *option;
-	int ret, dep = 0, set = 0;
-	char *indent;
+	काष्ठा pnp_option *option;
+	पूर्णांक ret, dep = 0, set = 0;
+	अक्षर *indent;
 
-	buffer = pnp_alloc(sizeof(pnp_info_buffer_t));
-	if (!buffer)
-		return -ENOMEM;
+	buffer = pnp_alloc(माप(pnp_info_buffer_t));
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	buffer->len = PAGE_SIZE;
 	buffer->buffer = buf;
 	buffer->curr = buffer->buffer;
 
-	list_for_each_entry(option, &dev->options, list) {
-		if (pnp_option_is_dependent(option)) {
+	list_क्रम_each_entry(option, &dev->options, list) अणु
+		अगर (pnp_option_is_dependent(option)) अणु
 			indent = "  ";
-			if (!dep || pnp_option_set(option) != set) {
+			अगर (!dep || pnp_option_set(option) != set) अणु
 				set = pnp_option_set(option);
 				dep = 1;
-				pnp_printf(buffer, "Dependent: %02i - "
+				pnp_म_लिखो(buffer, "Dependent: %02i - "
 					   "Priority %s\n", set,
 					   pnp_option_priority_name(option));
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			dep = 0;
 			indent = "";
-		}
-		pnp_print_option(buffer, indent, option);
-	}
+		पूर्ण
+		pnp_prपूर्णांक_option(buffer, indent, option);
+	पूर्ण
 
 	ret = (buffer->curr - buf);
-	kfree(buffer);
-	return ret;
-}
-static DEVICE_ATTR_RO(options);
+	kमुक्त(buffer);
+	वापस ret;
+पूर्ण
+अटल DEVICE_ATTR_RO(options);
 
-static ssize_t resources_show(struct device *dmdev,
-			      struct device_attribute *attr, char *buf)
-{
-	struct pnp_dev *dev = to_pnp_dev(dmdev);
+अटल sमाप_प्रकार resources_show(काष्ठा device *dmdev,
+			      काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pnp_dev *dev = to_pnp_dev(dmdev);
 	pnp_info_buffer_t *buffer;
-	struct pnp_resource *pnp_res;
-	struct resource *res;
-	int ret;
+	काष्ठा pnp_resource *pnp_res;
+	काष्ठा resource *res;
+	पूर्णांक ret;
 
-	if (!dev)
-		return -EINVAL;
+	अगर (!dev)
+		वापस -EINVAL;
 
-	buffer = pnp_alloc(sizeof(pnp_info_buffer_t));
-	if (!buffer)
-		return -ENOMEM;
+	buffer = pnp_alloc(माप(pnp_info_buffer_t));
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	buffer->len = PAGE_SIZE;
 	buffer->buffer = buf;
 	buffer->curr = buffer->buffer;
 
-	pnp_printf(buffer, "state = %s\n", dev->active ? "active" : "disabled");
+	pnp_म_लिखो(buffer, "state = %s\n", dev->active ? "active" : "disabled");
 
-	list_for_each_entry(pnp_res, &dev->resources, list) {
+	list_क्रम_each_entry(pnp_res, &dev->resources, list) अणु
 		res = &pnp_res->res;
 
-		pnp_printf(buffer, pnp_resource_type_name(res));
+		pnp_म_लिखो(buffer, pnp_resource_type_name(res));
 
-		if (res->flags & IORESOURCE_DISABLED) {
-			pnp_printf(buffer, " disabled\n");
-			continue;
-		}
+		अगर (res->flags & IORESOURCE_DISABLED) अणु
+			pnp_म_लिखो(buffer, " disabled\n");
+			जारी;
+		पूर्ण
 
-		switch (pnp_resource_type(res)) {
-		case IORESOURCE_IO:
-		case IORESOURCE_MEM:
-		case IORESOURCE_BUS:
-			pnp_printf(buffer, " %#llx-%#llx%s\n",
-				   (unsigned long long) res->start,
-				   (unsigned long long) res->end,
+		चयन (pnp_resource_type(res)) अणु
+		हाल IORESOURCE_IO:
+		हाल IORESOURCE_MEM:
+		हाल IORESOURCE_BUS:
+			pnp_म_लिखो(buffer, " %#llx-%#llx%s\n",
+				   (अचिन्हित दीर्घ दीर्घ) res->start,
+				   (अचिन्हित दीर्घ दीर्घ) res->end,
 				   res->flags & IORESOURCE_WINDOW ?
 					" window" : "");
-			break;
-		case IORESOURCE_IRQ:
-		case IORESOURCE_DMA:
-			pnp_printf(buffer, " %lld\n",
-				   (unsigned long long) res->start);
-			break;
-		}
-	}
+			अवरोध;
+		हाल IORESOURCE_IRQ:
+		हाल IORESOURCE_DMA:
+			pnp_म_लिखो(buffer, " %lld\n",
+				   (अचिन्हित दीर्घ दीर्घ) res->start);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ret = (buffer->curr - buf);
-	kfree(buffer);
-	return ret;
-}
+	kमुक्त(buffer);
+	वापस ret;
+पूर्ण
 
-static char *pnp_get_resource_value(char *buf,
-				    unsigned long type,
-				    resource_size_t *start,
-				    resource_size_t *end,
-				    unsigned long *flags)
-{
-	if (start)
+अटल अक्षर *pnp_get_resource_value(अक्षर *buf,
+				    अचिन्हित दीर्घ type,
+				    resource_माप_प्रकार *start,
+				    resource_माप_प्रकार *end,
+				    अचिन्हित दीर्घ *flags)
+अणु
+	अगर (start)
 		*start = 0;
-	if (end)
+	अगर (end)
 		*end = 0;
-	if (flags)
+	अगर (flags)
 		*flags = 0;
 
-	/* TBD: allow for disabled resources */
+	/* TBD: allow क्रम disabled resources */
 
 	buf = skip_spaces(buf);
-	if (start) {
-		*start = simple_strtoull(buf, &buf, 0);
-		if (end) {
+	अगर (start) अणु
+		*start = simple_म_से_अदीर्घl(buf, &buf, 0);
+		अगर (end) अणु
 			buf = skip_spaces(buf);
-			if (*buf == '-') {
+			अगर (*buf == '-') अणु
 				buf = skip_spaces(buf + 1);
-				*end = simple_strtoull(buf, &buf, 0);
-			} else
+				*end = simple_म_से_अदीर्घl(buf, &buf, 0);
+			पूर्ण अन्यथा
 				*end = *start;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* TBD: allow for additional flags, e.g., IORESOURCE_WINDOW */
+	/* TBD: allow क्रम additional flags, e.g., IORESOURCE_WINDOW */
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static ssize_t resources_store(struct device *dmdev,
-			       struct device_attribute *attr, const char *ubuf,
-			       size_t count)
-{
-	struct pnp_dev *dev = to_pnp_dev(dmdev);
-	char *buf = (void *)ubuf;
-	int retval = 0;
+अटल sमाप_प्रकार resources_store(काष्ठा device *dmdev,
+			       काष्ठा device_attribute *attr, स्थिर अक्षर *ubuf,
+			       माप_प्रकार count)
+अणु
+	काष्ठा pnp_dev *dev = to_pnp_dev(dmdev);
+	अक्षर *buf = (व्योम *)ubuf;
+	पूर्णांक retval = 0;
 
-	if (dev->status & PNP_ATTACHED) {
+	अगर (dev->status & PNP_ATTACHED) अणु
 		retval = -EBUSY;
 		dev_info(&dev->dev, "in use; can't configure\n");
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	buf = skip_spaces(buf);
-	if (!strncasecmp(buf, "disable", 7)) {
+	अगर (!strnहालcmp(buf, "disable", 7)) अणु
 		retval = pnp_disable_dev(dev);
-		goto done;
-	}
-	if (!strncasecmp(buf, "activate", 8)) {
+		जाओ करोne;
+	पूर्ण
+	अगर (!strnहालcmp(buf, "activate", 8)) अणु
 		retval = pnp_activate_dev(dev);
-		goto done;
-	}
-	if (!strncasecmp(buf, "fill", 4)) {
-		if (dev->active)
-			goto done;
-		retval = pnp_auto_config_dev(dev);
-		goto done;
-	}
-	if (!strncasecmp(buf, "auto", 4)) {
-		if (dev->active)
-			goto done;
+		जाओ करोne;
+	पूर्ण
+	अगर (!strnहालcmp(buf, "fill", 4)) अणु
+		अगर (dev->active)
+			जाओ करोne;
+		retval = pnp_स्वतः_config_dev(dev);
+		जाओ करोne;
+	पूर्ण
+	अगर (!strnहालcmp(buf, "auto", 4)) अणु
+		अगर (dev->active)
+			जाओ करोne;
 		pnp_init_resources(dev);
-		retval = pnp_auto_config_dev(dev);
-		goto done;
-	}
-	if (!strncasecmp(buf, "clear", 5)) {
-		if (dev->active)
-			goto done;
+		retval = pnp_स्वतः_config_dev(dev);
+		जाओ करोne;
+	पूर्ण
+	अगर (!strnहालcmp(buf, "clear", 5)) अणु
+		अगर (dev->active)
+			जाओ करोne;
 		pnp_init_resources(dev);
-		goto done;
-	}
-	if (!strncasecmp(buf, "get", 3)) {
+		जाओ करोne;
+	पूर्ण
+	अगर (!strnहालcmp(buf, "get", 3)) अणु
 		mutex_lock(&pnp_res_mutex);
-		if (pnp_can_read(dev))
+		अगर (pnp_can_पढ़ो(dev))
 			dev->protocol->get(dev);
 		mutex_unlock(&pnp_res_mutex);
-		goto done;
-	}
-	if (!strncasecmp(buf, "set", 3)) {
-		resource_size_t start;
-		resource_size_t end;
-		unsigned long flags;
+		जाओ करोne;
+	पूर्ण
+	अगर (!strnहालcmp(buf, "set", 3)) अणु
+		resource_माप_प्रकार start;
+		resource_माप_प्रकार end;
+		अचिन्हित दीर्घ flags;
 
-		if (dev->active)
-			goto done;
+		अगर (dev->active)
+			जाओ करोne;
 		buf += 3;
 		pnp_init_resources(dev);
 		mutex_lock(&pnp_res_mutex);
-		while (1) {
+		जबतक (1) अणु
 			buf = skip_spaces(buf);
-			if (!strncasecmp(buf, "io", 2)) {
+			अगर (!strnहालcmp(buf, "io", 2)) अणु
 				buf = pnp_get_resource_value(buf + 2,
 							     IORESOURCE_IO,
 							     &start, &end,
 							     &flags);
 				pnp_add_io_resource(dev, start, end, flags);
-			} else if (!strncasecmp(buf, "mem", 3)) {
+			पूर्ण अन्यथा अगर (!strnहालcmp(buf, "mem", 3)) अणु
 				buf = pnp_get_resource_value(buf + 3,
 							     IORESOURCE_MEM,
 							     &start, &end,
 							     &flags);
 				pnp_add_mem_resource(dev, start, end, flags);
-			} else if (!strncasecmp(buf, "irq", 3)) {
+			पूर्ण अन्यथा अगर (!strnहालcmp(buf, "irq", 3)) अणु
 				buf = pnp_get_resource_value(buf + 3,
 							     IORESOURCE_IRQ,
-							     &start, NULL,
+							     &start, शून्य,
 							     &flags);
 				pnp_add_irq_resource(dev, start, flags);
-			} else if (!strncasecmp(buf, "dma", 3)) {
+			पूर्ण अन्यथा अगर (!strnहालcmp(buf, "dma", 3)) अणु
 				buf = pnp_get_resource_value(buf + 3,
 							     IORESOURCE_DMA,
-							     &start, NULL,
+							     &start, शून्य,
 							     &flags);
 				pnp_add_dma_resource(dev, start, flags);
-			} else if (!strncasecmp(buf, "bus", 3)) {
+			पूर्ण अन्यथा अगर (!strnहालcmp(buf, "bus", 3)) अणु
 				buf = pnp_get_resource_value(buf + 3,
 							     IORESOURCE_BUS,
 							     &start, &end,
-							     NULL);
+							     शून्य);
 				pnp_add_bus_resource(dev, start, end);
-			} else
-				break;
-		}
+			पूर्ण अन्यथा
+				अवरोध;
+		पूर्ण
 		mutex_unlock(&pnp_res_mutex);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-done:
-	if (retval < 0)
-		return retval;
-	return count;
-}
-static DEVICE_ATTR_RW(resources);
+करोne:
+	अगर (retval < 0)
+		वापस retval;
+	वापस count;
+पूर्ण
+अटल DEVICE_ATTR_RW(resources);
 
-static ssize_t id_show(struct device *dmdev, struct device_attribute *attr,
-		       char *buf)
-{
-	char *str = buf;
-	struct pnp_dev *dev = to_pnp_dev(dmdev);
-	struct pnp_id *pos = dev->id;
+अटल sमाप_प्रकार id_show(काष्ठा device *dmdev, काष्ठा device_attribute *attr,
+		       अक्षर *buf)
+अणु
+	अक्षर *str = buf;
+	काष्ठा pnp_dev *dev = to_pnp_dev(dmdev);
+	काष्ठा pnp_id *pos = dev->id;
 
-	while (pos) {
-		str += sprintf(str, "%s\n", pos->id);
+	जबतक (pos) अणु
+		str += प्र_लिखो(str, "%s\n", pos->id);
 		pos = pos->next;
-	}
-	return (str - buf);
-}
-static DEVICE_ATTR_RO(id);
+	पूर्ण
+	वापस (str - buf);
+पूर्ण
+अटल DEVICE_ATTR_RO(id);
 
-static struct attribute *pnp_dev_attrs[] = {
+अटल काष्ठा attribute *pnp_dev_attrs[] = अणु
 	&dev_attr_resources.attr,
 	&dev_attr_options.attr,
 	&dev_attr_id.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group pnp_dev_group = {
+अटल स्थिर काष्ठा attribute_group pnp_dev_group = अणु
 	.attrs = pnp_dev_attrs,
-};
+पूर्ण;
 
-const struct attribute_group *pnp_dev_groups[] = {
+स्थिर काष्ठा attribute_group *pnp_dev_groups[] = अणु
 	&pnp_dev_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;

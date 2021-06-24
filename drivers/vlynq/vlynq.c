@@ -1,687 +1,688 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright (C) 2006, 2007 Eugene Konev <ejka@openwrt.org>
+ * Copyright (C) 2006, 2007 Eugene Konev <ejka@खोलोwrt.org>
  *
- * Parts of the VLYNQ specification can be found here:
+ * Parts of the VLYNQ specअगरication can be found here:
  * http://www.ti.com/litv/pdf/sprue36a
  */
 
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include <linux/irq.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/irq.h>
 
-#include <linux/vlynq.h>
+#समावेश <linux/vlynq.h>
 
-#define VLYNQ_CTRL_PM_ENABLE		0x80000000
-#define VLYNQ_CTRL_CLOCK_INT		0x00008000
-#define VLYNQ_CTRL_CLOCK_DIV(x)		(((x) & 7) << 16)
-#define VLYNQ_CTRL_INT_LOCAL		0x00004000
-#define VLYNQ_CTRL_INT_ENABLE		0x00002000
-#define VLYNQ_CTRL_INT_VECTOR(x)	(((x) & 0x1f) << 8)
-#define VLYNQ_CTRL_INT2CFG		0x00000080
-#define VLYNQ_CTRL_RESET		0x00000001
+#घोषणा VLYNQ_CTRL_PM_ENABLE		0x80000000
+#घोषणा VLYNQ_CTRL_CLOCK_INT		0x00008000
+#घोषणा VLYNQ_CTRL_CLOCK_DIV(x)		(((x) & 7) << 16)
+#घोषणा VLYNQ_CTRL_INT_LOCAL		0x00004000
+#घोषणा VLYNQ_CTRL_INT_ENABLE		0x00002000
+#घोषणा VLYNQ_CTRL_INT_VECTOR(x)	(((x) & 0x1f) << 8)
+#घोषणा VLYNQ_CTRL_INT2CFG		0x00000080
+#घोषणा VLYNQ_CTRL_RESET		0x00000001
 
-#define VLYNQ_CTRL_CLOCK_MASK          (0x7 << 16)
+#घोषणा VLYNQ_CTRL_CLOCK_MASK          (0x7 << 16)
 
-#define VLYNQ_INT_OFFSET		0x00000014
-#define VLYNQ_REMOTE_OFFSET		0x00000080
+#घोषणा VLYNQ_INT_OFFSET		0x00000014
+#घोषणा VLYNQ_REMOTE_OFFSET		0x00000080
 
-#define VLYNQ_STATUS_LINK		0x00000001
-#define VLYNQ_STATUS_LERROR		0x00000080
-#define VLYNQ_STATUS_RERROR		0x00000100
+#घोषणा VLYNQ_STATUS_LINK		0x00000001
+#घोषणा VLYNQ_STATUS_LERROR		0x00000080
+#घोषणा VLYNQ_STATUS_RERROR		0x00000100
 
-#define VINT_ENABLE			0x00000100
-#define VINT_TYPE_EDGE			0x00000080
-#define VINT_LEVEL_LOW			0x00000040
-#define VINT_VECTOR(x)			((x) & 0x1f)
-#define VINT_OFFSET(irq)		(8 * ((irq) % 4))
+#घोषणा VINT_ENABLE			0x00000100
+#घोषणा VINT_TYPE_EDGE			0x00000080
+#घोषणा VINT_LEVEL_LOW			0x00000040
+#घोषणा VINT_VECTOR(x)			((x) & 0x1f)
+#घोषणा VINT_OFFSET(irq)		(8 * ((irq) % 4))
 
-#define VLYNQ_AUTONEGO_V2		0x00010000
+#घोषणा VLYNQ_AUTONEGO_V2		0x00010000
 
-struct vlynq_regs {
+काष्ठा vlynq_regs अणु
 	u32 revision;
 	u32 control;
 	u32 status;
-	u32 int_prio;
-	u32 int_status;
-	u32 int_pending;
-	u32 int_ptr;
+	u32 पूर्णांक_prio;
+	u32 पूर्णांक_status;
+	u32 पूर्णांक_pending;
+	u32 पूर्णांक_ptr;
 	u32 tx_offset;
-	struct vlynq_mapping rx_mapping[4];
+	काष्ठा vlynq_mapping rx_mapping[4];
 	u32 chip;
-	u32 autonego;
+	u32 स्वतःnego;
 	u32 unused[6];
-	u32 int_device[8];
-};
+	u32 पूर्णांक_device[8];
+पूर्ण;
 
-#ifdef CONFIG_VLYNQ_DEBUG
-static void vlynq_dump_regs(struct vlynq_device *dev)
-{
-	int i;
+#अगर_घोषित CONFIG_VLYNQ_DEBUG
+अटल व्योम vlynq_dump_regs(काष्ठा vlynq_device *dev)
+अणु
+	पूर्णांक i;
 
-	printk(KERN_DEBUG "VLYNQ local=%p remote=%p\n",
+	prपूर्णांकk(KERN_DEBUG "VLYNQ local=%p remote=%p\n",
 			dev->local, dev->remote);
-	for (i = 0; i < 32; i++) {
-		printk(KERN_DEBUG "VLYNQ: local %d: %08x\n",
+	क्रम (i = 0; i < 32; i++) अणु
+		prपूर्णांकk(KERN_DEBUG "VLYNQ: local %d: %08x\n",
 			i + 1, ((u32 *)dev->local)[i]);
-		printk(KERN_DEBUG "VLYNQ: remote %d: %08x\n",
+		prपूर्णांकk(KERN_DEBUG "VLYNQ: remote %d: %08x\n",
 			i + 1, ((u32 *)dev->remote)[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vlynq_dump_mem(u32 *base, int count)
-{
-	int i;
+अटल व्योम vlynq_dump_mem(u32 *base, पूर्णांक count)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < (count + 3) / 4; i++) {
-		if (i % 4 == 0)
-			printk(KERN_DEBUG "\nMEM[0x%04x]:", i * 4);
-		printk(KERN_DEBUG " 0x%08x", *(base + i));
-	}
-	printk(KERN_DEBUG "\n");
-}
-#endif
+	क्रम (i = 0; i < (count + 3) / 4; i++) अणु
+		अगर (i % 4 == 0)
+			prपूर्णांकk(KERN_DEBUG "\nMEM[0x%04x]:", i * 4);
+		prपूर्णांकk(KERN_DEBUG " 0x%08x", *(base + i));
+	पूर्ण
+	prपूर्णांकk(KERN_DEBUG "\n");
+पूर्ण
+#पूर्ण_अगर
 
 /* Check the VLYNQ link status with a given device */
-static int vlynq_linked(struct vlynq_device *dev)
-{
-	int i;
+अटल पूर्णांक vlynq_linked(काष्ठा vlynq_device *dev)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < 100; i++)
-		if (readl(&dev->local->status) & VLYNQ_STATUS_LINK)
-			return 1;
-		else
+	क्रम (i = 0; i < 100; i++)
+		अगर (पढ़ोl(&dev->local->status) & VLYNQ_STATUS_LINK)
+			वापस 1;
+		अन्यथा
 			cpu_relax();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vlynq_reset(struct vlynq_device *dev)
-{
-	writel(readl(&dev->local->control) | VLYNQ_CTRL_RESET,
+अटल व्योम vlynq_reset(काष्ठा vlynq_device *dev)
+अणु
+	ग_लिखोl(पढ़ोl(&dev->local->control) | VLYNQ_CTRL_RESET,
 			&dev->local->control);
 
-	/* Wait for the devices to finish resetting */
+	/* Wait क्रम the devices to finish resetting */
 	msleep(5);
 
 	/* Remove reset bit */
-	writel(readl(&dev->local->control) & ~VLYNQ_CTRL_RESET,
+	ग_लिखोl(पढ़ोl(&dev->local->control) & ~VLYNQ_CTRL_RESET,
 			&dev->local->control);
 
-	/* Give some time for the devices to settle */
+	/* Give some समय क्रम the devices to settle */
 	msleep(5);
-}
+पूर्ण
 
-static void vlynq_irq_unmask(struct irq_data *d)
-{
-	struct vlynq_device *dev = irq_data_get_irq_chip_data(d);
-	int virq;
+अटल व्योम vlynq_irq_unmask(काष्ठा irq_data *d)
+अणु
+	काष्ठा vlynq_device *dev = irq_data_get_irq_chip_data(d);
+	पूर्णांक virq;
 	u32 val;
 
 	BUG_ON(!dev);
 	virq = d->irq - dev->irq_start;
-	val = readl(&dev->remote->int_device[virq >> 2]);
+	val = पढ़ोl(&dev->remote->पूर्णांक_device[virq >> 2]);
 	val |= (VINT_ENABLE | virq) << VINT_OFFSET(virq);
-	writel(val, &dev->remote->int_device[virq >> 2]);
-}
+	ग_लिखोl(val, &dev->remote->पूर्णांक_device[virq >> 2]);
+पूर्ण
 
-static void vlynq_irq_mask(struct irq_data *d)
-{
-	struct vlynq_device *dev = irq_data_get_irq_chip_data(d);
-	int virq;
+अटल व्योम vlynq_irq_mask(काष्ठा irq_data *d)
+अणु
+	काष्ठा vlynq_device *dev = irq_data_get_irq_chip_data(d);
+	पूर्णांक virq;
 	u32 val;
 
 	BUG_ON(!dev);
 	virq = d->irq - dev->irq_start;
-	val = readl(&dev->remote->int_device[virq >> 2]);
+	val = पढ़ोl(&dev->remote->पूर्णांक_device[virq >> 2]);
 	val &= ~(VINT_ENABLE << VINT_OFFSET(virq));
-	writel(val, &dev->remote->int_device[virq >> 2]);
-}
+	ग_लिखोl(val, &dev->remote->पूर्णांक_device[virq >> 2]);
+पूर्ण
 
-static int vlynq_irq_type(struct irq_data *d, unsigned int flow_type)
-{
-	struct vlynq_device *dev = irq_data_get_irq_chip_data(d);
-	int virq;
+अटल पूर्णांक vlynq_irq_type(काष्ठा irq_data *d, अचिन्हित पूर्णांक flow_type)
+अणु
+	काष्ठा vlynq_device *dev = irq_data_get_irq_chip_data(d);
+	पूर्णांक virq;
 	u32 val;
 
 	BUG_ON(!dev);
 	virq = d->irq - dev->irq_start;
-	val = readl(&dev->remote->int_device[virq >> 2]);
-	switch (flow_type & IRQ_TYPE_SENSE_MASK) {
-	case IRQ_TYPE_EDGE_RISING:
-	case IRQ_TYPE_EDGE_FALLING:
-	case IRQ_TYPE_EDGE_BOTH:
+	val = पढ़ोl(&dev->remote->पूर्णांक_device[virq >> 2]);
+	चयन (flow_type & IRQ_TYPE_SENSE_MASK) अणु
+	हाल IRQ_TYPE_EDGE_RISING:
+	हाल IRQ_TYPE_EDGE_FALLING:
+	हाल IRQ_TYPE_EDGE_BOTH:
 		val |= VINT_TYPE_EDGE << VINT_OFFSET(virq);
 		val &= ~(VINT_LEVEL_LOW << VINT_OFFSET(virq));
-		break;
-	case IRQ_TYPE_LEVEL_HIGH:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_HIGH:
 		val &= ~(VINT_TYPE_EDGE << VINT_OFFSET(virq));
 		val &= ~(VINT_LEVEL_LOW << VINT_OFFSET(virq));
-		break;
-	case IRQ_TYPE_LEVEL_LOW:
+		अवरोध;
+	हाल IRQ_TYPE_LEVEL_LOW:
 		val &= ~(VINT_TYPE_EDGE << VINT_OFFSET(virq));
 		val |= VINT_LEVEL_LOW << VINT_OFFSET(virq);
-		break;
-	default:
-		return -EINVAL;
-	}
-	writel(val, &dev->remote->int_device[virq >> 2]);
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	ग_लिखोl(val, &dev->remote->पूर्णांक_device[virq >> 2]);
+	वापस 0;
+पूर्ण
 
-static void vlynq_local_ack(struct irq_data *d)
-{
-	struct vlynq_device *dev = irq_data_get_irq_chip_data(d);
-	u32 status = readl(&dev->local->status);
+अटल व्योम vlynq_local_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा vlynq_device *dev = irq_data_get_irq_chip_data(d);
+	u32 status = पढ़ोl(&dev->local->status);
 
 	pr_debug("%s: local status: 0x%08x\n",
 		       dev_name(&dev->dev), status);
-	writel(status, &dev->local->status);
-}
+	ग_लिखोl(status, &dev->local->status);
+पूर्ण
 
-static void vlynq_remote_ack(struct irq_data *d)
-{
-	struct vlynq_device *dev = irq_data_get_irq_chip_data(d);
-	u32 status = readl(&dev->remote->status);
+अटल व्योम vlynq_remote_ack(काष्ठा irq_data *d)
+अणु
+	काष्ठा vlynq_device *dev = irq_data_get_irq_chip_data(d);
+	u32 status = पढ़ोl(&dev->remote->status);
 
 	pr_debug("%s: remote status: 0x%08x\n",
 		       dev_name(&dev->dev), status);
-	writel(status, &dev->remote->status);
-}
+	ग_लिखोl(status, &dev->remote->status);
+पूर्ण
 
-static irqreturn_t vlynq_irq(int irq, void *dev_id)
-{
-	struct vlynq_device *dev = dev_id;
+अटल irqवापस_t vlynq_irq(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा vlynq_device *dev = dev_id;
 	u32 status;
-	int virq = 0;
+	पूर्णांक virq = 0;
 
-	status = readl(&dev->local->int_status);
-	writel(status, &dev->local->int_status);
+	status = पढ़ोl(&dev->local->पूर्णांक_status);
+	ग_लिखोl(status, &dev->local->पूर्णांक_status);
 
-	if (unlikely(!status))
-		spurious_interrupt();
+	अगर (unlikely(!status))
+		spurious_पूर्णांकerrupt();
 
-	while (status) {
-		if (status & 1)
-			do_IRQ(dev->irq_start + virq);
+	जबतक (status) अणु
+		अगर (status & 1)
+			करो_IRQ(dev->irq_start + virq);
 		status >>= 1;
 		virq++;
-	}
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct irq_chip vlynq_irq_chip = {
+अटल काष्ठा irq_chip vlynq_irq_chip = अणु
 	.name = "vlynq",
 	.irq_unmask = vlynq_irq_unmask,
 	.irq_mask = vlynq_irq_mask,
 	.irq_set_type = vlynq_irq_type,
-};
+पूर्ण;
 
-static struct irq_chip vlynq_local_chip = {
+अटल काष्ठा irq_chip vlynq_local_chip = अणु
 	.name = "vlynq local error",
 	.irq_unmask = vlynq_irq_unmask,
 	.irq_mask = vlynq_irq_mask,
 	.irq_ack = vlynq_local_ack,
-};
+पूर्ण;
 
-static struct irq_chip vlynq_remote_chip = {
+अटल काष्ठा irq_chip vlynq_remote_chip = अणु
 	.name = "vlynq local error",
 	.irq_unmask = vlynq_irq_unmask,
 	.irq_mask = vlynq_irq_mask,
 	.irq_ack = vlynq_remote_ack,
-};
+पूर्ण;
 
-static int vlynq_setup_irq(struct vlynq_device *dev)
-{
+अटल पूर्णांक vlynq_setup_irq(काष्ठा vlynq_device *dev)
+अणु
 	u32 val;
-	int i, virq;
+	पूर्णांक i, virq;
 
-	if (dev->local_irq == dev->remote_irq) {
-		printk(KERN_ERR
+	अगर (dev->local_irq == dev->remote_irq) अणु
+		prपूर्णांकk(KERN_ERR
 		       "%s: local vlynq irq should be different from remote\n",
 		       dev_name(&dev->dev));
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Clear local and remote error bits */
-	writel(readl(&dev->local->status), &dev->local->status);
-	writel(readl(&dev->remote->status), &dev->remote->status);
+	ग_लिखोl(पढ़ोl(&dev->local->status), &dev->local->status);
+	ग_लिखोl(पढ़ोl(&dev->remote->status), &dev->remote->status);
 
-	/* Now setup interrupts */
+	/* Now setup पूर्णांकerrupts */
 	val = VLYNQ_CTRL_INT_VECTOR(dev->local_irq);
 	val |= VLYNQ_CTRL_INT_ENABLE | VLYNQ_CTRL_INT_LOCAL |
 		VLYNQ_CTRL_INT2CFG;
-	val |= readl(&dev->local->control);
-	writel(VLYNQ_INT_OFFSET, &dev->local->int_ptr);
-	writel(val, &dev->local->control);
+	val |= पढ़ोl(&dev->local->control);
+	ग_लिखोl(VLYNQ_INT_OFFSET, &dev->local->पूर्णांक_ptr);
+	ग_लिखोl(val, &dev->local->control);
 
 	val = VLYNQ_CTRL_INT_VECTOR(dev->remote_irq);
 	val |= VLYNQ_CTRL_INT_ENABLE;
-	val |= readl(&dev->remote->control);
-	writel(VLYNQ_INT_OFFSET, &dev->remote->int_ptr);
-	writel(val, &dev->remote->int_ptr);
-	writel(val, &dev->remote->control);
+	val |= पढ़ोl(&dev->remote->control);
+	ग_लिखोl(VLYNQ_INT_OFFSET, &dev->remote->पूर्णांक_ptr);
+	ग_लिखोl(val, &dev->remote->पूर्णांक_ptr);
+	ग_लिखोl(val, &dev->remote->control);
 
-	for (i = dev->irq_start; i <= dev->irq_end; i++) {
+	क्रम (i = dev->irq_start; i <= dev->irq_end; i++) अणु
 		virq = i - dev->irq_start;
-		if (virq == dev->local_irq) {
+		अगर (virq == dev->local_irq) अणु
 			irq_set_chip_and_handler(i, &vlynq_local_chip,
 						 handle_level_irq);
 			irq_set_chip_data(i, dev);
-		} else if (virq == dev->remote_irq) {
+		पूर्ण अन्यथा अगर (virq == dev->remote_irq) अणु
 			irq_set_chip_and_handler(i, &vlynq_remote_chip,
 						 handle_level_irq);
 			irq_set_chip_data(i, dev);
-		} else {
+		पूर्ण अन्यथा अणु
 			irq_set_chip_and_handler(i, &vlynq_irq_chip,
 						 handle_simple_irq);
 			irq_set_chip_data(i, dev);
-			writel(0, &dev->remote->int_device[virq >> 2]);
-		}
-	}
+			ग_लिखोl(0, &dev->remote->पूर्णांक_device[virq >> 2]);
+		पूर्ण
+	पूर्ण
 
-	if (request_irq(dev->irq, vlynq_irq, IRQF_SHARED, "vlynq", dev)) {
-		printk(KERN_ERR "%s: request_irq failed\n",
+	अगर (request_irq(dev->irq, vlynq_irq, IRQF_SHARED, "vlynq", dev)) अणु
+		prपूर्णांकk(KERN_ERR "%s: request_irq failed\n",
 					dev_name(&dev->dev));
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vlynq_device_release(struct device *dev)
-{
-	struct vlynq_device *vdev = to_vlynq_device(dev);
-	kfree(vdev);
-}
+अटल व्योम vlynq_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा vlynq_device *vdev = to_vlynq_device(dev);
+	kमुक्त(vdev);
+पूर्ण
 
-static int vlynq_device_match(struct device *dev,
-			      struct device_driver *drv)
-{
-	struct vlynq_device *vdev = to_vlynq_device(dev);
-	struct vlynq_driver *vdrv = to_vlynq_driver(drv);
-	struct vlynq_device_id *ids = vdrv->id_table;
+अटल पूर्णांक vlynq_device_match(काष्ठा device *dev,
+			      काष्ठा device_driver *drv)
+अणु
+	काष्ठा vlynq_device *vdev = to_vlynq_device(dev);
+	काष्ठा vlynq_driver *vdrv = to_vlynq_driver(drv);
+	काष्ठा vlynq_device_id *ids = vdrv->id_table;
 
-	while (ids->id) {
-		if (ids->id == vdev->dev_id) {
-			vdev->divisor = ids->divisor;
+	जबतक (ids->id) अणु
+		अगर (ids->id == vdev->dev_id) अणु
+			vdev->भागisor = ids->भागisor;
 			vlynq_set_drvdata(vdev, ids);
-			printk(KERN_INFO "Driver found for VLYNQ "
+			prपूर्णांकk(KERN_INFO "Driver found for VLYNQ "
 				"device: %08x\n", vdev->dev_id);
-			return 1;
-		}
-		printk(KERN_DEBUG "Not using the %08x VLYNQ device's driver"
+			वापस 1;
+		पूर्ण
+		prपूर्णांकk(KERN_DEBUG "Not using the %08x VLYNQ device's driver"
 			" for VLYNQ device: %08x\n", ids->id, vdev->dev_id);
 		ids++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vlynq_device_probe(struct device *dev)
-{
-	struct vlynq_device *vdev = to_vlynq_device(dev);
-	struct vlynq_driver *drv = to_vlynq_driver(dev->driver);
-	struct vlynq_device_id *id = vlynq_get_drvdata(vdev);
-	int result = -ENODEV;
+अटल पूर्णांक vlynq_device_probe(काष्ठा device *dev)
+अणु
+	काष्ठा vlynq_device *vdev = to_vlynq_device(dev);
+	काष्ठा vlynq_driver *drv = to_vlynq_driver(dev->driver);
+	काष्ठा vlynq_device_id *id = vlynq_get_drvdata(vdev);
+	पूर्णांक result = -ENODEV;
 
-	if (drv->probe)
+	अगर (drv->probe)
 		result = drv->probe(vdev, id);
-	if (result)
+	अगर (result)
 		put_device(dev);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-static int vlynq_device_remove(struct device *dev)
-{
-	struct vlynq_driver *drv = to_vlynq_driver(dev->driver);
+अटल पूर्णांक vlynq_device_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा vlynq_driver *drv = to_vlynq_driver(dev->driver);
 
-	if (drv->remove)
-		drv->remove(to_vlynq_device(dev));
+	अगर (drv->हटाओ)
+		drv->हटाओ(to_vlynq_device(dev));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __vlynq_register_driver(struct vlynq_driver *driver, struct module *owner)
-{
+पूर्णांक __vlynq_रेजिस्टर_driver(काष्ठा vlynq_driver *driver, काष्ठा module *owner)
+अणु
 	driver->driver.name = driver->name;
 	driver->driver.bus = &vlynq_bus_type;
-	return driver_register(&driver->driver);
-}
-EXPORT_SYMBOL(__vlynq_register_driver);
+	वापस driver_रेजिस्टर(&driver->driver);
+पूर्ण
+EXPORT_SYMBOL(__vlynq_रेजिस्टर_driver);
 
-void vlynq_unregister_driver(struct vlynq_driver *driver)
-{
-	driver_unregister(&driver->driver);
-}
-EXPORT_SYMBOL(vlynq_unregister_driver);
+व्योम vlynq_unरेजिस्टर_driver(काष्ठा vlynq_driver *driver)
+अणु
+	driver_unरेजिस्टर(&driver->driver);
+पूर्ण
+EXPORT_SYMBOL(vlynq_unरेजिस्टर_driver);
 
 /*
- * A VLYNQ remote device can clock the VLYNQ bus master
- * using a dedicated clock line. In that case, both the
- * remove device and the bus master should have the same
- * serial clock dividers configured. Iterate through the
- * 8 possible dividers until we actually link with the
+ * A VLYNQ remote device can घड़ी the VLYNQ bus master
+ * using a dedicated घड़ी line. In that हाल, both the
+ * हटाओ device and the bus master should have the same
+ * serial घड़ी भागiders configured. Iterate through the
+ * 8 possible भागiders until we actually link with the
  * device.
  */
-static int __vlynq_try_remote(struct vlynq_device *dev)
-{
-	int i;
+अटल पूर्णांक __vlynq_try_remote(काष्ठा vlynq_device *dev)
+अणु
+	पूर्णांक i;
 
 	vlynq_reset(dev);
-	for (i = dev->dev_id ? vlynq_rdiv2 : vlynq_rdiv8; dev->dev_id ?
-			i <= vlynq_rdiv8 : i >= vlynq_rdiv2;
-		dev->dev_id ? i++ : i--) {
+	क्रम (i = dev->dev_id ? vlynq_rभाग2 : vlynq_rभाग8; dev->dev_id ?
+			i <= vlynq_rभाग8 : i >= vlynq_rभाग2;
+		dev->dev_id ? i++ : i--) अणु
 
-		if (!vlynq_linked(dev))
-			break;
+		अगर (!vlynq_linked(dev))
+			अवरोध;
 
-		writel((readl(&dev->remote->control) &
+		ग_लिखोl((पढ़ोl(&dev->remote->control) &
 				~VLYNQ_CTRL_CLOCK_MASK) |
 				VLYNQ_CTRL_CLOCK_INT |
-				VLYNQ_CTRL_CLOCK_DIV(i - vlynq_rdiv1),
+				VLYNQ_CTRL_CLOCK_DIV(i - vlynq_rभाग1),
 				&dev->remote->control);
-		writel((readl(&dev->local->control)
+		ग_लिखोl((पढ़ोl(&dev->local->control)
 				& ~(VLYNQ_CTRL_CLOCK_INT |
 				VLYNQ_CTRL_CLOCK_MASK)) |
-				VLYNQ_CTRL_CLOCK_DIV(i - vlynq_rdiv1),
+				VLYNQ_CTRL_CLOCK_DIV(i - vlynq_rभाग1),
 				&dev->local->control);
 
-		if (vlynq_linked(dev)) {
-			printk(KERN_DEBUG
+		अगर (vlynq_linked(dev)) अणु
+			prपूर्णांकk(KERN_DEBUG
 				"%s: using remote clock divisor %d\n",
-				dev_name(&dev->dev), i - vlynq_rdiv1 + 1);
-			dev->divisor = i;
-			return 0;
-		} else {
+				dev_name(&dev->dev), i - vlynq_rभाग1 + 1);
+			dev->भागisor = i;
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			vlynq_reset(dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /*
- * A VLYNQ remote device can be clocked by the VLYNQ bus
- * master using a dedicated clock line. In that case, only
- * the bus master configures the serial clock divider.
- * Iterate through the 8 possible dividers until we
+ * A VLYNQ remote device can be घड़ीed by the VLYNQ bus
+ * master using a dedicated घड़ी line. In that हाल, only
+ * the bus master configures the serial घड़ी भागider.
+ * Iterate through the 8 possible भागiders until we
  * actually get a link with the device.
  */
-static int __vlynq_try_local(struct vlynq_device *dev)
-{
-	int i;
+अटल पूर्णांक __vlynq_try_local(काष्ठा vlynq_device *dev)
+अणु
+	पूर्णांक i;
 
 	vlynq_reset(dev);
 
-	for (i = dev->dev_id ? vlynq_ldiv2 : vlynq_ldiv8; dev->dev_id ?
-			i <= vlynq_ldiv8 : i >= vlynq_ldiv2;
-		dev->dev_id ? i++ : i--) {
+	क्रम (i = dev->dev_id ? vlynq_द_भाग2 : vlynq_द_भाग8; dev->dev_id ?
+			i <= vlynq_द_भाग8 : i >= vlynq_द_भाग2;
+		dev->dev_id ? i++ : i--) अणु
 
-		writel((readl(&dev->local->control) &
+		ग_लिखोl((पढ़ोl(&dev->local->control) &
 				~VLYNQ_CTRL_CLOCK_MASK) |
 				VLYNQ_CTRL_CLOCK_INT |
-				VLYNQ_CTRL_CLOCK_DIV(i - vlynq_ldiv1),
+				VLYNQ_CTRL_CLOCK_DIV(i - vlynq_द_भाग1),
 				&dev->local->control);
 
-		if (vlynq_linked(dev)) {
-			printk(KERN_DEBUG
+		अगर (vlynq_linked(dev)) अणु
+			prपूर्णांकk(KERN_DEBUG
 				"%s: using local clock divisor %d\n",
-				dev_name(&dev->dev), i - vlynq_ldiv1 + 1);
-			dev->divisor = i;
-			return 0;
-		} else {
+				dev_name(&dev->dev), i - vlynq_द_भाग1 + 1);
+			dev->भागisor = i;
+			वापस 0;
+		पूर्ण अन्यथा अणु
 			vlynq_reset(dev);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
 /*
- * When using external clocking method, serial clock
- * is supplied by an external oscillator, therefore we
- * should mask the local clock bit in the clock control
- * register for both the bus master and the remote device.
+ * When using बाह्यal घड़ीing method, serial घड़ी
+ * is supplied by an बाह्यal oscillator, thereक्रमe we
+ * should mask the local घड़ी bit in the घड़ी control
+ * रेजिस्टर क्रम both the bus master and the remote device.
  */
-static int __vlynq_try_external(struct vlynq_device *dev)
-{
+अटल पूर्णांक __vlynq_try_बाह्यal(काष्ठा vlynq_device *dev)
+अणु
 	vlynq_reset(dev);
-	if (!vlynq_linked(dev))
-		return -ENODEV;
+	अगर (!vlynq_linked(dev))
+		वापस -ENODEV;
 
-	writel((readl(&dev->remote->control) &
+	ग_लिखोl((पढ़ोl(&dev->remote->control) &
 			~VLYNQ_CTRL_CLOCK_INT),
 			&dev->remote->control);
 
-	writel((readl(&dev->local->control) &
+	ग_लिखोl((पढ़ोl(&dev->local->control) &
 			~VLYNQ_CTRL_CLOCK_INT),
 			&dev->local->control);
 
-	if (vlynq_linked(dev)) {
-		printk(KERN_DEBUG "%s: using external clock\n",
+	अगर (vlynq_linked(dev)) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: using external clock\n",
 			dev_name(&dev->dev));
-			dev->divisor = vlynq_div_external;
-		return 0;
-	}
+			dev->भागisor = vlynq_भाग_बाह्यal;
+		वापस 0;
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int __vlynq_enable_device(struct vlynq_device *dev)
-{
-	int result;
-	struct plat_vlynq_ops *ops = dev->dev.platform_data;
+अटल पूर्णांक __vlynq_enable_device(काष्ठा vlynq_device *dev)
+अणु
+	पूर्णांक result;
+	काष्ठा plat_vlynq_ops *ops = dev->dev.platक्रमm_data;
 
 	result = ops->on(dev);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
-	switch (dev->divisor) {
-	case vlynq_div_external:
-	case vlynq_div_auto:
-		/* When the device is brought from reset it should have clock
+	चयन (dev->भागisor) अणु
+	हाल vlynq_भाग_बाह्यal:
+	हाल vlynq_भाग_स्वतः:
+		/* When the device is brought from reset it should have घड़ी
 		 * generation negotiated by hardware.
-		 * Check which device is generating clocks and perform setup
+		 * Check which device is generating घड़ीs and perक्रमm setup
 		 * accordingly */
-		if (vlynq_linked(dev) && readl(&dev->remote->control) &
-		   VLYNQ_CTRL_CLOCK_INT) {
-			if (!__vlynq_try_remote(dev) ||
+		अगर (vlynq_linked(dev) && पढ़ोl(&dev->remote->control) &
+		   VLYNQ_CTRL_CLOCK_INT) अणु
+			अगर (!__vlynq_try_remote(dev) ||
 				!__vlynq_try_local(dev)  ||
-				!__vlynq_try_external(dev))
-				return 0;
-		} else {
-			if (!__vlynq_try_external(dev) ||
+				!__vlynq_try_बाह्यal(dev))
+				वापस 0;
+		पूर्ण अन्यथा अणु
+			अगर (!__vlynq_try_बाह्यal(dev) ||
 				!__vlynq_try_local(dev)    ||
 				!__vlynq_try_remote(dev))
-				return 0;
-		}
-		break;
-	case vlynq_ldiv1:
-	case vlynq_ldiv2:
-	case vlynq_ldiv3:
-	case vlynq_ldiv4:
-	case vlynq_ldiv5:
-	case vlynq_ldiv6:
-	case vlynq_ldiv7:
-	case vlynq_ldiv8:
-		writel(VLYNQ_CTRL_CLOCK_INT |
-			VLYNQ_CTRL_CLOCK_DIV(dev->divisor -
-			vlynq_ldiv1), &dev->local->control);
-		writel(0, &dev->remote->control);
-		if (vlynq_linked(dev)) {
-			printk(KERN_DEBUG
+				वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल vlynq_द_भाग1:
+	हाल vlynq_द_भाग2:
+	हाल vlynq_द_भाग3:
+	हाल vlynq_द_भाग4:
+	हाल vlynq_द_भाग5:
+	हाल vlynq_द_भाग6:
+	हाल vlynq_द_भाग7:
+	हाल vlynq_द_भाग8:
+		ग_लिखोl(VLYNQ_CTRL_CLOCK_INT |
+			VLYNQ_CTRL_CLOCK_DIV(dev->भागisor -
+			vlynq_द_भाग1), &dev->local->control);
+		ग_लिखोl(0, &dev->remote->control);
+		अगर (vlynq_linked(dev)) अणु
+			prपूर्णांकk(KERN_DEBUG
 				"%s: using local clock divisor %d\n",
 				dev_name(&dev->dev),
-				dev->divisor - vlynq_ldiv1 + 1);
-			return 0;
-		}
-		break;
-	case vlynq_rdiv1:
-	case vlynq_rdiv2:
-	case vlynq_rdiv3:
-	case vlynq_rdiv4:
-	case vlynq_rdiv5:
-	case vlynq_rdiv6:
-	case vlynq_rdiv7:
-	case vlynq_rdiv8:
-		writel(0, &dev->local->control);
-		writel(VLYNQ_CTRL_CLOCK_INT |
-			VLYNQ_CTRL_CLOCK_DIV(dev->divisor -
-			vlynq_rdiv1), &dev->remote->control);
-		if (vlynq_linked(dev)) {
-			printk(KERN_DEBUG
+				dev->भागisor - vlynq_द_भाग1 + 1);
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल vlynq_rभाग1:
+	हाल vlynq_rभाग2:
+	हाल vlynq_rभाग3:
+	हाल vlynq_rभाग4:
+	हाल vlynq_rभाग5:
+	हाल vlynq_rभाग6:
+	हाल vlynq_rभाग7:
+	हाल vlynq_rभाग8:
+		ग_लिखोl(0, &dev->local->control);
+		ग_लिखोl(VLYNQ_CTRL_CLOCK_INT |
+			VLYNQ_CTRL_CLOCK_DIV(dev->भागisor -
+			vlynq_rभाग1), &dev->remote->control);
+		अगर (vlynq_linked(dev)) अणु
+			prपूर्णांकk(KERN_DEBUG
 				"%s: using remote clock divisor %d\n",
 				dev_name(&dev->dev),
-				dev->divisor - vlynq_rdiv1 + 1);
-			return 0;
-		}
-		break;
-	}
+				dev->भागisor - vlynq_rभाग1 + 1);
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	ops->off(dev);
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-int vlynq_enable_device(struct vlynq_device *dev)
-{
-	struct plat_vlynq_ops *ops = dev->dev.platform_data;
-	int result = -ENODEV;
+पूर्णांक vlynq_enable_device(काष्ठा vlynq_device *dev)
+अणु
+	काष्ठा plat_vlynq_ops *ops = dev->dev.platक्रमm_data;
+	पूर्णांक result = -ENODEV;
 
 	result = __vlynq_enable_device(dev);
-	if (result)
-		return result;
+	अगर (result)
+		वापस result;
 
 	result = vlynq_setup_irq(dev);
-	if (result)
+	अगर (result)
 		ops->off(dev);
 
 	dev->enabled = !result;
-	return result;
-}
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(vlynq_enable_device);
 
 
-void vlynq_disable_device(struct vlynq_device *dev)
-{
-	struct plat_vlynq_ops *ops = dev->dev.platform_data;
+व्योम vlynq_disable_device(काष्ठा vlynq_device *dev)
+अणु
+	काष्ठा plat_vlynq_ops *ops = dev->dev.platक्रमm_data;
 
 	dev->enabled = 0;
-	free_irq(dev->irq, dev);
+	मुक्त_irq(dev->irq, dev);
 	ops->off(dev);
-}
+पूर्ण
 EXPORT_SYMBOL(vlynq_disable_device);
 
-int vlynq_set_local_mapping(struct vlynq_device *dev, u32 tx_offset,
-			    struct vlynq_mapping *mapping)
-{
-	int i;
+पूर्णांक vlynq_set_local_mapping(काष्ठा vlynq_device *dev, u32 tx_offset,
+			    काष्ठा vlynq_mapping *mapping)
+अणु
+	पूर्णांक i;
 
-	if (!dev->enabled)
-		return -ENXIO;
+	अगर (!dev->enabled)
+		वापस -ENXIO;
 
-	writel(tx_offset, &dev->local->tx_offset);
-	for (i = 0; i < 4; i++) {
-		writel(mapping[i].offset, &dev->local->rx_mapping[i].offset);
-		writel(mapping[i].size, &dev->local->rx_mapping[i].size);
-	}
-	return 0;
-}
+	ग_लिखोl(tx_offset, &dev->local->tx_offset);
+	क्रम (i = 0; i < 4; i++) अणु
+		ग_लिखोl(mapping[i].offset, &dev->local->rx_mapping[i].offset);
+		ग_लिखोl(mapping[i].size, &dev->local->rx_mapping[i].size);
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vlynq_set_local_mapping);
 
-int vlynq_set_remote_mapping(struct vlynq_device *dev, u32 tx_offset,
-			     struct vlynq_mapping *mapping)
-{
-	int i;
+पूर्णांक vlynq_set_remote_mapping(काष्ठा vlynq_device *dev, u32 tx_offset,
+			     काष्ठा vlynq_mapping *mapping)
+अणु
+	पूर्णांक i;
 
-	if (!dev->enabled)
-		return -ENXIO;
+	अगर (!dev->enabled)
+		वापस -ENXIO;
 
-	writel(tx_offset, &dev->remote->tx_offset);
-	for (i = 0; i < 4; i++) {
-		writel(mapping[i].offset, &dev->remote->rx_mapping[i].offset);
-		writel(mapping[i].size, &dev->remote->rx_mapping[i].size);
-	}
-	return 0;
-}
+	ग_लिखोl(tx_offset, &dev->remote->tx_offset);
+	क्रम (i = 0; i < 4; i++) अणु
+		ग_लिखोl(mapping[i].offset, &dev->remote->rx_mapping[i].offset);
+		ग_लिखोl(mapping[i].size, &dev->remote->rx_mapping[i].size);
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vlynq_set_remote_mapping);
 
-int vlynq_set_local_irq(struct vlynq_device *dev, int virq)
-{
-	int irq = dev->irq_start + virq;
-	if (dev->enabled)
-		return -EBUSY;
+पूर्णांक vlynq_set_local_irq(काष्ठा vlynq_device *dev, पूर्णांक virq)
+अणु
+	पूर्णांक irq = dev->irq_start + virq;
+	अगर (dev->enabled)
+		वापस -EBUSY;
 
-	if ((irq < dev->irq_start) || (irq > dev->irq_end))
-		return -EINVAL;
+	अगर ((irq < dev->irq_start) || (irq > dev->irq_end))
+		वापस -EINVAL;
 
-	if (virq == dev->remote_irq)
-		return -EINVAL;
+	अगर (virq == dev->remote_irq)
+		वापस -EINVAL;
 
 	dev->local_irq = virq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vlynq_set_local_irq);
 
-int vlynq_set_remote_irq(struct vlynq_device *dev, int virq)
-{
-	int irq = dev->irq_start + virq;
-	if (dev->enabled)
-		return -EBUSY;
+पूर्णांक vlynq_set_remote_irq(काष्ठा vlynq_device *dev, पूर्णांक virq)
+अणु
+	पूर्णांक irq = dev->irq_start + virq;
+	अगर (dev->enabled)
+		वापस -EBUSY;
 
-	if ((irq < dev->irq_start) || (irq > dev->irq_end))
-		return -EINVAL;
+	अगर ((irq < dev->irq_start) || (irq > dev->irq_end))
+		वापस -EINVAL;
 
-	if (virq == dev->local_irq)
-		return -EINVAL;
+	अगर (virq == dev->local_irq)
+		वापस -EINVAL;
 
 	dev->remote_irq = virq;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vlynq_set_remote_irq);
 
-static int vlynq_probe(struct platform_device *pdev)
-{
-	struct vlynq_device *dev;
-	struct resource *regs_res, *mem_res, *irq_res;
-	int len, result;
+अटल पूर्णांक vlynq_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vlynq_device *dev;
+	काष्ठा resource *regs_res, *mem_res, *irq_res;
+	पूर्णांक len, result;
 
-	regs_res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "regs");
-	if (!regs_res)
-		return -ENODEV;
+	regs_res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "regs");
+	अगर (!regs_res)
+		वापस -ENODEV;
 
-	mem_res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "mem");
-	if (!mem_res)
-		return -ENODEV;
+	mem_res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "mem");
+	अगर (!mem_res)
+		वापस -ENODEV;
 
-	irq_res = platform_get_resource_byname(pdev, IORESOURCE_IRQ, "devirq");
-	if (!irq_res)
-		return -ENODEV;
+	irq_res = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ, "devirq");
+	अगर (!irq_res)
+		वापस -ENODEV;
 
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev) {
-		printk(KERN_ERR
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev) अणु
+		prपूर्णांकk(KERN_ERR
 		       "vlynq: failed to allocate device structure\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	dev->id = pdev->id;
 	dev->dev.bus = &vlynq_bus_type;
 	dev->dev.parent = &pdev->dev;
 	dev_set_name(&dev->dev, "vlynq%d", dev->id);
-	dev->dev.platform_data = pdev->dev.platform_data;
+	dev->dev.platक्रमm_data = pdev->dev.platक्रमm_data;
 	dev->dev.release = vlynq_device_release;
 
 	dev->regs_start = regs_res->start;
@@ -690,112 +691,112 @@ static int vlynq_probe(struct platform_device *pdev)
 	dev->mem_end = mem_res->end;
 
 	len = resource_size(regs_res);
-	if (!request_mem_region(regs_res->start, len, dev_name(&dev->dev))) {
-		printk(KERN_ERR "%s: Can't request vlynq registers\n",
+	अगर (!request_mem_region(regs_res->start, len, dev_name(&dev->dev))) अणु
+		prपूर्णांकk(KERN_ERR "%s: Can't request vlynq registers\n",
 		       dev_name(&dev->dev));
 		result = -ENXIO;
-		goto fail_request;
-	}
+		जाओ fail_request;
+	पूर्ण
 
 	dev->local = ioremap(regs_res->start, len);
-	if (!dev->local) {
-		printk(KERN_ERR "%s: Can't remap vlynq registers\n",
+	अगर (!dev->local) अणु
+		prपूर्णांकk(KERN_ERR "%s: Can't remap vlynq registers\n",
 		       dev_name(&dev->dev));
 		result = -ENXIO;
-		goto fail_remap;
-	}
+		जाओ fail_remap;
+	पूर्ण
 
-	dev->remote = (struct vlynq_regs *)((void *)dev->local +
+	dev->remote = (काष्ठा vlynq_regs *)((व्योम *)dev->local +
 					    VLYNQ_REMOTE_OFFSET);
 
-	dev->irq = platform_get_irq_byname(pdev, "irq");
+	dev->irq = platक्रमm_get_irq_byname(pdev, "irq");
 	dev->irq_start = irq_res->start;
 	dev->irq_end = irq_res->end;
 	dev->local_irq = dev->irq_end - dev->irq_start;
 	dev->remote_irq = dev->local_irq - 1;
 
-	if (device_register(&dev->dev))
-		goto fail_register;
-	platform_set_drvdata(pdev, dev);
+	अगर (device_रेजिस्टर(&dev->dev))
+		जाओ fail_रेजिस्टर;
+	platक्रमm_set_drvdata(pdev, dev);
 
-	printk(KERN_INFO "%s: regs 0x%p, irq %d, mem 0x%p\n",
-	       dev_name(&dev->dev), (void *)dev->regs_start, dev->irq,
-	       (void *)dev->mem_start);
+	prपूर्णांकk(KERN_INFO "%s: regs 0x%p, irq %d, mem 0x%p\n",
+	       dev_name(&dev->dev), (व्योम *)dev->regs_start, dev->irq,
+	       (व्योम *)dev->mem_start);
 
 	dev->dev_id = 0;
-	dev->divisor = vlynq_div_auto;
+	dev->भागisor = vlynq_भाग_स्वतः;
 	result = __vlynq_enable_device(dev);
-	if (result == 0) {
-		dev->dev_id = readl(&dev->remote->chip);
-		((struct plat_vlynq_ops *)(dev->dev.platform_data))->off(dev);
-	}
-	if (dev->dev_id)
-		printk(KERN_INFO "Found a VLYNQ device: %08x\n", dev->dev_id);
+	अगर (result == 0) अणु
+		dev->dev_id = पढ़ोl(&dev->remote->chip);
+		((काष्ठा plat_vlynq_ops *)(dev->dev.platक्रमm_data))->off(dev);
+	पूर्ण
+	अगर (dev->dev_id)
+		prपूर्णांकk(KERN_INFO "Found a VLYNQ device: %08x\n", dev->dev_id);
 
-	return 0;
+	वापस 0;
 
-fail_register:
+fail_रेजिस्टर:
 	iounmap(dev->local);
 fail_remap:
 fail_request:
 	release_mem_region(regs_res->start, len);
-	kfree(dev);
-	return result;
-}
+	kमुक्त(dev);
+	वापस result;
+पूर्ण
 
-static int vlynq_remove(struct platform_device *pdev)
-{
-	struct vlynq_device *dev = platform_get_drvdata(pdev);
+अटल पूर्णांक vlynq_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vlynq_device *dev = platक्रमm_get_drvdata(pdev);
 
-	device_unregister(&dev->dev);
+	device_unरेजिस्टर(&dev->dev);
 	iounmap(dev->local);
 	release_mem_region(dev->regs_start,
 			   dev->regs_end - dev->regs_start + 1);
 
-	kfree(dev);
+	kमुक्त(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver vlynq_platform_driver = {
+अटल काष्ठा platक्रमm_driver vlynq_platक्रमm_driver = अणु
 	.driver.name = "vlynq",
 	.probe = vlynq_probe,
-	.remove = vlynq_remove,
-};
+	.हटाओ = vlynq_हटाओ,
+पूर्ण;
 
-struct bus_type vlynq_bus_type = {
+काष्ठा bus_type vlynq_bus_type = अणु
 	.name = "vlynq",
 	.match = vlynq_device_match,
 	.probe = vlynq_device_probe,
-	.remove = vlynq_device_remove,
-};
+	.हटाओ = vlynq_device_हटाओ,
+पूर्ण;
 EXPORT_SYMBOL(vlynq_bus_type);
 
-static int vlynq_init(void)
-{
-	int res = 0;
+अटल पूर्णांक vlynq_init(व्योम)
+अणु
+	पूर्णांक res = 0;
 
-	res = bus_register(&vlynq_bus_type);
-	if (res)
-		goto fail_bus;
+	res = bus_रेजिस्टर(&vlynq_bus_type);
+	अगर (res)
+		जाओ fail_bus;
 
-	res = platform_driver_register(&vlynq_platform_driver);
-	if (res)
-		goto fail_platform;
+	res = platक्रमm_driver_रेजिस्टर(&vlynq_platक्रमm_driver);
+	अगर (res)
+		जाओ fail_platक्रमm;
 
-	return 0;
+	वापस 0;
 
-fail_platform:
-	bus_unregister(&vlynq_bus_type);
+fail_platक्रमm:
+	bus_unरेजिस्टर(&vlynq_bus_type);
 fail_bus:
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void vlynq_exit(void)
-{
-	platform_driver_unregister(&vlynq_platform_driver);
-	bus_unregister(&vlynq_bus_type);
-}
+अटल व्योम vlynq_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&vlynq_platक्रमm_driver);
+	bus_unरेजिस्टर(&vlynq_bus_type);
+पूर्ण
 
 module_init(vlynq_init);
-module_exit(vlynq_exit);
+module_निकास(vlynq_निकास);

@@ -1,45 +1,46 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Intel OakTrail Platform support
+ * Intel OakTrail Platक्रमm support
  *
  * Copyright (C) 2010-2011 Intel Corporation
- * Author: Yin Kangkai (kangkai.yin@intel.com)
+ * Author: Yin Kangkai (kangkai.yin@पूर्णांकel.com)
  *
  * based on Compal driver, Copyright (C) 2008 Cezary Jackiewicz
  * <cezary.jackiewicz (at) gmail.com>, based on MSI driver
- * Copyright (C) 2006 Lennart Poettering <mzxreary (at) 0pointer (dot) de>
+ * Copyright (C) 2006 Lennart Poettering <mzxreary (at) 0poपूर्णांकer (करोt) de>
  *
- * This driver does below things:
- * 1. registers itself in the Linux backlight control in
- *    /sys/class/backlight/intel_oaktrail/
+ * This driver करोes below things:
+ * 1. रेजिस्टरs itself in the Linux backlight control in
+ *    /sys/class/backlight/पूर्णांकel_oaktrail/
  *
- * 2. registers in the rfkill subsystem here: /sys/class/rfkill/rfkillX/
- *    for these components: wifi, bluetooth, wwan (3g), gps
+ * 2. रेजिस्टरs in the rfसमाप्त subप्रणाली here: /sys/class/rfसमाप्त/rfसमाप्तX/
+ *    क्रम these components: wअगरi, bluetooth, wwan (3g), gps
  *
  * This driver might work on other products based on Oaktrail. If you
- * want to try it you can pass force=1 as argument to the module which
- * will force it to load even when the DMI data doesn't identify the
+ * want to try it you can pass क्रमce=1 as argument to the module which
+ * will क्रमce it to load even when the DMI data करोesn't identअगरy the
  * product as compatible.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/acpi.h>
-#include <linux/backlight.h>
-#include <linux/dmi.h>
-#include <linux/err.h>
-#include <linux/fb.h>
-#include <linux/i2c.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/platform_device.h>
-#include <linux/rfkill.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/backlight.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/rfसमाप्त.h>
 
-#include <acpi/video.h>
+#समावेश <acpi/video.h>
 
-#define DRIVER_NAME	"intel_oaktrail"
-#define DRIVER_VERSION	"0.4ac1"
+#घोषणा DRIVER_NAME	"intel_oaktrail"
+#घोषणा DRIVER_VERSION	"0.4ac1"
 
 /*
  * This is the devices status address in EC space, and the control bits
@@ -52,324 +53,324 @@
  * (1 << 4):	WWAN (3G) enable/disable, RW.
  * (1 << 5):	Touchscreen enable/disable, Read Only.
  */
-#define OT_EC_DEVICE_STATE_ADDRESS	0xD6
+#घोषणा OT_EC_DEVICE_STATE_ADDRESS	0xD6
 
-#define OT_EC_CAMERA_MASK	(1 << 0)
-#define OT_EC_BT_MASK		(1 << 1)
-#define OT_EC_GPS_MASK		(1 << 2)
-#define OT_EC_WIFI_MASK		(1 << 3)
-#define OT_EC_WWAN_MASK		(1 << 4)
-#define OT_EC_TS_MASK		(1 << 5)
+#घोषणा OT_EC_CAMERA_MASK	(1 << 0)
+#घोषणा OT_EC_BT_MASK		(1 << 1)
+#घोषणा OT_EC_GPS_MASK		(1 << 2)
+#घोषणा OT_EC_WIFI_MASK		(1 << 3)
+#घोषणा OT_EC_WWAN_MASK		(1 << 4)
+#घोषणा OT_EC_TS_MASK		(1 << 5)
 
 /*
  * This is the address in EC space and commands used to control LCD backlight:
  *
  * Two steps needed to change the LCD backlight:
- *   1. write the backlight percentage into OT_EC_BL_BRIGHTNESS_ADDRESS;
- *   2. write OT_EC_BL_CONTROL_ON_DATA into OT_EC_BL_CONTROL_ADDRESS.
+ *   1. ग_लिखो the backlight percentage पूर्णांकo OT_EC_BL_BRIGHTNESS_ADDRESS;
+ *   2. ग_लिखो OT_EC_BL_CONTROL_ON_DATA पूर्णांकo OT_EC_BL_CONTROL_ADDRESS.
  *
- * To read the LCD back light, just read out the value from
+ * To पढ़ो the LCD back light, just पढ़ो out the value from
  * OT_EC_BL_BRIGHTNESS_ADDRESS.
  *
  * LCD backlight brightness range: 0 - 100 (OT_EC_BL_BRIGHTNESS_MAX)
  */
-#define OT_EC_BL_BRIGHTNESS_ADDRESS	0x44
-#define OT_EC_BL_BRIGHTNESS_MAX		100
-#define OT_EC_BL_CONTROL_ADDRESS	0x3A
-#define OT_EC_BL_CONTROL_ON_DATA	0x1A
+#घोषणा OT_EC_BL_BRIGHTNESS_ADDRESS	0x44
+#घोषणा OT_EC_BL_BRIGHTNESS_MAX		100
+#घोषणा OT_EC_BL_CONTROL_ADDRESS	0x3A
+#घोषणा OT_EC_BL_CONTROL_ON_DATA	0x1A
 
 
-static bool force;
-module_param(force, bool, 0);
-MODULE_PARM_DESC(force, "Force driver load, ignore DMI data");
+अटल bool क्रमce;
+module_param(क्रमce, bool, 0);
+MODULE_PARM_DESC(क्रमce, "Force driver load, ignore DMI data");
 
-static struct platform_device *oaktrail_device;
-static struct backlight_device *oaktrail_bl_device;
-static struct rfkill *bt_rfkill;
-static struct rfkill *gps_rfkill;
-static struct rfkill *wifi_rfkill;
-static struct rfkill *wwan_rfkill;
+अटल काष्ठा platक्रमm_device *oaktrail_device;
+अटल काष्ठा backlight_device *oaktrail_bl_device;
+अटल काष्ठा rfसमाप्त *bt_rfसमाप्त;
+अटल काष्ठा rfसमाप्त *gps_rfसमाप्त;
+अटल काष्ठा rfसमाप्त *wअगरi_rfसमाप्त;
+अटल काष्ठा rfसमाप्त *wwan_rfसमाप्त;
 
 
-/* rfkill */
-static int oaktrail_rfkill_set(void *data, bool blocked)
-{
+/* rfसमाप्त */
+अटल पूर्णांक oaktrail_rfसमाप्त_set(व्योम *data, bool blocked)
+अणु
 	u8 value;
 	u8 result;
-	unsigned long radio = (unsigned long) data;
+	अचिन्हित दीर्घ radio = (अचिन्हित दीर्घ) data;
 
-	ec_read(OT_EC_DEVICE_STATE_ADDRESS, &result);
+	ec_पढ़ो(OT_EC_DEVICE_STATE_ADDRESS, &result);
 
-	if (!blocked)
+	अगर (!blocked)
 		value = (u8) (result | radio);
-	else
+	अन्यथा
 		value = (u8) (result & ~radio);
 
-	ec_write(OT_EC_DEVICE_STATE_ADDRESS, value);
+	ec_ग_लिखो(OT_EC_DEVICE_STATE_ADDRESS, value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rfkill_ops oaktrail_rfkill_ops = {
-	.set_block = oaktrail_rfkill_set,
-};
+अटल स्थिर काष्ठा rfसमाप्त_ops oaktrail_rfसमाप्त_ops = अणु
+	.set_block = oaktrail_rfसमाप्त_set,
+पूर्ण;
 
-static struct rfkill *oaktrail_rfkill_new(char *name, enum rfkill_type type,
-					  unsigned long mask)
-{
-	struct rfkill *rfkill_dev;
+अटल काष्ठा rfसमाप्त *oaktrail_rfसमाप्त_new(अक्षर *name, क्रमागत rfसमाप्त_type type,
+					  अचिन्हित दीर्घ mask)
+अणु
+	काष्ठा rfसमाप्त *rfसमाप्त_dev;
 	u8 value;
-	int err;
+	पूर्णांक err;
 
-	rfkill_dev = rfkill_alloc(name, &oaktrail_device->dev, type,
-				  &oaktrail_rfkill_ops, (void *)mask);
-	if (!rfkill_dev)
-		return ERR_PTR(-ENOMEM);
+	rfसमाप्त_dev = rfसमाप्त_alloc(name, &oaktrail_device->dev, type,
+				  &oaktrail_rfसमाप्त_ops, (व्योम *)mask);
+	अगर (!rfसमाप्त_dev)
+		वापस ERR_PTR(-ENOMEM);
 
-	ec_read(OT_EC_DEVICE_STATE_ADDRESS, &value);
-	rfkill_init_sw_state(rfkill_dev, (value & mask) != 1);
+	ec_पढ़ो(OT_EC_DEVICE_STATE_ADDRESS, &value);
+	rfसमाप्त_init_sw_state(rfसमाप्त_dev, (value & mask) != 1);
 
-	err = rfkill_register(rfkill_dev);
-	if (err) {
-		rfkill_destroy(rfkill_dev);
-		return ERR_PTR(err);
-	}
+	err = rfसमाप्त_रेजिस्टर(rfसमाप्त_dev);
+	अगर (err) अणु
+		rfसमाप्त_destroy(rfसमाप्त_dev);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	return rfkill_dev;
-}
+	वापस rfसमाप्त_dev;
+पूर्ण
 
-static inline void __oaktrail_rfkill_cleanup(struct rfkill *rf)
-{
-	if (rf) {
-		rfkill_unregister(rf);
-		rfkill_destroy(rf);
-	}
-}
+अटल अंतरभूत व्योम __oaktrail_rfसमाप्त_cleanup(काष्ठा rfसमाप्त *rf)
+अणु
+	अगर (rf) अणु
+		rfसमाप्त_unरेजिस्टर(rf);
+		rfसमाप्त_destroy(rf);
+	पूर्ण
+पूर्ण
 
-static void oaktrail_rfkill_cleanup(void)
-{
-	__oaktrail_rfkill_cleanup(wifi_rfkill);
-	__oaktrail_rfkill_cleanup(bt_rfkill);
-	__oaktrail_rfkill_cleanup(gps_rfkill);
-	__oaktrail_rfkill_cleanup(wwan_rfkill);
-}
+अटल व्योम oaktrail_rfसमाप्त_cleanup(व्योम)
+अणु
+	__oaktrail_rfसमाप्त_cleanup(wअगरi_rfसमाप्त);
+	__oaktrail_rfसमाप्त_cleanup(bt_rfसमाप्त);
+	__oaktrail_rfसमाप्त_cleanup(gps_rfसमाप्त);
+	__oaktrail_rfसमाप्त_cleanup(wwan_rfसमाप्त);
+पूर्ण
 
-static int oaktrail_rfkill_init(void)
-{
-	int ret;
+अटल पूर्णांक oaktrail_rfसमाप्त_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	wifi_rfkill = oaktrail_rfkill_new("oaktrail-wifi",
+	wअगरi_rfसमाप्त = oaktrail_rfसमाप्त_new("oaktrail-wifi",
 					  RFKILL_TYPE_WLAN,
 					  OT_EC_WIFI_MASK);
-	if (IS_ERR(wifi_rfkill)) {
-		ret = PTR_ERR(wifi_rfkill);
-		wifi_rfkill = NULL;
-		goto cleanup;
-	}
+	अगर (IS_ERR(wअगरi_rfसमाप्त)) अणु
+		ret = PTR_ERR(wअगरi_rfसमाप्त);
+		wअगरi_rfसमाप्त = शून्य;
+		जाओ cleanup;
+	पूर्ण
 
-	bt_rfkill = oaktrail_rfkill_new("oaktrail-bluetooth",
+	bt_rfसमाप्त = oaktrail_rfसमाप्त_new("oaktrail-bluetooth",
 					RFKILL_TYPE_BLUETOOTH,
 					OT_EC_BT_MASK);
-	if (IS_ERR(bt_rfkill)) {
-		ret = PTR_ERR(bt_rfkill);
-		bt_rfkill = NULL;
-		goto cleanup;
-	}
+	अगर (IS_ERR(bt_rfसमाप्त)) अणु
+		ret = PTR_ERR(bt_rfसमाप्त);
+		bt_rfसमाप्त = शून्य;
+		जाओ cleanup;
+	पूर्ण
 
-	gps_rfkill = oaktrail_rfkill_new("oaktrail-gps",
+	gps_rfसमाप्त = oaktrail_rfसमाप्त_new("oaktrail-gps",
 					 RFKILL_TYPE_GPS,
 					 OT_EC_GPS_MASK);
-	if (IS_ERR(gps_rfkill)) {
-		ret = PTR_ERR(gps_rfkill);
-		gps_rfkill = NULL;
-		goto cleanup;
-	}
+	अगर (IS_ERR(gps_rfसमाप्त)) अणु
+		ret = PTR_ERR(gps_rfसमाप्त);
+		gps_rfसमाप्त = शून्य;
+		जाओ cleanup;
+	पूर्ण
 
-	wwan_rfkill = oaktrail_rfkill_new("oaktrail-wwan",
+	wwan_rfसमाप्त = oaktrail_rfसमाप्त_new("oaktrail-wwan",
 					  RFKILL_TYPE_WWAN,
 					  OT_EC_WWAN_MASK);
-	if (IS_ERR(wwan_rfkill)) {
-		ret = PTR_ERR(wwan_rfkill);
-		wwan_rfkill = NULL;
-		goto cleanup;
-	}
+	अगर (IS_ERR(wwan_rfसमाप्त)) अणु
+		ret = PTR_ERR(wwan_rfसमाप्त);
+		wwan_rfसमाप्त = शून्य;
+		जाओ cleanup;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 cleanup:
-	oaktrail_rfkill_cleanup();
-	return ret;
-}
+	oaktrail_rfसमाप्त_cleanup();
+	वापस ret;
+पूर्ण
 
 
 /* backlight */
-static int get_backlight_brightness(struct backlight_device *b)
-{
+अटल पूर्णांक get_backlight_brightness(काष्ठा backlight_device *b)
+अणु
 	u8 value;
-	ec_read(OT_EC_BL_BRIGHTNESS_ADDRESS, &value);
+	ec_पढ़ो(OT_EC_BL_BRIGHTNESS_ADDRESS, &value);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static int set_backlight_brightness(struct backlight_device *b)
-{
+अटल पूर्णांक set_backlight_brightness(काष्ठा backlight_device *b)
+अणु
 	u8 percent = (u8) b->props.brightness;
-	if (percent < 0 || percent > OT_EC_BL_BRIGHTNESS_MAX)
-		return -EINVAL;
+	अगर (percent < 0 || percent > OT_EC_BL_BRIGHTNESS_MAX)
+		वापस -EINVAL;
 
-	ec_write(OT_EC_BL_BRIGHTNESS_ADDRESS, percent);
-	ec_write(OT_EC_BL_CONTROL_ADDRESS, OT_EC_BL_CONTROL_ON_DATA);
+	ec_ग_लिखो(OT_EC_BL_BRIGHTNESS_ADDRESS, percent);
+	ec_ग_लिखो(OT_EC_BL_CONTROL_ADDRESS, OT_EC_BL_CONTROL_ON_DATA);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct backlight_ops oaktrail_bl_ops = {
+अटल स्थिर काष्ठा backlight_ops oaktrail_bl_ops = अणु
 	.get_brightness = get_backlight_brightness,
 	.update_status	= set_backlight_brightness,
-};
+पूर्ण;
 
-static int oaktrail_backlight_init(void)
-{
-	struct backlight_device *bd;
-	struct backlight_properties props;
+अटल पूर्णांक oaktrail_backlight_init(व्योम)
+अणु
+	काष्ठा backlight_device *bd;
+	काष्ठा backlight_properties props;
 
-	memset(&props, 0, sizeof(struct backlight_properties));
+	स_रखो(&props, 0, माप(काष्ठा backlight_properties));
 	props.type = BACKLIGHT_PLATFORM;
 	props.max_brightness = OT_EC_BL_BRIGHTNESS_MAX;
-	bd = backlight_device_register(DRIVER_NAME,
-				       &oaktrail_device->dev, NULL,
+	bd = backlight_device_रेजिस्टर(DRIVER_NAME,
+				       &oaktrail_device->dev, शून्य,
 				       &oaktrail_bl_ops,
 				       &props);
 
-	if (IS_ERR(bd)) {
-		oaktrail_bl_device = NULL;
+	अगर (IS_ERR(bd)) अणु
+		oaktrail_bl_device = शून्य;
 		pr_warn("Unable to register backlight device\n");
-		return PTR_ERR(bd);
-	}
+		वापस PTR_ERR(bd);
+	पूर्ण
 
 	oaktrail_bl_device = bd;
 
 	bd->props.brightness = get_backlight_brightness(bd);
-	bd->props.power = FB_BLANK_UNBLANK;
+	bd->props.घातer = FB_BLANK_UNBLANK;
 	backlight_update_status(bd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void oaktrail_backlight_exit(void)
-{
-	backlight_device_unregister(oaktrail_bl_device);
-}
+अटल व्योम oaktrail_backlight_निकास(व्योम)
+अणु
+	backlight_device_unरेजिस्टर(oaktrail_bl_device);
+पूर्ण
 
-static int oaktrail_probe(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक oaktrail_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int oaktrail_remove(struct platform_device *pdev)
-{
-	return 0;
-}
+अटल पूर्णांक oaktrail_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस 0;
+पूर्ण
 
-static struct platform_driver oaktrail_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver oaktrail_driver = अणु
+	.driver = अणु
 		.name = DRIVER_NAME,
-	},
+	पूर्ण,
 	.probe	= oaktrail_probe,
-	.remove	= oaktrail_remove,
-};
+	.हटाओ	= oaktrail_हटाओ,
+पूर्ण;
 
-static int dmi_check_cb(const struct dmi_system_id *id)
-{
+अटल पूर्णांक dmi_check_cb(स्थिर काष्ठा dmi_प्रणाली_id *id)
+अणु
 	pr_info("Identified model '%s'\n", id->ident);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dmi_system_id oaktrail_dmi_table[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id oaktrail_dmi_table[] __initस्थिर = अणु
+	अणु
 		.ident = "OakTrail platform",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_PRODUCT_NAME, "OakTrail platform"),
-		},
+		पूर्ण,
 		.callback = dmi_check_cb
-	},
-	{ }
-};
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(dmi, oaktrail_dmi_table);
 
-static int __init oaktrail_init(void)
-{
-	int ret;
+अटल पूर्णांक __init oaktrail_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (acpi_disabled) {
+	अगर (acpi_disabled) अणु
 		pr_err("ACPI needs to be enabled for this driver to work!\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!force && !dmi_check_system(oaktrail_dmi_table)) {
+	अगर (!क्रमce && !dmi_check_प्रणाली(oaktrail_dmi_table)) अणु
 		pr_err("Platform not recognized (You could try the module's force-parameter)");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = platform_driver_register(&oaktrail_driver);
-	if (ret) {
+	ret = platक्रमm_driver_रेजिस्टर(&oaktrail_driver);
+	अगर (ret) अणु
 		pr_warn("Unable to register platform driver\n");
-		goto err_driver_reg;
-	}
+		जाओ err_driver_reg;
+	पूर्ण
 
-	oaktrail_device = platform_device_alloc(DRIVER_NAME, -1);
-	if (!oaktrail_device) {
+	oaktrail_device = platक्रमm_device_alloc(DRIVER_NAME, -1);
+	अगर (!oaktrail_device) अणु
 		pr_warn("Unable to allocate platform device\n");
 		ret = -ENOMEM;
-		goto err_device_alloc;
-	}
+		जाओ err_device_alloc;
+	पूर्ण
 
-	ret = platform_device_add(oaktrail_device);
-	if (ret) {
+	ret = platक्रमm_device_add(oaktrail_device);
+	अगर (ret) अणु
 		pr_warn("Unable to add platform device\n");
-		goto err_device_add;
-	}
+		जाओ err_device_add;
+	पूर्ण
 
-	if (acpi_video_get_backlight_type() == acpi_backlight_vendor) {
+	अगर (acpi_video_get_backlight_type() == acpi_backlight_venकरोr) अणु
 		ret = oaktrail_backlight_init();
-		if (ret)
-			goto err_backlight;
-	}
+		अगर (ret)
+			जाओ err_backlight;
+	पूर्ण
 
-	ret = oaktrail_rfkill_init();
-	if (ret) {
+	ret = oaktrail_rfसमाप्त_init();
+	अगर (ret) अणु
 		pr_warn("Setup rfkill failed\n");
-		goto err_rfkill;
-	}
+		जाओ err_rfसमाप्त;
+	पूर्ण
 
 	pr_info("Driver "DRIVER_VERSION" successfully loaded\n");
-	return 0;
+	वापस 0;
 
-err_rfkill:
-	oaktrail_backlight_exit();
+err_rfसमाप्त:
+	oaktrail_backlight_निकास();
 err_backlight:
-	platform_device_del(oaktrail_device);
+	platक्रमm_device_del(oaktrail_device);
 err_device_add:
-	platform_device_put(oaktrail_device);
+	platक्रमm_device_put(oaktrail_device);
 err_device_alloc:
-	platform_driver_unregister(&oaktrail_driver);
+	platक्रमm_driver_unरेजिस्टर(&oaktrail_driver);
 err_driver_reg:
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit oaktrail_cleanup(void)
-{
-	oaktrail_backlight_exit();
-	oaktrail_rfkill_cleanup();
-	platform_device_unregister(oaktrail_device);
-	platform_driver_unregister(&oaktrail_driver);
+अटल व्योम __निकास oaktrail_cleanup(व्योम)
+अणु
+	oaktrail_backlight_निकास();
+	oaktrail_rfसमाप्त_cleanup();
+	platक्रमm_device_unरेजिस्टर(oaktrail_device);
+	platक्रमm_driver_unरेजिस्टर(&oaktrail_driver);
 
 	pr_info("Driver unloaded\n");
-}
+पूर्ण
 
 module_init(oaktrail_init);
-module_exit(oaktrail_cleanup);
+module_निकास(oaktrail_cleanup);
 
 MODULE_AUTHOR("Yin Kangkai (kangkai.yin@intel.com)");
 MODULE_DESCRIPTION("Intel Oaktrail Platform ACPI Extras");

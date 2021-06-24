@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /******************************************************************************
 *******************************************************************************
 **
@@ -9,10 +10,10 @@
 *******************************************************************************
 ******************************************************************************/
 
-#ifndef __MIDCOMMS_DOT_H__
-#define __MIDCOMMS_DOT_H__
+#अगर_अघोषित __MIDCOMMS_DOT_H__
+#घोषणा __MIDCOMMS_DOT_H__
 
-int dlm_process_incoming_buffer(int nodeid, unsigned char *buf, int buflen);
+पूर्णांक dlm_process_incoming_buffer(पूर्णांक nodeid, अचिन्हित अक्षर *buf, पूर्णांक buflen);
 
-#endif				/* __MIDCOMMS_DOT_H__ */
+#पूर्ण_अगर				/* __MIDCOMMS_DOT_H__ */
 

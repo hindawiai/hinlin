@@ -1,59 +1,60 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Cloudflare */
-#include "bpf_iter.h"
-#include "bpf_tracing_net.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <errno.h>
+#समावेश "bpf_iter.h"
+#समावेश "bpf_tracing_net.h"
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
+#समावेश <त्रुटिसं.स>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
-struct {
-	__uint(type, BPF_MAP_TYPE_SOCKMAP);
-	__uint(max_entries, 64);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_SOCKMAP);
+	__uपूर्णांक(max_entries, 64);
 	__type(key, __u32);
 	__type(value, __u64);
-} sockmap SEC(".maps");
+पूर्ण sockmap SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_SOCKHASH);
-	__uint(max_entries, 64);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_SOCKHASH);
+	__uपूर्णांक(max_entries, 64);
 	__type(key, __u32);
 	__type(value, __u64);
-} sockhash SEC(".maps");
+पूर्ण sockhash SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_SOCKHASH);
-	__uint(max_entries, 64);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_SOCKHASH);
+	__uपूर्णांक(max_entries, 64);
 	__type(key, __u32);
 	__type(value, __u64);
-} dst SEC(".maps");
+पूर्ण dst SEC(".maps");
 
 __u32 elems = 0;
 __u32 socks = 0;
 
 SEC("iter/sockmap")
-int copy(struct bpf_iter__sockmap *ctx)
-{
-	struct sock *sk = ctx->sk;
-	__u32 tmp, *key = ctx->key;
-	int ret;
+पूर्णांक copy(काष्ठा bpf_iter__sockmap *ctx)
+अणु
+	काष्ठा sock *sk = ctx->sk;
+	__u32 पंचांगp, *key = ctx->key;
+	पूर्णांक ret;
 
-	if (!key)
-		return 0;
+	अगर (!key)
+		वापस 0;
 
 	elems++;
 
-	/* We need a temporary buffer on the stack, since the verifier doesn't
-	 * let us use the pointer from the context as an argument to the helper.
+	/* We need a temporary buffer on the stack, since the verअगरier करोesn't
+	 * let us use the poपूर्णांकer from the context as an argument to the helper.
 	 */
-	tmp = *key;
+	पंचांगp = *key;
 
-	if (sk) {
+	अगर (sk) अणु
 		socks++;
-		return bpf_map_update_elem(&dst, &tmp, sk, 0) != 0;
-	}
+		वापस bpf_map_update_elem(&dst, &पंचांगp, sk, 0) != 0;
+	पूर्ण
 
-	ret = bpf_map_delete_elem(&dst, &tmp);
-	return ret && ret != -ENOENT;
-}
+	ret = bpf_map_delete_elem(&dst, &पंचांगp);
+	वापस ret && ret != -ENOENT;
+पूर्ण

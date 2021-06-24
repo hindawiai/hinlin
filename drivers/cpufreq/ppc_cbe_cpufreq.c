@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * cpufreq driver for the cell processor
+ * cpufreq driver क्रम the cell processor
  *
  * (C) Copyright IBM Deutschland Entwicklung GmbH 2005-2007
  *
  * Author: Christian Krafft <krafft@de.ibm.com>
  */
 
-#include <linux/cpufreq.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include <asm/machdep.h>
-#include <asm/prom.h>
-#include <asm/cell-regs.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/cell-regs.h>
 
-#include "ppc_cbe_cpufreq.h"
+#समावेश "ppc_cbe_cpufreq.h"
 
 /* the CBE supports an 8 step frequency scaling */
-static struct cpufreq_frequency_table cbe_freqs[] = {
-	{0, 1,	0},
-	{0, 2,	0},
-	{0, 3,	0},
-	{0, 4,	0},
-	{0, 5,	0},
-	{0, 6,	0},
-	{0, 8,	0},
-	{0, 10,	0},
-	{0, 0,	CPUFREQ_TABLE_END},
-};
+अटल काष्ठा cpufreq_frequency_table cbe_freqs[] = अणु
+	अणु0, 1,	0पूर्ण,
+	अणु0, 2,	0पूर्ण,
+	अणु0, 3,	0पूर्ण,
+	अणु0, 4,	0पूर्ण,
+	अणु0, 5,	0पूर्ण,
+	अणु0, 6,	0पूर्ण,
+	अणु0, 8,	0पूर्ण,
+	अणु0, 10,	0पूर्ण,
+	अणु0, 0,	CPUFREQ_TABLE_ENDपूर्ण,
+पूर्ण;
 
 /*
- * hardware specific functions
+ * hardware specअगरic functions
  */
 
-static int set_pmode(unsigned int cpu, unsigned int slow_mode)
-{
-	int rc;
+अटल पूर्णांक set_pmode(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक slow_mode)
+अणु
+	पूर्णांक rc;
 
-	if (cbe_cpufreq_has_pmi)
+	अगर (cbe_cpufreq_has_pmi)
 		rc = cbe_cpufreq_set_pmode_pmi(cpu, slow_mode);
-	else
+	अन्यथा
 		rc = cbe_cpufreq_set_pmode(cpu, slow_mode);
 
 	pr_debug("register contains slow mode %d\n", cbe_cpufreq_get_pmode(cpu));
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * cpufreq functions
  */
 
-static int cbe_cpufreq_cpu_init(struct cpufreq_policy *policy)
-{
-	struct cpufreq_frequency_table *pos;
-	const u32 *max_freqp;
+अटल पूर्णांक cbe_cpufreq_cpu_init(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा cpufreq_frequency_table *pos;
+	स्थिर u32 *max_freqp;
 	u32 max_freq;
-	int cur_pmode;
-	struct device_node *cpu;
+	पूर्णांक cur_pmode;
+	काष्ठा device_node *cpu;
 
-	cpu = of_get_cpu_node(policy->cpu, NULL);
+	cpu = of_get_cpu_node(policy->cpu, शून्य);
 
-	if (!cpu)
-		return -ENODEV;
+	अगर (!cpu)
+		वापस -ENODEV;
 
 	pr_debug("init cpufreq on CPU %d\n", policy->cpu);
 
 	/*
 	 * Let's check we can actually get to the CELL regs
 	 */
-	if (!cbe_get_cpu_pmd_regs(policy->cpu) ||
-	    !cbe_get_cpu_mic_tm_regs(policy->cpu)) {
+	अगर (!cbe_get_cpu_pmd_regs(policy->cpu) ||
+	    !cbe_get_cpu_mic_पंचांग_regs(policy->cpu)) अणु
 		pr_info("invalid CBE regs pointers for cpufreq\n");
 		of_node_put(cpu);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	max_freqp = of_get_property(cpu, "clock-frequency", NULL);
+	max_freqp = of_get_property(cpu, "clock-frequency", शून्य);
 
 	of_node_put(cpu);
 
-	if (!max_freqp)
-		return -EINVAL;
+	अगर (!max_freqp)
+		वापस -EINVAL;
 
 	/* we need the freq in kHz */
 	max_freq = *max_freqp / 1000;
@@ -91,12 +92,12 @@ static int cbe_cpufreq_cpu_init(struct cpufreq_policy *policy)
 	pr_debug("initializing frequency table\n");
 
 	/* initialize frequency table */
-	cpufreq_for_each_entry(pos, cbe_freqs) {
+	cpufreq_क्रम_each_entry(pos, cbe_freqs) अणु
 		pos->frequency = max_freq / pos->driver_data;
-		pr_debug("%d: %d\n", (int)(pos - cbe_freqs), pos->frequency);
-	}
+		pr_debug("%d: %d\n", (पूर्णांक)(pos - cbe_freqs), pos->frequency);
+	पूर्ण
 
-	/* if DEBUG is enabled set_pmode() measures the latency
+	/* अगर DEBUG is enabled set_pmode() measures the latency
 	 * of a transition */
 	policy->cpuinfo.transition_latency = 25000;
 
@@ -105,70 +106,70 @@ static int cbe_cpufreq_cpu_init(struct cpufreq_policy *policy)
 
 	policy->cur = cbe_freqs[cur_pmode].frequency;
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	cpumask_copy(policy->cpus, cpu_sibling_mask(policy->cpu));
-#endif
+#पूर्ण_अगर
 
 	policy->freq_table = cbe_freqs;
 	cbe_cpufreq_pmi_policy_init(policy);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cbe_cpufreq_cpu_exit(struct cpufreq_policy *policy)
-{
-	cbe_cpufreq_pmi_policy_exit(policy);
-	return 0;
-}
+अटल पूर्णांक cbe_cpufreq_cpu_निकास(काष्ठा cpufreq_policy *policy)
+अणु
+	cbe_cpufreq_pmi_policy_निकास(policy);
+	वापस 0;
+पूर्ण
 
-static int cbe_cpufreq_target(struct cpufreq_policy *policy,
-			      unsigned int cbe_pmode_new)
-{
+अटल पूर्णांक cbe_cpufreq_target(काष्ठा cpufreq_policy *policy,
+			      अचिन्हित पूर्णांक cbe_pmode_new)
+अणु
 	pr_debug("setting frequency for cpu %d to %d kHz, " \
 		 "1/%d of max frequency\n",
 		 policy->cpu,
 		 cbe_freqs[cbe_pmode_new].frequency,
 		 cbe_freqs[cbe_pmode_new].driver_data);
 
-	return set_pmode(policy->cpu, cbe_pmode_new);
-}
+	वापस set_pmode(policy->cpu, cbe_pmode_new);
+पूर्ण
 
-static struct cpufreq_driver cbe_cpufreq_driver = {
-	.verify		= cpufreq_generic_frequency_table_verify,
+अटल काष्ठा cpufreq_driver cbe_cpufreq_driver = अणु
+	.verअगरy		= cpufreq_generic_frequency_table_verअगरy,
 	.target_index	= cbe_cpufreq_target,
 	.init		= cbe_cpufreq_cpu_init,
-	.exit		= cbe_cpufreq_cpu_exit,
+	.निकास		= cbe_cpufreq_cpu_निकास,
 	.name		= "cbe-cpufreq",
 	.flags		= CPUFREQ_CONST_LOOPS,
-};
+पूर्ण;
 
 /*
  * module init and destoy
  */
 
-static int __init cbe_cpufreq_init(void)
-{
-	int ret;
+अटल पूर्णांक __init cbe_cpufreq_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if (!machine_is(cell))
-		return -ENODEV;
+	अगर (!machine_is(cell))
+		वापस -ENODEV;
 
 	cbe_cpufreq_pmi_init();
 
-	ret = cpufreq_register_driver(&cbe_cpufreq_driver);
-	if (ret)
-		cbe_cpufreq_pmi_exit();
+	ret = cpufreq_रेजिस्टर_driver(&cbe_cpufreq_driver);
+	अगर (ret)
+		cbe_cpufreq_pmi_निकास();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit cbe_cpufreq_exit(void)
-{
-	cpufreq_unregister_driver(&cbe_cpufreq_driver);
-	cbe_cpufreq_pmi_exit();
-}
+अटल व्योम __निकास cbe_cpufreq_निकास(व्योम)
+अणु
+	cpufreq_unरेजिस्टर_driver(&cbe_cpufreq_driver);
+	cbe_cpufreq_pmi_निकास();
+पूर्ण
 
 module_init(cbe_cpufreq_init);
-module_exit(cbe_cpufreq_exit);
+module_निकास(cbe_cpufreq_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Christian Krafft <krafft@de.ibm.com>");

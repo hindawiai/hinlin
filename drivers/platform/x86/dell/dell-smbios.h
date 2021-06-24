@@ -1,100 +1,101 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  Common functions for kernel modules using Dell SMBIOS
+ *  Common functions क्रम kernel modules using Dell SMBIOS
  *
  *  Copyright (c) Red Hat <mjg@redhat.com>
  *  Copyright (c) 2014 Gabriele Mazzotta <gabriele.mzt@gmail.com>
- *  Copyright (c) 2014 Pali Rohár <pali@kernel.org>
+ *  Copyright (c) 2014 Pali Rohथँr <pali@kernel.org>
  *
- *  Based on documentation in the libsmbios package:
+ *  Based on करोcumentation in the libsmbios package:
  *  Copyright (C) 2005-2014 Dell Inc.
  */
 
-#ifndef _DELL_SMBIOS_H_
-#define _DELL_SMBIOS_H_
+#अगर_अघोषित _DELL_SMBIOS_H_
+#घोषणा _DELL_SMBIOS_H_
 
-#include <linux/device.h>
-#include <uapi/linux/wmi.h>
+#समावेश <linux/device.h>
+#समावेश <uapi/linux/wmi.h>
 
 /* Classes and selects used only in kernel drivers */
-#define CLASS_KBD_BACKLIGHT 4
-#define SELECT_KBD_BACKLIGHT 11
+#घोषणा CLASS_KBD_BACKLIGHT 4
+#घोषणा SELECT_KBD_BACKLIGHT 11
 
 /* Tokens used in kernel drivers, any of these
  * should be filtered from userspace access
  */
-#define BRIGHTNESS_TOKEN	0x007d
-#define KBD_LED_AC_TOKEN	0x0451
-#define KBD_LED_OFF_TOKEN	0x01E1
-#define KBD_LED_ON_TOKEN	0x01E2
-#define KBD_LED_AUTO_TOKEN	0x01E3
-#define KBD_LED_AUTO_25_TOKEN	0x02EA
-#define KBD_LED_AUTO_50_TOKEN	0x02EB
-#define KBD_LED_AUTO_75_TOKEN	0x02EC
-#define KBD_LED_AUTO_100_TOKEN	0x02F6
-#define GLOBAL_MIC_MUTE_ENABLE	0x0364
-#define GLOBAL_MIC_MUTE_DISABLE	0x0365
+#घोषणा BRIGHTNESS_TOKEN	0x007d
+#घोषणा KBD_LED_AC_TOKEN	0x0451
+#घोषणा KBD_LED_OFF_TOKEN	0x01E1
+#घोषणा KBD_LED_ON_TOKEN	0x01E2
+#घोषणा KBD_LED_AUTO_TOKEN	0x01E3
+#घोषणा KBD_LED_AUTO_25_TOKEN	0x02EA
+#घोषणा KBD_LED_AUTO_50_TOKEN	0x02EB
+#घोषणा KBD_LED_AUTO_75_TOKEN	0x02EC
+#घोषणा KBD_LED_AUTO_100_TOKEN	0x02F6
+#घोषणा GLOBAL_MIC_MUTE_ENABLE	0x0364
+#घोषणा GLOBAL_MIC_MUTE_DISABLE	0x0365
 
-struct notifier_block;
+काष्ठा notअगरier_block;
 
-struct calling_interface_token {
+काष्ठा calling_पूर्णांकerface_token अणु
 	u16 tokenID;
 	u16 location;
-	union {
+	जोड़ अणु
 		u16 value;
 		u16 stringlength;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-struct calling_interface_structure {
-	struct dmi_header header;
+काष्ठा calling_पूर्णांकerface_काष्ठाure अणु
+	काष्ठा dmi_header header;
 	u16 cmdIOAddress;
 	u8 cmdIOCode;
 	u32 supportedCmds;
-	struct calling_interface_token tokens[];
-} __packed;
+	काष्ठा calling_पूर्णांकerface_token tokens[];
+पूर्ण __packed;
 
-int dell_smbios_register_device(struct device *d, void *call_fn);
-void dell_smbios_unregister_device(struct device *d);
+पूर्णांक dell_smbios_रेजिस्टर_device(काष्ठा device *d, व्योम *call_fn);
+व्योम dell_smbios_unरेजिस्टर_device(काष्ठा device *d);
 
-int dell_smbios_error(int value);
-int dell_smbios_call_filter(struct device *d,
-	struct calling_interface_buffer *buffer);
-int dell_smbios_call(struct calling_interface_buffer *buffer);
+पूर्णांक dell_smbios_error(पूर्णांक value);
+पूर्णांक dell_smbios_call_filter(काष्ठा device *d,
+	काष्ठा calling_पूर्णांकerface_buffer *buffer);
+पूर्णांक dell_smbios_call(काष्ठा calling_पूर्णांकerface_buffer *buffer);
 
-struct calling_interface_token *dell_smbios_find_token(int tokenid);
+काष्ठा calling_पूर्णांकerface_token *dell_smbios_find_token(पूर्णांक tokenid);
 
-enum dell_laptop_notifier_actions {
+क्रमागत dell_laptop_notअगरier_actions अणु
 	DELL_LAPTOP_KBD_BACKLIGHT_BRIGHTNESS_CHANGED,
-};
+पूर्ण;
 
-int dell_laptop_register_notifier(struct notifier_block *nb);
-int dell_laptop_unregister_notifier(struct notifier_block *nb);
-void dell_laptop_call_notifier(unsigned long action, void *data);
+पूर्णांक dell_laptop_रेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+पूर्णांक dell_laptop_unरेजिस्टर_notअगरier(काष्ठा notअगरier_block *nb);
+व्योम dell_laptop_call_notअगरier(अचिन्हित दीर्घ action, व्योम *data);
 
-/* for the supported backends */
-#ifdef CONFIG_DELL_SMBIOS_WMI
-int init_dell_smbios_wmi(void);
-void exit_dell_smbios_wmi(void);
-#else /* CONFIG_DELL_SMBIOS_WMI */
-static inline int init_dell_smbios_wmi(void)
-{
-	return -ENODEV;
-}
-static inline void exit_dell_smbios_wmi(void)
-{}
-#endif /* CONFIG_DELL_SMBIOS_WMI */
+/* क्रम the supported backends */
+#अगर_घोषित CONFIG_DELL_SMBIOS_WMI
+पूर्णांक init_dell_smbios_wmi(व्योम);
+व्योम निकास_dell_smbios_wmi(व्योम);
+#अन्यथा /* CONFIG_DELL_SMBIOS_WMI */
+अटल अंतरभूत पूर्णांक init_dell_smbios_wmi(व्योम)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत व्योम निकास_dell_smbios_wmi(व्योम)
+अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_DELL_SMBIOS_WMI */
 
-#ifdef CONFIG_DELL_SMBIOS_SMM
-int init_dell_smbios_smm(void);
-void exit_dell_smbios_smm(void);
-#else /* CONFIG_DELL_SMBIOS_SMM */
-static inline int init_dell_smbios_smm(void)
-{
-	return -ENODEV;
-}
-static inline void exit_dell_smbios_smm(void)
-{}
-#endif /* CONFIG_DELL_SMBIOS_SMM */
+#अगर_घोषित CONFIG_DELL_SMBIOS_SMM
+पूर्णांक init_dell_smbios_smm(व्योम);
+व्योम निकास_dell_smbios_smm(व्योम);
+#अन्यथा /* CONFIG_DELL_SMBIOS_SMM */
+अटल अंतरभूत पूर्णांक init_dell_smbios_smm(व्योम)
+अणु
+	वापस -ENODEV;
+पूर्ण
+अटल अंतरभूत व्योम निकास_dell_smbios_smm(व्योम)
+अणुपूर्ण
+#पूर्ण_अगर /* CONFIG_DELL_SMBIOS_SMM */
 
-#endif /* _DELL_SMBIOS_H_ */
+#पूर्ण_अगर /* _DELL_SMBIOS_H_ */

@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * USB roothub wrapper
  *
  * Copyright (C) 2018 Martin Blumenstingl <martin.blumenstingl@googlemail.com>
  */
 
-#ifndef __USB_CORE_PHY_H_
-#define __USB_CORE_PHY_H_
+#अगर_अघोषित __USB_CORE_PHY_H_
+#घोषणा __USB_CORE_PHY_H_
 
-struct device;
-struct usb_phy_roothub;
+काष्ठा device;
+काष्ठा usb_phy_roothub;
 
-struct usb_phy_roothub *usb_phy_roothub_alloc(struct device *dev);
+काष्ठा usb_phy_roothub *usb_phy_roothub_alloc(काष्ठा device *dev);
 
-int usb_phy_roothub_init(struct usb_phy_roothub *phy_roothub);
-int usb_phy_roothub_exit(struct usb_phy_roothub *phy_roothub);
+पूर्णांक usb_phy_roothub_init(काष्ठा usb_phy_roothub *phy_roothub);
+पूर्णांक usb_phy_roothub_निकास(काष्ठा usb_phy_roothub *phy_roothub);
 
-int usb_phy_roothub_set_mode(struct usb_phy_roothub *phy_roothub,
-			     enum phy_mode mode);
-int usb_phy_roothub_calibrate(struct usb_phy_roothub *phy_roothub);
-int usb_phy_roothub_power_on(struct usb_phy_roothub *phy_roothub);
-void usb_phy_roothub_power_off(struct usb_phy_roothub *phy_roothub);
+पूर्णांक usb_phy_roothub_set_mode(काष्ठा usb_phy_roothub *phy_roothub,
+			     क्रमागत phy_mode mode);
+पूर्णांक usb_phy_roothub_calibrate(काष्ठा usb_phy_roothub *phy_roothub);
+पूर्णांक usb_phy_roothub_घातer_on(काष्ठा usb_phy_roothub *phy_roothub);
+व्योम usb_phy_roothub_घातer_off(काष्ठा usb_phy_roothub *phy_roothub);
 
-int usb_phy_roothub_suspend(struct device *controller_dev,
-			    struct usb_phy_roothub *phy_roothub);
-int usb_phy_roothub_resume(struct device *controller_dev,
-			   struct usb_phy_roothub *phy_roothub);
+पूर्णांक usb_phy_roothub_suspend(काष्ठा device *controller_dev,
+			    काष्ठा usb_phy_roothub *phy_roothub);
+पूर्णांक usb_phy_roothub_resume(काष्ठा device *controller_dev,
+			   काष्ठा usb_phy_roothub *phy_roothub);
 
-#endif /* __USB_CORE_PHY_H_ */
+#पूर्ण_अगर /* __USB_CORE_PHY_H_ */

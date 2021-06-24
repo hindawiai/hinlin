@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Platform data for LPC32xx SoC SLC NAND controller
+ * Platक्रमm data क्रम LPC32xx SoC SLC न_अंकD controller
  *
- * Copyright © 2012 Roland Stigge
+ * Copyright तऊ 2012 Roland Stigge
  */
 
-#ifndef __LINUX_MTD_LPC32XX_SLC_H
-#define __LINUX_MTD_LPC32XX_SLC_H
+#अगर_अघोषित __LINUX_MTD_LPC32XX_SLC_H
+#घोषणा __LINUX_MTD_LPC32XX_SLC_H
 
-#include <linux/dmaengine.h>
+#समावेश <linux/dmaengine.h>
 
-struct lpc32xx_slc_platform_data {
-	bool (*dma_filter)(struct dma_chan *chan, void *filter_param);
-};
+काष्ठा lpc32xx_slc_platक्रमm_data अणु
+	bool (*dma_filter)(काष्ठा dma_chan *chan, व्योम *filter_param);
+पूर्ण;
 
-#endif  /* __LINUX_MTD_LPC32XX_SLC_H */
+#पूर्ण_अगर  /* __LINUX_MTD_LPC32XX_SLC_H */

@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _NETNS_NFTABLES_H_
-#define _NETNS_NFTABLES_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _NETNS_NFTABLES_H_
+#घोषणा _NETNS_NFTABLES_H_
 
-#include <linux/list.h>
+#समावेश <linux/list.h>
 
-struct netns_nftables {
+काष्ठा netns_nftables अणु
 	u8			gencursor;
-};
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

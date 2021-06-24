@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_IIO_TRIGGERED_EVENT_H_
-#define _LINUX_IIO_TRIGGERED_EVENT_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_IIO_TRIGGERED_EVENT_H_
+#घोषणा _LINUX_IIO_TRIGGERED_EVENT_H_
 
-#include <linux/interrupt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-int iio_triggered_event_setup(struct iio_dev *indio_dev,
-	irqreturn_t (*h)(int irq, void *p),
-	irqreturn_t (*thread)(int irq, void *p));
-void iio_triggered_event_cleanup(struct iio_dev *indio_dev);
+पूर्णांक iio_triggered_event_setup(काष्ठा iio_dev *indio_dev,
+	irqवापस_t (*h)(पूर्णांक irq, व्योम *p),
+	irqवापस_t (*thपढ़ो)(पूर्णांक irq, व्योम *p));
+व्योम iio_triggered_event_cleanup(काष्ठा iio_dev *indio_dev);
 
-#endif
+#पूर्ण_अगर

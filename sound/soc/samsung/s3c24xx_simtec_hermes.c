@@ -1,67 +1,68 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
 // Copyright 2009 Simtec Electronics
 
-#include <linux/module.h>
-#include <sound/soc.h>
+#समावेश <linux/module.h>
+#समावेश <sound/soc.h>
 
-#include "s3c24xx_simtec.h"
+#समावेश "s3c24xx_simtec.h"
 
-static const struct snd_soc_dapm_widget dapm_widgets[] = {
-	SND_SOC_DAPM_LINE("GSM Out", NULL),
-	SND_SOC_DAPM_LINE("GSM In", NULL),
-	SND_SOC_DAPM_LINE("Line In", NULL),
-	SND_SOC_DAPM_LINE("Line Out", NULL),
-	SND_SOC_DAPM_LINE("ZV", NULL),
-	SND_SOC_DAPM_MIC("Mic Jack", NULL),
-	SND_SOC_DAPM_HP("Headphone Jack", NULL),
-};
+अटल स्थिर काष्ठा snd_soc_dapm_widget dapm_widमाला_लो[] = अणु
+	SND_SOC_DAPM_LINE("GSM Out", शून्य),
+	SND_SOC_DAPM_LINE("GSM In", शून्य),
+	SND_SOC_DAPM_LINE("Line In", शून्य),
+	SND_SOC_DAPM_LINE("Line Out", शून्य),
+	SND_SOC_DAPM_LINE("ZV", शून्य),
+	SND_SOC_DAPM_MIC("Mic Jack", शून्य),
+	SND_SOC_DAPM_HP("Headphone Jack", शून्य),
+पूर्ण;
 
-static const struct snd_soc_dapm_route base_map[] = {
-	/* Headphone connected to HP{L,R}OUT and HP{L,R}COM */
+अटल स्थिर काष्ठा snd_soc_dapm_route base_map[] = अणु
+	/* Headphone connected to HPअणुL,Rपूर्णOUT and HPअणुL,Rपूर्णCOM */
 
-	{ "Headphone Jack", NULL, "HPLOUT" },
-	{ "Headphone Jack", NULL, "HPLCOM" },
-	{ "Headphone Jack", NULL, "HPROUT" },
-	{ "Headphone Jack", NULL, "HPRCOM" },
+	अणु "Headphone Jack", शून्य, "HPLOUT" पूर्ण,
+	अणु "Headphone Jack", शून्य, "HPLCOM" पूर्ण,
+	अणु "Headphone Jack", शून्य, "HPROUT" पूर्ण,
+	अणु "Headphone Jack", शून्य, "HPRCOM" पूर्ण,
 
 	/* ZV connected to Line1 */
 
-	{ "LINE1L", NULL, "ZV" },
-	{ "LINE1R", NULL, "ZV" },
+	अणु "LINE1L", शून्य, "ZV" पूर्ण,
+	अणु "LINE1R", शून्य, "ZV" पूर्ण,
 
 	/* Line In connected to Line2 */
 
-	{ "LINE2L", NULL, "Line In" },
-	{ "LINE2R", NULL, "Line In" },
+	अणु "LINE2L", शून्य, "Line In" पूर्ण,
+	अणु "LINE2R", शून्य, "Line In" पूर्ण,
 
 	/* Microphone connected to MIC3R and MIC_BIAS */
 
-	{ "MIC3L", NULL, "Mic Jack" },
+	अणु "MIC3L", शून्य, "Mic Jack" पूर्ण,
 
 	/* GSM connected to MONO_LOUT and MIC3L (in) */
 
-	{ "GSM Out", NULL, "MONO_LOUT" },
-	{ "MIC3L", NULL, "GSM In" },
+	अणु "GSM Out", शून्य, "MONO_LOUT" पूर्ण,
+	अणु "MIC3L", शून्य, "GSM In" पूर्ण,
 
-	/* Speaker is connected to LINEOUT{LN,LP,RN,RP}, however we are
-	 * not using the DAPM to power it up and down as there it makes
-	 * a click when powering up. */
-};
+	/* Speaker is connected to LINEOUTअणुLN,LP,RN,RPपूर्ण, however we are
+	 * not using the DAPM to घातer it up and करोwn as there it makes
+	 * a click when घातering up. */
+पूर्ण;
 
 /**
  * simtec_hermes_init - initialise and add controls
  * @codec; The codec instance to attach to.
  *
  * Attach our controls and configure the necessary codec
- * mappings for our sound card instance.
+ * mappings क्रम our sound card instance.
 */
-static int simtec_hermes_init(struct snd_soc_pcm_runtime *rtd)
-{
+अटल पूर्णांक simtec_hermes_init(काष्ठा snd_soc_pcm_runसमय *rtd)
+अणु
 	simtec_audio_init(rtd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 SND_SOC_DAILINK_DEFS(tlv320aic33,
 	DAILINK_COMP_ARRAY(COMP_CPU("s3c24xx-iis")),
@@ -69,42 +70,42 @@ SND_SOC_DAILINK_DEFS(tlv320aic33,
 				      "tlv320aic3x-hifi")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("s3c24xx-iis")));
 
-static struct snd_soc_dai_link simtec_dai_aic33 = {
+अटल काष्ठा snd_soc_dai_link simtec_dai_aic33 = अणु
 	.name		= "tlv320aic33",
 	.stream_name	= "TLV320AIC33",
 	.init		= simtec_hermes_init,
 	SND_SOC_DAILINK_REG(tlv320aic33),
-};
+पूर्ण;
 
 /* simtec audio machine driver */
-static struct snd_soc_card snd_soc_machine_simtec_aic33 = {
+अटल काष्ठा snd_soc_card snd_soc_machine_simtec_aic33 = अणु
 	.name		= "Simtec-Hermes",
 	.owner		= THIS_MODULE,
 	.dai_link	= &simtec_dai_aic33,
 	.num_links	= 1,
 
-	.dapm_widgets	= dapm_widgets,
-	.num_dapm_widgets = ARRAY_SIZE(dapm_widgets),
+	.dapm_widमाला_लो	= dapm_widमाला_लो,
+	.num_dapm_widमाला_लो = ARRAY_SIZE(dapm_widमाला_लो),
 	.dapm_routes	= base_map,
 	.num_dapm_routes = ARRAY_SIZE(base_map),
-};
+पूर्ण;
 
-static int simtec_audio_hermes_probe(struct platform_device *pd)
-{
+अटल पूर्णांक simtec_audio_hermes_probe(काष्ठा platक्रमm_device *pd)
+अणु
 	dev_info(&pd->dev, "probing....\n");
-	return simtec_audio_core_probe(pd, &snd_soc_machine_simtec_aic33);
-}
+	वापस simtec_audio_core_probe(pd, &snd_soc_machine_simtec_aic33);
+पूर्ण
 
-static struct platform_driver simtec_audio_hermes_platdrv = {
-	.driver	= {
+अटल काष्ठा platक्रमm_driver simtec_audio_hermes_platdrv = अणु
+	.driver	= अणु
 		.name	= "s3c24xx-simtec-hermes-snd",
 		.pm	= simtec_audio_pm,
-	},
+	पूर्ण,
 	.probe	= simtec_audio_hermes_probe,
-	.remove	= simtec_audio_remove,
-};
+	.हटाओ	= simtec_audio_हटाओ,
+पूर्ण;
 
-module_platform_driver(simtec_audio_hermes_platdrv);
+module_platक्रमm_driver(simtec_audio_hermes_platdrv);
 
 MODULE_ALIAS("platform:s3c24xx-simtec-hermes-snd");
 MODULE_AUTHOR("Ben Dooks <ben@simtec.co.uk>");

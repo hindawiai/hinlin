@@ -1,185 +1,186 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * ioperm.c - Test case for ioperm(2)
+ * ioperm.c - Test हाल क्रम ioperm(2)
  * Copyright (c) 2015 Andrew Lutomirski
  */
 
-#define _GNU_SOURCE
-#include <err.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <signal.h>
-#include <setjmp.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <stdbool.h>
-#include <sched.h>
-#include <sys/io.h>
+#घोषणा _GNU_SOURCE
+#समावेश <err.h>
+#समावेश <मानकपन.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <संकेत.स>
+#समावेश <समलाँघ.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <stdbool.h>
+#समावेश <sched.h>
+#समावेश <sys/पन.स>
 
-static int nerrs = 0;
+अटल पूर्णांक nerrs = 0;
 
-static void sethandler(int sig, void (*handler)(int, siginfo_t *, void *),
-		       int flags)
-{
-	struct sigaction sa;
-	memset(&sa, 0, sizeof(sa));
+अटल व्योम sethandler(पूर्णांक sig, व्योम (*handler)(पूर्णांक, siginfo_t *, व्योम *),
+		       पूर्णांक flags)
+अणु
+	काष्ठा sigaction sa;
+	स_रखो(&sa, 0, माप(sa));
 	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO | flags;
 	sigemptyset(&sa.sa_mask);
-	if (sigaction(sig, &sa, 0))
+	अगर (sigaction(sig, &sa, 0))
 		err(1, "sigaction");
 
-}
+पूर्ण
 
-static void clearhandler(int sig)
-{
-	struct sigaction sa;
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = SIG_DFL;
+अटल व्योम clearhandler(पूर्णांक sig)
+अणु
+	काष्ठा sigaction sa;
+	स_रखो(&sa, 0, माप(sa));
+	sa.sa_handler = संक_पूर्व;
 	sigemptyset(&sa.sa_mask);
-	if (sigaction(sig, &sa, 0))
+	अगर (sigaction(sig, &sa, 0))
 		err(1, "sigaction");
-}
+पूर्ण
 
-static jmp_buf jmpbuf;
+अटल लाँघ_बफ jmpbuf;
 
-static void sigsegv(int sig, siginfo_t *si, void *ctx_void)
-{
-	siglongjmp(jmpbuf, 1);
-}
+अटल व्योम sigsegv(पूर्णांक sig, siginfo_t *si, व्योम *ctx_व्योम)
+अणु
+	sigदीर्घ_लाँघ(jmpbuf, 1);
+पूर्ण
 
-static bool try_outb(unsigned short port)
-{
-	sethandler(SIGSEGV, sigsegv, SA_RESETHAND);
-	if (sigsetjmp(jmpbuf, 1) != 0) {
-		return false;
-	} else {
-		asm volatile ("outb %%al, %w[port]"
+अटल bool try_outb(अचिन्हित लघु port)
+अणु
+	sethandler(संक_अंश, sigsegv, SA_RESETHAND);
+	अगर (sigबनाओ_लाँघ(jmpbuf, 1) != 0) अणु
+		वापस false;
+	पूर्ण अन्यथा अणु
+		यंत्र अस्थिर ("outb %%al, %w[port]"
 			      : : [port] "Nd" (port), "a" (0));
-		return true;
-	}
-	clearhandler(SIGSEGV);
-}
+		वापस true;
+	पूर्ण
+	clearhandler(संक_अंश);
+पूर्ण
 
-static void expect_ok(unsigned short port)
-{
-	if (!try_outb(port)) {
-		printf("[FAIL]\toutb to 0x%02hx failed\n", port);
-		exit(1);
-	}
+अटल व्योम expect_ok(अचिन्हित लघु port)
+अणु
+	अगर (!try_outb(port)) अणु
+		म_लिखो("[FAIL]\toutb to 0x%02hx failed\n", port);
+		निकास(1);
+	पूर्ण
 
-	printf("[OK]\toutb to 0x%02hx worked\n", port);
-}
+	म_लिखो("[OK]\toutb to 0x%02hx worked\n", port);
+पूर्ण
 
-static void expect_gp(unsigned short port)
-{
-	if (try_outb(port)) {
-		printf("[FAIL]\toutb to 0x%02hx worked\n", port);
-		exit(1);
-	}
+अटल व्योम expect_gp(अचिन्हित लघु port)
+अणु
+	अगर (try_outb(port)) अणु
+		म_लिखो("[FAIL]\toutb to 0x%02hx worked\n", port);
+		निकास(1);
+	पूर्ण
 
-	printf("[OK]\toutb to 0x%02hx failed\n", port);
-}
+	म_लिखो("[OK]\toutb to 0x%02hx failed\n", port);
+पूर्ण
 
-int main(void)
-{
+पूर्णांक मुख्य(व्योम)
+अणु
 	cpu_set_t cpuset;
 	CPU_ZERO(&cpuset);
 	CPU_SET(0, &cpuset);
-	if (sched_setaffinity(0, sizeof(cpuset), &cpuset) != 0)
+	अगर (sched_setaffinity(0, माप(cpuset), &cpuset) != 0)
 		err(1, "sched_setaffinity to CPU 0");
 
 	expect_gp(0x80);
 	expect_gp(0xed);
 
 	/*
-	 * Probe for ioperm support.  Note that clearing ioperm bits
+	 * Probe क्रम ioperm support.  Note that clearing ioperm bits
 	 * works even as nonroot.
 	 */
-	printf("[RUN]\tenable 0x80\n");
-	if (ioperm(0x80, 1, 1) != 0) {
-		printf("[OK]\tioperm(0x80, 1, 1) failed (%d) -- try running as root\n",
-		       errno);
-		return 0;
-	}
+	म_लिखो("[RUN]\tenable 0x80\n");
+	अगर (ioperm(0x80, 1, 1) != 0) अणु
+		म_लिखो("[OK]\tioperm(0x80, 1, 1) failed (%d) -- try running as root\n",
+		       त्रुटि_सं);
+		वापस 0;
+	पूर्ण
 	expect_ok(0x80);
 	expect_gp(0xed);
 
-	printf("[RUN]\tdisable 0x80\n");
-	if (ioperm(0x80, 1, 0) != 0) {
-		printf("[FAIL]\tioperm(0x80, 1, 0) failed (%d)", errno);
-		return 1;
-	}
+	म_लिखो("[RUN]\tdisable 0x80\n");
+	अगर (ioperm(0x80, 1, 0) != 0) अणु
+		म_लिखो("[FAIL]\tioperm(0x80, 1, 0) failed (%d)", त्रुटि_सं);
+		वापस 1;
+	पूर्ण
 	expect_gp(0x80);
 	expect_gp(0xed);
 
-	/* Make sure that fork() preserves ioperm. */
-	if (ioperm(0x80, 1, 1) != 0) {
-		printf("[FAIL]\tioperm(0x80, 1, 0) failed (%d)", errno);
-		return 1;
-	}
+	/* Make sure that विभाजन() preserves ioperm. */
+	अगर (ioperm(0x80, 1, 1) != 0) अणु
+		म_लिखो("[FAIL]\tioperm(0x80, 1, 0) failed (%d)", त्रुटि_सं);
+		वापस 1;
+	पूर्ण
 
-	pid_t child = fork();
-	if (child == -1)
+	pid_t child = विभाजन();
+	अगर (child == -1)
 		err(1, "fork");
 
-	if (child == 0) {
-		printf("[RUN]\tchild: check that we inherited permissions\n");
+	अगर (child == 0) अणु
+		म_लिखो("[RUN]\tchild: check that we inherited permissions\n");
 		expect_ok(0x80);
 		expect_gp(0xed);
-		printf("[RUN]\tchild: Extend permissions to 0x81\n");
-		if (ioperm(0x81, 1, 1) != 0) {
-			printf("[FAIL]\tioperm(0x81, 1, 1) failed (%d)", errno);
-			return 1;
-		}
-		printf("[RUN]\tchild: Drop permissions to 0x80\n");
-		if (ioperm(0x80, 1, 0) != 0) {
-			printf("[FAIL]\tioperm(0x80, 1, 0) failed (%d)", errno);
-			return 1;
-		}
+		म_लिखो("[RUN]\tchild: Extend permissions to 0x81\n");
+		अगर (ioperm(0x81, 1, 1) != 0) अणु
+			म_लिखो("[FAIL]\tioperm(0x81, 1, 1) failed (%d)", त्रुटि_सं);
+			वापस 1;
+		पूर्ण
+		म_लिखो("[RUN]\tchild: Drop permissions to 0x80\n");
+		अगर (ioperm(0x80, 1, 0) != 0) अणु
+			म_लिखो("[FAIL]\tioperm(0x80, 1, 0) failed (%d)", त्रुटि_सं);
+			वापस 1;
+		पूर्ण
 		expect_gp(0x80);
-		return 0;
-	} else {
-		int status;
-		if (waitpid(child, &status, 0) != child ||
-		    !WIFEXITED(status)) {
-			printf("[FAIL]\tChild died\n");
+		वापस 0;
+	पूर्ण अन्यथा अणु
+		पूर्णांक status;
+		अगर (रुकोpid(child, &status, 0) != child ||
+		    !WIFEXITED(status)) अणु
+			म_लिखो("[FAIL]\tChild died\n");
 			nerrs++;
-		} else if (WEXITSTATUS(status) != 0) {
-			printf("[FAIL]\tChild failed\n");
+		पूर्ण अन्यथा अगर (WEXITSTATUS(status) != 0) अणु
+			म_लिखो("[FAIL]\tChild failed\n");
 			nerrs++;
-		} else {
-			printf("[OK]\tChild succeeded\n");
-		}
-	}
+		पूर्ण अन्यथा अणु
+			म_लिखो("[OK]\tChild succeeded\n");
+		पूर्ण
+	पूर्ण
 
-	/* Verify that the child dropping 0x80 did not affect the parent */
-	printf("\tVerify that unsharing the bitmap worked\n");
+	/* Verअगरy that the child dropping 0x80 did not affect the parent */
+	म_लिखो("\tVerify that unsharing the bitmap worked\n");
 	expect_ok(0x80);
 
 	/* Test the capability checks. */
-	printf("\tDrop privileges\n");
-	if (setresuid(1, 1, 1) != 0) {
-		printf("[WARN]\tDropping privileges failed\n");
-		return 0;
-	}
+	म_लिखो("\tDrop privileges\n");
+	अगर (setresuid(1, 1, 1) != 0) अणु
+		म_लिखो("[WARN]\tDropping privileges failed\n");
+		वापस 0;
+	पूर्ण
 
-	printf("[RUN]\tdisable 0x80\n");
-	if (ioperm(0x80, 1, 0) != 0) {
-		printf("[FAIL]\tioperm(0x80, 1, 0) failed (%d)", errno);
-		return 1;
-	}
-	printf("[OK]\tit worked\n");
+	म_लिखो("[RUN]\tdisable 0x80\n");
+	अगर (ioperm(0x80, 1, 0) != 0) अणु
+		म_लिखो("[FAIL]\tioperm(0x80, 1, 0) failed (%d)", त्रुटि_सं);
+		वापस 1;
+	पूर्ण
+	म_लिखो("[OK]\tit worked\n");
 
-	printf("[RUN]\tenable 0x80 again\n");
-	if (ioperm(0x80, 1, 1) == 0) {
-		printf("[FAIL]\tit succeeded but should have failed.\n");
-		return 1;
-	}
-	printf("[OK]\tit failed\n");
-	return 0;
-}
+	म_लिखो("[RUN]\tenable 0x80 again\n");
+	अगर (ioperm(0x80, 1, 1) == 0) अणु
+		म_लिखो("[FAIL]\tit succeeded but should have failed.\n");
+		वापस 1;
+	पूर्ण
+	म_लिखो("[OK]\tit failed\n");
+	वापस 0;
+पूर्ण

@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-static inline void init_mmu(void)
-{
-}
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+अटल अंतरभूत व्योम init_mmu(व्योम)
+अणु
+पूर्ण
 
-static inline void init_kio(void)
-{
-}
+अटल अंतरभूत व्योम init_kio(व्योम)
+अणु
+पूर्ण
 
-#include <asm-generic/nommu_context.h>
+#समावेश <यंत्र-generic/nommu_context.h>

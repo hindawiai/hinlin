@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,36 +13,36 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_UNALIGNED_H
-#define __ASM_OPENRISC_UNALIGNED_H
+#अगर_अघोषित __ASM_OPENRISC_UNALIGNED_H
+#घोषणा __ASM_OPENRISC_UNALIGNED_H
 
 /*
- * This is copied from the generic implementation and the C-struct
- * variant replaced with the memmove variant.  The GCC compiler
- * for the OR32 arch optimizes too aggressively for the C-struct
- * variant to work, so use the memmove variant instead.
+ * This is copied from the generic implementation and the C-काष्ठा
+ * variant replaced with the स_हटाओ variant.  The GCC compiler
+ * क्रम the OR32 arch optimizes too aggressively क्रम the C-काष्ठा
+ * variant to work, so use the स_हटाओ variant instead.
  *
  * It may be worth considering implementing the unaligned access
  * exception handler and allowing unaligned accesses (access_ok.h)...
- * not sure if it would be much of a performance win without further
+ * not sure अगर it would be much of a perक्रमmance win without further
  * investigation.
  */
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-#if defined(__LITTLE_ENDIAN)
-# include <linux/unaligned/le_memmove.h>
-# include <linux/unaligned/be_byteshift.h>
+#अगर defined(__LITTLE_ENDIAN)
+# include <linux/unaligned/le_स_हटाओ.h>
+# include <linux/unaligned/be_byteshअगरt.h>
 # include <linux/unaligned/generic.h>
 # define get_unaligned	__get_unaligned_le
 # define put_unaligned	__put_unaligned_le
-#elif defined(__BIG_ENDIAN)
-# include <linux/unaligned/be_memmove.h>
-# include <linux/unaligned/le_byteshift.h>
+#या_अगर defined(__BIG_ENDIAN)
+# include <linux/unaligned/be_स_हटाओ.h>
+# include <linux/unaligned/le_byteshअगरt.h>
 # include <linux/unaligned/generic.h>
 # define get_unaligned	__get_unaligned_be
 # define put_unaligned	__put_unaligned_be
-#else
+#अन्यथा
 # error need to define endianess
-#endif
+#पूर्ण_अगर
 
-#endif /* __ASM_OPENRISC_UNALIGNED_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_UNALIGNED_H */

@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 
-#ifndef _ASM_POWERPC_BOOK3S_64_PKEYS_H
-#define _ASM_POWERPC_BOOK3S_64_PKEYS_H
+#अगर_अघोषित _ASM_POWERPC_BOOK3S_64_PKEYS_H
+#घोषणा _ASM_POWERPC_BOOK3S_64_PKEYS_H
 
-#include <asm/book3s/64/hash-pkey.h>
+#समावेश <यंत्र/book3s/64/hash-pkey.h>
 
-static inline u64 vmflag_to_pte_pkey_bits(u64 vm_flags)
-{
-	if (!mmu_has_feature(MMU_FTR_PKEY))
-		return 0x0UL;
+अटल अंतरभूत u64 vmflag_to_pte_pkey_bits(u64 vm_flags)
+अणु
+	अगर (!mmu_has_feature(MMU_FTR_PKEY))
+		वापस 0x0UL;
 
-	if (radix_enabled())
+	अगर (radix_enabled())
 		BUG();
-	return hash__vmflag_to_pte_pkey_bits(vm_flags);
-}
+	वापस hash__vmflag_to_pte_pkey_bits(vm_flags);
+पूर्ण
 
-static inline u16 pte_to_pkey_bits(u64 pteflags)
-{
-	if (radix_enabled())
+अटल अंतरभूत u16 pte_to_pkey_bits(u64 pteflags)
+अणु
+	अगर (radix_enabled())
 		BUG();
-	return hash__pte_to_pkey_bits(pteflags);
-}
+	वापस hash__pte_to_pkey_bits(pteflags);
+पूर्ण
 
-#endif /*_ASM_POWERPC_KEYS_H */
+#पूर्ण_अगर /*_ASM_POWERPC_KEYS_H */

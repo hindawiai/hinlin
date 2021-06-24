@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/cpu.h>
-#include <linux/cpumask.h>
-#include <linux/init.h>
-#include <linux/node.h>
-#include <linux/nodemask.h>
-#include <linux/percpu.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/init.h>
+#समावेश <linux/node.h>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/percpu.h>
 
-static DEFINE_PER_CPU(struct cpu, cpu_devices);
+अटल DEFINE_PER_CPU(काष्ठा cpu, cpu_devices);
 
-static int __init topology_init(void)
-{
-	int i, ret;
+अटल पूर्णांक __init topology_init(व्योम)
+अणु
+	पूर्णांक i, ret;
 
-#ifdef CONFIG_NUMA
-	for_each_online_node(i)
-		register_one_node(i);
-#endif /* CONFIG_NUMA */
+#अगर_घोषित CONFIG_NUMA
+	क्रम_each_online_node(i)
+		रेजिस्टर_one_node(i);
+#पूर्ण_अगर /* CONFIG_NUMA */
 
-	for_each_present_cpu(i) {
-		struct cpu *c = &per_cpu(cpu_devices, i);
+	क्रम_each_present_cpu(i) अणु
+		काष्ठा cpu *c = &per_cpu(cpu_devices, i);
 
 		c->hotpluggable = !!i;
-		ret = register_cpu(c, i);
-		if (ret)
-			printk(KERN_WARNING "topology_init: register_cpu %d "
+		ret = रेजिस्टर_cpu(c, i);
+		अगर (ret)
+			prपूर्णांकk(KERN_WARNING "topology_init: register_cpu %d "
 			       "failed (%d)\n", i, ret);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(topology_init);

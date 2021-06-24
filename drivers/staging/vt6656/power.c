@@ -1,65 +1,66 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (c) 1996, 2003 VIA Networking Technologies, Inc.
  * All rights reserved.
  *
- * File: power.c
+ * File: घातer.c
  *
- * Purpose: Handles 802.11 power management functions
+ * Purpose: Handles 802.11 घातer management functions
  *
- * Author: Lyndon Chen
+ * Author: Lynकरोn Chen
  *
  * Date: July 17, 2002
  *
  * Functions:
- *      vnt_enable_power_saving - Enable Power Saving Mode
+ *      vnt_enable_घातer_saving - Enable Power Saving Mode
  *      PSvDiasblePowerSaving - Disable Power Saving Mode
- *      vnt_next_tbtt_wakeup - Decide if we need to wake up at next Beacon
+ *      vnt_next_tbtt_wakeup - Decide अगर we need to wake up at next Beacon
  *
  * Revision History:
  *
  */
 
-#include "mac.h"
-#include "device.h"
-#include "power.h"
-#include "wcmd.h"
-#include "rxtx.h"
-#include "card.h"
-#include "usbpipe.h"
+#समावेश "mac.h"
+#समावेश "device.h"
+#समावेश "power.h"
+#समावेश "wcmd.h"
+#समावेश "rxtx.h"
+#समावेश "card.h"
+#समावेश "usbpipe.h"
 
 /*
  *
  * Routine Description:
- * Enable hw power saving functions
+ * Enable hw घातer saving functions
  *
  * Return Value:
  *    None.
  *
  */
 
-void vnt_enable_power_saving(struct vnt_private *priv, u16 listen_interval)
-{
+व्योम vnt_enable_घातer_saving(काष्ठा vnt_निजी *priv, u16 listen_पूर्णांकerval)
+अणु
 	u16 aid = priv->current_aid | BIT(14) | BIT(15);
 
-	/* set period of power up before TBTT */
-	vnt_mac_write_word(priv, MAC_REG_PWBT, C_PWBT);
+	/* set period of घातer up beक्रमe TBTT */
+	vnt_mac_ग_लिखो_word(priv, MAC_REG_PWBT, C_PWBT);
 
-	if (priv->op_mode != NL80211_IFTYPE_ADHOC)
+	अगर (priv->op_mode != NL80211_IFTYPE_ADHOC)
 		/* set AID */
-		vnt_mac_write_word(priv, MAC_REG_AIDATIM, aid);
+		vnt_mac_ग_लिखो_word(priv, MAC_REG_AIDATIM, aid);
 
 	/* Warren:06-18-2004,the sequence must follow
 	 * PSEN->AUTOSLEEP->GO2DOZE
 	 */
-	/* enable power saving hw function */
+	/* enable घातer saving hw function */
 	vnt_mac_reg_bits_on(priv, MAC_REG_PSCTL, PSCTL_PSEN);
 
 	/* Set AutoSleep */
 	vnt_mac_reg_bits_on(priv, MAC_REG_PSCFG, PSCFG_AUTOSLEEP);
 
-	/* Warren:MUST turn on this once before turn on AUTOSLEEP ,or the
-	 * AUTOSLEEP doesn't work
+	/* Warren:MUST turn on this once beक्रमe turn on AUTOSLEEP ,or the
+	 * AUTOSLEEP करोesn't work
 	 */
 	vnt_mac_reg_bits_on(priv, MAC_REG_PSCTL, PSCTL_GO2DOZE);
 
@@ -67,17 +68,17 @@ void vnt_enable_power_saving(struct vnt_private *priv, u16 listen_interval)
 	vnt_mac_reg_bits_on(priv, MAC_REG_PSCTL, PSCTL_ALBCN);
 
 	dev_dbg(&priv->usb->dev,  "PS:Power Saving Mode Enable...\n");
-}
+पूर्ण
 
-int vnt_disable_power_saving(struct vnt_private *priv)
-{
-	int ret;
+पूर्णांक vnt_disable_घातer_saving(काष्ठा vnt_निजी *priv)
+अणु
+	पूर्णांक ret;
 
-	/* disable power saving hw function */
+	/* disable घातer saving hw function */
 	ret = vnt_control_out(priv, MESSAGE_TYPE_DISABLE_PS, 0,
-			      0, 0, NULL);
-	if (ret)
-		return ret;
+			      0, 0, शून्य);
+	अगर (ret)
+		वापस ret;
 
 	/* clear AutoSleep */
 	vnt_mac_reg_bits_off(priv, MAC_REG_PSCFG, PSCFG_AUTOSLEEP);
@@ -85,30 +86,30 @@ int vnt_disable_power_saving(struct vnt_private *priv)
 	/* set always listen beacon */
 	vnt_mac_reg_bits_on(priv, MAC_REG_PSCTL, PSCTL_ALBCN);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *
  * Routine Description:
- * Check if Next TBTT must wake up
+ * Check अगर Next TBTT must wake up
  *
  * Return Value:
  *    None.
  *
  */
 
-int vnt_next_tbtt_wakeup(struct vnt_private *priv)
-{
-	struct ieee80211_hw *hw = priv->hw;
-	struct ieee80211_conf *conf = &hw->conf;
-	int wake_up = false;
+पूर्णांक vnt_next_tbtt_wakeup(काष्ठा vnt_निजी *priv)
+अणु
+	काष्ठा ieee80211_hw *hw = priv->hw;
+	काष्ठा ieee80211_conf *conf = &hw->conf;
+	पूर्णांक wake_up = false;
 
-	if (conf->listen_interval > 1) {
+	अगर (conf->listen_पूर्णांकerval > 1) अणु
 		/* Turn on wake up to listen next beacon */
 		vnt_mac_reg_bits_on(priv, MAC_REG_PSCTL, PSCTL_LNBCN);
 		wake_up = true;
-	}
+	पूर्ण
 
-	return wake_up;
-}
+	वापस wake_up;
+पूर्ण

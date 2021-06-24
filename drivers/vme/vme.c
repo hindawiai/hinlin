@@ -1,334 +1,335 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * VME Bridge Framework
  *
  * Author: Martyn Welch <martyn.welch@ge.com>
- * Copyright 2008 GE Intelligent Platforms Embedded Systems, Inc.
+ * Copyright 2008 GE Intelligent Platक्रमms Embedded Systems, Inc.
  *
  * Based on work by Tom Armistead and Ajit Prem
  * Copyright 2004 Motorola Inc.
  */
 
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/mm.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/pci.h>
-#include <linux/poll.h>
-#include <linux/highmem.h>
-#include <linux/interrupt.h>
-#include <linux/pagemap.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/syscalls.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/vme.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/pci.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vme.h>
 
-#include "vme_bridge.h"
+#समावेश "vme_bridge.h"
 
-/* Bitmask and list of registered buses both protected by common mutex */
-static unsigned int vme_bus_numbers;
-static LIST_HEAD(vme_bus_list);
-static DEFINE_MUTEX(vme_buses_lock);
+/* Biपंचांगask and list of रेजिस्टरed buses both रक्षित by common mutex */
+अटल अचिन्हित पूर्णांक vme_bus_numbers;
+अटल LIST_HEAD(vme_bus_list);
+अटल DEFINE_MUTEX(vme_buses_lock);
 
-static int __init vme_init(void);
+अटल पूर्णांक __init vme_init(व्योम);
 
-static struct vme_dev *dev_to_vme_dev(struct device *dev)
-{
-	return container_of(dev, struct vme_dev, dev);
-}
+अटल काष्ठा vme_dev *dev_to_vme_dev(काष्ठा device *dev)
+अणु
+	वापस container_of(dev, काष्ठा vme_dev, dev);
+पूर्ण
 
 /*
  * Find the bridge that the resource is associated with.
  */
-static struct vme_bridge *find_bridge(struct vme_resource *resource)
-{
+अटल काष्ठा vme_bridge *find_bridge(काष्ठा vme_resource *resource)
+अणु
 	/* Get list to search */
-	switch (resource->type) {
-	case VME_MASTER:
-		return list_entry(resource->entry, struct vme_master_resource,
+	चयन (resource->type) अणु
+	हाल VME_MASTER:
+		वापस list_entry(resource->entry, काष्ठा vme_master_resource,
 			list)->parent;
-	case VME_SLAVE:
-		return list_entry(resource->entry, struct vme_slave_resource,
+	हाल VME_SLAVE:
+		वापस list_entry(resource->entry, काष्ठा vme_slave_resource,
 			list)->parent;
-	case VME_DMA:
-		return list_entry(resource->entry, struct vme_dma_resource,
+	हाल VME_DMA:
+		वापस list_entry(resource->entry, काष्ठा vme_dma_resource,
 			list)->parent;
-	case VME_LM:
-		return list_entry(resource->entry, struct vme_lm_resource,
+	हाल VME_LM:
+		वापस list_entry(resource->entry, काष्ठा vme_lm_resource,
 			list)->parent;
-	default:
-		printk(KERN_ERR "Unknown resource type\n");
-		return NULL;
-	}
-}
+	शेष:
+		prपूर्णांकk(KERN_ERR "Unknown resource type\n");
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * vme_alloc_consistent - Allocate contiguous memory.
- * @resource: Pointer to VME resource.
+ * @resource: Poपूर्णांकer to VME resource.
  * @size: Size of allocation required.
- * @dma: Pointer to variable to store physical address of allocation.
+ * @dma: Poपूर्णांकer to variable to store physical address of allocation.
  *
- * Allocate a contiguous block of memory for use by the driver. This is used to
- * create the buffers for the slave windows.
+ * Allocate a contiguous block of memory क्रम use by the driver. This is used to
+ * create the buffers क्रम the slave winकरोws.
  *
- * Return: Virtual address of allocation on success, NULL on failure.
+ * Return: Virtual address of allocation on success, शून्य on failure.
  */
-void *vme_alloc_consistent(struct vme_resource *resource, size_t size,
+व्योम *vme_alloc_consistent(काष्ठा vme_resource *resource, माप_प्रकार size,
 	dma_addr_t *dma)
-{
-	struct vme_bridge *bridge;
+अणु
+	काष्ठा vme_bridge *bridge;
 
-	if (!resource) {
-		printk(KERN_ERR "No resource\n");
-		return NULL;
-	}
+	अगर (!resource) अणु
+		prपूर्णांकk(KERN_ERR "No resource\n");
+		वापस शून्य;
+	पूर्ण
 
 	bridge = find_bridge(resource);
-	if (!bridge) {
-		printk(KERN_ERR "Can't find bridge\n");
-		return NULL;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find bridge\n");
+		वापस शून्य;
+	पूर्ण
 
-	if (!bridge->parent) {
-		printk(KERN_ERR "Dev entry NULL for bridge %s\n", bridge->name);
-		return NULL;
-	}
+	अगर (!bridge->parent) अणु
+		prपूर्णांकk(KERN_ERR "Dev entry NULL for bridge %s\n", bridge->name);
+		वापस शून्य;
+	पूर्ण
 
-	if (!bridge->alloc_consistent) {
-		printk(KERN_ERR "alloc_consistent not supported by bridge %s\n",
+	अगर (!bridge->alloc_consistent) अणु
+		prपूर्णांकk(KERN_ERR "alloc_consistent not supported by bridge %s\n",
 		       bridge->name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return bridge->alloc_consistent(bridge->parent, size, dma);
-}
+	वापस bridge->alloc_consistent(bridge->parent, size, dma);
+पूर्ण
 EXPORT_SYMBOL(vme_alloc_consistent);
 
 /**
- * vme_free_consistent - Free previously allocated memory.
- * @resource: Pointer to VME resource.
- * @size: Size of allocation to free.
+ * vme_मुक्त_consistent - Free previously allocated memory.
+ * @resource: Poपूर्णांकer to VME resource.
+ * @size: Size of allocation to मुक्त.
  * @vaddr: Virtual address of allocation.
  * @dma: Physical address of allocation.
  *
  * Free previously allocated block of contiguous memory.
  */
-void vme_free_consistent(struct vme_resource *resource, size_t size,
-	void *vaddr, dma_addr_t dma)
-{
-	struct vme_bridge *bridge;
+व्योम vme_मुक्त_consistent(काष्ठा vme_resource *resource, माप_प्रकार size,
+	व्योम *vaddr, dma_addr_t dma)
+अणु
+	काष्ठा vme_bridge *bridge;
 
-	if (!resource) {
-		printk(KERN_ERR "No resource\n");
-		return;
-	}
+	अगर (!resource) अणु
+		prपूर्णांकk(KERN_ERR "No resource\n");
+		वापस;
+	पूर्ण
 
 	bridge = find_bridge(resource);
-	if (!bridge) {
-		printk(KERN_ERR "Can't find bridge\n");
-		return;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find bridge\n");
+		वापस;
+	पूर्ण
 
-	if (!bridge->parent) {
-		printk(KERN_ERR "Dev entry NULL for bridge %s\n", bridge->name);
-		return;
-	}
+	अगर (!bridge->parent) अणु
+		prपूर्णांकk(KERN_ERR "Dev entry NULL for bridge %s\n", bridge->name);
+		वापस;
+	पूर्ण
 
-	if (!bridge->free_consistent) {
-		printk(KERN_ERR "free_consistent not supported by bridge %s\n",
+	अगर (!bridge->मुक्त_consistent) अणु
+		prपूर्णांकk(KERN_ERR "free_consistent not supported by bridge %s\n",
 		       bridge->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	bridge->free_consistent(bridge->parent, size, vaddr, dma);
-}
-EXPORT_SYMBOL(vme_free_consistent);
+	bridge->मुक्त_consistent(bridge->parent, size, vaddr, dma);
+पूर्ण
+EXPORT_SYMBOL(vme_मुक्त_consistent);
 
 /**
- * vme_get_size - Helper function returning size of a VME window
- * @resource: Pointer to VME slave or master resource.
+ * vme_get_size - Helper function वापसing size of a VME winकरोw
+ * @resource: Poपूर्णांकer to VME slave or master resource.
  *
- * Determine the size of the VME window provided. This is a helper
+ * Determine the size of the VME winकरोw provided. This is a helper
  * function, wrappering the call to vme_master_get or vme_slave_get
- * depending on the type of window resource handed to it.
+ * depending on the type of winकरोw resource handed to it.
  *
- * Return: Size of the window on success, zero on failure.
+ * Return: Size of the winकरोw on success, zero on failure.
  */
-size_t vme_get_size(struct vme_resource *resource)
-{
-	int enabled, retval;
-	unsigned long long base, size;
+माप_प्रकार vme_get_size(काष्ठा vme_resource *resource)
+अणु
+	पूर्णांक enabled, retval;
+	अचिन्हित दीर्घ दीर्घ base, size;
 	dma_addr_t buf_base;
 	u32 aspace, cycle, dwidth;
 
-	switch (resource->type) {
-	case VME_MASTER:
+	चयन (resource->type) अणु
+	हाल VME_MASTER:
 		retval = vme_master_get(resource, &enabled, &base, &size,
 			&aspace, &cycle, &dwidth);
-		if (retval)
-			return 0;
+		अगर (retval)
+			वापस 0;
 
-		return size;
-	case VME_SLAVE:
+		वापस size;
+	हाल VME_SLAVE:
 		retval = vme_slave_get(resource, &enabled, &base, &size,
 			&buf_base, &aspace, &cycle);
-		if (retval)
-			return 0;
+		अगर (retval)
+			वापस 0;
 
-		return size;
-	case VME_DMA:
-		return 0;
-	default:
-		printk(KERN_ERR "Unknown resource type\n");
-		return 0;
-	}
-}
+		वापस size;
+	हाल VME_DMA:
+		वापस 0;
+	शेष:
+		prपूर्णांकk(KERN_ERR "Unknown resource type\n");
+		वापस 0;
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(vme_get_size);
 
-int vme_check_window(u32 aspace, unsigned long long vme_base,
-		     unsigned long long size)
-{
-	int retval = 0;
+पूर्णांक vme_check_winकरोw(u32 aspace, अचिन्हित दीर्घ दीर्घ vme_base,
+		     अचिन्हित दीर्घ दीर्घ size)
+अणु
+	पूर्णांक retval = 0;
 
-	if (vme_base + size < size)
-		return -EINVAL;
+	अगर (vme_base + size < size)
+		वापस -EINVAL;
 
-	switch (aspace) {
-	case VME_A16:
-		if (vme_base + size > VME_A16_MAX)
+	चयन (aspace) अणु
+	हाल VME_A16:
+		अगर (vme_base + size > VME_A16_MAX)
 			retval = -EFAULT;
-		break;
-	case VME_A24:
-		if (vme_base + size > VME_A24_MAX)
+		अवरोध;
+	हाल VME_A24:
+		अगर (vme_base + size > VME_A24_MAX)
 			retval = -EFAULT;
-		break;
-	case VME_A32:
-		if (vme_base + size > VME_A32_MAX)
+		अवरोध;
+	हाल VME_A32:
+		अगर (vme_base + size > VME_A32_MAX)
 			retval = -EFAULT;
-		break;
-	case VME_A64:
+		अवरोध;
+	हाल VME_A64:
 		/* The VME_A64_MAX limit is actually U64_MAX + 1 */
-		break;
-	case VME_CRCSR:
-		if (vme_base + size > VME_CRCSR_MAX)
+		अवरोध;
+	हाल VME_CRCSR:
+		अगर (vme_base + size > VME_CRCSR_MAX)
 			retval = -EFAULT;
-		break;
-	case VME_USER1:
-	case VME_USER2:
-	case VME_USER3:
-	case VME_USER4:
+		अवरोध;
+	हाल VME_USER1:
+	हाल VME_USER2:
+	हाल VME_USER3:
+	हाल VME_USER4:
 		/* User Defined */
-		break;
-	default:
-		printk(KERN_ERR "Invalid address space\n");
+		अवरोध;
+	शेष:
+		prपूर्णांकk(KERN_ERR "Invalid address space\n");
 		retval = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return retval;
-}
-EXPORT_SYMBOL(vme_check_window);
+	वापस retval;
+पूर्ण
+EXPORT_SYMBOL(vme_check_winकरोw);
 
-static u32 vme_get_aspace(int am)
-{
-	switch (am) {
-	case 0x29:
-	case 0x2D:
-		return VME_A16;
-	case 0x38:
-	case 0x39:
-	case 0x3A:
-	case 0x3B:
-	case 0x3C:
-	case 0x3D:
-	case 0x3E:
-	case 0x3F:
-		return VME_A24;
-	case 0x8:
-	case 0x9:
-	case 0xA:
-	case 0xB:
-	case 0xC:
-	case 0xD:
-	case 0xE:
-	case 0xF:
-		return VME_A32;
-	case 0x0:
-	case 0x1:
-	case 0x3:
-		return VME_A64;
-	}
+अटल u32 vme_get_aspace(पूर्णांक am)
+अणु
+	चयन (am) अणु
+	हाल 0x29:
+	हाल 0x2D:
+		वापस VME_A16;
+	हाल 0x38:
+	हाल 0x39:
+	हाल 0x3A:
+	हाल 0x3B:
+	हाल 0x3C:
+	हाल 0x3D:
+	हाल 0x3E:
+	हाल 0x3F:
+		वापस VME_A24;
+	हाल 0x8:
+	हाल 0x9:
+	हाल 0xA:
+	हाल 0xB:
+	हाल 0xC:
+	हाल 0xD:
+	हाल 0xE:
+	हाल 0xF:
+		वापस VME_A32;
+	हाल 0x0:
+	हाल 0x1:
+	हाल 0x3:
+		वापस VME_A64;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vme_slave_request - Request a VME slave window resource.
- * @vdev: Pointer to VME device struct vme_dev assigned to driver instance.
+ * vme_slave_request - Request a VME slave winकरोw resource.
+ * @vdev: Poपूर्णांकer to VME device काष्ठा vme_dev asचिन्हित to driver instance.
  * @address: Required VME address space.
  * @cycle: Required VME data transfer cycle type.
  *
- * Request use of a VME window resource capable of being set for the requested
+ * Request use of a VME winकरोw resource capable of being set क्रम the requested
  * address space and data transfer cycle.
  *
- * Return: Pointer to VME resource on success, NULL on failure.
+ * Return: Poपूर्णांकer to VME resource on success, शून्य on failure.
  */
-struct vme_resource *vme_slave_request(struct vme_dev *vdev, u32 address,
+काष्ठा vme_resource *vme_slave_request(काष्ठा vme_dev *vdev, u32 address,
 	u32 cycle)
-{
-	struct vme_bridge *bridge;
-	struct list_head *slave_pos = NULL;
-	struct vme_slave_resource *allocated_image = NULL;
-	struct vme_slave_resource *slave_image = NULL;
-	struct vme_resource *resource = NULL;
+अणु
+	काष्ठा vme_bridge *bridge;
+	काष्ठा list_head *slave_pos = शून्य;
+	काष्ठा vme_slave_resource *allocated_image = शून्य;
+	काष्ठा vme_slave_resource *slave_image = शून्य;
+	काष्ठा vme_resource *resource = शून्य;
 
 	bridge = vdev->bridge;
-	if (!bridge) {
-		printk(KERN_ERR "Can't find VME bus\n");
-		goto err_bus;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find VME bus\n");
+		जाओ err_bus;
+	पूर्ण
 
 	/* Loop through slave resources */
-	list_for_each(slave_pos, &bridge->slave_resources) {
+	list_क्रम_each(slave_pos, &bridge->slave_resources) अणु
 		slave_image = list_entry(slave_pos,
-			struct vme_slave_resource, list);
+			काष्ठा vme_slave_resource, list);
 
-		if (!slave_image) {
-			printk(KERN_ERR "Registered NULL Slave resource\n");
-			continue;
-		}
+		अगर (!slave_image) अणु
+			prपूर्णांकk(KERN_ERR "Registered NULL Slave resource\n");
+			जारी;
+		पूर्ण
 
 		/* Find an unlocked and compatible image */
 		mutex_lock(&slave_image->mtx);
-		if (((slave_image->address_attr & address) == address) &&
+		अगर (((slave_image->address_attr & address) == address) &&
 			((slave_image->cycle_attr & cycle) == cycle) &&
-			(slave_image->locked == 0)) {
+			(slave_image->locked == 0)) अणु
 
 			slave_image->locked = 1;
 			mutex_unlock(&slave_image->mtx);
 			allocated_image = slave_image;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&slave_image->mtx);
-	}
+	पूर्ण
 
-	/* No free image */
-	if (!allocated_image)
-		goto err_image;
+	/* No मुक्त image */
+	अगर (!allocated_image)
+		जाओ err_image;
 
-	resource = kmalloc(sizeof(*resource), GFP_KERNEL);
-	if (!resource)
-		goto err_alloc;
+	resource = kदो_स्मृति(माप(*resource), GFP_KERNEL);
+	अगर (!resource)
+		जाओ err_alloc;
 
 	resource->type = VME_SLAVE;
 	resource->entry = &allocated_image->list;
 
-	return resource;
+	वापस resource;
 
 err_alloc:
 	/* Unlock image */
@@ -337,202 +338,202 @@ err_alloc:
 	mutex_unlock(&slave_image->mtx);
 err_image:
 err_bus:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(vme_slave_request);
 
 /**
- * vme_slave_set - Set VME slave window configuration.
- * @resource: Pointer to VME slave resource.
- * @enabled: State to which the window should be configured.
- * @vme_base: Base address for the window.
- * @size: Size of the VME window.
- * @buf_base: Based address of buffer used to provide VME slave window storage.
- * @aspace: VME address space for the VME window.
- * @cycle: VME data transfer cycle type for the VME window.
+ * vme_slave_set - Set VME slave winकरोw configuration.
+ * @resource: Poपूर्णांकer to VME slave resource.
+ * @enabled: State to which the winकरोw should be configured.
+ * @vme_base: Base address क्रम the winकरोw.
+ * @size: Size of the VME winकरोw.
+ * @buf_base: Based address of buffer used to provide VME slave winकरोw storage.
+ * @aspace: VME address space क्रम the VME winकरोw.
+ * @cycle: VME data transfer cycle type क्रम the VME winकरोw.
  *
- * Set configuration for provided VME slave window.
+ * Set configuration क्रम provided VME slave winकरोw.
  *
- * Return: Zero on success, -EINVAL if operation is not supported on this
- *         device, if an invalid resource has been provided or invalid
- *         attributes are provided. Hardware specific errors may also be
- *         returned.
+ * Return: Zero on success, -EINVAL अगर operation is not supported on this
+ *         device, अगर an invalid resource has been provided or invalid
+ *         attributes are provided. Hardware specअगरic errors may also be
+ *         वापसed.
  */
-int vme_slave_set(struct vme_resource *resource, int enabled,
-	unsigned long long vme_base, unsigned long long size,
+पूर्णांक vme_slave_set(काष्ठा vme_resource *resource, पूर्णांक enabled,
+	अचिन्हित दीर्घ दीर्घ vme_base, अचिन्हित दीर्घ दीर्घ size,
 	dma_addr_t buf_base, u32 aspace, u32 cycle)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_slave_resource *image;
-	int retval;
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_slave_resource *image;
+	पूर्णांक retval;
 
-	if (resource->type != VME_SLAVE) {
-		printk(KERN_ERR "Not a slave resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_SLAVE) अणु
+		prपूर्णांकk(KERN_ERR "Not a slave resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	image = list_entry(resource->entry, struct vme_slave_resource, list);
+	image = list_entry(resource->entry, काष्ठा vme_slave_resource, list);
 
-	if (!bridge->slave_set) {
-		printk(KERN_ERR "Function not supported\n");
-		return -ENOSYS;
-	}
+	अगर (!bridge->slave_set) अणु
+		prपूर्णांकk(KERN_ERR "Function not supported\n");
+		वापस -ENOSYS;
+	पूर्ण
 
-	if (!(((image->address_attr & aspace) == aspace) &&
-		((image->cycle_attr & cycle) == cycle))) {
-		printk(KERN_ERR "Invalid attributes\n");
-		return -EINVAL;
-	}
+	अगर (!(((image->address_attr & aspace) == aspace) &&
+		((image->cycle_attr & cycle) == cycle))) अणु
+		prपूर्णांकk(KERN_ERR "Invalid attributes\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	retval = vme_check_window(aspace, vme_base, size);
-	if (retval)
-		return retval;
+	retval = vme_check_winकरोw(aspace, vme_base, size);
+	अगर (retval)
+		वापस retval;
 
-	return bridge->slave_set(image, enabled, vme_base, size, buf_base,
+	वापस bridge->slave_set(image, enabled, vme_base, size, buf_base,
 		aspace, cycle);
-}
+पूर्ण
 EXPORT_SYMBOL(vme_slave_set);
 
 /**
- * vme_slave_get - Retrieve VME slave window configuration.
- * @resource: Pointer to VME slave resource.
- * @enabled: Pointer to variable for storing state.
- * @vme_base: Pointer to variable for storing window base address.
- * @size: Pointer to variable for storing window size.
- * @buf_base: Pointer to variable for storing slave buffer base address.
- * @aspace: Pointer to variable for storing VME address space.
- * @cycle: Pointer to variable for storing VME data transfer cycle type.
+ * vme_slave_get - Retrieve VME slave winकरोw configuration.
+ * @resource: Poपूर्णांकer to VME slave resource.
+ * @enabled: Poपूर्णांकer to variable क्रम storing state.
+ * @vme_base: Poपूर्णांकer to variable क्रम storing winकरोw base address.
+ * @size: Poपूर्णांकer to variable क्रम storing winकरोw size.
+ * @buf_base: Poपूर्णांकer to variable क्रम storing slave buffer base address.
+ * @aspace: Poपूर्णांकer to variable क्रम storing VME address space.
+ * @cycle: Poपूर्णांकer to variable क्रम storing VME data transfer cycle type.
  *
- * Return configuration for provided VME slave window.
+ * Return configuration क्रम provided VME slave winकरोw.
  *
- * Return: Zero on success, -EINVAL if operation is not supported on this
- *         device or if an invalid resource has been provided.
+ * Return: Zero on success, -EINVAL अगर operation is not supported on this
+ *         device or अगर an invalid resource has been provided.
  */
-int vme_slave_get(struct vme_resource *resource, int *enabled,
-	unsigned long long *vme_base, unsigned long long *size,
+पूर्णांक vme_slave_get(काष्ठा vme_resource *resource, पूर्णांक *enabled,
+	अचिन्हित दीर्घ दीर्घ *vme_base, अचिन्हित दीर्घ दीर्घ *size,
 	dma_addr_t *buf_base, u32 *aspace, u32 *cycle)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_slave_resource *image;
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_slave_resource *image;
 
-	if (resource->type != VME_SLAVE) {
-		printk(KERN_ERR "Not a slave resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_SLAVE) अणु
+		prपूर्णांकk(KERN_ERR "Not a slave resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	image = list_entry(resource->entry, struct vme_slave_resource, list);
+	image = list_entry(resource->entry, काष्ठा vme_slave_resource, list);
 
-	if (!bridge->slave_get) {
-		printk(KERN_ERR "vme_slave_get not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->slave_get) अणु
+		prपूर्णांकk(KERN_ERR "vme_slave_get not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return bridge->slave_get(image, enabled, vme_base, size, buf_base,
+	वापस bridge->slave_get(image, enabled, vme_base, size, buf_base,
 		aspace, cycle);
-}
+पूर्ण
 EXPORT_SYMBOL(vme_slave_get);
 
 /**
- * vme_slave_free - Free VME slave window
- * @resource: Pointer to VME slave resource.
+ * vme_slave_मुक्त - Free VME slave winकरोw
+ * @resource: Poपूर्णांकer to VME slave resource.
  *
- * Free the provided slave resource so that it may be reallocated.
+ * Free the provided slave resource so that it may be पुनः_स्मृतिated.
  */
-void vme_slave_free(struct vme_resource *resource)
-{
-	struct vme_slave_resource *slave_image;
+व्योम vme_slave_मुक्त(काष्ठा vme_resource *resource)
+अणु
+	काष्ठा vme_slave_resource *slave_image;
 
-	if (resource->type != VME_SLAVE) {
-		printk(KERN_ERR "Not a slave resource\n");
-		return;
-	}
+	अगर (resource->type != VME_SLAVE) अणु
+		prपूर्णांकk(KERN_ERR "Not a slave resource\n");
+		वापस;
+	पूर्ण
 
-	slave_image = list_entry(resource->entry, struct vme_slave_resource,
+	slave_image = list_entry(resource->entry, काष्ठा vme_slave_resource,
 		list);
-	if (!slave_image) {
-		printk(KERN_ERR "Can't find slave resource\n");
-		return;
-	}
+	अगर (!slave_image) अणु
+		prपूर्णांकk(KERN_ERR "Can't find slave resource\n");
+		वापस;
+	पूर्ण
 
 	/* Unlock image */
 	mutex_lock(&slave_image->mtx);
-	if (slave_image->locked == 0)
-		printk(KERN_ERR "Image is already free\n");
+	अगर (slave_image->locked == 0)
+		prपूर्णांकk(KERN_ERR "Image is already free\n");
 
 	slave_image->locked = 0;
 	mutex_unlock(&slave_image->mtx);
 
 	/* Free up resource memory */
-	kfree(resource);
-}
-EXPORT_SYMBOL(vme_slave_free);
+	kमुक्त(resource);
+पूर्ण
+EXPORT_SYMBOL(vme_slave_मुक्त);
 
 /**
- * vme_master_request - Request a VME master window resource.
- * @vdev: Pointer to VME device struct vme_dev assigned to driver instance.
+ * vme_master_request - Request a VME master winकरोw resource.
+ * @vdev: Poपूर्णांकer to VME device काष्ठा vme_dev asचिन्हित to driver instance.
  * @address: Required VME address space.
  * @cycle: Required VME data transfer cycle type.
  * @dwidth: Required VME data transfer width.
  *
- * Request use of a VME window resource capable of being set for the requested
+ * Request use of a VME winकरोw resource capable of being set क्रम the requested
  * address space, data transfer cycle and width.
  *
- * Return: Pointer to VME resource on success, NULL on failure.
+ * Return: Poपूर्णांकer to VME resource on success, शून्य on failure.
  */
-struct vme_resource *vme_master_request(struct vme_dev *vdev, u32 address,
+काष्ठा vme_resource *vme_master_request(काष्ठा vme_dev *vdev, u32 address,
 	u32 cycle, u32 dwidth)
-{
-	struct vme_bridge *bridge;
-	struct list_head *master_pos = NULL;
-	struct vme_master_resource *allocated_image = NULL;
-	struct vme_master_resource *master_image = NULL;
-	struct vme_resource *resource = NULL;
+अणु
+	काष्ठा vme_bridge *bridge;
+	काष्ठा list_head *master_pos = शून्य;
+	काष्ठा vme_master_resource *allocated_image = शून्य;
+	काष्ठा vme_master_resource *master_image = शून्य;
+	काष्ठा vme_resource *resource = शून्य;
 
 	bridge = vdev->bridge;
-	if (!bridge) {
-		printk(KERN_ERR "Can't find VME bus\n");
-		goto err_bus;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find VME bus\n");
+		जाओ err_bus;
+	पूर्ण
 
 	/* Loop through master resources */
-	list_for_each(master_pos, &bridge->master_resources) {
+	list_क्रम_each(master_pos, &bridge->master_resources) अणु
 		master_image = list_entry(master_pos,
-			struct vme_master_resource, list);
+			काष्ठा vme_master_resource, list);
 
-		if (!master_image) {
-			printk(KERN_WARNING "Registered NULL master resource\n");
-			continue;
-		}
+		अगर (!master_image) अणु
+			prपूर्णांकk(KERN_WARNING "Registered NULL master resource\n");
+			जारी;
+		पूर्ण
 
 		/* Find an unlocked and compatible image */
 		spin_lock(&master_image->lock);
-		if (((master_image->address_attr & address) == address) &&
+		अगर (((master_image->address_attr & address) == address) &&
 			((master_image->cycle_attr & cycle) == cycle) &&
 			((master_image->width_attr & dwidth) == dwidth) &&
-			(master_image->locked == 0)) {
+			(master_image->locked == 0)) अणु
 
 			master_image->locked = 1;
 			spin_unlock(&master_image->lock);
 			allocated_image = master_image;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		spin_unlock(&master_image->lock);
-	}
+	पूर्ण
 
-	/* Check to see if we found a resource */
-	if (!allocated_image) {
-		printk(KERN_ERR "Can't find a suitable resource\n");
-		goto err_image;
-	}
+	/* Check to see अगर we found a resource */
+	अगर (!allocated_image) अणु
+		prपूर्णांकk(KERN_ERR "Can't find a suitable resource\n");
+		जाओ err_image;
+	पूर्ण
 
-	resource = kmalloc(sizeof(*resource), GFP_KERNEL);
-	if (!resource)
-		goto err_alloc;
+	resource = kदो_स्मृति(माप(*resource), GFP_KERNEL);
+	अगर (!resource)
+		जाओ err_alloc;
 
 	resource->type = VME_MASTER;
 	resource->entry = &allocated_image->list;
 
-	return resource;
+	वापस resource;
 
 err_alloc:
 	/* Unlock image */
@@ -541,373 +542,373 @@ err_alloc:
 	spin_unlock(&master_image->lock);
 err_image:
 err_bus:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(vme_master_request);
 
 /**
- * vme_master_set - Set VME master window configuration.
- * @resource: Pointer to VME master resource.
- * @enabled: State to which the window should be configured.
- * @vme_base: Base address for the window.
- * @size: Size of the VME window.
- * @aspace: VME address space for the VME window.
- * @cycle: VME data transfer cycle type for the VME window.
- * @dwidth: VME data transfer width for the VME window.
+ * vme_master_set - Set VME master winकरोw configuration.
+ * @resource: Poपूर्णांकer to VME master resource.
+ * @enabled: State to which the winकरोw should be configured.
+ * @vme_base: Base address क्रम the winकरोw.
+ * @size: Size of the VME winकरोw.
+ * @aspace: VME address space क्रम the VME winकरोw.
+ * @cycle: VME data transfer cycle type क्रम the VME winकरोw.
+ * @dwidth: VME data transfer width क्रम the VME winकरोw.
  *
- * Set configuration for provided VME master window.
+ * Set configuration क्रम provided VME master winकरोw.
  *
- * Return: Zero on success, -EINVAL if operation is not supported on this
- *         device, if an invalid resource has been provided or invalid
- *         attributes are provided. Hardware specific errors may also be
- *         returned.
+ * Return: Zero on success, -EINVAL अगर operation is not supported on this
+ *         device, अगर an invalid resource has been provided or invalid
+ *         attributes are provided. Hardware specअगरic errors may also be
+ *         वापसed.
  */
-int vme_master_set(struct vme_resource *resource, int enabled,
-	unsigned long long vme_base, unsigned long long size, u32 aspace,
+पूर्णांक vme_master_set(काष्ठा vme_resource *resource, पूर्णांक enabled,
+	अचिन्हित दीर्घ दीर्घ vme_base, अचिन्हित दीर्घ दीर्घ size, u32 aspace,
 	u32 cycle, u32 dwidth)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_master_resource *image;
-	int retval;
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_master_resource *image;
+	पूर्णांक retval;
 
-	if (resource->type != VME_MASTER) {
-		printk(KERN_ERR "Not a master resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_MASTER) अणु
+		prपूर्णांकk(KERN_ERR "Not a master resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	image = list_entry(resource->entry, struct vme_master_resource, list);
+	image = list_entry(resource->entry, काष्ठा vme_master_resource, list);
 
-	if (!bridge->master_set) {
-		printk(KERN_WARNING "vme_master_set not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->master_set) अणु
+		prपूर्णांकk(KERN_WARNING "vme_master_set not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!(((image->address_attr & aspace) == aspace) &&
+	अगर (!(((image->address_attr & aspace) == aspace) &&
 		((image->cycle_attr & cycle) == cycle) &&
-		((image->width_attr & dwidth) == dwidth))) {
-		printk(KERN_WARNING "Invalid attributes\n");
-		return -EINVAL;
-	}
+		((image->width_attr & dwidth) == dwidth))) अणु
+		prपूर्णांकk(KERN_WARNING "Invalid attributes\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	retval = vme_check_window(aspace, vme_base, size);
-	if (retval)
-		return retval;
+	retval = vme_check_winकरोw(aspace, vme_base, size);
+	अगर (retval)
+		वापस retval;
 
-	return bridge->master_set(image, enabled, vme_base, size, aspace,
+	वापस bridge->master_set(image, enabled, vme_base, size, aspace,
 		cycle, dwidth);
-}
+पूर्ण
 EXPORT_SYMBOL(vme_master_set);
 
 /**
- * vme_master_get - Retrieve VME master window configuration.
- * @resource: Pointer to VME master resource.
- * @enabled: Pointer to variable for storing state.
- * @vme_base: Pointer to variable for storing window base address.
- * @size: Pointer to variable for storing window size.
- * @aspace: Pointer to variable for storing VME address space.
- * @cycle: Pointer to variable for storing VME data transfer cycle type.
- * @dwidth: Pointer to variable for storing VME data transfer width.
+ * vme_master_get - Retrieve VME master winकरोw configuration.
+ * @resource: Poपूर्णांकer to VME master resource.
+ * @enabled: Poपूर्णांकer to variable क्रम storing state.
+ * @vme_base: Poपूर्णांकer to variable क्रम storing winकरोw base address.
+ * @size: Poपूर्णांकer to variable क्रम storing winकरोw size.
+ * @aspace: Poपूर्णांकer to variable क्रम storing VME address space.
+ * @cycle: Poपूर्णांकer to variable क्रम storing VME data transfer cycle type.
+ * @dwidth: Poपूर्णांकer to variable क्रम storing VME data transfer width.
  *
- * Return configuration for provided VME master window.
+ * Return configuration क्रम provided VME master winकरोw.
  *
- * Return: Zero on success, -EINVAL if operation is not supported on this
- *         device or if an invalid resource has been provided.
+ * Return: Zero on success, -EINVAL अगर operation is not supported on this
+ *         device or अगर an invalid resource has been provided.
  */
-int vme_master_get(struct vme_resource *resource, int *enabled,
-	unsigned long long *vme_base, unsigned long long *size, u32 *aspace,
+पूर्णांक vme_master_get(काष्ठा vme_resource *resource, पूर्णांक *enabled,
+	अचिन्हित दीर्घ दीर्घ *vme_base, अचिन्हित दीर्घ दीर्घ *size, u32 *aspace,
 	u32 *cycle, u32 *dwidth)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_master_resource *image;
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_master_resource *image;
 
-	if (resource->type != VME_MASTER) {
-		printk(KERN_ERR "Not a master resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_MASTER) अणु
+		prपूर्णांकk(KERN_ERR "Not a master resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	image = list_entry(resource->entry, struct vme_master_resource, list);
+	image = list_entry(resource->entry, काष्ठा vme_master_resource, list);
 
-	if (!bridge->master_get) {
-		printk(KERN_WARNING "%s not supported\n", __func__);
-		return -EINVAL;
-	}
+	अगर (!bridge->master_get) अणु
+		prपूर्णांकk(KERN_WARNING "%s not supported\n", __func__);
+		वापस -EINVAL;
+	पूर्ण
 
-	return bridge->master_get(image, enabled, vme_base, size, aspace,
+	वापस bridge->master_get(image, enabled, vme_base, size, aspace,
 		cycle, dwidth);
-}
+पूर्ण
 EXPORT_SYMBOL(vme_master_get);
 
 /**
- * vme_master_read - Read data from VME space into a buffer.
- * @resource: Pointer to VME master resource.
- * @buf: Pointer to buffer where data should be transferred.
+ * vme_master_पढ़ो - Read data from VME space पूर्णांकo a buffer.
+ * @resource: Poपूर्णांकer to VME master resource.
+ * @buf: Poपूर्णांकer to buffer where data should be transferred.
  * @count: Number of bytes to transfer.
- * @offset: Offset into VME master window at which to start transfer.
+ * @offset: Offset पूर्णांकo VME master winकरोw at which to start transfer.
  *
- * Perform read of count bytes of data from location on VME bus which maps into
- * the VME master window at offset to buf.
+ * Perक्रमm पढ़ो of count bytes of data from location on VME bus which maps पूर्णांकo
+ * the VME master winकरोw at offset to buf.
  *
- * Return: Number of bytes read, -EINVAL if resource is not a VME master
- *         resource or read operation is not supported. -EFAULT returned if
- *         invalid offset is provided. Hardware specific errors may also be
- *         returned.
+ * Return: Number of bytes पढ़ो, -EINVAL अगर resource is not a VME master
+ *         resource or पढ़ो operation is not supported. -EFAULT वापसed अगर
+ *         invalid offset is provided. Hardware specअगरic errors may also be
+ *         वापसed.
  */
-ssize_t vme_master_read(struct vme_resource *resource, void *buf, size_t count,
+sमाप_प्रकार vme_master_पढ़ो(काष्ठा vme_resource *resource, व्योम *buf, माप_प्रकार count,
 	loff_t offset)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_master_resource *image;
-	size_t length;
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_master_resource *image;
+	माप_प्रकार length;
 
-	if (!bridge->master_read) {
-		printk(KERN_WARNING "Reading from resource not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->master_पढ़ो) अणु
+		prपूर्णांकk(KERN_WARNING "Reading from resource not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (resource->type != VME_MASTER) {
-		printk(KERN_ERR "Not a master resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_MASTER) अणु
+		prपूर्णांकk(KERN_ERR "Not a master resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	image = list_entry(resource->entry, struct vme_master_resource, list);
+	image = list_entry(resource->entry, काष्ठा vme_master_resource, list);
 
 	length = vme_get_size(resource);
 
-	if (offset > length) {
-		printk(KERN_WARNING "Invalid Offset\n");
-		return -EFAULT;
-	}
+	अगर (offset > length) अणु
+		prपूर्णांकk(KERN_WARNING "Invalid Offset\n");
+		वापस -EFAULT;
+	पूर्ण
 
-	if ((offset + count) > length)
+	अगर ((offset + count) > length)
 		count = length - offset;
 
-	return bridge->master_read(image, buf, count, offset);
+	वापस bridge->master_पढ़ो(image, buf, count, offset);
 
-}
-EXPORT_SYMBOL(vme_master_read);
+पूर्ण
+EXPORT_SYMBOL(vme_master_पढ़ो);
 
 /**
- * vme_master_write - Write data out to VME space from a buffer.
- * @resource: Pointer to VME master resource.
- * @buf: Pointer to buffer holding data to transfer.
+ * vme_master_ग_लिखो - Write data out to VME space from a buffer.
+ * @resource: Poपूर्णांकer to VME master resource.
+ * @buf: Poपूर्णांकer to buffer holding data to transfer.
  * @count: Number of bytes to transfer.
- * @offset: Offset into VME master window at which to start transfer.
+ * @offset: Offset पूर्णांकo VME master winकरोw at which to start transfer.
  *
- * Perform write of count bytes of data from buf to location on VME bus which
- * maps into the VME master window at offset.
+ * Perक्रमm ग_लिखो of count bytes of data from buf to location on VME bus which
+ * maps पूर्णांकo the VME master winकरोw at offset.
  *
- * Return: Number of bytes written, -EINVAL if resource is not a VME master
- *         resource or write operation is not supported. -EFAULT returned if
- *         invalid offset is provided. Hardware specific errors may also be
- *         returned.
+ * Return: Number of bytes written, -EINVAL अगर resource is not a VME master
+ *         resource or ग_लिखो operation is not supported. -EFAULT वापसed अगर
+ *         invalid offset is provided. Hardware specअगरic errors may also be
+ *         वापसed.
  */
-ssize_t vme_master_write(struct vme_resource *resource, void *buf,
-	size_t count, loff_t offset)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_master_resource *image;
-	size_t length;
+sमाप_प्रकार vme_master_ग_लिखो(काष्ठा vme_resource *resource, व्योम *buf,
+	माप_प्रकार count, loff_t offset)
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_master_resource *image;
+	माप_प्रकार length;
 
-	if (!bridge->master_write) {
-		printk(KERN_WARNING "Writing to resource not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->master_ग_लिखो) अणु
+		prपूर्णांकk(KERN_WARNING "Writing to resource not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (resource->type != VME_MASTER) {
-		printk(KERN_ERR "Not a master resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_MASTER) अणु
+		prपूर्णांकk(KERN_ERR "Not a master resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	image = list_entry(resource->entry, struct vme_master_resource, list);
+	image = list_entry(resource->entry, काष्ठा vme_master_resource, list);
 
 	length = vme_get_size(resource);
 
-	if (offset > length) {
-		printk(KERN_WARNING "Invalid Offset\n");
-		return -EFAULT;
-	}
+	अगर (offset > length) अणु
+		prपूर्णांकk(KERN_WARNING "Invalid Offset\n");
+		वापस -EFAULT;
+	पूर्ण
 
-	if ((offset + count) > length)
+	अगर ((offset + count) > length)
 		count = length - offset;
 
-	return bridge->master_write(image, buf, count, offset);
-}
-EXPORT_SYMBOL(vme_master_write);
+	वापस bridge->master_ग_लिखो(image, buf, count, offset);
+पूर्ण
+EXPORT_SYMBOL(vme_master_ग_लिखो);
 
 /**
- * vme_master_rmw - Perform read-modify-write cycle.
- * @resource: Pointer to VME master resource.
+ * vme_master_rmw - Perक्रमm पढ़ो-modअगरy-ग_लिखो cycle.
+ * @resource: Poपूर्णांकer to VME master resource.
  * @mask: Bits to be compared and swapped in operation.
- * @compare: Bits to be compared with data read from offset.
- * @swap: Bits to be swapped in data read from offset.
- * @offset: Offset into VME master window at which to perform operation.
+ * @compare: Bits to be compared with data पढ़ो from offset.
+ * @swap: Bits to be swapped in data पढ़ो from offset.
+ * @offset: Offset पूर्णांकo VME master winकरोw at which to perक्रमm operation.
  *
- * Perform read-modify-write cycle on provided location:
- * - Location on VME bus is read.
+ * Perक्रमm पढ़ो-modअगरy-ग_लिखो cycle on provided location:
+ * - Location on VME bus is पढ़ो.
  * - Bits selected by mask are compared with compare.
  * - Where a selected bit matches that in compare and are selected in swap,
  * the bit is swapped.
  * - Result written back to location on VME bus.
  *
- * Return: Bytes written on success, -EINVAL if resource is not a VME master
- *         resource or RMW operation is not supported. Hardware specific
- *         errors may also be returned.
+ * Return: Bytes written on success, -EINVAL अगर resource is not a VME master
+ *         resource or RMW operation is not supported. Hardware specअगरic
+ *         errors may also be वापसed.
  */
-unsigned int vme_master_rmw(struct vme_resource *resource, unsigned int mask,
-	unsigned int compare, unsigned int swap, loff_t offset)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_master_resource *image;
+अचिन्हित पूर्णांक vme_master_rmw(काष्ठा vme_resource *resource, अचिन्हित पूर्णांक mask,
+	अचिन्हित पूर्णांक compare, अचिन्हित पूर्णांक swap, loff_t offset)
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_master_resource *image;
 
-	if (!bridge->master_rmw) {
-		printk(KERN_WARNING "Writing to resource not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->master_rmw) अणु
+		prपूर्णांकk(KERN_WARNING "Writing to resource not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (resource->type != VME_MASTER) {
-		printk(KERN_ERR "Not a master resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_MASTER) अणु
+		prपूर्णांकk(KERN_ERR "Not a master resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	image = list_entry(resource->entry, struct vme_master_resource, list);
+	image = list_entry(resource->entry, काष्ठा vme_master_resource, list);
 
-	return bridge->master_rmw(image, mask, compare, swap, offset);
-}
+	वापस bridge->master_rmw(image, mask, compare, swap, offset);
+पूर्ण
 EXPORT_SYMBOL(vme_master_rmw);
 
 /**
- * vme_master_mmap - Mmap region of VME master window.
- * @resource: Pointer to VME master resource.
- * @vma: Pointer to definition of user mapping.
+ * vme_master_mmap - Mmap region of VME master winकरोw.
+ * @resource: Poपूर्णांकer to VME master resource.
+ * @vma: Poपूर्णांकer to definition of user mapping.
  *
- * Memory map a region of the VME master window into user space.
+ * Memory map a region of the VME master winकरोw पूर्णांकo user space.
  *
- * Return: Zero on success, -EINVAL if resource is not a VME master
- *         resource or -EFAULT if map exceeds window size. Other generic mmap
- *         errors may also be returned.
+ * Return: Zero on success, -EINVAL अगर resource is not a VME master
+ *         resource or -EFAULT अगर map exceeds winकरोw size. Other generic mmap
+ *         errors may also be वापसed.
  */
-int vme_master_mmap(struct vme_resource *resource, struct vm_area_struct *vma)
-{
-	struct vme_master_resource *image;
+पूर्णांक vme_master_mmap(काष्ठा vme_resource *resource, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा vme_master_resource *image;
 	phys_addr_t phys_addr;
-	unsigned long vma_size;
+	अचिन्हित दीर्घ vma_size;
 
-	if (resource->type != VME_MASTER) {
+	अगर (resource->type != VME_MASTER) अणु
 		pr_err("Not a master resource\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	image = list_entry(resource->entry, struct vme_master_resource, list);
+	image = list_entry(resource->entry, काष्ठा vme_master_resource, list);
 	phys_addr = image->bus_resource.start + (vma->vm_pgoff << PAGE_SHIFT);
 	vma_size = vma->vm_end - vma->vm_start;
 
-	if (phys_addr + vma_size > image->bus_resource.end + 1) {
+	अगर (phys_addr + vma_size > image->bus_resource.end + 1) अणु
 		pr_err("Map size cannot exceed the window size\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	vma->vm_page_prot = pgprot_noncached(vma->vm_page_prot);
 
-	return vm_iomap_memory(vma, phys_addr, vma->vm_end - vma->vm_start);
-}
+	वापस vm_iomap_memory(vma, phys_addr, vma->vm_end - vma->vm_start);
+पूर्ण
 EXPORT_SYMBOL(vme_master_mmap);
 
 /**
- * vme_master_free - Free VME master window
- * @resource: Pointer to VME master resource.
+ * vme_master_मुक्त - Free VME master winकरोw
+ * @resource: Poपूर्णांकer to VME master resource.
  *
- * Free the provided master resource so that it may be reallocated.
+ * Free the provided master resource so that it may be पुनः_स्मृतिated.
  */
-void vme_master_free(struct vme_resource *resource)
-{
-	struct vme_master_resource *master_image;
+व्योम vme_master_मुक्त(काष्ठा vme_resource *resource)
+अणु
+	काष्ठा vme_master_resource *master_image;
 
-	if (resource->type != VME_MASTER) {
-		printk(KERN_ERR "Not a master resource\n");
-		return;
-	}
+	अगर (resource->type != VME_MASTER) अणु
+		prपूर्णांकk(KERN_ERR "Not a master resource\n");
+		वापस;
+	पूर्ण
 
-	master_image = list_entry(resource->entry, struct vme_master_resource,
+	master_image = list_entry(resource->entry, काष्ठा vme_master_resource,
 		list);
-	if (!master_image) {
-		printk(KERN_ERR "Can't find master resource\n");
-		return;
-	}
+	अगर (!master_image) अणु
+		prपूर्णांकk(KERN_ERR "Can't find master resource\n");
+		वापस;
+	पूर्ण
 
 	/* Unlock image */
 	spin_lock(&master_image->lock);
-	if (master_image->locked == 0)
-		printk(KERN_ERR "Image is already free\n");
+	अगर (master_image->locked == 0)
+		prपूर्णांकk(KERN_ERR "Image is already free\n");
 
 	master_image->locked = 0;
 	spin_unlock(&master_image->lock);
 
 	/* Free up resource memory */
-	kfree(resource);
-}
-EXPORT_SYMBOL(vme_master_free);
+	kमुक्त(resource);
+पूर्ण
+EXPORT_SYMBOL(vme_master_मुक्त);
 
 /**
  * vme_dma_request - Request a DMA controller.
- * @vdev: Pointer to VME device struct vme_dev assigned to driver instance.
+ * @vdev: Poपूर्णांकer to VME device काष्ठा vme_dev asचिन्हित to driver instance.
  * @route: Required src/destination combination.
  *
- * Request a VME DMA controller with capability to perform transfers bewteen
+ * Request a VME DMA controller with capability to perक्रमm transfers bewteen
  * requested source/destination combination.
  *
- * Return: Pointer to VME DMA resource on success, NULL on failure.
+ * Return: Poपूर्णांकer to VME DMA resource on success, शून्य on failure.
  */
-struct vme_resource *vme_dma_request(struct vme_dev *vdev, u32 route)
-{
-	struct vme_bridge *bridge;
-	struct list_head *dma_pos = NULL;
-	struct vme_dma_resource *allocated_ctrlr = NULL;
-	struct vme_dma_resource *dma_ctrlr = NULL;
-	struct vme_resource *resource = NULL;
+काष्ठा vme_resource *vme_dma_request(काष्ठा vme_dev *vdev, u32 route)
+अणु
+	काष्ठा vme_bridge *bridge;
+	काष्ठा list_head *dma_pos = शून्य;
+	काष्ठा vme_dma_resource *allocated_ctrlr = शून्य;
+	काष्ठा vme_dma_resource *dma_ctrlr = शून्य;
+	काष्ठा vme_resource *resource = शून्य;
 
 	/* XXX Not checking resource attributes */
-	printk(KERN_ERR "No VME resource Attribute tests done\n");
+	prपूर्णांकk(KERN_ERR "No VME resource Attribute tests done\n");
 
 	bridge = vdev->bridge;
-	if (!bridge) {
-		printk(KERN_ERR "Can't find VME bus\n");
-		goto err_bus;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find VME bus\n");
+		जाओ err_bus;
+	पूर्ण
 
 	/* Loop through DMA resources */
-	list_for_each(dma_pos, &bridge->dma_resources) {
+	list_क्रम_each(dma_pos, &bridge->dma_resources) अणु
 		dma_ctrlr = list_entry(dma_pos,
-			struct vme_dma_resource, list);
-		if (!dma_ctrlr) {
-			printk(KERN_ERR "Registered NULL DMA resource\n");
-			continue;
-		}
+			काष्ठा vme_dma_resource, list);
+		अगर (!dma_ctrlr) अणु
+			prपूर्णांकk(KERN_ERR "Registered NULL DMA resource\n");
+			जारी;
+		पूर्ण
 
 		/* Find an unlocked and compatible controller */
 		mutex_lock(&dma_ctrlr->mtx);
-		if (((dma_ctrlr->route_attr & route) == route) &&
-			(dma_ctrlr->locked == 0)) {
+		अगर (((dma_ctrlr->route_attr & route) == route) &&
+			(dma_ctrlr->locked == 0)) अणु
 
 			dma_ctrlr->locked = 1;
 			mutex_unlock(&dma_ctrlr->mtx);
 			allocated_ctrlr = dma_ctrlr;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&dma_ctrlr->mtx);
-	}
+	पूर्ण
 
-	/* Check to see if we found a resource */
-	if (!allocated_ctrlr)
-		goto err_ctrlr;
+	/* Check to see अगर we found a resource */
+	अगर (!allocated_ctrlr)
+		जाओ err_ctrlr;
 
-	resource = kmalloc(sizeof(*resource), GFP_KERNEL);
-	if (!resource)
-		goto err_alloc;
+	resource = kदो_स्मृति(माप(*resource), GFP_KERNEL);
+	अगर (!resource)
+		जाओ err_alloc;
 
 	resource->type = VME_DMA;
 	resource->entry = &allocated_ctrlr->list;
 
-	return resource;
+	वापस resource;
 
 err_alloc:
 	/* Unlock image */
@@ -916,41 +917,41 @@ err_alloc:
 	mutex_unlock(&dma_ctrlr->mtx);
 err_ctrlr:
 err_bus:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(vme_dma_request);
 
 /**
  * vme_new_dma_list - Create new VME DMA list.
- * @resource: Pointer to VME DMA resource.
+ * @resource: Poपूर्णांकer to VME DMA resource.
  *
- * Create a new VME DMA list. It is the responsibility of the user to free
- * the list once it is no longer required with vme_dma_list_free().
+ * Create a new VME DMA list. It is the responsibility of the user to मुक्त
+ * the list once it is no दीर्घer required with vme_dma_list_मुक्त().
  *
- * Return: Pointer to new VME DMA list, NULL on allocation failure or invalid
+ * Return: Poपूर्णांकer to new VME DMA list, शून्य on allocation failure or invalid
  *         VME DMA resource.
  */
-struct vme_dma_list *vme_new_dma_list(struct vme_resource *resource)
-{
-	struct vme_dma_list *dma_list;
+काष्ठा vme_dma_list *vme_new_dma_list(काष्ठा vme_resource *resource)
+अणु
+	काष्ठा vme_dma_list *dma_list;
 
-	if (resource->type != VME_DMA) {
-		printk(KERN_ERR "Not a DMA resource\n");
-		return NULL;
-	}
+	अगर (resource->type != VME_DMA) अणु
+		prपूर्णांकk(KERN_ERR "Not a DMA resource\n");
+		वापस शून्य;
+	पूर्ण
 
-	dma_list = kmalloc(sizeof(*dma_list), GFP_KERNEL);
-	if (!dma_list)
-		return NULL;
+	dma_list = kदो_स्मृति(माप(*dma_list), GFP_KERNEL);
+	अगर (!dma_list)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&dma_list->entries);
 	dma_list->parent = list_entry(resource->entry,
-				      struct vme_dma_resource,
+				      काष्ठा vme_dma_resource,
 				      list);
 	mutex_init(&dma_list->mtx);
 
-	return dma_list;
-}
+	वापस dma_list;
+पूर्ण
 EXPORT_SYMBOL(vme_new_dma_list);
 
 /**
@@ -958,197 +959,197 @@ EXPORT_SYMBOL(vme_new_dma_list);
  * @pattern: Value to use used as pattern
  * @type: Type of pattern to be written.
  *
- * Create VME DMA list attribute for pattern generation. It is the
- * responsibility of the user to free used attributes using
- * vme_dma_free_attribute().
+ * Create VME DMA list attribute क्रम pattern generation. It is the
+ * responsibility of the user to मुक्त used attributes using
+ * vme_dma_मुक्त_attribute().
  *
- * Return: Pointer to VME DMA attribute, NULL on failure.
+ * Return: Poपूर्णांकer to VME DMA attribute, शून्य on failure.
  */
-struct vme_dma_attr *vme_dma_pattern_attribute(u32 pattern, u32 type)
-{
-	struct vme_dma_attr *attributes;
-	struct vme_dma_pattern *pattern_attr;
+काष्ठा vme_dma_attr *vme_dma_pattern_attribute(u32 pattern, u32 type)
+अणु
+	काष्ठा vme_dma_attr *attributes;
+	काष्ठा vme_dma_pattern *pattern_attr;
 
-	attributes = kmalloc(sizeof(*attributes), GFP_KERNEL);
-	if (!attributes)
-		goto err_attr;
+	attributes = kदो_स्मृति(माप(*attributes), GFP_KERNEL);
+	अगर (!attributes)
+		जाओ err_attr;
 
-	pattern_attr = kmalloc(sizeof(*pattern_attr), GFP_KERNEL);
-	if (!pattern_attr)
-		goto err_pat;
+	pattern_attr = kदो_स्मृति(माप(*pattern_attr), GFP_KERNEL);
+	अगर (!pattern_attr)
+		जाओ err_pat;
 
 	attributes->type = VME_DMA_PATTERN;
-	attributes->private = (void *)pattern_attr;
+	attributes->निजी = (व्योम *)pattern_attr;
 
 	pattern_attr->pattern = pattern;
 	pattern_attr->type = type;
 
-	return attributes;
+	वापस attributes;
 
 err_pat:
-	kfree(attributes);
+	kमुक्त(attributes);
 err_attr:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(vme_dma_pattern_attribute);
 
 /**
  * vme_dma_pci_attribute - Create "PCI" type VME DMA list attribute.
- * @address: PCI base address for DMA transfer.
+ * @address: PCI base address क्रम DMA transfer.
  *
- * Create VME DMA list attribute pointing to a location on PCI for DMA
- * transfers. It is the responsibility of the user to free used attributes
- * using vme_dma_free_attribute().
+ * Create VME DMA list attribute poपूर्णांकing to a location on PCI क्रम DMA
+ * transfers. It is the responsibility of the user to मुक्त used attributes
+ * using vme_dma_मुक्त_attribute().
  *
- * Return: Pointer to VME DMA attribute, NULL on failure.
+ * Return: Poपूर्णांकer to VME DMA attribute, शून्य on failure.
  */
-struct vme_dma_attr *vme_dma_pci_attribute(dma_addr_t address)
-{
-	struct vme_dma_attr *attributes;
-	struct vme_dma_pci *pci_attr;
+काष्ठा vme_dma_attr *vme_dma_pci_attribute(dma_addr_t address)
+अणु
+	काष्ठा vme_dma_attr *attributes;
+	काष्ठा vme_dma_pci *pci_attr;
 
 	/* XXX Run some sanity checks here */
 
-	attributes = kmalloc(sizeof(*attributes), GFP_KERNEL);
-	if (!attributes)
-		goto err_attr;
+	attributes = kदो_स्मृति(माप(*attributes), GFP_KERNEL);
+	अगर (!attributes)
+		जाओ err_attr;
 
-	pci_attr = kmalloc(sizeof(*pci_attr), GFP_KERNEL);
-	if (!pci_attr)
-		goto err_pci;
+	pci_attr = kदो_स्मृति(माप(*pci_attr), GFP_KERNEL);
+	अगर (!pci_attr)
+		जाओ err_pci;
 
 	attributes->type = VME_DMA_PCI;
-	attributes->private = (void *)pci_attr;
+	attributes->निजी = (व्योम *)pci_attr;
 
 	pci_attr->address = address;
 
-	return attributes;
+	वापस attributes;
 
 err_pci:
-	kfree(attributes);
+	kमुक्त(attributes);
 err_attr:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(vme_dma_pci_attribute);
 
 /**
  * vme_dma_vme_attribute - Create "VME" type VME DMA list attribute.
- * @address: VME base address for DMA transfer.
- * @aspace: VME address space to use for DMA transfer.
- * @cycle: VME bus cycle to use for DMA transfer.
- * @dwidth: VME data width to use for DMA transfer.
+ * @address: VME base address क्रम DMA transfer.
+ * @aspace: VME address space to use क्रम DMA transfer.
+ * @cycle: VME bus cycle to use क्रम DMA transfer.
+ * @dwidth: VME data width to use क्रम DMA transfer.
  *
- * Create VME DMA list attribute pointing to a location on the VME bus for DMA
- * transfers. It is the responsibility of the user to free used attributes
- * using vme_dma_free_attribute().
+ * Create VME DMA list attribute poपूर्णांकing to a location on the VME bus क्रम DMA
+ * transfers. It is the responsibility of the user to मुक्त used attributes
+ * using vme_dma_मुक्त_attribute().
  *
- * Return: Pointer to VME DMA attribute, NULL on failure.
+ * Return: Poपूर्णांकer to VME DMA attribute, शून्य on failure.
  */
-struct vme_dma_attr *vme_dma_vme_attribute(unsigned long long address,
+काष्ठा vme_dma_attr *vme_dma_vme_attribute(अचिन्हित दीर्घ दीर्घ address,
 	u32 aspace, u32 cycle, u32 dwidth)
-{
-	struct vme_dma_attr *attributes;
-	struct vme_dma_vme *vme_attr;
+अणु
+	काष्ठा vme_dma_attr *attributes;
+	काष्ठा vme_dma_vme *vme_attr;
 
-	attributes = kmalloc(sizeof(*attributes), GFP_KERNEL);
-	if (!attributes)
-		goto err_attr;
+	attributes = kदो_स्मृति(माप(*attributes), GFP_KERNEL);
+	अगर (!attributes)
+		जाओ err_attr;
 
-	vme_attr = kmalloc(sizeof(*vme_attr), GFP_KERNEL);
-	if (!vme_attr)
-		goto err_vme;
+	vme_attr = kदो_स्मृति(माप(*vme_attr), GFP_KERNEL);
+	अगर (!vme_attr)
+		जाओ err_vme;
 
 	attributes->type = VME_DMA_VME;
-	attributes->private = (void *)vme_attr;
+	attributes->निजी = (व्योम *)vme_attr;
 
 	vme_attr->address = address;
 	vme_attr->aspace = aspace;
 	vme_attr->cycle = cycle;
 	vme_attr->dwidth = dwidth;
 
-	return attributes;
+	वापस attributes;
 
 err_vme:
-	kfree(attributes);
+	kमुक्त(attributes);
 err_attr:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(vme_dma_vme_attribute);
 
 /**
- * vme_dma_free_attribute - Free DMA list attribute.
- * @attributes: Pointer to DMA list attribute.
+ * vme_dma_मुक्त_attribute - Free DMA list attribute.
+ * @attributes: Poपूर्णांकer to DMA list attribute.
  *
- * Free VME DMA list attribute. VME DMA list attributes can be safely freed
- * once vme_dma_list_add() has returned.
+ * Free VME DMA list attribute. VME DMA list attributes can be safely मुक्तd
+ * once vme_dma_list_add() has वापसed.
  */
-void vme_dma_free_attribute(struct vme_dma_attr *attributes)
-{
-	kfree(attributes->private);
-	kfree(attributes);
-}
-EXPORT_SYMBOL(vme_dma_free_attribute);
+व्योम vme_dma_मुक्त_attribute(काष्ठा vme_dma_attr *attributes)
+अणु
+	kमुक्त(attributes->निजी);
+	kमुक्त(attributes);
+पूर्ण
+EXPORT_SYMBOL(vme_dma_मुक्त_attribute);
 
 /**
  * vme_dma_list_add - Add enty to a VME DMA list.
- * @list: Pointer to VME list.
- * @src: Pointer to DMA list attribute to use as source.
- * @dest: Pointer to DMA list attribute to use as destination.
+ * @list: Poपूर्णांकer to VME list.
+ * @src: Poपूर्णांकer to DMA list attribute to use as source.
+ * @dest: Poपूर्णांकer to DMA list attribute to use as destination.
  * @count: Number of bytes to transfer.
  *
- * Add an entry to the provided VME DMA list. Entry requires pointers to source
+ * Add an entry to the provided VME DMA list. Entry requires poपूर्णांकers to source
  * and destination DMA attributes and a count.
  *
- * Please note, the attributes supported as source and destinations for
+ * Please note, the attributes supported as source and destinations क्रम
  * transfers are hardware dependent.
  *
- * Return: Zero on success, -EINVAL if operation is not supported on this
- *         device or if the link list has already been submitted for execution.
- *         Hardware specific errors also possible.
+ * Return: Zero on success, -EINVAL अगर operation is not supported on this
+ *         device or अगर the link list has alपढ़ोy been submitted क्रम execution.
+ *         Hardware specअगरic errors also possible.
  */
-int vme_dma_list_add(struct vme_dma_list *list, struct vme_dma_attr *src,
-	struct vme_dma_attr *dest, size_t count)
-{
-	struct vme_bridge *bridge = list->parent->parent;
-	int retval;
+पूर्णांक vme_dma_list_add(काष्ठा vme_dma_list *list, काष्ठा vme_dma_attr *src,
+	काष्ठा vme_dma_attr *dest, माप_प्रकार count)
+अणु
+	काष्ठा vme_bridge *bridge = list->parent->parent;
+	पूर्णांक retval;
 
-	if (!bridge->dma_list_add) {
-		printk(KERN_WARNING "Link List DMA generation not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->dma_list_add) अणु
+		prपूर्णांकk(KERN_WARNING "Link List DMA generation not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!mutex_trylock(&list->mtx)) {
-		printk(KERN_ERR "Link List already submitted\n");
-		return -EINVAL;
-	}
+	अगर (!mutex_trylock(&list->mtx)) अणु
+		prपूर्णांकk(KERN_ERR "Link List already submitted\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	retval = bridge->dma_list_add(list, src, dest, count);
 
 	mutex_unlock(&list->mtx);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL(vme_dma_list_add);
 
 /**
- * vme_dma_list_exec - Queue a VME DMA list for execution.
- * @list: Pointer to VME list.
+ * vme_dma_list_exec - Queue a VME DMA list क्रम execution.
+ * @list: Poपूर्णांकer to VME list.
  *
- * Queue the provided VME DMA list for execution. The call will return once the
+ * Queue the provided VME DMA list क्रम execution. The call will वापस once the
  * list has been executed.
  *
- * Return: Zero on success, -EINVAL if operation is not supported on this
- *         device. Hardware specific errors also possible.
+ * Return: Zero on success, -EINVAL अगर operation is not supported on this
+ *         device. Hardware specअगरic errors also possible.
  */
-int vme_dma_list_exec(struct vme_dma_list *list)
-{
-	struct vme_bridge *bridge = list->parent->parent;
-	int retval;
+पूर्णांक vme_dma_list_exec(काष्ठा vme_dma_list *list)
+अणु
+	काष्ठा vme_bridge *bridge = list->parent->parent;
+	पूर्णांक retval;
 
-	if (!bridge->dma_list_exec) {
-		printk(KERN_ERR "Link List DMA execution not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->dma_list_exec) अणु
+		prपूर्णांकk(KERN_ERR "Link List DMA execution not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&list->mtx);
 
@@ -1156,130 +1157,130 @@ int vme_dma_list_exec(struct vme_dma_list *list)
 
 	mutex_unlock(&list->mtx);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 EXPORT_SYMBOL(vme_dma_list_exec);
 
 /**
- * vme_dma_list_free - Free a VME DMA list.
- * @list: Pointer to VME list.
+ * vme_dma_list_मुक्त - Free a VME DMA list.
+ * @list: Poपूर्णांकer to VME list.
  *
  * Free the provided DMA list and all its entries.
  *
- * Return: Zero on success, -EINVAL on invalid VME resource, -EBUSY if resource
- *         is still in use. Hardware specific errors also possible.
+ * Return: Zero on success, -EINVAL on invalid VME resource, -EBUSY अगर resource
+ *         is still in use. Hardware specअगरic errors also possible.
  */
-int vme_dma_list_free(struct vme_dma_list *list)
-{
-	struct vme_bridge *bridge = list->parent->parent;
-	int retval;
+पूर्णांक vme_dma_list_मुक्त(काष्ठा vme_dma_list *list)
+अणु
+	काष्ठा vme_bridge *bridge = list->parent->parent;
+	पूर्णांक retval;
 
-	if (!bridge->dma_list_empty) {
-		printk(KERN_WARNING "Emptying of Link Lists not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->dma_list_empty) अणु
+		prपूर्णांकk(KERN_WARNING "Emptying of Link Lists not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!mutex_trylock(&list->mtx)) {
-		printk(KERN_ERR "Link List in use\n");
-		return -EBUSY;
-	}
+	अगर (!mutex_trylock(&list->mtx)) अणु
+		prपूर्णांकk(KERN_ERR "Link List in use\n");
+		वापस -EBUSY;
+	पूर्ण
 
 	/*
 	 * Empty out all of the entries from the DMA list. We need to go to the
-	 * low level driver as DMA entries are driver specific.
+	 * low level driver as DMA entries are driver specअगरic.
 	 */
 	retval = bridge->dma_list_empty(list);
-	if (retval) {
-		printk(KERN_ERR "Unable to empty link-list entries\n");
+	अगर (retval) अणु
+		prपूर्णांकk(KERN_ERR "Unable to empty link-list entries\n");
 		mutex_unlock(&list->mtx);
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 	mutex_unlock(&list->mtx);
-	kfree(list);
+	kमुक्त(list);
 
-	return retval;
-}
-EXPORT_SYMBOL(vme_dma_list_free);
+	वापस retval;
+पूर्ण
+EXPORT_SYMBOL(vme_dma_list_मुक्त);
 
 /**
- * vme_dma_free - Free a VME DMA resource.
- * @resource: Pointer to VME DMA resource.
+ * vme_dma_मुक्त - Free a VME DMA resource.
+ * @resource: Poपूर्णांकer to VME DMA resource.
  *
- * Free the provided DMA resource so that it may be reallocated.
+ * Free the provided DMA resource so that it may be पुनः_स्मृतिated.
  *
- * Return: Zero on success, -EINVAL on invalid VME resource, -EBUSY if resource
+ * Return: Zero on success, -EINVAL on invalid VME resource, -EBUSY अगर resource
  *         is still active.
  */
-int vme_dma_free(struct vme_resource *resource)
-{
-	struct vme_dma_resource *ctrlr;
+पूर्णांक vme_dma_मुक्त(काष्ठा vme_resource *resource)
+अणु
+	काष्ठा vme_dma_resource *ctrlr;
 
-	if (resource->type != VME_DMA) {
-		printk(KERN_ERR "Not a DMA resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_DMA) अणु
+		prपूर्णांकk(KERN_ERR "Not a DMA resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	ctrlr = list_entry(resource->entry, struct vme_dma_resource, list);
+	ctrlr = list_entry(resource->entry, काष्ठा vme_dma_resource, list);
 
-	if (!mutex_trylock(&ctrlr->mtx)) {
-		printk(KERN_ERR "Resource busy, can't free\n");
-		return -EBUSY;
-	}
+	अगर (!mutex_trylock(&ctrlr->mtx)) अणु
+		prपूर्णांकk(KERN_ERR "Resource busy, can't free\n");
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!(list_empty(&ctrlr->pending) && list_empty(&ctrlr->running))) {
-		printk(KERN_WARNING "Resource still processing transfers\n");
+	अगर (!(list_empty(&ctrlr->pending) && list_empty(&ctrlr->running))) अणु
+		prपूर्णांकk(KERN_WARNING "Resource still processing transfers\n");
 		mutex_unlock(&ctrlr->mtx);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	ctrlr->locked = 0;
 
 	mutex_unlock(&ctrlr->mtx);
 
-	kfree(resource);
+	kमुक्त(resource);
 
-	return 0;
-}
-EXPORT_SYMBOL(vme_dma_free);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(vme_dma_मुक्त);
 
-void vme_bus_error_handler(struct vme_bridge *bridge,
-			   unsigned long long address, int am)
-{
-	struct list_head *handler_pos = NULL;
-	struct vme_error_handler *handler;
-	int handler_triggered = 0;
+व्योम vme_bus_error_handler(काष्ठा vme_bridge *bridge,
+			   अचिन्हित दीर्घ दीर्घ address, पूर्णांक am)
+अणु
+	काष्ठा list_head *handler_pos = शून्य;
+	काष्ठा vme_error_handler *handler;
+	पूर्णांक handler_triggered = 0;
 	u32 aspace = vme_get_aspace(am);
 
-	list_for_each(handler_pos, &bridge->vme_error_handlers) {
-		handler = list_entry(handler_pos, struct vme_error_handler,
+	list_क्रम_each(handler_pos, &bridge->vme_error_handlers) अणु
+		handler = list_entry(handler_pos, काष्ठा vme_error_handler,
 				     list);
-		if ((aspace == handler->aspace) &&
+		अगर ((aspace == handler->aspace) &&
 		    (address >= handler->start) &&
-		    (address < handler->end)) {
-			if (!handler->num_errors)
+		    (address < handler->end)) अणु
+			अगर (!handler->num_errors)
 				handler->first_error = address;
-			if (handler->num_errors != UINT_MAX)
+			अगर (handler->num_errors != अच_पूर्णांक_उच्च)
 				handler->num_errors++;
 			handler_triggered = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!handler_triggered)
+	अगर (!handler_triggered)
 		dev_err(bridge->parent,
 			"Unhandled VME access error at address 0x%llx\n",
 			address);
-}
+पूर्ण
 EXPORT_SYMBOL(vme_bus_error_handler);
 
-struct vme_error_handler *vme_register_error_handler(
-	struct vme_bridge *bridge, u32 aspace,
-	unsigned long long address, size_t len)
-{
-	struct vme_error_handler *handler;
+काष्ठा vme_error_handler *vme_रेजिस्टर_error_handler(
+	काष्ठा vme_bridge *bridge, u32 aspace,
+	अचिन्हित दीर्घ दीर्घ address, माप_प्रकार len)
+अणु
+	काष्ठा vme_error_handler *handler;
 
-	handler = kmalloc(sizeof(*handler), GFP_ATOMIC);
-	if (!handler)
-		return NULL;
+	handler = kदो_स्मृति(माप(*handler), GFP_ATOMIC);
+	अगर (!handler)
+		वापस शून्य;
 
 	handler->aspace = aspace;
 	handler->start = address;
@@ -1288,77 +1289,77 @@ struct vme_error_handler *vme_register_error_handler(
 	handler->first_error = 0;
 	list_add_tail(&handler->list, &bridge->vme_error_handlers);
 
-	return handler;
-}
-EXPORT_SYMBOL(vme_register_error_handler);
+	वापस handler;
+पूर्ण
+EXPORT_SYMBOL(vme_रेजिस्टर_error_handler);
 
-void vme_unregister_error_handler(struct vme_error_handler *handler)
-{
+व्योम vme_unरेजिस्टर_error_handler(काष्ठा vme_error_handler *handler)
+अणु
 	list_del(&handler->list);
-	kfree(handler);
-}
-EXPORT_SYMBOL(vme_unregister_error_handler);
+	kमुक्त(handler);
+पूर्ण
+EXPORT_SYMBOL(vme_unरेजिस्टर_error_handler);
 
-void vme_irq_handler(struct vme_bridge *bridge, int level, int statid)
-{
-	void (*call)(int, int, void *);
-	void *priv_data;
+व्योम vme_irq_handler(काष्ठा vme_bridge *bridge, पूर्णांक level, पूर्णांक statid)
+अणु
+	व्योम (*call)(पूर्णांक, पूर्णांक, व्योम *);
+	व्योम *priv_data;
 
 	call = bridge->irq[level - 1].callback[statid].func;
 	priv_data = bridge->irq[level - 1].callback[statid].priv_data;
-	if (call)
+	अगर (call)
 		call(level, statid, priv_data);
-	else
-		printk(KERN_WARNING "Spurious VME interrupt, level:%x, vector:%x\n",
+	अन्यथा
+		prपूर्णांकk(KERN_WARNING "Spurious VME interrupt, level:%x, vector:%x\n",
 		       level, statid);
-}
+पूर्ण
 EXPORT_SYMBOL(vme_irq_handler);
 
 /**
- * vme_irq_request - Request a specific VME interrupt.
- * @vdev: Pointer to VME device struct vme_dev assigned to driver instance.
+ * vme_irq_request - Request a specअगरic VME पूर्णांकerrupt.
+ * @vdev: Poपूर्णांकer to VME device काष्ठा vme_dev asचिन्हित to driver instance.
  * @level: Interrupt priority being requested.
  * @statid: Interrupt vector being requested.
- * @callback: Pointer to callback function called when VME interrupt/vector
+ * @callback: Poपूर्णांकer to callback function called when VME पूर्णांकerrupt/vector
  *            received.
- * @priv_data: Generic pointer that will be passed to the callback function.
+ * @priv_data: Generic poपूर्णांकer that will be passed to the callback function.
  *
- * Request callback to be attached as a handler for VME interrupts with provided
+ * Request callback to be attached as a handler क्रम VME पूर्णांकerrupts with provided
  * level and statid.
  *
- * Return: Zero on success, -EINVAL on invalid vme device, level or if the
- *         function is not supported, -EBUSY if the level/statid combination is
- *         already in use. Hardware specific errors also possible.
+ * Return: Zero on success, -EINVAL on invalid vme device, level or अगर the
+ *         function is not supported, -EBUSY अगर the level/statid combination is
+ *         alपढ़ोy in use. Hardware specअगरic errors also possible.
  */
-int vme_irq_request(struct vme_dev *vdev, int level, int statid,
-	void (*callback)(int, int, void *),
-	void *priv_data)
-{
-	struct vme_bridge *bridge;
+पूर्णांक vme_irq_request(काष्ठा vme_dev *vdev, पूर्णांक level, पूर्णांक statid,
+	व्योम (*callback)(पूर्णांक, पूर्णांक, व्योम *),
+	व्योम *priv_data)
+अणु
+	काष्ठा vme_bridge *bridge;
 
 	bridge = vdev->bridge;
-	if (!bridge) {
-		printk(KERN_ERR "Can't find VME bus\n");
-		return -EINVAL;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find VME bus\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((level < 1) || (level > 7)) {
-		printk(KERN_ERR "Invalid interrupt level\n");
-		return -EINVAL;
-	}
+	अगर ((level < 1) || (level > 7)) अणु
+		prपूर्णांकk(KERN_ERR "Invalid interrupt level\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!bridge->irq_set) {
-		printk(KERN_ERR "Configuring interrupts not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->irq_set) अणु
+		prपूर्णांकk(KERN_ERR "Configuring interrupts not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&bridge->irq_mtx);
 
-	if (bridge->irq[level - 1].callback[statid].func) {
+	अगर (bridge->irq[level - 1].callback[statid].func) अणु
 		mutex_unlock(&bridge->irq_mtx);
-		printk(KERN_WARNING "VME Interrupt already taken\n");
-		return -EBUSY;
-	}
+		prपूर्णांकk(KERN_WARNING "VME Interrupt already taken\n");
+		वापस -EBUSY;
+	पूर्ण
 
 	bridge->irq[level - 1].count++;
 	bridge->irq[level - 1].callback[statid].priv_data = priv_data;
@@ -1369,145 +1370,145 @@ int vme_irq_request(struct vme_dev *vdev, int level, int statid,
 
 	mutex_unlock(&bridge->irq_mtx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vme_irq_request);
 
 /**
- * vme_irq_free - Free a VME interrupt.
- * @vdev: Pointer to VME device struct vme_dev assigned to driver instance.
- * @level: Interrupt priority of interrupt being freed.
- * @statid: Interrupt vector of interrupt being freed.
+ * vme_irq_मुक्त - Free a VME पूर्णांकerrupt.
+ * @vdev: Poपूर्णांकer to VME device काष्ठा vme_dev asचिन्हित to driver instance.
+ * @level: Interrupt priority of पूर्णांकerrupt being मुक्तd.
+ * @statid: Interrupt vector of पूर्णांकerrupt being मुक्तd.
  *
- * Remove previously attached callback from VME interrupt priority/vector.
+ * Remove previously attached callback from VME पूर्णांकerrupt priority/vector.
  */
-void vme_irq_free(struct vme_dev *vdev, int level, int statid)
-{
-	struct vme_bridge *bridge;
+व्योम vme_irq_मुक्त(काष्ठा vme_dev *vdev, पूर्णांक level, पूर्णांक statid)
+अणु
+	काष्ठा vme_bridge *bridge;
 
 	bridge = vdev->bridge;
-	if (!bridge) {
-		printk(KERN_ERR "Can't find VME bus\n");
-		return;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find VME bus\n");
+		वापस;
+	पूर्ण
 
-	if ((level < 1) || (level > 7)) {
-		printk(KERN_ERR "Invalid interrupt level\n");
-		return;
-	}
+	अगर ((level < 1) || (level > 7)) अणु
+		prपूर्णांकk(KERN_ERR "Invalid interrupt level\n");
+		वापस;
+	पूर्ण
 
-	if (!bridge->irq_set) {
-		printk(KERN_ERR "Configuring interrupts not supported\n");
-		return;
-	}
+	अगर (!bridge->irq_set) अणु
+		prपूर्णांकk(KERN_ERR "Configuring interrupts not supported\n");
+		वापस;
+	पूर्ण
 
 	mutex_lock(&bridge->irq_mtx);
 
 	bridge->irq[level - 1].count--;
 
-	/* Disable IRQ level if no more interrupts attached at this level*/
-	if (bridge->irq[level - 1].count == 0)
+	/* Disable IRQ level अगर no more पूर्णांकerrupts attached at this level*/
+	अगर (bridge->irq[level - 1].count == 0)
 		bridge->irq_set(bridge, level, 0, 1);
 
-	bridge->irq[level - 1].callback[statid].func = NULL;
-	bridge->irq[level - 1].callback[statid].priv_data = NULL;
+	bridge->irq[level - 1].callback[statid].func = शून्य;
+	bridge->irq[level - 1].callback[statid].priv_data = शून्य;
 
 	mutex_unlock(&bridge->irq_mtx);
-}
-EXPORT_SYMBOL(vme_irq_free);
+पूर्ण
+EXPORT_SYMBOL(vme_irq_मुक्त);
 
 /**
- * vme_irq_generate - Generate VME interrupt.
- * @vdev: Pointer to VME device struct vme_dev assigned to driver instance.
- * @level: Interrupt priority at which to assert the interrupt.
- * @statid: Interrupt vector to associate with the interrupt.
+ * vme_irq_generate - Generate VME पूर्णांकerrupt.
+ * @vdev: Poपूर्णांकer to VME device काष्ठा vme_dev asचिन्हित to driver instance.
+ * @level: Interrupt priority at which to निश्चित the पूर्णांकerrupt.
+ * @statid: Interrupt vector to associate with the पूर्णांकerrupt.
  *
- * Generate a VME interrupt of the provided level and with the provided
+ * Generate a VME पूर्णांकerrupt of the provided level and with the provided
  * statid.
  *
- * Return: Zero on success, -EINVAL on invalid vme device, level or if the
- *         function is not supported. Hardware specific errors also possible.
+ * Return: Zero on success, -EINVAL on invalid vme device, level or अगर the
+ *         function is not supported. Hardware specअगरic errors also possible.
  */
-int vme_irq_generate(struct vme_dev *vdev, int level, int statid)
-{
-	struct vme_bridge *bridge;
+पूर्णांक vme_irq_generate(काष्ठा vme_dev *vdev, पूर्णांक level, पूर्णांक statid)
+अणु
+	काष्ठा vme_bridge *bridge;
 
 	bridge = vdev->bridge;
-	if (!bridge) {
-		printk(KERN_ERR "Can't find VME bus\n");
-		return -EINVAL;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find VME bus\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((level < 1) || (level > 7)) {
-		printk(KERN_WARNING "Invalid interrupt level\n");
-		return -EINVAL;
-	}
+	अगर ((level < 1) || (level > 7)) अणु
+		prपूर्णांकk(KERN_WARNING "Invalid interrupt level\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!bridge->irq_generate) {
-		printk(KERN_WARNING "Interrupt generation not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->irq_generate) अणु
+		prपूर्णांकk(KERN_WARNING "Interrupt generation not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return bridge->irq_generate(bridge, level, statid);
-}
+	वापस bridge->irq_generate(bridge, level, statid);
+पूर्ण
 EXPORT_SYMBOL(vme_irq_generate);
 
 /**
  * vme_lm_request - Request a VME location monitor
- * @vdev: Pointer to VME device struct vme_dev assigned to driver instance.
+ * @vdev: Poपूर्णांकer to VME device काष्ठा vme_dev asचिन्हित to driver instance.
  *
  * Allocate a location monitor resource to the driver. A location monitor
  * allows the driver to monitor accesses to a contiguous number of
  * addresses on the VME bus.
  *
- * Return: Pointer to a VME resource on success or NULL on failure.
+ * Return: Poपूर्णांकer to a VME resource on success or शून्य on failure.
  */
-struct vme_resource *vme_lm_request(struct vme_dev *vdev)
-{
-	struct vme_bridge *bridge;
-	struct list_head *lm_pos = NULL;
-	struct vme_lm_resource *allocated_lm = NULL;
-	struct vme_lm_resource *lm = NULL;
-	struct vme_resource *resource = NULL;
+काष्ठा vme_resource *vme_lm_request(काष्ठा vme_dev *vdev)
+अणु
+	काष्ठा vme_bridge *bridge;
+	काष्ठा list_head *lm_pos = शून्य;
+	काष्ठा vme_lm_resource *allocated_lm = शून्य;
+	काष्ठा vme_lm_resource *lm = शून्य;
+	काष्ठा vme_resource *resource = शून्य;
 
 	bridge = vdev->bridge;
-	if (!bridge) {
-		printk(KERN_ERR "Can't find VME bus\n");
-		goto err_bus;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find VME bus\n");
+		जाओ err_bus;
+	पूर्ण
 
 	/* Loop through LM resources */
-	list_for_each(lm_pos, &bridge->lm_resources) {
+	list_क्रम_each(lm_pos, &bridge->lm_resources) अणु
 		lm = list_entry(lm_pos,
-			struct vme_lm_resource, list);
-		if (!lm) {
-			printk(KERN_ERR "Registered NULL Location Monitor resource\n");
-			continue;
-		}
+			काष्ठा vme_lm_resource, list);
+		अगर (!lm) अणु
+			prपूर्णांकk(KERN_ERR "Registered NULL Location Monitor resource\n");
+			जारी;
+		पूर्ण
 
 		/* Find an unlocked controller */
 		mutex_lock(&lm->mtx);
-		if (lm->locked == 0) {
+		अगर (lm->locked == 0) अणु
 			lm->locked = 1;
 			mutex_unlock(&lm->mtx);
 			allocated_lm = lm;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		mutex_unlock(&lm->mtx);
-	}
+	पूर्ण
 
-	/* Check to see if we found a resource */
-	if (!allocated_lm)
-		goto err_lm;
+	/* Check to see अगर we found a resource */
+	अगर (!allocated_lm)
+		जाओ err_lm;
 
-	resource = kmalloc(sizeof(*resource), GFP_KERNEL);
-	if (!resource)
-		goto err_alloc;
+	resource = kदो_स्मृति(माप(*resource), GFP_KERNEL);
+	अगर (!resource)
+		जाओ err_alloc;
 
 	resource->type = VME_LM;
 	resource->entry = &allocated_lm->list;
 
-	return resource;
+	वापस resource;
 
 err_alloc:
 	/* Unlock image */
@@ -1516,13 +1517,13 @@ err_alloc:
 	mutex_unlock(&lm->mtx);
 err_lm:
 err_bus:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(vme_lm_request);
 
 /**
  * vme_lm_count - Determine number of VME Addresses monitored
- * @resource: Pointer to VME location monitor resource.
+ * @resource: Poपूर्णांकer to VME location monitor resource.
  *
  * The number of contiguous addresses monitored is hardware dependent.
  * Return the number of contiguous addresses monitored by the
@@ -1531,24 +1532,24 @@ EXPORT_SYMBOL(vme_lm_request);
  * Return: Count of addresses monitored or -EINVAL when provided with an
  *	   invalid location monitor resource.
  */
-int vme_lm_count(struct vme_resource *resource)
-{
-	struct vme_lm_resource *lm;
+पूर्णांक vme_lm_count(काष्ठा vme_resource *resource)
+अणु
+	काष्ठा vme_lm_resource *lm;
 
-	if (resource->type != VME_LM) {
-		printk(KERN_ERR "Not a Location Monitor resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_LM) अणु
+		prपूर्णांकk(KERN_ERR "Not a Location Monitor resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	lm = list_entry(resource->entry, struct vme_lm_resource, list);
+	lm = list_entry(resource->entry, काष्ठा vme_lm_resource, list);
 
-	return lm->monitors;
-}
+	वापस lm->monitors;
+पूर्ण
 EXPORT_SYMBOL(vme_lm_count);
 
 /**
  * vme_lm_set - Configure location monitor
- * @resource: Pointer to VME location monitor resource.
+ * @resource: Poपूर्णांकer to VME location monitor resource.
  * @lm_base: Base address to monitor.
  * @aspace: VME address space to monitor.
  * @cycle: VME bus cycle type to monitor.
@@ -1557,164 +1558,164 @@ EXPORT_SYMBOL(vme_lm_count);
  * monitored by the location monitor.
  *
  * Return: Zero on success, -EINVAL when provided with an invalid location
- *	   monitor resource or function is not supported. Hardware specific
- *	   errors may also be returned.
+ *	   monitor resource or function is not supported. Hardware specअगरic
+ *	   errors may also be वापसed.
  */
-int vme_lm_set(struct vme_resource *resource, unsigned long long lm_base,
+पूर्णांक vme_lm_set(काष्ठा vme_resource *resource, अचिन्हित दीर्घ दीर्घ lm_base,
 	u32 aspace, u32 cycle)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_lm_resource *lm;
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_lm_resource *lm;
 
-	if (resource->type != VME_LM) {
-		printk(KERN_ERR "Not a Location Monitor resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_LM) अणु
+		prपूर्णांकk(KERN_ERR "Not a Location Monitor resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	lm = list_entry(resource->entry, struct vme_lm_resource, list);
+	lm = list_entry(resource->entry, काष्ठा vme_lm_resource, list);
 
-	if (!bridge->lm_set) {
-		printk(KERN_ERR "vme_lm_set not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->lm_set) अणु
+		prपूर्णांकk(KERN_ERR "vme_lm_set not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return bridge->lm_set(lm, lm_base, aspace, cycle);
-}
+	वापस bridge->lm_set(lm, lm_base, aspace, cycle);
+पूर्ण
 EXPORT_SYMBOL(vme_lm_set);
 
 /**
  * vme_lm_get - Retrieve location monitor settings
- * @resource: Pointer to VME location monitor resource.
- * @lm_base: Pointer used to output the base address monitored.
- * @aspace: Pointer used to output the address space monitored.
- * @cycle: Pointer used to output the VME bus cycle type monitored.
+ * @resource: Poपूर्णांकer to VME location monitor resource.
+ * @lm_base: Poपूर्णांकer used to output the base address monitored.
+ * @aspace: Poपूर्णांकer used to output the address space monitored.
+ * @cycle: Poपूर्णांकer used to output the VME bus cycle type monitored.
  *
  * Retrieve the base address, address space and cycle type of accesses to
  * be monitored by the location monitor.
  *
  * Return: Zero on success, -EINVAL when provided with an invalid location
- *	   monitor resource or function is not supported. Hardware specific
- *	   errors may also be returned.
+ *	   monitor resource or function is not supported. Hardware specअगरic
+ *	   errors may also be वापसed.
  */
-int vme_lm_get(struct vme_resource *resource, unsigned long long *lm_base,
+पूर्णांक vme_lm_get(काष्ठा vme_resource *resource, अचिन्हित दीर्घ दीर्घ *lm_base,
 	u32 *aspace, u32 *cycle)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_lm_resource *lm;
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_lm_resource *lm;
 
-	if (resource->type != VME_LM) {
-		printk(KERN_ERR "Not a Location Monitor resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_LM) अणु
+		prपूर्णांकk(KERN_ERR "Not a Location Monitor resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	lm = list_entry(resource->entry, struct vme_lm_resource, list);
+	lm = list_entry(resource->entry, काष्ठा vme_lm_resource, list);
 
-	if (!bridge->lm_get) {
-		printk(KERN_ERR "vme_lm_get not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->lm_get) अणु
+		prपूर्णांकk(KERN_ERR "vme_lm_get not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return bridge->lm_get(lm, lm_base, aspace, cycle);
-}
+	वापस bridge->lm_get(lm, lm_base, aspace, cycle);
+पूर्ण
 EXPORT_SYMBOL(vme_lm_get);
 
 /**
- * vme_lm_attach - Provide callback for location monitor address
- * @resource: Pointer to VME location monitor resource.
+ * vme_lm_attach - Provide callback क्रम location monitor address
+ * @resource: Poपूर्णांकer to VME location monitor resource.
  * @monitor: Offset to which callback should be attached.
- * @callback: Pointer to callback function called when triggered.
- * @data: Generic pointer that will be passed to the callback function.
+ * @callback: Poपूर्णांकer to callback function called when triggered.
+ * @data: Generic poपूर्णांकer that will be passed to the callback function.
  *
- * Attach a callback to the specificed offset into the location monitors
- * monitored addresses. A generic pointer is provided to allow data to be
+ * Attach a callback to the specअगरiced offset पूर्णांकo the location monitors
+ * monitored addresses. A generic poपूर्णांकer is provided to allow data to be
  * passed to the callback when called.
  *
  * Return: Zero on success, -EINVAL when provided with an invalid location
- *	   monitor resource or function is not supported. Hardware specific
- *	   errors may also be returned.
+ *	   monitor resource or function is not supported. Hardware specअगरic
+ *	   errors may also be वापसed.
  */
-int vme_lm_attach(struct vme_resource *resource, int monitor,
-	void (*callback)(void *), void *data)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_lm_resource *lm;
+पूर्णांक vme_lm_attach(काष्ठा vme_resource *resource, पूर्णांक monitor,
+	व्योम (*callback)(व्योम *), व्योम *data)
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_lm_resource *lm;
 
-	if (resource->type != VME_LM) {
-		printk(KERN_ERR "Not a Location Monitor resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_LM) अणु
+		prपूर्णांकk(KERN_ERR "Not a Location Monitor resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	lm = list_entry(resource->entry, struct vme_lm_resource, list);
+	lm = list_entry(resource->entry, काष्ठा vme_lm_resource, list);
 
-	if (!bridge->lm_attach) {
-		printk(KERN_ERR "vme_lm_attach not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->lm_attach) अणु
+		prपूर्णांकk(KERN_ERR "vme_lm_attach not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return bridge->lm_attach(lm, monitor, callback, data);
-}
+	वापस bridge->lm_attach(lm, monitor, callback, data);
+पूर्ण
 EXPORT_SYMBOL(vme_lm_attach);
 
 /**
- * vme_lm_detach - Remove callback for location monitor address
- * @resource: Pointer to VME location monitor resource.
- * @monitor: Offset to which callback should be removed.
+ * vme_lm_detach - Remove callback क्रम location monitor address
+ * @resource: Poपूर्णांकer to VME location monitor resource.
+ * @monitor: Offset to which callback should be हटाओd.
  *
- * Remove the callback associated with the specificed offset into the
+ * Remove the callback associated with the specअगरiced offset पूर्णांकo the
  * location monitors monitored addresses.
  *
  * Return: Zero on success, -EINVAL when provided with an invalid location
- *	   monitor resource or function is not supported. Hardware specific
- *	   errors may also be returned.
+ *	   monitor resource or function is not supported. Hardware specअगरic
+ *	   errors may also be वापसed.
  */
-int vme_lm_detach(struct vme_resource *resource, int monitor)
-{
-	struct vme_bridge *bridge = find_bridge(resource);
-	struct vme_lm_resource *lm;
+पूर्णांक vme_lm_detach(काष्ठा vme_resource *resource, पूर्णांक monitor)
+अणु
+	काष्ठा vme_bridge *bridge = find_bridge(resource);
+	काष्ठा vme_lm_resource *lm;
 
-	if (resource->type != VME_LM) {
-		printk(KERN_ERR "Not a Location Monitor resource\n");
-		return -EINVAL;
-	}
+	अगर (resource->type != VME_LM) अणु
+		prपूर्णांकk(KERN_ERR "Not a Location Monitor resource\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	lm = list_entry(resource->entry, struct vme_lm_resource, list);
+	lm = list_entry(resource->entry, काष्ठा vme_lm_resource, list);
 
-	if (!bridge->lm_detach) {
-		printk(KERN_ERR "vme_lm_detach not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->lm_detach) अणु
+		prपूर्णांकk(KERN_ERR "vme_lm_detach not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return bridge->lm_detach(lm, monitor);
-}
+	वापस bridge->lm_detach(lm, monitor);
+पूर्ण
 EXPORT_SYMBOL(vme_lm_detach);
 
 /**
- * vme_lm_free - Free allocated VME location monitor
- * @resource: Pointer to VME location monitor resource.
+ * vme_lm_मुक्त - Free allocated VME location monitor
+ * @resource: Poपूर्णांकer to VME location monitor resource.
  *
  * Free allocation of a VME location monitor.
  *
  * WARNING: This function currently expects that any callbacks that have
- *          been attached to the location monitor have been removed.
+ *          been attached to the location monitor have been हटाओd.
  *
  * Return: Zero on success, -EINVAL when provided with an invalid location
  *	   monitor resource.
  */
-void vme_lm_free(struct vme_resource *resource)
-{
-	struct vme_lm_resource *lm;
+व्योम vme_lm_मुक्त(काष्ठा vme_resource *resource)
+अणु
+	काष्ठा vme_lm_resource *lm;
 
-	if (resource->type != VME_LM) {
-		printk(KERN_ERR "Not a Location Monitor resource\n");
-		return;
-	}
+	अगर (resource->type != VME_LM) अणु
+		prपूर्णांकk(KERN_ERR "Not a Location Monitor resource\n");
+		वापस;
+	पूर्ण
 
-	lm = list_entry(resource->entry, struct vme_lm_resource, list);
+	lm = list_entry(resource->entry, काष्ठा vme_lm_resource, list);
 
 	mutex_lock(&lm->mtx);
 
 	/* XXX
-	 * Check to see that there aren't any callbacks still attached, if
+	 * Check to see that there aren't any callbacks still attached, अगर
 	 * there are we should probably be detaching them!
 	 */
 
@@ -1722,72 +1723,72 @@ void vme_lm_free(struct vme_resource *resource)
 
 	mutex_unlock(&lm->mtx);
 
-	kfree(resource);
-}
-EXPORT_SYMBOL(vme_lm_free);
+	kमुक्त(resource);
+पूर्ण
+EXPORT_SYMBOL(vme_lm_मुक्त);
 
 /**
  * vme_slot_num - Retrieve slot ID
- * @vdev: Pointer to VME device struct vme_dev assigned to driver instance.
+ * @vdev: Poपूर्णांकer to VME device काष्ठा vme_dev asचिन्हित to driver instance.
  *
  * Retrieve the slot ID associated with the provided VME device.
  *
- * Return: The slot ID on success, -EINVAL if VME bridge cannot be determined
- *         or the function is not supported. Hardware specific errors may also
- *         be returned.
+ * Return: The slot ID on success, -EINVAL अगर VME bridge cannot be determined
+ *         or the function is not supported. Hardware specअगरic errors may also
+ *         be वापसed.
  */
-int vme_slot_num(struct vme_dev *vdev)
-{
-	struct vme_bridge *bridge;
+पूर्णांक vme_slot_num(काष्ठा vme_dev *vdev)
+अणु
+	काष्ठा vme_bridge *bridge;
 
 	bridge = vdev->bridge;
-	if (!bridge) {
-		printk(KERN_ERR "Can't find VME bus\n");
-		return -EINVAL;
-	}
+	अगर (!bridge) अणु
+		prपूर्णांकk(KERN_ERR "Can't find VME bus\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!bridge->slot_get) {
-		printk(KERN_WARNING "vme_slot_num not supported\n");
-		return -EINVAL;
-	}
+	अगर (!bridge->slot_get) अणु
+		prपूर्णांकk(KERN_WARNING "vme_slot_num not supported\n");
+		वापस -EINVAL;
+	पूर्ण
 
-	return bridge->slot_get(bridge);
-}
+	वापस bridge->slot_get(bridge);
+पूर्ण
 EXPORT_SYMBOL(vme_slot_num);
 
 /**
  * vme_bus_num - Retrieve bus number
- * @vdev: Pointer to VME device struct vme_dev assigned to driver instance.
+ * @vdev: Poपूर्णांकer to VME device काष्ठा vme_dev asचिन्हित to driver instance.
  *
- * Retrieve the bus enumeration associated with the provided VME device.
+ * Retrieve the bus क्रमागतeration associated with the provided VME device.
  *
- * Return: The bus number on success, -EINVAL if VME bridge cannot be
+ * Return: The bus number on success, -EINVAL अगर VME bridge cannot be
  *         determined.
  */
-int vme_bus_num(struct vme_dev *vdev)
-{
-	struct vme_bridge *bridge;
+पूर्णांक vme_bus_num(काष्ठा vme_dev *vdev)
+अणु
+	काष्ठा vme_bridge *bridge;
 
 	bridge = vdev->bridge;
-	if (!bridge) {
+	अगर (!bridge) अणु
 		pr_err("Can't find VME bus\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return bridge->num;
-}
+	वापस bridge->num;
+पूर्ण
 EXPORT_SYMBOL(vme_bus_num);
 
 /* - Bridge Registration --------------------------------------------------- */
 
-static void vme_dev_release(struct device *dev)
-{
-	kfree(dev_to_vme_dev(dev));
-}
+अटल व्योम vme_dev_release(काष्ठा device *dev)
+अणु
+	kमुक्त(dev_to_vme_dev(dev));
+पूर्ण
 
 /* Common bridge initialization */
-struct vme_bridge *vme_init_bridge(struct vme_bridge *bridge)
-{
+काष्ठा vme_bridge *vme_init_bridge(काष्ठा vme_bridge *bridge)
+अणु
 	INIT_LIST_HEAD(&bridge->vme_error_handlers);
 	INIT_LIST_HEAD(&bridge->master_resources);
 	INIT_LIST_HEAD(&bridge->slave_resources);
@@ -1795,223 +1796,223 @@ struct vme_bridge *vme_init_bridge(struct vme_bridge *bridge)
 	INIT_LIST_HEAD(&bridge->lm_resources);
 	mutex_init(&bridge->irq_mtx);
 
-	return bridge;
-}
+	वापस bridge;
+पूर्ण
 EXPORT_SYMBOL(vme_init_bridge);
 
-int vme_register_bridge(struct vme_bridge *bridge)
-{
-	int i;
-	int ret = -1;
+पूर्णांक vme_रेजिस्टर_bridge(काष्ठा vme_bridge *bridge)
+अणु
+	पूर्णांक i;
+	पूर्णांक ret = -1;
 
 	mutex_lock(&vme_buses_lock);
-	for (i = 0; i < sizeof(vme_bus_numbers) * 8; i++) {
-		if ((vme_bus_numbers & (1 << i)) == 0) {
+	क्रम (i = 0; i < माप(vme_bus_numbers) * 8; i++) अणु
+		अगर ((vme_bus_numbers & (1 << i)) == 0) अणु
 			vme_bus_numbers |= (1 << i);
 			bridge->num = i;
 			INIT_LIST_HEAD(&bridge->devices);
 			list_add_tail(&bridge->bus_list, &vme_bus_list);
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&vme_buses_lock);
 
-	return ret;
-}
-EXPORT_SYMBOL(vme_register_bridge);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL(vme_रेजिस्टर_bridge);
 
-void vme_unregister_bridge(struct vme_bridge *bridge)
-{
-	struct vme_dev *vdev;
-	struct vme_dev *tmp;
+व्योम vme_unरेजिस्टर_bridge(काष्ठा vme_bridge *bridge)
+अणु
+	काष्ठा vme_dev *vdev;
+	काष्ठा vme_dev *पंचांगp;
 
 	mutex_lock(&vme_buses_lock);
 	vme_bus_numbers &= ~(1 << bridge->num);
-	list_for_each_entry_safe(vdev, tmp, &bridge->devices, bridge_list) {
+	list_क्रम_each_entry_safe(vdev, पंचांगp, &bridge->devices, bridge_list) अणु
 		list_del(&vdev->drv_list);
 		list_del(&vdev->bridge_list);
-		device_unregister(&vdev->dev);
-	}
+		device_unरेजिस्टर(&vdev->dev);
+	पूर्ण
 	list_del(&bridge->bus_list);
 	mutex_unlock(&vme_buses_lock);
-}
-EXPORT_SYMBOL(vme_unregister_bridge);
+पूर्ण
+EXPORT_SYMBOL(vme_unरेजिस्टर_bridge);
 
 /* - Driver Registration --------------------------------------------------- */
 
-static int __vme_register_driver_bus(struct vme_driver *drv,
-	struct vme_bridge *bridge, unsigned int ndevs)
-{
-	int err;
-	unsigned int i;
-	struct vme_dev *vdev;
-	struct vme_dev *tmp;
+अटल पूर्णांक __vme_रेजिस्टर_driver_bus(काष्ठा vme_driver *drv,
+	काष्ठा vme_bridge *bridge, अचिन्हित पूर्णांक ndevs)
+अणु
+	पूर्णांक err;
+	अचिन्हित पूर्णांक i;
+	काष्ठा vme_dev *vdev;
+	काष्ठा vme_dev *पंचांगp;
 
-	for (i = 0; i < ndevs; i++) {
-		vdev = kzalloc(sizeof(*vdev), GFP_KERNEL);
-		if (!vdev) {
+	क्रम (i = 0; i < ndevs; i++) अणु
+		vdev = kzalloc(माप(*vdev), GFP_KERNEL);
+		अगर (!vdev) अणु
 			err = -ENOMEM;
-			goto err_devalloc;
-		}
+			जाओ err_devalloc;
+		पूर्ण
 		vdev->num = i;
 		vdev->bridge = bridge;
-		vdev->dev.platform_data = drv;
+		vdev->dev.platक्रमm_data = drv;
 		vdev->dev.release = vme_dev_release;
 		vdev->dev.parent = bridge->parent;
 		vdev->dev.bus = &vme_bus_type;
 		dev_set_name(&vdev->dev, "%s.%u-%u", drv->name, bridge->num,
 			vdev->num);
 
-		err = device_register(&vdev->dev);
-		if (err)
-			goto err_reg;
+		err = device_रेजिस्टर(&vdev->dev);
+		अगर (err)
+			जाओ err_reg;
 
-		if (vdev->dev.platform_data) {
+		अगर (vdev->dev.platक्रमm_data) अणु
 			list_add_tail(&vdev->drv_list, &drv->devices);
 			list_add_tail(&vdev->bridge_list, &bridge->devices);
-		} else
-			device_unregister(&vdev->dev);
-	}
-	return 0;
+		पूर्ण अन्यथा
+			device_unरेजिस्टर(&vdev->dev);
+	पूर्ण
+	वापस 0;
 
 err_reg:
 	put_device(&vdev->dev);
 err_devalloc:
-	list_for_each_entry_safe(vdev, tmp, &drv->devices, drv_list) {
+	list_क्रम_each_entry_safe(vdev, पंचांगp, &drv->devices, drv_list) अणु
 		list_del(&vdev->drv_list);
 		list_del(&vdev->bridge_list);
-		device_unregister(&vdev->dev);
-	}
-	return err;
-}
+		device_unरेजिस्टर(&vdev->dev);
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static int __vme_register_driver(struct vme_driver *drv, unsigned int ndevs)
-{
-	struct vme_bridge *bridge;
-	int err = 0;
+अटल पूर्णांक __vme_रेजिस्टर_driver(काष्ठा vme_driver *drv, अचिन्हित पूर्णांक ndevs)
+अणु
+	काष्ठा vme_bridge *bridge;
+	पूर्णांक err = 0;
 
 	mutex_lock(&vme_buses_lock);
-	list_for_each_entry(bridge, &vme_bus_list, bus_list) {
+	list_क्रम_each_entry(bridge, &vme_bus_list, bus_list) अणु
 		/*
-		 * This cannot cause trouble as we already have vme_buses_lock
-		 * and if the bridge is removed, it will have to go through
-		 * vme_unregister_bridge() to do it (which calls remove() on
+		 * This cannot cause trouble as we alपढ़ोy have vme_buses_lock
+		 * and अगर the bridge is हटाओd, it will have to go through
+		 * vme_unरेजिस्टर_bridge() to करो it (which calls हटाओ() on
 		 * the bridge which in turn tries to acquire vme_buses_lock and
-		 * will have to wait).
+		 * will have to रुको).
 		 */
-		err = __vme_register_driver_bus(drv, bridge, ndevs);
-		if (err)
-			break;
-	}
+		err = __vme_रेजिस्टर_driver_bus(drv, bridge, ndevs);
+		अगर (err)
+			अवरोध;
+	पूर्ण
 	mutex_unlock(&vme_buses_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * vme_register_driver - Register a VME driver
- * @drv: Pointer to VME driver structure to register.
- * @ndevs: Maximum number of devices to allow to be enumerated.
+ * vme_रेजिस्टर_driver - Register a VME driver
+ * @drv: Poपूर्णांकer to VME driver काष्ठाure to रेजिस्टर.
+ * @ndevs: Maximum number of devices to allow to be क्रमागतerated.
  *
- * Register a VME device driver with the VME subsystem.
+ * Register a VME device driver with the VME subप्रणाली.
  *
  * Return: Zero on success, error value on registration failure.
  */
-int vme_register_driver(struct vme_driver *drv, unsigned int ndevs)
-{
-	int err;
+पूर्णांक vme_रेजिस्टर_driver(काष्ठा vme_driver *drv, अचिन्हित पूर्णांक ndevs)
+अणु
+	पूर्णांक err;
 
 	drv->driver.name = drv->name;
 	drv->driver.bus = &vme_bus_type;
 	INIT_LIST_HEAD(&drv->devices);
 
-	err = driver_register(&drv->driver);
-	if (err)
-		return err;
+	err = driver_रेजिस्टर(&drv->driver);
+	अगर (err)
+		वापस err;
 
-	err = __vme_register_driver(drv, ndevs);
-	if (err)
-		driver_unregister(&drv->driver);
+	err = __vme_रेजिस्टर_driver(drv, ndevs);
+	अगर (err)
+		driver_unरेजिस्टर(&drv->driver);
 
-	return err;
-}
-EXPORT_SYMBOL(vme_register_driver);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(vme_रेजिस्टर_driver);
 
 /**
- * vme_unregister_driver - Unregister a VME driver
- * @drv: Pointer to VME driver structure to unregister.
+ * vme_unरेजिस्टर_driver - Unरेजिस्टर a VME driver
+ * @drv: Poपूर्णांकer to VME driver काष्ठाure to unरेजिस्टर.
  *
- * Unregister a VME device driver from the VME subsystem.
+ * Unरेजिस्टर a VME device driver from the VME subप्रणाली.
  */
-void vme_unregister_driver(struct vme_driver *drv)
-{
-	struct vme_dev *dev, *dev_tmp;
+व्योम vme_unरेजिस्टर_driver(काष्ठा vme_driver *drv)
+अणु
+	काष्ठा vme_dev *dev, *dev_पंचांगp;
 
 	mutex_lock(&vme_buses_lock);
-	list_for_each_entry_safe(dev, dev_tmp, &drv->devices, drv_list) {
+	list_क्रम_each_entry_safe(dev, dev_पंचांगp, &drv->devices, drv_list) अणु
 		list_del(&dev->drv_list);
 		list_del(&dev->bridge_list);
-		device_unregister(&dev->dev);
-	}
+		device_unरेजिस्टर(&dev->dev);
+	पूर्ण
 	mutex_unlock(&vme_buses_lock);
 
-	driver_unregister(&drv->driver);
-}
-EXPORT_SYMBOL(vme_unregister_driver);
+	driver_unरेजिस्टर(&drv->driver);
+पूर्ण
+EXPORT_SYMBOL(vme_unरेजिस्टर_driver);
 
 /* - Bus Registration ------------------------------------------------------ */
 
-static int vme_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct vme_driver *vme_drv;
+अटल पूर्णांक vme_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा vme_driver *vme_drv;
 
-	vme_drv = container_of(drv, struct vme_driver, driver);
+	vme_drv = container_of(drv, काष्ठा vme_driver, driver);
 
-	if (dev->platform_data == vme_drv) {
-		struct vme_dev *vdev = dev_to_vme_dev(dev);
+	अगर (dev->platक्रमm_data == vme_drv) अणु
+		काष्ठा vme_dev *vdev = dev_to_vme_dev(dev);
 
-		if (vme_drv->match && vme_drv->match(vdev))
-			return 1;
+		अगर (vme_drv->match && vme_drv->match(vdev))
+			वापस 1;
 
-		dev->platform_data = NULL;
-	}
-	return 0;
-}
+		dev->platक्रमm_data = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vme_bus_probe(struct device *dev)
-{
-	struct vme_driver *driver;
-	struct vme_dev *vdev = dev_to_vme_dev(dev);
+अटल पूर्णांक vme_bus_probe(काष्ठा device *dev)
+अणु
+	काष्ठा vme_driver *driver;
+	काष्ठा vme_dev *vdev = dev_to_vme_dev(dev);
 
-	driver = dev->platform_data;
-	if (driver->probe)
-		return driver->probe(vdev);
+	driver = dev->platक्रमm_data;
+	अगर (driver->probe)
+		वापस driver->probe(vdev);
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static int vme_bus_remove(struct device *dev)
-{
-	struct vme_driver *driver;
-	struct vme_dev *vdev = dev_to_vme_dev(dev);
+अटल पूर्णांक vme_bus_हटाओ(काष्ठा device *dev)
+अणु
+	काष्ठा vme_driver *driver;
+	काष्ठा vme_dev *vdev = dev_to_vme_dev(dev);
 
-	driver = dev->platform_data;
-	if (driver->remove)
-		driver->remove(vdev);
+	driver = dev->platक्रमm_data;
+	अगर (driver->हटाओ)
+		driver->हटाओ(vdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct bus_type vme_bus_type = {
+काष्ठा bus_type vme_bus_type = अणु
 	.name = "vme",
 	.match = vme_bus_match,
 	.probe = vme_bus_probe,
-	.remove = vme_bus_remove,
-};
+	.हटाओ = vme_bus_हटाओ,
+पूर्ण;
 EXPORT_SYMBOL(vme_bus_type);
 
-static int __init vme_init(void)
-{
-	return bus_register(&vme_bus_type);
-}
+अटल पूर्णांक __init vme_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&vme_bus_type);
+पूर्ण
 subsys_initcall(vme_init);

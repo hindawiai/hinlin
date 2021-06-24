@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * linux/drivers/video/mmp/fb/mmpfb.h
- * Framebuffer driver for Marvell Display controller.
+ * Framebuffer driver क्रम Marvell Display controller.
  *
  * Copyright (C) 2012 Marvell Technology Group Ltd.
  * Authors: Zhou Zhu <zzhu3@marvell.com>
  */
 
-#ifndef _MMP_FB_H_
-#define _MMP_FB_H_
+#अगर_अघोषित _MMP_FB_H_
+#घोषणा _MMP_FB_H_
 
-#include <video/mmp_disp.h>
-#include <linux/fb.h>
+#समावेश <video/mmp_disp.h>
+#समावेश <linux/fb.h>
 
-/* LCD controller private state. */
-struct mmpfb_info {
-	struct device	*dev;
-	int	id;
-	const char	*name;
+/* LCD controller निजी state. */
+काष्ठा mmpfb_info अणु
+	काष्ठा device	*dev;
+	पूर्णांक	id;
+	स्थिर अक्षर	*name;
 
-	struct fb_info	*fb_info;
-	/* basicaly videomode is for output */
-	struct fb_videomode	mode;
-	int	pix_fmt;
+	काष्ठा fb_info	*fb_info;
+	/* basicaly videomode is क्रम output */
+	काष्ठा fb_videomode	mode;
+	पूर्णांक	pix_fmt;
 
-	void	*fb_start;
-	int	fb_size;
+	व्योम	*fb_start;
+	पूर्णांक	fb_size;
 	dma_addr_t	fb_start_dma;
 
-	struct mmp_overlay	*overlay;
-	struct mmp_path	*path;
+	काष्ठा mmp_overlay	*overlay;
+	काष्ठा mmp_path	*path;
 
-	struct mutex	access_ok;
+	काष्ठा mutex	access_ok;
 
-	unsigned int		pseudo_palette[16];
-	int output_fmt;
-};
+	अचिन्हित पूर्णांक		pseuकरो_palette[16];
+	पूर्णांक output_fmt;
+पूर्ण;
 
-#define MMPFB_DEFAULT_SIZE (PAGE_ALIGN(1920 * 1080 * 4 * 2))
-#endif /* _MMP_FB_H_ */
+#घोषणा MMPFB_DEFAULT_SIZE (PAGE_ALIGN(1920 * 1080 * 4 * 2))
+#पूर्ण_अगर /* _MMP_FB_H_ */

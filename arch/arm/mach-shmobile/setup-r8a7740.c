@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * R8A7740 processor support
  *
  * Copyright (C) 2011  Renesas Solutions Corp.
  * Copyright (C) 2011  Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/irqchip.h>
-#include <linux/irqchip/arm-gic.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqchip/arm-gic.h>
 
-#include <asm/mach/map.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/time.h>
+#समावेश <यंत्र/mach/map.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/समय.स>
 
-#include "common.h"
+#समावेश "common.h"
 
 /*
  * r8a7740 chip has lasting errata on MERAM buffer.
- * this is work-around for it.
+ * this is work-around क्रम it.
  * see
- *	"Media RAM (MERAM)" on r8a7740 documentation
+ *	"Media RAM (MERAM)" on r8a7740 करोcumentation
  */
-#define MEBUFCNTR	0xFE950098
-static void __init r8a7740_meram_workaround(void)
-{
-	void __iomem *reg;
+#घोषणा MEBUFCNTR	0xFE950098
+अटल व्योम __init r8a7740_meram_workaround(व्योम)
+अणु
+	व्योम __iomem *reg;
 
 	reg = ioremap(MEBUFCNTR, 4);
-	if (reg) {
-		iowrite32(0x01600164, reg);
+	अगर (reg) अणु
+		ioग_लिखो32(0x01600164, reg);
 		iounmap(reg);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init r8a7740_init_irq_of(void)
-{
-	void __iomem *intc_prio_base = ioremap(0xe6900010, 0x10);
-	void __iomem *intc_msk_base = ioremap(0xe6900040, 0x10);
-	void __iomem *pfc_inta_ctrl = ioremap(0xe605807c, 0x4);
+अटल व्योम __init r8a7740_init_irq_of(व्योम)
+अणु
+	व्योम __iomem *पूर्णांकc_prio_base = ioremap(0xe6900010, 0x10);
+	व्योम __iomem *पूर्णांकc_msk_base = ioremap(0xe6900040, 0x10);
+	व्योम __iomem *pfc_पूर्णांकa_ctrl = ioremap(0xe605807c, 0x4);
 
 	irqchip_init();
 
-	/* route signals to GIC */
-	iowrite32(0x0, pfc_inta_ctrl);
+	/* route संकेतs to GIC */
+	ioग_लिखो32(0x0, pfc_पूर्णांकa_ctrl);
 
 	/*
-	 * To mask the shared interrupt to SPI 149 we must ensure to set
-	 * PRIO *and* MASK. Else we run into IRQ floods when registering
-	 * the intc_irqpin devices
+	 * To mask the shared पूर्णांकerrupt to SPI 149 we must ensure to set
+	 * PRIO *and* MASK. Else we run पूर्णांकo IRQ floods when रेजिस्टरing
+	 * the पूर्णांकc_irqpin devices
 	 */
-	iowrite32(0x0, intc_prio_base + 0x0);
-	iowrite32(0x0, intc_prio_base + 0x4);
-	iowrite32(0x0, intc_prio_base + 0x8);
-	iowrite32(0x0, intc_prio_base + 0xc);
-	iowrite8(0xff, intc_msk_base + 0x0);
-	iowrite8(0xff, intc_msk_base + 0x4);
-	iowrite8(0xff, intc_msk_base + 0x8);
-	iowrite8(0xff, intc_msk_base + 0xc);
+	ioग_लिखो32(0x0, पूर्णांकc_prio_base + 0x0);
+	ioग_लिखो32(0x0, पूर्णांकc_prio_base + 0x4);
+	ioग_लिखो32(0x0, पूर्णांकc_prio_base + 0x8);
+	ioग_लिखो32(0x0, पूर्णांकc_prio_base + 0xc);
+	ioग_लिखो8(0xff, पूर्णांकc_msk_base + 0x0);
+	ioग_लिखो8(0xff, पूर्णांकc_msk_base + 0x4);
+	ioग_लिखो8(0xff, पूर्णांकc_msk_base + 0x8);
+	ioग_लिखो8(0xff, पूर्णांकc_msk_base + 0xc);
 
-	iounmap(intc_prio_base);
-	iounmap(intc_msk_base);
-	iounmap(pfc_inta_ctrl);
-}
+	iounmap(पूर्णांकc_prio_base);
+	iounmap(पूर्णांकc_msk_base);
+	iounmap(pfc_पूर्णांकa_ctrl);
+पूर्ण
 
-static void __init r8a7740_generic_init(void)
-{
+अटल व्योम __init r8a7740_generic_init(व्योम)
+अणु
 	r8a7740_meram_workaround();
-}
+पूर्ण
 
-static const char *const r8a7740_boards_compat_dt[] __initconst = {
+अटल स्थिर अक्षर *स्थिर r8a7740_boards_compat_dt[] __initस्थिर = अणु
 	"renesas,r8a7740",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 DT_MACHINE_START(R8A7740_DT, "Generic R8A7740 (Flattened Device Tree)")
 	.l2c_aux_val	= 0,

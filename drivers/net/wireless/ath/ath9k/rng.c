@@ -1,36 +1,37 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2015 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <linux/hw_random.h>
-#include <linux/kthread.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/kthपढ़ो.h>
 
-#include "ath9k.h"
-#include "hw.h"
-#include "ar9003_phy.h"
+#समावेश "ath9k.h"
+#समावेश "hw.h"
+#समावेश "ar9003_phy.h"
 
-#define ATH9K_RNG_BUF_SIZE	320
-#define ATH9K_RNG_ENTROPY(x)	(((x) * 8 * 10) >> 5) /* quality: 10/32 */
+#घोषणा ATH9K_RNG_BUF_SIZE	320
+#घोषणा ATH9K_RNG_ENTROPY(x)	(((x) * 8 * 10) >> 5) /* quality: 10/32 */
 
-static DECLARE_WAIT_QUEUE_HEAD(rng_queue);
+अटल DECLARE_WAIT_QUEUE_HEAD(rng_queue);
 
-static int ath9k_rng_data_read(struct ath_softc *sc, u32 *buf, u32 buf_size)
-{
-	int i, j;
+अटल पूर्णांक ath9k_rng_data_पढ़ो(काष्ठा ath_softc *sc, u32 *buf, u32 buf_size)
+अणु
+	पूर्णांक i, j;
 	u32  v1, v2, rng_last = sc->rng_last;
-	struct ath_hw *ah = sc->sc_ah;
+	काष्ठा ath_hw *ah = sc->sc_ah;
 
 	ath9k_ps_wakeup(sc);
 
@@ -38,94 +39,94 @@ static int ath9k_rng_data_read(struct ath_softc *sc, u32 *buf, u32 buf_size)
 	REG_CLR_BIT(ah, AR_PHY_TEST, AR_PHY_TEST_RX_OBS_SEL_BIT5);
 	REG_RMW_FIELD(ah, AR_PHY_TEST_CTL_STATUS, AR_PHY_TEST_CTL_RX_OBS_SEL, 0);
 
-	for (i = 0, j = 0; i < buf_size; i++) {
+	क्रम (i = 0, j = 0; i < buf_size; i++) अणु
 		v1 = REG_READ(ah, AR_PHY_TST_ADC) & 0xffff;
 		v2 = REG_READ(ah, AR_PHY_TST_ADC) & 0xffff;
 
-		/* wait for data ready */
-		if (v1 && v2 && rng_last != v1 && v1 != v2 && v1 != 0xffff &&
+		/* रुको क्रम data पढ़ोy */
+		अगर (v1 && v2 && rng_last != v1 && v1 != v2 && v1 != 0xffff &&
 		    v2 != 0xffff)
 			buf[j++] = (v1 << 16) | v2;
 
 		rng_last = v2;
-	}
+	पूर्ण
 
 	ath9k_ps_restore(sc);
 
 	sc->rng_last = rng_last;
 
-	return j << 2;
-}
+	वापस j << 2;
+पूर्ण
 
-static u32 ath9k_rng_delay_get(u32 fail_stats)
-{
+अटल u32 ath9k_rng_delay_get(u32 fail_stats)
+अणु
 	u32 delay;
 
-	if (fail_stats < 100)
+	अगर (fail_stats < 100)
 		delay = 10;
-	else if (fail_stats < 105)
+	अन्यथा अगर (fail_stats < 105)
 		delay = 1000;
-	else
+	अन्यथा
 		delay = 10000;
 
-	return delay;
-}
+	वापस delay;
+पूर्ण
 
-static int ath9k_rng_kthread(void *data)
-{
-	int bytes_read;
-	struct ath_softc *sc = data;
+अटल पूर्णांक ath9k_rng_kthपढ़ो(व्योम *data)
+अणु
+	पूर्णांक bytes_पढ़ो;
+	काष्ठा ath_softc *sc = data;
 	u32 *rng_buf;
 	u32 delay, fail_stats = 0;
 
-	rng_buf = kmalloc_array(ATH9K_RNG_BUF_SIZE, sizeof(u32), GFP_KERNEL);
-	if (!rng_buf)
-		goto out;
+	rng_buf = kदो_स्मृति_array(ATH9K_RNG_BUF_SIZE, माप(u32), GFP_KERNEL);
+	अगर (!rng_buf)
+		जाओ out;
 
-	while (!kthread_should_stop()) {
-		bytes_read = ath9k_rng_data_read(sc, rng_buf,
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		bytes_पढ़ो = ath9k_rng_data_पढ़ो(sc, rng_buf,
 						 ATH9K_RNG_BUF_SIZE);
-		if (unlikely(!bytes_read)) {
+		अगर (unlikely(!bytes_पढ़ो)) अणु
 			delay = ath9k_rng_delay_get(++fail_stats);
-			wait_event_interruptible_timeout(rng_queue,
-							 kthread_should_stop(),
-							 msecs_to_jiffies(delay));
-			continue;
-		}
+			रुको_event_पूर्णांकerruptible_समयout(rng_queue,
+							 kthपढ़ो_should_stop(),
+							 msecs_to_jअगरfies(delay));
+			जारी;
+		पूर्ण
 
 		fail_stats = 0;
 
-		/* sleep until entropy bits under write_wakeup_threshold */
-		add_hwgenerator_randomness((void *)rng_buf, bytes_read,
-					   ATH9K_RNG_ENTROPY(bytes_read));
-	}
+		/* sleep until entropy bits under ग_लिखो_wakeup_threshold */
+		add_hwgenerator_अक्रमomness((व्योम *)rng_buf, bytes_पढ़ो,
+					   ATH9K_RNG_ENTROPY(bytes_पढ़ो));
+	पूर्ण
 
-	kfree(rng_buf);
+	kमुक्त(rng_buf);
 out:
-	sc->rng_task = NULL;
+	sc->rng_task = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ath9k_rng_start(struct ath_softc *sc)
-{
-	struct ath_hw *ah = sc->sc_ah;
+व्योम ath9k_rng_start(काष्ठा ath_softc *sc)
+अणु
+	काष्ठा ath_hw *ah = sc->sc_ah;
 
-	if (sc->rng_task)
-		return;
+	अगर (sc->rng_task)
+		वापस;
 
-	if (!AR_SREV_9300_20_OR_LATER(ah))
-		return;
+	अगर (!AR_SREV_9300_20_OR_LATER(ah))
+		वापस;
 
-	sc->rng_task = kthread_run(ath9k_rng_kthread, sc, "ath9k-hwrng");
-	if (IS_ERR(sc->rng_task))
-		sc->rng_task = NULL;
-}
+	sc->rng_task = kthपढ़ो_run(ath9k_rng_kthपढ़ो, sc, "ath9k-hwrng");
+	अगर (IS_ERR(sc->rng_task))
+		sc->rng_task = शून्य;
+पूर्ण
 
-void ath9k_rng_stop(struct ath_softc *sc)
-{
-	if (sc->rng_task) {
-		kthread_stop(sc->rng_task);
-		sc->rng_task = NULL;
-	}
-}
+व्योम ath9k_rng_stop(काष्ठा ath_softc *sc)
+अणु
+	अगर (sc->rng_task) अणु
+		kthपढ़ो_stop(sc->rng_task);
+		sc->rng_task = शून्य;
+	पूर्ण
+पूर्ण

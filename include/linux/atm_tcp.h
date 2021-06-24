@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* atm_tcp.h - Driver-specific declarations of the ATMTCP driver (for use by
-	       driver-specific utilities) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* aपंचांग_tcp.h - Driver-specअगरic declarations of the ATMTCP driver (क्रम use by
+	       driver-specअगरic utilities) */
 
 /* Written 1997-2000 by Werner Almesberger, EPFL LRC/ICA */
 
-#ifndef LINUX_ATM_TCP_H
-#define LINUX_ATM_TCP_H
+#अगर_अघोषित LINUX_ATM_TCP_H
+#घोषणा LINUX_ATM_TCP_H
 
-#include <uapi/linux/atm_tcp.h>
+#समावेश <uapi/linux/aपंचांग_tcp.h>
 
 
-struct atm_tcp_ops {
-	int (*attach)(struct atm_vcc *vcc,int itf);
-	int (*create_persistent)(int itf);
-	int (*remove_persistent)(int itf);
-	struct module *owner;
-};
+काष्ठा aपंचांग_tcp_ops अणु
+	पूर्णांक (*attach)(काष्ठा aपंचांग_vcc *vcc,पूर्णांक itf);
+	पूर्णांक (*create_persistent)(पूर्णांक itf);
+	पूर्णांक (*हटाओ_persistent)(पूर्णांक itf);
+	काष्ठा module *owner;
+पूर्ण;
 
-extern struct atm_tcp_ops atm_tcp_ops;
+बाह्य काष्ठा aपंचांग_tcp_ops aपंचांग_tcp_ops;
 
-#endif
+#पूर्ण_अगर

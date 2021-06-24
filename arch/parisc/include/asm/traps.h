@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_TRAPS_H
-#define __ASM_TRAPS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_TRAPS_H
+#घोषणा __ASM_TRAPS_H
 
-#define PARISC_ITLB_TRAP	6 /* defined by architecture. Do not change. */
+#घोषणा PARISC_ITLB_TRAP	6 /* defined by architecture. Do not change. */
 
-#if !defined(__ASSEMBLY__)
-struct pt_regs;
+#अगर !defined(__ASSEMBLY__)
+काष्ठा pt_regs;
 
 /* traps.c */
-void parisc_terminate(char *msg, struct pt_regs *regs,
-		int code, unsigned long offset) __noreturn __cold;
+व्योम parisc_terminate(अक्षर *msg, काष्ठा pt_regs *regs,
+		पूर्णांक code, अचिन्हित दीर्घ offset) __noवापस __cold;
 
-void die_if_kernel(char *str, struct pt_regs *regs, long err);
+व्योम die_अगर_kernel(अक्षर *str, काष्ठा pt_regs *regs, दीर्घ err);
 
 /* mm/fault.c */
-const char *trap_name(unsigned long code);
-void do_page_fault(struct pt_regs *regs, unsigned long code,
-		unsigned long address);
-#endif
+स्थिर अक्षर *trap_name(अचिन्हित दीर्घ code);
+व्योम करो_page_fault(काष्ठा pt_regs *regs, अचिन्हित दीर्घ code,
+		अचिन्हित दीर्घ address);
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

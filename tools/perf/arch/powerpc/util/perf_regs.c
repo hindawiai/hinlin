@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <string.h>
-#include <regex.h>
-#include <linux/zalloc.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <माला.स>
+#समावेश <regex.h>
+#समावेश <linux/zभाग.स>
 
-#include "../../../util/perf_regs.h"
-#include "../../../util/debug.h"
-#include "../../../util/event.h"
-#include "../../../util/header.h"
-#include "../../../perf-sys.h"
-#include "utils_header.h"
+#समावेश "../../../util/perf_regs.h"
+#समावेश "../../../util/debug.h"
+#समावेश "../../../util/event.h"
+#समावेश "../../../util/header.h"
+#समावेश "../../../perf-sys.h"
+#समावेश "utils_header.h"
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#define PVR_POWER9		0x004E
-#define PVR_POWER10		0x0080
+#घोषणा PVR_POWER9		0x004E
+#घोषणा PVR_POWER10		0x0080
 
-const struct sample_reg sample_reg_masks[] = {
+स्थिर काष्ठा sample_reg sample_reg_masks[] = अणु
 	SMPL_REG(r0, PERF_REG_POWERPC_R0),
 	SMPL_REG(r1, PERF_REG_POWERPC_R1),
 	SMPL_REG(r2, PERF_REG_POWERPC_R2),
@@ -75,44 +76,44 @@ const struct sample_reg sample_reg_masks[] = {
 	SMPL_REG(pmc5, PERF_REG_POWERPC_PMC5),
 	SMPL_REG(pmc6, PERF_REG_POWERPC_PMC6),
 	SMPL_REG_END
-};
+पूर्ण;
 
 /* REG or %rREG */
-#define SDT_OP_REGEX1  "^(%r)?([1-2]?[0-9]|3[0-1])$"
+#घोषणा SDT_OP_REGEX1  "^(%r)?([1-2]?[0-9]|3[0-1])$"
 
 /* -NUM(REG) or NUM(REG) or -NUM(%rREG) or NUM(%rREG) */
-#define SDT_OP_REGEX2  "^(\\-)?([0-9]+)\\((%r)?([1-2]?[0-9]|3[0-1])\\)$"
+#घोषणा SDT_OP_REGEX2  "^(\\-)?([0-9]+)\\((%r)?([1-2]?[0-9]|3[0-1])\\)$"
 
-static regex_t sdt_op_regex1, sdt_op_regex2;
+अटल regex_t sdt_op_regex1, sdt_op_regex2;
 
-static int sdt_init_op_regex(void)
-{
-	static int initialized;
-	int ret = 0;
+अटल पूर्णांक sdt_init_op_regex(व्योम)
+अणु
+	अटल पूर्णांक initialized;
+	पूर्णांक ret = 0;
 
-	if (initialized)
-		return 0;
+	अगर (initialized)
+		वापस 0;
 
 	ret = regcomp(&sdt_op_regex1, SDT_OP_REGEX1, REG_EXTENDED);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	ret = regcomp(&sdt_op_regex2, SDT_OP_REGEX2, REG_EXTENDED);
-	if (ret)
-		goto free_regex1;
+	अगर (ret)
+		जाओ मुक्त_regex1;
 
 	initialized = 1;
-	return 0;
+	वापस 0;
 
-free_regex1:
-	regfree(&sdt_op_regex1);
+मुक्त_regex1:
+	regमुक्त(&sdt_op_regex1);
 error:
 	pr_debug4("Regex compilation error.\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Parse OP and convert it into uprobe format, which is, +/-NUM(%gprREG).
+ * Parse OP and convert it पूर्णांकo uprobe क्रमmat, which is, +/-NUM(%gprREG).
  * Possible variants of OP are:
  *	Format		Example
  *	-------------------------
@@ -125,102 +126,102 @@ error:
  *	iNUM		i0
  *	i-NUM		i-1
  *
- * SDT marker arguments on Powerpc uses %rREG form with -mregnames flag
- * and REG form with -mno-regnames. Here REG is general purpose register,
+ * SDT marker arguments on Powerpc uses %rREG क्रमm with -mregnames flag
+ * and REG क्रमm with -mno-regnames. Here REG is general purpose रेजिस्टर,
  * which is in 0 to 31 range.
  */
-int arch_sdt_arg_parse_op(char *old_op, char **new_op)
-{
-	int ret, new_len;
+पूर्णांक arch_sdt_arg_parse_op(अक्षर *old_op, अक्षर **new_op)
+अणु
+	पूर्णांक ret, new_len;
 	regmatch_t rm[5];
-	char prefix;
+	अक्षर prefix;
 
-	/* Constant argument. Uprobe does not support it */
-	if (old_op[0] == 'i') {
+	/* Constant argument. Uprobe करोes not support it */
+	अगर (old_op[0] == 'i') अणु
 		pr_debug4("Skipping unsupported SDT argument: %s\n", old_op);
-		return SDT_ARG_SKIP;
-	}
+		वापस SDT_ARG_SKIP;
+	पूर्ण
 
 	ret = sdt_init_op_regex();
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!regexec(&sdt_op_regex1, old_op, 3, rm, 0)) {
+	अगर (!regexec(&sdt_op_regex1, old_op, 3, rm, 0)) अणु
 		/* REG or %rREG --> %gprREG */
 
-		new_len = 5;	/* % g p r NULL */
-		new_len += (int)(rm[2].rm_eo - rm[2].rm_so);
+		new_len = 5;	/* % g p r शून्य */
+		new_len += (पूर्णांक)(rm[2].rm_eo - rm[2].rm_so);
 
 		*new_op = zalloc(new_len);
-		if (!*new_op)
-			return -ENOMEM;
+		अगर (!*new_op)
+			वापस -ENOMEM;
 
-		scnprintf(*new_op, new_len, "%%gpr%.*s",
-			(int)(rm[2].rm_eo - rm[2].rm_so), old_op + rm[2].rm_so);
-	} else if (!regexec(&sdt_op_regex2, old_op, 5, rm, 0)) {
+		scnम_लिखो(*new_op, new_len, "%%gpr%.*s",
+			(पूर्णांक)(rm[2].rm_eo - rm[2].rm_so), old_op + rm[2].rm_so);
+	पूर्ण अन्यथा अगर (!regexec(&sdt_op_regex2, old_op, 5, rm, 0)) अणु
 		/*
 		 * -NUM(REG) or NUM(REG) or -NUM(%rREG) or NUM(%rREG) -->
 		 *	+/-NUM(%gprREG)
 		 */
 		prefix = (rm[1].rm_so == -1) ? '+' : '-';
 
-		new_len = 8;	/* +/- ( % g p r ) NULL */
-		new_len += (int)(rm[2].rm_eo - rm[2].rm_so);
-		new_len += (int)(rm[4].rm_eo - rm[4].rm_so);
+		new_len = 8;	/* +/- ( % g p r ) शून्य */
+		new_len += (पूर्णांक)(rm[2].rm_eo - rm[2].rm_so);
+		new_len += (पूर्णांक)(rm[4].rm_eo - rm[4].rm_so);
 
 		*new_op = zalloc(new_len);
-		if (!*new_op)
-			return -ENOMEM;
+		अगर (!*new_op)
+			वापस -ENOMEM;
 
-		scnprintf(*new_op, new_len, "%c%.*s(%%gpr%.*s)", prefix,
-			(int)(rm[2].rm_eo - rm[2].rm_so), old_op + rm[2].rm_so,
-			(int)(rm[4].rm_eo - rm[4].rm_so), old_op + rm[4].rm_so);
-	} else {
+		scnम_लिखो(*new_op, new_len, "%c%.*s(%%gpr%.*s)", prefix,
+			(पूर्णांक)(rm[2].rm_eo - rm[2].rm_so), old_op + rm[2].rm_so,
+			(पूर्णांक)(rm[4].rm_eo - rm[4].rm_so), old_op + rm[4].rm_so);
+	पूर्ण अन्यथा अणु
 		pr_debug4("Skipping unsupported SDT argument: %s\n", old_op);
-		return SDT_ARG_SKIP;
-	}
+		वापस SDT_ARG_SKIP;
+	पूर्ण
 
-	return SDT_ARG_VALID;
-}
+	वापस SDT_ARG_VALID;
+पूर्ण
 
-uint64_t arch__intr_reg_mask(void)
-{
-	struct perf_event_attr attr = {
+uपूर्णांक64_t arch__पूर्णांकr_reg_mask(व्योम)
+अणु
+	काष्ठा perf_event_attr attr = अणु
 		.type                   = PERF_TYPE_HARDWARE,
 		.config                 = PERF_COUNT_HW_CPU_CYCLES,
 		.sample_type            = PERF_SAMPLE_REGS_INTR,
 		.precise_ip             = 1,
 		.disabled               = 1,
 		.exclude_kernel         = 1,
-	};
-	int fd;
+	पूर्ण;
+	पूर्णांक fd;
 	u32 version;
 	u64 extended_mask = 0, mask = PERF_REGS_MASK;
 
 	/*
 	 * Get the PVR value to set the extended
-	 * mask specific to platform.
+	 * mask specअगरic to platक्रमm.
 	 */
 	version = (((mfspr(SPRN_PVR)) >>  16) & 0xFFFF);
-	if (version == PVR_POWER9)
+	अगर (version == PVR_POWER9)
 		extended_mask = PERF_REG_PMU_MASK_300;
-	else if (version == PVR_POWER10)
+	अन्यथा अगर (version == PVR_POWER10)
 		extended_mask = PERF_REG_PMU_MASK_31;
-	else
-		return mask;
+	अन्यथा
+		वापस mask;
 
-	attr.sample_regs_intr = extended_mask;
+	attr.sample_regs_पूर्णांकr = extended_mask;
 	attr.sample_period = 1;
 	event_attr_init(&attr);
 
 	/*
-	 * check if the pmu supports perf extended regs, before
-	 * returning the register mask to sample.
+	 * check अगर the pmu supports perf extended regs, beक्रमe
+	 * वापसing the रेजिस्टर mask to sample.
 	 */
-	fd = sys_perf_event_open(&attr, 0, -1, -1, 0);
-	if (fd != -1) {
-		close(fd);
+	fd = sys_perf_event_खोलो(&attr, 0, -1, -1, 0);
+	अगर (fd != -1) अणु
+		बंद(fd);
 		mask |= extended_mask;
-	}
-	return mask;
-}
+	पूर्ण
+	वापस mask;
+पूर्ण

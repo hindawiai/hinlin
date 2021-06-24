@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * APM emulation for PMU-based machines
+ * APM emulation क्रम PMU-based machines
  *
  * Copyright 2001 Benjamin Herrenschmidt (benh@kernel.crashing.org)
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/apm-emulation.h>
-#include <linux/adb.h>
-#include <linux/pmu.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/apm-emulation.h>
+#समावेश <linux/adb.h>
+#समावेश <linux/pmu.h>
 
-#define APM_CRITICAL		10
-#define APM_LOW			30
+#घोषणा APM_CRITICAL		10
+#घोषणा APM_LOW			30
 
-static void pmu_apm_get_power_status(struct apm_power_info *info)
-{
-	int percentage = -1;
-	int batteries = 0;
-	int time_units = -1;
-	int real_count = 0;
-	int i;
-	char charging = 0;
-	long charge = -1;
-	long amperage = 0;
-	unsigned long btype = 0;
+अटल व्योम pmu_apm_get_घातer_status(काष्ठा apm_घातer_info *info)
+अणु
+	पूर्णांक percentage = -1;
+	पूर्णांक batteries = 0;
+	पूर्णांक समय_units = -1;
+	पूर्णांक real_count = 0;
+	पूर्णांक i;
+	अक्षर अक्षरging = 0;
+	दीर्घ अक्षरge = -1;
+	दीर्घ amperage = 0;
+	अचिन्हित दीर्घ btype = 0;
 
 	info->battery_status = APM_BATTERY_STATUS_UNKNOWN;
 	info->battery_flag = APM_BATTERY_FLAG_UNKNOWN;
 	info->units = APM_UNITS_MINS;
 
-	if (pmu_power_flags & PMU_PWR_AC_PRESENT)
+	अगर (pmu_घातer_flags & PMU_PWR_AC_PRESENT)
 		info->ac_line_status = APM_AC_ONLINE;
-	else
+	अन्यथा
 		info->ac_line_status = APM_AC_OFFLINE;
 
-	for (i=0; i<pmu_battery_count; i++) {
-		if (pmu_batteries[i].flags & PMU_BATT_PRESENT) {
+	क्रम (i=0; i<pmu_battery_count; i++) अणु
+		अगर (pmu_batteries[i].flags & PMU_BATT_PRESENT) अणु
 			batteries++;
-			if (percentage < 0)
+			अगर (percentage < 0)
 				percentage = 0;
-			if (charge < 0)
-				charge = 0;
-			percentage += (pmu_batteries[i].charge * 100) /
-				pmu_batteries[i].max_charge;
-			charge += pmu_batteries[i].charge;
+			अगर (अक्षरge < 0)
+				अक्षरge = 0;
+			percentage += (pmu_batteries[i].अक्षरge * 100) /
+				pmu_batteries[i].max_अक्षरge;
+			अक्षरge += pmu_batteries[i].अक्षरge;
 			amperage += pmu_batteries[i].amperage;
-			if (btype == 0)
+			अगर (btype == 0)
 				btype = (pmu_batteries[i].flags & PMU_BATT_TYPE_MASK);
 			real_count++;
-			if ((pmu_batteries[i].flags & PMU_BATT_CHARGING))
-				charging++;
-		}
-	}
-	if (batteries == 0)
+			अगर ((pmu_batteries[i].flags & PMU_BATT_CHARGING))
+				अक्षरging++;
+		पूर्ण
+	पूर्ण
+	अगर (batteries == 0)
 		info->ac_line_status = APM_AC_ONLINE;
 
-	if (real_count) {
-		if (amperage < 0) {
-			if (btype == PMU_BATT_TYPE_SMART)
-				time_units = (charge * 59) / (amperage * -1);
-			else
-				time_units = (charge * 16440) / (amperage * -60);
-		}
+	अगर (real_count) अणु
+		अगर (amperage < 0) अणु
+			अगर (btype == PMU_BATT_TYPE_SMART)
+				समय_units = (अक्षरge * 59) / (amperage * -1);
+			अन्यथा
+				समय_units = (अक्षरge * 16440) / (amperage * -60);
+		पूर्ण
 		percentage /= real_count;
-		if (charging > 0) {
+		अगर (अक्षरging > 0) अणु
 			info->battery_status = APM_BATTERY_STATUS_CHARGING;
 			info->battery_flag = APM_BATTERY_FLAG_CHARGING;
-		} else if (percentage <= APM_CRITICAL) {
+		पूर्ण अन्यथा अगर (percentage <= APM_CRITICAL) अणु
 			info->battery_status = APM_BATTERY_STATUS_CRITICAL;
 			info->battery_flag = APM_BATTERY_FLAG_CRITICAL;
-		} else if (percentage <= APM_LOW) {
+		पूर्ण अन्यथा अगर (percentage <= APM_LOW) अणु
 			info->battery_status = APM_BATTERY_STATUS_LOW;
 			info->battery_flag = APM_BATTERY_FLAG_LOW;
-		} else {
+		पूर्ण अन्यथा अणु
 			info->battery_status = APM_BATTERY_STATUS_HIGH;
 			info->battery_flag = APM_BATTERY_FLAG_HIGH;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	info->battery_life = percentage;
-	info->time = time_units;
-}
+	info->battery_lअगरe = percentage;
+	info->समय = समय_units;
+पूर्ण
 
-static int __init apm_emu_init(void)
-{
-	apm_get_power_status = pmu_apm_get_power_status;
+अटल पूर्णांक __init apm_emu_init(व्योम)
+अणु
+	apm_get_घातer_status = pmu_apm_get_घातer_status;
 
-	printk(KERN_INFO "apm_emu: PMU APM Emulation initialized.\n");
+	prपूर्णांकk(KERN_INFO "apm_emu: PMU APM Emulation initialized.\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit apm_emu_exit(void)
-{
-	if (apm_get_power_status == pmu_apm_get_power_status)
-		apm_get_power_status = NULL;
+अटल व्योम __निकास apm_emu_निकास(व्योम)
+अणु
+	अगर (apm_get_घातer_status == pmu_apm_get_घातer_status)
+		apm_get_घातer_status = शून्य;
 
-	printk(KERN_INFO "apm_emu: PMU APM Emulation removed.\n");
-}
+	prपूर्णांकk(KERN_INFO "apm_emu: PMU APM Emulation removed.\n");
+पूर्ण
 
 module_init(apm_emu_init);
-module_exit(apm_emu_exit);
+module_निकास(apm_emu_निकास);
 
 MODULE_AUTHOR("Benjamin Herrenschmidt");
 MODULE_DESCRIPTION("APM emulation for PowerMac");

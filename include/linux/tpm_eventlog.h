@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __LINUX_TPM_EVENTLOG_H__
-#define __LINUX_TPM_EVENTLOG_H__
+#अगर_अघोषित __LINUX_TPM_EVENTLOG_H__
+#घोषणा __LINUX_TPM_EVENTLOG_H__
 
-#include <linux/tpm.h>
+#समावेश <linux/tpm.h>
 
-#define TCG_EVENT_NAME_LEN_MAX	255
-#define MAX_TEXT_EVENT		1000	/* Max event string length */
-#define ACPI_TCPA_SIG		"TCPA"	/* 0x41504354 /'TCPA' */
+#घोषणा TCG_EVENT_NAME_LEN_MAX	255
+#घोषणा MAX_TEXT_EVENT		1000	/* Max event string length */
+#घोषणा ACPI_TCPA_SIG		"TCPA"	/* 0x41504354 /'TCPA' */
 
-#define EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2 0x1
-#define EFI_TCG2_EVENT_LOG_FORMAT_TCG_2   0x2
+#घोषणा EFI_TCG2_EVENT_LOG_FORMAT_TCG_1_2 0x1
+#घोषणा EFI_TCG2_EVENT_LOG_FORMAT_TCG_2   0x2
 
-#ifdef CONFIG_PPC64
-#define do_endian_conversion(x) be32_to_cpu(x)
-#else
-#define do_endian_conversion(x) x
-#endif
+#अगर_घोषित CONFIG_PPC64
+#घोषणा करो_endian_conversion(x) be32_to_cpu(x)
+#अन्यथा
+#घोषणा करो_endian_conversion(x) x
+#पूर्ण_अगर
 
-enum bios_platform_class {
+क्रमागत bios_platक्रमm_class अणु
 	BIOS_CLIENT = 0x00,
 	BIOS_SERVER = 0x01,
-};
+पूर्ण;
 
-struct tcpa_event {
+काष्ठा tcpa_event अणु
 	u32 pcr_index;
 	u32 event_type;
 	u8 pcr_value[20];	/* SHA1 */
 	u32 event_size;
 	u8 event_data[];
-};
+पूर्ण;
 
-enum tcpa_event_types {
+क्रमागत tcpa_event_types अणु
 	PREBOOT = 0,
 	POST_CODE,
 	UNUSED,
@@ -50,15 +51,15 @@ enum tcpa_event_types {
 	NONHOST_CODE,
 	NONHOST_CONFIG,
 	NONHOST_INFO,
-};
+पूर्ण;
 
-struct tcpa_pc_event {
+काष्ठा tcpa_pc_event अणु
 	u32 event_id;
 	u32 event_size;
 	u8 event_data[];
-};
+पूर्ण;
 
-enum tcpa_pc_event_ids {
+क्रमागत tcpa_pc_event_ids अणु
 	SMBIOS = 1,
 	BIS_CERT,
 	POST_BIOS_ROM,
@@ -72,223 +73,223 @@ enum tcpa_pc_event_ids {
 	S_CRTM_CONTENTS,
 	POST_CONTENTS,
 	HOST_TABLE_OF_DEVICES,
-};
+पूर्ण;
 
-/* http://www.trustedcomputinggroup.org/tcg-efi-protocol-specification/ */
+/* http://www.trustedcomputinggroup.org/tcg-efi-protocol-specअगरication/ */
 
-struct tcg_efi_specid_event_algs {
+काष्ठा tcg_efi_specid_event_algs अणु
 	u16 alg_id;
 	u16 digest_size;
-} __packed;
+पूर्ण __packed;
 
-#define TCG_SPECID_SIG "Spec ID Event03"
+#घोषणा TCG_SPECID_SIG "Spec ID Event03"
 
-struct tcg_efi_specid_event_head {
+काष्ठा tcg_efi_specid_event_head अणु
 	u8 signature[16];
-	u32 platform_class;
+	u32 platक्रमm_class;
 	u8 spec_version_minor;
 	u8 spec_version_major;
 	u8 spec_errata;
-	u8 uintnsize;
+	u8 uपूर्णांकnsize;
 	u32 num_algs;
-	struct tcg_efi_specid_event_algs digest_sizes[];
-} __packed;
+	काष्ठा tcg_efi_specid_event_algs digest_sizes[];
+पूर्ण __packed;
 
-struct tcg_pcr_event {
+काष्ठा tcg_pcr_event अणु
 	u32 pcr_idx;
 	u32 event_type;
 	u8 digest[20];
 	u32 event_size;
 	u8 event[];
-} __packed;
+पूर्ण __packed;
 
-struct tcg_event_field {
+काष्ठा tcg_event_field अणु
 	u32 event_size;
 	u8 event[];
-} __packed;
+पूर्ण __packed;
 
-struct tcg_pcr_event2_head {
+काष्ठा tcg_pcr_event2_head अणु
 	u32 pcr_idx;
 	u32 event_type;
 	u32 count;
-	struct tpm_digest digests[];
-} __packed;
+	काष्ठा tpm_digest digests[];
+पूर्ण __packed;
 
-struct tcg_algorithm_size {
+काष्ठा tcg_algorithm_size अणु
 	u16 algorithm_id;
 	u16 algorithm_size;
-};
+पूर्ण;
 
-struct tcg_algorithm_info {
+काष्ठा tcg_algorithm_info अणु
 	u8 signature[16];
-	u32 platform_class;
+	u32 platक्रमm_class;
 	u8 spec_version_minor;
 	u8 spec_version_major;
 	u8 spec_errata;
-	u8 uintn_size;
+	u8 uपूर्णांकn_size;
 	u32 number_of_algorithms;
-	struct tcg_algorithm_size digest_sizes[];
-};
+	काष्ठा tcg_algorithm_size digest_sizes[];
+पूर्ण;
 
-#ifndef TPM_MEMREMAP
-#define TPM_MEMREMAP(start, size) NULL
-#endif
+#अगर_अघोषित TPM_MEMREMAP
+#घोषणा TPM_MEMREMAP(start, size) शून्य
+#पूर्ण_अगर
 
-#ifndef TPM_MEMUNMAP
-#define TPM_MEMUNMAP(start, size) do{} while(0)
-#endif
+#अगर_अघोषित TPM_MEMUNMAP
+#घोषणा TPM_MEMUNMAP(start, size) करोअणुपूर्ण जबतक(0)
+#पूर्ण_अगर
 
 /**
  * __calc_tpm2_event_size - calculate the size of a TPM2 event log entry
- * @event:        Pointer to the event whose size should be calculated
- * @event_header: Pointer to the initial event containing the digest lengths
- * @do_mapping:   Whether or not the event needs to be mapped
+ * @event:        Poपूर्णांकer to the event whose size should be calculated
+ * @event_header: Poपूर्णांकer to the initial event containing the digest lengths
+ * @करो_mapping:   Whether or not the event needs to be mapped
  *
- * The TPM2 event log format can contain multiple digests corresponding to
+ * The TPM2 event log क्रमmat can contain multiple digests corresponding to
  * separate PCR banks, and also contains a variable length of the data that
- * was measured. This requires knowledge of how long each digest type is,
- * and this information is contained within the first event in the log.
+ * was measured. This requires knowledge of how दीर्घ each digest type is,
+ * and this inक्रमmation is contained within the first event in the log.
  *
  * We calculate the length by examining the number of events, and then looking
- * at each event in turn to determine how much space is used for events in
- * total. Once we've done this we know the offset of the data length field,
+ * at each event in turn to determine how much space is used क्रम events in
+ * total. Once we've करोne this we know the offset of the data length field,
  * and can calculate the total size of the event.
  *
  * Return: size of the event on success, 0 on failure
  */
 
-static inline int __calc_tpm2_event_size(struct tcg_pcr_event2_head *event,
-					 struct tcg_pcr_event *event_header,
-					 bool do_mapping)
-{
-	struct tcg_efi_specid_event_head *efispecid;
-	struct tcg_event_field *event_field;
-	void *mapping = NULL;
-	int mapping_size;
-	void *marker;
-	void *marker_start;
+अटल अंतरभूत पूर्णांक __calc_tpm2_event_size(काष्ठा tcg_pcr_event2_head *event,
+					 काष्ठा tcg_pcr_event *event_header,
+					 bool करो_mapping)
+अणु
+	काष्ठा tcg_efi_specid_event_head *efispecid;
+	काष्ठा tcg_event_field *event_field;
+	व्योम *mapping = शून्य;
+	पूर्णांक mapping_size;
+	व्योम *marker;
+	व्योम *marker_start;
 	u32 halg_size;
-	size_t size;
+	माप_प्रकार size;
 	u16 halg;
-	int i;
-	int j;
+	पूर्णांक i;
+	पूर्णांक j;
 	u32 count, event_type;
-	const u8 zero_digest[sizeof(event_header->digest)] = {0};
+	स्थिर u8 zero_digest[माप(event_header->digest)] = अणु0पूर्ण;
 
 	marker = event;
 	marker_start = marker;
-	marker = marker + sizeof(event->pcr_idx) + sizeof(event->event_type)
-		+ sizeof(event->count);
+	marker = marker + माप(event->pcr_idx) + माप(event->event_type)
+		+ माप(event->count);
 
 	/* Map the event header */
-	if (do_mapping) {
+	अगर (करो_mapping) अणु
 		mapping_size = marker - marker_start;
-		mapping = TPM_MEMREMAP((unsigned long)marker_start,
+		mapping = TPM_MEMREMAP((अचिन्हित दीर्घ)marker_start,
 				       mapping_size);
-		if (!mapping) {
+		अगर (!mapping) अणु
 			size = 0;
-			goto out;
-		}
-	} else {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mapping = marker_start;
-	}
+	पूर्ण
 
-	event = (struct tcg_pcr_event2_head *)mapping;
+	event = (काष्ठा tcg_pcr_event2_head *)mapping;
 	/*
-	 * The loop below will unmap these fields if the log is larger than
-	 * one page, so save them here for reference:
+	 * The loop below will unmap these fields अगर the log is larger than
+	 * one page, so save them here क्रम reference:
 	 */
 	count = READ_ONCE(event->count);
 	event_type = READ_ONCE(event->event_type);
 
-	/* Verify that it's the log header */
-	if (event_header->pcr_idx != 0 ||
+	/* Verअगरy that it's the log header */
+	अगर (event_header->pcr_idx != 0 ||
 	    event_header->event_type != NO_ACTION ||
-	    memcmp(event_header->digest, zero_digest, sizeof(zero_digest))) {
+	    स_भेद(event_header->digest, zero_digest, माप(zero_digest))) अणु
 		size = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	efispecid = (struct tcg_efi_specid_event_head *)event_header->event;
+	efispecid = (काष्ठा tcg_efi_specid_event_head *)event_header->event;
 
 	/*
-	 * Perform validation of the event in order to identify malformed
+	 * Perक्रमm validation of the event in order to identअगरy malक्रमmed
 	 * events. This function may be asked to parse arbitrary byte sequences
 	 * immediately following a valid event log. The caller expects this
 	 * function to recognize that the byte sequence is not a valid event
-	 * and to return an event size of 0.
+	 * and to वापस an event size of 0.
 	 */
-	if (memcmp(efispecid->signature, TCG_SPECID_SIG,
-		   sizeof(TCG_SPECID_SIG)) ||
-	    !efispecid->num_algs || count != efispecid->num_algs) {
+	अगर (स_भेद(efispecid->signature, TCG_SPECID_SIG,
+		   माप(TCG_SPECID_SIG)) ||
+	    !efispecid->num_algs || count != efispecid->num_algs) अणु
 		size = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
-		halg_size = sizeof(event->digests[i].alg_id);
+	क्रम (i = 0; i < count; i++) अणु
+		halg_size = माप(event->digests[i].alg_id);
 
-		/* Map the digest's algorithm identifier */
-		if (do_mapping) {
+		/* Map the digest's algorithm identअगरier */
+		अगर (करो_mapping) अणु
 			TPM_MEMUNMAP(mapping, mapping_size);
 			mapping_size = halg_size;
-			mapping = TPM_MEMREMAP((unsigned long)marker,
+			mapping = TPM_MEMREMAP((अचिन्हित दीर्घ)marker,
 					     mapping_size);
-			if (!mapping) {
+			अगर (!mapping) अणु
 				size = 0;
-				goto out;
-			}
-		} else {
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			mapping = marker;
-		}
+		पूर्ण
 
-		memcpy(&halg, mapping, halg_size);
+		स_नकल(&halg, mapping, halg_size);
 		marker = marker + halg_size;
 
-		for (j = 0; j < efispecid->num_algs; j++) {
-			if (halg == efispecid->digest_sizes[j].alg_id) {
+		क्रम (j = 0; j < efispecid->num_algs; j++) अणु
+			अगर (halg == efispecid->digest_sizes[j].alg_id) अणु
 				marker +=
 					efispecid->digest_sizes[j].digest_size;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 		/* Algorithm without known length. Such event is unparseable. */
-		if (j == efispecid->num_algs) {
+		अगर (j == efispecid->num_algs) अणु
 			size = 0;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Map the event size - we don't read from the event itself, so
-	 * we don't need to map it
+	 * Map the event size - we करोn't पढ़ो from the event itself, so
+	 * we करोn't need to map it
 	 */
-	if (do_mapping) {
+	अगर (करो_mapping) अणु
 		TPM_MEMUNMAP(mapping, mapping_size);
-		mapping_size += sizeof(event_field->event_size);
-		mapping = TPM_MEMREMAP((unsigned long)marker,
+		mapping_size += माप(event_field->event_size);
+		mapping = TPM_MEMREMAP((अचिन्हित दीर्घ)marker,
 				       mapping_size);
-		if (!mapping) {
+		अगर (!mapping) अणु
 			size = 0;
-			goto out;
-		}
-	} else {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mapping = marker;
-	}
+	पूर्ण
 
-	event_field = (struct tcg_event_field *)mapping;
+	event_field = (काष्ठा tcg_event_field *)mapping;
 
-	marker = marker + sizeof(event_field->event_size)
+	marker = marker + माप(event_field->event_size)
 		+ event_field->event_size;
 	size = marker - marker_start;
 
-	if (event_type == 0 && event_field->event_size == 0)
+	अगर (event_type == 0 && event_field->event_size == 0)
 		size = 0;
 
 out:
-	if (do_mapping)
+	अगर (करो_mapping)
 		TPM_MEMUNMAP(mapping, mapping_size);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

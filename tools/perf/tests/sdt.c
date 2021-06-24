@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/epoll.h>
-#include <util/symbol.h>
-#include <linux/filter.h>
-#include "tests.h"
-#include "debug.h"
-#include "probe-file.h"
-#include "build-id.h"
-#include "util.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <त्रुटिसं.स>
+#समावेश <सीमा.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <sys/epoll.h>
+#समावेश <util/symbol.h>
+#समावेश <linux/filter.h>
+#समावेश "tests.h"
+#समावेश "debug.h"
+#समावेश "probe-file.h"
+#समावेश "build-id.h"
+#समावेश "util.h"
 
 /* To test SDT event, we need libelf support to scan elf binary */
-#if defined(HAVE_SDT_EVENT) && defined(HAVE_LIBELF_SUPPORT)
+#अगर defined(HAVE_SDT_EVENT) && defined(HAVE_LIBELF_SUPPORT)
 
-#include <sys/sdt.h>
+#समावेश <sys/sdt.h>
 
-static int target_function(void)
-{
+अटल पूर्णांक target_function(व्योम)
+अणु
 	DTRACE_PROBE(perf, test_target);
-	return TEST_OK;
-}
+	वापस TEST_OK;
+पूर्ण
 
 /* Copied from builtin-buildid-cache.c */
-static int build_id_cache__add_file(const char *filename)
-{
-	char sbuild_id[SBUILD_ID_SIZE];
-	struct build_id bid;
-	int err;
+अटल पूर्णांक build_id_cache__add_file(स्थिर अक्षर *filename)
+अणु
+	अक्षर sbuild_id[SBUILD_ID_SIZE];
+	काष्ठा build_id bid;
+	पूर्णांक err;
 
-	err = filename__read_build_id(filename, &bid);
-	if (err < 0) {
+	err = filename__पढ़ो_build_id(filename, &bid);
+	अगर (err < 0) अणु
 		pr_debug("Failed to read build id of %s\n", filename);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	build_id__sprintf(&bid, sbuild_id);
-	err = build_id_cache__add_s(sbuild_id, filename, NULL, false, false);
-	if (err < 0)
+	build_id__प्र_लिखो(&bid, sbuild_id);
+	err = build_id_cache__add_s(sbuild_id, filename, शून्य, false, false);
+	अगर (err < 0)
 		pr_debug("Failed to add build id cache of %s\n", filename);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static char *get_self_path(void)
-{
-	char *buf = calloc(PATH_MAX, sizeof(char));
+अटल अक्षर *get_self_path(व्योम)
+अणु
+	अक्षर *buf = सुस्मृति(PATH_MAX, माप(अक्षर));
 
-	if (buf && readlink("/proc/self/exe", buf, PATH_MAX - 1) < 0) {
+	अगर (buf && पढ़ोlink("/proc/self/exe", buf, PATH_MAX - 1) < 0) अणु
 		pr_debug("Failed to get correct path of perf\n");
-		free(buf);
-		return NULL;
-	}
-	return buf;
-}
+		मुक्त(buf);
+		वापस शून्य;
+	पूर्ण
+	वापस buf;
+पूर्ण
 
-static int search_cached_probe(const char *target,
-			       const char *group, const char *event)
-{
-	struct probe_cache *cache = probe_cache__new(target, NULL);
-	int ret = 0;
+अटल पूर्णांक search_cached_probe(स्थिर अक्षर *target,
+			       स्थिर अक्षर *group, स्थिर अक्षर *event)
+अणु
+	काष्ठा probe_cache *cache = probe_cache__new(target, शून्य);
+	पूर्णांक ret = 0;
 
-	if (!cache) {
+	अगर (!cache) अणु
 		pr_debug("Failed to open probe cache of %s\n", target);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!probe_cache__find_by_name(cache, group, event)) {
+	अगर (!probe_cache__find_by_name(cache, group, event)) अणु
 		pr_debug("Failed to find %s:%s in the cache\n", group, event);
 		ret = -ENOENT;
-	}
+	पूर्ण
 	probe_cache__delete(cache);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int test__sdt_event(struct test *test __maybe_unused, int subtests __maybe_unused)
-{
-	int ret = TEST_FAIL;
-	char __tempdir[] = "./test-buildid-XXXXXX";
-	char *tempdir = NULL, *myself = get_self_path();
+पूर्णांक test__sdt_event(काष्ठा test *test __maybe_unused, पूर्णांक subtests __maybe_unused)
+अणु
+	पूर्णांक ret = TEST_FAIL;
+	अक्षर __tempdir[] = "./test-buildid-XXXXXX";
+	अक्षर *tempdir = शून्य, *myself = get_self_path();
 
-	if (myself == NULL || mkdtemp(__tempdir) == NULL) {
+	अगर (myself == शून्य || mkdtemp(__tempdir) == शून्य) अणु
 		pr_debug("Failed to make a tempdir for build-id cache\n");
-		goto error;
-	}
-	/* Note that buildid_dir must be an absolute path */
-	tempdir = realpath(__tempdir, NULL);
-	if (tempdir == NULL)
-		goto error_rmdir;
+		जाओ error;
+	पूर्ण
+	/* Note that buildid_dir must be an असलolute path */
+	tempdir = realpath(__tempdir, शून्य);
+	अगर (tempdir == शून्य)
+		जाओ error_सूची_हटाओ;
 
 	/* At first, scan itself */
 	set_buildid_dir(tempdir);
-	if (build_id_cache__add_file(myself) < 0)
-		goto error_rmdir;
+	अगर (build_id_cache__add_file(myself) < 0)
+		जाओ error_सूची_हटाओ;
 
 	/* Open a cache and make sure the SDT is stored */
-	if (search_cached_probe(myself, "sdt_perf", "test_target") < 0)
-		goto error_rmdir;
+	अगर (search_cached_probe(myself, "sdt_perf", "test_target") < 0)
+		जाओ error_सूची_हटाओ;
 
 	/* TBD: probing on the SDT event and collect logs */
 
 	/* Call the target and get an event */
 	ret = target_function();
 
-error_rmdir:
+error_सूची_हटाओ:
 	/* Cleanup temporary buildid dir */
 	rm_rf(__tempdir);
 error:
-	free(tempdir);
-	free(myself);
-	return ret;
-}
-#else
-int test__sdt_event(struct test *test __maybe_unused, int subtests __maybe_unused)
-{
+	मुक्त(tempdir);
+	मुक्त(myself);
+	वापस ret;
+पूर्ण
+#अन्यथा
+पूर्णांक test__sdt_event(काष्ठा test *test __maybe_unused, पूर्णांक subtests __maybe_unused)
+अणु
 	pr_debug("Skip SDT event test because SDT support is not compiled\n");
-	return TEST_SKIP;
-}
-#endif
+	वापस TEST_SKIP;
+पूर्ण
+#पूर्ण_अगर

@@ -1,76 +1,77 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2018 Facebook
 
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-#ifndef PERF_MAX_STACK_DEPTH
-#define PERF_MAX_STACK_DEPTH         127
-#endif
+#अगर_अघोषित PERF_MAX_STACK_DEPTH
+#घोषणा PERF_MAX_STACK_DEPTH         127
+#पूर्ण_अगर
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__uint(max_entries, 1);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__uपूर्णांक(max_entries, 1);
 	__type(key, __u32);
 	__type(value, __u32);
-} control_map SEC(".maps");
+पूर्ण control_map SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_HASH);
-	__uint(max_entries, 16384);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_HASH);
+	__uपूर्णांक(max_entries, 16384);
 	__type(key, __u32);
 	__type(value, __u32);
-} stackid_hmap SEC(".maps");
+पूर्ण stackid_hmap SEC(".maps");
 
-typedef struct bpf_stack_build_id stack_trace_t[PERF_MAX_STACK_DEPTH];
+प्रकार काष्ठा bpf_stack_build_id stack_trace_t[PERF_MAX_STACK_DEPTH];
 
-struct {
-	__uint(type, BPF_MAP_TYPE_STACK_TRACE);
-	__uint(max_entries, 128);
-	__uint(map_flags, BPF_F_STACK_BUILD_ID);
-	__uint(key_size, sizeof(__u32));
-	__uint(value_size, sizeof(stack_trace_t));
-} stackmap SEC(".maps");
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_STACK_TRACE);
+	__uपूर्णांक(max_entries, 128);
+	__uपूर्णांक(map_flags, BPF_F_STACK_BUILD_ID);
+	__uपूर्णांक(key_size, माप(__u32));
+	__uपूर्णांक(value_size, माप(stack_trace_t));
+पूर्ण stackmap SEC(".maps");
 
-struct {
-	__uint(type, BPF_MAP_TYPE_ARRAY);
-	__uint(max_entries, 128);
+काष्ठा अणु
+	__uपूर्णांक(type, BPF_MAP_TYPE_ARRAY);
+	__uपूर्णांक(max_entries, 128);
 	__type(key, __u32);
 	__type(value, stack_trace_t);
-} stack_amap SEC(".maps");
+पूर्ण stack_amap SEC(".maps");
 
-/* taken from /sys/kernel/debug/tracing/events/random/urandom_read/format */
-struct random_urandom_args {
-	unsigned long long pad;
-	int got_bits;
-	int pool_left;
-	int input_left;
-};
+/* taken from /sys/kernel/debug/tracing/events/अक्रमom/uअक्रमom_पढ़ो/क्रमmat */
+काष्ठा अक्रमom_uअक्रमom_args अणु
+	अचिन्हित दीर्घ दीर्घ pad;
+	पूर्णांक got_bits;
+	पूर्णांक pool_left;
+	पूर्णांक input_left;
+पूर्ण;
 
 SEC("tracepoint/random/urandom_read")
-int oncpu(struct random_urandom_args *args)
-{
-	__u32 max_len = sizeof(struct bpf_stack_build_id)
+पूर्णांक oncpu(काष्ठा अक्रमom_uअक्रमom_args *args)
+अणु
+	__u32 max_len = माप(काष्ठा bpf_stack_build_id)
 			* PERF_MAX_STACK_DEPTH;
 	__u32 key = 0, val = 0, *value_p;
-	void *stack_p;
+	व्योम *stack_p;
 
 	value_p = bpf_map_lookup_elem(&control_map, &key);
-	if (value_p && *value_p)
-		return 0; /* skip if non-zero *value_p */
+	अगर (value_p && *value_p)
+		वापस 0; /* skip अगर non-zero *value_p */
 
 	/* The size of stackmap and stackid_hmap should be the same */
 	key = bpf_get_stackid(args, &stackmap, BPF_F_USER_STACK);
-	if ((int)key >= 0) {
+	अगर ((पूर्णांक)key >= 0) अणु
 		bpf_map_update_elem(&stackid_hmap, &key, &val, 0);
 		stack_p = bpf_map_lookup_elem(&stack_amap, &key);
-		if (stack_p)
+		अगर (stack_p)
 			bpf_get_stack(args, stack_p, max_len,
 				      BPF_F_USER_STACK | BPF_F_USER_BUILD_ID);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
-__u32 _version SEC("version") = 1; /* ignored by tracepoints, required by libbpf.a */
+अक्षर _license[] SEC("license") = "GPL";
+__u32 _version SEC("version") = 1; /* ignored by tracepoपूर्णांकs, required by libbpf.a */

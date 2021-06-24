@@ -1,19 +1,20 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
 
-#include "cpu.h"
-#include "fs/fs.h"
+#समावेश "cpu.h"
+#समावेश "fs/fs.h"
 
-int cpu__get_max_freq(unsigned long long *freq)
-{
-	char entry[PATH_MAX];
-	int cpu;
+पूर्णांक cpu__get_max_freq(अचिन्हित दीर्घ दीर्घ *freq)
+अणु
+	अक्षर entry[PATH_MAX];
+	पूर्णांक cpu;
 
-	if (sysfs__read_int("devices/system/cpu/online", &cpu) < 0)
-		return -1;
+	अगर (sysfs__पढ़ो_पूर्णांक("devices/system/cpu/online", &cpu) < 0)
+		वापस -1;
 
-	snprintf(entry, sizeof(entry),
+	snम_लिखो(entry, माप(entry),
 		 "devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", cpu);
 
-	return sysfs__read_ull(entry, freq);
-}
+	वापस sysfs__पढ़ो_ull(entry, freq);
+पूर्ण

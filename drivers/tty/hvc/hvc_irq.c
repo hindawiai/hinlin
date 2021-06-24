@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright IBM Corp. 2001,2008
  *
- * This file contains the IRQ specific code for hvc_console
+ * This file contains the IRQ specअगरic code क्रम hvc_console
  *
  */
 
-#include <linux/interrupt.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "hvc_console.h"
+#समावेश "hvc_console.h"
 
-static irqreturn_t hvc_handle_interrupt(int irq, void *dev_instance)
-{
-	/* if hvc_poll request a repoll, then kick the hvcd thread */
-	if (hvc_poll(dev_instance))
+अटल irqवापस_t hvc_handle_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	/* अगर hvc_poll request a repoll, then kick the hvcd thपढ़ो */
+	अगर (hvc_poll(dev_instance))
 		hvc_kick();
 
 	/*
-	 * We're safe to always return IRQ_HANDLED as the hvcd thread will
-	 * iterate through each hvc_struct.
+	 * We're safe to always वापस IRQ_HANDLED as the hvcd thपढ़ो will
+	 * iterate through each hvc_काष्ठा.
 	 */
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * For IRQ based systems these callbacks can be used
+ * For IRQ based प्रणालीs these callbacks can be used
  */
-int notifier_add_irq(struct hvc_struct *hp, int irq)
-{
-	int rc;
+पूर्णांक notअगरier_add_irq(काष्ठा hvc_काष्ठा *hp, पूर्णांक irq)
+अणु
+	पूर्णांक rc;
 
-	if (!irq) {
+	अगर (!irq) अणु
 		hp->irq_requested = 0;
-		return 0;
-	}
-	rc = request_irq(irq, hvc_handle_interrupt, hp->flags,
+		वापस 0;
+	पूर्ण
+	rc = request_irq(irq, hvc_handle_पूर्णांकerrupt, hp->flags,
 			"hvc_console", hp);
-	if (!rc)
+	अगर (!rc)
 		hp->irq_requested = 1;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void notifier_del_irq(struct hvc_struct *hp, int irq)
-{
-	if (!hp->irq_requested)
-		return;
-	free_irq(irq, hp);
+व्योम notअगरier_del_irq(काष्ठा hvc_काष्ठा *hp, पूर्णांक irq)
+अणु
+	अगर (!hp->irq_requested)
+		वापस;
+	मुक्त_irq(irq, hp);
 	hp->irq_requested = 0;
-}
+पूर्ण
 
-void notifier_hangup_irq(struct hvc_struct *hp, int irq)
-{
-	notifier_del_irq(hp, irq);
-}
+व्योम notअगरier_hangup_irq(काष्ठा hvc_काष्ठा *hp, पूर्णांक irq)
+अणु
+	notअगरier_del_irq(hp, irq);
+पूर्ण

@@ -1,62 +1,63 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* SCTP kernel implementation
  * (C) Copyright Red Hat Inc. 2017
  *
  * These are definitions used by the stream schedulers, defined in RFC
- * draft ndata (https://tools.ietf.org/html/draft-ietf-tsvwg-sctp-ndata-11)
+ * draft ndata (https://tools.ietf.org/hपंचांगl/draft-ietf-tsvwg-sctp-ndata-11)
  *
  * Please send any bug reports or fixes you make to the
  * email addresses:
  *    lksctp developers <linux-sctp@vger.kernel.org>
  *
- * Written or modified by:
- *   Marcelo Ricardo Leitner <marcelo.leitner@gmail.com>
+ * Written or modअगरied by:
+ *   Marcelo Ricarकरो Leitner <marcelo.leitner@gmail.com>
  */
 
-#ifndef __sctp_stream_sched_h__
-#define __sctp_stream_sched_h__
+#अगर_अघोषित __sctp_stream_sched_h__
+#घोषणा __sctp_stream_sched_h__
 
-struct sctp_sched_ops {
-	/* Property handling for a given stream */
-	int (*set)(struct sctp_stream *stream, __u16 sid, __u16 value,
+काष्ठा sctp_sched_ops अणु
+	/* Property handling क्रम a given stream */
+	पूर्णांक (*set)(काष्ठा sctp_stream *stream, __u16 sid, __u16 value,
 		   gfp_t gfp);
-	int (*get)(struct sctp_stream *stream, __u16 sid, __u16 *value);
+	पूर्णांक (*get)(काष्ठा sctp_stream *stream, __u16 sid, __u16 *value);
 
-	/* Init the specific scheduler */
-	int (*init)(struct sctp_stream *stream);
+	/* Init the specअगरic scheduler */
+	पूर्णांक (*init)(काष्ठा sctp_stream *stream);
 	/* Init a stream */
-	int (*init_sid)(struct sctp_stream *stream, __u16 sid, gfp_t gfp);
+	पूर्णांक (*init_sid)(काष्ठा sctp_stream *stream, __u16 sid, gfp_t gfp);
 	/* Frees the entire thing */
-	void (*free)(struct sctp_stream *stream);
+	व्योम (*मुक्त)(काष्ठा sctp_stream *stream);
 
 	/* Enqueue a chunk */
-	void (*enqueue)(struct sctp_outq *q, struct sctp_datamsg *msg);
+	व्योम (*enqueue)(काष्ठा sctp_outq *q, काष्ठा sctp_datamsg *msg);
 	/* Dequeue a chunk */
-	struct sctp_chunk *(*dequeue)(struct sctp_outq *q);
-	/* Called only if the chunk fit the packet */
-	void (*dequeue_done)(struct sctp_outq *q, struct sctp_chunk *chunk);
-	/* Sched all chunks already enqueued */
-	void (*sched_all)(struct sctp_stream *steam);
-	/* Unched all chunks already enqueued */
-	void (*unsched_all)(struct sctp_stream *steam);
-};
+	काष्ठा sctp_chunk *(*dequeue)(काष्ठा sctp_outq *q);
+	/* Called only अगर the chunk fit the packet */
+	व्योम (*dequeue_करोne)(काष्ठा sctp_outq *q, काष्ठा sctp_chunk *chunk);
+	/* Sched all chunks alपढ़ोy enqueued */
+	व्योम (*sched_all)(काष्ठा sctp_stream *steam);
+	/* Unched all chunks alपढ़ोy enqueued */
+	व्योम (*unsched_all)(काष्ठा sctp_stream *steam);
+पूर्ण;
 
-int sctp_sched_set_sched(struct sctp_association *asoc,
-			 enum sctp_sched_type sched);
-int sctp_sched_get_sched(struct sctp_association *asoc);
-int sctp_sched_set_value(struct sctp_association *asoc, __u16 sid,
+पूर्णांक sctp_sched_set_sched(काष्ठा sctp_association *asoc,
+			 क्रमागत sctp_sched_type sched);
+पूर्णांक sctp_sched_get_sched(काष्ठा sctp_association *asoc);
+पूर्णांक sctp_sched_set_value(काष्ठा sctp_association *asoc, __u16 sid,
 			 __u16 value, gfp_t gfp);
-int sctp_sched_get_value(struct sctp_association *asoc, __u16 sid,
+पूर्णांक sctp_sched_get_value(काष्ठा sctp_association *asoc, __u16 sid,
 			 __u16 *value);
-void sctp_sched_dequeue_done(struct sctp_outq *q, struct sctp_chunk *ch);
+व्योम sctp_sched_dequeue_करोne(काष्ठा sctp_outq *q, काष्ठा sctp_chunk *ch);
 
-void sctp_sched_dequeue_common(struct sctp_outq *q, struct sctp_chunk *ch);
-int sctp_sched_init_sid(struct sctp_stream *stream, __u16 sid, gfp_t gfp);
-struct sctp_sched_ops *sctp_sched_ops_from_stream(struct sctp_stream *stream);
+व्योम sctp_sched_dequeue_common(काष्ठा sctp_outq *q, काष्ठा sctp_chunk *ch);
+पूर्णांक sctp_sched_init_sid(काष्ठा sctp_stream *stream, __u16 sid, gfp_t gfp);
+काष्ठा sctp_sched_ops *sctp_sched_ops_from_stream(काष्ठा sctp_stream *stream);
 
-void sctp_sched_ops_register(enum sctp_sched_type sched,
-			     struct sctp_sched_ops *sched_ops);
-void sctp_sched_ops_prio_init(void);
-void sctp_sched_ops_rr_init(void);
+व्योम sctp_sched_ops_रेजिस्टर(क्रमागत sctp_sched_type sched,
+			     काष्ठा sctp_sched_ops *sched_ops);
+व्योम sctp_sched_ops_prio_init(व्योम);
+व्योम sctp_sched_ops_rr_init(व्योम);
 
-#endif /* __sctp_stream_sched_h__ */
+#पूर्ण_अगर /* __sctp_stream_sched_h__ */

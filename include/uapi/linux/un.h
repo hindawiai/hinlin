@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _LINUX_UN_H
-#define _LINUX_UN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _LINUX_UN_H
+#घोषणा _LINUX_UN_H
 
-#include <linux/socket.h>
+#समावेश <linux/socket.h>
 
-#define UNIX_PATH_MAX	108
+#घोषणा UNIX_PATH_MAX	108
 
-struct sockaddr_un {
+काष्ठा sockaddr_un अणु
 	__kernel_sa_family_t sun_family; /* AF_UNIX */
-	char sun_path[UNIX_PATH_MAX];	/* pathname */
-};
+	अक्षर sun_path[UNIX_PATH_MAX];	/* pathname */
+पूर्ण;
 
-#define SIOCUNIXFILE (SIOCPROTOPRIVATE + 0) /* open a socket file with O_PATH */
+#घोषणा SIOCUNIXखाता (SIOCPROTOPRIVATE + 0) /* खोलो a socket file with O_PATH */
 
-#endif /* _LINUX_UN_H */
+#पूर्ण_अगर /* _LINUX_UN_H */

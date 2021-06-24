@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* 
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <linux/slab.h>
-#include <linux/completion.h>
-#include <linux/irqreturn.h>
-#include <asm/irq.h>
-#include <irq_kern.h>
-#include <os.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/irqवापस.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <irq_kern.h>
+#समावेश <os.h>
 
-struct xterm_wait {
-	struct completion ready;
-	int fd;
-	int pid;
-	int new_fd;
-};
+काष्ठा xterm_रुको अणु
+	काष्ठा completion पढ़ोy;
+	पूर्णांक fd;
+	पूर्णांक pid;
+	पूर्णांक new_fd;
+पूर्ण;
 
-static irqreturn_t xterm_interrupt(int irq, void *data)
-{
-	struct xterm_wait *xterm = data;
-	int fd;
+अटल irqवापस_t xterm_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा xterm_रुको *xterm = data;
+	पूर्णांक fd;
 
 	fd = os_rcv_fd(xterm->fd, &xterm->pid);
-	if (fd == -EAGAIN)
-		return IRQ_NONE;
+	अगर (fd == -EAGAIN)
+		वापस IRQ_NONE;
 
 	xterm->new_fd = fd;
-	complete(&xterm->ready);
+	complete(&xterm->पढ़ोy);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int xterm_fd(int socket, int *pid_out)
-{
-	struct xterm_wait *data;
-	int err, ret;
+पूर्णांक xterm_fd(पूर्णांक socket, पूर्णांक *pid_out)
+अणु
+	काष्ठा xterm_रुको *data;
+	पूर्णांक err, ret;
 
-	data = kmalloc(sizeof(*data), GFP_KERNEL);
-	if (data == NULL) {
-		printk(KERN_ERR "xterm_fd : failed to allocate xterm_wait\n");
-		return -ENOMEM;
-	}
+	data = kदो_स्मृति(माप(*data), GFP_KERNEL);
+	अगर (data == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "xterm_fd : failed to allocate xterm_wait\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* This is a locked semaphore... */
-	*data = ((struct xterm_wait) { .fd 		= socket,
+	*data = ((काष्ठा xterm_रुको) अणु .fd 		= socket,
 				       .pid 		= -1,
-				       .new_fd	 	= -1 });
-	init_completion(&data->ready);
+				       .new_fd	 	= -1 पूर्ण);
+	init_completion(&data->पढ़ोy);
 
-	err = um_request_irq(XTERM_IRQ, socket, IRQ_READ, xterm_interrupt,
+	err = um_request_irq(XTERM_IRQ, socket, IRQ_READ, xterm_पूर्णांकerrupt,
 			     IRQF_SHARED, "xterm", data);
-	if (err < 0) {
-		printk(KERN_ERR "xterm_fd : failed to get IRQ for xterm, "
+	अगर (err < 0) अणु
+		prपूर्णांकk(KERN_ERR "xterm_fd : failed to get IRQ for xterm, "
 		       "err = %d\n",  err);
 		ret = err;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* ... so here we wait for an xterm interrupt.
+	/* ... so here we रुको क्रम an xterm पूर्णांकerrupt.
 	 *
-	 * XXX Note, if the xterm doesn't work for some reason (eg. DISPLAY
+	 * XXX Note, अगर the xterm करोesn't work क्रम some reason (eg. DISPLAY
 	 * isn't set) this will hang... */
-	wait_for_completion(&data->ready);
+	रुको_क्रम_completion(&data->पढ़ोy);
 
-	um_free_irq(XTERM_IRQ, data);
+	um_मुक्त_irq(XTERM_IRQ, data);
 
 	ret = data->new_fd;
 	*pid_out = data->pid;
  out:
-	kfree(data);
+	kमुक्त(data);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

@@ -1,109 +1,110 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /* Copyright (c) 2018 Mellanox Technologies. All rights reserved */
 
-#include <linux/netdevice.h>
-#include <linux/netlink.h>
-#include <linux/random.h>
-#include <net/vxlan.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/अक्रमom.h>
+#समावेश <net/vxlan.h>
 
-#include "reg.h"
-#include "spectrum.h"
-#include "spectrum_nve.h"
+#समावेश "reg.h"
+#समावेश "spectrum.h"
+#समावेश "spectrum_nve.h"
 
 /* Eth (18B) | IPv6 (40B) | UDP (8B) | VxLAN (8B) | Eth (14B) | IPv6 (40B)
  *
- * In the worst case - where we have a VLAN tag on the outer Ethernet
+ * In the worst हाल - where we have a VLAN tag on the outer Ethernet
  * header and IPv6 in overlay and underlay - we need to parse 128 bytes
  */
-#define MLXSW_SP_NVE_VXLAN_PARSING_DEPTH 128
-#define MLXSW_SP_NVE_DEFAULT_PARSING_DEPTH 96
+#घोषणा MLXSW_SP_NVE_VXLAN_PARSING_DEPTH 128
+#घोषणा MLXSW_SP_NVE_DEFAULT_PARSING_DEPTH 96
 
-#define MLXSW_SP_NVE_VXLAN_SUPPORTED_FLAGS	(VXLAN_F_UDP_ZERO_CSUM_TX | \
+#घोषणा MLXSW_SP_NVE_VXLAN_SUPPORTED_FLAGS	(VXLAN_F_UDP_ZERO_CSUM_TX | \
 						 VXLAN_F_LEARN)
 
-static bool mlxsw_sp_nve_vxlan_can_offload(const struct mlxsw_sp_nve *nve,
-					   const struct mlxsw_sp_nve_params *params,
-					   struct netlink_ext_ack *extack)
-{
-	struct vxlan_dev *vxlan = netdev_priv(params->dev);
-	struct vxlan_config *cfg = &vxlan->cfg;
+अटल bool mlxsw_sp_nve_vxlan_can_offload(स्थिर काष्ठा mlxsw_sp_nve *nve,
+					   स्थिर काष्ठा mlxsw_sp_nve_params *params,
+					   काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा vxlan_dev *vxlan = netdev_priv(params->dev);
+	काष्ठा vxlan_config *cfg = &vxlan->cfg;
 
-	if (cfg->saddr.sa.sa_family != AF_INET) {
+	अगर (cfg->saddr.sa.sa_family != AF_INET) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: Only IPv4 underlay is supported");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (vxlan_addr_multicast(&cfg->remote_ip)) {
+	अगर (vxlan_addr_multicast(&cfg->remote_ip)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: Multicast destination IP is not supported");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (vxlan_addr_any(&cfg->saddr)) {
+	अगर (vxlan_addr_any(&cfg->saddr)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: Source address must be specified");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (cfg->remote_ifindex) {
+	अगर (cfg->remote_अगरindex) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: Local interface is not supported");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (cfg->port_min || cfg->port_max) {
+	अगर (cfg->port_min || cfg->port_max) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: Only default UDP source port range is supported");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (cfg->tos != 1) {
+	अगर (cfg->tos != 1) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: TOS must be configured to inherit");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (cfg->flags & VXLAN_F_TTL_INHERIT) {
+	अगर (cfg->flags & VXLAN_F_TTL_INHERIT) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: TTL must not be configured to inherit");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (!(cfg->flags & VXLAN_F_UDP_ZERO_CSUM_TX)) {
+	अगर (!(cfg->flags & VXLAN_F_UDP_ZERO_CSUM_TX)) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: UDP checksum is not supported");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (cfg->flags & ~MLXSW_SP_NVE_VXLAN_SUPPORTED_FLAGS) {
+	अगर (cfg->flags & ~MLXSW_SP_NVE_VXLAN_SUPPORTED_FLAGS) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: Unsupported flag");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (cfg->ttl == 0) {
+	अगर (cfg->ttl == 0) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: TTL must not be configured to 0");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (cfg->label != 0) {
+	अगर (cfg->label != 0) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: Flow label must be configured to 0");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool mlxsw_sp1_nve_vxlan_can_offload(const struct mlxsw_sp_nve *nve,
-					    const struct mlxsw_sp_nve_params *params,
-					    struct netlink_ext_ack *extack)
-{
-	if (params->ethertype == ETH_P_8021AD) {
+अटल bool mlxsw_sp1_nve_vxlan_can_offload(स्थिर काष्ठा mlxsw_sp_nve *nve,
+					    स्थिर काष्ठा mlxsw_sp_nve_params *params,
+					    काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (params->ethertype == ETH_P_8021AD) अणु
 		NL_SET_ERR_MSG_MOD(extack, "VxLAN: 802.1ad bridge is not supported with VxLAN");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return mlxsw_sp_nve_vxlan_can_offload(nve, params, extack);
-}
+	वापस mlxsw_sp_nve_vxlan_can_offload(nve, params, extack);
+पूर्ण
 
-static void mlxsw_sp_nve_vxlan_config(const struct mlxsw_sp_nve *nve,
-				      const struct mlxsw_sp_nve_params *params,
-				      struct mlxsw_sp_nve_config *config)
-{
-	struct vxlan_dev *vxlan = netdev_priv(params->dev);
-	struct vxlan_config *cfg = &vxlan->cfg;
+अटल व्योम mlxsw_sp_nve_vxlan_config(स्थिर काष्ठा mlxsw_sp_nve *nve,
+				      स्थिर काष्ठा mlxsw_sp_nve_params *params,
+				      काष्ठा mlxsw_sp_nve_config *config)
+अणु
+	काष्ठा vxlan_dev *vxlan = netdev_priv(params->dev);
+	काष्ठा vxlan_config *cfg = &vxlan->cfg;
 
 	config->type = MLXSW_SP_NVE_TYPE_VXLAN;
 	config->ttl = cfg->ttl;
@@ -113,190 +114,190 @@ static void mlxsw_sp_nve_vxlan_config(const struct mlxsw_sp_nve *nve,
 	config->ul_proto = MLXSW_SP_L3_PROTO_IPV4;
 	config->ul_sip.addr4 = cfg->saddr.sin.sin_addr.s_addr;
 	config->udp_dport = cfg->dst_port;
-}
+पूर्ण
 
-static int __mlxsw_sp_nve_parsing_set(struct mlxsw_sp *mlxsw_sp,
-				      unsigned int parsing_depth,
+अटल पूर्णांक __mlxsw_sp_nve_parsing_set(काष्ठा mlxsw_sp *mlxsw_sp,
+				      अचिन्हित पूर्णांक parsing_depth,
 				      __be16 udp_dport)
-{
-	char mprs_pl[MLXSW_REG_MPRS_LEN];
+अणु
+	अक्षर mprs_pl[MLXSW_REG_MPRS_LEN];
 
 	mlxsw_reg_mprs_pack(mprs_pl, parsing_depth, be16_to_cpu(udp_dport));
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(mprs), mprs_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(mprs), mprs_pl);
+पूर्ण
 
-static int mlxsw_sp_nve_parsing_set(struct mlxsw_sp *mlxsw_sp,
+अटल पूर्णांक mlxsw_sp_nve_parsing_set(काष्ठा mlxsw_sp *mlxsw_sp,
 				    __be16 udp_dport)
-{
-	int parsing_depth = mlxsw_sp->nve->inc_parsing_depth_refs ?
+अणु
+	पूर्णांक parsing_depth = mlxsw_sp->nve->inc_parsing_depth_refs ?
 				MLXSW_SP_NVE_VXLAN_PARSING_DEPTH :
 				MLXSW_SP_NVE_DEFAULT_PARSING_DEPTH;
 
-	return __mlxsw_sp_nve_parsing_set(mlxsw_sp, parsing_depth, udp_dport);
-}
+	वापस __mlxsw_sp_nve_parsing_set(mlxsw_sp, parsing_depth, udp_dport);
+पूर्ण
 
-static int
-__mlxsw_sp_nve_inc_parsing_depth_get(struct mlxsw_sp *mlxsw_sp,
+अटल पूर्णांक
+__mlxsw_sp_nve_inc_parsing_depth_get(काष्ठा mlxsw_sp *mlxsw_sp,
 				     __be16 udp_dport)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
 	mlxsw_sp->nve->inc_parsing_depth_refs++;
 
 	err = mlxsw_sp_nve_parsing_set(mlxsw_sp, udp_dport);
-	if (err)
-		goto err_nve_parsing_set;
-	return 0;
+	अगर (err)
+		जाओ err_nve_parsing_set;
+	वापस 0;
 
 err_nve_parsing_set:
 	mlxsw_sp->nve->inc_parsing_depth_refs--;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void
-__mlxsw_sp_nve_inc_parsing_depth_put(struct mlxsw_sp *mlxsw_sp,
+अटल व्योम
+__mlxsw_sp_nve_inc_parsing_depth_put(काष्ठा mlxsw_sp *mlxsw_sp,
 				     __be16 udp_dport)
-{
+अणु
 	mlxsw_sp->nve->inc_parsing_depth_refs--;
 	mlxsw_sp_nve_parsing_set(mlxsw_sp, udp_dport);
-}
+पूर्ण
 
-int mlxsw_sp_nve_inc_parsing_depth_get(struct mlxsw_sp *mlxsw_sp)
-{
+पूर्णांक mlxsw_sp_nve_inc_parsing_depth_get(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
 	__be16 udp_dport = mlxsw_sp->nve->config.udp_dport;
 
-	return __mlxsw_sp_nve_inc_parsing_depth_get(mlxsw_sp, udp_dport);
-}
+	वापस __mlxsw_sp_nve_inc_parsing_depth_get(mlxsw_sp, udp_dport);
+पूर्ण
 
-void mlxsw_sp_nve_inc_parsing_depth_put(struct mlxsw_sp *mlxsw_sp)
-{
+व्योम mlxsw_sp_nve_inc_parsing_depth_put(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
 	__be16 udp_dport = mlxsw_sp->nve->config.udp_dport;
 
 	__mlxsw_sp_nve_inc_parsing_depth_put(mlxsw_sp, udp_dport);
-}
+पूर्ण
 
-static void
-mlxsw_sp_nve_vxlan_config_prepare(char *tngcr_pl,
-				  const struct mlxsw_sp_nve_config *config)
-{
+अटल व्योम
+mlxsw_sp_nve_vxlan_config_prepare(अक्षर *tngcr_pl,
+				  स्थिर काष्ठा mlxsw_sp_nve_config *config)
+अणु
 	u8 udp_sport;
 
 	mlxsw_reg_tngcr_pack(tngcr_pl, MLXSW_REG_TNGCR_TYPE_VXLAN, true,
 			     config->ttl);
-	/* VxLAN driver's default UDP source port range is 32768 (0x8000)
+	/* VxLAN driver's शेष UDP source port range is 32768 (0x8000)
 	 * to 60999 (0xee47). Set the upper 8 bits of the UDP source port
-	 * to a random number between 0x80 and 0xee
+	 * to a अक्रमom number between 0x80 and 0xee
 	 */
-	get_random_bytes(&udp_sport, sizeof(udp_sport));
+	get_अक्रमom_bytes(&udp_sport, माप(udp_sport));
 	udp_sport = (udp_sport % (0xee - 0x80 + 1)) + 0x80;
 	mlxsw_reg_tngcr_nve_udp_sport_prefix_set(tngcr_pl, udp_sport);
 	mlxsw_reg_tngcr_usipv4_set(tngcr_pl, be32_to_cpu(config->ul_sip.addr4));
-}
+पूर्ण
 
-static int
-mlxsw_sp1_nve_vxlan_config_set(struct mlxsw_sp *mlxsw_sp,
-			       const struct mlxsw_sp_nve_config *config)
-{
-	char tngcr_pl[MLXSW_REG_TNGCR_LEN];
+अटल पूर्णांक
+mlxsw_sp1_nve_vxlan_config_set(काष्ठा mlxsw_sp *mlxsw_sp,
+			       स्थिर काष्ठा mlxsw_sp_nve_config *config)
+अणु
+	अक्षर tngcr_pl[MLXSW_REG_TNGCR_LEN];
 	u16 ul_vr_id;
-	int err;
+	पूर्णांक err;
 
 	err = mlxsw_sp_router_tb_id_vr_id(mlxsw_sp, config->ul_tb_id,
 					  &ul_vr_id);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	mlxsw_sp_nve_vxlan_config_prepare(tngcr_pl, config);
 	mlxsw_reg_tngcr_learn_enable_set(tngcr_pl, config->learning_en);
-	mlxsw_reg_tngcr_underlay_virtual_router_set(tngcr_pl, ul_vr_id);
+	mlxsw_reg_tngcr_underlay_भव_router_set(tngcr_pl, ul_vr_id);
 
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
+पूर्ण
 
-static void mlxsw_sp1_nve_vxlan_config_clear(struct mlxsw_sp *mlxsw_sp)
-{
-	char tngcr_pl[MLXSW_REG_TNGCR_LEN];
+अटल व्योम mlxsw_sp1_nve_vxlan_config_clear(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	अक्षर tngcr_pl[MLXSW_REG_TNGCR_LEN];
 
 	mlxsw_reg_tngcr_pack(tngcr_pl, MLXSW_REG_TNGCR_TYPE_VXLAN, false, 0);
 
-	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
-}
+	mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
+पूर्ण
 
-static int mlxsw_sp1_nve_vxlan_rtdp_set(struct mlxsw_sp *mlxsw_sp,
-					unsigned int tunnel_index)
-{
-	char rtdp_pl[MLXSW_REG_RTDP_LEN];
+अटल पूर्णांक mlxsw_sp1_nve_vxlan_rtdp_set(काष्ठा mlxsw_sp *mlxsw_sp,
+					अचिन्हित पूर्णांक tunnel_index)
+अणु
+	अक्षर rtdp_pl[MLXSW_REG_RTDP_LEN];
 
 	mlxsw_reg_rtdp_pack(rtdp_pl, MLXSW_REG_RTDP_TYPE_NVE, tunnel_index);
 
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(rtdp), rtdp_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(rtdp), rtdp_pl);
+पूर्ण
 
-static int mlxsw_sp1_nve_vxlan_init(struct mlxsw_sp_nve *nve,
-				    const struct mlxsw_sp_nve_config *config)
-{
-	struct mlxsw_sp *mlxsw_sp = nve->mlxsw_sp;
-	int err;
+अटल पूर्णांक mlxsw_sp1_nve_vxlan_init(काष्ठा mlxsw_sp_nve *nve,
+				    स्थिर काष्ठा mlxsw_sp_nve_config *config)
+अणु
+	काष्ठा mlxsw_sp *mlxsw_sp = nve->mlxsw_sp;
+	पूर्णांक err;
 
 	err = __mlxsw_sp_nve_inc_parsing_depth_get(mlxsw_sp, config->udp_dport);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = mlxsw_sp1_nve_vxlan_config_set(mlxsw_sp, config);
-	if (err)
-		goto err_config_set;
+	अगर (err)
+		जाओ err_config_set;
 
 	err = mlxsw_sp1_nve_vxlan_rtdp_set(mlxsw_sp, nve->tunnel_index);
-	if (err)
-		goto err_rtdp_set;
+	अगर (err)
+		जाओ err_rtdp_set;
 
 	err = mlxsw_sp_router_nve_promote_decap(mlxsw_sp, config->ul_tb_id,
 						config->ul_proto,
 						&config->ul_sip,
 						nve->tunnel_index);
-	if (err)
-		goto err_promote_decap;
+	अगर (err)
+		जाओ err_promote_decap;
 
-	return 0;
+	वापस 0;
 
 err_promote_decap:
 err_rtdp_set:
 	mlxsw_sp1_nve_vxlan_config_clear(mlxsw_sp);
 err_config_set:
 	__mlxsw_sp_nve_inc_parsing_depth_put(mlxsw_sp, 0);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mlxsw_sp1_nve_vxlan_fini(struct mlxsw_sp_nve *nve)
-{
-	struct mlxsw_sp_nve_config *config = &nve->config;
-	struct mlxsw_sp *mlxsw_sp = nve->mlxsw_sp;
+अटल व्योम mlxsw_sp1_nve_vxlan_fini(काष्ठा mlxsw_sp_nve *nve)
+अणु
+	काष्ठा mlxsw_sp_nve_config *config = &nve->config;
+	काष्ठा mlxsw_sp *mlxsw_sp = nve->mlxsw_sp;
 
 	mlxsw_sp_router_nve_demote_decap(mlxsw_sp, config->ul_tb_id,
 					 config->ul_proto, &config->ul_sip);
 	mlxsw_sp1_nve_vxlan_config_clear(mlxsw_sp);
 	__mlxsw_sp_nve_inc_parsing_depth_put(mlxsw_sp, 0);
-}
+पूर्ण
 
-static int
-mlxsw_sp_nve_vxlan_fdb_replay(const struct net_device *nve_dev, __be32 vni,
-			      struct netlink_ext_ack *extack)
-{
-	if (WARN_ON(!netif_is_vxlan(nve_dev)))
-		return -EINVAL;
-	return vxlan_fdb_replay(nve_dev, vni, &mlxsw_sp_switchdev_notifier,
+अटल पूर्णांक
+mlxsw_sp_nve_vxlan_fdb_replay(स्थिर काष्ठा net_device *nve_dev, __be32 vni,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
+	अगर (WARN_ON(!netअगर_is_vxlan(nve_dev)))
+		वापस -EINVAL;
+	वापस vxlan_fdb_replay(nve_dev, vni, &mlxsw_sp_चयनdev_notअगरier,
 				extack);
-}
+पूर्ण
 
-static void
-mlxsw_sp_nve_vxlan_clear_offload(const struct net_device *nve_dev, __be32 vni)
-{
-	if (WARN_ON(!netif_is_vxlan(nve_dev)))
-		return;
+अटल व्योम
+mlxsw_sp_nve_vxlan_clear_offload(स्थिर काष्ठा net_device *nve_dev, __be32 vni)
+अणु
+	अगर (WARN_ON(!netअगर_is_vxlan(nve_dev)))
+		वापस;
 	vxlan_fdb_clear_offload(nve_dev, vni);
-}
+पूर्ण
 
-const struct mlxsw_sp_nve_ops mlxsw_sp1_nve_vxlan_ops = {
+स्थिर काष्ठा mlxsw_sp_nve_ops mlxsw_sp1_nve_vxlan_ops = अणु
 	.type		= MLXSW_SP_NVE_TYPE_VXLAN,
 	.can_offload	= mlxsw_sp1_nve_vxlan_can_offload,
 	.nve_config	= mlxsw_sp_nve_vxlan_config,
@@ -304,156 +305,156 @@ const struct mlxsw_sp_nve_ops mlxsw_sp1_nve_vxlan_ops = {
 	.fini		= mlxsw_sp1_nve_vxlan_fini,
 	.fdb_replay	= mlxsw_sp_nve_vxlan_fdb_replay,
 	.fdb_clear_offload = mlxsw_sp_nve_vxlan_clear_offload,
-};
+पूर्ण;
 
-static bool mlxsw_sp2_nve_vxlan_learning_set(struct mlxsw_sp *mlxsw_sp,
+अटल bool mlxsw_sp2_nve_vxlan_learning_set(काष्ठा mlxsw_sp *mlxsw_sp,
 					     bool learning_en)
-{
-	char tnpc_pl[MLXSW_REG_TNPC_LEN];
+अणु
+	अक्षर tnpc_pl[MLXSW_REG_TNPC_LEN];
 
 	mlxsw_reg_tnpc_pack(tnpc_pl, MLXSW_REG_TUNNEL_PORT_NVE,
 			    learning_en);
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(tnpc), tnpc_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(tnpc), tnpc_pl);
+पूर्ण
 
-static int
-mlxsw_sp2_nve_decap_ethertype_set(struct mlxsw_sp *mlxsw_sp)
-{
-	char spvid_pl[MLXSW_REG_SPVID_LEN] = {};
+अटल पूर्णांक
+mlxsw_sp2_nve_decap_ethertype_set(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	अक्षर spvid_pl[MLXSW_REG_SPVID_LEN] = अणुपूर्ण;
 
 	mlxsw_reg_spvid_tport_set(spvid_pl, true);
 	mlxsw_reg_spvid_local_port_set(spvid_pl,
 				       MLXSW_REG_TUNNEL_PORT_NVE);
 	mlxsw_reg_spvid_egr_et_set_set(spvid_pl, true);
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(spvid), spvid_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(spvid), spvid_pl);
+पूर्ण
 
-static int
-mlxsw_sp2_nve_vxlan_config_set(struct mlxsw_sp *mlxsw_sp,
-			       const struct mlxsw_sp_nve_config *config)
-{
-	char tngcr_pl[MLXSW_REG_TNGCR_LEN];
-	char spvtr_pl[MLXSW_REG_SPVTR_LEN];
-	u16 ul_rif_index;
-	int err;
+अटल पूर्णांक
+mlxsw_sp2_nve_vxlan_config_set(काष्ठा mlxsw_sp *mlxsw_sp,
+			       स्थिर काष्ठा mlxsw_sp_nve_config *config)
+अणु
+	अक्षर tngcr_pl[MLXSW_REG_TNGCR_LEN];
+	अक्षर spvtr_pl[MLXSW_REG_SPVTR_LEN];
+	u16 ul_rअगर_index;
+	पूर्णांक err;
 
-	err = mlxsw_sp_router_ul_rif_get(mlxsw_sp, config->ul_tb_id,
-					 &ul_rif_index);
-	if (err)
-		return err;
-	mlxsw_sp->nve->ul_rif_index = ul_rif_index;
+	err = mlxsw_sp_router_ul_rअगर_get(mlxsw_sp, config->ul_tb_id,
+					 &ul_rअगर_index);
+	अगर (err)
+		वापस err;
+	mlxsw_sp->nve->ul_rअगर_index = ul_rअगर_index;
 
 	err = mlxsw_sp2_nve_vxlan_learning_set(mlxsw_sp, config->learning_en);
-	if (err)
-		goto err_vxlan_learning_set;
+	अगर (err)
+		जाओ err_vxlan_learning_set;
 
 	mlxsw_sp_nve_vxlan_config_prepare(tngcr_pl, config);
-	mlxsw_reg_tngcr_underlay_rif_set(tngcr_pl, ul_rif_index);
+	mlxsw_reg_tngcr_underlay_rअगर_set(tngcr_pl, ul_rअगर_index);
 
-	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
-	if (err)
-		goto err_tngcr_write;
+	err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
+	अगर (err)
+		जाओ err_tngcr_ग_लिखो;
 
 	mlxsw_reg_spvtr_pack(spvtr_pl, true, MLXSW_REG_TUNNEL_PORT_NVE,
 			     MLXSW_REG_SPVTR_IPVID_MODE_ALWAYS_PUSH_VLAN);
-	err = mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(spvtr), spvtr_pl);
-	if (err)
-		goto err_spvtr_write;
+	err = mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(spvtr), spvtr_pl);
+	अगर (err)
+		जाओ err_spvtr_ग_लिखो;
 
 	err = mlxsw_sp2_nve_decap_ethertype_set(mlxsw_sp);
-	if (err)
-		goto err_decap_ethertype_set;
+	अगर (err)
+		जाओ err_decap_ethertype_set;
 
-	return 0;
+	वापस 0;
 
 err_decap_ethertype_set:
 	mlxsw_reg_spvtr_pack(spvtr_pl, true, MLXSW_REG_TUNNEL_PORT_NVE,
 			     MLXSW_REG_SPVTR_IPVID_MODE_IEEE_COMPLIANT_PVID);
-	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(spvtr), spvtr_pl);
-err_spvtr_write:
+	mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(spvtr), spvtr_pl);
+err_spvtr_ग_लिखो:
 	mlxsw_reg_tngcr_pack(tngcr_pl, MLXSW_REG_TNGCR_TYPE_VXLAN, false, 0);
-	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
-err_tngcr_write:
+	mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
+err_tngcr_ग_लिखो:
 	mlxsw_sp2_nve_vxlan_learning_set(mlxsw_sp, false);
 err_vxlan_learning_set:
-	mlxsw_sp_router_ul_rif_put(mlxsw_sp, ul_rif_index);
-	return err;
-}
+	mlxsw_sp_router_ul_rअगर_put(mlxsw_sp, ul_rअगर_index);
+	वापस err;
+पूर्ण
 
-static void mlxsw_sp2_nve_vxlan_config_clear(struct mlxsw_sp *mlxsw_sp)
-{
-	char spvtr_pl[MLXSW_REG_SPVTR_LEN];
-	char tngcr_pl[MLXSW_REG_TNGCR_LEN];
+अटल व्योम mlxsw_sp2_nve_vxlan_config_clear(काष्ठा mlxsw_sp *mlxsw_sp)
+अणु
+	अक्षर spvtr_pl[MLXSW_REG_SPVTR_LEN];
+	अक्षर tngcr_pl[MLXSW_REG_TNGCR_LEN];
 
 	mlxsw_reg_spvtr_pack(spvtr_pl, true, MLXSW_REG_TUNNEL_PORT_NVE,
 			     MLXSW_REG_SPVTR_IPVID_MODE_IEEE_COMPLIANT_PVID);
-	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(spvtr), spvtr_pl);
+	mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(spvtr), spvtr_pl);
 	mlxsw_reg_tngcr_pack(tngcr_pl, MLXSW_REG_TNGCR_TYPE_VXLAN, false, 0);
-	mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
+	mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(tngcr), tngcr_pl);
 	mlxsw_sp2_nve_vxlan_learning_set(mlxsw_sp, false);
-	mlxsw_sp_router_ul_rif_put(mlxsw_sp, mlxsw_sp->nve->ul_rif_index);
-}
+	mlxsw_sp_router_ul_rअगर_put(mlxsw_sp, mlxsw_sp->nve->ul_rअगर_index);
+पूर्ण
 
-static int mlxsw_sp2_nve_vxlan_rtdp_set(struct mlxsw_sp *mlxsw_sp,
-					unsigned int tunnel_index,
-					u16 ul_rif_index)
-{
-	char rtdp_pl[MLXSW_REG_RTDP_LEN];
+अटल पूर्णांक mlxsw_sp2_nve_vxlan_rtdp_set(काष्ठा mlxsw_sp *mlxsw_sp,
+					अचिन्हित पूर्णांक tunnel_index,
+					u16 ul_rअगर_index)
+अणु
+	अक्षर rtdp_pl[MLXSW_REG_RTDP_LEN];
 
 	mlxsw_reg_rtdp_pack(rtdp_pl, MLXSW_REG_RTDP_TYPE_NVE, tunnel_index);
-	mlxsw_reg_rtdp_egress_router_interface_set(rtdp_pl, ul_rif_index);
+	mlxsw_reg_rtdp_egress_router_पूर्णांकerface_set(rtdp_pl, ul_rअगर_index);
 
-	return mlxsw_reg_write(mlxsw_sp->core, MLXSW_REG(rtdp), rtdp_pl);
-}
+	वापस mlxsw_reg_ग_लिखो(mlxsw_sp->core, MLXSW_REG(rtdp), rtdp_pl);
+पूर्ण
 
-static int mlxsw_sp2_nve_vxlan_init(struct mlxsw_sp_nve *nve,
-				    const struct mlxsw_sp_nve_config *config)
-{
-	struct mlxsw_sp *mlxsw_sp = nve->mlxsw_sp;
-	int err;
+अटल पूर्णांक mlxsw_sp2_nve_vxlan_init(काष्ठा mlxsw_sp_nve *nve,
+				    स्थिर काष्ठा mlxsw_sp_nve_config *config)
+अणु
+	काष्ठा mlxsw_sp *mlxsw_sp = nve->mlxsw_sp;
+	पूर्णांक err;
 
 	err = __mlxsw_sp_nve_inc_parsing_depth_get(mlxsw_sp, config->udp_dport);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = mlxsw_sp2_nve_vxlan_config_set(mlxsw_sp, config);
-	if (err)
-		goto err_config_set;
+	अगर (err)
+		जाओ err_config_set;
 
 	err = mlxsw_sp2_nve_vxlan_rtdp_set(mlxsw_sp, nve->tunnel_index,
-					   nve->ul_rif_index);
-	if (err)
-		goto err_rtdp_set;
+					   nve->ul_rअगर_index);
+	अगर (err)
+		जाओ err_rtdp_set;
 
 	err = mlxsw_sp_router_nve_promote_decap(mlxsw_sp, config->ul_tb_id,
 						config->ul_proto,
 						&config->ul_sip,
 						nve->tunnel_index);
-	if (err)
-		goto err_promote_decap;
+	अगर (err)
+		जाओ err_promote_decap;
 
-	return 0;
+	वापस 0;
 
 err_promote_decap:
 err_rtdp_set:
 	mlxsw_sp2_nve_vxlan_config_clear(mlxsw_sp);
 err_config_set:
 	__mlxsw_sp_nve_inc_parsing_depth_put(mlxsw_sp, 0);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mlxsw_sp2_nve_vxlan_fini(struct mlxsw_sp_nve *nve)
-{
-	struct mlxsw_sp_nve_config *config = &nve->config;
-	struct mlxsw_sp *mlxsw_sp = nve->mlxsw_sp;
+अटल व्योम mlxsw_sp2_nve_vxlan_fini(काष्ठा mlxsw_sp_nve *nve)
+अणु
+	काष्ठा mlxsw_sp_nve_config *config = &nve->config;
+	काष्ठा mlxsw_sp *mlxsw_sp = nve->mlxsw_sp;
 
 	mlxsw_sp_router_nve_demote_decap(mlxsw_sp, config->ul_tb_id,
 					 config->ul_proto, &config->ul_sip);
 	mlxsw_sp2_nve_vxlan_config_clear(mlxsw_sp);
 	__mlxsw_sp_nve_inc_parsing_depth_put(mlxsw_sp, 0);
-}
+पूर्ण
 
-const struct mlxsw_sp_nve_ops mlxsw_sp2_nve_vxlan_ops = {
+स्थिर काष्ठा mlxsw_sp_nve_ops mlxsw_sp2_nve_vxlan_ops = अणु
 	.type		= MLXSW_SP_NVE_TYPE_VXLAN,
 	.can_offload	= mlxsw_sp_nve_vxlan_can_offload,
 	.nve_config	= mlxsw_sp_nve_vxlan_config,
@@ -461,4 +462,4 @@ const struct mlxsw_sp_nve_ops mlxsw_sp2_nve_vxlan_ops = {
 	.fini		= mlxsw_sp2_nve_vxlan_fini,
 	.fdb_replay	= mlxsw_sp_nve_vxlan_fdb_replay,
 	.fdb_clear_offload = mlxsw_sp_nve_vxlan_clear_offload,
-};
+पूर्ण;

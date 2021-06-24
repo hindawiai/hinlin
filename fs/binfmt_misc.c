@@ -1,703 +1,704 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * binfmt_misc.c
  *
- * Copyright (C) 1997 Richard Günther
+ * Copyright (C) 1997 Riअक्षरd Gथञnther
  *
  * binfmt_misc detects binaries via a magic or filename extension and invokes
- * a specified wrapper. See Documentation/admin-guide/binfmt-misc.rst for more details.
+ * a specअगरied wrapper. See Documentation/admin-guide/binfmt-misc.rst क्रम more details.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/sched/mm.h>
-#include <linux/magic.h>
-#include <linux/binfmts.h>
-#include <linux/slab.h>
-#include <linux/ctype.h>
-#include <linux/string_helpers.h>
-#include <linux/file.h>
-#include <linux/pagemap.h>
-#include <linux/namei.h>
-#include <linux/mount.h>
-#include <linux/fs_context.h>
-#include <linux/syscalls.h>
-#include <linux/fs.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/magic.h>
+#समावेश <linux/binfmts.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/string_helpers.h>
+#समावेश <linux/file.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/uaccess.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 # define USE_DEBUG 1
-#else
+#अन्यथा
 # define USE_DEBUG 0
-#endif
+#पूर्ण_अगर
 
-enum {
+क्रमागत अणु
 	VERBOSE_STATUS = 1 /* make it zero to save 400 bytes kernel memory */
-};
+पूर्ण;
 
-static LIST_HEAD(entries);
-static int enabled = 1;
+अटल LIST_HEAD(entries);
+अटल पूर्णांक enabled = 1;
 
-enum {Enabled, Magic};
-#define MISC_FMT_PRESERVE_ARGV0 (1 << 31)
-#define MISC_FMT_OPEN_BINARY (1 << 30)
-#define MISC_FMT_CREDENTIALS (1 << 29)
-#define MISC_FMT_OPEN_FILE (1 << 28)
+क्रमागत अणुEnabled, Magicपूर्ण;
+#घोषणा MISC_FMT_PRESERVE_ARGV0 (1 << 31)
+#घोषणा MISC_FMT_OPEN_BINARY (1 << 30)
+#घोषणा MISC_FMT_CREDENTIALS (1 << 29)
+#घोषणा MISC_FMT_OPEN_खाता (1 << 28)
 
-typedef struct {
-	struct list_head list;
-	unsigned long flags;		/* type, status, etc. */
-	int offset;			/* offset of magic */
-	int size;			/* size of magic/mask */
-	char *magic;			/* magic or filename extension */
-	char *mask;			/* mask, NULL for exact match */
-	const char *interpreter;	/* filename of interpreter */
-	char *name;
-	struct dentry *dentry;
-	struct file *interp_file;
-} Node;
+प्रकार काष्ठा अणु
+	काष्ठा list_head list;
+	अचिन्हित दीर्घ flags;		/* type, status, etc. */
+	पूर्णांक offset;			/* offset of magic */
+	पूर्णांक size;			/* size of magic/mask */
+	अक्षर *magic;			/* magic or filename extension */
+	अक्षर *mask;			/* mask, शून्य क्रम exact match */
+	स्थिर अक्षर *पूर्णांकerpreter;	/* filename of पूर्णांकerpreter */
+	अक्षर *name;
+	काष्ठा dentry *dentry;
+	काष्ठा file *पूर्णांकerp_file;
+पूर्ण Node;
 
-static DEFINE_RWLOCK(entries_lock);
-static struct file_system_type bm_fs_type;
-static struct vfsmount *bm_mnt;
-static int entry_count;
+अटल DEFINE_RWLOCK(entries_lock);
+अटल काष्ठा file_प्रणाली_type bm_fs_type;
+अटल काष्ठा vfsmount *bm_mnt;
+अटल पूर्णांक entry_count;
 
 /*
- * Max length of the register string.  Determined by:
+ * Max length of the रेजिस्टर string.  Determined by:
  *  - 7 delimiters
  *  - name:   ~50 bytes
  *  - type:   1 byte
  *  - offset: 3 bytes (has to be smaller than BINPRM_BUF_SIZE)
- *  - magic:  128 bytes (512 in escaped form)
- *  - mask:   128 bytes (512 in escaped form)
- *  - interp: ~50 bytes
+ *  - magic:  128 bytes (512 in escaped क्रमm)
+ *  - mask:   128 bytes (512 in escaped क्रमm)
+ *  - पूर्णांकerp: ~50 bytes
  *  - flags:  5 bytes
- * Round that up a bit, and then back off to hold the internal data
- * (like struct Node).
+ * Round that up a bit, and then back off to hold the पूर्णांकernal data
+ * (like काष्ठा Node).
  */
-#define MAX_REGISTER_LENGTH 1920
+#घोषणा MAX_REGISTER_LENGTH 1920
 
 /*
- * Check if we support the binfmt
- * if we do, return the node, else NULL
- * locking is done in load_misc_binary
+ * Check अगर we support the binfmt
+ * अगर we करो, वापस the node, अन्यथा शून्य
+ * locking is करोne in load_misc_binary
  */
-static Node *check_file(struct linux_binprm *bprm)
-{
-	char *p = strrchr(bprm->interp, '.');
-	struct list_head *l;
+अटल Node *check_file(काष्ठा linux_binprm *bprm)
+अणु
+	अक्षर *p = म_खोजप(bprm->पूर्णांकerp, '.');
+	काष्ठा list_head *l;
 
-	/* Walk all the registered handlers. */
-	list_for_each(l, &entries) {
+	/* Walk all the रेजिस्टरed handlers. */
+	list_क्रम_each(l, &entries) अणु
 		Node *e = list_entry(l, Node, list);
-		char *s;
-		int j;
+		अक्षर *s;
+		पूर्णांक j;
 
 		/* Make sure this one is currently enabled. */
-		if (!test_bit(Enabled, &e->flags))
-			continue;
+		अगर (!test_bit(Enabled, &e->flags))
+			जारी;
 
-		/* Do matching based on extension if applicable. */
-		if (!test_bit(Magic, &e->flags)) {
-			if (p && !strcmp(e->magic, p + 1))
-				return e;
-			continue;
-		}
+		/* Do matching based on extension अगर applicable. */
+		अगर (!test_bit(Magic, &e->flags)) अणु
+			अगर (p && !म_भेद(e->magic, p + 1))
+				वापस e;
+			जारी;
+		पूर्ण
 
 		/* Do matching based on magic & mask. */
 		s = bprm->buf + e->offset;
-		if (e->mask) {
-			for (j = 0; j < e->size; j++)
-				if ((*s++ ^ e->magic[j]) & e->mask[j])
-					break;
-		} else {
-			for (j = 0; j < e->size; j++)
-				if ((*s++ ^ e->magic[j]))
-					break;
-		}
-		if (j == e->size)
-			return e;
-	}
-	return NULL;
-}
+		अगर (e->mask) अणु
+			क्रम (j = 0; j < e->size; j++)
+				अगर ((*s++ ^ e->magic[j]) & e->mask[j])
+					अवरोध;
+		पूर्ण अन्यथा अणु
+			क्रम (j = 0; j < e->size; j++)
+				अगर ((*s++ ^ e->magic[j]))
+					अवरोध;
+		पूर्ण
+		अगर (j == e->size)
+			वापस e;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /*
  * the loader itself
  */
-static int load_misc_binary(struct linux_binprm *bprm)
-{
+अटल पूर्णांक load_misc_binary(काष्ठा linux_binprm *bprm)
+अणु
 	Node *fmt;
-	struct file *interp_file = NULL;
-	int retval;
+	काष्ठा file *पूर्णांकerp_file = शून्य;
+	पूर्णांक retval;
 
 	retval = -ENOEXEC;
-	if (!enabled)
-		return retval;
+	अगर (!enabled)
+		वापस retval;
 
-	/* to keep locking time low, we copy the interpreter string */
-	read_lock(&entries_lock);
+	/* to keep locking समय low, we copy the पूर्णांकerpreter string */
+	पढ़ो_lock(&entries_lock);
 	fmt = check_file(bprm);
-	if (fmt)
+	अगर (fmt)
 		dget(fmt->dentry);
-	read_unlock(&entries_lock);
-	if (!fmt)
-		return retval;
+	पढ़ो_unlock(&entries_lock);
+	अगर (!fmt)
+		वापस retval;
 
 	/* Need to be able to load the file after exec */
 	retval = -ENOENT;
-	if (bprm->interp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
-		goto ret;
+	अगर (bprm->पूर्णांकerp_flags & BINPRM_FLAGS_PATH_INACCESSIBLE)
+		जाओ ret;
 
-	if (fmt->flags & MISC_FMT_PRESERVE_ARGV0) {
-		bprm->interp_flags |= BINPRM_FLAGS_PRESERVE_ARGV0;
-	} else {
-		retval = remove_arg_zero(bprm);
-		if (retval)
-			goto ret;
-	}
+	अगर (fmt->flags & MISC_FMT_PRESERVE_ARGV0) अणु
+		bprm->पूर्णांकerp_flags |= BINPRM_FLAGS_PRESERVE_ARGV0;
+	पूर्ण अन्यथा अणु
+		retval = हटाओ_arg_zero(bprm);
+		अगर (retval)
+			जाओ ret;
+	पूर्ण
 
-	if (fmt->flags & MISC_FMT_OPEN_BINARY)
+	अगर (fmt->flags & MISC_FMT_OPEN_BINARY)
 		bprm->have_execfd = 1;
 
 	/* make argv[1] be the path to the binary */
-	retval = copy_string_kernel(bprm->interp, bprm);
-	if (retval < 0)
-		goto ret;
+	retval = copy_string_kernel(bprm->पूर्णांकerp, bprm);
+	अगर (retval < 0)
+		जाओ ret;
 	bprm->argc++;
 
-	/* add the interp as argv[0] */
-	retval = copy_string_kernel(fmt->interpreter, bprm);
-	if (retval < 0)
-		goto ret;
+	/* add the पूर्णांकerp as argv[0] */
+	retval = copy_string_kernel(fmt->पूर्णांकerpreter, bprm);
+	अगर (retval < 0)
+		जाओ ret;
 	bprm->argc++;
 
-	/* Update interp in case binfmt_script needs it. */
-	retval = bprm_change_interp(fmt->interpreter, bprm);
-	if (retval < 0)
-		goto ret;
+	/* Update पूर्णांकerp in हाल binfmt_script needs it. */
+	retval = bprm_change_पूर्णांकerp(fmt->पूर्णांकerpreter, bprm);
+	अगर (retval < 0)
+		जाओ ret;
 
-	if (fmt->flags & MISC_FMT_OPEN_FILE) {
-		interp_file = file_clone_open(fmt->interp_file);
-		if (!IS_ERR(interp_file))
-			deny_write_access(interp_file);
-	} else {
-		interp_file = open_exec(fmt->interpreter);
-	}
-	retval = PTR_ERR(interp_file);
-	if (IS_ERR(interp_file))
-		goto ret;
+	अगर (fmt->flags & MISC_FMT_OPEN_खाता) अणु
+		पूर्णांकerp_file = file_clone_खोलो(fmt->पूर्णांकerp_file);
+		अगर (!IS_ERR(पूर्णांकerp_file))
+			deny_ग_लिखो_access(पूर्णांकerp_file);
+	पूर्ण अन्यथा अणु
+		पूर्णांकerp_file = खोलो_exec(fmt->पूर्णांकerpreter);
+	पूर्ण
+	retval = PTR_ERR(पूर्णांकerp_file);
+	अगर (IS_ERR(पूर्णांकerp_file))
+		जाओ ret;
 
-	bprm->interpreter = interp_file;
-	if (fmt->flags & MISC_FMT_CREDENTIALS)
+	bprm->पूर्णांकerpreter = पूर्णांकerp_file;
+	अगर (fmt->flags & MISC_FMT_CREDENTIALS)
 		bprm->execfd_creds = 1;
 
 	retval = 0;
 ret:
 	dput(fmt->dentry);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /* Command parsers */
 
 /*
- * parses and copies one argument enclosed in del from *sp to *dp,
- * recognising the \x special.
- * returns pointer to the copied argument or NULL in case of an
+ * parses and copies one argument enबंदd in del from *sp to *dp,
+ * recognising the \ष special.
+ * वापसs poपूर्णांकer to the copied argument or शून्य in हाल of an
  * error (and sets err) or null argument length.
  */
-static char *scanarg(char *s, char del)
-{
-	char c;
+अटल अक्षर *scanarg(अक्षर *s, अक्षर del)
+अणु
+	अक्षर c;
 
-	while ((c = *s++) != del) {
-		if (c == '\\' && *s == 'x') {
+	जबतक ((c = *s++) != del) अणु
+		अगर (c == '\\' && *s == 'x') अणु
 			s++;
-			if (!isxdigit(*s++))
-				return NULL;
-			if (!isxdigit(*s++))
-				return NULL;
-		}
-	}
+			अगर (!है_षष्ठादशक(*s++))
+				वापस शून्य;
+			अगर (!है_षष्ठादशक(*s++))
+				वापस शून्य;
+		पूर्ण
+	पूर्ण
 	s[-1] ='\0';
-	return s;
-}
+	वापस s;
+पूर्ण
 
-static char *check_special_flags(char *sfs, Node *e)
-{
-	char *p = sfs;
-	int cont = 1;
+अटल अक्षर *check_special_flags(अक्षर *sfs, Node *e)
+अणु
+	अक्षर *p = sfs;
+	पूर्णांक cont = 1;
 
 	/* special flags */
-	while (cont) {
-		switch (*p) {
-		case 'P':
+	जबतक (cont) अणु
+		चयन (*p) अणु
+		हाल 'P':
 			pr_debug("register: flag: P (preserve argv0)\n");
 			p++;
 			e->flags |= MISC_FMT_PRESERVE_ARGV0;
-			break;
-		case 'O':
+			अवरोध;
+		हाल 'O':
 			pr_debug("register: flag: O (open binary)\n");
 			p++;
 			e->flags |= MISC_FMT_OPEN_BINARY;
-			break;
-		case 'C':
+			अवरोध;
+		हाल 'C':
 			pr_debug("register: flag: C (preserve creds)\n");
 			p++;
 			/* this flags also implies the
-			   open-binary flag */
+			   खोलो-binary flag */
 			e->flags |= (MISC_FMT_CREDENTIALS |
 					MISC_FMT_OPEN_BINARY);
-			break;
-		case 'F':
+			अवरोध;
+		हाल 'F':
 			pr_debug("register: flag: F: open interpreter file now\n");
 			p++;
-			e->flags |= MISC_FMT_OPEN_FILE;
-			break;
-		default:
+			e->flags |= MISC_FMT_OPEN_खाता;
+			अवरोध;
+		शेष:
 			cont = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
 /*
- * This registers a new binary format, it recognises the syntax
+ * This रेजिस्टरs a new binary क्रमmat, it recognises the syntax
  * ':name:type:offset:magic:mask:interpreter:flags'
- * where the ':' is the IFS, that can be chosen with the first char
+ * where the ':' is the IFS, that can be chosen with the first अक्षर
  */
-static Node *create_entry(const char __user *buffer, size_t count)
-{
+अटल Node *create_entry(स्थिर अक्षर __user *buffer, माप_प्रकार count)
+अणु
 	Node *e;
-	int memsize, err;
-	char *buf, *p;
-	char del;
+	पूर्णांक memsize, err;
+	अक्षर *buf, *p;
+	अक्षर del;
 
 	pr_debug("register: received %zu bytes\n", count);
 
 	/* some sanity checks */
 	err = -EINVAL;
-	if ((count < 11) || (count > MAX_REGISTER_LENGTH))
-		goto out;
+	अगर ((count < 11) || (count > MAX_REGISTER_LENGTH))
+		जाओ out;
 
 	err = -ENOMEM;
-	memsize = sizeof(Node) + count + 8;
-	e = kmalloc(memsize, GFP_KERNEL);
-	if (!e)
-		goto out;
+	memsize = माप(Node) + count + 8;
+	e = kदो_स्मृति(memsize, GFP_KERNEL);
+	अगर (!e)
+		जाओ out;
 
-	p = buf = (char *)e + sizeof(Node);
+	p = buf = (अक्षर *)e + माप(Node);
 
-	memset(e, 0, sizeof(Node));
-	if (copy_from_user(buf, buffer, count))
-		goto efault;
+	स_रखो(e, 0, माप(Node));
+	अगर (copy_from_user(buf, buffer, count))
+		जाओ efault;
 
 	del = *p++;	/* delimeter */
 
 	pr_debug("register: delim: %#x {%c}\n", del, del);
 
-	/* Pad the buffer with the delim to simplify parsing below. */
-	memset(buf + count, del, 8);
+	/* Pad the buffer with the delim to simplअगरy parsing below. */
+	स_रखो(buf + count, del, 8);
 
 	/* Parse the 'name' field. */
 	e->name = p;
-	p = strchr(p, del);
-	if (!p)
-		goto einval;
+	p = म_अक्षर(p, del);
+	अगर (!p)
+		जाओ einval;
 	*p++ = '\0';
-	if (!e->name[0] ||
-	    !strcmp(e->name, ".") ||
-	    !strcmp(e->name, "..") ||
-	    strchr(e->name, '/'))
-		goto einval;
+	अगर (!e->name[0] ||
+	    !म_भेद(e->name, ".") ||
+	    !म_भेद(e->name, "..") ||
+	    म_अक्षर(e->name, '/'))
+		जाओ einval;
 
 	pr_debug("register: name: {%s}\n", e->name);
 
 	/* Parse the 'type' field. */
-	switch (*p++) {
-	case 'E':
+	चयन (*p++) अणु
+	हाल 'E':
 		pr_debug("register: type: E (extension)\n");
 		e->flags = 1 << Enabled;
-		break;
-	case 'M':
+		अवरोध;
+	हाल 'M':
 		pr_debug("register: type: M (magic)\n");
 		e->flags = (1 << Enabled) | (1 << Magic);
-		break;
-	default:
-		goto einval;
-	}
-	if (*p++ != del)
-		goto einval;
+		अवरोध;
+	शेष:
+		जाओ einval;
+	पूर्ण
+	अगर (*p++ != del)
+		जाओ einval;
 
-	if (test_bit(Magic, &e->flags)) {
-		/* Handle the 'M' (magic) format. */
-		char *s;
+	अगर (test_bit(Magic, &e->flags)) अणु
+		/* Handle the 'M' (magic) क्रमmat. */
+		अक्षर *s;
 
 		/* Parse the 'offset' field. */
-		s = strchr(p, del);
-		if (!s)
-			goto einval;
+		s = म_अक्षर(p, del);
+		अगर (!s)
+			जाओ einval;
 		*s = '\0';
-		if (p != s) {
-			int r = kstrtoint(p, 10, &e->offset);
-			if (r != 0 || e->offset < 0)
-				goto einval;
-		}
+		अगर (p != s) अणु
+			पूर्णांक r = kstrtoपूर्णांक(p, 10, &e->offset);
+			अगर (r != 0 || e->offset < 0)
+				जाओ einval;
+		पूर्ण
 		p = s;
-		if (*p++)
-			goto einval;
+		अगर (*p++)
+			जाओ einval;
 		pr_debug("register: offset: %#x\n", e->offset);
 
 		/* Parse the 'magic' field. */
 		e->magic = p;
 		p = scanarg(p, del);
-		if (!p)
-			goto einval;
-		if (!e->magic[0])
-			goto einval;
-		if (USE_DEBUG)
-			print_hex_dump_bytes(
+		अगर (!p)
+			जाओ einval;
+		अगर (!e->magic[0])
+			जाओ einval;
+		अगर (USE_DEBUG)
+			prपूर्णांक_hex_dump_bytes(
 				KBUILD_MODNAME ": register: magic[raw]: ",
 				DUMP_PREFIX_NONE, e->magic, p - e->magic);
 
 		/* Parse the 'mask' field. */
 		e->mask = p;
 		p = scanarg(p, del);
-		if (!p)
-			goto einval;
-		if (!e->mask[0]) {
-			e->mask = NULL;
+		अगर (!p)
+			जाओ einval;
+		अगर (!e->mask[0]) अणु
+			e->mask = शून्य;
 			pr_debug("register:  mask[raw]: none\n");
-		} else if (USE_DEBUG)
-			print_hex_dump_bytes(
+		पूर्ण अन्यथा अगर (USE_DEBUG)
+			prपूर्णांक_hex_dump_bytes(
 				KBUILD_MODNAME ": register:  mask[raw]: ",
 				DUMP_PREFIX_NONE, e->mask, p - e->mask);
 
 		/*
 		 * Decode the magic & mask fields.
-		 * Note: while we might have accepted embedded NUL bytes from
+		 * Note: जबतक we might have accepted embedded NUL bytes from
 		 * above, the unescape helpers here will stop at the first one
 		 * it encounters.
 		 */
 		e->size = string_unescape_inplace(e->magic, UNESCAPE_HEX);
-		if (e->mask &&
+		अगर (e->mask &&
 		    string_unescape_inplace(e->mask, UNESCAPE_HEX) != e->size)
-			goto einval;
-		if (e->size > BINPRM_BUF_SIZE ||
+			जाओ einval;
+		अगर (e->size > BINPRM_BUF_SIZE ||
 		    BINPRM_BUF_SIZE - e->size < e->offset)
-			goto einval;
+			जाओ einval;
 		pr_debug("register: magic/mask length: %i\n", e->size);
-		if (USE_DEBUG) {
-			print_hex_dump_bytes(
+		अगर (USE_DEBUG) अणु
+			prपूर्णांक_hex_dump_bytes(
 				KBUILD_MODNAME ": register: magic[decoded]: ",
 				DUMP_PREFIX_NONE, e->magic, e->size);
 
-			if (e->mask) {
-				int i;
-				char *masked = kmalloc(e->size, GFP_KERNEL);
+			अगर (e->mask) अणु
+				पूर्णांक i;
+				अक्षर *masked = kदो_स्मृति(e->size, GFP_KERNEL);
 
-				print_hex_dump_bytes(
+				prपूर्णांक_hex_dump_bytes(
 					KBUILD_MODNAME ": register:  mask[decoded]: ",
 					DUMP_PREFIX_NONE, e->mask, e->size);
 
-				if (masked) {
-					for (i = 0; i < e->size; ++i)
+				अगर (masked) अणु
+					क्रम (i = 0; i < e->size; ++i)
 						masked[i] = e->magic[i] & e->mask[i];
-					print_hex_dump_bytes(
+					prपूर्णांक_hex_dump_bytes(
 						KBUILD_MODNAME ": register:  magic[masked]: ",
 						DUMP_PREFIX_NONE, masked, e->size);
 
-					kfree(masked);
-				}
-			}
-		}
-	} else {
-		/* Handle the 'E' (extension) format. */
+					kमुक्त(masked);
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* Handle the 'E' (extension) क्रमmat. */
 
 		/* Skip the 'offset' field. */
-		p = strchr(p, del);
-		if (!p)
-			goto einval;
+		p = म_अक्षर(p, del);
+		अगर (!p)
+			जाओ einval;
 		*p++ = '\0';
 
 		/* Parse the 'magic' field. */
 		e->magic = p;
-		p = strchr(p, del);
-		if (!p)
-			goto einval;
+		p = म_अक्षर(p, del);
+		अगर (!p)
+			जाओ einval;
 		*p++ = '\0';
-		if (!e->magic[0] || strchr(e->magic, '/'))
-			goto einval;
+		अगर (!e->magic[0] || म_अक्षर(e->magic, '/'))
+			जाओ einval;
 		pr_debug("register: extension: {%s}\n", e->magic);
 
 		/* Skip the 'mask' field. */
-		p = strchr(p, del);
-		if (!p)
-			goto einval;
+		p = म_अक्षर(p, del);
+		अगर (!p)
+			जाओ einval;
 		*p++ = '\0';
-	}
+	पूर्ण
 
 	/* Parse the 'interpreter' field. */
-	e->interpreter = p;
-	p = strchr(p, del);
-	if (!p)
-		goto einval;
+	e->पूर्णांकerpreter = p;
+	p = म_अक्षर(p, del);
+	अगर (!p)
+		जाओ einval;
 	*p++ = '\0';
-	if (!e->interpreter[0])
-		goto einval;
-	pr_debug("register: interpreter: {%s}\n", e->interpreter);
+	अगर (!e->पूर्णांकerpreter[0])
+		जाओ einval;
+	pr_debug("register: interpreter: {%s}\n", e->पूर्णांकerpreter);
 
 	/* Parse the 'flags' field. */
 	p = check_special_flags(p, e);
-	if (*p == '\n')
+	अगर (*p == '\n')
 		p++;
-	if (p != buf + count)
-		goto einval;
+	अगर (p != buf + count)
+		जाओ einval;
 
-	return e;
+	वापस e;
 
 out:
-	return ERR_PTR(err);
+	वापस ERR_PTR(err);
 
 efault:
-	kfree(e);
-	return ERR_PTR(-EFAULT);
+	kमुक्त(e);
+	वापस ERR_PTR(-EFAULT);
 einval:
-	kfree(e);
-	return ERR_PTR(-EINVAL);
-}
+	kमुक्त(e);
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
 /*
  * Set status of entry/binfmt_misc:
  * '1' enables, '0' disables and '-1' clears entry/binfmt_misc
  */
-static int parse_command(const char __user *buffer, size_t count)
-{
-	char s[4];
+अटल पूर्णांक parse_command(स्थिर अक्षर __user *buffer, माप_प्रकार count)
+अणु
+	अक्षर s[4];
 
-	if (count > 3)
-		return -EINVAL;
-	if (copy_from_user(s, buffer, count))
-		return -EFAULT;
-	if (!count)
-		return 0;
-	if (s[count - 1] == '\n')
+	अगर (count > 3)
+		वापस -EINVAL;
+	अगर (copy_from_user(s, buffer, count))
+		वापस -EFAULT;
+	अगर (!count)
+		वापस 0;
+	अगर (s[count - 1] == '\n')
 		count--;
-	if (count == 1 && s[0] == '0')
-		return 1;
-	if (count == 1 && s[0] == '1')
-		return 2;
-	if (count == 2 && s[0] == '-' && s[1] == '1')
-		return 3;
-	return -EINVAL;
-}
+	अगर (count == 1 && s[0] == '0')
+		वापस 1;
+	अगर (count == 1 && s[0] == '1')
+		वापस 2;
+	अगर (count == 2 && s[0] == '-' && s[1] == '1')
+		वापस 3;
+	वापस -EINVAL;
+पूर्ण
 
 /* generic stuff */
 
-static void entry_status(Node *e, char *page)
-{
-	char *dp = page;
-	const char *status = "disabled";
+अटल व्योम entry_status(Node *e, अक्षर *page)
+अणु
+	अक्षर *dp = page;
+	स्थिर अक्षर *status = "disabled";
 
-	if (test_bit(Enabled, &e->flags))
+	अगर (test_bit(Enabled, &e->flags))
 		status = "enabled";
 
-	if (!VERBOSE_STATUS) {
-		sprintf(page, "%s\n", status);
-		return;
-	}
+	अगर (!VERBOSE_STATUS) अणु
+		प्र_लिखो(page, "%s\n", status);
+		वापस;
+	पूर्ण
 
-	dp += sprintf(dp, "%s\ninterpreter %s\n", status, e->interpreter);
+	dp += प्र_लिखो(dp, "%s\ninterpreter %s\n", status, e->पूर्णांकerpreter);
 
-	/* print the special flags */
-	dp += sprintf(dp, "flags: ");
-	if (e->flags & MISC_FMT_PRESERVE_ARGV0)
+	/* prपूर्णांक the special flags */
+	dp += प्र_लिखो(dp, "flags: ");
+	अगर (e->flags & MISC_FMT_PRESERVE_ARGV0)
 		*dp++ = 'P';
-	if (e->flags & MISC_FMT_OPEN_BINARY)
+	अगर (e->flags & MISC_FMT_OPEN_BINARY)
 		*dp++ = 'O';
-	if (e->flags & MISC_FMT_CREDENTIALS)
+	अगर (e->flags & MISC_FMT_CREDENTIALS)
 		*dp++ = 'C';
-	if (e->flags & MISC_FMT_OPEN_FILE)
+	अगर (e->flags & MISC_FMT_OPEN_खाता)
 		*dp++ = 'F';
 	*dp++ = '\n';
 
-	if (!test_bit(Magic, &e->flags)) {
-		sprintf(dp, "extension .%s\n", e->magic);
-	} else {
-		dp += sprintf(dp, "offset %i\nmagic ", e->offset);
+	अगर (!test_bit(Magic, &e->flags)) अणु
+		प्र_लिखो(dp, "extension .%s\n", e->magic);
+	पूर्ण अन्यथा अणु
+		dp += प्र_लिखो(dp, "offset %i\nmagic ", e->offset);
 		dp = bin2hex(dp, e->magic, e->size);
-		if (e->mask) {
-			dp += sprintf(dp, "\nmask ");
+		अगर (e->mask) अणु
+			dp += प्र_लिखो(dp, "\nmask ");
 			dp = bin2hex(dp, e->mask, e->size);
-		}
+		पूर्ण
 		*dp++ = '\n';
 		*dp = '\0';
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct inode *bm_get_inode(struct super_block *sb, int mode)
-{
-	struct inode *inode = new_inode(sb);
+अटल काष्ठा inode *bm_get_inode(काष्ठा super_block *sb, पूर्णांक mode)
+अणु
+	काष्ठा inode *inode = new_inode(sb);
 
-	if (inode) {
+	अगर (inode) अणु
 		inode->i_ino = get_next_ino();
 		inode->i_mode = mode;
-		inode->i_atime = inode->i_mtime = inode->i_ctime =
-			current_time(inode);
-	}
-	return inode;
-}
+		inode->i_aसमय = inode->i_mसमय = inode->i_स_समय =
+			current_समय(inode);
+	पूर्ण
+	वापस inode;
+पूर्ण
 
-static void bm_evict_inode(struct inode *inode)
-{
-	Node *e = inode->i_private;
+अटल व्योम bm_evict_inode(काष्ठा inode *inode)
+अणु
+	Node *e = inode->i_निजी;
 
-	if (e && e->flags & MISC_FMT_OPEN_FILE)
-		filp_close(e->interp_file, NULL);
+	अगर (e && e->flags & MISC_FMT_OPEN_खाता)
+		filp_बंद(e->पूर्णांकerp_file, शून्य);
 
 	clear_inode(inode);
-	kfree(e);
-}
+	kमुक्त(e);
+पूर्ण
 
-static void kill_node(Node *e)
-{
-	struct dentry *dentry;
+अटल व्योम समाप्त_node(Node *e)
+अणु
+	काष्ठा dentry *dentry;
 
-	write_lock(&entries_lock);
+	ग_लिखो_lock(&entries_lock);
 	list_del_init(&e->list);
-	write_unlock(&entries_lock);
+	ग_लिखो_unlock(&entries_lock);
 
 	dentry = e->dentry;
 	drop_nlink(d_inode(dentry));
 	d_drop(dentry);
 	dput(dentry);
 	simple_release_fs(&bm_mnt, &entry_count);
-}
+पूर्ण
 
 /* /<entry> */
 
-static ssize_t
-bm_entry_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
-{
-	Node *e = file_inode(file)->i_private;
-	ssize_t res;
-	char *page;
+अटल sमाप_प्रकार
+bm_entry_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार nbytes, loff_t *ppos)
+अणु
+	Node *e = file_inode(file)->i_निजी;
+	sमाप_प्रकार res;
+	अक्षर *page;
 
-	page = (char *) __get_free_page(GFP_KERNEL);
-	if (!page)
-		return -ENOMEM;
+	page = (अक्षर *) __get_मुक्त_page(GFP_KERNEL);
+	अगर (!page)
+		वापस -ENOMEM;
 
 	entry_status(e, page);
 
-	res = simple_read_from_buffer(buf, nbytes, ppos, page, strlen(page));
+	res = simple_पढ़ो_from_buffer(buf, nbytes, ppos, page, म_माप(page));
 
-	free_page((unsigned long) page);
-	return res;
-}
+	मुक्त_page((अचिन्हित दीर्घ) page);
+	वापस res;
+पूर्ण
 
-static ssize_t bm_entry_write(struct file *file, const char __user *buffer,
-				size_t count, loff_t *ppos)
-{
-	struct dentry *root;
-	Node *e = file_inode(file)->i_private;
-	int res = parse_command(buffer, count);
+अटल sमाप_प्रकार bm_entry_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
+				माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा dentry *root;
+	Node *e = file_inode(file)->i_निजी;
+	पूर्णांक res = parse_command(buffer, count);
 
-	switch (res) {
-	case 1:
+	चयन (res) अणु
+	हाल 1:
 		/* Disable this handler. */
 		clear_bit(Enabled, &e->flags);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		/* Enable this handler. */
 		set_bit(Enabled, &e->flags);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		/* Delete this handler. */
 		root = file_inode(file)->i_sb->s_root;
 		inode_lock(d_inode(root));
 
-		if (!list_empty(&e->list))
-			kill_node(e);
+		अगर (!list_empty(&e->list))
+			समाप्त_node(e);
 
 		inode_unlock(d_inode(root));
-		break;
-	default:
-		return res;
-	}
+		अवरोध;
+	शेष:
+		वापस res;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations bm_entry_operations = {
-	.read		= bm_entry_read,
-	.write		= bm_entry_write,
-	.llseek		= default_llseek,
-};
+अटल स्थिर काष्ठा file_operations bm_entry_operations = अणु
+	.पढ़ो		= bm_entry_पढ़ो,
+	.ग_लिखो		= bm_entry_ग_लिखो,
+	.llseek		= शेष_llseek,
+पूर्ण;
 
-/* /register */
+/* /रेजिस्टर */
 
-static ssize_t bm_register_write(struct file *file, const char __user *buffer,
-			       size_t count, loff_t *ppos)
-{
+अटल sमाप_प्रकार bm_रेजिस्टर_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
+			       माप_प्रकार count, loff_t *ppos)
+अणु
 	Node *e;
-	struct inode *inode;
-	struct super_block *sb = file_inode(file)->i_sb;
-	struct dentry *root = sb->s_root, *dentry;
-	int err = 0;
-	struct file *f = NULL;
+	काष्ठा inode *inode;
+	काष्ठा super_block *sb = file_inode(file)->i_sb;
+	काष्ठा dentry *root = sb->s_root, *dentry;
+	पूर्णांक err = 0;
+	काष्ठा file *f = शून्य;
 
 	e = create_entry(buffer, count);
 
-	if (IS_ERR(e))
-		return PTR_ERR(e);
+	अगर (IS_ERR(e))
+		वापस PTR_ERR(e);
 
-	if (e->flags & MISC_FMT_OPEN_FILE) {
-		f = open_exec(e->interpreter);
-		if (IS_ERR(f)) {
+	अगर (e->flags & MISC_FMT_OPEN_खाता) अणु
+		f = खोलो_exec(e->पूर्णांकerpreter);
+		अगर (IS_ERR(f)) अणु
 			pr_notice("register: failed to install interpreter file %s\n",
-				 e->interpreter);
-			kfree(e);
-			return PTR_ERR(f);
-		}
-		e->interp_file = f;
-	}
+				 e->पूर्णांकerpreter);
+			kमुक्त(e);
+			वापस PTR_ERR(f);
+		पूर्ण
+		e->पूर्णांकerp_file = f;
+	पूर्ण
 
 	inode_lock(d_inode(root));
-	dentry = lookup_one_len(e->name, root, strlen(e->name));
+	dentry = lookup_one_len(e->name, root, म_माप(e->name));
 	err = PTR_ERR(dentry);
-	if (IS_ERR(dentry))
-		goto out;
+	अगर (IS_ERR(dentry))
+		जाओ out;
 
 	err = -EEXIST;
-	if (d_really_is_positive(dentry))
-		goto out2;
+	अगर (d_really_is_positive(dentry))
+		जाओ out2;
 
 	inode = bm_get_inode(sb, S_IFREG | 0644);
 
 	err = -ENOMEM;
-	if (!inode)
-		goto out2;
+	अगर (!inode)
+		जाओ out2;
 
 	err = simple_pin_fs(&bm_fs_type, &bm_mnt, &entry_count);
-	if (err) {
+	अगर (err) अणु
 		iput(inode);
-		inode = NULL;
-		goto out2;
-	}
+		inode = शून्य;
+		जाओ out2;
+	पूर्ण
 
 	e->dentry = dget(dentry);
-	inode->i_private = e;
+	inode->i_निजी = e;
 	inode->i_fop = &bm_entry_operations;
 
 	d_instantiate(dentry, inode);
-	write_lock(&entries_lock);
+	ग_लिखो_lock(&entries_lock);
 	list_add(&e->list, &entries);
-	write_unlock(&entries_lock);
+	ग_लिखो_unlock(&entries_lock);
 
 	err = 0;
 out2:
@@ -705,132 +706,132 @@ out2:
 out:
 	inode_unlock(d_inode(root));
 
-	if (err) {
-		if (f)
-			filp_close(f, NULL);
-		kfree(e);
-		return err;
-	}
-	return count;
-}
+	अगर (err) अणु
+		अगर (f)
+			filp_बंद(f, शून्य);
+		kमुक्त(e);
+		वापस err;
+	पूर्ण
+	वापस count;
+पूर्ण
 
-static const struct file_operations bm_register_operations = {
-	.write		= bm_register_write,
+अटल स्थिर काष्ठा file_operations bm_रेजिस्टर_operations = अणु
+	.ग_लिखो		= bm_रेजिस्टर_ग_लिखो,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
 /* /status */
 
-static ssize_t
-bm_status_read(struct file *file, char __user *buf, size_t nbytes, loff_t *ppos)
-{
-	char *s = enabled ? "enabled\n" : "disabled\n";
+अटल sमाप_प्रकार
+bm_status_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार nbytes, loff_t *ppos)
+अणु
+	अक्षर *s = enabled ? "enabled\n" : "disabled\n";
 
-	return simple_read_from_buffer(buf, nbytes, ppos, s, strlen(s));
-}
+	वापस simple_पढ़ो_from_buffer(buf, nbytes, ppos, s, म_माप(s));
+पूर्ण
 
-static ssize_t bm_status_write(struct file *file, const char __user *buffer,
-		size_t count, loff_t *ppos)
-{
-	int res = parse_command(buffer, count);
-	struct dentry *root;
+अटल sमाप_प्रकार bm_status_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
+		माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक res = parse_command(buffer, count);
+	काष्ठा dentry *root;
 
-	switch (res) {
-	case 1:
+	चयन (res) अणु
+	हाल 1:
 		/* Disable all handlers. */
 		enabled = 0;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		/* Enable all handlers. */
 		enabled = 1;
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		/* Delete all handlers. */
 		root = file_inode(file)->i_sb->s_root;
 		inode_lock(d_inode(root));
 
-		while (!list_empty(&entries))
-			kill_node(list_first_entry(&entries, Node, list));
+		जबतक (!list_empty(&entries))
+			समाप्त_node(list_first_entry(&entries, Node, list));
 
 		inode_unlock(d_inode(root));
-		break;
-	default:
-		return res;
-	}
+		अवरोध;
+	शेष:
+		वापस res;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct file_operations bm_status_operations = {
-	.read		= bm_status_read,
-	.write		= bm_status_write,
-	.llseek		= default_llseek,
-};
+अटल स्थिर काष्ठा file_operations bm_status_operations = अणु
+	.पढ़ो		= bm_status_पढ़ो,
+	.ग_लिखो		= bm_status_ग_लिखो,
+	.llseek		= शेष_llseek,
+पूर्ण;
 
 /* Superblock handling */
 
-static const struct super_operations s_ops = {
+अटल स्थिर काष्ठा super_operations s_ops = अणु
 	.statfs		= simple_statfs,
 	.evict_inode	= bm_evict_inode,
-};
+पूर्ण;
 
-static int bm_fill_super(struct super_block *sb, struct fs_context *fc)
-{
-	int err;
-	static const struct tree_descr bm_files[] = {
-		[2] = {"status", &bm_status_operations, S_IWUSR|S_IRUGO},
-		[3] = {"register", &bm_register_operations, S_IWUSR},
-		/* last one */ {""}
-	};
+अटल पूर्णांक bm_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	पूर्णांक err;
+	अटल स्थिर काष्ठा tree_descr bm_files[] = अणु
+		[2] = अणु"status", &bm_status_operations, S_IWUSR|S_IRUGOपूर्ण,
+		[3] = अणु"register", &bm_रेजिस्टर_operations, S_IWUSRपूर्ण,
+		/* last one */ अणु""पूर्ण
+	पूर्ण;
 
 	err = simple_fill_super(sb, BINFMTFS_MAGIC, bm_files);
-	if (!err)
+	अगर (!err)
 		sb->s_op = &s_ops;
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int bm_get_tree(struct fs_context *fc)
-{
-	return get_tree_single(fc, bm_fill_super);
-}
+अटल पूर्णांक bm_get_tree(काष्ठा fs_context *fc)
+अणु
+	वापस get_tree_single(fc, bm_fill_super);
+पूर्ण
 
-static const struct fs_context_operations bm_context_ops = {
+अटल स्थिर काष्ठा fs_context_operations bm_context_ops = अणु
 	.get_tree	= bm_get_tree,
-};
+पूर्ण;
 
-static int bm_init_fs_context(struct fs_context *fc)
-{
+अटल पूर्णांक bm_init_fs_context(काष्ठा fs_context *fc)
+अणु
 	fc->ops = &bm_context_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct linux_binfmt misc_format = {
+अटल काष्ठा linux_binfmt misc_क्रमmat = अणु
 	.module = THIS_MODULE,
 	.load_binary = load_misc_binary,
-};
+पूर्ण;
 
-static struct file_system_type bm_fs_type = {
+अटल काष्ठा file_प्रणाली_type bm_fs_type = अणु
 	.owner		= THIS_MODULE,
 	.name		= "binfmt_misc",
 	.init_fs_context = bm_init_fs_context,
-	.kill_sb	= kill_litter_super,
-};
+	.समाप्त_sb	= समाप्त_litter_super,
+पूर्ण;
 MODULE_ALIAS_FS("binfmt_misc");
 
-static int __init init_misc_binfmt(void)
-{
-	int err = register_filesystem(&bm_fs_type);
-	if (!err)
-		insert_binfmt(&misc_format);
-	return err;
-}
+अटल पूर्णांक __init init_misc_binfmt(व्योम)
+अणु
+	पूर्णांक err = रेजिस्टर_fileप्रणाली(&bm_fs_type);
+	अगर (!err)
+		insert_binfmt(&misc_क्रमmat);
+	वापस err;
+पूर्ण
 
-static void __exit exit_misc_binfmt(void)
-{
-	unregister_binfmt(&misc_format);
-	unregister_filesystem(&bm_fs_type);
-}
+अटल व्योम __निकास निकास_misc_binfmt(व्योम)
+अणु
+	unरेजिस्टर_binfmt(&misc_क्रमmat);
+	unरेजिस्टर_fileप्रणाली(&bm_fs_type);
+पूर्ण
 
 core_initcall(init_misc_binfmt);
-module_exit(exit_misc_binfmt);
+module_निकास(निकास_misc_binfmt);
 MODULE_LICENSE("GPL");

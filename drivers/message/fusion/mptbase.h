@@ -1,6 +1,7 @@
+<शैली गुरु>
 /*
  *  linux/drivers/message/fusion/mptbase.h
- *      High performance SCSI + LAN / Fibre Channel device drivers.
+ *      High perक्रमmance SCSI + LAN / Fibre Channel device drivers.
  *      For use with PCI chip/adapter(s):
  *          LSIFC9xx/LSI409xx Fibre Channel
  *      running LSI Fusion MPT (Message Passing Technology) firmware.
@@ -11,29 +12,29 @@
  */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
-    This program is free software; you can redistribute it and/or modify
+    This program is मुक्त software; you can redistribute it and/or modअगरy
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; version 2 of the License.
 
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+    GNU General Public License क्रम more details.
 
     NO WARRANTY
     THE PROGRAM IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OR
     CONDITIONS OF ANY KIND, EITHER EXPRESS OR IMPLIED INCLUDING, WITHOUT
     LIMITATION, ANY WARRANTIES OR CONDITIONS OF TITLE, NON-INFRINGEMENT,
     MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Each Recipient is
-    solely responsible for determining the appropriateness of using and
+    solely responsible क्रम determining the appropriateness of using and
     distributing the Program and assumes all risks associated with its
     exercise of rights under this Agreement, including but not limited to
     the risks and costs of program errors, damage to or loss of data,
-    programs or equipment, and unavailability or interruption of operations.
+    programs or equipment, and unavailability or पूर्णांकerruption of operations.
 
     DISCLAIMER OF LIABILITY
     NEITHER RECIPIENT NOR ANY CONTRIBUTORS SHALL HAVE ANY LIABILITY FOR ANY
-    DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+    सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
     DAMAGES (INCLUDING WITHOUT LIMITATION LOST PROFITS), HOWEVER CAUSED AND
     ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
     TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
@@ -41,163 +42,163 @@
     HEREUNDER, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES
 
     You should have received a copy of the GNU General Public License
-    along with this program; if not, write to the Free Software
+    aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#ifndef MPTBASE_H_INCLUDED
-#define MPTBASE_H_INCLUDED
-/*{-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+#अगर_अघोषित MPTBASE_H_INCLUDED
+#घोषणा MPTBASE_H_INCLUDED
+/*अणु-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/mutex.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/mutex.h>
 
-#include "lsi/mpi_type.h"
-#include "lsi/mpi.h"		/* Fusion MPI(nterface) basic defs */
-#include "lsi/mpi_ioc.h"	/* Fusion MPT IOC(ontroller) defs */
-#include "lsi/mpi_cnfg.h"	/* IOC configuration support */
-#include "lsi/mpi_init.h"	/* SCSI Host (initiator) protocol support */
-#include "lsi/mpi_lan.h"	/* LAN over FC protocol support */
-#include "lsi/mpi_raid.h"	/* Integrated Mirroring support */
+#समावेश "lsi/mpi_type.h"
+#समावेश "lsi/mpi.h"		/* Fusion MPI(nterface) basic defs */
+#समावेश "lsi/mpi_ioc.h"	/* Fusion MPT IOC(ontroller) defs */
+#समावेश "lsi/mpi_cnfg.h"	/* IOC configuration support */
+#समावेश "lsi/mpi_init.h"	/* SCSI Host (initiator) protocol support */
+#समावेश "lsi/mpi_lan.h"	/* LAN over FC protocol support */
+#समावेश "lsi/mpi_raid.h"	/* Integrated Mirroring support */
 
-#include "lsi/mpi_fc.h"		/* Fibre Channel (lowlevel) support */
-#include "lsi/mpi_targ.h"	/* SCSI/FCP Target protcol support */
-#include "lsi/mpi_tool.h"	/* Tools support */
-#include "lsi/mpi_sas.h"	/* SAS support */
+#समावेश "lsi/mpi_fc.h"		/* Fibre Channel (lowlevel) support */
+#समावेश "lsi/mpi_targ.h"	/* SCSI/FCP Target protcol support */
+#समावेश "lsi/mpi_tool.h"	/* Tools support */
+#समावेश "lsi/mpi_sas.h"	/* SAS support */
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
-#ifndef MODULEAUTHOR
-#define MODULEAUTHOR	"LSI Corporation"
-#endif
+#अगर_अघोषित MODULEAUTHOR
+#घोषणा MODULEAUTHOR	"LSI Corporation"
+#पूर्ण_अगर
 
-#ifndef COPYRIGHT
-#define COPYRIGHT	"Copyright (c) 1999-2008 " MODULEAUTHOR
-#endif
+#अगर_अघोषित COPYRIGHT
+#घोषणा COPYRIGHT	"Copyright (c) 1999-2008 " MODULEAUTHOR
+#पूर्ण_अगर
 
-#define MPT_LINUX_VERSION_COMMON	"3.04.20"
-#define MPT_LINUX_PACKAGE_NAME		"@(#)mptlinux-3.04.20"
-#define WHAT_MAGIC_STRING		"@" "(" "#" ")"
+#घोषणा MPT_LINUX_VERSION_COMMON	"3.04.20"
+#घोषणा MPT_LINUX_PACKAGE_NAME		"@(#)mptlinux-3.04.20"
+#घोषणा WHAT_MAGIC_STRING		"@" "(" "#" ")"
 
-#define show_mptmod_ver(s,ver)  \
-	printk(KERN_INFO "%s %s\n", s, ver);
+#घोषणा show_mpपंचांगod_ver(s,ver)  \
+	prपूर्णांकk(KERN_INFO "%s %s\n", s, ver);
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
  *  Fusion MPT(linux) driver configurable stuff...
  */
-#define MPT_MAX_ADAPTERS		18
-#define MPT_MAX_PROTOCOL_DRIVERS	16
-#define MPT_MAX_CALLBACKNAME_LEN	49
-#define MPT_MAX_BUS			1	/* Do not change */
-#define MPT_MAX_FC_DEVICES		255
-#define MPT_MAX_SCSI_DEVICES		16
-#define MPT_LAST_LUN			255
-#define MPT_SENSE_BUFFER_ALLOC		64
-	/* allow for 256 max sense alloc, but only 255 max request */
-#if MPT_SENSE_BUFFER_ALLOC >= 256
+#घोषणा MPT_MAX_ADAPTERS		18
+#घोषणा MPT_MAX_PROTOCOL_DRIVERS	16
+#घोषणा MPT_MAX_CALLBACKNAME_LEN	49
+#घोषणा MPT_MAX_BUS			1	/* Do not change */
+#घोषणा MPT_MAX_FC_DEVICES		255
+#घोषणा MPT_MAX_SCSI_DEVICES		16
+#घोषणा MPT_LAST_LUN			255
+#घोषणा MPT_SENSE_BUFFER_ALLOC		64
+	/* allow क्रम 256 max sense alloc, but only 255 max request */
+#अगर MPT_SENSE_BUFFER_ALLOC >= 256
 #	undef MPT_SENSE_BUFFER_ALLOC
 #	define MPT_SENSE_BUFFER_ALLOC	256
 #	define MPT_SENSE_BUFFER_SIZE	255
-#else
+#अन्यथा
 #	define MPT_SENSE_BUFFER_SIZE	MPT_SENSE_BUFFER_ALLOC
-#endif
+#पूर्ण_अगर
 
-#define MPT_NAME_LENGTH			32
-#define MPT_KOBJ_NAME_LEN		20
+#घोषणा MPT_NAME_LENGTH			32
+#घोषणा MPT_KOBJ_NAME_LEN		20
 
-#define MPT_PROCFS_MPTBASEDIR		"mpt"
+#घोषणा MPT_PROCFS_MPTBASEसूची		"mpt"
 						/* chg it to "driver/fusion" ? */
-#define MPT_PROCFS_SUMMARY_ALL_NODE		MPT_PROCFS_MPTBASEDIR "/summary"
-#define MPT_PROCFS_SUMMARY_ALL_PATHNAME		"/proc/" MPT_PROCFS_SUMMARY_ALL_NODE
-#define MPT_FW_REV_MAGIC_ID_STRING		"FwRev="
+#घोषणा MPT_PROCFS_SUMMARY_ALL_NODE		MPT_PROCFS_MPTBASEसूची "/summary"
+#घोषणा MPT_PROCFS_SUMMARY_ALL_PATHNAME		"/proc/" MPT_PROCFS_SUMMARY_ALL_NODE
+#घोषणा MPT_FW_REV_MAGIC_ID_STRING		"FwRev="
 
-#define  MPT_MAX_REQ_DEPTH		1023
-#define  MPT_DEFAULT_REQ_DEPTH		256
-#define  MPT_MIN_REQ_DEPTH		128
+#घोषणा  MPT_MAX_REQ_DEPTH		1023
+#घोषणा  MPT_DEFAULT_REQ_DEPTH		256
+#घोषणा  MPT_MIN_REQ_DEPTH		128
 
-#define  MPT_MAX_REPLY_DEPTH		MPT_MAX_REQ_DEPTH
-#define  MPT_DEFAULT_REPLY_DEPTH	128
-#define  MPT_MIN_REPLY_DEPTH		8
-#define  MPT_MAX_REPLIES_PER_ISR	32
+#घोषणा  MPT_MAX_REPLY_DEPTH		MPT_MAX_REQ_DEPTH
+#घोषणा  MPT_DEFAULT_REPLY_DEPTH	128
+#घोषणा  MPT_MIN_REPLY_DEPTH		8
+#घोषणा  MPT_MAX_REPLIES_PER_ISR	32
 
-#define  MPT_MAX_FRAME_SIZE		128
-#define  MPT_DEFAULT_FRAME_SIZE		128
+#घोषणा  MPT_MAX_FRAME_SIZE		128
+#घोषणा  MPT_DEFAULT_FRAME_SIZE		128
 
-#define  MPT_REPLY_FRAME_SIZE		0x50  /* Must be a multiple of 8 */
+#घोषणा  MPT_REPLY_FRAME_SIZE		0x50  /* Must be a multiple of 8 */
 
-#define  MPT_SG_REQ_128_SCALE		1
-#define  MPT_SG_REQ_96_SCALE		2
-#define  MPT_SG_REQ_64_SCALE		4
+#घोषणा  MPT_SG_REQ_128_SCALE		1
+#घोषणा  MPT_SG_REQ_96_SCALE		2
+#घोषणा  MPT_SG_REQ_64_SCALE		4
 
-#define	 CAN_SLEEP			1
-#define  NO_SLEEP			0
+#घोषणा	 CAN_SLEEP			1
+#घोषणा  NO_SLEEP			0
 
-#define MPT_COALESCING_TIMEOUT		0x10
+#घोषणा MPT_COALESCING_TIMEOUT		0x10
 
 
 /*
  * SCSI transfer rate defines.
  */
-#define MPT_ULTRA320			0x08
-#define MPT_ULTRA160			0x09
-#define MPT_ULTRA2			0x0A
-#define MPT_ULTRA			0x0C
-#define MPT_FAST			0x19
-#define MPT_SCSI			0x32
-#define MPT_ASYNC			0xFF
+#घोषणा MPT_ULTRA320			0x08
+#घोषणा MPT_ULTRA160			0x09
+#घोषणा MPT_ULTRA2			0x0A
+#घोषणा MPT_ULTRA			0x0C
+#घोषणा MPT_FAST			0x19
+#घोषणा MPT_SCSI			0x32
+#घोषणा MPT_ASYNC			0xFF
 
-#define MPT_NARROW			0
-#define MPT_WIDE			1
+#घोषणा MPT_NARROW			0
+#घोषणा MPT_WIDE			1
 
-#define C0_1030				0x08
-#define XL_929				0x01
+#घोषणा C0_1030				0x08
+#घोषणा XL_929				0x01
 
 
 /*
  *	Try to keep these at 2^N-1
  */
-#define MPT_FC_CAN_QUEUE	1024
-#define MPT_SCSI_CAN_QUEUE	127
-#define MPT_SAS_CAN_QUEUE	127
+#घोषणा MPT_FC_CAN_QUEUE	1024
+#घोषणा MPT_SCSI_CAN_QUEUE	127
+#घोषणा MPT_SAS_CAN_QUEUE	127
 
 /*
  * Set the MAX_SGE value based on user input.
  */
-#ifdef CONFIG_FUSION_MAX_SGE
-#if CONFIG_FUSION_MAX_SGE  < 16
-#define MPT_SCSI_SG_DEPTH	16
-#elif CONFIG_FUSION_MAX_SGE  > 128
-#define MPT_SCSI_SG_DEPTH	128
-#else
-#define MPT_SCSI_SG_DEPTH	CONFIG_FUSION_MAX_SGE
-#endif
-#else
-#define MPT_SCSI_SG_DEPTH	40
-#endif
+#अगर_घोषित CONFIG_FUSION_MAX_SGE
+#अगर CONFIG_FUSION_MAX_SGE  < 16
+#घोषणा MPT_SCSI_SG_DEPTH	16
+#या_अगर CONFIG_FUSION_MAX_SGE  > 128
+#घोषणा MPT_SCSI_SG_DEPTH	128
+#अन्यथा
+#घोषणा MPT_SCSI_SG_DEPTH	CONFIG_FUSION_MAX_SGE
+#पूर्ण_अगर
+#अन्यथा
+#घोषणा MPT_SCSI_SG_DEPTH	40
+#पूर्ण_अगर
 
-#ifdef CONFIG_FUSION_MAX_FC_SGE
-#if CONFIG_FUSION_MAX_FC_SGE  < 16
-#define MPT_SCSI_FC_SG_DEPTH	16
-#elif CONFIG_FUSION_MAX_FC_SGE  > 256
-#define MPT_SCSI_FC_SG_DEPTH	256
-#else
-#define MPT_SCSI_FC_SG_DEPTH	CONFIG_FUSION_MAX_FC_SGE
-#endif
-#else
-#define MPT_SCSI_FC_SG_DEPTH	40
-#endif
+#अगर_घोषित CONFIG_FUSION_MAX_FC_SGE
+#अगर CONFIG_FUSION_MAX_FC_SGE  < 16
+#घोषणा MPT_SCSI_FC_SG_DEPTH	16
+#या_अगर CONFIG_FUSION_MAX_FC_SGE  > 256
+#घोषणा MPT_SCSI_FC_SG_DEPTH	256
+#अन्यथा
+#घोषणा MPT_SCSI_FC_SG_DEPTH	CONFIG_FUSION_MAX_FC_SGE
+#पूर्ण_अगर
+#अन्यथा
+#घोषणा MPT_SCSI_FC_SG_DEPTH	40
+#पूर्ण_अगर
 
-/* debug print string length used for events and iocstatus */
+/* debug prपूर्णांक string length used क्रम events and iocstatus */
 # define EVENT_DESCR_STR_SZ             100
 
-#define MPT_POLLING_INTERVAL		1000	/* in milliseconds */
+#घोषणा MPT_POLLING_INTERVAL		1000	/* in milliseconds */
 
-#ifdef __KERNEL__	/* { */
+#अगर_घोषित __KERNEL__	/* अणु */
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
-#include <linux/proc_fs.h>
+#समावेश <linux/proc_fs.h>
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
@@ -205,39 +206,39 @@
  * MPT drivers.  NOTE: Users of these macro defs must
  * themselves define their own MYNAM.
  */
-#define MYIOC_s_FMT			MYNAM ": %s: "
-#define MYIOC_s_DEBUG_FMT		KERN_DEBUG MYNAM ": %s: "
-#define MYIOC_s_INFO_FMT		KERN_INFO MYNAM ": %s: "
-#define MYIOC_s_NOTE_FMT		KERN_NOTICE MYNAM ": %s: "
-#define MYIOC_s_WARN_FMT		KERN_WARNING MYNAM ": %s: WARNING - "
-#define MYIOC_s_ERR_FMT			KERN_ERR MYNAM ": %s: ERROR - "
+#घोषणा MYIOC_s_FMT			MYNAM ": %s: "
+#घोषणा MYIOC_s_DEBUG_FMT		KERN_DEBUG MYNAM ": %s: "
+#घोषणा MYIOC_s_INFO_FMT		KERN_INFO MYNAM ": %s: "
+#घोषणा MYIOC_s_NOTE_FMT		KERN_NOTICE MYNAM ": %s: "
+#घोषणा MYIOC_s_WARN_FMT		KERN_WARNING MYNAM ": %s: WARNING - "
+#घोषणा MYIOC_s_ERR_FMT			KERN_ERR MYNAM ": %s: ERROR - "
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
- *  ATTO UL4D associated structures and defines
+ *  ATTO UL4D associated काष्ठाures and defines
  */
-#define ATTOFLAG_DISC     0x0001
-#define ATTOFLAG_TAGGED   0x0002
-#define ATTOFLAG_WIDE_ENB 0x0008
-#define ATTOFLAG_ID_ENB   0x0010
-#define ATTOFLAG_LUN_ENB  0x0060
+#घोषणा ATTOFLAG_DISC     0x0001
+#घोषणा ATTOFLAG_TAGGED   0x0002
+#घोषणा ATTOFLAG_WIDE_ENB 0x0008
+#घोषणा ATTOFLAG_ID_ENB   0x0010
+#घोषणा ATTOFLAG_LUN_ENB  0x0060
 
-typedef struct _ATTO_DEVICE_INFO
-{
+प्रकार काष्ठा _ATTO_DEVICE_INFO
+अणु
 	u8	Offset;					/* 00h */
 	u8	Period;					/* 01h */
 	u16	ATTOFlags;				/* 02h */
-} ATTO_DEVICE_INFO, MPI_POINTER PTR_ATTO_DEVICE_INFO,
+पूर्ण ATTO_DEVICE_INFO, MPI_POINTER PTR_ATTO_DEVICE_INFO,
   ATTODeviceInfo_t, MPI_POINTER pATTODeviceInfo_t;
 
-typedef struct _ATTO_CONFIG_PAGE_SCSI_PORT_2
-{
+प्रकार काष्ठा _ATTO_CONFIG_PAGE_SCSI_PORT_2
+अणु
 	CONFIG_PAGE_HEADER	Header;			/* 00h */
 	u16			PortFlags;		/* 04h */
 	u16			Unused1;		/* 06h */
 	u32			Unused2;		/* 08h */
 	ATTO_DEVICE_INFO	DeviceSettings[16];	/* 0Ch */
-} fATTO_CONFIG_PAGE_SCSI_PORT_2, MPI_POINTER PTR_ATTO_CONFIG_PAGE_SCSI_PORT_2,
+पूर्ण fATTO_CONFIG_PAGE_SCSI_PORT_2, MPI_POINTER PTR_ATTO_CONFIG_PAGE_SCSI_PORT_2,
   ATTO_SCSIPortPage2_t, MPI_POINTER pATTO_SCSIPortPage2_t;
 
 
@@ -245,7 +246,7 @@ typedef struct _ATTO_CONFIG_PAGE_SCSI_PORT_2
 /*
  *  MPT protocol driver defs...
  */
-typedef enum {
+प्रकार क्रमागत अणु
 	MPTBASE_DRIVER,		/* MPT base class */
 	MPTCTL_DRIVER,		/* MPT ioctl class */
 	MPTSPI_DRIVER,		/* MPT SPI host class */
@@ -254,60 +255,60 @@ typedef enum {
 	MPTLAN_DRIVER,		/* MPT LAN class */
 	MPTSTM_DRIVER,		/* MPT SCSI target mode class */
 	MPTUNKNOWN_DRIVER
-} MPT_DRIVER_CLASS;
+पूर्ण MPT_DRIVER_CLASS;
 
-struct mpt_pci_driver{
-	int  (*probe) (struct pci_dev *dev, const struct pci_device_id *id);
-	void (*remove) (struct pci_dev *dev);
-};
+काष्ठा mpt_pci_driverअणु
+	पूर्णांक  (*probe) (काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id);
+	व्योम (*हटाओ) (काष्ठा pci_dev *dev);
+पूर्ण;
 
 /*
- *  MPT adapter / port / bus / device info structures...
+ *  MPT adapter / port / bus / device info काष्ठाures...
  */
 
-typedef union _MPT_FRAME_TRACKER {
-	struct {
-		struct list_head	list;
+प्रकार जोड़ _MPT_FRAME_TRACKER अणु
+	काष्ठा अणु
+		काष्ठा list_head	list;
 		u32			 arg1;
 		u32			 pad;
-		void			*argp1;
-	} linkage;
+		व्योम			*argp1;
+	पूर्ण linkage;
 	/*
-	 * NOTE: When request frames are free, on the linkage structure
+	 * NOTE: When request frames are मुक्त, on the linkage काष्ठाure
 	 * contents are valid.  All other values are invalid.
-	 * In particular, do NOT reply on offset [2]
+	 * In particular, करो NOT reply on offset [2]
 	 * (in words) being the * message context.
 	 * The message context must be reset (computed via base address
 	 * + an offset) prior to issuing any command.
 	 *
-	 * NOTE2: On non-32-bit systems, where pointers are LARGE,
-	 * using the linkage pointers destroys our sacred MsgContext
-	 * field contents.  But we don't care anymore because these
+	 * NOTE2: On non-32-bit प्रणालीs, where poपूर्णांकers are LARGE,
+	 * using the linkage poपूर्णांकers destroys our sacred MsgContext
+	 * field contents.  But we करोn't care anymore because these
 	 * are now reset in mpt_put_msg_frame() just prior to sending
 	 * a request off to the IOC.
 	 */
-	struct {
+	काष्ठा अणु
 		u32 __hdr[2];
 		/*
 		 * The following _MUST_ match the location of the
 		 * MsgContext field in the MPT message headers.
 		 */
-		union {
+		जोड़ अणु
 			u32		 MsgContext;
-			struct {
+			काष्ठा अणु
 				u16	 req_idx;	/* Request index */
 				u8	 cb_idx;	/* callback function index */
 				u8	 rsvd;
-			} fld;
-		} msgctxu;
-	} hwhdr;
+			पूर्ण fld;
+		पूर्ण msgctxu;
+	पूर्ण hwhdr;
 	/*
-	 * Remark: 32 bit identifier:
+	 * Remark: 32 bit identअगरier:
 	 *  31-24: reserved
 	 *  23-16: call back index
 	 *  15-0 : request index
 	 */
-} MPT_FRAME_TRACKER;
+पूर्ण MPT_FRAME_TRACKER;
 
 /*
  *  We might want to view/access a frame as:
@@ -317,243 +318,243 @@ typedef union _MPT_FRAME_TRACKER {
  *    4) MPIDefaultReply
  *    5) frame tracker
  */
-typedef struct _MPT_FRAME_HDR {
-	union {
+प्रकार काष्ठा _MPT_FRAME_HDR अणु
+	जोड़ अणु
 		MPIHeader_t		hdr;
 		SCSIIORequest_t		scsireq;
 		SCSIIOReply_t		sreply;
 		ConfigReply_t		configreply;
 		MPIDefaultReply_t	reply;
 		MPT_FRAME_TRACKER	frame;
-	} u;
-} MPT_FRAME_HDR;
+	पूर्ण u;
+पूर्ण MPT_FRAME_HDR;
 
-#define MPT_REQ_MSGFLAGS_DROPME		0x80
+#घोषणा MPT_REQ_MSGFLAGS_DROPME		0x80
 
-typedef struct _MPT_SGL_HDR {
+प्रकार काष्ठा _MPT_SGL_HDR अणु
 	SGESimple32_t	 sge[1];
-} MPT_SGL_HDR;
+पूर्ण MPT_SGL_HDR;
 
-typedef struct _MPT_SGL64_HDR {
+प्रकार काष्ठा _MPT_SGL64_HDR अणु
 	SGESimple64_t	 sge[1];
-} MPT_SGL64_HDR;
+पूर्ण MPT_SGL64_HDR;
 
 /*
- *  System interface register set
+ *  System पूर्णांकerface रेजिस्टर set
  */
 
-typedef struct _SYSIF_REGS
-{
+प्रकार काष्ठा _SYSIF_REGS
+अणु
 	u32	Doorbell;	/* 00     System<->IOC Doorbell reg  */
-	u32	WriteSequence;	/* 04     Write Sequence register    */
-	u32	Diagnostic;	/* 08     Diagnostic register        */
+	u32	WriteSequence;	/* 04     Write Sequence रेजिस्टर    */
+	u32	Diagnostic;	/* 08     Diagnostic रेजिस्टर        */
 	u32	TestBase;	/* 0C     Test Base Address          */
-	u32	DiagRwData;	/* 10     Read Write Data (fw download)   */
-	u32	DiagRwAddress;	/* 14     Read Write Address (fw download)*/
-	u32	Reserved1[6];	/* 18-2F  reserved for future use    */
+	u32	DiagRwData;	/* 10     Read Write Data (fw करोwnload)   */
+	u32	DiagRwAddress;	/* 14     Read Write Address (fw करोwnload)*/
+	u32	Reserved1[6];	/* 18-2F  reserved क्रम future use    */
 	u32	IntStatus;	/* 30     Interrupt Status           */
 	u32	IntMask;	/* 34     Interrupt Mask             */
-	u32	Reserved2[2];	/* 38-3F  reserved for future use    */
-	u32	RequestFifo;	/* 40     Request Post/Free FIFO     */
-	u32	ReplyFifo;	/* 44     Reply   Post/Free FIFO     */
-	u32	RequestHiPriFifo; /* 48   Hi Priority Request FIFO   */
-	u32	Reserved3;	/* 4C-4F  reserved for future use    */
-	u32	HostIndex;	/* 50     Host Index register        */
+	u32	Reserved2[2];	/* 38-3F  reserved क्रम future use    */
+	u32	RequestFअगरo;	/* 40     Request Post/Free FIFO     */
+	u32	ReplyFअगरo;	/* 44     Reply   Post/Free FIFO     */
+	u32	RequestHiPriFअगरo; /* 48   Hi Priority Request FIFO   */
+	u32	Reserved3;	/* 4C-4F  reserved क्रम future use    */
+	u32	HostIndex;	/* 50     Host Index रेजिस्टर        */
 	u32	Reserved4[15];	/* 54-8F                             */
 	u32	Fubar;		/* 90     For Fubar usage            */
 	u32	Reserved5[1050];/* 94-10F8                           */
 	u32	Reset_1078;	/* 10FC   Reset 1078                 */
-} SYSIF_REGS;
+पूर्ण SYSIF_REGS;
 
 /*
- * NOTE: Use MPI_{DOORBELL,WRITESEQ,DIAG}_xxx defs in lsi/mpi.h
+ * NOTE: Use MPI_अणुDOORBELL,WRITESEQ,DIAGपूर्ण_xxx defs in lsi/mpi.h
  * in conjunction with SYSIF_REGS accesses!
  */
 
 
 /*
- *	Dynamic Multi-Pathing specific stuff...
+ *	Dynamic Multi-Pathing specअगरic stuff...
  */
 
 /* VirtTarget negoFlags field */
-#define MPT_TARGET_NO_NEGO_WIDE		0x01
-#define MPT_TARGET_NO_NEGO_SYNC		0x02
-#define MPT_TARGET_NO_NEGO_QAS		0x04
-#define MPT_TAPE_NEGO_IDP     		0x08
+#घोषणा MPT_TARGET_NO_NEGO_WIDE		0x01
+#घोषणा MPT_TARGET_NO_NEGO_SYNC		0x02
+#घोषणा MPT_TARGET_NO_NEGO_QAS		0x04
+#घोषणा MPT_TAPE_NEGO_IDP     		0x08
 
 /*
  *	VirtDevice - FC LUN device or SCSI target device
  */
-typedef struct _VirtTarget {
-	struct scsi_target	*starget;
+प्रकार काष्ठा _VirtTarget अणु
+	काष्ठा scsi_target	*starget;
 	u8			 tflags;
 	u8			 ioc_id;
 	u8			 id;
 	u8			 channel;
 	u8			 minSyncFactor;	/* 0xFF is async */
-	u8			 maxOffset;	/* 0 if async */
-	u8			 maxWidth;	/* 0 if narrow, 1 if wide */
+	u8			 maxOffset;	/* 0 अगर async */
+	u8			 maxWidth;	/* 0 अगर narrow, 1 अगर wide */
 	u8			 negoFlags;	/* bit field, see above */
-	u8			 raidVolume;	/* set, if RAID Volume */
+	u8			 raidVolume;	/* set, अगर RAID Volume */
 	u8			 type;		/* byte 0 of Inquiry data */
-	u8			 deleted;	/* target in process of being removed */
+	u8			 deleted;	/* target in process of being हटाओd */
 	u8			 inDMD;		/* currently in the device
-						   removal delay timer */
+						   removal delay समयr */
 	u32			 num_luns;
-} VirtTarget;
+पूर्ण VirtTarget;
 
-typedef struct _VirtDevice {
+प्रकार काष्ठा _VirtDevice अणु
 	VirtTarget		*vtarget;
 	u8			 configured_lun;
 	u64			 lun;
-} VirtDevice;
+पूर्ण VirtDevice;
 
 /*
  *  Fibre Channel (SCSI) target device and associated defines...
  */
-#define MPT_TARGET_DEFAULT_DV_STATUS	0x00
-#define MPT_TARGET_FLAGS_VALID_NEGO	0x01
-#define MPT_TARGET_FLAGS_VALID_INQUIRY	0x02
-#define MPT_TARGET_FLAGS_Q_YES		0x08
-#define MPT_TARGET_FLAGS_VALID_56	0x10
-#define MPT_TARGET_FLAGS_SAF_TE_ISSUED	0x20
-#define MPT_TARGET_FLAGS_RAID_COMPONENT	0x40
-#define MPT_TARGET_FLAGS_LED_ON		0x80
+#घोषणा MPT_TARGET_DEFAULT_DV_STATUS	0x00
+#घोषणा MPT_TARGET_FLAGS_VALID_NEGO	0x01
+#घोषणा MPT_TARGET_FLAGS_VALID_INQUIRY	0x02
+#घोषणा MPT_TARGET_FLAGS_Q_YES		0x08
+#घोषणा MPT_TARGET_FLAGS_VALID_56	0x10
+#घोषणा MPT_TARGET_FLAGS_SAF_TE_ISSUED	0x20
+#घोषणा MPT_TARGET_FLAGS_RAID_COMPONENT	0x40
+#घोषणा MPT_TARGET_FLAGS_LED_ON		0x80
 
 /*
- *	IOCTL structure and associated defines
+ *	IOCTL काष्ठाure and associated defines
  */
 
-#define MPTCTL_RESET_OK			0x01	/* Issue Bus Reset */
+#घोषणा MPTCTL_RESET_OK			0x01	/* Issue Bus Reset */
 
-#define MPT_MGMT_STATUS_RF_VALID	0x01	/* The Reply Frame is VALID */
-#define MPT_MGMT_STATUS_COMMAND_GOOD	0x02	/* Command Status GOOD */
-#define MPT_MGMT_STATUS_PENDING		0x04	/* command is pending */
-#define MPT_MGMT_STATUS_DID_IOCRESET	0x08	/* IOC Reset occurred
+#घोषणा MPT_MGMT_STATUS_RF_VALID	0x01	/* The Reply Frame is VALID */
+#घोषणा MPT_MGMT_STATUS_COMMAND_GOOD	0x02	/* Command Status GOOD */
+#घोषणा MPT_MGMT_STATUS_PENDING		0x04	/* command is pending */
+#घोषणा MPT_MGMT_STATUS_DID_IOCRESET	0x08	/* IOC Reset occurred
 						   on the current*/
-#define MPT_MGMT_STATUS_SENSE_VALID	0x10	/* valid sense info */
-#define MPT_MGMT_STATUS_TIMER_ACTIVE	0x20	/* obsolete */
-#define MPT_MGMT_STATUS_FREE_MF		0x40	/* free the mf from
+#घोषणा MPT_MGMT_STATUS_SENSE_VALID	0x10	/* valid sense info */
+#घोषणा MPT_MGMT_STATUS_TIMER_ACTIVE	0x20	/* obsolete */
+#घोषणा MPT_MGMT_STATUS_FREE_MF		0x40	/* मुक्त the mf from
 						   complete routine */
 
-#define INITIALIZE_MGMT_STATUS(status) \
+#घोषणा INITIALIZE_MGMT_STATUS(status) \
 	status = MPT_MGMT_STATUS_PENDING;
-#define CLEAR_MGMT_STATUS(status) \
+#घोषणा CLEAR_MGMT_STATUS(status) \
 	status = 0;
-#define CLEAR_MGMT_PENDING_STATUS(status) \
+#घोषणा CLEAR_MGMT_PENDING_STATUS(status) \
 	status &= ~MPT_MGMT_STATUS_PENDING;
-#define SET_MGMT_MSG_CONTEXT(msg_context, value) \
+#घोषणा SET_MGMT_MSG_CONTEXT(msg_context, value) \
 	msg_context = value;
 
-typedef struct _MPT_MGMT {
-	struct mutex		 mutex;
-	struct completion	 done;
+प्रकार काष्ठा _MPT_MGMT अणु
+	काष्ठा mutex		 mutex;
+	काष्ठा completion	 करोne;
 	u8			 reply[MPT_DEFAULT_FRAME_SIZE]; /* reply frame data */
 	u8			 sense[MPT_SENSE_BUFFER_ALLOC];
 	u8			 status;	/* current command status */
-	int			 completion_code;
+	पूर्णांक			 completion_code;
 	u32			 msg_context;
-} MPT_MGMT;
+पूर्ण MPT_MGMT;
 
 /*
  *  Event Structure and define
  */
-#define MPTCTL_EVENT_LOG_SIZE		(0x000000032)
-typedef struct _mpt_ioctl_events {
-	u32	event;		/* Specified by define above */
+#घोषणा MPTCTL_EVENT_LOG_SIZE		(0x000000032)
+प्रकार काष्ठा _mpt_ioctl_events अणु
+	u32	event;		/* Specअगरied by define above */
 	u32	eventContext;	/* Index or counter */
 	u32	data[2];	/* First 8 bytes of Event Data */
-} MPT_IOCTL_EVENTS;
+पूर्ण MPT_IOCTL_EVENTS;
 
 /*
  * CONFIGPARM status  defines
  */
-#define MPT_CONFIG_GOOD		MPI_IOCSTATUS_SUCCESS
-#define MPT_CONFIG_ERROR	0x002F
+#घोषणा MPT_CONFIG_GOOD		MPI_IOCSTATUS_SUCCESS
+#घोषणा MPT_CONFIG_ERROR	0x002F
 
 /*
- *	Substructure to store SCSI specific configuration page data
+ *	Subकाष्ठाure to store SCSI specअगरic configuration page data
  */
 						/* dvStatus defines: */
-#define MPT_SCSICFG_USE_NVRAM		0x01	/* WriteSDP1 using NVRAM */
-#define MPT_SCSICFG_ALL_IDS		0x02	/* WriteSDP1 to all IDS */
-/* #define MPT_SCSICFG_BLK_NEGO		0x10	   WriteSDP1 with WDTR and SDTR disabled */
+#घोषणा MPT_SCSICFG_USE_NVRAM		0x01	/* WriteSDP1 using NVRAM */
+#घोषणा MPT_SCSICFG_ALL_IDS		0x02	/* WriteSDP1 to all IDS */
+/* #घोषणा MPT_SCSICFG_BLK_NEGO		0x10	   WriteSDP1 with WDTR and SDTR disabled */
 
-typedef	struct _SpiCfgData {
+प्रकार	काष्ठा _SpiCfgData अणु
 	u32		 PortFlags;
-	int		*nvram;			/* table of device NVRAM values */
+	पूर्णांक		*nvram;			/* table of device NVRAM values */
 	IOCPage4_t	*pIocPg4;		/* SEP devices addressing */
 	dma_addr_t	 IocPg4_dma;		/* Phys Addr of IOCPage4 data */
-	int		 IocPg4Sz;		/* IOCPage4 size */
-	u8		 minSyncFactor;		/* 0xFF if async */
-	u8		 maxSyncOffset;		/* 0 if async */
-	u8		 maxBusWidth;		/* 0 if narrow, 1 if wide */
+	पूर्णांक		 IocPg4Sz;		/* IOCPage4 size */
+	u8		 minSyncFactor;		/* 0xFF अगर async */
+	u8		 maxSyncOffset;		/* 0 अगर async */
+	u8		 maxBusWidth;		/* 0 अगर narrow, 1 अगर wide */
 	u8		 busType;		/* SE, LVD, HD */
 	u8		 sdp1version;		/* SDP1 version */
 	u8		 sdp1length;		/* SDP1 length  */
 	u8		 sdp0version;		/* SDP0 version */
 	u8		 sdp0length;		/* SDP0 length  */
-	u8		 dvScheduled;		/* 1 if scheduled */
-	u8		 noQas;			/* Disable QAS for this adapter */
-	u8		 Saf_Te;		/* 1 to force all Processors as
-						 * SAF-TE if Inquiry data length
-						 * is too short to check for SAF-TE
+	u8		 dvScheduled;		/* 1 अगर scheduled */
+	u8		 noQas;			/* Disable QAS क्रम this adapter */
+	u8		 Saf_Te;		/* 1 to क्रमce all Processors as
+						 * SAF-TE अगर Inquiry data length
+						 * is too लघु to check क्रम SAF-TE
 						 */
 	u8		 bus_reset;		/* 1 to allow bus reset */
 	u8		 rsvd[1];
-}SpiCfgData;
+पूर्णSpiCfgData;
 
-typedef	struct _SasCfgData {
-	u8		 ptClear;		/* 1 to automatically clear the
+प्रकार	काष्ठा _SasCfgData अणु
+	u8		 ptClear;		/* 1 to स्वतःmatically clear the
 						 * persistent table.
 						 * 0 to disable
-						 * automatic clearing.
+						 * स्वतःmatic clearing.
 						 */
-}SasCfgData;
+पूर्णSasCfgData;
 
 /*
  * Inactive volume link list of raid component data
  * @inactive_list
  */
-struct inactive_raid_component_info {
-	struct 	 list_head list;
+काष्ठा inactive_raid_component_info अणु
+	काष्ठा 	 list_head list;
 	u8		 volumeID;		/* volume target id */
 	u8		 volumeBus;		/* volume channel */
 	IOC_3_PHYS_DISK	 d;			/* phys disk info */
-};
+पूर्ण;
 
-typedef	struct _RaidCfgData {
+प्रकार	काष्ठा _RaidCfgData अणु
 	IOCPage2_t	*pIocPg2;		/* table of Raid Volumes */
 	IOCPage3_t	*pIocPg3;		/* table of physical disks */
-	struct mutex	inactive_list_mutex;
-	struct list_head	inactive_list; /* link list for physical
-						disk that belong in
+	काष्ठा mutex	inactive_list_mutex;
+	काष्ठा list_head	inactive_list; /* link list क्रम physical
+						disk that beदीर्घ in
 						inactive volumes */
-}RaidCfgData;
+पूर्णRaidCfgData;
 
-typedef struct _FcCfgData {
+प्रकार काष्ठा _FcCfgData अणु
 	/* will ultimately hold fc_port_page0 also */
-	struct {
+	काष्ठा अणु
 		FCPortPage1_t	*data;
 		dma_addr_t	 dma;
-		int		 pg_sz;
-	}			 fc_port_page1[2];
-} FcCfgData;
+		पूर्णांक		 pg_sz;
+	पूर्ण			 fc_port_page1[2];
+पूर्ण FcCfgData;
 
-#define MPT_RPORT_INFO_FLAGS_REGISTERED	0x01	/* rport registered */
-#define MPT_RPORT_INFO_FLAGS_MISSING	0x02	/* missing from DevPage0 scan */
+#घोषणा MPT_RPORT_INFO_FLAGS_REGISTERED	0x01	/* rport रेजिस्टरed */
+#घोषणा MPT_RPORT_INFO_FLAGS_MISSING	0x02	/* missing from DevPage0 scan */
 
 /*
- * data allocated for each fc rport device
+ * data allocated क्रम each fc rport device
  */
-struct mptfc_rport_info
-{
-	struct list_head list;
-	struct fc_rport *rport;
-	struct scsi_target *starget;
+काष्ठा mptfc_rport_info
+अणु
+	काष्ठा list_head list;
+	काष्ठा fc_rport *rport;
+	काष्ठा scsi_target *starget;
 	FCDevicePage0_t pg0;
 	u8		flags;
-};
+पूर्ण;
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
@@ -562,108 +563,108 @@ struct mptfc_rport_info
  * Private to the driver.
  */
 
-#define MPT_HOST_BUS_UNKNOWN		(0xFF)
-#define MPT_HOST_TOO_MANY_TM		(0x05)
-#define MPT_HOST_NVRAM_INVALID		(0xFFFFFFFF)
-#define MPT_HOST_NO_CHAIN		(0xFFFFFFFF)
-#define MPT_NVRAM_MASK_TIMEOUT		(0x000000FF)
-#define MPT_NVRAM_SYNC_MASK		(0x0000FF00)
-#define MPT_NVRAM_SYNC_SHIFT		(8)
-#define MPT_NVRAM_DISCONNECT_ENABLE	(0x00010000)
-#define MPT_NVRAM_ID_SCAN_ENABLE	(0x00020000)
-#define MPT_NVRAM_LUN_SCAN_ENABLE	(0x00040000)
-#define MPT_NVRAM_TAG_QUEUE_ENABLE	(0x00080000)
-#define MPT_NVRAM_WIDE_DISABLE		(0x00100000)
-#define MPT_NVRAM_BOOT_CHOICE		(0x00200000)
+#घोषणा MPT_HOST_BUS_UNKNOWN		(0xFF)
+#घोषणा MPT_HOST_TOO_MANY_TM		(0x05)
+#घोषणा MPT_HOST_NVRAM_INVALID		(0xFFFFFFFF)
+#घोषणा MPT_HOST_NO_CHAIN		(0xFFFFFFFF)
+#घोषणा MPT_NVRAM_MASK_TIMEOUT		(0x000000FF)
+#घोषणा MPT_NVRAM_SYNC_MASK		(0x0000FF00)
+#घोषणा MPT_NVRAM_SYNC_SHIFT		(8)
+#घोषणा MPT_NVRAM_DISCONNECT_ENABLE	(0x00010000)
+#घोषणा MPT_NVRAM_ID_SCAN_ENABLE	(0x00020000)
+#घोषणा MPT_NVRAM_LUN_SCAN_ENABLE	(0x00040000)
+#घोषणा MPT_NVRAM_TAG_QUEUE_ENABLE	(0x00080000)
+#घोषणा MPT_NVRAM_WIDE_DISABLE		(0x00100000)
+#घोषणा MPT_NVRAM_BOOT_CHOICE		(0x00200000)
 
-typedef enum {
+प्रकार क्रमागत अणु
 	FC,
 	SPI,
 	SAS
-} BUS_TYPE;
+पूर्ण BUS_TYPE;
 
-typedef struct _MPT_SCSI_HOST {
-	struct _MPT_ADAPTER		 *ioc;
-	ushort			  sel_timeout[MPT_MAX_FC_DEVICES];
-	char			  *info_kbuf;
-	long			  last_queue_full;
+प्रकार काष्ठा _MPT_SCSI_HOST अणु
+	काष्ठा _MPT_ADAPTER		 *ioc;
+	uलघु			  sel_समयout[MPT_MAX_FC_DEVICES];
+	अक्षर			  *info_kbuf;
+	दीर्घ			  last_queue_full;
 	u16			  spi_pending;
-	struct list_head	  target_reset_list;
-} MPT_SCSI_HOST;
+	काष्ठा list_head	  target_reset_list;
+पूर्ण MPT_SCSI_HOST;
 
-typedef void (*MPT_ADD_SGE)(void *pAddr, u32 flagslength, dma_addr_t dma_addr);
-typedef void (*MPT_ADD_CHAIN)(void *pAddr, u8 next, u16 length,
+प्रकार व्योम (*MPT_ADD_SGE)(व्योम *pAddr, u32 flagslength, dma_addr_t dma_addr);
+प्रकार व्योम (*MPT_ADD_CHAIN)(व्योम *pAddr, u8 next, u16 length,
 		dma_addr_t dma_addr);
-typedef void (*MPT_SCHEDULE_TARGET_RESET)(void *ioc);
-typedef void (*MPT_FLUSH_RUNNING_CMDS)(MPT_SCSI_HOST *hd);
+प्रकार व्योम (*MPT_SCHEDULE_TARGET_RESET)(व्योम *ioc);
+प्रकार व्योम (*MPT_FLUSH_RUNNING_CMDS)(MPT_SCSI_HOST *hd);
 
 /*
- *  Adapter Structure - pci_dev specific. Maximum: MPT_MAX_ADAPTERS
+ *  Adapter Structure - pci_dev specअगरic. Maximum: MPT_MAX_ADAPTERS
  */
-typedef struct _MPT_ADAPTER
-{
-	int			 id;		/* Unique adapter id N {0,1,2,...} */
-	int			 pci_irq;	/* This irq           */
-	char			 name[MPT_NAME_LENGTH];	/* "iocN"             */
-	const char		 *prod_name;	/* "LSIFC9x9"         */
-#ifdef CONFIG_FUSION_LOGGING
+प्रकार काष्ठा _MPT_ADAPTER
+अणु
+	पूर्णांक			 id;		/* Unique adapter id N अणु0,1,2,...पूर्ण */
+	पूर्णांक			 pci_irq;	/* This irq           */
+	अक्षर			 name[MPT_NAME_LENGTH];	/* "iocN"             */
+	स्थिर अक्षर		 *prod_name;	/* "LSIFC9x9"         */
+#अगर_घोषित CONFIG_FUSION_LOGGING
 	/* used in mpt_display_event_info */
-	char			 evStr[EVENT_DESCR_STR_SZ];
-#endif
-	char			 board_name[16];
-	char			 board_assembly[16];
-	char			 board_tracer[16];
+	अक्षर			 evStr[EVENT_DESCR_STR_SZ];
+#पूर्ण_अगर
+	अक्षर			 board_name[16];
+	अक्षर			 board_assembly[16];
+	अक्षर			 board_tracer[16];
 	u16			 nvdata_version_persistent;
-	u16			 nvdata_version_default;
-	int			 debug_level;
+	u16			 nvdata_version_शेष;
+	पूर्णांक			 debug_level;
 	u8			 io_missing_delay;
 	u16			 device_missing_delay;
 	SYSIF_REGS __iomem	*chip;		/* == c8817000 (mmap) */
-	SYSIF_REGS __iomem	*pio_chip;	/* Programmed IO (downloadboot) */
+	SYSIF_REGS __iomem	*pio_chip;	/* Programmed IO (करोwnloadboot) */
 	u8			 bus_type;
 	u32			 mem_phys;	/* == f4020000 (mmap) */
-	u32			 pio_mem_phys;	/* Programmed IO (downloadboot) */
-	int			 mem_size;	/* mmap memory size */
-	int			 number_of_buses;
-	int			 devices_per_bus;
-	int			 alloc_total;
+	u32			 pio_mem_phys;	/* Programmed IO (करोwnloadboot) */
+	पूर्णांक			 mem_size;	/* mmap memory size */
+	पूर्णांक			 number_of_buses;
+	पूर्णांक			 devices_per_bus;
+	पूर्णांक			 alloc_total;
 	u32			 last_state;
-	int			 active;
+	पूर्णांक			 active;
 	u8			*alloc;		/* frames alloc ptr */
 	dma_addr_t		 alloc_dma;
 	u32			 alloc_sz;
 	MPT_FRAME_HDR		*reply_frames;	/* Reply msg frames - rounded up! */
 	u32			 reply_frames_low_dma;
-	int			 reply_depth;	/* Num Allocated reply frames */
-	int			 reply_sz;	/* Reply frame size */
-	int			 num_chain;	/* Number of chain buffers */
-	MPT_ADD_SGE              add_sge;       /* Pointer to add_sge
+	पूर्णांक			 reply_depth;	/* Num Allocated reply frames */
+	पूर्णांक			 reply_sz;	/* Reply frame size */
+	पूर्णांक			 num_chain;	/* Number of chain buffers */
+	MPT_ADD_SGE              add_sge;       /* Poपूर्णांकer to add_sge
 						   function */
-	MPT_ADD_CHAIN		 add_chain;	/* Pointer to add_chain
+	MPT_ADD_CHAIN		 add_chain;	/* Poपूर्णांकer to add_chain
 						   function */
-		/* Pool of buffers for chaining. ReqToChain
+		/* Pool of buffers क्रम chaining. ReqToChain
 		 * and ChainToChain track index of chain buffers.
 		 * ChainBuffer (DMA) virt/phys addresses.
 		 * FreeChainQ (lock) locking mechanisms.
 		 */
-	int			*ReqToChain;
-	int			*RequestNB;
-	int			*ChainToChain;
+	पूर्णांक			*ReqToChain;
+	पूर्णांक			*RequestNB;
+	पूर्णांक			*ChainToChain;
 	u8			*ChainBuffer;
 	dma_addr_t		 ChainBufferDMA;
-	struct list_head	 FreeChainQ;
+	काष्ठा list_head	 FreeChainQ;
 	spinlock_t		 FreeChainQlock;
 		/* We (host driver) get to manage our own RequestQueue! */
 	dma_addr_t		 req_frames_dma;
 	MPT_FRAME_HDR		*req_frames;	/* Request msg frames - rounded up! */
 	u32			 req_frames_low_dma;
-	int			 req_depth;	/* Number of request frames */
-	int			 req_sz;	/* Request frame size (bytes) */
+	पूर्णांक			 req_depth;	/* Number of request frames */
+	पूर्णांक			 req_sz;	/* Request frame size (bytes) */
 	spinlock_t		 FreeQlock;
-	struct list_head	 FreeQ;
-		/* Pool of SCSI sense buffers for commands coming from
+	काष्ठा list_head	 FreeQ;
+		/* Pool of SCSI sense buffers क्रम commands coming from
 		 * the SCSI mid-layer.  We have one 256 byte sense buffer
-		 * for each REQ entry.
+		 * क्रम each REQ entry.
 		 */
 	u8			*sense_buf_pool;
 	dma_addr_t		 sense_buf_pool_dma;
@@ -671,212 +672,212 @@ typedef struct _MPT_ADAPTER
 	u8			*HostPageBuffer; /* SAS - host page buffer support */
 	u32			HostPageBuffer_sz;
 	dma_addr_t		HostPageBuffer_dma;
-	struct pci_dev		*pcidev;	/* struct pci_dev pointer */
-	int			bars;		/* bitmask of BAR's that must be configured */
-	int			msi_enable;
+	काष्ठा pci_dev		*pcidev;	/* काष्ठा pci_dev poपूर्णांकer */
+	पूर्णांक			bars;		/* biपंचांगask of BAR's that must be configured */
+	पूर्णांक			msi_enable;
 	u8			__iomem *memmap;	/* mmap address */
-	struct Scsi_Host	*sh;		/* Scsi Host pointer */
+	काष्ठा Scsi_Host	*sh;		/* Scsi Host poपूर्णांकer */
 	SpiCfgData		spi_data;	/* Scsi config. data */
 	RaidCfgData		raid_data;	/* Raid config. data */
 	SasCfgData		sas_data;	/* Sas config. data */
 	FcCfgData		fc_data;	/* Fc config. data */
-	struct proc_dir_entry	*ioc_dentry;
-	struct _MPT_ADAPTER	*alt_ioc;	/* ptr to 929 bound adapter port */
+	काष्ठा proc_dir_entry	*ioc_dentry;
+	काष्ठा _MPT_ADAPTER	*alt_ioc;	/* ptr to 929 bound adapter port */
 	u32			 biosVersion;	/* BIOS version from IO Unit Page 2 */
-	int			 eventTypes;	/* Event logging parameters */
-	int			 eventContext;	/* Next event context */
-	int			 eventLogSize;	/* Max number of cached events */
-	struct _mpt_ioctl_events *events;	/* pointer to event log */
-	u8			*cached_fw;	/* Pointer to FW */
+	पूर्णांक			 eventTypes;	/* Event logging parameters */
+	पूर्णांक			 eventContext;	/* Next event context */
+	पूर्णांक			 eventLogSize;	/* Max number of cached events */
+	काष्ठा _mpt_ioctl_events *events;	/* poपूर्णांकer to event log */
+	u8			*cached_fw;	/* Poपूर्णांकer to FW */
 	dma_addr_t	 	cached_fw_dma;
-	int			 hs_reply_idx;
-#ifndef MFCNT
+	पूर्णांक			 hs_reply_idx;
+#अगर_अघोषित MFCNT
 	u32			 pad0;
-#else
+#अन्यथा
 	u32			 mfcnt;
-#endif
-	u32			 NB_for_64_byte_frame;
-	u32			 hs_req[MPT_MAX_FRAME_SIZE/sizeof(u32)];
-	u16			 hs_reply[MPT_MAX_FRAME_SIZE/sizeof(u16)];
+#पूर्ण_अगर
+	u32			 NB_क्रम_64_byte_frame;
+	u32			 hs_req[MPT_MAX_FRAME_SIZE/माप(u32)];
+	u16			 hs_reply[MPT_MAX_FRAME_SIZE/माप(u16)];
 	IOCFactsReply_t		 facts;
 	PortFactsReply_t	 pfacts[2];
 	FCPortPage0_t		 fc_port_page0[2];
 	LANPage0_t		 lan_cnfg_page0;
 	LANPage1_t		 lan_cnfg_page1;
 
-	u8			 ir_firmware; /* =1 if IR firmware detected */
+	u8			 ir_firmware; /* =1 अगर IR firmware detected */
 	/*
 	 * Description: errata_flag_1064
-	 * If a PCIX read occurs within 1 or 2 cycles after the chip receives
-	 * a split completion for a read data, an internal address pointer incorrectly
+	 * If a PCIX पढ़ो occurs within 1 or 2 cycles after the chip receives
+	 * a split completion क्रम a पढ़ो data, an पूर्णांकernal address poपूर्णांकer incorrectly
 	 * increments by 32 bytes
 	 */
-	int			 errata_flag_1064;
-	int			 aen_event_read_flag; /* flag to indicate event log was read*/
+	पूर्णांक			 errata_flag_1064;
+	पूर्णांक			 aen_event_पढ़ो_flag; /* flag to indicate event log was पढ़ो*/
 	u8			 FirstWhoInit;
-	u8			 upload_fw;	/* If set, do a fw upload */
-	u8			 NBShiftFactor;  /* NB Shift Factor based on Block Size (Facts)  */
+	u8			 upload_fw;	/* If set, करो a fw upload */
+	u8			 NBShअगरtFactor;  /* NB Shअगरt Factor based on Block Size (Facts)  */
 	u8			 pad1[4];
 	u8			 DoneCtx;
 	u8			 TaskCtx;
 	u8			 InternalCtx;
-	struct list_head	 list;
-	struct net_device	*netdev;
-	struct list_head	 sas_topology;
-	struct mutex		 sas_topology_mutex;
+	काष्ठा list_head	 list;
+	काष्ठा net_device	*netdev;
+	काष्ठा list_head	 sas_topology;
+	काष्ठा mutex		 sas_topology_mutex;
 
-	struct workqueue_struct	*fw_event_q;
-	struct list_head	 fw_event_list;
+	काष्ठा workqueue_काष्ठा	*fw_event_q;
+	काष्ठा list_head	 fw_event_list;
 	spinlock_t		 fw_event_lock;
-	u8			 fw_events_off; /* if '1', then ignore events */
-	char 			 fw_event_q_name[MPT_KOBJ_NAME_LEN];
+	u8			 fw_events_off; /* अगर '1', then ignore events */
+	अक्षर 			 fw_event_q_name[MPT_KOBJ_NAME_LEN];
 
-	struct mutex		 sas_discovery_mutex;
-	u8			 sas_discovery_runtime;
+	काष्ठा mutex		 sas_discovery_mutex;
+	u8			 sas_discovery_runसमय;
 	u8			 sas_discovery_ignore_events;
 
-	/* port_info object for the host */
-	struct mptsas_portinfo	*hba_port_info;
+	/* port_info object क्रम the host */
+	काष्ठा mptsas_portinfo	*hba_port_info;
 	u64			 hba_port_sas_addr;
 	u16			 hba_port_num_phy;
-	struct list_head	 sas_device_info_list;
-	struct mutex		 sas_device_info_mutex;
+	काष्ठा list_head	 sas_device_info_list;
+	काष्ठा mutex		 sas_device_info_mutex;
 	u8			 old_sas_discovery_protocal;
 	u8			 sas_discovery_quiesce_io;
-	int			 sas_index; /* index refrencing */
+	पूर्णांक			 sas_index; /* index refrencing */
 	MPT_MGMT		 sas_mgmt;
-	MPT_MGMT		 mptbase_cmds; /* for sending config pages */
-	MPT_MGMT		 internal_cmds;
+	MPT_MGMT		 mptbase_cmds; /* क्रम sending config pages */
+	MPT_MGMT		 पूर्णांकernal_cmds;
 	MPT_MGMT		 taskmgmt_cmds;
 	MPT_MGMT		 ioctl_cmds;
 	spinlock_t		 taskmgmt_lock; /* diagnostic reset lock */
-	int			 taskmgmt_in_progress;
+	पूर्णांक			 taskmgmt_in_progress;
 	u8			 taskmgmt_quiesce_io;
 	u8			 ioc_reset_in_progress;
 	u8			 reset_status;
-	u8			 wait_on_reset_completion;
+	u8			 रुको_on_reset_completion;
 	MPT_SCHEDULE_TARGET_RESET schedule_target_reset;
 	MPT_FLUSH_RUNNING_CMDS schedule_dead_ioc_flush_running_cmds;
-	struct work_struct	 sas_persist_task;
+	काष्ठा work_काष्ठा	 sas_persist_task;
 
-	struct work_struct	 fc_setup_reset_work;
-	struct list_head	 fc_rports;
-	struct work_struct	 fc_lsc_work;
+	काष्ठा work_काष्ठा	 fc_setup_reset_work;
+	काष्ठा list_head	 fc_rports;
+	काष्ठा work_काष्ठा	 fc_lsc_work;
 	u8			 fc_link_speed[2];
 	spinlock_t		 fc_rescan_work_lock;
-	struct work_struct	 fc_rescan_work;
-	char			 fc_rescan_work_q_name[MPT_KOBJ_NAME_LEN];
-	struct workqueue_struct *fc_rescan_work_q;
+	काष्ठा work_काष्ठा	 fc_rescan_work;
+	अक्षर			 fc_rescan_work_q_name[MPT_KOBJ_NAME_LEN];
+	काष्ठा workqueue_काष्ठा *fc_rescan_work_q;
 
-	/* driver forced bus resets count */
-	unsigned long		  hard_resets;
-	/* fw/external bus resets count */
-	unsigned long		  soft_resets;
-	/* cmd timeouts */
-	unsigned long		  timeouts;
+	/* driver क्रमced bus resets count */
+	अचिन्हित दीर्घ		  hard_resets;
+	/* fw/बाह्यal bus resets count */
+	अचिन्हित दीर्घ		  soft_resets;
+	/* cmd समयouts */
+	अचिन्हित दीर्घ		  समयouts;
 
-	struct scsi_cmnd	**ScsiLookup;
+	काष्ठा scsi_cmnd	**ScsiLookup;
 	spinlock_t		  scsi_lookup_lock;
 	u64			dma_mask;
 	u32			  broadcast_aen_busy;
-	char			 reset_work_q_name[MPT_KOBJ_NAME_LEN];
-	struct workqueue_struct *reset_work_q;
-	struct delayed_work	 fault_reset_work;
+	अक्षर			 reset_work_q_name[MPT_KOBJ_NAME_LEN];
+	काष्ठा workqueue_काष्ठा *reset_work_q;
+	काष्ठा delayed_work	 fault_reset_work;
 
 	u8			sg_addr_size;
 	u8			in_rescan;
 	u8			SGE_size;
 
-} MPT_ADAPTER;
+पूर्ण MPT_ADAPTER;
 
 /*
- *  New return value convention:
- *    1 = Ok to free associated request frame
+ *  New वापस value convention:
+ *    1 = Ok to मुक्त associated request frame
  *    0 = not Ok ...
  */
-typedef int (*MPT_CALLBACK)(MPT_ADAPTER *ioc, MPT_FRAME_HDR *req, MPT_FRAME_HDR *reply);
-typedef int (*MPT_EVHANDLER)(MPT_ADAPTER *ioc, EventNotificationReply_t *evReply);
-typedef int (*MPT_RESETHANDLER)(MPT_ADAPTER *ioc, int reset_phase);
+प्रकार पूर्णांक (*MPT_CALLBACK)(MPT_ADAPTER *ioc, MPT_FRAME_HDR *req, MPT_FRAME_HDR *reply);
+प्रकार पूर्णांक (*MPT_EVHANDLER)(MPT_ADAPTER *ioc, EventNotअगरicationReply_t *evReply);
+प्रकार पूर्णांक (*MPT_RESETHANDLER)(MPT_ADAPTER *ioc, पूर्णांक reset_phase);
 /* reset_phase defs */
-#define MPT_IOC_PRE_RESET		0
-#define MPT_IOC_POST_RESET		1
-#define MPT_IOC_SETUP_RESET		2
+#घोषणा MPT_IOC_PRE_RESET		0
+#घोषणा MPT_IOC_POST_RESET		1
+#घोषणा MPT_IOC_SETUP_RESET		2
 
 /*
  * Invent MPT host event (super-set of MPI Events)
  * Fitted to 1030's 64-byte [max] request frame size
  */
-typedef struct _MPT_HOST_EVENT {
-	EventNotificationReply_t	 MpiEvent;	/* 8 32-bit words! */
+प्रकार काष्ठा _MPT_HOST_EVENT अणु
+	EventNotअगरicationReply_t	 MpiEvent;	/* 8 32-bit words! */
 	u32				 pad[6];
-	void				*next;
-} MPT_HOST_EVENT;
+	व्योम				*next;
+पूर्ण MPT_HOST_EVENT;
 
-#define MPT_HOSTEVENT_IOC_BRINGUP	0x91
-#define MPT_HOSTEVENT_IOC_RECOVER	0x92
+#घोषणा MPT_HOSTEVENT_IOC_BRINGUP	0x91
+#घोषणा MPT_HOSTEVENT_IOC_RECOVER	0x92
 
 /* Define the generic types based on the size
  * of the dma_addr_t type.
  */
-typedef struct _mpt_sge {
+प्रकार काष्ठा _mpt_sge अणु
 	u32		FlagsLength;
 	dma_addr_t	Address;
-} MptSge_t;
+पूर्ण MptSge_t;
 
 
-#define mpt_msg_flags(ioc) \
-	(ioc->sg_addr_size == sizeof(u64)) ?		\
+#घोषणा mpt_msg_flags(ioc) \
+	(ioc->sg_addr_size == माप(u64)) ?		\
 	MPI_SCSIIO_MSGFLGS_SENSE_WIDTH_64 : 		\
 	MPI_SCSIIO_MSGFLGS_SENSE_WIDTH_32
 
-#define MPT_SGE_FLAGS_64_BIT_ADDRESSING \
+#घोषणा MPT_SGE_FLAGS_64_BIT_ADDRESSING \
 	(MPI_SGE_FLAGS_64_BIT_ADDRESSING << MPI_SGE_FLAGS_SHIFT)
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
- *  Funky (private) macros...
+ *  Funky (निजी) macros...
  */
-#include "mptdebug.h"
+#समावेश "mptdebug.h"
 
-#define MPT_INDEX_2_MFPTR(ioc,idx) \
+#घोषणा MPT_INDEX_2_MFPTR(ioc,idx) \
 	(MPT_FRAME_HDR*)( (u8*)(ioc)->req_frames + (ioc)->req_sz * (idx) )
 
-#define MFPTR_2_MPT_INDEX(ioc,mf) \
-	(int)( ((u8*)mf - (u8*)(ioc)->req_frames) / (ioc)->req_sz )
+#घोषणा MFPTR_2_MPT_INDEX(ioc,mf) \
+	(पूर्णांक)( ((u8*)mf - (u8*)(ioc)->req_frames) / (ioc)->req_sz )
 
-#define MPT_INDEX_2_RFPTR(ioc,idx) \
+#घोषणा MPT_INDEX_2_RFPTR(ioc,idx) \
 	(MPT_FRAME_HDR*)( (u8*)(ioc)->reply_frames + (ioc)->req_sz * (idx) )
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 
-#define SCSI_STD_SENSE_BYTES    18
-#define SCSI_STD_INQUIRY_BYTES  36
-#define SCSI_MAX_INQUIRY_BYTES  96
+#घोषणा SCSI_STD_SENSE_BYTES    18
+#घोषणा SCSI_STD_INQUIRY_BYTES  36
+#घोषणा SCSI_MAX_INQUIRY_BYTES  96
 
 /*
  * MPT_SCSI_HOST defines - Used by the IOCTL and the SCSI drivers
  * Private to the driver.
  */
-/* LOCAL structure and fields used when processing
- * internally generated commands. These include:
+/* LOCAL काष्ठाure and fields used when processing
+ * पूर्णांकernally generated commands. These include:
  * bus scan, dv and config requests.
  */
-typedef struct _MPT_LOCAL_REPLY {
+प्रकार काष्ठा _MPT_LOCAL_REPLY अणु
 	ConfigPageHeader_t header;
-	int	completion;
+	पूर्णांक	completion;
 	u8	sense[SCSI_STD_SENSE_BYTES];
 	u8	scsiStatus;
 	u8	skip;
 	u32	pad;
-} MPT_LOCAL_REPLY;
+पूर्ण MPT_LOCAL_REPLY;
 
 
-/* The TM_STATE variable is used to provide strict single threading of TM
+/* The TM_STATE variable is used to provide strict single thपढ़ोing of TM
  * requests as well as communicate TM error conditions.
  */
-#define TM_STATE_NONE          (0)
-#define	TM_STATE_IN_PROGRESS   (1)
-#define	TM_STATE_ERROR	       (2)
+#घोषणा TM_STATE_NONE          (0)
+#घोषणा	TM_STATE_IN_PROGRESS   (1)
+#घोषणा	TM_STATE_ERROR	       (2)
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
@@ -884,124 +885,124 @@ typedef struct _MPT_LOCAL_REPLY {
  */
 
 /* Forward decl, a strange C thing, to prevent gcc compiler warnings */
-struct scsi_cmnd;
+काष्ठा scsi_cmnd;
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
- * Generic structure passed to the base mpt_config function.
+ * Generic काष्ठाure passed to the base mpt_config function.
  */
-typedef struct _x_config_parms {
-	union {
+प्रकार काष्ठा _x_config_parms अणु
+	जोड़ अणु
 		ConfigExtendedPageHeader_t	*ehdr;
 		ConfigPageHeader_t	*hdr;
-	} cfghdr;
+	पूर्ण cfghdr;
 	dma_addr_t		 physAddr;
-	u32			 pageAddr;	/* properly formatted */
+	u32			 pageAddr;	/* properly क्रमmatted */
 	u16			 status;
 	u8			 action;
 	u8			 dir;
-	u8			 timeout;	/* seconds */
-} CONFIGPARMS;
+	u8			 समयout;	/* seconds */
+पूर्ण CONFIGPARMS;
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
 /*
- *  Public entry points...
+ *  Public entry poपूर्णांकs...
  */
-extern int	 mpt_attach(struct pci_dev *pdev, const struct pci_device_id *id);
-extern void	 mpt_detach(struct pci_dev *pdev);
-#ifdef CONFIG_PM
-extern int	 mpt_suspend(struct pci_dev *pdev, pm_message_t state);
-extern int	 mpt_resume(struct pci_dev *pdev);
-#endif
-extern u8	 mpt_register(MPT_CALLBACK cbfunc, MPT_DRIVER_CLASS dclass,
-		char *func_name);
-extern void	 mpt_deregister(u8 cb_idx);
-extern int	 mpt_event_register(u8 cb_idx, MPT_EVHANDLER ev_cbfunc);
-extern void	 mpt_event_deregister(u8 cb_idx);
-extern int	 mpt_reset_register(u8 cb_idx, MPT_RESETHANDLER reset_func);
-extern void	 mpt_reset_deregister(u8 cb_idx);
-extern int	 mpt_device_driver_register(struct mpt_pci_driver * dd_cbfunc, u8 cb_idx);
-extern void	 mpt_device_driver_deregister(u8 cb_idx);
-extern MPT_FRAME_HDR	*mpt_get_msg_frame(u8 cb_idx, MPT_ADAPTER *ioc);
-extern void	 mpt_free_msg_frame(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf);
-extern void	 mpt_put_msg_frame(u8 cb_idx, MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf);
-extern void	 mpt_put_msg_frame_hi_pri(u8 cb_idx, MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf);
+बाह्य पूर्णांक	 mpt_attach(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *id);
+बाह्य व्योम	 mpt_detach(काष्ठा pci_dev *pdev);
+#अगर_घोषित CONFIG_PM
+बाह्य पूर्णांक	 mpt_suspend(काष्ठा pci_dev *pdev, pm_message_t state);
+बाह्य पूर्णांक	 mpt_resume(काष्ठा pci_dev *pdev);
+#पूर्ण_अगर
+बाह्य u8	 mpt_रेजिस्टर(MPT_CALLBACK cbfunc, MPT_DRIVER_CLASS dclass,
+		अक्षर *func_name);
+बाह्य व्योम	 mpt_deरेजिस्टर(u8 cb_idx);
+बाह्य पूर्णांक	 mpt_event_रेजिस्टर(u8 cb_idx, MPT_EVHANDLER ev_cbfunc);
+बाह्य व्योम	 mpt_event_deरेजिस्टर(u8 cb_idx);
+बाह्य पूर्णांक	 mpt_reset_रेजिस्टर(u8 cb_idx, MPT_RESETHANDLER reset_func);
+बाह्य व्योम	 mpt_reset_deरेजिस्टर(u8 cb_idx);
+बाह्य पूर्णांक	 mpt_device_driver_रेजिस्टर(काष्ठा mpt_pci_driver * dd_cbfunc, u8 cb_idx);
+बाह्य व्योम	 mpt_device_driver_deरेजिस्टर(u8 cb_idx);
+बाह्य MPT_FRAME_HDR	*mpt_get_msg_frame(u8 cb_idx, MPT_ADAPTER *ioc);
+बाह्य व्योम	 mpt_मुक्त_msg_frame(MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf);
+बाह्य व्योम	 mpt_put_msg_frame(u8 cb_idx, MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf);
+बाह्य व्योम	 mpt_put_msg_frame_hi_pri(u8 cb_idx, MPT_ADAPTER *ioc, MPT_FRAME_HDR *mf);
 
-extern int	 mpt_send_handshake_request(u8 cb_idx, MPT_ADAPTER *ioc, int reqBytes, u32 *req, int sleepFlag);
-extern int	 mpt_verify_adapter(int iocid, MPT_ADAPTER **iocpp);
-extern u32	 mpt_GetIocState(MPT_ADAPTER *ioc, int cooked);
-extern void	 mpt_print_ioc_summary(MPT_ADAPTER *ioc, char *buf, int *size, int len, int showlan);
-extern int	 mpt_HardResetHandler(MPT_ADAPTER *ioc, int sleepFlag);
-extern int	 mpt_Soft_Hard_ResetHandler(MPT_ADAPTER *ioc, int sleepFlag);
-extern int	 mpt_config(MPT_ADAPTER *ioc, CONFIGPARMS *cfg);
-extern int	 mpt_alloc_fw_memory(MPT_ADAPTER *ioc, int size);
-extern void	 mpt_free_fw_memory(MPT_ADAPTER *ioc);
-extern int	 mpt_findImVolumes(MPT_ADAPTER *ioc);
-extern int	 mptbase_sas_persist_operation(MPT_ADAPTER *ioc, u8 persist_opcode);
-extern int	 mpt_raid_phys_disk_pg0(MPT_ADAPTER *ioc, u8 phys_disk_num, pRaidPhysDiskPage0_t phys_disk);
-extern int	mpt_raid_phys_disk_pg1(MPT_ADAPTER *ioc, u8 phys_disk_num,
+बाह्य पूर्णांक	 mpt_send_handshake_request(u8 cb_idx, MPT_ADAPTER *ioc, पूर्णांक reqBytes, u32 *req, पूर्णांक sleepFlag);
+बाह्य पूर्णांक	 mpt_verअगरy_adapter(पूर्णांक iocid, MPT_ADAPTER **iocpp);
+बाह्य u32	 mpt_GetIocState(MPT_ADAPTER *ioc, पूर्णांक cooked);
+बाह्य व्योम	 mpt_prपूर्णांक_ioc_summary(MPT_ADAPTER *ioc, अक्षर *buf, पूर्णांक *size, पूर्णांक len, पूर्णांक showlan);
+बाह्य पूर्णांक	 mpt_HardResetHandler(MPT_ADAPTER *ioc, पूर्णांक sleepFlag);
+बाह्य पूर्णांक	 mpt_Soft_Hard_ResetHandler(MPT_ADAPTER *ioc, पूर्णांक sleepFlag);
+बाह्य पूर्णांक	 mpt_config(MPT_ADAPTER *ioc, CONFIGPARMS *cfg);
+बाह्य पूर्णांक	 mpt_alloc_fw_memory(MPT_ADAPTER *ioc, पूर्णांक size);
+बाह्य व्योम	 mpt_मुक्त_fw_memory(MPT_ADAPTER *ioc);
+बाह्य पूर्णांक	 mpt_findImVolumes(MPT_ADAPTER *ioc);
+बाह्य पूर्णांक	 mptbase_sas_persist_operation(MPT_ADAPTER *ioc, u8 persist_opcode);
+बाह्य पूर्णांक	 mpt_raid_phys_disk_pg0(MPT_ADAPTER *ioc, u8 phys_disk_num, pRaidPhysDiskPage0_t phys_disk);
+बाह्य पूर्णांक	mpt_raid_phys_disk_pg1(MPT_ADAPTER *ioc, u8 phys_disk_num,
 		pRaidPhysDiskPage1_t phys_disk);
-extern int	mpt_raid_phys_disk_get_num_paths(MPT_ADAPTER *ioc,
+बाह्य पूर्णांक	mpt_raid_phys_disk_get_num_paths(MPT_ADAPTER *ioc,
 		u8 phys_disk_num);
-extern int	 mpt_set_taskmgmt_in_progress_flag(MPT_ADAPTER *ioc);
-extern void	 mpt_clear_taskmgmt_in_progress_flag(MPT_ADAPTER *ioc);
-extern void     mpt_halt_firmware(MPT_ADAPTER *ioc);
+बाह्य पूर्णांक	 mpt_set_taskmgmt_in_progress_flag(MPT_ADAPTER *ioc);
+बाह्य व्योम	 mpt_clear_taskmgmt_in_progress_flag(MPT_ADAPTER *ioc);
+बाह्य व्योम     mpt_halt_firmware(MPT_ADAPTER *ioc);
 
 
 /*
  *  Public data decl's...
  */
-extern struct list_head	  ioc_list;
-extern int mpt_fwfault_debug;
+बाह्य काष्ठा list_head	  ioc_list;
+बाह्य पूर्णांक mpt_fwfault_debug;
 
 /*=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-#endif		/* } __KERNEL__ */
+#पूर्ण_अगर		/* पूर्ण __KERNEL__ */
 
-#ifdef CONFIG_64BIT
-#define CAST_U32_TO_PTR(x)	((void *)(u64)x)
-#define CAST_PTR_TO_U32(x)	((u32)(u64)x)
-#else
-#define CAST_U32_TO_PTR(x)	((void *)x)
-#define CAST_PTR_TO_U32(x)	((u32)x)
-#endif
+#अगर_घोषित CONFIG_64BIT
+#घोषणा CAST_U32_TO_PTR(x)	((व्योम *)(u64)x)
+#घोषणा CAST_PTR_TO_U32(x)	((u32)(u64)x)
+#अन्यथा
+#घोषणा CAST_U32_TO_PTR(x)	((व्योम *)x)
+#घोषणा CAST_PTR_TO_U32(x)	((u32)x)
+#पूर्ण_अगर
 
-#define MPT_PROTOCOL_FLAGS_c_c_c_c(pflags) \
+#घोषणा MPT_PROTOCOL_FLAGS_c_c_c_c(pflags) \
 	((pflags) & MPI_PORTFACTS_PROTOCOL_INITIATOR)	? 'I' : 'i',	\
 	((pflags) & MPI_PORTFACTS_PROTOCOL_TARGET)	? 'T' : 't',	\
 	((pflags) & MPI_PORTFACTS_PROTOCOL_LAN)		? 'L' : 'l',	\
 	((pflags) & MPI_PORTFACTS_PROTOCOL_LOGBUSADDR)	? 'B' : 'b'
 
 /*
- *  Shifted SGE Defines - Use in SGE with FlagsLength member.
+ *  Shअगरted SGE Defines - Use in SGE with FlagsLength member.
  *  Otherwise, use MPI_xxx defines (refer to "lsi/mpi.h" header).
- *  Defaults: 32 bit SGE, SYSTEM_ADDRESS if direction bit is 0, read
+ *  Defaults: 32 bit SGE, SYSTEM_ADDRESS अगर direction bit is 0, पढ़ो
  */
-#define MPT_TRANSFER_IOC_TO_HOST		(0x00000000)
-#define MPT_TRANSFER_HOST_TO_IOC		(0x04000000)
-#define MPT_SGE_FLAGS_LAST_ELEMENT		(0x80000000)
-#define MPT_SGE_FLAGS_END_OF_BUFFER		(0x40000000)
-#define MPT_SGE_FLAGS_LOCAL_ADDRESS		(0x08000000)
-#define MPT_SGE_FLAGS_DIRECTION			(0x04000000)
-#define MPT_SGE_FLAGS_END_OF_LIST		(0x01000000)
+#घोषणा MPT_TRANSFER_IOC_TO_HOST		(0x00000000)
+#घोषणा MPT_TRANSFER_HOST_TO_IOC		(0x04000000)
+#घोषणा MPT_SGE_FLAGS_LAST_ELEMENT		(0x80000000)
+#घोषणा MPT_SGE_FLAGS_END_OF_BUFFER		(0x40000000)
+#घोषणा MPT_SGE_FLAGS_LOCAL_ADDRESS		(0x08000000)
+#घोषणा MPT_SGE_FLAGS_सूचीECTION			(0x04000000)
+#घोषणा MPT_SGE_FLAGS_END_OF_LIST		(0x01000000)
 
-#define MPT_SGE_FLAGS_TRANSACTION_ELEMENT	(0x00000000)
-#define MPT_SGE_FLAGS_SIMPLE_ELEMENT		(0x10000000)
-#define MPT_SGE_FLAGS_CHAIN_ELEMENT		(0x30000000)
-#define MPT_SGE_FLAGS_ELEMENT_MASK		(0x30000000)
+#घोषणा MPT_SGE_FLAGS_TRANSACTION_ELEMENT	(0x00000000)
+#घोषणा MPT_SGE_FLAGS_SIMPLE_ELEMENT		(0x10000000)
+#घोषणा MPT_SGE_FLAGS_CHAIN_ELEMENT		(0x30000000)
+#घोषणा MPT_SGE_FLAGS_ELEMENT_MASK		(0x30000000)
 
-#define MPT_SGE_FLAGS_SSIMPLE_READ \
+#घोषणा MPT_SGE_FLAGS_SSIMPLE_READ \
 	(MPT_SGE_FLAGS_LAST_ELEMENT |	\
 	 MPT_SGE_FLAGS_END_OF_BUFFER |	\
 	 MPT_SGE_FLAGS_END_OF_LIST |	\
 	 MPT_SGE_FLAGS_SIMPLE_ELEMENT |	\
 	 MPT_TRANSFER_IOC_TO_HOST)
-#define MPT_SGE_FLAGS_SSIMPLE_WRITE \
+#घोषणा MPT_SGE_FLAGS_SSIMPLE_WRITE \
 	(MPT_SGE_FLAGS_LAST_ELEMENT |	\
 	 MPT_SGE_FLAGS_END_OF_BUFFER |	\
 	 MPT_SGE_FLAGS_END_OF_LIST |	\
 	 MPT_SGE_FLAGS_SIMPLE_ELEMENT |	\
 	 MPT_TRANSFER_HOST_TO_IOC)
 
-/*}-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
-#endif
+/*पूर्ण-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=*/
+#पूर्ण_अगर
 

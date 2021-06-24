@@ -1,43 +1,44 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
  * Blowfish Cipher Algorithm, by Bruce Schneier.
- * http://www.counterpane.com/blowfish.html
+ * http://www.counterpane.com/blowfish.hपंचांगl
  *
  * Adapted from Kerneli implementation.
  *
  * Copyright (c) Herbert Valerio Riedel <hvr@hvrlab.org>
  * Copyright (c) Kyle McMartin <kyle@debian.org>
- * Copyright (c) 2002 James Morris <jmorris@intercode.com.au>
+ * Copyright (c) 2002 James Morris <jmorris@पूर्णांकercode.com.au>
  */
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <asm/unaligned.h>
-#include <linux/crypto.h>
-#include <linux/types.h>
-#include <crypto/blowfish.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/blowfish.h>
 
 /*
- * Round loop unrolling macros, S is a pointer to a S-Box array
- * organized in 4 unsigned longs at a row.
+ * Round loop unrolling macros, S is a poपूर्णांकer to a S-Box array
+ * organized in 4 अचिन्हित दीर्घs at a row.
  */
-#define GET32_3(x) (((x) & 0xff))
-#define GET32_2(x) (((x) >> (8)) & (0xff))
-#define GET32_1(x) (((x) >> (16)) & (0xff))
-#define GET32_0(x) (((x) >> (24)) & (0xff))
+#घोषणा GET32_3(x) (((x) & 0xff))
+#घोषणा GET32_2(x) (((x) >> (8)) & (0xff))
+#घोषणा GET32_1(x) (((x) >> (16)) & (0xff))
+#घोषणा GET32_0(x) (((x) >> (24)) & (0xff))
 
-#define bf_F(x) (((S[GET32_0(x)] + S[256 + GET32_1(x)]) ^ \
+#घोषणा bf_F(x) (((S[GET32_0(x)] + S[256 + GET32_1(x)]) ^ \
 		S[512 + GET32_2(x)]) + S[768 + GET32_3(x)])
 
-#define ROUND(a, b, n) ({ b ^= P[n]; a ^= bf_F(b); })
+#घोषणा ROUND(a, b, n) (अणु b ^= P[n]; a ^= bf_F(b); पूर्ण)
 
-static void bf_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct bf_ctx *ctx = crypto_tfm_ctx(tfm);
-	const u32 *P = ctx->p;
-	const u32 *S = ctx->s;
+अटल व्योम bf_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा bf_ctx *ctx = crypto_tfm_ctx(tfm);
+	स्थिर u32 *P = ctx->p;
+	स्थिर u32 *S = ctx->s;
 	u32 yl = get_unaligned_be32(src);
 	u32 yr = get_unaligned_be32(src + 4);
 
@@ -63,13 +64,13 @@ static void bf_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
 
 	put_unaligned_be32(yr, dst);
 	put_unaligned_be32(yl, dst + 4);
-}
+पूर्ण
 
-static void bf_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct bf_ctx *ctx = crypto_tfm_ctx(tfm);
-	const u32 *P = ctx->p;
-	const u32 *S = ctx->s;
+अटल व्योम bf_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा bf_ctx *ctx = crypto_tfm_ctx(tfm);
+	स्थिर u32 *P = ctx->p;
+	स्थिर u32 *S = ctx->s;
 	u32 yl = get_unaligned_be32(src);
 	u32 yr = get_unaligned_be32(src + 4);
 
@@ -95,36 +96,36 @@ static void bf_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
 
 	put_unaligned_be32(yr, dst);
 	put_unaligned_be32(yl, dst + 4);
-}
+पूर्ण
 
-static struct crypto_alg alg = {
+अटल काष्ठा crypto_alg alg = अणु
 	.cra_name		=	"blowfish",
 	.cra_driver_name	=	"blowfish-generic",
 	.cra_priority		=	100,
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	BF_BLOCK_SIZE,
-	.cra_ctxsize		=	sizeof(struct bf_ctx),
+	.cra_ctxsize		=	माप(काष्ठा bf_ctx),
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	{ .cipher = {
+	.cra_u			=	अणु .cipher = अणु
 	.cia_min_keysize	=	BF_MIN_KEY_SIZE,
 	.cia_max_keysize	=	BF_MAX_KEY_SIZE,
 	.cia_setkey		=	blowfish_setkey,
 	.cia_encrypt		=	bf_encrypt,
-	.cia_decrypt		=	bf_decrypt } }
-};
+	.cia_decrypt		=	bf_decrypt पूर्ण पूर्ण
+पूर्ण;
 
-static int __init blowfish_mod_init(void)
-{
-	return crypto_register_alg(&alg);
-}
+अटल पूर्णांक __init blowfish_mod_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_alg(&alg);
+पूर्ण
 
-static void __exit blowfish_mod_fini(void)
-{
-	crypto_unregister_alg(&alg);
-}
+अटल व्योम __निकास blowfish_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_alg(&alg);
+पूर्ण
 
 subsys_initcall(blowfish_mod_init);
-module_exit(blowfish_mod_fini);
+module_निकास(blowfish_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Blowfish Cipher Algorithm");

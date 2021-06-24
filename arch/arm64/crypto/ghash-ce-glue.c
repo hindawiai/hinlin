@@ -1,209 +1,210 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Accelerated GHASH implementation with ARMv8 PMULL instructions.
+ * Accelerated GHASH implementation with ARMv8 PMULL inकाष्ठाions.
  *
  * Copyright (C) 2014 - 2018 Linaro Ltd. <ard.biesheuvel@linaro.org>
  */
 
-#include <asm/neon.h>
-#include <asm/simd.h>
-#include <asm/unaligned.h>
-#include <crypto/aes.h>
-#include <crypto/algapi.h>
-#include <crypto/b128ops.h>
-#include <crypto/gf128mul.h>
-#include <crypto/internal/aead.h>
-#include <crypto/internal/hash.h>
-#include <crypto/internal/simd.h>
-#include <crypto/internal/skcipher.h>
-#include <crypto/scatterwalk.h>
-#include <linux/cpufeature.h>
-#include <linux/crypto.h>
-#include <linux/module.h>
+#समावेश <यंत्र/neon.h>
+#समावेश <यंत्र/simd.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/b128ops.h>
+#समावेश <crypto/gf128mul.h>
+#समावेश <crypto/पूर्णांकernal/aead.h>
+#समावेश <crypto/पूर्णांकernal/hash.h>
+#समावेश <crypto/पूर्णांकernal/simd.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <crypto/scatterwalk.h>
+#समावेश <linux/cpufeature.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/module.h>
 
 MODULE_DESCRIPTION("GHASH and AES-GCM using ARMv8 Crypto Extensions");
 MODULE_AUTHOR("Ard Biesheuvel <ard.biesheuvel@linaro.org>");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS_CRYPTO("ghash");
 
-#define GHASH_BLOCK_SIZE	16
-#define GHASH_DIGEST_SIZE	16
-#define GCM_IV_SIZE		12
+#घोषणा GHASH_BLOCK_SIZE	16
+#घोषणा GHASH_DIGEST_SIZE	16
+#घोषणा GCM_IV_SIZE		12
 
-struct ghash_key {
+काष्ठा ghash_key अणु
 	be128			k;
 	u64			h[][2];
-};
+पूर्ण;
 
-struct ghash_desc_ctx {
-	u64 digest[GHASH_DIGEST_SIZE/sizeof(u64)];
+काष्ठा ghash_desc_ctx अणु
+	u64 digest[GHASH_DIGEST_SIZE/माप(u64)];
 	u8 buf[GHASH_BLOCK_SIZE];
 	u32 count;
-};
+पूर्ण;
 
-struct gcm_aes_ctx {
-	struct crypto_aes_ctx	aes_key;
-	struct ghash_key	ghash_key;
-};
+काष्ठा gcm_aes_ctx अणु
+	काष्ठा crypto_aes_ctx	aes_key;
+	काष्ठा ghash_key	ghash_key;
+पूर्ण;
 
-asmlinkage void pmull_ghash_update_p64(int blocks, u64 dg[], const char *src,
-				       u64 const h[][2], const char *head);
+यंत्रlinkage व्योम pmull_ghash_update_p64(पूर्णांक blocks, u64 dg[], स्थिर अक्षर *src,
+				       u64 स्थिर h[][2], स्थिर अक्षर *head);
 
-asmlinkage void pmull_ghash_update_p8(int blocks, u64 dg[], const char *src,
-				      u64 const h[][2], const char *head);
+यंत्रlinkage व्योम pmull_ghash_update_p8(पूर्णांक blocks, u64 dg[], स्थिर अक्षर *src,
+				      u64 स्थिर h[][2], स्थिर अक्षर *head);
 
-asmlinkage void pmull_gcm_encrypt(int bytes, u8 dst[], const u8 src[],
-				  u64 const h[][2], u64 dg[], u8 ctr[],
-				  u32 const rk[], int rounds, u8 tag[]);
-asmlinkage int pmull_gcm_decrypt(int bytes, u8 dst[], const u8 src[],
-				 u64 const h[][2], u64 dg[], u8 ctr[],
-				 u32 const rk[], int rounds, const u8 l[],
-				 const u8 tag[], u64 authsize);
+यंत्रlinkage व्योम pmull_gcm_encrypt(पूर्णांक bytes, u8 dst[], स्थिर u8 src[],
+				  u64 स्थिर h[][2], u64 dg[], u8 ctr[],
+				  u32 स्थिर rk[], पूर्णांक rounds, u8 tag[]);
+यंत्रlinkage पूर्णांक pmull_gcm_decrypt(पूर्णांक bytes, u8 dst[], स्थिर u8 src[],
+				 u64 स्थिर h[][2], u64 dg[], u8 ctr[],
+				 u32 स्थिर rk[], पूर्णांक rounds, स्थिर u8 l[],
+				 स्थिर u8 tag[], u64 authsize);
 
-static int ghash_init(struct shash_desc *desc)
-{
-	struct ghash_desc_ctx *ctx = shash_desc_ctx(desc);
+अटल पूर्णांक ghash_init(काष्ठा shash_desc *desc)
+अणु
+	काष्ठा ghash_desc_ctx *ctx = shash_desc_ctx(desc);
 
-	*ctx = (struct ghash_desc_ctx){};
-	return 0;
-}
+	*ctx = (काष्ठा ghash_desc_ctx)अणुपूर्ण;
+	वापस 0;
+पूर्ण
 
-static void ghash_do_update(int blocks, u64 dg[], const char *src,
-			    struct ghash_key *key, const char *head)
-{
-	be128 dst = { cpu_to_be64(dg[1]), cpu_to_be64(dg[0]) };
+अटल व्योम ghash_करो_update(पूर्णांक blocks, u64 dg[], स्थिर अक्षर *src,
+			    काष्ठा ghash_key *key, स्थिर अक्षर *head)
+अणु
+	be128 dst = अणु cpu_to_be64(dg[1]), cpu_to_be64(dg[0]) पूर्ण;
 
-	do {
-		const u8 *in = src;
+	करो अणु
+		स्थिर u8 *in = src;
 
-		if (head) {
+		अगर (head) अणु
 			in = head;
 			blocks++;
-			head = NULL;
-		} else {
+			head = शून्य;
+		पूर्ण अन्यथा अणु
 			src += GHASH_BLOCK_SIZE;
-		}
+		पूर्ण
 
 		crypto_xor((u8 *)&dst, in, GHASH_BLOCK_SIZE);
 		gf128mul_lle(&dst, &key->k);
-	} while (--blocks);
+	पूर्ण जबतक (--blocks);
 
 	dg[0] = be64_to_cpu(dst.b);
 	dg[1] = be64_to_cpu(dst.a);
-}
+पूर्ण
 
-static __always_inline
-void ghash_do_simd_update(int blocks, u64 dg[], const char *src,
-			  struct ghash_key *key, const char *head,
-			  void (*simd_update)(int blocks, u64 dg[],
-					      const char *src,
-					      u64 const h[][2],
-					      const char *head))
-{
-	if (likely(crypto_simd_usable())) {
+अटल __always_अंतरभूत
+व्योम ghash_करो_simd_update(पूर्णांक blocks, u64 dg[], स्थिर अक्षर *src,
+			  काष्ठा ghash_key *key, स्थिर अक्षर *head,
+			  व्योम (*simd_update)(पूर्णांक blocks, u64 dg[],
+					      स्थिर अक्षर *src,
+					      u64 स्थिर h[][2],
+					      स्थिर अक्षर *head))
+अणु
+	अगर (likely(crypto_simd_usable())) अणु
 		kernel_neon_begin();
 		simd_update(blocks, dg, src, key->h, head);
 		kernel_neon_end();
-	} else {
-		ghash_do_update(blocks, dg, src, key, head);
-	}
-}
+	पूर्ण अन्यथा अणु
+		ghash_करो_update(blocks, dg, src, key, head);
+	पूर्ण
+पूर्ण
 
-/* avoid hogging the CPU for too long */
-#define MAX_BLOCKS	(SZ_64K / GHASH_BLOCK_SIZE)
+/* aव्योम hogging the CPU क्रम too दीर्घ */
+#घोषणा MAX_BLOCKS	(SZ_64K / GHASH_BLOCK_SIZE)
 
-static int ghash_update(struct shash_desc *desc, const u8 *src,
-			unsigned int len)
-{
-	struct ghash_desc_ctx *ctx = shash_desc_ctx(desc);
-	unsigned int partial = ctx->count % GHASH_BLOCK_SIZE;
+अटल पूर्णांक ghash_update(काष्ठा shash_desc *desc, स्थिर u8 *src,
+			अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा ghash_desc_ctx *ctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial = ctx->count % GHASH_BLOCK_SIZE;
 
 	ctx->count += len;
 
-	if ((partial + len) >= GHASH_BLOCK_SIZE) {
-		struct ghash_key *key = crypto_shash_ctx(desc->tfm);
-		int blocks;
+	अगर ((partial + len) >= GHASH_BLOCK_SIZE) अणु
+		काष्ठा ghash_key *key = crypto_shash_ctx(desc->tfm);
+		पूर्णांक blocks;
 
-		if (partial) {
-			int p = GHASH_BLOCK_SIZE - partial;
+		अगर (partial) अणु
+			पूर्णांक p = GHASH_BLOCK_SIZE - partial;
 
-			memcpy(ctx->buf + partial, src, p);
+			स_नकल(ctx->buf + partial, src, p);
 			src += p;
 			len -= p;
-		}
+		पूर्ण
 
 		blocks = len / GHASH_BLOCK_SIZE;
 		len %= GHASH_BLOCK_SIZE;
 
-		do {
-			int chunk = min(blocks, MAX_BLOCKS);
+		करो अणु
+			पूर्णांक chunk = min(blocks, MAX_BLOCKS);
 
-			ghash_do_simd_update(chunk, ctx->digest, src, key,
-					     partial ? ctx->buf : NULL,
+			ghash_करो_simd_update(chunk, ctx->digest, src, key,
+					     partial ? ctx->buf : शून्य,
 					     pmull_ghash_update_p8);
 
 			blocks -= chunk;
 			src += chunk * GHASH_BLOCK_SIZE;
 			partial = 0;
-		} while (unlikely(blocks > 0));
-	}
-	if (len)
-		memcpy(ctx->buf + partial, src, len);
-	return 0;
-}
+		पूर्ण जबतक (unlikely(blocks > 0));
+	पूर्ण
+	अगर (len)
+		स_नकल(ctx->buf + partial, src, len);
+	वापस 0;
+पूर्ण
 
-static int ghash_final(struct shash_desc *desc, u8 *dst)
-{
-	struct ghash_desc_ctx *ctx = shash_desc_ctx(desc);
-	unsigned int partial = ctx->count % GHASH_BLOCK_SIZE;
+अटल पूर्णांक ghash_final(काष्ठा shash_desc *desc, u8 *dst)
+अणु
+	काष्ठा ghash_desc_ctx *ctx = shash_desc_ctx(desc);
+	अचिन्हित पूर्णांक partial = ctx->count % GHASH_BLOCK_SIZE;
 
-	if (partial) {
-		struct ghash_key *key = crypto_shash_ctx(desc->tfm);
+	अगर (partial) अणु
+		काष्ठा ghash_key *key = crypto_shash_ctx(desc->tfm);
 
-		memset(ctx->buf + partial, 0, GHASH_BLOCK_SIZE - partial);
+		स_रखो(ctx->buf + partial, 0, GHASH_BLOCK_SIZE - partial);
 
-		ghash_do_simd_update(1, ctx->digest, ctx->buf, key, NULL,
+		ghash_करो_simd_update(1, ctx->digest, ctx->buf, key, शून्य,
 				     pmull_ghash_update_p8);
-	}
+	पूर्ण
 	put_unaligned_be64(ctx->digest[1], dst);
 	put_unaligned_be64(ctx->digest[0], dst + 8);
 
-	memzero_explicit(ctx, sizeof(*ctx));
-	return 0;
-}
+	memzero_explicit(ctx, माप(*ctx));
+	वापस 0;
+पूर्ण
 
-static void ghash_reflect(u64 h[], const be128 *k)
-{
+अटल व्योम ghash_reflect(u64 h[], स्थिर be128 *k)
+अणु
 	u64 carry = be64_to_cpu(k->a) & BIT(63) ? 1 : 0;
 
 	h[0] = (be64_to_cpu(k->b) << 1) | carry;
 	h[1] = (be64_to_cpu(k->a) << 1) | (be64_to_cpu(k->b) >> 63);
 
-	if (carry)
+	अगर (carry)
 		h[1] ^= 0xc200000000000000UL;
-}
+पूर्ण
 
-static int ghash_setkey(struct crypto_shash *tfm,
-			const u8 *inkey, unsigned int keylen)
-{
-	struct ghash_key *key = crypto_shash_ctx(tfm);
+अटल पूर्णांक ghash_setkey(काष्ठा crypto_shash *tfm,
+			स्थिर u8 *inkey, अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा ghash_key *key = crypto_shash_ctx(tfm);
 
-	if (keylen != GHASH_BLOCK_SIZE)
-		return -EINVAL;
+	अगर (keylen != GHASH_BLOCK_SIZE)
+		वापस -EINVAL;
 
-	/* needed for the fallback */
-	memcpy(&key->k, inkey, GHASH_BLOCK_SIZE);
+	/* needed क्रम the fallback */
+	स_नकल(&key->k, inkey, GHASH_BLOCK_SIZE);
 
 	ghash_reflect(key->h[0], &key->k);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shash_alg ghash_alg = {
+अटल काष्ठा shash_alg ghash_alg = अणु
 	.base.cra_name		= "ghash",
 	.base.cra_driver_name	= "ghash-neon",
 	.base.cra_priority	= 150,
 	.base.cra_blocksize	= GHASH_BLOCK_SIZE,
-	.base.cra_ctxsize	= sizeof(struct ghash_key) + sizeof(u64[2]),
+	.base.cra_ctxsize	= माप(काष्ठा ghash_key) + माप(u64[2]),
 	.base.cra_module	= THIS_MODULE,
 
 	.digestsize		= GHASH_DIGEST_SIZE,
@@ -211,37 +212,37 @@ static struct shash_alg ghash_alg = {
 	.update			= ghash_update,
 	.final			= ghash_final,
 	.setkey			= ghash_setkey,
-	.descsize		= sizeof(struct ghash_desc_ctx),
-};
+	.descsize		= माप(काष्ठा ghash_desc_ctx),
+पूर्ण;
 
-static int num_rounds(struct crypto_aes_ctx *ctx)
-{
+अटल पूर्णांक num_rounds(काष्ठा crypto_aes_ctx *ctx)
+अणु
 	/*
-	 * # of rounds specified by AES:
+	 * # of rounds specअगरied by AES:
 	 * 128 bit key		10 rounds
 	 * 192 bit key		12 rounds
 	 * 256 bit key		14 rounds
 	 * => n byte key	=> 6 + (n/4) rounds
 	 */
-	return 6 + ctx->key_length / 4;
-}
+	वापस 6 + ctx->key_length / 4;
+पूर्ण
 
-static int gcm_setkey(struct crypto_aead *tfm, const u8 *inkey,
-		      unsigned int keylen)
-{
-	struct gcm_aes_ctx *ctx = crypto_aead_ctx(tfm);
+अटल पूर्णांक gcm_setkey(काष्ठा crypto_aead *tfm, स्थिर u8 *inkey,
+		      अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा gcm_aes_ctx *ctx = crypto_aead_ctx(tfm);
 	u8 key[GHASH_BLOCK_SIZE];
 	be128 h;
-	int ret;
+	पूर्णांक ret;
 
 	ret = aes_expandkey(&ctx->aes_key, inkey, keylen);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
-	aes_encrypt(&ctx->aes_key, key, (u8[AES_BLOCK_SIZE]){});
+	aes_encrypt(&ctx->aes_key, key, (u8[AES_BLOCK_SIZE])अणुपूर्ण);
 
-	/* needed for the fallback */
-	memcpy(&ctx->ghash_key.k, key, GHASH_BLOCK_SIZE);
+	/* needed क्रम the fallback */
+	स_नकल(&ctx->ghash_key.k, key, GHASH_BLOCK_SIZE);
 
 	ghash_reflect(ctx->ghash_key.h[0], &ctx->ghash_key.k);
 
@@ -255,72 +256,72 @@ static int gcm_setkey(struct crypto_aead *tfm, const u8 *inkey,
 	gf128mul_lle(&h, &ctx->ghash_key.k);
 	ghash_reflect(ctx->ghash_key.h[3], &h);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gcm_setauthsize(struct crypto_aead *tfm, unsigned int authsize)
-{
-	switch (authsize) {
-	case 4:
-	case 8:
-	case 12 ... 16:
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+अटल पूर्णांक gcm_setauthsize(काष्ठा crypto_aead *tfm, अचिन्हित पूर्णांक authsize)
+अणु
+	चयन (authsize) अणु
+	हाल 4:
+	हाल 8:
+	हाल 12 ... 16:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void gcm_update_mac(u64 dg[], const u8 *src, int count, u8 buf[],
-			   int *buf_count, struct gcm_aes_ctx *ctx)
-{
-	if (*buf_count > 0) {
-		int buf_added = min(count, GHASH_BLOCK_SIZE - *buf_count);
+अटल व्योम gcm_update_mac(u64 dg[], स्थिर u8 *src, पूर्णांक count, u8 buf[],
+			   पूर्णांक *buf_count, काष्ठा gcm_aes_ctx *ctx)
+अणु
+	अगर (*buf_count > 0) अणु
+		पूर्णांक buf_added = min(count, GHASH_BLOCK_SIZE - *buf_count);
 
-		memcpy(&buf[*buf_count], src, buf_added);
+		स_नकल(&buf[*buf_count], src, buf_added);
 
 		*buf_count += buf_added;
 		src += buf_added;
 		count -= buf_added;
-	}
+	पूर्ण
 
-	if (count >= GHASH_BLOCK_SIZE || *buf_count == GHASH_BLOCK_SIZE) {
-		int blocks = count / GHASH_BLOCK_SIZE;
+	अगर (count >= GHASH_BLOCK_SIZE || *buf_count == GHASH_BLOCK_SIZE) अणु
+		पूर्णांक blocks = count / GHASH_BLOCK_SIZE;
 
-		ghash_do_simd_update(blocks, dg, src, &ctx->ghash_key,
-				     *buf_count ? buf : NULL,
+		ghash_करो_simd_update(blocks, dg, src, &ctx->ghash_key,
+				     *buf_count ? buf : शून्य,
 				     pmull_ghash_update_p64);
 
 		src += blocks * GHASH_BLOCK_SIZE;
 		count %= GHASH_BLOCK_SIZE;
 		*buf_count = 0;
-	}
+	पूर्ण
 
-	if (count > 0) {
-		memcpy(buf, src, count);
+	अगर (count > 0) अणु
+		स_नकल(buf, src, count);
 		*buf_count = count;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gcm_calculate_auth_mac(struct aead_request *req, u64 dg[])
-{
-	struct crypto_aead *aead = crypto_aead_reqtfm(req);
-	struct gcm_aes_ctx *ctx = crypto_aead_ctx(aead);
+अटल व्योम gcm_calculate_auth_mac(काष्ठा aead_request *req, u64 dg[])
+अणु
+	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
+	काष्ठा gcm_aes_ctx *ctx = crypto_aead_ctx(aead);
 	u8 buf[GHASH_BLOCK_SIZE];
-	struct scatter_walk walk;
+	काष्ठा scatter_walk walk;
 	u32 len = req->assoclen;
-	int buf_count = 0;
+	पूर्णांक buf_count = 0;
 
 	scatterwalk_start(&walk, req->src);
 
-	do {
+	करो अणु
 		u32 n = scatterwalk_clamp(&walk, len);
 		u8 *p;
 
-		if (!n) {
+		अगर (!n) अणु
 			scatterwalk_start(&walk, sg_next(walk.sg));
 			n = scatterwalk_clamp(&walk, len);
-		}
+		पूर्ण
 		p = scatterwalk_map(&walk);
 
 		gcm_update_mac(dg, p, n, buf, &buf_count, ctx);
@@ -328,55 +329,55 @@ static void gcm_calculate_auth_mac(struct aead_request *req, u64 dg[])
 
 		scatterwalk_unmap(p);
 		scatterwalk_advance(&walk, n);
-		scatterwalk_done(&walk, 0, len);
-	} while (len);
+		scatterwalk_करोne(&walk, 0, len);
+	पूर्ण जबतक (len);
 
-	if (buf_count) {
-		memset(&buf[buf_count], 0, GHASH_BLOCK_SIZE - buf_count);
-		ghash_do_simd_update(1, dg, buf, &ctx->ghash_key, NULL,
+	अगर (buf_count) अणु
+		स_रखो(&buf[buf_count], 0, GHASH_BLOCK_SIZE - buf_count);
+		ghash_करो_simd_update(1, dg, buf, &ctx->ghash_key, शून्य,
 				     pmull_ghash_update_p64);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int gcm_encrypt(struct aead_request *req)
-{
-	struct crypto_aead *aead = crypto_aead_reqtfm(req);
-	struct gcm_aes_ctx *ctx = crypto_aead_ctx(aead);
-	int nrounds = num_rounds(&ctx->aes_key);
-	struct skcipher_walk walk;
+अटल पूर्णांक gcm_encrypt(काष्ठा aead_request *req)
+अणु
+	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
+	काष्ठा gcm_aes_ctx *ctx = crypto_aead_ctx(aead);
+	पूर्णांक nrounds = num_rounds(&ctx->aes_key);
+	काष्ठा skcipher_walk walk;
 	u8 buf[AES_BLOCK_SIZE];
 	u8 iv[AES_BLOCK_SIZE];
-	u64 dg[2] = {};
+	u64 dg[2] = अणुपूर्ण;
 	be128 lengths;
 	u8 *tag;
-	int err;
+	पूर्णांक err;
 
 	lengths.a = cpu_to_be64(req->assoclen * 8);
 	lengths.b = cpu_to_be64(req->cryptlen * 8);
 
-	if (req->assoclen)
+	अगर (req->assoclen)
 		gcm_calculate_auth_mac(req, dg);
 
-	memcpy(iv, req->iv, GCM_IV_SIZE);
+	स_नकल(iv, req->iv, GCM_IV_SIZE);
 	put_unaligned_be32(2, iv + GCM_IV_SIZE);
 
 	err = skcipher_walk_aead_encrypt(&walk, req, false);
 
-	if (likely(crypto_simd_usable())) {
-		do {
-			const u8 *src = walk.src.virt.addr;
+	अगर (likely(crypto_simd_usable())) अणु
+		करो अणु
+			स्थिर u8 *src = walk.src.virt.addr;
 			u8 *dst = walk.dst.virt.addr;
-			int nbytes = walk.nbytes;
+			पूर्णांक nbytes = walk.nbytes;
 
 			tag = (u8 *)&lengths;
 
-			if (unlikely(nbytes > 0 && nbytes < AES_BLOCK_SIZE)) {
-				src = dst = memcpy(buf + sizeof(buf) - nbytes,
+			अगर (unlikely(nbytes > 0 && nbytes < AES_BLOCK_SIZE)) अणु
+				src = dst = स_नकल(buf + माप(buf) - nbytes,
 						   src, nbytes);
-			} else if (nbytes < walk.total) {
+			पूर्ण अन्यथा अगर (nbytes < walk.total) अणु
 				nbytes &= ~(AES_BLOCK_SIZE - 1);
-				tag = NULL;
-			}
+				tag = शून्य;
+			पूर्ण
 
 			kernel_neon_begin();
 			pmull_gcm_encrypt(nbytes, dst, src, ctx->ghash_key.h,
@@ -384,95 +385,95 @@ static int gcm_encrypt(struct aead_request *req)
 					  tag);
 			kernel_neon_end();
 
-			if (unlikely(!nbytes))
-				break;
+			अगर (unlikely(!nbytes))
+				अवरोध;
 
-			if (unlikely(nbytes > 0 && nbytes < AES_BLOCK_SIZE))
-				memcpy(walk.dst.virt.addr,
-				       buf + sizeof(buf) - nbytes, nbytes);
+			अगर (unlikely(nbytes > 0 && nbytes < AES_BLOCK_SIZE))
+				स_नकल(walk.dst.virt.addr,
+				       buf + माप(buf) - nbytes, nbytes);
 
-			err = skcipher_walk_done(&walk, walk.nbytes - nbytes);
-		} while (walk.nbytes);
-	} else {
-		while (walk.nbytes >= AES_BLOCK_SIZE) {
-			int blocks = walk.nbytes / AES_BLOCK_SIZE;
-			const u8 *src = walk.src.virt.addr;
+			err = skcipher_walk_करोne(&walk, walk.nbytes - nbytes);
+		पूर्ण जबतक (walk.nbytes);
+	पूर्ण अन्यथा अणु
+		जबतक (walk.nbytes >= AES_BLOCK_SIZE) अणु
+			पूर्णांक blocks = walk.nbytes / AES_BLOCK_SIZE;
+			स्थिर u8 *src = walk.src.virt.addr;
 			u8 *dst = walk.dst.virt.addr;
-			int remaining = blocks;
+			पूर्णांक reमुख्यing = blocks;
 
-			do {
+			करो अणु
 				aes_encrypt(&ctx->aes_key, buf, iv);
 				crypto_xor_cpy(dst, src, buf, AES_BLOCK_SIZE);
 				crypto_inc(iv, AES_BLOCK_SIZE);
 
 				dst += AES_BLOCK_SIZE;
 				src += AES_BLOCK_SIZE;
-			} while (--remaining > 0);
+			पूर्ण जबतक (--reमुख्यing > 0);
 
-			ghash_do_update(blocks, dg, walk.dst.virt.addr,
-					&ctx->ghash_key, NULL);
+			ghash_करो_update(blocks, dg, walk.dst.virt.addr,
+					&ctx->ghash_key, शून्य);
 
-			err = skcipher_walk_done(&walk,
+			err = skcipher_walk_करोne(&walk,
 						 walk.nbytes % AES_BLOCK_SIZE);
-		}
+		पूर्ण
 
 		/* handle the tail */
-		if (walk.nbytes) {
+		अगर (walk.nbytes) अणु
 			aes_encrypt(&ctx->aes_key, buf, iv);
 
 			crypto_xor_cpy(walk.dst.virt.addr, walk.src.virt.addr,
 				       buf, walk.nbytes);
 
-			memcpy(buf, walk.dst.virt.addr, walk.nbytes);
-			memset(buf + walk.nbytes, 0, sizeof(buf) - walk.nbytes);
-		}
+			स_नकल(buf, walk.dst.virt.addr, walk.nbytes);
+			स_रखो(buf + walk.nbytes, 0, माप(buf) - walk.nbytes);
+		पूर्ण
 
 		tag = (u8 *)&lengths;
-		ghash_do_update(1, dg, tag, &ctx->ghash_key,
-				walk.nbytes ? buf : NULL);
+		ghash_करो_update(1, dg, tag, &ctx->ghash_key,
+				walk.nbytes ? buf : शून्य);
 
-		if (walk.nbytes)
-			err = skcipher_walk_done(&walk, 0);
+		अगर (walk.nbytes)
+			err = skcipher_walk_करोne(&walk, 0);
 
 		put_unaligned_be64(dg[1], tag);
 		put_unaligned_be64(dg[0], tag + 8);
 		put_unaligned_be32(1, iv + GCM_IV_SIZE);
 		aes_encrypt(&ctx->aes_key, iv, iv);
 		crypto_xor(tag, iv, AES_BLOCK_SIZE);
-	}
+	पूर्ण
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* copy authtag to end of dst */
 	scatterwalk_map_and_copy(tag, req->dst, req->assoclen + req->cryptlen,
 				 crypto_aead_authsize(aead), 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gcm_decrypt(struct aead_request *req)
-{
-	struct crypto_aead *aead = crypto_aead_reqtfm(req);
-	struct gcm_aes_ctx *ctx = crypto_aead_ctx(aead);
-	unsigned int authsize = crypto_aead_authsize(aead);
-	int nrounds = num_rounds(&ctx->aes_key);
-	struct skcipher_walk walk;
+अटल पूर्णांक gcm_decrypt(काष्ठा aead_request *req)
+अणु
+	काष्ठा crypto_aead *aead = crypto_aead_reqtfm(req);
+	काष्ठा gcm_aes_ctx *ctx = crypto_aead_ctx(aead);
+	अचिन्हित पूर्णांक authsize = crypto_aead_authsize(aead);
+	पूर्णांक nrounds = num_rounds(&ctx->aes_key);
+	काष्ठा skcipher_walk walk;
 	u8 otag[AES_BLOCK_SIZE];
 	u8 buf[AES_BLOCK_SIZE];
 	u8 iv[AES_BLOCK_SIZE];
-	u64 dg[2] = {};
+	u64 dg[2] = अणुपूर्ण;
 	be128 lengths;
 	u8 *tag;
-	int err;
+	पूर्णांक err;
 
 	lengths.a = cpu_to_be64(req->assoclen * 8);
 	lengths.b = cpu_to_be64((req->cryptlen - authsize) * 8);
 
-	if (req->assoclen)
+	अगर (req->assoclen)
 		gcm_calculate_auth_mac(req, dg);
 
-	memcpy(iv, req->iv, GCM_IV_SIZE);
+	स_नकल(iv, req->iv, GCM_IV_SIZE);
 	put_unaligned_be32(2, iv + GCM_IV_SIZE);
 
 	scatterwalk_map_and_copy(otag, req->src,
@@ -481,23 +482,23 @@ static int gcm_decrypt(struct aead_request *req)
 
 	err = skcipher_walk_aead_decrypt(&walk, req, false);
 
-	if (likely(crypto_simd_usable())) {
-		int ret;
+	अगर (likely(crypto_simd_usable())) अणु
+		पूर्णांक ret;
 
-		do {
-			const u8 *src = walk.src.virt.addr;
+		करो अणु
+			स्थिर u8 *src = walk.src.virt.addr;
 			u8 *dst = walk.dst.virt.addr;
-			int nbytes = walk.nbytes;
+			पूर्णांक nbytes = walk.nbytes;
 
 			tag = (u8 *)&lengths;
 
-			if (unlikely(nbytes > 0 && nbytes < AES_BLOCK_SIZE)) {
-				src = dst = memcpy(buf + sizeof(buf) - nbytes,
+			अगर (unlikely(nbytes > 0 && nbytes < AES_BLOCK_SIZE)) अणु
+				src = dst = स_नकल(buf + माप(buf) - nbytes,
 						   src, nbytes);
-			} else if (nbytes < walk.total) {
+			पूर्ण अन्यथा अगर (nbytes < walk.total) अणु
 				nbytes &= ~(AES_BLOCK_SIZE - 1);
-				tag = NULL;
-			}
+				tag = शून्य;
+			पूर्ण
 
 			kernel_neon_begin();
 			ret = pmull_gcm_decrypt(nbytes, dst, src,
@@ -506,63 +507,63 @@ static int gcm_decrypt(struct aead_request *req)
 						nrounds, tag, otag, authsize);
 			kernel_neon_end();
 
-			if (unlikely(!nbytes))
-				break;
+			अगर (unlikely(!nbytes))
+				अवरोध;
 
-			if (unlikely(nbytes > 0 && nbytes < AES_BLOCK_SIZE))
-				memcpy(walk.dst.virt.addr,
-				       buf + sizeof(buf) - nbytes, nbytes);
+			अगर (unlikely(nbytes > 0 && nbytes < AES_BLOCK_SIZE))
+				स_नकल(walk.dst.virt.addr,
+				       buf + माप(buf) - nbytes, nbytes);
 
-			err = skcipher_walk_done(&walk, walk.nbytes - nbytes);
-		} while (walk.nbytes);
+			err = skcipher_walk_करोne(&walk, walk.nbytes - nbytes);
+		पूर्ण जबतक (walk.nbytes);
 
-		if (err)
-			return err;
-		if (ret)
-			return -EBADMSG;
-	} else {
-		while (walk.nbytes >= AES_BLOCK_SIZE) {
-			int blocks = walk.nbytes / AES_BLOCK_SIZE;
-			const u8 *src = walk.src.virt.addr;
+		अगर (err)
+			वापस err;
+		अगर (ret)
+			वापस -EBADMSG;
+	पूर्ण अन्यथा अणु
+		जबतक (walk.nbytes >= AES_BLOCK_SIZE) अणु
+			पूर्णांक blocks = walk.nbytes / AES_BLOCK_SIZE;
+			स्थिर u8 *src = walk.src.virt.addr;
 			u8 *dst = walk.dst.virt.addr;
 
-			ghash_do_update(blocks, dg, walk.src.virt.addr,
-					&ctx->ghash_key, NULL);
+			ghash_करो_update(blocks, dg, walk.src.virt.addr,
+					&ctx->ghash_key, शून्य);
 
-			do {
+			करो अणु
 				aes_encrypt(&ctx->aes_key, buf, iv);
 				crypto_xor_cpy(dst, src, buf, AES_BLOCK_SIZE);
 				crypto_inc(iv, AES_BLOCK_SIZE);
 
 				dst += AES_BLOCK_SIZE;
 				src += AES_BLOCK_SIZE;
-			} while (--blocks > 0);
+			पूर्ण जबतक (--blocks > 0);
 
-			err = skcipher_walk_done(&walk,
+			err = skcipher_walk_करोne(&walk,
 						 walk.nbytes % AES_BLOCK_SIZE);
-		}
+		पूर्ण
 
 		/* handle the tail */
-		if (walk.nbytes) {
-			memcpy(buf, walk.src.virt.addr, walk.nbytes);
-			memset(buf + walk.nbytes, 0, sizeof(buf) - walk.nbytes);
-		}
+		अगर (walk.nbytes) अणु
+			स_नकल(buf, walk.src.virt.addr, walk.nbytes);
+			स_रखो(buf + walk.nbytes, 0, माप(buf) - walk.nbytes);
+		पूर्ण
 
 		tag = (u8 *)&lengths;
-		ghash_do_update(1, dg, tag, &ctx->ghash_key,
-				walk.nbytes ? buf : NULL);
+		ghash_करो_update(1, dg, tag, &ctx->ghash_key,
+				walk.nbytes ? buf : शून्य);
 
-		if (walk.nbytes) {
+		अगर (walk.nbytes) अणु
 			aes_encrypt(&ctx->aes_key, buf, iv);
 
 			crypto_xor_cpy(walk.dst.virt.addr, walk.src.virt.addr,
 				       buf, walk.nbytes);
 
-			err = skcipher_walk_done(&walk, 0);
-		}
+			err = skcipher_walk_करोne(&walk, 0);
+		पूर्ण
 
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		put_unaligned_be64(dg[1], tag);
 		put_unaligned_be64(dg[0], tag + 8);
@@ -570,15 +571,15 @@ static int gcm_decrypt(struct aead_request *req)
 		aes_encrypt(&ctx->aes_key, iv, iv);
 		crypto_xor(tag, iv, AES_BLOCK_SIZE);
 
-		if (crypto_memneq(tag, otag, authsize)) {
+		अगर (crypto_memneq(tag, otag, authsize)) अणु
 			memzero_explicit(tag, AES_BLOCK_SIZE);
-			return -EBADMSG;
-		}
-	}
-	return 0;
-}
+			वापस -EBADMSG;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct aead_alg gcm_aes_alg = {
+अटल काष्ठा aead_alg gcm_aes_alg = अणु
 	.ivsize			= GCM_IV_SIZE,
 	.chunksize		= AES_BLOCK_SIZE,
 	.maxauthsize		= AES_BLOCK_SIZE,
@@ -591,34 +592,34 @@ static struct aead_alg gcm_aes_alg = {
 	.base.cra_driver_name	= "gcm-aes-ce",
 	.base.cra_priority	= 300,
 	.base.cra_blocksize	= 1,
-	.base.cra_ctxsize	= sizeof(struct gcm_aes_ctx) +
-				  4 * sizeof(u64[2]),
+	.base.cra_ctxsize	= माप(काष्ठा gcm_aes_ctx) +
+				  4 * माप(u64[2]),
 	.base.cra_module	= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init ghash_ce_mod_init(void)
-{
-	if (!cpu_have_named_feature(ASIMD))
-		return -ENODEV;
+अटल पूर्णांक __init ghash_ce_mod_init(व्योम)
+अणु
+	अगर (!cpu_have_named_feature(ASIMD))
+		वापस -ENODEV;
 
-	if (cpu_have_named_feature(PMULL))
-		return crypto_register_aead(&gcm_aes_alg);
+	अगर (cpu_have_named_feature(PMULL))
+		वापस crypto_रेजिस्टर_aead(&gcm_aes_alg);
 
-	return crypto_register_shash(&ghash_alg);
-}
+	वापस crypto_रेजिस्टर_shash(&ghash_alg);
+पूर्ण
 
-static void __exit ghash_ce_mod_exit(void)
-{
-	if (cpu_have_named_feature(PMULL))
-		crypto_unregister_aead(&gcm_aes_alg);
-	else
-		crypto_unregister_shash(&ghash_alg);
-}
+अटल व्योम __निकास ghash_ce_mod_निकास(व्योम)
+अणु
+	अगर (cpu_have_named_feature(PMULL))
+		crypto_unरेजिस्टर_aead(&gcm_aes_alg);
+	अन्यथा
+		crypto_unरेजिस्टर_shash(&ghash_alg);
+पूर्ण
 
-static const struct cpu_feature ghash_cpu_feature[] = {
-	{ cpu_feature(PMULL) }, { }
-};
+अटल स्थिर काष्ठा cpu_feature ghash_cpu_feature[] = अणु
+	अणु cpu_feature(PMULL) पूर्ण, अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(cpu, ghash_cpu_feature);
 
 module_init(ghash_ce_mod_init);
-module_exit(ghash_ce_mod_exit);
+module_निकास(ghash_ce_mod_निकास);

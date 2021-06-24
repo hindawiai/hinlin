@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2008 PIKA Technologies
  *   Sean MacLennan <smaclennan@pikatech.com>
  */
 
-#include "ops.h"
-#include "4xx.h"
-#include "cuboot.h"
-#include "stdio.h"
+#समावेश "ops.h"
+#समावेश "4xx.h"
+#समावेश "cuboot.h"
+#समावेश "stdio.h"
 
-#define TARGET_4xx
-#define TARGET_44x
-#include "ppcboot.h"
+#घोषणा TARGET_4xx
+#घोषणा TARGET_44x
+#समावेश "ppcboot.h"
 
-static bd_t bd;
+अटल bd_t bd;
 
-static void warp_fixups(void)
-{
-	ibm440ep_fixup_clocks(66000000, 11059200, 50000000);
+अटल व्योम warp_fixups(व्योम)
+अणु
+	ibm440ep_fixup_घड़ीs(66000000, 11059200, 50000000);
 	ibm4xx_sdram_fixup_memsize();
 	ibm4xx_fixup_ebc_ranges("/plb/opb/ebc");
 	dt_fixup_mac_address_by_alias("ethernet0", bd.bi_enetaddr);
-}
+पूर्ण
 
-void platform_init(unsigned long r3, unsigned long r4, unsigned long r5,
-		   unsigned long r6, unsigned long r7)
-{
+व्योम platक्रमm_init(अचिन्हित दीर्घ r3, अचिन्हित दीर्घ r4, अचिन्हित दीर्घ r5,
+		   अचिन्हित दीर्घ r6, अचिन्हित दीर्घ r7)
+अणु
 	CUBOOT_INIT();
 
-	platform_ops.fixups = warp_fixups;
-	platform_ops.exit = ibm44x_dbcr_reset;
+	platक्रमm_ops.fixups = warp_fixups;
+	platक्रमm_ops.निकास = ibm44x_dbcr_reset;
 	fdt_init(_dtb_start);
 	serial_console_init();
-}
+पूर्ण

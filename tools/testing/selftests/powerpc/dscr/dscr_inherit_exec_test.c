@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * POWER Data Stream Control Register (DSCR) fork exec test
+ * POWER Data Stream Control Register (DSCR) विभाजन exec test
  *
- * This testcase modifies the DSCR using mtspr, forks & execs and
- * verifies that the child is using the changed DSCR using mfspr.
+ * This testहाल modअगरies the DSCR using mtspr, विभाजनs & execs and
+ * verअगरies that the child is using the changed DSCR using mfspr.
  *
- * When using the privilege state SPR, the instructions such as
+ * When using the privilege state SPR, the inकाष्ठाions such as
  * mfspr or mtspr are privileged and the kernel emulates them
- * for us. Instructions using problem state SPR can be executed
- * directly without any emulation if the HW supports them. Else
+ * क्रम us. Inकाष्ठाions using problem state SPR can be executed
+ * directly without any emulation अगर the HW supports them. Else
  * they also get emulated by the kernel.
  *
- * Copyright 2012, Anton Blanchard, IBM Corporation.
+ * Copyright 2012, Anton Blanअक्षरd, IBM Corporation.
  * Copyright 2015, Anshuman Khandual, IBM Corporation.
  */
-#include "dscr.h"
+#समावेश "dscr.h"
 
-static char *prog;
+अटल अक्षर *prog;
 
-static void do_exec(unsigned long parent_dscr)
-{
-	unsigned long cur_dscr, cur_dscr_usr;
+अटल व्योम करो_exec(अचिन्हित दीर्घ parent_dscr)
+अणु
+	अचिन्हित दीर्घ cur_dscr, cur_dscr_usr;
 
 	cur_dscr = get_dscr();
 	cur_dscr_usr = get_dscr_usr();
 
-	if (cur_dscr != parent_dscr) {
-		fprintf(stderr, "Parent DSCR %ld was not inherited "
+	अगर (cur_dscr != parent_dscr) अणु
+		ख_लिखो(मानक_त्रुटि, "Parent DSCR %ld was not inherited "
 				"over exec (kernel value)\n", parent_dscr);
-		exit(1);
-	}
+		निकास(1);
+	पूर्ण
 
-	if (cur_dscr_usr != parent_dscr) {
-		fprintf(stderr, "Parent DSCR %ld was not inherited "
+	अगर (cur_dscr_usr != parent_dscr) अणु
+		ख_लिखो(मानक_त्रुटि, "Parent DSCR %ld was not inherited "
 				"over exec (user value)\n", parent_dscr);
-		exit(1);
-	}
-	exit(0);
-}
+		निकास(1);
+	पूर्ण
+	निकास(0);
+पूर्ण
 
-int dscr_inherit_exec(void)
-{
-	unsigned long i, dscr = 0;
+पूर्णांक dscr_inherit_exec(व्योम)
+अणु
+	अचिन्हित दीर्घ i, dscr = 0;
 	pid_t pid;
 
 	SKIP_IF(!have_hwcap2(PPC_FEATURE2_DSCR));
 
-	for (i = 0; i < COUNT; i++) {
+	क्रम (i = 0; i < COUNT; i++) अणु
 		dscr++;
-		if (dscr > DSCR_MAX)
+		अगर (dscr > DSCR_MAX)
 			dscr = 0;
 
-		if (dscr == get_default_dscr())
-			continue;
+		अगर (dscr == get_शेष_dscr())
+			जारी;
 
-		if (i % 2 == 0)
+		अगर (i % 2 == 0)
 			set_dscr_usr(dscr);
-		else
+		अन्यथा
 			set_dscr(dscr);
 
-		pid = fork();
-		if (pid == -1) {
-			perror("fork() failed");
-			exit(1);
-		} else if (pid) {
-			int status;
+		pid = विभाजन();
+		अगर (pid == -1) अणु
+			लिखो_त्रुटि("fork() failed");
+			निकास(1);
+		पूर्ण अन्यथा अगर (pid) अणु
+			पूर्णांक status;
 
-			if (waitpid(pid, &status, 0) == -1) {
-				perror("waitpid() failed");
-				exit(1);
-			}
+			अगर (रुकोpid(pid, &status, 0) == -1) अणु
+				लिखो_त्रुटि("waitpid() failed");
+				निकास(1);
+			पूर्ण
 
-			if (!WIFEXITED(status)) {
-				fprintf(stderr, "Child didn't exit cleanly\n");
-				exit(1);
-			}
+			अगर (!WIFEXITED(status)) अणु
+				ख_लिखो(मानक_त्रुटि, "Child didn't exit cleanly\n");
+				निकास(1);
+			पूर्ण
 
-			if (WEXITSTATUS(status) != 0) {
-				fprintf(stderr, "Child didn't exit cleanly\n");
-				return 1;
-			}
-		} else {
-			char dscr_str[16];
+			अगर (WEXITSTATUS(status) != 0) अणु
+				ख_लिखो(मानक_त्रुटि, "Child didn't exit cleanly\n");
+				वापस 1;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अक्षर dscr_str[16];
 
-			sprintf(dscr_str, "%ld", dscr);
-			execlp(prog, prog, "exec", dscr_str, NULL);
-			exit(1);
-		}
-	}
-	return 0;
-}
+			प्र_लिखो(dscr_str, "%ld", dscr);
+			execlp(prog, prog, "exec", dscr_str, शून्य);
+			निकास(1);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	if (argc == 3 && !strcmp(argv[1], "exec")) {
-		unsigned long parent_dscr;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	अगर (argc == 3 && !म_भेद(argv[1], "exec")) अणु
+		अचिन्हित दीर्घ parent_dscr;
 
-		parent_dscr = atoi(argv[2]);
-		do_exec(parent_dscr);
-	} else if (argc != 1) {
-		fprintf(stderr, "Usage: %s\n", argv[0]);
-		exit(1);
-	}
+		parent_dscr = म_से_प(argv[2]);
+		करो_exec(parent_dscr);
+	पूर्ण अन्यथा अगर (argc != 1) अणु
+		ख_लिखो(मानक_त्रुटि, "Usage: %s\n", argv[0]);
+		निकास(1);
+	पूर्ण
 
 	prog = argv[0];
-	return test_harness(dscr_inherit_exec, "dscr_inherit_exec_test");
-}
+	वापस test_harness(dscr_inherit_exec, "dscr_inherit_exec_test");
+पूर्ण

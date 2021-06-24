@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Functions and registers to access AXP20X power management chip.
+ * Functions and रेजिस्टरs to access AXP20X घातer management chip.
  *
  * Copyright (C) 2013, Carlo Caione <carlo@caione.org>
  */
 
-#ifndef __LINUX_MFD_AXP20X_H
-#define __LINUX_MFD_AXP20X_H
+#अगर_अघोषित __LINUX_MFD_AXP20X_H
+#घोषणा __LINUX_MFD_AXP20X_H
 
-#include <linux/regmap.h>
+#समावेश <linux/regmap.h>
 
-enum axp20x_variants {
+क्रमागत axp20x_variants अणु
 	AXP152_ID = 0,
 	AXP202_ID,
 	AXP209_ID,
@@ -22,272 +23,272 @@ enum axp20x_variants {
 	AXP809_ID,
 	AXP813_ID,
 	NR_AXP20X_VARIANTS,
-};
+पूर्ण;
 
-#define AXP20X_DATACACHE(m)		(0x04 + (m))
+#घोषणा AXP20X_DATACACHE(m)		(0x04 + (m))
 
 /* Power supply */
-#define AXP152_PWR_OP_MODE		0x01
-#define AXP152_LDO3456_DC1234_CTRL	0x12
-#define AXP152_ALDO_OP_MODE		0x13
-#define AXP152_LDO0_CTRL		0x15
-#define AXP152_DCDC2_V_OUT		0x23
-#define AXP152_DCDC2_V_RAMP		0x25
-#define AXP152_DCDC1_V_OUT		0x26
-#define AXP152_DCDC3_V_OUT		0x27
-#define AXP152_ALDO12_V_OUT		0x28
-#define AXP152_DLDO1_V_OUT		0x29
-#define AXP152_DLDO2_V_OUT		0x2a
-#define AXP152_DCDC4_V_OUT		0x2b
-#define AXP152_V_OFF			0x31
-#define AXP152_OFF_CTRL			0x32
-#define AXP152_PEK_KEY			0x36
-#define AXP152_DCDC_FREQ		0x37
-#define AXP152_DCDC_MODE		0x80
+#घोषणा AXP152_PWR_OP_MODE		0x01
+#घोषणा AXP152_LDO3456_DC1234_CTRL	0x12
+#घोषणा AXP152_ALDO_OP_MODE		0x13
+#घोषणा AXP152_LDO0_CTRL		0x15
+#घोषणा AXP152_DCDC2_V_OUT		0x23
+#घोषणा AXP152_DCDC2_V_RAMP		0x25
+#घोषणा AXP152_DCDC1_V_OUT		0x26
+#घोषणा AXP152_DCDC3_V_OUT		0x27
+#घोषणा AXP152_ALDO12_V_OUT		0x28
+#घोषणा AXP152_DLDO1_V_OUT		0x29
+#घोषणा AXP152_DLDO2_V_OUT		0x2a
+#घोषणा AXP152_DCDC4_V_OUT		0x2b
+#घोषणा AXP152_V_OFF			0x31
+#घोषणा AXP152_OFF_CTRL			0x32
+#घोषणा AXP152_PEK_KEY			0x36
+#घोषणा AXP152_DCDC_FREQ		0x37
+#घोषणा AXP152_DCDC_MODE		0x80
 
-#define AXP20X_PWR_INPUT_STATUS		0x00
-#define AXP20X_PWR_OP_MODE		0x01
-#define AXP20X_USB_OTG_STATUS		0x02
-#define AXP20X_PWR_OUT_CTRL		0x12
-#define AXP20X_DCDC2_V_OUT		0x23
-#define AXP20X_DCDC2_LDO3_V_RAMP	0x25
-#define AXP20X_DCDC3_V_OUT		0x27
-#define AXP20X_LDO24_V_OUT		0x28
-#define AXP20X_LDO3_V_OUT		0x29
-#define AXP20X_VBUS_IPSOUT_MGMT		0x30
-#define AXP20X_V_OFF			0x31
-#define AXP20X_OFF_CTRL			0x32
-#define AXP20X_CHRG_CTRL1		0x33
-#define AXP20X_CHRG_CTRL2		0x34
-#define AXP20X_CHRG_BAK_CTRL		0x35
-#define AXP20X_PEK_KEY			0x36
-#define AXP20X_DCDC_FREQ		0x37
-#define AXP20X_V_LTF_CHRG		0x38
-#define AXP20X_V_HTF_CHRG		0x39
-#define AXP20X_APS_WARN_L1		0x3a
-#define AXP20X_APS_WARN_L2		0x3b
-#define AXP20X_V_LTF_DISCHRG		0x3c
-#define AXP20X_V_HTF_DISCHRG		0x3d
+#घोषणा AXP20X_PWR_INPUT_STATUS		0x00
+#घोषणा AXP20X_PWR_OP_MODE		0x01
+#घोषणा AXP20X_USB_OTG_STATUS		0x02
+#घोषणा AXP20X_PWR_OUT_CTRL		0x12
+#घोषणा AXP20X_DCDC2_V_OUT		0x23
+#घोषणा AXP20X_DCDC2_LDO3_V_RAMP	0x25
+#घोषणा AXP20X_DCDC3_V_OUT		0x27
+#घोषणा AXP20X_LDO24_V_OUT		0x28
+#घोषणा AXP20X_LDO3_V_OUT		0x29
+#घोषणा AXP20X_VBUS_IPSOUT_MGMT		0x30
+#घोषणा AXP20X_V_OFF			0x31
+#घोषणा AXP20X_OFF_CTRL			0x32
+#घोषणा AXP20X_CHRG_CTRL1		0x33
+#घोषणा AXP20X_CHRG_CTRL2		0x34
+#घोषणा AXP20X_CHRG_BAK_CTRL		0x35
+#घोषणा AXP20X_PEK_KEY			0x36
+#घोषणा AXP20X_DCDC_FREQ		0x37
+#घोषणा AXP20X_V_LTF_CHRG		0x38
+#घोषणा AXP20X_V_HTF_CHRG		0x39
+#घोषणा AXP20X_APS_WARN_L1		0x3a
+#घोषणा AXP20X_APS_WARN_L2		0x3b
+#घोषणा AXP20X_V_LTF_DISCHRG		0x3c
+#घोषणा AXP20X_V_HTF_DISCHRG		0x3d
 
-#define AXP22X_PWR_OUT_CTRL1		0x10
-#define AXP22X_PWR_OUT_CTRL2		0x12
-#define AXP22X_PWR_OUT_CTRL3		0x13
-#define AXP22X_DLDO1_V_OUT		0x15
-#define AXP22X_DLDO2_V_OUT		0x16
-#define AXP22X_DLDO3_V_OUT		0x17
-#define AXP22X_DLDO4_V_OUT		0x18
-#define AXP22X_ELDO1_V_OUT		0x19
-#define AXP22X_ELDO2_V_OUT		0x1a
-#define AXP22X_ELDO3_V_OUT		0x1b
-#define AXP22X_DC5LDO_V_OUT		0x1c
-#define AXP22X_DCDC1_V_OUT		0x21
-#define AXP22X_DCDC2_V_OUT		0x22
-#define AXP22X_DCDC3_V_OUT		0x23
-#define AXP22X_DCDC4_V_OUT		0x24
-#define AXP22X_DCDC5_V_OUT		0x25
-#define AXP22X_DCDC23_V_RAMP_CTRL	0x27
-#define AXP22X_ALDO1_V_OUT		0x28
-#define AXP22X_ALDO2_V_OUT		0x29
-#define AXP22X_ALDO3_V_OUT		0x2a
-#define AXP22X_CHRG_CTRL3		0x35
+#घोषणा AXP22X_PWR_OUT_CTRL1		0x10
+#घोषणा AXP22X_PWR_OUT_CTRL2		0x12
+#घोषणा AXP22X_PWR_OUT_CTRL3		0x13
+#घोषणा AXP22X_DLDO1_V_OUT		0x15
+#घोषणा AXP22X_DLDO2_V_OUT		0x16
+#घोषणा AXP22X_DLDO3_V_OUT		0x17
+#घोषणा AXP22X_DLDO4_V_OUT		0x18
+#घोषणा AXP22X_ELDO1_V_OUT		0x19
+#घोषणा AXP22X_ELDO2_V_OUT		0x1a
+#घोषणा AXP22X_ELDO3_V_OUT		0x1b
+#घोषणा AXP22X_DC5LDO_V_OUT		0x1c
+#घोषणा AXP22X_DCDC1_V_OUT		0x21
+#घोषणा AXP22X_DCDC2_V_OUT		0x22
+#घोषणा AXP22X_DCDC3_V_OUT		0x23
+#घोषणा AXP22X_DCDC4_V_OUT		0x24
+#घोषणा AXP22X_DCDC5_V_OUT		0x25
+#घोषणा AXP22X_DCDC23_V_RAMP_CTRL	0x27
+#घोषणा AXP22X_ALDO1_V_OUT		0x28
+#घोषणा AXP22X_ALDO2_V_OUT		0x29
+#घोषणा AXP22X_ALDO3_V_OUT		0x2a
+#घोषणा AXP22X_CHRG_CTRL3		0x35
 
-#define AXP806_STARTUP_SRC		0x00
-#define AXP806_CHIP_ID			0x03
-#define AXP806_PWR_OUT_CTRL1		0x10
-#define AXP806_PWR_OUT_CTRL2		0x11
-#define AXP806_DCDCA_V_CTRL		0x12
-#define AXP806_DCDCB_V_CTRL		0x13
-#define AXP806_DCDCC_V_CTRL		0x14
-#define AXP806_DCDCD_V_CTRL		0x15
-#define AXP806_DCDCE_V_CTRL		0x16
-#define AXP806_ALDO1_V_CTRL		0x17
-#define AXP806_ALDO2_V_CTRL		0x18
-#define AXP806_ALDO3_V_CTRL		0x19
-#define AXP806_DCDC_MODE_CTRL1		0x1a
-#define AXP806_DCDC_MODE_CTRL2		0x1b
-#define AXP806_DCDC_FREQ_CTRL		0x1c
-#define AXP806_BLDO1_V_CTRL		0x20
-#define AXP806_BLDO2_V_CTRL		0x21
-#define AXP806_BLDO3_V_CTRL		0x22
-#define AXP806_BLDO4_V_CTRL		0x23
-#define AXP806_CLDO1_V_CTRL		0x24
-#define AXP806_CLDO2_V_CTRL		0x25
-#define AXP806_CLDO3_V_CTRL		0x26
-#define AXP806_VREF_TEMP_WARN_L		0xf3
-#define AXP806_BUS_ADDR_EXT		0xfe
-#define AXP806_REG_ADDR_EXT		0xff
+#घोषणा AXP806_STARTUP_SRC		0x00
+#घोषणा AXP806_CHIP_ID			0x03
+#घोषणा AXP806_PWR_OUT_CTRL1		0x10
+#घोषणा AXP806_PWR_OUT_CTRL2		0x11
+#घोषणा AXP806_DCDCA_V_CTRL		0x12
+#घोषणा AXP806_DCDCB_V_CTRL		0x13
+#घोषणा AXP806_DCDCC_V_CTRL		0x14
+#घोषणा AXP806_DCDCD_V_CTRL		0x15
+#घोषणा AXP806_DCDCE_V_CTRL		0x16
+#घोषणा AXP806_ALDO1_V_CTRL		0x17
+#घोषणा AXP806_ALDO2_V_CTRL		0x18
+#घोषणा AXP806_ALDO3_V_CTRL		0x19
+#घोषणा AXP806_DCDC_MODE_CTRL1		0x1a
+#घोषणा AXP806_DCDC_MODE_CTRL2		0x1b
+#घोषणा AXP806_DCDC_FREQ_CTRL		0x1c
+#घोषणा AXP806_BLDO1_V_CTRL		0x20
+#घोषणा AXP806_BLDO2_V_CTRL		0x21
+#घोषणा AXP806_BLDO3_V_CTRL		0x22
+#घोषणा AXP806_BLDO4_V_CTRL		0x23
+#घोषणा AXP806_CLDO1_V_CTRL		0x24
+#घोषणा AXP806_CLDO2_V_CTRL		0x25
+#घोषणा AXP806_CLDO3_V_CTRL		0x26
+#घोषणा AXP806_VREF_TEMP_WARN_L		0xf3
+#घोषणा AXP806_BUS_ADDR_EXT		0xfe
+#घोषणा AXP806_REG_ADDR_EXT		0xff
 
-#define AXP803_POLYPHASE_CTRL		0x14
-#define AXP803_FLDO1_V_OUT		0x1c
-#define AXP803_FLDO2_V_OUT		0x1d
-#define AXP803_DCDC1_V_OUT		0x20
-#define AXP803_DCDC2_V_OUT		0x21
-#define AXP803_DCDC3_V_OUT		0x22
-#define AXP803_DCDC4_V_OUT		0x23
-#define AXP803_DCDC5_V_OUT		0x24
-#define AXP803_DCDC6_V_OUT		0x25
-#define AXP803_DCDC_FREQ_CTRL		0x3b
+#घोषणा AXP803_POLYPHASE_CTRL		0x14
+#घोषणा AXP803_FLDO1_V_OUT		0x1c
+#घोषणा AXP803_FLDO2_V_OUT		0x1d
+#घोषणा AXP803_DCDC1_V_OUT		0x20
+#घोषणा AXP803_DCDC2_V_OUT		0x21
+#घोषणा AXP803_DCDC3_V_OUT		0x22
+#घोषणा AXP803_DCDC4_V_OUT		0x23
+#घोषणा AXP803_DCDC5_V_OUT		0x24
+#घोषणा AXP803_DCDC6_V_OUT		0x25
+#घोषणा AXP803_DCDC_FREQ_CTRL		0x3b
 
-/* Other DCDC regulator control registers are the same as AXP803 */
-#define AXP813_DCDC7_V_OUT		0x26
+/* Other DCDC regulator control रेजिस्टरs are the same as AXP803 */
+#घोषणा AXP813_DCDC7_V_OUT		0x26
 
 /* Interrupt */
-#define AXP152_IRQ1_EN			0x40
-#define AXP152_IRQ2_EN			0x41
-#define AXP152_IRQ3_EN			0x42
-#define AXP152_IRQ1_STATE		0x48
-#define AXP152_IRQ2_STATE		0x49
-#define AXP152_IRQ3_STATE		0x4a
+#घोषणा AXP152_IRQ1_EN			0x40
+#घोषणा AXP152_IRQ2_EN			0x41
+#घोषणा AXP152_IRQ3_EN			0x42
+#घोषणा AXP152_IRQ1_STATE		0x48
+#घोषणा AXP152_IRQ2_STATE		0x49
+#घोषणा AXP152_IRQ3_STATE		0x4a
 
-#define AXP20X_IRQ1_EN			0x40
-#define AXP20X_IRQ2_EN			0x41
-#define AXP20X_IRQ3_EN			0x42
-#define AXP20X_IRQ4_EN			0x43
-#define AXP20X_IRQ5_EN			0x44
-#define AXP20X_IRQ6_EN			0x45
-#define AXP20X_IRQ1_STATE		0x48
-#define AXP20X_IRQ2_STATE		0x49
-#define AXP20X_IRQ3_STATE		0x4a
-#define AXP20X_IRQ4_STATE		0x4b
-#define AXP20X_IRQ5_STATE		0x4c
-#define AXP20X_IRQ6_STATE		0x4d
+#घोषणा AXP20X_IRQ1_EN			0x40
+#घोषणा AXP20X_IRQ2_EN			0x41
+#घोषणा AXP20X_IRQ3_EN			0x42
+#घोषणा AXP20X_IRQ4_EN			0x43
+#घोषणा AXP20X_IRQ5_EN			0x44
+#घोषणा AXP20X_IRQ6_EN			0x45
+#घोषणा AXP20X_IRQ1_STATE		0x48
+#घोषणा AXP20X_IRQ2_STATE		0x49
+#घोषणा AXP20X_IRQ3_STATE		0x4a
+#घोषणा AXP20X_IRQ4_STATE		0x4b
+#घोषणा AXP20X_IRQ5_STATE		0x4c
+#घोषणा AXP20X_IRQ6_STATE		0x4d
 
 /* ADC */
-#define AXP20X_ACIN_V_ADC_H		0x56
-#define AXP20X_ACIN_V_ADC_L		0x57
-#define AXP20X_ACIN_I_ADC_H		0x58
-#define AXP20X_ACIN_I_ADC_L		0x59
-#define AXP20X_VBUS_V_ADC_H		0x5a
-#define AXP20X_VBUS_V_ADC_L		0x5b
-#define AXP20X_VBUS_I_ADC_H		0x5c
-#define AXP20X_VBUS_I_ADC_L		0x5d
-#define AXP20X_TEMP_ADC_H		0x5e
-#define AXP20X_TEMP_ADC_L		0x5f
-#define AXP20X_TS_IN_H			0x62
-#define AXP20X_TS_IN_L			0x63
-#define AXP20X_GPIO0_V_ADC_H		0x64
-#define AXP20X_GPIO0_V_ADC_L		0x65
-#define AXP20X_GPIO1_V_ADC_H		0x66
-#define AXP20X_GPIO1_V_ADC_L		0x67
-#define AXP20X_PWR_BATT_H		0x70
-#define AXP20X_PWR_BATT_M		0x71
-#define AXP20X_PWR_BATT_L		0x72
-#define AXP20X_BATT_V_H			0x78
-#define AXP20X_BATT_V_L			0x79
-#define AXP20X_BATT_CHRG_I_H		0x7a
-#define AXP20X_BATT_CHRG_I_L		0x7b
-#define AXP20X_BATT_DISCHRG_I_H		0x7c
-#define AXP20X_BATT_DISCHRG_I_L		0x7d
-#define AXP20X_IPSOUT_V_HIGH_H		0x7e
-#define AXP20X_IPSOUT_V_HIGH_L		0x7f
+#घोषणा AXP20X_ACIN_V_ADC_H		0x56
+#घोषणा AXP20X_ACIN_V_ADC_L		0x57
+#घोषणा AXP20X_ACIN_I_ADC_H		0x58
+#घोषणा AXP20X_ACIN_I_ADC_L		0x59
+#घोषणा AXP20X_VBUS_V_ADC_H		0x5a
+#घोषणा AXP20X_VBUS_V_ADC_L		0x5b
+#घोषणा AXP20X_VBUS_I_ADC_H		0x5c
+#घोषणा AXP20X_VBUS_I_ADC_L		0x5d
+#घोषणा AXP20X_TEMP_ADC_H		0x5e
+#घोषणा AXP20X_TEMP_ADC_L		0x5f
+#घोषणा AXP20X_TS_IN_H			0x62
+#घोषणा AXP20X_TS_IN_L			0x63
+#घोषणा AXP20X_GPIO0_V_ADC_H		0x64
+#घोषणा AXP20X_GPIO0_V_ADC_L		0x65
+#घोषणा AXP20X_GPIO1_V_ADC_H		0x66
+#घोषणा AXP20X_GPIO1_V_ADC_L		0x67
+#घोषणा AXP20X_PWR_BATT_H		0x70
+#घोषणा AXP20X_PWR_BATT_M		0x71
+#घोषणा AXP20X_PWR_BATT_L		0x72
+#घोषणा AXP20X_BATT_V_H			0x78
+#घोषणा AXP20X_BATT_V_L			0x79
+#घोषणा AXP20X_BATT_CHRG_I_H		0x7a
+#घोषणा AXP20X_BATT_CHRG_I_L		0x7b
+#घोषणा AXP20X_BATT_DISCHRG_I_H		0x7c
+#घोषणा AXP20X_BATT_DISCHRG_I_L		0x7d
+#घोषणा AXP20X_IPSOUT_V_HIGH_H		0x7e
+#घोषणा AXP20X_IPSOUT_V_HIGH_L		0x7f
 
 /* Power supply */
-#define AXP20X_DCDC_MODE		0x80
-#define AXP20X_ADC_EN1			0x82
-#define AXP20X_ADC_EN2			0x83
-#define AXP20X_ADC_RATE			0x84
-#define AXP20X_GPIO10_IN_RANGE		0x85
-#define AXP20X_GPIO1_ADC_IRQ_RIS	0x86
-#define AXP20X_GPIO1_ADC_IRQ_FAL	0x87
-#define AXP20X_TIMER_CTRL		0x8a
-#define AXP20X_VBUS_MON			0x8b
-#define AXP20X_OVER_TMP			0x8f
+#घोषणा AXP20X_DCDC_MODE		0x80
+#घोषणा AXP20X_ADC_EN1			0x82
+#घोषणा AXP20X_ADC_EN2			0x83
+#घोषणा AXP20X_ADC_RATE			0x84
+#घोषणा AXP20X_GPIO10_IN_RANGE		0x85
+#घोषणा AXP20X_GPIO1_ADC_IRQ_RIS	0x86
+#घोषणा AXP20X_GPIO1_ADC_IRQ_FAL	0x87
+#घोषणा AXP20X_TIMER_CTRL		0x8a
+#घोषणा AXP20X_VBUS_MON			0x8b
+#घोषणा AXP20X_OVER_TMP			0x8f
 
-#define AXP22X_PWREN_CTRL1		0x8c
-#define AXP22X_PWREN_CTRL2		0x8d
+#घोषणा AXP22X_PWREN_CTRL1		0x8c
+#घोषणा AXP22X_PWREN_CTRL2		0x8d
 
 /* GPIO */
-#define AXP152_GPIO0_CTRL		0x90
-#define AXP152_GPIO1_CTRL		0x91
-#define AXP152_GPIO2_CTRL		0x92
-#define AXP152_GPIO3_CTRL		0x93
-#define AXP152_LDOGPIO2_V_OUT		0x96
-#define AXP152_GPIO_INPUT		0x97
-#define AXP152_PWM0_FREQ_X		0x98
-#define AXP152_PWM0_FREQ_Y		0x99
-#define AXP152_PWM0_DUTY_CYCLE		0x9a
-#define AXP152_PWM1_FREQ_X		0x9b
-#define AXP152_PWM1_FREQ_Y		0x9c
-#define AXP152_PWM1_DUTY_CYCLE		0x9d
+#घोषणा AXP152_GPIO0_CTRL		0x90
+#घोषणा AXP152_GPIO1_CTRL		0x91
+#घोषणा AXP152_GPIO2_CTRL		0x92
+#घोषणा AXP152_GPIO3_CTRL		0x93
+#घोषणा AXP152_LDOGPIO2_V_OUT		0x96
+#घोषणा AXP152_GPIO_INPUT		0x97
+#घोषणा AXP152_PWM0_FREQ_X		0x98
+#घोषणा AXP152_PWM0_FREQ_Y		0x99
+#घोषणा AXP152_PWM0_DUTY_CYCLE		0x9a
+#घोषणा AXP152_PWM1_FREQ_X		0x9b
+#घोषणा AXP152_PWM1_FREQ_Y		0x9c
+#घोषणा AXP152_PWM1_DUTY_CYCLE		0x9d
 
-#define AXP20X_GPIO0_CTRL		0x90
-#define AXP20X_LDO5_V_OUT		0x91
-#define AXP20X_GPIO1_CTRL		0x92
-#define AXP20X_GPIO2_CTRL		0x93
-#define AXP20X_GPIO20_SS		0x94
-#define AXP20X_GPIO3_CTRL		0x95
+#घोषणा AXP20X_GPIO0_CTRL		0x90
+#घोषणा AXP20X_LDO5_V_OUT		0x91
+#घोषणा AXP20X_GPIO1_CTRL		0x92
+#घोषणा AXP20X_GPIO2_CTRL		0x93
+#घोषणा AXP20X_GPIO20_SS		0x94
+#घोषणा AXP20X_GPIO3_CTRL		0x95
 
-#define AXP22X_LDO_IO0_V_OUT		0x91
-#define AXP22X_LDO_IO1_V_OUT		0x93
-#define AXP22X_GPIO_STATE		0x94
-#define AXP22X_GPIO_PULL_DOWN		0x95
+#घोषणा AXP22X_LDO_IO0_V_OUT		0x91
+#घोषणा AXP22X_LDO_IO1_V_OUT		0x93
+#घोषणा AXP22X_GPIO_STATE		0x94
+#घोषणा AXP22X_GPIO_PULL_DOWN		0x95
 
 /* Battery */
-#define AXP20X_CHRG_CC_31_24		0xb0
-#define AXP20X_CHRG_CC_23_16		0xb1
-#define AXP20X_CHRG_CC_15_8		0xb2
-#define AXP20X_CHRG_CC_7_0		0xb3
-#define AXP20X_DISCHRG_CC_31_24		0xb4
-#define AXP20X_DISCHRG_CC_23_16		0xb5
-#define AXP20X_DISCHRG_CC_15_8		0xb6
-#define AXP20X_DISCHRG_CC_7_0		0xb7
-#define AXP20X_CC_CTRL			0xb8
-#define AXP20X_FG_RES			0xb9
+#घोषणा AXP20X_CHRG_CC_31_24		0xb0
+#घोषणा AXP20X_CHRG_CC_23_16		0xb1
+#घोषणा AXP20X_CHRG_CC_15_8		0xb2
+#घोषणा AXP20X_CHRG_CC_7_0		0xb3
+#घोषणा AXP20X_DISCHRG_CC_31_24		0xb4
+#घोषणा AXP20X_DISCHRG_CC_23_16		0xb5
+#घोषणा AXP20X_DISCHRG_CC_15_8		0xb6
+#घोषणा AXP20X_DISCHRG_CC_7_0		0xb7
+#घोषणा AXP20X_CC_CTRL			0xb8
+#घोषणा AXP20X_FG_RES			0xb9
 
 /* OCV */
-#define AXP20X_RDC_H			0xba
-#define AXP20X_RDC_L			0xbb
-#define AXP20X_OCV(m)			(0xc0 + (m))
-#define AXP20X_OCV_MAX			0xf
+#घोषणा AXP20X_RDC_H			0xba
+#घोषणा AXP20X_RDC_L			0xbb
+#घोषणा AXP20X_OCV(m)			(0xc0 + (m))
+#घोषणा AXP20X_OCV_MAX			0xf
 
-/* AXP22X specific registers */
-#define AXP22X_PMIC_TEMP_H		0x56
-#define AXP22X_PMIC_TEMP_L		0x57
-#define AXP22X_TS_ADC_H			0x58
-#define AXP22X_TS_ADC_L			0x59
-#define AXP22X_BATLOW_THRES1		0xe6
+/* AXP22X specअगरic रेजिस्टरs */
+#घोषणा AXP22X_PMIC_TEMP_H		0x56
+#घोषणा AXP22X_PMIC_TEMP_L		0x57
+#घोषणा AXP22X_TS_ADC_H			0x58
+#घोषणा AXP22X_TS_ADC_L			0x59
+#घोषणा AXP22X_BATLOW_THRES1		0xe6
 
-/* AXP288/AXP803 specific registers */
-#define AXP288_POWER_REASON		0x02
-#define AXP288_BC_GLOBAL		0x2c
-#define AXP288_BC_VBUS_CNTL		0x2d
-#define AXP288_BC_USB_STAT		0x2e
-#define AXP288_BC_DET_STAT		0x2f
-#define AXP288_PMIC_ADC_H               0x56
-#define AXP288_PMIC_ADC_L               0x57
-#define AXP288_TS_ADC_H			0x58
-#define AXP288_TS_ADC_L			0x59
-#define AXP288_GP_ADC_H			0x5a
-#define AXP288_GP_ADC_L			0x5b
-#define AXP288_ADC_TS_PIN_CTRL          0x84
-#define AXP288_RT_BATT_V_H		0xa0
-#define AXP288_RT_BATT_V_L		0xa1
+/* AXP288/AXP803 specअगरic रेजिस्टरs */
+#घोषणा AXP288_POWER_REASON		0x02
+#घोषणा AXP288_BC_GLOBAL		0x2c
+#घोषणा AXP288_BC_VBUS_CNTL		0x2d
+#घोषणा AXP288_BC_USB_STAT		0x2e
+#घोषणा AXP288_BC_DET_STAT		0x2f
+#घोषणा AXP288_PMIC_ADC_H               0x56
+#घोषणा AXP288_PMIC_ADC_L               0x57
+#घोषणा AXP288_TS_ADC_H			0x58
+#घोषणा AXP288_TS_ADC_L			0x59
+#घोषणा AXP288_GP_ADC_H			0x5a
+#घोषणा AXP288_GP_ADC_L			0x5b
+#घोषणा AXP288_ADC_TS_PIN_CTRL          0x84
+#घोषणा AXP288_RT_BATT_V_H		0xa0
+#घोषणा AXP288_RT_BATT_V_L		0xa1
 
-#define AXP813_ACIN_PATH_CTRL		0x3a
-#define AXP813_ADC_RATE			0x85
+#घोषणा AXP813_ACIN_PATH_CTRL		0x3a
+#घोषणा AXP813_ADC_RATE			0x85
 
 /* Fuel Gauge */
-#define AXP288_FG_RDC1_REG          0xba
-#define AXP288_FG_RDC0_REG          0xbb
-#define AXP288_FG_OCVH_REG          0xbc
-#define AXP288_FG_OCVL_REG          0xbd
-#define AXP288_FG_OCV_CURVE_REG     0xc0
-#define AXP288_FG_DES_CAP1_REG      0xe0
-#define AXP288_FG_DES_CAP0_REG      0xe1
-#define AXP288_FG_CC_MTR1_REG       0xe2
-#define AXP288_FG_CC_MTR0_REG       0xe3
-#define AXP288_FG_OCV_CAP_REG       0xe4
-#define AXP288_FG_CC_CAP_REG        0xe5
-#define AXP288_FG_LOW_CAP_REG       0xe6
-#define AXP288_FG_TUNE0             0xe8
-#define AXP288_FG_TUNE1             0xe9
-#define AXP288_FG_TUNE2             0xea
-#define AXP288_FG_TUNE3             0xeb
-#define AXP288_FG_TUNE4             0xec
-#define AXP288_FG_TUNE5             0xed
+#घोषणा AXP288_FG_RDC1_REG          0xba
+#घोषणा AXP288_FG_RDC0_REG          0xbb
+#घोषणा AXP288_FG_OCVH_REG          0xbc
+#घोषणा AXP288_FG_OCVL_REG          0xbd
+#घोषणा AXP288_FG_OCV_CURVE_REG     0xc0
+#घोषणा AXP288_FG_DES_CAP1_REG      0xe0
+#घोषणा AXP288_FG_DES_CAP0_REG      0xe1
+#घोषणा AXP288_FG_CC_MTR1_REG       0xe2
+#घोषणा AXP288_FG_CC_MTR0_REG       0xe3
+#घोषणा AXP288_FG_OCV_CAP_REG       0xe4
+#घोषणा AXP288_FG_CC_CAP_REG        0xe5
+#घोषणा AXP288_FG_LOW_CAP_REG       0xe6
+#घोषणा AXP288_FG_TUNE0             0xe8
+#घोषणा AXP288_FG_TUNE1             0xe9
+#घोषणा AXP288_FG_TUNE2             0xea
+#घोषणा AXP288_FG_TUNE3             0xeb
+#घोषणा AXP288_FG_TUNE4             0xec
+#घोषणा AXP288_FG_TUNE5             0xed
 
 /* Regulators IDs */
-enum {
+क्रमागत अणु
 	AXP20X_LDO1 = 0,
 	AXP20X_LDO2,
 	AXP20X_LDO3,
@@ -296,9 +297,9 @@ enum {
 	AXP20X_DCDC2,
 	AXP20X_DCDC3,
 	AXP20X_REG_ID_MAX,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	AXP22X_DCDC1 = 0,
 	AXP22X_DCDC2,
 	AXP22X_DCDC3,
@@ -320,9 +321,9 @@ enum {
 	AXP22X_LDO_IO0,
 	AXP22X_LDO_IO1,
 	AXP22X_REG_ID_MAX,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	AXP806_DCDCA = 0,
 	AXP806_DCDCB,
 	AXP806_DCDCC,
@@ -340,9 +341,9 @@ enum {
 	AXP806_CLDO3,
 	AXP806_SW,
 	AXP806_REG_ID_MAX,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	AXP809_DCDC1 = 0,
 	AXP809_DCDC2,
 	AXP809_DCDC3,
@@ -363,9 +364,9 @@ enum {
 	AXP809_LDO_IO1,
 	AXP809_SW,
 	AXP809_REG_ID_MAX,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	AXP803_DCDC1 = 0,
 	AXP803_DCDC2,
 	AXP803_DCDC3,
@@ -389,9 +390,9 @@ enum {
 	AXP803_LDO_IO0,
 	AXP803_LDO_IO1,
 	AXP803_REG_ID_MAX,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	AXP813_DCDC1 = 0,
 	AXP813_DCDC2,
 	AXP813_DCDC3,
@@ -417,10 +418,10 @@ enum {
 	AXP813_LDO_IO1,
 	AXP813_SW,
 	AXP813_REG_ID_MAX,
-};
+पूर्ण;
 
 /* IRQs */
-enum {
+क्रमागत अणु
 	AXP152_IRQ_LDO0IN_CONNECT = 1,
 	AXP152_IRQ_LDO0IN_REMOVAL,
 	AXP152_IRQ_ALDO0IN_CONNECT,
@@ -438,9 +439,9 @@ enum {
 	AXP152_IRQ_GPIO2_INPUT,
 	AXP152_IRQ_GPIO1_INPUT,
 	AXP152_IRQ_GPIO0_INPUT,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	AXP20X_IRQ_ACIN_OVER_V = 1,
 	AXP20X_IRQ_ACIN_PLUGIN,
 	AXP20X_IRQ_ACIN_REMOVAL,
@@ -478,9 +479,9 @@ enum {
 	AXP20X_IRQ_GPIO2_INPUT,
 	AXP20X_IRQ_GPIO1_INPUT,
 	AXP20X_IRQ_GPIO0_INPUT,
-};
+पूर्ण;
 
-enum axp22x_irqs {
+क्रमागत axp22x_irqs अणु
 	AXP22X_IRQ_ACIN_OVER_V = 1,
 	AXP22X_IRQ_ACIN_PLUGIN,
 	AXP22X_IRQ_ACIN_REMOVAL,
@@ -506,9 +507,9 @@ enum axp22x_irqs {
 	AXP22X_IRQ_PEK_FAL_EDGE,
 	AXP22X_IRQ_GPIO1_INPUT,
 	AXP22X_IRQ_GPIO0_INPUT,
-};
+पूर्ण;
 
-enum axp288_irqs {
+क्रमागत axp288_irqs अणु
 	AXP288_IRQ_VBUS_FALL     = 2,
 	AXP288_IRQ_VBUS_RISE,
 	AXP288_IRQ_OV,
@@ -543,9 +544,9 @@ enum axp288_irqs {
 	AXP288_IRQ_TIMER,
 	AXP288_IRQ_MV_CHNG,
 	AXP288_IRQ_BC_USB_CHNG,
-};
+पूर्ण;
 
-enum axp803_irqs {
+क्रमागत axp803_irqs अणु
 	AXP803_IRQ_ACIN_OVER_V = 1,
 	AXP803_IRQ_ACIN_PLUGIN,
 	AXP803_IRQ_ACIN_REMOVAL,
@@ -580,9 +581,9 @@ enum axp803_irqs {
 	AXP803_IRQ_GPIO0_INPUT,
 	AXP803_IRQ_BC_USB_CHNG,
 	AXP803_IRQ_MV_CHNG,
-};
+पूर्ण;
 
-enum axp806_irqs {
+क्रमागत axp806_irqs अणु
 	AXP806_IRQ_DIE_TEMP_HIGH_LV1,
 	AXP806_IRQ_DIE_TEMP_HIGH_LV2,
 	AXP806_IRQ_DCDCA_V_LOW,
@@ -595,9 +596,9 @@ enum axp806_irqs {
 	AXP806_IRQ_WAKEUP,
 	AXP806_IRQ_POK_FALL,
 	AXP806_IRQ_POK_RISE,
-};
+पूर्ण;
 
-enum axp809_irqs {
+क्रमागत axp809_irqs अणु
 	AXP809_IRQ_ACIN_OVER_V = 1,
 	AXP809_IRQ_ACIN_PLUGIN,
 	AXP809_IRQ_ACIN_REMOVAL,
@@ -630,42 +631,42 @@ enum axp809_irqs {
 	AXP809_IRQ_PEK_OVER_OFF,
 	AXP809_IRQ_GPIO1_INPUT,
 	AXP809_IRQ_GPIO0_INPUT,
-};
+पूर्ण;
 
-struct axp20x_dev {
-	struct device			*dev;
-	int				irq;
-	unsigned long			irq_flags;
-	struct regmap			*regmap;
-	struct regmap_irq_chip_data	*regmap_irqc;
-	long				variant;
-	int                             nr_cells;
-	const struct mfd_cell           *cells;
-	const struct regmap_config	*regmap_cfg;
-	const struct regmap_irq_chip	*regmap_irq_chip;
-};
+काष्ठा axp20x_dev अणु
+	काष्ठा device			*dev;
+	पूर्णांक				irq;
+	अचिन्हित दीर्घ			irq_flags;
+	काष्ठा regmap			*regmap;
+	काष्ठा regmap_irq_chip_data	*regmap_irqc;
+	दीर्घ				variant;
+	पूर्णांक                             nr_cells;
+	स्थिर काष्ठा mfd_cell           *cells;
+	स्थिर काष्ठा regmap_config	*regmap_cfg;
+	स्थिर काष्ठा regmap_irq_chip	*regmap_irq_chip;
+पूर्ण;
 
-/* generic helper function for reading 9-16 bit wide regs */
-static inline int axp20x_read_variable_width(struct regmap *regmap,
-	unsigned int reg, unsigned int width)
-{
-	unsigned int reg_val, result;
-	int err;
+/* generic helper function क्रम पढ़ोing 9-16 bit wide regs */
+अटल अंतरभूत पूर्णांक axp20x_पढ़ो_variable_width(काष्ठा regmap *regmap,
+	अचिन्हित पूर्णांक reg, अचिन्हित पूर्णांक width)
+अणु
+	अचिन्हित पूर्णांक reg_val, result;
+	पूर्णांक err;
 
-	err = regmap_read(regmap, reg, &reg_val);
-	if (err)
-		return err;
+	err = regmap_पढ़ो(regmap, reg, &reg_val);
+	अगर (err)
+		वापस err;
 
 	result = reg_val << (width - 8);
 
-	err = regmap_read(regmap, reg + 1, &reg_val);
-	if (err)
-		return err;
+	err = regmap_पढ़ो(regmap, reg + 1, &reg_val);
+	अगर (err)
+		वापस err;
 
 	result |= reg_val;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * axp20x_match_device(): Setup axp20x variant related fields
@@ -673,29 +674,29 @@ static inline int axp20x_read_variable_width(struct regmap *regmap,
  * @axp20x: axp20x device to setup (.dev field must be set)
  * @dev: device associated with this axp20x device
  *
- * This lets the axp20x core configure the mfd cells and register maps
- * for later use.
+ * This lets the axp20x core configure the mfd cells and रेजिस्टर maps
+ * क्रम later use.
  */
-int axp20x_match_device(struct axp20x_dev *axp20x);
+पूर्णांक axp20x_match_device(काष्ठा axp20x_dev *axp20x);
 
 /**
  * axp20x_device_probe(): Probe a configured axp20x device
  *
  * @axp20x: axp20x device to probe (must be configured)
  *
- * This function lets the axp20x core register the axp20x mfd devices
+ * This function lets the axp20x core रेजिस्टर the axp20x mfd devices
  * and irqchip. The axp20x device passed in must be fully configured
  * with axp20x_match_device, its irq set, and regmap created.
  */
-int axp20x_device_probe(struct axp20x_dev *axp20x);
+पूर्णांक axp20x_device_probe(काष्ठा axp20x_dev *axp20x);
 
 /**
- * axp20x_device_remove(): Remove a axp20x device
+ * axp20x_device_हटाओ(): Remove a axp20x device
  *
- * @axp20x: axp20x device to remove
+ * @axp20x: axp20x device to हटाओ
  *
- * This tells the axp20x core to remove the associated mfd devices
+ * This tells the axp20x core to हटाओ the associated mfd devices
  */
-void axp20x_device_remove(struct axp20x_dev *axp20x);
+व्योम axp20x_device_हटाओ(काष्ठा axp20x_dev *axp20x);
 
-#endif /* __LINUX_MFD_AXP20X_H */
+#पूर्ण_अगर /* __LINUX_MFD_AXP20X_H */

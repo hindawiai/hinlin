@@ -1,245 +1,246 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Expose the Chromebook Pixel lightbar to userspace
 //
 // Copyright (C) 2014 Google, Inc.
 
-#include <linux/ctype.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/fs.h>
-#include <linux/kobject.h>
-#include <linux/module.h>
-#include <linux/platform_data/cros_ec_commands.h>
-#include <linux/platform_data/cros_ec_proto.h>
-#include <linux/platform_device.h>
-#include <linux/sched.h>
-#include <linux/types.h>
-#include <linux/uaccess.h>
-#include <linux/slab.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/cros_ec_commands.h>
+#समावेश <linux/platक्रमm_data/cros_ec_proto.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/slab.h>
 
-#define DRV_NAME "cros-ec-lightbar"
+#घोषणा DRV_NAME "cros-ec-lightbar"
 
-/* Rate-limit the lightbar interface to prevent DoS. */
-static unsigned long lb_interval_jiffies = 50 * HZ / 1000;
+/* Rate-limit the lightbar पूर्णांकerface to prevent DoS. */
+अटल अचिन्हित दीर्घ lb_पूर्णांकerval_jअगरfies = 50 * HZ / 1000;
 
 /*
  * Whether or not we have given userspace control of the lightbar.
- * If this is true, we won't do anything during suspend/resume.
+ * If this is true, we won't करो anything during suspend/resume.
  */
-static bool userspace_control;
+अटल bool userspace_control;
 
-static ssize_t interval_msec_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	unsigned long msec = lb_interval_jiffies * 1000 / HZ;
+अटल sमाप_प्रकार पूर्णांकerval_msec_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ msec = lb_पूर्णांकerval_jअगरfies * 1000 / HZ;
 
-	return scnprintf(buf, PAGE_SIZE, "%lu\n", msec);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%lu\n", msec);
+पूर्ण
 
-static ssize_t interval_msec_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t count)
-{
-	unsigned long msec;
+अटल sमाप_प्रकार पूर्णांकerval_msec_store(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	अचिन्हित दीर्घ msec;
 
-	if (kstrtoul(buf, 0, &msec))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &msec))
+		वापस -EINVAL;
 
-	lb_interval_jiffies = msec * HZ / 1000;
+	lb_पूर्णांकerval_jअगरfies = msec * HZ / 1000;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEFINE_MUTEX(lb_mutex);
-/* Return 0 if able to throttle correctly, error otherwise */
-static int lb_throttle(void)
-{
-	static unsigned long last_access;
-	unsigned long now, next_timeslot;
-	long delay;
-	int ret = 0;
+अटल DEFINE_MUTEX(lb_mutex);
+/* Return 0 अगर able to throttle correctly, error otherwise */
+अटल पूर्णांक lb_throttle(व्योम)
+अणु
+	अटल अचिन्हित दीर्घ last_access;
+	अचिन्हित दीर्घ now, next_बारlot;
+	दीर्घ delay;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&lb_mutex);
 
-	now = jiffies;
-	next_timeslot = last_access + lb_interval_jiffies;
+	now = jअगरfies;
+	next_बारlot = last_access + lb_पूर्णांकerval_jअगरfies;
 
-	if (time_before(now, next_timeslot)) {
-		delay = (long)(next_timeslot) - (long)now;
+	अगर (समय_beक्रमe(now, next_बारlot)) अणु
+		delay = (दीर्घ)(next_बारlot) - (दीर्घ)now;
 		set_current_state(TASK_INTERRUPTIBLE);
-		if (schedule_timeout(delay) > 0) {
-			/* interrupted - just abort */
+		अगर (schedule_समयout(delay) > 0) अणु
+			/* पूर्णांकerrupted - just पात */
 			ret = -EINTR;
-			goto out;
-		}
-		now = jiffies;
-	}
+			जाओ out;
+		पूर्ण
+		now = jअगरfies;
+	पूर्ण
 
 	last_access = now;
 out:
 	mutex_unlock(&lb_mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct cros_ec_command *alloc_lightbar_cmd_msg(struct cros_ec_dev *ec)
-{
-	struct cros_ec_command *msg;
-	int len;
+अटल काष्ठा cros_ec_command *alloc_lightbar_cmd_msg(काष्ठा cros_ec_dev *ec)
+अणु
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक len;
 
-	len = max(sizeof(struct ec_params_lightbar),
-		  sizeof(struct ec_response_lightbar));
+	len = max(माप(काष्ठा ec_params_lightbar),
+		  माप(काष्ठा ec_response_lightbar));
 
-	msg = kmalloc(sizeof(*msg) + len, GFP_KERNEL);
-	if (!msg)
-		return NULL;
+	msg = kदो_स्मृति(माप(*msg) + len, GFP_KERNEL);
+	अगर (!msg)
+		वापस शून्य;
 
 	msg->version = 0;
 	msg->command = EC_CMD_LIGHTBAR_CMD + ec->cmd_offset;
-	msg->outsize = sizeof(struct ec_params_lightbar);
-	msg->insize = sizeof(struct ec_response_lightbar);
+	msg->outsize = माप(काष्ठा ec_params_lightbar);
+	msg->insize = माप(काष्ठा ec_response_lightbar);
 
-	return msg;
-}
+	वापस msg;
+पूर्ण
 
-static int get_lightbar_version(struct cros_ec_dev *ec,
-				uint32_t *ver_ptr, uint32_t *flg_ptr)
-{
-	struct ec_params_lightbar *param;
-	struct ec_response_lightbar *resp;
-	struct cros_ec_command *msg;
-	int ret;
+अटल पूर्णांक get_lightbar_version(काष्ठा cros_ec_dev *ec,
+				uपूर्णांक32_t *ver_ptr, uपूर्णांक32_t *flg_ptr)
+अणु
+	काष्ठा ec_params_lightbar *param;
+	काष्ठा ec_response_lightbar *resp;
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
 
 	msg = alloc_lightbar_cmd_msg(ec);
-	if (!msg)
-		return 0;
+	अगर (!msg)
+		वापस 0;
 
-	param = (struct ec_params_lightbar *)msg->data;
+	param = (काष्ठा ec_params_lightbar *)msg->data;
 	param->cmd = LIGHTBAR_CMD_VERSION;
-	msg->outsize = sizeof(param->cmd);
-	msg->result = sizeof(resp->version);
+	msg->outsize = माप(param->cmd);
+	msg->result = माप(resp->version);
 	ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-	if (ret < 0 && ret != -EINVAL) {
+	अगर (ret < 0 && ret != -EINVAL) अणु
 		ret = 0;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	switch (msg->result) {
-	case EC_RES_INVALID_PARAM:
+	चयन (msg->result) अणु
+	हाल EC_RES_INVALID_PARAM:
 		/* Pixel had no version command. */
-		if (ver_ptr)
+		अगर (ver_ptr)
 			*ver_ptr = 0;
-		if (flg_ptr)
+		अगर (flg_ptr)
 			*flg_ptr = 0;
 		ret = 1;
-		goto exit;
+		जाओ निकास;
 
-	case EC_RES_SUCCESS:
-		resp = (struct ec_response_lightbar *)msg->data;
+	हाल EC_RES_SUCCESS:
+		resp = (काष्ठा ec_response_lightbar *)msg->data;
 
 		/* Future devices w/lightbars should implement this command */
-		if (ver_ptr)
+		अगर (ver_ptr)
 			*ver_ptr = resp->version.num;
-		if (flg_ptr)
+		अगर (flg_ptr)
 			*flg_ptr = resp->version.flags;
 		ret = 1;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* Anything else (ie, EC_RES_INVALID_COMMAND) - no lightbar */
+	/* Anything अन्यथा (ie, EC_RES_INVALID_COMMAND) - no lightbar */
 	ret = 0;
-exit:
-	kfree(msg);
-	return ret;
-}
+निकास:
+	kमुक्त(msg);
+	वापस ret;
+पूर्ण
 
-static ssize_t version_show(struct device *dev,
-			    struct device_attribute *attr, char *buf)
-{
-	uint32_t version = 0, flags = 0;
-	struct cros_ec_dev *ec = to_cros_ec_dev(dev);
-	int ret;
+अटल sमाप_प्रकार version_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	uपूर्णांक32_t version = 0, flags = 0;
+	काष्ठा cros_ec_dev *ec = to_cros_ec_dev(dev);
+	पूर्णांक ret;
 
 	ret = lb_throttle();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* This should always succeed, because we check during init. */
-	if (!get_lightbar_version(ec, &version, &flags))
-		return -EIO;
+	अगर (!get_lightbar_version(ec, &version, &flags))
+		वापस -EIO;
 
-	return scnprintf(buf, PAGE_SIZE, "%d %d\n", version, flags);
-}
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d %d\n", version, flags);
+पूर्ण
 
-static ssize_t brightness_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t count)
-{
-	struct ec_params_lightbar *param;
-	struct cros_ec_command *msg;
-	int ret;
-	unsigned int val;
-	struct cros_ec_dev *ec = to_cros_ec_dev(dev);
+अटल sमाप_प्रकार brightness_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ec_params_lightbar *param;
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक val;
+	काष्ठा cros_ec_dev *ec = to_cros_ec_dev(dev);
 
-	if (kstrtouint(buf, 0, &val))
-		return -EINVAL;
+	अगर (kstrtouपूर्णांक(buf, 0, &val))
+		वापस -EINVAL;
 
 	msg = alloc_lightbar_cmd_msg(ec);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
-	param = (struct ec_params_lightbar *)msg->data;
+	param = (काष्ठा ec_params_lightbar *)msg->data;
 	param->cmd = LIGHTBAR_CMD_SET_BRIGHTNESS;
 	param->set_brightness.num = val;
 	ret = lb_throttle();
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 
 	ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-	if (ret < 0)
-		goto exit;
+	अगर (ret < 0)
+		जाओ निकास;
 
 	ret = count;
-exit:
-	kfree(msg);
-	return ret;
-}
+निकास:
+	kमुक्त(msg);
+	वापस ret;
+पूर्ण
 
 
 /*
- * We expect numbers, and we'll keep reading until we find them, skipping over
+ * We expect numbers, and we'll keep पढ़ोing until we find them, skipping over
  * any whitespace (sysfs guarantees that the input is null-terminated). Every
  * four numbers are sent to the lightbar as <LED,R,G,B>. We fail at the first
- * parsing error, if we don't parse any numbers, or if we have numbers left
+ * parsing error, अगर we करोn't parse any numbers, or अगर we have numbers left
  * over.
  */
-static ssize_t led_rgb_store(struct device *dev, struct device_attribute *attr,
-			     const char *buf, size_t count)
-{
-	struct ec_params_lightbar *param;
-	struct cros_ec_command *msg;
-	struct cros_ec_dev *ec = to_cros_ec_dev(dev);
-	unsigned int val[4];
-	int ret, i = 0, j = 0, ok = 0;
+अटल sमाप_प्रकार led_rgb_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ec_params_lightbar *param;
+	काष्ठा cros_ec_command *msg;
+	काष्ठा cros_ec_dev *ec = to_cros_ec_dev(dev);
+	अचिन्हित पूर्णांक val[4];
+	पूर्णांक ret, i = 0, j = 0, ok = 0;
 
 	msg = alloc_lightbar_cmd_msg(ec);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
-	do {
+	करो अणु
 		/* Skip any whitespace */
-		while (*buf && isspace(*buf))
+		जबतक (*buf && है_खाली(*buf))
 			buf++;
 
-		if (!*buf)
-			break;
+		अगर (!*buf)
+			अवरोध;
 
-		ret = sscanf(buf, "%i", &val[i++]);
-		if (ret == 0)
-			goto exit;
+		ret = माला_पूछो(buf, "%i", &val[i++]);
+		अगर (ret == 0)
+			जाओ निकास;
 
-		if (i == 4) {
-			param = (struct ec_params_lightbar *)msg->data;
+		अगर (i == 4) अणु
+			param = (काष्ठा ec_params_lightbar *)msg->data;
 			param->cmd = LIGHTBAR_CMD_SET_RGB;
 			param->set_rgb.led = val[0];
 			param->set_rgb.red = val[1];
@@ -249,364 +250,364 @@ static ssize_t led_rgb_store(struct device *dev, struct device_attribute *attr,
 			 * Throttle only the first of every four transactions,
 			 * so that the user can update all four LEDs at once.
 			 */
-			if ((j++ % 4) == 0) {
+			अगर ((j++ % 4) == 0) अणु
 				ret = lb_throttle();
-				if (ret)
-					goto exit;
-			}
+				अगर (ret)
+					जाओ निकास;
+			पूर्ण
 
 			ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-			if (ret < 0)
-				goto exit;
+			अगर (ret < 0)
+				जाओ निकास;
 
 			i = 0;
 			ok = 1;
-		}
+		पूर्ण
 
-		/* Skip over the number we just read */
-		while (*buf && !isspace(*buf))
+		/* Skip over the number we just पढ़ो */
+		जबतक (*buf && !है_खाली(*buf))
 			buf++;
 
-	} while (*buf);
+	पूर्ण जबतक (*buf);
 
-exit:
-	kfree(msg);
-	return (ok && i == 0) ? count : -EINVAL;
-}
+निकास:
+	kमुक्त(msg);
+	वापस (ok && i == 0) ? count : -EINVAL;
+पूर्ण
 
-static char const *seqname[] = {
+अटल अक्षर स्थिर *seqname[] = अणु
 	"ERROR", "S5", "S3", "S0", "S5S3", "S3S0",
 	"S0S3", "S3S5", "STOP", "RUN", "KONAMI",
 	"TAP", "PROGRAM",
-};
+पूर्ण;
 
-static ssize_t sequence_show(struct device *dev,
-			     struct device_attribute *attr, char *buf)
-{
-	struct ec_params_lightbar *param;
-	struct ec_response_lightbar *resp;
-	struct cros_ec_command *msg;
-	int ret;
-	struct cros_ec_dev *ec = to_cros_ec_dev(dev);
+अटल sमाप_प्रकार sequence_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा ec_params_lightbar *param;
+	काष्ठा ec_response_lightbar *resp;
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
+	काष्ठा cros_ec_dev *ec = to_cros_ec_dev(dev);
 
 	msg = alloc_lightbar_cmd_msg(ec);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
-	param = (struct ec_params_lightbar *)msg->data;
+	param = (काष्ठा ec_params_lightbar *)msg->data;
 	param->cmd = LIGHTBAR_CMD_GET_SEQ;
 	ret = lb_throttle();
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 
 	ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-	if (ret < 0) {
-		ret = scnprintf(buf, PAGE_SIZE, "XFER / EC ERROR %d / %d\n",
+	अगर (ret < 0) अणु
+		ret = scnम_लिखो(buf, PAGE_SIZE, "XFER / EC ERROR %d / %d\n",
 				ret, msg->result);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	resp = (struct ec_response_lightbar *)msg->data;
-	if (resp->get_seq.num >= ARRAY_SIZE(seqname))
-		ret = scnprintf(buf, PAGE_SIZE, "%d\n", resp->get_seq.num);
-	else
-		ret = scnprintf(buf, PAGE_SIZE, "%s\n",
+	resp = (काष्ठा ec_response_lightbar *)msg->data;
+	अगर (resp->get_seq.num >= ARRAY_SIZE(seqname))
+		ret = scnम_लिखो(buf, PAGE_SIZE, "%d\n", resp->get_seq.num);
+	अन्यथा
+		ret = scnम_लिखो(buf, PAGE_SIZE, "%s\n",
 				seqname[resp->get_seq.num]);
 
-exit:
-	kfree(msg);
-	return ret;
-}
+निकास:
+	kमुक्त(msg);
+	वापस ret;
+पूर्ण
 
-static int lb_send_empty_cmd(struct cros_ec_dev *ec, uint8_t cmd)
-{
-	struct ec_params_lightbar *param;
-	struct cros_ec_command *msg;
-	int ret;
+अटल पूर्णांक lb_send_empty_cmd(काष्ठा cros_ec_dev *ec, uपूर्णांक8_t cmd)
+अणु
+	काष्ठा ec_params_lightbar *param;
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
 
 	msg = alloc_lightbar_cmd_msg(ec);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
-	param = (struct ec_params_lightbar *)msg->data;
+	param = (काष्ठा ec_params_lightbar *)msg->data;
 	param->cmd = cmd;
 
 	ret = lb_throttle();
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
 	ret = 0;
 error:
-	kfree(msg);
+	kमुक्त(msg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int lb_manual_suspend_ctrl(struct cros_ec_dev *ec, uint8_t enable)
-{
-	struct ec_params_lightbar *param;
-	struct cros_ec_command *msg;
-	int ret;
+अटल पूर्णांक lb_manual_suspend_ctrl(काष्ठा cros_ec_dev *ec, uपूर्णांक8_t enable)
+अणु
+	काष्ठा ec_params_lightbar *param;
+	काष्ठा cros_ec_command *msg;
+	पूर्णांक ret;
 
 	msg = alloc_lightbar_cmd_msg(ec);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
-	param = (struct ec_params_lightbar *)msg->data;
+	param = (काष्ठा ec_params_lightbar *)msg->data;
 
 	param->cmd = LIGHTBAR_CMD_MANUAL_SUSPEND_CTRL;
 	param->manual_suspend_ctrl.enable = enable;
 
 	ret = lb_throttle();
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
 	ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
 	ret = 0;
 error:
-	kfree(msg);
+	kमुक्त(msg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t sequence_store(struct device *dev, struct device_attribute *attr,
-			      const char *buf, size_t count)
-{
-	struct ec_params_lightbar *param;
-	struct cros_ec_command *msg;
-	unsigned int num;
-	int ret, len;
-	struct cros_ec_dev *ec = to_cros_ec_dev(dev);
+अटल sमाप_प्रकार sequence_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ec_params_lightbar *param;
+	काष्ठा cros_ec_command *msg;
+	अचिन्हित पूर्णांक num;
+	पूर्णांक ret, len;
+	काष्ठा cros_ec_dev *ec = to_cros_ec_dev(dev);
 
-	for (len = 0; len < count; len++)
-		if (!isalnum(buf[len]))
-			break;
+	क्रम (len = 0; len < count; len++)
+		अगर (!है_अक्षर_अंक(buf[len]))
+			अवरोध;
 
-	for (num = 0; num < ARRAY_SIZE(seqname); num++)
-		if (!strncasecmp(seqname[num], buf, len))
-			break;
+	क्रम (num = 0; num < ARRAY_SIZE(seqname); num++)
+		अगर (!strnहालcmp(seqname[num], buf, len))
+			अवरोध;
 
-	if (num >= ARRAY_SIZE(seqname)) {
-		ret = kstrtouint(buf, 0, &num);
-		if (ret)
-			return ret;
-	}
+	अगर (num >= ARRAY_SIZE(seqname)) अणु
+		ret = kstrtouपूर्णांक(buf, 0, &num);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	msg = alloc_lightbar_cmd_msg(ec);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
-	param = (struct ec_params_lightbar *)msg->data;
+	param = (काष्ठा ec_params_lightbar *)msg->data;
 	param->cmd = LIGHTBAR_CMD_SEQ;
 	param->seq.num = num;
 	ret = lb_throttle();
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 
 	ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-	if (ret < 0)
-		goto exit;
+	अगर (ret < 0)
+		जाओ निकास;
 
 	ret = count;
-exit:
-	kfree(msg);
-	return ret;
-}
+निकास:
+	kमुक्त(msg);
+	वापस ret;
+पूर्ण
 
-static ssize_t program_store(struct device *dev, struct device_attribute *attr,
-			     const char *buf, size_t count)
-{
-	int extra_bytes, max_size, ret;
-	struct ec_params_lightbar *param;
-	struct cros_ec_command *msg;
-	struct cros_ec_dev *ec = to_cros_ec_dev(dev);
+अटल sमाप_प्रकार program_store(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक extra_bytes, max_size, ret;
+	काष्ठा ec_params_lightbar *param;
+	काष्ठा cros_ec_command *msg;
+	काष्ठा cros_ec_dev *ec = to_cros_ec_dev(dev);
 
 	/*
-	 * We might need to reject the program for size reasons. The EC
-	 * enforces a maximum program size, but we also don't want to try
-	 * and send a program that is too big for the protocol. In order
+	 * We might need to reject the program क्रम size reasons. The EC
+	 * enक्रमces a maximum program size, but we also करोn't want to try
+	 * and send a program that is too big क्रम the protocol. In order
 	 * to ensure the latter, we also need to ensure we have extra bytes
 	 * to represent the rest of the packet.
 	 */
-	extra_bytes = sizeof(*param) - sizeof(param->set_program.data);
+	extra_bytes = माप(*param) - माप(param->set_program.data);
 	max_size = min(EC_LB_PROG_LEN, ec->ec_dev->max_request - extra_bytes);
-	if (count > max_size) {
+	अगर (count > max_size) अणु
 		dev_err(dev, "Program is %u bytes, too long to send (max: %u)",
-			(unsigned int)count, max_size);
+			(अचिन्हित पूर्णांक)count, max_size);
 
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	msg = alloc_lightbar_cmd_msg(ec);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	ret = lb_throttle();
-	if (ret)
-		goto exit;
+	अगर (ret)
+		जाओ निकास;
 
 	dev_info(dev, "Copying %zu byte program to EC", count);
 
-	param = (struct ec_params_lightbar *)msg->data;
+	param = (काष्ठा ec_params_lightbar *)msg->data;
 	param->cmd = LIGHTBAR_CMD_SET_PROGRAM;
 
 	param->set_program.size = count;
-	memcpy(param->set_program.data, buf, count);
+	स_नकल(param->set_program.data, buf, count);
 
 	/*
-	 * We need to set the message size manually or else it will use
-	 * EC_LB_PROG_LEN. This might be too long, and the program
+	 * We need to set the message size manually or अन्यथा it will use
+	 * EC_LB_PROG_LEN. This might be too दीर्घ, and the program
 	 * is unlikely to use all of the space.
 	 */
 	msg->outsize = count + extra_bytes;
 
 	ret = cros_ec_cmd_xfer_status(ec->ec_dev, msg);
-	if (ret < 0)
-		goto exit;
+	अगर (ret < 0)
+		जाओ निकास;
 
 	ret = count;
-exit:
-	kfree(msg);
+निकास:
+	kमुक्त(msg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t userspace_control_show(struct device *dev,
-				      struct device_attribute *attr,
-				      char *buf)
-{
-	return scnprintf(buf, PAGE_SIZE, "%d\n", userspace_control);
-}
+अटल sमाप_प्रकार userspace_control_show(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      अक्षर *buf)
+अणु
+	वापस scnम_लिखो(buf, PAGE_SIZE, "%d\n", userspace_control);
+पूर्ण
 
-static ssize_t userspace_control_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf,
-				       size_t count)
-{
+अटल sमाप_प्रकार userspace_control_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf,
+				       माप_प्रकार count)
+अणु
 	bool enable;
-	int ret;
+	पूर्णांक ret;
 
 	ret = strtobool(buf, &enable);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	userspace_control = enable;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /* Module initialization */
 
-static DEVICE_ATTR_RW(interval_msec);
-static DEVICE_ATTR_RO(version);
-static DEVICE_ATTR_WO(brightness);
-static DEVICE_ATTR_WO(led_rgb);
-static DEVICE_ATTR_RW(sequence);
-static DEVICE_ATTR_WO(program);
-static DEVICE_ATTR_RW(userspace_control);
+अटल DEVICE_ATTR_RW(पूर्णांकerval_msec);
+अटल DEVICE_ATTR_RO(version);
+अटल DEVICE_ATTR_WO(brightness);
+अटल DEVICE_ATTR_WO(led_rgb);
+अटल DEVICE_ATTR_RW(sequence);
+अटल DEVICE_ATTR_WO(program);
+अटल DEVICE_ATTR_RW(userspace_control);
 
-static struct attribute *__lb_cmds_attrs[] = {
-	&dev_attr_interval_msec.attr,
+अटल काष्ठा attribute *__lb_cmds_attrs[] = अणु
+	&dev_attr_पूर्णांकerval_msec.attr,
 	&dev_attr_version.attr,
 	&dev_attr_brightness.attr,
 	&dev_attr_led_rgb.attr,
 	&dev_attr_sequence.attr,
 	&dev_attr_program.attr,
 	&dev_attr_userspace_control.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group cros_ec_lightbar_attr_group = {
+अटल स्थिर काष्ठा attribute_group cros_ec_lightbar_attr_group = अणु
 	.name = "lightbar",
 	.attrs = __lb_cmds_attrs,
-};
+पूर्ण;
 
-static int cros_ec_lightbar_probe(struct platform_device *pd)
-{
-	struct cros_ec_dev *ec_dev = dev_get_drvdata(pd->dev.parent);
-	struct cros_ec_platform *pdata = dev_get_platdata(ec_dev->dev);
-	struct device *dev = &pd->dev;
-	int ret;
+अटल पूर्णांक cros_ec_lightbar_probe(काष्ठा platक्रमm_device *pd)
+अणु
+	काष्ठा cros_ec_dev *ec_dev = dev_get_drvdata(pd->dev.parent);
+	काष्ठा cros_ec_platक्रमm *pdata = dev_get_platdata(ec_dev->dev);
+	काष्ठा device *dev = &pd->dev;
+	पूर्णांक ret;
 
 	/*
-	 * Only instantiate the lightbar if the EC name is 'cros_ec'. Other EC
+	 * Only instantiate the lightbar अगर the EC name is 'cros_ec'. Other EC
 	 * devices like 'cros_pd' doesn't have a lightbar.
 	 */
-	if (strcmp(pdata->ec_name, CROS_EC_DEV_NAME) != 0)
-		return -ENODEV;
+	अगर (म_भेद(pdata->ec_name, CROS_EC_DEV_NAME) != 0)
+		वापस -ENODEV;
 
 	/*
-	 * Ask then for the lightbar version, if it's 0 then the 'cros_ec'
-	 * doesn't have a lightbar.
+	 * Ask then क्रम the lightbar version, अगर it's 0 then the 'cros_ec'
+	 * करोesn't have a lightbar.
 	 */
-	if (!get_lightbar_version(ec_dev, NULL, NULL))
-		return -ENODEV;
+	अगर (!get_lightbar_version(ec_dev, शून्य, शून्य))
+		वापस -ENODEV;
 
 	/* Take control of the lightbar from the EC. */
 	lb_manual_suspend_ctrl(ec_dev, 1);
 
 	ret = sysfs_create_group(&ec_dev->class_dev.kobj,
 				 &cros_ec_lightbar_attr_group);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(dev, "failed to create %s attributes. err=%d\n",
 			cros_ec_lightbar_attr_group.name, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cros_ec_lightbar_remove(struct platform_device *pd)
-{
-	struct cros_ec_dev *ec_dev = dev_get_drvdata(pd->dev.parent);
+अटल पूर्णांक cros_ec_lightbar_हटाओ(काष्ठा platक्रमm_device *pd)
+अणु
+	काष्ठा cros_ec_dev *ec_dev = dev_get_drvdata(pd->dev.parent);
 
-	sysfs_remove_group(&ec_dev->class_dev.kobj,
+	sysfs_हटाओ_group(&ec_dev->class_dev.kobj,
 			   &cros_ec_lightbar_attr_group);
 
 	/* Let the EC take over the lightbar again. */
 	lb_manual_suspend_ctrl(ec_dev, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused cros_ec_lightbar_resume(struct device *dev)
-{
-	struct cros_ec_dev *ec_dev = dev_get_drvdata(dev->parent);
+अटल पूर्णांक __maybe_unused cros_ec_lightbar_resume(काष्ठा device *dev)
+अणु
+	काष्ठा cros_ec_dev *ec_dev = dev_get_drvdata(dev->parent);
 
-	if (userspace_control)
-		return 0;
+	अगर (userspace_control)
+		वापस 0;
 
-	return lb_send_empty_cmd(ec_dev, LIGHTBAR_CMD_RESUME);
-}
+	वापस lb_send_empty_cmd(ec_dev, LIGHTBAR_CMD_RESUME);
+पूर्ण
 
-static int __maybe_unused cros_ec_lightbar_suspend(struct device *dev)
-{
-	struct cros_ec_dev *ec_dev = dev_get_drvdata(dev->parent);
+अटल पूर्णांक __maybe_unused cros_ec_lightbar_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा cros_ec_dev *ec_dev = dev_get_drvdata(dev->parent);
 
-	if (userspace_control)
-		return 0;
+	अगर (userspace_control)
+		वापस 0;
 
-	return lb_send_empty_cmd(ec_dev, LIGHTBAR_CMD_SUSPEND);
-}
+	वापस lb_send_empty_cmd(ec_dev, LIGHTBAR_CMD_SUSPEND);
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(cros_ec_lightbar_pm_ops,
+अटल SIMPLE_DEV_PM_OPS(cros_ec_lightbar_pm_ops,
 			 cros_ec_lightbar_suspend, cros_ec_lightbar_resume);
 
-static struct platform_driver cros_ec_lightbar_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver cros_ec_lightbar_driver = अणु
+	.driver = अणु
 		.name = DRV_NAME,
 		.pm = &cros_ec_lightbar_pm_ops,
-	},
+	पूर्ण,
 	.probe = cros_ec_lightbar_probe,
-	.remove = cros_ec_lightbar_remove,
-};
+	.हटाओ = cros_ec_lightbar_हटाओ,
+पूर्ण;
 
-module_platform_driver(cros_ec_lightbar_driver);
+module_platक्रमm_driver(cros_ec_lightbar_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Expose the Chromebook Pixel's lightbar to userspace");

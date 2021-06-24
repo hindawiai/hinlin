@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  arch/arm/include/asm/mach/irda.h
+ *  arch/arm/include/यंत्र/mach/irda.h
  *
  *  Copyright (C) 2004 Russell King.
  */
-#ifndef __ASM_ARM_MACH_IRDA_H
-#define __ASM_ARM_MACH_IRDA_H
+#अगर_अघोषित __ASM_ARM_MACH_IRDA_H
+#घोषणा __ASM_ARM_MACH_IRDA_H
 
-struct irda_platform_data {
-	int (*startup)(struct device *);
-	void (*shutdown)(struct device *);
-	int (*set_power)(struct device *, unsigned int state);
-	void (*set_speed)(struct device *, unsigned int speed);
-};
+काष्ठा irda_platक्रमm_data अणु
+	पूर्णांक (*startup)(काष्ठा device *);
+	व्योम (*shutकरोwn)(काष्ठा device *);
+	पूर्णांक (*set_घातer)(काष्ठा device *, अचिन्हित पूर्णांक state);
+	व्योम (*set_speed)(काष्ठा device *, अचिन्हित पूर्णांक speed);
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

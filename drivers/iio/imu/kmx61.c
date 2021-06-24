@@ -1,128 +1,129 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * KMX61 - Kionix 6-axis Accelerometer/Magnetometer
  *
  * Copyright (c) 2014, Intel Corporation.
  *
- * IIO driver for KMX61 (7-bit I2C slave address 0x0E or 0x0F).
+ * IIO driver क्रम KMX61 (7-bit I2C slave address 0x0E or 0x0F).
  */
 
-#include <linux/module.h>
-#include <linux/i2c.h>
-#include <linux/acpi.h>
-#include <linux/interrupt.h>
-#include <linux/pm.h>
-#include <linux/pm_runtime.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/iio/events.h>
-#include <linux/iio/trigger.h>
-#include <linux/iio/buffer.h>
-#include <linux/iio/triggered_buffer.h>
-#include <linux/iio/trigger_consumer.h>
+#समावेश <linux/module.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/iio/trigger.h>
+#समावेश <linux/iio/buffer.h>
+#समावेश <linux/iio/triggered_buffer.h>
+#समावेश <linux/iio/trigger_consumer.h>
 
-#define KMX61_DRV_NAME "kmx61"
-#define KMX61_IRQ_NAME "kmx61_event"
+#घोषणा KMX61_DRV_NAME "kmx61"
+#घोषणा KMX61_IRQ_NAME "kmx61_event"
 
-#define KMX61_REG_WHO_AM_I	0x00
-#define KMX61_REG_INS1		0x01
-#define KMX61_REG_INS2		0x02
+#घोषणा KMX61_REG_WHO_AM_I	0x00
+#घोषणा KMX61_REG_INS1		0x01
+#घोषणा KMX61_REG_INS2		0x02
 
 /*
- * three 16-bit accelerometer output registers for X/Y/Z axis
- * we use only XOUT_L as a base register, all other addresses
+ * three 16-bit accelerometer output रेजिस्टरs क्रम X/Y/Z axis
+ * we use only XOUT_L as a base रेजिस्टर, all other addresses
  * can be obtained by applying an offset and are provided here
- * only for clarity.
+ * only क्रम clarity.
  */
-#define KMX61_ACC_XOUT_L	0x0A
-#define KMX61_ACC_XOUT_H	0x0B
-#define KMX61_ACC_YOUT_L	0x0C
-#define KMX61_ACC_YOUT_H	0x0D
-#define KMX61_ACC_ZOUT_L	0x0E
-#define KMX61_ACC_ZOUT_H	0x0F
+#घोषणा KMX61_ACC_XOUT_L	0x0A
+#घोषणा KMX61_ACC_XOUT_H	0x0B
+#घोषणा KMX61_ACC_YOUT_L	0x0C
+#घोषणा KMX61_ACC_YOUT_H	0x0D
+#घोषणा KMX61_ACC_ZOUT_L	0x0E
+#घोषणा KMX61_ACC_ZOUT_H	0x0F
 
 /*
- * one 16-bit temperature output register
+ * one 16-bit temperature output रेजिस्टर
  */
-#define KMX61_TEMP_L		0x10
-#define KMX61_TEMP_H		0x11
+#घोषणा KMX61_TEMP_L		0x10
+#घोषणा KMX61_TEMP_H		0x11
 
 /*
- * three 16-bit magnetometer output registers for X/Y/Z axis
+ * three 16-bit magnetometer output रेजिस्टरs क्रम X/Y/Z axis
  */
-#define KMX61_MAG_XOUT_L	0x12
-#define KMX61_MAG_XOUT_H	0x13
-#define KMX61_MAG_YOUT_L	0x14
-#define KMX61_MAG_YOUT_H	0x15
-#define KMX61_MAG_ZOUT_L	0x16
-#define KMX61_MAG_ZOUT_H	0x17
+#घोषणा KMX61_MAG_XOUT_L	0x12
+#घोषणा KMX61_MAG_XOUT_H	0x13
+#घोषणा KMX61_MAG_YOUT_L	0x14
+#घोषणा KMX61_MAG_YOUT_H	0x15
+#घोषणा KMX61_MAG_ZOUT_L	0x16
+#घोषणा KMX61_MAG_ZOUT_H	0x17
 
-#define KMX61_REG_INL		0x28
-#define KMX61_REG_STBY		0x29
-#define KMX61_REG_CTRL1		0x2A
-#define KMX61_REG_CTRL2		0x2B
-#define KMX61_REG_ODCNTL	0x2C
-#define KMX61_REG_INC1		0x2D
+#घोषणा KMX61_REG_INL		0x28
+#घोषणा KMX61_REG_STBY		0x29
+#घोषणा KMX61_REG_CTRL1		0x2A
+#घोषणा KMX61_REG_CTRL2		0x2B
+#घोषणा KMX61_REG_ODCNTL	0x2C
+#घोषणा KMX61_REG_INC1		0x2D
 
-#define KMX61_REG_WUF_THRESH	0x3D
-#define KMX61_REG_WUF_TIMER	0x3E
+#घोषणा KMX61_REG_WUF_THRESH	0x3D
+#घोषणा KMX61_REG_WUF_TIMER	0x3E
 
-#define KMX61_ACC_STBY_BIT	BIT(0)
-#define KMX61_MAG_STBY_BIT	BIT(1)
-#define KMX61_ACT_STBY_BIT	BIT(7)
+#घोषणा KMX61_ACC_STBY_BIT	BIT(0)
+#घोषणा KMX61_MAG_STBY_BIT	BIT(1)
+#घोषणा KMX61_ACT_STBY_BIT	BIT(7)
 
-#define KMX61_ALL_STBY		(KMX61_ACC_STBY_BIT | KMX61_MAG_STBY_BIT)
+#घोषणा KMX61_ALL_STBY		(KMX61_ACC_STBY_BIT | KMX61_MAG_STBY_BIT)
 
-#define KMX61_REG_INS1_BIT_WUFS		BIT(1)
+#घोषणा KMX61_REG_INS1_BIT_WUFS		BIT(1)
 
-#define KMX61_REG_INS2_BIT_ZP		BIT(0)
-#define KMX61_REG_INS2_BIT_ZN		BIT(1)
-#define KMX61_REG_INS2_BIT_YP		BIT(2)
-#define KMX61_REG_INS2_BIT_YN		BIT(3)
-#define KMX61_REG_INS2_BIT_XP		BIT(4)
-#define KMX61_REG_INS2_BIT_XN		BIT(5)
+#घोषणा KMX61_REG_INS2_BIT_ZP		BIT(0)
+#घोषणा KMX61_REG_INS2_BIT_ZN		BIT(1)
+#घोषणा KMX61_REG_INS2_BIT_YP		BIT(2)
+#घोषणा KMX61_REG_INS2_BIT_YN		BIT(3)
+#घोषणा KMX61_REG_INS2_BIT_XP		BIT(4)
+#घोषणा KMX61_REG_INS2_BIT_XN		BIT(5)
 
-#define KMX61_REG_CTRL1_GSEL_MASK	0x03
+#घोषणा KMX61_REG_CTRL1_GSEL_MASK	0x03
 
-#define KMX61_REG_CTRL1_BIT_RES		BIT(4)
-#define KMX61_REG_CTRL1_BIT_DRDYE	BIT(5)
-#define KMX61_REG_CTRL1_BIT_WUFE	BIT(6)
-#define KMX61_REG_CTRL1_BIT_BTSE	BIT(7)
+#घोषणा KMX61_REG_CTRL1_BIT_RES		BIT(4)
+#घोषणा KMX61_REG_CTRL1_BIT_DRDYE	BIT(5)
+#घोषणा KMX61_REG_CTRL1_BIT_WUFE	BIT(6)
+#घोषणा KMX61_REG_CTRL1_BIT_BTSE	BIT(7)
 
-#define KMX61_REG_INC1_BIT_WUFS		BIT(0)
-#define KMX61_REG_INC1_BIT_DRDYM	BIT(1)
-#define KMX61_REG_INC1_BIT_DRDYA	BIT(2)
-#define KMX61_REG_INC1_BIT_IEN		BIT(5)
+#घोषणा KMX61_REG_INC1_BIT_WUFS		BIT(0)
+#घोषणा KMX61_REG_INC1_BIT_DRDYM	BIT(1)
+#घोषणा KMX61_REG_INC1_BIT_DRDYA	BIT(2)
+#घोषणा KMX61_REG_INC1_BIT_IEN		BIT(5)
 
-#define KMX61_ACC_ODR_SHIFT	0
-#define KMX61_MAG_ODR_SHIFT	4
-#define KMX61_ACC_ODR_MASK	0x0F
-#define KMX61_MAG_ODR_MASK	0xF0
+#घोषणा KMX61_ACC_ODR_SHIFT	0
+#घोषणा KMX61_MAG_ODR_SHIFT	4
+#घोषणा KMX61_ACC_ODR_MASK	0x0F
+#घोषणा KMX61_MAG_ODR_MASK	0xF0
 
-#define KMX61_OWUF_MASK		0x7
+#घोषणा KMX61_OWUF_MASK		0x7
 
-#define KMX61_DEFAULT_WAKE_THRESH	1
-#define KMX61_DEFAULT_WAKE_DURATION	1
+#घोषणा KMX61_DEFAULT_WAKE_THRESH	1
+#घोषणा KMX61_DEFAULT_WAKE_DURATION	1
 
-#define KMX61_SLEEP_DELAY_MS	2000
+#घोषणा KMX61_SLEEP_DELAY_MS	2000
 
-#define KMX61_CHIP_ID		0x12
+#घोषणा KMX61_CHIP_ID		0x12
 
 /* KMX61 devices */
-#define KMX61_ACC	0x01
-#define KMX61_MAG	0x02
+#घोषणा KMX61_ACC	0x01
+#घोषणा KMX61_MAG	0x02
 
-struct kmx61_data {
-	struct i2c_client *client;
+काष्ठा kmx61_data अणु
+	काष्ठा i2c_client *client;
 
 	/* serialize access to non-atomic ops, e.g set_mode */
-	struct mutex lock;
+	काष्ठा mutex lock;
 
 	/* standby state */
 	bool acc_stby;
 	bool mag_stby;
 
-	/* power state */
+	/* घातer state */
 	bool acc_ps;
 	bool mag_ps;
 
@@ -132,1401 +133,1401 @@ struct kmx61_data {
 	u8 wake_thresh;
 	u8 wake_duration;
 
-	/* accelerometer specific data */
-	struct iio_dev *acc_indio_dev;
-	struct iio_trigger *acc_dready_trig;
-	struct iio_trigger *motion_trig;
-	bool acc_dready_trig_on;
+	/* accelerometer specअगरic data */
+	काष्ठा iio_dev *acc_indio_dev;
+	काष्ठा iio_trigger *acc_dपढ़ोy_trig;
+	काष्ठा iio_trigger *motion_trig;
+	bool acc_dपढ़ोy_trig_on;
 	bool motion_trig_on;
 	bool ev_enable_state;
 
-	/* magnetometer specific data */
-	struct iio_dev *mag_indio_dev;
-	struct iio_trigger *mag_dready_trig;
-	bool mag_dready_trig_on;
-};
+	/* magnetometer specअगरic data */
+	काष्ठा iio_dev *mag_indio_dev;
+	काष्ठा iio_trigger *mag_dपढ़ोy_trig;
+	bool mag_dपढ़ोy_trig_on;
+पूर्ण;
 
-enum kmx61_range {
+क्रमागत kmx61_range अणु
 	KMX61_RANGE_2G,
 	KMX61_RANGE_4G,
 	KMX61_RANGE_8G,
-};
+पूर्ण;
 
-enum kmx61_axis {
+क्रमागत kmx61_axis अणु
 	KMX61_AXIS_X,
 	KMX61_AXIS_Y,
 	KMX61_AXIS_Z,
-};
+पूर्ण;
 
-static const u16 kmx61_uscale_table[] = {9582, 19163, 38326};
+अटल स्थिर u16 kmx61_uscale_table[] = अणु9582, 19163, 38326पूर्ण;
 
-static const struct {
-	int val;
-	int val2;
-} kmx61_samp_freq_table[] = { {12, 500000},
-			{25, 0},
-			{50, 0},
-			{100, 0},
-			{200, 0},
-			{400, 0},
-			{800, 0},
-			{1600, 0},
-			{0, 781000},
-			{1, 563000},
-			{3, 125000},
-			{6, 250000} };
+अटल स्थिर काष्ठा अणु
+	पूर्णांक val;
+	पूर्णांक val2;
+पूर्ण kmx61_samp_freq_table[] = अणु अणु12, 500000पूर्ण,
+			अणु25, 0पूर्ण,
+			अणु50, 0पूर्ण,
+			अणु100, 0पूर्ण,
+			अणु200, 0पूर्ण,
+			अणु400, 0पूर्ण,
+			अणु800, 0पूर्ण,
+			अणु1600, 0पूर्ण,
+			अणु0, 781000पूर्ण,
+			अणु1, 563000पूर्ण,
+			अणु3, 125000पूर्ण,
+			अणु6, 250000पूर्ण पूर्ण;
 
-static const struct {
-	int val;
-	int val2;
-	int odr_bits;
-} kmx61_wake_up_odr_table[] = { {0, 781000, 0x00},
-				 {1, 563000, 0x01},
-				 {3, 125000, 0x02},
-				 {6, 250000, 0x03},
-				 {12, 500000, 0x04},
-				 {25, 0, 0x05},
-				 {50, 0, 0x06},
-				 {100, 0, 0x06},
-				 {200, 0, 0x06},
-				 {400, 0, 0x06},
-				 {800, 0, 0x06},
-				 {1600, 0, 0x06} };
+अटल स्थिर काष्ठा अणु
+	पूर्णांक val;
+	पूर्णांक val2;
+	पूर्णांक odr_bits;
+पूर्ण kmx61_wake_up_odr_table[] = अणु अणु0, 781000, 0x00पूर्ण,
+				 अणु1, 563000, 0x01पूर्ण,
+				 अणु3, 125000, 0x02पूर्ण,
+				 अणु6, 250000, 0x03पूर्ण,
+				 अणु12, 500000, 0x04पूर्ण,
+				 अणु25, 0, 0x05पूर्ण,
+				 अणु50, 0, 0x06पूर्ण,
+				 अणु100, 0, 0x06पूर्ण,
+				 अणु200, 0, 0x06पूर्ण,
+				 अणु400, 0, 0x06पूर्ण,
+				 अणु800, 0, 0x06पूर्ण,
+				 अणु1600, 0, 0x06पूर्ण पूर्ण;
 
-static IIO_CONST_ATTR(accel_scale_available, "0.009582 0.019163 0.038326");
-static IIO_CONST_ATTR(magn_scale_available, "0.001465");
-static IIO_CONST_ATTR_SAMP_FREQ_AVAIL(
+अटल IIO_CONST_ATTR(accel_scale_available, "0.009582 0.019163 0.038326");
+अटल IIO_CONST_ATTR(magn_scale_available, "0.001465");
+अटल IIO_CONST_ATTR_SAMP_FREQ_AVAIL(
 	"0.781000 1.563000 3.125000 6.250000 12.500000 25 50 100 200 400 800");
 
-static struct attribute *kmx61_acc_attributes[] = {
-	&iio_const_attr_accel_scale_available.dev_attr.attr,
-	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
-	NULL,
-};
+अटल काष्ठा attribute *kmx61_acc_attributes[] = अणु
+	&iio_स्थिर_attr_accel_scale_available.dev_attr.attr,
+	&iio_स्थिर_attr_sampling_frequency_available.dev_attr.attr,
+	शून्य,
+पूर्ण;
 
-static struct attribute *kmx61_mag_attributes[] = {
-	&iio_const_attr_magn_scale_available.dev_attr.attr,
-	&iio_const_attr_sampling_frequency_available.dev_attr.attr,
-	NULL,
-};
+अटल काष्ठा attribute *kmx61_mag_attributes[] = अणु
+	&iio_स्थिर_attr_magn_scale_available.dev_attr.attr,
+	&iio_स्थिर_attr_sampling_frequency_available.dev_attr.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group kmx61_acc_attribute_group = {
+अटल स्थिर काष्ठा attribute_group kmx61_acc_attribute_group = अणु
 	.attrs = kmx61_acc_attributes,
-};
+पूर्ण;
 
-static const struct attribute_group kmx61_mag_attribute_group = {
+अटल स्थिर काष्ठा attribute_group kmx61_mag_attribute_group = अणु
 	.attrs = kmx61_mag_attributes,
-};
+पूर्ण;
 
-static const struct iio_event_spec kmx61_event = {
+अटल स्थिर काष्ठा iio_event_spec kmx61_event = अणु
 	.type = IIO_EV_TYPE_THRESH,
-	.dir = IIO_EV_DIR_EITHER,
+	.dir = IIO_EV_सूची_EITHER,
 	.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 			 BIT(IIO_EV_INFO_ENABLE) |
 			 BIT(IIO_EV_INFO_PERIOD),
-};
+पूर्ण;
 
-#define KMX61_ACC_CHAN(_axis) { \
+#घोषणा KMX61_ACC_CHAN(_axis) अणु \
 	.type = IIO_ACCEL, \
-	.modified = 1, \
+	.modअगरied = 1, \
 	.channel2 = IIO_MOD_ ## _axis, \
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) | \
 				BIT(IIO_CHAN_INFO_SAMP_FREQ), \
 	.address = KMX61_ACC, \
 	.scan_index = KMX61_AXIS_ ## _axis, \
-	.scan_type = { \
+	.scan_type = अणु \
 		.sign = 's', \
 		.realbits = 12, \
 		.storagebits = 16, \
-		.shift = 4, \
+		.shअगरt = 4, \
 		.endianness = IIO_LE, \
-	}, \
+	पूर्ण, \
 	.event_spec = &kmx61_event, \
 	.num_event_specs = 1 \
-}
+पूर्ण
 
-#define KMX61_MAG_CHAN(_axis) { \
+#घोषणा KMX61_MAG_CHAN(_axis) अणु \
 	.type = IIO_MAGN, \
-	.modified = 1, \
+	.modअगरied = 1, \
 	.channel2 = IIO_MOD_ ## _axis, \
 	.address = KMX61_MAG, \
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW), \
 	.info_mask_shared_by_type = BIT(IIO_CHAN_INFO_SCALE) | \
 				BIT(IIO_CHAN_INFO_SAMP_FREQ), \
 	.scan_index = KMX61_AXIS_ ## _axis, \
-	.scan_type = { \
+	.scan_type = अणु \
 		.sign = 's', \
 		.realbits = 14, \
 		.storagebits = 16, \
-		.shift = 2, \
+		.shअगरt = 2, \
 		.endianness = IIO_LE, \
-	}, \
-}
+	पूर्ण, \
+पूर्ण
 
-static const struct iio_chan_spec kmx61_acc_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec kmx61_acc_channels[] = अणु
 	KMX61_ACC_CHAN(X),
 	KMX61_ACC_CHAN(Y),
 	KMX61_ACC_CHAN(Z),
-};
+पूर्ण;
 
-static const struct iio_chan_spec kmx61_mag_channels[] = {
+अटल स्थिर काष्ठा iio_chan_spec kmx61_mag_channels[] = अणु
 	KMX61_MAG_CHAN(X),
 	KMX61_MAG_CHAN(Y),
 	KMX61_MAG_CHAN(Z),
-};
+पूर्ण;
 
-static void kmx61_set_data(struct iio_dev *indio_dev, struct kmx61_data *data)
-{
-	struct kmx61_data **priv = iio_priv(indio_dev);
+अटल व्योम kmx61_set_data(काष्ठा iio_dev *indio_dev, काष्ठा kmx61_data *data)
+अणु
+	काष्ठा kmx61_data **priv = iio_priv(indio_dev);
 
 	*priv = data;
-}
+पूर्ण
 
-static struct kmx61_data *kmx61_get_data(struct iio_dev *indio_dev)
-{
-	return *(struct kmx61_data **)iio_priv(indio_dev);
-}
+अटल काष्ठा kmx61_data *kmx61_get_data(काष्ठा iio_dev *indio_dev)
+अणु
+	वापस *(काष्ठा kmx61_data **)iio_priv(indio_dev);
+पूर्ण
 
-static int kmx61_convert_freq_to_bit(int val, int val2)
-{
-	int i;
+अटल पूर्णांक kmx61_convert_freq_to_bit(पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(kmx61_samp_freq_table); i++)
-		if (val == kmx61_samp_freq_table[i].val &&
+	क्रम (i = 0; i < ARRAY_SIZE(kmx61_samp_freq_table); i++)
+		अगर (val == kmx61_samp_freq_table[i].val &&
 		    val2 == kmx61_samp_freq_table[i].val2)
-			return i;
-	return -EINVAL;
-}
+			वापस i;
+	वापस -EINVAL;
+पूर्ण
 
-static int kmx61_convert_wake_up_odr_to_bit(int val, int val2)
-{
-	int i;
+अटल पूर्णांक kmx61_convert_wake_up_odr_to_bit(पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(kmx61_wake_up_odr_table); ++i)
-		if (kmx61_wake_up_odr_table[i].val == val &&
+	क्रम (i = 0; i < ARRAY_SIZE(kmx61_wake_up_odr_table); ++i)
+		अगर (kmx61_wake_up_odr_table[i].val == val &&
 			kmx61_wake_up_odr_table[i].val2 == val2)
-				return kmx61_wake_up_odr_table[i].odr_bits;
-	return -EINVAL;
-}
+				वापस kmx61_wake_up_odr_table[i].odr_bits;
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * kmx61_set_mode() - set KMX61 device operating mode
- * @data: kmx61 device private data pointer
- * @mode: bitmask, indicating operating mode for @device
- * @device: bitmask, indicating device for which @mode needs to be set
- * @update: update stby bits stored in device's private  @data
+ * @data: kmx61 device निजी data poपूर्णांकer
+ * @mode: biपंचांगask, indicating operating mode क्रम @device
+ * @device: biपंचांगask, indicating device क्रम which @mode needs to be set
+ * @update: update stby bits stored in device's निजी  @data
  *
  * For each sensor (accelerometer/magnetometer) there are two operating modes
  * STANDBY and OPERATION. Neither accel nor magn can be disabled independently
- * if they are both enabled. Internal sensors state is saved in acc_stby and
- * mag_stby members of driver's private @data.
+ * अगर they are both enabled. Internal sensors state is saved in acc_stby and
+ * mag_stby members of driver's निजी @data.
  */
-static int kmx61_set_mode(struct kmx61_data *data, u8 mode, u8 device,
+अटल पूर्णांक kmx61_set_mode(काष्ठा kmx61_data *data, u8 mode, u8 device,
 			  bool update)
-{
-	int ret;
-	int acc_stby = -1, mag_stby = -1;
+अणु
+	पूर्णांक ret;
+	पूर्णांक acc_stby = -1, mag_stby = -1;
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_STBY);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_STBY);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading reg_stby\n");
-		return ret;
-	}
-	if (device & KMX61_ACC) {
-		if (mode & KMX61_ACC_STBY_BIT) {
+		वापस ret;
+	पूर्ण
+	अगर (device & KMX61_ACC) अणु
+		अगर (mode & KMX61_ACC_STBY_BIT) अणु
 			ret |= KMX61_ACC_STBY_BIT;
 			acc_stby = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret &= ~KMX61_ACC_STBY_BIT;
 			acc_stby = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (device & KMX61_MAG) {
-		if (mode & KMX61_MAG_STBY_BIT) {
+	अगर (device & KMX61_MAG) अणु
+		अगर (mode & KMX61_MAG_STBY_BIT) अणु
 			ret |= KMX61_MAG_STBY_BIT;
 			mag_stby = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret &= ~KMX61_MAG_STBY_BIT;
 			mag_stby = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (mode & KMX61_ACT_STBY_BIT)
+	अगर (mode & KMX61_ACT_STBY_BIT)
 		ret |= KMX61_ACT_STBY_BIT;
 
-	ret = i2c_smbus_write_byte_data(data->client, KMX61_REG_STBY, ret);
-	if (ret < 0) {
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, KMX61_REG_STBY, ret);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error writing reg_stby\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (acc_stby != -1 && update)
+	अगर (acc_stby != -1 && update)
 		data->acc_stby = acc_stby;
-	if (mag_stby != -1 && update)
+	अगर (mag_stby != -1 && update)
 		data->mag_stby = mag_stby;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kmx61_get_mode(struct kmx61_data *data, u8 *mode, u8 device)
-{
-	int ret;
+अटल पूर्णांक kmx61_get_mode(काष्ठा kmx61_data *data, u8 *mode, u8 device)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_STBY);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_STBY);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading reg_stby\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	*mode = 0;
 
-	if (device & KMX61_ACC) {
-		if (ret & KMX61_ACC_STBY_BIT)
+	अगर (device & KMX61_ACC) अणु
+		अगर (ret & KMX61_ACC_STBY_BIT)
 			*mode |= KMX61_ACC_STBY_BIT;
-		else
+		अन्यथा
 			*mode &= ~KMX61_ACC_STBY_BIT;
-	}
+	पूर्ण
 
-	if (device & KMX61_MAG) {
-		if (ret & KMX61_MAG_STBY_BIT)
+	अगर (device & KMX61_MAG) अणु
+		अगर (ret & KMX61_MAG_STBY_BIT)
 			*mode |= KMX61_MAG_STBY_BIT;
-		else
+		अन्यथा
 			*mode &= ~KMX61_MAG_STBY_BIT;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kmx61_set_wake_up_odr(struct kmx61_data *data, int val, int val2)
-{
-	int ret, odr_bits;
+अटल पूर्णांक kmx61_set_wake_up_odr(काष्ठा kmx61_data *data, पूर्णांक val, पूर्णांक val2)
+अणु
+	पूर्णांक ret, odr_bits;
 
 	odr_bits = kmx61_convert_wake_up_odr_to_bit(val, val2);
-	if (odr_bits < 0)
-		return odr_bits;
+	अगर (odr_bits < 0)
+		वापस odr_bits;
 
-	ret = i2c_smbus_write_byte_data(data->client, KMX61_REG_CTRL2,
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, KMX61_REG_CTRL2,
 					odr_bits);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&data->client->dev, "Error writing reg_ctrl2\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kmx61_set_odr(struct kmx61_data *data, int val, int val2, u8 device)
-{
-	int ret;
+अटल पूर्णांक kmx61_set_odr(काष्ठा kmx61_data *data, पूर्णांक val, पूर्णांक val2, u8 device)
+अणु
+	पूर्णांक ret;
 	u8 mode;
-	int lodr_bits, odr_bits;
+	पूर्णांक lodr_bits, odr_bits;
 
 	ret = kmx61_get_mode(data, &mode, KMX61_ACC | KMX61_MAG);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	lodr_bits = kmx61_convert_freq_to_bit(val, val2);
-	if (lodr_bits < 0)
-		return lodr_bits;
+	अगर (lodr_bits < 0)
+		वापस lodr_bits;
 
 	/* To change ODR, accel and magn must be in STDBY */
 	ret = kmx61_set_mode(data, KMX61_ALL_STBY, KMX61_ACC | KMX61_MAG,
 			     true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	odr_bits = 0;
-	if (device & KMX61_ACC)
+	अगर (device & KMX61_ACC)
 		odr_bits |= lodr_bits << KMX61_ACC_ODR_SHIFT;
-	if (device & KMX61_MAG)
+	अगर (device & KMX61_MAG)
 		odr_bits |= lodr_bits << KMX61_MAG_ODR_SHIFT;
 
-	ret = i2c_smbus_write_byte_data(data->client, KMX61_REG_ODCNTL,
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, KMX61_REG_ODCNTL,
 					odr_bits);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	data->odr_bits = odr_bits;
 
-	if (device & KMX61_ACC) {
+	अगर (device & KMX61_ACC) अणु
 		ret = kmx61_set_wake_up_odr(data, val, val2);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return kmx61_set_mode(data, mode, KMX61_ACC | KMX61_MAG, true);
-}
+	वापस kmx61_set_mode(data, mode, KMX61_ACC | KMX61_MAG, true);
+पूर्ण
 
-static int kmx61_get_odr(struct kmx61_data *data, int *val, int *val2,
+अटल पूर्णांक kmx61_get_odr(काष्ठा kmx61_data *data, पूर्णांक *val, पूर्णांक *val2,
 			 u8 device)
-{
+अणु
 	u8 lodr_bits;
 
-	if (device & KMX61_ACC)
+	अगर (device & KMX61_ACC)
 		lodr_bits = (data->odr_bits >> KMX61_ACC_ODR_SHIFT) &
 			     KMX61_ACC_ODR_MASK;
-	else if (device & KMX61_MAG)
+	अन्यथा अगर (device & KMX61_MAG)
 		lodr_bits = (data->odr_bits >> KMX61_MAG_ODR_SHIFT) &
 			     KMX61_MAG_ODR_MASK;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	if (lodr_bits >= ARRAY_SIZE(kmx61_samp_freq_table))
-		return -EINVAL;
+	अगर (lodr_bits >= ARRAY_SIZE(kmx61_samp_freq_table))
+		वापस -EINVAL;
 
 	*val = kmx61_samp_freq_table[lodr_bits].val;
 	*val2 = kmx61_samp_freq_table[lodr_bits].val2;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kmx61_set_range(struct kmx61_data *data, u8 range)
-{
-	int ret;
+अटल पूर्णांक kmx61_set_range(काष्ठा kmx61_data *data, u8 range)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_CTRL1);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_CTRL1);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading reg_ctrl1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret &= ~KMX61_REG_CTRL1_GSEL_MASK;
 	ret |= range & KMX61_REG_CTRL1_GSEL_MASK;
 
-	ret = i2c_smbus_write_byte_data(data->client, KMX61_REG_CTRL1, ret);
-	if (ret < 0) {
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, KMX61_REG_CTRL1, ret);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error writing reg_ctrl1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	data->range = range;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kmx61_set_scale(struct kmx61_data *data, u16 uscale)
-{
-	int ret, i;
+अटल पूर्णांक kmx61_set_scale(काष्ठा kmx61_data *data, u16 uscale)
+अणु
+	पूर्णांक ret, i;
 	u8  mode;
 
-	for (i = 0; i < ARRAY_SIZE(kmx61_uscale_table); i++) {
-		if (kmx61_uscale_table[i] == uscale) {
+	क्रम (i = 0; i < ARRAY_SIZE(kmx61_uscale_table); i++) अणु
+		अगर (kmx61_uscale_table[i] == uscale) अणु
 			ret = kmx61_get_mode(data, &mode,
 					     KMX61_ACC | KMX61_MAG);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
 			ret = kmx61_set_mode(data, KMX61_ALL_STBY,
 					     KMX61_ACC | KMX61_MAG, true);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
 			ret = kmx61_set_range(data, i);
-			if (ret < 0)
-				return ret;
+			अगर (ret < 0)
+				वापस ret;
 
-			return  kmx61_set_mode(data, mode,
+			वापस  kmx61_set_mode(data, mode,
 					       KMX61_ACC | KMX61_MAG, true);
-		}
-	}
-	return -EINVAL;
-}
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int kmx61_chip_init(struct kmx61_data *data)
-{
-	int ret, val, val2;
+अटल पूर्णांक kmx61_chip_init(काष्ठा kmx61_data *data)
+अणु
+	पूर्णांक ret, val, val2;
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_WHO_AM_I);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_WHO_AM_I);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading who_am_i\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ret != KMX61_CHIP_ID) {
+	अगर (ret != KMX61_CHIP_ID) अणु
 		dev_err(&data->client->dev,
 			"Wrong chip id, got %x expected %x\n",
 			 ret, KMX61_CHIP_ID);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* set accel 12bit, 4g range */
 	ret = kmx61_set_range(data, KMX61_RANGE_4G);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_ODCNTL);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_ODCNTL);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading reg_odcntl\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	data->odr_bits = ret;
 
 	/*
-	 * set output data rate for wake up (motion detection) function
-	 * to match data rate for accelerometer sampling
+	 * set output data rate क्रम wake up (motion detection) function
+	 * to match data rate क्रम accelerometer sampling
 	 */
 	ret = kmx61_get_odr(data, &val, &val2, KMX61_ACC);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = kmx61_set_wake_up_odr(data, val, val2);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/* set acc/magn to OPERATION mode */
 	ret = kmx61_set_mode(data, 0, KMX61_ACC | KMX61_MAG, true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	data->wake_thresh = KMX61_DEFAULT_WAKE_THRESH;
 	data->wake_duration = KMX61_DEFAULT_WAKE_DURATION;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kmx61_setup_new_data_interrupt(struct kmx61_data *data,
+अटल पूर्णांक kmx61_setup_new_data_पूर्णांकerrupt(काष्ठा kmx61_data *data,
 					  bool status, u8 device)
-{
+अणु
 	u8 mode;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kmx61_get_mode(data, &mode, KMX61_ACC | KMX61_MAG);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = kmx61_set_mode(data, KMX61_ALL_STBY, KMX61_ACC | KMX61_MAG, true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_INC1);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_INC1);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading reg_ctrl1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (status) {
+	अगर (status) अणु
 		ret |= KMX61_REG_INC1_BIT_IEN;
-		if (device & KMX61_ACC)
+		अगर (device & KMX61_ACC)
 			ret |= KMX61_REG_INC1_BIT_DRDYA;
-		if (device & KMX61_MAG)
+		अगर (device & KMX61_MAG)
 			ret |=  KMX61_REG_INC1_BIT_DRDYM;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret &= ~KMX61_REG_INC1_BIT_IEN;
-		if (device & KMX61_ACC)
+		अगर (device & KMX61_ACC)
 			ret &= ~KMX61_REG_INC1_BIT_DRDYA;
-		if (device & KMX61_MAG)
+		अगर (device & KMX61_MAG)
 			ret &= ~KMX61_REG_INC1_BIT_DRDYM;
-	}
-	ret = i2c_smbus_write_byte_data(data->client, KMX61_REG_INC1, ret);
-	if (ret < 0) {
+	पूर्ण
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, KMX61_REG_INC1, ret);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error writing reg_int_ctrl1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_CTRL1);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_CTRL1);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading reg_ctrl1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (status)
+	अगर (status)
 		ret |= KMX61_REG_CTRL1_BIT_DRDYE;
-	else
+	अन्यथा
 		ret &= ~KMX61_REG_CTRL1_BIT_DRDYE;
 
-	ret = i2c_smbus_write_byte_data(data->client, KMX61_REG_CTRL1, ret);
-	if (ret < 0) {
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, KMX61_REG_CTRL1, ret);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error writing reg_ctrl1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return kmx61_set_mode(data, mode, KMX61_ACC | KMX61_MAG, true);
-}
+	वापस kmx61_set_mode(data, mode, KMX61_ACC | KMX61_MAG, true);
+पूर्ण
 
-static int kmx61_chip_update_thresholds(struct kmx61_data *data)
-{
-	int ret;
+अटल पूर्णांक kmx61_chip_update_thresholds(काष्ठा kmx61_data *data)
+अणु
+	पूर्णांक ret;
 
-	ret = i2c_smbus_write_byte_data(data->client,
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client,
 					KMX61_REG_WUF_TIMER,
 					data->wake_duration);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Errow writing reg_wuf_timer\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = i2c_smbus_write_byte_data(data->client,
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client,
 					KMX61_REG_WUF_THRESH,
 					data->wake_thresh);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&data->client->dev, "Error writing reg_wuf_thresh\n");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kmx61_setup_any_motion_interrupt(struct kmx61_data *data,
+अटल पूर्णांक kmx61_setup_any_motion_पूर्णांकerrupt(काष्ठा kmx61_data *data,
 					    bool status)
-{
+अणु
 	u8 mode;
-	int ret;
+	पूर्णांक ret;
 
 	ret = kmx61_get_mode(data, &mode, KMX61_ACC | KMX61_MAG);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = kmx61_set_mode(data, KMX61_ALL_STBY, KMX61_ACC | KMX61_MAG, true);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = kmx61_chip_update_thresholds(data);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_INC1);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_INC1);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading reg_inc1\n");
-		return ret;
-	}
-	if (status)
+		वापस ret;
+	पूर्ण
+	अगर (status)
 		ret |= (KMX61_REG_INC1_BIT_IEN | KMX61_REG_INC1_BIT_WUFS);
-	else
+	अन्यथा
 		ret &= ~(KMX61_REG_INC1_BIT_IEN | KMX61_REG_INC1_BIT_WUFS);
 
-	ret = i2c_smbus_write_byte_data(data->client, KMX61_REG_INC1, ret);
-	if (ret < 0) {
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, KMX61_REG_INC1, ret);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error writing reg_inc1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_CTRL1);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_CTRL1);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading reg_ctrl1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (status)
+	अगर (status)
 		ret |= KMX61_REG_CTRL1_BIT_WUFE | KMX61_REG_CTRL1_BIT_BTSE;
-	else
+	अन्यथा
 		ret &= ~(KMX61_REG_CTRL1_BIT_WUFE | KMX61_REG_CTRL1_BIT_BTSE);
 
-	ret = i2c_smbus_write_byte_data(data->client, KMX61_REG_CTRL1, ret);
-	if (ret < 0) {
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, KMX61_REG_CTRL1, ret);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error writing reg_ctrl1\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	mode |= KMX61_ACT_STBY_BIT;
-	return kmx61_set_mode(data, mode, KMX61_ACC | KMX61_MAG, true);
-}
+	वापस kmx61_set_mode(data, mode, KMX61_ACC | KMX61_MAG, true);
+पूर्ण
 
 /**
- * kmx61_set_power_state() - set power state for kmx61 @device
- * @data: kmx61 device private pointer
- * @on: power state to be set for @device
- * @device: bitmask indicating device for which @on state needs to be set
+ * kmx61_set_घातer_state() - set घातer state क्रम kmx61 @device
+ * @data: kmx61 device निजी poपूर्णांकer
+ * @on: घातer state to be set क्रम @device
+ * @device: biपंचांगask indicating device क्रम which @on state needs to be set
  *
- * Notice that when ACC power state needs to be set to ON and MAG is in
- * OPERATION then we know that kmx61_runtime_resume was already called
- * so we must set ACC OPERATION mode here. The same happens when MAG power
+ * Notice that when ACC घातer state needs to be set to ON and MAG is in
+ * OPERATION then we know that kmx61_runसमय_resume was alपढ़ोy called
+ * so we must set ACC OPERATION mode here. The same happens when MAG घातer
  * state needs to be set to ON and ACC is in OPERATION.
  */
-static int kmx61_set_power_state(struct kmx61_data *data, bool on, u8 device)
-{
-#ifdef CONFIG_PM
-	int ret;
+अटल पूर्णांक kmx61_set_घातer_state(काष्ठा kmx61_data *data, bool on, u8 device)
+अणु
+#अगर_घोषित CONFIG_PM
+	पूर्णांक ret;
 
-	if (device & KMX61_ACC) {
-		if (on && !data->acc_ps && !data->mag_stby) {
+	अगर (device & KMX61_ACC) अणु
+		अगर (on && !data->acc_ps && !data->mag_stby) अणु
 			ret = kmx61_set_mode(data, 0, KMX61_ACC, true);
-			if (ret < 0)
-				return ret;
-		}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
 		data->acc_ps = on;
-	}
-	if (device & KMX61_MAG) {
-		if (on && !data->mag_ps && !data->acc_stby) {
+	पूर्ण
+	अगर (device & KMX61_MAG) अणु
+		अगर (on && !data->mag_ps && !data->acc_stby) अणु
 			ret = kmx61_set_mode(data, 0, KMX61_MAG, true);
-			if (ret < 0)
-				return ret;
-		}
+			अगर (ret < 0)
+				वापस ret;
+		पूर्ण
 		data->mag_ps = on;
-	}
+	पूर्ण
 
-	if (on) {
-		ret = pm_runtime_get_sync(&data->client->dev);
-	} else {
-		pm_runtime_mark_last_busy(&data->client->dev);
-		ret = pm_runtime_put_autosuspend(&data->client->dev);
-	}
-	if (ret < 0) {
+	अगर (on) अणु
+		ret = pm_runसमय_get_sync(&data->client->dev);
+	पूर्ण अन्यथा अणु
+		pm_runसमय_mark_last_busy(&data->client->dev);
+		ret = pm_runसमय_put_स्वतःsuspend(&data->client->dev);
+	पूर्ण
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev,
 			"Failed: kmx61_set_power_state for %d, ret %d\n",
 			on, ret);
-		if (on)
-			pm_runtime_put_noidle(&data->client->dev);
+		अगर (on)
+			pm_runसमय_put_noidle(&data->client->dev);
 
-		return ret;
-	}
-#endif
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int kmx61_read_measurement(struct kmx61_data *data, u8 base, u8 offset)
-{
-	int ret;
+अटल पूर्णांक kmx61_पढ़ो_measurement(काष्ठा kmx61_data *data, u8 base, u8 offset)
+अणु
+	पूर्णांक ret;
 	u8 reg = base + offset * 2;
 
-	ret = i2c_smbus_read_word_data(data->client, reg);
-	if (ret < 0)
+	ret = i2c_smbus_पढ़ो_word_data(data->client, reg);
+	अगर (ret < 0)
 		dev_err(&data->client->dev, "failed to read reg at %x\n", reg);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kmx61_read_raw(struct iio_dev *indio_dev,
-			  struct iio_chan_spec const *chan, int *val,
-			  int *val2, long mask)
-{
-	int ret;
+अटल पूर्णांक kmx61_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			  काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
+			  पूर्णांक *val2, दीर्घ mask)
+अणु
+	पूर्णांक ret;
 	u8 base_reg;
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		switch (chan->type) {
-		case IIO_ACCEL:
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_RAW:
+		चयन (chan->type) अणु
+		हाल IIO_ACCEL:
 			base_reg = KMX61_ACC_XOUT_L;
-			break;
-		case IIO_MAGN:
+			अवरोध;
+		हाल IIO_MAGN:
 			base_reg = KMX61_MAG_XOUT_L;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 		mutex_lock(&data->lock);
 
-		ret = kmx61_set_power_state(data, true, chan->address);
-		if (ret) {
+		ret = kmx61_set_घातer_state(data, true, chan->address);
+		अगर (ret) अणु
 			mutex_unlock(&data->lock);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		ret = kmx61_read_measurement(data, base_reg, chan->scan_index);
-		if (ret < 0) {
-			kmx61_set_power_state(data, false, chan->address);
+		ret = kmx61_पढ़ो_measurement(data, base_reg, chan->scan_index);
+		अगर (ret < 0) अणु
+			kmx61_set_घातer_state(data, false, chan->address);
 			mutex_unlock(&data->lock);
-			return ret;
-		}
-		*val = sign_extend32(ret >> chan->scan_type.shift,
+			वापस ret;
+		पूर्ण
+		*val = sign_extend32(ret >> chan->scan_type.shअगरt,
 				     chan->scan_type.realbits - 1);
-		ret = kmx61_set_power_state(data, false, chan->address);
+		ret = kmx61_set_घातer_state(data, false, chan->address);
 
 		mutex_unlock(&data->lock);
-		if (ret)
-			return ret;
-		return IIO_VAL_INT;
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_ACCEL:
+		अगर (ret)
+			वापस ret;
+		वापस IIO_VAL_INT;
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_ACCEL:
 			*val = 0;
 			*val2 = kmx61_uscale_table[data->range];
-			return IIO_VAL_INT_PLUS_MICRO;
-		case IIO_MAGN:
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		हाल IIO_MAGN:
 			/* 14 bits res, 1465 microGauss per magn count */
 			*val = 0;
 			*val2 = 1465;
-			return IIO_VAL_INT_PLUS_MICRO;
-		default:
-			return -EINVAL;
-		}
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		if (chan->type != IIO_ACCEL && chan->type != IIO_MAGN)
-			return -EINVAL;
+			वापस IIO_VAL_INT_PLUS_MICRO;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		अगर (chan->type != IIO_ACCEL && chan->type != IIO_MAGN)
+			वापस -EINVAL;
 
 		mutex_lock(&data->lock);
 		ret = kmx61_get_odr(data, val, val2, chan->address);
 		mutex_unlock(&data->lock);
-		if (ret)
-			return -EINVAL;
-		return IIO_VAL_INT_PLUS_MICRO;
-	}
-	return -EINVAL;
-}
+		अगर (ret)
+			वापस -EINVAL;
+		वापस IIO_VAL_INT_PLUS_MICRO;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int kmx61_write_raw(struct iio_dev *indio_dev,
-			   struct iio_chan_spec const *chan, int val,
-			   int val2, long mask)
-{
-	int ret;
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
+अटल पूर्णांक kmx61_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			   काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val,
+			   पूर्णांक val2, दीर्घ mask)
+अणु
+	पूर्णांक ret;
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
 
-	switch (mask) {
-	case IIO_CHAN_INFO_SAMP_FREQ:
-		if (chan->type != IIO_ACCEL && chan->type != IIO_MAGN)
-			return -EINVAL;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_SAMP_FREQ:
+		अगर (chan->type != IIO_ACCEL && chan->type != IIO_MAGN)
+			वापस -EINVAL;
 
 		mutex_lock(&data->lock);
 		ret = kmx61_set_odr(data, val, val2, chan->address);
 		mutex_unlock(&data->lock);
-		return ret;
-	case IIO_CHAN_INFO_SCALE:
-		switch (chan->type) {
-		case IIO_ACCEL:
-			if (val != 0)
-				return -EINVAL;
+		वापस ret;
+	हाल IIO_CHAN_INFO_SCALE:
+		चयन (chan->type) अणु
+		हाल IIO_ACCEL:
+			अगर (val != 0)
+				वापस -EINVAL;
 			mutex_lock(&data->lock);
 			ret = kmx61_set_scale(data, val2);
 			mutex_unlock(&data->lock);
-			return ret;
-		default:
-			return -EINVAL;
-		}
-	default:
-		return -EINVAL;
-	}
-}
+			वापस ret;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int kmx61_read_event(struct iio_dev *indio_dev,
-			    const struct iio_chan_spec *chan,
-			    enum iio_event_type type,
-			    enum iio_event_direction dir,
-			    enum iio_event_info info,
-			    int *val, int *val2)
-{
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
+अटल पूर्णांक kmx61_पढ़ो_event(काष्ठा iio_dev *indio_dev,
+			    स्थिर काष्ठा iio_chan_spec *chan,
+			    क्रमागत iio_event_type type,
+			    क्रमागत iio_event_direction dir,
+			    क्रमागत iio_event_info info,
+			    पूर्णांक *val, पूर्णांक *val2)
+अणु
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
 
 	*val2 = 0;
-	switch (info) {
-	case IIO_EV_INFO_VALUE:
+	चयन (info) अणु
+	हाल IIO_EV_INFO_VALUE:
 		*val = data->wake_thresh;
-		return IIO_VAL_INT;
-	case IIO_EV_INFO_PERIOD:
+		वापस IIO_VAL_INT;
+	हाल IIO_EV_INFO_PERIOD:
 		*val = data->wake_duration;
-		return IIO_VAL_INT;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_INT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int kmx61_write_event(struct iio_dev *indio_dev,
-			     const struct iio_chan_spec *chan,
-			     enum iio_event_type type,
-			     enum iio_event_direction dir,
-			     enum iio_event_info info,
-			     int val, int val2)
-{
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
+अटल पूर्णांक kmx61_ग_लिखो_event(काष्ठा iio_dev *indio_dev,
+			     स्थिर काष्ठा iio_chan_spec *chan,
+			     क्रमागत iio_event_type type,
+			     क्रमागत iio_event_direction dir,
+			     क्रमागत iio_event_info info,
+			     पूर्णांक val, पूर्णांक val2)
+अणु
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
 
-	if (data->ev_enable_state)
-		return -EBUSY;
+	अगर (data->ev_enable_state)
+		वापस -EBUSY;
 
-	switch (info) {
-	case IIO_EV_INFO_VALUE:
+	चयन (info) अणु
+	हाल IIO_EV_INFO_VALUE:
 		data->wake_thresh = val;
-		return IIO_VAL_INT;
-	case IIO_EV_INFO_PERIOD:
+		वापस IIO_VAL_INT;
+	हाल IIO_EV_INFO_PERIOD:
 		data->wake_duration = val;
-		return IIO_VAL_INT;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस IIO_VAL_INT;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int kmx61_read_event_config(struct iio_dev *indio_dev,
-				   const struct iio_chan_spec *chan,
-				   enum iio_event_type type,
-				   enum iio_event_direction dir)
-{
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
+अटल पूर्णांक kmx61_पढ़ो_event_config(काष्ठा iio_dev *indio_dev,
+				   स्थिर काष्ठा iio_chan_spec *chan,
+				   क्रमागत iio_event_type type,
+				   क्रमागत iio_event_direction dir)
+अणु
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
 
-	return data->ev_enable_state;
-}
+	वापस data->ev_enable_state;
+पूर्ण
 
-static int kmx61_write_event_config(struct iio_dev *indio_dev,
-				    const struct iio_chan_spec *chan,
-				    enum iio_event_type type,
-				    enum iio_event_direction dir,
-				    int state)
-{
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
-	int ret = 0;
+अटल पूर्णांक kmx61_ग_लिखो_event_config(काष्ठा iio_dev *indio_dev,
+				    स्थिर काष्ठा iio_chan_spec *chan,
+				    क्रमागत iio_event_type type,
+				    क्रमागत iio_event_direction dir,
+				    पूर्णांक state)
+अणु
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
+	पूर्णांक ret = 0;
 
-	if (state && data->ev_enable_state)
-		return 0;
+	अगर (state && data->ev_enable_state)
+		वापस 0;
 
 	mutex_lock(&data->lock);
 
-	if (!state && data->motion_trig_on) {
+	अगर (!state && data->motion_trig_on) अणु
 		data->ev_enable_state = false;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
-	ret = kmx61_set_power_state(data, state, KMX61_ACC);
-	if (ret < 0)
-		goto err_unlock;
+	ret = kmx61_set_घातer_state(data, state, KMX61_ACC);
+	अगर (ret < 0)
+		जाओ err_unlock;
 
-	ret = kmx61_setup_any_motion_interrupt(data, state);
-	if (ret < 0) {
-		kmx61_set_power_state(data, false, KMX61_ACC);
-		goto err_unlock;
-	}
+	ret = kmx61_setup_any_motion_पूर्णांकerrupt(data, state);
+	अगर (ret < 0) अणु
+		kmx61_set_घातer_state(data, false, KMX61_ACC);
+		जाओ err_unlock;
+	पूर्ण
 
 	data->ev_enable_state = state;
 
 err_unlock:
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kmx61_acc_validate_trigger(struct iio_dev *indio_dev,
-				      struct iio_trigger *trig)
-{
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
+अटल पूर्णांक kmx61_acc_validate_trigger(काष्ठा iio_dev *indio_dev,
+				      काष्ठा iio_trigger *trig)
+अणु
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
 
-	if (data->acc_dready_trig != trig && data->motion_trig != trig)
-		return -EINVAL;
+	अगर (data->acc_dपढ़ोy_trig != trig && data->motion_trig != trig)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kmx61_mag_validate_trigger(struct iio_dev *indio_dev,
-				      struct iio_trigger *trig)
-{
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
+अटल पूर्णांक kmx61_mag_validate_trigger(काष्ठा iio_dev *indio_dev,
+				      काष्ठा iio_trigger *trig)
+अणु
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
 
-	if (data->mag_dready_trig != trig)
-		return -EINVAL;
+	अगर (data->mag_dपढ़ोy_trig != trig)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct iio_info kmx61_acc_info = {
-	.read_raw		= kmx61_read_raw,
-	.write_raw		= kmx61_write_raw,
+अटल स्थिर काष्ठा iio_info kmx61_acc_info = अणु
+	.पढ़ो_raw		= kmx61_पढ़ो_raw,
+	.ग_लिखो_raw		= kmx61_ग_लिखो_raw,
 	.attrs			= &kmx61_acc_attribute_group,
-	.read_event_value	= kmx61_read_event,
-	.write_event_value	= kmx61_write_event,
-	.read_event_config	= kmx61_read_event_config,
-	.write_event_config	= kmx61_write_event_config,
+	.पढ़ो_event_value	= kmx61_पढ़ो_event,
+	.ग_लिखो_event_value	= kmx61_ग_लिखो_event,
+	.पढ़ो_event_config	= kmx61_पढ़ो_event_config,
+	.ग_लिखो_event_config	= kmx61_ग_लिखो_event_config,
 	.validate_trigger	= kmx61_acc_validate_trigger,
-};
+पूर्ण;
 
-static const struct iio_info kmx61_mag_info = {
-	.read_raw		= kmx61_read_raw,
-	.write_raw		= kmx61_write_raw,
+अटल स्थिर काष्ठा iio_info kmx61_mag_info = अणु
+	.पढ़ो_raw		= kmx61_पढ़ो_raw,
+	.ग_लिखो_raw		= kmx61_ग_लिखो_raw,
 	.attrs			= &kmx61_mag_attribute_group,
 	.validate_trigger	= kmx61_mag_validate_trigger,
-};
+पूर्ण;
 
 
-static int kmx61_data_rdy_trigger_set_state(struct iio_trigger *trig,
+अटल पूर्णांक kmx61_data_rdy_trigger_set_state(काष्ठा iio_trigger *trig,
 					    bool state)
-{
-	int ret = 0;
+अणु
+	पूर्णांक ret = 0;
 	u8 device;
 
-	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
+	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
 
 	mutex_lock(&data->lock);
 
-	if (!state && data->ev_enable_state && data->motion_trig_on) {
+	अगर (!state && data->ev_enable_state && data->motion_trig_on) अणु
 		data->motion_trig_on = false;
-		goto err_unlock;
-	}
+		जाओ err_unlock;
+	पूर्ण
 
-	if (data->acc_dready_trig == trig || data->motion_trig == trig)
+	अगर (data->acc_dपढ़ोy_trig == trig || data->motion_trig == trig)
 		device = KMX61_ACC;
-	else
+	अन्यथा
 		device = KMX61_MAG;
 
-	ret = kmx61_set_power_state(data, state, device);
-	if (ret < 0)
-		goto err_unlock;
+	ret = kmx61_set_घातer_state(data, state, device);
+	अगर (ret < 0)
+		जाओ err_unlock;
 
-	if (data->acc_dready_trig == trig || data->mag_dready_trig == trig)
-		ret = kmx61_setup_new_data_interrupt(data, state, device);
-	else
-		ret = kmx61_setup_any_motion_interrupt(data, state);
-	if (ret < 0) {
-		kmx61_set_power_state(data, false, device);
-		goto err_unlock;
-	}
+	अगर (data->acc_dपढ़ोy_trig == trig || data->mag_dपढ़ोy_trig == trig)
+		ret = kmx61_setup_new_data_पूर्णांकerrupt(data, state, device);
+	अन्यथा
+		ret = kmx61_setup_any_motion_पूर्णांकerrupt(data, state);
+	अगर (ret < 0) अणु
+		kmx61_set_घातer_state(data, false, device);
+		जाओ err_unlock;
+	पूर्ण
 
-	if (data->acc_dready_trig == trig)
-		data->acc_dready_trig_on = state;
-	else if (data->mag_dready_trig == trig)
-		data->mag_dready_trig_on = state;
-	else
+	अगर (data->acc_dपढ़ोy_trig == trig)
+		data->acc_dपढ़ोy_trig_on = state;
+	अन्यथा अगर (data->mag_dपढ़ोy_trig == trig)
+		data->mag_dपढ़ोy_trig_on = state;
+	अन्यथा
 		data->motion_trig_on = state;
 err_unlock:
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void kmx61_trig_reenable(struct iio_trigger *trig)
-{
-	struct iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
-	int ret;
+अटल व्योम kmx61_trig_reenable(काष्ठा iio_trigger *trig)
+अणु
+	काष्ठा iio_dev *indio_dev = iio_trigger_get_drvdata(trig);
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_INL);
-	if (ret < 0)
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_INL);
+	अगर (ret < 0)
 		dev_err(&data->client->dev, "Error reading reg_inl\n");
-}
+पूर्ण
 
-static const struct iio_trigger_ops kmx61_trigger_ops = {
+अटल स्थिर काष्ठा iio_trigger_ops kmx61_trigger_ops = अणु
 	.set_trigger_state = kmx61_data_rdy_trigger_set_state,
 	.reenable = kmx61_trig_reenable,
-};
+पूर्ण;
 
-static irqreturn_t kmx61_event_handler(int irq, void *private)
-{
-	struct kmx61_data *data = private;
-	struct iio_dev *indio_dev = data->acc_indio_dev;
-	int ret;
+अटल irqवापस_t kmx61_event_handler(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा kmx61_data *data = निजी;
+	काष्ठा iio_dev *indio_dev = data->acc_indio_dev;
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_INS1);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_INS1);
+	अगर (ret < 0) अणु
 		dev_err(&data->client->dev, "Error reading reg_ins1\n");
-		goto ack_intr;
-	}
+		जाओ ack_पूर्णांकr;
+	पूर्ण
 
-	if (ret & KMX61_REG_INS1_BIT_WUFS) {
-		ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_INS2);
-		if (ret < 0) {
+	अगर (ret & KMX61_REG_INS1_BIT_WUFS) अणु
+		ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_INS2);
+		अगर (ret < 0) अणु
 			dev_err(&data->client->dev, "Error reading reg_ins2\n");
-			goto ack_intr;
-		}
+			जाओ ack_पूर्णांकr;
+		पूर्ण
 
-		if (ret & KMX61_REG_INS2_BIT_XN)
+		अगर (ret & KMX61_REG_INS2_BIT_XN)
 			iio_push_event(indio_dev,
 				       IIO_MOD_EVENT_CODE(IIO_ACCEL,
 				       0,
 				       IIO_MOD_X,
 				       IIO_EV_TYPE_THRESH,
-				       IIO_EV_DIR_FALLING),
+				       IIO_EV_सूची_FALLING),
 				       0);
 
-		if (ret & KMX61_REG_INS2_BIT_XP)
+		अगर (ret & KMX61_REG_INS2_BIT_XP)
 			iio_push_event(indio_dev,
 				       IIO_MOD_EVENT_CODE(IIO_ACCEL,
 				       0,
 				       IIO_MOD_X,
 				       IIO_EV_TYPE_THRESH,
-				       IIO_EV_DIR_RISING),
+				       IIO_EV_सूची_RISING),
 				       0);
 
-		if (ret & KMX61_REG_INS2_BIT_YN)
+		अगर (ret & KMX61_REG_INS2_BIT_YN)
 			iio_push_event(indio_dev,
 				       IIO_MOD_EVENT_CODE(IIO_ACCEL,
 				       0,
 				       IIO_MOD_Y,
 				       IIO_EV_TYPE_THRESH,
-				       IIO_EV_DIR_FALLING),
+				       IIO_EV_सूची_FALLING),
 				       0);
 
-		if (ret & KMX61_REG_INS2_BIT_YP)
+		अगर (ret & KMX61_REG_INS2_BIT_YP)
 			iio_push_event(indio_dev,
 				       IIO_MOD_EVENT_CODE(IIO_ACCEL,
 				       0,
 				       IIO_MOD_Y,
 				       IIO_EV_TYPE_THRESH,
-				       IIO_EV_DIR_RISING),
+				       IIO_EV_सूची_RISING),
 				       0);
 
-		if (ret & KMX61_REG_INS2_BIT_ZN)
+		अगर (ret & KMX61_REG_INS2_BIT_ZN)
 			iio_push_event(indio_dev,
 				       IIO_MOD_EVENT_CODE(IIO_ACCEL,
 				       0,
 				       IIO_MOD_Z,
 				       IIO_EV_TYPE_THRESH,
-				       IIO_EV_DIR_FALLING),
+				       IIO_EV_सूची_FALLING),
 				       0);
 
-		if (ret & KMX61_REG_INS2_BIT_ZP)
+		अगर (ret & KMX61_REG_INS2_BIT_ZP)
 			iio_push_event(indio_dev,
 				       IIO_MOD_EVENT_CODE(IIO_ACCEL,
 				       0,
 				       IIO_MOD_Z,
 				       IIO_EV_TYPE_THRESH,
-				       IIO_EV_DIR_RISING),
+				       IIO_EV_सूची_RISING),
 				       0);
-	}
+	पूर्ण
 
-ack_intr:
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_CTRL1);
-	if (ret < 0)
+ack_पूर्णांकr:
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_CTRL1);
+	अगर (ret < 0)
 		dev_err(&data->client->dev, "Error reading reg_ctrl1\n");
 
 	ret |= KMX61_REG_CTRL1_BIT_RES;
-	ret = i2c_smbus_write_byte_data(data->client, KMX61_REG_CTRL1, ret);
-	if (ret < 0)
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client, KMX61_REG_CTRL1, ret);
+	अगर (ret < 0)
 		dev_err(&data->client->dev, "Error writing reg_ctrl1\n");
 
-	ret = i2c_smbus_read_byte_data(data->client, KMX61_REG_INL);
-	if (ret < 0)
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, KMX61_REG_INL);
+	अगर (ret < 0)
 		dev_err(&data->client->dev, "Error reading reg_inl\n");
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t kmx61_data_rdy_trig_poll(int irq, void *private)
-{
-	struct kmx61_data *data = private;
+अटल irqवापस_t kmx61_data_rdy_trig_poll(पूर्णांक irq, व्योम *निजी)
+अणु
+	काष्ठा kmx61_data *data = निजी;
 
-	if (data->acc_dready_trig_on)
-		iio_trigger_poll(data->acc_dready_trig);
-	if (data->mag_dready_trig_on)
-		iio_trigger_poll(data->mag_dready_trig);
+	अगर (data->acc_dपढ़ोy_trig_on)
+		iio_trigger_poll(data->acc_dपढ़ोy_trig);
+	अगर (data->mag_dपढ़ोy_trig_on)
+		iio_trigger_poll(data->mag_dपढ़ोy_trig);
 
-	if (data->motion_trig_on)
+	अगर (data->motion_trig_on)
 		iio_trigger_poll(data->motion_trig);
 
-	if (data->ev_enable_state)
-		return IRQ_WAKE_THREAD;
-	return IRQ_HANDLED;
-}
+	अगर (data->ev_enable_state)
+		वापस IRQ_WAKE_THREAD;
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t kmx61_trigger_handler(int irq, void *p)
-{
-	struct iio_poll_func *pf = p;
-	struct iio_dev *indio_dev = pf->indio_dev;
-	struct kmx61_data *data = kmx61_get_data(indio_dev);
-	int bit, ret, i = 0;
+अटल irqवापस_t kmx61_trigger_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_poll_func *pf = p;
+	काष्ठा iio_dev *indio_dev = pf->indio_dev;
+	काष्ठा kmx61_data *data = kmx61_get_data(indio_dev);
+	पूर्णांक bit, ret, i = 0;
 	u8 base;
 	s16 buffer[8];
 
-	if (indio_dev == data->acc_indio_dev)
+	अगर (indio_dev == data->acc_indio_dev)
 		base = KMX61_ACC_XOUT_L;
-	else
+	अन्यथा
 		base = KMX61_MAG_XOUT_L;
 
 	mutex_lock(&data->lock);
-	for_each_set_bit(bit, indio_dev->active_scan_mask,
-			 indio_dev->masklength) {
-		ret = kmx61_read_measurement(data, base, bit);
-		if (ret < 0) {
+	क्रम_each_set_bit(bit, indio_dev->active_scan_mask,
+			 indio_dev->masklength) अणु
+		ret = kmx61_पढ़ो_measurement(data, base, bit);
+		अगर (ret < 0) अणु
 			mutex_unlock(&data->lock);
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 		buffer[i++] = ret;
-	}
+	पूर्ण
 	mutex_unlock(&data->lock);
 
 	iio_push_to_buffers(indio_dev, buffer);
 err:
-	iio_trigger_notify_done(indio_dev->trig);
+	iio_trigger_notअगरy_करोne(indio_dev->trig);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static const char *kmx61_match_acpi_device(struct device *dev)
-{
-	const struct acpi_device_id *id;
+अटल स्थिर अक्षर *kmx61_match_acpi_device(काष्ठा device *dev)
+अणु
+	स्थिर काष्ठा acpi_device_id *id;
 
 	id = acpi_match_device(dev->driver->acpi_match_table, dev);
-	if (!id)
-		return NULL;
-	return dev_name(dev);
-}
+	अगर (!id)
+		वापस शून्य;
+	वापस dev_name(dev);
+पूर्ण
 
-static struct iio_dev *kmx61_indiodev_setup(struct kmx61_data *data,
-					    const struct iio_info *info,
-					    const struct iio_chan_spec *chan,
-					    int num_channels,
-					    const char *name)
-{
-	struct iio_dev *indio_dev;
+अटल काष्ठा iio_dev *kmx61_indiodev_setup(काष्ठा kmx61_data *data,
+					    स्थिर काष्ठा iio_info *info,
+					    स्थिर काष्ठा iio_chan_spec *chan,
+					    पूर्णांक num_channels,
+					    स्थिर अक्षर *name)
+अणु
+	काष्ठा iio_dev *indio_dev;
 
-	indio_dev = devm_iio_device_alloc(&data->client->dev, sizeof(data));
-	if (!indio_dev)
-		return ERR_PTR(-ENOMEM);
+	indio_dev = devm_iio_device_alloc(&data->client->dev, माप(data));
+	अगर (!indio_dev)
+		वापस ERR_PTR(-ENOMEM);
 
 	kmx61_set_data(indio_dev, data);
 
 	indio_dev->channels = chan;
 	indio_dev->num_channels = num_channels;
 	indio_dev->name = name;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->info = info;
 
-	return indio_dev;
-}
+	वापस indio_dev;
+पूर्ण
 
-static struct iio_trigger *kmx61_trigger_setup(struct kmx61_data *data,
-					       struct iio_dev *indio_dev,
-					       const char *tag)
-{
-	struct iio_trigger *trig;
-	int ret;
+अटल काष्ठा iio_trigger *kmx61_trigger_setup(काष्ठा kmx61_data *data,
+					       काष्ठा iio_dev *indio_dev,
+					       स्थिर अक्षर *tag)
+अणु
+	काष्ठा iio_trigger *trig;
+	पूर्णांक ret;
 
 	trig = devm_iio_trigger_alloc(&data->client->dev,
 				      "%s-%s-dev%d",
 				      indio_dev->name,
 				      tag,
 				      indio_dev->id);
-	if (!trig)
-		return ERR_PTR(-ENOMEM);
+	अगर (!trig)
+		वापस ERR_PTR(-ENOMEM);
 
 	trig->ops = &kmx61_trigger_ops;
 	iio_trigger_set_drvdata(trig, indio_dev);
 
-	ret = iio_trigger_register(trig);
-	if (ret)
-		return ERR_PTR(ret);
+	ret = iio_trigger_रेजिस्टर(trig);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	return trig;
-}
+	वापस trig;
+पूर्ण
 
-static int kmx61_probe(struct i2c_client *client,
-		       const struct i2c_device_id *id)
-{
-	int ret;
-	struct kmx61_data *data;
-	const char *name = NULL;
+अटल पूर्णांक kmx61_probe(काष्ठा i2c_client *client,
+		       स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक ret;
+	काष्ठा kmx61_data *data;
+	स्थिर अक्षर *name = शून्य;
 
-	data = devm_kzalloc(&client->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&client->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, data);
 	data->client = client;
 
 	mutex_init(&data->lock);
 
-	if (id)
+	अगर (id)
 		name = id->name;
-	else if (ACPI_HANDLE(&client->dev))
+	अन्यथा अगर (ACPI_HANDLE(&client->dev))
 		name = kmx61_match_acpi_device(&client->dev);
-	else
-		return -ENODEV;
+	अन्यथा
+		वापस -ENODEV;
 
 	data->acc_indio_dev =
 		kmx61_indiodev_setup(data, &kmx61_acc_info,
 				     kmx61_acc_channels,
 				     ARRAY_SIZE(kmx61_acc_channels),
 				     name);
-	if (IS_ERR(data->acc_indio_dev))
-		return PTR_ERR(data->acc_indio_dev);
+	अगर (IS_ERR(data->acc_indio_dev))
+		वापस PTR_ERR(data->acc_indio_dev);
 
 	data->mag_indio_dev =
 		kmx61_indiodev_setup(data, &kmx61_mag_info,
 				     kmx61_mag_channels,
 				     ARRAY_SIZE(kmx61_mag_channels),
 				     name);
-	if (IS_ERR(data->mag_indio_dev))
-		return PTR_ERR(data->mag_indio_dev);
+	अगर (IS_ERR(data->mag_indio_dev))
+		वापस PTR_ERR(data->mag_indio_dev);
 
 	ret = kmx61_chip_init(data);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (client->irq > 0) {
-		ret = devm_request_threaded_irq(&client->dev, client->irq,
+	अगर (client->irq > 0) अणु
+		ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
 						kmx61_data_rdy_trig_poll,
 						kmx61_event_handler,
 						IRQF_TRIGGER_RISING,
 						KMX61_IRQ_NAME,
 						data);
-		if (ret)
-			goto err_chip_uninit;
+		अगर (ret)
+			जाओ err_chip_uninit;
 
-		data->acc_dready_trig =
+		data->acc_dपढ़ोy_trig =
 			kmx61_trigger_setup(data, data->acc_indio_dev,
 					    "dready");
-		if (IS_ERR(data->acc_dready_trig)) {
-			ret = PTR_ERR(data->acc_dready_trig);
-			goto err_chip_uninit;
-		}
+		अगर (IS_ERR(data->acc_dपढ़ोy_trig)) अणु
+			ret = PTR_ERR(data->acc_dपढ़ोy_trig);
+			जाओ err_chip_uninit;
+		पूर्ण
 
-		data->mag_dready_trig =
+		data->mag_dपढ़ोy_trig =
 			kmx61_trigger_setup(data, data->mag_indio_dev,
 					    "dready");
-		if (IS_ERR(data->mag_dready_trig)) {
-			ret = PTR_ERR(data->mag_dready_trig);
-			goto err_trigger_unregister_acc_dready;
-		}
+		अगर (IS_ERR(data->mag_dपढ़ोy_trig)) अणु
+			ret = PTR_ERR(data->mag_dपढ़ोy_trig);
+			जाओ err_trigger_unरेजिस्टर_acc_dपढ़ोy;
+		पूर्ण
 
 		data->motion_trig =
 			kmx61_trigger_setup(data, data->acc_indio_dev,
 					    "any-motion");
-		if (IS_ERR(data->motion_trig)) {
+		अगर (IS_ERR(data->motion_trig)) अणु
 			ret = PTR_ERR(data->motion_trig);
-			goto err_trigger_unregister_mag_dready;
-		}
+			जाओ err_trigger_unरेजिस्टर_mag_dपढ़ोy;
+		पूर्ण
 
 		ret = iio_triggered_buffer_setup(data->acc_indio_dev,
-						 &iio_pollfunc_store_time,
+						 &iio_pollfunc_store_समय,
 						 kmx61_trigger_handler,
-						 NULL);
-		if (ret < 0) {
+						 शून्य);
+		अगर (ret < 0) अणु
 			dev_err(&data->client->dev,
 				"Failed to setup acc triggered buffer\n");
-			goto err_trigger_unregister_motion;
-		}
+			जाओ err_trigger_unरेजिस्टर_motion;
+		पूर्ण
 
 		ret = iio_triggered_buffer_setup(data->mag_indio_dev,
-						 &iio_pollfunc_store_time,
+						 &iio_pollfunc_store_समय,
 						 kmx61_trigger_handler,
-						 NULL);
-		if (ret < 0) {
+						 शून्य);
+		अगर (ret < 0) अणु
 			dev_err(&data->client->dev,
 				"Failed to setup mag triggered buffer\n");
-			goto err_buffer_cleanup_acc;
-		}
-	}
+			जाओ err_buffer_cleanup_acc;
+		पूर्ण
+	पूर्ण
 
-	ret = pm_runtime_set_active(&client->dev);
-	if (ret < 0)
-		goto err_buffer_cleanup_mag;
+	ret = pm_runसमय_set_active(&client->dev);
+	अगर (ret < 0)
+		जाओ err_buffer_cleanup_mag;
 
-	pm_runtime_enable(&client->dev);
-	pm_runtime_set_autosuspend_delay(&client->dev, KMX61_SLEEP_DELAY_MS);
-	pm_runtime_use_autosuspend(&client->dev);
+	pm_runसमय_enable(&client->dev);
+	pm_runसमय_set_स्वतःsuspend_delay(&client->dev, KMX61_SLEEP_DELAY_MS);
+	pm_runसमय_use_स्वतःsuspend(&client->dev);
 
-	ret = iio_device_register(data->acc_indio_dev);
-	if (ret < 0) {
+	ret = iio_device_रेजिस्टर(data->acc_indio_dev);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Failed to register acc iio device\n");
-		goto err_buffer_cleanup_mag;
-	}
+		जाओ err_buffer_cleanup_mag;
+	पूर्ण
 
-	ret = iio_device_register(data->mag_indio_dev);
-	if (ret < 0) {
+	ret = iio_device_रेजिस्टर(data->mag_indio_dev);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Failed to register mag iio device\n");
-		goto err_iio_unregister_acc;
-	}
+		जाओ err_iio_unरेजिस्टर_acc;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_iio_unregister_acc:
-	iio_device_unregister(data->acc_indio_dev);
+err_iio_unरेजिस्टर_acc:
+	iio_device_unरेजिस्टर(data->acc_indio_dev);
 err_buffer_cleanup_mag:
-	if (client->irq > 0)
+	अगर (client->irq > 0)
 		iio_triggered_buffer_cleanup(data->mag_indio_dev);
 err_buffer_cleanup_acc:
-	if (client->irq > 0)
+	अगर (client->irq > 0)
 		iio_triggered_buffer_cleanup(data->acc_indio_dev);
-err_trigger_unregister_motion:
-	iio_trigger_unregister(data->motion_trig);
-err_trigger_unregister_mag_dready:
-	iio_trigger_unregister(data->mag_dready_trig);
-err_trigger_unregister_acc_dready:
-	iio_trigger_unregister(data->acc_dready_trig);
+err_trigger_unरेजिस्टर_motion:
+	iio_trigger_unरेजिस्टर(data->motion_trig);
+err_trigger_unरेजिस्टर_mag_dपढ़ोy:
+	iio_trigger_unरेजिस्टर(data->mag_dपढ़ोy_trig);
+err_trigger_unरेजिस्टर_acc_dपढ़ोy:
+	iio_trigger_unरेजिस्टर(data->acc_dपढ़ोy_trig);
 err_chip_uninit:
 	kmx61_set_mode(data, KMX61_ALL_STBY, KMX61_ACC | KMX61_MAG, true);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kmx61_remove(struct i2c_client *client)
-{
-	struct kmx61_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक kmx61_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा kmx61_data *data = i2c_get_clientdata(client);
 
-	iio_device_unregister(data->acc_indio_dev);
-	iio_device_unregister(data->mag_indio_dev);
+	iio_device_unरेजिस्टर(data->acc_indio_dev);
+	iio_device_unरेजिस्टर(data->mag_indio_dev);
 
-	pm_runtime_disable(&client->dev);
-	pm_runtime_set_suspended(&client->dev);
-	pm_runtime_put_noidle(&client->dev);
+	pm_runसमय_disable(&client->dev);
+	pm_runसमय_set_suspended(&client->dev);
+	pm_runसमय_put_noidle(&client->dev);
 
-	if (client->irq > 0) {
+	अगर (client->irq > 0) अणु
 		iio_triggered_buffer_cleanup(data->acc_indio_dev);
 		iio_triggered_buffer_cleanup(data->mag_indio_dev);
-		iio_trigger_unregister(data->acc_dready_trig);
-		iio_trigger_unregister(data->mag_dready_trig);
-		iio_trigger_unregister(data->motion_trig);
-	}
+		iio_trigger_unरेजिस्टर(data->acc_dपढ़ोy_trig);
+		iio_trigger_unरेजिस्टर(data->mag_dपढ़ोy_trig);
+		iio_trigger_unरेजिस्टर(data->motion_trig);
+	पूर्ण
 
 	mutex_lock(&data->lock);
 	kmx61_set_mode(data, KMX61_ALL_STBY, KMX61_ACC | KMX61_MAG, true);
 	mutex_unlock(&data->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int kmx61_suspend(struct device *dev)
-{
-	int ret;
-	struct kmx61_data *data = i2c_get_clientdata(to_i2c_client(dev));
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक kmx61_suspend(काष्ठा device *dev)
+अणु
+	पूर्णांक ret;
+	काष्ठा kmx61_data *data = i2c_get_clientdata(to_i2c_client(dev));
 
 	mutex_lock(&data->lock);
 	ret = kmx61_set_mode(data, KMX61_ALL_STBY, KMX61_ACC | KMX61_MAG,
 			     false);
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kmx61_resume(struct device *dev)
-{
+अटल पूर्णांक kmx61_resume(काष्ठा device *dev)
+अणु
 	u8 stby = 0;
-	struct kmx61_data *data = i2c_get_clientdata(to_i2c_client(dev));
+	काष्ठा kmx61_data *data = i2c_get_clientdata(to_i2c_client(dev));
 
-	if (data->acc_stby)
+	अगर (data->acc_stby)
 		stby |= KMX61_ACC_STBY_BIT;
-	if (data->mag_stby)
+	अगर (data->mag_stby)
 		stby |= KMX61_MAG_STBY_BIT;
 
-	return kmx61_set_mode(data, stby, KMX61_ACC | KMX61_MAG, true);
-}
-#endif
+	वापस kmx61_set_mode(data, stby, KMX61_ACC | KMX61_MAG, true);
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM
-static int kmx61_runtime_suspend(struct device *dev)
-{
-	struct kmx61_data *data = i2c_get_clientdata(to_i2c_client(dev));
-	int ret;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक kmx61_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा kmx61_data *data = i2c_get_clientdata(to_i2c_client(dev));
+	पूर्णांक ret;
 
 	mutex_lock(&data->lock);
 	ret = kmx61_set_mode(data, KMX61_ALL_STBY, KMX61_ACC | KMX61_MAG, true);
 	mutex_unlock(&data->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int kmx61_runtime_resume(struct device *dev)
-{
-	struct kmx61_data *data = i2c_get_clientdata(to_i2c_client(dev));
+अटल पूर्णांक kmx61_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा kmx61_data *data = i2c_get_clientdata(to_i2c_client(dev));
 	u8 stby = 0;
 
-	if (!data->acc_ps)
+	अगर (!data->acc_ps)
 		stby |= KMX61_ACC_STBY_BIT;
-	if (!data->mag_ps)
+	अगर (!data->mag_ps)
 		stby |= KMX61_MAG_STBY_BIT;
 
-	return kmx61_set_mode(data, stby, KMX61_ACC | KMX61_MAG, true);
-}
-#endif
+	वापस kmx61_set_mode(data, stby, KMX61_ACC | KMX61_MAG, true);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops kmx61_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops kmx61_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(kmx61_suspend, kmx61_resume)
-	SET_RUNTIME_PM_OPS(kmx61_runtime_suspend, kmx61_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(kmx61_runसमय_suspend, kmx61_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct acpi_device_id kmx61_acpi_match[] = {
-	{"KMX61021", 0},
-	{}
-};
+अटल स्थिर काष्ठा acpi_device_id kmx61_acpi_match[] = अणु
+	अणु"KMX61021", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(acpi, kmx61_acpi_match);
 
-static const struct i2c_device_id kmx61_id[] = {
-	{"kmx611021", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id kmx61_id[] = अणु
+	अणु"kmx611021", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(i2c, kmx61_id);
 
-static struct i2c_driver kmx61_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver kmx61_driver = अणु
+	.driver = अणु
 		.name = KMX61_DRV_NAME,
 		.acpi_match_table = ACPI_PTR(kmx61_acpi_match),
 		.pm = &kmx61_pm_ops,
-	},
+	पूर्ण,
 	.probe		= kmx61_probe,
-	.remove		= kmx61_remove,
+	.हटाओ		= kmx61_हटाओ,
 	.id_table	= kmx61_id,
-};
+पूर्ण;
 
 module_i2c_driver(kmx61_driver);
 

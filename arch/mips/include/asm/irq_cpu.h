@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *	include/asm-mips/irq_cpu.h
+ *	include/यंत्र-mips/irq_cpu.h
  *
- *	MIPS CPU interrupt definitions.
+ *	MIPS CPU पूर्णांकerrupt definitions.
  *
  *	Copyright (C) 2002  Maciej W. Rozycki
  */
-#ifndef _ASM_IRQ_CPU_H
-#define _ASM_IRQ_CPU_H
+#अगर_अघोषित _ASM_IRQ_CPU_H
+#घोषणा _ASM_IRQ_CPU_H
 
-extern void mips_cpu_irq_init(void);
+बाह्य व्योम mips_cpu_irq_init(व्योम);
 
-#ifdef CONFIG_IRQ_DOMAIN
-struct device_node;
-extern int mips_cpu_irq_of_init(struct device_node *of_node,
-				struct device_node *parent);
-#endif
+#अगर_घोषित CONFIG_IRQ_DOMAIN
+काष्ठा device_node;
+बाह्य पूर्णांक mips_cpu_irq_of_init(काष्ठा device_node *of_node,
+				काष्ठा device_node *parent);
+#पूर्ण_अगर
 
-#endif /* _ASM_IRQ_CPU_H */
+#पूर्ण_अगर /* _ASM_IRQ_CPU_H */

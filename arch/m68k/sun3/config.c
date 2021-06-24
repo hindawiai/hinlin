@@ -1,114 +1,115 @@
+<शैली गुरु>
 /*
  *  linux/arch/m68k/sun3/config.c
  *
- *  Copyright (C) 1996,1997 Pekka Pietik{inen
+ *  Copyright (C) 1996,1997 Pekka Pietikअणुinen
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/seq_file.h>
-#include <linux/tty.h>
-#include <linux/console.h>
-#include <linux/init.h>
-#include <linux/memblock.h>
-#include <linux/platform_device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/console.h>
+#समावेश <linux/init.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/oplib.h>
-#include <asm/setup.h>
-#include <asm/contregs.h>
-#include <asm/movs.h>
-#include <asm/pgalloc.h>
-#include <asm/sun3-head.h>
-#include <asm/sun3mmu.h>
-#include <asm/machdep.h>
-#include <asm/machines.h>
-#include <asm/idprom.h>
-#include <asm/intersil.h>
-#include <asm/irq.h>
-#include <asm/sections.h>
-#include <asm/segment.h>
-#include <asm/sun3ints.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/contregs.h>
+#समावेश <यंत्र/movs.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/sun3-head.h>
+#समावेश <यंत्र/sun3mmu.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/machines.h>
+#समावेश <यंत्र/idprom.h>
+#समावेश <यंत्र/पूर्णांकersil.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/segment.h>
+#समावेश <यंत्र/sun3पूर्णांकs.h>
 
-char sun3_reserved_pmeg[SUN3_PMEGS_NUM];
+अक्षर sun3_reserved_pmeg[SUN3_PMEGS_NUM];
 
-static void sun3_sched_init(void);
-extern void sun3_get_model (char* model);
-extern int sun3_hwclk(int set, struct rtc_time *t);
+अटल व्योम sun3_sched_init(व्योम);
+बाह्य व्योम sun3_get_model (अक्षर* model);
+बाह्य पूर्णांक sun3_hwclk(पूर्णांक set, काष्ठा rtc_समय *t);
 
-volatile char* clock_va;
-extern unsigned long availmem;
-unsigned long num_pages;
+अस्थिर अक्षर* घड़ी_va;
+बाह्य अचिन्हित दीर्घ availmem;
+अचिन्हित दीर्घ num_pages;
 
-static void sun3_get_hardware_list(struct seq_file *m)
-{
-	seq_printf(m, "PROM Revision:\t%s\n", romvec->pv_monid);
-}
+अटल व्योम sun3_get_hardware_list(काष्ठा seq_file *m)
+अणु
+	seq_म_लिखो(m, "PROM Revision:\t%s\n", romvec->pv_monid);
+पूर्ण
 
-void __init sun3_init(void)
-{
-	unsigned char enable_register;
-	int i;
+व्योम __init sun3_init(व्योम)
+अणु
+	अचिन्हित अक्षर enable_रेजिस्टर;
+	पूर्णांक i;
 
 	m68k_machtype= MACH_SUN3;
 	m68k_cputype = CPU_68020;
 	m68k_fputype = FPU_68881; /* mc68881 actually */
 	m68k_mmutype = MMU_SUN3;
-	clock_va    =          (char *) 0xfe06000;	/* dark  */
-	sun3_intreg = (unsigned char *) 0xfe0a000;	/* magic */
-	sun3_disable_interrupts();
+	घड़ी_va    =          (अक्षर *) 0xfe06000;	/* dark  */
+	sun3_पूर्णांकreg = (अचिन्हित अक्षर *) 0xfe0a000;	/* magic */
+	sun3_disable_पूर्णांकerrupts();
 
-	prom_init((void *)LINUX_OPPROM_BEGVM);
+	prom_init((व्योम *)LINUX_OPPROM_BEGVM);
 
-	GET_CONTROL_BYTE(AC_SENABLE,enable_register);
-	enable_register |= 0x50; /* Enable FPU */
-	SET_CONTROL_BYTE(AC_SENABLE,enable_register);
-	GET_CONTROL_BYTE(AC_SENABLE,enable_register);
+	GET_CONTROL_BYTE(AC_SENABLE,enable_रेजिस्टर);
+	enable_रेजिस्टर |= 0x50; /* Enable FPU */
+	SET_CONTROL_BYTE(AC_SENABLE,enable_रेजिस्टर);
+	GET_CONTROL_BYTE(AC_SENABLE,enable_रेजिस्टर);
 
-	/* This code looks suspicious, because it doesn't subtract
-           memory belonging to the kernel from the available space */
+	/* This code looks suspicious, because it करोesn't subtract
+           memory beदीर्घing to the kernel from the available space */
 
 
-	memset(sun3_reserved_pmeg, 0, sizeof(sun3_reserved_pmeg));
+	स_रखो(sun3_reserved_pmeg, 0, माप(sun3_reserved_pmeg));
 
 	/* Reserve important PMEGS */
 	/* FIXME: These should be probed instead of hardcoded */
 
-	for (i=0; i<8; i++)		/* Kernel PMEGs */
+	क्रम (i=0; i<8; i++)		/* Kernel PMEGs */
 		sun3_reserved_pmeg[i] = 1;
 
 	sun3_reserved_pmeg[247] = 1;	/* ROM mapping  */
 	sun3_reserved_pmeg[248] = 1;	/* AMD Ethernet */
 	sun3_reserved_pmeg[251] = 1;	/* VB area      */
-	sun3_reserved_pmeg[254] = 1;	/* main I/O     */
+	sun3_reserved_pmeg[254] = 1;	/* मुख्य I/O     */
 
 	sun3_reserved_pmeg[249] = 1;
 	sun3_reserved_pmeg[252] = 1;
 	sun3_reserved_pmeg[253] = 1;
 	set_fs(KERNEL_DS);
-}
+पूर्ण
 
 /* Without this, Bad Things happen when something calls arch_reset. */
-static void sun3_reboot (void)
-{
+अटल व्योम sun3_reboot (व्योम)
+अणु
 	prom_reboot ("vmlinux");
-}
+पूर्ण
 
-static void sun3_halt (void)
-{
+अटल व्योम sun3_halt (व्योम)
+अणु
 	prom_halt ();
-}
+पूर्ण
 
-/* sun3 bootmem allocation */
+/* sun3 booपंचांगem allocation */
 
-static void __init sun3_bootmem_alloc(unsigned long memory_start,
-				      unsigned long memory_end)
-{
-	unsigned long start_page;
+अटल व्योम __init sun3_booपंचांगem_alloc(अचिन्हित दीर्घ memory_start,
+				      अचिन्हित दीर्घ memory_end)
+अणु
+	अचिन्हित दीर्घ start_page;
 
 	/* align start/end to page boundaries */
 	memory_start = ((memory_start + (PAGE_SIZE-1)) & PAGE_MASK);
@@ -117,16 +118,16 @@ static void __init sun3_bootmem_alloc(unsigned long memory_start,
 	start_page = __pa(memory_start) >> PAGE_SHIFT;
 	max_pfn = num_pages = __pa(memory_end) >> PAGE_SHIFT;
 
-	high_memory = (void *)memory_end;
+	high_memory = (व्योम *)memory_end;
 	availmem = memory_start;
 
 	m68k_setup_node(0);
-}
+पूर्ण
 
 
-void __init config_sun3(void)
-{
-	unsigned long memory_start, memory_end;
+व्योम __init config_sun3(व्योम)
+अणु
+	अचिन्हित दीर्घ memory_start, memory_end;
 
 	pr_info("ARCH: SUN3\n");
 	idprom_init();
@@ -141,83 +142,83 @@ void __init config_sun3(void)
 	mach_halt	     =  sun3_halt;
 	mach_get_hardware_list = sun3_get_hardware_list;
 
-	memory_start = ((((unsigned long)_end) + 0x2000) & ~0x1fff);
+	memory_start = ((((अचिन्हित दीर्घ)_end) + 0x2000) & ~0x1fff);
 // PROM seems to want the last couple of physical pages. --m
 	memory_end   = *(romvec->pv_sun3mem) + PAGE_OFFSET - 2*PAGE_SIZE;
 
 	m68k_num_memory=1;
         m68k_memory[0].size=*(romvec->pv_sun3mem);
 
-	sun3_bootmem_alloc(memory_start, memory_end);
-}
+	sun3_booपंचांगem_alloc(memory_start, memory_end);
+पूर्ण
 
-static void __init sun3_sched_init(void)
-{
-	sun3_disable_interrupts();
-        intersil_clock->cmd_reg=(INTERSIL_RUN|INTERSIL_INT_DISABLE|INTERSIL_24H_MODE);
-        intersil_clock->int_reg=INTERSIL_HZ_100_MASK;
-	intersil_clear();
+अटल व्योम __init sun3_sched_init(व्योम)
+अणु
+	sun3_disable_पूर्णांकerrupts();
+        पूर्णांकersil_घड़ी->cmd_reg=(INTERSIL_RUN|INTERSIL_INT_DISABLE|INTERSIL_24H_MODE);
+        पूर्णांकersil_घड़ी->पूर्णांक_reg=INTERSIL_HZ_100_MASK;
+	पूर्णांकersil_clear();
         sun3_enable_irq(5);
-        intersil_clock->cmd_reg=(INTERSIL_RUN|INTERSIL_INT_ENABLE|INTERSIL_24H_MODE);
-        sun3_enable_interrupts();
-        intersil_clear();
-}
+        पूर्णांकersil_घड़ी->cmd_reg=(INTERSIL_RUN|INTERSIL_INT_ENABLE|INTERSIL_24H_MODE);
+        sun3_enable_पूर्णांकerrupts();
+        पूर्णांकersil_clear();
+पूर्ण
 
-#if IS_ENABLED(CONFIG_SUN3_SCSI)
+#अगर IS_ENABLED(CONFIG_SUN3_SCSI)
 
-static const struct resource sun3_scsi_vme_rsrc[] __initconst = {
-	{
+अटल स्थिर काष्ठा resource sun3_scsi_vme_rsrc[] __initस्थिर = अणु
+	अणु
 		.flags = IORESOURCE_IRQ,
 		.start = SUN3_VEC_VMESCSI0,
 		.end   = SUN3_VEC_VMESCSI0,
-	}, {
+	पूर्ण, अणु
 		.flags = IORESOURCE_MEM,
 		.start = 0xff200000,
 		.end   = 0xff200021,
-	}, {
+	पूर्ण, अणु
 		.flags = IORESOURCE_IRQ,
 		.start = SUN3_VEC_VMESCSI1,
 		.end   = SUN3_VEC_VMESCSI1,
-	}, {
+	पूर्ण, अणु
 		.flags = IORESOURCE_MEM,
 		.start = 0xff204000,
 		.end   = 0xff204021,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * Int: level 2 autovector
+ * Int: level 2 स्वतःvector
  * IO: type 1, base 0x00140000, 5 bits phys space: A<4..0>
  */
-static const struct resource sun3_scsi_rsrc[] __initconst = {
-	{
+अटल स्थिर काष्ठा resource sun3_scsi_rsrc[] __initस्थिर = अणु
+	अणु
 		.flags = IORESOURCE_IRQ,
 		.start = 2,
 		.end   = 2,
-	}, {
+	पूर्ण, अणु
 		.flags = IORESOURCE_MEM,
 		.start = 0x00140000,
 		.end   = 0x0014001f,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int __init sun3_platform_init(void)
-{
-	switch (idprom->id_machtype) {
-	case SM_SUN3 | SM_3_160:
-	case SM_SUN3 | SM_3_260:
-		platform_device_register_simple("sun3_scsi_vme", -1,
+पूर्णांक __init sun3_platक्रमm_init(व्योम)
+अणु
+	चयन (idprom->id_machtype) अणु
+	हाल SM_SUN3 | SM_3_160:
+	हाल SM_SUN3 | SM_3_260:
+		platक्रमm_device_रेजिस्टर_simple("sun3_scsi_vme", -1,
 			sun3_scsi_vme_rsrc, ARRAY_SIZE(sun3_scsi_vme_rsrc));
-		break;
-	case SM_SUN3 | SM_3_50:
-	case SM_SUN3 | SM_3_60:
-		platform_device_register_simple("sun3_scsi", -1,
+		अवरोध;
+	हाल SM_SUN3 | SM_3_50:
+	हाल SM_SUN3 | SM_3_60:
+		platक्रमm_device_रेजिस्टर_simple("sun3_scsi", -1,
 			sun3_scsi_rsrc, ARRAY_SIZE(sun3_scsi_rsrc));
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-arch_initcall(sun3_platform_init);
+arch_initcall(sun3_platक्रमm_init);
 
-#endif
+#पूर्ण_अगर

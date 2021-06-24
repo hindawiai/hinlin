@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
-   BlueZ - Bluetooth protocol stack for Linux
+   BlueZ - Bluetooth protocol stack क्रम Linux
 
    Copyright (C) 2014 Intel Corporation
 
-   This program is free software; you can redistribute it and/or modify
+   This program is मुक्त software; you can redistribute it and/or modअगरy
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -11,7 +12,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -21,65 +22,65 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-#include <linux/sched/signal.h>
+#समावेश <linux/sched/संकेत.स>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
-#include <net/bluetooth/mgmt.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/mgmt.h>
 
-#include "smp.h"
-#include "hci_request.h"
-#include "msft.h"
+#समावेश "smp.h"
+#समावेश "hci_request.h"
+#समावेश "msft.h"
 
-#define HCI_REQ_DONE	  0
-#define HCI_REQ_PEND	  1
-#define HCI_REQ_CANCELED  2
+#घोषणा HCI_REQ_DONE	  0
+#घोषणा HCI_REQ_PEND	  1
+#घोषणा HCI_REQ_CANCELED  2
 
-void hci_req_init(struct hci_request *req, struct hci_dev *hdev)
-{
+व्योम hci_req_init(काष्ठा hci_request *req, काष्ठा hci_dev *hdev)
+अणु
 	skb_queue_head_init(&req->cmd_q);
 	req->hdev = hdev;
 	req->err = 0;
-}
+पूर्ण
 
-void hci_req_purge(struct hci_request *req)
-{
+व्योम hci_req_purge(काष्ठा hci_request *req)
+अणु
 	skb_queue_purge(&req->cmd_q);
-}
+पूर्ण
 
-bool hci_req_status_pend(struct hci_dev *hdev)
-{
-	return hdev->req_status == HCI_REQ_PEND;
-}
+bool hci_req_status_pend(काष्ठा hci_dev *hdev)
+अणु
+	वापस hdev->req_status == HCI_REQ_PEND;
+पूर्ण
 
-static int req_run(struct hci_request *req, hci_req_complete_t complete,
+अटल पूर्णांक req_run(काष्ठा hci_request *req, hci_req_complete_t complete,
 		   hci_req_complete_skb_t complete_skb)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct sk_buff *skb;
-	unsigned long flags;
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा sk_buff *skb;
+	अचिन्हित दीर्घ flags;
 
 	bt_dev_dbg(hdev, "length %u", skb_queue_len(&req->cmd_q));
 
-	/* If an error occurred during request building, remove all HCI
+	/* If an error occurred during request building, हटाओ all HCI
 	 * commands queued on the HCI request queue.
 	 */
-	if (req->err) {
+	अगर (req->err) अणु
 		skb_queue_purge(&req->cmd_q);
-		return req->err;
-	}
+		वापस req->err;
+	पूर्ण
 
 	/* Do not allow empty requests */
-	if (skb_queue_empty(&req->cmd_q))
-		return -ENODATA;
+	अगर (skb_queue_empty(&req->cmd_q))
+		वापस -ENODATA;
 
 	skb = skb_peek_tail(&req->cmd_q);
-	if (complete) {
+	अगर (complete) अणु
 		bt_cb(skb)->hci.req_complete = complete;
-	} else if (complete_skb) {
+	पूर्ण अन्यथा अगर (complete_skb) अणु
 		bt_cb(skb)->hci.req_complete_skb = complete_skb;
 		bt_cb(skb)->hci.req_flags |= HCI_REQ_SKB;
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&hdev->cmd_q.lock, flags);
 	skb_queue_splice_tail(&req->cmd_q, &hdev->cmd_q);
@@ -87,50 +88,50 @@ static int req_run(struct hci_request *req, hci_req_complete_t complete,
 
 	queue_work(hdev->workqueue, &hdev->cmd_work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hci_req_run(struct hci_request *req, hci_req_complete_t complete)
-{
-	return req_run(req, complete, NULL);
-}
+पूर्णांक hci_req_run(काष्ठा hci_request *req, hci_req_complete_t complete)
+अणु
+	वापस req_run(req, complete, शून्य);
+पूर्ण
 
-int hci_req_run_skb(struct hci_request *req, hci_req_complete_skb_t complete)
-{
-	return req_run(req, NULL, complete);
-}
+पूर्णांक hci_req_run_skb(काष्ठा hci_request *req, hci_req_complete_skb_t complete)
+अणु
+	वापस req_run(req, शून्य, complete);
+पूर्ण
 
-static void hci_req_sync_complete(struct hci_dev *hdev, u8 result, u16 opcode,
-				  struct sk_buff *skb)
-{
+अटल व्योम hci_req_sync_complete(काष्ठा hci_dev *hdev, u8 result, u16 opcode,
+				  काष्ठा sk_buff *skb)
+अणु
 	bt_dev_dbg(hdev, "result 0x%2.2x", result);
 
-	if (hdev->req_status == HCI_REQ_PEND) {
+	अगर (hdev->req_status == HCI_REQ_PEND) अणु
 		hdev->req_result = result;
 		hdev->req_status = HCI_REQ_DONE;
-		if (skb)
+		अगर (skb)
 			hdev->req_skb = skb_get(skb);
-		wake_up_interruptible(&hdev->req_wait_q);
-	}
-}
+		wake_up_पूर्णांकerruptible(&hdev->req_रुको_q);
+	पूर्ण
+पूर्ण
 
-void hci_req_sync_cancel(struct hci_dev *hdev, int err)
-{
+व्योम hci_req_sync_cancel(काष्ठा hci_dev *hdev, पूर्णांक err)
+अणु
 	bt_dev_dbg(hdev, "err 0x%2.2x", err);
 
-	if (hdev->req_status == HCI_REQ_PEND) {
+	अगर (hdev->req_status == HCI_REQ_PEND) अणु
 		hdev->req_result = err;
 		hdev->req_status = HCI_REQ_CANCELED;
-		wake_up_interruptible(&hdev->req_wait_q);
-	}
-}
+		wake_up_पूर्णांकerruptible(&hdev->req_रुको_q);
+	पूर्ण
+पूर्ण
 
-struct sk_buff *__hci_cmd_sync_ev(struct hci_dev *hdev, u16 opcode, u32 plen,
-				  const void *param, u8 event, u32 timeout)
-{
-	struct hci_request req;
-	struct sk_buff *skb;
-	int err = 0;
+काष्ठा sk_buff *__hci_cmd_sync_ev(काष्ठा hci_dev *hdev, u16 opcode, u32 plen,
+				  स्थिर व्योम *param, u8 event, u32 समयout)
+अणु
+	काष्ठा hci_request req;
+	काष्ठा sk_buff *skb;
+	पूर्णांक err = 0;
 
 	bt_dev_dbg(hdev, "");
 
@@ -141,61 +142,61 @@ struct sk_buff *__hci_cmd_sync_ev(struct hci_dev *hdev, u16 opcode, u32 plen,
 	hdev->req_status = HCI_REQ_PEND;
 
 	err = hci_req_run_skb(&req, hci_req_sync_complete);
-	if (err < 0)
-		return ERR_PTR(err);
+	अगर (err < 0)
+		वापस ERR_PTR(err);
 
-	err = wait_event_interruptible_timeout(hdev->req_wait_q,
-			hdev->req_status != HCI_REQ_PEND, timeout);
+	err = रुको_event_पूर्णांकerruptible_समयout(hdev->req_रुको_q,
+			hdev->req_status != HCI_REQ_PEND, समयout);
 
-	if (err == -ERESTARTSYS)
-		return ERR_PTR(-EINTR);
+	अगर (err == -ERESTARTSYS)
+		वापस ERR_PTR(-EINTR);
 
-	switch (hdev->req_status) {
-	case HCI_REQ_DONE:
-		err = -bt_to_errno(hdev->req_result);
-		break;
+	चयन (hdev->req_status) अणु
+	हाल HCI_REQ_DONE:
+		err = -bt_to_त्रुटि_सं(hdev->req_result);
+		अवरोध;
 
-	case HCI_REQ_CANCELED:
+	हाल HCI_REQ_CANCELED:
 		err = -hdev->req_result;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ETIMEDOUT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	hdev->req_status = hdev->req_result = 0;
 	skb = hdev->req_skb;
-	hdev->req_skb = NULL;
+	hdev->req_skb = शून्य;
 
 	bt_dev_dbg(hdev, "end: err %d", err);
 
-	if (err < 0) {
-		kfree_skb(skb);
-		return ERR_PTR(err);
-	}
+	अगर (err < 0) अणु
+		kमुक्त_skb(skb);
+		वापस ERR_PTR(err);
+	पूर्ण
 
-	if (!skb)
-		return ERR_PTR(-ENODATA);
+	अगर (!skb)
+		वापस ERR_PTR(-ENODATA);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 EXPORT_SYMBOL(__hci_cmd_sync_ev);
 
-struct sk_buff *__hci_cmd_sync(struct hci_dev *hdev, u16 opcode, u32 plen,
-			       const void *param, u32 timeout)
-{
-	return __hci_cmd_sync_ev(hdev, opcode, plen, param, 0, timeout);
-}
+काष्ठा sk_buff *__hci_cmd_sync(काष्ठा hci_dev *hdev, u16 opcode, u32 plen,
+			       स्थिर व्योम *param, u32 समयout)
+अणु
+	वापस __hci_cmd_sync_ev(hdev, opcode, plen, param, 0, समयout);
+पूर्ण
 EXPORT_SYMBOL(__hci_cmd_sync);
 
-/* Execute request and wait for completion. */
-int __hci_req_sync(struct hci_dev *hdev, int (*func)(struct hci_request *req,
-						     unsigned long opt),
-		   unsigned long opt, u32 timeout, u8 *hci_status)
-{
-	struct hci_request req;
-	int err = 0;
+/* Execute request and रुको क्रम completion. */
+पूर्णांक __hci_req_sync(काष्ठा hci_dev *hdev, पूर्णांक (*func)(काष्ठा hci_request *req,
+						     अचिन्हित दीर्घ opt),
+		   अचिन्हित दीर्घ opt, u32 समयout, u8 *hci_status)
+अणु
+	काष्ठा hci_request req;
+	पूर्णांक err = 0;
 
 	bt_dev_dbg(hdev, "start");
 
@@ -204,105 +205,105 @@ int __hci_req_sync(struct hci_dev *hdev, int (*func)(struct hci_request *req,
 	hdev->req_status = HCI_REQ_PEND;
 
 	err = func(&req, opt);
-	if (err) {
-		if (hci_status)
+	अगर (err) अणु
+		अगर (hci_status)
 			*hci_status = HCI_ERROR_UNSPECIFIED;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = hci_req_run_skb(&req, hci_req_sync_complete);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		hdev->req_status = 0;
 
 		/* ENODATA means the HCI request command queue is empty.
-		 * This can happen when a request with conditionals doesn't
+		 * This can happen when a request with conditionals करोesn't
 		 * trigger any commands to be sent. This is normal behavior
-		 * and should not trigger an error return.
+		 * and should not trigger an error वापस.
 		 */
-		if (err == -ENODATA) {
-			if (hci_status)
+		अगर (err == -ENODATA) अणु
+			अगर (hci_status)
 				*hci_status = 0;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
-		if (hci_status)
+		अगर (hci_status)
 			*hci_status = HCI_ERROR_UNSPECIFIED;
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = wait_event_interruptible_timeout(hdev->req_wait_q,
-			hdev->req_status != HCI_REQ_PEND, timeout);
+	err = रुको_event_पूर्णांकerruptible_समयout(hdev->req_रुको_q,
+			hdev->req_status != HCI_REQ_PEND, समयout);
 
-	if (err == -ERESTARTSYS)
-		return -EINTR;
+	अगर (err == -ERESTARTSYS)
+		वापस -EINTR;
 
-	switch (hdev->req_status) {
-	case HCI_REQ_DONE:
-		err = -bt_to_errno(hdev->req_result);
-		if (hci_status)
+	चयन (hdev->req_status) अणु
+	हाल HCI_REQ_DONE:
+		err = -bt_to_त्रुटि_सं(hdev->req_result);
+		अगर (hci_status)
 			*hci_status = hdev->req_result;
-		break;
+		अवरोध;
 
-	case HCI_REQ_CANCELED:
+	हाल HCI_REQ_CANCELED:
 		err = -hdev->req_result;
-		if (hci_status)
+		अगर (hci_status)
 			*hci_status = HCI_ERROR_UNSPECIFIED;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -ETIMEDOUT;
-		if (hci_status)
+		अगर (hci_status)
 			*hci_status = HCI_ERROR_UNSPECIFIED;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	kfree_skb(hdev->req_skb);
-	hdev->req_skb = NULL;
+	kमुक्त_skb(hdev->req_skb);
+	hdev->req_skb = शून्य;
 	hdev->req_status = hdev->req_result = 0;
 
 	bt_dev_dbg(hdev, "end: err %d", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int hci_req_sync(struct hci_dev *hdev, int (*req)(struct hci_request *req,
-						  unsigned long opt),
-		 unsigned long opt, u32 timeout, u8 *hci_status)
-{
-	int ret;
+पूर्णांक hci_req_sync(काष्ठा hci_dev *hdev, पूर्णांक (*req)(काष्ठा hci_request *req,
+						  अचिन्हित दीर्घ opt),
+		 अचिन्हित दीर्घ opt, u32 समयout, u8 *hci_status)
+अणु
+	पूर्णांक ret;
 
 	/* Serialize all requests */
 	hci_req_sync_lock(hdev);
 	/* check the state after obtaing the lock to protect the HCI_UP
-	 * against any races from hci_dev_do_close when the controller
-	 * gets removed.
+	 * against any races from hci_dev_करो_बंद when the controller
+	 * माला_लो हटाओd.
 	 */
-	if (test_bit(HCI_UP, &hdev->flags))
-		ret = __hci_req_sync(hdev, req, opt, timeout, hci_status);
-	else
+	अगर (test_bit(HCI_UP, &hdev->flags))
+		ret = __hci_req_sync(hdev, req, opt, समयout, hci_status);
+	अन्यथा
 		ret = -ENETDOWN;
 	hci_req_sync_unlock(hdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct sk_buff *hci_prepare_cmd(struct hci_dev *hdev, u16 opcode, u32 plen,
-				const void *param)
-{
-	int len = HCI_COMMAND_HDR_SIZE + plen;
-	struct hci_command_hdr *hdr;
-	struct sk_buff *skb;
+काष्ठा sk_buff *hci_prepare_cmd(काष्ठा hci_dev *hdev, u16 opcode, u32 plen,
+				स्थिर व्योम *param)
+अणु
+	पूर्णांक len = HCI_COMMAND_HDR_SIZE + plen;
+	काष्ठा hci_command_hdr *hdr;
+	काष्ठा sk_buff *skb;
 
 	skb = bt_skb_alloc(len, GFP_ATOMIC);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	hdr = skb_put(skb, HCI_COMMAND_HDR_SIZE);
 	hdr->opcode = cpu_to_le16(opcode);
 	hdr->plen   = plen;
 
-	if (plen)
+	अगर (plen)
 		skb_put_data(skb, param, plen);
 
 	bt_dev_dbg(hdev, "skb len %d", skb->len);
@@ -310,130 +311,130 @@ struct sk_buff *hci_prepare_cmd(struct hci_dev *hdev, u16 opcode, u32 plen,
 	hci_skb_pkt_type(skb) = HCI_COMMAND_PKT;
 	hci_skb_opcode(skb) = opcode;
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /* Queue a command to an asynchronous HCI request */
-void hci_req_add_ev(struct hci_request *req, u16 opcode, u32 plen,
-		    const void *param, u8 event)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct sk_buff *skb;
+व्योम hci_req_add_ev(काष्ठा hci_request *req, u16 opcode, u32 plen,
+		    स्थिर व्योम *param, u8 event)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा sk_buff *skb;
 
 	bt_dev_dbg(hdev, "opcode 0x%4.4x plen %d", opcode, plen);
 
-	/* If an error occurred during request building, there is no point in
-	 * queueing the HCI command. We can simply return.
+	/* If an error occurred during request building, there is no poपूर्णांक in
+	 * queueing the HCI command. We can simply वापस.
 	 */
-	if (req->err)
-		return;
+	अगर (req->err)
+		वापस;
 
 	skb = hci_prepare_cmd(hdev, opcode, plen, param);
-	if (!skb) {
+	अगर (!skb) अणु
 		bt_dev_err(hdev, "no memory for command (opcode 0x%4.4x)",
 			   opcode);
 		req->err = -ENOMEM;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (skb_queue_empty(&req->cmd_q))
+	अगर (skb_queue_empty(&req->cmd_q))
 		bt_cb(skb)->hci.req_flags |= HCI_REQ_START;
 
 	bt_cb(skb)->hci.req_event = event;
 
 	skb_queue_tail(&req->cmd_q, skb);
-}
+पूर्ण
 
-void hci_req_add(struct hci_request *req, u16 opcode, u32 plen,
-		 const void *param)
-{
+व्योम hci_req_add(काष्ठा hci_request *req, u16 opcode, u32 plen,
+		 स्थिर व्योम *param)
+अणु
 	hci_req_add_ev(req, opcode, plen, param, 0);
-}
+पूर्ण
 
-void __hci_req_write_fast_connectable(struct hci_request *req, bool enable)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct hci_cp_write_page_scan_activity acp;
+व्योम __hci_req_ग_लिखो_fast_connectable(काष्ठा hci_request *req, bool enable)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा hci_cp_ग_लिखो_page_scan_activity acp;
 	u8 type;
 
-	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
-		return;
+	अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+		वापस;
 
-	if (hdev->hci_ver < BLUETOOTH_VER_1_2)
-		return;
+	अगर (hdev->hci_ver < BLUETOOTH_VER_1_2)
+		वापस;
 
-	if (enable) {
+	अगर (enable) अणु
 		type = PAGE_SCAN_TYPE_INTERLACED;
 
-		/* 160 msec page scan interval */
-		acp.interval = cpu_to_le16(0x0100);
-	} else {
+		/* 160 msec page scan पूर्णांकerval */
+		acp.पूर्णांकerval = cpu_to_le16(0x0100);
+	पूर्ण अन्यथा अणु
 		type = hdev->def_page_scan_type;
-		acp.interval = cpu_to_le16(hdev->def_page_scan_int);
-	}
+		acp.पूर्णांकerval = cpu_to_le16(hdev->def_page_scan_पूर्णांक);
+	पूर्ण
 
-	acp.window = cpu_to_le16(hdev->def_page_scan_window);
+	acp.winकरोw = cpu_to_le16(hdev->def_page_scan_winकरोw);
 
-	if (__cpu_to_le16(hdev->page_scan_interval) != acp.interval ||
-	    __cpu_to_le16(hdev->page_scan_window) != acp.window)
+	अगर (__cpu_to_le16(hdev->page_scan_पूर्णांकerval) != acp.पूर्णांकerval ||
+	    __cpu_to_le16(hdev->page_scan_winकरोw) != acp.winकरोw)
 		hci_req_add(req, HCI_OP_WRITE_PAGE_SCAN_ACTIVITY,
-			    sizeof(acp), &acp);
+			    माप(acp), &acp);
 
-	if (hdev->page_scan_type != type)
+	अगर (hdev->page_scan_type != type)
 		hci_req_add(req, HCI_OP_WRITE_PAGE_SCAN_TYPE, 1, &type);
-}
+पूर्ण
 
-static void start_interleave_scan(struct hci_dev *hdev)
-{
-	hdev->interleave_scan_state = INTERLEAVE_SCAN_NO_FILTER;
+अटल व्योम start_पूर्णांकerleave_scan(काष्ठा hci_dev *hdev)
+अणु
+	hdev->पूर्णांकerleave_scan_state = INTERLEAVE_SCAN_NO_FILTER;
 	queue_delayed_work(hdev->req_workqueue,
-			   &hdev->interleave_scan, 0);
-}
+			   &hdev->पूर्णांकerleave_scan, 0);
+पूर्ण
 
-static bool is_interleave_scanning(struct hci_dev *hdev)
-{
-	return hdev->interleave_scan_state != INTERLEAVE_SCAN_NONE;
-}
+अटल bool is_पूर्णांकerleave_scanning(काष्ठा hci_dev *hdev)
+अणु
+	वापस hdev->पूर्णांकerleave_scan_state != INTERLEAVE_SCAN_NONE;
+पूर्ण
 
-static void cancel_interleave_scan(struct hci_dev *hdev)
-{
+अटल व्योम cancel_पूर्णांकerleave_scan(काष्ठा hci_dev *hdev)
+अणु
 	bt_dev_dbg(hdev, "cancelling interleave scan");
 
-	cancel_delayed_work_sync(&hdev->interleave_scan);
+	cancel_delayed_work_sync(&hdev->पूर्णांकerleave_scan);
 
-	hdev->interleave_scan_state = INTERLEAVE_SCAN_NONE;
-}
+	hdev->पूर्णांकerleave_scan_state = INTERLEAVE_SCAN_NONE;
+पूर्ण
 
-/* Return true if interleave_scan wasn't started until exiting this function,
- * otherwise, return false
+/* Return true अगर पूर्णांकerleave_scan wasn't started until निकासing this function,
+ * otherwise, वापस false
  */
-static bool __hci_update_interleaved_scan(struct hci_dev *hdev)
-{
-	/* Do interleaved scan only if all of the following are true:
+अटल bool __hci_update_पूर्णांकerleaved_scan(काष्ठा hci_dev *hdev)
+अणु
+	/* Do पूर्णांकerleaved scan only अगर all of the following are true:
 	 * - There is at least one ADV monitor
-	 * - At least one pending LE connection or one device to be scanned for
+	 * - At least one pending LE connection or one device to be scanned क्रम
 	 * - Monitor offloading is not supported
 	 * If so, we should alternate between allowlist scan and one without
-	 * any filters to save power.
+	 * any filters to save घातer.
 	 */
-	bool use_interleaving = hci_is_adv_monitoring(hdev) &&
+	bool use_पूर्णांकerleaving = hci_is_adv_monitoring(hdev) &&
 				!(list_empty(&hdev->pend_le_conns) &&
 				  list_empty(&hdev->pend_le_reports)) &&
 				hci_get_adv_monitor_offload_ext(hdev) ==
 				    HCI_ADV_MONITOR_EXT_NONE;
-	bool is_interleaving = is_interleave_scanning(hdev);
+	bool is_पूर्णांकerleaving = is_पूर्णांकerleave_scanning(hdev);
 
-	if (use_interleaving && !is_interleaving) {
-		start_interleave_scan(hdev);
+	अगर (use_पूर्णांकerleaving && !is_पूर्णांकerleaving) अणु
+		start_पूर्णांकerleave_scan(hdev);
 		bt_dev_dbg(hdev, "starting interleave scan");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (!use_interleaving && is_interleaving)
-		cancel_interleave_scan(hdev);
+	अगर (!use_पूर्णांकerleaving && is_पूर्णांकerleaving)
+		cancel_पूर्णांकerleave_scan(hdev);
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* This function controls the background scanning based on hdev->pend_le_conns
  * list. If there are pending LE connection we start the background scanning,
@@ -441,31 +442,31 @@ static bool __hci_update_interleaved_scan(struct hci_dev *hdev)
  *
  * This function requires the caller holds hdev->lock.
  */
-static void __hci_update_background_scan(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
+अटल व्योम __hci_update_background_scan(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 
-	if (!test_bit(HCI_UP, &hdev->flags) ||
+	अगर (!test_bit(HCI_UP, &hdev->flags) ||
 	    test_bit(HCI_INIT, &hdev->flags) ||
 	    hci_dev_test_flag(hdev, HCI_SETUP) ||
 	    hci_dev_test_flag(hdev, HCI_CONFIG) ||
 	    hci_dev_test_flag(hdev, HCI_AUTO_OFF) ||
 	    hci_dev_test_flag(hdev, HCI_UNREGISTER))
-		return;
+		वापस;
 
-	/* No point in doing scanning if LE support hasn't been enabled */
-	if (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
-		return;
+	/* No poपूर्णांक in करोing scanning अगर LE support hasn't been enabled */
+	अगर (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
+		वापस;
 
-	/* If discovery is active don't interfere with it */
-	if (hdev->discovery.state != DISCOVERY_STOPPED)
-		return;
+	/* If discovery is active करोn't पूर्णांकerfere with it */
+	अगर (hdev->discovery.state != DISCOVERY_STOPPED)
+		वापस;
 
 	/* Reset RSSI and UUID filters when starting background scanning
-	 * since these filters are meant for service discovery only.
+	 * since these filters are meant क्रम service discovery only.
 	 *
 	 * The Start Discovery and Start Service Discovery operations
-	 * ensure to set proper values for RSSI threshold and UUID
+	 * ensure to set proper values क्रम RSSI threshold and UUID
 	 * filter list. So it is safe to just reset them here.
 	 */
 	hci_discovery_filter_clear(hdev);
@@ -473,335 +474,335 @@ static void __hci_update_background_scan(struct hci_request *req)
 	bt_dev_dbg(hdev, "ADV monitoring is %s",
 		   hci_is_adv_monitoring(hdev) ? "on" : "off");
 
-	if (list_empty(&hdev->pend_le_conns) &&
+	अगर (list_empty(&hdev->pend_le_conns) &&
 	    list_empty(&hdev->pend_le_reports) &&
-	    !hci_is_adv_monitoring(hdev)) {
+	    !hci_is_adv_monitoring(hdev)) अणु
 		/* If there is no pending LE connections or devices
-		 * to be scanned for or no ADV monitors, we should stop the
+		 * to be scanned क्रम or no ADV monitors, we should stop the
 		 * background scanning.
 		 */
 
-		/* If controller is not scanning we are done. */
-		if (!hci_dev_test_flag(hdev, HCI_LE_SCAN))
-			return;
+		/* If controller is not scanning we are करोne. */
+		अगर (!hci_dev_test_flag(hdev, HCI_LE_SCAN))
+			वापस;
 
 		hci_req_add_le_scan_disable(req, false);
 
 		bt_dev_dbg(hdev, "stopping background scanning");
-	} else {
+	पूर्ण अन्यथा अणु
 		/* If there is at least one pending LE connection, we should
 		 * keep the background scan running.
 		 */
 
 		/* If controller is connecting, we should not start scanning
 		 * since some controllers are not able to scan and connect at
-		 * the same time.
+		 * the same समय.
 		 */
-		if (hci_lookup_le_connect(hdev))
-			return;
+		अगर (hci_lookup_le_connect(hdev))
+			वापस;
 
 		/* If controller is currently scanning, we stop it to ensure we
-		 * don't miss any advertising (due to duplicates filter).
+		 * करोn't miss any advertising (due to duplicates filter).
 		 */
-		if (hci_dev_test_flag(hdev, HCI_LE_SCAN))
+		अगर (hci_dev_test_flag(hdev, HCI_LE_SCAN))
 			hci_req_add_le_scan_disable(req, false);
 
 		hci_req_add_le_passive_scan(req);
 		bt_dev_dbg(hdev, "starting background scanning");
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __hci_req_update_name(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct hci_cp_write_local_name cp;
+व्योम __hci_req_update_name(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा hci_cp_ग_लिखो_local_name cp;
 
-	memcpy(cp.name, hdev->dev_name, sizeof(cp.name));
+	स_नकल(cp.name, hdev->dev_name, माप(cp.name));
 
-	hci_req_add(req, HCI_OP_WRITE_LOCAL_NAME, sizeof(cp), &cp);
-}
+	hci_req_add(req, HCI_OP_WRITE_LOCAL_NAME, माप(cp), &cp);
+पूर्ण
 
-#define PNP_INFO_SVCLASS_ID		0x1200
+#घोषणा PNP_INFO_SVCLASS_ID		0x1200
 
-static u8 *create_uuid16_list(struct hci_dev *hdev, u8 *data, ptrdiff_t len)
-{
-	u8 *ptr = data, *uuids_start = NULL;
-	struct bt_uuid *uuid;
+अटल u8 *create_uuid16_list(काष्ठा hci_dev *hdev, u8 *data, सूचक_भेद_प्रकार len)
+अणु
+	u8 *ptr = data, *uuids_start = शून्य;
+	काष्ठा bt_uuid *uuid;
 
-	if (len < 4)
-		return ptr;
+	अगर (len < 4)
+		वापस ptr;
 
-	list_for_each_entry(uuid, &hdev->uuids, list) {
+	list_क्रम_each_entry(uuid, &hdev->uuids, list) अणु
 		u16 uuid16;
 
-		if (uuid->size != 16)
-			continue;
+		अगर (uuid->size != 16)
+			जारी;
 
 		uuid16 = get_unaligned_le16(&uuid->uuid[12]);
-		if (uuid16 < 0x1100)
-			continue;
+		अगर (uuid16 < 0x1100)
+			जारी;
 
-		if (uuid16 == PNP_INFO_SVCLASS_ID)
-			continue;
+		अगर (uuid16 == PNP_INFO_SVCLASS_ID)
+			जारी;
 
-		if (!uuids_start) {
+		अगर (!uuids_start) अणु
 			uuids_start = ptr;
 			uuids_start[0] = 1;
 			uuids_start[1] = EIR_UUID16_ALL;
 			ptr += 2;
-		}
+		पूर्ण
 
-		/* Stop if not enough space to put next UUID */
-		if ((ptr - data) + sizeof(u16) > len) {
+		/* Stop अगर not enough space to put next UUID */
+		अगर ((ptr - data) + माप(u16) > len) अणु
 			uuids_start[1] = EIR_UUID16_SOME;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		*ptr++ = (uuid16 & 0x00ff);
 		*ptr++ = (uuid16 & 0xff00) >> 8;
-		uuids_start[0] += sizeof(uuid16);
-	}
+		uuids_start[0] += माप(uuid16);
+	पूर्ण
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static u8 *create_uuid32_list(struct hci_dev *hdev, u8 *data, ptrdiff_t len)
-{
-	u8 *ptr = data, *uuids_start = NULL;
-	struct bt_uuid *uuid;
+अटल u8 *create_uuid32_list(काष्ठा hci_dev *hdev, u8 *data, सूचक_भेद_प्रकार len)
+अणु
+	u8 *ptr = data, *uuids_start = शून्य;
+	काष्ठा bt_uuid *uuid;
 
-	if (len < 6)
-		return ptr;
+	अगर (len < 6)
+		वापस ptr;
 
-	list_for_each_entry(uuid, &hdev->uuids, list) {
-		if (uuid->size != 32)
-			continue;
+	list_क्रम_each_entry(uuid, &hdev->uuids, list) अणु
+		अगर (uuid->size != 32)
+			जारी;
 
-		if (!uuids_start) {
+		अगर (!uuids_start) अणु
 			uuids_start = ptr;
 			uuids_start[0] = 1;
 			uuids_start[1] = EIR_UUID32_ALL;
 			ptr += 2;
-		}
+		पूर्ण
 
-		/* Stop if not enough space to put next UUID */
-		if ((ptr - data) + sizeof(u32) > len) {
+		/* Stop अगर not enough space to put next UUID */
+		अगर ((ptr - data) + माप(u32) > len) अणु
 			uuids_start[1] = EIR_UUID32_SOME;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		memcpy(ptr, &uuid->uuid[12], sizeof(u32));
-		ptr += sizeof(u32);
-		uuids_start[0] += sizeof(u32);
-	}
+		स_नकल(ptr, &uuid->uuid[12], माप(u32));
+		ptr += माप(u32);
+		uuids_start[0] += माप(u32);
+	पूर्ण
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static u8 *create_uuid128_list(struct hci_dev *hdev, u8 *data, ptrdiff_t len)
-{
-	u8 *ptr = data, *uuids_start = NULL;
-	struct bt_uuid *uuid;
+अटल u8 *create_uuid128_list(काष्ठा hci_dev *hdev, u8 *data, सूचक_भेद_प्रकार len)
+अणु
+	u8 *ptr = data, *uuids_start = शून्य;
+	काष्ठा bt_uuid *uuid;
 
-	if (len < 18)
-		return ptr;
+	अगर (len < 18)
+		वापस ptr;
 
-	list_for_each_entry(uuid, &hdev->uuids, list) {
-		if (uuid->size != 128)
-			continue;
+	list_क्रम_each_entry(uuid, &hdev->uuids, list) अणु
+		अगर (uuid->size != 128)
+			जारी;
 
-		if (!uuids_start) {
+		अगर (!uuids_start) अणु
 			uuids_start = ptr;
 			uuids_start[0] = 1;
 			uuids_start[1] = EIR_UUID128_ALL;
 			ptr += 2;
-		}
+		पूर्ण
 
-		/* Stop if not enough space to put next UUID */
-		if ((ptr - data) + 16 > len) {
+		/* Stop अगर not enough space to put next UUID */
+		अगर ((ptr - data) + 16 > len) अणु
 			uuids_start[1] = EIR_UUID128_SOME;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		memcpy(ptr, uuid->uuid, 16);
+		स_नकल(ptr, uuid->uuid, 16);
 		ptr += 16;
 		uuids_start[0] += 16;
-	}
+	पूर्ण
 
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
-static void create_eir(struct hci_dev *hdev, u8 *data)
-{
+अटल व्योम create_eir(काष्ठा hci_dev *hdev, u8 *data)
+अणु
 	u8 *ptr = data;
-	size_t name_len;
+	माप_प्रकार name_len;
 
-	name_len = strlen(hdev->dev_name);
+	name_len = म_माप(hdev->dev_name);
 
-	if (name_len > 0) {
+	अगर (name_len > 0) अणु
 		/* EIR Data type */
-		if (name_len > 48) {
+		अगर (name_len > 48) अणु
 			name_len = 48;
 			ptr[1] = EIR_NAME_SHORT;
-		} else
+		पूर्ण अन्यथा
 			ptr[1] = EIR_NAME_COMPLETE;
 
 		/* EIR Data length */
 		ptr[0] = name_len + 1;
 
-		memcpy(ptr + 2, hdev->dev_name, name_len);
+		स_नकल(ptr + 2, hdev->dev_name, name_len);
 
 		ptr += (name_len + 2);
-	}
+	पूर्ण
 
-	if (hdev->inq_tx_power != HCI_TX_POWER_INVALID) {
+	अगर (hdev->inq_tx_घातer != HCI_TX_POWER_INVALID) अणु
 		ptr[0] = 2;
 		ptr[1] = EIR_TX_POWER;
-		ptr[2] = (u8) hdev->inq_tx_power;
+		ptr[2] = (u8) hdev->inq_tx_घातer;
 
 		ptr += 3;
-	}
+	पूर्ण
 
-	if (hdev->devid_source > 0) {
+	अगर (hdev->devid_source > 0) अणु
 		ptr[0] = 9;
 		ptr[1] = EIR_DEVICE_ID;
 
 		put_unaligned_le16(hdev->devid_source, ptr + 2);
-		put_unaligned_le16(hdev->devid_vendor, ptr + 4);
+		put_unaligned_le16(hdev->devid_venकरोr, ptr + 4);
 		put_unaligned_le16(hdev->devid_product, ptr + 6);
 		put_unaligned_le16(hdev->devid_version, ptr + 8);
 
 		ptr += 10;
-	}
+	पूर्ण
 
 	ptr = create_uuid16_list(hdev, ptr, HCI_MAX_EIR_LENGTH - (ptr - data));
 	ptr = create_uuid32_list(hdev, ptr, HCI_MAX_EIR_LENGTH - (ptr - data));
 	ptr = create_uuid128_list(hdev, ptr, HCI_MAX_EIR_LENGTH - (ptr - data));
-}
+पूर्ण
 
-void __hci_req_update_eir(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct hci_cp_write_eir cp;
+व्योम __hci_req_update_eir(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा hci_cp_ग_लिखो_eir cp;
 
-	if (!hdev_is_powered(hdev))
-		return;
+	अगर (!hdev_is_घातered(hdev))
+		वापस;
 
-	if (!lmp_ext_inq_capable(hdev))
-		return;
+	अगर (!lmp_ext_inq_capable(hdev))
+		वापस;
 
-	if (!hci_dev_test_flag(hdev, HCI_SSP_ENABLED))
-		return;
+	अगर (!hci_dev_test_flag(hdev, HCI_SSP_ENABLED))
+		वापस;
 
-	if (hci_dev_test_flag(hdev, HCI_SERVICE_CACHE))
-		return;
+	अगर (hci_dev_test_flag(hdev, HCI_SERVICE_CACHE))
+		वापस;
 
-	memset(&cp, 0, sizeof(cp));
+	स_रखो(&cp, 0, माप(cp));
 
 	create_eir(hdev, cp.data);
 
-	if (memcmp(cp.data, hdev->eir, sizeof(cp.data)) == 0)
-		return;
+	अगर (स_भेद(cp.data, hdev->eir, माप(cp.data)) == 0)
+		वापस;
 
-	memcpy(hdev->eir, cp.data, sizeof(cp.data));
+	स_नकल(hdev->eir, cp.data, माप(cp.data));
 
-	hci_req_add(req, HCI_OP_WRITE_EIR, sizeof(cp), &cp);
-}
+	hci_req_add(req, HCI_OP_WRITE_EIR, माप(cp), &cp);
+पूर्ण
 
-void hci_req_add_le_scan_disable(struct hci_request *req, bool rpa_le_conn)
-{
-	struct hci_dev *hdev = req->hdev;
+व्योम hci_req_add_le_scan_disable(काष्ठा hci_request *req, bool rpa_le_conn)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 
-	if (hdev->scanning_paused) {
+	अगर (hdev->scanning_छोड़ोd) अणु
 		bt_dev_dbg(hdev, "Scanning is paused for suspend");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (hdev->suspended)
+	अगर (hdev->suspended)
 		set_bit(SUSPEND_SCAN_DISABLE, hdev->suspend_tasks);
 
-	if (use_ext_scan(hdev)) {
-		struct hci_cp_le_set_ext_scan_enable cp;
+	अगर (use_ext_scan(hdev)) अणु
+		काष्ठा hci_cp_le_set_ext_scan_enable cp;
 
-		memset(&cp, 0, sizeof(cp));
+		स_रखो(&cp, 0, माप(cp));
 		cp.enable = LE_SCAN_DISABLE;
-		hci_req_add(req, HCI_OP_LE_SET_EXT_SCAN_ENABLE, sizeof(cp),
+		hci_req_add(req, HCI_OP_LE_SET_EXT_SCAN_ENABLE, माप(cp),
 			    &cp);
-	} else {
-		struct hci_cp_le_set_scan_enable cp;
+	पूर्ण अन्यथा अणु
+		काष्ठा hci_cp_le_set_scan_enable cp;
 
-		memset(&cp, 0, sizeof(cp));
+		स_रखो(&cp, 0, माप(cp));
 		cp.enable = LE_SCAN_DISABLE;
-		hci_req_add(req, HCI_OP_LE_SET_SCAN_ENABLE, sizeof(cp), &cp);
-	}
+		hci_req_add(req, HCI_OP_LE_SET_SCAN_ENABLE, माप(cp), &cp);
+	पूर्ण
 
 	/* Disable address resolution */
-	if (use_ll_privacy(hdev) &&
+	अगर (use_ll_privacy(hdev) &&
 	    hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY) &&
-	    hci_dev_test_flag(hdev, HCI_LL_RPA_RESOLUTION) && !rpa_le_conn) {
+	    hci_dev_test_flag(hdev, HCI_LL_RPA_RESOLUTION) && !rpa_le_conn) अणु
 		__u8 enable = 0x00;
 
 		hci_req_add(req, HCI_OP_LE_SET_ADDR_RESOLV_ENABLE, 1, &enable);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void del_from_white_list(struct hci_request *req, bdaddr_t *bdaddr,
+अटल व्योम del_from_white_list(काष्ठा hci_request *req, bdaddr_t *bdaddr,
 				u8 bdaddr_type)
-{
-	struct hci_cp_le_del_from_white_list cp;
+अणु
+	काष्ठा hci_cp_le_del_from_white_list cp;
 
 	cp.bdaddr_type = bdaddr_type;
 	bacpy(&cp.bdaddr, bdaddr);
 
 	bt_dev_dbg(req->hdev, "Remove %pMR (0x%x) from whitelist", &cp.bdaddr,
 		   cp.bdaddr_type);
-	hci_req_add(req, HCI_OP_LE_DEL_FROM_WHITE_LIST, sizeof(cp), &cp);
+	hci_req_add(req, HCI_OP_LE_DEL_FROM_WHITE_LIST, माप(cp), &cp);
 
-	if (use_ll_privacy(req->hdev) &&
-	    hci_dev_test_flag(req->hdev, HCI_ENABLE_LL_PRIVACY)) {
-		struct smp_irk *irk;
+	अगर (use_ll_privacy(req->hdev) &&
+	    hci_dev_test_flag(req->hdev, HCI_ENABLE_LL_PRIVACY)) अणु
+		काष्ठा smp_irk *irk;
 
 		irk = hci_find_irk_by_addr(req->hdev, bdaddr, bdaddr_type);
-		if (irk) {
-			struct hci_cp_le_del_from_resolv_list cp;
+		अगर (irk) अणु
+			काष्ठा hci_cp_le_del_from_resolv_list cp;
 
 			cp.bdaddr_type = bdaddr_type;
 			bacpy(&cp.bdaddr, bdaddr);
 
 			hci_req_add(req, HCI_OP_LE_DEL_FROM_RESOLV_LIST,
-				    sizeof(cp), &cp);
-		}
-	}
-}
+				    माप(cp), &cp);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-/* Adds connection to white list if needed. On error, returns -1. */
-static int add_to_white_list(struct hci_request *req,
-			     struct hci_conn_params *params, u8 *num_entries,
+/* Adds connection to white list अगर needed. On error, वापसs -1. */
+अटल पूर्णांक add_to_white_list(काष्ठा hci_request *req,
+			     काष्ठा hci_conn_params *params, u8 *num_entries,
 			     bool allow_rpa)
-{
-	struct hci_cp_le_add_to_white_list cp;
-	struct hci_dev *hdev = req->hdev;
+अणु
+	काष्ठा hci_cp_le_add_to_white_list cp;
+	काष्ठा hci_dev *hdev = req->hdev;
 
-	/* Already in white list */
-	if (hci_bdaddr_list_lookup(&hdev->le_white_list, &params->addr,
+	/* Alपढ़ोy in white list */
+	अगर (hci_bdaddr_list_lookup(&hdev->le_white_list, &params->addr,
 				   params->addr_type))
-		return 0;
+		वापस 0;
 
 	/* Select filter policy to accept all advertising */
-	if (*num_entries >= hdev->le_white_list_size)
-		return -1;
+	अगर (*num_entries >= hdev->le_white_list_size)
+		वापस -1;
 
 	/* White list can not be used with RPAs */
-	if (!allow_rpa &&
+	अगर (!allow_rpa &&
 	    !hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY) &&
-	    hci_find_irk_by_addr(hdev, &params->addr, params->addr_type)) {
-		return -1;
-	}
+	    hci_find_irk_by_addr(hdev, &params->addr, params->addr_type)) अणु
+		वापस -1;
+	पूर्ण
 
 	/* During suspend, only wakeable devices can be in whitelist */
-	if (hdev->suspended && !hci_conn_test_flag(HCI_CONN_FLAG_REMOTE_WAKEUP,
+	अगर (hdev->suspended && !hci_conn_test_flag(HCI_CONN_FLAG_REMOTE_WAKEUP,
 						   params->current_flags))
-		return 0;
+		वापस 0;
 
 	*num_entries += 1;
 	cp.bdaddr_type = params->addr_type;
@@ -809,59 +810,59 @@ static int add_to_white_list(struct hci_request *req,
 
 	bt_dev_dbg(hdev, "Add %pMR (0x%x) to whitelist", &cp.bdaddr,
 		   cp.bdaddr_type);
-	hci_req_add(req, HCI_OP_LE_ADD_TO_WHITE_LIST, sizeof(cp), &cp);
+	hci_req_add(req, HCI_OP_LE_ADD_TO_WHITE_LIST, माप(cp), &cp);
 
-	if (use_ll_privacy(hdev) &&
-	    hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY)) {
-		struct smp_irk *irk;
+	अगर (use_ll_privacy(hdev) &&
+	    hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY)) अणु
+		काष्ठा smp_irk *irk;
 
 		irk = hci_find_irk_by_addr(hdev, &params->addr,
 					   params->addr_type);
-		if (irk) {
-			struct hci_cp_le_add_to_resolv_list cp;
+		अगर (irk) अणु
+			काष्ठा hci_cp_le_add_to_resolv_list cp;
 
 			cp.bdaddr_type = params->addr_type;
 			bacpy(&cp.bdaddr, &params->addr);
-			memcpy(cp.peer_irk, irk->val, 16);
+			स_नकल(cp.peer_irk, irk->val, 16);
 
-			if (hci_dev_test_flag(hdev, HCI_PRIVACY))
-				memcpy(cp.local_irk, hdev->irk, 16);
-			else
-				memset(cp.local_irk, 0, 16);
+			अगर (hci_dev_test_flag(hdev, HCI_PRIVACY))
+				स_नकल(cp.local_irk, hdev->irk, 16);
+			अन्यथा
+				स_रखो(cp.local_irk, 0, 16);
 
 			hci_req_add(req, HCI_OP_LE_ADD_TO_RESOLV_LIST,
-				    sizeof(cp), &cp);
-		}
-	}
+				    माप(cp), &cp);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 update_white_list(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct hci_conn_params *params;
-	struct bdaddr_list *b;
+अटल u8 update_white_list(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा hci_conn_params *params;
+	काष्ठा bdaddr_list *b;
 	u8 num_entries = 0;
 	bool pend_conn, pend_report;
-	/* We allow whitelisting even with RPAs in suspend. In the worst case,
+	/* We allow whitelisting even with RPAs in suspend. In the worst हाल,
 	 * we won't be able to wake from devices that use the privacy1.2
 	 * features. Additionally, once we support privacy1.2 and IRK
-	 * offloading, we can update this to also check for those conditions.
+	 * offloading, we can update this to also check क्रम those conditions.
 	 */
 	bool allow_rpa = hdev->suspended;
 
-	if (use_ll_privacy(hdev) &&
+	अगर (use_ll_privacy(hdev) &&
 	    hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
 		allow_rpa = true;
 
-	/* Go through the current white list programmed into the
-	 * controller one by one and check if that address is still
+	/* Go through the current white list programmed पूर्णांकo the
+	 * controller one by one and check अगर that address is still
 	 * in the list of pending connections or list of devices to
 	 * report. If not present in either list, then queue the
-	 * command to remove it from the controller.
+	 * command to हटाओ it from the controller.
 	 */
-	list_for_each_entry(b, &hdev->le_white_list, list) {
+	list_क्रम_each_entry(b, &hdev->le_white_list, list) अणु
 		pend_conn = hci_pend_le_action_lookup(&hdev->pend_le_conns,
 						      &b->bdaddr,
 						      b->bdaddr_type);
@@ -870,196 +871,196 @@ static u8 update_white_list(struct hci_request *req)
 							b->bdaddr_type);
 
 		/* If the device is not likely to connect or report,
-		 * remove it from the whitelist.
+		 * हटाओ it from the whitelist.
 		 */
-		if (!pend_conn && !pend_report) {
+		अगर (!pend_conn && !pend_report) अणु
 			del_from_white_list(req, &b->bdaddr, b->bdaddr_type);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* White list can not be used with RPAs */
-		if (!allow_rpa &&
+		अगर (!allow_rpa &&
 		    !hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY) &&
-		    hci_find_irk_by_addr(hdev, &b->bdaddr, b->bdaddr_type)) {
-			return 0x00;
-		}
+		    hci_find_irk_by_addr(hdev, &b->bdaddr, b->bdaddr_type)) अणु
+			वापस 0x00;
+		पूर्ण
 
 		num_entries++;
-	}
+	पूर्ण
 
-	/* Since all no longer valid white list entries have been
-	 * removed, walk through the list of pending connections
-	 * and ensure that any new device gets programmed into
+	/* Since all no दीर्घer valid white list entries have been
+	 * हटाओd, walk through the list of pending connections
+	 * and ensure that any new device माला_लो programmed पूर्णांकo
 	 * the controller.
 	 *
 	 * If the list of the devices is larger than the list of
 	 * available white list entries in the controller, then
-	 * just abort and return filer policy value to not use the
+	 * just पात and वापस filer policy value to not use the
 	 * white list.
 	 */
-	list_for_each_entry(params, &hdev->pend_le_conns, action) {
-		if (add_to_white_list(req, params, &num_entries, allow_rpa))
-			return 0x00;
-	}
+	list_क्रम_each_entry(params, &hdev->pend_le_conns, action) अणु
+		अगर (add_to_white_list(req, params, &num_entries, allow_rpa))
+			वापस 0x00;
+	पूर्ण
 
 	/* After adding all new pending connections, walk through
 	 * the list of pending reports and also add these to the
-	 * white list if there is still space. Abort if space runs out.
+	 * white list अगर there is still space. Abort अगर space runs out.
 	 */
-	list_for_each_entry(params, &hdev->pend_le_reports, action) {
-		if (add_to_white_list(req, params, &num_entries, allow_rpa))
-			return 0x00;
-	}
+	list_क्रम_each_entry(params, &hdev->pend_le_reports, action) अणु
+		अगर (add_to_white_list(req, params, &num_entries, allow_rpa))
+			वापस 0x00;
+	पूर्ण
 
 	/* Use the allowlist unless the following conditions are all true:
 	 * - We are not currently suspending
-	 * - There are 1 or more ADV monitors registered and it's not offloaded
+	 * - There are 1 or more ADV monitors रेजिस्टरed and it's not offloaded
 	 * - Interleaved scanning is not currently using the allowlist
 	 */
-	if (!idr_is_empty(&hdev->adv_monitors_idr) && !hdev->suspended &&
+	अगर (!idr_is_empty(&hdev->adv_monitors_idr) && !hdev->suspended &&
 	    hci_get_adv_monitor_offload_ext(hdev) == HCI_ADV_MONITOR_EXT_NONE &&
-	    hdev->interleave_scan_state != INTERLEAVE_SCAN_ALLOWLIST)
-		return 0x00;
+	    hdev->पूर्णांकerleave_scan_state != INTERLEAVE_SCAN_ALLOWLIST)
+		वापस 0x00;
 
 	/* Select filter policy to use white list */
-	return 0x01;
-}
+	वापस 0x01;
+पूर्ण
 
-static bool scan_use_rpa(struct hci_dev *hdev)
-{
-	return hci_dev_test_flag(hdev, HCI_PRIVACY);
-}
+अटल bool scan_use_rpa(काष्ठा hci_dev *hdev)
+अणु
+	वापस hci_dev_test_flag(hdev, HCI_PRIVACY);
+पूर्ण
 
-static void hci_req_start_scan(struct hci_request *req, u8 type, u16 interval,
-			       u16 window, u8 own_addr_type, u8 filter_policy,
+अटल व्योम hci_req_start_scan(काष्ठा hci_request *req, u8 type, u16 पूर्णांकerval,
+			       u16 winकरोw, u8 own_addr_type, u8 filter_policy,
 			       bool addr_resolv)
-{
-	struct hci_dev *hdev = req->hdev;
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 
-	if (hdev->scanning_paused) {
+	अगर (hdev->scanning_छोड़ोd) अणु
 		bt_dev_dbg(hdev, "Scanning is paused for suspend");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (use_ll_privacy(hdev) &&
+	अगर (use_ll_privacy(hdev) &&
 	    hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY) &&
-	    addr_resolv) {
+	    addr_resolv) अणु
 		u8 enable = 0x01;
 
 		hci_req_add(req, HCI_OP_LE_SET_ADDR_RESOLV_ENABLE, 1, &enable);
-	}
+	पूर्ण
 
-	/* Use ext scanning if set ext scan param and ext scan enable is
+	/* Use ext scanning अगर set ext scan param and ext scan enable is
 	 * supported
 	 */
-	if (use_ext_scan(hdev)) {
-		struct hci_cp_le_set_ext_scan_params *ext_param_cp;
-		struct hci_cp_le_set_ext_scan_enable ext_enable_cp;
-		struct hci_cp_le_scan_phy_params *phy_params;
-		u8 data[sizeof(*ext_param_cp) + sizeof(*phy_params) * 2];
+	अगर (use_ext_scan(hdev)) अणु
+		काष्ठा hci_cp_le_set_ext_scan_params *ext_param_cp;
+		काष्ठा hci_cp_le_set_ext_scan_enable ext_enable_cp;
+		काष्ठा hci_cp_le_scan_phy_params *phy_params;
+		u8 data[माप(*ext_param_cp) + माप(*phy_params) * 2];
 		u32 plen;
 
-		ext_param_cp = (void *)data;
-		phy_params = (void *)ext_param_cp->data;
+		ext_param_cp = (व्योम *)data;
+		phy_params = (व्योम *)ext_param_cp->data;
 
-		memset(ext_param_cp, 0, sizeof(*ext_param_cp));
+		स_रखो(ext_param_cp, 0, माप(*ext_param_cp));
 		ext_param_cp->own_addr_type = own_addr_type;
 		ext_param_cp->filter_policy = filter_policy;
 
-		plen = sizeof(*ext_param_cp);
+		plen = माप(*ext_param_cp);
 
-		if (scan_1m(hdev) || scan_2m(hdev)) {
+		अगर (scan_1m(hdev) || scan_2m(hdev)) अणु
 			ext_param_cp->scanning_phys |= LE_SCAN_PHY_1M;
 
-			memset(phy_params, 0, sizeof(*phy_params));
+			स_रखो(phy_params, 0, माप(*phy_params));
 			phy_params->type = type;
-			phy_params->interval = cpu_to_le16(interval);
-			phy_params->window = cpu_to_le16(window);
+			phy_params->पूर्णांकerval = cpu_to_le16(पूर्णांकerval);
+			phy_params->winकरोw = cpu_to_le16(winकरोw);
 
-			plen += sizeof(*phy_params);
+			plen += माप(*phy_params);
 			phy_params++;
-		}
+		पूर्ण
 
-		if (scan_coded(hdev)) {
+		अगर (scan_coded(hdev)) अणु
 			ext_param_cp->scanning_phys |= LE_SCAN_PHY_CODED;
 
-			memset(phy_params, 0, sizeof(*phy_params));
+			स_रखो(phy_params, 0, माप(*phy_params));
 			phy_params->type = type;
-			phy_params->interval = cpu_to_le16(interval);
-			phy_params->window = cpu_to_le16(window);
+			phy_params->पूर्णांकerval = cpu_to_le16(पूर्णांकerval);
+			phy_params->winकरोw = cpu_to_le16(winकरोw);
 
-			plen += sizeof(*phy_params);
+			plen += माप(*phy_params);
 			phy_params++;
-		}
+		पूर्ण
 
 		hci_req_add(req, HCI_OP_LE_SET_EXT_SCAN_PARAMS,
 			    plen, ext_param_cp);
 
-		memset(&ext_enable_cp, 0, sizeof(ext_enable_cp));
+		स_रखो(&ext_enable_cp, 0, माप(ext_enable_cp));
 		ext_enable_cp.enable = LE_SCAN_ENABLE;
 		ext_enable_cp.filter_dup = LE_SCAN_FILTER_DUP_ENABLE;
 
 		hci_req_add(req, HCI_OP_LE_SET_EXT_SCAN_ENABLE,
-			    sizeof(ext_enable_cp), &ext_enable_cp);
-	} else {
-		struct hci_cp_le_set_scan_param param_cp;
-		struct hci_cp_le_set_scan_enable enable_cp;
+			    माप(ext_enable_cp), &ext_enable_cp);
+	पूर्ण अन्यथा अणु
+		काष्ठा hci_cp_le_set_scan_param param_cp;
+		काष्ठा hci_cp_le_set_scan_enable enable_cp;
 
-		memset(&param_cp, 0, sizeof(param_cp));
+		स_रखो(&param_cp, 0, माप(param_cp));
 		param_cp.type = type;
-		param_cp.interval = cpu_to_le16(interval);
-		param_cp.window = cpu_to_le16(window);
+		param_cp.पूर्णांकerval = cpu_to_le16(पूर्णांकerval);
+		param_cp.winकरोw = cpu_to_le16(winकरोw);
 		param_cp.own_address_type = own_addr_type;
 		param_cp.filter_policy = filter_policy;
-		hci_req_add(req, HCI_OP_LE_SET_SCAN_PARAM, sizeof(param_cp),
+		hci_req_add(req, HCI_OP_LE_SET_SCAN_PARAM, माप(param_cp),
 			    &param_cp);
 
-		memset(&enable_cp, 0, sizeof(enable_cp));
+		स_रखो(&enable_cp, 0, माप(enable_cp));
 		enable_cp.enable = LE_SCAN_ENABLE;
 		enable_cp.filter_dup = LE_SCAN_FILTER_DUP_ENABLE;
-		hci_req_add(req, HCI_OP_LE_SET_SCAN_ENABLE, sizeof(enable_cp),
+		hci_req_add(req, HCI_OP_LE_SET_SCAN_ENABLE, माप(enable_cp),
 			    &enable_cp);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Returns true if an le connection is in the scanning state */
-static inline bool hci_is_le_conn_scanning(struct hci_dev *hdev)
-{
-	struct hci_conn_hash *h = &hdev->conn_hash;
-	struct hci_conn  *c;
+/* Returns true अगर an le connection is in the scanning state */
+अटल अंतरभूत bool hci_is_le_conn_scanning(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_conn_hash *h = &hdev->conn_hash;
+	काष्ठा hci_conn  *c;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(c, &h->list, list) {
-		if (c->type == LE_LINK && c->state == BT_CONNECT &&
-		    test_bit(HCI_CONN_SCANNING, &c->flags)) {
-			rcu_read_unlock();
-			return true;
-		}
-	}
+	list_क्रम_each_entry_rcu(c, &h->list, list) अणु
+		अगर (c->type == LE_LINK && c->state == BT_CONNECT &&
+		    test_bit(HCI_CONN_SCANNING, &c->flags)) अणु
+			rcu_पढ़ो_unlock();
+			वापस true;
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* Ensure to call hci_req_add_le_scan_disable() first to disable the
  * controller based address resolution to be able to reconfigure
  * resolving list.
  */
-void hci_req_add_le_passive_scan(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
+व्योम hci_req_add_le_passive_scan(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 	u8 own_addr_type;
 	u8 filter_policy;
-	u16 window, interval;
+	u16 winकरोw, पूर्णांकerval;
 	/* Background scanning should run with address resolution */
 	bool addr_resolv = true;
 
-	if (hdev->scanning_paused) {
+	अगर (hdev->scanning_छोड़ोd) अणु
 		bt_dev_dbg(hdev, "Scanning is paused for suspend");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Set require_privacy to false since no SCAN_REQ are send
 	 * during passive scanning. Not using an non-resolvable address
@@ -1067,317 +1068,317 @@ void hci_req_add_le_passive_scan(struct hci_request *req)
 	 * advertising with our address will be correctly reported
 	 * by the controller.
 	 */
-	if (hci_update_random_address(req, false, scan_use_rpa(hdev),
+	अगर (hci_update_अक्रमom_address(req, false, scan_use_rpa(hdev),
 				      &own_addr_type))
-		return;
+		वापस;
 
-	if (hdev->enable_advmon_interleave_scan &&
-	    __hci_update_interleaved_scan(hdev))
-		return;
+	अगर (hdev->enable_advmon_पूर्णांकerleave_scan &&
+	    __hci_update_पूर्णांकerleaved_scan(hdev))
+		वापस;
 
-	bt_dev_dbg(hdev, "interleave state %d", hdev->interleave_scan_state);
+	bt_dev_dbg(hdev, "interleave state %d", hdev->पूर्णांकerleave_scan_state);
 	/* Adding or removing entries from the white list must
-	 * happen before enabling scanning. The controller does
-	 * not allow white list modification while scanning.
+	 * happen beक्रमe enabling scanning. The controller करोes
+	 * not allow white list modअगरication जबतक scanning.
 	 */
 	filter_policy = update_white_list(req);
 
-	/* When the controller is using random resolvable addresses and
+	/* When the controller is using अक्रमom resolvable addresses and
 	 * with that having LE privacy enabled, then controllers with
 	 * Extended Scanner Filter Policies support can now enable support
-	 * for handling directed advertising.
+	 * क्रम handling directed advertising.
 	 *
 	 * So instead of using filter polices 0x00 (no whitelist)
 	 * and 0x01 (whitelist enabled) use the new filter policies
 	 * 0x02 (no whitelist) and 0x03 (whitelist enabled).
 	 */
-	if (hci_dev_test_flag(hdev, HCI_PRIVACY) &&
+	अगर (hci_dev_test_flag(hdev, HCI_PRIVACY) &&
 	    (hdev->le_features[0] & HCI_LE_EXT_SCAN_POLICY))
 		filter_policy |= 0x02;
 
-	if (hdev->suspended) {
-		window = hdev->le_scan_window_suspend;
-		interval = hdev->le_scan_int_suspend;
+	अगर (hdev->suspended) अणु
+		winकरोw = hdev->le_scan_winकरोw_suspend;
+		पूर्णांकerval = hdev->le_scan_पूर्णांक_suspend;
 
 		set_bit(SUSPEND_SCAN_ENABLE, hdev->suspend_tasks);
-	} else if (hci_is_le_conn_scanning(hdev)) {
-		window = hdev->le_scan_window_connect;
-		interval = hdev->le_scan_int_connect;
-	} else if (hci_is_adv_monitoring(hdev)) {
-		window = hdev->le_scan_window_adv_monitor;
-		interval = hdev->le_scan_int_adv_monitor;
-	} else {
-		window = hdev->le_scan_window;
-		interval = hdev->le_scan_interval;
-	}
+	पूर्ण अन्यथा अगर (hci_is_le_conn_scanning(hdev)) अणु
+		winकरोw = hdev->le_scan_winकरोw_connect;
+		पूर्णांकerval = hdev->le_scan_पूर्णांक_connect;
+	पूर्ण अन्यथा अगर (hci_is_adv_monitoring(hdev)) अणु
+		winकरोw = hdev->le_scan_winकरोw_adv_monitor;
+		पूर्णांकerval = hdev->le_scan_पूर्णांक_adv_monitor;
+	पूर्ण अन्यथा अणु
+		winकरोw = hdev->le_scan_winकरोw;
+		पूर्णांकerval = hdev->le_scan_पूर्णांकerval;
+	पूर्ण
 
 	bt_dev_dbg(hdev, "LE passive scan with whitelist = %d", filter_policy);
-	hci_req_start_scan(req, LE_SCAN_PASSIVE, interval, window,
+	hci_req_start_scan(req, LE_SCAN_PASSIVE, पूर्णांकerval, winकरोw,
 			   own_addr_type, filter_policy, addr_resolv);
-}
+पूर्ण
 
-static bool adv_instance_is_scannable(struct hci_dev *hdev, u8 instance)
-{
-	struct adv_info *adv_instance;
+अटल bool adv_instance_is_scannable(काष्ठा hci_dev *hdev, u8 instance)
+अणु
+	काष्ठा adv_info *adv_instance;
 
 	/* Instance 0x00 always set local name */
-	if (instance == 0x00)
-		return true;
+	अगर (instance == 0x00)
+		वापस true;
 
 	adv_instance = hci_find_adv_instance(hdev, instance);
-	if (!adv_instance)
-		return false;
+	अगर (!adv_instance)
+		वापस false;
 
-	if (adv_instance->flags & MGMT_ADV_FLAG_APPEARANCE ||
+	अगर (adv_instance->flags & MGMT_ADV_FLAG_APPEARANCE ||
 	    adv_instance->flags & MGMT_ADV_FLAG_LOCAL_NAME)
-		return true;
+		वापस true;
 
-	return adv_instance->scan_rsp_len ? true : false;
-}
+	वापस adv_instance->scan_rsp_len ? true : false;
+पूर्ण
 
-static void hci_req_clear_event_filter(struct hci_request *req)
-{
-	struct hci_cp_set_event_filter f;
+अटल व्योम hci_req_clear_event_filter(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_cp_set_event_filter f;
 
-	if (!hci_dev_test_flag(req->hdev, HCI_BREDR_ENABLED))
-		return;
+	अगर (!hci_dev_test_flag(req->hdev, HCI_BREDR_ENABLED))
+		वापस;
 
-	if (hci_dev_test_flag(req->hdev, HCI_EVENT_FILTER_CONFIGURED)) {
-		memset(&f, 0, sizeof(f));
+	अगर (hci_dev_test_flag(req->hdev, HCI_EVENT_FILTER_CONFIGURED)) अणु
+		स_रखो(&f, 0, माप(f));
 		f.flt_type = HCI_FLT_CLEAR_ALL;
 		hci_req_add(req, HCI_OP_SET_EVENT_FLT, 1, &f);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void hci_req_set_event_filter(struct hci_request *req)
-{
-	struct bdaddr_list_with_flags *b;
-	struct hci_cp_set_event_filter f;
-	struct hci_dev *hdev = req->hdev;
+अटल व्योम hci_req_set_event_filter(काष्ठा hci_request *req)
+अणु
+	काष्ठा bdaddr_list_with_flags *b;
+	काष्ठा hci_cp_set_event_filter f;
+	काष्ठा hci_dev *hdev = req->hdev;
 	u8 scan = SCAN_DISABLED;
 	bool scanning = test_bit(HCI_PSCAN, &hdev->flags);
 
-	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
-		return;
+	अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+		वापस;
 
 	/* Always clear event filter when starting */
 	hci_req_clear_event_filter(req);
 
-	list_for_each_entry(b, &hdev->whitelist, list) {
-		if (!hci_conn_test_flag(HCI_CONN_FLAG_REMOTE_WAKEUP,
+	list_क्रम_each_entry(b, &hdev->whitelist, list) अणु
+		अगर (!hci_conn_test_flag(HCI_CONN_FLAG_REMOTE_WAKEUP,
 					b->current_flags))
-			continue;
+			जारी;
 
-		memset(&f, 0, sizeof(f));
+		स_रखो(&f, 0, माप(f));
 		bacpy(&f.addr_conn_flt.bdaddr, &b->bdaddr);
 		f.flt_type = HCI_FLT_CONN_SETUP;
 		f.cond_type = HCI_CONN_SETUP_ALLOW_BDADDR;
-		f.addr_conn_flt.auto_accept = HCI_CONN_SETUP_AUTO_ON;
+		f.addr_conn_flt.स्वतः_accept = HCI_CONN_SETUP_AUTO_ON;
 
 		bt_dev_dbg(hdev, "Adding event filters for %pMR", &b->bdaddr);
-		hci_req_add(req, HCI_OP_SET_EVENT_FLT, sizeof(f), &f);
+		hci_req_add(req, HCI_OP_SET_EVENT_FLT, माप(f), &f);
 		scan = SCAN_PAGE;
-	}
+	पूर्ण
 
-	if (scan && !scanning) {
+	अगर (scan && !scanning) अणु
 		set_bit(SUSPEND_SCAN_ENABLE, hdev->suspend_tasks);
 		hci_req_add(req, HCI_OP_WRITE_SCAN_ENABLE, 1, &scan);
-	} else if (!scan && scanning) {
+	पूर्ण अन्यथा अगर (!scan && scanning) अणु
 		set_bit(SUSPEND_SCAN_DISABLE, hdev->suspend_tasks);
 		hci_req_add(req, HCI_OP_WRITE_SCAN_ENABLE, 1, &scan);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cancel_adv_timeout(struct hci_dev *hdev)
-{
-	if (hdev->adv_instance_timeout) {
-		hdev->adv_instance_timeout = 0;
+अटल व्योम cancel_adv_समयout(काष्ठा hci_dev *hdev)
+अणु
+	अगर (hdev->adv_instance_समयout) अणु
+		hdev->adv_instance_समयout = 0;
 		cancel_delayed_work(&hdev->adv_instance_expire);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* This function requires the caller holds hdev->lock */
-void __hci_req_pause_adv_instances(struct hci_request *req)
-{
+व्योम __hci_req_छोड़ो_adv_instances(काष्ठा hci_request *req)
+अणु
 	bt_dev_dbg(req->hdev, "Pausing advertising instances");
 
 	/* Call to disable any advertisements active on the controller.
-	 * This will succeed even if no advertisements are configured.
+	 * This will succeed even अगर no advertisements are configured.
 	 */
 	__hci_req_disable_advertising(req);
 
-	/* If we are using software rotation, pause the loop */
-	if (!ext_adv_capable(req->hdev))
-		cancel_adv_timeout(req->hdev);
-}
+	/* If we are using software rotation, छोड़ो the loop */
+	अगर (!ext_adv_capable(req->hdev))
+		cancel_adv_समयout(req->hdev);
+पूर्ण
 
 /* This function requires the caller holds hdev->lock */
-static void __hci_req_resume_adv_instances(struct hci_request *req)
-{
-	struct adv_info *adv;
+अटल व्योम __hci_req_resume_adv_instances(काष्ठा hci_request *req)
+अणु
+	काष्ठा adv_info *adv;
 
 	bt_dev_dbg(req->hdev, "Resuming advertising instances");
 
-	if (ext_adv_capable(req->hdev)) {
-		/* Call for each tracked instance to be re-enabled */
-		list_for_each_entry(adv, &req->hdev->adv_instances, list) {
+	अगर (ext_adv_capable(req->hdev)) अणु
+		/* Call क्रम each tracked instance to be re-enabled */
+		list_क्रम_each_entry(adv, &req->hdev->adv_instances, list) अणु
 			__hci_req_enable_ext_advertising(req,
 							 adv->instance);
-		}
+		पूर्ण
 
-	} else {
-		/* Schedule for most recent instance to be restarted and begin
+	पूर्ण अन्यथा अणु
+		/* Schedule क्रम most recent instance to be restarted and begin
 		 * the software rotation loop
 		 */
 		__hci_req_schedule_adv_instance(req,
 						req->hdev->cur_adv_instance,
 						true);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* This function requires the caller holds hdev->lock */
-int hci_req_resume_adv_instances(struct hci_dev *hdev)
-{
-	struct hci_request req;
+पूर्णांक hci_req_resume_adv_instances(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_request req;
 
 	hci_req_init(&req, hdev);
 	__hci_req_resume_adv_instances(&req);
 
-	return hci_req_run(&req, NULL);
-}
+	वापस hci_req_run(&req, शून्य);
+पूर्ण
 
-static void suspend_req_complete(struct hci_dev *hdev, u8 status, u16 opcode)
-{
+अटल व्योम suspend_req_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
+अणु
 	bt_dev_dbg(hdev, "Request complete opcode=0x%x, status=0x%x", opcode,
 		   status);
-	if (test_bit(SUSPEND_SCAN_ENABLE, hdev->suspend_tasks) ||
-	    test_bit(SUSPEND_SCAN_DISABLE, hdev->suspend_tasks)) {
+	अगर (test_bit(SUSPEND_SCAN_ENABLE, hdev->suspend_tasks) ||
+	    test_bit(SUSPEND_SCAN_DISABLE, hdev->suspend_tasks)) अणु
 		clear_bit(SUSPEND_SCAN_ENABLE, hdev->suspend_tasks);
 		clear_bit(SUSPEND_SCAN_DISABLE, hdev->suspend_tasks);
-		wake_up(&hdev->suspend_wait_q);
-	}
+		wake_up(&hdev->suspend_रुको_q);
+	पूर्ण
 
-	if (test_bit(SUSPEND_SET_ADV_FILTER, hdev->suspend_tasks)) {
+	अगर (test_bit(SUSPEND_SET_ADV_FILTER, hdev->suspend_tasks)) अणु
 		clear_bit(SUSPEND_SET_ADV_FILTER, hdev->suspend_tasks);
-		wake_up(&hdev->suspend_wait_q);
-	}
-}
+		wake_up(&hdev->suspend_रुको_q);
+	पूर्ण
+पूर्ण
 
-static void hci_req_add_set_adv_filter_enable(struct hci_request *req,
+अटल व्योम hci_req_add_set_adv_filter_enable(काष्ठा hci_request *req,
 					      bool enable)
-{
-	struct hci_dev *hdev = req->hdev;
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 
-	switch (hci_get_adv_monitor_offload_ext(hdev)) {
-	case HCI_ADV_MONITOR_EXT_MSFT:
+	चयन (hci_get_adv_monitor_offload_ext(hdev)) अणु
+	हाल HCI_ADV_MONITOR_EXT_MSFT:
 		msft_req_add_set_filter_enable(req, enable);
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 
 	/* No need to block when enabling since it's on resume path */
-	if (hdev->suspended && !enable)
+	अगर (hdev->suspended && !enable)
 		set_bit(SUSPEND_SET_ADV_FILTER, hdev->suspend_tasks);
-}
+पूर्ण
 
 /* Call with hci_dev_lock */
-void hci_req_prepare_suspend(struct hci_dev *hdev, enum suspended_state next)
-{
-	int old_state;
-	struct hci_conn *conn;
-	struct hci_request req;
+व्योम hci_req_prepare_suspend(काष्ठा hci_dev *hdev, क्रमागत suspended_state next)
+अणु
+	पूर्णांक old_state;
+	काष्ठा hci_conn *conn;
+	काष्ठा hci_request req;
 	u8 page_scan;
-	int disconnect_counter;
+	पूर्णांक disconnect_counter;
 
-	if (next == hdev->suspend_state) {
+	अगर (next == hdev->suspend_state) अणु
 		bt_dev_dbg(hdev, "Same state before and after: %d", next);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	hdev->suspend_state = next;
 	hci_req_init(&req, hdev);
 
-	if (next == BT_SUSPEND_DISCONNECT) {
+	अगर (next == BT_SUSPEND_DISCONNECT) अणु
 		/* Mark device as suspended */
 		hdev->suspended = true;
 
-		/* Pause discovery if not already stopped */
+		/* Pause discovery अगर not alपढ़ोy stopped */
 		old_state = hdev->discovery.state;
-		if (old_state != DISCOVERY_STOPPED) {
+		अगर (old_state != DISCOVERY_STOPPED) अणु
 			set_bit(SUSPEND_PAUSE_DISCOVERY, hdev->suspend_tasks);
 			hci_discovery_set_state(hdev, DISCOVERY_STOPPING);
 			queue_work(hdev->req_workqueue, &hdev->discov_update);
-		}
+		पूर्ण
 
-		hdev->discovery_paused = true;
+		hdev->discovery_छोड़ोd = true;
 		hdev->discovery_old_state = old_state;
 
 		/* Stop directed advertising */
 		old_state = hci_dev_test_flag(hdev, HCI_ADVERTISING);
-		if (old_state) {
+		अगर (old_state) अणु
 			set_bit(SUSPEND_PAUSE_ADVERTISING, hdev->suspend_tasks);
 			cancel_delayed_work(&hdev->discov_off);
 			queue_delayed_work(hdev->req_workqueue,
 					   &hdev->discov_off, 0);
-		}
+		पूर्ण
 
 		/* Pause other advertisements */
-		if (hdev->adv_instance_cnt)
-			__hci_req_pause_adv_instances(&req);
+		अगर (hdev->adv_instance_cnt)
+			__hci_req_छोड़ो_adv_instances(&req);
 
-		hdev->advertising_paused = true;
+		hdev->advertising_छोड़ोd = true;
 		hdev->advertising_old_state = old_state;
 
-		/* Disable page scan if enabled */
-		if (test_bit(HCI_PSCAN, &hdev->flags)) {
+		/* Disable page scan अगर enabled */
+		अगर (test_bit(HCI_PSCAN, &hdev->flags)) अणु
 			page_scan = SCAN_DISABLED;
 			hci_req_add(&req, HCI_OP_WRITE_SCAN_ENABLE, 1,
 				    &page_scan);
 			set_bit(SUSPEND_SCAN_DISABLE, hdev->suspend_tasks);
-		}
+		पूर्ण
 
-		/* Disable LE passive scan if enabled */
-		if (hci_dev_test_flag(hdev, HCI_LE_SCAN)) {
-			cancel_interleave_scan(hdev);
+		/* Disable LE passive scan अगर enabled */
+		अगर (hci_dev_test_flag(hdev, HCI_LE_SCAN)) अणु
+			cancel_पूर्णांकerleave_scan(hdev);
 			hci_req_add_le_scan_disable(&req, false);
-		}
+		पूर्ण
 
 		/* Disable advertisement filters */
 		hci_req_add_set_adv_filter_enable(&req, false);
 
 		/* Prevent disconnects from causing scanning to be re-enabled */
-		hdev->scanning_paused = true;
+		hdev->scanning_छोड़ोd = true;
 
-		/* Run commands before disconnecting */
+		/* Run commands beक्रमe disconnecting */
 		hci_req_run(&req, suspend_req_complete);
 
 		disconnect_counter = 0;
-		/* Soft disconnect everything (power off) */
-		list_for_each_entry(conn, &hdev->conn_hash.list, list) {
+		/* Soft disconnect everything (घातer off) */
+		list_क्रम_each_entry(conn, &hdev->conn_hash.list, list) अणु
 			hci_disconnect(conn, HCI_ERROR_REMOTE_POWER_OFF);
 			disconnect_counter++;
-		}
+		पूर्ण
 
-		if (disconnect_counter > 0) {
+		अगर (disconnect_counter > 0) अणु
 			bt_dev_dbg(hdev,
 				   "Had %d disconnects. Will wait on them",
 				   disconnect_counter);
 			set_bit(SUSPEND_DISCONNECTING, hdev->suspend_tasks);
-		}
-	} else if (next == BT_SUSPEND_CONFIGURE_WAKE) {
-		/* Unpause to take care of updating scanning params */
-		hdev->scanning_paused = false;
-		/* Enable event filter for paired devices */
+		पूर्ण
+	पूर्ण अन्यथा अगर (next == BT_SUSPEND_CONFIGURE_WAKE) अणु
+		/* Unछोड़ो to take care of updating scanning params */
+		hdev->scanning_छोड़ोd = false;
+		/* Enable event filter क्रम paired devices */
 		hci_req_set_event_filter(&req);
 		/* Enable passive scan at lower duty cycle */
 		__hci_update_background_scan(&req);
 		/* Pause scan changes again. */
-		hdev->scanning_paused = true;
+		hdev->scanning_छोड़ोd = true;
 		hci_req_run(&req, suspend_req_complete);
-	} else {
+	पूर्ण अन्यथा अणु
 		hdev->suspended = false;
-		hdev->scanning_paused = false;
+		hdev->scanning_छोड़ोd = false;
 
 		/* Clear any event filters and restore scan state */
 		hci_req_clear_event_filter(&req);
@@ -1388,63 +1389,63 @@ void hci_req_prepare_suspend(struct hci_dev *hdev, enum suspended_state next)
 		/* Enable all of the advertisement filters */
 		hci_req_add_set_adv_filter_enable(&req, true);
 
-		/* Unpause directed advertising */
-		hdev->advertising_paused = false;
-		if (hdev->advertising_old_state) {
+		/* Unछोड़ो directed advertising */
+		hdev->advertising_छोड़ोd = false;
+		अगर (hdev->advertising_old_state) अणु
 			set_bit(SUSPEND_UNPAUSE_ADVERTISING,
 				hdev->suspend_tasks);
 			hci_dev_set_flag(hdev, HCI_ADVERTISING);
 			queue_work(hdev->req_workqueue,
 				   &hdev->discoverable_update);
 			hdev->advertising_old_state = 0;
-		}
+		पूर्ण
 
 		/* Resume other advertisements */
-		if (hdev->adv_instance_cnt)
+		अगर (hdev->adv_instance_cnt)
 			__hci_req_resume_adv_instances(&req);
 
-		/* Unpause discovery */
-		hdev->discovery_paused = false;
-		if (hdev->discovery_old_state != DISCOVERY_STOPPED &&
-		    hdev->discovery_old_state != DISCOVERY_STOPPING) {
+		/* Unछोड़ो discovery */
+		hdev->discovery_छोड़ोd = false;
+		अगर (hdev->discovery_old_state != DISCOVERY_STOPPED &&
+		    hdev->discovery_old_state != DISCOVERY_STOPPING) अणु
 			set_bit(SUSPEND_UNPAUSE_DISCOVERY, hdev->suspend_tasks);
 			hci_discovery_set_state(hdev, DISCOVERY_STARTING);
 			queue_work(hdev->req_workqueue, &hdev->discov_update);
-		}
+		पूर्ण
 
 		hci_req_run(&req, suspend_req_complete);
-	}
+	पूर्ण
 
 	hdev->suspend_state = next;
 
-done:
+करोne:
 	clear_bit(SUSPEND_PREPARE_NOTIFIER, hdev->suspend_tasks);
-	wake_up(&hdev->suspend_wait_q);
-}
+	wake_up(&hdev->suspend_रुको_q);
+पूर्ण
 
-static bool adv_cur_instance_is_scannable(struct hci_dev *hdev)
-{
-	return adv_instance_is_scannable(hdev, hdev->cur_adv_instance);
-}
+अटल bool adv_cur_instance_is_scannable(काष्ठा hci_dev *hdev)
+अणु
+	वापस adv_instance_is_scannable(hdev, hdev->cur_adv_instance);
+पूर्ण
 
-void __hci_req_disable_advertising(struct hci_request *req)
-{
-	if (ext_adv_capable(req->hdev)) {
+व्योम __hci_req_disable_advertising(काष्ठा hci_request *req)
+अणु
+	अगर (ext_adv_capable(req->hdev)) अणु
 		__hci_req_disable_ext_adv_instance(req, 0x00);
 
-	} else {
+	पूर्ण अन्यथा अणु
 		u8 enable = 0x00;
 
-		hci_req_add(req, HCI_OP_LE_SET_ADV_ENABLE, sizeof(enable), &enable);
-	}
-}
+		hci_req_add(req, HCI_OP_LE_SET_ADV_ENABLE, माप(enable), &enable);
+	पूर्ण
+पूर्ण
 
-static u32 get_adv_instance_flags(struct hci_dev *hdev, u8 instance)
-{
+अटल u32 get_adv_instance_flags(काष्ठा hci_dev *hdev, u8 instance)
+अणु
 	u32 flags;
-	struct adv_info *adv_instance;
+	काष्ठा adv_info *adv_instance;
 
-	if (instance == 0x00) {
+	अगर (instance == 0x00) अणु
 		/* Instance 0 always manages the "Tx Power" and "Flags"
 		 * fields
 		 */
@@ -1453,94 +1454,94 @@ static u32 get_adv_instance_flags(struct hci_dev *hdev, u8 instance)
 		/* For instance 0, the HCI_ADVERTISING_CONNECTABLE setting
 		 * corresponds to the "connectable" instance flag.
 		 */
-		if (hci_dev_test_flag(hdev, HCI_ADVERTISING_CONNECTABLE))
+		अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING_CONNECTABLE))
 			flags |= MGMT_ADV_FLAG_CONNECTABLE;
 
-		if (hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE))
+		अगर (hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE))
 			flags |= MGMT_ADV_FLAG_LIMITED_DISCOV;
-		else if (hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
+		अन्यथा अगर (hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
 			flags |= MGMT_ADV_FLAG_DISCOV;
 
-		return flags;
-	}
+		वापस flags;
+	पूर्ण
 
 	adv_instance = hci_find_adv_instance(hdev, instance);
 
-	/* Return 0 when we got an invalid instance identifier. */
-	if (!adv_instance)
-		return 0;
+	/* Return 0 when we got an invalid instance identअगरier. */
+	अगर (!adv_instance)
+		वापस 0;
 
-	return adv_instance->flags;
-}
+	वापस adv_instance->flags;
+पूर्ण
 
-static bool adv_use_rpa(struct hci_dev *hdev, uint32_t flags)
-{
-	/* If privacy is not enabled don't use RPA */
-	if (!hci_dev_test_flag(hdev, HCI_PRIVACY))
-		return false;
+अटल bool adv_use_rpa(काष्ठा hci_dev *hdev, uपूर्णांक32_t flags)
+अणु
+	/* If privacy is not enabled करोn't use RPA */
+	अगर (!hci_dev_test_flag(hdev, HCI_PRIVACY))
+		वापस false;
 
 	/* If basic privacy mode is enabled use RPA */
-	if (!hci_dev_test_flag(hdev, HCI_LIMITED_PRIVACY))
-		return true;
+	अगर (!hci_dev_test_flag(hdev, HCI_LIMITED_PRIVACY))
+		वापस true;
 
-	/* If limited privacy mode is enabled don't use RPA if we're
+	/* If limited privacy mode is enabled करोn't use RPA if we're
 	 * both discoverable and bondable.
 	 */
-	if ((flags & MGMT_ADV_FLAG_DISCOV) &&
+	अगर ((flags & MGMT_ADV_FLAG_DISCOV) &&
 	    hci_dev_test_flag(hdev, HCI_BONDABLE))
-		return false;
+		वापस false;
 
 	/* We're neither bondable nor discoverable in the limited
-	 * privacy mode, therefore use RPA.
+	 * privacy mode, thereक्रमe use RPA.
 	 */
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool is_advertising_allowed(struct hci_dev *hdev, bool connectable)
-{
+अटल bool is_advertising_allowed(काष्ठा hci_dev *hdev, bool connectable)
+अणु
 	/* If there is no connection we are OK to advertise. */
-	if (hci_conn_num(hdev, LE_LINK) == 0)
-		return true;
+	अगर (hci_conn_num(hdev, LE_LINK) == 0)
+		वापस true;
 
-	/* Check le_states if there is any connection in slave role. */
-	if (hdev->conn_hash.le_num_slave > 0) {
+	/* Check le_states अगर there is any connection in slave role. */
+	अगर (hdev->conn_hash.le_num_slave > 0) अणु
 		/* Slave connection state and non connectable mode bit 20. */
-		if (!connectable && !(hdev->le_states[2] & 0x10))
-			return false;
+		अगर (!connectable && !(hdev->le_states[2] & 0x10))
+			वापस false;
 
 		/* Slave connection state and connectable mode bit 38
 		 * and scannable bit 21.
 		 */
-		if (connectable && (!(hdev->le_states[4] & 0x40) ||
+		अगर (connectable && (!(hdev->le_states[4] & 0x40) ||
 				    !(hdev->le_states[2] & 0x20)))
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	/* Check le_states if there is any connection in master role. */
-	if (hci_conn_num(hdev, LE_LINK) != hdev->conn_hash.le_num_slave) {
+	/* Check le_states अगर there is any connection in master role. */
+	अगर (hci_conn_num(hdev, LE_LINK) != hdev->conn_hash.le_num_slave) अणु
 		/* Master connection state and non connectable mode bit 18. */
-		if (!connectable && !(hdev->le_states[2] & 0x02))
-			return false;
+		अगर (!connectable && !(hdev->le_states[2] & 0x02))
+			वापस false;
 
 		/* Master connection state and connectable mode bit 35 and
 		 * scannable 19.
 		 */
-		if (connectable && (!(hdev->le_states[4] & 0x08) ||
+		अगर (connectable && (!(hdev->le_states[4] & 0x08) ||
 				    !(hdev->le_states[2] & 0x08)))
-			return false;
-	}
+			वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void __hci_req_enable_advertising(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct adv_info *adv_instance;
-	struct hci_cp_le_set_adv_param cp;
+व्योम __hci_req_enable_advertising(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा adv_info *adv_instance;
+	काष्ठा hci_cp_le_set_adv_param cp;
 	u8 own_addr_type, enable = 0x01;
 	bool connectable;
-	u16 adv_min_interval, adv_max_interval;
+	u16 adv_min_पूर्णांकerval, adv_max_पूर्णांकerval;
 	u32 flags;
 
 	flags = get_adv_instance_flags(hdev, hdev->cur_adv_instance);
@@ -1552,166 +1553,166 @@ void __hci_req_enable_advertising(struct hci_request *req)
 	connectable = (flags & MGMT_ADV_FLAG_CONNECTABLE) ||
 		      mgmt_get_connectable(hdev);
 
-	if (!is_advertising_allowed(hdev, connectable))
-		return;
+	अगर (!is_advertising_allowed(hdev, connectable))
+		वापस;
 
-	if (hci_dev_test_flag(hdev, HCI_LE_ADV))
+	अगर (hci_dev_test_flag(hdev, HCI_LE_ADV))
 		__hci_req_disable_advertising(req);
 
 	/* Clear the HCI_LE_ADV bit temporarily so that the
-	 * hci_update_random_address knows that it's safe to go ahead
-	 * and write a new random address. The flag will be set back on
+	 * hci_update_अक्रमom_address knows that it's safe to go ahead
+	 * and ग_लिखो a new अक्रमom address. The flag will be set back on
 	 * as soon as the SET_ADV_ENABLE HCI command completes.
 	 */
 	hci_dev_clear_flag(hdev, HCI_LE_ADV);
 
 	/* Set require_privacy to true only when non-connectable
-	 * advertising is used. In that case it is fine to use a
-	 * non-resolvable private address.
+	 * advertising is used. In that हाल it is fine to use a
+	 * non-resolvable निजी address.
 	 */
-	if (hci_update_random_address(req, !connectable,
+	अगर (hci_update_अक्रमom_address(req, !connectable,
 				      adv_use_rpa(hdev, flags),
 				      &own_addr_type) < 0)
-		return;
+		वापस;
 
-	memset(&cp, 0, sizeof(cp));
+	स_रखो(&cp, 0, माप(cp));
 
-	if (adv_instance) {
-		adv_min_interval = adv_instance->min_interval;
-		adv_max_interval = adv_instance->max_interval;
-	} else {
-		adv_min_interval = hdev->le_adv_min_interval;
-		adv_max_interval = hdev->le_adv_max_interval;
-	}
+	अगर (adv_instance) अणु
+		adv_min_पूर्णांकerval = adv_instance->min_पूर्णांकerval;
+		adv_max_पूर्णांकerval = adv_instance->max_पूर्णांकerval;
+	पूर्ण अन्यथा अणु
+		adv_min_पूर्णांकerval = hdev->le_adv_min_पूर्णांकerval;
+		adv_max_पूर्णांकerval = hdev->le_adv_max_पूर्णांकerval;
+	पूर्ण
 
-	if (connectable) {
+	अगर (connectable) अणु
 		cp.type = LE_ADV_IND;
-	} else {
-		if (adv_cur_instance_is_scannable(hdev))
+	पूर्ण अन्यथा अणु
+		अगर (adv_cur_instance_is_scannable(hdev))
 			cp.type = LE_ADV_SCAN_IND;
-		else
+		अन्यथा
 			cp.type = LE_ADV_NONCONN_IND;
 
-		if (!hci_dev_test_flag(hdev, HCI_DISCOVERABLE) ||
-		    hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE)) {
-			adv_min_interval = DISCOV_LE_FAST_ADV_INT_MIN;
-			adv_max_interval = DISCOV_LE_FAST_ADV_INT_MAX;
-		}
-	}
+		अगर (!hci_dev_test_flag(hdev, HCI_DISCOVERABLE) ||
+		    hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE)) अणु
+			adv_min_पूर्णांकerval = DISCOV_LE_FAST_ADV_पूर्णांक_न्यून;
+			adv_max_पूर्णांकerval = DISCOV_LE_FAST_ADV_पूर्णांक_उच्च;
+		पूर्ण
+	पूर्ण
 
-	cp.min_interval = cpu_to_le16(adv_min_interval);
-	cp.max_interval = cpu_to_le16(adv_max_interval);
+	cp.min_पूर्णांकerval = cpu_to_le16(adv_min_पूर्णांकerval);
+	cp.max_पूर्णांकerval = cpu_to_le16(adv_max_पूर्णांकerval);
 	cp.own_address_type = own_addr_type;
 	cp.channel_map = hdev->le_adv_channel_map;
 
-	hci_req_add(req, HCI_OP_LE_SET_ADV_PARAM, sizeof(cp), &cp);
+	hci_req_add(req, HCI_OP_LE_SET_ADV_PARAM, माप(cp), &cp);
 
-	hci_req_add(req, HCI_OP_LE_SET_ADV_ENABLE, sizeof(enable), &enable);
-}
+	hci_req_add(req, HCI_OP_LE_SET_ADV_ENABLE, माप(enable), &enable);
+पूर्ण
 
-u8 append_local_name(struct hci_dev *hdev, u8 *ptr, u8 ad_len)
-{
-	size_t short_len;
-	size_t complete_len;
+u8 append_local_name(काष्ठा hci_dev *hdev, u8 *ptr, u8 ad_len)
+अणु
+	माप_प्रकार लघु_len;
+	माप_प्रकार complete_len;
 
-	/* no space left for name (+ NULL + type + len) */
-	if ((HCI_MAX_AD_LENGTH - ad_len) < HCI_MAX_SHORT_NAME_LENGTH + 3)
-		return ad_len;
+	/* no space left क्रम name (+ शून्य + type + len) */
+	अगर ((HCI_MAX_AD_LENGTH - ad_len) < HCI_MAX_SHORT_NAME_LENGTH + 3)
+		वापस ad_len;
 
-	/* use complete name if present and fits */
-	complete_len = strlen(hdev->dev_name);
-	if (complete_len && complete_len <= HCI_MAX_SHORT_NAME_LENGTH)
-		return eir_append_data(ptr, ad_len, EIR_NAME_COMPLETE,
+	/* use complete name अगर present and fits */
+	complete_len = म_माप(hdev->dev_name);
+	अगर (complete_len && complete_len <= HCI_MAX_SHORT_NAME_LENGTH)
+		वापस eir_append_data(ptr, ad_len, EIR_NAME_COMPLETE,
 				       hdev->dev_name, complete_len + 1);
 
-	/* use short name if present */
-	short_len = strlen(hdev->short_name);
-	if (short_len)
-		return eir_append_data(ptr, ad_len, EIR_NAME_SHORT,
-				       hdev->short_name, short_len + 1);
+	/* use लघु name अगर present */
+	लघु_len = म_माप(hdev->लघु_name);
+	अगर (लघु_len)
+		वापस eir_append_data(ptr, ad_len, EIR_NAME_SHORT,
+				       hdev->लघु_name, लघु_len + 1);
 
-	/* use shortened full name if present, we already know that name
-	 * is longer then HCI_MAX_SHORT_NAME_LENGTH
+	/* use लघुened full name अगर present, we alपढ़ोy know that name
+	 * is दीर्घer then HCI_MAX_SHORT_NAME_LENGTH
 	 */
-	if (complete_len) {
+	अगर (complete_len) अणु
 		u8 name[HCI_MAX_SHORT_NAME_LENGTH + 1];
 
-		memcpy(name, hdev->dev_name, HCI_MAX_SHORT_NAME_LENGTH);
+		स_नकल(name, hdev->dev_name, HCI_MAX_SHORT_NAME_LENGTH);
 		name[HCI_MAX_SHORT_NAME_LENGTH] = '\0';
 
-		return eir_append_data(ptr, ad_len, EIR_NAME_SHORT, name,
-				       sizeof(name));
-	}
+		वापस eir_append_data(ptr, ad_len, EIR_NAME_SHORT, name,
+				       माप(name));
+	पूर्ण
 
-	return ad_len;
-}
+	वापस ad_len;
+पूर्ण
 
-static u8 append_appearance(struct hci_dev *hdev, u8 *ptr, u8 ad_len)
-{
-	return eir_append_le16(ptr, ad_len, EIR_APPEARANCE, hdev->appearance);
-}
+अटल u8 append_appearance(काष्ठा hci_dev *hdev, u8 *ptr, u8 ad_len)
+अणु
+	वापस eir_append_le16(ptr, ad_len, EIR_APPEARANCE, hdev->appearance);
+पूर्ण
 
-static u8 create_default_scan_rsp_data(struct hci_dev *hdev, u8 *ptr)
-{
+अटल u8 create_शेष_scan_rsp_data(काष्ठा hci_dev *hdev, u8 *ptr)
+अणु
 	u8 scan_rsp_len = 0;
 
-	if (hdev->appearance)
+	अगर (hdev->appearance)
 		scan_rsp_len = append_appearance(hdev, ptr, scan_rsp_len);
 
-	return append_local_name(hdev, ptr, scan_rsp_len);
-}
+	वापस append_local_name(hdev, ptr, scan_rsp_len);
+पूर्ण
 
-static u8 create_instance_scan_rsp_data(struct hci_dev *hdev, u8 instance,
+अटल u8 create_instance_scan_rsp_data(काष्ठा hci_dev *hdev, u8 instance,
 					u8 *ptr)
-{
-	struct adv_info *adv_instance;
+अणु
+	काष्ठा adv_info *adv_instance;
 	u32 instance_flags;
 	u8 scan_rsp_len = 0;
 
 	adv_instance = hci_find_adv_instance(hdev, instance);
-	if (!adv_instance)
-		return 0;
+	अगर (!adv_instance)
+		वापस 0;
 
 	instance_flags = adv_instance->flags;
 
-	if ((instance_flags & MGMT_ADV_FLAG_APPEARANCE) && hdev->appearance)
+	अगर ((instance_flags & MGMT_ADV_FLAG_APPEARANCE) && hdev->appearance)
 		scan_rsp_len = append_appearance(hdev, ptr, scan_rsp_len);
 
-	memcpy(&ptr[scan_rsp_len], adv_instance->scan_rsp_data,
+	स_नकल(&ptr[scan_rsp_len], adv_instance->scan_rsp_data,
 	       adv_instance->scan_rsp_len);
 
 	scan_rsp_len += adv_instance->scan_rsp_len;
 
-	if (instance_flags & MGMT_ADV_FLAG_LOCAL_NAME)
+	अगर (instance_flags & MGMT_ADV_FLAG_LOCAL_NAME)
 		scan_rsp_len = append_local_name(hdev, ptr, scan_rsp_len);
 
-	return scan_rsp_len;
-}
+	वापस scan_rsp_len;
+पूर्ण
 
-void __hci_req_update_scan_rsp_data(struct hci_request *req, u8 instance)
-{
-	struct hci_dev *hdev = req->hdev;
+व्योम __hci_req_update_scan_rsp_data(काष्ठा hci_request *req, u8 instance)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 	u8 len;
 
-	if (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
-		return;
+	अगर (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
+		वापस;
 
-	if (ext_adv_capable(hdev)) {
-		struct hci_cp_le_set_ext_scan_rsp_data cp;
+	अगर (ext_adv_capable(hdev)) अणु
+		काष्ठा hci_cp_le_set_ext_scan_rsp_data cp;
 
-		memset(&cp, 0, sizeof(cp));
+		स_रखो(&cp, 0, माप(cp));
 
-		if (instance)
+		अगर (instance)
 			len = create_instance_scan_rsp_data(hdev, instance,
 							    cp.data);
-		else
-			len = create_default_scan_rsp_data(hdev, cp.data);
+		अन्यथा
+			len = create_शेष_scan_rsp_data(hdev, cp.data);
 
-		if (hdev->scan_rsp_data_len == len &&
-		    !memcmp(cp.data, hdev->scan_rsp_data, len))
-			return;
+		अगर (hdev->scan_rsp_data_len == len &&
+		    !स_भेद(cp.data, hdev->scan_rsp_data, len))
+			वापस;
 
-		memcpy(hdev->scan_rsp_data, cp.data, sizeof(cp.data));
+		स_नकल(hdev->scan_rsp_data, cp.data, माप(cp.data));
 		hdev->scan_rsp_data_len = len;
 
 		cp.handle = instance;
@@ -1719,142 +1720,142 @@ void __hci_req_update_scan_rsp_data(struct hci_request *req, u8 instance)
 		cp.operation = LE_SET_ADV_DATA_OP_COMPLETE;
 		cp.frag_pref = LE_SET_ADV_DATA_NO_FRAG;
 
-		hci_req_add(req, HCI_OP_LE_SET_EXT_SCAN_RSP_DATA, sizeof(cp),
+		hci_req_add(req, HCI_OP_LE_SET_EXT_SCAN_RSP_DATA, माप(cp),
 			    &cp);
-	} else {
-		struct hci_cp_le_set_scan_rsp_data cp;
+	पूर्ण अन्यथा अणु
+		काष्ठा hci_cp_le_set_scan_rsp_data cp;
 
-		memset(&cp, 0, sizeof(cp));
+		स_रखो(&cp, 0, माप(cp));
 
-		if (instance)
+		अगर (instance)
 			len = create_instance_scan_rsp_data(hdev, instance,
 							    cp.data);
-		else
-			len = create_default_scan_rsp_data(hdev, cp.data);
+		अन्यथा
+			len = create_शेष_scan_rsp_data(hdev, cp.data);
 
-		if (hdev->scan_rsp_data_len == len &&
-		    !memcmp(cp.data, hdev->scan_rsp_data, len))
-			return;
+		अगर (hdev->scan_rsp_data_len == len &&
+		    !स_भेद(cp.data, hdev->scan_rsp_data, len))
+			वापस;
 
-		memcpy(hdev->scan_rsp_data, cp.data, sizeof(cp.data));
+		स_नकल(hdev->scan_rsp_data, cp.data, माप(cp.data));
 		hdev->scan_rsp_data_len = len;
 
 		cp.length = len;
 
-		hci_req_add(req, HCI_OP_LE_SET_SCAN_RSP_DATA, sizeof(cp), &cp);
-	}
-}
+		hci_req_add(req, HCI_OP_LE_SET_SCAN_RSP_DATA, माप(cp), &cp);
+	पूर्ण
+पूर्ण
 
-static u8 create_instance_adv_data(struct hci_dev *hdev, u8 instance, u8 *ptr)
-{
-	struct adv_info *adv_instance = NULL;
+अटल u8 create_instance_adv_data(काष्ठा hci_dev *hdev, u8 instance, u8 *ptr)
+अणु
+	काष्ठा adv_info *adv_instance = शून्य;
 	u8 ad_len = 0, flags = 0;
 	u32 instance_flags;
 
-	/* Return 0 when the current instance identifier is invalid. */
-	if (instance) {
+	/* Return 0 when the current instance identअगरier is invalid. */
+	अगर (instance) अणु
 		adv_instance = hci_find_adv_instance(hdev, instance);
-		if (!adv_instance)
-			return 0;
-	}
+		अगर (!adv_instance)
+			वापस 0;
+	पूर्ण
 
 	instance_flags = get_adv_instance_flags(hdev, instance);
 
-	/* If instance already has the flags set skip adding it once
+	/* If instance alपढ़ोy has the flags set skip adding it once
 	 * again.
 	 */
-	if (adv_instance && eir_get_data(adv_instance->adv_data,
+	अगर (adv_instance && eir_get_data(adv_instance->adv_data,
 					 adv_instance->adv_data_len, EIR_FLAGS,
-					 NULL))
-		goto skip_flags;
+					 शून्य))
+		जाओ skip_flags;
 
 	/* The Add Advertising command allows userspace to set both the general
 	 * and limited discoverable flags.
 	 */
-	if (instance_flags & MGMT_ADV_FLAG_DISCOV)
+	अगर (instance_flags & MGMT_ADV_FLAG_DISCOV)
 		flags |= LE_AD_GENERAL;
 
-	if (instance_flags & MGMT_ADV_FLAG_LIMITED_DISCOV)
+	अगर (instance_flags & MGMT_ADV_FLAG_LIMITED_DISCOV)
 		flags |= LE_AD_LIMITED;
 
-	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+	अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
 		flags |= LE_AD_NO_BREDR;
 
-	if (flags || (instance_flags & MGMT_ADV_FLAG_MANAGED_FLAGS)) {
+	अगर (flags || (instance_flags & MGMT_ADV_FLAG_MANAGED_FLAGS)) अणु
 		/* If a discovery flag wasn't provided, simply use the global
 		 * settings.
 		 */
-		if (!flags)
+		अगर (!flags)
 			flags |= mgmt_get_adv_discov_flags(hdev);
 
 		/* If flags would still be empty, then there is no need to
 		 * include the "Flags" AD field".
 		 */
-		if (flags) {
+		अगर (flags) अणु
 			ptr[0] = 0x02;
 			ptr[1] = EIR_FLAGS;
 			ptr[2] = flags;
 
 			ad_len += 3;
 			ptr += 3;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 skip_flags:
-	if (adv_instance) {
-		memcpy(ptr, adv_instance->adv_data,
+	अगर (adv_instance) अणु
+		स_नकल(ptr, adv_instance->adv_data,
 		       adv_instance->adv_data_len);
 		ad_len += adv_instance->adv_data_len;
 		ptr += adv_instance->adv_data_len;
-	}
+	पूर्ण
 
-	if (instance_flags & MGMT_ADV_FLAG_TX_POWER) {
-		s8 adv_tx_power;
+	अगर (instance_flags & MGMT_ADV_FLAG_TX_POWER) अणु
+		s8 adv_tx_घातer;
 
-		if (ext_adv_capable(hdev)) {
-			if (adv_instance)
-				adv_tx_power = adv_instance->tx_power;
-			else
-				adv_tx_power = hdev->adv_tx_power;
-		} else {
-			adv_tx_power = hdev->adv_tx_power;
-		}
+		अगर (ext_adv_capable(hdev)) अणु
+			अगर (adv_instance)
+				adv_tx_घातer = adv_instance->tx_घातer;
+			अन्यथा
+				adv_tx_घातer = hdev->adv_tx_घातer;
+		पूर्ण अन्यथा अणु
+			adv_tx_घातer = hdev->adv_tx_घातer;
+		पूर्ण
 
-		/* Provide Tx Power only if we can provide a valid value for it */
-		if (adv_tx_power != HCI_TX_POWER_INVALID) {
+		/* Provide Tx Power only अगर we can provide a valid value क्रम it */
+		अगर (adv_tx_घातer != HCI_TX_POWER_INVALID) अणु
 			ptr[0] = 0x02;
 			ptr[1] = EIR_TX_POWER;
-			ptr[2] = (u8)adv_tx_power;
+			ptr[2] = (u8)adv_tx_घातer;
 
 			ad_len += 3;
 			ptr += 3;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ad_len;
-}
+	वापस ad_len;
+पूर्ण
 
-void __hci_req_update_adv_data(struct hci_request *req, u8 instance)
-{
-	struct hci_dev *hdev = req->hdev;
+व्योम __hci_req_update_adv_data(काष्ठा hci_request *req, u8 instance)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 	u8 len;
 
-	if (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
-		return;
+	अगर (!hci_dev_test_flag(hdev, HCI_LE_ENABLED))
+		वापस;
 
-	if (ext_adv_capable(hdev)) {
-		struct hci_cp_le_set_ext_adv_data cp;
+	अगर (ext_adv_capable(hdev)) अणु
+		काष्ठा hci_cp_le_set_ext_adv_data cp;
 
-		memset(&cp, 0, sizeof(cp));
+		स_रखो(&cp, 0, माप(cp));
 
 		len = create_instance_adv_data(hdev, instance, cp.data);
 
 		/* There's nothing to do if the data hasn't changed */
-		if (hdev->adv_data_len == len &&
-		    memcmp(cp.data, hdev->adv_data, len) == 0)
-			return;
+		अगर (hdev->adv_data_len == len &&
+		    स_भेद(cp.data, hdev->adv_data, len) == 0)
+			वापस;
 
-		memcpy(hdev->adv_data, cp.data, sizeof(cp.data));
+		स_नकल(hdev->adv_data, cp.data, माप(cp.data));
 		hdev->adv_data_len = len;
 
 		cp.length = len;
@@ -1862,290 +1863,290 @@ void __hci_req_update_adv_data(struct hci_request *req, u8 instance)
 		cp.operation = LE_SET_ADV_DATA_OP_COMPLETE;
 		cp.frag_pref = LE_SET_ADV_DATA_NO_FRAG;
 
-		hci_req_add(req, HCI_OP_LE_SET_EXT_ADV_DATA, sizeof(cp), &cp);
-	} else {
-		struct hci_cp_le_set_adv_data cp;
+		hci_req_add(req, HCI_OP_LE_SET_EXT_ADV_DATA, माप(cp), &cp);
+	पूर्ण अन्यथा अणु
+		काष्ठा hci_cp_le_set_adv_data cp;
 
-		memset(&cp, 0, sizeof(cp));
+		स_रखो(&cp, 0, माप(cp));
 
 		len = create_instance_adv_data(hdev, instance, cp.data);
 
 		/* There's nothing to do if the data hasn't changed */
-		if (hdev->adv_data_len == len &&
-		    memcmp(cp.data, hdev->adv_data, len) == 0)
-			return;
+		अगर (hdev->adv_data_len == len &&
+		    स_भेद(cp.data, hdev->adv_data, len) == 0)
+			वापस;
 
-		memcpy(hdev->adv_data, cp.data, sizeof(cp.data));
+		स_नकल(hdev->adv_data, cp.data, माप(cp.data));
 		hdev->adv_data_len = len;
 
 		cp.length = len;
 
-		hci_req_add(req, HCI_OP_LE_SET_ADV_DATA, sizeof(cp), &cp);
-	}
-}
+		hci_req_add(req, HCI_OP_LE_SET_ADV_DATA, माप(cp), &cp);
+	पूर्ण
+पूर्ण
 
-int hci_req_update_adv_data(struct hci_dev *hdev, u8 instance)
-{
-	struct hci_request req;
+पूर्णांक hci_req_update_adv_data(काष्ठा hci_dev *hdev, u8 instance)
+अणु
+	काष्ठा hci_request req;
 
 	hci_req_init(&req, hdev);
 	__hci_req_update_adv_data(&req, instance);
 
-	return hci_req_run(&req, NULL);
-}
+	वापस hci_req_run(&req, शून्य);
+पूर्ण
 
-static void enable_addr_resolution_complete(struct hci_dev *hdev, u8 status,
+अटल व्योम enable_addr_resolution_complete(काष्ठा hci_dev *hdev, u8 status,
 					    u16 opcode)
-{
+अणु
 	BT_DBG("%s status %u", hdev->name, status);
-}
+पूर्ण
 
-void hci_req_disable_address_resolution(struct hci_dev *hdev)
-{
-	struct hci_request req;
+व्योम hci_req_disable_address_resolution(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_request req;
 	__u8 enable = 0x00;
 
-	if (!use_ll_privacy(hdev) &&
+	अगर (!use_ll_privacy(hdev) &&
 	    !hci_dev_test_flag(hdev, HCI_LL_RPA_RESOLUTION))
-		return;
+		वापस;
 
 	hci_req_init(&req, hdev);
 
 	hci_req_add(&req, HCI_OP_LE_SET_ADDR_RESOLV_ENABLE, 1, &enable);
 
 	hci_req_run(&req, enable_addr_resolution_complete);
-}
+पूर्ण
 
-static void adv_enable_complete(struct hci_dev *hdev, u8 status, u16 opcode)
-{
+अटल व्योम adv_enable_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
+अणु
 	bt_dev_dbg(hdev, "status %u", status);
-}
+पूर्ण
 
-void hci_req_reenable_advertising(struct hci_dev *hdev)
-{
-	struct hci_request req;
+व्योम hci_req_reenable_advertising(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा hci_request req;
 
-	if (!hci_dev_test_flag(hdev, HCI_ADVERTISING) &&
+	अगर (!hci_dev_test_flag(hdev, HCI_ADVERTISING) &&
 	    list_empty(&hdev->adv_instances))
-		return;
+		वापस;
 
 	hci_req_init(&req, hdev);
 
-	if (hdev->cur_adv_instance) {
+	अगर (hdev->cur_adv_instance) अणु
 		__hci_req_schedule_adv_instance(&req, hdev->cur_adv_instance,
 						true);
-	} else {
-		if (ext_adv_capable(hdev)) {
+	पूर्ण अन्यथा अणु
+		अगर (ext_adv_capable(hdev)) अणु
 			__hci_req_start_ext_adv(&req, 0x00);
-		} else {
+		पूर्ण अन्यथा अणु
 			__hci_req_update_adv_data(&req, 0x00);
 			__hci_req_update_scan_rsp_data(&req, 0x00);
 			__hci_req_enable_advertising(&req);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	hci_req_run(&req, adv_enable_complete);
-}
+पूर्ण
 
-static void adv_timeout_expire(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev,
+अटल व्योम adv_समयout_expire(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
 					    adv_instance_expire.work);
 
-	struct hci_request req;
+	काष्ठा hci_request req;
 	u8 instance;
 
 	bt_dev_dbg(hdev, "");
 
 	hci_dev_lock(hdev);
 
-	hdev->adv_instance_timeout = 0;
+	hdev->adv_instance_समयout = 0;
 
 	instance = hdev->cur_adv_instance;
-	if (instance == 0x00)
-		goto unlock;
+	अगर (instance == 0x00)
+		जाओ unlock;
 
 	hci_req_init(&req, hdev);
 
-	hci_req_clear_adv_instance(hdev, NULL, &req, instance, false);
+	hci_req_clear_adv_instance(hdev, शून्य, &req, instance, false);
 
-	if (list_empty(&hdev->adv_instances))
+	अगर (list_empty(&hdev->adv_instances))
 		__hci_req_disable_advertising(&req);
 
-	hci_req_run(&req, NULL);
+	hci_req_run(&req, शून्य);
 
 unlock:
 	hci_dev_unlock(hdev);
-}
+पूर्ण
 
-static int hci_req_add_le_interleaved_scan(struct hci_request *req,
-					   unsigned long opt)
-{
-	struct hci_dev *hdev = req->hdev;
-	int ret = 0;
+अटल पूर्णांक hci_req_add_le_पूर्णांकerleaved_scan(काष्ठा hci_request *req,
+					   अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	पूर्णांक ret = 0;
 
 	hci_dev_lock(hdev);
 
-	if (hci_dev_test_flag(hdev, HCI_LE_SCAN))
+	अगर (hci_dev_test_flag(hdev, HCI_LE_SCAN))
 		hci_req_add_le_scan_disable(req, false);
 	hci_req_add_le_passive_scan(req);
 
-	switch (hdev->interleave_scan_state) {
-	case INTERLEAVE_SCAN_ALLOWLIST:
+	चयन (hdev->पूर्णांकerleave_scan_state) अणु
+	हाल INTERLEAVE_SCAN_ALLOWLIST:
 		bt_dev_dbg(hdev, "next state: allowlist");
-		hdev->interleave_scan_state = INTERLEAVE_SCAN_NO_FILTER;
-		break;
-	case INTERLEAVE_SCAN_NO_FILTER:
+		hdev->पूर्णांकerleave_scan_state = INTERLEAVE_SCAN_NO_FILTER;
+		अवरोध;
+	हाल INTERLEAVE_SCAN_NO_FILTER:
 		bt_dev_dbg(hdev, "next state: no filter");
-		hdev->interleave_scan_state = INTERLEAVE_SCAN_ALLOWLIST;
-		break;
-	case INTERLEAVE_SCAN_NONE:
+		hdev->पूर्णांकerleave_scan_state = INTERLEAVE_SCAN_ALLOWLIST;
+		अवरोध;
+	हाल INTERLEAVE_SCAN_NONE:
 		BT_ERR("unexpected error");
 		ret = -1;
-	}
+	पूर्ण
 
 	hci_dev_unlock(hdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void interleave_scan_work(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev,
-					    interleave_scan.work);
+अटल व्योम पूर्णांकerleave_scan_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
+					    पूर्णांकerleave_scan.work);
 	u8 status;
-	unsigned long timeout;
+	अचिन्हित दीर्घ समयout;
 
-	if (hdev->interleave_scan_state == INTERLEAVE_SCAN_ALLOWLIST) {
-		timeout = msecs_to_jiffies(hdev->advmon_allowlist_duration);
-	} else if (hdev->interleave_scan_state == INTERLEAVE_SCAN_NO_FILTER) {
-		timeout = msecs_to_jiffies(hdev->advmon_no_filter_duration);
-	} else {
+	अगर (hdev->पूर्णांकerleave_scan_state == INTERLEAVE_SCAN_ALLOWLIST) अणु
+		समयout = msecs_to_jअगरfies(hdev->advmon_allowlist_duration);
+	पूर्ण अन्यथा अगर (hdev->पूर्णांकerleave_scan_state == INTERLEAVE_SCAN_NO_FILTER) अणु
+		समयout = msecs_to_jअगरfies(hdev->advmon_no_filter_duration);
+	पूर्ण अन्यथा अणु
 		bt_dev_err(hdev, "unexpected error");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	hci_req_sync(hdev, hci_req_add_le_interleaved_scan, 0,
+	hci_req_sync(hdev, hci_req_add_le_पूर्णांकerleaved_scan, 0,
 		     HCI_CMD_TIMEOUT, &status);
 
-	/* Don't continue interleaving if it was canceled */
-	if (is_interleave_scanning(hdev))
+	/* Don't जारी पूर्णांकerleaving अगर it was canceled */
+	अगर (is_पूर्णांकerleave_scanning(hdev))
 		queue_delayed_work(hdev->req_workqueue,
-				   &hdev->interleave_scan, timeout);
-}
+				   &hdev->पूर्णांकerleave_scan, समयout);
+पूर्ण
 
-int hci_get_random_address(struct hci_dev *hdev, bool require_privacy,
-			   bool use_rpa, struct adv_info *adv_instance,
-			   u8 *own_addr_type, bdaddr_t *rand_addr)
-{
-	int err;
+पूर्णांक hci_get_अक्रमom_address(काष्ठा hci_dev *hdev, bool require_privacy,
+			   bool use_rpa, काष्ठा adv_info *adv_instance,
+			   u8 *own_addr_type, bdaddr_t *अक्रम_addr)
+अणु
+	पूर्णांक err;
 
-	bacpy(rand_addr, BDADDR_ANY);
+	bacpy(अक्रम_addr, BDADDR_ANY);
 
-	/* If privacy is enabled use a resolvable private address. If
+	/* If privacy is enabled use a resolvable निजी address. If
 	 * current RPA has expired then generate a new one.
 	 */
-	if (use_rpa) {
-		int to;
+	अगर (use_rpa) अणु
+		पूर्णांक to;
 
 		/* If Controller supports LL Privacy use own address type is
 		 * 0x03
 		 */
-		if (use_ll_privacy(hdev) &&
+		अगर (use_ll_privacy(hdev) &&
 		    hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
 			*own_addr_type = ADDR_LE_DEV_RANDOM_RESOLVED;
-		else
+		अन्यथा
 			*own_addr_type = ADDR_LE_DEV_RANDOM;
 
-		if (adv_instance) {
-			if (!adv_instance->rpa_expired &&
-			    !bacmp(&adv_instance->random_addr, &hdev->rpa))
-				return 0;
+		अगर (adv_instance) अणु
+			अगर (!adv_instance->rpa_expired &&
+			    !bacmp(&adv_instance->अक्रमom_addr, &hdev->rpa))
+				वापस 0;
 
 			adv_instance->rpa_expired = false;
-		} else {
-			if (!hci_dev_test_and_clear_flag(hdev, HCI_RPA_EXPIRED) &&
-			    !bacmp(&hdev->random_addr, &hdev->rpa))
-				return 0;
-		}
+		पूर्ण अन्यथा अणु
+			अगर (!hci_dev_test_and_clear_flag(hdev, HCI_RPA_EXPIRED) &&
+			    !bacmp(&hdev->अक्रमom_addr, &hdev->rpa))
+				वापस 0;
+		पूर्ण
 
 		err = smp_generate_rpa(hdev, hdev->irk, &hdev->rpa);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			bt_dev_err(hdev, "failed to generate new RPA");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		bacpy(rand_addr, &hdev->rpa);
+		bacpy(अक्रम_addr, &hdev->rpa);
 
-		to = msecs_to_jiffies(hdev->rpa_timeout * 1000);
-		if (adv_instance)
+		to = msecs_to_jअगरfies(hdev->rpa_समयout * 1000);
+		अगर (adv_instance)
 			queue_delayed_work(hdev->workqueue,
 					   &adv_instance->rpa_expired_cb, to);
-		else
+		अन्यथा
 			queue_delayed_work(hdev->workqueue,
 					   &hdev->rpa_expired, to);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* In case of required privacy without resolvable private address,
-	 * use an non-resolvable private address. This is useful for
+	/* In हाल of required privacy without resolvable निजी address,
+	 * use an non-resolvable निजी address. This is useful क्रम
 	 * non-connectable advertising.
 	 */
-	if (require_privacy) {
+	अगर (require_privacy) अणु
 		bdaddr_t nrpa;
 
-		while (true) {
-			/* The non-resolvable private address is generated
-			 * from random six bytes with the two most significant
+		जबतक (true) अणु
+			/* The non-resolvable निजी address is generated
+			 * from अक्रमom six bytes with the two most signअगरicant
 			 * bits cleared.
 			 */
-			get_random_bytes(&nrpa, 6);
+			get_अक्रमom_bytes(&nrpa, 6);
 			nrpa.b[5] &= 0x3f;
 
-			/* The non-resolvable private address shall not be
-			 * equal to the public address.
+			/* The non-resolvable निजी address shall not be
+			 * equal to the खुला address.
 			 */
-			if (bacmp(&hdev->bdaddr, &nrpa))
-				break;
-		}
+			अगर (bacmp(&hdev->bdaddr, &nrpa))
+				अवरोध;
+		पूर्ण
 
 		*own_addr_type = ADDR_LE_DEV_RANDOM;
-		bacpy(rand_addr, &nrpa);
+		bacpy(अक्रम_addr, &nrpa);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* No privacy so use a public address. */
+	/* No privacy so use a खुला address. */
 	*own_addr_type = ADDR_LE_DEV_PUBLIC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __hci_req_clear_ext_adv_sets(struct hci_request *req)
-{
-	hci_req_add(req, HCI_OP_LE_CLEAR_ADV_SETS, 0, NULL);
-}
+व्योम __hci_req_clear_ext_adv_sets(काष्ठा hci_request *req)
+अणु
+	hci_req_add(req, HCI_OP_LE_CLEAR_ADV_SETS, 0, शून्य);
+पूर्ण
 
-int __hci_req_setup_ext_adv_instance(struct hci_request *req, u8 instance)
-{
-	struct hci_cp_le_set_ext_adv_params cp;
-	struct hci_dev *hdev = req->hdev;
+पूर्णांक __hci_req_setup_ext_adv_instance(काष्ठा hci_request *req, u8 instance)
+अणु
+	काष्ठा hci_cp_le_set_ext_adv_params cp;
+	काष्ठा hci_dev *hdev = req->hdev;
 	bool connectable;
 	u32 flags;
-	bdaddr_t random_addr;
+	bdaddr_t अक्रमom_addr;
 	u8 own_addr_type;
-	int err;
-	struct adv_info *adv_instance;
+	पूर्णांक err;
+	काष्ठा adv_info *adv_instance;
 	bool secondary_adv;
 
-	if (instance > 0) {
+	अगर (instance > 0) अणु
 		adv_instance = hci_find_adv_instance(hdev, instance);
-		if (!adv_instance)
-			return -EINVAL;
-	} else {
-		adv_instance = NULL;
-	}
+		अगर (!adv_instance)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		adv_instance = शून्य;
+	पूर्ण
 
 	flags = get_adv_instance_flags(hdev, instance);
 
@@ -2155,156 +2156,156 @@ int __hci_req_setup_ext_adv_instance(struct hci_request *req, u8 instance)
 	connectable = (flags & MGMT_ADV_FLAG_CONNECTABLE) ||
 		      mgmt_get_connectable(hdev);
 
-	if (!is_advertising_allowed(hdev, connectable))
-		return -EPERM;
+	अगर (!is_advertising_allowed(hdev, connectable))
+		वापस -EPERM;
 
 	/* Set require_privacy to true only when non-connectable
-	 * advertising is used. In that case it is fine to use a
-	 * non-resolvable private address.
+	 * advertising is used. In that हाल it is fine to use a
+	 * non-resolvable निजी address.
 	 */
-	err = hci_get_random_address(hdev, !connectable,
+	err = hci_get_अक्रमom_address(hdev, !connectable,
 				     adv_use_rpa(hdev, flags), adv_instance,
-				     &own_addr_type, &random_addr);
-	if (err < 0)
-		return err;
+				     &own_addr_type, &अक्रमom_addr);
+	अगर (err < 0)
+		वापस err;
 
-	memset(&cp, 0, sizeof(cp));
+	स_रखो(&cp, 0, माप(cp));
 
-	if (adv_instance) {
-		hci_cpu_to_le24(adv_instance->min_interval, cp.min_interval);
-		hci_cpu_to_le24(adv_instance->max_interval, cp.max_interval);
-		cp.tx_power = adv_instance->tx_power;
-	} else {
-		hci_cpu_to_le24(hdev->le_adv_min_interval, cp.min_interval);
-		hci_cpu_to_le24(hdev->le_adv_max_interval, cp.max_interval);
-		cp.tx_power = HCI_ADV_TX_POWER_NO_PREFERENCE;
-	}
+	अगर (adv_instance) अणु
+		hci_cpu_to_le24(adv_instance->min_पूर्णांकerval, cp.min_पूर्णांकerval);
+		hci_cpu_to_le24(adv_instance->max_पूर्णांकerval, cp.max_पूर्णांकerval);
+		cp.tx_घातer = adv_instance->tx_घातer;
+	पूर्ण अन्यथा अणु
+		hci_cpu_to_le24(hdev->le_adv_min_पूर्णांकerval, cp.min_पूर्णांकerval);
+		hci_cpu_to_le24(hdev->le_adv_max_पूर्णांकerval, cp.max_पूर्णांकerval);
+		cp.tx_घातer = HCI_ADV_TX_POWER_NO_PREFERENCE;
+	पूर्ण
 
 	secondary_adv = (flags & MGMT_ADV_FLAG_SEC_MASK);
 
-	if (connectable) {
-		if (secondary_adv)
+	अगर (connectable) अणु
+		अगर (secondary_adv)
 			cp.evt_properties = cpu_to_le16(LE_EXT_ADV_CONN_IND);
-		else
+		अन्यथा
 			cp.evt_properties = cpu_to_le16(LE_LEGACY_ADV_IND);
-	} else if (adv_instance_is_scannable(hdev, instance) ||
-		   (flags & MGMT_ADV_PARAM_SCAN_RSP)) {
-		if (secondary_adv)
+	पूर्ण अन्यथा अगर (adv_instance_is_scannable(hdev, instance) ||
+		   (flags & MGMT_ADV_PARAM_SCAN_RSP)) अणु
+		अगर (secondary_adv)
 			cp.evt_properties = cpu_to_le16(LE_EXT_ADV_SCAN_IND);
-		else
+		अन्यथा
 			cp.evt_properties = cpu_to_le16(LE_LEGACY_ADV_SCAN_IND);
-	} else {
-		if (secondary_adv)
+	पूर्ण अन्यथा अणु
+		अगर (secondary_adv)
 			cp.evt_properties = cpu_to_le16(LE_EXT_ADV_NON_CONN_IND);
-		else
+		अन्यथा
 			cp.evt_properties = cpu_to_le16(LE_LEGACY_NONCONN_IND);
-	}
+	पूर्ण
 
 	cp.own_addr_type = own_addr_type;
 	cp.channel_map = hdev->le_adv_channel_map;
 	cp.handle = instance;
 
-	if (flags & MGMT_ADV_FLAG_SEC_2M) {
+	अगर (flags & MGMT_ADV_FLAG_SEC_2M) अणु
 		cp.primary_phy = HCI_ADV_PHY_1M;
 		cp.secondary_phy = HCI_ADV_PHY_2M;
-	} else if (flags & MGMT_ADV_FLAG_SEC_CODED) {
+	पूर्ण अन्यथा अगर (flags & MGMT_ADV_FLAG_SEC_CODED) अणु
 		cp.primary_phy = HCI_ADV_PHY_CODED;
 		cp.secondary_phy = HCI_ADV_PHY_CODED;
-	} else {
-		/* In all other cases use 1M */
+	पूर्ण अन्यथा अणु
+		/* In all other हालs use 1M */
 		cp.primary_phy = HCI_ADV_PHY_1M;
 		cp.secondary_phy = HCI_ADV_PHY_1M;
-	}
+	पूर्ण
 
-	hci_req_add(req, HCI_OP_LE_SET_EXT_ADV_PARAMS, sizeof(cp), &cp);
+	hci_req_add(req, HCI_OP_LE_SET_EXT_ADV_PARAMS, माप(cp), &cp);
 
-	if (own_addr_type == ADDR_LE_DEV_RANDOM &&
-	    bacmp(&random_addr, BDADDR_ANY)) {
-		struct hci_cp_le_set_adv_set_rand_addr cp;
+	अगर (own_addr_type == ADDR_LE_DEV_RANDOM &&
+	    bacmp(&अक्रमom_addr, BDADDR_ANY)) अणु
+		काष्ठा hci_cp_le_set_adv_set_अक्रम_addr cp;
 
-		/* Check if random address need to be updated */
-		if (adv_instance) {
-			if (!bacmp(&random_addr, &adv_instance->random_addr))
-				return 0;
-		} else {
-			if (!bacmp(&random_addr, &hdev->random_addr))
-				return 0;
-		}
+		/* Check अगर अक्रमom address need to be updated */
+		अगर (adv_instance) अणु
+			अगर (!bacmp(&अक्रमom_addr, &adv_instance->अक्रमom_addr))
+				वापस 0;
+		पूर्ण अन्यथा अणु
+			अगर (!bacmp(&अक्रमom_addr, &hdev->अक्रमom_addr))
+				वापस 0;
+		पूर्ण
 
-		memset(&cp, 0, sizeof(cp));
+		स_रखो(&cp, 0, माप(cp));
 
 		cp.handle = instance;
-		bacpy(&cp.bdaddr, &random_addr);
+		bacpy(&cp.bdaddr, &अक्रमom_addr);
 
 		hci_req_add(req,
 			    HCI_OP_LE_SET_ADV_SET_RAND_ADDR,
-			    sizeof(cp), &cp);
-	}
+			    माप(cp), &cp);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __hci_req_enable_ext_advertising(struct hci_request *req, u8 instance)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct hci_cp_le_set_ext_adv_enable *cp;
-	struct hci_cp_ext_adv_set *adv_set;
-	u8 data[sizeof(*cp) + sizeof(*adv_set) * 1];
-	struct adv_info *adv_instance;
+पूर्णांक __hci_req_enable_ext_advertising(काष्ठा hci_request *req, u8 instance)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा hci_cp_le_set_ext_adv_enable *cp;
+	काष्ठा hci_cp_ext_adv_set *adv_set;
+	u8 data[माप(*cp) + माप(*adv_set) * 1];
+	काष्ठा adv_info *adv_instance;
 
-	if (instance > 0) {
+	अगर (instance > 0) अणु
 		adv_instance = hci_find_adv_instance(hdev, instance);
-		if (!adv_instance)
-			return -EINVAL;
-	} else {
-		adv_instance = NULL;
-	}
+		अगर (!adv_instance)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		adv_instance = शून्य;
+	पूर्ण
 
-	cp = (void *) data;
-	adv_set = (void *) cp->data;
+	cp = (व्योम *) data;
+	adv_set = (व्योम *) cp->data;
 
-	memset(cp, 0, sizeof(*cp));
+	स_रखो(cp, 0, माप(*cp));
 
 	cp->enable = 0x01;
 	cp->num_of_sets = 0x01;
 
-	memset(adv_set, 0, sizeof(*adv_set));
+	स_रखो(adv_set, 0, माप(*adv_set));
 
 	adv_set->handle = instance;
 
-	/* Set duration per instance since controller is responsible for
+	/* Set duration per instance since controller is responsible क्रम
 	 * scheduling it.
 	 */
-	if (adv_instance && adv_instance->duration) {
-		u16 duration = adv_instance->timeout * MSEC_PER_SEC;
+	अगर (adv_instance && adv_instance->duration) अणु
+		u16 duration = adv_instance->समयout * MSEC_PER_SEC;
 
 		/* Time = N * 10 ms */
 		adv_set->duration = cpu_to_le16(duration / 10);
-	}
+	पूर्ण
 
 	hci_req_add(req, HCI_OP_LE_SET_EXT_ADV_ENABLE,
-		    sizeof(*cp) + sizeof(*adv_set) * cp->num_of_sets,
+		    माप(*cp) + माप(*adv_set) * cp->num_of_sets,
 		    data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __hci_req_disable_ext_adv_instance(struct hci_request *req, u8 instance)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct hci_cp_le_set_ext_adv_enable *cp;
-	struct hci_cp_ext_adv_set *adv_set;
-	u8 data[sizeof(*cp) + sizeof(*adv_set) * 1];
+पूर्णांक __hci_req_disable_ext_adv_instance(काष्ठा hci_request *req, u8 instance)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा hci_cp_le_set_ext_adv_enable *cp;
+	काष्ठा hci_cp_ext_adv_set *adv_set;
+	u8 data[माप(*cp) + माप(*adv_set) * 1];
 	u8 req_size;
 
-	/* If request specifies an instance that doesn't exist, fail */
-	if (instance > 0 && !hci_find_adv_instance(hdev, instance))
-		return -EINVAL;
+	/* If request specअगरies an instance that करोesn't exist, fail */
+	अगर (instance > 0 && !hci_find_adv_instance(hdev, instance))
+		वापस -EINVAL;
 
-	memset(data, 0, sizeof(data));
+	स_रखो(data, 0, माप(data));
 
-	cp = (void *)data;
-	adv_set = (void *)cp->data;
+	cp = (व्योम *)data;
+	adv_set = (व्योम *)cp->data;
 
 	/* Instance 0x00 indicates all advertising instances will be disabled */
 	cp->num_of_sets = !!instance;
@@ -2312,368 +2313,368 @@ int __hci_req_disable_ext_adv_instance(struct hci_request *req, u8 instance)
 
 	adv_set->handle = instance;
 
-	req_size = sizeof(*cp) + sizeof(*adv_set) * cp->num_of_sets;
+	req_size = माप(*cp) + माप(*adv_set) * cp->num_of_sets;
 	hci_req_add(req, HCI_OP_LE_SET_EXT_ADV_ENABLE, req_size, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __hci_req_remove_ext_adv_instance(struct hci_request *req, u8 instance)
-{
-	struct hci_dev *hdev = req->hdev;
+पूर्णांक __hci_req_हटाओ_ext_adv_instance(काष्ठा hci_request *req, u8 instance)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 
-	/* If request specifies an instance that doesn't exist, fail */
-	if (instance > 0 && !hci_find_adv_instance(hdev, instance))
-		return -EINVAL;
+	/* If request specअगरies an instance that करोesn't exist, fail */
+	अगर (instance > 0 && !hci_find_adv_instance(hdev, instance))
+		वापस -EINVAL;
 
-	hci_req_add(req, HCI_OP_LE_REMOVE_ADV_SET, sizeof(instance), &instance);
+	hci_req_add(req, HCI_OP_LE_REMOVE_ADV_SET, माप(instance), &instance);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __hci_req_start_ext_adv(struct hci_request *req, u8 instance)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct adv_info *adv_instance = hci_find_adv_instance(hdev, instance);
-	int err;
+पूर्णांक __hci_req_start_ext_adv(काष्ठा hci_request *req, u8 instance)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा adv_info *adv_instance = hci_find_adv_instance(hdev, instance);
+	पूर्णांक err;
 
 	/* If instance isn't pending, the chip knows about it, and it's safe to
 	 * disable
 	 */
-	if (adv_instance && !adv_instance->pending)
+	अगर (adv_instance && !adv_instance->pending)
 		__hci_req_disable_ext_adv_instance(req, instance);
 
 	err = __hci_req_setup_ext_adv_instance(req, instance);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	__hci_req_update_scan_rsp_data(req, instance);
 	__hci_req_enable_ext_advertising(req, instance);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __hci_req_schedule_adv_instance(struct hci_request *req, u8 instance,
-				    bool force)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct adv_info *adv_instance = NULL;
-	u16 timeout;
+पूर्णांक __hci_req_schedule_adv_instance(काष्ठा hci_request *req, u8 instance,
+				    bool क्रमce)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा adv_info *adv_instance = शून्य;
+	u16 समयout;
 
-	if (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
+	अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
 	    list_empty(&hdev->adv_instances))
-		return -EPERM;
+		वापस -EPERM;
 
-	if (hdev->adv_instance_timeout)
-		return -EBUSY;
+	अगर (hdev->adv_instance_समयout)
+		वापस -EBUSY;
 
 	adv_instance = hci_find_adv_instance(hdev, instance);
-	if (!adv_instance)
-		return -ENOENT;
+	अगर (!adv_instance)
+		वापस -ENOENT;
 
-	/* A zero timeout means unlimited advertising. As long as there is
-	 * only one instance, duration should be ignored. We still set a timeout
-	 * in case further instances are being added later on.
+	/* A zero समयout means unlimited advertising. As दीर्घ as there is
+	 * only one instance, duration should be ignored. We still set a समयout
+	 * in हाल further instances are being added later on.
 	 *
-	 * If the remaining lifetime of the instance is more than the duration
-	 * then the timeout corresponds to the duration, otherwise it will be
-	 * reduced to the remaining instance lifetime.
+	 * If the reमुख्यing lअगरeसमय of the instance is more than the duration
+	 * then the समयout corresponds to the duration, otherwise it will be
+	 * reduced to the reमुख्यing instance lअगरeसमय.
 	 */
-	if (adv_instance->timeout == 0 ||
-	    adv_instance->duration <= adv_instance->remaining_time)
-		timeout = adv_instance->duration;
-	else
-		timeout = adv_instance->remaining_time;
+	अगर (adv_instance->समयout == 0 ||
+	    adv_instance->duration <= adv_instance->reमुख्यing_समय)
+		समयout = adv_instance->duration;
+	अन्यथा
+		समयout = adv_instance->reमुख्यing_समय;
 
-	/* The remaining time is being reduced unless the instance is being
-	 * advertised without time limit.
+	/* The reमुख्यing समय is being reduced unless the instance is being
+	 * advertised without समय limit.
 	 */
-	if (adv_instance->timeout)
-		adv_instance->remaining_time =
-				adv_instance->remaining_time - timeout;
+	अगर (adv_instance->समयout)
+		adv_instance->reमुख्यing_समय =
+				adv_instance->reमुख्यing_समय - समयout;
 
-	/* Only use work for scheduling instances with legacy advertising */
-	if (!ext_adv_capable(hdev)) {
-		hdev->adv_instance_timeout = timeout;
+	/* Only use work क्रम scheduling instances with legacy advertising */
+	अगर (!ext_adv_capable(hdev)) अणु
+		hdev->adv_instance_समयout = समयout;
 		queue_delayed_work(hdev->req_workqueue,
 			   &hdev->adv_instance_expire,
-			   msecs_to_jiffies(timeout * 1000));
-	}
+			   msecs_to_jअगरfies(समयout * 1000));
+	पूर्ण
 
-	/* If we're just re-scheduling the same instance again then do not
+	/* If we're just re-scheduling the same instance again then करो not
 	 * execute any HCI commands. This happens when a single instance is
 	 * being advertised.
 	 */
-	if (!force && hdev->cur_adv_instance == instance &&
+	अगर (!क्रमce && hdev->cur_adv_instance == instance &&
 	    hci_dev_test_flag(hdev, HCI_LE_ADV))
-		return 0;
+		वापस 0;
 
 	hdev->cur_adv_instance = instance;
-	if (ext_adv_capable(hdev)) {
+	अगर (ext_adv_capable(hdev)) अणु
 		__hci_req_start_ext_adv(req, instance);
-	} else {
+	पूर्ण अन्यथा अणु
 		__hci_req_update_adv_data(req, instance);
 		__hci_req_update_scan_rsp_data(req, instance);
 		__hci_req_enable_advertising(req);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* For a single instance:
- * - force == true: The instance will be removed even when its remaining
- *   lifetime is not zero.
- * - force == false: the instance will be deactivated but kept stored unless
- *   the remaining lifetime is zero.
+ * - क्रमce == true: The instance will be हटाओd even when its reमुख्यing
+ *   lअगरeसमय is not zero.
+ * - क्रमce == false: the instance will be deactivated but kept stored unless
+ *   the reमुख्यing lअगरeसमय is zero.
  *
  * For instance == 0x00:
- * - force == true: All instances will be removed regardless of their timeout
+ * - क्रमce == true: All instances will be हटाओd regardless of their समयout
  *   setting.
- * - force == false: Only instances that have a timeout will be removed.
+ * - क्रमce == false: Only instances that have a समयout will be हटाओd.
  */
-void hci_req_clear_adv_instance(struct hci_dev *hdev, struct sock *sk,
-				struct hci_request *req, u8 instance,
-				bool force)
-{
-	struct adv_info *adv_instance, *n, *next_instance = NULL;
-	int err;
+व्योम hci_req_clear_adv_instance(काष्ठा hci_dev *hdev, काष्ठा sock *sk,
+				काष्ठा hci_request *req, u8 instance,
+				bool क्रमce)
+अणु
+	काष्ठा adv_info *adv_instance, *n, *next_instance = शून्य;
+	पूर्णांक err;
 	u8 rem_inst;
 
-	/* Cancel any timeout concerning the removed instance(s). */
-	if (!instance || hdev->cur_adv_instance == instance)
-		cancel_adv_timeout(hdev);
+	/* Cancel any समयout concerning the हटाओd instance(s). */
+	अगर (!instance || hdev->cur_adv_instance == instance)
+		cancel_adv_समयout(hdev);
 
-	/* Get the next instance to advertise BEFORE we remove
+	/* Get the next instance to advertise BEFORE we हटाओ
 	 * the current one. This can be the same instance again
-	 * if there is only one instance.
+	 * अगर there is only one instance.
 	 */
-	if (instance && hdev->cur_adv_instance == instance)
+	अगर (instance && hdev->cur_adv_instance == instance)
 		next_instance = hci_get_next_instance(hdev, instance);
 
-	if (instance == 0x00) {
-		list_for_each_entry_safe(adv_instance, n, &hdev->adv_instances,
-					 list) {
-			if (!(force || adv_instance->timeout))
-				continue;
+	अगर (instance == 0x00) अणु
+		list_क्रम_each_entry_safe(adv_instance, n, &hdev->adv_instances,
+					 list) अणु
+			अगर (!(क्रमce || adv_instance->समयout))
+				जारी;
 
 			rem_inst = adv_instance->instance;
-			err = hci_remove_adv_instance(hdev, rem_inst);
-			if (!err)
-				mgmt_advertising_removed(sk, hdev, rem_inst);
-		}
-	} else {
+			err = hci_हटाओ_adv_instance(hdev, rem_inst);
+			अगर (!err)
+				mgmt_advertising_हटाओd(sk, hdev, rem_inst);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		adv_instance = hci_find_adv_instance(hdev, instance);
 
-		if (force || (adv_instance && adv_instance->timeout &&
-			      !adv_instance->remaining_time)) {
-			/* Don't advertise a removed instance. */
-			if (next_instance &&
+		अगर (क्रमce || (adv_instance && adv_instance->समयout &&
+			      !adv_instance->reमुख्यing_समय)) अणु
+			/* Don't advertise a हटाओd instance. */
+			अगर (next_instance &&
 			    next_instance->instance == instance)
-				next_instance = NULL;
+				next_instance = शून्य;
 
-			err = hci_remove_adv_instance(hdev, instance);
-			if (!err)
-				mgmt_advertising_removed(sk, hdev, instance);
-		}
-	}
+			err = hci_हटाओ_adv_instance(hdev, instance);
+			अगर (!err)
+				mgmt_advertising_हटाओd(sk, hdev, instance);
+		पूर्ण
+	पूर्ण
 
-	if (!req || !hdev_is_powered(hdev) ||
+	अगर (!req || !hdev_is_घातered(hdev) ||
 	    hci_dev_test_flag(hdev, HCI_ADVERTISING))
-		return;
+		वापस;
 
-	if (next_instance && !ext_adv_capable(hdev))
+	अगर (next_instance && !ext_adv_capable(hdev))
 		__hci_req_schedule_adv_instance(req, next_instance->instance,
 						false);
-}
+पूर्ण
 
-static void set_random_addr(struct hci_request *req, bdaddr_t *rpa)
-{
-	struct hci_dev *hdev = req->hdev;
+अटल व्योम set_अक्रमom_addr(काष्ठा hci_request *req, bdaddr_t *rpa)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 
 	/* If we're advertising or initiating an LE connection we can't
-	 * go ahead and change the random address at this time. This is
-	 * because the eventual initiator address used for the
+	 * go ahead and change the अक्रमom address at this समय. This is
+	 * because the eventual initiator address used क्रम the
 	 * subsequently created connection will be undefined (some
 	 * controllers use the new address and others the one we had
 	 * when the operation started).
 	 *
-	 * In this kind of scenario skip the update and let the random
+	 * In this kind of scenario skip the update and let the अक्रमom
 	 * address be updated at the next cycle.
 	 */
-	if (hci_dev_test_flag(hdev, HCI_LE_ADV) ||
-	    hci_lookup_le_connect(hdev)) {
+	अगर (hci_dev_test_flag(hdev, HCI_LE_ADV) ||
+	    hci_lookup_le_connect(hdev)) अणु
 		bt_dev_dbg(hdev, "Deferring random address update");
 		hci_dev_set_flag(hdev, HCI_RPA_EXPIRED);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hci_req_add(req, HCI_OP_LE_SET_RANDOM_ADDR, 6, rpa);
-}
+पूर्ण
 
-int hci_update_random_address(struct hci_request *req, bool require_privacy,
+पूर्णांक hci_update_अक्रमom_address(काष्ठा hci_request *req, bool require_privacy,
 			      bool use_rpa, u8 *own_addr_type)
-{
-	struct hci_dev *hdev = req->hdev;
-	int err;
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	पूर्णांक err;
 
-	/* If privacy is enabled use a resolvable private address. If
-	 * current RPA has expired or there is something else than
+	/* If privacy is enabled use a resolvable निजी address. If
+	 * current RPA has expired or there is something अन्यथा than
 	 * the current RPA in use, then generate a new one.
 	 */
-	if (use_rpa) {
-		int to;
+	अगर (use_rpa) अणु
+		पूर्णांक to;
 
 		/* If Controller supports LL Privacy use own address type is
 		 * 0x03
 		 */
-		if (use_ll_privacy(hdev) &&
+		अगर (use_ll_privacy(hdev) &&
 		    hci_dev_test_flag(hdev, HCI_ENABLE_LL_PRIVACY))
 			*own_addr_type = ADDR_LE_DEV_RANDOM_RESOLVED;
-		else
+		अन्यथा
 			*own_addr_type = ADDR_LE_DEV_RANDOM;
 
-		if (!hci_dev_test_and_clear_flag(hdev, HCI_RPA_EXPIRED) &&
-		    !bacmp(&hdev->random_addr, &hdev->rpa))
-			return 0;
+		अगर (!hci_dev_test_and_clear_flag(hdev, HCI_RPA_EXPIRED) &&
+		    !bacmp(&hdev->अक्रमom_addr, &hdev->rpa))
+			वापस 0;
 
 		err = smp_generate_rpa(hdev, hdev->irk, &hdev->rpa);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			bt_dev_err(hdev, "failed to generate new RPA");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		set_random_addr(req, &hdev->rpa);
+		set_अक्रमom_addr(req, &hdev->rpa);
 
-		to = msecs_to_jiffies(hdev->rpa_timeout * 1000);
+		to = msecs_to_jअगरfies(hdev->rpa_समयout * 1000);
 		queue_delayed_work(hdev->workqueue, &hdev->rpa_expired, to);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* In case of required privacy without resolvable private address,
-	 * use an non-resolvable private address. This is useful for active
+	/* In हाल of required privacy without resolvable निजी address,
+	 * use an non-resolvable निजी address. This is useful क्रम active
 	 * scanning and non-connectable advertising.
 	 */
-	if (require_privacy) {
+	अगर (require_privacy) अणु
 		bdaddr_t nrpa;
 
-		while (true) {
-			/* The non-resolvable private address is generated
-			 * from random six bytes with the two most significant
+		जबतक (true) अणु
+			/* The non-resolvable निजी address is generated
+			 * from अक्रमom six bytes with the two most signअगरicant
 			 * bits cleared.
 			 */
-			get_random_bytes(&nrpa, 6);
+			get_अक्रमom_bytes(&nrpa, 6);
 			nrpa.b[5] &= 0x3f;
 
-			/* The non-resolvable private address shall not be
-			 * equal to the public address.
+			/* The non-resolvable निजी address shall not be
+			 * equal to the खुला address.
 			 */
-			if (bacmp(&hdev->bdaddr, &nrpa))
-				break;
-		}
+			अगर (bacmp(&hdev->bdaddr, &nrpa))
+				अवरोध;
+		पूर्ण
 
 		*own_addr_type = ADDR_LE_DEV_RANDOM;
-		set_random_addr(req, &nrpa);
-		return 0;
-	}
+		set_अक्रमom_addr(req, &nrpa);
+		वापस 0;
+	पूर्ण
 
-	/* If forcing static address is in use or there is no public
-	 * address use the static address as random address (but skip
-	 * the HCI command if the current random address is already the
-	 * static one.
+	/* If क्रमcing अटल address is in use or there is no खुला
+	 * address use the अटल address as अक्रमom address (but skip
+	 * the HCI command अगर the current अक्रमom address is alपढ़ोy the
+	 * अटल one.
 	 *
-	 * In case BR/EDR has been disabled on a dual-mode controller
-	 * and a static address has been configured, then use that
-	 * address instead of the public BR/EDR address.
+	 * In हाल BR/EDR has been disabled on a dual-mode controller
+	 * and a अटल address has been configured, then use that
+	 * address instead of the खुला BR/EDR address.
 	 */
-	if (hci_dev_test_flag(hdev, HCI_FORCE_STATIC_ADDR) ||
+	अगर (hci_dev_test_flag(hdev, HCI_FORCE_STATIC_ADDR) ||
 	    !bacmp(&hdev->bdaddr, BDADDR_ANY) ||
 	    (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED) &&
-	     bacmp(&hdev->static_addr, BDADDR_ANY))) {
+	     bacmp(&hdev->अटल_addr, BDADDR_ANY))) अणु
 		*own_addr_type = ADDR_LE_DEV_RANDOM;
-		if (bacmp(&hdev->static_addr, &hdev->random_addr))
+		अगर (bacmp(&hdev->अटल_addr, &hdev->अक्रमom_addr))
 			hci_req_add(req, HCI_OP_LE_SET_RANDOM_ADDR, 6,
-				    &hdev->static_addr);
-		return 0;
-	}
+				    &hdev->अटल_addr);
+		वापस 0;
+	पूर्ण
 
-	/* Neither privacy nor static address is being used so use a
-	 * public address.
+	/* Neither privacy nor अटल address is being used so use a
+	 * खुला address.
 	 */
 	*own_addr_type = ADDR_LE_DEV_PUBLIC;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool disconnected_whitelist_entries(struct hci_dev *hdev)
-{
-	struct bdaddr_list *b;
+अटल bool disconnected_whitelist_entries(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bdaddr_list *b;
 
-	list_for_each_entry(b, &hdev->whitelist, list) {
-		struct hci_conn *conn;
+	list_क्रम_each_entry(b, &hdev->whitelist, list) अणु
+		काष्ठा hci_conn *conn;
 
 		conn = hci_conn_hash_lookup_ba(hdev, ACL_LINK, &b->bdaddr);
-		if (!conn)
-			return true;
+		अगर (!conn)
+			वापस true;
 
-		if (conn->state != BT_CONNECTED && conn->state != BT_CONFIG)
-			return true;
-	}
+		अगर (conn->state != BT_CONNECTED && conn->state != BT_CONFIG)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void __hci_req_update_scan(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
+व्योम __hci_req_update_scan(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 	u8 scan;
 
-	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
-		return;
+	अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+		वापस;
 
-	if (!hdev_is_powered(hdev))
-		return;
+	अगर (!hdev_is_घातered(hdev))
+		वापस;
 
-	if (mgmt_powering_down(hdev))
-		return;
+	अगर (mgmt_घातering_करोwn(hdev))
+		वापस;
 
-	if (hdev->scanning_paused)
-		return;
+	अगर (hdev->scanning_छोड़ोd)
+		वापस;
 
-	if (hci_dev_test_flag(hdev, HCI_CONNECTABLE) ||
+	अगर (hci_dev_test_flag(hdev, HCI_CONNECTABLE) ||
 	    disconnected_whitelist_entries(hdev))
 		scan = SCAN_PAGE;
-	else
+	अन्यथा
 		scan = SCAN_DISABLED;
 
-	if (hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
+	अगर (hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
 		scan |= SCAN_INQUIRY;
 
-	if (test_bit(HCI_PSCAN, &hdev->flags) == !!(scan & SCAN_PAGE) &&
+	अगर (test_bit(HCI_PSCAN, &hdev->flags) == !!(scan & SCAN_PAGE) &&
 	    test_bit(HCI_ISCAN, &hdev->flags) == !!(scan & SCAN_INQUIRY))
-		return;
+		वापस;
 
 	hci_req_add(req, HCI_OP_WRITE_SCAN_ENABLE, 1, &scan);
-}
+पूर्ण
 
-static int update_scan(struct hci_request *req, unsigned long opt)
-{
+अटल पूर्णांक update_scan(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
 	hci_dev_lock(req->hdev);
 	__hci_req_update_scan(req);
 	hci_dev_unlock(req->hdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scan_update_work(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev, scan_update);
+अटल व्योम scan_update_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev, scan_update);
 
-	hci_req_sync(hdev, update_scan, 0, HCI_CMD_TIMEOUT, NULL);
-}
+	hci_req_sync(hdev, update_scan, 0, HCI_CMD_TIMEOUT, शून्य);
+पूर्ण
 
-static int connectable_update(struct hci_request *req, unsigned long opt)
-{
-	struct hci_dev *hdev = req->hdev;
+अटल पूर्णांक connectable_update(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 
 	hci_dev_lock(hdev);
 
@@ -2683,84 +2684,84 @@ static int connectable_update(struct hci_request *req, unsigned long opt)
 	 * by-product of disabling connectable, we need to update the
 	 * advertising flags.
 	 */
-	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+	अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
 		__hci_req_update_adv_data(req, hdev->cur_adv_instance);
 
-	/* Update the advertising parameters if necessary */
-	if (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
-	    !list_empty(&hdev->adv_instances)) {
-		if (ext_adv_capable(hdev))
+	/* Update the advertising parameters अगर necessary */
+	अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
+	    !list_empty(&hdev->adv_instances)) अणु
+		अगर (ext_adv_capable(hdev))
 			__hci_req_start_ext_adv(req, hdev->cur_adv_instance);
-		else
+		अन्यथा
 			__hci_req_enable_advertising(req);
-	}
+	पूर्ण
 
 	__hci_update_background_scan(req);
 
 	hci_dev_unlock(hdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void connectable_update_work(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev,
+अटल व्योम connectable_update_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
 					    connectable_update);
 	u8 status;
 
 	hci_req_sync(hdev, connectable_update, 0, HCI_CMD_TIMEOUT, &status);
 	mgmt_set_connectable_complete(hdev, status);
-}
+पूर्ण
 
-static u8 get_service_classes(struct hci_dev *hdev)
-{
-	struct bt_uuid *uuid;
+अटल u8 get_service_classes(काष्ठा hci_dev *hdev)
+अणु
+	काष्ठा bt_uuid *uuid;
 	u8 val = 0;
 
-	list_for_each_entry(uuid, &hdev->uuids, list)
-		val |= uuid->svc_hint;
+	list_क्रम_each_entry(uuid, &hdev->uuids, list)
+		val |= uuid->svc_hपूर्णांक;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-void __hci_req_update_class(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
+व्योम __hci_req_update_class(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 	u8 cod[3];
 
 	bt_dev_dbg(hdev, "");
 
-	if (!hdev_is_powered(hdev))
-		return;
+	अगर (!hdev_is_घातered(hdev))
+		वापस;
 
-	if (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
-		return;
+	अगर (!hci_dev_test_flag(hdev, HCI_BREDR_ENABLED))
+		वापस;
 
-	if (hci_dev_test_flag(hdev, HCI_SERVICE_CACHE))
-		return;
+	अगर (hci_dev_test_flag(hdev, HCI_SERVICE_CACHE))
+		वापस;
 
 	cod[0] = hdev->minor_class;
 	cod[1] = hdev->major_class;
 	cod[2] = get_service_classes(hdev);
 
-	if (hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE))
+	अगर (hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE))
 		cod[1] |= 0x20;
 
-	if (memcmp(cod, hdev->dev_class, 3) == 0)
-		return;
+	अगर (स_भेद(cod, hdev->dev_class, 3) == 0)
+		वापस;
 
-	hci_req_add(req, HCI_OP_WRITE_CLASS_OF_DEV, sizeof(cod), cod);
-}
+	hci_req_add(req, HCI_OP_WRITE_CLASS_OF_DEV, माप(cod), cod);
+पूर्ण
 
-static void write_iac(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct hci_cp_write_current_iac_lap cp;
+अटल व्योम ग_लिखो_iac(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा hci_cp_ग_लिखो_current_iac_lap cp;
 
-	if (!hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
-		return;
+	अगर (!hci_dev_test_flag(hdev, HCI_DISCOVERABLE))
+		वापस;
 
-	if (hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE)) {
+	अगर (hci_dev_test_flag(hdev, HCI_LIMITED_DISCOVERABLE)) अणु
 		/* Limited discoverable mode */
 		cp.num_iac = min_t(u8, hdev->num_iac, 2);
 		cp.iac_lap[0] = 0x00;	/* LIAC */
@@ -2769,110 +2770,110 @@ static void write_iac(struct hci_request *req)
 		cp.iac_lap[3] = 0x33;	/* GIAC */
 		cp.iac_lap[4] = 0x8b;
 		cp.iac_lap[5] = 0x9e;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* General discoverable mode */
 		cp.num_iac = 1;
 		cp.iac_lap[0] = 0x33;	/* GIAC */
 		cp.iac_lap[1] = 0x8b;
 		cp.iac_lap[2] = 0x9e;
-	}
+	पूर्ण
 
 	hci_req_add(req, HCI_OP_WRITE_CURRENT_IAC_LAP,
 		    (cp.num_iac * 3) + 1, &cp);
-}
+पूर्ण
 
-static int discoverable_update(struct hci_request *req, unsigned long opt)
-{
-	struct hci_dev *hdev = req->hdev;
+अटल पूर्णांक discoverable_update(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 
 	hci_dev_lock(hdev);
 
-	if (hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) {
-		write_iac(req);
+	अगर (hci_dev_test_flag(hdev, HCI_BREDR_ENABLED)) अणु
+		ग_लिखो_iac(req);
 		__hci_req_update_scan(req);
 		__hci_req_update_class(req);
-	}
+	पूर्ण
 
-	/* Advertising instances don't use the global discoverable setting, so
-	 * only update AD if advertising was enabled using Set Advertising.
+	/* Advertising instances करोn't use the global discoverable setting, so
+	 * only update AD अगर advertising was enabled using Set Advertising.
 	 */
-	if (hci_dev_test_flag(hdev, HCI_ADVERTISING)) {
+	अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING)) अणु
 		__hci_req_update_adv_data(req, 0x00);
 
 		/* Discoverable mode affects the local advertising
 		 * address in limited privacy mode.
 		 */
-		if (hci_dev_test_flag(hdev, HCI_LIMITED_PRIVACY)) {
-			if (ext_adv_capable(hdev))
+		अगर (hci_dev_test_flag(hdev, HCI_LIMITED_PRIVACY)) अणु
+			अगर (ext_adv_capable(hdev))
 				__hci_req_start_ext_adv(req, 0x00);
-			else
+			अन्यथा
 				__hci_req_enable_advertising(req);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	hci_dev_unlock(hdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void discoverable_update_work(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev,
+अटल व्योम discoverable_update_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
 					    discoverable_update);
 	u8 status;
 
 	hci_req_sync(hdev, discoverable_update, 0, HCI_CMD_TIMEOUT, &status);
 	mgmt_set_discoverable_complete(hdev, status);
-}
+पूर्ण
 
-void __hci_abort_conn(struct hci_request *req, struct hci_conn *conn,
+व्योम __hci_पात_conn(काष्ठा hci_request *req, काष्ठा hci_conn *conn,
 		      u8 reason)
-{
-	switch (conn->state) {
-	case BT_CONNECTED:
-	case BT_CONFIG:
-		if (conn->type == AMP_LINK) {
-			struct hci_cp_disconn_phy_link cp;
+अणु
+	चयन (conn->state) अणु
+	हाल BT_CONNECTED:
+	हाल BT_CONFIG:
+		अगर (conn->type == AMP_LINK) अणु
+			काष्ठा hci_cp_disconn_phy_link cp;
 
 			cp.phy_handle = HCI_PHY_HANDLE(conn->handle);
 			cp.reason = reason;
-			hci_req_add(req, HCI_OP_DISCONN_PHY_LINK, sizeof(cp),
+			hci_req_add(req, HCI_OP_DISCONN_PHY_LINK, माप(cp),
 				    &cp);
-		} else {
-			struct hci_cp_disconnect dc;
+		पूर्ण अन्यथा अणु
+			काष्ठा hci_cp_disconnect dc;
 
 			dc.handle = cpu_to_le16(conn->handle);
 			dc.reason = reason;
-			hci_req_add(req, HCI_OP_DISCONNECT, sizeof(dc), &dc);
-		}
+			hci_req_add(req, HCI_OP_DISCONNECT, माप(dc), &dc);
+		पूर्ण
 
 		conn->state = BT_DISCONN;
 
-		break;
-	case BT_CONNECT:
-		if (conn->type == LE_LINK) {
-			if (test_bit(HCI_CONN_SCANNING, &conn->flags))
-				break;
+		अवरोध;
+	हाल BT_CONNECT:
+		अगर (conn->type == LE_LINK) अणु
+			अगर (test_bit(HCI_CONN_SCANNING, &conn->flags))
+				अवरोध;
 			hci_req_add(req, HCI_OP_LE_CREATE_CONN_CANCEL,
-				    0, NULL);
-		} else if (conn->type == ACL_LINK) {
-			if (req->hdev->hci_ver < BLUETOOTH_VER_1_2)
-				break;
+				    0, शून्य);
+		पूर्ण अन्यथा अगर (conn->type == ACL_LINK) अणु
+			अगर (req->hdev->hci_ver < BLUETOOTH_VER_1_2)
+				अवरोध;
 			hci_req_add(req, HCI_OP_CREATE_CONN_CANCEL,
 				    6, &conn->dst);
-		}
-		break;
-	case BT_CONNECT2:
-		if (conn->type == ACL_LINK) {
-			struct hci_cp_reject_conn_req rej;
+		पूर्ण
+		अवरोध;
+	हाल BT_CONNECT2:
+		अगर (conn->type == ACL_LINK) अणु
+			काष्ठा hci_cp_reject_conn_req rej;
 
 			bacpy(&rej.bdaddr, &conn->dst);
 			rej.reason = reason;
 
 			hci_req_add(req, HCI_OP_REJECT_CONN_REQ,
-				    sizeof(rej), &rej);
-		} else if (conn->type == SCO_LINK || conn->type == ESCO_LINK) {
-			struct hci_cp_reject_sync_conn_req rej;
+				    माप(rej), &rej);
+		पूर्ण अन्यथा अगर (conn->type == SCO_LINK || conn->type == ESCO_LINK) अणु
+			काष्ठा hci_cp_reject_sync_conn_req rej;
 
 			bacpy(&rej.bdaddr, &conn->dst);
 
@@ -2880,88 +2881,88 @@ void __hci_abort_conn(struct hci_request *req, struct hci_conn *conn,
 			 * allowed error values (0x0D-0x0F) which isn't
 			 * compatible with most values passed to this
 			 * function. To be safe hard-code one of the
-			 * values that's suitable for SCO.
+			 * values that's suitable क्रम SCO.
 			 */
 			rej.reason = HCI_ERROR_REJ_LIMITED_RESOURCES;
 
 			hci_req_add(req, HCI_OP_REJECT_SYNC_CONN_REQ,
-				    sizeof(rej), &rej);
-		}
-		break;
-	default:
+				    माप(rej), &rej);
+		पूर्ण
+		अवरोध;
+	शेष:
 		conn->state = BT_CLOSED;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void abort_conn_complete(struct hci_dev *hdev, u8 status, u16 opcode)
-{
-	if (status)
+अटल व्योम पात_conn_complete(काष्ठा hci_dev *hdev, u8 status, u16 opcode)
+अणु
+	अगर (status)
 		bt_dev_dbg(hdev, "Failed to abort connection: status 0x%2.2x", status);
-}
+पूर्ण
 
-int hci_abort_conn(struct hci_conn *conn, u8 reason)
-{
-	struct hci_request req;
-	int err;
+पूर्णांक hci_पात_conn(काष्ठा hci_conn *conn, u8 reason)
+अणु
+	काष्ठा hci_request req;
+	पूर्णांक err;
 
 	hci_req_init(&req, conn->hdev);
 
-	__hci_abort_conn(&req, conn, reason);
+	__hci_पात_conn(&req, conn, reason);
 
-	err = hci_req_run(&req, abort_conn_complete);
-	if (err && err != -ENODATA) {
+	err = hci_req_run(&req, पात_conn_complete);
+	अगर (err && err != -ENODATA) अणु
 		bt_dev_err(conn->hdev, "failed to run HCI request: err %d", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int update_bg_scan(struct hci_request *req, unsigned long opt)
-{
+अटल पूर्णांक update_bg_scan(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
 	hci_dev_lock(req->hdev);
 	__hci_update_background_scan(req);
 	hci_dev_unlock(req->hdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bg_scan_update(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev,
+अटल व्योम bg_scan_update(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
 					    bg_scan_update);
-	struct hci_conn *conn;
+	काष्ठा hci_conn *conn;
 	u8 status;
-	int err;
+	पूर्णांक err;
 
 	err = hci_req_sync(hdev, update_bg_scan, 0, HCI_CMD_TIMEOUT, &status);
-	if (!err)
-		return;
+	अगर (!err)
+		वापस;
 
 	hci_dev_lock(hdev);
 
 	conn = hci_conn_hash_lookup_state(hdev, LE_LINK, BT_CONNECT);
-	if (conn)
+	अगर (conn)
 		hci_le_conn_failed(conn, status);
 
 	hci_dev_unlock(hdev);
-}
+पूर्ण
 
-static int le_scan_disable(struct hci_request *req, unsigned long opt)
-{
+अटल पूर्णांक le_scan_disable(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
 	hci_req_add_le_scan_disable(req, false);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bredr_inquiry(struct hci_request *req, unsigned long opt)
-{
+अटल पूर्णांक bredr_inquiry(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
 	u8 length = opt;
-	const u8 giac[3] = { 0x33, 0x8b, 0x9e };
-	const u8 liac[3] = { 0x00, 0x8b, 0x9e };
-	struct hci_cp_inquiry cp;
+	स्थिर u8 giac[3] = अणु 0x33, 0x8b, 0x9e पूर्ण;
+	स्थिर u8 liac[3] = अणु 0x00, 0x8b, 0x9e पूर्ण;
+	काष्ठा hci_cp_inquiry cp;
 
-	if (test_bit(HCI_INQUIRY, &req->hdev->flags))
-		return 0;
+	अगर (test_bit(HCI_INQUIRY, &req->hdev->flags))
+		वापस 0;
 
 	bt_dev_dbg(req->hdev, "");
 
@@ -2969,175 +2970,175 @@ static int bredr_inquiry(struct hci_request *req, unsigned long opt)
 	hci_inquiry_cache_flush(req->hdev);
 	hci_dev_unlock(req->hdev);
 
-	memset(&cp, 0, sizeof(cp));
+	स_रखो(&cp, 0, माप(cp));
 
-	if (req->hdev->discovery.limited)
-		memcpy(&cp.lap, liac, sizeof(cp.lap));
-	else
-		memcpy(&cp.lap, giac, sizeof(cp.lap));
+	अगर (req->hdev->discovery.limited)
+		स_नकल(&cp.lap, liac, माप(cp.lap));
+	अन्यथा
+		स_नकल(&cp.lap, giac, माप(cp.lap));
 
 	cp.length = length;
 
-	hci_req_add(req, HCI_OP_INQUIRY, sizeof(cp), &cp);
+	hci_req_add(req, HCI_OP_INQUIRY, माप(cp), &cp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void le_scan_disable_work(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev,
+अटल व्योम le_scan_disable_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
 					    le_scan_disable.work);
 	u8 status;
 
 	bt_dev_dbg(hdev, "");
 
-	if (!hci_dev_test_flag(hdev, HCI_LE_SCAN))
-		return;
+	अगर (!hci_dev_test_flag(hdev, HCI_LE_SCAN))
+		वापस;
 
 	cancel_delayed_work(&hdev->le_scan_restart);
 
 	hci_req_sync(hdev, le_scan_disable, 0, HCI_CMD_TIMEOUT, &status);
-	if (status) {
+	अगर (status) अणु
 		bt_dev_err(hdev, "failed to disable LE scan: status 0x%02x",
 			   status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hdev->discovery.scan_start = 0;
 
 	/* If we were running LE only scan, change discovery state. If
 	 * we were running both LE and BR/EDR inquiry simultaneously,
-	 * and BR/EDR inquiry is already finished, stop discovery,
+	 * and BR/EDR inquiry is alपढ़ोy finished, stop discovery,
 	 * otherwise BR/EDR inquiry will stop discovery when finished.
-	 * If we will resolve remote device name, do not change
+	 * If we will resolve remote device name, करो not change
 	 * discovery state.
 	 */
 
-	if (hdev->discovery.type == DISCOV_TYPE_LE)
-		goto discov_stopped;
+	अगर (hdev->discovery.type == DISCOV_TYPE_LE)
+		जाओ discov_stopped;
 
-	if (hdev->discovery.type != DISCOV_TYPE_INTERLEAVED)
-		return;
+	अगर (hdev->discovery.type != DISCOV_TYPE_INTERLEAVED)
+		वापस;
 
-	if (test_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY, &hdev->quirks)) {
-		if (!test_bit(HCI_INQUIRY, &hdev->flags) &&
+	अगर (test_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY, &hdev->quirks)) अणु
+		अगर (!test_bit(HCI_INQUIRY, &hdev->flags) &&
 		    hdev->discovery.state != DISCOVERY_RESOLVING)
-			goto discov_stopped;
+			जाओ discov_stopped;
 
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hci_req_sync(hdev, bredr_inquiry, DISCOV_INTERLEAVED_INQUIRY_LEN,
 		     HCI_CMD_TIMEOUT, &status);
-	if (status) {
+	अगर (status) अणु
 		bt_dev_err(hdev, "inquiry failed: status 0x%02x", status);
-		goto discov_stopped;
-	}
+		जाओ discov_stopped;
+	पूर्ण
 
-	return;
+	वापस;
 
 discov_stopped:
 	hci_dev_lock(hdev);
 	hci_discovery_set_state(hdev, DISCOVERY_STOPPED);
 	hci_dev_unlock(hdev);
-}
+पूर्ण
 
-static int le_scan_restart(struct hci_request *req, unsigned long opt)
-{
-	struct hci_dev *hdev = req->hdev;
+अटल पूर्णांक le_scan_restart(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 
-	/* If controller is not scanning we are done. */
-	if (!hci_dev_test_flag(hdev, HCI_LE_SCAN))
-		return 0;
+	/* If controller is not scanning we are करोne. */
+	अगर (!hci_dev_test_flag(hdev, HCI_LE_SCAN))
+		वापस 0;
 
-	if (hdev->scanning_paused) {
+	अगर (hdev->scanning_छोड़ोd) अणु
 		bt_dev_dbg(hdev, "Scanning is paused for suspend");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	hci_req_add_le_scan_disable(req, false);
 
-	if (use_ext_scan(hdev)) {
-		struct hci_cp_le_set_ext_scan_enable ext_enable_cp;
+	अगर (use_ext_scan(hdev)) अणु
+		काष्ठा hci_cp_le_set_ext_scan_enable ext_enable_cp;
 
-		memset(&ext_enable_cp, 0, sizeof(ext_enable_cp));
+		स_रखो(&ext_enable_cp, 0, माप(ext_enable_cp));
 		ext_enable_cp.enable = LE_SCAN_ENABLE;
 		ext_enable_cp.filter_dup = LE_SCAN_FILTER_DUP_ENABLE;
 
 		hci_req_add(req, HCI_OP_LE_SET_EXT_SCAN_ENABLE,
-			    sizeof(ext_enable_cp), &ext_enable_cp);
-	} else {
-		struct hci_cp_le_set_scan_enable cp;
+			    माप(ext_enable_cp), &ext_enable_cp);
+	पूर्ण अन्यथा अणु
+		काष्ठा hci_cp_le_set_scan_enable cp;
 
-		memset(&cp, 0, sizeof(cp));
+		स_रखो(&cp, 0, माप(cp));
 		cp.enable = LE_SCAN_ENABLE;
 		cp.filter_dup = LE_SCAN_FILTER_DUP_ENABLE;
-		hci_req_add(req, HCI_OP_LE_SET_SCAN_ENABLE, sizeof(cp), &cp);
-	}
+		hci_req_add(req, HCI_OP_LE_SET_SCAN_ENABLE, माप(cp), &cp);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void le_scan_restart_work(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev,
+अटल व्योम le_scan_restart_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
 					    le_scan_restart.work);
-	unsigned long timeout, duration, scan_start, now;
+	अचिन्हित दीर्घ समयout, duration, scan_start, now;
 	u8 status;
 
 	bt_dev_dbg(hdev, "");
 
 	hci_req_sync(hdev, le_scan_restart, 0, HCI_CMD_TIMEOUT, &status);
-	if (status) {
+	अगर (status) अणु
 		bt_dev_err(hdev, "failed to restart LE scan: status %d",
 			   status);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	hci_dev_lock(hdev);
 
-	if (!test_bit(HCI_QUIRK_STRICT_DUPLICATE_FILTER, &hdev->quirks) ||
+	अगर (!test_bit(HCI_QUIRK_STRICT_DUPLICATE_FILTER, &hdev->quirks) ||
 	    !hdev->discovery.scan_start)
-		goto unlock;
+		जाओ unlock;
 
 	/* When the scan was started, hdev->le_scan_disable has been queued
 	 * after duration from scan_start. During scan restart this job
 	 * has been canceled, and we need to queue it again after proper
-	 * timeout, to make sure that scan does not run indefinitely.
+	 * समयout, to make sure that scan करोes not run indefinitely.
 	 */
 	duration = hdev->discovery.scan_duration;
 	scan_start = hdev->discovery.scan_start;
-	now = jiffies;
-	if (now - scan_start <= duration) {
-		int elapsed;
+	now = jअगरfies;
+	अगर (now - scan_start <= duration) अणु
+		पूर्णांक elapsed;
 
-		if (now >= scan_start)
+		अगर (now >= scan_start)
 			elapsed = now - scan_start;
-		else
-			elapsed = ULONG_MAX - scan_start + now;
+		अन्यथा
+			elapsed = अच_दीर्घ_उच्च - scan_start + now;
 
-		timeout = duration - elapsed;
-	} else {
-		timeout = 0;
-	}
+		समयout = duration - elapsed;
+	पूर्ण अन्यथा अणु
+		समयout = 0;
+	पूर्ण
 
 	queue_delayed_work(hdev->req_workqueue,
-			   &hdev->le_scan_disable, timeout);
+			   &hdev->le_scan_disable, समयout);
 
 unlock:
 	hci_dev_unlock(hdev);
-}
+पूर्ण
 
-static int active_scan(struct hci_request *req, unsigned long opt)
-{
-	uint16_t interval = opt;
-	struct hci_dev *hdev = req->hdev;
+अटल पूर्णांक active_scan(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
+	uपूर्णांक16_t पूर्णांकerval = opt;
+	काष्ठा hci_dev *hdev = req->hdev;
 	u8 own_addr_type;
-	/* White list is not used for discovery */
+	/* White list is not used क्रम discovery */
 	u8 filter_policy = 0x00;
-	/* Discovery doesn't require controller address resolution */
+	/* Discovery करोesn't require controller address resolution */
 	bool addr_resolv = false;
-	int err;
+	पूर्णांक err;
 
 	bt_dev_dbg(hdev, "");
 
@@ -3145,327 +3146,327 @@ static int active_scan(struct hci_request *req, unsigned long opt)
 	 * running. Thus, we should temporarily stop it in order to set the
 	 * discovery scanning parameters.
 	 */
-	if (hci_dev_test_flag(hdev, HCI_LE_SCAN)) {
+	अगर (hci_dev_test_flag(hdev, HCI_LE_SCAN)) अणु
 		hci_req_add_le_scan_disable(req, false);
-		cancel_interleave_scan(hdev);
-	}
+		cancel_पूर्णांकerleave_scan(hdev);
+	पूर्ण
 
-	/* All active scans will be done with either a resolvable private
+	/* All active scans will be करोne with either a resolvable निजी
 	 * address (when privacy feature has been enabled) or non-resolvable
-	 * private address.
+	 * निजी address.
 	 */
-	err = hci_update_random_address(req, true, scan_use_rpa(hdev),
+	err = hci_update_अक्रमom_address(req, true, scan_use_rpa(hdev),
 					&own_addr_type);
-	if (err < 0)
+	अगर (err < 0)
 		own_addr_type = ADDR_LE_DEV_PUBLIC;
 
-	hci_req_start_scan(req, LE_SCAN_ACTIVE, interval,
-			   hdev->le_scan_window_discovery, own_addr_type,
+	hci_req_start_scan(req, LE_SCAN_ACTIVE, पूर्णांकerval,
+			   hdev->le_scan_winकरोw_discovery, own_addr_type,
 			   filter_policy, addr_resolv);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int interleaved_discov(struct hci_request *req, unsigned long opt)
-{
-	int err;
+अटल पूर्णांक पूर्णांकerleaved_discov(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
+	पूर्णांक err;
 
 	bt_dev_dbg(req->hdev, "");
 
 	err = active_scan(req, opt);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return bredr_inquiry(req, DISCOV_BREDR_INQUIRY_LEN);
-}
+	वापस bredr_inquiry(req, DISCOV_BREDR_INQUIRY_LEN);
+पूर्ण
 
-static void start_discovery(struct hci_dev *hdev, u8 *status)
-{
-	unsigned long timeout;
+अटल व्योम start_discovery(काष्ठा hci_dev *hdev, u8 *status)
+अणु
+	अचिन्हित दीर्घ समयout;
 
 	bt_dev_dbg(hdev, "type %u", hdev->discovery.type);
 
-	switch (hdev->discovery.type) {
-	case DISCOV_TYPE_BREDR:
-		if (!hci_dev_test_flag(hdev, HCI_INQUIRY))
+	चयन (hdev->discovery.type) अणु
+	हाल DISCOV_TYPE_BREDR:
+		अगर (!hci_dev_test_flag(hdev, HCI_INQUIRY))
 			hci_req_sync(hdev, bredr_inquiry,
 				     DISCOV_BREDR_INQUIRY_LEN, HCI_CMD_TIMEOUT,
 				     status);
-		return;
-	case DISCOV_TYPE_INTERLEAVED:
-		/* When running simultaneous discovery, the LE scanning time
-		 * should occupy the whole discovery time sine BR/EDR inquiry
+		वापस;
+	हाल DISCOV_TYPE_INTERLEAVED:
+		/* When running simultaneous discovery, the LE scanning समय
+		 * should occupy the whole discovery समय sine BR/EDR inquiry
 		 * and LE scanning are scheduled by the controller.
 		 *
-		 * For interleaving discovery in comparison, BR/EDR inquiry
-		 * and LE scanning are done sequentially with separate
-		 * timeouts.
+		 * For पूर्णांकerleaving discovery in comparison, BR/EDR inquiry
+		 * and LE scanning are करोne sequentially with separate
+		 * समयouts.
 		 */
-		if (test_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY,
-			     &hdev->quirks)) {
-			timeout = msecs_to_jiffies(DISCOV_LE_TIMEOUT);
-			/* During simultaneous discovery, we double LE scan
-			 * interval. We must leave some time for the controller
-			 * to do BR/EDR inquiry.
+		अगर (test_bit(HCI_QUIRK_SIMULTANEOUS_DISCOVERY,
+			     &hdev->quirks)) अणु
+			समयout = msecs_to_jअगरfies(DISCOV_LE_TIMEOUT);
+			/* During simultaneous discovery, we द्विगुन LE scan
+			 * पूर्णांकerval. We must leave some समय क्रम the controller
+			 * to करो BR/EDR inquiry.
 			 */
-			hci_req_sync(hdev, interleaved_discov,
-				     hdev->le_scan_int_discovery * 2, HCI_CMD_TIMEOUT,
+			hci_req_sync(hdev, पूर्णांकerleaved_discov,
+				     hdev->le_scan_पूर्णांक_discovery * 2, HCI_CMD_TIMEOUT,
 				     status);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		timeout = msecs_to_jiffies(hdev->discov_interleaved_timeout);
-		hci_req_sync(hdev, active_scan, hdev->le_scan_int_discovery,
+		समयout = msecs_to_jअगरfies(hdev->discov_पूर्णांकerleaved_समयout);
+		hci_req_sync(hdev, active_scan, hdev->le_scan_पूर्णांक_discovery,
 			     HCI_CMD_TIMEOUT, status);
-		break;
-	case DISCOV_TYPE_LE:
-		timeout = msecs_to_jiffies(DISCOV_LE_TIMEOUT);
-		hci_req_sync(hdev, active_scan, hdev->le_scan_int_discovery,
+		अवरोध;
+	हाल DISCOV_TYPE_LE:
+		समयout = msecs_to_jअगरfies(DISCOV_LE_TIMEOUT);
+		hci_req_sync(hdev, active_scan, hdev->le_scan_पूर्णांक_discovery,
 			     HCI_CMD_TIMEOUT, status);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		*status = HCI_ERROR_UNSPECIFIED;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (*status)
-		return;
+	अगर (*status)
+		वापस;
 
-	bt_dev_dbg(hdev, "timeout %u ms", jiffies_to_msecs(timeout));
+	bt_dev_dbg(hdev, "timeout %u ms", jअगरfies_to_msecs(समयout));
 
 	/* When service discovery is used and the controller has a
 	 * strict duplicate filter, it is important to remember the
-	 * start and duration of the scan. This is required for
+	 * start and duration of the scan. This is required क्रम
 	 * restarting scanning during the discovery phase.
 	 */
-	if (test_bit(HCI_QUIRK_STRICT_DUPLICATE_FILTER, &hdev->quirks) &&
-		     hdev->discovery.result_filtering) {
-		hdev->discovery.scan_start = jiffies;
-		hdev->discovery.scan_duration = timeout;
-	}
+	अगर (test_bit(HCI_QUIRK_STRICT_DUPLICATE_FILTER, &hdev->quirks) &&
+		     hdev->discovery.result_filtering) अणु
+		hdev->discovery.scan_start = jअगरfies;
+		hdev->discovery.scan_duration = समयout;
+	पूर्ण
 
 	queue_delayed_work(hdev->req_workqueue, &hdev->le_scan_disable,
-			   timeout);
-}
+			   समयout);
+पूर्ण
 
-bool hci_req_stop_discovery(struct hci_request *req)
-{
-	struct hci_dev *hdev = req->hdev;
-	struct discovery_state *d = &hdev->discovery;
-	struct hci_cp_remote_name_req_cancel cp;
-	struct inquiry_entry *e;
+bool hci_req_stop_discovery(काष्ठा hci_request *req)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
+	काष्ठा discovery_state *d = &hdev->discovery;
+	काष्ठा hci_cp_remote_name_req_cancel cp;
+	काष्ठा inquiry_entry *e;
 	bool ret = false;
 
 	bt_dev_dbg(hdev, "state %u", hdev->discovery.state);
 
-	if (d->state == DISCOVERY_FINDING || d->state == DISCOVERY_STOPPING) {
-		if (test_bit(HCI_INQUIRY, &hdev->flags))
-			hci_req_add(req, HCI_OP_INQUIRY_CANCEL, 0, NULL);
+	अगर (d->state == DISCOVERY_FINDING || d->state == DISCOVERY_STOPPING) अणु
+		अगर (test_bit(HCI_INQUIRY, &hdev->flags))
+			hci_req_add(req, HCI_OP_INQUIRY_CANCEL, 0, शून्य);
 
-		if (hci_dev_test_flag(hdev, HCI_LE_SCAN)) {
+		अगर (hci_dev_test_flag(hdev, HCI_LE_SCAN)) अणु
 			cancel_delayed_work(&hdev->le_scan_disable);
 			cancel_delayed_work(&hdev->le_scan_restart);
 			hci_req_add_le_scan_disable(req, false);
-		}
+		पूर्ण
 
 		ret = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Passive scanning */
-		if (hci_dev_test_flag(hdev, HCI_LE_SCAN)) {
+		अगर (hci_dev_test_flag(hdev, HCI_LE_SCAN)) अणु
 			hci_req_add_le_scan_disable(req, false);
 			ret = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* No further actions needed for LE-only discovery */
-	if (d->type == DISCOV_TYPE_LE)
-		return ret;
+	/* No further actions needed क्रम LE-only discovery */
+	अगर (d->type == DISCOV_TYPE_LE)
+		वापस ret;
 
-	if (d->state == DISCOVERY_RESOLVING || d->state == DISCOVERY_STOPPING) {
+	अगर (d->state == DISCOVERY_RESOLVING || d->state == DISCOVERY_STOPPING) अणु
 		e = hci_inquiry_cache_lookup_resolve(hdev, BDADDR_ANY,
 						     NAME_PENDING);
-		if (!e)
-			return ret;
+		अगर (!e)
+			वापस ret;
 
 		bacpy(&cp.bdaddr, &e->data.bdaddr);
-		hci_req_add(req, HCI_OP_REMOTE_NAME_REQ_CANCEL, sizeof(cp),
+		hci_req_add(req, HCI_OP_REMOTE_NAME_REQ_CANCEL, माप(cp),
 			    &cp);
 		ret = true;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int stop_discovery(struct hci_request *req, unsigned long opt)
-{
+अटल पूर्णांक stop_discovery(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
 	hci_dev_lock(req->hdev);
 	hci_req_stop_discovery(req);
 	hci_dev_unlock(req->hdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void discov_update(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev,
+अटल व्योम discov_update(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
 					    discov_update);
 	u8 status = 0;
 
-	switch (hdev->discovery.state) {
-	case DISCOVERY_STARTING:
+	चयन (hdev->discovery.state) अणु
+	हाल DISCOVERY_STARTING:
 		start_discovery(hdev, &status);
 		mgmt_start_discovery_complete(hdev, status);
-		if (status)
+		अगर (status)
 			hci_discovery_set_state(hdev, DISCOVERY_STOPPED);
-		else
+		अन्यथा
 			hci_discovery_set_state(hdev, DISCOVERY_FINDING);
-		break;
-	case DISCOVERY_STOPPING:
+		अवरोध;
+	हाल DISCOVERY_STOPPING:
 		hci_req_sync(hdev, stop_discovery, 0, HCI_CMD_TIMEOUT, &status);
 		mgmt_stop_discovery_complete(hdev, status);
-		if (!status)
+		अगर (!status)
 			hci_discovery_set_state(hdev, DISCOVERY_STOPPED);
-		break;
-	case DISCOVERY_STOPPED:
-	default:
-		return;
-	}
-}
+		अवरोध;
+	हाल DISCOVERY_STOPPED:
+	शेष:
+		वापस;
+	पूर्ण
+पूर्ण
 
-static void discov_off(struct work_struct *work)
-{
-	struct hci_dev *hdev = container_of(work, struct hci_dev,
+अटल व्योम discov_off(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hci_dev *hdev = container_of(work, काष्ठा hci_dev,
 					    discov_off.work);
 
 	bt_dev_dbg(hdev, "");
 
 	hci_dev_lock(hdev);
 
-	/* When discoverable timeout triggers, then just make sure
-	 * the limited discoverable flag is cleared. Even in the case
-	 * of a timeout triggered from general discoverable, it is
+	/* When discoverable समयout triggers, then just make sure
+	 * the limited discoverable flag is cleared. Even in the हाल
+	 * of a समयout triggered from general discoverable, it is
 	 * safe to unconditionally clear the flag.
 	 */
 	hci_dev_clear_flag(hdev, HCI_LIMITED_DISCOVERABLE);
 	hci_dev_clear_flag(hdev, HCI_DISCOVERABLE);
-	hdev->discov_timeout = 0;
+	hdev->discov_समयout = 0;
 
 	hci_dev_unlock(hdev);
 
-	hci_req_sync(hdev, discoverable_update, 0, HCI_CMD_TIMEOUT, NULL);
+	hci_req_sync(hdev, discoverable_update, 0, HCI_CMD_TIMEOUT, शून्य);
 	mgmt_new_settings(hdev);
-}
+पूर्ण
 
-static int powered_update_hci(struct hci_request *req, unsigned long opt)
-{
-	struct hci_dev *hdev = req->hdev;
+अटल पूर्णांक घातered_update_hci(काष्ठा hci_request *req, अचिन्हित दीर्घ opt)
+अणु
+	काष्ठा hci_dev *hdev = req->hdev;
 	u8 link_sec;
 
 	hci_dev_lock(hdev);
 
-	if (hci_dev_test_flag(hdev, HCI_SSP_ENABLED) &&
-	    !lmp_host_ssp_capable(hdev)) {
+	अगर (hci_dev_test_flag(hdev, HCI_SSP_ENABLED) &&
+	    !lmp_host_ssp_capable(hdev)) अणु
 		u8 mode = 0x01;
 
-		hci_req_add(req, HCI_OP_WRITE_SSP_MODE, sizeof(mode), &mode);
+		hci_req_add(req, HCI_OP_WRITE_SSP_MODE, माप(mode), &mode);
 
-		if (bredr_sc_enabled(hdev) && !lmp_host_sc_capable(hdev)) {
+		अगर (bredr_sc_enabled(hdev) && !lmp_host_sc_capable(hdev)) अणु
 			u8 support = 0x01;
 
 			hci_req_add(req, HCI_OP_WRITE_SC_SUPPORT,
-				    sizeof(support), &support);
-		}
-	}
+				    माप(support), &support);
+		पूर्ण
+	पूर्ण
 
-	if (hci_dev_test_flag(hdev, HCI_LE_ENABLED) &&
-	    lmp_bredr_capable(hdev)) {
-		struct hci_cp_write_le_host_supported cp;
+	अगर (hci_dev_test_flag(hdev, HCI_LE_ENABLED) &&
+	    lmp_bredr_capable(hdev)) अणु
+		काष्ठा hci_cp_ग_लिखो_le_host_supported cp;
 
 		cp.le = 0x01;
 		cp.simul = 0x00;
 
-		/* Check first if we already have the right
+		/* Check first अगर we alपढ़ोy have the right
 		 * host state (host features set)
 		 */
-		if (cp.le != lmp_host_le_capable(hdev) ||
+		अगर (cp.le != lmp_host_le_capable(hdev) ||
 		    cp.simul != lmp_host_le_br_capable(hdev))
 			hci_req_add(req, HCI_OP_WRITE_LE_HOST_SUPPORTED,
-				    sizeof(cp), &cp);
-	}
+				    माप(cp), &cp);
+	पूर्ण
 
-	if (hci_dev_test_flag(hdev, HCI_LE_ENABLED)) {
-		/* Make sure the controller has a good default for
-		 * advertising data. This also applies to the case
+	अगर (hci_dev_test_flag(hdev, HCI_LE_ENABLED)) अणु
+		/* Make sure the controller has a good शेष क्रम
+		 * advertising data. This also applies to the हाल
 		 * where BR/EDR was toggled during the AUTO_OFF phase.
 		 */
-		if (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
-		    list_empty(&hdev->adv_instances)) {
-			int err;
+		अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING) ||
+		    list_empty(&hdev->adv_instances)) अणु
+			पूर्णांक err;
 
-			if (ext_adv_capable(hdev)) {
+			अगर (ext_adv_capable(hdev)) अणु
 				err = __hci_req_setup_ext_adv_instance(req,
 								       0x00);
-				if (!err)
+				अगर (!err)
 					__hci_req_update_scan_rsp_data(req,
 								       0x00);
-			} else {
+			पूर्ण अन्यथा अणु
 				err = 0;
 				__hci_req_update_adv_data(req, 0x00);
 				__hci_req_update_scan_rsp_data(req, 0x00);
-			}
+			पूर्ण
 
-			if (hci_dev_test_flag(hdev, HCI_ADVERTISING)) {
-				if (!ext_adv_capable(hdev))
+			अगर (hci_dev_test_flag(hdev, HCI_ADVERTISING)) अणु
+				अगर (!ext_adv_capable(hdev))
 					__hci_req_enable_advertising(req);
-				else if (!err)
+				अन्यथा अगर (!err)
 					__hci_req_enable_ext_advertising(req,
 									 0x00);
-			}
-		} else if (!list_empty(&hdev->adv_instances)) {
-			struct adv_info *adv_instance;
+			पूर्ण
+		पूर्ण अन्यथा अगर (!list_empty(&hdev->adv_instances)) अणु
+			काष्ठा adv_info *adv_instance;
 
 			adv_instance = list_first_entry(&hdev->adv_instances,
-							struct adv_info, list);
+							काष्ठा adv_info, list);
 			__hci_req_schedule_adv_instance(req,
 							adv_instance->instance,
 							true);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	link_sec = hci_dev_test_flag(hdev, HCI_LINK_SECURITY);
-	if (link_sec != test_bit(HCI_AUTH, &hdev->flags))
+	अगर (link_sec != test_bit(HCI_AUTH, &hdev->flags))
 		hci_req_add(req, HCI_OP_WRITE_AUTH_ENABLE,
-			    sizeof(link_sec), &link_sec);
+			    माप(link_sec), &link_sec);
 
-	if (lmp_bredr_capable(hdev)) {
-		if (hci_dev_test_flag(hdev, HCI_FAST_CONNECTABLE))
-			__hci_req_write_fast_connectable(req, true);
-		else
-			__hci_req_write_fast_connectable(req, false);
+	अगर (lmp_bredr_capable(hdev)) अणु
+		अगर (hci_dev_test_flag(hdev, HCI_FAST_CONNECTABLE))
+			__hci_req_ग_लिखो_fast_connectable(req, true);
+		अन्यथा
+			__hci_req_ग_लिखो_fast_connectable(req, false);
 		__hci_req_update_scan(req);
 		__hci_req_update_class(req);
 		__hci_req_update_name(req);
 		__hci_req_update_eir(req);
-	}
+	पूर्ण
 
 	hci_dev_unlock(hdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int __hci_req_hci_power_on(struct hci_dev *hdev)
-{
+पूर्णांक __hci_req_hci_घातer_on(काष्ठा hci_dev *hdev)
+अणु
 	/* Register the available SMP channels (BR/EDR and LE) only when
-	 * successfully powering on the controller. This late
-	 * registration is required so that LE SMP can clearly decide if
-	 * the public address or static address is used.
+	 * successfully घातering on the controller. This late
+	 * registration is required so that LE SMP can clearly decide अगर
+	 * the खुला address or अटल address is used.
 	 */
-	smp_register(hdev);
+	smp_रेजिस्टर(hdev);
 
-	return __hci_req_sync(hdev, powered_update_hci, 0, HCI_CMD_TIMEOUT,
-			      NULL);
-}
+	वापस __hci_req_sync(hdev, घातered_update_hci, 0, HCI_CMD_TIMEOUT,
+			      शून्य);
+पूर्ण
 
-void hci_request_setup(struct hci_dev *hdev)
-{
+व्योम hci_request_setup(काष्ठा hci_dev *hdev)
+अणु
 	INIT_WORK(&hdev->discov_update, discov_update);
 	INIT_WORK(&hdev->bg_scan_update, bg_scan_update);
 	INIT_WORK(&hdev->scan_update, scan_update_work);
@@ -3474,12 +3475,12 @@ void hci_request_setup(struct hci_dev *hdev)
 	INIT_DELAYED_WORK(&hdev->discov_off, discov_off);
 	INIT_DELAYED_WORK(&hdev->le_scan_disable, le_scan_disable_work);
 	INIT_DELAYED_WORK(&hdev->le_scan_restart, le_scan_restart_work);
-	INIT_DELAYED_WORK(&hdev->adv_instance_expire, adv_timeout_expire);
-	INIT_DELAYED_WORK(&hdev->interleave_scan, interleave_scan_work);
-}
+	INIT_DELAYED_WORK(&hdev->adv_instance_expire, adv_समयout_expire);
+	INIT_DELAYED_WORK(&hdev->पूर्णांकerleave_scan, पूर्णांकerleave_scan_work);
+पूर्ण
 
-void hci_request_cancel_all(struct hci_dev *hdev)
-{
+व्योम hci_request_cancel_all(काष्ठा hci_dev *hdev)
+अणु
 	hci_req_sync_cancel(hdev, ENODEV);
 
 	cancel_work_sync(&hdev->discov_update);
@@ -3491,10 +3492,10 @@ void hci_request_cancel_all(struct hci_dev *hdev)
 	cancel_delayed_work_sync(&hdev->le_scan_disable);
 	cancel_delayed_work_sync(&hdev->le_scan_restart);
 
-	if (hdev->adv_instance_timeout) {
+	अगर (hdev->adv_instance_समयout) अणु
 		cancel_delayed_work_sync(&hdev->adv_instance_expire);
-		hdev->adv_instance_timeout = 0;
-	}
+		hdev->adv_instance_समयout = 0;
+	पूर्ण
 
-	cancel_interleave_scan(hdev);
-}
+	cancel_पूर्णांकerleave_scan(hdev);
+पूर्ण

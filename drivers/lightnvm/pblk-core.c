@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2016 CNEX Labs
- * Initial release: Javier Gonzalez <javier@cnexlabs.com>
- *                  Matias Bjorling <matias@cnexlabs.com>
+ * Copyright (C) 2016 CNEX Lअसल
+ * Initial release: Javier Gonzalez <javier@cnexद_असल.com>
+ *                  Matias Bjorling <matias@cnexद_असल.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version
  * 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License for more details.
+ * General Public License क्रम more details.
  *
  * pblk-core.c - pblk's core functionality
  *
  */
 
-#define CREATE_TRACE_POINTS
+#घोषणा CREATE_TRACE_POINTS
 
-#include "pblk.h"
-#include "pblk-trace.h"
+#समावेश "pblk.h"
+#समावेश "pblk-trace.h"
 
-static void pblk_line_mark_bb(struct work_struct *work)
-{
-	struct pblk_line_ws *line_ws = container_of(work, struct pblk_line_ws,
+अटल व्योम pblk_line_mark_bb(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pblk_line_ws *line_ws = container_of(work, काष्ठा pblk_line_ws,
 									ws);
-	struct pblk *pblk = line_ws->pblk;
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct ppa_addr *ppa = line_ws->priv;
-	int ret;
+	काष्ठा pblk *pblk = line_ws->pblk;
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा ppa_addr *ppa = line_ws->priv;
+	पूर्णांक ret;
 
 	ret = nvm_set_chunk_meta(dev, ppa, 1, NVM_BLK_T_GRWN_BAD);
-	if (ret) {
-		struct pblk_line *line;
-		int pos;
+	अगर (ret) अणु
+		काष्ठा pblk_line *line;
+		पूर्णांक pos;
 
 		line = pblk_ppa_to_line(pblk, *ppa);
 		pos = pblk_ppa_to_pos(&dev->geo, *ppa);
 
 		pblk_err(pblk, "failed to mark bb, line:%d, pos:%d\n",
 				line->id, pos);
-	}
+	पूर्ण
 
-	kfree(ppa);
-	mempool_free(line_ws, &pblk->gen_ws_pool);
-}
+	kमुक्त(ppa);
+	mempool_मुक्त(line_ws, &pblk->gen_ws_pool);
+पूर्ण
 
-static void pblk_mark_bb(struct pblk *pblk, struct pblk_line *line,
-			 struct ppa_addr ppa_addr)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct ppa_addr *ppa;
-	int pos = pblk_ppa_to_pos(geo, ppa_addr);
+अटल व्योम pblk_mark_bb(काष्ठा pblk *pblk, काष्ठा pblk_line *line,
+			 काष्ठा ppa_addr ppa_addr)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा ppa_addr *ppa;
+	पूर्णांक pos = pblk_ppa_to_pos(geo, ppa_addr);
 
 	pblk_debug(pblk, "erase failed: line:%d, pos:%d\n", line->id, pos);
-	atomic_long_inc(&pblk->erase_failed);
+	atomic_दीर्घ_inc(&pblk->erase_failed);
 
 	atomic_dec(&line->blk_in_line);
-	if (test_and_set_bit(pos, line->blk_bitmap))
+	अगर (test_and_set_bit(pos, line->blk_biपंचांगap))
 		pblk_err(pblk, "attempted to erase bb: line:%d, pos:%d\n",
 							line->id, pos);
 
 	/* Not necessary to mark bad blocks on 2.0 spec. */
-	if (geo->version == NVM_OCSSD_SPEC_20)
-		return;
+	अगर (geo->version == NVM_OCSSD_SPEC_20)
+		वापस;
 
-	ppa = kmalloc(sizeof(struct ppa_addr), GFP_ATOMIC);
-	if (!ppa)
-		return;
+	ppa = kदो_स्मृति(माप(काष्ठा ppa_addr), GFP_ATOMIC);
+	अगर (!ppa)
+		वापस;
 
 	*ppa = ppa_addr;
-	pblk_gen_run_ws(pblk, NULL, ppa, pblk_line_mark_bb,
+	pblk_gen_run_ws(pblk, शून्य, ppa, pblk_line_mark_bb,
 						GFP_ATOMIC, pblk->bb_wq);
-}
+पूर्ण
 
-static void __pblk_end_io_erase(struct pblk *pblk, struct nvm_rq *rqd)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct nvm_chk_meta *chunk;
-	struct pblk_line *line;
-	int pos;
+अटल व्योम __pblk_end_io_erase(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा nvm_chk_meta *chunk;
+	काष्ठा pblk_line *line;
+	पूर्णांक pos;
 
 	line = pblk_ppa_to_line(pblk, rqd->ppa_addr);
 	pos = pblk_ppa_to_pos(geo, rqd->ppa_addr);
@@ -90,363 +91,363 @@ static void __pblk_end_io_erase(struct pblk *pblk, struct nvm_rq *rqd)
 
 	atomic_dec(&line->left_seblks);
 
-	if (rqd->error) {
+	अगर (rqd->error) अणु
 		trace_pblk_chunk_reset(pblk_disk_name(pblk),
 				&rqd->ppa_addr, PBLK_CHUNK_RESET_FAILED);
 
 		chunk->state = NVM_CHK_ST_OFFLINE;
 		pblk_mark_bb(pblk, line, rqd->ppa_addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		trace_pblk_chunk_reset(pblk_disk_name(pblk),
 				&rqd->ppa_addr, PBLK_CHUNK_RESET_DONE);
 
 		chunk->state = NVM_CHK_ST_FREE;
-	}
+	पूर्ण
 
 	trace_pblk_chunk_state(pblk_disk_name(pblk), &rqd->ppa_addr,
 				chunk->state);
 
 	atomic_dec(&pblk->inflight_io);
-}
+पूर्ण
 
-/* Erase completion assumes that only one block is erased at the time */
-static void pblk_end_io_erase(struct nvm_rq *rqd)
-{
-	struct pblk *pblk = rqd->private;
+/* Erase completion assumes that only one block is erased at the समय */
+अटल व्योम pblk_end_io_erase(काष्ठा nvm_rq *rqd)
+अणु
+	काष्ठा pblk *pblk = rqd->निजी;
 
 	__pblk_end_io_erase(pblk, rqd);
-	mempool_free(rqd, &pblk->e_rq_pool);
-}
+	mempool_मुक्त(rqd, &pblk->e_rq_pool);
+पूर्ण
 
 /*
- * Get information for all chunks from the device.
+ * Get inक्रमmation क्रम all chunks from the device.
  *
- * The caller is responsible for freeing (vmalloc) the returned structure
+ * The caller is responsible क्रम मुक्तing (vदो_स्मृति) the वापसed काष्ठाure
  */
-struct nvm_chk_meta *pblk_get_chunk_meta(struct pblk *pblk)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct nvm_chk_meta *meta;
-	struct ppa_addr ppa;
-	unsigned long len;
-	int ret;
+काष्ठा nvm_chk_meta *pblk_get_chunk_meta(काष्ठा pblk *pblk)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा nvm_chk_meta *meta;
+	काष्ठा ppa_addr ppa;
+	अचिन्हित दीर्घ len;
+	पूर्णांक ret;
 
 	ppa.ppa = 0;
 
-	len = geo->all_chunks * sizeof(*meta);
+	len = geo->all_chunks * माप(*meta);
 	meta = vzalloc(len);
-	if (!meta)
-		return ERR_PTR(-ENOMEM);
+	अगर (!meta)
+		वापस ERR_PTR(-ENOMEM);
 
 	ret = nvm_get_chunk_meta(dev, ppa, geo->all_chunks, meta);
-	if (ret) {
-		vfree(meta);
-		return ERR_PTR(-EIO);
-	}
+	अगर (ret) अणु
+		vमुक्त(meta);
+		वापस ERR_PTR(-EIO);
+	पूर्ण
 
-	return meta;
-}
+	वापस meta;
+पूर्ण
 
-struct nvm_chk_meta *pblk_chunk_get_off(struct pblk *pblk,
-					      struct nvm_chk_meta *meta,
-					      struct ppa_addr ppa)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	int ch_off = ppa.m.grp * geo->num_chk * geo->num_lun;
-	int lun_off = ppa.m.pu * geo->num_chk;
-	int chk_off = ppa.m.chk;
+काष्ठा nvm_chk_meta *pblk_chunk_get_off(काष्ठा pblk *pblk,
+					      काष्ठा nvm_chk_meta *meta,
+					      काष्ठा ppa_addr ppa)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	पूर्णांक ch_off = ppa.m.grp * geo->num_chk * geo->num_lun;
+	पूर्णांक lun_off = ppa.m.pu * geo->num_chk;
+	पूर्णांक chk_off = ppa.m.chk;
 
-	return meta + ch_off + lun_off + chk_off;
-}
+	वापस meta + ch_off + lun_off + chk_off;
+पूर्ण
 
-void __pblk_map_invalidate(struct pblk *pblk, struct pblk_line *line,
+व्योम __pblk_map_invalidate(काष्ठा pblk *pblk, काष्ठा pblk_line *line,
 			   u64 paddr)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct list_head *move_list = NULL;
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा list_head *move_list = शून्य;
 
-	/* Lines being reclaimed (GC'ed) cannot be invalidated. Before the L2P
-	 * table is modified with reclaimed sectors, a check is done to endure
+	/* Lines being reclaimed (GC'ed) cannot be invalidated. Beक्रमe the L2P
+	 * table is modअगरied with reclaimed sectors, a check is करोne to endure
 	 * that newer updates are not overwritten.
 	 */
 	spin_lock(&line->lock);
 	WARN_ON(line->state == PBLK_LINESTATE_FREE);
 
-	if (test_and_set_bit(paddr, line->invalid_bitmap)) {
+	अगर (test_and_set_bit(paddr, line->invalid_biपंचांगap)) अणु
 		WARN_ONCE(1, "pblk: double invalidate\n");
 		spin_unlock(&line->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 	le32_add_cpu(line->vsc, -1);
 
-	if (line->state == PBLK_LINESTATE_CLOSED)
+	अगर (line->state == PBLK_LINESTATE_CLOSED)
 		move_list = pblk_line_gc_list(pblk, line);
 	spin_unlock(&line->lock);
 
-	if (move_list) {
+	अगर (move_list) अणु
 		spin_lock(&l_mg->gc_lock);
 		spin_lock(&line->lock);
-		/* Prevent moving a line that has just been chosen for GC */
-		if (line->state == PBLK_LINESTATE_GC) {
+		/* Prevent moving a line that has just been chosen क्रम GC */
+		अगर (line->state == PBLK_LINESTATE_GC) अणु
 			spin_unlock(&line->lock);
 			spin_unlock(&l_mg->gc_lock);
-			return;
-		}
+			वापस;
+		पूर्ण
 		spin_unlock(&line->lock);
 
 		list_move_tail(&line->list, move_list);
 		spin_unlock(&l_mg->gc_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void pblk_map_invalidate(struct pblk *pblk, struct ppa_addr ppa)
-{
-	struct pblk_line *line;
+व्योम pblk_map_invalidate(काष्ठा pblk *pblk, काष्ठा ppa_addr ppa)
+अणु
+	काष्ठा pblk_line *line;
 	u64 paddr;
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	/* Callers must ensure that the ppa points to a device address */
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	/* Callers must ensure that the ppa poपूर्णांकs to a device address */
 	BUG_ON(pblk_addr_in_cache(ppa));
 	BUG_ON(pblk_ppa_empty(ppa));
-#endif
+#पूर्ण_अगर
 
 	line = pblk_ppa_to_line(pblk, ppa);
 	paddr = pblk_dev_ppa_to_line_addr(pblk, ppa);
 
 	__pblk_map_invalidate(pblk, line, paddr);
-}
+पूर्ण
 
-static void pblk_invalidate_range(struct pblk *pblk, sector_t slba,
-				  unsigned int nr_secs)
-{
+अटल व्योम pblk_invalidate_range(काष्ठा pblk *pblk, sector_t slba,
+				  अचिन्हित पूर्णांक nr_secs)
+अणु
 	sector_t lba;
 
 	spin_lock(&pblk->trans_lock);
-	for (lba = slba; lba < slba + nr_secs; lba++) {
-		struct ppa_addr ppa;
+	क्रम (lba = slba; lba < slba + nr_secs; lba++) अणु
+		काष्ठा ppa_addr ppa;
 
 		ppa = pblk_trans_map_get(pblk, lba);
 
-		if (!pblk_addr_in_cache(ppa) && !pblk_ppa_empty(ppa))
+		अगर (!pblk_addr_in_cache(ppa) && !pblk_ppa_empty(ppa))
 			pblk_map_invalidate(pblk, ppa);
 
 		pblk_ppa_set_empty(&ppa);
 		pblk_trans_map_set(pblk, lba, ppa);
-	}
+	पूर्ण
 	spin_unlock(&pblk->trans_lock);
-}
+पूर्ण
 
-int pblk_alloc_rqd_meta(struct pblk *pblk, struct nvm_rq *rqd)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
+पूर्णांक pblk_alloc_rqd_meta(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
 
 	rqd->meta_list = nvm_dev_dma_alloc(dev->parent, GFP_KERNEL,
 							&rqd->dma_meta_list);
-	if (!rqd->meta_list)
-		return -ENOMEM;
+	अगर (!rqd->meta_list)
+		वापस -ENOMEM;
 
-	if (rqd->nr_ppas == 1)
-		return 0;
+	अगर (rqd->nr_ppas == 1)
+		वापस 0;
 
 	rqd->ppa_list = rqd->meta_list + pblk_dma_meta_size(pblk);
 	rqd->dma_ppa_list = rqd->dma_meta_list + pblk_dma_meta_size(pblk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pblk_free_rqd_meta(struct pblk *pblk, struct nvm_rq *rqd)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
+व्योम pblk_मुक्त_rqd_meta(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
 
-	if (rqd->meta_list)
-		nvm_dev_dma_free(dev->parent, rqd->meta_list,
+	अगर (rqd->meta_list)
+		nvm_dev_dma_मुक्त(dev->parent, rqd->meta_list,
 				rqd->dma_meta_list);
-}
+पूर्ण
 
 /* Caller must guarantee that the request is a valid type */
-struct nvm_rq *pblk_alloc_rqd(struct pblk *pblk, int type)
-{
+काष्ठा nvm_rq *pblk_alloc_rqd(काष्ठा pblk *pblk, पूर्णांक type)
+अणु
 	mempool_t *pool;
-	struct nvm_rq *rqd;
-	int rq_size;
+	काष्ठा nvm_rq *rqd;
+	पूर्णांक rq_size;
 
-	switch (type) {
-	case PBLK_WRITE:
-	case PBLK_WRITE_INT:
+	चयन (type) अणु
+	हाल PBLK_WRITE:
+	हाल PBLK_WRITE_INT:
 		pool = &pblk->w_rq_pool;
 		rq_size = pblk_w_rq_size;
-		break;
-	case PBLK_READ:
+		अवरोध;
+	हाल PBLK_READ:
 		pool = &pblk->r_rq_pool;
 		rq_size = pblk_g_rq_size;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pool = &pblk->e_rq_pool;
 		rq_size = pblk_g_rq_size;
-	}
+	पूर्ण
 
 	rqd = mempool_alloc(pool, GFP_KERNEL);
-	memset(rqd, 0, rq_size);
+	स_रखो(rqd, 0, rq_size);
 
-	return rqd;
-}
+	वापस rqd;
+पूर्ण
 
 /* Typically used on completion path. Cannot guarantee request consistency */
-void pblk_free_rqd(struct pblk *pblk, struct nvm_rq *rqd, int type)
-{
+व्योम pblk_मुक्त_rqd(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd, पूर्णांक type)
+अणु
 	mempool_t *pool;
 
-	switch (type) {
-	case PBLK_WRITE:
-		kfree(((struct pblk_c_ctx *)nvm_rq_to_pdu(rqd))->lun_bitmap);
+	चयन (type) अणु
+	हाल PBLK_WRITE:
+		kमुक्त(((काष्ठा pblk_c_ctx *)nvm_rq_to_pdu(rqd))->lun_biपंचांगap);
 		fallthrough;
-	case PBLK_WRITE_INT:
+	हाल PBLK_WRITE_INT:
 		pool = &pblk->w_rq_pool;
-		break;
-	case PBLK_READ:
+		अवरोध;
+	हाल PBLK_READ:
 		pool = &pblk->r_rq_pool;
-		break;
-	case PBLK_ERASE:
+		अवरोध;
+	हाल PBLK_ERASE:
 		pool = &pblk->e_rq_pool;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pblk_err(pblk, "trying to free unknown rqd type\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	pblk_free_rqd_meta(pblk, rqd);
-	mempool_free(rqd, pool);
-}
+	pblk_मुक्त_rqd_meta(pblk, rqd);
+	mempool_मुक्त(rqd, pool);
+पूर्ण
 
-void pblk_bio_free_pages(struct pblk *pblk, struct bio *bio, int off,
-			 int nr_pages)
-{
-	struct bio_vec *bv;
-	struct page *page;
-	int i, e, nbv = 0;
+व्योम pblk_bio_मुक्त_pages(काष्ठा pblk *pblk, काष्ठा bio *bio, पूर्णांक off,
+			 पूर्णांक nr_pages)
+अणु
+	काष्ठा bio_vec *bv;
+	काष्ठा page *page;
+	पूर्णांक i, e, nbv = 0;
 
-	for (i = 0; i < bio->bi_vcnt; i++) {
+	क्रम (i = 0; i < bio->bi_vcnt; i++) अणु
 		bv = &bio->bi_io_vec[i];
 		page = bv->bv_page;
-		for (e = 0; e < bv->bv_len; e += PBLK_EXPOSED_PAGE_SIZE, nbv++)
-			if (nbv >= off)
-				mempool_free(page++, &pblk->page_bio_pool);
-	}
-}
+		क्रम (e = 0; e < bv->bv_len; e += PBLK_EXPOSED_PAGE_SIZE, nbv++)
+			अगर (nbv >= off)
+				mempool_मुक्त(page++, &pblk->page_bio_pool);
+	पूर्ण
+पूर्ण
 
-int pblk_bio_add_pages(struct pblk *pblk, struct bio *bio, gfp_t flags,
-		       int nr_pages)
-{
-	struct request_queue *q = pblk->dev->q;
-	struct page *page;
-	int i, ret;
+पूर्णांक pblk_bio_add_pages(काष्ठा pblk *pblk, काष्ठा bio *bio, gfp_t flags,
+		       पूर्णांक nr_pages)
+अणु
+	काष्ठा request_queue *q = pblk->dev->q;
+	काष्ठा page *page;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < nr_pages; i++) {
+	क्रम (i = 0; i < nr_pages; i++) अणु
 		page = mempool_alloc(&pblk->page_bio_pool, flags);
 
 		ret = bio_add_pc_page(q, bio, page, PBLK_EXPOSED_PAGE_SIZE, 0);
-		if (ret != PBLK_EXPOSED_PAGE_SIZE) {
+		अगर (ret != PBLK_EXPOSED_PAGE_SIZE) अणु
 			pblk_err(pblk, "could not add page to bio\n");
-			mempool_free(page, &pblk->page_bio_pool);
-			goto err;
-		}
-	}
+			mempool_मुक्त(page, &pblk->page_bio_pool);
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 err:
-	pblk_bio_free_pages(pblk, bio, (bio->bi_vcnt - i), i);
-	return -1;
-}
+	pblk_bio_मुक्त_pages(pblk, bio, (bio->bi_vcnt - i), i);
+	वापस -1;
+पूर्ण
 
-void pblk_write_kick(struct pblk *pblk)
-{
-	wake_up_process(pblk->writer_ts);
-	mod_timer(&pblk->wtimer, jiffies + msecs_to_jiffies(1000));
-}
+व्योम pblk_ग_लिखो_kick(काष्ठा pblk *pblk)
+अणु
+	wake_up_process(pblk->ग_लिखोr_ts);
+	mod_समयr(&pblk->wसमयr, jअगरfies + msecs_to_jअगरfies(1000));
+पूर्ण
 
-void pblk_write_timer_fn(struct timer_list *t)
-{
-	struct pblk *pblk = from_timer(pblk, t, wtimer);
+व्योम pblk_ग_लिखो_समयr_fn(काष्ठा समयr_list *t)
+अणु
+	काष्ठा pblk *pblk = from_समयr(pblk, t, wसमयr);
 
-	/* kick the write thread every tick to flush outstanding data */
-	pblk_write_kick(pblk);
-}
+	/* kick the ग_लिखो thपढ़ो every tick to flush outstanding data */
+	pblk_ग_लिखो_kick(pblk);
+पूर्ण
 
-void pblk_write_should_kick(struct pblk *pblk)
-{
-	unsigned int secs_avail = pblk_rb_read_count(&pblk->rwb);
+व्योम pblk_ग_लिखो_should_kick(काष्ठा pblk *pblk)
+अणु
+	अचिन्हित पूर्णांक secs_avail = pblk_rb_पढ़ो_count(&pblk->rwb);
 
-	if (secs_avail >= pblk->min_write_pgs_data)
-		pblk_write_kick(pblk);
-}
+	अगर (secs_avail >= pblk->min_ग_लिखो_pgs_data)
+		pblk_ग_लिखो_kick(pblk);
+पूर्ण
 
-static void pblk_wait_for_meta(struct pblk *pblk)
-{
-	do {
-		if (!atomic_read(&pblk->inflight_io))
-			break;
+अटल व्योम pblk_रुको_क्रम_meta(काष्ठा pblk *pblk)
+अणु
+	करो अणु
+		अगर (!atomic_पढ़ो(&pblk->inflight_io))
+			अवरोध;
 
 		schedule();
-	} while (1);
-}
+	पूर्ण जबतक (1);
+पूर्ण
 
-static void pblk_flush_writer(struct pblk *pblk)
-{
+अटल व्योम pblk_flush_ग_लिखोr(काष्ठा pblk *pblk)
+अणु
 	pblk_rb_flush(&pblk->rwb);
-	do {
-		if (!pblk_rb_sync_count(&pblk->rwb))
-			break;
+	करो अणु
+		अगर (!pblk_rb_sync_count(&pblk->rwb))
+			अवरोध;
 
-		pblk_write_kick(pblk);
+		pblk_ग_लिखो_kick(pblk);
 		schedule();
-	} while (1);
-}
+	पूर्ण जबतक (1);
+पूर्ण
 
-struct list_head *pblk_line_gc_list(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct list_head *move_list = NULL;
-	int packed_meta = (le32_to_cpu(*line->vsc) / pblk->min_write_pgs_data)
-			* (pblk->min_write_pgs - pblk->min_write_pgs_data);
-	int vsc = le32_to_cpu(*line->vsc) + packed_meta;
+काष्ठा list_head *pblk_line_gc_list(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा list_head *move_list = शून्य;
+	पूर्णांक packed_meta = (le32_to_cpu(*line->vsc) / pblk->min_ग_लिखो_pgs_data)
+			* (pblk->min_ग_लिखो_pgs - pblk->min_ग_लिखो_pgs_data);
+	पूर्णांक vsc = le32_to_cpu(*line->vsc) + packed_meta;
 
-	lockdep_assert_held(&line->lock);
+	lockdep_निश्चित_held(&line->lock);
 
-	if (line->w_err_gc->has_write_err) {
-		if (line->gc_group != PBLK_LINEGC_WERR) {
+	अगर (line->w_err_gc->has_ग_लिखो_err) अणु
+		अगर (line->gc_group != PBLK_LINEGC_WERR) अणु
 			line->gc_group = PBLK_LINEGC_WERR;
 			move_list = &l_mg->gc_werr_list;
 			pblk_rl_werr_line_in(&pblk->rl);
-		}
-	} else if (!vsc) {
-		if (line->gc_group != PBLK_LINEGC_FULL) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (!vsc) अणु
+		अगर (line->gc_group != PBLK_LINEGC_FULL) अणु
 			line->gc_group = PBLK_LINEGC_FULL;
 			move_list = &l_mg->gc_full_list;
-		}
-	} else if (vsc < lm->high_thrs) {
-		if (line->gc_group != PBLK_LINEGC_HIGH) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (vsc < lm->high_thrs) अणु
+		अगर (line->gc_group != PBLK_LINEGC_HIGH) अणु
 			line->gc_group = PBLK_LINEGC_HIGH;
 			move_list = &l_mg->gc_high_list;
-		}
-	} else if (vsc < lm->mid_thrs) {
-		if (line->gc_group != PBLK_LINEGC_MID) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (vsc < lm->mid_thrs) अणु
+		अगर (line->gc_group != PBLK_LINEGC_MID) अणु
 			line->gc_group = PBLK_LINEGC_MID;
 			move_list = &l_mg->gc_mid_list;
-		}
-	} else if (vsc < line->sec_in_line) {
-		if (line->gc_group != PBLK_LINEGC_LOW) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (vsc < line->sec_in_line) अणु
+		अगर (line->gc_group != PBLK_LINEGC_LOW) अणु
 			line->gc_group = PBLK_LINEGC_LOW;
 			move_list = &l_mg->gc_low_list;
-		}
-	} else if (vsc == line->sec_in_line) {
-		if (line->gc_group != PBLK_LINEGC_EMPTY) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (vsc == line->sec_in_line) अणु
+		अगर (line->gc_group != PBLK_LINEGC_EMPTY) अणु
 			line->gc_group = PBLK_LINEGC_EMPTY;
 			move_list = &l_mg->gc_empty_list;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		line->state = PBLK_LINESTATE_CORRUPT;
 		trace_pblk_line_state(pblk_disk_name(pblk), line->id,
 					line->state);
@@ -457,186 +458,186 @@ struct list_head *pblk_line_gc_list(struct pblk *pblk, struct pblk_line *line)
 						line->id, vsc,
 						line->sec_in_line,
 						lm->high_thrs, lm->mid_thrs);
-	}
+	पूर्ण
 
-	return move_list;
-}
+	वापस move_list;
+पूर्ण
 
-void pblk_discard(struct pblk *pblk, struct bio *bio)
-{
+व्योम pblk_discard(काष्ठा pblk *pblk, काष्ठा bio *bio)
+अणु
 	sector_t slba = pblk_get_lba(bio);
 	sector_t nr_secs = pblk_get_secs(bio);
 
 	pblk_invalidate_range(pblk, slba, nr_secs);
-}
+पूर्ण
 
-void pblk_log_write_err(struct pblk *pblk, struct nvm_rq *rqd)
-{
-	atomic_long_inc(&pblk->write_failed);
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	pblk_print_failed_rqd(pblk, rqd, rqd->error);
-#endif
-}
+व्योम pblk_log_ग_लिखो_err(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd)
+अणु
+	atomic_दीर्घ_inc(&pblk->ग_लिखो_failed);
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	pblk_prपूर्णांक_failed_rqd(pblk, rqd, rqd->error);
+#पूर्ण_अगर
+पूर्ण
 
-void pblk_log_read_err(struct pblk *pblk, struct nvm_rq *rqd)
-{
-	/* Empty page read is not necessarily an error (e.g., L2P recovery) */
-	if (rqd->error == NVM_RSP_ERR_EMPTYPAGE) {
-		atomic_long_inc(&pblk->read_empty);
-		return;
-	}
+व्योम pblk_log_पढ़ो_err(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd)
+अणु
+	/* Empty page पढ़ो is not necessarily an error (e.g., L2P recovery) */
+	अगर (rqd->error == NVM_RSP_ERR_EMPTYPAGE) अणु
+		atomic_दीर्घ_inc(&pblk->पढ़ो_empty);
+		वापस;
+	पूर्ण
 
-	switch (rqd->error) {
-	case NVM_RSP_WARN_HIGHECC:
-		atomic_long_inc(&pblk->read_high_ecc);
-		break;
-	case NVM_RSP_ERR_FAILECC:
-	case NVM_RSP_ERR_FAILCRC:
-		atomic_long_inc(&pblk->read_failed);
-		break;
-	default:
+	चयन (rqd->error) अणु
+	हाल NVM_RSP_WARN_HIGHECC:
+		atomic_दीर्घ_inc(&pblk->पढ़ो_high_ecc);
+		अवरोध;
+	हाल NVM_RSP_ERR_FAILECC:
+	हाल NVM_RSP_ERR_FAILCRC:
+		atomic_दीर्घ_inc(&pblk->पढ़ो_failed);
+		अवरोध;
+	शेष:
 		pblk_err(pblk, "unknown read error:%d\n", rqd->error);
-	}
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	pblk_print_failed_rqd(pblk, rqd, rqd->error);
-#endif
-}
+	पूर्ण
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	pblk_prपूर्णांक_failed_rqd(pblk, rqd, rqd->error);
+#पूर्ण_अगर
+पूर्ण
 
-void pblk_set_sec_per_write(struct pblk *pblk, int sec_per_write)
-{
-	pblk->sec_per_write = sec_per_write;
-}
+व्योम pblk_set_sec_per_ग_लिखो(काष्ठा pblk *pblk, पूर्णांक sec_per_ग_लिखो)
+अणु
+	pblk->sec_per_ग_लिखो = sec_per_ग_लिखो;
+पूर्ण
 
-int pblk_submit_io(struct pblk *pblk, struct nvm_rq *rqd, void *buf)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
+पूर्णांक pblk_submit_io(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd, व्योम *buf)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
 
 	atomic_inc(&pblk->inflight_io);
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	if (pblk_check_io(pblk, rqd))
-		return NVM_IO_ERR;
-#endif
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	अगर (pblk_check_io(pblk, rqd))
+		वापस NVM_IO_ERR;
+#पूर्ण_अगर
 
-	return nvm_submit_io(dev, rqd, buf);
-}
+	वापस nvm_submit_io(dev, rqd, buf);
+पूर्ण
 
-void pblk_check_chunk_state_update(struct pblk *pblk, struct nvm_rq *rqd)
-{
-	struct ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
+व्योम pblk_check_chunk_state_update(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd)
+अणु
+	काष्ठा ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
 
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < rqd->nr_ppas; i++) {
-		struct ppa_addr *ppa = &ppa_list[i];
-		struct nvm_chk_meta *chunk = pblk_dev_ppa_to_chunk(pblk, *ppa);
+	क्रम (i = 0; i < rqd->nr_ppas; i++) अणु
+		काष्ठा ppa_addr *ppa = &ppa_list[i];
+		काष्ठा nvm_chk_meta *chunk = pblk_dev_ppa_to_chunk(pblk, *ppa);
 		u64 caddr = pblk_dev_ppa_to_chunk_addr(pblk, *ppa);
 
-		if (caddr == 0)
+		अगर (caddr == 0)
 			trace_pblk_chunk_state(pblk_disk_name(pblk),
 							ppa, NVM_CHK_ST_OPEN);
-		else if (caddr == (chunk->cnlb - 1))
+		अन्यथा अगर (caddr == (chunk->cnlb - 1))
 			trace_pblk_chunk_state(pblk_disk_name(pblk),
 							ppa, NVM_CHK_ST_CLOSED);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int pblk_submit_io_sync(struct pblk *pblk, struct nvm_rq *rqd, void *buf)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	int ret;
+पूर्णांक pblk_submit_io_sync(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd, व्योम *buf)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	पूर्णांक ret;
 
 	atomic_inc(&pblk->inflight_io);
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	if (pblk_check_io(pblk, rqd))
-		return NVM_IO_ERR;
-#endif
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	अगर (pblk_check_io(pblk, rqd))
+		वापस NVM_IO_ERR;
+#पूर्ण_अगर
 
 	ret = nvm_submit_io_sync(dev, rqd, buf);
 
-	if (trace_pblk_chunk_state_enabled() && !ret &&
+	अगर (trace_pblk_chunk_state_enabled() && !ret &&
 	    rqd->opcode == NVM_OP_PWRITE)
 		pblk_check_chunk_state_update(pblk, rqd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pblk_submit_io_sync_sem(struct pblk *pblk, struct nvm_rq *rqd,
-				   void *buf)
-{
-	struct ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
-	int ret;
+अटल पूर्णांक pblk_submit_io_sync_sem(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd,
+				   व्योम *buf)
+अणु
+	काष्ठा ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
+	पूर्णांक ret;
 
-	pblk_down_chunk(pblk, ppa_list[0]);
+	pblk_करोwn_chunk(pblk, ppa_list[0]);
 	ret = pblk_submit_io_sync(pblk, rqd, buf);
 	pblk_up_chunk(pblk, ppa_list[0]);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int pblk_calc_secs(struct pblk *pblk, unsigned long secs_avail,
-		   unsigned long secs_to_flush, bool skip_meta)
-{
-	int max = pblk->sec_per_write;
-	int min = pblk->min_write_pgs;
-	int secs_to_sync = 0;
+पूर्णांक pblk_calc_secs(काष्ठा pblk *pblk, अचिन्हित दीर्घ secs_avail,
+		   अचिन्हित दीर्घ secs_to_flush, bool skip_meta)
+अणु
+	पूर्णांक max = pblk->sec_per_ग_लिखो;
+	पूर्णांक min = pblk->min_ग_लिखो_pgs;
+	पूर्णांक secs_to_sync = 0;
 
-	if (skip_meta && pblk->min_write_pgs_data != pblk->min_write_pgs)
-		min = max = pblk->min_write_pgs_data;
+	अगर (skip_meta && pblk->min_ग_लिखो_pgs_data != pblk->min_ग_लिखो_pgs)
+		min = max = pblk->min_ग_लिखो_pgs_data;
 
-	if (secs_avail >= max)
+	अगर (secs_avail >= max)
 		secs_to_sync = max;
-	else if (secs_avail >= min)
+	अन्यथा अगर (secs_avail >= min)
 		secs_to_sync = min * (secs_avail / min);
-	else if (secs_to_flush)
+	अन्यथा अगर (secs_to_flush)
 		secs_to_sync = min;
 
-	return secs_to_sync;
-}
+	वापस secs_to_sync;
+पूर्ण
 
-void pblk_dealloc_page(struct pblk *pblk, struct pblk_line *line, int nr_secs)
-{
+व्योम pblk_dealloc_page(काष्ठा pblk *pblk, काष्ठा pblk_line *line, पूर्णांक nr_secs)
+अणु
 	u64 addr;
-	int i;
+	पूर्णांक i;
 
 	spin_lock(&line->lock);
-	addr = find_next_zero_bit(line->map_bitmap,
+	addr = find_next_zero_bit(line->map_biपंचांगap,
 					pblk->lm.sec_per_line, line->cur_sec);
 	line->cur_sec = addr - nr_secs;
 
-	for (i = 0; i < nr_secs; i++, line->cur_sec--)
-		WARN_ON(!test_and_clear_bit(line->cur_sec, line->map_bitmap));
+	क्रम (i = 0; i < nr_secs; i++, line->cur_sec--)
+		WARN_ON(!test_and_clear_bit(line->cur_sec, line->map_biपंचांगap));
 	spin_unlock(&line->lock);
-}
+पूर्ण
 
-u64 __pblk_alloc_page(struct pblk *pblk, struct pblk_line *line, int nr_secs)
-{
+u64 __pblk_alloc_page(काष्ठा pblk *pblk, काष्ठा pblk_line *line, पूर्णांक nr_secs)
+अणु
 	u64 addr;
-	int i;
+	पूर्णांक i;
 
-	lockdep_assert_held(&line->lock);
+	lockdep_निश्चित_held(&line->lock);
 
 	/* logic error: ppa out-of-bounds. Prevent generating bad address */
-	if (line->cur_sec + nr_secs > pblk->lm.sec_per_line) {
+	अगर (line->cur_sec + nr_secs > pblk->lm.sec_per_line) अणु
 		WARN(1, "pblk: page allocation out of bounds\n");
 		nr_secs = pblk->lm.sec_per_line - line->cur_sec;
-	}
+	पूर्ण
 
-	line->cur_sec = addr = find_next_zero_bit(line->map_bitmap,
+	line->cur_sec = addr = find_next_zero_bit(line->map_biपंचांगap,
 					pblk->lm.sec_per_line, line->cur_sec);
-	for (i = 0; i < nr_secs; i++, line->cur_sec++)
-		WARN_ON(test_and_set_bit(line->cur_sec, line->map_bitmap));
+	क्रम (i = 0; i < nr_secs; i++, line->cur_sec++)
+		WARN_ON(test_and_set_bit(line->cur_sec, line->map_biपंचांगap));
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-u64 pblk_alloc_page(struct pblk *pblk, struct pblk_line *line, int nr_secs)
-{
+u64 pblk_alloc_page(काष्ठा pblk *pblk, काष्ठा pblk_line *line, पूर्णांक nr_secs)
+अणु
 	u64 addr;
 
-	/* Lock needed in case a write fails and a recovery needs to remap
-	 * failed write buffer entries
+	/* Lock needed in हाल a ग_लिखो fails and a recovery needs to remap
+	 * failed ग_लिखो buffer entries
 	 */
 	spin_lock(&line->lock);
 	addr = __pblk_alloc_page(pblk, line, nr_secs);
@@ -644,151 +645,151 @@ u64 pblk_alloc_page(struct pblk *pblk, struct pblk_line *line, int nr_secs)
 	WARN(line->left_msecs < 0, "pblk: page allocation out of bounds\n");
 	spin_unlock(&line->lock);
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-u64 pblk_lookup_page(struct pblk *pblk, struct pblk_line *line)
-{
+u64 pblk_lookup_page(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
 	u64 paddr;
 
 	spin_lock(&line->lock);
-	paddr = find_next_zero_bit(line->map_bitmap,
+	paddr = find_next_zero_bit(line->map_biपंचांगap,
 					pblk->lm.sec_per_line, line->cur_sec);
 	spin_unlock(&line->lock);
 
-	return paddr;
-}
+	वापस paddr;
+पूर्ण
 
-u64 pblk_line_smeta_start(struct pblk *pblk, struct pblk_line *line)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct pblk_line_meta *lm = &pblk->lm;
-	int bit;
+u64 pblk_line_smeta_start(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	पूर्णांक bit;
 
 	/* This usually only happens on bad lines */
-	bit = find_first_zero_bit(line->blk_bitmap, lm->blk_per_line);
-	if (bit >= lm->blk_per_line)
-		return -1;
+	bit = find_first_zero_bit(line->blk_biपंचांगap, lm->blk_per_line);
+	अगर (bit >= lm->blk_per_line)
+		वापस -1;
 
-	return bit * geo->ws_opt;
-}
+	वापस bit * geo->ws_opt;
+पूर्ण
 
-int pblk_line_smeta_read(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct ppa_addr *ppa_list;
-	struct nvm_rq rqd;
+पूर्णांक pblk_line_smeta_पढ़ो(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा ppa_addr *ppa_list;
+	काष्ठा nvm_rq rqd;
 	u64 paddr = pblk_line_smeta_start(pblk, line);
-	int i, ret;
+	पूर्णांक i, ret;
 
-	memset(&rqd, 0, sizeof(struct nvm_rq));
+	स_रखो(&rqd, 0, माप(काष्ठा nvm_rq));
 
 	ret = pblk_alloc_rqd_meta(pblk, &rqd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	rqd.opcode = NVM_OP_PREAD;
 	rqd.nr_ppas = lm->smeta_sec;
 	rqd.is_seq = 1;
 	ppa_list = nvm_rq_to_ppa_list(&rqd);
 
-	for (i = 0; i < lm->smeta_sec; i++, paddr++)
+	क्रम (i = 0; i < lm->smeta_sec; i++, paddr++)
 		ppa_list[i] = addr_to_gen_ppa(pblk, paddr, line->id);
 
 	ret = pblk_submit_io_sync(pblk, &rqd, line->smeta);
-	if (ret) {
+	अगर (ret) अणु
 		pblk_err(pblk, "smeta I/O submission failed: %d\n", ret);
-		goto clear_rqd;
-	}
+		जाओ clear_rqd;
+	पूर्ण
 
 	atomic_dec(&pblk->inflight_io);
 
-	if (rqd.error && rqd.error != NVM_RSP_WARN_HIGHECC) {
-		pblk_log_read_err(pblk, &rqd);
+	अगर (rqd.error && rqd.error != NVM_RSP_WARN_HIGHECC) अणु
+		pblk_log_पढ़ो_err(pblk, &rqd);
 		ret = -EIO;
-	}
+	पूर्ण
 
 clear_rqd:
-	pblk_free_rqd_meta(pblk, &rqd);
-	return ret;
-}
+	pblk_मुक्त_rqd_meta(pblk, &rqd);
+	वापस ret;
+पूर्ण
 
-static int pblk_line_smeta_write(struct pblk *pblk, struct pblk_line *line,
+अटल पूर्णांक pblk_line_smeta_ग_लिखो(काष्ठा pblk *pblk, काष्ठा pblk_line *line,
 				 u64 paddr)
-{
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct ppa_addr *ppa_list;
-	struct nvm_rq rqd;
+अणु
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा ppa_addr *ppa_list;
+	काष्ठा nvm_rq rqd;
 	__le64 *lba_list = emeta_to_lbas(pblk, line->emeta->buf);
 	__le64 addr_empty = cpu_to_le64(ADDR_EMPTY);
-	int i, ret;
+	पूर्णांक i, ret;
 
-	memset(&rqd, 0, sizeof(struct nvm_rq));
+	स_रखो(&rqd, 0, माप(काष्ठा nvm_rq));
 
 	ret = pblk_alloc_rqd_meta(pblk, &rqd);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	rqd.opcode = NVM_OP_PWRITE;
 	rqd.nr_ppas = lm->smeta_sec;
 	rqd.is_seq = 1;
 	ppa_list = nvm_rq_to_ppa_list(&rqd);
 
-	for (i = 0; i < lm->smeta_sec; i++, paddr++) {
-		struct pblk_sec_meta *meta = pblk_get_meta(pblk,
+	क्रम (i = 0; i < lm->smeta_sec; i++, paddr++) अणु
+		काष्ठा pblk_sec_meta *meta = pblk_get_meta(pblk,
 							   rqd.meta_list, i);
 
 		ppa_list[i] = addr_to_gen_ppa(pblk, paddr, line->id);
 		meta->lba = lba_list[paddr] = addr_empty;
-	}
+	पूर्ण
 
 	ret = pblk_submit_io_sync_sem(pblk, &rqd, line->smeta);
-	if (ret) {
+	अगर (ret) अणु
 		pblk_err(pblk, "smeta I/O submission failed: %d\n", ret);
-		goto clear_rqd;
-	}
+		जाओ clear_rqd;
+	पूर्ण
 
 	atomic_dec(&pblk->inflight_io);
 
-	if (rqd.error) {
-		pblk_log_write_err(pblk, &rqd);
+	अगर (rqd.error) अणु
+		pblk_log_ग_लिखो_err(pblk, &rqd);
 		ret = -EIO;
-	}
+	पूर्ण
 
 clear_rqd:
-	pblk_free_rqd_meta(pblk, &rqd);
-	return ret;
-}
+	pblk_मुक्त_rqd_meta(pblk, &rqd);
+	वापस ret;
+पूर्ण
 
-int pblk_line_emeta_read(struct pblk *pblk, struct pblk_line *line,
-			 void *emeta_buf)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct pblk_line_meta *lm = &pblk->lm;
-	void *ppa_list_buf, *meta_list;
-	struct ppa_addr *ppa_list;
-	struct nvm_rq rqd;
+पूर्णांक pblk_line_emeta_पढ़ो(काष्ठा pblk *pblk, काष्ठा pblk_line *line,
+			 व्योम *emeta_buf)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	व्योम *ppa_list_buf, *meta_list;
+	काष्ठा ppa_addr *ppa_list;
+	काष्ठा nvm_rq rqd;
 	u64 paddr = line->emeta_ssec;
 	dma_addr_t dma_ppa_list, dma_meta_list;
-	int min = pblk->min_write_pgs;
-	int left_ppas = lm->emeta_sec[0];
-	int line_id = line->id;
-	int rq_ppas, rq_len;
-	int i, j;
-	int ret;
+	पूर्णांक min = pblk->min_ग_लिखो_pgs;
+	पूर्णांक left_ppas = lm->emeta_sec[0];
+	पूर्णांक line_id = line->id;
+	पूर्णांक rq_ppas, rq_len;
+	पूर्णांक i, j;
+	पूर्णांक ret;
 
 	meta_list = nvm_dev_dma_alloc(dev->parent, GFP_KERNEL,
 							&dma_meta_list);
-	if (!meta_list)
-		return -ENOMEM;
+	अगर (!meta_list)
+		वापस -ENOMEM;
 
 	ppa_list_buf = meta_list + pblk_dma_meta_size(pblk);
 	dma_ppa_list = dma_meta_list + pblk_dma_meta_size(pblk);
 
 next_rq:
-	memset(&rqd, 0, sizeof(struct nvm_rq));
+	स_रखो(&rqd, 0, माप(काष्ठा nvm_rq));
 
 	rq_ppas = pblk_calc_secs(pblk, left_ppas, 0, false);
 	rq_len = rq_ppas * geo->csecs;
@@ -801,172 +802,172 @@ next_rq:
 	rqd.nr_ppas = rq_ppas;
 	ppa_list = nvm_rq_to_ppa_list(&rqd);
 
-	for (i = 0; i < rqd.nr_ppas; ) {
-		struct ppa_addr ppa = addr_to_gen_ppa(pblk, paddr, line_id);
-		int pos = pblk_ppa_to_pos(geo, ppa);
+	क्रम (i = 0; i < rqd.nr_ppas; ) अणु
+		काष्ठा ppa_addr ppa = addr_to_gen_ppa(pblk, paddr, line_id);
+		पूर्णांक pos = pblk_ppa_to_pos(geo, ppa);
 
-		if (pblk_io_aligned(pblk, rq_ppas))
+		अगर (pblk_io_aligned(pblk, rq_ppas))
 			rqd.is_seq = 1;
 
-		while (test_bit(pos, line->blk_bitmap)) {
+		जबतक (test_bit(pos, line->blk_biपंचांगap)) अणु
 			paddr += min;
-			if (pblk_boundary_paddr_checks(pblk, paddr)) {
+			अगर (pblk_boundary_paddr_checks(pblk, paddr)) अणु
 				ret = -EINTR;
-				goto free_rqd_dma;
-			}
+				जाओ मुक्त_rqd_dma;
+			पूर्ण
 
 			ppa = addr_to_gen_ppa(pblk, paddr, line_id);
 			pos = pblk_ppa_to_pos(geo, ppa);
-		}
+		पूर्ण
 
-		if (pblk_boundary_paddr_checks(pblk, paddr + min)) {
+		अगर (pblk_boundary_paddr_checks(pblk, paddr + min)) अणु
 			ret = -EINTR;
-			goto free_rqd_dma;
-		}
+			जाओ मुक्त_rqd_dma;
+		पूर्ण
 
-		for (j = 0; j < min; j++, i++, paddr++)
+		क्रम (j = 0; j < min; j++, i++, paddr++)
 			ppa_list[i] = addr_to_gen_ppa(pblk, paddr, line_id);
-	}
+	पूर्ण
 
 	ret = pblk_submit_io_sync(pblk, &rqd, emeta_buf);
-	if (ret) {
+	अगर (ret) अणु
 		pblk_err(pblk, "emeta I/O submission failed: %d\n", ret);
-		goto free_rqd_dma;
-	}
+		जाओ मुक्त_rqd_dma;
+	पूर्ण
 
 	atomic_dec(&pblk->inflight_io);
 
-	if (rqd.error && rqd.error != NVM_RSP_WARN_HIGHECC) {
-		pblk_log_read_err(pblk, &rqd);
+	अगर (rqd.error && rqd.error != NVM_RSP_WARN_HIGHECC) अणु
+		pblk_log_पढ़ो_err(pblk, &rqd);
 		ret = -EIO;
-		goto free_rqd_dma;
-	}
+		जाओ मुक्त_rqd_dma;
+	पूर्ण
 
 	emeta_buf += rq_len;
 	left_ppas -= rq_ppas;
-	if (left_ppas)
-		goto next_rq;
+	अगर (left_ppas)
+		जाओ next_rq;
 
-free_rqd_dma:
-	nvm_dev_dma_free(dev->parent, rqd.meta_list, rqd.dma_meta_list);
-	return ret;
-}
+मुक्त_rqd_dma:
+	nvm_dev_dma_मुक्त(dev->parent, rqd.meta_list, rqd.dma_meta_list);
+	वापस ret;
+पूर्ण
 
-static void pblk_setup_e_rq(struct pblk *pblk, struct nvm_rq *rqd,
-			    struct ppa_addr ppa)
-{
+अटल व्योम pblk_setup_e_rq(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd,
+			    काष्ठा ppa_addr ppa)
+अणु
 	rqd->opcode = NVM_OP_ERASE;
 	rqd->ppa_addr = ppa;
 	rqd->nr_ppas = 1;
 	rqd->is_seq = 1;
-	rqd->bio = NULL;
-}
+	rqd->bio = शून्य;
+पूर्ण
 
-static int pblk_blk_erase_sync(struct pblk *pblk, struct ppa_addr ppa)
-{
-	struct nvm_rq rqd = {NULL};
-	int ret;
+अटल पूर्णांक pblk_blk_erase_sync(काष्ठा pblk *pblk, काष्ठा ppa_addr ppa)
+अणु
+	काष्ठा nvm_rq rqd = अणुशून्यपूर्ण;
+	पूर्णांक ret;
 
 	trace_pblk_chunk_reset(pblk_disk_name(pblk), &ppa,
 				PBLK_CHUNK_RESET_START);
 
 	pblk_setup_e_rq(pblk, &rqd, ppa);
 
-	/* The write thread schedules erases so that it minimizes disturbances
-	 * with writes. Thus, there is no need to take the LUN semaphore.
+	/* The ग_लिखो thपढ़ो schedules erases so that it minimizes disturbances
+	 * with ग_लिखोs. Thus, there is no need to take the LUN semaphore.
 	 */
-	ret = pblk_submit_io_sync(pblk, &rqd, NULL);
-	rqd.private = pblk;
+	ret = pblk_submit_io_sync(pblk, &rqd, शून्य);
+	rqd.निजी = pblk;
 	__pblk_end_io_erase(pblk, &rqd);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int pblk_line_erase(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct ppa_addr ppa;
-	int ret, bit = -1;
+पूर्णांक pblk_line_erase(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा ppa_addr ppa;
+	पूर्णांक ret, bit = -1;
 
-	/* Erase only good blocks, one at a time */
-	do {
+	/* Erase only good blocks, one at a समय */
+	करो अणु
 		spin_lock(&line->lock);
-		bit = find_next_zero_bit(line->erase_bitmap, lm->blk_per_line,
+		bit = find_next_zero_bit(line->erase_biपंचांगap, lm->blk_per_line,
 								bit + 1);
-		if (bit >= lm->blk_per_line) {
+		अगर (bit >= lm->blk_per_line) अणु
 			spin_unlock(&line->lock);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		ppa = pblk->luns[bit].bppa; /* set ch and lun */
 		ppa.a.blk = line->id;
 
 		atomic_dec(&line->left_eblks);
-		WARN_ON(test_and_set_bit(bit, line->erase_bitmap));
+		WARN_ON(test_and_set_bit(bit, line->erase_biपंचांगap));
 		spin_unlock(&line->lock);
 
 		ret = pblk_blk_erase_sync(pblk, ppa);
-		if (ret) {
+		अगर (ret) अणु
 			pblk_err(pblk, "failed to erase line %d\n", line->id);
-			return ret;
-		}
-	} while (1);
+			वापस ret;
+		पूर्ण
+	पूर्ण जबतक (1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pblk_line_setup_metadata(struct pblk_line *line,
-				     struct pblk_line_mgmt *l_mg,
-				     struct pblk_line_meta *lm)
-{
-	int meta_line;
+अटल व्योम pblk_line_setup_metadata(काष्ठा pblk_line *line,
+				     काष्ठा pblk_line_mgmt *l_mg,
+				     काष्ठा pblk_line_meta *lm)
+अणु
+	पूर्णांक meta_line;
 
-	lockdep_assert_held(&l_mg->free_lock);
+	lockdep_निश्चित_held(&l_mg->मुक्त_lock);
 
 retry_meta:
-	meta_line = find_first_zero_bit(&l_mg->meta_bitmap, PBLK_DATA_LINES);
-	if (meta_line == PBLK_DATA_LINES) {
-		spin_unlock(&l_mg->free_lock);
+	meta_line = find_first_zero_bit(&l_mg->meta_biपंचांगap, PBLK_DATA_LINES);
+	अगर (meta_line == PBLK_DATA_LINES) अणु
+		spin_unlock(&l_mg->मुक्त_lock);
 		io_schedule();
-		spin_lock(&l_mg->free_lock);
-		goto retry_meta;
-	}
+		spin_lock(&l_mg->मुक्त_lock);
+		जाओ retry_meta;
+	पूर्ण
 
-	set_bit(meta_line, &l_mg->meta_bitmap);
+	set_bit(meta_line, &l_mg->meta_biपंचांगap);
 	line->meta_line = meta_line;
 
 	line->smeta = l_mg->sline_meta[meta_line];
 	line->emeta = l_mg->eline_meta[meta_line];
 
-	memset(line->smeta, 0, lm->smeta_len);
-	memset(line->emeta->buf, 0, lm->emeta_len[0]);
+	स_रखो(line->smeta, 0, lm->smeta_len);
+	स_रखो(line->emeta->buf, 0, lm->emeta_len[0]);
 
 	line->emeta->mem = 0;
 	atomic_set(&line->emeta->sync, 0);
-}
+पूर्ण
 
-/* For now lines are always assumed full lines. Thus, smeta former and current
- * lun bitmaps are omitted.
+/* For now lines are always assumed full lines. Thus, smeta क्रमmer and current
+ * lun biपंचांगaps are omitted.
  */
-static int pblk_line_init_metadata(struct pblk *pblk, struct pblk_line *line,
-				  struct pblk_line *cur)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct pblk_emeta *emeta = line->emeta;
-	struct line_emeta *emeta_buf = emeta->buf;
-	struct line_smeta *smeta_buf = (struct line_smeta *)line->smeta;
-	int nr_blk_line;
+अटल पूर्णांक pblk_line_init_metadata(काष्ठा pblk *pblk, काष्ठा pblk_line *line,
+				  काष्ठा pblk_line *cur)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा pblk_emeta *emeta = line->emeta;
+	काष्ठा line_emeta *emeta_buf = emeta->buf;
+	काष्ठा line_smeta *smeta_buf = (काष्ठा line_smeta *)line->smeta;
+	पूर्णांक nr_blk_line;
 
 	/* After erasing the line, new bad blocks might appear and we risk
 	 * having an invalid line
 	 */
 	nr_blk_line = lm->blk_per_line -
-			bitmap_weight(line->blk_bitmap, lm->blk_per_line);
-	if (nr_blk_line < lm->min_blk_line) {
-		spin_lock(&l_mg->free_lock);
+			biपंचांगap_weight(line->blk_biपंचांगap, lm->blk_per_line);
+	अगर (nr_blk_line < lm->min_blk_line) अणु
+		spin_lock(&l_mg->मुक्त_lock);
 		spin_lock(&line->lock);
 		line->state = PBLK_LINESTATE_BAD;
 		trace_pblk_line_state(pblk_disk_name(pblk), line->id,
@@ -974,20 +975,20 @@ static int pblk_line_init_metadata(struct pblk *pblk, struct pblk_line *line,
 		spin_unlock(&line->lock);
 
 		list_add_tail(&line->list, &l_mg->bad_list);
-		spin_unlock(&l_mg->free_lock);
+		spin_unlock(&l_mg->मुक्त_lock);
 
 		pblk_debug(pblk, "line %d is bad\n", line->id);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Run-time metadata */
-	line->lun_bitmap = ((void *)(smeta_buf)) + sizeof(struct line_smeta);
+	/* Run-समय metadata */
+	line->lun_biपंचांगap = ((व्योम *)(smeta_buf)) + माप(काष्ठा line_smeta);
 
-	/* Mark LUNs allocated in this line (all for now) */
-	bitmap_set(line->lun_bitmap, 0, lm->lun_bitmap_len);
+	/* Mark LUNs allocated in this line (all क्रम now) */
+	biपंचांगap_set(line->lun_biपंचांगap, 0, lm->lun_biपंचांगap_len);
 
-	smeta_buf->header.identifier = cpu_to_le32(PBLK_MAGIC);
+	smeta_buf->header.identअगरier = cpu_to_le32(PBLK_MAGIC);
 	export_guid(smeta_buf->header.uuid, &pblk->instance_uuid);
 	smeta_buf->header.id = cpu_to_le32(line->id);
 	smeta_buf->header.type = cpu_to_le16(line->type);
@@ -996,25 +997,25 @@ static int pblk_line_init_metadata(struct pblk *pblk, struct pblk_line *line,
 
 	/* Start metadata */
 	smeta_buf->seq_nr = cpu_to_le64(line->seq_nr);
-	smeta_buf->window_wr_lun = cpu_to_le32(geo->all_luns);
+	smeta_buf->winकरोw_wr_lun = cpu_to_le32(geo->all_luns);
 
 	/* Fill metadata among lines */
-	if (cur) {
-		memcpy(line->lun_bitmap, cur->lun_bitmap, lm->lun_bitmap_len);
+	अगर (cur) अणु
+		स_नकल(line->lun_biपंचांगap, cur->lun_biपंचांगap, lm->lun_biपंचांगap_len);
 		smeta_buf->prev_id = cpu_to_le32(cur->id);
 		cur->emeta->buf->next_id = cpu_to_le32(line->id);
-	} else {
+	पूर्ण अन्यथा अणु
 		smeta_buf->prev_id = cpu_to_le32(PBLK_LINE_EMPTY);
-	}
+	पूर्ण
 
-	/* All smeta must be set at this point */
+	/* All smeta must be set at this poपूर्णांक */
 	smeta_buf->header.crc = cpu_to_le32(
 			pblk_calc_meta_header_crc(pblk, &smeta_buf->header));
 	smeta_buf->crc = cpu_to_le32(pblk_calc_smeta_crc(pblk, smeta_buf));
 
 	/* End metadata */
-	memcpy(&emeta_buf->header, &smeta_buf->header,
-						sizeof(struct line_header));
+	स_नकल(&emeta_buf->header, &smeta_buf->header,
+						माप(काष्ठा line_header));
 
 	emeta_buf->header.version_major = EMETA_VERSION_MAJOR;
 	emeta_buf->header.version_minor = EMETA_VERSION_MINOR;
@@ -1028,84 +1029,84 @@ static int pblk_line_init_metadata(struct pblk *pblk, struct pblk_line *line,
 	emeta_buf->crc = cpu_to_le32(0);
 	emeta_buf->prev_id = smeta_buf->prev_id;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int pblk_line_alloc_bitmaps(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
+अटल पूर्णांक pblk_line_alloc_biपंचांगaps(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
 
-	line->map_bitmap = mempool_alloc(l_mg->bitmap_pool, GFP_KERNEL);
-	if (!line->map_bitmap)
-		return -ENOMEM;
+	line->map_biपंचांगap = mempool_alloc(l_mg->biपंचांगap_pool, GFP_KERNEL);
+	अगर (!line->map_biपंचांगap)
+		वापस -ENOMEM;
 
-	memset(line->map_bitmap, 0, lm->sec_bitmap_len);
+	स_रखो(line->map_biपंचांगap, 0, lm->sec_biपंचांगap_len);
 
-	/* will be initialized using bb info from map_bitmap */
-	line->invalid_bitmap = mempool_alloc(l_mg->bitmap_pool, GFP_KERNEL);
-	if (!line->invalid_bitmap) {
-		mempool_free(line->map_bitmap, l_mg->bitmap_pool);
-		line->map_bitmap = NULL;
-		return -ENOMEM;
-	}
+	/* will be initialized using bb info from map_biपंचांगap */
+	line->invalid_biपंचांगap = mempool_alloc(l_mg->biपंचांगap_pool, GFP_KERNEL);
+	अगर (!line->invalid_biपंचांगap) अणु
+		mempool_मुक्त(line->map_biपंचांगap, l_mg->biपंचांगap_pool);
+		line->map_biपंचांगap = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* For now lines are always assumed full lines. Thus, smeta former and current
- * lun bitmaps are omitted.
+/* For now lines are always assumed full lines. Thus, smeta क्रमmer and current
+ * lun biपंचांगaps are omitted.
  */
-static int pblk_line_init_bb(struct pblk *pblk, struct pblk_line *line,
-			     int init)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
+अटल पूर्णांक pblk_line_init_bb(काष्ठा pblk *pblk, काष्ठा pblk_line *line,
+			     पूर्णांक init)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
 	u64 off;
-	int bit = -1;
-	int emeta_secs;
+	पूर्णांक bit = -1;
+	पूर्णांक emeta_secs;
 
 	line->sec_in_line = lm->sec_per_line;
 
-	/* Capture bad block information on line mapping bitmaps */
-	while ((bit = find_next_bit(line->blk_bitmap, lm->blk_per_line,
-					bit + 1)) < lm->blk_per_line) {
+	/* Capture bad block inक्रमmation on line mapping biपंचांगaps */
+	जबतक ((bit = find_next_bit(line->blk_biपंचांगap, lm->blk_per_line,
+					bit + 1)) < lm->blk_per_line) अणु
 		off = bit * geo->ws_opt;
-		bitmap_shift_left(l_mg->bb_aux, l_mg->bb_template, off,
+		biपंचांगap_shअगरt_left(l_mg->bb_aux, l_mg->bb_ढाँचा, off,
 							lm->sec_per_line);
-		bitmap_or(line->map_bitmap, line->map_bitmap, l_mg->bb_aux,
+		biपंचांगap_or(line->map_biपंचांगap, line->map_biपंचांगap, l_mg->bb_aux,
 							lm->sec_per_line);
 		line->sec_in_line -= geo->clba;
-	}
+	पूर्ण
 
 	/* Mark smeta metadata sectors as bad sectors */
-	bit = find_first_zero_bit(line->blk_bitmap, lm->blk_per_line);
+	bit = find_first_zero_bit(line->blk_biपंचांगap, lm->blk_per_line);
 	off = bit * geo->ws_opt;
-	bitmap_set(line->map_bitmap, off, lm->smeta_sec);
+	biपंचांगap_set(line->map_biपंचांगap, off, lm->smeta_sec);
 	line->sec_in_line -= lm->smeta_sec;
 	line->cur_sec = off + lm->smeta_sec;
 
-	if (init && pblk_line_smeta_write(pblk, line, off)) {
+	अगर (init && pblk_line_smeta_ग_लिखो(pblk, line, off)) अणु
 		pblk_debug(pblk, "line smeta I/O failed. Retry\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	bitmap_copy(line->invalid_bitmap, line->map_bitmap, lm->sec_per_line);
+	biपंचांगap_copy(line->invalid_biपंचांगap, line->map_biपंचांगap, lm->sec_per_line);
 
 	/* Mark emeta metadata sectors as bad sectors. We need to consider bad
 	 * blocks to make sure that there are enough sectors to store emeta
 	 */
 	emeta_secs = lm->emeta_sec[0];
 	off = lm->sec_per_line;
-	while (emeta_secs) {
+	जबतक (emeta_secs) अणु
 		off -= geo->ws_opt;
-		if (!test_bit(off, line->invalid_bitmap)) {
-			bitmap_set(line->invalid_bitmap, off, geo->ws_opt);
+		अगर (!test_bit(off, line->invalid_biपंचांगap)) अणु
+			biपंचांगap_set(line->invalid_biपंचांगap, off, geo->ws_opt);
 			emeta_secs -= geo->ws_opt;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	line->emeta_ssec = off;
 	line->sec_in_line -= lm->emeta_sec[0];
@@ -1113,8 +1114,8 @@ static int pblk_line_init_bb(struct pblk *pblk, struct pblk_line *line,
 	line->left_msecs = line->sec_in_line;
 	*line->vsc = cpu_to_le32(line->sec_in_line);
 
-	if (lm->sec_per_line - line->sec_in_line !=
-		bitmap_weight(line->invalid_bitmap, lm->sec_per_line)) {
+	अगर (lm->sec_per_line - line->sec_in_line !=
+		biपंचांगap_weight(line->invalid_biपंचांगap, lm->sec_per_line)) अणु
 		spin_lock(&line->lock);
 		line->state = PBLK_LINESTATE_BAD;
 		trace_pblk_line_state(pblk_disk_name(pblk), line->id,
@@ -1124,70 +1125,70 @@ static int pblk_line_init_bb(struct pblk *pblk, struct pblk_line *line,
 		list_add_tail(&line->list, &l_mg->bad_list);
 		pblk_err(pblk, "unexpected line %d is bad\n", line->id);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int pblk_prepare_new_line(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	int blk_to_erase = atomic_read(&line->blk_in_line);
-	int i;
+अटल पूर्णांक pblk_prepare_new_line(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	पूर्णांक blk_to_erase = atomic_पढ़ो(&line->blk_in_line);
+	पूर्णांक i;
 
-	for (i = 0; i < lm->blk_per_line; i++) {
-		struct pblk_lun *rlun = &pblk->luns[i];
-		int pos = pblk_ppa_to_pos(geo, rlun->bppa);
-		int state = line->chks[pos].state;
+	क्रम (i = 0; i < lm->blk_per_line; i++) अणु
+		काष्ठा pblk_lun *rlun = &pblk->luns[i];
+		पूर्णांक pos = pblk_ppa_to_pos(geo, rlun->bppa);
+		पूर्णांक state = line->chks[pos].state;
 
 		/* Free chunks should not be erased */
-		if (state & NVM_CHK_ST_FREE) {
+		अगर (state & NVM_CHK_ST_FREE) अणु
 			set_bit(pblk_ppa_to_pos(geo, rlun->bppa),
-							line->erase_bitmap);
+							line->erase_biपंचांगap);
 			blk_to_erase--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return blk_to_erase;
-}
+	वापस blk_to_erase;
+पूर्ण
 
-static int pblk_line_prepare(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_meta *lm = &pblk->lm;
-	int blk_in_line = atomic_read(&line->blk_in_line);
-	int blk_to_erase;
+अटल पूर्णांक pblk_line_prepare(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	पूर्णांक blk_in_line = atomic_पढ़ो(&line->blk_in_line);
+	पूर्णांक blk_to_erase;
 
-	/* Bad blocks do not need to be erased */
-	bitmap_copy(line->erase_bitmap, line->blk_bitmap, lm->blk_per_line);
+	/* Bad blocks करो not need to be erased */
+	biपंचांगap_copy(line->erase_biपंचांगap, line->blk_biपंचांगap, lm->blk_per_line);
 
 	spin_lock(&line->lock);
 
-	/* If we have not written to this line, we need to mark up free chunks
-	 * as already erased
+	/* If we have not written to this line, we need to mark up मुक्त chunks
+	 * as alपढ़ोy erased
 	 */
-	if (line->state == PBLK_LINESTATE_NEW) {
+	अगर (line->state == PBLK_LINESTATE_NEW) अणु
 		blk_to_erase = pblk_prepare_new_line(pblk, line);
 		line->state = PBLK_LINESTATE_FREE;
 		trace_pblk_line_state(pblk_disk_name(pblk), line->id,
 					line->state);
-	} else {
+	पूर्ण अन्यथा अणु
 		blk_to_erase = blk_in_line;
-	}
+	पूर्ण
 
-	if (blk_in_line < lm->min_blk_line) {
+	अगर (blk_in_line < lm->min_blk_line) अणु
 		spin_unlock(&line->lock);
-		return -EAGAIN;
-	}
+		वापस -EAGAIN;
+	पूर्ण
 
-	if (line->state != PBLK_LINESTATE_FREE) {
+	अगर (line->state != PBLK_LINESTATE_FREE) अणु
 		WARN(1, "pblk: corrupted line %d, state %d\n",
 							line->id, line->state);
 		spin_unlock(&line->lock);
-		return -EINTR;
-	}
+		वापस -EINTR;
+	पूर्ण
 
 	line->state = PBLK_LINESTATE_OPEN;
 	trace_pblk_line_state(pblk_disk_name(pblk), line->id,
@@ -1202,99 +1203,99 @@ static int pblk_line_prepare(struct pblk *pblk, struct pblk_line *line)
 	kref_init(&line->ref);
 	atomic_set(&line->sec_to_update, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Line allocations in the recovery path are always single threaded */
-int pblk_line_recov_alloc(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	int ret;
+/* Line allocations in the recovery path are always single thपढ़ोed */
+पूर्णांक pblk_line_recov_alloc(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	पूर्णांक ret;
 
-	spin_lock(&l_mg->free_lock);
+	spin_lock(&l_mg->मुक्त_lock);
 	l_mg->data_line = line;
 	list_del(&line->list);
 
 	ret = pblk_line_prepare(pblk, line);
-	if (ret) {
-		list_add(&line->list, &l_mg->free_list);
-		spin_unlock(&l_mg->free_lock);
-		return ret;
-	}
-	spin_unlock(&l_mg->free_lock);
+	अगर (ret) अणु
+		list_add(&line->list, &l_mg->मुक्त_list);
+		spin_unlock(&l_mg->मुक्त_lock);
+		वापस ret;
+	पूर्ण
+	spin_unlock(&l_mg->मुक्त_lock);
 
-	ret = pblk_line_alloc_bitmaps(pblk, line);
-	if (ret)
-		goto fail;
+	ret = pblk_line_alloc_biपंचांगaps(pblk, line);
+	अगर (ret)
+		जाओ fail;
 
-	if (!pblk_line_init_bb(pblk, line, 0)) {
+	अगर (!pblk_line_init_bb(pblk, line, 0)) अणु
 		ret = -EINTR;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
-	pblk_rl_free_lines_dec(&pblk->rl, line, true);
-	return 0;
+	pblk_rl_मुक्त_lines_dec(&pblk->rl, line, true);
+	वापस 0;
 
 fail:
-	spin_lock(&l_mg->free_lock);
-	list_add(&line->list, &l_mg->free_list);
-	spin_unlock(&l_mg->free_lock);
+	spin_lock(&l_mg->मुक्त_lock);
+	list_add(&line->list, &l_mg->मुक्त_list);
+	spin_unlock(&l_mg->मुक्त_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void pblk_line_recov_close(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
+व्योम pblk_line_recov_बंद(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
 
-	mempool_free(line->map_bitmap, l_mg->bitmap_pool);
-	line->map_bitmap = NULL;
-	line->smeta = NULL;
-	line->emeta = NULL;
-}
+	mempool_मुक्त(line->map_biपंचांगap, l_mg->biपंचांगap_pool);
+	line->map_biपंचांगap = शून्य;
+	line->smeta = शून्य;
+	line->emeta = शून्य;
+पूर्ण
 
-static void pblk_line_reinit(struct pblk_line *line)
-{
+अटल व्योम pblk_line_reinit(काष्ठा pblk_line *line)
+अणु
 	*line->vsc = cpu_to_le32(EMPTY_ENTRY);
 
-	line->map_bitmap = NULL;
-	line->invalid_bitmap = NULL;
-	line->smeta = NULL;
-	line->emeta = NULL;
-}
+	line->map_biपंचांगap = शून्य;
+	line->invalid_biपंचांगap = शून्य;
+	line->smeta = शून्य;
+	line->emeta = शून्य;
+पूर्ण
 
-void pblk_line_free(struct pblk_line *line)
-{
-	struct pblk *pblk = line->pblk;
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
+व्योम pblk_line_मुक्त(काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk *pblk = line->pblk;
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
 
-	mempool_free(line->map_bitmap, l_mg->bitmap_pool);
-	mempool_free(line->invalid_bitmap, l_mg->bitmap_pool);
+	mempool_मुक्त(line->map_biपंचांगap, l_mg->biपंचांगap_pool);
+	mempool_मुक्त(line->invalid_biपंचांगap, l_mg->biपंचांगap_pool);
 
 	pblk_line_reinit(line);
-}
+पूर्ण
 
-struct pblk_line *pblk_line_get(struct pblk *pblk)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct pblk_line *line;
-	int ret, bit;
+काष्ठा pblk_line *pblk_line_get(काष्ठा pblk *pblk)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा pblk_line *line;
+	पूर्णांक ret, bit;
 
-	lockdep_assert_held(&l_mg->free_lock);
+	lockdep_निश्चित_held(&l_mg->मुक्त_lock);
 
 retry:
-	if (list_empty(&l_mg->free_list)) {
+	अगर (list_empty(&l_mg->मुक्त_list)) अणु
 		pblk_err(pblk, "no free lines\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	line = list_first_entry(&l_mg->free_list, struct pblk_line, list);
+	line = list_first_entry(&l_mg->मुक्त_list, काष्ठा pblk_line, list);
 	list_del(&line->list);
-	l_mg->nr_free_lines--;
+	l_mg->nr_मुक्त_lines--;
 
-	bit = find_first_zero_bit(line->blk_bitmap, lm->blk_per_line);
-	if (unlikely(bit >= lm->blk_per_line)) {
+	bit = find_first_zero_bit(line->blk_biपंचांगap, lm->blk_per_line);
+	अगर (unlikely(bit >= lm->blk_per_line)) अणु
 		spin_lock(&line->lock);
 		line->state = PBLK_LINESTATE_BAD;
 		trace_pblk_line_state(pblk_disk_name(pblk), line->id,
@@ -1304,46 +1305,46 @@ retry:
 		list_add_tail(&line->list, &l_mg->bad_list);
 
 		pblk_debug(pblk, "line %d is bad\n", line->id);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	ret = pblk_line_prepare(pblk, line);
-	if (ret) {
-		switch (ret) {
-		case -EAGAIN:
+	अगर (ret) अणु
+		चयन (ret) अणु
+		हाल -EAGAIN:
 			list_add(&line->list, &l_mg->bad_list);
-			goto retry;
-		case -EINTR:
+			जाओ retry;
+		हाल -EINTR:
 			list_add(&line->list, &l_mg->corrupt_list);
-			goto retry;
-		default:
+			जाओ retry;
+		शेष:
 			pblk_err(pblk, "failed to prepare line %d\n", line->id);
-			list_add(&line->list, &l_mg->free_list);
-			l_mg->nr_free_lines++;
-			return NULL;
-		}
-	}
+			list_add(&line->list, &l_mg->मुक्त_list);
+			l_mg->nr_मुक्त_lines++;
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
-	return line;
-}
+	वापस line;
+पूर्ण
 
-static struct pblk_line *pblk_line_retry(struct pblk *pblk,
-					 struct pblk_line *line)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct pblk_line *retry_line;
+अटल काष्ठा pblk_line *pblk_line_retry(काष्ठा pblk *pblk,
+					 काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा pblk_line *retry_line;
 
 retry:
-	spin_lock(&l_mg->free_lock);
+	spin_lock(&l_mg->मुक्त_lock);
 	retry_line = pblk_line_get(pblk);
-	if (!retry_line) {
-		l_mg->data_line = NULL;
-		spin_unlock(&l_mg->free_lock);
-		return NULL;
-	}
+	अगर (!retry_line) अणु
+		l_mg->data_line = शून्य;
+		spin_unlock(&l_mg->मुक्त_lock);
+		वापस शून्य;
+	पूर्ण
 
-	retry_line->map_bitmap = line->map_bitmap;
-	retry_line->invalid_bitmap = line->invalid_bitmap;
+	retry_line->map_biपंचांगap = line->map_biपंचांगap;
+	retry_line->invalid_biपंचांगap = line->invalid_biपंचांगap;
 	retry_line->smeta = line->smeta;
 	retry_line->emeta = line->emeta;
 	retry_line->meta_line = line->meta_line;
@@ -1351,34 +1352,34 @@ retry:
 	pblk_line_reinit(line);
 
 	l_mg->data_line = retry_line;
-	spin_unlock(&l_mg->free_lock);
+	spin_unlock(&l_mg->मुक्त_lock);
 
-	pblk_rl_free_lines_dec(&pblk->rl, line, false);
+	pblk_rl_मुक्त_lines_dec(&pblk->rl, line, false);
 
-	if (pblk_line_erase(pblk, retry_line))
-		goto retry;
+	अगर (pblk_line_erase(pblk, retry_line))
+		जाओ retry;
 
-	return retry_line;
-}
+	वापस retry_line;
+पूर्ण
 
-static void pblk_set_space_limit(struct pblk *pblk)
-{
-	struct pblk_rl *rl = &pblk->rl;
+अटल व्योम pblk_set_space_limit(काष्ठा pblk *pblk)
+अणु
+	काष्ठा pblk_rl *rl = &pblk->rl;
 
 	atomic_set(&rl->rb_space, 0);
-}
+पूर्ण
 
-struct pblk_line *pblk_line_get_first_data(struct pblk *pblk)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct pblk_line *line;
+काष्ठा pblk_line *pblk_line_get_first_data(काष्ठा pblk *pblk)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा pblk_line *line;
 
-	spin_lock(&l_mg->free_lock);
+	spin_lock(&l_mg->मुक्त_lock);
 	line = pblk_line_get(pblk);
-	if (!line) {
-		spin_unlock(&l_mg->free_lock);
-		return NULL;
-	}
+	अगर (!line) अणु
+		spin_unlock(&l_mg->मुक्त_lock);
+		वापस शून्य;
+	पूर्ण
 
 	line->seq_nr = l_mg->d_seq_nr++;
 	line->type = PBLK_LINETYPE_DATA;
@@ -1386,376 +1387,376 @@ struct pblk_line *pblk_line_get_first_data(struct pblk *pblk)
 
 	pblk_line_setup_metadata(line, l_mg, &pblk->lm);
 
-	/* Allocate next line for preparation */
+	/* Allocate next line क्रम preparation */
 	l_mg->data_next = pblk_line_get(pblk);
-	if (!l_mg->data_next) {
+	अगर (!l_mg->data_next) अणु
 		/* If we cannot get a new line, we need to stop the pipeline.
-		 * Only allow as many writes in as we can store safely and then
+		 * Only allow as many ग_लिखोs in as we can store safely and then
 		 * fail gracefully
 		 */
 		pblk_set_space_limit(pblk);
 
-		l_mg->data_next = NULL;
-	} else {
+		l_mg->data_next = शून्य;
+	पूर्ण अन्यथा अणु
 		l_mg->data_next->seq_nr = l_mg->d_seq_nr++;
 		l_mg->data_next->type = PBLK_LINETYPE_DATA;
-	}
-	spin_unlock(&l_mg->free_lock);
+	पूर्ण
+	spin_unlock(&l_mg->मुक्त_lock);
 
-	if (pblk_line_alloc_bitmaps(pblk, line))
-		return NULL;
+	अगर (pblk_line_alloc_biपंचांगaps(pblk, line))
+		वापस शून्य;
 
-	if (pblk_line_erase(pblk, line)) {
+	अगर (pblk_line_erase(pblk, line)) अणु
 		line = pblk_line_retry(pblk, line);
-		if (!line)
-			return NULL;
-	}
+		अगर (!line)
+			वापस शून्य;
+	पूर्ण
 
 retry_setup:
-	if (!pblk_line_init_metadata(pblk, line, NULL)) {
+	अगर (!pblk_line_init_metadata(pblk, line, शून्य)) अणु
 		line = pblk_line_retry(pblk, line);
-		if (!line)
-			return NULL;
+		अगर (!line)
+			वापस शून्य;
 
-		goto retry_setup;
-	}
+		जाओ retry_setup;
+	पूर्ण
 
-	if (!pblk_line_init_bb(pblk, line, 1)) {
+	अगर (!pblk_line_init_bb(pblk, line, 1)) अणु
 		line = pblk_line_retry(pblk, line);
-		if (!line)
-			return NULL;
+		अगर (!line)
+			वापस शून्य;
 
-		goto retry_setup;
-	}
+		जाओ retry_setup;
+	पूर्ण
 
-	pblk_rl_free_lines_dec(&pblk->rl, line, true);
+	pblk_rl_मुक्त_lines_dec(&pblk->rl, line, true);
 
-	return line;
-}
+	वापस line;
+पूर्ण
 
-void pblk_ppa_to_line_put(struct pblk *pblk, struct ppa_addr ppa)
-{
-	struct pblk_line *line;
+व्योम pblk_ppa_to_line_put(काष्ठा pblk *pblk, काष्ठा ppa_addr ppa)
+अणु
+	काष्ठा pblk_line *line;
 
 	line = pblk_ppa_to_line(pblk, ppa);
 	kref_put(&line->ref, pblk_line_put_wq);
-}
+पूर्ण
 
-void pblk_rq_to_line_put(struct pblk *pblk, struct nvm_rq *rqd)
-{
-	struct ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
-	int i;
+व्योम pblk_rq_to_line_put(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd)
+अणु
+	काष्ठा ppa_addr *ppa_list = nvm_rq_to_ppa_list(rqd);
+	पूर्णांक i;
 
-	for (i = 0; i < rqd->nr_ppas; i++)
+	क्रम (i = 0; i < rqd->nr_ppas; i++)
 		pblk_ppa_to_line_put(pblk, ppa_list[i]);
-}
+पूर्ण
 
-static void pblk_stop_writes(struct pblk *pblk, struct pblk_line *line)
-{
-	lockdep_assert_held(&pblk->l_mg.free_lock);
+अटल व्योम pblk_stop_ग_लिखोs(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	lockdep_निश्चित_held(&pblk->l_mg.मुक्त_lock);
 
 	pblk_set_space_limit(pblk);
 	pblk->state = PBLK_STATE_STOPPING;
 	trace_pblk_state(pblk_disk_name(pblk), pblk->state);
-}
+पूर्ण
 
-static void pblk_line_close_meta_sync(struct pblk *pblk)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct pblk_line *line, *tline;
+अटल व्योम pblk_line_बंद_meta_sync(काष्ठा pblk *pblk)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा pblk_line *line, *tline;
 	LIST_HEAD(list);
 
-	spin_lock(&l_mg->close_lock);
-	if (list_empty(&l_mg->emeta_list)) {
-		spin_unlock(&l_mg->close_lock);
-		return;
-	}
+	spin_lock(&l_mg->बंद_lock);
+	अगर (list_empty(&l_mg->emeta_list)) अणु
+		spin_unlock(&l_mg->बंद_lock);
+		वापस;
+	पूर्ण
 
 	list_cut_position(&list, &l_mg->emeta_list, l_mg->emeta_list.prev);
-	spin_unlock(&l_mg->close_lock);
+	spin_unlock(&l_mg->बंद_lock);
 
-	list_for_each_entry_safe(line, tline, &list, list) {
-		struct pblk_emeta *emeta = line->emeta;
+	list_क्रम_each_entry_safe(line, tline, &list, list) अणु
+		काष्ठा pblk_emeta *emeta = line->emeta;
 
-		while (emeta->mem < lm->emeta_len[0]) {
-			int ret;
+		जबतक (emeta->mem < lm->emeta_len[0]) अणु
+			पूर्णांक ret;
 
 			ret = pblk_submit_meta_io(pblk, line);
-			if (ret) {
+			अगर (ret) अणु
 				pblk_err(pblk, "sync meta line %d failed (%d)\n",
 							line->id, ret);
-				return;
-			}
-		}
-	}
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	pblk_wait_for_meta(pblk);
-	flush_workqueue(pblk->close_wq);
-}
+	pblk_रुको_क्रम_meta(pblk);
+	flush_workqueue(pblk->बंद_wq);
+पूर्ण
 
-void __pblk_pipeline_flush(struct pblk *pblk)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	int ret;
+व्योम __pblk_pipeline_flush(काष्ठा pblk *pblk)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	पूर्णांक ret;
 
-	spin_lock(&l_mg->free_lock);
-	if (pblk->state == PBLK_STATE_RECOVERING ||
-					pblk->state == PBLK_STATE_STOPPED) {
-		spin_unlock(&l_mg->free_lock);
-		return;
-	}
+	spin_lock(&l_mg->मुक्त_lock);
+	अगर (pblk->state == PBLK_STATE_RECOVERING ||
+					pblk->state == PBLK_STATE_STOPPED) अणु
+		spin_unlock(&l_mg->मुक्त_lock);
+		वापस;
+	पूर्ण
 	pblk->state = PBLK_STATE_RECOVERING;
 	trace_pblk_state(pblk_disk_name(pblk), pblk->state);
-	spin_unlock(&l_mg->free_lock);
+	spin_unlock(&l_mg->मुक्त_lock);
 
-	pblk_flush_writer(pblk);
-	pblk_wait_for_meta(pblk);
+	pblk_flush_ग_लिखोr(pblk);
+	pblk_रुको_क्रम_meta(pblk);
 
 	ret = pblk_recov_pad(pblk);
-	if (ret) {
+	अगर (ret) अणु
 		pblk_err(pblk, "could not close data on teardown(%d)\n", ret);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	flush_workqueue(pblk->bb_wq);
-	pblk_line_close_meta_sync(pblk);
-}
+	pblk_line_बंद_meta_sync(pblk);
+पूर्ण
 
-void __pblk_pipeline_stop(struct pblk *pblk)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
+व्योम __pblk_pipeline_stop(काष्ठा pblk *pblk)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
 
-	spin_lock(&l_mg->free_lock);
+	spin_lock(&l_mg->मुक्त_lock);
 	pblk->state = PBLK_STATE_STOPPED;
 	trace_pblk_state(pblk_disk_name(pblk), pblk->state);
-	l_mg->data_line = NULL;
-	l_mg->data_next = NULL;
-	spin_unlock(&l_mg->free_lock);
-}
+	l_mg->data_line = शून्य;
+	l_mg->data_next = शून्य;
+	spin_unlock(&l_mg->मुक्त_lock);
+पूर्ण
 
-void pblk_pipeline_stop(struct pblk *pblk)
-{
+व्योम pblk_pipeline_stop(काष्ठा pblk *pblk)
+अणु
 	__pblk_pipeline_flush(pblk);
 	__pblk_pipeline_stop(pblk);
-}
+पूर्ण
 
-struct pblk_line *pblk_line_replace_data(struct pblk *pblk)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct pblk_line *cur, *new = NULL;
-	unsigned int left_seblks;
+काष्ठा pblk_line *pblk_line_replace_data(काष्ठा pblk *pblk)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा pblk_line *cur, *new = शून्य;
+	अचिन्हित पूर्णांक left_seblks;
 
 	new = l_mg->data_next;
-	if (!new)
-		goto out;
+	अगर (!new)
+		जाओ out;
 
-	spin_lock(&l_mg->free_lock);
+	spin_lock(&l_mg->मुक्त_lock);
 	cur = l_mg->data_line;
 	l_mg->data_line = new;
 
 	pblk_line_setup_metadata(new, l_mg, &pblk->lm);
-	spin_unlock(&l_mg->free_lock);
+	spin_unlock(&l_mg->मुक्त_lock);
 
 retry_erase:
-	left_seblks = atomic_read(&new->left_seblks);
-	if (left_seblks) {
+	left_seblks = atomic_पढ़ो(&new->left_seblks);
+	अगर (left_seblks) अणु
 		/* If line is not fully erased, erase it */
-		if (atomic_read(&new->left_eblks)) {
-			if (pblk_line_erase(pblk, new))
-				goto out;
-		} else {
+		अगर (atomic_पढ़ो(&new->left_eblks)) अणु
+			अगर (pblk_line_erase(pblk, new))
+				जाओ out;
+		पूर्ण अन्यथा अणु
 			io_schedule();
-		}
-		goto retry_erase;
-	}
+		पूर्ण
+		जाओ retry_erase;
+	पूर्ण
 
-	if (pblk_line_alloc_bitmaps(pblk, new))
-		return NULL;
+	अगर (pblk_line_alloc_biपंचांगaps(pblk, new))
+		वापस शून्य;
 
 retry_setup:
-	if (!pblk_line_init_metadata(pblk, new, cur)) {
+	अगर (!pblk_line_init_metadata(pblk, new, cur)) अणु
 		new = pblk_line_retry(pblk, new);
-		if (!new)
-			goto out;
+		अगर (!new)
+			जाओ out;
 
-		goto retry_setup;
-	}
+		जाओ retry_setup;
+	पूर्ण
 
-	if (!pblk_line_init_bb(pblk, new, 1)) {
+	अगर (!pblk_line_init_bb(pblk, new, 1)) अणु
 		new = pblk_line_retry(pblk, new);
-		if (!new)
-			goto out;
+		अगर (!new)
+			जाओ out;
 
-		goto retry_setup;
-	}
+		जाओ retry_setup;
+	पूर्ण
 
-	pblk_rl_free_lines_dec(&pblk->rl, new, true);
+	pblk_rl_मुक्त_lines_dec(&pblk->rl, new, true);
 
-	/* Allocate next line for preparation */
-	spin_lock(&l_mg->free_lock);
+	/* Allocate next line क्रम preparation */
+	spin_lock(&l_mg->मुक्त_lock);
 	l_mg->data_next = pblk_line_get(pblk);
-	if (!l_mg->data_next) {
+	अगर (!l_mg->data_next) अणु
 		/* If we cannot get a new line, we need to stop the pipeline.
-		 * Only allow as many writes in as we can store safely and then
+		 * Only allow as many ग_लिखोs in as we can store safely and then
 		 * fail gracefully
 		 */
-		pblk_stop_writes(pblk, new);
-		l_mg->data_next = NULL;
-	} else {
+		pblk_stop_ग_लिखोs(pblk, new);
+		l_mg->data_next = शून्य;
+	पूर्ण अन्यथा अणु
 		l_mg->data_next->seq_nr = l_mg->d_seq_nr++;
 		l_mg->data_next->type = PBLK_LINETYPE_DATA;
-	}
-	spin_unlock(&l_mg->free_lock);
+	पूर्ण
+	spin_unlock(&l_mg->मुक्त_lock);
 
 out:
-	return new;
-}
+	वापस new;
+पूर्ण
 
-static void __pblk_line_put(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct pblk_gc *gc = &pblk->gc;
+अटल व्योम __pblk_line_put(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा pblk_gc *gc = &pblk->gc;
 
 	spin_lock(&line->lock);
 	WARN_ON(line->state != PBLK_LINESTATE_GC);
-	if (line->w_err_gc->has_gc_err) {
+	अगर (line->w_err_gc->has_gc_err) अणु
 		spin_unlock(&line->lock);
 		pblk_err(pblk, "line %d had errors during GC\n", line->id);
 		pblk_put_line_back(pblk, line);
 		line->w_err_gc->has_gc_err = 0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	line->state = PBLK_LINESTATE_FREE;
 	trace_pblk_line_state(pblk_disk_name(pblk), line->id,
 					line->state);
 	line->gc_group = PBLK_LINEGC_NONE;
-	pblk_line_free(line);
+	pblk_line_मुक्त(line);
 
-	if (line->w_err_gc->has_write_err) {
+	अगर (line->w_err_gc->has_ग_लिखो_err) अणु
 		pblk_rl_werr_line_out(&pblk->rl);
-		line->w_err_gc->has_write_err = 0;
-	}
+		line->w_err_gc->has_ग_लिखो_err = 0;
+	पूर्ण
 
 	spin_unlock(&line->lock);
 	atomic_dec(&gc->pipeline_gc);
 
-	spin_lock(&l_mg->free_lock);
-	list_add_tail(&line->list, &l_mg->free_list);
-	l_mg->nr_free_lines++;
-	spin_unlock(&l_mg->free_lock);
+	spin_lock(&l_mg->मुक्त_lock);
+	list_add_tail(&line->list, &l_mg->मुक्त_list);
+	l_mg->nr_मुक्त_lines++;
+	spin_unlock(&l_mg->मुक्त_lock);
 
-	pblk_rl_free_lines_inc(&pblk->rl, line);
-}
+	pblk_rl_मुक्त_lines_inc(&pblk->rl, line);
+पूर्ण
 
-static void pblk_line_put_ws(struct work_struct *work)
-{
-	struct pblk_line_ws *line_put_ws = container_of(work,
-						struct pblk_line_ws, ws);
-	struct pblk *pblk = line_put_ws->pblk;
-	struct pblk_line *line = line_put_ws->line;
-
-	__pblk_line_put(pblk, line);
-	mempool_free(line_put_ws, &pblk->gen_ws_pool);
-}
-
-void pblk_line_put(struct kref *ref)
-{
-	struct pblk_line *line = container_of(ref, struct pblk_line, ref);
-	struct pblk *pblk = line->pblk;
+अटल व्योम pblk_line_put_ws(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pblk_line_ws *line_put_ws = container_of(work,
+						काष्ठा pblk_line_ws, ws);
+	काष्ठा pblk *pblk = line_put_ws->pblk;
+	काष्ठा pblk_line *line = line_put_ws->line;
 
 	__pblk_line_put(pblk, line);
-}
+	mempool_मुक्त(line_put_ws, &pblk->gen_ws_pool);
+पूर्ण
 
-void pblk_line_put_wq(struct kref *ref)
-{
-	struct pblk_line *line = container_of(ref, struct pblk_line, ref);
-	struct pblk *pblk = line->pblk;
-	struct pblk_line_ws *line_put_ws;
+व्योम pblk_line_put(काष्ठा kref *ref)
+अणु
+	काष्ठा pblk_line *line = container_of(ref, काष्ठा pblk_line, ref);
+	काष्ठा pblk *pblk = line->pblk;
+
+	__pblk_line_put(pblk, line);
+पूर्ण
+
+व्योम pblk_line_put_wq(काष्ठा kref *ref)
+अणु
+	काष्ठा pblk_line *line = container_of(ref, काष्ठा pblk_line, ref);
+	काष्ठा pblk *pblk = line->pblk;
+	काष्ठा pblk_line_ws *line_put_ws;
 
 	line_put_ws = mempool_alloc(&pblk->gen_ws_pool, GFP_ATOMIC);
-	if (!line_put_ws)
-		return;
+	अगर (!line_put_ws)
+		वापस;
 
 	line_put_ws->pblk = pblk;
 	line_put_ws->line = line;
-	line_put_ws->priv = NULL;
+	line_put_ws->priv = शून्य;
 
 	INIT_WORK(&line_put_ws->ws, pblk_line_put_ws);
 	queue_work(pblk->r_end_wq, &line_put_ws->ws);
-}
+पूर्ण
 
-int pblk_blk_erase_async(struct pblk *pblk, struct ppa_addr ppa)
-{
-	struct nvm_rq *rqd;
-	int err;
+पूर्णांक pblk_blk_erase_async(काष्ठा pblk *pblk, काष्ठा ppa_addr ppa)
+अणु
+	काष्ठा nvm_rq *rqd;
+	पूर्णांक err;
 
 	rqd = pblk_alloc_rqd(pblk, PBLK_ERASE);
 
 	pblk_setup_e_rq(pblk, rqd, ppa);
 
 	rqd->end_io = pblk_end_io_erase;
-	rqd->private = pblk;
+	rqd->निजी = pblk;
 
 	trace_pblk_chunk_reset(pblk_disk_name(pblk),
 				&ppa, PBLK_CHUNK_RESET_START);
 
-	/* The write thread schedules erases so that it minimizes disturbances
-	 * with writes. Thus, there is no need to take the LUN semaphore.
+	/* The ग_लिखो thपढ़ो schedules erases so that it minimizes disturbances
+	 * with ग_लिखोs. Thus, there is no need to take the LUN semaphore.
 	 */
-	err = pblk_submit_io(pblk, rqd, NULL);
-	if (err) {
-		struct nvm_tgt_dev *dev = pblk->dev;
-		struct nvm_geo *geo = &dev->geo;
+	err = pblk_submit_io(pblk, rqd, शून्य);
+	अगर (err) अणु
+		काष्ठा nvm_tgt_dev *dev = pblk->dev;
+		काष्ठा nvm_geo *geo = &dev->geo;
 
 		pblk_err(pblk, "could not async erase line:%d,blk:%d\n",
 					pblk_ppa_to_line_id(ppa),
 					pblk_ppa_to_pos(geo, ppa));
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-struct pblk_line *pblk_line_get_data(struct pblk *pblk)
-{
-	return pblk->l_mg.data_line;
-}
+काष्ठा pblk_line *pblk_line_get_data(काष्ठा pblk *pblk)
+अणु
+	वापस pblk->l_mg.data_line;
+पूर्ण
 
 /* For now, always erase next line */
-struct pblk_line *pblk_line_get_erase(struct pblk *pblk)
-{
-	return pblk->l_mg.data_next;
-}
+काष्ठा pblk_line *pblk_line_get_erase(काष्ठा pblk *pblk)
+अणु
+	वापस pblk->l_mg.data_next;
+पूर्ण
 
-int pblk_line_is_full(struct pblk_line *line)
-{
-	return (line->left_msecs == 0);
-}
+पूर्णांक pblk_line_is_full(काष्ठा pblk_line *line)
+अणु
+	वापस (line->left_msecs == 0);
+पूर्ण
 
-static void pblk_line_should_sync_meta(struct pblk *pblk)
-{
-	if (pblk_rl_is_limit(&pblk->rl))
-		pblk_line_close_meta_sync(pblk);
-}
+अटल व्योम pblk_line_should_sync_meta(काष्ठा pblk *pblk)
+अणु
+	अगर (pblk_rl_is_limit(&pblk->rl))
+		pblk_line_बंद_meta_sync(pblk);
+पूर्ण
 
-void pblk_line_close(struct pblk *pblk, struct pblk_line *line)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct list_head *move_list;
-	int i;
+व्योम pblk_line_बंद(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा list_head *move_list;
+	पूर्णांक i;
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	WARN(!bitmap_full(line->map_bitmap, lm->sec_per_line),
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	WARN(!biपंचांगap_full(line->map_biपंचांगap, lm->sec_per_line),
 				"pblk: corrupt closed line %d\n", line->id);
-#endif
+#पूर्ण_अगर
 
-	spin_lock(&l_mg->free_lock);
-	WARN_ON(!test_and_clear_bit(line->meta_line, &l_mg->meta_bitmap));
-	spin_unlock(&l_mg->free_lock);
+	spin_lock(&l_mg->मुक्त_lock);
+	WARN_ON(!test_and_clear_bit(line->meta_line, &l_mg->meta_biपंचांगap));
+	spin_unlock(&l_mg->मुक्त_lock);
 
 	spin_lock(&l_mg->gc_lock);
 	spin_lock(&line->lock);
@@ -1764,45 +1765,45 @@ void pblk_line_close(struct pblk *pblk, struct pblk_line *line)
 	move_list = pblk_line_gc_list(pblk, line);
 	list_add_tail(&line->list, move_list);
 
-	mempool_free(line->map_bitmap, l_mg->bitmap_pool);
-	line->map_bitmap = NULL;
-	line->smeta = NULL;
-	line->emeta = NULL;
+	mempool_मुक्त(line->map_biपंचांगap, l_mg->biपंचांगap_pool);
+	line->map_biपंचांगap = शून्य;
+	line->smeta = शून्य;
+	line->emeta = शून्य;
 
-	for (i = 0; i < lm->blk_per_line; i++) {
-		struct pblk_lun *rlun = &pblk->luns[i];
-		int pos = pblk_ppa_to_pos(geo, rlun->bppa);
-		int state = line->chks[pos].state;
+	क्रम (i = 0; i < lm->blk_per_line; i++) अणु
+		काष्ठा pblk_lun *rlun = &pblk->luns[i];
+		पूर्णांक pos = pblk_ppa_to_pos(geo, rlun->bppa);
+		पूर्णांक state = line->chks[pos].state;
 
-		if (!(state & NVM_CHK_ST_OFFLINE))
+		अगर (!(state & NVM_CHK_ST_OFFLINE))
 			state = NVM_CHK_ST_CLOSED;
-	}
+	पूर्ण
 
 	spin_unlock(&line->lock);
 	spin_unlock(&l_mg->gc_lock);
 
 	trace_pblk_line_state(pblk_disk_name(pblk), line->id,
 					line->state);
-}
+पूर्ण
 
-void pblk_line_close_meta(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_mgmt *l_mg = &pblk->l_mg;
-	struct pblk_line_meta *lm = &pblk->lm;
-	struct pblk_emeta *emeta = line->emeta;
-	struct line_emeta *emeta_buf = emeta->buf;
-	struct wa_counters *wa = emeta_to_wa(lm, emeta_buf);
+व्योम pblk_line_बंद_meta(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_mgmt *l_mg = &pblk->l_mg;
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	काष्ठा pblk_emeta *emeta = line->emeta;
+	काष्ठा line_emeta *emeta_buf = emeta->buf;
+	काष्ठा wa_counters *wa = emeta_to_wa(lm, emeta_buf);
 
-	/* No need for exact vsc value; avoid a big line lock and take aprox. */
-	memcpy(emeta_to_vsc(pblk, emeta_buf), l_mg->vsc_list, lm->vsc_list_len);
-	memcpy(emeta_to_bb(emeta_buf), line->blk_bitmap, lm->blk_bitmap_len);
+	/* No need क्रम exact vsc value; aव्योम a big line lock and take aprox. */
+	स_नकल(emeta_to_vsc(pblk, emeta_buf), l_mg->vsc_list, lm->vsc_list_len);
+	स_नकल(emeta_to_bb(emeta_buf), line->blk_biपंचांगap, lm->blk_biपंचांगap_len);
 
-	wa->user = cpu_to_le64(atomic64_read(&pblk->user_wa));
-	wa->pad = cpu_to_le64(atomic64_read(&pblk->pad_wa));
-	wa->gc = cpu_to_le64(atomic64_read(&pblk->gc_wa));
+	wa->user = cpu_to_le64(atomic64_पढ़ो(&pblk->user_wa));
+	wa->pad = cpu_to_le64(atomic64_पढ़ो(&pblk->pad_wa));
+	wa->gc = cpu_to_le64(atomic64_पढ़ो(&pblk->gc_wa));
 
-	if (le32_to_cpu(emeta_buf->header.identifier) != PBLK_MAGIC) {
-		emeta_buf->header.identifier = cpu_to_le32(PBLK_MAGIC);
+	अगर (le32_to_cpu(emeta_buf->header.identअगरier) != PBLK_MAGIC) अणु
+		emeta_buf->header.identअगरier = cpu_to_le32(PBLK_MAGIC);
 		export_guid(emeta_buf->header.uuid, &pblk->instance_uuid);
 		emeta_buf->header.id = cpu_to_le32(line->id);
 		emeta_buf->header.type = cpu_to_le16(line->type);
@@ -1810,68 +1811,68 @@ void pblk_line_close_meta(struct pblk *pblk, struct pblk_line *line)
 		emeta_buf->header.version_minor = EMETA_VERSION_MINOR;
 		emeta_buf->header.crc = cpu_to_le32(
 			pblk_calc_meta_header_crc(pblk, &emeta_buf->header));
-	}
+	पूर्ण
 
 	emeta_buf->nr_valid_lbas = cpu_to_le64(line->nr_valid_lbas);
 	emeta_buf->crc = cpu_to_le32(pblk_calc_emeta_crc(pblk, emeta_buf));
 
-	spin_lock(&l_mg->close_lock);
+	spin_lock(&l_mg->बंद_lock);
 	spin_lock(&line->lock);
 
-	/* Update the in-memory start address for emeta, in case it has
-	 * shifted due to write errors
+	/* Update the in-memory start address क्रम emeta, in हाल it has
+	 * shअगरted due to ग_लिखो errors
 	 */
-	if (line->emeta_ssec != line->cur_sec)
+	अगर (line->emeta_ssec != line->cur_sec)
 		line->emeta_ssec = line->cur_sec;
 
 	list_add_tail(&line->list, &l_mg->emeta_list);
 	spin_unlock(&line->lock);
-	spin_unlock(&l_mg->close_lock);
+	spin_unlock(&l_mg->बंद_lock);
 
 	pblk_line_should_sync_meta(pblk);
-}
+पूर्ण
 
-static void pblk_save_lba_list(struct pblk *pblk, struct pblk_line *line)
-{
-	struct pblk_line_meta *lm = &pblk->lm;
-	unsigned int lba_list_size = lm->emeta_len[2];
-	struct pblk_w_err_gc *w_err_gc = line->w_err_gc;
-	struct pblk_emeta *emeta = line->emeta;
+अटल व्योम pblk_save_lba_list(काष्ठा pblk *pblk, काष्ठा pblk_line *line)
+अणु
+	काष्ठा pblk_line_meta *lm = &pblk->lm;
+	अचिन्हित पूर्णांक lba_list_size = lm->emeta_len[2];
+	काष्ठा pblk_w_err_gc *w_err_gc = line->w_err_gc;
+	काष्ठा pblk_emeta *emeta = line->emeta;
 
-	w_err_gc->lba_list = kvmalloc(lba_list_size, GFP_KERNEL);
-	memcpy(w_err_gc->lba_list, emeta_to_lbas(pblk, emeta->buf),
+	w_err_gc->lba_list = kvदो_स्मृति(lba_list_size, GFP_KERNEL);
+	स_नकल(w_err_gc->lba_list, emeta_to_lbas(pblk, emeta->buf),
 				lba_list_size);
-}
+पूर्ण
 
-void pblk_line_close_ws(struct work_struct *work)
-{
-	struct pblk_line_ws *line_ws = container_of(work, struct pblk_line_ws,
+व्योम pblk_line_बंद_ws(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pblk_line_ws *line_ws = container_of(work, काष्ठा pblk_line_ws,
 									ws);
-	struct pblk *pblk = line_ws->pblk;
-	struct pblk_line *line = line_ws->line;
-	struct pblk_w_err_gc *w_err_gc = line->w_err_gc;
+	काष्ठा pblk *pblk = line_ws->pblk;
+	काष्ठा pblk_line *line = line_ws->line;
+	काष्ठा pblk_w_err_gc *w_err_gc = line->w_err_gc;
 
 	/* Write errors makes the emeta start address stored in smeta invalid,
 	 * so keep a copy of the lba list until we've gc'd the line
 	 */
-	if (w_err_gc->has_write_err)
+	अगर (w_err_gc->has_ग_लिखो_err)
 		pblk_save_lba_list(pblk, line);
 
-	pblk_line_close(pblk, line);
-	mempool_free(line_ws, &pblk->gen_ws_pool);
-}
+	pblk_line_बंद(pblk, line);
+	mempool_मुक्त(line_ws, &pblk->gen_ws_pool);
+पूर्ण
 
-void pblk_gen_run_ws(struct pblk *pblk, struct pblk_line *line, void *priv,
-		      void (*work)(struct work_struct *), gfp_t gfp_mask,
-		      struct workqueue_struct *wq)
-{
-	struct pblk_line_ws *line_ws;
+व्योम pblk_gen_run_ws(काष्ठा pblk *pblk, काष्ठा pblk_line *line, व्योम *priv,
+		      व्योम (*work)(काष्ठा work_काष्ठा *), gfp_t gfp_mask,
+		      काष्ठा workqueue_काष्ठा *wq)
+अणु
+	काष्ठा pblk_line_ws *line_ws;
 
 	line_ws = mempool_alloc(&pblk->gen_ws_pool, gfp_mask);
-	if (!line_ws) {
+	अगर (!line_ws) अणु
 		pblk_err(pblk, "pblk: could not allocate memory\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	line_ws->pblk = pblk;
 	line_ws->line = line;
@@ -1879,273 +1880,273 @@ void pblk_gen_run_ws(struct pblk *pblk, struct pblk_line *line, void *priv,
 
 	INIT_WORK(&line_ws->ws, work);
 	queue_work(wq, &line_ws->ws);
-}
+पूर्ण
 
-static void __pblk_down_chunk(struct pblk *pblk, int pos)
-{
-	struct pblk_lun *rlun = &pblk->luns[pos];
-	int ret;
+अटल व्योम __pblk_करोwn_chunk(काष्ठा pblk *pblk, पूर्णांक pos)
+अणु
+	काष्ठा pblk_lun *rlun = &pblk->luns[pos];
+	पूर्णांक ret;
 
 	/*
 	 * Only send one inflight I/O per LUN. Since we map at a page
 	 * granurality, all ppas in the I/O will map to the same LUN
 	 */
 
-	ret = down_timeout(&rlun->wr_sem, msecs_to_jiffies(30000));
-	if (ret == -ETIME || ret == -EINTR)
+	ret = करोwn_समयout(&rlun->wr_sem, msecs_to_jअगरfies(30000));
+	अगर (ret == -ETIME || ret == -EINTR)
 		pblk_err(pblk, "taking lun semaphore timed out: err %d\n",
 				-ret);
-}
+पूर्ण
 
-void pblk_down_chunk(struct pblk *pblk, struct ppa_addr ppa)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	int pos = pblk_ppa_to_pos(geo, ppa);
+व्योम pblk_करोwn_chunk(काष्ठा pblk *pblk, काष्ठा ppa_addr ppa)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	पूर्णांक pos = pblk_ppa_to_pos(geo, ppa);
 
-	__pblk_down_chunk(pblk, pos);
-}
+	__pblk_करोwn_chunk(pblk, pos);
+पूर्ण
 
-void pblk_down_rq(struct pblk *pblk, struct ppa_addr ppa,
-		  unsigned long *lun_bitmap)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	int pos = pblk_ppa_to_pos(geo, ppa);
+व्योम pblk_करोwn_rq(काष्ठा pblk *pblk, काष्ठा ppa_addr ppa,
+		  अचिन्हित दीर्घ *lun_biपंचांगap)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	पूर्णांक pos = pblk_ppa_to_pos(geo, ppa);
 
-	/* If the LUN has been locked for this same request, do no attempt to
+	/* If the LUN has been locked क्रम this same request, करो no attempt to
 	 * lock it again
 	 */
-	if (test_and_set_bit(pos, lun_bitmap))
-		return;
+	अगर (test_and_set_bit(pos, lun_biपंचांगap))
+		वापस;
 
-	__pblk_down_chunk(pblk, pos);
-}
+	__pblk_करोwn_chunk(pblk, pos);
+पूर्ण
 
-void pblk_up_chunk(struct pblk *pblk, struct ppa_addr ppa)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct pblk_lun *rlun;
-	int pos = pblk_ppa_to_pos(geo, ppa);
+व्योम pblk_up_chunk(काष्ठा pblk *pblk, काष्ठा ppa_addr ppa)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा pblk_lun *rlun;
+	पूर्णांक pos = pblk_ppa_to_pos(geo, ppa);
 
 	rlun = &pblk->luns[pos];
 	up(&rlun->wr_sem);
-}
+पूर्ण
 
-void pblk_up_rq(struct pblk *pblk, unsigned long *lun_bitmap)
-{
-	struct nvm_tgt_dev *dev = pblk->dev;
-	struct nvm_geo *geo = &dev->geo;
-	struct pblk_lun *rlun;
-	int num_lun = geo->all_luns;
-	int bit = -1;
+व्योम pblk_up_rq(काष्ठा pblk *pblk, अचिन्हित दीर्घ *lun_biपंचांगap)
+अणु
+	काष्ठा nvm_tgt_dev *dev = pblk->dev;
+	काष्ठा nvm_geo *geo = &dev->geo;
+	काष्ठा pblk_lun *rlun;
+	पूर्णांक num_lun = geo->all_luns;
+	पूर्णांक bit = -1;
 
-	while ((bit = find_next_bit(lun_bitmap, num_lun, bit + 1)) < num_lun) {
+	जबतक ((bit = find_next_bit(lun_biपंचांगap, num_lun, bit + 1)) < num_lun) अणु
 		rlun = &pblk->luns[bit];
 		up(&rlun->wr_sem);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void pblk_update_map(struct pblk *pblk, sector_t lba, struct ppa_addr ppa)
-{
-	struct ppa_addr ppa_l2p;
+व्योम pblk_update_map(काष्ठा pblk *pblk, sector_t lba, काष्ठा ppa_addr ppa)
+अणु
+	काष्ठा ppa_addr ppa_l2p;
 
 	/* logic error: lba out-of-bounds. Ignore update */
-	if (!(lba < pblk->capacity)) {
+	अगर (!(lba < pblk->capacity)) अणु
 		WARN(1, "pblk: corrupted L2P map request\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock(&pblk->trans_lock);
 	ppa_l2p = pblk_trans_map_get(pblk, lba);
 
-	if (!pblk_addr_in_cache(ppa_l2p) && !pblk_ppa_empty(ppa_l2p))
+	अगर (!pblk_addr_in_cache(ppa_l2p) && !pblk_ppa_empty(ppa_l2p))
 		pblk_map_invalidate(pblk, ppa_l2p);
 
 	pblk_trans_map_set(pblk, lba, ppa);
 	spin_unlock(&pblk->trans_lock);
-}
+पूर्ण
 
-void pblk_update_map_cache(struct pblk *pblk, sector_t lba, struct ppa_addr ppa)
-{
+व्योम pblk_update_map_cache(काष्ठा pblk *pblk, sector_t lba, काष्ठा ppa_addr ppa)
+अणु
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	/* Callers must ensure that the ppa points to a cache address */
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	/* Callers must ensure that the ppa poपूर्णांकs to a cache address */
 	BUG_ON(!pblk_addr_in_cache(ppa));
 	BUG_ON(pblk_rb_pos_oob(&pblk->rwb, pblk_addr_to_cacheline(ppa)));
-#endif
+#पूर्ण_अगर
 
 	pblk_update_map(pblk, lba, ppa);
-}
+पूर्ण
 
-int pblk_update_map_gc(struct pblk *pblk, sector_t lba, struct ppa_addr ppa_new,
-		       struct pblk_line *gc_line, u64 paddr_gc)
-{
-	struct ppa_addr ppa_l2p, ppa_gc;
-	int ret = 1;
+पूर्णांक pblk_update_map_gc(काष्ठा pblk *pblk, sector_t lba, काष्ठा ppa_addr ppa_new,
+		       काष्ठा pblk_line *gc_line, u64 paddr_gc)
+अणु
+	काष्ठा ppa_addr ppa_l2p, ppa_gc;
+	पूर्णांक ret = 1;
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	/* Callers must ensure that the ppa points to a cache address */
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	/* Callers must ensure that the ppa poपूर्णांकs to a cache address */
 	BUG_ON(!pblk_addr_in_cache(ppa_new));
 	BUG_ON(pblk_rb_pos_oob(&pblk->rwb, pblk_addr_to_cacheline(ppa_new)));
-#endif
+#पूर्ण_अगर
 
 	/* logic error: lba out-of-bounds. Ignore update */
-	if (!(lba < pblk->capacity)) {
+	अगर (!(lba < pblk->capacity)) अणु
 		WARN(1, "pblk: corrupted L2P map request\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	spin_lock(&pblk->trans_lock);
 	ppa_l2p = pblk_trans_map_get(pblk, lba);
 	ppa_gc = addr_to_gen_ppa(pblk, paddr_gc, gc_line->id);
 
-	if (!pblk_ppa_comp(ppa_l2p, ppa_gc)) {
+	अगर (!pblk_ppa_comp(ppa_l2p, ppa_gc)) अणु
 		spin_lock(&gc_line->lock);
-		WARN(!test_bit(paddr_gc, gc_line->invalid_bitmap),
+		WARN(!test_bit(paddr_gc, gc_line->invalid_biपंचांगap),
 						"pblk: corrupted GC update");
 		spin_unlock(&gc_line->lock);
 
 		ret = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	pblk_trans_map_set(pblk, lba, ppa_new);
 out:
 	spin_unlock(&pblk->trans_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void pblk_update_map_dev(struct pblk *pblk, sector_t lba,
-			 struct ppa_addr ppa_mapped, struct ppa_addr ppa_cache)
-{
-	struct ppa_addr ppa_l2p;
+व्योम pblk_update_map_dev(काष्ठा pblk *pblk, sector_t lba,
+			 काष्ठा ppa_addr ppa_mapped, काष्ठा ppa_addr ppa_cache)
+अणु
+	काष्ठा ppa_addr ppa_l2p;
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
-	/* Callers must ensure that the ppa points to a device address */
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+	/* Callers must ensure that the ppa poपूर्णांकs to a device address */
 	BUG_ON(pblk_addr_in_cache(ppa_mapped));
-#endif
+#पूर्ण_अगर
 	/* Invalidate and discard padded entries */
-	if (lba == ADDR_EMPTY) {
+	अगर (lba == ADDR_EMPTY) अणु
 		atomic64_inc(&pblk->pad_wa);
-#ifdef CONFIG_NVM_PBLK_DEBUG
-		atomic_long_inc(&pblk->padded_wb);
-#endif
-		if (!pblk_ppa_empty(ppa_mapped))
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
+		atomic_दीर्घ_inc(&pblk->padded_wb);
+#पूर्ण_अगर
+		अगर (!pblk_ppa_empty(ppa_mapped))
 			pblk_map_invalidate(pblk, ppa_mapped);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* logic error: lba out-of-bounds. Ignore update */
-	if (!(lba < pblk->capacity)) {
+	अगर (!(lba < pblk->capacity)) अणु
 		WARN(1, "pblk: corrupted L2P map request\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_lock(&pblk->trans_lock);
 	ppa_l2p = pblk_trans_map_get(pblk, lba);
 
-	/* Do not update L2P if the cacheline has been updated. In this case,
+	/* Do not update L2P अगर the cacheline has been updated. In this हाल,
 	 * the mapped ppa must be invalidated
 	 */
-	if (!pblk_ppa_comp(ppa_l2p, ppa_cache)) {
-		if (!pblk_ppa_empty(ppa_mapped))
+	अगर (!pblk_ppa_comp(ppa_l2p, ppa_cache)) अणु
+		अगर (!pblk_ppa_empty(ppa_mapped))
 			pblk_map_invalidate(pblk, ppa_mapped);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-#ifdef CONFIG_NVM_PBLK_DEBUG
+#अगर_घोषित CONFIG_NVM_PBLK_DEBUG
 	WARN_ON(!pblk_addr_in_cache(ppa_l2p) && !pblk_ppa_empty(ppa_l2p));
-#endif
+#पूर्ण_अगर
 
 	pblk_trans_map_set(pblk, lba, ppa_mapped);
 out:
 	spin_unlock(&pblk->trans_lock);
-}
+पूर्ण
 
-int pblk_lookup_l2p_seq(struct pblk *pblk, struct ppa_addr *ppas,
-			 sector_t blba, int nr_secs, bool *from_cache)
-{
-	int i;
+पूर्णांक pblk_lookup_l2p_seq(काष्ठा pblk *pblk, काष्ठा ppa_addr *ppas,
+			 sector_t blba, पूर्णांक nr_secs, bool *from_cache)
+अणु
+	पूर्णांक i;
 
 	spin_lock(&pblk->trans_lock);
-	for (i = 0; i < nr_secs; i++) {
-		struct ppa_addr ppa;
+	क्रम (i = 0; i < nr_secs; i++) अणु
+		काष्ठा ppa_addr ppa;
 
 		ppa = ppas[i] = pblk_trans_map_get(pblk, blba + i);
 
 		/* If the L2P entry maps to a line, the reference is valid */
-		if (!pblk_ppa_empty(ppa) && !pblk_addr_in_cache(ppa)) {
-			struct pblk_line *line = pblk_ppa_to_line(pblk, ppa);
+		अगर (!pblk_ppa_empty(ppa) && !pblk_addr_in_cache(ppa)) अणु
+			काष्ठा pblk_line *line = pblk_ppa_to_line(pblk, ppa);
 
-			if (i > 0 && *from_cache)
-				break;
+			अगर (i > 0 && *from_cache)
+				अवरोध;
 			*from_cache = false;
 
 			kref_get(&line->ref);
-		} else {
-			if (i > 0 && !*from_cache)
-				break;
+		पूर्ण अन्यथा अणु
+			अगर (i > 0 && !*from_cache)
+				अवरोध;
 			*from_cache = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&pblk->trans_lock);
-	return i;
-}
+	वापस i;
+पूर्ण
 
-void pblk_lookup_l2p_rand(struct pblk *pblk, struct ppa_addr *ppas,
-			  u64 *lba_list, int nr_secs)
-{
+व्योम pblk_lookup_l2p_अक्रम(काष्ठा pblk *pblk, काष्ठा ppa_addr *ppas,
+			  u64 *lba_list, पूर्णांक nr_secs)
+अणु
 	u64 lba;
-	int i;
+	पूर्णांक i;
 
 	spin_lock(&pblk->trans_lock);
-	for (i = 0; i < nr_secs; i++) {
+	क्रम (i = 0; i < nr_secs; i++) अणु
 		lba = lba_list[i];
-		if (lba != ADDR_EMPTY) {
+		अगर (lba != ADDR_EMPTY) अणु
 			/* logic error: lba out-of-bounds. Ignore update */
-			if (!(lba < pblk->capacity)) {
+			अगर (!(lba < pblk->capacity)) अणु
 				WARN(1, "pblk: corrupted L2P map request\n");
-				continue;
-			}
+				जारी;
+			पूर्ण
 			ppas[i] = pblk_trans_map_get(pblk, lba);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock(&pblk->trans_lock);
-}
+पूर्ण
 
-void *pblk_get_meta_for_writes(struct pblk *pblk, struct nvm_rq *rqd)
-{
-	void *buffer;
+व्योम *pblk_get_meta_क्रम_ग_लिखोs(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd)
+अणु
+	व्योम *buffer;
 
-	if (pblk_is_oob_meta_supported(pblk)) {
+	अगर (pblk_is_oob_meta_supported(pblk)) अणु
 		/* Just use OOB metadata buffer as always */
 		buffer = rqd->meta_list;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* We need to reuse last page of request (packed metadata)
 		 * in similar way as traditional oob metadata
 		 */
 		buffer = page_to_virt(
 			rqd->bio->bi_io_vec[rqd->bio->bi_vcnt - 1].bv_page);
-	}
+	पूर्ण
 
-	return buffer;
-}
+	वापस buffer;
+पूर्ण
 
-void pblk_get_packed_meta(struct pblk *pblk, struct nvm_rq *rqd)
-{
-	void *meta_list = rqd->meta_list;
-	void *page;
-	int i = 0;
+व्योम pblk_get_packed_meta(काष्ठा pblk *pblk, काष्ठा nvm_rq *rqd)
+अणु
+	व्योम *meta_list = rqd->meta_list;
+	व्योम *page;
+	पूर्णांक i = 0;
 
-	if (pblk_is_oob_meta_supported(pblk))
-		return;
+	अगर (pblk_is_oob_meta_supported(pblk))
+		वापस;
 
 	page = page_to_virt(rqd->bio->bi_io_vec[rqd->bio->bi_vcnt - 1].bv_page);
 	/* We need to fill oob meta buffer with data from packed metadata */
-	for (; i < rqd->nr_ppas; i++)
-		memcpy(pblk_get_meta(pblk, meta_list, i),
-			page + (i * sizeof(struct pblk_sec_meta)),
-			sizeof(struct pblk_sec_meta));
-}
+	क्रम (; i < rqd->nr_ppas; i++)
+		स_नकल(pblk_get_meta(pblk, meta_list, i),
+			page + (i * माप(काष्ठा pblk_sec_meta)),
+			माप(काष्ठा pblk_sec_meta));
+पूर्ण

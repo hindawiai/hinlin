@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
 // Empiatech em28x1 audio extension
 //
@@ -11,7 +12,7 @@
 // This driver is based on my previous au600 usb pstn audio driver
 // and inherits all the copyrights
 //
-// This program is free software; you can redistribute it and/or modify
+// This program is मुक्त software; you can redistribute it and/or modअगरy
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation; either version 2 of the License, or
 // (at your option) any later version.
@@ -19,186 +20,186 @@
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+// GNU General Public License क्रम more details.
 
-#include "em28xx.h"
+#समावेश "em28xx.h"
 
-#include <linux/kernel.h>
-#include <linux/usb.h>
-#include <linux/init.h>
-#include <linux/sound.h>
-#include <linux/spinlock.h>
-#include <linux/soundcard.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/info.h>
-#include <sound/initval.h>
-#include <sound/control.h>
-#include <sound/tlv.h>
-#include <sound/ac97_codec.h>
-#include <media/v4l2-common.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sound.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/soundcard.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/info.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/control.h>
+#समावेश <sound/tlv.h>
+#समावेश <sound/ac97_codec.h>
+#समावेश <media/v4l2-common.h>
 
-static int debug;
-module_param(debug, int, 0644);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug, "activates debug info");
 
-#define EM28XX_MAX_AUDIO_BUFS		5
-#define EM28XX_MIN_AUDIO_PACKETS	64
+#घोषणा EM28XX_MAX_AUDIO_BUFS		5
+#घोषणा EM28XX_MIN_AUDIO_PACKETS	64
 
-#define dprintk(fmt, arg...) do {					\
-	if (debug)						\
-		dev_printk(KERN_DEBUG, &dev->intf->dev,			\
+#घोषणा dprपूर्णांकk(fmt, arg...) करो अणु					\
+	अगर (debug)						\
+		dev_prपूर्णांकk(KERN_DEBUG, &dev->पूर्णांकf->dev,			\
 			   "video: %s: " fmt, __func__, ## arg);	\
-} while (0)
+पूर्ण जबतक (0)
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
 
-static int em28xx_deinit_isoc_audio(struct em28xx *dev)
-{
-	int i;
+अटल पूर्णांक em28xx_deinit_isoc_audio(काष्ठा em28xx *dev)
+अणु
+	पूर्णांक i;
 
-	dprintk("Stopping isoc\n");
-	for (i = 0; i < dev->adev.num_urb; i++) {
-		struct urb *urb = dev->adev.urb[i];
+	dprपूर्णांकk("Stopping isoc\n");
+	क्रम (i = 0; i < dev->adev.num_urb; i++) अणु
+		काष्ठा urb *urb = dev->adev.urb[i];
 
-		if (!irqs_disabled())
-			usb_kill_urb(urb);
-		else
+		अगर (!irqs_disabled())
+			usb_समाप्त_urb(urb);
+		अन्यथा
 			usb_unlink_urb(urb);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void em28xx_audio_isocirq(struct urb *urb)
-{
-	struct em28xx            *dev = urb->context;
-	int                      i;
-	unsigned int             oldptr;
-	int                      period_elapsed = 0;
-	int                      status;
-	unsigned char            *cp;
-	unsigned int             stride;
-	struct snd_pcm_substream *substream;
-	struct snd_pcm_runtime   *runtime;
+अटल व्योम em28xx_audio_isocirq(काष्ठा urb *urb)
+अणु
+	काष्ठा em28xx            *dev = urb->context;
+	पूर्णांक                      i;
+	अचिन्हित पूर्णांक             oldptr;
+	पूर्णांक                      period_elapsed = 0;
+	पूर्णांक                      status;
+	अचिन्हित अक्षर            *cp;
+	अचिन्हित पूर्णांक             stride;
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm_runसमय   *runसमय;
 
-	if (dev->disconnected) {
-		dprintk("device disconnected while streaming. URB status=%d.\n",
+	अगर (dev->disconnected) अणु
+		dprपूर्णांकk("device disconnected while streaming. URB status=%d.\n",
 			urb->status);
 		atomic_set(&dev->adev.stream_started, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (urb->status) {
-	case 0:             /* success */
-	case -ETIMEDOUT:    /* NAK */
-		break;
-	case -ECONNRESET:   /* kill */
-	case -ENOENT:
-	case -ESHUTDOWN:
-		return;
-	default:            /* error */
-		dprintk("urb completion error %d.\n", urb->status);
-		break;
-	}
+	चयन (urb->status) अणु
+	हाल 0:             /* success */
+	हाल -ETIMEDOUT:    /* NAK */
+		अवरोध;
+	हाल -ECONNRESET:   /* समाप्त */
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
+		वापस;
+	शेष:            /* error */
+		dprपूर्णांकk("urb completion error %d.\n", urb->status);
+		अवरोध;
+	पूर्ण
 
-	if (atomic_read(&dev->adev.stream_started) == 0)
-		return;
+	अगर (atomic_पढ़ो(&dev->adev.stream_started) == 0)
+		वापस;
 
-	if (dev->adev.capture_pcm_substream) {
+	अगर (dev->adev.capture_pcm_substream) अणु
 		substream = dev->adev.capture_pcm_substream;
-		runtime = substream->runtime;
-		stride = runtime->frame_bits >> 3;
+		runसमय = substream->runसमय;
+		stride = runसमय->frame_bits >> 3;
 
-		for (i = 0; i < urb->number_of_packets; i++) {
-			unsigned long flags;
-			int length =
+		क्रम (i = 0; i < urb->number_of_packets; i++) अणु
+			अचिन्हित दीर्घ flags;
+			पूर्णांक length =
 			    urb->iso_frame_desc[i].actual_length / stride;
-			cp = (unsigned char *)urb->transfer_buffer +
+			cp = (अचिन्हित अक्षर *)urb->transfer_buffer +
 			    urb->iso_frame_desc[i].offset;
 
-			if (!length)
-				continue;
+			अगर (!length)
+				जारी;
 
-			oldptr = dev->adev.hwptr_done_capture;
-			if (oldptr + length >= runtime->buffer_size) {
-				unsigned int cnt =
-				    runtime->buffer_size - oldptr;
-				memcpy(runtime->dma_area + oldptr * stride, cp,
+			oldptr = dev->adev.hwptr_करोne_capture;
+			अगर (oldptr + length >= runसमय->buffer_size) अणु
+				अचिन्हित पूर्णांक cnt =
+				    runसमय->buffer_size - oldptr;
+				स_नकल(runसमय->dma_area + oldptr * stride, cp,
 				       cnt * stride);
-				memcpy(runtime->dma_area, cp + cnt * stride,
+				स_नकल(runसमय->dma_area, cp + cnt * stride,
 				       length * stride - cnt * stride);
-			} else {
-				memcpy(runtime->dma_area + oldptr * stride, cp,
+			पूर्ण अन्यथा अणु
+				स_नकल(runसमय->dma_area + oldptr * stride, cp,
 				       length * stride);
-			}
+			पूर्ण
 
 			snd_pcm_stream_lock_irqsave(substream, flags);
 
-			dev->adev.hwptr_done_capture += length;
-			if (dev->adev.hwptr_done_capture >=
-			    runtime->buffer_size)
-				dev->adev.hwptr_done_capture -=
-				    runtime->buffer_size;
+			dev->adev.hwptr_करोne_capture += length;
+			अगर (dev->adev.hwptr_करोne_capture >=
+			    runसमय->buffer_size)
+				dev->adev.hwptr_करोne_capture -=
+				    runसमय->buffer_size;
 
-			dev->adev.capture_transfer_done += length;
-			if (dev->adev.capture_transfer_done >=
-			    runtime->period_size) {
-				dev->adev.capture_transfer_done -=
-				    runtime->period_size;
+			dev->adev.capture_transfer_करोne += length;
+			अगर (dev->adev.capture_transfer_करोne >=
+			    runसमय->period_size) अणु
+				dev->adev.capture_transfer_करोne -=
+				    runसमय->period_size;
 				period_elapsed = 1;
-			}
+			पूर्ण
 
 			snd_pcm_stream_unlock_irqrestore(substream, flags);
-		}
-		if (period_elapsed)
+		पूर्ण
+		अगर (period_elapsed)
 			snd_pcm_period_elapsed(substream);
-	}
+	पूर्ण
 	urb->status = 0;
 
 	status = usb_submit_urb(urb, GFP_ATOMIC);
-	if (status < 0)
-		dev_err(&dev->intf->dev,
+	अगर (status < 0)
+		dev_err(&dev->पूर्णांकf->dev,
 			"resubmit of audio urb failed (error=%i)\n",
 			status);
-}
+पूर्ण
 
-static int em28xx_init_audio_isoc(struct em28xx *dev)
-{
-	int       i, err;
+अटल पूर्णांक em28xx_init_audio_isoc(काष्ठा em28xx *dev)
+अणु
+	पूर्णांक       i, err;
 
-	dprintk("Starting isoc transfers\n");
+	dprपूर्णांकk("Starting isoc transfers\n");
 
 	/* Start streaming */
-	for (i = 0; i < dev->adev.num_urb; i++) {
-		memset(dev->adev.transfer_buffer[i], 0x80,
+	क्रम (i = 0; i < dev->adev.num_urb; i++) अणु
+		स_रखो(dev->adev.transfer_buffer[i], 0x80,
 		       dev->adev.urb[i]->transfer_buffer_length);
 
 		err = usb_submit_urb(dev->adev.urb[i], GFP_ATOMIC);
-		if (err) {
-			dev_err(&dev->intf->dev,
+		अगर (err) अणु
+			dev_err(&dev->पूर्णांकf->dev,
 				"submit of audio urb failed (error=%i)\n",
 				err);
 			em28xx_deinit_isoc_audio(dev);
 			atomic_set(&dev->adev.stream_started, 0);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_pcm_hardware snd_em28xx_hw_capture = {
+अटल स्थिर काष्ठा snd_pcm_hardware snd_em28xx_hw_capture = अणु
 	.info = SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_MMAP           |
 		SNDRV_PCM_INFO_INTERLEAVED    |
 		SNDRV_PCM_INFO_BATCH	      |
 		SNDRV_PCM_INFO_MMAP_VALID,
 
-	.formats = SNDRV_PCM_FMTBIT_S16_LE,
+	.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
 
 	.rates = SNDRV_PCM_RATE_48000,
 
@@ -209,9 +210,9 @@ static const struct snd_pcm_hardware snd_em28xx_hw_capture = {
 	.buffer_bytes_max = 62720 * 8,	/* just about the value in usbaudio.c */
 
 	/*
-	 * The period is 12.288 bytes. Allow a 10% of variation along its
-	 * value, in order to avoid overruns/underruns due to some clock
-	 * drift.
+	 * The period is 12.288 bytes. Allow a 10% of variation aदीर्घ its
+	 * value, in order to aव्योम overruns/underruns due to some घड़ी
+	 * drअगरt.
 	 *
 	 * FIXME: This period assumes 64 packets, and a 48000 PCM rate.
 	 * Calculate it dynamically.
@@ -221,512 +222,512 @@ static const struct snd_pcm_hardware snd_em28xx_hw_capture = {
 
 	.periods_min = 2,
 	.periods_max = 98,		/* 12544, */
-};
+पूर्ण;
 
-static int snd_em28xx_capture_open(struct snd_pcm_substream *substream)
-{
-	struct em28xx *dev = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	int nonblock, ret = 0;
+अटल पूर्णांक snd_em28xx_capture_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा em28xx *dev = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	पूर्णांक nonblock, ret = 0;
 
-	if (!dev) {
+	अगर (!dev) अणु
 		pr_err("em28xx-audio: BUG: em28xx can't find device struct. Can't proceed with open\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (dev->disconnected)
-		return -ENODEV;
+	अगर (dev->disconnected)
+		वापस -ENODEV;
 
-	dprintk("opening device and trying to acquire exclusive lock\n");
+	dprपूर्णांकk("opening device and trying to acquire exclusive lock\n");
 
 	nonblock = !!(substream->f_flags & O_NONBLOCK);
-	if (nonblock) {
-		if (!mutex_trylock(&dev->lock))
-			return -EAGAIN;
-	} else {
+	अगर (nonblock) अणु
+		अगर (!mutex_trylock(&dev->lock))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		mutex_lock(&dev->lock);
-	}
+	पूर्ण
 
-	runtime->hw = snd_em28xx_hw_capture;
+	runसमय->hw = snd_em28xx_hw_capture;
 
-	if (dev->adev.users == 0) {
-		if (!dev->alt || dev->is_audio_only) {
-			struct usb_device *udev;
+	अगर (dev->adev.users == 0) अणु
+		अगर (!dev->alt || dev->is_audio_only) अणु
+			काष्ठा usb_device *udev;
 
-			udev = interface_to_usbdev(dev->intf);
+			udev = पूर्णांकerface_to_usbdev(dev->पूर्णांकf);
 
-			if (dev->is_audio_only)
-				/* audio is on a separate interface */
+			अगर (dev->is_audio_only)
+				/* audio is on a separate पूर्णांकerface */
 				dev->alt = 1;
-			else
-				/* audio is on the same interface as video */
+			अन्यथा
+				/* audio is on the same पूर्णांकerface as video */
 				dev->alt = 7;
 				/*
-				 * FIXME: The intention seems to be to select
+				 * FIXME: The पूर्णांकention seems to be to select
 				 * the alt setting with the largest
-				 * wMaxPacketSize for the video endpoint.
+				 * wMaxPacketSize क्रम the video endpoपूर्णांक.
 				 * At least dev->alt should be used instead, but
-				 * we should probably not touch it at all if it
-				 * is already >0, because wMaxPacketSize of the
-				 * audio endpoints seems to be the same for all.
+				 * we should probably not touch it at all अगर it
+				 * is alपढ़ोy >0, because wMaxPacketSize of the
+				 * audio endpoपूर्णांकs seems to be the same क्रम all.
 				 */
-			dprintk("changing alternate number on interface %d to %d\n",
-				dev->ifnum, dev->alt);
-			usb_set_interface(udev, dev->ifnum, dev->alt);
-		}
+			dprपूर्णांकk("changing alternate number on interface %d to %d\n",
+				dev->अगरnum, dev->alt);
+			usb_set_पूर्णांकerface(udev, dev->अगरnum, dev->alt);
+		पूर्ण
 
 		/* Sets volume, mute, etc */
 		dev->mute = 0;
 		ret = em28xx_audio_analog_set(dev);
-		if (ret < 0)
-			goto err;
-	}
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
 
 	kref_get(&dev->ref);
 	dev->adev.users++;
 	mutex_unlock(&dev->lock);
 
 	/* Dynamically adjust the period size */
-	snd_pcm_hw_constraint_integer(runtime, SNDRV_PCM_HW_PARAM_PERIODS);
-	snd_pcm_hw_constraint_minmax(runtime, SNDRV_PCM_HW_PARAM_PERIOD_BYTES,
+	snd_pcm_hw_स्थिरraपूर्णांक_पूर्णांकeger(runसमय, SNDRV_PCM_HW_PARAM_PERIODS);
+	snd_pcm_hw_स्थिरraपूर्णांक_minmax(runसमय, SNDRV_PCM_HW_PARAM_PERIOD_BYTES,
 				     dev->adev.period * 95 / 100,
 				     dev->adev.period * 105 / 100);
 
 	dev->adev.capture_pcm_substream = substream;
 
-	return 0;
+	वापस 0;
 err:
 	mutex_unlock(&dev->lock);
 
-	dev_err(&dev->intf->dev,
+	dev_err(&dev->पूर्णांकf->dev,
 		"Error while configuring em28xx mixer\n");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int snd_em28xx_pcm_close(struct snd_pcm_substream *substream)
-{
-	struct em28xx *dev = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_em28xx_pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा em28xx *dev = snd_pcm_substream_chip(substream);
 
-	dprintk("closing device\n");
+	dprपूर्णांकk("closing device\n");
 
 	dev->mute = 1;
 	mutex_lock(&dev->lock);
 	dev->adev.users--;
-	if (atomic_read(&dev->adev.stream_started) > 0) {
+	अगर (atomic_पढ़ो(&dev->adev.stream_started) > 0) अणु
 		atomic_set(&dev->adev.stream_started, 0);
 		schedule_work(&dev->adev.wq_trigger);
-	}
+	पूर्ण
 
 	em28xx_audio_analog_set(dev);
 	mutex_unlock(&dev->lock);
-	kref_put(&dev->ref, em28xx_free_device);
+	kref_put(&dev->ref, em28xx_मुक्त_device);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_em28xx_prepare(struct snd_pcm_substream *substream)
-{
-	struct em28xx *dev = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_em28xx_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा em28xx *dev = snd_pcm_substream_chip(substream);
 
-	if (dev->disconnected)
-		return -ENODEV;
+	अगर (dev->disconnected)
+		वापस -ENODEV;
 
-	dev->adev.hwptr_done_capture = 0;
-	dev->adev.capture_transfer_done = 0;
+	dev->adev.hwptr_करोne_capture = 0;
+	dev->adev.capture_transfer_करोne = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void audio_trigger(struct work_struct *work)
-{
-	struct em28xx_audio *adev =
-			    container_of(work, struct em28xx_audio, wq_trigger);
-	struct em28xx *dev = container_of(adev, struct em28xx, adev);
+अटल व्योम audio_trigger(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा em28xx_audio *adev =
+			    container_of(work, काष्ठा em28xx_audio, wq_trigger);
+	काष्ठा em28xx *dev = container_of(adev, काष्ठा em28xx, adev);
 
-	if (atomic_read(&adev->stream_started)) {
-		dprintk("starting capture");
+	अगर (atomic_पढ़ो(&adev->stream_started)) अणु
+		dprपूर्णांकk("starting capture");
 		em28xx_init_audio_isoc(dev);
-	} else {
-		dprintk("stopping capture");
+	पूर्ण अन्यथा अणु
+		dprपूर्णांकk("stopping capture");
 		em28xx_deinit_isoc_audio(dev);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int snd_em28xx_capture_trigger(struct snd_pcm_substream *substream,
-				      int cmd)
-{
-	struct em28xx *dev = snd_pcm_substream_chip(substream);
-	int retval = 0;
+अटल पूर्णांक snd_em28xx_capture_trigger(काष्ठा snd_pcm_substream *substream,
+				      पूर्णांक cmd)
+अणु
+	काष्ठा em28xx *dev = snd_pcm_substream_chip(substream);
+	पूर्णांक retval = 0;
 
-	if (dev->disconnected)
-		return -ENODEV;
+	अगर (dev->disconnected)
+		वापस -ENODEV;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_START:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_START:
 		atomic_set(&dev->adev.stream_started, 1);
-		break;
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_STOP:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_STOP:
 		atomic_set(&dev->adev.stream_started, 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		retval = -EINVAL;
-	}
+	पूर्ण
 	schedule_work(&dev->adev.wq_trigger);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static snd_pcm_uframes_t snd_em28xx_capture_pointer(struct snd_pcm_substream
+अटल snd_pcm_uframes_t snd_em28xx_capture_poपूर्णांकer(काष्ठा snd_pcm_substream
 						    *substream)
-{
-	unsigned long flags;
-	struct em28xx *dev;
-	snd_pcm_uframes_t hwptr_done;
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा em28xx *dev;
+	snd_pcm_uframes_t hwptr_करोne;
 
 	dev = snd_pcm_substream_chip(substream);
-	if (dev->disconnected)
-		return SNDRV_PCM_POS_XRUN;
+	अगर (dev->disconnected)
+		वापस SNDRV_PCM_POS_XRUN;
 
 	spin_lock_irqsave(&dev->adev.slock, flags);
-	hwptr_done = dev->adev.hwptr_done_capture;
+	hwptr_करोne = dev->adev.hwptr_करोne_capture;
 	spin_unlock_irqrestore(&dev->adev.slock, flags);
 
-	return hwptr_done;
-}
+	वापस hwptr_करोne;
+पूर्ण
 
 /*
  * AC97 volume control support
  */
-static int em28xx_vol_info(struct snd_kcontrol *kcontrol,
-			   struct snd_ctl_elem_info *info)
-{
-	struct em28xx *dev = snd_kcontrol_chip(kcontrol);
+अटल पूर्णांक em28xx_vol_info(काष्ठा snd_kcontrol *kcontrol,
+			   काष्ठा snd_ctl_elem_info *info)
+अणु
+	काष्ठा em28xx *dev = snd_kcontrol_chip(kcontrol);
 
-	if (dev->disconnected)
-		return -ENODEV;
+	अगर (dev->disconnected)
+		वापस -ENODEV;
 
 	info->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	info->count = 2;
-	info->value.integer.min = 0;
-	info->value.integer.max = 0x1f;
+	info->value.पूर्णांकeger.min = 0;
+	info->value.पूर्णांकeger.max = 0x1f;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int em28xx_vol_put(struct snd_kcontrol *kcontrol,
-			  struct snd_ctl_elem_value *value)
-{
-	struct em28xx *dev = snd_kcontrol_chip(kcontrol);
-	struct snd_pcm_substream *substream = dev->adev.capture_pcm_substream;
-	u16 val = (0x1f - (value->value.integer.value[0] & 0x1f)) |
-		  (0x1f - (value->value.integer.value[1] & 0x1f)) << 8;
-	int nonblock = 0;
-	int rc;
+अटल पूर्णांक em28xx_vol_put(काष्ठा snd_kcontrol *kcontrol,
+			  काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा em28xx *dev = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_pcm_substream *substream = dev->adev.capture_pcm_substream;
+	u16 val = (0x1f - (value->value.पूर्णांकeger.value[0] & 0x1f)) |
+		  (0x1f - (value->value.पूर्णांकeger.value[1] & 0x1f)) << 8;
+	पूर्णांक nonblock = 0;
+	पूर्णांक rc;
 
-	if (dev->disconnected)
-		return -ENODEV;
+	अगर (dev->disconnected)
+		वापस -ENODEV;
 
-	if (substream)
+	अगर (substream)
 		nonblock = !!(substream->f_flags & O_NONBLOCK);
-	if (nonblock) {
-		if (!mutex_trylock(&dev->lock))
-			return -EAGAIN;
-	} else {
+	अगर (nonblock) अणु
+		अगर (!mutex_trylock(&dev->lock))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		mutex_lock(&dev->lock);
-	}
-	rc = em28xx_read_ac97(dev, kcontrol->private_value);
-	if (rc < 0)
-		goto err;
+	पूर्ण
+	rc = em28xx_पढ़ो_ac97(dev, kcontrol->निजी_value);
+	अगर (rc < 0)
+		जाओ err;
 
 	val |= rc & 0x8000;	/* Preserve the mute flag */
 
-	rc = em28xx_write_ac97(dev, kcontrol->private_value, val);
-	if (rc < 0)
-		goto err;
+	rc = em28xx_ग_लिखो_ac97(dev, kcontrol->निजी_value, val);
+	अगर (rc < 0)
+		जाओ err;
 
-	dprintk("%sleft vol %d, right vol %d (0x%04x) to ac97 volume control 0x%04x\n",
+	dprपूर्णांकk("%sleft vol %d, right vol %d (0x%04x) to ac97 volume control 0x%04x\n",
 		(val & 0x8000) ? "muted " : "",
 		0x1f - ((val >> 8) & 0x1f), 0x1f - (val & 0x1f),
-		val, (int)kcontrol->private_value);
+		val, (पूर्णांक)kcontrol->निजी_value);
 
 err:
 	mutex_unlock(&dev->lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int em28xx_vol_get(struct snd_kcontrol *kcontrol,
-			  struct snd_ctl_elem_value *value)
-{
-	struct em28xx *dev = snd_kcontrol_chip(kcontrol);
-	struct snd_pcm_substream *substream = dev->adev.capture_pcm_substream;
-	int nonblock = 0;
-	int val;
+अटल पूर्णांक em28xx_vol_get(काष्ठा snd_kcontrol *kcontrol,
+			  काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा em28xx *dev = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_pcm_substream *substream = dev->adev.capture_pcm_substream;
+	पूर्णांक nonblock = 0;
+	पूर्णांक val;
 
-	if (dev->disconnected)
-		return -ENODEV;
+	अगर (dev->disconnected)
+		वापस -ENODEV;
 
-	if (substream)
+	अगर (substream)
 		nonblock = !!(substream->f_flags & O_NONBLOCK);
-	if (nonblock) {
-		if (!mutex_trylock(&dev->lock))
-			return -EAGAIN;
-	} else {
+	अगर (nonblock) अणु
+		अगर (!mutex_trylock(&dev->lock))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		mutex_lock(&dev->lock);
-	}
-	val = em28xx_read_ac97(dev, kcontrol->private_value);
+	पूर्ण
+	val = em28xx_पढ़ो_ac97(dev, kcontrol->निजी_value);
 	mutex_unlock(&dev->lock);
-	if (val < 0)
-		return val;
+	अगर (val < 0)
+		वापस val;
 
-	dprintk("%sleft vol %d, right vol %d (0x%04x) from ac97 volume control 0x%04x\n",
+	dprपूर्णांकk("%sleft vol %d, right vol %d (0x%04x) from ac97 volume control 0x%04x\n",
 		(val & 0x8000) ? "muted " : "",
 		0x1f - ((val >> 8) & 0x1f), 0x1f - (val & 0x1f),
-		val, (int)kcontrol->private_value);
+		val, (पूर्णांक)kcontrol->निजी_value);
 
-	value->value.integer.value[0] = 0x1f - (val & 0x1f);
-	value->value.integer.value[1] = 0x1f - ((val >> 8) & 0x1f);
+	value->value.पूर्णांकeger.value[0] = 0x1f - (val & 0x1f);
+	value->value.पूर्णांकeger.value[1] = 0x1f - ((val >> 8) & 0x1f);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int em28xx_vol_put_mute(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *value)
-{
-	struct em28xx *dev = snd_kcontrol_chip(kcontrol);
-	u16 val = value->value.integer.value[0];
-	struct snd_pcm_substream *substream = dev->adev.capture_pcm_substream;
-	int nonblock = 0;
-	int rc;
+अटल पूर्णांक em28xx_vol_put_mute(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा em28xx *dev = snd_kcontrol_chip(kcontrol);
+	u16 val = value->value.पूर्णांकeger.value[0];
+	काष्ठा snd_pcm_substream *substream = dev->adev.capture_pcm_substream;
+	पूर्णांक nonblock = 0;
+	पूर्णांक rc;
 
-	if (dev->disconnected)
-		return -ENODEV;
+	अगर (dev->disconnected)
+		वापस -ENODEV;
 
-	if (substream)
+	अगर (substream)
 		nonblock = !!(substream->f_flags & O_NONBLOCK);
-	if (nonblock) {
-		if (!mutex_trylock(&dev->lock))
-			return -EAGAIN;
-	} else {
+	अगर (nonblock) अणु
+		अगर (!mutex_trylock(&dev->lock))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		mutex_lock(&dev->lock);
-	}
-	rc = em28xx_read_ac97(dev, kcontrol->private_value);
-	if (rc < 0)
-		goto err;
+	पूर्ण
+	rc = em28xx_पढ़ो_ac97(dev, kcontrol->निजी_value);
+	अगर (rc < 0)
+		जाओ err;
 
-	if (val)
+	अगर (val)
 		rc &= 0x1f1f;
-	else
+	अन्यथा
 		rc |= 0x8000;
 
-	rc = em28xx_write_ac97(dev, kcontrol->private_value, rc);
-	if (rc < 0)
-		goto err;
+	rc = em28xx_ग_लिखो_ac97(dev, kcontrol->निजी_value, rc);
+	अगर (rc < 0)
+		जाओ err;
 
-	dprintk("%sleft vol %d, right vol %d (0x%04x) to ac97 volume control 0x%04x\n",
+	dprपूर्णांकk("%sleft vol %d, right vol %d (0x%04x) to ac97 volume control 0x%04x\n",
 		(val & 0x8000) ? "muted " : "",
 		0x1f - ((val >> 8) & 0x1f), 0x1f - (val & 0x1f),
-		val, (int)kcontrol->private_value);
+		val, (पूर्णांक)kcontrol->निजी_value);
 
 err:
 	mutex_unlock(&dev->lock);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int em28xx_vol_get_mute(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *value)
-{
-	struct em28xx *dev = snd_kcontrol_chip(kcontrol);
-	struct snd_pcm_substream *substream = dev->adev.capture_pcm_substream;
-	int nonblock = 0;
-	int val;
+अटल पूर्णांक em28xx_vol_get_mute(काष्ठा snd_kcontrol *kcontrol,
+			       काष्ठा snd_ctl_elem_value *value)
+अणु
+	काष्ठा em28xx *dev = snd_kcontrol_chip(kcontrol);
+	काष्ठा snd_pcm_substream *substream = dev->adev.capture_pcm_substream;
+	पूर्णांक nonblock = 0;
+	पूर्णांक val;
 
-	if (dev->disconnected)
-		return -ENODEV;
+	अगर (dev->disconnected)
+		वापस -ENODEV;
 
-	if (substream)
+	अगर (substream)
 		nonblock = !!(substream->f_flags & O_NONBLOCK);
-	if (nonblock) {
-		if (!mutex_trylock(&dev->lock))
-			return -EAGAIN;
-	} else {
+	अगर (nonblock) अणु
+		अगर (!mutex_trylock(&dev->lock))
+			वापस -EAGAIN;
+	पूर्ण अन्यथा अणु
 		mutex_lock(&dev->lock);
-	}
-	val = em28xx_read_ac97(dev, kcontrol->private_value);
+	पूर्ण
+	val = em28xx_पढ़ो_ac97(dev, kcontrol->निजी_value);
 	mutex_unlock(&dev->lock);
-	if (val < 0)
-		return val;
+	अगर (val < 0)
+		वापस val;
 
-	if (val & 0x8000)
-		value->value.integer.value[0] = 0;
-	else
-		value->value.integer.value[0] = 1;
+	अगर (val & 0x8000)
+		value->value.पूर्णांकeger.value[0] = 0;
+	अन्यथा
+		value->value.पूर्णांकeger.value[0] = 1;
 
-	dprintk("%sleft vol %d, right vol %d (0x%04x) from ac97 volume control 0x%04x\n",
+	dprपूर्णांकk("%sleft vol %d, right vol %d (0x%04x) from ac97 volume control 0x%04x\n",
 		(val & 0x8000) ? "muted " : "",
 		0x1f - ((val >> 8) & 0x1f), 0x1f - (val & 0x1f),
-		val, (int)kcontrol->private_value);
+		val, (पूर्णांक)kcontrol->निजी_value);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const DECLARE_TLV_DB_SCALE(em28xx_db_scale, -3450, 150, 0);
+अटल स्थिर DECLARE_TLV_DB_SCALE(em28xx_db_scale, -3450, 150, 0);
 
-static int em28xx_cvol_new(struct snd_card *card, struct em28xx *dev,
-			   char *name, int id)
-{
-	int err;
-	char ctl_name[44];
-	struct snd_kcontrol *kctl;
-	struct snd_kcontrol_new tmp;
+अटल पूर्णांक em28xx_cvol_new(काष्ठा snd_card *card, काष्ठा em28xx *dev,
+			   अक्षर *name, पूर्णांक id)
+अणु
+	पूर्णांक err;
+	अक्षर ctl_name[44];
+	काष्ठा snd_kcontrol *kctl;
+	काष्ठा snd_kcontrol_new पंचांगp;
 
-	memset(&tmp, 0, sizeof(tmp));
-	tmp.iface = SNDRV_CTL_ELEM_IFACE_MIXER;
-	tmp.private_value = id;
-	tmp.name  = ctl_name;
+	स_रखो(&पंचांगp, 0, माप(पंचांगp));
+	पंचांगp.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
+	पंचांगp.निजी_value = id;
+	पंचांगp.name  = ctl_name;
 
 	/* Add Mute Control */
-	sprintf(ctl_name, "%s Switch", name);
-	tmp.get  = em28xx_vol_get_mute;
-	tmp.put  = em28xx_vol_put_mute;
-	tmp.info = snd_ctl_boolean_mono_info;
-	kctl = snd_ctl_new1(&tmp, dev);
+	प्र_लिखो(ctl_name, "%s Switch", name);
+	पंचांगp.get  = em28xx_vol_get_mute;
+	पंचांगp.put  = em28xx_vol_put_mute;
+	पंचांगp.info = snd_ctl_boolean_mono_info;
+	kctl = snd_ctl_new1(&पंचांगp, dev);
 	err = snd_ctl_add(card, kctl);
-	if (err < 0)
-		return err;
-	dprintk("Added control %s for ac97 volume control 0x%04x\n",
+	अगर (err < 0)
+		वापस err;
+	dprपूर्णांकk("Added control %s for ac97 volume control 0x%04x\n",
 		ctl_name, id);
 
-	memset(&tmp, 0, sizeof(tmp));
-	tmp.iface = SNDRV_CTL_ELEM_IFACE_MIXER;
-	tmp.private_value = id;
-	tmp.name  = ctl_name;
+	स_रखो(&पंचांगp, 0, माप(पंचांगp));
+	पंचांगp.अगरace = SNDRV_CTL_ELEM_IFACE_MIXER;
+	पंचांगp.निजी_value = id;
+	पंचांगp.name  = ctl_name;
 
 	/* Add Volume Control */
-	sprintf(ctl_name, "%s Volume", name);
-	tmp.get   = em28xx_vol_get;
-	tmp.put   = em28xx_vol_put;
-	tmp.info  = em28xx_vol_info;
-	tmp.tlv.p = em28xx_db_scale;
-	kctl = snd_ctl_new1(&tmp, dev);
+	प्र_लिखो(ctl_name, "%s Volume", name);
+	पंचांगp.get   = em28xx_vol_get;
+	पंचांगp.put   = em28xx_vol_put;
+	पंचांगp.info  = em28xx_vol_info;
+	पंचांगp.tlv.p = em28xx_db_scale;
+	kctl = snd_ctl_new1(&पंचांगp, dev);
 	err = snd_ctl_add(card, kctl);
-	if (err < 0)
-		return err;
-	dprintk("Added control %s for ac97 volume control 0x%04x\n",
+	अगर (err < 0)
+		वापस err;
+	dprपूर्णांकk("Added control %s for ac97 volume control 0x%04x\n",
 		ctl_name, id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * register/unregister code and data
+ * रेजिस्टर/unरेजिस्टर code and data
  */
-static const struct snd_pcm_ops snd_em28xx_pcm_capture = {
-	.open      = snd_em28xx_capture_open,
-	.close     = snd_em28xx_pcm_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_em28xx_pcm_capture = अणु
+	.खोलो      = snd_em28xx_capture_खोलो,
+	.बंद     = snd_em28xx_pcm_बंद,
 	.prepare   = snd_em28xx_prepare,
 	.trigger   = snd_em28xx_capture_trigger,
-	.pointer   = snd_em28xx_capture_pointer,
-};
+	.poपूर्णांकer   = snd_em28xx_capture_poपूर्णांकer,
+पूर्ण;
 
-static void em28xx_audio_free_urb(struct em28xx *dev)
-{
-	struct usb_device *udev = interface_to_usbdev(dev->intf);
-	int i;
+अटल व्योम em28xx_audio_मुक्त_urb(काष्ठा em28xx *dev)
+अणु
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(dev->पूर्णांकf);
+	पूर्णांक i;
 
-	for (i = 0; i < dev->adev.num_urb; i++) {
-		struct urb *urb = dev->adev.urb[i];
+	क्रम (i = 0; i < dev->adev.num_urb; i++) अणु
+		काष्ठा urb *urb = dev->adev.urb[i];
 
-		if (!urb)
-			continue;
+		अगर (!urb)
+			जारी;
 
-		usb_free_coherent(udev, urb->transfer_buffer_length,
+		usb_मुक्त_coherent(udev, urb->transfer_buffer_length,
 				  dev->adev.transfer_buffer[i],
 				  urb->transfer_dma);
 
-		usb_free_urb(urb);
-	}
-	kfree(dev->adev.urb);
-	kfree(dev->adev.transfer_buffer);
+		usb_मुक्त_urb(urb);
+	पूर्ण
+	kमुक्त(dev->adev.urb);
+	kमुक्त(dev->adev.transfer_buffer);
 	dev->adev.num_urb = 0;
-}
+पूर्ण
 
-/* high bandwidth multiplier, as encoded in highspeed endpoint descriptors */
-static int em28xx_audio_ep_packet_size(struct usb_device *udev,
-				       struct usb_endpoint_descriptor *e)
-{
-	int size = le16_to_cpu(e->wMaxPacketSize);
+/* high bandwidth multiplier, as encoded in highspeed endpoपूर्णांक descriptors */
+अटल पूर्णांक em28xx_audio_ep_packet_size(काष्ठा usb_device *udev,
+				       काष्ठा usb_endpoपूर्णांक_descriptor *e)
+अणु
+	पूर्णांक size = le16_to_cpu(e->wMaxPacketSize);
 
-	if (udev->speed == USB_SPEED_HIGH)
-		return (size & 0x7ff) *  (1 + (((size) >> 11) & 0x03));
+	अगर (udev->speed == USB_SPEED_HIGH)
+		वापस (size & 0x7ff) *  (1 + (((size) >> 11) & 0x03));
 
-	return size & 0x7ff;
-}
+	वापस size & 0x7ff;
+पूर्ण
 
-static int em28xx_audio_urb_init(struct em28xx *dev)
-{
-	struct usb_interface *intf;
-	struct usb_endpoint_descriptor *e, *ep = NULL;
-	struct usb_device *udev = interface_to_usbdev(dev->intf);
-	int                 i, ep_size, interval, num_urb, npackets;
-	int		    urb_size, bytes_per_transfer;
+अटल पूर्णांक em28xx_audio_urb_init(काष्ठा em28xx *dev)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा usb_endpoपूर्णांक_descriptor *e, *ep = शून्य;
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(dev->पूर्णांकf);
+	पूर्णांक                 i, ep_size, पूर्णांकerval, num_urb, npackets;
+	पूर्णांक		    urb_size, bytes_per_transfer;
 	u8 alt;
 
-	if (dev->ifnum)
+	अगर (dev->अगरnum)
 		alt = 1;
-	else
+	अन्यथा
 		alt = 7;
 
-	intf = usb_ifnum_to_if(udev, dev->ifnum);
+	पूर्णांकf = usb_अगरnum_to_अगर(udev, dev->अगरnum);
 
-	if (intf->num_altsetting <= alt) {
-		dev_err(&dev->intf->dev, "alt %d doesn't exist on interface %d\n",
-			dev->ifnum, alt);
-		return -ENODEV;
-	}
+	अगर (पूर्णांकf->num_altsetting <= alt) अणु
+		dev_err(&dev->पूर्णांकf->dev, "alt %d doesn't exist on interface %d\n",
+			dev->अगरnum, alt);
+		वापस -ENODEV;
+	पूर्ण
 
-	for (i = 0; i < intf->altsetting[alt].desc.bNumEndpoints; i++) {
-		e = &intf->altsetting[alt].endpoint[i].desc;
-		if (!usb_endpoint_dir_in(e))
-			continue;
-		if (e->bEndpointAddress == EM28XX_EP_AUDIO) {
+	क्रम (i = 0; i < पूर्णांकf->altsetting[alt].desc.bNumEndpoपूर्णांकs; i++) अणु
+		e = &पूर्णांकf->altsetting[alt].endpoपूर्णांक[i].desc;
+		अगर (!usb_endpoपूर्णांक_dir_in(e))
+			जारी;
+		अगर (e->bEndpoपूर्णांकAddress == EM28XX_EP_AUDIO) अणु
 			ep = e;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!ep) {
-		dev_err(&dev->intf->dev, "Couldn't find an audio endpoint");
-		return -ENODEV;
-	}
+	अगर (!ep) अणु
+		dev_err(&dev->पूर्णांकf->dev, "Couldn't find an audio endpoint");
+		वापस -ENODEV;
+	पूर्ण
 
 	ep_size = em28xx_audio_ep_packet_size(udev, ep);
-	interval = 1 << (ep->bInterval - 1);
+	पूर्णांकerval = 1 << (ep->bInterval - 1);
 
-	dev_info(&dev->intf->dev,
+	dev_info(&dev->पूर्णांकf->dev,
 		 "Endpoint 0x%02x %s on intf %d alt %d interval = %d, size %d\n",
 		 EM28XX_EP_AUDIO, usb_speed_string(udev->speed),
-		 dev->ifnum, alt, interval, ep_size);
+		 dev->अगरnum, alt, पूर्णांकerval, ep_size);
 
 	/* Calculate the number and size of URBs to better fit the audio samples */
 
 	/*
 	 * Estimate the number of bytes per DMA transfer.
 	 *
-	 * This is given by the bit rate (for now, only 48000 Hz) multiplied
-	 * by 2 channels and 2 bytes/sample divided by the number of microframe
-	 * intervals and by the microframe rate (125 us)
+	 * This is given by the bit rate (क्रम now, only 48000 Hz) multiplied
+	 * by 2 channels and 2 bytes/sample भागided by the number of microframe
+	 * पूर्णांकervals and by the microframe rate (125 us)
 	 */
-	bytes_per_transfer = DIV_ROUND_UP(48000 * 2 * 2, 125 * interval);
+	bytes_per_transfer = DIV_ROUND_UP(48000 * 2 * 2, 125 * पूर्णांकerval);
 
 	/*
 	 * Estimate the number of transfer URBs. Don't let it go past the
 	 * maximum number of URBs that is known to be supported by the device.
 	 */
 	num_urb = DIV_ROUND_UP(bytes_per_transfer, ep_size);
-	if (num_urb > EM28XX_MAX_AUDIO_BUFS)
+	अगर (num_urb > EM28XX_MAX_AUDIO_BUFS)
 		num_urb = EM28XX_MAX_AUDIO_BUFS;
 
 	/*
@@ -739,13 +740,13 @@ static int em28xx_audio_urb_init(struct em28xx *dev)
 	/*
 	 * Now, calculate the amount of audio packets to be filled on each
 	 * URB. In order to preserve the old behaviour, use a minimal
-	 * threshold for this value.
+	 * threshold क्रम this value.
 	 */
 	npackets = EM28XX_MIN_AUDIO_PACKETS;
-	if (urb_size > ep_size * npackets)
+	अगर (urb_size > ep_size * npackets)
 		npackets = DIV_ROUND_UP(urb_size, ep_size);
 
-	dev_info(&dev->intf->dev,
+	dev_info(&dev->पूर्णांकf->dev,
 		 "Number of URBs: %d, with %d packets and %d size\n",
 		 num_urb, npackets, urb_size);
 
@@ -754,40 +755,40 @@ static int em28xx_audio_urb_init(struct em28xx *dev)
 
 	/* Allocate space to store the number of URBs to be used */
 
-	dev->adev.transfer_buffer = kcalloc(num_urb,
-					    sizeof(*dev->adev.transfer_buffer),
+	dev->adev.transfer_buffer = kसुस्मृति(num_urb,
+					    माप(*dev->adev.transfer_buffer),
 					    GFP_KERNEL);
-	if (!dev->adev.transfer_buffer)
-		return -ENOMEM;
+	अगर (!dev->adev.transfer_buffer)
+		वापस -ENOMEM;
 
-	dev->adev.urb = kcalloc(num_urb, sizeof(*dev->adev.urb), GFP_KERNEL);
-	if (!dev->adev.urb) {
-		kfree(dev->adev.transfer_buffer);
-		return -ENOMEM;
-	}
+	dev->adev.urb = kसुस्मृति(num_urb, माप(*dev->adev.urb), GFP_KERNEL);
+	अगर (!dev->adev.urb) अणु
+		kमुक्त(dev->adev.transfer_buffer);
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* Alloc memory for each URB and for each transfer buffer */
+	/* Alloc memory क्रम each URB and क्रम each transfer buffer */
 	dev->adev.num_urb = num_urb;
-	for (i = 0; i < num_urb; i++) {
-		struct urb *urb;
-		int j, k;
-		void *buf;
+	क्रम (i = 0; i < num_urb; i++) अणु
+		काष्ठा urb *urb;
+		पूर्णांक j, k;
+		व्योम *buf;
 
 		urb = usb_alloc_urb(npackets, GFP_KERNEL);
-		if (!urb) {
-			em28xx_audio_free_urb(dev);
-			return -ENOMEM;
-		}
+		अगर (!urb) अणु
+			em28xx_audio_मुक्त_urb(dev);
+			वापस -ENOMEM;
+		पूर्ण
 		dev->adev.urb[i] = urb;
 
 		buf = usb_alloc_coherent(udev, npackets * ep_size, GFP_KERNEL,
 					 &urb->transfer_dma);
-		if (!buf) {
-			dev_err(&dev->intf->dev,
+		अगर (!buf) अणु
+			dev_err(&dev->पूर्णांकf->dev,
 				"usb_alloc_coherent failed!\n");
-			em28xx_audio_free_urb(dev);
-			return -ENOMEM;
-		}
+			em28xx_audio_मुक्त_urb(dev);
+			वापस -ENOMEM;
+		पूर्ण
 		dev->adev.transfer_buffer[i] = buf;
 
 		urb->dev = udev;
@@ -795,73 +796,73 @@ static int em28xx_audio_urb_init(struct em28xx *dev)
 		urb->pipe = usb_rcvisocpipe(udev, EM28XX_EP_AUDIO);
 		urb->transfer_flags = URB_ISO_ASAP | URB_NO_TRANSFER_DMA_MAP;
 		urb->transfer_buffer = buf;
-		urb->interval = interval;
+		urb->पूर्णांकerval = पूर्णांकerval;
 		urb->complete = em28xx_audio_isocirq;
 		urb->number_of_packets = npackets;
 		urb->transfer_buffer_length = ep_size * npackets;
 
-		for (j = k = 0; j < npackets; j++, k += ep_size) {
+		क्रम (j = k = 0; j < npackets; j++, k += ep_size) अणु
 			urb->iso_frame_desc[j].offset = k;
 			urb->iso_frame_desc[j].length = ep_size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int em28xx_audio_init(struct em28xx *dev)
-{
-	struct em28xx_audio *adev = &dev->adev;
-	struct usb_device *udev = interface_to_usbdev(dev->intf);
-	struct snd_pcm      *pcm;
-	struct snd_card     *card;
-	static int          devnr;
-	int		    err;
+अटल पूर्णांक em28xx_audio_init(काष्ठा em28xx *dev)
+अणु
+	काष्ठा em28xx_audio *adev = &dev->adev;
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(dev->पूर्णांकf);
+	काष्ठा snd_pcm      *pcm;
+	काष्ठा snd_card     *card;
+	अटल पूर्णांक          devnr;
+	पूर्णांक		    err;
 
-	if (dev->usb_audio_type != EM28XX_USB_AUDIO_VENDOR) {
+	अगर (dev->usb_audio_type != EM28XX_USB_AUDIO_VENDOR) अणु
 		/*
-		 * This device does not support the extension (in this case
+		 * This device करोes not support the extension (in this हाल
 		 * the device is expecting the snd-usb-audio module or
-		 * doesn't have analog audio support at all)
+		 * करोesn't have analog audio support at all)
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	dev_info(&dev->intf->dev, "Binding audio extension\n");
+	dev_info(&dev->पूर्णांकf->dev, "Binding audio extension\n");
 
 	kref_get(&dev->ref);
 
-	dev_info(&dev->intf->dev,
+	dev_info(&dev->पूर्णांकf->dev,
 		 "em28xx-audio.c: Copyright (C) 2006 Markus Rechberger\n");
-	dev_info(&dev->intf->dev,
+	dev_info(&dev->पूर्णांकf->dev,
 		 "em28xx-audio.c: Copyright (C) 2007-2016 Mauro Carvalho Chehab\n");
 
-	err = snd_card_new(&dev->intf->dev, index[devnr], "Em28xx Audio",
+	err = snd_card_new(&dev->पूर्णांकf->dev, index[devnr], "Em28xx Audio",
 			   THIS_MODULE, 0, &card);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	spin_lock_init(&adev->slock);
 	adev->sndcard = card;
 	adev->udev = udev;
 
 	err = snd_pcm_new(card, "Em28xx Audio", 0, 0, 1, &pcm);
-	if (err < 0)
-		goto card_free;
+	अगर (err < 0)
+		जाओ card_मुक्त;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_em28xx_pcm_capture);
-	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, NULL, 0, 0);
+	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, शून्य, 0, 0);
 	pcm->info_flags = 0;
-	pcm->private_data = dev;
-	strscpy(pcm->name, "Empia 28xx Capture", sizeof(pcm->name));
+	pcm->निजी_data = dev;
+	strscpy(pcm->name, "Empia 28xx Capture", माप(pcm->name));
 
-	strscpy(card->driver, "Em28xx-Audio", sizeof(card->driver));
-	strscpy(card->shortname, "Em28xx Audio", sizeof(card->shortname));
-	strscpy(card->longname, "Empia Em28xx Audio", sizeof(card->longname));
+	strscpy(card->driver, "Em28xx-Audio", माप(card->driver));
+	strscpy(card->लघुname, "Em28xx Audio", माप(card->लघुname));
+	strscpy(card->दीर्घname, "Empia Em28xx Audio", माप(card->दीर्घname));
 
 	INIT_WORK(&adev->wq_trigger, audio_trigger);
 
-	if (dev->audio_mode.ac97 != EM28XX_NO_AC97) {
+	अगर (dev->audio_mode.ac97 != EM28XX_NO_AC97) अणु
 		em28xx_cvol_new(card, dev, "Video", AC97_VIDEO);
 		em28xx_cvol_new(card, dev, "Line In", AC97_LINE);
 		em28xx_cvol_new(card, dev, "Phone", AC97_PHONE);
@@ -875,105 +876,105 @@ static int em28xx_audio_init(struct em28xx *dev)
 		em28xx_cvol_new(card, dev, "Mono", AC97_MASTER_MONO);
 		em28xx_cvol_new(card, dev, "LFE", AC97_CENTER_LFE_MASTER);
 		em28xx_cvol_new(card, dev, "Surround", AC97_SURROUND_MASTER);
-	}
+	पूर्ण
 
 	err = em28xx_audio_urb_init(dev);
-	if (err)
-		goto card_free;
+	अगर (err)
+		जाओ card_मुक्त;
 
-	err = snd_card_register(card);
-	if (err < 0)
-		goto urb_free;
+	err = snd_card_रेजिस्टर(card);
+	अगर (err < 0)
+		जाओ urb_मुक्त;
 
-	dev_info(&dev->intf->dev, "Audio extension successfully initialized\n");
-	return 0;
+	dev_info(&dev->पूर्णांकf->dev, "Audio extension successfully initialized\n");
+	वापस 0;
 
-urb_free:
-	em28xx_audio_free_urb(dev);
+urb_मुक्त:
+	em28xx_audio_मुक्त_urb(dev);
 
-card_free:
-	snd_card_free(card);
-	adev->sndcard = NULL;
+card_मुक्त:
+	snd_card_मुक्त(card);
+	adev->sndcard = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int em28xx_audio_fini(struct em28xx *dev)
-{
-	if (!dev)
-		return 0;
+अटल पूर्णांक em28xx_audio_fini(काष्ठा em28xx *dev)
+अणु
+	अगर (!dev)
+		वापस 0;
 
-	if (dev->usb_audio_type != EM28XX_USB_AUDIO_VENDOR) {
+	अगर (dev->usb_audio_type != EM28XX_USB_AUDIO_VENDOR) अणु
 		/*
-		 * This device does not support the extension (in this case
+		 * This device करोes not support the extension (in this हाल
 		 * the device is expecting the snd-usb-audio module or
-		 * doesn't have analog audio support at all)
+		 * करोesn't have analog audio support at all)
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	dev_info(&dev->intf->dev, "Closing audio extension\n");
+	dev_info(&dev->पूर्णांकf->dev, "Closing audio extension\n");
 
-	if (dev->adev.sndcard) {
+	अगर (dev->adev.sndcard) अणु
 		snd_card_disconnect(dev->adev.sndcard);
 		flush_work(&dev->adev.wq_trigger);
 
-		em28xx_audio_free_urb(dev);
+		em28xx_audio_मुक्त_urb(dev);
 
-		snd_card_free(dev->adev.sndcard);
-		dev->adev.sndcard = NULL;
-	}
+		snd_card_मुक्त(dev->adev.sndcard);
+		dev->adev.sndcard = शून्य;
+	पूर्ण
 
-	kref_put(&dev->ref, em28xx_free_device);
-	return 0;
-}
+	kref_put(&dev->ref, em28xx_मुक्त_device);
+	वापस 0;
+पूर्ण
 
-static int em28xx_audio_suspend(struct em28xx *dev)
-{
-	if (!dev)
-		return 0;
+अटल पूर्णांक em28xx_audio_suspend(काष्ठा em28xx *dev)
+अणु
+	अगर (!dev)
+		वापस 0;
 
-	if (dev->usb_audio_type != EM28XX_USB_AUDIO_VENDOR)
-		return 0;
+	अगर (dev->usb_audio_type != EM28XX_USB_AUDIO_VENDOR)
+		वापस 0;
 
-	dev_info(&dev->intf->dev, "Suspending audio extension\n");
+	dev_info(&dev->पूर्णांकf->dev, "Suspending audio extension\n");
 	em28xx_deinit_isoc_audio(dev);
 	atomic_set(&dev->adev.stream_started, 0);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int em28xx_audio_resume(struct em28xx *dev)
-{
-	if (!dev)
-		return 0;
+अटल पूर्णांक em28xx_audio_resume(काष्ठा em28xx *dev)
+अणु
+	अगर (!dev)
+		वापस 0;
 
-	if (dev->usb_audio_type != EM28XX_USB_AUDIO_VENDOR)
-		return 0;
+	अगर (dev->usb_audio_type != EM28XX_USB_AUDIO_VENDOR)
+		वापस 0;
 
-	dev_info(&dev->intf->dev, "Resuming audio extension\n");
-	/* Nothing to do other than schedule_work() ?? */
+	dev_info(&dev->पूर्णांकf->dev, "Resuming audio extension\n");
+	/* Nothing to करो other than schedule_work() ?? */
 	schedule_work(&dev->adev.wq_trigger);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct em28xx_ops audio_ops = {
+अटल काष्ठा em28xx_ops audio_ops = अणु
 	.id   = EM28XX_AUDIO,
 	.name = "Em28xx Audio Extension",
 	.init = em28xx_audio_init,
 	.fini = em28xx_audio_fini,
 	.suspend = em28xx_audio_suspend,
 	.resume = em28xx_audio_resume,
-};
+पूर्ण;
 
-static int __init em28xx_alsa_register(void)
-{
-	return em28xx_register_extension(&audio_ops);
-}
+अटल पूर्णांक __init em28xx_alsa_रेजिस्टर(व्योम)
+अणु
+	वापस em28xx_रेजिस्टर_extension(&audio_ops);
+पूर्ण
 
-static void __exit em28xx_alsa_unregister(void)
-{
-	em28xx_unregister_extension(&audio_ops);
-}
+अटल व्योम __निकास em28xx_alsa_unरेजिस्टर(व्योम)
+अणु
+	em28xx_unरेजिस्टर_extension(&audio_ops);
+पूर्ण
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Markus Rechberger <mrechberger@gmail.com>");
@@ -981,5 +982,5 @@ MODULE_AUTHOR("Mauro Carvalho Chehab");
 MODULE_DESCRIPTION(DRIVER_DESC " - audio interface");
 MODULE_VERSION(EM28XX_VERSION);
 
-module_init(em28xx_alsa_register);
-module_exit(em28xx_alsa_unregister);
+module_init(em28xx_alsa_रेजिस्टर);
+module_निकास(em28xx_alsa_unरेजिस्टर);

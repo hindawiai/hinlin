@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PowerNV code for secure variables
+ * PowerNV code क्रम secure variables
  *
  * Copyright (C) 2019 IBM Corporation
  * Author: Claudio Carvalho
@@ -9,58 +10,58 @@
  * APIs to access secure variables managed by OPAL.
  */
 
-#define pr_fmt(fmt) "secvar: "fmt
+#घोषणा pr_fmt(fmt) "secvar: "fmt
 
-#include <linux/types.h>
-#include <linux/platform_device.h>
-#include <linux/of_platform.h>
-#include <asm/opal.h>
-#include <asm/secvar.h>
-#include <asm/secure_boot.h>
+#समावेश <linux/types.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <यंत्र/opal.h>
+#समावेश <यंत्र/secvar.h>
+#समावेश <यंत्र/secure_boot.h>
 
-static int opal_status_to_err(int rc)
-{
-	int err;
+अटल पूर्णांक opal_status_to_err(पूर्णांक rc)
+अणु
+	पूर्णांक err;
 
-	switch (rc) {
-	case OPAL_SUCCESS:
+	चयन (rc) अणु
+	हाल OPAL_SUCCESS:
 		err = 0;
-		break;
-	case OPAL_UNSUPPORTED:
+		अवरोध;
+	हाल OPAL_UNSUPPORTED:
 		err = -ENXIO;
-		break;
-	case OPAL_PARAMETER:
+		अवरोध;
+	हाल OPAL_PARAMETER:
 		err = -EINVAL;
-		break;
-	case OPAL_RESOURCE:
+		अवरोध;
+	हाल OPAL_RESOURCE:
 		err = -ENOSPC;
-		break;
-	case OPAL_HARDWARE:
+		अवरोध;
+	हाल OPAL_HARDWARE:
 		err = -EIO;
-		break;
-	case OPAL_NO_MEM:
+		अवरोध;
+	हाल OPAL_NO_MEM:
 		err = -ENOMEM;
-		break;
-	case OPAL_EMPTY:
+		अवरोध;
+	हाल OPAL_EMPTY:
 		err = -ENOENT;
-		break;
-	case OPAL_PARTIAL:
+		अवरोध;
+	हाल OPAL_PARTIAL:
 		err = -EFBIG;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		err = -EINVAL;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int opal_get_variable(const char *key, uint64_t ksize,
-			     u8 *data, uint64_t *dsize)
-{
-	int rc;
+अटल पूर्णांक opal_get_variable(स्थिर अक्षर *key, uपूर्णांक64_t ksize,
+			     u8 *data, uपूर्णांक64_t *dsize)
+अणु
+	पूर्णांक rc;
 
-	if (!key || !dsize)
-		return -EINVAL;
+	अगर (!key || !dsize)
+		वापस -EINVAL;
 
 	*dsize = cpu_to_be64(*dsize);
 
@@ -68,16 +69,16 @@ static int opal_get_variable(const char *key, uint64_t ksize,
 
 	*dsize = be64_to_cpu(*dsize);
 
-	return opal_status_to_err(rc);
-}
+	वापस opal_status_to_err(rc);
+पूर्ण
 
-static int opal_get_next_variable(const char *key, uint64_t *keylen,
-				  uint64_t keybufsize)
-{
-	int rc;
+अटल पूर्णांक opal_get_next_variable(स्थिर अक्षर *key, uपूर्णांक64_t *keylen,
+				  uपूर्णांक64_t keybufsize)
+अणु
+	पूर्णांक rc;
 
-	if (!key || !keylen)
-		return -EINVAL;
+	अगर (!key || !keylen)
+		वापस -EINVAL;
 
 	*keylen = cpu_to_be64(*keylen);
 
@@ -85,56 +86,56 @@ static int opal_get_next_variable(const char *key, uint64_t *keylen,
 
 	*keylen = be64_to_cpu(*keylen);
 
-	return opal_status_to_err(rc);
-}
+	वापस opal_status_to_err(rc);
+पूर्ण
 
-static int opal_set_variable(const char *key, uint64_t ksize, u8 *data,
-			     uint64_t dsize)
-{
-	int rc;
+अटल पूर्णांक opal_set_variable(स्थिर अक्षर *key, uपूर्णांक64_t ksize, u8 *data,
+			     uपूर्णांक64_t dsize)
+अणु
+	पूर्णांक rc;
 
-	if (!key || !data)
-		return -EINVAL;
+	अगर (!key || !data)
+		वापस -EINVAL;
 
 	rc = opal_secvar_enqueue_update(key, ksize, data, dsize);
 
-	return opal_status_to_err(rc);
-}
+	वापस opal_status_to_err(rc);
+पूर्ण
 
-static const struct secvar_operations opal_secvar_ops = {
+अटल स्थिर काष्ठा secvar_operations opal_secvar_ops = अणु
 	.get = opal_get_variable,
 	.get_next = opal_get_next_variable,
 	.set = opal_set_variable,
-};
+पूर्ण;
 
-static int opal_secvar_probe(struct platform_device *pdev)
-{
-	if (!opal_check_token(OPAL_SECVAR_GET)
+अटल पूर्णांक opal_secvar_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	अगर (!opal_check_token(OPAL_SECVAR_GET)
 			|| !opal_check_token(OPAL_SECVAR_GET_NEXT)
-			|| !opal_check_token(OPAL_SECVAR_ENQUEUE_UPDATE)) {
+			|| !opal_check_token(OPAL_SECVAR_ENQUEUE_UPDATE)) अणु
 		pr_err("OPAL doesn't support secure variables\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	set_secvar_ops(&opal_secvar_ops);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id opal_secvar_match[] = {
-	{ .compatible = "ibm,secvar-backend",},
-	{},
-};
+अटल स्थिर काष्ठा of_device_id opal_secvar_match[] = अणु
+	अणु .compatible = "ibm,secvar-backend",पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver opal_secvar_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver opal_secvar_driver = अणु
+	.driver = अणु
 		.name = "secvar",
 		.of_match_table = opal_secvar_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init opal_secvar_init(void)
-{
-	return platform_driver_probe(&opal_secvar_driver, opal_secvar_probe);
-}
+अटल पूर्णांक __init opal_secvar_init(व्योम)
+अणु
+	वापस platक्रमm_driver_probe(&opal_secvar_driver, opal_secvar_probe);
+पूर्ण
 device_initcall(opal_secvar_init);

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * f_eem.c -- USB CDC Ethernet (EEM) link function driver
  *
@@ -7,165 +8,165 @@
  * Copyright (C) 2009 EF Johnson Technologies
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/etherdevice.h>
-#include <linux/crc32.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/slab.h>
 
-#include "u_ether.h"
-#include "u_ether_configfs.h"
-#include "u_eem.h"
+#समावेश "u_ether.h"
+#समावेश "u_ether_configfs.h"
+#समावेश "u_eem.h"
 
-#define EEM_HLEN 2
+#घोषणा EEM_HLEN 2
 
 /*
  * This function is a "CDC Ethernet Emulation Model" (CDC EEM)
  * Ethernet link.
  */
 
-struct f_eem {
-	struct gether			port;
+काष्ठा f_eem अणु
+	काष्ठा gether			port;
 	u8				ctrl_id;
-};
+पूर्ण;
 
-static inline struct f_eem *func_to_eem(struct usb_function *f)
-{
-	return container_of(f, struct f_eem, port.func);
-}
+अटल अंतरभूत काष्ठा f_eem *func_to_eem(काष्ठा usb_function *f)
+अणु
+	वापस container_of(f, काष्ठा f_eem, port.func);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
-/* interface descriptor: */
+/* पूर्णांकerface descriptor: */
 
-static struct usb_interface_descriptor eem_intf = {
-	.bLength =		sizeof eem_intf,
+अटल काष्ठा usb_पूर्णांकerface_descriptor eem_पूर्णांकf = अणु
+	.bLength =		माप eem_पूर्णांकf,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
 	/* .bInterfaceNumber = DYNAMIC */
-	.bNumEndpoints =	2,
+	.bNumEndpoपूर्णांकs =	2,
 	.bInterfaceClass =	USB_CLASS_COMM,
 	.bInterfaceSubClass =	USB_CDC_SUBCLASS_EEM,
 	.bInterfaceProtocol =	USB_CDC_PROTO_EEM,
 	/* .iInterface = DYNAMIC */
-};
+पूर्ण;
 
 /* full speed support: */
 
-static struct usb_endpoint_descriptor eem_fs_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor eem_fs_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor eem_fs_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor eem_fs_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-};
+पूर्ण;
 
-static struct usb_descriptor_header *eem_fs_function[] = {
+अटल काष्ठा usb_descriptor_header *eem_fs_function[] = अणु
 	/* CDC EEM control descriptors */
-	(struct usb_descriptor_header *) &eem_intf,
-	(struct usb_descriptor_header *) &eem_fs_in_desc,
-	(struct usb_descriptor_header *) &eem_fs_out_desc,
-	NULL,
-};
+	(काष्ठा usb_descriptor_header *) &eem_पूर्णांकf,
+	(काष्ठा usb_descriptor_header *) &eem_fs_in_desc,
+	(काष्ठा usb_descriptor_header *) &eem_fs_out_desc,
+	शून्य,
+पूर्ण;
 
 /* high speed support: */
 
-static struct usb_endpoint_descriptor eem_hs_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor eem_hs_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor eem_hs_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor eem_hs_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-};
+पूर्ण;
 
-static struct usb_descriptor_header *eem_hs_function[] = {
+अटल काष्ठा usb_descriptor_header *eem_hs_function[] = अणु
 	/* CDC EEM control descriptors */
-	(struct usb_descriptor_header *) &eem_intf,
-	(struct usb_descriptor_header *) &eem_hs_in_desc,
-	(struct usb_descriptor_header *) &eem_hs_out_desc,
-	NULL,
-};
+	(काष्ठा usb_descriptor_header *) &eem_पूर्णांकf,
+	(काष्ठा usb_descriptor_header *) &eem_hs_in_desc,
+	(काष्ठा usb_descriptor_header *) &eem_hs_out_desc,
+	शून्य,
+पूर्ण;
 
 /* super speed support: */
 
-static struct usb_endpoint_descriptor eem_ss_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor eem_ss_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor eem_ss_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor eem_ss_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-};
+पूर्ण;
 
-static struct usb_ss_ep_comp_descriptor eem_ss_bulk_comp_desc = {
-	.bLength =		sizeof eem_ss_bulk_comp_desc,
+अटल काष्ठा usb_ss_ep_comp_descriptor eem_ss_bulk_comp_desc = अणु
+	.bLength =		माप eem_ss_bulk_comp_desc,
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
-	/* the following 2 values can be tweaked if necessary */
+	/* the following 2 values can be tweaked अगर necessary */
 	/* .bMaxBurst =		0, */
 	/* .bmAttributes =	0, */
-};
+पूर्ण;
 
-static struct usb_descriptor_header *eem_ss_function[] = {
+अटल काष्ठा usb_descriptor_header *eem_ss_function[] = अणु
 	/* CDC EEM control descriptors */
-	(struct usb_descriptor_header *) &eem_intf,
-	(struct usb_descriptor_header *) &eem_ss_in_desc,
-	(struct usb_descriptor_header *) &eem_ss_bulk_comp_desc,
-	(struct usb_descriptor_header *) &eem_ss_out_desc,
-	(struct usb_descriptor_header *) &eem_ss_bulk_comp_desc,
-	NULL,
-};
+	(काष्ठा usb_descriptor_header *) &eem_पूर्णांकf,
+	(काष्ठा usb_descriptor_header *) &eem_ss_in_desc,
+	(काष्ठा usb_descriptor_header *) &eem_ss_bulk_comp_desc,
+	(काष्ठा usb_descriptor_header *) &eem_ss_out_desc,
+	(काष्ठा usb_descriptor_header *) &eem_ss_bulk_comp_desc,
+	शून्य,
+पूर्ण;
 
 /* string descriptors: */
 
-static struct usb_string eem_string_defs[] = {
+अटल काष्ठा usb_string eem_string_defs[] = अणु
 	[0].s = "CDC Ethernet Emulation Model (EEM)",
-	{  } /* end of list */
-};
+	अणु  पूर्ण /* end of list */
+पूर्ण;
 
-static struct usb_gadget_strings eem_string_table = {
+अटल काष्ठा usb_gadget_strings eem_string_table = अणु
 	.language =		0x0409,	/* en-us */
 	.strings =		eem_string_defs,
-};
+पूर्ण;
 
-static struct usb_gadget_strings *eem_strings[] = {
+अटल काष्ठा usb_gadget_strings *eem_strings[] = अणु
 	&eem_string_table,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-static int eem_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
-{
-	struct usb_composite_dev *cdev = f->config->cdev;
+अटल पूर्णांक eem_setup(काष्ठा usb_function *f, स्थिर काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
 	u16			w_index = le16_to_cpu(ctrl->wIndex);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u16			w_length = le16_to_cpu(ctrl->wLength);
@@ -175,170 +176,170 @@ static int eem_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
 		w_value, w_index, w_length);
 
 	/* device either stalls (value < 0) or reports success */
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 
-static int eem_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
-{
-	struct f_eem		*eem = func_to_eem(f);
-	struct usb_composite_dev *cdev = f->config->cdev;
-	struct net_device	*net;
+अटल पूर्णांक eem_set_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf, अचिन्हित alt)
+अणु
+	काष्ठा f_eem		*eem = func_to_eem(f);
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
+	काष्ठा net_device	*net;
 
 	/* we know alt == 0, so this is an activation or a reset */
-	if (alt != 0)
-		goto fail;
+	अगर (alt != 0)
+		जाओ fail;
 
-	if (intf == eem->ctrl_id) {
+	अगर (पूर्णांकf == eem->ctrl_id) अणु
 		DBG(cdev, "reset eem\n");
 		gether_disconnect(&eem->port);
 
-		if (!eem->port.in_ep->desc || !eem->port.out_ep->desc) {
+		अगर (!eem->port.in_ep->desc || !eem->port.out_ep->desc) अणु
 			DBG(cdev, "init eem\n");
-			if (config_ep_by_speed(cdev->gadget, f,
+			अगर (config_ep_by_speed(cdev->gadget, f,
 					       eem->port.in_ep) ||
 			    config_ep_by_speed(cdev->gadget, f,
-					       eem->port.out_ep)) {
-				eem->port.in_ep->desc = NULL;
-				eem->port.out_ep->desc = NULL;
-				goto fail;
-			}
-		}
+					       eem->port.out_ep)) अणु
+				eem->port.in_ep->desc = शून्य;
+				eem->port.out_ep->desc = शून्य;
+				जाओ fail;
+			पूर्ण
+		पूर्ण
 
 		/* zlps should not occur because zero-length EEM packets
-		 * will be inserted in those cases where they would occur
+		 * will be inserted in those हालs where they would occur
 		 */
 		eem->port.is_zlp_ok = 1;
 		eem->port.cdc_filter = DEFAULT_FILTER;
 		DBG(cdev, "activate eem\n");
 		net = gether_connect(&eem->port);
-		if (IS_ERR(net))
-			return PTR_ERR(net);
-	} else
-		goto fail;
+		अगर (IS_ERR(net))
+			वापस PTR_ERR(net);
+	पूर्ण अन्यथा
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 fail:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void eem_disable(struct usb_function *f)
-{
-	struct f_eem		*eem = func_to_eem(f);
-	struct usb_composite_dev *cdev = f->config->cdev;
+अटल व्योम eem_disable(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_eem		*eem = func_to_eem(f);
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
 
 	DBG(cdev, "eem deactivated\n");
 
-	if (eem->port.in_ep->enabled)
+	अगर (eem->port.in_ep->enabled)
 		gether_disconnect(&eem->port);
-}
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /* EEM function driver setup/binding */
 
-static int eem_bind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct usb_composite_dev *cdev = c->cdev;
-	struct f_eem		*eem = func_to_eem(f);
-	struct usb_string	*us;
-	int			status;
-	struct usb_ep		*ep;
+अटल पूर्णांक eem_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा usb_composite_dev *cdev = c->cdev;
+	काष्ठा f_eem		*eem = func_to_eem(f);
+	काष्ठा usb_string	*us;
+	पूर्णांक			status;
+	काष्ठा usb_ep		*ep;
 
-	struct f_eem_opts	*eem_opts;
+	काष्ठा f_eem_opts	*eem_opts;
 
-	eem_opts = container_of(f->fi, struct f_eem_opts, func_inst);
+	eem_opts = container_of(f->fi, काष्ठा f_eem_opts, func_inst);
 	/*
 	 * in drivers/usb/gadget/configfs.c:configfs_composite_bind()
-	 * configurations are bound in sequence with list_for_each_entry,
+	 * configurations are bound in sequence with list_क्रम_each_entry,
 	 * in each configuration its functions are bound in sequence
-	 * with list_for_each_entry, so we assume no race condition
+	 * with list_क्रम_each_entry, so we assume no race condition
 	 * with regard to eem_opts->bound access
 	 */
-	if (!eem_opts->bound) {
+	अगर (!eem_opts->bound) अणु
 		mutex_lock(&eem_opts->lock);
 		gether_set_gadget(eem_opts->net, cdev->gadget);
-		status = gether_register_netdev(eem_opts->net);
+		status = gether_रेजिस्टर_netdev(eem_opts->net);
 		mutex_unlock(&eem_opts->lock);
-		if (status)
-			return status;
+		अगर (status)
+			वापस status;
 		eem_opts->bound = true;
-	}
+	पूर्ण
 
 	us = usb_gstrings_attach(cdev, eem_strings,
 				 ARRAY_SIZE(eem_string_defs));
-	if (IS_ERR(us))
-		return PTR_ERR(us);
-	eem_intf.iInterface = us[0].id;
+	अगर (IS_ERR(us))
+		वापस PTR_ERR(us);
+	eem_पूर्णांकf.iInterface = us[0].id;
 
-	/* allocate instance-specific interface IDs */
-	status = usb_interface_id(c, f);
-	if (status < 0)
-		goto fail;
+	/* allocate instance-specअगरic पूर्णांकerface IDs */
+	status = usb_पूर्णांकerface_id(c, f);
+	अगर (status < 0)
+		जाओ fail;
 	eem->ctrl_id = status;
-	eem_intf.bInterfaceNumber = status;
+	eem_पूर्णांकf.bInterfaceNumber = status;
 
 	status = -ENODEV;
 
-	/* allocate instance-specific endpoints */
-	ep = usb_ep_autoconfig(cdev->gadget, &eem_fs_in_desc);
-	if (!ep)
-		goto fail;
+	/* allocate instance-specअगरic endpoपूर्णांकs */
+	ep = usb_ep_स्वतःconfig(cdev->gadget, &eem_fs_in_desc);
+	अगर (!ep)
+		जाओ fail;
 	eem->port.in_ep = ep;
 
-	ep = usb_ep_autoconfig(cdev->gadget, &eem_fs_out_desc);
-	if (!ep)
-		goto fail;
+	ep = usb_ep_स्वतःconfig(cdev->gadget, &eem_fs_out_desc);
+	अगर (!ep)
+		जाओ fail;
 	eem->port.out_ep = ep;
 
 	/* support all relevant hardware speeds... we expect that when
-	 * hardware is dual speed, all bulk-capable endpoints work at
+	 * hardware is dual speed, all bulk-capable endpoपूर्णांकs work at
 	 * both speeds
 	 */
-	eem_hs_in_desc.bEndpointAddress = eem_fs_in_desc.bEndpointAddress;
-	eem_hs_out_desc.bEndpointAddress = eem_fs_out_desc.bEndpointAddress;
+	eem_hs_in_desc.bEndpoपूर्णांकAddress = eem_fs_in_desc.bEndpoपूर्णांकAddress;
+	eem_hs_out_desc.bEndpoपूर्णांकAddress = eem_fs_out_desc.bEndpoपूर्णांकAddress;
 
-	eem_ss_in_desc.bEndpointAddress = eem_fs_in_desc.bEndpointAddress;
-	eem_ss_out_desc.bEndpointAddress = eem_fs_out_desc.bEndpointAddress;
+	eem_ss_in_desc.bEndpoपूर्णांकAddress = eem_fs_in_desc.bEndpoपूर्णांकAddress;
+	eem_ss_out_desc.bEndpoपूर्णांकAddress = eem_fs_out_desc.bEndpoपूर्णांकAddress;
 
 	status = usb_assign_descriptors(f, eem_fs_function, eem_hs_function,
 			eem_ss_function, eem_ss_function);
-	if (status)
-		goto fail;
+	अगर (status)
+		जाओ fail;
 
 	DBG(cdev, "CDC Ethernet (EEM): %s speed IN/%s OUT/%s\n",
 			gadget_is_superspeed(c->cdev->gadget) ? "super" :
 			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
 			eem->port.in_ep->name, eem->port.out_ep->name);
-	return 0;
+	वापस 0;
 
 fail:
 	ERROR(cdev, "%s: can't bind, err %d\n", f->name, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static void eem_cmd_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct sk_buff *skb = (struct sk_buff *)req->context;
+अटल व्योम eem_cmd_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा sk_buff *skb = (काष्ठा sk_buff *)req->context;
 
-	dev_kfree_skb_any(skb);
-}
+	dev_kमुक्त_skb_any(skb);
+पूर्ण
 
 /*
  * Add the EEM header and ethernet checksum.
- * We currently do not attempt to put multiple ethernet frames
- * into a single USB transfer
+ * We currently करो not attempt to put multiple ethernet frames
+ * पूर्णांकo a single USB transfer
  */
-static struct sk_buff *eem_wrap(struct gether *port, struct sk_buff *skb)
-{
-	struct sk_buff	*skb2 = NULL;
-	struct usb_ep	*in = port->in_ep;
-	int		headroom, tailroom, padlen = 0;
+अटल काष्ठा sk_buff *eem_wrap(काष्ठा gether *port, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff	*skb2 = शून्य;
+	काष्ठा usb_ep	*in = port->in_ep;
+	पूर्णांक		headroom, tailroom, padlen = 0;
 	u16		len;
 
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	len = skb->len;
 	headroom = skb_headroom(skb);
@@ -347,24 +348,24 @@ static struct sk_buff *eem_wrap(struct gether *port, struct sk_buff *skb)
 	/* When (len + EEM_HLEN + ETH_FCS_LEN) % in->maxpacket) is 0,
 	 * stick two bytes of zero-length EEM packet on the end.
 	 */
-	if (((len + EEM_HLEN + ETH_FCS_LEN) % in->maxpacket) == 0)
+	अगर (((len + EEM_HLEN + ETH_FCS_LEN) % in->maxpacket) == 0)
 		padlen += 2;
 
-	if ((tailroom >= (ETH_FCS_LEN + padlen)) &&
+	अगर ((tailroom >= (ETH_FCS_LEN + padlen)) &&
 			(headroom >= EEM_HLEN) && !skb_cloned(skb))
-		goto done;
+		जाओ करोne;
 
 	skb2 = skb_copy_expand(skb, EEM_HLEN, ETH_FCS_LEN + padlen, GFP_ATOMIC);
-	dev_kfree_skb_any(skb);
+	dev_kमुक्त_skb_any(skb);
 	skb = skb2;
-	if (!skb)
-		return skb;
+	अगर (!skb)
+		वापस skb;
 
-done:
+करोne:
 	/* use the "no CRC" option */
 	put_unaligned_be32(0xdeadbeef, skb_put(skb, 4));
 
-	/* EEM packet header format:
+	/* EEM packet header क्रमmat:
 	 * b0..13:	length of ethernet frame
 	 * b14:		bmCRC (0 == sentinel CRC)
 	 * b15:		bmType (0 == data)
@@ -372,70 +373,70 @@ done:
 	len = skb->len;
 	put_unaligned_le16(len & 0x3FFF, skb_push(skb, 2));
 
-	/* add a zero-length EEM packet, if needed */
-	if (padlen)
+	/* add a zero-length EEM packet, अगर needed */
+	अगर (padlen)
 		put_unaligned_le16(0, skb_put(skb, 2));
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
 /*
  * Remove the EEM header.  Note that there can be many EEM packets in a single
- * USB transfer, so we need to break them out and handle them independently.
+ * USB transfer, so we need to अवरोध them out and handle them independently.
  */
-static int eem_unwrap(struct gether *port,
-			struct sk_buff *skb,
-			struct sk_buff_head *list)
-{
-	struct usb_composite_dev	*cdev = port->func.config->cdev;
-	int				status = 0;
+अटल पूर्णांक eem_unwrap(काष्ठा gether *port,
+			काष्ठा sk_buff *skb,
+			काष्ठा sk_buff_head *list)
+अणु
+	काष्ठा usb_composite_dev	*cdev = port->func.config->cdev;
+	पूर्णांक				status = 0;
 
-	do {
-		struct sk_buff	*skb2;
+	करो अणु
+		काष्ठा sk_buff	*skb2;
 		u16		header;
 		u16		len = 0;
 
-		if (skb->len < EEM_HLEN) {
+		अगर (skb->len < EEM_HLEN) अणु
 			status = -EINVAL;
 			DBG(cdev, "invalid EEM header\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
-		/* remove the EEM header */
+		/* हटाओ the EEM header */
 		header = get_unaligned_le16(skb->data);
 		skb_pull(skb, EEM_HLEN);
 
-		/* EEM packet header format:
+		/* EEM packet header क्रमmat:
 		 * b0..14:	EEM type dependent (data or command)
 		 * b15:		bmType (0 == data, 1 == command)
 		 */
-		if (header & BIT(15)) {
-			struct usb_request	*req = cdev->req;
+		अगर (header & BIT(15)) अणु
+			काष्ठा usb_request	*req = cdev->req;
 			u16			bmEEMCmd;
 
-			/* EEM command packet format:
+			/* EEM command packet क्रमmat:
 			 * b0..10:	bmEEMCmdParam
 			 * b11..13:	bmEEMCmd
 			 * b14:		reserved (must be zero)
 			 * b15:		bmType (1 == command)
 			 */
-			if (header & BIT(14))
-				continue;
+			अगर (header & BIT(14))
+				जारी;
 
 			bmEEMCmd = (header >> 11) & 0x7;
-			switch (bmEEMCmd) {
-			case 0: /* echo */
+			चयन (bmEEMCmd) अणु
+			हाल 0: /* echo */
 				len = header & 0x7FF;
-				if (skb->len < len) {
+				अगर (skb->len < len) अणु
 					status = -EOVERFLOW;
-					goto error;
-				}
+					जाओ error;
+				पूर्ण
 
 				skb2 = skb_clone(skb, GFP_ATOMIC);
-				if (unlikely(!skb2)) {
+				अगर (unlikely(!skb2)) अणु
 					DBG(cdev, "EEM echo response error\n");
-					goto next;
-				}
+					जाओ next;
+				पूर्ण
 				skb_trim(skb2, len);
 				put_unaligned_le16(BIT(15) | BIT(11) | len,
 							skb_push(skb2, 2));
@@ -444,86 +445,86 @@ static int eem_unwrap(struct gether *port,
 				req->complete = eem_cmd_complete;
 				req->zero = 1;
 				req->context = skb2;
-				if (usb_ep_queue(port->in_ep, req, GFP_ATOMIC))
+				अगर (usb_ep_queue(port->in_ep, req, GFP_ATOMIC))
 					DBG(cdev, "echo response queue fail\n");
-				break;
+				अवरोध;
 
-			case 1:  /* echo response */
-			case 2:  /* suspend hint */
-			case 3:  /* response hint */
-			case 4:  /* response complete hint */
-			case 5:  /* tickle */
-			default: /* reserved */
-				continue;
-			}
-		} else {
+			हाल 1:  /* echo response */
+			हाल 2:  /* suspend hपूर्णांक */
+			हाल 3:  /* response hपूर्णांक */
+			हाल 4:  /* response complete hपूर्णांक */
+			हाल 5:  /* tickle */
+			शेष: /* reserved */
+				जारी;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			u32		crc, crc2;
-			struct sk_buff	*skb3;
+			काष्ठा sk_buff	*skb3;
 
-			/* check for zero-length EEM packet */
-			if (header == 0)
-				continue;
+			/* check क्रम zero-length EEM packet */
+			अगर (header == 0)
+				जारी;
 
-			/* EEM data packet format:
+			/* EEM data packet क्रमmat:
 			 * b0..13:	length of ethernet frame
 			 * b14:		bmCRC (0 == sentinel, 1 == calculated)
 			 * b15:		bmType (0 == data)
 			 */
 			len = header & 0x3FFF;
-			if ((skb->len < len)
-					|| (len < (ETH_HLEN + ETH_FCS_LEN))) {
+			अगर ((skb->len < len)
+					|| (len < (ETH_HLEN + ETH_FCS_LEN))) अणु
 				status = -EINVAL;
-				goto error;
-			}
+				जाओ error;
+			पूर्ण
 
 			/* validate CRC */
-			if (header & BIT(14)) {
+			अगर (header & BIT(14)) अणु
 				crc = get_unaligned_le32(skb->data + len
 							- ETH_FCS_LEN);
 				crc2 = ~crc32_le(~0,
 						skb->data, len - ETH_FCS_LEN);
-			} else {
+			पूर्ण अन्यथा अणु
 				crc = get_unaligned_be32(skb->data + len
 							- ETH_FCS_LEN);
 				crc2 = 0xdeadbeef;
-			}
-			if (crc != crc2) {
+			पूर्ण
+			अगर (crc != crc2) अणु
 				DBG(cdev, "invalid EEM CRC\n");
-				goto next;
-			}
+				जाओ next;
+			पूर्ण
 
 			skb2 = skb_clone(skb, GFP_ATOMIC);
-			if (unlikely(!skb2)) {
+			अगर (unlikely(!skb2)) अणु
 				DBG(cdev, "unable to unframe EEM packet\n");
-				goto next;
-			}
+				जाओ next;
+			पूर्ण
 			skb_trim(skb2, len - ETH_FCS_LEN);
 
 			skb3 = skb_copy_expand(skb2,
 						NET_IP_ALIGN,
 						0,
 						GFP_ATOMIC);
-			if (unlikely(!skb3)) {
-				dev_kfree_skb_any(skb2);
-				goto next;
-			}
-			dev_kfree_skb_any(skb2);
+			अगर (unlikely(!skb3)) अणु
+				dev_kमुक्त_skb_any(skb2);
+				जाओ next;
+			पूर्ण
+			dev_kमुक्त_skb_any(skb2);
 			skb_queue_tail(list, skb3);
-		}
+		पूर्ण
 next:
 		skb_pull(skb, len);
-	} while (skb->len);
+	पूर्ण जबतक (skb->len);
 
 error:
-	dev_kfree_skb_any(skb);
-	return status;
-}
+	dev_kमुक्त_skb_any(skb);
+	वापस status;
+पूर्ण
 
-static inline struct f_eem_opts *to_f_eem_opts(struct config_item *item)
-{
-	return container_of(to_config_group(item), struct f_eem_opts,
+अटल अंतरभूत काष्ठा f_eem_opts *to_f_eem_opts(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item), काष्ठा f_eem_opts,
 			    func_inst.group);
-}
+पूर्ण
 
 /* f_eem_item_ops */
 USB_ETHERNET_CONFIGFS_ITEM(eem);
@@ -537,87 +538,87 @@ USB_ETHERNET_CONFIGFS_ITEM_ATTR_HOST_ADDR(eem);
 /* f_eem_opts_qmult */
 USB_ETHERNET_CONFIGFS_ITEM_ATTR_QMULT(eem);
 
-/* f_eem_opts_ifname */
+/* f_eem_opts_अगरname */
 USB_ETHERNET_CONFIGFS_ITEM_ATTR_IFNAME(eem);
 
-static struct configfs_attribute *eem_attrs[] = {
+अटल काष्ठा configfs_attribute *eem_attrs[] = अणु
 	&eem_opts_attr_dev_addr,
 	&eem_opts_attr_host_addr,
 	&eem_opts_attr_qmult,
-	&eem_opts_attr_ifname,
-	NULL,
-};
+	&eem_opts_attr_अगरname,
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type eem_func_type = {
+अटल स्थिर काष्ठा config_item_type eem_func_type = अणु
 	.ct_item_ops	= &eem_item_ops,
 	.ct_attrs	= eem_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static void eem_free_inst(struct usb_function_instance *f)
-{
-	struct f_eem_opts *opts;
+अटल व्योम eem_मुक्त_inst(काष्ठा usb_function_instance *f)
+अणु
+	काष्ठा f_eem_opts *opts;
 
-	opts = container_of(f, struct f_eem_opts, func_inst);
-	if (opts->bound)
+	opts = container_of(f, काष्ठा f_eem_opts, func_inst);
+	अगर (opts->bound)
 		gether_cleanup(netdev_priv(opts->net));
-	else
-		free_netdev(opts->net);
-	kfree(opts);
-}
+	अन्यथा
+		मुक्त_netdev(opts->net);
+	kमुक्त(opts);
+पूर्ण
 
-static struct usb_function_instance *eem_alloc_inst(void)
-{
-	struct f_eem_opts *opts;
+अटल काष्ठा usb_function_instance *eem_alloc_inst(व्योम)
+अणु
+	काष्ठा f_eem_opts *opts;
 
-	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
-	if (!opts)
-		return ERR_PTR(-ENOMEM);
+	opts = kzalloc(माप(*opts), GFP_KERNEL);
+	अगर (!opts)
+		वापस ERR_PTR(-ENOMEM);
 	mutex_init(&opts->lock);
-	opts->func_inst.free_func_inst = eem_free_inst;
-	opts->net = gether_setup_default();
-	if (IS_ERR(opts->net)) {
-		struct net_device *net = opts->net;
-		kfree(opts);
-		return ERR_CAST(net);
-	}
+	opts->func_inst.मुक्त_func_inst = eem_मुक्त_inst;
+	opts->net = gether_setup_शेष();
+	अगर (IS_ERR(opts->net)) अणु
+		काष्ठा net_device *net = opts->net;
+		kमुक्त(opts);
+		वापस ERR_CAST(net);
+	पूर्ण
 
 	config_group_init_type_name(&opts->func_inst.group, "", &eem_func_type);
 
-	return &opts->func_inst;
-}
+	वापस &opts->func_inst;
+पूर्ण
 
-static void eem_free(struct usb_function *f)
-{
-	struct f_eem *eem;
-	struct f_eem_opts *opts;
+अटल व्योम eem_मुक्त(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_eem *eem;
+	काष्ठा f_eem_opts *opts;
 
 	eem = func_to_eem(f);
-	opts = container_of(f->fi, struct f_eem_opts, func_inst);
-	kfree(eem);
+	opts = container_of(f->fi, काष्ठा f_eem_opts, func_inst);
+	kमुक्त(eem);
 	mutex_lock(&opts->lock);
 	opts->refcnt--;
 	mutex_unlock(&opts->lock);
-}
+पूर्ण
 
-static void eem_unbind(struct usb_configuration *c, struct usb_function *f)
-{
+अटल व्योम eem_unbind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
 	DBG(c->cdev, "eem unbind\n");
 
-	usb_free_all_descriptors(f);
-}
+	usb_मुक्त_all_descriptors(f);
+पूर्ण
 
-static struct usb_function *eem_alloc(struct usb_function_instance *fi)
-{
-	struct f_eem	*eem;
-	struct f_eem_opts *opts;
+अटल काष्ठा usb_function *eem_alloc(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा f_eem	*eem;
+	काष्ठा f_eem_opts *opts;
 
 	/* allocate and initialize one new instance */
-	eem = kzalloc(sizeof(*eem), GFP_KERNEL);
-	if (!eem)
-		return ERR_PTR(-ENOMEM);
+	eem = kzalloc(माप(*eem), GFP_KERNEL);
+	अगर (!eem)
+		वापस ERR_PTR(-ENOMEM);
 
-	opts = container_of(fi, struct f_eem_opts, func_inst);
+	opts = container_of(fi, काष्ठा f_eem_opts, func_inst);
 	mutex_lock(&opts->lock);
 	opts->refcnt++;
 
@@ -632,13 +633,13 @@ static struct usb_function *eem_alloc(struct usb_function_instance *fi)
 	eem->port.func.set_alt = eem_set_alt;
 	eem->port.func.setup = eem_setup;
 	eem->port.func.disable = eem_disable;
-	eem->port.func.free_func = eem_free;
+	eem->port.func.मुक्त_func = eem_मुक्त;
 	eem->port.wrap = eem_wrap;
 	eem->port.unwrap = eem_unwrap;
 	eem->port.header_len = EEM_HLEN;
 
-	return &eem->port.func;
-}
+	वापस &eem->port.func;
+पूर्ण
 
 DECLARE_USB_FUNCTION_INIT(eem, eem_alloc_inst, eem_alloc);
 MODULE_LICENSE("GPL");

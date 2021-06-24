@@ -1,28 +1,29 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004, 2005 Intel Corporation.  All rights reserved.
  * Copyright (c) 2004 Topspin Corporation.  All rights reserved.
  * Copyright (c) 2004, 2005 Voltaire Corporation.  All rights reserved.
- * Copyright (c) 2005 Sun Microsystems, Inc. All rights reserved.
+ * Copyright (c) 2005 Sun Microप्रणालीs, Inc. All rights reserved.
  * Copyright (c) 2005 Open Grid Computing, Inc. All rights reserved.
  * Copyright (c) 2005 Network Appliance, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -35,219 +36,219 @@
  * SOFTWARE.
  *
  */
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/idr.h>
-#include <linux/interrupt.h>
-#include <linux/rbtree.h>
-#include <linux/sched.h>
-#include <linux/spinlock.h>
-#include <linux/workqueue.h>
-#include <linux/completion.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/sysctl.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sysctl.h>
 
-#include <rdma/iw_cm.h>
-#include <rdma/ib_addr.h>
-#include <rdma/iw_portmap.h>
-#include <rdma/rdma_netlink.h>
+#समावेश <rdma/iw_cm.h>
+#समावेश <rdma/ib_addr.h>
+#समावेश <rdma/iw_porपंचांगap.h>
+#समावेश <rdma/rdma_netlink.h>
 
-#include "iwcm.h"
+#समावेश "iwcm.h"
 
 MODULE_AUTHOR("Tom Tucker");
 MODULE_DESCRIPTION("iWARP CM");
 MODULE_LICENSE("Dual BSD/GPL");
 
-static const char * const iwcm_rej_reason_strs[] = {
+अटल स्थिर अक्षर * स्थिर iwcm_rej_reason_strs[] = अणु
 	[ECONNRESET]			= "reset by remote host",
 	[ECONNREFUSED]			= "refused by remote application",
 	[ETIMEDOUT]			= "setup timeout",
-};
+पूर्ण;
 
-const char *__attribute_const__ iwcm_reject_msg(int reason)
-{
-	size_t index;
+स्थिर अक्षर *__attribute_स्थिर__ iwcm_reject_msg(पूर्णांक reason)
+अणु
+	माप_प्रकार index;
 
-	/* iWARP uses negative errnos */
+	/* iWARP uses negative त्रुटि_संs */
 	index = -reason;
 
-	if (index < ARRAY_SIZE(iwcm_rej_reason_strs) &&
+	अगर (index < ARRAY_SIZE(iwcm_rej_reason_strs) &&
 	    iwcm_rej_reason_strs[index])
-		return iwcm_rej_reason_strs[index];
-	else
-		return "unrecognized reason";
-}
+		वापस iwcm_rej_reason_strs[index];
+	अन्यथा
+		वापस "unrecognized reason";
+पूर्ण
 EXPORT_SYMBOL(iwcm_reject_msg);
 
-static struct rdma_nl_cbs iwcm_nl_cb_table[RDMA_NL_IWPM_NUM_OPS] = {
-	[RDMA_NL_IWPM_REG_PID] = {.dump = iwpm_register_pid_cb},
-	[RDMA_NL_IWPM_ADD_MAPPING] = {.dump = iwpm_add_mapping_cb},
-	[RDMA_NL_IWPM_QUERY_MAPPING] = {.dump = iwpm_add_and_query_mapping_cb},
-	[RDMA_NL_IWPM_REMOTE_INFO] = {.dump = iwpm_remote_info_cb},
-	[RDMA_NL_IWPM_HANDLE_ERR] = {.dump = iwpm_mapping_error_cb},
-	[RDMA_NL_IWPM_MAPINFO] = {.dump = iwpm_mapping_info_cb},
-	[RDMA_NL_IWPM_MAPINFO_NUM] = {.dump = iwpm_ack_mapping_info_cb},
-	[RDMA_NL_IWPM_HELLO] = {.dump = iwpm_hello_cb}
-};
+अटल काष्ठा rdma_nl_cbs iwcm_nl_cb_table[RDMA_NL_IWPM_NUM_OPS] = अणु
+	[RDMA_NL_IWPM_REG_PID] = अणु.dump = iwpm_रेजिस्टर_pid_cbपूर्ण,
+	[RDMA_NL_IWPM_ADD_MAPPING] = अणु.dump = iwpm_add_mapping_cbपूर्ण,
+	[RDMA_NL_IWPM_QUERY_MAPPING] = अणु.dump = iwpm_add_and_query_mapping_cbपूर्ण,
+	[RDMA_NL_IWPM_REMOTE_INFO] = अणु.dump = iwpm_remote_info_cbपूर्ण,
+	[RDMA_NL_IWPM_HANDLE_ERR] = अणु.dump = iwpm_mapping_error_cbपूर्ण,
+	[RDMA_NL_IWPM_MAPINFO] = अणु.dump = iwpm_mapping_info_cbपूर्ण,
+	[RDMA_NL_IWPM_MAPINFO_NUM] = अणु.dump = iwpm_ack_mapping_info_cbपूर्ण,
+	[RDMA_NL_IWPM_HELLO] = अणु.dump = iwpm_hello_cbपूर्ण
+पूर्ण;
 
-static struct workqueue_struct *iwcm_wq;
-struct iwcm_work {
-	struct work_struct work;
-	struct iwcm_id_private *cm_id;
-	struct list_head list;
-	struct iw_cm_event event;
-	struct list_head free_list;
-};
+अटल काष्ठा workqueue_काष्ठा *iwcm_wq;
+काष्ठा iwcm_work अणु
+	काष्ठा work_काष्ठा work;
+	काष्ठा iwcm_id_निजी *cm_id;
+	काष्ठा list_head list;
+	काष्ठा iw_cm_event event;
+	काष्ठा list_head मुक्त_list;
+पूर्ण;
 
-static unsigned int default_backlog = 256;
+अटल अचिन्हित पूर्णांक शेष_backlog = 256;
 
-static struct ctl_table_header *iwcm_ctl_table_hdr;
-static struct ctl_table iwcm_ctl_table[] = {
-	{
+अटल काष्ठा ctl_table_header *iwcm_ctl_table_hdr;
+अटल काष्ठा ctl_table iwcm_ctl_table[] = अणु
+	अणु
 		.procname	= "default_backlog",
-		.data		= &default_backlog,
-		.maxlen		= sizeof(default_backlog),
+		.data		= &शेष_backlog,
+		.maxlen		= माप(शेष_backlog),
 		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
-	},
-	{ }
-};
+		.proc_handler	= proc_करोपूर्णांकvec,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 /*
- * The following services provide a mechanism for pre-allocating iwcm_work
+ * The following services provide a mechanism क्रम pre-allocating iwcm_work
  * elements.  The design pre-allocates them  based on the cm_id type:
- *	LISTENING IDS: 	Get enough elements preallocated to handle the
+ *	LISTENING IDS: 	Get enough elements pपुनः_स्मृतिated to handle the
  *			listen backlog.
  *	ACTIVE IDS:	4: CONNECT_REPLY, ESTABLISHED, DISCONNECT, CLOSE
  *	PASSIVE IDS:	3: ESTABLISHED, DISCONNECT, CLOSE
  *
- * Allocating them in connect and listen avoids having to deal
+ * Allocating them in connect and listen aव्योमs having to deal
  * with allocation failures on the event upcall from the provider (which
- * is called in the interrupt context).
+ * is called in the पूर्णांकerrupt context).
  *
- * One exception is when creating the cm_id for incoming connection requests.
- * There are two cases:
- * 1) in the event upcall, cm_event_handler(), for a listening cm_id.  If
+ * One exception is when creating the cm_id क्रम incoming connection requests.
+ * There are two हालs:
+ * 1) in the event upcall, cm_event_handler(), क्रम a listening cm_id.  If
  *    the backlog is exceeded, then no more connection request events will
- *    be processed.  cm_event_handler() returns -ENOMEM in this case.  Its up
+ *    be processed.  cm_event_handler() वापसs -ENOMEM in this हाल.  Its up
  *    to the provider to reject the connection request.
  * 2) in the connection request workqueue handler, cm_conn_req_handler().
- *    If work elements cannot be allocated for the new connect request cm_id,
+ *    If work elements cannot be allocated क्रम the new connect request cm_id,
  *    then IWCM will call the provider reject method.  This is ok since
- *    cm_conn_req_handler() runs in the workqueue thread context.
+ *    cm_conn_req_handler() runs in the workqueue thपढ़ो context.
  */
 
-static struct iwcm_work *get_work(struct iwcm_id_private *cm_id_priv)
-{
-	struct iwcm_work *work;
+अटल काष्ठा iwcm_work *get_work(काष्ठा iwcm_id_निजी *cm_id_priv)
+अणु
+	काष्ठा iwcm_work *work;
 
-	if (list_empty(&cm_id_priv->work_free_list))
-		return NULL;
-	work = list_entry(cm_id_priv->work_free_list.next, struct iwcm_work,
-			  free_list);
-	list_del_init(&work->free_list);
-	return work;
-}
+	अगर (list_empty(&cm_id_priv->work_मुक्त_list))
+		वापस शून्य;
+	work = list_entry(cm_id_priv->work_मुक्त_list.next, काष्ठा iwcm_work,
+			  मुक्त_list);
+	list_del_init(&work->मुक्त_list);
+	वापस work;
+पूर्ण
 
-static void put_work(struct iwcm_work *work)
-{
-	list_add(&work->free_list, &work->cm_id->work_free_list);
-}
+अटल व्योम put_work(काष्ठा iwcm_work *work)
+अणु
+	list_add(&work->मुक्त_list, &work->cm_id->work_मुक्त_list);
+पूर्ण
 
-static void dealloc_work_entries(struct iwcm_id_private *cm_id_priv)
-{
-	struct list_head *e, *tmp;
+अटल व्योम dealloc_work_entries(काष्ठा iwcm_id_निजी *cm_id_priv)
+अणु
+	काष्ठा list_head *e, *पंचांगp;
 
-	list_for_each_safe(e, tmp, &cm_id_priv->work_free_list) {
+	list_क्रम_each_safe(e, पंचांगp, &cm_id_priv->work_मुक्त_list) अणु
 		list_del(e);
-		kfree(list_entry(e, struct iwcm_work, free_list));
-	}
-}
+		kमुक्त(list_entry(e, काष्ठा iwcm_work, मुक्त_list));
+	पूर्ण
+पूर्ण
 
-static int alloc_work_entries(struct iwcm_id_private *cm_id_priv, int count)
-{
-	struct iwcm_work *work;
+अटल पूर्णांक alloc_work_entries(काष्ठा iwcm_id_निजी *cm_id_priv, पूर्णांक count)
+अणु
+	काष्ठा iwcm_work *work;
 
-	BUG_ON(!list_empty(&cm_id_priv->work_free_list));
-	while (count--) {
-		work = kmalloc(sizeof(struct iwcm_work), GFP_KERNEL);
-		if (!work) {
+	BUG_ON(!list_empty(&cm_id_priv->work_मुक्त_list));
+	जबतक (count--) अणु
+		work = kदो_स्मृति(माप(काष्ठा iwcm_work), GFP_KERNEL);
+		अगर (!work) अणु
 			dealloc_work_entries(cm_id_priv);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		work->cm_id = cm_id_priv;
 		INIT_LIST_HEAD(&work->list);
 		put_work(work);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Save private data from incoming connection requests to
- * iw_cm_event, so the low level driver doesn't have to. Adjust
- * the event ptr to point to the local copy.
+ * Save निजी data from incoming connection requests to
+ * iw_cm_event, so the low level driver करोesn't have to. Adjust
+ * the event ptr to poपूर्णांक to the local copy.
  */
-static int copy_private_data(struct iw_cm_event *event)
-{
-	void *p;
+अटल पूर्णांक copy_निजी_data(काष्ठा iw_cm_event *event)
+अणु
+	व्योम *p;
 
-	p = kmemdup(event->private_data, event->private_data_len, GFP_ATOMIC);
-	if (!p)
-		return -ENOMEM;
-	event->private_data = p;
-	return 0;
-}
+	p = kmemdup(event->निजी_data, event->निजी_data_len, GFP_ATOMIC);
+	अगर (!p)
+		वापस -ENOMEM;
+	event->निजी_data = p;
+	वापस 0;
+पूर्ण
 
-static void free_cm_id(struct iwcm_id_private *cm_id_priv)
-{
+अटल व्योम मुक्त_cm_id(काष्ठा iwcm_id_निजी *cm_id_priv)
+अणु
 	dealloc_work_entries(cm_id_priv);
-	kfree(cm_id_priv);
-}
+	kमुक्त(cm_id_priv);
+पूर्ण
 
 /*
  * Release a reference on cm_id. If the last reference is being
- * released, free the cm_id and return 1.
+ * released, मुक्त the cm_id and वापस 1.
  */
-static int iwcm_deref_id(struct iwcm_id_private *cm_id_priv)
-{
-	BUG_ON(atomic_read(&cm_id_priv->refcount)==0);
-	if (atomic_dec_and_test(&cm_id_priv->refcount)) {
+अटल पूर्णांक iwcm_deref_id(काष्ठा iwcm_id_निजी *cm_id_priv)
+अणु
+	BUG_ON(atomic_पढ़ो(&cm_id_priv->refcount)==0);
+	अगर (atomic_dec_and_test(&cm_id_priv->refcount)) अणु
 		BUG_ON(!list_empty(&cm_id_priv->work_list));
-		free_cm_id(cm_id_priv);
-		return 1;
-	}
+		मुक्त_cm_id(cm_id_priv);
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void add_ref(struct iw_cm_id *cm_id)
-{
-	struct iwcm_id_private *cm_id_priv;
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
+अटल व्योम add_ref(काष्ठा iw_cm_id *cm_id)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
 	atomic_inc(&cm_id_priv->refcount);
-}
+पूर्ण
 
-static void rem_ref(struct iw_cm_id *cm_id)
-{
-	struct iwcm_id_private *cm_id_priv;
+अटल व्योम rem_ref(काष्ठा iw_cm_id *cm_id)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
 
-	(void)iwcm_deref_id(cm_id_priv);
-}
+	(व्योम)iwcm_deref_id(cm_id_priv);
+पूर्ण
 
-static int cm_event_handler(struct iw_cm_id *cm_id, struct iw_cm_event *event);
+अटल पूर्णांक cm_event_handler(काष्ठा iw_cm_id *cm_id, काष्ठा iw_cm_event *event);
 
-struct iw_cm_id *iw_create_cm_id(struct ib_device *device,
+काष्ठा iw_cm_id *iw_create_cm_id(काष्ठा ib_device *device,
 				 iw_cm_handler cm_handler,
-				 void *context)
-{
-	struct iwcm_id_private *cm_id_priv;
+				 व्योम *context)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
 
-	cm_id_priv = kzalloc(sizeof(*cm_id_priv), GFP_KERNEL);
-	if (!cm_id_priv)
-		return ERR_PTR(-ENOMEM);
+	cm_id_priv = kzalloc(माप(*cm_id_priv), GFP_KERNEL);
+	अगर (!cm_id_priv)
+		वापस ERR_PTR(-ENOMEM);
 
 	cm_id_priv->state = IW_CM_STATE_IDLE;
 	cm_id_priv->id.device = device;
@@ -258,111 +259,111 @@ struct iw_cm_id *iw_create_cm_id(struct ib_device *device,
 	cm_id_priv->id.rem_ref = rem_ref;
 	spin_lock_init(&cm_id_priv->lock);
 	atomic_set(&cm_id_priv->refcount, 1);
-	init_waitqueue_head(&cm_id_priv->connect_wait);
+	init_रुकोqueue_head(&cm_id_priv->connect_रुको);
 	init_completion(&cm_id_priv->destroy_comp);
 	INIT_LIST_HEAD(&cm_id_priv->work_list);
-	INIT_LIST_HEAD(&cm_id_priv->work_free_list);
+	INIT_LIST_HEAD(&cm_id_priv->work_मुक्त_list);
 
-	return &cm_id_priv->id;
-}
+	वापस &cm_id_priv->id;
+पूर्ण
 EXPORT_SYMBOL(iw_create_cm_id);
 
 
-static int iwcm_modify_qp_err(struct ib_qp *qp)
-{
-	struct ib_qp_attr qp_attr;
+अटल पूर्णांक iwcm_modअगरy_qp_err(काष्ठा ib_qp *qp)
+अणु
+	काष्ठा ib_qp_attr qp_attr;
 
-	if (!qp)
-		return -EINVAL;
+	अगर (!qp)
+		वापस -EINVAL;
 
 	qp_attr.qp_state = IB_QPS_ERR;
-	return ib_modify_qp(qp, &qp_attr, IB_QP_STATE);
-}
+	वापस ib_modअगरy_qp(qp, &qp_attr, IB_QP_STATE);
+पूर्ण
 
 /*
  * This is really the RDMAC CLOSING state. It is most similar to the
  * IB SQD QP state.
  */
-static int iwcm_modify_qp_sqd(struct ib_qp *qp)
-{
-	struct ib_qp_attr qp_attr;
+अटल पूर्णांक iwcm_modअगरy_qp_sqd(काष्ठा ib_qp *qp)
+अणु
+	काष्ठा ib_qp_attr qp_attr;
 
-	BUG_ON(qp == NULL);
+	BUG_ON(qp == शून्य);
 	qp_attr.qp_state = IB_QPS_SQD;
-	return ib_modify_qp(qp, &qp_attr, IB_QP_STATE);
-}
+	वापस ib_modअगरy_qp(qp, &qp_attr, IB_QP_STATE);
+पूर्ण
 
 /*
  * CM_ID <-- CLOSING
  *
- * Block if a passive or active connection is currently being processed. Then
+ * Block अगर a passive or active connection is currently being processed. Then
  * process the event as follows:
- * - If we are ESTABLISHED, move to CLOSING and modify the QP state
+ * - If we are ESTABLISHED, move to CLOSING and modअगरy the QP state
  *   based on the abrupt flag
- * - If the connection is already in the CLOSING or IDLE state, the peer is
- *   disconnecting concurrently with us and we've already seen the
- *   DISCONNECT event -- ignore the request and return 0
- * - Disconnect on a listening endpoint returns -EINVAL
+ * - If the connection is alपढ़ोy in the CLOSING or IDLE state, the peer is
+ *   disconnecting concurrently with us and we've alपढ़ोy seen the
+ *   DISCONNECT event -- ignore the request and वापस 0
+ * - Disconnect on a listening endpoपूर्णांक वापसs -EINVAL
  */
-int iw_cm_disconnect(struct iw_cm_id *cm_id, int abrupt)
-{
-	struct iwcm_id_private *cm_id_priv;
-	unsigned long flags;
-	int ret = 0;
-	struct ib_qp *qp = NULL;
+पूर्णांक iw_cm_disconnect(काष्ठा iw_cm_id *cm_id, पूर्णांक abrupt)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
+	काष्ठा ib_qp *qp = शून्य;
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
-	/* Wait if we're currently in a connect or accept downcall */
-	wait_event(cm_id_priv->connect_wait,
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
+	/* Wait अगर we're currently in a connect or accept करोwncall */
+	रुको_event(cm_id_priv->connect_रुको,
 		   !test_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags));
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
-	switch (cm_id_priv->state) {
-	case IW_CM_STATE_ESTABLISHED:
+	चयन (cm_id_priv->state) अणु
+	हाल IW_CM_STATE_ESTABLISHED:
 		cm_id_priv->state = IW_CM_STATE_CLOSING;
 
-		/* QP could be <nul> for user-mode client */
-		if (cm_id_priv->qp)
+		/* QP could be <nul> क्रम user-mode client */
+		अगर (cm_id_priv->qp)
 			qp = cm_id_priv->qp;
-		else
+		अन्यथा
 			ret = -EINVAL;
-		break;
-	case IW_CM_STATE_LISTEN:
+		अवरोध;
+	हाल IW_CM_STATE_LISTEN:
 		ret = -EINVAL;
-		break;
-	case IW_CM_STATE_CLOSING:
-		/* remote peer closed first */
-	case IW_CM_STATE_IDLE:
-		/* accept or connect returned !0 */
-		break;
-	case IW_CM_STATE_CONN_RECV:
+		अवरोध;
+	हाल IW_CM_STATE_CLOSING:
+		/* remote peer बंदd first */
+	हाल IW_CM_STATE_IDLE:
+		/* accept or connect वापसed !0 */
+		अवरोध;
+	हाल IW_CM_STATE_CONN_RECV:
 		/*
-		 * App called disconnect before/without calling accept after
+		 * App called disconnect beक्रमe/without calling accept after
 		 * connect_request event delivered.
 		 */
-		break;
-	case IW_CM_STATE_CONN_SENT:
-		/* Can only get here if wait above fails */
-	default:
+		अवरोध;
+	हाल IW_CM_STATE_CONN_SENT:
+		/* Can only get here अगर रुको above fails */
+	शेष:
 		BUG();
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 
-	if (qp) {
-		if (abrupt)
-			ret = iwcm_modify_qp_err(qp);
-		else
-			ret = iwcm_modify_qp_sqd(qp);
+	अगर (qp) अणु
+		अगर (abrupt)
+			ret = iwcm_modअगरy_qp_err(qp);
+		अन्यथा
+			ret = iwcm_modअगरy_qp_sqd(qp);
 
 		/*
 		 * If both sides are disconnecting the QP could
-		 * already be in ERR or SQD states
+		 * alपढ़ोy be in ERR or SQD states
 		 */
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(iw_cm_disconnect);
 
 /*
@@ -371,229 +372,229 @@ EXPORT_SYMBOL(iw_cm_disconnect);
  * Clean up all resources associated with the connection and release
  * the initial reference taken by iw_create_cm_id.
  */
-static void destroy_cm_id(struct iw_cm_id *cm_id)
-{
-	struct iwcm_id_private *cm_id_priv;
-	struct ib_qp *qp;
-	unsigned long flags;
+अटल व्योम destroy_cm_id(काष्ठा iw_cm_id *cm_id)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	काष्ठा ib_qp *qp;
+	अचिन्हित दीर्घ flags;
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
 	/*
-	 * Wait if we're currently in a connect or accept downcall. A
-	 * listening endpoint should never block here.
+	 * Wait अगर we're currently in a connect or accept करोwncall. A
+	 * listening endpoपूर्णांक should never block here.
 	 */
-	wait_event(cm_id_priv->connect_wait,
+	रुको_event(cm_id_priv->connect_रुको,
 		   !test_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags));
 
 	/*
 	 * Since we're deleting the cm_id, drop any events that
-	 * might arrive before the last dereference.
+	 * might arrive beक्रमe the last dereference.
 	 */
 	set_bit(IWCM_F_DROP_EVENTS, &cm_id_priv->flags);
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
 	qp = cm_id_priv->qp;
-	cm_id_priv->qp = NULL;
+	cm_id_priv->qp = शून्य;
 
-	switch (cm_id_priv->state) {
-	case IW_CM_STATE_LISTEN:
+	चयन (cm_id_priv->state) अणु
+	हाल IW_CM_STATE_LISTEN:
 		cm_id_priv->state = IW_CM_STATE_DESTROYING;
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-		/* destroy the listening endpoint */
+		/* destroy the listening endpoपूर्णांक */
 		cm_id->device->ops.iw_destroy_listen(cm_id);
 		spin_lock_irqsave(&cm_id_priv->lock, flags);
-		break;
-	case IW_CM_STATE_ESTABLISHED:
+		अवरोध;
+	हाल IW_CM_STATE_ESTABLISHED:
 		cm_id_priv->state = IW_CM_STATE_DESTROYING;
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-		/* Abrupt close of the connection */
-		(void)iwcm_modify_qp_err(qp);
+		/* Abrupt बंद of the connection */
+		(व्योम)iwcm_modअगरy_qp_err(qp);
 		spin_lock_irqsave(&cm_id_priv->lock, flags);
-		break;
-	case IW_CM_STATE_IDLE:
-	case IW_CM_STATE_CLOSING:
+		अवरोध;
+	हाल IW_CM_STATE_IDLE:
+	हाल IW_CM_STATE_CLOSING:
 		cm_id_priv->state = IW_CM_STATE_DESTROYING;
-		break;
-	case IW_CM_STATE_CONN_RECV:
+		अवरोध;
+	हाल IW_CM_STATE_CONN_RECV:
 		/*
-		 * App called destroy before/without calling accept after
-		 * receiving connection request event notification or
-		 * returned non zero from the event callback function.
-		 * In either case, must tell the provider to reject.
+		 * App called destroy beक्रमe/without calling accept after
+		 * receiving connection request event notअगरication or
+		 * वापसed non zero from the event callback function.
+		 * In either हाल, must tell the provider to reject.
 		 */
 		cm_id_priv->state = IW_CM_STATE_DESTROYING;
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-		cm_id->device->ops.iw_reject(cm_id, NULL, 0);
+		cm_id->device->ops.iw_reject(cm_id, शून्य, 0);
 		spin_lock_irqsave(&cm_id_priv->lock, flags);
-		break;
-	case IW_CM_STATE_CONN_SENT:
-	case IW_CM_STATE_DESTROYING:
-	default:
+		अवरोध;
+	हाल IW_CM_STATE_CONN_SENT:
+	हाल IW_CM_STATE_DESTROYING:
+	शेष:
 		BUG();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-	if (qp)
+	अगर (qp)
 		cm_id_priv->id.device->ops.iw_rem_ref(qp);
 
-	if (cm_id->mapped) {
-		iwpm_remove_mapinfo(&cm_id->local_addr, &cm_id->m_local_addr);
-		iwpm_remove_mapping(&cm_id->local_addr, RDMA_NL_IWCM);
-	}
+	अगर (cm_id->mapped) अणु
+		iwpm_हटाओ_mapinfo(&cm_id->local_addr, &cm_id->m_local_addr);
+		iwpm_हटाओ_mapping(&cm_id->local_addr, RDMA_NL_IWCM);
+	पूर्ण
 
-	(void)iwcm_deref_id(cm_id_priv);
-}
+	(व्योम)iwcm_deref_id(cm_id_priv);
+पूर्ण
 
 /*
- * This function is only called by the application thread and cannot
- * be called by the event thread. The function will wait for all
- * references to be released on the cm_id and then kfree the cm_id
+ * This function is only called by the application thपढ़ो and cannot
+ * be called by the event thपढ़ो. The function will रुको क्रम all
+ * references to be released on the cm_id and then kमुक्त the cm_id
  * object.
  */
-void iw_destroy_cm_id(struct iw_cm_id *cm_id)
-{
+व्योम iw_destroy_cm_id(काष्ठा iw_cm_id *cm_id)
+अणु
 	destroy_cm_id(cm_id);
-}
+पूर्ण
 EXPORT_SYMBOL(iw_destroy_cm_id);
 
 /**
  * iw_cm_check_wildcard - If IP address is 0 then use original
- * @pm_addr: sockaddr containing the ip to check for wildcard
+ * @pm_addr: sockaddr containing the ip to check क्रम wildcard
  * @cm_addr: sockaddr containing the actual IP address
  * @cm_outaddr: sockaddr to set IP addr which leaving port
  *
- *  Checks the pm_addr for wildcard and then sets cm_outaddr's
+ *  Checks the pm_addr क्रम wildcard and then sets cm_outaddr's
  *  IP to the actual (cm_addr).
  */
-static void iw_cm_check_wildcard(struct sockaddr_storage *pm_addr,
-				 struct sockaddr_storage *cm_addr,
-				 struct sockaddr_storage *cm_outaddr)
-{
-	if (pm_addr->ss_family == AF_INET) {
-		struct sockaddr_in *pm4_addr = (struct sockaddr_in *)pm_addr;
+अटल व्योम iw_cm_check_wildcard(काष्ठा sockaddr_storage *pm_addr,
+				 काष्ठा sockaddr_storage *cm_addr,
+				 काष्ठा sockaddr_storage *cm_outaddr)
+अणु
+	अगर (pm_addr->ss_family == AF_INET) अणु
+		काष्ठा sockaddr_in *pm4_addr = (काष्ठा sockaddr_in *)pm_addr;
 
-		if (pm4_addr->sin_addr.s_addr == htonl(INADDR_ANY)) {
-			struct sockaddr_in *cm4_addr =
-				(struct sockaddr_in *)cm_addr;
-			struct sockaddr_in *cm4_outaddr =
-				(struct sockaddr_in *)cm_outaddr;
+		अगर (pm4_addr->sin_addr.s_addr == htonl(INADDR_ANY)) अणु
+			काष्ठा sockaddr_in *cm4_addr =
+				(काष्ठा sockaddr_in *)cm_addr;
+			काष्ठा sockaddr_in *cm4_outaddr =
+				(काष्ठा sockaddr_in *)cm_outaddr;
 
 			cm4_outaddr->sin_addr = cm4_addr->sin_addr;
-		}
-	} else {
-		struct sockaddr_in6 *pm6_addr = (struct sockaddr_in6 *)pm_addr;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा sockaddr_in6 *pm6_addr = (काष्ठा sockaddr_in6 *)pm_addr;
 
-		if (ipv6_addr_type(&pm6_addr->sin6_addr) == IPV6_ADDR_ANY) {
-			struct sockaddr_in6 *cm6_addr =
-				(struct sockaddr_in6 *)cm_addr;
-			struct sockaddr_in6 *cm6_outaddr =
-				(struct sockaddr_in6 *)cm_outaddr;
+		अगर (ipv6_addr_type(&pm6_addr->sin6_addr) == IPV6_ADDR_ANY) अणु
+			काष्ठा sockaddr_in6 *cm6_addr =
+				(काष्ठा sockaddr_in6 *)cm_addr;
+			काष्ठा sockaddr_in6 *cm6_outaddr =
+				(काष्ठा sockaddr_in6 *)cm_outaddr;
 
 			cm6_outaddr->sin6_addr = cm6_addr->sin6_addr;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * iw_cm_map - Use portmapper to map the ports
- * @cm_id: connection manager pointer
+ * iw_cm_map - Use porपंचांगapper to map the ports
+ * @cm_id: connection manager poपूर्णांकer
  * @active: Indicates the active side when true
- * returns nonzero for error only if iwpm_create_mapinfo() fails
+ * वापसs nonzero क्रम error only अगर iwpm_create_mapinfo() fails
  *
- * Tries to add a mapping for a port using the Portmapper. If
+ * Tries to add a mapping क्रम a port using the Porपंचांगapper. If
  * successful in mapping the IP/Port it will check the remote
- * mapped IP address for a wildcard IP address and replace the
+ * mapped IP address क्रम a wildcard IP address and replace the
  * zero IP address with the remote_addr.
  */
-static int iw_cm_map(struct iw_cm_id *cm_id, bool active)
-{
-	const char *devname = dev_name(&cm_id->device->dev);
-	const char *ifname = cm_id->device->iw_ifname;
-	struct iwpm_dev_data pm_reg_msg = {};
-	struct iwpm_sa_data pm_msg;
-	int status;
+अटल पूर्णांक iw_cm_map(काष्ठा iw_cm_id *cm_id, bool active)
+अणु
+	स्थिर अक्षर *devname = dev_name(&cm_id->device->dev);
+	स्थिर अक्षर *अगरname = cm_id->device->iw_अगरname;
+	काष्ठा iwpm_dev_data pm_reg_msg = अणुपूर्ण;
+	काष्ठा iwpm_sa_data pm_msg;
+	पूर्णांक status;
 
-	if (strlen(devname) >= sizeof(pm_reg_msg.dev_name) ||
-	    strlen(ifname) >= sizeof(pm_reg_msg.if_name))
-		return -EINVAL;
+	अगर (म_माप(devname) >= माप(pm_reg_msg.dev_name) ||
+	    म_माप(अगरname) >= माप(pm_reg_msg.अगर_name))
+		वापस -EINVAL;
 
 	cm_id->m_local_addr = cm_id->local_addr;
 	cm_id->m_remote_addr = cm_id->remote_addr;
 
-	strcpy(pm_reg_msg.dev_name, devname);
-	strcpy(pm_reg_msg.if_name, ifname);
+	म_नकल(pm_reg_msg.dev_name, devname);
+	म_नकल(pm_reg_msg.अगर_name, अगरname);
 
-	if (iwpm_register_pid(&pm_reg_msg, RDMA_NL_IWCM) ||
+	अगर (iwpm_रेजिस्टर_pid(&pm_reg_msg, RDMA_NL_IWCM) ||
 	    !iwpm_valid_pid())
-		return 0;
+		वापस 0;
 
 	cm_id->mapped = true;
 	pm_msg.loc_addr = cm_id->local_addr;
 	pm_msg.rem_addr = cm_id->remote_addr;
 	pm_msg.flags = (cm_id->device->iw_driver_flags & IW_F_NO_PORT_MAP) ?
 		       IWPM_FLAGS_NO_PORT_MAP : 0;
-	if (active)
+	अगर (active)
 		status = iwpm_add_and_query_mapping(&pm_msg,
 						    RDMA_NL_IWCM);
-	else
+	अन्यथा
 		status = iwpm_add_mapping(&pm_msg, RDMA_NL_IWCM);
 
-	if (!status) {
+	अगर (!status) अणु
 		cm_id->m_local_addr = pm_msg.mapped_loc_addr;
-		if (active) {
+		अगर (active) अणु
 			cm_id->m_remote_addr = pm_msg.mapped_rem_addr;
 			iw_cm_check_wildcard(&pm_msg.mapped_rem_addr,
 					     &cm_id->remote_addr,
 					     &cm_id->m_remote_addr);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return iwpm_create_mapinfo(&cm_id->local_addr,
+	वापस iwpm_create_mapinfo(&cm_id->local_addr,
 				   &cm_id->m_local_addr,
 				   RDMA_NL_IWCM, pm_msg.flags);
-}
+पूर्ण
 
 /*
  * CM_ID <-- LISTEN
  *
- * Start listening for connect requests. Generates one CONNECT_REQUEST
- * event for each inbound connect request.
+ * Start listening क्रम connect requests. Generates one CONNECT_REQUEST
+ * event क्रम each inbound connect request.
  */
-int iw_cm_listen(struct iw_cm_id *cm_id, int backlog)
-{
-	struct iwcm_id_private *cm_id_priv;
-	unsigned long flags;
-	int ret;
+पूर्णांक iw_cm_listen(काष्ठा iw_cm_id *cm_id, पूर्णांक backlog)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
 
-	if (!backlog)
-		backlog = default_backlog;
+	अगर (!backlog)
+		backlog = शेष_backlog;
 
 	ret = alloc_work_entries(cm_id_priv, backlog);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
-	switch (cm_id_priv->state) {
-	case IW_CM_STATE_IDLE:
+	चयन (cm_id_priv->state) अणु
+	हाल IW_CM_STATE_IDLE:
 		cm_id_priv->state = IW_CM_STATE_LISTEN;
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 		ret = iw_cm_map(cm_id, false);
-		if (!ret)
+		अगर (!ret)
 			ret = cm_id->device->ops.iw_create_listen(cm_id,
 								  backlog);
-		if (ret)
+		अगर (ret)
 			cm_id_priv->state = IW_CM_STATE_IDLE;
 		spin_lock_irqsave(&cm_id_priv->lock, flags);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(iw_cm_listen);
 
 /*
@@ -601,35 +602,35 @@ EXPORT_SYMBOL(iw_cm_listen);
  *
  * Rejects an inbound connection request. No events are generated.
  */
-int iw_cm_reject(struct iw_cm_id *cm_id,
-		 const void *private_data,
-		 u8 private_data_len)
-{
-	struct iwcm_id_private *cm_id_priv;
-	unsigned long flags;
-	int ret;
+पूर्णांक iw_cm_reject(काष्ठा iw_cm_id *cm_id,
+		 स्थिर व्योम *निजी_data,
+		 u8 निजी_data_len)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
 	set_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
-	if (cm_id_priv->state != IW_CM_STATE_CONN_RECV) {
+	अगर (cm_id_priv->state != IW_CM_STATE_CONN_RECV) अणु
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 		clear_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
-		wake_up_all(&cm_id_priv->connect_wait);
-		return -EINVAL;
-	}
+		wake_up_all(&cm_id_priv->connect_रुको);
+		वापस -EINVAL;
+	पूर्ण
 	cm_id_priv->state = IW_CM_STATE_IDLE;
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 
-	ret = cm_id->device->ops.iw_reject(cm_id, private_data,
-					  private_data_len);
+	ret = cm_id->device->ops.iw_reject(cm_id, निजी_data,
+					  निजी_data_len);
 
 	clear_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
-	wake_up_all(&cm_id_priv->connect_wait);
+	wake_up_all(&cm_id_priv->connect_रुको);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(iw_cm_reject);
 
 /*
@@ -639,53 +640,53 @@ EXPORT_SYMBOL(iw_cm_reject);
  * event. Callers of iw_cm_disconnect and iw_destroy_cm_id will block
  * until the ESTABLISHED event is received from the provider.
  */
-int iw_cm_accept(struct iw_cm_id *cm_id,
-		 struct iw_cm_conn_param *iw_param)
-{
-	struct iwcm_id_private *cm_id_priv;
-	struct ib_qp *qp;
-	unsigned long flags;
-	int ret;
+पूर्णांक iw_cm_accept(काष्ठा iw_cm_id *cm_id,
+		 काष्ठा iw_cm_conn_param *iw_param)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	काष्ठा ib_qp *qp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
 	set_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
-	if (cm_id_priv->state != IW_CM_STATE_CONN_RECV) {
+	अगर (cm_id_priv->state != IW_CM_STATE_CONN_RECV) अणु
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 		clear_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
-		wake_up_all(&cm_id_priv->connect_wait);
-		return -EINVAL;
-	}
+		wake_up_all(&cm_id_priv->connect_रुको);
+		वापस -EINVAL;
+	पूर्ण
 	/* Get the ib_qp given the QPN */
 	qp = cm_id->device->ops.iw_get_qp(cm_id->device, iw_param->qpn);
-	if (!qp) {
+	अगर (!qp) अणु
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 		clear_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
-		wake_up_all(&cm_id_priv->connect_wait);
-		return -EINVAL;
-	}
+		wake_up_all(&cm_id_priv->connect_रुको);
+		वापस -EINVAL;
+	पूर्ण
 	cm_id->device->ops.iw_add_ref(qp);
 	cm_id_priv->qp = qp;
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 
 	ret = cm_id->device->ops.iw_accept(cm_id, iw_param);
-	if (ret) {
+	अगर (ret) अणु
 		/* An error on accept precludes provider events */
 		BUG_ON(cm_id_priv->state != IW_CM_STATE_CONN_RECV);
 		cm_id_priv->state = IW_CM_STATE_IDLE;
 		spin_lock_irqsave(&cm_id_priv->lock, flags);
 		qp = cm_id_priv->qp;
-		cm_id_priv->qp = NULL;
+		cm_id_priv->qp = शून्य;
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-		if (qp)
+		अगर (qp)
 			cm_id->device->ops.iw_rem_ref(qp);
 		clear_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
-		wake_up_all(&cm_id_priv->connect_wait);
-	}
+		wake_up_all(&cm_id_priv->connect_रुको);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(iw_cm_accept);
 
 /*
@@ -695,56 +696,56 @@ EXPORT_SYMBOL(iw_cm_accept);
  * event. iw_cm_disconnect and iw_cm_destroy will block until the
  * CONNECT_REPLY event is received from the provider.
  */
-int iw_cm_connect(struct iw_cm_id *cm_id, struct iw_cm_conn_param *iw_param)
-{
-	struct iwcm_id_private *cm_id_priv;
-	int ret;
-	unsigned long flags;
-	struct ib_qp *qp = NULL;
+पूर्णांक iw_cm_connect(काष्ठा iw_cm_id *cm_id, काष्ठा iw_cm_conn_param *iw_param)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
+	काष्ठा ib_qp *qp = शून्य;
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
 
 	ret = alloc_work_entries(cm_id_priv, 4);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	set_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
 
-	if (cm_id_priv->state != IW_CM_STATE_IDLE) {
+	अगर (cm_id_priv->state != IW_CM_STATE_IDLE) अणु
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/* Get the ib_qp given the QPN */
 	qp = cm_id->device->ops.iw_get_qp(cm_id->device, iw_param->qpn);
-	if (!qp) {
+	अगर (!qp) अणु
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 	cm_id->device->ops.iw_add_ref(qp);
 	cm_id_priv->qp = qp;
 	cm_id_priv->state = IW_CM_STATE_CONN_SENT;
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 
 	ret = iw_cm_map(cm_id, true);
-	if (!ret)
+	अगर (!ret)
 		ret = cm_id->device->ops.iw_connect(cm_id, iw_param);
-	if (!ret)
-		return 0;	/* success */
+	अगर (!ret)
+		वापस 0;	/* success */
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
 	qp = cm_id_priv->qp;
-	cm_id_priv->qp = NULL;
+	cm_id_priv->qp = शून्य;
 	cm_id_priv->state = IW_CM_STATE_IDLE;
 err:
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-	if (qp)
+	अगर (qp)
 		cm_id->device->ops.iw_rem_ref(qp);
 	clear_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
-	wake_up_all(&cm_id_priv->connect_wait);
-	return ret;
-}
+	wake_up_all(&cm_id_priv->connect_रुको);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(iw_cm_connect);
 
 /*
@@ -754,21 +755,21 @@ EXPORT_SYMBOL(iw_cm_connect);
  * iw_cm_id to represent the new connection and inherits the client
  * callback function and other attributes from the listening parent.
  *
- * The work item contains a pointer to the listen_cm_id and the event. The
+ * The work item contains a poपूर्णांकer to the listen_cm_id and the event. The
  * listen_cm_id contains the client cm_handler, context and
  * device. These are copied when the device is cloned. The event
  * contains the new four tuple.
  *
  * An error on the child should not affect the parent, so this
- * function does not return a value.
+ * function करोes not वापस a value.
  */
-static void cm_conn_req_handler(struct iwcm_id_private *listen_id_priv,
-				struct iw_cm_event *iw_event)
-{
-	unsigned long flags;
-	struct iw_cm_id *cm_id;
-	struct iwcm_id_private *cm_id_priv;
-	int ret;
+अटल व्योम cm_conn_req_handler(काष्ठा iwcm_id_निजी *listen_id_priv,
+				काष्ठा iw_cm_event *iw_event)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा iw_cm_id *cm_id;
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	पूर्णांक ret;
 
 	/*
 	 * The provider should never generate a connection request
@@ -780,8 +781,8 @@ static void cm_conn_req_handler(struct iwcm_id_private *listen_id_priv,
 				listen_id_priv->id.cm_handler,
 				listen_id_priv->id.context);
 	/* If the cm_id could not be created, ignore the request */
-	if (IS_ERR(cm_id))
-		goto out;
+	अगर (IS_ERR(cm_id))
+		जाओ out;
 
 	cm_id->provider_data = iw_event->provider_data;
 	cm_id->m_local_addr = iw_event->local_addr;
@@ -792,17 +793,17 @@ static void cm_conn_req_handler(struct iwcm_id_private *listen_id_priv,
 				   &iw_event->remote_addr,
 				   &cm_id->remote_addr,
 				   RDMA_NL_IWCM);
-	if (ret) {
+	अगर (ret) अणु
 		cm_id->remote_addr = iw_event->remote_addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		iw_cm_check_wildcard(&listen_id_priv->id.m_local_addr,
 				     &iw_event->local_addr,
 				     &cm_id->local_addr);
 		iw_event->local_addr = cm_id->local_addr;
 		iw_event->remote_addr = cm_id->remote_addr;
-	}
+	पूर्ण
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
 	cm_id_priv->state = IW_CM_STATE_CONN_RECV;
 
 	/*
@@ -810,32 +811,32 @@ static void cm_conn_req_handler(struct iwcm_id_private *listen_id_priv,
 	 * upcall.
 	 */
 	spin_lock_irqsave(&listen_id_priv->lock, flags);
-	if (listen_id_priv->state != IW_CM_STATE_LISTEN) {
+	अगर (listen_id_priv->state != IW_CM_STATE_LISTEN) अणु
 		spin_unlock_irqrestore(&listen_id_priv->lock, flags);
-		iw_cm_reject(cm_id, NULL, 0);
+		iw_cm_reject(cm_id, शून्य, 0);
 		iw_destroy_cm_id(cm_id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	spin_unlock_irqrestore(&listen_id_priv->lock, flags);
 
 	ret = alloc_work_entries(cm_id_priv, 3);
-	if (ret) {
-		iw_cm_reject(cm_id, NULL, 0);
+	अगर (ret) अणु
+		iw_cm_reject(cm_id, शून्य, 0);
 		iw_destroy_cm_id(cm_id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Call the client CM handler */
 	ret = cm_id->cm_handler(cm_id, iw_event);
-	if (ret) {
-		iw_cm_reject(cm_id, NULL, 0);
+	अगर (ret) अणु
+		iw_cm_reject(cm_id, शून्य, 0);
 		iw_destroy_cm_id(cm_id);
-	}
+	पूर्ण
 
 out:
-	if (iw_event->private_data_len)
-		kfree(iw_event->private_data);
-}
+	अगर (iw_event->निजी_data_len)
+		kमुक्त(iw_event->निजी_data);
+पूर्ण
 
 /*
  * Passive Side: CM_ID <-- ESTABLISHED
@@ -845,15 +846,15 @@ out:
  * FPDU mode.
  *
  * This event can only be received in the CONN_RECV state. If the
- * remote peer closed, the ESTABLISHED event would be received followed
- * by the CLOSE event. If the app closes, it will block until we wake
+ * remote peer बंदd, the ESTABLISHED event would be received followed
+ * by the CLOSE event. If the app बंदs, it will block until we wake
  * it up after processing this event.
  */
-static int cm_conn_est_handler(struct iwcm_id_private *cm_id_priv,
-			       struct iw_cm_event *iw_event)
-{
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक cm_conn_est_handler(काष्ठा iwcm_id_निजी *cm_id_priv,
+			       काष्ठा iw_cm_event *iw_event)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
 
@@ -867,193 +868,193 @@ static int cm_conn_est_handler(struct iwcm_id_private *cm_id_priv,
 	cm_id_priv->state = IW_CM_STATE_ESTABLISHED;
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 	ret = cm_id_priv->id.cm_handler(&cm_id_priv->id, iw_event);
-	wake_up_all(&cm_id_priv->connect_wait);
+	wake_up_all(&cm_id_priv->connect_रुको);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Active Side: CM_ID <-- ESTABLISHED
  *
- * The app has called connect and is waiting for the established event to
+ * The app has called connect and is रुकोing क्रम the established event to
  * post it's requests to the server. This event will wake up anyone
  * blocked in iw_cm_disconnect or iw_destroy_id.
  */
-static int cm_conn_rep_handler(struct iwcm_id_private *cm_id_priv,
-			       struct iw_cm_event *iw_event)
-{
-	struct ib_qp *qp = NULL;
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक cm_conn_rep_handler(काष्ठा iwcm_id_निजी *cm_id_priv,
+			       काष्ठा iw_cm_event *iw_event)
+अणु
+	काष्ठा ib_qp *qp = शून्य;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
 	/*
-	 * Clear the connect wait bit so a callback function calling
-	 * iw_cm_disconnect will not wait and deadlock this thread
+	 * Clear the connect रुको bit so a callback function calling
+	 * iw_cm_disconnect will not रुको and deadlock this thपढ़ो
 	 */
 	clear_bit(IWCM_F_CONNECT_WAIT, &cm_id_priv->flags);
 	BUG_ON(cm_id_priv->state != IW_CM_STATE_CONN_SENT);
-	if (iw_event->status == 0) {
+	अगर (iw_event->status == 0) अणु
 		cm_id_priv->id.m_local_addr = iw_event->local_addr;
 		cm_id_priv->id.m_remote_addr = iw_event->remote_addr;
 		iw_event->local_addr = cm_id_priv->id.local_addr;
 		iw_event->remote_addr = cm_id_priv->id.remote_addr;
 		cm_id_priv->state = IW_CM_STATE_ESTABLISHED;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* REJECTED or RESET */
 		qp = cm_id_priv->qp;
-		cm_id_priv->qp = NULL;
+		cm_id_priv->qp = शून्य;
 		cm_id_priv->state = IW_CM_STATE_IDLE;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-	if (qp)
+	अगर (qp)
 		cm_id_priv->id.device->ops.iw_rem_ref(qp);
 	ret = cm_id_priv->id.cm_handler(&cm_id_priv->id, iw_event);
 
-	if (iw_event->private_data_len)
-		kfree(iw_event->private_data);
+	अगर (iw_event->निजी_data_len)
+		kमुक्त(iw_event->निजी_data);
 
-	/* Wake up waiters on connect complete */
-	wake_up_all(&cm_id_priv->connect_wait);
+	/* Wake up रुकोers on connect complete */
+	wake_up_all(&cm_id_priv->connect_रुको);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * CM_ID <-- CLOSING
  *
  * If in the ESTABLISHED state, move to CLOSING.
  */
-static void cm_disconnect_handler(struct iwcm_id_private *cm_id_priv,
-				  struct iw_cm_event *iw_event)
-{
-	unsigned long flags;
+अटल व्योम cm_disconnect_handler(काष्ठा iwcm_id_निजी *cm_id_priv,
+				  काष्ठा iw_cm_event *iw_event)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
-	if (cm_id_priv->state == IW_CM_STATE_ESTABLISHED)
+	अगर (cm_id_priv->state == IW_CM_STATE_ESTABLISHED)
 		cm_id_priv->state = IW_CM_STATE_CLOSING;
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-}
+पूर्ण
 
 /*
  * CM_ID <-- IDLE
  *
  * If in the ESTBLISHED or CLOSING states, the QP will have have been
  * moved by the provider to the ERR state. Disassociate the CM_ID from
- * the QP,  move to IDLE, and remove the 'connected' reference.
+ * the QP,  move to IDLE, and हटाओ the 'connected' reference.
  *
  * If in some other state, the cm_id was destroyed asynchronously.
  * This is the last reference that will result in waking up
- * the app thread blocked in iw_destroy_cm_id.
+ * the app thपढ़ो blocked in iw_destroy_cm_id.
  */
-static int cm_close_handler(struct iwcm_id_private *cm_id_priv,
-				  struct iw_cm_event *iw_event)
-{
-	struct ib_qp *qp;
-	unsigned long flags;
-	int ret = 0, notify_event = 0;
+अटल पूर्णांक cm_बंद_handler(काष्ठा iwcm_id_निजी *cm_id_priv,
+				  काष्ठा iw_cm_event *iw_event)
+अणु
+	काष्ठा ib_qp *qp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0, notअगरy_event = 0;
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
 	qp = cm_id_priv->qp;
-	cm_id_priv->qp = NULL;
+	cm_id_priv->qp = शून्य;
 
-	switch (cm_id_priv->state) {
-	case IW_CM_STATE_ESTABLISHED:
-	case IW_CM_STATE_CLOSING:
+	चयन (cm_id_priv->state) अणु
+	हाल IW_CM_STATE_ESTABLISHED:
+	हाल IW_CM_STATE_CLOSING:
 		cm_id_priv->state = IW_CM_STATE_IDLE;
-		notify_event = 1;
-		break;
-	case IW_CM_STATE_DESTROYING:
-		break;
-	default:
+		notअगरy_event = 1;
+		अवरोध;
+	हाल IW_CM_STATE_DESTROYING:
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 
-	if (qp)
+	अगर (qp)
 		cm_id_priv->id.device->ops.iw_rem_ref(qp);
-	if (notify_event)
+	अगर (notअगरy_event)
 		ret = cm_id_priv->id.cm_handler(&cm_id_priv->id, iw_event);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int process_event(struct iwcm_id_private *cm_id_priv,
-			 struct iw_cm_event *iw_event)
-{
-	int ret = 0;
+अटल पूर्णांक process_event(काष्ठा iwcm_id_निजी *cm_id_priv,
+			 काष्ठा iw_cm_event *iw_event)
+अणु
+	पूर्णांक ret = 0;
 
-	switch (iw_event->event) {
-	case IW_CM_EVENT_CONNECT_REQUEST:
+	चयन (iw_event->event) अणु
+	हाल IW_CM_EVENT_CONNECT_REQUEST:
 		cm_conn_req_handler(cm_id_priv, iw_event);
-		break;
-	case IW_CM_EVENT_CONNECT_REPLY:
+		अवरोध;
+	हाल IW_CM_EVENT_CONNECT_REPLY:
 		ret = cm_conn_rep_handler(cm_id_priv, iw_event);
-		break;
-	case IW_CM_EVENT_ESTABLISHED:
+		अवरोध;
+	हाल IW_CM_EVENT_ESTABLISHED:
 		ret = cm_conn_est_handler(cm_id_priv, iw_event);
-		break;
-	case IW_CM_EVENT_DISCONNECT:
+		अवरोध;
+	हाल IW_CM_EVENT_DISCONNECT:
 		cm_disconnect_handler(cm_id_priv, iw_event);
-		break;
-	case IW_CM_EVENT_CLOSE:
-		ret = cm_close_handler(cm_id_priv, iw_event);
-		break;
-	default:
+		अवरोध;
+	हाल IW_CM_EVENT_CLOSE:
+		ret = cm_बंद_handler(cm_id_priv, iw_event);
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Process events on the work_list for the cm_id. If the callback
+ * Process events on the work_list क्रम the cm_id. If the callback
  * function requests that the cm_id be deleted, a flag is set in the
  * cm_id flags to indicate that when the last reference is
- * removed, the cm_id is to be destroyed. This is necessary to
+ * हटाओd, the cm_id is to be destroyed. This is necessary to
  * distinguish between an object that will be destroyed by the app
- * thread asleep on the destroy_comp list vs. an object destroyed
- * here synchronously when the last reference is removed.
+ * thपढ़ो asleep on the destroy_comp list vs. an object destroyed
+ * here synchronously when the last reference is हटाओd.
  */
-static void cm_work_handler(struct work_struct *_work)
-{
-	struct iwcm_work *work = container_of(_work, struct iwcm_work, work);
-	struct iw_cm_event levent;
-	struct iwcm_id_private *cm_id_priv = work->cm_id;
-	unsigned long flags;
-	int empty;
-	int ret = 0;
+अटल व्योम cm_work_handler(काष्ठा work_काष्ठा *_work)
+अणु
+	काष्ठा iwcm_work *work = container_of(_work, काष्ठा iwcm_work, work);
+	काष्ठा iw_cm_event levent;
+	काष्ठा iwcm_id_निजी *cm_id_priv = work->cm_id;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक empty;
+	पूर्णांक ret = 0;
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
 	empty = list_empty(&cm_id_priv->work_list);
-	while (!empty) {
+	जबतक (!empty) अणु
 		work = list_entry(cm_id_priv->work_list.next,
-				  struct iwcm_work, list);
+				  काष्ठा iwcm_work, list);
 		list_del_init(&work->list);
 		empty = list_empty(&cm_id_priv->work_list);
 		levent = work->event;
 		put_work(work);
 		spin_unlock_irqrestore(&cm_id_priv->lock, flags);
 
-		if (!test_bit(IWCM_F_DROP_EVENTS, &cm_id_priv->flags)) {
+		अगर (!test_bit(IWCM_F_DROP_EVENTS, &cm_id_priv->flags)) अणु
 			ret = process_event(cm_id_priv, &levent);
-			if (ret)
+			अगर (ret)
 				destroy_cm_id(&cm_id_priv->id);
-		} else
+		पूर्ण अन्यथा
 			pr_debug("dropping event %d\n", levent.event);
-		if (iwcm_deref_id(cm_id_priv))
-			return;
-		if (empty)
-			return;
+		अगर (iwcm_deref_id(cm_id_priv))
+			वापस;
+		अगर (empty)
+			वापस;
 		spin_lock_irqsave(&cm_id_priv->lock, flags);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-}
+पूर्ण
 
 /*
- * This function is called on interrupt context. Schedule events on
- * the iwcm_wq thread to allow callback functions to downcall into
+ * This function is called on पूर्णांकerrupt context. Schedule events on
+ * the iwcm_wq thपढ़ो to allow callback functions to करोwncall पूर्णांकo
  * the CM and/or block.  Events are queued to a per-CM_ID
  * work_list. If this is the first event on the work_list, the work
- * element is also queued on the iwcm_wq thread.
+ * element is also queued on the iwcm_wq thपढ़ो.
  *
  * Each event holds a reference on the cm_id. Until the last posted
  * event has been delivered and processed, the cm_id cannot be
@@ -1063,157 +1064,157 @@ static void cm_work_handler(struct work_struct *_work)
  * 	      0	- the event was handled.
  *	-ENOMEM	- the event was not handled due to lack of resources.
  */
-static int cm_event_handler(struct iw_cm_id *cm_id,
-			     struct iw_cm_event *iw_event)
-{
-	struct iwcm_work *work;
-	struct iwcm_id_private *cm_id_priv;
-	unsigned long flags;
-	int ret = 0;
+अटल पूर्णांक cm_event_handler(काष्ठा iw_cm_id *cm_id,
+			     काष्ठा iw_cm_event *iw_event)
+अणु
+	काष्ठा iwcm_work *work;
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
 	work = get_work(cm_id_priv);
-	if (!work) {
+	अगर (!work) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	INIT_WORK(&work->work, cm_work_handler);
 	work->cm_id = cm_id_priv;
 	work->event = *iw_event;
 
-	if ((work->event.event == IW_CM_EVENT_CONNECT_REQUEST ||
+	अगर ((work->event.event == IW_CM_EVENT_CONNECT_REQUEST ||
 	     work->event.event == IW_CM_EVENT_CONNECT_REPLY) &&
-	    work->event.private_data_len) {
-		ret = copy_private_data(&work->event);
-		if (ret) {
+	    work->event.निजी_data_len) अणु
+		ret = copy_निजी_data(&work->event);
+		अगर (ret) अणु
 			put_work(work);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	atomic_inc(&cm_id_priv->refcount);
-	if (list_empty(&cm_id_priv->work_list)) {
+	अगर (list_empty(&cm_id_priv->work_list)) अणु
 		list_add_tail(&work->list, &cm_id_priv->work_list);
 		queue_work(iwcm_wq, &work->work);
-	} else
+	पूर्ण अन्यथा
 		list_add_tail(&work->list, &cm_id_priv->work_list);
 out:
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iwcm_init_qp_init_attr(struct iwcm_id_private *cm_id_priv,
-				  struct ib_qp_attr *qp_attr,
-				  int *qp_attr_mask)
-{
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक iwcm_init_qp_init_attr(काष्ठा iwcm_id_निजी *cm_id_priv,
+				  काष्ठा ib_qp_attr *qp_attr,
+				  पूर्णांक *qp_attr_mask)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
-	switch (cm_id_priv->state) {
-	case IW_CM_STATE_IDLE:
-	case IW_CM_STATE_CONN_SENT:
-	case IW_CM_STATE_CONN_RECV:
-	case IW_CM_STATE_ESTABLISHED:
+	चयन (cm_id_priv->state) अणु
+	हाल IW_CM_STATE_IDLE:
+	हाल IW_CM_STATE_CONN_SENT:
+	हाल IW_CM_STATE_CONN_RECV:
+	हाल IW_CM_STATE_ESTABLISHED:
 		*qp_attr_mask = IB_QP_STATE | IB_QP_ACCESS_FLAGS;
 		qp_attr->qp_access_flags = IB_ACCESS_REMOTE_WRITE|
 					   IB_ACCESS_REMOTE_READ;
 		ret = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int iwcm_init_qp_rts_attr(struct iwcm_id_private *cm_id_priv,
-				  struct ib_qp_attr *qp_attr,
-				  int *qp_attr_mask)
-{
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक iwcm_init_qp_rts_attr(काष्ठा iwcm_id_निजी *cm_id_priv,
+				  काष्ठा ib_qp_attr *qp_attr,
+				  पूर्णांक *qp_attr_mask)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	spin_lock_irqsave(&cm_id_priv->lock, flags);
-	switch (cm_id_priv->state) {
-	case IW_CM_STATE_IDLE:
-	case IW_CM_STATE_CONN_SENT:
-	case IW_CM_STATE_CONN_RECV:
-	case IW_CM_STATE_ESTABLISHED:
+	चयन (cm_id_priv->state) अणु
+	हाल IW_CM_STATE_IDLE:
+	हाल IW_CM_STATE_CONN_SENT:
+	हाल IW_CM_STATE_CONN_RECV:
+	हाल IW_CM_STATE_ESTABLISHED:
 		*qp_attr_mask = 0;
 		ret = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&cm_id_priv->lock, flags);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int iw_cm_init_qp_attr(struct iw_cm_id *cm_id,
-		       struct ib_qp_attr *qp_attr,
-		       int *qp_attr_mask)
-{
-	struct iwcm_id_private *cm_id_priv;
-	int ret;
+पूर्णांक iw_cm_init_qp_attr(काष्ठा iw_cm_id *cm_id,
+		       काष्ठा ib_qp_attr *qp_attr,
+		       पूर्णांक *qp_attr_mask)
+अणु
+	काष्ठा iwcm_id_निजी *cm_id_priv;
+	पूर्णांक ret;
 
-	cm_id_priv = container_of(cm_id, struct iwcm_id_private, id);
-	switch (qp_attr->qp_state) {
-	case IB_QPS_INIT:
-	case IB_QPS_RTR:
+	cm_id_priv = container_of(cm_id, काष्ठा iwcm_id_निजी, id);
+	चयन (qp_attr->qp_state) अणु
+	हाल IB_QPS_INIT:
+	हाल IB_QPS_RTR:
 		ret = iwcm_init_qp_init_attr(cm_id_priv,
 					     qp_attr, qp_attr_mask);
-		break;
-	case IB_QPS_RTS:
+		अवरोध;
+	हाल IB_QPS_RTS:
 		ret = iwcm_init_qp_rts_attr(cm_id_priv,
 					    qp_attr, qp_attr_mask);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(iw_cm_init_qp_attr);
 
-static int __init iw_cm_init(void)
-{
-	int ret;
+अटल पूर्णांक __init iw_cm_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	ret = iwpm_init(RDMA_NL_IWCM);
-	if (ret)
+	अगर (ret)
 		pr_err("iw_cm: couldn't init iwpm\n");
-	else
-		rdma_nl_register(RDMA_NL_IWCM, iwcm_nl_cb_table);
+	अन्यथा
+		rdma_nl_रेजिस्टर(RDMA_NL_IWCM, iwcm_nl_cb_table);
 	iwcm_wq = alloc_ordered_workqueue("iw_cm_wq", 0);
-	if (!iwcm_wq)
-		return -ENOMEM;
+	अगर (!iwcm_wq)
+		वापस -ENOMEM;
 
-	iwcm_ctl_table_hdr = register_net_sysctl(&init_net, "net/iw_cm",
+	iwcm_ctl_table_hdr = रेजिस्टर_net_sysctl(&init_net, "net/iw_cm",
 						 iwcm_ctl_table);
-	if (!iwcm_ctl_table_hdr) {
+	अगर (!iwcm_ctl_table_hdr) अणु
 		pr_err("iw_cm: couldn't register sysctl paths\n");
 		destroy_workqueue(iwcm_wq);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit iw_cm_cleanup(void)
-{
-	unregister_net_sysctl_table(iwcm_ctl_table_hdr);
+अटल व्योम __निकास iw_cm_cleanup(व्योम)
+अणु
+	unरेजिस्टर_net_sysctl_table(iwcm_ctl_table_hdr);
 	destroy_workqueue(iwcm_wq);
-	rdma_nl_unregister(RDMA_NL_IWCM);
-	iwpm_exit(RDMA_NL_IWCM);
-}
+	rdma_nl_unरेजिस्टर(RDMA_NL_IWCM);
+	iwpm_निकास(RDMA_NL_IWCM);
+पूर्ण
 
 MODULE_ALIAS_RDMA_NETLINK(RDMA_NL_IWCM, 2);
 
 module_init(iw_cm_init);
-module_exit(iw_cm_cleanup);
+module_निकास(iw_cm_cleanup);

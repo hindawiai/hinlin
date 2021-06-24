@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2015 Zhang, Keguang <keguang.zhang@gmail.com>
  *
- * Loongson 1 NAND platform support.
+ * Loongson 1 न_अंकD platक्रमm support.
  */
 
-#ifndef __ASM_MACH_LOONGSON32_NAND_H
-#define __ASM_MACH_LOONGSON32_NAND_H
+#अगर_अघोषित __ASM_MACH_LOONGSON32_न_अंकD_H
+#घोषणा __ASM_MACH_LOONGSON32_न_अंकD_H
 
-#include <linux/dmaengine.h>
-#include <linux/mtd/partitions.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/mtd/partitions.h>
 
-struct plat_ls1x_nand {
-	struct mtd_partition *parts;
-	unsigned int nr_parts;
+काष्ठा plat_ls1x_nand अणु
+	काष्ठा mtd_partition *parts;
+	अचिन्हित पूर्णांक nr_parts;
 
-	int hold_cycle;
-	int wait_cycle;
-};
+	पूर्णांक hold_cycle;
+	पूर्णांक रुको_cycle;
+पूर्ण;
 
-extern struct plat_ls1x_nand ls1b_nand_pdata;
+बाह्य काष्ठा plat_ls1x_nand ls1b_nand_pdata;
 
-bool ls1x_dma_filter_fn(struct dma_chan *chan, void *param);
+bool ls1x_dma_filter_fn(काष्ठा dma_chan *chan, व्योम *param);
 
-#endif /* __ASM_MACH_LOONGSON32_NAND_H */
+#पूर्ण_अगर /* __ASM_MACH_LOONGSON32_न_अंकD_H */

@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* Parse a Microsoft Individual Code Signing blob
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* Parse a Microsoft Inभागidual Code Signing blob
  *
  * Copyright (C) 2014 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#define pr_fmt(fmt) "MSCODE: "fmt
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/oid_registry.h>
-#include <crypto/pkcs7.h>
-#include "verify_pefile.h"
-#include "mscode.asn1.h"
+#घोषणा pr_fmt(fmt) "MSCODE: "fmt
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/oid_registry.h>
+#समावेश <crypto/pkcs7.h>
+#समावेश "verify_pefile.h"
+#समावेश "mscode.asn1.h"
 
 /*
- * Parse a Microsoft Individual Code Signing blob
+ * Parse a Microsoft Inभागidual Code Signing blob
  */
-int mscode_parse(void *_ctx, const void *content_data, size_t data_len,
-		 size_t asn1hdrlen)
-{
-	struct pefile_context *ctx = _ctx;
+पूर्णांक mscode_parse(व्योम *_ctx, स्थिर व्योम *content_data, माप_प्रकार data_len,
+		 माप_प्रकार asn1hdrlen)
+अणु
+	काष्ठा pefile_context *ctx = _ctx;
 
 	content_data -= asn1hdrlen;
 	data_len += asn1hdrlen;
-	pr_devel("Data: %zu [%*ph]\n", data_len, (unsigned)(data_len),
+	pr_devel("Data: %zu [%*ph]\n", data_len, (अचिन्हित)(data_len),
 		 content_data);
 
-	return asn1_ber_decoder(&mscode_decoder, ctx, content_data, data_len);
-}
+	वापस asn1_ber_decoder(&mscode_decoder, ctx, content_data, data_len);
+पूर्ण
 
 /*
  * Check the content type OID
  */
-int mscode_note_content_type(void *context, size_t hdrlen,
-			     unsigned char tag,
-			     const void *value, size_t vlen)
-{
-	enum OID oid;
+पूर्णांक mscode_note_content_type(व्योम *context, माप_प्रकार hdrlen,
+			     अचिन्हित अक्षर tag,
+			     स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	क्रमागत OID oid;
 
 	oid = look_up_OID(value, vlen);
-	if (oid == OID__NR) {
-		char buffer[50];
+	अगर (oid == OID__NR) अणु
+		अक्षर buffer[50];
 
-		sprint_oid(value, vlen, buffer, sizeof(buffer));
+		sprपूर्णांक_oid(value, vlen, buffer, माप(buffer));
 		pr_err("Unknown OID: %s\n", buffer);
-		return -EBADMSG;
-	}
+		वापस -EBADMSG;
+	पूर्ण
 
 	/*
 	 * pesign utility had a bug where it was putting
-	 * OID_msIndividualSPKeyPurpose instead of OID_msPeImageDataObjId
+	 * OID_msInभागidualSPKeyPurpose instead of OID_msPeImageDataObjId
 	 * So allow both OIDs.
 	 */
-	if (oid != OID_msPeImageDataObjId &&
-	    oid != OID_msIndividualSPKeyPurpose) {
+	अगर (oid != OID_msPeImageDataObjId &&
+	    oid != OID_msInभागidualSPKeyPurpose) अणु
 		pr_err("Unexpected content type OID %u\n", oid);
-		return -EBADMSG;
-	}
+		वापस -EBADMSG;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Note the digest algorithm OID
  */
-int mscode_note_digest_algo(void *context, size_t hdrlen,
-			    unsigned char tag,
-			    const void *value, size_t vlen)
-{
-	struct pefile_context *ctx = context;
-	char buffer[50];
-	enum OID oid;
+पूर्णांक mscode_note_digest_algo(व्योम *context, माप_प्रकार hdrlen,
+			    अचिन्हित अक्षर tag,
+			    स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	काष्ठा pefile_context *ctx = context;
+	अक्षर buffer[50];
+	क्रमागत OID oid;
 
 	oid = look_up_OID(value, vlen);
-	switch (oid) {
-	case OID_md4:
+	चयन (oid) अणु
+	हाल OID_md4:
 		ctx->digest_algo = "md4";
-		break;
-	case OID_md5:
+		अवरोध;
+	हाल OID_md5:
 		ctx->digest_algo = "md5";
-		break;
-	case OID_sha1:
+		अवरोध;
+	हाल OID_sha1:
 		ctx->digest_algo = "sha1";
-		break;
-	case OID_sha256:
+		अवरोध;
+	हाल OID_sha256:
 		ctx->digest_algo = "sha256";
-		break;
-	case OID_sha384:
+		अवरोध;
+	हाल OID_sha384:
 		ctx->digest_algo = "sha384";
-		break;
-	case OID_sha512:
+		अवरोध;
+	हाल OID_sha512:
 		ctx->digest_algo = "sha512";
-		break;
-	case OID_sha224:
+		अवरोध;
+	हाल OID_sha224:
 		ctx->digest_algo = "sha224";
-		break;
+		अवरोध;
 
-	case OID__NR:
-		sprint_oid(value, vlen, buffer, sizeof(buffer));
+	हाल OID__NR:
+		sprपूर्णांक_oid(value, vlen, buffer, माप(buffer));
 		pr_err("Unknown OID: %s\n", buffer);
-		return -EBADMSG;
+		वापस -EBADMSG;
 
-	default:
+	शेष:
 		pr_err("Unsupported content type: %u\n", oid);
-		return -ENOPKG;
-	}
+		वापस -ENOPKG;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Note the digest we're guaranteeing with this certificate
+ * Note the digest we're guaranteeing with this certअगरicate
  */
-int mscode_note_digest(void *context, size_t hdrlen,
-		       unsigned char tag,
-		       const void *value, size_t vlen)
-{
-	struct pefile_context *ctx = context;
+पूर्णांक mscode_note_digest(व्योम *context, माप_प्रकार hdrlen,
+		       अचिन्हित अक्षर tag,
+		       स्थिर व्योम *value, माप_प्रकार vlen)
+अणु
+	काष्ठा pefile_context *ctx = context;
 
 	ctx->digest = kmemdup(value, vlen, GFP_KERNEL);
-	if (!ctx->digest)
-		return -ENOMEM;
+	अगर (!ctx->digest)
+		वापस -ENOMEM;
 
 	ctx->digest_len = vlen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

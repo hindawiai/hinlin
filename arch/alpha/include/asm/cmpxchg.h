@@ -1,76 +1,77 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ALPHA_CMPXCHG_H
-#define _ALPHA_CMPXCHG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ALPHA_CMPXCHG_H
+#घोषणा _ALPHA_CMPXCHG_H
 
 /*
  * Atomic exchange routines.
  */
 
-#define ____xchg(type, args...)		__xchg ## type ## _local(args)
-#define ____cmpxchg(type, args...)	__cmpxchg ## type ## _local(args)
-#include <asm/xchg.h>
+#घोषणा ____xchg(type, args...)		__xchg ## type ## _local(args)
+#घोषणा ____cmpxchg(type, args...)	__cmpxchg ## type ## _local(args)
+#समावेश <यंत्र/xchg.h>
 
-#define xchg_local(ptr, x)						\
-({									\
+#घोषणा xchg_local(ptr, x)						\
+(अणु									\
 	__typeof__(*(ptr)) _x_ = (x);					\
-	(__typeof__(*(ptr))) __xchg_local((ptr), (unsigned long)_x_,	\
-				       sizeof(*(ptr)));			\
-})
+	(__typeof__(*(ptr))) __xchg_local((ptr), (अचिन्हित दीर्घ)_x_,	\
+				       माप(*(ptr)));			\
+पूर्ण)
 
-#define cmpxchg_local(ptr, o, n)					\
-({									\
+#घोषणा cmpxchg_local(ptr, o, n)					\
+(अणु									\
 	__typeof__(*(ptr)) _o_ = (o);					\
 	__typeof__(*(ptr)) _n_ = (n);					\
-	(__typeof__(*(ptr))) __cmpxchg_local((ptr), (unsigned long)_o_,	\
-					  (unsigned long)_n_,		\
-					  sizeof(*(ptr)));		\
-})
+	(__typeof__(*(ptr))) __cmpxchg_local((ptr), (अचिन्हित दीर्घ)_o_,	\
+					  (अचिन्हित दीर्घ)_n_,		\
+					  माप(*(ptr)));		\
+पूर्ण)
 
-#define cmpxchg64_local(ptr, o, n)					\
-({									\
-	BUILD_BUG_ON(sizeof(*(ptr)) != 8);				\
+#घोषणा cmpxchg64_local(ptr, o, n)					\
+(अणु									\
+	BUILD_BUG_ON(माप(*(ptr)) != 8);				\
 	cmpxchg_local((ptr), (o), (n));					\
-})
+पूर्ण)
 
-#undef ____xchg
-#undef ____cmpxchg
-#define ____xchg(type, args...)		__xchg ##type(args)
-#define ____cmpxchg(type, args...)	__cmpxchg ##type(args)
-#include <asm/xchg.h>
+#अघोषित ____xchg
+#अघोषित ____cmpxchg
+#घोषणा ____xchg(type, args...)		__xchg ##type(args)
+#घोषणा ____cmpxchg(type, args...)	__cmpxchg ##type(args)
+#समावेश <यंत्र/xchg.h>
 
 /*
  * The leading and the trailing memory barriers guarantee that these
  * operations are fully ordered.
  */
-#define xchg(ptr, x)							\
-({									\
+#घोषणा xchg(ptr, x)							\
+(अणु									\
 	__typeof__(*(ptr)) __ret;					\
 	__typeof__(*(ptr)) _x_ = (x);					\
 	smp_mb();							\
 	__ret = (__typeof__(*(ptr)))					\
-		__xchg((ptr), (unsigned long)_x_, sizeof(*(ptr)));	\
+		__xchg((ptr), (अचिन्हित दीर्घ)_x_, माप(*(ptr)));	\
 	smp_mb();							\
 	__ret;								\
-})
+पूर्ण)
 
-#define cmpxchg(ptr, o, n)						\
-({									\
+#घोषणा cmpxchg(ptr, o, n)						\
+(अणु									\
 	__typeof__(*(ptr)) __ret;					\
 	__typeof__(*(ptr)) _o_ = (o);					\
 	__typeof__(*(ptr)) _n_ = (n);					\
 	smp_mb();							\
 	__ret = (__typeof__(*(ptr))) __cmpxchg((ptr),			\
-		(unsigned long)_o_, (unsigned long)_n_, sizeof(*(ptr)));\
+		(अचिन्हित दीर्घ)_o_, (अचिन्हित दीर्घ)_n_, माप(*(ptr)));\
 	smp_mb();							\
 	__ret;								\
-})
+पूर्ण)
 
-#define cmpxchg64(ptr, o, n)						\
-({									\
-	BUILD_BUG_ON(sizeof(*(ptr)) != 8);				\
+#घोषणा cmpxchg64(ptr, o, n)						\
+(अणु									\
+	BUILD_BUG_ON(माप(*(ptr)) != 8);				\
 	cmpxchg((ptr), (o), (n));					\
-})
+पूर्ण)
 
-#undef ____cmpxchg
+#अघोषित ____cmpxchg
 
-#endif /* _ALPHA_CMPXCHG_H */
+#पूर्ण_अगर /* _ALPHA_CMPXCHG_H */

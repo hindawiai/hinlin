@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/arch/arm/mach-integrator/core.c
+ *  linux/arch/arm/mach-पूर्णांकegrator/core.c
  *
  *  Copyright (C) 2000-2003 Deep Blue Solutions Ltd
  */
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/spinlock.h>
-#include <linux/interrupt.h>
-#include <linux/irq.h>
-#include <linux/memblock.h>
-#include <linux/sched.h>
-#include <linux/smp.h>
-#include <linux/amba/bus.h>
-#include <linux/amba/serial.h>
-#include <linux/io.h>
-#include <linux/stat.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/pgtable.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/export.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/amba/bus.h>
+#समावेश <linux/amba/serial.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/time.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/समय.स>
 
-#include "hardware.h"
-#include "cm.h"
-#include "common.h"
+#समावेश "hardware.h"
+#समावेश "cm.h"
+#समावेश "common.h"
 
-static DEFINE_RAW_SPINLOCK(cm_lock);
-static void __iomem *cm_base;
+अटल DEFINE_RAW_SPINLOCK(cm_lock);
+अटल व्योम __iomem *cm_base;
 
 /**
- * cm_get - get the value from the CM_CTRL register
+ * cm_get - get the value from the CM_CTRL रेजिस्टर
  */
-u32 cm_get(void)
-{
-	return readl(cm_base + INTEGRATOR_HDR_CTRL_OFFSET);
-}
+u32 cm_get(व्योम)
+अणु
+	वापस पढ़ोl(cm_base + INTEGRATOR_HDR_CTRL_OFFSET);
+पूर्ण
 
 /**
- * cm_control - update the CM_CTRL register.
+ * cm_control - update the CM_CTRL रेजिस्टर.
  * @mask: bits to change
  * @set: bits to set
  */
-void cm_control(u32 mask, u32 set)
-{
-	unsigned long flags;
+व्योम cm_control(u32 mask, u32 set)
+अणु
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	raw_spin_lock_irqsave(&cm_lock, flags);
-	val = readl(cm_base + INTEGRATOR_HDR_CTRL_OFFSET) & ~mask;
-	writel(val | set, cm_base + INTEGRATOR_HDR_CTRL_OFFSET);
+	val = पढ़ोl(cm_base + INTEGRATOR_HDR_CTRL_OFFSET) & ~mask;
+	ग_लिखोl(val | set, cm_base + INTEGRATOR_HDR_CTRL_OFFSET);
 	raw_spin_unlock_irqrestore(&cm_lock, flags);
-}
+पूर्ण
 
-void cm_clear_irqs(void)
-{
+व्योम cm_clear_irqs(व्योम)
+अणु
 	/* disable core module IRQs */
-	writel(0xffffffffU, cm_base + INTEGRATOR_HDR_IC_OFFSET +
+	ग_लिखोl(0xffffffffU, cm_base + INTEGRATOR_HDR_IC_OFFSET +
 		IRQ_ENABLE_CLEAR);
-}
+पूर्ण
 
-static const struct of_device_id cm_match[] = {
-	{ .compatible = "arm,core-module-integrator"},
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id cm_match[] = अणु
+	अणु .compatible = "arm,core-module-integrator"पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-void cm_init(void)
-{
-	struct device_node *cm = of_find_matching_node(NULL, cm_match);
+व्योम cm_init(व्योम)
+अणु
+	काष्ठा device_node *cm = of_find_matching_node(शून्य, cm_match);
 
-	if (!cm) {
+	अगर (!cm) अणु
 		pr_crit("no core module node found in device tree\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	cm_base = of_iomap(cm, 0);
-	if (!cm_base) {
+	अगर (!cm_base) अणु
 		pr_crit("could not remap core module\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 	cm_clear_irqs();
-}
+पूर्ण
 
 /*
  * We need to stop things allocating the low memory; ideally we need a
- * better implementation of GFP_DMA which does not assume that DMA-able
+ * better implementation of GFP_DMA which करोes not assume that DMA-able
  * memory starts at zero.
  */
-void __init integrator_reserve(void)
-{
+व्योम __init पूर्णांकegrator_reserve(व्योम)
+अणु
 	memblock_reserve(PHYS_OFFSET, __pa(swapper_pg_dir) - PHYS_OFFSET);
-}
+पूर्ण

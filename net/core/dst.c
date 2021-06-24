@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * net/core/dst.c	Protocol independent destination cache.
  *
@@ -6,276 +7,276 @@
  *
  */
 
-#include <linux/bitops.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/workqueue.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <net/net_namespace.h>
-#include <linux/sched.h>
-#include <linux/prefetch.h>
-#include <net/lwtunnel.h>
-#include <net/xfrm.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <net/net_namespace.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/prefetch.h>
+#समावेश <net/lwtunnel.h>
+#समावेश <net/xfrm.h>
 
-#include <net/dst.h>
-#include <net/dst_metadata.h>
+#समावेश <net/dst.h>
+#समावेश <net/dst_metadata.h>
 
-int dst_discard_out(struct net *net, struct sock *sk, struct sk_buff *skb)
-{
-	kfree_skb(skb);
-	return 0;
-}
+पूर्णांक dst_discard_out(काष्ठा net *net, काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(dst_discard_out);
 
-const struct dst_metrics dst_default_metrics = {
-	/* This initializer is needed to force linker to place this variable
-	 * into const section. Otherwise it might end into bss section.
-	 * We really want to avoid false sharing on this variable, and catch
-	 * any writes on it.
+स्थिर काष्ठा dst_metrics dst_शेष_metrics = अणु
+	/* This initializer is needed to क्रमce linker to place this variable
+	 * पूर्णांकo स्थिर section. Otherwise it might end पूर्णांकo bss section.
+	 * We really want to aव्योम false sharing on this variable, and catch
+	 * any ग_लिखोs on it.
 	 */
 	.refcnt = REFCOUNT_INIT(1),
-};
-EXPORT_SYMBOL(dst_default_metrics);
+पूर्ण;
+EXPORT_SYMBOL(dst_शेष_metrics);
 
-void dst_init(struct dst_entry *dst, struct dst_ops *ops,
-	      struct net_device *dev, int initial_ref, int initial_obsolete,
-	      unsigned short flags)
-{
+व्योम dst_init(काष्ठा dst_entry *dst, काष्ठा dst_ops *ops,
+	      काष्ठा net_device *dev, पूर्णांक initial_ref, पूर्णांक initial_obsolete,
+	      अचिन्हित लघु flags)
+अणु
 	dst->dev = dev;
-	if (dev)
+	अगर (dev)
 		dev_hold(dev);
 	dst->ops = ops;
-	dst_init_metrics(dst, dst_default_metrics.metrics, true);
+	dst_init_metrics(dst, dst_शेष_metrics.metrics, true);
 	dst->expires = 0UL;
-#ifdef CONFIG_XFRM
-	dst->xfrm = NULL;
-#endif
+#अगर_घोषित CONFIG_XFRM
+	dst->xfrm = शून्य;
+#पूर्ण_अगर
 	dst->input = dst_discard;
 	dst->output = dst_discard_out;
 	dst->error = 0;
 	dst->obsolete = initial_obsolete;
 	dst->header_len = 0;
 	dst->trailer_len = 0;
-#ifdef CONFIG_IP_ROUTE_CLASSID
+#अगर_घोषित CONFIG_IP_ROUTE_CLASSID
 	dst->tclassid = 0;
-#endif
-	dst->lwtstate = NULL;
+#पूर्ण_अगर
+	dst->lwtstate = शून्य;
 	atomic_set(&dst->__refcnt, initial_ref);
 	dst->__use = 0;
-	dst->lastuse = jiffies;
+	dst->lastuse = jअगरfies;
 	dst->flags = flags;
-	if (!(flags & DST_NOCOUNT))
+	अगर (!(flags & DST_NOCOUNT))
 		dst_entries_add(ops, 1);
-}
+पूर्ण
 EXPORT_SYMBOL(dst_init);
 
-void *dst_alloc(struct dst_ops *ops, struct net_device *dev,
-		int initial_ref, int initial_obsolete, unsigned short flags)
-{
-	struct dst_entry *dst;
+व्योम *dst_alloc(काष्ठा dst_ops *ops, काष्ठा net_device *dev,
+		पूर्णांक initial_ref, पूर्णांक initial_obsolete, अचिन्हित लघु flags)
+अणु
+	काष्ठा dst_entry *dst;
 
-	if (ops->gc &&
+	अगर (ops->gc &&
 	    !(flags & DST_NOCOUNT) &&
-	    dst_entries_get_fast(ops) > ops->gc_thresh) {
-		if (ops->gc(ops)) {
+	    dst_entries_get_fast(ops) > ops->gc_thresh) अणु
+		अगर (ops->gc(ops)) अणु
 			pr_notice_ratelimited("Route cache is full: consider increasing sysctl net.ipv6.route.max_size.\n");
-			return NULL;
-		}
-	}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	dst = kmem_cache_alloc(ops->kmem_cachep, GFP_ATOMIC);
-	if (!dst)
-		return NULL;
+	अगर (!dst)
+		वापस शून्य;
 
 	dst_init(dst, ops, dev, initial_ref, initial_obsolete, flags);
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 EXPORT_SYMBOL(dst_alloc);
 
-struct dst_entry *dst_destroy(struct dst_entry * dst)
-{
-	struct dst_entry *child = NULL;
+काष्ठा dst_entry *dst_destroy(काष्ठा dst_entry * dst)
+अणु
+	काष्ठा dst_entry *child = शून्य;
 
 	smp_rmb();
 
-#ifdef CONFIG_XFRM
-	if (dst->xfrm) {
-		struct xfrm_dst *xdst = (struct xfrm_dst *) dst;
+#अगर_घोषित CONFIG_XFRM
+	अगर (dst->xfrm) अणु
+		काष्ठा xfrm_dst *xdst = (काष्ठा xfrm_dst *) dst;
 
 		child = xdst->child;
-	}
-#endif
-	if (!(dst->flags & DST_NOCOUNT))
+	पूर्ण
+#पूर्ण_अगर
+	अगर (!(dst->flags & DST_NOCOUNT))
 		dst_entries_add(dst->ops, -1);
 
-	if (dst->ops->destroy)
+	अगर (dst->ops->destroy)
 		dst->ops->destroy(dst);
-	if (dst->dev)
+	अगर (dst->dev)
 		dev_put(dst->dev);
 
 	lwtstate_put(dst->lwtstate);
 
-	if (dst->flags & DST_METADATA)
-		metadata_dst_free((struct metadata_dst *)dst);
-	else
-		kmem_cache_free(dst->ops->kmem_cachep, dst);
+	अगर (dst->flags & DST_METADATA)
+		metadata_dst_मुक्त((काष्ठा metadata_dst *)dst);
+	अन्यथा
+		kmem_cache_मुक्त(dst->ops->kmem_cachep, dst);
 
 	dst = child;
-	if (dst)
+	अगर (dst)
 		dst_release_immediate(dst);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(dst_destroy);
 
-static void dst_destroy_rcu(struct rcu_head *head)
-{
-	struct dst_entry *dst = container_of(head, struct dst_entry, rcu_head);
+अटल व्योम dst_destroy_rcu(काष्ठा rcu_head *head)
+अणु
+	काष्ठा dst_entry *dst = container_of(head, काष्ठा dst_entry, rcu_head);
 
 	dst = dst_destroy(dst);
-}
+पूर्ण
 
 /* Operations to mark dst as DEAD and clean up the net device referenced
  * by dst:
- * 1. put the dst under blackhole interface and discard all tx/rx packets
+ * 1. put the dst under blackhole पूर्णांकerface and discard all tx/rx packets
  *    on this route.
  * 2. release the net_device
  * This function should be called when removing routes from the fib tree
- * in preparation for a NETDEV_DOWN/NETDEV_UNREGISTER event and also to
+ * in preparation क्रम a NETDEV_DOWN/NETDEV_UNREGISTER event and also to
  * make the next dst_ops->check() fail.
  */
-void dst_dev_put(struct dst_entry *dst)
-{
-	struct net_device *dev = dst->dev;
+व्योम dst_dev_put(काष्ठा dst_entry *dst)
+अणु
+	काष्ठा net_device *dev = dst->dev;
 
 	dst->obsolete = DST_OBSOLETE_DEAD;
-	if (dst->ops->ifdown)
-		dst->ops->ifdown(dst, dev, true);
+	अगर (dst->ops->अगरकरोwn)
+		dst->ops->अगरकरोwn(dst, dev, true);
 	dst->input = dst_discard;
 	dst->output = dst_discard_out;
 	dst->dev = blackhole_netdev;
 	dev_hold(dst->dev);
 	dev_put(dev);
-}
+पूर्ण
 EXPORT_SYMBOL(dst_dev_put);
 
-void dst_release(struct dst_entry *dst)
-{
-	if (dst) {
-		int newrefcnt;
+व्योम dst_release(काष्ठा dst_entry *dst)
+अणु
+	अगर (dst) अणु
+		पूर्णांक newrefcnt;
 
-		newrefcnt = atomic_dec_return(&dst->__refcnt);
-		if (WARN_ONCE(newrefcnt < 0, "dst_release underflow"))
+		newrefcnt = atomic_dec_वापस(&dst->__refcnt);
+		अगर (WARN_ONCE(newrefcnt < 0, "dst_release underflow"))
 			net_warn_ratelimited("%s: dst:%p refcnt:%d\n",
 					     __func__, dst, newrefcnt);
-		if (!newrefcnt)
+		अगर (!newrefcnt)
 			call_rcu(&dst->rcu_head, dst_destroy_rcu);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(dst_release);
 
-void dst_release_immediate(struct dst_entry *dst)
-{
-	if (dst) {
-		int newrefcnt;
+व्योम dst_release_immediate(काष्ठा dst_entry *dst)
+अणु
+	अगर (dst) अणु
+		पूर्णांक newrefcnt;
 
-		newrefcnt = atomic_dec_return(&dst->__refcnt);
-		if (WARN_ONCE(newrefcnt < 0, "dst_release_immediate underflow"))
+		newrefcnt = atomic_dec_वापस(&dst->__refcnt);
+		अगर (WARN_ONCE(newrefcnt < 0, "dst_release_immediate underflow"))
 			net_warn_ratelimited("%s: dst:%p refcnt:%d\n",
 					     __func__, dst, newrefcnt);
-		if (!newrefcnt)
+		अगर (!newrefcnt)
 			dst_destroy(dst);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(dst_release_immediate);
 
-u32 *dst_cow_metrics_generic(struct dst_entry *dst, unsigned long old)
-{
-	struct dst_metrics *p = kmalloc(sizeof(*p), GFP_ATOMIC);
+u32 *dst_cow_metrics_generic(काष्ठा dst_entry *dst, अचिन्हित दीर्घ old)
+अणु
+	काष्ठा dst_metrics *p = kदो_स्मृति(माप(*p), GFP_ATOMIC);
 
-	if (p) {
-		struct dst_metrics *old_p = (struct dst_metrics *)__DST_METRICS_PTR(old);
-		unsigned long prev, new;
+	अगर (p) अणु
+		काष्ठा dst_metrics *old_p = (काष्ठा dst_metrics *)__DST_METRICS_PTR(old);
+		अचिन्हित दीर्घ prev, new;
 
 		refcount_set(&p->refcnt, 1);
-		memcpy(p->metrics, old_p->metrics, sizeof(p->metrics));
+		स_नकल(p->metrics, old_p->metrics, माप(p->metrics));
 
-		new = (unsigned long) p;
+		new = (अचिन्हित दीर्घ) p;
 		prev = cmpxchg(&dst->_metrics, old, new);
 
-		if (prev != old) {
-			kfree(p);
-			p = (struct dst_metrics *)__DST_METRICS_PTR(prev);
-			if (prev & DST_METRICS_READ_ONLY)
-				p = NULL;
-		} else if (prev & DST_METRICS_REFCOUNTED) {
-			if (refcount_dec_and_test(&old_p->refcnt))
-				kfree(old_p);
-		}
-	}
-	BUILD_BUG_ON(offsetof(struct dst_metrics, metrics) != 0);
-	return (u32 *)p;
-}
+		अगर (prev != old) अणु
+			kमुक्त(p);
+			p = (काष्ठा dst_metrics *)__DST_METRICS_PTR(prev);
+			अगर (prev & DST_METRICS_READ_ONLY)
+				p = शून्य;
+		पूर्ण अन्यथा अगर (prev & DST_METRICS_REFCOUNTED) अणु
+			अगर (refcount_dec_and_test(&old_p->refcnt))
+				kमुक्त(old_p);
+		पूर्ण
+	पूर्ण
+	BUILD_BUG_ON(दुरत्व(काष्ठा dst_metrics, metrics) != 0);
+	वापस (u32 *)p;
+पूर्ण
 EXPORT_SYMBOL(dst_cow_metrics_generic);
 
-/* Caller asserts that dst_metrics_read_only(dst) is false.  */
-void __dst_destroy_metrics_generic(struct dst_entry *dst, unsigned long old)
-{
-	unsigned long prev, new;
+/* Caller निश्चितs that dst_metrics_पढ़ो_only(dst) is false.  */
+व्योम __dst_destroy_metrics_generic(काष्ठा dst_entry *dst, अचिन्हित दीर्घ old)
+अणु
+	अचिन्हित दीर्घ prev, new;
 
-	new = ((unsigned long) &dst_default_metrics) | DST_METRICS_READ_ONLY;
+	new = ((अचिन्हित दीर्घ) &dst_शेष_metrics) | DST_METRICS_READ_ONLY;
 	prev = cmpxchg(&dst->_metrics, old, new);
-	if (prev == old)
-		kfree(__DST_METRICS_PTR(old));
-}
+	अगर (prev == old)
+		kमुक्त(__DST_METRICS_PTR(old));
+पूर्ण
 EXPORT_SYMBOL(__dst_destroy_metrics_generic);
 
-struct dst_entry *dst_blackhole_check(struct dst_entry *dst, u32 cookie)
-{
-	return NULL;
-}
+काष्ठा dst_entry *dst_blackhole_check(काष्ठा dst_entry *dst, u32 cookie)
+अणु
+	वापस शून्य;
+पूर्ण
 
-u32 *dst_blackhole_cow_metrics(struct dst_entry *dst, unsigned long old)
-{
-	return NULL;
-}
+u32 *dst_blackhole_cow_metrics(काष्ठा dst_entry *dst, अचिन्हित दीर्घ old)
+अणु
+	वापस शून्य;
+पूर्ण
 
-struct neighbour *dst_blackhole_neigh_lookup(const struct dst_entry *dst,
-					     struct sk_buff *skb,
-					     const void *daddr)
-{
-	return NULL;
-}
+काष्ठा neighbour *dst_blackhole_neigh_lookup(स्थिर काष्ठा dst_entry *dst,
+					     काष्ठा sk_buff *skb,
+					     स्थिर व्योम *daddr)
+अणु
+	वापस शून्य;
+पूर्ण
 
-void dst_blackhole_update_pmtu(struct dst_entry *dst, struct sock *sk,
-			       struct sk_buff *skb, u32 mtu,
+व्योम dst_blackhole_update_pmtu(काष्ठा dst_entry *dst, काष्ठा sock *sk,
+			       काष्ठा sk_buff *skb, u32 mtu,
 			       bool confirm_neigh)
-{
-}
+अणु
+पूर्ण
 EXPORT_SYMBOL_GPL(dst_blackhole_update_pmtu);
 
-void dst_blackhole_redirect(struct dst_entry *dst, struct sock *sk,
-			    struct sk_buff *skb)
-{
-}
+व्योम dst_blackhole_redirect(काष्ठा dst_entry *dst, काष्ठा sock *sk,
+			    काष्ठा sk_buff *skb)
+अणु
+पूर्ण
 EXPORT_SYMBOL_GPL(dst_blackhole_redirect);
 
-unsigned int dst_blackhole_mtu(const struct dst_entry *dst)
-{
-	unsigned int mtu = dst_metric_raw(dst, RTAX_MTU);
+अचिन्हित पूर्णांक dst_blackhole_mtu(स्थिर काष्ठा dst_entry *dst)
+अणु
+	अचिन्हित पूर्णांक mtu = dst_metric_raw(dst, RTAX_MTU);
 
-	return mtu ? : dst->dev->mtu;
-}
+	वापस mtu ? : dst->dev->mtu;
+पूर्ण
 EXPORT_SYMBOL_GPL(dst_blackhole_mtu);
 
-static struct dst_ops dst_blackhole_ops = {
+अटल काष्ठा dst_ops dst_blackhole_ops = अणु
 	.family		= AF_UNSPEC,
 	.neigh_lookup	= dst_blackhole_neigh_lookup,
 	.check		= dst_blackhole_check,
@@ -283,75 +284,75 @@ static struct dst_ops dst_blackhole_ops = {
 	.update_pmtu	= dst_blackhole_update_pmtu,
 	.redirect	= dst_blackhole_redirect,
 	.mtu		= dst_blackhole_mtu,
-};
+पूर्ण;
 
-static void __metadata_dst_init(struct metadata_dst *md_dst,
-				enum metadata_type type, u8 optslen)
-{
-	struct dst_entry *dst;
+अटल व्योम __metadata_dst_init(काष्ठा metadata_dst *md_dst,
+				क्रमागत metadata_type type, u8 optslen)
+अणु
+	काष्ठा dst_entry *dst;
 
 	dst = &md_dst->dst;
-	dst_init(dst, &dst_blackhole_ops, NULL, 1, DST_OBSOLETE_NONE,
+	dst_init(dst, &dst_blackhole_ops, शून्य, 1, DST_OBSOLETE_NONE,
 		 DST_METADATA | DST_NOCOUNT);
-	memset(dst + 1, 0, sizeof(*md_dst) + optslen - sizeof(*dst));
+	स_रखो(dst + 1, 0, माप(*md_dst) + optslen - माप(*dst));
 	md_dst->type = type;
-}
+पूर्ण
 
-struct metadata_dst *metadata_dst_alloc(u8 optslen, enum metadata_type type,
+काष्ठा metadata_dst *metadata_dst_alloc(u8 optslen, क्रमागत metadata_type type,
 					gfp_t flags)
-{
-	struct metadata_dst *md_dst;
+अणु
+	काष्ठा metadata_dst *md_dst;
 
-	md_dst = kmalloc(sizeof(*md_dst) + optslen, flags);
-	if (!md_dst)
-		return NULL;
+	md_dst = kदो_स्मृति(माप(*md_dst) + optslen, flags);
+	अगर (!md_dst)
+		वापस शून्य;
 
 	__metadata_dst_init(md_dst, type, optslen);
 
-	return md_dst;
-}
+	वापस md_dst;
+पूर्ण
 EXPORT_SYMBOL_GPL(metadata_dst_alloc);
 
-void metadata_dst_free(struct metadata_dst *md_dst)
-{
-#ifdef CONFIG_DST_CACHE
-	if (md_dst->type == METADATA_IP_TUNNEL)
+व्योम metadata_dst_मुक्त(काष्ठा metadata_dst *md_dst)
+अणु
+#अगर_घोषित CONFIG_DST_CACHE
+	अगर (md_dst->type == METADATA_IP_TUNNEL)
 		dst_cache_destroy(&md_dst->u.tun_info.dst_cache);
-#endif
-	kfree(md_dst);
-}
-EXPORT_SYMBOL_GPL(metadata_dst_free);
+#पूर्ण_अगर
+	kमुक्त(md_dst);
+पूर्ण
+EXPORT_SYMBOL_GPL(metadata_dst_मुक्त);
 
-struct metadata_dst __percpu *
-metadata_dst_alloc_percpu(u8 optslen, enum metadata_type type, gfp_t flags)
-{
-	int cpu;
-	struct metadata_dst __percpu *md_dst;
+काष्ठा metadata_dst __percpu *
+metadata_dst_alloc_percpu(u8 optslen, क्रमागत metadata_type type, gfp_t flags)
+अणु
+	पूर्णांक cpu;
+	काष्ठा metadata_dst __percpu *md_dst;
 
-	md_dst = __alloc_percpu_gfp(sizeof(struct metadata_dst) + optslen,
-				    __alignof__(struct metadata_dst), flags);
-	if (!md_dst)
-		return NULL;
+	md_dst = __alloc_percpu_gfp(माप(काष्ठा metadata_dst) + optslen,
+				    __alignof__(काष्ठा metadata_dst), flags);
+	अगर (!md_dst)
+		वापस शून्य;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		__metadata_dst_init(per_cpu_ptr(md_dst, cpu), type, optslen);
 
-	return md_dst;
-}
+	वापस md_dst;
+पूर्ण
 EXPORT_SYMBOL_GPL(metadata_dst_alloc_percpu);
 
-void metadata_dst_free_percpu(struct metadata_dst __percpu *md_dst)
-{
-#ifdef CONFIG_DST_CACHE
-	int cpu;
+व्योम metadata_dst_मुक्त_percpu(काष्ठा metadata_dst __percpu *md_dst)
+अणु
+#अगर_घोषित CONFIG_DST_CACHE
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu) {
-		struct metadata_dst *one_md_dst = per_cpu_ptr(md_dst, cpu);
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा metadata_dst *one_md_dst = per_cpu_ptr(md_dst, cpu);
 
-		if (one_md_dst->type == METADATA_IP_TUNNEL)
+		अगर (one_md_dst->type == METADATA_IP_TUNNEL)
 			dst_cache_destroy(&one_md_dst->u.tun_info.dst_cache);
-	}
-#endif
-	free_percpu(md_dst);
-}
-EXPORT_SYMBOL_GPL(metadata_dst_free_percpu);
+	पूर्ण
+#पूर्ण_अगर
+	मुक्त_percpu(md_dst);
+पूर्ण
+EXPORT_SYMBOL_GPL(metadata_dst_मुक्त_percpu);

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *  Driver for GRLIB serial ports (APBUART)
+ *  Driver क्रम GRLIB serial ports (APBUART)
  *
  *  Based on linux/drivers/serial/amba.c
  *
@@ -11,71 +12,71 @@
  *  Copyright (C) 2009 Kristoffer Glembo <kristoffer@gaisler.com>, Aeroflex Gaisler AB
  */
 
-#include <linux/module.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/ioport.h>
-#include <linux/init.h>
-#include <linux/serial.h>
-#include <linux/console.h>
-#include <linux/sysrq.h>
-#include <linux/kthread.h>
-#include <linux/device.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_platform.h>
-#include <linux/of_irq.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
-#include <linux/serial_core.h>
-#include <asm/irq.h>
+#समावेश <linux/module.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/init.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/console.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/device.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/serial_core.h>
+#समावेश <यंत्र/irq.h>
 
-#include "apbuart.h"
+#समावेश "apbuart.h"
 
-#define SERIAL_APBUART_MAJOR	TTY_MAJOR
-#define SERIAL_APBUART_MINOR	64
-#define UART_DUMMY_RSR_RX	0x8000	/* for ignore all read */
+#घोषणा SERIAL_APBUART_MAJOR	TTY_MAJOR
+#घोषणा SERIAL_APBUART_MINOR	64
+#घोषणा UART_DUMMY_RSR_RX	0x8000	/* क्रम ignore all पढ़ो */
 
-static void apbuart_tx_chars(struct uart_port *port);
+अटल व्योम apbuart_tx_अक्षरs(काष्ठा uart_port *port);
 
-static void apbuart_stop_tx(struct uart_port *port)
-{
-	unsigned int cr;
+अटल व्योम apbuart_stop_tx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक cr;
 
 	cr = UART_GET_CTRL(port);
 	cr &= ~UART_CTRL_TI;
 	UART_PUT_CTRL(port, cr);
-}
+पूर्ण
 
-static void apbuart_start_tx(struct uart_port *port)
-{
-	unsigned int cr;
+अटल व्योम apbuart_start_tx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक cr;
 
 	cr = UART_GET_CTRL(port);
 	cr |= UART_CTRL_TI;
 	UART_PUT_CTRL(port, cr);
 
-	if (UART_GET_STATUS(port) & UART_STATUS_THE)
-		apbuart_tx_chars(port);
-}
+	अगर (UART_GET_STATUS(port) & UART_STATUS_THE)
+		apbuart_tx_अक्षरs(port);
+पूर्ण
 
-static void apbuart_stop_rx(struct uart_port *port)
-{
-	unsigned int cr;
+अटल व्योम apbuart_stop_rx(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक cr;
 
 	cr = UART_GET_CTRL(port);
 	cr &= ~(UART_CTRL_RI);
 	UART_PUT_CTRL(port, cr);
-}
+पूर्ण
 
-static void apbuart_rx_chars(struct uart_port *port)
-{
-	unsigned int status, ch, rsr, flag;
-	unsigned int max_chars = port->fifosize;
+अटल व्योम apbuart_rx_अक्षरs(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक status, ch, rsr, flag;
+	अचिन्हित पूर्णांक max_अक्षरs = port->fअगरosize;
 
 	status = UART_GET_STATUS(port);
 
-	while (UART_RX_DATA(status) && (max_chars--)) {
+	जबतक (UART_RX_DATA(status) && (max_अक्षरs--)) अणु
 
 		ch = UART_GET_CHAR(port);
 		flag = TTY_NORMAL;
@@ -84,192 +85,192 @@ static void apbuart_rx_chars(struct uart_port *port)
 
 		rsr = UART_GET_STATUS(port) | UART_DUMMY_RSR_RX;
 		UART_PUT_STATUS(port, 0);
-		if (rsr & UART_STATUS_ERR) {
+		अगर (rsr & UART_STATUS_ERR) अणु
 
-			if (rsr & UART_STATUS_BR) {
+			अगर (rsr & UART_STATUS_BR) अणु
 				rsr &= ~(UART_STATUS_FE | UART_STATUS_PE);
 				port->icount.brk++;
-				if (uart_handle_break(port))
-					goto ignore_char;
-			} else if (rsr & UART_STATUS_PE) {
+				अगर (uart_handle_अवरोध(port))
+					जाओ ignore_अक्षर;
+			पूर्ण अन्यथा अगर (rsr & UART_STATUS_PE) अणु
 				port->icount.parity++;
-			} else if (rsr & UART_STATUS_FE) {
+			पूर्ण अन्यथा अगर (rsr & UART_STATUS_FE) अणु
 				port->icount.frame++;
-			}
-			if (rsr & UART_STATUS_OE)
+			पूर्ण
+			अगर (rsr & UART_STATUS_OE)
 				port->icount.overrun++;
 
-			rsr &= port->read_status_mask;
+			rsr &= port->पढ़ो_status_mask;
 
-			if (rsr & UART_STATUS_PE)
+			अगर (rsr & UART_STATUS_PE)
 				flag = TTY_PARITY;
-			else if (rsr & UART_STATUS_FE)
+			अन्यथा अगर (rsr & UART_STATUS_FE)
 				flag = TTY_FRAME;
-		}
+		पूर्ण
 
-		if (uart_handle_sysrq_char(port, ch))
-			goto ignore_char;
+		अगर (uart_handle_sysrq_अक्षर(port, ch))
+			जाओ ignore_अक्षर;
 
-		uart_insert_char(port, rsr, UART_STATUS_OE, ch, flag);
+		uart_insert_अक्षर(port, rsr, UART_STATUS_OE, ch, flag);
 
 
-	      ignore_char:
+	      ignore_अक्षर:
 		status = UART_GET_STATUS(port);
-	}
+	पूर्ण
 
 	tty_flip_buffer_push(&port->state->port);
-}
+पूर्ण
 
-static void apbuart_tx_chars(struct uart_port *port)
-{
-	struct circ_buf *xmit = &port->state->xmit;
-	int count;
+अटल व्योम apbuart_tx_अक्षरs(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	पूर्णांक count;
 
-	if (port->x_char) {
-		UART_PUT_CHAR(port, port->x_char);
+	अगर (port->x_अक्षर) अणु
+		UART_PUT_CHAR(port, port->x_अक्षर);
 		port->icount.tx++;
-		port->x_char = 0;
-		return;
-	}
+		port->x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	if (uart_circ_empty(xmit) || uart_tx_stopped(port)) {
+	अगर (uart_circ_empty(xmit) || uart_tx_stopped(port)) अणु
 		apbuart_stop_tx(port);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* amba: fill FIFO */
-	count = port->fifosize >> 1;
-	do {
+	count = port->fअगरosize >> 1;
+	करो अणु
 		UART_PUT_CHAR(port, xmit->buf[xmit->tail]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		port->icount.tx++;
-		if (uart_circ_empty(xmit))
-			break;
-	} while (--count > 0);
+		अगर (uart_circ_empty(xmit))
+			अवरोध;
+	पूर्ण जबतक (--count > 0);
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
-	if (uart_circ_empty(xmit))
+	अगर (uart_circ_empty(xmit))
 		apbuart_stop_tx(port);
-}
+पूर्ण
 
-static irqreturn_t apbuart_int(int irq, void *dev_id)
-{
-	struct uart_port *port = dev_id;
-	unsigned int status;
+अटल irqवापस_t apbuart_पूर्णांक(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा uart_port *port = dev_id;
+	अचिन्हित पूर्णांक status;
 
 	spin_lock(&port->lock);
 
 	status = UART_GET_STATUS(port);
-	if (status & UART_STATUS_DR)
-		apbuart_rx_chars(port);
-	if (status & UART_STATUS_THE)
-		apbuart_tx_chars(port);
+	अगर (status & UART_STATUS_DR)
+		apbuart_rx_अक्षरs(port);
+	अगर (status & UART_STATUS_THE)
+		apbuart_tx_अक्षरs(port);
 
 	spin_unlock(&port->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static unsigned int apbuart_tx_empty(struct uart_port *port)
-{
-	unsigned int status = UART_GET_STATUS(port);
-	return status & UART_STATUS_THE ? TIOCSER_TEMT : 0;
-}
+अटल अचिन्हित पूर्णांक apbuart_tx_empty(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक status = UART_GET_STATUS(port);
+	वापस status & UART_STATUS_THE ? TIOCSER_TEMT : 0;
+पूर्ण
 
-static unsigned int apbuart_get_mctrl(struct uart_port *port)
-{
+अटल अचिन्हित पूर्णांक apbuart_get_mctrl(काष्ठा uart_port *port)
+अणु
 	/* The GRLIB APBUART handles flow control in hardware */
-	return TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
-}
+	वापस TIOCM_CAR | TIOCM_DSR | TIOCM_CTS;
+पूर्ण
 
-static void apbuart_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
+अटल व्योम apbuart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
 	/* The GRLIB APBUART handles flow control in hardware */
-}
+पूर्ण
 
-static void apbuart_break_ctl(struct uart_port *port, int break_state)
-{
-	/* We don't support sending break */
-}
+अटल व्योम apbuart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	/* We करोn't support sending अवरोध */
+पूर्ण
 
-static int apbuart_startup(struct uart_port *port)
-{
-	int retval;
-	unsigned int cr;
+अटल पूर्णांक apbuart_startup(काष्ठा uart_port *port)
+अणु
+	पूर्णांक retval;
+	अचिन्हित पूर्णांक cr;
 
 	/* Allocate the IRQ */
-	retval = request_irq(port->irq, apbuart_int, 0, "apbuart", port);
-	if (retval)
-		return retval;
+	retval = request_irq(port->irq, apbuart_पूर्णांक, 0, "apbuart", port);
+	अगर (retval)
+		वापस retval;
 
-	/* Finally, enable interrupts */
+	/* Finally, enable पूर्णांकerrupts */
 	cr = UART_GET_CTRL(port);
 	UART_PUT_CTRL(port,
 		      cr | UART_CTRL_RE | UART_CTRL_TE |
 		      UART_CTRL_RI | UART_CTRL_TI);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void apbuart_shutdown(struct uart_port *port)
-{
-	unsigned int cr;
+अटल व्योम apbuart_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	अचिन्हित पूर्णांक cr;
 
-	/* disable all interrupts, disable the port */
+	/* disable all पूर्णांकerrupts, disable the port */
 	cr = UART_GET_CTRL(port);
 	UART_PUT_CTRL(port,
 		      cr & ~(UART_CTRL_RE | UART_CTRL_TE |
 			     UART_CTRL_RI | UART_CTRL_TI));
 
-	/* Free the interrupt */
-	free_irq(port->irq, port);
-}
+	/* Free the पूर्णांकerrupt */
+	मुक्त_irq(port->irq, port);
+पूर्ण
 
-static void apbuart_set_termios(struct uart_port *port,
-				struct ktermios *termios, struct ktermios *old)
-{
-	unsigned int cr;
-	unsigned long flags;
-	unsigned int baud, quot;
+अटल व्योम apbuart_set_termios(काष्ठा uart_port *port,
+				काष्ठा ktermios *termios, काष्ठा ktermios *old)
+अणु
+	अचिन्हित पूर्णांक cr;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud, quot;
 
-	/* Ask the core to calculate the divisor for us. */
+	/* Ask the core to calculate the भागisor क्रम us. */
 	baud = uart_get_baud_rate(port, termios, old, 0, port->uartclk / 16);
-	if (baud == 0)
+	अगर (baud == 0)
 		panic("invalid baudrate %i\n", port->uartclk / 16);
 
-	/* uart_get_divisor calc a *16 uart freq, apbuart is *8 */
-	quot = (uart_get_divisor(port, baud)) * 2;
+	/* uart_get_भागisor calc a *16 uart freq, apbuart is *8 */
+	quot = (uart_get_भागisor(port, baud)) * 2;
 	cr = UART_GET_CTRL(port);
 	cr &= ~(UART_CTRL_PE | UART_CTRL_PS);
 
-	if (termios->c_cflag & PARENB) {
+	अगर (termios->c_cflag & PARENB) अणु
 		cr |= UART_CTRL_PE;
-		if ((termios->c_cflag & PARODD))
+		अगर ((termios->c_cflag & PARODD))
 			cr |= UART_CTRL_PS;
-	}
+	पूर्ण
 
 	/* Enable flow control. */
-	if (termios->c_cflag & CRTSCTS)
+	अगर (termios->c_cflag & CRTSCTS)
 		cr |= UART_CTRL_FL;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Update the per-port timeout. */
-	uart_update_timeout(port, termios->c_cflag, baud);
+	/* Update the per-port समयout. */
+	uart_update_समयout(port, termios->c_cflag, baud);
 
-	port->read_status_mask = UART_STATUS_OE;
-	if (termios->c_iflag & INPCK)
-		port->read_status_mask |= UART_STATUS_FE | UART_STATUS_PE;
+	port->पढ़ो_status_mask = UART_STATUS_OE;
+	अगर (termios->c_अगरlag & INPCK)
+		port->पढ़ो_status_mask |= UART_STATUS_FE | UART_STATUS_PE;
 
 	/* Characters to ignore */
 	port->ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		port->ignore_status_mask |= UART_STATUS_FE | UART_STATUS_PE;
 
-	/* Ignore all characters if CREAD is not set. */
-	if ((termios->c_cflag & CREAD) == 0)
+	/* Ignore all अक्षरacters अगर CREAD is not set. */
+	अगर ((termios->c_cflag & CREAD) == 0)
 		port->ignore_status_mask |= UART_DUMMY_RSR_RX;
 
 	/* Set baud rate */
@@ -278,82 +279,82 @@ static void apbuart_set_termios(struct uart_port *port,
 	UART_PUT_CTRL(port, cr);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static const char *apbuart_type(struct uart_port *port)
-{
-	return port->type == PORT_APBUART ? "GRLIB/APBUART" : NULL;
-}
+अटल स्थिर अक्षर *apbuart_type(काष्ठा uart_port *port)
+अणु
+	वापस port->type == PORT_APBUART ? "GRLIB/APBUART" : शून्य;
+पूर्ण
 
-static void apbuart_release_port(struct uart_port *port)
-{
+अटल व्योम apbuart_release_port(काष्ठा uart_port *port)
+अणु
 	release_mem_region(port->mapbase, 0x100);
-}
+पूर्ण
 
-static int apbuart_request_port(struct uart_port *port)
-{
-	return request_mem_region(port->mapbase, 0x100, "grlib-apbuart")
-	    != NULL ? 0 : -EBUSY;
-	return 0;
-}
+अटल पूर्णांक apbuart_request_port(काष्ठा uart_port *port)
+अणु
+	वापस request_mem_region(port->mapbase, 0x100, "grlib-apbuart")
+	    != शून्य ? 0 : -EBUSY;
+	वापस 0;
+पूर्ण
 
-/* Configure/autoconfigure the port */
-static void apbuart_config_port(struct uart_port *port, int flags)
-{
-	if (flags & UART_CONFIG_TYPE) {
+/* Configure/स्वतःconfigure the port */
+अटल व्योम apbuart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
+	अगर (flags & UART_CONFIG_TYPE) अणु
 		port->type = PORT_APBUART;
 		apbuart_request_port(port);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Verify the new serial_struct (for TIOCSSERIAL) */
-static int apbuart_verify_port(struct uart_port *port,
-			       struct serial_struct *ser)
-{
-	int ret = 0;
-	if (ser->type != PORT_UNKNOWN && ser->type != PORT_APBUART)
+/* Verअगरy the new serial_काष्ठा (क्रम TIOCSSERIAL) */
+अटल पूर्णांक apbuart_verअगरy_port(काष्ठा uart_port *port,
+			       काष्ठा serial_काष्ठा *ser)
+अणु
+	पूर्णांक ret = 0;
+	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_APBUART)
 		ret = -EINVAL;
-	if (ser->irq < 0 || ser->irq >= NR_IRQS)
+	अगर (ser->irq < 0 || ser->irq >= NR_IRQS)
 		ret = -EINVAL;
-	if (ser->baud_base < 9600)
+	अगर (ser->baud_base < 9600)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct uart_ops grlib_apbuart_ops = {
+अटल स्थिर काष्ठा uart_ops grlib_apbuart_ops = अणु
 	.tx_empty = apbuart_tx_empty,
 	.set_mctrl = apbuart_set_mctrl,
 	.get_mctrl = apbuart_get_mctrl,
 	.stop_tx = apbuart_stop_tx,
 	.start_tx = apbuart_start_tx,
 	.stop_rx = apbuart_stop_rx,
-	.break_ctl = apbuart_break_ctl,
+	.अवरोध_ctl = apbuart_अवरोध_ctl,
 	.startup = apbuart_startup,
-	.shutdown = apbuart_shutdown,
+	.shutकरोwn = apbuart_shutकरोwn,
 	.set_termios = apbuart_set_termios,
 	.type = apbuart_type,
 	.release_port = apbuart_release_port,
 	.request_port = apbuart_request_port,
 	.config_port = apbuart_config_port,
-	.verify_port = apbuart_verify_port,
-};
+	.verअगरy_port = apbuart_verअगरy_port,
+पूर्ण;
 
-static struct uart_port grlib_apbuart_ports[UART_NR];
-static struct device_node *grlib_apbuart_nodes[UART_NR];
+अटल काष्ठा uart_port grlib_apbuart_ports[UART_NR];
+अटल काष्ठा device_node *grlib_apbuart_nodes[UART_NR];
 
-static int apbuart_scan_fifo_size(struct uart_port *port, int portnumber)
-{
-	int ctrl, loop = 0;
-	int status;
-	int fifosize;
-	unsigned long flags;
+अटल पूर्णांक apbuart_scan_fअगरo_size(काष्ठा uart_port *port, पूर्णांक portnumber)
+अणु
+	पूर्णांक ctrl, loop = 0;
+	पूर्णांक status;
+	पूर्णांक fअगरosize;
+	अचिन्हित दीर्घ flags;
 
 	ctrl = UART_GET_CTRL(port);
 
 	/*
-	 * Enable the transceiver and wait for it to be ready to send data.
-	 * Clear interrupts so that this process will not be externally
-	 * interrupted in the middle (which can cause the transceiver to
+	 * Enable the transceiver and रुको क्रम it to be पढ़ोy to send data.
+	 * Clear पूर्णांकerrupts so that this process will not be बाह्यally
+	 * पूर्णांकerrupted in the middle (which can cause the transceiver to
 	 * drain prematurely).
 	 */
 
@@ -361,7 +362,7 @@ static int apbuart_scan_fifo_size(struct uart_port *port, int portnumber)
 
 	UART_PUT_CTRL(port, ctrl | UART_CTRL_TE);
 
-	while (!UART_TX_READY(UART_GET_STATUS(port)))
+	जबतक (!UART_TX_READY(UART_GET_STATUS(port)))
 		loop++;
 
 	/*
@@ -371,165 +372,165 @@ static int apbuart_scan_fifo_size(struct uart_port *port, int portnumber)
 
 	UART_PUT_CTRL(port, ctrl & ~(UART_CTRL_TE));
 
-	fifosize = 1;
+	fअगरosize = 1;
 	UART_PUT_CHAR(port, 0);
 
 	/*
-	 * So long as transmitting a character increments the tranceivier FIFO
+	 * So दीर्घ as transmitting a अक्षरacter increments the tranceivier FIFO
 	 * length the FIFO must be at least that big. These bytes will
-	 * automatically drain off of the FIFO.
+	 * स्वतःmatically drain off of the FIFO.
 	 */
 
 	status = UART_GET_STATUS(port);
-	while (((status >> 20) & 0x3F) == fifosize) {
-		fifosize++;
+	जबतक (((status >> 20) & 0x3F) == fअगरosize) अणु
+		fअगरosize++;
 		UART_PUT_CHAR(port, 0);
 		status = UART_GET_STATUS(port);
-	}
+	पूर्ण
 
-	fifosize--;
+	fअगरosize--;
 
 	UART_PUT_CTRL(port, ctrl);
 	local_irq_restore(flags);
 
-	if (fifosize == 0)
-		fifosize = 1;
+	अगर (fअगरosize == 0)
+		fअगरosize = 1;
 
-	return fifosize;
-}
+	वापस fअगरosize;
+पूर्ण
 
-static void apbuart_flush_fifo(struct uart_port *port)
-{
-	int i;
+अटल व्योम apbuart_flush_fअगरo(काष्ठा uart_port *port)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < port->fifosize; i++)
+	क्रम (i = 0; i < port->fअगरosize; i++)
 		UART_GET_CHAR(port);
-}
+पूर्ण
 
 
 /* ======================================================================== */
-/* Console driver, if enabled                                               */
+/* Console driver, अगर enabled                                               */
 /* ======================================================================== */
 
-#ifdef CONFIG_SERIAL_GRLIB_GAISLER_APBUART_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_GRLIB_GAISLER_APBUART_CONSOLE
 
-static void apbuart_console_putchar(struct uart_port *port, int ch)
-{
-	unsigned int status;
-	do {
+अटल व्योम apbuart_console_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	अचिन्हित पूर्णांक status;
+	करो अणु
 		status = UART_GET_STATUS(port);
-	} while (!UART_TX_READY(status));
+	पूर्ण जबतक (!UART_TX_READY(status));
 	UART_PUT_CHAR(port, ch);
-}
+पूर्ण
 
-static void
-apbuart_console_write(struct console *co, const char *s, unsigned int count)
-{
-	struct uart_port *port = &grlib_apbuart_ports[co->index];
-	unsigned int status, old_cr, new_cr;
+अटल व्योम
+apbuart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा uart_port *port = &grlib_apbuart_ports[co->index];
+	अचिन्हित पूर्णांक status, old_cr, new_cr;
 
-	/* First save the CR then disable the interrupts */
+	/* First save the CR then disable the पूर्णांकerrupts */
 	old_cr = UART_GET_CTRL(port);
 	new_cr = old_cr & ~(UART_CTRL_RI | UART_CTRL_TI);
 	UART_PUT_CTRL(port, new_cr);
 
-	uart_console_write(port, s, count, apbuart_console_putchar);
+	uart_console_ग_लिखो(port, s, count, apbuart_console_अक्षर_दो);
 
 	/*
-	 *      Finally, wait for transmitter to become empty
+	 *      Finally, रुको क्रम transmitter to become empty
 	 *      and restore the TCR
 	 */
-	do {
+	करो अणु
 		status = UART_GET_STATUS(port);
-	} while (!UART_TX_READY(status));
+	पूर्ण जबतक (!UART_TX_READY(status));
 	UART_PUT_CTRL(port, old_cr);
-}
+पूर्ण
 
-static void __init
-apbuart_console_get_options(struct uart_port *port, int *baud,
-			    int *parity, int *bits)
-{
-	if (UART_GET_CTRL(port) & (UART_CTRL_RE | UART_CTRL_TE)) {
+अटल व्योम __init
+apbuart_console_get_options(काष्ठा uart_port *port, पूर्णांक *baud,
+			    पूर्णांक *parity, पूर्णांक *bits)
+अणु
+	अगर (UART_GET_CTRL(port) & (UART_CTRL_RE | UART_CTRL_TE)) अणु
 
-		unsigned int quot, status;
+		अचिन्हित पूर्णांक quot, status;
 		status = UART_GET_STATUS(port);
 
 		*parity = 'n';
-		if (status & UART_CTRL_PE) {
-			if ((status & UART_CTRL_PS) == 0)
+		अगर (status & UART_CTRL_PE) अणु
+			अगर ((status & UART_CTRL_PS) == 0)
 				*parity = 'e';
-			else
+			अन्यथा
 				*parity = 'o';
-		}
+		पूर्ण
 
 		*bits = 8;
 		quot = UART_GET_SCAL(port) / 8;
 		*baud = port->uartclk / (16 * (quot + 1));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int __init apbuart_console_setup(struct console *co, char *options)
-{
-	struct uart_port *port;
-	int baud = 38400;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक __init apbuart_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 38400;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
 	pr_debug("apbuart_console_setup co=%p, co->index=%i, options=%s\n",
 		 co, co->index, options);
 
 	/*
-	 * Check whether an invalid uart number has been specified, and
-	 * if so, search for the first available port that does have
+	 * Check whether an invalid uart number has been specअगरied, and
+	 * अगर so, search क्रम the first available port that करोes have
 	 * console support.
 	 */
-	if (co->index >= grlib_apbuart_port_nr)
+	अगर (co->index >= grlib_apbuart_port_nr)
 		co->index = 0;
 
 	port = &grlib_apbuart_ports[co->index];
 
 	spin_lock_init(&port->lock);
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	else
+	अन्यथा
 		apbuart_console_get_options(port, &baud, &parity, &bits);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver grlib_apbuart_driver;
+अटल काष्ठा uart_driver grlib_apbuart_driver;
 
-static struct console grlib_apbuart_console = {
+अटल काष्ठा console grlib_apbuart_console = अणु
 	.name = "ttyS",
-	.write = apbuart_console_write,
+	.ग_लिखो = apbuart_console_ग_लिखो,
 	.device = uart_console_device,
 	.setup = apbuart_console_setup,
 	.flags = CON_PRINTBUFFER,
 	.index = -1,
 	.data = &grlib_apbuart_driver,
-};
+पूर्ण;
 
 
-static int grlib_apbuart_configure(void);
+अटल पूर्णांक grlib_apbuart_configure(व्योम);
 
-static int __init apbuart_console_init(void)
-{
-	if (grlib_apbuart_configure())
-		return -ENODEV;
-	register_console(&grlib_apbuart_console);
-	return 0;
-}
+अटल पूर्णांक __init apbuart_console_init(व्योम)
+अणु
+	अगर (grlib_apbuart_configure())
+		वापस -ENODEV;
+	रेजिस्टर_console(&grlib_apbuart_console);
+	वापस 0;
+पूर्ण
 
 console_initcall(apbuart_console_init);
 
-#define APBUART_CONSOLE	(&grlib_apbuart_console)
-#else
-#define APBUART_CONSOLE	NULL
-#endif
+#घोषणा APBUART_CONSOLE	(&grlib_apbuart_console)
+#अन्यथा
+#घोषणा APBUART_CONSOLE	शून्य
+#पूर्ण_अगर
 
-static struct uart_driver grlib_apbuart_driver = {
+अटल काष्ठा uart_driver grlib_apbuart_driver = अणु
 	.owner = THIS_MODULE,
 	.driver_name = "serial",
 	.dev_name = "ttyS",
@@ -537,77 +538,77 @@ static struct uart_driver grlib_apbuart_driver = {
 	.minor = SERIAL_APBUART_MINOR,
 	.nr = UART_NR,
 	.cons = APBUART_CONSOLE,
-};
+पूर्ण;
 
 
 /* ======================================================================== */
-/* OF Platform Driver                                                       */
+/* OF Platक्रमm Driver                                                       */
 /* ======================================================================== */
 
-static int apbuart_probe(struct platform_device *op)
-{
-	int i;
-	struct uart_port *port = NULL;
+अटल पूर्णांक apbuart_probe(काष्ठा platक्रमm_device *op)
+अणु
+	पूर्णांक i;
+	काष्ठा uart_port *port = शून्य;
 
-	for (i = 0; i < grlib_apbuart_port_nr; i++) {
-		if (op->dev.of_node == grlib_apbuart_nodes[i])
-			break;
-	}
+	क्रम (i = 0; i < grlib_apbuart_port_nr; i++) अणु
+		अगर (op->dev.of_node == grlib_apbuart_nodes[i])
+			अवरोध;
+	पूर्ण
 
 	port = &grlib_apbuart_ports[i];
 	port->dev = &op->dev;
 	port->irq = op->archdata.irqs[0];
 
-	uart_add_one_port(&grlib_apbuart_driver, (struct uart_port *) port);
+	uart_add_one_port(&grlib_apbuart_driver, (काष्ठा uart_port *) port);
 
-	apbuart_flush_fifo((struct uart_port *) port);
+	apbuart_flush_fअगरo((काष्ठा uart_port *) port);
 
-	printk(KERN_INFO "grlib-apbuart at 0x%llx, irq %d\n",
-	       (unsigned long long) port->mapbase, port->irq);
-	return 0;
-}
+	prपूर्णांकk(KERN_INFO "grlib-apbuart at 0x%llx, irq %d\n",
+	       (अचिन्हित दीर्घ दीर्घ) port->mapbase, port->irq);
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id apbuart_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id apbuart_match[] = अणु
+	अणु
 	 .name = "GAISLER_APBUART",
-	 },
-	{
+	 पूर्ण,
+	अणु
 	 .name = "01_00c",
-	 },
-	{},
-};
+	 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, apbuart_match);
 
-static struct platform_driver grlib_apbuart_of_driver = {
+अटल काष्ठा platक्रमm_driver grlib_apbuart_of_driver = अणु
 	.probe = apbuart_probe,
-	.driver = {
+	.driver = अणु
 		.name = "grlib-apbuart",
 		.of_match_table = apbuart_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 
-static int __init grlib_apbuart_configure(void)
-{
-	struct device_node *np;
-	int line = 0;
+अटल पूर्णांक __init grlib_apbuart_configure(व्योम)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक line = 0;
 
-	for_each_matching_node(np, apbuart_match) {
-		const int *ampopts;
-		const u32 *freq_hz;
-		const struct amba_prom_registers *regs;
-		struct uart_port *port;
-		unsigned long addr;
+	क्रम_each_matching_node(np, apbuart_match) अणु
+		स्थिर पूर्णांक *ampopts;
+		स्थिर u32 *freq_hz;
+		स्थिर काष्ठा amba_prom_रेजिस्टरs *regs;
+		काष्ठा uart_port *port;
+		अचिन्हित दीर्घ addr;
 
-		ampopts = of_get_property(np, "ampopts", NULL);
-		if (ampopts && (*ampopts == 0))
-			continue; /* Ignore if used by another OS instance */
-		regs = of_get_property(np, "reg", NULL);
+		ampopts = of_get_property(np, "ampopts", शून्य);
+		अगर (ampopts && (*ampopts == 0))
+			जारी; /* Ignore अगर used by another OS instance */
+		regs = of_get_property(np, "reg", शून्य);
 		/* Frequency of APB Bus is frequency of UART */
-		freq_hz = of_get_property(np, "freq", NULL);
+		freq_hz = of_get_property(np, "freq", शून्य);
 
-		if (!regs || !freq_hz || (*freq_hz == 0))
-			continue;
+		अगर (!regs || !freq_hz || (*freq_hz == 0))
+			जारी;
 
 		grlib_apbuart_nodes[line] = np;
 
@@ -616,7 +617,7 @@ static int __init grlib_apbuart_configure(void)
 		port = &grlib_apbuart_ports[line];
 
 		port->mapbase = addr;
-		port->membase = ioremap(addr, sizeof(struct grlib_apbuart_regs_map));
+		port->membase = ioremap(addr, माप(काष्ठा grlib_apbuart_regs_map));
 		port->irq = 0;
 		port->iotype = UPIO_MEM;
 		port->ops = &grlib_apbuart_ops;
@@ -624,63 +625,63 @@ static int __init grlib_apbuart_configure(void)
 		port->flags = UPF_BOOT_AUTOCONF;
 		port->line = line;
 		port->uartclk = *freq_hz;
-		port->fifosize = apbuart_scan_fifo_size((struct uart_port *) port, line);
+		port->fअगरosize = apbuart_scan_fअगरo_size((काष्ठा uart_port *) port, line);
 		line++;
 
 		/* We support maximum UART_NR uarts ... */
-		if (line == UART_NR)
-			break;
-	}
+		अगर (line == UART_NR)
+			अवरोध;
+	पूर्ण
 
 	grlib_apbuart_driver.nr = grlib_apbuart_port_nr = line;
-	return line ? 0 : -ENODEV;
-}
+	वापस line ? 0 : -ENODEV;
+पूर्ण
 
-static int __init grlib_apbuart_init(void)
-{
-	int ret;
+अटल पूर्णांक __init grlib_apbuart_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	/* Find all APBUARTS in device the tree and initialize their ports */
 	ret = grlib_apbuart_configure();
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	printk(KERN_INFO "Serial: GRLIB APBUART driver\n");
+	prपूर्णांकk(KERN_INFO "Serial: GRLIB APBUART driver\n");
 
-	ret = uart_register_driver(&grlib_apbuart_driver);
+	ret = uart_रेजिस्टर_driver(&grlib_apbuart_driver);
 
-	if (ret) {
-		printk(KERN_ERR "%s: uart_register_driver failed (%i)\n",
-		       __FILE__, ret);
-		return ret;
-	}
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR "%s: uart_register_driver failed (%i)\n",
+		       __खाता__, ret);
+		वापस ret;
+	पूर्ण
 
-	ret = platform_driver_register(&grlib_apbuart_of_driver);
-	if (ret) {
-		printk(KERN_ERR
+	ret = platक्रमm_driver_रेजिस्टर(&grlib_apbuart_of_driver);
+	अगर (ret) अणु
+		prपूर्णांकk(KERN_ERR
 		       "%s: platform_driver_register failed (%i)\n",
-		       __FILE__, ret);
-		uart_unregister_driver(&grlib_apbuart_driver);
-		return ret;
-	}
+		       __खाता__, ret);
+		uart_unरेजिस्टर_driver(&grlib_apbuart_driver);
+		वापस ret;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit grlib_apbuart_exit(void)
-{
-	int i;
+अटल व्योम __निकास grlib_apbuart_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < grlib_apbuart_port_nr; i++)
-		uart_remove_one_port(&grlib_apbuart_driver,
+	क्रम (i = 0; i < grlib_apbuart_port_nr; i++)
+		uart_हटाओ_one_port(&grlib_apbuart_driver,
 				     &grlib_apbuart_ports[i]);
 
-	uart_unregister_driver(&grlib_apbuart_driver);
-	platform_driver_unregister(&grlib_apbuart_of_driver);
-}
+	uart_unरेजिस्टर_driver(&grlib_apbuart_driver);
+	platक्रमm_driver_unरेजिस्टर(&grlib_apbuart_of_driver);
+पूर्ण
 
 module_init(grlib_apbuart_init);
-module_exit(grlib_apbuart_exit);
+module_निकास(grlib_apbuart_निकास);
 
 MODULE_AUTHOR("Aeroflex Gaisler AB");
 MODULE_DESCRIPTION("GRLIB APBUART serial driver");

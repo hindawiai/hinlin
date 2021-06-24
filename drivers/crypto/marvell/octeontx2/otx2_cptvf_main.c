@@ -1,253 +1,254 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (C) 2020 Marvell. */
 
-#include "otx2_cpt_common.h"
-#include "otx2_cptvf.h"
-#include "otx2_cptlf.h"
-#include "otx2_cptvf_algs.h"
-#include <rvu_reg.h>
+#समावेश "otx2_cpt_common.h"
+#समावेश "otx2_cptvf.h"
+#समावेश "otx2_cptlf.h"
+#समावेश "otx2_cptvf_algs.h"
+#समावेश <rvu_reg.h>
 
-#define OTX2_CPTVF_DRV_NAME "octeontx2-cptvf"
+#घोषणा OTX2_CPTVF_DRV_NAME "octeontx2-cptvf"
 
-static void cptvf_enable_pfvf_mbox_intrs(struct otx2_cptvf_dev *cptvf)
-{
-	/* Clear interrupt if any */
-	otx2_cpt_write64(cptvf->reg_base, BLKADDR_RVUM, 0, OTX2_RVU_VF_INT,
+अटल व्योम cptvf_enable_pfvf_mbox_पूर्णांकrs(काष्ठा otx2_cptvf_dev *cptvf)
+अणु
+	/* Clear पूर्णांकerrupt अगर any */
+	otx2_cpt_ग_लिखो64(cptvf->reg_base, BLKADDR_RVUM, 0, OTX2_RVU_VF_INT,
 			 0x1ULL);
 
-	/* Enable PF-VF interrupt */
-	otx2_cpt_write64(cptvf->reg_base, BLKADDR_RVUM, 0,
+	/* Enable PF-VF पूर्णांकerrupt */
+	otx2_cpt_ग_लिखो64(cptvf->reg_base, BLKADDR_RVUM, 0,
 			 OTX2_RVU_VF_INT_ENA_W1S, 0x1ULL);
-}
+पूर्ण
 
-static void cptvf_disable_pfvf_mbox_intrs(struct otx2_cptvf_dev *cptvf)
-{
-	/* Disable PF-VF interrupt */
-	otx2_cpt_write64(cptvf->reg_base, BLKADDR_RVUM, 0,
+अटल व्योम cptvf_disable_pfvf_mbox_पूर्णांकrs(काष्ठा otx2_cptvf_dev *cptvf)
+अणु
+	/* Disable PF-VF पूर्णांकerrupt */
+	otx2_cpt_ग_लिखो64(cptvf->reg_base, BLKADDR_RVUM, 0,
 			 OTX2_RVU_VF_INT_ENA_W1C, 0x1ULL);
 
-	/* Clear interrupt if any */
-	otx2_cpt_write64(cptvf->reg_base, BLKADDR_RVUM, 0, OTX2_RVU_VF_INT,
+	/* Clear पूर्णांकerrupt अगर any */
+	otx2_cpt_ग_लिखो64(cptvf->reg_base, BLKADDR_RVUM, 0, OTX2_RVU_VF_INT,
 			 0x1ULL);
-}
+पूर्ण
 
-static int cptvf_register_interrupts(struct otx2_cptvf_dev *cptvf)
-{
-	int ret, irq;
-	int num_vec;
+अटल पूर्णांक cptvf_रेजिस्टर_पूर्णांकerrupts(काष्ठा otx2_cptvf_dev *cptvf)
+अणु
+	पूर्णांक ret, irq;
+	पूर्णांक num_vec;
 
 	num_vec = pci_msix_vec_count(cptvf->pdev);
-	if (num_vec <= 0)
-		return -EINVAL;
+	अगर (num_vec <= 0)
+		वापस -EINVAL;
 
 	/* Enable MSI-X */
 	ret = pci_alloc_irq_vectors(cptvf->pdev, num_vec, num_vec,
 				    PCI_IRQ_MSIX);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&cptvf->pdev->dev,
 			"Request for %d msix vectors failed\n", num_vec);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	irq = pci_irq_vector(cptvf->pdev, OTX2_CPT_VF_INT_VEC_E_MBOX);
-	/* Register VF<=>PF mailbox interrupt handler */
+	/* Register VF<=>PF mailbox पूर्णांकerrupt handler */
 	ret = devm_request_irq(&cptvf->pdev->dev, irq,
-			       otx2_cptvf_pfvf_mbox_intr, 0,
+			       otx2_cptvf_pfvf_mbox_पूर्णांकr, 0,
 			       "CPTPFVF Mbox", cptvf);
-	if (ret)
-		return ret;
-	/* Enable PF-VF mailbox interrupts */
-	cptvf_enable_pfvf_mbox_intrs(cptvf);
+	अगर (ret)
+		वापस ret;
+	/* Enable PF-VF mailbox पूर्णांकerrupts */
+	cptvf_enable_pfvf_mbox_पूर्णांकrs(cptvf);
 
-	ret = otx2_cpt_send_ready_msg(&cptvf->pfvf_mbox, cptvf->pdev);
-	if (ret) {
+	ret = otx2_cpt_send_पढ़ोy_msg(&cptvf->pfvf_mbox, cptvf->pdev);
+	अगर (ret) अणु
 		dev_warn(&cptvf->pdev->dev,
 			 "PF not responding to mailbox, deferring probe\n");
-		cptvf_disable_pfvf_mbox_intrs(cptvf);
-		return -EPROBE_DEFER;
-	}
-	return 0;
-}
+		cptvf_disable_pfvf_mbox_पूर्णांकrs(cptvf);
+		वापस -EPROBE_DEFER;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int cptvf_pfvf_mbox_init(struct otx2_cptvf_dev *cptvf)
-{
-	int ret;
+अटल पूर्णांक cptvf_pfvf_mbox_init(काष्ठा otx2_cptvf_dev *cptvf)
+अणु
+	पूर्णांक ret;
 
 	cptvf->pfvf_mbox_wq = alloc_workqueue("cpt_pfvf_mailbox",
 					      WQ_UNBOUND | WQ_HIGHPRI |
 					      WQ_MEM_RECLAIM, 1);
-	if (!cptvf->pfvf_mbox_wq)
-		return -ENOMEM;
+	अगर (!cptvf->pfvf_mbox_wq)
+		वापस -ENOMEM;
 
 	ret = otx2_mbox_init(&cptvf->pfvf_mbox, cptvf->pfvf_mbox_base,
-			     cptvf->pdev, cptvf->reg_base, MBOX_DIR_VFPF, 1);
-	if (ret)
-		goto free_wqe;
+			     cptvf->pdev, cptvf->reg_base, MBOX_सूची_VFPF, 1);
+	अगर (ret)
+		जाओ मुक्त_wqe;
 
 	INIT_WORK(&cptvf->pfvf_mbox_work, otx2_cptvf_pfvf_mbox_handler);
-	return 0;
+	वापस 0;
 
-free_wqe:
+मुक्त_wqe:
 	destroy_workqueue(cptvf->pfvf_mbox_wq);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cptvf_pfvf_mbox_destroy(struct otx2_cptvf_dev *cptvf)
-{
+अटल व्योम cptvf_pfvf_mbox_destroy(काष्ठा otx2_cptvf_dev *cptvf)
+अणु
 	destroy_workqueue(cptvf->pfvf_mbox_wq);
 	otx2_mbox_destroy(&cptvf->pfvf_mbox);
-}
+पूर्ण
 
-static void cptlf_work_handler(unsigned long data)
-{
-	otx2_cpt_post_process((struct otx2_cptlf_wqe *) data);
-}
+अटल व्योम cptlf_work_handler(अचिन्हित दीर्घ data)
+अणु
+	otx2_cpt_post_process((काष्ठा otx2_cptlf_wqe *) data);
+पूर्ण
 
-static void cleanup_tasklet_work(struct otx2_cptlfs_info *lfs)
-{
-	int i;
+अटल व्योम cleanup_tasklet_work(काष्ठा otx2_cptlfs_info *lfs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i <  lfs->lfs_num; i++) {
-		if (!lfs->lf[i].wqe)
-			continue;
+	क्रम (i = 0; i <  lfs->lfs_num; i++) अणु
+		अगर (!lfs->lf[i].wqe)
+			जारी;
 
-		tasklet_kill(&lfs->lf[i].wqe->work);
-		kfree(lfs->lf[i].wqe);
-		lfs->lf[i].wqe = NULL;
-	}
-}
+		tasklet_समाप्त(&lfs->lf[i].wqe->work);
+		kमुक्त(lfs->lf[i].wqe);
+		lfs->lf[i].wqe = शून्य;
+	पूर्ण
+पूर्ण
 
-static int init_tasklet_work(struct otx2_cptlfs_info *lfs)
-{
-	struct otx2_cptlf_wqe *wqe;
-	int i, ret = 0;
+अटल पूर्णांक init_tasklet_work(काष्ठा otx2_cptlfs_info *lfs)
+अणु
+	काष्ठा otx2_cptlf_wqe *wqe;
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < lfs->lfs_num; i++) {
-		wqe = kzalloc(sizeof(struct otx2_cptlf_wqe), GFP_KERNEL);
-		if (!wqe) {
+	क्रम (i = 0; i < lfs->lfs_num; i++) अणु
+		wqe = kzalloc(माप(काष्ठा otx2_cptlf_wqe), GFP_KERNEL);
+		अगर (!wqe) अणु
 			ret = -ENOMEM;
-			goto cleanup_tasklet;
-		}
+			जाओ cleanup_tasklet;
+		पूर्ण
 
 		tasklet_init(&wqe->work, cptlf_work_handler, (u64) wqe);
 		wqe->lfs = lfs;
 		wqe->lf_num = i;
 		lfs->lf[i].wqe = wqe;
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 cleanup_tasklet:
 	cleanup_tasklet_work(lfs);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void free_pending_queues(struct otx2_cptlfs_info *lfs)
-{
-	int i;
+अटल व्योम मुक्त_pending_queues(काष्ठा otx2_cptlfs_info *lfs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < lfs->lfs_num; i++) {
-		kfree(lfs->lf[i].pqueue.head);
-		lfs->lf[i].pqueue.head = NULL;
-	}
-}
+	क्रम (i = 0; i < lfs->lfs_num; i++) अणु
+		kमुक्त(lfs->lf[i].pqueue.head);
+		lfs->lf[i].pqueue.head = शून्य;
+	पूर्ण
+पूर्ण
 
-static int alloc_pending_queues(struct otx2_cptlfs_info *lfs)
-{
-	int size, ret, i;
+अटल पूर्णांक alloc_pending_queues(काष्ठा otx2_cptlfs_info *lfs)
+अणु
+	पूर्णांक size, ret, i;
 
-	if (!lfs->lfs_num)
-		return -EINVAL;
+	अगर (!lfs->lfs_num)
+		वापस -EINVAL;
 
-	for (i = 0; i < lfs->lfs_num; i++) {
+	क्रम (i = 0; i < lfs->lfs_num; i++) अणु
 		lfs->lf[i].pqueue.qlen = OTX2_CPT_INST_QLEN_MSGS;
 		size = lfs->lf[i].pqueue.qlen *
-		       sizeof(struct otx2_cpt_pending_entry);
+		       माप(काष्ठा otx2_cpt_pending_entry);
 
 		lfs->lf[i].pqueue.head = kzalloc(size, GFP_KERNEL);
-		if (!lfs->lf[i].pqueue.head) {
+		अगर (!lfs->lf[i].pqueue.head) अणु
 			ret = -ENOMEM;
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		/* Initialize spin lock */
 		spin_lock_init(&lfs->lf[i].pqueue.lock);
-	}
-	return 0;
+	पूर्ण
+	वापस 0;
 
 error:
-	free_pending_queues(lfs);
-	return ret;
-}
+	मुक्त_pending_queues(lfs);
+	वापस ret;
+पूर्ण
 
-static void lf_sw_cleanup(struct otx2_cptlfs_info *lfs)
-{
+अटल व्योम lf_sw_cleanup(काष्ठा otx2_cptlfs_info *lfs)
+अणु
 	cleanup_tasklet_work(lfs);
-	free_pending_queues(lfs);
-}
+	मुक्त_pending_queues(lfs);
+पूर्ण
 
-static int lf_sw_init(struct otx2_cptlfs_info *lfs)
-{
-	int ret;
+अटल पूर्णांक lf_sw_init(काष्ठा otx2_cptlfs_info *lfs)
+अणु
+	पूर्णांक ret;
 
 	ret = alloc_pending_queues(lfs);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&lfs->pdev->dev,
 			"Allocating pending queues failed\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = init_tasklet_work(lfs);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&lfs->pdev->dev,
 			"Tasklet work init failed\n");
-		goto pending_queues_free;
-	}
-	return 0;
+		जाओ pending_queues_मुक्त;
+	पूर्ण
+	वापस 0;
 
-pending_queues_free:
-	free_pending_queues(lfs);
-	return ret;
-}
+pending_queues_मुक्त:
+	मुक्त_pending_queues(lfs);
+	वापस ret;
+पूर्ण
 
-static void cptvf_lf_shutdown(struct otx2_cptlfs_info *lfs)
-{
+अटल व्योम cptvf_lf_shutकरोwn(काष्ठा otx2_cptlfs_info *lfs)
+अणु
 	atomic_set(&lfs->state, OTX2_CPTLF_IN_RESET);
 
-	/* Remove interrupts affinity */
-	otx2_cptlf_free_irqs_affinity(lfs);
-	/* Disable instruction queue */
+	/* Remove पूर्णांकerrupts affinity */
+	otx2_cptlf_मुक्त_irqs_affinity(lfs);
+	/* Disable inकाष्ठाion queue */
 	otx2_cptlf_disable_iqueues(lfs);
-	/* Unregister crypto algorithms */
-	otx2_cpt_crypto_exit(lfs->pdev, THIS_MODULE);
-	/* Unregister LFs interrupts */
-	otx2_cptlf_unregister_interrupts(lfs);
+	/* Unरेजिस्टर crypto algorithms */
+	otx2_cpt_crypto_निकास(lfs->pdev, THIS_MODULE);
+	/* Unरेजिस्टर LFs पूर्णांकerrupts */
+	otx2_cptlf_unरेजिस्टर_पूर्णांकerrupts(lfs);
 	/* Cleanup LFs software side */
 	lf_sw_cleanup(lfs);
 	/* Send request to detach LFs */
 	otx2_cpt_detach_rsrcs_msg(lfs);
-}
+पूर्ण
 
-static int cptvf_lf_init(struct otx2_cptvf_dev *cptvf)
-{
-	struct otx2_cptlfs_info *lfs = &cptvf->lfs;
-	struct device *dev = &cptvf->pdev->dev;
-	int ret, lfs_num;
+अटल पूर्णांक cptvf_lf_init(काष्ठा otx2_cptvf_dev *cptvf)
+अणु
+	काष्ठा otx2_cptlfs_info *lfs = &cptvf->lfs;
+	काष्ठा device *dev = &cptvf->pdev->dev;
+	पूर्णांक ret, lfs_num;
 	u8 eng_grp_msk;
 
-	/* Get engine group number for symmetric crypto */
+	/* Get engine group number क्रम symmetric crypto */
 	cptvf->lfs.kcrypto_eng_grp_num = OTX2_CPT_INVALID_CRYPTO_ENG_GRP;
 	ret = otx2_cptvf_send_eng_grp_num_msg(cptvf, OTX2_CPT_SE_TYPES);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (cptvf->lfs.kcrypto_eng_grp_num == OTX2_CPT_INVALID_CRYPTO_ENG_GRP) {
+	अगर (cptvf->lfs.kcrypto_eng_grp_num == OTX2_CPT_INVALID_CRYPTO_ENG_GRP) अणु
 		dev_err(dev, "Engine group for kernel crypto not available\n");
 		ret = -ENOENT;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	eng_grp_msk = 1 << cptvf->lfs.kcrypto_eng_grp_num;
 
 	ret = otx2_cptvf_send_kvf_limits_msg(cptvf);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	lfs->reg_base = cptvf->reg_base;
 	lfs->pdev = cptvf->pdev;
@@ -257,80 +258,80 @@ static int cptvf_lf_init(struct otx2_cptvf_dev *cptvf)
 		  num_online_cpus();
 	ret = otx2_cptlf_init(lfs, eng_grp_msk, OTX2_CPT_QUEUE_HI_PRIO,
 			      lfs_num);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Get msix offsets for attached LFs */
+	/* Get msix offsets क्रम attached LFs */
 	ret = otx2_cpt_msix_offset_msg(lfs);
-	if (ret)
-		goto cleanup_lf;
+	अगर (ret)
+		जाओ cleanup_lf;
 
 	/* Initialize LFs software side */
 	ret = lf_sw_init(lfs);
-	if (ret)
-		goto cleanup_lf;
+	अगर (ret)
+		जाओ cleanup_lf;
 
-	/* Register LFs interrupts */
-	ret = otx2_cptlf_register_interrupts(lfs);
-	if (ret)
-		goto cleanup_lf_sw;
+	/* Register LFs पूर्णांकerrupts */
+	ret = otx2_cptlf_रेजिस्टर_पूर्णांकerrupts(lfs);
+	अगर (ret)
+		जाओ cleanup_lf_sw;
 
-	/* Set interrupts affinity */
+	/* Set पूर्णांकerrupts affinity */
 	ret = otx2_cptlf_set_irqs_affinity(lfs);
-	if (ret)
-		goto unregister_intr;
+	अगर (ret)
+		जाओ unरेजिस्टर_पूर्णांकr;
 
 	atomic_set(&lfs->state, OTX2_CPTLF_STARTED);
 	/* Register crypto algorithms */
 	ret = otx2_cpt_crypto_init(lfs->pdev, THIS_MODULE, lfs_num, 1);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&lfs->pdev->dev, "algorithms registration failed\n");
-		goto disable_irqs;
-	}
-	return 0;
+		जाओ disable_irqs;
+	पूर्ण
+	वापस 0;
 
 disable_irqs:
-	otx2_cptlf_free_irqs_affinity(lfs);
-unregister_intr:
-	otx2_cptlf_unregister_interrupts(lfs);
+	otx2_cptlf_मुक्त_irqs_affinity(lfs);
+unरेजिस्टर_पूर्णांकr:
+	otx2_cptlf_unरेजिस्टर_पूर्णांकerrupts(lfs);
 cleanup_lf_sw:
 	lf_sw_cleanup(lfs);
 cleanup_lf:
-	otx2_cptlf_shutdown(lfs);
+	otx2_cptlf_shutकरोwn(lfs);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int otx2_cptvf_probe(struct pci_dev *pdev,
-			    const struct pci_device_id *ent)
-{
-	struct device *dev = &pdev->dev;
-	resource_size_t offset, size;
-	struct otx2_cptvf_dev *cptvf;
-	int ret;
+अटल पूर्णांक otx2_cptvf_probe(काष्ठा pci_dev *pdev,
+			    स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	resource_माप_प्रकार offset, size;
+	काष्ठा otx2_cptvf_dev *cptvf;
+	पूर्णांक ret;
 
-	cptvf = devm_kzalloc(dev, sizeof(*cptvf), GFP_KERNEL);
-	if (!cptvf)
-		return -ENOMEM;
+	cptvf = devm_kzalloc(dev, माप(*cptvf), GFP_KERNEL);
+	अगर (!cptvf)
+		वापस -ENOMEM;
 
 	ret = pcim_enable_device(pdev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable PCI device\n");
-		goto clear_drvdata;
-	}
+		जाओ clear_drvdata;
+	पूर्ण
 
 	ret = dma_set_mask_and_coherent(dev, DMA_BIT_MASK(48));
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Unable to get usable DMA configuration\n");
-		goto clear_drvdata;
-	}
-	/* Map VF's configuration registers */
+		जाओ clear_drvdata;
+	पूर्ण
+	/* Map VF's configuration रेजिस्टरs */
 	ret = pcim_iomap_regions_request_all(pdev, 1 << PCI_PF_REG_BAR_NUM,
 					     OTX2_CPTVF_DRV_NAME);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Couldn't get PCI resources 0x%x\n", ret);
-		goto clear_drvdata;
-	}
+		जाओ clear_drvdata;
+	पूर्ण
 	pci_set_master(pdev);
 	pci_set_drvdata(pdev, cptvf);
 	cptvf->pdev = pdev;
@@ -341,66 +342,66 @@ static int otx2_cptvf_probe(struct pci_dev *pdev,
 	size = pci_resource_len(pdev, PCI_MBOX_BAR_NUM);
 	/* Map PF-VF mailbox memory */
 	cptvf->pfvf_mbox_base = devm_ioremap_wc(dev, offset, size);
-	if (!cptvf->pfvf_mbox_base) {
+	अगर (!cptvf->pfvf_mbox_base) अणु
 		dev_err(&pdev->dev, "Unable to map BAR4\n");
 		ret = -ENODEV;
-		goto clear_drvdata;
-	}
+		जाओ clear_drvdata;
+	पूर्ण
 	/* Initialize PF<=>VF mailbox */
 	ret = cptvf_pfvf_mbox_init(cptvf);
-	if (ret)
-		goto clear_drvdata;
+	अगर (ret)
+		जाओ clear_drvdata;
 
-	/* Register interrupts */
-	ret = cptvf_register_interrupts(cptvf);
-	if (ret)
-		goto destroy_pfvf_mbox;
+	/* Register पूर्णांकerrupts */
+	ret = cptvf_रेजिस्टर_पूर्णांकerrupts(cptvf);
+	अगर (ret)
+		जाओ destroy_pfvf_mbox;
 
 	/* Initialize CPT LFs */
 	ret = cptvf_lf_init(cptvf);
-	if (ret)
-		goto unregister_interrupts;
+	अगर (ret)
+		जाओ unरेजिस्टर_पूर्णांकerrupts;
 
-	return 0;
+	वापस 0;
 
-unregister_interrupts:
-	cptvf_disable_pfvf_mbox_intrs(cptvf);
+unरेजिस्टर_पूर्णांकerrupts:
+	cptvf_disable_pfvf_mbox_पूर्णांकrs(cptvf);
 destroy_pfvf_mbox:
 	cptvf_pfvf_mbox_destroy(cptvf);
 clear_drvdata:
-	pci_set_drvdata(pdev, NULL);
+	pci_set_drvdata(pdev, शून्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void otx2_cptvf_remove(struct pci_dev *pdev)
-{
-	struct otx2_cptvf_dev *cptvf = pci_get_drvdata(pdev);
+अटल व्योम otx2_cptvf_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा otx2_cptvf_dev *cptvf = pci_get_drvdata(pdev);
 
-	if (!cptvf) {
+	अगर (!cptvf) अणु
 		dev_err(&pdev->dev, "Invalid CPT VF device.\n");
-		return;
-	}
-	cptvf_lf_shutdown(&cptvf->lfs);
-	/* Disable PF-VF mailbox interrupt */
-	cptvf_disable_pfvf_mbox_intrs(cptvf);
+		वापस;
+	पूर्ण
+	cptvf_lf_shutकरोwn(&cptvf->lfs);
+	/* Disable PF-VF mailbox पूर्णांकerrupt */
+	cptvf_disable_pfvf_mbox_पूर्णांकrs(cptvf);
 	/* Destroy PF-VF mbox */
 	cptvf_pfvf_mbox_destroy(cptvf);
-	pci_set_drvdata(pdev, NULL);
-}
+	pci_set_drvdata(pdev, शून्य);
+पूर्ण
 
 /* Supported devices */
-static const struct pci_device_id otx2_cptvf_id_table[] = {
-	{PCI_VDEVICE(CAVIUM, OTX2_CPT_PCI_VF_DEVICE_ID), 0},
-	{ 0, }  /* end of table */
-};
+अटल स्थिर काष्ठा pci_device_id otx2_cptvf_id_table[] = अणु
+	अणुPCI_VDEVICE(CAVIUM, OTX2_CPT_PCI_VF_DEVICE_ID), 0पूर्ण,
+	अणु 0, पूर्ण  /* end of table */
+पूर्ण;
 
-static struct pci_driver otx2_cptvf_pci_driver = {
+अटल काष्ठा pci_driver otx2_cptvf_pci_driver = अणु
 	.name = OTX2_CPTVF_DRV_NAME,
 	.id_table = otx2_cptvf_id_table,
 	.probe = otx2_cptvf_probe,
-	.remove = otx2_cptvf_remove,
-};
+	.हटाओ = otx2_cptvf_हटाओ,
+पूर्ण;
 
 module_pci_driver(otx2_cptvf_pci_driver);
 

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * cn_proc.h - process events connector
  *
  * Copyright (C) Matt Helsley, IBM Corp. 2005
- * Based on cn_fork.h by Nguyen Anh Quynh and Guillaume Thouvenin
+ * Based on cn_विभाजन.h by Nguyen Anh Quynh and Guillaume Thouvenin
  * Copyright (C) 2005 Nguyen Anh Quynh <aquynh@gmail.com>
  * Copyright (C) 2005 Guillaume Thouvenin <guillaume.thouvenin@bull.net>
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms of version 2.1 of the GNU Lesser General Public License
  * as published by the Free Software Foundation.
  *
@@ -14,45 +15,45 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  */
-#ifndef CN_PROC_H
-#define CN_PROC_H
+#अगर_अघोषित CN_PROC_H
+#घोषणा CN_PROC_H
 
-#include <uapi/linux/cn_proc.h>
+#समावेश <uapi/linux/cn_proc.h>
 
-#ifdef CONFIG_PROC_EVENTS
-void proc_fork_connector(struct task_struct *task);
-void proc_exec_connector(struct task_struct *task);
-void proc_id_connector(struct task_struct *task, int which_id);
-void proc_sid_connector(struct task_struct *task);
-void proc_ptrace_connector(struct task_struct *task, int which_id);
-void proc_comm_connector(struct task_struct *task);
-void proc_coredump_connector(struct task_struct *task);
-void proc_exit_connector(struct task_struct *task);
-#else
-static inline void proc_fork_connector(struct task_struct *task)
-{}
+#अगर_घोषित CONFIG_PROC_EVENTS
+व्योम proc_विभाजन_connector(काष्ठा task_काष्ठा *task);
+व्योम proc_exec_connector(काष्ठा task_काष्ठा *task);
+व्योम proc_id_connector(काष्ठा task_काष्ठा *task, पूर्णांक which_id);
+व्योम proc_sid_connector(काष्ठा task_काष्ठा *task);
+व्योम proc_ptrace_connector(काष्ठा task_काष्ठा *task, पूर्णांक which_id);
+व्योम proc_comm_connector(काष्ठा task_काष्ठा *task);
+व्योम proc_coredump_connector(काष्ठा task_काष्ठा *task);
+व्योम proc_निकास_connector(काष्ठा task_काष्ठा *task);
+#अन्यथा
+अटल अंतरभूत व्योम proc_विभाजन_connector(काष्ठा task_काष्ठा *task)
+अणुपूर्ण
 
-static inline void proc_exec_connector(struct task_struct *task)
-{}
+अटल अंतरभूत व्योम proc_exec_connector(काष्ठा task_काष्ठा *task)
+अणुपूर्ण
 
-static inline void proc_id_connector(struct task_struct *task,
-				     int which_id)
-{}
+अटल अंतरभूत व्योम proc_id_connector(काष्ठा task_काष्ठा *task,
+				     पूर्णांक which_id)
+अणुपूर्ण
 
-static inline void proc_sid_connector(struct task_struct *task)
-{}
+अटल अंतरभूत व्योम proc_sid_connector(काष्ठा task_काष्ठा *task)
+अणुपूर्ण
 
-static inline void proc_comm_connector(struct task_struct *task)
-{}
+अटल अंतरभूत व्योम proc_comm_connector(काष्ठा task_काष्ठा *task)
+अणुपूर्ण
 
-static inline void proc_ptrace_connector(struct task_struct *task,
-					 int ptrace_id)
-{}
+अटल अंतरभूत व्योम proc_ptrace_connector(काष्ठा task_काष्ठा *task,
+					 पूर्णांक ptrace_id)
+अणुपूर्ण
 
-static inline void proc_coredump_connector(struct task_struct *task)
-{}
+अटल अंतरभूत व्योम proc_coredump_connector(काष्ठा task_काष्ठा *task)
+अणुपूर्ण
 
-static inline void proc_exit_connector(struct task_struct *task)
-{}
-#endif	/* CONFIG_PROC_EVENTS */
-#endif	/* CN_PROC_H */
+अटल अंतरभूत व्योम proc_निकास_connector(काष्ठा task_काष्ठा *task)
+अणुपूर्ण
+#पूर्ण_अगर	/* CONFIG_PROC_EVENTS */
+#पूर्ण_अगर	/* CN_PROC_H */

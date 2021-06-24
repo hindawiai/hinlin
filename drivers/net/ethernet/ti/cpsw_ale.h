@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Texas Instruments N-Port Ethernet Switch Address Lookup Engine APIs
  *
  * Copyright (C) 2012 Texas Instruments
  *
  */
-#ifndef __TI_CPSW_ALE_H__
-#define __TI_CPSW_ALE_H__
+#अगर_अघोषित __TI_CPSW_ALE_H__
+#घोषणा __TI_CPSW_ALE_H__
 
-struct cpsw_ale_params {
-	struct device		*dev;
-	void __iomem		*ale_regs;
-	unsigned long		ale_ageout;	/* in secs */
-	unsigned long		ale_entries;
-	unsigned long		ale_ports;
-	/* NU Switch has specific handling as number of bits in ALE entries
-	 * are different than other versions of ALE. Also there are specific
-	 * registers for unknown vlan specific fields. So use nu_switch_ale
-	 * to identify this hardware.
+काष्ठा cpsw_ale_params अणु
+	काष्ठा device		*dev;
+	व्योम __iomem		*ale_regs;
+	अचिन्हित दीर्घ		ale_ageout;	/* in secs */
+	अचिन्हित दीर्घ		ale_entries;
+	अचिन्हित दीर्घ		ale_ports;
+	/* NU Switch has specअगरic handling as number of bits in ALE entries
+	 * are dअगरferent than other versions of ALE. Also there are specअगरic
+	 * रेजिस्टरs क्रम unknown vlan specअगरic fields. So use nu_चयन_ale
+	 * to identअगरy this hardware.
 	 */
-	bool			nu_switch_ale;
+	bool			nu_चयन_ale;
 	/* mask bit used in NU Switch ALE is 3 bits instead of 8 bits. So
 	 * pass it from caller.
 	 */
 	u32			major_ver_mask;
-	const char		*dev_id;
-	unsigned long		bus_freq;
-};
+	स्थिर अक्षर		*dev_id;
+	अचिन्हित दीर्घ		bus_freq;
+पूर्ण;
 
-struct ale_entry_fld;
+काष्ठा ale_entry_fld;
 
-struct cpsw_ale {
-	struct cpsw_ale_params	params;
-	struct timer_list	timer;
-	unsigned long		ageout;
+काष्ठा cpsw_ale अणु
+	काष्ठा cpsw_ale_params	params;
+	काष्ठा समयr_list	समयr;
+	अचिन्हित दीर्घ		ageout;
 	u32			version;
 	u32			features;
-	/* These bits are different on NetCP NU Switch ALE */
+	/* These bits are dअगरferent on NetCP NU Switch ALE */
 	u32			port_mask_bits;
 	u32			port_num_bits;
 	u32			vlan_field_bits;
-	unsigned long		*p0_untag_vid_mask;
-	const struct ale_entry_fld *vlan_entry_tbl;
-};
+	अचिन्हित दीर्घ		*p0_untag_vid_mask;
+	स्थिर काष्ठा ale_entry_fld *vlan_entry_tbl;
+पूर्ण;
 
-enum cpsw_ale_control {
+क्रमागत cpsw_ale_control अणु
 	/* global */
 	ALE_ENABLE,
 	ALE_CLEAR,
@@ -75,67 +76,67 @@ enum cpsw_ale_control {
 	ALE_DEFAULT_THREAD_ID,
 	ALE_DEFAULT_THREAD_ENABLE,
 	ALE_NUM_CONTROLS,
-};
+पूर्ण;
 
-enum cpsw_ale_port_state {
+क्रमागत cpsw_ale_port_state अणु
 	ALE_PORT_STATE_DISABLE	= 0x00,
 	ALE_PORT_STATE_BLOCK	= 0x01,
 	ALE_PORT_STATE_LEARN	= 0x02,
 	ALE_PORT_STATE_FORWARD	= 0x03,
-};
+पूर्ण;
 
-/* ALE unicast entry flags - passed into cpsw_ale_add_ucast() */
-#define ALE_SECURE			BIT(0)
-#define ALE_BLOCKED			BIT(1)
-#define ALE_SUPER			BIT(2)
-#define ALE_VLAN			BIT(3)
+/* ALE unicast entry flags - passed पूर्णांकo cpsw_ale_add_ucast() */
+#घोषणा ALE_SECURE			BIT(0)
+#घोषणा ALE_BLOCKED			BIT(1)
+#घोषणा ALE_SUPER			BIT(2)
+#घोषणा ALE_VLAN			BIT(3)
 
-#define ALE_PORT_HOST			BIT(0)
-#define ALE_PORT_1			BIT(1)
-#define ALE_PORT_2			BIT(2)
+#घोषणा ALE_PORT_HOST			BIT(0)
+#घोषणा ALE_PORT_1			BIT(1)
+#घोषणा ALE_PORT_2			BIT(2)
 
-#define ALE_MCAST_FWD			0
-#define ALE_MCAST_BLOCK_LEARN_FWD	1
-#define ALE_MCAST_FWD_LEARN		2
-#define ALE_MCAST_FWD_2			3
+#घोषणा ALE_MCAST_FWD			0
+#घोषणा ALE_MCAST_BLOCK_LEARN_FWD	1
+#घोषणा ALE_MCAST_FWD_LEARN		2
+#घोषणा ALE_MCAST_FWD_2			3
 
-#define ALE_ENTRY_BITS		68
-#define ALE_ENTRY_WORDS	DIV_ROUND_UP(ALE_ENTRY_BITS, 32)
+#घोषणा ALE_ENTRY_BITS		68
+#घोषणा ALE_ENTRY_WORDS	DIV_ROUND_UP(ALE_ENTRY_BITS, 32)
 
-struct cpsw_ale *cpsw_ale_create(struct cpsw_ale_params *params);
+काष्ठा cpsw_ale *cpsw_ale_create(काष्ठा cpsw_ale_params *params);
 
-void cpsw_ale_start(struct cpsw_ale *ale);
-void cpsw_ale_stop(struct cpsw_ale *ale);
+व्योम cpsw_ale_start(काष्ठा cpsw_ale *ale);
+व्योम cpsw_ale_stop(काष्ठा cpsw_ale *ale);
 
-int cpsw_ale_flush_multicast(struct cpsw_ale *ale, int port_mask, int vid);
-int cpsw_ale_add_ucast(struct cpsw_ale *ale, const u8 *addr, int port,
-		       int flags, u16 vid);
-int cpsw_ale_del_ucast(struct cpsw_ale *ale, const u8 *addr, int port,
-		       int flags, u16 vid);
-int cpsw_ale_add_mcast(struct cpsw_ale *ale, const u8 *addr, int port_mask,
-		       int flags, u16 vid, int mcast_state);
-int cpsw_ale_del_mcast(struct cpsw_ale *ale, const u8 *addr, int port_mask,
-		       int flags, u16 vid);
-int cpsw_ale_add_vlan(struct cpsw_ale *ale, u16 vid, int port, int untag,
-			int reg_mcast, int unreg_mcast);
-int cpsw_ale_del_vlan(struct cpsw_ale *ale, u16 vid, int port);
-void cpsw_ale_set_allmulti(struct cpsw_ale *ale, int allmulti, int port);
+पूर्णांक cpsw_ale_flush_multicast(काष्ठा cpsw_ale *ale, पूर्णांक port_mask, पूर्णांक vid);
+पूर्णांक cpsw_ale_add_ucast(काष्ठा cpsw_ale *ale, स्थिर u8 *addr, पूर्णांक port,
+		       पूर्णांक flags, u16 vid);
+पूर्णांक cpsw_ale_del_ucast(काष्ठा cpsw_ale *ale, स्थिर u8 *addr, पूर्णांक port,
+		       पूर्णांक flags, u16 vid);
+पूर्णांक cpsw_ale_add_mcast(काष्ठा cpsw_ale *ale, स्थिर u8 *addr, पूर्णांक port_mask,
+		       पूर्णांक flags, u16 vid, पूर्णांक mcast_state);
+पूर्णांक cpsw_ale_del_mcast(काष्ठा cpsw_ale *ale, स्थिर u8 *addr, पूर्णांक port_mask,
+		       पूर्णांक flags, u16 vid);
+पूर्णांक cpsw_ale_add_vlan(काष्ठा cpsw_ale *ale, u16 vid, पूर्णांक port, पूर्णांक untag,
+			पूर्णांक reg_mcast, पूर्णांक unreg_mcast);
+पूर्णांक cpsw_ale_del_vlan(काष्ठा cpsw_ale *ale, u16 vid, पूर्णांक port);
+व्योम cpsw_ale_set_allmulti(काष्ठा cpsw_ale *ale, पूर्णांक allmulti, पूर्णांक port);
 
-int cpsw_ale_control_get(struct cpsw_ale *ale, int port, int control);
-int cpsw_ale_control_set(struct cpsw_ale *ale, int port,
-			 int control, int value);
-void cpsw_ale_dump(struct cpsw_ale *ale, u32 *data);
-u32 cpsw_ale_get_num_entries(struct cpsw_ale *ale);
+पूर्णांक cpsw_ale_control_get(काष्ठा cpsw_ale *ale, पूर्णांक port, पूर्णांक control);
+पूर्णांक cpsw_ale_control_set(काष्ठा cpsw_ale *ale, पूर्णांक port,
+			 पूर्णांक control, पूर्णांक value);
+व्योम cpsw_ale_dump(काष्ठा cpsw_ale *ale, u32 *data);
+u32 cpsw_ale_get_num_entries(काष्ठा cpsw_ale *ale);
 
-static inline int cpsw_ale_get_vlan_p0_untag(struct cpsw_ale *ale, u16 vid)
-{
-	return test_bit(vid, ale->p0_untag_vid_mask);
-}
+अटल अंतरभूत पूर्णांक cpsw_ale_get_vlan_p0_untag(काष्ठा cpsw_ale *ale, u16 vid)
+अणु
+	वापस test_bit(vid, ale->p0_untag_vid_mask);
+पूर्ण
 
-int cpsw_ale_vlan_add_modify(struct cpsw_ale *ale, u16 vid, int port_mask,
-			     int untag_mask, int reg_mcast, int unreg_mcast);
-int cpsw_ale_vlan_del_modify(struct cpsw_ale *ale, u16 vid, int port_mask);
-void cpsw_ale_set_unreg_mcast(struct cpsw_ale *ale, int unreg_mcast_mask,
+पूर्णांक cpsw_ale_vlan_add_modअगरy(काष्ठा cpsw_ale *ale, u16 vid, पूर्णांक port_mask,
+			     पूर्णांक untag_mask, पूर्णांक reg_mcast, पूर्णांक unreg_mcast);
+पूर्णांक cpsw_ale_vlan_del_modअगरy(काष्ठा cpsw_ale *ale, u16 vid, पूर्णांक port_mask);
+व्योम cpsw_ale_set_unreg_mcast(काष्ठा cpsw_ale *ale, पूर्णांक unreg_mcast_mask,
 			      bool add);
 
-#endif
+#पूर्ण_अगर

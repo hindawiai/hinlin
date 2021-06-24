@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
  * cxgb4i.c: Chelsio T4 iSCSI driver.
  *
  * Copyright (c) 2010-2015 Chelsio Communications, Inc.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  *
@@ -11,41 +12,41 @@
  *		Rakesh Ranjan (rranjan@chelsio.com)
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s: " fmt, __func__
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <scsi/scsi_host.h>
-#include <net/tcp.h>
-#include <net/dst.h>
-#include <linux/netdevice.h>
-#include <net/addrconf.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <net/tcp.h>
+#समावेश <net/dst.h>
+#समावेश <linux/netdevice.h>
+#समावेश <net/addrconf.h>
 
-#include "t4_regs.h"
-#include "t4_msg.h"
-#include "cxgb4.h"
-#include "cxgb4_uld.h"
-#include "t4fw_api.h"
-#include "l2t.h"
-#include "cxgb4i.h"
-#include "clip_tbl.h"
+#समावेश "t4_regs.h"
+#समावेश "t4_msg.h"
+#समावेश "cxgb4.h"
+#समावेश "cxgb4_uld.h"
+#समावेश "t4fw_api.h"
+#समावेश "l2t.h"
+#समावेश "cxgb4i.h"
+#समावेश "clip_tbl.h"
 
-static unsigned int dbg_level;
+अटल अचिन्हित पूर्णांक dbg_level;
 
-#include "../libcxgbi.h"
+#समावेश "../libcxgbi.h"
 
-#ifdef CONFIG_CHELSIO_T4_DCB
-#include <net/dcbevent.h>
-#include "cxgb4_dcb.h"
-#endif
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+#समावेश <net/dcbevent.h>
+#समावेश "cxgb4_dcb.h"
+#पूर्ण_अगर
 
-#define	DRV_MODULE_NAME		"cxgb4i"
-#define DRV_MODULE_DESC		"Chelsio T4-T6 iSCSI Driver"
-#define	DRV_MODULE_VERSION	"0.9.5-ko"
-#define DRV_MODULE_RELDATE	"Apr. 2015"
+#घोषणा	DRV_MODULE_NAME		"cxgb4i"
+#घोषणा DRV_MODULE_DESC		"Chelsio T4-T6 iSCSI Driver"
+#घोषणा	DRV_MODULE_VERSION	"0.9.5-ko"
+#घोषणा DRV_MODULE_RELDATE	"Apr. 2015"
 
-static char version[] =
+अटल अक्षर version[] =
 	DRV_MODULE_DESC " " DRV_MODULE_NAME
 	" v" DRV_MODULE_VERSION " (" DRV_MODULE_RELDATE ")\n";
 
@@ -54,40 +55,40 @@ MODULE_DESCRIPTION(DRV_MODULE_DESC);
 MODULE_VERSION(DRV_MODULE_VERSION);
 MODULE_LICENSE("GPL");
 
-module_param(dbg_level, uint, 0644);
+module_param(dbg_level, uपूर्णांक, 0644);
 MODULE_PARM_DESC(dbg_level, "Debug flag (default=0)");
 
-#define CXGB4I_DEFAULT_10G_RCV_WIN (256 * 1024)
-static int cxgb4i_rcv_win = -1;
-module_param(cxgb4i_rcv_win, int, 0644);
+#घोषणा CXGB4I_DEFAULT_10G_RCV_WIN (256 * 1024)
+अटल पूर्णांक cxgb4i_rcv_win = -1;
+module_param(cxgb4i_rcv_win, पूर्णांक, 0644);
 MODULE_PARM_DESC(cxgb4i_rcv_win, "TCP receive window in bytes");
 
-#define CXGB4I_DEFAULT_10G_SND_WIN (128 * 1024)
-static int cxgb4i_snd_win = -1;
-module_param(cxgb4i_snd_win, int, 0644);
+#घोषणा CXGB4I_DEFAULT_10G_SND_WIN (128 * 1024)
+अटल पूर्णांक cxgb4i_snd_win = -1;
+module_param(cxgb4i_snd_win, पूर्णांक, 0644);
 MODULE_PARM_DESC(cxgb4i_snd_win, "TCP send window in bytes");
 
-static int cxgb4i_rx_credit_thres = 10 * 1024;
-module_param(cxgb4i_rx_credit_thres, int, 0644);
+अटल पूर्णांक cxgb4i_rx_credit_thres = 10 * 1024;
+module_param(cxgb4i_rx_credit_thres, पूर्णांक, 0644);
 MODULE_PARM_DESC(cxgb4i_rx_credit_thres,
 		"RX credits return threshold in bytes (default=10KB)");
 
-static unsigned int cxgb4i_max_connect = (8 * 1024);
-module_param(cxgb4i_max_connect, uint, 0644);
+अटल अचिन्हित पूर्णांक cxgb4i_max_connect = (8 * 1024);
+module_param(cxgb4i_max_connect, uपूर्णांक, 0644);
 MODULE_PARM_DESC(cxgb4i_max_connect, "Maximum number of connections");
 
-static unsigned short cxgb4i_sport_base = 20000;
-module_param(cxgb4i_sport_base, ushort, 0644);
+अटल अचिन्हित लघु cxgb4i_sport_base = 20000;
+module_param(cxgb4i_sport_base, uलघु, 0644);
 MODULE_PARM_DESC(cxgb4i_sport_base, "Starting port number (default 20000)");
 
-typedef void (*cxgb4i_cplhandler_func)(struct cxgbi_device *, struct sk_buff *);
+प्रकार व्योम (*cxgb4i_cplhandler_func)(काष्ठा cxgbi_device *, काष्ठा sk_buff *);
 
-static void *t4_uld_add(const struct cxgb4_lld_info *);
-static int t4_uld_rx_handler(void *, const __be64 *, const struct pkt_gl *);
-static int t4_uld_state_change(void *, enum cxgb4_state state);
-static inline int send_tx_flowc_wr(struct cxgbi_sock *);
+अटल व्योम *t4_uld_add(स्थिर काष्ठा cxgb4_lld_info *);
+अटल पूर्णांक t4_uld_rx_handler(व्योम *, स्थिर __be64 *, स्थिर काष्ठा pkt_gl *);
+अटल पूर्णांक t4_uld_state_change(व्योम *, क्रमागत cxgb4_state state);
+अटल अंतरभूत पूर्णांक send_tx_flowc_wr(काष्ठा cxgbi_sock *);
 
-static const struct cxgb4_uld_info cxgb4i_uld_info = {
+अटल स्थिर काष्ठा cxgb4_uld_info cxgb4i_uld_info = अणु
 	.name = DRV_MODULE_NAME,
 	.nrxq = MAX_ULD_QSETS,
 	.ntxq = MAX_ULD_QSETS,
@@ -96,9 +97,9 @@ static const struct cxgb4_uld_info cxgb4i_uld_info = {
 	.add = t4_uld_add,
 	.rx_handler = t4_uld_rx_handler,
 	.state_change = t4_uld_state_change,
-};
+पूर्ण;
 
-static struct scsi_host_template cxgb4i_host_template = {
+अटल काष्ठा scsi_host_ढाँचा cxgb4i_host_ढाँचा = अणु
 	.module		= THIS_MODULE,
 	.name		= DRV_MODULE_NAME,
 	.proc_name	= DRV_MODULE_NAME,
@@ -108,17 +109,17 @@ static struct scsi_host_template cxgb4i_host_template = {
 	.sg_tablesize	= SG_ALL,
 	.max_sectors	= 0xFFFF,
 	.cmd_per_lun	= ISCSI_DEF_CMD_PER_LUN,
-	.eh_timed_out	= iscsi_eh_cmd_timed_out,
-	.eh_abort_handler = iscsi_eh_abort,
+	.eh_समयd_out	= iscsi_eh_cmd_समयd_out,
+	.eh_पात_handler = iscsi_eh_पात,
 	.eh_device_reset_handler = iscsi_eh_device_reset,
 	.eh_target_reset_handler = iscsi_eh_recover_target,
 	.target_alloc	= iscsi_target_alloc,
 	.dma_boundary	= PAGE_SIZE - 1,
 	.this_id	= -1,
 	.track_queue_depth = 1,
-};
+पूर्ण;
 
-static struct iscsi_transport cxgb4i_iscsi_transport = {
+अटल काष्ठा iscsi_transport cxgb4i_iscsi_transport = अणु
 	.owner		= THIS_MODULE,
 	.name		= DRV_MODULE_NAME,
 	.caps		= CAP_RECOVERY_L0 | CAP_MULTI_R2T | CAP_HDRDGST |
@@ -134,7 +135,7 @@ static struct iscsi_transport cxgb4i_iscsi_transport = {
 	/* connection management */
 	.create_conn	= cxgbi_create_conn,
 	.bind_conn		= cxgbi_bind_conn,
-	.destroy_conn	= iscsi_tcp_conn_teardown,
+	.destroy_conn	= iscsi_tcp_conn_tearकरोwn,
 	.start_conn		= iscsi_conn_start,
 	.stop_conn		= iscsi_conn_stop,
 	.get_conn_param	= iscsi_conn_get_param,
@@ -156,79 +157,79 @@ static struct iscsi_transport cxgb4i_iscsi_transport = {
 	.ep_connect	= cxgbi_ep_connect,
 	.ep_poll	= cxgbi_ep_poll,
 	.ep_disconnect	= cxgbi_ep_disconnect,
-	/* Error recovery timeout call */
-	.session_recovery_timedout = iscsi_session_recovery_timedout,
-};
+	/* Error recovery समयout call */
+	.session_recovery_समयकरोut = iscsi_session_recovery_समयकरोut,
+पूर्ण;
 
-#ifdef CONFIG_CHELSIO_T4_DCB
-static int
-cxgb4_dcb_change_notify(struct notifier_block *, unsigned long, void *);
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+अटल पूर्णांक
+cxgb4_dcb_change_notअगरy(काष्ठा notअगरier_block *, अचिन्हित दीर्घ, व्योम *);
 
-static struct notifier_block cxgb4_dcb_change = {
-	.notifier_call = cxgb4_dcb_change_notify,
-};
-#endif
+अटल काष्ठा notअगरier_block cxgb4_dcb_change = अणु
+	.notअगरier_call = cxgb4_dcb_change_notअगरy,
+पूर्ण;
+#पूर्ण_अगर
 
-static struct scsi_transport_template *cxgb4i_stt;
+अटल काष्ठा scsi_transport_ढाँचा *cxgb4i_stt;
 
 /*
- * CPL (Chelsio Protocol Language) defines a message passing interface between
+ * CPL (Chelsio Protocol Language) defines a message passing पूर्णांकerface between
  * the host driver and Chelsio asic.
  * The section below implments CPLs that related to iscsi tcp connection
- * open/close/abort and data send/receive.
+ * खोलो/बंद/पात and data send/receive.
  */
 
-#define RCV_BUFSIZ_MASK		0x3FFU
-#define MAX_IMM_TX_PKT_LEN	256
+#घोषणा RCV_बफ_मान_MASK		0x3FFU
+#घोषणा MAX_IMM_TX_PKT_LEN	256
 
-static int push_tx_frames(struct cxgbi_sock *, int);
+अटल पूर्णांक push_tx_frames(काष्ठा cxgbi_sock *, पूर्णांक);
 
 /*
  * is_ofld_imm - check whether a packet can be sent as immediate data
  * @skb: the packet
  *
- * Returns true if a packet can be sent as an offload WR with immediate
- * data.  We currently use the same limit as for Ethernet packets.
+ * Returns true अगर a packet can be sent as an offload WR with immediate
+ * data.  We currently use the same limit as क्रम Ethernet packets.
  */
-static inline bool is_ofld_imm(const struct sk_buff *skb)
-{
-	int len = skb->len;
+अटल अंतरभूत bool is_ofld_imm(स्थिर काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक len = skb->len;
 
-	if (likely(cxgbi_skcb_test_flag(skb, SKCBF_TX_NEED_HDR)))
-		len += sizeof(struct fw_ofld_tx_data_wr);
+	अगर (likely(cxgbi_skcb_test_flag(skb, SKCBF_TX_NEED_HDR)))
+		len += माप(काष्ठा fw_ofld_tx_data_wr);
 
-	if  (likely(cxgbi_skcb_test_flag((struct sk_buff *)skb, SKCBF_TX_ISO)))
-		len += sizeof(struct cpl_tx_data_iso);
+	अगर  (likely(cxgbi_skcb_test_flag((काष्ठा sk_buff *)skb, SKCBF_TX_ISO)))
+		len += माप(काष्ठा cpl_tx_data_iso);
 
-	return (len <= MAX_IMM_OFLD_TX_DATA_WR_LEN);
-}
+	वापस (len <= MAX_IMM_OFLD_TX_DATA_WR_LEN);
+पूर्ण
 
-static void send_act_open_req(struct cxgbi_sock *csk, struct sk_buff *skb,
-				struct l2t_entry *e)
-{
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(csk->cdev);
-	int wscale = cxgbi_sock_compute_wscale(csk->mss_idx);
-	unsigned long long opt0;
-	unsigned int opt2;
-	unsigned int qid_atid = ((unsigned int)csk->atid) |
-				 (((unsigned int)csk->rss_qid) << 14);
+अटल व्योम send_act_खोलो_req(काष्ठा cxgbi_sock *csk, काष्ठा sk_buff *skb,
+				काष्ठा l2t_entry *e)
+अणु
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(csk->cdev);
+	पूर्णांक wscale = cxgbi_sock_compute_wscale(csk->mss_idx);
+	अचिन्हित दीर्घ दीर्घ opt0;
+	अचिन्हित पूर्णांक opt2;
+	अचिन्हित पूर्णांक qid_atid = ((अचिन्हित पूर्णांक)csk->atid) |
+				 (((अचिन्हित पूर्णांक)csk->rss_qid) << 14);
 
 	opt0 = KEEP_ALIVE_F |
 		WND_SCALE_V(wscale) |
 		MSS_IDX_V(csk->mss_idx) |
-		L2T_IDX_V(((struct l2t_entry *)csk->l2t)->idx) |
+		L2T_IDX_V(((काष्ठा l2t_entry *)csk->l2t)->idx) |
 		TX_CHAN_V(csk->tx_chan) |
 		SMAC_SEL_V(csk->smac_idx) |
 		ULP_MODE_V(ULP_MODE_ISCSI) |
-		RCV_BUFSIZ_V(csk->rcv_win >> 10);
+		RCV_बफ_मान_V(csk->rcv_win >> 10);
 
 	opt2 = RX_CHANNEL_V(0) |
 		RSS_QUEUE_VALID_F |
 		RSS_QUEUE_V(csk->rss_qid);
 
-	if (is_t4(lldi->adapter_type)) {
-		struct cpl_act_open_req *req =
-				(struct cpl_act_open_req *)skb->head;
+	अगर (is_t4(lldi->adapter_type)) अणु
+		काष्ठा cpl_act_खोलो_req *req =
+				(काष्ठा cpl_act_खोलो_req *)skb->head;
 
 		INIT_TP_WR(req, 0);
 		OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_ACT_OPEN_REQ,
@@ -249,10 +250,10 @@ static void send_act_open_req(struct cxgbi_sock *csk, struct sk_buff *skb,
 			csk, &req->local_ip, ntohs(req->local_port),
 			&req->peer_ip, ntohs(req->peer_port),
 			csk->atid, csk->rss_qid);
-	} else if (is_t5(lldi->adapter_type)) {
-		struct cpl_t5_act_open_req *req =
-				(struct cpl_t5_act_open_req *)skb->head;
-		u32 isn = (prandom_u32() & ~7UL) - 1;
+	पूर्ण अन्यथा अगर (is_t5(lldi->adapter_type)) अणु
+		काष्ठा cpl_t5_act_खोलो_req *req =
+				(काष्ठा cpl_t5_act_खोलो_req *)skb->head;
+		u32 isn = (pअक्रमom_u32() & ~7UL) - 1;
 
 		INIT_TP_WR(req, 0);
 		OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_ACT_OPEN_REQ,
@@ -277,10 +278,10 @@ static void send_act_open_req(struct cxgbi_sock *csk, struct sk_buff *skb,
 			csk, &req->local_ip, ntohs(req->local_port),
 			&req->peer_ip, ntohs(req->peer_port),
 			csk->atid, csk->rss_qid);
-	} else {
-		struct cpl_t6_act_open_req *req =
-				(struct cpl_t6_act_open_req *)skb->head;
-		u32 isn = (prandom_u32() & ~7UL) - 1;
+	पूर्ण अन्यथा अणु
+		काष्ठा cpl_t6_act_खोलो_req *req =
+				(काष्ठा cpl_t6_act_खोलो_req *)skb->head;
+		u32 isn = (pअक्रमom_u32() & ~7UL) - 1;
 
 		INIT_TP_WR(req, 0);
 		OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_ACT_OPEN_REQ,
@@ -309,7 +310,7 @@ static void send_act_open_req(struct cxgbi_sock *csk, struct sk_buff *skb,
 			  csk, &req->local_ip, ntohs(req->local_port),
 			  &req->peer_ip, ntohs(req->peer_port),
 			  csk->atid, csk->rss_qid);
-	}
+	पूर्ण
 
 	set_wr_txq(skb, CPL_PRIORITY_SETUP, csk->port_id);
 
@@ -319,35 +320,35 @@ static void send_act_open_req(struct cxgbi_sock *csk, struct sk_buff *skb,
 		       csk->state, csk->flags, csk->atid, csk->rss_qid);
 
 	cxgb4_l2t_send(csk->cdev->ports[csk->port_id], skb, csk->l2t);
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
-static void send_act_open_req6(struct cxgbi_sock *csk, struct sk_buff *skb,
-			       struct l2t_entry *e)
-{
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(csk->cdev);
-	int wscale = cxgbi_sock_compute_wscale(csk->mss_idx);
-	unsigned long long opt0;
-	unsigned int opt2;
-	unsigned int qid_atid = ((unsigned int)csk->atid) |
-				 (((unsigned int)csk->rss_qid) << 14);
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल व्योम send_act_खोलो_req6(काष्ठा cxgbi_sock *csk, काष्ठा sk_buff *skb,
+			       काष्ठा l2t_entry *e)
+अणु
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(csk->cdev);
+	पूर्णांक wscale = cxgbi_sock_compute_wscale(csk->mss_idx);
+	अचिन्हित दीर्घ दीर्घ opt0;
+	अचिन्हित पूर्णांक opt2;
+	अचिन्हित पूर्णांक qid_atid = ((अचिन्हित पूर्णांक)csk->atid) |
+				 (((अचिन्हित पूर्णांक)csk->rss_qid) << 14);
 
 	opt0 = KEEP_ALIVE_F |
 		WND_SCALE_V(wscale) |
 		MSS_IDX_V(csk->mss_idx) |
-		L2T_IDX_V(((struct l2t_entry *)csk->l2t)->idx) |
+		L2T_IDX_V(((काष्ठा l2t_entry *)csk->l2t)->idx) |
 		TX_CHAN_V(csk->tx_chan) |
 		SMAC_SEL_V(csk->smac_idx) |
 		ULP_MODE_V(ULP_MODE_ISCSI) |
-		RCV_BUFSIZ_V(csk->rcv_win >> 10);
+		RCV_बफ_मान_V(csk->rcv_win >> 10);
 
 	opt2 = RX_CHANNEL_V(0) |
 		RSS_QUEUE_VALID_F |
 		RSS_QUEUE_V(csk->rss_qid);
 
-	if (is_t4(lldi->adapter_type)) {
-		struct cpl_act_open_req6 *req =
-			    (struct cpl_act_open_req6 *)skb->head;
+	अगर (is_t4(lldi->adapter_type)) अणु
+		काष्ठा cpl_act_खोलो_req6 *req =
+			    (काष्ठा cpl_act_खोलो_req6 *)skb->head;
 
 		INIT_TP_WR(req, 0);
 		OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_ACT_OPEN_REQ6,
@@ -370,9 +371,9 @@ static void send_act_open_req6(struct cxgbi_sock *csk, struct sk_buff *skb,
 		req->params = cpu_to_be32(cxgb4_select_ntuple(
 					  csk->cdev->ports[csk->port_id],
 					  csk->l2t));
-	} else if (is_t5(lldi->adapter_type)) {
-		struct cpl_t5_act_open_req6 *req =
-				(struct cpl_t5_act_open_req6 *)skb->head;
+	पूर्ण अन्यथा अगर (is_t5(lldi->adapter_type)) अणु
+		काष्ठा cpl_t5_act_खोलो_req6 *req =
+				(काष्ठा cpl_t5_act_खोलो_req6 *)skb->head;
 
 		INIT_TP_WR(req, 0);
 		OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_ACT_OPEN_REQ6,
@@ -393,9 +394,9 @@ static void send_act_open_req6(struct cxgbi_sock *csk, struct sk_buff *skb,
 		req->params = cpu_to_be64(FILTER_TUPLE_V(cxgb4_select_ntuple(
 					  csk->cdev->ports[csk->port_id],
 					  csk->l2t)));
-	} else {
-		struct cpl_t6_act_open_req6 *req =
-				(struct cpl_t6_act_open_req6 *)skb->head;
+	पूर्ण अन्यथा अणु
+		काष्ठा cpl_t6_act_खोलो_req6 *req =
+				(काष्ठा cpl_t6_act_खोलो_req6 *)skb->head;
 
 		INIT_TP_WR(req, 0);
 		OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_ACT_OPEN_REQ6,
@@ -421,7 +422,7 @@ static void send_act_open_req6(struct cxgbi_sock *csk, struct sk_buff *skb,
 
 		req->rsvd2 = cpu_to_be32(0);
 		req->opt3 = cpu_to_be32(0);
-	}
+	पूर्ण
 
 	set_wr_txq(skb, CPL_PRIORITY_SETUP, csk->port_id);
 
@@ -433,64 +434,64 @@ static void send_act_open_req6(struct cxgbi_sock *csk, struct sk_buff *skb,
 		csk->rss_qid);
 
 	cxgb4_l2t_send(csk->cdev->ports[csk->port_id], skb, csk->l2t);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void send_close_req(struct cxgbi_sock *csk)
-{
-	struct sk_buff *skb = csk->cpl_close;
-	struct cpl_close_con_req *req = (struct cpl_close_con_req *)skb->head;
-	unsigned int tid = csk->tid;
+अटल व्योम send_बंद_req(काष्ठा cxgbi_sock *csk)
+अणु
+	काष्ठा sk_buff *skb = csk->cpl_बंद;
+	काष्ठा cpl_बंद_con_req *req = (काष्ठा cpl_बंद_con_req *)skb->head;
+	अचिन्हित पूर्णांक tid = csk->tid;
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 		"csk 0x%p,%u,0x%lx, tid %u.\n",
 		csk, csk->state, csk->flags, csk->tid);
-	csk->cpl_close = NULL;
+	csk->cpl_बंद = शून्य;
 	set_wr_txq(skb, CPL_PRIORITY_DATA, csk->port_id);
 	INIT_TP_WR(req, tid);
 	OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_CLOSE_CON_REQ, tid));
 	req->rsvd = 0;
 
 	cxgbi_sock_skb_entail(csk, skb);
-	if (csk->state >= CTP_ESTABLISHED)
+	अगर (csk->state >= CTP_ESTABLISHED)
 		push_tx_frames(csk, 1);
-}
+पूर्ण
 
-static void abort_arp_failure(void *handle, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk = (struct cxgbi_sock *)handle;
-	struct cpl_abort_req *req;
+अटल व्योम पात_arp_failure(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk = (काष्ठा cxgbi_sock *)handle;
+	काष्ठा cpl_पात_req *req;
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 		"csk 0x%p,%u,0x%lx, tid %u, abort.\n",
 		csk, csk->state, csk->flags, csk->tid);
-	req = (struct cpl_abort_req *)skb->data;
+	req = (काष्ठा cpl_पात_req *)skb->data;
 	req->cmd = CPL_ABORT_NO_RST;
 	cxgb4_ofld_send(csk->cdev->ports[csk->port_id], skb);
-}
+पूर्ण
 
-static void send_abort_req(struct cxgbi_sock *csk)
-{
-	struct cpl_abort_req *req;
-	struct sk_buff *skb = csk->cpl_abort_req;
+अटल व्योम send_पात_req(काष्ठा cxgbi_sock *csk)
+अणु
+	काष्ठा cpl_पात_req *req;
+	काष्ठा sk_buff *skb = csk->cpl_पात_req;
 
-	if (unlikely(csk->state == CTP_ABORTING) || !skb || !csk->cdev)
-		return;
+	अगर (unlikely(csk->state == CTP_ABORTING) || !skb || !csk->cdev)
+		वापस;
 
-	if (!cxgbi_sock_flag(csk, CTPF_TX_DATA_SENT)) {
+	अगर (!cxgbi_sock_flag(csk, CTPF_TX_DATA_SENT)) अणु
 		send_tx_flowc_wr(csk);
 		cxgbi_sock_set_flag(csk, CTPF_TX_DATA_SENT);
-	}
+	पूर्ण
 
 	cxgbi_sock_set_state(csk, CTP_ABORTING);
 	cxgbi_sock_set_flag(csk, CTPF_ABORT_RPL_PENDING);
-	cxgbi_sock_purge_write_queue(csk);
+	cxgbi_sock_purge_ग_लिखो_queue(csk);
 
-	csk->cpl_abort_req = NULL;
-	req = (struct cpl_abort_req *)skb->head;
+	csk->cpl_पात_req = शून्य;
+	req = (काष्ठा cpl_पात_req *)skb->head;
 	set_wr_txq(skb, CPL_PRIORITY_DATA, csk->port_id);
 	req->cmd = CPL_ABORT_SEND_RST;
-	t4_set_arp_err_handler(skb, csk, abort_arp_failure);
+	t4_set_arp_err_handler(skb, csk, पात_arp_failure);
 	INIT_TP_WR(req, csk->tid);
 	OPCODE_TID(req) = cpu_to_be32(MK_OPCODE_TID(CPL_ABORT_REQ, csk->tid));
 	req->rsvd0 = htonl(csk->snd_nxt);
@@ -502,45 +503,45 @@ static void send_abort_req(struct cxgbi_sock *csk)
 		req->rsvd1);
 
 	cxgb4_l2t_send(csk->cdev->ports[csk->port_id], skb, csk->l2t);
-}
+पूर्ण
 
-static void send_abort_rpl(struct cxgbi_sock *csk, int rst_status)
-{
-	struct sk_buff *skb = csk->cpl_abort_rpl;
-	struct cpl_abort_rpl *rpl = (struct cpl_abort_rpl *)skb->head;
+अटल व्योम send_पात_rpl(काष्ठा cxgbi_sock *csk, पूर्णांक rst_status)
+अणु
+	काष्ठा sk_buff *skb = csk->cpl_पात_rpl;
+	काष्ठा cpl_पात_rpl *rpl = (काष्ठा cpl_पात_rpl *)skb->head;
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 		"csk 0x%p,%u,0x%lx,%u, status %d.\n",
 		csk, csk->state, csk->flags, csk->tid, rst_status);
 
-	csk->cpl_abort_rpl = NULL;
+	csk->cpl_पात_rpl = शून्य;
 	set_wr_txq(skb, CPL_PRIORITY_DATA, csk->port_id);
 	INIT_TP_WR(rpl, csk->tid);
 	OPCODE_TID(rpl) = cpu_to_be32(MK_OPCODE_TID(CPL_ABORT_RPL, csk->tid));
 	rpl->cmd = rst_status;
 	cxgb4_ofld_send(csk->cdev->ports[csk->port_id], skb);
-}
+पूर्ण
 
 /*
  * CPL connection rx data ack: host ->
  * Send RX credits through an RX_DATA_ACK CPL message. Returns the number of
  * credits sent.
  */
-static u32 send_rx_credits(struct cxgbi_sock *csk, u32 credits)
-{
-	struct sk_buff *skb;
-	struct cpl_rx_data_ack *req;
+अटल u32 send_rx_credits(काष्ठा cxgbi_sock *csk, u32 credits)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा cpl_rx_data_ack *req;
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_PDU_RX,
 		"csk 0x%p,%u,0x%lx,%u, credit %u.\n",
 		csk, csk->state, csk->flags, csk->tid, credits);
 
-	skb = alloc_wr(sizeof(*req), 0, GFP_ATOMIC);
-	if (!skb) {
+	skb = alloc_wr(माप(*req), 0, GFP_ATOMIC);
+	अगर (!skb) अणु
 		pr_info("csk 0x%p, credit %u, OOM.\n", csk, credits);
-		return 0;
-	}
-	req = (struct cpl_rx_data_ack *)skb->head;
+		वापस 0;
+	पूर्ण
+	req = (काष्ठा cpl_rx_data_ack *)skb->head;
 
 	set_wr_txq(skb, CPL_PRIORITY_ACK, csk->port_id);
 	INIT_TP_WR(req, csk->tid);
@@ -549,78 +550,78 @@ static u32 send_rx_credits(struct cxgbi_sock *csk, u32 credits)
 	req->credit_dack = cpu_to_be32(RX_CREDITS_V(credits)
 				       | RX_FORCE_ACK_F);
 	cxgb4_ofld_send(csk->cdev->ports[csk->port_id], skb);
-	return credits;
-}
+	वापस credits;
+पूर्ण
 
 /*
  * sgl_len - calculates the size of an SGL of the given capacity
  * @n: the number of SGL entries
- * Calculates the number of flits needed for a scatter/gather list that
+ * Calculates the number of flits needed क्रम a scatter/gather list that
  * can hold the given number of entries.
  */
-static inline unsigned int sgl_len(unsigned int n)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक sgl_len(अचिन्हित पूर्णांक n)
+अणु
 	n--;
-	return (3 * n) / 2 + (n & 1) + 2;
-}
+	वापस (3 * n) / 2 + (n & 1) + 2;
+पूर्ण
 
 /*
- * calc_tx_flits_ofld - calculate # of flits for an offload packet
+ * calc_tx_flits_ofld - calculate # of flits क्रम an offload packet
  * @skb: the packet
  *
- * Returns the number of flits needed for the given offload packet.
- * These packets are already fully constructed and no additional headers
+ * Returns the number of flits needed क्रम the given offload packet.
+ * These packets are alपढ़ोy fully स्थिरructed and no additional headers
  * will be added.
  */
-static inline unsigned int calc_tx_flits_ofld(const struct sk_buff *skb)
-{
-	unsigned int flits, cnt;
+अटल अंतरभूत अचिन्हित पूर्णांक calc_tx_flits_ofld(स्थिर काष्ठा sk_buff *skb)
+अणु
+	अचिन्हित पूर्णांक flits, cnt;
 
-	if (is_ofld_imm(skb))
-		return DIV_ROUND_UP(skb->len, 8);
+	अगर (is_ofld_imm(skb))
+		वापस DIV_ROUND_UP(skb->len, 8);
 	flits = skb_transport_offset(skb) / 8;
 	cnt = skb_shinfo(skb)->nr_frags;
-	if (skb_tail_pointer(skb) != skb_transport_header(skb))
+	अगर (skb_tail_poपूर्णांकer(skb) != skb_transport_header(skb))
 		cnt++;
-	return flits + sgl_len(cnt);
-}
+	वापस flits + sgl_len(cnt);
+पूर्ण
 
-#define FLOWC_WR_NPARAMS_MIN	9
-static inline int tx_flowc_wr_credits(int *nparamsp, int *flowclenp)
-{
-	int nparams, flowclen16, flowclen;
+#घोषणा FLOWC_WR_NPARAMS_MIN	9
+अटल अंतरभूत पूर्णांक tx_flowc_wr_credits(पूर्णांक *nparamsp, पूर्णांक *flowclenp)
+अणु
+	पूर्णांक nparams, flowclen16, flowclen;
 
 	nparams = FLOWC_WR_NPARAMS_MIN;
-#ifdef CONFIG_CHELSIO_T4_DCB
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
 	nparams++;
-#endif
-	flowclen = offsetof(struct fw_flowc_wr, mnemval[nparams]);
+#पूर्ण_अगर
+	flowclen = दुरत्व(काष्ठा fw_flowc_wr, mnemval[nparams]);
 	flowclen16 = DIV_ROUND_UP(flowclen, 16);
 	flowclen = flowclen16 * 16;
 	/*
 	 * Return the number of 16-byte credits used by the FlowC request.
-	 * Pass back the nparams and actual FlowC length if requested.
+	 * Pass back the nparams and actual FlowC length अगर requested.
 	 */
-	if (nparamsp)
+	अगर (nparamsp)
 		*nparamsp = nparams;
-	if (flowclenp)
+	अगर (flowclenp)
 		*flowclenp = flowclen;
 
-	return flowclen16;
-}
+	वापस flowclen16;
+पूर्ण
 
-static inline int send_tx_flowc_wr(struct cxgbi_sock *csk)
-{
-	struct sk_buff *skb;
-	struct fw_flowc_wr *flowc;
-	int nparams, flowclen16, flowclen;
+अटल अंतरभूत पूर्णांक send_tx_flowc_wr(काष्ठा cxgbi_sock *csk)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा fw_flowc_wr *flowc;
+	पूर्णांक nparams, flowclen16, flowclen;
 
-#ifdef CONFIG_CHELSIO_T4_DCB
-	u16 vlan = ((struct l2t_entry *)csk->l2t)->vlan;
-#endif
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+	u16 vlan = ((काष्ठा l2t_entry *)csk->l2t)->vlan;
+#पूर्ण_अगर
 	flowclen16 = tx_flowc_wr_credits(&nparams, &flowclen);
 	skb = alloc_wr(flowclen, 0, GFP_ATOMIC);
-	flowc = (struct fw_flowc_wr *)skb->head;
+	flowc = (काष्ठा fw_flowc_wr *)skb->head;
 	flowc->op_to_nparams =
 		htonl(FW_WR_OP_V(FW_FLOWC_WR) | FW_FLOWC_WR_NPARAMS_V(nparams));
 	flowc->flowid_len16 =
@@ -644,21 +645,21 @@ static inline int send_tx_flowc_wr(struct cxgbi_sock *csk)
 	flowc->mnemval[8].mnemonic = 0;
 	flowc->mnemval[8].val = 0;
 	flowc->mnemval[8].mnemonic = FW_FLOWC_MNEM_TXDATAPLEN_MAX;
-	if (csk->cdev->skb_iso_txhdr)
+	अगर (csk->cdev->skb_iso_txhdr)
 		flowc->mnemval[8].val = cpu_to_be32(CXGBI_MAX_ISO_DATA_IN_SKB);
-	else
+	अन्यथा
 		flowc->mnemval[8].val = cpu_to_be32(16128);
-#ifdef CONFIG_CHELSIO_T4_DCB
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
 	flowc->mnemval[9].mnemonic = FW_FLOWC_MNEM_DCBPRIO;
-	if (vlan == CPL_L2T_VLAN_NONE) {
+	अगर (vlan == CPL_L2T_VLAN_NONE) अणु
 		pr_warn_ratelimited("csk %u without VLAN Tag on DCB Link\n",
 				    csk->tid);
 		flowc->mnemval[9].val = cpu_to_be32(0);
-	} else {
+	पूर्ण अन्यथा अणु
 		flowc->mnemval[9].val = cpu_to_be32((vlan & VLAN_PRIO_MASK) >>
 					VLAN_PRIO_SHIFT);
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	set_wr_txq(skb, CPL_PRIORITY_DATA, csk->port_id);
 
@@ -670,13 +671,13 @@ static inline int send_tx_flowc_wr(struct cxgbi_sock *csk)
 
 	cxgb4_ofld_send(csk->cdev->ports[csk->port_id], skb);
 
-	return flowclen16;
-}
+	वापस flowclen16;
+पूर्ण
 
-static void
-cxgb4i_make_tx_iso_cpl(struct sk_buff *skb, struct cpl_tx_data_iso *cpl)
-{
-	struct cxgbi_iso_info *info = (struct cxgbi_iso_info *)skb->head;
+अटल व्योम
+cxgb4i_make_tx_iso_cpl(काष्ठा sk_buff *skb, काष्ठा cpl_tx_data_iso *cpl)
+अणु
+	काष्ठा cxgbi_iso_info *info = (काष्ठा cxgbi_iso_info *)skb->head;
 	u32 imm_en = !!(info->flags & CXGBI_ISO_INFO_IMM_ENABLE);
 	u32 fslice = !!(info->flags & CXGBI_ISO_INFO_FSLICE);
 	u32 lslice = !!(info->flags & CXGBI_ISO_INFO_LSLICE);
@@ -706,78 +707,78 @@ cxgb4i_make_tx_iso_cpl(struct sk_buff *skb, struct cpl_tx_data_iso *cpl)
 		  "burst_size %u, iso_len %u\n",
 		  info->flags, info->op, info->ahs, info->num_pdu,
 		  info->mpdu, info->burst_size << 2, info->len);
-}
+पूर्ण
 
-static void
-cxgb4i_make_tx_data_wr(struct cxgbi_sock *csk, struct sk_buff *skb, int dlen,
-		       int len, u32 credits, int compl)
-{
-	struct cxgbi_device *cdev = csk->cdev;
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct fw_ofld_tx_data_wr *req;
-	struct cpl_tx_data_iso *cpl;
+अटल व्योम
+cxgb4i_make_tx_data_wr(काष्ठा cxgbi_sock *csk, काष्ठा sk_buff *skb, पूर्णांक dlen,
+		       पूर्णांक len, u32 credits, पूर्णांक compl)
+अणु
+	काष्ठा cxgbi_device *cdev = csk->cdev;
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा fw_ofld_tx_data_wr *req;
+	काष्ठा cpl_tx_data_iso *cpl;
 	u32 submode = cxgbi_skcb_tx_ulp_mode(skb) & 0x3;
 	u32 wr_ulp_mode = 0;
-	u32 hdr_size = sizeof(*req);
+	u32 hdr_size = माप(*req);
 	u32 opcode = FW_OFLD_TX_DATA_WR;
 	u32 immlen = 0;
-	u32 force = is_t5(lldi->adapter_type) ? TX_FORCE_V(!submode) :
+	u32 क्रमce = is_t5(lldi->adapter_type) ? TX_FORCE_V(!submode) :
 						T6_TX_FORCE_F;
 
-	if (cxgbi_skcb_test_flag(skb, SKCBF_TX_ISO)) {
-		hdr_size += sizeof(struct cpl_tx_data_iso);
+	अगर (cxgbi_skcb_test_flag(skb, SKCBF_TX_ISO)) अणु
+		hdr_size += माप(काष्ठा cpl_tx_data_iso);
 		opcode = FW_ISCSI_TX_DATA_WR;
-		immlen += sizeof(struct cpl_tx_data_iso);
+		immlen += माप(काष्ठा cpl_tx_data_iso);
 		submode |= 8;
-	}
+	पूर्ण
 
-	if (is_ofld_imm(skb))
+	अगर (is_ofld_imm(skb))
 		immlen += dlen;
 
-	req = (struct fw_ofld_tx_data_wr *)__skb_push(skb, hdr_size);
+	req = (काष्ठा fw_ofld_tx_data_wr *)__skb_push(skb, hdr_size);
 	req->op_to_immdlen = cpu_to_be32(FW_WR_OP_V(opcode) |
 					 FW_WR_COMPL_V(compl) |
 					 FW_WR_IMMDLEN_V(immlen));
 	req->flowid_len16 = cpu_to_be32(FW_WR_FLOWID_V(csk->tid) |
 					FW_WR_LEN16_V(credits));
 	req->plen = cpu_to_be32(len);
-	cpl =  (struct cpl_tx_data_iso *)(req + 1);
+	cpl =  (काष्ठा cpl_tx_data_iso *)(req + 1);
 
-	if (likely(cxgbi_skcb_test_flag(skb, SKCBF_TX_ISO)))
+	अगर (likely(cxgbi_skcb_test_flag(skb, SKCBF_TX_ISO)))
 		cxgb4i_make_tx_iso_cpl(skb, cpl);
 
-	if (submode)
+	अगर (submode)
 		wr_ulp_mode = FW_OFLD_TX_DATA_WR_ULPMODE_V(ULP2_MODE_ISCSI) |
 			      FW_OFLD_TX_DATA_WR_ULPSUBMODE_V(submode);
 
-	req->tunnel_to_proxy = cpu_to_be32(wr_ulp_mode | force |
+	req->tunnel_to_proxy = cpu_to_be32(wr_ulp_mode | क्रमce |
 					   FW_OFLD_TX_DATA_WR_SHOVE_V(1U));
 
-	if (!cxgbi_sock_flag(csk, CTPF_TX_DATA_SENT))
+	अगर (!cxgbi_sock_flag(csk, CTPF_TX_DATA_SENT))
 		cxgbi_sock_set_flag(csk, CTPF_TX_DATA_SENT);
-}
+पूर्ण
 
-static void arp_failure_skb_discard(void *handle, struct sk_buff *skb)
-{
-	kfree_skb(skb);
-}
+अटल व्योम arp_failure_skb_discard(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
+	kमुक्त_skb(skb);
+पूर्ण
 
-static int push_tx_frames(struct cxgbi_sock *csk, int req_completion)
-{
-	int total_size = 0;
-	struct sk_buff *skb;
+अटल पूर्णांक push_tx_frames(काष्ठा cxgbi_sock *csk, पूर्णांक req_completion)
+अणु
+	पूर्णांक total_size = 0;
+	काष्ठा sk_buff *skb;
 
-	if (unlikely(csk->state < CTP_ESTABLISHED ||
-		csk->state == CTP_CLOSE_WAIT_1 || csk->state >= CTP_ABORTING)) {
+	अगर (unlikely(csk->state < CTP_ESTABLISHED ||
+		csk->state == CTP_CLOSE_WAIT_1 || csk->state >= CTP_ABORTING)) अणु
 		log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK |
 			  1 << CXGBI_DBG_PDU_TX,
 			  "csk 0x%p,%u,0x%lx,%u, in closing state.\n",
 			  csk, csk->state, csk->flags, csk->tid);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	while (csk->wr_cred && ((skb = skb_peek(&csk->write_queue)) != NULL)) {
-		struct cxgbi_iso_info *iso_cpl;
+	जबतक (csk->wr_cred && ((skb = skb_peek(&csk->ग_लिखो_queue)) != शून्य)) अणु
+		काष्ठा cxgbi_iso_info *iso_cpl;
 		u32 dlen = skb->len;
 		u32 len = skb->len;
 		u32 iso_cpl_len = 0;
@@ -785,46 +786,46 @@ static int push_tx_frames(struct cxgbi_sock *csk, int req_completion)
 		u32 credits_needed;
 		u32 num_pdu = 1, hdr_len;
 
-		if (cxgbi_skcb_test_flag(skb, SKCBF_TX_ISO))
-			iso_cpl_len = sizeof(struct cpl_tx_data_iso);
+		अगर (cxgbi_skcb_test_flag(skb, SKCBF_TX_ISO))
+			iso_cpl_len = माप(काष्ठा cpl_tx_data_iso);
 
-		if (is_ofld_imm(skb))
+		अगर (is_ofld_imm(skb))
 			credits_needed = DIV_ROUND_UP(dlen + iso_cpl_len, 16);
-		else
+		अन्यथा
 			credits_needed =
 				DIV_ROUND_UP((8 * calc_tx_flits_ofld(skb)) +
 					     iso_cpl_len, 16);
 
-		if (likely(cxgbi_skcb_test_flag(skb, SKCBF_TX_NEED_HDR)))
+		अगर (likely(cxgbi_skcb_test_flag(skb, SKCBF_TX_NEED_HDR)))
 			credits_needed +=
-			   DIV_ROUND_UP(sizeof(struct fw_ofld_tx_data_wr), 16);
+			   DIV_ROUND_UP(माप(काष्ठा fw_ofld_tx_data_wr), 16);
 
 		/*
 		 * Assumes the initial credits is large enough to support
 		 * fw_flowc_wr plus largest possible first payload
 		 */
-		if (!cxgbi_sock_flag(csk, CTPF_TX_DATA_SENT)) {
+		अगर (!cxgbi_sock_flag(csk, CTPF_TX_DATA_SENT)) अणु
 			flowclen16 = send_tx_flowc_wr(csk);
 			csk->wr_cred -= flowclen16;
 			csk->wr_una_cred += flowclen16;
 			cxgbi_sock_set_flag(csk, CTPF_TX_DATA_SENT);
-		}
+		पूर्ण
 
-		if (csk->wr_cred < credits_needed) {
+		अगर (csk->wr_cred < credits_needed) अणु
 			log_debug(1 << CXGBI_DBG_PDU_TX,
 				  "csk 0x%p, skb %u/%u, wr %d < %u.\n",
 				  csk, skb->len, skb->data_len,
 				  credits_needed, csk->wr_cred);
 
 			csk->no_tx_credits++;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		csk->no_tx_credits = 0;
 
-		__skb_unlink(skb, &csk->write_queue);
+		__skb_unlink(skb, &csk->ग_लिखो_queue);
 		set_wr_txq(skb, CPL_PRIORITY_DATA, csk->port_id);
-		skb->csum = (__force __wsum)(credits_needed + flowclen16);
+		skb->csum = (__क्रमce __wsum)(credits_needed + flowclen16);
 		csk->wr_cred -= credits_needed;
 		csk->wr_una_cred += credits_needed;
 		cxgbi_sock_enqueue_wr(csk, skb);
@@ -834,35 +835,35 @@ static int push_tx_frames(struct cxgbi_sock *csk, int req_completion)
 			csk, skb->len, skb->data_len, credits_needed,
 			csk->wr_cred, csk->wr_una_cred);
 
-		if (!req_completion &&
+		अगर (!req_completion &&
 		    ((csk->wr_una_cred >= (csk->wr_max_cred / 2)) ||
-		     after(csk->write_seq, (csk->snd_una + csk->snd_win / 2))))
+		     after(csk->ग_लिखो_seq, (csk->snd_una + csk->snd_win / 2))))
 			req_completion = 1;
 
-		if (likely(cxgbi_skcb_test_flag(skb, SKCBF_TX_NEED_HDR))) {
+		अगर (likely(cxgbi_skcb_test_flag(skb, SKCBF_TX_NEED_HDR))) अणु
 			u32 ulp_mode = cxgbi_skcb_tx_ulp_mode(skb);
 
-			if (cxgbi_skcb_test_flag(skb, SKCBF_TX_ISO)) {
-				iso_cpl = (struct cxgbi_iso_info *)skb->head;
+			अगर (cxgbi_skcb_test_flag(skb, SKCBF_TX_ISO)) अणु
+				iso_cpl = (काष्ठा cxgbi_iso_info *)skb->head;
 				num_pdu = iso_cpl->num_pdu;
 				hdr_len = cxgbi_skcb_tx_iscsi_hdrlen(skb);
 				len += (cxgbi_ulp_extra_len(ulp_mode) * num_pdu) +
 				       (hdr_len * (num_pdu - 1));
-			} else {
+			पूर्ण अन्यथा अणु
 				len += cxgbi_ulp_extra_len(ulp_mode);
-			}
+			पूर्ण
 
 			cxgb4i_make_tx_data_wr(csk, skb, dlen, len,
 					       credits_needed, req_completion);
 			csk->snd_nxt += len;
 			cxgbi_skcb_clear_flag(skb, SKCBF_TX_NEED_HDR);
-		} else if (cxgbi_skcb_test_flag(skb, SKCBF_TX_FLAG_COMPL) &&
-			   (csk->wr_una_cred >= (csk->wr_max_cred / 2))) {
-			struct cpl_close_con_req *req =
-				(struct cpl_close_con_req *)skb->data;
+		पूर्ण अन्यथा अगर (cxgbi_skcb_test_flag(skb, SKCBF_TX_FLAG_COMPL) &&
+			   (csk->wr_una_cred >= (csk->wr_max_cred / 2))) अणु
+			काष्ठा cpl_बंद_con_req *req =
+				(काष्ठा cpl_बंद_con_req *)skb->data;
 
 			req->wr.wr_hi |= cpu_to_be32(FW_WR_COMPL_F);
-		}
+		पूर्ण
 
 		total_size += skb->truesize;
 		t4_set_arp_err_handler(skb, csk, arp_failure_skb_discard);
@@ -871,43 +872,43 @@ static int push_tx_frames(struct cxgbi_sock *csk, int req_completion)
 			  "csk 0x%p,%u,0x%lx,%u, skb 0x%p, %u.\n",
 			  csk, csk->state, csk->flags, csk->tid, skb, len);
 		cxgb4_l2t_send(csk->cdev->ports[csk->port_id], skb, csk->l2t);
-	}
-	return total_size;
-}
+	पूर्ण
+	वापस total_size;
+पूर्ण
 
-static inline void free_atid(struct cxgbi_sock *csk)
-{
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(csk->cdev);
+अटल अंतरभूत व्योम मुक्त_atid(काष्ठा cxgbi_sock *csk)
+अणु
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(csk->cdev);
 
-	if (cxgbi_sock_flag(csk, CTPF_HAS_ATID)) {
-		cxgb4_free_atid(lldi->tids, csk->atid);
+	अगर (cxgbi_sock_flag(csk, CTPF_HAS_ATID)) अणु
+		cxgb4_मुक्त_atid(lldi->tids, csk->atid);
 		cxgbi_sock_clear_flag(csk, CTPF_HAS_ATID);
 		cxgbi_sock_put(csk);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_act_establish(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_act_establish *req = (struct cpl_act_establish *)skb->data;
-	unsigned short tcp_opt = ntohs(req->tcp_opt);
-	unsigned int tid = GET_TID(req);
-	unsigned int atid = TID_TID_G(ntohl(req->tos_atid));
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
+अटल व्योम करो_act_establish(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_act_establish *req = (काष्ठा cpl_act_establish *)skb->data;
+	अचिन्हित लघु tcp_opt = ntohs(req->tcp_opt);
+	अचिन्हित पूर्णांक tid = GET_TID(req);
+	अचिन्हित पूर्णांक atid = TID_TID_G(ntohl(req->tos_atid));
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
 	u32 rcv_isn = be32_to_cpu(req->rcv_isn);
 
 	csk = lookup_atid(t, atid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("NO conn. for atid %u, cdev 0x%p.\n", atid, cdev);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
-	if (csk->atid != atid) {
+	अगर (csk->atid != atid) अणु
 		pr_err("bad conn atid %u, csk 0x%p,%u,0x%lx,tid %u, atid %u.\n",
 			atid, csk, csk->state, csk->flags, csk->tid, csk->atid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	pr_info_ipaddr("atid 0x%x, tid 0x%x, csk 0x%p,%u,0x%lx, isn %u.\n",
 		       (&csk->saddr), (&csk->daddr),
@@ -920,30 +921,30 @@ static void do_act_establish(struct cxgbi_device *cdev, struct sk_buff *skb)
 	cxgb4_insert_tid(lldi->tids, csk, tid, csk->csk_family);
 	cxgbi_sock_set_flag(csk, CTPF_HAS_TID);
 
-	free_atid(csk);
+	मुक्त_atid(csk);
 
 	spin_lock_bh(&csk->lock);
-	if (unlikely(csk->state != CTP_ACTIVE_OPEN))
+	अगर (unlikely(csk->state != CTP_ACTIVE_OPEN))
 		pr_info("csk 0x%p,%u,0x%lx,%u, got EST.\n",
 			csk, csk->state, csk->flags, csk->tid);
 
-	if (csk->retry_timer.function) {
-		del_timer(&csk->retry_timer);
-		csk->retry_timer.function = NULL;
-	}
+	अगर (csk->retry_समयr.function) अणु
+		del_समयr(&csk->retry_समयr);
+		csk->retry_समयr.function = शून्य;
+	पूर्ण
 
 	csk->copied_seq = csk->rcv_wup = csk->rcv_nxt = rcv_isn;
 	/*
 	 * Causes the first RX_DATA_ACK to supply any Rx credits we couldn't
 	 * pass through opt0.
 	 */
-	if (csk->rcv_win > (RCV_BUFSIZ_MASK << 10))
-		csk->rcv_wup -= csk->rcv_win - (RCV_BUFSIZ_MASK << 10);
+	अगर (csk->rcv_win > (RCV_बफ_मान_MASK << 10))
+		csk->rcv_wup -= csk->rcv_win - (RCV_बफ_मान_MASK << 10);
 
 	csk->advmss = lldi->mtus[TCPOPT_MSS_G(tcp_opt)] - 40;
-	if (TCPOPT_TSTAMP_G(tcp_opt))
+	अगर (TCPOPT_TSTAMP_G(tcp_opt))
 		csk->advmss -= 12;
-	if (csk->advmss < 128)
+	अगर (csk->advmss < 128)
 		csk->advmss = 128;
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
@@ -952,45 +953,45 @@ static void do_act_establish(struct cxgbi_device *cdev, struct sk_buff *skb)
 
 	cxgbi_sock_established(csk, ntohl(req->snd_isn), ntohs(req->tcp_opt));
 
-	if (unlikely(cxgbi_sock_flag(csk, CTPF_ACTIVE_CLOSE_NEEDED)))
-		send_abort_req(csk);
-	else {
-		if (skb_queue_len(&csk->write_queue))
+	अगर (unlikely(cxgbi_sock_flag(csk, CTPF_ACTIVE_CLOSE_NEEDED)))
+		send_पात_req(csk);
+	अन्यथा अणु
+		अगर (skb_queue_len(&csk->ग_लिखो_queue))
 			push_tx_frames(csk, 0);
-		cxgbi_conn_tx_open(csk);
-	}
+		cxgbi_conn_tx_खोलो(csk);
+	पूर्ण
 	spin_unlock_bh(&csk->lock);
 
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static int act_open_rpl_status_to_errno(int status)
-{
-	switch (status) {
-	case CPL_ERR_CONN_RESET:
-		return -ECONNREFUSED;
-	case CPL_ERR_ARP_MISS:
-		return -EHOSTUNREACH;
-	case CPL_ERR_CONN_TIMEDOUT:
-		return -ETIMEDOUT;
-	case CPL_ERR_TCAM_FULL:
-		return -ENOMEM;
-	case CPL_ERR_CONN_EXIST:
-		return -EADDRINUSE;
-	default:
-		return -EIO;
-	}
-}
+अटल पूर्णांक act_खोलो_rpl_status_to_त्रुटि_सं(पूर्णांक status)
+अणु
+	चयन (status) अणु
+	हाल CPL_ERR_CONN_RESET:
+		वापस -ECONNREFUSED;
+	हाल CPL_ERR_ARP_MISS:
+		वापस -EHOSTUNREACH;
+	हाल CPL_ERR_CONN_TIMEDOUT:
+		वापस -ETIMEDOUT;
+	हाल CPL_ERR_TCAM_FULL:
+		वापस -ENOMEM;
+	हाल CPL_ERR_CONN_EXIST:
+		वापस -EADDRINUSE;
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-static void csk_act_open_retry_timer(struct timer_list *t)
-{
-	struct sk_buff *skb = NULL;
-	struct cxgbi_sock *csk = from_timer(csk, t, retry_timer);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(csk->cdev);
-	void (*send_act_open_func)(struct cxgbi_sock *, struct sk_buff *,
-				   struct l2t_entry *);
-	int t4 = is_t4(lldi->adapter_type), size, size6;
+अटल व्योम csk_act_खोलो_retry_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा cxgbi_sock *csk = from_समयr(csk, t, retry_समयr);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(csk->cdev);
+	व्योम (*send_act_खोलो_func)(काष्ठा cxgbi_sock *, काष्ठा sk_buff *,
+				   काष्ठा l2t_entry *);
+	पूर्णांक t4 = is_t4(lldi->adapter_type), size, size6;
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 		"csk 0x%p,%u,0x%lx,%u.\n",
@@ -999,261 +1000,261 @@ static void csk_act_open_retry_timer(struct timer_list *t)
 	cxgbi_sock_get(csk);
 	spin_lock_bh(&csk->lock);
 
-	if (t4) {
-		size = sizeof(struct cpl_act_open_req);
-		size6 = sizeof(struct cpl_act_open_req6);
-	} else {
-		size = sizeof(struct cpl_t5_act_open_req);
-		size6 = sizeof(struct cpl_t5_act_open_req6);
-	}
+	अगर (t4) अणु
+		size = माप(काष्ठा cpl_act_खोलो_req);
+		size6 = माप(काष्ठा cpl_act_खोलो_req6);
+	पूर्ण अन्यथा अणु
+		size = माप(काष्ठा cpl_t5_act_खोलो_req);
+		size6 = माप(काष्ठा cpl_t5_act_खोलो_req6);
+	पूर्ण
 
-	if (csk->csk_family == AF_INET) {
-		send_act_open_func = send_act_open_req;
+	अगर (csk->csk_family == AF_INET) अणु
+		send_act_खोलो_func = send_act_खोलो_req;
 		skb = alloc_wr(size, 0, GFP_ATOMIC);
-#if IS_ENABLED(CONFIG_IPV6)
-	} else {
-		send_act_open_func = send_act_open_req6;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	पूर्ण अन्यथा अणु
+		send_act_खोलो_func = send_act_खोलो_req6;
 		skb = alloc_wr(size6, 0, GFP_ATOMIC);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	if (!skb)
-		cxgbi_sock_fail_act_open(csk, -ENOMEM);
-	else {
-		skb->sk = (struct sock *)csk;
+	अगर (!skb)
+		cxgbi_sock_fail_act_खोलो(csk, -ENOMEM);
+	अन्यथा अणु
+		skb->sk = (काष्ठा sock *)csk;
 		t4_set_arp_err_handler(skb, csk,
-				       cxgbi_sock_act_open_req_arp_failure);
-		send_act_open_func(csk, skb, csk->l2t);
-	}
+				       cxgbi_sock_act_खोलो_req_arp_failure);
+		send_act_खोलो_func(csk, skb, csk->l2t);
+	पूर्ण
 
 	spin_unlock_bh(&csk->lock);
 	cxgbi_sock_put(csk);
 
-}
+पूर्ण
 
-static inline bool is_neg_adv(unsigned int status)
-{
-	return status == CPL_ERR_RTX_NEG_ADVICE ||
+अटल अंतरभूत bool is_neg_adv(अचिन्हित पूर्णांक status)
+अणु
+	वापस status == CPL_ERR_RTX_NEG_ADVICE ||
 		status == CPL_ERR_KEEPALV_NEG_ADVICE ||
 		status == CPL_ERR_PERSIST_NEG_ADVICE;
-}
+पूर्ण
 
-static void do_act_open_rpl(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_act_open_rpl *rpl = (struct cpl_act_open_rpl *)skb->data;
-	unsigned int tid = GET_TID(rpl);
-	unsigned int atid =
+अटल व्योम करो_act_खोलो_rpl(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_act_खोलो_rpl *rpl = (काष्ठा cpl_act_खोलो_rpl *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	अचिन्हित पूर्णांक atid =
 		TID_TID_G(AOPEN_ATID_G(be32_to_cpu(rpl->atid_status)));
-	unsigned int status = AOPEN_STATUS_G(be32_to_cpu(rpl->atid_status));
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
+	अचिन्हित पूर्णांक status = AOPEN_STATUS_G(be32_to_cpu(rpl->atid_status));
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
 
 	csk = lookup_atid(t, atid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("NO matching conn. atid %u, tid %u.\n", atid, tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	pr_info_ipaddr("tid %u/%u, status %u.\n"
 		       "csk 0x%p,%u,0x%lx. ", (&csk->saddr), (&csk->daddr),
 		       atid, tid, status, csk, csk->state, csk->flags);
 
-	if (is_neg_adv(status))
-		goto rel_skb;
+	अगर (is_neg_adv(status))
+		जाओ rel_skb;
 
 	module_put(cdev->owner);
 
-	if (status && status != CPL_ERR_TCAM_FULL &&
+	अगर (status && status != CPL_ERR_TCAM_FULL &&
 	    status != CPL_ERR_CONN_EXIST &&
 	    status != CPL_ERR_ARP_MISS)
-		cxgb4_remove_tid(lldi->tids, csk->port_id, GET_TID(rpl),
+		cxgb4_हटाओ_tid(lldi->tids, csk->port_id, GET_TID(rpl),
 				 csk->csk_family);
 
 	cxgbi_sock_get(csk);
 	spin_lock_bh(&csk->lock);
 
-	if (status == CPL_ERR_CONN_EXIST &&
-	    csk->retry_timer.function != csk_act_open_retry_timer) {
-		csk->retry_timer.function = csk_act_open_retry_timer;
-		mod_timer(&csk->retry_timer, jiffies + HZ / 2);
-	} else
-		cxgbi_sock_fail_act_open(csk,
-					act_open_rpl_status_to_errno(status));
+	अगर (status == CPL_ERR_CONN_EXIST &&
+	    csk->retry_समयr.function != csk_act_खोलो_retry_समयr) अणु
+		csk->retry_समयr.function = csk_act_खोलो_retry_समयr;
+		mod_समयr(&csk->retry_समयr, jअगरfies + HZ / 2);
+	पूर्ण अन्यथा
+		cxgbi_sock_fail_act_खोलो(csk,
+					act_खोलो_rpl_status_to_त्रुटि_सं(status));
 
 	spin_unlock_bh(&csk->lock);
 	cxgbi_sock_put(csk);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void do_peer_close(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_peer_close *req = (struct cpl_peer_close *)skb->data;
-	unsigned int tid = GET_TID(req);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
+अटल व्योम करो_peer_बंद(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_peer_बंद *req = (काष्ठा cpl_peer_बंद *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(req);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find connection for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 	pr_info_ipaddr("csk 0x%p,%u,0x%lx,%u.\n",
 		       (&csk->saddr), (&csk->daddr),
 		       csk, csk->state, csk->flags, csk->tid);
-	cxgbi_sock_rcv_peer_close(csk);
+	cxgbi_sock_rcv_peer_बंद(csk);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void do_close_con_rpl(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_close_con_rpl *rpl = (struct cpl_close_con_rpl *)skb->data;
-	unsigned int tid = GET_TID(rpl);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
+अटल व्योम करो_बंद_con_rpl(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_बंद_con_rpl *rpl = (काष्ठा cpl_बंद_con_rpl *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find connection for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 	pr_info_ipaddr("csk 0x%p,%u,0x%lx,%u.\n",
 		       (&csk->saddr), (&csk->daddr),
 		       csk, csk->state, csk->flags, csk->tid);
-	cxgbi_sock_rcv_close_conn_rpl(csk, ntohl(rpl->snd_nxt));
+	cxgbi_sock_rcv_बंद_conn_rpl(csk, ntohl(rpl->snd_nxt));
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static int abort_status_to_errno(struct cxgbi_sock *csk, int abort_reason,
-								int *need_rst)
-{
-	switch (abort_reason) {
-	case CPL_ERR_BAD_SYN:
-	case CPL_ERR_CONN_RESET:
-		return csk->state > CTP_ESTABLISHED ?
+अटल पूर्णांक पात_status_to_त्रुटि_सं(काष्ठा cxgbi_sock *csk, पूर्णांक पात_reason,
+								पूर्णांक *need_rst)
+अणु
+	चयन (पात_reason) अणु
+	हाल CPL_ERR_BAD_SYN:
+	हाल CPL_ERR_CONN_RESET:
+		वापस csk->state > CTP_ESTABLISHED ?
 			-EPIPE : -ECONNRESET;
-	case CPL_ERR_XMIT_TIMEDOUT:
-	case CPL_ERR_PERSIST_TIMEDOUT:
-	case CPL_ERR_FINWAIT2_TIMEDOUT:
-	case CPL_ERR_KEEPALIVE_TIMEDOUT:
-		return -ETIMEDOUT;
-	default:
-		return -EIO;
-	}
-}
+	हाल CPL_ERR_XMIT_TIMEDOUT:
+	हाल CPL_ERR_PERSIST_TIMEDOUT:
+	हाल CPL_ERR_FINWAIT2_TIMEDOUT:
+	हाल CPL_ERR_KEEPALIVE_TIMEDOUT:
+		वापस -ETIMEDOUT;
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
-static void do_abort_req_rss(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_abort_req_rss *req = (struct cpl_abort_req_rss *)skb->data;
-	unsigned int tid = GET_TID(req);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
-	int rst_status = CPL_ABORT_NO_RST;
+अटल व्योम करो_पात_req_rss(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_पात_req_rss *req = (काष्ठा cpl_पात_req_rss *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(req);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
+	पूर्णांक rst_status = CPL_ABORT_NO_RST;
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find connection for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	pr_info_ipaddr("csk 0x%p,%u,0x%lx,%u, status %u.\n",
 		       (&csk->saddr), (&csk->daddr),
 		       csk, csk->state, csk->flags, csk->tid, req->status);
 
-	if (is_neg_adv(req->status))
-		goto rel_skb;
+	अगर (is_neg_adv(req->status))
+		जाओ rel_skb;
 
 	cxgbi_sock_get(csk);
 	spin_lock_bh(&csk->lock);
 
 	cxgbi_sock_clear_flag(csk, CTPF_ABORT_REQ_RCVD);
 
-	if (!cxgbi_sock_flag(csk, CTPF_TX_DATA_SENT)) {
+	अगर (!cxgbi_sock_flag(csk, CTPF_TX_DATA_SENT)) अणु
 		send_tx_flowc_wr(csk);
 		cxgbi_sock_set_flag(csk, CTPF_TX_DATA_SENT);
-	}
+	पूर्ण
 
 	cxgbi_sock_set_flag(csk, CTPF_ABORT_REQ_RCVD);
 	cxgbi_sock_set_state(csk, CTP_ABORTING);
 
-	send_abort_rpl(csk, rst_status);
+	send_पात_rpl(csk, rst_status);
 
-	if (!cxgbi_sock_flag(csk, CTPF_ABORT_RPL_PENDING)) {
-		csk->err = abort_status_to_errno(csk, req->status, &rst_status);
-		cxgbi_sock_closed(csk);
-	}
+	अगर (!cxgbi_sock_flag(csk, CTPF_ABORT_RPL_PENDING)) अणु
+		csk->err = पात_status_to_त्रुटि_सं(csk, req->status, &rst_status);
+		cxgbi_sock_बंदd(csk);
+	पूर्ण
 
 	spin_unlock_bh(&csk->lock);
 	cxgbi_sock_put(csk);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void do_abort_rpl_rss(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_abort_rpl_rss *rpl = (struct cpl_abort_rpl_rss *)skb->data;
-	unsigned int tid = GET_TID(rpl);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
+अटल व्योम करो_पात_rpl_rss(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_पात_rpl_rss *rpl = (काष्ठा cpl_पात_rpl_rss *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
 
 	csk = lookup_tid(t, tid);
-	if (!csk)
-		goto rel_skb;
+	अगर (!csk)
+		जाओ rel_skb;
 
 	pr_info_ipaddr("csk 0x%p,%u,0x%lx,%u, status %u.\n",
 		       (&csk->saddr), (&csk->daddr), csk,
 		       csk->state, csk->flags, csk->tid, rpl->status);
 
-	if (rpl->status == CPL_ERR_ABORT_FAILED)
-		goto rel_skb;
+	अगर (rpl->status == CPL_ERR_ABORT_FAILED)
+		जाओ rel_skb;
 
-	cxgbi_sock_rcv_abort_rpl(csk);
+	cxgbi_sock_rcv_पात_rpl(csk);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void do_rx_data(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_rx_data *cpl = (struct cpl_rx_data *)skb->data;
-	unsigned int tid = GET_TID(cpl);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
+अटल व्योम करो_rx_data(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_rx_data *cpl = (काष्ठा cpl_rx_data *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(cpl);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
 
 	csk = lookup_tid(t, tid);
-	if (!csk) {
+	अगर (!csk) अणु
 		pr_err("can't find connection for tid %u.\n", tid);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* not expecting this, reset the connection. */
 		pr_err("csk 0x%p, tid %u, rcv cpl_rx_data.\n", csk, tid);
 		spin_lock_bh(&csk->lock);
-		send_abort_req(csk);
+		send_पात_req(csk);
 		spin_unlock_bh(&csk->lock);
-	}
-	__kfree_skb(skb);
-}
+	पूर्ण
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void do_rx_iscsi_hdr(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_iscsi_hdr *cpl = (struct cpl_iscsi_hdr *)skb->data;
-	unsigned short pdu_len_ddp = be16_to_cpu(cpl->pdu_len_ddp);
-	unsigned int tid = GET_TID(cpl);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
+अटल व्योम करो_rx_iscsi_hdr(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_iscsi_hdr *cpl = (काष्ठा cpl_iscsi_hdr *)skb->data;
+	अचिन्हित लघु pdu_len_ddp = be16_to_cpu(cpl->pdu_len_ddp);
+	अचिन्हित पूर्णांक tid = GET_TID(cpl);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find conn. for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_PDU_RX,
 		"csk 0x%p,%u,0x%lx, tid %u, skb 0x%p,%u, 0x%x.\n",
@@ -1262,26 +1263,26 @@ static void do_rx_iscsi_hdr(struct cxgbi_device *cdev, struct sk_buff *skb)
 
 	spin_lock_bh(&csk->lock);
 
-	if (unlikely(csk->state >= CTP_PASSIVE_CLOSE)) {
+	अगर (unlikely(csk->state >= CTP_PASSIVE_CLOSE)) अणु
 		log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 			"csk 0x%p,%u,0x%lx,%u, bad state.\n",
 			csk, csk->state, csk->flags, csk->tid);
-		if (csk->state != CTP_ABORTING)
-			goto abort_conn;
-		else
-			goto discard;
-	}
+		अगर (csk->state != CTP_ABORTING)
+			जाओ पात_conn;
+		अन्यथा
+			जाओ discard;
+	पूर्ण
 
 	cxgbi_skcb_tcp_seq(skb) = ntohl(cpl->seq);
 	cxgbi_skcb_flags(skb) = 0;
 
 	skb_reset_transport_header(skb);
-	__skb_pull(skb, sizeof(*cpl));
+	__skb_pull(skb, माप(*cpl));
 	__pskb_trim(skb, ntohs(cpl->len));
 
-	if (!csk->skb_ulp_lhdr) {
-		unsigned char *bhs;
-		unsigned int hlen, dlen, plen;
+	अगर (!csk->skb_ulp_lhdr) अणु
+		अचिन्हित अक्षर *bhs;
+		अचिन्हित पूर्णांक hlen, dlen, plen;
 
 		log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_PDU_RX,
 			"csk 0x%p,%u,0x%lx, tid %u, skb 0x%p header.\n",
@@ -1289,77 +1290,77 @@ static void do_rx_iscsi_hdr(struct cxgbi_device *cdev, struct sk_buff *skb)
 		csk->skb_ulp_lhdr = skb;
 		cxgbi_skcb_set_flag(skb, SKCBF_RX_HDR);
 
-		if ((CHELSIO_CHIP_VERSION(lldi->adapter_type) <= CHELSIO_T5) &&
-		    (cxgbi_skcb_tcp_seq(skb) != csk->rcv_nxt)) {
+		अगर ((CHELSIO_CHIP_VERSION(lldi->adapter_type) <= CHELSIO_T5) &&
+		    (cxgbi_skcb_tcp_seq(skb) != csk->rcv_nxt)) अणु
 			pr_info("tid %u, CPL_ISCSI_HDR, bad seq, 0x%x/0x%x.\n",
 				csk->tid, cxgbi_skcb_tcp_seq(skb),
 				csk->rcv_nxt);
-			goto abort_conn;
-		}
+			जाओ पात_conn;
+		पूर्ण
 
 		bhs = skb->data;
 		hlen = ntohs(cpl->len);
-		dlen = ntohl(*(unsigned int *)(bhs + 4)) & 0xFFFFFF;
+		dlen = ntohl(*(अचिन्हित पूर्णांक *)(bhs + 4)) & 0xFFFFFF;
 
 		plen = ISCSI_PDU_LEN_G(pdu_len_ddp);
-		if (is_t4(lldi->adapter_type))
+		अगर (is_t4(lldi->adapter_type))
 			plen -= 40;
 
-		if ((hlen + dlen) != plen) {
+		अगर ((hlen + dlen) != plen) अणु
 			pr_info("tid 0x%x, CPL_ISCSI_HDR, pdu len "
 				"mismatch %u != %u + %u, seq 0x%x.\n",
 				csk->tid, plen, hlen, dlen,
 				cxgbi_skcb_tcp_seq(skb));
-			goto abort_conn;
-		}
+			जाओ पात_conn;
+		पूर्ण
 
 		cxgbi_skcb_rx_pdulen(skb) = (hlen + dlen + 3) & (~0x3);
-		if (dlen)
+		अगर (dlen)
 			cxgbi_skcb_rx_pdulen(skb) += csk->dcrc_len;
 		csk->rcv_nxt += cxgbi_skcb_rx_pdulen(skb);
 
 		log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_PDU_RX,
 			"csk 0x%p, skb 0x%p, 0x%x,%u+%u,0x%x,0x%x.\n",
 			csk, skb, *bhs, hlen, dlen,
-			ntohl(*((unsigned int *)(bhs + 16))),
-			ntohl(*((unsigned int *)(bhs + 24))));
+			ntohl(*((अचिन्हित पूर्णांक *)(bhs + 16))),
+			ntohl(*((अचिन्हित पूर्णांक *)(bhs + 24))));
 
-	} else {
-		struct sk_buff *lskb = csk->skb_ulp_lhdr;
+	पूर्ण अन्यथा अणु
+		काष्ठा sk_buff *lskb = csk->skb_ulp_lhdr;
 
 		cxgbi_skcb_set_flag(lskb, SKCBF_RX_DATA);
 		log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_PDU_RX,
 			"csk 0x%p,%u,0x%lx, skb 0x%p data, 0x%p.\n",
 			csk, csk->state, csk->flags, skb, lskb);
-	}
+	पूर्ण
 
 	__skb_queue_tail(&csk->receive_queue, skb);
 	spin_unlock_bh(&csk->lock);
-	return;
+	वापस;
 
-abort_conn:
-	send_abort_req(csk);
+पात_conn:
+	send_पात_req(csk);
 discard:
 	spin_unlock_bh(&csk->lock);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void do_rx_iscsi_data(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_iscsi_hdr *cpl = (struct cpl_iscsi_hdr *)skb->data;
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
-	struct sk_buff *lskb;
+अटल व्योम करो_rx_iscsi_data(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_iscsi_hdr *cpl = (काष्ठा cpl_iscsi_hdr *)skb->data;
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
+	काष्ठा sk_buff *lskb;
 	u32 tid = GET_TID(cpl);
 	u16 pdu_len_ddp = be16_to_cpu(cpl->pdu_len_ddp);
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find conn. for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_PDU_RX,
 		  "csk 0x%p,%u,0x%lx, tid %u, skb 0x%p,%u, 0x%x.\n",
@@ -1368,25 +1369,25 @@ static void do_rx_iscsi_data(struct cxgbi_device *cdev, struct sk_buff *skb)
 
 	spin_lock_bh(&csk->lock);
 
-	if (unlikely(csk->state >= CTP_PASSIVE_CLOSE)) {
+	अगर (unlikely(csk->state >= CTP_PASSIVE_CLOSE)) अणु
 		log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 			  "csk 0x%p,%u,0x%lx,%u, bad state.\n",
 			  csk, csk->state, csk->flags, csk->tid);
 
-		if (csk->state != CTP_ABORTING)
-			goto abort_conn;
-		else
-			goto discard;
-	}
+		अगर (csk->state != CTP_ABORTING)
+			जाओ पात_conn;
+		अन्यथा
+			जाओ discard;
+	पूर्ण
 
 	cxgbi_skcb_tcp_seq(skb) = be32_to_cpu(cpl->seq);
 	cxgbi_skcb_flags(skb) = 0;
 
 	skb_reset_transport_header(skb);
-	__skb_pull(skb, sizeof(*cpl));
+	__skb_pull(skb, माप(*cpl));
 	__pskb_trim(skb, ntohs(cpl->len));
 
-	if (!csk->skb_ulp_lhdr)
+	अगर (!csk->skb_ulp_lhdr)
 		csk->skb_ulp_lhdr = skb;
 
 	lskb = csk->skb_ulp_lhdr;
@@ -1398,64 +1399,64 @@ static void do_rx_iscsi_data(struct cxgbi_device *cdev, struct sk_buff *skb)
 
 	__skb_queue_tail(&csk->receive_queue, skb);
 	spin_unlock_bh(&csk->lock);
-	return;
+	वापस;
 
-abort_conn:
-	send_abort_req(csk);
+पात_conn:
+	send_पात_req(csk);
 discard:
 	spin_unlock_bh(&csk->lock);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void
-cxgb4i_process_ddpvld(struct cxgbi_sock *csk,
-		      struct sk_buff *skb, u32 ddpvld)
-{
-	if (ddpvld & (1 << CPL_RX_DDP_STATUS_HCRC_SHIFT)) {
+अटल व्योम
+cxgb4i_process_ddpvld(काष्ठा cxgbi_sock *csk,
+		      काष्ठा sk_buff *skb, u32 ddpvld)
+अणु
+	अगर (ddpvld & (1 << CPL_RX_DDP_STATUS_HCRC_SHIFT)) अणु
 		pr_info("csk 0x%p, lhdr 0x%p, status 0x%x, hcrc bad 0x%lx.\n",
 			csk, skb, ddpvld, cxgbi_skcb_flags(skb));
 		cxgbi_skcb_set_flag(skb, SKCBF_RX_HCRC_ERR);
-	}
+	पूर्ण
 
-	if (ddpvld & (1 << CPL_RX_DDP_STATUS_DCRC_SHIFT)) {
+	अगर (ddpvld & (1 << CPL_RX_DDP_STATUS_DCRC_SHIFT)) अणु
 		pr_info("csk 0x%p, lhdr 0x%p, status 0x%x, dcrc bad 0x%lx.\n",
 			csk, skb, ddpvld, cxgbi_skcb_flags(skb));
 		cxgbi_skcb_set_flag(skb, SKCBF_RX_DCRC_ERR);
-	}
+	पूर्ण
 
-	if (ddpvld & (1 << CPL_RX_DDP_STATUS_PAD_SHIFT)) {
+	अगर (ddpvld & (1 << CPL_RX_DDP_STATUS_PAD_SHIFT)) अणु
 		log_debug(1 << CXGBI_DBG_PDU_RX,
 			  "csk 0x%p, lhdr 0x%p, status 0x%x, pad bad.\n",
 			  csk, skb, ddpvld);
 		cxgbi_skcb_set_flag(skb, SKCBF_RX_PAD_ERR);
-	}
+	पूर्ण
 
-	if ((ddpvld & (1 << CPL_RX_DDP_STATUS_DDP_SHIFT)) &&
-	    !cxgbi_skcb_test_flag(skb, SKCBF_RX_DATA)) {
+	अगर ((ddpvld & (1 << CPL_RX_DDP_STATUS_DDP_SHIFT)) &&
+	    !cxgbi_skcb_test_flag(skb, SKCBF_RX_DATA)) अणु
 		log_debug(1 << CXGBI_DBG_PDU_RX,
 			  "csk 0x%p, lhdr 0x%p, 0x%x, data ddp'ed.\n",
 			  csk, skb, ddpvld);
 		cxgbi_skcb_set_flag(skb, SKCBF_RX_DATA_DDPD);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void do_rx_data_ddp(struct cxgbi_device *cdev,
-				  struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct sk_buff *lskb;
-	struct cpl_rx_data_ddp *rpl = (struct cpl_rx_data_ddp *)skb->data;
-	unsigned int tid = GET_TID(rpl);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
+अटल व्योम करो_rx_data_ddp(काष्ठा cxgbi_device *cdev,
+				  काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा sk_buff *lskb;
+	काष्ठा cpl_rx_data_ddp *rpl = (काष्ठा cpl_rx_data_ddp *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
 	u32 ddpvld = be32_to_cpu(rpl->ddpvld);
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find connection for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_PDU_RX,
 		"csk 0x%p,%u,0x%lx, skb 0x%p,0x%x, lhdr 0x%p.\n",
@@ -1463,27 +1464,27 @@ static void do_rx_data_ddp(struct cxgbi_device *cdev,
 
 	spin_lock_bh(&csk->lock);
 
-	if (unlikely(csk->state >= CTP_PASSIVE_CLOSE)) {
+	अगर (unlikely(csk->state >= CTP_PASSIVE_CLOSE)) अणु
 		log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 			"csk 0x%p,%u,0x%lx,%u, bad state.\n",
 			csk, csk->state, csk->flags, csk->tid);
-		if (csk->state != CTP_ABORTING)
-			goto abort_conn;
-		else
-			goto discard;
-	}
+		अगर (csk->state != CTP_ABORTING)
+			जाओ पात_conn;
+		अन्यथा
+			जाओ discard;
+	पूर्ण
 
-	if (!csk->skb_ulp_lhdr) {
+	अगर (!csk->skb_ulp_lhdr) अणु
 		pr_err("tid 0x%x, rcv RX_DATA_DDP w/o pdu bhs.\n", csk->tid);
-		goto abort_conn;
-	}
+		जाओ पात_conn;
+	पूर्ण
 
 	lskb = csk->skb_ulp_lhdr;
-	csk->skb_ulp_lhdr = NULL;
+	csk->skb_ulp_lhdr = शून्य;
 
 	cxgbi_skcb_rx_ddigest(lskb) = ntohl(rpl->ulp_crc);
 
-	if (ntohs(rpl->len) != cxgbi_skcb_rx_pdulen(lskb))
+	अगर (ntohs(rpl->len) != cxgbi_skcb_rx_pdulen(lskb))
 		pr_info("tid 0x%x, RX_DATA_DDP pdulen %u != %u.\n",
 			csk->tid, ntohs(rpl->len), cxgbi_skcb_rx_pdulen(lskb));
 
@@ -1494,36 +1495,36 @@ static void do_rx_data_ddp(struct cxgbi_device *cdev,
 		csk, lskb, cxgbi_skcb_flags(lskb));
 
 	cxgbi_skcb_set_flag(lskb, SKCBF_RX_STATUS);
-	cxgbi_conn_pdu_ready(csk);
+	cxgbi_conn_pdu_पढ़ोy(csk);
 	spin_unlock_bh(&csk->lock);
-	goto rel_skb;
+	जाओ rel_skb;
 
-abort_conn:
-	send_abort_req(csk);
+पात_conn:
+	send_पात_req(csk);
 discard:
 	spin_unlock_bh(&csk->lock);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void
-do_rx_iscsi_cmp(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_rx_iscsi_cmp *rpl = (struct cpl_rx_iscsi_cmp *)skb->data;
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
-	struct sk_buff *data_skb = NULL;
+अटल व्योम
+करो_rx_iscsi_cmp(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_rx_iscsi_cmp *rpl = (काष्ठा cpl_rx_iscsi_cmp *)skb->data;
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
+	काष्ठा sk_buff *data_skb = शून्य;
 	u32 tid = GET_TID(rpl);
 	u32 ddpvld = be32_to_cpu(rpl->ddpvld);
 	u32 seq = be32_to_cpu(rpl->seq);
 	u16 pdu_len_ddp = be16_to_cpu(rpl->pdu_len_ddp);
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find connection for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_PDU_RX,
 		  "csk 0x%p,%u,0x%lx, skb 0x%p,0x%x, lhdr 0x%p, len %u, "
@@ -1533,47 +1534,47 @@ do_rx_iscsi_cmp(struct cxgbi_device *cdev, struct sk_buff *skb)
 
 	spin_lock_bh(&csk->lock);
 
-	if (unlikely(csk->state >= CTP_PASSIVE_CLOSE)) {
+	अगर (unlikely(csk->state >= CTP_PASSIVE_CLOSE)) अणु
 		log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 			  "csk 0x%p,%u,0x%lx,%u, bad state.\n",
 			  csk, csk->state, csk->flags, csk->tid);
 
-		if (csk->state != CTP_ABORTING)
-			goto abort_conn;
-		else
-			goto discard;
-	}
+		अगर (csk->state != CTP_ABORTING)
+			जाओ पात_conn;
+		अन्यथा
+			जाओ discard;
+	पूर्ण
 
 	cxgbi_skcb_tcp_seq(skb) = seq;
 	cxgbi_skcb_flags(skb) = 0;
 	cxgbi_skcb_rx_pdulen(skb) = 0;
 
 	skb_reset_transport_header(skb);
-	__skb_pull(skb, sizeof(*rpl));
+	__skb_pull(skb, माप(*rpl));
 	__pskb_trim(skb, be16_to_cpu(rpl->len));
 
 	csk->rcv_nxt = seq + pdu_len_ddp;
 
-	if (csk->skb_ulp_lhdr) {
+	अगर (csk->skb_ulp_lhdr) अणु
 		data_skb = skb_peek(&csk->receive_queue);
-		if (!data_skb ||
-		    !cxgbi_skcb_test_flag(data_skb, SKCBF_RX_DATA)) {
+		अगर (!data_skb ||
+		    !cxgbi_skcb_test_flag(data_skb, SKCBF_RX_DATA)) अणु
 			pr_err("Error! freelist data not found 0x%p, tid %u\n",
 			       data_skb, tid);
 
-			goto abort_conn;
-		}
+			जाओ पात_conn;
+		पूर्ण
 		__skb_unlink(data_skb, &csk->receive_queue);
 
 		cxgbi_skcb_set_flag(skb, SKCBF_RX_DATA);
 
 		__skb_queue_tail(&csk->receive_queue, skb);
 		__skb_queue_tail(&csk->receive_queue, data_skb);
-	} else {
+	पूर्ण अन्यथा अणु
 		 __skb_queue_tail(&csk->receive_queue, skb);
-	}
+	पूर्ण
 
-	csk->skb_ulp_lhdr = NULL;
+	csk->skb_ulp_lhdr = शून्य;
 
 	cxgbi_skcb_set_flag(skb, SKCBF_RX_HDR);
 	cxgbi_skcb_set_flag(skb, SKCBF_RX_STATUS);
@@ -1585,302 +1586,302 @@ do_rx_iscsi_cmp(struct cxgbi_device *cdev, struct sk_buff *skb)
 	log_debug(1 << CXGBI_DBG_PDU_RX, "csk 0x%p, skb 0x%p, f 0x%lx.\n",
 		  csk, skb, cxgbi_skcb_flags(skb));
 
-	cxgbi_conn_pdu_ready(csk);
+	cxgbi_conn_pdu_पढ़ोy(csk);
 	spin_unlock_bh(&csk->lock);
 
-	return;
+	वापस;
 
-abort_conn:
-	send_abort_req(csk);
+पात_conn:
+	send_पात_req(csk);
 discard:
 	spin_unlock_bh(&csk->lock);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void do_fw4_ack(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbi_sock *csk;
-	struct cpl_fw4_ack *rpl = (struct cpl_fw4_ack *)skb->data;
-	unsigned int tid = GET_TID(rpl);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
+अटल व्योम करो_fw4_ack(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbi_sock *csk;
+	काष्ठा cpl_fw4_ack *rpl = (काष्ठा cpl_fw4_ack *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk))
+	अगर (unlikely(!csk))
 		pr_err("can't find connection for tid %u.\n", tid);
-	else {
+	अन्यथा अणु
 		log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 			"csk 0x%p,%u,0x%lx,%u.\n",
 			csk, csk->state, csk->flags, csk->tid);
 		cxgbi_sock_rcv_wr_ack(csk, rpl->credits, ntohl(rpl->snd_una),
 					rpl->seq_vld);
-	}
-	__kfree_skb(skb);
-}
+	पूर्ण
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void do_set_tcb_rpl(struct cxgbi_device *cdev, struct sk_buff *skb)
-{
-	struct cpl_set_tcb_rpl *rpl = (struct cpl_set_tcb_rpl *)skb->data;
-	unsigned int tid = GET_TID(rpl);
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct tid_info *t = lldi->tids;
-	struct cxgbi_sock *csk;
+अटल व्योम करो_set_tcb_rpl(काष्ठा cxgbi_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_set_tcb_rpl *rpl = (काष्ठा cpl_set_tcb_rpl *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा tid_info *t = lldi->tids;
+	काष्ठा cxgbi_sock *csk;
 
 	csk = lookup_tid(t, tid);
-	if (!csk) {
+	अगर (!csk) अणु
 		pr_err("can't find conn. for tid %u.\n", tid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 		"csk 0x%p,%u,%lx,%u, status 0x%x.\n",
 		csk, csk->state, csk->flags, csk->tid, rpl->status);
 
-	if (rpl->status != CPL_ERR_NONE) {
+	अगर (rpl->status != CPL_ERR_NONE) अणु
 		pr_err("csk 0x%p,%u, SET_TCB_RPL status %u.\n",
 			csk, tid, rpl->status);
 		csk->err = -EINVAL;
-	}
+	पूर्ण
 
 	complete(&csk->cmpl);
 
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static int alloc_cpls(struct cxgbi_sock *csk)
-{
-	csk->cpl_close = alloc_wr(sizeof(struct cpl_close_con_req),
+अटल पूर्णांक alloc_cpls(काष्ठा cxgbi_sock *csk)
+अणु
+	csk->cpl_बंद = alloc_wr(माप(काष्ठा cpl_बंद_con_req),
 					0, GFP_KERNEL);
-	if (!csk->cpl_close)
-		return -ENOMEM;
+	अगर (!csk->cpl_बंद)
+		वापस -ENOMEM;
 
-	csk->cpl_abort_req = alloc_wr(sizeof(struct cpl_abort_req),
+	csk->cpl_पात_req = alloc_wr(माप(काष्ठा cpl_पात_req),
 					0, GFP_KERNEL);
-	if (!csk->cpl_abort_req)
-		goto free_cpls;
+	अगर (!csk->cpl_पात_req)
+		जाओ मुक्त_cpls;
 
-	csk->cpl_abort_rpl = alloc_wr(sizeof(struct cpl_abort_rpl),
+	csk->cpl_पात_rpl = alloc_wr(माप(काष्ठा cpl_पात_rpl),
 					0, GFP_KERNEL);
-	if (!csk->cpl_abort_rpl)
-		goto free_cpls;
-	return 0;
+	अगर (!csk->cpl_पात_rpl)
+		जाओ मुक्त_cpls;
+	वापस 0;
 
-free_cpls:
-	cxgbi_sock_free_cpl_skbs(csk);
-	return -ENOMEM;
-}
+मुक्त_cpls:
+	cxgbi_sock_मुक्त_cpl_skbs(csk);
+	वापस -ENOMEM;
+पूर्ण
 
-static inline void l2t_put(struct cxgbi_sock *csk)
-{
-	if (csk->l2t) {
+अटल अंतरभूत व्योम l2t_put(काष्ठा cxgbi_sock *csk)
+अणु
+	अगर (csk->l2t) अणु
 		cxgb4_l2t_release(csk->l2t);
-		csk->l2t = NULL;
+		csk->l2t = शून्य;
 		cxgbi_sock_put(csk);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void release_offload_resources(struct cxgbi_sock *csk)
-{
-	struct cxgb4_lld_info *lldi;
-#if IS_ENABLED(CONFIG_IPV6)
-	struct net_device *ndev = csk->cdev->ports[csk->port_id];
-#endif
+अटल व्योम release_offload_resources(काष्ठा cxgbi_sock *csk)
+अणु
+	काष्ठा cxgb4_lld_info *lldi;
+#अगर IS_ENABLED(CONFIG_IPV6)
+	काष्ठा net_device *ndev = csk->cdev->ports[csk->port_id];
+#पूर्ण_अगर
 
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 		"csk 0x%p,%u,0x%lx,%u.\n",
 		csk, csk->state, csk->flags, csk->tid);
 
-	cxgbi_sock_free_cpl_skbs(csk);
-	cxgbi_sock_purge_write_queue(csk);
-	if (csk->wr_cred != csk->wr_max_cred) {
+	cxgbi_sock_मुक्त_cpl_skbs(csk);
+	cxgbi_sock_purge_ग_लिखो_queue(csk);
+	अगर (csk->wr_cred != csk->wr_max_cred) अणु
 		cxgbi_sock_purge_wr_queue(csk);
 		cxgbi_sock_reset_wr_list(csk);
-	}
+	पूर्ण
 
 	l2t_put(csk);
-#if IS_ENABLED(CONFIG_IPV6)
-	if (csk->csk_family == AF_INET6)
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अगर (csk->csk_family == AF_INET6)
 		cxgb4_clip_release(ndev,
-				   (const u32 *)&csk->saddr6.sin6_addr, 1);
-#endif
+				   (स्थिर u32 *)&csk->saddr6.sin6_addr, 1);
+#पूर्ण_अगर
 
-	if (cxgbi_sock_flag(csk, CTPF_HAS_ATID))
-		free_atid(csk);
-	else if (cxgbi_sock_flag(csk, CTPF_HAS_TID)) {
+	अगर (cxgbi_sock_flag(csk, CTPF_HAS_ATID))
+		मुक्त_atid(csk);
+	अन्यथा अगर (cxgbi_sock_flag(csk, CTPF_HAS_TID)) अणु
 		lldi = cxgbi_cdev_priv(csk->cdev);
-		cxgb4_remove_tid(lldi->tids, 0, csk->tid,
+		cxgb4_हटाओ_tid(lldi->tids, 0, csk->tid,
 				 csk->csk_family);
 		cxgbi_sock_clear_flag(csk, CTPF_HAS_TID);
 		cxgbi_sock_put(csk);
-	}
-	csk->dst = NULL;
-}
+	पूर्ण
+	csk->dst = शून्य;
+पूर्ण
 
-#ifdef CONFIG_CHELSIO_T4_DCB
-static inline u8 get_iscsi_dcb_state(struct net_device *ndev)
-{
-	return ndev->dcbnl_ops->getstate(ndev);
-}
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+अटल अंतरभूत u8 get_iscsi_dcb_state(काष्ठा net_device *ndev)
+अणु
+	वापस ndev->dcbnl_ops->माला_लोtate(ndev);
+पूर्ण
 
-static int select_priority(int pri_mask)
-{
-	if (!pri_mask)
-		return 0;
-	return (ffs(pri_mask) - 1);
-}
+अटल पूर्णांक select_priority(पूर्णांक pri_mask)
+अणु
+	अगर (!pri_mask)
+		वापस 0;
+	वापस (ffs(pri_mask) - 1);
+पूर्ण
 
-static u8 get_iscsi_dcb_priority(struct net_device *ndev)
-{
-	int rv;
+अटल u8 get_iscsi_dcb_priority(काष्ठा net_device *ndev)
+अणु
+	पूर्णांक rv;
 	u8 caps;
 
-	struct dcb_app iscsi_dcb_app = {
+	काष्ठा dcb_app iscsi_dcb_app = अणु
 		.protocol = 3260
-	};
+	पूर्ण;
 
-	rv = (int)ndev->dcbnl_ops->getcap(ndev, DCB_CAP_ATTR_DCBX, &caps);
-	if (rv)
-		return 0;
+	rv = (पूर्णांक)ndev->dcbnl_ops->अ_लोap(ndev, DCB_CAP_ATTR_DCBX, &caps);
+	अगर (rv)
+		वापस 0;
 
-	if (caps & DCB_CAP_DCBX_VER_IEEE) {
+	अगर (caps & DCB_CAP_DCBX_VER_IEEE) अणु
 		iscsi_dcb_app.selector = IEEE_8021QAZ_APP_SEL_STREAM;
 		rv = dcb_ieee_getapp_mask(ndev, &iscsi_dcb_app);
-		if (!rv) {
+		अगर (!rv) अणु
 			iscsi_dcb_app.selector = IEEE_8021QAZ_APP_SEL_ANY;
 			rv = dcb_ieee_getapp_mask(ndev, &iscsi_dcb_app);
-		}
-	} else if (caps & DCB_CAP_DCBX_VER_CEE) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (caps & DCB_CAP_DCBX_VER_CEE) अणु
 		iscsi_dcb_app.selector = DCB_APP_IDTYPE_PORTNUM;
 		rv = dcb_getapp(ndev, &iscsi_dcb_app);
-	}
+	पूर्ण
 
 	log_debug(1 << CXGBI_DBG_ISCSI,
 		  "iSCSI priority is set to %u\n", select_priority(rv));
-	return select_priority(rv);
-}
-#endif
+	वापस select_priority(rv);
+पूर्ण
+#पूर्ण_अगर
 
-static int init_act_open(struct cxgbi_sock *csk)
-{
-	struct cxgbi_device *cdev = csk->cdev;
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct net_device *ndev = cdev->ports[csk->port_id];
-	struct sk_buff *skb = NULL;
-	struct neighbour *n = NULL;
-	void *daddr;
-	unsigned int step;
-	unsigned int rxq_idx;
-	unsigned int size, size6;
-	unsigned int linkspeed;
-	unsigned int rcv_winf, snd_winf;
-#ifdef CONFIG_CHELSIO_T4_DCB
+अटल पूर्णांक init_act_खोलो(काष्ठा cxgbi_sock *csk)
+अणु
+	काष्ठा cxgbi_device *cdev = csk->cdev;
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा net_device *ndev = cdev->ports[csk->port_id];
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा neighbour *n = शून्य;
+	व्योम *daddr;
+	अचिन्हित पूर्णांक step;
+	अचिन्हित पूर्णांक rxq_idx;
+	अचिन्हित पूर्णांक size, size6;
+	अचिन्हित पूर्णांक linkspeed;
+	अचिन्हित पूर्णांक rcv_winf, snd_winf;
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
 	u8 priority = 0;
-#endif
+#पूर्ण_अगर
 	log_debug(1 << CXGBI_DBG_TOE | 1 << CXGBI_DBG_SOCK,
 		"csk 0x%p,%u,0x%lx,%u.\n",
 		csk, csk->state, csk->flags, csk->tid);
 
-	if (csk->csk_family == AF_INET)
+	अगर (csk->csk_family == AF_INET)
 		daddr = &csk->daddr.sin_addr.s_addr;
-#if IS_ENABLED(CONFIG_IPV6)
-	else if (csk->csk_family == AF_INET6)
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अन्यथा अगर (csk->csk_family == AF_INET6)
 		daddr = &csk->daddr6.sin6_addr;
-#endif
-	else {
+#पूर्ण_अगर
+	अन्यथा अणु
 		pr_err("address family 0x%x not supported\n", csk->csk_family);
-		goto rel_resource;
-	}
+		जाओ rel_resource;
+	पूर्ण
 
 	n = dst_neigh_lookup(csk->dst, daddr);
 
-	if (!n) {
+	अगर (!n) अणु
 		pr_err("%s, can't get neighbour of csk->dst.\n", ndev->name);
-		goto rel_resource;
-	}
+		जाओ rel_resource;
+	पूर्ण
 
-	if (!(n->nud_state & NUD_VALID))
-		neigh_event_send(n, NULL);
+	अगर (!(n->nud_state & NUD_VALID))
+		neigh_event_send(n, शून्य);
 
 	csk->atid = cxgb4_alloc_atid(lldi->tids, csk);
-	if (csk->atid < 0) {
+	अगर (csk->atid < 0) अणु
 		pr_err("%s, NO atid available.\n", ndev->name);
-		goto rel_resource_without_clip;
-	}
+		जाओ rel_resource_without_clip;
+	पूर्ण
 	cxgbi_sock_set_flag(csk, CTPF_HAS_ATID);
 	cxgbi_sock_get(csk);
 
-#ifdef CONFIG_CHELSIO_T4_DCB
-	if (get_iscsi_dcb_state(ndev))
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+	अगर (get_iscsi_dcb_state(ndev))
 		priority = get_iscsi_dcb_priority(ndev);
 
 	csk->dcb_priority = priority;
 	csk->l2t = cxgb4_l2t_get(lldi->l2t, n, ndev, priority);
-#else
+#अन्यथा
 	csk->l2t = cxgb4_l2t_get(lldi->l2t, n, ndev, 0);
-#endif
-	if (!csk->l2t) {
+#पूर्ण_अगर
+	अगर (!csk->l2t) अणु
 		pr_err("%s, cannot alloc l2t.\n", ndev->name);
-		goto rel_resource_without_clip;
-	}
+		जाओ rel_resource_without_clip;
+	पूर्ण
 	cxgbi_sock_get(csk);
 
-#if IS_ENABLED(CONFIG_IPV6)
-	if (csk->csk_family == AF_INET6)
-		cxgb4_clip_get(ndev, (const u32 *)&csk->saddr6.sin6_addr, 1);
-#endif
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अगर (csk->csk_family == AF_INET6)
+		cxgb4_clip_get(ndev, (स्थिर u32 *)&csk->saddr6.sin6_addr, 1);
+#पूर्ण_अगर
 
-	if (is_t4(lldi->adapter_type)) {
-		size = sizeof(struct cpl_act_open_req);
-		size6 = sizeof(struct cpl_act_open_req6);
-	} else if (is_t5(lldi->adapter_type)) {
-		size = sizeof(struct cpl_t5_act_open_req);
-		size6 = sizeof(struct cpl_t5_act_open_req6);
-	} else {
-		size = sizeof(struct cpl_t6_act_open_req);
-		size6 = sizeof(struct cpl_t6_act_open_req6);
-	}
+	अगर (is_t4(lldi->adapter_type)) अणु
+		size = माप(काष्ठा cpl_act_खोलो_req);
+		size6 = माप(काष्ठा cpl_act_खोलो_req6);
+	पूर्ण अन्यथा अगर (is_t5(lldi->adapter_type)) अणु
+		size = माप(काष्ठा cpl_t5_act_खोलो_req);
+		size6 = माप(काष्ठा cpl_t5_act_खोलो_req6);
+	पूर्ण अन्यथा अणु
+		size = माप(काष्ठा cpl_t6_act_खोलो_req);
+		size6 = माप(काष्ठा cpl_t6_act_खोलो_req6);
+	पूर्ण
 
-	if (csk->csk_family == AF_INET)
+	अगर (csk->csk_family == AF_INET)
 		skb = alloc_wr(size, 0, GFP_NOIO);
-#if IS_ENABLED(CONFIG_IPV6)
-	else
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अन्यथा
 		skb = alloc_wr(size6, 0, GFP_NOIO);
-#endif
+#पूर्ण_अगर
 
-	if (!skb)
-		goto rel_resource;
-	skb->sk = (struct sock *)csk;
-	t4_set_arp_err_handler(skb, csk, cxgbi_sock_act_open_req_arp_failure);
+	अगर (!skb)
+		जाओ rel_resource;
+	skb->sk = (काष्ठा sock *)csk;
+	t4_set_arp_err_handler(skb, csk, cxgbi_sock_act_खोलो_req_arp_failure);
 
-	if (!csk->mtu)
+	अगर (!csk->mtu)
 		csk->mtu = dst_mtu(csk->dst);
 	cxgb4_best_mtu(lldi->mtus, csk->mtu, &csk->mss_idx);
 	csk->tx_chan = cxgb4_port_chan(ndev);
-	csk->smac_idx = ((struct port_info *)netdev_priv(ndev))->smt_idx;
+	csk->smac_idx = ((काष्ठा port_info *)netdev_priv(ndev))->smt_idx;
 	step = lldi->ntxq / lldi->nchan;
 	csk->txq_idx = cxgb4_port_idx(ndev) * step;
 	step = lldi->nrxq / lldi->nchan;
 	rxq_idx = (cxgb4_port_idx(ndev) * step) + (cdev->rxq_idx_cntr % step);
 	cdev->rxq_idx_cntr++;
 	csk->rss_qid = lldi->rxq_ids[rxq_idx];
-	linkspeed = ((struct port_info *)netdev_priv(ndev))->link_cfg.speed;
+	linkspeed = ((काष्ठा port_info *)netdev_priv(ndev))->link_cfg.speed;
 	csk->snd_win = cxgb4i_snd_win;
 	csk->rcv_win = cxgb4i_rcv_win;
-	if (cxgb4i_rcv_win <= 0) {
+	अगर (cxgb4i_rcv_win <= 0) अणु
 		csk->rcv_win = CXGB4I_DEFAULT_10G_RCV_WIN;
 		rcv_winf = linkspeed / SPEED_10000;
-		if (rcv_winf)
+		अगर (rcv_winf)
 			csk->rcv_win *= rcv_winf;
-	}
-	if (cxgb4i_snd_win <= 0) {
+	पूर्ण
+	अगर (cxgb4i_snd_win <= 0) अणु
 		csk->snd_win = CXGB4I_DEFAULT_10G_SND_WIN;
 		snd_winf = linkspeed / SPEED_10000;
-		if (snd_winf)
+		अगर (snd_winf)
 			csk->snd_win *= snd_winf;
-	}
+	पूर्ण
 	csk->wr_cred = lldi->wr_cred -
-		       DIV_ROUND_UP(sizeof(struct cpl_abort_req), 16);
+		       DIV_ROUND_UP(माप(काष्ठा cpl_पात_req), 16);
 	csk->wr_max_cred = csk->wr_cred;
 	csk->wr_una_cred = 0;
 	cxgbi_sock_reset_wr_list(csk);
@@ -1891,87 +1892,87 @@ static int init_act_open(struct cxgbi_sock *csk)
 		       csk->flags, csk->tx_chan, csk->txq_idx, csk->rss_qid,
 		       csk->mtu, csk->mss_idx, csk->smac_idx);
 
-	/* must wait for either a act_open_rpl or act_open_establish */
-	if (!try_module_get(cdev->owner)) {
+	/* must रुको क्रम either a act_खोलो_rpl or act_खोलो_establish */
+	अगर (!try_module_get(cdev->owner)) अणु
 		pr_err("%s, try_module_get failed.\n", ndev->name);
-		goto rel_resource;
-	}
+		जाओ rel_resource;
+	पूर्ण
 
 	cxgbi_sock_set_state(csk, CTP_ACTIVE_OPEN);
-	if (csk->csk_family == AF_INET)
-		send_act_open_req(csk, skb, csk->l2t);
-#if IS_ENABLED(CONFIG_IPV6)
-	else
-		send_act_open_req6(csk, skb, csk->l2t);
-#endif
+	अगर (csk->csk_family == AF_INET)
+		send_act_खोलो_req(csk, skb, csk->l2t);
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अन्यथा
+		send_act_खोलो_req6(csk, skb, csk->l2t);
+#पूर्ण_अगर
 	neigh_release(n);
 
-	return 0;
+	वापस 0;
 
 rel_resource:
-#if IS_ENABLED(CONFIG_IPV6)
-	if (csk->csk_family == AF_INET6)
+#अगर IS_ENABLED(CONFIG_IPV6)
+	अगर (csk->csk_family == AF_INET6)
 		cxgb4_clip_release(ndev,
-				   (const u32 *)&csk->saddr6.sin6_addr, 1);
-#endif
+				   (स्थिर u32 *)&csk->saddr6.sin6_addr, 1);
+#पूर्ण_अगर
 rel_resource_without_clip:
-	if (n)
+	अगर (n)
 		neigh_release(n);
-	if (skb)
-		__kfree_skb(skb);
-	return -EINVAL;
-}
+	अगर (skb)
+		__kमुक्त_skb(skb);
+	वापस -EINVAL;
+पूर्ण
 
-static cxgb4i_cplhandler_func cxgb4i_cplhandlers[NUM_CPL_CMDS] = {
-	[CPL_ACT_ESTABLISH] = do_act_establish,
-	[CPL_ACT_OPEN_RPL] = do_act_open_rpl,
-	[CPL_PEER_CLOSE] = do_peer_close,
-	[CPL_ABORT_REQ_RSS] = do_abort_req_rss,
-	[CPL_ABORT_RPL_RSS] = do_abort_rpl_rss,
-	[CPL_CLOSE_CON_RPL] = do_close_con_rpl,
-	[CPL_FW4_ACK] = do_fw4_ack,
-	[CPL_ISCSI_HDR] = do_rx_iscsi_hdr,
-	[CPL_ISCSI_DATA] = do_rx_iscsi_data,
-	[CPL_SET_TCB_RPL] = do_set_tcb_rpl,
-	[CPL_RX_DATA_DDP] = do_rx_data_ddp,
-	[CPL_RX_ISCSI_DDP] = do_rx_data_ddp,
-	[CPL_RX_ISCSI_CMP] = do_rx_iscsi_cmp,
-	[CPL_RX_DATA] = do_rx_data,
-};
+अटल cxgb4i_cplhandler_func cxgb4i_cplhandlers[NUM_CPL_CMDS] = अणु
+	[CPL_ACT_ESTABLISH] = करो_act_establish,
+	[CPL_ACT_OPEN_RPL] = करो_act_खोलो_rpl,
+	[CPL_PEER_CLOSE] = करो_peer_बंद,
+	[CPL_ABORT_REQ_RSS] = करो_पात_req_rss,
+	[CPL_ABORT_RPL_RSS] = करो_पात_rpl_rss,
+	[CPL_CLOSE_CON_RPL] = करो_बंद_con_rpl,
+	[CPL_FW4_ACK] = करो_fw4_ack,
+	[CPL_ISCSI_HDR] = करो_rx_iscsi_hdr,
+	[CPL_ISCSI_DATA] = करो_rx_iscsi_data,
+	[CPL_SET_TCB_RPL] = करो_set_tcb_rpl,
+	[CPL_RX_DATA_DDP] = करो_rx_data_ddp,
+	[CPL_RX_ISCSI_DDP] = करो_rx_data_ddp,
+	[CPL_RX_ISCSI_CMP] = करो_rx_iscsi_cmp,
+	[CPL_RX_DATA] = करो_rx_data,
+पूर्ण;
 
-static int cxgb4i_ofld_init(struct cxgbi_device *cdev)
-{
-	int rc;
+अटल पूर्णांक cxgb4i_ofld_init(काष्ठा cxgbi_device *cdev)
+अणु
+	पूर्णांक rc;
 
-	if (cxgb4i_max_connect > CXGB4I_MAX_CONN)
+	अगर (cxgb4i_max_connect > CXGB4I_MAX_CONN)
 		cxgb4i_max_connect = CXGB4I_MAX_CONN;
 
-	rc = cxgbi_device_portmap_create(cdev, cxgb4i_sport_base,
+	rc = cxgbi_device_porपंचांगap_create(cdev, cxgb4i_sport_base,
 					cxgb4i_max_connect);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	cdev->csk_release_offload_resources = release_offload_resources;
 	cdev->csk_push_tx_frames = push_tx_frames;
-	cdev->csk_send_abort_req = send_abort_req;
-	cdev->csk_send_close_req = send_close_req;
+	cdev->csk_send_पात_req = send_पात_req;
+	cdev->csk_send_बंद_req = send_बंद_req;
 	cdev->csk_send_rx_credits = send_rx_credits;
 	cdev->csk_alloc_cpls = alloc_cpls;
-	cdev->csk_init_act_open = init_act_open;
+	cdev->csk_init_act_खोलो = init_act_खोलो;
 
 	pr_info("cdev 0x%p, offload up, added.\n", cdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void
-ulp_mem_io_set_hdr(struct cxgbi_device *cdev,
-		   struct ulp_mem_io *req,
-		   unsigned int wr_len, unsigned int dlen,
-		   unsigned int pm_addr,
-		   int tid)
-{
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct ulptx_idata *idata = (struct ulptx_idata *)(req + 1);
+अटल अंतरभूत व्योम
+ulp_mem_io_set_hdr(काष्ठा cxgbi_device *cdev,
+		   काष्ठा ulp_mem_io *req,
+		   अचिन्हित पूर्णांक wr_len, अचिन्हित पूर्णांक dlen,
+		   अचिन्हित पूर्णांक pm_addr,
+		   पूर्णांक tid)
+अणु
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा ulptx_idata *idata = (काष्ठा ulptx_idata *)(req + 1);
 
 	INIT_ULPTX_WR(req, wr_len, 0, tid);
 	req->wr.wr_hi = htonl(FW_WR_OP_V(FW_ULPTX_WR) |
@@ -1981,58 +1982,58 @@ ulp_mem_io_set_hdr(struct cxgbi_device *cdev,
 		T5_ULP_MEMIO_IMM_V(!is_t4(lldi->adapter_type)));
 	req->dlen = htonl(ULP_MEMIO_DATA_LEN_V(dlen >> 5));
 	req->lock_addr = htonl(ULP_MEMIO_ADDR_V(pm_addr >> 5));
-	req->len16 = htonl(DIV_ROUND_UP(wr_len - sizeof(req->wr), 16));
+	req->len16 = htonl(DIV_ROUND_UP(wr_len - माप(req->wr), 16));
 
 	idata->cmd_more = htonl(ULPTX_CMD_V(ULP_TX_SC_IMM));
 	idata->len = htonl(dlen);
-}
+पूर्ण
 
-static struct sk_buff *
-ddp_ppod_init_idata(struct cxgbi_device *cdev,
-		    struct cxgbi_ppm *ppm,
-		    unsigned int idx, unsigned int npods,
-		    unsigned int tid)
-{
-	unsigned int pm_addr = (idx << PPOD_SIZE_SHIFT) + ppm->llimit;
-	unsigned int dlen = npods << PPOD_SIZE_SHIFT;
-	unsigned int wr_len = roundup(sizeof(struct ulp_mem_io) +
-				sizeof(struct ulptx_idata) + dlen, 16);
-	struct sk_buff *skb = alloc_wr(wr_len, 0, GFP_ATOMIC);
+अटल काष्ठा sk_buff *
+ddp_ppod_init_idata(काष्ठा cxgbi_device *cdev,
+		    काष्ठा cxgbi_ppm *ppm,
+		    अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक npods,
+		    अचिन्हित पूर्णांक tid)
+अणु
+	अचिन्हित पूर्णांक pm_addr = (idx << PPOD_SIZE_SHIFT) + ppm->llimit;
+	अचिन्हित पूर्णांक dlen = npods << PPOD_SIZE_SHIFT;
+	अचिन्हित पूर्णांक wr_len = roundup(माप(काष्ठा ulp_mem_io) +
+				माप(काष्ठा ulptx_idata) + dlen, 16);
+	काष्ठा sk_buff *skb = alloc_wr(wr_len, 0, GFP_ATOMIC);
 
-	if (!skb) {
+	अगर (!skb) अणु
 		pr_err("%s: %s idx %u, npods %u, OOM.\n",
 		       __func__, ppm->ndev->name, idx, npods);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	ulp_mem_io_set_hdr(cdev, (struct ulp_mem_io *)skb->head, wr_len, dlen,
+	ulp_mem_io_set_hdr(cdev, (काष्ठा ulp_mem_io *)skb->head, wr_len, dlen,
 			   pm_addr, tid);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-static int ddp_ppod_write_idata(struct cxgbi_ppm *ppm, struct cxgbi_sock *csk,
-				struct cxgbi_task_tag_info *ttinfo,
-				unsigned int idx, unsigned int npods,
-				struct scatterlist **sg_pp,
-				unsigned int *sg_off)
-{
-	struct cxgbi_device *cdev = csk->cdev;
-	struct sk_buff *skb = ddp_ppod_init_idata(cdev, ppm, idx, npods,
+अटल पूर्णांक ddp_ppod_ग_लिखो_idata(काष्ठा cxgbi_ppm *ppm, काष्ठा cxgbi_sock *csk,
+				काष्ठा cxgbi_task_tag_info *ttinfo,
+				अचिन्हित पूर्णांक idx, अचिन्हित पूर्णांक npods,
+				काष्ठा scatterlist **sg_pp,
+				अचिन्हित पूर्णांक *sg_off)
+अणु
+	काष्ठा cxgbi_device *cdev = csk->cdev;
+	काष्ठा sk_buff *skb = ddp_ppod_init_idata(cdev, ppm, idx, npods,
 						  csk->tid);
-	struct ulp_mem_io *req;
-	struct ulptx_idata *idata;
-	struct cxgbi_pagepod *ppod;
-	int i;
+	काष्ठा ulp_mem_io *req;
+	काष्ठा ulptx_idata *idata;
+	काष्ठा cxgbi_pagepod *ppod;
+	पूर्णांक i;
 
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	req = (struct ulp_mem_io *)skb->head;
-	idata = (struct ulptx_idata *)(req + 1);
-	ppod = (struct cxgbi_pagepod *)(idata + 1);
+	req = (काष्ठा ulp_mem_io *)skb->head;
+	idata = (काष्ठा ulptx_idata *)(req + 1);
+	ppod = (काष्ठा cxgbi_pagepod *)(idata + 1);
 
-	for (i = 0; i < npods; i++, ppod++)
+	क्रम (i = 0; i < npods; i++, ppod++)
 		cxgbi_ddp_set_one_ppod(ppod, ttinfo, sg_pp, sg_off);
 
 	cxgbi_skcb_set_flag(skb, SKCBF_TX_MEM_WRITE);
@@ -2043,50 +2044,50 @@ static int ddp_ppod_write_idata(struct cxgbi_ppm *ppm, struct cxgbi_sock *csk,
 	cxgbi_sock_skb_entail(csk, skb);
 	spin_unlock_bh(&csk->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ddp_set_map(struct cxgbi_ppm *ppm, struct cxgbi_sock *csk,
-		       struct cxgbi_task_tag_info *ttinfo)
-{
-	unsigned int pidx = ttinfo->idx;
-	unsigned int npods = ttinfo->npods;
-	unsigned int i, cnt;
-	int err = 0;
-	struct scatterlist *sg = ttinfo->sgl;
-	unsigned int offset = 0;
+अटल पूर्णांक ddp_set_map(काष्ठा cxgbi_ppm *ppm, काष्ठा cxgbi_sock *csk,
+		       काष्ठा cxgbi_task_tag_info *ttinfo)
+अणु
+	अचिन्हित पूर्णांक pidx = ttinfo->idx;
+	अचिन्हित पूर्णांक npods = ttinfo->npods;
+	अचिन्हित पूर्णांक i, cnt;
+	पूर्णांक err = 0;
+	काष्ठा scatterlist *sg = ttinfo->sgl;
+	अचिन्हित पूर्णांक offset = 0;
 
 	ttinfo->cid = csk->port_id;
 
-	for (i = 0; i < npods; i += cnt, pidx += cnt) {
+	क्रम (i = 0; i < npods; i += cnt, pidx += cnt) अणु
 		cnt = npods - i;
 
-		if (cnt > ULPMEM_IDATA_MAX_NPPODS)
+		अगर (cnt > ULPMEM_IDATA_MAX_NPPODS)
 			cnt = ULPMEM_IDATA_MAX_NPPODS;
-		err = ddp_ppod_write_idata(ppm, csk, ttinfo, pidx, cnt,
+		err = ddp_ppod_ग_लिखो_idata(ppm, csk, ttinfo, pidx, cnt,
 					   &sg, &offset);
-		if (err < 0)
-			break;
-	}
+		अगर (err < 0)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ddp_setup_conn_pgidx(struct cxgbi_sock *csk, unsigned int tid,
-				int pg_idx)
-{
-	struct sk_buff *skb;
-	struct cpl_set_tcb_field *req;
+अटल पूर्णांक ddp_setup_conn_pgidx(काष्ठा cxgbi_sock *csk, अचिन्हित पूर्णांक tid,
+				पूर्णांक pg_idx)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा cpl_set_tcb_field *req;
 
-	if (!pg_idx || pg_idx >= DDP_PGIDX_MAX)
-		return 0;
+	अगर (!pg_idx || pg_idx >= DDP_PGIDX_MAX)
+		वापस 0;
 
-	skb = alloc_wr(sizeof(*req), 0, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	skb = alloc_wr(माप(*req), 0, GFP_KERNEL);
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	/*  set up ulp page size */
-	req = (struct cpl_set_tcb_field *)skb->head;
+	req = (काष्ठा cpl_set_tcb_field *)skb->head;
 	INIT_TP_WR(req, csk->tid);
 	OPCODE_TID(req) = htonl(MK_OPCODE_TID(CPL_SET_TCB_FIELD, csk->tid));
 	req->reply_ctrl = htons(NO_REPLY_V(0) | QUEUENO_V(csk->rss_qid));
@@ -2100,28 +2101,28 @@ static int ddp_setup_conn_pgidx(struct cxgbi_sock *csk, unsigned int tid,
 
 	reinit_completion(&csk->cmpl);
 	cxgb4_ofld_send(csk->cdev->ports[csk->port_id], skb);
-	wait_for_completion(&csk->cmpl);
+	रुको_क्रम_completion(&csk->cmpl);
 
-	return csk->err;
-}
+	वापस csk->err;
+पूर्ण
 
-static int ddp_setup_conn_digest(struct cxgbi_sock *csk, unsigned int tid,
-				 int hcrc, int dcrc)
-{
-	struct sk_buff *skb;
-	struct cpl_set_tcb_field *req;
+अटल पूर्णांक ddp_setup_conn_digest(काष्ठा cxgbi_sock *csk, अचिन्हित पूर्णांक tid,
+				 पूर्णांक hcrc, पूर्णांक dcrc)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा cpl_set_tcb_field *req;
 
-	if (!hcrc && !dcrc)
-		return 0;
+	अगर (!hcrc && !dcrc)
+		वापस 0;
 
-	skb = alloc_wr(sizeof(*req), 0, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	skb = alloc_wr(माप(*req), 0, GFP_KERNEL);
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	csk->hcrc_len = (hcrc ? 4 : 0);
 	csk->dcrc_len = (dcrc ? 4 : 0);
 	/*  set up ulp submode */
-	req = (struct cpl_set_tcb_field *)skb->head;
+	req = (काष्ठा cpl_set_tcb_field *)skb->head;
 	INIT_TP_WR(req, tid);
 	OPCODE_TID(req) = htonl(MK_OPCODE_TID(CPL_SET_TCB_FIELD, tid));
 	req->reply_ctrl = htons(NO_REPLY_V(0) | QUEUENO_V(csk->rss_qid));
@@ -2136,102 +2137,102 @@ static int ddp_setup_conn_digest(struct cxgbi_sock *csk, unsigned int tid,
 
 	reinit_completion(&csk->cmpl);
 	cxgb4_ofld_send(csk->cdev->ports[csk->port_id], skb);
-	wait_for_completion(&csk->cmpl);
+	रुको_क्रम_completion(&csk->cmpl);
 
-	return csk->err;
-}
+	वापस csk->err;
+पूर्ण
 
-static struct cxgbi_ppm *cdev2ppm(struct cxgbi_device *cdev)
-{
-	return (struct cxgbi_ppm *)(*((struct cxgb4_lld_info *)
+अटल काष्ठा cxgbi_ppm *cdev2ppm(काष्ठा cxgbi_device *cdev)
+अणु
+	वापस (काष्ठा cxgbi_ppm *)(*((काष्ठा cxgb4_lld_info *)
 				       (cxgbi_cdev_priv(cdev)))->iscsi_ppm);
-}
+पूर्ण
 
-static int cxgb4i_ddp_init(struct cxgbi_device *cdev)
-{
-	struct cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
-	struct net_device *ndev = cdev->ports[0];
-	struct cxgbi_tag_format tformat;
-	int i, err;
+अटल पूर्णांक cxgb4i_ddp_init(काष्ठा cxgbi_device *cdev)
+अणु
+	काष्ठा cxgb4_lld_info *lldi = cxgbi_cdev_priv(cdev);
+	काष्ठा net_device *ndev = cdev->ports[0];
+	काष्ठा cxgbi_tag_क्रमmat tक्रमmat;
+	पूर्णांक i, err;
 
-	if (!lldi->vr->iscsi.size) {
+	अगर (!lldi->vr->iscsi.size) अणु
 		pr_warn("%s, iscsi NOT enabled, check config!\n", ndev->name);
-		return -EACCES;
-	}
+		वापस -EACCES;
+	पूर्ण
 
 	cdev->flags |= CXGBI_FLAG_USE_PPOD_OFLDQ;
 
-	memset(&tformat, 0, sizeof(struct cxgbi_tag_format));
-	for (i = 0; i < 4; i++)
-		tformat.pgsz_order[i] = (lldi->iscsi_pgsz_order >> (i << 3))
+	स_रखो(&tक्रमmat, 0, माप(काष्ठा cxgbi_tag_क्रमmat));
+	क्रम (i = 0; i < 4; i++)
+		tक्रमmat.pgsz_order[i] = (lldi->iscsi_pgsz_order >> (i << 3))
 					 & 0xF;
-	cxgbi_tagmask_check(lldi->iscsi_tagmask, &tformat);
+	cxgbi_tagmask_check(lldi->iscsi_tagmask, &tक्रमmat);
 
 	pr_info("iscsi_edram.start 0x%x iscsi_edram.size 0x%x",
 		lldi->vr->ppod_edram.start, lldi->vr->ppod_edram.size);
 
-	err = cxgbi_ddp_ppm_setup(lldi->iscsi_ppm, cdev, &tformat,
+	err = cxgbi_ddp_ppm_setup(lldi->iscsi_ppm, cdev, &tक्रमmat,
 				  lldi->vr->iscsi.size, lldi->iscsi_llimit,
 				  lldi->vr->iscsi.start, 2,
 				  lldi->vr->ppod_edram.start,
 				  lldi->vr->ppod_edram.size);
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	cdev->csk_ddp_setup_digest = ddp_setup_conn_digest;
 	cdev->csk_ddp_setup_pgidx = ddp_setup_conn_pgidx;
 	cdev->csk_ddp_set_map = ddp_set_map;
-	cdev->tx_max_size = min_t(unsigned int, ULP2_MAX_PDU_PAYLOAD,
+	cdev->tx_max_size = min_t(अचिन्हित पूर्णांक, ULP2_MAX_PDU_PAYLOAD,
 				  lldi->iscsi_iolen - ISCSI_PDU_NONPAYLOAD_LEN);
-	cdev->rx_max_size = min_t(unsigned int, ULP2_MAX_PDU_PAYLOAD,
+	cdev->rx_max_size = min_t(अचिन्हित पूर्णांक, ULP2_MAX_PDU_PAYLOAD,
 				  lldi->iscsi_iolen - ISCSI_PDU_NONPAYLOAD_LEN);
 	cdev->cdev2ppm = cdev2ppm;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool is_memfree(struct adapter *adap)
-{
+अटल bool is_memमुक्त(काष्ठा adapter *adap)
+अणु
 	u32 io;
 
-	io = t4_read_reg(adap, MA_TARGET_MEM_ENABLE_A);
-	if (is_t5(adap->params.chip)) {
-		if ((io & EXT_MEM0_ENABLE_F) || (io & EXT_MEM1_ENABLE_F))
-			return false;
-	} else if (io & EXT_MEM_ENABLE_F) {
-		return false;
-	}
+	io = t4_पढ़ो_reg(adap, MA_TARGET_MEM_ENABLE_A);
+	अगर (is_t5(adap->params.chip)) अणु
+		अगर ((io & EXT_MEM0_ENABLE_F) || (io & EXT_MEM1_ENABLE_F))
+			वापस false;
+	पूर्ण अन्यथा अगर (io & EXT_MEM_ENABLE_F) अणु
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void *t4_uld_add(const struct cxgb4_lld_info *lldi)
-{
-	struct cxgbi_device *cdev;
-	struct port_info *pi;
-	struct net_device *ndev;
-	struct adapter *adap;
-	struct tid_info *t;
+अटल व्योम *t4_uld_add(स्थिर काष्ठा cxgb4_lld_info *lldi)
+अणु
+	काष्ठा cxgbi_device *cdev;
+	काष्ठा port_info *pi;
+	काष्ठा net_device *ndev;
+	काष्ठा adapter *adap;
+	काष्ठा tid_info *t;
 	u32 max_cmds = CXGB4I_SCSI_HOST_QDEPTH;
 	u32 max_conn = CXGBI_MAX_CONN;
-	int i, rc;
+	पूर्णांक i, rc;
 
-	cdev = cxgbi_device_register(sizeof(*lldi), lldi->nports);
-	if (!cdev) {
+	cdev = cxgbi_device_रेजिस्टर(माप(*lldi), lldi->nports);
+	अगर (!cdev) अणु
 		pr_info("t4 device 0x%p, register failed.\n", lldi);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	pr_info("0x%p,0x%x, ports %u,%s, chan %u, q %u,%u, wr %u.\n",
 		cdev, lldi->adapter_type, lldi->nports,
 		lldi->ports[0]->name, lldi->nchan, lldi->ntxq,
 		lldi->nrxq, lldi->wr_cred);
-	for (i = 0; i < lldi->nrxq; i++)
+	क्रम (i = 0; i < lldi->nrxq; i++)
 		log_debug(1 << CXGBI_DBG_DEV,
 			"t4 0x%p, rxq id #%d: %u.\n",
 			cdev, i, lldi->rxq_ids[i]);
 
-	memcpy(cxgbi_cdev_priv(cdev), lldi, sizeof(*lldi));
+	स_नकल(cxgbi_cdev_priv(cdev), lldi, माप(*lldi));
 	cdev->flags = CXGBI_FLAG_DEV_T4;
 	cdev->pdev = lldi->pdev;
 	cdev->ports = lldi->ports;
@@ -2241,7 +2242,7 @@ static void *t4_uld_add(const struct cxgb4_lld_info *lldi)
 	cdev->rx_credit_thres = (CHELSIO_CHIP_VERSION(lldi->adapter_type) <=
 				 CHELSIO_T5) ? cxgb4i_rx_credit_thres : 0;
 	cdev->skb_tx_rsvd = CXGB4I_TX_HEADER_LEN;
-	cdev->skb_rx_extra = sizeof(struct cpl_iscsi_hdr);
+	cdev->skb_rx_extra = माप(काष्ठा cpl_iscsi_hdr);
 	cdev->itp = &cxgb4i_iscsi_transport;
 	cdev->owner = THIS_MODULE;
 
@@ -2250,222 +2251,222 @@ static void *t4_uld_add(const struct cxgb4_lld_info *lldi)
 		cdev, lldi->ports[0]->name, cdev->pfvf);
 
 	rc = cxgb4i_ddp_init(cdev);
-	if (rc) {
+	अगर (rc) अणु
 		pr_info("t4 0x%p ddp init failed %d.\n", cdev, rc);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	ndev = cdev->ports[0];
 	adap = netdev2adap(ndev);
-	if (adap) {
+	अगर (adap) अणु
 		t = &adap->tids;
-		if (t->ntids <= CXGBI_MAX_CONN)
+		अगर (t->ntids <= CXGBI_MAX_CONN)
 			max_conn = t->ntids;
 
-		if (is_memfree(adap)) {
+		अगर (is_memमुक्त(adap)) अणु
 			cdev->flags |=	CXGBI_FLAG_DEV_ISO_OFF;
 			max_cmds = CXGB4I_SCSI_HOST_QDEPTH >> 2;
 
 			pr_info("%s: 0x%p, tid %u, SO adapter.\n",
 				ndev->name, cdev, t->ntids);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pr_info("%s, 0x%p, NO adapter struct.\n", ndev->name, cdev);
-	}
+	पूर्ण
 
 	/* ISO is enabled in T5/T6 firmware version >= 1.13.43.0 */
-	if (!is_t4(lldi->adapter_type) &&
+	अगर (!is_t4(lldi->adapter_type) &&
 	    (lldi->fw_vers >= 0x10d2b00) &&
 	    !(cdev->flags & CXGBI_FLAG_DEV_ISO_OFF))
-		cdev->skb_iso_txhdr = sizeof(struct cpl_tx_data_iso);
+		cdev->skb_iso_txhdr = माप(काष्ठा cpl_tx_data_iso);
 
 	rc = cxgb4i_ofld_init(cdev);
-	if (rc) {
+	अगर (rc) अणु
 		pr_info("t4 0x%p ofld init failed.\n", cdev);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	cxgb4i_host_template.can_queue = max_cmds;
+	cxgb4i_host_ढाँचा.can_queue = max_cmds;
 	rc = cxgbi_hbas_add(cdev, CXGB4I_MAX_LUN, max_conn,
-			    &cxgb4i_host_template, cxgb4i_stt);
-	if (rc)
-		goto err_out;
+			    &cxgb4i_host_ढाँचा, cxgb4i_stt);
+	अगर (rc)
+		जाओ err_out;
 
-	for (i = 0; i < cdev->nports; i++) {
+	क्रम (i = 0; i < cdev->nports; i++) अणु
 		pi = netdev_priv(lldi->ports[i]);
 		cdev->hbas[i]->port_id = pi->port_id;
-	}
-	return cdev;
+	पूर्ण
+	वापस cdev;
 
 err_out:
-	cxgbi_device_unregister(cdev);
-	return ERR_PTR(-ENOMEM);
-}
+	cxgbi_device_unरेजिस्टर(cdev);
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-#define RX_PULL_LEN	128
-static int t4_uld_rx_handler(void *handle, const __be64 *rsp,
-				const struct pkt_gl *pgl)
-{
-	const struct cpl_act_establish *rpl;
-	struct sk_buff *skb;
-	unsigned int opc;
-	struct cxgbi_device *cdev = handle;
+#घोषणा RX_PULL_LEN	128
+अटल पूर्णांक t4_uld_rx_handler(व्योम *handle, स्थिर __be64 *rsp,
+				स्थिर काष्ठा pkt_gl *pgl)
+अणु
+	स्थिर काष्ठा cpl_act_establish *rpl;
+	काष्ठा sk_buff *skb;
+	अचिन्हित पूर्णांक opc;
+	काष्ठा cxgbi_device *cdev = handle;
 
-	if (pgl == NULL) {
-		unsigned int len = 64 - sizeof(struct rsp_ctrl) - 8;
+	अगर (pgl == शून्य) अणु
+		अचिन्हित पूर्णांक len = 64 - माप(काष्ठा rsp_ctrl) - 8;
 
 		skb = alloc_wr(len, 0, GFP_ATOMIC);
-		if (!skb)
-			goto nomem;
+		अगर (!skb)
+			जाओ nomem;
 		skb_copy_to_linear_data(skb, &rsp[1], len);
-	} else {
-		if (unlikely(*(u8 *)rsp != *(u8 *)pgl->va)) {
+	पूर्ण अन्यथा अणु
+		अगर (unlikely(*(u8 *)rsp != *(u8 *)pgl->va)) अणु
 			pr_info("? FL 0x%p,RSS%#llx,FL %#llx,len %u.\n",
 				pgl->va, be64_to_cpu(*rsp),
 				be64_to_cpu(*(u64 *)pgl->va),
 				pgl->tot_len);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		skb = cxgb4_pktgl_to_skb(pgl, RX_PULL_LEN, RX_PULL_LEN);
-		if (unlikely(!skb))
-			goto nomem;
-	}
+		अगर (unlikely(!skb))
+			जाओ nomem;
+	पूर्ण
 
-	rpl = (struct cpl_act_establish *)skb->data;
+	rpl = (काष्ठा cpl_act_establish *)skb->data;
 	opc = rpl->ot.opcode;
 	log_debug(1 << CXGBI_DBG_TOE,
 		"cdev %p, opcode 0x%x(0x%x,0x%x), skb %p.\n",
 		 cdev, opc, rpl->ot.opcode_tid, ntohl(rpl->ot.opcode_tid), skb);
-	if (opc >= ARRAY_SIZE(cxgb4i_cplhandlers) || !cxgb4i_cplhandlers[opc]) {
+	अगर (opc >= ARRAY_SIZE(cxgb4i_cplhandlers) || !cxgb4i_cplhandlers[opc]) अणु
 		pr_err("No handler for opcode 0x%x.\n", opc);
-		__kfree_skb(skb);
-	} else
+		__kमुक्त_skb(skb);
+	पूर्ण अन्यथा
 		cxgb4i_cplhandlers[opc](cdev, skb);
 
-	return 0;
+	वापस 0;
 nomem:
 	log_debug(1 << CXGBI_DBG_TOE, "OOM bailing out.\n");
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int t4_uld_state_change(void *handle, enum cxgb4_state state)
-{
-	struct cxgbi_device *cdev = handle;
+अटल पूर्णांक t4_uld_state_change(व्योम *handle, क्रमागत cxgb4_state state)
+अणु
+	काष्ठा cxgbi_device *cdev = handle;
 
-	switch (state) {
-	case CXGB4_STATE_UP:
+	चयन (state) अणु
+	हाल CXGB4_STATE_UP:
 		pr_info("cdev 0x%p, UP.\n", cdev);
-		break;
-	case CXGB4_STATE_START_RECOVERY:
+		अवरोध;
+	हाल CXGB4_STATE_START_RECOVERY:
 		pr_info("cdev 0x%p, RECOVERY.\n", cdev);
-		/* close all connections */
-		break;
-	case CXGB4_STATE_DOWN:
+		/* बंद all connections */
+		अवरोध;
+	हाल CXGB4_STATE_DOWN:
 		pr_info("cdev 0x%p, DOWN.\n", cdev);
-		break;
-	case CXGB4_STATE_DETACH:
+		अवरोध;
+	हाल CXGB4_STATE_DETACH:
 		pr_info("cdev 0x%p, DETACH.\n", cdev);
-		cxgbi_device_unregister(cdev);
-		break;
-	default:
+		cxgbi_device_unरेजिस्टर(cdev);
+		अवरोध;
+	शेष:
 		pr_info("cdev 0x%p, unknown state %d.\n", cdev, state);
-		break;
-	}
-	return 0;
-}
+		अवरोध;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_CHELSIO_T4_DCB
-static int
-cxgb4_dcb_change_notify(struct notifier_block *self, unsigned long val,
-			void *data)
-{
-	int i, port = 0xFF;
-	struct net_device *ndev;
-	struct cxgbi_device *cdev = NULL;
-	struct dcb_app_type *iscsi_app = data;
-	struct cxgbi_ports_map *pmap;
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+अटल पूर्णांक
+cxgb4_dcb_change_notअगरy(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ val,
+			व्योम *data)
+अणु
+	पूर्णांक i, port = 0xFF;
+	काष्ठा net_device *ndev;
+	काष्ठा cxgbi_device *cdev = शून्य;
+	काष्ठा dcb_app_type *iscsi_app = data;
+	काष्ठा cxgbi_ports_map *pmap;
 	u8 priority;
 
-	if (iscsi_app->dcbx & DCB_CAP_DCBX_VER_IEEE) {
-		if ((iscsi_app->app.selector != IEEE_8021QAZ_APP_SEL_STREAM) &&
+	अगर (iscsi_app->dcbx & DCB_CAP_DCBX_VER_IEEE) अणु
+		अगर ((iscsi_app->app.selector != IEEE_8021QAZ_APP_SEL_STREAM) &&
 		    (iscsi_app->app.selector != IEEE_8021QAZ_APP_SEL_ANY))
-			return NOTIFY_DONE;
+			वापस NOTIFY_DONE;
 
 		priority = iscsi_app->app.priority;
-	} else if (iscsi_app->dcbx & DCB_CAP_DCBX_VER_CEE) {
-		if (iscsi_app->app.selector != DCB_APP_IDTYPE_PORTNUM)
-			return NOTIFY_DONE;
+	पूर्ण अन्यथा अगर (iscsi_app->dcbx & DCB_CAP_DCBX_VER_CEE) अणु
+		अगर (iscsi_app->app.selector != DCB_APP_IDTYPE_PORTNUM)
+			वापस NOTIFY_DONE;
 
-		if (!iscsi_app->app.priority)
-			return NOTIFY_DONE;
+		अगर (!iscsi_app->app.priority)
+			वापस NOTIFY_DONE;
 
 		priority = ffs(iscsi_app->app.priority) - 1;
-	} else {
-		return NOTIFY_DONE;
-	}
+	पूर्ण अन्यथा अणु
+		वापस NOTIFY_DONE;
+	पूर्ण
 
-	if (iscsi_app->app.protocol != 3260)
-		return NOTIFY_DONE;
+	अगर (iscsi_app->app.protocol != 3260)
+		वापस NOTIFY_DONE;
 
 	log_debug(1 << CXGBI_DBG_ISCSI, "iSCSI priority for ifid %d is %u\n",
-		  iscsi_app->ifindex, priority);
+		  iscsi_app->अगरindex, priority);
 
-	ndev = dev_get_by_index(&init_net, iscsi_app->ifindex);
-	if (!ndev)
-		return NOTIFY_DONE;
+	ndev = dev_get_by_index(&init_net, iscsi_app->अगरindex);
+	अगर (!ndev)
+		वापस NOTIFY_DONE;
 
 	cdev = cxgbi_device_find_by_netdev_rcu(ndev, &port);
 
 	dev_put(ndev);
-	if (!cdev)
-		return NOTIFY_DONE;
+	अगर (!cdev)
+		वापस NOTIFY_DONE;
 
 	pmap = &cdev->pmap;
 
-	for (i = 0; i < pmap->used; i++) {
-		if (pmap->port_csk[i]) {
-			struct cxgbi_sock *csk = pmap->port_csk[i];
+	क्रम (i = 0; i < pmap->used; i++) अणु
+		अगर (pmap->port_csk[i]) अणु
+			काष्ठा cxgbi_sock *csk = pmap->port_csk[i];
 
-			if (csk->dcb_priority != priority) {
+			अगर (csk->dcb_priority != priority) अणु
 				iscsi_conn_failure(csk->user_data,
 						   ISCSI_ERR_CONN_FAILED);
 				pr_info("Restarting iSCSI connection %p with "
 					"priority %u->%u.\n", csk,
 					csk->dcb_priority, priority);
-			}
-		}
-	}
-	return NOTIFY_OK;
-}
-#endif
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस NOTIFY_OK;
+पूर्ण
+#पूर्ण_अगर
 
-static int __init cxgb4i_init_module(void)
-{
-	int rc;
+अटल पूर्णांक __init cxgb4i_init_module(व्योम)
+अणु
+	पूर्णांक rc;
 
-	printk(KERN_INFO "%s", version);
+	prपूर्णांकk(KERN_INFO "%s", version);
 
 	rc = cxgbi_iscsi_init(&cxgb4i_iscsi_transport, &cxgb4i_stt);
-	if (rc < 0)
-		return rc;
-	cxgb4_register_uld(CXGB4_ULD_ISCSI, &cxgb4i_uld_info);
+	अगर (rc < 0)
+		वापस rc;
+	cxgb4_रेजिस्टर_uld(CXGB4_ULD_ISCSI, &cxgb4i_uld_info);
 
-#ifdef CONFIG_CHELSIO_T4_DCB
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
 	pr_info("%s dcb enabled.\n", DRV_MODULE_NAME);
-	register_dcbevent_notifier(&cxgb4_dcb_change);
-#endif
-	return 0;
-}
+	रेजिस्टर_dcbevent_notअगरier(&cxgb4_dcb_change);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void __exit cxgb4i_exit_module(void)
-{
-#ifdef CONFIG_CHELSIO_T4_DCB
-	unregister_dcbevent_notifier(&cxgb4_dcb_change);
-#endif
-	cxgb4_unregister_uld(CXGB4_ULD_ISCSI);
-	cxgbi_device_unregister_all(CXGBI_FLAG_DEV_T4);
+अटल व्योम __निकास cxgb4i_निकास_module(व्योम)
+अणु
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+	unरेजिस्टर_dcbevent_notअगरier(&cxgb4_dcb_change);
+#पूर्ण_अगर
+	cxgb4_unरेजिस्टर_uld(CXGB4_ULD_ISCSI);
+	cxgbi_device_unरेजिस्टर_all(CXGBI_FLAG_DEV_T4);
 	cxgbi_iscsi_cleanup(&cxgb4i_iscsi_transport, &cxgb4i_stt);
-}
+पूर्ण
 
 module_init(cxgb4i_init_module);
-module_exit(cxgb4i_exit_module);
+module_निकास(cxgb4i_निकास_module);

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  linux/arch/alpha/kernel/process.c
  *
@@ -9,81 +10,81 @@
  * This file handles the architecture-dependent parts of process handling.
  */
 
-#include <linux/errno.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/task.h>
-#include <linux/sched/task_stack.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/smp.h>
-#include <linux/stddef.h>
-#include <linux/unistd.h>
-#include <linux/ptrace.h>
-#include <linux/user.h>
-#include <linux/time.h>
-#include <linux/major.h>
-#include <linux/stat.h>
-#include <linux/vt.h>
-#include <linux/mman.h>
-#include <linux/elfcore.h>
-#include <linux/reboot.h>
-#include <linux/tty.h>
-#include <linux/console.h>
-#include <linux/slab.h>
-#include <linux/rcupdate.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/unistd.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/user.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/major.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/vt.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/elfcore.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/console.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rcupdate.h>
 
-#include <asm/reg.h>
-#include <linux/uaccess.h>
-#include <asm/io.h>
-#include <asm/hwrpb.h>
-#include <asm/fpu.h>
+#समावेश <यंत्र/reg.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/hwrpb.h>
+#समावेश <यंत्र/fpu.h>
 
-#include "proto.h"
-#include "pci_impl.h"
+#समावेश "proto.h"
+#समावेश "pci_impl.h"
 
 /*
- * Power off function, if any
+ * Power off function, अगर any
  */
-void (*pm_power_off)(void) = machine_power_off;
-EXPORT_SYMBOL(pm_power_off);
+व्योम (*pm_घातer_off)(व्योम) = machine_घातer_off;
+EXPORT_SYMBOL(pm_घातer_off);
 
-#ifdef CONFIG_ALPHA_WTINT
+#अगर_घोषित CONFIG_ALPHA_WTINT
 /*
  * Sleep the CPU.
- * EV6, LCA45 and QEMU know how to power down, skipping N timer interrupts.
+ * EV6, LCA45 and QEMU know how to घातer करोwn, skipping N समयr पूर्णांकerrupts.
  */
-void arch_cpu_idle(void)
-{
-	wtint(0);
+व्योम arch_cpu_idle(व्योम)
+अणु
+	wtपूर्णांक(0);
 	raw_local_irq_enable();
-}
+पूर्ण
 
-void arch_cpu_idle_dead(void)
-{
-	wtint(INT_MAX);
-}
-#endif /* ALPHA_WTINT */
+व्योम arch_cpu_idle_dead(व्योम)
+अणु
+	wtपूर्णांक(पूर्णांक_उच्च);
+पूर्ण
+#पूर्ण_अगर /* ALPHA_WTINT */
 
-struct halt_info {
-	int mode;
-	char *restart_cmd;
-};
+काष्ठा halt_info अणु
+	पूर्णांक mode;
+	अक्षर *restart_cmd;
+पूर्ण;
 
-static void
-common_shutdown_1(void *generic_ptr)
-{
-	struct halt_info *how = (struct halt_info *)generic_ptr;
-	struct percpu_struct *cpup;
-	unsigned long *pflags, flags;
-	int cpuid = smp_processor_id();
+अटल व्योम
+common_shutकरोwn_1(व्योम *generic_ptr)
+अणु
+	काष्ठा halt_info *how = (काष्ठा halt_info *)generic_ptr;
+	काष्ठा percpu_काष्ठा *cpup;
+	अचिन्हित दीर्घ *pflags, flags;
+	पूर्णांक cpuid = smp_processor_id();
 
-	/* No point in taking interrupts anymore. */
+	/* No poपूर्णांक in taking पूर्णांकerrupts anymore. */
 	local_irq_disable();
 
-	cpup = (struct percpu_struct *)
-			((unsigned long)hwrpb + hwrpb->processor_offset
+	cpup = (काष्ठा percpu_काष्ठा *)
+			((अचिन्हित दीर्घ)hwrpb + hwrpb->processor_offset
 			 + hwrpb->processor_size * cpuid);
 	pflags = &cpup->flags;
 	flags = *pflags;
@@ -91,203 +92,203 @@ common_shutdown_1(void *generic_ptr)
 	/* Clear reason to "default"; clear "bootstrap in progress". */
 	flags &= ~0x00ff0001UL;
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	/* Secondaries halt here. */
-	if (cpuid != boot_cpuid) {
+	अगर (cpuid != boot_cpuid) अणु
 		flags |= 0x00040000UL; /* "remain halted" */
 		*pflags = flags;
 		set_cpu_present(cpuid, false);
 		set_cpu_possible(cpuid, false);
 		halt();
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (how->mode == LINUX_REBOOT_CMD_RESTART) {
-		if (!how->restart_cmd) {
+	अगर (how->mode == LINUX_REBOOT_CMD_RESTART) अणु
+		अगर (!how->restart_cmd) अणु
 			flags |= 0x00020000UL; /* "cold bootstrap" */
-		} else {
+		पूर्ण अन्यथा अणु
 			/* For SRM, we could probably set environment
 			   variables to get this to work.  We'd have to
 			   delay this until after srm_paging_stop unless
 			   we ever got srm_fixup working.
 
 			   At the moment, SRM will use the last boot device,
-			   but the file and flags will be the defaults, when
-			   doing a "warm" bootstrap.  */
+			   but the file and flags will be the शेषs, when
+			   करोing a "warm" bootstrap.  */
 			flags |= 0x00030000UL; /* "warm bootstrap" */
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		flags |= 0x00040000UL; /* "remain halted" */
-	}
+	पूर्ण
 	*pflags = flags;
 
-#ifdef CONFIG_SMP
-	/* Wait for the secondaries to halt. */
+#अगर_घोषित CONFIG_SMP
+	/* Wait क्रम the secondaries to halt. */
 	set_cpu_present(boot_cpuid, false);
 	set_cpu_possible(boot_cpuid, false);
-	while (cpumask_weight(cpu_present_mask))
+	जबतक (cpumask_weight(cpu_present_mask))
 		barrier();
-#endif
+#पूर्ण_अगर
 
 	/* If booted from SRM, reset some of the original environment. */
-	if (alpha_using_srm) {
-#ifdef CONFIG_DUMMY_CONSOLE
-		/* If we've gotten here after SysRq-b, leave interrupt
-		   context before taking over the console. */
-		if (in_irq())
-			irq_exit();
+	अगर (alpha_using_srm) अणु
+#अगर_घोषित CONFIG_DUMMY_CONSOLE
+		/* If we've gotten here after SysRq-b, leave पूर्णांकerrupt
+		   context beक्रमe taking over the console. */
+		अगर (in_irq())
+			irq_निकास();
 		/* This has the effect of resetting the VGA video origin.  */
 		console_lock();
-		do_take_over_console(&dummy_con, 0, MAX_NR_CONSOLES-1, 1);
+		करो_take_over_console(&dummy_con, 0, MAX_NR_CONSOLES-1, 1);
 		console_unlock();
-#endif
+#पूर्ण_अगर
 		pci_restore_srm_config();
 		set_hae(srm_hae);
-	}
+	पूर्ण
 
-	if (alpha_mv.kill_arch)
-		alpha_mv.kill_arch(how->mode);
+	अगर (alpha_mv.समाप्त_arch)
+		alpha_mv.समाप्त_arch(how->mode);
 
-	if (! alpha_using_srm && how->mode != LINUX_REBOOT_CMD_RESTART) {
-		/* Unfortunately, since MILO doesn't currently understand
+	अगर (! alpha_using_srm && how->mode != LINUX_REBOOT_CMD_RESTART) अणु
+		/* Unक्रमtunately, since MILO करोesn't currently understand
 		   the hwrpb bits above, we can't reliably halt the 
 		   processor and keep it halted.  So just loop.  */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (alpha_using_srm)
+	अगर (alpha_using_srm)
 		srm_paging_stop();
 
 	halt();
-}
+पूर्ण
 
-static void
-common_shutdown(int mode, char *restart_cmd)
-{
-	struct halt_info args;
+अटल व्योम
+common_shutकरोwn(पूर्णांक mode, अक्षर *restart_cmd)
+अणु
+	काष्ठा halt_info args;
 	args.mode = mode;
 	args.restart_cmd = restart_cmd;
-	on_each_cpu(common_shutdown_1, &args, 0);
-}
+	on_each_cpu(common_shutकरोwn_1, &args, 0);
+पूर्ण
 
-void
-machine_restart(char *restart_cmd)
-{
-	common_shutdown(LINUX_REBOOT_CMD_RESTART, restart_cmd);
-}
-
-
-void
-machine_halt(void)
-{
-	common_shutdown(LINUX_REBOOT_CMD_HALT, NULL);
-}
+व्योम
+machine_restart(अक्षर *restart_cmd)
+अणु
+	common_shutकरोwn(LINUX_REBOOT_CMD_RESTART, restart_cmd);
+पूर्ण
 
 
-void
-machine_power_off(void)
-{
-	common_shutdown(LINUX_REBOOT_CMD_POWER_OFF, NULL);
-}
+व्योम
+machine_halt(व्योम)
+अणु
+	common_shutकरोwn(LINUX_REBOOT_CMD_HALT, शून्य);
+पूर्ण
 
 
-/* Used by sysrq-p, among others.  I don't believe r9-r15 are ever
+व्योम
+machine_घातer_off(व्योम)
+अणु
+	common_shutकरोwn(LINUX_REBOOT_CMD_POWER_OFF, शून्य);
+पूर्ण
+
+
+/* Used by sysrq-p, among others.  I करोn't believe r9-r15 are ever
    saved in the context it's used.  */
 
-void
-show_regs(struct pt_regs *regs)
-{
-	show_regs_print_info(KERN_DEFAULT);
-	dik_show_regs(regs, NULL);
-}
+व्योम
+show_regs(काष्ठा pt_regs *regs)
+अणु
+	show_regs_prपूर्णांक_info(KERN_DEFAULT);
+	dik_show_regs(regs, शून्य);
+पूर्ण
 
 /*
- * Re-start a thread when doing execve()
+ * Re-start a thपढ़ो when करोing execve()
  */
-void
-start_thread(struct pt_regs * regs, unsigned long pc, unsigned long sp)
-{
+व्योम
+start_thपढ़ो(काष्ठा pt_regs * regs, अचिन्हित दीर्घ pc, अचिन्हित दीर्घ sp)
+अणु
 	regs->pc = pc;
 	regs->ps = 8;
 	wrusp(sp);
-}
-EXPORT_SYMBOL(start_thread);
+पूर्ण
+EXPORT_SYMBOL(start_thपढ़ो);
 
-void
-flush_thread(void)
-{
-	/* Arrange for each exec'ed process to start off with a clean slate
+व्योम
+flush_thपढ़ो(व्योम)
+अणु
+	/* Arrange क्रम each exec'ed process to start off with a clean slate
 	   with respect to the FPU.  This is all exceptions disabled.  */
-	current_thread_info()->ieee_state = 0;
+	current_thपढ़ो_info()->ieee_state = 0;
 	wrfpcr(FPCR_DYN_NORMAL | ieee_swcr_to_fpcr(0));
 
-	/* Clean slate for TLS.  */
-	current_thread_info()->pcb.unique = 0;
-}
+	/* Clean slate क्रम TLS.  */
+	current_thपढ़ो_info()->pcb.unique = 0;
+पूर्ण
 
-void
-release_thread(struct task_struct *dead_task)
-{
-}
+व्योम
+release_thपढ़ो(काष्ठा task_काष्ठा *dead_task)
+अणु
+पूर्ण
 
 /*
- * Copy architecture-specific thread state
+ * Copy architecture-specअगरic thपढ़ो state
  */
-int copy_thread(unsigned long clone_flags, unsigned long usp,
-		unsigned long kthread_arg, struct task_struct *p,
-		unsigned long tls)
-{
-	extern void ret_from_fork(void);
-	extern void ret_from_kernel_thread(void);
+पूर्णांक copy_thपढ़ो(अचिन्हित दीर्घ clone_flags, अचिन्हित दीर्घ usp,
+		अचिन्हित दीर्घ kthपढ़ो_arg, काष्ठा task_काष्ठा *p,
+		अचिन्हित दीर्घ tls)
+अणु
+	बाह्य व्योम ret_from_विभाजन(व्योम);
+	बाह्य व्योम ret_from_kernel_thपढ़ो(व्योम);
 
-	struct thread_info *childti = task_thread_info(p);
-	struct pt_regs *childregs = task_pt_regs(p);
-	struct pt_regs *regs = current_pt_regs();
-	struct switch_stack *childstack, *stack;
+	काष्ठा thपढ़ो_info *childti = task_thपढ़ो_info(p);
+	काष्ठा pt_regs *childregs = task_pt_regs(p);
+	काष्ठा pt_regs *regs = current_pt_regs();
+	काष्ठा चयन_stack *childstack, *stack;
 
-	childstack = ((struct switch_stack *) childregs) - 1;
-	childti->pcb.ksp = (unsigned long) childstack;
-	childti->pcb.flags = 1;	/* set FEN, clear everything else */
+	childstack = ((काष्ठा चयन_stack *) childregs) - 1;
+	childti->pcb.ksp = (अचिन्हित दीर्घ) childstack;
+	childti->pcb.flags = 1;	/* set FEN, clear everything अन्यथा */
 
-	if (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) {
-		/* kernel thread */
-		memset(childstack, 0,
-			sizeof(struct switch_stack) + sizeof(struct pt_regs));
-		childstack->r26 = (unsigned long) ret_from_kernel_thread;
+	अगर (unlikely(p->flags & (PF_KTHREAD | PF_IO_WORKER))) अणु
+		/* kernel thपढ़ो */
+		स_रखो(childstack, 0,
+			माप(काष्ठा चयन_stack) + माप(काष्ठा pt_regs));
+		childstack->r26 = (अचिन्हित दीर्घ) ret_from_kernel_thपढ़ो;
 		childstack->r9 = usp;	/* function */
-		childstack->r10 = kthread_arg;
+		childstack->r10 = kthपढ़ो_arg;
 		childregs->hae = alpha_mv.hae_cache,
 		childti->pcb.usp = 0;
-		return 0;
-	}
-	/* Note: if CLONE_SETTLS is not set, then we must inherit the
+		वापस 0;
+	पूर्ण
+	/* Note: अगर CLONE_SETTLS is not set, then we must inherit the
 	   value from the parent, which will have been set by the block
-	   copy in dup_task_struct.  This is non-intuitive, but is
-	   required for proper operation in the case of a threaded
-	   application calling fork.  */
-	if (clone_flags & CLONE_SETTLS)
+	   copy in dup_task_काष्ठा.  This is non-पूर्णांकuitive, but is
+	   required क्रम proper operation in the हाल of a thपढ़ोed
+	   application calling विभाजन.  */
+	अगर (clone_flags & CLONE_SETTLS)
 		childti->pcb.unique = tls;
-	else
-		regs->r20 = 0;	/* OSF/1 has some strange fork() semantics.  */
+	अन्यथा
+		regs->r20 = 0;	/* OSF/1 has some strange विभाजन() semantics.  */
 	childti->pcb.usp = usp ?: rdusp();
 	*childregs = *regs;
 	childregs->r0 = 0;
 	childregs->r19 = 0;
-	childregs->r20 = 1;	/* OSF/1 has some strange fork() semantics.  */
-	stack = ((struct switch_stack *) regs) - 1;
+	childregs->r20 = 1;	/* OSF/1 has some strange विभाजन() semantics.  */
+	stack = ((काष्ठा चयन_stack *) regs) - 1;
 	*childstack = *stack;
-	childstack->r26 = (unsigned long) ret_from_fork;
-	return 0;
-}
+	childstack->r26 = (अचिन्हित दीर्घ) ret_from_विभाजन;
+	वापस 0;
+पूर्ण
 
 /*
- * Fill in the user structure for a ELF core dump.
+ * Fill in the user काष्ठाure क्रम a ELF core dump.
  */
-void
-dump_elf_thread(elf_greg_t *dest, struct pt_regs *pt, struct thread_info *ti)
-{
-	/* switch stack follows right below pt_regs: */
-	struct switch_stack * sw = ((struct switch_stack *) pt) - 1;
+व्योम
+dump_elf_thपढ़ो(elf_greg_t *dest, काष्ठा pt_regs *pt, काष्ठा thपढ़ो_info *ti)
+अणु
+	/* चयन stack follows right below pt_regs: */
+	काष्ठा चयन_stack * sw = ((काष्ठा चयन_stack *) pt) - 1;
 
 	dest[ 0] = pt->r0;
 	dest[ 1] = pt->r1;
@@ -319,83 +320,83 @@ dump_elf_thread(elf_greg_t *dest, struct pt_regs *pt, struct thread_info *ti)
 	dest[27] = pt->r27;
 	dest[28] = pt->r28;
 	dest[29] = pt->gp;
-	dest[30] = ti == current_thread_info() ? rdusp() : ti->pcb.usp;
+	dest[30] = ti == current_thपढ़ो_info() ? rdusp() : ti->pcb.usp;
 	dest[31] = pt->pc;
 
-	/* Once upon a time this was the PS value.  Which is stupid
-	   since that is always 8 for usermode.  Usurped for the more
-	   useful value of the thread's UNIQUE field.  */
+	/* Once upon a समय this was the PS value.  Which is stupid
+	   since that is always 8 क्रम usermode.  Usurped क्रम the more
+	   useful value of the thपढ़ो's UNIQUE field.  */
 	dest[32] = ti->pcb.unique;
-}
-EXPORT_SYMBOL(dump_elf_thread);
+पूर्ण
+EXPORT_SYMBOL(dump_elf_thपढ़ो);
 
-int
-dump_elf_task(elf_greg_t *dest, struct task_struct *task)
-{
-	dump_elf_thread(dest, task_pt_regs(task), task_thread_info(task));
-	return 1;
-}
+पूर्णांक
+dump_elf_task(elf_greg_t *dest, काष्ठा task_काष्ठा *task)
+अणु
+	dump_elf_thपढ़ो(dest, task_pt_regs(task), task_thपढ़ो_info(task));
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(dump_elf_task);
 
-int
-dump_elf_task_fp(elf_fpreg_t *dest, struct task_struct *task)
-{
-	struct switch_stack *sw = (struct switch_stack *)task_pt_regs(task) - 1;
-	memcpy(dest, sw->fp, 32 * 8);
-	return 1;
-}
+पूर्णांक
+dump_elf_task_fp(elf_fpreg_t *dest, काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा चयन_stack *sw = (काष्ठा चयन_stack *)task_pt_regs(task) - 1;
+	स_नकल(dest, sw->fp, 32 * 8);
+	वापस 1;
+पूर्ण
 EXPORT_SYMBOL(dump_elf_task_fp);
 
 /*
- * Return saved PC of a blocked thread.  This assumes the frame
- * pointer is the 6th saved long on the kernel stack and that the
- * saved return address is the first long in the frame.  This all
- * holds provided the thread blocked through a call to schedule() ($15
- * is the frame pointer in schedule() and $15 is saved at offset 48 by
- * entry.S:do_switch_stack).
+ * Return saved PC of a blocked thपढ़ो.  This assumes the frame
+ * poपूर्णांकer is the 6th saved दीर्घ on the kernel stack and that the
+ * saved वापस address is the first दीर्घ in the frame.  This all
+ * holds provided the thपढ़ो blocked through a call to schedule() ($15
+ * is the frame poपूर्णांकer in schedule() and $15 is saved at offset 48 by
+ * entry.S:करो_चयन_stack).
  *
- * Under heavy swap load I've seen this lose in an ugly way.  So do
- * some extra sanity checking on the ranges we expect these pointers
- * to be in so that we can fail gracefully.  This is just for ps after
+ * Under heavy swap load I've seen this lose in an ugly way.  So करो
+ * some extra sanity checking on the ranges we expect these poपूर्णांकers
+ * to be in so that we can fail gracefully.  This is just क्रम ps after
  * all.  -- r~
  */
 
-static unsigned long
-thread_saved_pc(struct task_struct *t)
-{
-	unsigned long base = (unsigned long)task_stack_page(t);
-	unsigned long fp, sp = task_thread_info(t)->pcb.ksp;
+अटल अचिन्हित दीर्घ
+thपढ़ो_saved_pc(काष्ठा task_काष्ठा *t)
+अणु
+	अचिन्हित दीर्घ base = (अचिन्हित दीर्घ)task_stack_page(t);
+	अचिन्हित दीर्घ fp, sp = task_thपढ़ो_info(t)->pcb.ksp;
 
-	if (sp > base && sp+6*8 < base + 16*1024) {
-		fp = ((unsigned long*)sp)[6];
-		if (fp > sp && fp < base + 16*1024)
-			return *(unsigned long *)fp;
-	}
+	अगर (sp > base && sp+6*8 < base + 16*1024) अणु
+		fp = ((अचिन्हित दीर्घ*)sp)[6];
+		अगर (fp > sp && fp < base + 16*1024)
+			वापस *(अचिन्हित दीर्घ *)fp;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long
-get_wchan(struct task_struct *p)
-{
-	unsigned long schedule_frame;
-	unsigned long pc;
-	if (!p || p == current || p->state == TASK_RUNNING)
-		return 0;
+अचिन्हित दीर्घ
+get_wchan(काष्ठा task_काष्ठा *p)
+अणु
+	अचिन्हित दीर्घ schedule_frame;
+	अचिन्हित दीर्घ pc;
+	अगर (!p || p == current || p->state == TASK_RUNNING)
+		वापस 0;
 	/*
 	 * This one depends on the frame size of schedule().  Do a
 	 * "disass schedule" in gdb to find the frame size.  Also, the
 	 * code assumes that sleep_on() follows immediately after
-	 * interruptible_sleep_on() and that add_timer() follows
-	 * immediately after interruptible_sleep().  Ugly, isn't it?
-	 * Maybe adding a wchan field to task_struct would be better,
+	 * पूर्णांकerruptible_sleep_on() and that add_समयr() follows
+	 * immediately after पूर्णांकerruptible_sleep().  Ugly, isn't it?
+	 * Maybe adding a wchan field to task_काष्ठा would be better,
 	 * after all...
 	 */
 
-	pc = thread_saved_pc(p);
-	if (in_sched_functions(pc)) {
-		schedule_frame = ((unsigned long *)task_thread_info(p)->pcb.ksp)[6];
-		return ((unsigned long *)schedule_frame)[12];
-	}
-	return pc;
-}
+	pc = thपढ़ो_saved_pc(p);
+	अगर (in_sched_functions(pc)) अणु
+		schedule_frame = ((अचिन्हित दीर्घ *)task_thपढ़ो_info(p)->pcb.ksp)[6];
+		वापस ((अचिन्हित दीर्घ *)schedule_frame)[12];
+	पूर्ण
+	वापस pc;
+पूर्ण

@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*  cpufreq-bench CPUFreq microbenchmark
  *
  *  Copyright (C) 2008 Christian Kornacker <ckornacker@suse.de>
  */
 
-#include <stdio.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
+#समावेश <मानकपन.स>
+#समावेश <समय.स>
+#समावेश <sys/समय.स>
+#समावेश <sys/types.h>
+#समावेश <unistd.h>
 
-#include <sched.h>
+#समावेश <sched.h>
 
-#include <cpufreq.h>
-#include <cpupower.h>
+#समावेश <cpufreq.h>
+#समावेश <cpuघातer.h>
 
-#include "config.h"
-#include "system.h"
+#समावेश "config.h"
+#समावेश "system.h"
 
 /**
- * returns time since epoch in µs
+ * वापसs समय since epoch in तगs
  *
- * @retval time
+ * @retval समय
  **/
 
-long long int get_time()
-{
-	struct timeval now;
+दीर्घ दीर्घ पूर्णांक get_समय()
+अणु
+	काष्ठा समयval now;
 
-	gettimeofday(&now, NULL);
+	समय_लोofday(&now, शून्य);
 
-	return (long long int)(now.tv_sec * 1000000LL + now.tv_usec);
-}
+	वापस (दीर्घ दीर्घ पूर्णांक)(now.tv_sec * 1000000LL + now.tv_usec);
+पूर्ण
 
 /**
  * sets the cpufreq governor
  *
  * @param governor cpufreq governor name
- * @param cpu cpu for which the governor should be set
+ * @param cpu cpu क्रम which the governor should be set
  *
  * @retval 0 on success
  * @retval -1 when failed
  **/
 
-int set_cpufreq_governor(char *governor, unsigned int cpu)
-{
+पूर्णांक set_cpufreq_governor(अक्षर *governor, अचिन्हित पूर्णांक cpu)
+अणु
 
-	dprintf("set %s as cpufreq governor\n", governor);
+	dम_लिखो("set %s as cpufreq governor\n", governor);
 
-	if (cpupower_is_cpu_online(cpu) != 1) {
-		perror("cpufreq_cpu_exists");
-		fprintf(stderr, "error: cpu %u does not exist\n", cpu);
-		return -1;
-	}
+	अगर (cpuघातer_is_cpu_online(cpu) != 1) अणु
+		लिखो_त्रुटि("cpufreq_cpu_exists");
+		ख_लिखो(मानक_त्रुटि, "error: cpu %u does not exist\n", cpu);
+		वापस -1;
+	पूर्ण
 
-	if (cpufreq_modify_policy_governor(cpu, governor) != 0) {
-		perror("cpufreq_modify_policy_governor");
-		fprintf(stderr, "error: unable to set %s governor\n", governor);
-		return -1;
-	}
+	अगर (cpufreq_modअगरy_policy_governor(cpu, governor) != 0) अणु
+		लिखो_त्रुटि("cpufreq_modify_policy_governor");
+		ख_लिखो(मानक_त्रुटि, "error: unable to set %s governor\n", governor);
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * sets cpu affinity for the process
+ * sets cpu affinity क्रम the process
  *
  * @param cpu cpu# to which the affinity should be set
  *
@@ -72,23 +73,23 @@ int set_cpufreq_governor(char *governor, unsigned int cpu)
  * @retval -1 when setting the affinity failed
  **/
 
-int set_cpu_affinity(unsigned int cpu)
-{
+पूर्णांक set_cpu_affinity(अचिन्हित पूर्णांक cpu)
+अणु
 	cpu_set_t cpuset;
 
 	CPU_ZERO(&cpuset);
 	CPU_SET(cpu, &cpuset);
 
-	dprintf("set affinity to cpu #%u\n", cpu);
+	dम_लिखो("set affinity to cpu #%u\n", cpu);
 
-	if (sched_setaffinity(getpid(), sizeof(cpu_set_t), &cpuset) < 0) {
-		perror("sched_setaffinity");
-		fprintf(stderr, "warning: unable to set cpu affinity\n");
-		return -1;
-	}
+	अगर (sched_setaffinity(getpid(), माप(cpu_set_t), &cpuset) < 0) अणु
+		लिखो_त्रुटि("sched_setaffinity");
+		ख_लिखो(मानक_त्रुटि, "warning: unable to set cpu affinity\n");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * sets the process priority parameter
@@ -99,48 +100,48 @@ int set_cpu_affinity(unsigned int cpu)
  * @retval -1 when setting the priority failed
  **/
 
-int set_process_priority(int priority)
-{
-	struct sched_param param;
+पूर्णांक set_process_priority(पूर्णांक priority)
+अणु
+	काष्ठा sched_param param;
 
-	dprintf("set scheduler priority to %i\n", priority);
+	dम_लिखो("set scheduler priority to %i\n", priority);
 
 	param.sched_priority = priority;
 
-	if (sched_setscheduler(0, SCHEDULER, &param) < 0) {
-		perror("sched_setscheduler");
-		fprintf(stderr, "warning: unable to set scheduler priority\n");
-		return -1;
-	}
+	अगर (sched_setscheduler(0, SCHEDULER, &param) < 0) अणु
+		लिखो_त्रुटि("sched_setscheduler");
+		ख_लिखो(मानक_त्रुटि, "warning: unable to set scheduler priority\n");
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * notifies the user that the benchmark may run some time
+ * notअगरies the user that the benchmark may run some समय
  *
  * @param config benchmark config values
  *
  **/
 
-void prepare_user(const struct config *config)
-{
-	unsigned long sleep_time = 0;
-	unsigned long load_time = 0;
-	unsigned int round;
+व्योम prepare_user(स्थिर काष्ठा config *config)
+अणु
+	अचिन्हित दीर्घ sleep_समय = 0;
+	अचिन्हित दीर्घ load_समय = 0;
+	अचिन्हित पूर्णांक round;
 
-	for (round = 0; round < config->rounds; round++) {
-		sleep_time +=  2 * config->cycles *
+	क्रम (round = 0; round < config->rounds; round++) अणु
+		sleep_समय +=  2 * config->cycles *
 			(config->sleep + config->sleep_step * round);
-		load_time += 2 * config->cycles *
+		load_समय += 2 * config->cycles *
 			(config->load + config->load_step * round) +
 			(config->load + config->load_step * round * 4);
-	}
+	पूर्ण
 
-	if (config->verbose || config->output != stdout)
-		printf("approx. test duration: %im\n",
-		       (int)((sleep_time + load_time) / 60000000));
-}
+	अगर (config->verbose || config->output != मानक_निकास)
+		म_लिखो("approx. test duration: %im\n",
+		       (पूर्णांक)((sleep_समय + load_समय) / 60000000));
+पूर्ण
 
 /**
  * sets up the cpu affinity and scheduler priority
@@ -149,31 +150,31 @@ void prepare_user(const struct config *config)
  *
  **/
 
-void prepare_system(const struct config *config)
-{
-	if (config->verbose)
-		printf("set cpu affinity to cpu #%u\n", config->cpu);
+व्योम prepare_प्रणाली(स्थिर काष्ठा config *config)
+अणु
+	अगर (config->verbose)
+		म_लिखो("set cpu affinity to cpu #%u\n", config->cpu);
 
 	set_cpu_affinity(config->cpu);
 
-	switch (config->prio) {
-	case SCHED_HIGH:
-		if (config->verbose)
-			printf("high priority condition requested\n");
+	चयन (config->prio) अणु
+	हाल SCHED_HIGH:
+		अगर (config->verbose)
+			म_लिखो("high priority condition requested\n");
 
 		set_process_priority(PRIORITY_HIGH);
-		break;
-	case SCHED_LOW:
-		if (config->verbose)
-			printf("low priority condition requested\n");
+		अवरोध;
+	हाल SCHED_LOW:
+		अगर (config->verbose)
+			म_लिखो("low priority condition requested\n");
 
 		set_process_priority(PRIORITY_LOW);
-		break;
-	default:
-		if (config->verbose)
-			printf("default priority condition requested\n");
+		अवरोध;
+	शेष:
+		अगर (config->verbose)
+			म_लिखो("default priority condition requested\n");
 
 		set_process_priority(PRIORITY_DEFAULT);
-	}
-}
+	पूर्ण
+पूर्ण
 

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2003 Sistina Software Limited.
  * Copyright (C) 2004-2005 Red Hat, Inc. All rights reserved.
@@ -5,207 +6,207 @@
  * This file is released under the GPL.
  */
 
-#include <linux/device-mapper.h>
+#समावेश <linux/device-mapper.h>
 
-#include "dm-rq.h"
-#include "dm-bio-record.h"
-#include "dm-path-selector.h"
-#include "dm-uevent.h"
+#समावेश "dm-rq.h"
+#समावेश "dm-bio-record.h"
+#समावेश "dm-path-selector.h"
+#समावेश "dm-uevent.h"
 
-#include <linux/blkdev.h>
-#include <linux/ctype.h>
-#include <linux/init.h>
-#include <linux/mempool.h>
-#include <linux/module.h>
-#include <linux/pagemap.h>
-#include <linux/slab.h>
-#include <linux/time.h>
-#include <linux/timer.h>
-#include <linux/workqueue.h>
-#include <linux/delay.h>
-#include <scsi/scsi_dh.h>
-#include <linux/atomic.h>
-#include <linux/blk-mq.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/init.h>
+#समावेश <linux/mempool.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/delay.h>
+#समावेश <scsi/scsi_dh.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/blk-mq.h>
 
-#define DM_MSG_PREFIX "multipath"
-#define DM_PG_INIT_DELAY_MSECS 2000
-#define DM_PG_INIT_DELAY_DEFAULT ((unsigned) -1)
-#define QUEUE_IF_NO_PATH_TIMEOUT_DEFAULT 0
+#घोषणा DM_MSG_PREFIX "multipath"
+#घोषणा DM_PG_INIT_DELAY_MSECS 2000
+#घोषणा DM_PG_INIT_DELAY_DEFAULT ((अचिन्हित) -1)
+#घोषणा QUEUE_IF_NO_PATH_TIMEOUT_DEFAULT 0
 
-static unsigned long queue_if_no_path_timeout_secs = QUEUE_IF_NO_PATH_TIMEOUT_DEFAULT;
+अटल अचिन्हित दीर्घ queue_अगर_no_path_समयout_secs = QUEUE_IF_NO_PATH_TIMEOUT_DEFAULT;
 
 /* Path properties */
-struct pgpath {
-	struct list_head list;
+काष्ठा pgpath अणु
+	काष्ठा list_head list;
 
-	struct priority_group *pg;	/* Owning PG */
-	unsigned fail_count;		/* Cumulative failure count */
+	काष्ठा priority_group *pg;	/* Owning PG */
+	अचिन्हित fail_count;		/* Cumulative failure count */
 
-	struct dm_path path;
-	struct delayed_work activate_path;
+	काष्ठा dm_path path;
+	काष्ठा delayed_work activate_path;
 
 	bool is_active:1;		/* Path status */
-};
+पूर्ण;
 
-#define path_to_pgpath(__pgp) container_of((__pgp), struct pgpath, path)
+#घोषणा path_to_pgpath(__pgp) container_of((__pgp), काष्ठा pgpath, path)
 
 /*
- * Paths are grouped into Priority Groups and numbered from 1 upwards.
- * Each has a path selector which controls which path gets used.
+ * Paths are grouped पूर्णांकo Priority Groups and numbered from 1 upwards.
+ * Each has a path selector which controls which path माला_लो used.
  */
-struct priority_group {
-	struct list_head list;
+काष्ठा priority_group अणु
+	काष्ठा list_head list;
 
-	struct multipath *m;		/* Owning multipath instance */
-	struct path_selector ps;
+	काष्ठा multipath *m;		/* Owning multipath instance */
+	काष्ठा path_selector ps;
 
-	unsigned pg_num;		/* Reference number */
-	unsigned nr_pgpaths;		/* Number of paths in PG */
-	struct list_head pgpaths;
+	अचिन्हित pg_num;		/* Reference number */
+	अचिन्हित nr_pgpaths;		/* Number of paths in PG */
+	काष्ठा list_head pgpaths;
 
 	bool bypassed:1;		/* Temporarily bypass this PG? */
-};
+पूर्ण;
 
 /* Multipath context */
-struct multipath {
-	unsigned long flags;		/* Multipath state flags */
+काष्ठा multipath अणु
+	अचिन्हित दीर्घ flags;		/* Multipath state flags */
 
 	spinlock_t lock;
-	enum dm_queue_mode queue_mode;
+	क्रमागत dm_queue_mode queue_mode;
 
-	struct pgpath *current_pgpath;
-	struct priority_group *current_pg;
-	struct priority_group *next_pg;	/* Switch to this PG if set */
+	काष्ठा pgpath *current_pgpath;
+	काष्ठा priority_group *current_pg;
+	काष्ठा priority_group *next_pg;	/* Switch to this PG अगर set */
 
 	atomic_t nr_valid_paths;	/* Total number of usable paths */
-	unsigned nr_priority_groups;
-	struct list_head priority_groups;
+	अचिन्हित nr_priority_groups;
+	काष्ठा list_head priority_groups;
 
-	const char *hw_handler_name;
-	char *hw_handler_params;
-	wait_queue_head_t pg_init_wait;	/* Wait for pg_init completion */
-	unsigned pg_init_retries;	/* Number of times to retry pg_init */
-	unsigned pg_init_delay_msecs;	/* Number of msecs before pg_init retry */
+	स्थिर अक्षर *hw_handler_name;
+	अक्षर *hw_handler_params;
+	रुको_queue_head_t pg_init_रुको;	/* Wait क्रम pg_init completion */
+	अचिन्हित pg_init_retries;	/* Number of बार to retry pg_init */
+	अचिन्हित pg_init_delay_msecs;	/* Number of msecs beक्रमe pg_init retry */
 	atomic_t pg_init_in_progress;	/* Only one pg_init allowed at once */
-	atomic_t pg_init_count;		/* Number of times pg_init called */
+	atomic_t pg_init_count;		/* Number of बार pg_init called */
 
-	struct mutex work_mutex;
-	struct work_struct trigger_event;
-	struct dm_target *ti;
+	काष्ठा mutex work_mutex;
+	काष्ठा work_काष्ठा trigger_event;
+	काष्ठा dm_target *ti;
 
-	struct work_struct process_queued_bios;
-	struct bio_list queued_bios;
+	काष्ठा work_काष्ठा process_queued_bios;
+	काष्ठा bio_list queued_bios;
 
-	struct timer_list nopath_timer;	/* Timeout for queue_if_no_path */
-};
+	काष्ठा समयr_list nopath_समयr;	/* Timeout क्रम queue_अगर_no_path */
+पूर्ण;
 
 /*
- * Context information attached to each io we process.
+ * Context inक्रमmation attached to each io we process.
  */
-struct dm_mpath_io {
-	struct pgpath *pgpath;
-	size_t nr_bytes;
-};
+काष्ठा dm_mpath_io अणु
+	काष्ठा pgpath *pgpath;
+	माप_प्रकार nr_bytes;
+पूर्ण;
 
-typedef int (*action_fn) (struct pgpath *pgpath);
+प्रकार पूर्णांक (*action_fn) (काष्ठा pgpath *pgpath);
 
-static struct workqueue_struct *kmultipathd, *kmpath_handlerd;
-static void trigger_event(struct work_struct *work);
-static void activate_or_offline_path(struct pgpath *pgpath);
-static void activate_path_work(struct work_struct *work);
-static void process_queued_bios(struct work_struct *work);
-static void queue_if_no_path_timeout_work(struct timer_list *t);
+अटल काष्ठा workqueue_काष्ठा *kmultipathd, *kmpath_handlerd;
+अटल व्योम trigger_event(काष्ठा work_काष्ठा *work);
+अटल व्योम activate_or_offline_path(काष्ठा pgpath *pgpath);
+अटल व्योम activate_path_work(काष्ठा work_काष्ठा *work);
+अटल व्योम process_queued_bios(काष्ठा work_काष्ठा *work);
+अटल व्योम queue_अगर_no_path_समयout_work(काष्ठा समयr_list *t);
 
 /*-----------------------------------------------
  * Multipath state flags.
  *-----------------------------------------------*/
 
-#define MPATHF_QUEUE_IO 0			/* Must we queue all I/O? */
-#define MPATHF_QUEUE_IF_NO_PATH 1		/* Queue I/O if last path fails? */
-#define MPATHF_SAVED_QUEUE_IF_NO_PATH 2		/* Saved state during suspension */
-#define MPATHF_RETAIN_ATTACHED_HW_HANDLER 3	/* If there's already a hw_handler present, don't change it. */
-#define MPATHF_PG_INIT_DISABLED 4		/* pg_init is not currently allowed */
-#define MPATHF_PG_INIT_REQUIRED 5		/* pg_init needs calling? */
-#define MPATHF_PG_INIT_DELAY_RETRY 6		/* Delay pg_init retry? */
+#घोषणा MPATHF_QUEUE_IO 0			/* Must we queue all I/O? */
+#घोषणा MPATHF_QUEUE_IF_NO_PATH 1		/* Queue I/O अगर last path fails? */
+#घोषणा MPATHF_SAVED_QUEUE_IF_NO_PATH 2		/* Saved state during suspension */
+#घोषणा MPATHF_RETAIN_ATTACHED_HW_HANDLER 3	/* If there's already a hw_handler present, don't change it. */
+#घोषणा MPATHF_PG_INIT_DISABLED 4		/* pg_init is not currently allowed */
+#घोषणा MPATHF_PG_INIT_REQUIRED 5		/* pg_init needs calling? */
+#घोषणा MPATHF_PG_INIT_DELAY_RETRY 6		/* Delay pg_init retry? */
 
-static bool mpath_double_check_test_bit(int MPATHF_bit, struct multipath *m)
-{
+अटल bool mpath_द्विगुन_check_test_bit(पूर्णांक MPATHF_bit, काष्ठा multipath *m)
+अणु
 	bool r = test_bit(MPATHF_bit, &m->flags);
 
-	if (r) {
-		unsigned long flags;
+	अगर (r) अणु
+		अचिन्हित दीर्घ flags;
 		spin_lock_irqsave(&m->lock, flags);
 		r = test_bit(MPATHF_bit, &m->flags);
 		spin_unlock_irqrestore(&m->lock, flags);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*-----------------------------------------------
  * Allocation routines
  *-----------------------------------------------*/
 
-static struct pgpath *alloc_pgpath(void)
-{
-	struct pgpath *pgpath = kzalloc(sizeof(*pgpath), GFP_KERNEL);
+अटल काष्ठा pgpath *alloc_pgpath(व्योम)
+अणु
+	काष्ठा pgpath *pgpath = kzalloc(माप(*pgpath), GFP_KERNEL);
 
-	if (!pgpath)
-		return NULL;
+	अगर (!pgpath)
+		वापस शून्य;
 
 	pgpath->is_active = true;
 
-	return pgpath;
-}
+	वापस pgpath;
+पूर्ण
 
-static void free_pgpath(struct pgpath *pgpath)
-{
-	kfree(pgpath);
-}
+अटल व्योम मुक्त_pgpath(काष्ठा pgpath *pgpath)
+अणु
+	kमुक्त(pgpath);
+पूर्ण
 
-static struct priority_group *alloc_priority_group(void)
-{
-	struct priority_group *pg;
+अटल काष्ठा priority_group *alloc_priority_group(व्योम)
+अणु
+	काष्ठा priority_group *pg;
 
-	pg = kzalloc(sizeof(*pg), GFP_KERNEL);
+	pg = kzalloc(माप(*pg), GFP_KERNEL);
 
-	if (pg)
+	अगर (pg)
 		INIT_LIST_HEAD(&pg->pgpaths);
 
-	return pg;
-}
+	वापस pg;
+पूर्ण
 
-static void free_pgpaths(struct list_head *pgpaths, struct dm_target *ti)
-{
-	struct pgpath *pgpath, *tmp;
+अटल व्योम मुक्त_pgpaths(काष्ठा list_head *pgpaths, काष्ठा dm_target *ti)
+अणु
+	काष्ठा pgpath *pgpath, *पंचांगp;
 
-	list_for_each_entry_safe(pgpath, tmp, pgpaths, list) {
+	list_क्रम_each_entry_safe(pgpath, पंचांगp, pgpaths, list) अणु
 		list_del(&pgpath->list);
 		dm_put_device(ti, pgpath->path.dev);
-		free_pgpath(pgpath);
-	}
-}
+		मुक्त_pgpath(pgpath);
+	पूर्ण
+पूर्ण
 
-static void free_priority_group(struct priority_group *pg,
-				struct dm_target *ti)
-{
-	struct path_selector *ps = &pg->ps;
+अटल व्योम मुक्त_priority_group(काष्ठा priority_group *pg,
+				काष्ठा dm_target *ti)
+अणु
+	काष्ठा path_selector *ps = &pg->ps;
 
-	if (ps->type) {
+	अगर (ps->type) अणु
 		ps->type->destroy(ps);
 		dm_put_path_selector(ps->type);
-	}
+	पूर्ण
 
-	free_pgpaths(&pg->pgpaths, ti);
-	kfree(pg);
-}
+	मुक्त_pgpaths(&pg->pgpaths, ti);
+	kमुक्त(pg);
+पूर्ण
 
-static struct multipath *alloc_multipath(struct dm_target *ti)
-{
-	struct multipath *m;
+अटल काष्ठा multipath *alloc_multipath(काष्ठा dm_target *ti)
+अणु
+	काष्ठा multipath *m;
 
-	m = kzalloc(sizeof(*m), GFP_KERNEL);
-	if (m) {
+	m = kzalloc(माप(*m), GFP_KERNEL);
+	अगर (m) अणु
 		INIT_LIST_HEAD(&m->priority_groups);
 		spin_lock_init(&m->lock);
 		atomic_set(&m->nr_valid_paths, 0);
@@ -215,315 +216,315 @@ static struct multipath *alloc_multipath(struct dm_target *ti)
 		m->queue_mode = DM_TYPE_NONE;
 
 		m->ti = ti;
-		ti->private = m;
+		ti->निजी = m;
 
-		timer_setup(&m->nopath_timer, queue_if_no_path_timeout_work, 0);
-	}
+		समयr_setup(&m->nopath_समयr, queue_अगर_no_path_समयout_work, 0);
+	पूर्ण
 
-	return m;
-}
+	वापस m;
+पूर्ण
 
-static int alloc_multipath_stage2(struct dm_target *ti, struct multipath *m)
-{
-	if (m->queue_mode == DM_TYPE_NONE) {
+अटल पूर्णांक alloc_multipath_stage2(काष्ठा dm_target *ti, काष्ठा multipath *m)
+अणु
+	अगर (m->queue_mode == DM_TYPE_NONE) अणु
 		m->queue_mode = DM_TYPE_REQUEST_BASED;
-	} else if (m->queue_mode == DM_TYPE_BIO_BASED) {
+	पूर्ण अन्यथा अगर (m->queue_mode == DM_TYPE_BIO_BASED) अणु
 		INIT_WORK(&m->process_queued_bios, process_queued_bios);
 		/*
-		 * bio-based doesn't support any direct scsi_dh management;
-		 * it just discovers if a scsi_dh is attached.
+		 * bio-based करोesn't support any direct scsi_dh management;
+		 * it just discovers अगर a scsi_dh is attached.
 		 */
 		set_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags);
-	}
+	पूर्ण
 
 	dm_table_set_type(ti->table, m->queue_mode);
 
 	/*
 	 * Init fields that are only used when a scsi_dh is attached
-	 * - must do this unconditionally (really doesn't hurt non-SCSI uses)
+	 * - must करो this unconditionally (really करोesn't hurt non-SCSI uses)
 	 */
 	set_bit(MPATHF_QUEUE_IO, &m->flags);
 	atomic_set(&m->pg_init_in_progress, 0);
 	atomic_set(&m->pg_init_count, 0);
 	m->pg_init_delay_msecs = DM_PG_INIT_DELAY_DEFAULT;
-	init_waitqueue_head(&m->pg_init_wait);
+	init_रुकोqueue_head(&m->pg_init_रुको);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void free_multipath(struct multipath *m)
-{
-	struct priority_group *pg, *tmp;
+अटल व्योम मुक्त_multipath(काष्ठा multipath *m)
+अणु
+	काष्ठा priority_group *pg, *पंचांगp;
 
-	list_for_each_entry_safe(pg, tmp, &m->priority_groups, list) {
+	list_क्रम_each_entry_safe(pg, पंचांगp, &m->priority_groups, list) अणु
 		list_del(&pg->list);
-		free_priority_group(pg, m->ti);
-	}
+		मुक्त_priority_group(pg, m->ti);
+	पूर्ण
 
-	kfree(m->hw_handler_name);
-	kfree(m->hw_handler_params);
+	kमुक्त(m->hw_handler_name);
+	kमुक्त(m->hw_handler_params);
 	mutex_destroy(&m->work_mutex);
-	kfree(m);
-}
+	kमुक्त(m);
+पूर्ण
 
-static struct dm_mpath_io *get_mpio(union map_info *info)
-{
-	return info->ptr;
-}
+अटल काष्ठा dm_mpath_io *get_mpio(जोड़ map_info *info)
+अणु
+	वापस info->ptr;
+पूर्ण
 
-static size_t multipath_per_bio_data_size(void)
-{
-	return sizeof(struct dm_mpath_io) + sizeof(struct dm_bio_details);
-}
+अटल माप_प्रकार multipath_per_bio_data_size(व्योम)
+अणु
+	वापस माप(काष्ठा dm_mpath_io) + माप(काष्ठा dm_bio_details);
+पूर्ण
 
-static struct dm_mpath_io *get_mpio_from_bio(struct bio *bio)
-{
-	return dm_per_bio_data(bio, multipath_per_bio_data_size());
-}
+अटल काष्ठा dm_mpath_io *get_mpio_from_bio(काष्ठा bio *bio)
+अणु
+	वापस dm_per_bio_data(bio, multipath_per_bio_data_size());
+पूर्ण
 
-static struct dm_bio_details *get_bio_details_from_mpio(struct dm_mpath_io *mpio)
-{
+अटल काष्ठा dm_bio_details *get_bio_details_from_mpio(काष्ठा dm_mpath_io *mpio)
+अणु
 	/* dm_bio_details is immediately after the dm_mpath_io in bio's per-bio-data */
-	void *bio_details = mpio + 1;
-	return bio_details;
-}
+	व्योम *bio_details = mpio + 1;
+	वापस bio_details;
+पूर्ण
 
-static void multipath_init_per_bio_data(struct bio *bio, struct dm_mpath_io **mpio_p)
-{
-	struct dm_mpath_io *mpio = get_mpio_from_bio(bio);
-	struct dm_bio_details *bio_details = get_bio_details_from_mpio(mpio);
+अटल व्योम multipath_init_per_bio_data(काष्ठा bio *bio, काष्ठा dm_mpath_io **mpio_p)
+अणु
+	काष्ठा dm_mpath_io *mpio = get_mpio_from_bio(bio);
+	काष्ठा dm_bio_details *bio_details = get_bio_details_from_mpio(mpio);
 
 	mpio->nr_bytes = bio->bi_iter.bi_size;
-	mpio->pgpath = NULL;
+	mpio->pgpath = शून्य;
 	*mpio_p = mpio;
 
 	dm_bio_record(bio_details, bio);
-}
+पूर्ण
 
 /*-----------------------------------------------
  * Path selection
  *-----------------------------------------------*/
 
-static int __pg_init_all_paths(struct multipath *m)
-{
-	struct pgpath *pgpath;
-	unsigned long pg_init_delay = 0;
+अटल पूर्णांक __pg_init_all_paths(काष्ठा multipath *m)
+अणु
+	काष्ठा pgpath *pgpath;
+	अचिन्हित दीर्घ pg_init_delay = 0;
 
-	lockdep_assert_held(&m->lock);
+	lockdep_निश्चित_held(&m->lock);
 
-	if (atomic_read(&m->pg_init_in_progress) || test_bit(MPATHF_PG_INIT_DISABLED, &m->flags))
-		return 0;
+	अगर (atomic_पढ़ो(&m->pg_init_in_progress) || test_bit(MPATHF_PG_INIT_DISABLED, &m->flags))
+		वापस 0;
 
 	atomic_inc(&m->pg_init_count);
 	clear_bit(MPATHF_PG_INIT_REQUIRED, &m->flags);
 
 	/* Check here to reset pg_init_required */
-	if (!m->current_pg)
-		return 0;
+	अगर (!m->current_pg)
+		वापस 0;
 
-	if (test_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags))
-		pg_init_delay = msecs_to_jiffies(m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT ?
+	अगर (test_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags))
+		pg_init_delay = msecs_to_jअगरfies(m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT ?
 						 m->pg_init_delay_msecs : DM_PG_INIT_DELAY_MSECS);
-	list_for_each_entry(pgpath, &m->current_pg->pgpaths, list) {
+	list_क्रम_each_entry(pgpath, &m->current_pg->pgpaths, list) अणु
 		/* Skip failed paths */
-		if (!pgpath->is_active)
-			continue;
-		if (queue_delayed_work(kmpath_handlerd, &pgpath->activate_path,
+		अगर (!pgpath->is_active)
+			जारी;
+		अगर (queue_delayed_work(kmpath_handlerd, &pgpath->activate_path,
 				       pg_init_delay))
 			atomic_inc(&m->pg_init_in_progress);
-	}
-	return atomic_read(&m->pg_init_in_progress);
-}
+	पूर्ण
+	वापस atomic_पढ़ो(&m->pg_init_in_progress);
+पूर्ण
 
-static int pg_init_all_paths(struct multipath *m)
-{
-	int ret;
-	unsigned long flags;
+अटल पूर्णांक pg_init_all_paths(काष्ठा multipath *m)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&m->lock, flags);
 	ret = __pg_init_all_paths(m);
 	spin_unlock_irqrestore(&m->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __switch_pg(struct multipath *m, struct priority_group *pg)
-{
-	lockdep_assert_held(&m->lock);
+अटल व्योम __चयन_pg(काष्ठा multipath *m, काष्ठा priority_group *pg)
+अणु
+	lockdep_निश्चित_held(&m->lock);
 
 	m->current_pg = pg;
 
-	/* Must we initialise the PG first, and queue I/O till it's ready? */
-	if (m->hw_handler_name) {
+	/* Must we initialise the PG first, and queue I/O till it's पढ़ोy? */
+	अगर (m->hw_handler_name) अणु
 		set_bit(MPATHF_PG_INIT_REQUIRED, &m->flags);
 		set_bit(MPATHF_QUEUE_IO, &m->flags);
-	} else {
+	पूर्ण अन्यथा अणु
 		clear_bit(MPATHF_PG_INIT_REQUIRED, &m->flags);
 		clear_bit(MPATHF_QUEUE_IO, &m->flags);
-	}
+	पूर्ण
 
 	atomic_set(&m->pg_init_count, 0);
-}
+पूर्ण
 
-static struct pgpath *choose_path_in_pg(struct multipath *m,
-					struct priority_group *pg,
-					size_t nr_bytes)
-{
-	unsigned long flags;
-	struct dm_path *path;
-	struct pgpath *pgpath;
+अटल काष्ठा pgpath *choose_path_in_pg(काष्ठा multipath *m,
+					काष्ठा priority_group *pg,
+					माप_प्रकार nr_bytes)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा dm_path *path;
+	काष्ठा pgpath *pgpath;
 
 	path = pg->ps.type->select_path(&pg->ps, nr_bytes);
-	if (!path)
-		return ERR_PTR(-ENXIO);
+	अगर (!path)
+		वापस ERR_PTR(-ENXIO);
 
 	pgpath = path_to_pgpath(path);
 
-	if (unlikely(READ_ONCE(m->current_pg) != pg)) {
-		/* Only update current_pgpath if pg changed */
+	अगर (unlikely(READ_ONCE(m->current_pg) != pg)) अणु
+		/* Only update current_pgpath अगर pg changed */
 		spin_lock_irqsave(&m->lock, flags);
 		m->current_pgpath = pgpath;
-		__switch_pg(m, pg);
+		__चयन_pg(m, pg);
 		spin_unlock_irqrestore(&m->lock, flags);
-	}
+	पूर्ण
 
-	return pgpath;
-}
+	वापस pgpath;
+पूर्ण
 
-static struct pgpath *choose_pgpath(struct multipath *m, size_t nr_bytes)
-{
-	unsigned long flags;
-	struct priority_group *pg;
-	struct pgpath *pgpath;
-	unsigned bypassed = 1;
+अटल काष्ठा pgpath *choose_pgpath(काष्ठा multipath *m, माप_प्रकार nr_bytes)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा priority_group *pg;
+	काष्ठा pgpath *pgpath;
+	अचिन्हित bypassed = 1;
 
-	if (!atomic_read(&m->nr_valid_paths)) {
+	अगर (!atomic_पढ़ो(&m->nr_valid_paths)) अणु
 		spin_lock_irqsave(&m->lock, flags);
 		clear_bit(MPATHF_QUEUE_IO, &m->flags);
 		spin_unlock_irqrestore(&m->lock, flags);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	/* Were we instructed to switch PG? */
-	if (READ_ONCE(m->next_pg)) {
+	/* Were we inकाष्ठाed to चयन PG? */
+	अगर (READ_ONCE(m->next_pg)) अणु
 		spin_lock_irqsave(&m->lock, flags);
 		pg = m->next_pg;
-		if (!pg) {
+		अगर (!pg) अणु
 			spin_unlock_irqrestore(&m->lock, flags);
-			goto check_current_pg;
-		}
-		m->next_pg = NULL;
+			जाओ check_current_pg;
+		पूर्ण
+		m->next_pg = शून्य;
 		spin_unlock_irqrestore(&m->lock, flags);
 		pgpath = choose_path_in_pg(m, pg, nr_bytes);
-		if (!IS_ERR_OR_NULL(pgpath))
-			return pgpath;
-	}
+		अगर (!IS_ERR_OR_शून्य(pgpath))
+			वापस pgpath;
+	पूर्ण
 
-	/* Don't change PG until it has no remaining paths */
+	/* Don't change PG until it has no reमुख्यing paths */
 check_current_pg:
 	pg = READ_ONCE(m->current_pg);
-	if (pg) {
+	अगर (pg) अणु
 		pgpath = choose_path_in_pg(m, pg, nr_bytes);
-		if (!IS_ERR_OR_NULL(pgpath))
-			return pgpath;
-	}
+		अगर (!IS_ERR_OR_शून्य(pgpath))
+			वापस pgpath;
+	पूर्ण
 
 	/*
 	 * Loop through priority groups until we find a valid path.
-	 * First time we skip PGs marked 'bypassed'.
-	 * Second time we only try the ones we skipped, but set
-	 * pg_init_delay_retry so we do not hammer controllers.
+	 * First समय we skip PGs marked 'bypassed'.
+	 * Second समय we only try the ones we skipped, but set
+	 * pg_init_delay_retry so we करो not hammer controllers.
 	 */
-	do {
-		list_for_each_entry(pg, &m->priority_groups, list) {
-			if (pg->bypassed == !!bypassed)
-				continue;
+	करो अणु
+		list_क्रम_each_entry(pg, &m->priority_groups, list) अणु
+			अगर (pg->bypassed == !!bypassed)
+				जारी;
 			pgpath = choose_path_in_pg(m, pg, nr_bytes);
-			if (!IS_ERR_OR_NULL(pgpath)) {
-				if (!bypassed) {
+			अगर (!IS_ERR_OR_शून्य(pgpath)) अणु
+				अगर (!bypassed) अणु
 					spin_lock_irqsave(&m->lock, flags);
 					set_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
 					spin_unlock_irqrestore(&m->lock, flags);
-				}
-				return pgpath;
-			}
-		}
-	} while (bypassed--);
+				पूर्ण
+				वापस pgpath;
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (bypassed--);
 
 failed:
 	spin_lock_irqsave(&m->lock, flags);
-	m->current_pgpath = NULL;
-	m->current_pg = NULL;
+	m->current_pgpath = शून्य;
+	m->current_pg = शून्य;
 	spin_unlock_irqrestore(&m->lock, flags);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * dm_report_EIO() is a macro instead of a function to make pr_debug_ratelimited()
  * report the function name and line number of the function from which
  * it has been invoked.
  */
-#define dm_report_EIO(m)						\
-do {									\
+#घोषणा dm_report_EIO(m)						\
+करो अणु									\
 	DMDEBUG_LIMIT("%s: returning EIO; QIFNP = %d; SQIFNP = %d; DNFS = %d", \
 		      dm_table_device_name((m)->ti->table),		\
 		      test_bit(MPATHF_QUEUE_IF_NO_PATH, &(m)->flags),	\
 		      test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &(m)->flags), \
 		      dm_noflush_suspending((m)->ti));			\
-} while (0)
+पूर्ण जबतक (0)
 
 /*
  * Check whether bios must be queued in the device-mapper core rather
  * than here in the target.
  */
-static bool __must_push_back(struct multipath *m)
-{
-	return dm_noflush_suspending(m->ti);
-}
+अटल bool __must_push_back(काष्ठा multipath *m)
+अणु
+	वापस dm_noflush_suspending(m->ti);
+पूर्ण
 
-static bool must_push_back_rq(struct multipath *m)
-{
-	unsigned long flags;
+अटल bool must_push_back_rq(काष्ठा multipath *m)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool ret;
 
 	spin_lock_irqsave(&m->lock, flags);
 	ret = (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) || __must_push_back(m));
 	spin_unlock_irqrestore(&m->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Map cloned requests (request-based multipath)
  */
-static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
-				   union map_info *map_context,
-				   struct request **__clone)
-{
-	struct multipath *m = ti->private;
-	size_t nr_bytes = blk_rq_bytes(rq);
-	struct pgpath *pgpath;
-	struct block_device *bdev;
-	struct dm_mpath_io *mpio = get_mpio(map_context);
-	struct request_queue *q;
-	struct request *clone;
+अटल पूर्णांक multipath_clone_and_map(काष्ठा dm_target *ti, काष्ठा request *rq,
+				   जोड़ map_info *map_context,
+				   काष्ठा request **__clone)
+अणु
+	काष्ठा multipath *m = ti->निजी;
+	माप_प्रकार nr_bytes = blk_rq_bytes(rq);
+	काष्ठा pgpath *pgpath;
+	काष्ठा block_device *bdev;
+	काष्ठा dm_mpath_io *mpio = get_mpio(map_context);
+	काष्ठा request_queue *q;
+	काष्ठा request *clone;
 
 	/* Do we need to select a new pgpath? */
 	pgpath = READ_ONCE(m->current_pgpath);
-	if (!pgpath || !mpath_double_check_test_bit(MPATHF_QUEUE_IO, m))
+	अगर (!pgpath || !mpath_द्विगुन_check_test_bit(MPATHF_QUEUE_IO, m))
 		pgpath = choose_pgpath(m, nr_bytes);
 
-	if (!pgpath) {
-		if (must_push_back_rq(m))
-			return DM_MAPIO_DELAY_REQUEUE;
+	अगर (!pgpath) अणु
+		अगर (must_push_back_rq(m))
+			वापस DM_MAPIO_DELAY_REQUEUE;
 		dm_report_EIO(m);	/* Failed */
-		return DM_MAPIO_KILL;
-	} else if (mpath_double_check_test_bit(MPATHF_QUEUE_IO, m) ||
-		   mpath_double_check_test_bit(MPATHF_PG_INIT_REQUIRED, m)) {
+		वापस DM_MAPIO_KILL;
+	पूर्ण अन्यथा अगर (mpath_द्विगुन_check_test_bit(MPATHF_QUEUE_IO, m) ||
+		   mpath_द्विगुन_check_test_bit(MPATHF_PG_INIT_REQUIRED, m)) अणु
 		pg_init_all_paths(m);
-		return DM_MAPIO_DELAY_REQUEUE;
-	}
+		वापस DM_MAPIO_DELAY_REQUEUE;
+	पूर्ण
 
 	mpio->pgpath = pgpath;
 	mpio->nr_bytes = nr_bytes;
@@ -532,119 +533,119 @@ static int multipath_clone_and_map(struct dm_target *ti, struct request *rq,
 	q = bdev_get_queue(bdev);
 	clone = blk_get_request(q, rq->cmd_flags | REQ_NOMERGE,
 			BLK_MQ_REQ_NOWAIT);
-	if (IS_ERR(clone)) {
+	अगर (IS_ERR(clone)) अणु
 		/* EBUSY, ENODEV or EWOULDBLOCK: requeue */
-		if (blk_queue_dying(q)) {
+		अगर (blk_queue_dying(q)) अणु
 			atomic_inc(&m->pg_init_in_progress);
 			activate_or_offline_path(pgpath);
-			return DM_MAPIO_DELAY_REQUEUE;
-		}
+			वापस DM_MAPIO_DELAY_REQUEUE;
+		पूर्ण
 
 		/*
 		 * blk-mq's SCHED_RESTART can cover this requeue, so we
 		 * needn't deal with it by DELAY_REQUEUE. More importantly,
-		 * we have to return DM_MAPIO_REQUEUE so that blk-mq can
+		 * we have to वापस DM_MAPIO_REQUEUE so that blk-mq can
 		 * get the queue busy feedback (via BLK_STS_RESOURCE),
 		 * otherwise I/O merging can suffer.
 		 */
-		return DM_MAPIO_REQUEUE;
-	}
-	clone->bio = clone->biotail = NULL;
+		वापस DM_MAPIO_REQUEUE;
+	पूर्ण
+	clone->bio = clone->biotail = शून्य;
 	clone->rq_disk = bdev->bd_disk;
 	clone->cmd_flags |= REQ_FAILFAST_TRANSPORT;
 	*__clone = clone;
 
-	if (pgpath->pg->ps.type->start_io)
+	अगर (pgpath->pg->ps.type->start_io)
 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
 					      &pgpath->path,
 					      nr_bytes);
-	return DM_MAPIO_REMAPPED;
-}
+	वापस DM_MAPIO_REMAPPED;
+पूर्ण
 
-static void multipath_release_clone(struct request *clone,
-				    union map_info *map_context)
-{
-	if (unlikely(map_context)) {
+अटल व्योम multipath_release_clone(काष्ठा request *clone,
+				    जोड़ map_info *map_context)
+अणु
+	अगर (unlikely(map_context)) अणु
 		/*
-		 * non-NULL map_context means caller is still map
-		 * method; must undo multipath_clone_and_map()
+		 * non-शून्य map_context means caller is still map
+		 * method; must unकरो multipath_clone_and_map()
 		 */
-		struct dm_mpath_io *mpio = get_mpio(map_context);
-		struct pgpath *pgpath = mpio->pgpath;
+		काष्ठा dm_mpath_io *mpio = get_mpio(map_context);
+		काष्ठा pgpath *pgpath = mpio->pgpath;
 
-		if (pgpath && pgpath->pg->ps.type->end_io)
+		अगर (pgpath && pgpath->pg->ps.type->end_io)
 			pgpath->pg->ps.type->end_io(&pgpath->pg->ps,
 						    &pgpath->path,
 						    mpio->nr_bytes,
-						    clone->io_start_time_ns);
-	}
+						    clone->io_start_समय_ns);
+	पूर्ण
 
 	blk_put_request(clone);
-}
+पूर्ण
 
 /*
  * Map cloned bios (bio-based multipath)
  */
 
-static void __multipath_queue_bio(struct multipath *m, struct bio *bio)
-{
-	/* Queue for the daemon to resubmit */
+अटल व्योम __multipath_queue_bio(काष्ठा multipath *m, काष्ठा bio *bio)
+अणु
+	/* Queue क्रम the daemon to resubmit */
 	bio_list_add(&m->queued_bios, bio);
-	if (!test_bit(MPATHF_QUEUE_IO, &m->flags))
+	अगर (!test_bit(MPATHF_QUEUE_IO, &m->flags))
 		queue_work(kmultipathd, &m->process_queued_bios);
-}
+पूर्ण
 
-static void multipath_queue_bio(struct multipath *m, struct bio *bio)
-{
-	unsigned long flags;
+अटल व्योम multipath_queue_bio(काष्ठा multipath *m, काष्ठा bio *bio)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&m->lock, flags);
 	__multipath_queue_bio(m, bio);
 	spin_unlock_irqrestore(&m->lock, flags);
-}
+पूर्ण
 
-static struct pgpath *__map_bio(struct multipath *m, struct bio *bio)
-{
-	struct pgpath *pgpath;
-	unsigned long flags;
+अटल काष्ठा pgpath *__map_bio(काष्ठा multipath *m, काष्ठा bio *bio)
+अणु
+	काष्ठा pgpath *pgpath;
+	अचिन्हित दीर्घ flags;
 
 	/* Do we need to select a new pgpath? */
 	pgpath = READ_ONCE(m->current_pgpath);
-	if (!pgpath || !mpath_double_check_test_bit(MPATHF_QUEUE_IO, m))
+	अगर (!pgpath || !mpath_द्विगुन_check_test_bit(MPATHF_QUEUE_IO, m))
 		pgpath = choose_pgpath(m, bio->bi_iter.bi_size);
 
-	if (!pgpath) {
+	अगर (!pgpath) अणु
 		spin_lock_irqsave(&m->lock, flags);
-		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
+		अगर (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) अणु
 			__multipath_queue_bio(m, bio);
 			pgpath = ERR_PTR(-EAGAIN);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&m->lock, flags);
 
-	} else if (mpath_double_check_test_bit(MPATHF_QUEUE_IO, m) ||
-		   mpath_double_check_test_bit(MPATHF_PG_INIT_REQUIRED, m)) {
+	पूर्ण अन्यथा अगर (mpath_द्विगुन_check_test_bit(MPATHF_QUEUE_IO, m) ||
+		   mpath_द्विगुन_check_test_bit(MPATHF_PG_INIT_REQUIRED, m)) अणु
 		multipath_queue_bio(m, bio);
 		pg_init_all_paths(m);
-		return ERR_PTR(-EAGAIN);
-	}
+		वापस ERR_PTR(-EAGAIN);
+	पूर्ण
 
-	return pgpath;
-}
+	वापस pgpath;
+पूर्ण
 
-static int __multipath_map_bio(struct multipath *m, struct bio *bio,
-			       struct dm_mpath_io *mpio)
-{
-	struct pgpath *pgpath = __map_bio(m, bio);
+अटल पूर्णांक __multipath_map_bio(काष्ठा multipath *m, काष्ठा bio *bio,
+			       काष्ठा dm_mpath_io *mpio)
+अणु
+	काष्ठा pgpath *pgpath = __map_bio(m, bio);
 
-	if (IS_ERR(pgpath))
-		return DM_MAPIO_SUBMITTED;
+	अगर (IS_ERR(pgpath))
+		वापस DM_MAPIO_SUBMITTED;
 
-	if (!pgpath) {
-		if (__must_push_back(m))
-			return DM_MAPIO_REQUEUE;
+	अगर (!pgpath) अणु
+		अगर (__must_push_back(m))
+			वापस DM_MAPIO_REQUEUE;
 		dm_report_EIO(m);
-		return DM_MAPIO_KILL;
-	}
+		वापस DM_MAPIO_KILL;
+	पूर्ण
 
 	mpio->pgpath = pgpath;
 
@@ -652,48 +653,48 @@ static int __multipath_map_bio(struct multipath *m, struct bio *bio,
 	bio_set_dev(bio, pgpath->path.dev->bdev);
 	bio->bi_opf |= REQ_FAILFAST_TRANSPORT;
 
-	if (pgpath->pg->ps.type->start_io)
+	अगर (pgpath->pg->ps.type->start_io)
 		pgpath->pg->ps.type->start_io(&pgpath->pg->ps,
 					      &pgpath->path,
 					      mpio->nr_bytes);
-	return DM_MAPIO_REMAPPED;
-}
+	वापस DM_MAPIO_REMAPPED;
+पूर्ण
 
-static int multipath_map_bio(struct dm_target *ti, struct bio *bio)
-{
-	struct multipath *m = ti->private;
-	struct dm_mpath_io *mpio = NULL;
+अटल पूर्णांक multipath_map_bio(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	काष्ठा multipath *m = ti->निजी;
+	काष्ठा dm_mpath_io *mpio = शून्य;
 
 	multipath_init_per_bio_data(bio, &mpio);
-	return __multipath_map_bio(m, bio, mpio);
-}
+	वापस __multipath_map_bio(m, bio, mpio);
+पूर्ण
 
-static void process_queued_io_list(struct multipath *m)
-{
-	if (m->queue_mode == DM_TYPE_REQUEST_BASED)
+अटल व्योम process_queued_io_list(काष्ठा multipath *m)
+अणु
+	अगर (m->queue_mode == DM_TYPE_REQUEST_BASED)
 		dm_mq_kick_requeue_list(dm_table_get_md(m->ti->table));
-	else if (m->queue_mode == DM_TYPE_BIO_BASED)
+	अन्यथा अगर (m->queue_mode == DM_TYPE_BIO_BASED)
 		queue_work(kmultipathd, &m->process_queued_bios);
-}
+पूर्ण
 
-static void process_queued_bios(struct work_struct *work)
-{
-	int r;
-	unsigned long flags;
-	struct bio *bio;
-	struct bio_list bios;
-	struct blk_plug plug;
-	struct multipath *m =
-		container_of(work, struct multipath, process_queued_bios);
+अटल व्योम process_queued_bios(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक r;
+	अचिन्हित दीर्घ flags;
+	काष्ठा bio *bio;
+	काष्ठा bio_list bios;
+	काष्ठा blk_plug plug;
+	काष्ठा multipath *m =
+		container_of(work, काष्ठा multipath, process_queued_bios);
 
 	bio_list_init(&bios);
 
 	spin_lock_irqsave(&m->lock, flags);
 
-	if (bio_list_empty(&m->queued_bios)) {
+	अगर (bio_list_empty(&m->queued_bios)) अणु
 		spin_unlock_irqrestore(&m->lock, flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	bio_list_merge(&bios, &m->queued_bios);
 	bio_list_init(&m->queued_bios);
@@ -701,60 +702,60 @@ static void process_queued_bios(struct work_struct *work)
 	spin_unlock_irqrestore(&m->lock, flags);
 
 	blk_start_plug(&plug);
-	while ((bio = bio_list_pop(&bios))) {
-		struct dm_mpath_io *mpio = get_mpio_from_bio(bio);
+	जबतक ((bio = bio_list_pop(&bios))) अणु
+		काष्ठा dm_mpath_io *mpio = get_mpio_from_bio(bio);
 		dm_bio_restore(get_bio_details_from_mpio(mpio), bio);
 		r = __multipath_map_bio(m, bio, mpio);
-		switch (r) {
-		case DM_MAPIO_KILL:
+		चयन (r) अणु
+		हाल DM_MAPIO_KILL:
 			bio->bi_status = BLK_STS_IOERR;
 			bio_endio(bio);
-			break;
-		case DM_MAPIO_REQUEUE:
+			अवरोध;
+		हाल DM_MAPIO_REQUEUE:
 			bio->bi_status = BLK_STS_DM_REQUEUE;
 			bio_endio(bio);
-			break;
-		case DM_MAPIO_REMAPPED:
+			अवरोध;
+		हाल DM_MAPIO_REMAPPED:
 			submit_bio_noacct(bio);
-			break;
-		case DM_MAPIO_SUBMITTED:
-			break;
-		default:
+			अवरोध;
+		हाल DM_MAPIO_SUBMITTED:
+			अवरोध;
+		शेष:
 			WARN_ONCE(true, "__multipath_map_bio() returned %d\n", r);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	blk_finish_plug(&plug);
-}
+पूर्ण
 
 /*
  * If we run out of usable paths, should we queue I/O or error it?
  */
-static int queue_if_no_path(struct multipath *m, bool queue_if_no_path,
-			    bool save_old_value, const char *caller)
-{
-	unsigned long flags;
-	bool queue_if_no_path_bit, saved_queue_if_no_path_bit;
-	const char *dm_dev_name = dm_table_device_name(m->ti->table);
+अटल पूर्णांक queue_अगर_no_path(काष्ठा multipath *m, bool queue_अगर_no_path,
+			    bool save_old_value, स्थिर अक्षर *caller)
+अणु
+	अचिन्हित दीर्घ flags;
+	bool queue_अगर_no_path_bit, saved_queue_अगर_no_path_bit;
+	स्थिर अक्षर *dm_dev_name = dm_table_device_name(m->ti->table);
 
 	DMDEBUG("%s: %s caller=%s queue_if_no_path=%d save_old_value=%d",
-		dm_dev_name, __func__, caller, queue_if_no_path, save_old_value);
+		dm_dev_name, __func__, caller, queue_अगर_no_path, save_old_value);
 
 	spin_lock_irqsave(&m->lock, flags);
 
-	queue_if_no_path_bit = test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
-	saved_queue_if_no_path_bit = test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
+	queue_अगर_no_path_bit = test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
+	saved_queue_अगर_no_path_bit = test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
 
-	if (save_old_value) {
-		if (unlikely(!queue_if_no_path_bit && saved_queue_if_no_path_bit)) {
+	अगर (save_old_value) अणु
+		अगर (unlikely(!queue_अगर_no_path_bit && saved_queue_अगर_no_path_bit)) अणु
 			DMERR("%s: QIFNP disabled but saved as enabled, saving again loses state, not saving!",
 			      dm_dev_name);
-		} else
-			assign_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags, queue_if_no_path_bit);
-	} else if (!queue_if_no_path && saved_queue_if_no_path_bit) {
+		पूर्ण अन्यथा
+			assign_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags, queue_अगर_no_path_bit);
+	पूर्ण अन्यथा अगर (!queue_अगर_no_path && saved_queue_अगर_no_path_bit) अणु
 		/* due to "fail_if_no_path" message, need to honor it. */
 		clear_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
-	}
-	assign_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags, queue_if_no_path);
+	पूर्ण
+	assign_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags, queue_अगर_no_path);
 
 	DMDEBUG("%s: after %s changes; QIFNP = %d; SQIFNP = %d; DNFS = %d",
 		dm_dev_name, __func__,
@@ -764,65 +765,65 @@ static int queue_if_no_path(struct multipath *m, bool queue_if_no_path,
 
 	spin_unlock_irqrestore(&m->lock, flags);
 
-	if (!queue_if_no_path) {
+	अगर (!queue_अगर_no_path) अणु
 		dm_table_run_md_queue_async(m->ti->table);
 		process_queued_io_list(m);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * If the queue_if_no_path timeout fires, turn off queue_if_no_path and
+ * If the queue_अगर_no_path समयout fires, turn off queue_अगर_no_path and
  * process any queued I/O.
  */
-static void queue_if_no_path_timeout_work(struct timer_list *t)
-{
-	struct multipath *m = from_timer(m, t, nopath_timer);
+अटल व्योम queue_अगर_no_path_समयout_work(काष्ठा समयr_list *t)
+अणु
+	काष्ठा multipath *m = from_समयr(m, t, nopath_समयr);
 
 	DMWARN("queue_if_no_path timeout on %s, failing queued IO",
 	       dm_table_device_name(m->ti->table));
-	queue_if_no_path(m, false, false, __func__);
-}
+	queue_अगर_no_path(m, false, false, __func__);
+पूर्ण
 
 /*
- * Enable the queue_if_no_path timeout if necessary.
+ * Enable the queue_अगर_no_path समयout अगर necessary.
  * Called with m->lock held.
  */
-static void enable_nopath_timeout(struct multipath *m)
-{
-	unsigned long queue_if_no_path_timeout =
-		READ_ONCE(queue_if_no_path_timeout_secs) * HZ;
+अटल व्योम enable_nopath_समयout(काष्ठा multipath *m)
+अणु
+	अचिन्हित दीर्घ queue_अगर_no_path_समयout =
+		READ_ONCE(queue_अगर_no_path_समयout_secs) * HZ;
 
-	lockdep_assert_held(&m->lock);
+	lockdep_निश्चित_held(&m->lock);
 
-	if (queue_if_no_path_timeout > 0 &&
-	    atomic_read(&m->nr_valid_paths) == 0 &&
-	    test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
-		mod_timer(&m->nopath_timer,
-			  jiffies + queue_if_no_path_timeout);
-	}
-}
+	अगर (queue_अगर_no_path_समयout > 0 &&
+	    atomic_पढ़ो(&m->nr_valid_paths) == 0 &&
+	    test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) अणु
+		mod_समयr(&m->nopath_समयr,
+			  jअगरfies + queue_अगर_no_path_समयout);
+	पूर्ण
+पूर्ण
 
-static void disable_nopath_timeout(struct multipath *m)
-{
-	del_timer_sync(&m->nopath_timer);
-}
+अटल व्योम disable_nopath_समयout(काष्ठा multipath *m)
+अणु
+	del_समयr_sync(&m->nopath_समयr);
+पूर्ण
 
 /*
  * An event is triggered whenever a path is taken out of use.
  * Includes path failure and PG bypass.
  */
-static void trigger_event(struct work_struct *work)
-{
-	struct multipath *m =
-		container_of(work, struct multipath, trigger_event);
+अटल व्योम trigger_event(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा multipath *m =
+		container_of(work, काष्ठा multipath, trigger_event);
 
 	dm_table_event(m->ti->table);
-}
+पूर्ण
 
 /*-----------------------------------------------------------------
- * Constructor/argument parsing:
+ * Conकाष्ठाor/argument parsing:
  * <#multipath feature args> [<arg>]*
  * <#hw_handler args> [hw_handler [<arg>]*]
  * <#priority groups>
@@ -831,405 +832,405 @@ static void trigger_event(struct work_struct *work)
  *      <#paths> <#per-path selector args>
  *         [<path> [<arg>]* ]+ ]+
  *---------------------------------------------------------------*/
-static int parse_path_selector(struct dm_arg_set *as, struct priority_group *pg,
-			       struct dm_target *ti)
-{
-	int r;
-	struct path_selector_type *pst;
-	unsigned ps_argc;
+अटल पूर्णांक parse_path_selector(काष्ठा dm_arg_set *as, काष्ठा priority_group *pg,
+			       काष्ठा dm_target *ti)
+अणु
+	पूर्णांक r;
+	काष्ठा path_selector_type *pst;
+	अचिन्हित ps_argc;
 
-	static const struct dm_arg _args[] = {
-		{0, 1024, "invalid number of path selector args"},
-	};
+	अटल स्थिर काष्ठा dm_arg _args[] = अणु
+		अणु0, 1024, "invalid number of path selector args"पूर्ण,
+	पूर्ण;
 
-	pst = dm_get_path_selector(dm_shift_arg(as));
-	if (!pst) {
+	pst = dm_get_path_selector(dm_shअगरt_arg(as));
+	अगर (!pst) अणु
 		ti->error = "unknown path selector type";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	r = dm_read_arg_group(_args, as, &ps_argc, &ti->error);
-	if (r) {
+	r = dm_पढ़ो_arg_group(_args, as, &ps_argc, &ti->error);
+	अगर (r) अणु
 		dm_put_path_selector(pst);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	r = pst->create(&pg->ps, ps_argc, as->argv);
-	if (r) {
+	अगर (r) अणु
 		dm_put_path_selector(pst);
 		ti->error = "path selector constructor failed";
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	pg->ps.type = pst;
 	dm_consume_args(as, ps_argc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int setup_scsi_dh(struct block_device *bdev, struct multipath *m,
-			 const char **attached_handler_name, char **error)
-{
-	struct request_queue *q = bdev_get_queue(bdev);
-	int r;
+अटल पूर्णांक setup_scsi_dh(काष्ठा block_device *bdev, काष्ठा multipath *m,
+			 स्थिर अक्षर **attached_handler_name, अक्षर **error)
+अणु
+	काष्ठा request_queue *q = bdev_get_queue(bdev);
+	पूर्णांक r;
 
-	if (mpath_double_check_test_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, m)) {
+	अगर (mpath_द्विगुन_check_test_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, m)) अणु
 retain:
-		if (*attached_handler_name) {
+		अगर (*attached_handler_name) अणु
 			/*
 			 * Clear any hw_handler_params associated with a
-			 * handler that isn't already attached.
+			 * handler that isn't alपढ़ोy attached.
 			 */
-			if (m->hw_handler_name && strcmp(*attached_handler_name, m->hw_handler_name)) {
-				kfree(m->hw_handler_params);
-				m->hw_handler_params = NULL;
-			}
+			अगर (m->hw_handler_name && म_भेद(*attached_handler_name, m->hw_handler_name)) अणु
+				kमुक्त(m->hw_handler_params);
+				m->hw_handler_params = शून्य;
+			पूर्ण
 
 			/*
 			 * Reset hw_handler_name to match the attached handler
 			 *
-			 * NB. This modifies the table line to show the actual
+			 * NB. This modअगरies the table line to show the actual
 			 * handler instead of the original table passed in.
 			 */
-			kfree(m->hw_handler_name);
+			kमुक्त(m->hw_handler_name);
 			m->hw_handler_name = *attached_handler_name;
-			*attached_handler_name = NULL;
-		}
-	}
+			*attached_handler_name = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (m->hw_handler_name) {
+	अगर (m->hw_handler_name) अणु
 		r = scsi_dh_attach(q, m->hw_handler_name);
-		if (r == -EBUSY) {
-			char b[BDEVNAME_SIZE];
+		अगर (r == -EBUSY) अणु
+			अक्षर b[BDEVNAME_SIZE];
 
-			printk(KERN_INFO "dm-mpath: retaining handler on device %s\n",
+			prपूर्णांकk(KERN_INFO "dm-mpath: retaining handler on device %s\n",
 			       bdevname(bdev, b));
-			goto retain;
-		}
-		if (r < 0) {
+			जाओ retain;
+		पूर्ण
+		अगर (r < 0) अणु
 			*error = "error attaching hardware handler";
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
-		if (m->hw_handler_params) {
+		अगर (m->hw_handler_params) अणु
 			r = scsi_dh_set_params(q, m->hw_handler_params);
-			if (r < 0) {
+			अगर (r < 0) अणु
 				*error = "unable to set hardware handler parameters";
-				return r;
-			}
-		}
-	}
+				वापस r;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct pgpath *parse_path(struct dm_arg_set *as, struct path_selector *ps,
-				 struct dm_target *ti)
-{
-	int r;
-	struct pgpath *p;
-	struct multipath *m = ti->private;
-	struct request_queue *q;
-	const char *attached_handler_name = NULL;
+अटल काष्ठा pgpath *parse_path(काष्ठा dm_arg_set *as, काष्ठा path_selector *ps,
+				 काष्ठा dm_target *ti)
+अणु
+	पूर्णांक r;
+	काष्ठा pgpath *p;
+	काष्ठा multipath *m = ti->निजी;
+	काष्ठा request_queue *q;
+	स्थिर अक्षर *attached_handler_name = शून्य;
 
 	/* we need at least a path arg */
-	if (as->argc < 1) {
+	अगर (as->argc < 1) अणु
 		ti->error = "no device given";
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	p = alloc_pgpath();
-	if (!p)
-		return ERR_PTR(-ENOMEM);
+	अगर (!p)
+		वापस ERR_PTR(-ENOMEM);
 
-	r = dm_get_device(ti, dm_shift_arg(as), dm_table_get_mode(ti->table),
+	r = dm_get_device(ti, dm_shअगरt_arg(as), dm_table_get_mode(ti->table),
 			  &p->path.dev);
-	if (r) {
+	अगर (r) अणु
 		ti->error = "error getting device";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	q = bdev_get_queue(p->path.dev->bdev);
 	attached_handler_name = scsi_dh_attached_handler_name(q, GFP_KERNEL);
-	if (attached_handler_name || m->hw_handler_name) {
+	अगर (attached_handler_name || m->hw_handler_name) अणु
 		INIT_DELAYED_WORK(&p->activate_path, activate_path_work);
 		r = setup_scsi_dh(p->path.dev->bdev, m, &attached_handler_name, &ti->error);
-		kfree(attached_handler_name);
-		if (r) {
+		kमुक्त(attached_handler_name);
+		अगर (r) अणु
 			dm_put_device(ti, p->path.dev);
-			goto bad;
-		}
-	}
+			जाओ bad;
+		पूर्ण
+	पूर्ण
 
 	r = ps->type->add_path(ps, &p->path, as->argc, as->argv, &ti->error);
-	if (r) {
+	अगर (r) अणु
 		dm_put_device(ti, p->path.dev);
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	return p;
+	वापस p;
  bad:
-	free_pgpath(p);
-	return ERR_PTR(r);
-}
+	मुक्त_pgpath(p);
+	वापस ERR_PTR(r);
+पूर्ण
 
-static struct priority_group *parse_priority_group(struct dm_arg_set *as,
-						   struct multipath *m)
-{
-	static const struct dm_arg _args[] = {
-		{1, 1024, "invalid number of paths"},
-		{0, 1024, "invalid number of selector args"}
-	};
+अटल काष्ठा priority_group *parse_priority_group(काष्ठा dm_arg_set *as,
+						   काष्ठा multipath *m)
+अणु
+	अटल स्थिर काष्ठा dm_arg _args[] = अणु
+		अणु1, 1024, "invalid number of paths"पूर्ण,
+		अणु0, 1024, "invalid number of selector args"पूर्ण
+	पूर्ण;
 
-	int r;
-	unsigned i, nr_selector_args, nr_args;
-	struct priority_group *pg;
-	struct dm_target *ti = m->ti;
+	पूर्णांक r;
+	अचिन्हित i, nr_selector_args, nr_args;
+	काष्ठा priority_group *pg;
+	काष्ठा dm_target *ti = m->ti;
 
-	if (as->argc < 2) {
+	अगर (as->argc < 2) अणु
 		as->argc = 0;
 		ti->error = "not enough priority group arguments";
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	pg = alloc_priority_group();
-	if (!pg) {
+	अगर (!pg) अणु
 		ti->error = "couldn't allocate priority group";
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	pg->m = m;
 
 	r = parse_path_selector(as, pg, ti);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	/*
-	 * read the paths
+	 * पढ़ो the paths
 	 */
-	r = dm_read_arg(_args, as, &pg->nr_pgpaths, &ti->error);
-	if (r)
-		goto bad;
+	r = dm_पढ़ो_arg(_args, as, &pg->nr_pgpaths, &ti->error);
+	अगर (r)
+		जाओ bad;
 
-	r = dm_read_arg(_args + 1, as, &nr_selector_args, &ti->error);
-	if (r)
-		goto bad;
+	r = dm_पढ़ो_arg(_args + 1, as, &nr_selector_args, &ti->error);
+	अगर (r)
+		जाओ bad;
 
 	nr_args = 1 + nr_selector_args;
-	for (i = 0; i < pg->nr_pgpaths; i++) {
-		struct pgpath *pgpath;
-		struct dm_arg_set path_args;
+	क्रम (i = 0; i < pg->nr_pgpaths; i++) अणु
+		काष्ठा pgpath *pgpath;
+		काष्ठा dm_arg_set path_args;
 
-		if (as->argc < nr_args) {
+		अगर (as->argc < nr_args) अणु
 			ti->error = "not enough path parameters";
 			r = -EINVAL;
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
 		path_args.argc = nr_args;
 		path_args.argv = as->argv;
 
 		pgpath = parse_path(&path_args, &pg->ps, ti);
-		if (IS_ERR(pgpath)) {
+		अगर (IS_ERR(pgpath)) अणु
 			r = PTR_ERR(pgpath);
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
 		pgpath->pg = pg;
 		list_add_tail(&pgpath->list, &pg->pgpaths);
 		dm_consume_args(as, nr_args);
-	}
+	पूर्ण
 
-	return pg;
+	वापस pg;
 
  bad:
-	free_priority_group(pg, ti);
-	return ERR_PTR(r);
-}
+	मुक्त_priority_group(pg, ti);
+	वापस ERR_PTR(r);
+पूर्ण
 
-static int parse_hw_handler(struct dm_arg_set *as, struct multipath *m)
-{
-	unsigned hw_argc;
-	int ret;
-	struct dm_target *ti = m->ti;
+अटल पूर्णांक parse_hw_handler(काष्ठा dm_arg_set *as, काष्ठा multipath *m)
+अणु
+	अचिन्हित hw_argc;
+	पूर्णांक ret;
+	काष्ठा dm_target *ti = m->ti;
 
-	static const struct dm_arg _args[] = {
-		{0, 1024, "invalid number of hardware handler args"},
-	};
+	अटल स्थिर काष्ठा dm_arg _args[] = अणु
+		अणु0, 1024, "invalid number of hardware handler args"पूर्ण,
+	पूर्ण;
 
-	if (dm_read_arg_group(_args, as, &hw_argc, &ti->error))
-		return -EINVAL;
+	अगर (dm_पढ़ो_arg_group(_args, as, &hw_argc, &ti->error))
+		वापस -EINVAL;
 
-	if (!hw_argc)
-		return 0;
+	अगर (!hw_argc)
+		वापस 0;
 
-	if (m->queue_mode == DM_TYPE_BIO_BASED) {
+	अगर (m->queue_mode == DM_TYPE_BIO_BASED) अणु
 		dm_consume_args(as, hw_argc);
 		DMERR("bio-based multipath doesn't allow hardware handler args");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	m->hw_handler_name = kstrdup(dm_shift_arg(as), GFP_KERNEL);
-	if (!m->hw_handler_name)
-		return -EINVAL;
+	m->hw_handler_name = kstrdup(dm_shअगरt_arg(as), GFP_KERNEL);
+	अगर (!m->hw_handler_name)
+		वापस -EINVAL;
 
-	if (hw_argc > 1) {
-		char *p;
-		int i, j, len = 4;
+	अगर (hw_argc > 1) अणु
+		अक्षर *p;
+		पूर्णांक i, j, len = 4;
 
-		for (i = 0; i <= hw_argc - 2; i++)
-			len += strlen(as->argv[i]) + 1;
+		क्रम (i = 0; i <= hw_argc - 2; i++)
+			len += म_माप(as->argv[i]) + 1;
 		p = m->hw_handler_params = kzalloc(len, GFP_KERNEL);
-		if (!p) {
+		अगर (!p) अणु
 			ti->error = "memory allocation failed";
 			ret = -ENOMEM;
-			goto fail;
-		}
-		j = sprintf(p, "%d", hw_argc - 1);
-		for (i = 0, p+=j+1; i <= hw_argc - 2; i++, p+=j+1)
-			j = sprintf(p, "%s", as->argv[i]);
-	}
+			जाओ fail;
+		पूर्ण
+		j = प्र_लिखो(p, "%d", hw_argc - 1);
+		क्रम (i = 0, p+=j+1; i <= hw_argc - 2; i++, p+=j+1)
+			j = प्र_लिखो(p, "%s", as->argv[i]);
+	पूर्ण
 	dm_consume_args(as, hw_argc - 1);
 
-	return 0;
+	वापस 0;
 fail:
-	kfree(m->hw_handler_name);
-	m->hw_handler_name = NULL;
-	return ret;
-}
+	kमुक्त(m->hw_handler_name);
+	m->hw_handler_name = शून्य;
+	वापस ret;
+पूर्ण
 
-static int parse_features(struct dm_arg_set *as, struct multipath *m)
-{
-	int r;
-	unsigned argc;
-	struct dm_target *ti = m->ti;
-	const char *arg_name;
+अटल पूर्णांक parse_features(काष्ठा dm_arg_set *as, काष्ठा multipath *m)
+अणु
+	पूर्णांक r;
+	अचिन्हित argc;
+	काष्ठा dm_target *ti = m->ti;
+	स्थिर अक्षर *arg_name;
 
-	static const struct dm_arg _args[] = {
-		{0, 8, "invalid number of feature args"},
-		{1, 50, "pg_init_retries must be between 1 and 50"},
-		{0, 60000, "pg_init_delay_msecs must be between 0 and 60000"},
-	};
+	अटल स्थिर काष्ठा dm_arg _args[] = अणु
+		अणु0, 8, "invalid number of feature args"पूर्ण,
+		अणु1, 50, "pg_init_retries must be between 1 and 50"पूर्ण,
+		अणु0, 60000, "pg_init_delay_msecs must be between 0 and 60000"पूर्ण,
+	पूर्ण;
 
-	r = dm_read_arg_group(_args, as, &argc, &ti->error);
-	if (r)
-		return -EINVAL;
+	r = dm_पढ़ो_arg_group(_args, as, &argc, &ti->error);
+	अगर (r)
+		वापस -EINVAL;
 
-	if (!argc)
-		return 0;
+	अगर (!argc)
+		वापस 0;
 
-	do {
-		arg_name = dm_shift_arg(as);
+	करो अणु
+		arg_name = dm_shअगरt_arg(as);
 		argc--;
 
-		if (!strcasecmp(arg_name, "queue_if_no_path")) {
-			r = queue_if_no_path(m, true, false, __func__);
-			continue;
-		}
+		अगर (!strहालcmp(arg_name, "queue_if_no_path")) अणु
+			r = queue_अगर_no_path(m, true, false, __func__);
+			जारी;
+		पूर्ण
 
-		if (!strcasecmp(arg_name, "retain_attached_hw_handler")) {
+		अगर (!strहालcmp(arg_name, "retain_attached_hw_handler")) अणु
 			set_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!strcasecmp(arg_name, "pg_init_retries") &&
-		    (argc >= 1)) {
-			r = dm_read_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
+		अगर (!strहालcmp(arg_name, "pg_init_retries") &&
+		    (argc >= 1)) अणु
+			r = dm_पढ़ो_arg(_args + 1, as, &m->pg_init_retries, &ti->error);
 			argc--;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!strcasecmp(arg_name, "pg_init_delay_msecs") &&
-		    (argc >= 1)) {
-			r = dm_read_arg(_args + 2, as, &m->pg_init_delay_msecs, &ti->error);
+		अगर (!strहालcmp(arg_name, "pg_init_delay_msecs") &&
+		    (argc >= 1)) अणु
+			r = dm_पढ़ो_arg(_args + 2, as, &m->pg_init_delay_msecs, &ti->error);
 			argc--;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!strcasecmp(arg_name, "queue_mode") &&
-		    (argc >= 1)) {
-			const char *queue_mode_name = dm_shift_arg(as);
+		अगर (!strहालcmp(arg_name, "queue_mode") &&
+		    (argc >= 1)) अणु
+			स्थिर अक्षर *queue_mode_name = dm_shअगरt_arg(as);
 
-			if (!strcasecmp(queue_mode_name, "bio"))
+			अगर (!strहालcmp(queue_mode_name, "bio"))
 				m->queue_mode = DM_TYPE_BIO_BASED;
-			else if (!strcasecmp(queue_mode_name, "rq") ||
-				 !strcasecmp(queue_mode_name, "mq"))
+			अन्यथा अगर (!strहालcmp(queue_mode_name, "rq") ||
+				 !strहालcmp(queue_mode_name, "mq"))
 				m->queue_mode = DM_TYPE_REQUEST_BASED;
-			else {
+			अन्यथा अणु
 				ti->error = "Unknown 'queue_mode' requested";
 				r = -EINVAL;
-			}
+			पूर्ण
 			argc--;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		ti->error = "Unrecognised multipath feature request";
 		r = -EINVAL;
-	} while (argc && !r);
+	पूर्ण जबतक (argc && !r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int multipath_ctr(struct dm_target *ti, unsigned argc, char **argv)
-{
+अटल पूर्णांक multipath_ctr(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv)
+अणु
 	/* target arguments */
-	static const struct dm_arg _args[] = {
-		{0, 1024, "invalid number of priority groups"},
-		{0, 1024, "invalid initial priority group number"},
-	};
+	अटल स्थिर काष्ठा dm_arg _args[] = अणु
+		अणु0, 1024, "invalid number of priority groups"पूर्ण,
+		अणु0, 1024, "invalid initial priority group number"पूर्ण,
+	पूर्ण;
 
-	int r;
-	struct multipath *m;
-	struct dm_arg_set as;
-	unsigned pg_count = 0;
-	unsigned next_pg_num;
-	unsigned long flags;
+	पूर्णांक r;
+	काष्ठा multipath *m;
+	काष्ठा dm_arg_set as;
+	अचिन्हित pg_count = 0;
+	अचिन्हित next_pg_num;
+	अचिन्हित दीर्घ flags;
 
 	as.argc = argc;
 	as.argv = argv;
 
 	m = alloc_multipath(ti);
-	if (!m) {
+	अगर (!m) अणु
 		ti->error = "can't allocate multipath";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	r = parse_features(&as, m);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	r = alloc_multipath_stage2(ti, m);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
 	r = parse_hw_handler(&as, m);
-	if (r)
-		goto bad;
+	अगर (r)
+		जाओ bad;
 
-	r = dm_read_arg(_args, &as, &m->nr_priority_groups, &ti->error);
-	if (r)
-		goto bad;
+	r = dm_पढ़ो_arg(_args, &as, &m->nr_priority_groups, &ti->error);
+	अगर (r)
+		जाओ bad;
 
-	r = dm_read_arg(_args + 1, &as, &next_pg_num, &ti->error);
-	if (r)
-		goto bad;
+	r = dm_पढ़ो_arg(_args + 1, &as, &next_pg_num, &ti->error);
+	अगर (r)
+		जाओ bad;
 
-	if ((!m->nr_priority_groups && next_pg_num) ||
-	    (m->nr_priority_groups && !next_pg_num)) {
+	अगर ((!m->nr_priority_groups && next_pg_num) ||
+	    (m->nr_priority_groups && !next_pg_num)) अणु
 		ti->error = "invalid initial priority group";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	/* parse the priority groups */
-	while (as.argc) {
-		struct priority_group *pg;
-		unsigned nr_valid_paths = atomic_read(&m->nr_valid_paths);
+	जबतक (as.argc) अणु
+		काष्ठा priority_group *pg;
+		अचिन्हित nr_valid_paths = atomic_पढ़ो(&m->nr_valid_paths);
 
 		pg = parse_priority_group(&as, m);
-		if (IS_ERR(pg)) {
+		अगर (IS_ERR(pg)) अणु
 			r = PTR_ERR(pg);
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 
 		nr_valid_paths += pg->nr_pgpaths;
 		atomic_set(&m->nr_valid_paths, nr_valid_paths);
@@ -1237,99 +1238,99 @@ static int multipath_ctr(struct dm_target *ti, unsigned argc, char **argv)
 		list_add_tail(&pg->list, &m->priority_groups);
 		pg_count++;
 		pg->pg_num = pg_count;
-		if (!--next_pg_num)
+		अगर (!--next_pg_num)
 			m->next_pg = pg;
-	}
+	पूर्ण
 
-	if (pg_count != m->nr_priority_groups) {
+	अगर (pg_count != m->nr_priority_groups) अणु
 		ti->error = "priority group count mismatch";
 		r = -EINVAL;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	spin_lock_irqsave(&m->lock, flags);
-	enable_nopath_timeout(m);
+	enable_nopath_समयout(m);
 	spin_unlock_irqrestore(&m->lock, flags);
 
 	ti->num_flush_bios = 1;
 	ti->num_discard_bios = 1;
-	ti->num_write_same_bios = 1;
-	ti->num_write_zeroes_bios = 1;
-	if (m->queue_mode == DM_TYPE_BIO_BASED)
+	ti->num_ग_लिखो_same_bios = 1;
+	ti->num_ग_लिखो_zeroes_bios = 1;
+	अगर (m->queue_mode == DM_TYPE_BIO_BASED)
 		ti->per_io_data_size = multipath_per_bio_data_size();
-	else
-		ti->per_io_data_size = sizeof(struct dm_mpath_io);
+	अन्यथा
+		ti->per_io_data_size = माप(काष्ठा dm_mpath_io);
 
-	return 0;
+	वापस 0;
 
  bad:
-	free_multipath(m);
-	return r;
-}
+	मुक्त_multipath(m);
+	वापस r;
+पूर्ण
 
-static void multipath_wait_for_pg_init_completion(struct multipath *m)
-{
-	DEFINE_WAIT(wait);
+अटल व्योम multipath_रुको_क्रम_pg_init_completion(काष्ठा multipath *m)
+अणु
+	DEFINE_WAIT(रुको);
 
-	while (1) {
-		prepare_to_wait(&m->pg_init_wait, &wait, TASK_UNINTERRUPTIBLE);
+	जबतक (1) अणु
+		prepare_to_रुको(&m->pg_init_रुको, &रुको, TASK_UNINTERRUPTIBLE);
 
-		if (!atomic_read(&m->pg_init_in_progress))
-			break;
+		अगर (!atomic_पढ़ो(&m->pg_init_in_progress))
+			अवरोध;
 
 		io_schedule();
-	}
-	finish_wait(&m->pg_init_wait, &wait);
-}
+	पूर्ण
+	finish_रुको(&m->pg_init_रुको, &रुको);
+पूर्ण
 
-static void flush_multipath_work(struct multipath *m)
-{
-	if (m->hw_handler_name) {
-		unsigned long flags;
+अटल व्योम flush_multipath_work(काष्ठा multipath *m)
+अणु
+	अगर (m->hw_handler_name) अणु
+		अचिन्हित दीर्घ flags;
 
-		if (!atomic_read(&m->pg_init_in_progress))
-			goto skip;
+		अगर (!atomic_पढ़ो(&m->pg_init_in_progress))
+			जाओ skip;
 
 		spin_lock_irqsave(&m->lock, flags);
-		if (atomic_read(&m->pg_init_in_progress) &&
-		    !test_and_set_bit(MPATHF_PG_INIT_DISABLED, &m->flags)) {
+		अगर (atomic_पढ़ो(&m->pg_init_in_progress) &&
+		    !test_and_set_bit(MPATHF_PG_INIT_DISABLED, &m->flags)) अणु
 			spin_unlock_irqrestore(&m->lock, flags);
 
 			flush_workqueue(kmpath_handlerd);
-			multipath_wait_for_pg_init_completion(m);
+			multipath_रुको_क्रम_pg_init_completion(m);
 
 			spin_lock_irqsave(&m->lock, flags);
 			clear_bit(MPATHF_PG_INIT_DISABLED, &m->flags);
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&m->lock, flags);
-	}
+	पूर्ण
 skip:
-	if (m->queue_mode == DM_TYPE_BIO_BASED)
+	अगर (m->queue_mode == DM_TYPE_BIO_BASED)
 		flush_work(&m->process_queued_bios);
 	flush_work(&m->trigger_event);
-}
+पूर्ण
 
-static void multipath_dtr(struct dm_target *ti)
-{
-	struct multipath *m = ti->private;
+अटल व्योम multipath_dtr(काष्ठा dm_target *ti)
+अणु
+	काष्ठा multipath *m = ti->निजी;
 
-	disable_nopath_timeout(m);
+	disable_nopath_समयout(m);
 	flush_multipath_work(m);
-	free_multipath(m);
-}
+	मुक्त_multipath(m);
+पूर्ण
 
 /*
  * Take a path out of use.
  */
-static int fail_path(struct pgpath *pgpath)
-{
-	unsigned long flags;
-	struct multipath *m = pgpath->pg->m;
+अटल पूर्णांक fail_path(काष्ठा pgpath *pgpath)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा multipath *m = pgpath->pg->m;
 
 	spin_lock_irqsave(&m->lock, flags);
 
-	if (!pgpath->is_active)
-		goto out;
+	अगर (!pgpath->is_active)
+		जाओ out;
 
 	DMWARN("%s: Failing path %s.",
 	       dm_table_device_name(m->ti->table),
@@ -1341,55 +1342,55 @@ static int fail_path(struct pgpath *pgpath)
 
 	atomic_dec(&m->nr_valid_paths);
 
-	if (pgpath == m->current_pgpath)
-		m->current_pgpath = NULL;
+	अगर (pgpath == m->current_pgpath)
+		m->current_pgpath = शून्य;
 
 	dm_path_uevent(DM_UEVENT_PATH_FAILED, m->ti,
-		       pgpath->path.dev->name, atomic_read(&m->nr_valid_paths));
+		       pgpath->path.dev->name, atomic_पढ़ो(&m->nr_valid_paths));
 
 	schedule_work(&m->trigger_event);
 
-	enable_nopath_timeout(m);
+	enable_nopath_समयout(m);
 
 out:
 	spin_unlock_irqrestore(&m->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Reinstate a previously-failed path
  */
-static int reinstate_path(struct pgpath *pgpath)
-{
-	int r = 0, run_queue = 0;
-	unsigned long flags;
-	struct multipath *m = pgpath->pg->m;
-	unsigned nr_valid_paths;
+अटल पूर्णांक reinstate_path(काष्ठा pgpath *pgpath)
+अणु
+	पूर्णांक r = 0, run_queue = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा multipath *m = pgpath->pg->m;
+	अचिन्हित nr_valid_paths;
 
 	spin_lock_irqsave(&m->lock, flags);
 
-	if (pgpath->is_active)
-		goto out;
+	अगर (pgpath->is_active)
+		जाओ out;
 
 	DMWARN("%s: Reinstating path %s.",
 	       dm_table_device_name(m->ti->table),
 	       pgpath->path.dev->name);
 
 	r = pgpath->pg->ps.type->reinstate_path(&pgpath->pg->ps, &pgpath->path);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 
 	pgpath->is_active = true;
 
-	nr_valid_paths = atomic_inc_return(&m->nr_valid_paths);
-	if (nr_valid_paths == 1) {
-		m->current_pgpath = NULL;
+	nr_valid_paths = atomic_inc_वापस(&m->nr_valid_paths);
+	अगर (nr_valid_paths == 1) अणु
+		m->current_pgpath = शून्य;
 		run_queue = 1;
-	} else if (m->hw_handler_name && (m->current_pg == pgpath->pg)) {
-		if (queue_work(kmpath_handlerd, &pgpath->activate_path.work))
+	पूर्ण अन्यथा अगर (m->hw_handler_name && (m->current_pg == pgpath->pg)) अणु
+		अगर (queue_work(kmpath_handlerd, &pgpath->activate_path.work))
 			atomic_inc(&m->pg_init_in_progress);
-	}
+	पूर्ण
 
 	dm_path_uevent(DM_UEVENT_PATH_REINSTATED, m->ti,
 		       pgpath->path.dev->name, nr_valid_paths);
@@ -1398,370 +1399,370 @@ static int reinstate_path(struct pgpath *pgpath)
 
 out:
 	spin_unlock_irqrestore(&m->lock, flags);
-	if (run_queue) {
+	अगर (run_queue) अणु
 		dm_table_run_md_queue_async(m->ti->table);
 		process_queued_io_list(m);
-	}
+	पूर्ण
 
-	if (pgpath->is_active)
-		disable_nopath_timeout(m);
+	अगर (pgpath->is_active)
+		disable_nopath_समयout(m);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * Fail or reinstate all paths that match the provided struct dm_dev.
+ * Fail or reinstate all paths that match the provided काष्ठा dm_dev.
  */
-static int action_dev(struct multipath *m, struct dm_dev *dev,
+अटल पूर्णांक action_dev(काष्ठा multipath *m, काष्ठा dm_dev *dev,
 		      action_fn action)
-{
-	int r = -EINVAL;
-	struct pgpath *pgpath;
-	struct priority_group *pg;
+अणु
+	पूर्णांक r = -EINVAL;
+	काष्ठा pgpath *pgpath;
+	काष्ठा priority_group *pg;
 
-	list_for_each_entry(pg, &m->priority_groups, list) {
-		list_for_each_entry(pgpath, &pg->pgpaths, list) {
-			if (pgpath->path.dev == dev)
+	list_क्रम_each_entry(pg, &m->priority_groups, list) अणु
+		list_क्रम_each_entry(pgpath, &pg->pgpaths, list) अणु
+			अगर (pgpath->path.dev == dev)
 				r = action(pgpath);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * Temporarily try to avoid having to use the specified PG
+ * Temporarily try to aव्योम having to use the specअगरied PG
  */
-static void bypass_pg(struct multipath *m, struct priority_group *pg,
+अटल व्योम bypass_pg(काष्ठा multipath *m, काष्ठा priority_group *pg,
 		      bool bypassed)
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&m->lock, flags);
 
 	pg->bypassed = bypassed;
-	m->current_pgpath = NULL;
-	m->current_pg = NULL;
+	m->current_pgpath = शून्य;
+	m->current_pg = शून्य;
 
 	spin_unlock_irqrestore(&m->lock, flags);
 
 	schedule_work(&m->trigger_event);
-}
+पूर्ण
 
 /*
- * Switch to using the specified PG from the next I/O that gets mapped
+ * Switch to using the specअगरied PG from the next I/O that माला_लो mapped
  */
-static int switch_pg_num(struct multipath *m, const char *pgstr)
-{
-	struct priority_group *pg;
-	unsigned pgnum;
-	unsigned long flags;
-	char dummy;
+अटल पूर्णांक चयन_pg_num(काष्ठा multipath *m, स्थिर अक्षर *pgstr)
+अणु
+	काष्ठा priority_group *pg;
+	अचिन्हित pgnum;
+	अचिन्हित दीर्घ flags;
+	अक्षर dummy;
 
-	if (!pgstr || (sscanf(pgstr, "%u%c", &pgnum, &dummy) != 1) || !pgnum ||
-	    !m->nr_priority_groups || (pgnum > m->nr_priority_groups)) {
+	अगर (!pgstr || (माला_पूछो(pgstr, "%u%c", &pgnum, &dummy) != 1) || !pgnum ||
+	    !m->nr_priority_groups || (pgnum > m->nr_priority_groups)) अणु
 		DMWARN("invalid PG number supplied to switch_pg_num");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&m->lock, flags);
-	list_for_each_entry(pg, &m->priority_groups, list) {
+	list_क्रम_each_entry(pg, &m->priority_groups, list) अणु
 		pg->bypassed = false;
-		if (--pgnum)
-			continue;
+		अगर (--pgnum)
+			जारी;
 
-		m->current_pgpath = NULL;
-		m->current_pg = NULL;
+		m->current_pgpath = शून्य;
+		m->current_pg = शून्य;
 		m->next_pg = pg;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&m->lock, flags);
 
 	schedule_work(&m->trigger_event);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Set/clear bypassed status of a PG.
  * PGs are numbered upwards from 1 in the order they were declared.
  */
-static int bypass_pg_num(struct multipath *m, const char *pgstr, bool bypassed)
-{
-	struct priority_group *pg;
-	unsigned pgnum;
-	char dummy;
+अटल पूर्णांक bypass_pg_num(काष्ठा multipath *m, स्थिर अक्षर *pgstr, bool bypassed)
+अणु
+	काष्ठा priority_group *pg;
+	अचिन्हित pgnum;
+	अक्षर dummy;
 
-	if (!pgstr || (sscanf(pgstr, "%u%c", &pgnum, &dummy) != 1) || !pgnum ||
-	    !m->nr_priority_groups || (pgnum > m->nr_priority_groups)) {
+	अगर (!pgstr || (माला_पूछो(pgstr, "%u%c", &pgnum, &dummy) != 1) || !pgnum ||
+	    !m->nr_priority_groups || (pgnum > m->nr_priority_groups)) अणु
 		DMWARN("invalid PG number supplied to bypass_pg");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	list_for_each_entry(pg, &m->priority_groups, list) {
-		if (!--pgnum)
-			break;
-	}
+	list_क्रम_each_entry(pg, &m->priority_groups, list) अणु
+		अगर (!--pgnum)
+			अवरोध;
+	पूर्ण
 
 	bypass_pg(m, pg, bypassed);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Should we retry pg_init immediately?
  */
-static bool pg_init_limit_reached(struct multipath *m, struct pgpath *pgpath)
-{
-	unsigned long flags;
+अटल bool pg_init_limit_reached(काष्ठा multipath *m, काष्ठा pgpath *pgpath)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool limit_reached = false;
 
 	spin_lock_irqsave(&m->lock, flags);
 
-	if (atomic_read(&m->pg_init_count) <= m->pg_init_retries &&
+	अगर (atomic_पढ़ो(&m->pg_init_count) <= m->pg_init_retries &&
 	    !test_bit(MPATHF_PG_INIT_DISABLED, &m->flags))
 		set_bit(MPATHF_PG_INIT_REQUIRED, &m->flags);
-	else
+	अन्यथा
 		limit_reached = true;
 
 	spin_unlock_irqrestore(&m->lock, flags);
 
-	return limit_reached;
-}
+	वापस limit_reached;
+पूर्ण
 
-static void pg_init_done(void *data, int errors)
-{
-	struct pgpath *pgpath = data;
-	struct priority_group *pg = pgpath->pg;
-	struct multipath *m = pg->m;
-	unsigned long flags;
+अटल व्योम pg_init_करोne(व्योम *data, पूर्णांक errors)
+अणु
+	काष्ठा pgpath *pgpath = data;
+	काष्ठा priority_group *pg = pgpath->pg;
+	काष्ठा multipath *m = pg->m;
+	अचिन्हित दीर्घ flags;
 	bool delay_retry = false;
 
 	/* device or driver problems */
-	switch (errors) {
-	case SCSI_DH_OK:
-		break;
-	case SCSI_DH_NOSYS:
-		if (!m->hw_handler_name) {
+	चयन (errors) अणु
+	हाल SCSI_DH_OK:
+		अवरोध;
+	हाल SCSI_DH_NOSYS:
+		अगर (!m->hw_handler_name) अणु
 			errors = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		DMERR("Could not failover the device: Handler scsi_dh_%s "
 		      "Error %d.", m->hw_handler_name, errors);
 		/*
-		 * Fail path for now, so we do not ping pong
+		 * Fail path क्रम now, so we करो not ping pong
 		 */
 		fail_path(pgpath);
-		break;
-	case SCSI_DH_DEV_TEMP_BUSY:
+		अवरोध;
+	हाल SCSI_DH_DEV_TEMP_BUSY:
 		/*
-		 * Probably doing something like FW upgrade on the
+		 * Probably करोing something like FW upgrade on the
 		 * controller so try the other pg.
 		 */
 		bypass_pg(m, pg, true);
-		break;
-	case SCSI_DH_RETRY:
-		/* Wait before retrying. */
+		अवरोध;
+	हाल SCSI_DH_RETRY:
+		/* Wait beक्रमe retrying. */
 		delay_retry = true;
 		fallthrough;
-	case SCSI_DH_IMM_RETRY:
-	case SCSI_DH_RES_TEMP_UNAVAIL:
-		if (pg_init_limit_reached(m, pgpath))
+	हाल SCSI_DH_IMM_RETRY:
+	हाल SCSI_DH_RES_TEMP_UNAVAIL:
+		अगर (pg_init_limit_reached(m, pgpath))
 			fail_path(pgpath);
 		errors = 0;
-		break;
-	case SCSI_DH_DEV_OFFLINED:
-	default:
+		अवरोध;
+	हाल SCSI_DH_DEV_OFFLINED:
+	शेष:
 		/*
-		 * We probably do not want to fail the path for a device
+		 * We probably करो not want to fail the path क्रम a device
 		 * error, but this is what the old dm did. In future
-		 * patches we can do more advanced handling.
+		 * patches we can करो more advanced handling.
 		 */
 		fail_path(pgpath);
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&m->lock, flags);
-	if (errors) {
-		if (pgpath == m->current_pgpath) {
+	अगर (errors) अणु
+		अगर (pgpath == m->current_pgpath) अणु
 			DMERR("Could not failover device. Error %d.", errors);
-			m->current_pgpath = NULL;
-			m->current_pg = NULL;
-		}
-	} else if (!test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags))
+			m->current_pgpath = शून्य;
+			m->current_pg = शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags))
 		pg->bypassed = false;
 
-	if (atomic_dec_return(&m->pg_init_in_progress) > 0)
+	अगर (atomic_dec_वापस(&m->pg_init_in_progress) > 0)
 		/* Activations of other paths are still on going */
-		goto out;
+		जाओ out;
 
-	if (test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) {
-		if (delay_retry)
+	अगर (test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags)) अणु
+		अगर (delay_retry)
 			set_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
-		else
+		अन्यथा
 			clear_bit(MPATHF_PG_INIT_DELAY_RETRY, &m->flags);
 
-		if (__pg_init_all_paths(m))
-			goto out;
-	}
+		अगर (__pg_init_all_paths(m))
+			जाओ out;
+	पूर्ण
 	clear_bit(MPATHF_QUEUE_IO, &m->flags);
 
 	process_queued_io_list(m);
 
 	/*
-	 * Wake up any thread waiting to suspend.
+	 * Wake up any thपढ़ो रुकोing to suspend.
 	 */
-	wake_up(&m->pg_init_wait);
+	wake_up(&m->pg_init_रुको);
 
 out:
 	spin_unlock_irqrestore(&m->lock, flags);
-}
+पूर्ण
 
-static void activate_or_offline_path(struct pgpath *pgpath)
-{
-	struct request_queue *q = bdev_get_queue(pgpath->path.dev->bdev);
+अटल व्योम activate_or_offline_path(काष्ठा pgpath *pgpath)
+अणु
+	काष्ठा request_queue *q = bdev_get_queue(pgpath->path.dev->bdev);
 
-	if (pgpath->is_active && !blk_queue_dying(q))
-		scsi_dh_activate(q, pg_init_done, pgpath);
-	else
-		pg_init_done(pgpath, SCSI_DH_DEV_OFFLINED);
-}
+	अगर (pgpath->is_active && !blk_queue_dying(q))
+		scsi_dh_activate(q, pg_init_करोne, pgpath);
+	अन्यथा
+		pg_init_करोne(pgpath, SCSI_DH_DEV_OFFLINED);
+पूर्ण
 
-static void activate_path_work(struct work_struct *work)
-{
-	struct pgpath *pgpath =
-		container_of(work, struct pgpath, activate_path.work);
+अटल व्योम activate_path_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pgpath *pgpath =
+		container_of(work, काष्ठा pgpath, activate_path.work);
 
 	activate_or_offline_path(pgpath);
-}
+पूर्ण
 
-static int multipath_end_io(struct dm_target *ti, struct request *clone,
-			    blk_status_t error, union map_info *map_context)
-{
-	struct dm_mpath_io *mpio = get_mpio(map_context);
-	struct pgpath *pgpath = mpio->pgpath;
-	int r = DM_ENDIO_DONE;
+अटल पूर्णांक multipath_end_io(काष्ठा dm_target *ti, काष्ठा request *clone,
+			    blk_status_t error, जोड़ map_info *map_context)
+अणु
+	काष्ठा dm_mpath_io *mpio = get_mpio(map_context);
+	काष्ठा pgpath *pgpath = mpio->pgpath;
+	पूर्णांक r = DM_ENDIO_DONE;
 
 	/*
-	 * We don't queue any clone request inside the multipath target
-	 * during end I/O handling, since those clone requests don't have
+	 * We करोn't queue any clone request inside the multipath target
+	 * during end I/O handling, since those clone requests करोn't have
 	 * bio clones.  If we queue them inside the multipath target,
 	 * we need to make bio clones, that requires memory allocation.
 	 * (See drivers/md/dm-rq.c:end_clone_bio() about why the clone requests
-	 *  don't have bio clones.)
+	 *  करोn't have bio clones.)
 	 * Instead of queueing the clone request here, we queue the original
-	 * request into dm core, which will remake a clone request and
-	 * clone bios for it and resubmit it later.
+	 * request पूर्णांकo dm core, which will remake a clone request and
+	 * clone bios क्रम it and resubmit it later.
 	 */
-	if (error && blk_path_error(error)) {
-		struct multipath *m = ti->private;
+	अगर (error && blk_path_error(error)) अणु
+		काष्ठा multipath *m = ti->निजी;
 
-		if (error == BLK_STS_RESOURCE)
+		अगर (error == BLK_STS_RESOURCE)
 			r = DM_ENDIO_DELAY_REQUEUE;
-		else
+		अन्यथा
 			r = DM_ENDIO_REQUEUE;
 
-		if (pgpath)
+		अगर (pgpath)
 			fail_path(pgpath);
 
-		if (!atomic_read(&m->nr_valid_paths) &&
-		    !must_push_back_rq(m)) {
-			if (error == BLK_STS_IOERR)
+		अगर (!atomic_पढ़ो(&m->nr_valid_paths) &&
+		    !must_push_back_rq(m)) अणु
+			अगर (error == BLK_STS_IOERR)
 				dm_report_EIO(m);
 			/* complete with the original error */
 			r = DM_ENDIO_DONE;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pgpath) {
-		struct path_selector *ps = &pgpath->pg->ps;
+	अगर (pgpath) अणु
+		काष्ठा path_selector *ps = &pgpath->pg->ps;
 
-		if (ps->type->end_io)
+		अगर (ps->type->end_io)
 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes,
-					 clone->io_start_time_ns);
-	}
+					 clone->io_start_समय_ns);
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int multipath_end_io_bio(struct dm_target *ti, struct bio *clone,
+अटल पूर्णांक multipath_end_io_bio(काष्ठा dm_target *ti, काष्ठा bio *clone,
 				blk_status_t *error)
-{
-	struct multipath *m = ti->private;
-	struct dm_mpath_io *mpio = get_mpio_from_bio(clone);
-	struct pgpath *pgpath = mpio->pgpath;
-	unsigned long flags;
-	int r = DM_ENDIO_DONE;
+अणु
+	काष्ठा multipath *m = ti->निजी;
+	काष्ठा dm_mpath_io *mpio = get_mpio_from_bio(clone);
+	काष्ठा pgpath *pgpath = mpio->pgpath;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक r = DM_ENDIO_DONE;
 
-	if (!*error || !blk_path_error(*error))
-		goto done;
+	अगर (!*error || !blk_path_error(*error))
+		जाओ करोne;
 
-	if (pgpath)
+	अगर (pgpath)
 		fail_path(pgpath);
 
-	if (!atomic_read(&m->nr_valid_paths)) {
+	अगर (!atomic_पढ़ो(&m->nr_valid_paths)) अणु
 		spin_lock_irqsave(&m->lock, flags);
-		if (!test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
-			if (__must_push_back(m)) {
+		अगर (!test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) अणु
+			अगर (__must_push_back(m)) अणु
 				r = DM_ENDIO_REQUEUE;
-			} else {
+			पूर्ण अन्यथा अणु
 				dm_report_EIO(m);
 				*error = BLK_STS_IOERR;
-			}
+			पूर्ण
 			spin_unlock_irqrestore(&m->lock, flags);
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		spin_unlock_irqrestore(&m->lock, flags);
-	}
+	पूर्ण
 
 	multipath_queue_bio(m, clone);
 	r = DM_ENDIO_INCOMPLETE;
-done:
-	if (pgpath) {
-		struct path_selector *ps = &pgpath->pg->ps;
+करोne:
+	अगर (pgpath) अणु
+		काष्ठा path_selector *ps = &pgpath->pg->ps;
 
-		if (ps->type->end_io)
+		अगर (ps->type->end_io)
 			ps->type->end_io(ps, &pgpath->path, mpio->nr_bytes,
-					 dm_start_time_ns_from_clone(clone));
-	}
+					 dm_start_समय_ns_from_clone(clone));
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * Suspend with flush can't complete until all the I/O is processed
- * so if the last path fails we must error any remaining I/O.
- * - Note that if the freeze_bdev fails while suspending, the
- *   queue_if_no_path state is lost - userspace should reset it.
- * Otherwise, during noflush suspend, queue_if_no_path will not change.
+ * so अगर the last path fails we must error any reमुख्यing I/O.
+ * - Note that अगर the मुक्तze_bdev fails जबतक suspending, the
+ *   queue_अगर_no_path state is lost - userspace should reset it.
+ * Otherwise, during noflush suspend, queue_अगर_no_path will not change.
  */
-static void multipath_presuspend(struct dm_target *ti)
-{
-	struct multipath *m = ti->private;
+अटल व्योम multipath_presuspend(काष्ठा dm_target *ti)
+अणु
+	काष्ठा multipath *m = ti->निजी;
 
-	/* FIXME: bio-based shouldn't need to always disable queue_if_no_path */
-	if (m->queue_mode == DM_TYPE_BIO_BASED || !dm_noflush_suspending(m->ti))
-		queue_if_no_path(m, false, true, __func__);
-}
+	/* FIXME: bio-based shouldn't need to always disable queue_अगर_no_path */
+	अगर (m->queue_mode == DM_TYPE_BIO_BASED || !dm_noflush_suspending(m->ti))
+		queue_अगर_no_path(m, false, true, __func__);
+पूर्ण
 
-static void multipath_postsuspend(struct dm_target *ti)
-{
-	struct multipath *m = ti->private;
+अटल व्योम multipath_postsuspend(काष्ठा dm_target *ti)
+अणु
+	काष्ठा multipath *m = ti->निजी;
 
 	mutex_lock(&m->work_mutex);
 	flush_multipath_work(m);
 	mutex_unlock(&m->work_mutex);
-}
+पूर्ण
 
 /*
- * Restore the queue_if_no_path setting.
+ * Restore the queue_अगर_no_path setting.
  */
-static void multipath_resume(struct dm_target *ti)
-{
-	struct multipath *m = ti->private;
-	unsigned long flags;
+अटल व्योम multipath_resume(काष्ठा dm_target *ti)
+अणु
+	काष्ठा multipath *m = ti->निजी;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&m->lock, flags);
-	if (test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) {
+	अगर (test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags)) अणु
 		set_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags);
 		clear_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags);
-	}
+	पूर्ण
 
 	DMDEBUG("%s: %s finished; QIFNP = %d; SQIFNP = %d",
 		dm_table_device_name(m->ti->table), __func__,
@@ -1769,10 +1770,10 @@ static void multipath_resume(struct dm_target *ti)
 		test_bit(MPATHF_SAVED_QUEUE_IF_NO_PATH, &m->flags));
 
 	spin_unlock_irqrestore(&m->lock, flags);
-}
+पूर्ण
 
 /*
- * Info output has the following format:
+ * Info output has the following क्रमmat:
  * num_multipath_feature_args [multipath_feature_args]*
  * num_handler_status_args [handler_status_args]*
  * num_groups init_group_number
@@ -1780,194 +1781,194 @@ static void multipath_resume(struct dm_target *ti)
  *             num_paths num_selector_args
  *             [path_dev A|F fail_count [selector_args]* ]+ ]+
  *
- * Table output has the following format (identical to the constructor string):
+ * Table output has the following क्रमmat (identical to the स्थिरructor string):
  * num_feature_args [features_args]*
  * num_handler_args hw_handler [hw_handler_args]*
  * num_groups init_group_number
  *     [priority selector-name num_ps_args [ps_args]*
  *      num_paths num_selector_args [path_dev [selector_args]* ]+ ]+
  */
-static void multipath_status(struct dm_target *ti, status_type_t type,
-			     unsigned status_flags, char *result, unsigned maxlen)
-{
-	int sz = 0;
-	unsigned long flags;
-	struct multipath *m = ti->private;
-	struct priority_group *pg;
-	struct pgpath *p;
-	unsigned pg_num;
-	char state;
+अटल व्योम multipath_status(काष्ठा dm_target *ti, status_type_t type,
+			     अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
+अणु
+	पूर्णांक sz = 0;
+	अचिन्हित दीर्घ flags;
+	काष्ठा multipath *m = ti->निजी;
+	काष्ठा priority_group *pg;
+	काष्ठा pgpath *p;
+	अचिन्हित pg_num;
+	अक्षर state;
 
 	spin_lock_irqsave(&m->lock, flags);
 
 	/* Features */
-	if (type == STATUSTYPE_INFO)
+	अगर (type == STATUSTYPE_INFO)
 		DMEMIT("2 %u %u ", test_bit(MPATHF_QUEUE_IO, &m->flags),
-		       atomic_read(&m->pg_init_count));
-	else {
+		       atomic_पढ़ो(&m->pg_init_count));
+	अन्यथा अणु
 		DMEMIT("%u ", test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags) +
 			      (m->pg_init_retries > 0) * 2 +
 			      (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT) * 2 +
 			      test_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags) +
 			      (m->queue_mode != DM_TYPE_REQUEST_BASED) * 2);
 
-		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
+		अगर (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
 			DMEMIT("queue_if_no_path ");
-		if (m->pg_init_retries)
+		अगर (m->pg_init_retries)
 			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
-		if (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT)
+		अगर (m->pg_init_delay_msecs != DM_PG_INIT_DELAY_DEFAULT)
 			DMEMIT("pg_init_delay_msecs %u ", m->pg_init_delay_msecs);
-		if (test_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags))
+		अगर (test_bit(MPATHF_RETAIN_ATTACHED_HW_HANDLER, &m->flags))
 			DMEMIT("retain_attached_hw_handler ");
-		if (m->queue_mode != DM_TYPE_REQUEST_BASED) {
-			switch(m->queue_mode) {
-			case DM_TYPE_BIO_BASED:
+		अगर (m->queue_mode != DM_TYPE_REQUEST_BASED) अणु
+			चयन(m->queue_mode) अणु
+			हाल DM_TYPE_BIO_BASED:
 				DMEMIT("queue_mode bio ");
-				break;
-			default:
+				अवरोध;
+			शेष:
 				WARN_ON_ONCE(true);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!m->hw_handler_name || type == STATUSTYPE_INFO)
+	अगर (!m->hw_handler_name || type == STATUSTYPE_INFO)
 		DMEMIT("0 ");
-	else
+	अन्यथा
 		DMEMIT("1 %s ", m->hw_handler_name);
 
 	DMEMIT("%u ", m->nr_priority_groups);
 
-	if (m->next_pg)
+	अगर (m->next_pg)
 		pg_num = m->next_pg->pg_num;
-	else if (m->current_pg)
+	अन्यथा अगर (m->current_pg)
 		pg_num = m->current_pg->pg_num;
-	else
+	अन्यथा
 		pg_num = (m->nr_priority_groups ? 1 : 0);
 
 	DMEMIT("%u ", pg_num);
 
-	switch (type) {
-	case STATUSTYPE_INFO:
-		list_for_each_entry(pg, &m->priority_groups, list) {
-			if (pg->bypassed)
+	चयन (type) अणु
+	हाल STATUSTYPE_INFO:
+		list_क्रम_each_entry(pg, &m->priority_groups, list) अणु
+			अगर (pg->bypassed)
 				state = 'D';	/* Disabled */
-			else if (pg == m->current_pg)
+			अन्यथा अगर (pg == m->current_pg)
 				state = 'A';	/* Currently Active */
-			else
+			अन्यथा
 				state = 'E';	/* Enabled */
 
 			DMEMIT("%c ", state);
 
-			if (pg->ps.type->status)
-				sz += pg->ps.type->status(&pg->ps, NULL, type,
+			अगर (pg->ps.type->status)
+				sz += pg->ps.type->status(&pg->ps, शून्य, type,
 							  result + sz,
 							  maxlen - sz);
-			else
+			अन्यथा
 				DMEMIT("0 ");
 
 			DMEMIT("%u %u ", pg->nr_pgpaths,
 			       pg->ps.type->info_args);
 
-			list_for_each_entry(p, &pg->pgpaths, list) {
+			list_क्रम_each_entry(p, &pg->pgpaths, list) अणु
 				DMEMIT("%s %s %u ", p->path.dev->name,
 				       p->is_active ? "A" : "F",
 				       p->fail_count);
-				if (pg->ps.type->status)
+				अगर (pg->ps.type->status)
 					sz += pg->ps.type->status(&pg->ps,
 					      &p->path, type, result + sz,
 					      maxlen - sz);
-			}
-		}
-		break;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case STATUSTYPE_TABLE:
-		list_for_each_entry(pg, &m->priority_groups, list) {
+	हाल STATUSTYPE_TABLE:
+		list_क्रम_each_entry(pg, &m->priority_groups, list) अणु
 			DMEMIT("%s ", pg->ps.type->name);
 
-			if (pg->ps.type->status)
-				sz += pg->ps.type->status(&pg->ps, NULL, type,
+			अगर (pg->ps.type->status)
+				sz += pg->ps.type->status(&pg->ps, शून्य, type,
 							  result + sz,
 							  maxlen - sz);
-			else
+			अन्यथा
 				DMEMIT("0 ");
 
 			DMEMIT("%u %u ", pg->nr_pgpaths,
 			       pg->ps.type->table_args);
 
-			list_for_each_entry(p, &pg->pgpaths, list) {
+			list_क्रम_each_entry(p, &pg->pgpaths, list) अणु
 				DMEMIT("%s ", p->path.dev->name);
-				if (pg->ps.type->status)
+				अगर (pg->ps.type->status)
 					sz += pg->ps.type->status(&pg->ps,
 					      &p->path, type, result + sz,
 					      maxlen - sz);
-			}
-		}
-		break;
-	}
+			पूर्ण
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irqrestore(&m->lock, flags);
-}
+पूर्ण
 
-static int multipath_message(struct dm_target *ti, unsigned argc, char **argv,
-			     char *result, unsigned maxlen)
-{
-	int r = -EINVAL;
-	struct dm_dev *dev;
-	struct multipath *m = ti->private;
+अटल पूर्णांक multipath_message(काष्ठा dm_target *ti, अचिन्हित argc, अक्षर **argv,
+			     अक्षर *result, अचिन्हित maxlen)
+अणु
+	पूर्णांक r = -EINVAL;
+	काष्ठा dm_dev *dev;
+	काष्ठा multipath *m = ti->निजी;
 	action_fn action;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	mutex_lock(&m->work_mutex);
 
-	if (dm_suspended(ti)) {
+	अगर (dm_suspended(ti)) अणु
 		r = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (argc == 1) {
-		if (!strcasecmp(argv[0], "queue_if_no_path")) {
-			r = queue_if_no_path(m, true, false, __func__);
+	अगर (argc == 1) अणु
+		अगर (!strहालcmp(argv[0], "queue_if_no_path")) अणु
+			r = queue_अगर_no_path(m, true, false, __func__);
 			spin_lock_irqsave(&m->lock, flags);
-			enable_nopath_timeout(m);
+			enable_nopath_समयout(m);
 			spin_unlock_irqrestore(&m->lock, flags);
-			goto out;
-		} else if (!strcasecmp(argv[0], "fail_if_no_path")) {
-			r = queue_if_no_path(m, false, false, __func__);
-			disable_nopath_timeout(m);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "fail_if_no_path")) अणु
+			r = queue_अगर_no_path(m, false, false, __func__);
+			disable_nopath_समयout(m);
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (argc != 2) {
+	अगर (argc != 2) अणु
 		DMWARN("Invalid multipath message arguments. Expected 2 arguments, got %d.", argc);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!strcasecmp(argv[0], "disable_group")) {
+	अगर (!strहालcmp(argv[0], "disable_group")) अणु
 		r = bypass_pg_num(m, argv[1], true);
-		goto out;
-	} else if (!strcasecmp(argv[0], "enable_group")) {
+		जाओ out;
+	पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "enable_group")) अणु
 		r = bypass_pg_num(m, argv[1], false);
-		goto out;
-	} else if (!strcasecmp(argv[0], "switch_group")) {
-		r = switch_pg_num(m, argv[1]);
-		goto out;
-	} else if (!strcasecmp(argv[0], "reinstate_path"))
+		जाओ out;
+	पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "switch_group")) अणु
+		r = चयन_pg_num(m, argv[1]);
+		जाओ out;
+	पूर्ण अन्यथा अगर (!strहालcmp(argv[0], "reinstate_path"))
 		action = reinstate_path;
-	else if (!strcasecmp(argv[0], "fail_path"))
+	अन्यथा अगर (!strहालcmp(argv[0], "fail_path"))
 		action = fail_path;
-	else {
+	अन्यथा अणु
 		DMWARN("Unrecognised multipath message received: %s", argv[0]);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	r = dm_get_device(ti, argv[1], dm_table_get_mode(ti->table), &dev);
-	if (r) {
+	अगर (r) अणु
 		DMWARN("message: error getting device %s",
 		       argv[1]);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	r = action_dev(m, dev, action);
 
@@ -1975,166 +1976,166 @@ static int multipath_message(struct dm_target *ti, unsigned argc, char **argv,
 
 out:
 	mutex_unlock(&m->work_mutex);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int multipath_prepare_ioctl(struct dm_target *ti,
-				   struct block_device **bdev)
-{
-	struct multipath *m = ti->private;
-	struct pgpath *pgpath;
-	unsigned long flags;
-	int r;
+अटल पूर्णांक multipath_prepare_ioctl(काष्ठा dm_target *ti,
+				   काष्ठा block_device **bdev)
+अणु
+	काष्ठा multipath *m = ti->निजी;
+	काष्ठा pgpath *pgpath;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक r;
 
 	pgpath = READ_ONCE(m->current_pgpath);
-	if (!pgpath || !mpath_double_check_test_bit(MPATHF_QUEUE_IO, m))
+	अगर (!pgpath || !mpath_द्विगुन_check_test_bit(MPATHF_QUEUE_IO, m))
 		pgpath = choose_pgpath(m, 0);
 
-	if (pgpath) {
-		if (!mpath_double_check_test_bit(MPATHF_QUEUE_IO, m)) {
+	अगर (pgpath) अणु
+		अगर (!mpath_द्विगुन_check_test_bit(MPATHF_QUEUE_IO, m)) अणु
 			*bdev = pgpath->path.dev->bdev;
 			r = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* pg_init has not started or completed */
 			r = -ENOTCONN;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* No path is available */
 		r = -EIO;
 		spin_lock_irqsave(&m->lock, flags);
-		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
+		अगर (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags))
 			r = -ENOTCONN;
 		spin_unlock_irqrestore(&m->lock, flags);
-	}
+	पूर्ण
 
-	if (r == -ENOTCONN) {
-		if (!READ_ONCE(m->current_pg)) {
-			/* Path status changed, redo selection */
-			(void) choose_pgpath(m, 0);
-		}
+	अगर (r == -ENOTCONN) अणु
+		अगर (!READ_ONCE(m->current_pg)) अणु
+			/* Path status changed, reकरो selection */
+			(व्योम) choose_pgpath(m, 0);
+		पूर्ण
 		spin_lock_irqsave(&m->lock, flags);
-		if (test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags))
-			(void) __pg_init_all_paths(m);
+		अगर (test_bit(MPATHF_PG_INIT_REQUIRED, &m->flags))
+			(व्योम) __pg_init_all_paths(m);
 		spin_unlock_irqrestore(&m->lock, flags);
 		dm_table_run_md_queue_async(m->ti->table);
 		process_queued_io_list(m);
-	}
+	पूर्ण
 
 	/*
-	 * Only pass ioctls through if the device sizes match exactly.
+	 * Only pass ioctls through अगर the device sizes match exactly.
 	 */
-	if (!r && ti->len != i_size_read((*bdev)->bd_inode) >> SECTOR_SHIFT)
-		return 1;
-	return r;
-}
+	अगर (!r && ti->len != i_size_पढ़ो((*bdev)->bd_inode) >> SECTOR_SHIFT)
+		वापस 1;
+	वापस r;
+पूर्ण
 
-static int multipath_iterate_devices(struct dm_target *ti,
-				     iterate_devices_callout_fn fn, void *data)
-{
-	struct multipath *m = ti->private;
-	struct priority_group *pg;
-	struct pgpath *p;
-	int ret = 0;
+अटल पूर्णांक multipath_iterate_devices(काष्ठा dm_target *ti,
+				     iterate_devices_callout_fn fn, व्योम *data)
+अणु
+	काष्ठा multipath *m = ti->निजी;
+	काष्ठा priority_group *pg;
+	काष्ठा pgpath *p;
+	पूर्णांक ret = 0;
 
-	list_for_each_entry(pg, &m->priority_groups, list) {
-		list_for_each_entry(p, &pg->pgpaths, list) {
+	list_क्रम_each_entry(pg, &m->priority_groups, list) अणु
+		list_क्रम_each_entry(p, &pg->pgpaths, list) अणु
 			ret = fn(ti, p->path.dev, ti->begin, ti->len, data);
-			if (ret)
-				goto out;
-		}
-	}
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pgpath_busy(struct pgpath *pgpath)
-{
-	struct request_queue *q = bdev_get_queue(pgpath->path.dev->bdev);
+अटल पूर्णांक pgpath_busy(काष्ठा pgpath *pgpath)
+अणु
+	काष्ठा request_queue *q = bdev_get_queue(pgpath->path.dev->bdev);
 
-	return blk_lld_busy(q);
-}
+	वापस blk_lld_busy(q);
+पूर्ण
 
 /*
- * We return "busy", only when we can map I/Os but underlying devices
- * are busy (so even if we map I/Os now, the I/Os will wait on
+ * We वापस "busy", only when we can map I/Os but underlying devices
+ * are busy (so even अगर we map I/Os now, the I/Os will रुको on
  * the underlying queue).
- * In other words, if we want to kill I/Os or queue them inside us
- * due to map unavailability, we don't return "busy".  Otherwise,
- * dm core won't give us the I/Os and we can't do what we want.
+ * In other words, अगर we want to समाप्त I/Os or queue them inside us
+ * due to map unavailability, we करोn't वापस "busy".  Otherwise,
+ * dm core won't give us the I/Os and we can't करो what we want.
  */
-static int multipath_busy(struct dm_target *ti)
-{
+अटल पूर्णांक multipath_busy(काष्ठा dm_target *ti)
+अणु
 	bool busy = false, has_active = false;
-	struct multipath *m = ti->private;
-	struct priority_group *pg, *next_pg;
-	struct pgpath *pgpath;
+	काष्ठा multipath *m = ti->निजी;
+	काष्ठा priority_group *pg, *next_pg;
+	काष्ठा pgpath *pgpath;
 
 	/* pg_init in progress */
-	if (atomic_read(&m->pg_init_in_progress))
-		return true;
+	अगर (atomic_पढ़ो(&m->pg_init_in_progress))
+		वापस true;
 
-	/* no paths available, for blk-mq: rely on IO mapping to delay requeue */
-	if (!atomic_read(&m->nr_valid_paths)) {
-		unsigned long flags;
+	/* no paths available, क्रम blk-mq: rely on IO mapping to delay requeue */
+	अगर (!atomic_पढ़ो(&m->nr_valid_paths)) अणु
+		अचिन्हित दीर्घ flags;
 		spin_lock_irqsave(&m->lock, flags);
-		if (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) {
+		अगर (test_bit(MPATHF_QUEUE_IF_NO_PATH, &m->flags)) अणु
 			spin_unlock_irqrestore(&m->lock, flags);
-			return (m->queue_mode != DM_TYPE_REQUEST_BASED);
-		}
+			वापस (m->queue_mode != DM_TYPE_REQUEST_BASED);
+		पूर्ण
 		spin_unlock_irqrestore(&m->lock, flags);
-	}
+	पूर्ण
 
-	/* Guess which priority_group will be used at next mapping time */
+	/* Guess which priority_group will be used at next mapping समय */
 	pg = READ_ONCE(m->current_pg);
 	next_pg = READ_ONCE(m->next_pg);
-	if (unlikely(!READ_ONCE(m->current_pgpath) && next_pg))
+	अगर (unlikely(!READ_ONCE(m->current_pgpath) && next_pg))
 		pg = next_pg;
 
-	if (!pg) {
+	अगर (!pg) अणु
 		/*
-		 * We don't know which pg will be used at next mapping time.
-		 * We don't call choose_pgpath() here to avoid to trigger
+		 * We करोn't know which pg will be used at next mapping समय.
+		 * We करोn't call choose_pgpath() here to aव्योम to trigger
 		 * pg_init just by busy checking.
-		 * So we don't know whether underlying devices we will be using
-		 * at next mapping time are busy or not. Just try mapping.
+		 * So we करोn't know whether underlying devices we will be using
+		 * at next mapping समय are busy or not. Just try mapping.
 		 */
-		return busy;
-	}
+		वापस busy;
+	पूर्ण
 
 	/*
 	 * If there is one non-busy active path at least, the path selector
 	 * will be able to select it. So we consider such a pg as not busy.
 	 */
 	busy = true;
-	list_for_each_entry(pgpath, &pg->pgpaths, list) {
-		if (pgpath->is_active) {
+	list_क्रम_each_entry(pgpath, &pg->pgpaths, list) अणु
+		अगर (pgpath->is_active) अणु
 			has_active = true;
-			if (!pgpath_busy(pgpath)) {
+			अगर (!pgpath_busy(pgpath)) अणु
 				busy = false;
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!has_active) {
+	अगर (!has_active) अणु
 		/*
 		 * No active path in this pg, so this pg won't be used and
-		 * the current_pg will be changed at next mapping time.
+		 * the current_pg will be changed at next mapping समय.
 		 * We need to try mapping to determine it.
 		 */
 		busy = false;
-	}
+	पूर्ण
 
-	return busy;
-}
+	वापस busy;
+पूर्ण
 
 /*-----------------------------------------------------------------
  * Module setup
  *---------------------------------------------------------------*/
-static struct target_type multipath_target = {
+अटल काष्ठा target_type multipath_target = अणु
 	.name = "multipath",
-	.version = {1, 14, 0},
+	.version = अणु1, 14, 0पूर्ण,
 	.features = DM_TARGET_SINGLETON | DM_TARGET_IMMUTABLE |
 		    DM_TARGET_PASSES_INTEGRITY,
 	.module = THIS_MODULE,
@@ -2153,64 +2154,64 @@ static struct target_type multipath_target = {
 	.prepare_ioctl = multipath_prepare_ioctl,
 	.iterate_devices = multipath_iterate_devices,
 	.busy = multipath_busy,
-};
+पूर्ण;
 
-static int __init dm_multipath_init(void)
-{
-	int r;
+अटल पूर्णांक __init dm_multipath_init(व्योम)
+अणु
+	पूर्णांक r;
 
 	kmultipathd = alloc_workqueue("kmpathd", WQ_MEM_RECLAIM, 0);
-	if (!kmultipathd) {
+	अगर (!kmultipathd) अणु
 		DMERR("failed to create workqueue kmpathd");
 		r = -ENOMEM;
-		goto bad_alloc_kmultipathd;
-	}
+		जाओ bad_alloc_kmultipathd;
+	पूर्ण
 
 	/*
 	 * A separate workqueue is used to handle the device handlers
-	 * to avoid overloading existing workqueue. Overloading the
+	 * to aव्योम overloading existing workqueue. Overloading the
 	 * old workqueue would also create a bottleneck in the
 	 * path of the storage hardware device activation.
 	 */
 	kmpath_handlerd = alloc_ordered_workqueue("kmpath_handlerd",
 						  WQ_MEM_RECLAIM);
-	if (!kmpath_handlerd) {
+	अगर (!kmpath_handlerd) अणु
 		DMERR("failed to create workqueue kmpath_handlerd");
 		r = -ENOMEM;
-		goto bad_alloc_kmpath_handlerd;
-	}
+		जाओ bad_alloc_kmpath_handlerd;
+	पूर्ण
 
-	r = dm_register_target(&multipath_target);
-	if (r < 0) {
+	r = dm_रेजिस्टर_target(&multipath_target);
+	अगर (r < 0) अणु
 		DMERR("request-based register failed %d", r);
 		r = -EINVAL;
-		goto bad_register_target;
-	}
+		जाओ bad_रेजिस्टर_target;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-bad_register_target:
+bad_रेजिस्टर_target:
 	destroy_workqueue(kmpath_handlerd);
 bad_alloc_kmpath_handlerd:
 	destroy_workqueue(kmultipathd);
 bad_alloc_kmultipathd:
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit dm_multipath_exit(void)
-{
+अटल व्योम __निकास dm_multipath_निकास(व्योम)
+अणु
 	destroy_workqueue(kmpath_handlerd);
 	destroy_workqueue(kmultipathd);
 
-	dm_unregister_target(&multipath_target);
-}
+	dm_unरेजिस्टर_target(&multipath_target);
+पूर्ण
 
 module_init(dm_multipath_init);
-module_exit(dm_multipath_exit);
+module_निकास(dm_multipath_निकास);
 
-module_param_named(queue_if_no_path_timeout_secs,
-		   queue_if_no_path_timeout_secs, ulong, S_IRUGO | S_IWUSR);
-MODULE_PARM_DESC(queue_if_no_path_timeout_secs, "No available paths queue IO timeout in seconds");
+module_param_named(queue_अगर_no_path_समयout_secs,
+		   queue_अगर_no_path_समयout_secs, uदीर्घ, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(queue_अगर_no_path_समयout_secs, "No available paths queue IO timeout in seconds");
 
 MODULE_DESCRIPTION(DM_NAME " multipath target");
 MODULE_AUTHOR("Sistina Software <dm-devel@redhat.com>");

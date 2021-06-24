@@ -1,207 +1,208 @@
+<शैली गुरु>
 /*
  * linux/arch/arm/mach-omap2/irq.c
  *
- * Interrupt handler for OMAP2 boards.
+ * Interrupt handler क्रम OMAP2 boards.
  *
  * Copyright (C) 2005 Nokia Corporation
  * Author: Paul Mundt <paul.mundt@nokia.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License. See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License. See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
 
-#include <asm/exception.h>
-#include <linux/irqchip.h>
-#include <linux/irqdomain.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
+#समावेश <यंत्र/exception.h>
+#समावेश <linux/irqchip.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
 
-#include <linux/irqchip/irq-omap-intc.h>
+#समावेश <linux/irqchip/irq-omap-पूर्णांकc.h>
 
-/* selected INTC register offsets */
+/* selected INTC रेजिस्टर offsets */
 
-#define INTC_REVISION		0x0000
-#define INTC_SYSCONFIG		0x0010
-#define INTC_SYSSTATUS		0x0014
-#define INTC_SIR		0x0040
-#define INTC_CONTROL		0x0048
-#define INTC_PROTECTION		0x004C
-#define INTC_IDLE		0x0050
-#define INTC_THRESHOLD		0x0068
-#define INTC_MIR0		0x0084
-#define INTC_MIR_CLEAR0		0x0088
-#define INTC_MIR_SET0		0x008c
-#define INTC_PENDING_IRQ0	0x0098
-#define INTC_PENDING_IRQ1	0x00b8
-#define INTC_PENDING_IRQ2	0x00d8
-#define INTC_PENDING_IRQ3	0x00f8
-#define INTC_ILR0		0x0100
+#घोषणा INTC_REVISION		0x0000
+#घोषणा INTC_SYSCONFIG		0x0010
+#घोषणा INTC_SYSSTATUS		0x0014
+#घोषणा INTC_SIR		0x0040
+#घोषणा INTC_CONTROL		0x0048
+#घोषणा INTC_PROTECTION		0x004C
+#घोषणा INTC_IDLE		0x0050
+#घोषणा INTC_THRESHOLD		0x0068
+#घोषणा INTC_MIR0		0x0084
+#घोषणा INTC_MIR_CLEAR0		0x0088
+#घोषणा INTC_MIR_SET0		0x008c
+#घोषणा INTC_PENDING_IRQ0	0x0098
+#घोषणा INTC_PENDING_IRQ1	0x00b8
+#घोषणा INTC_PENDING_IRQ2	0x00d8
+#घोषणा INTC_PENDING_IRQ3	0x00f8
+#घोषणा INTC_ILR0		0x0100
 
-#define ACTIVEIRQ_MASK		0x7f	/* omap2/3 active interrupt bits */
-#define SPURIOUSIRQ_MASK	(0x1ffffff << 7)
-#define INTCPS_NR_ILR_REGS	128
-#define INTCPS_NR_MIR_REGS	4
+#घोषणा ACTIVEIRQ_MASK		0x7f	/* omap2/3 active पूर्णांकerrupt bits */
+#घोषणा SPURIOUSIRQ_MASK	(0x1ffffff << 7)
+#घोषणा INTCPS_NR_ILR_REGS	128
+#घोषणा INTCPS_NR_MIR_REGS	4
 
-#define INTC_IDLE_FUNCIDLE	(1 << 0)
-#define INTC_IDLE_TURBO		(1 << 1)
+#घोषणा INTC_IDLE_FUNCIDLE	(1 << 0)
+#घोषणा INTC_IDLE_TURBO		(1 << 1)
 
-#define INTC_PROTECTION_ENABLE	(1 << 0)
+#घोषणा INTC_PROTECTION_ENABLE	(1 << 0)
 
-struct omap_intc_regs {
+काष्ठा omap_पूर्णांकc_regs अणु
 	u32 sysconfig;
 	u32 protection;
 	u32 idle;
 	u32 threshold;
 	u32 ilr[INTCPS_NR_ILR_REGS];
 	u32 mir[INTCPS_NR_MIR_REGS];
-};
-static struct omap_intc_regs intc_context;
+पूर्ण;
+अटल काष्ठा omap_पूर्णांकc_regs पूर्णांकc_context;
 
-static struct irq_domain *domain;
-static void __iomem *omap_irq_base;
-static int omap_nr_pending;
-static int omap_nr_irqs;
+अटल काष्ठा irq_करोमुख्य *करोमुख्य;
+अटल व्योम __iomem *omap_irq_base;
+अटल पूर्णांक omap_nr_pending;
+अटल पूर्णांक omap_nr_irqs;
 
-static void intc_writel(u32 reg, u32 val)
-{
-	writel_relaxed(val, omap_irq_base + reg);
-}
+अटल व्योम पूर्णांकc_ग_लिखोl(u32 reg, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, omap_irq_base + reg);
+पूर्ण
 
-static u32 intc_readl(u32 reg)
-{
-	return readl_relaxed(omap_irq_base + reg);
-}
+अटल u32 पूर्णांकc_पढ़ोl(u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(omap_irq_base + reg);
+पूर्ण
 
-void omap_intc_save_context(void)
-{
-	int i;
+व्योम omap_पूर्णांकc_save_context(व्योम)
+अणु
+	पूर्णांक i;
 
-	intc_context.sysconfig =
-		intc_readl(INTC_SYSCONFIG);
-	intc_context.protection =
-		intc_readl(INTC_PROTECTION);
-	intc_context.idle =
-		intc_readl(INTC_IDLE);
-	intc_context.threshold =
-		intc_readl(INTC_THRESHOLD);
+	पूर्णांकc_context.sysconfig =
+		पूर्णांकc_पढ़ोl(INTC_SYSCONFIG);
+	पूर्णांकc_context.protection =
+		पूर्णांकc_पढ़ोl(INTC_PROTECTION);
+	पूर्णांकc_context.idle =
+		पूर्णांकc_पढ़ोl(INTC_IDLE);
+	पूर्णांकc_context.threshold =
+		पूर्णांकc_पढ़ोl(INTC_THRESHOLD);
 
-	for (i = 0; i < omap_nr_irqs; i++)
-		intc_context.ilr[i] =
-			intc_readl((INTC_ILR0 + 0x4 * i));
-	for (i = 0; i < INTCPS_NR_MIR_REGS; i++)
-		intc_context.mir[i] =
-			intc_readl(INTC_MIR0 + (0x20 * i));
-}
+	क्रम (i = 0; i < omap_nr_irqs; i++)
+		पूर्णांकc_context.ilr[i] =
+			पूर्णांकc_पढ़ोl((INTC_ILR0 + 0x4 * i));
+	क्रम (i = 0; i < INTCPS_NR_MIR_REGS; i++)
+		पूर्णांकc_context.mir[i] =
+			पूर्णांकc_पढ़ोl(INTC_MIR0 + (0x20 * i));
+पूर्ण
 
-void omap_intc_restore_context(void)
-{
-	int i;
+व्योम omap_पूर्णांकc_restore_context(व्योम)
+अणु
+	पूर्णांक i;
 
-	intc_writel(INTC_SYSCONFIG, intc_context.sysconfig);
-	intc_writel(INTC_PROTECTION, intc_context.protection);
-	intc_writel(INTC_IDLE, intc_context.idle);
-	intc_writel(INTC_THRESHOLD, intc_context.threshold);
+	पूर्णांकc_ग_लिखोl(INTC_SYSCONFIG, पूर्णांकc_context.sysconfig);
+	पूर्णांकc_ग_लिखोl(INTC_PROTECTION, पूर्णांकc_context.protection);
+	पूर्णांकc_ग_लिखोl(INTC_IDLE, पूर्णांकc_context.idle);
+	पूर्णांकc_ग_लिखोl(INTC_THRESHOLD, पूर्णांकc_context.threshold);
 
-	for (i = 0; i < omap_nr_irqs; i++)
-		intc_writel(INTC_ILR0 + 0x4 * i,
-				intc_context.ilr[i]);
+	क्रम (i = 0; i < omap_nr_irqs; i++)
+		पूर्णांकc_ग_लिखोl(INTC_ILR0 + 0x4 * i,
+				पूर्णांकc_context.ilr[i]);
 
-	for (i = 0; i < INTCPS_NR_MIR_REGS; i++)
-		intc_writel(INTC_MIR0 + 0x20 * i,
-			intc_context.mir[i]);
-	/* MIRs are saved and restore with other PRCM registers */
-}
+	क्रम (i = 0; i < INTCPS_NR_MIR_REGS; i++)
+		पूर्णांकc_ग_लिखोl(INTC_MIR0 + 0x20 * i,
+			पूर्णांकc_context.mir[i]);
+	/* MIRs are saved and restore with other PRCM रेजिस्टरs */
+पूर्ण
 
-void omap3_intc_prepare_idle(void)
-{
+व्योम omap3_पूर्णांकc_prepare_idle(व्योम)
+अणु
 	/*
-	 * Disable autoidle as it can stall interrupt controller,
-	 * cf. errata ID i540 for 3430 (all revisions up to 3.1.x)
+	 * Disable स्वतःidle as it can stall पूर्णांकerrupt controller,
+	 * cf. errata ID i540 क्रम 3430 (all revisions up to 3.1.x)
 	 */
-	intc_writel(INTC_SYSCONFIG, 0);
-	intc_writel(INTC_IDLE, INTC_IDLE_TURBO);
-}
+	पूर्णांकc_ग_लिखोl(INTC_SYSCONFIG, 0);
+	पूर्णांकc_ग_लिखोl(INTC_IDLE, INTC_IDLE_TURBO);
+पूर्ण
 
-void omap3_intc_resume_idle(void)
-{
-	/* Re-enable autoidle */
-	intc_writel(INTC_SYSCONFIG, 1);
-	intc_writel(INTC_IDLE, 0);
-}
+व्योम omap3_पूर्णांकc_resume_idle(व्योम)
+अणु
+	/* Re-enable स्वतःidle */
+	पूर्णांकc_ग_लिखोl(INTC_SYSCONFIG, 1);
+	पूर्णांकc_ग_लिखोl(INTC_IDLE, 0);
+पूर्ण
 
 /* XXX: FIQ and additional INTC support (only MPU at the moment) */
-static void omap_ack_irq(struct irq_data *d)
-{
-	intc_writel(INTC_CONTROL, 0x1);
-}
+अटल व्योम omap_ack_irq(काष्ठा irq_data *d)
+अणु
+	पूर्णांकc_ग_लिखोl(INTC_CONTROL, 0x1);
+पूर्ण
 
-static void omap_mask_ack_irq(struct irq_data *d)
-{
+अटल व्योम omap_mask_ack_irq(काष्ठा irq_data *d)
+अणु
 	irq_gc_mask_disable_reg(d);
 	omap_ack_irq(d);
-}
+पूर्ण
 
-static void __init omap_irq_soft_reset(void)
-{
-	unsigned long tmp;
+अटल व्योम __init omap_irq_soft_reset(व्योम)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
 
-	tmp = intc_readl(INTC_REVISION) & 0xff;
+	पंचांगp = पूर्णांकc_पढ़ोl(INTC_REVISION) & 0xff;
 
 	pr_info("IRQ: Found an INTC at 0x%p (revision %ld.%ld) with %d interrupts\n",
-		omap_irq_base, tmp >> 4, tmp & 0xf, omap_nr_irqs);
+		omap_irq_base, पंचांगp >> 4, पंचांगp & 0xf, omap_nr_irqs);
 
-	tmp = intc_readl(INTC_SYSCONFIG);
-	tmp |= 1 << 1;	/* soft reset */
-	intc_writel(INTC_SYSCONFIG, tmp);
+	पंचांगp = पूर्णांकc_पढ़ोl(INTC_SYSCONFIG);
+	पंचांगp |= 1 << 1;	/* soft reset */
+	पूर्णांकc_ग_लिखोl(INTC_SYSCONFIG, पंचांगp);
 
-	while (!(intc_readl(INTC_SYSSTATUS) & 0x1))
-		/* Wait for reset to complete */;
+	जबतक (!(पूर्णांकc_पढ़ोl(INTC_SYSSTATUS) & 0x1))
+		/* Wait क्रम reset to complete */;
 
-	/* Enable autoidle */
-	intc_writel(INTC_SYSCONFIG, 1 << 0);
-}
+	/* Enable स्वतःidle */
+	पूर्णांकc_ग_लिखोl(INTC_SYSCONFIG, 1 << 0);
+पूर्ण
 
-int omap_irq_pending(void)
-{
-	int i;
+पूर्णांक omap_irq_pending(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < omap_nr_pending; i++)
-		if (intc_readl(INTC_PENDING_IRQ0 + (0x20 * i)))
-			return 1;
-	return 0;
-}
+	क्रम (i = 0; i < omap_nr_pending; i++)
+		अगर (पूर्णांकc_पढ़ोl(INTC_PENDING_IRQ0 + (0x20 * i)))
+			वापस 1;
+	वापस 0;
+पूर्ण
 
-void omap3_intc_suspend(void)
-{
-	/* A pending interrupt would prevent OMAP from entering suspend */
-	omap_ack_irq(NULL);
-}
+व्योम omap3_पूर्णांकc_suspend(व्योम)
+अणु
+	/* A pending पूर्णांकerrupt would prevent OMAP from entering suspend */
+	omap_ack_irq(शून्य);
+पूर्ण
 
-static int __init omap_alloc_gc_of(struct irq_domain *d, void __iomem *base)
-{
-	int ret;
-	int i;
+अटल पूर्णांक __init omap_alloc_gc_of(काष्ठा irq_करोमुख्य *d, व्योम __iomem *base)
+अणु
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	ret = irq_alloc_domain_generic_chips(d, 32, 1, "INTC",
+	ret = irq_alloc_करोमुख्य_generic_chips(d, 32, 1, "INTC",
 			handle_level_irq, IRQ_NOREQUEST | IRQ_NOPROBE,
 			IRQ_LEVEL, 0);
-	if (ret) {
+	अगर (ret) अणु
 		pr_warn("Failed to allocate irq chips\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	for (i = 0; i < omap_nr_pending; i++) {
-		struct irq_chip_generic *gc;
-		struct irq_chip_type *ct;
+	क्रम (i = 0; i < omap_nr_pending; i++) अणु
+		काष्ठा irq_chip_generic *gc;
+		काष्ठा irq_chip_type *ct;
 
-		gc = irq_get_domain_generic_chip(d, 32 * i);
+		gc = irq_get_करोमुख्य_generic_chip(d, 32 * i);
 		gc->reg_base = base;
 		ct = gc->chip_types;
 
@@ -215,16 +216,16 @@ static int __init omap_alloc_gc_of(struct irq_domain *d, void __iomem *base)
 
 		ct->regs.enable = INTC_MIR_CLEAR0 + 32 * i;
 		ct->regs.disable = INTC_MIR_SET0 + 32 * i;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init omap_alloc_gc_legacy(void __iomem *base,
-		unsigned int irq_start, unsigned int num)
-{
-	struct irq_chip_generic *gc;
-	struct irq_chip_type *ct;
+अटल व्योम __init omap_alloc_gc_legacy(व्योम __iomem *base,
+		अचिन्हित पूर्णांक irq_start, अचिन्हित पूर्णांक num)
+अणु
+	काष्ठा irq_chip_generic *gc;
+	काष्ठा irq_chip_type *ct;
 
 	gc = irq_alloc_generic_chip("INTC", 1, irq_start, base,
 			handle_level_irq);
@@ -238,157 +239,157 @@ static void __init omap_alloc_gc_legacy(void __iomem *base,
 	ct->regs.disable = INTC_MIR_SET0;
 	irq_setup_generic_chip(gc, IRQ_MSK(num), IRQ_GC_INIT_MASK_CACHE,
 			IRQ_NOREQUEST | IRQ_NOPROBE, 0);
-}
+पूर्ण
 
-static int __init omap_init_irq_of(struct device_node *node)
-{
-	int ret;
+अटल पूर्णांक __init omap_init_irq_of(काष्ठा device_node *node)
+अणु
+	पूर्णांक ret;
 
 	omap_irq_base = of_iomap(node, 0);
-	if (WARN_ON(!omap_irq_base))
-		return -ENOMEM;
+	अगर (WARN_ON(!omap_irq_base))
+		वापस -ENOMEM;
 
-	domain = irq_domain_add_linear(node, omap_nr_irqs,
-			&irq_generic_chip_ops, NULL);
+	करोमुख्य = irq_करोमुख्य_add_linear(node, omap_nr_irqs,
+			&irq_generic_chip_ops, शून्य);
 
 	omap_irq_soft_reset();
 
-	ret = omap_alloc_gc_of(domain, omap_irq_base);
-	if (ret < 0)
-		irq_domain_remove(domain);
+	ret = omap_alloc_gc_of(करोमुख्य, omap_irq_base);
+	अगर (ret < 0)
+		irq_करोमुख्य_हटाओ(करोमुख्य);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __init omap_init_irq_legacy(u32 base, struct device_node *node)
-{
-	int j, irq_base;
+अटल पूर्णांक __init omap_init_irq_legacy(u32 base, काष्ठा device_node *node)
+अणु
+	पूर्णांक j, irq_base;
 
 	omap_irq_base = ioremap(base, SZ_4K);
-	if (WARN_ON(!omap_irq_base))
-		return -ENOMEM;
+	अगर (WARN_ON(!omap_irq_base))
+		वापस -ENOMEM;
 
 	irq_base = irq_alloc_descs(-1, 0, omap_nr_irqs, 0);
-	if (irq_base < 0) {
+	अगर (irq_base < 0) अणु
 		pr_warn("Couldn't allocate IRQ numbers\n");
 		irq_base = 0;
-	}
+	पूर्ण
 
-	domain = irq_domain_add_legacy(node, omap_nr_irqs, irq_base, 0,
-			&irq_domain_simple_ops, NULL);
+	करोमुख्य = irq_करोमुख्य_add_legacy(node, omap_nr_irqs, irq_base, 0,
+			&irq_करोमुख्य_simple_ops, शून्य);
 
 	omap_irq_soft_reset();
 
-	for (j = 0; j < omap_nr_irqs; j += 32)
+	क्रम (j = 0; j < omap_nr_irqs; j += 32)
 		omap_alloc_gc_legacy(omap_irq_base + j, j + irq_base, 32);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __init omap_irq_enable_protection(void)
-{
+अटल व्योम __init omap_irq_enable_protection(व्योम)
+अणु
 	u32 reg;
 
-	reg = intc_readl(INTC_PROTECTION);
+	reg = पूर्णांकc_पढ़ोl(INTC_PROTECTION);
 	reg |= INTC_PROTECTION_ENABLE;
-	intc_writel(INTC_PROTECTION, reg);
-}
+	पूर्णांकc_ग_लिखोl(INTC_PROTECTION, reg);
+पूर्ण
 
-static int __init omap_init_irq(u32 base, struct device_node *node)
-{
-	int ret;
+अटल पूर्णांक __init omap_init_irq(u32 base, काष्ठा device_node *node)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * FIXME legacy OMAP DMA driver sitting under arch/arm/plat-omap/dma.c
-	 * depends is still not ready for linear IRQ domains; because of that
+	 * depends is still not पढ़ोy क्रम linear IRQ करोमुख्यs; because of that
 	 * we need to temporarily "blacklist" OMAP2 and OMAP3 devices from using
-	 * linear IRQ Domain until that driver is finally fixed.
+	 * linear IRQ Doमुख्य until that driver is finally fixed.
 	 */
-	if (of_device_is_compatible(node, "ti,omap2-intc") ||
-			of_device_is_compatible(node, "ti,omap3-intc")) {
-		struct resource res;
+	अगर (of_device_is_compatible(node, "ti,omap2-intc") ||
+			of_device_is_compatible(node, "ti,omap3-intc")) अणु
+		काष्ठा resource res;
 
-		if (of_address_to_resource(node, 0, &res))
-			return -ENOMEM;
+		अगर (of_address_to_resource(node, 0, &res))
+			वापस -ENOMEM;
 
 		base = res.start;
 		ret = omap_init_irq_legacy(base, node);
-	} else if (node) {
+	पूर्ण अन्यथा अगर (node) अणु
 		ret = omap_init_irq_of(node);
-	} else {
-		ret = omap_init_irq_legacy(base, NULL);
-	}
+	पूर्ण अन्यथा अणु
+		ret = omap_init_irq_legacy(base, शून्य);
+	पूर्ण
 
-	if (ret == 0)
+	अगर (ret == 0)
 		omap_irq_enable_protection();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static asmlinkage void __exception_irq_entry
-omap_intc_handle_irq(struct pt_regs *regs)
-{
-	extern unsigned long irq_err_count;
+अटल यंत्रlinkage व्योम __exception_irq_entry
+omap_पूर्णांकc_handle_irq(काष्ठा pt_regs *regs)
+अणु
+	बाह्य अचिन्हित दीर्घ irq_err_count;
 	u32 irqnr;
 
-	irqnr = intc_readl(INTC_SIR);
+	irqnr = पूर्णांकc_पढ़ोl(INTC_SIR);
 
 	/*
-	 * A spurious IRQ can result if interrupt that triggered the
-	 * sorting is no longer active during the sorting (10 INTC
-	 * functional clock cycles after interrupt assertion). Or a
-	 * change in interrupt mask affected the result during sorting
-	 * time. There is no special handling required except ignoring
-	 * the SIR register value just read and retrying.
+	 * A spurious IRQ can result अगर पूर्णांकerrupt that triggered the
+	 * sorting is no दीर्घer active during the sorting (10 INTC
+	 * functional घड़ी cycles after पूर्णांकerrupt निश्चितion). Or a
+	 * change in पूर्णांकerrupt mask affected the result during sorting
+	 * समय. There is no special handling required except ignoring
+	 * the SIR रेजिस्टर value just पढ़ो and retrying.
 	 * See section 6.2.5 of AM335x TRM Literature Number: SPRUH73K
 	 *
-	 * Many a times, a spurious interrupt situation has been fixed
-	 * by adding a flush for the posted write acking the IRQ in
+	 * Many a बार, a spurious पूर्णांकerrupt situation has been fixed
+	 * by adding a flush क्रम the posted ग_लिखो acking the IRQ in
 	 * the device driver. Typically, this is going be the device
-	 * driver whose interrupt was handled just before the spurious
-	 * IRQ occurred. Pay attention to those device drivers if you
-	 * run into hitting the spurious IRQ condition below.
+	 * driver whose पूर्णांकerrupt was handled just beक्रमe the spurious
+	 * IRQ occurred. Pay attention to those device drivers अगर you
+	 * run पूर्णांकo hitting the spurious IRQ condition below.
 	 */
-	if (unlikely((irqnr & SPURIOUSIRQ_MASK) == SPURIOUSIRQ_MASK)) {
+	अगर (unlikely((irqnr & SPURIOUSIRQ_MASK) == SPURIOUSIRQ_MASK)) अणु
 		pr_err_once("%s: spurious irq!\n", __func__);
 		irq_err_count++;
-		omap_ack_irq(NULL);
-		return;
-	}
+		omap_ack_irq(शून्य);
+		वापस;
+	पूर्ण
 
 	irqnr &= ACTIVEIRQ_MASK;
-	handle_domain_irq(domain, irqnr, regs);
-}
+	handle_करोमुख्य_irq(करोमुख्य, irqnr, regs);
+पूर्ण
 
-static int __init intc_of_init(struct device_node *node,
-			     struct device_node *parent)
-{
-	int ret;
+अटल पूर्णांक __init पूर्णांकc_of_init(काष्ठा device_node *node,
+			     काष्ठा device_node *parent)
+अणु
+	पूर्णांक ret;
 
 	omap_nr_pending = 3;
 	omap_nr_irqs = 96;
 
-	if (WARN_ON(!node))
-		return -ENODEV;
+	अगर (WARN_ON(!node))
+		वापस -ENODEV;
 
-	if (of_device_is_compatible(node, "ti,dm814-intc") ||
+	अगर (of_device_is_compatible(node, "ti,dm814-intc") ||
 	    of_device_is_compatible(node, "ti,dm816-intc") ||
-	    of_device_is_compatible(node, "ti,am33xx-intc")) {
+	    of_device_is_compatible(node, "ti,am33xx-intc")) अणु
 		omap_nr_irqs = 128;
 		omap_nr_pending = 4;
-	}
+	पूर्ण
 
 	ret = omap_init_irq(-1, of_node_get(node));
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	set_handle_irq(omap_intc_handle_irq);
+	set_handle_irq(omap_पूर्णांकc_handle_irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-IRQCHIP_DECLARE(omap2_intc, "ti,omap2-intc", intc_of_init);
-IRQCHIP_DECLARE(omap3_intc, "ti,omap3-intc", intc_of_init);
-IRQCHIP_DECLARE(dm814x_intc, "ti,dm814-intc", intc_of_init);
-IRQCHIP_DECLARE(dm816x_intc, "ti,dm816-intc", intc_of_init);
-IRQCHIP_DECLARE(am33xx_intc, "ti,am33xx-intc", intc_of_init);
+IRQCHIP_DECLARE(omap2_पूर्णांकc, "ti,omap2-intc", पूर्णांकc_of_init);
+IRQCHIP_DECLARE(omap3_पूर्णांकc, "ti,omap3-intc", पूर्णांकc_of_init);
+IRQCHIP_DECLARE(dm814x_पूर्णांकc, "ti,dm814-intc", पूर्णांकc_of_init);
+IRQCHIP_DECLARE(dm816x_पूर्णांकc, "ti,dm816-intc", पूर्णांकc_of_init);
+IRQCHIP_DECLARE(am33xx_पूर्णांकc, "ti,am33xx-intc", पूर्णांकc_of_init);

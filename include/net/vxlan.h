@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_VXLAN_H
-#define __NET_VXLAN_H 1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_VXLAN_H
+#घोषणा __NET_VXLAN_H 1
 
-#include <linux/if_vlan.h>
-#include <net/udp_tunnel.h>
-#include <net/dst_metadata.h>
-#include <net/rtnetlink.h>
-#include <net/switchdev.h>
-#include <net/nexthop.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/udp_tunnel.h>
+#समावेश <net/dst_metadata.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/चयनdev.h>
+#समावेश <net/nexthop.h>
 
-#define IANA_VXLAN_UDP_PORT     4789
+#घोषणा IANA_VXLAN_UDP_PORT     4789
 
 /* VXLAN protocol (RFC 7348) header:
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |R|R|R|R|I|R|R|R|               Reserved                        |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                VXLAN Network Identifier (VNI) |   Reserved    |
+ * |                VXLAN Network Identअगरier (VNI) |   Reserved    |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
- * I = VXLAN Network Identifier (VNI) present.
+ * I = VXLAN Network Identअगरier (VNI) present.
  */
-struct vxlanhdr {
+काष्ठा vxlanhdr अणु
 	__be32 vx_flags;
 	__be32 vx_vni;
-};
+पूर्ण;
 
 /* VXLAN header flags. */
-#define VXLAN_HF_VNI	cpu_to_be32(BIT(27))
+#घोषणा VXLAN_HF_VNI	cpu_to_be32(BIT(27))
 
-#define VXLAN_N_VID     (1u << 24)
-#define VXLAN_VID_MASK  (VXLAN_N_VID - 1)
-#define VXLAN_VNI_MASK	cpu_to_be32(VXLAN_VID_MASK << 8)
-#define VXLAN_HLEN (sizeof(struct udphdr) + sizeof(struct vxlanhdr))
+#घोषणा VXLAN_N_VID     (1u << 24)
+#घोषणा VXLAN_VID_MASK  (VXLAN_N_VID - 1)
+#घोषणा VXLAN_VNI_MASK	cpu_to_be32(VXLAN_VID_MASK << 8)
+#घोषणा VXLAN_HLEN (माप(काष्ठा udphdr) + माप(काष्ठा vxlanhdr))
 
-#define VNI_HASH_BITS	10
-#define VNI_HASH_SIZE	(1<<VNI_HASH_BITS)
-#define FDB_HASH_BITS	8
-#define FDB_HASH_SIZE	(1<<FDB_HASH_BITS)
+#घोषणा VNI_HASH_BITS	10
+#घोषणा VNI_HASH_SIZE	(1<<VNI_HASH_BITS)
+#घोषणा FDB_HASH_BITS	8
+#घोषणा FDB_HASH_SIZE	(1<<FDB_HASH_BITS)
 
-/* Remote checksum offload for VXLAN (VXLAN_F_REMCSUM_[RT]X):
+/* Remote checksum offload क्रम VXLAN (VXLAN_F_REMCSUM_[RT]X):
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |R|R|R|R|I|R|R|R|R|R|C|              Reserved                   |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |           VXLAN Network Identifier (VNI)      |O| Csum start  |
+ * |           VXLAN Network Identअगरier (VNI)      |O| Csum start  |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  * C = Remote checksum offload bit. When set indicates that the
@@ -51,27 +52,27 @@ struct vxlanhdr {
  * O = Offset bit. Indicates the checksum offset relative to
  *     checksum start.
  *
- * Csum start = Checksum start divided by two.
+ * Csum start = Checksum start भागided by two.
  *
- * http://tools.ietf.org/html/draft-herbert-vxlan-rco
+ * http://tools.ietf.org/hपंचांगl/draft-herbert-vxlan-rco
  */
 
 /* VXLAN-RCO header flags. */
-#define VXLAN_HF_RCO	cpu_to_be32(BIT(21))
+#घोषणा VXLAN_HF_RCO	cpu_to_be32(BIT(21))
 
 /* Remote checksum offload header option */
-#define VXLAN_RCO_MASK	cpu_to_be32(0x7f)  /* Last byte of vni field */
-#define VXLAN_RCO_UDP	cpu_to_be32(0x80)  /* Indicate UDP RCO (TCP when not set *) */
-#define VXLAN_RCO_SHIFT	1		   /* Left shift of start */
-#define VXLAN_RCO_SHIFT_MASK ((1 << VXLAN_RCO_SHIFT) - 1)
-#define VXLAN_MAX_REMCSUM_START (0x7f << VXLAN_RCO_SHIFT)
+#घोषणा VXLAN_RCO_MASK	cpu_to_be32(0x7f)  /* Last byte of vni field */
+#घोषणा VXLAN_RCO_UDP	cpu_to_be32(0x80)  /* Indicate UDP RCO (TCP when not set *) */
+#घोषणा VXLAN_RCO_SHIFT	1		   /* Left shअगरt of start */
+#घोषणा VXLAN_RCO_SHIFT_MASK ((1 << VXLAN_RCO_SHIFT) - 1)
+#घोषणा VXLAN_MAX_REMCSUM_START (0x7f << VXLAN_RCO_SHIFT)
 
 /*
  * VXLAN Group Based Policy Extension (VXLAN_F_GBP):
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |G|R|R|R|I|R|R|R|R|D|R|R|A|R|R|R|        Group Policy ID        |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                VXLAN Network Identifier (VNI) |   Reserved    |
+ * |                VXLAN Network Identअगरier (VNI) |   Reserved    |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  * G = Group Policy ID present.
@@ -79,37 +80,37 @@ struct vxlanhdr {
  * D = Don't Learn bit. When set, this bit indicates that the egress
  *     VTEP MUST NOT learn the source address of the encapsulated frame.
  *
- * A = Indicates that the group policy has already been applied to
+ * A = Indicates that the group policy has alपढ़ोy been applied to
  *     this packet. Policies MUST NOT be applied by devices when the
  *     A bit is set.
  *
- * https://tools.ietf.org/html/draft-smith-vxlan-group-policy
+ * https://tools.ietf.org/hपंचांगl/draft-smith-vxlan-group-policy
  */
-struct vxlanhdr_gbp {
+काष्ठा vxlanhdr_gbp अणु
 	u8	vx_flags;
-#ifdef __LITTLE_ENDIAN_BITFIELD
+#अगर_घोषित __LITTLE_ENDIAN_BITFIELD
 	u8	reserved_flags1:3,
 		policy_applied:1,
 		reserved_flags2:2,
-		dont_learn:1,
+		करोnt_learn:1,
 		reserved_flags3:1;
-#elif defined(__BIG_ENDIAN_BITFIELD)
+#या_अगर defined(__BIG_ENDIAN_BITFIELD)
 	u8	reserved_flags1:1,
-		dont_learn:1,
+		करोnt_learn:1,
 		reserved_flags2:2,
 		policy_applied:1,
 		reserved_flags3:3;
-#else
-#error	"Please fix <asm/byteorder.h>"
-#endif
+#अन्यथा
+#त्रुटि	"Please fix <asm/byteorder.h>"
+#पूर्ण_अगर
 	__be16	policy_id;
 	__be32	vx_vni;
-};
+पूर्ण;
 
 /* VXLAN-GBP header flags. */
-#define VXLAN_HF_GBP	cpu_to_be32(BIT(31))
+#घोषणा VXLAN_HF_GBP	cpu_to_be32(BIT(31))
 
-#define VXLAN_GBP_USED_BITS (VXLAN_HF_GBP | cpu_to_be32(0xFFFFFF))
+#घोषणा VXLAN_GBP_USED_BITS (VXLAN_HF_GBP | cpu_to_be32(0xFFFFFF))
 
 /* skb->mark mapping
  *
@@ -117,11 +118,11 @@ struct vxlanhdr_gbp {
  * |R|R|R|R|R|R|R|R|R|D|R|R|A|R|R|R|        Group Policy ID        |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
-#define VXLAN_GBP_DONT_LEARN		(BIT(6) << 16)
-#define VXLAN_GBP_POLICY_APPLIED	(BIT(3) << 16)
-#define VXLAN_GBP_ID_MASK		(0xFFFF)
+#घोषणा VXLAN_GBP_DONT_LEARN		(BIT(6) << 16)
+#घोषणा VXLAN_GBP_POLICY_APPLIED	(BIT(3) << 16)
+#घोषणा VXLAN_GBP_ID_MASK		(0xFFFF)
 
-#define VXLAN_GBP_MASK (VXLAN_GBP_DONT_LEARN | VXLAN_GBP_POLICY_APPLIED | \
+#घोषणा VXLAN_GBP_MASK (VXLAN_GBP_DONT_LEARN | VXLAN_GBP_POLICY_APPLIED | \
 			VXLAN_GBP_ID_MASK)
 
 /*
@@ -129,7 +130,7 @@ struct vxlanhdr_gbp {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |R|R|Ver|I|P|R|O|       Reserved                |Next Protocol  |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- * |                VXLAN Network Identifier (VNI) |   Reserved    |
+ * |                VXLAN Network Identअगरier (VNI) |   Reserved    |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
  * Ver = Version. Indicates VXLAN GPE protocol version.
@@ -143,76 +144,76 @@ struct vxlanhdr_gbp {
  * Next Protocol = This 8 bit field indicates the protocol header
  * immediately following the VXLAN GPE header.
  *
- * https://tools.ietf.org/html/draft-ietf-nvo3-vxlan-gpe-01
+ * https://tools.ietf.org/hपंचांगl/draft-ietf-nvo3-vxlan-gpe-01
  */
 
-struct vxlanhdr_gpe {
-#if defined(__LITTLE_ENDIAN_BITFIELD)
+काष्ठा vxlanhdr_gpe अणु
+#अगर defined(__LITTLE_ENDIAN_BITFIELD)
 	u8	oam_flag:1,
 		reserved_flags1:1,
 		np_applied:1,
 		instance_applied:1,
 		version:2,
 		reserved_flags2:2;
-#elif defined(__BIG_ENDIAN_BITFIELD)
+#या_अगर defined(__BIG_ENDIAN_BITFIELD)
 	u8	reserved_flags2:2,
 		version:2,
 		instance_applied:1,
 		np_applied:1,
 		reserved_flags1:1,
 		oam_flag:1;
-#endif
+#पूर्ण_अगर
 	u8	reserved_flags3;
 	u8	reserved_flags4;
 	u8	next_protocol;
 	__be32	vx_vni;
-};
+पूर्ण;
 
 /* VXLAN-GPE header flags. */
-#define VXLAN_HF_VER	cpu_to_be32(BIT(29) | BIT(28))
-#define VXLAN_HF_NP	cpu_to_be32(BIT(26))
-#define VXLAN_HF_OAM	cpu_to_be32(BIT(24))
+#घोषणा VXLAN_HF_VER	cpu_to_be32(BIT(29) | BIT(28))
+#घोषणा VXLAN_HF_NP	cpu_to_be32(BIT(26))
+#घोषणा VXLAN_HF_OAM	cpu_to_be32(BIT(24))
 
-#define VXLAN_GPE_USED_BITS (VXLAN_HF_VER | VXLAN_HF_NP | VXLAN_HF_OAM | \
+#घोषणा VXLAN_GPE_USED_BITS (VXLAN_HF_VER | VXLAN_HF_NP | VXLAN_HF_OAM | \
 			     cpu_to_be32(0xff))
 
-struct vxlan_metadata {
+काष्ठा vxlan_metadata अणु
 	u32		gbp;
-};
+पूर्ण;
 
-/* per UDP socket information */
-struct vxlan_sock {
-	struct hlist_node hlist;
-	struct socket	 *sock;
-	struct hlist_head vni_list[VNI_HASH_SIZE];
+/* per UDP socket inक्रमmation */
+काष्ठा vxlan_sock अणु
+	काष्ठा hlist_node hlist;
+	काष्ठा socket	 *sock;
+	काष्ठा hlist_head vni_list[VNI_HASH_SIZE];
 	refcount_t	  refcnt;
 	u32		  flags;
-};
+पूर्ण;
 
-union vxlan_addr {
-	struct sockaddr_in sin;
-	struct sockaddr_in6 sin6;
-	struct sockaddr sa;
-};
+जोड़ vxlan_addr अणु
+	काष्ठा sockaddr_in sin;
+	काष्ठा sockaddr_in6 sin6;
+	काष्ठा sockaddr sa;
+पूर्ण;
 
-struct vxlan_rdst {
-	union vxlan_addr	 remote_ip;
+काष्ठा vxlan_rdst अणु
+	जोड़ vxlan_addr	 remote_ip;
 	__be16			 remote_port;
 	u8			 offloaded:1;
 	__be32			 remote_vni;
-	u32			 remote_ifindex;
-	struct net_device	 *remote_dev;
-	struct list_head	 list;
-	struct rcu_head		 rcu;
-	struct dst_cache	 dst_cache;
-};
+	u32			 remote_अगरindex;
+	काष्ठा net_device	 *remote_dev;
+	काष्ठा list_head	 list;
+	काष्ठा rcu_head		 rcu;
+	काष्ठा dst_cache	 dst_cache;
+पूर्ण;
 
-struct vxlan_config {
-	union vxlan_addr	remote_ip;
-	union vxlan_addr	saddr;
+काष्ठा vxlan_config अणु
+	जोड़ vxlan_addr	remote_ip;
+	जोड़ vxlan_addr	saddr;
 	__be32			vni;
-	int			remote_ifindex;
-	int			mtu;
+	पूर्णांक			remote_अगरindex;
+	पूर्णांक			mtu;
 	__be16			dst_port;
 	u16			port_min;
 	u16			port_max;
@@ -220,64 +221,64 @@ struct vxlan_config {
 	u8			ttl;
 	__be32			label;
 	u32			flags;
-	unsigned long		age_interval;
-	unsigned int		addrmax;
+	अचिन्हित दीर्घ		age_पूर्णांकerval;
+	अचिन्हित पूर्णांक		addrmax;
 	bool			no_share;
-	enum ifla_vxlan_df	df;
-};
+	क्रमागत अगरla_vxlan_df	df;
+पूर्ण;
 
-struct vxlan_dev_node {
-	struct hlist_node hlist;
-	struct vxlan_dev *vxlan;
-};
+काष्ठा vxlan_dev_node अणु
+	काष्ठा hlist_node hlist;
+	काष्ठा vxlan_dev *vxlan;
+पूर्ण;
 
-/* Pseudo network device */
-struct vxlan_dev {
-	struct vxlan_dev_node hlist4;	/* vni hash table for IPv4 socket */
-#if IS_ENABLED(CONFIG_IPV6)
-	struct vxlan_dev_node hlist6;	/* vni hash table for IPv6 socket */
-#endif
-	struct list_head  next;		/* vxlan's per namespace list */
-	struct vxlan_sock __rcu *vn4_sock;	/* listening socket for IPv4 */
-#if IS_ENABLED(CONFIG_IPV6)
-	struct vxlan_sock __rcu *vn6_sock;	/* listening socket for IPv6 */
-#endif
-	struct net_device *dev;
-	struct net	  *net;		/* netns for packet i/o */
-	struct vxlan_rdst default_dst;	/* default destination */
+/* Pseuकरो network device */
+काष्ठा vxlan_dev अणु
+	काष्ठा vxlan_dev_node hlist4;	/* vni hash table क्रम IPv4 socket */
+#अगर IS_ENABLED(CONFIG_IPV6)
+	काष्ठा vxlan_dev_node hlist6;	/* vni hash table क्रम IPv6 socket */
+#पूर्ण_अगर
+	काष्ठा list_head  next;		/* vxlan's per namespace list */
+	काष्ठा vxlan_sock __rcu *vn4_sock;	/* listening socket क्रम IPv4 */
+#अगर IS_ENABLED(CONFIG_IPV6)
+	काष्ठा vxlan_sock __rcu *vn6_sock;	/* listening socket क्रम IPv6 */
+#पूर्ण_अगर
+	काष्ठा net_device *dev;
+	काष्ठा net	  *net;		/* netns क्रम packet i/o */
+	काष्ठा vxlan_rdst शेष_dst;	/* शेष destination */
 
-	struct timer_list age_timer;
+	काष्ठा समयr_list age_समयr;
 	spinlock_t	  hash_lock[FDB_HASH_SIZE];
-	unsigned int	  addrcnt;
-	struct gro_cells  gro_cells;
+	अचिन्हित पूर्णांक	  addrcnt;
+	काष्ठा gro_cells  gro_cells;
 
-	struct vxlan_config	cfg;
+	काष्ठा vxlan_config	cfg;
 
-	struct hlist_head fdb_head[FDB_HASH_SIZE];
-};
+	काष्ठा hlist_head fdb_head[FDB_HASH_SIZE];
+पूर्ण;
 
-#define VXLAN_F_LEARN			0x01
-#define VXLAN_F_PROXY			0x02
-#define VXLAN_F_RSC			0x04
-#define VXLAN_F_L2MISS			0x08
-#define VXLAN_F_L3MISS			0x10
-#define VXLAN_F_IPV6			0x20
-#define VXLAN_F_UDP_ZERO_CSUM_TX	0x40
-#define VXLAN_F_UDP_ZERO_CSUM6_TX	0x80
-#define VXLAN_F_UDP_ZERO_CSUM6_RX	0x100
-#define VXLAN_F_REMCSUM_TX		0x200
-#define VXLAN_F_REMCSUM_RX		0x400
-#define VXLAN_F_GBP			0x800
-#define VXLAN_F_REMCSUM_NOPARTIAL	0x1000
-#define VXLAN_F_COLLECT_METADATA	0x2000
-#define VXLAN_F_GPE			0x4000
-#define VXLAN_F_IPV6_LINKLOCAL		0x8000
-#define VXLAN_F_TTL_INHERIT		0x10000
+#घोषणा VXLAN_F_LEARN			0x01
+#घोषणा VXLAN_F_PROXY			0x02
+#घोषणा VXLAN_F_RSC			0x04
+#घोषणा VXLAN_F_L2MISS			0x08
+#घोषणा VXLAN_F_L3MISS			0x10
+#घोषणा VXLAN_F_IPV6			0x20
+#घोषणा VXLAN_F_UDP_ZERO_CSUM_TX	0x40
+#घोषणा VXLAN_F_UDP_ZERO_CSUM6_TX	0x80
+#घोषणा VXLAN_F_UDP_ZERO_CSUM6_RX	0x100
+#घोषणा VXLAN_F_REMCSUM_TX		0x200
+#घोषणा VXLAN_F_REMCSUM_RX		0x400
+#घोषणा VXLAN_F_GBP			0x800
+#घोषणा VXLAN_F_REMCSUM_NOPARTIAL	0x1000
+#घोषणा VXLAN_F_COLLECT_METADATA	0x2000
+#घोषणा VXLAN_F_GPE			0x4000
+#घोषणा VXLAN_F_IPV6_LINKLOCAL		0x8000
+#घोषणा VXLAN_F_TTL_INHERIT		0x10000
 
 /* Flags that are used in the receive path. These flags must match in
- * order for a socket to be shareable
+ * order क्रम a socket to be shareable
  */
-#define VXLAN_F_RCV_FLAGS		(VXLAN_F_GBP |			\
+#घोषणा VXLAN_F_RCV_FLAGS		(VXLAN_F_GBP |			\
 					 VXLAN_F_GPE |			\
 					 VXLAN_F_UDP_ZERO_CSUM6_RX |	\
 					 VXLAN_F_REMCSUM_RX |		\
@@ -285,7 +286,7 @@ struct vxlan_dev {
 					 VXLAN_F_COLLECT_METADATA)
 
 /* Flags that can be set together with VXLAN_F_GPE. */
-#define VXLAN_F_ALLOWED_GPE		(VXLAN_F_GPE |			\
+#घोषणा VXLAN_F_ALLOWED_GPE		(VXLAN_F_GPE |			\
 					 VXLAN_F_IPV6 |			\
 					 VXLAN_F_IPV6_LINKLOCAL |	\
 					 VXLAN_F_UDP_ZERO_CSUM_TX |	\
@@ -293,182 +294,182 @@ struct vxlan_dev {
 					 VXLAN_F_UDP_ZERO_CSUM6_RX |	\
 					 VXLAN_F_COLLECT_METADATA)
 
-struct net_device *vxlan_dev_create(struct net *net, const char *name,
-				    u8 name_assign_type, struct vxlan_config *conf);
+काष्ठा net_device *vxlan_dev_create(काष्ठा net *net, स्थिर अक्षर *name,
+				    u8 name_assign_type, काष्ठा vxlan_config *conf);
 
-static inline netdev_features_t vxlan_features_check(struct sk_buff *skb,
+अटल अंतरभूत netdev_features_t vxlan_features_check(काष्ठा sk_buff *skb,
 						     netdev_features_t features)
-{
+अणु
 	u8 l4_hdr = 0;
 
-	if (!skb->encapsulation)
-		return features;
+	अगर (!skb->encapsulation)
+		वापस features;
 
-	switch (vlan_get_protocol(skb)) {
-	case htons(ETH_P_IP):
+	चयन (vlan_get_protocol(skb)) अणु
+	हाल htons(ETH_P_IP):
 		l4_hdr = ip_hdr(skb)->protocol;
-		break;
-	case htons(ETH_P_IPV6):
+		अवरोध;
+	हाल htons(ETH_P_IPV6):
 		l4_hdr = ipv6_hdr(skb)->nexthdr;
-		break;
-	default:
-		return features;
-	}
+		अवरोध;
+	शेष:
+		वापस features;
+	पूर्ण
 
-	if ((l4_hdr == IPPROTO_UDP) &&
+	अगर ((l4_hdr == IPPROTO_UDP) &&
 	    (skb->inner_protocol_type != ENCAP_TYPE_ETHER ||
 	     skb->inner_protocol != htons(ETH_P_TEB) ||
 	     (skb_inner_mac_header(skb) - skb_transport_header(skb) !=
-	      sizeof(struct udphdr) + sizeof(struct vxlanhdr)) ||
+	      माप(काष्ठा udphdr) + माप(काष्ठा vxlanhdr)) ||
 	     (skb->ip_summed != CHECKSUM_NONE &&
 	      !can_checksum_protocol(features, inner_eth_hdr(skb)->h_proto))))
-		return features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
+		वापस features & ~(NETIF_F_CSUM_MASK | NETIF_F_GSO_MASK);
 
-	return features;
-}
+	वापस features;
+पूर्ण
 
 /* IP header + UDP + VXLAN + Ethernet header */
-#define VXLAN_HEADROOM (20 + 8 + 8 + 14)
+#घोषणा VXLAN_HEADROOM (20 + 8 + 8 + 14)
 /* IPv6 header + UDP + VXLAN + Ethernet header */
-#define VXLAN6_HEADROOM (40 + 8 + 8 + 14)
+#घोषणा VXLAN6_HEADROOM (40 + 8 + 8 + 14)
 
-static inline struct vxlanhdr *vxlan_hdr(struct sk_buff *skb)
-{
-	return (struct vxlanhdr *)(udp_hdr(skb) + 1);
-}
+अटल अंतरभूत काष्ठा vxlanhdr *vxlan_hdr(काष्ठा sk_buff *skb)
+अणु
+	वापस (काष्ठा vxlanhdr *)(udp_hdr(skb) + 1);
+पूर्ण
 
-static inline __be32 vxlan_vni(__be32 vni_field)
-{
-#if defined(__BIG_ENDIAN)
-	return (__force __be32)((__force u32)vni_field >> 8);
-#else
-	return (__force __be32)((__force u32)(vni_field & VXLAN_VNI_MASK) << 8);
-#endif
-}
+अटल अंतरभूत __be32 vxlan_vni(__be32 vni_field)
+अणु
+#अगर defined(__BIG_ENDIAN)
+	वापस (__क्रमce __be32)((__क्रमce u32)vni_field >> 8);
+#अन्यथा
+	वापस (__क्रमce __be32)((__क्रमce u32)(vni_field & VXLAN_VNI_MASK) << 8);
+#पूर्ण_अगर
+पूर्ण
 
-static inline __be32 vxlan_vni_field(__be32 vni)
-{
-#if defined(__BIG_ENDIAN)
-	return (__force __be32)((__force u32)vni << 8);
-#else
-	return (__force __be32)((__force u32)vni >> 8);
-#endif
-}
+अटल अंतरभूत __be32 vxlan_vni_field(__be32 vni)
+अणु
+#अगर defined(__BIG_ENDIAN)
+	वापस (__क्रमce __be32)((__क्रमce u32)vni << 8);
+#अन्यथा
+	वापस (__क्रमce __be32)((__क्रमce u32)vni >> 8);
+#पूर्ण_अगर
+पूर्ण
 
-static inline size_t vxlan_rco_start(__be32 vni_field)
-{
-	return be32_to_cpu(vni_field & VXLAN_RCO_MASK) << VXLAN_RCO_SHIFT;
-}
+अटल अंतरभूत माप_प्रकार vxlan_rco_start(__be32 vni_field)
+अणु
+	वापस be32_to_cpu(vni_field & VXLAN_RCO_MASK) << VXLAN_RCO_SHIFT;
+पूर्ण
 
-static inline size_t vxlan_rco_offset(__be32 vni_field)
-{
-	return (vni_field & VXLAN_RCO_UDP) ?
-		offsetof(struct udphdr, check) :
-		offsetof(struct tcphdr, check);
-}
+अटल अंतरभूत माप_प्रकार vxlan_rco_offset(__be32 vni_field)
+अणु
+	वापस (vni_field & VXLAN_RCO_UDP) ?
+		दुरत्व(काष्ठा udphdr, check) :
+		दुरत्व(काष्ठा tcphdr, check);
+पूर्ण
 
-static inline __be32 vxlan_compute_rco(unsigned int start, unsigned int offset)
-{
+अटल अंतरभूत __be32 vxlan_compute_rco(अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक offset)
+अणु
 	__be32 vni_field = cpu_to_be32(start >> VXLAN_RCO_SHIFT);
 
-	if (offset == offsetof(struct udphdr, check))
+	अगर (offset == दुरत्व(काष्ठा udphdr, check))
 		vni_field |= VXLAN_RCO_UDP;
-	return vni_field;
-}
+	वापस vni_field;
+पूर्ण
 
-static inline unsigned short vxlan_get_sk_family(struct vxlan_sock *vs)
-{
-	return vs->sock->sk->sk_family;
-}
+अटल अंतरभूत अचिन्हित लघु vxlan_get_sk_family(काष्ठा vxlan_sock *vs)
+अणु
+	वापस vs->sock->sk->sk_family;
+पूर्ण
 
-#if IS_ENABLED(CONFIG_IPV6)
+#अगर IS_ENABLED(CONFIG_IPV6)
 
-static inline bool vxlan_addr_any(const union vxlan_addr *ipa)
-{
-	if (ipa->sa.sa_family == AF_INET6)
-		return ipv6_addr_any(&ipa->sin6.sin6_addr);
-	else
-		return ipa->sin.sin_addr.s_addr == htonl(INADDR_ANY);
-}
+अटल अंतरभूत bool vxlan_addr_any(स्थिर जोड़ vxlan_addr *ipa)
+अणु
+	अगर (ipa->sa.sa_family == AF_INET6)
+		वापस ipv6_addr_any(&ipa->sin6.sin6_addr);
+	अन्यथा
+		वापस ipa->sin.sin_addr.s_addr == htonl(INADDR_ANY);
+पूर्ण
 
-static inline bool vxlan_addr_multicast(const union vxlan_addr *ipa)
-{
-	if (ipa->sa.sa_family == AF_INET6)
-		return ipv6_addr_is_multicast(&ipa->sin6.sin6_addr);
-	else
-		return ipv4_is_multicast(ipa->sin.sin_addr.s_addr);
-}
+अटल अंतरभूत bool vxlan_addr_multicast(स्थिर जोड़ vxlan_addr *ipa)
+अणु
+	अगर (ipa->sa.sa_family == AF_INET6)
+		वापस ipv6_addr_is_multicast(&ipa->sin6.sin6_addr);
+	अन्यथा
+		वापस ipv4_is_multicast(ipa->sin.sin_addr.s_addr);
+पूर्ण
 
-#else /* !IS_ENABLED(CONFIG_IPV6) */
+#अन्यथा /* !IS_ENABLED(CONFIG_IPV6) */
 
-static inline bool vxlan_addr_any(const union vxlan_addr *ipa)
-{
-	return ipa->sin.sin_addr.s_addr == htonl(INADDR_ANY);
-}
+अटल अंतरभूत bool vxlan_addr_any(स्थिर जोड़ vxlan_addr *ipa)
+अणु
+	वापस ipa->sin.sin_addr.s_addr == htonl(INADDR_ANY);
+पूर्ण
 
-static inline bool vxlan_addr_multicast(const union vxlan_addr *ipa)
-{
-	return ipv4_is_multicast(ipa->sin.sin_addr.s_addr);
-}
+अटल अंतरभूत bool vxlan_addr_multicast(स्थिर जोड़ vxlan_addr *ipa)
+अणु
+	वापस ipv4_is_multicast(ipa->sin.sin_addr.s_addr);
+पूर्ण
 
-#endif /* IS_ENABLED(CONFIG_IPV6) */
+#पूर्ण_अगर /* IS_ENABLED(CONFIG_IPV6) */
 
-static inline bool netif_is_vxlan(const struct net_device *dev)
-{
-	return dev->rtnl_link_ops &&
-	       !strcmp(dev->rtnl_link_ops->kind, "vxlan");
-}
+अटल अंतरभूत bool netअगर_is_vxlan(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस dev->rtnl_link_ops &&
+	       !म_भेद(dev->rtnl_link_ops->kind, "vxlan");
+पूर्ण
 
-struct switchdev_notifier_vxlan_fdb_info {
-	struct switchdev_notifier_info info; /* must be first */
-	union vxlan_addr remote_ip;
+काष्ठा चयनdev_notअगरier_vxlan_fdb_info अणु
+	काष्ठा चयनdev_notअगरier_info info; /* must be first */
+	जोड़ vxlan_addr remote_ip;
 	__be16 remote_port;
 	__be32 remote_vni;
-	u32 remote_ifindex;
+	u32 remote_अगरindex;
 	u8 eth_addr[ETH_ALEN];
 	__be32 vni;
 	bool offloaded;
 	bool added_by_user;
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_VXLAN)
-int vxlan_fdb_find_uc(struct net_device *dev, const u8 *mac, __be32 vni,
-		      struct switchdev_notifier_vxlan_fdb_info *fdb_info);
-int vxlan_fdb_replay(const struct net_device *dev, __be32 vni,
-		     struct notifier_block *nb,
-		     struct netlink_ext_ack *extack);
-void vxlan_fdb_clear_offload(const struct net_device *dev, __be32 vni);
+#अगर IS_ENABLED(CONFIG_VXLAN)
+पूर्णांक vxlan_fdb_find_uc(काष्ठा net_device *dev, स्थिर u8 *mac, __be32 vni,
+		      काष्ठा चयनdev_notअगरier_vxlan_fdb_info *fdb_info);
+पूर्णांक vxlan_fdb_replay(स्थिर काष्ठा net_device *dev, __be32 vni,
+		     काष्ठा notअगरier_block *nb,
+		     काष्ठा netlink_ext_ack *extack);
+व्योम vxlan_fdb_clear_offload(स्थिर काष्ठा net_device *dev, __be32 vni);
 
-#else
-static inline int
-vxlan_fdb_find_uc(struct net_device *dev, const u8 *mac, __be32 vni,
-		  struct switchdev_notifier_vxlan_fdb_info *fdb_info)
-{
-	return -ENOENT;
-}
+#अन्यथा
+अटल अंतरभूत पूर्णांक
+vxlan_fdb_find_uc(काष्ठा net_device *dev, स्थिर u8 *mac, __be32 vni,
+		  काष्ठा चयनdev_notअगरier_vxlan_fdb_info *fdb_info)
+अणु
+	वापस -ENOENT;
+पूर्ण
 
-static inline int vxlan_fdb_replay(const struct net_device *dev, __be32 vni,
-				   struct notifier_block *nb,
-				   struct netlink_ext_ack *extack)
-{
-	return -EOPNOTSUPP;
-}
+अटल अंतरभूत पूर्णांक vxlan_fdb_replay(स्थिर काष्ठा net_device *dev, __be32 vni,
+				   काष्ठा notअगरier_block *nb,
+				   काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static inline void
-vxlan_fdb_clear_offload(const struct net_device *dev, __be32 vni)
-{
-}
-#endif
+अटल अंतरभूत व्योम
+vxlan_fdb_clear_offload(स्थिर काष्ठा net_device *dev, __be32 vni)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static inline void vxlan_flag_attr_error(int attrtype,
-					 struct netlink_ext_ack *extack)
-{
-#define VXLAN_FLAG(flg) \
-	case IFLA_VXLAN_##flg: \
+अटल अंतरभूत व्योम vxlan_flag_attr_error(पूर्णांक attrtype,
+					 काष्ठा netlink_ext_ack *extack)
+अणु
+#घोषणा VXLAN_FLAG(flg) \
+	हाल IFLA_VXLAN_##flg: \
 		NL_SET_ERR_MSG_MOD(extack, \
 				   "cannot change " #flg " flag"); \
-		break
-	switch (attrtype) {
+		अवरोध
+	चयन (attrtype) अणु
 	VXLAN_FLAG(TTL_INHERIT);
 	VXLAN_FLAG(LEARNING);
 	VXLAN_FLAG(PROXY);
@@ -483,36 +484,36 @@ static inline void vxlan_flag_attr_error(int attrtype,
 	VXLAN_FLAG(GBP);
 	VXLAN_FLAG(GPE);
 	VXLAN_FLAG(REMCSUM_NOPARTIAL);
-	default:
+	शेष:
 		NL_SET_ERR_MSG_MOD(extack, \
 				   "cannot change flag");
-		break;
-	}
-#undef VXLAN_FLAG
-}
+		अवरोध;
+	पूर्ण
+#अघोषित VXLAN_FLAG
+पूर्ण
 
-static inline bool vxlan_fdb_nh_path_select(struct nexthop *nh,
-					    int hash,
-					    struct vxlan_rdst *rdst)
-{
-	struct fib_nh_common *nhc;
+अटल अंतरभूत bool vxlan_fdb_nh_path_select(काष्ठा nexthop *nh,
+					    पूर्णांक hash,
+					    काष्ठा vxlan_rdst *rdst)
+अणु
+	काष्ठा fib_nh_common *nhc;
 
 	nhc = nexthop_path_fdb_result(nh, hash);
-	if (unlikely(!nhc))
-		return false;
+	अगर (unlikely(!nhc))
+		वापस false;
 
-	switch (nhc->nhc_gw_family) {
-	case AF_INET:
+	चयन (nhc->nhc_gw_family) अणु
+	हाल AF_INET:
 		rdst->remote_ip.sin.sin_addr.s_addr = nhc->nhc_gw.ipv4;
 		rdst->remote_ip.sa.sa_family = AF_INET;
-		break;
-	case AF_INET6:
+		अवरोध;
+	हाल AF_INET6:
 		rdst->remote_ip.sin6.sin6_addr = nhc->nhc_gw.ipv6;
 		rdst->remote_ip.sa.sa_family = AF_INET6;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
- * Copyright © 2017 Intel Corporation
+ * Copyright तऊ 2017 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,190 +23,190 @@
  *
  */
 
-#include "../i915_selftest.h"
-#include "i915_random.h"
+#समावेश "../i915_selftest.h"
+#समावेश "i915_random.h"
 
-static char *
-__sync_print(struct i915_syncmap *p,
-	     char *buf, unsigned long *sz,
-	     unsigned int depth,
-	     unsigned int last,
-	     unsigned int idx)
-{
-	unsigned long len;
-	unsigned int i, X;
+अटल अक्षर *
+__sync_prपूर्णांक(काष्ठा i915_syncmap *p,
+	     अक्षर *buf, अचिन्हित दीर्घ *sz,
+	     अचिन्हित पूर्णांक depth,
+	     अचिन्हित पूर्णांक last,
+	     अचिन्हित पूर्णांक idx)
+अणु
+	अचिन्हित दीर्घ len;
+	अचिन्हित पूर्णांक i, X;
 
-	if (depth) {
-		unsigned int d;
+	अगर (depth) अणु
+		अचिन्हित पूर्णांक d;
 
-		for (d = 0; d < depth - 1; d++) {
-			if (last & BIT(depth - d - 1))
-				len = scnprintf(buf, *sz, "|   ");
-			else
-				len = scnprintf(buf, *sz, "    ");
+		क्रम (d = 0; d < depth - 1; d++) अणु
+			अगर (last & BIT(depth - d - 1))
+				len = scnम_लिखो(buf, *sz, "|   ");
+			अन्यथा
+				len = scnम_लिखो(buf, *sz, "    ");
 			buf += len;
 			*sz -= len;
-		}
-		len = scnprintf(buf, *sz, "%x-> ", idx);
+		पूर्ण
+		len = scnम_लिखो(buf, *sz, "%x-> ", idx);
 		buf += len;
 		*sz -= len;
-	}
+	पूर्ण
 
 	/* We mark bits after the prefix as "X" */
-	len = scnprintf(buf, *sz, "0x%016llx", p->prefix << p->height << SHIFT);
+	len = scnम_लिखो(buf, *sz, "0x%016llx", p->prefix << p->height << SHIFT);
 	buf += len;
 	*sz -= len;
 	X = (p->height + SHIFT) / 4;
-	scnprintf(buf - X, *sz + X, "%*s", X, "XXXXXXXXXXXXXXXXX");
+	scnम_लिखो(buf - X, *sz + X, "%*s", X, "XXXXXXXXXXXXXXXXX");
 
-	if (!p->height) {
-		for_each_set_bit(i, (unsigned long *)&p->bitmap, KSYNCMAP) {
-			len = scnprintf(buf, *sz, " %x:%x,",
+	अगर (!p->height) अणु
+		क्रम_each_set_bit(i, (अचिन्हित दीर्घ *)&p->biपंचांगap, KSYNCMAP) अणु
+			len = scnम_लिखो(buf, *sz, " %x:%x,",
 					i, __sync_seqno(p)[i]);
 			buf += len;
 			*sz -= len;
-		}
+		पूर्ण
 		buf -= 1;
 		*sz += 1;
-	}
+	पूर्ण
 
-	len = scnprintf(buf, *sz, "\n");
+	len = scnम_लिखो(buf, *sz, "\n");
 	buf += len;
 	*sz -= len;
 
-	if (p->height) {
-		for_each_set_bit(i, (unsigned long *)&p->bitmap, KSYNCMAP) {
-			buf = __sync_print(__sync_child(p)[i], buf, sz,
+	अगर (p->height) अणु
+		क्रम_each_set_bit(i, (अचिन्हित दीर्घ *)&p->biपंचांगap, KSYNCMAP) अणु
+			buf = __sync_prपूर्णांक(__sync_child(p)[i], buf, sz,
 					   depth + 1,
-					   last << 1 | !!(p->bitmap >> (i + 1)),
+					   last << 1 | !!(p->biपंचांगap >> (i + 1)),
 					   i);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static bool
-i915_syncmap_print_to_buf(struct i915_syncmap *p, char *buf, unsigned long sz)
-{
-	if (!p)
-		return false;
+अटल bool
+i915_syncmap_prपूर्णांक_to_buf(काष्ठा i915_syncmap *p, अक्षर *buf, अचिन्हित दीर्घ sz)
+अणु
+	अगर (!p)
+		वापस false;
 
-	while (p->parent)
+	जबतक (p->parent)
 		p = p->parent;
 
-	__sync_print(p, buf, &sz, 0, 1, 0);
-	return true;
-}
+	__sync_prपूर्णांक(p, buf, &sz, 0, 1, 0);
+	वापस true;
+पूर्ण
 
-static int check_syncmap_free(struct i915_syncmap **sync)
-{
-	i915_syncmap_free(sync);
-	if (*sync) {
+अटल पूर्णांक check_syncmap_मुक्त(काष्ठा i915_syncmap **sync)
+अणु
+	i915_syncmap_मुक्त(sync);
+	अगर (*sync) अणु
 		pr_err("sync not cleared after free\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dump_syncmap(struct i915_syncmap *sync, int err)
-{
-	char *buf;
+अटल पूर्णांक dump_syncmap(काष्ठा i915_syncmap *sync, पूर्णांक err)
+अणु
+	अक्षर *buf;
 
-	if (!err)
-		return check_syncmap_free(&sync);
+	अगर (!err)
+		वापस check_syncmap_मुक्त(&sync);
 
-	buf = kmalloc(PAGE_SIZE, GFP_KERNEL);
-	if (!buf)
-		goto skip;
+	buf = kदो_स्मृति(PAGE_SIZE, GFP_KERNEL);
+	अगर (!buf)
+		जाओ skip;
 
-	if (i915_syncmap_print_to_buf(sync, buf, PAGE_SIZE))
+	अगर (i915_syncmap_prपूर्णांक_to_buf(sync, buf, PAGE_SIZE))
 		pr_err("%s", buf);
 
-	kfree(buf);
+	kमुक्त(buf);
 
 skip:
-	i915_syncmap_free(&sync);
-	return err;
-}
+	i915_syncmap_मुक्त(&sync);
+	वापस err;
+पूर्ण
 
-static int igt_syncmap_init(void *arg)
-{
-	struct i915_syncmap *sync = (void *)~0ul;
+अटल पूर्णांक igt_syncmap_init(व्योम *arg)
+अणु
+	काष्ठा i915_syncmap *sync = (व्योम *)~0ul;
 
 	/*
-	 * Cursory check that we can initialise a random pointer and transform
-	 * it into the root pointer of a syncmap.
+	 * Cursory check that we can initialise a अक्रमom poपूर्णांकer and transक्रमm
+	 * it पूर्णांकo the root poपूर्णांकer of a syncmap.
 	 */
 
 	i915_syncmap_init(&sync);
-	return check_syncmap_free(&sync);
-}
+	वापस check_syncmap_मुक्त(&sync);
+पूर्ण
 
-static int check_seqno(struct i915_syncmap *leaf, unsigned int idx, u32 seqno)
-{
-	if (leaf->height) {
+अटल पूर्णांक check_seqno(काष्ठा i915_syncmap *leaf, अचिन्हित पूर्णांक idx, u32 seqno)
+अणु
+	अगर (leaf->height) अणु
 		pr_err("%s: not a leaf, height is %d\n",
 		       __func__, leaf->height);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (__sync_seqno(leaf)[idx] != seqno) {
+	अगर (__sync_seqno(leaf)[idx] != seqno) अणु
 		pr_err("%s: seqno[%d], found %x, expected %x\n",
 		       __func__, idx, __sync_seqno(leaf)[idx], seqno);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_one(struct i915_syncmap **sync, u64 context, u32 seqno)
-{
-	int err;
+अटल पूर्णांक check_one(काष्ठा i915_syncmap **sync, u64 context, u32 seqno)
+अणु
+	पूर्णांक err;
 
 	err = i915_syncmap_set(sync, context, seqno);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if ((*sync)->height) {
+	अगर ((*sync)->height) अणु
 		pr_err("Inserting first context=%llx did not return leaf (height=%d, prefix=%llx\n",
 		       context, (*sync)->height, (*sync)->prefix);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if ((*sync)->parent) {
+	अगर ((*sync)->parent) अणु
 		pr_err("Inserting first context=%llx created branches!\n",
 		       context);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hweight32((*sync)->bitmap) != 1) {
+	अगर (hweight32((*sync)->biपंचांगap) != 1) अणु
 		pr_err("First bitmap does not contain a single entry, found %x (count=%d)!\n",
-		       (*sync)->bitmap, hweight32((*sync)->bitmap));
-		return -EINVAL;
-	}
+		       (*sync)->biपंचांगap, hweight32((*sync)->biपंचांगap));
+		वापस -EINVAL;
+	पूर्ण
 
-	err = check_seqno((*sync), ilog2((*sync)->bitmap), seqno);
-	if (err)
-		return err;
+	err = check_seqno((*sync), ilog2((*sync)->biपंचांगap), seqno);
+	अगर (err)
+		वापस err;
 
-	if (!i915_syncmap_is_later(sync, context, seqno)) {
+	अगर (!i915_syncmap_is_later(sync, context, seqno)) अणु
 		pr_err("Lookup of first context=%llx/seqno=%x failed!\n",
 		       context, seqno);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igt_syncmap_one(void *arg)
-{
+अटल पूर्णांक igt_syncmap_one(व्योम *arg)
+अणु
 	I915_RND_STATE(prng);
-	IGT_TIMEOUT(end_time);
-	struct i915_syncmap *sync;
-	unsigned long max = 1;
-	int err;
+	IGT_TIMEOUT(end_समय);
+	काष्ठा i915_syncmap *sync;
+	अचिन्हित दीर्घ max = 1;
+	पूर्णांक err;
 
 	/*
 	 * Check that inserting a new id, creates a leaf and only that leaf.
@@ -213,71 +214,71 @@ static int igt_syncmap_one(void *arg)
 
 	i915_syncmap_init(&sync);
 
-	do {
-		u64 context = i915_prandom_u64_state(&prng);
-		unsigned long loop;
+	करो अणु
+		u64 context = i915_pअक्रमom_u64_state(&prng);
+		अचिन्हित दीर्घ loop;
 
-		err = check_syncmap_free(&sync);
-		if (err)
-			goto out;
+		err = check_syncmap_मुक्त(&sync);
+		अगर (err)
+			जाओ out;
 
-		for (loop = 0; loop <= max; loop++) {
+		क्रम (loop = 0; loop <= max; loop++) अणु
 			err = check_one(&sync, context,
-					prandom_u32_state(&prng));
-			if (err)
-				goto out;
-		}
+					pअक्रमom_u32_state(&prng));
+			अगर (err)
+				जाओ out;
+		पूर्ण
 		max++;
-	} while (!__igt_timeout(end_time, NULL));
+	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
 	pr_debug("%s: Completed %lu single insertions\n",
 		 __func__, max * (max - 1) / 2);
 out:
-	return dump_syncmap(sync, err);
-}
+	वापस dump_syncmap(sync, err);
+पूर्ण
 
-static int check_leaf(struct i915_syncmap **sync, u64 context, u32 seqno)
-{
-	int err;
+अटल पूर्णांक check_leaf(काष्ठा i915_syncmap **sync, u64 context, u32 seqno)
+अणु
+	पूर्णांक err;
 
 	err = i915_syncmap_set(sync, context, seqno);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if ((*sync)->height) {
+	अगर ((*sync)->height) अणु
 		pr_err("Inserting context=%llx did not return leaf (height=%d, prefix=%llx\n",
 		       context, (*sync)->height, (*sync)->prefix);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (hweight32((*sync)->bitmap) != 1) {
+	अगर (hweight32((*sync)->biपंचांगap) != 1) अणु
 		pr_err("First entry into leaf (context=%llx) does not contain a single entry, found %x (count=%d)!\n",
-		       context, (*sync)->bitmap, hweight32((*sync)->bitmap));
-		return -EINVAL;
-	}
+		       context, (*sync)->biपंचांगap, hweight32((*sync)->biपंचांगap));
+		वापस -EINVAL;
+	पूर्ण
 
-	err = check_seqno((*sync), ilog2((*sync)->bitmap), seqno);
-	if (err)
-		return err;
+	err = check_seqno((*sync), ilog2((*sync)->biपंचांगap), seqno);
+	अगर (err)
+		वापस err;
 
-	if (!i915_syncmap_is_later(sync, context, seqno)) {
+	अगर (!i915_syncmap_is_later(sync, context, seqno)) अणु
 		pr_err("Lookup of first entry context=%llx/seqno=%x failed!\n",
 		       context, seqno);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igt_syncmap_join_above(void *arg)
-{
-	struct i915_syncmap *sync;
-	unsigned int pass, order;
-	int err;
+अटल पूर्णांक igt_syncmap_join_above(व्योम *arg)
+अणु
+	काष्ठा i915_syncmap *sync;
+	अचिन्हित पूर्णांक pass, order;
+	पूर्णांक err;
 
 	i915_syncmap_init(&sync);
 
 	/*
-	 * When we have a new id that doesn't fit inside the existing tree,
+	 * When we have a new id that करोesn't fit inside the existing tree,
 	 * we need to add a new layer above.
 	 *
 	 * 1: 0x00000001
@@ -292,48 +293,48 @@ static int igt_syncmap_join_above(void *arg)
 	 * If we then reuse the same set of contexts, we expect to build an
 	 * identical tree.
 	 */
-	for (pass = 0; pass < 3; pass++) {
-		for (order = 0; order < 64; order += SHIFT) {
+	क्रम (pass = 0; pass < 3; pass++) अणु
+		क्रम (order = 0; order < 64; order += SHIFT) अणु
 			u64 context = BIT_ULL(order);
-			struct i915_syncmap *join;
+			काष्ठा i915_syncmap *join;
 
 			err = check_leaf(&sync, context, 0);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
 			join = sync->parent;
-			if (!join) /* very first insert will have no parents */
-				continue;
+			अगर (!join) /* very first insert will have no parents */
+				जारी;
 
-			if (!join->height) {
+			अगर (!join->height) अणु
 				pr_err("Parent with no height!\n");
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (hweight32(join->bitmap) != 2) {
+			अगर (hweight32(join->biपंचांगap) != 2) अणु
 				pr_err("Join does not have 2 children: %x (%d)\n",
-				       join->bitmap, hweight32(join->bitmap));
+				       join->biपंचांगap, hweight32(join->biपंचांगap));
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (__sync_child(join)[__sync_branch_idx(join, context)] != sync) {
+			अगर (__sync_child(join)[__sync_branch_idx(join, context)] != sync) अणु
 				pr_err("Leaf misplaced in parent!\n");
 				err = -EINVAL;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out:
-	return dump_syncmap(sync, err);
-}
+	वापस dump_syncmap(sync, err);
+पूर्ण
 
-static int igt_syncmap_join_below(void *arg)
-{
-	struct i915_syncmap *sync;
-	unsigned int step, order, idx;
-	int err = -ENODEV;
+अटल पूर्णांक igt_syncmap_join_below(व्योम *arg)
+अणु
+	काष्ठा i915_syncmap *sync;
+	अचिन्हित पूर्णांक step, order, idx;
+	पूर्णांक err = -ENODEV;
 
 	i915_syncmap_init(&sync);
 
@@ -341,113 +342,113 @@ static int igt_syncmap_join_below(void *arg)
 	 * Check that we can split a compacted branch by replacing it with
 	 * a join.
 	 */
-	for (step = 0; step < KSYNCMAP; step++) {
-		for (order = 64 - SHIFT; order > 0; order -= SHIFT) {
+	क्रम (step = 0; step < KSYNCMAP; step++) अणु
+		क्रम (order = 64 - SHIFT; order > 0; order -= SHIFT) अणु
 			u64 context = step * BIT_ULL(order);
 
 			err = i915_syncmap_set(&sync, context, 0);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
-			if (sync->height) {
+			अगर (sync->height) अणु
 				pr_err("Inserting context=%llx (order=%d, step=%d) did not return leaf (height=%d, prefix=%llx\n",
 				       context, order, step, sync->height, sync->prefix);
 				err = -EINVAL;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (step = 0; step < KSYNCMAP; step++) {
-		for (order = SHIFT; order < 64; order += SHIFT) {
+	क्रम (step = 0; step < KSYNCMAP; step++) अणु
+		क्रम (order = SHIFT; order < 64; order += SHIFT) अणु
 			u64 context = step * BIT_ULL(order);
 
-			if (!i915_syncmap_is_later(&sync, context, 0)) {
+			अगर (!i915_syncmap_is_later(&sync, context, 0)) अणु
 				pr_err("1: context %llx (order=%d, step=%d) not found\n",
 				       context, order, step);
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			for (idx = 1; idx < KSYNCMAP; idx++) {
-				if (i915_syncmap_is_later(&sync, context + idx, 0)) {
+			क्रम (idx = 1; idx < KSYNCMAP; idx++) अणु
+				अगर (i915_syncmap_is_later(&sync, context + idx, 0)) अणु
 					pr_err("1: context %llx (order=%d, step=%d) should not exist\n",
 					       context + idx, order, step);
 					err = -EINVAL;
-					goto out;
-				}
-			}
-		}
-	}
+					जाओ out;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	for (order = SHIFT; order < 64; order += SHIFT) {
-		for (step = 0; step < KSYNCMAP; step++) {
+	क्रम (order = SHIFT; order < 64; order += SHIFT) अणु
+		क्रम (step = 0; step < KSYNCMAP; step++) अणु
 			u64 context = step * BIT_ULL(order);
 
-			if (!i915_syncmap_is_later(&sync, context, 0)) {
+			अगर (!i915_syncmap_is_later(&sync, context, 0)) अणु
 				pr_err("2: context %llx (order=%d, step=%d) not found\n",
 				       context, order, step);
 				err = -EINVAL;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 out:
-	return dump_syncmap(sync, err);
-}
+	वापस dump_syncmap(sync, err);
+पूर्ण
 
-static int igt_syncmap_neighbours(void *arg)
-{
+अटल पूर्णांक igt_syncmap_neighbours(व्योम *arg)
+अणु
 	I915_RND_STATE(prng);
-	IGT_TIMEOUT(end_time);
-	struct i915_syncmap *sync;
-	int err = -ENODEV;
+	IGT_TIMEOUT(end_समय);
+	काष्ठा i915_syncmap *sync;
+	पूर्णांक err = -ENODEV;
 
 	/*
 	 * Each leaf holds KSYNCMAP seqno. Check that when we create KSYNCMAP
-	 * neighbouring ids, they all fit into the same leaf.
+	 * neighbouring ids, they all fit पूर्णांकo the same leaf.
 	 */
 
 	i915_syncmap_init(&sync);
-	do {
-		u64 context = i915_prandom_u64_state(&prng) & ~MASK;
-		unsigned int idx;
+	करो अणु
+		u64 context = i915_pअक्रमom_u64_state(&prng) & ~MASK;
+		अचिन्हित पूर्णांक idx;
 
-		if (i915_syncmap_is_later(&sync, context, 0)) /* Skip repeats */
-			continue;
+		अगर (i915_syncmap_is_later(&sync, context, 0)) /* Skip repeats */
+			जारी;
 
-		for (idx = 0; idx < KSYNCMAP; idx++) {
+		क्रम (idx = 0; idx < KSYNCMAP; idx++) अणु
 			err = i915_syncmap_set(&sync, context + idx, 0);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
-			if (sync->height) {
+			अगर (sync->height) अणु
 				pr_err("Inserting context=%llx did not return leaf (height=%d, prefix=%llx\n",
 				       context, sync->height, sync->prefix);
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (sync->bitmap != BIT(idx + 1) - 1) {
+			अगर (sync->biपंचांगap != BIT(idx + 1) - 1) अणु
 				pr_err("Inserting neighbouring context=0x%llx+%d, did not fit into the same leaf bitmap=%x (%d), expected %lx (%d)\n",
 				       context, idx,
-				       sync->bitmap, hweight32(sync->bitmap),
+				       sync->biपंचांगap, hweight32(sync->biपंचांगap),
 				       BIT(idx + 1) - 1, idx + 1);
 				err = -EINVAL;
-				goto out;
-			}
-		}
-	} while (!__igt_timeout(end_time, NULL));
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
 out:
-	return dump_syncmap(sync, err);
-}
+	वापस dump_syncmap(sync, err);
+पूर्ण
 
-static int igt_syncmap_compact(void *arg)
-{
-	struct i915_syncmap *sync;
-	unsigned int idx, order;
-	int err = -ENODEV;
+अटल पूर्णांक igt_syncmap_compact(व्योम *arg)
+अणु
+	काष्ठा i915_syncmap *sync;
+	अचिन्हित पूर्णांक idx, order;
+	पूर्णांक err = -ENODEV;
 
 	i915_syncmap_init(&sync);
 
@@ -455,162 +456,162 @@ static int igt_syncmap_compact(void *arg)
 	 * The syncmap are "space efficient" compressed radix trees - any
 	 * branch with only one child is skipped and replaced by the child.
 	 *
-	 * If we construct a tree with ids that are neighbouring at a non-zero
-	 * height, we form a join but each child of that join is directly a
+	 * If we स्थिरruct a tree with ids that are neighbouring at a non-zero
+	 * height, we क्रमm a join but each child of that join is directly a
 	 * leaf holding the single id.
 	 */
-	for (order = SHIFT; order < 64; order += SHIFT) {
-		err = check_syncmap_free(&sync);
-		if (err)
-			goto out;
+	क्रम (order = SHIFT; order < 64; order += SHIFT) अणु
+		err = check_syncmap_मुक्त(&sync);
+		अगर (err)
+			जाओ out;
 
 		/* Create neighbours in the parent */
-		for (idx = 0; idx < KSYNCMAP; idx++) {
+		क्रम (idx = 0; idx < KSYNCMAP; idx++) अणु
 			u64 context = idx * BIT_ULL(order) + idx;
 
 			err = i915_syncmap_set(&sync, context, 0);
-			if (err)
-				goto out;
+			अगर (err)
+				जाओ out;
 
-			if (sync->height) {
+			अगर (sync->height) अणु
 				pr_err("Inserting context=%llx (order=%d, idx=%d) did not return leaf (height=%d, prefix=%llx\n",
 				       context, order, idx,
 				       sync->height, sync->prefix);
 				err = -EINVAL;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		sync = sync->parent;
-		if (sync->parent) {
+		अगर (sync->parent) अणु
 			pr_err("Parent (join) of last leaf was not the sync!\n");
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (sync->height != order) {
+		अगर (sync->height != order) अणु
 			pr_err("Join does not have the expected height, found %d, expected %d\n",
 			       sync->height, order);
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (sync->bitmap != BIT(KSYNCMAP) - 1) {
+		अगर (sync->biपंचांगap != BIT(KSYNCMAP) - 1) अणु
 			pr_err("Join is not full!, found %x (%d) expected %lx (%d)\n",
-			       sync->bitmap, hweight32(sync->bitmap),
+			       sync->biपंचांगap, hweight32(sync->biपंचांगap),
 			       BIT(KSYNCMAP) - 1, KSYNCMAP);
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* Each of our children should be a leaf */
-		for (idx = 0; idx < KSYNCMAP; idx++) {
-			struct i915_syncmap *leaf = __sync_child(sync)[idx];
+		क्रम (idx = 0; idx < KSYNCMAP; idx++) अणु
+			काष्ठा i915_syncmap *leaf = __sync_child(sync)[idx];
 
-			if (leaf->height) {
+			अगर (leaf->height) अणु
 				pr_err("Child %d is a not leaf!\n", idx);
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (leaf->parent != sync) {
+			अगर (leaf->parent != sync) अणु
 				pr_err("Child %d is not attached to us!\n",
 				       idx);
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (!is_power_of_2(leaf->bitmap)) {
+			अगर (!is_घातer_of_2(leaf->biपंचांगap)) अणु
 				pr_err("Child %d holds more than one id, found %x (%d)\n",
-				       idx, leaf->bitmap, hweight32(leaf->bitmap));
+				       idx, leaf->biपंचांगap, hweight32(leaf->biपंचांगap));
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
-			if (leaf->bitmap != BIT(idx)) {
+			अगर (leaf->biपंचांगap != BIT(idx)) अणु
 				pr_err("Child %d has wrong seqno idx, found %d, expected %d\n",
-				       idx, ilog2(leaf->bitmap), idx);
+				       idx, ilog2(leaf->biपंचांगap), idx);
 				err = -EINVAL;
-				goto out;
-			}
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 out:
-	return dump_syncmap(sync, err);
-}
+	वापस dump_syncmap(sync, err);
+पूर्ण
 
-static int igt_syncmap_random(void *arg)
-{
+अटल पूर्णांक igt_syncmap_अक्रमom(व्योम *arg)
+अणु
 	I915_RND_STATE(prng);
-	IGT_TIMEOUT(end_time);
-	struct i915_syncmap *sync;
-	unsigned long count, phase, i;
+	IGT_TIMEOUT(end_समय);
+	काष्ठा i915_syncmap *sync;
+	अचिन्हित दीर्घ count, phase, i;
 	u32 seqno;
-	int err;
+	पूर्णांक err;
 
 	i915_syncmap_init(&sync);
 
 	/*
-	 * Having tried to test the individual operations within i915_syncmap,
-	 * run a smoketest exploring the entire u64 space with random
+	 * Having tried to test the inभागidual operations within i915_syncmap,
+	 * run a smoketest exploring the entire u64 space with अक्रमom
 	 * insertions.
 	 */
 
 	count = 0;
-	phase = jiffies + HZ/100 + 1;
-	do {
-		u64 context = i915_prandom_u64_state(&prng);
+	phase = jअगरfies + HZ/100 + 1;
+	करो अणु
+		u64 context = i915_pअक्रमom_u64_state(&prng);
 
 		err = i915_syncmap_set(&sync, context, 0);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 
 		count++;
-	} while (!time_after(jiffies, phase));
+	पूर्ण जबतक (!समय_after(jअगरfies, phase));
 	seqno = 0;
 
 	phase = 0;
-	do {
+	करो अणु
 		I915_RND_STATE(ctx);
 		u32 last_seqno = seqno;
 		bool expect;
 
-		seqno = prandom_u32_state(&prng);
+		seqno = pअक्रमom_u32_state(&prng);
 		expect = seqno_later(last_seqno, seqno);
 
-		for (i = 0; i < count; i++) {
-			u64 context = i915_prandom_u64_state(&ctx);
+		क्रम (i = 0; i < count; i++) अणु
+			u64 context = i915_pअक्रमom_u64_state(&ctx);
 
-			if (i915_syncmap_is_later(&sync, context, seqno) != expect) {
+			अगर (i915_syncmap_is_later(&sync, context, seqno) != expect) अणु
 				pr_err("context=%llu, last=%u this=%u did not match expectation (%d)\n",
 				       context, last_seqno, seqno, expect);
 				err = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			err = i915_syncmap_set(&sync, context, seqno);
-			if (err)
-				goto out;
-		}
+			अगर (err)
+				जाओ out;
+		पूर्ण
 
 		phase++;
-	} while (!__igt_timeout(end_time, NULL));
+	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
 	pr_debug("Completed %lu passes, each of %lu contexts\n", phase, count);
 out:
-	return dump_syncmap(sync, err);
-}
+	वापस dump_syncmap(sync, err);
+पूर्ण
 
-int i915_syncmap_mock_selftests(void)
-{
-	static const struct i915_subtest tests[] = {
+पूर्णांक i915_syncmap_mock_selftests(व्योम)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
 		SUBTEST(igt_syncmap_init),
 		SUBTEST(igt_syncmap_one),
 		SUBTEST(igt_syncmap_join_above),
 		SUBTEST(igt_syncmap_join_below),
 		SUBTEST(igt_syncmap_neighbours),
 		SUBTEST(igt_syncmap_compact),
-		SUBTEST(igt_syncmap_random),
-	};
+		SUBTEST(igt_syncmap_अक्रमom),
+	पूर्ण;
 
-	return i915_subtests(tests, NULL);
-}
+	वापस i915_subtests(tests, शून्य);
+पूर्ण

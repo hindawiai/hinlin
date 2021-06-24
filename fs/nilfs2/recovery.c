@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * recovery.c - NILFS recovery logic
  *
@@ -7,21 +8,21 @@
  * Written by Ryusuke Konishi.
  */
 
-#include <linux/buffer_head.h>
-#include <linux/blkdev.h>
-#include <linux/swap.h>
-#include <linux/slab.h>
-#include <linux/crc32.h>
-#include "nilfs.h"
-#include "segment.h"
-#include "sufile.h"
-#include "page.h"
-#include "segbuf.h"
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/crc32.h>
+#समावेश "nilfs.h"
+#समावेश "segment.h"
+#समावेश "sufile.h"
+#समावेश "page.h"
+#समावेश "segbuf.h"
 
 /*
  * Segment check result
  */
-enum {
+क्रमागत अणु
 	NILFS_SEG_VALID,
 	NILFS_SEG_NO_SUPER_ROOT,
 	NILFS_SEG_FAIL_IO,
@@ -30,54 +31,54 @@ enum {
 	NILFS_SEG_FAIL_CHECKSUM_SUPER_ROOT,
 	NILFS_SEG_FAIL_CHECKSUM_FULL,
 	NILFS_SEG_FAIL_CONSISTENCY,
-};
+पूर्ण;
 
-/* work structure for recovery */
-struct nilfs_recovery_block {
+/* work काष्ठाure क्रम recovery */
+काष्ठा nilfs_recovery_block अणु
 	ino_t ino;		/*
 				 * Inode number of the file that this block
-				 * belongs to
+				 * beदीर्घs to
 				 */
 	sector_t blocknr;	/* block number */
-	__u64 vblocknr;		/* virtual block number */
-	unsigned long blkoff;	/* File offset of the data block (per block) */
-	struct list_head list;
-};
+	__u64 vblocknr;		/* भव block number */
+	अचिन्हित दीर्घ blkoff;	/* File offset of the data block (per block) */
+	काष्ठा list_head list;
+पूर्ण;
 
 
-static int nilfs_warn_segment_error(struct super_block *sb, int err)
-{
-	const char *msg = NULL;
+अटल पूर्णांक nilfs_warn_segment_error(काष्ठा super_block *sb, पूर्णांक err)
+अणु
+	स्थिर अक्षर *msg = शून्य;
 
-	switch (err) {
-	case NILFS_SEG_FAIL_IO:
+	चयन (err) अणु
+	हाल NILFS_SEG_FAIL_IO:
 		nilfs_err(sb, "I/O error reading segment");
-		return -EIO;
-	case NILFS_SEG_FAIL_MAGIC:
+		वापस -EIO;
+	हाल NILFS_SEG_FAIL_MAGIC:
 		msg = "Magic number mismatch";
-		break;
-	case NILFS_SEG_FAIL_SEQ:
+		अवरोध;
+	हाल NILFS_SEG_FAIL_SEQ:
 		msg = "Sequence number mismatch";
-		break;
-	case NILFS_SEG_FAIL_CHECKSUM_SUPER_ROOT:
+		अवरोध;
+	हाल NILFS_SEG_FAIL_CHECKSUM_SUPER_ROOT:
 		msg = "Checksum error in super root";
-		break;
-	case NILFS_SEG_FAIL_CHECKSUM_FULL:
+		अवरोध;
+	हाल NILFS_SEG_FAIL_CHECKSUM_FULL:
 		msg = "Checksum error in segment payload";
-		break;
-	case NILFS_SEG_FAIL_CONSISTENCY:
+		अवरोध;
+	हाल NILFS_SEG_FAIL_CONSISTENCY:
 		msg = "Inconsistency found";
-		break;
-	case NILFS_SEG_NO_SUPER_ROOT:
+		अवरोध;
+	हाल NILFS_SEG_NO_SUPER_ROOT:
 		msg = "No super root in the last segment";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		nilfs_err(sb, "unrecognized segment error %d", err);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	nilfs_warn(sb, "invalid segment: %s", msg);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /**
  * nilfs_compute_checksum - compute checksum of blocks continuously
@@ -89,177 +90,177 @@ static int nilfs_warn_segment_error(struct super_block *sb, int err)
  * @start: DBN of start block
  * @nblock: number of blocks to be checked
  */
-static int nilfs_compute_checksum(struct the_nilfs *nilfs,
-				  struct buffer_head *bhs, u32 *sum,
-				  unsigned long offset, u64 check_bytes,
-				  sector_t start, unsigned long nblock)
-{
-	unsigned int blocksize = nilfs->ns_blocksize;
-	unsigned long size;
+अटल पूर्णांक nilfs_compute_checksum(काष्ठा the_nilfs *nilfs,
+				  काष्ठा buffer_head *bhs, u32 *sum,
+				  अचिन्हित दीर्घ offset, u64 check_bytes,
+				  sector_t start, अचिन्हित दीर्घ nblock)
+अणु
+	अचिन्हित पूर्णांक blocksize = nilfs->ns_blocksize;
+	अचिन्हित दीर्घ size;
 	u32 crc;
 
 	BUG_ON(offset >= blocksize);
 	check_bytes -= offset;
 	size = min_t(u64, check_bytes, blocksize - offset);
 	crc = crc32_le(nilfs->ns_crc_seed,
-		       (unsigned char *)bhs->b_data + offset, size);
-	if (--nblock > 0) {
-		do {
-			struct buffer_head *bh;
+		       (अचिन्हित अक्षर *)bhs->b_data + offset, size);
+	अगर (--nblock > 0) अणु
+		करो अणु
+			काष्ठा buffer_head *bh;
 
-			bh = __bread(nilfs->ns_bdev, ++start, blocksize);
-			if (!bh)
-				return -EIO;
+			bh = __bपढ़ो(nilfs->ns_bdev, ++start, blocksize);
+			अगर (!bh)
+				वापस -EIO;
 			check_bytes -= size;
 			size = min_t(u64, check_bytes, blocksize);
 			crc = crc32_le(crc, bh->b_data, size);
-			brelse(bh);
-		} while (--nblock > 0);
-	}
+			brअन्यथा(bh);
+		पूर्ण जबतक (--nblock > 0);
+	पूर्ण
 	*sum = crc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * nilfs_read_super_root_block - read super root block
+ * nilfs_पढ़ो_super_root_block - पढ़ो super root block
  * @nilfs: nilfs object
  * @sr_block: disk block number of the super root block
- * @pbh: address of a buffer_head pointer to return super root buffer
+ * @pbh: address of a buffer_head poपूर्णांकer to वापस super root buffer
  * @check: CRC check flag
  */
-int nilfs_read_super_root_block(struct the_nilfs *nilfs, sector_t sr_block,
-				struct buffer_head **pbh, int check)
-{
-	struct buffer_head *bh_sr;
-	struct nilfs_super_root *sr;
+पूर्णांक nilfs_पढ़ो_super_root_block(काष्ठा the_nilfs *nilfs, sector_t sr_block,
+				काष्ठा buffer_head **pbh, पूर्णांक check)
+अणु
+	काष्ठा buffer_head *bh_sr;
+	काष्ठा nilfs_super_root *sr;
 	u32 crc;
-	int ret;
+	पूर्णांक ret;
 
-	*pbh = NULL;
-	bh_sr = __bread(nilfs->ns_bdev, sr_block, nilfs->ns_blocksize);
-	if (unlikely(!bh_sr)) {
+	*pbh = शून्य;
+	bh_sr = __bपढ़ो(nilfs->ns_bdev, sr_block, nilfs->ns_blocksize);
+	अगर (unlikely(!bh_sr)) अणु
 		ret = NILFS_SEG_FAIL_IO;
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
-	sr = (struct nilfs_super_root *)bh_sr->b_data;
-	if (check) {
-		unsigned int bytes = le16_to_cpu(sr->sr_bytes);
+	sr = (काष्ठा nilfs_super_root *)bh_sr->b_data;
+	अगर (check) अणु
+		अचिन्हित पूर्णांक bytes = le16_to_cpu(sr->sr_bytes);
 
-		if (bytes == 0 || bytes > nilfs->ns_blocksize) {
+		अगर (bytes == 0 || bytes > nilfs->ns_blocksize) अणु
 			ret = NILFS_SEG_FAIL_CHECKSUM_SUPER_ROOT;
-			goto failed_bh;
-		}
-		if (nilfs_compute_checksum(
-			    nilfs, bh_sr, &crc, sizeof(sr->sr_sum), bytes,
-			    sr_block, 1)) {
+			जाओ failed_bh;
+		पूर्ण
+		अगर (nilfs_compute_checksum(
+			    nilfs, bh_sr, &crc, माप(sr->sr_sum), bytes,
+			    sr_block, 1)) अणु
 			ret = NILFS_SEG_FAIL_IO;
-			goto failed_bh;
-		}
-		if (crc != le32_to_cpu(sr->sr_sum)) {
+			जाओ failed_bh;
+		पूर्ण
+		अगर (crc != le32_to_cpu(sr->sr_sum)) अणु
 			ret = NILFS_SEG_FAIL_CHECKSUM_SUPER_ROOT;
-			goto failed_bh;
-		}
-	}
+			जाओ failed_bh;
+		पूर्ण
+	पूर्ण
 	*pbh = bh_sr;
-	return 0;
+	वापस 0;
 
  failed_bh:
-	brelse(bh_sr);
+	brअन्यथा(bh_sr);
 
  failed:
-	return nilfs_warn_segment_error(nilfs->ns_sb, ret);
-}
+	वापस nilfs_warn_segment_error(nilfs->ns_sb, ret);
+पूर्ण
 
 /**
- * nilfs_read_log_header - read summary header of the specified log
+ * nilfs_पढ़ो_log_header - पढ़ो summary header of the specअगरied log
  * @nilfs: nilfs object
  * @start_blocknr: start block number of the log
- * @sum: pointer to return segment summary structure
+ * @sum: poपूर्णांकer to वापस segment summary काष्ठाure
  */
-static struct buffer_head *
-nilfs_read_log_header(struct the_nilfs *nilfs, sector_t start_blocknr,
-		      struct nilfs_segment_summary **sum)
-{
-	struct buffer_head *bh_sum;
+अटल काष्ठा buffer_head *
+nilfs_पढ़ो_log_header(काष्ठा the_nilfs *nilfs, sector_t start_blocknr,
+		      काष्ठा nilfs_segment_summary **sum)
+अणु
+	काष्ठा buffer_head *bh_sum;
 
-	bh_sum = __bread(nilfs->ns_bdev, start_blocknr, nilfs->ns_blocksize);
-	if (bh_sum)
-		*sum = (struct nilfs_segment_summary *)bh_sum->b_data;
-	return bh_sum;
-}
+	bh_sum = __bपढ़ो(nilfs->ns_bdev, start_blocknr, nilfs->ns_blocksize);
+	अगर (bh_sum)
+		*sum = (काष्ठा nilfs_segment_summary *)bh_sum->b_data;
+	वापस bh_sum;
+पूर्ण
 
 /**
- * nilfs_validate_log - verify consistency of log
+ * nilfs_validate_log - verअगरy consistency of log
  * @nilfs: nilfs object
  * @seg_seq: sequence number of segment
  * @bh_sum: buffer head of summary block
- * @sum: segment summary struct
+ * @sum: segment summary काष्ठा
  */
-static int nilfs_validate_log(struct the_nilfs *nilfs, u64 seg_seq,
-			      struct buffer_head *bh_sum,
-			      struct nilfs_segment_summary *sum)
-{
-	unsigned long nblock;
+अटल पूर्णांक nilfs_validate_log(काष्ठा the_nilfs *nilfs, u64 seg_seq,
+			      काष्ठा buffer_head *bh_sum,
+			      काष्ठा nilfs_segment_summary *sum)
+अणु
+	अचिन्हित दीर्घ nblock;
 	u32 crc;
-	int ret;
+	पूर्णांक ret;
 
 	ret = NILFS_SEG_FAIL_MAGIC;
-	if (le32_to_cpu(sum->ss_magic) != NILFS_SEGSUM_MAGIC)
-		goto out;
+	अगर (le32_to_cpu(sum->ss_magic) != NILFS_SEGSUM_MAGIC)
+		जाओ out;
 
 	ret = NILFS_SEG_FAIL_SEQ;
-	if (le64_to_cpu(sum->ss_seq) != seg_seq)
-		goto out;
+	अगर (le64_to_cpu(sum->ss_seq) != seg_seq)
+		जाओ out;
 
 	nblock = le32_to_cpu(sum->ss_nblocks);
 	ret = NILFS_SEG_FAIL_CONSISTENCY;
-	if (unlikely(nblock == 0 || nblock > nilfs->ns_blocks_per_segment))
-		/* This limits the number of blocks read in the CRC check */
-		goto out;
+	अगर (unlikely(nblock == 0 || nblock > nilfs->ns_blocks_per_segment))
+		/* This limits the number of blocks पढ़ो in the CRC check */
+		जाओ out;
 
 	ret = NILFS_SEG_FAIL_IO;
-	if (nilfs_compute_checksum(nilfs, bh_sum, &crc, sizeof(sum->ss_datasum),
+	अगर (nilfs_compute_checksum(nilfs, bh_sum, &crc, माप(sum->ss_datasum),
 				   ((u64)nblock << nilfs->ns_blocksize_bits),
 				   bh_sum->b_blocknr, nblock))
-		goto out;
+		जाओ out;
 
 	ret = NILFS_SEG_FAIL_CHECKSUM_FULL;
-	if (crc != le32_to_cpu(sum->ss_datasum))
-		goto out;
+	अगर (crc != le32_to_cpu(sum->ss_datasum))
+		जाओ out;
 	ret = 0;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * nilfs_read_summary_info - read an item on summary blocks of a log
+ * nilfs_पढ़ो_summary_info - पढ़ो an item on summary blocks of a log
  * @nilfs: nilfs object
  * @pbh: the current buffer head on summary blocks [in, out]
  * @offset: the current byte offset on summary blocks [in, out]
- * @bytes: byte size of the item to be read
+ * @bytes: byte size of the item to be पढ़ो
  */
-static void *nilfs_read_summary_info(struct the_nilfs *nilfs,
-				     struct buffer_head **pbh,
-				     unsigned int *offset, unsigned int bytes)
-{
-	void *ptr;
+अटल व्योम *nilfs_पढ़ो_summary_info(काष्ठा the_nilfs *nilfs,
+				     काष्ठा buffer_head **pbh,
+				     अचिन्हित पूर्णांक *offset, अचिन्हित पूर्णांक bytes)
+अणु
+	व्योम *ptr;
 	sector_t blocknr;
 
 	BUG_ON((*pbh)->b_size < *offset);
-	if (bytes > (*pbh)->b_size - *offset) {
+	अगर (bytes > (*pbh)->b_size - *offset) अणु
 		blocknr = (*pbh)->b_blocknr;
-		brelse(*pbh);
-		*pbh = __bread(nilfs->ns_bdev, blocknr + 1,
+		brअन्यथा(*pbh);
+		*pbh = __bपढ़ो(nilfs->ns_bdev, blocknr + 1,
 			       nilfs->ns_blocksize);
-		if (unlikely(!*pbh))
-			return NULL;
+		अगर (unlikely(!*pbh))
+			वापस शून्य;
 		*offset = 0;
-	}
+	पूर्ण
 	ptr = (*pbh)->b_data + *offset;
 	*offset += bytes;
-	return ptr;
-}
+	वापस ptr;
+पूर्ण
 
 /**
  * nilfs_skip_summary_info - skip items on summary blocks of a log
@@ -269,159 +270,159 @@ static void *nilfs_read_summary_info(struct the_nilfs *nilfs,
  * @bytes: byte size of the item to be skipped
  * @count: number of items to be skipped
  */
-static void nilfs_skip_summary_info(struct the_nilfs *nilfs,
-				    struct buffer_head **pbh,
-				    unsigned int *offset, unsigned int bytes,
-				    unsigned long count)
-{
-	unsigned int rest_item_in_current_block
+अटल व्योम nilfs_skip_summary_info(काष्ठा the_nilfs *nilfs,
+				    काष्ठा buffer_head **pbh,
+				    अचिन्हित पूर्णांक *offset, अचिन्हित पूर्णांक bytes,
+				    अचिन्हित दीर्घ count)
+अणु
+	अचिन्हित पूर्णांक rest_item_in_current_block
 		= ((*pbh)->b_size - *offset) / bytes;
 
-	if (count <= rest_item_in_current_block) {
+	अगर (count <= rest_item_in_current_block) अणु
 		*offset += bytes * count;
-	} else {
+	पूर्ण अन्यथा अणु
 		sector_t blocknr = (*pbh)->b_blocknr;
-		unsigned int nitem_per_block = (*pbh)->b_size / bytes;
-		unsigned int bcnt;
+		अचिन्हित पूर्णांक nitem_per_block = (*pbh)->b_size / bytes;
+		अचिन्हित पूर्णांक bcnt;
 
 		count -= rest_item_in_current_block;
 		bcnt = DIV_ROUND_UP(count, nitem_per_block);
 		*offset = bytes * (count - (bcnt - 1) * nitem_per_block);
 
-		brelse(*pbh);
-		*pbh = __bread(nilfs->ns_bdev, blocknr + bcnt,
+		brअन्यथा(*pbh);
+		*pbh = __bपढ़ो(nilfs->ns_bdev, blocknr + bcnt,
 			       nilfs->ns_blocksize);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * nilfs_scan_dsync_log - get block information of a log written for data sync
+ * nilfs_scan_dsync_log - get block inक्रमmation of a log written क्रम data sync
  * @nilfs: nilfs object
  * @start_blocknr: start block number of the log
- * @sum: log summary information
- * @head: list head to add nilfs_recovery_block struct
+ * @sum: log summary inक्रमmation
+ * @head: list head to add nilfs_recovery_block काष्ठा
  */
-static int nilfs_scan_dsync_log(struct the_nilfs *nilfs, sector_t start_blocknr,
-				struct nilfs_segment_summary *sum,
-				struct list_head *head)
-{
-	struct buffer_head *bh;
-	unsigned int offset;
+अटल पूर्णांक nilfs_scan_dsync_log(काष्ठा the_nilfs *nilfs, sector_t start_blocknr,
+				काष्ठा nilfs_segment_summary *sum,
+				काष्ठा list_head *head)
+अणु
+	काष्ठा buffer_head *bh;
+	अचिन्हित पूर्णांक offset;
 	u32 nfinfo, sumbytes;
 	sector_t blocknr;
 	ino_t ino;
-	int err = -EIO;
+	पूर्णांक err = -EIO;
 
 	nfinfo = le32_to_cpu(sum->ss_nfinfo);
-	if (!nfinfo)
-		return 0;
+	अगर (!nfinfo)
+		वापस 0;
 
 	sumbytes = le32_to_cpu(sum->ss_sumbytes);
 	blocknr = start_blocknr + DIV_ROUND_UP(sumbytes, nilfs->ns_blocksize);
-	bh = __bread(nilfs->ns_bdev, start_blocknr, nilfs->ns_blocksize);
-	if (unlikely(!bh))
-		goto out;
+	bh = __bपढ़ो(nilfs->ns_bdev, start_blocknr, nilfs->ns_blocksize);
+	अगर (unlikely(!bh))
+		जाओ out;
 
 	offset = le16_to_cpu(sum->ss_bytes);
-	for (;;) {
-		unsigned long nblocks, ndatablk, nnodeblk;
-		struct nilfs_finfo *finfo;
+	क्रम (;;) अणु
+		अचिन्हित दीर्घ nblocks, ndatablk, nnodeblk;
+		काष्ठा nilfs_finfo *finfo;
 
-		finfo = nilfs_read_summary_info(nilfs, &bh, &offset,
-						sizeof(*finfo));
-		if (unlikely(!finfo))
-			goto out;
+		finfo = nilfs_पढ़ो_summary_info(nilfs, &bh, &offset,
+						माप(*finfo));
+		अगर (unlikely(!finfo))
+			जाओ out;
 
 		ino = le64_to_cpu(finfo->fi_ino);
 		nblocks = le32_to_cpu(finfo->fi_nblocks);
 		ndatablk = le32_to_cpu(finfo->fi_ndatablk);
 		nnodeblk = nblocks - ndatablk;
 
-		while (ndatablk-- > 0) {
-			struct nilfs_recovery_block *rb;
-			struct nilfs_binfo_v *binfo;
+		जबतक (ndatablk-- > 0) अणु
+			काष्ठा nilfs_recovery_block *rb;
+			काष्ठा nilfs_binfo_v *binfo;
 
-			binfo = nilfs_read_summary_info(nilfs, &bh, &offset,
-							sizeof(*binfo));
-			if (unlikely(!binfo))
-				goto out;
+			binfo = nilfs_पढ़ो_summary_info(nilfs, &bh, &offset,
+							माप(*binfo));
+			अगर (unlikely(!binfo))
+				जाओ out;
 
-			rb = kmalloc(sizeof(*rb), GFP_NOFS);
-			if (unlikely(!rb)) {
+			rb = kदो_स्मृति(माप(*rb), GFP_NOFS);
+			अगर (unlikely(!rb)) अणु
 				err = -ENOMEM;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			rb->ino = ino;
 			rb->blocknr = blocknr++;
 			rb->vblocknr = le64_to_cpu(binfo->bi_vblocknr);
 			rb->blkoff = le64_to_cpu(binfo->bi_blkoff);
 			/* INIT_LIST_HEAD(&rb->list); */
 			list_add_tail(&rb->list, head);
-		}
-		if (--nfinfo == 0)
-			break;
-		blocknr += nnodeblk; /* always 0 for data sync logs */
-		nilfs_skip_summary_info(nilfs, &bh, &offset, sizeof(__le64),
+		पूर्ण
+		अगर (--nfinfo == 0)
+			अवरोध;
+		blocknr += nnodeblk; /* always 0 क्रम data sync logs */
+		nilfs_skip_summary_info(nilfs, &bh, &offset, माप(__le64),
 					nnodeblk);
-		if (unlikely(!bh))
-			goto out;
-	}
+		अगर (unlikely(!bh))
+			जाओ out;
+	पूर्ण
 	err = 0;
  out:
-	brelse(bh);   /* brelse(NULL) is just ignored */
-	return err;
-}
+	brअन्यथा(bh);   /* brअन्यथा(शून्य) is just ignored */
+	वापस err;
+पूर्ण
 
-static void dispose_recovery_list(struct list_head *head)
-{
-	while (!list_empty(head)) {
-		struct nilfs_recovery_block *rb;
+अटल व्योम dispose_recovery_list(काष्ठा list_head *head)
+अणु
+	जबतक (!list_empty(head)) अणु
+		काष्ठा nilfs_recovery_block *rb;
 
-		rb = list_first_entry(head, struct nilfs_recovery_block, list);
+		rb = list_first_entry(head, काष्ठा nilfs_recovery_block, list);
 		list_del(&rb->list);
-		kfree(rb);
-	}
-}
+		kमुक्त(rb);
+	पूर्ण
+पूर्ण
 
-struct nilfs_segment_entry {
-	struct list_head	list;
+काष्ठा nilfs_segment_entry अणु
+	काष्ठा list_head	list;
 	__u64			segnum;
-};
+पूर्ण;
 
-static int nilfs_segment_list_add(struct list_head *head, __u64 segnum)
-{
-	struct nilfs_segment_entry *ent = kmalloc(sizeof(*ent), GFP_NOFS);
+अटल पूर्णांक nilfs_segment_list_add(काष्ठा list_head *head, __u64 segnum)
+अणु
+	काष्ठा nilfs_segment_entry *ent = kदो_स्मृति(माप(*ent), GFP_NOFS);
 
-	if (unlikely(!ent))
-		return -ENOMEM;
+	अगर (unlikely(!ent))
+		वापस -ENOMEM;
 
 	ent->segnum = segnum;
 	INIT_LIST_HEAD(&ent->list);
 	list_add_tail(&ent->list, head);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void nilfs_dispose_segment_list(struct list_head *head)
-{
-	while (!list_empty(head)) {
-		struct nilfs_segment_entry *ent;
+व्योम nilfs_dispose_segment_list(काष्ठा list_head *head)
+अणु
+	जबतक (!list_empty(head)) अणु
+		काष्ठा nilfs_segment_entry *ent;
 
-		ent = list_first_entry(head, struct nilfs_segment_entry, list);
+		ent = list_first_entry(head, काष्ठा nilfs_segment_entry, list);
 		list_del(&ent->list);
-		kfree(ent);
-	}
-}
+		kमुक्त(ent);
+	पूर्ण
+पूर्ण
 
-static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
-					      struct super_block *sb,
-					      struct nilfs_recovery_info *ri)
-{
-	struct list_head *head = &ri->ri_used_segments;
-	struct nilfs_segment_entry *ent, *n;
-	struct inode *sufile = nilfs->ns_sufile;
+अटल पूर्णांक nilfs_prepare_segment_क्रम_recovery(काष्ठा the_nilfs *nilfs,
+					      काष्ठा super_block *sb,
+					      काष्ठा nilfs_recovery_info *ri)
+अणु
+	काष्ठा list_head *head = &ri->ri_used_segments;
+	काष्ठा nilfs_segment_entry *ent, *n;
+	काष्ठा inode *sufile = nilfs->ns_sufile;
 	__u64 segnum[4];
-	int err;
-	int i;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	segnum[0] = nilfs->ns_segnum;
 	segnum[1] = nilfs->ns_nextnum;
@@ -432,34 +433,34 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
 	 * Releasing the next segment of the latest super root.
 	 * The next segment is invalidated by this recovery.
 	 */
-	err = nilfs_sufile_free(sufile, segnum[1]);
-	if (unlikely(err))
-		goto failed;
+	err = nilfs_sufile_मुक्त(sufile, segnum[1]);
+	अगर (unlikely(err))
+		जाओ failed;
 
-	for (i = 1; i < 4; i++) {
+	क्रम (i = 1; i < 4; i++) अणु
 		err = nilfs_segment_list_add(head, segnum[i]);
-		if (unlikely(err))
-			goto failed;
-	}
+		अगर (unlikely(err))
+			जाओ failed;
+	पूर्ण
 
 	/*
 	 * Collecting segments written after the latest super root.
-	 * These are marked dirty to avoid being reallocated in the next write.
+	 * These are marked dirty to aव्योम being पुनः_स्मृतिated in the next ग_लिखो.
 	 */
-	list_for_each_entry_safe(ent, n, head, list) {
-		if (ent->segnum != segnum[0]) {
+	list_क्रम_each_entry_safe(ent, n, head, list) अणु
+		अगर (ent->segnum != segnum[0]) अणु
 			err = nilfs_sufile_scrap(sufile, ent->segnum);
-			if (unlikely(err))
-				goto failed;
-		}
+			अगर (unlikely(err))
+				जाओ failed;
+		पूर्ण
 		list_del(&ent->list);
-		kfree(ent);
-	}
+		kमुक्त(ent);
+	पूर्ण
 
-	/* Allocate new segments for recovery */
+	/* Allocate new segments क्रम recovery */
 	err = nilfs_sufile_alloc(sufile, &segnum[0]);
-	if (unlikely(err))
-		goto failed;
+	अगर (unlikely(err))
+		जाओ failed;
 
 	nilfs->ns_pseg_offset = 0;
 	nilfs->ns_seg_seq = ri->ri_seq + 2;
@@ -467,76 +468,76 @@ static int nilfs_prepare_segment_for_recovery(struct the_nilfs *nilfs,
 
  failed:
 	/* No need to recover sufile because it will be destroyed on error */
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int nilfs_recovery_copy_block(struct the_nilfs *nilfs,
-				     struct nilfs_recovery_block *rb,
-				     struct page *page)
-{
-	struct buffer_head *bh_org;
-	void *kaddr;
+अटल पूर्णांक nilfs_recovery_copy_block(काष्ठा the_nilfs *nilfs,
+				     काष्ठा nilfs_recovery_block *rb,
+				     काष्ठा page *page)
+अणु
+	काष्ठा buffer_head *bh_org;
+	व्योम *kaddr;
 
-	bh_org = __bread(nilfs->ns_bdev, rb->blocknr, nilfs->ns_blocksize);
-	if (unlikely(!bh_org))
-		return -EIO;
+	bh_org = __bपढ़ो(nilfs->ns_bdev, rb->blocknr, nilfs->ns_blocksize);
+	अगर (unlikely(!bh_org))
+		वापस -EIO;
 
 	kaddr = kmap_atomic(page);
-	memcpy(kaddr + bh_offset(bh_org), bh_org->b_data, bh_org->b_size);
+	स_नकल(kaddr + bh_offset(bh_org), bh_org->b_data, bh_org->b_size);
 	kunmap_atomic(kaddr);
-	brelse(bh_org);
-	return 0;
-}
+	brअन्यथा(bh_org);
+	वापस 0;
+पूर्ण
 
-static int nilfs_recover_dsync_blocks(struct the_nilfs *nilfs,
-				      struct super_block *sb,
-				      struct nilfs_root *root,
-				      struct list_head *head,
-				      unsigned long *nr_salvaged_blocks)
-{
-	struct inode *inode;
-	struct nilfs_recovery_block *rb, *n;
-	unsigned int blocksize = nilfs->ns_blocksize;
-	struct page *page;
+अटल पूर्णांक nilfs_recover_dsync_blocks(काष्ठा the_nilfs *nilfs,
+				      काष्ठा super_block *sb,
+				      काष्ठा nilfs_root *root,
+				      काष्ठा list_head *head,
+				      अचिन्हित दीर्घ *nr_salvaged_blocks)
+अणु
+	काष्ठा inode *inode;
+	काष्ठा nilfs_recovery_block *rb, *n;
+	अचिन्हित पूर्णांक blocksize = nilfs->ns_blocksize;
+	काष्ठा page *page;
 	loff_t pos;
-	int err = 0, err2 = 0;
+	पूर्णांक err = 0, err2 = 0;
 
-	list_for_each_entry_safe(rb, n, head, list) {
+	list_क्रम_each_entry_safe(rb, n, head, list) अणु
 		inode = nilfs_iget(sb, root, rb->ino);
-		if (IS_ERR(inode)) {
+		अगर (IS_ERR(inode)) अणु
 			err = PTR_ERR(inode);
-			inode = NULL;
-			goto failed_inode;
-		}
+			inode = शून्य;
+			जाओ failed_inode;
+		पूर्ण
 
 		pos = rb->blkoff << inode->i_blkbits;
-		err = block_write_begin(inode->i_mapping, pos, blocksize,
+		err = block_ग_लिखो_begin(inode->i_mapping, pos, blocksize,
 					0, &page, nilfs_get_block);
-		if (unlikely(err)) {
+		अगर (unlikely(err)) अणु
 			loff_t isize = inode->i_size;
 
-			if (pos + blocksize > isize)
-				nilfs_write_failed(inode->i_mapping,
+			अगर (pos + blocksize > isize)
+				nilfs_ग_लिखो_failed(inode->i_mapping,
 							pos + blocksize);
-			goto failed_inode;
-		}
+			जाओ failed_inode;
+		पूर्ण
 
 		err = nilfs_recovery_copy_block(nilfs, rb, page);
-		if (unlikely(err))
-			goto failed_page;
+		अगर (unlikely(err))
+			जाओ failed_page;
 
 		err = nilfs_set_file_dirty(inode, 1);
-		if (unlikely(err))
-			goto failed_page;
+		अगर (unlikely(err))
+			जाओ failed_page;
 
-		block_write_end(NULL, inode->i_mapping, pos, blocksize,
-				blocksize, page, NULL);
+		block_ग_लिखो_end(शून्य, inode->i_mapping, pos, blocksize,
+				blocksize, page, शून्य);
 
 		unlock_page(page);
 		put_page(page);
 
 		(*nr_salvaged_blocks)++;
-		goto next;
+		जाओ next;
 
  failed_page:
 		unlock_page(page);
@@ -545,178 +546,178 @@ static int nilfs_recover_dsync_blocks(struct the_nilfs *nilfs,
  failed_inode:
 		nilfs_warn(sb,
 			   "error %d recovering data block (ino=%lu, block-offset=%llu)",
-			   err, (unsigned long)rb->ino,
-			   (unsigned long long)rb->blkoff);
-		if (!err2)
+			   err, (अचिन्हित दीर्घ)rb->ino,
+			   (अचिन्हित दीर्घ दीर्घ)rb->blkoff);
+		अगर (!err2)
 			err2 = err;
  next:
-		iput(inode); /* iput(NULL) is just ignored */
+		iput(inode); /* iput(शून्य) is just ignored */
 		list_del_init(&rb->list);
-		kfree(rb);
-	}
-	return err2;
-}
+		kमुक्त(rb);
+	पूर्ण
+	वापस err2;
+पूर्ण
 
 /**
- * nilfs_do_roll_forward - salvage logical segments newer than the latest
- * checkpoint
+ * nilfs_करो_roll_क्रमward - salvage logical segments newer than the latest
+ * checkpoपूर्णांक
  * @nilfs: nilfs object
  * @sb: super block instance
- * @ri: pointer to a nilfs_recovery_info
+ * @ri: poपूर्णांकer to a nilfs_recovery_info
  */
-static int nilfs_do_roll_forward(struct the_nilfs *nilfs,
-				 struct super_block *sb,
-				 struct nilfs_root *root,
-				 struct nilfs_recovery_info *ri)
-{
-	struct buffer_head *bh_sum = NULL;
-	struct nilfs_segment_summary *sum = NULL;
+अटल पूर्णांक nilfs_करो_roll_क्रमward(काष्ठा the_nilfs *nilfs,
+				 काष्ठा super_block *sb,
+				 काष्ठा nilfs_root *root,
+				 काष्ठा nilfs_recovery_info *ri)
+अणु
+	काष्ठा buffer_head *bh_sum = शून्य;
+	काष्ठा nilfs_segment_summary *sum = शून्य;
 	sector_t pseg_start;
 	sector_t seg_start, seg_end;  /* Starting/ending DBN of full segment */
-	unsigned long nsalvaged_blocks = 0;
-	unsigned int flags;
+	अचिन्हित दीर्घ nsalvaged_blocks = 0;
+	अचिन्हित पूर्णांक flags;
 	u64 seg_seq;
 	__u64 segnum, nextnum = 0;
-	int empty_seg = 0;
-	int err = 0, ret;
+	पूर्णांक empty_seg = 0;
+	पूर्णांक err = 0, ret;
 	LIST_HEAD(dsync_blocks);  /* list of data blocks to be recovered */
-	enum {
+	क्रमागत अणु
 		RF_INIT_ST,
 		RF_DSYNC_ST,   /* scanning data-sync segments */
-	};
-	int state = RF_INIT_ST;
+	पूर्ण;
+	पूर्णांक state = RF_INIT_ST;
 
 	pseg_start = ri->ri_lsegs_start;
 	seg_seq = ri->ri_lsegs_start_seq;
 	segnum = nilfs_get_segnum_of_block(nilfs, pseg_start);
 	nilfs_get_segment_range(nilfs, segnum, &seg_start, &seg_end);
 
-	while (segnum != ri->ri_segnum || pseg_start <= ri->ri_pseg_start) {
-		brelse(bh_sum);
-		bh_sum = nilfs_read_log_header(nilfs, pseg_start, &sum);
-		if (!bh_sum) {
+	जबतक (segnum != ri->ri_segnum || pseg_start <= ri->ri_pseg_start) अणु
+		brअन्यथा(bh_sum);
+		bh_sum = nilfs_पढ़ो_log_header(nilfs, pseg_start, &sum);
+		अगर (!bh_sum) अणु
 			err = -EIO;
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
 		ret = nilfs_validate_log(nilfs, seg_seq, bh_sum, sum);
-		if (ret) {
-			if (ret == NILFS_SEG_FAIL_IO) {
+		अगर (ret) अणु
+			अगर (ret == NILFS_SEG_FAIL_IO) अणु
 				err = -EIO;
-				goto failed;
-			}
-			goto strayed;
-		}
+				जाओ failed;
+			पूर्ण
+			जाओ strayed;
+		पूर्ण
 
 		flags = le16_to_cpu(sum->ss_flags);
-		if (flags & NILFS_SS_SR)
-			goto confused;
+		अगर (flags & NILFS_SS_SR)
+			जाओ confused;
 
-		/* Found a valid partial segment; do recovery actions */
+		/* Found a valid partial segment; करो recovery actions */
 		nextnum = nilfs_get_segnum_of_block(nilfs,
 						    le64_to_cpu(sum->ss_next));
 		empty_seg = 0;
-		nilfs->ns_ctime = le64_to_cpu(sum->ss_create);
-		if (!(flags & NILFS_SS_GC))
-			nilfs->ns_nongc_ctime = nilfs->ns_ctime;
+		nilfs->ns_स_समय = le64_to_cpu(sum->ss_create);
+		अगर (!(flags & NILFS_SS_GC))
+			nilfs->ns_nongc_स_समय = nilfs->ns_स_समय;
 
-		switch (state) {
-		case RF_INIT_ST:
-			if (!(flags & NILFS_SS_LOGBGN) ||
+		चयन (state) अणु
+		हाल RF_INIT_ST:
+			अगर (!(flags & NILFS_SS_LOGBGN) ||
 			    !(flags & NILFS_SS_SYNDT))
-				goto try_next_pseg;
+				जाओ try_next_pseg;
 			state = RF_DSYNC_ST;
 			fallthrough;
-		case RF_DSYNC_ST:
-			if (!(flags & NILFS_SS_SYNDT))
-				goto confused;
+		हाल RF_DSYNC_ST:
+			अगर (!(flags & NILFS_SS_SYNDT))
+				जाओ confused;
 
 			err = nilfs_scan_dsync_log(nilfs, pseg_start, sum,
 						   &dsync_blocks);
-			if (unlikely(err))
-				goto failed;
-			if (flags & NILFS_SS_LOGEND) {
+			अगर (unlikely(err))
+				जाओ failed;
+			अगर (flags & NILFS_SS_LOGEND) अणु
 				err = nilfs_recover_dsync_blocks(
 					nilfs, sb, root, &dsync_blocks,
 					&nsalvaged_blocks);
-				if (unlikely(err))
-					goto failed;
+				अगर (unlikely(err))
+					जाओ failed;
 				state = RF_INIT_ST;
-			}
-			break; /* Fall through to try_next_pseg */
-		}
+			पूर्ण
+			अवरोध; /* Fall through to try_next_pseg */
+		पूर्ण
 
  try_next_pseg:
-		if (pseg_start == ri->ri_lsegs_end)
-			break;
+		अगर (pseg_start == ri->ri_lsegs_end)
+			अवरोध;
 		pseg_start += le32_to_cpu(sum->ss_nblocks);
-		if (pseg_start < seg_end)
-			continue;
-		goto feed_segment;
+		अगर (pseg_start < seg_end)
+			जारी;
+		जाओ feed_segment;
 
  strayed:
-		if (pseg_start == ri->ri_lsegs_end)
-			break;
+		अगर (pseg_start == ri->ri_lsegs_end)
+			अवरोध;
 
  feed_segment:
 		/* Looking to the next full segment */
-		if (empty_seg++)
-			break;
+		अगर (empty_seg++)
+			अवरोध;
 		seg_seq++;
 		segnum = nextnum;
 		nilfs_get_segment_range(nilfs, segnum, &seg_start, &seg_end);
 		pseg_start = seg_start;
-	}
+	पूर्ण
 
-	if (nsalvaged_blocks) {
+	अगर (nsalvaged_blocks) अणु
 		nilfs_info(sb, "salvaged %lu blocks", nsalvaged_blocks);
 		ri->ri_need_recovery = NILFS_RECOVERY_ROLLFORWARD_DONE;
-	}
+	पूर्ण
  out:
-	brelse(bh_sum);
+	brअन्यथा(bh_sum);
 	dispose_recovery_list(&dsync_blocks);
-	return err;
+	वापस err;
 
  confused:
 	err = -EINVAL;
  failed:
 	nilfs_err(sb,
 		  "error %d roll-forwarding partial segment at blocknr = %llu",
-		  err, (unsigned long long)pseg_start);
-	goto out;
-}
+		  err, (अचिन्हित दीर्घ दीर्घ)pseg_start);
+	जाओ out;
+पूर्ण
 
-static void nilfs_finish_roll_forward(struct the_nilfs *nilfs,
-				      struct nilfs_recovery_info *ri)
-{
-	struct buffer_head *bh;
-	int err;
+अटल व्योम nilfs_finish_roll_क्रमward(काष्ठा the_nilfs *nilfs,
+				      काष्ठा nilfs_recovery_info *ri)
+अणु
+	काष्ठा buffer_head *bh;
+	पूर्णांक err;
 
-	if (nilfs_get_segnum_of_block(nilfs, ri->ri_lsegs_start) !=
+	अगर (nilfs_get_segnum_of_block(nilfs, ri->ri_lsegs_start) !=
 	    nilfs_get_segnum_of_block(nilfs, ri->ri_super_root))
-		return;
+		वापस;
 
 	bh = __getblk(nilfs->ns_bdev, ri->ri_lsegs_start, nilfs->ns_blocksize);
 	BUG_ON(!bh);
-	memset(bh->b_data, 0, bh->b_size);
+	स_रखो(bh->b_data, 0, bh->b_size);
 	set_buffer_dirty(bh);
 	err = sync_dirty_buffer(bh);
-	if (unlikely(err))
+	अगर (unlikely(err))
 		nilfs_warn(nilfs->ns_sb,
 			   "buffer sync write failed during post-cleaning of recovery.");
-	brelse(bh);
-}
+	brअन्यथा(bh);
+पूर्ण
 
 /**
- * nilfs_salvage_orphan_logs - salvage logs written after the latest checkpoint
+ * nilfs_salvage_orphan_logs - salvage logs written after the latest checkpoपूर्णांक
  * @nilfs: nilfs object
  * @sb: super block instance
- * @ri: pointer to a nilfs_recovery_info struct to store search results.
+ * @ri: poपूर्णांकer to a nilfs_recovery_info काष्ठा to store search results.
  *
- * Return Value: On success, 0 is returned.  On error, one of the following
- * negative error code is returned.
+ * Return Value: On success, 0 is वापसed.  On error, one of the following
+ * negative error code is वापसed.
  *
- * %-EINVAL - Inconsistent filesystem state.
+ * %-EINVAL - Inconsistent fileप्रणाली state.
  *
  * %-EIO - I/O error
  *
@@ -726,67 +727,67 @@ static void nilfs_finish_roll_forward(struct the_nilfs *nilfs,
  *
  * %-ENOMEM - Insufficient memory available.
  */
-int nilfs_salvage_orphan_logs(struct the_nilfs *nilfs,
-			      struct super_block *sb,
-			      struct nilfs_recovery_info *ri)
-{
-	struct nilfs_root *root;
-	int err;
+पूर्णांक nilfs_salvage_orphan_logs(काष्ठा the_nilfs *nilfs,
+			      काष्ठा super_block *sb,
+			      काष्ठा nilfs_recovery_info *ri)
+अणु
+	काष्ठा nilfs_root *root;
+	पूर्णांक err;
 
-	if (ri->ri_lsegs_start == 0 || ri->ri_lsegs_end == 0)
-		return 0;
+	अगर (ri->ri_lsegs_start == 0 || ri->ri_lsegs_end == 0)
+		वापस 0;
 
-	err = nilfs_attach_checkpoint(sb, ri->ri_cno, true, &root);
-	if (unlikely(err)) {
+	err = nilfs_attach_checkpoपूर्णांक(sb, ri->ri_cno, true, &root);
+	अगर (unlikely(err)) अणु
 		nilfs_err(sb, "error %d loading the latest checkpoint", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = nilfs_do_roll_forward(nilfs, sb, root, ri);
-	if (unlikely(err))
-		goto failed;
+	err = nilfs_करो_roll_क्रमward(nilfs, sb, root, ri);
+	अगर (unlikely(err))
+		जाओ failed;
 
-	if (ri->ri_need_recovery == NILFS_RECOVERY_ROLLFORWARD_DONE) {
-		err = nilfs_prepare_segment_for_recovery(nilfs, sb, ri);
-		if (unlikely(err)) {
+	अगर (ri->ri_need_recovery == NILFS_RECOVERY_ROLLFORWARD_DONE) अणु
+		err = nilfs_prepare_segment_क्रम_recovery(nilfs, sb, ri);
+		अगर (unlikely(err)) अणु
 			nilfs_err(sb, "error %d preparing segment for recovery",
 				  err);
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
-		err = nilfs_attach_log_writer(sb, root);
-		if (unlikely(err))
-			goto failed;
+		err = nilfs_attach_log_ग_लिखोr(sb, root);
+		अगर (unlikely(err))
+			जाओ failed;
 
-		set_nilfs_discontinued(nilfs);
-		err = nilfs_construct_segment(sb);
-		nilfs_detach_log_writer(sb);
+		set_nilfs_disजारीd(nilfs);
+		err = nilfs_स्थिरruct_segment(sb);
+		nilfs_detach_log_ग_लिखोr(sb);
 
-		if (unlikely(err)) {
+		अगर (unlikely(err)) अणु
 			nilfs_err(sb, "error %d writing segment for recovery",
 				  err);
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
-		nilfs_finish_roll_forward(nilfs, ri);
-	}
+		nilfs_finish_roll_क्रमward(nilfs, ri);
+	पूर्ण
 
  failed:
 	nilfs_put_root(root);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * nilfs_search_super_root - search the latest valid super root
  * @nilfs: the_nilfs
- * @ri: pointer to a nilfs_recovery_info struct to store search results.
+ * @ri: poपूर्णांकer to a nilfs_recovery_info काष्ठा to store search results.
  *
- * nilfs_search_super_root() looks for the latest super-root from a partial
- * segment pointed by the superblock.  It sets up struct the_nilfs through
- * this search. It fills nilfs_recovery_info (ri) required for recovery.
+ * nilfs_search_super_root() looks क्रम the latest super-root from a partial
+ * segment poपूर्णांकed by the superblock.  It sets up काष्ठा the_nilfs through
+ * this search. It fills nilfs_recovery_info (ri) required क्रम recovery.
  *
- * Return Value: On success, 0 is returned.  On error, one of the following
- * negative error code is returned.
+ * Return Value: On success, 0 is वापसed.  On error, one of the following
+ * negative error code is वापसed.
  *
  * %-EINVAL - No valid segment found
  *
@@ -794,22 +795,22 @@ int nilfs_salvage_orphan_logs(struct the_nilfs *nilfs,
  *
  * %-ENOMEM - Insufficient memory available.
  */
-int nilfs_search_super_root(struct the_nilfs *nilfs,
-			    struct nilfs_recovery_info *ri)
-{
-	struct buffer_head *bh_sum = NULL;
-	struct nilfs_segment_summary *sum = NULL;
+पूर्णांक nilfs_search_super_root(काष्ठा the_nilfs *nilfs,
+			    काष्ठा nilfs_recovery_info *ri)
+अणु
+	काष्ठा buffer_head *bh_sum = शून्य;
+	काष्ठा nilfs_segment_summary *sum = शून्य;
 	sector_t pseg_start, pseg_end, sr_pseg_start = 0;
 	sector_t seg_start, seg_end; /* range of full segment (block number) */
 	sector_t b, end;
-	unsigned long nblocks;
-	unsigned int flags;
+	अचिन्हित दीर्घ nblocks;
+	अचिन्हित पूर्णांक flags;
 	u64 seg_seq;
 	__u64 segnum, nextnum = 0;
 	__u64 cno;
 	LIST_HEAD(segments);
-	int empty_seg = 0, scan_newer = 0;
-	int ret;
+	पूर्णांक empty_seg = 0, scan_newer = 0;
+	पूर्णांक ret;
 
 	pseg_start = nilfs->ns_last_pseg;
 	seg_seq = nilfs->ns_last_seq;
@@ -821,29 +822,29 @@ int nilfs_search_super_root(struct the_nilfs *nilfs,
 
 	/* Read ahead segment */
 	b = seg_start;
-	while (b <= seg_end)
-		__breadahead(nilfs->ns_bdev, b++, nilfs->ns_blocksize);
+	जबतक (b <= seg_end)
+		__bपढ़ोahead(nilfs->ns_bdev, b++, nilfs->ns_blocksize);
 
-	for (;;) {
-		brelse(bh_sum);
+	क्रम (;;) अणु
+		brअन्यथा(bh_sum);
 		ret = NILFS_SEG_FAIL_IO;
-		bh_sum = nilfs_read_log_header(nilfs, pseg_start, &sum);
-		if (!bh_sum)
-			goto failed;
+		bh_sum = nilfs_पढ़ो_log_header(nilfs, pseg_start, &sum);
+		अगर (!bh_sum)
+			जाओ failed;
 
 		ret = nilfs_validate_log(nilfs, seg_seq, bh_sum, sum);
-		if (ret) {
-			if (ret == NILFS_SEG_FAIL_IO)
-				goto failed;
-			goto strayed;
-		}
+		अगर (ret) अणु
+			अगर (ret == NILFS_SEG_FAIL_IO)
+				जाओ failed;
+			जाओ strayed;
+		पूर्ण
 
 		nblocks = le32_to_cpu(sum->ss_nblocks);
 		pseg_end = pseg_start + nblocks - 1;
-		if (unlikely(pseg_end > seg_end)) {
+		अगर (unlikely(pseg_end > seg_end)) अणु
 			ret = NILFS_SEG_FAIL_CONSISTENCY;
-			goto strayed;
-		}
+			जाओ strayed;
+		पूर्ण
 
 		/* A valid partial segment */
 		ri->ri_pseg_start = pseg_start;
@@ -855,31 +856,31 @@ int nilfs_search_super_root(struct the_nilfs *nilfs,
 		empty_seg = 0;
 
 		flags = le16_to_cpu(sum->ss_flags);
-		if (!(flags & NILFS_SS_SR) && !scan_newer) {
+		अगर (!(flags & NILFS_SS_SR) && !scan_newer) अणु
 			/*
 			 * This will never happen because a superblock
-			 * (last_segment) always points to a pseg with
+			 * (last_segment) always poपूर्णांकs to a pseg with
 			 * a super root.
 			 */
 			ret = NILFS_SEG_FAIL_CONSISTENCY;
-			goto failed;
-		}
+			जाओ failed;
+		पूर्ण
 
-		if (pseg_start == seg_start) {
+		अगर (pseg_start == seg_start) अणु
 			nilfs_get_segment_range(nilfs, nextnum, &b, &end);
-			while (b <= end)
-				__breadahead(nilfs->ns_bdev, b++,
+			जबतक (b <= end)
+				__bपढ़ोahead(nilfs->ns_bdev, b++,
 					     nilfs->ns_blocksize);
-		}
-		if (!(flags & NILFS_SS_SR)) {
-			if (!ri->ri_lsegs_start && (flags & NILFS_SS_LOGBGN)) {
+		पूर्ण
+		अगर (!(flags & NILFS_SS_SR)) अणु
+			अगर (!ri->ri_lsegs_start && (flags & NILFS_SS_LOGBGN)) अणु
 				ri->ri_lsegs_start = pseg_start;
 				ri->ri_lsegs_start_seq = seg_seq;
-			}
-			if (flags & NILFS_SS_LOGEND)
+			पूर्ण
+			अगर (flags & NILFS_SS_LOGEND)
 				ri->ri_lsegs_end = pseg_start;
-			goto try_next_pseg;
-		}
+			जाओ try_next_pseg;
+		पूर्ण
 
 		/* A valid super root was found. */
 		ri->ri_cno = cno++;
@@ -892,59 +893,59 @@ int nilfs_search_super_root(struct the_nilfs *nilfs,
 		nilfs->ns_seg_seq = seg_seq;
 		nilfs->ns_segnum = segnum;
 		nilfs->ns_cno = cno;  /* nilfs->ns_cno = ri->ri_cno + 1 */
-		nilfs->ns_ctime = le64_to_cpu(sum->ss_create);
+		nilfs->ns_स_समय = le64_to_cpu(sum->ss_create);
 		nilfs->ns_nextnum = nextnum;
 
-		if (scan_newer)
+		अगर (scan_newer)
 			ri->ri_need_recovery = NILFS_RECOVERY_SR_UPDATED;
-		else {
-			if (nilfs->ns_mount_state & NILFS_VALID_FS)
-				goto super_root_found;
+		अन्यथा अणु
+			अगर (nilfs->ns_mount_state & NILFS_VALID_FS)
+				जाओ super_root_found;
 			scan_newer = 1;
-		}
+		पूर्ण
 
  try_next_pseg:
 		/* Standing on a course, or met an inconsistent state */
 		pseg_start += nblocks;
-		if (pseg_start < seg_end)
-			continue;
-		goto feed_segment;
+		अगर (pseg_start < seg_end)
+			जारी;
+		जाओ feed_segment;
 
  strayed:
 		/* Off the trail */
-		if (!scan_newer)
+		अगर (!scan_newer)
 			/*
-			 * This can happen if a checkpoint was written without
+			 * This can happen अगर a checkpoपूर्णांक was written without
 			 * barriers, or as a result of an I/O failure.
 			 */
-			goto failed;
+			जाओ failed;
 
  feed_segment:
 		/* Looking to the next full segment */
-		if (empty_seg++)
-			goto super_root_found; /* found a valid super root */
+		अगर (empty_seg++)
+			जाओ super_root_found; /* found a valid super root */
 
 		ret = nilfs_segment_list_add(&segments, segnum);
-		if (unlikely(ret))
-			goto failed;
+		अगर (unlikely(ret))
+			जाओ failed;
 
 		seg_seq++;
 		segnum = nextnum;
 		nilfs_get_segment_range(nilfs, segnum, &seg_start, &seg_end);
 		pseg_start = seg_start;
-	}
+	पूर्ण
 
  super_root_found:
-	/* Updating pointers relating to the latest checkpoint */
-	brelse(bh_sum);
+	/* Updating poपूर्णांकers relating to the latest checkpoपूर्णांक */
+	brअन्यथा(bh_sum);
 	list_splice_tail(&segments, &ri->ri_used_segments);
 	nilfs->ns_last_pseg = sr_pseg_start;
 	nilfs->ns_last_seq = nilfs->ns_seg_seq;
 	nilfs->ns_last_cno = ri->ri_cno;
-	return 0;
+	वापस 0;
 
  failed:
-	brelse(bh_sum);
+	brअन्यथा(bh_sum);
 	nilfs_dispose_segment_list(&segments);
-	return ret < 0 ? ret : nilfs_warn_segment_error(nilfs->ns_sb, ret);
-}
+	वापस ret < 0 ? ret : nilfs_warn_segment_error(nilfs->ns_sb, ret);
+पूर्ण

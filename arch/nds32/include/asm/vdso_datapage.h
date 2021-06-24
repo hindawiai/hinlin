@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 // Copyright (C) 2012 ARM Limited
 // Copyright (C) 2005-2017 Andes Technology Corporation
-#ifndef __ASM_VDSO_DATAPAGE_H
-#define __ASM_VDSO_DATAPAGE_H
+#अगर_अघोषित __ASM_VDSO_DATAPAGE_H
+#घोषणा __ASM_VDSO_DATAPAGE_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-struct vdso_data {
-	bool cycle_count_down;	/* timer cyclye counter is decrease with time */
-	u32 cycle_count_offset;	/* offset of timer cycle counter register */
+काष्ठा vdso_data अणु
+	bool cycle_count_करोwn;	/* समयr cyclye counter is decrease with समय */
+	u32 cycle_count_offset;	/* offset of समयr cycle counter रेजिस्टर */
 	u32 seq_count;		/* sequence count - odd during updates */
-	u32 xtime_coarse_sec;	/* coarse time */
-	u32 xtime_coarse_nsec;
+	u32 xसमय_coarse_sec;	/* coarse समय */
+	u32 xसमय_coarse_nsec;
 
-	u32 wtm_clock_sec;	/* wall to monotonic offset */
-	u32 wtm_clock_nsec;
-	u32 xtime_clock_sec;	/* CLOCK_REALTIME - seconds */
-	u32 cs_mult;		/* clocksource multiplier */
-	u32 cs_shift;		/* Cycle to nanosecond divisor (power of two) */
-	u32 hrtimer_res;	/* hrtimer resolution */
+	u32 wपंचांग_घड़ी_sec;	/* wall to monotonic offset */
+	u32 wपंचांग_घड़ी_nsec;
+	u32 xसमय_घड़ी_sec;	/* CLOCK_REALTIME - seconds */
+	u32 cs_mult;		/* घड़ीsource multiplier */
+	u32 cs_shअगरt;		/* Cycle to nanosecond भागisor (घातer of two) */
+	u32 hrसमयr_res;	/* hrसमयr resolution */
 
 	u64 cs_cycle_last;	/* last cycle value */
-	u64 cs_mask;		/* clocksource mask */
+	u64 cs_mask;		/* घड़ीsource mask */
 
-	u64 xtime_clock_nsec;	/* CLOCK_REALTIME sub-ns base */
-	u32 tz_minuteswest;	/* timezone info for gettimeofday(2) */
-	u32 tz_dsttime;
-};
+	u64 xसमय_घड़ी_nsec;	/* CLOCK_REALTIME sub-ns base */
+	u32 tz_minuteswest;	/* समयzone info क्रम समय_लोofday(2) */
+	u32 tz_dstसमय;
+पूर्ण;
 
-#endif /* !__ASSEMBLY__ */
+#पूर्ण_अगर /* !__ASSEMBLY__ */
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* __ASM_VDSO_DATAPAGE_H */
+#पूर्ण_अगर /* __ASM_VDSO_DATAPAGE_H */

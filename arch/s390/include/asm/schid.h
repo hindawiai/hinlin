@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ASM_SCHID_H
-#define ASM_SCHID_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ASM_SCHID_H
+#घोषणा ASM_SCHID_H
 
-#include <linux/string.h>
-#include <uapi/asm/schid.h>
+#समावेश <linux/माला.स>
+#समावेश <uapi/यंत्र/schid.h>
 
-/* Helper function for sane state of pre-allocated subchannel_id. */
-static inline void
-init_subchannel_id(struct subchannel_id *schid)
-{
-	memset(schid, 0, sizeof(struct subchannel_id));
+/* Helper function क्रम sane state of pre-allocated subchannel_id. */
+अटल अंतरभूत व्योम
+init_subchannel_id(काष्ठा subchannel_id *schid)
+अणु
+	स_रखो(schid, 0, माप(काष्ठा subchannel_id));
 	schid->one = 1;
-}
+पूर्ण
 
-static inline int
-schid_equal(struct subchannel_id *schid1, struct subchannel_id *schid2)
-{
-	return !memcmp(schid1, schid2, sizeof(struct subchannel_id));
-}
+अटल अंतरभूत पूर्णांक
+schid_equal(काष्ठा subchannel_id *schid1, काष्ठा subchannel_id *schid2)
+अणु
+	वापस !स_भेद(schid1, schid2, माप(काष्ठा subchannel_id));
+पूर्ण
 
-#endif /* ASM_SCHID_H */
+#पूर्ण_अगर /* ASM_SCHID_H */

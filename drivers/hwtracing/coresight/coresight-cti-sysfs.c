@@ -1,30 +1,31 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2019 Linaro Limited, All rights reserved.
  * Author: Mike Leach <mike.leach@linaro.org>
  */
 
-#include <linux/atomic.h>
-#include <linux/coresight.h>
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/spinlock.h>
-#include <linux/sysfs.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/coresight.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sysfs.h>
 
-#include "coresight-cti.h"
-
-/*
- * Declare the number of static declared attribute groups
- * Value includes groups + NULL value at end of table.
- */
-#define CORESIGHT_CTI_STATIC_GROUPS_MAX 5
+#समावेश "coresight-cti.h"
 
 /*
- * List of trigger signal type names. Match the constants declared in
- * include\dt-bindings\arm\coresight-cti-dt.h
+ * Declare the number of अटल declared attribute groups
+ * Value includes groups + शून्य value at end of table.
  */
-static const char * const sig_type_names[] = {
+#घोषणा CORESIGHT_CTI_STATIC_GROUPS_MAX 5
+
+/*
+ * List of trigger संकेत type names. Match the स्थिरants declared in
+ * include\dt-bindings\चrm\coresight-cti-dt.h
+ */
+अटल स्थिर अक्षर * स्थिर sig_type_names[] = अणु
 	"genio",	/* GEN_IO */
 	"intreq",	/* GEN_INTREQ */
 	"intack",	/* GEN_INTACK */
@@ -50,137 +51,137 @@ static const char * const sig_type_names[] = {
 	"ela_tstart",	/* ELA_TSTART */
 	"ela_tstop",	/* ELA_TSTOP */
 	"ela_dbgreq",	/* ELA_DBGREQ */
-};
+पूर्ण;
 
-/* Show function pointer used in the connections dynamic declared attributes*/
-typedef ssize_t (*p_show_fn)(struct device *dev, struct device_attribute *attr,
-			     char *buf);
+/* Show function poपूर्णांकer used in the connections dynamic declared attributes*/
+प्रकार sमाप_प्रकार (*p_show_fn)(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			     अक्षर *buf);
 
 /* Connection attribute types */
-enum cti_conn_attr_type {
+क्रमागत cti_conn_attr_type अणु
 	CTI_CON_ATTR_NAME,
 	CTI_CON_ATTR_TRIGIN_SIG,
 	CTI_CON_ATTR_TRIGOUT_SIG,
 	CTI_CON_ATTR_TRIGIN_TYPES,
 	CTI_CON_ATTR_TRIGOUT_TYPES,
 	CTI_CON_ATTR_MAX,
-};
+पूर्ण;
 
-/* Names for the connection attributes */
-static const char * const con_attr_names[CTI_CON_ATTR_MAX] = {
+/* Names क्रम the connection attributes */
+अटल स्थिर अक्षर * स्थिर con_attr_names[CTI_CON_ATTR_MAX] = अणु
 	"name",
 	"in_signals",
 	"out_signals",
 	"in_types",
 	"out_types",
-};
+पूर्ण;
 
 /* basic attributes */
-static ssize_t enable_show(struct device *dev,
-			   struct device_attribute *attr,
-			   char *buf)
-{
-	int enable_req;
-	bool enabled, powered;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार enable_show(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr,
+			   अक्षर *buf)
+अणु
+	पूर्णांक enable_req;
+	bool enabled, घातered;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	enable_req = atomic_read(&drvdata->config.enable_req_count);
+	enable_req = atomic_पढ़ो(&drvdata->config.enable_req_count);
 	spin_lock(&drvdata->spinlock);
-	powered = drvdata->config.hw_powered;
+	घातered = drvdata->config.hw_घातered;
 	enabled = drvdata->config.hw_enabled;
 	spin_unlock(&drvdata->spinlock);
 
-	if (powered)
-		return sprintf(buf, "%d\n", enabled);
-	else
-		return sprintf(buf, "%d\n", !!enable_req);
-}
+	अगर (घातered)
+		वापस प्र_लिखो(buf, "%d\n", enabled);
+	अन्यथा
+		वापस प्र_लिखो(buf, "%d\n", !!enable_req);
+पूर्ण
 
-static ssize_t enable_store(struct device *dev,
-			    struct device_attribute *attr,
-			    const char *buf, size_t size)
-{
-	int ret = 0;
-	unsigned long val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार enable_store(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ val;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	ret = kstrtoul(buf, 0, &val);
-	if (ret)
-		return ret;
+	ret = kम_से_अदीर्घ(buf, 0, &val);
+	अगर (ret)
+		वापस ret;
 
-	if (val)
+	अगर (val)
 		ret = cti_enable(drvdata->csdev);
-	else
+	अन्यथा
 		ret = cti_disable(drvdata->csdev);
-	if (ret)
-		return ret;
-	return size;
-}
-static DEVICE_ATTR_RW(enable);
+	अगर (ret)
+		वापस ret;
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(enable);
 
-static ssize_t powered_show(struct device *dev,
-			    struct device_attribute *attr,
-			    char *buf)
-{
-	bool powered;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार घातered_show(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr,
+			    अक्षर *buf)
+अणु
+	bool घातered;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	spin_lock(&drvdata->spinlock);
-	powered = drvdata->config.hw_powered;
+	घातered = drvdata->config.hw_घातered;
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%d\n", powered);
-}
-static DEVICE_ATTR_RO(powered);
+	वापस प्र_लिखो(buf, "%d\n", घातered);
+पूर्ण
+अटल DEVICE_ATTR_RO(घातered);
 
-static ssize_t ctmid_show(struct device *dev,
-			  struct device_attribute *attr, char *buf)
-{
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार cपंचांगid_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	return sprintf(buf, "%d\n", drvdata->ctidev.ctm_id);
-}
-static DEVICE_ATTR_RO(ctmid);
+	वापस प्र_लिखो(buf, "%d\n", drvdata->ctidev.cपंचांग_id);
+पूर्ण
+अटल DEVICE_ATTR_RO(cपंचांगid);
 
-static ssize_t nr_trigger_cons_show(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार nr_trigger_cons_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	return sprintf(buf, "%d\n", drvdata->ctidev.nr_trig_con);
-}
-static DEVICE_ATTR_RO(nr_trigger_cons);
+	वापस प्र_लिखो(buf, "%d\n", drvdata->ctidev.nr_trig_con);
+पूर्ण
+अटल DEVICE_ATTR_RO(nr_trigger_cons);
 
 /* attribute and group sysfs tables. */
-static struct attribute *coresight_cti_attrs[] = {
+अटल काष्ठा attribute *coresight_cti_attrs[] = अणु
 	&dev_attr_enable.attr,
-	&dev_attr_powered.attr,
-	&dev_attr_ctmid.attr,
+	&dev_attr_घातered.attr,
+	&dev_attr_cपंचांगid.attr,
 	&dev_attr_nr_trigger_cons.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* register based attributes */
+/* रेजिस्टर based attributes */
 
-/* macro to access RO registers with power check only (no enable check). */
-#define coresight_cti_reg(name, offset)			\
-static ssize_t name##_show(struct device *dev,				\
-			   struct device_attribute *attr, char *buf)	\
-{									\
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
+/* macro to access RO रेजिस्टरs with घातer check only (no enable check). */
+#घोषणा coresight_cti_reg(name, offset)			\
+अटल sमाप_प्रकार name##_show(काष्ठा device *dev,				\
+			   काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु									\
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
 	u32 val = 0;							\
-	pm_runtime_get_sync(dev->parent);				\
+	pm_runसमय_get_sync(dev->parent);				\
 	spin_lock(&drvdata->spinlock);					\
-	if (drvdata->config.hw_powered)					\
-		val = readl_relaxed(drvdata->base + offset);		\
+	अगर (drvdata->config.hw_घातered)					\
+		val = पढ़ोl_relaxed(drvdata->base + offset);		\
 	spin_unlock(&drvdata->spinlock);				\
-	pm_runtime_put_sync(dev->parent);				\
-	return sprintf(buf, "0x%x\n", val);				\
-}									\
-static DEVICE_ATTR_RO(name)
+	pm_runसमय_put_sync(dev->parent);				\
+	वापस प्र_लिखो(buf, "0x%x\n", val);				\
+पूर्ण									\
+अटल DEVICE_ATTR_RO(name)
 
-/* coresight management registers */
+/* coresight management रेजिस्टरs */
 coresight_cti_reg(devaff0, CTIDEVAFF0);
 coresight_cti_reg(devaff1, CTIDEVAFF1);
 coresight_cti_reg(authstatus, CORESIGHT_AUTHSTATUS);
@@ -193,7 +194,7 @@ coresight_cti_reg(pidr2, CORESIGHT_PERIPHIDR2);
 coresight_cti_reg(pidr3, CORESIGHT_PERIPHIDR3);
 coresight_cti_reg(pidr4, CORESIGHT_PERIPHIDR4);
 
-static struct attribute *coresight_cti_mgmt_attrs[] = {
+अटल काष्ठा attribute *coresight_cti_mgmt_attrs[] = अणु
 	&dev_attr_devaff0.attr,
 	&dev_attr_devaff1.attr,
 	&dev_attr_authstatus.attr,
@@ -205,254 +206,254 @@ static struct attribute *coresight_cti_mgmt_attrs[] = {
 	&dev_attr_pidr2.attr,
 	&dev_attr_pidr3.attr,
 	&dev_attr_pidr4.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-/* CTI low level programming registers */
+/* CTI low level programming रेजिस्टरs */
 
 /*
- * Show a simple 32 bit value if enabled and powered.
- * If inaccessible & pcached_val not NULL then show cached value.
+ * Show a simple 32 bit value अगर enabled and घातered.
+ * If inaccessible & pcached_val not शून्य then show cached value.
  */
-static ssize_t cti_reg32_show(struct device *dev, char *buf,
-			      u32 *pcached_val, int reg_offset)
-{
+अटल sमाप_प्रकार cti_reg32_show(काष्ठा device *dev, अक्षर *buf,
+			      u32 *pcached_val, पूर्णांक reg_offset)
+अणु
 	u32 val = 0;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *config = &drvdata->config;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
-	if ((reg_offset >= 0) && cti_active(config)) {
+	अगर ((reg_offset >= 0) && cti_active(config)) अणु
 		CS_UNLOCK(drvdata->base);
-		val = readl_relaxed(drvdata->base + reg_offset);
-		if (pcached_val)
+		val = पढ़ोl_relaxed(drvdata->base + reg_offset);
+		अगर (pcached_val)
 			*pcached_val = val;
 		CS_LOCK(drvdata->base);
-	} else if (pcached_val) {
+	पूर्ण अन्यथा अगर (pcached_val) अणु
 		val = *pcached_val;
-	}
+	पूर्ण
 	spin_unlock(&drvdata->spinlock);
-	return sprintf(buf, "%#x\n", val);
-}
+	वापस प्र_लिखो(buf, "%#x\n", val);
+पूर्ण
 
 /*
  * Store a simple 32 bit value.
- * If pcached_val not NULL, then copy to here too,
- * if reg_offset >= 0 then write through if enabled.
+ * If pcached_val not शून्य, then copy to here too,
+ * अगर reg_offset >= 0 then ग_लिखो through अगर enabled.
  */
-static ssize_t cti_reg32_store(struct device *dev, const char *buf,
-			       size_t size, u32 *pcached_val, int reg_offset)
-{
-	unsigned long val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *config = &drvdata->config;
+अटल sमाप_प्रकार cti_reg32_store(काष्ठा device *dev, स्थिर अक्षर *buf,
+			       माप_प्रकार size, u32 *pcached_val, पूर्णांक reg_offset)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *config = &drvdata->config;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 	/* local store */
-	if (pcached_val)
+	अगर (pcached_val)
 		*pcached_val = (u32)val;
 
-	/* write through if offset and enabled */
-	if ((reg_offset >= 0) && cti_active(config))
-		cti_write_single_reg(drvdata, reg_offset, val);
+	/* ग_लिखो through अगर offset and enabled */
+	अगर ((reg_offset >= 0) && cti_active(config))
+		cti_ग_लिखो_single_reg(drvdata, reg_offset, val);
 	spin_unlock(&drvdata->spinlock);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-/* Standard macro for simple rw cti config registers */
-#define cti_config_reg32_rw(name, cfgname, offset)			\
-static ssize_t name##_show(struct device *dev,				\
-			   struct device_attribute *attr,		\
-			   char *buf)					\
-{									\
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
-	return cti_reg32_show(dev, buf,					\
+/* Standard macro क्रम simple rw cti config रेजिस्टरs */
+#घोषणा cti_config_reg32_rw(name, cfgname, offset)			\
+अटल sमाप_प्रकार name##_show(काष्ठा device *dev,				\
+			   काष्ठा device_attribute *attr,		\
+			   अक्षर *buf)					\
+अणु									\
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
+	वापस cti_reg32_show(dev, buf,					\
 			      &drvdata->config.cfgname, offset);	\
-}									\
+पूर्ण									\
 									\
-static ssize_t name##_store(struct device *dev,				\
-			    struct device_attribute *attr,		\
-			    const char *buf, size_t size)		\
-{									\
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
-	return cti_reg32_store(dev, buf, size,				\
+अटल sमाप_प्रकार name##_store(काष्ठा device *dev,				\
+			    काष्ठा device_attribute *attr,		\
+			    स्थिर अक्षर *buf, माप_प्रकार size)		\
+अणु									\
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
+	वापस cti_reg32_store(dev, buf, size,				\
 			       &drvdata->config.cfgname, offset);	\
-}									\
-static DEVICE_ATTR_RW(name)
+पूर्ण									\
+अटल DEVICE_ATTR_RW(name)
 
-static ssize_t inout_sel_show(struct device *dev,
-			      struct device_attribute *attr,
-			      char *buf)
-{
+अटल sमाप_प्रकार inout_sel_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
 	u32 val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	val = (u32)drvdata->config.ctiinout_sel;
-	return sprintf(buf, "%d\n", val);
-}
+	वापस प्र_लिखो(buf, "%d\n", val);
+पूर्ण
 
-static ssize_t inout_sel_store(struct device *dev,
-			       struct device_attribute *attr,
-			       const char *buf, size_t size)
-{
-	unsigned long val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार inout_sel_store(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
-	if (val > (CTIINOUTEN_MAX - 1))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
+	अगर (val > (CTIINOUTEN_MAX - 1))
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 	drvdata->config.ctiinout_sel = val;
 	spin_unlock(&drvdata->spinlock);
-	return size;
-}
-static DEVICE_ATTR_RW(inout_sel);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(inout_sel);
 
-static ssize_t inen_show(struct device *dev,
-			 struct device_attribute *attr,
-			 char *buf)
-{
-	unsigned long val;
-	int index;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार inen_show(काष्ठा device *dev,
+			 काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक index;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	spin_lock(&drvdata->spinlock);
 	index = drvdata->config.ctiinout_sel;
 	val = drvdata->config.ctiinen[index];
 	spin_unlock(&drvdata->spinlock);
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t inen_store(struct device *dev,
-			  struct device_attribute *attr,
-			  const char *buf, size_t size)
-{
-	unsigned long val;
-	int index;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *config = &drvdata->config;
+अटल sमाप_प्रकार inen_store(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr,
+			  स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक index;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *config = &drvdata->config;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 	index = config->ctiinout_sel;
 	config->ctiinen[index] = val;
 
-	/* write through if enabled */
-	if (cti_active(config))
-		cti_write_single_reg(drvdata, CTIINEN(index), val);
+	/* ग_लिखो through अगर enabled */
+	अगर (cti_active(config))
+		cti_ग_लिखो_single_reg(drvdata, CTIINEN(index), val);
 	spin_unlock(&drvdata->spinlock);
-	return size;
-}
-static DEVICE_ATTR_RW(inen);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(inen);
 
-static ssize_t outen_show(struct device *dev,
-			  struct device_attribute *attr,
-			  char *buf)
-{
-	unsigned long val;
-	int index;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार outen_show(काष्ठा device *dev,
+			  काष्ठा device_attribute *attr,
+			  अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक index;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	spin_lock(&drvdata->spinlock);
 	index = drvdata->config.ctiinout_sel;
 	val = drvdata->config.ctiouten[index];
 	spin_unlock(&drvdata->spinlock);
-	return sprintf(buf, "%#lx\n", val);
-}
+	वापस प्र_लिखो(buf, "%#lx\n", val);
+पूर्ण
 
-static ssize_t outen_store(struct device *dev,
-			   struct device_attribute *attr,
-			   const char *buf, size_t size)
-{
-	unsigned long val;
-	int index;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *config = &drvdata->config;
+अटल sमाप_प्रकार outen_store(काष्ठा device *dev,
+			   काष्ठा device_attribute *attr,
+			   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ val;
+	पूर्णांक index;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *config = &drvdata->config;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 	index = config->ctiinout_sel;
 	config->ctiouten[index] = val;
 
-	/* write through if enabled */
-	if (cti_active(config))
-		cti_write_single_reg(drvdata, CTIOUTEN(index), val);
+	/* ग_लिखो through अगर enabled */
+	अगर (cti_active(config))
+		cti_ग_लिखो_single_reg(drvdata, CTIOUTEN(index), val);
 	spin_unlock(&drvdata->spinlock);
-	return size;
-}
-static DEVICE_ATTR_RW(outen);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(outen);
 
-static ssize_t intack_store(struct device *dev,
-			    struct device_attribute *attr,
-			    const char *buf, size_t size)
-{
-	unsigned long val;
+अटल sमाप_प्रकार पूर्णांकack_store(काष्ठा device *dev,
+			    काष्ठा device_attribute *attr,
+			    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ val;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
-	cti_write_intack(dev, val);
-	return size;
-}
-static DEVICE_ATTR_WO(intack);
+	cti_ग_लिखो_पूर्णांकack(dev, val);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_WO(पूर्णांकack);
 
 cti_config_reg32_rw(gate, ctigate, CTIGATE);
 cti_config_reg32_rw(asicctl, asicctl, ASICCTL);
 cti_config_reg32_rw(appset, ctiappset, CTIAPPSET);
 
-static ssize_t appclear_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t size)
-{
-	unsigned long val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *config = &drvdata->config;
+अटल sमाप_प्रकार appclear_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *config = &drvdata->config;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 
-	/* a 1'b1 in appclr clears down the same bit in appset*/
+	/* a 1'b1 in appclr clears करोwn the same bit in appset*/
 	config->ctiappset &= ~val;
 
-	/* write through if enabled */
-	if (cti_active(config))
-		cti_write_single_reg(drvdata, CTIAPPCLEAR, val);
+	/* ग_लिखो through अगर enabled */
+	अगर (cti_active(config))
+		cti_ग_लिखो_single_reg(drvdata, CTIAPPCLEAR, val);
 	spin_unlock(&drvdata->spinlock);
-	return size;
-}
-static DEVICE_ATTR_WO(appclear);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_WO(appclear);
 
-static ssize_t apppulse_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t size)
-{
-	unsigned long val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *config = &drvdata->config;
+अटल sमाप_प्रकार apppulse_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *config = &drvdata->config;
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 
-	/* write through if enabled */
-	if (cti_active(config))
-		cti_write_single_reg(drvdata, CTIAPPPULSE, val);
+	/* ग_लिखो through अगर enabled */
+	अगर (cti_active(config))
+		cti_ग_लिखो_single_reg(drvdata, CTIAPPPULSE, val);
 	spin_unlock(&drvdata->spinlock);
-	return size;
-}
-static DEVICE_ATTR_WO(apppulse);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_WO(apppulse);
 
 coresight_cti_reg(triginstatus, CTITRIGINSTATUS);
 coresight_cti_reg(trigoutstatus, CTITRIGOUTSTATUS);
@@ -461,66 +462,66 @@ coresight_cti_reg(choutstatus, CTICHOUTSTATUS);
 
 /*
  * Define CONFIG_CORESIGHT_CTI_INTEGRATION_REGS to enable the access to the
- * integration control registers. Normally only used to investigate connection
+ * पूर्णांकegration control रेजिस्टरs. Normally only used to investigate connection
  * data.
  */
-#ifdef CONFIG_CORESIGHT_CTI_INTEGRATION_REGS
+#अगर_घोषित CONFIG_CORESIGHT_CTI_INTEGRATION_REGS
 
-/* macro to access RW registers with power check only (no enable check). */
-#define coresight_cti_reg_rw(name, offset)				\
-static ssize_t name##_show(struct device *dev,				\
-			   struct device_attribute *attr, char *buf)	\
-{									\
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
+/* macro to access RW रेजिस्टरs with घातer check only (no enable check). */
+#घोषणा coresight_cti_reg_rw(name, offset)				\
+अटल sमाप_प्रकार name##_show(काष्ठा device *dev,				\
+			   काष्ठा device_attribute *attr, अक्षर *buf)	\
+अणु									\
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
 	u32 val = 0;							\
-	pm_runtime_get_sync(dev->parent);				\
+	pm_runसमय_get_sync(dev->parent);				\
 	spin_lock(&drvdata->spinlock);					\
-	if (drvdata->config.hw_powered)					\
-		val = readl_relaxed(drvdata->base + offset);		\
+	अगर (drvdata->config.hw_घातered)					\
+		val = पढ़ोl_relaxed(drvdata->base + offset);		\
 	spin_unlock(&drvdata->spinlock);				\
-	pm_runtime_put_sync(dev->parent);				\
-	return sprintf(buf, "0x%x\n", val);				\
-}									\
+	pm_runसमय_put_sync(dev->parent);				\
+	वापस प्र_लिखो(buf, "0x%x\n", val);				\
+पूर्ण									\
 									\
-static ssize_t name##_store(struct device *dev,				\
-			    struct device_attribute *attr,		\
-			    const char *buf, size_t size)		\
-{									\
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
-	unsigned long val = 0;						\
-	if (kstrtoul(buf, 0, &val))					\
-		return -EINVAL;						\
+अटल sमाप_प्रकार name##_store(काष्ठा device *dev,				\
+			    काष्ठा device_attribute *attr,		\
+			    स्थिर अक्षर *buf, माप_प्रकार size)		\
+अणु									\
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
+	अचिन्हित दीर्घ val = 0;						\
+	अगर (kम_से_अदीर्घ(buf, 0, &val))					\
+		वापस -EINVAL;						\
 									\
-	pm_runtime_get_sync(dev->parent);				\
+	pm_runसमय_get_sync(dev->parent);				\
 	spin_lock(&drvdata->spinlock);					\
-	if (drvdata->config.hw_powered)					\
-		cti_write_single_reg(drvdata, offset, val);		\
+	अगर (drvdata->config.hw_घातered)					\
+		cti_ग_लिखो_single_reg(drvdata, offset, val);		\
 	spin_unlock(&drvdata->spinlock);				\
-	pm_runtime_put_sync(dev->parent);				\
-	return size;							\
-}									\
-static DEVICE_ATTR_RW(name)
+	pm_runसमय_put_sync(dev->parent);				\
+	वापस size;							\
+पूर्ण									\
+अटल DEVICE_ATTR_RW(name)
 
-/* macro to access WO registers with power check only (no enable check). */
-#define coresight_cti_reg_wo(name, offset)				\
-static ssize_t name##_store(struct device *dev,				\
-			    struct device_attribute *attr,		\
-			    const char *buf, size_t size)		\
-{									\
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
-	unsigned long val = 0;						\
-	if (kstrtoul(buf, 0, &val))					\
-		return -EINVAL;						\
+/* macro to access WO रेजिस्टरs with घातer check only (no enable check). */
+#घोषणा coresight_cti_reg_wo(name, offset)				\
+अटल sमाप_प्रकार name##_store(काष्ठा device *dev,				\
+			    काष्ठा device_attribute *attr,		\
+			    स्थिर अक्षर *buf, माप_प्रकार size)		\
+अणु									\
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);	\
+	अचिन्हित दीर्घ val = 0;						\
+	अगर (kम_से_अदीर्घ(buf, 0, &val))					\
+		वापस -EINVAL;						\
 									\
-	pm_runtime_get_sync(dev->parent);				\
+	pm_runसमय_get_sync(dev->parent);				\
 	spin_lock(&drvdata->spinlock);					\
-	if (drvdata->config.hw_powered)					\
-		cti_write_single_reg(drvdata, offset, val);		\
+	अगर (drvdata->config.hw_घातered)					\
+		cti_ग_लिखो_single_reg(drvdata, offset, val);		\
 	spin_unlock(&drvdata->spinlock);				\
-	pm_runtime_put_sync(dev->parent);				\
-	return size;							\
-}									\
-static DEVICE_ATTR_WO(name)
+	pm_runसमय_put_sync(dev->parent);				\
+	वापस size;							\
+पूर्ण									\
+अटल DEVICE_ATTR_WO(name)
 
 coresight_cti_reg_rw(itchout, ITCHOUT);
 coresight_cti_reg_rw(ittrigout, ITTRIGOUT);
@@ -532,15 +533,15 @@ coresight_cti_reg(itchin, ITCHIN);
 coresight_cti_reg(itchoutack, ITCHOUTACK);
 coresight_cti_reg(ittrigoutack, ITTRIGOUTACK);
 
-#endif /* CORESIGHT_CTI_INTEGRATION_REGS */
+#पूर्ण_अगर /* CORESIGHT_CTI_INTEGRATION_REGS */
 
-static struct attribute *coresight_cti_regs_attrs[] = {
+अटल काष्ठा attribute *coresight_cti_regs_attrs[] = अणु
 	&dev_attr_inout_sel.attr,
 	&dev_attr_inen.attr,
 	&dev_attr_outen.attr,
 	&dev_attr_gate.attr,
 	&dev_attr_asicctl.attr,
-	&dev_attr_intack.attr,
+	&dev_attr_पूर्णांकack.attr,
 	&dev_attr_appset.attr,
 	&dev_attr_appclear.attr,
 	&dev_attr_apppulse.attr,
@@ -548,7 +549,7 @@ static struct attribute *coresight_cti_regs_attrs[] = {
 	&dev_attr_trigoutstatus.attr,
 	&dev_attr_chinstatus.attr,
 	&dev_attr_choutstatus.attr,
-#ifdef CONFIG_CORESIGHT_CTI_INTEGRATION_REGS
+#अगर_घोषित CONFIG_CORESIGHT_CTI_INTEGRATION_REGS
 	&dev_attr_itctrl.attr,
 	&dev_attr_ittrigin.attr,
 	&dev_attr_itchin.attr,
@@ -558,356 +559,356 @@ static struct attribute *coresight_cti_regs_attrs[] = {
 	&dev_attr_ittrigoutack.attr,
 	&dev_attr_ittriginack.attr,
 	&dev_attr_itchinack.attr,
-#endif
-	NULL,
-};
+#पूर्ण_अगर
+	शून्य,
+पूर्ण;
 
 /* CTI channel x-trigger programming */
-static int
-cti_trig_op_parse(struct device *dev, enum cti_chan_op op,
-		  enum cti_trig_dir dir, const char *buf, size_t size)
-{
+अटल पूर्णांक
+cti_trig_op_parse(काष्ठा device *dev, क्रमागत cti_chan_op op,
+		  क्रमागत cti_trig_dir dir, स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
 	u32 chan_idx;
 	u32 trig_idx;
-	int items, err = -EINVAL;
+	पूर्णांक items, err = -EINVAL;
 
 	/* extract chan idx and trigger idx */
-	items = sscanf(buf, "%d %d", &chan_idx, &trig_idx);
-	if (items == 2) {
+	items = माला_पूछो(buf, "%d %d", &chan_idx, &trig_idx);
+	अगर (items == 2) अणु
 		err = cti_channel_trig_op(dev, op, dir, chan_idx, trig_idx);
-		if (!err)
+		अगर (!err)
 			err = size;
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 
-static ssize_t trigin_attach_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t size)
-{
-	return cti_trig_op_parse(dev, CTI_CHAN_ATTACH, CTI_TRIG_IN,
+अटल sमाप_प्रकार trigin_attach_store(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	वापस cti_trig_op_parse(dev, CTI_CHAN_ATTACH, CTI_TRIG_IN,
 				 buf, size);
-}
-static DEVICE_ATTR_WO(trigin_attach);
+पूर्ण
+अटल DEVICE_ATTR_WO(trigin_attach);
 
-static ssize_t trigin_detach_store(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t size)
-{
-	return cti_trig_op_parse(dev, CTI_CHAN_DETACH, CTI_TRIG_IN,
+अटल sमाप_प्रकार trigin_detach_store(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	वापस cti_trig_op_parse(dev, CTI_CHAN_DETACH, CTI_TRIG_IN,
 				 buf, size);
-}
-static DEVICE_ATTR_WO(trigin_detach);
+पूर्ण
+अटल DEVICE_ATTR_WO(trigin_detach);
 
-static ssize_t trigout_attach_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t size)
-{
-	return cti_trig_op_parse(dev, CTI_CHAN_ATTACH, CTI_TRIG_OUT,
+अटल sमाप_प्रकार trigout_attach_store(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	वापस cti_trig_op_parse(dev, CTI_CHAN_ATTACH, CTI_TRIG_OUT,
 				 buf, size);
-}
-static DEVICE_ATTR_WO(trigout_attach);
+पूर्ण
+अटल DEVICE_ATTR_WO(trigout_attach);
 
-static ssize_t trigout_detach_store(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t size)
-{
-	return cti_trig_op_parse(dev, CTI_CHAN_DETACH, CTI_TRIG_OUT,
+अटल sमाप_प्रकार trigout_detach_store(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	वापस cti_trig_op_parse(dev, CTI_CHAN_DETACH, CTI_TRIG_OUT,
 				 buf, size);
-}
-static DEVICE_ATTR_WO(trigout_detach);
+पूर्ण
+अटल DEVICE_ATTR_WO(trigout_detach);
 
 
-static ssize_t chan_gate_enable_store(struct device *dev,
-				      struct device_attribute *attr,
-				      const char *buf, size_t size)
-{
-	int err = 0, channel = 0;
+अटल sमाप_प्रकार chan_gate_enable_store(काष्ठा device *dev,
+				      काष्ठा device_attribute *attr,
+				      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक err = 0, channel = 0;
 
-	if (kstrtoint(buf, 0, &channel))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 0, &channel))
+		वापस -EINVAL;
 
 	err = cti_channel_gate_op(dev, CTI_GATE_CHAN_ENABLE, channel);
-	return err ? err : size;
-}
+	वापस err ? err : size;
+पूर्ण
 
-static ssize_t chan_gate_enable_show(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *cfg = &drvdata->config;
-	unsigned long ctigate_bitmask = cfg->ctigate;
-	int size = 0;
+अटल sमाप_प्रकार chan_gate_enable_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *cfg = &drvdata->config;
+	अचिन्हित दीर्घ ctigate_biपंचांगask = cfg->ctigate;
+	पूर्णांक size = 0;
 
-	if (cfg->ctigate == 0)
-		size = sprintf(buf, "\n");
-	else
-		size = bitmap_print_to_pagebuf(true, buf, &ctigate_bitmask,
-					       cfg->nr_ctm_channels);
-	return size;
-}
-static DEVICE_ATTR_RW(chan_gate_enable);
+	अगर (cfg->ctigate == 0)
+		size = प्र_लिखो(buf, "\n");
+	अन्यथा
+		size = biपंचांगap_prपूर्णांक_to_pagebuf(true, buf, &ctigate_biपंचांगask,
+					       cfg->nr_cपंचांग_channels);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(chan_gate_enable);
 
-static ssize_t chan_gate_disable_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf, size_t size)
-{
-	int err = 0, channel = 0;
+अटल sमाप_प्रकार chan_gate_disable_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक err = 0, channel = 0;
 
-	if (kstrtoint(buf, 0, &channel))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 0, &channel))
+		वापस -EINVAL;
 
 	err = cti_channel_gate_op(dev, CTI_GATE_CHAN_DISABLE, channel);
-	return err ? err : size;
-}
-static DEVICE_ATTR_WO(chan_gate_disable);
+	वापस err ? err : size;
+पूर्ण
+अटल DEVICE_ATTR_WO(chan_gate_disable);
 
-static int
-chan_op_parse(struct device *dev, enum cti_chan_set_op op, const char *buf)
-{
-	int err = 0, channel = 0;
+अटल पूर्णांक
+chan_op_parse(काष्ठा device *dev, क्रमागत cti_chan_set_op op, स्थिर अक्षर *buf)
+अणु
+	पूर्णांक err = 0, channel = 0;
 
-	if (kstrtoint(buf, 0, &channel))
-		return -EINVAL;
+	अगर (kstrtoपूर्णांक(buf, 0, &channel))
+		वापस -EINVAL;
 
 	err = cti_channel_setop(dev, op, channel);
-	return err;
+	वापस err;
 
-}
+पूर्ण
 
-static ssize_t chan_set_store(struct device *dev,
-			      struct device_attribute *attr,
-			      const char *buf, size_t size)
-{
-	int err = chan_op_parse(dev, CTI_CHAN_SET, buf);
+अटल sमाप_प्रकार chan_set_store(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक err = chan_op_parse(dev, CTI_CHAN_SET, buf);
 
-	return err ? err : size;
-}
-static DEVICE_ATTR_WO(chan_set);
+	वापस err ? err : size;
+पूर्ण
+अटल DEVICE_ATTR_WO(chan_set);
 
-static ssize_t chan_clear_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t size)
-{
-	int err = chan_op_parse(dev, CTI_CHAN_CLR, buf);
+अटल sमाप_प्रकार chan_clear_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक err = chan_op_parse(dev, CTI_CHAN_CLR, buf);
 
-	return err ? err : size;
-}
-static DEVICE_ATTR_WO(chan_clear);
+	वापस err ? err : size;
+पूर्ण
+अटल DEVICE_ATTR_WO(chan_clear);
 
-static ssize_t chan_pulse_store(struct device *dev,
-				struct device_attribute *attr,
-				const char *buf, size_t size)
-{
-	int err = chan_op_parse(dev, CTI_CHAN_PULSE, buf);
+अटल sमाप_प्रकार chan_pulse_store(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक err = chan_op_parse(dev, CTI_CHAN_PULSE, buf);
 
-	return err ? err : size;
-}
-static DEVICE_ATTR_WO(chan_pulse);
+	वापस err ? err : size;
+पूर्ण
+अटल DEVICE_ATTR_WO(chan_pulse);
 
-static ssize_t trig_filter_enable_show(struct device *dev,
-				       struct device_attribute *attr,
-				       char *buf)
-{
+अटल sमाप_प्रकार trig_filter_enable_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       अक्षर *buf)
+अणु
 	u32 val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	spin_lock(&drvdata->spinlock);
 	val = drvdata->config.trig_filter_enable;
 	spin_unlock(&drvdata->spinlock);
-	return sprintf(buf, "%d\n", val);
-}
+	वापस प्र_लिखो(buf, "%d\n", val);
+पूर्ण
 
-static ssize_t trig_filter_enable_store(struct device *dev,
-					struct device_attribute *attr,
-					const char *buf, size_t size)
-{
-	unsigned long val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार trig_filter_enable_store(काष्ठा device *dev,
+					काष्ठा device_attribute *attr,
+					स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 	drvdata->config.trig_filter_enable = !!val;
 	spin_unlock(&drvdata->spinlock);
-	return size;
-}
-static DEVICE_ATTR_RW(trig_filter_enable);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RW(trig_filter_enable);
 
-static ssize_t trigout_filtered_show(struct device *dev,
-				     struct device_attribute *attr,
-				     char *buf)
-{
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *cfg = &drvdata->config;
-	int size = 0, nr_trig_max = cfg->nr_trig_max;
-	unsigned long mask = cfg->trig_out_filter;
+अटल sमाप_प्रकार trigout_filtered_show(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     अक्षर *buf)
+अणु
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *cfg = &drvdata->config;
+	पूर्णांक size = 0, nr_trig_max = cfg->nr_trig_max;
+	अचिन्हित दीर्घ mask = cfg->trig_out_filter;
 
-	if (mask)
-		size = bitmap_print_to_pagebuf(true, buf, &mask, nr_trig_max);
-	return size;
-}
-static DEVICE_ATTR_RO(trigout_filtered);
+	अगर (mask)
+		size = biपंचांगap_prपूर्णांक_to_pagebuf(true, buf, &mask, nr_trig_max);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_RO(trigout_filtered);
 
 /* clear all xtrigger / channel programming */
-static ssize_t chan_xtrigs_reset_store(struct device *dev,
-				       struct device_attribute *attr,
-				       const char *buf, size_t size)
-{
-	int i;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *config = &drvdata->config;
+अटल sमाप_प्रकार chan_xtrigs_reset_store(काष्ठा device *dev,
+				       काष्ठा device_attribute *attr,
+				       स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक i;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *config = &drvdata->config;
 
 	spin_lock(&drvdata->spinlock);
 
-	/* clear the CTI trigger / channel programming registers */
-	for (i = 0; i < config->nr_trig_max; i++) {
+	/* clear the CTI trigger / channel programming रेजिस्टरs */
+	क्रम (i = 0; i < config->nr_trig_max; i++) अणु
 		config->ctiinen[i] = 0;
 		config->ctiouten[i] = 0;
-	}
+	पूर्ण
 
 	/* clear the other regs */
-	config->ctigate = GENMASK(config->nr_ctm_channels - 1, 0);
+	config->ctigate = GENMASK(config->nr_cपंचांग_channels - 1, 0);
 	config->asicctl = 0;
 	config->ctiappset = 0;
 	config->ctiinout_sel = 0;
 	config->xtrig_rchan_sel = 0;
 
-	/* if enabled then write through */
-	if (cti_active(config))
-		cti_write_all_hw_regs(drvdata);
+	/* अगर enabled then ग_लिखो through */
+	अगर (cti_active(config))
+		cti_ग_लिखो_all_hw_regs(drvdata);
 
 	spin_unlock(&drvdata->spinlock);
-	return size;
-}
-static DEVICE_ATTR_WO(chan_xtrigs_reset);
+	वापस size;
+पूर्ण
+अटल DEVICE_ATTR_WO(chan_xtrigs_reset);
 
 /*
- * Write to select a channel to view, read to display the
- * cross triggers for the selected channel.
+ * Write to select a channel to view, पढ़ो to display the
+ * cross triggers क्रम the selected channel.
  */
-static ssize_t chan_xtrigs_sel_store(struct device *dev,
-				     struct device_attribute *attr,
-				     const char *buf, size_t size)
-{
-	unsigned long val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार chan_xtrigs_sel_store(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr,
+				     स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
-	if (kstrtoul(buf, 0, &val))
-		return -EINVAL;
-	if (val > (drvdata->config.nr_ctm_channels - 1))
-		return -EINVAL;
+	अगर (kम_से_अदीर्घ(buf, 0, &val))
+		वापस -EINVAL;
+	अगर (val > (drvdata->config.nr_cपंचांग_channels - 1))
+		वापस -EINVAL;
 
 	spin_lock(&drvdata->spinlock);
 	drvdata->config.xtrig_rchan_sel = val;
 	spin_unlock(&drvdata->spinlock);
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t chan_xtrigs_sel_show(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	unsigned long val;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+अटल sमाप_प्रकार chan_xtrigs_sel_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	अचिन्हित दीर्घ val;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
 
 	spin_lock(&drvdata->spinlock);
 	val = drvdata->config.xtrig_rchan_sel;
 	spin_unlock(&drvdata->spinlock);
 
-	return sprintf(buf, "%ld\n", val);
-}
-static DEVICE_ATTR_RW(chan_xtrigs_sel);
+	वापस प्र_लिखो(buf, "%ld\n", val);
+पूर्ण
+अटल DEVICE_ATTR_RW(chan_xtrigs_sel);
 
-static ssize_t chan_xtrigs_in_show(struct device *dev,
-				   struct device_attribute *attr,
-				   char *buf)
-{
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *cfg = &drvdata->config;
-	int used = 0, reg_idx;
-	int nr_trig_max = drvdata->config.nr_trig_max;
+अटल sमाप_प्रकार chan_xtrigs_in_show(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   अक्षर *buf)
+अणु
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *cfg = &drvdata->config;
+	पूर्णांक used = 0, reg_idx;
+	पूर्णांक nr_trig_max = drvdata->config.nr_trig_max;
 	u32 chan_mask = BIT(cfg->xtrig_rchan_sel);
 
-	for (reg_idx = 0; reg_idx < nr_trig_max; reg_idx++) {
-		if (chan_mask & cfg->ctiinen[reg_idx])
-			used += sprintf(buf + used, "%d ", reg_idx);
-	}
+	क्रम (reg_idx = 0; reg_idx < nr_trig_max; reg_idx++) अणु
+		अगर (chan_mask & cfg->ctiinen[reg_idx])
+			used += प्र_लिखो(buf + used, "%d ", reg_idx);
+	पूर्ण
 
-	used += sprintf(buf + used, "\n");
-	return used;
-}
-static DEVICE_ATTR_RO(chan_xtrigs_in);
+	used += प्र_लिखो(buf + used, "\n");
+	वापस used;
+पूर्ण
+अटल DEVICE_ATTR_RO(chan_xtrigs_in);
 
-static ssize_t chan_xtrigs_out_show(struct device *dev,
-				    struct device_attribute *attr,
-				    char *buf)
-{
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *cfg = &drvdata->config;
-	int used = 0, reg_idx;
-	int nr_trig_max = drvdata->config.nr_trig_max;
+अटल sमाप_प्रकार chan_xtrigs_out_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    अक्षर *buf)
+अणु
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *cfg = &drvdata->config;
+	पूर्णांक used = 0, reg_idx;
+	पूर्णांक nr_trig_max = drvdata->config.nr_trig_max;
 	u32 chan_mask = BIT(cfg->xtrig_rchan_sel);
 
-	for (reg_idx = 0; reg_idx < nr_trig_max; reg_idx++) {
-		if (chan_mask & cfg->ctiouten[reg_idx])
-			used += sprintf(buf + used, "%d ", reg_idx);
-	}
+	क्रम (reg_idx = 0; reg_idx < nr_trig_max; reg_idx++) अणु
+		अगर (chan_mask & cfg->ctiouten[reg_idx])
+			used += प्र_लिखो(buf + used, "%d ", reg_idx);
+	पूर्ण
 
-	used += sprintf(buf + used, "\n");
-	return used;
-}
-static DEVICE_ATTR_RO(chan_xtrigs_out);
+	used += प्र_लिखो(buf + used, "\n");
+	वापस used;
+पूर्ण
+अटल DEVICE_ATTR_RO(chan_xtrigs_out);
 
-static ssize_t print_chan_list(struct device *dev,
-			       char *buf, bool inuse)
-{
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *config = &drvdata->config;
-	int size, i;
-	unsigned long inuse_bits = 0, chan_mask;
+अटल sमाप_प्रकार prपूर्णांक_chan_list(काष्ठा device *dev,
+			       अक्षर *buf, bool inuse)
+अणु
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *config = &drvdata->config;
+	पूर्णांक size, i;
+	अचिन्हित दीर्घ inuse_bits = 0, chan_mask;
 
-	/* scan regs to get bitmap of channels in use. */
+	/* scan regs to get biपंचांगap of channels in use. */
 	spin_lock(&drvdata->spinlock);
-	for (i = 0; i < config->nr_trig_max; i++) {
+	क्रम (i = 0; i < config->nr_trig_max; i++) अणु
 		inuse_bits |= config->ctiinen[i];
 		inuse_bits |= config->ctiouten[i];
-	}
+	पूर्ण
 	spin_unlock(&drvdata->spinlock);
 
-	/* inverse bits if printing free channels */
-	if (!inuse)
+	/* inverse bits अगर prपूर्णांकing मुक्त channels */
+	अगर (!inuse)
 		inuse_bits = ~inuse_bits;
 
 	/* list of channels, or 'none' */
-	chan_mask = GENMASK(config->nr_ctm_channels - 1, 0);
-	if (inuse_bits & chan_mask)
-		size = bitmap_print_to_pagebuf(true, buf, &inuse_bits,
-					       config->nr_ctm_channels);
-	else
-		size = sprintf(buf, "\n");
-	return size;
-}
+	chan_mask = GENMASK(config->nr_cपंचांग_channels - 1, 0);
+	अगर (inuse_bits & chan_mask)
+		size = biपंचांगap_prपूर्णांक_to_pagebuf(true, buf, &inuse_bits,
+					       config->nr_cपंचांग_channels);
+	अन्यथा
+		size = प्र_लिखो(buf, "\n");
+	वापस size;
+पूर्ण
 
-static ssize_t chan_inuse_show(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	return print_chan_list(dev, buf, true);
-}
-static DEVICE_ATTR_RO(chan_inuse);
+अटल sमाप_प्रकार chan_inuse_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	वापस prपूर्णांक_chan_list(dev, buf, true);
+पूर्ण
+अटल DEVICE_ATTR_RO(chan_inuse);
 
-static ssize_t chan_free_show(struct device *dev,
-			      struct device_attribute *attr,
-			      char *buf)
-{
-	return print_chan_list(dev, buf, false);
-}
-static DEVICE_ATTR_RO(chan_free);
+अटल sमाप_प्रकार chan_मुक्त_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	वापस prपूर्णांक_chan_list(dev, buf, false);
+पूर्ण
+अटल DEVICE_ATTR_RO(chan_मुक्त);
 
-static struct attribute *coresight_cti_channel_attrs[] = {
+अटल काष्ठा attribute *coresight_cti_channel_attrs[] = अणु
 	&dev_attr_trigin_attach.attr,
 	&dev_attr_trigin_detach.attr,
 	&dev_attr_trigout_attach.attr,
@@ -920,300 +921,300 @@ static struct attribute *coresight_cti_channel_attrs[] = {
 	&dev_attr_chan_clear.attr,
 	&dev_attr_chan_pulse.attr,
 	&dev_attr_chan_inuse.attr,
-	&dev_attr_chan_free.attr,
+	&dev_attr_chan_मुक्त.attr,
 	&dev_attr_chan_xtrigs_sel.attr,
 	&dev_attr_chan_xtrigs_in.attr,
 	&dev_attr_chan_xtrigs_out.attr,
 	&dev_attr_chan_xtrigs_reset.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /* Create the connections trigger groups and attrs dynamically */
 /*
  * Each connection has dynamic group triggers<N> + name, trigin/out sigs/types
- * attributes, + each device has static nr_trigger_cons giving the number
+ * attributes, + each device has अटल nr_trigger_cons giving the number
  * of groups. e.g. in sysfs:-
  * /cti_<name>/triggers0
  * /cti_<name>/triggers1
  * /cti_<name>/nr_trigger_cons
  * where nr_trigger_cons = 2
  */
-static ssize_t con_name_show(struct device *dev,
-			     struct device_attribute *attr,
-			     char *buf)
-{
-	struct dev_ext_attribute *ext_attr =
-		container_of(attr, struct dev_ext_attribute, attr);
-	struct cti_trig_con *con = (struct cti_trig_con *)ext_attr->var;
+अटल sमाप_प्रकार con_name_show(काष्ठा device *dev,
+			     काष्ठा device_attribute *attr,
+			     अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *ext_attr =
+		container_of(attr, काष्ठा dev_ext_attribute, attr);
+	काष्ठा cti_trig_con *con = (काष्ठा cti_trig_con *)ext_attr->var;
 
-	return sprintf(buf, "%s\n", con->con_dev_name);
-}
+	वापस प्र_लिखो(buf, "%s\n", con->con_dev_name);
+पूर्ण
 
-static ssize_t trigin_sig_show(struct device *dev,
-			       struct device_attribute *attr,
-			       char *buf)
-{
-	struct dev_ext_attribute *ext_attr =
-		container_of(attr, struct dev_ext_attribute, attr);
-	struct cti_trig_con *con = (struct cti_trig_con *)ext_attr->var;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *cfg = &drvdata->config;
-	unsigned long mask = con->con_in->used_mask;
+अटल sमाप_प्रकार trigin_sig_show(काष्ठा device *dev,
+			       काष्ठा device_attribute *attr,
+			       अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *ext_attr =
+		container_of(attr, काष्ठा dev_ext_attribute, attr);
+	काष्ठा cti_trig_con *con = (काष्ठा cti_trig_con *)ext_attr->var;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *cfg = &drvdata->config;
+	अचिन्हित दीर्घ mask = con->con_in->used_mask;
 
-	return bitmap_print_to_pagebuf(true, buf, &mask, cfg->nr_trig_max);
-}
+	वापस biपंचांगap_prपूर्णांक_to_pagebuf(true, buf, &mask, cfg->nr_trig_max);
+पूर्ण
 
-static ssize_t trigout_sig_show(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct dev_ext_attribute *ext_attr =
-		container_of(attr, struct dev_ext_attribute, attr);
-	struct cti_trig_con *con = (struct cti_trig_con *)ext_attr->var;
-	struct cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
-	struct cti_config *cfg = &drvdata->config;
-	unsigned long mask = con->con_out->used_mask;
+अटल sमाप_प्रकार trigout_sig_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *ext_attr =
+		container_of(attr, काष्ठा dev_ext_attribute, attr);
+	काष्ठा cti_trig_con *con = (काष्ठा cti_trig_con *)ext_attr->var;
+	काष्ठा cti_drvdata *drvdata = dev_get_drvdata(dev->parent);
+	काष्ठा cti_config *cfg = &drvdata->config;
+	अचिन्हित दीर्घ mask = con->con_out->used_mask;
 
-	return bitmap_print_to_pagebuf(true, buf, &mask, cfg->nr_trig_max);
-}
+	वापस biपंचांगap_prपूर्णांक_to_pagebuf(true, buf, &mask, cfg->nr_trig_max);
+पूर्ण
 
 /* convert a sig type id to a name */
-static const char *
-cti_sig_type_name(struct cti_trig_con *con, int used_count, bool in)
-{
-	int idx = 0;
-	struct cti_trig_grp *grp = in ? con->con_in : con->con_out;
+अटल स्थिर अक्षर *
+cti_sig_type_name(काष्ठा cti_trig_con *con, पूर्णांक used_count, bool in)
+अणु
+	पूर्णांक idx = 0;
+	काष्ठा cti_trig_grp *grp = in ? con->con_in : con->con_out;
 
-	if (used_count < grp->nr_sigs)
+	अगर (used_count < grp->nr_sigs)
 		idx = grp->sig_types[used_count];
-	return sig_type_names[idx];
-}
+	वापस sig_type_names[idx];
+पूर्ण
 
-static ssize_t trigin_type_show(struct device *dev,
-				struct device_attribute *attr,
-				char *buf)
-{
-	struct dev_ext_attribute *ext_attr =
-		container_of(attr, struct dev_ext_attribute, attr);
-	struct cti_trig_con *con = (struct cti_trig_con *)ext_attr->var;
-	int sig_idx, used = 0;
-	const char *name;
+अटल sमाप_प्रकार trigin_type_show(काष्ठा device *dev,
+				काष्ठा device_attribute *attr,
+				अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *ext_attr =
+		container_of(attr, काष्ठा dev_ext_attribute, attr);
+	काष्ठा cti_trig_con *con = (काष्ठा cti_trig_con *)ext_attr->var;
+	पूर्णांक sig_idx, used = 0;
+	स्थिर अक्षर *name;
 
-	for (sig_idx = 0; sig_idx < con->con_in->nr_sigs; sig_idx++) {
+	क्रम (sig_idx = 0; sig_idx < con->con_in->nr_sigs; sig_idx++) अणु
 		name = cti_sig_type_name(con, sig_idx, true);
-		used += sprintf(buf + used, "%s ", name);
-	}
-	used += sprintf(buf + used, "\n");
-	return used;
-}
+		used += प्र_लिखो(buf + used, "%s ", name);
+	पूर्ण
+	used += प्र_लिखो(buf + used, "\n");
+	वापस used;
+पूर्ण
 
-static ssize_t trigout_type_show(struct device *dev,
-				 struct device_attribute *attr,
-				 char *buf)
-{
-	struct dev_ext_attribute *ext_attr =
-		container_of(attr, struct dev_ext_attribute, attr);
-	struct cti_trig_con *con = (struct cti_trig_con *)ext_attr->var;
-	int sig_idx, used = 0;
-	const char *name;
+अटल sमाप_प्रकार trigout_type_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 अक्षर *buf)
+अणु
+	काष्ठा dev_ext_attribute *ext_attr =
+		container_of(attr, काष्ठा dev_ext_attribute, attr);
+	काष्ठा cti_trig_con *con = (काष्ठा cti_trig_con *)ext_attr->var;
+	पूर्णांक sig_idx, used = 0;
+	स्थिर अक्षर *name;
 
-	for (sig_idx = 0; sig_idx < con->con_out->nr_sigs; sig_idx++) {
+	क्रम (sig_idx = 0; sig_idx < con->con_out->nr_sigs; sig_idx++) अणु
 		name = cti_sig_type_name(con, sig_idx, false);
-		used += sprintf(buf + used, "%s ", name);
-	}
-	used += sprintf(buf + used, "\n");
-	return used;
-}
+		used += प्र_लिखो(buf + used, "%s ", name);
+	पूर्ण
+	used += प्र_लिखो(buf + used, "\n");
+	वापस used;
+पूर्ण
 
 /*
  * Array of show function names declared above to allow selection
- * for the connection attributes
+ * क्रम the connection attributes
  */
-static p_show_fn show_fns[CTI_CON_ATTR_MAX] = {
+अटल p_show_fn show_fns[CTI_CON_ATTR_MAX] = अणु
 	con_name_show,
 	trigin_sig_show,
 	trigout_sig_show,
 	trigin_type_show,
 	trigout_type_show,
-};
+पूर्ण;
 
-static int cti_create_con_sysfs_attr(struct device *dev,
-				     struct cti_trig_con *con,
-				     enum cti_conn_attr_type attr_type,
-				     int attr_idx)
-{
-	struct dev_ext_attribute *eattr;
-	char *name;
+अटल पूर्णांक cti_create_con_sysfs_attr(काष्ठा device *dev,
+				     काष्ठा cti_trig_con *con,
+				     क्रमागत cti_conn_attr_type attr_type,
+				     पूर्णांक attr_idx)
+अणु
+	काष्ठा dev_ext_attribute *eattr;
+	अक्षर *name;
 
-	eattr = devm_kzalloc(dev, sizeof(struct dev_ext_attribute),
+	eattr = devm_kzalloc(dev, माप(काष्ठा dev_ext_attribute),
 				    GFP_KERNEL);
-	if (eattr) {
+	अगर (eattr) अणु
 		name = devm_kstrdup(dev, con_attr_names[attr_type],
 				    GFP_KERNEL);
-		if (name) {
-			/* fill out the underlying attribute struct */
+		अगर (name) अणु
+			/* fill out the underlying attribute काष्ठा */
 			eattr->attr.attr.name = name;
 			eattr->attr.attr.mode = 0444;
 
-			/* now the device_attribute struct */
+			/* now the device_attribute काष्ठा */
 			eattr->attr.show = show_fns[attr_type];
-		} else {
-			return -ENOMEM;
-		}
-	} else {
-		return -ENOMEM;
-	}
+		पूर्ण अन्यथा अणु
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस -ENOMEM;
+	पूर्ण
 	eattr->var = con;
 	con->con_attrs[attr_idx] = &eattr->attr.attr;
 	/*
 	 * Initialize the dynamically allocated attribute
-	 * to avoid LOCKDEP splat. See include/linux/sysfs.h
-	 * for more details.
+	 * to aव्योम LOCKDEP splat. See include/linux/sysfs.h
+	 * क्रम more details.
 	 */
 	sysfs_attr_init(con->con_attrs[attr_idx]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct attribute_group *
-cti_create_con_sysfs_group(struct device *dev, struct cti_device *ctidev,
-			   int con_idx, struct cti_trig_con *tc)
-{
-	struct attribute_group *group = NULL;
-	int grp_idx;
+अटल काष्ठा attribute_group *
+cti_create_con_sysfs_group(काष्ठा device *dev, काष्ठा cti_device *ctidev,
+			   पूर्णांक con_idx, काष्ठा cti_trig_con *tc)
+अणु
+	काष्ठा attribute_group *group = शून्य;
+	पूर्णांक grp_idx;
 
-	group = devm_kzalloc(dev, sizeof(struct attribute_group), GFP_KERNEL);
-	if (!group)
-		return NULL;
+	group = devm_kzalloc(dev, माप(काष्ठा attribute_group), GFP_KERNEL);
+	अगर (!group)
+		वापस शून्य;
 
-	group->name = devm_kasprintf(dev, GFP_KERNEL, "triggers%d", con_idx);
-	if (!group->name)
-		return NULL;
+	group->name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "triggers%d", con_idx);
+	अगर (!group->name)
+		वापस शून्य;
 
 	grp_idx = con_idx + CORESIGHT_CTI_STATIC_GROUPS_MAX - 1;
 	ctidev->con_groups[grp_idx] = group;
 	tc->attr_group = group;
-	return group;
-}
+	वापस group;
+पूर्ण
 
-/* create a triggers connection group and the attributes for that group */
-static int cti_create_con_attr_set(struct device *dev, int con_idx,
-				   struct cti_device *ctidev,
-				   struct cti_trig_con *tc)
-{
-	struct attribute_group *attr_group = NULL;
-	int attr_idx = 0;
-	int err = -ENOMEM;
+/* create a triggers connection group and the attributes क्रम that group */
+अटल पूर्णांक cti_create_con_attr_set(काष्ठा device *dev, पूर्णांक con_idx,
+				   काष्ठा cti_device *ctidev,
+				   काष्ठा cti_trig_con *tc)
+अणु
+	काष्ठा attribute_group *attr_group = शून्य;
+	पूर्णांक attr_idx = 0;
+	पूर्णांक err = -ENOMEM;
 
 	attr_group = cti_create_con_sysfs_group(dev, ctidev, con_idx, tc);
-	if (!attr_group)
-		return -ENOMEM;
+	अगर (!attr_group)
+		वापस -ENOMEM;
 
-	/* allocate NULL terminated array of attributes */
-	tc->con_attrs = devm_kcalloc(dev, CTI_CON_ATTR_MAX + 1,
-				     sizeof(struct attribute *), GFP_KERNEL);
-	if (!tc->con_attrs)
-		return -ENOMEM;
+	/* allocate शून्य terminated array of attributes */
+	tc->con_attrs = devm_kसुस्मृति(dev, CTI_CON_ATTR_MAX + 1,
+				     माप(काष्ठा attribute *), GFP_KERNEL);
+	अगर (!tc->con_attrs)
+		वापस -ENOMEM;
 
 	err = cti_create_con_sysfs_attr(dev, tc, CTI_CON_ATTR_NAME,
 					attr_idx++);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (tc->con_in->nr_sigs > 0) {
+	अगर (tc->con_in->nr_sigs > 0) अणु
 		err = cti_create_con_sysfs_attr(dev, tc,
 						CTI_CON_ATTR_TRIGIN_SIG,
 						attr_idx++);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = cti_create_con_sysfs_attr(dev, tc,
 						CTI_CON_ATTR_TRIGIN_TYPES,
 						attr_idx++);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	if (tc->con_out->nr_sigs > 0) {
+	अगर (tc->con_out->nr_sigs > 0) अणु
 		err = cti_create_con_sysfs_attr(dev, tc,
 						CTI_CON_ATTR_TRIGOUT_SIG,
 						attr_idx++);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		err = cti_create_con_sysfs_attr(dev, tc,
 						CTI_CON_ATTR_TRIGOUT_TYPES,
 						attr_idx++);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 	attr_group->attrs = tc->con_attrs;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* create the array of group pointers for the CTI sysfs groups */
-static int cti_create_cons_groups(struct device *dev, struct cti_device *ctidev)
-{
-	int nr_groups;
+/* create the array of group poपूर्णांकers क्रम the CTI sysfs groups */
+अटल पूर्णांक cti_create_cons_groups(काष्ठा device *dev, काष्ठा cti_device *ctidev)
+अणु
+	पूर्णांक nr_groups;
 
-	/* nr groups = dynamic + static + NULL terminator */
+	/* nr groups = dynamic + अटल + शून्य terminator */
 	nr_groups = ctidev->nr_trig_con + CORESIGHT_CTI_STATIC_GROUPS_MAX;
-	ctidev->con_groups = devm_kcalloc(dev, nr_groups,
-					  sizeof(struct attribute_group *),
+	ctidev->con_groups = devm_kसुस्मृति(dev, nr_groups,
+					  माप(काष्ठा attribute_group *),
 					  GFP_KERNEL);
-	if (!ctidev->con_groups)
-		return -ENOMEM;
-	return 0;
-}
+	अगर (!ctidev->con_groups)
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-int cti_create_cons_sysfs(struct device *dev, struct cti_drvdata *drvdata)
-{
-	struct cti_device *ctidev = &drvdata->ctidev;
-	int err, con_idx = 0, i;
-	struct cti_trig_con *tc;
+पूर्णांक cti_create_cons_sysfs(काष्ठा device *dev, काष्ठा cti_drvdata *drvdata)
+अणु
+	काष्ठा cti_device *ctidev = &drvdata->ctidev;
+	पूर्णांक err, con_idx = 0, i;
+	काष्ठा cti_trig_con *tc;
 
 	err = cti_create_cons_groups(dev, ctidev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* populate first locations with the static set of groups */
-	for (i = 0; i < (CORESIGHT_CTI_STATIC_GROUPS_MAX - 1); i++)
+	/* populate first locations with the अटल set of groups */
+	क्रम (i = 0; i < (CORESIGHT_CTI_STATIC_GROUPS_MAX - 1); i++)
 		ctidev->con_groups[i] = coresight_cti_groups[i];
 
-	/* add dynamic set for each connection */
-	list_for_each_entry(tc, &ctidev->trig_cons, node) {
+	/* add dynamic set क्रम each connection */
+	list_क्रम_each_entry(tc, &ctidev->trig_cons, node) अणु
 		err = cti_create_con_attr_set(dev, con_idx++, ctidev, tc);
-		if (err)
-			break;
-	}
-	return err;
-}
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	वापस err;
+पूर्ण
 
 /* attribute and group sysfs tables. */
-static const struct attribute_group coresight_cti_group = {
+अटल स्थिर काष्ठा attribute_group coresight_cti_group = अणु
 	.attrs = coresight_cti_attrs,
-};
+पूर्ण;
 
-static const struct attribute_group coresight_cti_mgmt_group = {
+अटल स्थिर काष्ठा attribute_group coresight_cti_mgmt_group = अणु
 	.attrs = coresight_cti_mgmt_attrs,
 	.name = "mgmt",
-};
+पूर्ण;
 
-static const struct attribute_group coresight_cti_regs_group = {
+अटल स्थिर काष्ठा attribute_group coresight_cti_regs_group = अणु
 	.attrs = coresight_cti_regs_attrs,
 	.name = "regs",
-};
+पूर्ण;
 
-static const struct attribute_group coresight_cti_channels_group = {
+अटल स्थिर काष्ठा attribute_group coresight_cti_channels_group = अणु
 	.attrs = coresight_cti_channel_attrs,
 	.name = "channels",
-};
+पूर्ण;
 
-const struct attribute_group *
-coresight_cti_groups[CORESIGHT_CTI_STATIC_GROUPS_MAX] = {
+स्थिर काष्ठा attribute_group *
+coresight_cti_groups[CORESIGHT_CTI_STATIC_GROUPS_MAX] = अणु
 	&coresight_cti_group,
 	&coresight_cti_mgmt_group,
 	&coresight_cti_regs_group,
 	&coresight_cti_channels_group,
-	NULL,
-};
+	शून्य,
+पूर्ण;

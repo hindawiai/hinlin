@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Regulator driver for Ricoh RN5T618 PMIC
+ * Regulator driver क्रम Ricoh RN5T618 PMIC
  *
  * Copyright (C) 2014 Beniamino Galvani <b.galvani@gmail.com>
  */
 
-#include <linux/mfd/rn5t618.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/of_regulator.h>
+#समावेश <linux/mfd/rn5t618.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/of_regulator.h>
 
-static const struct regulator_ops rn5t618_reg_ops = {
+अटल स्थिर काष्ठा regulator_ops rn5t618_reg_ops = अणु
 	.enable			= regulator_enable_regmap,
 	.disable		= regulator_disable_regmap,
 	.is_enabled		= regulator_is_enabled_regmap,
 	.set_voltage_sel	= regulator_set_voltage_sel_regmap,
 	.get_voltage_sel	= regulator_get_voltage_sel_regmap,
 	.list_voltage		= regulator_list_voltage_linear,
-};
+पूर्ण;
 
-#define REG(rid, ereg, emask, vreg, vmask, min, max, step)		\
-	{								\
+#घोषणा REG(rid, ereg, emask, vreg, vmask, min, max, step)		\
+	अणु								\
 		.name		= #rid,					\
 		.of_match	= of_match_ptr(#rid),			\
 		.regulators_node = of_match_ptr("regulators"),		\
@@ -38,9 +39,9 @@ static const struct regulator_ops rn5t618_reg_ops = {
 		.enable_mask	= (emask),				\
 		.vsel_reg	= RN5T618_##vreg,			\
 		.vsel_mask	= (vmask),				\
-	}
+	पूर्ण
 
-static const struct regulator_desc rn5t567_regulators[] = {
+अटल स्थिर काष्ठा regulator_desc rn5t567_regulators[] = अणु
 	/* DCDC */
 	REG(DCDC1, DC1CTL, BIT(0), DC1DAC, 0xff, 600000, 3500000, 12500),
 	REG(DCDC2, DC2CTL, BIT(0), DC2DAC, 0xff, 600000, 3500000, 12500),
@@ -55,9 +56,9 @@ static const struct regulator_desc rn5t567_regulators[] = {
 	/* LDO RTC */
 	REG(LDORTC1, LDOEN2, BIT(4), LDORTCDAC, 0x7f, 1200000, 3500000, 25000),
 	REG(LDORTC2, LDOEN2, BIT(5), LDORTC2DAC, 0x7f, 900000, 3500000, 25000),
-};
+पूर्ण;
 
-static const struct regulator_desc rn5t618_regulators[] = {
+अटल स्थिर काष्ठा regulator_desc rn5t618_regulators[] = अणु
 	/* DCDC */
 	REG(DCDC1, DC1CTL, BIT(0), DC1DAC, 0xff, 600000, 3500000, 12500),
 	REG(DCDC2, DC2CTL, BIT(0), DC2DAC, 0xff, 600000, 3500000, 12500),
@@ -71,9 +72,9 @@ static const struct regulator_desc rn5t618_regulators[] = {
 	/* LDO RTC */
 	REG(LDORTC1, LDOEN2, BIT(4), LDORTCDAC, 0x7f, 1700000, 3500000, 25000),
 	REG(LDORTC2, LDOEN2, BIT(5), LDORTC2DAC, 0x7f, 900000, 3500000, 25000),
-};
+पूर्ण;
 
-static const struct regulator_desc rc5t619_regulators[] = {
+अटल स्थिर काष्ठा regulator_desc rc5t619_regulators[] = अणु
 	/* DCDC */
 	REG(DCDC1, DC1CTL, BIT(0), DC1DAC, 0xff, 600000, 3500000, 12500),
 	REG(DCDC2, DC2CTL, BIT(0), DC2DAC, 0xff, 600000, 3500000, 12500),
@@ -94,59 +95,59 @@ static const struct regulator_desc rc5t619_regulators[] = {
 	/* LDO RTC */
 	REG(LDORTC1, LDOEN2, BIT(4), LDORTCDAC, 0x7f, 1700000, 3500000, 25000),
 	REG(LDORTC2, LDOEN2, BIT(5), LDORTC2DAC, 0x7f, 900000, 3500000, 25000),
-};
+पूर्ण;
 
-static int rn5t618_regulator_probe(struct platform_device *pdev)
-{
-	struct rn5t618 *rn5t618 = dev_get_drvdata(pdev->dev.parent);
-	struct regulator_config config = { };
-	struct regulator_dev *rdev;
-	const struct regulator_desc *regulators;
-	int i;
-	int num_regulators = 0;
+अटल पूर्णांक rn5t618_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rn5t618 *rn5t618 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा regulator_dev *rdev;
+	स्थिर काष्ठा regulator_desc *regulators;
+	पूर्णांक i;
+	पूर्णांक num_regulators = 0;
 
-	switch (rn5t618->variant) {
-	case RN5T567:
+	चयन (rn5t618->variant) अणु
+	हाल RN5T567:
 		regulators = rn5t567_regulators;
 		num_regulators = ARRAY_SIZE(rn5t567_regulators);
-		break;
-	case RN5T618:
+		अवरोध;
+	हाल RN5T618:
 		regulators = rn5t618_regulators;
 		num_regulators = ARRAY_SIZE(rn5t618_regulators);
-		break;
-	case RC5T619:
+		अवरोध;
+	हाल RC5T619:
 		regulators = rc5t619_regulators;
 		num_regulators = ARRAY_SIZE(rc5t619_regulators);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	config.dev = pdev->dev.parent;
 	config.regmap = rn5t618->regmap;
 
-	for (i = 0; i < num_regulators; i++) {
-		rdev = devm_regulator_register(&pdev->dev,
+	क्रम (i = 0; i < num_regulators; i++) अणु
+		rdev = devm_regulator_रेजिस्टर(&pdev->dev,
 					       &regulators[i],
 					       &config);
-		if (IS_ERR(rdev)) {
+		अगर (IS_ERR(rdev)) अणु
 			dev_err(&pdev->dev, "failed to register %s regulator\n",
 				regulators[i].name);
-			return PTR_ERR(rdev);
-		}
-	}
+			वापस PTR_ERR(rdev);
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver rn5t618_regulator_driver = {
+अटल काष्ठा platक्रमm_driver rn5t618_regulator_driver = अणु
 	.probe = rn5t618_regulator_probe,
-	.driver = {
+	.driver = अणु
 		.name	= "rn5t618-regulator",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(rn5t618_regulator_driver);
+module_platक्रमm_driver(rn5t618_regulator_driver);
 
 MODULE_ALIAS("platform:rn5t618-regulator");
 MODULE_AUTHOR("Beniamino Galvani <b.galvani@gmail.com>");

@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __CPUPOWER_CPUIDLE_H__
-#define __CPUPOWER_CPUIDLE_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __CPUPOWER_CPUIDLE_H__
+#घोषणा __CPUPOWER_CPUIDLE_H__
 
-int cpuidle_is_state_disabled(unsigned int cpu,
-				       unsigned int idlestate);
-int cpuidle_state_disable(unsigned int cpu, unsigned int idlestate,
-				   unsigned int disable);
-unsigned long cpuidle_state_latency(unsigned int cpu,
-						unsigned int idlestate);
-unsigned long cpuidle_state_usage(unsigned int cpu,
-					unsigned int idlestate);
-unsigned long long cpuidle_state_time(unsigned int cpu,
-						unsigned int idlestate);
-char *cpuidle_state_name(unsigned int cpu,
-				unsigned int idlestate);
-char *cpuidle_state_desc(unsigned int cpu,
-				unsigned int idlestate);
-unsigned int cpuidle_state_count(unsigned int cpu);
+पूर्णांक cpuidle_is_state_disabled(अचिन्हित पूर्णांक cpu,
+				       अचिन्हित पूर्णांक idlestate);
+पूर्णांक cpuidle_state_disable(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक idlestate,
+				   अचिन्हित पूर्णांक disable);
+अचिन्हित दीर्घ cpuidle_state_latency(अचिन्हित पूर्णांक cpu,
+						अचिन्हित पूर्णांक idlestate);
+अचिन्हित दीर्घ cpuidle_state_usage(अचिन्हित पूर्णांक cpu,
+					अचिन्हित पूर्णांक idlestate);
+अचिन्हित दीर्घ दीर्घ cpuidle_state_समय(अचिन्हित पूर्णांक cpu,
+						अचिन्हित पूर्णांक idlestate);
+अक्षर *cpuidle_state_name(अचिन्हित पूर्णांक cpu,
+				अचिन्हित पूर्णांक idlestate);
+अक्षर *cpuidle_state_desc(अचिन्हित पूर्णांक cpu,
+				अचिन्हित पूर्णांक idlestate);
+अचिन्हित पूर्णांक cpuidle_state_count(अचिन्हित पूर्णांक cpu);
 
-char *cpuidle_get_governor(void);
-char *cpuidle_get_driver(void);
+अक्षर *cpuidle_get_governor(व्योम);
+अक्षर *cpuidle_get_driver(व्योम);
 
-#endif /* __CPUPOWER_HELPERS_SYSFS_H__ */
+#पूर्ण_अगर /* __CPUPOWER_HELPERS_SYSFS_H__ */

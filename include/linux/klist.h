@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *	klist.h - Some generic list helpers, extending struct list_head a bit.
+ *	klist.h - Some generic list helpers, extending काष्ठा list_head a bit.
  *
  *	Implementations are found in lib/klist.c
  *
  *	Copyright (C) 2005 Patrick Mochel
  */
 
-#ifndef _LINUX_KLIST_H
-#define _LINUX_KLIST_H
+#अगर_अघोषित _LINUX_KLIST_H
+#घोषणा _LINUX_KLIST_H
 
-#include <linux/spinlock.h>
-#include <linux/kref.h>
-#include <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/list.h>
 
-struct klist_node;
-struct klist {
+काष्ठा klist_node;
+काष्ठा klist अणु
 	spinlock_t		k_lock;
-	struct list_head	k_list;
-	void			(*get)(struct klist_node *);
-	void			(*put)(struct klist_node *);
-} __attribute__ ((aligned (sizeof(void *))));
+	काष्ठा list_head	k_list;
+	व्योम			(*get)(काष्ठा klist_node *);
+	व्योम			(*put)(काष्ठा klist_node *);
+पूर्ण __attribute__ ((aligned (माप(व्योम *))));
 
-#define KLIST_INIT(_name, _get, _put)					\
-	{ .k_lock	= __SPIN_LOCK_UNLOCKED(_name.k_lock),		\
+#घोषणा KLIST_INIT(_name, _get, _put)					\
+	अणु .k_lock	= __SPIN_LOCK_UNLOCKED(_name.k_lock),		\
 	  .k_list	= LIST_HEAD_INIT(_name.k_list),			\
 	  .get		= _get,						\
-	  .put		= _put, }
+	  .put		= _put, पूर्ण
 
-#define DEFINE_KLIST(_name, _get, _put)					\
-	struct klist _name = KLIST_INIT(_name, _get, _put)
+#घोषणा DEFINE_KLIST(_name, _get, _put)					\
+	काष्ठा klist _name = KLIST_INIT(_name, _get, _put)
 
-extern void klist_init(struct klist *k, void (*get)(struct klist_node *),
-		       void (*put)(struct klist_node *));
+बाह्य व्योम klist_init(काष्ठा klist *k, व्योम (*get)(काष्ठा klist_node *),
+		       व्योम (*put)(काष्ठा klist_node *));
 
-struct klist_node {
-	void			*n_klist;	/* never access directly */
-	struct list_head	n_node;
-	struct kref		n_ref;
-};
+काष्ठा klist_node अणु
+	व्योम			*n_klist;	/* never access directly */
+	काष्ठा list_head	n_node;
+	काष्ठा kref		n_ref;
+पूर्ण;
 
-extern void klist_add_tail(struct klist_node *n, struct klist *k);
-extern void klist_add_head(struct klist_node *n, struct klist *k);
-extern void klist_add_behind(struct klist_node *n, struct klist_node *pos);
-extern void klist_add_before(struct klist_node *n, struct klist_node *pos);
+बाह्य व्योम klist_add_tail(काष्ठा klist_node *n, काष्ठा klist *k);
+बाह्य व्योम klist_add_head(काष्ठा klist_node *n, काष्ठा klist *k);
+बाह्य व्योम klist_add_behind(काष्ठा klist_node *n, काष्ठा klist_node *pos);
+बाह्य व्योम klist_add_beक्रमe(काष्ठा klist_node *n, काष्ठा klist_node *pos);
 
-extern void klist_del(struct klist_node *n);
-extern void klist_remove(struct klist_node *n);
+बाह्य व्योम klist_del(काष्ठा klist_node *n);
+बाह्य व्योम klist_हटाओ(काष्ठा klist_node *n);
 
-extern int klist_node_attached(struct klist_node *n);
-
-
-struct klist_iter {
-	struct klist		*i_klist;
-	struct klist_node	*i_cur;
-};
+बाह्य पूर्णांक klist_node_attached(काष्ठा klist_node *n);
 
 
-extern void klist_iter_init(struct klist *k, struct klist_iter *i);
-extern void klist_iter_init_node(struct klist *k, struct klist_iter *i,
-				 struct klist_node *n);
-extern void klist_iter_exit(struct klist_iter *i);
-extern struct klist_node *klist_prev(struct klist_iter *i);
-extern struct klist_node *klist_next(struct klist_iter *i);
+काष्ठा klist_iter अणु
+	काष्ठा klist		*i_klist;
+	काष्ठा klist_node	*i_cur;
+पूर्ण;
 
-#endif
+
+बाह्य व्योम klist_iter_init(काष्ठा klist *k, काष्ठा klist_iter *i);
+बाह्य व्योम klist_iter_init_node(काष्ठा klist *k, काष्ठा klist_iter *i,
+				 काष्ठा klist_node *n);
+बाह्य व्योम klist_iter_निकास(काष्ठा klist_iter *i);
+बाह्य काष्ठा klist_node *klist_prev(काष्ठा klist_iter *i);
+बाह्य काष्ठा klist_node *klist_next(काष्ठा klist_iter *i);
+
+#पूर्ण_अगर

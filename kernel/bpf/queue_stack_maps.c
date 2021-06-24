@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * queue_stack_maps.c: BPF queue and stack maps
  *
  * Copyright (c) 2018 Politecnico di Torino
  */
-#include <linux/bpf.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/capability.h>
-#include "percpu_freelist.h"
+#समावेश <linux/bpf.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/capability.h>
+#समावेश "percpu_freelist.h"
 
-#define QUEUE_STACK_CREATE_FLAG_MASK \
+#घोषणा QUEUE_STACK_CREATE_FLAG_MASK \
 	(BPF_F_NUMA_NODE | BPF_F_ACCESS_MASK)
 
-struct bpf_queue_stack {
-	struct bpf_map map;
+काष्ठा bpf_queue_stack अणु
+	काष्ठा bpf_map map;
 	raw_spinlock_t lock;
 	u32 head, tail;
 	u32 size; /* max_entries + 1 */
 
-	char elements[] __aligned(8);
-};
+	अक्षर elements[] __aligned(8);
+पूर्ण;
 
-static struct bpf_queue_stack *bpf_queue_stack(struct bpf_map *map)
-{
-	return container_of(map, struct bpf_queue_stack, map);
-}
+अटल काष्ठा bpf_queue_stack *bpf_queue_stack(काष्ठा bpf_map *map)
+अणु
+	वापस container_of(map, काष्ठा bpf_queue_stack, map);
+पूर्ण
 
-static bool queue_stack_map_is_empty(struct bpf_queue_stack *qs)
-{
-	return qs->head == qs->tail;
-}
+अटल bool queue_stack_map_is_empty(काष्ठा bpf_queue_stack *qs)
+अणु
+	वापस qs->head == qs->tail;
+पूर्ण
 
-static bool queue_stack_map_is_full(struct bpf_queue_stack *qs)
-{
+अटल bool queue_stack_map_is_full(काष्ठा bpf_queue_stack *qs)
+अणु
 	u32 head = qs->head + 1;
 
-	if (unlikely(head >= qs->size))
+	अगर (unlikely(head >= qs->size))
 		head = 0;
 
-	return head == qs->tail;
-}
+	वापस head == qs->tail;
+पूर्ण
 
 /* Called from syscall */
-static int queue_stack_map_alloc_check(union bpf_attr *attr)
-{
-	if (!bpf_capable())
-		return -EPERM;
+अटल पूर्णांक queue_stack_map_alloc_check(जोड़ bpf_attr *attr)
+अणु
+	अगर (!bpf_capable())
+		वापस -EPERM;
 
 	/* check sanity of attributes */
-	if (attr->max_entries == 0 || attr->key_size != 0 ||
+	अगर (attr->max_entries == 0 || attr->key_size != 0 ||
 	    attr->value_size == 0 ||
 	    attr->map_flags & ~QUEUE_STACK_CREATE_FLAG_MASK ||
 	    !bpf_map_flags_access_ok(attr->map_flags))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (attr->value_size > KMALLOC_MAX_SIZE)
-		/* if value_size is bigger, the user space won't be able to
+	अगर (attr->value_size > KMALLOC_MAX_SIZE)
+		/* अगर value_size is bigger, the user space won't be able to
 		 * access the elements.
 		 */
-		return -E2BIG;
+		वापस -E2BIG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct bpf_map *queue_stack_map_alloc(union bpf_attr *attr)
-{
-	int numa_node = bpf_map_attr_numa_node(attr);
-	struct bpf_queue_stack *qs;
+अटल काष्ठा bpf_map *queue_stack_map_alloc(जोड़ bpf_attr *attr)
+अणु
+	पूर्णांक numa_node = bpf_map_attr_numa_node(attr);
+	काष्ठा bpf_queue_stack *qs;
 	u64 size, queue_size;
 
 	size = (u64) attr->max_entries + 1;
-	queue_size = sizeof(*qs) + size * attr->value_size;
+	queue_size = माप(*qs) + size * attr->value_size;
 
 	qs = bpf_map_area_alloc(queue_size, numa_node);
-	if (!qs)
-		return ERR_PTR(-ENOMEM);
+	अगर (!qs)
+		वापस ERR_PTR(-ENOMEM);
 
-	memset(qs, 0, sizeof(*qs));
+	स_रखो(qs, 0, माप(*qs));
 
 	bpf_map_init_from_attr(&qs->map, attr);
 
@@ -85,174 +86,174 @@ static struct bpf_map *queue_stack_map_alloc(union bpf_attr *attr)
 
 	raw_spin_lock_init(&qs->lock);
 
-	return &qs->map;
-}
+	वापस &qs->map;
+पूर्ण
 
 /* Called when map->refcnt goes to zero, either from workqueue or from syscall */
-static void queue_stack_map_free(struct bpf_map *map)
-{
-	struct bpf_queue_stack *qs = bpf_queue_stack(map);
+अटल व्योम queue_stack_map_मुक्त(काष्ठा bpf_map *map)
+अणु
+	काष्ठा bpf_queue_stack *qs = bpf_queue_stack(map);
 
-	bpf_map_area_free(qs);
-}
+	bpf_map_area_मुक्त(qs);
+पूर्ण
 
-static int __queue_map_get(struct bpf_map *map, void *value, bool delete)
-{
-	struct bpf_queue_stack *qs = bpf_queue_stack(map);
-	unsigned long flags;
-	int err = 0;
-	void *ptr;
+अटल पूर्णांक __queue_map_get(काष्ठा bpf_map *map, व्योम *value, bool delete)
+अणु
+	काष्ठा bpf_queue_stack *qs = bpf_queue_stack(map);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
+	व्योम *ptr;
 
 	raw_spin_lock_irqsave(&qs->lock, flags);
 
-	if (queue_stack_map_is_empty(qs)) {
-		memset(value, 0, qs->map.value_size);
+	अगर (queue_stack_map_is_empty(qs)) अणु
+		स_रखो(value, 0, qs->map.value_size);
 		err = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ptr = &qs->elements[qs->tail * qs->map.value_size];
-	memcpy(value, ptr, qs->map.value_size);
+	स_नकल(value, ptr, qs->map.value_size);
 
-	if (delete) {
-		if (unlikely(++qs->tail >= qs->size))
+	अगर (delete) अणु
+		अगर (unlikely(++qs->tail >= qs->size))
 			qs->tail = 0;
-	}
+	पूर्ण
 
 out:
 	raw_spin_unlock_irqrestore(&qs->lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
-static int __stack_map_get(struct bpf_map *map, void *value, bool delete)
-{
-	struct bpf_queue_stack *qs = bpf_queue_stack(map);
-	unsigned long flags;
-	int err = 0;
-	void *ptr;
+अटल पूर्णांक __stack_map_get(काष्ठा bpf_map *map, व्योम *value, bool delete)
+अणु
+	काष्ठा bpf_queue_stack *qs = bpf_queue_stack(map);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक err = 0;
+	व्योम *ptr;
 	u32 index;
 
 	raw_spin_lock_irqsave(&qs->lock, flags);
 
-	if (queue_stack_map_is_empty(qs)) {
-		memset(value, 0, qs->map.value_size);
+	अगर (queue_stack_map_is_empty(qs)) अणु
+		स_रखो(value, 0, qs->map.value_size);
 		err = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	index = qs->head - 1;
-	if (unlikely(index >= qs->size))
+	अगर (unlikely(index >= qs->size))
 		index = qs->size - 1;
 
 	ptr = &qs->elements[index * qs->map.value_size];
-	memcpy(value, ptr, qs->map.value_size);
+	स_नकल(value, ptr, qs->map.value_size);
 
-	if (delete)
+	अगर (delete)
 		qs->head = index;
 
 out:
 	raw_spin_unlock_irqrestore(&qs->lock, flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Called from syscall or from eBPF program */
-static int queue_map_peek_elem(struct bpf_map *map, void *value)
-{
-	return __queue_map_get(map, value, false);
-}
+अटल पूर्णांक queue_map_peek_elem(काष्ठा bpf_map *map, व्योम *value)
+अणु
+	वापस __queue_map_get(map, value, false);
+पूर्ण
 
 /* Called from syscall or from eBPF program */
-static int stack_map_peek_elem(struct bpf_map *map, void *value)
-{
-	return __stack_map_get(map, value, false);
-}
+अटल पूर्णांक stack_map_peek_elem(काष्ठा bpf_map *map, व्योम *value)
+अणु
+	वापस __stack_map_get(map, value, false);
+पूर्ण
 
 /* Called from syscall or from eBPF program */
-static int queue_map_pop_elem(struct bpf_map *map, void *value)
-{
-	return __queue_map_get(map, value, true);
-}
+अटल पूर्णांक queue_map_pop_elem(काष्ठा bpf_map *map, व्योम *value)
+अणु
+	वापस __queue_map_get(map, value, true);
+पूर्ण
 
 /* Called from syscall or from eBPF program */
-static int stack_map_pop_elem(struct bpf_map *map, void *value)
-{
-	return __stack_map_get(map, value, true);
-}
+अटल पूर्णांक stack_map_pop_elem(काष्ठा bpf_map *map, व्योम *value)
+अणु
+	वापस __stack_map_get(map, value, true);
+पूर्ण
 
 /* Called from syscall or from eBPF program */
-static int queue_stack_map_push_elem(struct bpf_map *map, void *value,
+अटल पूर्णांक queue_stack_map_push_elem(काष्ठा bpf_map *map, व्योम *value,
 				     u64 flags)
-{
-	struct bpf_queue_stack *qs = bpf_queue_stack(map);
-	unsigned long irq_flags;
-	int err = 0;
-	void *dst;
+अणु
+	काष्ठा bpf_queue_stack *qs = bpf_queue_stack(map);
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक err = 0;
+	व्योम *dst;
 
-	/* BPF_EXIST is used to force making room for a new element in case the
+	/* BPF_EXIST is used to क्रमce making room क्रम a new element in हाल the
 	 * map is full
 	 */
 	bool replace = (flags & BPF_EXIST);
 
-	/* Check supported flags for queue and stack maps */
-	if (flags & BPF_NOEXIST || flags > BPF_EXIST)
-		return -EINVAL;
+	/* Check supported flags क्रम queue and stack maps */
+	अगर (flags & BPF_NOEXIST || flags > BPF_EXIST)
+		वापस -EINVAL;
 
 	raw_spin_lock_irqsave(&qs->lock, irq_flags);
 
-	if (queue_stack_map_is_full(qs)) {
-		if (!replace) {
+	अगर (queue_stack_map_is_full(qs)) अणु
+		अगर (!replace) अणु
 			err = -E2BIG;
-			goto out;
-		}
-		/* advance tail pointer to overwrite oldest element */
-		if (unlikely(++qs->tail >= qs->size))
+			जाओ out;
+		पूर्ण
+		/* advance tail poपूर्णांकer to overग_लिखो oldest element */
+		अगर (unlikely(++qs->tail >= qs->size))
 			qs->tail = 0;
-	}
+	पूर्ण
 
 	dst = &qs->elements[qs->head * qs->map.value_size];
-	memcpy(dst, value, qs->map.value_size);
+	स_नकल(dst, value, qs->map.value_size);
 
-	if (unlikely(++qs->head >= qs->size))
+	अगर (unlikely(++qs->head >= qs->size))
 		qs->head = 0;
 
 out:
 	raw_spin_unlock_irqrestore(&qs->lock, irq_flags);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* Called from syscall or from eBPF program */
-static void *queue_stack_map_lookup_elem(struct bpf_map *map, void *key)
-{
-	return NULL;
-}
+अटल व्योम *queue_stack_map_lookup_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	वापस शून्य;
+पूर्ण
 
 /* Called from syscall or from eBPF program */
-static int queue_stack_map_update_elem(struct bpf_map *map, void *key,
-				       void *value, u64 flags)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक queue_stack_map_update_elem(काष्ठा bpf_map *map, व्योम *key,
+				       व्योम *value, u64 flags)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
 /* Called from syscall or from eBPF program */
-static int queue_stack_map_delete_elem(struct bpf_map *map, void *key)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक queue_stack_map_delete_elem(काष्ठा bpf_map *map, व्योम *key)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
 /* Called from syscall */
-static int queue_stack_map_get_next_key(struct bpf_map *map, void *key,
-					void *next_key)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक queue_stack_map_get_next_key(काष्ठा bpf_map *map, व्योम *key,
+					व्योम *next_key)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static int queue_map_btf_id;
-const struct bpf_map_ops queue_map_ops = {
+अटल पूर्णांक queue_map_btf_id;
+स्थिर काष्ठा bpf_map_ops queue_map_ops = अणु
 	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc_check = queue_stack_map_alloc_check,
 	.map_alloc = queue_stack_map_alloc,
-	.map_free = queue_stack_map_free,
+	.map_मुक्त = queue_stack_map_मुक्त,
 	.map_lookup_elem = queue_stack_map_lookup_elem,
 	.map_update_elem = queue_stack_map_update_elem,
 	.map_delete_elem = queue_stack_map_delete_elem,
@@ -262,14 +263,14 @@ const struct bpf_map_ops queue_map_ops = {
 	.map_get_next_key = queue_stack_map_get_next_key,
 	.map_btf_name = "bpf_queue_stack",
 	.map_btf_id = &queue_map_btf_id,
-};
+पूर्ण;
 
-static int stack_map_btf_id;
-const struct bpf_map_ops stack_map_ops = {
+अटल पूर्णांक stack_map_btf_id;
+स्थिर काष्ठा bpf_map_ops stack_map_ops = अणु
 	.map_meta_equal = bpf_map_meta_equal,
 	.map_alloc_check = queue_stack_map_alloc_check,
 	.map_alloc = queue_stack_map_alloc,
-	.map_free = queue_stack_map_free,
+	.map_मुक्त = queue_stack_map_मुक्त,
 	.map_lookup_elem = queue_stack_map_lookup_elem,
 	.map_update_elem = queue_stack_map_update_elem,
 	.map_delete_elem = queue_stack_map_delete_elem,
@@ -279,4 +280,4 @@ const struct bpf_map_ops stack_map_ops = {
 	.map_get_next_key = queue_stack_map_get_next_key,
 	.map_btf_name = "bpf_queue_stack",
 	.map_btf_id = &stack_map_btf_id,
-};
+पूर्ण;

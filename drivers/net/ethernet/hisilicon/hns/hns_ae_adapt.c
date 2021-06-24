@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2014-2015 Hisilicon Limited.
  */
 
-#include <linux/etherdevice.h>
-#include <linux/netdevice.h>
-#include <linux/spinlock.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/spinlock.h>
 
-#include "hnae.h"
-#include "hns_dsaf_mac.h"
-#include "hns_dsaf_main.h"
-#include "hns_dsaf_ppe.h"
-#include "hns_dsaf_rcb.h"
+#समावेश "hnae.h"
+#समावेश "hns_dsaf_mac.h"
+#समावेश "hns_dsaf_main.h"
+#समावेश "hns_dsaf_ppe.h"
+#समावेश "hns_dsaf_rcb.h"
 
-static struct hns_mac_cb *hns_get_mac_cb(struct hnae_handle *handle)
-{
-	struct  hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
+अटल काष्ठा hns_mac_cb *hns_get_mac_cb(काष्ठा hnae_handle *handle)
+अणु
+	काष्ठा  hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
 
-	return vf_cb->mac_cb;
-}
+	वापस vf_cb->mac_cb;
+पूर्ण
 
-static struct dsaf_device *hns_ae_get_dsaf_dev(struct hnae_ae_dev *dev)
-{
-	return container_of(dev, struct dsaf_device, ae_dev);
-}
+अटल काष्ठा dsaf_device *hns_ae_get_dsaf_dev(काष्ठा hnae_ae_dev *dev)
+अणु
+	वापस container_of(dev, काष्ठा dsaf_device, ae_dev);
+पूर्ण
 
-static struct hns_ppe_cb *hns_get_ppe_cb(struct hnae_handle *handle)
-{
-	int ppe_index;
-	struct ppe_common_cb *ppe_comm;
-	struct  hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
+अटल काष्ठा hns_ppe_cb *hns_get_ppe_cb(काष्ठा hnae_handle *handle)
+अणु
+	पूर्णांक ppe_index;
+	काष्ठा ppe_common_cb *ppe_comm;
+	काष्ठा  hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
 
 	ppe_comm = vf_cb->dsaf_dev->ppe_common[0];
 	ppe_index = vf_cb->port_index;
 
-	return &ppe_comm->ppe_cb[ppe_index];
-}
+	वापस &ppe_comm->ppe_cb[ppe_index];
+पूर्ण
 
-static int hns_ae_get_q_num_per_vf(
-	struct dsaf_device *dsaf_dev, int port)
-{
-	return dsaf_dev->rcb_common[0]->max_q_per_vf;
-}
+अटल पूर्णांक hns_ae_get_q_num_per_vf(
+	काष्ठा dsaf_device *dsaf_dev, पूर्णांक port)
+अणु
+	वापस dsaf_dev->rcb_common[0]->max_q_per_vf;
+पूर्ण
 
-static int hns_ae_get_vf_num_per_port(
-	struct dsaf_device *dsaf_dev, int port)
-{
-	return dsaf_dev->rcb_common[0]->max_vfn;
-}
+अटल पूर्णांक hns_ae_get_vf_num_per_port(
+	काष्ठा dsaf_device *dsaf_dev, पूर्णांक port)
+अणु
+	वापस dsaf_dev->rcb_common[0]->max_vfn;
+पूर्ण
 
-static struct ring_pair_cb *hns_ae_get_base_ring_pair(
-	struct dsaf_device *dsaf_dev, int port)
-{
-	struct rcb_common_cb *rcb_comm = dsaf_dev->rcb_common[0];
-	int q_num = rcb_comm->max_q_per_vf;
-	int vf_num = rcb_comm->max_vfn;
+अटल काष्ठा ring_pair_cb *hns_ae_get_base_ring_pair(
+	काष्ठा dsaf_device *dsaf_dev, पूर्णांक port)
+अणु
+	काष्ठा rcb_common_cb *rcb_comm = dsaf_dev->rcb_common[0];
+	पूर्णांक q_num = rcb_comm->max_q_per_vf;
+	पूर्णांक vf_num = rcb_comm->max_vfn;
 
-	return &rcb_comm->ring_pair_cb[port * q_num * vf_num];
-}
+	वापस &rcb_comm->ring_pair_cb[port * q_num * vf_num];
+पूर्ण
 
-static struct ring_pair_cb *hns_ae_get_ring_pair(struct hnae_queue *q)
-{
-	return container_of(q, struct ring_pair_cb, q);
-}
+अटल काष्ठा ring_pair_cb *hns_ae_get_ring_pair(काष्ठा hnae_queue *q)
+अणु
+	वापस container_of(q, काष्ठा ring_pair_cb, q);
+पूर्ण
 
-static struct hnae_handle *hns_ae_get_handle(struct hnae_ae_dev *dev,
+अटल काष्ठा hnae_handle *hns_ae_get_handle(काष्ठा hnae_ae_dev *dev,
 					     u32 port_id)
-{
-	int vfnum_per_port;
-	int qnum_per_vf;
-	int i;
-	struct dsaf_device *dsaf_dev;
-	struct hnae_handle *ae_handle;
-	struct ring_pair_cb *ring_pair_cb;
-	struct hnae_vf_cb *vf_cb;
+अणु
+	पूर्णांक vfnum_per_port;
+	पूर्णांक qnum_per_vf;
+	पूर्णांक i;
+	काष्ठा dsaf_device *dsaf_dev;
+	काष्ठा hnae_handle *ae_handle;
+	काष्ठा ring_pair_cb *ring_pair_cb;
+	काष्ठा hnae_vf_cb *vf_cb;
 
 	dsaf_dev = hns_ae_get_dsaf_dev(dev);
 
@@ -81,13 +82,13 @@ static struct hnae_handle *hns_ae_get_handle(struct hnae_ae_dev *dev,
 	vfnum_per_port = hns_ae_get_vf_num_per_port(dsaf_dev, port_id);
 	qnum_per_vf = hns_ae_get_q_num_per_vf(dsaf_dev, port_id);
 
-	vf_cb = kzalloc(sizeof(*vf_cb) +
-			qnum_per_vf * sizeof(struct hnae_queue *), GFP_KERNEL);
-	if (unlikely(!vf_cb)) {
+	vf_cb = kzalloc(माप(*vf_cb) +
+			qnum_per_vf * माप(काष्ठा hnae_queue *), GFP_KERNEL);
+	अगर (unlikely(!vf_cb)) अणु
 		dev_err(dsaf_dev->dev, "malloc vf_cb fail!\n");
 		ae_handle = ERR_PTR(-ENOMEM);
-		goto handle_err;
-	}
+		जाओ handle_err;
+	पूर्ण
 	ae_handle = &vf_cb->ae_handle;
 	/* ae_handle Init  */
 	ae_handle->owner_dev = dsaf_dev->dev;
@@ -96,272 +97,272 @@ static struct hnae_handle *hns_ae_get_handle(struct hnae_ae_dev *dev,
 	ae_handle->coal_param = HNAE_LOWEST_LATENCY_COAL_PARAM;
 
 	/* find ring pair, and set vf id*/
-	for (ae_handle->vf_id = 0;
-		ae_handle->vf_id < vfnum_per_port; ae_handle->vf_id++) {
-		if (!ring_pair_cb->used_by_vf)
-			break;
+	क्रम (ae_handle->vf_id = 0;
+		ae_handle->vf_id < vfnum_per_port; ae_handle->vf_id++) अणु
+		अगर (!ring_pair_cb->used_by_vf)
+			अवरोध;
 		ring_pair_cb += qnum_per_vf;
-	}
-	if (ae_handle->vf_id >= vfnum_per_port) {
+	पूर्ण
+	अगर (ae_handle->vf_id >= vfnum_per_port) अणु
 		dev_err(dsaf_dev->dev, "malloc queue fail!\n");
 		ae_handle = ERR_PTR(-EINVAL);
-		goto vf_id_err;
-	}
+		जाओ vf_id_err;
+	पूर्ण
 
-	ae_handle->qs = (struct hnae_queue **)(&ae_handle->qs + 1);
-	for (i = 0; i < qnum_per_vf; i++) {
+	ae_handle->qs = (काष्ठा hnae_queue **)(&ae_handle->qs + 1);
+	क्रम (i = 0; i < qnum_per_vf; i++) अणु
 		ae_handle->qs[i] = &ring_pair_cb->q;
 		ae_handle->qs[i]->rx_ring.q = ae_handle->qs[i];
 		ae_handle->qs[i]->tx_ring.q = ae_handle->qs[i];
 
 		ring_pair_cb->used_by_vf = 1;
 		ring_pair_cb++;
-	}
+	पूर्ण
 
 	vf_cb->dsaf_dev = dsaf_dev;
 	vf_cb->port_index = port_id;
 	vf_cb->mac_cb = dsaf_dev->mac_cb[port_id];
 
-	ae_handle->phy_if = vf_cb->mac_cb->phy_if;
+	ae_handle->phy_अगर = vf_cb->mac_cb->phy_अगर;
 	ae_handle->phy_dev = vf_cb->mac_cb->phy_dev;
-	ae_handle->if_support = vf_cb->mac_cb->if_support;
+	ae_handle->अगर_support = vf_cb->mac_cb->अगर_support;
 	ae_handle->port_type = vf_cb->mac_cb->mac_type;
 	ae_handle->media_type = vf_cb->mac_cb->media_type;
 	ae_handle->dport_id = port_id;
 
-	return ae_handle;
+	वापस ae_handle;
 vf_id_err:
-	kfree(vf_cb);
+	kमुक्त(vf_cb);
 handle_err:
-	return ae_handle;
-}
+	वापस ae_handle;
+पूर्ण
 
-static void hns_ae_put_handle(struct hnae_handle *handle)
-{
-	struct hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
-	int i;
+अटल व्योम hns_ae_put_handle(काष्ठा hnae_handle *handle)
+अणु
+	काष्ठा hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
+	पूर्णांक i;
 
-	for (i = 0; i < handle->q_num; i++)
+	क्रम (i = 0; i < handle->q_num; i++)
 		hns_ae_get_ring_pair(handle->qs[i])->used_by_vf = 0;
 
-	kfree(vf_cb);
-}
+	kमुक्त(vf_cb);
+पूर्ण
 
-static int hns_ae_wait_flow_down(struct hnae_handle *handle)
-{
-	struct dsaf_device *dsaf_dev;
-	struct hns_ppe_cb *ppe_cb;
-	struct hnae_vf_cb *vf_cb;
-	int ret;
-	int i;
+अटल पूर्णांक hns_ae_रुको_flow_करोwn(काष्ठा hnae_handle *handle)
+अणु
+	काष्ठा dsaf_device *dsaf_dev;
+	काष्ठा hns_ppe_cb *ppe_cb;
+	काष्ठा hnae_vf_cb *vf_cb;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	for (i = 0; i < handle->q_num; i++) {
-		ret = hns_rcb_wait_tx_ring_clean(handle->qs[i]);
-		if (ret)
-			return ret;
-	}
+	क्रम (i = 0; i < handle->q_num; i++) अणु
+		ret = hns_rcb_रुको_tx_ring_clean(handle->qs[i]);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ppe_cb = hns_get_ppe_cb(handle);
-	ret = hns_ppe_wait_tx_fifo_clean(ppe_cb);
-	if (ret)
-		return ret;
+	ret = hns_ppe_रुको_tx_fअगरo_clean(ppe_cb);
+	अगर (ret)
+		वापस ret;
 
 	dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
-	if (!dsaf_dev)
-		return -EINVAL;
-	ret = hns_dsaf_wait_pkt_clean(dsaf_dev, handle->dport_id);
-	if (ret)
-		return ret;
+	अगर (!dsaf_dev)
+		वापस -EINVAL;
+	ret = hns_dsaf_रुको_pkt_clean(dsaf_dev, handle->dport_id);
+	अगर (ret)
+		वापस ret;
 
 	vf_cb = hns_ae_get_vf_cb(handle);
-	ret = hns_mac_wait_fifo_clean(vf_cb->mac_cb);
-	if (ret)
-		return ret;
+	ret = hns_mac_रुको_fअगरo_clean(vf_cb->mac_cb);
+	अगर (ret)
+		वापस ret;
 
 	mdelay(10);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hns_ae_ring_enable_all(struct hnae_handle *handle, int val)
-{
-	int q_num = handle->q_num;
-	int i;
+अटल व्योम hns_ae_ring_enable_all(काष्ठा hnae_handle *handle, पूर्णांक val)
+अणु
+	पूर्णांक q_num = handle->q_num;
+	पूर्णांक i;
 
-	for (i = 0; i < q_num; i++)
+	क्रम (i = 0; i < q_num; i++)
 		hns_rcb_ring_enable_hw(handle->qs[i], val);
-}
+पूर्ण
 
-static void hns_ae_init_queue(struct hnae_queue *q)
-{
-	struct ring_pair_cb *ring =
-		container_of(q, struct ring_pair_cb, q);
+अटल व्योम hns_ae_init_queue(काष्ठा hnae_queue *q)
+अणु
+	काष्ठा ring_pair_cb *ring =
+		container_of(q, काष्ठा ring_pair_cb, q);
 
 	hns_rcb_init_hw(ring);
-}
+पूर्ण
 
-static void hns_ae_fini_queue(struct hnae_queue *q)
-{
-	struct hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(q->handle);
+अटल व्योम hns_ae_fini_queue(काष्ठा hnae_queue *q)
+अणु
+	काष्ठा hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(q->handle);
 
-	if (vf_cb->mac_cb->mac_type == HNAE_PORT_SERVICE)
+	अगर (vf_cb->mac_cb->mac_type == HNAE_PORT_SERVICE)
 		hns_rcb_reset_ring_hw(q);
-}
+पूर्ण
 
-static int hns_ae_set_mac_address(struct hnae_handle *handle, void *p)
-{
-	int ret;
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल पूर्णांक hns_ae_set_mac_address(काष्ठा hnae_handle *handle, व्योम *p)
+अणु
+	पूर्णांक ret;
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
-	if (!p || !is_valid_ether_addr((const u8 *)p)) {
+	अगर (!p || !is_valid_ether_addr((स्थिर u8 *)p)) अणु
 		dev_err(handle->owner_dev, "is not valid ether addr !\n");
-		return -EADDRNOTAVAIL;
-	}
+		वापस -EADDRNOTAVAIL;
+	पूर्ण
 
 	ret = hns_mac_change_vf_addr(mac_cb, handle->vf_id, p);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(handle->owner_dev,
 			"set_mac_address fail, ret=%d!\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hns_ae_add_uc_address(struct hnae_handle *handle,
-				 const unsigned char *addr)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल पूर्णांक hns_ae_add_uc_address(काष्ठा hnae_handle *handle,
+				 स्थिर अचिन्हित अक्षर *addr)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
-	if (mac_cb->mac_type != HNAE_PORT_SERVICE)
-		return -ENOSPC;
+	अगर (mac_cb->mac_type != HNAE_PORT_SERVICE)
+		वापस -ENOSPC;
 
-	return hns_mac_add_uc_addr(mac_cb, handle->vf_id, addr);
-}
+	वापस hns_mac_add_uc_addr(mac_cb, handle->vf_id, addr);
+पूर्ण
 
-static int hns_ae_rm_uc_address(struct hnae_handle *handle,
-				const unsigned char *addr)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल पूर्णांक hns_ae_rm_uc_address(काष्ठा hnae_handle *handle,
+				स्थिर अचिन्हित अक्षर *addr)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
-	if (mac_cb->mac_type != HNAE_PORT_SERVICE)
-		return -ENOSPC;
+	अगर (mac_cb->mac_type != HNAE_PORT_SERVICE)
+		वापस -ENOSPC;
 
-	return hns_mac_rm_uc_addr(mac_cb, handle->vf_id, addr);
-}
+	वापस hns_mac_rm_uc_addr(mac_cb, handle->vf_id, addr);
+पूर्ण
 
-static int hns_ae_set_multicast_one(struct hnae_handle *handle, void *addr)
-{
-	int ret;
-	char *mac_addr = (char *)addr;
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल पूर्णांक hns_ae_set_multicast_one(काष्ठा hnae_handle *handle, व्योम *addr)
+अणु
+	पूर्णांक ret;
+	अक्षर *mac_addr = (अक्षर *)addr;
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 	u8 port_num;
 
-	assert(mac_cb);
+	निश्चित(mac_cb);
 
-	if (mac_cb->mac_type != HNAE_PORT_SERVICE)
-		return 0;
+	अगर (mac_cb->mac_type != HNAE_PORT_SERVICE)
+		वापस 0;
 
 	ret = hns_mac_set_multi(mac_cb, mac_cb->mac_id, mac_addr, true);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(handle->owner_dev,
 			"mac add mul_mac:%pM port%d  fail, ret = %#x!\n",
 			mac_addr, mac_cb->mac_id, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = hns_mac_get_inner_port_num(mac_cb, handle->vf_id, &port_num);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = hns_mac_set_multi(mac_cb, port_num, mac_addr, true);
-	if (ret)
+	अगर (ret)
 		dev_err(handle->owner_dev,
 			"mac add mul_mac:%pM port%d  fail, ret = %#x!\n",
 			mac_addr, DSAF_BASE_INNER_PORT_NUM, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hns_ae_clr_multicast(struct hnae_handle *handle)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल पूर्णांक hns_ae_clr_multicast(काष्ठा hnae_handle *handle)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
-	if (mac_cb->mac_type != HNAE_PORT_SERVICE)
-		return 0;
+	अगर (mac_cb->mac_type != HNAE_PORT_SERVICE)
+		वापस 0;
 
-	return hns_mac_clr_multicast(mac_cb, handle->vf_id);
-}
+	वापस hns_mac_clr_multicast(mac_cb, handle->vf_id);
+पूर्ण
 
-static int hns_ae_set_mtu(struct hnae_handle *handle, int new_mtu)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
-	struct hnae_queue *q;
+अटल पूर्णांक hns_ae_set_mtu(काष्ठा hnae_handle *handle, पूर्णांक new_mtu)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+	काष्ठा hnae_queue *q;
 	u32 rx_buf_size;
-	int i, ret;
+	पूर्णांक i, ret;
 
-	/* when buf_size is 2048, max mtu is 6K for rx ring max bd num is 3. */
-	if (!AE_IS_VER1(mac_cb->dsaf_dev->dsaf_ver)) {
-		if (new_mtu <= BD_SIZE_2048_MAX_MTU)
+	/* when buf_size is 2048, max mtu is 6K क्रम rx ring max bd num is 3. */
+	अगर (!AE_IS_VER1(mac_cb->dsaf_dev->dsaf_ver)) अणु
+		अगर (new_mtu <= BD_SIZE_2048_MAX_MTU)
 			rx_buf_size = 2048;
-		else
+		अन्यथा
 			rx_buf_size = 4096;
-	} else {
+	पूर्ण अन्यथा अणु
 		rx_buf_size = mac_cb->dsaf_dev->buf_size;
-	}
+	पूर्ण
 
 	ret = hns_mac_set_mtu(mac_cb, new_mtu, rx_buf_size);
 
-	if (!ret) {
+	अगर (!ret) अणु
 		/* reinit ring buf_size */
-		for (i = 0; i < handle->q_num; i++) {
+		क्रम (i = 0; i < handle->q_num; i++) अणु
 			q = handle->qs[i];
 			q->rx_ring.buf_size = rx_buf_size;
 			hns_rcb_set_rx_ring_bs(q, rx_buf_size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hns_ae_set_tso_stats(struct hnae_handle *handle, int enable)
-{
-	struct hns_ppe_cb *ppe_cb = hns_get_ppe_cb(handle);
+अटल व्योम hns_ae_set_tso_stats(काष्ठा hnae_handle *handle, पूर्णांक enable)
+अणु
+	काष्ठा hns_ppe_cb *ppe_cb = hns_get_ppe_cb(handle);
 
 	hns_ppe_set_tso_enable(ppe_cb, enable);
-}
+पूर्ण
 
-static int hns_ae_start(struct hnae_handle *handle)
-{
-	int ret;
-	int k;
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल पूर्णांक hns_ae_start(काष्ठा hnae_handle *handle)
+अणु
+	पूर्णांक ret;
+	पूर्णांक k;
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
 	ret = hns_mac_vm_config_bc_en(mac_cb, 0, true);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (k = 0; k < handle->q_num; k++) {
-		if (AE_IS_VER1(mac_cb->dsaf_dev->dsaf_ver))
-			hns_rcb_int_clr_hw(handle->qs[k],
+	क्रम (k = 0; k < handle->q_num; k++) अणु
+		अगर (AE_IS_VER1(mac_cb->dsaf_dev->dsaf_ver))
+			hns_rcb_पूर्णांक_clr_hw(handle->qs[k],
 					   RCB_INT_FLAG_TX | RCB_INT_FLAG_RX);
-		else
-			hns_rcbv2_int_clr_hw(handle->qs[k],
+		अन्यथा
+			hns_rcbv2_पूर्णांक_clr_hw(handle->qs[k],
 					     RCB_INT_FLAG_TX | RCB_INT_FLAG_RX);
-	}
+	पूर्ण
 	hns_ae_ring_enable_all(handle, 1);
 	msleep(100);
 
 	hns_mac_start(mac_cb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hns_ae_stop(struct hnae_handle *handle)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल व्योम hns_ae_stop(काष्ठा hnae_handle *handle)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
 	/* just clean tx fbd, neednot rx fbd*/
-	hns_rcb_wait_fbd_clean(handle->qs, handle->q_num, RCB_INT_FLAG_TX);
+	hns_rcb_रुको_fbd_clean(handle->qs, handle->q_num, RCB_INT_FLAG_TX);
 
 	msleep(20);
 
@@ -372,242 +373,242 @@ static void hns_ae_stop(struct hnae_handle *handle)
 	hns_ae_ring_enable_all(handle, 0);
 
 	/* clean rx fbd. */
-	hns_rcb_wait_fbd_clean(handle->qs, handle->q_num, RCB_INT_FLAG_RX);
+	hns_rcb_रुको_fbd_clean(handle->qs, handle->q_num, RCB_INT_FLAG_RX);
 
-	(void)hns_mac_vm_config_bc_en(mac_cb, 0, false);
-}
+	(व्योम)hns_mac_vm_config_bc_en(mac_cb, 0, false);
+पूर्ण
 
-static void hns_ae_reset(struct hnae_handle *handle)
-{
-	struct hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
+अटल व्योम hns_ae_reset(काष्ठा hnae_handle *handle)
+अणु
+	काष्ठा hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
 
-	if (vf_cb->mac_cb->mac_type == HNAE_PORT_DEBUG) {
+	अगर (vf_cb->mac_cb->mac_type == HNAE_PORT_DEBUG) अणु
 		hns_mac_reset(vf_cb->mac_cb);
 		hns_ppe_reset_common(vf_cb->dsaf_dev, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void hns_ae_toggle_ring_irq(struct hnae_ring *ring, u32 mask)
-{
+अटल व्योम hns_ae_toggle_ring_irq(काष्ठा hnae_ring *ring, u32 mask)
+अणु
 	u32 flag;
 
-	if (is_tx_ring(ring))
+	अगर (is_tx_ring(ring))
 		flag = RCB_INT_FLAG_TX;
-	else
+	अन्यथा
 		flag = RCB_INT_FLAG_RX;
 
-	hns_rcb_int_ctrl_hw(ring->q, flag, mask);
-}
+	hns_rcb_पूर्णांक_ctrl_hw(ring->q, flag, mask);
+पूर्ण
 
-static void hns_aev2_toggle_ring_irq(struct hnae_ring *ring, u32 mask)
-{
+अटल व्योम hns_aev2_toggle_ring_irq(काष्ठा hnae_ring *ring, u32 mask)
+अणु
 	u32 flag;
 
-	if (is_tx_ring(ring))
+	अगर (is_tx_ring(ring))
 		flag = RCB_INT_FLAG_TX;
-	else
+	अन्यथा
 		flag = RCB_INT_FLAG_RX;
 
-	hns_rcbv2_int_ctrl_hw(ring->q, flag, mask);
-}
+	hns_rcbv2_पूर्णांक_ctrl_hw(ring->q, flag, mask);
+पूर्ण
 
-static int hns_ae_get_link_status(struct hnae_handle *handle)
-{
+अटल पूर्णांक hns_ae_get_link_status(काष्ठा hnae_handle *handle)
+अणु
 	u32 link_status;
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
 	hns_mac_get_link_status(mac_cb, &link_status);
 
-	return !!link_status;
-}
+	वापस !!link_status;
+पूर्ण
 
-static int hns_ae_get_mac_info(struct hnae_handle *handle,
-			       u8 *auto_neg, u16 *speed, u8 *duplex)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल पूर्णांक hns_ae_get_mac_info(काष्ठा hnae_handle *handle,
+			       u8 *स्वतः_neg, u16 *speed, u8 *duplex)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
-	return hns_mac_get_port_info(mac_cb, auto_neg, speed, duplex);
-}
+	वापस hns_mac_get_port_info(mac_cb, स्वतः_neg, speed, duplex);
+पूर्ण
 
-static bool hns_ae_need_adjust_link(struct hnae_handle *handle, int speed,
-				    int duplex)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल bool hns_ae_need_adjust_link(काष्ठा hnae_handle *handle, पूर्णांक speed,
+				    पूर्णांक duplex)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
-	return hns_mac_need_adjust_link(mac_cb, speed, duplex);
-}
+	वापस hns_mac_need_adjust_link(mac_cb, speed, duplex);
+पूर्ण
 
-static void hns_ae_adjust_link(struct hnae_handle *handle, int speed,
-			       int duplex)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल व्योम hns_ae_adjust_link(काष्ठा hnae_handle *handle, पूर्णांक speed,
+			       पूर्णांक duplex)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
-	switch (mac_cb->dsaf_dev->dsaf_ver) {
-	case AE_VERSION_1:
+	चयन (mac_cb->dsaf_dev->dsaf_ver) अणु
+	हाल AE_VERSION_1:
 		hns_mac_adjust_link(mac_cb, speed, duplex);
-		break;
+		अवरोध;
 
-	case AE_VERSION_2:
+	हाल AE_VERSION_2:
 		/* chip need to clear all pkt inside */
 		hns_mac_disable(mac_cb, MAC_COMM_MODE_RX);
-		if (hns_ae_wait_flow_down(handle)) {
+		अगर (hns_ae_रुको_flow_करोwn(handle)) अणु
 			hns_mac_enable(mac_cb, MAC_COMM_MODE_RX);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		hns_mac_adjust_link(mac_cb, speed, duplex);
 		hns_mac_enable(mac_cb, MAC_COMM_MODE_RX);
-		break;
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static void hns_ae_get_ring_bdnum_limit(struct hnae_queue *queue,
+अटल व्योम hns_ae_get_ring_bdnum_limit(काष्ठा hnae_queue *queue,
 					u32 *uplimit)
-{
+अणु
 	*uplimit = HNS_RCB_RING_MAX_PENDING_BD;
-}
+पूर्ण
 
-static void hns_ae_get_pauseparam(struct hnae_handle *handle,
-				  u32 *auto_neg, u32 *rx_en, u32 *tx_en)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
-	struct dsaf_device *dsaf_dev = mac_cb->dsaf_dev;
+अटल व्योम hns_ae_get_छोड़ोparam(काष्ठा hnae_handle *handle,
+				  u32 *स्वतः_neg, u32 *rx_en, u32 *tx_en)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+	काष्ठा dsaf_device *dsaf_dev = mac_cb->dsaf_dev;
 
-	hns_mac_get_autoneg(mac_cb, auto_neg);
+	hns_mac_get_स्वतःneg(mac_cb, स्वतः_neg);
 
-	hns_mac_get_pauseparam(mac_cb, rx_en, tx_en);
+	hns_mac_get_छोड़ोparam(mac_cb, rx_en, tx_en);
 
-	/* Service port's pause feature is provided by DSAF, not mac */
-	if (handle->port_type == HNAE_PORT_SERVICE)
-		hns_dsaf_get_rx_mac_pause_en(dsaf_dev, mac_cb->mac_id, rx_en);
-}
+	/* Service port's छोड़ो feature is provided by DSAF, not mac */
+	अगर (handle->port_type == HNAE_PORT_SERVICE)
+		hns_dsaf_get_rx_mac_छोड़ो_en(dsaf_dev, mac_cb->mac_id, rx_en);
+पूर्ण
 
-static void hns_ae_set_promisc_mode(struct hnae_handle *handle, u32 en)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+अटल व्योम hns_ae_set_promisc_mode(काष्ठा hnae_handle *handle, u32 en)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
 
 	hns_dsaf_set_promisc_mode(hns_ae_get_dsaf_dev(handle->dev), en);
 	hns_mac_set_promisc(mac_cb, (u8)!!en);
-}
+पूर्ण
 
-static int hns_ae_set_pauseparam(struct hnae_handle *handle,
-				 u32 autoneg, u32 rx_en, u32 tx_en)
-{
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
-	struct dsaf_device *dsaf_dev = mac_cb->dsaf_dev;
-	int ret;
+अटल पूर्णांक hns_ae_set_छोड़ोparam(काष्ठा hnae_handle *handle,
+				 u32 स्वतःneg, u32 rx_en, u32 tx_en)
+अणु
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+	काष्ठा dsaf_device *dsaf_dev = mac_cb->dsaf_dev;
+	पूर्णांक ret;
 
-	ret = hns_mac_set_autoneg(mac_cb, autoneg);
-	if (ret)
-		return ret;
+	ret = hns_mac_set_स्वतःneg(mac_cb, स्वतःneg);
+	अगर (ret)
+		वापस ret;
 
-	/* Service port's pause feature is provided by DSAF, not mac */
-	if (handle->port_type == HNAE_PORT_SERVICE) {
-		ret = hns_dsaf_set_rx_mac_pause_en(dsaf_dev,
+	/* Service port's छोड़ो feature is provided by DSAF, not mac */
+	अगर (handle->port_type == HNAE_PORT_SERVICE) अणु
+		ret = hns_dsaf_set_rx_mac_छोड़ो_en(dsaf_dev,
 						   mac_cb->mac_id, rx_en);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		rx_en = 0;
-	}
-	return hns_mac_set_pauseparam(mac_cb, rx_en, tx_en);
-}
+	पूर्ण
+	वापस hns_mac_set_छोड़ोparam(mac_cb, rx_en, tx_en);
+पूर्ण
 
-static void hns_ae_get_coalesce_usecs(struct hnae_handle *handle,
+अटल व्योम hns_ae_get_coalesce_usecs(काष्ठा hnae_handle *handle,
 				      u32 *tx_usecs, u32 *rx_usecs)
-{
-	struct ring_pair_cb *ring_pair =
-		container_of(handle->qs[0], struct ring_pair_cb, q);
+अणु
+	काष्ठा ring_pair_cb *ring_pair =
+		container_of(handle->qs[0], काष्ठा ring_pair_cb, q);
 
 	*tx_usecs = hns_rcb_get_coalesce_usecs(ring_pair->rcb_common,
 					       ring_pair->port_id_in_comm);
 	*rx_usecs = hns_rcb_get_coalesce_usecs(ring_pair->rcb_common,
 					       ring_pair->port_id_in_comm);
-}
+पूर्ण
 
-static void hns_ae_get_max_coalesced_frames(struct hnae_handle *handle,
+अटल व्योम hns_ae_get_max_coalesced_frames(काष्ठा hnae_handle *handle,
 					    u32 *tx_frames, u32 *rx_frames)
-{
-	struct ring_pair_cb *ring_pair =
-		container_of(handle->qs[0], struct ring_pair_cb, q);
-	struct dsaf_device *dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
+अणु
+	काष्ठा ring_pair_cb *ring_pair =
+		container_of(handle->qs[0], काष्ठा ring_pair_cb, q);
+	काष्ठा dsaf_device *dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
 
-	if (AE_IS_VER1(dsaf_dev->dsaf_ver) ||
+	अगर (AE_IS_VER1(dsaf_dev->dsaf_ver) ||
 	    handle->port_type == HNAE_PORT_DEBUG)
 		*tx_frames = hns_rcb_get_rx_coalesced_frames(
 			ring_pair->rcb_common, ring_pair->port_id_in_comm);
-	else
+	अन्यथा
 		*tx_frames = hns_rcb_get_tx_coalesced_frames(
 			ring_pair->rcb_common, ring_pair->port_id_in_comm);
 	*rx_frames = hns_rcb_get_rx_coalesced_frames(ring_pair->rcb_common,
 						  ring_pair->port_id_in_comm);
-}
+पूर्ण
 
-static int hns_ae_set_coalesce_usecs(struct hnae_handle *handle,
-				     u32 timeout)
-{
-	struct ring_pair_cb *ring_pair =
-		container_of(handle->qs[0], struct ring_pair_cb, q);
+अटल पूर्णांक hns_ae_set_coalesce_usecs(काष्ठा hnae_handle *handle,
+				     u32 समयout)
+अणु
+	काष्ठा ring_pair_cb *ring_pair =
+		container_of(handle->qs[0], काष्ठा ring_pair_cb, q);
 
-	return hns_rcb_set_coalesce_usecs(
-		ring_pair->rcb_common, ring_pair->port_id_in_comm, timeout);
-}
+	वापस hns_rcb_set_coalesce_usecs(
+		ring_pair->rcb_common, ring_pair->port_id_in_comm, समयout);
+पूर्ण
 
-static int hns_ae_set_coalesce_frames(struct hnae_handle *handle,
+अटल पूर्णांक hns_ae_set_coalesce_frames(काष्ठा hnae_handle *handle,
 				      u32 tx_frames, u32 rx_frames)
-{
-	int ret;
-	struct ring_pair_cb *ring_pair =
-		container_of(handle->qs[0], struct ring_pair_cb, q);
-	struct dsaf_device *dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
+अणु
+	पूर्णांक ret;
+	काष्ठा ring_pair_cb *ring_pair =
+		container_of(handle->qs[0], काष्ठा ring_pair_cb, q);
+	काष्ठा dsaf_device *dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
 
-	if (AE_IS_VER1(dsaf_dev->dsaf_ver) ||
-	    handle->port_type == HNAE_PORT_DEBUG) {
-		if (tx_frames != rx_frames)
-			return -EINVAL;
-		return hns_rcb_set_rx_coalesced_frames(
+	अगर (AE_IS_VER1(dsaf_dev->dsaf_ver) ||
+	    handle->port_type == HNAE_PORT_DEBUG) अणु
+		अगर (tx_frames != rx_frames)
+			वापस -EINVAL;
+		वापस hns_rcb_set_rx_coalesced_frames(
 			ring_pair->rcb_common,
 			ring_pair->port_id_in_comm, rx_frames);
-	} else {
-		if (tx_frames != 1)
-			return -EINVAL;
+	पूर्ण अन्यथा अणु
+		अगर (tx_frames != 1)
+			वापस -EINVAL;
 		ret = hns_rcb_set_tx_coalesced_frames(
 			ring_pair->rcb_common,
 			ring_pair->port_id_in_comm, tx_frames);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		return hns_rcb_set_rx_coalesced_frames(
+		वापस hns_rcb_set_rx_coalesced_frames(
 			ring_pair->rcb_common,
 			ring_pair->port_id_in_comm, rx_frames);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void hns_ae_get_coalesce_range(struct hnae_handle *handle,
+अटल व्योम hns_ae_get_coalesce_range(काष्ठा hnae_handle *handle,
 				      u32 *tx_frames_low, u32 *rx_frames_low,
 				      u32 *tx_frames_high, u32 *rx_frames_high,
 				      u32 *tx_usecs_low, u32 *rx_usecs_low,
 				      u32 *tx_usecs_high, u32 *rx_usecs_high)
-{
-	struct dsaf_device *dsaf_dev;
+अणु
+	काष्ठा dsaf_device *dsaf_dev;
 
-	assert(handle);
+	निश्चित(handle);
 
 	dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
 
 	*tx_frames_low  = HNS_RCB_TX_FRAMES_LOW;
 	*rx_frames_low  = HNS_RCB_RX_FRAMES_LOW;
 
-	if (AE_IS_VER1(dsaf_dev->dsaf_ver) ||
+	अगर (AE_IS_VER1(dsaf_dev->dsaf_ver) ||
 	    handle->port_type == HNAE_PORT_DEBUG)
 		*tx_frames_high =
 			(dsaf_dev->desc_num - 1 > HNS_RCB_TX_FRAMES_HIGH) ?
 			HNS_RCB_TX_FRAMES_HIGH : dsaf_dev->desc_num - 1;
-	else
+	अन्यथा
 		*tx_frames_high = 1;
 
 	*rx_frames_high = (dsaf_dev->desc_num - 1 > HNS_RCB_RX_FRAMES_HIGH) ?
@@ -616,30 +617,30 @@ static void hns_ae_get_coalesce_range(struct hnae_handle *handle,
 	*rx_usecs_low   = HNS_RCB_RX_USECS_LOW;
 	*tx_usecs_high  = HNS_RCB_TX_USECS_HIGH;
 	*rx_usecs_high  = HNS_RCB_RX_USECS_HIGH;
-}
+पूर्ण
 
-static void hns_ae_update_stats(struct hnae_handle *handle,
-				struct net_device_stats *net_stats)
-{
-	int port;
-	int idx;
-	struct dsaf_device *dsaf_dev;
-	struct hns_mac_cb *mac_cb;
-	struct hns_ppe_cb *ppe_cb;
-	struct hnae_queue *queue;
-	struct hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
+अटल व्योम hns_ae_update_stats(काष्ठा hnae_handle *handle,
+				काष्ठा net_device_stats *net_stats)
+अणु
+	पूर्णांक port;
+	पूर्णांक idx;
+	काष्ठा dsaf_device *dsaf_dev;
+	काष्ठा hns_mac_cb *mac_cb;
+	काष्ठा hns_ppe_cb *ppe_cb;
+	काष्ठा hnae_queue *queue;
+	काष्ठा hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
 	u64 tx_bytes = 0, rx_bytes = 0, tx_packets = 0, rx_packets = 0;
 	u64 rx_errors = 0, tx_errors = 0, tx_dropped = 0;
 	u64 rx_missed_errors;
 
 	dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
-	if (!dsaf_dev)
-		return;
+	अगर (!dsaf_dev)
+		वापस;
 	port = vf_cb->port_index;
 	ppe_cb = hns_get_ppe_cb(handle);
 	mac_cb = hns_get_mac_cb(handle);
 
-	for (idx = 0; idx < handle->q_num; idx++) {
+	क्रम (idx = 0; idx < handle->q_num; idx++) अणु
 		queue = handle->qs[idx];
 		hns_rcb_update_stats(queue);
 
@@ -651,21 +652,21 @@ static void hns_ae_update_stats(struct hnae_handle *handle,
 		rx_errors += queue->rx_ring.stats.err_pkt_len
 				+ queue->rx_ring.stats.l2_err
 				+ queue->rx_ring.stats.l3l4_csum_err;
-	}
+	पूर्ण
 
 	hns_ppe_update_stats(ppe_cb);
 	rx_missed_errors = ppe_cb->hw_stats.rx_drop_no_buf;
 	tx_errors += ppe_cb->hw_stats.tx_err_checksum
-		+ ppe_cb->hw_stats.tx_err_fifo_empty;
+		+ ppe_cb->hw_stats.tx_err_fअगरo_empty;
 
-	if (mac_cb->mac_type == HNAE_PORT_SERVICE) {
+	अगर (mac_cb->mac_type == HNAE_PORT_SERVICE) अणु
 		hns_dsaf_update_stats(dsaf_dev, port);
-		/* for port upline direction, i.e., rx. */
+		/* क्रम port upline direction, i.e., rx. */
 		rx_missed_errors += dsaf_dev->hw_stats[port].bp_drop;
 		rx_missed_errors += dsaf_dev->hw_stats[port].pad_drop;
 		rx_missed_errors += dsaf_dev->hw_stats[port].crc_false;
 
-		/* for port downline direction, i.e., tx. */
+		/* क्रम port करोwnline direction, i.e., tx. */
 		port = port + DSAF_PPE_INODE_BASE;
 		hns_dsaf_update_stats(dsaf_dev, port);
 		tx_dropped += dsaf_dev->hw_stats[port].bp_drop;
@@ -674,10 +675,10 @@ static void hns_ae_update_stats(struct hnae_handle *handle,
 		tx_dropped += dsaf_dev->hw_stats[port].rslt_drop;
 		tx_dropped += dsaf_dev->hw_stats[port].vlan_drop;
 		tx_dropped += dsaf_dev->hw_stats[port].stp_drop;
-	}
+	पूर्ण
 
 	hns_mac_update_stats(mac_cb);
-	rx_errors += mac_cb->hw_stats.rx_fifo_overrun_err;
+	rx_errors += mac_cb->hw_stats.rx_fअगरo_overrun_err;
 
 	tx_errors += mac_cb->hw_stats.tx_bad_pkts
 		+ mac_cb->hw_stats.tx_fragment_err
@@ -696,65 +697,65 @@ static void hns_ae_update_stats(struct hnae_handle *handle,
 	net_stats->rx_missed_errors = rx_missed_errors;
 	net_stats->rx_crc_errors = mac_cb->hw_stats.rx_fcs_err;
 	net_stats->rx_frame_errors = mac_cb->hw_stats.rx_align_err;
-	net_stats->rx_fifo_errors = mac_cb->hw_stats.rx_fifo_overrun_err;
+	net_stats->rx_fअगरo_errors = mac_cb->hw_stats.rx_fअगरo_overrun_err;
 	net_stats->rx_length_errors = mac_cb->hw_stats.rx_len_err;
 	net_stats->multicast = mac_cb->hw_stats.rx_mc_pkts;
-}
+पूर्ण
 
-static void hns_ae_get_stats(struct hnae_handle *handle, u64 *data)
-{
-	int idx;
-	struct hns_mac_cb *mac_cb;
-	struct hns_ppe_cb *ppe_cb;
+अटल व्योम hns_ae_get_stats(काष्ठा hnae_handle *handle, u64 *data)
+अणु
+	पूर्णांक idx;
+	काष्ठा hns_mac_cb *mac_cb;
+	काष्ठा hns_ppe_cb *ppe_cb;
 	u64 *p = data;
-	struct  hnae_vf_cb *vf_cb;
+	काष्ठा  hnae_vf_cb *vf_cb;
 
-	if (!handle || !data) {
+	अगर (!handle || !data) अणु
 		pr_err("hns_ae_get_stats NULL handle or data pointer!\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	vf_cb = hns_ae_get_vf_cb(handle);
 	mac_cb = hns_get_mac_cb(handle);
 	ppe_cb = hns_get_ppe_cb(handle);
 
-	for (idx = 0; idx < handle->q_num; idx++) {
+	क्रम (idx = 0; idx < handle->q_num; idx++) अणु
 		hns_rcb_get_stats(handle->qs[idx], p);
-		p += hns_rcb_get_ring_sset_count((int)ETH_SS_STATS);
-	}
+		p += hns_rcb_get_ring_sset_count((पूर्णांक)ETH_SS_STATS);
+	पूर्ण
 
 	hns_ppe_get_stats(ppe_cb, p);
-	p += hns_ppe_get_sset_count((int)ETH_SS_STATS);
+	p += hns_ppe_get_sset_count((पूर्णांक)ETH_SS_STATS);
 
 	hns_mac_get_stats(mac_cb, p);
-	p += hns_mac_get_sset_count(mac_cb, (int)ETH_SS_STATS);
+	p += hns_mac_get_sset_count(mac_cb, (पूर्णांक)ETH_SS_STATS);
 
-	if (mac_cb->mac_type == HNAE_PORT_SERVICE)
+	अगर (mac_cb->mac_type == HNAE_PORT_SERVICE)
 		hns_dsaf_get_stats(vf_cb->dsaf_dev, p, vf_cb->port_index);
-}
+पूर्ण
 
-static void hns_ae_get_strings(struct hnae_handle *handle,
+अटल व्योम hns_ae_get_strings(काष्ठा hnae_handle *handle,
 			       u32 stringset, u8 *data)
-{
-	int port;
-	int idx;
-	struct hns_mac_cb *mac_cb;
-	struct hns_ppe_cb *ppe_cb;
-	struct dsaf_device *dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
+अणु
+	पूर्णांक port;
+	पूर्णांक idx;
+	काष्ठा hns_mac_cb *mac_cb;
+	काष्ठा hns_ppe_cb *ppe_cb;
+	काष्ठा dsaf_device *dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
 	u8 *p = data;
-	struct	hnae_vf_cb *vf_cb;
+	काष्ठा	hnae_vf_cb *vf_cb;
 
-	assert(handle);
+	निश्चित(handle);
 
 	vf_cb = hns_ae_get_vf_cb(handle);
 	port = vf_cb->port_index;
 	mac_cb = hns_get_mac_cb(handle);
 	ppe_cb = hns_get_ppe_cb(handle);
 
-	for (idx = 0; idx < handle->q_num; idx++) {
+	क्रम (idx = 0; idx < handle->q_num; idx++) अणु
 		hns_rcb_get_strings(stringset, p, idx);
 		p += ETH_GSTRING_LEN * hns_rcb_get_ring_sset_count(stringset);
-	}
+	पूर्ण
 
 	hns_ppe_get_strings(ppe_cb, stringset, p);
 	p += ETH_GSTRING_LEN * hns_ppe_get_sset_count(stringset);
@@ -762,17 +763,17 @@ static void hns_ae_get_strings(struct hnae_handle *handle,
 	hns_mac_get_strings(mac_cb, stringset, p);
 	p += ETH_GSTRING_LEN * hns_mac_get_sset_count(mac_cb, stringset);
 
-	if (mac_cb->mac_type == HNAE_PORT_SERVICE)
+	अगर (mac_cb->mac_type == HNAE_PORT_SERVICE)
 		hns_dsaf_get_strings(stringset, p, port, dsaf_dev);
-}
+पूर्ण
 
-static int hns_ae_get_sset_count(struct hnae_handle *handle, int stringset)
-{
+अटल पूर्णांक hns_ae_get_sset_count(काष्ठा hnae_handle *handle, पूर्णांक stringset)
+अणु
 	u32 sset_count = 0;
-	struct hns_mac_cb *mac_cb;
-	struct dsaf_device *dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
+	काष्ठा hns_mac_cb *mac_cb;
+	काष्ठा dsaf_device *dsaf_dev = hns_ae_get_dsaf_dev(handle->dev);
 
-	assert(handle);
+	निश्चित(handle);
 
 	mac_cb = hns_get_mac_cb(handle);
 
@@ -780,68 +781,68 @@ static int hns_ae_get_sset_count(struct hnae_handle *handle, int stringset)
 	sset_count += hns_ppe_get_sset_count(stringset);
 	sset_count += hns_mac_get_sset_count(mac_cb, stringset);
 
-	if (mac_cb->mac_type == HNAE_PORT_SERVICE)
+	अगर (mac_cb->mac_type == HNAE_PORT_SERVICE)
 		sset_count += hns_dsaf_get_sset_count(dsaf_dev, stringset);
 
-	return sset_count;
-}
+	वापस sset_count;
+पूर्ण
 
-static int hns_ae_config_loopback(struct hnae_handle *handle,
-				  enum hnae_loop loop, int en)
-{
-	int ret;
-	struct hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
-	struct hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
-	struct dsaf_device *dsaf_dev = mac_cb->dsaf_dev;
+अटल पूर्णांक hns_ae_config_loopback(काष्ठा hnae_handle *handle,
+				  क्रमागत hnae_loop loop, पूर्णांक en)
+अणु
+	पूर्णांक ret;
+	काष्ठा hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
+	काष्ठा hns_mac_cb *mac_cb = hns_get_mac_cb(handle);
+	काष्ठा dsaf_device *dsaf_dev = mac_cb->dsaf_dev;
 
-	switch (loop) {
-	case MAC_INTERNALLOOP_PHY:
+	चयन (loop) अणु
+	हाल MAC_INTERNALLOOP_PHY:
 		ret = 0;
-		break;
-	case MAC_INTERNALLOOP_SERDES:
+		अवरोध;
+	हाल MAC_INTERNALLOOP_SERDES:
 		ret = dsaf_dev->misc_op->cfg_serdes_loopback(vf_cb->mac_cb,
 							     !!en);
-		break;
-	case MAC_INTERNALLOOP_MAC:
+		अवरोध;
+	हाल MAC_INTERNALLOOP_MAC:
 		ret = hns_mac_config_mac_loopback(vf_cb->mac_cb, loop, en);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void hns_ae_update_led_status(struct hnae_handle *handle)
-{
-	struct hns_mac_cb *mac_cb;
+अटल व्योम hns_ae_update_led_status(काष्ठा hnae_handle *handle)
+अणु
+	काष्ठा hns_mac_cb *mac_cb;
 
-	assert(handle);
+	निश्चित(handle);
 	mac_cb = hns_get_mac_cb(handle);
-	if (mac_cb->media_type != HNAE_MEDIA_TYPE_FIBER)
-		return;
+	अगर (mac_cb->media_type != HNAE_MEDIA_TYPE_FIBER)
+		वापस;
 
 	hns_set_led_opt(mac_cb);
-}
+पूर्ण
 
-static int hns_ae_cpld_set_led_id(struct hnae_handle *handle,
-				  enum hnae_led_state status)
-{
-	struct hns_mac_cb *mac_cb;
+अटल पूर्णांक hns_ae_cpld_set_led_id(काष्ठा hnae_handle *handle,
+				  क्रमागत hnae_led_state status)
+अणु
+	काष्ठा hns_mac_cb *mac_cb;
 
-	assert(handle);
+	निश्चित(handle);
 
 	mac_cb = hns_get_mac_cb(handle);
 
-	return hns_cpld_led_set_id(mac_cb, status);
-}
+	वापस hns_cpld_led_set_id(mac_cb, status);
+पूर्ण
 
-static void hns_ae_get_regs(struct hnae_handle *handle, void *data)
-{
+अटल व्योम hns_ae_get_regs(काष्ठा hnae_handle *handle, व्योम *data)
+अणु
 	u32 *p = data;
-	int i;
-	struct hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
-	struct hns_ppe_cb *ppe_cb = hns_get_ppe_cb(handle);
+	पूर्णांक i;
+	काष्ठा hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
+	काष्ठा hns_ppe_cb *ppe_cb = hns_get_ppe_cb(handle);
 
 	hns_ppe_get_regs(ppe_cb, p);
 	p += hns_ppe_get_regs_count();
@@ -849,89 +850,89 @@ static void hns_ae_get_regs(struct hnae_handle *handle, void *data)
 	hns_rcb_get_common_regs(vf_cb->dsaf_dev->rcb_common[0], p);
 	p += hns_rcb_get_common_regs_count();
 
-	for (i = 0; i < handle->q_num; i++) {
+	क्रम (i = 0; i < handle->q_num; i++) अणु
 		hns_rcb_get_ring_regs(handle->qs[i], p);
 		p += hns_rcb_get_ring_regs_count();
-	}
+	पूर्ण
 
 	hns_mac_get_regs(vf_cb->mac_cb, p);
 	p += hns_mac_get_regs_count(vf_cb->mac_cb);
 
-	if (vf_cb->mac_cb->mac_type == HNAE_PORT_SERVICE)
+	अगर (vf_cb->mac_cb->mac_type == HNAE_PORT_SERVICE)
 		hns_dsaf_get_regs(vf_cb->dsaf_dev, vf_cb->port_index, p);
-}
+पूर्ण
 
-static int hns_ae_get_regs_len(struct hnae_handle *handle)
-{
+अटल पूर्णांक hns_ae_get_regs_len(काष्ठा hnae_handle *handle)
+अणु
 	u32 total_num;
-	struct hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
+	काष्ठा hnae_vf_cb *vf_cb = hns_ae_get_vf_cb(handle);
 
 	total_num = hns_ppe_get_regs_count();
 	total_num += hns_rcb_get_common_regs_count();
 	total_num += hns_rcb_get_ring_regs_count() * handle->q_num;
 	total_num += hns_mac_get_regs_count(vf_cb->mac_cb);
 
-	if (vf_cb->mac_cb->mac_type == HNAE_PORT_SERVICE)
+	अगर (vf_cb->mac_cb->mac_type == HNAE_PORT_SERVICE)
 		total_num += hns_dsaf_get_regs_count();
 
-	return total_num;
-}
+	वापस total_num;
+पूर्ण
 
-static u32 hns_ae_get_rss_key_size(struct hnae_handle *handle)
-{
-	return HNS_PPEV2_RSS_KEY_SIZE;
-}
+अटल u32 hns_ae_get_rss_key_size(काष्ठा hnae_handle *handle)
+अणु
+	वापस HNS_PPEV2_RSS_KEY_SIZE;
+पूर्ण
 
-static u32 hns_ae_get_rss_indir_size(struct hnae_handle *handle)
-{
-	return HNS_PPEV2_RSS_IND_TBL_SIZE;
-}
+अटल u32 hns_ae_get_rss_indir_size(काष्ठा hnae_handle *handle)
+अणु
+	वापस HNS_PPEV2_RSS_IND_TBL_SIZE;
+पूर्ण
 
-static int hns_ae_get_rss(struct hnae_handle *handle, u32 *indir, u8 *key,
+अटल पूर्णांक hns_ae_get_rss(काष्ठा hnae_handle *handle, u32 *indir, u8 *key,
 			  u8 *hfunc)
-{
-	struct hns_ppe_cb *ppe_cb = hns_get_ppe_cb(handle);
+अणु
+	काष्ठा hns_ppe_cb *ppe_cb = hns_get_ppe_cb(handle);
 
 	/* currently we support only one type of hash function i.e. Toep hash */
-	if (hfunc)
+	अगर (hfunc)
 		*hfunc = ETH_RSS_HASH_TOP;
 
 	/* get the RSS Key required by the user */
-	if (key)
-		memcpy(key, ppe_cb->rss_key, HNS_PPEV2_RSS_KEY_SIZE);
+	अगर (key)
+		स_नकल(key, ppe_cb->rss_key, HNS_PPEV2_RSS_KEY_SIZE);
 
-	/* update the current hash->queue mappings from the shadow RSS table */
-	if (indir)
-		memcpy(indir, ppe_cb->rss_indir_table,
-		       HNS_PPEV2_RSS_IND_TBL_SIZE  * sizeof(*indir));
+	/* update the current hash->queue mappings from the shaकरोw RSS table */
+	अगर (indir)
+		स_नकल(indir, ppe_cb->rss_indir_table,
+		       HNS_PPEV2_RSS_IND_TBL_SIZE  * माप(*indir));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hns_ae_set_rss(struct hnae_handle *handle, const u32 *indir,
-			  const u8 *key, const u8 hfunc)
-{
-	struct hns_ppe_cb *ppe_cb = hns_get_ppe_cb(handle);
+अटल पूर्णांक hns_ae_set_rss(काष्ठा hnae_handle *handle, स्थिर u32 *indir,
+			  स्थिर u8 *key, स्थिर u8 hfunc)
+अणु
+	काष्ठा hns_ppe_cb *ppe_cb = hns_get_ppe_cb(handle);
 
-	/* set the RSS Hash Key if specififed by the user */
-	if (key) {
-		memcpy(ppe_cb->rss_key, key, HNS_PPEV2_RSS_KEY_SIZE);
+	/* set the RSS Hash Key अगर specअगरअगरed by the user */
+	अगर (key) अणु
+		स_नकल(ppe_cb->rss_key, key, HNS_PPEV2_RSS_KEY_SIZE);
 		hns_ppe_set_rss_key(ppe_cb, ppe_cb->rss_key);
-	}
+	पूर्ण
 
-	if (indir) {
-		/* update the shadow RSS table with user specified qids */
-		memcpy(ppe_cb->rss_indir_table, indir,
-		       HNS_PPEV2_RSS_IND_TBL_SIZE  * sizeof(*indir));
+	अगर (indir) अणु
+		/* update the shaकरोw RSS table with user specअगरied qids */
+		स_नकल(ppe_cb->rss_indir_table, indir,
+		       HNS_PPEV2_RSS_IND_TBL_SIZE  * माप(*indir));
 
 		/* now update the hardware */
 		hns_ppe_set_indir_table(ppe_cb, ppe_cb->rss_indir_table);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct hnae_ae_ops hns_dsaf_ops = {
+अटल काष्ठा hnae_ae_ops hns_dsaf_ops = अणु
 	.get_handle = hns_ae_get_handle,
 	.put_handle = hns_ae_put_handle,
 	.init_queue = hns_ae_init_queue,
@@ -946,8 +947,8 @@ static struct hnae_ae_ops hns_dsaf_ops = {
 	.need_adjust_link = hns_ae_need_adjust_link,
 	.set_loopback = hns_ae_config_loopback,
 	.get_ring_bdnum_limit = hns_ae_get_ring_bdnum_limit,
-	.get_pauseparam = hns_ae_get_pauseparam,
-	.set_pauseparam = hns_ae_set_pauseparam,
+	.get_छोड़ोparam = hns_ae_get_छोड़ोparam,
+	.set_छोड़ोparam = hns_ae_set_छोड़ोparam,
 	.get_coalesce_usecs = hns_ae_get_coalesce_usecs,
 	.get_max_coalesced_frames = hns_ae_get_max_coalesced_frames,
 	.set_coalesce_usecs = hns_ae_set_coalesce_usecs,
@@ -973,33 +974,33 @@ static struct hnae_ae_ops hns_dsaf_ops = {
 	.get_rss_indir_size = hns_ae_get_rss_indir_size,
 	.get_rss = hns_ae_get_rss,
 	.set_rss = hns_ae_set_rss
-};
+पूर्ण;
 
-int hns_dsaf_ae_init(struct dsaf_device *dsaf_dev)
-{
-	struct hnae_ae_dev *ae_dev = &dsaf_dev->ae_dev;
-	static atomic_t id = ATOMIC_INIT(-1);
+पूर्णांक hns_dsaf_ae_init(काष्ठा dsaf_device *dsaf_dev)
+अणु
+	काष्ठा hnae_ae_dev *ae_dev = &dsaf_dev->ae_dev;
+	अटल atomic_t id = ATOMIC_INIT(-1);
 
-	switch (dsaf_dev->dsaf_ver) {
-	case AE_VERSION_1:
+	चयन (dsaf_dev->dsaf_ver) अणु
+	हाल AE_VERSION_1:
 		hns_dsaf_ops.toggle_ring_irq = hns_ae_toggle_ring_irq;
-		break;
-	case AE_VERSION_2:
+		अवरोध;
+	हाल AE_VERSION_2:
 		hns_dsaf_ops.toggle_ring_irq = hns_aev2_toggle_ring_irq;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	snprintf(ae_dev->name, AE_NAME_SIZE, "%s%d", DSAF_DEVICE_NAME,
-		 (int)atomic_inc_return(&id));
+	snम_लिखो(ae_dev->name, AE_NAME_SIZE, "%s%d", DSAF_DEVICE_NAME,
+		 (पूर्णांक)atomic_inc_वापस(&id));
 	ae_dev->ops = &hns_dsaf_ops;
 	ae_dev->dev = dsaf_dev->dev;
 
-	return hnae_ae_register(ae_dev, THIS_MODULE);
-}
+	वापस hnae_ae_रेजिस्टर(ae_dev, THIS_MODULE);
+पूर्ण
 
-void hns_dsaf_ae_uninit(struct dsaf_device *dsaf_dev)
-{
-	hnae_ae_unregister(&dsaf_dev->ae_dev);
-}
+व्योम hns_dsaf_ae_uninit(काष्ठा dsaf_device *dsaf_dev)
+अणु
+	hnae_ae_unरेजिस्टर(&dsaf_dev->ae_dev);
+पूर्ण

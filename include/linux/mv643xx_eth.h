@@ -1,87 +1,88 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * MV-643XX ethernet platform device data definition file.
+ * MV-643XX ethernet platक्रमm device data definition file.
  */
 
-#ifndef __LINUX_MV643XX_ETH_H
-#define __LINUX_MV643XX_ETH_H
+#अगर_अघोषित __LINUX_MV643XX_ETH_H
+#घोषणा __LINUX_MV643XX_ETH_H
 
-#include <linux/mbus.h>
-#include <linux/if_ether.h>
+#समावेश <linux/mbus.h>
+#समावेश <linux/अगर_ether.h>
 
-#define MV643XX_ETH_SHARED_NAME		"mv643xx_eth"
-#define MV643XX_ETH_NAME		"mv643xx_eth_port"
-#define MV643XX_ETH_SHARED_REGS		0x2000
-#define MV643XX_ETH_SHARED_REGS_SIZE	0x2000
-#define MV643XX_ETH_BAR_4		0x2220
-#define MV643XX_ETH_SIZE_REG_4		0x2224
-#define MV643XX_ETH_BASE_ADDR_ENABLE_REG	0x2290
+#घोषणा MV643XX_ETH_SHARED_NAME		"mv643xx_eth"
+#घोषणा MV643XX_ETH_NAME		"mv643xx_eth_port"
+#घोषणा MV643XX_ETH_SHARED_REGS		0x2000
+#घोषणा MV643XX_ETH_SHARED_REGS_SIZE	0x2000
+#घोषणा MV643XX_ETH_BAR_4		0x2220
+#घोषणा MV643XX_ETH_SIZE_REG_4		0x2224
+#घोषणा MV643XX_ETH_BASE_ADDR_ENABLE_REG	0x2290
 
-#define MV643XX_TX_CSUM_DEFAULT_LIMIT	0
+#घोषणा MV643XX_TX_CSUM_DEFAULT_LIMIT	0
 
-struct mv643xx_eth_shared_platform_data {
-	struct mbus_dram_target_info	*dram;
+काष्ठा mv643xx_eth_shared_platक्रमm_data अणु
+	काष्ठा mbus_dram_target_info	*dram;
 	/*
-	 * Max packet size for Tx IP/Layer 4 checksum, when set to 0, default
+	 * Max packet size क्रम Tx IP/Layer 4 checksum, when set to 0, शेष
 	 * limit of 9KiB will be used.
 	 */
-	int			tx_csum_limit;
-};
+	पूर्णांक			tx_csum_limit;
+पूर्ण;
 
-#define MV643XX_ETH_PHY_ADDR_DEFAULT	0
-#define MV643XX_ETH_PHY_ADDR(x)		(0x80 | (x))
-#define MV643XX_ETH_PHY_NONE		0xff
+#घोषणा MV643XX_ETH_PHY_ADDR_DEFAULT	0
+#घोषणा MV643XX_ETH_PHY_ADDR(x)		(0x80 | (x))
+#घोषणा MV643XX_ETH_PHY_NONE		0xff
 
-struct device_node;
-struct mv643xx_eth_platform_data {
+काष्ठा device_node;
+काष्ठा mv643xx_eth_platक्रमm_data अणु
 	/*
-	 * Pointer back to our parent instance, and our port number.
+	 * Poपूर्णांकer back to our parent instance, and our port number.
 	 */
-	struct platform_device	*shared;
-	int			port_number;
+	काष्ठा platक्रमm_device	*shared;
+	पूर्णांक			port_number;
 
 	/*
-	 * Whether a PHY is present, and if yes, at which address.
+	 * Whether a PHY is present, and अगर yes, at which address.
 	 */
-	int			phy_addr;
-	struct device_node	*phy_node;
+	पूर्णांक			phy_addr;
+	काष्ठा device_node	*phy_node;
 
 	/*
-	 * Use this MAC address if it is valid, overriding the
-	 * address that is already in the hardware.
+	 * Use this MAC address अगर it is valid, overriding the
+	 * address that is alपढ़ोy in the hardware.
 	 */
 	u8			mac_addr[ETH_ALEN];
 
 	/*
-	 * If speed is 0, autonegotiation is enabled.
-	 *   Valid values for speed: 0, SPEED_10, SPEED_100, SPEED_1000.
-	 *   Valid values for duplex: DUPLEX_HALF, DUPLEX_FULL.
+	 * If speed is 0, स्वतःnegotiation is enabled.
+	 *   Valid values क्रम speed: 0, SPEED_10, SPEED_100, SPEED_1000.
+	 *   Valid values क्रम duplex: DUPLEX_HALF, DUPLEX_FULL.
 	 */
-	int			speed;
-	int			duplex;
+	पूर्णांक			speed;
+	पूर्णांक			duplex;
 
 	/*
 	 * How many RX/TX queues to use.
 	 */
-	int			rx_queue_count;
-	int			tx_queue_count;
+	पूर्णांक			rx_queue_count;
+	पूर्णांक			tx_queue_count;
 
 	/*
-	 * Override default RX/TX queue sizes if nonzero.
+	 * Override शेष RX/TX queue sizes अगर nonzero.
 	 */
-	int			rx_queue_size;
-	int			tx_queue_size;
+	पूर्णांक			rx_queue_size;
+	पूर्णांक			tx_queue_size;
 
 	/*
-	 * Use on-chip SRAM for RX/TX descriptors if size is nonzero
-	 * and sufficient to contain all descriptors for the requested
+	 * Use on-chip SRAM क्रम RX/TX descriptors अगर size is nonzero
+	 * and sufficient to contain all descriptors क्रम the requested
 	 * ring sizes.
 	 */
-	unsigned long		rx_sram_addr;
-	int			rx_sram_size;
-	unsigned long		tx_sram_addr;
-	int			tx_sram_size;
-};
+	अचिन्हित दीर्घ		rx_sram_addr;
+	पूर्णांक			rx_sram_size;
+	अचिन्हित दीर्घ		tx_sram_addr;
+	पूर्णांक			tx_sram_size;
+पूर्ण;
 
 
-#endif
+#पूर्ण_अगर

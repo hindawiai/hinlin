@@ -1,32 +1,33 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#ifndef __MOCK_ENGINE_H__
-#define __MOCK_ENGINE_H__
+#अगर_अघोषित __MOCK_ENGINE_H__
+#घोषणा __MOCK_ENGINE_H__
 
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/timer.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/समयr.h>
 
-#include "gt/intel_engine.h"
+#समावेश "gt/intel_engine.h"
 
-struct mock_engine {
-	struct intel_engine_cs base;
+काष्ठा mock_engine अणु
+	काष्ठा पूर्णांकel_engine_cs base;
 
 	spinlock_t hw_lock;
-	struct list_head hw_queue;
-	struct timer_list hw_delay;
-};
+	काष्ठा list_head hw_queue;
+	काष्ठा समयr_list hw_delay;
+पूर्ण;
 
-struct intel_engine_cs *mock_engine(struct drm_i915_private *i915,
-				    const char *name,
-				    int id);
-int mock_engine_init(struct intel_engine_cs *engine);
+काष्ठा पूर्णांकel_engine_cs *mock_engine(काष्ठा drm_i915_निजी *i915,
+				    स्थिर अक्षर *name,
+				    पूर्णांक id);
+पूर्णांक mock_engine_init(काष्ठा पूर्णांकel_engine_cs *engine);
 
-void mock_engine_flush(struct intel_engine_cs *engine);
-void mock_engine_reset(struct intel_engine_cs *engine);
-void mock_engine_free(struct intel_engine_cs *engine);
+व्योम mock_engine_flush(काष्ठा पूर्णांकel_engine_cs *engine);
+व्योम mock_engine_reset(काष्ठा पूर्णांकel_engine_cs *engine);
+व्योम mock_engine_मुक्त(काष्ठा पूर्णांकel_engine_cs *engine);
 
-#endif /* !__MOCK_ENGINE_H__ */
+#पूर्ण_अगर /* !__MOCK_ENGINE_H__ */

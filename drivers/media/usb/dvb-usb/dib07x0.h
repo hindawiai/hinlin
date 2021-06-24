@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _DIB07X0_H_
-#define _DIB07X0_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _DIB07X0_H_
+#घोषणा _DIB07X0_H_
 
-enum dib07x0_gpios {
+क्रमागत dib07x0_gpios अणु
 	GPIO0  =  0,
 	GPIO1  =  2,
 	GPIO2  =  3,
@@ -14,9 +15,9 @@ enum dib07x0_gpios {
 	GPIO8  = 11,
 	GPIO9  = 14,
 	GPIO10 = 15,
-};
+पूर्ण;
 
-#define GPIO_IN  0
-#define GPIO_OUT 1
+#घोषणा GPIO_IN  0
+#घोषणा GPIO_OUT 1
 
-#endif
+#पूर्ण_अगर

@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  iSCSI Transport BSG Interface
  *
  *  Copyright (C) 2009   James Smart, Emulex Corporation
  */
 
-#ifndef SCSI_BSG_ISCSI_H
-#define SCSI_BSG_ISCSI_H
+#अगर_अघोषित SCSI_BSG_ISCSI_H
+#घोषणा SCSI_BSG_ISCSI_H
 
 /*
- * This file intended to be included by both kernel and user space
+ * This file पूर्णांकended to be included by both kernel and user space
  */
 
-#include <scsi/scsi.h>
+#समावेश <scsi/scsi.h>
 
 /*
  * iSCSI Transport SGIO v4 BSG Message Support
  */
 
-/* Default BSG request timeout (in seconds) */
-#define ISCSI_DEFAULT_BSG_TIMEOUT      (10 * HZ)
+/* Default BSG request समयout (in seconds) */
+#घोषणा ISCSI_DEFAULT_BSG_TIMEOUT      (10 * HZ)
 
 
 /*
  * Request Message Codes supported by the iSCSI Transport
  */
 
-/* define the class masks for the message codes */
-#define ISCSI_BSG_CLS_MASK     0xF0000000      /* find object class */
-#define ISCSI_BSG_HST_MASK     0x80000000      /* iscsi host class */
+/* define the class masks क्रम the message codes */
+#घोषणा ISCSI_BSG_CLS_MASK     0xF0000000      /* find object class */
+#घोषणा ISCSI_BSG_HST_MASK     0x80000000      /* iscsi host class */
 
 /* iscsi host Message Codes */
-#define ISCSI_BSG_HST_VENDOR           (ISCSI_BSG_HST_MASK | 0x000000FF)
+#घोषणा ISCSI_BSG_HST_VENDOR           (ISCSI_BSG_HST_MASK | 0x000000FF)
 
 
 /*
@@ -41,56 +42,56 @@
 /* ISCSI_BSG_HST_VENDOR : */
 
 /* Request:
- * Note: When specifying vendor_id, be sure to read the Vendor Type and ID
- *   formatting requirements specified in scsi_netlink.h
+ * Note: When specअगरying venकरोr_id, be sure to पढ़ो the Venकरोr Type and ID
+ *   क्रमmatting requirements specअगरied in scsi_netlink.h
  */
-struct iscsi_bsg_host_vendor {
+काष्ठा iscsi_bsg_host_venकरोr अणु
 	/*
-	 * Identifies the vendor that the message is formatted for. This
+	 * Identअगरies the venकरोr that the message is क्रमmatted क्रम. This
 	 * should be the recipient of the message.
 	 */
-	uint64_t vendor_id;
+	uपूर्णांक64_t venकरोr_id;
 
-	/* start of vendor command area */
-	uint32_t vendor_cmd[];
-};
+	/* start of venकरोr command area */
+	uपूर्णांक32_t venकरोr_cmd[];
+पूर्ण;
 
 /* Response:
  */
-struct iscsi_bsg_host_vendor_reply {
-	/* start of vendor response area */
-	uint32_t vendor_rsp[0];
-};
+काष्ठा iscsi_bsg_host_venकरोr_reply अणु
+	/* start of venकरोr response area */
+	uपूर्णांक32_t venकरोr_rsp[0];
+पूर्ण;
 
 
-/* request (CDB) structure of the sg_io_v4 */
-struct iscsi_bsg_request {
-	uint32_t msgcode;
-	union {
-		struct iscsi_bsg_host_vendor    h_vendor;
-	} rqst_data;
-} __attribute__((packed));
+/* request (CDB) काष्ठाure of the sg_io_v4 */
+काष्ठा iscsi_bsg_request अणु
+	uपूर्णांक32_t msgcode;
+	जोड़ अणु
+		काष्ठा iscsi_bsg_host_venकरोr    h_venकरोr;
+	पूर्ण rqst_data;
+पूर्ण __attribute__((packed));
 
 
-/* response (request sense data) structure of the sg_io_v4 */
-struct iscsi_bsg_reply {
+/* response (request sense data) काष्ठाure of the sg_io_v4 */
+काष्ठा iscsi_bsg_reply अणु
 	/*
-	 * The completion result. Result exists in two forms:
-	 * if negative, it is an -Exxx system errno value. There will
-	 * be no further reply information supplied.
-	 * else, it's the 4-byte scsi error result, with driver, host,
-	 * msg and status fields. The per-msgcode reply structure
+	 * The completion result. Result exists in two क्रमms:
+	 * अगर negative, it is an -Exxx प्रणाली त्रुटि_सं value. There will
+	 * be no further reply inक्रमmation supplied.
+	 * अन्यथा, it's the 4-byte scsi error result, with driver, host,
+	 * msg and status fields. The per-msgcode reply काष्ठाure
 	 * will contain valid data.
 	 */
-	uint32_t result;
+	uपूर्णांक32_t result;
 
 	/* If there was reply_payload, how much was recevied ? */
-	uint32_t reply_payload_rcv_len;
+	uपूर्णांक32_t reply_payload_rcv_len;
 
-	union {
-		struct iscsi_bsg_host_vendor_reply      vendor_reply;
-	} reply_data;
-};
+	जोड़ अणु
+		काष्ठा iscsi_bsg_host_venकरोr_reply      venकरोr_reply;
+	पूर्ण reply_data;
+पूर्ण;
 
 
-#endif /* SCSI_BSG_ISCSI_H */
+#पूर्ण_अगर /* SCSI_BSG_ISCSI_H */

@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM napi
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM napi
 
-#if !defined(_TRACE_NAPI_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_NAPI_H
+#अगर !defined(_TRACE_NAPI_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_NAPI_H
 
-#include <linux/netdevice.h>
-#include <linux/tracepoint.h>
-#include <linux/ftrace.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <linux/ftrace.h>
 
-#define NO_DEV "(no_device)"
+#घोषणा NO_DEV "(no_device)"
 
 TRACE_EVENT(napi_poll,
 
-	TP_PROTO(struct napi_struct *napi, int work, int budget),
+	TP_PROTO(काष्ठा napi_काष्ठा *napi, पूर्णांक work, पूर्णांक budget),
 
 	TP_ARGS(napi, work, budget),
 
 	TP_STRUCT__entry(
-		__field(	struct napi_struct *,	napi)
+		__field(	काष्ठा napi_काष्ठा *,	napi)
 		__string(	dev_name, napi->dev ? napi->dev->name : NO_DEV)
-		__field(	int,			work)
-		__field(	int,			budget)
+		__field(	पूर्णांक,			work)
+		__field(	पूर्णांक,			budget)
 	),
 
 	TP_fast_assign(
@@ -31,14 +32,14 @@ TRACE_EVENT(napi_poll,
 		__entry->budget = budget;
 	),
 
-	TP_printk("napi poll on napi struct %p for device %s work %d budget %d",
+	TP_prपूर्णांकk("napi poll on napi struct %p for device %s work %d budget %d",
 		  __entry->napi, __get_str(dev_name),
 		  __entry->work, __entry->budget)
 );
 
-#undef NO_DEV
+#अघोषित NO_DEV
 
-#endif /* _TRACE_NAPI_H */
+#पूर्ण_अगर /* _TRACE_NAPI_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

@@ -1,198 +1,199 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Microchip switch driver main logic
+ * Microchip चयन driver मुख्य logic
  *
  * Copyright (C) 2017-2019 Microchip Technology Inc.
  */
 
-#include <linux/delay.h>
-#include <linux/export.h>
-#include <linux/gpio/consumer.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_data/microchip-ksz.h>
-#include <linux/phy.h>
-#include <linux/etherdevice.h>
-#include <linux/if_bridge.h>
-#include <linux/of_net.h>
-#include <net/dsa.h>
-#include <net/switchdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/export.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/microchip-ksz.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <linux/of_net.h>
+#समावेश <net/dsa.h>
+#समावेश <net/चयनdev.h>
 
-#include "ksz_common.h"
+#समावेश "ksz_common.h"
 
-void ksz_update_port_member(struct ksz_device *dev, int port)
-{
-	struct ksz_port *p;
-	int i;
+व्योम ksz_update_port_member(काष्ठा ksz_device *dev, पूर्णांक port)
+अणु
+	काष्ठा ksz_port *p;
+	पूर्णांक i;
 
-	for (i = 0; i < dev->port_cnt; i++) {
-		if (i == port || i == dev->cpu_port)
-			continue;
+	क्रम (i = 0; i < dev->port_cnt; i++) अणु
+		अगर (i == port || i == dev->cpu_port)
+			जारी;
 		p = &dev->ports[i];
-		if (!(dev->member & (1 << i)))
-			continue;
+		अगर (!(dev->member & (1 << i)))
+			जारी;
 
-		/* Port is a member of the bridge and is forwarding. */
-		if (p->stp_state == BR_STATE_FORWARDING &&
+		/* Port is a member of the bridge and is क्रमwarding. */
+		अगर (p->stp_state == BR_STATE_FORWARDING &&
 		    p->member != dev->member)
 			dev->dev_ops->cfg_port_member(dev, i, dev->member);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_update_port_member);
 
-static void port_r_cnt(struct ksz_device *dev, int port)
-{
-	struct ksz_port_mib *mib = &dev->ports[port].mib;
+अटल व्योम port_r_cnt(काष्ठा ksz_device *dev, पूर्णांक port)
+अणु
+	काष्ठा ksz_port_mib *mib = &dev->ports[port].mib;
 	u64 *dropped;
 
-	/* Some ports may not have MIB counters before SWITCH_COUNTER_NUM. */
-	while (mib->cnt_ptr < dev->reg_mib_cnt) {
+	/* Some ports may not have MIB counters beक्रमe SWITCH_COUNTER_NUM. */
+	जबतक (mib->cnt_ptr < dev->reg_mib_cnt) अणु
 		dev->dev_ops->r_mib_cnt(dev, port, mib->cnt_ptr,
 					&mib->counters[mib->cnt_ptr]);
 		++mib->cnt_ptr;
-	}
+	पूर्ण
 
 	/* last one in storage */
 	dropped = &mib->counters[dev->mib_cnt];
 
 	/* Some ports may not have MIB counters after SWITCH_COUNTER_NUM. */
-	while (mib->cnt_ptr < dev->mib_cnt) {
+	जबतक (mib->cnt_ptr < dev->mib_cnt) अणु
 		dev->dev_ops->r_mib_pkt(dev, port, mib->cnt_ptr,
 					dropped, &mib->counters[mib->cnt_ptr]);
 		++mib->cnt_ptr;
-	}
+	पूर्ण
 	mib->cnt_ptr = 0;
-}
+पूर्ण
 
-static void ksz_mib_read_work(struct work_struct *work)
-{
-	struct ksz_device *dev = container_of(work, struct ksz_device,
-					      mib_read.work);
-	struct ksz_port_mib *mib;
-	struct ksz_port *p;
-	int i;
+अटल व्योम ksz_mib_पढ़ो_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ksz_device *dev = container_of(work, काष्ठा ksz_device,
+					      mib_पढ़ो.work);
+	काष्ठा ksz_port_mib *mib;
+	काष्ठा ksz_port *p;
+	पूर्णांक i;
 
-	for (i = 0; i < dev->port_cnt; i++) {
-		if (dsa_is_unused_port(dev->ds, i))
-			continue;
+	क्रम (i = 0; i < dev->port_cnt; i++) अणु
+		अगर (dsa_is_unused_port(dev->ds, i))
+			जारी;
 
 		p = &dev->ports[i];
 		mib = &p->mib;
 		mutex_lock(&mib->cnt_mutex);
 
-		/* Only read MIB counters when the port is told to do.
-		 * If not, read only dropped counters when link is not up.
+		/* Only पढ़ो MIB counters when the port is told to करो.
+		 * If not, पढ़ो only dropped counters when link is not up.
 		 */
-		if (!p->read) {
-			const struct dsa_port *dp = dsa_to_port(dev->ds, i);
+		अगर (!p->पढ़ो) अणु
+			स्थिर काष्ठा dsa_port *dp = dsa_to_port(dev->ds, i);
 
-			if (!netif_carrier_ok(dp->slave))
+			अगर (!netअगर_carrier_ok(dp->slave))
 				mib->cnt_ptr = dev->reg_mib_cnt;
-		}
+		पूर्ण
 		port_r_cnt(dev, i);
-		p->read = false;
+		p->पढ़ो = false;
 		mutex_unlock(&mib->cnt_mutex);
-	}
+	पूर्ण
 
-	schedule_delayed_work(&dev->mib_read, dev->mib_read_interval);
-}
+	schedule_delayed_work(&dev->mib_पढ़ो, dev->mib_पढ़ो_पूर्णांकerval);
+पूर्ण
 
-void ksz_init_mib_timer(struct ksz_device *dev)
-{
-	int i;
+व्योम ksz_init_mib_समयr(काष्ठा ksz_device *dev)
+अणु
+	पूर्णांक i;
 
-	INIT_DELAYED_WORK(&dev->mib_read, ksz_mib_read_work);
+	INIT_DELAYED_WORK(&dev->mib_पढ़ो, ksz_mib_पढ़ो_work);
 
-	for (i = 0; i < dev->port_cnt; i++)
+	क्रम (i = 0; i < dev->port_cnt; i++)
 		dev->dev_ops->port_init_cnt(dev, i);
-}
-EXPORT_SYMBOL_GPL(ksz_init_mib_timer);
+पूर्ण
+EXPORT_SYMBOL_GPL(ksz_init_mib_समयr);
 
-int ksz_phy_read16(struct dsa_switch *ds, int addr, int reg)
-{
-	struct ksz_device *dev = ds->priv;
+पूर्णांक ksz_phy_पढ़ो16(काष्ठा dsa_चयन *ds, पूर्णांक addr, पूर्णांक reg)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 	u16 val = 0xffff;
 
 	dev->dev_ops->r_phy(dev, addr, reg, &val);
 
-	return val;
-}
-EXPORT_SYMBOL_GPL(ksz_phy_read16);
+	वापस val;
+पूर्ण
+EXPORT_SYMBOL_GPL(ksz_phy_पढ़ो16);
 
-int ksz_phy_write16(struct dsa_switch *ds, int addr, int reg, u16 val)
-{
-	struct ksz_device *dev = ds->priv;
+पूर्णांक ksz_phy_ग_लिखो16(काष्ठा dsa_चयन *ds, पूर्णांक addr, पूर्णांक reg, u16 val)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 
 	dev->dev_ops->w_phy(dev, addr, reg, val);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(ksz_phy_write16);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(ksz_phy_ग_लिखो16);
 
-void ksz_mac_link_down(struct dsa_switch *ds, int port, unsigned int mode,
-		       phy_interface_t interface)
-{
-	struct ksz_device *dev = ds->priv;
-	struct ksz_port *p = &dev->ports[port];
+व्योम ksz_mac_link_करोwn(काष्ठा dsa_चयन *ds, पूर्णांक port, अचिन्हित पूर्णांक mode,
+		       phy_पूर्णांकerface_t पूर्णांकerface)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
+	काष्ठा ksz_port *p = &dev->ports[port];
 
-	/* Read all MIB counters when the link is going down. */
-	p->read = true;
-	/* timer started */
-	if (dev->mib_read_interval)
-		schedule_delayed_work(&dev->mib_read, 0);
-}
-EXPORT_SYMBOL_GPL(ksz_mac_link_down);
+	/* Read all MIB counters when the link is going करोwn. */
+	p->पढ़ो = true;
+	/* समयr started */
+	अगर (dev->mib_पढ़ो_पूर्णांकerval)
+		schedule_delayed_work(&dev->mib_पढ़ो, 0);
+पूर्ण
+EXPORT_SYMBOL_GPL(ksz_mac_link_करोwn);
 
-int ksz_sset_count(struct dsa_switch *ds, int port, int sset)
-{
-	struct ksz_device *dev = ds->priv;
+पूर्णांक ksz_sset_count(काष्ठा dsa_चयन *ds, पूर्णांक port, पूर्णांक sset)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 
-	if (sset != ETH_SS_STATS)
-		return 0;
+	अगर (sset != ETH_SS_STATS)
+		वापस 0;
 
-	return dev->mib_cnt;
-}
+	वापस dev->mib_cnt;
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_sset_count);
 
-void ksz_get_ethtool_stats(struct dsa_switch *ds, int port, uint64_t *buf)
-{
-	const struct dsa_port *dp = dsa_to_port(ds, port);
-	struct ksz_device *dev = ds->priv;
-	struct ksz_port_mib *mib;
+व्योम ksz_get_ethtool_stats(काष्ठा dsa_चयन *ds, पूर्णांक port, uपूर्णांक64_t *buf)
+अणु
+	स्थिर काष्ठा dsa_port *dp = dsa_to_port(ds, port);
+	काष्ठा ksz_device *dev = ds->priv;
+	काष्ठा ksz_port_mib *mib;
 
 	mib = &dev->ports[port].mib;
 	mutex_lock(&mib->cnt_mutex);
 
-	/* Only read dropped counters if no link. */
-	if (!netif_carrier_ok(dp->slave))
+	/* Only पढ़ो dropped counters अगर no link. */
+	अगर (!netअगर_carrier_ok(dp->slave))
 		mib->cnt_ptr = dev->reg_mib_cnt;
 	port_r_cnt(dev, port);
-	memcpy(buf, mib->counters, dev->mib_cnt * sizeof(u64));
+	स_नकल(buf, mib->counters, dev->mib_cnt * माप(u64));
 	mutex_unlock(&mib->cnt_mutex);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_get_ethtool_stats);
 
-int ksz_port_bridge_join(struct dsa_switch *ds, int port,
-			 struct net_device *br)
-{
-	struct ksz_device *dev = ds->priv;
+पूर्णांक ksz_port_bridge_join(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			 काष्ठा net_device *br)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 
 	mutex_lock(&dev->dev_mutex);
 	dev->br_member |= (1 << port);
 	mutex_unlock(&dev->dev_mutex);
 
 	/* port_stp_state_set() will be called after to put the port in
-	 * appropriate state so there is no need to do anything.
+	 * appropriate state so there is no need to करो anything.
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_port_bridge_join);
 
-void ksz_port_bridge_leave(struct dsa_switch *ds, int port,
-			   struct net_device *br)
-{
-	struct ksz_device *dev = ds->priv;
+व्योम ksz_port_bridge_leave(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			   काष्ठा net_device *br)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 
 	mutex_lock(&dev->dev_mutex);
 	dev->br_member &= ~(1 << port);
@@ -200,160 +201,160 @@ void ksz_port_bridge_leave(struct dsa_switch *ds, int port,
 	mutex_unlock(&dev->dev_mutex);
 
 	/* port_stp_state_set() will be called after to put the port in
-	 * forwarding state so there is no need to do anything.
+	 * क्रमwarding state so there is no need to करो anything.
 	 */
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_port_bridge_leave);
 
-void ksz_port_fast_age(struct dsa_switch *ds, int port)
-{
-	struct ksz_device *dev = ds->priv;
+व्योम ksz_port_fast_age(काष्ठा dsa_चयन *ds, पूर्णांक port)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 
 	dev->dev_ops->flush_dyn_mac_table(dev, port);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_port_fast_age);
 
-int ksz_port_fdb_dump(struct dsa_switch *ds, int port, dsa_fdb_dump_cb_t *cb,
-		      void *data)
-{
-	struct ksz_device *dev = ds->priv;
-	int ret = 0;
+पूर्णांक ksz_port_fdb_dump(काष्ठा dsa_चयन *ds, पूर्णांक port, dsa_fdb_dump_cb_t *cb,
+		      व्योम *data)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
+	पूर्णांक ret = 0;
 	u16 i = 0;
 	u16 entries = 0;
-	u8 timestamp = 0;
+	u8 बारtamp = 0;
 	u8 fid;
 	u8 member;
-	struct alu_struct alu;
+	काष्ठा alu_काष्ठा alu;
 
-	do {
-		alu.is_static = false;
+	करो अणु
+		alu.is_अटल = false;
 		ret = dev->dev_ops->r_dyn_mac_table(dev, i, alu.mac, &fid,
-						    &member, &timestamp,
+						    &member, &बारtamp,
 						    &entries);
-		if (!ret && (member & BIT(port))) {
-			ret = cb(alu.mac, alu.fid, alu.is_static, data);
-			if (ret)
-				break;
-		}
+		अगर (!ret && (member & BIT(port))) अणु
+			ret = cb(alu.mac, alu.fid, alu.is_अटल, data);
+			अगर (ret)
+				अवरोध;
+		पूर्ण
 		i++;
-	} while (i < entries);
-	if (i >= entries)
+	पूर्ण जबतक (i < entries);
+	अगर (i >= entries)
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_port_fdb_dump);
 
-int ksz_port_mdb_add(struct dsa_switch *ds, int port,
-		     const struct switchdev_obj_port_mdb *mdb)
-{
-	struct ksz_device *dev = ds->priv;
-	struct alu_struct alu;
-	int index;
-	int empty = 0;
+पूर्णांक ksz_port_mdb_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+		     स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
+	काष्ठा alu_काष्ठा alu;
+	पूर्णांक index;
+	पूर्णांक empty = 0;
 
-	alu.port_forward = 0;
-	for (index = 0; index < dev->num_statics; index++) {
-		if (!dev->dev_ops->r_sta_mac_table(dev, index, &alu)) {
-			/* Found one already in static MAC table. */
-			if (!memcmp(alu.mac, mdb->addr, ETH_ALEN) &&
+	alu.port_क्रमward = 0;
+	क्रम (index = 0; index < dev->num_अटलs; index++) अणु
+		अगर (!dev->dev_ops->r_sta_mac_table(dev, index, &alu)) अणु
+			/* Found one alपढ़ोy in अटल MAC table. */
+			अगर (!स_भेद(alu.mac, mdb->addr, ETH_ALEN) &&
 			    alu.fid == mdb->vid)
-				break;
+				अवरोध;
 		/* Remember the first empty entry. */
-		} else if (!empty) {
+		पूर्ण अन्यथा अगर (!empty) अणु
 			empty = index + 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* no available entry */
-	if (index == dev->num_statics && !empty)
-		return -ENOSPC;
+	अगर (index == dev->num_अटलs && !empty)
+		वापस -ENOSPC;
 
 	/* add entry */
-	if (index == dev->num_statics) {
+	अगर (index == dev->num_अटलs) अणु
 		index = empty - 1;
-		memset(&alu, 0, sizeof(alu));
-		memcpy(alu.mac, mdb->addr, ETH_ALEN);
-		alu.is_static = true;
-	}
-	alu.port_forward |= BIT(port);
-	if (mdb->vid) {
+		स_रखो(&alu, 0, माप(alu));
+		स_नकल(alu.mac, mdb->addr, ETH_ALEN);
+		alu.is_अटल = true;
+	पूर्ण
+	alu.port_क्रमward |= BIT(port);
+	अगर (mdb->vid) अणु
 		alu.is_use_fid = true;
 
 		/* Need a way to map VID to FID. */
 		alu.fid = mdb->vid;
-	}
+	पूर्ण
 	dev->dev_ops->w_sta_mac_table(dev, index, &alu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_port_mdb_add);
 
-int ksz_port_mdb_del(struct dsa_switch *ds, int port,
-		     const struct switchdev_obj_port_mdb *mdb)
-{
-	struct ksz_device *dev = ds->priv;
-	struct alu_struct alu;
-	int index;
-	int ret = 0;
+पूर्णांक ksz_port_mdb_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+		     स्थिर काष्ठा चयनdev_obj_port_mdb *mdb)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
+	काष्ठा alu_काष्ठा alu;
+	पूर्णांक index;
+	पूर्णांक ret = 0;
 
-	for (index = 0; index < dev->num_statics; index++) {
-		if (!dev->dev_ops->r_sta_mac_table(dev, index, &alu)) {
-			/* Found one already in static MAC table. */
-			if (!memcmp(alu.mac, mdb->addr, ETH_ALEN) &&
+	क्रम (index = 0; index < dev->num_अटलs; index++) अणु
+		अगर (!dev->dev_ops->r_sta_mac_table(dev, index, &alu)) अणु
+			/* Found one alपढ़ोy in अटल MAC table. */
+			अगर (!स_भेद(alu.mac, mdb->addr, ETH_ALEN) &&
 			    alu.fid == mdb->vid)
-				break;
-		}
-	}
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* no available entry */
-	if (index == dev->num_statics)
-		goto exit;
+	अगर (index == dev->num_अटलs)
+		जाओ निकास;
 
 	/* clear port */
-	alu.port_forward &= ~BIT(port);
-	if (!alu.port_forward)
-		alu.is_static = false;
+	alu.port_क्रमward &= ~BIT(port);
+	अगर (!alu.port_क्रमward)
+		alu.is_अटल = false;
 	dev->dev_ops->w_sta_mac_table(dev, index, &alu);
 
-exit:
-	return ret;
-}
+निकास:
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_port_mdb_del);
 
-int ksz_enable_port(struct dsa_switch *ds, int port, struct phy_device *phy)
-{
-	struct ksz_device *dev = ds->priv;
+पूर्णांक ksz_enable_port(काष्ठा dsa_चयन *ds, पूर्णांक port, काष्ठा phy_device *phy)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 
-	if (!dsa_is_user_port(ds, port))
-		return 0;
+	अगर (!dsa_is_user_port(ds, port))
+		वापस 0;
 
 	/* setup slave port */
 	dev->dev_ops->port_setup(dev, port, false);
 
 	/* port_stp_state_set() will be called after to enable the port so
-	 * there is no need to do anything.
+	 * there is no need to करो anything.
 	 */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ksz_enable_port);
 
-struct ksz_device *ksz_switch_alloc(struct device *base, void *priv)
-{
-	struct dsa_switch *ds;
-	struct ksz_device *swdev;
+काष्ठा ksz_device *ksz_चयन_alloc(काष्ठा device *base, व्योम *priv)
+अणु
+	काष्ठा dsa_चयन *ds;
+	काष्ठा ksz_device *swdev;
 
-	ds = devm_kzalloc(base, sizeof(*ds), GFP_KERNEL);
-	if (!ds)
-		return NULL;
+	ds = devm_kzalloc(base, माप(*ds), GFP_KERNEL);
+	अगर (!ds)
+		वापस शून्य;
 
 	ds->dev = base;
 	ds->num_ports = DSA_MAX_PORTS;
 
-	swdev = devm_kzalloc(base, sizeof(*swdev), GFP_KERNEL);
-	if (!swdev)
-		return NULL;
+	swdev = devm_kzalloc(base, माप(*swdev), GFP_KERNEL);
+	अगर (!swdev)
+		वापस शून्य;
 
 	ds->priv = swdev;
 	swdev->dev = base;
@@ -361,32 +362,32 @@ struct ksz_device *ksz_switch_alloc(struct device *base, void *priv)
 	swdev->ds = ds;
 	swdev->priv = priv;
 
-	return swdev;
-}
-EXPORT_SYMBOL(ksz_switch_alloc);
+	वापस swdev;
+पूर्ण
+EXPORT_SYMBOL(ksz_चयन_alloc);
 
-int ksz_switch_register(struct ksz_device *dev,
-			const struct ksz_dev_ops *ops)
-{
-	struct device_node *port, *ports;
-	phy_interface_t interface;
-	unsigned int port_num;
-	int ret;
+पूर्णांक ksz_चयन_रेजिस्टर(काष्ठा ksz_device *dev,
+			स्थिर काष्ठा ksz_dev_ops *ops)
+अणु
+	काष्ठा device_node *port, *ports;
+	phy_पूर्णांकerface_t पूर्णांकerface;
+	अचिन्हित पूर्णांक port_num;
+	पूर्णांक ret;
 
-	if (dev->pdata)
+	अगर (dev->pdata)
 		dev->chip_id = dev->pdata->chip_id;
 
 	dev->reset_gpio = devm_gpiod_get_optional(dev->dev, "reset",
 						  GPIOD_OUT_LOW);
-	if (IS_ERR(dev->reset_gpio))
-		return PTR_ERR(dev->reset_gpio);
+	अगर (IS_ERR(dev->reset_gpio))
+		वापस PTR_ERR(dev->reset_gpio);
 
-	if (dev->reset_gpio) {
+	अगर (dev->reset_gpio) अणु
 		gpiod_set_value_cansleep(dev->reset_gpio, 1);
 		usleep_range(10000, 12000);
 		gpiod_set_value_cansleep(dev->reset_gpio, 0);
 		msleep(100);
-	}
+	पूर्ण
 
 	mutex_init(&dev->dev_mutex);
 	mutex_init(&dev->regmap_mutex);
@@ -395,69 +396,69 @@ int ksz_switch_register(struct ksz_device *dev,
 
 	dev->dev_ops = ops;
 
-	if (dev->dev_ops->detect(dev))
-		return -EINVAL;
+	अगर (dev->dev_ops->detect(dev))
+		वापस -EINVAL;
 
 	ret = dev->dev_ops->init(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Host port interface will be self detected, or specifically set in
+	/* Host port पूर्णांकerface will be self detected, or specअगरically set in
 	 * device tree.
 	 */
-	for (port_num = 0; port_num < dev->port_cnt; ++port_num)
-		dev->ports[port_num].interface = PHY_INTERFACE_MODE_NA;
-	if (dev->dev->of_node) {
-		ret = of_get_phy_mode(dev->dev->of_node, &interface);
-		if (ret == 0)
-			dev->compat_interface = interface;
+	क्रम (port_num = 0; port_num < dev->port_cnt; ++port_num)
+		dev->ports[port_num].पूर्णांकerface = PHY_INTERFACE_MODE_NA;
+	अगर (dev->dev->of_node) अणु
+		ret = of_get_phy_mode(dev->dev->of_node, &पूर्णांकerface);
+		अगर (ret == 0)
+			dev->compat_पूर्णांकerface = पूर्णांकerface;
 		ports = of_get_child_by_name(dev->dev->of_node, "ethernet-ports");
-		if (!ports)
+		अगर (!ports)
 			ports = of_get_child_by_name(dev->dev->of_node, "ports");
-		if (ports)
-			for_each_available_child_of_node(ports, port) {
-				if (of_property_read_u32(port, "reg",
+		अगर (ports)
+			क्रम_each_available_child_of_node(ports, port) अणु
+				अगर (of_property_पढ़ो_u32(port, "reg",
 							 &port_num))
-					continue;
-				if (!(dev->port_mask & BIT(port_num)))
-					return -EINVAL;
+					जारी;
+				अगर (!(dev->port_mask & BIT(port_num)))
+					वापस -EINVAL;
 				of_get_phy_mode(port,
-						&dev->ports[port_num].interface);
-			}
-		dev->synclko_125 = of_property_read_bool(dev->dev->of_node,
+						&dev->ports[port_num].पूर्णांकerface);
+			पूर्ण
+		dev->synclko_125 = of_property_पढ़ो_bool(dev->dev->of_node,
 							 "microchip,synclko-125");
-	}
+	पूर्ण
 
-	ret = dsa_register_switch(dev->ds);
-	if (ret) {
-		dev->dev_ops->exit(dev);
-		return ret;
-	}
+	ret = dsa_रेजिस्टर_चयन(dev->ds);
+	अगर (ret) अणु
+		dev->dev_ops->निकास(dev);
+		वापस ret;
+	पूर्ण
 
-	/* Read MIB counters every 30 seconds to avoid overflow. */
-	dev->mib_read_interval = msecs_to_jiffies(30000);
+	/* Read MIB counters every 30 seconds to aव्योम overflow. */
+	dev->mib_पढ़ो_पूर्णांकerval = msecs_to_jअगरfies(30000);
 
-	/* Start the MIB timer. */
-	schedule_delayed_work(&dev->mib_read, 0);
+	/* Start the MIB समयr. */
+	schedule_delayed_work(&dev->mib_पढ़ो, 0);
 
-	return 0;
-}
-EXPORT_SYMBOL(ksz_switch_register);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ksz_चयन_रेजिस्टर);
 
-void ksz_switch_remove(struct ksz_device *dev)
-{
-	/* timer started */
-	if (dev->mib_read_interval)
-		cancel_delayed_work_sync(&dev->mib_read);
+व्योम ksz_चयन_हटाओ(काष्ठा ksz_device *dev)
+अणु
+	/* समयr started */
+	अगर (dev->mib_पढ़ो_पूर्णांकerval)
+		cancel_delayed_work_sync(&dev->mib_पढ़ो);
 
-	dev->dev_ops->exit(dev);
-	dsa_unregister_switch(dev->ds);
+	dev->dev_ops->निकास(dev);
+	dsa_unरेजिस्टर_चयन(dev->ds);
 
-	if (dev->reset_gpio)
+	अगर (dev->reset_gpio)
 		gpiod_set_value_cansleep(dev->reset_gpio, 1);
 
-}
-EXPORT_SYMBOL(ksz_switch_remove);
+पूर्ण
+EXPORT_SYMBOL(ksz_चयन_हटाओ);
 
 MODULE_AUTHOR("Woojung Huh <Woojung.Huh@microchip.com>");
 MODULE_DESCRIPTION("Microchip KSZ Series Switch DSA Driver");

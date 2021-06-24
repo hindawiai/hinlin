@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/proc_fs.h>
-#include <linux/sched.h>
-#include <linux/seq_file.h>
-#include <linux/time.h>
-#include <linux/time_namespace.h>
-#include <linux/kernel_stat.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/समय_namespace.h>
+#समावेश <linux/kernel_स्थिति.स>
 
-static int uptime_proc_show(struct seq_file *m, void *v)
-{
-	struct timespec64 uptime;
-	struct timespec64 idle;
+अटल पूर्णांक upसमय_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा बारpec64 upसमय;
+	काष्ठा बारpec64 idle;
 	u64 nsec;
 	u32 rem;
-	int i;
+	पूर्णांक i;
 
 	nsec = 0;
-	for_each_possible_cpu(i)
-		nsec += (__force u64) kcpustat_cpu(i).cpustat[CPUTIME_IDLE];
+	क्रम_each_possible_cpu(i)
+		nsec += (__क्रमce u64) kcpustat_cpu(i).cpustat[CPUTIME_IDLE];
 
-	ktime_get_boottime_ts64(&uptime);
-	timens_add_boottime(&uptime);
+	kसमय_get_bootसमय_प्रकारs64(&upसमय);
+	समयns_add_bootसमय(&upसमय);
 
-	idle.tv_sec = div_u64_rem(nsec, NSEC_PER_SEC, &rem);
+	idle.tv_sec = भाग_u64_rem(nsec, NSEC_PER_SEC, &rem);
 	idle.tv_nsec = rem;
-	seq_printf(m, "%lu.%02lu %lu.%02lu\n",
-			(unsigned long) uptime.tv_sec,
-			(uptime.tv_nsec / (NSEC_PER_SEC / 100)),
-			(unsigned long) idle.tv_sec,
+	seq_म_लिखो(m, "%lu.%02lu %lu.%02lu\n",
+			(अचिन्हित दीर्घ) upसमय.tv_sec,
+			(upसमय.tv_nsec / (NSEC_PER_SEC / 100)),
+			(अचिन्हित दीर्घ) idle.tv_sec,
 			(idle.tv_nsec / (NSEC_PER_SEC / 100)));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init proc_uptime_init(void)
-{
-	proc_create_single("uptime", 0, NULL, uptime_proc_show);
-	return 0;
-}
-fs_initcall(proc_uptime_init);
+अटल पूर्णांक __init proc_upसमय_init(व्योम)
+अणु
+	proc_create_single("uptime", 0, शून्य, upसमय_proc_show);
+	वापस 0;
+पूर्ण
+fs_initcall(proc_upसमय_init);

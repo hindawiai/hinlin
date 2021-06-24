@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2008 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,455 +24,455 @@
  * Authors:
  *    Eric Anholt <eric@anholt.net>
  *    Keith Packard <keithp@keithp.com>
- *    Mika Kuoppala <mika.kuoppala@intel.com>
+ *    Mika Kuoppala <mika.kuoppala@पूर्णांकel.com>
  *
  */
 
-#include <linux/ascii85.h>
-#include <linux/nmi.h>
-#include <linux/pagevec.h>
-#include <linux/scatterlist.h>
-#include <linux/utsname.h>
-#include <linux/zlib.h>
+#समावेश <linux/ascii85.h>
+#समावेश <linux/nmi.h>
+#समावेश <linux/pagevec.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/zlib.h>
 
-#include <drm/drm_print.h>
+#समावेश <drm/drm_prपूर्णांक.h>
 
-#include "display/intel_atomic.h"
-#include "display/intel_csr.h"
-#include "display/intel_overlay.h"
+#समावेश "display/intel_atomic.h"
+#समावेश "display/intel_csr.h"
+#समावेश "display/intel_overlay.h"
 
-#include "gem/i915_gem_context.h"
-#include "gem/i915_gem_lmem.h"
-#include "gt/intel_gt.h"
-#include "gt/intel_gt_pm.h"
+#समावेश "gem/i915_gem_context.h"
+#समावेश "gem/i915_gem_lmem.h"
+#समावेश "gt/intel_gt.h"
+#समावेश "gt/intel_gt_pm.h"
 
-#include "i915_drv.h"
-#include "i915_gpu_error.h"
-#include "i915_memcpy.h"
-#include "i915_scatterlist.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_gpu_error.h"
+#समावेश "i915_memcpy.h"
+#समावेश "i915_scatterlist.h"
 
-#define ALLOW_FAIL (GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN)
-#define ATOMIC_MAYFAIL (GFP_ATOMIC | __GFP_NOWARN)
+#घोषणा ALLOW_FAIL (GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN)
+#घोषणा ATOMIC_MAYFAIL (GFP_ATOMIC | __GFP_NOWARN)
 
-static void __sg_set_buf(struct scatterlist *sg,
-			 void *addr, unsigned int len, loff_t it)
-{
-	sg->page_link = (unsigned long)virt_to_page(addr);
+अटल व्योम __sg_set_buf(काष्ठा scatterlist *sg,
+			 व्योम *addr, अचिन्हित पूर्णांक len, loff_t it)
+अणु
+	sg->page_link = (अचिन्हित दीर्घ)virt_to_page(addr);
 	sg->offset = offset_in_page(addr);
 	sg->length = len;
 	sg->dma_address = it;
-}
+पूर्ण
 
-static bool __i915_error_grow(struct drm_i915_error_state_buf *e, size_t len)
-{
-	if (!len)
-		return false;
+अटल bool __i915_error_grow(काष्ठा drm_i915_error_state_buf *e, माप_प्रकार len)
+अणु
+	अगर (!len)
+		वापस false;
 
-	if (e->bytes + len + 1 <= e->size)
-		return true;
+	अगर (e->bytes + len + 1 <= e->size)
+		वापस true;
 
-	if (e->bytes) {
+	अगर (e->bytes) अणु
 		__sg_set_buf(e->cur++, e->buf, e->bytes, e->iter);
 		e->iter += e->bytes;
-		e->buf = NULL;
+		e->buf = शून्य;
 		e->bytes = 0;
-	}
+	पूर्ण
 
-	if (e->cur == e->end) {
-		struct scatterlist *sgl;
+	अगर (e->cur == e->end) अणु
+		काष्ठा scatterlist *sgl;
 
-		sgl = (typeof(sgl))__get_free_page(ALLOW_FAIL);
-		if (!sgl) {
+		sgl = (typeof(sgl))__get_मुक्त_page(ALLOW_FAIL);
+		अगर (!sgl) अणु
 			e->err = -ENOMEM;
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (e->cur) {
+		अगर (e->cur) अणु
 			e->cur->offset = 0;
 			e->cur->length = 0;
 			e->cur->page_link =
-				(unsigned long)sgl | SG_CHAIN;
-		} else {
+				(अचिन्हित दीर्घ)sgl | SG_CHAIN;
+		पूर्ण अन्यथा अणु
 			e->sgl = sgl;
-		}
+		पूर्ण
 
 		e->cur = sgl;
 		e->end = sgl + SG_MAX_SINGLE_ALLOC - 1;
-	}
+	पूर्ण
 
 	e->size = ALIGN(len + 1, SZ_64K);
-	e->buf = kmalloc(e->size, ALLOW_FAIL);
-	if (!e->buf) {
+	e->buf = kदो_स्मृति(e->size, ALLOW_FAIL);
+	अगर (!e->buf) अणु
 		e->size = PAGE_ALIGN(len + 1);
-		e->buf = kmalloc(e->size, GFP_KERNEL);
-	}
-	if (!e->buf) {
+		e->buf = kदो_स्मृति(e->size, GFP_KERNEL);
+	पूर्ण
+	अगर (!e->buf) अणु
 		e->err = -ENOMEM;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-__printf(2, 0)
-static void i915_error_vprintf(struct drm_i915_error_state_buf *e,
-			       const char *fmt, va_list args)
-{
-	va_list ap;
-	int len;
+__म_लिखो(2, 0)
+अटल व्योम i915_error_भ_लिखो(काष्ठा drm_i915_error_state_buf *e,
+			       स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	बहु_सूची ap;
+	पूर्णांक len;
 
-	if (e->err)
-		return;
+	अगर (e->err)
+		वापस;
 
 	va_copy(ap, args);
-	len = vsnprintf(NULL, 0, fmt, ap);
-	va_end(ap);
-	if (len <= 0) {
+	len = vsnम_लिखो(शून्य, 0, fmt, ap);
+	बहु_पूर्ण(ap);
+	अगर (len <= 0) अणु
 		e->err = len;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!__i915_error_grow(e, len))
-		return;
+	अगर (!__i915_error_grow(e, len))
+		वापस;
 
 	GEM_BUG_ON(e->bytes >= e->size);
-	len = vscnprintf(e->buf + e->bytes, e->size - e->bytes, fmt, args);
-	if (len < 0) {
+	len = vscnम_लिखो(e->buf + e->bytes, e->size - e->bytes, fmt, args);
+	अगर (len < 0) अणु
 		e->err = len;
-		return;
-	}
+		वापस;
+	पूर्ण
 	e->bytes += len;
-}
+पूर्ण
 
-static void i915_error_puts(struct drm_i915_error_state_buf *e, const char *str)
-{
-	unsigned len;
+अटल व्योम i915_error_माला_दो(काष्ठा drm_i915_error_state_buf *e, स्थिर अक्षर *str)
+अणु
+	अचिन्हित len;
 
-	if (e->err || !str)
-		return;
+	अगर (e->err || !str)
+		वापस;
 
-	len = strlen(str);
-	if (!__i915_error_grow(e, len))
-		return;
+	len = म_माप(str);
+	अगर (!__i915_error_grow(e, len))
+		वापस;
 
 	GEM_BUG_ON(e->bytes + len > e->size);
-	memcpy(e->buf + e->bytes, str, len);
+	स_नकल(e->buf + e->bytes, str, len);
 	e->bytes += len;
-}
+पूर्ण
 
-#define err_printf(e, ...) i915_error_printf(e, __VA_ARGS__)
-#define err_puts(e, s) i915_error_puts(e, s)
+#घोषणा err_म_लिखो(e, ...) i915_error_म_लिखो(e, __VA_ARGS__)
+#घोषणा err_माला_दो(e, s) i915_error_माला_दो(e, s)
 
-static void __i915_printfn_error(struct drm_printer *p, struct va_format *vaf)
-{
-	i915_error_vprintf(p->arg, vaf->fmt, *vaf->va);
-}
+अटल व्योम __i915_म_लिखोn_error(काष्ठा drm_prपूर्णांकer *p, काष्ठा va_क्रमmat *vaf)
+अणु
+	i915_error_भ_लिखो(p->arg, vaf->fmt, *vaf->va);
+पूर्ण
 
-static inline struct drm_printer
-i915_error_printer(struct drm_i915_error_state_buf *e)
-{
-	struct drm_printer p = {
-		.printfn = __i915_printfn_error,
+अटल अंतरभूत काष्ठा drm_prपूर्णांकer
+i915_error_prपूर्णांकer(काष्ठा drm_i915_error_state_buf *e)
+अणु
+	काष्ठा drm_prपूर्णांकer p = अणु
+		.म_लिखोn = __i915_म_लिखोn_error,
 		.arg = e,
-	};
-	return p;
-}
+	पूर्ण;
+	वापस p;
+पूर्ण
 
-/* single threaded page allocator with a reserved stash for emergencies */
-static void pool_fini(struct pagevec *pv)
-{
+/* single thपढ़ोed page allocator with a reserved stash क्रम emergencies */
+अटल व्योम pool_fini(काष्ठा pagevec *pv)
+अणु
 	pagevec_release(pv);
-}
+पूर्ण
 
-static int pool_refill(struct pagevec *pv, gfp_t gfp)
-{
-	while (pagevec_space(pv)) {
-		struct page *p;
+अटल पूर्णांक pool_refill(काष्ठा pagevec *pv, gfp_t gfp)
+अणु
+	जबतक (pagevec_space(pv)) अणु
+		काष्ठा page *p;
 
 		p = alloc_page(gfp);
-		if (!p)
-			return -ENOMEM;
+		अगर (!p)
+			वापस -ENOMEM;
 
 		pagevec_add(pv, p);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pool_init(struct pagevec *pv, gfp_t gfp)
-{
-	int err;
+अटल पूर्णांक pool_init(काष्ठा pagevec *pv, gfp_t gfp)
+अणु
+	पूर्णांक err;
 
 	pagevec_init(pv);
 
 	err = pool_refill(pv, gfp);
-	if (err)
+	अगर (err)
 		pool_fini(pv);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void *pool_alloc(struct pagevec *pv, gfp_t gfp)
-{
-	struct page *p;
+अटल व्योम *pool_alloc(काष्ठा pagevec *pv, gfp_t gfp)
+अणु
+	काष्ठा page *p;
 
 	p = alloc_page(gfp);
-	if (!p && pagevec_count(pv))
+	अगर (!p && pagevec_count(pv))
 		p = pv->pages[--pv->nr];
 
-	return p ? page_address(p) : NULL;
-}
+	वापस p ? page_address(p) : शून्य;
+पूर्ण
 
-static void pool_free(struct pagevec *pv, void *addr)
-{
-	struct page *p = virt_to_page(addr);
+अटल व्योम pool_मुक्त(काष्ठा pagevec *pv, व्योम *addr)
+अणु
+	काष्ठा page *p = virt_to_page(addr);
 
-	if (pagevec_space(pv))
+	अगर (pagevec_space(pv))
 		pagevec_add(pv, p);
-	else
-		__free_page(p);
-}
+	अन्यथा
+		__मुक्त_page(p);
+पूर्ण
 
-#ifdef CONFIG_DRM_I915_COMPRESS_ERROR
+#अगर_घोषित CONFIG_DRM_I915_COMPRESS_ERROR
 
-struct i915_vma_compress {
-	struct pagevec pool;
-	struct z_stream_s zstream;
-	void *tmp;
-};
+काष्ठा i915_vma_compress अणु
+	काष्ठा pagevec pool;
+	काष्ठा z_stream_s zstream;
+	व्योम *पंचांगp;
+पूर्ण;
 
-static bool compress_init(struct i915_vma_compress *c)
-{
-	struct z_stream_s *zstream = &c->zstream;
+अटल bool compress_init(काष्ठा i915_vma_compress *c)
+अणु
+	काष्ठा z_stream_s *zstream = &c->zstream;
 
-	if (pool_init(&c->pool, ALLOW_FAIL))
-		return false;
+	अगर (pool_init(&c->pool, ALLOW_FAIL))
+		वापस false;
 
 	zstream->workspace =
-		kmalloc(zlib_deflate_workspacesize(MAX_WBITS, MAX_MEM_LEVEL),
+		kदो_स्मृति(zlib_deflate_workspacesize(MAX_WBITS, MAX_MEM_LEVEL),
 			ALLOW_FAIL);
-	if (!zstream->workspace) {
+	अगर (!zstream->workspace) अणु
 		pool_fini(&c->pool);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	c->tmp = NULL;
-	if (i915_has_memcpy_from_wc())
-		c->tmp = pool_alloc(&c->pool, ALLOW_FAIL);
+	c->पंचांगp = शून्य;
+	अगर (i915_has_स_नकल_from_wc())
+		c->पंचांगp = pool_alloc(&c->pool, ALLOW_FAIL);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool compress_start(struct i915_vma_compress *c)
-{
-	struct z_stream_s *zstream = &c->zstream;
-	void *workspace = zstream->workspace;
+अटल bool compress_start(काष्ठा i915_vma_compress *c)
+अणु
+	काष्ठा z_stream_s *zstream = &c->zstream;
+	व्योम *workspace = zstream->workspace;
 
-	memset(zstream, 0, sizeof(*zstream));
+	स_रखो(zstream, 0, माप(*zstream));
 	zstream->workspace = workspace;
 
-	return zlib_deflateInit(zstream, Z_DEFAULT_COMPRESSION) == Z_OK;
-}
+	वापस zlib_deflateInit(zstream, Z_DEFAULT_COMPRESSION) == Z_OK;
+पूर्ण
 
-static void *compress_next_page(struct i915_vma_compress *c,
-				struct i915_vma_coredump *dst)
-{
-	void *page;
+अटल व्योम *compress_next_page(काष्ठा i915_vma_compress *c,
+				काष्ठा i915_vma_coredump *dst)
+अणु
+	व्योम *page;
 
-	if (dst->page_count >= dst->num_pages)
-		return ERR_PTR(-ENOSPC);
+	अगर (dst->page_count >= dst->num_pages)
+		वापस ERR_PTR(-ENOSPC);
 
 	page = pool_alloc(&c->pool, ALLOW_FAIL);
-	if (!page)
-		return ERR_PTR(-ENOMEM);
+	अगर (!page)
+		वापस ERR_PTR(-ENOMEM);
 
-	return dst->pages[dst->page_count++] = page;
-}
+	वापस dst->pages[dst->page_count++] = page;
+पूर्ण
 
-static int compress_page(struct i915_vma_compress *c,
-			 void *src,
-			 struct i915_vma_coredump *dst,
+अटल पूर्णांक compress_page(काष्ठा i915_vma_compress *c,
+			 व्योम *src,
+			 काष्ठा i915_vma_coredump *dst,
 			 bool wc)
-{
-	struct z_stream_s *zstream = &c->zstream;
+अणु
+	काष्ठा z_stream_s *zstream = &c->zstream;
 
 	zstream->next_in = src;
-	if (wc && c->tmp && i915_memcpy_from_wc(c->tmp, src, PAGE_SIZE))
-		zstream->next_in = c->tmp;
+	अगर (wc && c->पंचांगp && i915_स_नकल_from_wc(c->पंचांगp, src, PAGE_SIZE))
+		zstream->next_in = c->पंचांगp;
 	zstream->avail_in = PAGE_SIZE;
 
-	do {
-		if (zstream->avail_out == 0) {
+	करो अणु
+		अगर (zstream->avail_out == 0) अणु
 			zstream->next_out = compress_next_page(c, dst);
-			if (IS_ERR(zstream->next_out))
-				return PTR_ERR(zstream->next_out);
+			अगर (IS_ERR(zstream->next_out))
+				वापस PTR_ERR(zstream->next_out);
 
 			zstream->avail_out = PAGE_SIZE;
-		}
+		पूर्ण
 
-		if (zlib_deflate(zstream, Z_NO_FLUSH) != Z_OK)
-			return -EIO;
+		अगर (zlib_deflate(zstream, Z_NO_FLUSH) != Z_OK)
+			वापस -EIO;
 
 		cond_resched();
-	} while (zstream->avail_in);
+	पूर्ण जबतक (zstream->avail_in);
 
-	/* Fallback to uncompressed if we increase size? */
-	if (0 && zstream->total_out > zstream->total_in)
-		return -E2BIG;
+	/* Fallback to uncompressed अगर we increase size? */
+	अगर (0 && zstream->total_out > zstream->total_in)
+		वापस -E2BIG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int compress_flush(struct i915_vma_compress *c,
-			  struct i915_vma_coredump *dst)
-{
-	struct z_stream_s *zstream = &c->zstream;
+अटल पूर्णांक compress_flush(काष्ठा i915_vma_compress *c,
+			  काष्ठा i915_vma_coredump *dst)
+अणु
+	काष्ठा z_stream_s *zstream = &c->zstream;
 
-	do {
-		switch (zlib_deflate(zstream, Z_FINISH)) {
-		case Z_OK: /* more space requested */
+	करो अणु
+		चयन (zlib_deflate(zstream, Z_FINISH)) अणु
+		हाल Z_OK: /* more space requested */
 			zstream->next_out = compress_next_page(c, dst);
-			if (IS_ERR(zstream->next_out))
-				return PTR_ERR(zstream->next_out);
+			अगर (IS_ERR(zstream->next_out))
+				वापस PTR_ERR(zstream->next_out);
 
 			zstream->avail_out = PAGE_SIZE;
-			break;
+			अवरोध;
 
-		case Z_STREAM_END:
-			goto end;
+		हाल Z_STREAM_END:
+			जाओ end;
 
-		default: /* any error */
-			return -EIO;
-		}
-	} while (1);
+		शेष: /* any error */
+			वापस -EIO;
+		पूर्ण
+	पूर्ण जबतक (1);
 
 end:
-	memset(zstream->next_out, 0, zstream->avail_out);
+	स_रखो(zstream->next_out, 0, zstream->avail_out);
 	dst->unused = zstream->avail_out;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void compress_finish(struct i915_vma_compress *c)
-{
+अटल व्योम compress_finish(काष्ठा i915_vma_compress *c)
+अणु
 	zlib_deflateEnd(&c->zstream);
-}
+पूर्ण
 
-static void compress_fini(struct i915_vma_compress *c)
-{
-	kfree(c->zstream.workspace);
-	if (c->tmp)
-		pool_free(&c->pool, c->tmp);
+अटल व्योम compress_fini(काष्ठा i915_vma_compress *c)
+अणु
+	kमुक्त(c->zstream.workspace);
+	अगर (c->पंचांगp)
+		pool_मुक्त(&c->pool, c->पंचांगp);
 	pool_fini(&c->pool);
-}
+पूर्ण
 
-static void err_compression_marker(struct drm_i915_error_state_buf *m)
-{
-	err_puts(m, ":");
-}
+अटल व्योम err_compression_marker(काष्ठा drm_i915_error_state_buf *m)
+अणु
+	err_माला_दो(m, ":");
+पूर्ण
 
-#else
+#अन्यथा
 
-struct i915_vma_compress {
-	struct pagevec pool;
-};
+काष्ठा i915_vma_compress अणु
+	काष्ठा pagevec pool;
+पूर्ण;
 
-static bool compress_init(struct i915_vma_compress *c)
-{
-	return pool_init(&c->pool, ALLOW_FAIL) == 0;
-}
+अटल bool compress_init(काष्ठा i915_vma_compress *c)
+अणु
+	वापस pool_init(&c->pool, ALLOW_FAIL) == 0;
+पूर्ण
 
-static bool compress_start(struct i915_vma_compress *c)
-{
-	return true;
-}
+अटल bool compress_start(काष्ठा i915_vma_compress *c)
+अणु
+	वापस true;
+पूर्ण
 
-static int compress_page(struct i915_vma_compress *c,
-			 void *src,
-			 struct i915_vma_coredump *dst,
+अटल पूर्णांक compress_page(काष्ठा i915_vma_compress *c,
+			 व्योम *src,
+			 काष्ठा i915_vma_coredump *dst,
 			 bool wc)
-{
-	void *ptr;
+अणु
+	व्योम *ptr;
 
 	ptr = pool_alloc(&c->pool, ALLOW_FAIL);
-	if (!ptr)
-		return -ENOMEM;
+	अगर (!ptr)
+		वापस -ENOMEM;
 
-	if (!(wc && i915_memcpy_from_wc(ptr, src, PAGE_SIZE)))
-		memcpy(ptr, src, PAGE_SIZE);
+	अगर (!(wc && i915_स_नकल_from_wc(ptr, src, PAGE_SIZE)))
+		स_नकल(ptr, src, PAGE_SIZE);
 	dst->pages[dst->page_count++] = ptr;
 	cond_resched();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int compress_flush(struct i915_vma_compress *c,
-			  struct i915_vma_coredump *dst)
-{
-	return 0;
-}
+अटल पूर्णांक compress_flush(काष्ठा i915_vma_compress *c,
+			  काष्ठा i915_vma_coredump *dst)
+अणु
+	वापस 0;
+पूर्ण
 
-static void compress_finish(struct i915_vma_compress *c)
-{
-}
+अटल व्योम compress_finish(काष्ठा i915_vma_compress *c)
+अणु
+पूर्ण
 
-static void compress_fini(struct i915_vma_compress *c)
-{
+अटल व्योम compress_fini(काष्ठा i915_vma_compress *c)
+अणु
 	pool_fini(&c->pool);
-}
+पूर्ण
 
-static void err_compression_marker(struct drm_i915_error_state_buf *m)
-{
-	err_puts(m, "~");
-}
+अटल व्योम err_compression_marker(काष्ठा drm_i915_error_state_buf *m)
+अणु
+	err_माला_दो(m, "~");
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static void error_print_instdone(struct drm_i915_error_state_buf *m,
-				 const struct intel_engine_coredump *ee)
-{
-	const struct sseu_dev_info *sseu = &ee->engine->gt->info.sseu;
-	int slice;
-	int subslice;
+अटल व्योम error_prपूर्णांक_instकरोne(काष्ठा drm_i915_error_state_buf *m,
+				 स्थिर काष्ठा पूर्णांकel_engine_coredump *ee)
+अणु
+	स्थिर काष्ठा sseu_dev_info *sseu = &ee->engine->gt->info.sseu;
+	पूर्णांक slice;
+	पूर्णांक subslice;
 
-	err_printf(m, "  INSTDONE: 0x%08x\n",
-		   ee->instdone.instdone);
+	err_म_लिखो(m, "  INSTDONE: 0x%08x\n",
+		   ee->instकरोne.instकरोne);
 
-	if (ee->engine->class != RENDER_CLASS || INTEL_GEN(m->i915) <= 3)
-		return;
+	अगर (ee->engine->class != RENDER_CLASS || INTEL_GEN(m->i915) <= 3)
+		वापस;
 
-	err_printf(m, "  SC_INSTDONE: 0x%08x\n",
-		   ee->instdone.slice_common);
+	err_म_लिखो(m, "  SC_INSTDONE: 0x%08x\n",
+		   ee->instकरोne.slice_common);
 
-	if (INTEL_GEN(m->i915) <= 6)
-		return;
+	अगर (INTEL_GEN(m->i915) <= 6)
+		वापस;
 
-	for_each_instdone_slice_subslice(m->i915, sseu, slice, subslice)
-		err_printf(m, "  SAMPLER_INSTDONE[%d][%d]: 0x%08x\n",
+	क्रम_each_instकरोne_slice_subslice(m->i915, sseu, slice, subslice)
+		err_म_लिखो(m, "  SAMPLER_INSTDONE[%d][%d]: 0x%08x\n",
 			   slice, subslice,
-			   ee->instdone.sampler[slice][subslice]);
+			   ee->instकरोne.sampler[slice][subslice]);
 
-	for_each_instdone_slice_subslice(m->i915, sseu, slice, subslice)
-		err_printf(m, "  ROW_INSTDONE[%d][%d]: 0x%08x\n",
+	क्रम_each_instकरोne_slice_subslice(m->i915, sseu, slice, subslice)
+		err_म_लिखो(m, "  ROW_INSTDONE[%d][%d]: 0x%08x\n",
 			   slice, subslice,
-			   ee->instdone.row[slice][subslice]);
+			   ee->instकरोne.row[slice][subslice]);
 
-	if (INTEL_GEN(m->i915) < 12)
-		return;
+	अगर (INTEL_GEN(m->i915) < 12)
+		वापस;
 
-	err_printf(m, "  SC_INSTDONE_EXTRA: 0x%08x\n",
-		   ee->instdone.slice_common_extra[0]);
-	err_printf(m, "  SC_INSTDONE_EXTRA2: 0x%08x\n",
-		   ee->instdone.slice_common_extra[1]);
-}
+	err_म_लिखो(m, "  SC_INSTDONE_EXTRA: 0x%08x\n",
+		   ee->instकरोne.slice_common_extra[0]);
+	err_म_लिखो(m, "  SC_INSTDONE_EXTRA2: 0x%08x\n",
+		   ee->instकरोne.slice_common_extra[1]);
+पूर्ण
 
-static void error_print_request(struct drm_i915_error_state_buf *m,
-				const char *prefix,
-				const struct i915_request_coredump *erq)
-{
-	if (!erq->seqno)
-		return;
+अटल व्योम error_prपूर्णांक_request(काष्ठा drm_i915_error_state_buf *m,
+				स्थिर अक्षर *prefix,
+				स्थिर काष्ठा i915_request_coredump *erq)
+अणु
+	अगर (!erq->seqno)
+		वापस;
 
-	err_printf(m, "%s pid %d, seqno %8x:%08x%s%s, prio %d, head %08x, tail %08x\n",
+	err_म_लिखो(m, "%s pid %d, seqno %8x:%08x%s%s, prio %d, head %08x, tail %08x\n",
 		   prefix, erq->pid, erq->context, erq->seqno,
 		   test_bit(DMA_FENCE_FLAG_SIGNALED_BIT,
 			    &erq->flags) ? "!" : "",
@@ -479,540 +480,540 @@ static void error_print_request(struct drm_i915_error_state_buf *m,
 			    &erq->flags) ? "+" : "",
 		   erq->sched_attr.priority,
 		   erq->head, erq->tail);
-}
+पूर्ण
 
-static void error_print_context(struct drm_i915_error_state_buf *m,
-				const char *header,
-				const struct i915_gem_context_coredump *ctx)
-{
-	const u32 period = m->i915->gt.clock_period_ns;
+अटल व्योम error_prपूर्णांक_context(काष्ठा drm_i915_error_state_buf *m,
+				स्थिर अक्षर *header,
+				स्थिर काष्ठा i915_gem_context_coredump *ctx)
+अणु
+	स्थिर u32 period = m->i915->gt.घड़ी_period_ns;
 
-	err_printf(m, "%s%s[%d] prio %d, guilty %d active %d, runtime total %lluns, avg %lluns\n",
+	err_म_लिखो(m, "%s%s[%d] prio %d, guilty %d active %d, runtime total %lluns, avg %lluns\n",
 		   header, ctx->comm, ctx->pid, ctx->sched_attr.priority,
 		   ctx->guilty, ctx->active,
-		   ctx->total_runtime * period,
-		   mul_u32_u32(ctx->avg_runtime, period));
-}
+		   ctx->total_runसमय * period,
+		   mul_u32_u32(ctx->avg_runसमय, period));
+पूर्ण
 
-static struct i915_vma_coredump *
-__find_vma(struct i915_vma_coredump *vma, const char *name)
-{
-	while (vma) {
-		if (strcmp(vma->name, name) == 0)
-			return vma;
+अटल काष्ठा i915_vma_coredump *
+__find_vma(काष्ठा i915_vma_coredump *vma, स्थिर अक्षर *name)
+अणु
+	जबतक (vma) अणु
+		अगर (म_भेद(vma->name, name) == 0)
+			वापस vma;
 		vma = vma->next;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct i915_vma_coredump *
-find_batch(const struct intel_engine_coredump *ee)
-{
-	return __find_vma(ee->vma, "batch");
-}
+अटल काष्ठा i915_vma_coredump *
+find_batch(स्थिर काष्ठा पूर्णांकel_engine_coredump *ee)
+अणु
+	वापस __find_vma(ee->vma, "batch");
+पूर्ण
 
-static void error_print_engine(struct drm_i915_error_state_buf *m,
-			       const struct intel_engine_coredump *ee)
-{
-	struct i915_vma_coredump *batch;
-	int n;
+अटल व्योम error_prपूर्णांक_engine(काष्ठा drm_i915_error_state_buf *m,
+			       स्थिर काष्ठा पूर्णांकel_engine_coredump *ee)
+अणु
+	काष्ठा i915_vma_coredump *batch;
+	पूर्णांक n;
 
-	err_printf(m, "%s command stream:\n", ee->engine->name);
-	err_printf(m, "  CCID:  0x%08x\n", ee->ccid);
-	err_printf(m, "  START: 0x%08x\n", ee->start);
-	err_printf(m, "  HEAD:  0x%08x [0x%08x]\n", ee->head, ee->rq_head);
-	err_printf(m, "  TAIL:  0x%08x [0x%08x, 0x%08x]\n",
+	err_म_लिखो(m, "%s command stream:\n", ee->engine->name);
+	err_म_लिखो(m, "  CCID:  0x%08x\n", ee->ccid);
+	err_म_लिखो(m, "  START: 0x%08x\n", ee->start);
+	err_म_लिखो(m, "  HEAD:  0x%08x [0x%08x]\n", ee->head, ee->rq_head);
+	err_म_लिखो(m, "  TAIL:  0x%08x [0x%08x, 0x%08x]\n",
 		   ee->tail, ee->rq_post, ee->rq_tail);
-	err_printf(m, "  CTL:   0x%08x\n", ee->ctl);
-	err_printf(m, "  MODE:  0x%08x\n", ee->mode);
-	err_printf(m, "  HWS:   0x%08x\n", ee->hws);
-	err_printf(m, "  ACTHD: 0x%08x %08x\n",
+	err_म_लिखो(m, "  CTL:   0x%08x\n", ee->ctl);
+	err_म_लिखो(m, "  MODE:  0x%08x\n", ee->mode);
+	err_म_लिखो(m, "  HWS:   0x%08x\n", ee->hws);
+	err_म_लिखो(m, "  ACTHD: 0x%08x %08x\n",
 		   (u32)(ee->acthd>>32), (u32)ee->acthd);
-	err_printf(m, "  IPEIR: 0x%08x\n", ee->ipeir);
-	err_printf(m, "  IPEHR: 0x%08x\n", ee->ipehr);
-	err_printf(m, "  ESR:   0x%08x\n", ee->esr);
+	err_म_लिखो(m, "  IPEIR: 0x%08x\n", ee->ipeir);
+	err_म_लिखो(m, "  IPEHR: 0x%08x\n", ee->ipehr);
+	err_म_लिखो(m, "  ESR:   0x%08x\n", ee->esr);
 
-	error_print_instdone(m, ee);
+	error_prपूर्णांक_instकरोne(m, ee);
 
 	batch = find_batch(ee);
-	if (batch) {
+	अगर (batch) अणु
 		u64 start = batch->gtt_offset;
 		u64 end = start + batch->gtt_size;
 
-		err_printf(m, "  batch: [0x%08x_%08x, 0x%08x_%08x]\n",
+		err_म_लिखो(m, "  batch: [0x%08x_%08x, 0x%08x_%08x]\n",
 			   upper_32_bits(start), lower_32_bits(start),
 			   upper_32_bits(end), lower_32_bits(end));
-	}
-	if (INTEL_GEN(m->i915) >= 4) {
-		err_printf(m, "  BBADDR: 0x%08x_%08x\n",
+	पूर्ण
+	अगर (INTEL_GEN(m->i915) >= 4) अणु
+		err_म_लिखो(m, "  BBADDR: 0x%08x_%08x\n",
 			   (u32)(ee->bbaddr>>32), (u32)ee->bbaddr);
-		err_printf(m, "  BB_STATE: 0x%08x\n", ee->bbstate);
-		err_printf(m, "  INSTPS: 0x%08x\n", ee->instps);
-	}
-	err_printf(m, "  INSTPM: 0x%08x\n", ee->instpm);
-	err_printf(m, "  FADDR: 0x%08x %08x\n", upper_32_bits(ee->faddr),
+		err_म_लिखो(m, "  BB_STATE: 0x%08x\n", ee->bbstate);
+		err_म_लिखो(m, "  INSTPS: 0x%08x\n", ee->instps);
+	पूर्ण
+	err_म_लिखो(m, "  INSTPM: 0x%08x\n", ee->instpm);
+	err_म_लिखो(m, "  FADDR: 0x%08x %08x\n", upper_32_bits(ee->faddr),
 		   lower_32_bits(ee->faddr));
-	if (INTEL_GEN(m->i915) >= 6) {
-		err_printf(m, "  RC PSMI: 0x%08x\n", ee->rc_psmi);
-		err_printf(m, "  FAULT_REG: 0x%08x\n", ee->fault_reg);
-	}
-	if (HAS_PPGTT(m->i915)) {
-		err_printf(m, "  GFX_MODE: 0x%08x\n", ee->vm_info.gfx_mode);
+	अगर (INTEL_GEN(m->i915) >= 6) अणु
+		err_म_लिखो(m, "  RC PSMI: 0x%08x\n", ee->rc_psmi);
+		err_म_लिखो(m, "  FAULT_REG: 0x%08x\n", ee->fault_reg);
+	पूर्ण
+	अगर (HAS_PPGTT(m->i915)) अणु
+		err_म_लिखो(m, "  GFX_MODE: 0x%08x\n", ee->vm_info.gfx_mode);
 
-		if (INTEL_GEN(m->i915) >= 8) {
-			int i;
-			for (i = 0; i < 4; i++)
-				err_printf(m, "  PDP%d: 0x%016llx\n",
+		अगर (INTEL_GEN(m->i915) >= 8) अणु
+			पूर्णांक i;
+			क्रम (i = 0; i < 4; i++)
+				err_म_लिखो(m, "  PDP%d: 0x%016llx\n",
 					   i, ee->vm_info.pdp[i]);
-		} else {
-			err_printf(m, "  PP_DIR_BASE: 0x%08x\n",
+		पूर्ण अन्यथा अणु
+			err_म_लिखो(m, "  PP_DIR_BASE: 0x%08x\n",
 				   ee->vm_info.pp_dir_base);
-		}
-	}
-	err_printf(m, "  hung: %u\n", ee->hung);
-	err_printf(m, "  engine reset count: %u\n", ee->reset_count);
+		पूर्ण
+	पूर्ण
+	err_म_लिखो(m, "  hung: %u\n", ee->hung);
+	err_म_लिखो(m, "  engine reset count: %u\n", ee->reset_count);
 
-	for (n = 0; n < ee->num_ports; n++) {
-		err_printf(m, "  ELSP[%d]:", n);
-		error_print_request(m, " ", &ee->execlist[n]);
-	}
+	क्रम (n = 0; n < ee->num_ports; n++) अणु
+		err_म_लिखो(m, "  ELSP[%d]:", n);
+		error_prपूर्णांक_request(m, " ", &ee->execlist[n]);
+	पूर्ण
 
-	error_print_context(m, "  Active context: ", &ee->context);
-}
+	error_prपूर्णांक_context(m, "  Active context: ", &ee->context);
+पूर्ण
 
-void i915_error_printf(struct drm_i915_error_state_buf *e, const char *f, ...)
-{
-	va_list args;
+व्योम i915_error_म_लिखो(काष्ठा drm_i915_error_state_buf *e, स्थिर अक्षर *f, ...)
+अणु
+	बहु_सूची args;
 
-	va_start(args, f);
-	i915_error_vprintf(e, f, args);
-	va_end(args);
-}
+	बहु_शुरू(args, f);
+	i915_error_भ_लिखो(e, f, args);
+	बहु_पूर्ण(args);
+पूर्ण
 
-static void print_error_vma(struct drm_i915_error_state_buf *m,
-			    const struct intel_engine_cs *engine,
-			    const struct i915_vma_coredump *vma)
-{
-	char out[ASCII85_BUFSZ];
-	int page;
+अटल व्योम prपूर्णांक_error_vma(काष्ठा drm_i915_error_state_buf *m,
+			    स्थिर काष्ठा पूर्णांकel_engine_cs *engine,
+			    स्थिर काष्ठा i915_vma_coredump *vma)
+अणु
+	अक्षर out[ASCII85_BUFSZ];
+	पूर्णांक page;
 
-	if (!vma)
-		return;
+	अगर (!vma)
+		वापस;
 
-	err_printf(m, "%s --- %s = 0x%08x %08x\n",
+	err_म_लिखो(m, "%s --- %s = 0x%08x %08x\n",
 		   engine ? engine->name : "global", vma->name,
 		   upper_32_bits(vma->gtt_offset),
 		   lower_32_bits(vma->gtt_offset));
 
-	if (vma->gtt_page_sizes > I915_GTT_PAGE_SIZE_4K)
-		err_printf(m, "gtt_page_sizes = 0x%08x\n", vma->gtt_page_sizes);
+	अगर (vma->gtt_page_sizes > I915_GTT_PAGE_SIZE_4K)
+		err_म_लिखो(m, "gtt_page_sizes = 0x%08x\n", vma->gtt_page_sizes);
 
 	err_compression_marker(m);
-	for (page = 0; page < vma->page_count; page++) {
-		int i, len;
+	क्रम (page = 0; page < vma->page_count; page++) अणु
+		पूर्णांक i, len;
 
 		len = PAGE_SIZE;
-		if (page == vma->page_count - 1)
+		अगर (page == vma->page_count - 1)
 			len -= vma->unused;
 		len = ascii85_encode_len(len);
 
-		for (i = 0; i < len; i++)
-			err_puts(m, ascii85_encode(vma->pages[page][i], out));
-	}
-	err_puts(m, "\n");
-}
+		क्रम (i = 0; i < len; i++)
+			err_माला_दो(m, ascii85_encode(vma->pages[page][i], out));
+	पूर्ण
+	err_माला_दो(m, "\n");
+पूर्ण
 
-static void err_print_capabilities(struct drm_i915_error_state_buf *m,
-				   struct i915_gpu_coredump *error)
-{
-	struct drm_printer p = i915_error_printer(m);
+अटल व्योम err_prपूर्णांक_capabilities(काष्ठा drm_i915_error_state_buf *m,
+				   काष्ठा i915_gpu_coredump *error)
+अणु
+	काष्ठा drm_prपूर्णांकer p = i915_error_prपूर्णांकer(m);
 
-	intel_device_info_print_static(&error->device_info, &p);
-	intel_device_info_print_runtime(&error->runtime_info, &p);
-	intel_driver_caps_print(&error->driver_caps, &p);
-}
+	पूर्णांकel_device_info_prपूर्णांक_अटल(&error->device_info, &p);
+	पूर्णांकel_device_info_prपूर्णांक_runसमय(&error->runसमय_info, &p);
+	पूर्णांकel_driver_caps_prपूर्णांक(&error->driver_caps, &p);
+पूर्ण
 
-static void err_print_params(struct drm_i915_error_state_buf *m,
-			     const struct i915_params *params)
-{
-	struct drm_printer p = i915_error_printer(m);
+अटल व्योम err_prपूर्णांक_params(काष्ठा drm_i915_error_state_buf *m,
+			     स्थिर काष्ठा i915_params *params)
+अणु
+	काष्ठा drm_prपूर्णांकer p = i915_error_prपूर्णांकer(m);
 
 	i915_params_dump(params, &p);
-}
+पूर्ण
 
-static void err_print_pciid(struct drm_i915_error_state_buf *m,
-			    struct drm_i915_private *i915)
-{
-	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
+अटल व्योम err_prपूर्णांक_pciid(काष्ठा drm_i915_error_state_buf *m,
+			    काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
 
-	err_printf(m, "PCI ID: 0x%04x\n", pdev->device);
-	err_printf(m, "PCI Revision: 0x%02x\n", pdev->revision);
-	err_printf(m, "PCI Subsystem: %04x:%04x\n",
-		   pdev->subsystem_vendor,
-		   pdev->subsystem_device);
-}
+	err_म_लिखो(m, "PCI ID: 0x%04x\n", pdev->device);
+	err_म_लिखो(m, "PCI Revision: 0x%02x\n", pdev->revision);
+	err_म_लिखो(m, "PCI Subsystem: %04x:%04x\n",
+		   pdev->subप्रणाली_venकरोr,
+		   pdev->subप्रणाली_device);
+पूर्ण
 
-static void err_print_uc(struct drm_i915_error_state_buf *m,
-			 const struct intel_uc_coredump *error_uc)
-{
-	struct drm_printer p = i915_error_printer(m);
+अटल व्योम err_prपूर्णांक_uc(काष्ठा drm_i915_error_state_buf *m,
+			 स्थिर काष्ठा पूर्णांकel_uc_coredump *error_uc)
+अणु
+	काष्ठा drm_prपूर्णांकer p = i915_error_prपूर्णांकer(m);
 
-	intel_uc_fw_dump(&error_uc->guc_fw, &p);
-	intel_uc_fw_dump(&error_uc->huc_fw, &p);
-	print_error_vma(m, NULL, error_uc->guc_log);
-}
+	पूर्णांकel_uc_fw_dump(&error_uc->guc_fw, &p);
+	पूर्णांकel_uc_fw_dump(&error_uc->huc_fw, &p);
+	prपूर्णांक_error_vma(m, शून्य, error_uc->guc_log);
+पूर्ण
 
-static void err_free_sgl(struct scatterlist *sgl)
-{
-	while (sgl) {
-		struct scatterlist *sg;
+अटल व्योम err_मुक्त_sgl(काष्ठा scatterlist *sgl)
+अणु
+	जबतक (sgl) अणु
+		काष्ठा scatterlist *sg;
 
-		for (sg = sgl; !sg_is_chain(sg); sg++) {
-			kfree(sg_virt(sg));
-			if (sg_is_last(sg))
-				break;
-		}
+		क्रम (sg = sgl; !sg_is_chain(sg); sg++) अणु
+			kमुक्त(sg_virt(sg));
+			अगर (sg_is_last(sg))
+				अवरोध;
+		पूर्ण
 
-		sg = sg_is_last(sg) ? NULL : sg_chain_ptr(sg);
-		free_page((unsigned long)sgl);
+		sg = sg_is_last(sg) ? शून्य : sg_chain_ptr(sg);
+		मुक्त_page((अचिन्हित दीर्घ)sgl);
 		sgl = sg;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void err_print_gt_info(struct drm_i915_error_state_buf *m,
-			      struct intel_gt_coredump *gt)
-{
-	struct drm_printer p = i915_error_printer(m);
+अटल व्योम err_prपूर्णांक_gt_info(काष्ठा drm_i915_error_state_buf *m,
+			      काष्ठा पूर्णांकel_gt_coredump *gt)
+अणु
+	काष्ठा drm_prपूर्णांकer p = i915_error_prपूर्णांकer(m);
 
-	intel_gt_info_print(&gt->info, &p);
-	intel_sseu_print_topology(&gt->info.sseu, &p);
-}
+	पूर्णांकel_gt_info_prपूर्णांक(&gt->info, &p);
+	पूर्णांकel_sseu_prपूर्णांक_topology(&gt->info.sseu, &p);
+पूर्ण
 
-static void err_print_gt(struct drm_i915_error_state_buf *m,
-			 struct intel_gt_coredump *gt)
-{
-	const struct intel_engine_coredump *ee;
-	int i;
+अटल व्योम err_prपूर्णांक_gt(काष्ठा drm_i915_error_state_buf *m,
+			 काष्ठा पूर्णांकel_gt_coredump *gt)
+अणु
+	स्थिर काष्ठा पूर्णांकel_engine_coredump *ee;
+	पूर्णांक i;
 
-	err_printf(m, "GT awake: %s\n", yesno(gt->awake));
-	err_printf(m, "EIR: 0x%08x\n", gt->eir);
-	err_printf(m, "IER: 0x%08x\n", gt->ier);
-	for (i = 0; i < gt->ngtier; i++)
-		err_printf(m, "GTIER[%d]: 0x%08x\n", i, gt->gtier[i]);
-	err_printf(m, "PGTBL_ER: 0x%08x\n", gt->pgtbl_er);
-	err_printf(m, "FORCEWAKE: 0x%08x\n", gt->forcewake);
-	err_printf(m, "DERRMR: 0x%08x\n", gt->derrmr);
+	err_म_लिखो(m, "GT awake: %s\n", yesno(gt->awake));
+	err_म_लिखो(m, "EIR: 0x%08x\n", gt->eir);
+	err_म_लिखो(m, "IER: 0x%08x\n", gt->ier);
+	क्रम (i = 0; i < gt->ngtier; i++)
+		err_म_लिखो(m, "GTIER[%d]: 0x%08x\n", i, gt->gtier[i]);
+	err_म_लिखो(m, "PGTBL_ER: 0x%08x\n", gt->pgtbl_er);
+	err_म_लिखो(m, "FORCEWAKE: 0x%08x\n", gt->क्रमcewake);
+	err_म_लिखो(m, "DERRMR: 0x%08x\n", gt->derrmr);
 
-	for (i = 0; i < gt->nfence; i++)
-		err_printf(m, "  fence[%d] = %08llx\n", i, gt->fence[i]);
+	क्रम (i = 0; i < gt->nfence; i++)
+		err_म_लिखो(m, "  fence[%d] = %08llx\n", i, gt->fence[i]);
 
-	if (IS_GEN_RANGE(m->i915, 6, 11)) {
-		err_printf(m, "ERROR: 0x%08x\n", gt->error);
-		err_printf(m, "DONE_REG: 0x%08x\n", gt->done_reg);
-	}
+	अगर (IS_GEN_RANGE(m->i915, 6, 11)) अणु
+		err_म_लिखो(m, "ERROR: 0x%08x\n", gt->error);
+		err_म_लिखो(m, "DONE_REG: 0x%08x\n", gt->करोne_reg);
+	पूर्ण
 
-	if (INTEL_GEN(m->i915) >= 8)
-		err_printf(m, "FAULT_TLB_DATA: 0x%08x 0x%08x\n",
+	अगर (INTEL_GEN(m->i915) >= 8)
+		err_म_लिखो(m, "FAULT_TLB_DATA: 0x%08x 0x%08x\n",
 			   gt->fault_data1, gt->fault_data0);
 
-	if (IS_GEN(m->i915, 7))
-		err_printf(m, "ERR_INT: 0x%08x\n", gt->err_int);
+	अगर (IS_GEN(m->i915, 7))
+		err_म_लिखो(m, "ERR_INT: 0x%08x\n", gt->err_पूर्णांक);
 
-	if (IS_GEN_RANGE(m->i915, 8, 11))
-		err_printf(m, "GTT_CACHE_EN: 0x%08x\n", gt->gtt_cache);
+	अगर (IS_GEN_RANGE(m->i915, 8, 11))
+		err_म_लिखो(m, "GTT_CACHE_EN: 0x%08x\n", gt->gtt_cache);
 
-	if (IS_GEN(m->i915, 12))
-		err_printf(m, "AUX_ERR_DBG: 0x%08x\n", gt->aux_err);
+	अगर (IS_GEN(m->i915, 12))
+		err_म_लिखो(m, "AUX_ERR_DBG: 0x%08x\n", gt->aux_err);
 
-	if (INTEL_GEN(m->i915) >= 12) {
-		int i;
+	अगर (INTEL_GEN(m->i915) >= 12) अणु
+		पूर्णांक i;
 
-		for (i = 0; i < GEN12_SFC_DONE_MAX; i++)
-			err_printf(m, "  SFC_DONE[%d]: 0x%08x\n", i,
-				   gt->sfc_done[i]);
+		क्रम (i = 0; i < GEN12_SFC_DONE_MAX; i++)
+			err_म_लिखो(m, "  SFC_DONE[%d]: 0x%08x\n", i,
+				   gt->sfc_करोne[i]);
 
-		err_printf(m, "  GAM_DONE: 0x%08x\n", gt->gam_done);
-	}
+		err_म_लिखो(m, "  GAM_DONE: 0x%08x\n", gt->gam_करोne);
+	पूर्ण
 
-	for (ee = gt->engine; ee; ee = ee->next) {
-		const struct i915_vma_coredump *vma;
+	क्रम (ee = gt->engine; ee; ee = ee->next) अणु
+		स्थिर काष्ठा i915_vma_coredump *vma;
 
-		error_print_engine(m, ee);
-		for (vma = ee->vma; vma; vma = vma->next)
-			print_error_vma(m, ee->engine, vma);
-	}
+		error_prपूर्णांक_engine(m, ee);
+		क्रम (vma = ee->vma; vma; vma = vma->next)
+			prपूर्णांक_error_vma(m, ee->engine, vma);
+	पूर्ण
 
-	if (gt->uc)
-		err_print_uc(m, gt->uc);
+	अगर (gt->uc)
+		err_prपूर्णांक_uc(m, gt->uc);
 
-	err_print_gt_info(m, gt);
-}
+	err_prपूर्णांक_gt_info(m, gt);
+पूर्ण
 
-static void __err_print_to_sgl(struct drm_i915_error_state_buf *m,
-			       struct i915_gpu_coredump *error)
-{
-	const struct intel_engine_coredump *ee;
-	struct timespec64 ts;
+अटल व्योम __err_prपूर्णांक_to_sgl(काष्ठा drm_i915_error_state_buf *m,
+			       काष्ठा i915_gpu_coredump *error)
+अणु
+	स्थिर काष्ठा पूर्णांकel_engine_coredump *ee;
+	काष्ठा बारpec64 ts;
 
-	if (*error->error_msg)
-		err_printf(m, "%s\n", error->error_msg);
-	err_printf(m, "Kernel: %s %s\n",
+	अगर (*error->error_msg)
+		err_म_लिखो(m, "%s\n", error->error_msg);
+	err_म_लिखो(m, "Kernel: %s %s\n",
 		   init_utsname()->release,
 		   init_utsname()->machine);
-	err_printf(m, "Driver: %s\n", DRIVER_DATE);
-	ts = ktime_to_timespec64(error->time);
-	err_printf(m, "Time: %lld s %ld us\n",
+	err_म_लिखो(m, "Driver: %s\n", DRIVER_DATE);
+	ts = kसमय_प्रकारo_बारpec64(error->समय);
+	err_म_लिखो(m, "Time: %lld s %ld us\n",
 		   (s64)ts.tv_sec, ts.tv_nsec / NSEC_PER_USEC);
-	ts = ktime_to_timespec64(error->boottime);
-	err_printf(m, "Boottime: %lld s %ld us\n",
+	ts = kसमय_प्रकारo_बारpec64(error->bootसमय);
+	err_म_लिखो(m, "Boottime: %lld s %ld us\n",
 		   (s64)ts.tv_sec, ts.tv_nsec / NSEC_PER_USEC);
-	ts = ktime_to_timespec64(error->uptime);
-	err_printf(m, "Uptime: %lld s %ld us\n",
+	ts = kसमय_प्रकारo_बारpec64(error->upसमय);
+	err_म_लिखो(m, "Uptime: %lld s %ld us\n",
 		   (s64)ts.tv_sec, ts.tv_nsec / NSEC_PER_USEC);
-	err_printf(m, "Capture: %lu jiffies; %d ms ago\n",
-		   error->capture, jiffies_to_msecs(jiffies - error->capture));
+	err_म_लिखो(m, "Capture: %lu jiffies; %d ms ago\n",
+		   error->capture, jअगरfies_to_msecs(jअगरfies - error->capture));
 
-	for (ee = error->gt ? error->gt->engine : NULL; ee; ee = ee->next)
-		err_printf(m, "Active process (on ring %s): %s [%d]\n",
+	क्रम (ee = error->gt ? error->gt->engine : शून्य; ee; ee = ee->next)
+		err_म_लिखो(m, "Active process (on ring %s): %s [%d]\n",
 			   ee->engine->name,
 			   ee->context.comm,
 			   ee->context.pid);
 
-	err_printf(m, "Reset count: %u\n", error->reset_count);
-	err_printf(m, "Suspend count: %u\n", error->suspend_count);
-	err_printf(m, "Platform: %s\n", intel_platform_name(error->device_info.platform));
-	err_printf(m, "Subplatform: 0x%x\n",
-		   intel_subplatform(&error->runtime_info,
-				     error->device_info.platform));
-	err_print_pciid(m, m->i915);
+	err_म_लिखो(m, "Reset count: %u\n", error->reset_count);
+	err_म_लिखो(m, "Suspend count: %u\n", error->suspend_count);
+	err_म_लिखो(m, "Platform: %s\n", पूर्णांकel_platक्रमm_name(error->device_info.platक्रमm));
+	err_म_लिखो(m, "Subplatform: 0x%x\n",
+		   पूर्णांकel_subplatक्रमm(&error->runसमय_info,
+				     error->device_info.platक्रमm));
+	err_prपूर्णांक_pciid(m, m->i915);
 
-	err_printf(m, "IOMMU enabled?: %d\n", error->iommu);
+	err_म_लिखो(m, "IOMMU enabled?: %d\n", error->iommu);
 
-	if (HAS_CSR(m->i915)) {
-		struct intel_csr *csr = &m->i915->csr;
+	अगर (HAS_CSR(m->i915)) अणु
+		काष्ठा पूर्णांकel_csr *csr = &m->i915->csr;
 
-		err_printf(m, "DMC loaded: %s\n",
-			   yesno(csr->dmc_payload != NULL));
-		err_printf(m, "DMC fw version: %d.%d\n",
+		err_म_लिखो(m, "DMC loaded: %s\n",
+			   yesno(csr->dmc_payload != शून्य));
+		err_म_लिखो(m, "DMC fw version: %d.%d\n",
 			   CSR_VERSION_MAJOR(csr->version),
 			   CSR_VERSION_MINOR(csr->version));
-	}
+	पूर्ण
 
-	err_printf(m, "RPM wakelock: %s\n", yesno(error->wakelock));
-	err_printf(m, "PM suspended: %s\n", yesno(error->suspended));
+	err_म_लिखो(m, "RPM wakelock: %s\n", yesno(error->wakelock));
+	err_म_लिखो(m, "PM suspended: %s\n", yesno(error->suspended));
 
-	if (error->gt)
-		err_print_gt(m, error->gt);
+	अगर (error->gt)
+		err_prपूर्णांक_gt(m, error->gt);
 
-	if (error->overlay)
-		intel_overlay_print_error_state(m, error->overlay);
+	अगर (error->overlay)
+		पूर्णांकel_overlay_prपूर्णांक_error_state(m, error->overlay);
 
-	if (error->display)
-		intel_display_print_error_state(m, error->display);
+	अगर (error->display)
+		पूर्णांकel_display_prपूर्णांक_error_state(m, error->display);
 
-	err_print_capabilities(m, error);
-	err_print_params(m, &error->params);
-}
+	err_prपूर्णांक_capabilities(m, error);
+	err_prपूर्णांक_params(m, &error->params);
+पूर्ण
 
-static int err_print_to_sgl(struct i915_gpu_coredump *error)
-{
-	struct drm_i915_error_state_buf m;
+अटल पूर्णांक err_prपूर्णांक_to_sgl(काष्ठा i915_gpu_coredump *error)
+अणु
+	काष्ठा drm_i915_error_state_buf m;
 
-	if (IS_ERR(error))
-		return PTR_ERR(error);
+	अगर (IS_ERR(error))
+		वापस PTR_ERR(error);
 
-	if (READ_ONCE(error->sgl))
-		return 0;
+	अगर (READ_ONCE(error->sgl))
+		वापस 0;
 
-	memset(&m, 0, sizeof(m));
+	स_रखो(&m, 0, माप(m));
 	m.i915 = error->i915;
 
-	__err_print_to_sgl(&m, error);
+	__err_prपूर्णांक_to_sgl(&m, error);
 
-	if (m.buf) {
+	अगर (m.buf) अणु
 		__sg_set_buf(m.cur++, m.buf, m.bytes, m.iter);
 		m.bytes = 0;
-		m.buf = NULL;
-	}
-	if (m.cur) {
+		m.buf = शून्य;
+	पूर्ण
+	अगर (m.cur) अणु
 		GEM_BUG_ON(m.end < m.cur);
 		sg_mark_end(m.cur - 1);
-	}
+	पूर्ण
 	GEM_BUG_ON(m.sgl && !m.cur);
 
-	if (m.err) {
-		err_free_sgl(m.sgl);
-		return m.err;
-	}
+	अगर (m.err) अणु
+		err_मुक्त_sgl(m.sgl);
+		वापस m.err;
+	पूर्ण
 
-	if (cmpxchg(&error->sgl, NULL, m.sgl))
-		err_free_sgl(m.sgl);
+	अगर (cmpxchg(&error->sgl, शून्य, m.sgl))
+		err_मुक्त_sgl(m.sgl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-ssize_t i915_gpu_coredump_copy_to_buffer(struct i915_gpu_coredump *error,
-					 char *buf, loff_t off, size_t rem)
-{
-	struct scatterlist *sg;
-	size_t count;
+sमाप_प्रकार i915_gpu_coredump_copy_to_buffer(काष्ठा i915_gpu_coredump *error,
+					 अक्षर *buf, loff_t off, माप_प्रकार rem)
+अणु
+	काष्ठा scatterlist *sg;
+	माप_प्रकार count;
 	loff_t pos;
-	int err;
+	पूर्णांक err;
 
-	if (!error || !rem)
-		return 0;
+	अगर (!error || !rem)
+		वापस 0;
 
-	err = err_print_to_sgl(error);
-	if (err)
-		return err;
+	err = err_prपूर्णांक_to_sgl(error);
+	अगर (err)
+		वापस err;
 
 	sg = READ_ONCE(error->fit);
-	if (!sg || off < sg->dma_address)
+	अगर (!sg || off < sg->dma_address)
 		sg = error->sgl;
-	if (!sg)
-		return 0;
+	अगर (!sg)
+		वापस 0;
 
 	pos = sg->dma_address;
 	count = 0;
-	do {
-		size_t len, start;
+	करो अणु
+		माप_प्रकार len, start;
 
-		if (sg_is_chain(sg)) {
+		अगर (sg_is_chain(sg)) अणु
 			sg = sg_chain_ptr(sg);
 			GEM_BUG_ON(sg_is_chain(sg));
-		}
+		पूर्ण
 
 		len = sg->length;
-		if (pos + len <= off) {
+		अगर (pos + len <= off) अणु
 			pos += len;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		start = sg->offset;
-		if (pos < off) {
+		अगर (pos < off) अणु
 			GEM_BUG_ON(off - pos > len);
 			len -= off - pos;
 			start += off - pos;
 			pos = off;
-		}
+		पूर्ण
 
 		len = min(len, rem);
 		GEM_BUG_ON(!len || len > sg->length);
 
-		memcpy(buf, page_address(sg_page(sg)) + start, len);
+		स_नकल(buf, page_address(sg_page(sg)) + start, len);
 
 		count += len;
 		pos += len;
 
 		buf += len;
 		rem -= len;
-		if (!rem) {
+		अगर (!rem) अणु
 			WRITE_ONCE(error->fit, sg);
-			break;
-		}
-	} while (!sg_is_last(sg++));
+			अवरोध;
+		पूर्ण
+	पूर्ण जबतक (!sg_is_last(sg++));
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static void i915_vma_coredump_free(struct i915_vma_coredump *vma)
-{
-	while (vma) {
-		struct i915_vma_coredump *next = vma->next;
-		int page;
+अटल व्योम i915_vma_coredump_मुक्त(काष्ठा i915_vma_coredump *vma)
+अणु
+	जबतक (vma) अणु
+		काष्ठा i915_vma_coredump *next = vma->next;
+		पूर्णांक page;
 
-		for (page = 0; page < vma->page_count; page++)
-			free_page((unsigned long)vma->pages[page]);
+		क्रम (page = 0; page < vma->page_count; page++)
+			मुक्त_page((अचिन्हित दीर्घ)vma->pages[page]);
 
-		kfree(vma);
+		kमुक्त(vma);
 		vma = next;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void cleanup_params(struct i915_gpu_coredump *error)
-{
-	i915_params_free(&error->params);
-}
+अटल व्योम cleanup_params(काष्ठा i915_gpu_coredump *error)
+अणु
+	i915_params_मुक्त(&error->params);
+पूर्ण
 
-static void cleanup_uc(struct intel_uc_coredump *uc)
-{
-	kfree(uc->guc_fw.path);
-	kfree(uc->huc_fw.path);
-	i915_vma_coredump_free(uc->guc_log);
+अटल व्योम cleanup_uc(काष्ठा पूर्णांकel_uc_coredump *uc)
+अणु
+	kमुक्त(uc->guc_fw.path);
+	kमुक्त(uc->huc_fw.path);
+	i915_vma_coredump_मुक्त(uc->guc_log);
 
-	kfree(uc);
-}
+	kमुक्त(uc);
+पूर्ण
 
-static void cleanup_gt(struct intel_gt_coredump *gt)
-{
-	while (gt->engine) {
-		struct intel_engine_coredump *ee = gt->engine;
+अटल व्योम cleanup_gt(काष्ठा पूर्णांकel_gt_coredump *gt)
+अणु
+	जबतक (gt->engine) अणु
+		काष्ठा पूर्णांकel_engine_coredump *ee = gt->engine;
 
 		gt->engine = ee->next;
 
-		i915_vma_coredump_free(ee->vma);
-		kfree(ee);
-	}
+		i915_vma_coredump_मुक्त(ee->vma);
+		kमुक्त(ee);
+	पूर्ण
 
-	if (gt->uc)
+	अगर (gt->uc)
 		cleanup_uc(gt->uc);
 
-	kfree(gt);
-}
+	kमुक्त(gt);
+पूर्ण
 
-void __i915_gpu_coredump_free(struct kref *error_ref)
-{
-	struct i915_gpu_coredump *error =
+व्योम __i915_gpu_coredump_मुक्त(काष्ठा kref *error_ref)
+अणु
+	काष्ठा i915_gpu_coredump *error =
 		container_of(error_ref, typeof(*error), ref);
 
-	while (error->gt) {
-		struct intel_gt_coredump *gt = error->gt;
+	जबतक (error->gt) अणु
+		काष्ठा पूर्णांकel_gt_coredump *gt = error->gt;
 
 		error->gt = gt->next;
 		cleanup_gt(gt);
-	}
+	पूर्ण
 
-	kfree(error->overlay);
-	kfree(error->display);
+	kमुक्त(error->overlay);
+	kमुक्त(error->display);
 
 	cleanup_params(error);
 
-	err_free_sgl(error->sgl);
-	kfree(error);
-}
+	err_मुक्त_sgl(error->sgl);
+	kमुक्त(error);
+पूर्ण
 
-static struct i915_vma_coredump *
-i915_vma_coredump_create(const struct intel_gt *gt,
-			 const struct i915_vma *vma,
-			 const char *name,
-			 struct i915_vma_compress *compress)
-{
-	struct i915_ggtt *ggtt = gt->ggtt;
-	const u64 slot = ggtt->error_capture.start;
-	struct i915_vma_coredump *dst;
-	unsigned long num_pages;
-	struct sgt_iter iter;
-	int ret;
+अटल काष्ठा i915_vma_coredump *
+i915_vma_coredump_create(स्थिर काष्ठा पूर्णांकel_gt *gt,
+			 स्थिर काष्ठा i915_vma *vma,
+			 स्थिर अक्षर *name,
+			 काष्ठा i915_vma_compress *compress)
+अणु
+	काष्ठा i915_ggtt *ggtt = gt->ggtt;
+	स्थिर u64 slot = ggtt->error_capture.start;
+	काष्ठा i915_vma_coredump *dst;
+	अचिन्हित दीर्घ num_pages;
+	काष्ठा sgt_iter iter;
+	पूर्णांक ret;
 
 	might_sleep();
 
-	if (!vma || !vma->pages || !compress)
-		return NULL;
+	अगर (!vma || !vma->pages || !compress)
+		वापस शून्य;
 
 	num_pages = min_t(u64, vma->size, vma->obj->base.size) >> PAGE_SHIFT;
-	num_pages = DIV_ROUND_UP(10 * num_pages, 8); /* worstcase zlib growth */
-	dst = kmalloc(sizeof(*dst) + num_pages * sizeof(u32 *), ALLOW_FAIL);
-	if (!dst)
-		return NULL;
+	num_pages = DIV_ROUND_UP(10 * num_pages, 8); /* worstहाल zlib growth */
+	dst = kदो_स्मृति(माप(*dst) + num_pages * माप(u32 *), ALLOW_FAIL);
+	अगर (!dst)
+		वापस शून्य;
 
-	if (!compress_start(compress)) {
-		kfree(dst);
-		return NULL;
-	}
+	अगर (!compress_start(compress)) अणु
+		kमुक्त(dst);
+		वापस शून्य;
+	पूर्ण
 
-	strcpy(dst->name, name);
-	dst->next = NULL;
+	म_नकल(dst->name, name);
+	dst->next = शून्य;
 
 	dst->gtt_offset = vma->node.start;
 	dst->gtt_size = vma->node.size;
@@ -1022,11 +1023,11 @@ i915_vma_coredump_create(const struct intel_gt *gt,
 	dst->unused = 0;
 
 	ret = -EINVAL;
-	if (drm_mm_node_allocated(&ggtt->error_capture)) {
-		void __iomem *s;
+	अगर (drm_mm_node_allocated(&ggtt->error_capture)) अणु
+		व्योम __iomem *s;
 		dma_addr_t dma;
 
-		for_each_sgt_daddr(dma, iter, vma->pages) {
+		क्रम_each_sgt_daddr(dma, iter, vma->pages) अणु
 			mutex_lock(&ggtt->error_mutex);
 			ggtt->vm.insert_page(&ggtt->vm, dma, slot,
 					     I915_CACHE_NONE, 0);
@@ -1034,38 +1035,38 @@ i915_vma_coredump_create(const struct intel_gt *gt,
 
 			s = io_mapping_map_wc(&ggtt->iomap, slot, PAGE_SIZE);
 			ret = compress_page(compress,
-					    (void  __force *)s, dst,
+					    (व्योम  __क्रमce *)s, dst,
 					    true);
 			io_mapping_unmap(s);
 
 			mb();
 			ggtt->vm.clear_range(&ggtt->vm, slot, PAGE_SIZE);
 			mutex_unlock(&ggtt->error_mutex);
-			if (ret)
-				break;
-		}
-	} else if (i915_gem_object_is_lmem(vma->obj)) {
-		struct intel_memory_region *mem = vma->obj->mm.region;
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (i915_gem_object_is_lmem(vma->obj)) अणु
+		काष्ठा पूर्णांकel_memory_region *mem = vma->obj->mm.region;
 		dma_addr_t dma;
 
-		for_each_sgt_daddr(dma, iter, vma->pages) {
-			void __iomem *s;
+		क्रम_each_sgt_daddr(dma, iter, vma->pages) अणु
+			व्योम __iomem *s;
 
 			s = io_mapping_map_wc(&mem->iomap,
 					      dma - mem->region.start,
 					      PAGE_SIZE);
 			ret = compress_page(compress,
-					    (void __force *)s, dst,
+					    (व्योम __क्रमce *)s, dst,
 					    true);
 			io_mapping_unmap(s);
-			if (ret)
-				break;
-		}
-	} else {
-		struct page *page;
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा page *page;
 
-		for_each_sgt_page(page, iter, vma->pages) {
-			void *s;
+		क्रम_each_sgt_page(page, iter, vma->pages) अणु
+			व्योम *s;
 
 			drm_clflush_pages(&page, 1);
 
@@ -1075,65 +1076,65 @@ i915_vma_coredump_create(const struct intel_gt *gt,
 
 			drm_clflush_pages(&page, 1);
 
-			if (ret)
-				break;
-		}
-	}
+			अगर (ret)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ret || compress_flush(compress, dst)) {
-		while (dst->page_count--)
-			pool_free(&compress->pool, dst->pages[dst->page_count]);
-		kfree(dst);
-		dst = NULL;
-	}
+	अगर (ret || compress_flush(compress, dst)) अणु
+		जबतक (dst->page_count--)
+			pool_मुक्त(&compress->pool, dst->pages[dst->page_count]);
+		kमुक्त(dst);
+		dst = शून्य;
+	पूर्ण
 	compress_finish(compress);
 
-	return dst;
-}
+	वापस dst;
+पूर्ण
 
-static void gt_record_fences(struct intel_gt_coredump *gt)
-{
-	struct i915_ggtt *ggtt = gt->_gt->ggtt;
-	struct intel_uncore *uncore = gt->_gt->uncore;
-	int i;
+अटल व्योम gt_record_fences(काष्ठा पूर्णांकel_gt_coredump *gt)
+अणु
+	काष्ठा i915_ggtt *ggtt = gt->_gt->ggtt;
+	काष्ठा पूर्णांकel_uncore *uncore = gt->_gt->uncore;
+	पूर्णांक i;
 
-	if (INTEL_GEN(uncore->i915) >= 6) {
-		for (i = 0; i < ggtt->num_fences; i++)
+	अगर (INTEL_GEN(uncore->i915) >= 6) अणु
+		क्रम (i = 0; i < ggtt->num_fences; i++)
 			gt->fence[i] =
-				intel_uncore_read64(uncore,
+				पूर्णांकel_uncore_पढ़ो64(uncore,
 						    FENCE_REG_GEN6_LO(i));
-	} else if (INTEL_GEN(uncore->i915) >= 4) {
-		for (i = 0; i < ggtt->num_fences; i++)
+	पूर्ण अन्यथा अगर (INTEL_GEN(uncore->i915) >= 4) अणु
+		क्रम (i = 0; i < ggtt->num_fences; i++)
 			gt->fence[i] =
-				intel_uncore_read64(uncore,
+				पूर्णांकel_uncore_पढ़ो64(uncore,
 						    FENCE_REG_965_LO(i));
-	} else {
-		for (i = 0; i < ggtt->num_fences; i++)
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < ggtt->num_fences; i++)
 			gt->fence[i] =
-				intel_uncore_read(uncore, FENCE_REG(i));
-	}
+				पूर्णांकel_uncore_पढ़ो(uncore, FENCE_REG(i));
+	पूर्ण
 	gt->nfence = i;
-}
+पूर्ण
 
-static void engine_record_registers(struct intel_engine_coredump *ee)
-{
-	const struct intel_engine_cs *engine = ee->engine;
-	struct drm_i915_private *i915 = engine->i915;
+अटल व्योम engine_record_रेजिस्टरs(काष्ठा पूर्णांकel_engine_coredump *ee)
+अणु
+	स्थिर काष्ठा पूर्णांकel_engine_cs *engine = ee->engine;
+	काष्ठा drm_i915_निजी *i915 = engine->i915;
 
-	if (INTEL_GEN(i915) >= 6) {
+	अगर (INTEL_GEN(i915) >= 6) अणु
 		ee->rc_psmi = ENGINE_READ(engine, RING_PSMI_CTL);
 
-		if (INTEL_GEN(i915) >= 12)
-			ee->fault_reg = intel_uncore_read(engine->uncore,
+		अगर (INTEL_GEN(i915) >= 12)
+			ee->fault_reg = पूर्णांकel_uncore_पढ़ो(engine->uncore,
 							  GEN12_RING_FAULT_REG);
-		else if (INTEL_GEN(i915) >= 8)
-			ee->fault_reg = intel_uncore_read(engine->uncore,
+		अन्यथा अगर (INTEL_GEN(i915) >= 8)
+			ee->fault_reg = पूर्णांकel_uncore_पढ़ो(engine->uncore,
 							  GEN8_RING_FAULT_REG);
-		else
+		अन्यथा
 			ee->fault_reg = GEN6_RING_FAULT_REG_READ(engine);
-	}
+	पूर्ण
 
-	if (INTEL_GEN(i915) >= 4) {
+	अगर (INTEL_GEN(i915) >= 4) अणु
 		ee->esr = ENGINE_READ(engine, RING_ESR);
 		ee->faddr = ENGINE_READ(engine, RING_DMA_FADD);
 		ee->ipeir = ENGINE_READ(engine, RING_IPEIR);
@@ -1141,91 +1142,91 @@ static void engine_record_registers(struct intel_engine_coredump *ee)
 		ee->instps = ENGINE_READ(engine, RING_INSTPS);
 		ee->bbaddr = ENGINE_READ(engine, RING_BBADDR);
 		ee->ccid = ENGINE_READ(engine, CCID);
-		if (INTEL_GEN(i915) >= 8) {
+		अगर (INTEL_GEN(i915) >= 8) अणु
 			ee->faddr |= (u64)ENGINE_READ(engine, RING_DMA_FADD_UDW) << 32;
 			ee->bbaddr |= (u64)ENGINE_READ(engine, RING_BBADDR_UDW) << 32;
-		}
+		पूर्ण
 		ee->bbstate = ENGINE_READ(engine, RING_BBSTATE);
-	} else {
+	पूर्ण अन्यथा अणु
 		ee->faddr = ENGINE_READ(engine, DMA_FADD_I8XX);
 		ee->ipeir = ENGINE_READ(engine, IPEIR);
 		ee->ipehr = ENGINE_READ(engine, IPEHR);
-	}
+	पूर्ण
 
-	intel_engine_get_instdone(engine, &ee->instdone);
+	पूर्णांकel_engine_get_instकरोne(engine, &ee->instकरोne);
 
 	ee->instpm = ENGINE_READ(engine, RING_INSTPM);
-	ee->acthd = intel_engine_get_active_head(engine);
+	ee->acthd = पूर्णांकel_engine_get_active_head(engine);
 	ee->start = ENGINE_READ(engine, RING_START);
 	ee->head = ENGINE_READ(engine, RING_HEAD);
 	ee->tail = ENGINE_READ(engine, RING_TAIL);
 	ee->ctl = ENGINE_READ(engine, RING_CTL);
-	if (INTEL_GEN(i915) > 2)
+	अगर (INTEL_GEN(i915) > 2)
 		ee->mode = ENGINE_READ(engine, RING_MI_MODE);
 
-	if (!HWS_NEEDS_PHYSICAL(i915)) {
+	अगर (!HWS_NEEDS_PHYSICAL(i915)) अणु
 		i915_reg_t mmio;
 
-		if (IS_GEN(i915, 7)) {
-			switch (engine->id) {
-			default:
+		अगर (IS_GEN(i915, 7)) अणु
+			चयन (engine->id) अणु
+			शेष:
 				MISSING_CASE(engine->id);
 				fallthrough;
-			case RCS0:
+			हाल RCS0:
 				mmio = RENDER_HWS_PGA_GEN7;
-				break;
-			case BCS0:
+				अवरोध;
+			हाल BCS0:
 				mmio = BLT_HWS_PGA_GEN7;
-				break;
-			case VCS0:
+				अवरोध;
+			हाल VCS0:
 				mmio = BSD_HWS_PGA_GEN7;
-				break;
-			case VECS0:
+				अवरोध;
+			हाल VECS0:
 				mmio = VEBOX_HWS_PGA_GEN7;
-				break;
-			}
-		} else if (IS_GEN(engine->i915, 6)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा अगर (IS_GEN(engine->i915, 6)) अणु
 			mmio = RING_HWS_PGA_GEN6(engine->mmio_base);
-		} else {
-			/* XXX: gen8 returns to sanity */
+		पूर्ण अन्यथा अणु
+			/* XXX: gen8 वापसs to sanity */
 			mmio = RING_HWS_PGA(engine->mmio_base);
-		}
+		पूर्ण
 
-		ee->hws = intel_uncore_read(engine->uncore, mmio);
-	}
+		ee->hws = पूर्णांकel_uncore_पढ़ो(engine->uncore, mmio);
+	पूर्ण
 
 	ee->reset_count = i915_reset_engine_count(&i915->gpu_error, engine);
 
-	if (HAS_PPGTT(i915)) {
-		int i;
+	अगर (HAS_PPGTT(i915)) अणु
+		पूर्णांक i;
 
 		ee->vm_info.gfx_mode = ENGINE_READ(engine, RING_MODE_GEN7);
 
-		if (IS_GEN(i915, 6)) {
+		अगर (IS_GEN(i915, 6)) अणु
 			ee->vm_info.pp_dir_base =
-				ENGINE_READ(engine, RING_PP_DIR_BASE_READ);
-		} else if (IS_GEN(i915, 7)) {
+				ENGINE_READ(engine, RING_PP_सूची_BASE_READ);
+		पूर्ण अन्यथा अगर (IS_GEN(i915, 7)) अणु
 			ee->vm_info.pp_dir_base =
-				ENGINE_READ(engine, RING_PP_DIR_BASE);
-		} else if (INTEL_GEN(i915) >= 8) {
+				ENGINE_READ(engine, RING_PP_सूची_BASE);
+		पूर्ण अन्यथा अगर (INTEL_GEN(i915) >= 8) अणु
 			u32 base = engine->mmio_base;
 
-			for (i = 0; i < 4; i++) {
+			क्रम (i = 0; i < 4; i++) अणु
 				ee->vm_info.pdp[i] =
-					intel_uncore_read(engine->uncore,
+					पूर्णांकel_uncore_पढ़ो(engine->uncore,
 							  GEN8_RING_PDP_UDW(base, i));
 				ee->vm_info.pdp[i] <<= 32;
 				ee->vm_info.pdp[i] |=
-					intel_uncore_read(engine->uncore,
+					पूर्णांकel_uncore_पढ़ो(engine->uncore,
 							  GEN8_RING_PDP_LDW(base, i));
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void record_request(const struct i915_request *request,
-			   struct i915_request_coredump *erq)
-{
+अटल व्योम record_request(स्थिर काष्ठा i915_request *request,
+			   काष्ठा i915_request_coredump *erq)
+अणु
 	erq->flags = request->fence.flags;
 	erq->context = request->fence.context;
 	erq->seqno = request->fence.seqno;
@@ -1234,151 +1235,151 @@ static void record_request(const struct i915_request *request,
 	erq->tail = request->tail;
 
 	erq->pid = 0;
-	rcu_read_lock();
-	if (!intel_context_is_closed(request->context)) {
-		const struct i915_gem_context *ctx;
+	rcu_पढ़ो_lock();
+	अगर (!पूर्णांकel_context_is_बंदd(request->context)) अणु
+		स्थिर काष्ठा i915_gem_context *ctx;
 
 		ctx = rcu_dereference(request->context->gem_context);
-		if (ctx)
+		अगर (ctx)
 			erq->pid = pid_nr(ctx->pid);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void engine_record_execlists(struct intel_engine_coredump *ee)
-{
-	const struct intel_engine_execlists * const el = &ee->engine->execlists;
-	struct i915_request * const *port = el->active;
-	unsigned int n = 0;
+अटल व्योम engine_record_execlists(काष्ठा पूर्णांकel_engine_coredump *ee)
+अणु
+	स्थिर काष्ठा पूर्णांकel_engine_execlists * स्थिर el = &ee->engine->execlists;
+	काष्ठा i915_request * स्थिर *port = el->active;
+	अचिन्हित पूर्णांक n = 0;
 
-	while (*port)
+	जबतक (*port)
 		record_request(*port++, &ee->execlist[n++]);
 
 	ee->num_ports = n;
-}
+पूर्ण
 
-static bool record_context(struct i915_gem_context_coredump *e,
-			   const struct i915_request *rq)
-{
-	struct i915_gem_context *ctx;
-	struct task_struct *task;
+अटल bool record_context(काष्ठा i915_gem_context_coredump *e,
+			   स्थिर काष्ठा i915_request *rq)
+अणु
+	काष्ठा i915_gem_context *ctx;
+	काष्ठा task_काष्ठा *task;
 	bool simulated;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ctx = rcu_dereference(rq->context->gem_context);
-	if (ctx && !kref_get_unless_zero(&ctx->ref))
-		ctx = NULL;
-	rcu_read_unlock();
-	if (!ctx)
-		return true;
+	अगर (ctx && !kref_get_unless_zero(&ctx->ref))
+		ctx = शून्य;
+	rcu_पढ़ो_unlock();
+	अगर (!ctx)
+		वापस true;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	task = pid_task(ctx->pid, PIDTYPE_PID);
-	if (task) {
-		strcpy(e->comm, task->comm);
+	अगर (task) अणु
+		म_नकल(e->comm, task->comm);
 		e->pid = task->pid;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	e->sched_attr = ctx->sched;
-	e->guilty = atomic_read(&ctx->guilty_count);
-	e->active = atomic_read(&ctx->active_count);
+	e->guilty = atomic_पढ़ो(&ctx->guilty_count);
+	e->active = atomic_पढ़ो(&ctx->active_count);
 
-	e->total_runtime = rq->context->runtime.total;
-	e->avg_runtime = ewma_runtime_read(&rq->context->runtime.avg);
+	e->total_runसमय = rq->context->runसमय.total;
+	e->avg_runसमय = ewma_runसमय_पढ़ो(&rq->context->runसमय.avg);
 
 	simulated = i915_gem_context_no_error_capture(ctx);
 
 	i915_gem_context_put(ctx);
-	return simulated;
-}
+	वापस simulated;
+पूर्ण
 
-struct intel_engine_capture_vma {
-	struct intel_engine_capture_vma *next;
-	struct i915_vma *vma;
-	char name[16];
-};
+काष्ठा पूर्णांकel_engine_capture_vma अणु
+	काष्ठा पूर्णांकel_engine_capture_vma *next;
+	काष्ठा i915_vma *vma;
+	अक्षर name[16];
+पूर्ण;
 
-static struct intel_engine_capture_vma *
-capture_vma(struct intel_engine_capture_vma *next,
-	    struct i915_vma *vma,
-	    const char *name,
+अटल काष्ठा पूर्णांकel_engine_capture_vma *
+capture_vma(काष्ठा पूर्णांकel_engine_capture_vma *next,
+	    काष्ठा i915_vma *vma,
+	    स्थिर अक्षर *name,
 	    gfp_t gfp)
-{
-	struct intel_engine_capture_vma *c;
+अणु
+	काष्ठा पूर्णांकel_engine_capture_vma *c;
 
-	if (!vma)
-		return next;
+	अगर (!vma)
+		वापस next;
 
-	c = kmalloc(sizeof(*c), gfp);
-	if (!c)
-		return next;
+	c = kदो_स्मृति(माप(*c), gfp);
+	अगर (!c)
+		वापस next;
 
-	if (!i915_active_acquire_if_busy(&vma->active)) {
-		kfree(c);
-		return next;
-	}
+	अगर (!i915_active_acquire_अगर_busy(&vma->active)) अणु
+		kमुक्त(c);
+		वापस next;
+	पूर्ण
 
-	strcpy(c->name, name);
-	c->vma = vma; /* reference held while active */
+	म_नकल(c->name, name);
+	c->vma = vma; /* reference held जबतक active */
 
 	c->next = next;
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static struct intel_engine_capture_vma *
-capture_user(struct intel_engine_capture_vma *capture,
-	     const struct i915_request *rq,
+अटल काष्ठा पूर्णांकel_engine_capture_vma *
+capture_user(काष्ठा पूर्णांकel_engine_capture_vma *capture,
+	     स्थिर काष्ठा i915_request *rq,
 	     gfp_t gfp)
-{
-	struct i915_capture_list *c;
+अणु
+	काष्ठा i915_capture_list *c;
 
-	for (c = rq->capture_list; c; c = c->next)
+	क्रम (c = rq->capture_list; c; c = c->next)
 		capture = capture_vma(capture, c->vma, "user", gfp);
 
-	return capture;
-}
+	वापस capture;
+पूर्ण
 
-static void add_vma(struct intel_engine_coredump *ee,
-		    struct i915_vma_coredump *vma)
-{
-	if (vma) {
+अटल व्योम add_vma(काष्ठा पूर्णांकel_engine_coredump *ee,
+		    काष्ठा i915_vma_coredump *vma)
+अणु
+	अगर (vma) अणु
 		vma->next = ee->vma;
 		ee->vma = vma;
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct intel_engine_coredump *
-intel_engine_coredump_alloc(struct intel_engine_cs *engine, gfp_t gfp)
-{
-	struct intel_engine_coredump *ee;
+काष्ठा पूर्णांकel_engine_coredump *
+पूर्णांकel_engine_coredump_alloc(काष्ठा पूर्णांकel_engine_cs *engine, gfp_t gfp)
+अणु
+	काष्ठा पूर्णांकel_engine_coredump *ee;
 
-	ee = kzalloc(sizeof(*ee), gfp);
-	if (!ee)
-		return NULL;
+	ee = kzalloc(माप(*ee), gfp);
+	अगर (!ee)
+		वापस शून्य;
 
 	ee->engine = engine;
 
-	engine_record_registers(ee);
+	engine_record_रेजिस्टरs(ee);
 	engine_record_execlists(ee);
 
-	return ee;
-}
+	वापस ee;
+पूर्ण
 
-struct intel_engine_capture_vma *
-intel_engine_coredump_add_request(struct intel_engine_coredump *ee,
-				  struct i915_request *rq,
+काष्ठा पूर्णांकel_engine_capture_vma *
+पूर्णांकel_engine_coredump_add_request(काष्ठा पूर्णांकel_engine_coredump *ee,
+				  काष्ठा i915_request *rq,
 				  gfp_t gfp)
-{
-	struct intel_engine_capture_vma *vma = NULL;
+अणु
+	काष्ठा पूर्णांकel_engine_capture_vma *vma = शून्य;
 
 	ee->simulated |= record_context(&ee->context, rq);
-	if (ee->simulated)
-		return NULL;
+	अगर (ee->simulated)
+		वापस शून्य;
 
 	/*
 	 * We need to copy these to an anonymous buffer
-	 * as the simplest method to avoid being overwritten
+	 * as the simplest method to aव्योम being overwritten
 	 * by userspace.
 	 */
 	vma = capture_vma(vma, rq->batch, "batch", gfp);
@@ -1390,19 +1391,19 @@ intel_engine_coredump_add_request(struct intel_engine_coredump *ee,
 	ee->rq_post = rq->postfix;
 	ee->rq_tail = rq->tail;
 
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-void
-intel_engine_coredump_add_vma(struct intel_engine_coredump *ee,
-			      struct intel_engine_capture_vma *capture,
-			      struct i915_vma_compress *compress)
-{
-	const struct intel_engine_cs *engine = ee->engine;
+व्योम
+पूर्णांकel_engine_coredump_add_vma(काष्ठा पूर्णांकel_engine_coredump *ee,
+			      काष्ठा पूर्णांकel_engine_capture_vma *capture,
+			      काष्ठा i915_vma_compress *compress)
+अणु
+	स्थिर काष्ठा पूर्णांकel_engine_cs *engine = ee->engine;
 
-	while (capture) {
-		struct intel_engine_capture_vma *this = capture;
-		struct i915_vma *vma = this->vma;
+	जबतक (capture) अणु
+		काष्ठा पूर्णांकel_engine_capture_vma *this = capture;
+		काष्ठा i915_vma *vma = this->vma;
 
 		add_vma(ee,
 			i915_vma_coredump_create(engine->gt,
@@ -1412,8 +1413,8 @@ intel_engine_coredump_add_vma(struct intel_engine_coredump *ee,
 		i915_active_release(&vma->active);
 
 		capture = this->next;
-		kfree(this);
-	}
+		kमुक्त(this);
+	पूर्ण
 
 	add_vma(ee,
 		i915_vma_coredump_create(engine->gt,
@@ -1426,83 +1427,83 @@ intel_engine_coredump_add_vma(struct intel_engine_coredump *ee,
 					 engine->wa_ctx.vma,
 					 "WA context",
 					 compress));
-}
+पूर्ण
 
-static struct intel_engine_coredump *
-capture_engine(struct intel_engine_cs *engine,
-	       struct i915_vma_compress *compress)
-{
-	struct intel_engine_capture_vma *capture = NULL;
-	struct intel_engine_coredump *ee;
-	struct i915_request *rq;
-	unsigned long flags;
+अटल काष्ठा पूर्णांकel_engine_coredump *
+capture_engine(काष्ठा पूर्णांकel_engine_cs *engine,
+	       काष्ठा i915_vma_compress *compress)
+अणु
+	काष्ठा पूर्णांकel_engine_capture_vma *capture = शून्य;
+	काष्ठा पूर्णांकel_engine_coredump *ee;
+	काष्ठा i915_request *rq;
+	अचिन्हित दीर्घ flags;
 
-	ee = intel_engine_coredump_alloc(engine, GFP_KERNEL);
-	if (!ee)
-		return NULL;
+	ee = पूर्णांकel_engine_coredump_alloc(engine, GFP_KERNEL);
+	अगर (!ee)
+		वापस शून्य;
 
 	spin_lock_irqsave(&engine->active.lock, flags);
-	rq = intel_engine_find_active_request(engine);
-	if (rq)
-		capture = intel_engine_coredump_add_request(ee, rq,
+	rq = पूर्णांकel_engine_find_active_request(engine);
+	अगर (rq)
+		capture = पूर्णांकel_engine_coredump_add_request(ee, rq,
 							    ATOMIC_MAYFAIL);
 	spin_unlock_irqrestore(&engine->active.lock, flags);
-	if (!capture) {
-		kfree(ee);
-		return NULL;
-	}
+	अगर (!capture) अणु
+		kमुक्त(ee);
+		वापस शून्य;
+	पूर्ण
 
-	intel_engine_coredump_add_vma(ee, capture, compress);
+	पूर्णांकel_engine_coredump_add_vma(ee, capture, compress);
 
-	return ee;
-}
+	वापस ee;
+पूर्ण
 
-static void
-gt_record_engines(struct intel_gt_coredump *gt,
-		  intel_engine_mask_t engine_mask,
-		  struct i915_vma_compress *compress)
-{
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल व्योम
+gt_record_engines(काष्ठा पूर्णांकel_gt_coredump *gt,
+		  पूर्णांकel_engine_mask_t engine_mask,
+		  काष्ठा i915_vma_compress *compress)
+अणु
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
-	for_each_engine(engine, gt->_gt, id) {
-		struct intel_engine_coredump *ee;
+	क्रम_each_engine(engine, gt->_gt, id) अणु
+		काष्ठा पूर्णांकel_engine_coredump *ee;
 
-		/* Refill our page pool before entering atomic section */
+		/* Refill our page pool beक्रमe entering atomic section */
 		pool_refill(&compress->pool, ALLOW_FAIL);
 
 		ee = capture_engine(engine, compress);
-		if (!ee)
-			continue;
+		अगर (!ee)
+			जारी;
 
 		ee->hung = engine->mask & engine_mask;
 
 		gt->simulated |= ee->simulated;
-		if (ee->simulated) {
-			kfree(ee);
-			continue;
-		}
+		अगर (ee->simulated) अणु
+			kमुक्त(ee);
+			जारी;
+		पूर्ण
 
 		ee->next = gt->engine;
 		gt->engine = ee;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct intel_uc_coredump *
-gt_record_uc(struct intel_gt_coredump *gt,
-	     struct i915_vma_compress *compress)
-{
-	const struct intel_uc *uc = &gt->_gt->uc;
-	struct intel_uc_coredump *error_uc;
+अटल काष्ठा पूर्णांकel_uc_coredump *
+gt_record_uc(काष्ठा पूर्णांकel_gt_coredump *gt,
+	     काष्ठा i915_vma_compress *compress)
+अणु
+	स्थिर काष्ठा पूर्णांकel_uc *uc = &gt->_gt->uc;
+	काष्ठा पूर्णांकel_uc_coredump *error_uc;
 
-	error_uc = kzalloc(sizeof(*error_uc), ALLOW_FAIL);
-	if (!error_uc)
-		return NULL;
+	error_uc = kzalloc(माप(*error_uc), ALLOW_FAIL);
+	अगर (!error_uc)
+		वापस शून्य;
 
-	memcpy(&error_uc->guc_fw, &uc->guc.fw, sizeof(uc->guc.fw));
-	memcpy(&error_uc->huc_fw, &uc->huc.fw, sizeof(uc->huc.fw));
+	स_नकल(&error_uc->guc_fw, &uc->guc.fw, माप(uc->guc.fw));
+	स_नकल(&error_uc->huc_fw, &uc->huc.fw, माप(uc->huc.fw));
 
-	/* Non-default firmware paths will be specified by the modparam.
+	/* Non-शेष firmware paths will be specअगरied by the modparam.
 	 * As modparams are generally accesible from the userspace make
 	 * explicit copies of the firmware paths.
 	 */
@@ -1513,129 +1514,129 @@ gt_record_uc(struct intel_gt_coredump *gt,
 					 uc->guc.log.vma, "GuC log buffer",
 					 compress);
 
-	return error_uc;
-}
+	वापस error_uc;
+पूर्ण
 
-/* Capture all registers which don't fit into another category. */
-static void gt_record_regs(struct intel_gt_coredump *gt)
-{
-	struct intel_uncore *uncore = gt->_gt->uncore;
-	struct drm_i915_private *i915 = uncore->i915;
-	int i;
+/* Capture all रेजिस्टरs which करोn't fit पूर्णांकo another category. */
+अटल व्योम gt_record_regs(काष्ठा पूर्णांकel_gt_coredump *gt)
+अणु
+	काष्ठा पूर्णांकel_uncore *uncore = gt->_gt->uncore;
+	काष्ठा drm_i915_निजी *i915 = uncore->i915;
+	पूर्णांक i;
 
 	/*
 	 * General organization
-	 * 1. Registers specific to a single generation
-	 * 2. Registers which belong to multiple generations
-	 * 3. Feature specific registers.
-	 * 4. Everything else
+	 * 1. Registers specअगरic to a single generation
+	 * 2. Registers which beदीर्घ to multiple generations
+	 * 3. Feature specअगरic रेजिस्टरs.
+	 * 4. Everything अन्यथा
 	 * Please try to follow the order.
 	 */
 
-	/* 1: Registers specific to a single generation */
-	if (IS_VALLEYVIEW(i915)) {
-		gt->gtier[0] = intel_uncore_read(uncore, GTIER);
-		gt->ier = intel_uncore_read(uncore, VLV_IER);
-		gt->forcewake = intel_uncore_read_fw(uncore, FORCEWAKE_VLV);
-	}
+	/* 1: Registers specअगरic to a single generation */
+	अगर (IS_VALLEYVIEW(i915)) अणु
+		gt->gtier[0] = पूर्णांकel_uncore_पढ़ो(uncore, GTIER);
+		gt->ier = पूर्णांकel_uncore_पढ़ो(uncore, VLV_IER);
+		gt->क्रमcewake = पूर्णांकel_uncore_पढ़ो_fw(uncore, FORCEWAKE_VLV);
+	पूर्ण
 
-	if (IS_GEN(i915, 7))
-		gt->err_int = intel_uncore_read(uncore, GEN7_ERR_INT);
+	अगर (IS_GEN(i915, 7))
+		gt->err_पूर्णांक = पूर्णांकel_uncore_पढ़ो(uncore, GEN7_ERR_INT);
 
-	if (INTEL_GEN(i915) >= 12) {
-		gt->fault_data0 = intel_uncore_read(uncore,
+	अगर (INTEL_GEN(i915) >= 12) अणु
+		gt->fault_data0 = पूर्णांकel_uncore_पढ़ो(uncore,
 						    GEN12_FAULT_TLB_DATA0);
-		gt->fault_data1 = intel_uncore_read(uncore,
+		gt->fault_data1 = पूर्णांकel_uncore_पढ़ो(uncore,
 						    GEN12_FAULT_TLB_DATA1);
-	} else if (INTEL_GEN(i915) >= 8) {
-		gt->fault_data0 = intel_uncore_read(uncore,
+	पूर्ण अन्यथा अगर (INTEL_GEN(i915) >= 8) अणु
+		gt->fault_data0 = पूर्णांकel_uncore_पढ़ो(uncore,
 						    GEN8_FAULT_TLB_DATA0);
-		gt->fault_data1 = intel_uncore_read(uncore,
+		gt->fault_data1 = पूर्णांकel_uncore_पढ़ो(uncore,
 						    GEN8_FAULT_TLB_DATA1);
-	}
+	पूर्ण
 
-	if (IS_GEN(i915, 6)) {
-		gt->forcewake = intel_uncore_read_fw(uncore, FORCEWAKE);
-		gt->gab_ctl = intel_uncore_read(uncore, GAB_CTL);
-		gt->gfx_mode = intel_uncore_read(uncore, GFX_MODE);
-	}
+	अगर (IS_GEN(i915, 6)) अणु
+		gt->क्रमcewake = पूर्णांकel_uncore_पढ़ो_fw(uncore, FORCEWAKE);
+		gt->gab_ctl = पूर्णांकel_uncore_पढ़ो(uncore, GAB_CTL);
+		gt->gfx_mode = पूर्णांकel_uncore_पढ़ो(uncore, GFX_MODE);
+	पूर्ण
 
-	/* 2: Registers which belong to multiple generations */
-	if (INTEL_GEN(i915) >= 7)
-		gt->forcewake = intel_uncore_read_fw(uncore, FORCEWAKE_MT);
+	/* 2: Registers which beदीर्घ to multiple generations */
+	अगर (INTEL_GEN(i915) >= 7)
+		gt->क्रमcewake = पूर्णांकel_uncore_पढ़ो_fw(uncore, FORCEWAKE_MT);
 
-	if (INTEL_GEN(i915) >= 6) {
-		gt->derrmr = intel_uncore_read(uncore, DERRMR);
-		if (INTEL_GEN(i915) < 12) {
-			gt->error = intel_uncore_read(uncore, ERROR_GEN6);
-			gt->done_reg = intel_uncore_read(uncore, DONE_REG);
-		}
-	}
+	अगर (INTEL_GEN(i915) >= 6) अणु
+		gt->derrmr = पूर्णांकel_uncore_पढ़ो(uncore, DERRMR);
+		अगर (INTEL_GEN(i915) < 12) अणु
+			gt->error = पूर्णांकel_uncore_पढ़ो(uncore, ERROR_GEN6);
+			gt->करोne_reg = पूर्णांकel_uncore_पढ़ो(uncore, DONE_REG);
+		पूर्ण
+	पूर्ण
 
-	/* 3: Feature specific registers */
-	if (IS_GEN_RANGE(i915, 6, 7)) {
-		gt->gam_ecochk = intel_uncore_read(uncore, GAM_ECOCHK);
-		gt->gac_eco = intel_uncore_read(uncore, GAC_ECO_BITS);
-	}
+	/* 3: Feature specअगरic रेजिस्टरs */
+	अगर (IS_GEN_RANGE(i915, 6, 7)) अणु
+		gt->gam_ecochk = पूर्णांकel_uncore_पढ़ो(uncore, GAM_ECOCHK);
+		gt->gac_eco = पूर्णांकel_uncore_पढ़ो(uncore, GAC_ECO_BITS);
+	पूर्ण
 
-	if (IS_GEN_RANGE(i915, 8, 11))
-		gt->gtt_cache = intel_uncore_read(uncore, HSW_GTT_CACHE_EN);
+	अगर (IS_GEN_RANGE(i915, 8, 11))
+		gt->gtt_cache = पूर्णांकel_uncore_पढ़ो(uncore, HSW_GTT_CACHE_EN);
 
-	if (IS_GEN(i915, 12))
-		gt->aux_err = intel_uncore_read(uncore, GEN12_AUX_ERR_DBG);
+	अगर (IS_GEN(i915, 12))
+		gt->aux_err = पूर्णांकel_uncore_पढ़ो(uncore, GEN12_AUX_ERR_DBG);
 
-	if (INTEL_GEN(i915) >= 12) {
-		for (i = 0; i < GEN12_SFC_DONE_MAX; i++) {
-			gt->sfc_done[i] =
-				intel_uncore_read(uncore, GEN12_SFC_DONE(i));
-		}
+	अगर (INTEL_GEN(i915) >= 12) अणु
+		क्रम (i = 0; i < GEN12_SFC_DONE_MAX; i++) अणु
+			gt->sfc_करोne[i] =
+				पूर्णांकel_uncore_पढ़ो(uncore, GEN12_SFC_DONE(i));
+		पूर्ण
 
-		gt->gam_done = intel_uncore_read(uncore, GEN12_GAM_DONE);
-	}
+		gt->gam_करोne = पूर्णांकel_uncore_पढ़ो(uncore, GEN12_GAM_DONE);
+	पूर्ण
 
-	/* 4: Everything else */
-	if (INTEL_GEN(i915) >= 11) {
-		gt->ier = intel_uncore_read(uncore, GEN8_DE_MISC_IER);
+	/* 4: Everything अन्यथा */
+	अगर (INTEL_GEN(i915) >= 11) अणु
+		gt->ier = पूर्णांकel_uncore_पढ़ो(uncore, GEN8_DE_MISC_IER);
 		gt->gtier[0] =
-			intel_uncore_read(uncore,
+			पूर्णांकel_uncore_पढ़ो(uncore,
 					  GEN11_RENDER_COPY_INTR_ENABLE);
 		gt->gtier[1] =
-			intel_uncore_read(uncore, GEN11_VCS_VECS_INTR_ENABLE);
+			पूर्णांकel_uncore_पढ़ो(uncore, GEN11_VCS_VECS_INTR_ENABLE);
 		gt->gtier[2] =
-			intel_uncore_read(uncore, GEN11_GUC_SG_INTR_ENABLE);
+			पूर्णांकel_uncore_पढ़ो(uncore, GEN11_GUC_SG_INTR_ENABLE);
 		gt->gtier[3] =
-			intel_uncore_read(uncore,
+			पूर्णांकel_uncore_पढ़ो(uncore,
 					  GEN11_GPM_WGBOXPERF_INTR_ENABLE);
 		gt->gtier[4] =
-			intel_uncore_read(uncore,
+			पूर्णांकel_uncore_पढ़ो(uncore,
 					  GEN11_CRYPTO_RSVD_INTR_ENABLE);
 		gt->gtier[5] =
-			intel_uncore_read(uncore,
+			पूर्णांकel_uncore_पढ़ो(uncore,
 					  GEN11_GUNIT_CSME_INTR_ENABLE);
 		gt->ngtier = 6;
-	} else if (INTEL_GEN(i915) >= 8) {
-		gt->ier = intel_uncore_read(uncore, GEN8_DE_MISC_IER);
-		for (i = 0; i < 4; i++)
+	पूर्ण अन्यथा अगर (INTEL_GEN(i915) >= 8) अणु
+		gt->ier = पूर्णांकel_uncore_पढ़ो(uncore, GEN8_DE_MISC_IER);
+		क्रम (i = 0; i < 4; i++)
 			gt->gtier[i] =
-				intel_uncore_read(uncore, GEN8_GT_IER(i));
+				पूर्णांकel_uncore_पढ़ो(uncore, GEN8_GT_IER(i));
 		gt->ngtier = 4;
-	} else if (HAS_PCH_SPLIT(i915)) {
-		gt->ier = intel_uncore_read(uncore, DEIER);
-		gt->gtier[0] = intel_uncore_read(uncore, GTIER);
+	पूर्ण अन्यथा अगर (HAS_PCH_SPLIT(i915)) अणु
+		gt->ier = पूर्णांकel_uncore_पढ़ो(uncore, DEIER);
+		gt->gtier[0] = पूर्णांकel_uncore_पढ़ो(uncore, GTIER);
 		gt->ngtier = 1;
-	} else if (IS_GEN(i915, 2)) {
-		gt->ier = intel_uncore_read16(uncore, GEN2_IER);
-	} else if (!IS_VALLEYVIEW(i915)) {
-		gt->ier = intel_uncore_read(uncore, GEN2_IER);
-	}
-	gt->eir = intel_uncore_read(uncore, EIR);
-	gt->pgtbl_er = intel_uncore_read(uncore, PGTBL_ER);
-}
+	पूर्ण अन्यथा अगर (IS_GEN(i915, 2)) अणु
+		gt->ier = पूर्णांकel_uncore_पढ़ो16(uncore, GEN2_IER);
+	पूर्ण अन्यथा अगर (!IS_VALLEYVIEW(i915)) अणु
+		gt->ier = पूर्णांकel_uncore_पढ़ो(uncore, GEN2_IER);
+	पूर्ण
+	gt->eir = पूर्णांकel_uncore_पढ़ो(uncore, EIR);
+	gt->pgtbl_er = पूर्णांकel_uncore_पढ़ो(uncore, PGTBL_ER);
+पूर्ण
 
-static void gt_record_info(struct intel_gt_coredump *gt)
-{
-	memcpy(&gt->info, &gt->_gt->info, sizeof(struct intel_gt_info));
-}
+अटल व्योम gt_record_info(काष्ठा पूर्णांकel_gt_coredump *gt)
+अणु
+	स_नकल(&gt->info, &gt->_gt->info, माप(काष्ठा पूर्णांकel_gt_info));
+पूर्ण
 
 /*
  * Generate a semi-unique error code. The code is not meant to have meaning, The
@@ -1643,213 +1644,213 @@ static void gt_record_info(struct intel_gt_coredump *gt)
  * grossly estimating a GPU error state.
  *
  * TODO Ideally, hashing the batchbuffer would be a very nice way to determine
- * the hang if we could strip the GTT offset information from it.
+ * the hang अगर we could strip the GTT offset inक्रमmation from it.
  *
- * It's only a small step better than a random number in its current form.
+ * It's only a small step better than a अक्रमom number in its current क्रमm.
  */
-static u32 generate_ecode(const struct intel_engine_coredump *ee)
-{
+अटल u32 generate_ecode(स्थिर काष्ठा पूर्णांकel_engine_coredump *ee)
+अणु
 	/*
 	 * IPEHR would be an ideal way to detect errors, as it's the gross
 	 * measure of "the command that hung." However, has some very common
-	 * synchronization commands which almost always appear in the case
-	 * strictly a client bug. Use instdone to differentiate those some.
+	 * synchronization commands which almost always appear in the हाल
+	 * strictly a client bug. Use instकरोne to dअगरferentiate those some.
 	 */
-	return ee ? ee->ipehr ^ ee->instdone.instdone : 0;
-}
+	वापस ee ? ee->ipehr ^ ee->instकरोne.instकरोne : 0;
+पूर्ण
 
-static const char *error_msg(struct i915_gpu_coredump *error)
-{
-	struct intel_engine_coredump *first = NULL;
-	unsigned int hung_classes = 0;
-	struct intel_gt_coredump *gt;
-	int len;
+अटल स्थिर अक्षर *error_msg(काष्ठा i915_gpu_coredump *error)
+अणु
+	काष्ठा पूर्णांकel_engine_coredump *first = शून्य;
+	अचिन्हित पूर्णांक hung_classes = 0;
+	काष्ठा पूर्णांकel_gt_coredump *gt;
+	पूर्णांक len;
 
-	for (gt = error->gt; gt; gt = gt->next) {
-		struct intel_engine_coredump *cs;
+	क्रम (gt = error->gt; gt; gt = gt->next) अणु
+		काष्ठा पूर्णांकel_engine_coredump *cs;
 
-		for (cs = gt->engine; cs; cs = cs->next) {
-			if (cs->hung) {
+		क्रम (cs = gt->engine; cs; cs = cs->next) अणु
+			अगर (cs->hung) अणु
 				hung_classes |= BIT(cs->engine->uabi_class);
-				if (!first)
+				अगर (!first)
 					first = cs;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	len = scnprintf(error->error_msg, sizeof(error->error_msg),
+	len = scnम_लिखो(error->error_msg, माप(error->error_msg),
 			"GPU HANG: ecode %d:%x:%08x",
 			INTEL_GEN(error->i915), hung_classes,
 			generate_ecode(first));
-	if (first && first->context.pid) {
+	अगर (first && first->context.pid) अणु
 		/* Just show the first executing process, more is confusing */
-		len += scnprintf(error->error_msg + len,
-				 sizeof(error->error_msg) - len,
+		len += scnम_लिखो(error->error_msg + len,
+				 माप(error->error_msg) - len,
 				 ", in %s [%d]",
 				 first->context.comm, first->context.pid);
-	}
+	पूर्ण
 
-	return error->error_msg;
-}
+	वापस error->error_msg;
+पूर्ण
 
-static void capture_gen(struct i915_gpu_coredump *error)
-{
-	struct drm_i915_private *i915 = error->i915;
+अटल व्योम capture_gen(काष्ठा i915_gpu_coredump *error)
+अणु
+	काष्ठा drm_i915_निजी *i915 = error->i915;
 
-	error->wakelock = atomic_read(&i915->runtime_pm.wakeref_count);
-	error->suspended = i915->runtime_pm.suspended;
+	error->wakelock = atomic_पढ़ो(&i915->runसमय_pm.wakeref_count);
+	error->suspended = i915->runसमय_pm.suspended;
 
 	error->iommu = -1;
-#ifdef CONFIG_INTEL_IOMMU
-	error->iommu = intel_iommu_gfx_mapped;
-#endif
+#अगर_घोषित CONFIG_INTEL_IOMMU
+	error->iommu = पूर्णांकel_iommu_gfx_mapped;
+#पूर्ण_अगर
 	error->reset_count = i915_reset_count(&i915->gpu_error);
 	error->suspend_count = i915->suspend_count;
 
 	i915_params_copy(&error->params, &i915->params);
-	memcpy(&error->device_info,
+	स_नकल(&error->device_info,
 	       INTEL_INFO(i915),
-	       sizeof(error->device_info));
-	memcpy(&error->runtime_info,
+	       माप(error->device_info));
+	स_नकल(&error->runसमय_info,
 	       RUNTIME_INFO(i915),
-	       sizeof(error->runtime_info));
+	       माप(error->runसमय_info));
 	error->driver_caps = i915->caps;
-}
+पूर्ण
 
-struct i915_gpu_coredump *
-i915_gpu_coredump_alloc(struct drm_i915_private *i915, gfp_t gfp)
-{
-	struct i915_gpu_coredump *error;
+काष्ठा i915_gpu_coredump *
+i915_gpu_coredump_alloc(काष्ठा drm_i915_निजी *i915, gfp_t gfp)
+अणु
+	काष्ठा i915_gpu_coredump *error;
 
-	if (!i915->params.error_capture)
-		return NULL;
+	अगर (!i915->params.error_capture)
+		वापस शून्य;
 
-	error = kzalloc(sizeof(*error), gfp);
-	if (!error)
-		return NULL;
+	error = kzalloc(माप(*error), gfp);
+	अगर (!error)
+		वापस शून्य;
 
 	kref_init(&error->ref);
 	error->i915 = i915;
 
-	error->time = ktime_get_real();
-	error->boottime = ktime_get_boottime();
-	error->uptime = ktime_sub(ktime_get(), i915->gt.last_init_time);
-	error->capture = jiffies;
+	error->समय = kसमय_get_real();
+	error->bootसमय = kसमय_get_bootसमय();
+	error->upसमय = kसमय_sub(kसमय_get(), i915->gt.last_init_समय);
+	error->capture = jअगरfies;
 
 	capture_gen(error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-#define DAY_AS_SECONDS(x) (24 * 60 * 60 * (x))
+#घोषणा DAY_AS_SECONDS(x) (24 * 60 * 60 * (x))
 
-struct intel_gt_coredump *
-intel_gt_coredump_alloc(struct intel_gt *gt, gfp_t gfp)
-{
-	struct intel_gt_coredump *gc;
+काष्ठा पूर्णांकel_gt_coredump *
+पूर्णांकel_gt_coredump_alloc(काष्ठा पूर्णांकel_gt *gt, gfp_t gfp)
+अणु
+	काष्ठा पूर्णांकel_gt_coredump *gc;
 
-	gc = kzalloc(sizeof(*gc), gfp);
-	if (!gc)
-		return NULL;
+	gc = kzalloc(माप(*gc), gfp);
+	अगर (!gc)
+		वापस शून्य;
 
 	gc->_gt = gt;
-	gc->awake = intel_gt_pm_is_awake(gt);
+	gc->awake = पूर्णांकel_gt_pm_is_awake(gt);
 
 	gt_record_regs(gc);
 	gt_record_fences(gc);
 
-	return gc;
-}
+	वापस gc;
+पूर्ण
 
-struct i915_vma_compress *
-i915_vma_capture_prepare(struct intel_gt_coredump *gt)
-{
-	struct i915_vma_compress *compress;
+काष्ठा i915_vma_compress *
+i915_vma_capture_prepare(काष्ठा पूर्णांकel_gt_coredump *gt)
+अणु
+	काष्ठा i915_vma_compress *compress;
 
-	compress = kmalloc(sizeof(*compress), ALLOW_FAIL);
-	if (!compress)
-		return NULL;
+	compress = kदो_स्मृति(माप(*compress), ALLOW_FAIL);
+	अगर (!compress)
+		वापस शून्य;
 
-	if (!compress_init(compress)) {
-		kfree(compress);
-		return NULL;
-	}
+	अगर (!compress_init(compress)) अणु
+		kमुक्त(compress);
+		वापस शून्य;
+	पूर्ण
 
-	return compress;
-}
+	वापस compress;
+पूर्ण
 
-void i915_vma_capture_finish(struct intel_gt_coredump *gt,
-			     struct i915_vma_compress *compress)
-{
-	if (!compress)
-		return;
+व्योम i915_vma_capture_finish(काष्ठा पूर्णांकel_gt_coredump *gt,
+			     काष्ठा i915_vma_compress *compress)
+अणु
+	अगर (!compress)
+		वापस;
 
 	compress_fini(compress);
-	kfree(compress);
-}
+	kमुक्त(compress);
+पूर्ण
 
-struct i915_gpu_coredump *
-i915_gpu_coredump(struct intel_gt *gt, intel_engine_mask_t engine_mask)
-{
-	struct drm_i915_private *i915 = gt->i915;
-	struct i915_gpu_coredump *error;
+काष्ठा i915_gpu_coredump *
+i915_gpu_coredump(काष्ठा पूर्णांकel_gt *gt, पूर्णांकel_engine_mask_t engine_mask)
+अणु
+	काष्ठा drm_i915_निजी *i915 = gt->i915;
+	काष्ठा i915_gpu_coredump *error;
 
-	/* Check if GPU capture has been disabled */
+	/* Check अगर GPU capture has been disabled */
 	error = READ_ONCE(i915->gpu_error.first_error);
-	if (IS_ERR(error))
-		return error;
+	अगर (IS_ERR(error))
+		वापस error;
 
 	error = i915_gpu_coredump_alloc(i915, ALLOW_FAIL);
-	if (!error)
-		return ERR_PTR(-ENOMEM);
+	अगर (!error)
+		वापस ERR_PTR(-ENOMEM);
 
-	error->gt = intel_gt_coredump_alloc(gt, ALLOW_FAIL);
-	if (error->gt) {
-		struct i915_vma_compress *compress;
+	error->gt = पूर्णांकel_gt_coredump_alloc(gt, ALLOW_FAIL);
+	अगर (error->gt) अणु
+		काष्ठा i915_vma_compress *compress;
 
 		compress = i915_vma_capture_prepare(error->gt);
-		if (!compress) {
-			kfree(error->gt);
-			kfree(error);
-			return ERR_PTR(-ENOMEM);
-		}
+		अगर (!compress) अणु
+			kमुक्त(error->gt);
+			kमुक्त(error);
+			वापस ERR_PTR(-ENOMEM);
+		पूर्ण
 
 		gt_record_info(error->gt);
 		gt_record_engines(error->gt, engine_mask, compress);
 
-		if (INTEL_INFO(i915)->has_gt_uc)
+		अगर (INTEL_INFO(i915)->has_gt_uc)
 			error->gt->uc = gt_record_uc(error->gt, compress);
 
 		i915_vma_capture_finish(error->gt, compress);
 
 		error->simulated |= error->gt->simulated;
-	}
+	पूर्ण
 
-	error->overlay = intel_overlay_capture_error_state(i915);
-	error->display = intel_display_capture_error_state(i915);
+	error->overlay = पूर्णांकel_overlay_capture_error_state(i915);
+	error->display = पूर्णांकel_display_capture_error_state(i915);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-void i915_error_state_store(struct i915_gpu_coredump *error)
-{
-	struct drm_i915_private *i915;
-	static bool warned;
+व्योम i915_error_state_store(काष्ठा i915_gpu_coredump *error)
+अणु
+	काष्ठा drm_i915_निजी *i915;
+	अटल bool warned;
 
-	if (IS_ERR_OR_NULL(error))
-		return;
+	अगर (IS_ERR_OR_शून्य(error))
+		वापस;
 
 	i915 = error->i915;
 	drm_info(&i915->drm, "%s\n", error_msg(error));
 
-	if (error->simulated ||
-	    cmpxchg(&i915->gpu_error.first_error, NULL, error))
-		return;
+	अगर (error->simulated ||
+	    cmpxchg(&i915->gpu_error.first_error, शून्य, error))
+		वापस;
 
 	i915_gpu_coredump_get(error);
 
-	if (!xchg(&warned, true) &&
-	    ktime_get_real_seconds() - DRIVER_TIMESTAMP < DAY_AS_SECONDS(180)) {
+	अगर (!xchg(&warned, true) &&
+	    kसमय_get_real_seconds() - DRIVER_TIMESTAMP < DAY_AS_SECONDS(180)) अणु
 		pr_info("GPU hangs can indicate a bug anywhere in the entire gfx stack, including userspace.\n");
 		pr_info("Please file a _new_ bug report at https://gitlab.freedesktop.org/drm/intel/issues/new.\n");
 		pr_info("Please see https://gitlab.freedesktop.org/drm/intel/-/wikis/How-to-file-i915-bugs for details.\n");
@@ -1857,67 +1858,67 @@ void i915_error_state_store(struct i915_gpu_coredump *error)
 		pr_info("The GPU crash dump is required to analyze GPU hangs, so please always attach it.\n");
 		pr_info("GPU crash dump saved to /sys/class/drm/card%d/error\n",
 			i915->drm.primary->index);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * i915_capture_error_state - capture an error record for later analysis
- * @gt: intel_gt which originated the hang
+ * i915_capture_error_state - capture an error record क्रम later analysis
+ * @gt: पूर्णांकel_gt which originated the hang
  * @engine_mask: hung engines
  *
  *
  * Should be called when an error is detected (either a hang or an error
- * interrupt) to capture error state from the time of the error.  Fills
- * out a structure which becomes available in debugfs for user level tools
+ * पूर्णांकerrupt) to capture error state from the समय of the error.  Fills
+ * out a काष्ठाure which becomes available in debugfs क्रम user level tools
  * to pick up.
  */
-void i915_capture_error_state(struct intel_gt *gt,
-			      intel_engine_mask_t engine_mask)
-{
-	struct i915_gpu_coredump *error;
+व्योम i915_capture_error_state(काष्ठा पूर्णांकel_gt *gt,
+			      पूर्णांकel_engine_mask_t engine_mask)
+अणु
+	काष्ठा i915_gpu_coredump *error;
 
 	error = i915_gpu_coredump(gt, engine_mask);
-	if (IS_ERR(error)) {
-		cmpxchg(&gt->i915->gpu_error.first_error, NULL, error);
-		return;
-	}
+	अगर (IS_ERR(error)) अणु
+		cmpxchg(&gt->i915->gpu_error.first_error, शून्य, error);
+		वापस;
+	पूर्ण
 
 	i915_error_state_store(error);
 	i915_gpu_coredump_put(error);
-}
+पूर्ण
 
-struct i915_gpu_coredump *
-i915_first_error_state(struct drm_i915_private *i915)
-{
-	struct i915_gpu_coredump *error;
+काष्ठा i915_gpu_coredump *
+i915_first_error_state(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_gpu_coredump *error;
 
 	spin_lock_irq(&i915->gpu_error.lock);
 	error = i915->gpu_error.first_error;
-	if (!IS_ERR_OR_NULL(error))
+	अगर (!IS_ERR_OR_शून्य(error))
 		i915_gpu_coredump_get(error);
 	spin_unlock_irq(&i915->gpu_error.lock);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-void i915_reset_error_state(struct drm_i915_private *i915)
-{
-	struct i915_gpu_coredump *error;
+व्योम i915_reset_error_state(काष्ठा drm_i915_निजी *i915)
+अणु
+	काष्ठा i915_gpu_coredump *error;
 
 	spin_lock_irq(&i915->gpu_error.lock);
 	error = i915->gpu_error.first_error;
-	if (error != ERR_PTR(-ENODEV)) /* if disabled, always disabled */
-		i915->gpu_error.first_error = NULL;
+	अगर (error != ERR_PTR(-ENODEV)) /* अगर disabled, always disabled */
+		i915->gpu_error.first_error = शून्य;
 	spin_unlock_irq(&i915->gpu_error.lock);
 
-	if (!IS_ERR_OR_NULL(error))
+	अगर (!IS_ERR_OR_शून्य(error))
 		i915_gpu_coredump_put(error);
-}
+पूर्ण
 
-void i915_disable_error_state(struct drm_i915_private *i915, int err)
-{
+व्योम i915_disable_error_state(काष्ठा drm_i915_निजी *i915, पूर्णांक err)
+अणु
 	spin_lock_irq(&i915->gpu_error.lock);
-	if (!i915->gpu_error.first_error)
+	अगर (!i915->gpu_error.first_error)
 		i915->gpu_error.first_error = ERR_PTR(err);
 	spin_unlock_irq(&i915->gpu_error.lock);
-}
+पूर्ण

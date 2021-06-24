@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef __HID_ROCCAT_ISKU_H
-#define __HID_ROCCAT_ISKU_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित __HID_ROCCAT_ISKU_H
+#घोषणा __HID_ROCCAT_ISKU_H
 
 /*
- * Copyright (c) 2011 Stefan Achatz <erazor_de@users.sourceforge.net>
+ * Copyright (c) 2011 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
  */
 
 /*
  */
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum {
+क्रमागत अणु
 	ISKU_SIZE_CONTROL = 0x03,
 	ISKU_SIZE_INFO = 0x06,
 	ISKU_SIZE_KEY_MASK = 0x06,
@@ -27,22 +28,22 @@ enum {
 	ISKU_SIZE_RESET = 0x03,
 	ISKU_SIZE_TALK = 0x10,
 	ISKU_SIZE_TALKFX = 0x10,
-};
+पूर्ण;
 
-enum {
-	ISKU_PROFILE_NUM = 5,
+क्रमागत अणु
+	ISKU_PROखाता_NUM = 5,
 	ISKU_USB_INTERFACE_PROTOCOL = 0,
-};
+पूर्ण;
 
-struct isku_actual_profile {
-	uint8_t command; /* ISKU_COMMAND_ACTUAL_PROFILE */
-	uint8_t size; /* always 3 */
-	uint8_t actual_profile;
-} __packed;
+काष्ठा isku_actual_profile अणु
+	uपूर्णांक8_t command; /* ISKU_COMMAND_ACTUAL_PROखाता */
+	uपूर्णांक8_t size; /* always 3 */
+	uपूर्णांक8_t actual_profile;
+पूर्ण __packed;
 
-enum isku_commands {
+क्रमागत isku_commands अणु
 	ISKU_COMMAND_CONTROL = 0x4,
-	ISKU_COMMAND_ACTUAL_PROFILE = 0x5,
+	ISKU_COMMAND_ACTUAL_PROखाता = 0x5,
 	ISKU_COMMAND_KEY_MASK = 0x7,
 	ISKU_COMMAND_KEYS_FUNCTION = 0x8,
 	ISKU_COMMAND_KEYS_EASYZONE = 0x9,
@@ -60,38 +61,38 @@ enum isku_commands {
 	ISKU_COMMAND_TALKFX = 0x17,
 	ISKU_COMMAND_FIRMWARE_WRITE = 0x1b,
 	ISKU_COMMAND_FIRMWARE_WRITE_CONTROL = 0x1c,
-};
+पूर्ण;
 
-struct isku_report_button {
-	uint8_t number; /* ISKU_REPORT_NUMBER_BUTTON */
-	uint8_t zero;
-	uint8_t event;
-	uint8_t data1;
-	uint8_t data2;
-};
+काष्ठा isku_report_button अणु
+	uपूर्णांक8_t number; /* ISKU_REPORT_NUMBER_BUTTON */
+	uपूर्णांक8_t zero;
+	uपूर्णांक8_t event;
+	uपूर्णांक8_t data1;
+	uपूर्णांक8_t data2;
+पूर्ण;
 
-enum isku_report_numbers {
+क्रमागत isku_report_numbers अणु
 	ISKU_REPORT_NUMBER_BUTTON = 3,
-};
+पूर्ण;
 
-enum isku_report_button_events {
-	ISKU_REPORT_BUTTON_EVENT_PROFILE = 0x2,
-};
+क्रमागत isku_report_button_events अणु
+	ISKU_REPORT_BUTTON_EVENT_PROखाता = 0x2,
+पूर्ण;
 
-struct isku_roccat_report {
-	uint8_t event;
-	uint8_t data1;
-	uint8_t data2;
-	uint8_t profile;
-} __packed;
+काष्ठा isku_roccat_report अणु
+	uपूर्णांक8_t event;
+	uपूर्णांक8_t data1;
+	uपूर्णांक8_t data2;
+	uपूर्णांक8_t profile;
+पूर्ण __packed;
 
-struct isku_device {
-	int roccat_claimed;
-	int chrdev_minor;
+काष्ठा isku_device अणु
+	पूर्णांक roccat_claimed;
+	पूर्णांक chrdev_minor;
 
-	struct mutex isku_lock;
+	काष्ठा mutex isku_lock;
 
-	int actual_profile;
-};
+	पूर्णांक actual_profile;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

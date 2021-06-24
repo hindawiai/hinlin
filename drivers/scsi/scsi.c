@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  scsi.c Copyright (C) 1992 Drew Eckhardt
  *         Copyright (C) 1993, 1994, 1995, 1999 Eric Youngdale
@@ -8,96 +9,96 @@
  *      Initial versions: Drew Eckhardt
  *      Subsequent revisions: Eric Youngdale
  *
- *  <drew@colorado.edu>
+ *  <drew@coloraकरो.edu>
  *
  *  Bug correction thanks go to :
  *      Rik Faith <faith@cs.unc.edu>
  *      Tommy Thorn <tthorn>
  *      Thomas Wuensche <tw@fgb1.fgb.mw.tu-muenchen.de>
  *
- *  Modified by Eric Youngdale eric@andante.org or ericy@gnu.ai.mit.edu to
+ *  Modअगरied by Eric Youngdale eric@andante.org or ericy@gnu.ai.mit.edu to
  *  add scatter-gather, multiple outstanding request, and other
  *  enhancements.
  *
  *  Native multichannel, wide scsi, /proc/scsi and hot plugging
  *  support added by Michael Neuffer <mike@i-connect.net>
  *
- *  Added request_module("scsi_hostadapter") for kerneld:
+ *  Added request_module("scsi_hostadapter") क्रम kerneld:
  *  (Put an "alias scsi_hostadapter your_hostadapter" in /etc/modprobe.conf)
  *  Bjorn Ekwall  <bj0rn@blox.se>
  *  (changed to kmod)
  *
- *  Major improvements to the timeout, abort, and reset processing,
- *  as well as performance modifications for large queue depths by
+ *  Major improvements to the समयout, पात, and reset processing,
+ *  as well as perक्रमmance modअगरications क्रम large queue depths by
  *  Leonard N. Zubkoff <lnz@dandelion.com>
  *
  *  Converted cli() code to spinlocks, Ingo Molnar
  *
- *  Jiffies wrap fixes (host->resetting), 3 Dec 1998 Andrea Arcangeli
+ *  Jअगरfies wrap fixes (host->resetting), 3 Dec 1998 Andrea Arcangeli
  *
  *  out_of_space hacks, D. Gilbert (dpg) 990608
  */
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/kernel.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/completion.h>
-#include <linux/unistd.h>
-#include <linux/spinlock.h>
-#include <linux/kmod.h>
-#include <linux/interrupt.h>
-#include <linux/notifier.h>
-#include <linux/cpu.h>
-#include <linux/mutex.h>
-#include <linux/async.h>
-#include <asm/unaligned.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/unistd.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/kmod.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/async.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <scsi/scsi.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_dbg.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_driver.h>
-#include <scsi/scsi_eh.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_tcq.h>
+#समावेश <scsi/scsi.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_dbg.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_driver.h>
+#समावेश <scsi/scsi_eh.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_tcq.h>
 
-#include "scsi_priv.h"
-#include "scsi_logging.h"
+#समावेश "scsi_priv.h"
+#समावेश "scsi_logging.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/scsi.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/scsi.h>
 
 /*
- * Definitions and constants.
+ * Definitions and स्थिरants.
  */
 
 /*
- * Note - the initial logging level can be set here to log events at boot time.
- * After the system is up, you may enable logging via the /proc interface.
+ * Note - the initial logging level can be set here to log events at boot समय.
+ * After the प्रणाली is up, you may enable logging via the /proc पूर्णांकerface.
  */
-unsigned int scsi_logging_level;
-#if defined(CONFIG_SCSI_LOGGING)
+अचिन्हित पूर्णांक scsi_logging_level;
+#अगर defined(CONFIG_SCSI_LOGGING)
 EXPORT_SYMBOL(scsi_logging_level);
-#endif
+#पूर्ण_अगर
 
 /*
- * Domain for asynchronous system resume operations.  It is marked 'exclusive'
- * to avoid being included in the async_synchronize_full() that is invoked by
+ * Doमुख्य क्रम asynchronous प्रणाली resume operations.  It is marked 'exclusive'
+ * to aव्योम being included in the async_synchronize_full() that is invoked by
  * dpm_resume().
  */
-ASYNC_DOMAIN_EXCLUSIVE(scsi_sd_pm_domain);
-EXPORT_SYMBOL(scsi_sd_pm_domain);
+ASYNC_DOMAIN_EXCLUSIVE(scsi_sd_pm_करोमुख्य);
+EXPORT_SYMBOL(scsi_sd_pm_करोमुख्य);
 
-#ifdef CONFIG_SCSI_LOGGING
-void scsi_log_send(struct scsi_cmnd *cmd)
-{
-	unsigned int level;
+#अगर_घोषित CONFIG_SCSI_LOGGING
+व्योम scsi_log_send(काष्ठा scsi_cmnd *cmd)
+अणु
+	अचिन्हित पूर्णांक level;
 
 	/*
 	 * If ML QUEUE log level is greater than or equal to:
@@ -110,152 +111,152 @@ void scsi_log_send(struct scsi_cmnd *cmd)
 	 *
 	 * 4: same as 3
 	 */
-	if (unlikely(scsi_logging_level)) {
+	अगर (unlikely(scsi_logging_level)) अणु
 		level = SCSI_LOG_LEVEL(SCSI_LOG_MLQUEUE_SHIFT,
 				       SCSI_LOG_MLQUEUE_BITS);
-		if (level > 1) {
-			scmd_printk(KERN_INFO, cmd,
+		अगर (level > 1) अणु
+			scmd_prपूर्णांकk(KERN_INFO, cmd,
 				    "Send: scmd 0x%p\n", cmd);
-			scsi_print_command(cmd);
-		}
-	}
-}
+			scsi_prपूर्णांक_command(cmd);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void scsi_log_completion(struct scsi_cmnd *cmd, int disposition)
-{
-	unsigned int level;
+व्योम scsi_log_completion(काष्ठा scsi_cmnd *cmd, पूर्णांक disposition)
+अणु
+	अचिन्हित पूर्णांक level;
 
 	/*
 	 * If ML COMPLETE log level is greater than or equal to:
 	 *
 	 * 1: log disposition, result, opcode + command, and conditionally
-	 * sense data for failures or non SUCCESS dispositions.
+	 * sense data क्रम failures or non SUCCESS dispositions.
 	 *
-	 * 2: same as 1 but for all command completions.
+	 * 2: same as 1 but क्रम all command completions.
 	 *
 	 * 3: same as 2
 	 *
 	 * 4: same as 3 plus dump extra junk
 	 */
-	if (unlikely(scsi_logging_level)) {
+	अगर (unlikely(scsi_logging_level)) अणु
 		level = SCSI_LOG_LEVEL(SCSI_LOG_MLCOMPLETE_SHIFT,
 				       SCSI_LOG_MLCOMPLETE_BITS);
-		if (((level > 0) && (cmd->result || disposition != SUCCESS)) ||
-		    (level > 1)) {
-			scsi_print_result(cmd, "Done", disposition);
-			scsi_print_command(cmd);
-			if (status_byte(cmd->result) == CHECK_CONDITION)
-				scsi_print_sense(cmd);
-			if (level > 3)
-				scmd_printk(KERN_INFO, cmd,
+		अगर (((level > 0) && (cmd->result || disposition != SUCCESS)) ||
+		    (level > 1)) अणु
+			scsi_prपूर्णांक_result(cmd, "Done", disposition);
+			scsi_prपूर्णांक_command(cmd);
+			अगर (status_byte(cmd->result) == CHECK_CONDITION)
+				scsi_prपूर्णांक_sense(cmd);
+			अगर (level > 3)
+				scmd_prपूर्णांकk(KERN_INFO, cmd,
 					    "scsi host busy %d failed %d\n",
 					    scsi_host_busy(cmd->device->host),
 					    cmd->device->host->host_failed);
-		}
-	}
-}
-#endif
+		पूर्ण
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
 /**
  * scsi_finish_command - cleanup and pass command back to upper layer
  * @cmd: the command
  *
- * Description: Pass command off to upper layer for finishing of I/O
- *              request, waking processes that are waiting on results,
+ * Description: Pass command off to upper layer क्रम finishing of I/O
+ *              request, waking processes that are रुकोing on results,
  *              etc.
  */
-void scsi_finish_command(struct scsi_cmnd *cmd)
-{
-	struct scsi_device *sdev = cmd->device;
-	struct scsi_target *starget = scsi_target(sdev);
-	struct Scsi_Host *shost = sdev->host;
-	struct scsi_driver *drv;
-	unsigned int good_bytes;
+व्योम scsi_finish_command(काष्ठा scsi_cmnd *cmd)
+अणु
+	काष्ठा scsi_device *sdev = cmd->device;
+	काष्ठा scsi_target *starget = scsi_target(sdev);
+	काष्ठा Scsi_Host *shost = sdev->host;
+	काष्ठा scsi_driver *drv;
+	अचिन्हित पूर्णांक good_bytes;
 
 	scsi_device_unbusy(sdev, cmd);
 
 	/*
-	 * Clear the flags that say that the device/target/host is no longer
+	 * Clear the flags that say that the device/target/host is no दीर्घer
 	 * capable of accepting new commands.
 	 */
-	if (atomic_read(&shost->host_blocked))
+	अगर (atomic_पढ़ो(&shost->host_blocked))
 		atomic_set(&shost->host_blocked, 0);
-	if (atomic_read(&starget->target_blocked))
+	अगर (atomic_पढ़ो(&starget->target_blocked))
 		atomic_set(&starget->target_blocked, 0);
-	if (atomic_read(&sdev->device_blocked))
+	अगर (atomic_पढ़ो(&sdev->device_blocked))
 		atomic_set(&sdev->device_blocked, 0);
 
 	/*
-	 * If we have valid sense information, then some kind of recovery
+	 * If we have valid sense inक्रमmation, then some kind of recovery
 	 * must have taken place.  Make a note of this.
 	 */
-	if (SCSI_SENSE_VALID(cmd))
+	अगर (SCSI_SENSE_VALID(cmd))
 		cmd->result |= (DRIVER_SENSE << 24);
 
-	SCSI_LOG_MLCOMPLETE(4, sdev_printk(KERN_INFO, sdev,
+	SCSI_LOG_MLCOMPLETE(4, sdev_prपूर्णांकk(KERN_INFO, sdev,
 				"Notifying upper driver of completion "
 				"(result %x)\n", cmd->result));
 
 	good_bytes = scsi_bufflen(cmd);
-	if (!blk_rq_is_passthrough(cmd->request)) {
-		int old_good_bytes = good_bytes;
+	अगर (!blk_rq_is_passthrough(cmd->request)) अणु
+		पूर्णांक old_good_bytes = good_bytes;
 		drv = scsi_cmd_to_driver(cmd);
-		if (drv->done)
-			good_bytes = drv->done(cmd);
+		अगर (drv->करोne)
+			good_bytes = drv->करोne(cmd);
 		/*
-		 * USB may not give sense identifying bad sector and
-		 * simply return a residue instead, so subtract off the
-		 * residue if drv->done() error processing indicates no
+		 * USB may not give sense identअगरying bad sector and
+		 * simply वापस a residue instead, so subtract off the
+		 * residue अगर drv->करोne() error processing indicates no
 		 * change to the completion length.
 		 */
-		if (good_bytes == old_good_bytes)
+		अगर (good_bytes == old_good_bytes)
 			good_bytes -= scsi_get_resid(cmd);
-	}
+	पूर्ण
 	scsi_io_completion(cmd, good_bytes);
-}
+पूर्ण
 
 
 /*
- * 1024 is big enough for saturating the fast scsi LUN now
+ * 1024 is big enough क्रम saturating the fast scsi LUN now
  */
-int scsi_device_max_queue_depth(struct scsi_device *sdev)
-{
-	return max_t(int, sdev->host->can_queue, 1024);
-}
+पूर्णांक scsi_device_max_queue_depth(काष्ठा scsi_device *sdev)
+अणु
+	वापस max_t(पूर्णांक, sdev->host->can_queue, 1024);
+पूर्ण
 
 /**
  * scsi_change_queue_depth - change a device's queue depth
  * @sdev: SCSI Device in question
  * @depth: number of commands allowed to be queued to the driver
  *
- * Sets the device queue depth and returns the new value.
+ * Sets the device queue depth and वापसs the new value.
  */
-int scsi_change_queue_depth(struct scsi_device *sdev, int depth)
-{
-	depth = min_t(int, depth, scsi_device_max_queue_depth(sdev));
+पूर्णांक scsi_change_queue_depth(काष्ठा scsi_device *sdev, पूर्णांक depth)
+अणु
+	depth = min_t(पूर्णांक, depth, scsi_device_max_queue_depth(sdev));
 
-	if (depth > 0) {
+	अगर (depth > 0) अणु
 		sdev->queue_depth = depth;
 		wmb();
-	}
+	पूर्ण
 
-	if (sdev->request_queue)
+	अगर (sdev->request_queue)
 		blk_set_queue_depth(sdev->request_queue, depth);
 
-	sbitmap_resize(&sdev->budget_map, sdev->queue_depth);
+	sbiपंचांगap_resize(&sdev->budget_map, sdev->queue_depth);
 
-	return sdev->queue_depth;
-}
+	वापस sdev->queue_depth;
+पूर्ण
 EXPORT_SYMBOL(scsi_change_queue_depth);
 
 /**
  * scsi_track_queue_full - track QUEUE_FULL events to adjust queue depth
  * @sdev: SCSI Device in question
  * @depth: Current number of outstanding SCSI commands on this device,
- *         not counting the one returned as QUEUE_FULL.
+ *         not counting the one वापसed as QUEUE_FULL.
  *
  * Description:	This function will track successive QUEUE_FULL events on a
- * 		specific SCSI device to determine if and when there is a
+ * 		specअगरic SCSI device to determine अगर and when there is a
  * 		need to adjust the queue depth on the device.
  *
  * Returns:	0 - No change needed, >0 - Adjust queue depth to this new depth,
@@ -264,55 +265,55 @@ EXPORT_SYMBOL(scsi_change_queue_depth);
  *
  * Lock Status:	None held on entry
  *
- * Notes:	Low level drivers may call this at any time and we will do
- * 		"The Right Thing."  We are interrupt context safe.
+ * Notes:	Low level drivers may call this at any समय and we will करो
+ * 		"The Right Thing."  We are पूर्णांकerrupt context safe.
  */
-int scsi_track_queue_full(struct scsi_device *sdev, int depth)
-{
+पूर्णांक scsi_track_queue_full(काष्ठा scsi_device *sdev, पूर्णांक depth)
+अणु
 
 	/*
 	 * Don't let QUEUE_FULLs on the same
-	 * jiffies count, they could all be from
+	 * jअगरfies count, they could all be from
 	 * same event.
 	 */
-	if ((jiffies >> 4) == (sdev->last_queue_full_time >> 4))
-		return 0;
+	अगर ((jअगरfies >> 4) == (sdev->last_queue_full_समय >> 4))
+		वापस 0;
 
-	sdev->last_queue_full_time = jiffies;
-	if (sdev->last_queue_full_depth != depth) {
+	sdev->last_queue_full_समय = jअगरfies;
+	अगर (sdev->last_queue_full_depth != depth) अणु
 		sdev->last_queue_full_count = 1;
 		sdev->last_queue_full_depth = depth;
-	} else {
+	पूर्ण अन्यथा अणु
 		sdev->last_queue_full_count++;
-	}
+	पूर्ण
 
-	if (sdev->last_queue_full_count <= 10)
-		return 0;
+	अगर (sdev->last_queue_full_count <= 10)
+		वापस 0;
 
-	return scsi_change_queue_depth(sdev, depth);
-}
+	वापस scsi_change_queue_depth(sdev, depth);
+पूर्ण
 EXPORT_SYMBOL(scsi_track_queue_full);
 
 /**
  * scsi_vpd_inquiry - Request a device provide us with a VPD page
  * @sdev: The device to ask
  * @buffer: Where to put the result
- * @page: Which Vital Product Data to return
+ * @page: Which Vital Product Data to वापस
  * @len: The length of the buffer
  *
- * This is an internal helper function.  You probably want to use
+ * This is an पूर्णांकernal helper function.  You probably want to use
  * scsi_get_vpd_page instead.
  *
  * Returns size of the vpd page on success or a negative error number.
  */
-static int scsi_vpd_inquiry(struct scsi_device *sdev, unsigned char *buffer,
-							u8 page, unsigned len)
-{
-	int result;
-	unsigned char cmd[16];
+अटल पूर्णांक scsi_vpd_inquiry(काष्ठा scsi_device *sdev, अचिन्हित अक्षर *buffer,
+							u8 page, अचिन्हित len)
+अणु
+	पूर्णांक result;
+	अचिन्हित अक्षर cmd[16];
 
-	if (len < 4)
-		return -EINVAL;
+	अगर (len < 4)
+		वापस -EINVAL;
 
 	cmd[0] = INQUIRY;
 	cmd[1] = 1;		/* EVPD */
@@ -326,198 +327,198 @@ static int scsi_vpd_inquiry(struct scsi_device *sdev, unsigned char *buffer,
 	 * all the existing users tried this hard.
 	 */
 	result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buffer,
-				  len, NULL, 30 * HZ, 3, NULL);
-	if (result)
-		return -EIO;
+				  len, शून्य, 30 * HZ, 3, शून्य);
+	अगर (result)
+		वापस -EIO;
 
-	/* Sanity check that we got the page back that we asked for */
-	if (buffer[1] != page)
-		return -EIO;
+	/* Sanity check that we got the page back that we asked क्रम */
+	अगर (buffer[1] != page)
+		वापस -EIO;
 
-	return get_unaligned_be16(&buffer[2]) + 4;
-}
+	वापस get_unaligned_be16(&buffer[2]) + 4;
+पूर्ण
 
 /**
  * scsi_get_vpd_page - Get Vital Product Data from a SCSI device
  * @sdev: The device to ask
- * @page: Which Vital Product Data to return
+ * @page: Which Vital Product Data to वापस
  * @buf: where to store the VPD
  * @buf_len: number of bytes in the VPD buffer area
  *
  * SCSI devices may optionally supply Vital Product Data.  Each 'page'
- * of VPD is defined in the appropriate SCSI document (eg SPC, SBC).
- * If the device supports this VPD page, this routine returns a pointer
+ * of VPD is defined in the appropriate SCSI करोcument (eg SPC, SBC).
+ * If the device supports this VPD page, this routine वापसs a poपूर्णांकer
  * to a buffer containing the data from that page.  The caller is
- * responsible for calling kfree() on this pointer when it is no longer
- * needed.  If we cannot retrieve the VPD page this routine returns %NULL.
+ * responsible क्रम calling kमुक्त() on this poपूर्णांकer when it is no दीर्घer
+ * needed.  If we cannot retrieve the VPD page this routine वापसs %शून्य.
  */
-int scsi_get_vpd_page(struct scsi_device *sdev, u8 page, unsigned char *buf,
-		      int buf_len)
-{
-	int i, result;
+पूर्णांक scsi_get_vpd_page(काष्ठा scsi_device *sdev, u8 page, अचिन्हित अक्षर *buf,
+		      पूर्णांक buf_len)
+अणु
+	पूर्णांक i, result;
 
-	if (sdev->skip_vpd_pages)
-		goto fail;
+	अगर (sdev->skip_vpd_pages)
+		जाओ fail;
 
-	/* Ask for all the pages supported by this device */
+	/* Ask क्रम all the pages supported by this device */
 	result = scsi_vpd_inquiry(sdev, buf, 0, buf_len);
-	if (result < 4)
-		goto fail;
+	अगर (result < 4)
+		जाओ fail;
 
 	/* If the user actually wanted this page, we can skip the rest */
-	if (page == 0)
-		return 0;
+	अगर (page == 0)
+		वापस 0;
 
-	for (i = 4; i < min(result, buf_len); i++)
-		if (buf[i] == page)
-			goto found;
+	क्रम (i = 4; i < min(result, buf_len); i++)
+		अगर (buf[i] == page)
+			जाओ found;
 
-	if (i < result && i >= buf_len)
-		/* ran off the end of the buffer, give us benefit of doubt */
-		goto found;
-	/* The device claims it doesn't support the requested page */
-	goto fail;
+	अगर (i < result && i >= buf_len)
+		/* ran off the end of the buffer, give us benefit of करोubt */
+		जाओ found;
+	/* The device claims it करोesn't support the requested page */
+	जाओ fail;
 
  found:
 	result = scsi_vpd_inquiry(sdev, buf, page, buf_len);
-	if (result < 0)
-		goto fail;
+	अगर (result < 0)
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 
  fail:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(scsi_get_vpd_page);
 
 /**
  * scsi_get_vpd_buf - Get Vital Product Data from a SCSI device
  * @sdev: The device to ask
- * @page: Which Vital Product Data to return
+ * @page: Which Vital Product Data to वापस
  *
- * Returns %NULL upon failure.
+ * Returns %शून्य upon failure.
  */
-static struct scsi_vpd *scsi_get_vpd_buf(struct scsi_device *sdev, u8 page)
-{
-	struct scsi_vpd *vpd_buf;
-	int vpd_len = SCSI_VPD_PG_LEN, result;
+अटल काष्ठा scsi_vpd *scsi_get_vpd_buf(काष्ठा scsi_device *sdev, u8 page)
+अणु
+	काष्ठा scsi_vpd *vpd_buf;
+	पूर्णांक vpd_len = SCSI_VPD_PG_LEN, result;
 
 retry_pg:
-	vpd_buf = kmalloc(sizeof(*vpd_buf) + vpd_len, GFP_KERNEL);
-	if (!vpd_buf)
-		return NULL;
+	vpd_buf = kदो_स्मृति(माप(*vpd_buf) + vpd_len, GFP_KERNEL);
+	अगर (!vpd_buf)
+		वापस शून्य;
 
 	result = scsi_vpd_inquiry(sdev, vpd_buf->data, page, vpd_len);
-	if (result < 0) {
-		kfree(vpd_buf);
-		return NULL;
-	}
-	if (result > vpd_len) {
+	अगर (result < 0) अणु
+		kमुक्त(vpd_buf);
+		वापस शून्य;
+	पूर्ण
+	अगर (result > vpd_len) अणु
 		vpd_len = result;
-		kfree(vpd_buf);
-		goto retry_pg;
-	}
+		kमुक्त(vpd_buf);
+		जाओ retry_pg;
+	पूर्ण
 
 	vpd_buf->len = result;
 
-	return vpd_buf;
-}
+	वापस vpd_buf;
+पूर्ण
 
-static void scsi_update_vpd_page(struct scsi_device *sdev, u8 page,
-				 struct scsi_vpd __rcu **sdev_vpd_buf)
-{
-	struct scsi_vpd *vpd_buf;
+अटल व्योम scsi_update_vpd_page(काष्ठा scsi_device *sdev, u8 page,
+				 काष्ठा scsi_vpd __rcu **sdev_vpd_buf)
+अणु
+	काष्ठा scsi_vpd *vpd_buf;
 
 	vpd_buf = scsi_get_vpd_buf(sdev, page);
-	if (!vpd_buf)
-		return;
+	अगर (!vpd_buf)
+		वापस;
 
 	mutex_lock(&sdev->inquiry_mutex);
-	vpd_buf = rcu_replace_pointer(*sdev_vpd_buf, vpd_buf,
+	vpd_buf = rcu_replace_poपूर्णांकer(*sdev_vpd_buf, vpd_buf,
 				      lockdep_is_held(&sdev->inquiry_mutex));
 	mutex_unlock(&sdev->inquiry_mutex);
 
-	if (vpd_buf)
-		kfree_rcu(vpd_buf, rcu);
-}
+	अगर (vpd_buf)
+		kमुक्त_rcu(vpd_buf, rcu);
+पूर्ण
 
 /**
- * scsi_attach_vpd - Attach Vital Product Data to a SCSI device structure
+ * scsi_attach_vpd - Attach Vital Product Data to a SCSI device काष्ठाure
  * @sdev: The device to ask
  *
  * Attach the 'Device Identification' VPD page (0x83) and the
  * 'Unit Serial Number' VPD page (0x80) to a SCSI device
- * structure. This information can be used to identify the device
+ * काष्ठाure. This inक्रमmation can be used to identअगरy the device
  * uniquely.
  */
-void scsi_attach_vpd(struct scsi_device *sdev)
-{
-	int i;
-	struct scsi_vpd *vpd_buf;
+व्योम scsi_attach_vpd(काष्ठा scsi_device *sdev)
+अणु
+	पूर्णांक i;
+	काष्ठा scsi_vpd *vpd_buf;
 
-	if (!scsi_device_supports_vpd(sdev))
-		return;
+	अगर (!scsi_device_supports_vpd(sdev))
+		वापस;
 
-	/* Ask for all the pages supported by this device */
+	/* Ask क्रम all the pages supported by this device */
 	vpd_buf = scsi_get_vpd_buf(sdev, 0);
-	if (!vpd_buf)
-		return;
+	अगर (!vpd_buf)
+		वापस;
 
-	for (i = 4; i < vpd_buf->len; i++) {
-		if (vpd_buf->data[i] == 0x0)
+	क्रम (i = 4; i < vpd_buf->len; i++) अणु
+		अगर (vpd_buf->data[i] == 0x0)
 			scsi_update_vpd_page(sdev, 0x0, &sdev->vpd_pg0);
-		if (vpd_buf->data[i] == 0x80)
+		अगर (vpd_buf->data[i] == 0x80)
 			scsi_update_vpd_page(sdev, 0x80, &sdev->vpd_pg80);
-		if (vpd_buf->data[i] == 0x83)
+		अगर (vpd_buf->data[i] == 0x83)
 			scsi_update_vpd_page(sdev, 0x83, &sdev->vpd_pg83);
-		if (vpd_buf->data[i] == 0x89)
+		अगर (vpd_buf->data[i] == 0x89)
 			scsi_update_vpd_page(sdev, 0x89, &sdev->vpd_pg89);
-	}
-	kfree(vpd_buf);
-}
+	पूर्ण
+	kमुक्त(vpd_buf);
+पूर्ण
 
 /**
- * scsi_report_opcode - Find out if a given command opcode is supported
+ * scsi_report_opcode - Find out अगर a given command opcode is supported
  * @sdev:	scsi device to query
- * @buffer:	scratch buffer (must be at least 20 bytes long)
+ * @buffer:	scratch buffer (must be at least 20 bytes दीर्घ)
  * @len:	length of buffer
- * @opcode:	opcode for command to look up
+ * @opcode:	opcode क्रम command to look up
  *
  * Uses the REPORT SUPPORTED OPERATION CODES to look up the given
- * opcode. Returns -EINVAL if RSOC fails, 0 if the command opcode is
- * unsupported and 1 if the device claims to support the command.
+ * opcode. Returns -EINVAL अगर RSOC fails, 0 अगर the command opcode is
+ * unsupported and 1 अगर the device claims to support the command.
  */
-int scsi_report_opcode(struct scsi_device *sdev, unsigned char *buffer,
-		       unsigned int len, unsigned char opcode)
-{
-	unsigned char cmd[16];
-	struct scsi_sense_hdr sshdr;
-	int result;
+पूर्णांक scsi_report_opcode(काष्ठा scsi_device *sdev, अचिन्हित अक्षर *buffer,
+		       अचिन्हित पूर्णांक len, अचिन्हित अक्षर opcode)
+अणु
+	अचिन्हित अक्षर cmd[16];
+	काष्ठा scsi_sense_hdr sshdr;
+	पूर्णांक result;
 
-	if (sdev->no_report_opcodes || sdev->scsi_level < SCSI_SPC_3)
-		return -EINVAL;
+	अगर (sdev->no_report_opcodes || sdev->scsi_level < SCSI_SPC_3)
+		वापस -EINVAL;
 
-	memset(cmd, 0, 16);
-	cmd[0] = MAINTENANCE_IN;
+	स_रखो(cmd, 0, 16);
+	cmd[0] = MAINTEन_अंकCE_IN;
 	cmd[1] = MI_REPORT_SUPPORTED_OPERATION_CODES;
-	cmd[2] = 1;		/* One command format */
+	cmd[2] = 1;		/* One command क्रमmat */
 	cmd[3] = opcode;
 	put_unaligned_be32(len, &cmd[6]);
-	memset(buffer, 0, len);
+	स_रखो(buffer, 0, len);
 
 	result = scsi_execute_req(sdev, cmd, DMA_FROM_DEVICE, buffer, len,
-				  &sshdr, 30 * HZ, 3, NULL);
+				  &sshdr, 30 * HZ, 3, शून्य);
 
-	if (result && scsi_sense_valid(&sshdr) &&
+	अगर (result && scsi_sense_valid(&sshdr) &&
 	    sshdr.sense_key == ILLEGAL_REQUEST &&
 	    (sshdr.asc == 0x20 || sshdr.asc == 0x24) && sshdr.ascq == 0x00)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if ((buffer[1] & 3) == 3) /* Command supported */
-		return 1;
+	अगर ((buffer[1] & 3) == 3) /* Command supported */
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(scsi_report_opcode);
 
 /**
@@ -526,26 +527,26 @@ EXPORT_SYMBOL(scsi_report_opcode);
  *
  * Description: Gets a reference to the scsi_device and increments the use count
  * of the underlying LLDD module.  You must hold host_lock of the
- * parent Scsi_Host or already have a reference when calling this.
+ * parent Scsi_Host or alपढ़ोy have a reference when calling this.
  *
- * This will fail if a device is deleted or cancelled, or when the LLD module
+ * This will fail अगर a device is deleted or cancelled, or when the LLD module
  * is in the process of being unloaded.
  */
-int scsi_device_get(struct scsi_device *sdev)
-{
-	if (sdev->sdev_state == SDEV_DEL || sdev->sdev_state == SDEV_CANCEL)
-		goto fail;
-	if (!get_device(&sdev->sdev_gendev))
-		goto fail;
-	if (!try_module_get(sdev->host->hostt->module))
-		goto fail_put_device;
-	return 0;
+पूर्णांक scsi_device_get(काष्ठा scsi_device *sdev)
+अणु
+	अगर (sdev->sdev_state == SDEV_DEL || sdev->sdev_state == SDEV_CANCEL)
+		जाओ fail;
+	अगर (!get_device(&sdev->sdev_gendev))
+		जाओ fail;
+	अगर (!try_module_get(sdev->host->hostt->module))
+		जाओ fail_put_device;
+	वापस 0;
 
 fail_put_device:
 	put_device(&sdev->sdev_gendev);
 fail:
-	return -ENXIO;
-}
+	वापस -ENXIO;
+पूर्ण
 EXPORT_SYMBOL(scsi_device_get);
 
 /**
@@ -553,266 +554,266 @@ EXPORT_SYMBOL(scsi_device_get);
  * @sdev:	device to release a reference on.
  *
  * Description: Release a reference to the scsi_device and decrements the use
- * count of the underlying LLDD module.  The device is freed once the last
+ * count of the underlying LLDD module.  The device is मुक्तd once the last
  * user vanishes.
  */
-void scsi_device_put(struct scsi_device *sdev)
-{
+व्योम scsi_device_put(काष्ठा scsi_device *sdev)
+अणु
 	module_put(sdev->host->hostt->module);
 	put_device(&sdev->sdev_gendev);
-}
+पूर्ण
 EXPORT_SYMBOL(scsi_device_put);
 
-/* helper for shost_for_each_device, see that for documentation */
-struct scsi_device *__scsi_iterate_devices(struct Scsi_Host *shost,
-					   struct scsi_device *prev)
-{
-	struct list_head *list = (prev ? &prev->siblings : &shost->__devices);
-	struct scsi_device *next = NULL;
-	unsigned long flags;
+/* helper क्रम shost_क्रम_each_device, see that क्रम करोcumentation */
+काष्ठा scsi_device *__scsi_iterate_devices(काष्ठा Scsi_Host *shost,
+					   काष्ठा scsi_device *prev)
+अणु
+	काष्ठा list_head *list = (prev ? &prev->siblings : &shost->__devices);
+	काष्ठा scsi_device *next = शून्य;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(shost->host_lock, flags);
-	while (list->next != &shost->__devices) {
-		next = list_entry(list->next, struct scsi_device, siblings);
+	जबतक (list->next != &shost->__devices) अणु
+		next = list_entry(list->next, काष्ठा scsi_device, siblings);
 		/* skip devices that we can't get a reference to */
-		if (!scsi_device_get(next))
-			break;
-		next = NULL;
+		अगर (!scsi_device_get(next))
+			अवरोध;
+		next = शून्य;
 		list = list->next;
-	}
+	पूर्ण
 	spin_unlock_irqrestore(shost->host_lock, flags);
 
-	if (prev)
+	अगर (prev)
 		scsi_device_put(prev);
-	return next;
-}
+	वापस next;
+पूर्ण
 EXPORT_SYMBOL(__scsi_iterate_devices);
 
 /**
- * starget_for_each_device  -  helper to walk all devices of a target
+ * starget_क्रम_each_device  -  helper to walk all devices of a target
  * @starget:	target whose devices we want to iterate over.
  * @data:	Opaque passed to each function call.
  * @fn:		Function to call on each device
  *
  * This traverses over each device of @starget.  The devices have
- * a reference that must be released by scsi_host_put when breaking
+ * a reference that must be released by scsi_host_put when अवरोधing
  * out of the loop.
  */
-void starget_for_each_device(struct scsi_target *starget, void *data,
-		     void (*fn)(struct scsi_device *, void *))
-{
-	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	struct scsi_device *sdev;
+व्योम starget_क्रम_each_device(काष्ठा scsi_target *starget, व्योम *data,
+		     व्योम (*fn)(काष्ठा scsi_device *, व्योम *))
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	काष्ठा scsi_device *sdev;
 
-	shost_for_each_device(sdev, shost) {
-		if ((sdev->channel == starget->channel) &&
+	shost_क्रम_each_device(sdev, shost) अणु
+		अगर ((sdev->channel == starget->channel) &&
 		    (sdev->id == starget->id))
 			fn(sdev, data);
-	}
-}
-EXPORT_SYMBOL(starget_for_each_device);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(starget_क्रम_each_device);
 
 /**
- * __starget_for_each_device - helper to walk all devices of a target (UNLOCKED)
+ * __starget_क्रम_each_device - helper to walk all devices of a target (UNLOCKED)
  * @starget:	target whose devices we want to iterate over.
- * @data:	parameter for callback @fn()
- * @fn:		callback function that is invoked for each device
+ * @data:	parameter क्रम callback @fn()
+ * @fn:		callback function that is invoked क्रम each device
  *
- * This traverses over each device of @starget.  It does _not_
+ * This traverses over each device of @starget.  It करोes _not_
  * take a reference on the scsi_device, so the whole loop must be
- * protected by shost->host_lock.
+ * रक्षित by shost->host_lock.
  *
  * Note:  The only reason why drivers would want to use this is because
  * they need to access the device list in irq context.  Otherwise you
- * really want to use starget_for_each_device instead.
+ * really want to use starget_क्रम_each_device instead.
  **/
-void __starget_for_each_device(struct scsi_target *starget, void *data,
-			       void (*fn)(struct scsi_device *, void *))
-{
-	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	struct scsi_device *sdev;
+व्योम __starget_क्रम_each_device(काष्ठा scsi_target *starget, व्योम *data,
+			       व्योम (*fn)(काष्ठा scsi_device *, व्योम *))
+अणु
+	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	काष्ठा scsi_device *sdev;
 
-	__shost_for_each_device(sdev, shost) {
-		if ((sdev->channel == starget->channel) &&
+	__shost_क्रम_each_device(sdev, shost) अणु
+		अगर ((sdev->channel == starget->channel) &&
 		    (sdev->id == starget->id))
 			fn(sdev, data);
-	}
-}
-EXPORT_SYMBOL(__starget_for_each_device);
+	पूर्ण
+पूर्ण
+EXPORT_SYMBOL(__starget_क्रम_each_device);
 
 /**
  * __scsi_device_lookup_by_target - find a device given the target (UNLOCKED)
- * @starget:	SCSI target pointer
+ * @starget:	SCSI target poपूर्णांकer
  * @lun:	SCSI Logical Unit Number
  *
- * Description: Looks up the scsi_device with the specified @lun for a given
- * @starget.  The returned scsi_device does not have an additional
+ * Description: Looks up the scsi_device with the specअगरied @lun क्रम a given
+ * @starget.  The वापसed scsi_device करोes not have an additional
  * reference.  You must hold the host's host_lock over this call and
- * any access to the returned scsi_device. A scsi_device in state
+ * any access to the वापसed scsi_device. A scsi_device in state
  * SDEV_DEL is skipped.
  *
  * Note:  The only reason why drivers should use this is because
  * they need to access the device list in irq context.  Otherwise you
  * really want to use scsi_device_lookup_by_target instead.
  **/
-struct scsi_device *__scsi_device_lookup_by_target(struct scsi_target *starget,
+काष्ठा scsi_device *__scsi_device_lookup_by_target(काष्ठा scsi_target *starget,
 						   u64 lun)
-{
-	struct scsi_device *sdev;
+अणु
+	काष्ठा scsi_device *sdev;
 
-	list_for_each_entry(sdev, &starget->devices, same_target_siblings) {
-		if (sdev->sdev_state == SDEV_DEL)
-			continue;
-		if (sdev->lun ==lun)
-			return sdev;
-	}
+	list_क्रम_each_entry(sdev, &starget->devices, same_target_siblings) अणु
+		अगर (sdev->sdev_state == SDEV_DEL)
+			जारी;
+		अगर (sdev->lun ==lun)
+			वापस sdev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(__scsi_device_lookup_by_target);
 
 /**
  * scsi_device_lookup_by_target - find a device given the target
- * @starget:	SCSI target pointer
+ * @starget:	SCSI target poपूर्णांकer
  * @lun:	SCSI Logical Unit Number
  *
- * Description: Looks up the scsi_device with the specified @lun for a given
- * @starget.  The returned scsi_device has an additional reference that
- * needs to be released with scsi_device_put once you're done with it.
+ * Description: Looks up the scsi_device with the specअगरied @lun क्रम a given
+ * @starget.  The वापसed scsi_device has an additional reference that
+ * needs to be released with scsi_device_put once you're करोne with it.
  **/
-struct scsi_device *scsi_device_lookup_by_target(struct scsi_target *starget,
+काष्ठा scsi_device *scsi_device_lookup_by_target(काष्ठा scsi_target *starget,
 						 u64 lun)
-{
-	struct scsi_device *sdev;
-	struct Scsi_Host *shost = dev_to_shost(starget->dev.parent);
-	unsigned long flags;
+अणु
+	काष्ठा scsi_device *sdev;
+	काष्ठा Scsi_Host *shost = dev_to_shost(starget->dev.parent);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(shost->host_lock, flags);
 	sdev = __scsi_device_lookup_by_target(starget, lun);
-	if (sdev && scsi_device_get(sdev))
-		sdev = NULL;
+	अगर (sdev && scsi_device_get(sdev))
+		sdev = शून्य;
 	spin_unlock_irqrestore(shost->host_lock, flags);
 
-	return sdev;
-}
+	वापस sdev;
+पूर्ण
 EXPORT_SYMBOL(scsi_device_lookup_by_target);
 
 /**
  * __scsi_device_lookup - find a device given the host (UNLOCKED)
- * @shost:	SCSI host pointer
- * @channel:	SCSI channel (zero if only one channel)
+ * @shost:	SCSI host poपूर्णांकer
+ * @channel:	SCSI channel (zero अगर only one channel)
  * @id:		SCSI target number (physical unit number)
  * @lun:	SCSI Logical Unit Number
  *
- * Description: Looks up the scsi_device with the specified @channel, @id, @lun
- * for a given host. The returned scsi_device does not have an additional
+ * Description: Looks up the scsi_device with the specअगरied @channel, @id, @lun
+ * क्रम a given host. The वापसed scsi_device करोes not have an additional
  * reference.  You must hold the host's host_lock over this call and any access
- * to the returned scsi_device.
+ * to the वापसed scsi_device.
  *
  * Note:  The only reason why drivers would want to use this is because
  * they need to access the device list in irq context.  Otherwise you
  * really want to use scsi_device_lookup instead.
  **/
-struct scsi_device *__scsi_device_lookup(struct Scsi_Host *shost,
-		uint channel, uint id, u64 lun)
-{
-	struct scsi_device *sdev;
+काष्ठा scsi_device *__scsi_device_lookup(काष्ठा Scsi_Host *shost,
+		uपूर्णांक channel, uपूर्णांक id, u64 lun)
+अणु
+	काष्ठा scsi_device *sdev;
 
-	list_for_each_entry(sdev, &shost->__devices, siblings) {
-		if (sdev->sdev_state == SDEV_DEL)
-			continue;
-		if (sdev->channel == channel && sdev->id == id &&
+	list_क्रम_each_entry(sdev, &shost->__devices, siblings) अणु
+		अगर (sdev->sdev_state == SDEV_DEL)
+			जारी;
+		अगर (sdev->channel == channel && sdev->id == id &&
 				sdev->lun ==lun)
-			return sdev;
-	}
+			वापस sdev;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(__scsi_device_lookup);
 
 /**
  * scsi_device_lookup - find a device given the host
- * @shost:	SCSI host pointer
- * @channel:	SCSI channel (zero if only one channel)
+ * @shost:	SCSI host poपूर्णांकer
+ * @channel:	SCSI channel (zero अगर only one channel)
  * @id:		SCSI target number (physical unit number)
  * @lun:	SCSI Logical Unit Number
  *
- * Description: Looks up the scsi_device with the specified @channel, @id, @lun
- * for a given host.  The returned scsi_device has an additional reference that
- * needs to be released with scsi_device_put once you're done with it.
+ * Description: Looks up the scsi_device with the specअगरied @channel, @id, @lun
+ * क्रम a given host.  The वापसed scsi_device has an additional reference that
+ * needs to be released with scsi_device_put once you're करोne with it.
  **/
-struct scsi_device *scsi_device_lookup(struct Scsi_Host *shost,
-		uint channel, uint id, u64 lun)
-{
-	struct scsi_device *sdev;
-	unsigned long flags;
+काष्ठा scsi_device *scsi_device_lookup(काष्ठा Scsi_Host *shost,
+		uपूर्णांक channel, uपूर्णांक id, u64 lun)
+अणु
+	काष्ठा scsi_device *sdev;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(shost->host_lock, flags);
 	sdev = __scsi_device_lookup(shost, channel, id, lun);
-	if (sdev && scsi_device_get(sdev))
-		sdev = NULL;
+	अगर (sdev && scsi_device_get(sdev))
+		sdev = शून्य;
 	spin_unlock_irqrestore(shost->host_lock, flags);
 
-	return sdev;
-}
+	वापस sdev;
+पूर्ण
 EXPORT_SYMBOL(scsi_device_lookup);
 
 MODULE_DESCRIPTION("SCSI core");
 MODULE_LICENSE("GPL");
 
-module_param(scsi_logging_level, int, S_IRUGO|S_IWUSR);
+module_param(scsi_logging_level, पूर्णांक, S_IRUGO|S_IWUSR);
 MODULE_PARM_DESC(scsi_logging_level, "a bit mask of logging levels");
 
-static int __init init_scsi(void)
-{
-	int error;
+अटल पूर्णांक __init init_scsi(व्योम)
+अणु
+	पूर्णांक error;
 
 	error = scsi_init_procfs();
-	if (error)
-		goto cleanup_queue;
+	अगर (error)
+		जाओ cleanup_queue;
 	error = scsi_init_devinfo();
-	if (error)
-		goto cleanup_procfs;
+	अगर (error)
+		जाओ cleanup_procfs;
 	error = scsi_init_hosts();
-	if (error)
-		goto cleanup_devlist;
+	अगर (error)
+		जाओ cleanup_devlist;
 	error = scsi_init_sysctl();
-	if (error)
-		goto cleanup_hosts;
-	error = scsi_sysfs_register();
-	if (error)
-		goto cleanup_sysctl;
+	अगर (error)
+		जाओ cleanup_hosts;
+	error = scsi_sysfs_रेजिस्टर();
+	अगर (error)
+		जाओ cleanup_sysctl;
 
 	scsi_netlink_init();
 
-	printk(KERN_NOTICE "SCSI subsystem initialized\n");
-	return 0;
+	prपूर्णांकk(KERN_NOTICE "SCSI subsystem initialized\n");
+	वापस 0;
 
 cleanup_sysctl:
-	scsi_exit_sysctl();
+	scsi_निकास_sysctl();
 cleanup_hosts:
-	scsi_exit_hosts();
+	scsi_निकास_hosts();
 cleanup_devlist:
-	scsi_exit_devinfo();
+	scsi_निकास_devinfo();
 cleanup_procfs:
-	scsi_exit_procfs();
+	scsi_निकास_procfs();
 cleanup_queue:
-	scsi_exit_queue();
-	printk(KERN_ERR "SCSI subsystem failed to initialize, error = %d\n",
+	scsi_निकास_queue();
+	prपूर्णांकk(KERN_ERR "SCSI subsystem failed to initialize, error = %d\n",
 	       -error);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void __exit exit_scsi(void)
-{
-	scsi_netlink_exit();
-	scsi_sysfs_unregister();
-	scsi_exit_sysctl();
-	scsi_exit_hosts();
-	scsi_exit_devinfo();
-	scsi_exit_procfs();
-	scsi_exit_queue();
-}
+अटल व्योम __निकास निकास_scsi(व्योम)
+अणु
+	scsi_netlink_निकास();
+	scsi_sysfs_unरेजिस्टर();
+	scsi_निकास_sysctl();
+	scsi_निकास_hosts();
+	scsi_निकास_devinfo();
+	scsi_निकास_procfs();
+	scsi_निकास_queue();
+पूर्ण
 
 subsys_initcall(init_scsi);
-module_exit(exit_scsi);
+module_निकास(निकास_scsi);

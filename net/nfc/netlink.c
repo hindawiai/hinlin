@@ -1,671 +1,672 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 Instituto Nokia de Tecnologia
  *
  * Authors:
- *    Lauro Ramos Venancio <lauro.venancio@openbossa.org>
- *    Aloisio Almeida Jr <aloisio.almeida@openbossa.org>
+ *    Lauro Ramos Venancio <lauro.venancio@खोलोbossa.org>
+ *    Aloisio Almeida Jr <aloisio.almeida@खोलोbossa.org>
  *
- * Vendor commands implementation based on net/wireless/nl80211.c
+ * Venकरोr commands implementation based on net/wireless/nl80211.c
  * which is:
  *
  * Copyright 2006-2010	Johannes Berg <johannes@sipsolutions.net>
  * Copyright 2013-2014  Intel Mobile Communications GmbH
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": %s: " fmt, __func__
 
-#include <net/genetlink.h>
-#include <linux/nfc.h>
-#include <linux/slab.h>
+#समावेश <net/genetlink.h>
+#समावेश <linux/nfc.h>
+#समावेश <linux/slab.h>
 
-#include "nfc.h"
-#include "llcp.h"
+#समावेश "nfc.h"
+#समावेश "llcp.h"
 
-static const struct genl_multicast_group nfc_genl_mcgrps[] = {
-	{ .name = NFC_GENL_MCAST_EVENT_NAME, },
-};
+अटल स्थिर काष्ठा genl_multicast_group nfc_genl_mcgrps[] = अणु
+	अणु .name = NFC_GENL_MCAST_EVENT_NAME, पूर्ण,
+पूर्ण;
 
-static struct genl_family nfc_genl_family;
-static const struct nla_policy nfc_genl_policy[NFC_ATTR_MAX + 1] = {
-	[NFC_ATTR_DEVICE_INDEX] = { .type = NLA_U32 },
-	[NFC_ATTR_DEVICE_NAME] = { .type = NLA_STRING,
-				.len = NFC_DEVICE_NAME_MAXSIZE },
-	[NFC_ATTR_PROTOCOLS] = { .type = NLA_U32 },
-	[NFC_ATTR_TARGET_INDEX] = { .type = NLA_U32 },
-	[NFC_ATTR_COMM_MODE] = { .type = NLA_U8 },
-	[NFC_ATTR_RF_MODE] = { .type = NLA_U8 },
-	[NFC_ATTR_DEVICE_POWERED] = { .type = NLA_U8 },
-	[NFC_ATTR_IM_PROTOCOLS] = { .type = NLA_U32 },
-	[NFC_ATTR_TM_PROTOCOLS] = { .type = NLA_U32 },
-	[NFC_ATTR_LLC_PARAM_LTO] = { .type = NLA_U8 },
-	[NFC_ATTR_LLC_PARAM_RW] = { .type = NLA_U8 },
-	[NFC_ATTR_LLC_PARAM_MIUX] = { .type = NLA_U16 },
-	[NFC_ATTR_LLC_SDP] = { .type = NLA_NESTED },
-	[NFC_ATTR_FIRMWARE_NAME] = { .type = NLA_STRING,
-				     .len = NFC_FIRMWARE_NAME_MAXSIZE },
-	[NFC_ATTR_SE_INDEX] = { .type = NLA_U32 },
-	[NFC_ATTR_SE_APDU] = { .type = NLA_BINARY },
-	[NFC_ATTR_VENDOR_ID] = { .type = NLA_U32 },
-	[NFC_ATTR_VENDOR_SUBCMD] = { .type = NLA_U32 },
-	[NFC_ATTR_VENDOR_DATA] = { .type = NLA_BINARY },
+अटल काष्ठा genl_family nfc_genl_family;
+अटल स्थिर काष्ठा nla_policy nfc_genl_policy[NFC_ATTR_MAX + 1] = अणु
+	[NFC_ATTR_DEVICE_INDEX] = अणु .type = NLA_U32 पूर्ण,
+	[NFC_ATTR_DEVICE_NAME] = अणु .type = NLA_STRING,
+				.len = NFC_DEVICE_NAME_MAXSIZE पूर्ण,
+	[NFC_ATTR_PROTOCOLS] = अणु .type = NLA_U32 पूर्ण,
+	[NFC_ATTR_TARGET_INDEX] = अणु .type = NLA_U32 पूर्ण,
+	[NFC_ATTR_COMM_MODE] = अणु .type = NLA_U8 पूर्ण,
+	[NFC_ATTR_RF_MODE] = अणु .type = NLA_U8 पूर्ण,
+	[NFC_ATTR_DEVICE_POWERED] = अणु .type = NLA_U8 पूर्ण,
+	[NFC_ATTR_IM_PROTOCOLS] = अणु .type = NLA_U32 पूर्ण,
+	[NFC_ATTR_TM_PROTOCOLS] = अणु .type = NLA_U32 पूर्ण,
+	[NFC_ATTR_LLC_PARAM_LTO] = अणु .type = NLA_U8 पूर्ण,
+	[NFC_ATTR_LLC_PARAM_RW] = अणु .type = NLA_U8 पूर्ण,
+	[NFC_ATTR_LLC_PARAM_MIUX] = अणु .type = NLA_U16 पूर्ण,
+	[NFC_ATTR_LLC_SDP] = अणु .type = NLA_NESTED पूर्ण,
+	[NFC_ATTR_FIRMWARE_NAME] = अणु .type = NLA_STRING,
+				     .len = NFC_FIRMWARE_NAME_MAXSIZE पूर्ण,
+	[NFC_ATTR_SE_INDEX] = अणु .type = NLA_U32 पूर्ण,
+	[NFC_ATTR_SE_APDU] = अणु .type = NLA_BINARY पूर्ण,
+	[NFC_ATTR_VENDOR_ID] = अणु .type = NLA_U32 पूर्ण,
+	[NFC_ATTR_VENDOR_SUBCMD] = अणु .type = NLA_U32 पूर्ण,
+	[NFC_ATTR_VENDOR_DATA] = अणु .type = NLA_BINARY पूर्ण,
 
-};
+पूर्ण;
 
-static const struct nla_policy nfc_sdp_genl_policy[NFC_SDP_ATTR_MAX + 1] = {
-	[NFC_SDP_ATTR_URI] = { .type = NLA_STRING,
-			       .len = U8_MAX - 4 },
-	[NFC_SDP_ATTR_SAP] = { .type = NLA_U8 },
-};
+अटल स्थिर काष्ठा nla_policy nfc_sdp_genl_policy[NFC_SDP_ATTR_MAX + 1] = अणु
+	[NFC_SDP_ATTR_URI] = अणु .type = NLA_STRING,
+			       .len = U8_MAX - 4 पूर्ण,
+	[NFC_SDP_ATTR_SAP] = अणु .type = NLA_U8 पूर्ण,
+पूर्ण;
 
-static int nfc_genl_send_target(struct sk_buff *msg, struct nfc_target *target,
-				struct netlink_callback *cb, int flags)
-{
-	void *hdr;
+अटल पूर्णांक nfc_genl_send_target(काष्ठा sk_buff *msg, काष्ठा nfc_target *target,
+				काष्ठा netlink_callback *cb, पूर्णांक flags)
+अणु
+	व्योम *hdr;
 
 	hdr = genlmsg_put(msg, NETLINK_CB(cb->skb).portid, cb->nlh->nlmsg_seq,
 			  &nfc_genl_family, flags, NFC_CMD_GET_TARGET);
-	if (!hdr)
-		return -EMSGSIZE;
+	अगर (!hdr)
+		वापस -EMSGSIZE;
 
 	genl_dump_check_consistent(cb, hdr);
 
-	if (nla_put_u32(msg, NFC_ATTR_TARGET_INDEX, target->idx) ||
+	अगर (nla_put_u32(msg, NFC_ATTR_TARGET_INDEX, target->idx) ||
 	    nla_put_u32(msg, NFC_ATTR_PROTOCOLS, target->supported_protocols) ||
 	    nla_put_u16(msg, NFC_ATTR_TARGET_SENS_RES, target->sens_res) ||
 	    nla_put_u8(msg, NFC_ATTR_TARGET_SEL_RES, target->sel_res))
-		goto nla_put_failure;
-	if (target->nfcid1_len > 0 &&
+		जाओ nla_put_failure;
+	अगर (target->nfcid1_len > 0 &&
 	    nla_put(msg, NFC_ATTR_TARGET_NFCID1, target->nfcid1_len,
 		    target->nfcid1))
-		goto nla_put_failure;
-	if (target->sensb_res_len > 0 &&
+		जाओ nla_put_failure;
+	अगर (target->sensb_res_len > 0 &&
 	    nla_put(msg, NFC_ATTR_TARGET_SENSB_RES, target->sensb_res_len,
 		    target->sensb_res))
-		goto nla_put_failure;
-	if (target->sensf_res_len > 0 &&
+		जाओ nla_put_failure;
+	अगर (target->sensf_res_len > 0 &&
 	    nla_put(msg, NFC_ATTR_TARGET_SENSF_RES, target->sensf_res_len,
 		    target->sensf_res))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (target->is_iso15693) {
-		if (nla_put_u8(msg, NFC_ATTR_TARGET_ISO15693_DSFID,
+	अगर (target->is_iso15693) अणु
+		अगर (nla_put_u8(msg, NFC_ATTR_TARGET_ISO15693_DSFID,
 			       target->iso15693_dsfid) ||
 		    nla_put(msg, NFC_ATTR_TARGET_ISO15693_UID,
-			    sizeof(target->iso15693_uid), target->iso15693_uid))
-			goto nla_put_failure;
-	}
+			    माप(target->iso15693_uid), target->iso15693_uid))
+			जाओ nla_put_failure;
+	पूर्ण
 
 	genlmsg_end(msg, hdr);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static struct nfc_dev *__get_device_from_cb(struct netlink_callback *cb)
-{
-	const struct genl_dumpit_info *info = genl_dumpit_info(cb);
-	struct nfc_dev *dev;
+अटल काष्ठा nfc_dev *__get_device_from_cb(काष्ठा netlink_callback *cb)
+अणु
+	स्थिर काष्ठा genl_dumpit_info *info = genl_dumpit_info(cb);
+	काष्ठा nfc_dev *dev;
 	u32 idx;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX])
-		return ERR_PTR(-EINVAL);
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX])
+		वापस ERR_PTR(-EINVAL);
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return ERR_PTR(-ENODEV);
+	अगर (!dev)
+		वापस ERR_PTR(-ENODEV);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static int nfc_genl_dump_targets(struct sk_buff *skb,
-				 struct netlink_callback *cb)
-{
-	int i = cb->args[0];
-	struct nfc_dev *dev = (struct nfc_dev *) cb->args[1];
-	int rc;
+अटल पूर्णांक nfc_genl_dump_tarमाला_लो(काष्ठा sk_buff *skb,
+				 काष्ठा netlink_callback *cb)
+अणु
+	पूर्णांक i = cb->args[0];
+	काष्ठा nfc_dev *dev = (काष्ठा nfc_dev *) cb->args[1];
+	पूर्णांक rc;
 
-	if (!dev) {
+	अगर (!dev) अणु
 		dev = __get_device_from_cb(cb);
-		if (IS_ERR(dev))
-			return PTR_ERR(dev);
+		अगर (IS_ERR(dev))
+			वापस PTR_ERR(dev);
 
-		cb->args[1] = (long) dev;
-	}
+		cb->args[1] = (दीर्घ) dev;
+	पूर्ण
 
 	device_lock(&dev->dev);
 
-	cb->seq = dev->targets_generation;
+	cb->seq = dev->tarमाला_लो_generation;
 
-	while (i < dev->n_targets) {
-		rc = nfc_genl_send_target(skb, &dev->targets[i], cb,
+	जबतक (i < dev->n_tarमाला_लो) अणु
+		rc = nfc_genl_send_target(skb, &dev->tarमाला_लो[i], cb,
 					  NLM_F_MULTI);
-		if (rc < 0)
-			break;
+		अगर (rc < 0)
+			अवरोध;
 
 		i++;
-	}
+	पूर्ण
 
 	device_unlock(&dev->dev);
 
 	cb->args[0] = i;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static int nfc_genl_dump_targets_done(struct netlink_callback *cb)
-{
-	struct nfc_dev *dev = (struct nfc_dev *) cb->args[1];
+अटल पूर्णांक nfc_genl_dump_tarमाला_लो_करोne(काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा nfc_dev *dev = (काष्ठा nfc_dev *) cb->args[1];
 
-	if (dev)
+	अगर (dev)
 		nfc_put_device(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int nfc_genl_targets_found(struct nfc_dev *dev)
-{
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_tarमाला_लो_found(काष्ठा nfc_dev *dev)
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	dev->genl_data.poll_req_portid = 0;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_TARGETS_FOUND);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
-		goto nla_put_failure;
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
-	return genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_ATOMIC);
+	वापस genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_ATOMIC);
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int nfc_genl_target_lost(struct nfc_dev *dev, u32 target_idx)
-{
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_target_lost(काष्ठा nfc_dev *dev, u32 target_idx)
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_TARGET_LOST);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_string(msg, NFC_ATTR_DEVICE_NAME, nfc_device_name(dev)) ||
+	अगर (nla_put_string(msg, NFC_ATTR_DEVICE_NAME, nfc_device_name(dev)) ||
 	    nla_put_u32(msg, NFC_ATTR_TARGET_INDEX, target_idx))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int nfc_genl_tm_activated(struct nfc_dev *dev, u32 protocol)
-{
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_पंचांग_activated(काष्ठा nfc_dev *dev, u32 protocol)
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_TM_ACTIVATED);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
-		goto nla_put_failure;
-	if (nla_put_u32(msg, NFC_ATTR_TM_PROTOCOLS, protocol))
-		goto nla_put_failure;
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
+		जाओ nla_put_failure;
+	अगर (nla_put_u32(msg, NFC_ATTR_TM_PROTOCOLS, protocol))
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int nfc_genl_tm_deactivated(struct nfc_dev *dev)
-{
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_पंचांग_deactivated(काष्ठा nfc_dev *dev)
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_TM_DEACTIVATED);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
-		goto nla_put_failure;
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int nfc_genl_setup_device_added(struct nfc_dev *dev, struct sk_buff *msg)
-{
-	if (nla_put_string(msg, NFC_ATTR_DEVICE_NAME, nfc_device_name(dev)) ||
+अटल पूर्णांक nfc_genl_setup_device_added(काष्ठा nfc_dev *dev, काष्ठा sk_buff *msg)
+अणु
+	अगर (nla_put_string(msg, NFC_ATTR_DEVICE_NAME, nfc_device_name(dev)) ||
 	    nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
 	    nla_put_u32(msg, NFC_ATTR_PROTOCOLS, dev->supported_protocols) ||
 	    nla_put_u8(msg, NFC_ATTR_DEVICE_POWERED, dev->dev_up) ||
 	    nla_put_u8(msg, NFC_ATTR_RF_MODE, dev->rf_mode))
-		return -1;
-	return 0;
-}
+		वापस -1;
+	वापस 0;
+पूर्ण
 
-int nfc_genl_device_added(struct nfc_dev *dev)
-{
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_device_added(काष्ठा nfc_dev *dev)
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_DEVICE_ADDED);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nfc_genl_setup_device_added(dev, msg))
-		goto nla_put_failure;
+	अगर (nfc_genl_setup_device_added(dev, msg))
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int nfc_genl_device_removed(struct nfc_dev *dev)
-{
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_device_हटाओd(काष्ठा nfc_dev *dev)
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_DEVICE_REMOVED);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
-		goto nla_put_failure;
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int nfc_genl_llc_send_sdres(struct nfc_dev *dev, struct hlist_head *sdres_list)
-{
-	struct sk_buff *msg;
-	struct nlattr *sdp_attr, *uri_attr;
-	struct nfc_llcp_sdp_tlv *sdres;
-	struct hlist_node *n;
-	void *hdr;
-	int rc = -EMSGSIZE;
-	int i;
+पूर्णांक nfc_genl_llc_send_sdres(काष्ठा nfc_dev *dev, काष्ठा hlist_head *sdres_list)
+अणु
+	काष्ठा sk_buff *msg;
+	काष्ठा nlattr *sdp_attr, *uri_attr;
+	काष्ठा nfc_llcp_sdp_tlv *sdres;
+	काष्ठा hlist_node *n;
+	व्योम *hdr;
+	पूर्णांक rc = -EMSGSIZE;
+	पूर्णांक i;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_LLC_SDRES);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
-		goto nla_put_failure;
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
+		जाओ nla_put_failure;
 
 	sdp_attr = nla_nest_start_noflag(msg, NFC_ATTR_LLC_SDP);
-	if (sdp_attr == NULL) {
+	अगर (sdp_attr == शून्य) अणु
 		rc = -ENOMEM;
-		goto nla_put_failure;
-	}
+		जाओ nla_put_failure;
+	पूर्ण
 
 	i = 1;
-	hlist_for_each_entry_safe(sdres, n, sdres_list, node) {
+	hlist_क्रम_each_entry_safe(sdres, n, sdres_list, node) अणु
 		pr_debug("uri: %s, sap: %d\n", sdres->uri, sdres->sap);
 
 		uri_attr = nla_nest_start_noflag(msg, i++);
-		if (uri_attr == NULL) {
+		अगर (uri_attr == शून्य) अणु
 			rc = -ENOMEM;
-			goto nla_put_failure;
-		}
+			जाओ nla_put_failure;
+		पूर्ण
 
-		if (nla_put_u8(msg, NFC_SDP_ATTR_SAP, sdres->sap))
-			goto nla_put_failure;
+		अगर (nla_put_u8(msg, NFC_SDP_ATTR_SAP, sdres->sap))
+			जाओ nla_put_failure;
 
-		if (nla_put_string(msg, NFC_SDP_ATTR_URI, sdres->uri))
-			goto nla_put_failure;
+		अगर (nla_put_string(msg, NFC_SDP_ATTR_URI, sdres->uri))
+			जाओ nla_put_failure;
 
 		nla_nest_end(msg, uri_attr);
 
 		hlist_del(&sdres->node);
 
-		nfc_llcp_free_sdp_tlv(sdres);
-	}
+		nfc_llcp_मुक्त_sdp_tlv(sdres);
+	पूर्ण
 
 	nla_nest_end(msg, sdp_attr);
 
 	genlmsg_end(msg, hdr);
 
-	return genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_ATOMIC);
+	वापस genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_ATOMIC);
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
 
-	nfc_llcp_free_sdp_tlv_list(sdres_list);
+	nfc_llcp_मुक्त_sdp_tlv_list(sdres_list);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int nfc_genl_se_added(struct nfc_dev *dev, u32 se_idx, u16 type)
-{
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_se_added(काष्ठा nfc_dev *dev, u32 se_idx, u16 type)
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_SE_ADDED);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
 	    nla_put_u32(msg, NFC_ATTR_SE_INDEX, se_idx) ||
 	    nla_put_u8(msg, NFC_ATTR_SE_TYPE, type))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int nfc_genl_se_removed(struct nfc_dev *dev, u32 se_idx)
-{
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_se_हटाओd(काष्ठा nfc_dev *dev, u32 se_idx)
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_SE_REMOVED);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
 	    nla_put_u32(msg, NFC_ATTR_SE_INDEX, se_idx))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int nfc_genl_se_transaction(struct nfc_dev *dev, u8 se_idx,
-			    struct nfc_evt_transaction *evt_transaction)
-{
-	struct nfc_se *se;
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_se_transaction(काष्ठा nfc_dev *dev, u8 se_idx,
+			    काष्ठा nfc_evt_transaction *evt_transaction)
+अणु
+	काष्ठा nfc_se *se;
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_SE_TRANSACTION);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
 	se = nfc_find_se(dev, se_idx);
-	if (!se)
-		goto free_msg;
+	अगर (!se)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
 	    nla_put_u32(msg, NFC_ATTR_SE_INDEX, se_idx) ||
 	    nla_put_u8(msg, NFC_ATTR_SE_TYPE, se->type) ||
 	    nla_put(msg, NFC_ATTR_SE_AID, evt_transaction->aid_len,
 		    evt_transaction->aid) ||
 	    nla_put(msg, NFC_ATTR_SE_PARAMS, evt_transaction->params_len,
 		    evt_transaction->params))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	/* evt_transaction is no more used */
-	devm_kfree(&dev->dev, evt_transaction);
+	devm_kमुक्त(&dev->dev, evt_transaction);
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
+मुक्त_msg:
 	/* evt_transaction is no more used */
-	devm_kfree(&dev->dev, evt_transaction);
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+	devm_kमुक्त(&dev->dev, evt_transaction);
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int nfc_genl_se_connectivity(struct nfc_dev *dev, u8 se_idx)
-{
-	struct nfc_se *se;
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_se_connectivity(काष्ठा nfc_dev *dev, u8 se_idx)
+अणु
+	काष्ठा nfc_se *se;
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_EVENT_SE_CONNECTIVITY);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
 	se = nfc_find_se(dev, se_idx);
-	if (!se)
-		goto free_msg;
+	अगर (!se)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
 	    nla_put_u32(msg, NFC_ATTR_SE_INDEX, se_idx) ||
 	    nla_put_u8(msg, NFC_ATTR_SE_TYPE, se->type))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int nfc_genl_send_device(struct sk_buff *msg, struct nfc_dev *dev,
+अटल पूर्णांक nfc_genl_send_device(काष्ठा sk_buff *msg, काष्ठा nfc_dev *dev,
 				u32 portid, u32 seq,
-				struct netlink_callback *cb,
-				int flags)
-{
-	void *hdr;
+				काष्ठा netlink_callback *cb,
+				पूर्णांक flags)
+अणु
+	व्योम *hdr;
 
 	hdr = genlmsg_put(msg, portid, seq, &nfc_genl_family, flags,
 			  NFC_CMD_GET_DEVICE);
-	if (!hdr)
-		return -EMSGSIZE;
+	अगर (!hdr)
+		वापस -EMSGSIZE;
 
-	if (cb)
+	अगर (cb)
 		genl_dump_check_consistent(cb, hdr);
 
-	if (nfc_genl_setup_device_added(dev, msg))
-		goto nla_put_failure;
+	अगर (nfc_genl_setup_device_added(dev, msg))
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int nfc_genl_dump_devices(struct sk_buff *skb,
-				 struct netlink_callback *cb)
-{
-	struct class_dev_iter *iter = (struct class_dev_iter *) cb->args[0];
-	struct nfc_dev *dev = (struct nfc_dev *) cb->args[1];
+अटल पूर्णांक nfc_genl_dump_devices(काष्ठा sk_buff *skb,
+				 काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा class_dev_iter *iter = (काष्ठा class_dev_iter *) cb->args[0];
+	काष्ठा nfc_dev *dev = (काष्ठा nfc_dev *) cb->args[1];
 	bool first_call = false;
 
-	if (!iter) {
+	अगर (!iter) अणु
 		first_call = true;
-		iter = kmalloc(sizeof(struct class_dev_iter), GFP_KERNEL);
-		if (!iter)
-			return -ENOMEM;
-		cb->args[0] = (long) iter;
-	}
+		iter = kदो_स्मृति(माप(काष्ठा class_dev_iter), GFP_KERNEL);
+		अगर (!iter)
+			वापस -ENOMEM;
+		cb->args[0] = (दीर्घ) iter;
+	पूर्ण
 
 	mutex_lock(&nfc_devlist_mutex);
 
 	cb->seq = nfc_devlist_generation;
 
-	if (first_call) {
+	अगर (first_call) अणु
 		nfc_device_iter_init(iter);
 		dev = nfc_device_iter_next(iter);
-	}
+	पूर्ण
 
-	while (dev) {
-		int rc;
+	जबतक (dev) अणु
+		पूर्णांक rc;
 
 		rc = nfc_genl_send_device(skb, dev, NETLINK_CB(cb->skb).portid,
 					  cb->nlh->nlmsg_seq, cb, NLM_F_MULTI);
-		if (rc < 0)
-			break;
+		अगर (rc < 0)
+			अवरोध;
 
 		dev = nfc_device_iter_next(iter);
-	}
+	पूर्ण
 
 	mutex_unlock(&nfc_devlist_mutex);
 
-	cb->args[1] = (long) dev;
+	cb->args[1] = (दीर्घ) dev;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static int nfc_genl_dump_devices_done(struct netlink_callback *cb)
-{
-	struct class_dev_iter *iter = (struct class_dev_iter *) cb->args[0];
+अटल पूर्णांक nfc_genl_dump_devices_करोne(काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा class_dev_iter *iter = (काष्ठा class_dev_iter *) cb->args[0];
 
-	nfc_device_iter_exit(iter);
-	kfree(iter);
+	nfc_device_iter_निकास(iter);
+	kमुक्त(iter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int nfc_genl_dep_link_up_event(struct nfc_dev *dev, u32 target_idx,
+पूर्णांक nfc_genl_dep_link_up_event(काष्ठा nfc_dev *dev, u32 target_idx,
 			       u8 comm_mode, u8 rf_mode)
-{
-	struct sk_buff *msg;
-	void *hdr;
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	pr_debug("DEP link is up\n");
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0, NFC_CMD_DEP_LINK_UP);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
-		goto nla_put_failure;
-	if (rf_mode == NFC_RF_INITIATOR &&
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
+		जाओ nla_put_failure;
+	अगर (rf_mode == NFC_RF_INITIATOR &&
 	    nla_put_u32(msg, NFC_ATTR_TARGET_INDEX, target_idx))
-		goto nla_put_failure;
-	if (nla_put_u8(msg, NFC_ATTR_COMM_MODE, comm_mode) ||
+		जाओ nla_put_failure;
+	अगर (nla_put_u8(msg, NFC_ATTR_COMM_MODE, comm_mode) ||
 	    nla_put_u8(msg, NFC_ATTR_RF_MODE, rf_mode))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
@@ -673,197 +674,197 @@ int nfc_genl_dep_link_up_event(struct nfc_dev *dev, u32 target_idx,
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_ATOMIC);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-int nfc_genl_dep_link_down_event(struct nfc_dev *dev)
-{
-	struct sk_buff *msg;
-	void *hdr;
+पूर्णांक nfc_genl_dep_link_करोwn_event(काष्ठा nfc_dev *dev)
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	pr_debug("DEP link is down\n");
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_ATOMIC);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_CMD_DEP_LINK_DOWN);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
-		goto nla_put_failure;
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_ATOMIC);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int nfc_genl_get_device(struct sk_buff *skb, struct genl_info *info)
-{
-	struct sk_buff *msg;
-	struct nfc_dev *dev;
+अटल पूर्णांक nfc_genl_get_device(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा sk_buff *msg;
+	काष्ठा nfc_dev *dev;
 	u32 idx;
-	int rc = -ENOBUFS;
+	पूर्णांक rc = -ENOBUFS;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX])
-		return -EINVAL;
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX])
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg) {
+	अगर (!msg) अणु
 		rc = -ENOMEM;
-		goto out_putdev;
-	}
+		जाओ out_putdev;
+	पूर्ण
 
 	rc = nfc_genl_send_device(msg, dev, info->snd_portid, info->snd_seq,
-				  NULL, 0);
-	if (rc < 0)
-		goto out_free;
+				  शून्य, 0);
+	अगर (rc < 0)
+		जाओ out_मुक्त;
 
 	nfc_put_device(dev);
 
-	return genlmsg_reply(msg, info);
+	वापस genlmsg_reply(msg, info);
 
-out_free:
-	nlmsg_free(msg);
+out_मुक्त:
+	nlmsg_मुक्त(msg);
 out_putdev:
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_dev_up(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	int rc;
+अटल पूर्णांक nfc_genl_dev_up(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	पूर्णांक rc;
 	u32 idx;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX])
-		return -EINVAL;
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX])
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	rc = nfc_dev_up(dev);
 
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_dev_down(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	int rc;
+अटल पूर्णांक nfc_genl_dev_करोwn(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	पूर्णांक rc;
 	u32 idx;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX])
-		return -EINVAL;
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX])
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
-	rc = nfc_dev_down(dev);
+	rc = nfc_dev_करोwn(dev);
 
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_start_poll(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	int rc;
+अटल पूर्णांक nfc_genl_start_poll(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	पूर्णांक rc;
 	u32 idx;
-	u32 im_protocols = 0, tm_protocols = 0;
+	u32 im_protocols = 0, पंचांग_protocols = 0;
 
 	pr_debug("Poll start\n");
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    ((!info->attrs[NFC_ATTR_IM_PROTOCOLS] &&
 	      !info->attrs[NFC_ATTR_PROTOCOLS]) &&
 	      !info->attrs[NFC_ATTR_TM_PROTOCOLS]))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
-	if (info->attrs[NFC_ATTR_TM_PROTOCOLS])
-		tm_protocols = nla_get_u32(info->attrs[NFC_ATTR_TM_PROTOCOLS]);
+	अगर (info->attrs[NFC_ATTR_TM_PROTOCOLS])
+		पंचांग_protocols = nla_get_u32(info->attrs[NFC_ATTR_TM_PROTOCOLS]);
 
-	if (info->attrs[NFC_ATTR_IM_PROTOCOLS])
+	अगर (info->attrs[NFC_ATTR_IM_PROTOCOLS])
 		im_protocols = nla_get_u32(info->attrs[NFC_ATTR_IM_PROTOCOLS]);
-	else if (info->attrs[NFC_ATTR_PROTOCOLS])
+	अन्यथा अगर (info->attrs[NFC_ATTR_PROTOCOLS])
 		im_protocols = nla_get_u32(info->attrs[NFC_ATTR_PROTOCOLS]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	mutex_lock(&dev->genl_data.genl_data_mutex);
 
-	rc = nfc_start_poll(dev, im_protocols, tm_protocols);
-	if (!rc)
+	rc = nfc_start_poll(dev, im_protocols, पंचांग_protocols);
+	अगर (!rc)
 		dev->genl_data.poll_req_portid = info->snd_portid;
 
 	mutex_unlock(&dev->genl_data.genl_data_mutex);
 
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_stop_poll(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	int rc;
+अटल पूर्णांक nfc_genl_stop_poll(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	पूर्णांक rc;
 	u32 idx;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX])
-		return -EINVAL;
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX])
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	device_lock(&dev->dev);
 
-	if (!dev->polling) {
+	अगर (!dev->polling) अणु
 		device_unlock(&dev->dev);
 		nfc_put_device(dev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	device_unlock(&dev->dev);
 
 	mutex_lock(&dev->genl_data.genl_data_mutex);
 
-	if (dev->genl_data.poll_req_portid != info->snd_portid) {
+	अगर (dev->genl_data.poll_req_portid != info->snd_portid) अणु
 		rc = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rc = nfc_stop_poll(dev);
 	dev->genl_data.poll_req_portid = 0;
@@ -871,25 +872,25 @@ static int nfc_genl_stop_poll(struct sk_buff *skb, struct genl_info *info)
 out:
 	mutex_unlock(&dev->genl_data.genl_data_mutex);
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_activate_target(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
+अटल पूर्णांक nfc_genl_activate_target(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
 	u32 device_idx, target_idx, protocol;
-	int rc;
+	पूर्णांक rc;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_TARGET_INDEX] ||
 	    !info->attrs[NFC_ATTR_PROTOCOLS])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	device_idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(device_idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	target_idx = nla_get_u32(info->attrs[NFC_ATTR_TARGET_INDEX]);
 	protocol = nla_get_u32(info->attrs[NFC_ATTR_PROTOCOLS]);
@@ -898,864 +899,864 @@ static int nfc_genl_activate_target(struct sk_buff *skb, struct genl_info *info)
 	rc = nfc_activate_target(dev, target_idx, protocol);
 
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_deactivate_target(struct sk_buff *skb,
-				      struct genl_info *info)
-{
-	struct nfc_dev *dev;
+अटल पूर्णांक nfc_genl_deactivate_target(काष्ठा sk_buff *skb,
+				      काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
 	u32 device_idx, target_idx;
-	int rc;
+	पूर्णांक rc;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_TARGET_INDEX])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	device_idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(device_idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	target_idx = nla_get_u32(info->attrs[NFC_ATTR_TARGET_INDEX]);
 
 	rc = nfc_deactivate_target(dev, target_idx, NFC_TARGET_MODE_SLEEP);
 
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_dep_link_up(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	int rc, tgt_idx;
+अटल पूर्णांक nfc_genl_dep_link_up(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	पूर्णांक rc, tgt_idx;
 	u32 idx;
 	u8 comm;
 
 	pr_debug("DEP link up\n");
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_COMM_MODE])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
-	if (!info->attrs[NFC_ATTR_TARGET_INDEX])
+	अगर (!info->attrs[NFC_ATTR_TARGET_INDEX])
 		tgt_idx = NFC_TARGET_IDX_ANY;
-	else
+	अन्यथा
 		tgt_idx = nla_get_u32(info->attrs[NFC_ATTR_TARGET_INDEX]);
 
 	comm = nla_get_u8(info->attrs[NFC_ATTR_COMM_MODE]);
 
-	if (comm != NFC_COMM_ACTIVE && comm != NFC_COMM_PASSIVE)
-		return -EINVAL;
+	अगर (comm != NFC_COMM_ACTIVE && comm != NFC_COMM_PASSIVE)
+		वापस -EINVAL;
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	rc = nfc_dep_link_up(dev, tgt_idx, comm);
 
 	nfc_put_device(dev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_dep_link_down(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	int rc;
+अटल पूर्णांक nfc_genl_dep_link_करोwn(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	पूर्णांक rc;
 	u32 idx;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_TARGET_INDEX])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
-	rc = nfc_dep_link_down(dev);
+	rc = nfc_dep_link_करोwn(dev);
 
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_send_params(struct sk_buff *msg,
-				struct nfc_llcp_local *local,
+अटल पूर्णांक nfc_genl_send_params(काष्ठा sk_buff *msg,
+				काष्ठा nfc_llcp_local *local,
 				u32 portid, u32 seq)
-{
-	void *hdr;
+अणु
+	व्योम *hdr;
 
 	hdr = genlmsg_put(msg, portid, seq, &nfc_genl_family, 0,
 			  NFC_CMD_LLC_GET_PARAMS);
-	if (!hdr)
-		return -EMSGSIZE;
+	अगर (!hdr)
+		वापस -EMSGSIZE;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, local->dev->idx) ||
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, local->dev->idx) ||
 	    nla_put_u8(msg, NFC_ATTR_LLC_PARAM_LTO, local->lto) ||
 	    nla_put_u8(msg, NFC_ATTR_LLC_PARAM_RW, local->rw) ||
 	    nla_put_u16(msg, NFC_ATTR_LLC_PARAM_MIUX, be16_to_cpu(local->miux)))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int nfc_genl_llc_get_params(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	struct nfc_llcp_local *local;
-	int rc = 0;
-	struct sk_buff *msg = NULL;
+अटल पूर्णांक nfc_genl_llc_get_params(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	काष्ठा nfc_llcp_local *local;
+	पूर्णांक rc = 0;
+	काष्ठा sk_buff *msg = शून्य;
 	u32 idx;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_FIRMWARE_NAME])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	device_lock(&dev->dev);
 
 	local = nfc_llcp_find_local(dev);
-	if (!local) {
+	अगर (!local) अणु
 		rc = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg) {
+	अगर (!msg) अणु
 		rc = -ENOMEM;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rc = nfc_genl_send_params(msg, local, info->snd_portid, info->snd_seq);
 
-exit:
+निकास:
 	device_unlock(&dev->dev);
 
 	nfc_put_device(dev);
 
-	if (rc < 0) {
-		if (msg)
-			nlmsg_free(msg);
+	अगर (rc < 0) अणु
+		अगर (msg)
+			nlmsg_मुक्त(msg);
 
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return genlmsg_reply(msg, info);
-}
+	वापस genlmsg_reply(msg, info);
+पूर्ण
 
-static int nfc_genl_llc_set_params(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	struct nfc_llcp_local *local;
+अटल पूर्णांक nfc_genl_llc_set_params(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	काष्ठा nfc_llcp_local *local;
 	u8 rw = 0;
 	u16 miux = 0;
 	u32 idx;
-	int rc = 0;
+	पूर्णांक rc = 0;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    (!info->attrs[NFC_ATTR_LLC_PARAM_LTO] &&
 	     !info->attrs[NFC_ATTR_LLC_PARAM_RW] &&
 	     !info->attrs[NFC_ATTR_LLC_PARAM_MIUX]))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (info->attrs[NFC_ATTR_LLC_PARAM_RW]) {
+	अगर (info->attrs[NFC_ATTR_LLC_PARAM_RW]) अणु
 		rw = nla_get_u8(info->attrs[NFC_ATTR_LLC_PARAM_RW]);
 
-		if (rw > LLCP_MAX_RW)
-			return -EINVAL;
-	}
+		अगर (rw > LLCP_MAX_RW)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (info->attrs[NFC_ATTR_LLC_PARAM_MIUX]) {
+	अगर (info->attrs[NFC_ATTR_LLC_PARAM_MIUX]) अणु
 		miux = nla_get_u16(info->attrs[NFC_ATTR_LLC_PARAM_MIUX]);
 
-		if (miux > LLCP_MAX_MIUX)
-			return -EINVAL;
-	}
+		अगर (miux > LLCP_MAX_MIUX)
+			वापस -EINVAL;
+	पूर्ण
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	device_lock(&dev->dev);
 
 	local = nfc_llcp_find_local(dev);
-	if (!local) {
+	अगर (!local) अणु
 		rc = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	if (info->attrs[NFC_ATTR_LLC_PARAM_LTO]) {
-		if (dev->dep_link_up) {
+	अगर (info->attrs[NFC_ATTR_LLC_PARAM_LTO]) अणु
+		अगर (dev->dep_link_up) अणु
 			rc = -EINPROGRESS;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		local->lto = nla_get_u8(info->attrs[NFC_ATTR_LLC_PARAM_LTO]);
-	}
+	पूर्ण
 
-	if (info->attrs[NFC_ATTR_LLC_PARAM_RW])
+	अगर (info->attrs[NFC_ATTR_LLC_PARAM_RW])
 		local->rw = rw;
 
-	if (info->attrs[NFC_ATTR_LLC_PARAM_MIUX])
+	अगर (info->attrs[NFC_ATTR_LLC_PARAM_MIUX])
 		local->miux = cpu_to_be16(miux);
 
-exit:
+निकास:
 	device_unlock(&dev->dev);
 
 	nfc_put_device(dev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_llc_sdreq(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	struct nfc_llcp_local *local;
-	struct nlattr *attr, *sdp_attrs[NFC_SDP_ATTR_MAX+1];
+अटल पूर्णांक nfc_genl_llc_sdreq(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	काष्ठा nfc_llcp_local *local;
+	काष्ठा nlattr *attr, *sdp_attrs[NFC_SDP_ATTR_MAX+1];
 	u32 idx;
 	u8 tid;
-	char *uri;
-	int rc = 0, rem;
-	size_t uri_len, tlvs_len;
-	struct hlist_head sdreq_list;
-	struct nfc_llcp_sdp_tlv *sdreq;
+	अक्षर *uri;
+	पूर्णांक rc = 0, rem;
+	माप_प्रकार uri_len, tlvs_len;
+	काष्ठा hlist_head sdreq_list;
+	काष्ठा nfc_llcp_sdp_tlv *sdreq;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_LLC_SDP])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	device_lock(&dev->dev);
 
-	if (dev->dep_link_up == false) {
+	अगर (dev->dep_link_up == false) अणु
 		rc = -ENOLINK;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	local = nfc_llcp_find_local(dev);
-	if (!local) {
+	अगर (!local) अणु
 		rc = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	INIT_HLIST_HEAD(&sdreq_list);
 
 	tlvs_len = 0;
 
-	nla_for_each_nested(attr, info->attrs[NFC_ATTR_LLC_SDP], rem) {
+	nla_क्रम_each_nested(attr, info->attrs[NFC_ATTR_LLC_SDP], rem) अणु
 		rc = nla_parse_nested_deprecated(sdp_attrs, NFC_SDP_ATTR_MAX,
 						 attr, nfc_sdp_genl_policy,
 						 info->extack);
 
-		if (rc != 0) {
+		अगर (rc != 0) अणु
 			rc = -EINVAL;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
-		if (!sdp_attrs[NFC_SDP_ATTR_URI])
-			continue;
+		अगर (!sdp_attrs[NFC_SDP_ATTR_URI])
+			जारी;
 
 		uri_len = nla_len(sdp_attrs[NFC_SDP_ATTR_URI]);
-		if (uri_len == 0)
-			continue;
+		अगर (uri_len == 0)
+			जारी;
 
 		uri = nla_data(sdp_attrs[NFC_SDP_ATTR_URI]);
-		if (uri == NULL || *uri == 0)
-			continue;
+		अगर (uri == शून्य || *uri == 0)
+			जारी;
 
 		tid = local->sdreq_next_tid++;
 
 		sdreq = nfc_llcp_build_sdreq_tlv(tid, uri, uri_len);
-		if (sdreq == NULL) {
+		अगर (sdreq == शून्य) अणु
 			rc = -ENOMEM;
-			goto exit;
-		}
+			जाओ निकास;
+		पूर्ण
 
 		tlvs_len += sdreq->tlv_len;
 
 		hlist_add_head(&sdreq->node, &sdreq_list);
-	}
+	पूर्ण
 
-	if (hlist_empty(&sdreq_list)) {
+	अगर (hlist_empty(&sdreq_list)) अणु
 		rc = -EINVAL;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	rc = nfc_llcp_send_snl_sdreq(local, &sdreq_list, tlvs_len);
-exit:
+निकास:
 	device_unlock(&dev->dev);
 
 	nfc_put_device(dev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_fw_download(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	int rc;
+अटल पूर्णांक nfc_genl_fw_करोwnload(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	पूर्णांक rc;
 	u32 idx;
-	char firmware_name[NFC_FIRMWARE_NAME_MAXSIZE + 1];
+	अक्षर firmware_name[NFC_FIRMWARE_NAME_MAXSIZE + 1];
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] || !info->attrs[NFC_ATTR_FIRMWARE_NAME])
-		return -EINVAL;
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] || !info->attrs[NFC_ATTR_FIRMWARE_NAME])
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	nla_strscpy(firmware_name, info->attrs[NFC_ATTR_FIRMWARE_NAME],
-		    sizeof(firmware_name));
+		    माप(firmware_name));
 
-	rc = nfc_fw_download(dev, firmware_name);
+	rc = nfc_fw_करोwnload(dev, firmware_name);
 
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int nfc_genl_fw_download_done(struct nfc_dev *dev, const char *firmware_name,
+पूर्णांक nfc_genl_fw_करोwnload_करोne(काष्ठा nfc_dev *dev, स्थिर अक्षर *firmware_name,
 			      u32 result)
-{
-	struct sk_buff *msg;
-	void *hdr;
+अणु
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg)
-		return -ENOMEM;
+	अगर (!msg)
+		वापस -ENOMEM;
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_CMD_FW_DOWNLOAD);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_string(msg, NFC_ATTR_FIRMWARE_NAME, firmware_name) ||
+	अगर (nla_put_string(msg, NFC_ATTR_FIRMWARE_NAME, firmware_name) ||
 	    nla_put_u32(msg, NFC_ATTR_FIRMWARE_DOWNLOAD_STATUS, result) ||
 	    nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	return -EMSGSIZE;
-}
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int nfc_genl_enable_se(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	int rc;
+अटल पूर्णांक nfc_genl_enable_se(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	पूर्णांक rc;
 	u32 idx, se_idx;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_SE_INDEX])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 	se_idx = nla_get_u32(info->attrs[NFC_ATTR_SE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	rc = nfc_enable_se(dev, se_idx);
 
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_disable_se(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	int rc;
+अटल पूर्णांक nfc_genl_disable_se(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	पूर्णांक rc;
 	u32 idx, se_idx;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_SE_INDEX])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 	se_idx = nla_get_u32(info->attrs[NFC_ATTR_SE_INDEX]);
 
 	dev = nfc_get_device(idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	rc = nfc_disable_se(dev, se_idx);
 
 	nfc_put_device(dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int nfc_genl_send_se(struct sk_buff *msg, struct nfc_dev *dev,
+अटल पूर्णांक nfc_genl_send_se(काष्ठा sk_buff *msg, काष्ठा nfc_dev *dev,
 				u32 portid, u32 seq,
-				struct netlink_callback *cb,
-				int flags)
-{
-	void *hdr;
-	struct nfc_se *se, *n;
+				काष्ठा netlink_callback *cb,
+				पूर्णांक flags)
+अणु
+	व्योम *hdr;
+	काष्ठा nfc_se *se, *n;
 
-	list_for_each_entry_safe(se, n, &dev->secure_elements, list) {
+	list_क्रम_each_entry_safe(se, n, &dev->secure_elements, list) अणु
 		hdr = genlmsg_put(msg, portid, seq, &nfc_genl_family, flags,
 				  NFC_CMD_GET_SE);
-		if (!hdr)
-			goto nla_put_failure;
+		अगर (!hdr)
+			जाओ nla_put_failure;
 
-		if (cb)
+		अगर (cb)
 			genl_dump_check_consistent(cb, hdr);
 
-		if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
+		अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, dev->idx) ||
 		    nla_put_u32(msg, NFC_ATTR_SE_INDEX, se->idx) ||
 		    nla_put_u8(msg, NFC_ATTR_SE_TYPE, se->type))
-			goto nla_put_failure;
+			जाओ nla_put_failure;
 
 		genlmsg_end(msg, hdr);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-static int nfc_genl_dump_ses(struct sk_buff *skb,
-				 struct netlink_callback *cb)
-{
-	struct class_dev_iter *iter = (struct class_dev_iter *) cb->args[0];
-	struct nfc_dev *dev = (struct nfc_dev *) cb->args[1];
+अटल पूर्णांक nfc_genl_dump_ses(काष्ठा sk_buff *skb,
+				 काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा class_dev_iter *iter = (काष्ठा class_dev_iter *) cb->args[0];
+	काष्ठा nfc_dev *dev = (काष्ठा nfc_dev *) cb->args[1];
 	bool first_call = false;
 
-	if (!iter) {
+	अगर (!iter) अणु
 		first_call = true;
-		iter = kmalloc(sizeof(struct class_dev_iter), GFP_KERNEL);
-		if (!iter)
-			return -ENOMEM;
-		cb->args[0] = (long) iter;
-	}
+		iter = kदो_स्मृति(माप(काष्ठा class_dev_iter), GFP_KERNEL);
+		अगर (!iter)
+			वापस -ENOMEM;
+		cb->args[0] = (दीर्घ) iter;
+	पूर्ण
 
 	mutex_lock(&nfc_devlist_mutex);
 
 	cb->seq = nfc_devlist_generation;
 
-	if (first_call) {
+	अगर (first_call) अणु
 		nfc_device_iter_init(iter);
 		dev = nfc_device_iter_next(iter);
-	}
+	पूर्ण
 
-	while (dev) {
-		int rc;
+	जबतक (dev) अणु
+		पूर्णांक rc;
 
 		rc = nfc_genl_send_se(skb, dev, NETLINK_CB(cb->skb).portid,
 					  cb->nlh->nlmsg_seq, cb, NLM_F_MULTI);
-		if (rc < 0)
-			break;
+		अगर (rc < 0)
+			अवरोध;
 
 		dev = nfc_device_iter_next(iter);
-	}
+	पूर्ण
 
 	mutex_unlock(&nfc_devlist_mutex);
 
-	cb->args[1] = (long) dev;
+	cb->args[1] = (दीर्घ) dev;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static int nfc_genl_dump_ses_done(struct netlink_callback *cb)
-{
-	struct class_dev_iter *iter = (struct class_dev_iter *) cb->args[0];
+अटल पूर्णांक nfc_genl_dump_ses_करोne(काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा class_dev_iter *iter = (काष्ठा class_dev_iter *) cb->args[0];
 
-	nfc_device_iter_exit(iter);
-	kfree(iter);
+	nfc_device_iter_निकास(iter);
+	kमुक्त(iter);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int nfc_se_io(struct nfc_dev *dev, u32 se_idx,
-		     u8 *apdu, size_t apdu_length,
-		     se_io_cb_t cb, void *cb_context)
-{
-	struct nfc_se *se;
-	int rc;
+अटल पूर्णांक nfc_se_io(काष्ठा nfc_dev *dev, u32 se_idx,
+		     u8 *apdu, माप_प्रकार apdu_length,
+		     se_io_cb_t cb, व्योम *cb_context)
+अणु
+	काष्ठा nfc_se *se;
+	पूर्णांक rc;
 
 	pr_debug("%s se index %d\n", dev_name(&dev->dev), se_idx);
 
 	device_lock(&dev->dev);
 
-	if (!device_is_registered(&dev->dev)) {
+	अगर (!device_is_रेजिस्टरed(&dev->dev)) अणु
 		rc = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (!dev->dev_up) {
+	अगर (!dev->dev_up) अणु
 		rc = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (!dev->ops->se_io) {
+	अगर (!dev->ops->se_io) अणु
 		rc = -EOPNOTSUPP;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	se = nfc_find_se(dev, se_idx);
-	if (!se) {
+	अगर (!se) अणु
 		rc = -EINVAL;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (se->state != NFC_SE_ENABLED) {
+	अगर (se->state != NFC_SE_ENABLED) अणु
 		rc = -ENODEV;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	rc = dev->ops->se_io(dev, se_idx, apdu,
 			apdu_length, cb, cb_context);
 
 error:
 	device_unlock(&dev->dev);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-struct se_io_ctx {
+काष्ठा se_io_ctx अणु
 	u32 dev_idx;
 	u32 se_idx;
-};
+पूर्ण;
 
-static void se_io_cb(void *context, u8 *apdu, size_t apdu_len, int err)
-{
-	struct se_io_ctx *ctx = context;
-	struct sk_buff *msg;
-	void *hdr;
+अटल व्योम se_io_cb(व्योम *context, u8 *apdu, माप_प्रकार apdu_len, पूर्णांक err)
+अणु
+	काष्ठा se_io_ctx *ctx = context;
+	काष्ठा sk_buff *msg;
+	व्योम *hdr;
 
 	msg = nlmsg_new(NLMSG_DEFAULT_SIZE, GFP_KERNEL);
-	if (!msg) {
-		kfree(ctx);
-		return;
-	}
+	अगर (!msg) अणु
+		kमुक्त(ctx);
+		वापस;
+	पूर्ण
 
 	hdr = genlmsg_put(msg, 0, 0, &nfc_genl_family, 0,
 			  NFC_CMD_SE_IO);
-	if (!hdr)
-		goto free_msg;
+	अगर (!hdr)
+		जाओ मुक्त_msg;
 
-	if (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, ctx->dev_idx) ||
+	अगर (nla_put_u32(msg, NFC_ATTR_DEVICE_INDEX, ctx->dev_idx) ||
 	    nla_put_u32(msg, NFC_ATTR_SE_INDEX, ctx->se_idx) ||
 	    nla_put(msg, NFC_ATTR_SE_APDU, apdu_len, apdu))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
 
 	genlmsg_multicast(&nfc_genl_family, msg, 0, 0, GFP_KERNEL);
 
-	kfree(ctx);
+	kमुक्त(ctx);
 
-	return;
+	वापस;
 
 nla_put_failure:
-free_msg:
-	nlmsg_free(msg);
-	kfree(ctx);
+मुक्त_msg:
+	nlmsg_मुक्त(msg);
+	kमुक्त(ctx);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int nfc_genl_se_io(struct sk_buff *skb, struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	struct se_io_ctx *ctx;
+अटल पूर्णांक nfc_genl_se_io(काष्ठा sk_buff *skb, काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	काष्ठा se_io_ctx *ctx;
 	u32 dev_idx, se_idx;
 	u8 *apdu;
-	size_t apdu_len;
+	माप_प्रकार apdu_len;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_SE_INDEX] ||
 	    !info->attrs[NFC_ATTR_SE_APDU])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	dev_idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 	se_idx = nla_get_u32(info->attrs[NFC_ATTR_SE_INDEX]);
 
 	dev = nfc_get_device(dev_idx);
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
-	if (!dev->ops || !dev->ops->se_io)
-		return -ENOTSUPP;
+	अगर (!dev->ops || !dev->ops->se_io)
+		वापस -ENOTSUPP;
 
 	apdu_len = nla_len(info->attrs[NFC_ATTR_SE_APDU]);
-	if (apdu_len == 0)
-		return -EINVAL;
+	अगर (apdu_len == 0)
+		वापस -EINVAL;
 
 	apdu = nla_data(info->attrs[NFC_ATTR_SE_APDU]);
-	if (!apdu)
-		return -EINVAL;
+	अगर (!apdu)
+		वापस -EINVAL;
 
-	ctx = kzalloc(sizeof(struct se_io_ctx), GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	ctx = kzalloc(माप(काष्ठा se_io_ctx), GFP_KERNEL);
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->dev_idx = dev_idx;
 	ctx->se_idx = se_idx;
 
-	return nfc_se_io(dev, se_idx, apdu, apdu_len, se_io_cb, ctx);
-}
+	वापस nfc_se_io(dev, se_idx, apdu, apdu_len, se_io_cb, ctx);
+पूर्ण
 
-static int nfc_genl_vendor_cmd(struct sk_buff *skb,
-			       struct genl_info *info)
-{
-	struct nfc_dev *dev;
-	struct nfc_vendor_cmd *cmd;
+अटल पूर्णांक nfc_genl_venकरोr_cmd(काष्ठा sk_buff *skb,
+			       काष्ठा genl_info *info)
+अणु
+	काष्ठा nfc_dev *dev;
+	काष्ठा nfc_venकरोr_cmd *cmd;
 	u32 dev_idx, vid, subcmd;
 	u8 *data;
-	size_t data_len;
-	int i, err;
+	माप_प्रकार data_len;
+	पूर्णांक i, err;
 
-	if (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
+	अगर (!info->attrs[NFC_ATTR_DEVICE_INDEX] ||
 	    !info->attrs[NFC_ATTR_VENDOR_ID] ||
 	    !info->attrs[NFC_ATTR_VENDOR_SUBCMD])
-		return -EINVAL;
+		वापस -EINVAL;
 
 	dev_idx = nla_get_u32(info->attrs[NFC_ATTR_DEVICE_INDEX]);
 	vid = nla_get_u32(info->attrs[NFC_ATTR_VENDOR_ID]);
 	subcmd = nla_get_u32(info->attrs[NFC_ATTR_VENDOR_SUBCMD]);
 
 	dev = nfc_get_device(dev_idx);
-	if (!dev || !dev->vendor_cmds || !dev->n_vendor_cmds)
-		return -ENODEV;
+	अगर (!dev || !dev->venकरोr_cmds || !dev->n_venकरोr_cmds)
+		वापस -ENODEV;
 
-	if (info->attrs[NFC_ATTR_VENDOR_DATA]) {
+	अगर (info->attrs[NFC_ATTR_VENDOR_DATA]) अणु
 		data = nla_data(info->attrs[NFC_ATTR_VENDOR_DATA]);
 		data_len = nla_len(info->attrs[NFC_ATTR_VENDOR_DATA]);
-		if (data_len == 0)
-			return -EINVAL;
-	} else {
-		data = NULL;
+		अगर (data_len == 0)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		data = शून्य;
 		data_len = 0;
-	}
+	पूर्ण
 
-	for (i = 0; i < dev->n_vendor_cmds; i++) {
-		cmd = &dev->vendor_cmds[i];
+	क्रम (i = 0; i < dev->n_venकरोr_cmds; i++) अणु
+		cmd = &dev->venकरोr_cmds[i];
 
-		if (cmd->vendor_id != vid || cmd->subcmd != subcmd)
-			continue;
+		अगर (cmd->venकरोr_id != vid || cmd->subcmd != subcmd)
+			जारी;
 
 		dev->cur_cmd_info = info;
-		err = cmd->doit(dev, data, data_len);
-		dev->cur_cmd_info = NULL;
-		return err;
-	}
+		err = cmd->करोit(dev, data, data_len);
+		dev->cur_cmd_info = शून्य;
+		वापस err;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
 /* message building helper */
-static inline void *nfc_hdr_put(struct sk_buff *skb, u32 portid, u32 seq,
-				int flags, u8 cmd)
-{
-	/* since there is no private header just add the generic one */
-	return genlmsg_put(skb, portid, seq, &nfc_genl_family, flags, cmd);
-}
+अटल अंतरभूत व्योम *nfc_hdr_put(काष्ठा sk_buff *skb, u32 portid, u32 seq,
+				पूर्णांक flags, u8 cmd)
+अणु
+	/* since there is no निजी header just add the generic one */
+	वापस genlmsg_put(skb, portid, seq, &nfc_genl_family, flags, cmd);
+पूर्ण
 
-static struct sk_buff *
-__nfc_alloc_vendor_cmd_skb(struct nfc_dev *dev, int approxlen,
+अटल काष्ठा sk_buff *
+__nfc_alloc_venकरोr_cmd_skb(काष्ठा nfc_dev *dev, पूर्णांक approxlen,
 			   u32 portid, u32 seq,
-			   enum nfc_attrs attr,
+			   क्रमागत nfc_attrs attr,
 			   u32 oui, u32 subcmd, gfp_t gfp)
-{
-	struct sk_buff *skb;
-	void *hdr;
+अणु
+	काष्ठा sk_buff *skb;
+	व्योम *hdr;
 
 	skb = nlmsg_new(approxlen + 100, gfp);
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
 	hdr = nfc_hdr_put(skb, portid, seq, 0, NFC_CMD_VENDOR);
-	if (!hdr) {
-		kfree_skb(skb);
-		return NULL;
-	}
+	अगर (!hdr) अणु
+		kमुक्त_skb(skb);
+		वापस शून्य;
+	पूर्ण
 
-	if (nla_put_u32(skb, NFC_ATTR_DEVICE_INDEX, dev->idx))
-		goto nla_put_failure;
-	if (nla_put_u32(skb, NFC_ATTR_VENDOR_ID, oui))
-		goto nla_put_failure;
-	if (nla_put_u32(skb, NFC_ATTR_VENDOR_SUBCMD, subcmd))
-		goto nla_put_failure;
+	अगर (nla_put_u32(skb, NFC_ATTR_DEVICE_INDEX, dev->idx))
+		जाओ nla_put_failure;
+	अगर (nla_put_u32(skb, NFC_ATTR_VENDOR_ID, oui))
+		जाओ nla_put_failure;
+	अगर (nla_put_u32(skb, NFC_ATTR_VENDOR_SUBCMD, subcmd))
+		जाओ nla_put_failure;
 
-	((void **)skb->cb)[0] = dev;
-	((void **)skb->cb)[1] = hdr;
+	((व्योम **)skb->cb)[0] = dev;
+	((व्योम **)skb->cb)[1] = hdr;
 
-	return skb;
+	वापस skb;
 
 nla_put_failure:
-	kfree_skb(skb);
-	return NULL;
-}
+	kमुक्त_skb(skb);
+	वापस शून्य;
+पूर्ण
 
-struct sk_buff *__nfc_alloc_vendor_cmd_reply_skb(struct nfc_dev *dev,
-						 enum nfc_attrs attr,
+काष्ठा sk_buff *__nfc_alloc_venकरोr_cmd_reply_skb(काष्ठा nfc_dev *dev,
+						 क्रमागत nfc_attrs attr,
 						 u32 oui, u32 subcmd,
-						 int approxlen)
-{
-	if (WARN_ON(!dev->cur_cmd_info))
-		return NULL;
+						 पूर्णांक approxlen)
+अणु
+	अगर (WARN_ON(!dev->cur_cmd_info))
+		वापस शून्य;
 
-	return __nfc_alloc_vendor_cmd_skb(dev, approxlen,
+	वापस __nfc_alloc_venकरोr_cmd_skb(dev, approxlen,
 					  dev->cur_cmd_info->snd_portid,
 					  dev->cur_cmd_info->snd_seq, attr,
 					  oui, subcmd, GFP_KERNEL);
-}
-EXPORT_SYMBOL(__nfc_alloc_vendor_cmd_reply_skb);
+पूर्ण
+EXPORT_SYMBOL(__nfc_alloc_venकरोr_cmd_reply_skb);
 
-int nfc_vendor_cmd_reply(struct sk_buff *skb)
-{
-	struct nfc_dev *dev = ((void **)skb->cb)[0];
-	void *hdr = ((void **)skb->cb)[1];
+पूर्णांक nfc_venकरोr_cmd_reply(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा nfc_dev *dev = ((व्योम **)skb->cb)[0];
+	व्योम *hdr = ((व्योम **)skb->cb)[1];
 
-	/* clear CB data for netlink core to own from now on */
-	memset(skb->cb, 0, sizeof(skb->cb));
+	/* clear CB data क्रम netlink core to own from now on */
+	स_रखो(skb->cb, 0, माप(skb->cb));
 
-	if (WARN_ON(!dev->cur_cmd_info)) {
-		kfree_skb(skb);
-		return -EINVAL;
-	}
+	अगर (WARN_ON(!dev->cur_cmd_info)) अणु
+		kमुक्त_skb(skb);
+		वापस -EINVAL;
+	पूर्ण
 
 	genlmsg_end(skb, hdr);
-	return genlmsg_reply(skb, dev->cur_cmd_info);
-}
-EXPORT_SYMBOL(nfc_vendor_cmd_reply);
+	वापस genlmsg_reply(skb, dev->cur_cmd_info);
+पूर्ण
+EXPORT_SYMBOL(nfc_venकरोr_cmd_reply);
 
-static const struct genl_ops nfc_genl_ops[] = {
-	{
+अटल स्थिर काष्ठा genl_ops nfc_genl_ops[] = अणु
+	अणु
 		.cmd = NFC_CMD_GET_DEVICE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_get_device,
+		.करोit = nfc_genl_get_device,
 		.dumpit = nfc_genl_dump_devices,
-		.done = nfc_genl_dump_devices_done,
-	},
-	{
+		.करोne = nfc_genl_dump_devices_करोne,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_DEV_UP,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_dev_up,
-	},
-	{
+		.करोit = nfc_genl_dev_up,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_DEV_DOWN,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_dev_down,
-	},
-	{
+		.करोit = nfc_genl_dev_करोwn,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_START_POLL,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_start_poll,
-	},
-	{
+		.करोit = nfc_genl_start_poll,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_STOP_POLL,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_stop_poll,
-	},
-	{
+		.करोit = nfc_genl_stop_poll,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_DEP_LINK_UP,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_dep_link_up,
-	},
-	{
+		.करोit = nfc_genl_dep_link_up,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_DEP_LINK_DOWN,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_dep_link_down,
-	},
-	{
+		.करोit = nfc_genl_dep_link_करोwn,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_GET_TARGET,
 		.validate = GENL_DONT_VALIDATE_STRICT |
 			    GENL_DONT_VALIDATE_DUMP_STRICT,
-		.dumpit = nfc_genl_dump_targets,
-		.done = nfc_genl_dump_targets_done,
-	},
-	{
+		.dumpit = nfc_genl_dump_tarमाला_लो,
+		.करोne = nfc_genl_dump_tarमाला_लो_करोne,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_LLC_GET_PARAMS,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_llc_get_params,
-	},
-	{
+		.करोit = nfc_genl_llc_get_params,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_LLC_SET_PARAMS,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_llc_set_params,
-	},
-	{
+		.करोit = nfc_genl_llc_set_params,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_LLC_SDREQ,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_llc_sdreq,
-	},
-	{
+		.करोit = nfc_genl_llc_sdreq,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_FW_DOWNLOAD,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_fw_download,
-	},
-	{
+		.करोit = nfc_genl_fw_करोwnload,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_ENABLE_SE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_enable_se,
-	},
-	{
+		.करोit = nfc_genl_enable_se,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_DISABLE_SE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_disable_se,
-	},
-	{
+		.करोit = nfc_genl_disable_se,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_GET_SE,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
 		.dumpit = nfc_genl_dump_ses,
-		.done = nfc_genl_dump_ses_done,
-	},
-	{
+		.करोne = nfc_genl_dump_ses_करोne,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_SE_IO,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_se_io,
-	},
-	{
+		.करोit = nfc_genl_se_io,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_ACTIVATE_TARGET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_activate_target,
-	},
-	{
+		.करोit = nfc_genl_activate_target,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_VENDOR,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_vendor_cmd,
-	},
-	{
+		.करोit = nfc_genl_venकरोr_cmd,
+	पूर्ण,
+	अणु
 		.cmd = NFC_CMD_DEACTIVATE_TARGET,
 		.validate = GENL_DONT_VALIDATE_STRICT | GENL_DONT_VALIDATE_DUMP,
-		.doit = nfc_genl_deactivate_target,
-	},
-};
+		.करोit = nfc_genl_deactivate_target,
+	पूर्ण,
+पूर्ण;
 
-static struct genl_family nfc_genl_family __ro_after_init = {
+अटल काष्ठा genl_family nfc_genl_family __ro_after_init = अणु
 	.hdrsize = 0,
 	.name = NFC_GENL_NAME,
 	.version = NFC_GENL_VERSION,
@@ -1766,19 +1767,19 @@ static struct genl_family nfc_genl_family __ro_after_init = {
 	.n_ops = ARRAY_SIZE(nfc_genl_ops),
 	.mcgrps = nfc_genl_mcgrps,
 	.n_mcgrps = ARRAY_SIZE(nfc_genl_mcgrps),
-};
+पूर्ण;
 
 
-struct urelease_work {
-	struct	work_struct w;
+काष्ठा urelease_work अणु
+	काष्ठा	work_काष्ठा w;
 	u32	portid;
-};
+पूर्ण;
 
-static void nfc_urelease_event_work(struct work_struct *work)
-{
-	struct urelease_work *w = container_of(work, struct urelease_work, w);
-	struct class_dev_iter iter;
-	struct nfc_dev *dev;
+अटल व्योम nfc_urelease_event_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा urelease_work *w = container_of(work, काष्ठा urelease_work, w);
+	काष्ठा class_dev_iter iter;
+	काष्ठा nfc_dev *dev;
 
 	pr_debug("portid %d\n", w->portid);
 
@@ -1787,88 +1788,88 @@ static void nfc_urelease_event_work(struct work_struct *work)
 	nfc_device_iter_init(&iter);
 	dev = nfc_device_iter_next(&iter);
 
-	while (dev) {
+	जबतक (dev) अणु
 		mutex_lock(&dev->genl_data.genl_data_mutex);
 
-		if (dev->genl_data.poll_req_portid == w->portid) {
+		अगर (dev->genl_data.poll_req_portid == w->portid) अणु
 			nfc_stop_poll(dev);
 			dev->genl_data.poll_req_portid = 0;
-		}
+		पूर्ण
 
 		mutex_unlock(&dev->genl_data.genl_data_mutex);
 
 		dev = nfc_device_iter_next(&iter);
-	}
+	पूर्ण
 
-	nfc_device_iter_exit(&iter);
+	nfc_device_iter_निकास(&iter);
 
 	mutex_unlock(&nfc_devlist_mutex);
 
-	kfree(w);
-}
+	kमुक्त(w);
+पूर्ण
 
-static int nfc_genl_rcv_nl_event(struct notifier_block *this,
-				 unsigned long event, void *ptr)
-{
-	struct netlink_notify *n = ptr;
-	struct urelease_work *w;
+अटल पूर्णांक nfc_genl_rcv_nl_event(काष्ठा notअगरier_block *this,
+				 अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा netlink_notअगरy *n = ptr;
+	काष्ठा urelease_work *w;
 
-	if (event != NETLINK_URELEASE || n->protocol != NETLINK_GENERIC)
-		goto out;
+	अगर (event != NETLINK_URELEASE || n->protocol != NETLINK_GENERIC)
+		जाओ out;
 
 	pr_debug("NETLINK_URELEASE event from id %d\n", n->portid);
 
-	w = kmalloc(sizeof(*w), GFP_ATOMIC);
-	if (w) {
+	w = kदो_स्मृति(माप(*w), GFP_ATOMIC);
+	अगर (w) अणु
 		INIT_WORK(&w->w, nfc_urelease_event_work);
 		w->portid = n->portid;
 		schedule_work(&w->w);
-	}
+	पूर्ण
 
 out:
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-void nfc_genl_data_init(struct nfc_genl_data *genl_data)
-{
+व्योम nfc_genl_data_init(काष्ठा nfc_genl_data *genl_data)
+अणु
 	genl_data->poll_req_portid = 0;
 	mutex_init(&genl_data->genl_data_mutex);
-}
+पूर्ण
 
-void nfc_genl_data_exit(struct nfc_genl_data *genl_data)
-{
+व्योम nfc_genl_data_निकास(काष्ठा nfc_genl_data *genl_data)
+अणु
 	mutex_destroy(&genl_data->genl_data_mutex);
-}
+पूर्ण
 
-static struct notifier_block nl_notifier = {
-	.notifier_call  = nfc_genl_rcv_nl_event,
-};
-
-/**
- * nfc_genl_init() - Initialize netlink interface
- *
- * This initialization function registers the nfc netlink family.
- */
-int __init nfc_genl_init(void)
-{
-	int rc;
-
-	rc = genl_register_family(&nfc_genl_family);
-	if (rc)
-		return rc;
-
-	netlink_register_notifier(&nl_notifier);
-
-	return 0;
-}
+अटल काष्ठा notअगरier_block nl_notअगरier = अणु
+	.notअगरier_call  = nfc_genl_rcv_nl_event,
+पूर्ण;
 
 /**
- * nfc_genl_exit() - Deinitialize netlink interface
+ * nfc_genl_init() - Initialize netlink पूर्णांकerface
  *
- * This exit function unregisters the nfc netlink family.
+ * This initialization function रेजिस्टरs the nfc netlink family.
  */
-void nfc_genl_exit(void)
-{
-	netlink_unregister_notifier(&nl_notifier);
-	genl_unregister_family(&nfc_genl_family);
-}
+पूर्णांक __init nfc_genl_init(व्योम)
+अणु
+	पूर्णांक rc;
+
+	rc = genl_रेजिस्टर_family(&nfc_genl_family);
+	अगर (rc)
+		वापस rc;
+
+	netlink_रेजिस्टर_notअगरier(&nl_notअगरier);
+
+	वापस 0;
+पूर्ण
+
+/**
+ * nfc_genl_निकास() - Deinitialize netlink पूर्णांकerface
+ *
+ * This निकास function unरेजिस्टरs the nfc netlink family.
+ */
+व्योम nfc_genl_निकास(व्योम)
+अणु
+	netlink_unरेजिस्टर_notअगरier(&nl_notअगरier);
+	genl_unरेजिस्टर_family(&nfc_genl_family);
+पूर्ण

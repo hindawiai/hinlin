@@ -1,284 +1,285 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Core driver for the pin config portions of the pin control subsystem
+ * Core driver क्रम the pin config portions of the pin control subप्रणाली
  *
  * Copyright (C) 2011 ST-Ericsson SA
- * Written on behalf of Linaro for ST-Ericsson
+ * Written on behalf of Linaro क्रम ST-Ericsson
  *
  * Author: Linus Walleij <linus.walleij@linaro.org>
  */
-#define pr_fmt(fmt) "pinconfig core: " fmt
+#घोषणा pr_fmt(fmt) "pinconfig core: " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/slab.h>
-#include <linux/debugfs.h>
-#include <linux/seq_file.h>
-#include <linux/pinctrl/machine.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinconf.h>
-#include "core.h"
-#include "pinconf.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/pinctrl/machine.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश "core.h"
+#समावेश "pinconf.h"
 
-int pinconf_check_ops(struct pinctrl_dev *pctldev)
-{
-	const struct pinconf_ops *ops = pctldev->desc->confops;
+पूर्णांक pinconf_check_ops(काष्ठा pinctrl_dev *pctldev)
+अणु
+	स्थिर काष्ठा pinconf_ops *ops = pctldev->desc->confops;
 
 	/* We have to be able to config the pins in SOME way */
-	if (!ops->pin_config_set && !ops->pin_config_group_set) {
+	अगर (!ops->pin_config_set && !ops->pin_config_group_set) अणु
 		dev_err(pctldev->dev,
 			"pinconf has to be able to set a pins config\n");
-		return -EINVAL;
-	}
-	return 0;
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int pinconf_validate_map(const struct pinctrl_map *map, int i)
-{
-	if (!map->data.configs.group_or_pin) {
+पूर्णांक pinconf_validate_map(स्थिर काष्ठा pinctrl_map *map, पूर्णांक i)
+अणु
+	अगर (!map->data.configs.group_or_pin) अणु
 		pr_err("failed to register map %s (%d): no group/pin given\n",
 		       map->name, i);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!map->data.configs.num_configs ||
-			!map->data.configs.configs) {
+	अगर (!map->data.configs.num_configs ||
+			!map->data.configs.configs) अणु
 		pr_err("failed to register map %s (%d): no configs given\n",
 		       map->name, i);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int pin_config_get_for_pin(struct pinctrl_dev *pctldev, unsigned pin,
-			   unsigned long *config)
-{
-	const struct pinconf_ops *ops = pctldev->desc->confops;
+पूर्णांक pin_config_get_क्रम_pin(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+			   अचिन्हित दीर्घ *config)
+अणु
+	स्थिर काष्ठा pinconf_ops *ops = pctldev->desc->confops;
 
-	if (!ops || !ops->pin_config_get) {
+	अगर (!ops || !ops->pin_config_get) अणु
 		dev_dbg(pctldev->dev,
 			"cannot get pin configuration, .pin_config_get missing in driver\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return ops->pin_config_get(pctldev, pin, config);
-}
+	वापस ops->pin_config_get(pctldev, pin, config);
+पूर्ण
 
-int pin_config_group_get(const char *dev_name, const char *pin_group,
-			 unsigned long *config)
-{
-	struct pinctrl_dev *pctldev;
-	const struct pinconf_ops *ops;
-	int selector, ret;
+पूर्णांक pin_config_group_get(स्थिर अक्षर *dev_name, स्थिर अक्षर *pin_group,
+			 अचिन्हित दीर्घ *config)
+अणु
+	काष्ठा pinctrl_dev *pctldev;
+	स्थिर काष्ठा pinconf_ops *ops;
+	पूर्णांक selector, ret;
 
 	pctldev = get_pinctrl_dev_from_devname(dev_name);
-	if (!pctldev) {
+	अगर (!pctldev) अणु
 		ret = -EINVAL;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mutex_lock(&pctldev->mutex);
 
 	ops = pctldev->desc->confops;
 
-	if (!ops || !ops->pin_config_group_get) {
+	अगर (!ops || !ops->pin_config_group_get) अणु
 		dev_dbg(pctldev->dev,
 			"cannot get configuration for pin group, missing group config get function in driver\n");
 		ret = -ENOTSUPP;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	selector = pinctrl_get_group_selector(pctldev, pin_group);
-	if (selector < 0) {
+	अगर (selector < 0) अणु
 		ret = selector;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	ret = ops->pin_config_group_get(pctldev, selector, config);
 
 unlock:
 	mutex_unlock(&pctldev->mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int pinconf_map_to_setting(const struct pinctrl_map *map,
-			  struct pinctrl_setting *setting)
-{
-	struct pinctrl_dev *pctldev = setting->pctldev;
-	int pin;
+पूर्णांक pinconf_map_to_setting(स्थिर काष्ठा pinctrl_map *map,
+			  काष्ठा pinctrl_setting *setting)
+अणु
+	काष्ठा pinctrl_dev *pctldev = setting->pctldev;
+	पूर्णांक pin;
 
-	switch (setting->type) {
-	case PIN_MAP_TYPE_CONFIGS_PIN:
+	चयन (setting->type) अणु
+	हाल PIN_MAP_TYPE_CONFIGS_PIN:
 		pin = pin_get_from_name(pctldev,
 					map->data.configs.group_or_pin);
-		if (pin < 0) {
+		अगर (pin < 0) अणु
 			dev_err(pctldev->dev, "could not map pin config for \"%s\"",
 				map->data.configs.group_or_pin);
-			return pin;
-		}
+			वापस pin;
+		पूर्ण
 		setting->data.configs.group_or_pin = pin;
-		break;
-	case PIN_MAP_TYPE_CONFIGS_GROUP:
+		अवरोध;
+	हाल PIN_MAP_TYPE_CONFIGS_GROUP:
 		pin = pinctrl_get_group_selector(pctldev,
 					 map->data.configs.group_or_pin);
-		if (pin < 0) {
+		अगर (pin < 0) अणु
 			dev_err(pctldev->dev, "could not map group config for \"%s\"",
 				map->data.configs.group_or_pin);
-			return pin;
-		}
+			वापस pin;
+		पूर्ण
 		setting->data.configs.group_or_pin = pin;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	setting->data.configs.num_configs = map->data.configs.num_configs;
 	setting->data.configs.configs = map->data.configs.configs;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void pinconf_free_setting(const struct pinctrl_setting *setting)
-{
-}
+व्योम pinconf_मुक्त_setting(स्थिर काष्ठा pinctrl_setting *setting)
+अणु
+पूर्ण
 
-int pinconf_apply_setting(const struct pinctrl_setting *setting)
-{
-	struct pinctrl_dev *pctldev = setting->pctldev;
-	const struct pinconf_ops *ops = pctldev->desc->confops;
-	int ret;
+पूर्णांक pinconf_apply_setting(स्थिर काष्ठा pinctrl_setting *setting)
+अणु
+	काष्ठा pinctrl_dev *pctldev = setting->pctldev;
+	स्थिर काष्ठा pinconf_ops *ops = pctldev->desc->confops;
+	पूर्णांक ret;
 
-	if (!ops) {
+	अगर (!ops) अणु
 		dev_err(pctldev->dev, "missing confops\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (setting->type) {
-	case PIN_MAP_TYPE_CONFIGS_PIN:
-		if (!ops->pin_config_set) {
+	चयन (setting->type) अणु
+	हाल PIN_MAP_TYPE_CONFIGS_PIN:
+		अगर (!ops->pin_config_set) अणु
 			dev_err(pctldev->dev, "missing pin_config_set op\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ret = ops->pin_config_set(pctldev,
 				setting->data.configs.group_or_pin,
 				setting->data.configs.configs,
 				setting->data.configs.num_configs);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(pctldev->dev,
 				"pin_config_set op failed for pin %d\n",
 				setting->data.configs.group_or_pin);
-			return ret;
-		}
-		break;
-	case PIN_MAP_TYPE_CONFIGS_GROUP:
-		if (!ops->pin_config_group_set) {
+			वापस ret;
+		पूर्ण
+		अवरोध;
+	हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+		अगर (!ops->pin_config_group_set) अणु
 			dev_err(pctldev->dev,
 				"missing pin_config_group_set op\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 		ret = ops->pin_config_group_set(pctldev,
 				setting->data.configs.group_or_pin,
 				setting->data.configs.configs,
 				setting->data.configs.num_configs);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(pctldev->dev,
 				"pin_config_group_set op failed for group %d\n",
 				setting->data.configs.group_or_pin);
-			return ret;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+			वापस ret;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int pinconf_set_config(struct pinctrl_dev *pctldev, unsigned pin,
-		       unsigned long *configs, size_t nconfigs)
-{
-	const struct pinconf_ops *ops;
+पूर्णांक pinconf_set_config(काष्ठा pinctrl_dev *pctldev, अचिन्हित pin,
+		       अचिन्हित दीर्घ *configs, माप_प्रकार nconfigs)
+अणु
+	स्थिर काष्ठा pinconf_ops *ops;
 
 	ops = pctldev->desc->confops;
-	if (!ops || !ops->pin_config_set)
-		return -ENOTSUPP;
+	अगर (!ops || !ops->pin_config_set)
+		वापस -ENOTSUPP;
 
-	return ops->pin_config_set(pctldev, pin, configs, nconfigs);
-}
+	वापस ops->pin_config_set(pctldev, pin, configs, nconfigs);
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-static void pinconf_show_config(struct seq_file *s, struct pinctrl_dev *pctldev,
-		      unsigned long *configs, unsigned num_configs)
-{
-	const struct pinconf_ops *confops;
-	int i;
+अटल व्योम pinconf_show_config(काष्ठा seq_file *s, काष्ठा pinctrl_dev *pctldev,
+		      अचिन्हित दीर्घ *configs, अचिन्हित num_configs)
+अणु
+	स्थिर काष्ठा pinconf_ops *confops;
+	पूर्णांक i;
 
-	if (pctldev)
+	अगर (pctldev)
 		confops = pctldev->desc->confops;
-	else
-		confops = NULL;
+	अन्यथा
+		confops = शून्य;
 
-	for (i = 0; i < num_configs; i++) {
-		seq_puts(s, "config ");
-		if (confops && confops->pin_config_config_dbg_show)
+	क्रम (i = 0; i < num_configs; i++) अणु
+		seq_माला_दो(s, "config ");
+		अगर (confops && confops->pin_config_config_dbg_show)
 			confops->pin_config_config_dbg_show(pctldev, s,
 							    configs[i]);
-		else
-			seq_printf(s, "%08lx", configs[i]);
-		seq_putc(s, '\n');
-	}
-}
+		अन्यथा
+			seq_म_लिखो(s, "%08lx", configs[i]);
+		seq_अ_दो(s, '\n');
+	पूर्ण
+पूर्ण
 
-void pinconf_show_map(struct seq_file *s, const struct pinctrl_map *map)
-{
-	struct pinctrl_dev *pctldev;
+व्योम pinconf_show_map(काष्ठा seq_file *s, स्थिर काष्ठा pinctrl_map *map)
+अणु
+	काष्ठा pinctrl_dev *pctldev;
 
 	pctldev = get_pinctrl_dev_from_devname(map->ctrl_dev_name);
 
-	switch (map->type) {
-	case PIN_MAP_TYPE_CONFIGS_PIN:
-		seq_puts(s, "pin ");
-		break;
-	case PIN_MAP_TYPE_CONFIGS_GROUP:
-		seq_puts(s, "group ");
-		break;
-	default:
-		break;
-	}
+	चयन (map->type) अणु
+	हाल PIN_MAP_TYPE_CONFIGS_PIN:
+		seq_माला_दो(s, "pin ");
+		अवरोध;
+	हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+		seq_माला_दो(s, "group ");
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	seq_printf(s, "%s\n", map->data.configs.group_or_pin);
+	seq_म_लिखो(s, "%s\n", map->data.configs.group_or_pin);
 
 	pinconf_show_config(s, pctldev, map->data.configs.configs,
 			    map->data.configs.num_configs);
-}
+पूर्ण
 
-void pinconf_show_setting(struct seq_file *s,
-			  const struct pinctrl_setting *setting)
-{
-	struct pinctrl_dev *pctldev = setting->pctldev;
-	const struct pinctrl_ops *pctlops = pctldev->desc->pctlops;
-	struct pin_desc *desc;
+व्योम pinconf_show_setting(काष्ठा seq_file *s,
+			  स्थिर काष्ठा pinctrl_setting *setting)
+अणु
+	काष्ठा pinctrl_dev *pctldev = setting->pctldev;
+	स्थिर काष्ठा pinctrl_ops *pctlops = pctldev->desc->pctlops;
+	काष्ठा pin_desc *desc;
 
-	switch (setting->type) {
-	case PIN_MAP_TYPE_CONFIGS_PIN:
+	चयन (setting->type) अणु
+	हाल PIN_MAP_TYPE_CONFIGS_PIN:
 		desc = pin_desc_get(setting->pctldev,
 				    setting->data.configs.group_or_pin);
-		seq_printf(s, "pin %s (%d)", desc->name,
+		seq_म_लिखो(s, "pin %s (%d)", desc->name,
 			   setting->data.configs.group_or_pin);
-		break;
-	case PIN_MAP_TYPE_CONFIGS_GROUP:
-		seq_printf(s, "group %s (%d)",
+		अवरोध;
+	हाल PIN_MAP_TYPE_CONFIGS_GROUP:
+		seq_म_लिखो(s, "group %s (%d)",
 			   pctlops->get_group_name(pctldev,
 					setting->data.configs.group_or_pin),
 			   setting->data.configs.group_or_pin);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * FIXME: We should really get the pin controller to dump the config
@@ -286,94 +287,94 @@ void pinconf_show_setting(struct seq_file *s,
 	 */
 	pinconf_show_config(s, pctldev, setting->data.configs.configs,
 			    setting->data.configs.num_configs);
-}
+पूर्ण
 
-static void pinconf_dump_pin(struct pinctrl_dev *pctldev,
-			     struct seq_file *s, int pin)
-{
-	const struct pinconf_ops *ops = pctldev->desc->confops;
+अटल व्योम pinconf_dump_pin(काष्ठा pinctrl_dev *pctldev,
+			     काष्ठा seq_file *s, पूर्णांक pin)
+अणु
+	स्थिर काष्ठा pinconf_ops *ops = pctldev->desc->confops;
 
 	/* no-op when not using generic pin config */
-	pinconf_generic_dump_pins(pctldev, s, NULL, pin);
-	if (ops && ops->pin_config_dbg_show)
+	pinconf_generic_dump_pins(pctldev, s, शून्य, pin);
+	अगर (ops && ops->pin_config_dbg_show)
 		ops->pin_config_dbg_show(pctldev, s, pin);
-}
+पूर्ण
 
-static int pinconf_pins_show(struct seq_file *s, void *what)
-{
-	struct pinctrl_dev *pctldev = s->private;
-	unsigned i, pin;
+अटल पूर्णांक pinconf_pins_show(काष्ठा seq_file *s, व्योम *what)
+अणु
+	काष्ठा pinctrl_dev *pctldev = s->निजी;
+	अचिन्हित i, pin;
 
-	seq_puts(s, "Pin config settings per pin\n");
-	seq_puts(s, "Format: pin (name): configs\n");
+	seq_माला_दो(s, "Pin config settings per pin\n");
+	seq_माला_दो(s, "Format: pin (name): configs\n");
 
 	mutex_lock(&pctldev->mutex);
 
 	/* The pin number can be retrived from the pin controller descriptor */
-	for (i = 0; i < pctldev->desc->npins; i++) {
-		struct pin_desc *desc;
+	क्रम (i = 0; i < pctldev->desc->npins; i++) अणु
+		काष्ठा pin_desc *desc;
 
 		pin = pctldev->desc->pins[i].number;
 		desc = pin_desc_get(pctldev, pin);
-		/* Skip if we cannot search the pin */
-		if (!desc)
-			continue;
+		/* Skip अगर we cannot search the pin */
+		अगर (!desc)
+			जारी;
 
-		seq_printf(s, "pin %d (%s): ", pin, desc->name);
+		seq_म_लिखो(s, "pin %d (%s): ", pin, desc->name);
 
 		pinconf_dump_pin(pctldev, s, pin);
-		seq_putc(s, '\n');
-	}
+		seq_अ_दो(s, '\n');
+	पूर्ण
 
 	mutex_unlock(&pctldev->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pinconf_dump_group(struct pinctrl_dev *pctldev,
-			       struct seq_file *s, unsigned selector,
-			       const char *gname)
-{
-	const struct pinconf_ops *ops = pctldev->desc->confops;
+अटल व्योम pinconf_dump_group(काष्ठा pinctrl_dev *pctldev,
+			       काष्ठा seq_file *s, अचिन्हित selector,
+			       स्थिर अक्षर *gname)
+अणु
+	स्थिर काष्ठा pinconf_ops *ops = pctldev->desc->confops;
 
 	/* no-op when not using generic pin config */
 	pinconf_generic_dump_pins(pctldev, s, gname, 0);
-	if (ops && ops->pin_config_group_dbg_show)
+	अगर (ops && ops->pin_config_group_dbg_show)
 		ops->pin_config_group_dbg_show(pctldev, s, selector);
-}
+पूर्ण
 
-static int pinconf_groups_show(struct seq_file *s, void *what)
-{
-	struct pinctrl_dev *pctldev = s->private;
-	const struct pinctrl_ops *pctlops = pctldev->desc->pctlops;
-	unsigned ngroups = pctlops->get_groups_count(pctldev);
-	unsigned selector = 0;
+अटल पूर्णांक pinconf_groups_show(काष्ठा seq_file *s, व्योम *what)
+अणु
+	काष्ठा pinctrl_dev *pctldev = s->निजी;
+	स्थिर काष्ठा pinctrl_ops *pctlops = pctldev->desc->pctlops;
+	अचिन्हित ngroups = pctlops->get_groups_count(pctldev);
+	अचिन्हित selector = 0;
 
-	seq_puts(s, "Pin config settings per pin group\n");
-	seq_puts(s, "Format: group (name): configs\n");
+	seq_माला_दो(s, "Pin config settings per pin group\n");
+	seq_माला_दो(s, "Format: group (name): configs\n");
 
-	while (selector < ngroups) {
-		const char *gname = pctlops->get_group_name(pctldev, selector);
+	जबतक (selector < ngroups) अणु
+		स्थिर अक्षर *gname = pctlops->get_group_name(pctldev, selector);
 
-		seq_printf(s, "%u (%s): ", selector, gname);
+		seq_म_लिखो(s, "%u (%s): ", selector, gname);
 		pinconf_dump_group(pctldev, s, selector, gname);
-		seq_putc(s, '\n');
+		seq_अ_दो(s, '\n');
 		selector++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 DEFINE_SHOW_ATTRIBUTE(pinconf_pins);
 DEFINE_SHOW_ATTRIBUTE(pinconf_groups);
 
-void pinconf_init_device_debugfs(struct dentry *devroot,
-			 struct pinctrl_dev *pctldev)
-{
+व्योम pinconf_init_device_debugfs(काष्ठा dentry *devroot,
+			 काष्ठा pinctrl_dev *pctldev)
+अणु
 	debugfs_create_file("pinconf-pins", 0444,
 			    devroot, pctldev, &pinconf_pins_fops);
 	debugfs_create_file("pinconf-groups", 0444,
 			    devroot, pctldev, &pinconf_groups_fops);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

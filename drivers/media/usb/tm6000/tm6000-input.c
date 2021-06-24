@@ -1,423 +1,424 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  tm6000-input.c - driver for TM5600/TM6000/TM6010 USB video capture devices
+ *  पंचांग6000-input.c - driver क्रम TM5600/TM6000/TM6010 USB video capture devices
  *
  *  Copyright (C) 2010 Stefan Ringel <stefan.ringel@arcor.de>
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
 
-#include <linux/input.h>
-#include <linux/usb.h>
+#समावेश <linux/input.h>
+#समावेश <linux/usb.h>
 
-#include <media/rc-core.h>
+#समावेश <media/rc-core.h>
 
-#include "tm6000.h"
-#include "tm6000-regs.h"
+#समावेश "tm6000.h"
+#समावेश "tm6000-regs.h"
 
-static unsigned int ir_debug;
-module_param(ir_debug, int, 0644);
+अटल अचिन्हित पूर्णांक ir_debug;
+module_param(ir_debug, पूर्णांक, 0644);
 MODULE_PARM_DESC(ir_debug, "debug message level");
 
-static unsigned int enable_ir = 1;
-module_param(enable_ir, int, 0644);
+अटल अचिन्हित पूर्णांक enable_ir = 1;
+module_param(enable_ir, पूर्णांक, 0644);
 MODULE_PARM_DESC(enable_ir, "enable ir (default is enable)");
 
-static unsigned int ir_clock_mhz = 12;
-module_param(ir_clock_mhz, int, 0644);
-MODULE_PARM_DESC(ir_clock_mhz, "ir clock, in MHz");
+अटल अचिन्हित पूर्णांक ir_घड़ी_mhz = 12;
+module_param(ir_घड़ी_mhz, पूर्णांक, 0644);
+MODULE_PARM_DESC(ir_घड़ी_mhz, "ir clock, in MHz");
 
-#define URB_SUBMIT_DELAY	100	/* ms - Delay to submit an URB request on retrial and init */
-#define URB_INT_LED_DELAY	100	/* ms - Delay to turn led on again on int mode */
+#घोषणा URB_SUBMIT_DELAY	100	/* ms - Delay to submit an URB request on retrial and init */
+#घोषणा URB_INT_LED_DELAY	100	/* ms - Delay to turn led on again on पूर्णांक mode */
 
-#undef dprintk
+#अघोषित dprपूर्णांकk
 
-#define dprintk(level, fmt, arg...) do {\
-	if (ir_debug >= level) \
-		printk(KERN_DEBUG "%s/ir: " fmt, ir->name , ## arg); \
-	} while (0)
+#घोषणा dprपूर्णांकk(level, fmt, arg...) करो अणु\
+	अगर (ir_debug >= level) \
+		prपूर्णांकk(KERN_DEBUG "%s/ir: " fmt, ir->name , ## arg); \
+	पूर्ण जबतक (0)
 
-struct tm6000_ir_poll_result {
+काष्ठा पंचांग6000_ir_poll_result अणु
 	u16 rc_data;
-};
+पूर्ण;
 
-struct tm6000_IR {
-	struct tm6000_core	*dev;
-	struct rc_dev		*rc;
-	char			name[32];
-	char			phys[32];
+काष्ठा पंचांग6000_IR अणु
+	काष्ठा पंचांग6000_core	*dev;
+	काष्ठा rc_dev		*rc;
+	अक्षर			name[32];
+	अक्षर			phys[32];
 
 	/* poll expernal decoder */
-	int			polling;
-	struct delayed_work	work;
-	u8			wait:1;
+	पूर्णांक			polling;
+	काष्ठा delayed_work	work;
+	u8			रुको:1;
 	u8			pwled:2;
 	u8			submit_urb:1;
-	struct urb		*int_urb;
+	काष्ठा urb		*पूर्णांक_urb;
 
 	/* IR device properties */
 	u64			rc_proto;
-};
+पूर्ण;
 
-void tm6000_ir_wait(struct tm6000_core *dev, u8 state)
-{
-	struct tm6000_IR *ir = dev->ir;
+व्योम पंचांग6000_ir_रुको(काष्ठा पंचांग6000_core *dev, u8 state)
+अणु
+	काष्ठा पंचांग6000_IR *ir = dev->ir;
 
-	if (!dev->ir)
-		return;
+	अगर (!dev->ir)
+		वापस;
 
-	dprintk(2, "%s: %i\n",__func__, ir->wait);
+	dprपूर्णांकk(2, "%s: %i\n",__func__, ir->रुको);
 
-	if (state)
-		ir->wait = 1;
-	else
-		ir->wait = 0;
-}
+	अगर (state)
+		ir->रुको = 1;
+	अन्यथा
+		ir->रुको = 0;
+पूर्ण
 
-static int tm6000_ir_config(struct tm6000_IR *ir)
-{
-	struct tm6000_core *dev = ir->dev;
+अटल पूर्णांक पंचांग6000_ir_config(काष्ठा पंचांग6000_IR *ir)
+अणु
+	काष्ठा पंचांग6000_core *dev = ir->dev;
 	u32 pulse = 0, leader = 0;
 
-	dprintk(2, "%s\n",__func__);
+	dprपूर्णांकk(2, "%s\n",__func__);
 
 	/*
 	 * The IR decoder supports RC-5 or NEC, with a configurable timing.
 	 * The timing configuration there is not that accurate, as it uses
 	 * approximate values. The NEC spec mentions a 562.5 unit period,
 	 * and RC-5 uses a 888.8 period.
-	 * Currently, driver assumes a clock provided by a 12 MHz XTAL, but
+	 * Currently, driver assumes a घड़ी provided by a 12 MHz XTAL, but
 	 * a modprobe parameter can adjust it.
-	 * Adjustments are required for other timings.
-	 * It seems that the 900ms timing for NEC is used to detect a RC-5
+	 * Adjusपंचांगents are required क्रम other timings.
+	 * It seems that the 900ms timing क्रम NEC is used to detect a RC-5
 	 * IR, in order to discard such decoding
 	 */
 
-	switch (ir->rc_proto) {
-	case RC_PROTO_BIT_NEC:
+	चयन (ir->rc_proto) अणु
+	हाल RC_PROTO_BIT_NEC:
 		leader = 900;	/* ms */
 		pulse  = 700;	/* ms - the actual value would be 562 */
-		break;
-	default:
-	case RC_PROTO_BIT_RC5:
+		अवरोध;
+	शेष:
+	हाल RC_PROTO_BIT_RC5:
 		leader = 900;	/* ms - from the NEC decoding */
 		pulse  = 1780;	/* ms - The actual value would be 1776 */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	pulse = ir_clock_mhz * pulse;
-	leader = ir_clock_mhz * leader;
-	if (ir->rc_proto == RC_PROTO_BIT_NEC)
+	pulse = ir_घड़ी_mhz * pulse;
+	leader = ir_घड़ी_mhz * leader;
+	अगर (ir->rc_proto == RC_PROTO_BIT_NEC)
 		leader = leader | 0x8000;
 
-	dprintk(2, "%s: %s, %d MHz, leader = 0x%04x, pulse = 0x%06x \n",
+	dprपूर्णांकk(2, "%s: %s, %d MHz, leader = 0x%04x, pulse = 0x%06x \n",
 		__func__,
 		(ir->rc_proto == RC_PROTO_BIT_NEC) ? "NEC" : "RC-5",
-		ir_clock_mhz, leader, pulse);
+		ir_घड़ी_mhz, leader, pulse);
 
 	/* Remote WAKEUP = enable, normal mode, from IR decoder output */
-	tm6000_set_reg(dev, TM6010_REQ07_RE5_REMOTE_WAKEUP, 0xfe);
+	पंचांग6000_set_reg(dev, TM6010_REQ07_RE5_REMOTE_WAKEUP, 0xfe);
 
 	/* Enable IR reception on non-busrt mode */
-	tm6000_set_reg(dev, TM6010_REQ07_RD8_IR, 0x2f);
+	पंचांग6000_set_reg(dev, TM6010_REQ07_RD8_IR, 0x2f);
 
 	/* IR_WKUP_SEL = Low byte in decoded IR data */
-	tm6000_set_reg(dev, TM6010_REQ07_RDA_IR_WAKEUP_SEL, 0xff);
+	पंचांग6000_set_reg(dev, TM6010_REQ07_RDA_IR_WAKEUP_SEL, 0xff);
 	/* IR_WKU_ADD code */
-	tm6000_set_reg(dev, TM6010_REQ07_RDB_IR_WAKEUP_ADD, 0xff);
+	पंचांग6000_set_reg(dev, TM6010_REQ07_RDB_IR_WAKEUP_ADD, 0xff);
 
-	tm6000_set_reg(dev, TM6010_REQ07_RDC_IR_LEADER1, leader >> 8);
-	tm6000_set_reg(dev, TM6010_REQ07_RDD_IR_LEADER0, leader);
+	पंचांग6000_set_reg(dev, TM6010_REQ07_RDC_IR_LEADER1, leader >> 8);
+	पंचांग6000_set_reg(dev, TM6010_REQ07_RDD_IR_LEADER0, leader);
 
-	tm6000_set_reg(dev, TM6010_REQ07_RDE_IR_PULSE_CNT1, pulse >> 8);
-	tm6000_set_reg(dev, TM6010_REQ07_RDF_IR_PULSE_CNT0, pulse);
+	पंचांग6000_set_reg(dev, TM6010_REQ07_RDE_IR_PULSE_CNT1, pulse >> 8);
+	पंचांग6000_set_reg(dev, TM6010_REQ07_RDF_IR_PULSE_CNT0, pulse);
 
-	if (!ir->polling)
-		tm6000_set_reg(dev, REQ_04_EN_DISABLE_MCU_INT, 2, 0);
-	else
-		tm6000_set_reg(dev, REQ_04_EN_DISABLE_MCU_INT, 2, 1);
+	अगर (!ir->polling)
+		पंचांग6000_set_reg(dev, REQ_04_EN_DISABLE_MCU_INT, 2, 0);
+	अन्यथा
+		पंचांग6000_set_reg(dev, REQ_04_EN_DISABLE_MCU_INT, 2, 1);
 	msleep(10);
 
 	/* Shows that IR is working via the LED */
-	tm6000_flash_led(dev, 0);
+	पंचांग6000_flash_led(dev, 0);
 	msleep(100);
-	tm6000_flash_led(dev, 1);
+	पंचांग6000_flash_led(dev, 1);
 	ir->pwled = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tm6000_ir_keydown(struct tm6000_IR *ir,
-			      const char *buf, unsigned int len)
-{
+अटल व्योम पंचांग6000_ir_keyकरोwn(काष्ठा पंचांग6000_IR *ir,
+			      स्थिर अक्षर *buf, अचिन्हित पूर्णांक len)
+अणु
 	u8 device, command;
 	u32 scancode;
-	enum rc_proto protocol;
+	क्रमागत rc_proto protocol;
 
-	if (len < 1)
-		return;
+	अगर (len < 1)
+		वापस;
 
 	command = buf[0];
 	device = (len > 1 ? buf[1] : 0x0);
-	switch (ir->rc_proto) {
-	case RC_PROTO_BIT_RC5:
+	चयन (ir->rc_proto) अणु
+	हाल RC_PROTO_BIT_RC5:
 		protocol = RC_PROTO_RC5;
 		scancode = RC_SCANCODE_RC5(device, command);
-		break;
-	case RC_PROTO_BIT_NEC:
+		अवरोध;
+	हाल RC_PROTO_BIT_NEC:
 		protocol = RC_PROTO_NEC;
 		scancode = RC_SCANCODE_NEC(device, command);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		protocol = RC_PROTO_OTHER;
 		scancode = RC_SCANCODE_OTHER(device << 8 | command);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	dprintk(1, "%s, protocol: 0x%04x, scancode: 0x%08x\n",
+	dprपूर्णांकk(1, "%s, protocol: 0x%04x, scancode: 0x%08x\n",
 		__func__, protocol, scancode);
-	rc_keydown(ir->rc, protocol, scancode, 0);
-}
+	rc_keyकरोwn(ir->rc, protocol, scancode, 0);
+पूर्ण
 
-static void tm6000_ir_urb_received(struct urb *urb)
-{
-	struct tm6000_core *dev = urb->context;
-	struct tm6000_IR *ir = dev->ir;
-	char *buf;
+अटल व्योम पंचांग6000_ir_urb_received(काष्ठा urb *urb)
+अणु
+	काष्ठा पंचांग6000_core *dev = urb->context;
+	काष्ठा पंचांग6000_IR *ir = dev->ir;
+	अक्षर *buf;
 
-	dprintk(2, "%s\n",__func__);
-	if (urb->status < 0 || urb->actual_length <= 0) {
-		printk(KERN_INFO "tm6000: IR URB failure: status: %i, length %i\n",
+	dprपूर्णांकk(2, "%s\n",__func__);
+	अगर (urb->status < 0 || urb->actual_length <= 0) अणु
+		prपूर्णांकk(KERN_INFO "tm6000: IR URB failure: status: %i, length %i\n",
 		       urb->status, urb->actual_length);
 		ir->submit_urb = 1;
-		schedule_delayed_work(&ir->work, msecs_to_jiffies(URB_SUBMIT_DELAY));
-		return;
-	}
+		schedule_delayed_work(&ir->work, msecs_to_jअगरfies(URB_SUBMIT_DELAY));
+		वापस;
+	पूर्ण
 	buf = urb->transfer_buffer;
 
-	if (ir_debug)
-		print_hex_dump(KERN_DEBUG, "tm6000: IR data: ",
+	अगर (ir_debug)
+		prपूर्णांक_hex_dump(KERN_DEBUG, "tm6000: IR data: ",
 			       DUMP_PREFIX_OFFSET,16, 1,
 			       buf, urb->actual_length, false);
 
-	tm6000_ir_keydown(ir, urb->transfer_buffer, urb->actual_length);
+	पंचांग6000_ir_keyकरोwn(ir, urb->transfer_buffer, urb->actual_length);
 
 	usb_submit_urb(urb, GFP_ATOMIC);
 	/*
-	 * Flash the led. We can't do it here, as it is running on IRQ context.
-	 * So, use the scheduler to do it, in a few ms.
+	 * Flash the led. We can't करो it here, as it is running on IRQ context.
+	 * So, use the scheduler to करो it, in a few ms.
 	 */
 	ir->pwled = 2;
-	schedule_delayed_work(&ir->work, msecs_to_jiffies(10));
-}
+	schedule_delayed_work(&ir->work, msecs_to_jअगरfies(10));
+पूर्ण
 
-static void tm6000_ir_handle_key(struct work_struct *work)
-{
-	struct tm6000_IR *ir = container_of(work, struct tm6000_IR, work.work);
-	struct tm6000_core *dev = ir->dev;
-	int rc;
+अटल व्योम पंचांग6000_ir_handle_key(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा पंचांग6000_IR *ir = container_of(work, काष्ठा पंचांग6000_IR, work.work);
+	काष्ठा पंचांग6000_core *dev = ir->dev;
+	पूर्णांक rc;
 	u8 buf[2];
 
-	if (ir->wait)
-		return;
+	अगर (ir->रुको)
+		वापस;
 
-	dprintk(3, "%s\n",__func__);
+	dprपूर्णांकk(3, "%s\n",__func__);
 
-	rc = tm6000_read_write_usb(dev, USB_DIR_IN |
+	rc = पंचांग6000_पढ़ो_ग_लिखो_usb(dev, USB_सूची_IN |
 		USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 		REQ_02_GET_IR_CODE, 0, 0, buf, 2);
-	if (rc < 0)
-		return;
+	अगर (rc < 0)
+		वापस;
 
-	/* Check if something was read */
-	if ((buf[0] & 0xff) == 0xff) {
-		if (!ir->pwled) {
-			tm6000_flash_led(dev, 1);
+	/* Check अगर something was पढ़ो */
+	अगर ((buf[0] & 0xff) == 0xff) अणु
+		अगर (!ir->pwled) अणु
+			पंचांग6000_flash_led(dev, 1);
 			ir->pwled = 1;
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	tm6000_ir_keydown(ir, buf, rc);
-	tm6000_flash_led(dev, 0);
+	पंचांग6000_ir_keyकरोwn(ir, buf, rc);
+	पंचांग6000_flash_led(dev, 0);
 	ir->pwled = 0;
 
 	/* Re-schedule polling */
-	schedule_delayed_work(&ir->work, msecs_to_jiffies(ir->polling));
-}
+	schedule_delayed_work(&ir->work, msecs_to_jअगरfies(ir->polling));
+पूर्ण
 
-static void tm6000_ir_int_work(struct work_struct *work)
-{
-	struct tm6000_IR *ir = container_of(work, struct tm6000_IR, work.work);
-	struct tm6000_core *dev = ir->dev;
-	int rc;
+अटल व्योम पंचांग6000_ir_पूर्णांक_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा पंचांग6000_IR *ir = container_of(work, काष्ठा पंचांग6000_IR, work.work);
+	काष्ठा पंचांग6000_core *dev = ir->dev;
+	पूर्णांक rc;
 
-	dprintk(3, "%s, submit_urb = %d, pwled = %d\n",__func__, ir->submit_urb,
+	dprपूर्णांकk(3, "%s, submit_urb = %d, pwled = %d\n",__func__, ir->submit_urb,
 		ir->pwled);
 
-	if (ir->submit_urb) {
-		dprintk(3, "Resubmit urb\n");
-		tm6000_set_reg(dev, REQ_04_EN_DISABLE_MCU_INT, 2, 0);
+	अगर (ir->submit_urb) अणु
+		dprपूर्णांकk(3, "Resubmit urb\n");
+		पंचांग6000_set_reg(dev, REQ_04_EN_DISABLE_MCU_INT, 2, 0);
 
-		rc = usb_submit_urb(ir->int_urb, GFP_ATOMIC);
-		if (rc < 0) {
-			printk(KERN_ERR "tm6000: Can't submit an IR interrupt. Error %i\n",
+		rc = usb_submit_urb(ir->पूर्णांक_urb, GFP_ATOMIC);
+		अगर (rc < 0) अणु
+			prपूर्णांकk(KERN_ERR "tm6000: Can't submit an IR interrupt. Error %i\n",
 			       rc);
 			/* Retry in 100 ms */
-			schedule_delayed_work(&ir->work, msecs_to_jiffies(URB_SUBMIT_DELAY));
-			return;
-		}
+			schedule_delayed_work(&ir->work, msecs_to_jअगरfies(URB_SUBMIT_DELAY));
+			वापस;
+		पूर्ण
 		ir->submit_urb = 0;
-	}
+	पूर्ण
 
-	/* Led is enabled only if USB submit doesn't fail */
-	if (ir->pwled == 2) {
-		tm6000_flash_led(dev, 0);
+	/* Led is enabled only अगर USB submit करोesn't fail */
+	अगर (ir->pwled == 2) अणु
+		पंचांग6000_flash_led(dev, 0);
 		ir->pwled = 0;
-		schedule_delayed_work(&ir->work, msecs_to_jiffies(URB_INT_LED_DELAY));
-	} else if (!ir->pwled) {
-		tm6000_flash_led(dev, 1);
+		schedule_delayed_work(&ir->work, msecs_to_jअगरfies(URB_INT_LED_DELAY));
+	पूर्ण अन्यथा अगर (!ir->pwled) अणु
+		पंचांग6000_flash_led(dev, 1);
 		ir->pwled = 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int tm6000_ir_start(struct rc_dev *rc)
-{
-	struct tm6000_IR *ir = rc->priv;
+अटल पूर्णांक पंचांग6000_ir_start(काष्ठा rc_dev *rc)
+अणु
+	काष्ठा पंचांग6000_IR *ir = rc->priv;
 
-	dprintk(2, "%s\n",__func__);
+	dprपूर्णांकk(2, "%s\n",__func__);
 
 	schedule_delayed_work(&ir->work, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tm6000_ir_stop(struct rc_dev *rc)
-{
-	struct tm6000_IR *ir = rc->priv;
+अटल व्योम पंचांग6000_ir_stop(काष्ठा rc_dev *rc)
+अणु
+	काष्ठा पंचांग6000_IR *ir = rc->priv;
 
-	dprintk(2, "%s\n",__func__);
+	dprपूर्णांकk(2, "%s\n",__func__);
 
 	cancel_delayed_work_sync(&ir->work);
-}
+पूर्ण
 
-static int tm6000_ir_change_protocol(struct rc_dev *rc, u64 *rc_proto)
-{
-	struct tm6000_IR *ir = rc->priv;
+अटल पूर्णांक पंचांग6000_ir_change_protocol(काष्ठा rc_dev *rc, u64 *rc_proto)
+अणु
+	काष्ठा पंचांग6000_IR *ir = rc->priv;
 
-	if (!ir)
-		return 0;
+	अगर (!ir)
+		वापस 0;
 
-	dprintk(2, "%s\n",__func__);
+	dprपूर्णांकk(2, "%s\n",__func__);
 
 	ir->rc_proto = *rc_proto;
 
-	tm6000_ir_config(ir);
+	पंचांग6000_ir_config(ir);
 	/* TODO */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __tm6000_ir_int_start(struct rc_dev *rc)
-{
-	struct tm6000_IR *ir = rc->priv;
-	struct tm6000_core *dev;
-	int pipe, size;
-	int err = -ENOMEM;
+अटल पूर्णांक __पंचांग6000_ir_पूर्णांक_start(काष्ठा rc_dev *rc)
+अणु
+	काष्ठा पंचांग6000_IR *ir = rc->priv;
+	काष्ठा पंचांग6000_core *dev;
+	पूर्णांक pipe, size;
+	पूर्णांक err = -ENOMEM;
 
-	if (!ir)
-		return -ENODEV;
+	अगर (!ir)
+		वापस -ENODEV;
 	dev = ir->dev;
 
-	dprintk(2, "%s\n",__func__);
+	dprपूर्णांकk(2, "%s\n",__func__);
 
-	ir->int_urb = usb_alloc_urb(0, GFP_ATOMIC);
-	if (!ir->int_urb)
-		return -ENOMEM;
+	ir->पूर्णांक_urb = usb_alloc_urb(0, GFP_ATOMIC);
+	अगर (!ir->पूर्णांक_urb)
+		वापस -ENOMEM;
 
-	pipe = usb_rcvintpipe(dev->udev,
-		dev->int_in.endp->desc.bEndpointAddress
+	pipe = usb_rcvपूर्णांकpipe(dev->udev,
+		dev->पूर्णांक_in.endp->desc.bEndpoपूर्णांकAddress
 		& USB_ENDPOINT_NUMBER_MASK);
 
 	size = usb_maxpacket(dev->udev, pipe, usb_pipeout(pipe));
-	dprintk(1, "IR max size: %d\n", size);
+	dprपूर्णांकk(1, "IR max size: %d\n", size);
 
-	ir->int_urb->transfer_buffer = kzalloc(size, GFP_ATOMIC);
-	if (!ir->int_urb->transfer_buffer) {
-		usb_free_urb(ir->int_urb);
-		return err;
-	}
-	dprintk(1, "int interval: %d\n", dev->int_in.endp->desc.bInterval);
+	ir->पूर्णांक_urb->transfer_buffer = kzalloc(size, GFP_ATOMIC);
+	अगर (!ir->पूर्णांक_urb->transfer_buffer) अणु
+		usb_मुक्त_urb(ir->पूर्णांक_urb);
+		वापस err;
+	पूर्ण
+	dprपूर्णांकk(1, "int interval: %d\n", dev->पूर्णांक_in.endp->desc.bInterval);
 
-	usb_fill_int_urb(ir->int_urb, dev->udev, pipe,
-		ir->int_urb->transfer_buffer, size,
-		tm6000_ir_urb_received, dev,
-		dev->int_in.endp->desc.bInterval);
+	usb_fill_पूर्णांक_urb(ir->पूर्णांक_urb, dev->udev, pipe,
+		ir->पूर्णांक_urb->transfer_buffer, size,
+		पंचांग6000_ir_urb_received, dev,
+		dev->पूर्णांक_in.endp->desc.bInterval);
 
 	ir->submit_urb = 1;
-	schedule_delayed_work(&ir->work, msecs_to_jiffies(URB_SUBMIT_DELAY));
+	schedule_delayed_work(&ir->work, msecs_to_jअगरfies(URB_SUBMIT_DELAY));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __tm6000_ir_int_stop(struct rc_dev *rc)
-{
-	struct tm6000_IR *ir = rc->priv;
+अटल व्योम __पंचांग6000_ir_पूर्णांक_stop(काष्ठा rc_dev *rc)
+अणु
+	काष्ठा पंचांग6000_IR *ir = rc->priv;
 
-	if (!ir || !ir->int_urb)
-		return;
+	अगर (!ir || !ir->पूर्णांक_urb)
+		वापस;
 
-	dprintk(2, "%s\n",__func__);
+	dprपूर्णांकk(2, "%s\n",__func__);
 
-	usb_kill_urb(ir->int_urb);
-	kfree(ir->int_urb->transfer_buffer);
-	usb_free_urb(ir->int_urb);
-	ir->int_urb = NULL;
-}
+	usb_समाप्त_urb(ir->पूर्णांक_urb);
+	kमुक्त(ir->पूर्णांक_urb->transfer_buffer);
+	usb_मुक्त_urb(ir->पूर्णांक_urb);
+	ir->पूर्णांक_urb = शून्य;
+पूर्ण
 
-int tm6000_ir_int_start(struct tm6000_core *dev)
-{
-	struct tm6000_IR *ir = dev->ir;
+पूर्णांक पंचांग6000_ir_पूर्णांक_start(काष्ठा पंचांग6000_core *dev)
+अणु
+	काष्ठा पंचांग6000_IR *ir = dev->ir;
 
-	if (!ir)
-		return 0;
+	अगर (!ir)
+		वापस 0;
 
-	return __tm6000_ir_int_start(ir->rc);
-}
+	वापस __पंचांग6000_ir_पूर्णांक_start(ir->rc);
+पूर्ण
 
-void tm6000_ir_int_stop(struct tm6000_core *dev)
-{
-	struct tm6000_IR *ir = dev->ir;
+व्योम पंचांग6000_ir_पूर्णांक_stop(काष्ठा पंचांग6000_core *dev)
+अणु
+	काष्ठा पंचांग6000_IR *ir = dev->ir;
 
-	if (!ir || !ir->rc)
-		return;
+	अगर (!ir || !ir->rc)
+		वापस;
 
-	__tm6000_ir_int_stop(ir->rc);
-}
+	__पंचांग6000_ir_पूर्णांक_stop(ir->rc);
+पूर्ण
 
-int tm6000_ir_init(struct tm6000_core *dev)
-{
-	struct tm6000_IR *ir;
-	struct rc_dev *rc;
-	int err = -ENOMEM;
+पूर्णांक पंचांग6000_ir_init(काष्ठा पंचांग6000_core *dev)
+अणु
+	काष्ठा पंचांग6000_IR *ir;
+	काष्ठा rc_dev *rc;
+	पूर्णांक err = -ENOMEM;
 	u64 rc_proto;
 
-	if (!enable_ir)
-		return -ENODEV;
+	अगर (!enable_ir)
+		वापस -ENODEV;
 
-	if (!dev->caps.has_remote)
-		return 0;
+	अगर (!dev->caps.has_remote)
+		वापस 0;
 
-	if (!dev->ir_codes)
-		return 0;
+	अगर (!dev->ir_codes)
+		वापस 0;
 
-	ir = kzalloc(sizeof(*ir), GFP_ATOMIC);
+	ir = kzalloc(माप(*ir), GFP_ATOMIC);
 	rc = rc_allocate_device(RC_DRIVER_SCANCODE);
-	if (!ir || !rc)
-		goto out;
+	अगर (!ir || !rc)
+		जाओ out;
 
-	dprintk(2, "%s\n", __func__);
+	dprपूर्णांकk(2, "%s\n", __func__);
 
 	/* record handles to ourself */
 	ir->dev = dev;
@@ -429,75 +430,75 @@ int tm6000_ir_init(struct tm6000_core *dev)
 	/* Needed, in order to support NEC remotes with 24 or 32 bits */
 	rc->scancode_mask = 0xffff;
 	rc->priv = ir;
-	rc->change_protocol = tm6000_ir_change_protocol;
-	if (dev->int_in.endp) {
-		rc->open    = __tm6000_ir_int_start;
-		rc->close   = __tm6000_ir_int_stop;
-		INIT_DELAYED_WORK(&ir->work, tm6000_ir_int_work);
-	} else {
-		rc->open  = tm6000_ir_start;
-		rc->close = tm6000_ir_stop;
+	rc->change_protocol = पंचांग6000_ir_change_protocol;
+	अगर (dev->पूर्णांक_in.endp) अणु
+		rc->खोलो    = __पंचांग6000_ir_पूर्णांक_start;
+		rc->बंद   = __पंचांग6000_ir_पूर्णांक_stop;
+		INIT_DELAYED_WORK(&ir->work, पंचांग6000_ir_पूर्णांक_work);
+	पूर्ण अन्यथा अणु
+		rc->खोलो  = पंचांग6000_ir_start;
+		rc->बंद = पंचांग6000_ir_stop;
 		ir->polling = 50;
-		INIT_DELAYED_WORK(&ir->work, tm6000_ir_handle_key);
-	}
+		INIT_DELAYED_WORK(&ir->work, पंचांग6000_ir_handle_key);
+	पूर्ण
 
-	snprintf(ir->name, sizeof(ir->name), "tm5600/60x0 IR (%s)",
+	snम_लिखो(ir->name, माप(ir->name), "tm5600/60x0 IR (%s)",
 						dev->name);
 
-	usb_make_path(dev->udev, ir->phys, sizeof(ir->phys));
-	strlcat(ir->phys, "/input0", sizeof(ir->phys));
+	usb_make_path(dev->udev, ir->phys, माप(ir->phys));
+	strlcat(ir->phys, "/input0", माप(ir->phys));
 
 	rc_proto = RC_PROTO_BIT_UNKNOWN;
-	tm6000_ir_change_protocol(rc, &rc_proto);
+	पंचांग6000_ir_change_protocol(rc, &rc_proto);
 
 	rc->device_name = ir->name;
 	rc->input_phys = ir->phys;
 	rc->input_id.bustype = BUS_USB;
 	rc->input_id.version = 1;
-	rc->input_id.vendor = le16_to_cpu(dev->udev->descriptor.idVendor);
+	rc->input_id.venकरोr = le16_to_cpu(dev->udev->descriptor.idVenकरोr);
 	rc->input_id.product = le16_to_cpu(dev->udev->descriptor.idProduct);
 	rc->map_name = dev->ir_codes;
 	rc->driver_name = "tm6000";
 	rc->dev.parent = &dev->udev->dev;
 
-	/* ir register */
-	err = rc_register_device(rc);
-	if (err)
-		goto out;
+	/* ir रेजिस्टर */
+	err = rc_रेजिस्टर_device(rc);
+	अगर (err)
+		जाओ out;
 
-	return 0;
+	वापस 0;
 
 out:
-	dev->ir = NULL;
-	rc_free_device(rc);
-	kfree(ir);
-	return err;
-}
+	dev->ir = शून्य;
+	rc_मुक्त_device(rc);
+	kमुक्त(ir);
+	वापस err;
+पूर्ण
 
-int tm6000_ir_fini(struct tm6000_core *dev)
-{
-	struct tm6000_IR *ir = dev->ir;
+पूर्णांक पंचांग6000_ir_fini(काष्ठा पंचांग6000_core *dev)
+अणु
+	काष्ठा पंचांग6000_IR *ir = dev->ir;
 
 	/* skip detach on non attached board */
 
-	if (!ir)
-		return 0;
+	अगर (!ir)
+		वापस 0;
 
-	dprintk(2, "%s\n",__func__);
+	dprपूर्णांकk(2, "%s\n",__func__);
 
-	if (!ir->polling)
-		__tm6000_ir_int_stop(ir->rc);
+	अगर (!ir->polling)
+		__पंचांग6000_ir_पूर्णांक_stop(ir->rc);
 
-	tm6000_ir_stop(ir->rc);
+	पंचांग6000_ir_stop(ir->rc);
 
 	/* Turn off the led */
-	tm6000_flash_led(dev, 0);
+	पंचांग6000_flash_led(dev, 0);
 	ir->pwled = 0;
 
-	rc_unregister_device(ir->rc);
+	rc_unरेजिस्टर_device(ir->rc);
 
-	kfree(ir);
-	dev->ir = NULL;
+	kमुक्त(ir);
+	dev->ir = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

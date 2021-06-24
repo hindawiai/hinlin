@@ -1,22 +1,23 @@
+<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright © 2001-2007 Red Hat, Inc.
- * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright तऊ 2001-2007 Red Hat, Inc.
+ * Copyright तऊ 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
  * Created by David Woodhouse <dwmw2@infradead.org>
  *
- * For licensing information, see the file 'LICENCE' in this directory.
+ * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
  *
  */
 
-#include <linux/fs.h>
-#include "nodelist.h"
+#समावेश <linux/fs.h>
+#समावेश "nodelist.h"
 
-long jffs2_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
-{
-	/* Later, this will provide for lsattr.jffs2 and chattr.jffs2, which
+दीर्घ jffs2_ioctl(काष्ठा file *filp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	/* Later, this will provide क्रम lsattr.jffs2 and chattr.jffs2, which
 	   will include compression support etc. */
-	return -ENOTTY;
-}
+	वापस -ENOTTY;
+पूर्ण
 

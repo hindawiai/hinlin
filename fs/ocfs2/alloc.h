@@ -1,264 +1,265 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * alloc.h
+ * भाग.स
  *
  * Function prototypes
  *
  * Copyright (C) 2002, 2004 Oracle.  All rights reserved.
  */
 
-#ifndef OCFS2_ALLOC_H
-#define OCFS2_ALLOC_H
+#अगर_अघोषित OCFS2_ALLOC_H
+#घोषणा OCFS2_ALLOC_H
 
 
 /*
  * For xattr tree leaf, we limit the leaf byte size to be 64K.
  */
-#define OCFS2_MAX_XATTR_TREE_LEAF_SIZE 65536
+#घोषणा OCFS2_MAX_XATTR_TREE_LEAF_SIZE 65536
 
 /*
- * ocfs2_extent_tree and ocfs2_extent_tree_operations are used to abstract
+ * ocfs2_extent_tree and ocfs2_extent_tree_operations are used to असलtract
  * the b-tree operations in ocfs2. Now all the b-tree operations are not
  * limited to ocfs2_dinode only. Any data which need to allocate clusters
  * to store can use b-tree. And it only needs to implement its ocfs2_extent_tree
  * and operation.
  *
- * ocfs2_extent_tree becomes the first-class object for extent tree
+ * ocfs2_extent_tree becomes the first-class object क्रम extent tree
  * manipulation.  Callers of the alloc.c code need to fill it via one of
  * the ocfs2_init_*_extent_tree() operations below.
  *
- * ocfs2_extent_tree contains info for the root of the b-tree, it must have a
+ * ocfs2_extent_tree contains info क्रम the root of the b-tree, it must have a
  * root ocfs2_extent_list and a root_bh so that they can be used in the b-tree
- * functions.  It needs the ocfs2_caching_info structure associated with
- * I/O on the tree.  With metadata ecc, we now call different journal_access
- * functions for each type of metadata, so it must have the
+ * functions.  It needs the ocfs2_caching_info काष्ठाure associated with
+ * I/O on the tree.  With metadata ecc, we now call dअगरferent journal_access
+ * functions क्रम each type of metadata, so it must have the
  * root_journal_access function.
- * ocfs2_extent_tree_operations abstract the normal operations we do for
+ * ocfs2_extent_tree_operations असलtract the normal operations we करो क्रम
  * the root of extent b-tree.
  */
-struct ocfs2_extent_tree_operations;
-struct ocfs2_extent_tree {
-	const struct ocfs2_extent_tree_operations *et_ops;
-	struct buffer_head			*et_root_bh;
-	struct ocfs2_extent_list		*et_root_el;
-	struct ocfs2_caching_info		*et_ci;
+काष्ठा ocfs2_extent_tree_operations;
+काष्ठा ocfs2_extent_tree अणु
+	स्थिर काष्ठा ocfs2_extent_tree_operations *et_ops;
+	काष्ठा buffer_head			*et_root_bh;
+	काष्ठा ocfs2_extent_list		*et_root_el;
+	काष्ठा ocfs2_caching_info		*et_ci;
 	ocfs2_journal_access_func		et_root_journal_access;
-	void					*et_object;
-	unsigned int				et_max_leaf_clusters;
-	struct ocfs2_cached_dealloc_ctxt	*et_dealloc;
-};
+	व्योम					*et_object;
+	अचिन्हित पूर्णांक				et_max_leaf_clusters;
+	काष्ठा ocfs2_cached_dealloc_ctxt	*et_dealloc;
+पूर्ण;
 
 /*
  * ocfs2_init_*_extent_tree() will fill an ocfs2_extent_tree from the
- * specified object buffer.
+ * specअगरied object buffer.
  */
-void ocfs2_init_dinode_extent_tree(struct ocfs2_extent_tree *et,
-				   struct ocfs2_caching_info *ci,
-				   struct buffer_head *bh);
-void ocfs2_init_xattr_tree_extent_tree(struct ocfs2_extent_tree *et,
-				       struct ocfs2_caching_info *ci,
-				       struct buffer_head *bh);
-struct ocfs2_xattr_value_buf;
-void ocfs2_init_xattr_value_extent_tree(struct ocfs2_extent_tree *et,
-					struct ocfs2_caching_info *ci,
-					struct ocfs2_xattr_value_buf *vb);
-void ocfs2_init_dx_root_extent_tree(struct ocfs2_extent_tree *et,
-				    struct ocfs2_caching_info *ci,
-				    struct buffer_head *bh);
-void ocfs2_init_refcount_extent_tree(struct ocfs2_extent_tree *et,
-				     struct ocfs2_caching_info *ci,
-				     struct buffer_head *bh);
+व्योम ocfs2_init_dinode_extent_tree(काष्ठा ocfs2_extent_tree *et,
+				   काष्ठा ocfs2_caching_info *ci,
+				   काष्ठा buffer_head *bh);
+व्योम ocfs2_init_xattr_tree_extent_tree(काष्ठा ocfs2_extent_tree *et,
+				       काष्ठा ocfs2_caching_info *ci,
+				       काष्ठा buffer_head *bh);
+काष्ठा ocfs2_xattr_value_buf;
+व्योम ocfs2_init_xattr_value_extent_tree(काष्ठा ocfs2_extent_tree *et,
+					काष्ठा ocfs2_caching_info *ci,
+					काष्ठा ocfs2_xattr_value_buf *vb);
+व्योम ocfs2_init_dx_root_extent_tree(काष्ठा ocfs2_extent_tree *et,
+				    काष्ठा ocfs2_caching_info *ci,
+				    काष्ठा buffer_head *bh);
+व्योम ocfs2_init_refcount_extent_tree(काष्ठा ocfs2_extent_tree *et,
+				     काष्ठा ocfs2_caching_info *ci,
+				     काष्ठा buffer_head *bh);
 
 /*
- * Read an extent block into *bh.  If *bh is NULL, a bh will be
- * allocated.  This is a cached read.  The extent block will be validated
+ * Read an extent block पूर्णांकo *bh.  If *bh is शून्य, a bh will be
+ * allocated.  This is a cached पढ़ो.  The extent block will be validated
  * with ocfs2_validate_extent_block().
  */
-int ocfs2_read_extent_block(struct ocfs2_caching_info *ci, u64 eb_blkno,
-			    struct buffer_head **bh);
+पूर्णांक ocfs2_पढ़ो_extent_block(काष्ठा ocfs2_caching_info *ci, u64 eb_blkno,
+			    काष्ठा buffer_head **bh);
 
-struct ocfs2_alloc_context;
-int ocfs2_insert_extent(handle_t *handle,
-			struct ocfs2_extent_tree *et,
+काष्ठा ocfs2_alloc_context;
+पूर्णांक ocfs2_insert_extent(handle_t *handle,
+			काष्ठा ocfs2_extent_tree *et,
 			u32 cpos,
 			u64 start_blk,
 			u32 new_clusters,
 			u8 flags,
-			struct ocfs2_alloc_context *meta_ac);
+			काष्ठा ocfs2_alloc_context *meta_ac);
 
-enum ocfs2_alloc_restarted {
+क्रमागत ocfs2_alloc_restarted अणु
 	RESTART_NONE = 0,
 	RESTART_TRANS,
 	RESTART_META
-};
-int ocfs2_add_clusters_in_btree(handle_t *handle,
-				struct ocfs2_extent_tree *et,
+पूर्ण;
+पूर्णांक ocfs2_add_clusters_in_btree(handle_t *handle,
+				काष्ठा ocfs2_extent_tree *et,
 				u32 *logical_offset,
 				u32 clusters_to_add,
-				int mark_unwritten,
-				struct ocfs2_alloc_context *data_ac,
-				struct ocfs2_alloc_context *meta_ac,
-				enum ocfs2_alloc_restarted *reason_ret);
-struct ocfs2_cached_dealloc_ctxt;
-struct ocfs2_path;
-int ocfs2_split_extent(handle_t *handle,
-		       struct ocfs2_extent_tree *et,
-		       struct ocfs2_path *path,
-		       int split_index,
-		       struct ocfs2_extent_rec *split_rec,
-		       struct ocfs2_alloc_context *meta_ac,
-		       struct ocfs2_cached_dealloc_ctxt *dealloc);
-int ocfs2_mark_extent_written(struct inode *inode,
-			      struct ocfs2_extent_tree *et,
+				पूर्णांक mark_unwritten,
+				काष्ठा ocfs2_alloc_context *data_ac,
+				काष्ठा ocfs2_alloc_context *meta_ac,
+				क्रमागत ocfs2_alloc_restarted *reason_ret);
+काष्ठा ocfs2_cached_dealloc_ctxt;
+काष्ठा ocfs2_path;
+पूर्णांक ocfs2_split_extent(handle_t *handle,
+		       काष्ठा ocfs2_extent_tree *et,
+		       काष्ठा ocfs2_path *path,
+		       पूर्णांक split_index,
+		       काष्ठा ocfs2_extent_rec *split_rec,
+		       काष्ठा ocfs2_alloc_context *meta_ac,
+		       काष्ठा ocfs2_cached_dealloc_ctxt *dealloc);
+पूर्णांक ocfs2_mark_extent_written(काष्ठा inode *inode,
+			      काष्ठा ocfs2_extent_tree *et,
 			      handle_t *handle, u32 cpos, u32 len, u32 phys,
-			      struct ocfs2_alloc_context *meta_ac,
-			      struct ocfs2_cached_dealloc_ctxt *dealloc);
-int ocfs2_change_extent_flag(handle_t *handle,
-			     struct ocfs2_extent_tree *et,
+			      काष्ठा ocfs2_alloc_context *meta_ac,
+			      काष्ठा ocfs2_cached_dealloc_ctxt *dealloc);
+पूर्णांक ocfs2_change_extent_flag(handle_t *handle,
+			     काष्ठा ocfs2_extent_tree *et,
 			     u32 cpos, u32 len, u32 phys,
-			     struct ocfs2_alloc_context *meta_ac,
-			     struct ocfs2_cached_dealloc_ctxt *dealloc,
-			     int new_flags, int clear_flags);
-int ocfs2_remove_extent(handle_t *handle, struct ocfs2_extent_tree *et,
+			     काष्ठा ocfs2_alloc_context *meta_ac,
+			     काष्ठा ocfs2_cached_dealloc_ctxt *dealloc,
+			     पूर्णांक new_flags, पूर्णांक clear_flags);
+पूर्णांक ocfs2_हटाओ_extent(handle_t *handle, काष्ठा ocfs2_extent_tree *et,
 			u32 cpos, u32 len,
-			struct ocfs2_alloc_context *meta_ac,
-			struct ocfs2_cached_dealloc_ctxt *dealloc);
-int ocfs2_remove_btree_range(struct inode *inode,
-			     struct ocfs2_extent_tree *et,
-			     u32 cpos, u32 phys_cpos, u32 len, int flags,
-			     struct ocfs2_cached_dealloc_ctxt *dealloc,
+			काष्ठा ocfs2_alloc_context *meta_ac,
+			काष्ठा ocfs2_cached_dealloc_ctxt *dealloc);
+पूर्णांक ocfs2_हटाओ_btree_range(काष्ठा inode *inode,
+			     काष्ठा ocfs2_extent_tree *et,
+			     u32 cpos, u32 phys_cpos, u32 len, पूर्णांक flags,
+			     काष्ठा ocfs2_cached_dealloc_ctxt *dealloc,
 			     u64 refcount_loc, bool refcount_tree_locked);
 
-int ocfs2_num_free_extents(struct ocfs2_extent_tree *et);
+पूर्णांक ocfs2_num_मुक्त_extents(काष्ठा ocfs2_extent_tree *et);
 
 /*
  * how many new metadata chunks would an allocation need at maximum?
  *
  * Please note that the caller must make sure that root_el is the root
- * of extent tree. So for an inode, it should be &fe->id2.i_list. Otherwise
+ * of extent tree. So क्रम an inode, it should be &fe->id2.i_list. Otherwise
  * the result may be wrong.
  */
-static inline int ocfs2_extend_meta_needed(struct ocfs2_extent_list *root_el)
-{
+अटल अंतरभूत पूर्णांक ocfs2_extend_meta_needed(काष्ठा ocfs2_extent_list *root_el)
+अणु
 	/*
-	 * Rather than do all the work of determining how much we need
-	 * (involves a ton of reads and locks), just ask for the
-	 * maximal limit.  That's a tree depth shift.  So, one block for
-	 * level of the tree (current l_tree_depth), one block for the
+	 * Rather than करो all the work of determining how much we need
+	 * (involves a ton of पढ़ोs and locks), just ask क्रम the
+	 * maximal limit.  That's a tree depth shअगरt.  So, one block क्रम
+	 * level of the tree (current l_tree_depth), one block क्रम the
 	 * new tree_depth==0 extent_block, and one block at the new
 	 * top-of-the tree.
 	 */
-	return le16_to_cpu(root_el->l_tree_depth) + 2;
-}
+	वापस le16_to_cpu(root_el->l_tree_depth) + 2;
+पूर्ण
 
-void ocfs2_dinode_new_extent_list(struct inode *inode, struct ocfs2_dinode *di);
-void ocfs2_set_inode_data_inline(struct inode *inode, struct ocfs2_dinode *di);
-int ocfs2_convert_inline_data_to_extents(struct inode *inode,
-					 struct buffer_head *di_bh);
+व्योम ocfs2_dinode_new_extent_list(काष्ठा inode *inode, काष्ठा ocfs2_dinode *di);
+व्योम ocfs2_set_inode_data_अंतरभूत(काष्ठा inode *inode, काष्ठा ocfs2_dinode *di);
+पूर्णांक ocfs2_convert_अंतरभूत_data_to_extents(काष्ठा inode *inode,
+					 काष्ठा buffer_head *di_bh);
 
-int ocfs2_truncate_log_init(struct ocfs2_super *osb);
-void ocfs2_truncate_log_shutdown(struct ocfs2_super *osb);
-void ocfs2_schedule_truncate_log_flush(struct ocfs2_super *osb,
-				       int cancel);
-int ocfs2_flush_truncate_log(struct ocfs2_super *osb);
-int ocfs2_begin_truncate_log_recovery(struct ocfs2_super *osb,
-				      int slot_num,
-				      struct ocfs2_dinode **tl_copy);
-int ocfs2_complete_truncate_log_recovery(struct ocfs2_super *osb,
-					 struct ocfs2_dinode *tl_copy);
-int ocfs2_truncate_log_needs_flush(struct ocfs2_super *osb);
-int ocfs2_truncate_log_append(struct ocfs2_super *osb,
+पूर्णांक ocfs2_truncate_log_init(काष्ठा ocfs2_super *osb);
+व्योम ocfs2_truncate_log_shutकरोwn(काष्ठा ocfs2_super *osb);
+व्योम ocfs2_schedule_truncate_log_flush(काष्ठा ocfs2_super *osb,
+				       पूर्णांक cancel);
+पूर्णांक ocfs2_flush_truncate_log(काष्ठा ocfs2_super *osb);
+पूर्णांक ocfs2_begin_truncate_log_recovery(काष्ठा ocfs2_super *osb,
+				      पूर्णांक slot_num,
+				      काष्ठा ocfs2_dinode **tl_copy);
+पूर्णांक ocfs2_complete_truncate_log_recovery(काष्ठा ocfs2_super *osb,
+					 काष्ठा ocfs2_dinode *tl_copy);
+पूर्णांक ocfs2_truncate_log_needs_flush(काष्ठा ocfs2_super *osb);
+पूर्णांक ocfs2_truncate_log_append(काष्ठा ocfs2_super *osb,
 			      handle_t *handle,
 			      u64 start_blk,
-			      unsigned int num_clusters);
-int __ocfs2_flush_truncate_log(struct ocfs2_super *osb);
-int ocfs2_try_to_free_truncate_log(struct ocfs2_super *osb,
-				   unsigned int needed);
+			      अचिन्हित पूर्णांक num_clusters);
+पूर्णांक __ocfs2_flush_truncate_log(काष्ठा ocfs2_super *osb);
+पूर्णांक ocfs2_try_to_मुक्त_truncate_log(काष्ठा ocfs2_super *osb,
+				   अचिन्हित पूर्णांक needed);
 
 /*
- * Process local structure which describes the block unlinks done
+ * Process local काष्ठाure which describes the block unlinks करोne
  * during an operation. This is populated via
  * ocfs2_cache_block_dealloc().
  *
  * ocfs2_run_deallocs() should be called after the potentially
- * de-allocating routines. No journal handles should be open, and most
+ * de-allocating routines. No journal handles should be खोलो, and most
  * locks should have been dropped.
  */
-struct ocfs2_cached_dealloc_ctxt {
-	struct ocfs2_per_slot_free_list		*c_first_suballocator;
-	struct ocfs2_cached_block_free 		*c_global_allocator;
-};
-static inline void ocfs2_init_dealloc_ctxt(struct ocfs2_cached_dealloc_ctxt *c)
-{
-	c->c_first_suballocator = NULL;
-	c->c_global_allocator = NULL;
-}
-int ocfs2_cache_cluster_dealloc(struct ocfs2_cached_dealloc_ctxt *ctxt,
-				u64 blkno, unsigned int bit);
-int ocfs2_cache_block_dealloc(struct ocfs2_cached_dealloc_ctxt *ctxt,
-			      int type, int slot, u64 suballoc, u64 blkno,
-			      unsigned int bit);
-static inline int ocfs2_dealloc_has_cluster(struct ocfs2_cached_dealloc_ctxt *c)
-{
-	return c->c_global_allocator != NULL;
-}
-int ocfs2_run_deallocs(struct ocfs2_super *osb,
-		       struct ocfs2_cached_dealloc_ctxt *ctxt);
+काष्ठा ocfs2_cached_dealloc_ctxt अणु
+	काष्ठा ocfs2_per_slot_मुक्त_list		*c_first_suballocator;
+	काष्ठा ocfs2_cached_block_मुक्त 		*c_global_allocator;
+पूर्ण;
+अटल अंतरभूत व्योम ocfs2_init_dealloc_ctxt(काष्ठा ocfs2_cached_dealloc_ctxt *c)
+अणु
+	c->c_first_suballocator = शून्य;
+	c->c_global_allocator = शून्य;
+पूर्ण
+पूर्णांक ocfs2_cache_cluster_dealloc(काष्ठा ocfs2_cached_dealloc_ctxt *ctxt,
+				u64 blkno, अचिन्हित पूर्णांक bit);
+पूर्णांक ocfs2_cache_block_dealloc(काष्ठा ocfs2_cached_dealloc_ctxt *ctxt,
+			      पूर्णांक type, पूर्णांक slot, u64 suballoc, u64 blkno,
+			      अचिन्हित पूर्णांक bit);
+अटल अंतरभूत पूर्णांक ocfs2_dealloc_has_cluster(काष्ठा ocfs2_cached_dealloc_ctxt *c)
+अणु
+	वापस c->c_global_allocator != शून्य;
+पूर्ण
+पूर्णांक ocfs2_run_deallocs(काष्ठा ocfs2_super *osb,
+		       काष्ठा ocfs2_cached_dealloc_ctxt *ctxt);
 
-struct ocfs2_truncate_context {
-	struct ocfs2_cached_dealloc_ctxt tc_dealloc;
-	int tc_ext_alloc_locked; /* is it cluster locked? */
+काष्ठा ocfs2_truncate_context अणु
+	काष्ठा ocfs2_cached_dealloc_ctxt tc_dealloc;
+	पूर्णांक tc_ext_alloc_locked; /* is it cluster locked? */
 	/* these get destroyed once it's passed to ocfs2_commit_truncate. */
-	struct buffer_head *tc_last_eb_bh;
-};
+	काष्ठा buffer_head *tc_last_eb_bh;
+पूर्ण;
 
-int ocfs2_zero_range_for_truncate(struct inode *inode, handle_t *handle,
+पूर्णांक ocfs2_zero_range_क्रम_truncate(काष्ठा inode *inode, handle_t *handle,
 				  u64 range_start, u64 range_end);
-int ocfs2_commit_truncate(struct ocfs2_super *osb,
-			  struct inode *inode,
-			  struct buffer_head *di_bh);
-int ocfs2_truncate_inline(struct inode *inode, struct buffer_head *di_bh,
-			  unsigned int start, unsigned int end, int trunc);
+पूर्णांक ocfs2_commit_truncate(काष्ठा ocfs2_super *osb,
+			  काष्ठा inode *inode,
+			  काष्ठा buffer_head *di_bh);
+पूर्णांक ocfs2_truncate_अंतरभूत(काष्ठा inode *inode, काष्ठा buffer_head *di_bh,
+			  अचिन्हित पूर्णांक start, अचिन्हित पूर्णांक end, पूर्णांक trunc);
 
-int ocfs2_find_leaf(struct ocfs2_caching_info *ci,
-		    struct ocfs2_extent_list *root_el, u32 cpos,
-		    struct buffer_head **leaf_bh);
-int ocfs2_search_extent_list(struct ocfs2_extent_list *el, u32 v_cluster);
+पूर्णांक ocfs2_find_leaf(काष्ठा ocfs2_caching_info *ci,
+		    काष्ठा ocfs2_extent_list *root_el, u32 cpos,
+		    काष्ठा buffer_head **leaf_bh);
+पूर्णांक ocfs2_search_extent_list(काष्ठा ocfs2_extent_list *el, u32 v_cluster);
 
-int ocfs2_trim_fs(struct super_block *sb, struct fstrim_range *range);
+पूर्णांक ocfs2_trim_fs(काष्ठा super_block *sb, काष्ठा fstrim_range *range);
 /*
  * Helper function to look at the # of clusters in an extent record.
  */
-static inline unsigned int ocfs2_rec_clusters(struct ocfs2_extent_list *el,
-					      struct ocfs2_extent_rec *rec)
-{
+अटल अंतरभूत अचिन्हित पूर्णांक ocfs2_rec_clusters(काष्ठा ocfs2_extent_list *el,
+					      काष्ठा ocfs2_extent_rec *rec)
+अणु
 	/*
-	 * Cluster count in extent records is slightly different
-	 * between interior nodes and leaf nodes. This is to support
+	 * Cluster count in extent records is slightly dअगरferent
+	 * between पूर्णांकerior nodes and leaf nodes. This is to support
 	 * unwritten extents which need a flags field in leaf node
-	 * records, thus shrinking the available space for a clusters
+	 * records, thus shrinking the available space क्रम a clusters
 	 * field.
 	 */
-	if (el->l_tree_depth)
-		return le32_to_cpu(rec->e_int_clusters);
-	else
-		return le16_to_cpu(rec->e_leaf_clusters);
-}
+	अगर (el->l_tree_depth)
+		वापस le32_to_cpu(rec->e_पूर्णांक_clusters);
+	अन्यथा
+		वापस le16_to_cpu(rec->e_leaf_clusters);
+पूर्ण
 
 /*
- * This is only valid for leaf nodes, which are the only ones that can
+ * This is only valid क्रम leaf nodes, which are the only ones that can
  * have empty extents anyway.
  */
-static inline int ocfs2_is_empty_extent(struct ocfs2_extent_rec *rec)
-{
-	return !rec->e_leaf_clusters;
-}
+अटल अंतरभूत पूर्णांक ocfs2_is_empty_extent(काष्ठा ocfs2_extent_rec *rec)
+अणु
+	वापस !rec->e_leaf_clusters;
+पूर्ण
 
-int ocfs2_grab_pages(struct inode *inode, loff_t start, loff_t end,
-		     struct page **pages, int *num);
-void ocfs2_map_and_dirty_page(struct inode *inode, handle_t *handle,
-			      unsigned int from, unsigned int to,
-			      struct page *page, int zero, u64 *phys);
+पूर्णांक ocfs2_grab_pages(काष्ठा inode *inode, loff_t start, loff_t end,
+		     काष्ठा page **pages, पूर्णांक *num);
+व्योम ocfs2_map_and_dirty_page(काष्ठा inode *inode, handle_t *handle,
+			      अचिन्हित पूर्णांक from, अचिन्हित पूर्णांक to,
+			      काष्ठा page *page, पूर्णांक zero, u64 *phys);
 /*
  * Structures which describe a path through a btree, and functions to
  * manipulate them.
@@ -266,45 +267,45 @@ void ocfs2_map_and_dirty_page(struct inode *inode, handle_t *handle,
  * The idea here is to be as generic as possible with the tree
  * manipulation code.
  */
-struct ocfs2_path_item {
-	struct buffer_head		*bh;
-	struct ocfs2_extent_list	*el;
-};
+काष्ठा ocfs2_path_item अणु
+	काष्ठा buffer_head		*bh;
+	काष्ठा ocfs2_extent_list	*el;
+पूर्ण;
 
-#define OCFS2_MAX_PATH_DEPTH	5
+#घोषणा OCFS2_MAX_PATH_DEPTH	5
 
-struct ocfs2_path {
-	int				p_tree_depth;
+काष्ठा ocfs2_path अणु
+	पूर्णांक				p_tree_depth;
 	ocfs2_journal_access_func	p_root_access;
-	struct ocfs2_path_item		p_node[OCFS2_MAX_PATH_DEPTH];
-};
+	काष्ठा ocfs2_path_item		p_node[OCFS2_MAX_PATH_DEPTH];
+पूर्ण;
 
-#define path_root_bh(_path) ((_path)->p_node[0].bh)
-#define path_root_el(_path) ((_path)->p_node[0].el)
-#define path_root_access(_path)((_path)->p_root_access)
-#define path_leaf_bh(_path) ((_path)->p_node[(_path)->p_tree_depth].bh)
-#define path_leaf_el(_path) ((_path)->p_node[(_path)->p_tree_depth].el)
-#define path_num_items(_path) ((_path)->p_tree_depth + 1)
+#घोषणा path_root_bh(_path) ((_path)->p_node[0].bh)
+#घोषणा path_root_el(_path) ((_path)->p_node[0].el)
+#घोषणा path_root_access(_path)((_path)->p_root_access)
+#घोषणा path_leaf_bh(_path) ((_path)->p_node[(_path)->p_tree_depth].bh)
+#घोषणा path_leaf_el(_path) ((_path)->p_node[(_path)->p_tree_depth].el)
+#घोषणा path_num_items(_path) ((_path)->p_tree_depth + 1)
 
-void ocfs2_reinit_path(struct ocfs2_path *path, int keep_root);
-void ocfs2_free_path(struct ocfs2_path *path);
-int ocfs2_find_path(struct ocfs2_caching_info *ci,
-		    struct ocfs2_path *path,
+व्योम ocfs2_reinit_path(काष्ठा ocfs2_path *path, पूर्णांक keep_root);
+व्योम ocfs2_मुक्त_path(काष्ठा ocfs2_path *path);
+पूर्णांक ocfs2_find_path(काष्ठा ocfs2_caching_info *ci,
+		    काष्ठा ocfs2_path *path,
 		    u32 cpos);
-struct ocfs2_path *ocfs2_new_path_from_path(struct ocfs2_path *path);
-struct ocfs2_path *ocfs2_new_path_from_et(struct ocfs2_extent_tree *et);
-int ocfs2_path_bh_journal_access(handle_t *handle,
-				 struct ocfs2_caching_info *ci,
-				 struct ocfs2_path *path,
-				 int idx);
-int ocfs2_journal_access_path(struct ocfs2_caching_info *ci,
+काष्ठा ocfs2_path *ocfs2_new_path_from_path(काष्ठा ocfs2_path *path);
+काष्ठा ocfs2_path *ocfs2_new_path_from_et(काष्ठा ocfs2_extent_tree *et);
+पूर्णांक ocfs2_path_bh_journal_access(handle_t *handle,
+				 काष्ठा ocfs2_caching_info *ci,
+				 काष्ठा ocfs2_path *path,
+				 पूर्णांक idx);
+पूर्णांक ocfs2_journal_access_path(काष्ठा ocfs2_caching_info *ci,
 			      handle_t *handle,
-			      struct ocfs2_path *path);
-int ocfs2_find_cpos_for_right_leaf(struct super_block *sb,
-				   struct ocfs2_path *path, u32 *cpos);
-int ocfs2_find_cpos_for_left_leaf(struct super_block *sb,
-				  struct ocfs2_path *path, u32 *cpos);
-int ocfs2_find_subtree_root(struct ocfs2_extent_tree *et,
-			    struct ocfs2_path *left,
-			    struct ocfs2_path *right);
-#endif /* OCFS2_ALLOC_H */
+			      काष्ठा ocfs2_path *path);
+पूर्णांक ocfs2_find_cpos_क्रम_right_leaf(काष्ठा super_block *sb,
+				   काष्ठा ocfs2_path *path, u32 *cpos);
+पूर्णांक ocfs2_find_cpos_क्रम_left_leaf(काष्ठा super_block *sb,
+				  काष्ठा ocfs2_path *path, u32 *cpos);
+पूर्णांक ocfs2_find_subtree_root(काष्ठा ocfs2_extent_tree *et,
+			    काष्ठा ocfs2_path *left,
+			    काष्ठा ocfs2_path *right);
+#पूर्ण_अगर /* OCFS2_ALLOC_H */

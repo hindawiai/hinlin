@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause */
 /******************************************************************************
  *
  * Copyright(c) 2020 Intel Corporation
  *
  *****************************************************************************/
 
-#ifndef __IWL_PNVM_H__
-#define __IWL_PNVM_H__
+#अगर_अघोषित __IWL_PNVM_H__
+#घोषणा __IWL_PNVM_H__
 
-#include "fw/notif-wait.h"
+#समावेश "fw/notif-wait.h"
 
-#define MVM_UCODE_PNVM_TIMEOUT	(HZ / 10)
+#घोषणा MVM_UCODE_PNVM_TIMEOUT	(HZ / 10)
 
-int iwl_pnvm_load(struct iwl_trans *trans,
-		  struct iwl_notif_wait_data *notif_wait);
+पूर्णांक iwl_pnvm_load(काष्ठा iwl_trans *trans,
+		  काष्ठा iwl_notअगर_रुको_data *notअगर_रुको);
 
-#endif /* __IWL_PNVM_H__ */
+#पूर्ण_अगर /* __IWL_PNVM_H__ */

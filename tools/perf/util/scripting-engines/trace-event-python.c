@@ -1,9 +1,10 @@
+<शैली गुरु>
 /*
- * trace-event-python.  Feed trace events to an embedded Python interpreter.
+ * trace-event-python.  Feed trace events to an embedded Python पूर्णांकerpreter.
  *
  * Copyright (C) 2010 Tom Zanussi <tzanussi@gmail.com>
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is मुक्त software; you can redistribute it and/or modअगरy
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -11,208 +12,208 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  GNU General Public License क्रम more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
+ *  aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
  *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  */
 
-#include <Python.h>
+#समावेश <Python.h>
 
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <errno.h>
-#include <linux/bitmap.h>
-#include <linux/compiler.h>
-#include <linux/time64.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <stdbool.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/समय64.h>
 
-#include "../build-id.h"
-#include "../counts.h"
-#include "../debug.h"
-#include "../dso.h"
-#include "../callchain.h"
-#include "../evsel.h"
-#include "../event.h"
-#include "../thread.h"
-#include "../comm.h"
-#include "../machine.h"
-#include "../db-export.h"
-#include "../thread-stack.h"
-#include "../trace-event.h"
-#include "../call-path.h"
-#include "map.h"
-#include "symbol.h"
-#include "thread_map.h"
-#include "print_binary.h"
-#include "stat.h"
-#include "mem-events.h"
+#समावेश "../build-id.h"
+#समावेश "../counts.h"
+#समावेश "../debug.h"
+#समावेश "../dso.h"
+#समावेश "../callchain.h"
+#समावेश "../evsel.h"
+#समावेश "../event.h"
+#समावेश "../thread.h"
+#समावेश "../comm.h"
+#समावेश "../machine.h"
+#समावेश "../db-export.h"
+#समावेश "../thread-stack.h"
+#समावेश "../trace-event.h"
+#समावेश "../call-path.h"
+#समावेश "map.h"
+#समावेश "symbol.h"
+#समावेश "thread_map.h"
+#समावेश "print_binary.h"
+#समावेश "stat.h"
+#समावेश "mem-events.h"
 
-#if PY_MAJOR_VERSION < 3
-#define _PyUnicode_FromString(arg) \
+#अगर PY_MAJOR_VERSION < 3
+#घोषणा _PyUnicode_FromString(arg) \
   PyString_FromString(arg)
-#define _PyUnicode_FromStringAndSize(arg1, arg2) \
+#घोषणा _PyUnicode_FromStringAndSize(arg1, arg2) \
   PyString_FromStringAndSize((arg1), (arg2))
-#define _PyBytes_FromStringAndSize(arg1, arg2) \
+#घोषणा _PyBytes_FromStringAndSize(arg1, arg2) \
   PyString_FromStringAndSize((arg1), (arg2))
-#define _PyLong_FromLong(arg) \
+#घोषणा _PyLong_FromLong(arg) \
   PyInt_FromLong(arg)
-#define _PyLong_AsLong(arg) \
+#घोषणा _PyLong_AsLong(arg) \
   PyInt_AsLong(arg)
-#define _PyCapsule_New(arg1, arg2, arg3) \
+#घोषणा _PyCapsule_New(arg1, arg2, arg3) \
   PyCObject_FromVoidPtr((arg1), (arg2))
 
-PyMODINIT_FUNC initperf_trace_context(void);
-#else
-#define _PyUnicode_FromString(arg) \
+PyMODINIT_FUNC initperf_trace_context(व्योम);
+#अन्यथा
+#घोषणा _PyUnicode_FromString(arg) \
   PyUnicode_FromString(arg)
-#define _PyUnicode_FromStringAndSize(arg1, arg2) \
+#घोषणा _PyUnicode_FromStringAndSize(arg1, arg2) \
   PyUnicode_FromStringAndSize((arg1), (arg2))
-#define _PyBytes_FromStringAndSize(arg1, arg2) \
+#घोषणा _PyBytes_FromStringAndSize(arg1, arg2) \
   PyBytes_FromStringAndSize((arg1), (arg2))
-#define _PyLong_FromLong(arg) \
+#घोषणा _PyLong_FromLong(arg) \
   PyLong_FromLong(arg)
-#define _PyLong_AsLong(arg) \
+#घोषणा _PyLong_AsLong(arg) \
   PyLong_AsLong(arg)
-#define _PyCapsule_New(arg1, arg2, arg3) \
+#घोषणा _PyCapsule_New(arg1, arg2, arg3) \
   PyCapsule_New((arg1), (arg2), (arg3))
 
-PyMODINIT_FUNC PyInit_perf_trace_context(void);
-#endif
+PyMODINIT_FUNC PyInit_perf_trace_context(व्योम);
+#पूर्ण_अगर
 
-#define TRACE_EVENT_TYPE_MAX				\
-	((1 << (sizeof(unsigned short) * 8)) - 1)
+#घोषणा TRACE_EVENT_TYPE_MAX				\
+	((1 << (माप(अचिन्हित लघु) * 8)) - 1)
 
-static DECLARE_BITMAP(events_defined, TRACE_EVENT_TYPE_MAX);
+अटल DECLARE_BITMAP(events_defined, TRACE_EVENT_TYPE_MAX);
 
-#define MAX_FIELDS	64
-#define N_COMMON_FIELDS	7
+#घोषणा MAX_FIELDS	64
+#घोषणा N_COMMON_FIELDS	7
 
-extern struct scripting_context *scripting_context;
+बाह्य काष्ठा scripting_context *scripting_context;
 
-static char *cur_field_name;
-static int zero_flag_atom;
+अटल अक्षर *cur_field_name;
+अटल पूर्णांक zero_flag_atom;
 
-static PyObject *main_module, *main_dict;
+अटल PyObject *मुख्य_module, *मुख्य_dict;
 
-struct tables {
-	struct db_export	dbe;
+काष्ठा tables अणु
+	काष्ठा db_export	dbe;
 	PyObject		*evsel_handler;
 	PyObject		*machine_handler;
-	PyObject		*thread_handler;
+	PyObject		*thपढ़ो_handler;
 	PyObject		*comm_handler;
-	PyObject		*comm_thread_handler;
+	PyObject		*comm_thपढ़ो_handler;
 	PyObject		*dso_handler;
 	PyObject		*symbol_handler;
 	PyObject		*branch_type_handler;
 	PyObject		*sample_handler;
 	PyObject		*call_path_handler;
-	PyObject		*call_return_handler;
+	PyObject		*call_वापस_handler;
 	PyObject		*synth_handler;
-	PyObject		*context_switch_handler;
+	PyObject		*context_चयन_handler;
 	bool			db_export_mode;
-};
+पूर्ण;
 
-static struct tables tables_global;
+अटल काष्ठा tables tables_global;
 
-static void handler_call_die(const char *handler_name) __noreturn;
-static void handler_call_die(const char *handler_name)
-{
-	PyErr_Print();
+अटल व्योम handler_call_die(स्थिर अक्षर *handler_name) __noवापस;
+अटल व्योम handler_call_die(स्थिर अक्षर *handler_name)
+अणु
+	PyErr_Prपूर्णांक();
 	Py_FatalError("problem in Python trace event handler");
-	// Py_FatalError does not return
+	// Py_FatalError करोes not वापस
 	// but we have to make the compiler happy
-	abort();
-}
+	पात();
+पूर्ण
 
 /*
- * Insert val into into the dictionary and decrement the reference counter.
- * This is necessary for dictionaries since PyDict_SetItemString() does not
+ * Insert val पूर्णांकo पूर्णांकo the dictionary and decrement the reference counter.
+ * This is necessary क्रम dictionaries since PyDict_SetItemString() करोes not
  * steal a reference, as opposed to PyTuple_SetItem().
  */
-static void pydict_set_item_string_decref(PyObject *dict, const char *key, PyObject *val)
-{
+अटल व्योम pydict_set_item_string_decref(PyObject *dict, स्थिर अक्षर *key, PyObject *val)
+अणु
 	PyDict_SetItemString(dict, key, val);
 	Py_DECREF(val);
-}
+पूर्ण
 
-static PyObject *get_handler(const char *handler_name)
-{
+अटल PyObject *get_handler(स्थिर अक्षर *handler_name)
+अणु
 	PyObject *handler;
 
-	handler = PyDict_GetItemString(main_dict, handler_name);
-	if (handler && !PyCallable_Check(handler))
-		return NULL;
-	return handler;
-}
+	handler = PyDict_GetItemString(मुख्य_dict, handler_name);
+	अगर (handler && !PyCallable_Check(handler))
+		वापस शून्य;
+	वापस handler;
+पूर्ण
 
-static int get_argument_count(PyObject *handler)
-{
-	int arg_count = 0;
+अटल पूर्णांक get_argument_count(PyObject *handler)
+अणु
+	पूर्णांक arg_count = 0;
 
 	/*
-	 * The attribute for the code object is func_code in Python 2,
+	 * The attribute क्रम the code object is func_code in Python 2,
 	 * whereas it is __code__ in Python 3.0+.
 	 */
 	PyObject *code_obj = PyObject_GetAttrString(handler,
 		"func_code");
-	if (PyErr_Occurred()) {
+	अगर (PyErr_Occurred()) अणु
 		PyErr_Clear();
 		code_obj = PyObject_GetAttrString(handler,
 			"__code__");
-	}
+	पूर्ण
 	PyErr_Clear();
-	if (code_obj) {
+	अगर (code_obj) अणु
 		PyObject *arg_count_obj = PyObject_GetAttrString(code_obj,
 			"co_argcount");
-		if (arg_count_obj) {
-			arg_count = (int) _PyLong_AsLong(arg_count_obj);
+		अगर (arg_count_obj) अणु
+			arg_count = (पूर्णांक) _PyLong_AsLong(arg_count_obj);
 			Py_DECREF(arg_count_obj);
-		}
+		पूर्ण
 		Py_DECREF(code_obj);
-	}
-	return arg_count;
-}
+	पूर्ण
+	वापस arg_count;
+पूर्ण
 
-static void call_object(PyObject *handler, PyObject *args, const char *die_msg)
-{
+अटल व्योम call_object(PyObject *handler, PyObject *args, स्थिर अक्षर *die_msg)
+अणु
 	PyObject *retval;
 
 	retval = PyObject_CallObject(handler, args);
-	if (retval == NULL)
+	अगर (retval == शून्य)
 		handler_call_die(die_msg);
 	Py_DECREF(retval);
-}
+पूर्ण
 
-static void try_call_object(const char *handler_name, PyObject *args)
-{
+अटल व्योम try_call_object(स्थिर अक्षर *handler_name, PyObject *args)
+अणु
 	PyObject *handler;
 
 	handler = get_handler(handler_name);
-	if (handler)
+	अगर (handler)
 		call_object(handler, args, handler_name);
-}
+पूर्ण
 
-static void define_value(enum tep_print_arg_type field_type,
-			 const char *ev_name,
-			 const char *field_name,
-			 const char *field_value,
-			 const char *field_str)
-{
-	const char *handler_name = "define_flag_value";
+अटल व्योम define_value(क्रमागत tep_prपूर्णांक_arg_type field_type,
+			 स्थिर अक्षर *ev_name,
+			 स्थिर अक्षर *field_name,
+			 स्थिर अक्षर *field_value,
+			 स्थिर अक्षर *field_str)
+अणु
+	स्थिर अक्षर *handler_name = "define_flag_value";
 	PyObject *t;
-	unsigned long long value;
-	unsigned n = 0;
+	अचिन्हित दीर्घ दीर्घ value;
+	अचिन्हित n = 0;
 
-	if (field_type == TEP_PRINT_SYMBOL)
+	अगर (field_type == TEP_PRINT_SYMBOL)
 		handler_name = "define_symbolic_value";
 
 	t = PyTuple_New(4);
-	if (!t)
+	अगर (!t)
 		Py_FatalError("couldn't create Python tuple");
 
 	value = eval_flag(field_value);
@@ -225,269 +226,269 @@ static void define_value(enum tep_print_arg_type field_type,
 	try_call_object(handler_name, t);
 
 	Py_DECREF(t);
-}
+पूर्ण
 
-static void define_values(enum tep_print_arg_type field_type,
-			  struct tep_print_flag_sym *field,
-			  const char *ev_name,
-			  const char *field_name)
-{
+अटल व्योम define_values(क्रमागत tep_prपूर्णांक_arg_type field_type,
+			  काष्ठा tep_prपूर्णांक_flag_sym *field,
+			  स्थिर अक्षर *ev_name,
+			  स्थिर अक्षर *field_name)
+अणु
 	define_value(field_type, ev_name, field_name, field->value,
 		     field->str);
 
-	if (field->next)
+	अगर (field->next)
 		define_values(field_type, field->next, ev_name, field_name);
-}
+पूर्ण
 
-static void define_field(enum tep_print_arg_type field_type,
-			 const char *ev_name,
-			 const char *field_name,
-			 const char *delim)
-{
-	const char *handler_name = "define_flag_field";
+अटल व्योम define_field(क्रमागत tep_prपूर्णांक_arg_type field_type,
+			 स्थिर अक्षर *ev_name,
+			 स्थिर अक्षर *field_name,
+			 स्थिर अक्षर *delim)
+अणु
+	स्थिर अक्षर *handler_name = "define_flag_field";
 	PyObject *t;
-	unsigned n = 0;
+	अचिन्हित n = 0;
 
-	if (field_type == TEP_PRINT_SYMBOL)
+	अगर (field_type == TEP_PRINT_SYMBOL)
 		handler_name = "define_symbolic_field";
 
-	if (field_type == TEP_PRINT_FLAGS)
+	अगर (field_type == TEP_PRINT_FLAGS)
 		t = PyTuple_New(3);
-	else
+	अन्यथा
 		t = PyTuple_New(2);
-	if (!t)
+	अगर (!t)
 		Py_FatalError("couldn't create Python tuple");
 
 	PyTuple_SetItem(t, n++, _PyUnicode_FromString(ev_name));
 	PyTuple_SetItem(t, n++, _PyUnicode_FromString(field_name));
-	if (field_type == TEP_PRINT_FLAGS)
+	अगर (field_type == TEP_PRINT_FLAGS)
 		PyTuple_SetItem(t, n++, _PyUnicode_FromString(delim));
 
 	try_call_object(handler_name, t);
 
 	Py_DECREF(t);
-}
+पूर्ण
 
-static void define_event_symbols(struct tep_event *event,
-				 const char *ev_name,
-				 struct tep_print_arg *args)
-{
-	if (args == NULL)
-		return;
+अटल व्योम define_event_symbols(काष्ठा tep_event *event,
+				 स्थिर अक्षर *ev_name,
+				 काष्ठा tep_prपूर्णांक_arg *args)
+अणु
+	अगर (args == शून्य)
+		वापस;
 
-	switch (args->type) {
-	case TEP_PRINT_NULL:
-		break;
-	case TEP_PRINT_ATOM:
+	चयन (args->type) अणु
+	हाल TEP_PRINT_शून्य:
+		अवरोध;
+	हाल TEP_PRINT_ATOM:
 		define_value(TEP_PRINT_FLAGS, ev_name, cur_field_name, "0",
 			     args->atom.atom);
 		zero_flag_atom = 0;
-		break;
-	case TEP_PRINT_FIELD:
-		free(cur_field_name);
+		अवरोध;
+	हाल TEP_PRINT_FIELD:
+		मुक्त(cur_field_name);
 		cur_field_name = strdup(args->field.name);
-		break;
-	case TEP_PRINT_FLAGS:
+		अवरोध;
+	हाल TEP_PRINT_FLAGS:
 		define_event_symbols(event, ev_name, args->flags.field);
 		define_field(TEP_PRINT_FLAGS, ev_name, cur_field_name,
 			     args->flags.delim);
 		define_values(TEP_PRINT_FLAGS, args->flags.flags, ev_name,
 			      cur_field_name);
-		break;
-	case TEP_PRINT_SYMBOL:
+		अवरोध;
+	हाल TEP_PRINT_SYMBOL:
 		define_event_symbols(event, ev_name, args->symbol.field);
-		define_field(TEP_PRINT_SYMBOL, ev_name, cur_field_name, NULL);
+		define_field(TEP_PRINT_SYMBOL, ev_name, cur_field_name, शून्य);
 		define_values(TEP_PRINT_SYMBOL, args->symbol.symbols, ev_name,
 			      cur_field_name);
-		break;
-	case TEP_PRINT_HEX:
-	case TEP_PRINT_HEX_STR:
+		अवरोध;
+	हाल TEP_PRINT_HEX:
+	हाल TEP_PRINT_HEX_STR:
 		define_event_symbols(event, ev_name, args->hex.field);
 		define_event_symbols(event, ev_name, args->hex.size);
-		break;
-	case TEP_PRINT_INT_ARRAY:
-		define_event_symbols(event, ev_name, args->int_array.field);
-		define_event_symbols(event, ev_name, args->int_array.count);
-		define_event_symbols(event, ev_name, args->int_array.el_size);
-		break;
-	case TEP_PRINT_STRING:
-		break;
-	case TEP_PRINT_TYPE:
+		अवरोध;
+	हाल TEP_PRINT_INT_ARRAY:
+		define_event_symbols(event, ev_name, args->पूर्णांक_array.field);
+		define_event_symbols(event, ev_name, args->पूर्णांक_array.count);
+		define_event_symbols(event, ev_name, args->पूर्णांक_array.el_size);
+		अवरोध;
+	हाल TEP_PRINT_STRING:
+		अवरोध;
+	हाल TEP_PRINT_TYPE:
 		define_event_symbols(event, ev_name, args->typecast.item);
-		break;
-	case TEP_PRINT_OP:
-		if (strcmp(args->op.op, ":") == 0)
+		अवरोध;
+	हाल TEP_PRINT_OP:
+		अगर (म_भेद(args->op.op, ":") == 0)
 			zero_flag_atom = 1;
 		define_event_symbols(event, ev_name, args->op.left);
 		define_event_symbols(event, ev_name, args->op.right);
-		break;
-	default:
-		/* gcc warns for these? */
-	case TEP_PRINT_BSTRING:
-	case TEP_PRINT_DYNAMIC_ARRAY:
-	case TEP_PRINT_DYNAMIC_ARRAY_LEN:
-	case TEP_PRINT_FUNC:
-	case TEP_PRINT_BITMASK:
+		अवरोध;
+	शेष:
+		/* gcc warns क्रम these? */
+	हाल TEP_PRINT_BSTRING:
+	हाल TEP_PRINT_DYNAMIC_ARRAY:
+	हाल TEP_PRINT_DYNAMIC_ARRAY_LEN:
+	हाल TEP_PRINT_FUNC:
+	हाल TEP_PRINT_BITMASK:
 		/* we should warn... */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (args->next)
+	अगर (args->next)
 		define_event_symbols(event, ev_name, args->next);
-}
+पूर्ण
 
-static PyObject *get_field_numeric_entry(struct tep_event *event,
-		struct tep_format_field *field, void *data)
-{
+अटल PyObject *get_field_numeric_entry(काष्ठा tep_event *event,
+		काष्ठा tep_क्रमmat_field *field, व्योम *data)
+अणु
 	bool is_array = field->flags & TEP_FIELD_IS_ARRAY;
-	PyObject *obj = NULL, *list = NULL;
-	unsigned long long val;
-	unsigned int item_size, n_items, i;
+	PyObject *obj = शून्य, *list = शून्य;
+	अचिन्हित दीर्घ दीर्घ val;
+	अचिन्हित पूर्णांक item_size, n_items, i;
 
-	if (is_array) {
+	अगर (is_array) अणु
 		list = PyList_New(field->arraylen);
 		item_size = field->size / field->arraylen;
 		n_items = field->arraylen;
-	} else {
+	पूर्ण अन्यथा अणु
 		item_size = field->size;
 		n_items = 1;
-	}
+	पूर्ण
 
-	for (i = 0; i < n_items; i++) {
+	क्रम (i = 0; i < n_items; i++) अणु
 
-		val = read_size(event, data + field->offset + i * item_size,
+		val = पढ़ो_size(event, data + field->offset + i * item_size,
 				item_size);
-		if (field->flags & TEP_FIELD_IS_SIGNED) {
-			if ((long long)val >= LONG_MIN &&
-					(long long)val <= LONG_MAX)
+		अगर (field->flags & TEP_FIELD_IS_SIGNED) अणु
+			अगर ((दीर्घ दीर्घ)val >= दीर्घ_न्यून &&
+					(दीर्घ दीर्घ)val <= दीर्घ_उच्च)
 				obj = _PyLong_FromLong(val);
-			else
+			अन्यथा
 				obj = PyLong_FromLongLong(val);
-		} else {
-			if (val <= LONG_MAX)
+		पूर्ण अन्यथा अणु
+			अगर (val <= दीर्घ_उच्च)
 				obj = _PyLong_FromLong(val);
-			else
-				obj = PyLong_FromUnsignedLongLong(val);
-		}
-		if (is_array)
+			अन्यथा
+				obj = PyLong_FromUnचिन्हितLongLong(val);
+		पूर्ण
+		अगर (is_array)
 			PyList_SET_ITEM(list, i, obj);
-	}
-	if (is_array)
+	पूर्ण
+	अगर (is_array)
 		obj = list;
-	return obj;
-}
+	वापस obj;
+पूर्ण
 
-static const char *get_dsoname(struct map *map)
-{
-	const char *dsoname = "[unknown]";
+अटल स्थिर अक्षर *get_dsoname(काष्ठा map *map)
+अणु
+	स्थिर अक्षर *dsoname = "[unknown]";
 
-	if (map && map->dso) {
-		if (symbol_conf.show_kernel_path && map->dso->long_name)
-			dsoname = map->dso->long_name;
-		else
+	अगर (map && map->dso) अणु
+		अगर (symbol_conf.show_kernel_path && map->dso->दीर्घ_name)
+			dsoname = map->dso->दीर्घ_name;
+		अन्यथा
 			dsoname = map->dso->name;
-	}
+	पूर्ण
 
-	return dsoname;
-}
+	वापस dsoname;
+पूर्ण
 
-static PyObject *python_process_callchain(struct perf_sample *sample,
-					 struct evsel *evsel,
-					 struct addr_location *al)
-{
+अटल PyObject *python_process_callchain(काष्ठा perf_sample *sample,
+					 काष्ठा evsel *evsel,
+					 काष्ठा addr_location *al)
+अणु
 	PyObject *pylist;
 
 	pylist = PyList_New(0);
-	if (!pylist)
+	अगर (!pylist)
 		Py_FatalError("couldn't create Python list");
 
-	if (!symbol_conf.use_callchain || !sample->callchain)
-		goto exit;
+	अगर (!symbol_conf.use_callchain || !sample->callchain)
+		जाओ निकास;
 
-	if (thread__resolve_callchain(al->thread, &callchain_cursor, evsel,
-				      sample, NULL, NULL,
-				      scripting_max_stack) != 0) {
+	अगर (thपढ़ो__resolve_callchain(al->thपढ़ो, &callchain_cursor, evsel,
+				      sample, शून्य, शून्य,
+				      scripting_max_stack) != 0) अणु
 		pr_err("Failed to resolve callchain. Skipping\n");
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 	callchain_cursor_commit(&callchain_cursor);
 
 
-	while (1) {
+	जबतक (1) अणु
 		PyObject *pyelem;
-		struct callchain_cursor_node *node;
+		काष्ठा callchain_cursor_node *node;
 		node = callchain_cursor_current(&callchain_cursor);
-		if (!node)
-			break;
+		अगर (!node)
+			अवरोध;
 
 		pyelem = PyDict_New();
-		if (!pyelem)
+		अगर (!pyelem)
 			Py_FatalError("couldn't create Python dictionary");
 
 
 		pydict_set_item_string_decref(pyelem, "ip",
-				PyLong_FromUnsignedLongLong(node->ip));
+				PyLong_FromUnचिन्हितLongLong(node->ip));
 
-		if (node->ms.sym) {
+		अगर (node->ms.sym) अणु
 			PyObject *pysym  = PyDict_New();
-			if (!pysym)
+			अगर (!pysym)
 				Py_FatalError("couldn't create Python dictionary");
 			pydict_set_item_string_decref(pysym, "start",
-					PyLong_FromUnsignedLongLong(node->ms.sym->start));
+					PyLong_FromUnचिन्हितLongLong(node->ms.sym->start));
 			pydict_set_item_string_decref(pysym, "end",
-					PyLong_FromUnsignedLongLong(node->ms.sym->end));
+					PyLong_FromUnचिन्हितLongLong(node->ms.sym->end));
 			pydict_set_item_string_decref(pysym, "binding",
 					_PyLong_FromLong(node->ms.sym->binding));
 			pydict_set_item_string_decref(pysym, "name",
 					_PyUnicode_FromStringAndSize(node->ms.sym->name,
 							node->ms.sym->namelen));
 			pydict_set_item_string_decref(pyelem, "sym", pysym);
-		}
+		पूर्ण
 
-		if (node->ms.map) {
-			const char *dsoname = get_dsoname(node->ms.map);
+		अगर (node->ms.map) अणु
+			स्थिर अक्षर *dsoname = get_dsoname(node->ms.map);
 
 			pydict_set_item_string_decref(pyelem, "dso",
 					_PyUnicode_FromString(dsoname));
-		}
+		पूर्ण
 
 		callchain_cursor_advance(&callchain_cursor);
 		PyList_Append(pylist, pyelem);
 		Py_DECREF(pyelem);
-	}
+	पूर्ण
 
-exit:
-	return pylist;
-}
+निकास:
+	वापस pylist;
+पूर्ण
 
-static PyObject *python_process_brstack(struct perf_sample *sample,
-					struct thread *thread)
-{
-	struct branch_stack *br = sample->branch_stack;
-	struct branch_entry *entries = perf_sample__branch_entries(sample);
+अटल PyObject *python_process_brstack(काष्ठा perf_sample *sample,
+					काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा branch_stack *br = sample->branch_stack;
+	काष्ठा branch_entry *entries = perf_sample__branch_entries(sample);
 	PyObject *pylist;
 	u64 i;
 
 	pylist = PyList_New(0);
-	if (!pylist)
+	अगर (!pylist)
 		Py_FatalError("couldn't create Python list");
 
-	if (!(br && br->nr))
-		goto exit;
+	अगर (!(br && br->nr))
+		जाओ निकास;
 
-	for (i = 0; i < br->nr; i++) {
+	क्रम (i = 0; i < br->nr; i++) अणु
 		PyObject *pyelem;
-		struct addr_location al;
-		const char *dsoname;
+		काष्ठा addr_location al;
+		स्थिर अक्षर *dsoname;
 
 		pyelem = PyDict_New();
-		if (!pyelem)
+		अगर (!pyelem)
 			Py_FatalError("couldn't create Python dictionary");
 
 		pydict_set_item_string_decref(pyelem, "from",
-		    PyLong_FromUnsignedLongLong(entries[i].from));
+		    PyLong_FromUnचिन्हितLongLong(entries[i].from));
 		pydict_set_item_string_decref(pyelem, "to",
-		    PyLong_FromUnsignedLongLong(entries[i].to));
+		    PyLong_FromUnचिन्हितLongLong(entries[i].to));
 		pydict_set_item_string_decref(pyelem, "mispred",
 		    PyBool_FromLong(entries[i].flags.mispred));
 		pydict_set_item_string_decref(pyelem, "predicted",
@@ -495,17 +496,17 @@ static PyObject *python_process_brstack(struct perf_sample *sample,
 		pydict_set_item_string_decref(pyelem, "in_tx",
 		    PyBool_FromLong(entries[i].flags.in_tx));
 		pydict_set_item_string_decref(pyelem, "abort",
-		    PyBool_FromLong(entries[i].flags.abort));
+		    PyBool_FromLong(entries[i].flags.पात));
 		pydict_set_item_string_decref(pyelem, "cycles",
-		    PyLong_FromUnsignedLongLong(entries[i].flags.cycles));
+		    PyLong_FromUnचिन्हितLongLong(entries[i].flags.cycles));
 
-		thread__find_map_fb(thread, sample->cpumode,
+		thपढ़ो__find_map_fb(thपढ़ो, sample->cpumode,
 				    entries[i].from, &al);
 		dsoname = get_dsoname(al.map);
 		pydict_set_item_string_decref(pyelem, "from_dsoname",
 					      _PyUnicode_FromString(dsoname));
 
-		thread__find_map_fb(thread, sample->cpumode,
+		thपढ़ो__find_map_fb(thपढ़ो, sample->cpumode,
 				    entries[i].to, &al);
 		dsoname = get_dsoname(al.map);
 		pydict_set_item_string_decref(pyelem, "to_dsoname",
@@ -513,236 +514,236 @@ static PyObject *python_process_brstack(struct perf_sample *sample,
 
 		PyList_Append(pylist, pyelem);
 		Py_DECREF(pyelem);
-	}
+	पूर्ण
 
-exit:
-	return pylist;
-}
+निकास:
+	वापस pylist;
+पूर्ण
 
-static unsigned long get_offset(struct symbol *sym, struct addr_location *al)
-{
-	unsigned long offset;
+अटल अचिन्हित दीर्घ get_offset(काष्ठा symbol *sym, काष्ठा addr_location *al)
+अणु
+	अचिन्हित दीर्घ offset;
 
-	if (al->addr < sym->end)
+	अगर (al->addr < sym->end)
 		offset = al->addr - sym->start;
-	else
+	अन्यथा
 		offset = al->addr - al->map->start - sym->start;
 
-	return offset;
-}
+	वापस offset;
+पूर्ण
 
-static int get_symoff(struct symbol *sym, struct addr_location *al,
-		      bool print_off, char *bf, int size)
-{
-	unsigned long offset;
+अटल पूर्णांक get_symoff(काष्ठा symbol *sym, काष्ठा addr_location *al,
+		      bool prपूर्णांक_off, अक्षर *bf, पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ offset;
 
-	if (!sym || !sym->name[0])
-		return scnprintf(bf, size, "%s", "[unknown]");
+	अगर (!sym || !sym->name[0])
+		वापस scnम_लिखो(bf, size, "%s", "[unknown]");
 
-	if (!print_off)
-		return scnprintf(bf, size, "%s", sym->name);
+	अगर (!prपूर्णांक_off)
+		वापस scnम_लिखो(bf, size, "%s", sym->name);
 
 	offset = get_offset(sym, al);
 
-	return scnprintf(bf, size, "%s+0x%x", sym->name, offset);
-}
+	वापस scnम_लिखो(bf, size, "%s+0x%x", sym->name, offset);
+पूर्ण
 
-static int get_br_mspred(struct branch_flags *flags, char *bf, int size)
-{
-	if (!flags->mispred  && !flags->predicted)
-		return scnprintf(bf, size, "%s", "-");
+अटल पूर्णांक get_br_mspred(काष्ठा branch_flags *flags, अक्षर *bf, पूर्णांक size)
+अणु
+	अगर (!flags->mispred  && !flags->predicted)
+		वापस scnम_लिखो(bf, size, "%s", "-");
 
-	if (flags->mispred)
-		return scnprintf(bf, size, "%s", "M");
+	अगर (flags->mispred)
+		वापस scnम_लिखो(bf, size, "%s", "M");
 
-	return scnprintf(bf, size, "%s", "P");
-}
+	वापस scnम_लिखो(bf, size, "%s", "P");
+पूर्ण
 
-static PyObject *python_process_brstacksym(struct perf_sample *sample,
-					   struct thread *thread)
-{
-	struct branch_stack *br = sample->branch_stack;
-	struct branch_entry *entries = perf_sample__branch_entries(sample);
+अटल PyObject *python_process_brstacksym(काष्ठा perf_sample *sample,
+					   काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा branch_stack *br = sample->branch_stack;
+	काष्ठा branch_entry *entries = perf_sample__branch_entries(sample);
 	PyObject *pylist;
 	u64 i;
-	char bf[512];
-	struct addr_location al;
+	अक्षर bf[512];
+	काष्ठा addr_location al;
 
 	pylist = PyList_New(0);
-	if (!pylist)
+	अगर (!pylist)
 		Py_FatalError("couldn't create Python list");
 
-	if (!(br && br->nr))
-		goto exit;
+	अगर (!(br && br->nr))
+		जाओ निकास;
 
-	for (i = 0; i < br->nr; i++) {
+	क्रम (i = 0; i < br->nr; i++) अणु
 		PyObject *pyelem;
 
 		pyelem = PyDict_New();
-		if (!pyelem)
+		अगर (!pyelem)
 			Py_FatalError("couldn't create Python dictionary");
 
-		thread__find_symbol_fb(thread, sample->cpumode,
+		thपढ़ो__find_symbol_fb(thपढ़ो, sample->cpumode,
 				       entries[i].from, &al);
-		get_symoff(al.sym, &al, true, bf, sizeof(bf));
+		get_symoff(al.sym, &al, true, bf, माप(bf));
 		pydict_set_item_string_decref(pyelem, "from",
 					      _PyUnicode_FromString(bf));
 
-		thread__find_symbol_fb(thread, sample->cpumode,
+		thपढ़ो__find_symbol_fb(thपढ़ो, sample->cpumode,
 				       entries[i].to, &al);
-		get_symoff(al.sym, &al, true, bf, sizeof(bf));
+		get_symoff(al.sym, &al, true, bf, माप(bf));
 		pydict_set_item_string_decref(pyelem, "to",
 					      _PyUnicode_FromString(bf));
 
-		get_br_mspred(&entries[i].flags, bf, sizeof(bf));
+		get_br_mspred(&entries[i].flags, bf, माप(bf));
 		pydict_set_item_string_decref(pyelem, "pred",
 					      _PyUnicode_FromString(bf));
 
-		if (entries[i].flags.in_tx) {
+		अगर (entries[i].flags.in_tx) अणु
 			pydict_set_item_string_decref(pyelem, "in_tx",
 					      _PyUnicode_FromString("X"));
-		} else {
+		पूर्ण अन्यथा अणु
 			pydict_set_item_string_decref(pyelem, "in_tx",
 					      _PyUnicode_FromString("-"));
-		}
+		पूर्ण
 
-		if (entries[i].flags.abort) {
+		अगर (entries[i].flags.पात) अणु
 			pydict_set_item_string_decref(pyelem, "abort",
 					      _PyUnicode_FromString("A"));
-		} else {
+		पूर्ण अन्यथा अणु
 			pydict_set_item_string_decref(pyelem, "abort",
 					      _PyUnicode_FromString("-"));
-		}
+		पूर्ण
 
 		PyList_Append(pylist, pyelem);
 		Py_DECREF(pyelem);
-	}
+	पूर्ण
 
-exit:
-	return pylist;
-}
+निकास:
+	वापस pylist;
+पूर्ण
 
-static PyObject *get_sample_value_as_tuple(struct sample_read_value *value)
-{
+अटल PyObject *get_sample_value_as_tuple(काष्ठा sample_पढ़ो_value *value)
+अणु
 	PyObject *t;
 
 	t = PyTuple_New(2);
-	if (!t)
+	अगर (!t)
 		Py_FatalError("couldn't create Python tuple");
-	PyTuple_SetItem(t, 0, PyLong_FromUnsignedLongLong(value->id));
-	PyTuple_SetItem(t, 1, PyLong_FromUnsignedLongLong(value->value));
-	return t;
-}
+	PyTuple_SetItem(t, 0, PyLong_FromUnचिन्हितLongLong(value->id));
+	PyTuple_SetItem(t, 1, PyLong_FromUnचिन्हितLongLong(value->value));
+	वापस t;
+पूर्ण
 
-static void set_sample_read_in_dict(PyObject *dict_sample,
-					 struct perf_sample *sample,
-					 struct evsel *evsel)
-{
-	u64 read_format = evsel->core.attr.read_format;
+अटल व्योम set_sample_पढ़ो_in_dict(PyObject *dict_sample,
+					 काष्ठा perf_sample *sample,
+					 काष्ठा evsel *evsel)
+अणु
+	u64 पढ़ो_क्रमmat = evsel->core.attr.पढ़ो_क्रमmat;
 	PyObject *values;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	if (read_format & PERF_FORMAT_TOTAL_TIME_ENABLED) {
+	अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_ENABLED) अणु
 		pydict_set_item_string_decref(dict_sample, "time_enabled",
-			PyLong_FromUnsignedLongLong(sample->read.time_enabled));
-	}
+			PyLong_FromUnचिन्हितLongLong(sample->पढ़ो.समय_enabled));
+	पूर्ण
 
-	if (read_format & PERF_FORMAT_TOTAL_TIME_RUNNING) {
+	अगर (पढ़ो_क्रमmat & PERF_FORMAT_TOTAL_TIME_RUNNING) अणु
 		pydict_set_item_string_decref(dict_sample, "time_running",
-			PyLong_FromUnsignedLongLong(sample->read.time_running));
-	}
+			PyLong_FromUnचिन्हितLongLong(sample->पढ़ो.समय_running));
+	पूर्ण
 
-	if (read_format & PERF_FORMAT_GROUP)
-		values = PyList_New(sample->read.group.nr);
-	else
+	अगर (पढ़ो_क्रमmat & PERF_FORMAT_GROUP)
+		values = PyList_New(sample->पढ़ो.group.nr);
+	अन्यथा
 		values = PyList_New(1);
 
-	if (!values)
+	अगर (!values)
 		Py_FatalError("couldn't create Python list");
 
-	if (read_format & PERF_FORMAT_GROUP) {
-		for (i = 0; i < sample->read.group.nr; i++) {
-			PyObject *t = get_sample_value_as_tuple(&sample->read.group.values[i]);
+	अगर (पढ़ो_क्रमmat & PERF_FORMAT_GROUP) अणु
+		क्रम (i = 0; i < sample->पढ़ो.group.nr; i++) अणु
+			PyObject *t = get_sample_value_as_tuple(&sample->पढ़ो.group.values[i]);
 			PyList_SET_ITEM(values, i, t);
-		}
-	} else {
-		PyObject *t = get_sample_value_as_tuple(&sample->read.one);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		PyObject *t = get_sample_value_as_tuple(&sample->पढ़ो.one);
 		PyList_SET_ITEM(values, 0, t);
-	}
+	पूर्ण
 	pydict_set_item_string_decref(dict_sample, "values", values);
-}
+पूर्ण
 
-static void set_sample_datasrc_in_dict(PyObject *dict,
-				       struct perf_sample *sample)
-{
-	struct mem_info mi = { .data_src.val = sample->data_src };
-	char decode[100];
+अटल व्योम set_sample_datasrc_in_dict(PyObject *dict,
+				       काष्ठा perf_sample *sample)
+अणु
+	काष्ठा mem_info mi = अणु .data_src.val = sample->data_src पूर्ण;
+	अक्षर decode[100];
 
 	pydict_set_item_string_decref(dict, "datasrc",
-			PyLong_FromUnsignedLongLong(sample->data_src));
+			PyLong_FromUnचिन्हितLongLong(sample->data_src));
 
-	perf_script__meminfo_scnprintf(decode, 100, &mi);
+	perf_script__meminfo_scnम_लिखो(decode, 100, &mi);
 
 	pydict_set_item_string_decref(dict, "datasrc_decode",
 			_PyUnicode_FromString(decode));
-}
+पूर्ण
 
-static int regs_map(struct regs_dump *regs, uint64_t mask, char *bf, int size)
-{
-	unsigned int i = 0, r;
-	int printed = 0;
+अटल पूर्णांक regs_map(काष्ठा regs_dump *regs, uपूर्णांक64_t mask, अक्षर *bf, पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक i = 0, r;
+	पूर्णांक prपूर्णांकed = 0;
 
 	bf[0] = 0;
 
-	if (!regs || !regs->regs)
-		return 0;
+	अगर (!regs || !regs->regs)
+		वापस 0;
 
-	for_each_set_bit(r, (unsigned long *) &mask, sizeof(mask) * 8) {
+	क्रम_each_set_bit(r, (अचिन्हित दीर्घ *) &mask, माप(mask) * 8) अणु
 		u64 val = regs->regs[i++];
 
-		printed += scnprintf(bf + printed, size - printed,
+		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed,
 				     "%5s:0x%" PRIx64 " ",
 				     perf_reg_name(r), val);
-	}
+	पूर्ण
 
-	return printed;
-}
+	वापस prपूर्णांकed;
+पूर्ण
 
-static void set_regs_in_dict(PyObject *dict,
-			     struct perf_sample *sample,
-			     struct evsel *evsel)
-{
-	struct perf_event_attr *attr = &evsel->core.attr;
-	char bf[512];
+अटल व्योम set_regs_in_dict(PyObject *dict,
+			     काष्ठा perf_sample *sample,
+			     काष्ठा evsel *evsel)
+अणु
+	काष्ठा perf_event_attr *attr = &evsel->core.attr;
+	अक्षर bf[512];
 
-	regs_map(&sample->intr_regs, attr->sample_regs_intr, bf, sizeof(bf));
+	regs_map(&sample->पूर्णांकr_regs, attr->sample_regs_पूर्णांकr, bf, माप(bf));
 
 	pydict_set_item_string_decref(dict, "iregs",
 			_PyUnicode_FromString(bf));
 
-	regs_map(&sample->user_regs, attr->sample_regs_user, bf, sizeof(bf));
+	regs_map(&sample->user_regs, attr->sample_regs_user, bf, माप(bf));
 
 	pydict_set_item_string_decref(dict, "uregs",
 			_PyUnicode_FromString(bf));
-}
+पूर्ण
 
-static PyObject *get_perf_sample_dict(struct perf_sample *sample,
-					 struct evsel *evsel,
-					 struct addr_location *al,
+अटल PyObject *get_perf_sample_dict(काष्ठा perf_sample *sample,
+					 काष्ठा evsel *evsel,
+					 काष्ठा addr_location *al,
 					 PyObject *callchain)
-{
+अणु
 	PyObject *dict, *dict_sample, *brstack, *brstacksym;
 
 	dict = PyDict_New();
-	if (!dict)
+	अगर (!dict)
 		Py_FatalError("couldn't create Python dictionary");
 
 	dict_sample = PyDict_New();
-	if (!dict_sample)
+	अगर (!dict_sample)
 		Py_FatalError("couldn't create Python dictionary");
 
 	pydict_set_item_string_decref(dict, "ev_name", _PyUnicode_FromString(evsel__name(evsel)));
-	pydict_set_item_string_decref(dict, "attr", _PyBytes_FromStringAndSize((const char *)&evsel->core.attr, sizeof(evsel->core.attr)));
+	pydict_set_item_string_decref(dict, "attr", _PyBytes_FromStringAndSize((स्थिर अक्षर *)&evsel->core.attr, माप(evsel->core.attr)));
 
 	pydict_set_item_string_decref(dict_sample, "pid",
 			_PyLong_FromLong(sample->pid));
@@ -751,92 +752,92 @@ static PyObject *get_perf_sample_dict(struct perf_sample *sample,
 	pydict_set_item_string_decref(dict_sample, "cpu",
 			_PyLong_FromLong(sample->cpu));
 	pydict_set_item_string_decref(dict_sample, "ip",
-			PyLong_FromUnsignedLongLong(sample->ip));
+			PyLong_FromUnचिन्हितLongLong(sample->ip));
 	pydict_set_item_string_decref(dict_sample, "time",
-			PyLong_FromUnsignedLongLong(sample->time));
+			PyLong_FromUnचिन्हितLongLong(sample->समय));
 	pydict_set_item_string_decref(dict_sample, "period",
-			PyLong_FromUnsignedLongLong(sample->period));
+			PyLong_FromUnचिन्हितLongLong(sample->period));
 	pydict_set_item_string_decref(dict_sample, "phys_addr",
-			PyLong_FromUnsignedLongLong(sample->phys_addr));
+			PyLong_FromUnचिन्हितLongLong(sample->phys_addr));
 	pydict_set_item_string_decref(dict_sample, "addr",
-			PyLong_FromUnsignedLongLong(sample->addr));
-	set_sample_read_in_dict(dict_sample, sample, evsel);
+			PyLong_FromUnचिन्हितLongLong(sample->addr));
+	set_sample_पढ़ो_in_dict(dict_sample, sample, evsel);
 	pydict_set_item_string_decref(dict_sample, "weight",
-			PyLong_FromUnsignedLongLong(sample->weight));
+			PyLong_FromUnचिन्हितLongLong(sample->weight));
 	pydict_set_item_string_decref(dict_sample, "transaction",
-			PyLong_FromUnsignedLongLong(sample->transaction));
+			PyLong_FromUnचिन्हितLongLong(sample->transaction));
 	set_sample_datasrc_in_dict(dict_sample, sample);
 	pydict_set_item_string_decref(dict, "sample", dict_sample);
 
 	pydict_set_item_string_decref(dict, "raw_buf", _PyBytes_FromStringAndSize(
-			(const char *)sample->raw_data, sample->raw_size));
+			(स्थिर अक्षर *)sample->raw_data, sample->raw_size));
 	pydict_set_item_string_decref(dict, "comm",
-			_PyUnicode_FromString(thread__comm_str(al->thread)));
-	if (al->map) {
+			_PyUnicode_FromString(thपढ़ो__comm_str(al->thपढ़ो)));
+	अगर (al->map) अणु
 		pydict_set_item_string_decref(dict, "dso",
 			_PyUnicode_FromString(al->map->dso->name));
-	}
-	if (al->sym) {
+	पूर्ण
+	अगर (al->sym) अणु
 		pydict_set_item_string_decref(dict, "symbol",
 			_PyUnicode_FromString(al->sym->name));
-	}
+	पूर्ण
 
 	pydict_set_item_string_decref(dict, "callchain", callchain);
 
-	brstack = python_process_brstack(sample, al->thread);
+	brstack = python_process_brstack(sample, al->thपढ़ो);
 	pydict_set_item_string_decref(dict, "brstack", brstack);
 
-	brstacksym = python_process_brstacksym(sample, al->thread);
+	brstacksym = python_process_brstacksym(sample, al->thपढ़ो);
 	pydict_set_item_string_decref(dict, "brstacksym", brstacksym);
 
 	set_regs_in_dict(dict, sample, evsel);
 
-	return dict;
-}
+	वापस dict;
+पूर्ण
 
-static void python_process_tracepoint(struct perf_sample *sample,
-				      struct evsel *evsel,
-				      struct addr_location *al)
-{
-	struct tep_event *event = evsel->tp_format;
-	PyObject *handler, *context, *t, *obj = NULL, *callchain;
-	PyObject *dict = NULL, *all_entries_dict = NULL;
-	static char handler_name[256];
-	struct tep_format_field *field;
-	unsigned long s, ns;
-	unsigned n = 0;
-	int pid;
-	int cpu = sample->cpu;
-	void *data = sample->raw_data;
-	unsigned long long nsecs = sample->time;
-	const char *comm = thread__comm_str(al->thread);
-	const char *default_handler_name = "trace_unhandled";
+अटल व्योम python_process_tracepoपूर्णांक(काष्ठा perf_sample *sample,
+				      काष्ठा evsel *evsel,
+				      काष्ठा addr_location *al)
+अणु
+	काष्ठा tep_event *event = evsel->tp_क्रमmat;
+	PyObject *handler, *context, *t, *obj = शून्य, *callchain;
+	PyObject *dict = शून्य, *all_entries_dict = शून्य;
+	अटल अक्षर handler_name[256];
+	काष्ठा tep_क्रमmat_field *field;
+	अचिन्हित दीर्घ s, ns;
+	अचिन्हित n = 0;
+	पूर्णांक pid;
+	पूर्णांक cpu = sample->cpu;
+	व्योम *data = sample->raw_data;
+	अचिन्हित दीर्घ दीर्घ nsecs = sample->समय;
+	स्थिर अक्षर *comm = thपढ़ो__comm_str(al->thपढ़ो);
+	स्थिर अक्षर *शेष_handler_name = "trace_unhandled";
 
-	if (!event) {
-		snprintf(handler_name, sizeof(handler_name),
+	अगर (!event) अणु
+		snम_लिखो(handler_name, माप(handler_name),
 			 "ug! no event found for type %" PRIu64, (u64)evsel->core.attr.config);
 		Py_FatalError(handler_name);
-	}
+	पूर्ण
 
 	pid = raw_field_value(event, "common_pid", data);
 
-	sprintf(handler_name, "%s__%s", event->system, event->name);
+	प्र_लिखो(handler_name, "%s__%s", event->प्रणाली, event->name);
 
-	if (!test_and_set_bit(event->id, events_defined))
-		define_event_symbols(event, handler_name, event->print_fmt.args);
+	अगर (!test_and_set_bit(event->id, events_defined))
+		define_event_symbols(event, handler_name, event->prपूर्णांक_fmt.args);
 
 	handler = get_handler(handler_name);
-	if (!handler) {
-		handler = get_handler(default_handler_name);
-		if (!handler)
-			return;
+	अगर (!handler) अणु
+		handler = get_handler(शेष_handler_name);
+		अगर (!handler)
+			वापस;
 		dict = PyDict_New();
-		if (!dict)
+		अगर (!dict)
 			Py_FatalError("couldn't create Python dict");
-	}
+	पूर्ण
 
 	t = PyTuple_New(MAX_FIELDS);
-	if (!t)
+	अगर (!t)
 		Py_FatalError("couldn't create Python tuple");
 
 
@@ -844,125 +845,125 @@ static void python_process_tracepoint(struct perf_sample *sample,
 	ns = nsecs - s * NSEC_PER_SEC;
 
 	scripting_context->event_data = data;
-	scripting_context->pevent = evsel->tp_format->tep;
+	scripting_context->pevent = evsel->tp_क्रमmat->tep;
 
-	context = _PyCapsule_New(scripting_context, NULL, NULL);
+	context = _PyCapsule_New(scripting_context, शून्य, शून्य);
 
 	PyTuple_SetItem(t, n++, _PyUnicode_FromString(handler_name));
 	PyTuple_SetItem(t, n++, context);
 
 	/* ip unwinding */
 	callchain = python_process_callchain(sample, evsel, al);
-	/* Need an additional reference for the perf_sample dict */
+	/* Need an additional reference क्रम the perf_sample dict */
 	Py_INCREF(callchain);
 
-	if (!dict) {
+	अगर (!dict) अणु
 		PyTuple_SetItem(t, n++, _PyLong_FromLong(cpu));
 		PyTuple_SetItem(t, n++, _PyLong_FromLong(s));
 		PyTuple_SetItem(t, n++, _PyLong_FromLong(ns));
 		PyTuple_SetItem(t, n++, _PyLong_FromLong(pid));
 		PyTuple_SetItem(t, n++, _PyUnicode_FromString(comm));
 		PyTuple_SetItem(t, n++, callchain);
-	} else {
+	पूर्ण अन्यथा अणु
 		pydict_set_item_string_decref(dict, "common_cpu", _PyLong_FromLong(cpu));
 		pydict_set_item_string_decref(dict, "common_s", _PyLong_FromLong(s));
 		pydict_set_item_string_decref(dict, "common_ns", _PyLong_FromLong(ns));
 		pydict_set_item_string_decref(dict, "common_pid", _PyLong_FromLong(pid));
 		pydict_set_item_string_decref(dict, "common_comm", _PyUnicode_FromString(comm));
 		pydict_set_item_string_decref(dict, "common_callchain", callchain);
-	}
-	for (field = event->format.fields; field; field = field->next) {
-		unsigned int offset, len;
-		unsigned long long val;
+	पूर्ण
+	क्रम (field = event->क्रमmat.fields; field; field = field->next) अणु
+		अचिन्हित पूर्णांक offset, len;
+		अचिन्हित दीर्घ दीर्घ val;
 
-		if (field->flags & TEP_FIELD_IS_ARRAY) {
+		अगर (field->flags & TEP_FIELD_IS_ARRAY) अणु
 			offset = field->offset;
 			len    = field->size;
-			if (field->flags & TEP_FIELD_IS_DYNAMIC) {
-				val     = tep_read_number(scripting_context->pevent,
+			अगर (field->flags & TEP_FIELD_IS_DYNAMIC) अणु
+				val     = tep_पढ़ो_number(scripting_context->pevent,
 							  data + offset, len);
 				offset  = val;
 				len     = offset >> 16;
 				offset &= 0xffff;
-			}
-			if (field->flags & TEP_FIELD_IS_STRING &&
-			    is_printable_array(data + offset, len)) {
-				obj = _PyUnicode_FromString((char *) data + offset);
-			} else {
-				obj = PyByteArray_FromStringAndSize((const char *) data + offset, len);
+			पूर्ण
+			अगर (field->flags & TEP_FIELD_IS_STRING &&
+			    is_prपूर्णांकable_array(data + offset, len)) अणु
+				obj = _PyUnicode_FromString((अक्षर *) data + offset);
+			पूर्ण अन्यथा अणु
+				obj = PyByteArray_FromStringAndSize((स्थिर अक्षर *) data + offset, len);
 				field->flags &= ~TEP_FIELD_IS_STRING;
-			}
-		} else { /* FIELD_IS_NUMERIC */
+			पूर्ण
+		पूर्ण अन्यथा अणु /* FIELD_IS_NUMERIC */
 			obj = get_field_numeric_entry(event, field, data);
-		}
-		if (!dict)
+		पूर्ण
+		अगर (!dict)
 			PyTuple_SetItem(t, n++, obj);
-		else
+		अन्यथा
 			pydict_set_item_string_decref(dict, field->name, obj);
 
-	}
+	पूर्ण
 
-	if (dict)
+	अगर (dict)
 		PyTuple_SetItem(t, n++, dict);
 
-	if (get_argument_count(handler) == (int) n + 1) {
+	अगर (get_argument_count(handler) == (पूर्णांक) n + 1) अणु
 		all_entries_dict = get_perf_sample_dict(sample, evsel, al,
 			callchain);
 		PyTuple_SetItem(t, n++,	all_entries_dict);
-	} else {
+	पूर्ण अन्यथा अणु
 		Py_DECREF(callchain);
-	}
+	पूर्ण
 
-	if (_PyTuple_Resize(&t, n) == -1)
+	अगर (_PyTuple_Resize(&t, n) == -1)
 		Py_FatalError("error resizing Python tuple");
 
-	if (!dict)
+	अगर (!dict)
 		call_object(handler, t, handler_name);
-	else
-		call_object(handler, t, default_handler_name);
+	अन्यथा
+		call_object(handler, t, शेष_handler_name);
 
 	Py_DECREF(t);
-}
+पूर्ण
 
-static PyObject *tuple_new(unsigned int sz)
-{
+अटल PyObject *tuple_new(अचिन्हित पूर्णांक sz)
+अणु
 	PyObject *t;
 
 	t = PyTuple_New(sz);
-	if (!t)
+	अगर (!t)
 		Py_FatalError("couldn't create Python tuple");
-	return t;
-}
+	वापस t;
+पूर्ण
 
-static int tuple_set_u64(PyObject *t, unsigned int pos, u64 val)
-{
-#if BITS_PER_LONG == 64
-	return PyTuple_SetItem(t, pos, _PyLong_FromLong(val));
-#endif
-#if BITS_PER_LONG == 32
-	return PyTuple_SetItem(t, pos, PyLong_FromLongLong(val));
-#endif
-}
+अटल पूर्णांक tuple_set_u64(PyObject *t, अचिन्हित पूर्णांक pos, u64 val)
+अणु
+#अगर BITS_PER_LONG == 64
+	वापस PyTuple_SetItem(t, pos, _PyLong_FromLong(val));
+#पूर्ण_अगर
+#अगर BITS_PER_LONG == 32
+	वापस PyTuple_SetItem(t, pos, PyLong_FromLongLong(val));
+#पूर्ण_अगर
+पूर्ण
 
-static int tuple_set_s32(PyObject *t, unsigned int pos, s32 val)
-{
-	return PyTuple_SetItem(t, pos, _PyLong_FromLong(val));
-}
+अटल पूर्णांक tuple_set_s32(PyObject *t, अचिन्हित पूर्णांक pos, s32 val)
+अणु
+	वापस PyTuple_SetItem(t, pos, _PyLong_FromLong(val));
+पूर्ण
 
-static int tuple_set_string(PyObject *t, unsigned int pos, const char *s)
-{
-	return PyTuple_SetItem(t, pos, _PyUnicode_FromString(s));
-}
+अटल पूर्णांक tuple_set_string(PyObject *t, अचिन्हित पूर्णांक pos, स्थिर अक्षर *s)
+अणु
+	वापस PyTuple_SetItem(t, pos, _PyUnicode_FromString(s));
+पूर्ण
 
-static int tuple_set_bytes(PyObject *t, unsigned int pos, void *bytes,
-			   unsigned int sz)
-{
-	return PyTuple_SetItem(t, pos, _PyBytes_FromStringAndSize(bytes, sz));
-}
+अटल पूर्णांक tuple_set_bytes(PyObject *t, अचिन्हित पूर्णांक pos, व्योम *bytes,
+			   अचिन्हित पूर्णांक sz)
+अणु
+	वापस PyTuple_SetItem(t, pos, _PyBytes_FromStringAndSize(bytes, sz));
+पूर्ण
 
-static int python_export_evsel(struct db_export *dbe, struct evsel *evsel)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_evsel(काष्ठा db_export *dbe, काष्ठा evsel *evsel)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 
 	t = tuple_new(2);
@@ -974,13 +975,13 @@ static int python_export_evsel(struct db_export *dbe, struct evsel *evsel)
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_machine(struct db_export *dbe,
-				 struct machine *machine)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_machine(काष्ठा db_export *dbe,
+				 काष्ठा machine *machine)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 
 	t = tuple_new(3);
@@ -993,41 +994,41 @@ static int python_export_machine(struct db_export *dbe,
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_thread(struct db_export *dbe, struct thread *thread,
-				u64 main_thread_db_id, struct machine *machine)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_thपढ़ो(काष्ठा db_export *dbe, काष्ठा thपढ़ो *thपढ़ो,
+				u64 मुख्य_thपढ़ो_db_id, काष्ठा machine *machine)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 
 	t = tuple_new(5);
 
-	tuple_set_u64(t, 0, thread->db_id);
+	tuple_set_u64(t, 0, thपढ़ो->db_id);
 	tuple_set_u64(t, 1, machine->db_id);
-	tuple_set_u64(t, 2, main_thread_db_id);
-	tuple_set_s32(t, 3, thread->pid_);
-	tuple_set_s32(t, 4, thread->tid);
+	tuple_set_u64(t, 2, मुख्य_thपढ़ो_db_id);
+	tuple_set_s32(t, 3, thपढ़ो->pid_);
+	tuple_set_s32(t, 4, thपढ़ो->tid);
 
-	call_object(tables->thread_handler, t, "thread_table");
+	call_object(tables->thपढ़ो_handler, t, "thread_table");
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_comm(struct db_export *dbe, struct comm *comm,
-			      struct thread *thread)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_comm(काष्ठा db_export *dbe, काष्ठा comm *comm,
+			      काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 
 	t = tuple_new(5);
 
 	tuple_set_u64(t, 0, comm->db_id);
 	tuple_set_string(t, 1, comm__str(comm));
-	tuple_set_u64(t, 2, thread->db_id);
+	tuple_set_u64(t, 2, thपढ़ो->db_id);
 	tuple_set_u64(t, 3, comm->start);
 	tuple_set_s32(t, 4, comm->exec);
 
@@ -1035,56 +1036,56 @@ static int python_export_comm(struct db_export *dbe, struct comm *comm,
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_comm_thread(struct db_export *dbe, u64 db_id,
-				     struct comm *comm, struct thread *thread)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_comm_thपढ़ो(काष्ठा db_export *dbe, u64 db_id,
+				     काष्ठा comm *comm, काष्ठा thपढ़ो *thपढ़ो)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 
 	t = tuple_new(3);
 
 	tuple_set_u64(t, 0, db_id);
 	tuple_set_u64(t, 1, comm->db_id);
-	tuple_set_u64(t, 2, thread->db_id);
+	tuple_set_u64(t, 2, thपढ़ो->db_id);
 
-	call_object(tables->comm_thread_handler, t, "comm_thread_table");
+	call_object(tables->comm_thपढ़ो_handler, t, "comm_thread_table");
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_dso(struct db_export *dbe, struct dso *dso,
-			     struct machine *machine)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
-	char sbuild_id[SBUILD_ID_SIZE];
+अटल पूर्णांक python_export_dso(काष्ठा db_export *dbe, काष्ठा dso *dso,
+			     काष्ठा machine *machine)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
+	अक्षर sbuild_id[SBUILD_ID_SIZE];
 	PyObject *t;
 
-	build_id__sprintf(&dso->bid, sbuild_id);
+	build_id__प्र_लिखो(&dso->bid, sbuild_id);
 
 	t = tuple_new(5);
 
 	tuple_set_u64(t, 0, dso->db_id);
 	tuple_set_u64(t, 1, machine->db_id);
-	tuple_set_string(t, 2, dso->short_name);
-	tuple_set_string(t, 3, dso->long_name);
+	tuple_set_string(t, 2, dso->लघु_name);
+	tuple_set_string(t, 3, dso->दीर्घ_name);
 	tuple_set_string(t, 4, sbuild_id);
 
 	call_object(tables->dso_handler, t, "dso_table");
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_symbol(struct db_export *dbe, struct symbol *sym,
-				struct dso *dso)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_symbol(काष्ठा db_export *dbe, काष्ठा symbol *sym,
+				काष्ठा dso *dso)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	u64 *sym_db_id = symbol__priv(sym);
 	PyObject *t;
 
@@ -1101,13 +1102,13 @@ static int python_export_symbol(struct db_export *dbe, struct symbol *sym,
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_branch_type(struct db_export *dbe, u32 branch_type,
-				     const char *name)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_branch_type(काष्ठा db_export *dbe, u32 branch_type,
+				     स्थिर अक्षर *name)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 
 	t = tuple_new(2);
@@ -1119,13 +1120,13 @@ static int python_export_branch_type(struct db_export *dbe, u32 branch_type,
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void python_export_sample_table(struct db_export *dbe,
-				       struct export_sample *es)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल व्योम python_export_sample_table(काष्ठा db_export *dbe,
+				       काष्ठा export_sample *es)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 
 	t = tuple_new(24);
@@ -1133,13 +1134,13 @@ static void python_export_sample_table(struct db_export *dbe,
 	tuple_set_u64(t, 0, es->db_id);
 	tuple_set_u64(t, 1, es->evsel->db_id);
 	tuple_set_u64(t, 2, es->al->maps->machine->db_id);
-	tuple_set_u64(t, 3, es->al->thread->db_id);
+	tuple_set_u64(t, 3, es->al->thपढ़ो->db_id);
 	tuple_set_u64(t, 4, es->comm_db_id);
 	tuple_set_u64(t, 5, es->dso_db_id);
 	tuple_set_u64(t, 6, es->sym_db_id);
 	tuple_set_u64(t, 7, es->offset);
 	tuple_set_u64(t, 8, es->sample->ip);
-	tuple_set_u64(t, 9, es->sample->time);
+	tuple_set_u64(t, 9, es->sample->समय);
 	tuple_set_s32(t, 10, es->sample->cpu);
 	tuple_set_u64(t, 11, es->addr_dso_db_id);
 	tuple_set_u64(t, 12, es->addr_sym_db_id);
@@ -1158,11 +1159,11 @@ static void python_export_sample_table(struct db_export *dbe,
 	call_object(tables->sample_handler, t, "sample_table");
 
 	Py_DECREF(t);
-}
+पूर्ण
 
-static void python_export_synth(struct db_export *dbe, struct export_sample *es)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल व्योम python_export_synth(काष्ठा db_export *dbe, काष्ठा export_sample *es)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 
 	t = tuple_new(3);
@@ -1174,24 +1175,24 @@ static void python_export_synth(struct db_export *dbe, struct export_sample *es)
 	call_object(tables->synth_handler, t, "synth_data");
 
 	Py_DECREF(t);
-}
+पूर्ण
 
-static int python_export_sample(struct db_export *dbe,
-				struct export_sample *es)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_sample(काष्ठा db_export *dbe,
+				काष्ठा export_sample *es)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 
 	python_export_sample_table(dbe, es);
 
-	if (es->evsel->core.attr.type == PERF_TYPE_SYNTH && tables->synth_handler)
+	अगर (es->evsel->core.attr.type == PERF_TYPE_SYNTH && tables->synth_handler)
 		python_export_synth(dbe, es);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_call_path(struct db_export *dbe, struct call_path *cp)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_call_path(काष्ठा db_export *dbe, काष्ठा call_path *cp)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 	u64 parent_db_id, sym_db_id;
 
@@ -1209,54 +1210,54 @@ static int python_export_call_path(struct db_export *dbe, struct call_path *cp)
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_call_return(struct db_export *dbe,
-				     struct call_return *cr)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+अटल पूर्णांक python_export_call_वापस(काष्ठा db_export *dbe,
+				     काष्ठा call_वापस *cr)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	u64 comm_db_id = cr->comm ? cr->comm->db_id : 0;
 	PyObject *t;
 
 	t = tuple_new(14);
 
 	tuple_set_u64(t, 0, cr->db_id);
-	tuple_set_u64(t, 1, cr->thread->db_id);
+	tuple_set_u64(t, 1, cr->thपढ़ो->db_id);
 	tuple_set_u64(t, 2, comm_db_id);
 	tuple_set_u64(t, 3, cr->cp->db_id);
-	tuple_set_u64(t, 4, cr->call_time);
-	tuple_set_u64(t, 5, cr->return_time);
+	tuple_set_u64(t, 4, cr->call_समय);
+	tuple_set_u64(t, 5, cr->वापस_समय);
 	tuple_set_u64(t, 6, cr->branch_count);
 	tuple_set_u64(t, 7, cr->call_ref);
-	tuple_set_u64(t, 8, cr->return_ref);
+	tuple_set_u64(t, 8, cr->वापस_ref);
 	tuple_set_u64(t, 9, cr->cp->parent->db_id);
 	tuple_set_s32(t, 10, cr->flags);
 	tuple_set_u64(t, 11, cr->parent_db_id);
 	tuple_set_u64(t, 12, cr->insn_count);
 	tuple_set_u64(t, 13, cr->cyc_count);
 
-	call_object(tables->call_return_handler, t, "call_return_table");
+	call_object(tables->call_वापस_handler, t, "call_return_table");
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_export_context_switch(struct db_export *dbe, u64 db_id,
-					struct machine *machine,
-					struct perf_sample *sample,
+अटल पूर्णांक python_export_context_चयन(काष्ठा db_export *dbe, u64 db_id,
+					काष्ठा machine *machine,
+					काष्ठा perf_sample *sample,
 					u64 th_out_id, u64 comm_out_id,
-					u64 th_in_id, u64 comm_in_id, int flags)
-{
-	struct tables *tables = container_of(dbe, struct tables, dbe);
+					u64 th_in_id, u64 comm_in_id, पूर्णांक flags)
+अणु
+	काष्ठा tables *tables = container_of(dbe, काष्ठा tables, dbe);
 	PyObject *t;
 
 	t = tuple_new(9);
 
 	tuple_set_u64(t, 0, db_id);
 	tuple_set_u64(t, 1, machine->db_id);
-	tuple_set_u64(t, 2, sample->time);
+	tuple_set_u64(t, 2, sample->समय);
 	tuple_set_s32(t, 3, sample->cpu);
 	tuple_set_u64(t, 4, th_out_id);
 	tuple_set_u64(t, 5, comm_out_id);
@@ -1264,41 +1265,41 @@ static int python_export_context_switch(struct db_export *dbe, u64 db_id,
 	tuple_set_u64(t, 7, comm_in_id);
 	tuple_set_s32(t, 8, flags);
 
-	call_object(tables->context_switch_handler, t, "context_switch");
+	call_object(tables->context_चयन_handler, t, "context_switch");
 
 	Py_DECREF(t);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_process_call_return(struct call_return *cr, u64 *parent_db_id,
-				      void *data)
-{
-	struct db_export *dbe = data;
+अटल पूर्णांक python_process_call_वापस(काष्ठा call_वापस *cr, u64 *parent_db_id,
+				      व्योम *data)
+अणु
+	काष्ठा db_export *dbe = data;
 
-	return db_export__call_return(dbe, cr, parent_db_id);
-}
+	वापस db_export__call_वापस(dbe, cr, parent_db_id);
+पूर्ण
 
-static void python_process_general_event(struct perf_sample *sample,
-					 struct evsel *evsel,
-					 struct addr_location *al)
-{
+अटल व्योम python_process_general_event(काष्ठा perf_sample *sample,
+					 काष्ठा evsel *evsel,
+					 काष्ठा addr_location *al)
+अणु
 	PyObject *handler, *t, *dict, *callchain;
-	static char handler_name[64];
-	unsigned n = 0;
+	अटल अक्षर handler_name[64];
+	अचिन्हित n = 0;
 
-	snprintf(handler_name, sizeof(handler_name), "%s", "process_event");
+	snम_लिखो(handler_name, माप(handler_name), "%s", "process_event");
 
 	handler = get_handler(handler_name);
-	if (!handler)
-		return;
+	अगर (!handler)
+		वापस;
 
 	/*
 	 * Use the MAX_FIELDS to make the function expandable, though
-	 * currently there is only one item for the tuple.
+	 * currently there is only one item क्रम the tuple.
 	 */
 	t = PyTuple_New(MAX_FIELDS);
-	if (!t)
+	अगर (!t)
 		Py_FatalError("couldn't create Python tuple");
 
 	/* ip unwinding */
@@ -1306,582 +1307,582 @@ static void python_process_general_event(struct perf_sample *sample,
 	dict = get_perf_sample_dict(sample, evsel, al, callchain);
 
 	PyTuple_SetItem(t, n++, dict);
-	if (_PyTuple_Resize(&t, n) == -1)
+	अगर (_PyTuple_Resize(&t, n) == -1)
 		Py_FatalError("error resizing Python tuple");
 
 	call_object(handler, t, handler_name);
 
 	Py_DECREF(t);
-}
+पूर्ण
 
-static void python_process_event(union perf_event *event,
-				 struct perf_sample *sample,
-				 struct evsel *evsel,
-				 struct addr_location *al)
-{
-	struct tables *tables = &tables_global;
+अटल व्योम python_process_event(जोड़ perf_event *event,
+				 काष्ठा perf_sample *sample,
+				 काष्ठा evsel *evsel,
+				 काष्ठा addr_location *al)
+अणु
+	काष्ठा tables *tables = &tables_global;
 
-	switch (evsel->core.attr.type) {
-	case PERF_TYPE_TRACEPOINT:
-		python_process_tracepoint(sample, evsel, al);
-		break;
-	/* Reserve for future process_hw/sw/raw APIs */
-	default:
-		if (tables->db_export_mode)
+	चयन (evsel->core.attr.type) अणु
+	हाल PERF_TYPE_TRACEPOINT:
+		python_process_tracepoपूर्णांक(sample, evsel, al);
+		अवरोध;
+	/* Reserve क्रम future process_hw/sw/raw APIs */
+	शेष:
+		अगर (tables->db_export_mode)
 			db_export__sample(&tables->dbe, event, sample, evsel, al);
-		else
+		अन्यथा
 			python_process_general_event(sample, evsel, al);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void python_process_switch(union perf_event *event,
-				  struct perf_sample *sample,
-				  struct machine *machine)
-{
-	struct tables *tables = &tables_global;
+अटल व्योम python_process_चयन(जोड़ perf_event *event,
+				  काष्ठा perf_sample *sample,
+				  काष्ठा machine *machine)
+अणु
+	काष्ठा tables *tables = &tables_global;
 
-	if (tables->db_export_mode)
-		db_export__switch(&tables->dbe, event, sample, machine);
-}
+	अगर (tables->db_export_mode)
+		db_export__चयन(&tables->dbe, event, sample, machine);
+पूर्ण
 
-static void get_handler_name(char *str, size_t size,
-			     struct evsel *evsel)
-{
-	char *p = str;
+अटल व्योम get_handler_name(अक्षर *str, माप_प्रकार size,
+			     काष्ठा evsel *evsel)
+अणु
+	अक्षर *p = str;
 
-	scnprintf(str, size, "stat__%s", evsel__name(evsel));
+	scnम_लिखो(str, size, "stat__%s", evsel__name(evsel));
 
-	while ((p = strchr(p, ':'))) {
+	जबतक ((p = म_अक्षर(p, ':'))) अणु
 		*p = '_';
 		p++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-process_stat(struct evsel *counter, int cpu, int thread, u64 tstamp,
-	     struct perf_counts_values *count)
-{
+अटल व्योम
+process_stat(काष्ठा evsel *counter, पूर्णांक cpu, पूर्णांक thपढ़ो, u64 tstamp,
+	     काष्ठा perf_counts_values *count)
+अणु
 	PyObject *handler, *t;
-	static char handler_name[256];
-	int n = 0;
+	अटल अक्षर handler_name[256];
+	पूर्णांक n = 0;
 
 	t = PyTuple_New(MAX_FIELDS);
-	if (!t)
+	अगर (!t)
 		Py_FatalError("couldn't create Python tuple");
 
-	get_handler_name(handler_name, sizeof(handler_name),
+	get_handler_name(handler_name, माप(handler_name),
 			 counter);
 
 	handler = get_handler(handler_name);
-	if (!handler) {
+	अगर (!handler) अणु
 		pr_debug("can't find python handler %s\n", handler_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	PyTuple_SetItem(t, n++, _PyLong_FromLong(cpu));
-	PyTuple_SetItem(t, n++, _PyLong_FromLong(thread));
+	PyTuple_SetItem(t, n++, _PyLong_FromLong(thपढ़ो));
 
 	tuple_set_u64(t, n++, tstamp);
 	tuple_set_u64(t, n++, count->val);
 	tuple_set_u64(t, n++, count->ena);
 	tuple_set_u64(t, n++, count->run);
 
-	if (_PyTuple_Resize(&t, n) == -1)
+	अगर (_PyTuple_Resize(&t, n) == -1)
 		Py_FatalError("error resizing Python tuple");
 
 	call_object(handler, t, handler_name);
 
 	Py_DECREF(t);
-}
+पूर्ण
 
-static void python_process_stat(struct perf_stat_config *config,
-				struct evsel *counter, u64 tstamp)
-{
-	struct perf_thread_map *threads = counter->core.threads;
-	struct perf_cpu_map *cpus = counter->core.cpus;
-	int cpu, thread;
+अटल व्योम python_process_stat(काष्ठा perf_stat_config *config,
+				काष्ठा evsel *counter, u64 tstamp)
+अणु
+	काष्ठा perf_thपढ़ो_map *thपढ़ोs = counter->core.thपढ़ोs;
+	काष्ठा perf_cpu_map *cpus = counter->core.cpus;
+	पूर्णांक cpu, thपढ़ो;
 
-	if (config->aggr_mode == AGGR_GLOBAL) {
+	अगर (config->aggr_mode == AGGR_GLOBAL) अणु
 		process_stat(counter, -1, -1, tstamp,
 			     &counter->counts->aggr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (thread = 0; thread < threads->nr; thread++) {
-		for (cpu = 0; cpu < cpus->nr; cpu++) {
+	क्रम (thपढ़ो = 0; thपढ़ो < thपढ़ोs->nr; thपढ़ो++) अणु
+		क्रम (cpu = 0; cpu < cpus->nr; cpu++) अणु
 			process_stat(counter, cpus->map[cpu],
-				     perf_thread_map__pid(threads, thread), tstamp,
-				     perf_counts(counter->counts, cpu, thread));
-		}
-	}
-}
+				     perf_thपढ़ो_map__pid(thपढ़ोs, thपढ़ो), tstamp,
+				     perf_counts(counter->counts, cpu, thपढ़ो));
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void python_process_stat_interval(u64 tstamp)
-{
+अटल व्योम python_process_stat_पूर्णांकerval(u64 tstamp)
+अणु
 	PyObject *handler, *t;
-	static const char handler_name[] = "stat__interval";
-	int n = 0;
+	अटल स्थिर अक्षर handler_name[] = "stat__interval";
+	पूर्णांक n = 0;
 
 	t = PyTuple_New(MAX_FIELDS);
-	if (!t)
+	अगर (!t)
 		Py_FatalError("couldn't create Python tuple");
 
 	handler = get_handler(handler_name);
-	if (!handler) {
+	अगर (!handler) अणु
 		pr_debug("can't find python handler %s\n", handler_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tuple_set_u64(t, n++, tstamp);
 
-	if (_PyTuple_Resize(&t, n) == -1)
+	अगर (_PyTuple_Resize(&t, n) == -1)
 		Py_FatalError("error resizing Python tuple");
 
 	call_object(handler, t, handler_name);
 
 	Py_DECREF(t);
-}
+पूर्ण
 
-static int run_start_sub(void)
-{
-	main_module = PyImport_AddModule("__main__");
-	if (main_module == NULL)
-		return -1;
-	Py_INCREF(main_module);
+अटल पूर्णांक run_start_sub(व्योम)
+अणु
+	मुख्य_module = PyImport_AddModule("__main__");
+	अगर (मुख्य_module == शून्य)
+		वापस -1;
+	Py_INCREF(मुख्य_module);
 
-	main_dict = PyModule_GetDict(main_module);
-	if (main_dict == NULL)
-		goto error;
-	Py_INCREF(main_dict);
+	मुख्य_dict = PyModule_GetDict(मुख्य_module);
+	अगर (मुख्य_dict == शून्य)
+		जाओ error;
+	Py_INCREF(मुख्य_dict);
 
-	try_call_object("trace_begin", NULL);
+	try_call_object("trace_begin", शून्य);
 
-	return 0;
+	वापस 0;
 
 error:
-	Py_XDECREF(main_dict);
-	Py_XDECREF(main_module);
-	return -1;
-}
+	Py_XDECREF(मुख्य_dict);
+	Py_XDECREF(मुख्य_module);
+	वापस -1;
+पूर्ण
 
-#define SET_TABLE_HANDLER_(name, handler_name, table_name) do {		\
+#घोषणा SET_TABLE_HANDLER_(name, handler_name, table_name) करो अणु		\
 	tables->handler_name = get_handler(#table_name);		\
-	if (tables->handler_name)					\
+	अगर (tables->handler_name)					\
 		tables->dbe.export_ ## name = python_export_ ## name;	\
-} while (0)
+पूर्ण जबतक (0)
 
-#define SET_TABLE_HANDLER(name) \
+#घोषणा SET_TABLE_HANDLER(name) \
 	SET_TABLE_HANDLER_(name, name ## _handler, name ## _table)
 
-static void set_table_handlers(struct tables *tables)
-{
-	const char *perf_db_export_mode = "perf_db_export_mode";
-	const char *perf_db_export_calls = "perf_db_export_calls";
-	const char *perf_db_export_callchains = "perf_db_export_callchains";
+अटल व्योम set_table_handlers(काष्ठा tables *tables)
+अणु
+	स्थिर अक्षर *perf_db_export_mode = "perf_db_export_mode";
+	स्थिर अक्षर *perf_db_export_calls = "perf_db_export_calls";
+	स्थिर अक्षर *perf_db_export_callchains = "perf_db_export_callchains";
 	PyObject *db_export_mode, *db_export_calls, *db_export_callchains;
 	bool export_calls = false;
 	bool export_callchains = false;
-	int ret;
+	पूर्णांक ret;
 
-	memset(tables, 0, sizeof(struct tables));
-	if (db_export__init(&tables->dbe))
+	स_रखो(tables, 0, माप(काष्ठा tables));
+	अगर (db_export__init(&tables->dbe))
 		Py_FatalError("failed to initialize export");
 
-	db_export_mode = PyDict_GetItemString(main_dict, perf_db_export_mode);
-	if (!db_export_mode)
-		return;
+	db_export_mode = PyDict_GetItemString(मुख्य_dict, perf_db_export_mode);
+	अगर (!db_export_mode)
+		वापस;
 
 	ret = PyObject_IsTrue(db_export_mode);
-	if (ret == -1)
+	अगर (ret == -1)
 		handler_call_die(perf_db_export_mode);
-	if (!ret)
-		return;
+	अगर (!ret)
+		वापस;
 
 	/* handle export calls */
-	tables->dbe.crp = NULL;
-	db_export_calls = PyDict_GetItemString(main_dict, perf_db_export_calls);
-	if (db_export_calls) {
+	tables->dbe.crp = शून्य;
+	db_export_calls = PyDict_GetItemString(मुख्य_dict, perf_db_export_calls);
+	अगर (db_export_calls) अणु
 		ret = PyObject_IsTrue(db_export_calls);
-		if (ret == -1)
+		अगर (ret == -1)
 			handler_call_die(perf_db_export_calls);
 		export_calls = !!ret;
-	}
+	पूर्ण
 
-	if (export_calls) {
+	अगर (export_calls) अणु
 		tables->dbe.crp =
-			call_return_processor__new(python_process_call_return,
+			call_वापस_processor__new(python_process_call_वापस,
 						   &tables->dbe);
-		if (!tables->dbe.crp)
+		अगर (!tables->dbe.crp)
 			Py_FatalError("failed to create calls processor");
-	}
+	पूर्ण
 
 	/* handle export callchains */
-	tables->dbe.cpr = NULL;
-	db_export_callchains = PyDict_GetItemString(main_dict,
+	tables->dbe.cpr = शून्य;
+	db_export_callchains = PyDict_GetItemString(मुख्य_dict,
 						    perf_db_export_callchains);
-	if (db_export_callchains) {
+	अगर (db_export_callchains) अणु
 		ret = PyObject_IsTrue(db_export_callchains);
-		if (ret == -1)
+		अगर (ret == -1)
 			handler_call_die(perf_db_export_callchains);
 		export_callchains = !!ret;
-	}
+	पूर्ण
 
-	if (export_callchains) {
+	अगर (export_callchains) अणु
 		/*
-		 * Attempt to use the call path root from the call return
-		 * processor, if the call return processor is in use. Otherwise,
+		 * Attempt to use the call path root from the call वापस
+		 * processor, अगर the call वापस processor is in use. Otherwise,
 		 * we allocate a new call path root. This prevents exporting
 		 * duplicate call path ids when both are in use simultaneously.
 		 */
-		if (tables->dbe.crp)
+		अगर (tables->dbe.crp)
 			tables->dbe.cpr = tables->dbe.crp->cpr;
-		else
+		अन्यथा
 			tables->dbe.cpr = call_path_root__new();
 
-		if (!tables->dbe.cpr)
+		अगर (!tables->dbe.cpr)
 			Py_FatalError("failed to create call path root");
-	}
+	पूर्ण
 
 	tables->db_export_mode = true;
 	/*
-	 * Reserve per symbol space for symbol->db_id via symbol__priv()
+	 * Reserve per symbol space क्रम symbol->db_id via symbol__priv()
 	 */
-	symbol_conf.priv_size = sizeof(u64);
+	symbol_conf.priv_size = माप(u64);
 
 	SET_TABLE_HANDLER(evsel);
 	SET_TABLE_HANDLER(machine);
-	SET_TABLE_HANDLER(thread);
+	SET_TABLE_HANDLER(thपढ़ो);
 	SET_TABLE_HANDLER(comm);
-	SET_TABLE_HANDLER(comm_thread);
+	SET_TABLE_HANDLER(comm_thपढ़ो);
 	SET_TABLE_HANDLER(dso);
 	SET_TABLE_HANDLER(symbol);
 	SET_TABLE_HANDLER(branch_type);
 	SET_TABLE_HANDLER(sample);
 	SET_TABLE_HANDLER(call_path);
-	SET_TABLE_HANDLER(call_return);
-	SET_TABLE_HANDLER(context_switch);
+	SET_TABLE_HANDLER(call_वापस);
+	SET_TABLE_HANDLER(context_चयन);
 
 	/*
-	 * Synthesized events are samples but with architecture-specific data
+	 * Synthesized events are samples but with architecture-specअगरic data
 	 * stored in sample->raw_data. They are exported via
-	 * python_export_sample() and consequently do not need a separate export
+	 * python_export_sample() and consequently करो not need a separate export
 	 * callback.
 	 */
 	tables->synth_handler = get_handler("synth_data");
-}
+पूर्ण
 
-#if PY_MAJOR_VERSION < 3
-static void _free_command_line(const char **command_line, int num)
-{
-	free(command_line);
-}
-#else
-static void _free_command_line(wchar_t **command_line, int num)
-{
-	int i;
-	for (i = 0; i < num; i++)
+#अगर PY_MAJOR_VERSION < 3
+अटल व्योम _मुक्त_command_line(स्थिर अक्षर **command_line, पूर्णांक num)
+अणु
+	मुक्त(command_line);
+पूर्ण
+#अन्यथा
+अटल व्योम _मुक्त_command_line(ब_अक्षर_प्रकार **command_line, पूर्णांक num)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < num; i++)
 		PyMem_RawFree(command_line[i]);
-	free(command_line);
-}
-#endif
+	मुक्त(command_line);
+पूर्ण
+#पूर्ण_अगर
 
 
 /*
  * Start trace script
  */
-static int python_start_script(const char *script, int argc, const char **argv)
-{
-	struct tables *tables = &tables_global;
-#if PY_MAJOR_VERSION < 3
-	const char **command_line;
-#else
-	wchar_t **command_line;
-#endif
+अटल पूर्णांक python_start_script(स्थिर अक्षर *script, पूर्णांक argc, स्थिर अक्षर **argv)
+अणु
+	काष्ठा tables *tables = &tables_global;
+#अगर PY_MAJOR_VERSION < 3
+	स्थिर अक्षर **command_line;
+#अन्यथा
+	ब_अक्षर_प्रकार **command_line;
+#पूर्ण_अगर
 	/*
-	 * Use a non-const name variable to cope with python 2.6's
+	 * Use a non-स्थिर name variable to cope with python 2.6's
 	 * PyImport_AppendInittab prototype
 	 */
-	char buf[PATH_MAX], name[19] = "perf_trace_context";
-	int i, err = 0;
-	FILE *fp;
+	अक्षर buf[PATH_MAX], name[19] = "perf_trace_context";
+	पूर्णांक i, err = 0;
+	खाता *fp;
 
-#if PY_MAJOR_VERSION < 3
-	command_line = malloc((argc + 1) * sizeof(const char *));
+#अगर PY_MAJOR_VERSION < 3
+	command_line = दो_स्मृति((argc + 1) * माप(स्थिर अक्षर *));
 	command_line[0] = script;
-	for (i = 1; i < argc + 1; i++)
+	क्रम (i = 1; i < argc + 1; i++)
 		command_line[i] = argv[i - 1];
 	PyImport_AppendInittab(name, initperf_trace_context);
-#else
-	command_line = malloc((argc + 1) * sizeof(wchar_t *));
-	command_line[0] = Py_DecodeLocale(script, NULL);
-	for (i = 1; i < argc + 1; i++)
-		command_line[i] = Py_DecodeLocale(argv[i - 1], NULL);
+#अन्यथा
+	command_line = दो_स्मृति((argc + 1) * माप(ब_अक्षर_प्रकार *));
+	command_line[0] = Py_DecodeLocale(script, शून्य);
+	क्रम (i = 1; i < argc + 1; i++)
+		command_line[i] = Py_DecodeLocale(argv[i - 1], शून्य);
 	PyImport_AppendInittab(name, PyInit_perf_trace_context);
-#endif
+#पूर्ण_अगर
 	Py_Initialize();
 
-#if PY_MAJOR_VERSION < 3
-	PySys_SetArgv(argc + 1, (char **)command_line);
-#else
+#अगर PY_MAJOR_VERSION < 3
+	PySys_SetArgv(argc + 1, (अक्षर **)command_line);
+#अन्यथा
 	PySys_SetArgv(argc + 1, command_line);
-#endif
+#पूर्ण_अगर
 
-	fp = fopen(script, "r");
-	if (!fp) {
-		sprintf(buf, "Can't open python script \"%s\"", script);
-		perror(buf);
+	fp = ख_खोलो(script, "r");
+	अगर (!fp) अणु
+		प्र_लिखो(buf, "Can't open python script \"%s\"", script);
+		लिखो_त्रुटि(buf);
 		err = -1;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	err = PyRun_SimpleFile(fp, script);
-	if (err) {
-		fprintf(stderr, "Error running python script %s\n", script);
-		goto error;
-	}
+	अगर (err) अणु
+		ख_लिखो(मानक_त्रुटि, "Error running python script %s\n", script);
+		जाओ error;
+	पूर्ण
 
 	err = run_start_sub();
-	if (err) {
-		fprintf(stderr, "Error starting python script %s\n", script);
-		goto error;
-	}
+	अगर (err) अणु
+		ख_लिखो(मानक_त्रुटि, "Error starting python script %s\n", script);
+		जाओ error;
+	पूर्ण
 
 	set_table_handlers(tables);
 
-	if (tables->db_export_mode) {
+	अगर (tables->db_export_mode) अणु
 		err = db_export__branch_types(&tables->dbe);
-		if (err)
-			goto error;
-	}
+		अगर (err)
+			जाओ error;
+	पूर्ण
 
-	_free_command_line(command_line, argc + 1);
+	_मुक्त_command_line(command_line, argc + 1);
 
-	return err;
+	वापस err;
 error:
 	Py_Finalize();
-	_free_command_line(command_line, argc + 1);
+	_मुक्त_command_line(command_line, argc + 1);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int python_flush_script(void)
-{
-	return 0;
-}
+अटल पूर्णांक python_flush_script(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
 /*
  * Stop trace script
  */
-static int python_stop_script(void)
-{
-	struct tables *tables = &tables_global;
+अटल पूर्णांक python_stop_script(व्योम)
+अणु
+	काष्ठा tables *tables = &tables_global;
 
-	try_call_object("trace_end", NULL);
+	try_call_object("trace_end", शून्य);
 
-	db_export__exit(&tables->dbe);
+	db_export__निकास(&tables->dbe);
 
-	Py_XDECREF(main_dict);
-	Py_XDECREF(main_module);
+	Py_XDECREF(मुख्य_dict);
+	Py_XDECREF(मुख्य_module);
 	Py_Finalize();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int python_generate_script(struct tep_handle *pevent, const char *outfile)
-{
-	int i, not_first, count, nr_events;
-	struct tep_event **all_events;
-	struct tep_event *event = NULL;
-	struct tep_format_field *f;
-	char fname[PATH_MAX];
-	FILE *ofp;
+अटल पूर्णांक python_generate_script(काष्ठा tep_handle *pevent, स्थिर अक्षर *outfile)
+अणु
+	पूर्णांक i, not_first, count, nr_events;
+	काष्ठा tep_event **all_events;
+	काष्ठा tep_event *event = शून्य;
+	काष्ठा tep_क्रमmat_field *f;
+	अक्षर fname[PATH_MAX];
+	खाता *ofp;
 
-	sprintf(fname, "%s.py", outfile);
-	ofp = fopen(fname, "w");
-	if (ofp == NULL) {
-		fprintf(stderr, "couldn't open %s\n", fname);
-		return -1;
-	}
-	fprintf(ofp, "# perf script event handlers, "
+	प्र_लिखो(fname, "%s.py", outfile);
+	ofp = ख_खोलो(fname, "w");
+	अगर (ofp == शून्य) अणु
+		ख_लिखो(मानक_त्रुटि, "couldn't open %s\n", fname);
+		वापस -1;
+	पूर्ण
+	ख_लिखो(ofp, "# perf script event handlers, "
 		"generated by perf script -g python\n");
 
-	fprintf(ofp, "# Licensed under the terms of the GNU GPL"
+	ख_लिखो(ofp, "# Licensed under the terms of the GNU GPL"
 		" License version 2\n\n");
 
-	fprintf(ofp, "# The common_* event handler fields are the most useful "
+	ख_लिखो(ofp, "# The common_* event handler fields are the most useful "
 		"fields common to\n");
 
-	fprintf(ofp, "# all events.  They don't necessarily correspond to "
+	ख_लिखो(ofp, "# all events.  They don't necessarily correspond to "
 		"the 'common_*' fields\n");
 
-	fprintf(ofp, "# in the format files.  Those fields not available as "
+	ख_लिखो(ofp, "# in the format files.  Those fields not available as "
 		"handler params can\n");
 
-	fprintf(ofp, "# be retrieved using Python functions of the form "
+	ख_लिखो(ofp, "# be retrieved using Python functions of the form "
 		"common_*(context).\n");
 
-	fprintf(ofp, "# See the perf-script-python Documentation for the list "
+	ख_लिखो(ofp, "# See the perf-script-python Documentation for the list "
 		"of available functions.\n\n");
 
-	fprintf(ofp, "from __future__ import print_function\n\n");
-	fprintf(ofp, "import os\n");
-	fprintf(ofp, "import sys\n\n");
+	ख_लिखो(ofp, "from __future__ import print_function\n\n");
+	ख_लिखो(ofp, "import os\n");
+	ख_लिखो(ofp, "import sys\n\n");
 
-	fprintf(ofp, "sys.path.append(os.environ['PERF_EXEC_PATH'] + \\\n");
-	fprintf(ofp, "\t'/scripts/python/Perf-Trace-Util/lib/Perf/Trace')\n");
-	fprintf(ofp, "\nfrom perf_trace_context import *\n");
-	fprintf(ofp, "from Core import *\n\n\n");
+	ख_लिखो(ofp, "sys.path.append(os.environ['PERF_EXEC_PATH'] + \\\n");
+	ख_लिखो(ofp, "\t'/scripts/python/Perf-Trace-Util/lib/Perf/Trace')\n");
+	ख_लिखो(ofp, "\nfrom perf_trace_context import *\n");
+	ख_लिखो(ofp, "from Core import *\n\n\n");
 
-	fprintf(ofp, "def trace_begin():\n");
-	fprintf(ofp, "\tprint(\"in trace_begin\")\n\n");
+	ख_लिखो(ofp, "def trace_begin():\n");
+	ख_लिखो(ofp, "\tprint(\"in trace_begin\")\n\n");
 
-	fprintf(ofp, "def trace_end():\n");
-	fprintf(ofp, "\tprint(\"in trace_end\")\n\n");
+	ख_लिखो(ofp, "def trace_end():\n");
+	ख_लिखो(ofp, "\tprint(\"in trace_end\")\n\n");
 
 	nr_events = tep_get_events_count(pevent);
 	all_events = tep_list_events(pevent, TEP_EVENT_SORT_ID);
 
-	for (i = 0; all_events && i < nr_events; i++) {
+	क्रम (i = 0; all_events && i < nr_events; i++) अणु
 		event = all_events[i];
-		fprintf(ofp, "def %s__%s(", event->system, event->name);
-		fprintf(ofp, "event_name, ");
-		fprintf(ofp, "context, ");
-		fprintf(ofp, "common_cpu,\n");
-		fprintf(ofp, "\tcommon_secs, ");
-		fprintf(ofp, "common_nsecs, ");
-		fprintf(ofp, "common_pid, ");
-		fprintf(ofp, "common_comm,\n\t");
-		fprintf(ofp, "common_callchain, ");
+		ख_लिखो(ofp, "def %s__%s(", event->प्रणाली, event->name);
+		ख_लिखो(ofp, "event_name, ");
+		ख_लिखो(ofp, "context, ");
+		ख_लिखो(ofp, "common_cpu,\n");
+		ख_लिखो(ofp, "\tcommon_secs, ");
+		ख_लिखो(ofp, "common_nsecs, ");
+		ख_लिखो(ofp, "common_pid, ");
+		ख_लिखो(ofp, "common_comm,\n\t");
+		ख_लिखो(ofp, "common_callchain, ");
 
 		not_first = 0;
 		count = 0;
 
-		for (f = event->format.fields; f; f = f->next) {
-			if (not_first++)
-				fprintf(ofp, ", ");
-			if (++count % 5 == 0)
-				fprintf(ofp, "\n\t");
+		क्रम (f = event->क्रमmat.fields; f; f = f->next) अणु
+			अगर (not_first++)
+				ख_लिखो(ofp, ", ");
+			अगर (++count % 5 == 0)
+				ख_लिखो(ofp, "\n\t");
 
-			fprintf(ofp, "%s", f->name);
-		}
-		if (not_first++)
-			fprintf(ofp, ", ");
-		if (++count % 5 == 0)
-			fprintf(ofp, "\n\t\t");
-		fprintf(ofp, "perf_sample_dict");
+			ख_लिखो(ofp, "%s", f->name);
+		पूर्ण
+		अगर (not_first++)
+			ख_लिखो(ofp, ", ");
+		अगर (++count % 5 == 0)
+			ख_लिखो(ofp, "\n\t\t");
+		ख_लिखो(ofp, "perf_sample_dict");
 
-		fprintf(ofp, "):\n");
+		ख_लिखो(ofp, "):\n");
 
-		fprintf(ofp, "\t\tprint_header(event_name, common_cpu, "
+		ख_लिखो(ofp, "\t\tprint_header(event_name, common_cpu, "
 			"common_secs, common_nsecs,\n\t\t\t"
 			"common_pid, common_comm)\n\n");
 
-		fprintf(ofp, "\t\tprint(\"");
+		ख_लिखो(ofp, "\t\tprint(\"");
 
 		not_first = 0;
 		count = 0;
 
-		for (f = event->format.fields; f; f = f->next) {
-			if (not_first++)
-				fprintf(ofp, ", ");
-			if (count && count % 3 == 0) {
-				fprintf(ofp, "\" \\\n\t\t\"");
-			}
+		क्रम (f = event->क्रमmat.fields; f; f = f->next) अणु
+			अगर (not_first++)
+				ख_लिखो(ofp, ", ");
+			अगर (count && count % 3 == 0) अणु
+				ख_लिखो(ofp, "\" \\\n\t\t\"");
+			पूर्ण
 			count++;
 
-			fprintf(ofp, "%s=", f->name);
-			if (f->flags & TEP_FIELD_IS_STRING ||
+			ख_लिखो(ofp, "%s=", f->name);
+			अगर (f->flags & TEP_FIELD_IS_STRING ||
 			    f->flags & TEP_FIELD_IS_FLAG ||
 			    f->flags & TEP_FIELD_IS_ARRAY ||
 			    f->flags & TEP_FIELD_IS_SYMBOLIC)
-				fprintf(ofp, "%%s");
-			else if (f->flags & TEP_FIELD_IS_SIGNED)
-				fprintf(ofp, "%%d");
-			else
-				fprintf(ofp, "%%u");
-		}
+				ख_लिखो(ofp, "%%s");
+			अन्यथा अगर (f->flags & TEP_FIELD_IS_SIGNED)
+				ख_लिखो(ofp, "%%d");
+			अन्यथा
+				ख_लिखो(ofp, "%%u");
+		पूर्ण
 
-		fprintf(ofp, "\" %% \\\n\t\t(");
+		ख_लिखो(ofp, "\" %% \\\n\t\t(");
 
 		not_first = 0;
 		count = 0;
 
-		for (f = event->format.fields; f; f = f->next) {
-			if (not_first++)
-				fprintf(ofp, ", ");
+		क्रम (f = event->क्रमmat.fields; f; f = f->next) अणु
+			अगर (not_first++)
+				ख_लिखो(ofp, ", ");
 
-			if (++count % 5 == 0)
-				fprintf(ofp, "\n\t\t");
+			अगर (++count % 5 == 0)
+				ख_लिखो(ofp, "\n\t\t");
 
-			if (f->flags & TEP_FIELD_IS_FLAG) {
-				if ((count - 1) % 5 != 0) {
-					fprintf(ofp, "\n\t\t");
+			अगर (f->flags & TEP_FIELD_IS_FLAG) अणु
+				अगर ((count - 1) % 5 != 0) अणु
+					ख_लिखो(ofp, "\n\t\t");
 					count = 4;
-				}
-				fprintf(ofp, "flag_str(\"");
-				fprintf(ofp, "%s__%s\", ", event->system,
+				पूर्ण
+				ख_लिखो(ofp, "flag_str(\"");
+				ख_लिखो(ofp, "%s__%s\", ", event->प्रणाली,
 					event->name);
-				fprintf(ofp, "\"%s\", %s)", f->name,
+				ख_लिखो(ofp, "\"%s\", %s)", f->name,
 					f->name);
-			} else if (f->flags & TEP_FIELD_IS_SYMBOLIC) {
-				if ((count - 1) % 5 != 0) {
-					fprintf(ofp, "\n\t\t");
+			पूर्ण अन्यथा अगर (f->flags & TEP_FIELD_IS_SYMBOLIC) अणु
+				अगर ((count - 1) % 5 != 0) अणु
+					ख_लिखो(ofp, "\n\t\t");
 					count = 4;
-				}
-				fprintf(ofp, "symbol_str(\"");
-				fprintf(ofp, "%s__%s\", ", event->system,
+				पूर्ण
+				ख_लिखो(ofp, "symbol_str(\"");
+				ख_लिखो(ofp, "%s__%s\", ", event->प्रणाली,
 					event->name);
-				fprintf(ofp, "\"%s\", %s)", f->name,
+				ख_लिखो(ofp, "\"%s\", %s)", f->name,
 					f->name);
-			} else
-				fprintf(ofp, "%s", f->name);
-		}
+			पूर्ण अन्यथा
+				ख_लिखो(ofp, "%s", f->name);
+		पूर्ण
 
-		fprintf(ofp, "))\n\n");
+		ख_लिखो(ofp, "))\n\n");
 
-		fprintf(ofp, "\t\tprint('Sample: {'+"
+		ख_लिखो(ofp, "\t\tprint('Sample: {'+"
 			"get_dict_as_string(perf_sample_dict['sample'], ', ')+'}')\n\n");
 
-		fprintf(ofp, "\t\tfor node in common_callchain:");
-		fprintf(ofp, "\n\t\t\tif 'sym' in node:");
-		fprintf(ofp, "\n\t\t\t\tprint(\"\\t[%%x] %%s\" %% (node['ip'], node['sym']['name']))");
-		fprintf(ofp, "\n\t\t\telse:");
-		fprintf(ofp, "\n\t\t\t\tprint(\"\t[%%x]\" %% (node['ip']))\n\n");
-		fprintf(ofp, "\t\tprint()\n\n");
+		ख_लिखो(ofp, "\t\tfor node in common_callchain:");
+		ख_लिखो(ofp, "\n\t\t\tif 'sym' in node:");
+		ख_लिखो(ofp, "\n\t\t\t\tprint(\"\\t[%%x] %%s\" %% (node['ip'], node['sym']['name']))");
+		ख_लिखो(ofp, "\n\t\t\telse:");
+		ख_लिखो(ofp, "\n\t\t\t\tprint(\"\t[%%x]\" %% (node['ip']))\n\n");
+		ख_लिखो(ofp, "\t\tprint()\n\n");
 
-	}
+	पूर्ण
 
-	fprintf(ofp, "def trace_unhandled(event_name, context, "
+	ख_लिखो(ofp, "def trace_unhandled(event_name, context, "
 		"event_fields_dict, perf_sample_dict):\n");
 
-	fprintf(ofp, "\t\tprint(get_dict_as_string(event_fields_dict))\n");
-	fprintf(ofp, "\t\tprint('Sample: {'+"
+	ख_लिखो(ofp, "\t\tprint(get_dict_as_string(event_fields_dict))\n");
+	ख_लिखो(ofp, "\t\tprint('Sample: {'+"
 		"get_dict_as_string(perf_sample_dict['sample'], ', ')+'}')\n\n");
 
-	fprintf(ofp, "def print_header("
+	ख_लिखो(ofp, "def print_header("
 		"event_name, cpu, secs, nsecs, pid, comm):\n"
 		"\tprint(\"%%-20s %%5u %%05u.%%09u %%8u %%-20s \" %% \\\n\t"
 		"(event_name, cpu, secs, nsecs, pid, comm), end=\"\")\n\n");
 
-	fprintf(ofp, "def get_dict_as_string(a_dict, delimiter=' '):\n"
+	ख_लिखो(ofp, "def get_dict_as_string(a_dict, delimiter=' '):\n"
 		"\treturn delimiter.join"
 		"(['%%s=%%s'%%(k,str(v))for k,v in sorted(a_dict.items())])\n");
 
-	fclose(ofp);
+	ख_बंद(ofp);
 
-	fprintf(stderr, "generated Python script: %s\n", fname);
+	ख_लिखो(मानक_त्रुटि, "generated Python script: %s\n", fname);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct scripting_ops python_scripting_ops = {
+काष्ठा scripting_ops python_scripting_ops = अणु
 	.name			= "Python",
 	.start_script		= python_start_script,
 	.flush_script		= python_flush_script,
 	.stop_script		= python_stop_script,
 	.process_event		= python_process_event,
-	.process_switch		= python_process_switch,
+	.process_चयन		= python_process_चयन,
 	.process_stat		= python_process_stat,
-	.process_stat_interval	= python_process_stat_interval,
+	.process_stat_पूर्णांकerval	= python_process_stat_पूर्णांकerval,
 	.generate_script	= python_generate_script,
-};
+पूर्ण;

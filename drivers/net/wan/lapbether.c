@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	"LAPB via ethernet" driver release 001
  *
@@ -11,124 +12,124 @@
  *
  *	History
  *	LAPBETH 001	Jonathan Naylor		Cloned from bpqether.c
- *	2000-10-29	Henner Eisen	lapb_data_indication() return status.
+ *	2000-10-29	Henner Eisen	lapb_data_indication() वापस status.
  *	2000-11-14	Henner Eisen	dev_hold/put, NETDEV_GOING_DOWN support
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/net.h>
-#include <linux/inet.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <linux/uaccess.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/notifier.h>
-#include <linux/stat.h>
-#include <linux/module.h>
-#include <linux/lapb.h>
-#include <linux/init.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/net.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/स्थिति.स>
+#समावेश <linux/module.h>
+#समावेश <linux/lapb.h>
+#समावेश <linux/init.h>
 
-#include <net/x25device.h>
+#समावेश <net/x25device.h>
 
-static const u8 bcast_addr[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+अटल स्थिर u8 bcast_addr[6] = अणु 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF पूर्ण;
 
 /* If this number is made larger, check that the temporary string buffer
  * in lapbeth_new_device is large enough to store the probe device name.*/
-#define MAXLAPBDEV 100
+#घोषणा MAXLAPBDEV 100
 
-struct lapbethdev {
-	struct list_head	node;
-	struct net_device	*ethdev;	/* link to ethernet device */
-	struct net_device	*axdev;		/* lapbeth device (lapb#) */
+काष्ठा lapbethdev अणु
+	काष्ठा list_head	node;
+	काष्ठा net_device	*ethdev;	/* link to ethernet device */
+	काष्ठा net_device	*axdev;		/* lapbeth device (lapb#) */
 	bool			up;
 	spinlock_t		up_lock;	/* Protects "up" */
-	struct sk_buff_head	rx_queue;
-	struct napi_struct	napi;
-};
+	काष्ठा sk_buff_head	rx_queue;
+	काष्ठा napi_काष्ठा	napi;
+पूर्ण;
 
-static LIST_HEAD(lapbeth_devices);
+अटल LIST_HEAD(lapbeth_devices);
 
-static void lapbeth_connected(struct net_device *dev, int reason);
-static void lapbeth_disconnected(struct net_device *dev, int reason);
+अटल व्योम lapbeth_connected(काष्ठा net_device *dev, पूर्णांक reason);
+अटल व्योम lapbeth_disconnected(काष्ठा net_device *dev, पूर्णांक reason);
 
 /* ------------------------------------------------------------------------ */
 
 /*
- *	Get the LAPB device for the ethernet device
+ *	Get the LAPB device क्रम the ethernet device
  */
-static struct lapbethdev *lapbeth_get_x25_dev(struct net_device *dev)
-{
-	struct lapbethdev *lapbeth;
+अटल काष्ठा lapbethdev *lapbeth_get_x25_dev(काष्ठा net_device *dev)
+अणु
+	काष्ठा lapbethdev *lapbeth;
 
-	list_for_each_entry_rcu(lapbeth, &lapbeth_devices, node, lockdep_rtnl_is_held()) {
-		if (lapbeth->ethdev == dev) 
-			return lapbeth;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry_rcu(lapbeth, &lapbeth_devices, node, lockdep_rtnl_is_held()) अणु
+		अगर (lapbeth->ethdev == dev) 
+			वापस lapbeth;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static __inline__ int dev_is_ethdev(struct net_device *dev)
-{
-	return dev->type == ARPHRD_ETHER && strncmp(dev->name, "dummy", 5);
-}
+अटल __अंतरभूत__ पूर्णांक dev_is_ethdev(काष्ठा net_device *dev)
+अणु
+	वापस dev->type == ARPHRD_ETHER && म_भेदन(dev->name, "dummy", 5);
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
 
-static int lapbeth_napi_poll(struct napi_struct *napi, int budget)
-{
-	struct lapbethdev *lapbeth = container_of(napi, struct lapbethdev,
+अटल पूर्णांक lapbeth_napi_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा lapbethdev *lapbeth = container_of(napi, काष्ठा lapbethdev,
 						  napi);
-	struct sk_buff *skb;
-	int processed = 0;
+	काष्ठा sk_buff *skb;
+	पूर्णांक processed = 0;
 
-	for (; processed < budget; ++processed) {
+	क्रम (; processed < budget; ++processed) अणु
 		skb = skb_dequeue(&lapbeth->rx_queue);
-		if (!skb)
-			break;
-		netif_receive_skb_core(skb);
-	}
+		अगर (!skb)
+			अवरोध;
+		netअगर_receive_skb_core(skb);
+	पूर्ण
 
-	if (processed < budget)
+	अगर (processed < budget)
 		napi_complete(napi);
 
-	return processed;
-}
+	वापस processed;
+पूर्ण
 
 /*
- *	Receive a LAPB frame via an ethernet interface.
+ *	Receive a LAPB frame via an ethernet पूर्णांकerface.
  */
-static int lapbeth_rcv(struct sk_buff *skb, struct net_device *dev, struct packet_type *ptype, struct net_device *orig_dev)
-{
-	int len, err;
-	struct lapbethdev *lapbeth;
+अटल पूर्णांक lapbeth_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev, काष्ठा packet_type *ptype, काष्ठा net_device *orig_dev)
+अणु
+	पूर्णांक len, err;
+	काष्ठा lapbethdev *lapbeth;
 
-	if (dev_net(dev) != &init_net)
-		goto drop;
+	अगर (dev_net(dev) != &init_net)
+		जाओ drop;
 
-	if ((skb = skb_share_check(skb, GFP_ATOMIC)) == NULL)
-		return NET_RX_DROP;
+	अगर ((skb = skb_share_check(skb, GFP_ATOMIC)) == शून्य)
+		वापस NET_RX_DROP;
 
-	if (!pskb_may_pull(skb, 2))
-		goto drop;
+	अगर (!pskb_may_pull(skb, 2))
+		जाओ drop;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	lapbeth = lapbeth_get_x25_dev(dev);
-	if (!lapbeth)
-		goto drop_unlock_rcu;
+	अगर (!lapbeth)
+		जाओ drop_unlock_rcu;
 	spin_lock_bh(&lapbeth->up_lock);
-	if (!lapbeth->up)
-		goto drop_unlock;
+	अगर (!lapbeth->up)
+		जाओ drop_unlock;
 
 	len = skb->data[0] + skb->data[1] * 256;
 	dev->stats.rx_packets++;
@@ -137,33 +138,33 @@ static int lapbeth_rcv(struct sk_buff *skb, struct net_device *dev, struct packe
 	skb_pull(skb, 2);	/* Remove the length bytes */
 	skb_trim(skb, len);	/* Set the length of the data */
 
-	if ((err = lapb_data_received(lapbeth->axdev, skb)) != LAPB_OK) {
-		printk(KERN_DEBUG "lapbether: lapb_data_received err - %d\n", err);
-		goto drop_unlock;
-	}
+	अगर ((err = lapb_data_received(lapbeth->axdev, skb)) != LAPB_OK) अणु
+		prपूर्णांकk(KERN_DEBUG "lapbether: lapb_data_received err - %d\n", err);
+		जाओ drop_unlock;
+	पूर्ण
 out:
 	spin_unlock_bh(&lapbeth->up_lock);
-	rcu_read_unlock();
-	return 0;
+	rcu_पढ़ो_unlock();
+	वापस 0;
 drop_unlock:
-	kfree_skb(skb);
-	goto out;
+	kमुक्त_skb(skb);
+	जाओ out;
 drop_unlock_rcu:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 drop:
-	kfree_skb(skb);
-	return 0;
-}
+	kमुक्त_skb(skb);
+	वापस 0;
+पूर्ण
 
-static int lapbeth_data_indication(struct net_device *dev, struct sk_buff *skb)
-{
-	struct lapbethdev *lapbeth = netdev_priv(dev);
-	unsigned char *ptr;
+अटल पूर्णांक lapbeth_data_indication(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा lapbethdev *lapbeth = netdev_priv(dev);
+	अचिन्हित अक्षर *ptr;
 
-	if (skb_cow(skb, 1)) {
-		kfree_skb(skb);
-		return NET_RX_DROP;
-	}
+	अगर (skb_cow(skb, 1)) अणु
+		kमुक्त_skb(skb);
+		वापस NET_RX_DROP;
+	पूर्ण
 
 	skb_push(skb, 1);
 
@@ -174,69 +175,69 @@ static int lapbeth_data_indication(struct net_device *dev, struct sk_buff *skb)
 
 	skb_queue_tail(&lapbeth->rx_queue, skb);
 	napi_schedule(&lapbeth->napi);
-	return NET_RX_SUCCESS;
-}
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
 /*
- *	Send a LAPB frame via an ethernet interface
+ *	Send a LAPB frame via an ethernet पूर्णांकerface
  */
-static netdev_tx_t lapbeth_xmit(struct sk_buff *skb,
-				      struct net_device *dev)
-{
-	struct lapbethdev *lapbeth = netdev_priv(dev);
-	int err;
+अटल netdev_tx_t lapbeth_xmit(काष्ठा sk_buff *skb,
+				      काष्ठा net_device *dev)
+अणु
+	काष्ठा lapbethdev *lapbeth = netdev_priv(dev);
+	पूर्णांक err;
 
 	spin_lock_bh(&lapbeth->up_lock);
-	if (!lapbeth->up)
-		goto drop;
+	अगर (!lapbeth->up)
+		जाओ drop;
 
-	/* There should be a pseudo header of 1 byte added by upper layers.
-	 * Check to make sure it is there before reading it.
+	/* There should be a pseuकरो header of 1 byte added by upper layers.
+	 * Check to make sure it is there beक्रमe पढ़ोing it.
 	 */
-	if (skb->len < 1)
-		goto drop;
+	अगर (skb->len < 1)
+		जाओ drop;
 
-	switch (skb->data[0]) {
-	case X25_IFACE_DATA:
-		break;
-	case X25_IFACE_CONNECT:
+	चयन (skb->data[0]) अणु
+	हाल X25_IFACE_DATA:
+		अवरोध;
+	हाल X25_IFACE_CONNECT:
 		err = lapb_connect_request(dev);
-		if (err == LAPB_CONNECTED)
+		अगर (err == LAPB_CONNECTED)
 			lapbeth_connected(dev, LAPB_OK);
-		else if (err != LAPB_OK)
+		अन्यथा अगर (err != LAPB_OK)
 			pr_err("lapb_connect_request error: %d\n", err);
-		goto drop;
-	case X25_IFACE_DISCONNECT:
+		जाओ drop;
+	हाल X25_IFACE_DISCONNECT:
 		err = lapb_disconnect_request(dev);
-		if (err == LAPB_NOTCONNECTED)
+		अगर (err == LAPB_NOTCONNECTED)
 			lapbeth_disconnected(dev, LAPB_OK);
-		else if (err != LAPB_OK)
+		अन्यथा अगर (err != LAPB_OK)
 			pr_err("lapb_disconnect_request err: %d\n", err);
 		fallthrough;
-	default:
-		goto drop;
-	}
+	शेष:
+		जाओ drop;
+	पूर्ण
 
 	skb_pull(skb, 1);
 
-	if ((err = lapb_data_request(dev, skb)) != LAPB_OK) {
+	अगर ((err = lapb_data_request(dev, skb)) != LAPB_OK) अणु
 		pr_err("lapb_data_request error - %d\n", err);
-		goto drop;
-	}
+		जाओ drop;
+	पूर्ण
 out:
 	spin_unlock_bh(&lapbeth->up_lock);
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 drop:
-	kfree_skb(skb);
-	goto out;
-}
+	kमुक्त_skb(skb);
+	जाओ out;
+पूर्ण
 
-static void lapbeth_data_transmit(struct net_device *ndev, struct sk_buff *skb)
-{
-	struct lapbethdev *lapbeth = netdev_priv(ndev);
-	unsigned char *ptr;
-	struct net_device *dev;
-	int size = skb->len;
+अटल व्योम lapbeth_data_transmit(काष्ठा net_device *ndev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा lapbethdev *lapbeth = netdev_priv(ndev);
+	अचिन्हित अक्षर *ptr;
+	काष्ठा net_device *dev;
+	पूर्णांक size = skb->len;
 
 	ptr = skb_push(skb, 2);
 
@@ -252,21 +253,21 @@ static void lapbeth_data_transmit(struct net_device *ndev, struct sk_buff *skb)
 
 	skb_reset_network_header(skb);
 
-	dev_hard_header(skb, dev, ETH_P_DEC, bcast_addr, NULL, 0);
+	dev_hard_header(skb, dev, ETH_P_DEC, bcast_addr, शून्य, 0);
 
 	dev_queue_xmit(skb);
-}
+पूर्ण
 
-static void lapbeth_connected(struct net_device *dev, int reason)
-{
-	struct lapbethdev *lapbeth = netdev_priv(dev);
-	unsigned char *ptr;
-	struct sk_buff *skb = __dev_alloc_skb(1, GFP_ATOMIC | __GFP_NOMEMALLOC);
+अटल व्योम lapbeth_connected(काष्ठा net_device *dev, पूर्णांक reason)
+अणु
+	काष्ठा lapbethdev *lapbeth = netdev_priv(dev);
+	अचिन्हित अक्षर *ptr;
+	काष्ठा sk_buff *skb = __dev_alloc_skb(1, GFP_ATOMIC | __GFP_NOMEMALLOC);
 
-	if (!skb) {
+	अगर (!skb) अणु
 		pr_err("out of memory\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ptr  = skb_put(skb, 1);
 	*ptr = X25_IFACE_CONNECT;
@@ -275,18 +276,18 @@ static void lapbeth_connected(struct net_device *dev, int reason)
 
 	skb_queue_tail(&lapbeth->rx_queue, skb);
 	napi_schedule(&lapbeth->napi);
-}
+पूर्ण
 
-static void lapbeth_disconnected(struct net_device *dev, int reason)
-{
-	struct lapbethdev *lapbeth = netdev_priv(dev);
-	unsigned char *ptr;
-	struct sk_buff *skb = __dev_alloc_skb(1, GFP_ATOMIC | __GFP_NOMEMALLOC);
+अटल व्योम lapbeth_disconnected(काष्ठा net_device *dev, पूर्णांक reason)
+अणु
+	काष्ठा lapbethdev *lapbeth = netdev_priv(dev);
+	अचिन्हित अक्षर *ptr;
+	काष्ठा sk_buff *skb = __dev_alloc_skb(1, GFP_ATOMIC | __GFP_NOMEMALLOC);
 
-	if (!skb) {
+	अगर (!skb) अणु
 		pr_err("out of memory\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ptr  = skb_put(skb, 1);
 	*ptr = X25_IFACE_DISCONNECT;
@@ -295,104 +296,104 @@ static void lapbeth_disconnected(struct net_device *dev, int reason)
 
 	skb_queue_tail(&lapbeth->rx_queue, skb);
 	napi_schedule(&lapbeth->napi);
-}
+पूर्ण
 
 /*
  *	Set AX.25 callsign
  */
-static int lapbeth_set_mac_address(struct net_device *dev, void *addr)
-{
-	struct sockaddr *sa = addr;
-	memcpy(dev->dev_addr, sa->sa_data, dev->addr_len);
-	return 0;
-}
+अटल पूर्णांक lapbeth_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
+अणु
+	काष्ठा sockaddr *sa = addr;
+	स_नकल(dev->dev_addr, sa->sa_data, dev->addr_len);
+	वापस 0;
+पूर्ण
 
 
-static const struct lapb_register_struct lapbeth_callbacks = {
+अटल स्थिर काष्ठा lapb_रेजिस्टर_काष्ठा lapbeth_callbacks = अणु
 	.connect_confirmation    = lapbeth_connected,
 	.connect_indication      = lapbeth_connected,
 	.disconnect_confirmation = lapbeth_disconnected,
 	.disconnect_indication   = lapbeth_disconnected,
 	.data_indication         = lapbeth_data_indication,
 	.data_transmit           = lapbeth_data_transmit,
-};
+पूर्ण;
 
 /*
- * open/close a device
+ * खोलो/बंद a device
  */
-static int lapbeth_open(struct net_device *dev)
-{
-	struct lapbethdev *lapbeth = netdev_priv(dev);
-	int err;
+अटल पूर्णांक lapbeth_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा lapbethdev *lapbeth = netdev_priv(dev);
+	पूर्णांक err;
 
 	napi_enable(&lapbeth->napi);
 
-	if ((err = lapb_register(dev, &lapbeth_callbacks)) != LAPB_OK) {
+	अगर ((err = lapb_रेजिस्टर(dev, &lapbeth_callbacks)) != LAPB_OK) अणु
 		pr_err("lapb_register error: %d\n", err);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	spin_lock_bh(&lapbeth->up_lock);
 	lapbeth->up = true;
 	spin_unlock_bh(&lapbeth->up_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lapbeth_close(struct net_device *dev)
-{
-	struct lapbethdev *lapbeth = netdev_priv(dev);
-	int err;
+अटल पूर्णांक lapbeth_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा lapbethdev *lapbeth = netdev_priv(dev);
+	पूर्णांक err;
 
 	spin_lock_bh(&lapbeth->up_lock);
 	lapbeth->up = false;
 	spin_unlock_bh(&lapbeth->up_lock);
 
-	if ((err = lapb_unregister(dev)) != LAPB_OK)
+	अगर ((err = lapb_unरेजिस्टर(dev)) != LAPB_OK)
 		pr_err("lapb_unregister error: %d\n", err);
 
 	napi_disable(&lapbeth->napi);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
 
-static const struct net_device_ops lapbeth_netdev_ops = {
-	.ndo_open	     = lapbeth_open,
-	.ndo_stop	     = lapbeth_close,
-	.ndo_start_xmit	     = lapbeth_xmit,
-	.ndo_set_mac_address = lapbeth_set_mac_address,
-};
+अटल स्थिर काष्ठा net_device_ops lapbeth_netdev_ops = अणु
+	.nकरो_खोलो	     = lapbeth_खोलो,
+	.nकरो_stop	     = lapbeth_बंद,
+	.nकरो_start_xmit	     = lapbeth_xmit,
+	.nकरो_set_mac_address = lapbeth_set_mac_address,
+पूर्ण;
 
-static void lapbeth_setup(struct net_device *dev)
-{
+अटल व्योम lapbeth_setup(काष्ठा net_device *dev)
+अणु
 	dev->netdev_ops	     = &lapbeth_netdev_ops;
-	dev->needs_free_netdev = true;
+	dev->needs_मुक्त_netdev = true;
 	dev->type            = ARPHRD_X25;
 	dev->hard_header_len = 0;
 	dev->mtu             = 1000;
 	dev->addr_len        = 0;
-}
+पूर्ण
 
 /*
  *	Setup a new device.
  */
-static int lapbeth_new_device(struct net_device *dev)
-{
-	struct net_device *ndev;
-	struct lapbethdev *lapbeth;
-	int rc = -ENOMEM;
+अटल पूर्णांक lapbeth_new_device(काष्ठा net_device *dev)
+अणु
+	काष्ठा net_device *ndev;
+	काष्ठा lapbethdev *lapbeth;
+	पूर्णांक rc = -ENOMEM;
 
 	ASSERT_RTNL();
 
-	ndev = alloc_netdev(sizeof(*lapbeth), "lapb%d", NET_NAME_UNKNOWN,
+	ndev = alloc_netdev(माप(*lapbeth), "lapb%d", NET_NAME_UNKNOWN,
 			    lapbeth_setup);
-	if (!ndev)
-		goto out;
+	अगर (!ndev)
+		जाओ out;
 
 	/* When transmitting data:
-	 * first this driver removes a pseudo header of 1 byte,
+	 * first this driver हटाओs a pseuकरो header of 1 byte,
 	 * then the lapb module prepends an LAPB header of at most 3 bytes,
 	 * then this driver prepends a length field of 2 bytes,
 	 * then the underlying Ethernet device prepends its own header.
@@ -411,116 +412,116 @@ static int lapbeth_new_device(struct net_device *dev)
 	spin_lock_init(&lapbeth->up_lock);
 
 	skb_queue_head_init(&lapbeth->rx_queue);
-	netif_napi_add(ndev, &lapbeth->napi, lapbeth_napi_poll, 16);
+	netअगर_napi_add(ndev, &lapbeth->napi, lapbeth_napi_poll, 16);
 
 	rc = -EIO;
-	if (register_netdevice(ndev))
-		goto fail;
+	अगर (रेजिस्टर_netdevice(ndev))
+		जाओ fail;
 
 	list_add_rcu(&lapbeth->node, &lapbeth_devices);
 	rc = 0;
 out:
-	return rc;
+	वापस rc;
 fail:
 	dev_put(dev);
-	free_netdev(ndev);
-	goto out;
-}
+	मुक्त_netdev(ndev);
+	जाओ out;
+पूर्ण
 
 /*
  *	Free a lapb network device.
  */
-static void lapbeth_free_device(struct lapbethdev *lapbeth)
-{
+अटल व्योम lapbeth_मुक्त_device(काष्ठा lapbethdev *lapbeth)
+अणु
 	dev_put(lapbeth->ethdev);
 	list_del_rcu(&lapbeth->node);
-	unregister_netdevice(lapbeth->axdev);
-}
+	unरेजिस्टर_netdevice(lapbeth->axdev);
+पूर्ण
 
 /*
  *	Handle device status changes.
  *
- * Called from notifier with RTNL held.
+ * Called from notअगरier with RTNL held.
  */
-static int lapbeth_device_event(struct notifier_block *this,
-				unsigned long event, void *ptr)
-{
-	struct lapbethdev *lapbeth;
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
+अटल पूर्णांक lapbeth_device_event(काष्ठा notअगरier_block *this,
+				अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा lapbethdev *lapbeth;
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
 
-	if (dev_net(dev) != &init_net)
-		return NOTIFY_DONE;
+	अगर (dev_net(dev) != &init_net)
+		वापस NOTIFY_DONE;
 
-	if (!dev_is_ethdev(dev))
-		return NOTIFY_DONE;
+	अगर (!dev_is_ethdev(dev))
+		वापस NOTIFY_DONE;
 
-	switch (event) {
-	case NETDEV_UP:
-		/* New ethernet device -> new LAPB interface	 */
-		if (lapbeth_get_x25_dev(dev) == NULL)
+	चयन (event) अणु
+	हाल NETDEV_UP:
+		/* New ethernet device -> new LAPB पूर्णांकerface	 */
+		अगर (lapbeth_get_x25_dev(dev) == शून्य)
 			lapbeth_new_device(dev);
-		break;
-	case NETDEV_GOING_DOWN:
-		/* ethernet device closes -> close LAPB interface */
+		अवरोध;
+	हाल NETDEV_GOING_DOWN:
+		/* ethernet device बंदs -> बंद LAPB पूर्णांकerface */
 		lapbeth = lapbeth_get_x25_dev(dev);
-		if (lapbeth) 
-			dev_close(lapbeth->axdev);
-		break;
-	case NETDEV_UNREGISTER:
-		/* ethernet device disappears -> remove LAPB interface */
+		अगर (lapbeth) 
+			dev_बंद(lapbeth->axdev);
+		अवरोध;
+	हाल NETDEV_UNREGISTER:
+		/* ethernet device disappears -> हटाओ LAPB पूर्णांकerface */
 		lapbeth = lapbeth_get_x25_dev(dev);
-		if (lapbeth)
-			lapbeth_free_device(lapbeth);
-		break;
-	}
+		अगर (lapbeth)
+			lapbeth_मुक्त_device(lapbeth);
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /* ------------------------------------------------------------------------ */
 
-static struct packet_type lapbeth_packet_type __read_mostly = {
+अटल काष्ठा packet_type lapbeth_packet_type __पढ़ो_mostly = अणु
 	.type = cpu_to_be16(ETH_P_DEC),
 	.func = lapbeth_rcv,
-};
+पूर्ण;
 
-static struct notifier_block lapbeth_dev_notifier = {
-	.notifier_call = lapbeth_device_event,
-};
+अटल काष्ठा notअगरier_block lapbeth_dev_notअगरier = अणु
+	.notअगरier_call = lapbeth_device_event,
+पूर्ण;
 
-static const char banner[] __initconst =
+अटल स्थिर अक्षर banner[] __initस्थिर =
 	KERN_INFO "LAPB Ethernet driver version 0.02\n";
 
-static int __init lapbeth_init_driver(void)
-{
+अटल पूर्णांक __init lapbeth_init_driver(व्योम)
+अणु
 	dev_add_pack(&lapbeth_packet_type);
 
-	register_netdevice_notifier(&lapbeth_dev_notifier);
+	रेजिस्टर_netdevice_notअगरier(&lapbeth_dev_notअगरier);
 
-	printk(banner);
+	prपूर्णांकk(banner);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 module_init(lapbeth_init_driver);
 
-static void __exit lapbeth_cleanup_driver(void)
-{
-	struct lapbethdev *lapbeth;
-	struct list_head *entry, *tmp;
+अटल व्योम __निकास lapbeth_cleanup_driver(व्योम)
+अणु
+	काष्ठा lapbethdev *lapbeth;
+	काष्ठा list_head *entry, *पंचांगp;
 
-	dev_remove_pack(&lapbeth_packet_type);
-	unregister_netdevice_notifier(&lapbeth_dev_notifier);
+	dev_हटाओ_pack(&lapbeth_packet_type);
+	unरेजिस्टर_netdevice_notअगरier(&lapbeth_dev_notअगरier);
 
 	rtnl_lock();
-	list_for_each_safe(entry, tmp, &lapbeth_devices) {
-		lapbeth = list_entry(entry, struct lapbethdev, node);
+	list_क्रम_each_safe(entry, पंचांगp, &lapbeth_devices) अणु
+		lapbeth = list_entry(entry, काष्ठा lapbethdev, node);
 
 		dev_put(lapbeth->ethdev);
-		unregister_netdevice(lapbeth->axdev);
-	}
+		unरेजिस्टर_netdevice(lapbeth->axdev);
+	पूर्ण
 	rtnl_unlock();
-}
-module_exit(lapbeth_cleanup_driver);
+पूर्ण
+module_निकास(lapbeth_cleanup_driver);
 
 MODULE_AUTHOR("Jonathan Naylor <g4klx@g4klx.demon.co.uk>");
 MODULE_DESCRIPTION("The unofficial LAPB over Ethernet driver");

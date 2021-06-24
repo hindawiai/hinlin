@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006, 2007 Cisco Systems.  All rights reserved.
  * Copyright (c) 2007, 2008 Mellanox Technologies. All rights reserved.
@@ -5,20 +6,20 @@
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,174 +32,174 @@
  * SOFTWARE.
  */
 
-#ifndef MLX4_IB_H
-#define MLX4_IB_H
+#अगर_अघोषित MLX4_IB_H
+#घोषणा MLX4_IB_H
 
-#include <linux/compiler.h>
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/idr.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/idr.h>
 
-#include <rdma/ib_verbs.h>
-#include <rdma/ib_umem.h>
-#include <rdma/ib_mad.h>
-#include <rdma/ib_sa.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/ib_uस्मृति.स>
+#समावेश <rdma/ib_mad.h>
+#समावेश <rdma/ib_sa.h>
 
-#include <linux/mlx4/device.h>
-#include <linux/mlx4/doorbell.h>
-#include <linux/mlx4/qp.h>
-#include <linux/mlx4/cq.h>
+#समावेश <linux/mlx4/device.h>
+#समावेश <linux/mlx4/करोorbell.h>
+#समावेश <linux/mlx4/qp.h>
+#समावेश <linux/mlx4/cq.h>
 
-#define MLX4_IB_DRV_NAME	"mlx4_ib"
+#घोषणा MLX4_IB_DRV_NAME	"mlx4_ib"
 
-#ifdef pr_fmt
-#undef pr_fmt
-#endif
-#define pr_fmt(fmt)	"<" MLX4_IB_DRV_NAME "> %s: " fmt, __func__
+#अगर_घोषित pr_fmt
+#अघोषित pr_fmt
+#पूर्ण_अगर
+#घोषणा pr_fmt(fmt)	"<" MLX4_IB_DRV_NAME "> %s: " fmt, __func__
 
-#define mlx4_ib_warn(ibdev, format, arg...) \
-	dev_warn((ibdev)->dev.parent, MLX4_IB_DRV_NAME ": " format, ## arg)
+#घोषणा mlx4_ib_warn(ibdev, क्रमmat, arg...) \
+	dev_warn((ibdev)->dev.parent, MLX4_IB_DRV_NAME ": " क्रमmat, ## arg)
 
-enum {
+क्रमागत अणु
 	MLX4_IB_SQ_MIN_WQE_SHIFT = 6,
 	MLX4_IB_MAX_HEADROOM	 = 2048
-};
+पूर्ण;
 
-#define MLX4_IB_SQ_HEADROOM(shift)	((MLX4_IB_MAX_HEADROOM >> (shift)) + 1)
-#define MLX4_IB_SQ_MAX_SPARE		(MLX4_IB_SQ_HEADROOM(MLX4_IB_SQ_MIN_WQE_SHIFT))
+#घोषणा MLX4_IB_SQ_HEADROOM(shअगरt)	((MLX4_IB_MAX_HEADROOM >> (shअगरt)) + 1)
+#घोषणा MLX4_IB_SQ_MAX_SPARE		(MLX4_IB_SQ_HEADROOM(MLX4_IB_SQ_MIN_WQE_SHIFT))
 
-/*module param to indicate if SM assigns the alias_GUID*/
-extern int mlx4_ib_sm_guid_assign;
+/*module param to indicate अगर SM assigns the alias_GUID*/
+बाह्य पूर्णांक mlx4_ib_sm_guid_assign;
 
-#define MLX4_IB_UC_STEER_QPN_ALIGN 1
-#define MLX4_IB_UC_MAX_NUM_QPS     256
+#घोषणा MLX4_IB_UC_STEER_QPN_ALIGN 1
+#घोषणा MLX4_IB_UC_MAX_NUM_QPS     256
 
-enum hw_bar_type {
+क्रमागत hw_bar_type अणु
 	HW_BAR_BF,
 	HW_BAR_DB,
 	HW_BAR_CLOCK,
 	HW_BAR_COUNT
-};
+पूर्ण;
 
-struct mlx4_ib_ucontext {
-	struct ib_ucontext	ibucontext;
-	struct mlx4_uar		uar;
-	struct list_head	db_page_list;
-	struct mutex		db_page_mutex;
-	struct list_head	wqn_ranges_list;
-	struct mutex		wqn_ranges_mutex; /* protect wqn_ranges_list */
-};
+काष्ठा mlx4_ib_ucontext अणु
+	काष्ठा ib_ucontext	ibucontext;
+	काष्ठा mlx4_uar		uar;
+	काष्ठा list_head	db_page_list;
+	काष्ठा mutex		db_page_mutex;
+	काष्ठा list_head	wqn_ranges_list;
+	काष्ठा mutex		wqn_ranges_mutex; /* protect wqn_ranges_list */
+पूर्ण;
 
-struct mlx4_ib_pd {
-	struct ib_pd		ibpd;
+काष्ठा mlx4_ib_pd अणु
+	काष्ठा ib_pd		ibpd;
 	u32			pdn;
-};
+पूर्ण;
 
-struct mlx4_ib_xrcd {
-	struct ib_xrcd		ibxrcd;
+काष्ठा mlx4_ib_xrcd अणु
+	काष्ठा ib_xrcd		ibxrcd;
 	u32			xrcdn;
-	struct ib_pd	       *pd;
-	struct ib_cq	       *cq;
-};
+	काष्ठा ib_pd	       *pd;
+	काष्ठा ib_cq	       *cq;
+पूर्ण;
 
-struct mlx4_ib_cq_buf {
-	struct mlx4_buf		buf;
-	struct mlx4_mtt		mtt;
-	int			entry_size;
-};
+काष्ठा mlx4_ib_cq_buf अणु
+	काष्ठा mlx4_buf		buf;
+	काष्ठा mlx4_mtt		mtt;
+	पूर्णांक			entry_size;
+पूर्ण;
 
-struct mlx4_ib_cq_resize {
-	struct mlx4_ib_cq_buf	buf;
-	int			cqe;
-};
+काष्ठा mlx4_ib_cq_resize अणु
+	काष्ठा mlx4_ib_cq_buf	buf;
+	पूर्णांक			cqe;
+पूर्ण;
 
-struct mlx4_ib_cq {
-	struct ib_cq		ibcq;
-	struct mlx4_cq		mcq;
-	struct mlx4_ib_cq_buf	buf;
-	struct mlx4_ib_cq_resize *resize_buf;
-	struct mlx4_db		db;
+काष्ठा mlx4_ib_cq अणु
+	काष्ठा ib_cq		ibcq;
+	काष्ठा mlx4_cq		mcq;
+	काष्ठा mlx4_ib_cq_buf	buf;
+	काष्ठा mlx4_ib_cq_resize *resize_buf;
+	काष्ठा mlx4_db		db;
 	spinlock_t		lock;
-	struct mutex		resize_mutex;
-	struct ib_umem	       *umem;
-	struct ib_umem	       *resize_umem;
-	int			create_flags;
+	काष्ठा mutex		resize_mutex;
+	काष्ठा ib_umem	       *umem;
+	काष्ठा ib_umem	       *resize_umem;
+	पूर्णांक			create_flags;
 	/* List of qps that it serves.*/
-	struct list_head		send_qp_list;
-	struct list_head		recv_qp_list;
-};
+	काष्ठा list_head		send_qp_list;
+	काष्ठा list_head		recv_qp_list;
+पूर्ण;
 
-#define MLX4_MR_PAGES_ALIGN 0x40
+#घोषणा MLX4_MR_PAGES_ALIGN 0x40
 
-struct mlx4_ib_mr {
-	struct ib_mr		ibmr;
+काष्ठा mlx4_ib_mr अणु
+	काष्ठा ib_mr		ibmr;
 	__be64			*pages;
 	dma_addr_t		page_map;
 	u32			npages;
 	u32			max_pages;
-	struct mlx4_mr		mmr;
-	struct ib_umem	       *umem;
-	size_t			page_map_size;
-};
+	काष्ठा mlx4_mr		mmr;
+	काष्ठा ib_umem	       *umem;
+	माप_प्रकार			page_map_size;
+पूर्ण;
 
-struct mlx4_ib_mw {
-	struct ib_mw		ibmw;
-	struct mlx4_mw		mmw;
-};
+काष्ठा mlx4_ib_mw अणु
+	काष्ठा ib_mw		ibmw;
+	काष्ठा mlx4_mw		mmw;
+पूर्ण;
 
-#define MAX_REGS_PER_FLOW 2
+#घोषणा MAX_REGS_PER_FLOW 2
 
-struct mlx4_flow_reg_id {
+काष्ठा mlx4_flow_reg_id अणु
 	u64 id;
 	u64 mirror;
-};
+पूर्ण;
 
-struct mlx4_ib_flow {
-	struct ib_flow ibflow;
-	/* translating DMFS verbs sniffer rule to FW API requires two reg IDs */
-	struct mlx4_flow_reg_id reg_id[MAX_REGS_PER_FLOW];
-};
+काष्ठा mlx4_ib_flow अणु
+	काष्ठा ib_flow ibflow;
+	/* translating DMFS verbs snअगरfer rule to FW API requires two reg IDs */
+	काष्ठा mlx4_flow_reg_id reg_id[MAX_REGS_PER_FLOW];
+पूर्ण;
 
-struct mlx4_ib_wq {
+काष्ठा mlx4_ib_wq अणु
 	u64		       *wrid;
 	spinlock_t		lock;
-	int			wqe_cnt;
-	int			max_post;
-	int			max_gs;
-	int			offset;
-	int			wqe_shift;
-	unsigned		head;
-	unsigned		tail;
-};
+	पूर्णांक			wqe_cnt;
+	पूर्णांक			max_post;
+	पूर्णांक			max_gs;
+	पूर्णांक			offset;
+	पूर्णांक			wqe_shअगरt;
+	अचिन्हित		head;
+	अचिन्हित		tail;
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX4_IB_QP_CREATE_ROCE_V2_GSI = IB_QP_CREATE_RESERVED_START
-};
+पूर्ण;
 
-enum mlx4_ib_qp_flags {
+क्रमागत mlx4_ib_qp_flags अणु
 	MLX4_IB_QP_LSO = IB_QP_CREATE_IPOIB_UD_LSO,
 	MLX4_IB_QP_BLOCK_MULTICAST_LOOPBACK = IB_QP_CREATE_BLOCK_MULTICAST_LOOPBACK,
 	MLX4_IB_QP_NETIF = IB_QP_CREATE_NETIF_QP,
 	MLX4_IB_QP_SCATTER_FCS = IB_QP_CREATE_SCATTER_FCS,
 
-	/* Mellanox specific flags start from IB_QP_CREATE_RESERVED_START */
+	/* Mellanox specअगरic flags start from IB_QP_CREATE_RESERVED_START */
 	MLX4_IB_ROCE_V2_GSI_QP = MLX4_IB_QP_CREATE_ROCE_V2_GSI,
 	MLX4_IB_SRIOV_TUNNEL_QP = 1 << 30,
 	MLX4_IB_SRIOV_SQP = 1 << 31,
-};
+पूर्ण;
 
-struct mlx4_ib_gid_entry {
-	struct list_head	list;
-	union ib_gid		gid;
-	int			added;
+काष्ठा mlx4_ib_gid_entry अणु
+	काष्ठा list_head	list;
+	जोड़ ib_gid		gid;
+	पूर्णांक			added;
 	u8			port;
-};
+पूर्ण;
 
-enum mlx4_ib_qp_type {
+क्रमागत mlx4_ib_qp_type अणु
 	/*
 	 * IB_QPT_SMI and IB_QPT_GSI have to be the first two entries
 	 * here (and in that order) since the MAD layer uses them as
-	 * indices into a 2-entry table.
+	 * indices पूर्णांकo a 2-entry table.
 	 */
 	MLX4_IB_QPT_SMI = IB_QPT_SMI,
 	MLX4_IB_QPT_GSI = IB_QPT_GSI,
@@ -218,129 +219,129 @@ enum mlx4_ib_qp_type {
 	MLX4_IB_QPT_TUN_SMI_OWNER	= 1 << 19,
 	MLX4_IB_QPT_TUN_SMI		= 1 << 20,
 	MLX4_IB_QPT_TUN_GSI		= 1 << 21,
-};
+पूर्ण;
 
-#define MLX4_IB_QPT_ANY_SRIOV	(MLX4_IB_QPT_PROXY_SMI_OWNER | \
+#घोषणा MLX4_IB_QPT_ANY_SRIOV	(MLX4_IB_QPT_PROXY_SMI_OWNER | \
 	MLX4_IB_QPT_PROXY_SMI | MLX4_IB_QPT_PROXY_GSI | MLX4_IB_QPT_TUN_SMI_OWNER | \
 	MLX4_IB_QPT_TUN_SMI | MLX4_IB_QPT_TUN_GSI)
 
-enum mlx4_ib_mad_ifc_flags {
+क्रमागत mlx4_ib_mad_अगरc_flags अणु
 	MLX4_MAD_IFC_IGNORE_MKEY	= 1,
 	MLX4_MAD_IFC_IGNORE_BKEY	= 2,
 	MLX4_MAD_IFC_IGNORE_KEYS	= (MLX4_MAD_IFC_IGNORE_MKEY |
 					   MLX4_MAD_IFC_IGNORE_BKEY),
 	MLX4_MAD_IFC_NET_VIEW		= 4,
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX4_NUM_TUNNEL_BUFS		= 512,
 	MLX4_NUM_WIRE_BUFS		= 2048,
-};
+पूर्ण;
 
-struct mlx4_ib_tunnel_header {
-	struct mlx4_av av;
+काष्ठा mlx4_ib_tunnel_header अणु
+	काष्ठा mlx4_av av;
 	__be32 remote_qpn;
 	__be32 qkey;
 	__be16 vlan;
 	u8 mac[6];
 	__be16 pkey_index;
 	u8 reserved[6];
-};
+पूर्ण;
 
-struct mlx4_ib_buf {
-	void *addr;
+काष्ठा mlx4_ib_buf अणु
+	व्योम *addr;
 	dma_addr_t map;
-};
+पूर्ण;
 
-struct mlx4_rcv_tunnel_hdr {
-	__be32 flags_src_qp; /* flags[6:5] is defined for VLANs:
+काष्ठा mlx4_rcv_tunnel_hdr अणु
+	__be32 flags_src_qp; /* flags[6:5] is defined क्रम VLANs:
 			      * 0x0 - no vlan was in the packet
 			      * 0x01 - C-VLAN was in the packet */
-	u8 g_ml_path; /* gid bit stands for ipv6/4 header in RoCE */
+	u8 g_ml_path; /* gid bit stands क्रम ipv6/4 header in RoCE */
 	u8 reserved;
 	__be16 pkey_index;
 	__be16 sl_vid;
 	__be16 slid_mac_47_32;
 	__be32 mac_31_0;
-};
+पूर्ण;
 
-struct mlx4_ib_proxy_sqp_hdr {
-	struct ib_grh grh;
-	struct mlx4_rcv_tunnel_hdr tun;
-}  __packed;
+काष्ठा mlx4_ib_proxy_sqp_hdr अणु
+	काष्ठा ib_grh grh;
+	काष्ठा mlx4_rcv_tunnel_hdr tun;
+पूर्ण  __packed;
 
-struct mlx4_roce_smac_vlan_info {
+काष्ठा mlx4_roce_smac_vlan_info अणु
 	u64 smac;
-	int smac_index;
-	int smac_port;
+	पूर्णांक smac_index;
+	पूर्णांक smac_port;
 	u64 candidate_smac;
-	int candidate_smac_index;
-	int candidate_smac_port;
+	पूर्णांक candidate_smac_index;
+	पूर्णांक candidate_smac_port;
 	u16 vid;
-	int vlan_index;
-	int vlan_port;
+	पूर्णांक vlan_index;
+	पूर्णांक vlan_port;
 	u16 candidate_vid;
-	int candidate_vlan_index;
-	int candidate_vlan_port;
-	int update_vid;
-};
+	पूर्णांक candidate_vlan_index;
+	पूर्णांक candidate_vlan_port;
+	पूर्णांक update_vid;
+पूर्ण;
 
-struct mlx4_wqn_range {
-	int			base_wqn;
-	int			size;
-	int			refcount;
+काष्ठा mlx4_wqn_range अणु
+	पूर्णांक			base_wqn;
+	पूर्णांक			size;
+	पूर्णांक			refcount;
 	bool			dirty;
-	struct list_head	list;
-};
+	काष्ठा list_head	list;
+पूर्ण;
 
-struct mlx4_ib_rss {
-	unsigned int		base_qpn_tbl_sz;
+काष्ठा mlx4_ib_rss अणु
+	अचिन्हित पूर्णांक		base_qpn_tbl_sz;
 	u8			flags;
 	u8			rss_key[MLX4_EN_RSS_KEY_SIZE];
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	/*
 	 * Largest possible UD header: send with GRH and immediate
-	 * data plus 18 bytes for an Ethernet header with VLAN/802.1Q
+	 * data plus 18 bytes क्रम an Ethernet header with VLAN/802.1Q
 	 * tag.  (LRH would only use 8 bytes, so Ethernet is the
-	 * biggest case)
+	 * biggest हाल)
 	 */
 	MLX4_IB_UD_HEADER_SIZE		= 82,
 	MLX4_IB_LSO_HEADER_SPARE	= 128,
-};
+पूर्ण;
 
-struct mlx4_ib_sqp {
-	int pkey_index;
+काष्ठा mlx4_ib_sqp अणु
+	पूर्णांक pkey_index;
 	u32 qkey;
 	u32 send_psn;
-	struct ib_ud_header ud_header;
+	काष्ठा ib_ud_header ud_header;
 	u8 header_buf[MLX4_IB_UD_HEADER_SIZE];
-	struct ib_qp *roce_v2_gsi;
-};
+	काष्ठा ib_qp *roce_v2_gsi;
+पूर्ण;
 
-struct mlx4_ib_qp {
-	union {
-		struct ib_qp	ibqp;
-		struct ib_wq	ibwq;
-	};
-	struct mlx4_qp		mqp;
-	struct mlx4_buf		buf;
+काष्ठा mlx4_ib_qp अणु
+	जोड़ अणु
+		काष्ठा ib_qp	ibqp;
+		काष्ठा ib_wq	ibwq;
+	पूर्ण;
+	काष्ठा mlx4_qp		mqp;
+	काष्ठा mlx4_buf		buf;
 
-	struct mlx4_db		db;
-	struct mlx4_ib_wq	rq;
+	काष्ठा mlx4_db		db;
+	काष्ठा mlx4_ib_wq	rq;
 
-	u32			doorbell_qpn;
-	__be32			sq_signal_bits;
-	unsigned		sq_next_wqe;
-	int			sq_spare_wqes;
-	struct mlx4_ib_wq	sq;
+	u32			करोorbell_qpn;
+	__be32			sq_संकेत_bits;
+	अचिन्हित		sq_next_wqe;
+	पूर्णांक			sq_spare_wqes;
+	काष्ठा mlx4_ib_wq	sq;
 
-	enum mlx4_ib_qp_type	mlx4_ib_qp_type;
-	struct ib_umem	       *umem;
-	struct mlx4_mtt		mtt;
-	int			buf_size;
-	struct mutex		mutex;
+	क्रमागत mlx4_ib_qp_type	mlx4_ib_qp_type;
+	काष्ठा ib_umem	       *umem;
+	काष्ठा mlx4_mtt		mtt;
+	पूर्णांक			buf_size;
+	काष्ठा mutex		mutex;
 	u16			xrcdn;
 	u32			flags;
 	u8			port;
@@ -349,593 +350,593 @@ struct mlx4_ib_qp {
 	u8			resp_depth;
 	u8			sq_no_prefetch;
 	u8			state;
-	int			mlx_type;
+	पूर्णांक			mlx_type;
 	u32			inl_recv_sz;
-	struct list_head	gid_list;
-	struct list_head	steering_rules;
-	struct mlx4_ib_buf	*sqp_proxy_rcv;
-	struct mlx4_roce_smac_vlan_info pri;
-	struct mlx4_roce_smac_vlan_info alt;
+	काष्ठा list_head	gid_list;
+	काष्ठा list_head	steering_rules;
+	काष्ठा mlx4_ib_buf	*sqp_proxy_rcv;
+	काष्ठा mlx4_roce_smac_vlan_info pri;
+	काष्ठा mlx4_roce_smac_vlan_info alt;
 	u64			reg_id;
-	struct list_head	qps_list;
-	struct list_head	cq_recv_list;
-	struct list_head	cq_send_list;
-	struct counter_index	*counter_index;
-	struct mlx4_wqn_range	*wqn_range;
+	काष्ठा list_head	qps_list;
+	काष्ठा list_head	cq_recv_list;
+	काष्ठा list_head	cq_send_list;
+	काष्ठा counter_index	*counter_index;
+	काष्ठा mlx4_wqn_range	*wqn_range;
 	/* Number of RSS QP parents that uses this WQ */
 	u32			rss_usecnt;
-	union {
-		struct mlx4_ib_rss *rss_ctx;
-		struct mlx4_ib_sqp *sqp;
-	};
-};
+	जोड़ अणु
+		काष्ठा mlx4_ib_rss *rss_ctx;
+		काष्ठा mlx4_ib_sqp *sqp;
+	पूर्ण;
+पूर्ण;
 
-struct mlx4_ib_srq {
-	struct ib_srq		ibsrq;
-	struct mlx4_srq		msrq;
-	struct mlx4_buf		buf;
-	struct mlx4_db		db;
+काष्ठा mlx4_ib_srq अणु
+	काष्ठा ib_srq		ibsrq;
+	काष्ठा mlx4_srq		msrq;
+	काष्ठा mlx4_buf		buf;
+	काष्ठा mlx4_db		db;
 	u64		       *wrid;
 	spinlock_t		lock;
-	int			head;
-	int			tail;
+	पूर्णांक			head;
+	पूर्णांक			tail;
 	u16			wqe_ctr;
-	struct ib_umem	       *umem;
-	struct mlx4_mtt		mtt;
-	struct mutex		mutex;
-};
+	काष्ठा ib_umem	       *umem;
+	काष्ठा mlx4_mtt		mtt;
+	काष्ठा mutex		mutex;
+पूर्ण;
 
-struct mlx4_ib_ah {
-	struct ib_ah		ibah;
-	union mlx4_ext_av       av;
-};
+काष्ठा mlx4_ib_ah अणु
+	काष्ठा ib_ah		ibah;
+	जोड़ mlx4_ext_av       av;
+पूर्ण;
 
-struct mlx4_ib_rwq_ind_table {
-	struct ib_rwq_ind_table ib_rwq_ind_tbl;
-};
+काष्ठा mlx4_ib_rwq_ind_table अणु
+	काष्ठा ib_rwq_ind_table ib_rwq_ind_tbl;
+पूर्ण;
 
 /****************************************/
 /* alias guid support */
 /****************************************/
-#define NUM_PORT_ALIAS_GUID		2
-#define NUM_ALIAS_GUID_IN_REC		8
-#define NUM_ALIAS_GUID_REC_IN_PORT	16
-#define GUID_REC_SIZE			8
-#define NUM_ALIAS_GUID_PER_PORT		128
-#define MLX4_NOT_SET_GUID		(0x00LL)
-#define MLX4_GUID_FOR_DELETE_VAL	(~(0x00LL))
+#घोषणा NUM_PORT_ALIAS_GUID		2
+#घोषणा NUM_ALIAS_GUID_IN_REC		8
+#घोषणा NUM_ALIAS_GUID_REC_IN_PORT	16
+#घोषणा GUID_REC_SIZE			8
+#घोषणा NUM_ALIAS_GUID_PER_PORT		128
+#घोषणा MLX4_NOT_SET_GUID		(0x00LL)
+#घोषणा MLX4_GUID_FOR_DELETE_VAL	(~(0x00LL))
 
-enum mlx4_guid_alias_rec_status {
+क्रमागत mlx4_guid_alias_rec_status अणु
 	MLX4_GUID_INFO_STATUS_IDLE,
 	MLX4_GUID_INFO_STATUS_SET,
-};
+पूर्ण;
 
-#define GUID_STATE_NEED_PORT_INIT 0x01
+#घोषणा GUID_STATE_NEED_PORT_INIT 0x01
 
-enum mlx4_guid_alias_rec_method {
+क्रमागत mlx4_guid_alias_rec_method अणु
 	MLX4_GUID_INFO_RECORD_SET	= IB_MGMT_METHOD_SET,
 	MLX4_GUID_INFO_RECORD_DELETE	= IB_SA_METHOD_DELETE,
-};
+पूर्ण;
 
-struct mlx4_sriov_alias_guid_info_rec_det {
+काष्ठा mlx4_sriov_alias_guid_info_rec_det अणु
 	u8 all_recs[GUID_REC_SIZE * NUM_ALIAS_GUID_IN_REC];
 	ib_sa_comp_mask guid_indexes; /*indicates what from the 8 records are valid*/
-	enum mlx4_guid_alias_rec_status status; /*indicates the administraively status of the record.*/
-	unsigned int guids_retry_schedule[NUM_ALIAS_GUID_IN_REC];
-	u64 time_to_run;
-};
+	क्रमागत mlx4_guid_alias_rec_status status; /*indicates the administraively status of the record.*/
+	अचिन्हित पूर्णांक guids_retry_schedule[NUM_ALIAS_GUID_IN_REC];
+	u64 समय_प्रकारo_run;
+पूर्ण;
 
-struct mlx4_sriov_alias_guid_port_rec_det {
-	struct mlx4_sriov_alias_guid_info_rec_det all_rec_per_port[NUM_ALIAS_GUID_REC_IN_PORT];
-	struct workqueue_struct *wq;
-	struct delayed_work alias_guid_work;
+काष्ठा mlx4_sriov_alias_guid_port_rec_det अणु
+	काष्ठा mlx4_sriov_alias_guid_info_rec_det all_rec_per_port[NUM_ALIAS_GUID_REC_IN_PORT];
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा delayed_work alias_guid_work;
 	u32 port;
 	u32 state_flags;
-	struct mlx4_sriov_alias_guid *parent;
-	struct list_head cb_list;
-};
+	काष्ठा mlx4_sriov_alias_guid *parent;
+	काष्ठा list_head cb_list;
+पूर्ण;
 
-struct mlx4_sriov_alias_guid {
-	struct mlx4_sriov_alias_guid_port_rec_det ports_guid[MLX4_MAX_PORTS];
+काष्ठा mlx4_sriov_alias_guid अणु
+	काष्ठा mlx4_sriov_alias_guid_port_rec_det ports_guid[MLX4_MAX_PORTS];
 	spinlock_t ag_work_lock;
-	struct ib_sa_client *sa_client;
-};
+	काष्ठा ib_sa_client *sa_client;
+पूर्ण;
 
-struct mlx4_ib_demux_work {
-	struct work_struct	work;
-	struct mlx4_ib_dev     *dev;
-	int			slave;
-	int			do_init;
+काष्ठा mlx4_ib_demux_work अणु
+	काष्ठा work_काष्ठा	work;
+	काष्ठा mlx4_ib_dev     *dev;
+	पूर्णांक			slave;
+	पूर्णांक			करो_init;
 	u8			port;
 
-};
+पूर्ण;
 
-struct mlx4_ib_tun_tx_buf {
-	struct mlx4_ib_buf buf;
-	struct ib_ah *ah;
-};
+काष्ठा mlx4_ib_tun_tx_buf अणु
+	काष्ठा mlx4_ib_buf buf;
+	काष्ठा ib_ah *ah;
+पूर्ण;
 
-struct mlx4_ib_demux_pv_qp {
-	struct ib_qp *qp;
-	enum ib_qp_type proxy_qpt;
-	struct mlx4_ib_buf *ring;
-	struct mlx4_ib_tun_tx_buf *tx_ring;
+काष्ठा mlx4_ib_demux_pv_qp अणु
+	काष्ठा ib_qp *qp;
+	क्रमागत ib_qp_type proxy_qpt;
+	काष्ठा mlx4_ib_buf *ring;
+	काष्ठा mlx4_ib_tun_tx_buf *tx_ring;
 	spinlock_t tx_lock;
-	unsigned tx_ix_head;
-	unsigned tx_ix_tail;
-};
+	अचिन्हित tx_ix_head;
+	अचिन्हित tx_ix_tail;
+पूर्ण;
 
-enum mlx4_ib_demux_pv_state {
+क्रमागत mlx4_ib_demux_pv_state अणु
 	DEMUX_PV_STATE_DOWN,
 	DEMUX_PV_STATE_STARTING,
 	DEMUX_PV_STATE_ACTIVE,
 	DEMUX_PV_STATE_DOWNING,
-};
+पूर्ण;
 
-struct mlx4_ib_demux_pv_ctx {
-	int port;
-	int slave;
-	enum mlx4_ib_demux_pv_state state;
-	int has_smi;
-	struct ib_device *ib_dev;
-	struct ib_cq *cq;
-	struct ib_pd *pd;
-	struct work_struct work;
-	struct workqueue_struct *wq;
-	struct workqueue_struct *wi_wq;
-	struct mlx4_ib_demux_pv_qp qp[2];
-};
+काष्ठा mlx4_ib_demux_pv_ctx अणु
+	पूर्णांक port;
+	पूर्णांक slave;
+	क्रमागत mlx4_ib_demux_pv_state state;
+	पूर्णांक has_smi;
+	काष्ठा ib_device *ib_dev;
+	काष्ठा ib_cq *cq;
+	काष्ठा ib_pd *pd;
+	काष्ठा work_काष्ठा work;
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा workqueue_काष्ठा *wi_wq;
+	काष्ठा mlx4_ib_demux_pv_qp qp[2];
+पूर्ण;
 
-struct mlx4_ib_demux_ctx {
-	struct ib_device *ib_dev;
-	int port;
-	struct workqueue_struct *wq;
-	struct workqueue_struct *wi_wq;
-	struct workqueue_struct *ud_wq;
+काष्ठा mlx4_ib_demux_ctx अणु
+	काष्ठा ib_device *ib_dev;
+	पूर्णांक port;
+	काष्ठा workqueue_काष्ठा *wq;
+	काष्ठा workqueue_काष्ठा *wi_wq;
+	काष्ठा workqueue_काष्ठा *ud_wq;
 	spinlock_t ud_lock;
 	atomic64_t subnet_prefix;
 	__be64 guid_cache[128];
-	struct mlx4_ib_dev *dev;
+	काष्ठा mlx4_ib_dev *dev;
 	/* the following lock protects both mcg_table and mcg_mgid0_list */
-	struct mutex		mcg_table_lock;
-	struct rb_root		mcg_table;
-	struct list_head	mcg_mgid0_list;
-	struct workqueue_struct	*mcg_wq;
-	struct mlx4_ib_demux_pv_ctx **tun;
+	काष्ठा mutex		mcg_table_lock;
+	काष्ठा rb_root		mcg_table;
+	काष्ठा list_head	mcg_mgid0_list;
+	काष्ठा workqueue_काष्ठा	*mcg_wq;
+	काष्ठा mlx4_ib_demux_pv_ctx **tun;
 	atomic_t tid;
-	int    flushing; /* flushing the work queue */
-};
+	पूर्णांक    flushing; /* flushing the work queue */
+पूर्ण;
 
-struct mlx4_ib_sriov {
-	struct mlx4_ib_demux_ctx demux[MLX4_MAX_PORTS];
-	struct mlx4_ib_demux_pv_ctx *sqps[MLX4_MAX_PORTS];
+काष्ठा mlx4_ib_sriov अणु
+	काष्ठा mlx4_ib_demux_ctx demux[MLX4_MAX_PORTS];
+	काष्ठा mlx4_ib_demux_pv_ctx *sqps[MLX4_MAX_PORTS];
 	/* when using this spinlock you should use "irq" because
-	 * it may be called from interrupt context.*/
-	spinlock_t going_down_lock;
-	int is_going_down;
+	 * it may be called from पूर्णांकerrupt context.*/
+	spinlock_t going_करोwn_lock;
+	पूर्णांक is_going_करोwn;
 
-	struct mlx4_sriov_alias_guid alias_guid;
+	काष्ठा mlx4_sriov_alias_guid alias_guid;
 
-	/* CM paravirtualization fields */
-	struct xarray pv_id_table;
+	/* CM paraभवization fields */
+	काष्ठा xarray pv_id_table;
 	u32 pv_id_next;
 	spinlock_t id_map_lock;
-	struct rb_root sl_id_map;
-	struct list_head cm_list;
-	struct xarray xa_rej_tmout;
-};
+	काष्ठा rb_root sl_id_map;
+	काष्ठा list_head cm_list;
+	काष्ठा xarray xa_rej_पंचांगout;
+पूर्ण;
 
-struct gid_cache_context {
-	int real_index;
-	int refcount;
-};
+काष्ठा gid_cache_context अणु
+	पूर्णांक real_index;
+	पूर्णांक refcount;
+पूर्ण;
 
-struct gid_entry {
-	union ib_gid	gid;
-	enum ib_gid_type gid_type;
-	struct gid_cache_context *ctx;
+काष्ठा gid_entry अणु
+	जोड़ ib_gid	gid;
+	क्रमागत ib_gid_type gid_type;
+	काष्ठा gid_cache_context *ctx;
 	u16 vlan_id;
-};
+पूर्ण;
 
-struct mlx4_port_gid_table {
-	struct gid_entry gids[MLX4_MAX_PORT_GIDS];
-};
+काष्ठा mlx4_port_gid_table अणु
+	काष्ठा gid_entry gids[MLX4_MAX_PORT_GIDS];
+पूर्ण;
 
-struct mlx4_ib_iboe {
+काष्ठा mlx4_ib_iboe अणु
 	spinlock_t		lock;
-	struct net_device      *netdevs[MLX4_MAX_PORTS];
+	काष्ठा net_device      *netdevs[MLX4_MAX_PORTS];
 	atomic64_t		mac[MLX4_MAX_PORTS];
-	struct notifier_block 	nb;
-	struct mlx4_port_gid_table gids[MLX4_MAX_PORTS];
-	enum ib_port_state	last_port_state[MLX4_MAX_PORTS];
-};
+	काष्ठा notअगरier_block 	nb;
+	काष्ठा mlx4_port_gid_table gids[MLX4_MAX_PORTS];
+	क्रमागत ib_port_state	last_port_state[MLX4_MAX_PORTS];
+पूर्ण;
 
-struct pkey_mgt {
+काष्ठा pkey_mgt अणु
 	u8			virt2phys_pkey[MLX4_MFUNC_MAX][MLX4_MAX_PORTS][MLX4_MAX_PORT_PKEYS];
 	u16			phys_pkey_cache[MLX4_MAX_PORTS][MLX4_MAX_PORT_PKEYS];
-	struct list_head	pkey_port_list[MLX4_MFUNC_MAX];
-	struct kobject	       *device_parent[MLX4_MFUNC_MAX];
-};
+	काष्ठा list_head	pkey_port_list[MLX4_MFUNC_MAX];
+	काष्ठा kobject	       *device_parent[MLX4_MFUNC_MAX];
+पूर्ण;
 
-struct mlx4_ib_iov_sysfs_attr {
-	void *ctx;
-	struct kobject *kobj;
-	unsigned long data;
+काष्ठा mlx4_ib_iov_sysfs_attr अणु
+	व्योम *ctx;
+	काष्ठा kobject *kobj;
+	अचिन्हित दीर्घ data;
 	u32 entry_num;
-	char name[15];
-	struct device_attribute dentry;
-	struct device *dev;
-};
+	अक्षर name[15];
+	काष्ठा device_attribute dentry;
+	काष्ठा device *dev;
+पूर्ण;
 
-struct mlx4_ib_iov_sysfs_attr_ar {
-	struct mlx4_ib_iov_sysfs_attr dentries[3 * NUM_ALIAS_GUID_PER_PORT + 1];
-};
+काष्ठा mlx4_ib_iov_sysfs_attr_ar अणु
+	काष्ठा mlx4_ib_iov_sysfs_attr dentries[3 * NUM_ALIAS_GUID_PER_PORT + 1];
+पूर्ण;
 
-struct mlx4_ib_iov_port {
-	char name[100];
+काष्ठा mlx4_ib_iov_port अणु
+	अक्षर name[100];
 	u8 num;
-	struct mlx4_ib_dev *dev;
-	struct list_head list;
-	struct mlx4_ib_iov_sysfs_attr_ar *dentr_ar;
-	struct ib_port_attr attr;
-	struct kobject	*cur_port;
-	struct kobject	*admin_alias_parent;
-	struct kobject	*gids_parent;
-	struct kobject	*pkeys_parent;
-	struct kobject	*mcgs_parent;
-	struct mlx4_ib_iov_sysfs_attr mcg_dentry;
-};
+	काष्ठा mlx4_ib_dev *dev;
+	काष्ठा list_head list;
+	काष्ठा mlx4_ib_iov_sysfs_attr_ar *dentr_ar;
+	काष्ठा ib_port_attr attr;
+	काष्ठा kobject	*cur_port;
+	काष्ठा kobject	*admin_alias_parent;
+	काष्ठा kobject	*gids_parent;
+	काष्ठा kobject	*pkeys_parent;
+	काष्ठा kobject	*mcgs_parent;
+	काष्ठा mlx4_ib_iov_sysfs_attr mcg_dentry;
+पूर्ण;
 
-struct counter_index {
-	struct  list_head       list;
+काष्ठा counter_index अणु
+	काष्ठा  list_head       list;
 	u32		index;
 	u8		allocated;
-};
+पूर्ण;
 
-struct mlx4_ib_counters {
-	struct list_head        counters_list;
-	struct mutex            mutex; /* mutex for accessing counters list */
-	u32			default_counter;
-};
+काष्ठा mlx4_ib_counters अणु
+	काष्ठा list_head        counters_list;
+	काष्ठा mutex            mutex; /* mutex क्रम accessing counters list */
+	u32			शेष_counter;
+पूर्ण;
 
-#define MLX4_DIAG_COUNTERS_TYPES 2
+#घोषणा MLX4_DIAG_COUNTERS_TYPES 2
 
-struct mlx4_ib_diag_counters {
-	const char **name;
+काष्ठा mlx4_ib_diag_counters अणु
+	स्थिर अक्षर **name;
 	u32 *offset;
 	u32 num_counters;
-};
+पूर्ण;
 
-struct mlx4_ib_dev {
-	struct ib_device	ib_dev;
-	struct mlx4_dev	       *dev;
-	int			num_ports;
-	void __iomem	       *uar_map;
+काष्ठा mlx4_ib_dev अणु
+	काष्ठा ib_device	ib_dev;
+	काष्ठा mlx4_dev	       *dev;
+	पूर्णांक			num_ports;
+	व्योम __iomem	       *uar_map;
 
-	struct mlx4_uar		priv_uar;
+	काष्ठा mlx4_uar		priv_uar;
 	u32			priv_pdn;
 	MLX4_DECLARE_DOORBELL_LOCK(uar_lock);
 
-	struct ib_mad_agent    *send_agent[MLX4_MAX_PORTS][2];
-	struct ib_ah	       *sm_ah[MLX4_MAX_PORTS];
+	काष्ठा ib_mad_agent    *send_agent[MLX4_MAX_PORTS][2];
+	काष्ठा ib_ah	       *sm_ah[MLX4_MAX_PORTS];
 	spinlock_t		sm_lock;
 	atomic64_t		sl2vl[MLX4_MAX_PORTS];
-	struct mlx4_ib_sriov	sriov;
+	काष्ठा mlx4_ib_sriov	sriov;
 
-	struct mutex		cap_mask_mutex;
+	काष्ठा mutex		cap_mask_mutex;
 	bool			ib_active;
-	struct mlx4_ib_iboe	iboe;
-	struct mlx4_ib_counters counters_table[MLX4_MAX_PORTS];
-	int		       *eq_table;
-	struct kobject	       *iov_parent;
-	struct kobject	       *ports_parent;
-	struct kobject	       *dev_ports_parent[MLX4_MFUNC_MAX];
-	struct mlx4_ib_iov_port	iov_ports[MLX4_MAX_PORTS];
-	struct pkey_mgt		pkeys;
-	unsigned long *ib_uc_qpns_bitmap;
-	int steer_qpn_count;
-	int steer_qpn_base;
-	int steering_support;
-	struct mlx4_ib_qp      *qp1_proxy[MLX4_MAX_PORTS];
+	काष्ठा mlx4_ib_iboe	iboe;
+	काष्ठा mlx4_ib_counters counters_table[MLX4_MAX_PORTS];
+	पूर्णांक		       *eq_table;
+	काष्ठा kobject	       *iov_parent;
+	काष्ठा kobject	       *ports_parent;
+	काष्ठा kobject	       *dev_ports_parent[MLX4_MFUNC_MAX];
+	काष्ठा mlx4_ib_iov_port	iov_ports[MLX4_MAX_PORTS];
+	काष्ठा pkey_mgt		pkeys;
+	अचिन्हित दीर्घ *ib_uc_qpns_biपंचांगap;
+	पूर्णांक steer_qpn_count;
+	पूर्णांक steer_qpn_base;
+	पूर्णांक steering_support;
+	काष्ठा mlx4_ib_qp      *qp1_proxy[MLX4_MAX_PORTS];
 	/* lock when destroying qp1_proxy and getting netdev events */
-	struct mutex		qp1_proxy_lock[MLX4_MAX_PORTS];
+	काष्ठा mutex		qp1_proxy_lock[MLX4_MAX_PORTS];
 	u8			bond_next_port;
 	/* protect resources needed as part of reset flow */
 	spinlock_t		reset_flow_resource_lock;
-	struct list_head		qp_list;
-	struct mlx4_ib_diag_counters diag_counters[MLX4_DIAG_COUNTERS_TYPES];
-};
+	काष्ठा list_head		qp_list;
+	काष्ठा mlx4_ib_diag_counters diag_counters[MLX4_DIAG_COUNTERS_TYPES];
+पूर्ण;
 
-struct ib_event_work {
-	struct work_struct	work;
-	struct mlx4_ib_dev	*ib_dev;
-	struct mlx4_eqe		ib_eqe;
-	int			port;
-};
+काष्ठा ib_event_work अणु
+	काष्ठा work_काष्ठा	work;
+	काष्ठा mlx4_ib_dev	*ib_dev;
+	काष्ठा mlx4_eqe		ib_eqe;
+	पूर्णांक			port;
+पूर्ण;
 
-struct mlx4_ib_qp_tunnel_init_attr {
-	struct ib_qp_init_attr init_attr;
-	int slave;
-	enum ib_qp_type proxy_qp_type;
+काष्ठा mlx4_ib_qp_tunnel_init_attr अणु
+	काष्ठा ib_qp_init_attr init_attr;
+	पूर्णांक slave;
+	क्रमागत ib_qp_type proxy_qp_type;
 	u32 port;
-};
+पूर्ण;
 
-struct mlx4_uverbs_ex_query_device {
+काष्ठा mlx4_uverbs_ex_query_device अणु
 	__u32 comp_mask;
 	__u32 reserved;
-};
+पूर्ण;
 
-static inline struct mlx4_ib_dev *to_mdev(struct ib_device *ibdev)
-{
-	return container_of(ibdev, struct mlx4_ib_dev, ib_dev);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_dev *to_mdev(काष्ठा ib_device *ibdev)
+अणु
+	वापस container_of(ibdev, काष्ठा mlx4_ib_dev, ib_dev);
+पूर्ण
 
-static inline struct mlx4_ib_ucontext *to_mucontext(struct ib_ucontext *ibucontext)
-{
-	return container_of(ibucontext, struct mlx4_ib_ucontext, ibucontext);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_ucontext *to_mucontext(काष्ठा ib_ucontext *ibucontext)
+अणु
+	वापस container_of(ibucontext, काष्ठा mlx4_ib_ucontext, ibucontext);
+पूर्ण
 
-static inline struct mlx4_ib_pd *to_mpd(struct ib_pd *ibpd)
-{
-	return container_of(ibpd, struct mlx4_ib_pd, ibpd);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_pd *to_mpd(काष्ठा ib_pd *ibpd)
+अणु
+	वापस container_of(ibpd, काष्ठा mlx4_ib_pd, ibpd);
+पूर्ण
 
-static inline struct mlx4_ib_xrcd *to_mxrcd(struct ib_xrcd *ibxrcd)
-{
-	return container_of(ibxrcd, struct mlx4_ib_xrcd, ibxrcd);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_xrcd *to_mxrcd(काष्ठा ib_xrcd *ibxrcd)
+अणु
+	वापस container_of(ibxrcd, काष्ठा mlx4_ib_xrcd, ibxrcd);
+पूर्ण
 
-static inline struct mlx4_ib_cq *to_mcq(struct ib_cq *ibcq)
-{
-	return container_of(ibcq, struct mlx4_ib_cq, ibcq);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_cq *to_mcq(काष्ठा ib_cq *ibcq)
+अणु
+	वापस container_of(ibcq, काष्ठा mlx4_ib_cq, ibcq);
+पूर्ण
 
-static inline struct mlx4_ib_cq *to_mibcq(struct mlx4_cq *mcq)
-{
-	return container_of(mcq, struct mlx4_ib_cq, mcq);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_cq *to_mibcq(काष्ठा mlx4_cq *mcq)
+अणु
+	वापस container_of(mcq, काष्ठा mlx4_ib_cq, mcq);
+पूर्ण
 
-static inline struct mlx4_ib_mr *to_mmr(struct ib_mr *ibmr)
-{
-	return container_of(ibmr, struct mlx4_ib_mr, ibmr);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_mr *to_mmr(काष्ठा ib_mr *ibmr)
+अणु
+	वापस container_of(ibmr, काष्ठा mlx4_ib_mr, ibmr);
+पूर्ण
 
-static inline struct mlx4_ib_mw *to_mmw(struct ib_mw *ibmw)
-{
-	return container_of(ibmw, struct mlx4_ib_mw, ibmw);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_mw *to_mmw(काष्ठा ib_mw *ibmw)
+अणु
+	वापस container_of(ibmw, काष्ठा mlx4_ib_mw, ibmw);
+पूर्ण
 
-static inline struct mlx4_ib_flow *to_mflow(struct ib_flow *ibflow)
-{
-	return container_of(ibflow, struct mlx4_ib_flow, ibflow);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_flow *to_mflow(काष्ठा ib_flow *ibflow)
+अणु
+	वापस container_of(ibflow, काष्ठा mlx4_ib_flow, ibflow);
+पूर्ण
 
-static inline struct mlx4_ib_qp *to_mqp(struct ib_qp *ibqp)
-{
-	return container_of(ibqp, struct mlx4_ib_qp, ibqp);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_qp *to_mqp(काष्ठा ib_qp *ibqp)
+अणु
+	वापस container_of(ibqp, काष्ठा mlx4_ib_qp, ibqp);
+पूर्ण
 
-static inline struct mlx4_ib_qp *to_mibqp(struct mlx4_qp *mqp)
-{
-	return container_of(mqp, struct mlx4_ib_qp, mqp);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_qp *to_mibqp(काष्ठा mlx4_qp *mqp)
+अणु
+	वापस container_of(mqp, काष्ठा mlx4_ib_qp, mqp);
+पूर्ण
 
-static inline struct mlx4_ib_srq *to_msrq(struct ib_srq *ibsrq)
-{
-	return container_of(ibsrq, struct mlx4_ib_srq, ibsrq);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_srq *to_msrq(काष्ठा ib_srq *ibsrq)
+अणु
+	वापस container_of(ibsrq, काष्ठा mlx4_ib_srq, ibsrq);
+पूर्ण
 
-static inline struct mlx4_ib_srq *to_mibsrq(struct mlx4_srq *msrq)
-{
-	return container_of(msrq, struct mlx4_ib_srq, msrq);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_srq *to_mibsrq(काष्ठा mlx4_srq *msrq)
+अणु
+	वापस container_of(msrq, काष्ठा mlx4_ib_srq, msrq);
+पूर्ण
 
-static inline struct mlx4_ib_ah *to_mah(struct ib_ah *ibah)
-{
-	return container_of(ibah, struct mlx4_ib_ah, ibah);
-}
+अटल अंतरभूत काष्ठा mlx4_ib_ah *to_mah(काष्ठा ib_ah *ibah)
+अणु
+	वापस container_of(ibah, काष्ठा mlx4_ib_ah, ibah);
+पूर्ण
 
-static inline u8 mlx4_ib_bond_next_port(struct mlx4_ib_dev *dev)
-{
+अटल अंतरभूत u8 mlx4_ib_bond_next_port(काष्ठा mlx4_ib_dev *dev)
+अणु
 	dev->bond_next_port = (dev->bond_next_port + 1) % dev->num_ports;
 
-	return dev->bond_next_port + 1;
-}
+	वापस dev->bond_next_port + 1;
+पूर्ण
 
-int mlx4_ib_init_sriov(struct mlx4_ib_dev *dev);
-void mlx4_ib_close_sriov(struct mlx4_ib_dev *dev);
+पूर्णांक mlx4_ib_init_sriov(काष्ठा mlx4_ib_dev *dev);
+व्योम mlx4_ib_बंद_sriov(काष्ठा mlx4_ib_dev *dev);
 
-int mlx4_ib_db_map_user(struct ib_udata *udata, unsigned long virt,
-			struct mlx4_db *db);
-void mlx4_ib_db_unmap_user(struct mlx4_ib_ucontext *context, struct mlx4_db *db);
+पूर्णांक mlx4_ib_db_map_user(काष्ठा ib_udata *udata, अचिन्हित दीर्घ virt,
+			काष्ठा mlx4_db *db);
+व्योम mlx4_ib_db_unmap_user(काष्ठा mlx4_ib_ucontext *context, काष्ठा mlx4_db *db);
 
-struct ib_mr *mlx4_ib_get_dma_mr(struct ib_pd *pd, int acc);
-int mlx4_ib_umem_write_mtt(struct mlx4_ib_dev *dev, struct mlx4_mtt *mtt,
-			   struct ib_umem *umem);
-struct ib_mr *mlx4_ib_reg_user_mr(struct ib_pd *pd, u64 start, u64 length,
-				  u64 virt_addr, int access_flags,
-				  struct ib_udata *udata);
-int mlx4_ib_dereg_mr(struct ib_mr *mr, struct ib_udata *udata);
-int mlx4_ib_alloc_mw(struct ib_mw *mw, struct ib_udata *udata);
-int mlx4_ib_dealloc_mw(struct ib_mw *mw);
-struct ib_mr *mlx4_ib_alloc_mr(struct ib_pd *pd, enum ib_mr_type mr_type,
+काष्ठा ib_mr *mlx4_ib_get_dma_mr(काष्ठा ib_pd *pd, पूर्णांक acc);
+पूर्णांक mlx4_ib_umem_ग_लिखो_mtt(काष्ठा mlx4_ib_dev *dev, काष्ठा mlx4_mtt *mtt,
+			   काष्ठा ib_umem *umem);
+काष्ठा ib_mr *mlx4_ib_reg_user_mr(काष्ठा ib_pd *pd, u64 start, u64 length,
+				  u64 virt_addr, पूर्णांक access_flags,
+				  काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_dereg_mr(काष्ठा ib_mr *mr, काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_alloc_mw(काष्ठा ib_mw *mw, काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_dealloc_mw(काष्ठा ib_mw *mw);
+काष्ठा ib_mr *mlx4_ib_alloc_mr(काष्ठा ib_pd *pd, क्रमागत ib_mr_type mr_type,
 			       u32 max_num_sg);
-int mlx4_ib_map_mr_sg(struct ib_mr *ibmr, struct scatterlist *sg, int sg_nents,
-		      unsigned int *sg_offset);
-int mlx4_ib_modify_cq(struct ib_cq *cq, u16 cq_count, u16 cq_period);
-int mlx4_ib_resize_cq(struct ib_cq *ibcq, int entries, struct ib_udata *udata);
-int mlx4_ib_create_cq(struct ib_cq *ibcq, const struct ib_cq_init_attr *attr,
-		      struct ib_udata *udata);
-int mlx4_ib_destroy_cq(struct ib_cq *cq, struct ib_udata *udata);
-int mlx4_ib_poll_cq(struct ib_cq *ibcq, int num_entries, struct ib_wc *wc);
-int mlx4_ib_arm_cq(struct ib_cq *cq, enum ib_cq_notify_flags flags);
-void __mlx4_ib_cq_clean(struct mlx4_ib_cq *cq, u32 qpn, struct mlx4_ib_srq *srq);
-void mlx4_ib_cq_clean(struct mlx4_ib_cq *cq, u32 qpn, struct mlx4_ib_srq *srq);
+पूर्णांक mlx4_ib_map_mr_sg(काष्ठा ib_mr *ibmr, काष्ठा scatterlist *sg, पूर्णांक sg_nents,
+		      अचिन्हित पूर्णांक *sg_offset);
+पूर्णांक mlx4_ib_modअगरy_cq(काष्ठा ib_cq *cq, u16 cq_count, u16 cq_period);
+पूर्णांक mlx4_ib_resize_cq(काष्ठा ib_cq *ibcq, पूर्णांक entries, काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_create_cq(काष्ठा ib_cq *ibcq, स्थिर काष्ठा ib_cq_init_attr *attr,
+		      काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_destroy_cq(काष्ठा ib_cq *cq, काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_poll_cq(काष्ठा ib_cq *ibcq, पूर्णांक num_entries, काष्ठा ib_wc *wc);
+पूर्णांक mlx4_ib_arm_cq(काष्ठा ib_cq *cq, क्रमागत ib_cq_notअगरy_flags flags);
+व्योम __mlx4_ib_cq_clean(काष्ठा mlx4_ib_cq *cq, u32 qpn, काष्ठा mlx4_ib_srq *srq);
+व्योम mlx4_ib_cq_clean(काष्ठा mlx4_ib_cq *cq, u32 qpn, काष्ठा mlx4_ib_srq *srq);
 
-int mlx4_ib_create_ah(struct ib_ah *ah, struct rdma_ah_init_attr *init_attr,
-		      struct ib_udata *udata);
-int mlx4_ib_create_ah_slave(struct ib_ah *ah, struct rdma_ah_attr *ah_attr,
-			    int slave_sgid_index, u8 *s_mac, u16 vlan_tag);
-int mlx4_ib_query_ah(struct ib_ah *ibah, struct rdma_ah_attr *ah_attr);
-static inline int mlx4_ib_destroy_ah(struct ib_ah *ah, u32 flags)
-{
-	return 0;
-}
+पूर्णांक mlx4_ib_create_ah(काष्ठा ib_ah *ah, काष्ठा rdma_ah_init_attr *init_attr,
+		      काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_create_ah_slave(काष्ठा ib_ah *ah, काष्ठा rdma_ah_attr *ah_attr,
+			    पूर्णांक slave_sgid_index, u8 *s_mac, u16 vlan_tag);
+पूर्णांक mlx4_ib_query_ah(काष्ठा ib_ah *ibah, काष्ठा rdma_ah_attr *ah_attr);
+अटल अंतरभूत पूर्णांक mlx4_ib_destroy_ah(काष्ठा ib_ah *ah, u32 flags)
+अणु
+	वापस 0;
+पूर्ण
 
-int mlx4_ib_create_srq(struct ib_srq *srq, struct ib_srq_init_attr *init_attr,
-		       struct ib_udata *udata);
-int mlx4_ib_modify_srq(struct ib_srq *ibsrq, struct ib_srq_attr *attr,
-		       enum ib_srq_attr_mask attr_mask, struct ib_udata *udata);
-int mlx4_ib_query_srq(struct ib_srq *srq, struct ib_srq_attr *srq_attr);
-int mlx4_ib_destroy_srq(struct ib_srq *srq, struct ib_udata *udata);
-void mlx4_ib_free_srq_wqe(struct mlx4_ib_srq *srq, int wqe_index);
-int mlx4_ib_post_srq_recv(struct ib_srq *ibsrq, const struct ib_recv_wr *wr,
-			  const struct ib_recv_wr **bad_wr);
+पूर्णांक mlx4_ib_create_srq(काष्ठा ib_srq *srq, काष्ठा ib_srq_init_attr *init_attr,
+		       काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_modअगरy_srq(काष्ठा ib_srq *ibsrq, काष्ठा ib_srq_attr *attr,
+		       क्रमागत ib_srq_attr_mask attr_mask, काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_query_srq(काष्ठा ib_srq *srq, काष्ठा ib_srq_attr *srq_attr);
+पूर्णांक mlx4_ib_destroy_srq(काष्ठा ib_srq *srq, काष्ठा ib_udata *udata);
+व्योम mlx4_ib_मुक्त_srq_wqe(काष्ठा mlx4_ib_srq *srq, पूर्णांक wqe_index);
+पूर्णांक mlx4_ib_post_srq_recv(काष्ठा ib_srq *ibsrq, स्थिर काष्ठा ib_recv_wr *wr,
+			  स्थिर काष्ठा ib_recv_wr **bad_wr);
 
-struct ib_qp *mlx4_ib_create_qp(struct ib_pd *pd,
-				struct ib_qp_init_attr *init_attr,
-				struct ib_udata *udata);
-int mlx4_ib_destroy_qp(struct ib_qp *qp, struct ib_udata *udata);
-void mlx4_ib_drain_sq(struct ib_qp *qp);
-void mlx4_ib_drain_rq(struct ib_qp *qp);
-int mlx4_ib_modify_qp(struct ib_qp *ibqp, struct ib_qp_attr *attr,
-		      int attr_mask, struct ib_udata *udata);
-int mlx4_ib_query_qp(struct ib_qp *ibqp, struct ib_qp_attr *qp_attr, int qp_attr_mask,
-		     struct ib_qp_init_attr *qp_init_attr);
-int mlx4_ib_post_send(struct ib_qp *ibqp, const struct ib_send_wr *wr,
-		      const struct ib_send_wr **bad_wr);
-int mlx4_ib_post_recv(struct ib_qp *ibqp, const struct ib_recv_wr *wr,
-		      const struct ib_recv_wr **bad_wr);
+काष्ठा ib_qp *mlx4_ib_create_qp(काष्ठा ib_pd *pd,
+				काष्ठा ib_qp_init_attr *init_attr,
+				काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_destroy_qp(काष्ठा ib_qp *qp, काष्ठा ib_udata *udata);
+व्योम mlx4_ib_drain_sq(काष्ठा ib_qp *qp);
+व्योम mlx4_ib_drain_rq(काष्ठा ib_qp *qp);
+पूर्णांक mlx4_ib_modअगरy_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *attr,
+		      पूर्णांक attr_mask, काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_query_qp(काष्ठा ib_qp *ibqp, काष्ठा ib_qp_attr *qp_attr, पूर्णांक qp_attr_mask,
+		     काष्ठा ib_qp_init_attr *qp_init_attr);
+पूर्णांक mlx4_ib_post_send(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_send_wr *wr,
+		      स्थिर काष्ठा ib_send_wr **bad_wr);
+पूर्णांक mlx4_ib_post_recv(काष्ठा ib_qp *ibqp, स्थिर काष्ठा ib_recv_wr *wr,
+		      स्थिर काष्ठा ib_recv_wr **bad_wr);
 
-int mlx4_MAD_IFC(struct mlx4_ib_dev *dev, int mad_ifc_flags,
-		 int port, const struct ib_wc *in_wc, const struct ib_grh *in_grh,
-		 const void *in_mad, void *response_mad);
-int mlx4_ib_process_mad(struct ib_device *ibdev, int mad_flags, u32 port_num,
-			const struct ib_wc *in_wc, const struct ib_grh *in_grh,
-			const struct ib_mad *in, struct ib_mad *out,
-			size_t *out_mad_size, u16 *out_mad_pkey_index);
-int mlx4_ib_mad_init(struct mlx4_ib_dev *dev);
-void mlx4_ib_mad_cleanup(struct mlx4_ib_dev *dev);
+पूर्णांक mlx4_MAD_IFC(काष्ठा mlx4_ib_dev *dev, पूर्णांक mad_अगरc_flags,
+		 पूर्णांक port, स्थिर काष्ठा ib_wc *in_wc, स्थिर काष्ठा ib_grh *in_grh,
+		 स्थिर व्योम *in_mad, व्योम *response_mad);
+पूर्णांक mlx4_ib_process_mad(काष्ठा ib_device *ibdev, पूर्णांक mad_flags, u32 port_num,
+			स्थिर काष्ठा ib_wc *in_wc, स्थिर काष्ठा ib_grh *in_grh,
+			स्थिर काष्ठा ib_mad *in, काष्ठा ib_mad *out,
+			माप_प्रकार *out_mad_size, u16 *out_mad_pkey_index);
+पूर्णांक mlx4_ib_mad_init(काष्ठा mlx4_ib_dev *dev);
+व्योम mlx4_ib_mad_cleanup(काष्ठा mlx4_ib_dev *dev);
 
-int __mlx4_ib_query_port(struct ib_device *ibdev, u32 port,
-			 struct ib_port_attr *props, int netw_view);
-int __mlx4_ib_query_pkey(struct ib_device *ibdev, u32 port, u16 index,
-			 u16 *pkey, int netw_view);
+पूर्णांक __mlx4_ib_query_port(काष्ठा ib_device *ibdev, u32 port,
+			 काष्ठा ib_port_attr *props, पूर्णांक netw_view);
+पूर्णांक __mlx4_ib_query_pkey(काष्ठा ib_device *ibdev, u32 port, u16 index,
+			 u16 *pkey, पूर्णांक netw_view);
 
-int __mlx4_ib_query_gid(struct ib_device *ibdev, u32 port, int index,
-			union ib_gid *gid, int netw_view);
+पूर्णांक __mlx4_ib_query_gid(काष्ठा ib_device *ibdev, u32 port, पूर्णांक index,
+			जोड़ ib_gid *gid, पूर्णांक netw_view);
 
-static inline bool mlx4_ib_ah_grh_present(struct mlx4_ib_ah *ah)
-{
+अटल अंतरभूत bool mlx4_ib_ah_grh_present(काष्ठा mlx4_ib_ah *ah)
+अणु
 	u32 port = be32_to_cpu(ah->av.ib.port_pd) >> 24 & 3;
 
-	if (rdma_port_get_link_layer(ah->ibah.device, port) == IB_LINK_LAYER_ETHERNET)
-		return true;
+	अगर (rdma_port_get_link_layer(ah->ibah.device, port) == IB_LINK_LAYER_ETHERNET)
+		वापस true;
 
-	return !!(ah->av.ib.g_slid & 0x80);
-}
+	वापस !!(ah->av.ib.g_slid & 0x80);
+पूर्ण
 
-int mlx4_ib_mcg_port_init(struct mlx4_ib_demux_ctx *ctx);
-void mlx4_ib_mcg_port_cleanup(struct mlx4_ib_demux_ctx *ctx, int destroy_wq);
-void clean_vf_mcast(struct mlx4_ib_demux_ctx *ctx, int slave);
-int mlx4_ib_mcg_init(void);
-void mlx4_ib_mcg_destroy(void);
+पूर्णांक mlx4_ib_mcg_port_init(काष्ठा mlx4_ib_demux_ctx *ctx);
+व्योम mlx4_ib_mcg_port_cleanup(काष्ठा mlx4_ib_demux_ctx *ctx, पूर्णांक destroy_wq);
+व्योम clean_vf_mcast(काष्ठा mlx4_ib_demux_ctx *ctx, पूर्णांक slave);
+पूर्णांक mlx4_ib_mcg_init(व्योम);
+व्योम mlx4_ib_mcg_destroy(व्योम);
 
-int mlx4_ib_find_real_gid(struct ib_device *ibdev, u32 port, __be64 guid);
+पूर्णांक mlx4_ib_find_real_gid(काष्ठा ib_device *ibdev, u32 port, __be64 guid);
 
-int mlx4_ib_mcg_multiplex_handler(struct ib_device *ibdev, int port, int slave,
-				  struct ib_sa_mad *sa_mad);
-int mlx4_ib_mcg_demux_handler(struct ib_device *ibdev, int port, int slave,
-			      struct ib_sa_mad *mad);
+पूर्णांक mlx4_ib_mcg_multiplex_handler(काष्ठा ib_device *ibdev, पूर्णांक port, पूर्णांक slave,
+				  काष्ठा ib_sa_mad *sa_mad);
+पूर्णांक mlx4_ib_mcg_demux_handler(काष्ठा ib_device *ibdev, पूर्णांक port, पूर्णांक slave,
+			      काष्ठा ib_sa_mad *mad);
 
-int mlx4_ib_add_mc(struct mlx4_ib_dev *mdev, struct mlx4_ib_qp *mqp,
-		   union ib_gid *gid);
+पूर्णांक mlx4_ib_add_mc(काष्ठा mlx4_ib_dev *mdev, काष्ठा mlx4_ib_qp *mqp,
+		   जोड़ ib_gid *gid);
 
-void mlx4_ib_dispatch_event(struct mlx4_ib_dev *dev, u32 port_num,
-			    enum ib_event_type type);
+व्योम mlx4_ib_dispatch_event(काष्ठा mlx4_ib_dev *dev, u32 port_num,
+			    क्रमागत ib_event_type type);
 
-void mlx4_ib_tunnels_update_work(struct work_struct *work);
+व्योम mlx4_ib_tunnels_update_work(काष्ठा work_काष्ठा *work);
 
-int mlx4_ib_send_to_slave(struct mlx4_ib_dev *dev, int slave, u32 port,
-			  enum ib_qp_type qpt, struct ib_wc *wc,
-			  struct ib_grh *grh, struct ib_mad *mad);
+पूर्णांक mlx4_ib_send_to_slave(काष्ठा mlx4_ib_dev *dev, पूर्णांक slave, u32 port,
+			  क्रमागत ib_qp_type qpt, काष्ठा ib_wc *wc,
+			  काष्ठा ib_grh *grh, काष्ठा ib_mad *mad);
 
-int mlx4_ib_send_to_wire(struct mlx4_ib_dev *dev, int slave, u32 port,
-			 enum ib_qp_type dest_qpt, u16 pkey_index, u32 remote_qpn,
-			 u32 qkey, struct rdma_ah_attr *attr, u8 *s_mac,
-			 u16 vlan_id, struct ib_mad *mad);
+पूर्णांक mlx4_ib_send_to_wire(काष्ठा mlx4_ib_dev *dev, पूर्णांक slave, u32 port,
+			 क्रमागत ib_qp_type dest_qpt, u16 pkey_index, u32 remote_qpn,
+			 u32 qkey, काष्ठा rdma_ah_attr *attr, u8 *s_mac,
+			 u16 vlan_id, काष्ठा ib_mad *mad);
 
-__be64 mlx4_ib_get_new_demux_tid(struct mlx4_ib_demux_ctx *ctx);
+__be64 mlx4_ib_get_new_demux_tid(काष्ठा mlx4_ib_demux_ctx *ctx);
 
-int mlx4_ib_demux_cm_handler(struct ib_device *ibdev, int port, int *slave,
-		struct ib_mad *mad);
+पूर्णांक mlx4_ib_demux_cm_handler(काष्ठा ib_device *ibdev, पूर्णांक port, पूर्णांक *slave,
+		काष्ठा ib_mad *mad);
 
-int mlx4_ib_multiplex_cm_handler(struct ib_device *ibdev, int port, int slave_id,
-		struct ib_mad *mad);
+पूर्णांक mlx4_ib_multiplex_cm_handler(काष्ठा ib_device *ibdev, पूर्णांक port, पूर्णांक slave_id,
+		काष्ठा ib_mad *mad);
 
-void mlx4_ib_cm_paravirt_init(struct mlx4_ib_dev *dev);
-void mlx4_ib_cm_paravirt_clean(struct mlx4_ib_dev *dev, int slave_id);
+व्योम mlx4_ib_cm_paravirt_init(काष्ठा mlx4_ib_dev *dev);
+व्योम mlx4_ib_cm_paravirt_clean(काष्ठा mlx4_ib_dev *dev, पूर्णांक slave_id);
 
 /* alias guid support */
-void mlx4_ib_init_alias_guid_work(struct mlx4_ib_dev *dev, int port);
-int mlx4_ib_init_alias_guid_service(struct mlx4_ib_dev *dev);
-void mlx4_ib_destroy_alias_guid_service(struct mlx4_ib_dev *dev);
-void mlx4_ib_invalidate_all_guid_record(struct mlx4_ib_dev *dev, int port);
+व्योम mlx4_ib_init_alias_guid_work(काष्ठा mlx4_ib_dev *dev, पूर्णांक port);
+पूर्णांक mlx4_ib_init_alias_guid_service(काष्ठा mlx4_ib_dev *dev);
+व्योम mlx4_ib_destroy_alias_guid_service(काष्ठा mlx4_ib_dev *dev);
+व्योम mlx4_ib_invalidate_all_guid_record(काष्ठा mlx4_ib_dev *dev, पूर्णांक port);
 
-void mlx4_ib_notify_slaves_on_guid_change(struct mlx4_ib_dev *dev,
-					  int block_num,
+व्योम mlx4_ib_notअगरy_slaves_on_guid_change(काष्ठा mlx4_ib_dev *dev,
+					  पूर्णांक block_num,
 					  u32 port_num, u8 *p_data);
 
-void mlx4_ib_update_cache_on_guid_change(struct mlx4_ib_dev *dev,
-					 int block_num, u32 port_num,
+व्योम mlx4_ib_update_cache_on_guid_change(काष्ठा mlx4_ib_dev *dev,
+					 पूर्णांक block_num, u32 port_num,
 					 u8 *p_data);
 
-int add_sysfs_port_mcg_attr(struct mlx4_ib_dev *device, int port_num,
-			    struct attribute *attr);
-void del_sysfs_port_mcg_attr(struct mlx4_ib_dev *device, int port_num,
-			     struct attribute *attr);
-ib_sa_comp_mask mlx4_ib_get_aguid_comp_mask_from_ix(int index);
-void mlx4_ib_slave_alias_guid_event(struct mlx4_ib_dev *dev, int slave,
-				    int port, int slave_init);
+पूर्णांक add_sysfs_port_mcg_attr(काष्ठा mlx4_ib_dev *device, पूर्णांक port_num,
+			    काष्ठा attribute *attr);
+व्योम del_sysfs_port_mcg_attr(काष्ठा mlx4_ib_dev *device, पूर्णांक port_num,
+			     काष्ठा attribute *attr);
+ib_sa_comp_mask mlx4_ib_get_aguid_comp_mask_from_ix(पूर्णांक index);
+व्योम mlx4_ib_slave_alias_guid_event(काष्ठा mlx4_ib_dev *dev, पूर्णांक slave,
+				    पूर्णांक port, पूर्णांक slave_init);
 
-int mlx4_ib_device_register_sysfs(struct mlx4_ib_dev *device) ;
+पूर्णांक mlx4_ib_device_रेजिस्टर_sysfs(काष्ठा mlx4_ib_dev *device) ;
 
-void mlx4_ib_device_unregister_sysfs(struct mlx4_ib_dev *device);
+व्योम mlx4_ib_device_unरेजिस्टर_sysfs(काष्ठा mlx4_ib_dev *device);
 
-__be64 mlx4_ib_gen_node_guid(void);
+__be64 mlx4_ib_gen_node_guid(व्योम);
 
-int mlx4_ib_steer_qp_alloc(struct mlx4_ib_dev *dev, int count, int *qpn);
-void mlx4_ib_steer_qp_free(struct mlx4_ib_dev *dev, u32 qpn, int count);
-int mlx4_ib_steer_qp_reg(struct mlx4_ib_dev *mdev, struct mlx4_ib_qp *mqp,
-			 int is_attach);
-struct ib_mr *mlx4_ib_rereg_user_mr(struct ib_mr *mr, int flags, u64 start,
+पूर्णांक mlx4_ib_steer_qp_alloc(काष्ठा mlx4_ib_dev *dev, पूर्णांक count, पूर्णांक *qpn);
+व्योम mlx4_ib_steer_qp_मुक्त(काष्ठा mlx4_ib_dev *dev, u32 qpn, पूर्णांक count);
+पूर्णांक mlx4_ib_steer_qp_reg(काष्ठा mlx4_ib_dev *mdev, काष्ठा mlx4_ib_qp *mqp,
+			 पूर्णांक is_attach);
+काष्ठा ib_mr *mlx4_ib_rereg_user_mr(काष्ठा ib_mr *mr, पूर्णांक flags, u64 start,
 				    u64 length, u64 virt_addr,
-				    int mr_access_flags, struct ib_pd *pd,
-				    struct ib_udata *udata);
-int mlx4_ib_gid_index_to_real_index(struct mlx4_ib_dev *ibdev,
-				    const struct ib_gid_attr *attr);
+				    पूर्णांक mr_access_flags, काष्ठा ib_pd *pd,
+				    काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_gid_index_to_real_index(काष्ठा mlx4_ib_dev *ibdev,
+				    स्थिर काष्ठा ib_gid_attr *attr);
 
-void mlx4_sched_ib_sl2vl_update_work(struct mlx4_ib_dev *ibdev,
-				     int port);
+व्योम mlx4_sched_ib_sl2vl_update_work(काष्ठा mlx4_ib_dev *ibdev,
+				     पूर्णांक port);
 
-void mlx4_ib_sl2vl_update(struct mlx4_ib_dev *mdev, int port);
+व्योम mlx4_ib_sl2vl_update(काष्ठा mlx4_ib_dev *mdev, पूर्णांक port);
 
-struct ib_wq *mlx4_ib_create_wq(struct ib_pd *pd,
-				struct ib_wq_init_attr *init_attr,
-				struct ib_udata *udata);
-int mlx4_ib_destroy_wq(struct ib_wq *wq, struct ib_udata *udata);
-int mlx4_ib_modify_wq(struct ib_wq *wq, struct ib_wq_attr *wq_attr,
-		      u32 wq_attr_mask, struct ib_udata *udata);
+काष्ठा ib_wq *mlx4_ib_create_wq(काष्ठा ib_pd *pd,
+				काष्ठा ib_wq_init_attr *init_attr,
+				काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_destroy_wq(काष्ठा ib_wq *wq, काष्ठा ib_udata *udata);
+पूर्णांक mlx4_ib_modअगरy_wq(काष्ठा ib_wq *wq, काष्ठा ib_wq_attr *wq_attr,
+		      u32 wq_attr_mask, काष्ठा ib_udata *udata);
 
-int mlx4_ib_create_rwq_ind_table(struct ib_rwq_ind_table *ib_rwq_ind_tbl,
-				 struct ib_rwq_ind_table_init_attr *init_attr,
-				 struct ib_udata *udata);
-static inline int
-mlx4_ib_destroy_rwq_ind_table(struct ib_rwq_ind_table *wq_ind_table)
-{
-	return 0;
-}
-int mlx4_ib_umem_calc_optimal_mtt_size(struct ib_umem *umem, u64 start_va,
-				       int *num_of_mtts);
+पूर्णांक mlx4_ib_create_rwq_ind_table(काष्ठा ib_rwq_ind_table *ib_rwq_ind_tbl,
+				 काष्ठा ib_rwq_ind_table_init_attr *init_attr,
+				 काष्ठा ib_udata *udata);
+अटल अंतरभूत पूर्णांक
+mlx4_ib_destroy_rwq_ind_table(काष्ठा ib_rwq_ind_table *wq_ind_table)
+अणु
+	वापस 0;
+पूर्ण
+पूर्णांक mlx4_ib_umem_calc_optimal_mtt_size(काष्ठा ib_umem *umem, u64 start_va,
+				       पूर्णांक *num_of_mtts);
 
-#endif /* MLX4_IB_H */
+#पूर्ण_अगर /* MLX4_IB_H */

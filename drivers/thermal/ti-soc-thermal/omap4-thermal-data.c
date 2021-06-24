@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OMAP4 thermal driver.
  *
  * Copyright (C) 2011-2012 Texas Instruments Inc.
  * Contact:
- *	Eduardo Valentin <eduardo.valentin@ti.com>
+ *	Eduarकरो Valentin <eduarकरो.valentin@ti.com>
  */
 
-#include "ti-thermal.h"
-#include "ti-bandgap.h"
-#include "omap4xxx-bandgap.h"
+#समावेश "ti-thermal.h"
+#समावेश "ti-bandgap.h"
+#समावेश "omap4xxx-bandgap.h"
 
 /*
- * OMAP4430 has one instance of thermal sensor for MPU
- * need to describe the individual bit fields
+ * OMAP4430 has one instance of thermal sensor क्रम MPU
+ * need to describe the inभागidual bit fields
  */
-static struct temp_sensor_registers
-omap4430_mpu_temp_sensor_registers = {
+अटल काष्ठा temp_sensor_रेजिस्टरs
+omap4430_mpu_temp_sensor_रेजिस्टरs = अणु
 	.temp_sensor_ctrl = OMAP4430_TEMP_SENSOR_CTRL_OFFSET,
 	.bgap_tempsoff_mask = OMAP4430_BGAP_TEMPSOFF_MASK,
 	.bgap_soc_mask = OMAP4430_BGAP_TEMP_SENSOR_SOC_MASK,
@@ -27,21 +28,21 @@ omap4430_mpu_temp_sensor_registers = {
 	.mode_ctrl_mask = OMAP4430_CONTINUOUS_MODE_MASK,
 
 	.bgap_efuse = OMAP4430_FUSE_OPP_BGAP,
-};
+पूर्ण;
 
-/* Thresholds and limits for OMAP4430 MPU temperature sensor */
-static struct temp_sensor_data omap4430_mpu_temp_sensor_data = {
+/* Thresholds and limits क्रम OMAP4430 MPU temperature sensor */
+अटल काष्ठा temp_sensor_data omap4430_mpu_temp_sensor_data = अणु
 	.min_freq = OMAP4430_MIN_FREQ,
 	.max_freq = OMAP4430_MAX_FREQ,
-};
+पूर्ण;
 
 /*
  * Temperature values in milli degree celsius
  * ADC code values from 13 to 107, see TRM
  * "18.4.10.2.3 ADC Codes Versus Temperature".
  */
-static const int
-omap4430_adc_to_temp[OMAP4430_ADC_END_VALUE - OMAP4430_ADC_START_VALUE + 1] = {
+अटल स्थिर पूर्णांक
+omap4430_adc_to_temp[OMAP4430_ADC_END_VALUE - OMAP4430_ADC_START_VALUE + 1] = अणु
 	-40000, -38000, -35000, -34000, -32000, -30000, -28000, -26000, -24000,
 	-22000,	-20000, -18500, -17000, -15000, -13500, -12000, -10000, -8000,
 	-6500, -5000, -3500, -1500, 0, 2000, 3500, 5000, 6500, 8500, 10000,
@@ -52,40 +53,40 @@ omap4430_adc_to_temp[OMAP4430_ADC_END_VALUE - OMAP4430_ADC_START_VALUE + 1] = {
 	82000, 83500, 85000, 87000, 88500, 90000, 92000, 93500, 95000, 97000,
 	98500, 100000, 102000, 103500, 105000, 107000, 109000, 111000, 113000,
 	115000, 117000, 118500, 120000, 122000, 123500, 125000,
-};
+पूर्ण;
 
 /* OMAP4430 data */
-const struct ti_bandgap_data omap4430_data = {
+स्थिर काष्ठा ti_bandgap_data omap4430_data = अणु
 	.features = TI_BANDGAP_FEATURE_MODE_CONFIG |
 			TI_BANDGAP_FEATURE_CLK_CTRL |
 			TI_BANDGAP_FEATURE_POWER_SWITCH |
 			TI_BANDGAP_FEATURE_CONT_MODE_ONLY,
-	.fclock_name = "bandgap_fclk",
-	.div_ck_name = "bandgap_fclk",
+	.fघड़ी_name = "bandgap_fclk",
+	.भाग_ck_name = "bandgap_fclk",
 	.conv_table = omap4430_adc_to_temp,
 	.adc_start_val = OMAP4430_ADC_START_VALUE,
 	.adc_end_val = OMAP4430_ADC_END_VALUE,
 	.expose_sensor = ti_thermal_expose_sensor,
-	.remove_sensor = ti_thermal_remove_sensor,
-	.sensors = {
-		{
-		.registers = &omap4430_mpu_temp_sensor_registers,
+	.हटाओ_sensor = ti_thermal_हटाओ_sensor,
+	.sensors = अणु
+		अणु
+		.रेजिस्टरs = &omap4430_mpu_temp_sensor_रेजिस्टरs,
 		.ts_data = &omap4430_mpu_temp_sensor_data,
-		.domain = "cpu",
+		.करोमुख्य = "cpu",
 		.slope_pcb = OMAP_GRADIENT_SLOPE_W_PCB_4430,
-		.constant_pcb = OMAP_GRADIENT_CONST_W_PCB_4430,
-		.register_cooling = ti_thermal_register_cpu_cooling,
-		.unregister_cooling = ti_thermal_unregister_cpu_cooling,
-		},
-	},
+		.स्थिरant_pcb = OMAP_GRADIENT_CONST_W_PCB_4430,
+		.रेजिस्टर_cooling = ti_thermal_रेजिस्टर_cpu_cooling,
+		.unरेजिस्टर_cooling = ti_thermal_unरेजिस्टर_cpu_cooling,
+		पूर्ण,
+	पूर्ण,
 	.sensor_count = 1,
-};
+पूर्ण;
 /*
- * OMAP4460 has one instance of thermal sensor for MPU
- * need to describe the individual bit fields
+ * OMAP4460 has one instance of thermal sensor क्रम MPU
+ * need to describe the inभागidual bit fields
  */
-static struct temp_sensor_registers
-omap4460_mpu_temp_sensor_registers = {
+अटल काष्ठा temp_sensor_रेजिस्टरs
+omap4460_mpu_temp_sensor_रेजिस्टरs = अणु
 	.temp_sensor_ctrl = OMAP4460_TEMP_SENSOR_CTRL_OFFSET,
 	.bgap_tempsoff_mask = OMAP4460_BGAP_TEMPSOFF_MASK,
 	.bgap_soc_mask = OMAP4460_BGAP_TEMP_SENSOR_SOC_MASK,
@@ -115,24 +116,24 @@ omap4460_mpu_temp_sensor_registers = {
 	.status_cold_mask = OMAP4460_COLD_FLAG_MASK,
 
 	.bgap_efuse = OMAP4460_FUSE_OPP_BGAP,
-};
+पूर्ण;
 
-/* Thresholds and limits for OMAP4460 MPU temperature sensor */
-static struct temp_sensor_data omap4460_mpu_temp_sensor_data = {
+/* Thresholds and limits क्रम OMAP4460 MPU temperature sensor */
+अटल काष्ठा temp_sensor_data omap4460_mpu_temp_sensor_data = अणु
 	.tshut_hot = OMAP4460_TSHUT_HOT,
 	.tshut_cold = OMAP4460_TSHUT_COLD,
 	.t_hot = OMAP4460_T_HOT,
 	.t_cold = OMAP4460_T_COLD,
 	.min_freq = OMAP4460_MIN_FREQ,
 	.max_freq = OMAP4460_MAX_FREQ,
-};
+पूर्ण;
 
 /*
  * Temperature values in milli degree celsius
  * ADC code values from 530 to 923
  */
-static const int
-omap4460_adc_to_temp[OMAP4460_ADC_END_VALUE - OMAP4460_ADC_START_VALUE + 1] = {
+अटल स्थिर पूर्णांक
+omap4460_adc_to_temp[OMAP4460_ADC_END_VALUE - OMAP4460_ADC_START_VALUE + 1] = अणु
 	-40000, -40000, -40000, -40000, -39800, -39400, -39000, -38600, -38200,
 	-37800, -37300, -36800, -36400, -36000, -35600, -35200, -34800,
 	-34300, -33800, -33400, -33000, -32600, -32200, -31800, -31300,
@@ -179,10 +180,10 @@ omap4460_adc_to_temp[OMAP4460_ADC_END_VALUE - OMAP4460_ADC_START_VALUE + 1] = {
 	117800, 118200, 118600, 119000, 119400, 119800, 120200, 120600,
 	121000, 121400, 121800, 122200, 122600, 123000, 123400, 123800, 124200,
 	124600, 124900, 125000, 125000, 125000, 125000
-};
+पूर्ण;
 
 /* OMAP4460 data */
-const struct ti_bandgap_data omap4460_data = {
+स्थिर काष्ठा ti_bandgap_data omap4460_data = अणु
 	.features = TI_BANDGAP_FEATURE_TSHUT |
 			TI_BANDGAP_FEATURE_TSHUT_CONFIG |
 			TI_BANDGAP_FEATURE_TALERT |
@@ -190,30 +191,30 @@ const struct ti_bandgap_data omap4460_data = {
 			TI_BANDGAP_FEATURE_POWER_SWITCH |
 			TI_BANDGAP_FEATURE_CLK_CTRL |
 			TI_BANDGAP_FEATURE_COUNTER,
-	.fclock_name = "bandgap_ts_fclk",
-	.div_ck_name = "div_ts_ck",
+	.fघड़ी_name = "bandgap_ts_fclk",
+	.भाग_ck_name = "div_ts_ck",
 	.conv_table = omap4460_adc_to_temp,
 	.adc_start_val = OMAP4460_ADC_START_VALUE,
 	.adc_end_val = OMAP4460_ADC_END_VALUE,
 	.expose_sensor = ti_thermal_expose_sensor,
-	.remove_sensor = ti_thermal_remove_sensor,
+	.हटाओ_sensor = ti_thermal_हटाओ_sensor,
 	.report_temperature = ti_thermal_report_sensor_temperature,
-	.sensors = {
-		{
-		.registers = &omap4460_mpu_temp_sensor_registers,
+	.sensors = अणु
+		अणु
+		.रेजिस्टरs = &omap4460_mpu_temp_sensor_रेजिस्टरs,
 		.ts_data = &omap4460_mpu_temp_sensor_data,
-		.domain = "cpu",
+		.करोमुख्य = "cpu",
 		.slope_pcb = OMAP_GRADIENT_SLOPE_W_PCB_4460,
-		.constant_pcb = OMAP_GRADIENT_CONST_W_PCB_4460,
-		.register_cooling = ti_thermal_register_cpu_cooling,
-		.unregister_cooling = ti_thermal_unregister_cpu_cooling,
-		},
-	},
+		.स्थिरant_pcb = OMAP_GRADIENT_CONST_W_PCB_4460,
+		.रेजिस्टर_cooling = ti_thermal_रेजिस्टर_cpu_cooling,
+		.unरेजिस्टर_cooling = ti_thermal_unरेजिस्टर_cpu_cooling,
+		पूर्ण,
+	पूर्ण,
 	.sensor_count = 1,
-};
+पूर्ण;
 
 /* OMAP4470 data */
-const struct ti_bandgap_data omap4470_data = {
+स्थिर काष्ठा ti_bandgap_data omap4470_data = अणु
 	.features = TI_BANDGAP_FEATURE_TSHUT |
 			TI_BANDGAP_FEATURE_TSHUT_CONFIG |
 			TI_BANDGAP_FEATURE_TALERT |
@@ -221,24 +222,24 @@ const struct ti_bandgap_data omap4470_data = {
 			TI_BANDGAP_FEATURE_POWER_SWITCH |
 			TI_BANDGAP_FEATURE_CLK_CTRL |
 			TI_BANDGAP_FEATURE_COUNTER,
-	.fclock_name = "bandgap_ts_fclk",
-	.div_ck_name = "div_ts_ck",
+	.fघड़ी_name = "bandgap_ts_fclk",
+	.भाग_ck_name = "div_ts_ck",
 	.conv_table = omap4460_adc_to_temp,
 	.adc_start_val = OMAP4460_ADC_START_VALUE,
 	.adc_end_val = OMAP4460_ADC_END_VALUE,
 	.expose_sensor = ti_thermal_expose_sensor,
-	.remove_sensor = ti_thermal_remove_sensor,
+	.हटाओ_sensor = ti_thermal_हटाओ_sensor,
 	.report_temperature = ti_thermal_report_sensor_temperature,
-	.sensors = {
-		{
-		.registers = &omap4460_mpu_temp_sensor_registers,
+	.sensors = अणु
+		अणु
+		.रेजिस्टरs = &omap4460_mpu_temp_sensor_रेजिस्टरs,
 		.ts_data = &omap4460_mpu_temp_sensor_data,
-		.domain = "cpu",
+		.करोमुख्य = "cpu",
 		.slope_pcb = OMAP_GRADIENT_SLOPE_W_PCB_4470,
-		.constant_pcb = OMAP_GRADIENT_CONST_W_PCB_4470,
-		.register_cooling = ti_thermal_register_cpu_cooling,
-		.unregister_cooling = ti_thermal_unregister_cpu_cooling,
-		},
-	},
+		.स्थिरant_pcb = OMAP_GRADIENT_CONST_W_PCB_4470,
+		.रेजिस्टर_cooling = ti_thermal_रेजिस्टर_cpu_cooling,
+		.unरेजिस्टर_cooling = ti_thermal_unरेजिस्टर_cpu_cooling,
+		पूर्ण,
+	पूर्ण,
 	.sensor_count = 1,
-};
+पूर्ण;

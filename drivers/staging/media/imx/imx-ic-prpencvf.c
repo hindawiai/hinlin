@@ -1,275 +1,276 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * V4L2 Capture IC Preprocess Subdev for Freescale i.MX5/6 SOC
+ * V4L2 Capture IC Preprocess Subdev क्रम Freescale i.MX5/6 SOC
  *
  * This subdevice handles capture of video frames from the CSI or VDIC,
  * which are routed directly to the Image Converter preprocess tasks,
- * for resizing, colorspace conversion, and rotation.
+ * क्रम resizing, colorspace conversion, and rotation.
  *
  * Copyright (c) 2012-2017 Mentor Graphics Inc.
  */
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/timer.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-mc.h>
-#include <media/v4l2-subdev.h>
-#include <media/imx.h>
-#include "imx-media.h"
-#include "imx-ic.h"
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/समयr.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-mc.h>
+#समावेश <media/v4l2-subdev.h>
+#समावेश <media/imx.h>
+#समावेश "imx-media.h"
+#समावेश "imx-ic.h"
 
 /*
  * Min/Max supported width and heights.
  *
  * We allow planar output, so we have to align width at the source pad
- * by 16 pixels to meet IDMAC alignment requirements for possible planar
+ * by 16 pixels to meet IDMAC alignment requirements क्रम possible planar
  * output.
  *
- * TODO: move this into pad format negotiation, if capture device
- * has not requested a planar format, we should allow 8 pixel
+ * TODO: move this पूर्णांकo pad क्रमmat negotiation, अगर capture device
+ * has not requested a planar क्रमmat, we should allow 8 pixel
  * alignment at the source pad.
  */
-#define MIN_W_SINK   32
-#define MIN_H_SINK   32
-#define MAX_W_SINK 4096
-#define MAX_H_SINK 4096
-#define W_ALIGN_SINK  3 /* multiple of 8 pixels */
-#define H_ALIGN_SINK  1 /* multiple of 2 lines */
+#घोषणा MIN_W_SINK   32
+#घोषणा MIN_H_SINK   32
+#घोषणा MAX_W_SINK 4096
+#घोषणा MAX_H_SINK 4096
+#घोषणा W_ALIGN_SINK  3 /* multiple of 8 pixels */
+#घोषणा H_ALIGN_SINK  1 /* multiple of 2 lines */
 
-#define MAX_W_SRC  1024
-#define MAX_H_SRC  1024
-#define W_ALIGN_SRC   1 /* multiple of 2 pixels */
-#define H_ALIGN_SRC   1 /* multiple of 2 lines */
+#घोषणा MAX_W_SRC  1024
+#घोषणा MAX_H_SRC  1024
+#घोषणा W_ALIGN_SRC   1 /* multiple of 2 pixels */
+#घोषणा H_ALIGN_SRC   1 /* multiple of 2 lines */
 
-#define S_ALIGN       1 /* multiple of 2 */
+#घोषणा S_ALIGN       1 /* multiple of 2 */
 
-struct prp_priv {
-	struct imx_ic_priv *ic_priv;
-	struct media_pad pad[PRPENCVF_NUM_PADS];
+काष्ठा prp_priv अणु
+	काष्ठा imx_ic_priv *ic_priv;
+	काष्ठा media_pad pad[PRPENCVF_NUM_PADS];
 	/* the video device at output pad */
-	struct imx_media_video_dev *vdev;
+	काष्ठा imx_media_video_dev *vdev;
 
 	/* lock to protect all members below */
-	struct mutex lock;
+	काष्ठा mutex lock;
 
 	/* IPU units we require */
-	struct ipu_ic *ic;
-	struct ipuv3_channel *out_ch;
-	struct ipuv3_channel *rot_in_ch;
-	struct ipuv3_channel *rot_out_ch;
+	काष्ठा ipu_ic *ic;
+	काष्ठा ipuv3_channel *out_ch;
+	काष्ठा ipuv3_channel *rot_in_ch;
+	काष्ठा ipuv3_channel *rot_out_ch;
 
 	/* active vb2 buffers to send to video dev sink */
-	struct imx_media_buffer *active_vb2_buf[2];
-	struct imx_media_dma_buf underrun_buf;
+	काष्ठा imx_media_buffer *active_vb2_buf[2];
+	काष्ठा imx_media_dma_buf underrun_buf;
 
-	int ipu_buf_num;  /* ipu double buffer index: 0-1 */
+	पूर्णांक ipu_buf_num;  /* ipu द्विगुन buffer index: 0-1 */
 
-	/* the sink for the captured frames */
-	struct media_entity *sink;
+	/* the sink क्रम the captured frames */
+	काष्ठा media_entity *sink;
 	/* the source subdev */
-	struct v4l2_subdev *src_sd;
+	काष्ठा v4l2_subdev *src_sd;
 
-	struct v4l2_mbus_framefmt format_mbus[PRPENCVF_NUM_PADS];
-	const struct imx_media_pixfmt *cc[PRPENCVF_NUM_PADS];
-	struct v4l2_fract frame_interval;
+	काष्ठा v4l2_mbus_framefmt क्रमmat_mbus[PRPENCVF_NUM_PADS];
+	स्थिर काष्ठा imx_media_pixfmt *cc[PRPENCVF_NUM_PADS];
+	काष्ठा v4l2_fract frame_पूर्णांकerval;
 
-	struct imx_media_dma_buf rot_buf[2];
+	काष्ठा imx_media_dma_buf rot_buf[2];
 
 	/* controls */
-	struct v4l2_ctrl_handler ctrl_hdlr;
-	int  rotation; /* degrees */
+	काष्ठा v4l2_ctrl_handler ctrl_hdlr;
+	पूर्णांक  rotation; /* degrees */
 	bool hflip;
 	bool vflip;
 
 	/* derived from rotation, hflip, vflip controls */
-	enum ipu_rotate_mode rot_mode;
+	क्रमागत ipu_rotate_mode rot_mode;
 
 	spinlock_t irqlock; /* protect eof_irq handler */
 
-	struct timer_list eof_timeout_timer;
-	int eof_irq;
-	int nfb4eof_irq;
+	काष्ठा समयr_list eof_समयout_समयr;
+	पूर्णांक eof_irq;
+	पूर्णांक nfb4eof_irq;
 
-	int stream_count;
+	पूर्णांक stream_count;
 	u32 frame_sequence; /* frame sequence counter */
-	bool last_eof;  /* waiting for last EOF at stream off */
-	bool nfb4eof;    /* NFB4EOF encountered during streaming */
-	bool interweave_swap; /* swap top/bottom lines when interweaving */
-	struct completion last_eof_comp;
-};
+	bool last_eof;  /* रुकोing क्रम last खातापूर्ण at stream off */
+	bool nfb4eof;    /* NFB4खातापूर्ण encountered during streaming */
+	bool पूर्णांकerweave_swap; /* swap top/bottom lines when पूर्णांकerweaving */
+	काष्ठा completion last_eof_comp;
+पूर्ण;
 
-static const struct prp_channels {
+अटल स्थिर काष्ठा prp_channels अणु
 	u32 out_ch;
 	u32 rot_in_ch;
 	u32 rot_out_ch;
-} prp_channel[] = {
-	[IC_TASK_ENCODER] = {
+पूर्ण prp_channel[] = अणु
+	[IC_TASK_ENCODER] = अणु
 		.out_ch = IPUV3_CHANNEL_IC_PRP_ENC_MEM,
 		.rot_in_ch = IPUV3_CHANNEL_MEM_ROT_ENC,
 		.rot_out_ch = IPUV3_CHANNEL_ROT_ENC_MEM,
-	},
-	[IC_TASK_VIEWFINDER] = {
+	पूर्ण,
+	[IC_TASK_VIEWFINDER] = अणु
 		.out_ch = IPUV3_CHANNEL_IC_PRP_VF_MEM,
 		.rot_in_ch = IPUV3_CHANNEL_MEM_ROT_VF,
 		.rot_out_ch = IPUV3_CHANNEL_ROT_VF_MEM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static inline struct prp_priv *sd_to_priv(struct v4l2_subdev *sd)
-{
-	struct imx_ic_priv *ic_priv = v4l2_get_subdevdata(sd);
+अटल अंतरभूत काष्ठा prp_priv *sd_to_priv(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा imx_ic_priv *ic_priv = v4l2_get_subdevdata(sd);
 
-	return ic_priv->task_priv;
-}
+	वापस ic_priv->task_priv;
+पूर्ण
 
-static void prp_put_ipu_resources(struct prp_priv *priv)
-{
-	if (priv->ic)
+अटल व्योम prp_put_ipu_resources(काष्ठा prp_priv *priv)
+अणु
+	अगर (priv->ic)
 		ipu_ic_put(priv->ic);
-	priv->ic = NULL;
+	priv->ic = शून्य;
 
-	if (priv->out_ch)
+	अगर (priv->out_ch)
 		ipu_idmac_put(priv->out_ch);
-	priv->out_ch = NULL;
+	priv->out_ch = शून्य;
 
-	if (priv->rot_in_ch)
+	अगर (priv->rot_in_ch)
 		ipu_idmac_put(priv->rot_in_ch);
-	priv->rot_in_ch = NULL;
+	priv->rot_in_ch = शून्य;
 
-	if (priv->rot_out_ch)
+	अगर (priv->rot_out_ch)
 		ipu_idmac_put(priv->rot_out_ch);
-	priv->rot_out_ch = NULL;
-}
+	priv->rot_out_ch = शून्य;
+पूर्ण
 
-static int prp_get_ipu_resources(struct prp_priv *priv)
-{
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
-	struct ipu_ic *ic;
-	struct ipuv3_channel *out_ch, *rot_in_ch, *rot_out_ch;
-	int ret, task = ic_priv->task_id;
+अटल पूर्णांक prp_get_ipu_resources(काष्ठा prp_priv *priv)
+अणु
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
+	काष्ठा ipu_ic *ic;
+	काष्ठा ipuv3_channel *out_ch, *rot_in_ch, *rot_out_ch;
+	पूर्णांक ret, task = ic_priv->task_id;
 
 	ic = ipu_ic_get(ic_priv->ipu, task);
-	if (IS_ERR(ic)) {
+	अगर (IS_ERR(ic)) अणु
 		v4l2_err(&ic_priv->sd, "failed to get IC\n");
 		ret = PTR_ERR(ic);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	priv->ic = ic;
 
 	out_ch = ipu_idmac_get(ic_priv->ipu, prp_channel[task].out_ch);
-	if (IS_ERR(out_ch)) {
+	अगर (IS_ERR(out_ch)) अणु
 		v4l2_err(&ic_priv->sd, "could not get IDMAC channel %u\n",
 			 prp_channel[task].out_ch);
 		ret = PTR_ERR(out_ch);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	priv->out_ch = out_ch;
 
 	rot_in_ch = ipu_idmac_get(ic_priv->ipu, prp_channel[task].rot_in_ch);
-	if (IS_ERR(rot_in_ch)) {
+	अगर (IS_ERR(rot_in_ch)) अणु
 		v4l2_err(&ic_priv->sd, "could not get IDMAC channel %u\n",
 			 prp_channel[task].rot_in_ch);
 		ret = PTR_ERR(rot_in_ch);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	priv->rot_in_ch = rot_in_ch;
 
 	rot_out_ch = ipu_idmac_get(ic_priv->ipu, prp_channel[task].rot_out_ch);
-	if (IS_ERR(rot_out_ch)) {
+	अगर (IS_ERR(rot_out_ch)) अणु
 		v4l2_err(&ic_priv->sd, "could not get IDMAC channel %u\n",
 			 prp_channel[task].rot_out_ch);
 		ret = PTR_ERR(rot_out_ch);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	priv->rot_out_ch = rot_out_ch;
 
-	return 0;
+	वापस 0;
 out:
 	prp_put_ipu_resources(priv);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void prp_vb2_buf_done(struct prp_priv *priv, struct ipuv3_channel *ch)
-{
-	struct imx_media_video_dev *vdev = priv->vdev;
-	struct imx_media_buffer *done, *next;
-	struct vb2_buffer *vb;
+अटल व्योम prp_vb2_buf_करोne(काष्ठा prp_priv *priv, काष्ठा ipuv3_channel *ch)
+अणु
+	काष्ठा imx_media_video_dev *vdev = priv->vdev;
+	काष्ठा imx_media_buffer *करोne, *next;
+	काष्ठा vb2_buffer *vb;
 	dma_addr_t phys;
 
-	done = priv->active_vb2_buf[priv->ipu_buf_num];
-	if (done) {
-		done->vbuf.field = vdev->fmt.field;
-		done->vbuf.sequence = priv->frame_sequence;
-		vb = &done->vbuf.vb2_buf;
-		vb->timestamp = ktime_get_ns();
-		vb2_buffer_done(vb, priv->nfb4eof ?
+	करोne = priv->active_vb2_buf[priv->ipu_buf_num];
+	अगर (करोne) अणु
+		करोne->vbuf.field = vdev->fmt.field;
+		करोne->vbuf.sequence = priv->frame_sequence;
+		vb = &करोne->vbuf.vb2_buf;
+		vb->बारtamp = kसमय_get_ns();
+		vb2_buffer_करोne(vb, priv->nfb4eof ?
 				VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
-	}
+	पूर्ण
 
 	priv->frame_sequence++;
 	priv->nfb4eof = false;
 
 	/* get next queued buffer */
 	next = imx_media_capture_device_next_buf(vdev);
-	if (next) {
+	अगर (next) अणु
 		phys = vb2_dma_contig_plane_dma_addr(&next->vbuf.vb2_buf, 0);
 		priv->active_vb2_buf[priv->ipu_buf_num] = next;
-	} else {
+	पूर्ण अन्यथा अणु
 		phys = priv->underrun_buf.phys;
-		priv->active_vb2_buf[priv->ipu_buf_num] = NULL;
-	}
+		priv->active_vb2_buf[priv->ipu_buf_num] = शून्य;
+	पूर्ण
 
-	if (ipu_idmac_buffer_is_ready(ch, priv->ipu_buf_num))
+	अगर (ipu_idmac_buffer_is_पढ़ोy(ch, priv->ipu_buf_num))
 		ipu_idmac_clear_buffer(ch, priv->ipu_buf_num);
 
-	if (priv->interweave_swap && ch == priv->out_ch)
+	अगर (priv->पूर्णांकerweave_swap && ch == priv->out_ch)
 		phys += vdev->fmt.bytesperline;
 
 	ipu_cpmem_set_buffer(ch, priv->ipu_buf_num, phys);
-}
+पूर्ण
 
-static irqreturn_t prp_eof_interrupt(int irq, void *dev_id)
-{
-	struct prp_priv *priv = dev_id;
-	struct ipuv3_channel *channel;
+अटल irqवापस_t prp_eof_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा prp_priv *priv = dev_id;
+	काष्ठा ipuv3_channel *channel;
 
 	spin_lock(&priv->irqlock);
 
-	if (priv->last_eof) {
+	अगर (priv->last_eof) अणु
 		complete(&priv->last_eof_comp);
 		priv->last_eof = false;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	channel = (ipu_rot_mode_is_irt(priv->rot_mode)) ?
 		priv->rot_out_ch : priv->out_ch;
 
-	prp_vb2_buf_done(priv, channel);
+	prp_vb2_buf_करोne(priv, channel);
 
 	/* select new IPU buf */
 	ipu_idmac_select_buffer(channel, priv->ipu_buf_num);
-	/* toggle IPU double-buffer index */
+	/* toggle IPU द्विगुन-buffer index */
 	priv->ipu_buf_num ^= 1;
 
-	/* bump the EOF timeout timer */
-	mod_timer(&priv->eof_timeout_timer,
-		  jiffies + msecs_to_jiffies(IMX_MEDIA_EOF_TIMEOUT));
+	/* bump the खातापूर्ण समयout समयr */
+	mod_समयr(&priv->eof_समयout_समयr,
+		  jअगरfies + msecs_to_jअगरfies(IMX_MEDIA_खातापूर्ण_TIMEOUT));
 
 unlock:
 	spin_unlock(&priv->irqlock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t prp_nfb4eof_interrupt(int irq, void *dev_id)
-{
-	struct prp_priv *priv = dev_id;
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
+अटल irqवापस_t prp_nfb4eof_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा prp_priv *priv = dev_id;
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
 
 	spin_lock(&priv->irqlock);
 
@@ -283,180 +284,180 @@ static irqreturn_t prp_nfb4eof_interrupt(int irq, void *dev_id)
 
 	spin_unlock(&priv->irqlock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /*
- * EOF timeout timer function.
+ * खातापूर्ण समयout समयr function.
  */
 /*
- * EOF timeout timer function. This is an unrecoverable condition
+ * खातापूर्ण समयout समयr function. This is an unrecoverable condition
  * without a stream restart.
  */
-static void prp_eof_timeout(struct timer_list *t)
-{
-	struct prp_priv *priv = from_timer(priv, t, eof_timeout_timer);
-	struct imx_media_video_dev *vdev = priv->vdev;
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
+अटल व्योम prp_eof_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा prp_priv *priv = from_समयr(priv, t, eof_समयout_समयr);
+	काष्ठा imx_media_video_dev *vdev = priv->vdev;
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
 
 	v4l2_err(&ic_priv->sd, "EOF timeout\n");
 
-	/* signal a fatal error to capture device */
+	/* संकेत a fatal error to capture device */
 	imx_media_capture_device_error(vdev);
-}
+पूर्ण
 
-static void prp_setup_vb2_buf(struct prp_priv *priv, dma_addr_t *phys)
-{
-	struct imx_media_video_dev *vdev = priv->vdev;
-	struct imx_media_buffer *buf;
-	int i;
+अटल व्योम prp_setup_vb2_buf(काष्ठा prp_priv *priv, dma_addr_t *phys)
+अणु
+	काष्ठा imx_media_video_dev *vdev = priv->vdev;
+	काष्ठा imx_media_buffer *buf;
+	पूर्णांक i;
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		buf = imx_media_capture_device_next_buf(vdev);
-		if (buf) {
+		अगर (buf) अणु
 			priv->active_vb2_buf[i] = buf;
 			phys[i] = vb2_dma_contig_plane_dma_addr(
 				&buf->vbuf.vb2_buf, 0);
-		} else {
-			priv->active_vb2_buf[i] = NULL;
+		पूर्ण अन्यथा अणु
+			priv->active_vb2_buf[i] = शून्य;
 			phys[i] = priv->underrun_buf.phys;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void prp_unsetup_vb2_buf(struct prp_priv *priv,
-				enum vb2_buffer_state return_status)
-{
-	struct imx_media_buffer *buf;
-	int i;
+अटल व्योम prp_unsetup_vb2_buf(काष्ठा prp_priv *priv,
+				क्रमागत vb2_buffer_state वापस_status)
+अणु
+	काष्ठा imx_media_buffer *buf;
+	पूर्णांक i;
 
-	/* return any remaining active frames with return_status */
-	for (i = 0; i < 2; i++) {
+	/* वापस any reमुख्यing active frames with वापस_status */
+	क्रम (i = 0; i < 2; i++) अणु
 		buf = priv->active_vb2_buf[i];
-		if (buf) {
-			struct vb2_buffer *vb = &buf->vbuf.vb2_buf;
+		अगर (buf) अणु
+			काष्ठा vb2_buffer *vb = &buf->vbuf.vb2_buf;
 
-			vb->timestamp = ktime_get_ns();
-			vb2_buffer_done(vb, return_status);
-		}
-	}
-}
+			vb->बारtamp = kसमय_get_ns();
+			vb2_buffer_करोne(vb, वापस_status);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int prp_setup_channel(struct prp_priv *priv,
-			     struct ipuv3_channel *channel,
-			     enum ipu_rotate_mode rot_mode,
+अटल पूर्णांक prp_setup_channel(काष्ठा prp_priv *priv,
+			     काष्ठा ipuv3_channel *channel,
+			     क्रमागत ipu_rotate_mode rot_mode,
 			     dma_addr_t addr0, dma_addr_t addr1,
 			     bool rot_swap_width_height)
-{
-	struct imx_media_video_dev *vdev = priv->vdev;
-	const struct imx_media_pixfmt *outcc;
-	struct v4l2_mbus_framefmt *outfmt;
-	unsigned int burst_size;
-	struct ipu_image image;
-	bool interweave;
-	int ret;
+अणु
+	काष्ठा imx_media_video_dev *vdev = priv->vdev;
+	स्थिर काष्ठा imx_media_pixfmt *outcc;
+	काष्ठा v4l2_mbus_framefmt *outfmt;
+	अचिन्हित पूर्णांक burst_size;
+	काष्ठा ipu_image image;
+	bool पूर्णांकerweave;
+	पूर्णांक ret;
 
-	outfmt = &priv->format_mbus[PRPENCVF_SRC_PAD];
+	outfmt = &priv->क्रमmat_mbus[PRPENCVF_SRC_PAD];
 	outcc = vdev->cc;
 
 	ipu_cpmem_zero(channel);
 
-	memset(&image, 0, sizeof(image));
+	स_रखो(&image, 0, माप(image));
 	image.pix = vdev->fmt;
 	image.rect = vdev->compose;
 
 	/*
-	 * If the field type at capture interface is interlaced, and
-	 * the output IDMAC pad is sequential, enable interweave at
+	 * If the field type at capture पूर्णांकerface is पूर्णांकerlaced, and
+	 * the output IDMAC pad is sequential, enable पूर्णांकerweave at
 	 * the IDMAC output channel.
 	 */
-	interweave = V4L2_FIELD_IS_INTERLACED(image.pix.field) &&
+	पूर्णांकerweave = V4L2_FIELD_IS_INTERLACED(image.pix.field) &&
 		V4L2_FIELD_IS_SEQUENTIAL(outfmt->field);
-	priv->interweave_swap = interweave &&
+	priv->पूर्णांकerweave_swap = पूर्णांकerweave &&
 		image.pix.field == V4L2_FIELD_INTERLACED_BT;
 
-	if (rot_swap_width_height) {
+	अगर (rot_swap_width_height) अणु
 		swap(image.pix.width, image.pix.height);
 		swap(image.rect.width, image.rect.height);
 		/* recalc stride using swapped width */
 		image.pix.bytesperline = outcc->planar ?
 			image.pix.width :
 			(image.pix.width * outcc->bpp) >> 3;
-	}
+	पूर्ण
 
-	if (priv->interweave_swap && channel == priv->out_ch) {
-		/* start interweave scan at 1st top line (2nd line) */
+	अगर (priv->पूर्णांकerweave_swap && channel == priv->out_ch) अणु
+		/* start पूर्णांकerweave scan at 1st top line (2nd line) */
 		image.rect.top = 1;
-	}
+	पूर्ण
 
 	image.phys0 = addr0;
 	image.phys1 = addr1;
 
 	/*
 	 * Skip writing U and V components to odd rows in the output
-	 * channels for planar 4:2:0 (but not when enabling IDMAC
-	 * interweaving, they are incompatible).
+	 * channels क्रम planar 4:2:0 (but not when enabling IDMAC
+	 * पूर्णांकerweaving, they are incompatible).
 	 */
-	if ((channel == priv->out_ch && !interweave) ||
-	    channel == priv->rot_out_ch) {
-		switch (image.pix.pixelformat) {
-		case V4L2_PIX_FMT_YUV420:
-		case V4L2_PIX_FMT_YVU420:
-		case V4L2_PIX_FMT_NV12:
+	अगर ((channel == priv->out_ch && !पूर्णांकerweave) ||
+	    channel == priv->rot_out_ch) अणु
+		चयन (image.pix.pixelक्रमmat) अणु
+		हाल V4L2_PIX_FMT_YUV420:
+		हाल V4L2_PIX_FMT_YVU420:
+		हाल V4L2_PIX_FMT_NV12:
 			ipu_cpmem_skip_odd_chroma_rows(channel);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ret = ipu_cpmem_set_image(channel, &image);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (channel == priv->rot_in_ch ||
-	    channel == priv->rot_out_ch) {
+	अगर (channel == priv->rot_in_ch ||
+	    channel == priv->rot_out_ch) अणु
 		burst_size = 8;
 		ipu_cpmem_set_block_mode(channel);
-	} else {
+	पूर्ण अन्यथा अणु
 		burst_size = (image.pix.width & 0xf) ? 8 : 16;
-	}
+	पूर्ण
 
 	ipu_cpmem_set_burstsize(channel, burst_size);
 
-	if (rot_mode)
+	अगर (rot_mode)
 		ipu_cpmem_set_rotation(channel, rot_mode);
 
-	if (interweave && channel == priv->out_ch)
-		ipu_cpmem_interlaced_scan(channel,
-					  priv->interweave_swap ?
+	अगर (पूर्णांकerweave && channel == priv->out_ch)
+		ipu_cpmem_पूर्णांकerlaced_scan(channel,
+					  priv->पूर्णांकerweave_swap ?
 					  -image.pix.bytesperline :
 					  image.pix.bytesperline,
-					  image.pix.pixelformat);
+					  image.pix.pixelक्रमmat);
 
 	ret = ipu_ic_task_idma_init(priv->ic, channel,
 				    image.pix.width, image.pix.height,
 				    burst_size, rot_mode);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ipu_cpmem_set_axi_id(channel, 1);
 
-	ipu_idmac_set_double_buffer(channel, true);
+	ipu_idmac_set_द्विगुन_buffer(channel, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prp_setup_rotation(struct prp_priv *priv)
-{
-	struct imx_media_video_dev *vdev = priv->vdev;
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
-	const struct imx_media_pixfmt *outcc, *incc;
-	struct v4l2_mbus_framefmt *infmt;
-	struct v4l2_pix_format *outfmt;
-	struct ipu_ic_csc csc;
+अटल पूर्णांक prp_setup_rotation(काष्ठा prp_priv *priv)
+अणु
+	काष्ठा imx_media_video_dev *vdev = priv->vdev;
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
+	स्थिर काष्ठा imx_media_pixfmt *outcc, *incc;
+	काष्ठा v4l2_mbus_framefmt *infmt;
+	काष्ठा v4l2_pix_क्रमmat *outfmt;
+	काष्ठा ipu_ic_csc csc;
 	dma_addr_t phys[2];
-	int ret;
+	पूर्णांक ret;
 
-	infmt = &priv->format_mbus[PRPENCVF_SINK_PAD];
+	infmt = &priv->क्रमmat_mbus[PRPENCVF_SINK_PAD];
 	outfmt = &vdev->fmt;
 	incc = priv->cc[PRPENCVF_SINK_PAD];
 	outcc = vdev->cc;
@@ -466,52 +467,52 @@ static int prp_setup_rotation(struct prp_priv *priv)
 			      incc->cs,
 			      outfmt->ycbcr_enc, outfmt->quantization,
 			      outcc->cs);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd, "ipu_ic_calc_csc failed, %d\n",
 			 ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = imx_media_alloc_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[0],
 				      outfmt->sizeimage);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd, "failed to alloc rot_buf[0], %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	ret = imx_media_alloc_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[1],
 				      outfmt->sizeimage);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd, "failed to alloc rot_buf[1], %d\n", ret);
-		goto free_rot0;
-	}
+		जाओ मुक्त_rot0;
+	पूर्ण
 
 	ret = ipu_ic_task_init(priv->ic, &csc,
 			       infmt->width, infmt->height,
 			       outfmt->height, outfmt->width);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd, "ipu_ic_task_init failed, %d\n", ret);
-		goto free_rot1;
-	}
+		जाओ मुक्त_rot1;
+	पूर्ण
 
 	/* init the IC-PRP-->MEM IDMAC channel */
 	ret = prp_setup_channel(priv, priv->out_ch, IPU_ROTATE_NONE,
 				priv->rot_buf[0].phys, priv->rot_buf[1].phys,
 				true);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd,
 			 "prp_setup_channel(out_ch) failed, %d\n", ret);
-		goto free_rot1;
-	}
+		जाओ मुक्त_rot1;
+	पूर्ण
 
 	/* init the MEM-->IC-PRP ROT IDMAC channel */
 	ret = prp_setup_channel(priv, priv->rot_in_ch, priv->rot_mode,
 				priv->rot_buf[0].phys, priv->rot_buf[1].phys,
 				true);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd,
 			 "prp_setup_channel(rot_in_ch) failed, %d\n", ret);
-		goto free_rot1;
-	}
+		जाओ मुक्त_rot1;
+	पूर्ण
 
 	prp_setup_vb2_buf(priv, phys);
 
@@ -519,11 +520,11 @@ static int prp_setup_rotation(struct prp_priv *priv)
 	ret = prp_setup_channel(priv, priv->rot_out_ch, IPU_ROTATE_NONE,
 				phys[0], phys[1],
 				false);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd,
 			 "prp_setup_channel(rot_out_ch) failed, %d\n", ret);
-		goto unsetup_vb2;
-	}
+		जाओ unsetup_vb2;
+	पूर्ण
 
 	/* now link IC-PRP-->MEM to MEM-->IC-PRP ROT */
 	ipu_idmac_link(priv->out_ch, priv->rot_in_ch);
@@ -531,7 +532,7 @@ static int prp_setup_rotation(struct prp_priv *priv)
 	/* enable the IC */
 	ipu_ic_enable(priv->ic);
 
-	/* set buffers ready */
+	/* set buffers पढ़ोy */
 	ipu_idmac_select_buffer(priv->out_ch, 0);
 	ipu_idmac_select_buffer(priv->out_ch, 1);
 	ipu_idmac_select_buffer(priv->rot_out_ch, 0);
@@ -545,20 +546,20 @@ static int prp_setup_rotation(struct prp_priv *priv)
 	/* and finally enable the IC PRP task */
 	ipu_ic_task_enable(priv->ic);
 
-	return 0;
+	वापस 0;
 
 unsetup_vb2:
 	prp_unsetup_vb2_buf(priv, VB2_BUF_STATE_QUEUED);
-free_rot1:
-	imx_media_free_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[1]);
-free_rot0:
-	imx_media_free_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[0]);
-	return ret;
-}
+मुक्त_rot1:
+	imx_media_मुक्त_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[1]);
+मुक्त_rot0:
+	imx_media_मुक्त_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[0]);
+	वापस ret;
+पूर्ण
 
-static void prp_unsetup_rotation(struct prp_priv *priv)
-{
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
+अटल व्योम prp_unsetup_rotation(काष्ठा prp_priv *priv)
+अणु
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
 
 	ipu_ic_task_disable(priv->ic);
 
@@ -570,22 +571,22 @@ static void prp_unsetup_rotation(struct prp_priv *priv)
 
 	ipu_ic_disable(priv->ic);
 
-	imx_media_free_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[0]);
-	imx_media_free_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[1]);
-}
+	imx_media_मुक्त_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[0]);
+	imx_media_मुक्त_dma_buf(ic_priv->ipu_dev, &priv->rot_buf[1]);
+पूर्ण
 
-static int prp_setup_norotation(struct prp_priv *priv)
-{
-	struct imx_media_video_dev *vdev = priv->vdev;
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
-	const struct imx_media_pixfmt *outcc, *incc;
-	struct v4l2_mbus_framefmt *infmt;
-	struct v4l2_pix_format *outfmt;
-	struct ipu_ic_csc csc;
+अटल पूर्णांक prp_setup_norotation(काष्ठा prp_priv *priv)
+अणु
+	काष्ठा imx_media_video_dev *vdev = priv->vdev;
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
+	स्थिर काष्ठा imx_media_pixfmt *outcc, *incc;
+	काष्ठा v4l2_mbus_framefmt *infmt;
+	काष्ठा v4l2_pix_क्रमmat *outfmt;
+	काष्ठा ipu_ic_csc csc;
 	dma_addr_t phys[2];
-	int ret;
+	पूर्णांक ret;
 
-	infmt = &priv->format_mbus[PRPENCVF_SINK_PAD];
+	infmt = &priv->क्रमmat_mbus[PRPENCVF_SINK_PAD];
 	outfmt = &vdev->fmt;
 	incc = priv->cc[PRPENCVF_SINK_PAD];
 	outcc = vdev->cc;
@@ -595,30 +596,30 @@ static int prp_setup_norotation(struct prp_priv *priv)
 			      incc->cs,
 			      outfmt->ycbcr_enc, outfmt->quantization,
 			      outcc->cs);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd, "ipu_ic_calc_csc failed, %d\n",
 			 ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = ipu_ic_task_init(priv->ic, &csc,
 			       infmt->width, infmt->height,
 			       outfmt->width, outfmt->height);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd, "ipu_ic_task_init failed, %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	prp_setup_vb2_buf(priv, phys);
 
 	/* init the IC PRP-->MEM IDMAC channel */
 	ret = prp_setup_channel(priv, priv->out_ch, priv->rot_mode,
 				phys[0], phys[1], false);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd,
 			 "prp_setup_channel(out_ch) failed, %d\n", ret);
-		goto unsetup_vb2;
-	}
+		जाओ unsetup_vb2;
+	पूर्ण
 
 	ipu_cpmem_dump(priv->out_ch);
 	ipu_ic_dump(priv->ic);
@@ -626,7 +627,7 @@ static int prp_setup_norotation(struct prp_priv *priv)
 
 	ipu_ic_enable(priv->ic);
 
-	/* set buffers ready */
+	/* set buffers पढ़ोy */
 	ipu_idmac_select_buffer(priv->out_ch, 0);
 	ipu_idmac_select_buffer(priv->out_ch, 1);
 
@@ -636,196 +637,196 @@ static int prp_setup_norotation(struct prp_priv *priv)
 	/* enable the IC task */
 	ipu_ic_task_enable(priv->ic);
 
-	return 0;
+	वापस 0;
 
 unsetup_vb2:
 	prp_unsetup_vb2_buf(priv, VB2_BUF_STATE_QUEUED);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void prp_unsetup_norotation(struct prp_priv *priv)
-{
+अटल व्योम prp_unsetup_norotation(काष्ठा prp_priv *priv)
+अणु
 	ipu_ic_task_disable(priv->ic);
 	ipu_idmac_disable_channel(priv->out_ch);
 	ipu_ic_disable(priv->ic);
-}
+पूर्ण
 
-static void prp_unsetup(struct prp_priv *priv,
-			enum vb2_buffer_state state)
-{
-	if (ipu_rot_mode_is_irt(priv->rot_mode))
+अटल व्योम prp_unsetup(काष्ठा prp_priv *priv,
+			क्रमागत vb2_buffer_state state)
+अणु
+	अगर (ipu_rot_mode_is_irt(priv->rot_mode))
 		prp_unsetup_rotation(priv);
-	else
+	अन्यथा
 		prp_unsetup_norotation(priv);
 
 	prp_unsetup_vb2_buf(priv, state);
-}
+पूर्ण
 
-static int prp_start(struct prp_priv *priv)
-{
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
-	struct imx_media_video_dev *vdev = priv->vdev;
-	int ret;
+अटल पूर्णांक prp_start(काष्ठा prp_priv *priv)
+अणु
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
+	काष्ठा imx_media_video_dev *vdev = priv->vdev;
+	पूर्णांक ret;
 
 	ret = prp_get_ipu_resources(priv);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = imx_media_alloc_dma_buf(ic_priv->ipu_dev, &priv->underrun_buf,
 				      vdev->fmt.sizeimage);
-	if (ret)
-		goto out_put_ipu;
+	अगर (ret)
+		जाओ out_put_ipu;
 
 	priv->ipu_buf_num = 0;
 
-	/* init EOF completion waitq */
+	/* init खातापूर्ण completion रुकोq */
 	init_completion(&priv->last_eof_comp);
 	priv->frame_sequence = 0;
 	priv->last_eof = false;
 	priv->nfb4eof = false;
 
-	if (ipu_rot_mode_is_irt(priv->rot_mode))
+	अगर (ipu_rot_mode_is_irt(priv->rot_mode))
 		ret = prp_setup_rotation(priv);
-	else
+	अन्यथा
 		ret = prp_setup_norotation(priv);
-	if (ret)
-		goto out_free_underrun;
+	अगर (ret)
+		जाओ out_मुक्त_underrun;
 
 	priv->nfb4eof_irq = ipu_idmac_channel_irq(ic_priv->ipu,
 						  priv->out_ch,
-						  IPU_IRQ_NFB4EOF);
+						  IPU_IRQ_NFB4खातापूर्ण);
 	ret = devm_request_irq(ic_priv->ipu_dev, priv->nfb4eof_irq,
-			       prp_nfb4eof_interrupt, 0,
+			       prp_nfb4eof_पूर्णांकerrupt, 0,
 			       "imx-ic-prp-nfb4eof", priv);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd,
 			 "Error registering NFB4EOF irq: %d\n", ret);
-		goto out_unsetup;
-	}
+		जाओ out_unsetup;
+	पूर्ण
 
-	if (ipu_rot_mode_is_irt(priv->rot_mode))
+	अगर (ipu_rot_mode_is_irt(priv->rot_mode))
 		priv->eof_irq = ipu_idmac_channel_irq(
-			ic_priv->ipu, priv->rot_out_ch, IPU_IRQ_EOF);
-	else
+			ic_priv->ipu, priv->rot_out_ch, IPU_IRQ_खातापूर्ण);
+	अन्यथा
 		priv->eof_irq = ipu_idmac_channel_irq(
-			ic_priv->ipu, priv->out_ch, IPU_IRQ_EOF);
+			ic_priv->ipu, priv->out_ch, IPU_IRQ_खातापूर्ण);
 
 	ret = devm_request_irq(ic_priv->ipu_dev, priv->eof_irq,
-			       prp_eof_interrupt, 0,
+			       prp_eof_पूर्णांकerrupt, 0,
 			       "imx-ic-prp-eof", priv);
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd,
 			 "Error registering eof irq: %d\n", ret);
-		goto out_free_nfb4eof_irq;
-	}
+		जाओ out_मुक्त_nfb4eof_irq;
+	पूर्ण
 
 	/* start upstream */
 	ret = v4l2_subdev_call(priv->src_sd, video, s_stream, 1);
 	ret = (ret && ret != -ENOIOCTLCMD) ? ret : 0;
-	if (ret) {
+	अगर (ret) अणु
 		v4l2_err(&ic_priv->sd,
 			 "upstream stream on failed: %d\n", ret);
-		goto out_free_eof_irq;
-	}
+		जाओ out_मुक्त_eof_irq;
+	पूर्ण
 
-	/* start the EOF timeout timer */
-	mod_timer(&priv->eof_timeout_timer,
-		  jiffies + msecs_to_jiffies(IMX_MEDIA_EOF_TIMEOUT));
+	/* start the खातापूर्ण समयout समयr */
+	mod_समयr(&priv->eof_समयout_समयr,
+		  jअगरfies + msecs_to_jअगरfies(IMX_MEDIA_खातापूर्ण_TIMEOUT));
 
-	return 0;
+	वापस 0;
 
-out_free_eof_irq:
-	devm_free_irq(ic_priv->ipu_dev, priv->eof_irq, priv);
-out_free_nfb4eof_irq:
-	devm_free_irq(ic_priv->ipu_dev, priv->nfb4eof_irq, priv);
+out_मुक्त_eof_irq:
+	devm_मुक्त_irq(ic_priv->ipu_dev, priv->eof_irq, priv);
+out_मुक्त_nfb4eof_irq:
+	devm_मुक्त_irq(ic_priv->ipu_dev, priv->nfb4eof_irq, priv);
 out_unsetup:
 	prp_unsetup(priv, VB2_BUF_STATE_QUEUED);
-out_free_underrun:
-	imx_media_free_dma_buf(ic_priv->ipu_dev, &priv->underrun_buf);
+out_मुक्त_underrun:
+	imx_media_मुक्त_dma_buf(ic_priv->ipu_dev, &priv->underrun_buf);
 out_put_ipu:
 	prp_put_ipu_resources(priv);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void prp_stop(struct prp_priv *priv)
-{
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
-	unsigned long flags;
-	int ret;
+अटल व्योम prp_stop(काष्ठा prp_priv *priv)
+अणु
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
-	/* mark next EOF interrupt as the last before stream off */
+	/* mark next खातापूर्ण पूर्णांकerrupt as the last beक्रमe stream off */
 	spin_lock_irqsave(&priv->irqlock, flags);
 	priv->last_eof = true;
 	spin_unlock_irqrestore(&priv->irqlock, flags);
 
 	/*
-	 * and then wait for interrupt handler to mark completion.
+	 * and then रुको क्रम पूर्णांकerrupt handler to mark completion.
 	 */
-	ret = wait_for_completion_timeout(
+	ret = रुको_क्रम_completion_समयout(
 		&priv->last_eof_comp,
-		msecs_to_jiffies(IMX_MEDIA_EOF_TIMEOUT));
-	if (ret == 0)
+		msecs_to_jअगरfies(IMX_MEDIA_खातापूर्ण_TIMEOUT));
+	अगर (ret == 0)
 		v4l2_warn(&ic_priv->sd, "wait last EOF timeout\n");
 
 	/* stop upstream */
 	ret = v4l2_subdev_call(priv->src_sd, video, s_stream, 0);
-	if (ret && ret != -ENOIOCTLCMD)
+	अगर (ret && ret != -ENOIOCTLCMD)
 		v4l2_warn(&ic_priv->sd,
 			  "upstream stream off failed: %d\n", ret);
 
-	devm_free_irq(ic_priv->ipu_dev, priv->eof_irq, priv);
-	devm_free_irq(ic_priv->ipu_dev, priv->nfb4eof_irq, priv);
+	devm_मुक्त_irq(ic_priv->ipu_dev, priv->eof_irq, priv);
+	devm_मुक्त_irq(ic_priv->ipu_dev, priv->nfb4eof_irq, priv);
 
 	prp_unsetup(priv, VB2_BUF_STATE_ERROR);
 
-	imx_media_free_dma_buf(ic_priv->ipu_dev, &priv->underrun_buf);
+	imx_media_मुक्त_dma_buf(ic_priv->ipu_dev, &priv->underrun_buf);
 
-	/* cancel the EOF timeout timer */
-	del_timer_sync(&priv->eof_timeout_timer);
+	/* cancel the खातापूर्ण समयout समयr */
+	del_समयr_sync(&priv->eof_समयout_समयr);
 
 	prp_put_ipu_resources(priv);
-}
+पूर्ण
 
-static struct v4l2_mbus_framefmt *
-__prp_get_fmt(struct prp_priv *priv, struct v4l2_subdev_pad_config *cfg,
-	      unsigned int pad, enum v4l2_subdev_format_whence which)
-{
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
+अटल काष्ठा v4l2_mbus_framefmt *
+__prp_get_fmt(काष्ठा prp_priv *priv, काष्ठा v4l2_subdev_pad_config *cfg,
+	      अचिन्हित पूर्णांक pad, क्रमागत v4l2_subdev_क्रमmat_whence which)
+अणु
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
 
-	if (which == V4L2_SUBDEV_FORMAT_TRY)
-		return v4l2_subdev_get_try_format(&ic_priv->sd, cfg, pad);
-	else
-		return &priv->format_mbus[pad];
-}
+	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
+		वापस v4l2_subdev_get_try_क्रमmat(&ic_priv->sd, cfg, pad);
+	अन्यथा
+		वापस &priv->क्रमmat_mbus[pad];
+पूर्ण
 
 /*
  * Applies IC resizer and IDMAC alignment restrictions to output
  * rectangle given the input rectangle, and depending on given
  * rotation mode.
  *
- * The IC resizer cannot downsize more than 4:1. Note also that
- * for 90 or 270 rotation, _both_ output width and height must
- * be aligned by W_ALIGN_SRC, because the intermediate rotation
+ * The IC resizer cannot करोwnsize more than 4:1. Note also that
+ * क्रम 90 or 270 rotation, _both_ output width and height must
+ * be aligned by W_ALIGN_SRC, because the पूर्णांकermediate rotation
  * buffer swaps output width/height, and the final output buffer
- * does not.
+ * करोes not.
  *
- * Returns true if the output rectangle was modified.
+ * Returns true अगर the output rectangle was modअगरied.
  */
-static bool prp_bound_align_output(struct v4l2_mbus_framefmt *outfmt,
-				   struct v4l2_mbus_framefmt *infmt,
-				   enum ipu_rotate_mode rot_mode)
-{
+अटल bool prp_bound_align_output(काष्ठा v4l2_mbus_framefmt *outfmt,
+				   काष्ठा v4l2_mbus_framefmt *infmt,
+				   क्रमागत ipu_rotate_mode rot_mode)
+अणु
 	u32 orig_width = outfmt->width;
 	u32 orig_height = outfmt->height;
 
-	if (ipu_rot_mode_is_irt(rot_mode))
+	अगर (ipu_rot_mode_is_irt(rot_mode))
 		v4l_bound_align_image(&outfmt->width,
 				      infmt->height / 4, MAX_H_SRC,
 				      W_ALIGN_SRC,
 				      &outfmt->height,
 				      infmt->width / 4, MAX_W_SRC,
 				      W_ALIGN_SRC, S_ALIGN);
-	else
+	अन्यथा
 		v4l_bound_align_image(&outfmt->width,
 				      infmt->width / 4, MAX_W_SRC,
 				      W_ALIGN_SRC,
@@ -833,248 +834,248 @@ static bool prp_bound_align_output(struct v4l2_mbus_framefmt *outfmt,
 				      infmt->height / 4, MAX_H_SRC,
 				      H_ALIGN_SRC, S_ALIGN);
 
-	return outfmt->width != orig_width || outfmt->height != orig_height;
-}
+	वापस outfmt->width != orig_width || outfmt->height != orig_height;
+पूर्ण
 
 /*
  * V4L2 subdev operations.
  */
 
-static int prp_enum_mbus_code(struct v4l2_subdev *sd,
-			      struct v4l2_subdev_pad_config *cfg,
-			      struct v4l2_subdev_mbus_code_enum *code)
-{
-	if (code->pad >= PRPENCVF_NUM_PADS)
-		return -EINVAL;
+अटल पूर्णांक prp_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
+			      काष्ठा v4l2_subdev_pad_config *cfg,
+			      काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
+	अगर (code->pad >= PRPENCVF_NUM_PADS)
+		वापस -EINVAL;
 
-	return imx_media_enum_ipu_formats(&code->code, code->index,
+	वापस imx_media_क्रमागत_ipu_क्रमmats(&code->code, code->index,
 					  PIXFMT_SEL_YUV_RGB);
-}
+पूर्ण
 
-static int prp_get_fmt(struct v4l2_subdev *sd,
-		       struct v4l2_subdev_pad_config *cfg,
-		       struct v4l2_subdev_format *sdformat)
-{
-	struct prp_priv *priv = sd_to_priv(sd);
-	struct v4l2_mbus_framefmt *fmt;
-	int ret = 0;
+अटल पूर्णांक prp_get_fmt(काष्ठा v4l2_subdev *sd,
+		       काष्ठा v4l2_subdev_pad_config *cfg,
+		       काष्ठा v4l2_subdev_क्रमmat *sdक्रमmat)
+अणु
+	काष्ठा prp_priv *priv = sd_to_priv(sd);
+	काष्ठा v4l2_mbus_framefmt *fmt;
+	पूर्णांक ret = 0;
 
-	if (sdformat->pad >= PRPENCVF_NUM_PADS)
-		return -EINVAL;
+	अगर (sdक्रमmat->pad >= PRPENCVF_NUM_PADS)
+		वापस -EINVAL;
 
 	mutex_lock(&priv->lock);
 
-	fmt = __prp_get_fmt(priv, cfg, sdformat->pad, sdformat->which);
-	if (!fmt) {
+	fmt = __prp_get_fmt(priv, cfg, sdक्रमmat->pad, sdक्रमmat->which);
+	अगर (!fmt) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sdformat->format = *fmt;
+	sdक्रमmat->क्रमmat = *fmt;
 out:
 	mutex_unlock(&priv->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void prp_try_fmt(struct prp_priv *priv,
-			struct v4l2_subdev_pad_config *cfg,
-			struct v4l2_subdev_format *sdformat,
-			const struct imx_media_pixfmt **cc)
-{
-	struct v4l2_mbus_framefmt *infmt;
+अटल व्योम prp_try_fmt(काष्ठा prp_priv *priv,
+			काष्ठा v4l2_subdev_pad_config *cfg,
+			काष्ठा v4l2_subdev_क्रमmat *sdक्रमmat,
+			स्थिर काष्ठा imx_media_pixfmt **cc)
+अणु
+	काष्ठा v4l2_mbus_framefmt *infmt;
 
-	*cc = imx_media_find_ipu_format(sdformat->format.code,
+	*cc = imx_media_find_ipu_क्रमmat(sdक्रमmat->क्रमmat.code,
 					PIXFMT_SEL_YUV_RGB);
-	if (!*cc) {
+	अगर (!*cc) अणु
 		u32 code;
 
-		imx_media_enum_ipu_formats(&code, 0, PIXFMT_SEL_YUV_RGB);
-		*cc = imx_media_find_ipu_format(code, PIXFMT_SEL_YUV_RGB);
+		imx_media_क्रमागत_ipu_क्रमmats(&code, 0, PIXFMT_SEL_YUV_RGB);
+		*cc = imx_media_find_ipu_क्रमmat(code, PIXFMT_SEL_YUV_RGB);
 
-		sdformat->format.code = (*cc)->codes[0];
-	}
+		sdक्रमmat->क्रमmat.code = (*cc)->codes[0];
+	पूर्ण
 
-	infmt = __prp_get_fmt(priv, cfg, PRPENCVF_SINK_PAD, sdformat->which);
+	infmt = __prp_get_fmt(priv, cfg, PRPENCVF_SINK_PAD, sdक्रमmat->which);
 
-	if (sdformat->pad == PRPENCVF_SRC_PAD) {
-		sdformat->format.field = infmt->field;
+	अगर (sdक्रमmat->pad == PRPENCVF_SRC_PAD) अणु
+		sdक्रमmat->क्रमmat.field = infmt->field;
 
-		prp_bound_align_output(&sdformat->format, infmt,
+		prp_bound_align_output(&sdक्रमmat->क्रमmat, infmt,
 				       priv->rot_mode);
 
 		/* propagate colorimetry from sink */
-		sdformat->format.colorspace = infmt->colorspace;
-		sdformat->format.xfer_func = infmt->xfer_func;
-	} else {
-		v4l_bound_align_image(&sdformat->format.width,
+		sdक्रमmat->क्रमmat.colorspace = infmt->colorspace;
+		sdक्रमmat->क्रमmat.xfer_func = infmt->xfer_func;
+	पूर्ण अन्यथा अणु
+		v4l_bound_align_image(&sdक्रमmat->क्रमmat.width,
 				      MIN_W_SINK, MAX_W_SINK, W_ALIGN_SINK,
-				      &sdformat->format.height,
+				      &sdक्रमmat->क्रमmat.height,
 				      MIN_H_SINK, MAX_H_SINK, H_ALIGN_SINK,
 				      S_ALIGN);
 
-		if (sdformat->format.field == V4L2_FIELD_ANY)
-			sdformat->format.field = V4L2_FIELD_NONE;
-	}
+		अगर (sdक्रमmat->क्रमmat.field == V4L2_FIELD_ANY)
+			sdक्रमmat->क्रमmat.field = V4L2_FIELD_NONE;
+	पूर्ण
 
-	imx_media_try_colorimetry(&sdformat->format, true);
-}
+	imx_media_try_colorimetry(&sdक्रमmat->क्रमmat, true);
+पूर्ण
 
-static int prp_set_fmt(struct v4l2_subdev *sd,
-		       struct v4l2_subdev_pad_config *cfg,
-		       struct v4l2_subdev_format *sdformat)
-{
-	struct prp_priv *priv = sd_to_priv(sd);
-	const struct imx_media_pixfmt *cc;
-	struct v4l2_mbus_framefmt *fmt;
-	int ret = 0;
+अटल पूर्णांक prp_set_fmt(काष्ठा v4l2_subdev *sd,
+		       काष्ठा v4l2_subdev_pad_config *cfg,
+		       काष्ठा v4l2_subdev_क्रमmat *sdक्रमmat)
+अणु
+	काष्ठा prp_priv *priv = sd_to_priv(sd);
+	स्थिर काष्ठा imx_media_pixfmt *cc;
+	काष्ठा v4l2_mbus_framefmt *fmt;
+	पूर्णांक ret = 0;
 
-	if (sdformat->pad >= PRPENCVF_NUM_PADS)
-		return -EINVAL;
+	अगर (sdक्रमmat->pad >= PRPENCVF_NUM_PADS)
+		वापस -EINVAL;
 
 	mutex_lock(&priv->lock);
 
-	if (priv->stream_count > 0) {
+	अगर (priv->stream_count > 0) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	prp_try_fmt(priv, cfg, sdformat, &cc);
+	prp_try_fmt(priv, cfg, sdक्रमmat, &cc);
 
-	fmt = __prp_get_fmt(priv, cfg, sdformat->pad, sdformat->which);
-	*fmt = sdformat->format;
+	fmt = __prp_get_fmt(priv, cfg, sdक्रमmat->pad, sdक्रमmat->which);
+	*fmt = sdक्रमmat->क्रमmat;
 
-	/* propagate a default format to source pad */
-	if (sdformat->pad == PRPENCVF_SINK_PAD) {
-		const struct imx_media_pixfmt *outcc;
-		struct v4l2_mbus_framefmt *outfmt;
-		struct v4l2_subdev_format format;
+	/* propagate a शेष क्रमmat to source pad */
+	अगर (sdक्रमmat->pad == PRPENCVF_SINK_PAD) अणु
+		स्थिर काष्ठा imx_media_pixfmt *outcc;
+		काष्ठा v4l2_mbus_framefmt *outfmt;
+		काष्ठा v4l2_subdev_क्रमmat क्रमmat;
 
-		format.pad = PRPENCVF_SRC_PAD;
-		format.which = sdformat->which;
-		format.format = sdformat->format;
-		prp_try_fmt(priv, cfg, &format, &outcc);
+		क्रमmat.pad = PRPENCVF_SRC_PAD;
+		क्रमmat.which = sdक्रमmat->which;
+		क्रमmat.क्रमmat = sdक्रमmat->क्रमmat;
+		prp_try_fmt(priv, cfg, &क्रमmat, &outcc);
 
 		outfmt = __prp_get_fmt(priv, cfg, PRPENCVF_SRC_PAD,
-				       sdformat->which);
-		*outfmt = format.format;
-		if (sdformat->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+				       sdक्रमmat->which);
+		*outfmt = क्रमmat.क्रमmat;
+		अगर (sdक्रमmat->which == V4L2_SUBDEV_FORMAT_ACTIVE)
 			priv->cc[PRPENCVF_SRC_PAD] = outcc;
-	}
+	पूर्ण
 
-	if (sdformat->which == V4L2_SUBDEV_FORMAT_ACTIVE)
-		priv->cc[sdformat->pad] = cc;
+	अगर (sdक्रमmat->which == V4L2_SUBDEV_FORMAT_ACTIVE)
+		priv->cc[sdक्रमmat->pad] = cc;
 
 out:
 	mutex_unlock(&priv->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int prp_enum_frame_size(struct v4l2_subdev *sd,
-			       struct v4l2_subdev_pad_config *cfg,
-			       struct v4l2_subdev_frame_size_enum *fse)
-{
-	struct prp_priv *priv = sd_to_priv(sd);
-	struct v4l2_subdev_format format = {};
-	const struct imx_media_pixfmt *cc;
-	int ret = 0;
+अटल पूर्णांक prp_क्रमागत_frame_size(काष्ठा v4l2_subdev *sd,
+			       काष्ठा v4l2_subdev_pad_config *cfg,
+			       काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
+अणु
+	काष्ठा prp_priv *priv = sd_to_priv(sd);
+	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणुपूर्ण;
+	स्थिर काष्ठा imx_media_pixfmt *cc;
+	पूर्णांक ret = 0;
 
-	if (fse->pad >= PRPENCVF_NUM_PADS || fse->index != 0)
-		return -EINVAL;
+	अगर (fse->pad >= PRPENCVF_NUM_PADS || fse->index != 0)
+		वापस -EINVAL;
 
 	mutex_lock(&priv->lock);
 
-	format.pad = fse->pad;
-	format.which = fse->which;
-	format.format.code = fse->code;
-	format.format.width = 1;
-	format.format.height = 1;
-	prp_try_fmt(priv, cfg, &format, &cc);
-	fse->min_width = format.format.width;
-	fse->min_height = format.format.height;
+	क्रमmat.pad = fse->pad;
+	क्रमmat.which = fse->which;
+	क्रमmat.क्रमmat.code = fse->code;
+	क्रमmat.क्रमmat.width = 1;
+	क्रमmat.क्रमmat.height = 1;
+	prp_try_fmt(priv, cfg, &क्रमmat, &cc);
+	fse->min_width = क्रमmat.क्रमmat.width;
+	fse->min_height = क्रमmat.क्रमmat.height;
 
-	if (format.format.code != fse->code) {
+	अगर (क्रमmat.क्रमmat.code != fse->code) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	format.format.code = fse->code;
-	format.format.width = -1;
-	format.format.height = -1;
-	prp_try_fmt(priv, cfg, &format, &cc);
-	fse->max_width = format.format.width;
-	fse->max_height = format.format.height;
+	क्रमmat.क्रमmat.code = fse->code;
+	क्रमmat.क्रमmat.width = -1;
+	क्रमmat.क्रमmat.height = -1;
+	prp_try_fmt(priv, cfg, &क्रमmat, &cc);
+	fse->max_width = क्रमmat.क्रमmat.width;
+	fse->max_height = क्रमmat.क्रमmat.height;
 out:
 	mutex_unlock(&priv->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int prp_link_setup(struct media_entity *entity,
-			  const struct media_pad *local,
-			  const struct media_pad *remote, u32 flags)
-{
-	struct v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
-	struct imx_ic_priv *ic_priv = v4l2_get_subdevdata(sd);
-	struct prp_priv *priv = ic_priv->task_priv;
-	struct v4l2_subdev *remote_sd;
-	int ret = 0;
+अटल पूर्णांक prp_link_setup(काष्ठा media_entity *entity,
+			  स्थिर काष्ठा media_pad *local,
+			  स्थिर काष्ठा media_pad *remote, u32 flags)
+अणु
+	काष्ठा v4l2_subdev *sd = media_entity_to_v4l2_subdev(entity);
+	काष्ठा imx_ic_priv *ic_priv = v4l2_get_subdevdata(sd);
+	काष्ठा prp_priv *priv = ic_priv->task_priv;
+	काष्ठा v4l2_subdev *remote_sd;
+	पूर्णांक ret = 0;
 
 	dev_dbg(ic_priv->ipu_dev, "%s: link setup %s -> %s",
 		ic_priv->sd.name, remote->entity->name, local->entity->name);
 
 	mutex_lock(&priv->lock);
 
-	if (local->flags & MEDIA_PAD_FL_SINK) {
-		if (!is_media_entity_v4l2_subdev(remote->entity)) {
+	अगर (local->flags & MEDIA_PAD_FL_SINK) अणु
+		अगर (!is_media_entity_v4l2_subdev(remote->entity)) अणु
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		remote_sd = media_entity_to_v4l2_subdev(remote->entity);
 
-		if (flags & MEDIA_LNK_FL_ENABLED) {
-			if (priv->src_sd) {
+		अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
+			अगर (priv->src_sd) अणु
 				ret = -EBUSY;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			priv->src_sd = remote_sd;
-		} else {
-			priv->src_sd = NULL;
-		}
+		पूर्ण अन्यथा अणु
+			priv->src_sd = शून्य;
+		पूर्ण
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* this is the source pad */
 
 	/* the remote must be the device node */
-	if (!is_media_entity_v4l2_video_device(remote->entity)) {
+	अगर (!is_media_entity_v4l2_video_device(remote->entity)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (flags & MEDIA_LNK_FL_ENABLED) {
-		if (priv->sink) {
+	अगर (flags & MEDIA_LNK_FL_ENABLED) अणु
+		अगर (priv->sink) अणु
 			ret = -EBUSY;
-			goto out;
-		}
-	} else {
-		priv->sink = NULL;
-		goto out;
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		priv->sink = शून्य;
+		जाओ out;
+	पूर्ण
 
 	priv->sink = remote->entity;
 out:
 	mutex_unlock(&priv->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int prp_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct prp_priv *priv = container_of(ctrl->handler,
-					       struct prp_priv, ctrl_hdlr);
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
-	enum ipu_rotate_mode rot_mode;
-	int rotation, ret = 0;
+अटल पूर्णांक prp_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा prp_priv *priv = container_of(ctrl->handler,
+					       काष्ठा prp_priv, ctrl_hdlr);
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
+	क्रमागत ipu_rotate_mode rot_mode;
+	पूर्णांक rotation, ret = 0;
 	bool hflip, vflip;
 
 	mutex_lock(&priv->lock);
@@ -1083,63 +1084,63 @@ static int prp_s_ctrl(struct v4l2_ctrl *ctrl)
 	hflip = priv->hflip;
 	vflip = priv->vflip;
 
-	switch (ctrl->id) {
-	case V4L2_CID_HFLIP:
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_HFLIP:
 		hflip = (ctrl->val == 1);
-		break;
-	case V4L2_CID_VFLIP:
+		अवरोध;
+	हाल V4L2_CID_VFLIP:
 		vflip = (ctrl->val == 1);
-		break;
-	case V4L2_CID_ROTATE:
+		अवरोध;
+	हाल V4L2_CID_ROTATE:
 		rotation = ctrl->val;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		v4l2_err(&ic_priv->sd, "Invalid control\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ret = ipu_degrees_to_rot_mode(&rot_mode, rotation, hflip, vflip);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (rot_mode != priv->rot_mode) {
-		struct v4l2_mbus_framefmt outfmt, infmt;
+	अगर (rot_mode != priv->rot_mode) अणु
+		काष्ठा v4l2_mbus_framefmt outfmt, infmt;
 
 		/* can't change rotation mid-streaming */
-		if (priv->stream_count > 0) {
+		अगर (priv->stream_count > 0) अणु
 			ret = -EBUSY;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		outfmt = priv->format_mbus[PRPENCVF_SRC_PAD];
-		infmt = priv->format_mbus[PRPENCVF_SINK_PAD];
+		outfmt = priv->क्रमmat_mbus[PRPENCVF_SRC_PAD];
+		infmt = priv->क्रमmat_mbus[PRPENCVF_SINK_PAD];
 
-		if (prp_bound_align_output(&outfmt, &infmt, rot_mode)) {
+		अगर (prp_bound_align_output(&outfmt, &infmt, rot_mode)) अणु
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		priv->rot_mode = rot_mode;
 		priv->rotation = rotation;
 		priv->hflip = hflip;
 		priv->vflip = vflip;
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&priv->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_ctrl_ops prp_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops prp_ctrl_ops = अणु
 	.s_ctrl = prp_s_ctrl,
-};
+पूर्ण;
 
-static int prp_init_controls(struct prp_priv *priv)
-{
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
-	struct v4l2_ctrl_handler *hdlr = &priv->ctrl_hdlr;
-	int ret;
+अटल पूर्णांक prp_init_controls(काष्ठा prp_priv *priv)
+अणु
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
+	काष्ठा v4l2_ctrl_handler *hdlr = &priv->ctrl_hdlr;
+	पूर्णांक ret;
 
 	v4l2_ctrl_handler_init(hdlr, 3);
 
@@ -1152,220 +1153,220 @@ static int prp_init_controls(struct prp_priv *priv)
 
 	ic_priv->sd.ctrl_handler = hdlr;
 
-	if (hdlr->error) {
+	अगर (hdlr->error) अणु
 		ret = hdlr->error;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	v4l2_ctrl_handler_setup(hdlr);
-	return 0;
+	वापस 0;
 
-out_free:
-	v4l2_ctrl_handler_free(hdlr);
-	return ret;
-}
+out_मुक्त:
+	v4l2_ctrl_handler_मुक्त(hdlr);
+	वापस ret;
+पूर्ण
 
-static int prp_s_stream(struct v4l2_subdev *sd, int enable)
-{
-	struct imx_ic_priv *ic_priv = v4l2_get_subdevdata(sd);
-	struct prp_priv *priv = ic_priv->task_priv;
-	int ret = 0;
+अटल पूर्णांक prp_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
+अणु
+	काष्ठा imx_ic_priv *ic_priv = v4l2_get_subdevdata(sd);
+	काष्ठा prp_priv *priv = ic_priv->task_priv;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&priv->lock);
 
-	if (!priv->src_sd || !priv->sink) {
+	अगर (!priv->src_sd || !priv->sink) अणु
 		ret = -EPIPE;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * enable/disable streaming only if stream_count is
+	 * enable/disable streaming only अगर stream_count is
 	 * going from 0 to 1 / 1 to 0.
 	 */
-	if (priv->stream_count != !enable)
-		goto update_count;
+	अगर (priv->stream_count != !enable)
+		जाओ update_count;
 
 	dev_dbg(ic_priv->ipu_dev, "%s: stream %s\n", sd->name,
 		enable ? "ON" : "OFF");
 
-	if (enable)
+	अगर (enable)
 		ret = prp_start(priv);
-	else
+	अन्यथा
 		prp_stop(priv);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 update_count:
 	priv->stream_count += enable ? 1 : -1;
-	if (priv->stream_count < 0)
+	अगर (priv->stream_count < 0)
 		priv->stream_count = 0;
 out:
 	mutex_unlock(&priv->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int prp_g_frame_interval(struct v4l2_subdev *sd,
-				struct v4l2_subdev_frame_interval *fi)
-{
-	struct prp_priv *priv = sd_to_priv(sd);
+अटल पूर्णांक prp_g_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+				काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
+अणु
+	काष्ठा prp_priv *priv = sd_to_priv(sd);
 
-	if (fi->pad >= PRPENCVF_NUM_PADS)
-		return -EINVAL;
-
-	mutex_lock(&priv->lock);
-	fi->interval = priv->frame_interval;
-	mutex_unlock(&priv->lock);
-
-	return 0;
-}
-
-static int prp_s_frame_interval(struct v4l2_subdev *sd,
-				struct v4l2_subdev_frame_interval *fi)
-{
-	struct prp_priv *priv = sd_to_priv(sd);
-
-	if (fi->pad >= PRPENCVF_NUM_PADS)
-		return -EINVAL;
+	अगर (fi->pad >= PRPENCVF_NUM_PADS)
+		वापस -EINVAL;
 
 	mutex_lock(&priv->lock);
+	fi->पूर्णांकerval = priv->frame_पूर्णांकerval;
+	mutex_unlock(&priv->lock);
 
-	/* No limits on valid frame intervals */
-	if (fi->interval.numerator == 0 || fi->interval.denominator == 0)
-		fi->interval = priv->frame_interval;
-	else
-		priv->frame_interval = fi->interval;
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक prp_s_frame_पूर्णांकerval(काष्ठा v4l2_subdev *sd,
+				काष्ठा v4l2_subdev_frame_पूर्णांकerval *fi)
+अणु
+	काष्ठा prp_priv *priv = sd_to_priv(sd);
+
+	अगर (fi->pad >= PRPENCVF_NUM_PADS)
+		वापस -EINVAL;
+
+	mutex_lock(&priv->lock);
+
+	/* No limits on valid frame पूर्णांकervals */
+	अगर (fi->पूर्णांकerval.numerator == 0 || fi->पूर्णांकerval.denominator == 0)
+		fi->पूर्णांकerval = priv->frame_पूर्णांकerval;
+	अन्यथा
+		priv->frame_पूर्णांकerval = fi->पूर्णांकerval;
 
 	mutex_unlock(&priv->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prp_registered(struct v4l2_subdev *sd)
-{
-	struct prp_priv *priv = sd_to_priv(sd);
-	struct imx_ic_priv *ic_priv = priv->ic_priv;
-	int i, ret;
+अटल पूर्णांक prp_रेजिस्टरed(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा prp_priv *priv = sd_to_priv(sd);
+	काष्ठा imx_ic_priv *ic_priv = priv->ic_priv;
+	पूर्णांक i, ret;
 	u32 code;
 
-	/* set a default mbus format  */
-	imx_media_enum_ipu_formats(&code, 0, PIXFMT_SEL_YUV);
+	/* set a शेष mbus क्रमmat  */
+	imx_media_क्रमागत_ipu_क्रमmats(&code, 0, PIXFMT_SEL_YUV);
 
-	for (i = 0; i < PRPENCVF_NUM_PADS; i++) {
-		ret = imx_media_init_mbus_fmt(&priv->format_mbus[i],
+	क्रम (i = 0; i < PRPENCVF_NUM_PADS; i++) अणु
+		ret = imx_media_init_mbus_fmt(&priv->क्रमmat_mbus[i],
 					      IMX_MEDIA_DEF_PIX_WIDTH,
 					      IMX_MEDIA_DEF_PIX_HEIGHT, code,
 					      V4L2_FIELD_NONE, &priv->cc[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	/* init default frame interval */
-	priv->frame_interval.numerator = 1;
-	priv->frame_interval.denominator = 30;
+	/* init शेष frame पूर्णांकerval */
+	priv->frame_पूर्णांकerval.numerator = 1;
+	priv->frame_पूर्णांकerval.denominator = 30;
 
 	priv->vdev = imx_media_capture_device_init(ic_priv->ipu_dev,
 						   &ic_priv->sd,
 						   PRPENCVF_SRC_PAD, true);
-	if (IS_ERR(priv->vdev))
-		return PTR_ERR(priv->vdev);
+	अगर (IS_ERR(priv->vdev))
+		वापस PTR_ERR(priv->vdev);
 
-	ret = imx_media_capture_device_register(priv->vdev, 0);
-	if (ret)
-		goto remove_vdev;
+	ret = imx_media_capture_device_रेजिस्टर(priv->vdev, 0);
+	अगर (ret)
+		जाओ हटाओ_vdev;
 
 	ret = prp_init_controls(priv);
-	if (ret)
-		goto unreg_vdev;
+	अगर (ret)
+		जाओ unreg_vdev;
 
-	return 0;
+	वापस 0;
 
 unreg_vdev:
-	imx_media_capture_device_unregister(priv->vdev);
-remove_vdev:
-	imx_media_capture_device_remove(priv->vdev);
-	return ret;
-}
+	imx_media_capture_device_unरेजिस्टर(priv->vdev);
+हटाओ_vdev:
+	imx_media_capture_device_हटाओ(priv->vdev);
+	वापस ret;
+पूर्ण
 
-static void prp_unregistered(struct v4l2_subdev *sd)
-{
-	struct prp_priv *priv = sd_to_priv(sd);
+अटल व्योम prp_unरेजिस्टरed(काष्ठा v4l2_subdev *sd)
+अणु
+	काष्ठा prp_priv *priv = sd_to_priv(sd);
 
-	imx_media_capture_device_unregister(priv->vdev);
-	imx_media_capture_device_remove(priv->vdev);
+	imx_media_capture_device_unरेजिस्टर(priv->vdev);
+	imx_media_capture_device_हटाओ(priv->vdev);
 
-	v4l2_ctrl_handler_free(&priv->ctrl_hdlr);
-}
+	v4l2_ctrl_handler_मुक्त(&priv->ctrl_hdlr);
+पूर्ण
 
-static const struct v4l2_subdev_pad_ops prp_pad_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops prp_pad_ops = अणु
 	.init_cfg = imx_media_init_cfg,
-	.enum_mbus_code = prp_enum_mbus_code,
-	.enum_frame_size = prp_enum_frame_size,
+	.क्रमागत_mbus_code = prp_क्रमागत_mbus_code,
+	.क्रमागत_frame_size = prp_क्रमागत_frame_size,
 	.get_fmt = prp_get_fmt,
 	.set_fmt = prp_set_fmt,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops prp_video_ops = {
-	.g_frame_interval = prp_g_frame_interval,
-	.s_frame_interval = prp_s_frame_interval,
+अटल स्थिर काष्ठा v4l2_subdev_video_ops prp_video_ops = अणु
+	.g_frame_पूर्णांकerval = prp_g_frame_पूर्णांकerval,
+	.s_frame_पूर्णांकerval = prp_s_frame_पूर्णांकerval,
 	.s_stream = prp_s_stream,
-};
+पूर्ण;
 
-static const struct media_entity_operations prp_entity_ops = {
+अटल स्थिर काष्ठा media_entity_operations prp_entity_ops = अणु
 	.link_setup = prp_link_setup,
 	.link_validate = v4l2_subdev_link_validate,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops prp_subdev_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops prp_subdev_ops = अणु
 	.video = &prp_video_ops,
 	.pad = &prp_pad_ops,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_internal_ops prp_internal_ops = {
-	.registered = prp_registered,
-	.unregistered = prp_unregistered,
-};
+अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops prp_पूर्णांकernal_ops = अणु
+	.रेजिस्टरed = prp_रेजिस्टरed,
+	.unरेजिस्टरed = prp_unरेजिस्टरed,
+पूर्ण;
 
-static int prp_init(struct imx_ic_priv *ic_priv)
-{
-	struct prp_priv *priv;
-	int i, ret;
+अटल पूर्णांक prp_init(काष्ठा imx_ic_priv *ic_priv)
+अणु
+	काष्ठा prp_priv *priv;
+	पूर्णांक i, ret;
 
-	priv = devm_kzalloc(ic_priv->ipu_dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(ic_priv->ipu_dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	ic_priv->task_priv = priv;
 	priv->ic_priv = ic_priv;
 
 	spin_lock_init(&priv->irqlock);
-	timer_setup(&priv->eof_timeout_timer, prp_eof_timeout, 0);
+	समयr_setup(&priv->eof_समयout_समयr, prp_eof_समयout, 0);
 
 	mutex_init(&priv->lock);
 
-	for (i = 0; i < PRPENCVF_NUM_PADS; i++) {
+	क्रम (i = 0; i < PRPENCVF_NUM_PADS; i++) अणु
 		priv->pad[i].flags = (i == PRPENCVF_SINK_PAD) ?
 			MEDIA_PAD_FL_SINK : MEDIA_PAD_FL_SOURCE;
-	}
+	पूर्ण
 
 	ret = media_entity_pads_init(&ic_priv->sd.entity, PRPENCVF_NUM_PADS,
 				     priv->pad);
-	if (ret)
+	अगर (ret)
 		mutex_destroy(&priv->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void prp_remove(struct imx_ic_priv *ic_priv)
-{
-	struct prp_priv *priv = ic_priv->task_priv;
+अटल व्योम prp_हटाओ(काष्ठा imx_ic_priv *ic_priv)
+अणु
+	काष्ठा prp_priv *priv = ic_priv->task_priv;
 
 	mutex_destroy(&priv->lock);
-}
+पूर्ण
 
-struct imx_ic_ops imx_ic_prpencvf_ops = {
+काष्ठा imx_ic_ops imx_ic_prpencvf_ops = अणु
 	.subdev_ops = &prp_subdev_ops,
-	.internal_ops = &prp_internal_ops,
+	.पूर्णांकernal_ops = &prp_पूर्णांकernal_ops,
 	.entity_ops = &prp_entity_ops,
 	.init = prp_init,
-	.remove = prp_remove,
-};
+	.हटाओ = prp_हटाओ,
+पूर्ण;

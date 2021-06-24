@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2014 Martin Peres
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,74 +22,74 @@
  *
  * Authors: Martin Peres
  */
-#include <subdev/bios.h>
-#include <subdev/bios/bit.h>
-#include <subdev/bios/fan.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/bit.h>
+#समावेश <subdev/bios/fan.h>
 
-static u32
-nvbios_fan_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
-{
-	struct bit_entry bit_P;
+अटल u32
+nvbios_fan_table(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
+अणु
+	काष्ठा bit_entry bit_P;
 	u32 fan = 0;
 
-	if (!bit_entry(bios, 'P', &bit_P)) {
-		if (bit_P.version == 2 && bit_P.length >= 0x5c)
+	अगर (!bit_entry(bios, 'P', &bit_P)) अणु
+		अगर (bit_P.version == 2 && bit_P.length >= 0x5c)
 			fan = nvbios_rd32(bios, bit_P.offset + 0x58);
 
-		if (fan) {
+		अगर (fan) अणु
 			*ver = nvbios_rd08(bios, fan + 0);
-			switch (*ver) {
-			case 0x10:
+			चयन (*ver) अणु
+			हाल 0x10:
 				*hdr = nvbios_rd08(bios, fan + 1);
 				*len = nvbios_rd08(bios, fan + 2);
 				*cnt = nvbios_rd08(bios, fan + 3);
-				return fan;
-			default:
-				break;
-			}
-		}
-	}
+				वापस fan;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u32
-nvbios_fan_entry(struct nvkm_bios *bios, int idx, u8 *ver, u8 *hdr,
+अटल u32
+nvbios_fan_entry(काष्ठा nvkm_bios *bios, पूर्णांक idx, u8 *ver, u8 *hdr,
 		 u8 *cnt, u8 *len)
-{
+अणु
 	u32 data = nvbios_fan_table(bios, ver, hdr, cnt, len);
-	if (data && idx < *cnt)
-		return data + *hdr + (idx * (*len));
-	return 0;
-}
+	अगर (data && idx < *cnt)
+		वापस data + *hdr + (idx * (*len));
+	वापस 0;
+पूर्ण
 
 u32
-nvbios_fan_parse(struct nvkm_bios *bios, struct nvbios_therm_fan *fan)
-{
+nvbios_fan_parse(काष्ठा nvkm_bios *bios, काष्ठा nvbios_therm_fan *fan)
+अणु
 	u8 ver, hdr, cnt, len;
 
 	u32 data = nvbios_fan_entry(bios, 0, &ver, &hdr, &cnt, &len);
-	if (data) {
+	अगर (data) अणु
 		u8 type = nvbios_rd08(bios, data + 0x00);
-		switch (type) {
-		case 0:
+		चयन (type) अणु
+		हाल 0:
 			fan->type = NVBIOS_THERM_FAN_TOGGLE;
-			break;
-		case 1:
-		case 2:
-			/* TODO: Understand the difference between the two! */
+			अवरोध;
+		हाल 1:
+		हाल 2:
+			/* TODO: Understand the dअगरference between the two! */
 			fan->type = NVBIOS_THERM_FAN_PWM;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			fan->type = NVBIOS_THERM_FAN_UNK;
-		}
+		पूर्ण
 
 		fan->fan_mode = NVBIOS_THERM_FAN_LINEAR;
 		fan->min_duty = nvbios_rd08(bios, data + 0x02);
 		fan->max_duty = nvbios_rd08(bios, data + 0x03);
 
 		fan->pwm_freq = nvbios_rd32(bios, data + 0x0b) & 0xffffff;
-	}
+	पूर्ण
 
-	return data;
-}
+	वापस data;
+पूर्ण

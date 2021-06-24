@@ -1,30 +1,31 @@
+<शैली गुरु>
 /*
- * Copyright (C) 2016 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright (C) 2016 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  *
  * This file is dual-licensed: you can use it either under the terms
  * of the GPL or the X11 license, at your option. Note that this dual
  * licensing only applies to this file, and not this project as a
  * whole.
  *
- *  a) This file is free software; you can redistribute it and/or
- *     modify it under the terms of the GNU General Public License as
+ *  a) This file is मुक्त software; you can redistribute it and/or
+ *     modअगरy it under the terms of the GNU General Public License as
  *     published by the Free Software Foundation; either version 2 of the
  *     License, or (at your option) any later version.
  *
  *     This file is distributed in the hope that it will be useful,
  *     but WITHOUT ANY WARRANTY; without even the implied warranty of
  *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *     GNU General Public License for more details.
+ *     GNU General Public License क्रम more details.
  *
  * Or, alternatively,
  *
- *  b) Permission is hereby granted, free of charge, to any person
- *     obtaining a copy of this software and associated documentation
+ *  b) Permission is hereby granted, मुक्त of अक्षरge, to any person
+ *     obtaining a copy of this software and associated करोcumentation
  *     files (the "Software"), to deal in the Software without
  *     restriction, including without limitation the rights to use,
- *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     copy, modअगरy, merge, publish, distribute, sublicense, and/or
  *     sell copies of the Software, and to permit persons to whom the
- *     Software is furnished to do so, subject to the following
+ *     Software is furnished to करो so, subject to the following
  *     conditions:
  *
  *     The above copyright notice and this permission notice shall be
@@ -40,99 +41,99 @@
  *     OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _DT_BINDINGS_CLK_SUN50I_A64_H_
-#define _DT_BINDINGS_CLK_SUN50I_A64_H_
+#अगर_अघोषित _DT_BINDINGS_CLK_SUN50I_A64_H_
+#घोषणा _DT_BINDINGS_CLK_SUN50I_A64_H_
 
-#define CLK_PLL_VIDEO0		7
-#define CLK_PLL_PERIPH0		11
+#घोषणा CLK_PLL_VIDEO0		7
+#घोषणा CLK_PLL_PERIPH0		11
 
-#define CLK_CPUX		21
-#define CLK_BUS_MIPI_DSI	28
-#define CLK_BUS_CE		29
-#define CLK_BUS_DMA		30
-#define CLK_BUS_MMC0		31
-#define CLK_BUS_MMC1		32
-#define CLK_BUS_MMC2		33
-#define CLK_BUS_NAND		34
-#define CLK_BUS_DRAM		35
-#define CLK_BUS_EMAC		36
-#define CLK_BUS_TS		37
-#define CLK_BUS_HSTIMER		38
-#define CLK_BUS_SPI0		39
-#define CLK_BUS_SPI1		40
-#define CLK_BUS_OTG		41
-#define CLK_BUS_EHCI0		42
-#define CLK_BUS_EHCI1		43
-#define CLK_BUS_OHCI0		44
-#define CLK_BUS_OHCI1		45
-#define CLK_BUS_VE		46
-#define CLK_BUS_TCON0		47
-#define CLK_BUS_TCON1		48
-#define CLK_BUS_DEINTERLACE	49
-#define CLK_BUS_CSI		50
-#define CLK_BUS_HDMI		51
-#define CLK_BUS_DE		52
-#define CLK_BUS_GPU		53
-#define CLK_BUS_MSGBOX		54
-#define CLK_BUS_SPINLOCK	55
-#define CLK_BUS_CODEC		56
-#define CLK_BUS_SPDIF		57
-#define CLK_BUS_PIO		58
-#define CLK_BUS_THS		59
-#define CLK_BUS_I2S0		60
-#define CLK_BUS_I2S1		61
-#define CLK_BUS_I2S2		62
-#define CLK_BUS_I2C0		63
-#define CLK_BUS_I2C1		64
-#define CLK_BUS_I2C2		65
-#define CLK_BUS_SCR		66
-#define CLK_BUS_UART0		67
-#define CLK_BUS_UART1		68
-#define CLK_BUS_UART2		69
-#define CLK_BUS_UART3		70
-#define CLK_BUS_UART4		71
-#define CLK_BUS_DBG		72
-#define CLK_THS			73
-#define CLK_NAND		74
-#define CLK_MMC0		75
-#define CLK_MMC1		76
-#define CLK_MMC2		77
-#define CLK_TS			78
-#define CLK_CE			79
-#define CLK_SPI0		80
-#define CLK_SPI1		81
-#define CLK_I2S0		82
-#define CLK_I2S1		83
-#define CLK_I2S2		84
-#define CLK_SPDIF		85
-#define CLK_USB_PHY0		86
-#define CLK_USB_PHY1		87
-#define CLK_USB_HSIC		88
-#define CLK_USB_HSIC_12M	89
+#घोषणा CLK_CPUX		21
+#घोषणा CLK_BUS_MIPI_DSI	28
+#घोषणा CLK_BUS_CE		29
+#घोषणा CLK_BUS_DMA		30
+#घोषणा CLK_BUS_MMC0		31
+#घोषणा CLK_BUS_MMC1		32
+#घोषणा CLK_BUS_MMC2		33
+#घोषणा CLK_BUS_न_अंकD		34
+#घोषणा CLK_BUS_DRAM		35
+#घोषणा CLK_BUS_EMAC		36
+#घोषणा CLK_BUS_TS		37
+#घोषणा CLK_BUS_HSTIMER		38
+#घोषणा CLK_BUS_SPI0		39
+#घोषणा CLK_BUS_SPI1		40
+#घोषणा CLK_BUS_OTG		41
+#घोषणा CLK_BUS_EHCI0		42
+#घोषणा CLK_BUS_EHCI1		43
+#घोषणा CLK_BUS_OHCI0		44
+#घोषणा CLK_BUS_OHCI1		45
+#घोषणा CLK_BUS_VE		46
+#घोषणा CLK_BUS_TCON0		47
+#घोषणा CLK_BUS_TCON1		48
+#घोषणा CLK_BUS_DEINTERLACE	49
+#घोषणा CLK_BUS_CSI		50
+#घोषणा CLK_BUS_HDMI		51
+#घोषणा CLK_BUS_DE		52
+#घोषणा CLK_BUS_GPU		53
+#घोषणा CLK_BUS_MSGBOX		54
+#घोषणा CLK_BUS_SPINLOCK	55
+#घोषणा CLK_BUS_CODEC		56
+#घोषणा CLK_BUS_SPDIF		57
+#घोषणा CLK_BUS_PIO		58
+#घोषणा CLK_BUS_THS		59
+#घोषणा CLK_BUS_I2S0		60
+#घोषणा CLK_BUS_I2S1		61
+#घोषणा CLK_BUS_I2S2		62
+#घोषणा CLK_BUS_I2C0		63
+#घोषणा CLK_BUS_I2C1		64
+#घोषणा CLK_BUS_I2C2		65
+#घोषणा CLK_BUS_SCR		66
+#घोषणा CLK_BUS_UART0		67
+#घोषणा CLK_BUS_UART1		68
+#घोषणा CLK_BUS_UART2		69
+#घोषणा CLK_BUS_UART3		70
+#घोषणा CLK_BUS_UART4		71
+#घोषणा CLK_BUS_DBG		72
+#घोषणा CLK_THS			73
+#घोषणा CLK_न_अंकD		74
+#घोषणा CLK_MMC0		75
+#घोषणा CLK_MMC1		76
+#घोषणा CLK_MMC2		77
+#घोषणा CLK_TS			78
+#घोषणा CLK_CE			79
+#घोषणा CLK_SPI0		80
+#घोषणा CLK_SPI1		81
+#घोषणा CLK_I2S0		82
+#घोषणा CLK_I2S1		83
+#घोषणा CLK_I2S2		84
+#घोषणा CLK_SPDIF		85
+#घोषणा CLK_USB_PHY0		86
+#घोषणा CLK_USB_PHY1		87
+#घोषणा CLK_USB_HSIC		88
+#घोषणा CLK_USB_HSIC_12M	89
 
-#define CLK_USB_OHCI0		91
+#घोषणा CLK_USB_OHCI0		91
 
-#define CLK_USB_OHCI1		93
+#घोषणा CLK_USB_OHCI1		93
 
-#define CLK_DRAM_VE		95
-#define CLK_DRAM_CSI		96
-#define CLK_DRAM_DEINTERLACE	97
-#define CLK_DRAM_TS		98
-#define CLK_DE			99
-#define CLK_TCON0		100
-#define CLK_TCON1		101
-#define CLK_DEINTERLACE		102
-#define CLK_CSI_MISC		103
-#define CLK_CSI_SCLK		104
-#define CLK_CSI_MCLK		105
-#define CLK_VE			106
-#define CLK_AC_DIG		107
-#define CLK_AC_DIG_4X		108
-#define CLK_AVS			109
-#define CLK_HDMI		110
-#define CLK_HDMI_DDC		111
-#define CLK_MBUS		112
-#define CLK_DSI_DPHY		113
-#define CLK_GPU			114
+#घोषणा CLK_DRAM_VE		95
+#घोषणा CLK_DRAM_CSI		96
+#घोषणा CLK_DRAM_DEINTERLACE	97
+#घोषणा CLK_DRAM_TS		98
+#घोषणा CLK_DE			99
+#घोषणा CLK_TCON0		100
+#घोषणा CLK_TCON1		101
+#घोषणा CLK_DEINTERLACE		102
+#घोषणा CLK_CSI_MISC		103
+#घोषणा CLK_CSI_SCLK		104
+#घोषणा CLK_CSI_MCLK		105
+#घोषणा CLK_VE			106
+#घोषणा CLK_AC_DIG		107
+#घोषणा CLK_AC_DIG_4X		108
+#घोषणा CLK_AVS			109
+#घोषणा CLK_HDMI		110
+#घोषणा CLK_HDMI_DDC		111
+#घोषणा CLK_MBUS		112
+#घोषणा CLK_DSI_DPHY		113
+#घोषणा CLK_GPU			114
 
-#endif /* _DT_BINDINGS_CLK_SUN50I_H_ */
+#पूर्ण_अगर /* _DT_BINDINGS_CLK_SUN50I_H_ */

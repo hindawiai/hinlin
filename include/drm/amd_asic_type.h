@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,17 +21,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __AMD_ASIC_TYPE_H__
-#define __AMD_ASIC_TYPE_H__
+#अगर_अघोषित __AMD_ASIC_TYPE_H__
+#घोषणा __AMD_ASIC_TYPE_H__
 /*
  * Supported ASIC types
  */
-enum amd_asic_type {
+क्रमागत amd_asic_type अणु
 	CHIP_TAHITI = 0,
 	CHIP_PITCAIRN,	/* 1 */
 	CHIP_VERDE,	/* 2 */
 	CHIP_OLAND,	/* 3 */
-	CHIP_HAINAN,	/* 4 */
+	CHIP_HAIन_अंक,	/* 4 */
 	CHIP_BONAIRE,	/* 5 */
 	CHIP_KAVERI,	/* 6 */
 	CHIP_KABINI,	/* 7 */
@@ -60,8 +61,8 @@ enum amd_asic_type {
 	CHIP_VANGOGH,	/* 31 */
 	CHIP_DIMGREY_CAVEFISH,	/* 32 */
 	CHIP_LAST,
-};
+पूर्ण;
 
-extern const char *amdgpu_asic_name[];
+बाह्य स्थिर अक्षर *amdgpu_asic_name[];
 
-#endif /*__AMD_ASIC_TYPE_H__ */
+#पूर्ण_अगर /*__AMD_ASIC_TYPE_H__ */

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * IPWireless 3G PCMCIA Network Driver
  *
@@ -9,38 +10,38 @@
  * Copyrighted as follows:
  *   Copyright (C) 2004 by Symmetric Systems Ltd (NZ)
  *
- * Various driver changes and rewrites, port to new kernels
+ * Various driver changes and reग_लिखोs, port to new kernels
  *   Copyright (C) 2006-2007 Jiri Kosina
  *
  * Misc code cleanups and updates
  *   Copyright (C) 2007 David Sterba
  */
 
-#ifndef _IPWIRELESS_CS_TTY_H_
-#define _IPWIRELESS_CS_TTY_H_
+#अगर_अघोषित _IPWIRELESS_CS_TTY_H_
+#घोषणा _IPWIRELESS_CS_TTY_H_
 
-#include <linux/types.h>
-#include <linux/sched.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
 
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ds.h>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ds.h>
 
-struct ipw_tty;
-struct ipw_network;
-struct ipw_hardware;
+काष्ठा ipw_tty;
+काष्ठा ipw_network;
+काष्ठा ipw_hardware;
 
-int ipwireless_tty_init(void);
-void ipwireless_tty_release(void);
+पूर्णांक ipwireless_tty_init(व्योम);
+व्योम ipwireless_tty_release(व्योम);
 
-struct ipw_tty *ipwireless_tty_create(struct ipw_hardware *hw,
-				      struct ipw_network *net);
-void ipwireless_tty_free(struct ipw_tty *tty);
-void ipwireless_tty_received(struct ipw_tty *tty, unsigned char *data,
-			     unsigned int length);
-int ipwireless_tty_is_modem(struct ipw_tty *tty);
-void ipwireless_tty_notify_control_line_change(struct ipw_tty *tty,
-					       unsigned int channel_idx,
-					       unsigned int control_lines,
-					       unsigned int changed_mask);
+काष्ठा ipw_tty *ipwireless_tty_create(काष्ठा ipw_hardware *hw,
+				      काष्ठा ipw_network *net);
+व्योम ipwireless_tty_मुक्त(काष्ठा ipw_tty *tty);
+व्योम ipwireless_tty_received(काष्ठा ipw_tty *tty, अचिन्हित अक्षर *data,
+			     अचिन्हित पूर्णांक length);
+पूर्णांक ipwireless_tty_is_modem(काष्ठा ipw_tty *tty);
+व्योम ipwireless_tty_notअगरy_control_line_change(काष्ठा ipw_tty *tty,
+					       अचिन्हित पूर्णांक channel_idx,
+					       अचिन्हित पूर्णांक control_lines,
+					       अचिन्हित पूर्णांक changed_mask);
 
-#endif
+#पूर्ण_अगर

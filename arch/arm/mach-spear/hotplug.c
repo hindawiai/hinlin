@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/arch/arm/mach-spear13xx/hotplug.c
  *
@@ -7,19 +8,19 @@
  *
  * based upon linux/arch/arm/mach-realview/hotplug.c
  */
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/smp.h>
-#include <asm/cp15.h>
-#include <asm/smp_plat.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/smp.h>
+#समावेश <यंत्र/cp15.h>
+#समावेश <यंत्र/smp_plat.h>
 
-#include "generic.h"
+#समावेश "generic.h"
 
-static inline void cpu_enter_lowpower(void)
-{
-	unsigned int v;
+अटल अंतरभूत व्योम cpu_enter_lowघातer(व्योम)
+अणु
+	अचिन्हित पूर्णांक v;
 
-	asm volatile(
+	यंत्र अस्थिर(
 	"	mcr	p15, 0, %1, c7, c5, 0\n"
 	"	dsb\n"
 	/*
@@ -34,13 +35,13 @@ static inline void cpu_enter_lowpower(void)
 	: "=&r" (v)
 	: "r" (0), "Ir" (CR_C)
 	: "cc", "memory");
-}
+पूर्ण
 
-static inline void cpu_leave_lowpower(void)
-{
-	unsigned int v;
+अटल अंतरभूत व्योम cpu_leave_lowघातer(व्योम)
+अणु
+	अचिन्हित पूर्णांक v;
 
-	asm volatile("mrc	p15, 0, %0, c1, c0, 0\n"
+	यंत्र अस्थिर("mrc	p15, 0, %0, c1, c0, 0\n"
 	"	orr	%0, %0, %1\n"
 	"	mcr	p15, 0, %0, c1, c0, 0\n"
 	"	mrc	p15, 0, %0, c1, c0, 1\n"
@@ -49,19 +50,19 @@ static inline void cpu_leave_lowpower(void)
 	: "=&r" (v)
 	: "Ir" (CR_C)
 	: "cc");
-}
+पूर्ण
 
-static inline void spear13xx_do_lowpower(unsigned int cpu, int *spurious)
-{
-	for (;;) {
+अटल अंतरभूत व्योम spear13xx_करो_lowघातer(अचिन्हित पूर्णांक cpu, पूर्णांक *spurious)
+अणु
+	क्रम (;;) अणु
 		wfi();
 
-		if (spear_pen_release == cpu) {
+		अगर (spear_pen_release == cpu) अणु
 			/*
-			 * OK, proper wakeup, we're done
+			 * OK, proper wakeup, we're करोne
 			 */
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * Getting here, means that we have come out of WFI without
@@ -71,30 +72,30 @@ static inline void spear13xx_do_lowpower(unsigned int cpu, int *spurious)
 		 * its occurrence.
 		 */
 		(*spurious)++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * platform-specific code to shutdown a CPU
+ * platक्रमm-specअगरic code to shutकरोwn a CPU
  *
  * Called with IRQs disabled
  */
-void spear13xx_cpu_die(unsigned int cpu)
-{
-	int spurious = 0;
+व्योम spear13xx_cpu_die(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक spurious = 0;
 
 	/*
-	 * we're ready for shutdown now, so do it
+	 * we're पढ़ोy क्रम shutकरोwn now, so करो it
 	 */
-	cpu_enter_lowpower();
-	spear13xx_do_lowpower(cpu, &spurious);
+	cpu_enter_lowघातer();
+	spear13xx_करो_lowघातer(cpu, &spurious);
 
 	/*
-	 * bring this CPU back into the world of cache
-	 * coherency, and then restore interrupts
+	 * bring this CPU back पूर्णांकo the world of cache
+	 * coherency, and then restore पूर्णांकerrupts
 	 */
-	cpu_leave_lowpower();
+	cpu_leave_lowघातer();
 
-	if (spurious)
+	अगर (spurious)
 		pr_warn("CPU%u: %u spurious wakeup calls\n", cpu, spurious);
-}
+पूर्ण

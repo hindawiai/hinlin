@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef _LINUX_BTF_IDS_H
-#define _LINUX_BTF_IDS_H
+#अगर_अघोषित _LINUX_BTF_IDS_H
+#घोषणा _LINUX_BTF_IDS_H
 
-struct btf_id_set {
+काष्ठा btf_id_set अणु
 	u32 cnt;
 	u32 ids[];
-};
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_INFO_BTF
+#अगर_घोषित CONFIG_DEBUG_INFO_BTF
 
-#include <linux/compiler.h> /* for __PASTE */
+#समावेश <linux/compiler.h> /* क्रम __PASTE */
 
 /*
  * Following macros help to define lists of BTF IDs placed
@@ -22,10 +23,10 @@ struct btf_id_set {
  * tool logic.
  */
 
-#define BTF_IDS_SECTION ".BTF_ids"
+#घोषणा BTF_IDS_SECTION ".BTF_ids"
 
-#define ____BTF_ID(symbol)				\
-asm(							\
+#घोषणा ____BTF_ID(symbol)				\
+यंत्र(							\
 ".pushsection " BTF_IDS_SECTION ",\"a\";       \n"	\
 ".local " #symbol " ;                          \n"	\
 ".type  " #symbol ", STT_OBJECT;               \n"	\
@@ -34,17 +35,17 @@ asm(							\
 ".zero 4                                       \n"	\
 ".popsection;                                  \n");
 
-#define __BTF_ID(symbol) \
+#घोषणा __BTF_ID(symbol) \
 	____BTF_ID(symbol)
 
-#define __ID(prefix) \
+#घोषणा __ID(prefix) \
 	__PASTE(prefix, __COUNTER__)
 
 /*
- * The BTF_ID defines unique symbol for each ID pointing
+ * The BTF_ID defines unique symbol क्रम each ID poपूर्णांकing
  * to 4 zero bytes.
  */
-#define BTF_ID(prefix, name) \
+#घोषणा BTF_ID(prefix, name) \
 	__BTF_ID(__ID(__BTF_ID__##prefix##__##name##__))
 
 /*
@@ -62,24 +63,24 @@ asm(							\
  * .zero 4
  *
  */
-#define __BTF_ID_LIST(name, scope)			\
-asm(							\
+#घोषणा __BTF_ID_LIST(name, scope)			\
+यंत्र(							\
 ".pushsection " BTF_IDS_SECTION ",\"a\";       \n"	\
 "." #scope " " #name ";                        \n"	\
 #name ":;                                      \n"	\
 ".popsection;                                  \n");
 
-#define BTF_ID_LIST(name)				\
+#घोषणा BTF_ID_LIST(name)				\
 __BTF_ID_LIST(name, local)				\
-extern u32 name[];
+बाह्य u32 name[];
 
-#define BTF_ID_LIST_GLOBAL(name)			\
+#घोषणा BTF_ID_LIST_GLOBAL(name)			\
 __BTF_ID_LIST(name, globl)
 
 /* The BTF_ID_LIST_SINGLE macro defines a BTF_ID_LIST with
  * a single entry.
  */
-#define BTF_ID_LIST_SINGLE(name, prefix, typename)	\
+#घोषणा BTF_ID_LIST_SINGLE(name, prefix, typename)	\
 	BTF_ID_LIST(name) \
 	BTF_ID(prefix, typename)
 
@@ -89,13 +90,13 @@ __BTF_ID_LIST(name, globl)
  * in BTF_ID_LIST, like:
  *
  *   BTF_ID_LIST(bpf_skb_output_btf_ids)
- *   BTF_ID(struct, sk_buff)
+ *   BTF_ID(काष्ठा, sk_buff)
  *   BTF_ID_UNUSED
- *   BTF_ID(struct, task_struct)
+ *   BTF_ID(काष्ठा, task_काष्ठा)
  */
 
-#define BTF_ID_UNUSED					\
-asm(							\
+#घोषणा BTF_ID_UNUSED					\
+यंत्र(							\
 ".pushsection " BTF_IDS_SECTION ",\"a\";       \n"	\
 ".zero 4                                       \n"	\
 ".popsection;                                  \n");
@@ -118,70 +119,70 @@ asm(							\
  * .zero 4
  *
  */
-#define __BTF_SET_START(name, scope)			\
-asm(							\
+#घोषणा __BTF_SET_START(name, scope)			\
+यंत्र(							\
 ".pushsection " BTF_IDS_SECTION ",\"a\";       \n"	\
 "." #scope " __BTF_ID__set__" #name ";         \n"	\
 "__BTF_ID__set__" #name ":;                    \n"	\
 ".zero 4                                       \n"	\
 ".popsection;                                  \n");
 
-#define BTF_SET_START(name)				\
+#घोषणा BTF_SET_START(name)				\
 __BTF_ID_LIST(name, local)				\
 __BTF_SET_START(name, local)
 
-#define BTF_SET_START_GLOBAL(name)			\
+#घोषणा BTF_SET_START_GLOBAL(name)			\
 __BTF_ID_LIST(name, globl)				\
 __BTF_SET_START(name, globl)
 
-#define BTF_SET_END(name)				\
-asm(							\
+#घोषणा BTF_SET_END(name)				\
+यंत्र(							\
 ".pushsection " BTF_IDS_SECTION ",\"a\";      \n"	\
 ".size __BTF_ID__set__" #name ", .-" #name "  \n"	\
 ".popsection;                                 \n");	\
-extern struct btf_id_set name;
+बाह्य काष्ठा btf_id_set name;
 
-#else
+#अन्यथा
 
-#define BTF_ID_LIST(name) static u32 name[5];
-#define BTF_ID(prefix, name)
-#define BTF_ID_UNUSED
-#define BTF_ID_LIST_GLOBAL(name) u32 name[1];
-#define BTF_ID_LIST_SINGLE(name, prefix, typename) static u32 name[1];
-#define BTF_SET_START(name) static struct btf_id_set name = { 0 };
-#define BTF_SET_START_GLOBAL(name) static struct btf_id_set name = { 0 };
-#define BTF_SET_END(name)
+#घोषणा BTF_ID_LIST(name) अटल u32 name[5];
+#घोषणा BTF_ID(prefix, name)
+#घोषणा BTF_ID_UNUSED
+#घोषणा BTF_ID_LIST_GLOBAL(name) u32 name[1];
+#घोषणा BTF_ID_LIST_SINGLE(name, prefix, typename) अटल u32 name[1];
+#घोषणा BTF_SET_START(name) अटल काष्ठा btf_id_set name = अणु 0 पूर्ण;
+#घोषणा BTF_SET_START_GLOBAL(name) अटल काष्ठा btf_id_set name = अणु 0 पूर्ण;
+#घोषणा BTF_SET_END(name)
 
-#endif /* CONFIG_DEBUG_INFO_BTF */
+#पूर्ण_अगर /* CONFIG_DEBUG_INFO_BTF */
 
-#ifdef CONFIG_NET
-/* Define a list of socket types which can be the argument for
+#अगर_घोषित CONFIG_NET
+/* Define a list of socket types which can be the argument क्रम
  * skc_to_*_sock() helpers. All these sockets should have
  * sock_common as the first argument in its memory layout.
  */
-#define BTF_SOCK_TYPE_xxx \
+#घोषणा BTF_SOCK_TYPE_xxx \
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_INET, inet_sock)			\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_INET_CONN, inet_connection_sock)	\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_INET_REQ, inet_request_sock)	\
-	BTF_SOCK_TYPE(BTF_SOCK_TYPE_INET_TW, inet_timewait_sock)	\
+	BTF_SOCK_TYPE(BTF_SOCK_TYPE_INET_TW, inet_समयरुको_sock)	\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_REQ, request_sock)			\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_SOCK, sock)				\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_SOCK_COMMON, sock_common)		\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_TCP, tcp_sock)			\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_TCP_REQ, tcp_request_sock)		\
-	BTF_SOCK_TYPE(BTF_SOCK_TYPE_TCP_TW, tcp_timewait_sock)		\
+	BTF_SOCK_TYPE(BTF_SOCK_TYPE_TCP_TW, tcp_समयरुको_sock)		\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_TCP6, tcp6_sock)			\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_UDP, udp_sock)			\
 	BTF_SOCK_TYPE(BTF_SOCK_TYPE_UDP6, udp6_sock)
 
-enum {
-#define BTF_SOCK_TYPE(name, str) name,
+क्रमागत अणु
+#घोषणा BTF_SOCK_TYPE(name, str) name,
 BTF_SOCK_TYPE_xxx
-#undef BTF_SOCK_TYPE
+#अघोषित BTF_SOCK_TYPE
 MAX_BTF_SOCK_TYPE,
-};
+पूर्ण;
 
-extern u32 btf_sock_ids[];
-#endif
+बाह्य u32 btf_sock_ids[];
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

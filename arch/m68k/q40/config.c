@@ -1,169 +1,170 @@
+<शैली गुरु>
 /*
  *  arch/m68k/q40/config.c
  *
- *  Copyright (C) 1999 Richard Zidlicky
+ *  Copyright (C) 1999 Riअक्षरd Zidlicky
  *
  * originally based on:
  *
  *  linux/bvme/config.c
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file README.legal in the main directory of this archive
- * for more details.
+ * License.  See the file README.legal in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/tty.h>
-#include <linux/console.h>
-#include <linux/linkage.h>
-#include <linux/init.h>
-#include <linux/major.h>
-#include <linux/serial_reg.h>
-#include <linux/rtc.h>
-#include <linux/vt_kern.h>
-#include <linux/bcd.h>
-#include <linux/platform_device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/console.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/init.h>
+#समावेश <linux/major.h>
+#समावेश <linux/serial_reg.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/vt_kern.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#include <asm/io.h>
-#include <asm/bootinfo.h>
-#include <asm/setup.h>
-#include <asm/irq.h>
-#include <asm/traps.h>
-#include <asm/machdep.h>
-#include <asm/q40_master.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/traps.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/q40_master.h>
 
-extern void q40_init_IRQ(void);
-static void q40_get_model(char *model);
-extern void q40_sched_init(void);
+बाह्य व्योम q40_init_IRQ(व्योम);
+अटल व्योम q40_get_model(अक्षर *model);
+बाह्य व्योम q40_sched_init(व्योम);
 
-static int q40_hwclk(int, struct rtc_time *);
-static unsigned int q40_get_ss(void);
-static int q40_get_rtc_pll(struct rtc_pll_info *pll);
-static int q40_set_rtc_pll(struct rtc_pll_info *pll);
+अटल पूर्णांक q40_hwclk(पूर्णांक, काष्ठा rtc_समय *);
+अटल अचिन्हित पूर्णांक q40_get_ss(व्योम);
+अटल पूर्णांक q40_get_rtc_pll(काष्ठा rtc_pll_info *pll);
+अटल पूर्णांक q40_set_rtc_pll(काष्ठा rtc_pll_info *pll);
 
-extern void q40_mksound(unsigned int /*freq*/, unsigned int /*ticks*/);
+बाह्य व्योम q40_mksound(अचिन्हित पूर्णांक /*freq*/, अचिन्हित पूर्णांक /*ticks*/);
 
-static void q40_mem_console_write(struct console *co, const char *b,
-				  unsigned int count);
+अटल व्योम q40_mem_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *b,
+				  अचिन्हित पूर्णांक count);
 
-extern int ql_ticks;
+बाह्य पूर्णांक ql_ticks;
 
-static struct console q40_console_driver = {
+अटल काष्ठा console q40_console_driver = अणु
 	.name	= "debug",
-	.write	= q40_mem_console_write,
+	.ग_लिखो	= q40_mem_console_ग_लिखो,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
-};
+पूर्ण;
 
 
 /* early debugging function:*/
-extern char *q40_mem_cptr; /*=(char *)0xff020000;*/
-static int _cpleft;
+बाह्य अक्षर *q40_mem_cptr; /*=(अक्षर *)0xff020000;*/
+अटल पूर्णांक _cpleft;
 
-static void q40_mem_console_write(struct console *co, const char *s,
-				  unsigned int count)
-{
-	const char *p = s;
+अटल व्योम q40_mem_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+				  अचिन्हित पूर्णांक count)
+अणु
+	स्थिर अक्षर *p = s;
 
-	if (count < _cpleft) {
-		while (count-- > 0) {
+	अगर (count < _cpleft) अणु
+		जबतक (count-- > 0) अणु
 			*q40_mem_cptr = *p++;
 			q40_mem_cptr += 4;
 			_cpleft--;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int __init q40_debug_setup(char *arg)
-{
-	/* useful for early debugging stages - writes kernel messages into SRAM */
-	if (MACH_IS_Q40 && !strncmp(arg, "mem", 3)) {
+अटल पूर्णांक __init q40_debug_setup(अक्षर *arg)
+अणु
+	/* useful क्रम early debugging stages - ग_लिखोs kernel messages पूर्णांकo SRAM */
+	अगर (MACH_IS_Q40 && !म_भेदन(arg, "mem", 3)) अणु
 		/*pr_info("using NVRAM debug, q40_mem_cptr=%p\n",q40_mem_cptr);*/
-		_cpleft = 2000 - ((long)q40_mem_cptr-0xff020000) / 4;
-		register_console(&q40_console_driver);
-	}
-	return 0;
-}
+		_cpleft = 2000 - ((दीर्घ)q40_mem_cptr-0xff020000) / 4;
+		रेजिस्टर_console(&q40_console_driver);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 early_param("debug", q40_debug_setup);
 
-#if 0
-void printq40(char *str)
-{
-	int l = strlen(str);
-	char *p = q40_mem_cptr;
+#अगर 0
+व्योम prपूर्णांकq40(अक्षर *str)
+अणु
+	पूर्णांक l = म_माप(str);
+	अक्षर *p = q40_mem_cptr;
 
-	while (l-- > 0 && _cpleft-- > 0) {
+	जबतक (l-- > 0 && _cpleft-- > 0) अणु
 		*p = *str++;
 		p += 4;
-	}
+	पूर्ण
 	q40_mem_cptr = p;
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static int halted;
+अटल पूर्णांक halted;
 
-#ifdef CONFIG_HEARTBEAT
-static void q40_heartbeat(int on)
-{
-	if (halted)
-		return;
+#अगर_घोषित CONFIG_HEARTBEAT
+अटल व्योम q40_heartbeat(पूर्णांक on)
+अणु
+	अगर (halted)
+		वापस;
 
-	if (on)
+	अगर (on)
 		Q40_LED_ON();
-	else
+	अन्यथा
 		Q40_LED_OFF();
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-static void q40_reset(void)
-{
+अटल व्योम q40_reset(व्योम)
+अणु
 	halted = 1;
 	pr_info("*******************************************\n"
 		"Called q40_reset : press the RESET button!!\n"
 		"*******************************************\n");
 	Q40_LED_ON();
-	while (1)
+	जबतक (1)
 		;
-}
+पूर्ण
 
-static void q40_halt(void)
-{
+अटल व्योम q40_halt(व्योम)
+अणु
 	halted = 1;
 	pr_info("*******************\n"
 		"  Called q40_halt\n"
 		"*******************\n");
 	Q40_LED_ON();
-	while (1)
+	जबतक (1)
 		;
-}
+पूर्ण
 
-static void q40_get_model(char *model)
-{
-	sprintf(model, "Q40");
-}
+अटल व्योम q40_get_model(अक्षर *model)
+अणु
+	प्र_लिखो(model, "Q40");
+पूर्ण
 
-static unsigned int serports[] =
-{
+अटल अचिन्हित पूर्णांक serports[] =
+अणु
 	0x3f8,0x2f8,0x3e8,0x2e8,0
-};
+पूर्ण;
 
-static void __init q40_disable_irqs(void)
-{
-	unsigned i, j;
+अटल व्योम __init q40_disable_irqs(व्योम)
+अणु
+	अचिन्हित i, j;
 
 	j = 0;
-	while ((i = serports[j++]))
+	जबतक ((i = serports[j++]))
 		outb(0, i + UART_IER);
 	master_outb(0, EXT_ENABLE_REG);
 	master_outb(0, KEY_IRQ_ENABLE_REG);
-}
+पूर्ण
 
-void __init config_q40(void)
-{
+व्योम __init config_q40(व्योम)
+अणु
 	mach_sched_init = q40_sched_init;
 
 	mach_init_IRQ = q40_init_IRQ;
@@ -175,125 +176,125 @@ void __init config_q40(void)
 	mach_reset = q40_reset;
 	mach_get_model = q40_get_model;
 
-#if IS_ENABLED(CONFIG_INPUT_M68K_BEEP)
+#अगर IS_ENABLED(CONFIG_INPUT_M68K_BEEP)
 	mach_beep = q40_mksound;
-#endif
-#ifdef CONFIG_HEARTBEAT
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_HEARTBEAT
 	mach_heartbeat = q40_heartbeat;
-#endif
+#पूर्ण_अगर
 	mach_halt = q40_halt;
 
 	/* disable a few things that SMSQ might have left enabled */
 	q40_disable_irqs();
-}
+पूर्ण
 
 
-int __init q40_parse_bootinfo(const struct bi_record *rec)
-{
-	return 1;
-}
+पूर्णांक __init q40_parse_bootinfo(स्थिर काष्ठा bi_record *rec)
+अणु
+	वापस 1;
+पूर्ण
 
 /*
- * Looks like op is non-zero for setting the clock, and zero for
- * reading the clock.
+ * Looks like op is non-zero क्रम setting the घड़ी, and zero क्रम
+ * पढ़ोing the घड़ी.
  *
- *  struct hwclk_time {
- *         unsigned        sec;       0..59
- *         unsigned        min;       0..59
- *         unsigned        hour;      0..23
- *         unsigned        day;       1..31
- *         unsigned        mon;       0..11
- *         unsigned        year;      00...
- *         int             wday;      0..6, 0 is Sunday, -1 means unknown/don't set
- * };
+ *  काष्ठा hwclk_समय अणु
+ *         अचिन्हित        sec;       0..59
+ *         अचिन्हित        min;       0..59
+ *         अचिन्हित        hour;      0..23
+ *         अचिन्हित        day;       1..31
+ *         अचिन्हित        mon;       0..11
+ *         अचिन्हित        year;      00...
+ *         पूर्णांक             wday;      0..6, 0 is Sunday, -1 means unknown/करोn't set
+ * पूर्ण;
  */
 
-static int q40_hwclk(int op, struct rtc_time *t)
-{
-	if (op) {
+अटल पूर्णांक q40_hwclk(पूर्णांक op, काष्ठा rtc_समय *t)
+अणु
+	अगर (op) अणु
 		/* Write.... */
 		Q40_RTC_CTRL |= Q40_RTC_WRITE;
 
-		Q40_RTC_SECS = bin2bcd(t->tm_sec);
-		Q40_RTC_MINS = bin2bcd(t->tm_min);
-		Q40_RTC_HOUR = bin2bcd(t->tm_hour);
-		Q40_RTC_DATE = bin2bcd(t->tm_mday);
-		Q40_RTC_MNTH = bin2bcd(t->tm_mon + 1);
-		Q40_RTC_YEAR = bin2bcd(t->tm_year%100);
-		if (t->tm_wday >= 0)
-			Q40_RTC_DOW = bin2bcd(t->tm_wday+1);
+		Q40_RTC_SECS = bin2bcd(t->पंचांग_sec);
+		Q40_RTC_MINS = bin2bcd(t->पंचांग_min);
+		Q40_RTC_HOUR = bin2bcd(t->पंचांग_hour);
+		Q40_RTC_DATE = bin2bcd(t->पंचांग_mday);
+		Q40_RTC_MNTH = bin2bcd(t->पंचांग_mon + 1);
+		Q40_RTC_YEAR = bin2bcd(t->पंचांग_year%100);
+		अगर (t->पंचांग_wday >= 0)
+			Q40_RTC_DOW = bin2bcd(t->पंचांग_wday+1);
 
 		Q40_RTC_CTRL &= ~(Q40_RTC_WRITE);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Read....  */
 		Q40_RTC_CTRL |= Q40_RTC_READ;
 
-		t->tm_year = bcd2bin (Q40_RTC_YEAR);
-		t->tm_mon  = bcd2bin (Q40_RTC_MNTH)-1;
-		t->tm_mday = bcd2bin (Q40_RTC_DATE);
-		t->tm_hour = bcd2bin (Q40_RTC_HOUR);
-		t->tm_min  = bcd2bin (Q40_RTC_MINS);
-		t->tm_sec  = bcd2bin (Q40_RTC_SECS);
+		t->पंचांग_year = bcd2bin (Q40_RTC_YEAR);
+		t->पंचांग_mon  = bcd2bin (Q40_RTC_MNTH)-1;
+		t->पंचांग_mday = bcd2bin (Q40_RTC_DATE);
+		t->पंचांग_hour = bcd2bin (Q40_RTC_HOUR);
+		t->पंचांग_min  = bcd2bin (Q40_RTC_MINS);
+		t->पंचांग_sec  = bcd2bin (Q40_RTC_SECS);
 
 		Q40_RTC_CTRL &= ~(Q40_RTC_READ);
 
-		if (t->tm_year < 70)
-			t->tm_year += 100;
-		t->tm_wday = bcd2bin(Q40_RTC_DOW)-1;
-	}
+		अगर (t->पंचांग_year < 70)
+			t->पंचांग_year += 100;
+		t->पंचांग_wday = bcd2bin(Q40_RTC_DOW)-1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int q40_get_ss(void)
-{
-	return bcd2bin(Q40_RTC_SECS);
-}
+अटल अचिन्हित पूर्णांक q40_get_ss(व्योम)
+अणु
+	वापस bcd2bin(Q40_RTC_SECS);
+पूर्ण
 
-/* get and set PLL calibration of RTC clock */
-#define Q40_RTC_PLL_MASK ((1<<5)-1)
-#define Q40_RTC_PLL_SIGN (1<<5)
+/* get and set PLL calibration of RTC घड़ी */
+#घोषणा Q40_RTC_PLL_MASK ((1<<5)-1)
+#घोषणा Q40_RTC_PLL_SIGN (1<<5)
 
-static int q40_get_rtc_pll(struct rtc_pll_info *pll)
-{
-	int tmp = Q40_RTC_CTRL;
+अटल पूर्णांक q40_get_rtc_pll(काष्ठा rtc_pll_info *pll)
+अणु
+	पूर्णांक पंचांगp = Q40_RTC_CTRL;
 
 	pll->pll_ctrl = 0;
-	pll->pll_value = tmp & Q40_RTC_PLL_MASK;
-	if (tmp & Q40_RTC_PLL_SIGN)
+	pll->pll_value = पंचांगp & Q40_RTC_PLL_MASK;
+	अगर (पंचांगp & Q40_RTC_PLL_SIGN)
 		pll->pll_value = -pll->pll_value;
 	pll->pll_max = 31;
 	pll->pll_min = -31;
 	pll->pll_posmult = 512;
 	pll->pll_negmult = 256;
-	pll->pll_clock = 125829120;
+	pll->pll_घड़ी = 125829120;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int q40_set_rtc_pll(struct rtc_pll_info *pll)
-{
-	if (!pll->pll_ctrl) {
-		/* the docs are a bit unclear so I am doublesetting */
+अटल पूर्णांक q40_set_rtc_pll(काष्ठा rtc_pll_info *pll)
+अणु
+	अगर (!pll->pll_ctrl) अणु
+		/* the करोcs are a bit unclear so I am द्विगुनsetting */
 		/* RTC_WRITE here ... */
-		int tmp = (pll->pll_value & 31) | (pll->pll_value<0 ? 32 : 0) |
+		पूर्णांक पंचांगp = (pll->pll_value & 31) | (pll->pll_value<0 ? 32 : 0) |
 			  Q40_RTC_WRITE;
 		Q40_RTC_CTRL |= Q40_RTC_WRITE;
-		Q40_RTC_CTRL = tmp;
+		Q40_RTC_CTRL = पंचांगp;
 		Q40_RTC_CTRL &= ~(Q40_RTC_WRITE);
-		return 0;
-	} else
-		return -EINVAL;
-}
+		वापस 0;
+	पूर्ण अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static __init int q40_add_kbd_device(void)
-{
-	struct platform_device *pdev;
+अटल __init पूर्णांक q40_add_kbd_device(व्योम)
+अणु
+	काष्ठा platक्रमm_device *pdev;
 
-	if (!MACH_IS_Q40)
-		return -ENODEV;
+	अगर (!MACH_IS_Q40)
+		वापस -ENODEV;
 
-	pdev = platform_device_register_simple("q40kbd", -1, NULL, 0);
-	return PTR_ERR_OR_ZERO(pdev);
-}
+	pdev = platक्रमm_device_रेजिस्टर_simple("q40kbd", -1, शून्य, 0);
+	वापस PTR_ERR_OR_ZERO(pdev);
+पूर्ण
 arch_initcall(q40_add_kbd_device);

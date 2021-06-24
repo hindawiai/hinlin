@@ -1,21 +1,22 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/fs/adfs/map.c
  *
  *  Copyright (C) 1997-2002 Russell King
  */
-#include <linux/slab.h>
-#include <linux/statfs.h>
-#include <asm/unaligned.h>
-#include "adfs.h"
+#समावेश <linux/slab.h>
+#समावेश <linux/statfs.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश "adfs.h"
 
 /*
  * The ADFS map is basically a set of sectors.  Each sector is called a
  * zone which contains a bitstream made up of variable sized fragments.
- * Each bit refers to a set of bytes in the filesystem, defined by
+ * Each bit refers to a set of bytes in the fileप्रणाली, defined by
  * log2bpmb.  This may be larger or smaller than the sector size, but
  * the overall size it describes will always be a round number of
- * sectors.  A fragment id is always idlen bits long.
+ * sectors.  A fragment id is always idlen bits दीर्घ.
  *
  *  < idlen > <       n        > <1>
  * +---------+-------//---------+---+
@@ -26,15 +27,15 @@
  * the fragment id up to and including the '1' bit - ie, idlen + n + 1
  * bits.
  *
- * A fragment id can be repeated multiple times in the whole map for
+ * A fragment id can be repeated multiple बार in the whole map क्रम
  * large or fragmented files.  The first map zone a fragment starts in
  * is given by fragment id / ids_per_zone - this allows objects to start
  * from any zone on the disk.
  *
- * Free space is described by a linked list of fragments.  Each free
- * fragment describes free space in the same way as the other fragments,
- * however, the frag id specifies an offset (in map bits) from the end
- * of this fragment to the start of the next free fragment.
+ * Free space is described by a linked list of fragments.  Each मुक्त
+ * fragment describes मुक्त space in the same way as the other fragments,
+ * however, the frag id specअगरies an offset (in map bits) from the end
+ * of this fragment to the start of the next मुक्त fragment.
  *
  * Objects stored on the disk are allocated object ids (we use these as
  * our inode numbers.)  Object ids contain a fragment id and an optional
@@ -45,83 +46,83 @@
 /*
  * For the future...
  */
-static DEFINE_RWLOCK(adfs_map_lock);
+अटल DEFINE_RWLOCK(adfs_map_lock);
 
 /*
  * This is fun.  We need to load up to 19 bits from the map at an
  * arbitrary bit alignment.  (We're limited to 19 bits by F+ version 2).
  */
-#define GET_FRAG_ID(_map,_start,_idmask)				\
-	({								\
-		unsigned char *_m = _map + (_start >> 3);		\
+#घोषणा GET_FRAG_ID(_map,_start,_idmask)				\
+	(अणु								\
+		अचिन्हित अक्षर *_m = _map + (_start >> 3);		\
 		u32 _frag = get_unaligned_le32(_m);			\
 		_frag >>= (_start & 7);					\
 		_frag & _idmask;					\
-	})
+	पूर्ण)
 
 /*
- * return the map bit offset of the fragment frag_id in the zone dm.
- * Note that the loop is optimised for best asm code - look at the
+ * वापस the map bit offset of the fragment frag_id in the zone dm.
+ * Note that the loop is optimised क्रम best यंत्र code - look at the
  * output of:
  *  gcc -D__KERNEL__ -O2 -I../../include -o - -S map.c
  */
-static int lookup_zone(const struct adfs_discmap *dm, const unsigned int idlen,
-		       const u32 frag_id, unsigned int *offset)
-{
-	const unsigned int endbit = dm->dm_endbit;
-	const u32 idmask = (1 << idlen) - 1;
-	unsigned char *map = dm->dm_bh->b_data;
-	unsigned int start = dm->dm_startbit;
-	unsigned int freelink, fragend;
+अटल पूर्णांक lookup_zone(स्थिर काष्ठा adfs_discmap *dm, स्थिर अचिन्हित पूर्णांक idlen,
+		       स्थिर u32 frag_id, अचिन्हित पूर्णांक *offset)
+अणु
+	स्थिर अचिन्हित पूर्णांक endbit = dm->dm_endbit;
+	स्थिर u32 idmask = (1 << idlen) - 1;
+	अचिन्हित अक्षर *map = dm->dm_bh->b_data;
+	अचिन्हित पूर्णांक start = dm->dm_startbit;
+	अचिन्हित पूर्णांक मुक्तlink, fragend;
 	u32 frag;
 
 	frag = GET_FRAG_ID(map, 8, idmask & 0x7fff);
-	freelink = frag ? 8 + frag : 0;
+	मुक्तlink = frag ? 8 + frag : 0;
 
-	do {
+	करो अणु
 		frag = GET_FRAG_ID(map, start, idmask);
 
 		fragend = find_next_bit_le(map, endbit, start + idlen);
-		if (fragend >= endbit)
-			goto error;
+		अगर (fragend >= endbit)
+			जाओ error;
 
-		if (start == freelink) {
-			freelink += frag & 0x7fff;
-		} else if (frag == frag_id) {
-			unsigned int length = fragend + 1 - start;
+		अगर (start == मुक्तlink) अणु
+			मुक्तlink += frag & 0x7fff;
+		पूर्ण अन्यथा अगर (frag == frag_id) अणु
+			अचिन्हित पूर्णांक length = fragend + 1 - start;
 
-			if (*offset < length)
-				return start + *offset;
+			अगर (*offset < length)
+				वापस start + *offset;
 			*offset -= length;
-		}
+		पूर्ण
 
 		start = fragend + 1;
-	} while (start < endbit);
-	return -1;
+	पूर्ण जबतक (start < endbit);
+	वापस -1;
 
 error:
-	printk(KERN_ERR "adfs: oversized fragment 0x%x at 0x%x-0x%x\n",
+	prपूर्णांकk(KERN_ERR "adfs: oversized fragment 0x%x at 0x%x-0x%x\n",
 		frag, start, fragend);
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
 /*
- * Scan the free space map, for this zone, calculating the total
- * number of map bits in each free space fragment.
+ * Scan the मुक्त space map, क्रम this zone, calculating the total
+ * number of map bits in each मुक्त space fragment.
  *
  * Note: idmask is limited to 15 bits [3.2]
  */
-static unsigned int
-scan_free_map(struct adfs_sb_info *asb, struct adfs_discmap *dm)
-{
-	const unsigned int endbit = dm->dm_endbit;
-	const unsigned int idlen  = asb->s_idlen;
-	const unsigned int frag_idlen = idlen <= 15 ? idlen : 15;
-	const u32 idmask = (1 << frag_idlen) - 1;
-	unsigned char *map = dm->dm_bh->b_data;
-	unsigned int start = 8, fragend;
+अटल अचिन्हित पूर्णांक
+scan_मुक्त_map(काष्ठा adfs_sb_info *asb, काष्ठा adfs_discmap *dm)
+अणु
+	स्थिर अचिन्हित पूर्णांक endbit = dm->dm_endbit;
+	स्थिर अचिन्हित पूर्णांक idlen  = asb->s_idlen;
+	स्थिर अचिन्हित पूर्णांक frag_idlen = idlen <= 15 ? idlen : 15;
+	स्थिर u32 idmask = (1 << frag_idlen) - 1;
+	अचिन्हित अक्षर *map = dm->dm_bh->b_data;
+	अचिन्हित पूर्णांक start = 8, fragend;
 	u32 frag;
-	unsigned long total = 0;
+	अचिन्हित दीर्घ total = 0;
 
 	/*
 	 * get fragment id
@@ -129,141 +130,141 @@ scan_free_map(struct adfs_sb_info *asb, struct adfs_discmap *dm)
 	frag = GET_FRAG_ID(map, start, idmask);
 
 	/*
-	 * If the freelink is null, then no free fragments
+	 * If the मुक्तlink is null, then no मुक्त fragments
 	 * exist in this zone.
 	 */
-	if (frag == 0)
-		return 0;
+	अगर (frag == 0)
+		वापस 0;
 
-	do {
+	करो अणु
 		start += frag;
 
 		frag = GET_FRAG_ID(map, start, idmask);
 
 		fragend = find_next_bit_le(map, endbit, start + idlen);
-		if (fragend >= endbit)
-			goto error;
+		अगर (fragend >= endbit)
+			जाओ error;
 
 		total += fragend + 1 - start;
-	} while (frag >= idlen + 1);
+	पूर्ण जबतक (frag >= idlen + 1);
 
-	if (frag != 0)
-		printk(KERN_ERR "adfs: undersized free fragment\n");
+	अगर (frag != 0)
+		prपूर्णांकk(KERN_ERR "adfs: undersized free fragment\n");
 
-	return total;
+	वापस total;
 error:
-	printk(KERN_ERR "adfs: oversized free fragment\n");
-	return 0;
-}
+	prपूर्णांकk(KERN_ERR "adfs: oversized free fragment\n");
+	वापस 0;
+पूर्ण
 
-static int scan_map(struct adfs_sb_info *asb, unsigned int zone,
-		    const u32 frag_id, unsigned int mapoff)
-{
-	const unsigned int idlen = asb->s_idlen;
-	struct adfs_discmap *dm, *dm_end;
-	int result;
+अटल पूर्णांक scan_map(काष्ठा adfs_sb_info *asb, अचिन्हित पूर्णांक zone,
+		    स्थिर u32 frag_id, अचिन्हित पूर्णांक mapoff)
+अणु
+	स्थिर अचिन्हित पूर्णांक idlen = asb->s_idlen;
+	काष्ठा adfs_discmap *dm, *dm_end;
+	पूर्णांक result;
 
 	dm	= asb->s_map + zone;
 	zone	= asb->s_map_size;
 	dm_end	= asb->s_map + zone;
 
-	do {
+	करो अणु
 		result = lookup_zone(dm, idlen, frag_id, &mapoff);
 
-		if (result != -1)
-			goto found;
+		अगर (result != -1)
+			जाओ found;
 
 		dm ++;
-		if (dm == dm_end)
+		अगर (dm == dm_end)
 			dm = asb->s_map;
-	} while (--zone > 0);
+	पूर्ण जबतक (--zone > 0);
 
-	return -1;
+	वापस -1;
 found:
 	result -= dm->dm_startbit;
 	result += dm->dm_startblk;
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /*
- * calculate the amount of free blocks in the map.
+ * calculate the amount of मुक्त blocks in the map.
  *
  *              n=1
- *  total_free = E(free_in_zone_n)
+ *  total_मुक्त = E(मुक्त_in_zone_n)
  *              nzones
  */
-void adfs_map_statfs(struct super_block *sb, struct kstatfs *buf)
-{
-	struct adfs_sb_info *asb = ADFS_SB(sb);
-	struct adfs_discrecord *dr = adfs_map_discrecord(asb->s_map);
-	struct adfs_discmap *dm;
-	unsigned int total = 0;
-	unsigned int zone;
+व्योम adfs_map_statfs(काष्ठा super_block *sb, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा adfs_sb_info *asb = ADFS_SB(sb);
+	काष्ठा adfs_discrecord *dr = adfs_map_discrecord(asb->s_map);
+	काष्ठा adfs_discmap *dm;
+	अचिन्हित पूर्णांक total = 0;
+	अचिन्हित पूर्णांक zone;
 
 	dm   = asb->s_map;
 	zone = asb->s_map_size;
 
-	do {
-		total += scan_free_map(asb, dm++);
-	} while (--zone > 0);
+	करो अणु
+		total += scan_मुक्त_map(asb, dm++);
+	पूर्ण जबतक (--zone > 0);
 
 	buf->f_blocks  = adfs_disc_size(dr) >> sb->s_blocksize_bits;
 	buf->f_files   = asb->s_ids_per_zone * asb->s_map_size;
 	buf->f_bavail  =
-	buf->f_bfree   = signed_asl(total, asb->s_map2blk);
-}
+	buf->f_bमुक्त   = चिन्हित_asl(total, asb->s_map2blk);
+पूर्ण
 
-int adfs_map_lookup(struct super_block *sb, u32 frag_id, unsigned int offset)
-{
-	struct adfs_sb_info *asb = ADFS_SB(sb);
-	unsigned int zone, mapoff;
-	int result;
+पूर्णांक adfs_map_lookup(काष्ठा super_block *sb, u32 frag_id, अचिन्हित पूर्णांक offset)
+अणु
+	काष्ठा adfs_sb_info *asb = ADFS_SB(sb);
+	अचिन्हित पूर्णांक zone, mapoff;
+	पूर्णांक result;
 
 	/*
 	 * map & root fragment is special - it starts in the center of the
 	 * disk.  The other fragments start at zone (frag / ids_per_zone)
 	 */
-	if (frag_id == ADFS_ROOT_FRAG)
+	अगर (frag_id == ADFS_ROOT_FRAG)
 		zone = asb->s_map_size >> 1;
-	else
+	अन्यथा
 		zone = frag_id / asb->s_ids_per_zone;
 
-	if (zone >= asb->s_map_size)
-		goto bad_fragment;
+	अगर (zone >= asb->s_map_size)
+		जाओ bad_fragment;
 
 	/* Convert sector offset to map offset */
-	mapoff = signed_asl(offset, -asb->s_map2blk);
+	mapoff = चिन्हित_asl(offset, -asb->s_map2blk);
 
-	read_lock(&adfs_map_lock);
+	पढ़ो_lock(&adfs_map_lock);
 	result = scan_map(asb, zone, frag_id, mapoff);
-	read_unlock(&adfs_map_lock);
+	पढ़ो_unlock(&adfs_map_lock);
 
-	if (result > 0) {
-		unsigned int secoff;
+	अगर (result > 0) अणु
+		अचिन्हित पूर्णांक secoff;
 
-		/* Calculate sector offset into map block */
-		secoff = offset - signed_asl(mapoff, asb->s_map2blk);
-		return secoff + signed_asl(result, asb->s_map2blk);
-	}
+		/* Calculate sector offset पूर्णांकo map block */
+		secoff = offset - चिन्हित_asl(mapoff, asb->s_map2blk);
+		वापस secoff + चिन्हित_asl(result, asb->s_map2blk);
+	पूर्ण
 
 	adfs_error(sb, "fragment 0x%04x at offset %d not found in map",
 		   frag_id, offset);
-	return 0;
+	वापस 0;
 
 bad_fragment:
 	adfs_error(sb, "invalid fragment 0x%04x (zone = %d, max = %d)",
 		   frag_id, zone, asb->s_map_size);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned char adfs_calczonecheck(struct super_block *sb, unsigned char *map)
-{
-	unsigned int v0, v1, v2, v3;
-	int i;
+अटल अचिन्हित अक्षर adfs_calczonecheck(काष्ठा super_block *sb, अचिन्हित अक्षर *map)
+अणु
+	अचिन्हित पूर्णांक v0, v1, v2, v3;
+	पूर्णांक i;
 
 	v0 = v1 = v2 = v3 = 0;
-	for (i = sb->s_blocksize - 4; i; i -= 4) {
+	क्रम (i = sb->s_blocksize - 4; i; i -= 4) अणु
 		v0 += map[i]     + (v3 >> 8);
 		v3 &= 0xff;
 		v1 += map[i + 1] + (v0 >> 8);
@@ -272,93 +273,93 @@ static unsigned char adfs_calczonecheck(struct super_block *sb, unsigned char *m
 		v1 &= 0xff;
 		v3 += map[i + 3] + (v2 >> 8);
 		v2 &= 0xff;
-	}
+	पूर्ण
 	v0 +=           v3 >> 8;
 	v1 += map[1] + (v0 >> 8);
 	v2 += map[2] + (v1 >> 8);
 	v3 += map[3] + (v2 >> 8);
 
-	return v0 ^ v1 ^ v2 ^ v3;
-}
+	वापस v0 ^ v1 ^ v2 ^ v3;
+पूर्ण
 
-static int adfs_checkmap(struct super_block *sb, struct adfs_discmap *dm)
-{
-	unsigned char crosscheck = 0, zonecheck = 1;
-	int i;
+अटल पूर्णांक adfs_checkmap(काष्ठा super_block *sb, काष्ठा adfs_discmap *dm)
+अणु
+	अचिन्हित अक्षर crosscheck = 0, zonecheck = 1;
+	पूर्णांक i;
 
-	for (i = 0; i < ADFS_SB(sb)->s_map_size; i++) {
-		unsigned char *map;
+	क्रम (i = 0; i < ADFS_SB(sb)->s_map_size; i++) अणु
+		अचिन्हित अक्षर *map;
 
 		map = dm[i].dm_bh->b_data;
 
-		if (adfs_calczonecheck(sb, map) != map[0]) {
+		अगर (adfs_calczonecheck(sb, map) != map[0]) अणु
 			adfs_error(sb, "zone %d fails zonecheck", i);
 			zonecheck = 0;
-		}
+		पूर्ण
 		crosscheck ^= map[3];
-	}
-	if (crosscheck != 0xff)
+	पूर्ण
+	अगर (crosscheck != 0xff)
 		adfs_error(sb, "crosscheck != 0xff");
-	return crosscheck == 0xff && zonecheck;
-}
+	वापस crosscheck == 0xff && zonecheck;
+पूर्ण
 
 /*
  * Layout the map - the first zone contains a copy of the disc record,
- * and the last zone must be limited to the size of the filesystem.
+ * and the last zone must be limited to the size of the fileप्रणाली.
  */
-static void adfs_map_layout(struct adfs_discmap *dm, unsigned int nzones,
-			    struct adfs_discrecord *dr)
-{
-	unsigned int zone, zone_size;
+अटल व्योम adfs_map_layout(काष्ठा adfs_discmap *dm, अचिन्हित पूर्णांक nzones,
+			    काष्ठा adfs_discrecord *dr)
+अणु
+	अचिन्हित पूर्णांक zone, zone_size;
 	u64 size;
 
 	zone_size = (8 << dr->log2secsize) - le16_to_cpu(dr->zone_spare);
 
-	dm[0].dm_bh       = NULL;
+	dm[0].dm_bh       = शून्य;
 	dm[0].dm_startblk = 0;
 	dm[0].dm_startbit = 32 + ADFS_DR_SIZE_BITS;
 	dm[0].dm_endbit   = 32 + zone_size;
 
-	for (zone = 1; zone < nzones; zone++) {
-		dm[zone].dm_bh       = NULL;
+	क्रम (zone = 1; zone < nzones; zone++) अणु
+		dm[zone].dm_bh       = शून्य;
 		dm[zone].dm_startblk = zone * zone_size - ADFS_DR_SIZE_BITS;
 		dm[zone].dm_startbit = 32;
 		dm[zone].dm_endbit   = 32 + zone_size;
-	}
+	पूर्ण
 
 	size = adfs_disc_size(dr) >> dr->log2bpmb;
 	size -= (nzones - 1) * zone_size - ADFS_DR_SIZE_BITS;
 	dm[nzones - 1].dm_endbit = 32 + size;
-}
+पूर्ण
 
-static int adfs_map_read(struct adfs_discmap *dm, struct super_block *sb,
-			 unsigned int map_addr, unsigned int nzones)
-{
-	unsigned int zone;
+अटल पूर्णांक adfs_map_पढ़ो(काष्ठा adfs_discmap *dm, काष्ठा super_block *sb,
+			 अचिन्हित पूर्णांक map_addr, अचिन्हित पूर्णांक nzones)
+अणु
+	अचिन्हित पूर्णांक zone;
 
-	for (zone = 0; zone < nzones; zone++) {
-		dm[zone].dm_bh = sb_bread(sb, map_addr + zone);
-		if (!dm[zone].dm_bh)
-			return -EIO;
-	}
+	क्रम (zone = 0; zone < nzones; zone++) अणु
+		dm[zone].dm_bh = sb_bपढ़ो(sb, map_addr + zone);
+		अगर (!dm[zone].dm_bh)
+			वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void adfs_map_relse(struct adfs_discmap *dm, unsigned int nzones)
-{
-	unsigned int zone;
+अटल व्योम adfs_map_rअन्यथा(काष्ठा adfs_discmap *dm, अचिन्हित पूर्णांक nzones)
+अणु
+	अचिन्हित पूर्णांक zone;
 
-	for (zone = 0; zone < nzones; zone++)
-		brelse(dm[zone].dm_bh);
-}
+	क्रम (zone = 0; zone < nzones; zone++)
+		brअन्यथा(dm[zone].dm_bh);
+पूर्ण
 
-struct adfs_discmap *adfs_read_map(struct super_block *sb, struct adfs_discrecord *dr)
-{
-	struct adfs_sb_info *asb = ADFS_SB(sb);
-	struct adfs_discmap *dm;
-	unsigned int map_addr, zone_size, nzones;
-	int ret;
+काष्ठा adfs_discmap *adfs_पढ़ो_map(काष्ठा super_block *sb, काष्ठा adfs_discrecord *dr)
+अणु
+	काष्ठा adfs_sb_info *asb = ADFS_SB(sb);
+	काष्ठा adfs_discmap *dm;
+	अचिन्हित पूर्णांक map_addr, zone_size, nzones;
+	पूर्णांक ret;
 
 	nzones    = dr->nzones | dr->nzones_high << 8;
 	zone_size = (8 << dr->log2secsize) - le16_to_cpu(dr->zone_spare);
@@ -371,37 +372,37 @@ struct adfs_discmap *adfs_read_map(struct super_block *sb, struct adfs_discrecor
 
 	map_addr = (nzones >> 1) * zone_size -
 		     ((nzones > 1) ? ADFS_DR_SIZE_BITS : 0);
-	map_addr = signed_asl(map_addr, asb->s_map2blk);
+	map_addr = चिन्हित_asl(map_addr, asb->s_map2blk);
 
-	dm = kmalloc_array(nzones, sizeof(*dm), GFP_KERNEL);
-	if (dm == NULL) {
+	dm = kदो_स्मृति_array(nzones, माप(*dm), GFP_KERNEL);
+	अगर (dm == शून्य) अणु
 		adfs_error(sb, "not enough memory");
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	adfs_map_layout(dm, nzones, dr);
 
-	ret = adfs_map_read(dm, sb, map_addr, nzones);
-	if (ret) {
+	ret = adfs_map_पढ़ो(dm, sb, map_addr, nzones);
+	अगर (ret) अणु
 		adfs_error(sb, "unable to read map");
-		goto error_free;
-	}
+		जाओ error_मुक्त;
+	पूर्ण
 
-	if (adfs_checkmap(sb, dm))
-		return dm;
+	अगर (adfs_checkmap(sb, dm))
+		वापस dm;
 
 	adfs_error(sb, "map corrupted");
 
-error_free:
-	adfs_map_relse(dm, nzones);
-	kfree(dm);
-	return ERR_PTR(-EIO);
-}
+error_मुक्त:
+	adfs_map_rअन्यथा(dm, nzones);
+	kमुक्त(dm);
+	वापस ERR_PTR(-EIO);
+पूर्ण
 
-void adfs_free_map(struct super_block *sb)
-{
-	struct adfs_sb_info *asb = ADFS_SB(sb);
+व्योम adfs_मुक्त_map(काष्ठा super_block *sb)
+अणु
+	काष्ठा adfs_sb_info *asb = ADFS_SB(sb);
 
-	adfs_map_relse(asb->s_map, asb->s_map_size);
-	kfree(asb->s_map);
-}
+	adfs_map_rअन्यथा(asb->s_map, asb->s_map_size);
+	kमुक्त(asb->s_map);
+पूर्ण

@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * comedi/drivers/pcl818.c
  *
  * Driver: pcl818
  * Description: Advantech PCL-818 cards, PCL-718
- * Author: Michal Dobes <dobes@tesnet.cz>
+ * Author: Michal Dobes <करोbes@tesnet.cz>
  * Devices: [Advantech] PCL-818L (pcl818l), PCL-818H (pcl818h),
  *   PCL-818HD (pcl818hd), PCL-818HG (pcl818hg), PCL-818 (pcl818),
  *   PCL-718 (pcl718)
  * Status: works
  *
  * All cards have 16 SE/8 DIFF ADCs, one or two DACs, 16 DI and 16 DO.
- * Differences are only at maximal sample speed, range list and FIFO
+ * Dअगरferences are only at maximal sample speed, range list and FIFO
  * support.
  * The driver support AI mode 0, 1, 3 other subdevices (AO, DI, DO) support
  * only mode 0. If DMA/FIFO/INT are disabled then AI support only mode 0.
@@ -21,58 +22,58 @@
  * 1) DMA uses two buffers and after one is filled then is generated
  *    INT and DMA restart with second buffer. With this mode I'm unable run
  *    more that 80Ksamples/secs without data dropouts on K6/233.
- * 2) DMA uses one buffer and run in autoinit mode and the data are
- *    from DMA buffer moved on the fly with 2kHz interrupts from RTC.
- *    This mode is used if the interrupt 8 is available for allocation.
+ * 2) DMA uses one buffer and run in स्वतःinit mode and the data are
+ *    from DMA buffer moved on the fly with 2kHz पूर्णांकerrupts from RTC.
+ *    This mode is used अगर the पूर्णांकerrupt 8 is available क्रम allocation.
  *    If not, then first DMA mode is used. With this I can run at
  *    full speed one card (100ksamples/secs) or two cards with
  *    60ksamples/secs each (more is problem on account of ISA limitations).
  *    To use this mode you must have compiled  kernel with disabled
  *    "Enhanced Real Time Clock Support".
- *    Maybe you can have problems if you use xntpd or similar.
+ *    Maybe you can have problems अगर you use xntpd or similar.
  *    If you've data dropouts with DMA mode 2 then:
  *     a) disable IDE DMA
- *     b) switch text mode console to fb.
+ *     b) चयन text mode console to fb.
  *
- *  Options for PCL-818L:
+ *  Options क्रम PCL-818L:
  *  [0] - IO Base
  *  [1] - IRQ        (0=disable, 2, 3, 4, 5, 6, 7)
  *  [2] - DMA        (0=disable, 1, 3)
- *  [3] - 0, 10=10MHz clock for 8254
- *            1= 1MHz clock for 8254
+ *  [3] - 0, 10=10MHz घड़ी क्रम 8254
+ *            1= 1MHz घड़ी क्रम 8254
  *  [4] - 0,  5=A/D input  -5V.. +5V
  *        1, 10=A/D input -10V..+10V
- *  [5] - 0,  5=D/A output 0-5V  (internal reference -5V)
- *        1, 10=D/A output 0-10V (internal reference -10V)
- *        2    =D/A output unknown (external reference)
+ *  [5] - 0,  5=D/A output 0-5V  (पूर्णांकernal reference -5V)
+ *        1, 10=D/A output 0-10V (पूर्णांकernal reference -10V)
+ *        2    =D/A output unknown (बाह्यal reference)
  *
- *  Options for PCL-818, PCL-818H:
+ *  Options क्रम PCL-818, PCL-818H:
  *  [0] - IO Base
  *  [1] - IRQ        (0=disable, 2, 3, 4, 5, 6, 7)
  *  [2] - DMA        (0=disable, 1, 3)
- *  [3] - 0, 10=10MHz clock for 8254
- *            1= 1MHz clock for 8254
- *  [4] - 0,  5=D/A output 0-5V  (internal reference -5V)
- *        1, 10=D/A output 0-10V (internal reference -10V)
- *        2    =D/A output unknown (external reference)
+ *  [3] - 0, 10=10MHz घड़ी क्रम 8254
+ *            1= 1MHz घड़ी क्रम 8254
+ *  [4] - 0,  5=D/A output 0-5V  (पूर्णांकernal reference -5V)
+ *        1, 10=D/A output 0-10V (पूर्णांकernal reference -10V)
+ *        2    =D/A output unknown (बाह्यal reference)
  *
- *  Options for PCL-818HD, PCL-818HG:
+ *  Options क्रम PCL-818HD, PCL-818HG:
  *  [0] - IO Base
  *  [1] - IRQ        (0=disable, 2, 3, 4, 5, 6, 7)
  *  [2] - DMA/FIFO  (-1=use FIFO, 0=disable both FIFO and DMA,
  *                    1=use DMA ch 1, 3=use DMA ch 3)
- *  [3] - 0, 10=10MHz clock for 8254
- *            1= 1MHz clock for 8254
- *  [4] - 0,  5=D/A output 0-5V  (internal reference -5V)
- *        1, 10=D/A output 0-10V (internal reference -10V)
- *        2    =D/A output unknown (external reference)
+ *  [3] - 0, 10=10MHz घड़ी क्रम 8254
+ *            1= 1MHz घड़ी क्रम 8254
+ *  [4] - 0,  5=D/A output 0-5V  (पूर्णांकernal reference -5V)
+ *        1, 10=D/A output 0-10V (पूर्णांकernal reference -10V)
+ *        2    =D/A output unknown (बाह्यal reference)
  *
- *  Options for PCL-718:
+ *  Options क्रम PCL-718:
  *  [0] - IO Base
  *  [1] - IRQ        (0=disable, 2, 3, 4, 5, 6, 7)
  *  [2] - DMA        (0=disable, 1, 3)
- *  [3] - 0, 10=10MHz clock for 8254
- *            1= 1MHz clock for 8254
+ *  [3] - 0, 10=10MHz घड़ी क्रम 8254
+ *            1= 1MHz घड़ी क्रम 8254
  *  [4] -     0=A/D Range is +/-10V
  *            1=             +/-5V
  *            2=             +/-2.5V
@@ -84,73 +85,73 @@
  *            8=             0-2V
  *            9=             0-1V
  *           10=             user defined unipolar
- *  [5] - 0,  5=D/A outputs 0-5V  (internal reference -5V)
- *        1, 10=D/A outputs 0-10V (internal reference -10V)
- *            2=D/A outputs unknown (external reference)
+ *  [5] - 0,  5=D/A outमाला_दो 0-5V  (पूर्णांकernal reference -5V)
+ *        1, 10=D/A outमाला_दो 0-10V (पूर्णांकernal reference -10V)
+ *            2=D/A outमाला_दो unknown (बाह्यal reference)
  *  [6] - 0, 60=max  60kHz A/D sampling
  *        1,100=max 100kHz A/D sampling (PCL-718 with Option 001 installed)
  *
  */
 
-#include <linux/module.h>
-#include <linux/gfp.h>
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "../comedidev.h"
+#समावेश "../comedidev.h"
 
-#include "comedi_isadma.h"
-#include "comedi_8254.h"
+#समावेश "comedi_isadma.h"
+#समावेश "comedi_8254.h"
 
 /*
  * Register I/O map
  */
-#define PCL818_AI_LSB_REG			0x00
-#define PCL818_AI_MSB_REG			0x01
-#define PCL818_RANGE_REG			0x01
-#define PCL818_MUX_REG				0x02
-#define PCL818_MUX_SCAN(_first, _last)		(((_last) << 4) | (_first))
-#define PCL818_DO_DI_LSB_REG			0x03
-#define PCL818_AO_LSB_REG(x)			(0x04 + ((x) * 2))
-#define PCL818_AO_MSB_REG(x)			(0x05 + ((x) * 2))
-#define PCL818_STATUS_REG			0x08
-#define PCL818_STATUS_NEXT_CHAN_MASK		(0xf << 0)
-#define PCL818_STATUS_INT			BIT(4)
-#define PCL818_STATUS_MUX			BIT(5)
-#define PCL818_STATUS_UNI			BIT(6)
-#define PCL818_STATUS_EOC			BIT(7)
-#define PCL818_CTRL_REG				0x09
-#define PCL818_CTRL_TRIG(x)			(((x) & 0x3) << 0)
-#define PCL818_CTRL_DISABLE_TRIG		PCL818_CTRL_TRIG(0)
-#define PCL818_CTRL_SOFT_TRIG			PCL818_CTRL_TRIG(1)
-#define PCL818_CTRL_EXT_TRIG			PCL818_CTRL_TRIG(2)
-#define PCL818_CTRL_PACER_TRIG			PCL818_CTRL_TRIG(3)
-#define PCL818_CTRL_DMAE			BIT(2)
-#define PCL818_CTRL_IRQ(x)			((x) << 4)
-#define PCL818_CTRL_INTE			BIT(7)
-#define PCL818_CNTENABLE_REG			0x0a
-#define PCL818_CNTENABLE_PACER_TRIG0		BIT(0)
-#define PCL818_CNTENABLE_CNT0_INT_CLK		BIT(1)	/* 0=ext clk */
-#define PCL818_DO_DI_MSB_REG			0x0b
-#define PCL818_TIMER_BASE			0x0c
+#घोषणा PCL818_AI_LSB_REG			0x00
+#घोषणा PCL818_AI_MSB_REG			0x01
+#घोषणा PCL818_RANGE_REG			0x01
+#घोषणा PCL818_MUX_REG				0x02
+#घोषणा PCL818_MUX_SCAN(_first, _last)		(((_last) << 4) | (_first))
+#घोषणा PCL818_DO_DI_LSB_REG			0x03
+#घोषणा PCL818_AO_LSB_REG(x)			(0x04 + ((x) * 2))
+#घोषणा PCL818_AO_MSB_REG(x)			(0x05 + ((x) * 2))
+#घोषणा PCL818_STATUS_REG			0x08
+#घोषणा PCL818_STATUS_NEXT_CHAN_MASK		(0xf << 0)
+#घोषणा PCL818_STATUS_INT			BIT(4)
+#घोषणा PCL818_STATUS_MUX			BIT(5)
+#घोषणा PCL818_STATUS_UNI			BIT(6)
+#घोषणा PCL818_STATUS_EOC			BIT(7)
+#घोषणा PCL818_CTRL_REG				0x09
+#घोषणा PCL818_CTRL_TRIG(x)			(((x) & 0x3) << 0)
+#घोषणा PCL818_CTRL_DISABLE_TRIG		PCL818_CTRL_TRIG(0)
+#घोषणा PCL818_CTRL_SOFT_TRIG			PCL818_CTRL_TRIG(1)
+#घोषणा PCL818_CTRL_EXT_TRIG			PCL818_CTRL_TRIG(2)
+#घोषणा PCL818_CTRL_PACER_TRIG			PCL818_CTRL_TRIG(3)
+#घोषणा PCL818_CTRL_DMAE			BIT(2)
+#घोषणा PCL818_CTRL_IRQ(x)			((x) << 4)
+#घोषणा PCL818_CTRL_INTE			BIT(7)
+#घोषणा PCL818_CNTENABLE_REG			0x0a
+#घोषणा PCL818_CNTENABLE_PACER_TRIG0		BIT(0)
+#घोषणा PCL818_CNTENABLE_CNT0_INT_CLK		BIT(1)	/* 0=ext clk */
+#घोषणा PCL818_DO_DI_MSB_REG			0x0b
+#घोषणा PCL818_TIMER_BASE			0x0c
 
-/* W: fifo enable/disable */
-#define PCL818_FI_ENABLE 6
-/* W: fifo interrupt clear */
-#define PCL818_FI_INTCLR 20
-/* W: fifo interrupt clear */
-#define PCL818_FI_FLUSH 25
-/* R: fifo status */
-#define PCL818_FI_STATUS 25
+/* W: fअगरo enable/disable */
+#घोषणा PCL818_FI_ENABLE 6
+/* W: fअगरo पूर्णांकerrupt clear */
+#घोषणा PCL818_FI_INTCLR 20
+/* W: fअगरo पूर्णांकerrupt clear */
+#घोषणा PCL818_FI_FLUSH 25
+/* R: fअगरo status */
+#घोषणा PCL818_FI_STATUS 25
 /* R: one record from FIFO */
-#define PCL818_FI_DATALO 23
-#define PCL818_FI_DATAHI 24
+#घोषणा PCL818_FI_DATALO 23
+#घोषणा PCL818_FI_DATAHI 24
 
-#define MAGIC_DMA_WORD 0x5a5a
+#घोषणा MAGIC_DMA_WORD 0x5a5a
 
-static const struct comedi_lrange range_pcl818h_ai = {
-	9, {
+अटल स्थिर काष्ठा comedi_lrange range_pcl818h_ai = अणु
+	9, अणु
 		BIP_RANGE(5),
 		BIP_RANGE(2.5),
 		BIP_RANGE(1.25),
@@ -160,11 +161,11 @@ static const struct comedi_lrange range_pcl818h_ai = {
 		UNI_RANGE(2.5),
 		UNI_RANGE(1.25),
 		BIP_RANGE(10)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_pcl818hg_ai = {
-	10, {
+अटल स्थिर काष्ठा comedi_lrange range_pcl818hg_ai = अणु
+	10, अणु
 		BIP_RANGE(5),
 		BIP_RANGE(0.5),
 		BIP_RANGE(0.05),
@@ -177,436 +178,436 @@ static const struct comedi_lrange range_pcl818hg_ai = {
 		BIP_RANGE(1),
 		BIP_RANGE(0.1),
 		BIP_RANGE(0.01)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_pcl818l_l_ai = {
-	4, {
+अटल स्थिर काष्ठा comedi_lrange range_pcl818l_l_ai = अणु
+	4, अणु
 		BIP_RANGE(5),
 		BIP_RANGE(2.5),
 		BIP_RANGE(1.25),
 		BIP_RANGE(0.625)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range_pcl818l_h_ai = {
-	4, {
+अटल स्थिर काष्ठा comedi_lrange range_pcl818l_h_ai = अणु
+	4, अणु
 		BIP_RANGE(10),
 		BIP_RANGE(5),
 		BIP_RANGE(2.5),
 		BIP_RANGE(1.25)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range718_bipolar1 = {
-	1, {
+अटल स्थिर काष्ठा comedi_lrange range718_bipolar1 = अणु
+	1, अणु
 		BIP_RANGE(1)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range718_bipolar0_5 = {
-	1, {
+अटल स्थिर काष्ठा comedi_lrange range718_bipolar0_5 = अणु
+	1, अणु
 		BIP_RANGE(0.5)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range718_unipolar2 = {
-	1, {
+अटल स्थिर काष्ठा comedi_lrange range718_unipolar2 = अणु
+	1, अणु
 		UNI_RANGE(2)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct comedi_lrange range718_unipolar1 = {
-	1, {
+अटल स्थिर काष्ठा comedi_lrange range718_unipolar1 = अणु
+	1, अणु
 		BIP_RANGE(1)
-	}
-};
+	पूर्ण
+पूर्ण;
 
-struct pcl818_board {
-	const char *name;
-	unsigned int ns_min;
-	int n_aochan;
-	const struct comedi_lrange *ai_range_type;
-	unsigned int has_dma:1;
-	unsigned int has_fifo:1;
-	unsigned int is_818:1;
-};
+काष्ठा pcl818_board अणु
+	स्थिर अक्षर *name;
+	अचिन्हित पूर्णांक ns_min;
+	पूर्णांक n_aochan;
+	स्थिर काष्ठा comedi_lrange *ai_range_type;
+	अचिन्हित पूर्णांक has_dma:1;
+	अचिन्हित पूर्णांक has_fअगरo:1;
+	अचिन्हित पूर्णांक is_818:1;
+पूर्ण;
 
-static const struct pcl818_board boardtypes[] = {
-	{
+अटल स्थिर काष्ठा pcl818_board boardtypes[] = अणु
+	अणु
 		.name		= "pcl818l",
 		.ns_min		= 25000,
 		.n_aochan	= 1,
 		.ai_range_type	= &range_pcl818l_l_ai,
 		.has_dma	= 1,
 		.is_818		= 1,
-	}, {
+	पूर्ण, अणु
 		.name		= "pcl818h",
 		.ns_min		= 10000,
 		.n_aochan	= 1,
 		.ai_range_type	= &range_pcl818h_ai,
 		.has_dma	= 1,
 		.is_818		= 1,
-	}, {
+	पूर्ण, अणु
 		.name		= "pcl818hd",
 		.ns_min		= 10000,
 		.n_aochan	= 1,
 		.ai_range_type	= &range_pcl818h_ai,
 		.has_dma	= 1,
-		.has_fifo	= 1,
+		.has_fअगरo	= 1,
 		.is_818		= 1,
-	}, {
+	पूर्ण, अणु
 		.name		= "pcl818hg",
 		.ns_min		= 10000,
 		.n_aochan	= 1,
 		.ai_range_type	= &range_pcl818hg_ai,
 		.has_dma	= 1,
-		.has_fifo	= 1,
+		.has_fअगरo	= 1,
 		.is_818		= 1,
-	}, {
+	पूर्ण, अणु
 		.name		= "pcl818",
 		.ns_min		= 10000,
 		.n_aochan	= 2,
 		.ai_range_type	= &range_pcl818h_ai,
 		.has_dma	= 1,
 		.is_818		= 1,
-	}, {
+	पूर्ण, अणु
 		.name		= "pcl718",
 		.ns_min		= 16000,
 		.n_aochan	= 2,
 		.ai_range_type	= &range_unipolar5,
 		.has_dma	= 1,
-	}, {
+	पूर्ण, अणु
 		.name		= "pcm3718",
 		.ns_min		= 10000,
 		.ai_range_type	= &range_pcl818h_ai,
 		.has_dma	= 1,
 		.is_818		= 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-struct pcl818_private {
-	struct comedi_isadma *dma;
-	/*  manimal allowed delay between samples (in us) for actual card */
-	unsigned int ns_min;
-	/*  MUX setting for actual AI operations */
-	unsigned int act_chanlist[16];
-	unsigned int act_chanlist_len;	/*  how long is actual MUX list */
-	unsigned int act_chanlist_pos;	/*  actual position in MUX list */
-	unsigned int usefifo:1;
-	unsigned int ai_cmd_running:1;
-	unsigned int ai_cmd_canceled:1;
-};
+काष्ठा pcl818_निजी अणु
+	काष्ठा comedi_isadma *dma;
+	/*  manimal allowed delay between samples (in us) क्रम actual card */
+	अचिन्हित पूर्णांक ns_min;
+	/*  MUX setting क्रम actual AI operations */
+	अचिन्हित पूर्णांक act_chanlist[16];
+	अचिन्हित पूर्णांक act_chanlist_len;	/*  how दीर्घ is actual MUX list */
+	अचिन्हित पूर्णांक act_chanlist_pos;	/*  actual position in MUX list */
+	अचिन्हित पूर्णांक usefअगरo:1;
+	अचिन्हित पूर्णांक ai_cmd_running:1;
+	अचिन्हित पूर्णांक ai_cmd_canceled:1;
+पूर्ण;
 
-static void pcl818_ai_setup_dma(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				unsigned int unread_samples)
-{
-	struct pcl818_private *devpriv = dev->private;
-	struct comedi_isadma *dma = devpriv->dma;
-	struct comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
-	unsigned int max_samples = comedi_bytes_to_samples(s, desc->maxsize);
-	unsigned int nsamples;
+अटल व्योम pcl818_ai_setup_dma(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				अचिन्हित पूर्णांक unपढ़ो_samples)
+अणु
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_isadma *dma = devpriv->dma;
+	काष्ठा comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
+	अचिन्हित पूर्णांक max_samples = comedi_bytes_to_samples(s, desc->maxsize);
+	अचिन्हित पूर्णांक nsamples;
 
 	comedi_isadma_disable(dma->chan);
 
 	/*
 	 * Determine dma size based on the buffer maxsize plus the number of
-	 * unread samples and the number of samples remaining in the command.
+	 * unपढ़ो samples and the number of samples reमुख्यing in the command.
 	 */
-	nsamples = comedi_nsamples_left(s, max_samples + unread_samples);
-	if (nsamples > unread_samples) {
-		nsamples -= unread_samples;
+	nsamples = comedi_nsamples_left(s, max_samples + unपढ़ो_samples);
+	अगर (nsamples > unपढ़ो_samples) अणु
+		nsamples -= unपढ़ो_samples;
 		desc->size = comedi_samples_to_bytes(s, nsamples);
 		comedi_isadma_program(desc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pcl818_ai_set_chan_range(struct comedi_device *dev,
-				     unsigned int chan,
-				     unsigned int range)
-{
+अटल व्योम pcl818_ai_set_chan_range(काष्ठा comedi_device *dev,
+				     अचिन्हित पूर्णांक chan,
+				     अचिन्हित पूर्णांक range)
+अणु
 	outb(chan, dev->iobase + PCL818_MUX_REG);
 	outb(range, dev->iobase + PCL818_RANGE_REG);
-}
+पूर्ण
 
-static void pcl818_ai_set_chan_scan(struct comedi_device *dev,
-				    unsigned int first_chan,
-				    unsigned int last_chan)
-{
+अटल व्योम pcl818_ai_set_chan_scan(काष्ठा comedi_device *dev,
+				    अचिन्हित पूर्णांक first_chan,
+				    अचिन्हित पूर्णांक last_chan)
+अणु
 	outb(PCL818_MUX_SCAN(first_chan, last_chan),
 	     dev->iobase + PCL818_MUX_REG);
-}
+पूर्ण
 
-static void pcl818_ai_setup_chanlist(struct comedi_device *dev,
-				     unsigned int *chanlist,
-				     unsigned int seglen)
-{
-	struct pcl818_private *devpriv = dev->private;
-	unsigned int first_chan = CR_CHAN(chanlist[0]);
-	unsigned int last_chan;
-	unsigned int range;
-	int i;
+अटल व्योम pcl818_ai_setup_chanlist(काष्ठा comedi_device *dev,
+				     अचिन्हित पूर्णांक *chanlist,
+				     अचिन्हित पूर्णांक seglen)
+अणु
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
+	अचिन्हित पूर्णांक first_chan = CR_CHAN(chanlist[0]);
+	अचिन्हित पूर्णांक last_chan;
+	अचिन्हित पूर्णांक range;
+	पूर्णांक i;
 
 	devpriv->act_chanlist_len = seglen;
 	devpriv->act_chanlist_pos = 0;
 
 	/* store range list to card */
-	for (i = 0; i < seglen; i++) {
+	क्रम (i = 0; i < seglen; i++) अणु
 		last_chan = CR_CHAN(chanlist[i]);
 		range = CR_RANGE(chanlist[i]);
 
 		devpriv->act_chanlist[i] = last_chan;
 
 		pcl818_ai_set_chan_range(dev, last_chan, range);
-	}
+	पूर्ण
 
 	udelay(1);
 
 	pcl818_ai_set_chan_scan(dev, first_chan, last_chan);
-}
+पूर्ण
 
-static void pcl818_ai_clear_eoc(struct comedi_device *dev)
-{
-	/* writing any value clears the interrupt request */
+अटल व्योम pcl818_ai_clear_eoc(काष्ठा comedi_device *dev)
+अणु
+	/* writing any value clears the पूर्णांकerrupt request */
 	outb(0, dev->iobase + PCL818_STATUS_REG);
-}
+पूर्ण
 
-static void pcl818_ai_soft_trig(struct comedi_device *dev)
-{
+अटल व्योम pcl818_ai_soft_trig(काष्ठा comedi_device *dev)
+अणु
 	/* writing any value triggers a software conversion */
 	outb(0, dev->iobase + PCL818_AI_LSB_REG);
-}
+पूर्ण
 
-static unsigned int pcl818_ai_get_fifo_sample(struct comedi_device *dev,
-					      struct comedi_subdevice *s,
-					      unsigned int *chan)
-{
-	unsigned int val;
+अटल अचिन्हित पूर्णांक pcl818_ai_get_fअगरo_sample(काष्ठा comedi_device *dev,
+					      काष्ठा comedi_subdevice *s,
+					      अचिन्हित पूर्णांक *chan)
+अणु
+	अचिन्हित पूर्णांक val;
 
 	val = inb(dev->iobase + PCL818_FI_DATALO);
 	val |= (inb(dev->iobase + PCL818_FI_DATAHI) << 8);
 
-	if (chan)
+	अगर (chan)
 		*chan = val & 0xf;
 
-	return (val >> 4) & s->maxdata;
-}
+	वापस (val >> 4) & s->maxdata;
+पूर्ण
 
-static unsigned int pcl818_ai_get_sample(struct comedi_device *dev,
-					 struct comedi_subdevice *s,
-					 unsigned int *chan)
-{
-	unsigned int val;
+अटल अचिन्हित पूर्णांक pcl818_ai_get_sample(काष्ठा comedi_device *dev,
+					 काष्ठा comedi_subdevice *s,
+					 अचिन्हित पूर्णांक *chan)
+अणु
+	अचिन्हित पूर्णांक val;
 
 	val = inb(dev->iobase + PCL818_AI_MSB_REG) << 8;
 	val |= inb(dev->iobase + PCL818_AI_LSB_REG);
 
-	if (chan)
+	अगर (chan)
 		*chan = val & 0xf;
 
-	return (val >> 4) & s->maxdata;
-}
+	वापस (val >> 4) & s->maxdata;
+पूर्ण
 
-static int pcl818_ai_eoc(struct comedi_device *dev,
-			 struct comedi_subdevice *s,
-			 struct comedi_insn *insn,
-			 unsigned long context)
-{
-	unsigned int status;
+अटल पूर्णांक pcl818_ai_eoc(काष्ठा comedi_device *dev,
+			 काष्ठा comedi_subdevice *s,
+			 काष्ठा comedi_insn *insn,
+			 अचिन्हित दीर्घ context)
+अणु
+	अचिन्हित पूर्णांक status;
 
 	status = inb(dev->iobase + PCL818_STATUS_REG);
-	if (status & PCL818_STATUS_INT)
-		return 0;
-	return -EBUSY;
-}
+	अगर (status & PCL818_STATUS_INT)
+		वापस 0;
+	वापस -EBUSY;
+पूर्ण
 
-static bool pcl818_ai_write_sample(struct comedi_device *dev,
-				   struct comedi_subdevice *s,
-				   unsigned int chan, unsigned short val)
-{
-	struct pcl818_private *devpriv = dev->private;
-	struct comedi_cmd *cmd = &s->async->cmd;
-	unsigned int expected_chan;
+अटल bool pcl818_ai_ग_लिखो_sample(काष्ठा comedi_device *dev,
+				   काष्ठा comedi_subdevice *s,
+				   अचिन्हित पूर्णांक chan, अचिन्हित लघु val)
+अणु
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	अचिन्हित पूर्णांक expected_chan;
 
 	expected_chan = devpriv->act_chanlist[devpriv->act_chanlist_pos];
-	if (chan != expected_chan) {
+	अगर (chan != expected_chan) अणु
 		dev_dbg(dev->class_dev,
 			"A/D mode1/3 %s - channel dropout %d!=%d !\n",
 			(devpriv->dma) ? "DMA" :
-			(devpriv->usefifo) ? "FIFO" : "IRQ",
+			(devpriv->usefअगरo) ? "FIFO" : "IRQ",
 			chan, expected_chan);
 		s->async->events |= COMEDI_CB_ERROR;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	comedi_buf_write_samples(s, &val, 1);
+	comedi_buf_ग_लिखो_samples(s, &val, 1);
 
 	devpriv->act_chanlist_pos++;
-	if (devpriv->act_chanlist_pos >= devpriv->act_chanlist_len)
+	अगर (devpriv->act_chanlist_pos >= devpriv->act_chanlist_len)
 		devpriv->act_chanlist_pos = 0;
 
-	if (cmd->stop_src == TRIG_COUNT &&
-	    s->async->scans_done >= cmd->stop_arg) {
+	अगर (cmd->stop_src == TRIG_COUNT &&
+	    s->async->scans_करोne >= cmd->stop_arg) अणु
 		s->async->events |= COMEDI_CB_EOA;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void pcl818_handle_eoc(struct comedi_device *dev,
-			      struct comedi_subdevice *s)
-{
-	unsigned int chan;
-	unsigned int val;
+अटल व्योम pcl818_handle_eoc(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s)
+अणु
+	अचिन्हित पूर्णांक chan;
+	अचिन्हित पूर्णांक val;
 
-	if (pcl818_ai_eoc(dev, s, NULL, 0)) {
+	अगर (pcl818_ai_eoc(dev, s, शून्य, 0)) अणु
 		dev_err(dev->class_dev, "A/D mode1/3 IRQ without DRDY!\n");
 		s->async->events |= COMEDI_CB_ERROR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	val = pcl818_ai_get_sample(dev, s, &chan);
-	pcl818_ai_write_sample(dev, s, chan, val);
-}
+	pcl818_ai_ग_लिखो_sample(dev, s, chan, val);
+पूर्ण
 
-static void pcl818_handle_dma(struct comedi_device *dev,
-			      struct comedi_subdevice *s)
-{
-	struct pcl818_private *devpriv = dev->private;
-	struct comedi_isadma *dma = devpriv->dma;
-	struct comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
-	unsigned short *ptr = desc->virt_addr;
-	unsigned int nsamples = comedi_bytes_to_samples(s, desc->size);
-	unsigned int chan;
-	unsigned int val;
-	int i;
+अटल व्योम pcl818_handle_dma(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_isadma *dma = devpriv->dma;
+	काष्ठा comedi_isadma_desc *desc = &dma->desc[dma->cur_dma];
+	अचिन्हित लघु *ptr = desc->virt_addr;
+	अचिन्हित पूर्णांक nsamples = comedi_bytes_to_samples(s, desc->size);
+	अचिन्हित पूर्णांक chan;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक i;
 
 	/* restart dma with the next buffer */
 	dma->cur_dma = 1 - dma->cur_dma;
 	pcl818_ai_setup_dma(dev, s, nsamples);
 
-	for (i = 0; i < nsamples; i++) {
+	क्रम (i = 0; i < nsamples; i++) अणु
 		val = ptr[i];
 		chan = val & 0xf;
 		val = (val >> 4) & s->maxdata;
-		if (!pcl818_ai_write_sample(dev, s, chan, val))
-			break;
-	}
-}
+		अगर (!pcl818_ai_ग_लिखो_sample(dev, s, chan, val))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static void pcl818_handle_fifo(struct comedi_device *dev,
-			       struct comedi_subdevice *s)
-{
-	unsigned int status;
-	unsigned int chan;
-	unsigned int val;
-	int i, len;
+अटल व्योम pcl818_handle_fअगरo(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s)
+अणु
+	अचिन्हित पूर्णांक status;
+	अचिन्हित पूर्णांक chan;
+	अचिन्हित पूर्णांक val;
+	पूर्णांक i, len;
 
 	status = inb(dev->iobase + PCL818_FI_STATUS);
 
-	if (status & 4) {
+	अगर (status & 4) अणु
 		dev_err(dev->class_dev, "A/D mode1/3 FIFO overflow!\n");
 		s->async->events |= COMEDI_CB_ERROR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (status & 1) {
+	अगर (status & 1) अणु
 		dev_err(dev->class_dev,
 			"A/D mode1/3 FIFO interrupt without data!\n");
 		s->async->events |= COMEDI_CB_ERROR;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (status & 2)
+	अगर (status & 2)
 		len = 512;
-	else
+	अन्यथा
 		len = 0;
 
-	for (i = 0; i < len; i++) {
-		val = pcl818_ai_get_fifo_sample(dev, s, &chan);
-		if (!pcl818_ai_write_sample(dev, s, chan, val))
-			break;
-	}
-}
+	क्रम (i = 0; i < len; i++) अणु
+		val = pcl818_ai_get_fअगरo_sample(dev, s, &chan);
+		अगर (!pcl818_ai_ग_लिखो_sample(dev, s, chan, val))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-static irqreturn_t pcl818_interrupt(int irq, void *d)
-{
-	struct comedi_device *dev = d;
-	struct pcl818_private *devpriv = dev->private;
-	struct comedi_subdevice *s = dev->read_subdev;
-	struct comedi_cmd *cmd = &s->async->cmd;
+अटल irqवापस_t pcl818_पूर्णांकerrupt(पूर्णांक irq, व्योम *d)
+अणु
+	काष्ठा comedi_device *dev = d;
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_subdevice *s = dev->पढ़ो_subdev;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
 
-	if (!dev->attached || !devpriv->ai_cmd_running) {
+	अगर (!dev->attached || !devpriv->ai_cmd_running) अणु
 		pcl818_ai_clear_eoc(dev);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (devpriv->ai_cmd_canceled) {
+	अगर (devpriv->ai_cmd_canceled) अणु
 		/*
 		 * The cleanup from ai_cancel() has been delayed
-		 * until now because the card doesn't seem to like
-		 * being reprogrammed while a DMA transfer is in
+		 * until now because the card करोesn't seem to like
+		 * being reprogrammed जबतक a DMA transfer is in
 		 * progress.
 		 */
-		s->async->scans_done = cmd->stop_arg;
+		s->async->scans_करोne = cmd->stop_arg;
 		s->cancel(dev, s);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	if (devpriv->dma)
+	अगर (devpriv->dma)
 		pcl818_handle_dma(dev, s);
-	else if (devpriv->usefifo)
-		pcl818_handle_fifo(dev, s);
-	else
+	अन्यथा अगर (devpriv->usefअगरo)
+		pcl818_handle_fअगरo(dev, s);
+	अन्यथा
 		pcl818_handle_eoc(dev, s);
 
 	pcl818_ai_clear_eoc(dev);
 
 	comedi_handle_events(dev, s);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int check_channel_list(struct comedi_device *dev,
-			      struct comedi_subdevice *s,
-			      unsigned int *chanlist, unsigned int n_chan)
-{
-	unsigned int chansegment[16];
-	unsigned int i, nowmustbechan, seglen;
+अटल पूर्णांक check_channel_list(काष्ठा comedi_device *dev,
+			      काष्ठा comedi_subdevice *s,
+			      अचिन्हित पूर्णांक *chanlist, अचिन्हित पूर्णांक n_chan)
+अणु
+	अचिन्हित पूर्णांक chansegment[16];
+	अचिन्हित पूर्णांक i, nowmustbechan, seglen;
 
 	/* correct channel and range number check itself comedi/range.c */
-	if (n_chan < 1) {
+	अगर (n_chan < 1) अणु
 		dev_err(dev->class_dev, "range/channel list is empty!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (n_chan > 1) {
-		/*  first channel is every time ok */
+	अगर (n_chan > 1) अणु
+		/*  first channel is every समय ok */
 		chansegment[0] = chanlist[0];
 		/*  build part of chanlist */
-		for (i = 1, seglen = 1; i < n_chan; i++, seglen++) {
+		क्रम (i = 1, seglen = 1; i < n_chan; i++, seglen++) अणु
 			/* we detect loop, this must by finish */
 
-			if (chanlist[0] == chanlist[i])
-				break;
+			अगर (chanlist[0] == chanlist[i])
+				अवरोध;
 			nowmustbechan =
 			    (CR_CHAN(chansegment[i - 1]) + 1) % s->n_chan;
-			if (nowmustbechan != CR_CHAN(chanlist[i])) {
+			अगर (nowmustbechan != CR_CHAN(chanlist[i])) अणु
 				/*  channel list isn't continuous :-( */
 				dev_dbg(dev->class_dev,
 					"channel list must be continuous! chanlist[%i]=%d but must be %d or %d!\n",
 					i, CR_CHAN(chanlist[i]), nowmustbechan,
 					CR_CHAN(chanlist[0]));
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			/*  well, this is next correct channel in list */
 			chansegment[i] = chanlist[i];
-		}
+		पूर्ण
 
 		/*  check whole chanlist */
-		for (i = 0; i < n_chan; i++) {
-			if (chanlist[i] != chansegment[i % seglen]) {
+		क्रम (i = 0; i < n_chan; i++) अणु
+			अगर (chanlist[i] != chansegment[i % seglen]) अणु
 				dev_dbg(dev->class_dev,
 					"bad channel or range number! chanlist[%i]=%d,%d,%d and not %d,%d,%d!\n",
 					i, CR_CHAN(chansegment[i]),
@@ -615,29 +616,29 @@ static int check_channel_list(struct comedi_device *dev,
 					CR_CHAN(chanlist[i % seglen]),
 					CR_RANGE(chanlist[i % seglen]),
 					CR_AREF(chansegment[i % seglen]));
-				return 0;	/*  chan/gain list is strange */
-			}
-		}
-	} else {
+				वापस 0;	/*  chan/gain list is strange */
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		seglen = 1;
-	}
-	return seglen;
-}
+	पूर्ण
+	वापस seglen;
+पूर्ण
 
-static int check_single_ended(unsigned int port)
-{
-	if (inb(port + PCL818_STATUS_REG) & PCL818_STATUS_MUX)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक check_single_ended(अचिन्हित पूर्णांक port)
+अणु
+	अगर (inb(port + PCL818_STATUS_REG) & PCL818_STATUS_MUX)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static int ai_cmdtest(struct comedi_device *dev, struct comedi_subdevice *s,
-		      struct comedi_cmd *cmd)
-{
-	const struct pcl818_board *board = dev->board_ptr;
-	int err = 0;
+अटल पूर्णांक ai_cmdtest(काष्ठा comedi_device *dev, काष्ठा comedi_subdevice *s,
+		      काष्ठा comedi_cmd *cmd)
+अणु
+	स्थिर काष्ठा pcl818_board *board = dev->board_ptr;
+	पूर्णांक err = 0;
 
-	/* Step 1 : check if triggers are trivially valid */
+	/* Step 1 : check अगर triggers are trivially valid */
 
 	err |= comedi_check_trigger_src(&cmd->start_src, TRIG_NOW);
 	err |= comedi_check_trigger_src(&cmd->scan_begin_src, TRIG_FOLLOW);
@@ -646,8 +647,8 @@ static int ai_cmdtest(struct comedi_device *dev, struct comedi_subdevice *s,
 	err |= comedi_check_trigger_src(&cmd->scan_end_src, TRIG_COUNT);
 	err |= comedi_check_trigger_src(&cmd->stop_src, TRIG_COUNT | TRIG_NONE);
 
-	if (err)
-		return 1;
+	अगर (err)
+		वापस 1;
 
 	/* Step 2a : make sure trigger sources are unique */
 
@@ -656,235 +657,235 @@ static int ai_cmdtest(struct comedi_device *dev, struct comedi_subdevice *s,
 
 	/* Step 2b : and mutually compatible */
 
-	if (err)
-		return 2;
+	अगर (err)
+		वापस 2;
 
-	/* Step 3: check if arguments are trivially valid */
+	/* Step 3: check अगर arguments are trivially valid */
 
 	err |= comedi_check_trigger_arg_is(&cmd->start_arg, 0);
 	err |= comedi_check_trigger_arg_is(&cmd->scan_begin_arg, 0);
 
-	if (cmd->convert_src == TRIG_TIMER) {
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
 		err |= comedi_check_trigger_arg_min(&cmd->convert_arg,
 						    board->ns_min);
-	} else {	/* TRIG_EXT */
+	पूर्ण अन्यथा अणु	/* TRIG_EXT */
 		err |= comedi_check_trigger_arg_is(&cmd->convert_arg, 0);
-	}
+	पूर्ण
 
 	err |= comedi_check_trigger_arg_is(&cmd->scan_end_arg,
 					   cmd->chanlist_len);
 
-	if (cmd->stop_src == TRIG_COUNT)
+	अगर (cmd->stop_src == TRIG_COUNT)
 		err |= comedi_check_trigger_arg_min(&cmd->stop_arg, 1);
-	else	/* TRIG_NONE */
+	अन्यथा	/* TRIG_NONE */
 		err |= comedi_check_trigger_arg_is(&cmd->stop_arg, 0);
 
-	if (err)
-		return 3;
+	अगर (err)
+		वापस 3;
 
 	/* step 4: fix up any arguments */
 
-	if (cmd->convert_src == TRIG_TIMER) {
-		unsigned int arg = cmd->convert_arg;
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
+		अचिन्हित पूर्णांक arg = cmd->convert_arg;
 
-		comedi_8254_cascade_ns_to_timer(dev->pacer, &arg, cmd->flags);
+		comedi_8254_cascade_ns_to_समयr(dev->pacer, &arg, cmd->flags);
 		err |= comedi_check_trigger_arg_is(&cmd->convert_arg, arg);
-	}
+	पूर्ण
 
-	if (err)
-		return 4;
+	अगर (err)
+		वापस 4;
 
 	/* step 5: complain about special chanlist considerations */
 
-	if (cmd->chanlist) {
-		if (!check_channel_list(dev, s, cmd->chanlist,
+	अगर (cmd->chanlist) अणु
+		अगर (!check_channel_list(dev, s, cmd->chanlist,
 					cmd->chanlist_len))
-			return 5;	/*  incorrect channels list */
-	}
+			वापस 5;	/*  incorrect channels list */
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcl818_ai_cmd(struct comedi_device *dev,
-			 struct comedi_subdevice *s)
-{
-	struct pcl818_private *devpriv = dev->private;
-	struct comedi_isadma *dma = devpriv->dma;
-	struct comedi_cmd *cmd = &s->async->cmd;
-	unsigned int ctrl = 0;
-	unsigned int seglen;
+अटल पूर्णांक pcl818_ai_cmd(काष्ठा comedi_device *dev,
+			 काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_isadma *dma = devpriv->dma;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
+	अचिन्हित पूर्णांक ctrl = 0;
+	अचिन्हित पूर्णांक seglen;
 
-	if (devpriv->ai_cmd_running)
-		return -EBUSY;
+	अगर (devpriv->ai_cmd_running)
+		वापस -EBUSY;
 
 	seglen = check_channel_list(dev, s, cmd->chanlist, cmd->chanlist_len);
-	if (seglen < 1)
-		return -EINVAL;
+	अगर (seglen < 1)
+		वापस -EINVAL;
 	pcl818_ai_setup_chanlist(dev, cmd->chanlist, seglen);
 
 	devpriv->ai_cmd_running = 1;
 	devpriv->ai_cmd_canceled = 0;
 	devpriv->act_chanlist_pos = 0;
 
-	if (cmd->convert_src == TRIG_TIMER)
+	अगर (cmd->convert_src == TRIG_TIMER)
 		ctrl |= PCL818_CTRL_PACER_TRIG;
-	else
+	अन्यथा
 		ctrl |= PCL818_CTRL_EXT_TRIG;
 
 	outb(0, dev->iobase + PCL818_CNTENABLE_REG);
 
-	if (dma) {
-		/* setup and enable dma for the first buffer */
+	अगर (dma) अणु
+		/* setup and enable dma क्रम the first buffer */
 		dma->cur_dma = 0;
 		pcl818_ai_setup_dma(dev, s, 0);
 
 		ctrl |= PCL818_CTRL_INTE | PCL818_CTRL_IRQ(dev->irq) |
 			PCL818_CTRL_DMAE;
-	} else if (devpriv->usefifo) {
+	पूर्ण अन्यथा अगर (devpriv->usefअगरo) अणु
 		/* enable FIFO */
 		outb(1, dev->iobase + PCL818_FI_ENABLE);
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl |= PCL818_CTRL_INTE | PCL818_CTRL_IRQ(dev->irq);
-	}
+	पूर्ण
 	outb(ctrl, dev->iobase + PCL818_CTRL_REG);
 
-	if (cmd->convert_src == TRIG_TIMER) {
-		comedi_8254_update_divisors(dev->pacer);
+	अगर (cmd->convert_src == TRIG_TIMER) अणु
+		comedi_8254_update_भागisors(dev->pacer);
 		comedi_8254_pacer_enable(dev->pacer, 1, 2, true);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcl818_ai_cancel(struct comedi_device *dev,
-			    struct comedi_subdevice *s)
-{
-	struct pcl818_private *devpriv = dev->private;
-	struct comedi_isadma *dma = devpriv->dma;
-	struct comedi_cmd *cmd = &s->async->cmd;
+अटल पूर्णांक pcl818_ai_cancel(काष्ठा comedi_device *dev,
+			    काष्ठा comedi_subdevice *s)
+अणु
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
+	काष्ठा comedi_isadma *dma = devpriv->dma;
+	काष्ठा comedi_cmd *cmd = &s->async->cmd;
 
-	if (!devpriv->ai_cmd_running)
-		return 0;
+	अगर (!devpriv->ai_cmd_running)
+		वापस 0;
 
-	if (dma) {
-		if (cmd->stop_src == TRIG_NONE ||
+	अगर (dma) अणु
+		अगर (cmd->stop_src == TRIG_NONE ||
 		    (cmd->stop_src == TRIG_COUNT &&
-		     s->async->scans_done < cmd->stop_arg)) {
-			if (!devpriv->ai_cmd_canceled) {
+		     s->async->scans_करोne < cmd->stop_arg)) अणु
+			अगर (!devpriv->ai_cmd_canceled) अणु
 				/*
-				 * Wait for running dma transfer to end,
-				 * do cleanup in interrupt.
+				 * Wait क्रम running dma transfer to end,
+				 * करो cleanup in पूर्णांकerrupt.
 				 */
 				devpriv->ai_cmd_canceled = 1;
-				return 0;
-			}
-		}
+				वापस 0;
+			पूर्ण
+		पूर्ण
 		comedi_isadma_disable(dma->chan);
-	}
+	पूर्ण
 
 	outb(PCL818_CTRL_DISABLE_TRIG, dev->iobase + PCL818_CTRL_REG);
 	comedi_8254_pacer_enable(dev->pacer, 1, 2, false);
 	pcl818_ai_clear_eoc(dev);
 
-	if (devpriv->usefifo) {	/*  FIFO shutdown */
+	अगर (devpriv->usefअगरo) अणु	/*  FIFO shutकरोwn */
 		outb(0, dev->iobase + PCL818_FI_INTCLR);
 		outb(0, dev->iobase + PCL818_FI_FLUSH);
 		outb(0, dev->iobase + PCL818_FI_ENABLE);
-	}
+	पूर्ण
 	devpriv->ai_cmd_running = 0;
 	devpriv->ai_cmd_canceled = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pcl818_ai_insn_read(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int range = CR_RANGE(insn->chanspec);
-	int ret = 0;
-	int i;
+अटल पूर्णांक pcl818_ai_insn_पढ़ो(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक range = CR_RANGE(insn->chanspec);
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
 	outb(PCL818_CTRL_SOFT_TRIG, dev->iobase + PCL818_CTRL_REG);
 
 	pcl818_ai_set_chan_range(dev, chan, range);
 	pcl818_ai_set_chan_scan(dev, chan, chan);
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		pcl818_ai_clear_eoc(dev);
 		pcl818_ai_soft_trig(dev);
 
-		ret = comedi_timeout(dev, s, insn, pcl818_ai_eoc, 0);
-		if (ret)
-			break;
+		ret = comedi_समयout(dev, s, insn, pcl818_ai_eoc, 0);
+		अगर (ret)
+			अवरोध;
 
-		data[i] = pcl818_ai_get_sample(dev, s, NULL);
-	}
+		data[i] = pcl818_ai_get_sample(dev, s, शून्य);
+	पूर्ण
 	pcl818_ai_clear_eoc(dev);
 
-	return ret ? ret : insn->n;
-}
+	वापस ret ? ret : insn->n;
+पूर्ण
 
-static int pcl818_ao_insn_write(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
-	unsigned int chan = CR_CHAN(insn->chanspec);
-	unsigned int val = s->readback[chan];
-	int i;
+अटल पूर्णांक pcl818_ao_insn_ग_लिखो(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक chan = CR_CHAN(insn->chanspec);
+	अचिन्हित पूर्णांक val = s->पढ़ोback[chan];
+	पूर्णांक i;
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		val = data[i];
 		outb((val & 0x000f) << 4,
 		     dev->iobase + PCL818_AO_LSB_REG(chan));
 		outb((val & 0x0ff0) >> 4,
 		     dev->iobase + PCL818_AO_MSB_REG(chan));
-	}
-	s->readback[chan] = val;
+	पूर्ण
+	s->पढ़ोback[chan] = val;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pcl818_di_insn_bits(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
+अटल पूर्णांक pcl818_di_insn_bits(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
 	data[1] = inb(dev->iobase + PCL818_DO_DI_LSB_REG) |
 		  (inb(dev->iobase + PCL818_DO_DI_MSB_REG) << 8);
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int pcl818_do_insn_bits(struct comedi_device *dev,
-			       struct comedi_subdevice *s,
-			       struct comedi_insn *insn,
-			       unsigned int *data)
-{
-	if (comedi_dio_update_state(s, data)) {
+अटल पूर्णांक pcl818_करो_insn_bits(काष्ठा comedi_device *dev,
+			       काष्ठा comedi_subdevice *s,
+			       काष्ठा comedi_insn *insn,
+			       अचिन्हित पूर्णांक *data)
+अणु
+	अगर (comedi_dio_update_state(s, data)) अणु
 		outb(s->state & 0xff, dev->iobase + PCL818_DO_DI_LSB_REG);
 		outb((s->state >> 8), dev->iobase + PCL818_DO_DI_MSB_REG);
-	}
+	पूर्ण
 
 	data[1] = s->state;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static void pcl818_reset(struct comedi_device *dev)
-{
-	const struct pcl818_board *board = dev->board_ptr;
-	unsigned int chan;
+अटल व्योम pcl818_reset(काष्ठा comedi_device *dev)
+अणु
+	स्थिर काष्ठा pcl818_board *board = dev->board_ptr;
+	अचिन्हित पूर्णांक chan;
 
 	/* flush and disable the FIFO */
-	if (board->has_fifo) {
+	अगर (board->has_fअगरo) अणु
 		outb(0, dev->iobase + PCL818_FI_INTCLR);
 		outb(0, dev->iobase + PCL818_FI_FLUSH);
 		outb(0, dev->iobase + PCL818_FI_ENABLE);
-	}
+	पूर्ण
 
 	/* disable analog input trigger */
 	outb(PCL818_CTRL_DISABLE_TRIG, dev->iobase + PCL818_CTRL_REG);
@@ -896,195 +897,195 @@ static void pcl818_reset(struct comedi_device *dev)
 	outb(0, dev->iobase + PCL818_CNTENABLE_REG);
 
 	/* set analog output channels to 0V */
-	for (chan = 0; chan < board->n_aochan; chan++) {
+	क्रम (chan = 0; chan < board->n_aochan; chan++) अणु
 		outb(0, dev->iobase + PCL818_AO_LSB_REG(chan));
 		outb(0, dev->iobase + PCL818_AO_MSB_REG(chan));
-	}
+	पूर्ण
 
-	/* set all digital outputs low */
+	/* set all digital outमाला_दो low */
 	outb(0, dev->iobase + PCL818_DO_DI_MSB_REG);
 	outb(0, dev->iobase + PCL818_DO_DI_LSB_REG);
-}
+पूर्ण
 
-static void pcl818_set_ai_range_table(struct comedi_device *dev,
-				      struct comedi_subdevice *s,
-				      struct comedi_devconfig *it)
-{
-	const struct pcl818_board *board = dev->board_ptr;
+अटल व्योम pcl818_set_ai_range_table(काष्ठा comedi_device *dev,
+				      काष्ठा comedi_subdevice *s,
+				      काष्ठा comedi_devconfig *it)
+अणु
+	स्थिर काष्ठा pcl818_board *board = dev->board_ptr;
 
-	/* default to the range table from the boardinfo */
+	/* शेष to the range table from the boardinfo */
 	s->range_table = board->ai_range_type;
 
 	/* now check the user config option based on the boardtype */
-	if (board->is_818) {
-		if (it->options[4] == 1 || it->options[4] == 10) {
+	अगर (board->is_818) अणु
+		अगर (it->options[4] == 1 || it->options[4] == 10) अणु
 			/* secondary range list jumper selectable */
 			s->range_table = &range_pcl818l_h_ai;
-		}
-	} else {
-		switch (it->options[4]) {
-		case 0:
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (it->options[4]) अणु
+		हाल 0:
 			s->range_table = &range_bipolar10;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			s->range_table = &range_bipolar5;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			s->range_table = &range_bipolar2_5;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			s->range_table = &range718_bipolar1;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			s->range_table = &range718_bipolar0_5;
-			break;
-		case 6:
+			अवरोध;
+		हाल 6:
 			s->range_table = &range_unipolar10;
-			break;
-		case 7:
+			अवरोध;
+		हाल 7:
 			s->range_table = &range_unipolar5;
-			break;
-		case 8:
+			अवरोध;
+		हाल 8:
 			s->range_table = &range718_unipolar2;
-			break;
-		case 9:
+			अवरोध;
+		हाल 9:
 			s->range_table = &range718_unipolar1;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			s->range_table = &range_unknown;
-			break;
-		}
-	}
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void pcl818_alloc_dma(struct comedi_device *dev, unsigned int dma_chan)
-{
-	struct pcl818_private *devpriv = dev->private;
+अटल व्योम pcl818_alloc_dma(काष्ठा comedi_device *dev, अचिन्हित पूर्णांक dma_chan)
+अणु
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
 
 	/* only DMA channels 3 and 1 are valid */
-	if (!(dma_chan == 3 || dma_chan == 1))
-		return;
+	अगर (!(dma_chan == 3 || dma_chan == 1))
+		वापस;
 
 	/* DMA uses two 16K buffers */
 	devpriv->dma = comedi_isadma_alloc(dev, 2, dma_chan, dma_chan,
 					   PAGE_SIZE * 4, COMEDI_ISADMA_READ);
-}
+पूर्ण
 
-static void pcl818_free_dma(struct comedi_device *dev)
-{
-	struct pcl818_private *devpriv = dev->private;
+अटल व्योम pcl818_मुक्त_dma(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
 
-	if (devpriv)
-		comedi_isadma_free(devpriv->dma);
-}
+	अगर (devpriv)
+		comedi_isadma_मुक्त(devpriv->dma);
+पूर्ण
 
-static int pcl818_attach(struct comedi_device *dev, struct comedi_devconfig *it)
-{
-	const struct pcl818_board *board = dev->board_ptr;
-	struct pcl818_private *devpriv;
-	struct comedi_subdevice *s;
-	unsigned int osc_base;
-	int ret;
+अटल पूर्णांक pcl818_attach(काष्ठा comedi_device *dev, काष्ठा comedi_devconfig *it)
+अणु
+	स्थिर काष्ठा pcl818_board *board = dev->board_ptr;
+	काष्ठा pcl818_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	अचिन्हित पूर्णांक osc_base;
+	पूर्णांक ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	ret = comedi_request_region(dev, it->options[0],
-				    board->has_fifo ? 0x20 : 0x10);
-	if (ret)
-		return ret;
+				    board->has_fअगरo ? 0x20 : 0x10);
+	अगर (ret)
+		वापस ret;
 
-	/* we can use IRQ 2-7 for async command support */
-	if (it->options[1] >= 2 && it->options[1] <= 7) {
-		ret = request_irq(it->options[1], pcl818_interrupt, 0,
+	/* we can use IRQ 2-7 क्रम async command support */
+	अगर (it->options[1] >= 2 && it->options[1] <= 7) अणु
+		ret = request_irq(it->options[1], pcl818_पूर्णांकerrupt, 0,
 				  dev->board_name, dev);
-		if (ret == 0)
+		अगर (ret == 0)
 			dev->irq = it->options[1];
-	}
+	पूर्ण
 
 	/* should we use the FIFO? */
-	if (dev->irq && board->has_fifo && it->options[2] == -1)
-		devpriv->usefifo = 1;
+	अगर (dev->irq && board->has_fअगरo && it->options[2] == -1)
+		devpriv->usefअगरo = 1;
 
-	/* we need an IRQ to do DMA on channel 3 or 1 */
-	if (dev->irq && board->has_dma)
+	/* we need an IRQ to करो DMA on channel 3 or 1 */
+	अगर (dev->irq && board->has_dma)
 		pcl818_alloc_dma(dev, it->options[2]);
 
 	/* use 1MHz or 10MHz oscilator */
-	if ((it->options[3] == 0) || (it->options[3] == 10))
+	अगर ((it->options[3] == 0) || (it->options[3] == 10))
 		osc_base = I8254_OSC_BASE_10MHZ;
-	else
+	अन्यथा
 		osc_base = I8254_OSC_BASE_1MHZ;
 
 	dev->pacer = comedi_8254_init(dev->iobase + PCL818_TIMER_BASE,
 				      osc_base, I8254_IO8, 0);
-	if (!dev->pacer)
-		return -ENOMEM;
+	अगर (!dev->pacer)
+		वापस -ENOMEM;
 
 	/* max sampling speed */
 	devpriv->ns_min = board->ns_min;
-	if (!board->is_818) {
+	अगर (!board->is_818) अणु
 		/* extended PCL718 to 100kHz DAC */
-		if ((it->options[6] == 1) || (it->options[6] == 100))
+		अगर ((it->options[6] == 1) || (it->options[6] == 100))
 			devpriv->ns_min = 10000;
-	}
+	पूर्ण
 
 	ret = comedi_alloc_subdevices(dev, 4);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	s = &dev->subdevices[0];
 	s->type		= COMEDI_SUBD_AI;
 	s->subdev_flags	= SDF_READABLE;
-	if (check_single_ended(dev->iobase)) {
+	अगर (check_single_ended(dev->iobase)) अणु
 		s->n_chan	= 16;
 		s->subdev_flags	|= SDF_COMMON | SDF_GROUND;
-	} else {
+	पूर्ण अन्यथा अणु
 		s->n_chan	= 8;
 		s->subdev_flags	|= SDF_DIFF;
-	}
+	पूर्ण
 	s->maxdata	= 0x0fff;
 
 	pcl818_set_ai_range_table(dev, s, it);
 
-	s->insn_read	= pcl818_ai_insn_read;
-	if (dev->irq) {
-		dev->read_subdev = s;
+	s->insn_पढ़ो	= pcl818_ai_insn_पढ़ो;
+	अगर (dev->irq) अणु
+		dev->पढ़ो_subdev = s;
 		s->subdev_flags	|= SDF_CMD_READ;
 		s->len_chanlist	= s->n_chan;
-		s->do_cmdtest	= ai_cmdtest;
-		s->do_cmd	= pcl818_ai_cmd;
+		s->करो_cmdtest	= ai_cmdtest;
+		s->करो_cmd	= pcl818_ai_cmd;
 		s->cancel	= pcl818_ai_cancel;
-	}
+	पूर्ण
 
 	/* Analog Output subdevice */
 	s = &dev->subdevices[1];
-	if (board->n_aochan) {
+	अगर (board->n_aochan) अणु
 		s->type		= COMEDI_SUBD_AO;
 		s->subdev_flags	= SDF_WRITABLE | SDF_GROUND;
 		s->n_chan	= board->n_aochan;
 		s->maxdata	= 0x0fff;
 		s->range_table	= &range_unipolar5;
-		if (board->is_818) {
-			if ((it->options[4] == 1) || (it->options[4] == 10))
+		अगर (board->is_818) अणु
+			अगर ((it->options[4] == 1) || (it->options[4] == 10))
 				s->range_table = &range_unipolar10;
-			if (it->options[4] == 2)
+			अगर (it->options[4] == 2)
 				s->range_table = &range_unknown;
-		} else {
-			if ((it->options[5] == 1) || (it->options[5] == 10))
+		पूर्ण अन्यथा अणु
+			अगर ((it->options[5] == 1) || (it->options[5] == 10))
 				s->range_table = &range_unipolar10;
-			if (it->options[5] == 2)
+			अगर (it->options[5] == 2)
 				s->range_table = &range_unknown;
-		}
-		s->insn_write	= pcl818_ao_insn_write;
+		पूर्ण
+		s->insn_ग_लिखो	= pcl818_ao_insn_ग_लिखो;
 
-		ret = comedi_alloc_subdev_readback(s);
-		if (ret)
-			return ret;
-	} else {
+		ret = comedi_alloc_subdev_पढ़ोback(s);
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		s->type		= COMEDI_SUBD_UNUSED;
-	}
+	पूर्ण
 
 	/* Digital Input subdevice */
 	s = &dev->subdevices[2];
@@ -1102,34 +1103,34 @@ static int pcl818_attach(struct comedi_device *dev, struct comedi_devconfig *it)
 	s->n_chan	= 16;
 	s->maxdata	= 1;
 	s->range_table	= &range_digital;
-	s->insn_bits	= pcl818_do_insn_bits;
+	s->insn_bits	= pcl818_करो_insn_bits;
 
 	pcl818_reset(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pcl818_detach(struct comedi_device *dev)
-{
-	struct pcl818_private *devpriv = dev->private;
+अटल व्योम pcl818_detach(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा pcl818_निजी *devpriv = dev->निजी;
 
-	if (devpriv) {
-		pcl818_ai_cancel(dev, dev->read_subdev);
+	अगर (devpriv) अणु
+		pcl818_ai_cancel(dev, dev->पढ़ो_subdev);
 		pcl818_reset(dev);
-	}
-	pcl818_free_dma(dev);
+	पूर्ण
+	pcl818_मुक्त_dma(dev);
 	comedi_legacy_detach(dev);
-}
+पूर्ण
 
-static struct comedi_driver pcl818_driver = {
+अटल काष्ठा comedi_driver pcl818_driver = अणु
 	.driver_name	= "pcl818",
 	.module		= THIS_MODULE,
 	.attach		= pcl818_attach,
 	.detach		= pcl818_detach,
 	.board_name	= &boardtypes[0].name,
 	.num_names	= ARRAY_SIZE(boardtypes),
-	.offset		= sizeof(struct pcl818_board),
-};
+	.offset		= माप(काष्ठा pcl818_board),
+पूर्ण;
 module_comedi_driver(pcl818_driver);
 
 MODULE_AUTHOR("Comedi https://www.comedi.org");

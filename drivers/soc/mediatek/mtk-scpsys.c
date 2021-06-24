@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2015 Pengutronix, Sascha Hauer <kernel@pengutronix.de>
  */
-#include <linux/clk.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/mfd/syscon.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/pm_domain.h>
-#include <linux/regulator/consumer.h>
-#include <linux/soc/mediatek/infracfg.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/soc/mediatek/infracfg.h>
 
-#include <dt-bindings/power/mt2701-power.h>
-#include <dt-bindings/power/mt2712-power.h>
-#include <dt-bindings/power/mt6797-power.h>
-#include <dt-bindings/power/mt7622-power.h>
-#include <dt-bindings/power/mt7623a-power.h>
-#include <dt-bindings/power/mt8173-power.h>
+#समावेश <dt-bindings/घातer/mt2701-घातer.h>
+#समावेश <dt-bindings/घातer/mt2712-घातer.h>
+#समावेश <dt-bindings/घातer/mt6797-घातer.h>
+#समावेश <dt-bindings/घातer/mt7622-घातer.h>
+#समावेश <dt-bindings/घातer/mt7623a-घातer.h>
+#समावेश <dt-bindings/घातer/mt8173-घातer.h>
 
-#define MTK_POLL_DELAY_US   10
-#define MTK_POLL_TIMEOUT    USEC_PER_SEC
+#घोषणा MTK_POLL_DELAY_US   10
+#घोषणा MTK_POLL_TIMEOUT    USEC_PER_SEC
 
-#define MTK_SCPD_ACTIVE_WAKEUP		BIT(0)
-#define MTK_SCPD_FWAIT_SRAM		BIT(1)
-#define MTK_SCPD_CAPS(_scpd, _x)	((_scpd)->data->caps & (_x))
+#घोषणा MTK_SCPD_ACTIVE_WAKEUP		BIT(0)
+#घोषणा MTK_SCPD_FWAIT_SRAM		BIT(1)
+#घोषणा MTK_SCPD_CAPS(_scpd, _x)	((_scpd)->data->caps & (_x))
 
-#define SPM_VDE_PWR_CON			0x0210
-#define SPM_MFG_PWR_CON			0x0214
-#define SPM_VEN_PWR_CON			0x0230
-#define SPM_ISP_PWR_CON			0x0238
-#define SPM_DIS_PWR_CON			0x023c
-#define SPM_CONN_PWR_CON		0x0280
-#define SPM_VEN2_PWR_CON		0x0298
-#define SPM_AUDIO_PWR_CON		0x029c	/* MT8173, MT2712 */
-#define SPM_BDP_PWR_CON			0x029c	/* MT2701 */
-#define SPM_ETH_PWR_CON			0x02a0
-#define SPM_HIF_PWR_CON			0x02a4
-#define SPM_IFR_MSC_PWR_CON		0x02a8
-#define SPM_MFG_2D_PWR_CON		0x02c0
-#define SPM_MFG_ASYNC_PWR_CON		0x02c4
-#define SPM_USB_PWR_CON			0x02cc
-#define SPM_USB2_PWR_CON		0x02d4	/* MT2712 */
-#define SPM_ETHSYS_PWR_CON		0x02e0	/* MT7622 */
-#define SPM_HIF0_PWR_CON		0x02e4	/* MT7622 */
-#define SPM_HIF1_PWR_CON		0x02e8	/* MT7622 */
-#define SPM_WB_PWR_CON			0x02ec	/* MT7622 */
+#घोषणा SPM_VDE_PWR_CON			0x0210
+#घोषणा SPM_MFG_PWR_CON			0x0214
+#घोषणा SPM_VEN_PWR_CON			0x0230
+#घोषणा SPM_ISP_PWR_CON			0x0238
+#घोषणा SPM_DIS_PWR_CON			0x023c
+#घोषणा SPM_CONN_PWR_CON		0x0280
+#घोषणा SPM_VEN2_PWR_CON		0x0298
+#घोषणा SPM_AUDIO_PWR_CON		0x029c	/* MT8173, MT2712 */
+#घोषणा SPM_BDP_PWR_CON			0x029c	/* MT2701 */
+#घोषणा SPM_ETH_PWR_CON			0x02a0
+#घोषणा SPM_HIF_PWR_CON			0x02a4
+#घोषणा SPM_IFR_MSC_PWR_CON		0x02a8
+#घोषणा SPM_MFG_2D_PWR_CON		0x02c0
+#घोषणा SPM_MFG_ASYNC_PWR_CON		0x02c4
+#घोषणा SPM_USB_PWR_CON			0x02cc
+#घोषणा SPM_USB2_PWR_CON		0x02d4	/* MT2712 */
+#घोषणा SPM_ETHSYS_PWR_CON		0x02e0	/* MT7622 */
+#घोषणा SPM_HIF0_PWR_CON		0x02e4	/* MT7622 */
+#घोषणा SPM_HIF1_PWR_CON		0x02e8	/* MT7622 */
+#घोषणा SPM_WB_PWR_CON			0x02ec	/* MT7622 */
 
-#define SPM_PWR_STATUS			0x060c
-#define SPM_PWR_STATUS_2ND		0x0610
+#घोषणा SPM_PWR_STATUS			0x060c
+#घोषणा SPM_PWR_STATUS_2ND		0x0610
 
-#define PWR_RST_B_BIT			BIT(0)
-#define PWR_ISO_BIT			BIT(1)
-#define PWR_ON_BIT			BIT(2)
-#define PWR_ON_2ND_BIT			BIT(3)
-#define PWR_CLK_DIS_BIT			BIT(4)
+#घोषणा PWR_RST_B_BIT			BIT(0)
+#घोषणा PWR_ISO_BIT			BIT(1)
+#घोषणा PWR_ON_BIT			BIT(2)
+#घोषणा PWR_ON_2ND_BIT			BIT(3)
+#घोषणा PWR_CLK_DIS_BIT			BIT(4)
 
-#define PWR_STATUS_CONN			BIT(1)
-#define PWR_STATUS_DISP			BIT(3)
-#define PWR_STATUS_MFG			BIT(4)
-#define PWR_STATUS_ISP			BIT(5)
-#define PWR_STATUS_VDEC			BIT(7)
-#define PWR_STATUS_BDP			BIT(14)
-#define PWR_STATUS_ETH			BIT(15)
-#define PWR_STATUS_HIF			BIT(16)
-#define PWR_STATUS_IFR_MSC		BIT(17)
-#define PWR_STATUS_USB2			BIT(19)	/* MT2712 */
-#define PWR_STATUS_VENC_LT		BIT(20)
-#define PWR_STATUS_VENC			BIT(21)
-#define PWR_STATUS_MFG_2D		BIT(22)	/* MT8173 */
-#define PWR_STATUS_MFG_ASYNC		BIT(23)	/* MT8173 */
-#define PWR_STATUS_AUDIO		BIT(24)	/* MT8173, MT2712 */
-#define PWR_STATUS_USB			BIT(25)	/* MT8173, MT2712 */
-#define PWR_STATUS_ETHSYS		BIT(24)	/* MT7622 */
-#define PWR_STATUS_HIF0			BIT(25)	/* MT7622 */
-#define PWR_STATUS_HIF1			BIT(26)	/* MT7622 */
-#define PWR_STATUS_WB			BIT(27)	/* MT7622 */
+#घोषणा PWR_STATUS_CONN			BIT(1)
+#घोषणा PWR_STATUS_DISP			BIT(3)
+#घोषणा PWR_STATUS_MFG			BIT(4)
+#घोषणा PWR_STATUS_ISP			BIT(5)
+#घोषणा PWR_STATUS_VDEC			BIT(7)
+#घोषणा PWR_STATUS_BDP			BIT(14)
+#घोषणा PWR_STATUS_ETH			BIT(15)
+#घोषणा PWR_STATUS_HIF			BIT(16)
+#घोषणा PWR_STATUS_IFR_MSC		BIT(17)
+#घोषणा PWR_STATUS_USB2			BIT(19)	/* MT2712 */
+#घोषणा PWR_STATUS_VENC_LT		BIT(20)
+#घोषणा PWR_STATUS_VENC			BIT(21)
+#घोषणा PWR_STATUS_MFG_2D		BIT(22)	/* MT8173 */
+#घोषणा PWR_STATUS_MFG_ASYNC		BIT(23)	/* MT8173 */
+#घोषणा PWR_STATUS_AUDIO		BIT(24)	/* MT8173, MT2712 */
+#घोषणा PWR_STATUS_USB			BIT(25)	/* MT8173, MT2712 */
+#घोषणा PWR_STATUS_ETHSYS		BIT(24)	/* MT7622 */
+#घोषणा PWR_STATUS_HIF0			BIT(25)	/* MT7622 */
+#घोषणा PWR_STATUS_HIF1			BIT(26)	/* MT7622 */
+#घोषणा PWR_STATUS_WB			BIT(27)	/* MT7622 */
 
-enum clk_id {
+क्रमागत clk_id अणु
 	CLK_NONE,
 	CLK_MM,
 	CLK_MFG,
@@ -90,10 +91,10 @@ enum clk_id {
 	CLK_JPGDEC,
 	CLK_AUDIO,
 	CLK_MAX,
-};
+पूर्ण;
 
-static const char * const clk_names[] = {
-	NULL,
+अटल स्थिर अक्षर * स्थिर clk_names[] = अणु
+	शून्य,
 	"mm",
 	"mfg",
 	"venc",
@@ -103,250 +104,250 @@ static const char * const clk_names[] = {
 	"hif_sel",
 	"jpgdec",
 	"audio",
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-#define MAX_CLKS	3
+#घोषणा MAX_CLKS	3
 
 /**
- * struct scp_domain_data - scp domain data for power on/off flow
- * @name: The domain name.
- * @sta_mask: The mask for power on/off status bit.
- * @ctl_offs: The offset for main power control register.
- * @sram_pdn_bits: The mask for sram power control bits.
- * @sram_pdn_ack_bits: The mask for sram power control acked bits.
- * @bus_prot_mask: The mask for single step bus protection.
- * @clk_id: The basic clocks required by this power domain.
- * @caps: The flag for active wake-up action.
+ * काष्ठा scp_करोमुख्य_data - scp करोमुख्य data क्रम घातer on/off flow
+ * @name: The करोमुख्य name.
+ * @sta_mask: The mask क्रम घातer on/off status bit.
+ * @ctl_offs: The offset क्रम मुख्य घातer control रेजिस्टर.
+ * @sram_pdn_bits: The mask क्रम sram घातer control bits.
+ * @sram_pdn_ack_bits: The mask क्रम sram घातer control acked bits.
+ * @bus_prot_mask: The mask क्रम single step bus protection.
+ * @clk_id: The basic घड़ीs required by this घातer करोमुख्य.
+ * @caps: The flag क्रम active wake-up action.
  */
-struct scp_domain_data {
-	const char *name;
+काष्ठा scp_करोमुख्य_data अणु
+	स्थिर अक्षर *name;
 	u32 sta_mask;
-	int ctl_offs;
+	पूर्णांक ctl_offs;
 	u32 sram_pdn_bits;
 	u32 sram_pdn_ack_bits;
 	u32 bus_prot_mask;
-	enum clk_id clk_id[MAX_CLKS];
+	क्रमागत clk_id clk_id[MAX_CLKS];
 	u8 caps;
-};
+पूर्ण;
 
-struct scp;
+काष्ठा scp;
 
-struct scp_domain {
-	struct generic_pm_domain genpd;
-	struct scp *scp;
-	struct clk *clk[MAX_CLKS];
-	const struct scp_domain_data *data;
-	struct regulator *supply;
-};
+काष्ठा scp_करोमुख्य अणु
+	काष्ठा generic_pm_करोमुख्य genpd;
+	काष्ठा scp *scp;
+	काष्ठा clk *clk[MAX_CLKS];
+	स्थिर काष्ठा scp_करोमुख्य_data *data;
+	काष्ठा regulator *supply;
+पूर्ण;
 
-struct scp_ctrl_reg {
-	int pwr_sta_offs;
-	int pwr_sta2nd_offs;
-};
+काष्ठा scp_ctrl_reg अणु
+	पूर्णांक pwr_sta_offs;
+	पूर्णांक pwr_sta2nd_offs;
+पूर्ण;
 
-struct scp {
-	struct scp_domain *domains;
-	struct genpd_onecell_data pd_data;
-	struct device *dev;
-	void __iomem *base;
-	struct regmap *infracfg;
-	struct scp_ctrl_reg ctrl_reg;
+काष्ठा scp अणु
+	काष्ठा scp_करोमुख्य *करोमुख्यs;
+	काष्ठा genpd_onecell_data pd_data;
+	काष्ठा device *dev;
+	व्योम __iomem *base;
+	काष्ठा regmap *infracfg;
+	काष्ठा scp_ctrl_reg ctrl_reg;
 	bool bus_prot_reg_update;
-};
+पूर्ण;
 
-struct scp_subdomain {
-	int origin;
-	int subdomain;
-};
+काष्ठा scp_subकरोमुख्य अणु
+	पूर्णांक origin;
+	पूर्णांक subकरोमुख्य;
+पूर्ण;
 
-struct scp_soc_data {
-	const struct scp_domain_data *domains;
-	int num_domains;
-	const struct scp_subdomain *subdomains;
-	int num_subdomains;
-	const struct scp_ctrl_reg regs;
+काष्ठा scp_soc_data अणु
+	स्थिर काष्ठा scp_करोमुख्य_data *करोमुख्यs;
+	पूर्णांक num_करोमुख्यs;
+	स्थिर काष्ठा scp_subकरोमुख्य *subकरोमुख्यs;
+	पूर्णांक num_subकरोमुख्यs;
+	स्थिर काष्ठा scp_ctrl_reg regs;
 	bool bus_prot_reg_update;
-};
+पूर्ण;
 
-static int scpsys_domain_is_on(struct scp_domain *scpd)
-{
-	struct scp *scp = scpd->scp;
+अटल पूर्णांक scpsys_करोमुख्य_is_on(काष्ठा scp_करोमुख्य *scpd)
+अणु
+	काष्ठा scp *scp = scpd->scp;
 
-	u32 status = readl(scp->base + scp->ctrl_reg.pwr_sta_offs) &
+	u32 status = पढ़ोl(scp->base + scp->ctrl_reg.pwr_sta_offs) &
 						scpd->data->sta_mask;
-	u32 status2 = readl(scp->base + scp->ctrl_reg.pwr_sta2nd_offs) &
+	u32 status2 = पढ़ोl(scp->base + scp->ctrl_reg.pwr_sta2nd_offs) &
 						scpd->data->sta_mask;
 
 	/*
-	 * A domain is on when both status bits are set. If only one is set
-	 * return an error. This happens while powering up a domain
+	 * A करोमुख्य is on when both status bits are set. If only one is set
+	 * वापस an error. This happens जबतक घातering up a करोमुख्य
 	 */
 
-	if (status && status2)
-		return true;
-	if (!status && !status2)
-		return false;
+	अगर (status && status2)
+		वापस true;
+	अगर (!status && !status2)
+		वापस false;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int scpsys_regulator_enable(struct scp_domain *scpd)
-{
-	if (!scpd->supply)
-		return 0;
+अटल पूर्णांक scpsys_regulator_enable(काष्ठा scp_करोमुख्य *scpd)
+अणु
+	अगर (!scpd->supply)
+		वापस 0;
 
-	return regulator_enable(scpd->supply);
-}
+	वापस regulator_enable(scpd->supply);
+पूर्ण
 
-static int scpsys_regulator_disable(struct scp_domain *scpd)
-{
-	if (!scpd->supply)
-		return 0;
+अटल पूर्णांक scpsys_regulator_disable(काष्ठा scp_करोमुख्य *scpd)
+अणु
+	अगर (!scpd->supply)
+		वापस 0;
 
-	return regulator_disable(scpd->supply);
-}
+	वापस regulator_disable(scpd->supply);
+पूर्ण
 
-static void scpsys_clk_disable(struct clk *clk[], int max_num)
-{
-	int i;
+अटल व्योम scpsys_clk_disable(काष्ठा clk *clk[], पूर्णांक max_num)
+अणु
+	पूर्णांक i;
 
-	for (i = max_num - 1; i >= 0; i--)
+	क्रम (i = max_num - 1; i >= 0; i--)
 		clk_disable_unprepare(clk[i]);
-}
+पूर्ण
 
-static int scpsys_clk_enable(struct clk *clk[], int max_num)
-{
-	int i, ret = 0;
+अटल पूर्णांक scpsys_clk_enable(काष्ठा clk *clk[], पूर्णांक max_num)
+अणु
+	पूर्णांक i, ret = 0;
 
-	for (i = 0; i < max_num && clk[i]; i++) {
+	क्रम (i = 0; i < max_num && clk[i]; i++) अणु
 		ret = clk_prepare_enable(clk[i]);
-		if (ret) {
+		अगर (ret) अणु
 			scpsys_clk_disable(clk, i);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scpsys_sram_enable(struct scp_domain *scpd, void __iomem *ctl_addr)
-{
+अटल पूर्णांक scpsys_sram_enable(काष्ठा scp_करोमुख्य *scpd, व्योम __iomem *ctl_addr)
+अणु
 	u32 val;
 	u32 pdn_ack = scpd->data->sram_pdn_ack_bits;
-	int tmp;
+	पूर्णांक पंचांगp;
 
-	val = readl(ctl_addr);
+	val = पढ़ोl(ctl_addr);
 	val &= ~scpd->data->sram_pdn_bits;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
-	/* Either wait until SRAM_PDN_ACK all 0 or have a force wait */
-	if (MTK_SCPD_CAPS(scpd, MTK_SCPD_FWAIT_SRAM)) {
+	/* Either रुको until SRAM_PDN_ACK all 0 or have a क्रमce रुको */
+	अगर (MTK_SCPD_CAPS(scpd, MTK_SCPD_FWAIT_SRAM)) अणु
 		/*
-		 * Currently, MTK_SCPD_FWAIT_SRAM is necessary only for
+		 * Currently, MTK_SCPD_FWAIT_SRAM is necessary only क्रम
 		 * MT7622_POWER_DOMAIN_WB and thus just a trivial setup
 		 * is applied here.
 		 */
 		usleep_range(12000, 12100);
-	} else {
-		/* Either wait until SRAM_PDN_ACK all 1 or 0 */
-		int ret = readl_poll_timeout(ctl_addr, tmp,
-				(tmp & pdn_ack) == 0,
+	पूर्ण अन्यथा अणु
+		/* Either रुको until SRAM_PDN_ACK all 1 or 0 */
+		पूर्णांक ret = पढ़ोl_poll_समयout(ctl_addr, पंचांगp,
+				(पंचांगp & pdn_ack) == 0,
 				MTK_POLL_DELAY_US, MTK_POLL_TIMEOUT);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int scpsys_sram_disable(struct scp_domain *scpd, void __iomem *ctl_addr)
-{
+अटल पूर्णांक scpsys_sram_disable(काष्ठा scp_करोमुख्य *scpd, व्योम __iomem *ctl_addr)
+अणु
 	u32 val;
 	u32 pdn_ack = scpd->data->sram_pdn_ack_bits;
-	int tmp;
+	पूर्णांक पंचांगp;
 
-	val = readl(ctl_addr);
+	val = पढ़ोl(ctl_addr);
 	val |= scpd->data->sram_pdn_bits;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
-	/* Either wait until SRAM_PDN_ACK all 1 or 0 */
-	return readl_poll_timeout(ctl_addr, tmp,
-			(tmp & pdn_ack) == pdn_ack,
+	/* Either रुको until SRAM_PDN_ACK all 1 or 0 */
+	वापस पढ़ोl_poll_समयout(ctl_addr, पंचांगp,
+			(पंचांगp & pdn_ack) == pdn_ack,
 			MTK_POLL_DELAY_US, MTK_POLL_TIMEOUT);
-}
+पूर्ण
 
-static int scpsys_bus_protect_enable(struct scp_domain *scpd)
-{
-	struct scp *scp = scpd->scp;
+अटल पूर्णांक scpsys_bus_protect_enable(काष्ठा scp_करोमुख्य *scpd)
+अणु
+	काष्ठा scp *scp = scpd->scp;
 
-	if (!scpd->data->bus_prot_mask)
-		return 0;
+	अगर (!scpd->data->bus_prot_mask)
+		वापस 0;
 
-	return mtk_infracfg_set_bus_protection(scp->infracfg,
+	वापस mtk_infracfg_set_bus_protection(scp->infracfg,
 			scpd->data->bus_prot_mask,
 			scp->bus_prot_reg_update);
-}
+पूर्ण
 
-static int scpsys_bus_protect_disable(struct scp_domain *scpd)
-{
-	struct scp *scp = scpd->scp;
+अटल पूर्णांक scpsys_bus_protect_disable(काष्ठा scp_करोमुख्य *scpd)
+अणु
+	काष्ठा scp *scp = scpd->scp;
 
-	if (!scpd->data->bus_prot_mask)
-		return 0;
+	अगर (!scpd->data->bus_prot_mask)
+		वापस 0;
 
-	return mtk_infracfg_clear_bus_protection(scp->infracfg,
+	वापस mtk_infracfg_clear_bus_protection(scp->infracfg,
 			scpd->data->bus_prot_mask,
 			scp->bus_prot_reg_update);
-}
+पूर्ण
 
-static int scpsys_power_on(struct generic_pm_domain *genpd)
-{
-	struct scp_domain *scpd = container_of(genpd, struct scp_domain, genpd);
-	struct scp *scp = scpd->scp;
-	void __iomem *ctl_addr = scp->base + scpd->data->ctl_offs;
+अटल पूर्णांक scpsys_घातer_on(काष्ठा generic_pm_करोमुख्य *genpd)
+अणु
+	काष्ठा scp_करोमुख्य *scpd = container_of(genpd, काष्ठा scp_करोमुख्य, genpd);
+	काष्ठा scp *scp = scpd->scp;
+	व्योम __iomem *ctl_addr = scp->base + scpd->data->ctl_offs;
 	u32 val;
-	int ret, tmp;
+	पूर्णांक ret, पंचांगp;
 
 	ret = scpsys_regulator_enable(scpd);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = scpsys_clk_enable(scpd->clk, MAX_CLKS);
-	if (ret)
-		goto err_clk;
+	अगर (ret)
+		जाओ err_clk;
 
-	/* subsys power on */
-	val = readl(ctl_addr);
+	/* subsys घातer on */
+	val = पढ़ोl(ctl_addr);
 	val |= PWR_ON_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 	val |= PWR_ON_2ND_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
-	/* wait until PWR_ACK = 1 */
-	ret = readx_poll_timeout(scpsys_domain_is_on, scpd, tmp, tmp > 0,
+	/* रुको until PWR_ACK = 1 */
+	ret = पढ़ोx_poll_समयout(scpsys_करोमुख्य_is_on, scpd, पंचांगp, पंचांगp > 0,
 				 MTK_POLL_DELAY_US, MTK_POLL_TIMEOUT);
-	if (ret < 0)
-		goto err_pwr_ack;
+	अगर (ret < 0)
+		जाओ err_pwr_ack;
 
 	val &= ~PWR_CLK_DIS_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
 	val &= ~PWR_ISO_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
 	val |= PWR_RST_B_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
 	ret = scpsys_sram_enable(scpd, ctl_addr);
-	if (ret < 0)
-		goto err_pwr_ack;
+	अगर (ret < 0)
+		जाओ err_pwr_ack;
 
 	ret = scpsys_bus_protect_disable(scpd);
-	if (ret < 0)
-		goto err_pwr_ack;
+	अगर (ret < 0)
+		जाओ err_pwr_ack;
 
-	return 0;
+	वापस 0;
 
 err_pwr_ack:
 	scpsys_clk_disable(scpd->clk, MAX_CLKS);
@@ -355,84 +356,84 @@ err_clk:
 
 	dev_err(scp->dev, "Failed to power on domain %s\n", genpd->name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int scpsys_power_off(struct generic_pm_domain *genpd)
-{
-	struct scp_domain *scpd = container_of(genpd, struct scp_domain, genpd);
-	struct scp *scp = scpd->scp;
-	void __iomem *ctl_addr = scp->base + scpd->data->ctl_offs;
+अटल पूर्णांक scpsys_घातer_off(काष्ठा generic_pm_करोमुख्य *genpd)
+अणु
+	काष्ठा scp_करोमुख्य *scpd = container_of(genpd, काष्ठा scp_करोमुख्य, genpd);
+	काष्ठा scp *scp = scpd->scp;
+	व्योम __iomem *ctl_addr = scp->base + scpd->data->ctl_offs;
 	u32 val;
-	int ret, tmp;
+	पूर्णांक ret, पंचांगp;
 
 	ret = scpsys_bus_protect_enable(scpd);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	ret = scpsys_sram_disable(scpd, ctl_addr);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	/* subsys power off */
-	val = readl(ctl_addr);
+	/* subsys घातer off */
+	val = पढ़ोl(ctl_addr);
 	val |= PWR_ISO_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
 	val &= ~PWR_RST_B_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
 	val |= PWR_CLK_DIS_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
 	val &= ~PWR_ON_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
 	val &= ~PWR_ON_2ND_BIT;
-	writel(val, ctl_addr);
+	ग_लिखोl(val, ctl_addr);
 
-	/* wait until PWR_ACK = 0 */
-	ret = readx_poll_timeout(scpsys_domain_is_on, scpd, tmp, tmp == 0,
+	/* रुको until PWR_ACK = 0 */
+	ret = पढ़ोx_poll_समयout(scpsys_करोमुख्य_is_on, scpd, पंचांगp, पंचांगp == 0,
 				 MTK_POLL_DELAY_US, MTK_POLL_TIMEOUT);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	scpsys_clk_disable(scpd->clk, MAX_CLKS);
 
 	ret = scpsys_regulator_disable(scpd);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	return 0;
+	वापस 0;
 
 out:
 	dev_err(scp->dev, "Failed to power off domain %s\n", genpd->name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void init_clks(struct platform_device *pdev, struct clk **clk)
-{
-	int i;
+अटल व्योम init_clks(काष्ठा platक्रमm_device *pdev, काष्ठा clk **clk)
+अणु
+	पूर्णांक i;
 
-	for (i = CLK_NONE + 1; i < CLK_MAX; i++)
+	क्रम (i = CLK_NONE + 1; i < CLK_MAX; i++)
 		clk[i] = devm_clk_get(&pdev->dev, clk_names[i]);
-}
+पूर्ण
 
-static struct scp *init_scp(struct platform_device *pdev,
-			const struct scp_domain_data *scp_domain_data, int num,
-			const struct scp_ctrl_reg *scp_ctrl_reg,
+अटल काष्ठा scp *init_scp(काष्ठा platक्रमm_device *pdev,
+			स्थिर काष्ठा scp_करोमुख्य_data *scp_करोमुख्य_data, पूर्णांक num,
+			स्थिर काष्ठा scp_ctrl_reg *scp_ctrl_reg,
 			bool bus_prot_reg_update)
-{
-	struct genpd_onecell_data *pd_data;
-	struct resource *res;
-	int i, j;
-	struct scp *scp;
-	struct clk *clk[CLK_MAX];
+अणु
+	काष्ठा genpd_onecell_data *pd_data;
+	काष्ठा resource *res;
+	पूर्णांक i, j;
+	काष्ठा scp *scp;
+	काष्ठा clk *clk[CLK_MAX];
 
-	scp = devm_kzalloc(&pdev->dev, sizeof(*scp), GFP_KERNEL);
-	if (!scp)
-		return ERR_PTR(-ENOMEM);
+	scp = devm_kzalloc(&pdev->dev, माप(*scp), GFP_KERNEL);
+	अगर (!scp)
+		वापस ERR_PTR(-ENOMEM);
 
 	scp->ctrl_reg.pwr_sta_offs = scp_ctrl_reg->pwr_sta_offs;
 	scp->ctrl_reg.pwr_sta2nd_offs = scp_ctrl_reg->pwr_sta2nd_offs;
@@ -441,707 +442,707 @@ static struct scp *init_scp(struct platform_device *pdev,
 
 	scp->dev = &pdev->dev;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	scp->base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(scp->base))
-		return ERR_CAST(scp->base);
+	अगर (IS_ERR(scp->base))
+		वापस ERR_CAST(scp->base);
 
-	scp->domains = devm_kcalloc(&pdev->dev,
-				num, sizeof(*scp->domains), GFP_KERNEL);
-	if (!scp->domains)
-		return ERR_PTR(-ENOMEM);
+	scp->करोमुख्यs = devm_kसुस्मृति(&pdev->dev,
+				num, माप(*scp->करोमुख्यs), GFP_KERNEL);
+	अगर (!scp->करोमुख्यs)
+		वापस ERR_PTR(-ENOMEM);
 
 	pd_data = &scp->pd_data;
 
-	pd_data->domains = devm_kcalloc(&pdev->dev,
-			num, sizeof(*pd_data->domains), GFP_KERNEL);
-	if (!pd_data->domains)
-		return ERR_PTR(-ENOMEM);
+	pd_data->करोमुख्यs = devm_kसुस्मृति(&pdev->dev,
+			num, माप(*pd_data->करोमुख्यs), GFP_KERNEL);
+	अगर (!pd_data->करोमुख्यs)
+		वापस ERR_PTR(-ENOMEM);
 
 	scp->infracfg = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
 			"infracfg");
-	if (IS_ERR(scp->infracfg)) {
+	अगर (IS_ERR(scp->infracfg)) अणु
 		dev_err(&pdev->dev, "Cannot find infracfg controller: %ld\n",
 				PTR_ERR(scp->infracfg));
-		return ERR_CAST(scp->infracfg);
-	}
+		वापस ERR_CAST(scp->infracfg);
+	पूर्ण
 
-	for (i = 0; i < num; i++) {
-		struct scp_domain *scpd = &scp->domains[i];
-		const struct scp_domain_data *data = &scp_domain_data[i];
+	क्रम (i = 0; i < num; i++) अणु
+		काष्ठा scp_करोमुख्य *scpd = &scp->करोमुख्यs[i];
+		स्थिर काष्ठा scp_करोमुख्य_data *data = &scp_करोमुख्य_data[i];
 
 		scpd->supply = devm_regulator_get_optional(&pdev->dev, data->name);
-		if (IS_ERR(scpd->supply)) {
-			if (PTR_ERR(scpd->supply) == -ENODEV)
-				scpd->supply = NULL;
-			else
-				return ERR_CAST(scpd->supply);
-		}
-	}
+		अगर (IS_ERR(scpd->supply)) अणु
+			अगर (PTR_ERR(scpd->supply) == -ENODEV)
+				scpd->supply = शून्य;
+			अन्यथा
+				वापस ERR_CAST(scpd->supply);
+		पूर्ण
+	पूर्ण
 
-	pd_data->num_domains = num;
+	pd_data->num_करोमुख्यs = num;
 
 	init_clks(pdev, clk);
 
-	for (i = 0; i < num; i++) {
-		struct scp_domain *scpd = &scp->domains[i];
-		struct generic_pm_domain *genpd = &scpd->genpd;
-		const struct scp_domain_data *data = &scp_domain_data[i];
+	क्रम (i = 0; i < num; i++) अणु
+		काष्ठा scp_करोमुख्य *scpd = &scp->करोमुख्यs[i];
+		काष्ठा generic_pm_करोमुख्य *genpd = &scpd->genpd;
+		स्थिर काष्ठा scp_करोमुख्य_data *data = &scp_करोमुख्य_data[i];
 
-		pd_data->domains[i] = genpd;
+		pd_data->करोमुख्यs[i] = genpd;
 		scpd->scp = scp;
 
 		scpd->data = data;
 
-		for (j = 0; j < MAX_CLKS && data->clk_id[j]; j++) {
-			struct clk *c = clk[data->clk_id[j]];
+		क्रम (j = 0; j < MAX_CLKS && data->clk_id[j]; j++) अणु
+			काष्ठा clk *c = clk[data->clk_id[j]];
 
-			if (IS_ERR(c)) {
+			अगर (IS_ERR(c)) अणु
 				dev_err(&pdev->dev, "%s: clk unavailable\n",
 					data->name);
-				return ERR_CAST(c);
-			}
+				वापस ERR_CAST(c);
+			पूर्ण
 
 			scpd->clk[j] = c;
-		}
+		पूर्ण
 
 		genpd->name = data->name;
-		genpd->power_off = scpsys_power_off;
-		genpd->power_on = scpsys_power_on;
-		if (MTK_SCPD_CAPS(scpd, MTK_SCPD_ACTIVE_WAKEUP))
+		genpd->घातer_off = scpsys_घातer_off;
+		genpd->घातer_on = scpsys_घातer_on;
+		अगर (MTK_SCPD_CAPS(scpd, MTK_SCPD_ACTIVE_WAKEUP))
 			genpd->flags |= GENPD_FLAG_ACTIVE_WAKEUP;
-	}
+	पूर्ण
 
-	return scp;
-}
+	वापस scp;
+पूर्ण
 
-static void mtk_register_power_domains(struct platform_device *pdev,
-				struct scp *scp, int num)
-{
-	struct genpd_onecell_data *pd_data;
-	int i, ret;
+अटल व्योम mtk_रेजिस्टर_घातer_करोमुख्यs(काष्ठा platक्रमm_device *pdev,
+				काष्ठा scp *scp, पूर्णांक num)
+अणु
+	काष्ठा genpd_onecell_data *pd_data;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < num; i++) {
-		struct scp_domain *scpd = &scp->domains[i];
-		struct generic_pm_domain *genpd = &scpd->genpd;
+	क्रम (i = 0; i < num; i++) अणु
+		काष्ठा scp_करोमुख्य *scpd = &scp->करोमुख्यs[i];
+		काष्ठा generic_pm_करोमुख्य *genpd = &scpd->genpd;
 		bool on;
 
 		/*
-		 * Initially turn on all domains to make the domains usable
+		 * Initially turn on all करोमुख्यs to make the करोमुख्यs usable
 		 * with !CONFIG_PM and to get the hardware in sync with the
-		 * software.  The unused domains will be switched off during
-		 * late_init time.
+		 * software.  The unused करोमुख्यs will be चयनed off during
+		 * late_init समय.
 		 */
-		on = !WARN_ON(genpd->power_on(genpd) < 0);
+		on = !WARN_ON(genpd->घातer_on(genpd) < 0);
 
-		pm_genpd_init(genpd, NULL, !on);
-	}
+		pm_genpd_init(genpd, शून्य, !on);
+	पूर्ण
 
 	/*
-	 * We are not allowed to fail here since there is no way to unregister
-	 * a power domain. Once registered above we have to keep the domains
+	 * We are not allowed to fail here since there is no way to unरेजिस्टर
+	 * a घातer करोमुख्य. Once रेजिस्टरed above we have to keep the करोमुख्यs
 	 * valid.
 	 */
 
 	pd_data = &scp->pd_data;
 
 	ret = of_genpd_add_provider_onecell(pdev->dev.of_node, pd_data);
-	if (ret)
+	अगर (ret)
 		dev_err(&pdev->dev, "Failed to add OF provider: %d\n", ret);
-}
+पूर्ण
 
 /*
- * MT2701 power domain support
+ * MT2701 घातer करोमुख्य support
  */
 
-static const struct scp_domain_data scp_domain_data_mt2701[] = {
-	[MT2701_POWER_DOMAIN_CONN] = {
+अटल स्थिर काष्ठा scp_करोमुख्य_data scp_करोमुख्य_data_mt2701[] = अणु
+	[MT2701_POWER_DOMAIN_CONN] = अणु
 		.name = "conn",
 		.sta_mask = PWR_STATUS_CONN,
 		.ctl_offs = SPM_CONN_PWR_CON,
 		.bus_prot_mask = MT2701_TOP_AXI_PROT_EN_CONN_M |
 				 MT2701_TOP_AXI_PROT_EN_CONN_S,
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2701_POWER_DOMAIN_DISP] = {
+	पूर्ण,
+	[MT2701_POWER_DOMAIN_DISP] = अणु
 		.name = "disp",
 		.sta_mask = PWR_STATUS_DISP,
 		.ctl_offs = SPM_DIS_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
-		.clk_id = {CLK_MM},
+		.clk_id = अणुCLK_MMपूर्ण,
 		.bus_prot_mask = MT2701_TOP_AXI_PROT_EN_MM_M0,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2701_POWER_DOMAIN_MFG] = {
+	पूर्ण,
+	[MT2701_POWER_DOMAIN_MFG] = अणु
 		.name = "mfg",
 		.sta_mask = PWR_STATUS_MFG,
 		.ctl_offs = SPM_MFG_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(12, 12),
-		.clk_id = {CLK_MFG},
+		.clk_id = अणुCLK_MFGपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2701_POWER_DOMAIN_VDEC] = {
+	पूर्ण,
+	[MT2701_POWER_DOMAIN_VDEC] = अणु
 		.name = "vdec",
 		.sta_mask = PWR_STATUS_VDEC,
 		.ctl_offs = SPM_VDE_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(12, 12),
-		.clk_id = {CLK_MM},
+		.clk_id = अणुCLK_MMपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2701_POWER_DOMAIN_ISP] = {
+	पूर्ण,
+	[MT2701_POWER_DOMAIN_ISP] = अणु
 		.name = "isp",
 		.sta_mask = PWR_STATUS_ISP,
 		.ctl_offs = SPM_ISP_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(13, 12),
-		.clk_id = {CLK_MM},
+		.clk_id = अणुCLK_MMपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2701_POWER_DOMAIN_BDP] = {
+	पूर्ण,
+	[MT2701_POWER_DOMAIN_BDP] = अणु
 		.name = "bdp",
 		.sta_mask = PWR_STATUS_BDP,
 		.ctl_offs = SPM_BDP_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2701_POWER_DOMAIN_ETH] = {
+	पूर्ण,
+	[MT2701_POWER_DOMAIN_ETH] = अणु
 		.name = "eth",
 		.sta_mask = PWR_STATUS_ETH,
 		.ctl_offs = SPM_ETH_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_ETHIF},
+		.clk_id = अणुCLK_ETHIFपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2701_POWER_DOMAIN_HIF] = {
+	पूर्ण,
+	[MT2701_POWER_DOMAIN_HIF] = अणु
 		.name = "hif",
 		.sta_mask = PWR_STATUS_HIF,
 		.ctl_offs = SPM_HIF_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_ETHIF},
+		.clk_id = अणुCLK_ETHIFपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2701_POWER_DOMAIN_IFR_MSC] = {
+	पूर्ण,
+	[MT2701_POWER_DOMAIN_IFR_MSC] = अणु
 		.name = "ifr_msc",
 		.sta_mask = PWR_STATUS_IFR_MSC,
 		.ctl_offs = SPM_IFR_MSC_PWR_CON,
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * MT2712 power domain support
+ * MT2712 घातer करोमुख्य support
  */
-static const struct scp_domain_data scp_domain_data_mt2712[] = {
-	[MT2712_POWER_DOMAIN_MM] = {
+अटल स्थिर काष्ठा scp_करोमुख्य_data scp_करोमुख्य_data_mt2712[] = अणु
+	[MT2712_POWER_DOMAIN_MM] = अणु
 		.name = "mm",
 		.sta_mask = PWR_STATUS_DISP,
 		.ctl_offs = SPM_DIS_PWR_CON,
 		.sram_pdn_bits = GENMASK(8, 8),
 		.sram_pdn_ack_bits = GENMASK(12, 12),
-		.clk_id = {CLK_MM},
+		.clk_id = अणुCLK_MMपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_VDEC] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_VDEC] = अणु
 		.name = "vdec",
 		.sta_mask = PWR_STATUS_VDEC,
 		.ctl_offs = SPM_VDE_PWR_CON,
 		.sram_pdn_bits = GENMASK(8, 8),
 		.sram_pdn_ack_bits = GENMASK(12, 12),
-		.clk_id = {CLK_MM, CLK_VDEC},
+		.clk_id = अणुCLK_MM, CLK_VDECपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_VENC] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_VENC] = अणु
 		.name = "venc",
 		.sta_mask = PWR_STATUS_VENC,
 		.ctl_offs = SPM_VEN_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_MM, CLK_VENC, CLK_JPGDEC},
+		.clk_id = अणुCLK_MM, CLK_VENC, CLK_JPGDECपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_ISP] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_ISP] = अणु
 		.name = "isp",
 		.sta_mask = PWR_STATUS_ISP,
 		.ctl_offs = SPM_ISP_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(13, 12),
-		.clk_id = {CLK_MM},
+		.clk_id = अणुCLK_MMपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_AUDIO] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_AUDIO] = अणु
 		.name = "audio",
 		.sta_mask = PWR_STATUS_AUDIO,
 		.ctl_offs = SPM_AUDIO_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_AUDIO},
+		.clk_id = अणुCLK_AUDIOपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_USB] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_USB] = अणु
 		.name = "usb",
 		.sta_mask = PWR_STATUS_USB,
 		.ctl_offs = SPM_USB_PWR_CON,
 		.sram_pdn_bits = GENMASK(10, 8),
 		.sram_pdn_ack_bits = GENMASK(14, 12),
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_USB2] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_USB2] = अणु
 		.name = "usb2",
 		.sta_mask = PWR_STATUS_USB2,
 		.ctl_offs = SPM_USB2_PWR_CON,
 		.sram_pdn_bits = GENMASK(10, 8),
 		.sram_pdn_ack_bits = GENMASK(14, 12),
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_MFG] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_MFG] = अणु
 		.name = "mfg",
 		.sta_mask = PWR_STATUS_MFG,
 		.ctl_offs = SPM_MFG_PWR_CON,
 		.sram_pdn_bits = GENMASK(8, 8),
 		.sram_pdn_ack_bits = GENMASK(16, 16),
-		.clk_id = {CLK_MFG},
+		.clk_id = अणुCLK_MFGपूर्ण,
 		.bus_prot_mask = BIT(14) | BIT(21) | BIT(23),
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_MFG_SC1] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_MFG_SC1] = अणु
 		.name = "mfg_sc1",
 		.sta_mask = BIT(22),
 		.ctl_offs = 0x02c0,
 		.sram_pdn_bits = GENMASK(8, 8),
 		.sram_pdn_ack_bits = GENMASK(16, 16),
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_MFG_SC2] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_MFG_SC2] = अणु
 		.name = "mfg_sc2",
 		.sta_mask = BIT(23),
 		.ctl_offs = 0x02c4,
 		.sram_pdn_bits = GENMASK(8, 8),
 		.sram_pdn_ack_bits = GENMASK(16, 16),
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT2712_POWER_DOMAIN_MFG_SC3] = {
+	पूर्ण,
+	[MT2712_POWER_DOMAIN_MFG_SC3] = अणु
 		.name = "mfg_sc3",
 		.sta_mask = BIT(30),
 		.ctl_offs = 0x01f8,
 		.sram_pdn_bits = GENMASK(8, 8),
 		.sram_pdn_ack_bits = GENMASK(16, 16),
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct scp_subdomain scp_subdomain_mt2712[] = {
-	{MT2712_POWER_DOMAIN_MM, MT2712_POWER_DOMAIN_VDEC},
-	{MT2712_POWER_DOMAIN_MM, MT2712_POWER_DOMAIN_VENC},
-	{MT2712_POWER_DOMAIN_MM, MT2712_POWER_DOMAIN_ISP},
-	{MT2712_POWER_DOMAIN_MFG, MT2712_POWER_DOMAIN_MFG_SC1},
-	{MT2712_POWER_DOMAIN_MFG_SC1, MT2712_POWER_DOMAIN_MFG_SC2},
-	{MT2712_POWER_DOMAIN_MFG_SC2, MT2712_POWER_DOMAIN_MFG_SC3},
-};
+अटल स्थिर काष्ठा scp_subकरोमुख्य scp_subकरोमुख्य_mt2712[] = अणु
+	अणुMT2712_POWER_DOMAIN_MM, MT2712_POWER_DOMAIN_VDECपूर्ण,
+	अणुMT2712_POWER_DOMAIN_MM, MT2712_POWER_DOMAIN_VENCपूर्ण,
+	अणुMT2712_POWER_DOMAIN_MM, MT2712_POWER_DOMAIN_ISPपूर्ण,
+	अणुMT2712_POWER_DOMAIN_MFG, MT2712_POWER_DOMAIN_MFG_SC1पूर्ण,
+	अणुMT2712_POWER_DOMAIN_MFG_SC1, MT2712_POWER_DOMAIN_MFG_SC2पूर्ण,
+	अणुMT2712_POWER_DOMAIN_MFG_SC2, MT2712_POWER_DOMAIN_MFG_SC3पूर्ण,
+पूर्ण;
 
 /*
- * MT6797 power domain support
+ * MT6797 घातer करोमुख्य support
  */
 
-static const struct scp_domain_data scp_domain_data_mt6797[] = {
-	[MT6797_POWER_DOMAIN_VDEC] = {
+अटल स्थिर काष्ठा scp_करोमुख्य_data scp_करोमुख्य_data_mt6797[] = अणु
+	[MT6797_POWER_DOMAIN_VDEC] = अणु
 		.name = "vdec",
 		.sta_mask = BIT(7),
 		.ctl_offs = 0x300,
 		.sram_pdn_bits = GENMASK(8, 8),
 		.sram_pdn_ack_bits = GENMASK(12, 12),
-		.clk_id = {CLK_VDEC},
-	},
-	[MT6797_POWER_DOMAIN_VENC] = {
+		.clk_id = अणुCLK_VDECपूर्ण,
+	पूर्ण,
+	[MT6797_POWER_DOMAIN_VENC] = अणु
 		.name = "venc",
 		.sta_mask = BIT(21),
 		.ctl_offs = 0x304,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_NONE},
-	},
-	[MT6797_POWER_DOMAIN_ISP] = {
+		.clk_id = अणुCLK_NONEपूर्ण,
+	पूर्ण,
+	[MT6797_POWER_DOMAIN_ISP] = अणु
 		.name = "isp",
 		.sta_mask = BIT(5),
 		.ctl_offs = 0x308,
 		.sram_pdn_bits = GENMASK(9, 8),
 		.sram_pdn_ack_bits = GENMASK(13, 12),
-		.clk_id = {CLK_NONE},
-	},
-	[MT6797_POWER_DOMAIN_MM] = {
+		.clk_id = अणुCLK_NONEपूर्ण,
+	पूर्ण,
+	[MT6797_POWER_DOMAIN_MM] = अणु
 		.name = "mm",
 		.sta_mask = BIT(3),
 		.ctl_offs = 0x30C,
 		.sram_pdn_bits = GENMASK(8, 8),
 		.sram_pdn_ack_bits = GENMASK(12, 12),
-		.clk_id = {CLK_MM},
+		.clk_id = अणुCLK_MMपूर्ण,
 		.bus_prot_mask = (BIT(1) | BIT(2)),
-	},
-	[MT6797_POWER_DOMAIN_AUDIO] = {
+	पूर्ण,
+	[MT6797_POWER_DOMAIN_AUDIO] = अणु
 		.name = "audio",
 		.sta_mask = BIT(24),
 		.ctl_offs = 0x314,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_NONE},
-	},
-	[MT6797_POWER_DOMAIN_MFG_ASYNC] = {
+		.clk_id = अणुCLK_NONEपूर्ण,
+	पूर्ण,
+	[MT6797_POWER_DOMAIN_MFG_ASYNC] = अणु
 		.name = "mfg_async",
 		.sta_mask = BIT(13),
 		.ctl_offs = 0x334,
 		.sram_pdn_bits = 0,
 		.sram_pdn_ack_bits = 0,
-		.clk_id = {CLK_MFG},
-	},
-	[MT6797_POWER_DOMAIN_MJC] = {
+		.clk_id = अणुCLK_MFGपूर्ण,
+	पूर्ण,
+	[MT6797_POWER_DOMAIN_MJC] = अणु
 		.name = "mjc",
 		.sta_mask = BIT(20),
 		.ctl_offs = 0x310,
 		.sram_pdn_bits = GENMASK(8, 8),
 		.sram_pdn_ack_bits = GENMASK(12, 12),
-		.clk_id = {CLK_NONE},
-	},
-};
+		.clk_id = अणुCLK_NONEपूर्ण,
+	पूर्ण,
+पूर्ण;
 
-#define SPM_PWR_STATUS_MT6797		0x0180
-#define SPM_PWR_STATUS_2ND_MT6797	0x0184
+#घोषणा SPM_PWR_STATUS_MT6797		0x0180
+#घोषणा SPM_PWR_STATUS_2ND_MT6797	0x0184
 
-static const struct scp_subdomain scp_subdomain_mt6797[] = {
-	{MT6797_POWER_DOMAIN_MM, MT6797_POWER_DOMAIN_VDEC},
-	{MT6797_POWER_DOMAIN_MM, MT6797_POWER_DOMAIN_ISP},
-	{MT6797_POWER_DOMAIN_MM, MT6797_POWER_DOMAIN_VENC},
-	{MT6797_POWER_DOMAIN_MM, MT6797_POWER_DOMAIN_MJC},
-};
+अटल स्थिर काष्ठा scp_subकरोमुख्य scp_subकरोमुख्य_mt6797[] = अणु
+	अणुMT6797_POWER_DOMAIN_MM, MT6797_POWER_DOMAIN_VDECपूर्ण,
+	अणुMT6797_POWER_DOMAIN_MM, MT6797_POWER_DOMAIN_ISPपूर्ण,
+	अणुMT6797_POWER_DOMAIN_MM, MT6797_POWER_DOMAIN_VENCपूर्ण,
+	अणुMT6797_POWER_DOMAIN_MM, MT6797_POWER_DOMAIN_MJCपूर्ण,
+पूर्ण;
 
 /*
- * MT7622 power domain support
+ * MT7622 घातer करोमुख्य support
  */
 
-static const struct scp_domain_data scp_domain_data_mt7622[] = {
-	[MT7622_POWER_DOMAIN_ETHSYS] = {
+अटल स्थिर काष्ठा scp_करोमुख्य_data scp_करोमुख्य_data_mt7622[] = अणु
+	[MT7622_POWER_DOMAIN_ETHSYS] = अणु
 		.name = "ethsys",
 		.sta_mask = PWR_STATUS_ETHSYS,
 		.ctl_offs = SPM_ETHSYS_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.bus_prot_mask = MT7622_TOP_AXI_PROT_EN_ETHSYS,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT7622_POWER_DOMAIN_HIF0] = {
+	पूर्ण,
+	[MT7622_POWER_DOMAIN_HIF0] = अणु
 		.name = "hif0",
 		.sta_mask = PWR_STATUS_HIF0,
 		.ctl_offs = SPM_HIF0_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_HIFSEL},
+		.clk_id = अणुCLK_HIFSELपूर्ण,
 		.bus_prot_mask = MT7622_TOP_AXI_PROT_EN_HIF0,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT7622_POWER_DOMAIN_HIF1] = {
+	पूर्ण,
+	[MT7622_POWER_DOMAIN_HIF1] = अणु
 		.name = "hif1",
 		.sta_mask = PWR_STATUS_HIF1,
 		.ctl_offs = SPM_HIF1_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_HIFSEL},
+		.clk_id = अणुCLK_HIFSELपूर्ण,
 		.bus_prot_mask = MT7622_TOP_AXI_PROT_EN_HIF1,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT7622_POWER_DOMAIN_WB] = {
+	पूर्ण,
+	[MT7622_POWER_DOMAIN_WB] = अणु
 		.name = "wb",
 		.sta_mask = PWR_STATUS_WB,
 		.ctl_offs = SPM_WB_PWR_CON,
 		.sram_pdn_bits = 0,
 		.sram_pdn_ack_bits = 0,
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.bus_prot_mask = MT7622_TOP_AXI_PROT_EN_WB,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP | MTK_SCPD_FWAIT_SRAM,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * MT7623A power domain support
+ * MT7623A घातer करोमुख्य support
  */
 
-static const struct scp_domain_data scp_domain_data_mt7623a[] = {
-	[MT7623A_POWER_DOMAIN_CONN] = {
+अटल स्थिर काष्ठा scp_करोमुख्य_data scp_करोमुख्य_data_mt7623a[] = अणु
+	[MT7623A_POWER_DOMAIN_CONN] = अणु
 		.name = "conn",
 		.sta_mask = PWR_STATUS_CONN,
 		.ctl_offs = SPM_CONN_PWR_CON,
 		.bus_prot_mask = MT2701_TOP_AXI_PROT_EN_CONN_M |
 				 MT2701_TOP_AXI_PROT_EN_CONN_S,
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT7623A_POWER_DOMAIN_ETH] = {
+	पूर्ण,
+	[MT7623A_POWER_DOMAIN_ETH] = अणु
 		.name = "eth",
 		.sta_mask = PWR_STATUS_ETH,
 		.ctl_offs = SPM_ETH_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_ETHIF},
+		.clk_id = अणुCLK_ETHIFपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT7623A_POWER_DOMAIN_HIF] = {
+	पूर्ण,
+	[MT7623A_POWER_DOMAIN_HIF] = अणु
 		.name = "hif",
 		.sta_mask = PWR_STATUS_HIF,
 		.ctl_offs = SPM_HIF_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_ETHIF},
+		.clk_id = अणुCLK_ETHIFपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT7623A_POWER_DOMAIN_IFR_MSC] = {
+	पूर्ण,
+	[MT7623A_POWER_DOMAIN_IFR_MSC] = अणु
 		.name = "ifr_msc",
 		.sta_mask = PWR_STATUS_IFR_MSC,
 		.ctl_offs = SPM_IFR_MSC_PWR_CON,
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /*
- * MT8173 power domain support
+ * MT8173 घातer करोमुख्य support
  */
 
-static const struct scp_domain_data scp_domain_data_mt8173[] = {
-	[MT8173_POWER_DOMAIN_VDEC] = {
+अटल स्थिर काष्ठा scp_करोमुख्य_data scp_करोमुख्य_data_mt8173[] = अणु
+	[MT8173_POWER_DOMAIN_VDEC] = अणु
 		.name = "vdec",
 		.sta_mask = PWR_STATUS_VDEC,
 		.ctl_offs = SPM_VDE_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(12, 12),
-		.clk_id = {CLK_MM},
-	},
-	[MT8173_POWER_DOMAIN_VENC] = {
+		.clk_id = अणुCLK_MMपूर्ण,
+	पूर्ण,
+	[MT8173_POWER_DOMAIN_VENC] = अणु
 		.name = "venc",
 		.sta_mask = PWR_STATUS_VENC,
 		.ctl_offs = SPM_VEN_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_MM, CLK_VENC},
-	},
-	[MT8173_POWER_DOMAIN_ISP] = {
+		.clk_id = अणुCLK_MM, CLK_VENCपूर्ण,
+	पूर्ण,
+	[MT8173_POWER_DOMAIN_ISP] = अणु
 		.name = "isp",
 		.sta_mask = PWR_STATUS_ISP,
 		.ctl_offs = SPM_ISP_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(13, 12),
-		.clk_id = {CLK_MM},
-	},
-	[MT8173_POWER_DOMAIN_MM] = {
+		.clk_id = अणुCLK_MMपूर्ण,
+	पूर्ण,
+	[MT8173_POWER_DOMAIN_MM] = अणु
 		.name = "mm",
 		.sta_mask = PWR_STATUS_DISP,
 		.ctl_offs = SPM_DIS_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(12, 12),
-		.clk_id = {CLK_MM},
+		.clk_id = अणुCLK_MMपूर्ण,
 		.bus_prot_mask = MT8173_TOP_AXI_PROT_EN_MM_M0 |
 			MT8173_TOP_AXI_PROT_EN_MM_M1,
-	},
-	[MT8173_POWER_DOMAIN_VENC_LT] = {
+	पूर्ण,
+	[MT8173_POWER_DOMAIN_VENC_LT] = अणु
 		.name = "venc_lt",
 		.sta_mask = PWR_STATUS_VENC_LT,
 		.ctl_offs = SPM_VEN2_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_MM, CLK_VENC_LT},
-	},
-	[MT8173_POWER_DOMAIN_AUDIO] = {
+		.clk_id = अणुCLK_MM, CLK_VENC_LTपूर्ण,
+	पूर्ण,
+	[MT8173_POWER_DOMAIN_AUDIO] = अणु
 		.name = "audio",
 		.sta_mask = PWR_STATUS_AUDIO,
 		.ctl_offs = SPM_AUDIO_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_NONE},
-	},
-	[MT8173_POWER_DOMAIN_USB] = {
+		.clk_id = अणुCLK_NONEपूर्ण,
+	पूर्ण,
+	[MT8173_POWER_DOMAIN_USB] = अणु
 		.name = "usb",
 		.sta_mask = PWR_STATUS_USB,
 		.ctl_offs = SPM_USB_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(15, 12),
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.caps = MTK_SCPD_ACTIVE_WAKEUP,
-	},
-	[MT8173_POWER_DOMAIN_MFG_ASYNC] = {
+	पूर्ण,
+	[MT8173_POWER_DOMAIN_MFG_ASYNC] = अणु
 		.name = "mfg_async",
 		.sta_mask = PWR_STATUS_MFG_ASYNC,
 		.ctl_offs = SPM_MFG_ASYNC_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = 0,
-		.clk_id = {CLK_MFG},
-	},
-	[MT8173_POWER_DOMAIN_MFG_2D] = {
+		.clk_id = अणुCLK_MFGपूर्ण,
+	पूर्ण,
+	[MT8173_POWER_DOMAIN_MFG_2D] = अणु
 		.name = "mfg_2d",
 		.sta_mask = PWR_STATUS_MFG_2D,
 		.ctl_offs = SPM_MFG_2D_PWR_CON,
 		.sram_pdn_bits = GENMASK(11, 8),
 		.sram_pdn_ack_bits = GENMASK(13, 12),
-		.clk_id = {CLK_NONE},
-	},
-	[MT8173_POWER_DOMAIN_MFG] = {
+		.clk_id = अणुCLK_NONEपूर्ण,
+	पूर्ण,
+	[MT8173_POWER_DOMAIN_MFG] = अणु
 		.name = "mfg",
 		.sta_mask = PWR_STATUS_MFG,
 		.ctl_offs = SPM_MFG_PWR_CON,
 		.sram_pdn_bits = GENMASK(13, 8),
 		.sram_pdn_ack_bits = GENMASK(21, 16),
-		.clk_id = {CLK_NONE},
+		.clk_id = अणुCLK_NONEपूर्ण,
 		.bus_prot_mask = MT8173_TOP_AXI_PROT_EN_MFG_S |
 			MT8173_TOP_AXI_PROT_EN_MFG_M0 |
 			MT8173_TOP_AXI_PROT_EN_MFG_M1 |
 			MT8173_TOP_AXI_PROT_EN_MFG_SNOOP_OUT,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct scp_subdomain scp_subdomain_mt8173[] = {
-	{MT8173_POWER_DOMAIN_MFG_ASYNC, MT8173_POWER_DOMAIN_MFG_2D},
-	{MT8173_POWER_DOMAIN_MFG_2D, MT8173_POWER_DOMAIN_MFG},
-};
+अटल स्थिर काष्ठा scp_subकरोमुख्य scp_subकरोमुख्य_mt8173[] = अणु
+	अणुMT8173_POWER_DOMAIN_MFG_ASYNC, MT8173_POWER_DOMAIN_MFG_2Dपूर्ण,
+	अणुMT8173_POWER_DOMAIN_MFG_2D, MT8173_POWER_DOMAIN_MFGपूर्ण,
+पूर्ण;
 
-static const struct scp_soc_data mt2701_data = {
-	.domains = scp_domain_data_mt2701,
-	.num_domains = ARRAY_SIZE(scp_domain_data_mt2701),
-	.regs = {
+अटल स्थिर काष्ठा scp_soc_data mt2701_data = अणु
+	.करोमुख्यs = scp_करोमुख्य_data_mt2701,
+	.num_करोमुख्यs = ARRAY_SIZE(scp_करोमुख्य_data_mt2701),
+	.regs = अणु
 		.pwr_sta_offs = SPM_PWR_STATUS,
 		.pwr_sta2nd_offs = SPM_PWR_STATUS_2ND
-	},
+	पूर्ण,
 	.bus_prot_reg_update = true,
-};
+पूर्ण;
 
-static const struct scp_soc_data mt2712_data = {
-	.domains = scp_domain_data_mt2712,
-	.num_domains = ARRAY_SIZE(scp_domain_data_mt2712),
-	.subdomains = scp_subdomain_mt2712,
-	.num_subdomains = ARRAY_SIZE(scp_subdomain_mt2712),
-	.regs = {
+अटल स्थिर काष्ठा scp_soc_data mt2712_data = अणु
+	.करोमुख्यs = scp_करोमुख्य_data_mt2712,
+	.num_करोमुख्यs = ARRAY_SIZE(scp_करोमुख्य_data_mt2712),
+	.subकरोमुख्यs = scp_subकरोमुख्य_mt2712,
+	.num_subकरोमुख्यs = ARRAY_SIZE(scp_subकरोमुख्य_mt2712),
+	.regs = अणु
 		.pwr_sta_offs = SPM_PWR_STATUS,
 		.pwr_sta2nd_offs = SPM_PWR_STATUS_2ND
-	},
+	पूर्ण,
 	.bus_prot_reg_update = false,
-};
+पूर्ण;
 
-static const struct scp_soc_data mt6797_data = {
-	.domains = scp_domain_data_mt6797,
-	.num_domains = ARRAY_SIZE(scp_domain_data_mt6797),
-	.subdomains = scp_subdomain_mt6797,
-	.num_subdomains = ARRAY_SIZE(scp_subdomain_mt6797),
-	.regs = {
+अटल स्थिर काष्ठा scp_soc_data mt6797_data = अणु
+	.करोमुख्यs = scp_करोमुख्य_data_mt6797,
+	.num_करोमुख्यs = ARRAY_SIZE(scp_करोमुख्य_data_mt6797),
+	.subकरोमुख्यs = scp_subकरोमुख्य_mt6797,
+	.num_subकरोमुख्यs = ARRAY_SIZE(scp_subकरोमुख्य_mt6797),
+	.regs = अणु
 		.pwr_sta_offs = SPM_PWR_STATUS_MT6797,
 		.pwr_sta2nd_offs = SPM_PWR_STATUS_2ND_MT6797
-	},
+	पूर्ण,
 	.bus_prot_reg_update = true,
-};
+पूर्ण;
 
-static const struct scp_soc_data mt7622_data = {
-	.domains = scp_domain_data_mt7622,
-	.num_domains = ARRAY_SIZE(scp_domain_data_mt7622),
-	.regs = {
+अटल स्थिर काष्ठा scp_soc_data mt7622_data = अणु
+	.करोमुख्यs = scp_करोमुख्य_data_mt7622,
+	.num_करोमुख्यs = ARRAY_SIZE(scp_करोमुख्य_data_mt7622),
+	.regs = अणु
 		.pwr_sta_offs = SPM_PWR_STATUS,
 		.pwr_sta2nd_offs = SPM_PWR_STATUS_2ND
-	},
+	पूर्ण,
 	.bus_prot_reg_update = true,
-};
+पूर्ण;
 
-static const struct scp_soc_data mt7623a_data = {
-	.domains = scp_domain_data_mt7623a,
-	.num_domains = ARRAY_SIZE(scp_domain_data_mt7623a),
-	.regs = {
+अटल स्थिर काष्ठा scp_soc_data mt7623a_data = अणु
+	.करोमुख्यs = scp_करोमुख्य_data_mt7623a,
+	.num_करोमुख्यs = ARRAY_SIZE(scp_करोमुख्य_data_mt7623a),
+	.regs = अणु
 		.pwr_sta_offs = SPM_PWR_STATUS,
 		.pwr_sta2nd_offs = SPM_PWR_STATUS_2ND
-	},
+	पूर्ण,
 	.bus_prot_reg_update = true,
-};
+पूर्ण;
 
-static const struct scp_soc_data mt8173_data = {
-	.domains = scp_domain_data_mt8173,
-	.num_domains = ARRAY_SIZE(scp_domain_data_mt8173),
-	.subdomains = scp_subdomain_mt8173,
-	.num_subdomains = ARRAY_SIZE(scp_subdomain_mt8173),
-	.regs = {
+अटल स्थिर काष्ठा scp_soc_data mt8173_data = अणु
+	.करोमुख्यs = scp_करोमुख्य_data_mt8173,
+	.num_करोमुख्यs = ARRAY_SIZE(scp_करोमुख्य_data_mt8173),
+	.subकरोमुख्यs = scp_subकरोमुख्य_mt8173,
+	.num_subकरोमुख्यs = ARRAY_SIZE(scp_subकरोमुख्य_mt8173),
+	.regs = अणु
 		.pwr_sta_offs = SPM_PWR_STATUS,
 		.pwr_sta2nd_offs = SPM_PWR_STATUS_2ND
-	},
+	पूर्ण,
 	.bus_prot_reg_update = true,
-};
+पूर्ण;
 
 /*
  * scpsys driver init
  */
 
-static const struct of_device_id of_scpsys_match_tbl[] = {
-	{
+अटल स्थिर काष्ठा of_device_id of_scpsys_match_tbl[] = अणु
+	अणु
 		.compatible = "mediatek,mt2701-scpsys",
 		.data = &mt2701_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt2712-scpsys",
 		.data = &mt2712_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt6797-scpsys",
 		.data = &mt6797_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt7622-scpsys",
 		.data = &mt7622_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt7623a-scpsys",
 		.data = &mt7623a_data,
-	}, {
+	पूर्ण, अणु
 		.compatible = "mediatek,mt8173-scpsys",
 		.data = &mt8173_data,
-	}, {
+	पूर्ण, अणु
 		/* sentinel */
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int scpsys_probe(struct platform_device *pdev)
-{
-	const struct scp_subdomain *sd;
-	const struct scp_soc_data *soc;
-	struct scp *scp;
-	struct genpd_onecell_data *pd_data;
-	int i, ret;
+अटल पूर्णांक scpsys_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा scp_subकरोमुख्य *sd;
+	स्थिर काष्ठा scp_soc_data *soc;
+	काष्ठा scp *scp;
+	काष्ठा genpd_onecell_data *pd_data;
+	पूर्णांक i, ret;
 
 	soc = of_device_get_match_data(&pdev->dev);
 
-	scp = init_scp(pdev, soc->domains, soc->num_domains, &soc->regs,
+	scp = init_scp(pdev, soc->करोमुख्यs, soc->num_करोमुख्यs, &soc->regs,
 			soc->bus_prot_reg_update);
-	if (IS_ERR(scp))
-		return PTR_ERR(scp);
+	अगर (IS_ERR(scp))
+		वापस PTR_ERR(scp);
 
-	mtk_register_power_domains(pdev, scp, soc->num_domains);
+	mtk_रेजिस्टर_घातer_करोमुख्यs(pdev, scp, soc->num_करोमुख्यs);
 
 	pd_data = &scp->pd_data;
 
-	for (i = 0, sd = soc->subdomains; i < soc->num_subdomains; i++, sd++) {
-		ret = pm_genpd_add_subdomain(pd_data->domains[sd->origin],
-					     pd_data->domains[sd->subdomain]);
-		if (ret && IS_ENABLED(CONFIG_PM))
+	क्रम (i = 0, sd = soc->subकरोमुख्यs; i < soc->num_subकरोमुख्यs; i++, sd++) अणु
+		ret = pm_genpd_add_subकरोमुख्य(pd_data->करोमुख्यs[sd->origin],
+					     pd_data->करोमुख्यs[sd->subकरोमुख्य]);
+		अगर (ret && IS_ENABLED(CONFIG_PM))
 			dev_err(&pdev->dev, "Failed to add subdomain: %d\n",
 				ret);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver scpsys_drv = {
+अटल काष्ठा platक्रमm_driver scpsys_drv = अणु
 	.probe = scpsys_probe,
-	.driver = {
+	.driver = अणु
 		.name = "mtk-scpsys",
 		.suppress_bind_attrs = true,
 		.owner = THIS_MODULE,
 		.of_match_table = of_match_ptr(of_scpsys_match_tbl),
-	},
-};
-builtin_platform_driver(scpsys_drv);
+	पूर्ण,
+पूर्ण;
+builtin_platक्रमm_driver(scpsys_drv);

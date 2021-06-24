@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,85 +20,85 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <nvif/mem.h>
-#include <nvif/client.h>
+#समावेश <nvअगर/स्मृति.स>
+#समावेश <nvअगर/client.h>
 
-#include <nvif/if000a.h>
+#समावेश <nvअगर/अगर000a.h>
 
-int
-nvif_mem_ctor_map(struct nvif_mmu *mmu, const char *name, u8 type, u64 size,
-		  struct nvif_mem *mem)
-{
-	int ret = nvif_mem_ctor(mmu, name, mmu->mem, NVIF_MEM_MAPPABLE | type,
-				0, size, NULL, 0, mem);
-	if (ret == 0) {
-		ret = nvif_object_map(&mem->object, NULL, 0);
-		if (ret)
-			nvif_mem_dtor(mem);
-	}
-	return ret;
-}
+पूर्णांक
+nvअगर_mem_ctor_map(काष्ठा nvअगर_mmu *mmu, स्थिर अक्षर *name, u8 type, u64 size,
+		  काष्ठा nvअगर_mem *mem)
+अणु
+	पूर्णांक ret = nvअगर_mem_ctor(mmu, name, mmu->mem, NVIF_MEM_MAPPABLE | type,
+				0, size, शून्य, 0, mem);
+	अगर (ret == 0) अणु
+		ret = nvअगर_object_map(&mem->object, शून्य, 0);
+		अगर (ret)
+			nvअगर_mem_dtor(mem);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-void
-nvif_mem_dtor(struct nvif_mem *mem)
-{
-	nvif_object_dtor(&mem->object);
-}
+व्योम
+nvअगर_mem_dtor(काष्ठा nvअगर_mem *mem)
+अणु
+	nvअगर_object_dtor(&mem->object);
+पूर्ण
 
-int
-nvif_mem_ctor_type(struct nvif_mmu *mmu, const char *name, s32 oclass,
-		   int type, u8 page, u64 size, void *argv, u32 argc,
-		   struct nvif_mem *mem)
-{
-	struct nvif_mem_v0 *args;
+पूर्णांक
+nvअगर_mem_ctor_type(काष्ठा nvअगर_mmu *mmu, स्थिर अक्षर *name, s32 oclass,
+		   पूर्णांक type, u8 page, u64 size, व्योम *argv, u32 argc,
+		   काष्ठा nvअगर_mem *mem)
+अणु
+	काष्ठा nvअगर_mem_v0 *args;
 	u8 stack[128];
-	int ret;
+	पूर्णांक ret;
 
-	mem->object.client = NULL;
-	if (type < 0)
-		return -EINVAL;
+	mem->object.client = शून्य;
+	अगर (type < 0)
+		वापस -EINVAL;
 
-	if (sizeof(*args) + argc > sizeof(stack)) {
-		if (!(args = kmalloc(sizeof(*args) + argc, GFP_KERNEL)))
-			return -ENOMEM;
-	} else {
-		args = (void *)stack;
-	}
+	अगर (माप(*args) + argc > माप(stack)) अणु
+		अगर (!(args = kदो_स्मृति(माप(*args) + argc, GFP_KERNEL)))
+			वापस -ENOMEM;
+	पूर्ण अन्यथा अणु
+		args = (व्योम *)stack;
+	पूर्ण
 	args->version = 0;
 	args->type = type;
 	args->page = page;
 	args->size = size;
-	memcpy(args->data, argv, argc);
+	स_नकल(args->data, argv, argc);
 
-	ret = nvif_object_ctor(&mmu->object, name ? name : "nvifMem", 0, oclass,
-			       args, sizeof(*args) + argc, &mem->object);
-	if (ret == 0) {
+	ret = nvअगर_object_ctor(&mmu->object, name ? name : "nvifMem", 0, oclass,
+			       args, माप(*args) + argc, &mem->object);
+	अगर (ret == 0) अणु
 		mem->type = mmu->type[type].type;
 		mem->page = args->page;
 		mem->addr = args->addr;
 		mem->size = args->size;
-	}
+	पूर्ण
 
-	if (args != (void *)stack)
-		kfree(args);
-	return ret;
+	अगर (args != (व्योम *)stack)
+		kमुक्त(args);
+	वापस ret;
 
-}
+पूर्ण
 
-int
-nvif_mem_ctor(struct nvif_mmu *mmu, const char *name, s32 oclass, u8 type,
-	      u8 page, u64 size, void *argv, u32 argc, struct nvif_mem *mem)
-{
-	int ret = -EINVAL, i;
+पूर्णांक
+nvअगर_mem_ctor(काष्ठा nvअगर_mmu *mmu, स्थिर अक्षर *name, s32 oclass, u8 type,
+	      u8 page, u64 size, व्योम *argv, u32 argc, काष्ठा nvअगर_mem *mem)
+अणु
+	पूर्णांक ret = -EINVAL, i;
 
-	mem->object.client = NULL;
+	mem->object.client = शून्य;
 
-	for (i = 0; ret && i < mmu->type_nr; i++) {
-		if ((mmu->type[i].type & type) == type) {
-			ret = nvif_mem_ctor_type(mmu, name, oclass, i, page,
+	क्रम (i = 0; ret && i < mmu->type_nr; i++) अणु
+		अगर ((mmu->type[i].type & type) == type) अणु
+			ret = nvअगर_mem_ctor_type(mmu, name, oclass, i, page,
 						 size, argv, argc, mem);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

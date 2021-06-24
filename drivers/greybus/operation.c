@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Greybus operations
  *
@@ -6,32 +7,32 @@
  * Copyright 2014-2015 Linaro Ltd.
  */
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#include <linux/workqueue.h>
-#include <linux/greybus.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/greybus.h>
 
-#include "greybus_trace.h"
+#समावेश "greybus_trace.h"
 
-static struct kmem_cache *gb_operation_cache;
-static struct kmem_cache *gb_message_cache;
+अटल काष्ठा kmem_cache *gb_operation_cache;
+अटल काष्ठा kmem_cache *gb_message_cache;
 
 /* Workqueue to handle Greybus operation completions. */
-static struct workqueue_struct *gb_operation_completion_wq;
+अटल काष्ठा workqueue_काष्ठा *gb_operation_completion_wq;
 
-/* Wait queue for synchronous cancellations. */
-static DECLARE_WAIT_QUEUE_HEAD(gb_operation_cancellation_queue);
+/* Wait queue क्रम synchronous cancellations. */
+अटल DECLARE_WAIT_QUEUE_HEAD(gb_operation_cancellation_queue);
 
 /*
- * Protects updates to operation->errno.
+ * Protects updates to operation->त्रुटि_सं.
  */
-static DEFINE_SPINLOCK(gb_operations_lock);
+अटल DEFINE_SPINLOCK(gb_operations_lock);
 
-static int gb_operation_response_send(struct gb_operation *operation,
-				      int errno);
+अटल पूर्णांक gb_operation_response_send(काष्ठा gb_operation *operation,
+				      पूर्णांक त्रुटि_सं);
 
 /*
  * Increment operation active count and add to connection list unless the
@@ -39,122 +40,122 @@ static int gb_operation_response_send(struct gb_operation *operation,
  *
  * Caller holds operation reference.
  */
-static int gb_operation_get_active(struct gb_operation *operation)
-{
-	struct gb_connection *connection = operation->connection;
-	unsigned long flags;
+अटल पूर्णांक gb_operation_get_active(काष्ठा gb_operation *operation)
+अणु
+	काष्ठा gb_connection *connection = operation->connection;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&connection->lock, flags);
-	switch (connection->state) {
-	case GB_CONNECTION_STATE_ENABLED:
-		break;
-	case GB_CONNECTION_STATE_ENABLED_TX:
-		if (gb_operation_is_incoming(operation))
-			goto err_unlock;
-		break;
-	case GB_CONNECTION_STATE_DISCONNECTING:
-		if (!gb_operation_is_core(operation))
-			goto err_unlock;
-		break;
-	default:
-		goto err_unlock;
-	}
+	चयन (connection->state) अणु
+	हाल GB_CONNECTION_STATE_ENABLED:
+		अवरोध;
+	हाल GB_CONNECTION_STATE_ENABLED_TX:
+		अगर (gb_operation_is_incoming(operation))
+			जाओ err_unlock;
+		अवरोध;
+	हाल GB_CONNECTION_STATE_DISCONNECTING:
+		अगर (!gb_operation_is_core(operation))
+			जाओ err_unlock;
+		अवरोध;
+	शेष:
+		जाओ err_unlock;
+	पूर्ण
 
-	if (operation->active++ == 0)
+	अगर (operation->active++ == 0)
 		list_add_tail(&operation->links, &connection->operations);
 
 	trace_gb_operation_get_active(operation);
 
 	spin_unlock_irqrestore(&connection->lock, flags);
 
-	return 0;
+	वापस 0;
 
 err_unlock:
 	spin_unlock_irqrestore(&connection->lock, flags);
 
-	return -ENOTCONN;
-}
+	वापस -ENOTCONN;
+पूर्ण
 
 /* Caller holds operation reference. */
-static void gb_operation_put_active(struct gb_operation *operation)
-{
-	struct gb_connection *connection = operation->connection;
-	unsigned long flags;
+अटल व्योम gb_operation_put_active(काष्ठा gb_operation *operation)
+अणु
+	काष्ठा gb_connection *connection = operation->connection;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&connection->lock, flags);
 
 	trace_gb_operation_put_active(operation);
 
-	if (--operation->active == 0) {
+	अगर (--operation->active == 0) अणु
 		list_del(&operation->links);
-		if (atomic_read(&operation->waiters))
+		अगर (atomic_पढ़ो(&operation->रुकोers))
 			wake_up(&gb_operation_cancellation_queue);
-	}
+	पूर्ण
 	spin_unlock_irqrestore(&connection->lock, flags);
-}
+पूर्ण
 
-static bool gb_operation_is_active(struct gb_operation *operation)
-{
-	struct gb_connection *connection = operation->connection;
-	unsigned long flags;
+अटल bool gb_operation_is_active(काष्ठा gb_operation *operation)
+अणु
+	काष्ठा gb_connection *connection = operation->connection;
+	अचिन्हित दीर्घ flags;
 	bool ret;
 
 	spin_lock_irqsave(&connection->lock, flags);
 	ret = operation->active;
 	spin_unlock_irqrestore(&connection->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * Set an operation's result.
  *
- * Initially an outgoing operation's errno value is -EBADR.
- * If no error occurs before sending the request message the only
- * valid value operation->errno can be set to is -EINPROGRESS,
+ * Initially an outgoing operation's त्रुटि_सं value is -EBADR.
+ * If no error occurs beक्रमe sending the request message the only
+ * valid value operation->त्रुटि_सं can be set to is -EINPROGRESS,
  * indicating the request has been (or rather is about to be) sent.
- * At that point nobody should be looking at the result until the
+ * At that poपूर्णांक nobody should be looking at the result until the
  * response arrives.
  *
- * The first time the result gets set after the request has been
- * sent, that result "sticks."  That is, if two concurrent threads
- * race to set the result, the first one wins.  The return value
- * tells the caller whether its result was recorded; if not the
- * caller has nothing more to do.
+ * The first समय the result माला_लो set after the request has been
+ * sent, that result "sticks."  That is, अगर two concurrent thपढ़ोs
+ * race to set the result, the first one wins.  The वापस value
+ * tells the caller whether its result was recorded; अगर not the
+ * caller has nothing more to करो.
  *
- * The result value -EILSEQ is reserved to signal an implementation
- * error; if it's ever observed, the code performing the request has
- * done something fundamentally wrong.  It is an error to try to set
- * the result to -EBADR, and attempts to do so result in a warning,
+ * The result value -EILSEQ is reserved to संकेत an implementation
+ * error; अगर it's ever observed, the code perक्रमming the request has
+ * करोne something fundamentally wrong.  It is an error to try to set
+ * the result to -EBADR, and attempts to करो so result in a warning,
  * and -EILSEQ is used instead.  Similarly, the only valid result
- * value to set for an operation in initial state is -EINPROGRESS.
- * Attempts to do otherwise will also record a (successful) -EILSEQ
+ * value to set क्रम an operation in initial state is -EINPROGRESS.
+ * Attempts to करो otherwise will also record a (successful) -EILSEQ
  * operation result.
  */
-static bool gb_operation_result_set(struct gb_operation *operation, int result)
-{
-	unsigned long flags;
-	int prev;
+अटल bool gb_operation_result_set(काष्ठा gb_operation *operation, पूर्णांक result)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक prev;
 
-	if (result == -EINPROGRESS) {
+	अगर (result == -EINPROGRESS) अणु
 		/*
 		 * -EINPROGRESS is used to indicate the request is
 		 * in flight.  It should be the first result value
 		 * set after the initial -EBADR.  Issue a warning
-		 * and record an implementation error if it's
-		 * set at any other time.
+		 * and record an implementation error अगर it's
+		 * set at any other समय.
 		 */
 		spin_lock_irqsave(&gb_operations_lock, flags);
-		prev = operation->errno;
-		if (prev == -EBADR)
-			operation->errno = result;
-		else
-			operation->errno = -EILSEQ;
+		prev = operation->त्रुटि_सं;
+		अगर (prev == -EBADR)
+			operation->त्रुटि_सं = result;
+		अन्यथा
+			operation->त्रुटि_सं = -EILSEQ;
 		spin_unlock_irqrestore(&gb_operations_lock, flags);
 		WARN_ON(prev != -EBADR);
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
 	/*
 	 * The first result value set after a request has been sent
@@ -165,323 +166,323 @@ static bool gb_operation_result_set(struct gb_operation *operation, int result)
 	 * value.  Attempts to set this value result in a warning,
 	 * and the result code is set to -EILSEQ instead.
 	 */
-	if (WARN_ON(result == -EBADR))
+	अगर (WARN_ON(result == -EBADR))
 		result = -EILSEQ; /* Nobody should be setting -EBADR */
 
 	spin_lock_irqsave(&gb_operations_lock, flags);
-	prev = operation->errno;
-	if (prev == -EINPROGRESS)
-		operation->errno = result;	/* First and final result */
+	prev = operation->त्रुटि_सं;
+	अगर (prev == -EINPROGRESS)
+		operation->त्रुटि_सं = result;	/* First and final result */
 	spin_unlock_irqrestore(&gb_operations_lock, flags);
 
-	return prev == -EINPROGRESS;
-}
+	वापस prev == -EINPROGRESS;
+पूर्ण
 
-int gb_operation_result(struct gb_operation *operation)
-{
-	int result = operation->errno;
+पूर्णांक gb_operation_result(काष्ठा gb_operation *operation)
+अणु
+	पूर्णांक result = operation->त्रुटि_सं;
 
 	WARN_ON(result == -EBADR);
 	WARN_ON(result == -EINPROGRESS);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_operation_result);
 
 /*
- * Looks up an outgoing operation on a connection and returns a refcounted
- * pointer if found, or NULL otherwise.
+ * Looks up an outgoing operation on a connection and वापसs a refcounted
+ * poपूर्णांकer अगर found, or शून्य otherwise.
  */
-static struct gb_operation *
-gb_operation_find_outgoing(struct gb_connection *connection, u16 operation_id)
-{
-	struct gb_operation *operation;
-	unsigned long flags;
+अटल काष्ठा gb_operation *
+gb_operation_find_outgoing(काष्ठा gb_connection *connection, u16 operation_id)
+अणु
+	काष्ठा gb_operation *operation;
+	अचिन्हित दीर्घ flags;
 	bool found = false;
 
 	spin_lock_irqsave(&connection->lock, flags);
-	list_for_each_entry(operation, &connection->operations, links)
-		if (operation->id == operation_id &&
-		    !gb_operation_is_incoming(operation)) {
+	list_क्रम_each_entry(operation, &connection->operations, links)
+		अगर (operation->id == operation_id &&
+		    !gb_operation_is_incoming(operation)) अणु
 			gb_operation_get(operation);
 			found = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 	spin_unlock_irqrestore(&connection->lock, flags);
 
-	return found ? operation : NULL;
-}
+	वापस found ? operation : शून्य;
+पूर्ण
 
-static int gb_message_send(struct gb_message *message, gfp_t gfp)
-{
-	struct gb_connection *connection = message->operation->connection;
+अटल पूर्णांक gb_message_send(काष्ठा gb_message *message, gfp_t gfp)
+अणु
+	काष्ठा gb_connection *connection = message->operation->connection;
 
 	trace_gb_message_send(message);
-	return connection->hd->driver->message_send(connection->hd,
+	वापस connection->hd->driver->message_send(connection->hd,
 					connection->hd_cport_id,
 					message,
 					gfp);
-}
+पूर्ण
 
 /*
  * Cancel a message we have passed to the host device layer to be sent.
  */
-static void gb_message_cancel(struct gb_message *message)
-{
-	struct gb_host_device *hd = message->operation->connection->hd;
+अटल व्योम gb_message_cancel(काष्ठा gb_message *message)
+अणु
+	काष्ठा gb_host_device *hd = message->operation->connection->hd;
 
 	hd->driver->message_cancel(message);
-}
+पूर्ण
 
-static void gb_operation_request_handle(struct gb_operation *operation)
-{
-	struct gb_connection *connection = operation->connection;
-	int status;
-	int ret;
+अटल व्योम gb_operation_request_handle(काष्ठा gb_operation *operation)
+अणु
+	काष्ठा gb_connection *connection = operation->connection;
+	पूर्णांक status;
+	पूर्णांक ret;
 
-	if (connection->handler) {
+	अगर (connection->handler) अणु
 		status = connection->handler(operation);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_err(&connection->hd->dev,
 			"%s: unexpected incoming request of type 0x%02x\n",
 			connection->name, operation->type);
 
 		status = -EPROTONOSUPPORT;
-	}
+	पूर्ण
 
 	ret = gb_operation_response_send(operation, status);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&connection->hd->dev,
 			"%s: failed to send response %d for type 0x%02x: %d\n",
 			connection->name, status, operation->type, ret);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
 /*
  * Process operation work.
  *
  * For incoming requests, call the protocol request handler. The operation
- * result should be -EINPROGRESS at this point.
+ * result should be -EINPROGRESS at this poपूर्णांक.
  *
  * For outgoing requests, the operation result value should have
- * been set before queueing this.  The operation callback function
+ * been set beक्रमe queueing this.  The operation callback function
  * allows the original requester to know the request has completed
  * and its result is available.
  */
-static void gb_operation_work(struct work_struct *work)
-{
-	struct gb_operation *operation;
-	int ret;
+अटल व्योम gb_operation_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा gb_operation *operation;
+	पूर्णांक ret;
 
-	operation = container_of(work, struct gb_operation, work);
+	operation = container_of(work, काष्ठा gb_operation, work);
 
-	if (gb_operation_is_incoming(operation)) {
+	अगर (gb_operation_is_incoming(operation)) अणु
 		gb_operation_request_handle(operation);
-	} else {
-		ret = del_timer_sync(&operation->timer);
-		if (!ret) {
-			/* Cancel request message if scheduled by timeout. */
-			if (gb_operation_result(operation) == -ETIMEDOUT)
+	पूर्ण अन्यथा अणु
+		ret = del_समयr_sync(&operation->समयr);
+		अगर (!ret) अणु
+			/* Cancel request message अगर scheduled by समयout. */
+			अगर (gb_operation_result(operation) == -ETIMEDOUT)
 				gb_message_cancel(operation->request);
-		}
+		पूर्ण
 
 		operation->callback(operation);
-	}
+	पूर्ण
 
 	gb_operation_put_active(operation);
 	gb_operation_put(operation);
-}
+पूर्ण
 
-static void gb_operation_timeout(struct timer_list *t)
-{
-	struct gb_operation *operation = from_timer(operation, t, timer);
+अटल व्योम gb_operation_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा gb_operation *operation = from_समयr(operation, t, समयr);
 
-	if (gb_operation_result_set(operation, -ETIMEDOUT)) {
+	अगर (gb_operation_result_set(operation, -ETIMEDOUT)) अणु
 		/*
 		 * A stuck request message will be cancelled from the
 		 * workqueue.
 		 */
 		queue_work(gb_operation_completion_wq, &operation->work);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gb_operation_message_init(struct gb_host_device *hd,
-				      struct gb_message *message,
+अटल व्योम gb_operation_message_init(काष्ठा gb_host_device *hd,
+				      काष्ठा gb_message *message,
 				      u16 operation_id,
-				      size_t payload_size, u8 type)
-{
-	struct gb_operation_msg_hdr *header;
+				      माप_प्रकार payload_size, u8 type)
+अणु
+	काष्ठा gb_operation_msg_hdr *header;
 
 	header = message->buffer;
 
 	message->header = header;
-	message->payload = payload_size ? header + 1 : NULL;
+	message->payload = payload_size ? header + 1 : शून्य;
 	message->payload_size = payload_size;
 
 	/*
-	 * The type supplied for incoming message buffers will be
+	 * The type supplied क्रम incoming message buffers will be
 	 * GB_REQUEST_TYPE_INVALID. Such buffers will be overwritten by
 	 * arriving data so there's no need to initialize the message header.
 	 */
-	if (type != GB_REQUEST_TYPE_INVALID) {
-		u16 message_size = (u16)(sizeof(*header) + payload_size);
+	अगर (type != GB_REQUEST_TYPE_INVALID) अणु
+		u16 message_size = (u16)(माप(*header) + payload_size);
 
 		/*
-		 * For a request, the operation id gets filled in
+		 * For a request, the operation id माला_लो filled in
 		 * when the message is sent.  For a response, it
 		 * will be copied from the request by the caller.
 		 *
 		 * The result field in a request message must be
-		 * zero.  It will be set just prior to sending for
+		 * zero.  It will be set just prior to sending क्रम
 		 * a response.
 		 */
 		header->size = cpu_to_le16(message_size);
 		header->operation_id = 0;
 		header->type = type;
 		header->result = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Allocate a message to be used for an operation request or response.
+ * Allocate a message to be used क्रम an operation request or response.
  * Both types of message contain a common header.  The request message
- * for an outgoing operation is outbound, as is the response message
- * for an incoming operation.  The message header for an outbound
+ * क्रम an outgoing operation is outbound, as is the response message
+ * क्रम an incoming operation.  The message header क्रम an outbound
  * message is partially initialized here.
  *
- * The headers for inbound messages don't need to be initialized;
+ * The headers क्रम inbound messages करोn't need to be initialized;
  * they'll be filled in by arriving data.
  *
  * Our message buffers have the following layout:
  *	message header  \_ these combined are
  *	message payload /  the message size
  */
-static struct gb_message *
-gb_operation_message_alloc(struct gb_host_device *hd, u8 type,
-			   size_t payload_size, gfp_t gfp_flags)
-{
-	struct gb_message *message;
-	struct gb_operation_msg_hdr *header;
-	size_t message_size = payload_size + sizeof(*header);
+अटल काष्ठा gb_message *
+gb_operation_message_alloc(काष्ठा gb_host_device *hd, u8 type,
+			   माप_प्रकार payload_size, gfp_t gfp_flags)
+अणु
+	काष्ठा gb_message *message;
+	काष्ठा gb_operation_msg_hdr *header;
+	माप_प्रकार message_size = payload_size + माप(*header);
 
-	if (message_size > hd->buffer_size_max) {
+	अगर (message_size > hd->buffer_size_max) अणु
 		dev_warn(&hd->dev, "requested message size too big (%zu > %zu)\n",
 			 message_size, hd->buffer_size_max);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	/* Allocate the message structure and buffer. */
+	/* Allocate the message काष्ठाure and buffer. */
 	message = kmem_cache_zalloc(gb_message_cache, gfp_flags);
-	if (!message)
-		return NULL;
+	अगर (!message)
+		वापस शून्य;
 
 	message->buffer = kzalloc(message_size, gfp_flags);
-	if (!message->buffer)
-		goto err_free_message;
+	अगर (!message->buffer)
+		जाओ err_मुक्त_message;
 
 	/* Initialize the message.  Operation id is filled in later. */
 	gb_operation_message_init(hd, message, 0, payload_size, type);
 
-	return message;
+	वापस message;
 
-err_free_message:
-	kmem_cache_free(gb_message_cache, message);
+err_मुक्त_message:
+	kmem_cache_मुक्त(gb_message_cache, message);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void gb_operation_message_free(struct gb_message *message)
-{
-	kfree(message->buffer);
-	kmem_cache_free(gb_message_cache, message);
-}
+अटल व्योम gb_operation_message_मुक्त(काष्ठा gb_message *message)
+अणु
+	kमुक्त(message->buffer);
+	kmem_cache_मुक्त(gb_message_cache, message);
+पूर्ण
 
 /*
- * Map an enum gb_operation_status value (which is represented in a
- * message as a single byte) to an appropriate Linux negative errno.
+ * Map an क्रमागत gb_operation_status value (which is represented in a
+ * message as a single byte) to an appropriate Linux negative त्रुटि_सं.
  */
-static int gb_operation_status_map(u8 status)
-{
-	switch (status) {
-	case GB_OP_SUCCESS:
-		return 0;
-	case GB_OP_INTERRUPTED:
-		return -EINTR;
-	case GB_OP_TIMEOUT:
-		return -ETIMEDOUT;
-	case GB_OP_NO_MEMORY:
-		return -ENOMEM;
-	case GB_OP_PROTOCOL_BAD:
-		return -EPROTONOSUPPORT;
-	case GB_OP_OVERFLOW:
-		return -EMSGSIZE;
-	case GB_OP_INVALID:
-		return -EINVAL;
-	case GB_OP_RETRY:
-		return -EAGAIN;
-	case GB_OP_NONEXISTENT:
-		return -ENODEV;
-	case GB_OP_MALFUNCTION:
-		return -EILSEQ;
-	case GB_OP_UNKNOWN_ERROR:
-	default:
-		return -EIO;
-	}
-}
+अटल पूर्णांक gb_operation_status_map(u8 status)
+अणु
+	चयन (status) अणु
+	हाल GB_OP_SUCCESS:
+		वापस 0;
+	हाल GB_OP_INTERRUPTED:
+		वापस -EINTR;
+	हाल GB_OP_TIMEOUT:
+		वापस -ETIMEDOUT;
+	हाल GB_OP_NO_MEMORY:
+		वापस -ENOMEM;
+	हाल GB_OP_PROTOCOL_BAD:
+		वापस -EPROTONOSUPPORT;
+	हाल GB_OP_OVERFLOW:
+		वापस -EMSGSIZE;
+	हाल GB_OP_INVALID:
+		वापस -EINVAL;
+	हाल GB_OP_RETRY:
+		वापस -EAGAIN;
+	हाल GB_OP_NONEXISTENT:
+		वापस -ENODEV;
+	हाल GB_OP_MALFUNCTION:
+		वापस -EILSEQ;
+	हाल GB_OP_UNKNOWN_ERROR:
+	शेष:
+		वापस -EIO;
+	पूर्ण
+पूर्ण
 
 /*
- * Map a Linux errno value (from operation->errno) into the value
+ * Map a Linux त्रुटि_सं value (from operation->त्रुटि_सं) पूर्णांकo the value
  * that should represent it in a response message status sent
- * over the wire.  Returns an enum gb_operation_status value (which
+ * over the wire.  Returns an क्रमागत gb_operation_status value (which
  * is represented in a message as a single byte).
  */
-static u8 gb_operation_errno_map(int errno)
-{
-	switch (errno) {
-	case 0:
-		return GB_OP_SUCCESS;
-	case -EINTR:
-		return GB_OP_INTERRUPTED;
-	case -ETIMEDOUT:
-		return GB_OP_TIMEOUT;
-	case -ENOMEM:
-		return GB_OP_NO_MEMORY;
-	case -EPROTONOSUPPORT:
-		return GB_OP_PROTOCOL_BAD;
-	case -EMSGSIZE:
-		return GB_OP_OVERFLOW;	/* Could be underflow too */
-	case -EINVAL:
-		return GB_OP_INVALID;
-	case -EAGAIN:
-		return GB_OP_RETRY;
-	case -EILSEQ:
-		return GB_OP_MALFUNCTION;
-	case -ENODEV:
-		return GB_OP_NONEXISTENT;
-	case -EIO:
-	default:
-		return GB_OP_UNKNOWN_ERROR;
-	}
-}
+अटल u8 gb_operation_त्रुटि_सं_map(पूर्णांक त्रुटि_सं)
+अणु
+	चयन (त्रुटि_सं) अणु
+	हाल 0:
+		वापस GB_OP_SUCCESS;
+	हाल -EINTR:
+		वापस GB_OP_INTERRUPTED;
+	हाल -ETIMEDOUT:
+		वापस GB_OP_TIMEOUT;
+	हाल -ENOMEM:
+		वापस GB_OP_NO_MEMORY;
+	हाल -EPROTONOSUPPORT:
+		वापस GB_OP_PROTOCOL_BAD;
+	हाल -EMSGSIZE:
+		वापस GB_OP_OVERFLOW;	/* Could be underflow too */
+	हाल -EINVAL:
+		वापस GB_OP_INVALID;
+	हाल -EAGAIN:
+		वापस GB_OP_RETRY;
+	हाल -EILSEQ:
+		वापस GB_OP_MALFUNCTION;
+	हाल -ENODEV:
+		वापस GB_OP_NONEXISTENT;
+	हाल -EIO:
+	शेष:
+		वापस GB_OP_UNKNOWN_ERROR;
+	पूर्ण
+पूर्ण
 
-bool gb_operation_response_alloc(struct gb_operation *operation,
-				 size_t response_size, gfp_t gfp)
-{
-	struct gb_host_device *hd = operation->connection->hd;
-	struct gb_operation_msg_hdr *request_header;
-	struct gb_message *response;
+bool gb_operation_response_alloc(काष्ठा gb_operation *operation,
+				 माप_प्रकार response_size, gfp_t gfp)
+अणु
+	काष्ठा gb_host_device *hd = operation->connection->hd;
+	काष्ठा gb_operation_msg_hdr *request_header;
+	काष्ठा gb_message *response;
 	u8 type;
 
 	type = operation->type | GB_MESSAGE_TYPE_RESPONSE;
 	response = gb_operation_message_alloc(hd, type, response_size, gfp);
-	if (!response)
-		return false;
+	अगर (!response)
+		वापस false;
 	response->operation = operation;
 
 	/*
 	 * Size and type get initialized when the message is
-	 * allocated.  The errno will be set before sending.  All
+	 * allocated.  The त्रुटि_सं will be set beक्रमe sending.  All
 	 * that's left is the operation id, which we copy from the
 	 * request message header (as-is, in little-endian order).
 	 */
@@ -489,249 +490,249 @@ bool gb_operation_response_alloc(struct gb_operation *operation,
 	response->header->operation_id = request_header->operation_id;
 	operation->response = response;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_operation_response_alloc);
 
 /*
  * Create a Greybus operation to be sent over the given connection.
- * The request buffer will be big enough for a payload of the given
+ * The request buffer will be big enough क्रम a payload of the given
  * size.
  *
  * For outgoing requests, the request message's header will be
  * initialized with the type of the request and the message size.
- * Outgoing operations must also specify the response buffer size,
+ * Outgoing operations must also specअगरy the response buffer size,
  * which must be sufficient to hold all expected response data.  The
  * response message header will eventually be overwritten, so there's
  * no need to initialize it here.
  *
- * Request messages for incoming operations can arrive in interrupt
- * context, so they must be allocated with GFP_ATOMIC.  In this case
+ * Request messages क्रम incoming operations can arrive in पूर्णांकerrupt
+ * context, so they must be allocated with GFP_ATOMIC.  In this हाल
  * the request buffer will be immediately overwritten, so there is
- * no need to initialize the message header.  Responsibility for
+ * no need to initialize the message header.  Responsibility क्रम
  * allocating a response buffer lies with the incoming request
- * handler for a protocol.  So we don't allocate that here.
+ * handler क्रम a protocol.  So we करोn't allocate that here.
  *
- * Returns a pointer to the new operation or a null pointer if an
+ * Returns a poपूर्णांकer to the new operation or a null poपूर्णांकer अगर an
  * error occurs.
  */
-static struct gb_operation *
-gb_operation_create_common(struct gb_connection *connection, u8 type,
-			   size_t request_size, size_t response_size,
-			   unsigned long op_flags, gfp_t gfp_flags)
-{
-	struct gb_host_device *hd = connection->hd;
-	struct gb_operation *operation;
+अटल काष्ठा gb_operation *
+gb_operation_create_common(काष्ठा gb_connection *connection, u8 type,
+			   माप_प्रकार request_size, माप_प्रकार response_size,
+			   अचिन्हित दीर्घ op_flags, gfp_t gfp_flags)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
+	काष्ठा gb_operation *operation;
 
 	operation = kmem_cache_zalloc(gb_operation_cache, gfp_flags);
-	if (!operation)
-		return NULL;
+	अगर (!operation)
+		वापस शून्य;
 	operation->connection = connection;
 
 	operation->request = gb_operation_message_alloc(hd, type, request_size,
 							gfp_flags);
-	if (!operation->request)
-		goto err_cache;
+	अगर (!operation->request)
+		जाओ err_cache;
 	operation->request->operation = operation;
 
-	/* Allocate the response buffer for outgoing operations */
-	if (!(op_flags & GB_OPERATION_FLAG_INCOMING)) {
-		if (!gb_operation_response_alloc(operation, response_size,
-						 gfp_flags)) {
-			goto err_request;
-		}
+	/* Allocate the response buffer क्रम outgoing operations */
+	अगर (!(op_flags & GB_OPERATION_FLAG_INCOMING)) अणु
+		अगर (!gb_operation_response_alloc(operation, response_size,
+						 gfp_flags)) अणु
+			जाओ err_request;
+		पूर्ण
 
-		timer_setup(&operation->timer, gb_operation_timeout, 0);
-	}
+		समयr_setup(&operation->समयr, gb_operation_समयout, 0);
+	पूर्ण
 
 	operation->flags = op_flags;
 	operation->type = type;
-	operation->errno = -EBADR;  /* Initial value--means "never set" */
+	operation->त्रुटि_सं = -EBADR;  /* Initial value--means "never set" */
 
 	INIT_WORK(&operation->work, gb_operation_work);
 	init_completion(&operation->completion);
 	kref_init(&operation->kref);
-	atomic_set(&operation->waiters, 0);
+	atomic_set(&operation->रुकोers, 0);
 
-	return operation;
+	वापस operation;
 
 err_request:
-	gb_operation_message_free(operation->request);
+	gb_operation_message_मुक्त(operation->request);
 err_cache:
-	kmem_cache_free(gb_operation_cache, operation);
+	kmem_cache_मुक्त(gb_operation_cache, operation);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Create a new operation associated with the given connection.  The
  * request and response sizes provided are the number of bytes
  * required to hold the request/response payload only.  Both of
  * these are allowed to be 0.  Note that 0x00 is reserved as an
- * invalid operation type for all protocols, and this is enforced
+ * invalid operation type क्रम all protocols, and this is enक्रमced
  * here.
  */
-struct gb_operation *
-gb_operation_create_flags(struct gb_connection *connection,
-			  u8 type, size_t request_size,
-			  size_t response_size, unsigned long flags,
+काष्ठा gb_operation *
+gb_operation_create_flags(काष्ठा gb_connection *connection,
+			  u8 type, माप_प्रकार request_size,
+			  माप_प्रकार response_size, अचिन्हित दीर्घ flags,
 			  gfp_t gfp)
-{
-	struct gb_operation *operation;
+अणु
+	काष्ठा gb_operation *operation;
 
-	if (WARN_ON_ONCE(type == GB_REQUEST_TYPE_INVALID))
-		return NULL;
-	if (WARN_ON_ONCE(type & GB_MESSAGE_TYPE_RESPONSE))
+	अगर (WARN_ON_ONCE(type == GB_REQUEST_TYPE_INVALID))
+		वापस शून्य;
+	अगर (WARN_ON_ONCE(type & GB_MESSAGE_TYPE_RESPONSE))
 		type &= ~GB_MESSAGE_TYPE_RESPONSE;
 
-	if (WARN_ON_ONCE(flags & ~GB_OPERATION_FLAG_USER_MASK))
+	अगर (WARN_ON_ONCE(flags & ~GB_OPERATION_FLAG_USER_MASK))
 		flags &= GB_OPERATION_FLAG_USER_MASK;
 
 	operation = gb_operation_create_common(connection, type,
 					       request_size, response_size,
 					       flags, gfp);
-	if (operation)
+	अगर (operation)
 		trace_gb_operation_create(operation);
 
-	return operation;
-}
+	वापस operation;
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_operation_create_flags);
 
-struct gb_operation *
-gb_operation_create_core(struct gb_connection *connection,
-			 u8 type, size_t request_size,
-			 size_t response_size, unsigned long flags,
+काष्ठा gb_operation *
+gb_operation_create_core(काष्ठा gb_connection *connection,
+			 u8 type, माप_प्रकार request_size,
+			 माप_प्रकार response_size, अचिन्हित दीर्घ flags,
 			 gfp_t gfp)
-{
-	struct gb_operation *operation;
+अणु
+	काष्ठा gb_operation *operation;
 
 	flags |= GB_OPERATION_FLAG_CORE;
 
 	operation = gb_operation_create_common(connection, type,
 					       request_size, response_size,
 					       flags, gfp);
-	if (operation)
+	अगर (operation)
 		trace_gb_operation_create_core(operation);
 
-	return operation;
-}
+	वापस operation;
+पूर्ण
 
 /* Do not export this function. */
 
-size_t gb_operation_get_payload_size_max(struct gb_connection *connection)
-{
-	struct gb_host_device *hd = connection->hd;
+माप_प्रकार gb_operation_get_payload_size_max(काष्ठा gb_connection *connection)
+अणु
+	काष्ठा gb_host_device *hd = connection->hd;
 
-	return hd->buffer_size_max - sizeof(struct gb_operation_msg_hdr);
-}
+	वापस hd->buffer_size_max - माप(काष्ठा gb_operation_msg_hdr);
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_operation_get_payload_size_max);
 
-static struct gb_operation *
-gb_operation_create_incoming(struct gb_connection *connection, u16 id,
-			     u8 type, void *data, size_t size)
-{
-	struct gb_operation *operation;
-	size_t request_size;
-	unsigned long flags = GB_OPERATION_FLAG_INCOMING;
+अटल काष्ठा gb_operation *
+gb_operation_create_incoming(काष्ठा gb_connection *connection, u16 id,
+			     u8 type, व्योम *data, माप_प्रकार size)
+अणु
+	काष्ठा gb_operation *operation;
+	माप_प्रकार request_size;
+	अचिन्हित दीर्घ flags = GB_OPERATION_FLAG_INCOMING;
 
 	/* Caller has made sure we at least have a message header. */
-	request_size = size - sizeof(struct gb_operation_msg_hdr);
+	request_size = size - माप(काष्ठा gb_operation_msg_hdr);
 
-	if (!id)
-		flags |= GB_OPERATION_FLAG_UNIDIRECTIONAL;
+	अगर (!id)
+		flags |= GB_OPERATION_FLAG_UNIसूचीECTIONAL;
 
 	operation = gb_operation_create_common(connection, type,
 					       request_size,
 					       GB_REQUEST_TYPE_INVALID,
 					       flags, GFP_ATOMIC);
-	if (!operation)
-		return NULL;
+	अगर (!operation)
+		वापस शून्य;
 
 	operation->id = id;
-	memcpy(operation->request->header, data, size);
+	स_नकल(operation->request->header, data, size);
 	trace_gb_operation_create_incoming(operation);
 
-	return operation;
-}
+	वापस operation;
+पूर्ण
 
 /*
  * Get an additional reference on an operation.
  */
-void gb_operation_get(struct gb_operation *operation)
-{
+व्योम gb_operation_get(काष्ठा gb_operation *operation)
+अणु
 	kref_get(&operation->kref);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_operation_get);
 
 /*
  * Destroy a previously created operation.
  */
-static void _gb_operation_destroy(struct kref *kref)
-{
-	struct gb_operation *operation;
+अटल व्योम _gb_operation_destroy(काष्ठा kref *kref)
+अणु
+	काष्ठा gb_operation *operation;
 
-	operation = container_of(kref, struct gb_operation, kref);
+	operation = container_of(kref, काष्ठा gb_operation, kref);
 
 	trace_gb_operation_destroy(operation);
 
-	if (operation->response)
-		gb_operation_message_free(operation->response);
-	gb_operation_message_free(operation->request);
+	अगर (operation->response)
+		gb_operation_message_मुक्त(operation->response);
+	gb_operation_message_मुक्त(operation->request);
 
-	kmem_cache_free(gb_operation_cache, operation);
-}
+	kmem_cache_मुक्त(gb_operation_cache, operation);
+पूर्ण
 
 /*
  * Drop a reference on an operation, and destroy it when the last
  * one is gone.
  */
-void gb_operation_put(struct gb_operation *operation)
-{
-	if (WARN_ON(!operation))
-		return;
+व्योम gb_operation_put(काष्ठा gb_operation *operation)
+अणु
+	अगर (WARN_ON(!operation))
+		वापस;
 
 	kref_put(&operation->kref, _gb_operation_destroy);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_operation_put);
 
-/* Tell the requester we're done */
-static void gb_operation_sync_callback(struct gb_operation *operation)
-{
+/* Tell the requester we're करोne */
+अटल व्योम gb_operation_sync_callback(काष्ठा gb_operation *operation)
+अणु
 	complete(&operation->completion);
-}
+पूर्ण
 
 /**
  * gb_operation_request_send() - send an operation request message
  * @operation:	the operation to initiate
  * @callback:	the operation completion callback
- * @timeout:	operation timeout in milliseconds, or zero for no timeout
- * @gfp:	the memory flags to use for any allocations
+ * @समयout:	operation समयout in milliseconds, or zero क्रम no समयout
+ * @gfp:	the memory flags to use क्रम any allocations
  *
- * The caller has filled in any payload so the request message is ready to go.
+ * The caller has filled in any payload so the request message is पढ़ोy to go.
  * The callback function supplied will be called when the response message has
  * arrived, a unidirectional request has been sent, or the operation is
  * cancelled, indicating that the operation is complete. The callback function
- * can fetch the result of the operation using gb_operation_result() if
+ * can fetch the result of the operation using gb_operation_result() अगर
  * desired.
  *
- * Return: 0 if the request was successfully queued in the host-driver queues,
- * or a negative errno.
+ * Return: 0 अगर the request was successfully queued in the host-driver queues,
+ * or a negative त्रुटि_सं.
  */
-int gb_operation_request_send(struct gb_operation *operation,
+पूर्णांक gb_operation_request_send(काष्ठा gb_operation *operation,
 			      gb_operation_callback callback,
-			      unsigned int timeout,
+			      अचिन्हित पूर्णांक समयout,
 			      gfp_t gfp)
-{
-	struct gb_connection *connection = operation->connection;
-	struct gb_operation_msg_hdr *header;
-	unsigned int cycle;
-	int ret;
+अणु
+	काष्ठा gb_connection *connection = operation->connection;
+	काष्ठा gb_operation_msg_hdr *header;
+	अचिन्हित पूर्णांक cycle;
+	पूर्णांक ret;
 
-	if (gb_connection_is_offloaded(connection))
-		return -EBUSY;
+	अगर (gb_connection_is_offloaded(connection))
+		वापस -EBUSY;
 
-	if (!callback)
-		return -EINVAL;
+	अगर (!callback)
+		वापस -EINVAL;
 
 	/*
 	 * Record the callback function, which is executed in
@@ -742,14 +743,14 @@ int gb_operation_request_send(struct gb_operation *operation,
 
 	/*
 	 * Assign the operation's id, and store it in the request header.
-	 * Zero is a reserved operation id for unidirectional operations.
+	 * Zero is a reserved operation id क्रम unidirectional operations.
 	 */
-	if (gb_operation_is_unidirectional(operation)) {
+	अगर (gb_operation_is_unidirectional(operation)) अणु
 		operation->id = 0;
-	} else {
-		cycle = (unsigned int)atomic_inc_return(&connection->op_cycle);
+	पूर्ण अन्यथा अणु
+		cycle = (अचिन्हित पूर्णांक)atomic_inc_वापस(&connection->op_cycle);
 		operation->id = (u16)(cycle % U16_MAX + 1);
-	}
+	पूर्ण
 
 	header = operation->request->header;
 	header->operation_id = cpu_to_le16(operation->id);
@@ -762,503 +763,503 @@ int gb_operation_request_send(struct gb_operation *operation,
 	 */
 	gb_operation_get(operation);
 	ret = gb_operation_get_active(operation);
-	if (ret)
-		goto err_put;
+	अगर (ret)
+		जाओ err_put;
 
 	ret = gb_message_send(operation->request, gfp);
-	if (ret)
-		goto err_put_active;
+	अगर (ret)
+		जाओ err_put_active;
 
-	if (timeout) {
-		operation->timer.expires = jiffies + msecs_to_jiffies(timeout);
-		add_timer(&operation->timer);
-	}
+	अगर (समयout) अणु
+		operation->समयr.expires = jअगरfies + msecs_to_jअगरfies(समयout);
+		add_समयr(&operation->समयr);
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_put_active:
 	gb_operation_put_active(operation);
 err_put:
 	gb_operation_put(operation);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_operation_request_send);
 
 /*
  * Send a synchronous operation.  This function is expected to
- * block, returning only when the response has arrived, (or when an
- * error is detected.  The return value is the result of the
+ * block, वापसing only when the response has arrived, (or when an
+ * error is detected.  The वापस value is the result of the
  * operation.
  */
-int gb_operation_request_send_sync_timeout(struct gb_operation *operation,
-					   unsigned int timeout)
-{
-	int ret;
+पूर्णांक gb_operation_request_send_sync_समयout(काष्ठा gb_operation *operation,
+					   अचिन्हित पूर्णांक समयout)
+अणु
+	पूर्णांक ret;
 
 	ret = gb_operation_request_send(operation, gb_operation_sync_callback,
-					timeout, GFP_KERNEL);
-	if (ret)
-		return ret;
+					समयout, GFP_KERNEL);
+	अगर (ret)
+		वापस ret;
 
-	ret = wait_for_completion_interruptible(&operation->completion);
-	if (ret < 0) {
-		/* Cancel the operation if interrupted */
+	ret = रुको_क्रम_completion_पूर्णांकerruptible(&operation->completion);
+	अगर (ret < 0) अणु
+		/* Cancel the operation अगर पूर्णांकerrupted */
 		gb_operation_cancel(operation, -ECANCELED);
-	}
+	पूर्ण
 
-	return gb_operation_result(operation);
-}
-EXPORT_SYMBOL_GPL(gb_operation_request_send_sync_timeout);
+	वापस gb_operation_result(operation);
+पूर्ण
+EXPORT_SYMBOL_GPL(gb_operation_request_send_sync_समयout);
 
 /*
- * Send a response for an incoming operation request.  A non-zero
- * errno indicates a failed operation.
+ * Send a response क्रम an incoming operation request.  A non-zero
+ * त्रुटि_सं indicates a failed operation.
  *
  * If there is any response payload, the incoming request handler is
- * responsible for allocating the response message.  Otherwise the
- * it can simply supply the result errno; this function will
- * allocate the response message if necessary.
+ * responsible क्रम allocating the response message.  Otherwise the
+ * it can simply supply the result त्रुटि_सं; this function will
+ * allocate the response message अगर necessary.
  */
-static int gb_operation_response_send(struct gb_operation *operation,
-				      int errno)
-{
-	struct gb_connection *connection = operation->connection;
-	int ret;
+अटल पूर्णांक gb_operation_response_send(काष्ठा gb_operation *operation,
+				      पूर्णांक त्रुटि_सं)
+अणु
+	काष्ठा gb_connection *connection = operation->connection;
+	पूर्णांक ret;
 
-	if (!operation->response &&
-	    !gb_operation_is_unidirectional(operation)) {
-		if (!gb_operation_response_alloc(operation, 0, GFP_KERNEL))
-			return -ENOMEM;
-	}
+	अगर (!operation->response &&
+	    !gb_operation_is_unidirectional(operation)) अणु
+		अगर (!gb_operation_response_alloc(operation, 0, GFP_KERNEL))
+			वापस -ENOMEM;
+	पूर्ण
 
 	/* Record the result */
-	if (!gb_operation_result_set(operation, errno)) {
+	अगर (!gb_operation_result_set(operation, त्रुटि_सं)) अणु
 		dev_err(&connection->hd->dev, "request result already set\n");
-		return -EIO;	/* Shouldn't happen */
-	}
+		वापस -EIO;	/* Shouldn't happen */
+	पूर्ण
 
-	/* Sender of request does not care about response. */
-	if (gb_operation_is_unidirectional(operation))
-		return 0;
+	/* Sender of request करोes not care about response. */
+	अगर (gb_operation_is_unidirectional(operation))
+		वापस 0;
 
 	/* Reference will be dropped when message has been sent. */
 	gb_operation_get(operation);
 	ret = gb_operation_get_active(operation);
-	if (ret)
-		goto err_put;
+	अगर (ret)
+		जाओ err_put;
 
 	/* Fill in the response header and send it */
-	operation->response->header->result = gb_operation_errno_map(errno);
+	operation->response->header->result = gb_operation_त्रुटि_सं_map(त्रुटि_सं);
 
 	ret = gb_message_send(operation->response, GFP_KERNEL);
-	if (ret)
-		goto err_put_active;
+	अगर (ret)
+		जाओ err_put_active;
 
-	return 0;
+	वापस 0;
 
 err_put_active:
 	gb_operation_put_active(operation);
 err_put:
 	gb_operation_put(operation);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * This function is called when a message send request has completed.
  */
-void greybus_message_sent(struct gb_host_device *hd,
-			  struct gb_message *message, int status)
-{
-	struct gb_operation *operation = message->operation;
-	struct gb_connection *connection = operation->connection;
+व्योम greybus_message_sent(काष्ठा gb_host_device *hd,
+			  काष्ठा gb_message *message, पूर्णांक status)
+अणु
+	काष्ठा gb_operation *operation = message->operation;
+	काष्ठा gb_connection *connection = operation->connection;
 
 	/*
 	 * If the message was a response, we just need to drop our
 	 * reference to the operation.  If an error occurred, report
 	 * it.
 	 *
-	 * For requests, if there's no error and the operation in not
-	 * unidirectional, there's nothing more to do until the response
-	 * arrives. If an error occurred attempting to send it, or if the
+	 * For requests, अगर there's no error and the operation in not
+	 * unidirectional, there's nothing more to करो until the response
+	 * arrives. If an error occurred attempting to send it, or अगर the
 	 * operation is unidrectional, record the result of the operation and
 	 * schedule its completion.
 	 */
-	if (message == operation->response) {
-		if (status) {
+	अगर (message == operation->response) अणु
+		अगर (status) अणु
 			dev_err(&connection->hd->dev,
 				"%s: error sending response 0x%02x: %d\n",
 				connection->name, operation->type, status);
-		}
+		पूर्ण
 
 		gb_operation_put_active(operation);
 		gb_operation_put(operation);
-	} else if (status || gb_operation_is_unidirectional(operation)) {
-		if (gb_operation_result_set(operation, status)) {
+	पूर्ण अन्यथा अगर (status || gb_operation_is_unidirectional(operation)) अणु
+		अगर (gb_operation_result_set(operation, status)) अणु
 			queue_work(gb_operation_completion_wq,
 				   &operation->work);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(greybus_message_sent);
 
 /*
  * We've received data on a connection, and it doesn't look like a
  * response, so we assume it's a request.
  *
- * This is called in interrupt context, so just copy the incoming
- * data into the request buffer and handle the rest via workqueue.
+ * This is called in पूर्णांकerrupt context, so just copy the incoming
+ * data पूर्णांकo the request buffer and handle the rest via workqueue.
  */
-static void gb_connection_recv_request(struct gb_connection *connection,
-				const struct gb_operation_msg_hdr *header,
-				void *data, size_t size)
-{
-	struct gb_operation *operation;
+अटल व्योम gb_connection_recv_request(काष्ठा gb_connection *connection,
+				स्थिर काष्ठा gb_operation_msg_hdr *header,
+				व्योम *data, माप_प्रकार size)
+अणु
+	काष्ठा gb_operation *operation;
 	u16 operation_id;
 	u8 type;
-	int ret;
+	पूर्णांक ret;
 
 	operation_id = le16_to_cpu(header->operation_id);
 	type = header->type;
 
 	operation = gb_operation_create_incoming(connection, operation_id,
 						 type, data, size);
-	if (!operation) {
+	अगर (!operation) अणु
 		dev_err(&connection->hd->dev,
 			"%s: can't create incoming operation\n",
 			connection->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	ret = gb_operation_get_active(operation);
-	if (ret) {
+	अगर (ret) अणु
 		gb_operation_put(operation);
-		return;
-	}
+		वापस;
+	पूर्ण
 	trace_gb_message_recv_request(operation->request);
 
 	/*
 	 * The initial reference to the operation will be dropped when the
-	 * request handler returns.
+	 * request handler वापसs.
 	 */
-	if (gb_operation_result_set(operation, -EINPROGRESS))
+	अगर (gb_operation_result_set(operation, -EINPROGRESS))
 		queue_work(connection->wq, &operation->work);
-}
+पूर्ण
 
 /*
  * We've received data that appears to be an operation response
  * message.  Look up the operation, and record that we've received
  * its response.
  *
- * This is called in interrupt context, so just copy the incoming
- * data into the response buffer and handle the rest via workqueue.
+ * This is called in पूर्णांकerrupt context, so just copy the incoming
+ * data पूर्णांकo the response buffer and handle the rest via workqueue.
  */
-static void gb_connection_recv_response(struct gb_connection *connection,
-				const struct gb_operation_msg_hdr *header,
-				void *data, size_t size)
-{
-	struct gb_operation *operation;
-	struct gb_message *message;
-	size_t message_size;
+अटल व्योम gb_connection_recv_response(काष्ठा gb_connection *connection,
+				स्थिर काष्ठा gb_operation_msg_hdr *header,
+				व्योम *data, माप_प्रकार size)
+अणु
+	काष्ठा gb_operation *operation;
+	काष्ठा gb_message *message;
+	माप_प्रकार message_size;
 	u16 operation_id;
-	int errno;
+	पूर्णांक त्रुटि_सं;
 
 	operation_id = le16_to_cpu(header->operation_id);
 
-	if (!operation_id) {
+	अगर (!operation_id) अणु
 		dev_err_ratelimited(&connection->hd->dev,
 				    "%s: invalid response id 0 received\n",
 				    connection->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	operation = gb_operation_find_outgoing(connection, operation_id);
-	if (!operation) {
+	अगर (!operation) अणु
 		dev_err_ratelimited(&connection->hd->dev,
 				    "%s: unexpected response id 0x%04x received\n",
 				    connection->name, operation_id);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	errno = gb_operation_status_map(header->result);
+	त्रुटि_सं = gb_operation_status_map(header->result);
 	message = operation->response;
-	message_size = sizeof(*header) + message->payload_size;
-	if (!errno && size > message_size) {
+	message_size = माप(*header) + message->payload_size;
+	अगर (!त्रुटि_सं && size > message_size) अणु
 		dev_err_ratelimited(&connection->hd->dev,
 				    "%s: malformed response 0x%02x received (%zu > %zu)\n",
 				    connection->name, header->type,
 				    size, message_size);
-		errno = -EMSGSIZE;
-	} else if (!errno && size < message_size) {
-		if (gb_operation_short_response_allowed(operation)) {
-			message->payload_size = size - sizeof(*header);
-		} else {
+		त्रुटि_सं = -EMSGSIZE;
+	पूर्ण अन्यथा अगर (!त्रुटि_सं && size < message_size) अणु
+		अगर (gb_operation_लघु_response_allowed(operation)) अणु
+			message->payload_size = size - माप(*header);
+		पूर्ण अन्यथा अणु
 			dev_err_ratelimited(&connection->hd->dev,
 					    "%s: short response 0x%02x received (%zu < %zu)\n",
 					    connection->name, header->type,
 					    size, message_size);
-			errno = -EMSGSIZE;
-		}
-	}
+			त्रुटि_सं = -EMSGSIZE;
+		पूर्ण
+	पूर्ण
 
-	/* We must ignore the payload if a bad status is returned */
-	if (errno)
-		size = sizeof(*header);
+	/* We must ignore the payload अगर a bad status is वापसed */
+	अगर (त्रुटि_सं)
+		size = माप(*header);
 
 	/* The rest will be handled in work queue context */
-	if (gb_operation_result_set(operation, errno)) {
-		memcpy(message->buffer, data, size);
+	अगर (gb_operation_result_set(operation, त्रुटि_सं)) अणु
+		स_नकल(message->buffer, data, size);
 
 		trace_gb_message_recv_response(message);
 
 		queue_work(gb_operation_completion_wq, &operation->work);
-	}
+	पूर्ण
 
 	gb_operation_put(operation);
-}
+पूर्ण
 
 /*
- * Handle data arriving on a connection.  As soon as we return the
- * supplied data buffer will be reused (so unless we do something
+ * Handle data arriving on a connection.  As soon as we वापस the
+ * supplied data buffer will be reused (so unless we करो something
  * with, it's effectively dropped).
  */
-void gb_connection_recv(struct gb_connection *connection,
-			void *data, size_t size)
-{
-	struct gb_operation_msg_hdr header;
-	struct device *dev = &connection->hd->dev;
-	size_t msg_size;
+व्योम gb_connection_recv(काष्ठा gb_connection *connection,
+			व्योम *data, माप_प्रकार size)
+अणु
+	काष्ठा gb_operation_msg_hdr header;
+	काष्ठा device *dev = &connection->hd->dev;
+	माप_प्रकार msg_size;
 
-	if (connection->state == GB_CONNECTION_STATE_DISABLED ||
-	    gb_connection_is_offloaded(connection)) {
+	अगर (connection->state == GB_CONNECTION_STATE_DISABLED ||
+	    gb_connection_is_offloaded(connection)) अणु
 		dev_warn_ratelimited(dev, "%s: dropping %zu received bytes\n",
 				     connection->name, size);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (size < sizeof(header)) {
+	अगर (size < माप(header)) अणु
 		dev_err_ratelimited(dev, "%s: short message received\n",
 				    connection->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Use memcpy as data may be unaligned */
-	memcpy(&header, data, sizeof(header));
+	/* Use स_नकल as data may be unaligned */
+	स_नकल(&header, data, माप(header));
 	msg_size = le16_to_cpu(header.size);
-	if (size < msg_size) {
+	अगर (size < msg_size) अणु
 		dev_err_ratelimited(dev,
 				    "%s: incomplete message 0x%04x of type 0x%02x received (%zu < %zu)\n",
 				    connection->name,
 				    le16_to_cpu(header.operation_id),
 				    header.type, size, msg_size);
-		return;		/* XXX Should still complete operation */
-	}
+		वापस;		/* XXX Should still complete operation */
+	पूर्ण
 
-	if (header.type & GB_MESSAGE_TYPE_RESPONSE) {
+	अगर (header.type & GB_MESSAGE_TYPE_RESPONSE) अणु
 		gb_connection_recv_response(connection,	&header, data,
 					    msg_size);
-	} else {
+	पूर्ण अन्यथा अणु
 		gb_connection_recv_request(connection, &header, data,
 					   msg_size);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
  * Cancel an outgoing operation synchronously, and record the given error to
  * indicate why.
  */
-void gb_operation_cancel(struct gb_operation *operation, int errno)
-{
-	if (WARN_ON(gb_operation_is_incoming(operation)))
-		return;
+व्योम gb_operation_cancel(काष्ठा gb_operation *operation, पूर्णांक त्रुटि_सं)
+अणु
+	अगर (WARN_ON(gb_operation_is_incoming(operation)))
+		वापस;
 
-	if (gb_operation_result_set(operation, errno)) {
+	अगर (gb_operation_result_set(operation, त्रुटि_सं)) अणु
 		gb_message_cancel(operation->request);
 		queue_work(gb_operation_completion_wq, &operation->work);
-	}
+	पूर्ण
 	trace_gb_message_cancel_outgoing(operation->request);
 
-	atomic_inc(&operation->waiters);
-	wait_event(gb_operation_cancellation_queue,
+	atomic_inc(&operation->रुकोers);
+	रुको_event(gb_operation_cancellation_queue,
 		   !gb_operation_is_active(operation));
-	atomic_dec(&operation->waiters);
-}
+	atomic_dec(&operation->रुकोers);
+पूर्ण
 EXPORT_SYMBOL_GPL(gb_operation_cancel);
 
 /*
  * Cancel an incoming operation synchronously. Called during connection tear
- * down.
+ * करोwn.
  */
-void gb_operation_cancel_incoming(struct gb_operation *operation, int errno)
-{
-	if (WARN_ON(!gb_operation_is_incoming(operation)))
-		return;
+व्योम gb_operation_cancel_incoming(काष्ठा gb_operation *operation, पूर्णांक त्रुटि_सं)
+अणु
+	अगर (WARN_ON(!gb_operation_is_incoming(operation)))
+		वापस;
 
-	if (!gb_operation_is_unidirectional(operation)) {
+	अगर (!gb_operation_is_unidirectional(operation)) अणु
 		/*
 		 * Make sure the request handler has submitted the response
-		 * before cancelling it.
+		 * beक्रमe cancelling it.
 		 */
 		flush_work(&operation->work);
-		if (!gb_operation_result_set(operation, errno))
+		अगर (!gb_operation_result_set(operation, त्रुटि_सं))
 			gb_message_cancel(operation->response);
-	}
+	पूर्ण
 	trace_gb_message_cancel_incoming(operation->response);
 
-	atomic_inc(&operation->waiters);
-	wait_event(gb_operation_cancellation_queue,
+	atomic_inc(&operation->रुकोers);
+	रुको_event(gb_operation_cancellation_queue,
 		   !gb_operation_is_active(operation));
-	atomic_dec(&operation->waiters);
-}
+	atomic_dec(&operation->रुकोers);
+पूर्ण
 
 /**
- * gb_operation_sync_timeout() - implement a "simple" synchronous operation
+ * gb_operation_sync_समयout() - implement a "simple" synchronous operation
  * @connection: the Greybus connection to send this to
  * @type: the type of operation to send
- * @request: pointer to a memory buffer to copy the request from
+ * @request: poपूर्णांकer to a memory buffer to copy the request from
  * @request_size: size of @request
- * @response: pointer to a memory buffer to copy the response to
+ * @response: poपूर्णांकer to a memory buffer to copy the response to
  * @response_size: the size of @response.
- * @timeout: operation timeout in milliseconds
+ * @समयout: operation समयout in milliseconds
  *
  * This function implements a simple synchronous Greybus operation.  It sends
- * the provided operation request and waits (sleeps) until the corresponding
+ * the provided operation request and रुकोs (sleeps) until the corresponding
  * operation response message has been successfully received, or an error
  * occurs.  @request and @response are buffers to hold the request and response
- * data respectively, and if they are not NULL, their size must be specified in
+ * data respectively, and अगर they are not शून्य, their size must be specअगरied in
  * @request_size and @response_size.
  *
- * If a response payload is to come back, and @response is not NULL,
- * @response_size number of bytes will be copied into @response if the operation
+ * If a response payload is to come back, and @response is not शून्य,
+ * @response_size number of bytes will be copied पूर्णांकo @response अगर the operation
  * is successful.
  *
  * If there is an error, the response buffer is left alone.
  */
-int gb_operation_sync_timeout(struct gb_connection *connection, int type,
-			      void *request, int request_size,
-			      void *response, int response_size,
-			      unsigned int timeout)
-{
-	struct gb_operation *operation;
-	int ret;
+पूर्णांक gb_operation_sync_समयout(काष्ठा gb_connection *connection, पूर्णांक type,
+			      व्योम *request, पूर्णांक request_size,
+			      व्योम *response, पूर्णांक response_size,
+			      अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा gb_operation *operation;
+	पूर्णांक ret;
 
-	if ((response_size && !response) ||
+	अगर ((response_size && !response) ||
 	    (request_size && !request))
-		return -EINVAL;
+		वापस -EINVAL;
 
 	operation = gb_operation_create(connection, type,
 					request_size, response_size,
 					GFP_KERNEL);
-	if (!operation)
-		return -ENOMEM;
+	अगर (!operation)
+		वापस -ENOMEM;
 
-	if (request_size)
-		memcpy(operation->request->payload, request, request_size);
+	अगर (request_size)
+		स_नकल(operation->request->payload, request, request_size);
 
-	ret = gb_operation_request_send_sync_timeout(operation, timeout);
-	if (ret) {
+	ret = gb_operation_request_send_sync_समयout(operation, समयout);
+	अगर (ret) अणु
 		dev_err(&connection->hd->dev,
 			"%s: synchronous operation id 0x%04x of type 0x%02x failed: %d\n",
 			connection->name, operation->id, type, ret);
-	} else {
-		if (response_size) {
-			memcpy(response, operation->response->payload,
+	पूर्ण अन्यथा अणु
+		अगर (response_size) अणु
+			स_नकल(response, operation->response->payload,
 			       response_size);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	gb_operation_put(operation);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(gb_operation_sync_timeout);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(gb_operation_sync_समयout);
 
 /**
- * gb_operation_unidirectional_timeout() - initiate a unidirectional operation
+ * gb_operation_unidirectional_समयout() - initiate a unidirectional operation
  * @connection:		connection to use
  * @type:		type of operation to send
  * @request:		memory buffer to copy the request from
  * @request_size:	size of @request
- * @timeout:		send timeout in milliseconds
+ * @समयout:		send समयout in milliseconds
  *
  * Initiate a unidirectional operation by sending a request message and
- * waiting for it to be acknowledged as sent by the host device.
+ * रुकोing क्रम it to be acknowledged as sent by the host device.
  *
- * Note that successful send of a unidirectional operation does not imply that
+ * Note that successful send of a unidirectional operation करोes not imply that
  * the request as actually reached the remote end of the connection.
  */
-int gb_operation_unidirectional_timeout(struct gb_connection *connection,
-					int type, void *request,
-					int request_size,
-					unsigned int timeout)
-{
-	struct gb_operation *operation;
-	int ret;
+पूर्णांक gb_operation_unidirectional_समयout(काष्ठा gb_connection *connection,
+					पूर्णांक type, व्योम *request,
+					पूर्णांक request_size,
+					अचिन्हित पूर्णांक समयout)
+अणु
+	काष्ठा gb_operation *operation;
+	पूर्णांक ret;
 
-	if (request_size && !request)
-		return -EINVAL;
+	अगर (request_size && !request)
+		वापस -EINVAL;
 
 	operation = gb_operation_create_flags(connection, type,
 					      request_size, 0,
-					      GB_OPERATION_FLAG_UNIDIRECTIONAL,
+					      GB_OPERATION_FLAG_UNIसूचीECTIONAL,
 					      GFP_KERNEL);
-	if (!operation)
-		return -ENOMEM;
+	अगर (!operation)
+		वापस -ENOMEM;
 
-	if (request_size)
-		memcpy(operation->request->payload, request, request_size);
+	अगर (request_size)
+		स_नकल(operation->request->payload, request, request_size);
 
-	ret = gb_operation_request_send_sync_timeout(operation, timeout);
-	if (ret) {
+	ret = gb_operation_request_send_sync_समयout(operation, समयout);
+	अगर (ret) अणु
 		dev_err(&connection->hd->dev,
 			"%s: unidirectional operation of type 0x%02x failed: %d\n",
 			connection->name, type, ret);
-	}
+	पूर्ण
 
 	gb_operation_put(operation);
 
-	return ret;
-}
-EXPORT_SYMBOL_GPL(gb_operation_unidirectional_timeout);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(gb_operation_unidirectional_समयout);
 
-int __init gb_operation_init(void)
-{
+पूर्णांक __init gb_operation_init(व्योम)
+अणु
 	gb_message_cache = kmem_cache_create("gb_message_cache",
-					     sizeof(struct gb_message), 0, 0,
-					     NULL);
-	if (!gb_message_cache)
-		return -ENOMEM;
+					     माप(काष्ठा gb_message), 0, 0,
+					     शून्य);
+	अगर (!gb_message_cache)
+		वापस -ENOMEM;
 
 	gb_operation_cache = kmem_cache_create("gb_operation_cache",
-					       sizeof(struct gb_operation), 0,
-					       0, NULL);
-	if (!gb_operation_cache)
-		goto err_destroy_message_cache;
+					       माप(काष्ठा gb_operation), 0,
+					       0, शून्य);
+	अगर (!gb_operation_cache)
+		जाओ err_destroy_message_cache;
 
 	gb_operation_completion_wq = alloc_workqueue("greybus_completion",
 						     0, 0);
-	if (!gb_operation_completion_wq)
-		goto err_destroy_operation_cache;
+	अगर (!gb_operation_completion_wq)
+		जाओ err_destroy_operation_cache;
 
-	return 0;
+	वापस 0;
 
 err_destroy_operation_cache:
 	kmem_cache_destroy(gb_operation_cache);
-	gb_operation_cache = NULL;
+	gb_operation_cache = शून्य;
 err_destroy_message_cache:
 	kmem_cache_destroy(gb_message_cache);
-	gb_message_cache = NULL;
+	gb_message_cache = शून्य;
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-void gb_operation_exit(void)
-{
+व्योम gb_operation_निकास(व्योम)
+अणु
 	destroy_workqueue(gb_operation_completion_wq);
-	gb_operation_completion_wq = NULL;
+	gb_operation_completion_wq = शून्य;
 	kmem_cache_destroy(gb_operation_cache);
-	gb_operation_cache = NULL;
+	gb_operation_cache = शून्य;
 	kmem_cache_destroy(gb_message_cache);
-	gb_message_cache = NULL;
-}
+	gb_message_cache = शून्य;
+पूर्ण

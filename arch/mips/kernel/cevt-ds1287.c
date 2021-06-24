@@ -1,53 +1,54 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  DS1287 clockevent driver
+ *  DS1287 घड़ीevent driver
  *
  *  Copyright (C) 2008	Yoichi Yuasa <yuasa@linux-mips.org>
  */
-#include <linux/clockchips.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/mc146818rtc.h>
-#include <linux/irq.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/mc146818rtc.h>
+#समावेश <linux/irq.h>
 
-#include <asm/time.h>
+#समावेश <यंत्र/समय.स>
 
-int ds1287_timer_state(void)
-{
-	return (CMOS_READ(RTC_REG_C) & RTC_PF) != 0;
-}
+पूर्णांक ds1287_समयr_state(व्योम)
+अणु
+	वापस (CMOS_READ(RTC_REG_C) & RTC_PF) != 0;
+पूर्ण
 
-int ds1287_set_base_clock(unsigned int hz)
-{
+पूर्णांक ds1287_set_base_घड़ी(अचिन्हित पूर्णांक hz)
+अणु
 	u8 rate;
 
-	switch (hz) {
-	case 128:
+	चयन (hz) अणु
+	हाल 128:
 		rate = 0x9;
-		break;
-	case 256:
+		अवरोध;
+	हाल 256:
 		rate = 0x8;
-		break;
-	case 1024:
+		अवरोध;
+	हाल 1024:
 		rate = 0x6;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	CMOS_WRITE(RTC_REF_CLCK_32KHZ | rate, RTC_REG_A);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ds1287_set_next_event(unsigned long delta,
-				 struct clock_event_device *evt)
-{
-	return -EINVAL;
-}
+अटल पूर्णांक ds1287_set_next_event(अचिन्हित दीर्घ delta,
+				 काष्ठा घड़ी_event_device *evt)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
-static int ds1287_shutdown(struct clock_event_device *evt)
-{
+अटल पूर्णांक ds1287_shutकरोwn(काष्ठा घड़ी_event_device *evt)
+अणु
 	u8 val;
 
 	spin_lock(&rtc_lock);
@@ -57,11 +58,11 @@ static int ds1287_shutdown(struct clock_event_device *evt)
 	CMOS_WRITE(val, RTC_REG_B);
 
 	spin_unlock(&rtc_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ds1287_set_periodic(struct clock_event_device *evt)
-{
+अटल पूर्णांक ds1287_set_periodic(काष्ठा घड़ी_event_device *evt)
+अणु
 	u8 val;
 
 	spin_lock(&rtc_lock);
@@ -71,51 +72,51 @@ static int ds1287_set_periodic(struct clock_event_device *evt)
 	CMOS_WRITE(val, RTC_REG_B);
 
 	spin_unlock(&rtc_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ds1287_event_handler(struct clock_event_device *dev)
-{
-}
+अटल व्योम ds1287_event_handler(काष्ठा घड़ी_event_device *dev)
+अणु
+पूर्ण
 
-static struct clock_event_device ds1287_clockevent = {
+अटल काष्ठा घड़ी_event_device ds1287_घड़ीevent = अणु
 	.name			= "ds1287",
 	.features		= CLOCK_EVT_FEAT_PERIODIC,
 	.set_next_event		= ds1287_set_next_event,
-	.set_state_shutdown	= ds1287_shutdown,
+	.set_state_shutकरोwn	= ds1287_shutकरोwn,
 	.set_state_periodic	= ds1287_set_periodic,
-	.tick_resume		= ds1287_shutdown,
+	.tick_resume		= ds1287_shutकरोwn,
 	.event_handler		= ds1287_event_handler,
-};
+पूर्ण;
 
-static irqreturn_t ds1287_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *cd = &ds1287_clockevent;
+अटल irqवापस_t ds1287_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *cd = &ds1287_घड़ीevent;
 
-	/* Ack the RTC interrupt. */
+	/* Ack the RTC पूर्णांकerrupt. */
 	CMOS_READ(RTC_REG_C);
 
 	cd->event_handler(cd);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-int __init ds1287_clockevent_init(int irq)
-{
-	unsigned long flags = IRQF_PERCPU | IRQF_TIMER;
-	struct clock_event_device *cd;
+पूर्णांक __init ds1287_घड़ीevent_init(पूर्णांक irq)
+अणु
+	अचिन्हित दीर्घ flags = IRQF_PERCPU | IRQF_TIMER;
+	काष्ठा घड़ी_event_device *cd;
 
-	cd = &ds1287_clockevent;
+	cd = &ds1287_घड़ीevent;
 	cd->rating = 100;
 	cd->irq = irq;
-	clockevent_set_clock(cd, 32768);
-	cd->max_delta_ns = clockevent_delta2ns(0x7fffffff, cd);
+	घड़ीevent_set_घड़ी(cd, 32768);
+	cd->max_delta_ns = घड़ीevent_delta2ns(0x7fffffff, cd);
 	cd->max_delta_ticks = 0x7fffffff;
-	cd->min_delta_ns = clockevent_delta2ns(0x300, cd);
+	cd->min_delta_ns = घड़ीevent_delta2ns(0x300, cd);
 	cd->min_delta_ticks = 0x300;
 	cd->cpumask = cpumask_of(0);
 
-	clockevents_register_device(&ds1287_clockevent);
+	घड़ीevents_रेजिस्टर_device(&ds1287_घड़ीevent);
 
-	return request_irq(irq, ds1287_interrupt, flags, "ds1287", NULL);
-}
+	वापस request_irq(irq, ds1287_पूर्णांकerrupt, flags, "ds1287", शून्य);
+पूर्ण

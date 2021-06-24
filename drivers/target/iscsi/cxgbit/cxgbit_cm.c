@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2016 Chelsio Communications, Inc.
  */
 
-#include <linux/module.h>
-#include <linux/list.h>
-#include <linux/workqueue.h>
-#include <linux/skbuff.h>
-#include <linux/timer.h>
-#include <linux/notifier.h>
-#include <linux/inetdevice.h>
-#include <linux/ip.h>
-#include <linux/tcp.h>
-#include <linux/if_vlan.h>
+#समावेश <linux/module.h>
+#समावेश <linux/list.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/inetdevice.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/अगर_vlan.h>
 
-#include <net/neighbour.h>
-#include <net/netevent.h>
-#include <net/route.h>
-#include <net/tcp.h>
-#include <net/ip6_route.h>
-#include <net/addrconf.h>
+#समावेश <net/neighbour.h>
+#समावेश <net/netevent.h>
+#समावेश <net/route.h>
+#समावेश <net/tcp.h>
+#समावेश <net/ip6_route.h>
+#समावेश <net/addrconf.h>
 
-#include <libcxgb_cm.h>
-#include "cxgbit.h"
-#include "clip_tbl.h"
+#समावेश <libcxgb_cm.h>
+#समावेश "cxgbit.h"
+#समावेश "clip_tbl.h"
 
-static void cxgbit_init_wr_wait(struct cxgbit_wr_wait *wr_waitp)
-{
-	wr_waitp->ret = 0;
-	reinit_completion(&wr_waitp->completion);
-}
+अटल व्योम cxgbit_init_wr_रुको(काष्ठा cxgbit_wr_रुको *wr_रुकोp)
+अणु
+	wr_रुकोp->ret = 0;
+	reinit_completion(&wr_रुकोp->completion);
+पूर्ण
 
-static void
-cxgbit_wake_up(struct cxgbit_wr_wait *wr_waitp, const char *func, u8 ret)
-{
-	if (ret == CPL_ERR_NONE)
-		wr_waitp->ret = 0;
-	else
-		wr_waitp->ret = -EIO;
+अटल व्योम
+cxgbit_wake_up(काष्ठा cxgbit_wr_रुको *wr_रुकोp, स्थिर अक्षर *func, u8 ret)
+अणु
+	अगर (ret == CPL_ERR_NONE)
+		wr_रुकोp->ret = 0;
+	अन्यथा
+		wr_रुकोp->ret = -EIO;
 
-	if (wr_waitp->ret)
+	अगर (wr_रुकोp->ret)
 		pr_err("%s: err:%u", func, ret);
 
-	complete(&wr_waitp->completion);
-}
+	complete(&wr_रुकोp->completion);
+पूर्ण
 
-static int
-cxgbit_wait_for_reply(struct cxgbit_device *cdev,
-		      struct cxgbit_wr_wait *wr_waitp, u32 tid, u32 timeout,
-		      const char *func)
-{
-	int ret;
+अटल पूर्णांक
+cxgbit_रुको_क्रम_reply(काष्ठा cxgbit_device *cdev,
+		      काष्ठा cxgbit_wr_रुको *wr_रुकोp, u32 tid, u32 समयout,
+		      स्थिर अक्षर *func)
+अणु
+	पूर्णांक ret;
 
-	if (!test_bit(CDEV_STATE_UP, &cdev->flags)) {
-		wr_waitp->ret = -EIO;
-		goto out;
-	}
+	अगर (!test_bit(CDEV_STATE_UP, &cdev->flags)) अणु
+		wr_रुकोp->ret = -EIO;
+		जाओ out;
+	पूर्ण
 
-	ret = wait_for_completion_timeout(&wr_waitp->completion, timeout * HZ);
-	if (!ret) {
+	ret = रुको_क्रम_completion_समयout(&wr_रुकोp->completion, समयout * HZ);
+	अगर (!ret) अणु
 		pr_info("%s - Device %s not responding tid %u\n",
 			func, pci_name(cdev->lldi.pdev), tid);
-		wr_waitp->ret = -ETIMEDOUT;
-	}
+		wr_रुकोp->ret = -ETIMEDOUT;
+	पूर्ण
 out:
-	if (wr_waitp->ret)
+	अगर (wr_रुकोp->ret)
 		pr_info("%s: FW reply %d tid %u\n",
-			pci_name(cdev->lldi.pdev), wr_waitp->ret, tid);
-	return wr_waitp->ret;
-}
+			pci_name(cdev->lldi.pdev), wr_रुकोp->ret, tid);
+	वापस wr_रुकोp->ret;
+पूर्ण
 
-static int cxgbit_np_hashfn(const struct cxgbit_np *cnp)
-{
-	return ((unsigned long)cnp >> 10) & (NP_INFO_HASH_SIZE - 1);
-}
+अटल पूर्णांक cxgbit_np_hashfn(स्थिर काष्ठा cxgbit_np *cnp)
+अणु
+	वापस ((अचिन्हित दीर्घ)cnp >> 10) & (NP_INFO_HASH_SIZE - 1);
+पूर्ण
 
-static struct np_info *
-cxgbit_np_hash_add(struct cxgbit_device *cdev, struct cxgbit_np *cnp,
-		   unsigned int stid)
-{
-	struct np_info *p = kzalloc(sizeof(*p), GFP_KERNEL);
+अटल काष्ठा np_info *
+cxgbit_np_hash_add(काष्ठा cxgbit_device *cdev, काष्ठा cxgbit_np *cnp,
+		   अचिन्हित पूर्णांक stid)
+अणु
+	काष्ठा np_info *p = kzalloc(माप(*p), GFP_KERNEL);
 
-	if (p) {
-		int bucket = cxgbit_np_hashfn(cnp);
+	अगर (p) अणु
+		पूर्णांक bucket = cxgbit_np_hashfn(cnp);
 
 		p->cnp = cnp;
 		p->stid = stid;
@@ -90,419 +91,419 @@ cxgbit_np_hash_add(struct cxgbit_device *cdev, struct cxgbit_np *cnp,
 		p->next = cdev->np_hash_tab[bucket];
 		cdev->np_hash_tab[bucket] = p;
 		spin_unlock(&cdev->np_lock);
-	}
+	पूर्ण
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
-static int
-cxgbit_np_hash_find(struct cxgbit_device *cdev, struct cxgbit_np *cnp)
-{
-	int stid = -1, bucket = cxgbit_np_hashfn(cnp);
-	struct np_info *p;
+अटल पूर्णांक
+cxgbit_np_hash_find(काष्ठा cxgbit_device *cdev, काष्ठा cxgbit_np *cnp)
+अणु
+	पूर्णांक stid = -1, bucket = cxgbit_np_hashfn(cnp);
+	काष्ठा np_info *p;
 
 	spin_lock(&cdev->np_lock);
-	for (p = cdev->np_hash_tab[bucket]; p; p = p->next) {
-		if (p->cnp == cnp) {
+	क्रम (p = cdev->np_hash_tab[bucket]; p; p = p->next) अणु
+		अगर (p->cnp == cnp) अणु
 			stid = p->stid;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&cdev->np_lock);
 
-	return stid;
-}
+	वापस stid;
+पूर्ण
 
-static int cxgbit_np_hash_del(struct cxgbit_device *cdev, struct cxgbit_np *cnp)
-{
-	int stid = -1, bucket = cxgbit_np_hashfn(cnp);
-	struct np_info *p, **prev = &cdev->np_hash_tab[bucket];
+अटल पूर्णांक cxgbit_np_hash_del(काष्ठा cxgbit_device *cdev, काष्ठा cxgbit_np *cnp)
+अणु
+	पूर्णांक stid = -1, bucket = cxgbit_np_hashfn(cnp);
+	काष्ठा np_info *p, **prev = &cdev->np_hash_tab[bucket];
 
 	spin_lock(&cdev->np_lock);
-	for (p = *prev; p; prev = &p->next, p = p->next) {
-		if (p->cnp == cnp) {
+	क्रम (p = *prev; p; prev = &p->next, p = p->next) अणु
+		अगर (p->cnp == cnp) अणु
 			stid = p->stid;
 			*prev = p->next;
-			kfree(p);
-			break;
-		}
-	}
+			kमुक्त(p);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&cdev->np_lock);
 
-	return stid;
-}
+	वापस stid;
+पूर्ण
 
-void _cxgbit_free_cnp(struct kref *kref)
-{
-	struct cxgbit_np *cnp;
+व्योम _cxgbit_मुक्त_cnp(काष्ठा kref *kref)
+अणु
+	काष्ठा cxgbit_np *cnp;
 
-	cnp = container_of(kref, struct cxgbit_np, kref);
-	kfree(cnp);
-}
+	cnp = container_of(kref, काष्ठा cxgbit_np, kref);
+	kमुक्त(cnp);
+पूर्ण
 
-static int
-cxgbit_create_server6(struct cxgbit_device *cdev, unsigned int stid,
-		      struct cxgbit_np *cnp)
-{
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)
+अटल पूर्णांक
+cxgbit_create_server6(काष्ठा cxgbit_device *cdev, अचिन्हित पूर्णांक stid,
+		      काष्ठा cxgbit_np *cnp)
+अणु
+	काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)
 				     &cnp->com.local_addr;
-	int addr_type;
-	int ret;
+	पूर्णांक addr_type;
+	पूर्णांक ret;
 
 	pr_debug("%s: dev = %s; stid = %u; sin6_port = %u\n",
 		 __func__, cdev->lldi.ports[0]->name, stid, sin6->sin6_port);
 
-	addr_type = ipv6_addr_type((const struct in6_addr *)
+	addr_type = ipv6_addr_type((स्थिर काष्ठा in6_addr *)
 				   &sin6->sin6_addr);
-	if (addr_type != IPV6_ADDR_ANY) {
+	अगर (addr_type != IPV6_ADDR_ANY) अणु
 		ret = cxgb4_clip_get(cdev->lldi.ports[0],
-				     (const u32 *)&sin6->sin6_addr.s6_addr, 1);
-		if (ret) {
+				     (स्थिर u32 *)&sin6->sin6_addr.s6_addr, 1);
+		अगर (ret) अणु
 			pr_err("Unable to find clip table entry. laddr %pI6. Error:%d.\n",
 			       sin6->sin6_addr.s6_addr, ret);
-			return -ENOMEM;
-		}
-	}
+			वापस -ENOMEM;
+		पूर्ण
+	पूर्ण
 
 	cxgbit_get_cnp(cnp);
-	cxgbit_init_wr_wait(&cnp->com.wr_wait);
+	cxgbit_init_wr_रुको(&cnp->com.wr_रुको);
 
 	ret = cxgb4_create_server6(cdev->lldi.ports[0],
 				   stid, &sin6->sin6_addr,
 				   sin6->sin6_port,
 				   cdev->lldi.rxq_ids[0]);
-	if (!ret)
-		ret = cxgbit_wait_for_reply(cdev, &cnp->com.wr_wait,
+	अगर (!ret)
+		ret = cxgbit_रुको_क्रम_reply(cdev, &cnp->com.wr_रुको,
 					    0, 10, __func__);
-	else if (ret > 0)
-		ret = net_xmit_errno(ret);
-	else
+	अन्यथा अगर (ret > 0)
+		ret = net_xmit_त्रुटि_सं(ret);
+	अन्यथा
 		cxgbit_put_cnp(cnp);
 
-	if (ret) {
-		if (ret != -ETIMEDOUT)
+	अगर (ret) अणु
+		अगर (ret != -ETIMEDOUT)
 			cxgb4_clip_release(cdev->lldi.ports[0],
-				   (const u32 *)&sin6->sin6_addr.s6_addr, 1);
+				   (स्थिर u32 *)&sin6->sin6_addr.s6_addr, 1);
 
 		pr_err("create server6 err %d stid %d laddr %pI6 lport %d\n",
 		       ret, stid, sin6->sin6_addr.s6_addr,
 		       ntohs(sin6->sin6_port));
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-cxgbit_create_server4(struct cxgbit_device *cdev, unsigned int stid,
-		      struct cxgbit_np *cnp)
-{
-	struct sockaddr_in *sin = (struct sockaddr_in *)
+अटल पूर्णांक
+cxgbit_create_server4(काष्ठा cxgbit_device *cdev, अचिन्हित पूर्णांक stid,
+		      काष्ठा cxgbit_np *cnp)
+अणु
+	काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)
 				   &cnp->com.local_addr;
-	int ret;
+	पूर्णांक ret;
 
 	pr_debug("%s: dev = %s; stid = %u; sin_port = %u\n",
 		 __func__, cdev->lldi.ports[0]->name, stid, sin->sin_port);
 
 	cxgbit_get_cnp(cnp);
-	cxgbit_init_wr_wait(&cnp->com.wr_wait);
+	cxgbit_init_wr_रुको(&cnp->com.wr_रुको);
 
 	ret = cxgb4_create_server(cdev->lldi.ports[0],
 				  stid, sin->sin_addr.s_addr,
 				  sin->sin_port, 0,
 				  cdev->lldi.rxq_ids[0]);
-	if (!ret)
-		ret = cxgbit_wait_for_reply(cdev,
-					    &cnp->com.wr_wait,
+	अगर (!ret)
+		ret = cxgbit_रुको_क्रम_reply(cdev,
+					    &cnp->com.wr_रुको,
 					    0, 10, __func__);
-	else if (ret > 0)
-		ret = net_xmit_errno(ret);
-	else
+	अन्यथा अगर (ret > 0)
+		ret = net_xmit_त्रुटि_सं(ret);
+	अन्यथा
 		cxgbit_put_cnp(cnp);
 
-	if (ret)
+	अगर (ret)
 		pr_err("create server failed err %d stid %d laddr %pI4 lport %d\n",
 		       ret, stid, &sin->sin_addr, ntohs(sin->sin_port));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct cxgbit_device *cxgbit_find_device(struct net_device *ndev, u8 *port_id)
-{
-	struct cxgbit_device *cdev;
+काष्ठा cxgbit_device *cxgbit_find_device(काष्ठा net_device *ndev, u8 *port_id)
+अणु
+	काष्ठा cxgbit_device *cdev;
 	u8 i;
 
-	list_for_each_entry(cdev, &cdev_list_head, list) {
-		struct cxgb4_lld_info *lldi = &cdev->lldi;
+	list_क्रम_each_entry(cdev, &cdev_list_head, list) अणु
+		काष्ठा cxgb4_lld_info *lldi = &cdev->lldi;
 
-		for (i = 0; i < lldi->nports; i++) {
-			if (lldi->ports[i] == ndev) {
-				if (port_id)
+		क्रम (i = 0; i < lldi->nports; i++) अणु
+			अगर (lldi->ports[i] == ndev) अणु
+				अगर (port_id)
 					*port_id = i;
-				return cdev;
-			}
-		}
-	}
+				वापस cdev;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct net_device *cxgbit_get_real_dev(struct net_device *ndev)
-{
-	if (ndev->priv_flags & IFF_BONDING) {
+अटल काष्ठा net_device *cxgbit_get_real_dev(काष्ठा net_device *ndev)
+अणु
+	अगर (ndev->priv_flags & IFF_BONDING) अणु
 		pr_err("Bond devices are not supported. Interface:%s\n",
 		       ndev->name);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (is_vlan_dev(ndev))
-		return vlan_dev_real_dev(ndev);
+	अगर (is_vlan_dev(ndev))
+		वापस vlan_dev_real_dev(ndev);
 
-	return ndev;
-}
+	वापस ndev;
+पूर्ण
 
-static struct net_device *cxgbit_ipv4_netdev(__be32 saddr)
-{
-	struct net_device *ndev;
+अटल काष्ठा net_device *cxgbit_ipv4_netdev(__be32 saddr)
+अणु
+	काष्ठा net_device *ndev;
 
 	ndev = __ip_dev_find(&init_net, saddr, false);
-	if (!ndev)
-		return NULL;
+	अगर (!ndev)
+		वापस शून्य;
 
-	return cxgbit_get_real_dev(ndev);
-}
+	वापस cxgbit_get_real_dev(ndev);
+पूर्ण
 
-static struct net_device *cxgbit_ipv6_netdev(struct in6_addr *addr6)
-{
-	struct net_device *ndev = NULL;
+अटल काष्ठा net_device *cxgbit_ipv6_netdev(काष्ठा in6_addr *addr6)
+अणु
+	काष्ठा net_device *ndev = शून्य;
 	bool found = false;
 
-	if (IS_ENABLED(CONFIG_IPV6)) {
-		for_each_netdev_rcu(&init_net, ndev)
-			if (ipv6_chk_addr(&init_net, addr6, ndev, 1)) {
+	अगर (IS_ENABLED(CONFIG_IPV6)) अणु
+		क्रम_each_netdev_rcu(&init_net, ndev)
+			अगर (ipv6_chk_addr(&init_net, addr6, ndev, 1)) अणु
 				found = true;
-				break;
-			}
-	}
-	if (!found)
-		return NULL;
-	return cxgbit_get_real_dev(ndev);
-}
+				अवरोध;
+			पूर्ण
+	पूर्ण
+	अगर (!found)
+		वापस शून्य;
+	वापस cxgbit_get_real_dev(ndev);
+पूर्ण
 
-static struct cxgbit_device *cxgbit_find_np_cdev(struct cxgbit_np *cnp)
-{
-	struct sockaddr_storage *sockaddr = &cnp->com.local_addr;
-	int ss_family = sockaddr->ss_family;
-	struct net_device *ndev = NULL;
-	struct cxgbit_device *cdev = NULL;
+अटल काष्ठा cxgbit_device *cxgbit_find_np_cdev(काष्ठा cxgbit_np *cnp)
+अणु
+	काष्ठा sockaddr_storage *sockaddr = &cnp->com.local_addr;
+	पूर्णांक ss_family = sockaddr->ss_family;
+	काष्ठा net_device *ndev = शून्य;
+	काष्ठा cxgbit_device *cdev = शून्य;
 
-	rcu_read_lock();
-	if (ss_family == AF_INET) {
-		struct sockaddr_in *sin;
+	rcu_पढ़ो_lock();
+	अगर (ss_family == AF_INET) अणु
+		काष्ठा sockaddr_in *sin;
 
-		sin = (struct sockaddr_in *)sockaddr;
+		sin = (काष्ठा sockaddr_in *)sockaddr;
 		ndev = cxgbit_ipv4_netdev(sin->sin_addr.s_addr);
-	} else if (ss_family == AF_INET6) {
-		struct sockaddr_in6 *sin6;
+	पूर्ण अन्यथा अगर (ss_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *sin6;
 
-		sin6 = (struct sockaddr_in6 *)sockaddr;
+		sin6 = (काष्ठा sockaddr_in6 *)sockaddr;
 		ndev = cxgbit_ipv6_netdev(&sin6->sin6_addr);
-	}
-	if (!ndev)
-		goto out;
+	पूर्ण
+	अगर (!ndev)
+		जाओ out;
 
-	cdev = cxgbit_find_device(ndev, NULL);
+	cdev = cxgbit_find_device(ndev, शून्य);
 out:
-	rcu_read_unlock();
-	return cdev;
-}
+	rcu_पढ़ो_unlock();
+	वापस cdev;
+पूर्ण
 
-static bool cxgbit_inaddr_any(struct cxgbit_np *cnp)
-{
-	struct sockaddr_storage *sockaddr = &cnp->com.local_addr;
-	int ss_family = sockaddr->ss_family;
-	int addr_type;
+अटल bool cxgbit_inaddr_any(काष्ठा cxgbit_np *cnp)
+अणु
+	काष्ठा sockaddr_storage *sockaddr = &cnp->com.local_addr;
+	पूर्णांक ss_family = sockaddr->ss_family;
+	पूर्णांक addr_type;
 
-	if (ss_family == AF_INET) {
-		struct sockaddr_in *sin;
+	अगर (ss_family == AF_INET) अणु
+		काष्ठा sockaddr_in *sin;
 
-		sin = (struct sockaddr_in *)sockaddr;
-		if (sin->sin_addr.s_addr == htonl(INADDR_ANY))
-			return true;
-	} else if (ss_family == AF_INET6) {
-		struct sockaddr_in6 *sin6;
+		sin = (काष्ठा sockaddr_in *)sockaddr;
+		अगर (sin->sin_addr.s_addr == htonl(INADDR_ANY))
+			वापस true;
+	पूर्ण अन्यथा अगर (ss_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *sin6;
 
-		sin6 = (struct sockaddr_in6 *)sockaddr;
-		addr_type = ipv6_addr_type((const struct in6_addr *)
+		sin6 = (काष्ठा sockaddr_in6 *)sockaddr;
+		addr_type = ipv6_addr_type((स्थिर काष्ठा in6_addr *)
 				&sin6->sin6_addr);
-		if (addr_type == IPV6_ADDR_ANY)
-			return true;
-	}
-	return false;
-}
+		अगर (addr_type == IPV6_ADDR_ANY)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static int
-__cxgbit_setup_cdev_np(struct cxgbit_device *cdev, struct cxgbit_np *cnp)
-{
-	int stid, ret;
-	int ss_family = cnp->com.local_addr.ss_family;
+अटल पूर्णांक
+__cxgbit_setup_cdev_np(काष्ठा cxgbit_device *cdev, काष्ठा cxgbit_np *cnp)
+अणु
+	पूर्णांक stid, ret;
+	पूर्णांक ss_family = cnp->com.local_addr.ss_family;
 
-	if (!test_bit(CDEV_STATE_UP, &cdev->flags))
-		return -EINVAL;
+	अगर (!test_bit(CDEV_STATE_UP, &cdev->flags))
+		वापस -EINVAL;
 
 	stid = cxgb4_alloc_stid(cdev->lldi.tids, ss_family, cnp);
-	if (stid < 0)
-		return -EINVAL;
+	अगर (stid < 0)
+		वापस -EINVAL;
 
-	if (!cxgbit_np_hash_add(cdev, cnp, stid)) {
-		cxgb4_free_stid(cdev->lldi.tids, stid, ss_family);
-		return -EINVAL;
-	}
+	अगर (!cxgbit_np_hash_add(cdev, cnp, stid)) अणु
+		cxgb4_मुक्त_stid(cdev->lldi.tids, stid, ss_family);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ss_family == AF_INET)
+	अगर (ss_family == AF_INET)
 		ret = cxgbit_create_server4(cdev, stid, cnp);
-	else
+	अन्यथा
 		ret = cxgbit_create_server6(cdev, stid, cnp);
 
-	if (ret) {
-		if (ret != -ETIMEDOUT)
-			cxgb4_free_stid(cdev->lldi.tids, stid,
+	अगर (ret) अणु
+		अगर (ret != -ETIMEDOUT)
+			cxgb4_मुक्त_stid(cdev->lldi.tids, stid,
 					ss_family);
 		cxgbit_np_hash_del(cdev, cnp);
-		return ret;
-	}
-	return ret;
-}
+		वापस ret;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cxgbit_setup_cdev_np(struct cxgbit_np *cnp)
-{
-	struct cxgbit_device *cdev;
-	int ret = -1;
+अटल पूर्णांक cxgbit_setup_cdev_np(काष्ठा cxgbit_np *cnp)
+अणु
+	काष्ठा cxgbit_device *cdev;
+	पूर्णांक ret = -1;
 
 	mutex_lock(&cdev_list_lock);
 	cdev = cxgbit_find_np_cdev(cnp);
-	if (!cdev)
-		goto out;
+	अगर (!cdev)
+		जाओ out;
 
-	if (cxgbit_np_hash_find(cdev, cnp) >= 0)
-		goto out;
+	अगर (cxgbit_np_hash_find(cdev, cnp) >= 0)
+		जाओ out;
 
-	if (__cxgbit_setup_cdev_np(cdev, cnp))
-		goto out;
+	अगर (__cxgbit_setup_cdev_np(cdev, cnp))
+		जाओ out;
 
 	cnp->com.cdev = cdev;
 	ret = 0;
 out:
 	mutex_unlock(&cdev_list_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxgbit_setup_all_np(struct cxgbit_np *cnp)
-{
-	struct cxgbit_device *cdev;
-	int ret;
+अटल पूर्णांक cxgbit_setup_all_np(काष्ठा cxgbit_np *cnp)
+अणु
+	काष्ठा cxgbit_device *cdev;
+	पूर्णांक ret;
 	u32 count = 0;
 
 	mutex_lock(&cdev_list_lock);
-	list_for_each_entry(cdev, &cdev_list_head, list) {
-		if (cxgbit_np_hash_find(cdev, cnp) >= 0) {
+	list_क्रम_each_entry(cdev, &cdev_list_head, list) अणु
+		अगर (cxgbit_np_hash_find(cdev, cnp) >= 0) अणु
 			mutex_unlock(&cdev_list_lock);
-			return -1;
-		}
-	}
+			वापस -1;
+		पूर्ण
+	पूर्ण
 
-	list_for_each_entry(cdev, &cdev_list_head, list) {
+	list_क्रम_each_entry(cdev, &cdev_list_head, list) अणु
 		ret = __cxgbit_setup_cdev_np(cdev, cnp);
-		if (ret == -ETIMEDOUT)
-			break;
-		if (ret != 0)
-			continue;
+		अगर (ret == -ETIMEDOUT)
+			अवरोध;
+		अगर (ret != 0)
+			जारी;
 		count++;
-	}
+	पूर्ण
 	mutex_unlock(&cdev_list_lock);
 
-	return count ? 0 : -1;
-}
+	वापस count ? 0 : -1;
+पूर्ण
 
-int cxgbit_setup_np(struct iscsi_np *np, struct sockaddr_storage *ksockaddr)
-{
-	struct cxgbit_np *cnp;
-	int ret;
+पूर्णांक cxgbit_setup_np(काष्ठा iscsi_np *np, काष्ठा sockaddr_storage *ksockaddr)
+अणु
+	काष्ठा cxgbit_np *cnp;
+	पूर्णांक ret;
 
-	if ((ksockaddr->ss_family != AF_INET) &&
+	अगर ((ksockaddr->ss_family != AF_INET) &&
 	    (ksockaddr->ss_family != AF_INET6))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	cnp = kzalloc(sizeof(*cnp), GFP_KERNEL);
-	if (!cnp)
-		return -ENOMEM;
+	cnp = kzalloc(माप(*cnp), GFP_KERNEL);
+	अगर (!cnp)
+		वापस -ENOMEM;
 
-	init_waitqueue_head(&cnp->accept_wait);
-	init_completion(&cnp->com.wr_wait.completion);
+	init_रुकोqueue_head(&cnp->accept_रुको);
+	init_completion(&cnp->com.wr_रुको.completion);
 	init_completion(&cnp->accept_comp);
 	INIT_LIST_HEAD(&cnp->np_accept_list);
 	spin_lock_init(&cnp->np_accept_lock);
 	kref_init(&cnp->kref);
-	memcpy(&np->np_sockaddr, ksockaddr,
-	       sizeof(struct sockaddr_storage));
-	memcpy(&cnp->com.local_addr, &np->np_sockaddr,
-	       sizeof(cnp->com.local_addr));
+	स_नकल(&np->np_sockaddr, ksockaddr,
+	       माप(काष्ठा sockaddr_storage));
+	स_नकल(&cnp->com.local_addr, &np->np_sockaddr,
+	       माप(cnp->com.local_addr));
 
 	cnp->np = np;
-	cnp->com.cdev = NULL;
+	cnp->com.cdev = शून्य;
 
-	if (cxgbit_inaddr_any(cnp))
+	अगर (cxgbit_inaddr_any(cnp))
 		ret = cxgbit_setup_all_np(cnp);
-	else
+	अन्यथा
 		ret = cxgbit_setup_cdev_np(cnp);
 
-	if (ret) {
+	अगर (ret) अणु
 		cxgbit_put_cnp(cnp);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	np->np_context = cnp;
 	cnp->com.state = CSK_STATE_LISTEN;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-cxgbit_set_conn_info(struct iscsi_np *np, struct iscsi_conn *conn,
-		     struct cxgbit_sock *csk)
-{
+अटल व्योम
+cxgbit_set_conn_info(काष्ठा iscsi_np *np, काष्ठा iscsi_conn *conn,
+		     काष्ठा cxgbit_sock *csk)
+अणु
 	conn->login_family = np->np_sockaddr.ss_family;
 	conn->login_sockaddr = csk->com.remote_addr;
 	conn->local_sockaddr = csk->com.local_addr;
-}
+पूर्ण
 
-int cxgbit_accept_np(struct iscsi_np *np, struct iscsi_conn *conn)
-{
-	struct cxgbit_np *cnp = np->np_context;
-	struct cxgbit_sock *csk;
-	int ret = 0;
+पूर्णांक cxgbit_accept_np(काष्ठा iscsi_np *np, काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा cxgbit_np *cnp = np->np_context;
+	काष्ठा cxgbit_sock *csk;
+	पूर्णांक ret = 0;
 
-accept_wait:
-	ret = wait_for_completion_interruptible(&cnp->accept_comp);
-	if (ret)
-		return -ENODEV;
+accept_रुको:
+	ret = रुको_क्रम_completion_पूर्णांकerruptible(&cnp->accept_comp);
+	अगर (ret)
+		वापस -ENODEV;
 
-	spin_lock_bh(&np->np_thread_lock);
-	if (np->np_thread_state >= ISCSI_NP_THREAD_RESET) {
-		spin_unlock_bh(&np->np_thread_lock);
+	spin_lock_bh(&np->np_thपढ़ो_lock);
+	अगर (np->np_thपढ़ो_state >= ISCSI_NP_THREAD_RESET) अणु
+		spin_unlock_bh(&np->np_thपढ़ो_lock);
 		/**
-		 * No point in stalling here when np_thread
+		 * No poपूर्णांक in stalling here when np_thपढ़ो
 		 * is in state RESET/SHUTDOWN/EXIT - bail
 		 **/
-		return -ENODEV;
-	}
-	spin_unlock_bh(&np->np_thread_lock);
+		वापस -ENODEV;
+	पूर्ण
+	spin_unlock_bh(&np->np_thपढ़ो_lock);
 
 	spin_lock_bh(&cnp->np_accept_lock);
-	if (list_empty(&cnp->np_accept_list)) {
+	अगर (list_empty(&cnp->np_accept_list)) अणु
 		spin_unlock_bh(&cnp->np_accept_lock);
-		goto accept_wait;
-	}
+		जाओ accept_रुको;
+	पूर्ण
 
 	csk = list_first_entry(&cnp->np_accept_list,
-			       struct cxgbit_sock,
+			       काष्ठा cxgbit_sock,
 			       accept_node);
 
 	list_del_init(&csk->accept_node);
@@ -511,272 +512,272 @@ accept_wait:
 	csk->conn = conn;
 
 	cxgbit_set_conn_info(np, conn, csk);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-__cxgbit_free_cdev_np(struct cxgbit_device *cdev, struct cxgbit_np *cnp)
-{
-	int stid, ret;
+अटल पूर्णांक
+__cxgbit_मुक्त_cdev_np(काष्ठा cxgbit_device *cdev, काष्ठा cxgbit_np *cnp)
+अणु
+	पूर्णांक stid, ret;
 	bool ipv6 = false;
 
 	stid = cxgbit_np_hash_del(cdev, cnp);
-	if (stid < 0)
-		return -EINVAL;
-	if (!test_bit(CDEV_STATE_UP, &cdev->flags))
-		return -EINVAL;
+	अगर (stid < 0)
+		वापस -EINVAL;
+	अगर (!test_bit(CDEV_STATE_UP, &cdev->flags))
+		वापस -EINVAL;
 
-	if (cnp->np->np_sockaddr.ss_family == AF_INET6)
+	अगर (cnp->np->np_sockaddr.ss_family == AF_INET6)
 		ipv6 = true;
 
 	cxgbit_get_cnp(cnp);
-	cxgbit_init_wr_wait(&cnp->com.wr_wait);
-	ret = cxgb4_remove_server(cdev->lldi.ports[0], stid,
+	cxgbit_init_wr_रुको(&cnp->com.wr_रुको);
+	ret = cxgb4_हटाओ_server(cdev->lldi.ports[0], stid,
 				  cdev->lldi.rxq_ids[0], ipv6);
 
-	if (ret > 0)
-		ret = net_xmit_errno(ret);
+	अगर (ret > 0)
+		ret = net_xmit_त्रुटि_सं(ret);
 
-	if (ret) {
+	अगर (ret) अणु
 		cxgbit_put_cnp(cnp);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = cxgbit_wait_for_reply(cdev, &cnp->com.wr_wait,
+	ret = cxgbit_रुको_क्रम_reply(cdev, &cnp->com.wr_रुको,
 				    0, 10, __func__);
-	if (ret == -ETIMEDOUT)
-		return ret;
+	अगर (ret == -ETIMEDOUT)
+		वापस ret;
 
-	if (ipv6 && cnp->com.cdev) {
-		struct sockaddr_in6 *sin6;
+	अगर (ipv6 && cnp->com.cdev) अणु
+		काष्ठा sockaddr_in6 *sin6;
 
-		sin6 = (struct sockaddr_in6 *)&cnp->com.local_addr;
+		sin6 = (काष्ठा sockaddr_in6 *)&cnp->com.local_addr;
 		cxgb4_clip_release(cdev->lldi.ports[0],
-				   (const u32 *)&sin6->sin6_addr.s6_addr,
+				   (स्थिर u32 *)&sin6->sin6_addr.s6_addr,
 				   1);
-	}
+	पूर्ण
 
-	cxgb4_free_stid(cdev->lldi.tids, stid,
+	cxgb4_मुक्त_stid(cdev->lldi.tids, stid,
 			cnp->com.local_addr.ss_family);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cxgbit_free_all_np(struct cxgbit_np *cnp)
-{
-	struct cxgbit_device *cdev;
-	int ret;
+अटल व्योम cxgbit_मुक्त_all_np(काष्ठा cxgbit_np *cnp)
+अणु
+	काष्ठा cxgbit_device *cdev;
+	पूर्णांक ret;
 
 	mutex_lock(&cdev_list_lock);
-	list_for_each_entry(cdev, &cdev_list_head, list) {
-		ret = __cxgbit_free_cdev_np(cdev, cnp);
-		if (ret == -ETIMEDOUT)
-			break;
-	}
+	list_क्रम_each_entry(cdev, &cdev_list_head, list) अणु
+		ret = __cxgbit_मुक्त_cdev_np(cdev, cnp);
+		अगर (ret == -ETIMEDOUT)
+			अवरोध;
+	पूर्ण
 	mutex_unlock(&cdev_list_lock);
-}
+पूर्ण
 
-static void cxgbit_free_cdev_np(struct cxgbit_np *cnp)
-{
-	struct cxgbit_device *cdev;
+अटल व्योम cxgbit_मुक्त_cdev_np(काष्ठा cxgbit_np *cnp)
+अणु
+	काष्ठा cxgbit_device *cdev;
 	bool found = false;
 
 	mutex_lock(&cdev_list_lock);
-	list_for_each_entry(cdev, &cdev_list_head, list) {
-		if (cdev == cnp->com.cdev) {
+	list_क्रम_each_entry(cdev, &cdev_list_head, list) अणु
+		अगर (cdev == cnp->com.cdev) अणु
 			found = true;
-			break;
-		}
-	}
-	if (!found)
-		goto out;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (!found)
+		जाओ out;
 
-	__cxgbit_free_cdev_np(cdev, cnp);
+	__cxgbit_मुक्त_cdev_np(cdev, cnp);
 out:
 	mutex_unlock(&cdev_list_lock);
-}
+पूर्ण
 
-static void __cxgbit_free_conn(struct cxgbit_sock *csk);
+अटल व्योम __cxgbit_मुक्त_conn(काष्ठा cxgbit_sock *csk);
 
-void cxgbit_free_np(struct iscsi_np *np)
-{
-	struct cxgbit_np *cnp = np->np_context;
-	struct cxgbit_sock *csk, *tmp;
+व्योम cxgbit_मुक्त_np(काष्ठा iscsi_np *np)
+अणु
+	काष्ठा cxgbit_np *cnp = np->np_context;
+	काष्ठा cxgbit_sock *csk, *पंचांगp;
 
 	cnp->com.state = CSK_STATE_DEAD;
-	if (cnp->com.cdev)
-		cxgbit_free_cdev_np(cnp);
-	else
-		cxgbit_free_all_np(cnp);
+	अगर (cnp->com.cdev)
+		cxgbit_मुक्त_cdev_np(cnp);
+	अन्यथा
+		cxgbit_मुक्त_all_np(cnp);
 
 	spin_lock_bh(&cnp->np_accept_lock);
-	list_for_each_entry_safe(csk, tmp, &cnp->np_accept_list, accept_node) {
+	list_क्रम_each_entry_safe(csk, पंचांगp, &cnp->np_accept_list, accept_node) अणु
 		list_del_init(&csk->accept_node);
-		__cxgbit_free_conn(csk);
-	}
+		__cxgbit_मुक्त_conn(csk);
+	पूर्ण
 	spin_unlock_bh(&cnp->np_accept_lock);
 
-	np->np_context = NULL;
+	np->np_context = शून्य;
 	cxgbit_put_cnp(cnp);
-}
+पूर्ण
 
-static void cxgbit_send_halfclose(struct cxgbit_sock *csk)
-{
-	struct sk_buff *skb;
-	u32 len = roundup(sizeof(struct cpl_close_con_req), 16);
+अटल व्योम cxgbit_send_halख_बंद(काष्ठा cxgbit_sock *csk)
+अणु
+	काष्ठा sk_buff *skb;
+	u32 len = roundup(माप(काष्ठा cpl_बंद_con_req), 16);
 
 	skb = alloc_skb(len, GFP_ATOMIC);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
-	cxgb_mk_close_con_req(skb, len, csk->tid, csk->txq_idx,
-			      NULL, NULL);
+	cxgb_mk_बंद_con_req(skb, len, csk->tid, csk->txq_idx,
+			      शून्य, शून्य);
 
 	cxgbit_skcb_flags(skb) |= SKCBF_TX_FLAG_COMPL;
 	__skb_queue_tail(&csk->txq, skb);
 	cxgbit_push_tx_frames(csk);
-}
+पूर्ण
 
-static void cxgbit_arp_failure_discard(void *handle, struct sk_buff *skb)
-{
-	struct cxgbit_sock *csk = handle;
+अटल व्योम cxgbit_arp_failure_discard(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbit_sock *csk = handle;
 
 	pr_debug("%s cxgbit_device %p\n", __func__, handle);
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 	cxgbit_put_csk(csk);
-}
+पूर्ण
 
-static void cxgbit_abort_arp_failure(void *handle, struct sk_buff *skb)
-{
-	struct cxgbit_device *cdev = handle;
-	struct cpl_abort_req *req = cplhdr(skb);
+अटल व्योम cxgbit_पात_arp_failure(व्योम *handle, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbit_device *cdev = handle;
+	काष्ठा cpl_पात_req *req = cplhdr(skb);
 
 	pr_debug("%s cdev %p\n", __func__, cdev);
 	req->cmd = CPL_ABORT_NO_RST;
 	cxgbit_ofld_send(cdev, skb);
-}
+पूर्ण
 
-static int cxgbit_send_abort_req(struct cxgbit_sock *csk)
-{
-	struct sk_buff *skb;
-	u32 len = roundup(sizeof(struct cpl_abort_req), 16);
+अटल पूर्णांक cxgbit_send_पात_req(काष्ठा cxgbit_sock *csk)
+अणु
+	काष्ठा sk_buff *skb;
+	u32 len = roundup(माप(काष्ठा cpl_पात_req), 16);
 
 	pr_debug("%s: csk %p tid %u; state %d\n",
 		 __func__, csk, csk->tid, csk->com.state);
 
 	__skb_queue_purge(&csk->txq);
 
-	if (!test_and_set_bit(CSK_TX_DATA_SENT, &csk->com.flags))
+	अगर (!test_and_set_bit(CSK_TX_DATA_SENT, &csk->com.flags))
 		cxgbit_send_tx_flowc_wr(csk);
 
 	skb = __skb_dequeue(&csk->skbq);
-	cxgb_mk_abort_req(skb, len, csk->tid, csk->txq_idx,
-			  csk->com.cdev, cxgbit_abort_arp_failure);
+	cxgb_mk_पात_req(skb, len, csk->tid, csk->txq_idx,
+			  csk->com.cdev, cxgbit_पात_arp_failure);
 
-	return cxgbit_l2t_send(csk->com.cdev, skb, csk->l2t);
-}
+	वापस cxgbit_l2t_send(csk->com.cdev, skb, csk->l2t);
+पूर्ण
 
-static void
-__cxgbit_abort_conn(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
-	__kfree_skb(skb);
+अटल व्योम
+__cxgbit_पात_conn(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
+	__kमुक्त_skb(skb);
 
-	if (csk->com.state != CSK_STATE_ESTABLISHED)
-		goto no_abort;
+	अगर (csk->com.state != CSK_STATE_ESTABLISHED)
+		जाओ no_पात;
 
 	set_bit(CSK_ABORT_RPL_WAIT, &csk->com.flags);
 	csk->com.state = CSK_STATE_ABORTING;
 
-	cxgbit_send_abort_req(csk);
+	cxgbit_send_पात_req(csk);
 
-	return;
+	वापस;
 
-no_abort:
-	cxgbit_wake_up(&csk->com.wr_wait, __func__, CPL_ERR_NONE);
+no_पात:
+	cxgbit_wake_up(&csk->com.wr_रुको, __func__, CPL_ERR_NONE);
 	cxgbit_put_csk(csk);
-}
+पूर्ण
 
-void cxgbit_abort_conn(struct cxgbit_sock *csk)
-{
-	struct sk_buff *skb = alloc_skb(0, GFP_KERNEL | __GFP_NOFAIL);
+व्योम cxgbit_पात_conn(काष्ठा cxgbit_sock *csk)
+अणु
+	काष्ठा sk_buff *skb = alloc_skb(0, GFP_KERNEL | __GFP_NOFAIL);
 
 	cxgbit_get_csk(csk);
-	cxgbit_init_wr_wait(&csk->com.wr_wait);
+	cxgbit_init_wr_रुको(&csk->com.wr_रुको);
 
 	spin_lock_bh(&csk->lock);
-	if (csk->lock_owner) {
-		cxgbit_skcb_rx_backlog_fn(skb) = __cxgbit_abort_conn;
+	अगर (csk->lock_owner) अणु
+		cxgbit_skcb_rx_backlog_fn(skb) = __cxgbit_पात_conn;
 		__skb_queue_tail(&csk->backlogq, skb);
-	} else {
-		__cxgbit_abort_conn(csk, skb);
-	}
+	पूर्ण अन्यथा अणु
+		__cxgbit_पात_conn(csk, skb);
+	पूर्ण
 	spin_unlock_bh(&csk->lock);
 
-	cxgbit_wait_for_reply(csk->com.cdev, &csk->com.wr_wait,
+	cxgbit_रुको_क्रम_reply(csk->com.cdev, &csk->com.wr_रुको,
 			      csk->tid, 600, __func__);
-}
+पूर्ण
 
-static void __cxgbit_free_conn(struct cxgbit_sock *csk)
-{
-	struct iscsi_conn *conn = csk->conn;
+अटल व्योम __cxgbit_मुक्त_conn(काष्ठा cxgbit_sock *csk)
+अणु
+	काष्ठा iscsi_conn *conn = csk->conn;
 	bool release = false;
 
 	pr_debug("%s: state %d\n",
 		 __func__, csk->com.state);
 
 	spin_lock_bh(&csk->lock);
-	switch (csk->com.state) {
-	case CSK_STATE_ESTABLISHED:
-		if (conn && (conn->conn_state == TARG_CONN_STATE_IN_LOGOUT)) {
+	चयन (csk->com.state) अणु
+	हाल CSK_STATE_ESTABLISHED:
+		अगर (conn && (conn->conn_state == TARG_CONN_STATE_IN_LOGOUT)) अणु
 			csk->com.state = CSK_STATE_CLOSING;
-			cxgbit_send_halfclose(csk);
-		} else {
+			cxgbit_send_halख_बंद(csk);
+		पूर्ण अन्यथा अणु
 			csk->com.state = CSK_STATE_ABORTING;
-			cxgbit_send_abort_req(csk);
-		}
-		break;
-	case CSK_STATE_CLOSING:
+			cxgbit_send_पात_req(csk);
+		पूर्ण
+		अवरोध;
+	हाल CSK_STATE_CLOSING:
 		csk->com.state = CSK_STATE_MORIBUND;
-		cxgbit_send_halfclose(csk);
-		break;
-	case CSK_STATE_DEAD:
+		cxgbit_send_halख_बंद(csk);
+		अवरोध;
+	हाल CSK_STATE_DEAD:
 		release = true;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_err("%s: csk %p; state %d\n",
 		       __func__, csk, csk->com.state);
-	}
+	पूर्ण
 	spin_unlock_bh(&csk->lock);
 
-	if (release)
+	अगर (release)
 		cxgbit_put_csk(csk);
-}
+पूर्ण
 
-void cxgbit_free_conn(struct iscsi_conn *conn)
-{
-	__cxgbit_free_conn(conn->context);
-}
+व्योम cxgbit_मुक्त_conn(काष्ठा iscsi_conn *conn)
+अणु
+	__cxgbit_मुक्त_conn(conn->context);
+पूर्ण
 
-static void cxgbit_set_emss(struct cxgbit_sock *csk, u16 opt)
-{
+अटल व्योम cxgbit_set_emss(काष्ठा cxgbit_sock *csk, u16 opt)
+अणु
 	csk->emss = csk->com.cdev->lldi.mtus[TCPOPT_MSS_G(opt)] -
 			((csk->com.remote_addr.ss_family == AF_INET) ?
-			sizeof(struct iphdr) : sizeof(struct ipv6hdr)) -
-			sizeof(struct tcphdr);
+			माप(काष्ठा iphdr) : माप(काष्ठा ipv6hdr)) -
+			माप(काष्ठा tcphdr);
 	csk->mss = csk->emss;
-	if (TCPOPT_TSTAMP_G(opt))
+	अगर (TCPOPT_TSTAMP_G(opt))
 		csk->emss -= round_up(TCPOLEN_TIMESTAMP, 4);
-	if (csk->emss < 128)
+	अगर (csk->emss < 128)
 		csk->emss = 128;
-	if (csk->emss & 7)
+	अगर (csk->emss & 7)
 		pr_info("Warning: misaligned mtu idx %u mss %u emss=%u\n",
 			TCPOPT_MSS_G(opt), csk->mss, csk->emss);
 	pr_debug("%s mss_idx %u mss %u emss=%u\n", __func__, TCPOPT_MSS_G(opt),
 		 csk->mss, csk->emss);
-}
+पूर्ण
 
-static void cxgbit_free_skb(struct cxgbit_sock *csk)
-{
-	struct sk_buff *skb;
+अटल व्योम cxgbit_मुक्त_skb(काष्ठा cxgbit_sock *csk)
+अणु
+	काष्ठा sk_buff *skb;
 
 	__skb_queue_purge(&csk->txq);
 	__skb_queue_purge(&csk->rxq);
@@ -784,30 +785,30 @@ static void cxgbit_free_skb(struct cxgbit_sock *csk)
 	__skb_queue_purge(&csk->ppodq);
 	__skb_queue_purge(&csk->skbq);
 
-	while ((skb = cxgbit_sock_dequeue_wr(csk)))
-		kfree_skb(skb);
+	जबतक ((skb = cxgbit_sock_dequeue_wr(csk)))
+		kमुक्त_skb(skb);
 
-	__kfree_skb(csk->lro_hskb);
-}
+	__kमुक्त_skb(csk->lro_hskb);
+पूर्ण
 
-void _cxgbit_free_csk(struct kref *kref)
-{
-	struct cxgbit_sock *csk;
-	struct cxgbit_device *cdev;
+व्योम _cxgbit_मुक्त_csk(काष्ठा kref *kref)
+अणु
+	काष्ठा cxgbit_sock *csk;
+	काष्ठा cxgbit_device *cdev;
 
-	csk = container_of(kref, struct cxgbit_sock, kref);
+	csk = container_of(kref, काष्ठा cxgbit_sock, kref);
 
 	pr_debug("%s csk %p state %d\n", __func__, csk, csk->com.state);
 
-	if (csk->com.local_addr.ss_family == AF_INET6) {
-		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)
+	अगर (csk->com.local_addr.ss_family == AF_INET6) अणु
+		काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)
 					     &csk->com.local_addr;
 		cxgb4_clip_release(csk->com.cdev->lldi.ports[0],
-				   (const u32 *)
+				   (स्थिर u32 *)
 				   &sin6->sin6_addr.s6_addr, 1);
-	}
+	पूर्ण
 
-	cxgb4_remove_tid(csk->com.cdev->lldi.tids, 0, csk->tid,
+	cxgb4_हटाओ_tid(csk->com.cdev->lldi.tids, 0, csk->tid,
 			 csk->com.local_addr.ss_family);
 	dst_release(csk->dst);
 	cxgb4_l2t_release(csk->l2t);
@@ -817,125 +818,125 @@ void _cxgbit_free_csk(struct kref *kref)
 	list_del(&csk->list);
 	spin_unlock_bh(&cdev->cskq.lock);
 
-	cxgbit_free_skb(csk);
+	cxgbit_मुक्त_skb(csk);
 	cxgbit_put_cnp(csk->cnp);
 	cxgbit_put_cdev(cdev);
 
-	kfree(csk);
-}
+	kमुक्त(csk);
+पूर्ण
 
-static void cxgbit_set_tcp_window(struct cxgbit_sock *csk, struct port_info *pi)
-{
-	unsigned int linkspeed;
+अटल व्योम cxgbit_set_tcp_winकरोw(काष्ठा cxgbit_sock *csk, काष्ठा port_info *pi)
+अणु
+	अचिन्हित पूर्णांक linkspeed;
 	u8 scale;
 
 	linkspeed = pi->link_cfg.speed;
 	scale = linkspeed / SPEED_10000;
 
-#define CXGBIT_10G_RCV_WIN (256 * 1024)
+#घोषणा CXGBIT_10G_RCV_WIN (256 * 1024)
 	csk->rcv_win = CXGBIT_10G_RCV_WIN;
-	if (scale)
+	अगर (scale)
 		csk->rcv_win *= scale;
 
-#define CXGBIT_10G_SND_WIN (256 * 1024)
+#घोषणा CXGBIT_10G_SND_WIN (256 * 1024)
 	csk->snd_win = CXGBIT_10G_SND_WIN;
-	if (scale)
+	अगर (scale)
 		csk->snd_win *= scale;
 
 	pr_debug("%s snd_win %d rcv_win %d\n",
 		 __func__, csk->snd_win, csk->rcv_win);
-}
+पूर्ण
 
-#ifdef CONFIG_CHELSIO_T4_DCB
-static u8 cxgbit_get_iscsi_dcb_state(struct net_device *ndev)
-{
-	return ndev->dcbnl_ops->getstate(ndev);
-}
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+अटल u8 cxgbit_get_iscsi_dcb_state(काष्ठा net_device *ndev)
+अणु
+	वापस ndev->dcbnl_ops->माला_लोtate(ndev);
+पूर्ण
 
-static int cxgbit_select_priority(int pri_mask)
-{
-	if (!pri_mask)
-		return 0;
+अटल पूर्णांक cxgbit_select_priority(पूर्णांक pri_mask)
+अणु
+	अगर (!pri_mask)
+		वापस 0;
 
-	return (ffs(pri_mask) - 1);
-}
+	वापस (ffs(pri_mask) - 1);
+पूर्ण
 
-static u8 cxgbit_get_iscsi_dcb_priority(struct net_device *ndev, u16 local_port)
-{
-	int ret;
+अटल u8 cxgbit_get_iscsi_dcb_priority(काष्ठा net_device *ndev, u16 local_port)
+अणु
+	पूर्णांक ret;
 	u8 caps;
 
-	struct dcb_app iscsi_dcb_app = {
+	काष्ठा dcb_app iscsi_dcb_app = अणु
 		.protocol = local_port
-	};
+	पूर्ण;
 
-	ret = (int)ndev->dcbnl_ops->getcap(ndev, DCB_CAP_ATTR_DCBX, &caps);
+	ret = (पूर्णांक)ndev->dcbnl_ops->अ_लोap(ndev, DCB_CAP_ATTR_DCBX, &caps);
 
-	if (ret)
-		return 0;
+	अगर (ret)
+		वापस 0;
 
-	if (caps & DCB_CAP_DCBX_VER_IEEE) {
+	अगर (caps & DCB_CAP_DCBX_VER_IEEE) अणु
 		iscsi_dcb_app.selector = IEEE_8021QAZ_APP_SEL_STREAM;
 		ret = dcb_ieee_getapp_mask(ndev, &iscsi_dcb_app);
-		if (!ret) {
+		अगर (!ret) अणु
 			iscsi_dcb_app.selector = IEEE_8021QAZ_APP_SEL_ANY;
 			ret = dcb_ieee_getapp_mask(ndev, &iscsi_dcb_app);
-		}
-	} else if (caps & DCB_CAP_DCBX_VER_CEE) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (caps & DCB_CAP_DCBX_VER_CEE) अणु
 		iscsi_dcb_app.selector = DCB_APP_IDTYPE_PORTNUM;
 
 		ret = dcb_getapp(ndev, &iscsi_dcb_app);
-	}
+	पूर्ण
 
 	pr_info("iSCSI priority is set to %u\n", cxgbit_select_priority(ret));
 
-	return cxgbit_select_priority(ret);
-}
-#endif
+	वापस cxgbit_select_priority(ret);
+पूर्ण
+#पूर्ण_अगर
 
-static int
-cxgbit_offload_init(struct cxgbit_sock *csk, int iptype, __u8 *peer_ip,
-		    u16 local_port, struct dst_entry *dst,
-		    struct cxgbit_device *cdev)
-{
-	struct neighbour *n;
-	int ret, step;
-	struct net_device *ndev;
+अटल पूर्णांक
+cxgbit_offload_init(काष्ठा cxgbit_sock *csk, पूर्णांक iptype, __u8 *peer_ip,
+		    u16 local_port, काष्ठा dst_entry *dst,
+		    काष्ठा cxgbit_device *cdev)
+अणु
+	काष्ठा neighbour *n;
+	पूर्णांक ret, step;
+	काष्ठा net_device *ndev;
 	u16 rxq_idx, port_id;
-#ifdef CONFIG_CHELSIO_T4_DCB
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
 	u8 priority = 0;
-#endif
+#पूर्ण_अगर
 
 	n = dst_neigh_lookup(dst, peer_ip);
-	if (!n)
-		return -ENODEV;
+	अगर (!n)
+		वापस -ENODEV;
 
-	rcu_read_lock();
-	if (!(n->nud_state & NUD_VALID))
-		neigh_event_send(n, NULL);
+	rcu_पढ़ो_lock();
+	अगर (!(n->nud_state & NUD_VALID))
+		neigh_event_send(n, शून्य);
 
 	ret = -ENOMEM;
-	if (n->dev->flags & IFF_LOOPBACK) {
-		if (iptype == 4)
+	अगर (n->dev->flags & IFF_LOOPBACK) अणु
+		अगर (iptype == 4)
 			ndev = cxgbit_ipv4_netdev(*(__be32 *)peer_ip);
-		else if (IS_ENABLED(CONFIG_IPV6))
-			ndev = cxgbit_ipv6_netdev((struct in6_addr *)peer_ip);
-		else
-			ndev = NULL;
+		अन्यथा अगर (IS_ENABLED(CONFIG_IPV6))
+			ndev = cxgbit_ipv6_netdev((काष्ठा in6_addr *)peer_ip);
+		अन्यथा
+			ndev = शून्य;
 
-		if (!ndev) {
+		अगर (!ndev) अणु
 			ret = -ENODEV;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		csk->l2t = cxgb4_l2t_get(cdev->lldi.l2t,
 					 n, ndev, 0);
-		if (!csk->l2t)
-			goto out;
+		अगर (!csk->l2t)
+			जाओ out;
 		csk->mtu = ndev->mtu;
 		csk->tx_chan = cxgb4_port_chan(ndev);
 		csk->smac_idx =
-			       ((struct port_info *)netdev_priv(ndev))->smt_idx;
+			       ((काष्ठा port_info *)netdev_priv(ndev))->smt_idx;
 		step = cdev->lldi.ntxq /
 			cdev->lldi.nchan;
 		csk->txq_idx = cxgb4_port_idx(ndev) * step;
@@ -945,33 +946,33 @@ cxgbit_offload_init(struct cxgbit_sock *csk, int iptype, __u8 *peer_ip,
 		csk->rss_qid = cdev->lldi.rxq_ids[
 				cxgb4_port_idx(ndev) * step];
 		csk->port_id = cxgb4_port_idx(ndev);
-		cxgbit_set_tcp_window(csk,
-				      (struct port_info *)netdev_priv(ndev));
-	} else {
+		cxgbit_set_tcp_winकरोw(csk,
+				      (काष्ठा port_info *)netdev_priv(ndev));
+	पूर्ण अन्यथा अणु
 		ndev = cxgbit_get_real_dev(n->dev);
-		if (!ndev) {
+		अगर (!ndev) अणु
 			ret = -ENODEV;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-#ifdef CONFIG_CHELSIO_T4_DCB
-		if (cxgbit_get_iscsi_dcb_state(ndev))
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+		अगर (cxgbit_get_iscsi_dcb_state(ndev))
 			priority = cxgbit_get_iscsi_dcb_priority(ndev,
 								 local_port);
 
 		csk->dcb_priority = priority;
 
 		csk->l2t = cxgb4_l2t_get(cdev->lldi.l2t, n, ndev, priority);
-#else
+#अन्यथा
 		csk->l2t = cxgb4_l2t_get(cdev->lldi.l2t, n, ndev, 0);
-#endif
-		if (!csk->l2t)
-			goto out;
+#पूर्ण_अगर
+		अगर (!csk->l2t)
+			जाओ out;
 		port_id = cxgb4_port_idx(ndev);
 		csk->mtu = dst_mtu(dst);
 		csk->tx_chan = cxgb4_port_chan(ndev);
 		csk->smac_idx =
-			       ((struct port_info *)netdev_priv(ndev))->smt_idx;
+			       ((काष्ठा port_info *)netdev_priv(ndev))->smt_idx;
 		step = cdev->lldi.ntxq /
 			cdev->lldi.nports;
 		csk->txq_idx = (port_id * step) +
@@ -983,87 +984,87 @@ cxgbit_offload_init(struct cxgbit_sock *csk, int iptype, __u8 *peer_ip,
 				(cdev->selectq[port_id][1]++ % step);
 		csk->rss_qid = cdev->lldi.rxq_ids[rxq_idx];
 		csk->port_id = port_id;
-		cxgbit_set_tcp_window(csk,
-				      (struct port_info *)netdev_priv(ndev));
-	}
+		cxgbit_set_tcp_winकरोw(csk,
+				      (काष्ठा port_info *)netdev_priv(ndev));
+	पूर्ण
 	ret = 0;
 out:
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	neigh_release(n);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxgbit_ofld_send(struct cxgbit_device *cdev, struct sk_buff *skb)
-{
-	int ret = 0;
+पूर्णांक cxgbit_ofld_send(काष्ठा cxgbit_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!test_bit(CDEV_STATE_UP, &cdev->flags)) {
-		kfree_skb(skb);
+	अगर (!test_bit(CDEV_STATE_UP, &cdev->flags)) अणु
+		kमुक्त_skb(skb);
 		pr_err("%s - device not up - dropping\n", __func__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	ret = cxgb4_ofld_send(cdev->lldi.ports[0], skb);
-	if (ret < 0)
-		kfree_skb(skb);
-	return ret < 0 ? ret : 0;
-}
+	अगर (ret < 0)
+		kमुक्त_skb(skb);
+	वापस ret < 0 ? ret : 0;
+पूर्ण
 
-static void cxgbit_release_tid(struct cxgbit_device *cdev, u32 tid)
-{
-	u32 len = roundup(sizeof(struct cpl_tid_release), 16);
-	struct sk_buff *skb;
+अटल व्योम cxgbit_release_tid(काष्ठा cxgbit_device *cdev, u32 tid)
+अणु
+	u32 len = roundup(माप(काष्ठा cpl_tid_release), 16);
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(len, GFP_ATOMIC);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	cxgb_mk_tid_release(skb, len, tid, 0);
 	cxgbit_ofld_send(cdev, skb);
-}
+पूर्ण
 
-int
-cxgbit_l2t_send(struct cxgbit_device *cdev, struct sk_buff *skb,
-		struct l2t_entry *l2e)
-{
-	int ret = 0;
+पूर्णांक
+cxgbit_l2t_send(काष्ठा cxgbit_device *cdev, काष्ठा sk_buff *skb,
+		काष्ठा l2t_entry *l2e)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!test_bit(CDEV_STATE_UP, &cdev->flags)) {
-		kfree_skb(skb);
+	अगर (!test_bit(CDEV_STATE_UP, &cdev->flags)) अणु
+		kमुक्त_skb(skb);
 		pr_err("%s - device not up - dropping\n", __func__);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	ret = cxgb4_l2t_send(cdev->lldi.ports[0], skb, l2e);
-	if (ret < 0)
-		kfree_skb(skb);
-	return ret < 0 ? ret : 0;
-}
+	अगर (ret < 0)
+		kमुक्त_skb(skb);
+	वापस ret < 0 ? ret : 0;
+पूर्ण
 
-static void cxgbit_send_rx_credits(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
-	if (csk->com.state != CSK_STATE_ESTABLISHED) {
-		__kfree_skb(skb);
-		return;
-	}
+अटल व्योम cxgbit_send_rx_credits(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
+	अगर (csk->com.state != CSK_STATE_ESTABLISHED) अणु
+		__kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	cxgbit_ofld_send(csk->com.cdev, skb);
-}
+पूर्ण
 
 /*
  * CPL connection rx data ack: host ->
  * Send RX credits through an RX_DATA_ACK CPL message.
  * Returns the number of credits sent.
  */
-int cxgbit_rx_data_ack(struct cxgbit_sock *csk)
-{
-	struct sk_buff *skb;
-	u32 len = roundup(sizeof(struct cpl_rx_data_ack), 16);
+पूर्णांक cxgbit_rx_data_ack(काष्ठा cxgbit_sock *csk)
+अणु
+	काष्ठा sk_buff *skb;
+	u32 len = roundup(माप(काष्ठा cpl_rx_data_ack), 16);
 	u32 credit_dack;
 
 	skb = alloc_skb(len, GFP_KERNEL);
-	if (!skb)
-		return -1;
+	अगर (!skb)
+		वापस -1;
 
 	credit_dack = RX_DACK_CHANGE_F | RX_DACK_MODE_V(1) |
 		      RX_CREDITS_V(csk->rx_credits);
@@ -1074,65 +1075,65 @@ int cxgbit_rx_data_ack(struct cxgbit_sock *csk)
 	csk->rx_credits = 0;
 
 	spin_lock_bh(&csk->lock);
-	if (csk->lock_owner) {
+	अगर (csk->lock_owner) अणु
 		cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_send_rx_credits;
 		__skb_queue_tail(&csk->backlogq, skb);
 		spin_unlock_bh(&csk->lock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	cxgbit_send_rx_credits(csk, skb);
 	spin_unlock_bh(&csk->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define FLOWC_WR_NPARAMS_MIN    9
-#define FLOWC_WR_NPARAMS_MAX	11
-static int cxgbit_alloc_csk_skb(struct cxgbit_sock *csk)
-{
-	struct sk_buff *skb;
+#घोषणा FLOWC_WR_NPARAMS_MIN    9
+#घोषणा FLOWC_WR_NPARAMS_MAX	11
+अटल पूर्णांक cxgbit_alloc_csk_skb(काष्ठा cxgbit_sock *csk)
+अणु
+	काष्ठा sk_buff *skb;
 	u32 len, flowclen;
 	u8 i;
 
-	flowclen = offsetof(struct fw_flowc_wr,
+	flowclen = दुरत्व(काष्ठा fw_flowc_wr,
 			    mnemval[FLOWC_WR_NPARAMS_MAX]);
 
-	len = max_t(u32, sizeof(struct cpl_abort_req),
-		    sizeof(struct cpl_abort_rpl));
+	len = max_t(u32, माप(काष्ठा cpl_पात_req),
+		    माप(काष्ठा cpl_पात_rpl));
 
 	len = max(len, flowclen);
 	len = roundup(len, 16);
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		skb = alloc_skb(len, GFP_ATOMIC);
-		if (!skb)
-			goto out;
+		अगर (!skb)
+			जाओ out;
 		__skb_queue_tail(&csk->skbq, skb);
-	}
+	पूर्ण
 
 	skb = alloc_skb(LRO_SKB_MIN_HEADROOM, GFP_ATOMIC);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
-	memset(skb->data, 0, LRO_SKB_MIN_HEADROOM);
+	स_रखो(skb->data, 0, LRO_SKB_MIN_HEADROOM);
 	csk->lro_hskb = skb;
 
-	return 0;
+	वापस 0;
 out:
 	__skb_queue_purge(&csk->skbq);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void
-cxgbit_pass_accept_rpl(struct cxgbit_sock *csk, struct cpl_pass_accept_req *req)
-{
-	struct sk_buff *skb;
-	const struct tcphdr *tcph;
-	struct cpl_t5_pass_accept_rpl *rpl5;
-	struct cxgb4_lld_info *lldi = &csk->com.cdev->lldi;
-	unsigned int len = roundup(sizeof(*rpl5), 16);
-	unsigned int mtu_idx;
+अटल व्योम
+cxgbit_pass_accept_rpl(काष्ठा cxgbit_sock *csk, काष्ठा cpl_pass_accept_req *req)
+अणु
+	काष्ठा sk_buff *skb;
+	स्थिर काष्ठा tcphdr *tcph;
+	काष्ठा cpl_t5_pass_accept_rpl *rpl5;
+	काष्ठा cxgb4_lld_info *lldi = &csk->com.cdev->lldi;
+	अचिन्हित पूर्णांक len = roundup(माप(*rpl5), 16);
+	अचिन्हित पूर्णांक mtu_idx;
 	u64 opt0;
 	u32 opt2, hlen;
 	u32 wscale;
@@ -1141,10 +1142,10 @@ cxgbit_pass_accept_rpl(struct cxgbit_sock *csk, struct cpl_pass_accept_req *req)
 	pr_debug("%s csk %p tid %u\n", __func__, csk, csk->tid);
 
 	skb = alloc_skb(len, GFP_ATOMIC);
-	if (!skb) {
+	अगर (!skb) अणु
 		cxgbit_put_csk(csk);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rpl5 = __skb_put_zero(skb, len);
 
@@ -1156,12 +1157,12 @@ cxgbit_pass_accept_rpl(struct cxgbit_sock *csk, struct cpl_pass_accept_req *req)
 		      (csk->com.remote_addr.ss_family == AF_INET) ? 0 : 1);
 	wscale = cxgb_compute_wscale(csk->rcv_win);
 	/*
-	 * Specify the largest window that will fit in opt0. The
-	 * remainder will be specified in the rx_data_ack.
+	 * Specअगरy the largest winकरोw that will fit in opt0. The
+	 * reमुख्यder will be specअगरied in the rx_data_ack.
 	 */
 	win = csk->rcv_win >> 10;
-	if (win > RCV_BUFSIZ_M)
-		win = RCV_BUFSIZ_M;
+	अगर (win > RCV_बफ_मान_M)
+		win = RCV_बफ_मान_M;
 	opt0 =  TCAM_BYPASS_F |
 		WND_SCALE_V(wscale) |
 		MSS_IDX_V(mtu_idx) |
@@ -1170,38 +1171,38 @@ cxgbit_pass_accept_rpl(struct cxgbit_sock *csk, struct cpl_pass_accept_req *req)
 		SMAC_SEL_V(csk->smac_idx) |
 		DSCP_V(csk->tos >> 2) |
 		ULP_MODE_V(ULP_MODE_ISCSI) |
-		RCV_BUFSIZ_V(win);
+		RCV_बफ_मान_V(win);
 
 	opt2 = RX_CHANNEL_V(0) |
 		RSS_QUEUE_VALID_F | RSS_QUEUE_V(csk->rss_qid);
 
-	if (!is_t5(lldi->adapter_type))
+	अगर (!is_t5(lldi->adapter_type))
 		opt2 |= RX_FC_DISABLE_F;
 
-	if (req->tcpopt.tstamp)
+	अगर (req->tcpopt.tstamp)
 		opt2 |= TSTAMPS_EN_F;
-	if (req->tcpopt.sack)
+	अगर (req->tcpopt.sack)
 		opt2 |= SACK_EN_F;
-	if (wscale)
+	अगर (wscale)
 		opt2 |= WND_SCALE_EN_F;
 
 	hlen = ntohl(req->hdr_len);
 
-	if (is_t5(lldi->adapter_type))
-		tcph = (struct tcphdr *)((u8 *)(req + 1) +
+	अगर (is_t5(lldi->adapter_type))
+		tcph = (काष्ठा tcphdr *)((u8 *)(req + 1) +
 		       ETH_HDR_LEN_G(hlen) + IP_HDR_LEN_G(hlen));
-	else
-		tcph = (struct tcphdr *)((u8 *)(req + 1) +
+	अन्यथा
+		tcph = (काष्ठा tcphdr *)((u8 *)(req + 1) +
 		       T6_ETH_HDR_LEN_G(hlen) + T6_IP_HDR_LEN_G(hlen));
 
-	if (tcph->ece && tcph->cwr)
+	अगर (tcph->ece && tcph->cwr)
 		opt2 |= CCTRL_ECN_V(1);
 
 	opt2 |= RX_COALESCE_V(3);
 	opt2 |= CONG_CNTRL_V(CONG_ALG_NEWRENO);
 
 	opt2 |= T5_ISS_F;
-	rpl5->iss = cpu_to_be32((prandom_u32() & ~7UL) - 1);
+	rpl5->iss = cpu_to_be32((pअक्रमom_u32() & ~7UL) - 1);
 
 	opt2 |= T5_OPT_2_VALID_F;
 
@@ -1210,54 +1211,54 @@ cxgbit_pass_accept_rpl(struct cxgbit_sock *csk, struct cpl_pass_accept_req *req)
 	set_wr_txq(skb, CPL_PRIORITY_SETUP, csk->ctrlq_idx);
 	t4_set_arp_err_handler(skb, csk, cxgbit_arp_failure_discard);
 	cxgbit_l2t_send(csk->com.cdev, skb, csk->l2t);
-}
+पूर्ण
 
-static void
-cxgbit_pass_accept_req(struct cxgbit_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbit_sock *csk = NULL;
-	struct cxgbit_np *cnp;
-	struct cpl_pass_accept_req *req = cplhdr(skb);
-	unsigned int stid = PASS_OPEN_TID_G(ntohl(req->tos_stid));
-	struct tid_info *t = cdev->lldi.tids;
-	unsigned int tid = GET_TID(req);
+अटल व्योम
+cxgbit_pass_accept_req(काष्ठा cxgbit_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbit_sock *csk = शून्य;
+	काष्ठा cxgbit_np *cnp;
+	काष्ठा cpl_pass_accept_req *req = cplhdr(skb);
+	अचिन्हित पूर्णांक stid = PASS_OPEN_TID_G(ntohl(req->tos_stid));
+	काष्ठा tid_info *t = cdev->lldi.tids;
+	अचिन्हित पूर्णांक tid = GET_TID(req);
 	u16 peer_mss = ntohs(req->tcpopt.mss);
-	unsigned short hdrs;
+	अचिन्हित लघु hdrs;
 
-	struct dst_entry *dst;
+	काष्ठा dst_entry *dst;
 	__u8 local_ip[16], peer_ip[16];
 	__be16 local_port, peer_port;
-	int ret;
-	int iptype;
+	पूर्णांक ret;
+	पूर्णांक iptype;
 
 	pr_debug("%s: cdev = %p; stid = %u; tid = %u\n",
 		 __func__, cdev, stid, tid);
 
 	cnp = lookup_stid(t, stid);
-	if (!cnp) {
+	अगर (!cnp) अणु
 		pr_err("%s connect request on invalid stid %d\n",
 		       __func__, stid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
-	if (cnp->com.state != CSK_STATE_LISTEN) {
+	अगर (cnp->com.state != CSK_STATE_LISTEN) अणु
 		pr_err("%s - listening parent not in CSK_STATE_LISTEN\n",
 		       __func__);
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
 	csk = lookup_tid(t, tid);
-	if (csk) {
+	अगर (csk) अणु
 		pr_err("%s csk not null tid %u\n",
 		       __func__, tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	cxgb_get_4tuple(req, cdev->lldi.adapter_type, &iptype, local_ip,
 			peer_ip, &local_port, &peer_port);
 
 	/* Find output route */
-	if (iptype == 4)  {
+	अगर (iptype == 4)  अणु
 		pr_debug("%s parent sock %p tid %u laddr %pI4 raddr %pI4 "
 			 "lport %d rport %d peer_mss %d\n"
 			 , __func__, cnp, tid,
@@ -1268,7 +1269,7 @@ cxgbit_pass_accept_req(struct cxgbit_device *cdev, struct sk_buff *skb)
 				      *(__be32 *)peer_ip,
 				      local_port, peer_port,
 				      PASS_OPEN_TOS_G(ntohl(req->tos_stid)));
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_debug("%s parent sock %p tid %u laddr %pI6 raddr %pI6 "
 			 "lport %d rport %d peer_mss %d\n"
 			 , __func__, cnp, tid,
@@ -1278,39 +1279,39 @@ cxgbit_pass_accept_req(struct cxgbit_device *cdev, struct sk_buff *skb)
 				       local_ip, peer_ip,
 				       local_port, peer_port,
 				       PASS_OPEN_TOS_G(ntohl(req->tos_stid)),
-				       ((struct sockaddr_in6 *)
+				       ((काष्ठा sockaddr_in6 *)
 					&cnp->com.local_addr)->sin6_scope_id);
-	}
-	if (!dst) {
+	पूर्ण
+	अगर (!dst) अणु
 		pr_err("%s - failed to find dst entry!\n",
 		       __func__);
-		goto reject;
-	}
+		जाओ reject;
+	पूर्ण
 
-	csk = kzalloc(sizeof(*csk), GFP_ATOMIC);
-	if (!csk) {
+	csk = kzalloc(माप(*csk), GFP_ATOMIC);
+	अगर (!csk) अणु
 		dst_release(dst);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	ret = cxgbit_offload_init(csk, iptype, peer_ip, ntohs(local_port),
 				  dst, cdev);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("%s - failed to allocate l2t entry!\n",
 		       __func__);
 		dst_release(dst);
-		kfree(csk);
-		goto reject;
-	}
+		kमुक्त(csk);
+		जाओ reject;
+	पूर्ण
 
 	kref_init(&csk->kref);
-	init_completion(&csk->com.wr_wait.completion);
+	init_completion(&csk->com.wr_रुको.completion);
 
 	INIT_LIST_HEAD(&csk->accept_node);
 
-	hdrs = (iptype == 4 ? sizeof(struct iphdr) : sizeof(struct ipv6hdr)) +
-		sizeof(struct tcphdr) +	(req->tcpopt.tstamp ? 12 : 0);
-	if (peer_mss && csk->mtu > (peer_mss + hdrs))
+	hdrs = (iptype == 4 ? माप(काष्ठा iphdr) : माप(काष्ठा ipv6hdr)) +
+		माप(काष्ठा tcphdr) +	(req->tcpopt.tstamp ? 12 : 0);
+	अगर (peer_mss && csk->mtu > (peer_mss + hdrs))
 		csk->mtu = peer_mss + hdrs;
 
 	csk->com.state = CSK_STATE_CONNECTING;
@@ -1320,37 +1321,37 @@ cxgbit_pass_accept_req(struct cxgbit_device *cdev, struct sk_buff *skb)
 	csk->dst = dst;
 	csk->tid = tid;
 	csk->wr_cred = cdev->lldi.wr_cred -
-			DIV_ROUND_UP(sizeof(struct cpl_abort_req), 16);
+			DIV_ROUND_UP(माप(काष्ठा cpl_पात_req), 16);
 	csk->wr_max_cred = csk->wr_cred;
 	csk->wr_una_cred = 0;
 
-	if (iptype == 4) {
-		struct sockaddr_in *sin = (struct sockaddr_in *)
+	अगर (iptype == 4) अणु
+		काष्ठा sockaddr_in *sin = (काष्ठा sockaddr_in *)
 					  &csk->com.local_addr;
 		sin->sin_family = AF_INET;
 		sin->sin_port = local_port;
 		sin->sin_addr.s_addr = *(__be32 *)local_ip;
 
-		sin = (struct sockaddr_in *)&csk->com.remote_addr;
+		sin = (काष्ठा sockaddr_in *)&csk->com.remote_addr;
 		sin->sin_family = AF_INET;
 		sin->sin_port = peer_port;
 		sin->sin_addr.s_addr = *(__be32 *)peer_ip;
-	} else {
-		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)
+	पूर्ण अन्यथा अणु
+		काष्ठा sockaddr_in6 *sin6 = (काष्ठा sockaddr_in6 *)
 					    &csk->com.local_addr;
 
 		sin6->sin6_family = PF_INET6;
 		sin6->sin6_port = local_port;
-		memcpy(sin6->sin6_addr.s6_addr, local_ip, 16);
+		स_नकल(sin6->sin6_addr.s6_addr, local_ip, 16);
 		cxgb4_clip_get(cdev->lldi.ports[0],
-			       (const u32 *)&sin6->sin6_addr.s6_addr,
+			       (स्थिर u32 *)&sin6->sin6_addr.s6_addr,
 			       1);
 
-		sin6 = (struct sockaddr_in6 *)&csk->com.remote_addr;
+		sin6 = (काष्ठा sockaddr_in6 *)&csk->com.remote_addr;
 		sin6->sin6_family = PF_INET6;
 		sin6->sin6_port = peer_port;
-		memcpy(sin6->sin6_addr.s6_addr, peer_ip, 16);
-	}
+		स_नकल(sin6->sin6_addr.s6_addr, peer_ip, 16);
+	पूर्ण
 
 	skb_queue_head_init(&csk->rxq);
 	skb_queue_head_init(&csk->txq);
@@ -1359,14 +1360,14 @@ cxgbit_pass_accept_req(struct cxgbit_device *cdev, struct sk_buff *skb)
 	skb_queue_head_init(&csk->skbq);
 	cxgbit_sock_reset_wr_list(csk);
 	spin_lock_init(&csk->lock);
-	init_waitqueue_head(&csk->waitq);
+	init_रुकोqueue_head(&csk->रुकोq);
 	csk->lock_owner = false;
 
-	if (cxgbit_alloc_csk_skb(csk)) {
+	अगर (cxgbit_alloc_csk_skb(csk)) अणु
 		dst_release(dst);
-		kfree(csk);
-		goto rel_skb;
-	}
+		kमुक्त(csk);
+		जाओ rel_skb;
+	पूर्ण
 
 	cxgbit_get_cnp(cnp);
 	cxgbit_get_cdev(cdev);
@@ -1376,53 +1377,53 @@ cxgbit_pass_accept_req(struct cxgbit_device *cdev, struct sk_buff *skb)
 	spin_unlock(&cdev->cskq.lock);
 	cxgb4_insert_tid(t, csk, tid, csk->com.local_addr.ss_family);
 	cxgbit_pass_accept_rpl(csk, req);
-	goto rel_skb;
+	जाओ rel_skb;
 
 reject:
 	cxgbit_release_tid(cdev, tid);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static u32
-cxgbit_tx_flowc_wr_credits(struct cxgbit_sock *csk, u32 *nparamsp,
+अटल u32
+cxgbit_tx_flowc_wr_credits(काष्ठा cxgbit_sock *csk, u32 *nparamsp,
 			   u32 *flowclenp)
-{
+अणु
 	u32 nparams, flowclen16, flowclen;
 
 	nparams = FLOWC_WR_NPARAMS_MIN;
 
-	if (csk->snd_wscale)
+	अगर (csk->snd_wscale)
 		nparams++;
 
-#ifdef CONFIG_CHELSIO_T4_DCB
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
 	nparams++;
-#endif
-	flowclen = offsetof(struct fw_flowc_wr, mnemval[nparams]);
+#पूर्ण_अगर
+	flowclen = दुरत्व(काष्ठा fw_flowc_wr, mnemval[nparams]);
 	flowclen16 = DIV_ROUND_UP(flowclen, 16);
 	flowclen = flowclen16 * 16;
 	/*
 	 * Return the number of 16-byte credits used by the flowc request.
-	 * Pass back the nparams and actual flowc length if requested.
+	 * Pass back the nparams and actual flowc length अगर requested.
 	 */
-	if (nparamsp)
+	अगर (nparamsp)
 		*nparamsp = nparams;
-	if (flowclenp)
+	अगर (flowclenp)
 		*flowclenp = flowclen;
-	return flowclen16;
-}
+	वापस flowclen16;
+पूर्ण
 
-u32 cxgbit_send_tx_flowc_wr(struct cxgbit_sock *csk)
-{
-	struct cxgbit_device *cdev = csk->com.cdev;
-	struct fw_flowc_wr *flowc;
+u32 cxgbit_send_tx_flowc_wr(काष्ठा cxgbit_sock *csk)
+अणु
+	काष्ठा cxgbit_device *cdev = csk->com.cdev;
+	काष्ठा fw_flowc_wr *flowc;
 	u32 nparams, flowclen16, flowclen;
-	struct sk_buff *skb;
+	काष्ठा sk_buff *skb;
 	u8 index;
 
-#ifdef CONFIG_CHELSIO_T4_DCB
-	u16 vlan = ((struct l2t_entry *)csk->l2t)->vlan;
-#endif
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
+	u16 vlan = ((काष्ठा l2t_entry *)csk->l2t)->vlan;
+#पूर्ण_अगर
 
 	flowclen16 = cxgbit_tx_flowc_wr_credits(csk, &nparams, &flowclen);
 
@@ -1452,28 +1453,28 @@ u32 cxgbit_send_tx_flowc_wr(struct cxgbit_sock *csk)
 	flowc->mnemval[7].val = cpu_to_be32(csk->emss);
 
 	flowc->mnemval[8].mnemonic = FW_FLOWC_MNEM_TXDATAPLEN_MAX;
-	if (test_bit(CDEV_ISO_ENABLE, &cdev->flags))
+	अगर (test_bit(CDEV_ISO_ENABLE, &cdev->flags))
 		flowc->mnemval[8].val = cpu_to_be32(CXGBIT_MAX_ISO_PAYLOAD);
-	else
+	अन्यथा
 		flowc->mnemval[8].val = cpu_to_be32(16384);
 
 	index = 9;
 
-	if (csk->snd_wscale) {
+	अगर (csk->snd_wscale) अणु
 		flowc->mnemval[index].mnemonic = FW_FLOWC_MNEM_RCV_SCALE;
 		flowc->mnemval[index].val = cpu_to_be32(csk->snd_wscale);
 		index++;
-	}
+	पूर्ण
 
-#ifdef CONFIG_CHELSIO_T4_DCB
+#अगर_घोषित CONFIG_CHELSIO_T4_DCB
 	flowc->mnemval[index].mnemonic = FW_FLOWC_MNEM_DCBPRIO;
-	if (vlan == VLAN_NONE) {
+	अगर (vlan == VLAN_NONE) अणु
 		pr_warn("csk %u without VLAN Tag on DCB Link\n", csk->tid);
 		flowc->mnemval[index].val = cpu_to_be32(0);
-	} else
+	पूर्ण अन्यथा
 		flowc->mnemval[index].val = cpu_to_be32(
 				(vlan & VLAN_PRIO_MASK) >> VLAN_PRIO_SHIFT);
-#endif
+#पूर्ण_अगर
 
 	pr_debug("%s: csk %p; tx_chan = %u; rss_qid = %u; snd_seq = %u;"
 		 " rcv_seq = %u; snd_win = %u; emss = %u\n",
@@ -1481,41 +1482,41 @@ u32 cxgbit_send_tx_flowc_wr(struct cxgbit_sock *csk)
 		 csk->rcv_nxt, csk->snd_win, csk->emss);
 	set_wr_txq(skb, CPL_PRIORITY_DATA, csk->txq_idx);
 	cxgbit_ofld_send(csk->com.cdev, skb);
-	return flowclen16;
-}
+	वापस flowclen16;
+पूर्ण
 
-static int
-cxgbit_send_tcb_skb(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
+अटल पूर्णांक
+cxgbit_send_tcb_skb(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
 	spin_lock_bh(&csk->lock);
-	if (unlikely(csk->com.state != CSK_STATE_ESTABLISHED)) {
+	अगर (unlikely(csk->com.state != CSK_STATE_ESTABLISHED)) अणु
 		spin_unlock_bh(&csk->lock);
 		pr_err("%s: csk 0x%p, tid %u, state %u\n",
 		       __func__, csk, csk->tid, csk->com.state);
-		__kfree_skb(skb);
-		return -1;
-	}
+		__kमुक्त_skb(skb);
+		वापस -1;
+	पूर्ण
 
 	cxgbit_get_csk(csk);
-	cxgbit_init_wr_wait(&csk->com.wr_wait);
+	cxgbit_init_wr_रुको(&csk->com.wr_रुको);
 	cxgbit_ofld_send(csk->com.cdev, skb);
 	spin_unlock_bh(&csk->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cxgbit_setup_conn_digest(struct cxgbit_sock *csk)
-{
-	struct sk_buff *skb;
-	struct cpl_set_tcb_field *req;
+पूर्णांक cxgbit_setup_conn_digest(काष्ठा cxgbit_sock *csk)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा cpl_set_tcb_field *req;
 	u8 hcrc = csk->submode & CXGBIT_SUBMODE_HCRC;
 	u8 dcrc = csk->submode & CXGBIT_SUBMODE_DCRC;
-	unsigned int len = roundup(sizeof(*req), 16);
-	int ret;
+	अचिन्हित पूर्णांक len = roundup(माप(*req), 16);
+	पूर्णांक ret;
 
 	skb = alloc_skb(len, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	/*  set up ulp submode */
 	req = __skb_put_zero(skb, len);
@@ -1529,28 +1530,28 @@ int cxgbit_setup_conn_digest(struct cxgbit_sock *csk)
 				(dcrc ? ULP_CRC_DATA : 0)) << 4);
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, csk->ctrlq_idx);
 
-	if (cxgbit_send_tcb_skb(csk, skb))
-		return -1;
+	अगर (cxgbit_send_tcb_skb(csk, skb))
+		वापस -1;
 
-	ret = cxgbit_wait_for_reply(csk->com.cdev,
-				    &csk->com.wr_wait,
+	ret = cxgbit_रुको_क्रम_reply(csk->com.cdev,
+				    &csk->com.wr_रुको,
 				    csk->tid, 5, __func__);
-	if (ret)
-		return -1;
+	अगर (ret)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cxgbit_setup_conn_pgidx(struct cxgbit_sock *csk, u32 pg_idx)
-{
-	struct sk_buff *skb;
-	struct cpl_set_tcb_field *req;
-	unsigned int len = roundup(sizeof(*req), 16);
-	int ret;
+पूर्णांक cxgbit_setup_conn_pgidx(काष्ठा cxgbit_sock *csk, u32 pg_idx)
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा cpl_set_tcb_field *req;
+	अचिन्हित पूर्णांक len = roundup(माप(*req), 16);
+	पूर्णांक ret;
 
 	skb = alloc_skb(len, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	req = __skb_put_zero(skb, len);
 
@@ -1562,92 +1563,92 @@ int cxgbit_setup_conn_pgidx(struct cxgbit_sock *csk, u32 pg_idx)
 	req->val = cpu_to_be64(pg_idx << 8);
 	set_wr_txq(skb, CPL_PRIORITY_CONTROL, csk->ctrlq_idx);
 
-	if (cxgbit_send_tcb_skb(csk, skb))
-		return -1;
+	अगर (cxgbit_send_tcb_skb(csk, skb))
+		वापस -1;
 
-	ret = cxgbit_wait_for_reply(csk->com.cdev,
-				    &csk->com.wr_wait,
+	ret = cxgbit_रुको_क्रम_reply(csk->com.cdev,
+				    &csk->com.wr_रुको,
 				    csk->tid, 5, __func__);
-	if (ret)
-		return -1;
+	अगर (ret)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-cxgbit_pass_open_rpl(struct cxgbit_device *cdev, struct sk_buff *skb)
-{
-	struct cpl_pass_open_rpl *rpl = cplhdr(skb);
-	struct tid_info *t = cdev->lldi.tids;
-	unsigned int stid = GET_TID(rpl);
-	struct cxgbit_np *cnp = lookup_stid(t, stid);
-
-	pr_debug("%s: cnp = %p; stid = %u; status = %d\n",
-		 __func__, cnp, stid, rpl->status);
-
-	if (!cnp) {
-		pr_info("%s stid %d lookup failure\n", __func__, stid);
-		goto rel_skb;
-	}
-
-	cxgbit_wake_up(&cnp->com.wr_wait, __func__, rpl->status);
-	cxgbit_put_cnp(cnp);
-rel_skb:
-	__kfree_skb(skb);
-}
-
-static void
-cxgbit_close_listsrv_rpl(struct cxgbit_device *cdev, struct sk_buff *skb)
-{
-	struct cpl_close_listsvr_rpl *rpl = cplhdr(skb);
-	struct tid_info *t = cdev->lldi.tids;
-	unsigned int stid = GET_TID(rpl);
-	struct cxgbit_np *cnp = lookup_stid(t, stid);
+अटल व्योम
+cxgbit_pass_खोलो_rpl(काष्ठा cxgbit_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_pass_खोलो_rpl *rpl = cplhdr(skb);
+	काष्ठा tid_info *t = cdev->lldi.tids;
+	अचिन्हित पूर्णांक stid = GET_TID(rpl);
+	काष्ठा cxgbit_np *cnp = lookup_stid(t, stid);
 
 	pr_debug("%s: cnp = %p; stid = %u; status = %d\n",
 		 __func__, cnp, stid, rpl->status);
 
-	if (!cnp) {
+	अगर (!cnp) अणु
 		pr_info("%s stid %d lookup failure\n", __func__, stid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
-	cxgbit_wake_up(&cnp->com.wr_wait, __func__, rpl->status);
+	cxgbit_wake_up(&cnp->com.wr_रुको, __func__, rpl->status);
 	cxgbit_put_cnp(cnp);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void
-cxgbit_pass_establish(struct cxgbit_device *cdev, struct sk_buff *skb)
-{
-	struct cpl_pass_establish *req = cplhdr(skb);
-	struct tid_info *t = cdev->lldi.tids;
-	unsigned int tid = GET_TID(req);
-	struct cxgbit_sock *csk;
-	struct cxgbit_np *cnp;
+अटल व्योम
+cxgbit_बंद_listsrv_rpl(काष्ठा cxgbit_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_बंद_listsvr_rpl *rpl = cplhdr(skb);
+	काष्ठा tid_info *t = cdev->lldi.tids;
+	अचिन्हित पूर्णांक stid = GET_TID(rpl);
+	काष्ठा cxgbit_np *cnp = lookup_stid(t, stid);
+
+	pr_debug("%s: cnp = %p; stid = %u; status = %d\n",
+		 __func__, cnp, stid, rpl->status);
+
+	अगर (!cnp) अणु
+		pr_info("%s stid %d lookup failure\n", __func__, stid);
+		जाओ rel_skb;
+	पूर्ण
+
+	cxgbit_wake_up(&cnp->com.wr_रुको, __func__, rpl->status);
+	cxgbit_put_cnp(cnp);
+rel_skb:
+	__kमुक्त_skb(skb);
+पूर्ण
+
+अटल व्योम
+cxgbit_pass_establish(काष्ठा cxgbit_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_pass_establish *req = cplhdr(skb);
+	काष्ठा tid_info *t = cdev->lldi.tids;
+	अचिन्हित पूर्णांक tid = GET_TID(req);
+	काष्ठा cxgbit_sock *csk;
+	काष्ठा cxgbit_np *cnp;
 	u16 tcp_opt = be16_to_cpu(req->tcp_opt);
 	u32 snd_isn = be32_to_cpu(req->snd_isn);
 	u32 rcv_isn = be32_to_cpu(req->rcv_isn);
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find connection for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 	cnp = csk->cnp;
 
 	pr_debug("%s: csk %p; tid %u; cnp %p\n",
 		 __func__, csk, tid, cnp);
 
-	csk->write_seq = snd_isn;
+	csk->ग_लिखो_seq = snd_isn;
 	csk->snd_una = snd_isn;
 	csk->snd_nxt = snd_isn;
 
 	csk->rcv_nxt = rcv_isn;
 
-	if (csk->rcv_win > (RCV_BUFSIZ_M << 10))
-		csk->rx_credits = (csk->rcv_win - (RCV_BUFSIZ_M << 10));
+	अगर (csk->rcv_win > (RCV_बफ_मान_M << 10))
+		csk->rx_credits = (csk->rcv_win - (RCV_बफ_मान_M << 10));
 
 	csk->snd_wscale = TCPOPT_SND_WSCALE_G(tcp_opt);
 	cxgbit_set_emss(csk, tcp_opt);
@@ -1658,356 +1659,356 @@ cxgbit_pass_establish(struct cxgbit_device *cdev, struct sk_buff *skb)
 	spin_unlock_bh(&cnp->np_accept_lock);
 	complete(&cnp->accept_comp);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void cxgbit_queue_rx_skb(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
+अटल व्योम cxgbit_queue_rx_skb(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
 	cxgbit_skcb_flags(skb) = 0;
 	spin_lock_bh(&csk->rxq.lock);
 	__skb_queue_tail(&csk->rxq, skb);
 	spin_unlock_bh(&csk->rxq.lock);
-	wake_up(&csk->waitq);
-}
+	wake_up(&csk->रुकोq);
+पूर्ण
 
-static void cxgbit_peer_close(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
+अटल व्योम cxgbit_peer_बंद(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
 	pr_debug("%s: csk %p; tid %u; state %d\n",
 		 __func__, csk, csk->tid, csk->com.state);
 
-	switch (csk->com.state) {
-	case CSK_STATE_ESTABLISHED:
+	चयन (csk->com.state) अणु
+	हाल CSK_STATE_ESTABLISHED:
 		csk->com.state = CSK_STATE_CLOSING;
 		cxgbit_queue_rx_skb(csk, skb);
-		return;
-	case CSK_STATE_CLOSING:
-		/* simultaneous close */
+		वापस;
+	हाल CSK_STATE_CLOSING:
+		/* simultaneous बंद */
 		csk->com.state = CSK_STATE_MORIBUND;
-		break;
-	case CSK_STATE_MORIBUND:
+		अवरोध;
+	हाल CSK_STATE_MORIBUND:
 		csk->com.state = CSK_STATE_DEAD;
 		cxgbit_put_csk(csk);
-		break;
-	case CSK_STATE_ABORTING:
-		break;
-	default:
+		अवरोध;
+	हाल CSK_STATE_ABORTING:
+		अवरोध;
+	शेष:
 		pr_info("%s: cpl_peer_close in bad state %d\n",
 			__func__, csk->com.state);
-	}
+	पूर्ण
 
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void cxgbit_close_con_rpl(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
+अटल व्योम cxgbit_बंद_con_rpl(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
 	pr_debug("%s: csk %p; tid %u; state %d\n",
 		 __func__, csk, csk->tid, csk->com.state);
 
-	switch (csk->com.state) {
-	case CSK_STATE_CLOSING:
+	चयन (csk->com.state) अणु
+	हाल CSK_STATE_CLOSING:
 		csk->com.state = CSK_STATE_MORIBUND;
-		break;
-	case CSK_STATE_MORIBUND:
+		अवरोध;
+	हाल CSK_STATE_MORIBUND:
 		csk->com.state = CSK_STATE_DEAD;
 		cxgbit_put_csk(csk);
-		break;
-	case CSK_STATE_ABORTING:
-	case CSK_STATE_DEAD:
-		break;
-	default:
+		अवरोध;
+	हाल CSK_STATE_ABORTING:
+	हाल CSK_STATE_DEAD:
+		अवरोध;
+	शेष:
 		pr_info("%s: cpl_close_con_rpl in bad state %d\n",
 			__func__, csk->com.state);
-	}
+	पूर्ण
 
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void cxgbit_abort_req_rss(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
-	struct cpl_abort_req_rss *hdr = cplhdr(skb);
-	unsigned int tid = GET_TID(hdr);
-	struct sk_buff *rpl_skb;
+अटल व्योम cxgbit_पात_req_rss(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_पात_req_rss *hdr = cplhdr(skb);
+	अचिन्हित पूर्णांक tid = GET_TID(hdr);
+	काष्ठा sk_buff *rpl_skb;
 	bool release = false;
-	bool wakeup_thread = false;
-	u32 len = roundup(sizeof(struct cpl_abort_rpl), 16);
+	bool wakeup_thपढ़ो = false;
+	u32 len = roundup(माप(काष्ठा cpl_पात_rpl), 16);
 
 	pr_debug("%s: csk %p; tid %u; state %d\n",
 		 __func__, csk, tid, csk->com.state);
 
-	if (cxgb_is_neg_adv(hdr->status)) {
+	अगर (cxgb_is_neg_adv(hdr->status)) अणु
 		pr_err("%s: got neg advise %d on tid %u\n",
 		       __func__, hdr->status, tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
-	switch (csk->com.state) {
-	case CSK_STATE_CONNECTING:
-	case CSK_STATE_MORIBUND:
+	चयन (csk->com.state) अणु
+	हाल CSK_STATE_CONNECTING:
+	हाल CSK_STATE_MORIBUND:
 		csk->com.state = CSK_STATE_DEAD;
 		release = true;
-		break;
-	case CSK_STATE_ESTABLISHED:
+		अवरोध;
+	हाल CSK_STATE_ESTABLISHED:
 		csk->com.state = CSK_STATE_DEAD;
-		wakeup_thread = true;
-		break;
-	case CSK_STATE_CLOSING:
+		wakeup_thपढ़ो = true;
+		अवरोध;
+	हाल CSK_STATE_CLOSING:
 		csk->com.state = CSK_STATE_DEAD;
-		if (!csk->conn)
+		अगर (!csk->conn)
 			release = true;
-		break;
-	case CSK_STATE_ABORTING:
-		break;
-	default:
+		अवरोध;
+	हाल CSK_STATE_ABORTING:
+		अवरोध;
+	शेष:
 		pr_info("%s: cpl_abort_req_rss in bad state %d\n",
 			__func__, csk->com.state);
 		csk->com.state = CSK_STATE_DEAD;
-	}
+	पूर्ण
 
 	__skb_queue_purge(&csk->txq);
 
-	if (!test_and_set_bit(CSK_TX_DATA_SENT, &csk->com.flags))
+	अगर (!test_and_set_bit(CSK_TX_DATA_SENT, &csk->com.flags))
 		cxgbit_send_tx_flowc_wr(csk);
 
 	rpl_skb = __skb_dequeue(&csk->skbq);
 
-	cxgb_mk_abort_rpl(rpl_skb, len, csk->tid, csk->txq_idx);
+	cxgb_mk_पात_rpl(rpl_skb, len, csk->tid, csk->txq_idx);
 	cxgbit_ofld_send(csk->com.cdev, rpl_skb);
 
-	if (wakeup_thread) {
+	अगर (wakeup_thपढ़ो) अणु
 		cxgbit_queue_rx_skb(csk, skb);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (release)
+	अगर (release)
 		cxgbit_put_csk(csk);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void cxgbit_abort_rpl_rss(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
-	struct cpl_abort_rpl_rss *rpl = cplhdr(skb);
+अटल व्योम cxgbit_पात_rpl_rss(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_पात_rpl_rss *rpl = cplhdr(skb);
 
 	pr_debug("%s: csk %p; tid %u; state %d\n",
 		 __func__, csk, csk->tid, csk->com.state);
 
-	switch (csk->com.state) {
-	case CSK_STATE_ABORTING:
+	चयन (csk->com.state) अणु
+	हाल CSK_STATE_ABORTING:
 		csk->com.state = CSK_STATE_DEAD;
-		if (test_bit(CSK_ABORT_RPL_WAIT, &csk->com.flags))
-			cxgbit_wake_up(&csk->com.wr_wait, __func__,
+		अगर (test_bit(CSK_ABORT_RPL_WAIT, &csk->com.flags))
+			cxgbit_wake_up(&csk->com.wr_रुको, __func__,
 				       rpl->status);
 		cxgbit_put_csk(csk);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_info("%s: cpl_abort_rpl_rss in state %d\n",
 			__func__, csk->com.state);
-	}
+	पूर्ण
 
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static bool cxgbit_credit_err(const struct cxgbit_sock *csk)
-{
-	const struct sk_buff *skb = csk->wr_pending_head;
+अटल bool cxgbit_credit_err(स्थिर काष्ठा cxgbit_sock *csk)
+अणु
+	स्थिर काष्ठा sk_buff *skb = csk->wr_pending_head;
 	u32 credit = 0;
 
-	if (unlikely(csk->wr_cred > csk->wr_max_cred)) {
+	अगर (unlikely(csk->wr_cred > csk->wr_max_cred)) अणु
 		pr_err("csk 0x%p, tid %u, credit %u > %u\n",
 		       csk, csk->tid, csk->wr_cred, csk->wr_max_cred);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	while (skb) {
-		credit += (__force u32)skb->csum;
+	जबतक (skb) अणु
+		credit += (__क्रमce u32)skb->csum;
 		skb = cxgbit_skcb_tx_wr_next(skb);
-	}
+	पूर्ण
 
-	if (unlikely((csk->wr_cred + credit) != csk->wr_max_cred)) {
+	अगर (unlikely((csk->wr_cred + credit) != csk->wr_max_cred)) अणु
 		pr_err("csk 0x%p, tid %u, credit %u + %u != %u.\n",
 		       csk, csk->tid, csk->wr_cred,
 		       credit, csk->wr_max_cred);
 
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void cxgbit_fw4_ack(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
-	struct cpl_fw4_ack *rpl = (struct cpl_fw4_ack *)cplhdr(skb);
+अटल व्योम cxgbit_fw4_ack(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cpl_fw4_ack *rpl = (काष्ठा cpl_fw4_ack *)cplhdr(skb);
 	u32 credits = rpl->credits;
 	u32 snd_una = ntohl(rpl->snd_una);
 
 	csk->wr_cred += credits;
-	if (csk->wr_una_cred > (csk->wr_max_cred - csk->wr_cred))
+	अगर (csk->wr_una_cred > (csk->wr_max_cred - csk->wr_cred))
 		csk->wr_una_cred = csk->wr_max_cred - csk->wr_cred;
 
-	while (credits) {
-		struct sk_buff *p = cxgbit_sock_peek_wr(csk);
+	जबतक (credits) अणु
+		काष्ठा sk_buff *p = cxgbit_sock_peek_wr(csk);
 		u32 csum;
 
-		if (unlikely(!p)) {
+		अगर (unlikely(!p)) अणु
 			pr_err("csk 0x%p,%u, cr %u,%u+%u, empty.\n",
 			       csk, csk->tid, credits,
 			       csk->wr_cred, csk->wr_una_cred);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		csum = (__force u32)p->csum;
-		if (unlikely(credits < csum)) {
+		csum = (__क्रमce u32)p->csum;
+		अगर (unlikely(credits < csum)) अणु
 			pr_warn("csk 0x%p,%u, cr %u,%u+%u, < %u.\n",
 				csk,  csk->tid,
 				credits, csk->wr_cred, csk->wr_una_cred,
 				csum);
-			p->csum = (__force __wsum)(csum - credits);
-			break;
-		}
+			p->csum = (__क्रमce __wsum)(csum - credits);
+			अवरोध;
+		पूर्ण
 
 		cxgbit_sock_dequeue_wr(csk);
 		credits -= csum;
-		kfree_skb(p);
-	}
+		kमुक्त_skb(p);
+	पूर्ण
 
-	if (unlikely(cxgbit_credit_err(csk))) {
+	अगर (unlikely(cxgbit_credit_err(csk))) अणु
 		cxgbit_queue_rx_skb(csk, skb);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (rpl->seq_vld & CPL_FW4_ACK_FLAGS_SEQVAL) {
-		if (unlikely(before(snd_una, csk->snd_una))) {
+	अगर (rpl->seq_vld & CPL_FW4_ACK_FLAGS_SEQVAL) अणु
+		अगर (unlikely(beक्रमe(snd_una, csk->snd_una))) अणु
 			pr_warn("csk 0x%p,%u, snd_una %u/%u.",
 				csk, csk->tid, snd_una,
 				csk->snd_una);
-			goto rel_skb;
-		}
+			जाओ rel_skb;
+		पूर्ण
 
-		if (csk->snd_una != snd_una) {
+		अगर (csk->snd_una != snd_una) अणु
 			csk->snd_una = snd_una;
 			dst_confirm(csk->dst);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (skb_queue_len(&csk->txq))
+	अगर (skb_queue_len(&csk->txq))
 		cxgbit_push_tx_frames(csk);
 
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void cxgbit_set_tcb_rpl(struct cxgbit_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbit_sock *csk;
-	struct cpl_set_tcb_rpl *rpl = (struct cpl_set_tcb_rpl *)skb->data;
-	unsigned int tid = GET_TID(rpl);
-	struct cxgb4_lld_info *lldi = &cdev->lldi;
-	struct tid_info *t = lldi->tids;
+अटल व्योम cxgbit_set_tcb_rpl(काष्ठा cxgbit_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbit_sock *csk;
+	काष्ठा cpl_set_tcb_rpl *rpl = (काष्ठा cpl_set_tcb_rpl *)skb->data;
+	अचिन्हित पूर्णांक tid = GET_TID(rpl);
+	काष्ठा cxgb4_lld_info *lldi = &cdev->lldi;
+	काष्ठा tid_info *t = lldi->tids;
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find connection for tid %u.\n", tid);
-		goto rel_skb;
-	} else {
-		cxgbit_wake_up(&csk->com.wr_wait, __func__, rpl->status);
-	}
+		जाओ rel_skb;
+	पूर्ण अन्यथा अणु
+		cxgbit_wake_up(&csk->com.wr_रुको, __func__, rpl->status);
+	पूर्ण
 
 	cxgbit_put_csk(csk);
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void cxgbit_rx_data(struct cxgbit_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbit_sock *csk;
-	struct cpl_rx_data *cpl = cplhdr(skb);
-	unsigned int tid = GET_TID(cpl);
-	struct cxgb4_lld_info *lldi = &cdev->lldi;
-	struct tid_info *t = lldi->tids;
+अटल व्योम cxgbit_rx_data(काष्ठा cxgbit_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbit_sock *csk;
+	काष्ठा cpl_rx_data *cpl = cplhdr(skb);
+	अचिन्हित पूर्णांक tid = GET_TID(cpl);
+	काष्ठा cxgb4_lld_info *lldi = &cdev->lldi;
+	काष्ठा tid_info *t = lldi->tids;
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find conn. for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
 	cxgbit_queue_rx_skb(csk, skb);
-	return;
+	वापस;
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-static void
-__cxgbit_process_rx_cpl(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
+अटल व्योम
+__cxgbit_process_rx_cpl(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
 	spin_lock(&csk->lock);
-	if (csk->lock_owner) {
+	अगर (csk->lock_owner) अणु
 		__skb_queue_tail(&csk->backlogq, skb);
 		spin_unlock(&csk->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cxgbit_skcb_rx_backlog_fn(skb)(csk, skb);
 	spin_unlock(&csk->lock);
-}
+पूर्ण
 
-static void cxgbit_process_rx_cpl(struct cxgbit_sock *csk, struct sk_buff *skb)
-{
+अटल व्योम cxgbit_process_rx_cpl(काष्ठा cxgbit_sock *csk, काष्ठा sk_buff *skb)
+अणु
 	cxgbit_get_csk(csk);
 	__cxgbit_process_rx_cpl(csk, skb);
 	cxgbit_put_csk(csk);
-}
+पूर्ण
 
-static void cxgbit_rx_cpl(struct cxgbit_device *cdev, struct sk_buff *skb)
-{
-	struct cxgbit_sock *csk;
-	struct cpl_tx_data *cpl = cplhdr(skb);
-	struct cxgb4_lld_info *lldi = &cdev->lldi;
-	struct tid_info *t = lldi->tids;
-	unsigned int tid = GET_TID(cpl);
+अटल व्योम cxgbit_rx_cpl(काष्ठा cxgbit_device *cdev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा cxgbit_sock *csk;
+	काष्ठा cpl_tx_data *cpl = cplhdr(skb);
+	काष्ठा cxgb4_lld_info *lldi = &cdev->lldi;
+	काष्ठा tid_info *t = lldi->tids;
+	अचिन्हित पूर्णांक tid = GET_TID(cpl);
 	u8 opcode = cxgbit_skcb_rx_opcode(skb);
 	bool ref = true;
 
-	switch (opcode) {
-	case CPL_FW4_ACK:
+	चयन (opcode) अणु
+	हाल CPL_FW4_ACK:
 			cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_fw4_ack;
 			ref = false;
-			break;
-	case CPL_PEER_CLOSE:
-			cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_peer_close;
-			break;
-	case CPL_CLOSE_CON_RPL:
-			cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_close_con_rpl;
-			break;
-	case CPL_ABORT_REQ_RSS:
-			cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_abort_req_rss;
-			break;
-	case CPL_ABORT_RPL_RSS:
-			cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_abort_rpl_rss;
-			break;
-	default:
-		goto rel_skb;
-	}
+			अवरोध;
+	हाल CPL_PEER_CLOSE:
+			cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_peer_बंद;
+			अवरोध;
+	हाल CPL_CLOSE_CON_RPL:
+			cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_बंद_con_rpl;
+			अवरोध;
+	हाल CPL_ABORT_REQ_RSS:
+			cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_पात_req_rss;
+			अवरोध;
+	हाल CPL_ABORT_RPL_RSS:
+			cxgbit_skcb_rx_backlog_fn(skb) = cxgbit_पात_rpl_rss;
+			अवरोध;
+	शेष:
+		जाओ rel_skb;
+	पूर्ण
 
 	csk = lookup_tid(t, tid);
-	if (unlikely(!csk)) {
+	अगर (unlikely(!csk)) अणु
 		pr_err("can't find conn. for tid %u.\n", tid);
-		goto rel_skb;
-	}
+		जाओ rel_skb;
+	पूर्ण
 
-	if (ref)
+	अगर (ref)
 		cxgbit_process_rx_cpl(csk, skb);
-	else
+	अन्यथा
 		__cxgbit_process_rx_cpl(csk, skb);
 
-	return;
+	वापस;
 rel_skb:
-	__kfree_skb(skb);
-}
+	__kमुक्त_skb(skb);
+पूर्ण
 
-cxgbit_cplhandler_func cxgbit_cplhandlers[NUM_CPL_CMDS] = {
-	[CPL_PASS_OPEN_RPL]	= cxgbit_pass_open_rpl,
-	[CPL_CLOSE_LISTSRV_RPL] = cxgbit_close_listsrv_rpl,
+cxgbit_cplhandler_func cxgbit_cplhandlers[NUM_CPL_CMDS] = अणु
+	[CPL_PASS_OPEN_RPL]	= cxgbit_pass_खोलो_rpl,
+	[CPL_CLOSE_LISTSRV_RPL] = cxgbit_बंद_listsrv_rpl,
 	[CPL_PASS_ACCEPT_REQ]	= cxgbit_pass_accept_req,
 	[CPL_PASS_ESTABLISH]	= cxgbit_pass_establish,
 	[CPL_SET_TCB_RPL]	= cxgbit_set_tcb_rpl,
@@ -2017,4 +2018,4 @@ cxgbit_cplhandler_func cxgbit_cplhandlers[NUM_CPL_CMDS] = {
 	[CPL_CLOSE_CON_RPL]	= cxgbit_rx_cpl,
 	[CPL_ABORT_REQ_RSS]	= cxgbit_rx_cpl,
 	[CPL_ABORT_RPL_RSS]	= cxgbit_rx_cpl,
-};
+पूर्ण;

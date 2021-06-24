@@ -1,152 +1,153 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ALPHA_TLBFLUSH_H
-#define _ALPHA_TLBFLUSH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ALPHA_TLBFLUSH_H
+#घोषणा _ALPHA_TLBFLUSH_H
 
-#include <linux/mm.h>
-#include <linux/sched.h>
-#include <asm/compiler.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/compiler.h>
 
-#ifndef __EXTERN_INLINE
-#define __EXTERN_INLINE extern inline
-#define __MMU_EXTERN_INLINE
-#endif
+#अगर_अघोषित __EXTERN_INLINE
+#घोषणा __EXTERN_INLINE बाह्य अंतरभूत
+#घोषणा __MMU_EXTERN_INLINE
+#पूर्ण_अगर
 
-extern void __load_new_mm_context(struct mm_struct *);
+बाह्य व्योम __load_new_mm_context(काष्ठा mm_काष्ठा *);
 
 
 /* Use a few helper functions to hide the ugly broken ASN
    numbers on early Alphas (ev4 and ev45).  */
 
-__EXTERN_INLINE void
-ev4_flush_tlb_current(struct mm_struct *mm)
-{
+__EXTERN_INLINE व्योम
+ev4_flush_tlb_current(काष्ठा mm_काष्ठा *mm)
+अणु
 	__load_new_mm_context(mm);
 	tbiap();
-}
+पूर्ण
 
-__EXTERN_INLINE void
-ev5_flush_tlb_current(struct mm_struct *mm)
-{
+__EXTERN_INLINE व्योम
+ev5_flush_tlb_current(काष्ठा mm_काष्ठा *mm)
+अणु
 	__load_new_mm_context(mm);
-}
+पूर्ण
 
 /* Flush just one page in the current TLB set.  We need to be very
    careful about the icache here, there is no way to invalidate a
-   specific icache page.  */
+   specअगरic icache page.  */
 
-__EXTERN_INLINE void
-ev4_flush_tlb_current_page(struct mm_struct * mm,
-			   struct vm_area_struct *vma,
-			   unsigned long addr)
-{
-	int tbi_flag = 2;
-	if (vma->vm_flags & VM_EXEC) {
+__EXTERN_INLINE व्योम
+ev4_flush_tlb_current_page(काष्ठा mm_काष्ठा * mm,
+			   काष्ठा vm_area_काष्ठा *vma,
+			   अचिन्हित दीर्घ addr)
+अणु
+	पूर्णांक tbi_flag = 2;
+	अगर (vma->vm_flags & VM_EXEC) अणु
 		__load_new_mm_context(mm);
 		tbi_flag = 3;
-	}
+	पूर्ण
 	tbi(tbi_flag, addr);
-}
+पूर्ण
 
-__EXTERN_INLINE void
-ev5_flush_tlb_current_page(struct mm_struct * mm,
-			   struct vm_area_struct *vma,
-			   unsigned long addr)
-{
-	if (vma->vm_flags & VM_EXEC)
+__EXTERN_INLINE व्योम
+ev5_flush_tlb_current_page(काष्ठा mm_काष्ठा * mm,
+			   काष्ठा vm_area_काष्ठा *vma,
+			   अचिन्हित दीर्घ addr)
+अणु
+	अगर (vma->vm_flags & VM_EXEC)
 		__load_new_mm_context(mm);
-	else
+	अन्यथा
 		tbi(2, addr);
-}
+पूर्ण
 
 
-#ifdef CONFIG_ALPHA_GENERIC
+#अगर_घोषित CONFIG_ALPHA_GENERIC
 # define flush_tlb_current		alpha_mv.mv_flush_tlb_current
 # define flush_tlb_current_page		alpha_mv.mv_flush_tlb_current_page
-#else
-# ifdef CONFIG_ALPHA_EV4
+#अन्यथा
+# अगरdef CONFIG_ALPHA_EV4
 #  define flush_tlb_current		ev4_flush_tlb_current
 #  define flush_tlb_current_page	ev4_flush_tlb_current_page
-# else
+# अन्यथा
 #  define flush_tlb_current		ev5_flush_tlb_current
 #  define flush_tlb_current_page	ev5_flush_tlb_current_page
-# endif
-#endif
+# endअगर
+#पूर्ण_अगर
 
-#ifdef __MMU_EXTERN_INLINE
-#undef __EXTERN_INLINE
-#undef __MMU_EXTERN_INLINE
-#endif
+#अगर_घोषित __MMU_EXTERN_INLINE
+#अघोषित __EXTERN_INLINE
+#अघोषित __MMU_EXTERN_INLINE
+#पूर्ण_अगर
 
 /* Flush current user mapping.  */
-static inline void
-flush_tlb(void)
-{
+अटल अंतरभूत व्योम
+flush_tlb(व्योम)
+अणु
 	flush_tlb_current(current->active_mm);
-}
+पूर्ण
 
-/* Flush someone else's user mapping.  */
-static inline void
-flush_tlb_other(struct mm_struct *mm)
-{
-	unsigned long *mmc = &mm->context[smp_processor_id()];
-	/* Check it's not zero first to avoid cacheline ping pong
+/* Flush someone अन्यथा's user mapping.  */
+अटल अंतरभूत व्योम
+flush_tlb_other(काष्ठा mm_काष्ठा *mm)
+अणु
+	अचिन्हित दीर्घ *mmc = &mm->context[smp_processor_id()];
+	/* Check it's not zero first to aव्योम cacheline ping pong
 	   when possible.  */
-	if (*mmc) *mmc = 0;
-}
+	अगर (*mmc) *mmc = 0;
+पूर्ण
 
-#ifndef CONFIG_SMP
+#अगर_अघोषित CONFIG_SMP
 /* Flush everything (kernel mapping may also have changed
-   due to vmalloc/vfree).  */
-static inline void flush_tlb_all(void)
-{
+   due to vदो_स्मृति/vमुक्त).  */
+अटल अंतरभूत व्योम flush_tlb_all(व्योम)
+अणु
 	tbia();
-}
+पूर्ण
 
-/* Flush a specified user mapping.  */
-static inline void
-flush_tlb_mm(struct mm_struct *mm)
-{
-	if (mm == current->active_mm)
+/* Flush a specअगरied user mapping.  */
+अटल अंतरभूत व्योम
+flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mm == current->active_mm)
 		flush_tlb_current(mm);
-	else
+	अन्यथा
 		flush_tlb_other(mm);
-}
+पूर्ण
 
 /* Page-granular tlb flush.  */
-static inline void
-flush_tlb_page(struct vm_area_struct *vma, unsigned long addr)
-{
-	struct mm_struct *mm = vma->vm_mm;
+अटल अंतरभूत व्योम
+flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr)
+अणु
+	काष्ठा mm_काष्ठा *mm = vma->vm_mm;
 
-	if (mm == current->active_mm)
+	अगर (mm == current->active_mm)
 		flush_tlb_current_page(mm, vma, addr);
-	else
+	अन्यथा
 		flush_tlb_other(mm);
-}
+पूर्ण
 
-/* Flush a specified range of user mapping.  On the Alpha we flush
+/* Flush a specअगरied range of user mapping.  On the Alpha we flush
    the whole user tlb.  */
-static inline void
-flush_tlb_range(struct vm_area_struct *vma, unsigned long start,
-		unsigned long end)
-{
+अटल अंतरभूत व्योम
+flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start,
+		अचिन्हित दीर्घ end)
+अणु
 	flush_tlb_mm(vma->vm_mm);
-}
+पूर्ण
 
-#else /* CONFIG_SMP */
+#अन्यथा /* CONFIG_SMP */
 
-extern void flush_tlb_all(void);
-extern void flush_tlb_mm(struct mm_struct *);
-extern void flush_tlb_page(struct vm_area_struct *, unsigned long);
-extern void flush_tlb_range(struct vm_area_struct *, unsigned long,
-			    unsigned long);
+बाह्य व्योम flush_tlb_all(व्योम);
+बाह्य व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *);
+बाह्य व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ);
+बाह्य व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *, अचिन्हित दीर्घ,
+			    अचिन्हित दीर्घ);
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-static inline void flush_tlb_kernel_range(unsigned long start,
-					unsigned long end)
-{
+अटल अंतरभूत व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start,
+					अचिन्हित दीर्घ end)
+अणु
 	flush_tlb_all();
-}
+पूर्ण
 
-#endif /* _ALPHA_TLBFLUSH_H */
+#पूर्ण_अगर /* _ALPHA_TLBFLUSH_H */

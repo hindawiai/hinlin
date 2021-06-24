@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright(c) 2011-2017 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -20,166 +21,166 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include "i915_drv.h"
-#include "gvt.h"
+#समावेश "i915_drv.h"
+#समावेश "gvt.h"
 
 /**
- * intel_vgpu_find_page_track - find page track rcord of guest page
+ * पूर्णांकel_vgpu_find_page_track - find page track rcord of guest page
  * @vgpu: a vGPU
  * @gfn: the gfn of guest page
  *
  * Returns:
- * A pointer to struct intel_vgpu_page_track if found, else NULL returned.
+ * A poपूर्णांकer to काष्ठा पूर्णांकel_vgpu_page_track अगर found, अन्यथा शून्य वापसed.
  */
-struct intel_vgpu_page_track *intel_vgpu_find_page_track(
-		struct intel_vgpu *vgpu, unsigned long gfn)
-{
-	return radix_tree_lookup(&vgpu->page_track_tree, gfn);
-}
+काष्ठा पूर्णांकel_vgpu_page_track *पूर्णांकel_vgpu_find_page_track(
+		काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित दीर्घ gfn)
+अणु
+	वापस radix_tree_lookup(&vgpu->page_track_tree, gfn);
+पूर्ण
 
 /**
- * intel_vgpu_register_page_track - register a guest page to be tacked
+ * पूर्णांकel_vgpu_रेजिस्टर_page_track - रेजिस्टर a guest page to be tacked
  * @vgpu: a vGPU
  * @gfn: the gfn of guest page
  * @handler: page track handler
- * @priv: tracker private
+ * @priv: tracker निजी
  *
  * Returns:
- * zero on success, negative error code if failed.
+ * zero on success, negative error code अगर failed.
  */
-int intel_vgpu_register_page_track(struct intel_vgpu *vgpu, unsigned long gfn,
-		gvt_page_track_handler_t handler, void *priv)
-{
-	struct intel_vgpu_page_track *track;
-	int ret;
+पूर्णांक पूर्णांकel_vgpu_रेजिस्टर_page_track(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित दीर्घ gfn,
+		gvt_page_track_handler_t handler, व्योम *priv)
+अणु
+	काष्ठा पूर्णांकel_vgpu_page_track *track;
+	पूर्णांक ret;
 
-	track = intel_vgpu_find_page_track(vgpu, gfn);
-	if (track)
-		return -EEXIST;
+	track = पूर्णांकel_vgpu_find_page_track(vgpu, gfn);
+	अगर (track)
+		वापस -EEXIST;
 
-	track = kzalloc(sizeof(*track), GFP_KERNEL);
-	if (!track)
-		return -ENOMEM;
+	track = kzalloc(माप(*track), GFP_KERNEL);
+	अगर (!track)
+		वापस -ENOMEM;
 
 	track->handler = handler;
 	track->priv_data = priv;
 
 	ret = radix_tree_insert(&vgpu->page_track_tree, gfn, track);
-	if (ret) {
-		kfree(track);
-		return ret;
-	}
+	अगर (ret) अणु
+		kमुक्त(track);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_vgpu_unregister_page_track - unregister the tracked guest page
+ * पूर्णांकel_vgpu_unरेजिस्टर_page_track - unरेजिस्टर the tracked guest page
  * @vgpu: a vGPU
  * @gfn: the gfn of guest page
  *
  */
-void intel_vgpu_unregister_page_track(struct intel_vgpu *vgpu,
-		unsigned long gfn)
-{
-	struct intel_vgpu_page_track *track;
+व्योम पूर्णांकel_vgpu_unरेजिस्टर_page_track(काष्ठा पूर्णांकel_vgpu *vgpu,
+		अचिन्हित दीर्घ gfn)
+अणु
+	काष्ठा पूर्णांकel_vgpu_page_track *track;
 
 	track = radix_tree_delete(&vgpu->page_track_tree, gfn);
-	if (track) {
-		if (track->tracked)
-			intel_gvt_hypervisor_disable_page_track(vgpu, gfn);
-		kfree(track);
-	}
-}
+	अगर (track) अणु
+		अगर (track->tracked)
+			पूर्णांकel_gvt_hypervisor_disable_page_track(vgpu, gfn);
+		kमुक्त(track);
+	पूर्ण
+पूर्ण
 
 /**
- * intel_vgpu_enable_page_track - set write-protection on guest page
+ * पूर्णांकel_vgpu_enable_page_track - set ग_लिखो-protection on guest page
  * @vgpu: a vGPU
  * @gfn: the gfn of guest page
  *
  * Returns:
- * zero on success, negative error code if failed.
+ * zero on success, negative error code अगर failed.
  */
-int intel_vgpu_enable_page_track(struct intel_vgpu *vgpu, unsigned long gfn)
-{
-	struct intel_vgpu_page_track *track;
-	int ret;
+पूर्णांक पूर्णांकel_vgpu_enable_page_track(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित दीर्घ gfn)
+अणु
+	काष्ठा पूर्णांकel_vgpu_page_track *track;
+	पूर्णांक ret;
 
-	track = intel_vgpu_find_page_track(vgpu, gfn);
-	if (!track)
-		return -ENXIO;
+	track = पूर्णांकel_vgpu_find_page_track(vgpu, gfn);
+	अगर (!track)
+		वापस -ENXIO;
 
-	if (track->tracked)
-		return 0;
+	अगर (track->tracked)
+		वापस 0;
 
-	ret = intel_gvt_hypervisor_enable_page_track(vgpu, gfn);
-	if (ret)
-		return ret;
+	ret = पूर्णांकel_gvt_hypervisor_enable_page_track(vgpu, gfn);
+	अगर (ret)
+		वापस ret;
 	track->tracked = true;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_vgpu_enable_page_track - cancel write-protection on guest page
+ * पूर्णांकel_vgpu_enable_page_track - cancel ग_लिखो-protection on guest page
  * @vgpu: a vGPU
  * @gfn: the gfn of guest page
  *
  * Returns:
- * zero on success, negative error code if failed.
+ * zero on success, negative error code अगर failed.
  */
-int intel_vgpu_disable_page_track(struct intel_vgpu *vgpu, unsigned long gfn)
-{
-	struct intel_vgpu_page_track *track;
-	int ret;
+पूर्णांक पूर्णांकel_vgpu_disable_page_track(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित दीर्घ gfn)
+अणु
+	काष्ठा पूर्णांकel_vgpu_page_track *track;
+	पूर्णांक ret;
 
-	track = intel_vgpu_find_page_track(vgpu, gfn);
-	if (!track)
-		return -ENXIO;
+	track = पूर्णांकel_vgpu_find_page_track(vgpu, gfn);
+	अगर (!track)
+		वापस -ENXIO;
 
-	if (!track->tracked)
-		return 0;
+	अगर (!track->tracked)
+		वापस 0;
 
-	ret = intel_gvt_hypervisor_disable_page_track(vgpu, gfn);
-	if (ret)
-		return ret;
+	ret = पूर्णांकel_gvt_hypervisor_disable_page_track(vgpu, gfn);
+	अगर (ret)
+		वापस ret;
 	track->tracked = false;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * intel_vgpu_page_track_handler - called when write to write-protected page
+ * पूर्णांकel_vgpu_page_track_handler - called when ग_लिखो to ग_लिखो-रक्षित page
  * @vgpu: a vGPU
- * @gpa: the gpa of this write
- * @data: the writed data
- * @bytes: the length of this write
+ * @gpa: the gpa of this ग_लिखो
+ * @data: the ग_लिखोd data
+ * @bytes: the length of this ग_लिखो
  *
  * Returns:
- * zero on success, negative error code if failed.
+ * zero on success, negative error code अगर failed.
  */
-int intel_vgpu_page_track_handler(struct intel_vgpu *vgpu, u64 gpa,
-		void *data, unsigned int bytes)
-{
-	struct intel_vgpu_page_track *page_track;
-	int ret = 0;
+पूर्णांक पूर्णांकel_vgpu_page_track_handler(काष्ठा पूर्णांकel_vgpu *vgpu, u64 gpa,
+		व्योम *data, अचिन्हित पूर्णांक bytes)
+अणु
+	काष्ठा पूर्णांकel_vgpu_page_track *page_track;
+	पूर्णांक ret = 0;
 
 	mutex_lock(&vgpu->vgpu_lock);
 
-	page_track = intel_vgpu_find_page_track(vgpu, gpa >> PAGE_SHIFT);
-	if (!page_track) {
+	page_track = पूर्णांकel_vgpu_find_page_track(vgpu, gpa >> PAGE_SHIFT);
+	अगर (!page_track) अणु
 		ret = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (unlikely(vgpu->failsafe)) {
-		/* Remove write protection to prevent furture traps. */
-		intel_vgpu_disable_page_track(vgpu, gpa >> PAGE_SHIFT);
-	} else {
+	अगर (unlikely(vgpu->failsafe)) अणु
+		/* Remove ग_लिखो protection to prevent furture traps. */
+		पूर्णांकel_vgpu_disable_page_track(vgpu, gpa >> PAGE_SHIFT);
+	पूर्ण अन्यथा अणु
 		ret = page_track->handler(page_track, gpa, data, bytes);
-		if (ret)
+		अगर (ret)
 			gvt_err("guest page write error, gpa %llx\n", gpa);
-	}
+	पूर्ण
 
 out:
 	mutex_unlock(&vgpu->vgpu_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण

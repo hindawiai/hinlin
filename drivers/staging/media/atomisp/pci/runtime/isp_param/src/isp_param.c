@@ -1,219 +1,220 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2010 - 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#include "hmm.h"
+#समावेश "hmm.h"
 
-#include "ia_css_pipeline.h"
-#include "ia_css_isp_param.h"
+#समावेश "ia_css_pipeline.h"
+#समावेश "ia_css_isp_param.h"
 
-/* Set functions for parameter memory descriptors */
+/* Set functions क्रम parameter memory descriptors */
 
-void
+व्योम
 ia_css_isp_param_set_mem_init(
-    struct ia_css_isp_param_host_segments *mem_init,
-    enum ia_css_param_class pclass,
-    enum ia_css_isp_memories mem,
-    char *address, size_t size)
-{
+    काष्ठा ia_css_isp_param_host_segments *mem_init,
+    क्रमागत ia_css_param_class pclass,
+    क्रमागत ia_css_isp_memories mem,
+    अक्षर *address, माप_प्रकार size)
+अणु
 	mem_init->params[pclass][mem].address = address;
-	mem_init->params[pclass][mem].size = (uint32_t)size;
-}
+	mem_init->params[pclass][mem].size = (uपूर्णांक32_t)size;
+पूर्ण
 
-void
+व्योम
 ia_css_isp_param_set_css_mem_init(
-    struct ia_css_isp_param_css_segments *mem_init,
-    enum ia_css_param_class pclass,
-    enum ia_css_isp_memories mem,
-    ia_css_ptr address, size_t size)
-{
+    काष्ठा ia_css_isp_param_css_segments *mem_init,
+    क्रमागत ia_css_param_class pclass,
+    क्रमागत ia_css_isp_memories mem,
+    ia_css_ptr address, माप_प्रकार size)
+अणु
 	mem_init->params[pclass][mem].address = address;
-	mem_init->params[pclass][mem].size = (uint32_t)size;
-}
+	mem_init->params[pclass][mem].size = (uपूर्णांक32_t)size;
+पूर्ण
 
-void
+व्योम
 ia_css_isp_param_set_isp_mem_init(
-    struct ia_css_isp_param_isp_segments *mem_init,
-    enum ia_css_param_class pclass,
-    enum ia_css_isp_memories mem,
-    u32 address, size_t size)
-{
+    काष्ठा ia_css_isp_param_isp_segments *mem_init,
+    क्रमागत ia_css_param_class pclass,
+    क्रमागत ia_css_isp_memories mem,
+    u32 address, माप_प्रकार size)
+अणु
 	mem_init->params[pclass][mem].address = address;
-	mem_init->params[pclass][mem].size = (uint32_t)size;
-}
+	mem_init->params[pclass][mem].size = (uपूर्णांक32_t)size;
+पूर्ण
 
-/* Get functions for parameter memory descriptors */
-const struct ia_css_host_data *
+/* Get functions क्रम parameter memory descriptors */
+स्थिर काष्ठा ia_css_host_data *
 ia_css_isp_param_get_mem_init(
-    const struct ia_css_isp_param_host_segments *mem_init,
-    enum ia_css_param_class pclass,
-    enum ia_css_isp_memories mem)
-{
-	return &mem_init->params[pclass][mem];
-}
+    स्थिर काष्ठा ia_css_isp_param_host_segments *mem_init,
+    क्रमागत ia_css_param_class pclass,
+    क्रमागत ia_css_isp_memories mem)
+अणु
+	वापस &mem_init->params[pclass][mem];
+पूर्ण
 
-const struct ia_css_data *
+स्थिर काष्ठा ia_css_data *
 ia_css_isp_param_get_css_mem_init(
-    const struct ia_css_isp_param_css_segments *mem_init,
-    enum ia_css_param_class pclass,
-    enum ia_css_isp_memories mem)
-{
-	return &mem_init->params[pclass][mem];
-}
+    स्थिर काष्ठा ia_css_isp_param_css_segments *mem_init,
+    क्रमागत ia_css_param_class pclass,
+    क्रमागत ia_css_isp_memories mem)
+अणु
+	वापस &mem_init->params[pclass][mem];
+पूर्ण
 
-const struct ia_css_isp_data *
+स्थिर काष्ठा ia_css_isp_data *
 ia_css_isp_param_get_isp_mem_init(
-    const struct ia_css_isp_param_isp_segments *mem_init,
-    enum ia_css_param_class pclass,
-    enum ia_css_isp_memories mem)
-{
-	return &mem_init->params[pclass][mem];
-}
+    स्थिर काष्ठा ia_css_isp_param_isp_segments *mem_init,
+    क्रमागत ia_css_param_class pclass,
+    क्रमागत ia_css_isp_memories mem)
+अणु
+	वापस &mem_init->params[pclass][mem];
+पूर्ण
 
-void
-ia_css_init_memory_interface(
-    struct ia_css_isp_param_css_segments *isp_mem_if,
-    const struct ia_css_isp_param_host_segments *mem_params,
-    const struct ia_css_isp_param_css_segments *css_params)
-{
-	unsigned int pclass, mem;
+व्योम
+ia_css_init_memory_पूर्णांकerface(
+    काष्ठा ia_css_isp_param_css_segments *isp_mem_अगर,
+    स्थिर काष्ठा ia_css_isp_param_host_segments *mem_params,
+    स्थिर काष्ठा ia_css_isp_param_css_segments *css_params)
+अणु
+	अचिन्हित पूर्णांक pclass, mem;
 
-	for (pclass = 0; pclass < IA_CSS_NUM_PARAM_CLASSES; pclass++) {
-		memset(isp_mem_if->params[pclass], 0, sizeof(isp_mem_if->params[pclass]));
-		for (mem = 0; mem < IA_CSS_NUM_MEMORIES; mem++) {
-			if (!mem_params->params[pclass][mem].address)
-				continue;
-			isp_mem_if->params[pclass][mem].size = mem_params->params[pclass][mem].size;
-			if (pclass != IA_CSS_PARAM_CLASS_PARAM)
-				isp_mem_if->params[pclass][mem].address =
+	क्रम (pclass = 0; pclass < IA_CSS_NUM_PARAM_CLASSES; pclass++) अणु
+		स_रखो(isp_mem_अगर->params[pclass], 0, माप(isp_mem_अगर->params[pclass]));
+		क्रम (mem = 0; mem < IA_CSS_NUM_MEMORIES; mem++) अणु
+			अगर (!mem_params->params[pclass][mem].address)
+				जारी;
+			isp_mem_अगर->params[pclass][mem].size = mem_params->params[pclass][mem].size;
+			अगर (pclass != IA_CSS_PARAM_CLASS_PARAM)
+				isp_mem_अगर->params[pclass][mem].address =
 				    css_params->params[pclass][mem].address;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-int
+पूर्णांक
 ia_css_isp_param_allocate_isp_parameters(
-    struct ia_css_isp_param_host_segments *mem_params,
-    struct ia_css_isp_param_css_segments *css_params,
-    const struct ia_css_isp_param_isp_segments *mem_initializers) {
-	int err = 0;
-	unsigned int mem, pclass;
+    काष्ठा ia_css_isp_param_host_segments *mem_params,
+    काष्ठा ia_css_isp_param_css_segments *css_params,
+    स्थिर काष्ठा ia_css_isp_param_isp_segments *mem_initializers) अणु
+	पूर्णांक err = 0;
+	अचिन्हित पूर्णांक mem, pclass;
 
 	pclass = IA_CSS_PARAM_CLASS_PARAM;
-	for (mem = 0; mem < IA_CSS_NUM_MEMORIES; mem++)
-	{
-		for (pclass = 0; pclass < IA_CSS_NUM_PARAM_CLASSES; pclass++) {
+	क्रम (mem = 0; mem < IA_CSS_NUM_MEMORIES; mem++)
+	अणु
+		क्रम (pclass = 0; pclass < IA_CSS_NUM_PARAM_CLASSES; pclass++) अणु
 			u32 size = 0;
 
-			if (mem_initializers)
+			अगर (mem_initializers)
 				size = mem_initializers->params[pclass][mem].size;
 			mem_params->params[pclass][mem].size = size;
-			mem_params->params[pclass][mem].address = NULL;
+			mem_params->params[pclass][mem].address = शून्य;
 			css_params->params[pclass][mem].size = size;
 			css_params->params[pclass][mem].address = 0x0;
-			if (size) {
-				mem_params->params[pclass][mem].address = kvcalloc(1,
+			अगर (size) अणु
+				mem_params->params[pclass][mem].address = kvसुस्मृति(1,
 										   size,
 										   GFP_KERNEL);
-				if (!mem_params->params[pclass][mem].address) {
+				अगर (!mem_params->params[pclass][mem].address) अणु
 					err = -ENOMEM;
-					goto cleanup;
-				}
-				if (pclass != IA_CSS_PARAM_CLASS_PARAM) {
-					css_params->params[pclass][mem].address = hmm_alloc(size, HMM_BO_PRIVATE, 0, NULL, 0);
-					if (!css_params->params[pclass][mem].address) {
+					जाओ cleanup;
+				पूर्ण
+				अगर (pclass != IA_CSS_PARAM_CLASS_PARAM) अणु
+					css_params->params[pclass][mem].address = hmm_alloc(size, HMM_BO_PRIVATE, 0, शून्य, 0);
+					अगर (!css_params->params[pclass][mem].address) अणु
 						err = -ENOMEM;
-						goto cleanup;
-					}
-				}
-			}
-		}
-	}
-	return err;
+						जाओ cleanup;
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस err;
 cleanup:
 	ia_css_isp_param_destroy_isp_parameters(mem_params, css_params);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void
+व्योम
 ia_css_isp_param_destroy_isp_parameters(
-    struct ia_css_isp_param_host_segments *mem_params,
-    struct ia_css_isp_param_css_segments *css_params)
-{
-	unsigned int mem, pclass;
+    काष्ठा ia_css_isp_param_host_segments *mem_params,
+    काष्ठा ia_css_isp_param_css_segments *css_params)
+अणु
+	अचिन्हित पूर्णांक mem, pclass;
 
-	for (mem = 0; mem < IA_CSS_NUM_MEMORIES; mem++) {
-		for (pclass = 0; pclass < IA_CSS_NUM_PARAM_CLASSES; pclass++) {
-			kvfree(mem_params->params[pclass][mem].address);
-			if (css_params->params[pclass][mem].address)
-				hmm_free(css_params->params[pclass][mem].address);
-			mem_params->params[pclass][mem].address = NULL;
+	क्रम (mem = 0; mem < IA_CSS_NUM_MEMORIES; mem++) अणु
+		क्रम (pclass = 0; pclass < IA_CSS_NUM_PARAM_CLASSES; pclass++) अणु
+			kvमुक्त(mem_params->params[pclass][mem].address);
+			अगर (css_params->params[pclass][mem].address)
+				hmm_मुक्त(css_params->params[pclass][mem].address);
+			mem_params->params[pclass][mem].address = शून्य;
 			css_params->params[pclass][mem].address = 0x0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void
+व्योम
 ia_css_isp_param_load_fw_params(
-    const char *fw,
-    union ia_css_all_memory_offsets *mem_offsets,
-    const struct ia_css_isp_param_memory_offsets *memory_offsets,
+    स्थिर अक्षर *fw,
+    जोड़ ia_css_all_memory_offsets *mem_offsets,
+    स्थिर काष्ठा ia_css_isp_param_memory_offsets *memory_offsets,
     bool init)
-{
-	unsigned int pclass;
+अणु
+	अचिन्हित पूर्णांक pclass;
 
-	for (pclass = 0; pclass < IA_CSS_NUM_PARAM_CLASSES; pclass++) {
-		mem_offsets->array[pclass].ptr = NULL;
-		if (init)
-			mem_offsets->array[pclass].ptr = (void *)(fw + memory_offsets->offsets[pclass]);
-	}
-}
+	क्रम (pclass = 0; pclass < IA_CSS_NUM_PARAM_CLASSES; pclass++) अणु
+		mem_offsets->array[pclass].ptr = शून्य;
+		अगर (init)
+			mem_offsets->array[pclass].ptr = (व्योम *)(fw + memory_offsets->offsets[pclass]);
+	पूर्ण
+पूर्ण
 
-int
-ia_css_isp_param_copy_isp_mem_if_to_ddr(
-    struct ia_css_isp_param_css_segments *ddr,
-    const struct ia_css_isp_param_host_segments *host,
-    enum ia_css_param_class pclass) {
-	unsigned int mem;
+पूर्णांक
+ia_css_isp_param_copy_isp_mem_अगर_to_ddr(
+    काष्ठा ia_css_isp_param_css_segments *ddr,
+    स्थिर काष्ठा ia_css_isp_param_host_segments *host,
+    क्रमागत ia_css_param_class pclass) अणु
+	अचिन्हित पूर्णांक mem;
 
-	for (mem = 0; mem < N_IA_CSS_ISP_MEMORIES; mem++)
-	{
-		size_t       size	  = host->params[pclass][mem].size;
+	क्रम (mem = 0; mem < N_IA_CSS_ISP_MEMORIES; mem++)
+	अणु
+		माप_प्रकार       size	  = host->params[pclass][mem].size;
 		ia_css_ptr ddr_mem_ptr  = ddr->params[pclass][mem].address;
-		char	    *host_mem_ptr = host->params[pclass][mem].address;
+		अक्षर	    *host_mem_ptr = host->params[pclass][mem].address;
 
-		if (size != ddr->params[pclass][mem].size)
-			return -EINVAL;
-		if (!size)
-			continue;
+		अगर (size != ddr->params[pclass][mem].size)
+			वापस -EINVAL;
+		अगर (!size)
+			जारी;
 		hmm_store(ddr_mem_ptr, host_mem_ptr, size);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void
+व्योम
 ia_css_isp_param_enable_pipeline(
-    const struct ia_css_isp_param_host_segments *mem_params)
-{
-	/* By protocol b0 of the mandatory uint32_t first field of the
+    स्थिर काष्ठा ia_css_isp_param_host_segments *mem_params)
+अणु
+	/* By protocol b0 of the mandatory uपूर्णांक32_t first field of the
 	   input parameter is a disable bit*/
-	short dmem_offset = 0;
+	लघु dmem_offset = 0;
 
-	if (mem_params->params[IA_CSS_PARAM_CLASS_PARAM][IA_CSS_ISP_DMEM0].size == 0)
-		return;
+	अगर (mem_params->params[IA_CSS_PARAM_CLASS_PARAM][IA_CSS_ISP_DMEM0].size == 0)
+		वापस;
 
-	*(uint32_t *)
+	*(uपूर्णांक32_t *)
 	&mem_params->params[IA_CSS_PARAM_CLASS_PARAM][IA_CSS_ISP_DMEM0].address[dmem_offset]
 	    = 0x0;
-}
+पूर्ण

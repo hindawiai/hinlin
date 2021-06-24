@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_FRAME_H
-#define _ASM_X86_FRAME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_FRAME_H
+#घोषणा _ASM_X86_FRAME_H
 
-#include <asm/asm.h>
+#समावेश <यंत्र/यंत्र.h>
 
 /*
  * These are stack frame creation macros.  They should be used by every
- * callable non-leaf asm function to make kernel stack traces more reliable.
+ * callable non-leaf यंत्र function to make kernel stack traces more reliable.
  */
 
-#ifdef CONFIG_FRAME_POINTER
+#अगर_घोषित CONFIG_FRAME_POINTER
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
 .macro FRAME_BEGIN
 	push %_ASM_BP
@@ -22,12 +23,12 @@
 	pop %_ASM_BP
 .endm
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 /*
  * This is a sneaky trick to help the unwinder find pt_regs on the stack.  The
- * frame pointer is replaced with an encoded pointer to pt_regs.  The encoding
+ * frame poपूर्णांकer is replaced with an encoded poपूर्णांकer to pt_regs.  The encoding
  * is just setting the LSB, which makes it an invalid stack address and is also
- * a signal to the unwinder that it's a pt_regs pointer in disguise.
+ * a संकेत to the unwinder that it's a pt_regs poपूर्णांकer in disguise.
  *
  * NOTE: This macro must be used *after* PUSH_AND_CLEAR_REGS because it corrupts
  * the original rbp.
@@ -35,12 +36,12 @@
 .macro ENCODE_FRAME_POINTER ptregs_offset=0
 	leaq 1+\ptregs_offset(%rsp), %rbp
 .endm
-#else /* !CONFIG_X86_64 */
+#अन्यथा /* !CONFIG_X86_64 */
 /*
  * This is a sneaky trick to help the unwinder find pt_regs on the stack.  The
- * frame pointer is replaced with an encoded pointer to pt_regs.  The encoding
+ * frame poपूर्णांकer is replaced with an encoded poपूर्णांकer to pt_regs.  The encoding
  * is just clearing the MSB, which makes it an invalid stack address and is also
- * a signal to the unwinder that it's a pt_regs pointer in disguise.
+ * a संकेत to the unwinder that it's a pt_regs poपूर्णांकer in disguise.
  *
  * NOTE: This macro must be used *after* SAVE_ALL because it corrupts the
  * original ebp.
@@ -49,65 +50,65 @@
 	mov %esp, %ebp
 	andl $0x7fffffff, %ebp
 .endm
-#endif /* CONFIG_X86_64 */
+#पूर्ण_अगर /* CONFIG_X86_64 */
 
-#else /* !__ASSEMBLY__ */
+#अन्यथा /* !__ASSEMBLY__ */
 
-#define FRAME_BEGIN				\
+#घोषणा FRAME_BEGIN				\
 	"push %" _ASM_BP "\n"			\
 	_ASM_MOV "%" _ASM_SP ", %" _ASM_BP "\n"
 
-#define FRAME_END "pop %" _ASM_BP "\n"
+#घोषणा FRAME_END "pop %" _ASM_BP "\n"
 
-#ifdef CONFIG_X86_64
+#अगर_घोषित CONFIG_X86_64
 
-#define ENCODE_FRAME_POINTER			\
+#घोषणा ENCODE_FRAME_POINTER			\
 	"lea 1(%rsp), %rbp\n\t"
 
-static inline unsigned long encode_frame_pointer(struct pt_regs *regs)
-{
-	return (unsigned long)regs + 1;
-}
+अटल अंतरभूत अचिन्हित दीर्घ encode_frame_poपूर्णांकer(काष्ठा pt_regs *regs)
+अणु
+	वापस (अचिन्हित दीर्घ)regs + 1;
+पूर्ण
 
-#else /* !CONFIG_X86_64 */
+#अन्यथा /* !CONFIG_X86_64 */
 
-#define ENCODE_FRAME_POINTER			\
+#घोषणा ENCODE_FRAME_POINTER			\
 	"movl %esp, %ebp\n\t"			\
 	"andl $0x7fffffff, %ebp\n\t"
 
-static inline unsigned long encode_frame_pointer(struct pt_regs *regs)
-{
-	return (unsigned long)regs & 0x7fffffff;
-}
+अटल अंतरभूत अचिन्हित दीर्घ encode_frame_poपूर्णांकer(काष्ठा pt_regs *regs)
+अणु
+	वापस (अचिन्हित दीर्घ)regs & 0x7fffffff;
+पूर्ण
 
-#endif /* CONFIG_X86_64 */
+#पूर्ण_अगर /* CONFIG_X86_64 */
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#define FRAME_OFFSET __ASM_SEL(4, 8)
+#घोषणा FRAME_OFFSET __ASM_SEL(4, 8)
 
-#else /* !CONFIG_FRAME_POINTER */
+#अन्यथा /* !CONFIG_FRAME_POINTER */
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
 .macro ENCODE_FRAME_POINTER ptregs_offset=0
 .endm
 
-#else /* !__ASSEMBLY */
+#अन्यथा /* !__ASSEMBLY */
 
-#define ENCODE_FRAME_POINTER
+#घोषणा ENCODE_FRAME_POINTER
 
-static inline unsigned long encode_frame_pointer(struct pt_regs *regs)
-{
-	return 0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ encode_frame_poपूर्णांकer(काष्ठा pt_regs *regs)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#define FRAME_BEGIN
-#define FRAME_END
-#define FRAME_OFFSET 0
+#घोषणा FRAME_BEGIN
+#घोषणा FRAME_END
+#घोषणा FRAME_OFFSET 0
 
-#endif /* CONFIG_FRAME_POINTER */
+#पूर्ण_अगर /* CONFIG_FRAME_POINTER */
 
-#endif /* _ASM_X86_FRAME_H */
+#पूर्ण_अगर /* _ASM_X86_FRAME_H */

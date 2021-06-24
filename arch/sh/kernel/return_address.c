@@ -1,56 +1,57 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * arch/sh/kernel/return_address.c
+ * arch/sh/kernel/वापस_address.c
  *
  * Copyright (C) 2009  Matt Fleming
  * Copyright (C) 2009  Paul Mundt
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <asm/dwarf.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <यंत्र/dwarf.h>
 
-#ifdef CONFIG_DWARF_UNWINDER
+#अगर_घोषित CONFIG_DWARF_UNWINDER
 
-void *return_address(unsigned int depth)
-{
-	struct dwarf_frame *frame;
-	unsigned long ra;
-	int i;
+व्योम *वापस_address(अचिन्हित पूर्णांक depth)
+अणु
+	काष्ठा dwarf_frame *frame;
+	अचिन्हित दीर्घ ra;
+	पूर्णांक i;
 
-	for (i = 0, frame = NULL, ra = 0; i <= depth; i++) {
-		struct dwarf_frame *tmp;
+	क्रम (i = 0, frame = शून्य, ra = 0; i <= depth; i++) अणु
+		काष्ठा dwarf_frame *पंचांगp;
 
-		tmp = dwarf_unwind_stack(ra, frame);
-		if (!tmp)
-			return NULL;
+		पंचांगp = dwarf_unwind_stack(ra, frame);
+		अगर (!पंचांगp)
+			वापस शून्य;
 
-		if (frame)
-			dwarf_free_frame(frame);
+		अगर (frame)
+			dwarf_मुक्त_frame(frame);
 
-		frame = tmp;
+		frame = पंचांगp;
 
-		if (!frame || !frame->return_addr)
-			break;
+		अगर (!frame || !frame->वापस_addr)
+			अवरोध;
 
-		ra = frame->return_addr;
-	}
+		ra = frame->वापस_addr;
+	पूर्ण
 
-	/* Failed to unwind the stack to the specified depth. */
+	/* Failed to unwind the stack to the specअगरied depth. */
 	WARN_ON(i != depth + 1);
 
-	if (frame)
-		dwarf_free_frame(frame);
+	अगर (frame)
+		dwarf_मुक्त_frame(frame);
 
-	return (void *)ra;
-}
+	वापस (व्योम *)ra;
+पूर्ण
 
-#else
+#अन्यथा
 
-void *return_address(unsigned int depth)
-{
-	return NULL;
-}
+व्योम *वापस_address(अचिन्हित पूर्णांक depth)
+अणु
+	वापस शून्य;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-EXPORT_SYMBOL_GPL(return_address);
+EXPORT_SYMBOL_GPL(वापस_address);

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * fs/f2fs/acl.c
  *
@@ -9,427 +10,427 @@
  *
  * Copyright (C) 2001-2003 Andreas Gruenbacher, <agruen@suse.de>
  */
-#include <linux/f2fs_fs.h>
-#include "f2fs.h"
-#include "xattr.h"
-#include "acl.h"
+#समावेश <linux/f2fs_fs.h>
+#समावेश "f2fs.h"
+#समावेश "xattr.h"
+#समावेश "acl.h"
 
-static inline size_t f2fs_acl_size(int count)
-{
-	if (count <= 4) {
-		return sizeof(struct f2fs_acl_header) +
-			count * sizeof(struct f2fs_acl_entry_short);
-	} else {
-		return sizeof(struct f2fs_acl_header) +
-			4 * sizeof(struct f2fs_acl_entry_short) +
-			(count - 4) * sizeof(struct f2fs_acl_entry);
-	}
-}
+अटल अंतरभूत माप_प्रकार f2fs_acl_size(पूर्णांक count)
+अणु
+	अगर (count <= 4) अणु
+		वापस माप(काष्ठा f2fs_acl_header) +
+			count * माप(काष्ठा f2fs_acl_entry_लघु);
+	पूर्ण अन्यथा अणु
+		वापस माप(काष्ठा f2fs_acl_header) +
+			4 * माप(काष्ठा f2fs_acl_entry_लघु) +
+			(count - 4) * माप(काष्ठा f2fs_acl_entry);
+	पूर्ण
+पूर्ण
 
-static inline int f2fs_acl_count(size_t size)
-{
-	ssize_t s;
+अटल अंतरभूत पूर्णांक f2fs_acl_count(माप_प्रकार size)
+अणु
+	sमाप_प्रकार s;
 
-	size -= sizeof(struct f2fs_acl_header);
-	s = size - 4 * sizeof(struct f2fs_acl_entry_short);
-	if (s < 0) {
-		if (size % sizeof(struct f2fs_acl_entry_short))
-			return -1;
-		return size / sizeof(struct f2fs_acl_entry_short);
-	} else {
-		if (s % sizeof(struct f2fs_acl_entry))
-			return -1;
-		return s / sizeof(struct f2fs_acl_entry) + 4;
-	}
-}
+	size -= माप(काष्ठा f2fs_acl_header);
+	s = size - 4 * माप(काष्ठा f2fs_acl_entry_लघु);
+	अगर (s < 0) अणु
+		अगर (size % माप(काष्ठा f2fs_acl_entry_लघु))
+			वापस -1;
+		वापस size / माप(काष्ठा f2fs_acl_entry_लघु);
+	पूर्ण अन्यथा अणु
+		अगर (s % माप(काष्ठा f2fs_acl_entry))
+			वापस -1;
+		वापस s / माप(काष्ठा f2fs_acl_entry) + 4;
+	पूर्ण
+पूर्ण
 
-static struct posix_acl *f2fs_acl_from_disk(const char *value, size_t size)
-{
-	int i, count;
-	struct posix_acl *acl;
-	struct f2fs_acl_header *hdr = (struct f2fs_acl_header *)value;
-	struct f2fs_acl_entry *entry = (struct f2fs_acl_entry *)(hdr + 1);
-	const char *end = value + size;
+अटल काष्ठा posix_acl *f2fs_acl_from_disk(स्थिर अक्षर *value, माप_प्रकार size)
+अणु
+	पूर्णांक i, count;
+	काष्ठा posix_acl *acl;
+	काष्ठा f2fs_acl_header *hdr = (काष्ठा f2fs_acl_header *)value;
+	काष्ठा f2fs_acl_entry *entry = (काष्ठा f2fs_acl_entry *)(hdr + 1);
+	स्थिर अक्षर *end = value + size;
 
-	if (size < sizeof(struct f2fs_acl_header))
-		return ERR_PTR(-EINVAL);
+	अगर (size < माप(काष्ठा f2fs_acl_header))
+		वापस ERR_PTR(-EINVAL);
 
-	if (hdr->a_version != cpu_to_le32(F2FS_ACL_VERSION))
-		return ERR_PTR(-EINVAL);
+	अगर (hdr->a_version != cpu_to_le32(F2FS_ACL_VERSION))
+		वापस ERR_PTR(-EINVAL);
 
 	count = f2fs_acl_count(size);
-	if (count < 0)
-		return ERR_PTR(-EINVAL);
-	if (count == 0)
-		return NULL;
+	अगर (count < 0)
+		वापस ERR_PTR(-EINVAL);
+	अगर (count == 0)
+		वापस शून्य;
 
 	acl = posix_acl_alloc(count, GFP_NOFS);
-	if (!acl)
-		return ERR_PTR(-ENOMEM);
+	अगर (!acl)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 
-		if ((char *)entry > end)
-			goto fail;
+		अगर ((अक्षर *)entry > end)
+			जाओ fail;
 
 		acl->a_entries[i].e_tag  = le16_to_cpu(entry->e_tag);
 		acl->a_entries[i].e_perm = le16_to_cpu(entry->e_perm);
 
-		switch (acl->a_entries[i].e_tag) {
-		case ACL_USER_OBJ:
-		case ACL_GROUP_OBJ:
-		case ACL_MASK:
-		case ACL_OTHER:
-			entry = (struct f2fs_acl_entry *)((char *)entry +
-					sizeof(struct f2fs_acl_entry_short));
-			break;
+		चयन (acl->a_entries[i].e_tag) अणु
+		हाल ACL_USER_OBJ:
+		हाल ACL_GROUP_OBJ:
+		हाल ACL_MASK:
+		हाल ACL_OTHER:
+			entry = (काष्ठा f2fs_acl_entry *)((अक्षर *)entry +
+					माप(काष्ठा f2fs_acl_entry_लघु));
+			अवरोध;
 
-		case ACL_USER:
+		हाल ACL_USER:
 			acl->a_entries[i].e_uid =
 				make_kuid(&init_user_ns,
 						le32_to_cpu(entry->e_id));
-			entry = (struct f2fs_acl_entry *)((char *)entry +
-					sizeof(struct f2fs_acl_entry));
-			break;
-		case ACL_GROUP:
+			entry = (काष्ठा f2fs_acl_entry *)((अक्षर *)entry +
+					माप(काष्ठा f2fs_acl_entry));
+			अवरोध;
+		हाल ACL_GROUP:
 			acl->a_entries[i].e_gid =
 				make_kgid(&init_user_ns,
 						le32_to_cpu(entry->e_id));
-			entry = (struct f2fs_acl_entry *)((char *)entry +
-					sizeof(struct f2fs_acl_entry));
-			break;
-		default:
-			goto fail;
-		}
-	}
-	if ((char *)entry != end)
-		goto fail;
-	return acl;
+			entry = (काष्ठा f2fs_acl_entry *)((अक्षर *)entry +
+					माप(काष्ठा f2fs_acl_entry));
+			अवरोध;
+		शेष:
+			जाओ fail;
+		पूर्ण
+	पूर्ण
+	अगर ((अक्षर *)entry != end)
+		जाओ fail;
+	वापस acl;
 fail:
 	posix_acl_release(acl);
-	return ERR_PTR(-EINVAL);
-}
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static void *f2fs_acl_to_disk(struct f2fs_sb_info *sbi,
-				const struct posix_acl *acl, size_t *size)
-{
-	struct f2fs_acl_header *f2fs_acl;
-	struct f2fs_acl_entry *entry;
-	int i;
+अटल व्योम *f2fs_acl_to_disk(काष्ठा f2fs_sb_info *sbi,
+				स्थिर काष्ठा posix_acl *acl, माप_प्रकार *size)
+अणु
+	काष्ठा f2fs_acl_header *f2fs_acl;
+	काष्ठा f2fs_acl_entry *entry;
+	पूर्णांक i;
 
-	f2fs_acl = f2fs_kmalloc(sbi, sizeof(struct f2fs_acl_header) +
-			acl->a_count * sizeof(struct f2fs_acl_entry),
+	f2fs_acl = f2fs_kदो_स्मृति(sbi, माप(काष्ठा f2fs_acl_header) +
+			acl->a_count * माप(काष्ठा f2fs_acl_entry),
 			GFP_NOFS);
-	if (!f2fs_acl)
-		return ERR_PTR(-ENOMEM);
+	अगर (!f2fs_acl)
+		वापस ERR_PTR(-ENOMEM);
 
 	f2fs_acl->a_version = cpu_to_le32(F2FS_ACL_VERSION);
-	entry = (struct f2fs_acl_entry *)(f2fs_acl + 1);
+	entry = (काष्ठा f2fs_acl_entry *)(f2fs_acl + 1);
 
-	for (i = 0; i < acl->a_count; i++) {
+	क्रम (i = 0; i < acl->a_count; i++) अणु
 
 		entry->e_tag  = cpu_to_le16(acl->a_entries[i].e_tag);
 		entry->e_perm = cpu_to_le16(acl->a_entries[i].e_perm);
 
-		switch (acl->a_entries[i].e_tag) {
-		case ACL_USER:
+		चयन (acl->a_entries[i].e_tag) अणु
+		हाल ACL_USER:
 			entry->e_id = cpu_to_le32(
 					from_kuid(&init_user_ns,
 						acl->a_entries[i].e_uid));
-			entry = (struct f2fs_acl_entry *)((char *)entry +
-					sizeof(struct f2fs_acl_entry));
-			break;
-		case ACL_GROUP:
+			entry = (काष्ठा f2fs_acl_entry *)((अक्षर *)entry +
+					माप(काष्ठा f2fs_acl_entry));
+			अवरोध;
+		हाल ACL_GROUP:
 			entry->e_id = cpu_to_le32(
 					from_kgid(&init_user_ns,
 						acl->a_entries[i].e_gid));
-			entry = (struct f2fs_acl_entry *)((char *)entry +
-					sizeof(struct f2fs_acl_entry));
-			break;
-		case ACL_USER_OBJ:
-		case ACL_GROUP_OBJ:
-		case ACL_MASK:
-		case ACL_OTHER:
-			entry = (struct f2fs_acl_entry *)((char *)entry +
-					sizeof(struct f2fs_acl_entry_short));
-			break;
-		default:
-			goto fail;
-		}
-	}
+			entry = (काष्ठा f2fs_acl_entry *)((अक्षर *)entry +
+					माप(काष्ठा f2fs_acl_entry));
+			अवरोध;
+		हाल ACL_USER_OBJ:
+		हाल ACL_GROUP_OBJ:
+		हाल ACL_MASK:
+		हाल ACL_OTHER:
+			entry = (काष्ठा f2fs_acl_entry *)((अक्षर *)entry +
+					माप(काष्ठा f2fs_acl_entry_लघु));
+			अवरोध;
+		शेष:
+			जाओ fail;
+		पूर्ण
+	पूर्ण
 	*size = f2fs_acl_size(acl->a_count);
-	return (void *)f2fs_acl;
+	वापस (व्योम *)f2fs_acl;
 
 fail:
-	kfree(f2fs_acl);
-	return ERR_PTR(-EINVAL);
-}
+	kमुक्त(f2fs_acl);
+	वापस ERR_PTR(-EINVAL);
+पूर्ण
 
-static struct posix_acl *__f2fs_get_acl(struct inode *inode, int type,
-						struct page *dpage)
-{
-	int name_index = F2FS_XATTR_INDEX_POSIX_ACL_DEFAULT;
-	void *value = NULL;
-	struct posix_acl *acl;
-	int retval;
+अटल काष्ठा posix_acl *__f2fs_get_acl(काष्ठा inode *inode, पूर्णांक type,
+						काष्ठा page *dpage)
+अणु
+	पूर्णांक name_index = F2FS_XATTR_INDEX_POSIX_ACL_DEFAULT;
+	व्योम *value = शून्य;
+	काष्ठा posix_acl *acl;
+	पूर्णांक retval;
 
-	if (type == ACL_TYPE_ACCESS)
+	अगर (type == ACL_TYPE_ACCESS)
 		name_index = F2FS_XATTR_INDEX_POSIX_ACL_ACCESS;
 
-	retval = f2fs_getxattr(inode, name_index, "", NULL, 0, dpage);
-	if (retval > 0) {
-		value = f2fs_kmalloc(F2FS_I_SB(inode), retval, GFP_F2FS_ZERO);
-		if (!value)
-			return ERR_PTR(-ENOMEM);
+	retval = f2fs_getxattr(inode, name_index, "", शून्य, 0, dpage);
+	अगर (retval > 0) अणु
+		value = f2fs_kदो_स्मृति(F2FS_I_SB(inode), retval, GFP_F2FS_ZERO);
+		अगर (!value)
+			वापस ERR_PTR(-ENOMEM);
 		retval = f2fs_getxattr(inode, name_index, "", value,
 							retval, dpage);
-	}
+	पूर्ण
 
-	if (retval > 0)
+	अगर (retval > 0)
 		acl = f2fs_acl_from_disk(value, retval);
-	else if (retval == -ENODATA)
-		acl = NULL;
-	else
+	अन्यथा अगर (retval == -ENODATA)
+		acl = शून्य;
+	अन्यथा
 		acl = ERR_PTR(retval);
-	kfree(value);
+	kमुक्त(value);
 
-	return acl;
-}
+	वापस acl;
+पूर्ण
 
-struct posix_acl *f2fs_get_acl(struct inode *inode, int type)
-{
-	return __f2fs_get_acl(inode, type, NULL);
-}
+काष्ठा posix_acl *f2fs_get_acl(काष्ठा inode *inode, पूर्णांक type)
+अणु
+	वापस __f2fs_get_acl(inode, type, शून्य);
+पूर्ण
 
-static int f2fs_acl_update_mode(struct inode *inode, umode_t *mode_p,
-			  struct posix_acl **acl)
-{
+अटल पूर्णांक f2fs_acl_update_mode(काष्ठा inode *inode, umode_t *mode_p,
+			  काष्ठा posix_acl **acl)
+अणु
 	umode_t mode = inode->i_mode;
-	int error;
+	पूर्णांक error;
 
-	if (is_inode_flag_set(inode, FI_ACL_MODE))
+	अगर (is_inode_flag_set(inode, FI_ACL_MODE))
 		mode = F2FS_I(inode)->i_acl_mode;
 
 	error = posix_acl_equiv_mode(*acl, &mode);
-	if (error < 0)
-		return error;
-	if (error == 0)
-		*acl = NULL;
-	if (!in_group_p(i_gid_into_mnt(&init_user_ns, inode)) &&
+	अगर (error < 0)
+		वापस error;
+	अगर (error == 0)
+		*acl = शून्य;
+	अगर (!in_group_p(i_gid_पूर्णांकo_mnt(&init_user_ns, inode)) &&
 	    !capable_wrt_inode_uidgid(&init_user_ns, inode, CAP_FSETID))
 		mode &= ~S_ISGID;
 	*mode_p = mode;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __f2fs_set_acl(struct inode *inode, int type,
-			struct posix_acl *acl, struct page *ipage)
-{
-	int name_index;
-	void *value = NULL;
-	size_t size = 0;
-	int error;
+अटल पूर्णांक __f2fs_set_acl(काष्ठा inode *inode, पूर्णांक type,
+			काष्ठा posix_acl *acl, काष्ठा page *ipage)
+अणु
+	पूर्णांक name_index;
+	व्योम *value = शून्य;
+	माप_प्रकार size = 0;
+	पूर्णांक error;
 	umode_t mode = inode->i_mode;
 
-	switch (type) {
-	case ACL_TYPE_ACCESS:
+	चयन (type) अणु
+	हाल ACL_TYPE_ACCESS:
 		name_index = F2FS_XATTR_INDEX_POSIX_ACL_ACCESS;
-		if (acl && !ipage) {
+		अगर (acl && !ipage) अणु
 			error = f2fs_acl_update_mode(inode, &mode, &acl);
-			if (error)
-				return error;
+			अगर (error)
+				वापस error;
 			set_acl_inode(inode, mode);
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case ACL_TYPE_DEFAULT:
+	हाल ACL_TYPE_DEFAULT:
 		name_index = F2FS_XATTR_INDEX_POSIX_ACL_DEFAULT;
-		if (!S_ISDIR(inode->i_mode))
-			return acl ? -EACCES : 0;
-		break;
+		अगर (!S_ISसूची(inode->i_mode))
+			वापस acl ? -EACCES : 0;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (acl) {
+	अगर (acl) अणु
 		value = f2fs_acl_to_disk(F2FS_I_SB(inode), acl, &size);
-		if (IS_ERR(value)) {
+		अगर (IS_ERR(value)) अणु
 			clear_inode_flag(inode, FI_ACL_MODE);
-			return PTR_ERR(value);
-		}
-	}
+			वापस PTR_ERR(value);
+		पूर्ण
+	पूर्ण
 
 	error = f2fs_setxattr(inode, name_index, "", value, size, ipage, 0);
 
-	kfree(value);
-	if (!error)
+	kमुक्त(value);
+	अगर (!error)
 		set_cached_acl(inode, type, acl);
 
 	clear_inode_flag(inode, FI_ACL_MODE);
-	return error;
-}
+	वापस error;
+पूर्ण
 
-int f2fs_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
-		 struct posix_acl *acl, int type)
-{
-	if (unlikely(f2fs_cp_error(F2FS_I_SB(inode))))
-		return -EIO;
+पूर्णांक f2fs_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
+		 काष्ठा posix_acl *acl, पूर्णांक type)
+अणु
+	अगर (unlikely(f2fs_cp_error(F2FS_I_SB(inode))))
+		वापस -EIO;
 
-	return __f2fs_set_acl(inode, type, acl, NULL);
-}
+	वापस __f2fs_set_acl(inode, type, acl, शून्य);
+पूर्ण
 
 /*
  * Most part of f2fs_acl_clone, f2fs_acl_create_masq, f2fs_acl_create
  * are copied from posix_acl.c
  */
-static struct posix_acl *f2fs_acl_clone(const struct posix_acl *acl,
+अटल काष्ठा posix_acl *f2fs_acl_clone(स्थिर काष्ठा posix_acl *acl,
 							gfp_t flags)
-{
-	struct posix_acl *clone = NULL;
+अणु
+	काष्ठा posix_acl *clone = शून्य;
 
-	if (acl) {
-		int size = sizeof(struct posix_acl) + acl->a_count *
-				sizeof(struct posix_acl_entry);
+	अगर (acl) अणु
+		पूर्णांक size = माप(काष्ठा posix_acl) + acl->a_count *
+				माप(काष्ठा posix_acl_entry);
 		clone = kmemdup(acl, size, flags);
-		if (clone)
+		अगर (clone)
 			refcount_set(&clone->a_refcount, 1);
-	}
-	return clone;
-}
+	पूर्ण
+	वापस clone;
+पूर्ण
 
-static int f2fs_acl_create_masq(struct posix_acl *acl, umode_t *mode_p)
-{
-	struct posix_acl_entry *pa, *pe;
-	struct posix_acl_entry *group_obj = NULL, *mask_obj = NULL;
+अटल पूर्णांक f2fs_acl_create_masq(काष्ठा posix_acl *acl, umode_t *mode_p)
+अणु
+	काष्ठा posix_acl_entry *pa, *pe;
+	काष्ठा posix_acl_entry *group_obj = शून्य, *mask_obj = शून्य;
 	umode_t mode = *mode_p;
-	int not_equiv = 0;
+	पूर्णांक not_equiv = 0;
 
-	/* assert(atomic_read(acl->a_refcount) == 1); */
+	/* निश्चित(atomic_पढ़ो(acl->a_refcount) == 1); */
 
-	FOREACH_ACL_ENTRY(pa, acl, pe) {
-		switch (pa->e_tag) {
-		case ACL_USER_OBJ:
+	FOREACH_ACL_ENTRY(pa, acl, pe) अणु
+		चयन (pa->e_tag) अणु
+		हाल ACL_USER_OBJ:
 			pa->e_perm &= (mode >> 6) | ~S_IRWXO;
 			mode &= (pa->e_perm << 6) | ~S_IRWXU;
-			break;
+			अवरोध;
 
-		case ACL_USER:
-		case ACL_GROUP:
+		हाल ACL_USER:
+		हाल ACL_GROUP:
 			not_equiv = 1;
-			break;
+			अवरोध;
 
-		case ACL_GROUP_OBJ:
+		हाल ACL_GROUP_OBJ:
 			group_obj = pa;
-			break;
+			अवरोध;
 
-		case ACL_OTHER:
+		हाल ACL_OTHER:
 			pa->e_perm &= mode | ~S_IRWXO;
 			mode &= pa->e_perm | ~S_IRWXO;
-			break;
+			अवरोध;
 
-		case ACL_MASK:
+		हाल ACL_MASK:
 			mask_obj = pa;
 			not_equiv = 1;
-			break;
+			अवरोध;
 
-		default:
-			return -EIO;
-		}
-	}
+		शेष:
+			वापस -EIO;
+		पूर्ण
+	पूर्ण
 
-	if (mask_obj) {
+	अगर (mask_obj) अणु
 		mask_obj->e_perm &= (mode >> 3) | ~S_IRWXO;
 		mode &= (mask_obj->e_perm << 3) | ~S_IRWXG;
-	} else {
-		if (!group_obj)
-			return -EIO;
+	पूर्ण अन्यथा अणु
+		अगर (!group_obj)
+			वापस -EIO;
 		group_obj->e_perm &= (mode >> 3) | ~S_IRWXO;
 		mode &= (group_obj->e_perm << 3) | ~S_IRWXG;
-	}
+	पूर्ण
 
 	*mode_p = (*mode_p & ~S_IRWXUGO) | mode;
-	return not_equiv;
-}
+	वापस not_equiv;
+पूर्ण
 
-static int f2fs_acl_create(struct inode *dir, umode_t *mode,
-		struct posix_acl **default_acl, struct posix_acl **acl,
-		struct page *dpage)
-{
-	struct posix_acl *p;
-	struct posix_acl *clone;
-	int ret;
+अटल पूर्णांक f2fs_acl_create(काष्ठा inode *dir, umode_t *mode,
+		काष्ठा posix_acl **शेष_acl, काष्ठा posix_acl **acl,
+		काष्ठा page *dpage)
+अणु
+	काष्ठा posix_acl *p;
+	काष्ठा posix_acl *clone;
+	पूर्णांक ret;
 
-	*acl = NULL;
-	*default_acl = NULL;
+	*acl = शून्य;
+	*शेष_acl = शून्य;
 
-	if (S_ISLNK(*mode) || !IS_POSIXACL(dir))
-		return 0;
+	अगर (S_ISLNK(*mode) || !IS_POSIXACL(dir))
+		वापस 0;
 
 	p = __f2fs_get_acl(dir, ACL_TYPE_DEFAULT, dpage);
-	if (!p || p == ERR_PTR(-EOPNOTSUPP)) {
+	अगर (!p || p == ERR_PTR(-EOPNOTSUPP)) अणु
 		*mode &= ~current_umask();
-		return 0;
-	}
-	if (IS_ERR(p))
-		return PTR_ERR(p);
+		वापस 0;
+	पूर्ण
+	अगर (IS_ERR(p))
+		वापस PTR_ERR(p);
 
 	clone = f2fs_acl_clone(p, GFP_NOFS);
-	if (!clone) {
+	अगर (!clone) अणु
 		ret = -ENOMEM;
-		goto release_acl;
-	}
+		जाओ release_acl;
+	पूर्ण
 
 	ret = f2fs_acl_create_masq(clone, mode);
-	if (ret < 0)
-		goto release_clone;
+	अगर (ret < 0)
+		जाओ release_clone;
 
-	if (ret == 0)
+	अगर (ret == 0)
 		posix_acl_release(clone);
-	else
+	अन्यथा
 		*acl = clone;
 
-	if (!S_ISDIR(*mode))
+	अगर (!S_ISसूची(*mode))
 		posix_acl_release(p);
-	else
-		*default_acl = p;
+	अन्यथा
+		*शेष_acl = p;
 
-	return 0;
+	वापस 0;
 
 release_clone:
 	posix_acl_release(clone);
 release_acl:
 	posix_acl_release(p);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int f2fs_init_acl(struct inode *inode, struct inode *dir, struct page *ipage,
-							struct page *dpage)
-{
-	struct posix_acl *default_acl = NULL, *acl = NULL;
-	int error;
+पूर्णांक f2fs_init_acl(काष्ठा inode *inode, काष्ठा inode *dir, काष्ठा page *ipage,
+							काष्ठा page *dpage)
+अणु
+	काष्ठा posix_acl *शेष_acl = शून्य, *acl = शून्य;
+	पूर्णांक error;
 
-	error = f2fs_acl_create(dir, &inode->i_mode, &default_acl, &acl, dpage);
-	if (error)
-		return error;
+	error = f2fs_acl_create(dir, &inode->i_mode, &शेष_acl, &acl, dpage);
+	अगर (error)
+		वापस error;
 
 	f2fs_mark_inode_dirty_sync(inode, true);
 
-	if (default_acl) {
-		error = __f2fs_set_acl(inode, ACL_TYPE_DEFAULT, default_acl,
+	अगर (शेष_acl) अणु
+		error = __f2fs_set_acl(inode, ACL_TYPE_DEFAULT, शेष_acl,
 				       ipage);
-		posix_acl_release(default_acl);
-	} else {
-		inode->i_default_acl = NULL;
-	}
-	if (acl) {
-		if (!error)
+		posix_acl_release(शेष_acl);
+	पूर्ण अन्यथा अणु
+		inode->i_शेष_acl = शून्य;
+	पूर्ण
+	अगर (acl) अणु
+		अगर (!error)
 			error = __f2fs_set_acl(inode, ACL_TYPE_ACCESS, acl,
 					       ipage);
 		posix_acl_release(acl);
-	} else {
-		inode->i_acl = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		inode->i_acl = शून्य;
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण

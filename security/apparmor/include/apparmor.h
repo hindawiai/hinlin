@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
@@ -8,38 +9,38 @@
  * Copyright 2009-2017 Canonical Ltd.
  */
 
-#ifndef __APPARMOR_H
-#define __APPARMOR_H
+#अगर_अघोषित __APPARMOR_H
+#घोषणा __APPARMOR_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /*
  * Class of mediation types in the AppArmor policy db
  */
-#define AA_CLASS_ENTRY		0
-#define AA_CLASS_UNKNOWN	1
-#define AA_CLASS_FILE		2
-#define AA_CLASS_CAP		3
-#define AA_CLASS_DEPRECATED	4
-#define AA_CLASS_RLIMITS	5
-#define AA_CLASS_DOMAIN		6
-#define AA_CLASS_MOUNT		7
-#define AA_CLASS_PTRACE		9
-#define AA_CLASS_SIGNAL		10
-#define AA_CLASS_NET		14
-#define AA_CLASS_LABEL		16
+#घोषणा AA_CLASS_ENTRY		0
+#घोषणा AA_CLASS_UNKNOWN	1
+#घोषणा AA_CLASS_खाता		2
+#घोषणा AA_CLASS_CAP		3
+#घोषणा AA_CLASS_DEPRECATED	4
+#घोषणा AA_CLASS_RLIMITS	5
+#घोषणा AA_CLASS_DOMAIN		6
+#घोषणा AA_CLASS_MOUNT		7
+#घोषणा AA_CLASS_PTRACE		9
+#घोषणा AA_CLASS_SIGNAL		10
+#घोषणा AA_CLASS_NET		14
+#घोषणा AA_CLASS_LABEL		16
 
-#define AA_CLASS_LAST		AA_CLASS_LABEL
+#घोषणा AA_CLASS_LAST		AA_CLASS_LABEL
 
 /* Control parameters settable through module/boot flags */
-extern enum audit_mode aa_g_audit;
-extern bool aa_g_audit_header;
-extern bool aa_g_debug;
-extern bool aa_g_hash_policy;
-extern int aa_g_rawdata_compression_level;
-extern bool aa_g_lock_policy;
-extern bool aa_g_logsyscall;
-extern bool aa_g_paranoid_load;
-extern unsigned int aa_g_path_max;
+बाह्य क्रमागत audit_mode aa_g_audit;
+बाह्य bool aa_g_audit_header;
+बाह्य bool aa_g_debug;
+बाह्य bool aa_g_hash_policy;
+बाह्य पूर्णांक aa_g_rawdata_compression_level;
+बाह्य bool aa_g_lock_policy;
+बाह्य bool aa_g_logsyscall;
+बाह्य bool aa_g_paranoid_load;
+बाह्य अचिन्हित पूर्णांक aa_g_path_max;
 
-#endif /* __APPARMOR_H */
+#पूर्ण_अगर /* __APPARMOR_H */

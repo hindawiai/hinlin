@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  cobalt V4L2 API
  *
@@ -6,5 +7,5 @@
  *  All rights reserved.
  */
 
-int cobalt_nodes_register(struct cobalt *cobalt);
-void cobalt_nodes_unregister(struct cobalt *cobalt);
+पूर्णांक cobalt_nodes_रेजिस्टर(काष्ठा cobalt *cobalt);
+व्योम cobalt_nodes_unरेजिस्टर(काष्ठा cobalt *cobalt);

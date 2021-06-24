@@ -1,359 +1,360 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *
- *  Bluetooth HCI UART driver for Broadcom devices
+ *  Bluetooth HCI UART driver क्रम Broadcom devices
  *
  *  Copyright (C) 2015  Intel Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/skbuff.h>
-#include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/acpi.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/property.h>
-#include <linux/platform_data/x86/apple.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/consumer.h>
-#include <linux/clk.h>
-#include <linux/gpio/consumer.h>
-#include <linux/tty.h>
-#include <linux/interrupt.h>
-#include <linux/dmi.h>
-#include <linux/pm_runtime.h>
-#include <linux/serdev.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/module.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/property.h>
+#समावेश <linux/platक्रमm_data/x86/apple.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/serdev.h>
 
-#include <net/bluetooth/bluetooth.h>
-#include <net/bluetooth/hci_core.h>
+#समावेश <net/bluetooth/bluetooth.h>
+#समावेश <net/bluetooth/hci_core.h>
 
-#include "btbcm.h"
-#include "hci_uart.h"
+#समावेश "btbcm.h"
+#समावेश "hci_uart.h"
 
-#define BCM_NULL_PKT 0x00
-#define BCM_NULL_SIZE 0
+#घोषणा BCM_शून्य_PKT 0x00
+#घोषणा BCM_शून्य_SIZE 0
 
-#define BCM_LM_DIAG_PKT 0x07
-#define BCM_LM_DIAG_SIZE 63
+#घोषणा BCM_LM_DIAG_PKT 0x07
+#घोषणा BCM_LM_DIAG_SIZE 63
 
-#define BCM_TYPE49_PKT 0x31
-#define BCM_TYPE49_SIZE 0
+#घोषणा BCM_TYPE49_PKT 0x31
+#घोषणा BCM_TYPE49_SIZE 0
 
-#define BCM_TYPE52_PKT 0x34
-#define BCM_TYPE52_SIZE 0
+#घोषणा BCM_TYPE52_PKT 0x34
+#घोषणा BCM_TYPE52_SIZE 0
 
-#define BCM_AUTOSUSPEND_DELAY	5000 /* default autosleep delay */
+#घोषणा BCM_AUTOSUSPEND_DELAY	5000 /* शेष स्वतःsleep delay */
 
-#define BCM_NUM_SUPPLIES 2
+#घोषणा BCM_NUM_SUPPLIES 2
 
 /**
- * struct bcm_device_data - device specific data
- * @no_early_set_baudrate: Disallow set baudrate before driver setup()
+ * काष्ठा bcm_device_data - device specअगरic data
+ * @no_early_set_baudrate: Disallow set baudrate beक्रमe driver setup()
  */
-struct bcm_device_data {
+काष्ठा bcm_device_data अणु
 	bool	no_early_set_baudrate;
-	bool	drive_rts_on_open;
-};
+	bool	drive_rts_on_खोलो;
+पूर्ण;
 
 /**
- * struct bcm_device - device driver resources
- * @serdev_hu: HCI UART controller struct
+ * काष्ठा bcm_device - device driver resources
+ * @serdev_hu: HCI UART controller काष्ठा
  * @list: bcm_device_list node
  * @dev: physical UART slave
  * @name: device name logged by bt_dev_*() functions
  * @device_wakeup: BT_WAKE pin,
- *	assert = Bluetooth device must wake up or remain awake,
- *	deassert = Bluetooth device may sleep when sleep criteria are met
- * @shutdown: BT_REG_ON pin,
- *	power up or power down Bluetooth device internal regulators
+ *	निश्चित = Bluetooth device must wake up or reमुख्य awake,
+ *	deनिश्चित = Bluetooth device may sleep when sleep criteria are met
+ * @shutकरोwn: BT_REG_ON pin,
+ *	घातer up or घातer करोwn Bluetooth device पूर्णांकernal regulators
  * @reset: BT_RST_N pin,
  *	active low resets the Bluetooth logic core
  * @set_device_wakeup: callback to toggle BT_WAKE pin
  *	either by accessing @device_wakeup or by calling @btlp
- * @set_shutdown: callback to toggle BT_REG_ON pin
- *	either by accessing @shutdown or by calling @btpu/@btpd
+ * @set_shutकरोwn: callback to toggle BT_REG_ON pin
+ *	either by accessing @shutकरोwn or by calling @btpu/@btpd
  * @btlp: Apple ACPI method to toggle BT_WAKE pin ("Bluetooth Low Power")
  * @btpu: Apple ACPI method to drive BT_REG_ON pin high ("Bluetooth Power Up")
  * @btpd: Apple ACPI method to drive BT_REG_ON pin low ("Bluetooth Power Down")
- * @txco_clk: external reference frequency clock used by Bluetooth device
- * @lpo_clk: external LPO clock used by Bluetooth device
+ * @txco_clk: बाह्यal reference frequency घड़ी used by Bluetooth device
+ * @lpo_clk: बाह्यal LPO घड़ी used by Bluetooth device
  * @supplies: VBAT and VDDIO supplies used by Bluetooth device
- * @res_enabled: whether clocks and supplies are prepared and enabled
- * @init_speed: default baudrate of Bluetooth device;
+ * @res_enabled: whether घड़ीs and supplies are prepared and enabled
+ * @init_speed: शेष baudrate of Bluetooth device;
  *	the host UART is initially set to this baudrate so that
- *	it can configure the Bluetooth device for @oper_speed
+ *	it can configure the Bluetooth device क्रम @oper_speed
  * @oper_speed: preferred baudrate of Bluetooth device;
- *	set to 0 if @init_speed is already the preferred baudrate
- * @irq: interrupt triggered by HOST_WAKE_BT pin
+ *	set to 0 अगर @init_speed is alपढ़ोy the preferred baudrate
+ * @irq: पूर्णांकerrupt triggered by HOST_WAKE_BT pin
  * @irq_active_low: whether @irq is active low
- * @hu: pointer to HCI UART controller struct,
- *	used to disable flow control during runtime suspend and system sleep
+ * @hu: poपूर्णांकer to HCI UART controller काष्ठा,
+ *	used to disable flow control during runसमय suspend and प्रणाली sleep
  * @is_suspended: whether flow control is currently disabled
- * @no_early_set_baudrate: don't set_baudrate before setup()
+ * @no_early_set_baudrate: करोn't set_baudrate beक्रमe setup()
  */
-struct bcm_device {
+काष्ठा bcm_device अणु
 	/* Must be the first member, hci_serdev.c expects this. */
-	struct hci_uart		serdev_hu;
-	struct list_head	list;
+	काष्ठा hci_uart		serdev_hu;
+	काष्ठा list_head	list;
 
-	struct device		*dev;
+	काष्ठा device		*dev;
 
-	const char		*name;
-	struct gpio_desc	*device_wakeup;
-	struct gpio_desc	*shutdown;
-	struct gpio_desc	*reset;
-	int			(*set_device_wakeup)(struct bcm_device *, bool);
-	int			(*set_shutdown)(struct bcm_device *, bool);
-#ifdef CONFIG_ACPI
+	स्थिर अक्षर		*name;
+	काष्ठा gpio_desc	*device_wakeup;
+	काष्ठा gpio_desc	*shutकरोwn;
+	काष्ठा gpio_desc	*reset;
+	पूर्णांक			(*set_device_wakeup)(काष्ठा bcm_device *, bool);
+	पूर्णांक			(*set_shutकरोwn)(काष्ठा bcm_device *, bool);
+#अगर_घोषित CONFIG_ACPI
 	acpi_handle		btlp, btpu, btpd;
-	int			gpio_count;
-	int			gpio_int_idx;
-#endif
+	पूर्णांक			gpio_count;
+	पूर्णांक			gpio_पूर्णांक_idx;
+#पूर्ण_अगर
 
-	struct clk		*txco_clk;
-	struct clk		*lpo_clk;
-	struct regulator_bulk_data supplies[BCM_NUM_SUPPLIES];
+	काष्ठा clk		*txco_clk;
+	काष्ठा clk		*lpo_clk;
+	काष्ठा regulator_bulk_data supplies[BCM_NUM_SUPPLIES];
 	bool			res_enabled;
 
 	u32			init_speed;
 	u32			oper_speed;
-	int			irq;
+	पूर्णांक			irq;
 	bool			irq_active_low;
 	bool			irq_acquired;
 
-#ifdef CONFIG_PM
-	struct hci_uart		*hu;
+#अगर_घोषित CONFIG_PM
+	काष्ठा hci_uart		*hu;
 	bool			is_suspended;
-#endif
+#पूर्ण_अगर
 	bool			no_early_set_baudrate;
-	bool			drive_rts_on_open;
-	u8			pcm_int_params[5];
-};
+	bool			drive_rts_on_खोलो;
+	u8			pcm_पूर्णांक_params[5];
+पूर्ण;
 
 /* generic bcm uart resources */
-struct bcm_data {
-	struct sk_buff		*rx_skb;
-	struct sk_buff_head	txq;
+काष्ठा bcm_data अणु
+	काष्ठा sk_buff		*rx_skb;
+	काष्ठा sk_buff_head	txq;
 
-	struct bcm_device	*dev;
-};
+	काष्ठा bcm_device	*dev;
+पूर्ण;
 
 /* List of BCM BT UART devices */
-static DEFINE_MUTEX(bcm_device_lock);
-static LIST_HEAD(bcm_device_list);
+अटल DEFINE_MUTEX(bcm_device_lock);
+अटल LIST_HEAD(bcm_device_list);
 
-static int irq_polarity = -1;
-module_param(irq_polarity, int, 0444);
+अटल पूर्णांक irq_polarity = -1;
+module_param(irq_polarity, पूर्णांक, 0444);
 MODULE_PARM_DESC(irq_polarity, "IRQ polarity 0: active-high 1: active-low");
 
-static inline void host_set_baudrate(struct hci_uart *hu, unsigned int speed)
-{
-	if (hu->serdev)
+अटल अंतरभूत व्योम host_set_baudrate(काष्ठा hci_uart *hu, अचिन्हित पूर्णांक speed)
+अणु
+	अगर (hu->serdev)
 		serdev_device_set_baudrate(hu->serdev, speed);
-	else
+	अन्यथा
 		hci_uart_set_baudrate(hu, speed);
-}
+पूर्ण
 
-static int bcm_set_baudrate(struct hci_uart *hu, unsigned int speed)
-{
-	struct hci_dev *hdev = hu->hdev;
-	struct sk_buff *skb;
-	struct bcm_update_uart_baud_rate param;
+अटल पूर्णांक bcm_set_baudrate(काष्ठा hci_uart *hu, अचिन्हित पूर्णांक speed)
+अणु
+	काष्ठा hci_dev *hdev = hu->hdev;
+	काष्ठा sk_buff *skb;
+	काष्ठा bcm_update_uart_baud_rate param;
 
-	if (speed > 3000000) {
-		struct bcm_write_uart_clock_setting clock;
+	अगर (speed > 3000000) अणु
+		काष्ठा bcm_ग_लिखो_uart_घड़ी_setting घड़ी;
 
-		clock.type = BCM_UART_CLOCK_48MHZ;
+		घड़ी.type = BCM_UART_CLOCK_48MHZ;
 
-		bt_dev_dbg(hdev, "Set Controller clock (%d)", clock.type);
+		bt_dev_dbg(hdev, "Set Controller clock (%d)", घड़ी.type);
 
-		/* This Broadcom specific command changes the UART's controller
-		 * clock for baud rate > 3000000.
+		/* This Broadcom specअगरic command changes the UART's controller
+		 * घड़ी क्रम baud rate > 3000000.
 		 */
-		skb = __hci_cmd_sync(hdev, 0xfc45, 1, &clock, HCI_INIT_TIMEOUT);
-		if (IS_ERR(skb)) {
-			int err = PTR_ERR(skb);
+		skb = __hci_cmd_sync(hdev, 0xfc45, 1, &घड़ी, HCI_INIT_TIMEOUT);
+		अगर (IS_ERR(skb)) अणु
+			पूर्णांक err = PTR_ERR(skb);
 			bt_dev_err(hdev, "BCM: failed to write clock (%d)",
 				   err);
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		kfree_skb(skb);
-	}
+		kमुक्त_skb(skb);
+	पूर्ण
 
 	bt_dev_dbg(hdev, "Set Controller UART speed to %d bit/s", speed);
 
 	param.zero = cpu_to_le16(0);
 	param.baud_rate = cpu_to_le32(speed);
 
-	/* This Broadcom specific command changes the UART's controller baud
+	/* This Broadcom specअगरic command changes the UART's controller baud
 	 * rate.
 	 */
-	skb = __hci_cmd_sync(hdev, 0xfc18, sizeof(param), &param,
+	skb = __hci_cmd_sync(hdev, 0xfc18, माप(param), &param,
 			     HCI_INIT_TIMEOUT);
-	if (IS_ERR(skb)) {
-		int err = PTR_ERR(skb);
+	अगर (IS_ERR(skb)) अणु
+		पूर्णांक err = PTR_ERR(skb);
 		bt_dev_err(hdev, "BCM: failed to write update baudrate (%d)",
 			   err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* bcm_device_exists should be protected by bcm_device_lock */
-static bool bcm_device_exists(struct bcm_device *device)
-{
-	struct list_head *p;
+/* bcm_device_exists should be रक्षित by bcm_device_lock */
+अटल bool bcm_device_exists(काष्ठा bcm_device *device)
+अणु
+	काष्ठा list_head *p;
 
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	/* Devices using serdev always exist */
-	if (device && device->hu && device->hu->serdev)
-		return true;
-#endif
+	अगर (device && device->hu && device->hu->serdev)
+		वापस true;
+#पूर्ण_अगर
 
-	list_for_each(p, &bcm_device_list) {
-		struct bcm_device *dev = list_entry(p, struct bcm_device, list);
+	list_क्रम_each(p, &bcm_device_list) अणु
+		काष्ठा bcm_device *dev = list_entry(p, काष्ठा bcm_device, list);
 
-		if (device == dev)
-			return true;
-	}
+		अगर (device == dev)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int bcm_gpio_set_power(struct bcm_device *dev, bool powered)
-{
-	int err;
+अटल पूर्णांक bcm_gpio_set_घातer(काष्ठा bcm_device *dev, bool घातered)
+अणु
+	पूर्णांक err;
 
-	if (powered && !dev->res_enabled) {
-		/* Intel Macs use bcm_apple_get_resources() and don't
+	अगर (घातered && !dev->res_enabled) अणु
+		/* Intel Macs use bcm_apple_get_resources() and करोn't
 		 * have regulator supplies configured.
 		 */
-		if (dev->supplies[0].supply) {
+		अगर (dev->supplies[0].supply) अणु
 			err = regulator_bulk_enable(BCM_NUM_SUPPLIES,
 						    dev->supplies);
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
-		/* LPO clock needs to be 32.768 kHz */
+		/* LPO घड़ी needs to be 32.768 kHz */
 		err = clk_set_rate(dev->lpo_clk, 32768);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev->dev, "Could not set LPO clock rate\n");
-			goto err_regulator_disable;
-		}
+			जाओ err_regulator_disable;
+		पूर्ण
 
 		err = clk_prepare_enable(dev->lpo_clk);
-		if (err)
-			goto err_regulator_disable;
+		अगर (err)
+			जाओ err_regulator_disable;
 
 		err = clk_prepare_enable(dev->txco_clk);
-		if (err)
-			goto err_lpo_clk_disable;
-	}
+		अगर (err)
+			जाओ err_lpo_clk_disable;
+	पूर्ण
 
-	err = dev->set_shutdown(dev, powered);
-	if (err)
-		goto err_txco_clk_disable;
+	err = dev->set_shutकरोwn(dev, घातered);
+	अगर (err)
+		जाओ err_txco_clk_disable;
 
-	err = dev->set_device_wakeup(dev, powered);
-	if (err)
-		goto err_revert_shutdown;
+	err = dev->set_device_wakeup(dev, घातered);
+	अगर (err)
+		जाओ err_revert_shutकरोwn;
 
-	if (!powered && dev->res_enabled) {
+	अगर (!घातered && dev->res_enabled) अणु
 		clk_disable_unprepare(dev->txco_clk);
 		clk_disable_unprepare(dev->lpo_clk);
 
-		/* Intel Macs use bcm_apple_get_resources() and don't
+		/* Intel Macs use bcm_apple_get_resources() and करोn't
 		 * have regulator supplies configured.
 		 */
-		if (dev->supplies[0].supply)
+		अगर (dev->supplies[0].supply)
 			regulator_bulk_disable(BCM_NUM_SUPPLIES,
 					       dev->supplies);
-	}
+	पूर्ण
 
-	/* wait for device to power on and come out of reset */
+	/* रुको क्रम device to घातer on and come out of reset */
 	usleep_range(100000, 120000);
 
-	dev->res_enabled = powered;
+	dev->res_enabled = घातered;
 
-	return 0;
+	वापस 0;
 
-err_revert_shutdown:
-	dev->set_shutdown(dev, !powered);
+err_revert_shutकरोwn:
+	dev->set_shutकरोwn(dev, !घातered);
 err_txco_clk_disable:
-	if (powered && !dev->res_enabled)
+	अगर (घातered && !dev->res_enabled)
 		clk_disable_unprepare(dev->txco_clk);
 err_lpo_clk_disable:
-	if (powered && !dev->res_enabled)
+	अगर (घातered && !dev->res_enabled)
 		clk_disable_unprepare(dev->lpo_clk);
 err_regulator_disable:
-	if (powered && !dev->res_enabled)
+	अगर (घातered && !dev->res_enabled)
 		regulator_bulk_disable(BCM_NUM_SUPPLIES, dev->supplies);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#ifdef CONFIG_PM
-static irqreturn_t bcm_host_wake(int irq, void *data)
-{
-	struct bcm_device *bdev = data;
+#अगर_घोषित CONFIG_PM
+अटल irqवापस_t bcm_host_wake(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा bcm_device *bdev = data;
 
 	bt_dev_dbg(bdev, "Host wake IRQ");
 
-	pm_runtime_get(bdev->dev);
-	pm_runtime_mark_last_busy(bdev->dev);
-	pm_runtime_put_autosuspend(bdev->dev);
+	pm_runसमय_get(bdev->dev);
+	pm_runसमय_mark_last_busy(bdev->dev);
+	pm_runसमय_put_स्वतःsuspend(bdev->dev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int bcm_request_irq(struct bcm_data *bcm)
-{
-	struct bcm_device *bdev = bcm->dev;
-	int err;
+अटल पूर्णांक bcm_request_irq(काष्ठा bcm_data *bcm)
+अणु
+	काष्ठा bcm_device *bdev = bcm->dev;
+	पूर्णांक err;
 
 	mutex_lock(&bcm_device_lock);
-	if (!bcm_device_exists(bdev)) {
+	अगर (!bcm_device_exists(bdev)) अणु
 		err = -ENODEV;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
-	if (bdev->irq <= 0) {
+	अगर (bdev->irq <= 0) अणु
 		err = -EOPNOTSUPP;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	err = devm_request_irq(bdev->dev, bdev->irq, bcm_host_wake,
 			       bdev->irq_active_low ? IRQF_TRIGGER_FALLING :
 						      IRQF_TRIGGER_RISING,
 			       "host_wake", bdev);
-	if (err) {
+	अगर (err) अणु
 		bdev->irq = err;
-		goto unlock;
-	}
+		जाओ unlock;
+	पूर्ण
 
 	bdev->irq_acquired = true;
 
 	device_init_wakeup(bdev->dev, true);
 
-	pm_runtime_set_autosuspend_delay(bdev->dev,
+	pm_runसमय_set_स्वतःsuspend_delay(bdev->dev,
 					 BCM_AUTOSUSPEND_DELAY);
-	pm_runtime_use_autosuspend(bdev->dev);
-	pm_runtime_set_active(bdev->dev);
-	pm_runtime_enable(bdev->dev);
+	pm_runसमय_use_स्वतःsuspend(bdev->dev);
+	pm_runसमय_set_active(bdev->dev);
+	pm_runसमय_enable(bdev->dev);
 
 unlock:
 	mutex_unlock(&bcm_device_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct bcm_set_sleep_mode default_sleep_params = {
+अटल स्थिर काष्ठा bcm_set_sleep_mode शेष_sleep_params = अणु
 	.sleep_mode = 1,	/* 0=Disabled, 1=UART, 2=Reserved, 3=USB */
 	.idle_host = 2,		/* idle threshold HOST, in 300ms */
 	.idle_dev = 2,		/* idle threshold device, in 300ms */
@@ -363,50 +364,50 @@ static const struct bcm_set_sleep_mode default_sleep_params = {
 	.combine_modes = 1,	/* Combine sleep and LPM flag */
 	.tristate_control = 0,	/* Allow tri-state control of UART tx flag */
 	/* Irrelevant USB flags */
-	.usb_auto_sleep = 0,
-	.usb_resume_timeout = 0,
-	.break_to_host = 0,
+	.usb_स्वतः_sleep = 0,
+	.usb_resume_समयout = 0,
+	.अवरोध_to_host = 0,
 	.pulsed_host_wake = 1,
-};
+पूर्ण;
 
-static int bcm_setup_sleep(struct hci_uart *hu)
-{
-	struct bcm_data *bcm = hu->priv;
-	struct sk_buff *skb;
-	struct bcm_set_sleep_mode sleep_params = default_sleep_params;
+अटल पूर्णांक bcm_setup_sleep(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcm_data *bcm = hu->priv;
+	काष्ठा sk_buff *skb;
+	काष्ठा bcm_set_sleep_mode sleep_params = शेष_sleep_params;
 
 	sleep_params.host_wake_active = !bcm->dev->irq_active_low;
 
-	skb = __hci_cmd_sync(hu->hdev, 0xfc27, sizeof(sleep_params),
+	skb = __hci_cmd_sync(hu->hdev, 0xfc27, माप(sleep_params),
 			     &sleep_params, HCI_INIT_TIMEOUT);
-	if (IS_ERR(skb)) {
-		int err = PTR_ERR(skb);
+	अगर (IS_ERR(skb)) अणु
+		पूर्णांक err = PTR_ERR(skb);
 		bt_dev_err(hu->hdev, "Sleep VSC failed (%d)", err);
-		return err;
-	}
-	kfree_skb(skb);
+		वापस err;
+	पूर्ण
+	kमुक्त_skb(skb);
 
 	bt_dev_dbg(hu->hdev, "Set Sleep Parameters VSC succeeded");
 
-	return 0;
-}
-#else
-static inline int bcm_request_irq(struct bcm_data *bcm) { return 0; }
-static inline int bcm_setup_sleep(struct hci_uart *hu) { return 0; }
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक bcm_request_irq(काष्ठा bcm_data *bcm) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक bcm_setup_sleep(काष्ठा hci_uart *hu) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-static int bcm_set_diag(struct hci_dev *hdev, bool enable)
-{
-	struct hci_uart *hu = hci_get_drvdata(hdev);
-	struct bcm_data *bcm = hu->priv;
-	struct sk_buff *skb;
+अटल पूर्णांक bcm_set_diag(काष्ठा hci_dev *hdev, bool enable)
+अणु
+	काष्ठा hci_uart *hu = hci_get_drvdata(hdev);
+	काष्ठा bcm_data *bcm = hu->priv;
+	काष्ठा sk_buff *skb;
 
-	if (!test_bit(HCI_RUNNING, &hdev->flags))
-		return -ENETDOWN;
+	अगर (!test_bit(HCI_RUNNING, &hdev->flags))
+		वापस -ENETDOWN;
 
 	skb = bt_skb_alloc(3, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
 	skb_put_u8(skb, BCM_LM_DIAG_PKT);
 	skb_put_u8(skb, 0xf0);
@@ -415,23 +416,23 @@ static int bcm_set_diag(struct hci_dev *hdev, bool enable)
 	skb_queue_tail(&bcm->txq, skb);
 	hci_uart_tx_wakeup(hu);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_open(struct hci_uart *hu)
-{
-	struct bcm_data *bcm;
-	struct list_head *p;
-	int err;
+अटल पूर्णांक bcm_खोलो(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcm_data *bcm;
+	काष्ठा list_head *p;
+	पूर्णांक err;
 
 	bt_dev_dbg(hu->hdev, "hu %p", hu);
 
-	if (!hci_uart_has_flow_control(hu))
-		return -EOPNOTSUPP;
+	अगर (!hci_uart_has_flow_control(hu))
+		वापस -EOPNOTSUPP;
 
-	bcm = kzalloc(sizeof(*bcm), GFP_KERNEL);
-	if (!bcm)
-		return -ENOMEM;
+	bcm = kzalloc(माप(*bcm), GFP_KERNEL);
+	अगर (!bcm)
+		वापस -ENOMEM;
 
 	skb_queue_head_init(&bcm->txq);
 
@@ -439,765 +440,765 @@ static int bcm_open(struct hci_uart *hu)
 
 	mutex_lock(&bcm_device_lock);
 
-	if (hu->serdev) {
+	अगर (hu->serdev) अणु
 		bcm->dev = serdev_device_get_drvdata(hu->serdev);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!hu->tty->dev)
-		goto out;
+	अगर (!hu->tty->dev)
+		जाओ out;
 
-	list_for_each(p, &bcm_device_list) {
-		struct bcm_device *dev = list_entry(p, struct bcm_device, list);
+	list_क्रम_each(p, &bcm_device_list) अणु
+		काष्ठा bcm_device *dev = list_entry(p, काष्ठा bcm_device, list);
 
 		/* Retrieve saved bcm_device based on parent of the
-		 * platform device (saved during device probe) and
+		 * platक्रमm device (saved during device probe) and
 		 * parent of tty device used by hci_uart
 		 */
-		if (hu->tty->dev->parent == dev->dev->parent) {
+		अगर (hu->tty->dev->parent == dev->dev->parent) अणु
 			bcm->dev = dev;
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 			dev->hu = hu;
-#endif
-			break;
-		}
-	}
+#पूर्ण_अगर
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 out:
-	if (bcm->dev) {
-		if (bcm->dev->drive_rts_on_open)
+	अगर (bcm->dev) अणु
+		अगर (bcm->dev->drive_rts_on_खोलो)
 			hci_uart_set_flow_control(hu, true);
 
 		hu->init_speed = bcm->dev->init_speed;
 
 		/* If oper_speed is set, ldisc/serdev will set the baudrate
-		 * before calling setup()
+		 * beक्रमe calling setup()
 		 */
-		if (!bcm->dev->no_early_set_baudrate)
+		अगर (!bcm->dev->no_early_set_baudrate)
 			hu->oper_speed = bcm->dev->oper_speed;
 
-		err = bcm_gpio_set_power(bcm->dev, true);
+		err = bcm_gpio_set_घातer(bcm->dev, true);
 
-		if (bcm->dev->drive_rts_on_open)
+		अगर (bcm->dev->drive_rts_on_खोलो)
 			hci_uart_set_flow_control(hu, false);
 
-		if (err)
-			goto err_unset_hu;
-	}
+		अगर (err)
+			जाओ err_unset_hu;
+	पूर्ण
 
 	mutex_unlock(&bcm_device_lock);
-	return 0;
+	वापस 0;
 
 err_unset_hu:
-#ifdef CONFIG_PM
-	if (!hu->serdev)
-		bcm->dev->hu = NULL;
-#endif
+#अगर_घोषित CONFIG_PM
+	अगर (!hu->serdev)
+		bcm->dev->hu = शून्य;
+#पूर्ण_अगर
 	mutex_unlock(&bcm_device_lock);
-	hu->priv = NULL;
-	kfree(bcm);
-	return err;
-}
+	hu->priv = शून्य;
+	kमुक्त(bcm);
+	वापस err;
+पूर्ण
 
-static int bcm_close(struct hci_uart *hu)
-{
-	struct bcm_data *bcm = hu->priv;
-	struct bcm_device *bdev = NULL;
-	int err;
+अटल पूर्णांक bcm_बंद(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcm_data *bcm = hu->priv;
+	काष्ठा bcm_device *bdev = शून्य;
+	पूर्णांक err;
 
 	bt_dev_dbg(hu->hdev, "hu %p", hu);
 
 	/* Protect bcm->dev against removal of the device or driver */
 	mutex_lock(&bcm_device_lock);
 
-	if (hu->serdev) {
+	अगर (hu->serdev) अणु
 		bdev = serdev_device_get_drvdata(hu->serdev);
-	} else if (bcm_device_exists(bcm->dev)) {
+	पूर्ण अन्यथा अगर (bcm_device_exists(bcm->dev)) अणु
 		bdev = bcm->dev;
-#ifdef CONFIG_PM
-		bdev->hu = NULL;
-#endif
-	}
+#अगर_घोषित CONFIG_PM
+		bdev->hu = शून्य;
+#पूर्ण_अगर
+	पूर्ण
 
-	if (bdev) {
-		if (IS_ENABLED(CONFIG_PM) && bdev->irq_acquired) {
-			devm_free_irq(bdev->dev, bdev->irq, bdev);
+	अगर (bdev) अणु
+		अगर (IS_ENABLED(CONFIG_PM) && bdev->irq_acquired) अणु
+			devm_मुक्त_irq(bdev->dev, bdev->irq, bdev);
 			device_init_wakeup(bdev->dev, false);
-			pm_runtime_disable(bdev->dev);
-		}
+			pm_runसमय_disable(bdev->dev);
+		पूर्ण
 
-		err = bcm_gpio_set_power(bdev, false);
-		if (err)
+		err = bcm_gpio_set_घातer(bdev, false);
+		अगर (err)
 			bt_dev_err(hu->hdev, "Failed to power down");
-		else
-			pm_runtime_set_suspended(bdev->dev);
-	}
+		अन्यथा
+			pm_runसमय_set_suspended(bdev->dev);
+	पूर्ण
 	mutex_unlock(&bcm_device_lock);
 
 	skb_queue_purge(&bcm->txq);
-	kfree_skb(bcm->rx_skb);
-	kfree(bcm);
+	kमुक्त_skb(bcm->rx_skb);
+	kमुक्त(bcm);
 
-	hu->priv = NULL;
-	return 0;
-}
+	hu->priv = शून्य;
+	वापस 0;
+पूर्ण
 
-static int bcm_flush(struct hci_uart *hu)
-{
-	struct bcm_data *bcm = hu->priv;
+अटल पूर्णांक bcm_flush(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcm_data *bcm = hu->priv;
 
 	bt_dev_dbg(hu->hdev, "hu %p", hu);
 
 	skb_queue_purge(&bcm->txq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_setup(struct hci_uart *hu)
-{
-	struct bcm_data *bcm = hu->priv;
-	bool fw_load_done = false;
-	unsigned int speed;
-	int err;
+अटल पूर्णांक bcm_setup(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcm_data *bcm = hu->priv;
+	bool fw_load_करोne = false;
+	अचिन्हित पूर्णांक speed;
+	पूर्णांक err;
 
 	bt_dev_dbg(hu->hdev, "hu %p", hu);
 
 	hu->hdev->set_diag = bcm_set_diag;
 	hu->hdev->set_bdaddr = btbcm_set_bdaddr;
 
-	err = btbcm_initialize(hu->hdev, &fw_load_done);
-	if (err)
-		return err;
+	err = btbcm_initialize(hu->hdev, &fw_load_करोne);
+	अगर (err)
+		वापस err;
 
-	if (!fw_load_done)
-		return 0;
+	अगर (!fw_load_करोne)
+		वापस 0;
 
-	/* Init speed if any */
-	if (hu->init_speed)
+	/* Init speed अगर any */
+	अगर (hu->init_speed)
 		speed = hu->init_speed;
-	else if (hu->proto->init_speed)
+	अन्यथा अगर (hu->proto->init_speed)
 		speed = hu->proto->init_speed;
-	else
+	अन्यथा
 		speed = 0;
 
-	if (speed)
+	अगर (speed)
 		host_set_baudrate(hu, speed);
 
-	/* Operational speed if any */
-	if (hu->oper_speed)
+	/* Operational speed अगर any */
+	अगर (hu->oper_speed)
 		speed = hu->oper_speed;
-	else if (bcm->dev && bcm->dev->oper_speed)
+	अन्यथा अगर (bcm->dev && bcm->dev->oper_speed)
 		speed = bcm->dev->oper_speed;
-	else if (hu->proto->oper_speed)
+	अन्यथा अगर (hu->proto->oper_speed)
 		speed = hu->proto->oper_speed;
-	else
+	अन्यथा
 		speed = 0;
 
-	if (speed) {
+	अगर (speed) अणु
 		err = bcm_set_baudrate(hu, speed);
-		if (!err)
+		अगर (!err)
 			host_set_baudrate(hu, speed);
-	}
+	पूर्ण
 
-	/* PCM parameters if provided */
-	if (bcm->dev && bcm->dev->pcm_int_params[0] != 0xff) {
-		struct bcm_set_pcm_int_params params;
+	/* PCM parameters अगर provided */
+	अगर (bcm->dev && bcm->dev->pcm_पूर्णांक_params[0] != 0xff) अणु
+		काष्ठा bcm_set_pcm_पूर्णांक_params params;
 
-		btbcm_read_pcm_int_params(hu->hdev, &params);
+		btbcm_पढ़ो_pcm_पूर्णांक_params(hu->hdev, &params);
 
-		memcpy(&params, bcm->dev->pcm_int_params, 5);
-		btbcm_write_pcm_int_params(hu->hdev, &params);
-	}
+		स_नकल(&params, bcm->dev->pcm_पूर्णांक_params, 5);
+		btbcm_ग_लिखो_pcm_पूर्णांक_params(hu->hdev, &params);
+	पूर्ण
 
-	err = btbcm_finalize(hu->hdev, &fw_load_done);
-	if (err)
-		return err;
+	err = btbcm_finalize(hu->hdev, &fw_load_करोne);
+	अगर (err)
+		वापस err;
 
-	/* Some devices ship with the controller default address.
+	/* Some devices ship with the controller शेष address.
 	 * Allow the bootloader to set a valid address through the
 	 * device tree.
 	 */
 	set_bit(HCI_QUIRK_USE_BDADDR_PROPERTY, &hu->hdev->quirks);
 
-	if (!bcm_request_irq(bcm))
+	अगर (!bcm_request_irq(bcm))
 		err = bcm_setup_sleep(hu);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-#define BCM_RECV_LM_DIAG \
+#घोषणा BCM_RECV_LM_DIAG \
 	.type = BCM_LM_DIAG_PKT, \
 	.hlen = BCM_LM_DIAG_SIZE, \
 	.loff = 0, \
 	.lsize = 0, \
 	.maxlen = BCM_LM_DIAG_SIZE
 
-#define BCM_RECV_NULL \
-	.type = BCM_NULL_PKT, \
-	.hlen = BCM_NULL_SIZE, \
+#घोषणा BCM_RECV_शून्य \
+	.type = BCM_शून्य_PKT, \
+	.hlen = BCM_शून्य_SIZE, \
 	.loff = 0, \
 	.lsize = 0, \
-	.maxlen = BCM_NULL_SIZE
+	.maxlen = BCM_शून्य_SIZE
 
-#define BCM_RECV_TYPE49 \
+#घोषणा BCM_RECV_TYPE49 \
 	.type = BCM_TYPE49_PKT, \
 	.hlen = BCM_TYPE49_SIZE, \
 	.loff = 0, \
 	.lsize = 0, \
 	.maxlen = BCM_TYPE49_SIZE
 
-#define BCM_RECV_TYPE52 \
+#घोषणा BCM_RECV_TYPE52 \
 	.type = BCM_TYPE52_PKT, \
 	.hlen = BCM_TYPE52_SIZE, \
 	.loff = 0, \
 	.lsize = 0, \
 	.maxlen = BCM_TYPE52_SIZE
 
-static const struct h4_recv_pkt bcm_recv_pkts[] = {
-	{ H4_RECV_ACL,      .recv = hci_recv_frame },
-	{ H4_RECV_SCO,      .recv = hci_recv_frame },
-	{ H4_RECV_EVENT,    .recv = hci_recv_frame },
-	{ H4_RECV_ISO,      .recv = hci_recv_frame },
-	{ BCM_RECV_LM_DIAG, .recv = hci_recv_diag  },
-	{ BCM_RECV_NULL,    .recv = hci_recv_diag  },
-	{ BCM_RECV_TYPE49,  .recv = hci_recv_diag  },
-	{ BCM_RECV_TYPE52,  .recv = hci_recv_diag  },
-};
+अटल स्थिर काष्ठा h4_recv_pkt bcm_recv_pkts[] = अणु
+	अणु H4_RECV_ACL,      .recv = hci_recv_frame पूर्ण,
+	अणु H4_RECV_SCO,      .recv = hci_recv_frame पूर्ण,
+	अणु H4_RECV_EVENT,    .recv = hci_recv_frame पूर्ण,
+	अणु H4_RECV_ISO,      .recv = hci_recv_frame पूर्ण,
+	अणु BCM_RECV_LM_DIAG, .recv = hci_recv_diag  पूर्ण,
+	अणु BCM_RECV_शून्य,    .recv = hci_recv_diag  पूर्ण,
+	अणु BCM_RECV_TYPE49,  .recv = hci_recv_diag  पूर्ण,
+	अणु BCM_RECV_TYPE52,  .recv = hci_recv_diag  पूर्ण,
+पूर्ण;
 
-static int bcm_recv(struct hci_uart *hu, const void *data, int count)
-{
-	struct bcm_data *bcm = hu->priv;
+अटल पूर्णांक bcm_recv(काष्ठा hci_uart *hu, स्थिर व्योम *data, पूर्णांक count)
+अणु
+	काष्ठा bcm_data *bcm = hu->priv;
 
-	if (!test_bit(HCI_UART_REGISTERED, &hu->flags))
-		return -EUNATCH;
+	अगर (!test_bit(HCI_UART_REGISTERED, &hu->flags))
+		वापस -EUNATCH;
 
 	bcm->rx_skb = h4_recv_buf(hu->hdev, bcm->rx_skb, data, count,
 				  bcm_recv_pkts, ARRAY_SIZE(bcm_recv_pkts));
-	if (IS_ERR(bcm->rx_skb)) {
-		int err = PTR_ERR(bcm->rx_skb);
+	अगर (IS_ERR(bcm->rx_skb)) अणु
+		पूर्णांक err = PTR_ERR(bcm->rx_skb);
 		bt_dev_err(hu->hdev, "Frame reassembly failed (%d)", err);
-		bcm->rx_skb = NULL;
-		return err;
-	} else if (!bcm->rx_skb) {
-		/* Delay auto-suspend when receiving completed packet */
+		bcm->rx_skb = शून्य;
+		वापस err;
+	पूर्ण अन्यथा अगर (!bcm->rx_skb) अणु
+		/* Delay स्वतः-suspend when receiving completed packet */
 		mutex_lock(&bcm_device_lock);
-		if (bcm->dev && bcm_device_exists(bcm->dev)) {
-			pm_runtime_get(bcm->dev->dev);
-			pm_runtime_mark_last_busy(bcm->dev->dev);
-			pm_runtime_put_autosuspend(bcm->dev->dev);
-		}
+		अगर (bcm->dev && bcm_device_exists(bcm->dev)) अणु
+			pm_runसमय_get(bcm->dev->dev);
+			pm_runसमय_mark_last_busy(bcm->dev->dev);
+			pm_runसमय_put_स्वतःsuspend(bcm->dev->dev);
+		पूर्ण
 		mutex_unlock(&bcm_device_lock);
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int bcm_enqueue(struct hci_uart *hu, struct sk_buff *skb)
-{
-	struct bcm_data *bcm = hu->priv;
+अटल पूर्णांक bcm_enqueue(काष्ठा hci_uart *hu, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा bcm_data *bcm = hu->priv;
 
 	bt_dev_dbg(hu->hdev, "hu %p skb %p", hu, skb);
 
 	/* Prepend skb with frame type */
-	memcpy(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
+	स_नकल(skb_push(skb, 1), &hci_skb_pkt_type(skb), 1);
 	skb_queue_tail(&bcm->txq, skb);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct sk_buff *bcm_dequeue(struct hci_uart *hu)
-{
-	struct bcm_data *bcm = hu->priv;
-	struct sk_buff *skb = NULL;
-	struct bcm_device *bdev = NULL;
+अटल काष्ठा sk_buff *bcm_dequeue(काष्ठा hci_uart *hu)
+अणु
+	काष्ठा bcm_data *bcm = hu->priv;
+	काष्ठा sk_buff *skb = शून्य;
+	काष्ठा bcm_device *bdev = शून्य;
 
 	mutex_lock(&bcm_device_lock);
 
-	if (bcm_device_exists(bcm->dev)) {
+	अगर (bcm_device_exists(bcm->dev)) अणु
 		bdev = bcm->dev;
-		pm_runtime_get_sync(bdev->dev);
+		pm_runसमय_get_sync(bdev->dev);
 		/* Shall be resumed here */
-	}
+	पूर्ण
 
 	skb = skb_dequeue(&bcm->txq);
 
-	if (bdev) {
-		pm_runtime_mark_last_busy(bdev->dev);
-		pm_runtime_put_autosuspend(bdev->dev);
-	}
+	अगर (bdev) अणु
+		pm_runसमय_mark_last_busy(bdev->dev);
+		pm_runसमय_put_स्वतःsuspend(bdev->dev);
+	पूर्ण
 
 	mutex_unlock(&bcm_device_lock);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-#ifdef CONFIG_PM
-static int bcm_suspend_device(struct device *dev)
-{
-	struct bcm_device *bdev = dev_get_drvdata(dev);
-	int err;
+#अगर_घोषित CONFIG_PM
+अटल पूर्णांक bcm_suspend_device(काष्ठा device *dev)
+अणु
+	काष्ठा bcm_device *bdev = dev_get_drvdata(dev);
+	पूर्णांक err;
 
 	bt_dev_dbg(bdev, "");
 
-	if (!bdev->is_suspended && bdev->hu) {
+	अगर (!bdev->is_suspended && bdev->hu) अणु
 		hci_uart_set_flow_control(bdev->hu, true);
 
-		/* Once this returns, driver suspends BT via GPIO */
+		/* Once this वापसs, driver suspends BT via GPIO */
 		bdev->is_suspended = true;
-	}
+	पूर्ण
 
 	/* Suspend the device */
 	err = bdev->set_device_wakeup(bdev, false);
-	if (err) {
-		if (bdev->is_suspended && bdev->hu) {
+	अगर (err) अणु
+		अगर (bdev->is_suspended && bdev->hu) अणु
 			bdev->is_suspended = false;
 			hci_uart_set_flow_control(bdev->hu, false);
-		}
-		return -EBUSY;
-	}
+		पूर्ण
+		वापस -EBUSY;
+	पूर्ण
 
 	bt_dev_dbg(bdev, "suspend, delaying 15 ms");
 	msleep(15);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_resume_device(struct device *dev)
-{
-	struct bcm_device *bdev = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक bcm_resume_device(काष्ठा device *dev)
+अणु
+	काष्ठा bcm_device *bdev = dev_get_drvdata(dev);
+	पूर्णांक err;
 
 	bt_dev_dbg(bdev, "");
 
 	err = bdev->set_device_wakeup(bdev, true);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "Failed to power up\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	bt_dev_dbg(bdev, "resume, delaying 15 ms");
 	msleep(15);
 
-	/* When this executes, the device has woken up already */
-	if (bdev->is_suspended && bdev->hu) {
+	/* When this executes, the device has woken up alपढ़ोy */
+	अगर (bdev->is_suspended && bdev->hu) अणु
 		bdev->is_suspended = false;
 
 		hci_uart_set_flow_control(bdev->hu, false);
-	}
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-#ifdef CONFIG_PM_SLEEP
+#अगर_घोषित CONFIG_PM_SLEEP
 /* suspend callback */
-static int bcm_suspend(struct device *dev)
-{
-	struct bcm_device *bdev = dev_get_drvdata(dev);
-	int error;
+अटल पूर्णांक bcm_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा bcm_device *bdev = dev_get_drvdata(dev);
+	पूर्णांक error;
 
 	bt_dev_dbg(bdev, "suspend: is_suspended %d", bdev->is_suspended);
 
 	/*
-	 * When used with a device instantiated as platform_device, bcm_suspend
-	 * can be called at any time as long as the platform device is bound,
+	 * When used with a device instantiated as platक्रमm_device, bcm_suspend
+	 * can be called at any समय as दीर्घ as the platक्रमm device is bound,
 	 * so it should use bcm_device_lock to protect access to hci_uart
 	 * and device_wake-up GPIO.
 	 */
 	mutex_lock(&bcm_device_lock);
 
-	if (!bdev->hu)
-		goto unlock;
+	अगर (!bdev->hu)
+		जाओ unlock;
 
-	if (pm_runtime_active(dev))
+	अगर (pm_runसमय_active(dev))
 		bcm_suspend_device(dev);
 
-	if (device_may_wakeup(dev) && bdev->irq > 0) {
+	अगर (device_may_wakeup(dev) && bdev->irq > 0) अणु
 		error = enable_irq_wake(bdev->irq);
-		if (!error)
+		अगर (!error)
 			bt_dev_dbg(bdev, "BCM irq: enabled");
-	}
+	पूर्ण
 
 unlock:
 	mutex_unlock(&bcm_device_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* resume callback */
-static int bcm_resume(struct device *dev)
-{
-	struct bcm_device *bdev = dev_get_drvdata(dev);
-	int err = 0;
+अटल पूर्णांक bcm_resume(काष्ठा device *dev)
+अणु
+	काष्ठा bcm_device *bdev = dev_get_drvdata(dev);
+	पूर्णांक err = 0;
 
 	bt_dev_dbg(bdev, "resume: is_suspended %d", bdev->is_suspended);
 
 	/*
-	 * When used with a device instantiated as platform_device, bcm_resume
-	 * can be called at any time as long as platform device is bound,
+	 * When used with a device instantiated as platक्रमm_device, bcm_resume
+	 * can be called at any समय as दीर्घ as platक्रमm device is bound,
 	 * so it should use bcm_device_lock to protect access to hci_uart
 	 * and device_wake-up GPIO.
 	 */
 	mutex_lock(&bcm_device_lock);
 
-	if (!bdev->hu)
-		goto unlock;
+	अगर (!bdev->hu)
+		जाओ unlock;
 
-	if (device_may_wakeup(dev) && bdev->irq > 0) {
+	अगर (device_may_wakeup(dev) && bdev->irq > 0) अणु
 		disable_irq_wake(bdev->irq);
 		bt_dev_dbg(bdev, "BCM irq: disabled");
-	}
+	पूर्ण
 
 	err = bcm_resume_device(dev);
 
 unlock:
 	mutex_unlock(&bcm_device_lock);
 
-	if (!err) {
-		pm_runtime_disable(dev);
-		pm_runtime_set_active(dev);
-		pm_runtime_enable(dev);
-	}
+	अगर (!err) अणु
+		pm_runसमय_disable(dev);
+		pm_runसमय_set_active(dev);
+		pm_runसमय_enable(dev);
+	पूर्ण
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-/* Some firmware reports an IRQ which does not work (wrong pin in fw table?) */
-static const struct dmi_system_id bcm_broken_irq_dmi_table[] = {
-	{
+/* Some firmware reports an IRQ which करोes not work (wrong pin in fw table?) */
+अटल स्थिर काष्ठा dmi_प्रणाली_id bcm_broken_irq_dmi_table[] = अणु
+	अणु
 		.ident = "Meegopad T08",
-		.matches = {
+		.matches = अणु
 			DMI_EXACT_MATCH(DMI_BOARD_VENDOR,
 					"To be filled by OEM."),
 			DMI_EXACT_MATCH(DMI_BOARD_NAME, "T3 MRD"),
 			DMI_EXACT_MATCH(DMI_BOARD_VERSION, "V1.1"),
-		},
-	},
-	{ }
-};
+		पूर्ण,
+	पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-#ifdef CONFIG_ACPI
-static const struct acpi_gpio_params first_gpio = { 0, 0, false };
-static const struct acpi_gpio_params second_gpio = { 1, 0, false };
-static const struct acpi_gpio_params third_gpio = { 2, 0, false };
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_gpio_params first_gpio = अणु 0, 0, false पूर्ण;
+अटल स्थिर काष्ठा acpi_gpio_params second_gpio = अणु 1, 0, false पूर्ण;
+अटल स्थिर काष्ठा acpi_gpio_params third_gpio = अणु 2, 0, false पूर्ण;
 
-static const struct acpi_gpio_mapping acpi_bcm_int_last_gpios[] = {
-	{ "device-wakeup-gpios", &first_gpio, 1 },
-	{ "shutdown-gpios", &second_gpio, 1 },
-	{ "host-wakeup-gpios", &third_gpio, 1 },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_gpio_mapping acpi_bcm_पूर्णांक_last_gpios[] = अणु
+	अणु "device-wakeup-gpios", &first_gpio, 1 पूर्ण,
+	अणु "shutdown-gpios", &second_gpio, 1 पूर्ण,
+	अणु "host-wakeup-gpios", &third_gpio, 1 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const struct acpi_gpio_mapping acpi_bcm_int_first_gpios[] = {
-	{ "host-wakeup-gpios", &first_gpio, 1 },
-	{ "device-wakeup-gpios", &second_gpio, 1 },
-	{ "shutdown-gpios", &third_gpio, 1 },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_gpio_mapping acpi_bcm_पूर्णांक_first_gpios[] = अणु
+	अणु "host-wakeup-gpios", &first_gpio, 1 पूर्ण,
+	अणु "device-wakeup-gpios", &second_gpio, 1 पूर्ण,
+	अणु "shutdown-gpios", &third_gpio, 1 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static int bcm_resource(struct acpi_resource *ares, void *data)
-{
-	struct bcm_device *dev = data;
-	struct acpi_resource_extended_irq *irq;
-	struct acpi_resource_gpio *gpio;
-	struct acpi_resource_uart_serialbus *sb;
+अटल पूर्णांक bcm_resource(काष्ठा acpi_resource *ares, व्योम *data)
+अणु
+	काष्ठा bcm_device *dev = data;
+	काष्ठा acpi_resource_extended_irq *irq;
+	काष्ठा acpi_resource_gpio *gpio;
+	काष्ठा acpi_resource_uart_serialbus *sb;
 
-	switch (ares->type) {
-	case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
+	चयन (ares->type) अणु
+	हाल ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
 		irq = &ares->data.extended_irq;
-		if (irq->polarity != ACPI_ACTIVE_LOW)
+		अगर (irq->polarity != ACPI_ACTIVE_LOW)
 			dev_info(dev->dev, "ACPI Interrupt resource is active-high, this is usually wrong, treating the IRQ as active-low\n");
 		dev->irq_active_low = true;
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_GPIO:
+	हाल ACPI_RESOURCE_TYPE_GPIO:
 		gpio = &ares->data.gpio;
-		if (gpio->connection_type == ACPI_RESOURCE_GPIO_TYPE_INT) {
-			dev->gpio_int_idx = dev->gpio_count;
+		अगर (gpio->connection_type == ACPI_RESOURCE_GPIO_TYPE_INT) अणु
+			dev->gpio_पूर्णांक_idx = dev->gpio_count;
 			dev->irq_active_low = gpio->polarity == ACPI_ACTIVE_LOW;
-		}
+		पूर्ण
 		dev->gpio_count++;
-		break;
+		अवरोध;
 
-	case ACPI_RESOURCE_TYPE_SERIAL_BUS:
+	हाल ACPI_RESOURCE_TYPE_SERIAL_BUS:
 		sb = &ares->data.uart_serial_bus;
-		if (sb->type == ACPI_RESOURCE_SERIAL_TYPE_UART) {
-			dev->init_speed = sb->default_baud_rate;
+		अगर (sb->type == ACPI_RESOURCE_SERIAL_TYPE_UART) अणु
+			dev->init_speed = sb->शेष_baud_rate;
 			dev->oper_speed = 4000000;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	default:
-		break;
-	}
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_apple_set_device_wakeup(struct bcm_device *dev, bool awake)
-{
-	if (ACPI_FAILURE(acpi_execute_simple_method(dev->btlp, NULL, !awake)))
-		return -EIO;
+अटल पूर्णांक bcm_apple_set_device_wakeup(काष्ठा bcm_device *dev, bool awake)
+अणु
+	अगर (ACPI_FAILURE(acpi_execute_simple_method(dev->btlp, शून्य, !awake)))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_apple_set_shutdown(struct bcm_device *dev, bool powered)
-{
-	if (ACPI_FAILURE(acpi_evaluate_object(powered ? dev->btpu : dev->btpd,
-					      NULL, NULL, NULL)))
-		return -EIO;
+अटल पूर्णांक bcm_apple_set_shutकरोwn(काष्ठा bcm_device *dev, bool घातered)
+अणु
+	अगर (ACPI_FAILURE(acpi_evaluate_object(घातered ? dev->btpu : dev->btpd,
+					      शून्य, शून्य, शून्य)))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_apple_get_resources(struct bcm_device *dev)
-{
-	struct acpi_device *adev = ACPI_COMPANION(dev->dev);
-	const union acpi_object *obj;
+अटल पूर्णांक bcm_apple_get_resources(काष्ठा bcm_device *dev)
+अणु
+	काष्ठा acpi_device *adev = ACPI_COMPANION(dev->dev);
+	स्थिर जोड़ acpi_object *obj;
 
-	if (!adev ||
+	अगर (!adev ||
 	    ACPI_FAILURE(acpi_get_handle(adev->handle, "BTLP", &dev->btlp)) ||
 	    ACPI_FAILURE(acpi_get_handle(adev->handle, "BTPU", &dev->btpu)) ||
 	    ACPI_FAILURE(acpi_get_handle(adev->handle, "BTPD", &dev->btpd)))
-		return -ENODEV;
+		वापस -ENODEV;
 
-	if (!acpi_dev_get_property(adev, "baud", ACPI_TYPE_BUFFER, &obj) &&
+	अगर (!acpi_dev_get_property(adev, "baud", ACPI_TYPE_BUFFER, &obj) &&
 	    obj->buffer.length == 8)
-		dev->init_speed = *(u64 *)obj->buffer.pointer;
+		dev->init_speed = *(u64 *)obj->buffer.poपूर्णांकer;
 
 	dev->set_device_wakeup = bcm_apple_set_device_wakeup;
-	dev->set_shutdown = bcm_apple_set_shutdown;
+	dev->set_shutकरोwn = bcm_apple_set_shutकरोwn;
 
-	return 0;
-}
-#else
-static inline int bcm_apple_get_resources(struct bcm_device *dev)
-{
-	return -EOPNOTSUPP;
-}
-#endif /* CONFIG_ACPI */
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक bcm_apple_get_resources(काष्ठा bcm_device *dev)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI */
 
-static int bcm_gpio_set_device_wakeup(struct bcm_device *dev, bool awake)
-{
+अटल पूर्णांक bcm_gpio_set_device_wakeup(काष्ठा bcm_device *dev, bool awake)
+अणु
 	gpiod_set_value_cansleep(dev->device_wakeup, awake);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_gpio_set_shutdown(struct bcm_device *dev, bool powered)
-{
-	gpiod_set_value_cansleep(dev->shutdown, powered);
-	if (dev->reset)
+अटल पूर्णांक bcm_gpio_set_shutकरोwn(काष्ठा bcm_device *dev, bool घातered)
+अणु
+	gpiod_set_value_cansleep(dev->shutकरोwn, घातered);
+	अगर (dev->reset)
 		/*
-		 * The reset line is asserted on powerdown and deasserted
-		 * on poweron so the inverse of powered is used. Notice
-		 * that the GPIO line BT_RST_N needs to be specified as
-		 * active low in the device tree or similar system
+		 * The reset line is निश्चितed on घातerकरोwn and deनिश्चितed
+		 * on घातeron so the inverse of घातered is used. Notice
+		 * that the GPIO line BT_RST_N needs to be specअगरied as
+		 * active low in the device tree or similar प्रणाली
 		 * description.
 		 */
-		gpiod_set_value_cansleep(dev->reset, !powered);
-	return 0;
-}
+		gpiod_set_value_cansleep(dev->reset, !घातered);
+	वापस 0;
+पूर्ण
 
-/* Try a bunch of names for TXCO */
-static struct clk *bcm_get_txco(struct device *dev)
-{
-	struct clk *clk;
+/* Try a bunch of names क्रम TXCO */
+अटल काष्ठा clk *bcm_get_txco(काष्ठा device *dev)
+अणु
+	काष्ठा clk *clk;
 
 	/* New explicit name */
 	clk = devm_clk_get(dev, "txco");
-	if (!IS_ERR(clk) || PTR_ERR(clk) == -EPROBE_DEFER)
-		return clk;
+	अगर (!IS_ERR(clk) || PTR_ERR(clk) == -EPROBE_DEFER)
+		वापस clk;
 
 	/* Deprecated name */
 	clk = devm_clk_get(dev, "extclk");
-	if (!IS_ERR(clk) || PTR_ERR(clk) == -EPROBE_DEFER)
-		return clk;
+	अगर (!IS_ERR(clk) || PTR_ERR(clk) == -EPROBE_DEFER)
+		वापस clk;
 
 	/* Original code used no name at all */
-	return devm_clk_get(dev, NULL);
-}
+	वापस devm_clk_get(dev, शून्य);
+पूर्ण
 
-static int bcm_get_resources(struct bcm_device *dev)
-{
-	const struct dmi_system_id *dmi_id;
-	int err;
+अटल पूर्णांक bcm_get_resources(काष्ठा bcm_device *dev)
+अणु
+	स्थिर काष्ठा dmi_प्रणाली_id *dmi_id;
+	पूर्णांक err;
 
 	dev->name = dev_name(dev->dev);
 
-	if (x86_apple_machine && !bcm_apple_get_resources(dev))
-		return 0;
+	अगर (x86_apple_machine && !bcm_apple_get_resources(dev))
+		वापस 0;
 
 	dev->txco_clk = bcm_get_txco(dev->dev);
 
 	/* Handle deferred probing */
-	if (dev->txco_clk == ERR_PTR(-EPROBE_DEFER))
-		return PTR_ERR(dev->txco_clk);
+	अगर (dev->txco_clk == ERR_PTR(-EPROBE_DEFER))
+		वापस PTR_ERR(dev->txco_clk);
 
-	/* Ignore all other errors as before */
-	if (IS_ERR(dev->txco_clk))
-		dev->txco_clk = NULL;
+	/* Ignore all other errors as beक्रमe */
+	अगर (IS_ERR(dev->txco_clk))
+		dev->txco_clk = शून्य;
 
 	dev->lpo_clk = devm_clk_get(dev->dev, "lpo");
-	if (dev->lpo_clk == ERR_PTR(-EPROBE_DEFER))
-		return PTR_ERR(dev->lpo_clk);
+	अगर (dev->lpo_clk == ERR_PTR(-EPROBE_DEFER))
+		वापस PTR_ERR(dev->lpo_clk);
 
-	if (IS_ERR(dev->lpo_clk))
-		dev->lpo_clk = NULL;
+	अगर (IS_ERR(dev->lpo_clk))
+		dev->lpo_clk = शून्य;
 
-	/* Check if we accidentally fetched the lpo clock twice */
-	if (dev->lpo_clk && clk_is_match(dev->lpo_clk, dev->txco_clk)) {
+	/* Check अगर we accidentally fetched the lpo घड़ी twice */
+	अगर (dev->lpo_clk && clk_is_match(dev->lpo_clk, dev->txco_clk)) अणु
 		devm_clk_put(dev->dev, dev->txco_clk);
-		dev->txco_clk = NULL;
-	}
+		dev->txco_clk = शून्य;
+	पूर्ण
 
 	dev->device_wakeup = devm_gpiod_get_optional(dev->dev, "device-wakeup",
 						     GPIOD_OUT_LOW);
-	if (IS_ERR(dev->device_wakeup))
-		return PTR_ERR(dev->device_wakeup);
+	अगर (IS_ERR(dev->device_wakeup))
+		वापस PTR_ERR(dev->device_wakeup);
 
-	dev->shutdown = devm_gpiod_get_optional(dev->dev, "shutdown",
+	dev->shutकरोwn = devm_gpiod_get_optional(dev->dev, "shutdown",
 						GPIOD_OUT_LOW);
-	if (IS_ERR(dev->shutdown))
-		return PTR_ERR(dev->shutdown);
+	अगर (IS_ERR(dev->shutकरोwn))
+		वापस PTR_ERR(dev->shutकरोwn);
 
 	dev->reset = devm_gpiod_get_optional(dev->dev, "reset",
 					     GPIOD_OUT_LOW);
-	if (IS_ERR(dev->reset))
-		return PTR_ERR(dev->reset);
+	अगर (IS_ERR(dev->reset))
+		वापस PTR_ERR(dev->reset);
 
 	dev->set_device_wakeup = bcm_gpio_set_device_wakeup;
-	dev->set_shutdown = bcm_gpio_set_shutdown;
+	dev->set_shutकरोwn = bcm_gpio_set_shutकरोwn;
 
 	dev->supplies[0].supply = "vbat";
 	dev->supplies[1].supply = "vddio";
 	err = devm_regulator_bulk_get(dev->dev, BCM_NUM_SUPPLIES,
 				      dev->supplies);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	/* IRQ can be declared in ACPI table as Interrupt or GpioInt */
-	if (dev->irq <= 0) {
-		struct gpio_desc *gpio;
+	अगर (dev->irq <= 0) अणु
+		काष्ठा gpio_desc *gpio;
 
 		gpio = devm_gpiod_get_optional(dev->dev, "host-wakeup",
 					       GPIOD_IN);
-		if (IS_ERR(gpio))
-			return PTR_ERR(gpio);
+		अगर (IS_ERR(gpio))
+			वापस PTR_ERR(gpio);
 
 		dev->irq = gpiod_to_irq(gpio);
-	}
+	पूर्ण
 
 	dmi_id = dmi_first_match(bcm_broken_irq_dmi_table);
-	if (dmi_id) {
+	अगर (dmi_id) अणु
 		dev_info(dev->dev, "%s: Has a broken IRQ config, disabling IRQ support / runtime-pm\n",
 			 dmi_id->ident);
 		dev->irq = 0;
-	}
+	पूर्ण
 
 	dev_dbg(dev->dev, "BCM irq: %d\n", dev->irq);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_ACPI
-static int bcm_acpi_probe(struct bcm_device *dev)
-{
+#अगर_घोषित CONFIG_ACPI
+अटल पूर्णांक bcm_acpi_probe(काष्ठा bcm_device *dev)
+अणु
 	LIST_HEAD(resources);
-	const struct acpi_gpio_mapping *gpio_mapping = acpi_bcm_int_last_gpios;
-	struct resource_entry *entry;
-	int ret;
+	स्थिर काष्ठा acpi_gpio_mapping *gpio_mapping = acpi_bcm_पूर्णांक_last_gpios;
+	काष्ठा resource_entry *entry;
+	पूर्णांक ret;
 
 	/* Retrieve UART ACPI info */
-	dev->gpio_int_idx = -1;
+	dev->gpio_पूर्णांक_idx = -1;
 	ret = acpi_dev_get_resources(ACPI_COMPANION(dev->dev),
 				     &resources, bcm_resource, dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	resource_list_for_each_entry(entry, &resources) {
-		if (resource_type(entry->res) == IORESOURCE_IRQ) {
+	resource_list_क्रम_each_entry(entry, &resources) अणु
+		अगर (resource_type(entry->res) == IORESOURCE_IRQ) अणु
 			dev->irq = entry->res->start;
-			break;
-		}
-	}
-	acpi_dev_free_resource_list(&resources);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	acpi_dev_मुक्त_resource_list(&resources);
 
-	/* If the DSDT uses an Interrupt resource for the IRQ, then there are
-	 * only 2 GPIO resources, we use the irq-last mapping for this, since
-	 * we already have an irq the 3th / last mapping will not be used.
+	/* If the DSDT uses an Interrupt resource क्रम the IRQ, then there are
+	 * only 2 GPIO resources, we use the irq-last mapping क्रम this, since
+	 * we alपढ़ोy have an irq the 3th / last mapping will not be used.
 	 */
-	if (dev->irq)
-		gpio_mapping = acpi_bcm_int_last_gpios;
-	else if (dev->gpio_int_idx == 0)
-		gpio_mapping = acpi_bcm_int_first_gpios;
-	else if (dev->gpio_int_idx == 2)
-		gpio_mapping = acpi_bcm_int_last_gpios;
-	else
+	अगर (dev->irq)
+		gpio_mapping = acpi_bcm_पूर्णांक_last_gpios;
+	अन्यथा अगर (dev->gpio_पूर्णांक_idx == 0)
+		gpio_mapping = acpi_bcm_पूर्णांक_first_gpios;
+	अन्यथा अगर (dev->gpio_पूर्णांक_idx == 2)
+		gpio_mapping = acpi_bcm_पूर्णांक_last_gpios;
+	अन्यथा
 		dev_warn(dev->dev, "Unexpected ACPI gpio_int_idx: %d\n",
-			 dev->gpio_int_idx);
+			 dev->gpio_पूर्णांक_idx);
 
-	/* Warn if our expectations are not met. */
-	if (dev->gpio_count != (dev->irq ? 2 : 3))
+	/* Warn अगर our expectations are not met. */
+	अगर (dev->gpio_count != (dev->irq ? 2 : 3))
 		dev_warn(dev->dev, "Unexpected number of ACPI GPIOs: %d\n",
 			 dev->gpio_count);
 
 	ret = devm_acpi_dev_add_driver_gpios(dev->dev, gpio_mapping);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (irq_polarity != -1) {
+	अगर (irq_polarity != -1) अणु
 		dev->irq_active_low = irq_polarity;
 		dev_warn(dev->dev, "Overwriting IRQ polarity to active %s by module-param\n",
 			 dev->irq_active_low ? "low" : "high");
-	}
+	पूर्ण
 
-	return 0;
-}
-#else
-static int bcm_acpi_probe(struct bcm_device *dev)
-{
-	return -EINVAL;
-}
-#endif /* CONFIG_ACPI */
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक bcm_acpi_probe(काष्ठा bcm_device *dev)
+अणु
+	वापस -EINVAL;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_ACPI */
 
-static int bcm_of_probe(struct bcm_device *bdev)
-{
-	device_property_read_u32(bdev->dev, "max-speed", &bdev->oper_speed);
-	device_property_read_u8_array(bdev->dev, "brcm,bt-pcm-int-params",
-				      bdev->pcm_int_params, 5);
+अटल पूर्णांक bcm_of_probe(काष्ठा bcm_device *bdev)
+अणु
+	device_property_पढ़ो_u32(bdev->dev, "max-speed", &bdev->oper_speed);
+	device_property_पढ़ो_u8_array(bdev->dev, "brcm,bt-pcm-int-params",
+				      bdev->pcm_पूर्णांक_params, 5);
 	bdev->irq = of_irq_get_byname(bdev->dev->of_node, "host-wakeup");
 	bdev->irq_active_low = irq_get_trigger_type(bdev->irq)
 			     & (IRQ_TYPE_EDGE_FALLING | IRQ_TYPE_LEVEL_LOW);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_probe(struct platform_device *pdev)
-{
-	struct bcm_device *dev;
-	int ret;
+अटल पूर्णांक bcm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm_device *dev;
+	पूर्णांक ret;
 
-	dev = devm_kzalloc(&pdev->dev, sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	dev = devm_kzalloc(&pdev->dev, माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	dev->dev = &pdev->dev;
-	dev->irq = platform_get_irq(pdev, 0);
+	dev->irq = platक्रमm_get_irq(pdev, 0);
 
 	/* Initialize routing field to an unused value */
-	dev->pcm_int_params[0] = 0xff;
+	dev->pcm_पूर्णांक_params[0] = 0xff;
 
-	if (has_acpi_companion(&pdev->dev)) {
+	अगर (has_acpi_companion(&pdev->dev)) अणु
 		ret = bcm_acpi_probe(dev);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	ret = bcm_get_resources(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 
 	dev_info(&pdev->dev, "%s device registered.\n", dev->name);
 
@@ -1206,16 +1207,16 @@ static int bcm_probe(struct platform_device *pdev)
 	list_add_tail(&dev->list, &bcm_device_list);
 	mutex_unlock(&bcm_device_lock);
 
-	ret = bcm_gpio_set_power(dev, false);
-	if (ret)
+	ret = bcm_gpio_set_घातer(dev, false);
+	अगर (ret)
 		dev_err(&pdev->dev, "Failed to power down\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bcm_remove(struct platform_device *pdev)
-{
-	struct bcm_device *dev = platform_get_drvdata(pdev);
+अटल पूर्णांक bcm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा bcm_device *dev = platक्रमm_get_drvdata(pdev);
 
 	mutex_lock(&bcm_device_lock);
 	list_del(&dev->list);
@@ -1223,320 +1224,320 @@ static int bcm_remove(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "%s device unregistered.\n", dev->name);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct hci_uart_proto bcm_proto = {
+अटल स्थिर काष्ठा hci_uart_proto bcm_proto = अणु
 	.id		= HCI_UART_BCM,
 	.name		= "Broadcom",
 	.manufacturer	= 15,
 	.init_speed	= 115200,
-	.open		= bcm_open,
-	.close		= bcm_close,
+	.खोलो		= bcm_खोलो,
+	.बंद		= bcm_बंद,
 	.flush		= bcm_flush,
 	.setup		= bcm_setup,
 	.set_baudrate	= bcm_set_baudrate,
 	.recv		= bcm_recv,
 	.enqueue	= bcm_enqueue,
 	.dequeue	= bcm_dequeue,
-};
+पूर्ण;
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id bcm_acpi_match[] = {
-	{ "BCM2E00" },
-	{ "BCM2E01" },
-	{ "BCM2E02" },
-	{ "BCM2E03" },
-	{ "BCM2E04" },
-	{ "BCM2E05" },
-	{ "BCM2E06" },
-	{ "BCM2E07" },
-	{ "BCM2E08" },
-	{ "BCM2E09" },
-	{ "BCM2E0A" },
-	{ "BCM2E0B" },
-	{ "BCM2E0C" },
-	{ "BCM2E0D" },
-	{ "BCM2E0E" },
-	{ "BCM2E0F" },
-	{ "BCM2E10" },
-	{ "BCM2E11" },
-	{ "BCM2E12" },
-	{ "BCM2E13" },
-	{ "BCM2E14" },
-	{ "BCM2E15" },
-	{ "BCM2E16" },
-	{ "BCM2E17" },
-	{ "BCM2E18" },
-	{ "BCM2E19" },
-	{ "BCM2E1A" },
-	{ "BCM2E1B" },
-	{ "BCM2E1C" },
-	{ "BCM2E1D" },
-	{ "BCM2E1F" },
-	{ "BCM2E20" },
-	{ "BCM2E21" },
-	{ "BCM2E22" },
-	{ "BCM2E23" },
-	{ "BCM2E24" },
-	{ "BCM2E25" },
-	{ "BCM2E26" },
-	{ "BCM2E27" },
-	{ "BCM2E28" },
-	{ "BCM2E29" },
-	{ "BCM2E2A" },
-	{ "BCM2E2B" },
-	{ "BCM2E2C" },
-	{ "BCM2E2D" },
-	{ "BCM2E2E" },
-	{ "BCM2E2F" },
-	{ "BCM2E30" },
-	{ "BCM2E31" },
-	{ "BCM2E32" },
-	{ "BCM2E33" },
-	{ "BCM2E34" },
-	{ "BCM2E35" },
-	{ "BCM2E36" },
-	{ "BCM2E37" },
-	{ "BCM2E38" },
-	{ "BCM2E39" },
-	{ "BCM2E3A" },
-	{ "BCM2E3B" },
-	{ "BCM2E3C" },
-	{ "BCM2E3D" },
-	{ "BCM2E3E" },
-	{ "BCM2E3F" },
-	{ "BCM2E40" },
-	{ "BCM2E41" },
-	{ "BCM2E42" },
-	{ "BCM2E43" },
-	{ "BCM2E44" },
-	{ "BCM2E45" },
-	{ "BCM2E46" },
-	{ "BCM2E47" },
-	{ "BCM2E48" },
-	{ "BCM2E49" },
-	{ "BCM2E4A" },
-	{ "BCM2E4B" },
-	{ "BCM2E4C" },
-	{ "BCM2E4D" },
-	{ "BCM2E4E" },
-	{ "BCM2E4F" },
-	{ "BCM2E50" },
-	{ "BCM2E51" },
-	{ "BCM2E52" },
-	{ "BCM2E53" },
-	{ "BCM2E54" },
-	{ "BCM2E55" },
-	{ "BCM2E56" },
-	{ "BCM2E57" },
-	{ "BCM2E58" },
-	{ "BCM2E59" },
-	{ "BCM2E5A" },
-	{ "BCM2E5B" },
-	{ "BCM2E5C" },
-	{ "BCM2E5D" },
-	{ "BCM2E5E" },
-	{ "BCM2E5F" },
-	{ "BCM2E60" },
-	{ "BCM2E61" },
-	{ "BCM2E62" },
-	{ "BCM2E63" },
-	{ "BCM2E64" },
-	{ "BCM2E65" },
-	{ "BCM2E66" },
-	{ "BCM2E67" },
-	{ "BCM2E68" },
-	{ "BCM2E69" },
-	{ "BCM2E6B" },
-	{ "BCM2E6D" },
-	{ "BCM2E6E" },
-	{ "BCM2E6F" },
-	{ "BCM2E70" },
-	{ "BCM2E71" },
-	{ "BCM2E72" },
-	{ "BCM2E73" },
-	{ "BCM2E74" },
-	{ "BCM2E75" },
-	{ "BCM2E76" },
-	{ "BCM2E77" },
-	{ "BCM2E78" },
-	{ "BCM2E79" },
-	{ "BCM2E7A" },
-	{ "BCM2E7B" },
-	{ "BCM2E7C" },
-	{ "BCM2E7D" },
-	{ "BCM2E7E" },
-	{ "BCM2E7F" },
-	{ "BCM2E80" },
-	{ "BCM2E81" },
-	{ "BCM2E82" },
-	{ "BCM2E83" },
-	{ "BCM2E84" },
-	{ "BCM2E85" },
-	{ "BCM2E86" },
-	{ "BCM2E87" },
-	{ "BCM2E88" },
-	{ "BCM2E89" },
-	{ "BCM2E8A" },
-	{ "BCM2E8B" },
-	{ "BCM2E8C" },
-	{ "BCM2E8D" },
-	{ "BCM2E8E" },
-	{ "BCM2E90" },
-	{ "BCM2E92" },
-	{ "BCM2E93" },
-	{ "BCM2E94" },
-	{ "BCM2E95" },
-	{ "BCM2E96" },
-	{ "BCM2E97" },
-	{ "BCM2E98" },
-	{ "BCM2E99" },
-	{ "BCM2E9A" },
-	{ "BCM2E9B" },
-	{ "BCM2E9C" },
-	{ "BCM2E9D" },
-	{ "BCM2EA0" },
-	{ "BCM2EA1" },
-	{ "BCM2EA2" },
-	{ "BCM2EA3" },
-	{ "BCM2EA4" },
-	{ "BCM2EA5" },
-	{ "BCM2EA6" },
-	{ "BCM2EA7" },
-	{ "BCM2EA8" },
-	{ "BCM2EA9" },
-	{ "BCM2EAA" },
-	{ "BCM2EAB" },
-	{ "BCM2EAC" },
-	{ },
-};
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id bcm_acpi_match[] = अणु
+	अणु "BCM2E00" पूर्ण,
+	अणु "BCM2E01" पूर्ण,
+	अणु "BCM2E02" पूर्ण,
+	अणु "BCM2E03" पूर्ण,
+	अणु "BCM2E04" पूर्ण,
+	अणु "BCM2E05" पूर्ण,
+	अणु "BCM2E06" पूर्ण,
+	अणु "BCM2E07" पूर्ण,
+	अणु "BCM2E08" पूर्ण,
+	अणु "BCM2E09" पूर्ण,
+	अणु "BCM2E0A" पूर्ण,
+	अणु "BCM2E0B" पूर्ण,
+	अणु "BCM2E0C" पूर्ण,
+	अणु "BCM2E0D" पूर्ण,
+	अणु "BCM2E0E" पूर्ण,
+	अणु "BCM2E0F" पूर्ण,
+	अणु "BCM2E10" पूर्ण,
+	अणु "BCM2E11" पूर्ण,
+	अणु "BCM2E12" पूर्ण,
+	अणु "BCM2E13" पूर्ण,
+	अणु "BCM2E14" पूर्ण,
+	अणु "BCM2E15" पूर्ण,
+	अणु "BCM2E16" पूर्ण,
+	अणु "BCM2E17" पूर्ण,
+	अणु "BCM2E18" पूर्ण,
+	अणु "BCM2E19" पूर्ण,
+	अणु "BCM2E1A" पूर्ण,
+	अणु "BCM2E1B" पूर्ण,
+	अणु "BCM2E1C" पूर्ण,
+	अणु "BCM2E1D" पूर्ण,
+	अणु "BCM2E1F" पूर्ण,
+	अणु "BCM2E20" पूर्ण,
+	अणु "BCM2E21" पूर्ण,
+	अणु "BCM2E22" पूर्ण,
+	अणु "BCM2E23" पूर्ण,
+	अणु "BCM2E24" पूर्ण,
+	अणु "BCM2E25" पूर्ण,
+	अणु "BCM2E26" पूर्ण,
+	अणु "BCM2E27" पूर्ण,
+	अणु "BCM2E28" पूर्ण,
+	अणु "BCM2E29" पूर्ण,
+	अणु "BCM2E2A" पूर्ण,
+	अणु "BCM2E2B" पूर्ण,
+	अणु "BCM2E2C" पूर्ण,
+	अणु "BCM2E2D" पूर्ण,
+	अणु "BCM2E2E" पूर्ण,
+	अणु "BCM2E2F" पूर्ण,
+	अणु "BCM2E30" पूर्ण,
+	अणु "BCM2E31" पूर्ण,
+	अणु "BCM2E32" पूर्ण,
+	अणु "BCM2E33" पूर्ण,
+	अणु "BCM2E34" पूर्ण,
+	अणु "BCM2E35" पूर्ण,
+	अणु "BCM2E36" पूर्ण,
+	अणु "BCM2E37" पूर्ण,
+	अणु "BCM2E38" पूर्ण,
+	अणु "BCM2E39" पूर्ण,
+	अणु "BCM2E3A" पूर्ण,
+	अणु "BCM2E3B" पूर्ण,
+	अणु "BCM2E3C" पूर्ण,
+	अणु "BCM2E3D" पूर्ण,
+	अणु "BCM2E3E" पूर्ण,
+	अणु "BCM2E3F" पूर्ण,
+	अणु "BCM2E40" पूर्ण,
+	अणु "BCM2E41" पूर्ण,
+	अणु "BCM2E42" पूर्ण,
+	अणु "BCM2E43" पूर्ण,
+	अणु "BCM2E44" पूर्ण,
+	अणु "BCM2E45" पूर्ण,
+	अणु "BCM2E46" पूर्ण,
+	अणु "BCM2E47" पूर्ण,
+	अणु "BCM2E48" पूर्ण,
+	अणु "BCM2E49" पूर्ण,
+	अणु "BCM2E4A" पूर्ण,
+	अणु "BCM2E4B" पूर्ण,
+	अणु "BCM2E4C" पूर्ण,
+	अणु "BCM2E4D" पूर्ण,
+	अणु "BCM2E4E" पूर्ण,
+	अणु "BCM2E4F" पूर्ण,
+	अणु "BCM2E50" पूर्ण,
+	अणु "BCM2E51" पूर्ण,
+	अणु "BCM2E52" पूर्ण,
+	अणु "BCM2E53" पूर्ण,
+	अणु "BCM2E54" पूर्ण,
+	अणु "BCM2E55" पूर्ण,
+	अणु "BCM2E56" पूर्ण,
+	अणु "BCM2E57" पूर्ण,
+	अणु "BCM2E58" पूर्ण,
+	अणु "BCM2E59" पूर्ण,
+	अणु "BCM2E5A" पूर्ण,
+	अणु "BCM2E5B" पूर्ण,
+	अणु "BCM2E5C" पूर्ण,
+	अणु "BCM2E5D" पूर्ण,
+	अणु "BCM2E5E" पूर्ण,
+	अणु "BCM2E5F" पूर्ण,
+	अणु "BCM2E60" पूर्ण,
+	अणु "BCM2E61" पूर्ण,
+	अणु "BCM2E62" पूर्ण,
+	अणु "BCM2E63" पूर्ण,
+	अणु "BCM2E64" पूर्ण,
+	अणु "BCM2E65" पूर्ण,
+	अणु "BCM2E66" पूर्ण,
+	अणु "BCM2E67" पूर्ण,
+	अणु "BCM2E68" पूर्ण,
+	अणु "BCM2E69" पूर्ण,
+	अणु "BCM2E6B" पूर्ण,
+	अणु "BCM2E6D" पूर्ण,
+	अणु "BCM2E6E" पूर्ण,
+	अणु "BCM2E6F" पूर्ण,
+	अणु "BCM2E70" पूर्ण,
+	अणु "BCM2E71" पूर्ण,
+	अणु "BCM2E72" पूर्ण,
+	अणु "BCM2E73" पूर्ण,
+	अणु "BCM2E74" पूर्ण,
+	अणु "BCM2E75" पूर्ण,
+	अणु "BCM2E76" पूर्ण,
+	अणु "BCM2E77" पूर्ण,
+	अणु "BCM2E78" पूर्ण,
+	अणु "BCM2E79" पूर्ण,
+	अणु "BCM2E7A" पूर्ण,
+	अणु "BCM2E7B" पूर्ण,
+	अणु "BCM2E7C" पूर्ण,
+	अणु "BCM2E7D" पूर्ण,
+	अणु "BCM2E7E" पूर्ण,
+	अणु "BCM2E7F" पूर्ण,
+	अणु "BCM2E80" पूर्ण,
+	अणु "BCM2E81" पूर्ण,
+	अणु "BCM2E82" पूर्ण,
+	अणु "BCM2E83" पूर्ण,
+	अणु "BCM2E84" पूर्ण,
+	अणु "BCM2E85" पूर्ण,
+	अणु "BCM2E86" पूर्ण,
+	अणु "BCM2E87" पूर्ण,
+	अणु "BCM2E88" पूर्ण,
+	अणु "BCM2E89" पूर्ण,
+	अणु "BCM2E8A" पूर्ण,
+	अणु "BCM2E8B" पूर्ण,
+	अणु "BCM2E8C" पूर्ण,
+	अणु "BCM2E8D" पूर्ण,
+	अणु "BCM2E8E" पूर्ण,
+	अणु "BCM2E90" पूर्ण,
+	अणु "BCM2E92" पूर्ण,
+	अणु "BCM2E93" पूर्ण,
+	अणु "BCM2E94" पूर्ण,
+	अणु "BCM2E95" पूर्ण,
+	अणु "BCM2E96" पूर्ण,
+	अणु "BCM2E97" पूर्ण,
+	अणु "BCM2E98" पूर्ण,
+	अणु "BCM2E99" पूर्ण,
+	अणु "BCM2E9A" पूर्ण,
+	अणु "BCM2E9B" पूर्ण,
+	अणु "BCM2E9C" पूर्ण,
+	अणु "BCM2E9D" पूर्ण,
+	अणु "BCM2EA0" पूर्ण,
+	अणु "BCM2EA1" पूर्ण,
+	अणु "BCM2EA2" पूर्ण,
+	अणु "BCM2EA3" पूर्ण,
+	अणु "BCM2EA4" पूर्ण,
+	अणु "BCM2EA5" पूर्ण,
+	अणु "BCM2EA6" पूर्ण,
+	अणु "BCM2EA7" पूर्ण,
+	अणु "BCM2EA8" पूर्ण,
+	अणु "BCM2EA9" पूर्ण,
+	अणु "BCM2EAA" पूर्ण,
+	अणु "BCM2EAB" पूर्ण,
+	अणु "BCM2EAC" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, bcm_acpi_match);
-#endif
+#पूर्ण_अगर
 
 /* suspend and resume callbacks */
-static const struct dev_pm_ops bcm_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops bcm_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(bcm_suspend, bcm_resume)
-	SET_RUNTIME_PM_OPS(bcm_suspend_device, bcm_resume_device, NULL)
-};
+	SET_RUNTIME_PM_OPS(bcm_suspend_device, bcm_resume_device, शून्य)
+पूर्ण;
 
-static struct platform_driver bcm_driver = {
+अटल काष्ठा platक्रमm_driver bcm_driver = अणु
 	.probe = bcm_probe,
-	.remove = bcm_remove,
-	.driver = {
+	.हटाओ = bcm_हटाओ,
+	.driver = अणु
 		.name = "hci_bcm",
 		.acpi_match_table = ACPI_PTR(bcm_acpi_match),
 		.pm = &bcm_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int bcm_serdev_probe(struct serdev_device *serdev)
-{
-	struct bcm_device *bcmdev;
-	const struct bcm_device_data *data;
-	int err;
+अटल पूर्णांक bcm_serdev_probe(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा bcm_device *bcmdev;
+	स्थिर काष्ठा bcm_device_data *data;
+	पूर्णांक err;
 
-	bcmdev = devm_kzalloc(&serdev->dev, sizeof(*bcmdev), GFP_KERNEL);
-	if (!bcmdev)
-		return -ENOMEM;
+	bcmdev = devm_kzalloc(&serdev->dev, माप(*bcmdev), GFP_KERNEL);
+	अगर (!bcmdev)
+		वापस -ENOMEM;
 
 	bcmdev->dev = &serdev->dev;
-#ifdef CONFIG_PM
+#अगर_घोषित CONFIG_PM
 	bcmdev->hu = &bcmdev->serdev_hu;
-#endif
+#पूर्ण_अगर
 	bcmdev->serdev_hu.serdev = serdev;
 	serdev_device_set_drvdata(serdev, bcmdev);
 
 	/* Initialize routing field to an unused value */
-	bcmdev->pcm_int_params[0] = 0xff;
+	bcmdev->pcm_पूर्णांक_params[0] = 0xff;
 
-	if (has_acpi_companion(&serdev->dev))
+	अगर (has_acpi_companion(&serdev->dev))
 		err = bcm_acpi_probe(bcmdev);
-	else
+	अन्यथा
 		err = bcm_of_probe(bcmdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = bcm_get_resources(bcmdev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!bcmdev->shutdown) {
+	अगर (!bcmdev->shutकरोwn) अणु
 		dev_warn(&serdev->dev,
 			 "No reset resource, using default baud rate\n");
 		bcmdev->oper_speed = bcmdev->init_speed;
-	}
+	पूर्ण
 
-	err = bcm_gpio_set_power(bcmdev, false);
-	if (err)
+	err = bcm_gpio_set_घातer(bcmdev, false);
+	अगर (err)
 		dev_err(&serdev->dev, "Failed to power down\n");
 
 	data = device_get_match_data(bcmdev->dev);
-	if (data) {
+	अगर (data) अणु
 		bcmdev->no_early_set_baudrate = data->no_early_set_baudrate;
-		bcmdev->drive_rts_on_open = data->drive_rts_on_open;
-	}
+		bcmdev->drive_rts_on_खोलो = data->drive_rts_on_खोलो;
+	पूर्ण
 
-	return hci_uart_register_device(&bcmdev->serdev_hu, &bcm_proto);
-}
+	वापस hci_uart_रेजिस्टर_device(&bcmdev->serdev_hu, &bcm_proto);
+पूर्ण
 
-static void bcm_serdev_remove(struct serdev_device *serdev)
-{
-	struct bcm_device *bcmdev = serdev_device_get_drvdata(serdev);
+अटल व्योम bcm_serdev_हटाओ(काष्ठा serdev_device *serdev)
+अणु
+	काष्ठा bcm_device *bcmdev = serdev_device_get_drvdata(serdev);
 
-	hci_uart_unregister_device(&bcmdev->serdev_hu);
-}
+	hci_uart_unरेजिस्टर_device(&bcmdev->serdev_hu);
+पूर्ण
 
-#ifdef CONFIG_OF
-static struct bcm_device_data bcm4354_device_data = {
+#अगर_घोषित CONFIG_OF
+अटल काष्ठा bcm_device_data bcm4354_device_data = अणु
 	.no_early_set_baudrate = true,
-};
+पूर्ण;
 
-static struct bcm_device_data bcm43438_device_data = {
-	.drive_rts_on_open = true,
-};
+अटल काष्ठा bcm_device_data bcm43438_device_data = अणु
+	.drive_rts_on_खोलो = true,
+पूर्ण;
 
-static const struct of_device_id bcm_bluetooth_of_match[] = {
-	{ .compatible = "brcm,bcm20702a1" },
-	{ .compatible = "brcm,bcm4329-bt" },
-	{ .compatible = "brcm,bcm4330-bt" },
-	{ .compatible = "brcm,bcm4334-bt" },
-	{ .compatible = "brcm,bcm4345c5" },
-	{ .compatible = "brcm,bcm4330-bt" },
-	{ .compatible = "brcm,bcm43438-bt", .data = &bcm43438_device_data },
-	{ .compatible = "brcm,bcm43540-bt", .data = &bcm4354_device_data },
-	{ .compatible = "brcm,bcm4335a0" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id bcm_bluetooth_of_match[] = अणु
+	अणु .compatible = "brcm,bcm20702a1" पूर्ण,
+	अणु .compatible = "brcm,bcm4329-bt" पूर्ण,
+	अणु .compatible = "brcm,bcm4330-bt" पूर्ण,
+	अणु .compatible = "brcm,bcm4334-bt" पूर्ण,
+	अणु .compatible = "brcm,bcm4345c5" पूर्ण,
+	अणु .compatible = "brcm,bcm4330-bt" पूर्ण,
+	अणु .compatible = "brcm,bcm43438-bt", .data = &bcm43438_device_data पूर्ण,
+	अणु .compatible = "brcm,bcm43540-bt", .data = &bcm4354_device_data पूर्ण,
+	अणु .compatible = "brcm,bcm4335a0" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcm_bluetooth_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct serdev_device_driver bcm_serdev_driver = {
+अटल काष्ठा serdev_device_driver bcm_serdev_driver = अणु
 	.probe = bcm_serdev_probe,
-	.remove = bcm_serdev_remove,
-	.driver = {
+	.हटाओ = bcm_serdev_हटाओ,
+	.driver = अणु
 		.name = "hci_uart_bcm",
 		.of_match_table = of_match_ptr(bcm_bluetooth_of_match),
 		.acpi_match_table = ACPI_PTR(bcm_acpi_match),
 		.pm = &bcm_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int __init bcm_init(void)
-{
-	/* For now, we need to keep both platform device
+पूर्णांक __init bcm_init(व्योम)
+अणु
+	/* For now, we need to keep both platक्रमm device
 	 * driver (ACPI generated) and serdev driver (DT).
 	 */
-	platform_driver_register(&bcm_driver);
-	serdev_device_driver_register(&bcm_serdev_driver);
+	platक्रमm_driver_रेजिस्टर(&bcm_driver);
+	serdev_device_driver_रेजिस्टर(&bcm_serdev_driver);
 
-	return hci_uart_register_proto(&bcm_proto);
-}
+	वापस hci_uart_रेजिस्टर_proto(&bcm_proto);
+पूर्ण
 
-int __exit bcm_deinit(void)
-{
-	platform_driver_unregister(&bcm_driver);
-	serdev_device_driver_unregister(&bcm_serdev_driver);
+पूर्णांक __निकास bcm_deinit(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&bcm_driver);
+	serdev_device_driver_unरेजिस्टर(&bcm_serdev_driver);
 
-	return hci_uart_unregister_proto(&bcm_proto);
-}
+	वापस hci_uart_unरेजिस्टर_proto(&bcm_proto);
+पूर्ण

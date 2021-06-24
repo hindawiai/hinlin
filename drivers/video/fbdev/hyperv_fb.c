@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2012, Microsoft Corporation.
  *
@@ -9,14 +10,14 @@
 /*
  * Hyper-V Synthetic Video Frame Buffer Driver
  *
- * This is the driver for the Hyper-V Synthetic Video, which supports
- * screen resolution up to Full HD 1920x1080 with 32 bit color on Windows
- * Server 2012, and 1600x1200 with 16 bit color on Windows Server 2008 R2
+ * This is the driver क्रम the Hyper-V Synthetic Video, which supports
+ * screen resolution up to Full HD 1920x1080 with 32 bit color on Winकरोws
+ * Server 2012, and 1600x1200 with 16 bit color on Winकरोws Server 2008 R2
  * or earlier.
  *
- * It also solves the double mouse cursor issue of the emulated video mode.
+ * It also solves the द्विगुन mouse cursor issue of the emulated video mode.
  *
- * The default screen resolution is 1152x864, which may be changed by a
+ * The शेष screen resolution is 1152x864, which may be changed by a
  * kernel parameter:
  *     video=hyperv_fb:<width>x<height>
  *     For example: video=hyperv_fb:1280x1024
@@ -24,77 +25,77 @@
  * Portrait orientation is also supported:
  *     For example: video=hyperv_fb:864x1152
  *
- * When a Windows 10 RS5+ host is used, the virtual machine screen
+ * When a Winकरोws 10 RS5+ host is used, the भव machine screen
  * resolution is obtained from the host. The "video=hyperv_fb" option is
- * not needed, but still can be used to overwrite what the host specifies.
- * The VM resolution on the host could be set by executing the powershell
+ * not needed, but still can be used to overग_लिखो what the host specअगरies.
+ * The VM resolution on the host could be set by executing the घातershell
  * "set-vmvideo" command. For example
  *     set-vmvideo -vmname name -horizontalresolution:1920 \
  * -verticalresolution:1200 -resolutiontype single
  *
- * Gen 1 VMs also support direct using VM's physical memory for framebuffer.
- * It could improve the efficiency and performance for framebuffer and VM.
+ * Gen 1 VMs also support direct using VM's physical memory क्रम framebuffer.
+ * It could improve the efficiency and perक्रमmance क्रम framebuffer and VM.
  * This requires to allocate contiguous physical memory from Linux kernel's
  * CMA memory allocator. To enable this, supply a kernel parameter to give
- * enough memory space to CMA allocator for framebuffer. For example:
+ * enough memory space to CMA allocator क्रम framebuffer. For example:
  *    cma=130m
  * This gives 130MB memory to CMA allocator that can be allocated to
  * framebuffer. For reference, 8K resolution (7680x4320) takes about
  * 127MB memory.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/vmalloc.h>
-#include <linux/init.h>
-#include <linux/completion.h>
-#include <linux/fb.h>
-#include <linux/pci.h>
-#include <linux/efi.h>
-#include <linux/console.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/init.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/console.h>
 
-#include <linux/hyperv.h>
-
-
-/* Hyper-V Synthetic Video Protocol definitions and structures */
-#define MAX_VMBUS_PKT_SIZE 0x4000
-
-#define SYNTHVID_VERSION(major, minor) ((minor) << 16 | (major))
-#define SYNTHVID_VERSION_WIN7 SYNTHVID_VERSION(3, 0)
-#define SYNTHVID_VERSION_WIN8 SYNTHVID_VERSION(3, 2)
-#define SYNTHVID_VERSION_WIN10 SYNTHVID_VERSION(3, 5)
-
-#define SYNTHVID_VER_GET_MAJOR(ver) (ver & 0x0000ffff)
-#define SYNTHVID_VER_GET_MINOR(ver) ((ver & 0xffff0000) >> 16)
-
-#define SYNTHVID_DEPTH_WIN7 16
-#define SYNTHVID_DEPTH_WIN8 32
-
-#define SYNTHVID_FB_SIZE_WIN7 (4 * 1024 * 1024)
-#define SYNTHVID_WIDTH_MAX_WIN7 1600
-#define SYNTHVID_HEIGHT_MAX_WIN7 1200
-
-#define SYNTHVID_FB_SIZE_WIN8 (8 * 1024 * 1024)
-
-#define PCI_VENDOR_ID_MICROSOFT 0x1414
-#define PCI_DEVICE_ID_HYPERV_VIDEO 0x5353
+#समावेश <linux/hyperv.h>
 
 
-enum pipe_msg_type {
+/* Hyper-V Synthetic Video Protocol definitions and काष्ठाures */
+#घोषणा MAX_VMBUS_PKT_SIZE 0x4000
+
+#घोषणा SYNTHVID_VERSION(major, minor) ((minor) << 16 | (major))
+#घोषणा SYNTHVID_VERSION_WIN7 SYNTHVID_VERSION(3, 0)
+#घोषणा SYNTHVID_VERSION_WIN8 SYNTHVID_VERSION(3, 2)
+#घोषणा SYNTHVID_VERSION_WIN10 SYNTHVID_VERSION(3, 5)
+
+#घोषणा SYNTHVID_VER_GET_MAJOR(ver) (ver & 0x0000ffff)
+#घोषणा SYNTHVID_VER_GET_MINOR(ver) ((ver & 0xffff0000) >> 16)
+
+#घोषणा SYNTHVID_DEPTH_WIN7 16
+#घोषणा SYNTHVID_DEPTH_WIN8 32
+
+#घोषणा SYNTHVID_FB_SIZE_WIN7 (4 * 1024 * 1024)
+#घोषणा SYNTHVID_WIDTH_MAX_WIN7 1600
+#घोषणा SYNTHVID_HEIGHT_MAX_WIN7 1200
+
+#घोषणा SYNTHVID_FB_SIZE_WIN8 (8 * 1024 * 1024)
+
+#घोषणा PCI_VENDOR_ID_MICROSOFT 0x1414
+#घोषणा PCI_DEVICE_ID_HYPERV_VIDEO 0x5353
+
+
+क्रमागत pipe_msg_type अणु
 	PIPE_MSG_INVALID,
 	PIPE_MSG_DATA,
 	PIPE_MSG_MAX
-};
+पूर्ण;
 
-struct pipe_msg_hdr {
+काष्ठा pipe_msg_hdr अणु
 	u32 type;
 	u32 size; /* size of message after this field */
-} __packed;
+पूर्ण __packed;
 
 
-enum synthvid_msg_type {
+क्रमागत synthvid_msg_type अणु
 	SYNTHVID_ERROR			= 0,
 	SYNTHVID_VERSION_REQUEST	= 1,
 	SYNTHVID_VERSION_RESPONSE	= 2,
@@ -105,229 +106,229 @@ enum synthvid_msg_type {
 	SYNTHVID_POINTER_POSITION	= 7,
 	SYNTHVID_POINTER_SHAPE		= 8,
 	SYNTHVID_FEATURE_CHANGE		= 9,
-	SYNTHVID_DIRT			= 10,
+	SYNTHVID_सूचीT			= 10,
 	SYNTHVID_RESOLUTION_REQUEST	= 13,
 	SYNTHVID_RESOLUTION_RESPONSE	= 14,
 
 	SYNTHVID_MAX			= 15
-};
+पूर्ण;
 
-#define		SYNTHVID_EDID_BLOCK_SIZE	128
-#define		SYNTHVID_MAX_RESOLUTION_COUNT	64
+#घोषणा		SYNTHVID_EDID_BLOCK_SIZE	128
+#घोषणा		SYNTHVID_MAX_RESOLUTION_COUNT	64
 
-struct hvd_screen_info {
+काष्ठा hvd_screen_info अणु
 	u16 width;
 	u16 height;
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_msg_hdr {
+काष्ठा synthvid_msg_hdr अणु
 	u32 type;
 	u32 size;  /* size of this header + payload after this field*/
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_version_req {
+काष्ठा synthvid_version_req अणु
 	u32 version;
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_version_resp {
+काष्ठा synthvid_version_resp अणु
 	u32 version;
 	u8 is_accepted;
-	u8 max_video_outputs;
-} __packed;
+	u8 max_video_outमाला_दो;
+पूर्ण __packed;
 
-struct synthvid_supported_resolution_req {
+काष्ठा synthvid_supported_resolution_req अणु
 	u8 maximum_resolution_count;
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_supported_resolution_resp {
+काष्ठा synthvid_supported_resolution_resp अणु
 	u8 edid_block[SYNTHVID_EDID_BLOCK_SIZE];
 	u8 resolution_count;
-	u8 default_resolution_index;
+	u8 शेष_resolution_index;
 	u8 is_standard;
-	struct hvd_screen_info
+	काष्ठा hvd_screen_info
 		supported_resolution[SYNTHVID_MAX_RESOLUTION_COUNT];
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_vram_location {
+काष्ठा synthvid_vram_location अणु
 	u64 user_ctx;
-	u8 is_vram_gpa_specified;
+	u8 is_vram_gpa_specअगरied;
 	u64 vram_gpa;
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_vram_location_ack {
+काष्ठा synthvid_vram_location_ack अणु
 	u64 user_ctx;
-} __packed;
+पूर्ण __packed;
 
-struct video_output_situation {
+काष्ठा video_output_situation अणु
 	u8 active;
 	u32 vram_offset;
 	u8 depth_bits;
 	u32 width_pixels;
 	u32 height_pixels;
 	u32 pitch_bytes;
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_situation_update {
+काष्ठा synthvid_situation_update अणु
 	u64 user_ctx;
 	u8 video_output_count;
-	struct video_output_situation video_output[1];
-} __packed;
+	काष्ठा video_output_situation video_output[1];
+पूर्ण __packed;
 
-struct synthvid_situation_update_ack {
+काष्ठा synthvid_situation_update_ack अणु
 	u64 user_ctx;
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_pointer_position {
+काष्ठा synthvid_poपूर्णांकer_position अणु
 	u8 is_visible;
 	u8 video_output;
 	s32 image_x;
 	s32 image_y;
-} __packed;
+पूर्ण __packed;
 
 
-#define CURSOR_MAX_X 96
-#define CURSOR_MAX_Y 96
-#define CURSOR_ARGB_PIXEL_SIZE 4
-#define CURSOR_MAX_SIZE (CURSOR_MAX_X * CURSOR_MAX_Y * CURSOR_ARGB_PIXEL_SIZE)
-#define CURSOR_COMPLETE (-1)
+#घोषणा CURSOR_MAX_X 96
+#घोषणा CURSOR_MAX_Y 96
+#घोषणा CURSOR_ARGB_PIXEL_SIZE 4
+#घोषणा CURSOR_MAX_SIZE (CURSOR_MAX_X * CURSOR_MAX_Y * CURSOR_ARGB_PIXEL_SIZE)
+#घोषणा CURSOR_COMPLETE (-1)
 
-struct synthvid_pointer_shape {
+काष्ठा synthvid_poपूर्णांकer_shape अणु
 	u8 part_idx;
 	u8 is_argb;
 	u32 width; /* CURSOR_MAX_X at most */
 	u32 height; /* CURSOR_MAX_Y at most */
-	u32 hot_x; /* hotspot relative to upper-left of pointer image */
+	u32 hot_x; /* hotspot relative to upper-left of poपूर्णांकer image */
 	u32 hot_y;
 	u8 data[4];
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_feature_change {
+काष्ठा synthvid_feature_change अणु
 	u8 is_dirt_needed;
 	u8 is_ptr_pos_needed;
 	u8 is_ptr_shape_needed;
 	u8 is_situ_needed;
-} __packed;
+पूर्ण __packed;
 
-struct rect {
+काष्ठा rect अणु
 	s32 x1, y1; /* top left corner */
 	s32 x2, y2; /* bottom right corner, exclusive */
-} __packed;
+पूर्ण __packed;
 
-struct synthvid_dirt {
+काष्ठा synthvid_dirt अणु
 	u8 video_output;
 	u8 dirt_count;
-	struct rect rect[1];
-} __packed;
+	काष्ठा rect rect[1];
+पूर्ण __packed;
 
-struct synthvid_msg {
-	struct pipe_msg_hdr pipe_hdr;
-	struct synthvid_msg_hdr vid_hdr;
-	union {
-		struct synthvid_version_req ver_req;
-		struct synthvid_version_resp ver_resp;
-		struct synthvid_vram_location vram;
-		struct synthvid_vram_location_ack vram_ack;
-		struct synthvid_situation_update situ;
-		struct synthvid_situation_update_ack situ_ack;
-		struct synthvid_pointer_position ptr_pos;
-		struct synthvid_pointer_shape ptr_shape;
-		struct synthvid_feature_change feature_chg;
-		struct synthvid_dirt dirt;
-		struct synthvid_supported_resolution_req resolution_req;
-		struct synthvid_supported_resolution_resp resolution_resp;
-	};
-} __packed;
+काष्ठा synthvid_msg अणु
+	काष्ठा pipe_msg_hdr pipe_hdr;
+	काष्ठा synthvid_msg_hdr vid_hdr;
+	जोड़ अणु
+		काष्ठा synthvid_version_req ver_req;
+		काष्ठा synthvid_version_resp ver_resp;
+		काष्ठा synthvid_vram_location vram;
+		काष्ठा synthvid_vram_location_ack vram_ack;
+		काष्ठा synthvid_situation_update situ;
+		काष्ठा synthvid_situation_update_ack situ_ack;
+		काष्ठा synthvid_poपूर्णांकer_position ptr_pos;
+		काष्ठा synthvid_poपूर्णांकer_shape ptr_shape;
+		काष्ठा synthvid_feature_change feature_chg;
+		काष्ठा synthvid_dirt dirt;
+		काष्ठा synthvid_supported_resolution_req resolution_req;
+		काष्ठा synthvid_supported_resolution_resp resolution_resp;
+	पूर्ण;
+पूर्ण __packed;
 
 
-/* FB driver definitions and structures */
-#define HVFB_WIDTH 1152 /* default screen width */
-#define HVFB_HEIGHT 864 /* default screen height */
-#define HVFB_WIDTH_MIN 640
-#define HVFB_HEIGHT_MIN 480
+/* FB driver definitions and काष्ठाures */
+#घोषणा HVFB_WIDTH 1152 /* शेष screen width */
+#घोषणा HVFB_HEIGHT 864 /* शेष screen height */
+#घोषणा HVFB_WIDTH_MIN 640
+#घोषणा HVFB_HEIGHT_MIN 480
 
-#define RING_BUFSIZE (256 * 1024)
-#define VSP_TIMEOUT (10 * HZ)
-#define HVFB_UPDATE_DELAY (HZ / 20)
-#define HVFB_ONDEMAND_THROTTLE (HZ / 20)
+#घोषणा RING_बफ_मानE (256 * 1024)
+#घोषणा VSP_TIMEOUT (10 * HZ)
+#घोषणा HVFB_UPDATE_DELAY (HZ / 20)
+#घोषणा HVFB_ONDEMAND_THROTTLE (HZ / 20)
 
-struct hvfb_par {
-	struct fb_info *info;
-	struct resource *mem;
-	bool fb_ready; /* fb device is ready */
-	struct completion wait;
+काष्ठा hvfb_par अणु
+	काष्ठा fb_info *info;
+	काष्ठा resource *mem;
+	bool fb_पढ़ोy; /* fb device is पढ़ोy */
+	काष्ठा completion रुको;
 	u32 synthvid_version;
 
-	struct delayed_work dwork;
+	काष्ठा delayed_work dwork;
 	bool update;
-	bool update_saved; /* The value of 'update' before hibernation */
+	bool update_saved; /* The value of 'update' beक्रमe hibernation */
 
-	u32 pseudo_palette[16];
+	u32 pseuकरो_palette[16];
 	u8 init_buf[MAX_VMBUS_PKT_SIZE];
 	u8 recv_buf[MAX_VMBUS_PKT_SIZE];
 
-	/* If true, the VSC notifies the VSP on every framebuffer change */
+	/* If true, the VSC notअगरies the VSP on every framebuffer change */
 	bool synchronous_fb;
 
 	/* If true, need to copy from deferred IO mem to framebuffer mem */
-	bool need_docopy;
+	bool need_करोcopy;
 
-	struct notifier_block hvfb_panic_nb;
+	काष्ठा notअगरier_block hvfb_panic_nb;
 
-	/* Memory for deferred IO and frame buffer itself */
-	unsigned char *dio_vp;
-	unsigned char *mmio_vp;
+	/* Memory क्रम deferred IO and frame buffer itself */
+	अचिन्हित अक्षर *dio_vp;
+	अचिन्हित अक्षर *mmio_vp;
 	phys_addr_t mmio_pp;
 
-	/* Dirty rectangle, protected by delayed_refresh_lock */
-	int x1, y1, x2, y2;
+	/* Dirty rectangle, रक्षित by delayed_refresh_lock */
+	पूर्णांक x1, y1, x2, y2;
 	bool delayed_refresh;
 	spinlock_t delayed_refresh_lock;
-};
+पूर्ण;
 
-static uint screen_width = HVFB_WIDTH;
-static uint screen_height = HVFB_HEIGHT;
-static uint screen_width_max = HVFB_WIDTH;
-static uint screen_height_max = HVFB_HEIGHT;
-static uint screen_depth;
-static uint screen_fb_size;
-static uint dio_fb_size; /* FB size for deferred IO */
+अटल uपूर्णांक screen_width = HVFB_WIDTH;
+अटल uपूर्णांक screen_height = HVFB_HEIGHT;
+अटल uपूर्णांक screen_width_max = HVFB_WIDTH;
+अटल uपूर्णांक screen_height_max = HVFB_HEIGHT;
+अटल uपूर्णांक screen_depth;
+अटल uपूर्णांक screen_fb_size;
+अटल uपूर्णांक dio_fb_size; /* FB size क्रम deferred IO */
 
 /* Send message to Hyper-V host */
-static inline int synthvid_send(struct hv_device *hdev,
-				struct synthvid_msg *msg)
-{
-	static atomic64_t request_id = ATOMIC64_INIT(0);
-	int ret;
+अटल अंतरभूत पूर्णांक synthvid_send(काष्ठा hv_device *hdev,
+				काष्ठा synthvid_msg *msg)
+अणु
+	अटल atomic64_t request_id = ATOMIC64_INIT(0);
+	पूर्णांक ret;
 
 	msg->pipe_hdr.type = PIPE_MSG_DATA;
 	msg->pipe_hdr.size = msg->vid_hdr.size;
 
 	ret = vmbus_sendpacket(hdev->channel, msg,
-			       msg->vid_hdr.size + sizeof(struct pipe_msg_hdr),
-			       atomic64_inc_return(&request_id),
+			       msg->vid_hdr.size + माप(काष्ठा pipe_msg_hdr),
+			       atomic64_inc_वापस(&request_id),
 			       VM_PKT_DATA_INBAND, 0);
 
-	if (ret)
+	अगर (ret)
 		pr_err_ratelimited("Unable to send packet via vmbus; error %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /* Send screen resolution info to host */
-static int synthvid_send_situ(struct hv_device *hdev)
-{
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct synthvid_msg msg;
+अटल पूर्णांक synthvid_send_situ(काष्ठा hv_device *hdev)
+अणु
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा synthvid_msg msg;
 
-	if (!info)
-		return -ENODEV;
+	अगर (!info)
+		वापस -ENODEV;
 
-	memset(&msg, 0, sizeof(struct synthvid_msg));
+	स_रखो(&msg, 0, माप(काष्ठा synthvid_msg));
 
 	msg.vid_hdr.type = SYNTHVID_SITUATION_UPDATE;
-	msg.vid_hdr.size = sizeof(struct synthvid_msg_hdr) +
-		sizeof(struct synthvid_situation_update);
+	msg.vid_hdr.size = माप(काष्ठा synthvid_msg_hdr) +
+		माप(काष्ठा synthvid_situation_update);
 	msg.situ.user_ctx = 0;
 	msg.situ.video_output_count = 1;
 	msg.situ.video_output[0].active = 1;
@@ -339,28 +340,28 @@ static int synthvid_send_situ(struct hv_device *hdev)
 
 	synthvid_send(hdev, &msg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Send mouse pointer info to host */
-static int synthvid_send_ptr(struct hv_device *hdev)
-{
-	struct synthvid_msg msg;
+/* Send mouse poपूर्णांकer info to host */
+अटल पूर्णांक synthvid_send_ptr(काष्ठा hv_device *hdev)
+अणु
+	काष्ठा synthvid_msg msg;
 
-	memset(&msg, 0, sizeof(struct synthvid_msg));
+	स_रखो(&msg, 0, माप(काष्ठा synthvid_msg));
 	msg.vid_hdr.type = SYNTHVID_POINTER_POSITION;
-	msg.vid_hdr.size = sizeof(struct synthvid_msg_hdr) +
-		sizeof(struct synthvid_pointer_position);
+	msg.vid_hdr.size = माप(काष्ठा synthvid_msg_hdr) +
+		माप(काष्ठा synthvid_poपूर्णांकer_position);
 	msg.ptr_pos.is_visible = 1;
 	msg.ptr_pos.video_output = 0;
 	msg.ptr_pos.image_x = 0;
 	msg.ptr_pos.image_y = 0;
 	synthvid_send(hdev, &msg);
 
-	memset(&msg, 0, sizeof(struct synthvid_msg));
+	स_रखो(&msg, 0, माप(काष्ठा synthvid_msg));
 	msg.vid_hdr.type = SYNTHVID_POINTER_SHAPE;
-	msg.vid_hdr.size = sizeof(struct synthvid_msg_hdr) +
-		sizeof(struct synthvid_pointer_shape);
+	msg.vid_hdr.size = माप(काष्ठा synthvid_msg_hdr) +
+		माप(काष्ठा synthvid_poपूर्णांकer_shape);
 	msg.ptr_shape.part_idx = CURSOR_COMPLETE;
 	msg.ptr_shape.is_argb = 1;
 	msg.ptr_shape.width = 1;
@@ -373,25 +374,25 @@ static int synthvid_send_ptr(struct hv_device *hdev)
 	msg.ptr_shape.data[3] = 1;
 	synthvid_send(hdev, &msg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Send updated screen area (dirty rectangle) location to host */
-static int
-synthvid_update(struct fb_info *info, int x1, int y1, int x2, int y2)
-{
-	struct hv_device *hdev = device_to_hv_device(info->device);
-	struct synthvid_msg msg;
+अटल पूर्णांक
+synthvid_update(काष्ठा fb_info *info, पूर्णांक x1, पूर्णांक y1, पूर्णांक x2, पूर्णांक y2)
+अणु
+	काष्ठा hv_device *hdev = device_to_hv_device(info->device);
+	काष्ठा synthvid_msg msg;
 
-	memset(&msg, 0, sizeof(struct synthvid_msg));
-	if (x2 == INT_MAX)
+	स_रखो(&msg, 0, माप(काष्ठा synthvid_msg));
+	अगर (x2 == पूर्णांक_उच्च)
 		x2 = info->var.xres;
-	if (y2 == INT_MAX)
+	अगर (y2 == पूर्णांक_उच्च)
 		y2 = info->var.yres;
 
-	msg.vid_hdr.type = SYNTHVID_DIRT;
-	msg.vid_hdr.size = sizeof(struct synthvid_msg_hdr) +
-		sizeof(struct synthvid_dirt);
+	msg.vid_hdr.type = SYNTHVID_सूचीT;
+	msg.vid_hdr.size = माप(काष्ठा synthvid_msg_hdr) +
+		माप(काष्ठा synthvid_dirt);
 	msg.dirt.video_output = 0;
 	msg.dirt.dirt_count = 1;
 	msg.dirt.rect[0].x1 = (x1 > x2) ? 0 : x1;
@@ -403,33 +404,33 @@ synthvid_update(struct fb_info *info, int x1, int y1, int x2, int y2)
 
 	synthvid_send(hdev, &msg);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hvfb_docopy(struct hvfb_par *par,
-			unsigned long offset,
-			unsigned long size)
-{
-	if (!par || !par->mmio_vp || !par->dio_vp || !par->fb_ready ||
+अटल व्योम hvfb_करोcopy(काष्ठा hvfb_par *par,
+			अचिन्हित दीर्घ offset,
+			अचिन्हित दीर्घ size)
+अणु
+	अगर (!par || !par->mmio_vp || !par->dio_vp || !par->fb_पढ़ोy ||
 	    size == 0 || offset >= dio_fb_size)
-		return;
+		वापस;
 
-	if (offset + size > dio_fb_size)
+	अगर (offset + size > dio_fb_size)
 		size = dio_fb_size - offset;
 
-	memcpy(par->mmio_vp + offset, par->dio_vp + offset, size);
-}
+	स_नकल(par->mmio_vp + offset, par->dio_vp + offset, size);
+पूर्ण
 
 /* Deferred IO callback */
-static void synthvid_deferred_io(struct fb_info *p,
-				 struct list_head *pagelist)
-{
-	struct hvfb_par *par = p->par;
-	struct page *page;
-	unsigned long start, end;
-	int y1, y2, miny, maxy;
+अटल व्योम synthvid_deferred_io(काष्ठा fb_info *p,
+				 काष्ठा list_head *pagelist)
+अणु
+	काष्ठा hvfb_par *par = p->par;
+	काष्ठा page *page;
+	अचिन्हित दीर्घ start, end;
+	पूर्णांक y1, y2, miny, maxy;
 
-	miny = INT_MAX;
+	miny = पूर्णांक_उच्च;
 	maxy = 0;
 
 	/*
@@ -438,186 +439,186 @@ static void synthvid_deferred_io(struct fb_info *p,
 	 * in synthvid_update function by clamping the y2
 	 * value to yres.
 	 */
-	list_for_each_entry(page, pagelist, lru) {
+	list_क्रम_each_entry(page, pagelist, lru) अणु
 		start = page->index << PAGE_SHIFT;
 		end = start + PAGE_SIZE - 1;
 		y1 = start / p->fix.line_length;
 		y2 = end / p->fix.line_length;
-		miny = min_t(int, miny, y1);
-		maxy = max_t(int, maxy, y2);
+		miny = min_t(पूर्णांक, miny, y1);
+		maxy = max_t(पूर्णांक, maxy, y2);
 
 		/* Copy from dio space to mmio address */
-		if (par->fb_ready && par->need_docopy)
-			hvfb_docopy(par, start, PAGE_SIZE);
-	}
+		अगर (par->fb_पढ़ोy && par->need_करोcopy)
+			hvfb_करोcopy(par, start, PAGE_SIZE);
+	पूर्ण
 
-	if (par->fb_ready && par->update)
+	अगर (par->fb_पढ़ोy && par->update)
 		synthvid_update(p, 0, miny, p->var.xres, maxy + 1);
-}
+पूर्ण
 
-static struct fb_deferred_io synthvid_defio = {
+अटल काष्ठा fb_deferred_io synthvid_defio = अणु
 	.delay		= HZ / 20,
 	.deferred_io	= synthvid_deferred_io,
-};
+पूर्ण;
 
 /*
  * Actions on received messages from host:
- * Complete the wait event.
+ * Complete the रुको event.
  * Or, reply with screen and cursor info.
  */
-static void synthvid_recv_sub(struct hv_device *hdev)
-{
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct hvfb_par *par;
-	struct synthvid_msg *msg;
+अटल व्योम synthvid_recv_sub(काष्ठा hv_device *hdev)
+अणु
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा hvfb_par *par;
+	काष्ठा synthvid_msg *msg;
 
-	if (!info)
-		return;
+	अगर (!info)
+		वापस;
 
 	par = info->par;
-	msg = (struct synthvid_msg *)par->recv_buf;
+	msg = (काष्ठा synthvid_msg *)par->recv_buf;
 
-	/* Complete the wait event */
-	if (msg->vid_hdr.type == SYNTHVID_VERSION_RESPONSE ||
+	/* Complete the रुको event */
+	अगर (msg->vid_hdr.type == SYNTHVID_VERSION_RESPONSE ||
 	    msg->vid_hdr.type == SYNTHVID_RESOLUTION_RESPONSE ||
-	    msg->vid_hdr.type == SYNTHVID_VRAM_LOCATION_ACK) {
-		memcpy(par->init_buf, msg, MAX_VMBUS_PKT_SIZE);
-		complete(&par->wait);
-		return;
-	}
+	    msg->vid_hdr.type == SYNTHVID_VRAM_LOCATION_ACK) अणु
+		स_नकल(par->init_buf, msg, MAX_VMBUS_PKT_SIZE);
+		complete(&par->रुको);
+		वापस;
+	पूर्ण
 
 	/* Reply with screen and cursor info */
-	if (msg->vid_hdr.type == SYNTHVID_FEATURE_CHANGE) {
-		if (par->fb_ready) {
+	अगर (msg->vid_hdr.type == SYNTHVID_FEATURE_CHANGE) अणु
+		अगर (par->fb_पढ़ोy) अणु
 			synthvid_send_ptr(hdev);
 			synthvid_send_situ(hdev);
-		}
+		पूर्ण
 
 		par->update = msg->feature_chg.is_dirt_needed;
-		if (par->update)
+		अगर (par->update)
 			schedule_delayed_work(&par->dwork, HVFB_UPDATE_DELAY);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Receive callback for messages from the host */
-static void synthvid_receive(void *ctx)
-{
-	struct hv_device *hdev = ctx;
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct hvfb_par *par;
-	struct synthvid_msg *recv_buf;
+/* Receive callback क्रम messages from the host */
+अटल व्योम synthvid_receive(व्योम *ctx)
+अणु
+	काष्ठा hv_device *hdev = ctx;
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा hvfb_par *par;
+	काष्ठा synthvid_msg *recv_buf;
 	u32 bytes_recvd;
 	u64 req_id;
-	int ret;
+	पूर्णांक ret;
 
-	if (!info)
-		return;
+	अगर (!info)
+		वापस;
 
 	par = info->par;
-	recv_buf = (struct synthvid_msg *)par->recv_buf;
+	recv_buf = (काष्ठा synthvid_msg *)par->recv_buf;
 
-	do {
+	करो अणु
 		ret = vmbus_recvpacket(hdev->channel, recv_buf,
 				       MAX_VMBUS_PKT_SIZE,
 				       &bytes_recvd, &req_id);
-		if (bytes_recvd > 0 &&
+		अगर (bytes_recvd > 0 &&
 		    recv_buf->pipe_hdr.type == PIPE_MSG_DATA)
 			synthvid_recv_sub(hdev);
-	} while (bytes_recvd > 0 && ret == 0);
-}
+	पूर्ण जबतक (bytes_recvd > 0 && ret == 0);
+पूर्ण
 
-/* Check if the ver1 version is equal or greater than ver2 */
-static inline bool synthvid_ver_ge(u32 ver1, u32 ver2)
-{
-	if (SYNTHVID_VER_GET_MAJOR(ver1) > SYNTHVID_VER_GET_MAJOR(ver2) ||
+/* Check अगर the ver1 version is equal or greater than ver2 */
+अटल अंतरभूत bool synthvid_ver_ge(u32 ver1, u32 ver2)
+अणु
+	अगर (SYNTHVID_VER_GET_MAJOR(ver1) > SYNTHVID_VER_GET_MAJOR(ver2) ||
 	    (SYNTHVID_VER_GET_MAJOR(ver1) == SYNTHVID_VER_GET_MAJOR(ver2) &&
 	     SYNTHVID_VER_GET_MINOR(ver1) >= SYNTHVID_VER_GET_MINOR(ver2)))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /* Check synthetic video protocol version with the host */
-static int synthvid_negotiate_ver(struct hv_device *hdev, u32 ver)
-{
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct hvfb_par *par = info->par;
-	struct synthvid_msg *msg = (struct synthvid_msg *)par->init_buf;
-	int ret = 0;
-	unsigned long t;
+अटल पूर्णांक synthvid_negotiate_ver(काष्ठा hv_device *hdev, u32 ver)
+अणु
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा hvfb_par *par = info->par;
+	काष्ठा synthvid_msg *msg = (काष्ठा synthvid_msg *)par->init_buf;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ t;
 
-	memset(msg, 0, sizeof(struct synthvid_msg));
+	स_रखो(msg, 0, माप(काष्ठा synthvid_msg));
 	msg->vid_hdr.type = SYNTHVID_VERSION_REQUEST;
-	msg->vid_hdr.size = sizeof(struct synthvid_msg_hdr) +
-		sizeof(struct synthvid_version_req);
+	msg->vid_hdr.size = माप(काष्ठा synthvid_msg_hdr) +
+		माप(काष्ठा synthvid_version_req);
 	msg->ver_req.version = ver;
 	synthvid_send(hdev, msg);
 
-	t = wait_for_completion_timeout(&par->wait, VSP_TIMEOUT);
-	if (!t) {
+	t = रुको_क्रम_completion_समयout(&par->रुको, VSP_TIMEOUT);
+	अगर (!t) अणु
 		pr_err("Time out on waiting version response\n");
 		ret = -ETIMEDOUT;
-		goto out;
-	}
-	if (!msg->ver_resp.is_accepted) {
+		जाओ out;
+	पूर्ण
+	अगर (!msg->ver_resp.is_accepted) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	par->synthvid_version = ver;
 	pr_info("Synthvid Version major %d, minor %d\n",
 		SYNTHVID_VER_GET_MAJOR(ver), SYNTHVID_VER_GET_MINOR(ver));
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Get current resolution from the host */
-static int synthvid_get_supported_resolution(struct hv_device *hdev)
-{
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct hvfb_par *par = info->par;
-	struct synthvid_msg *msg = (struct synthvid_msg *)par->init_buf;
-	int ret = 0;
-	unsigned long t;
+अटल पूर्णांक synthvid_get_supported_resolution(काष्ठा hv_device *hdev)
+अणु
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा hvfb_par *par = info->par;
+	काष्ठा synthvid_msg *msg = (काष्ठा synthvid_msg *)par->init_buf;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ t;
 	u8 index;
-	int i;
+	पूर्णांक i;
 
-	memset(msg, 0, sizeof(struct synthvid_msg));
+	स_रखो(msg, 0, माप(काष्ठा synthvid_msg));
 	msg->vid_hdr.type = SYNTHVID_RESOLUTION_REQUEST;
-	msg->vid_hdr.size = sizeof(struct synthvid_msg_hdr) +
-		sizeof(struct synthvid_supported_resolution_req);
+	msg->vid_hdr.size = माप(काष्ठा synthvid_msg_hdr) +
+		माप(काष्ठा synthvid_supported_resolution_req);
 
 	msg->resolution_req.maximum_resolution_count =
 		SYNTHVID_MAX_RESOLUTION_COUNT;
 	synthvid_send(hdev, msg);
 
-	t = wait_for_completion_timeout(&par->wait, VSP_TIMEOUT);
-	if (!t) {
+	t = रुको_क्रम_completion_समयout(&par->रुको, VSP_TIMEOUT);
+	अगर (!t) अणु
 		pr_err("Time out on waiting resolution response\n");
 		ret = -ETIMEDOUT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (msg->resolution_resp.resolution_count == 0) {
+	अगर (msg->resolution_resp.resolution_count == 0) अणु
 		pr_err("No supported resolutions\n");
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	index = msg->resolution_resp.default_resolution_index;
-	if (index >= msg->resolution_resp.resolution_count) {
+	index = msg->resolution_resp.शेष_resolution_index;
+	अगर (index >= msg->resolution_resp.resolution_count) अणु
 		pr_err("Invalid resolution index: %d\n", index);
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < msg->resolution_resp.resolution_count; i++) {
-		screen_width_max = max_t(unsigned int, screen_width_max,
+	क्रम (i = 0; i < msg->resolution_resp.resolution_count; i++) अणु
+		screen_width_max = max_t(अचिन्हित पूर्णांक, screen_width_max,
 		    msg->resolution_resp.supported_resolution[i].width);
-		screen_height_max = max_t(unsigned int, screen_height_max,
+		screen_height_max = max_t(अचिन्हित पूर्णांक, screen_height_max,
 		    msg->resolution_resp.supported_resolution[i].height);
-	}
+	पूर्ण
 
 	screen_width =
 		msg->resolution_resp.supported_resolution[index].width;
@@ -625,123 +626,123 @@ static int synthvid_get_supported_resolution(struct hv_device *hdev)
 		msg->resolution_resp.supported_resolution[index].height;
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Connect to VSP (Virtual Service Provider) on host */
-static int synthvid_connect_vsp(struct hv_device *hdev)
-{
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct hvfb_par *par = info->par;
-	int ret;
+अटल पूर्णांक synthvid_connect_vsp(काष्ठा hv_device *hdev)
+अणु
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा hvfb_par *par = info->par;
+	पूर्णांक ret;
 
-	ret = vmbus_open(hdev->channel, RING_BUFSIZE, RING_BUFSIZE,
-			 NULL, 0, synthvid_receive, hdev);
-	if (ret) {
+	ret = vmbus_खोलो(hdev->channel, RING_बफ_मानE, RING_बफ_मानE,
+			 शून्य, 0, synthvid_receive, hdev);
+	अगर (ret) अणु
 		pr_err("Unable to open vmbus channel\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Negotiate the protocol version with host */
-	switch (vmbus_proto_version) {
-	case VERSION_WIN10:
-	case VERSION_WIN10_V5:
+	चयन (vmbus_proto_version) अणु
+	हाल VERSION_WIN10:
+	हाल VERSION_WIN10_V5:
 		ret = synthvid_negotiate_ver(hdev, SYNTHVID_VERSION_WIN10);
-		if (!ret)
-			break;
+		अगर (!ret)
+			अवरोध;
 		fallthrough;
-	case VERSION_WIN8:
-	case VERSION_WIN8_1:
+	हाल VERSION_WIN8:
+	हाल VERSION_WIN8_1:
 		ret = synthvid_negotiate_ver(hdev, SYNTHVID_VERSION_WIN8);
-		if (!ret)
-			break;
+		अगर (!ret)
+			अवरोध;
 		fallthrough;
-	case VERSION_WS2008:
-	case VERSION_WIN7:
+	हाल VERSION_WS2008:
+	हाल VERSION_WIN7:
 		ret = synthvid_negotiate_ver(hdev, SYNTHVID_VERSION_WIN7);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = synthvid_negotiate_ver(hdev, SYNTHVID_VERSION_WIN10);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Synthetic video device version not accepted\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	if (par->synthvid_version == SYNTHVID_VERSION_WIN7)
+	अगर (par->synthvid_version == SYNTHVID_VERSION_WIN7)
 		screen_depth = SYNTHVID_DEPTH_WIN7;
-	else
+	अन्यथा
 		screen_depth = SYNTHVID_DEPTH_WIN8;
 
-	if (synthvid_ver_ge(par->synthvid_version, SYNTHVID_VERSION_WIN10)) {
+	अगर (synthvid_ver_ge(par->synthvid_version, SYNTHVID_VERSION_WIN10)) अणु
 		ret = synthvid_get_supported_resolution(hdev);
-		if (ret)
+		अगर (ret)
 			pr_info("Failed to get supported resolution from host, use default\n");
-	}
+	पूर्ण
 
 	screen_fb_size = hdev->channel->offermsg.offer.
 				mmio_megabytes * 1024 * 1024;
 
-	return 0;
+	वापस 0;
 
 error:
-	vmbus_close(hdev->channel);
-	return ret;
-}
+	vmbus_बंद(hdev->channel);
+	वापस ret;
+पूर्ण
 
 /* Send VRAM and Situation messages to the host */
-static int synthvid_send_config(struct hv_device *hdev)
-{
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct hvfb_par *par = info->par;
-	struct synthvid_msg *msg = (struct synthvid_msg *)par->init_buf;
-	int ret = 0;
-	unsigned long t;
+अटल पूर्णांक synthvid_send_config(काष्ठा hv_device *hdev)
+अणु
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा hvfb_par *par = info->par;
+	काष्ठा synthvid_msg *msg = (काष्ठा synthvid_msg *)par->init_buf;
+	पूर्णांक ret = 0;
+	अचिन्हित दीर्घ t;
 
 	/* Send VRAM location */
-	memset(msg, 0, sizeof(struct synthvid_msg));
+	स_रखो(msg, 0, माप(काष्ठा synthvid_msg));
 	msg->vid_hdr.type = SYNTHVID_VRAM_LOCATION;
-	msg->vid_hdr.size = sizeof(struct synthvid_msg_hdr) +
-		sizeof(struct synthvid_vram_location);
+	msg->vid_hdr.size = माप(काष्ठा synthvid_msg_hdr) +
+		माप(काष्ठा synthvid_vram_location);
 	msg->vram.user_ctx = msg->vram.vram_gpa = par->mmio_pp;
-	msg->vram.is_vram_gpa_specified = 1;
+	msg->vram.is_vram_gpa_specअगरied = 1;
 	synthvid_send(hdev, msg);
 
-	t = wait_for_completion_timeout(&par->wait, VSP_TIMEOUT);
-	if (!t) {
+	t = रुको_क्रम_completion_समयout(&par->रुको, VSP_TIMEOUT);
+	अगर (!t) अणु
 		pr_err("Time out on waiting vram location ack\n");
 		ret = -ETIMEDOUT;
-		goto out;
-	}
-	if (msg->vram_ack.user_ctx != par->mmio_pp) {
+		जाओ out;
+	पूर्ण
+	अगर (msg->vram_ack.user_ctx != par->mmio_pp) अणु
 		pr_err("Unable to set VRAM location\n");
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* Send pointer and situation update */
+	/* Send poपूर्णांकer and situation update */
 	synthvid_send_ptr(hdev);
 	synthvid_send_situ(hdev);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
 /*
  * Delayed work callback:
  * It is scheduled to call whenever update request is received and it has
- * not been called in last HVFB_ONDEMAND_THROTTLE time interval.
+ * not been called in last HVFB_ONDEMAND_THROTTLE समय पूर्णांकerval.
  */
-static void hvfb_update_work(struct work_struct *w)
-{
-	struct hvfb_par *par = container_of(w, struct hvfb_par, dwork.work);
-	struct fb_info *info = par->info;
-	unsigned long flags;
-	int x1, x2, y1, y2;
-	int j;
+अटल व्योम hvfb_update_work(काष्ठा work_काष्ठा *w)
+अणु
+	काष्ठा hvfb_par *par = container_of(w, काष्ठा hvfb_par, dwork.work);
+	काष्ठा fb_info *info = par->info;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक x1, x2, y1, y2;
+	पूर्णांक j;
 
 	spin_lock_irqsave(&par->delayed_refresh_lock, flags);
 	/* Reset the request flag */
@@ -754,162 +755,162 @@ static void hvfb_update_work(struct work_struct *w)
 	y2 = par->y2;
 
 	/* Clear dirty rectangle */
-	par->x1 = par->y1 = INT_MAX;
+	par->x1 = par->y1 = पूर्णांक_उच्च;
 	par->x2 = par->y2 = 0;
 
 	spin_unlock_irqrestore(&par->delayed_refresh_lock, flags);
 
-	if (x1 > info->var.xres || x2 > info->var.xres ||
+	अगर (x1 > info->var.xres || x2 > info->var.xres ||
 	    y1 > info->var.yres || y2 > info->var.yres || x2 <= x1)
-		return;
+		वापस;
 
 	/* Copy the dirty rectangle to frame buffer memory */
-	if (par->need_docopy)
-		for (j = y1; j < y2; j++)
-			hvfb_docopy(par,
+	अगर (par->need_करोcopy)
+		क्रम (j = y1; j < y2; j++)
+			hvfb_करोcopy(par,
 				    j * info->fix.line_length +
 				    (x1 * screen_depth / 8),
 				    (x2 - x1) * screen_depth / 8);
 
 	/* Refresh */
-	if (par->fb_ready && par->update)
+	अगर (par->fb_पढ़ोy && par->update)
 		synthvid_update(info, x1, y1, x2, y2);
-}
+पूर्ण
 
 /*
  * Control the on-demand refresh frequency. It schedules a delayed
- * screen update if it has not yet.
+ * screen update अगर it has not yet.
  */
-static void hvfb_ondemand_refresh_throttle(struct hvfb_par *par,
-					   int x1, int y1, int w, int h)
-{
-	unsigned long flags;
-	int x2 = x1 + w;
-	int y2 = y1 + h;
+अटल व्योम hvfb_ondemand_refresh_throttle(काष्ठा hvfb_par *par,
+					   पूर्णांक x1, पूर्णांक y1, पूर्णांक w, पूर्णांक h)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक x2 = x1 + w;
+	पूर्णांक y2 = y1 + h;
 
 	spin_lock_irqsave(&par->delayed_refresh_lock, flags);
 
 	/* Merge dirty rectangle */
-	par->x1 = min_t(int, par->x1, x1);
-	par->y1 = min_t(int, par->y1, y1);
-	par->x2 = max_t(int, par->x2, x2);
-	par->y2 = max_t(int, par->y2, y2);
+	par->x1 = min_t(पूर्णांक, par->x1, x1);
+	par->y1 = min_t(पूर्णांक, par->y1, y1);
+	par->x2 = max_t(पूर्णांक, par->x2, x2);
+	par->y2 = max_t(पूर्णांक, par->y2, y2);
 
-	/* Schedule a delayed screen update if not yet */
-	if (par->delayed_refresh == false) {
+	/* Schedule a delayed screen update अगर not yet */
+	अगर (par->delayed_refresh == false) अणु
 		schedule_delayed_work(&par->dwork,
 				      HVFB_ONDEMAND_THROTTLE);
 		par->delayed_refresh = true;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&par->delayed_refresh_lock, flags);
-}
+पूर्ण
 
-static int hvfb_on_panic(struct notifier_block *nb,
-			 unsigned long e, void *p)
-{
-	struct hvfb_par *par;
-	struct fb_info *info;
+अटल पूर्णांक hvfb_on_panic(काष्ठा notअगरier_block *nb,
+			 अचिन्हित दीर्घ e, व्योम *p)
+अणु
+	काष्ठा hvfb_par *par;
+	काष्ठा fb_info *info;
 
-	par = container_of(nb, struct hvfb_par, hvfb_panic_nb);
+	par = container_of(nb, काष्ठा hvfb_par, hvfb_panic_nb);
 	par->synchronous_fb = true;
 	info = par->info;
-	if (par->need_docopy)
-		hvfb_docopy(par, 0, dio_fb_size);
-	synthvid_update(info, 0, 0, INT_MAX, INT_MAX);
+	अगर (par->need_करोcopy)
+		hvfb_करोcopy(par, 0, dio_fb_size);
+	synthvid_update(info, 0, 0, पूर्णांक_उच्च, पूर्णांक_उच्च);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /* Framebuffer operation handlers */
 
-static int hvfb_check_var(struct fb_var_screeninfo *var, struct fb_info *info)
-{
-	if (var->xres < HVFB_WIDTH_MIN || var->yres < HVFB_HEIGHT_MIN ||
+अटल पूर्णांक hvfb_check_var(काष्ठा fb_var_screeninfo *var, काष्ठा fb_info *info)
+अणु
+	अगर (var->xres < HVFB_WIDTH_MIN || var->yres < HVFB_HEIGHT_MIN ||
 	    var->xres > screen_width || var->yres >  screen_height ||
 	    var->bits_per_pixel != screen_depth)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	var->xres_virtual = var->xres;
-	var->yres_virtual = var->yres;
+	var->xres_भव = var->xres;
+	var->yres_भव = var->yres;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hvfb_set_par(struct fb_info *info)
-{
-	struct hv_device *hdev = device_to_hv_device(info->device);
+अटल पूर्णांक hvfb_set_par(काष्ठा fb_info *info)
+अणु
+	काष्ठा hv_device *hdev = device_to_hv_device(info->device);
 
-	return synthvid_send_situ(hdev);
-}
+	वापस synthvid_send_situ(hdev);
+पूर्ण
 
 
-static inline u32 chan_to_field(u32 chan, struct fb_bitfield *bf)
-{
-	return ((chan & 0xffff) >> (16 - bf->length)) << bf->offset;
-}
+अटल अंतरभूत u32 chan_to_field(u32 chan, काष्ठा fb_bitfield *bf)
+अणु
+	वापस ((chan & 0xffff) >> (16 - bf->length)) << bf->offset;
+पूर्ण
 
-static int hvfb_setcolreg(unsigned regno, unsigned red, unsigned green,
-			  unsigned blue, unsigned transp, struct fb_info *info)
-{
-	u32 *pal = info->pseudo_palette;
+अटल पूर्णांक hvfb_setcolreg(अचिन्हित regno, अचिन्हित red, अचिन्हित green,
+			  अचिन्हित blue, अचिन्हित transp, काष्ठा fb_info *info)
+अणु
+	u32 *pal = info->pseuकरो_palette;
 
-	if (regno > 15)
-		return -EINVAL;
+	अगर (regno > 15)
+		वापस -EINVAL;
 
 	pal[regno] = chan_to_field(red, &info->var.red)
 		| chan_to_field(green, &info->var.green)
 		| chan_to_field(blue, &info->var.blue)
 		| chan_to_field(transp, &info->var.transp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hvfb_blank(int blank, struct fb_info *info)
-{
-	return 1;	/* get fb_blank to set the colormap to all black */
-}
+अटल पूर्णांक hvfb_blank(पूर्णांक blank, काष्ठा fb_info *info)
+अणु
+	वापस 1;	/* get fb_blank to set the colormap to all black */
+पूर्ण
 
-static void hvfb_cfb_fillrect(struct fb_info *p,
-			      const struct fb_fillrect *rect)
-{
-	struct hvfb_par *par = p->par;
+अटल व्योम hvfb_cfb_fillrect(काष्ठा fb_info *p,
+			      स्थिर काष्ठा fb_fillrect *rect)
+अणु
+	काष्ठा hvfb_par *par = p->par;
 
 	cfb_fillrect(p, rect);
-	if (par->synchronous_fb)
-		synthvid_update(p, 0, 0, INT_MAX, INT_MAX);
-	else
+	अगर (par->synchronous_fb)
+		synthvid_update(p, 0, 0, पूर्णांक_उच्च, पूर्णांक_उच्च);
+	अन्यथा
 		hvfb_ondemand_refresh_throttle(par, rect->dx, rect->dy,
 					       rect->width, rect->height);
-}
+पूर्ण
 
-static void hvfb_cfb_copyarea(struct fb_info *p,
-			      const struct fb_copyarea *area)
-{
-	struct hvfb_par *par = p->par;
+अटल व्योम hvfb_cfb_copyarea(काष्ठा fb_info *p,
+			      स्थिर काष्ठा fb_copyarea *area)
+अणु
+	काष्ठा hvfb_par *par = p->par;
 
 	cfb_copyarea(p, area);
-	if (par->synchronous_fb)
-		synthvid_update(p, 0, 0, INT_MAX, INT_MAX);
-	else
+	अगर (par->synchronous_fb)
+		synthvid_update(p, 0, 0, पूर्णांक_उच्च, पूर्णांक_उच्च);
+	अन्यथा
 		hvfb_ondemand_refresh_throttle(par, area->dx, area->dy,
 					       area->width, area->height);
-}
+पूर्ण
 
-static void hvfb_cfb_imageblit(struct fb_info *p,
-			       const struct fb_image *image)
-{
-	struct hvfb_par *par = p->par;
+अटल व्योम hvfb_cfb_imageblit(काष्ठा fb_info *p,
+			       स्थिर काष्ठा fb_image *image)
+अणु
+	काष्ठा hvfb_par *par = p->par;
 
 	cfb_imageblit(p, image);
-	if (par->synchronous_fb)
-		synthvid_update(p, 0, 0, INT_MAX, INT_MAX);
-	else
+	अगर (par->synchronous_fb)
+		synthvid_update(p, 0, 0, पूर्णांक_उच्च, पूर्णांक_उच्च);
+	अन्यथा
 		hvfb_ondemand_refresh_throttle(par, image->dx, image->dy,
 					       image->width, image->height);
-}
+पूर्ण
 
-static const struct fb_ops hvfb_ops = {
+अटल स्थिर काष्ठा fb_ops hvfb_ops = अणु
 	.owner = THIS_MODULE,
 	.fb_check_var = hvfb_check_var,
 	.fb_set_par = hvfb_set_par,
@@ -918,66 +919,66 @@ static const struct fb_ops hvfb_ops = {
 	.fb_copyarea = hvfb_cfb_copyarea,
 	.fb_imageblit = hvfb_cfb_imageblit,
 	.fb_blank = hvfb_blank,
-};
+पूर्ण;
 
 
 /* Get options from kernel paramenter "video=" */
-static void hvfb_get_option(struct fb_info *info)
-{
-	struct hvfb_par *par = info->par;
-	char *opt = NULL, *p;
-	uint x = 0, y = 0;
+अटल व्योम hvfb_get_option(काष्ठा fb_info *info)
+अणु
+	काष्ठा hvfb_par *par = info->par;
+	अक्षर *opt = शून्य, *p;
+	uपूर्णांक x = 0, y = 0;
 
-	if (fb_get_options(KBUILD_MODNAME, &opt) || !opt || !*opt)
-		return;
+	अगर (fb_get_options(KBUILD_MODNAME, &opt) || !opt || !*opt)
+		वापस;
 
 	p = strsep(&opt, "x");
-	if (!*p || kstrtouint(p, 0, &x) ||
-	    !opt || !*opt || kstrtouint(opt, 0, &y)) {
+	अगर (!*p || kstrtouपूर्णांक(p, 0, &x) ||
+	    !opt || !*opt || kstrtouपूर्णांक(opt, 0, &y)) अणु
 		pr_err("Screen option is invalid: skipped\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (x < HVFB_WIDTH_MIN || y < HVFB_HEIGHT_MIN ||
+	अगर (x < HVFB_WIDTH_MIN || y < HVFB_HEIGHT_MIN ||
 	    (synthvid_ver_ge(par->synthvid_version, SYNTHVID_VERSION_WIN10) &&
 	    (x > screen_width_max || y > screen_height_max)) ||
 	    (par->synthvid_version == SYNTHVID_VERSION_WIN8 &&
 	     x * y * screen_depth / 8 > SYNTHVID_FB_SIZE_WIN8) ||
 	    (par->synthvid_version == SYNTHVID_VERSION_WIN7 &&
-	     (x > SYNTHVID_WIDTH_MAX_WIN7 || y > SYNTHVID_HEIGHT_MAX_WIN7))) {
+	     (x > SYNTHVID_WIDTH_MAX_WIN7 || y > SYNTHVID_HEIGHT_MAX_WIN7))) अणु
 		pr_err("Screen resolution option is out of range: skipped\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	screen_width = x;
 	screen_height = y;
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  * Allocate enough contiguous physical memory.
- * Return physical address if succeeded or -1 if failed.
+ * Return physical address अगर succeeded or -1 अगर failed.
  */
-static phys_addr_t hvfb_get_phymem(struct hv_device *hdev,
-				   unsigned int request_size)
-{
-	struct page *page = NULL;
+अटल phys_addr_t hvfb_get_phymem(काष्ठा hv_device *hdev,
+				   अचिन्हित पूर्णांक request_size)
+अणु
+	काष्ठा page *page = शून्य;
 	dma_addr_t dma_handle;
-	void *vmem;
+	व्योम *vmem;
 	phys_addr_t paddr = 0;
-	unsigned int order = get_order(request_size);
+	अचिन्हित पूर्णांक order = get_order(request_size);
 
-	if (request_size == 0)
-		return -1;
+	अगर (request_size == 0)
+		वापस -1;
 
-	if (order < MAX_ORDER) {
-		/* Call alloc_pages if the size is less than 2^MAX_ORDER */
+	अगर (order < MAX_ORDER) अणु
+		/* Call alloc_pages अगर the size is less than 2^MAX_ORDER */
 		page = alloc_pages(GFP_KERNEL | __GFP_ZERO, order);
-		if (!page)
-			return -1;
+		अगर (!page)
+			वापस -1;
 
 		paddr = (page_to_pfn(page) << PAGE_SHIFT);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Allocate from CMA */
 		hdev->device.coherent_dma_mask = DMA_BIT_MASK(64);
 
@@ -986,53 +987,53 @@ static phys_addr_t hvfb_get_phymem(struct hv_device *hdev,
 					  &dma_handle,
 					  GFP_KERNEL | __GFP_NOWARN);
 
-		if (!vmem)
-			return -1;
+		अगर (!vmem)
+			वापस -1;
 
 		paddr = virt_to_phys(vmem);
-	}
+	पूर्ण
 
-	return paddr;
-}
+	वापस paddr;
+पूर्ण
 
 /* Release contiguous physical memory */
-static void hvfb_release_phymem(struct hv_device *hdev,
-				phys_addr_t paddr, unsigned int size)
-{
-	unsigned int order = get_order(size);
+अटल व्योम hvfb_release_phymem(काष्ठा hv_device *hdev,
+				phys_addr_t paddr, अचिन्हित पूर्णांक size)
+अणु
+	अचिन्हित पूर्णांक order = get_order(size);
 
-	if (order < MAX_ORDER)
-		__free_pages(pfn_to_page(paddr >> PAGE_SHIFT), order);
-	else
-		dma_free_coherent(&hdev->device,
+	अगर (order < MAX_ORDER)
+		__मुक्त_pages(pfn_to_page(paddr >> PAGE_SHIFT), order);
+	अन्यथा
+		dma_मुक्त_coherent(&hdev->device,
 				  round_up(size, PAGE_SIZE),
 				  phys_to_virt(paddr),
 				  paddr);
-}
+पूर्ण
 
 
 /* Get framebuffer memory from Hyper-V video pci space */
-static int hvfb_getmem(struct hv_device *hdev, struct fb_info *info)
-{
-	struct hvfb_par *par = info->par;
-	struct pci_dev *pdev  = NULL;
-	void __iomem *fb_virt;
-	int gen2vm = efi_enabled(EFI_BOOT);
-	resource_size_t pot_start, pot_end;
+अटल पूर्णांक hvfb_geपंचांगem(काष्ठा hv_device *hdev, काष्ठा fb_info *info)
+अणु
+	काष्ठा hvfb_par *par = info->par;
+	काष्ठा pci_dev *pdev  = शून्य;
+	व्योम __iomem *fb_virt;
+	पूर्णांक gen2vm = efi_enabled(EFI_BOOT);
+	resource_माप_प्रकार pot_start, pot_end;
 	phys_addr_t paddr;
-	int ret;
+	पूर्णांक ret;
 
 	info->apertures = alloc_apertures(1);
-	if (!info->apertures)
-		return -ENOMEM;
+	अगर (!info->apertures)
+		वापस -ENOMEM;
 
-	if (!gen2vm) {
+	अगर (!gen2vm) अणु
 		pdev = pci_get_device(PCI_VENDOR_ID_MICROSOFT,
-			PCI_DEVICE_ID_HYPERV_VIDEO, NULL);
-		if (!pdev) {
+			PCI_DEVICE_ID_HYPERV_VIDEO, शून्य);
+		अगर (!pdev) अणु
 			pr_err("Unable to find PCI Hyper-V video\n");
-			return -ENODEV;
-		}
+			वापस -ENODEV;
+		पूर्ण
 
 		info->apertures->ranges[0].base = pci_resource_start(pdev, 0);
 		info->apertures->ranges[0].size = pci_resource_len(pdev, 0);
@@ -1040,11 +1041,11 @@ static int hvfb_getmem(struct hv_device *hdev, struct fb_info *info)
 		/*
 		 * For Gen 1 VM, we can directly use the contiguous memory
 		 * from VM. If we succeed, deferred IO happens directly
-		 * on this allocated framebuffer memory, avoiding extra
+		 * on this allocated framebuffer memory, aव्योमing extra
 		 * memory copy.
 		 */
 		paddr = hvfb_get_phymem(hdev, screen_fb_size);
-		if (paddr != (phys_addr_t) -1) {
+		अगर (paddr != (phys_addr_t) -1) अणु
 			par->mmio_pp = paddr;
 			par->mmio_vp = par->dio_vp = __va(paddr);
 
@@ -1053,187 +1054,187 @@ static int hvfb_getmem(struct hv_device *hdev, struct fb_info *info)
 			info->screen_base = par->mmio_vp;
 			info->screen_size = screen_fb_size;
 
-			par->need_docopy = false;
-			goto getmem_done;
-		}
+			par->need_करोcopy = false;
+			जाओ geपंचांगem_करोne;
+		पूर्ण
 		pr_info("Unable to allocate enough contiguous physical memory on Gen 1 VM. Using MMIO instead.\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		info->apertures->ranges[0].base = screen_info.lfb_base;
 		info->apertures->ranges[0].size = screen_info.lfb_size;
-	}
+	पूर्ण
 
 	/*
 	 * Cannot use the contiguous physical memory.
-	 * Allocate mmio space for framebuffer.
+	 * Allocate mmio space क्रम framebuffer.
 	 */
 	dio_fb_size =
 		screen_width * screen_height * screen_depth / 8;
 
-	if (gen2vm) {
+	अगर (gen2vm) अणु
 		pot_start = 0;
 		pot_end = -1;
-	} else {
-		if (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM) ||
-		    pci_resource_len(pdev, 0) < screen_fb_size) {
+	पूर्ण अन्यथा अणु
+		अगर (!(pci_resource_flags(pdev, 0) & IORESOURCE_MEM) ||
+		    pci_resource_len(pdev, 0) < screen_fb_size) अणु
 			pr_err("Resource not available or (0x%lx < 0x%lx)\n",
-			       (unsigned long) pci_resource_len(pdev, 0),
-			       (unsigned long) screen_fb_size);
-			goto err1;
-		}
+			       (अचिन्हित दीर्घ) pci_resource_len(pdev, 0),
+			       (अचिन्हित दीर्घ) screen_fb_size);
+			जाओ err1;
+		पूर्ण
 
 		pot_end = pci_resource_end(pdev, 0);
 		pot_start = pot_end - screen_fb_size + 1;
-	}
+	पूर्ण
 
 	ret = vmbus_allocate_mmio(&par->mem, hdev, pot_start, pot_end,
 				  screen_fb_size, 0x100000, true);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		pr_err("Unable to allocate framebuffer memory\n");
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
 	/*
-	 * Map the VRAM cacheable for performance. This is also required for
-	 * VM Connect to display properly for ARM64 Linux VM, as the host also
+	 * Map the VRAM cacheable क्रम perक्रमmance. This is also required क्रम
+	 * VM Connect to display properly क्रम ARM64 Linux VM, as the host also
 	 * maps the VRAM cacheable.
 	 */
 	fb_virt = ioremap_cache(par->mem->start, screen_fb_size);
-	if (!fb_virt)
-		goto err2;
+	अगर (!fb_virt)
+		जाओ err2;
 
-	/* Allocate memory for deferred IO */
+	/* Allocate memory क्रम deferred IO */
 	par->dio_vp = vzalloc(round_up(dio_fb_size, PAGE_SIZE));
-	if (par->dio_vp == NULL)
-		goto err3;
+	अगर (par->dio_vp == शून्य)
+		जाओ err3;
 
 	/* Physical address of FB device */
 	par->mmio_pp = par->mem->start;
 	/* Virtual address of FB device */
-	par->mmio_vp = (unsigned char *) fb_virt;
+	par->mmio_vp = (अचिन्हित अक्षर *) fb_virt;
 
 	info->fix.smem_start = par->mem->start;
 	info->fix.smem_len = dio_fb_size;
 	info->screen_base = par->dio_vp;
 	info->screen_size = dio_fb_size;
 
-getmem_done:
-	remove_conflicting_framebuffers(info->apertures,
+geपंचांगem_करोne:
+	हटाओ_conflicting_framebuffers(info->apertures,
 					KBUILD_MODNAME, false);
 
-	if (gen2vm) {
-		/* framebuffer is reallocated, clear screen_info to avoid misuse from kexec */
+	अगर (gen2vm) अणु
+		/* framebuffer is पुनः_स्मृतिated, clear screen_info to aव्योम misuse from kexec */
 		screen_info.lfb_size = 0;
 		screen_info.lfb_base = 0;
 		screen_info.orig_video_isVGA = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		pci_dev_put(pdev);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err3:
 	iounmap(fb_virt);
 err2:
-	vmbus_free_mmio(par->mem->start, screen_fb_size);
-	par->mem = NULL;
+	vmbus_मुक्त_mmio(par->mem->start, screen_fb_size);
+	par->mem = शून्य;
 err1:
-	if (!gen2vm)
+	अगर (!gen2vm)
 		pci_dev_put(pdev);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /* Release the framebuffer */
-static void hvfb_putmem(struct hv_device *hdev, struct fb_info *info)
-{
-	struct hvfb_par *par = info->par;
+अटल व्योम hvfb_puपंचांगem(काष्ठा hv_device *hdev, काष्ठा fb_info *info)
+अणु
+	काष्ठा hvfb_par *par = info->par;
 
-	if (par->need_docopy) {
-		vfree(par->dio_vp);
+	अगर (par->need_करोcopy) अणु
+		vमुक्त(par->dio_vp);
 		iounmap(info->screen_base);
-		vmbus_free_mmio(par->mem->start, screen_fb_size);
-	} else {
+		vmbus_मुक्त_mmio(par->mem->start, screen_fb_size);
+	पूर्ण अन्यथा अणु
 		hvfb_release_phymem(hdev, info->fix.smem_start,
 				    screen_fb_size);
-	}
+	पूर्ण
 
-	par->mem = NULL;
-}
+	par->mem = शून्य;
+पूर्ण
 
 
-static int hvfb_probe(struct hv_device *hdev,
-		      const struct hv_vmbus_device_id *dev_id)
-{
-	struct fb_info *info;
-	struct hvfb_par *par;
-	int ret;
+अटल पूर्णांक hvfb_probe(काष्ठा hv_device *hdev,
+		      स्थिर काष्ठा hv_vmbus_device_id *dev_id)
+अणु
+	काष्ठा fb_info *info;
+	काष्ठा hvfb_par *par;
+	पूर्णांक ret;
 
-	info = framebuffer_alloc(sizeof(struct hvfb_par), &hdev->device);
-	if (!info)
-		return -ENOMEM;
+	info = framebuffer_alloc(माप(काष्ठा hvfb_par), &hdev->device);
+	अगर (!info)
+		वापस -ENOMEM;
 
 	par = info->par;
 	par->info = info;
-	par->fb_ready = false;
-	par->need_docopy = true;
-	init_completion(&par->wait);
+	par->fb_पढ़ोy = false;
+	par->need_करोcopy = true;
+	init_completion(&par->रुको);
 	INIT_DELAYED_WORK(&par->dwork, hvfb_update_work);
 
 	par->delayed_refresh = false;
 	spin_lock_init(&par->delayed_refresh_lock);
-	par->x1 = par->y1 = INT_MAX;
+	par->x1 = par->y1 = पूर्णांक_उच्च;
 	par->x2 = par->y2 = 0;
 
 	/* Connect to VSP */
 	hv_set_drvdata(hdev, info);
 	ret = synthvid_connect_vsp(hdev);
-	if (ret) {
+	अगर (ret) अणु
 		pr_err("Unable to connect to VSP\n");
-		goto error1;
-	}
+		जाओ error1;
+	पूर्ण
 
 	hvfb_get_option(info);
 	pr_info("Screen resolution: %dx%d, Color depth: %d\n",
 		screen_width, screen_height, screen_depth);
 
-	ret = hvfb_getmem(hdev, info);
-	if (ret) {
+	ret = hvfb_geपंचांगem(hdev, info);
+	अगर (ret) अणु
 		pr_err("No memory for framebuffer\n");
-		goto error2;
-	}
+		जाओ error2;
+	पूर्ण
 
 	/* Set up fb_info */
 	info->flags = FBINFO_DEFAULT;
 
-	info->var.xres_virtual = info->var.xres = screen_width;
-	info->var.yres_virtual = info->var.yres = screen_height;
+	info->var.xres_भव = info->var.xres = screen_width;
+	info->var.yres_भव = info->var.yres = screen_height;
 	info->var.bits_per_pixel = screen_depth;
 
-	if (info->var.bits_per_pixel == 16) {
-		info->var.red = (struct fb_bitfield){11, 5, 0};
-		info->var.green = (struct fb_bitfield){5, 6, 0};
-		info->var.blue = (struct fb_bitfield){0, 5, 0};
-		info->var.transp = (struct fb_bitfield){0, 0, 0};
-	} else {
-		info->var.red = (struct fb_bitfield){16, 8, 0};
-		info->var.green = (struct fb_bitfield){8, 8, 0};
-		info->var.blue = (struct fb_bitfield){0, 8, 0};
-		info->var.transp = (struct fb_bitfield){24, 8, 0};
-	}
+	अगर (info->var.bits_per_pixel == 16) अणु
+		info->var.red = (काष्ठा fb_bitfield)अणु11, 5, 0पूर्ण;
+		info->var.green = (काष्ठा fb_bitfield)अणु5, 6, 0पूर्ण;
+		info->var.blue = (काष्ठा fb_bitfield)अणु0, 5, 0पूर्ण;
+		info->var.transp = (काष्ठा fb_bitfield)अणु0, 0, 0पूर्ण;
+	पूर्ण अन्यथा अणु
+		info->var.red = (काष्ठा fb_bitfield)अणु16, 8, 0पूर्ण;
+		info->var.green = (काष्ठा fb_bitfield)अणु8, 8, 0पूर्ण;
+		info->var.blue = (काष्ठा fb_bitfield)अणु0, 8, 0पूर्ण;
+		info->var.transp = (काष्ठा fb_bitfield)अणु24, 8, 0पूर्ण;
+	पूर्ण
 
 	info->var.activate = FB_ACTIVATE_NOW;
 	info->var.height = -1;
 	info->var.width = -1;
 	info->var.vmode = FB_VMODE_NONINTERLACED;
 
-	strcpy(info->fix.id, KBUILD_MODNAME);
+	म_नकल(info->fix.id, KBUILD_MODNAME);
 	info->fix.type = FB_TYPE_PACKED_PIXELS;
 	info->fix.visual = FB_VISUAL_TRUECOLOR;
 	info->fix.line_length = screen_width * screen_depth / 8;
 	info->fix.accel = FB_ACCEL_NONE;
 
 	info->fbops = &hvfb_ops;
-	info->pseudo_palette = par->pseudo_palette;
+	info->pseuकरो_palette = par->pseuकरो_palette;
 
 	/* Initialize deferred IO */
 	info->fbdefio = &synthvid_defio;
@@ -1241,70 +1242,70 @@ static int hvfb_probe(struct hv_device *hdev,
 
 	/* Send config to host */
 	ret = synthvid_send_config(hdev);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	ret = register_framebuffer(info);
-	if (ret) {
+	ret = रेजिस्टर_framebuffer(info);
+	अगर (ret) अणु
 		pr_err("Unable to register framebuffer\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	par->fb_ready = true;
+	par->fb_पढ़ोy = true;
 
 	par->synchronous_fb = false;
-	par->hvfb_panic_nb.notifier_call = hvfb_on_panic;
-	atomic_notifier_chain_register(&panic_notifier_list,
+	par->hvfb_panic_nb.notअगरier_call = hvfb_on_panic;
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list,
 				       &par->hvfb_panic_nb);
 
-	return 0;
+	वापस 0;
 
 error:
 	fb_deferred_io_cleanup(info);
-	hvfb_putmem(hdev, info);
+	hvfb_puपंचांगem(hdev, info);
 error2:
-	vmbus_close(hdev->channel);
+	vmbus_बंद(hdev->channel);
 error1:
 	cancel_delayed_work_sync(&par->dwork);
-	hv_set_drvdata(hdev, NULL);
+	hv_set_drvdata(hdev, शून्य);
 	framebuffer_release(info);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int hvfb_remove(struct hv_device *hdev)
-{
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct hvfb_par *par = info->par;
+अटल पूर्णांक hvfb_हटाओ(काष्ठा hv_device *hdev)
+अणु
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा hvfb_par *par = info->par;
 
-	atomic_notifier_chain_unregister(&panic_notifier_list,
+	atomic_notअगरier_chain_unरेजिस्टर(&panic_notअगरier_list,
 					 &par->hvfb_panic_nb);
 
 	par->update = false;
-	par->fb_ready = false;
+	par->fb_पढ़ोy = false;
 
 	fb_deferred_io_cleanup(info);
 
-	unregister_framebuffer(info);
+	unरेजिस्टर_framebuffer(info);
 	cancel_delayed_work_sync(&par->dwork);
 
-	vmbus_close(hdev->channel);
-	hv_set_drvdata(hdev, NULL);
+	vmbus_बंद(hdev->channel);
+	hv_set_drvdata(hdev, शून्य);
 
-	hvfb_putmem(hdev, info);
+	hvfb_puपंचांगem(hdev, info);
 	framebuffer_release(info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hvfb_suspend(struct hv_device *hdev)
-{
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct hvfb_par *par = info->par;
+अटल पूर्णांक hvfb_suspend(काष्ठा hv_device *hdev)
+अणु
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा hvfb_par *par = info->par;
 
 	console_lock();
 
-	/* 1 means do suspend */
+	/* 1 means करो suspend */
 	fb_set_suspend(info, 1);
 
 	cancel_delayed_work_sync(&par->dwork);
@@ -1312,123 +1313,123 @@ static int hvfb_suspend(struct hv_device *hdev)
 
 	par->update_saved = par->update;
 	par->update = false;
-	par->fb_ready = false;
+	par->fb_पढ़ोy = false;
 
-	vmbus_close(hdev->channel);
+	vmbus_बंद(hdev->channel);
 
 	console_unlock();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hvfb_resume(struct hv_device *hdev)
-{
-	struct fb_info *info = hv_get_drvdata(hdev);
-	struct hvfb_par *par = info->par;
-	int ret;
+अटल पूर्णांक hvfb_resume(काष्ठा hv_device *hdev)
+अणु
+	काष्ठा fb_info *info = hv_get_drvdata(hdev);
+	काष्ठा hvfb_par *par = info->par;
+	पूर्णांक ret;
 
 	console_lock();
 
 	ret = synthvid_connect_vsp(hdev);
-	if (ret != 0)
-		goto out;
+	अगर (ret != 0)
+		जाओ out;
 
 	ret = synthvid_send_config(hdev);
-	if (ret != 0) {
-		vmbus_close(hdev->channel);
-		goto out;
-	}
+	अगर (ret != 0) अणु
+		vmbus_बंद(hdev->channel);
+		जाओ out;
+	पूर्ण
 
-	par->fb_ready = true;
+	par->fb_पढ़ोy = true;
 	par->update = par->update_saved;
 
 	schedule_delayed_work(&info->deferred_work, info->fbdefio->delay);
 	schedule_delayed_work(&par->dwork, HVFB_UPDATE_DELAY);
 
-	/* 0 means do resume */
+	/* 0 means करो resume */
 	fb_set_suspend(info, 0);
 
 out:
 	console_unlock();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static const struct pci_device_id pci_stub_id_table[] = {
-	{
-		.vendor      = PCI_VENDOR_ID_MICROSOFT,
+अटल स्थिर काष्ठा pci_device_id pci_stub_id_table[] = अणु
+	अणु
+		.venकरोr      = PCI_VENDOR_ID_MICROSOFT,
 		.device      = PCI_DEVICE_ID_HYPERV_VIDEO,
-	},
-	{ /* end of list */ }
-};
+	पूर्ण,
+	अणु /* end of list */ पूर्ण
+पूर्ण;
 
-static const struct hv_vmbus_device_id id_table[] = {
+अटल स्थिर काष्ठा hv_vmbus_device_id id_table[] = अणु
 	/* Synthetic Video Device GUID */
-	{HV_SYNTHVID_GUID},
-	{}
-};
+	अणुHV_SYNTHVID_GUIDपूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, pci_stub_id_table);
 MODULE_DEVICE_TABLE(vmbus, id_table);
 
-static struct hv_driver hvfb_drv = {
+अटल काष्ठा hv_driver hvfb_drv = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = id_table,
 	.probe = hvfb_probe,
-	.remove = hvfb_remove,
+	.हटाओ = hvfb_हटाओ,
 	.suspend = hvfb_suspend,
 	.resume = hvfb_resume,
-	.driver = {
+	.driver = अणु
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int hvfb_pci_stub_probe(struct pci_dev *pdev,
-			       const struct pci_device_id *ent)
-{
-	return 0;
-}
+अटल पूर्णांक hvfb_pci_stub_probe(काष्ठा pci_dev *pdev,
+			       स्थिर काष्ठा pci_device_id *ent)
+अणु
+	वापस 0;
+पूर्ण
 
-static void hvfb_pci_stub_remove(struct pci_dev *pdev)
-{
-}
+अटल व्योम hvfb_pci_stub_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+पूर्ण
 
-static struct pci_driver hvfb_pci_stub_driver = {
+अटल काष्ठा pci_driver hvfb_pci_stub_driver = अणु
 	.name =		KBUILD_MODNAME,
 	.id_table =	pci_stub_id_table,
 	.probe =	hvfb_pci_stub_probe,
-	.remove =	hvfb_pci_stub_remove,
-	.driver = {
+	.हटाओ =	hvfb_pci_stub_हटाओ,
+	.driver = अणु
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int __init hvfb_drv_init(void)
-{
-	int ret;
+अटल पूर्णांक __init hvfb_drv_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = vmbus_driver_register(&hvfb_drv);
-	if (ret != 0)
-		return ret;
+	ret = vmbus_driver_रेजिस्टर(&hvfb_drv);
+	अगर (ret != 0)
+		वापस ret;
 
-	ret = pci_register_driver(&hvfb_pci_stub_driver);
-	if (ret != 0) {
-		vmbus_driver_unregister(&hvfb_drv);
-		return ret;
-	}
+	ret = pci_रेजिस्टर_driver(&hvfb_pci_stub_driver);
+	अगर (ret != 0) अणु
+		vmbus_driver_unरेजिस्टर(&hvfb_drv);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit hvfb_drv_exit(void)
-{
-	pci_unregister_driver(&hvfb_pci_stub_driver);
-	vmbus_driver_unregister(&hvfb_drv);
-}
+अटल व्योम __निकास hvfb_drv_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&hvfb_pci_stub_driver);
+	vmbus_driver_unरेजिस्टर(&hvfb_drv);
+पूर्ण
 
 module_init(hvfb_drv_init);
-module_exit(hvfb_drv_exit);
+module_निकास(hvfb_drv_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Microsoft Hyper-V Synthetic Video Frame Buffer Driver");

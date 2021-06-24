@@ -1,218 +1,219 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * linux/drivers/pcmcia/soc_common.h
  *
  * Copyright (C) 2000 John G Dorsey <john+@cs.cmu.edu>
  *
- * This file contains definitions for the PCMCIA support code common to
- * integrated SOCs like the SA-11x0 and PXA2xx microprocessors.
+ * This file contains definitions क्रम the PCMCIA support code common to
+ * पूर्णांकegrated SOCs like the SA-11x0 and PXA2xx microprocessors.
  */
-#ifndef _ASM_ARCH_PCMCIA
-#define _ASM_ARCH_PCMCIA
+#अगर_अघोषित _ASM_ARCH_PCMCIA
+#घोषणा _ASM_ARCH_PCMCIA
 
 /* include the world */
-#include <linux/clk.h>
-#include <linux/cpufreq.h>
-#include <pcmcia/ss.h>
-#include <pcmcia/cistpl.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <pcmcia/ss.h>
+#समावेश <pcmcia/cistpl.h>
 
 
-struct device;
-struct gpio_desc;
-struct pcmcia_low_level;
-struct regulator;
+काष्ठा device;
+काष्ठा gpio_desc;
+काष्ठा pcmcia_low_level;
+काष्ठा regulator;
 
-struct soc_pcmcia_regulator {
-	struct regulator	*reg;
+काष्ठा soc_pcmcia_regulator अणु
+	काष्ठा regulator	*reg;
 	bool			on;
-};
+पूर्ण;
 
 /*
- * This structure encapsulates per-socket state which we might need to
+ * This काष्ठाure encapsulates per-socket state which we might need to
  * use when responding to a Card Services query of some kind.
  */
-struct soc_pcmcia_socket {
-	struct pcmcia_socket	socket;
+काष्ठा soc_pcmcia_socket अणु
+	काष्ठा pcmcia_socket	socket;
 
 	/*
 	 * Info from low level handler
 	 */
-	unsigned int		nr;
-	struct clk		*clk;
+	अचिन्हित पूर्णांक		nr;
+	काष्ठा clk		*clk;
 
 	/*
 	 * Core PCMCIA state
 	 */
-	const struct pcmcia_low_level *ops;
+	स्थिर काष्ठा pcmcia_low_level *ops;
 
-	unsigned int		status;
+	अचिन्हित पूर्णांक		status;
 	socket_state_t		cs_state;
 
-	unsigned short		spd_io[MAX_IO_WIN];
-	unsigned short		spd_mem[MAX_WIN];
-	unsigned short		spd_attr[MAX_WIN];
+	अचिन्हित लघु		spd_io[MAX_IO_WIN];
+	अचिन्हित लघु		spd_mem[MAX_WIN];
+	अचिन्हित लघु		spd_attr[MAX_WIN];
 
-	struct resource		res_skt;
-	struct resource		res_io;
-	struct resource		res_mem;
-	struct resource		res_attr;
-	void __iomem		*virt_io;
+	काष्ठा resource		res_skt;
+	काष्ठा resource		res_io;
+	काष्ठा resource		res_mem;
+	काष्ठा resource		res_attr;
+	व्योम __iomem		*virt_io;
 
-	struct {
-		int		gpio;
-		struct gpio_desc *desc;
-		unsigned int	irq;
-		const char	*name;
-	} stat[6];
-#define SOC_STAT_CD		0	/* Card detect */
-#define SOC_STAT_BVD1		1	/* BATDEAD / IOSTSCHG */
-#define SOC_STAT_BVD2		2	/* BATWARN / IOSPKR */
-#define SOC_STAT_RDY		3	/* Ready / Interrupt */
-#define SOC_STAT_VS1		4	/* Voltage sense 1 */
-#define SOC_STAT_VS2		5	/* Voltage sense 2 */
+	काष्ठा अणु
+		पूर्णांक		gpio;
+		काष्ठा gpio_desc *desc;
+		अचिन्हित पूर्णांक	irq;
+		स्थिर अक्षर	*name;
+	पूर्ण stat[6];
+#घोषणा SOC_STAT_CD		0	/* Card detect */
+#घोषणा SOC_STAT_BVD1		1	/* BATDEAD / IOSTSCHG */
+#घोषणा SOC_STAT_BVD2		2	/* BATWARN / IOSPKR */
+#घोषणा SOC_STAT_RDY		3	/* Ready / Interrupt */
+#घोषणा SOC_STAT_VS1		4	/* Voltage sense 1 */
+#घोषणा SOC_STAT_VS2		5	/* Voltage sense 2 */
 
-	struct gpio_desc	*gpio_reset;
-	struct gpio_desc	*gpio_bus_enable;
-	struct soc_pcmcia_regulator vcc;
-	struct soc_pcmcia_regulator vpp;
+	काष्ठा gpio_desc	*gpio_reset;
+	काष्ठा gpio_desc	*gpio_bus_enable;
+	काष्ठा soc_pcmcia_regulator vcc;
+	काष्ठा soc_pcmcia_regulator vpp;
 
-	unsigned int		irq_state;
+	अचिन्हित पूर्णांक		irq_state;
 
-#ifdef CONFIG_CPU_FREQ
-	struct notifier_block	cpufreq_nb;
-#endif
-	struct timer_list	poll_timer;
-	struct list_head	node;
-	void *driver_data;
-};
+#अगर_घोषित CONFIG_CPU_FREQ
+	काष्ठा notअगरier_block	cpufreq_nb;
+#पूर्ण_अगर
+	काष्ठा समयr_list	poll_समयr;
+	काष्ठा list_head	node;
+	व्योम *driver_data;
+पूर्ण;
 
-struct skt_dev_info {
-	int nskt;
-	struct soc_pcmcia_socket skt[];
-};
+काष्ठा skt_dev_info अणु
+	पूर्णांक nskt;
+	काष्ठा soc_pcmcia_socket skt[];
+पूर्ण;
 
-struct pcmcia_state {
-  unsigned detect: 1,
-            ready: 1,
+काष्ठा pcmcia_state अणु
+  अचिन्हित detect: 1,
+            पढ़ोy: 1,
              bvd1: 1,
              bvd2: 1,
            wrprot: 1,
             vs_3v: 1,
             vs_Xv: 1;
-};
+पूर्ण;
 
-struct pcmcia_low_level {
-	struct module *owner;
+काष्ठा pcmcia_low_level अणु
+	काष्ठा module *owner;
 
-	/* first socket in system */
-	int first;
+	/* first socket in प्रणाली */
+	पूर्णांक first;
 	/* nr of sockets */
-	int nr;
+	पूर्णांक nr;
 
-	int (*hw_init)(struct soc_pcmcia_socket *);
-	void (*hw_shutdown)(struct soc_pcmcia_socket *);
+	पूर्णांक (*hw_init)(काष्ठा soc_pcmcia_socket *);
+	व्योम (*hw_shutकरोwn)(काष्ठा soc_pcmcia_socket *);
 
-	void (*socket_state)(struct soc_pcmcia_socket *, struct pcmcia_state *);
-	int (*configure_socket)(struct soc_pcmcia_socket *, const socket_state_t *);
+	व्योम (*socket_state)(काष्ठा soc_pcmcia_socket *, काष्ठा pcmcia_state *);
+	पूर्णांक (*configure_socket)(काष्ठा soc_pcmcia_socket *, स्थिर socket_state_t *);
 
 	/*
 	 * Enable card status IRQs on (re-)initialisation.  This can
-	 * be called at initialisation, power management event, or
+	 * be called at initialisation, घातer management event, or
 	 * pcmcia event.
 	 */
-	void (*socket_init)(struct soc_pcmcia_socket *);
+	व्योम (*socket_init)(काष्ठा soc_pcmcia_socket *);
 
 	/*
 	 * Disable card status IRQs and PCMCIA bus on suspend.
 	 */
-	void (*socket_suspend)(struct soc_pcmcia_socket *);
+	व्योम (*socket_suspend)(काष्ठा soc_pcmcia_socket *);
 
 	/*
-	 * Hardware specific timing routines.
-	 * If provided, the get_timing routine overrides the SOC default.
+	 * Hardware specअगरic timing routines.
+	 * If provided, the get_timing routine overrides the SOC शेष.
 	 */
-	unsigned int (*get_timing)(struct soc_pcmcia_socket *, unsigned int, unsigned int);
-	int (*set_timing)(struct soc_pcmcia_socket *);
-	int (*show_timing)(struct soc_pcmcia_socket *, char *);
+	अचिन्हित पूर्णांक (*get_timing)(काष्ठा soc_pcmcia_socket *, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक);
+	पूर्णांक (*set_timing)(काष्ठा soc_pcmcia_socket *);
+	पूर्णांक (*show_timing)(काष्ठा soc_pcmcia_socket *, अक्षर *);
 
-#ifdef CONFIG_CPU_FREQ
+#अगर_घोषित CONFIG_CPU_FREQ
 	/*
 	 * CPUFREQ support.
 	 */
-	int (*frequency_change)(struct soc_pcmcia_socket *, unsigned long, struct cpufreq_freqs *);
-#endif
-};
+	पूर्णांक (*frequency_change)(काष्ठा soc_pcmcia_socket *, अचिन्हित दीर्घ, काष्ठा cpufreq_freqs *);
+#पूर्ण_अगर
+पूर्ण;
 
 
-struct soc_pcmcia_timing {
-	unsigned short io;
-	unsigned short mem;
-	unsigned short attr;
-};
+काष्ठा soc_pcmcia_timing अणु
+	अचिन्हित लघु io;
+	अचिन्हित लघु mem;
+	अचिन्हित लघु attr;
+पूर्ण;
 
-extern void soc_common_pcmcia_get_timing(struct soc_pcmcia_socket *, struct soc_pcmcia_timing *);
+बाह्य व्योम soc_common_pcmcia_get_timing(काष्ठा soc_pcmcia_socket *, काष्ठा soc_pcmcia_timing *);
 
-void soc_pcmcia_init_one(struct soc_pcmcia_socket *skt,
-	const struct pcmcia_low_level *ops, struct device *dev);
-void soc_pcmcia_remove_one(struct soc_pcmcia_socket *skt);
-int soc_pcmcia_add_one(struct soc_pcmcia_socket *skt);
-int soc_pcmcia_request_gpiods(struct soc_pcmcia_socket *skt);
+व्योम soc_pcmcia_init_one(काष्ठा soc_pcmcia_socket *skt,
+	स्थिर काष्ठा pcmcia_low_level *ops, काष्ठा device *dev);
+व्योम soc_pcmcia_हटाओ_one(काष्ठा soc_pcmcia_socket *skt);
+पूर्णांक soc_pcmcia_add_one(काष्ठा soc_pcmcia_socket *skt);
+पूर्णांक soc_pcmcia_request_gpiods(काष्ठा soc_pcmcia_socket *skt);
 
-void soc_common_cf_socket_state(struct soc_pcmcia_socket *skt,
-	struct pcmcia_state *state);
+व्योम soc_common_cf_socket_state(काष्ठा soc_pcmcia_socket *skt,
+	काष्ठा pcmcia_state *state);
 
-int soc_pcmcia_regulator_set(struct soc_pcmcia_socket *skt,
-	struct soc_pcmcia_regulator *r, int v);
+पूर्णांक soc_pcmcia_regulator_set(काष्ठा soc_pcmcia_socket *skt,
+	काष्ठा soc_pcmcia_regulator *r, पूर्णांक v);
 
-#ifdef CONFIG_PCMCIA_DEBUG
+#अगर_घोषित CONFIG_PCMCIA_DEBUG
 
-extern void soc_pcmcia_debug(struct soc_pcmcia_socket *skt, const char *func,
-			     int lvl, const char *fmt, ...);
+बाह्य व्योम soc_pcmcia_debug(काष्ठा soc_pcmcia_socket *skt, स्थिर अक्षर *func,
+			     पूर्णांक lvl, स्थिर अक्षर *fmt, ...);
 
-#define debug(skt, lvl, fmt, arg...) \
+#घोषणा debug(skt, lvl, fmt, arg...) \
 	soc_pcmcia_debug(skt, __func__, lvl, fmt , ## arg)
 
-#else
-#define debug(skt, lvl, fmt, arg...) do { } while (0)
-#endif
+#अन्यथा
+#घोषणा debug(skt, lvl, fmt, arg...) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 
 /*
  * The PC Card Standard, Release 7, section 4.13.4, says that twIORD
  * has a minimum value of 165ns. Section 4.13.5 says that twIOWR has
  * a minimum value of 165ns, as well. Section 4.7.2 (describing
- * common and attribute memory write timing) says that twWE has a
- * minimum value of 150ns for a 250ns cycle time (for 5V operation;
- * see section 4.7.4), or 300ns for a 600ns cycle time (for 3.3V
+ * common and attribute memory ग_लिखो timing) says that twWE has a
+ * minimum value of 150ns क्रम a 250ns cycle समय (क्रम 5V operation;
+ * see section 4.7.4), or 300ns क्रम a 600ns cycle समय (क्रम 3.3V
  * operation, also section 4.7.4). Section 4.7.3 says that taOE
- * has a maximum value of 150ns for a 300ns cycle time (for 5V
- * operation), or 300ns for a 600ns cycle time (for 3.3V operation).
+ * has a maximum value of 150ns क्रम a 300ns cycle समय (क्रम 5V
+ * operation), or 300ns क्रम a 600ns cycle समय (क्रम 3.3V operation).
  *
- * When configuring memory maps, Card Services appears to adopt the policy
- * that a memory access time of "0" means "use the default." The default
- * PCMCIA I/O command width time is 165ns. The default PCMCIA 5V attribute
- * and memory command width time is 150ns; the PCMCIA 3.3V attribute and
- * memory command width time is 300ns.
+ * When configuring memory maps, Card Services appears to aकरोpt the policy
+ * that a memory access समय of "0" means "use the default." The शेष
+ * PCMCIA I/O command width समय is 165ns. The शेष PCMCIA 5V attribute
+ * and memory command width समय is 150ns; the PCMCIA 3.3V attribute and
+ * memory command width समय is 300ns.
  */
-#define SOC_PCMCIA_IO_ACCESS		(165)
-#define SOC_PCMCIA_5V_MEM_ACCESS	(150)
-#define SOC_PCMCIA_3V_MEM_ACCESS	(300)
-#define SOC_PCMCIA_ATTR_MEM_ACCESS	(300)
+#घोषणा SOC_PCMCIA_IO_ACCESS		(165)
+#घोषणा SOC_PCMCIA_5V_MEM_ACCESS	(150)
+#घोषणा SOC_PCMCIA_3V_MEM_ACCESS	(300)
+#घोषणा SOC_PCMCIA_ATTR_MEM_ACCESS	(300)
 
 /*
- * The socket driver actually works nicely in interrupt-driven form,
+ * The socket driver actually works nicely in पूर्णांकerrupt-driven क्रमm,
  * so the (relatively infrequent) polling is "just to be sure."
  */
-#define SOC_PCMCIA_POLL_PERIOD    (2*HZ)
+#घोषणा SOC_PCMCIA_POLL_PERIOD    (2*HZ)
 
 
 /* I/O pins replacing memory pins
  * (PCMCIA System Architecture, 2nd ed., by Don Anderson, p.75)
  *
- * These signals change meaning when going from memory-only to
- * memory-or-I/O interface:
+ * These संकेतs change meaning when going from memory-only to
+ * memory-or-I/O पूर्णांकerface:
  */
-#define iostschg bvd1
-#define iospkr   bvd2
+#घोषणा iostschg bvd1
+#घोषणा iospkr   bvd2
 
-#endif
+#पूर्ण_अगर

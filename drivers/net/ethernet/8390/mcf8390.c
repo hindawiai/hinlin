@@ -1,241 +1,242 @@
+<शैली गुरु>
 /*
- *  Support for ColdFire CPU based boards using a NS8390 Ethernet device.
+ *  Support क्रम ColdFire CPU based boards using a NS8390 Ethernet device.
  *
  *  Derived from the many other 8390 drivers.
  *
  *  (C) Copyright 2012,  Greg Ungerer <gerg@uclinux.org>
  *
  *  This file is subject to the terms and conditions of the GNU General Public
- *  License.  See the file COPYING in the main directory of the Linux
- *  distribution for more details.
+ *  License.  See the file COPYING in the मुख्य directory of the Linux
+ *  distribution क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/platform_device.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/jiffies.h>
-#include <linux/io.h>
-#include <asm/mcf8390.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/पन.स>
+#समावेश <यंत्र/mcf8390.h>
 
-static const char version[] =
+अटल स्थिर अक्षर version[] =
 	"mcf8390.c: (15-06-2012) Greg Ungerer <gerg@uclinux.org>";
 
-#define NE_CMD		0x00
-#define NE_DATAPORT	0x10	/* NatSemi-defined port window offset */
-#define NE_RESET	0x1f	/* Issue a read to reset ,a write to clear */
-#define NE_EN0_ISR	0x07
-#define NE_EN0_DCFG	0x0e
-#define NE_EN0_RSARLO	0x08
-#define NE_EN0_RSARHI	0x09
-#define NE_EN0_RCNTLO	0x0a
-#define NE_EN0_RXCR	0x0c
-#define NE_EN0_TXCR	0x0d
-#define NE_EN0_RCNTHI	0x0b
-#define NE_EN0_IMR	0x0f
+#घोषणा NE_CMD		0x00
+#घोषणा NE_DATAPORT	0x10	/* NatSemi-defined port winकरोw offset */
+#घोषणा NE_RESET	0x1f	/* Issue a पढ़ो to reset ,a ग_लिखो to clear */
+#घोषणा NE_EN0_ISR	0x07
+#घोषणा NE_EN0_DCFG	0x0e
+#घोषणा NE_EN0_RSARLO	0x08
+#घोषणा NE_EN0_RSARHI	0x09
+#घोषणा NE_EN0_RCNTLO	0x0a
+#घोषणा NE_EN0_RXCR	0x0c
+#घोषणा NE_EN0_TXCR	0x0d
+#घोषणा NE_EN0_RCNTHI	0x0b
+#घोषणा NE_EN0_IMR	0x0f
 
-#define NESM_START_PG	0x40	/* First page of TX buffer */
-#define NESM_STOP_PG	0x80	/* Last page +1 of RX ring */
+#घोषणा NESM_START_PG	0x40	/* First page of TX buffer */
+#घोषणा NESM_STOP_PG	0x80	/* Last page +1 of RX ring */
 
-#ifdef NE2000_ODDOFFSET
+#अगर_घोषित NE2000_ODDOFFSET
 /*
- * A lot of the ColdFire boards use a separate address region for odd offset
- * register addresses. The following functions convert and map as required.
- * Note that the data port accesses are treated a little differently, and
+ * A lot of the ColdFire boards use a separate address region क्रम odd offset
+ * रेजिस्टर addresses. The following functions convert and map as required.
+ * Note that the data port accesses are treated a little dअगरferently, and
  * always accessed via the insX/outsX functions.
  */
-static inline u32 NE_PTR(u32 addr)
-{
-	if (addr & 1)
-		return addr - 1 + NE2000_ODDOFFSET;
-	return addr;
-}
+अटल अंतरभूत u32 NE_PTR(u32 addr)
+अणु
+	अगर (addr & 1)
+		वापस addr - 1 + NE2000_ODDOFFSET;
+	वापस addr;
+पूर्ण
 
-static inline u32 NE_DATA_PTR(u32 addr)
-{
-	return addr;
-}
+अटल अंतरभूत u32 NE_DATA_PTR(u32 addr)
+अणु
+	वापस addr;
+पूर्ण
 
-void ei_outb(u32 val, u32 addr)
-{
+व्योम ei_outb(u32 val, u32 addr)
+अणु
 	NE2000_BYTE *rp;
 
 	rp = (NE2000_BYTE *) NE_PTR(addr);
 	*rp = RSWAP(val);
-}
+पूर्ण
 
-#define	ei_inb	ei_inb
+#घोषणा	ei_inb	ei_inb
 u8 ei_inb(u32 addr)
-{
+अणु
 	NE2000_BYTE *rp, val;
 
 	rp = (NE2000_BYTE *) NE_PTR(addr);
 	val = *rp;
-	return (u8) (RSWAP(val) & 0xff);
-}
+	वापस (u8) (RSWAP(val) & 0xff);
+पूर्ण
 
-void ei_insb(u32 addr, void *vbuf, int len)
-{
+व्योम ei_insb(u32 addr, व्योम *vbuf, पूर्णांक len)
+अणु
 	NE2000_BYTE *rp, val;
 	u8 *buf;
 
 	buf = (u8 *) vbuf;
 	rp = (NE2000_BYTE *) NE_DATA_PTR(addr);
-	for (; (len > 0); len--) {
+	क्रम (; (len > 0); len--) अणु
 		val = *rp;
 		*buf++ = RSWAP(val);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ei_insw(u32 addr, void *vbuf, int len)
-{
-	volatile u16 *rp;
+व्योम ei_insw(u32 addr, व्योम *vbuf, पूर्णांक len)
+अणु
+	अस्थिर u16 *rp;
 	u16 w, *buf;
 
 	buf = (u16 *) vbuf;
-	rp = (volatile u16 *) NE_DATA_PTR(addr);
-	for (; (len > 0); len--) {
+	rp = (अस्थिर u16 *) NE_DATA_PTR(addr);
+	क्रम (; (len > 0); len--) अणु
 		w = *rp;
 		*buf++ = BSWAP(w);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ei_outsb(u32 addr, const void *vbuf, int len)
-{
+व्योम ei_outsb(u32 addr, स्थिर व्योम *vbuf, पूर्णांक len)
+अणु
 	NE2000_BYTE *rp, val;
 	u8 *buf;
 
 	buf = (u8 *) vbuf;
 	rp = (NE2000_BYTE *) NE_DATA_PTR(addr);
-	for (; (len > 0); len--) {
+	क्रम (; (len > 0); len--) अणु
 		val = *buf++;
 		*rp = RSWAP(val);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ei_outsw(u32 addr, const void *vbuf, int len)
-{
-	volatile u16 *rp;
+व्योम ei_outsw(u32 addr, स्थिर व्योम *vbuf, पूर्णांक len)
+अणु
+	अस्थिर u16 *rp;
 	u16 w, *buf;
 
 	buf = (u16 *) vbuf;
-	rp = (volatile u16 *) NE_DATA_PTR(addr);
-	for (; (len > 0); len--) {
+	rp = (अस्थिर u16 *) NE_DATA_PTR(addr);
+	क्रम (; (len > 0); len--) अणु
 		w = *buf++;
 		*rp = BSWAP(w);
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else /* !NE2000_ODDOFFSET */
+#अन्यथा /* !NE2000_ODDOFFSET */
 
-#define	ei_inb		inb
-#define	ei_outb		outb
-#define	ei_insb		insb
-#define	ei_insw		insw
-#define	ei_outsb	outsb
-#define	ei_outsw	outsw
+#घोषणा	ei_inb		inb
+#घोषणा	ei_outb		outb
+#घोषणा	ei_insb		insb
+#घोषणा	ei_insw		insw
+#घोषणा	ei_outsb	outsb
+#घोषणा	ei_outsw	outsw
 
-#endif /* !NE2000_ODDOFFSET */
+#पूर्ण_अगर /* !NE2000_ODDOFFSET */
 
-#define	ei_inb_p	ei_inb
-#define	ei_outb_p	ei_outb
+#घोषणा	ei_inb_p	ei_inb
+#घोषणा	ei_outb_p	ei_outb
 
-#include "lib8390.c"
+#समावेश "lib8390.c"
 
 /*
- * Hard reset the card. This used to pause for the same period that a
+ * Hard reset the card. This used to छोड़ो क्रम the same period that a
  * 8390 reset command required, but that shouldn't be necessary.
  */
-static void mcf8390_reset_8390(struct net_device *dev)
-{
-	unsigned long reset_start_time = jiffies;
+अटल व्योम mcf8390_reset_8390(काष्ठा net_device *dev)
+अणु
+	अचिन्हित दीर्घ reset_start_समय = jअगरfies;
 	u32 addr = dev->base_addr;
-	struct ei_device *ei_local = netdev_priv(dev);
+	काष्ठा ei_device *ei_local = netdev_priv(dev);
 
-	netif_dbg(ei_local, hw, dev, "resetting the 8390 t=%ld...\n", jiffies);
+	netअगर_dbg(ei_local, hw, dev, "resetting the 8390 t=%ld...\n", jअगरfies);
 
 	ei_outb(ei_inb(addr + NE_RESET), addr + NE_RESET);
 
 	ei_status.txing = 0;
-	ei_status.dmaing = 0;
+	ei_status.dमुख्यg = 0;
 
 	/* This check _should_not_ be necessary, omit eventually. */
-	while ((ei_inb(addr + NE_EN0_ISR) & ENISR_RESET) == 0) {
-		if (time_after(jiffies, reset_start_time + 2 * HZ / 100)) {
+	जबतक ((ei_inb(addr + NE_EN0_ISR) & ENISR_RESET) == 0) अणु
+		अगर (समय_after(jअगरfies, reset_start_समय + 2 * HZ / 100)) अणु
 			netdev_warn(dev, "%s: did not complete\n", __func__);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	ei_outb(ENISR_RESET, addr + NE_EN0_ISR);
-}
+पूर्ण
 
 /*
  * This *shouldn't* happen.
- * If it does, it's the last thing you'll see
+ * If it करोes, it's the last thing you'll see
  */
-static void mcf8390_dmaing_err(const char *func, struct net_device *dev,
-			       struct ei_device *ei_local)
-{
+अटल व्योम mcf8390_dमुख्यg_err(स्थिर अक्षर *func, काष्ठा net_device *dev,
+			       काष्ठा ei_device *ei_local)
+अणु
 	netdev_err(dev, "%s: DMAing conflict [DMAstat:%d][irqlock:%d]\n",
-		func, ei_local->dmaing, ei_local->irqlock);
-}
+		func, ei_local->dमुख्यg, ei_local->irqlock);
+पूर्ण
 
 /*
- * Grab the 8390 specific header. Similar to the block_input routine, but
- * we don't need to be concerned with ring wrap as the header will be at
+ * Grab the 8390 specअगरic header. Similar to the block_input routine, but
+ * we करोn't need to be concerned with ring wrap as the header will be at
  * the start of a page, so we optimize accordingly.
  */
-static void mcf8390_get_8390_hdr(struct net_device *dev,
-				 struct e8390_pkt_hdr *hdr, int ring_page)
-{
-	struct ei_device *ei_local = netdev_priv(dev);
+अटल व्योम mcf8390_get_8390_hdr(काष्ठा net_device *dev,
+				 काष्ठा e8390_pkt_hdr *hdr, पूर्णांक ring_page)
+अणु
+	काष्ठा ei_device *ei_local = netdev_priv(dev);
 	u32 addr = dev->base_addr;
 
-	if (ei_local->dmaing) {
-		mcf8390_dmaing_err(__func__, dev, ei_local);
-		return;
-	}
+	अगर (ei_local->dमुख्यg) अणु
+		mcf8390_dमुख्यg_err(__func__, dev, ei_local);
+		वापस;
+	पूर्ण
 
-	ei_local->dmaing |= 0x01;
+	ei_local->dमुख्यg |= 0x01;
 	ei_outb(E8390_NODMA + E8390_PAGE0 + E8390_START, addr + NE_CMD);
 	ei_outb(ENISR_RDC, addr + NE_EN0_ISR);
-	ei_outb(sizeof(struct e8390_pkt_hdr), addr + NE_EN0_RCNTLO);
+	ei_outb(माप(काष्ठा e8390_pkt_hdr), addr + NE_EN0_RCNTLO);
 	ei_outb(0, addr + NE_EN0_RCNTHI);
 	ei_outb(0, addr + NE_EN0_RSARLO);		/* On page boundary */
 	ei_outb(ring_page, addr + NE_EN0_RSARHI);
 	ei_outb(E8390_RREAD + E8390_START, addr + NE_CMD);
 
-	ei_insw(addr + NE_DATAPORT, hdr, sizeof(struct e8390_pkt_hdr) >> 1);
+	ei_insw(addr + NE_DATAPORT, hdr, माप(काष्ठा e8390_pkt_hdr) >> 1);
 
-	outb(ENISR_RDC, addr + NE_EN0_ISR);	/* Ack intr */
-	ei_local->dmaing &= ~0x01;
+	outb(ENISR_RDC, addr + NE_EN0_ISR);	/* Ack पूर्णांकr */
+	ei_local->dमुख्यg &= ~0x01;
 
 	hdr->count = cpu_to_le16(hdr->count);
-}
+पूर्ण
 
 /*
  * Block input and output, similar to the Crynwr packet driver.
  * If you are porting to a new ethercard, look at the packet driver source
- * for hints. The NEx000 doesn't share the on-board packet memory --
+ * क्रम hपूर्णांकs. The NEx000 करोesn't share the on-board packet memory --
  * you have to put the packet out through the "remote DMA" dataport
- * using z_writeb.
+ * using z_ग_लिखोb.
  */
-static void mcf8390_block_input(struct net_device *dev, int count,
-				struct sk_buff *skb, int ring_offset)
-{
-	struct ei_device *ei_local = netdev_priv(dev);
+अटल व्योम mcf8390_block_input(काष्ठा net_device *dev, पूर्णांक count,
+				काष्ठा sk_buff *skb, पूर्णांक ring_offset)
+अणु
+	काष्ठा ei_device *ei_local = netdev_priv(dev);
 	u32 addr = dev->base_addr;
-	char *buf = skb->data;
+	अक्षर *buf = skb->data;
 
-	if (ei_local->dmaing) {
-		mcf8390_dmaing_err(__func__, dev, ei_local);
-		return;
-	}
+	अगर (ei_local->dमुख्यg) अणु
+		mcf8390_dमुख्यg_err(__func__, dev, ei_local);
+		वापस;
+	पूर्ण
 
-	ei_local->dmaing |= 0x01;
+	ei_local->dमुख्यg |= 0x01;
 	ei_outb(E8390_NODMA + E8390_PAGE0 + E8390_START, addr + NE_CMD);
 	ei_outb(ENISR_RDC, addr + NE_EN0_ISR);
 	ei_outb(count & 0xff, addr + NE_EN0_RCNTLO);
@@ -245,32 +246,32 @@ static void mcf8390_block_input(struct net_device *dev, int count,
 	ei_outb(E8390_RREAD + E8390_START, addr + NE_CMD);
 
 	ei_insw(addr + NE_DATAPORT, buf, count >> 1);
-	if (count & 1)
+	अगर (count & 1)
 		buf[count - 1] = ei_inb(addr + NE_DATAPORT);
 
-	ei_outb(ENISR_RDC, addr + NE_EN0_ISR);	/* Ack intr */
-	ei_local->dmaing &= ~0x01;
-}
+	ei_outb(ENISR_RDC, addr + NE_EN0_ISR);	/* Ack पूर्णांकr */
+	ei_local->dमुख्यg &= ~0x01;
+पूर्ण
 
-static void mcf8390_block_output(struct net_device *dev, int count,
-				 const unsigned char *buf,
-				 const int start_page)
-{
-	struct ei_device *ei_local = netdev_priv(dev);
+अटल व्योम mcf8390_block_output(काष्ठा net_device *dev, पूर्णांक count,
+				 स्थिर अचिन्हित अक्षर *buf,
+				 स्थिर पूर्णांक start_page)
+अणु
+	काष्ठा ei_device *ei_local = netdev_priv(dev);
 	u32 addr = dev->base_addr;
-	unsigned long dma_start;
+	अचिन्हित दीर्घ dma_start;
 
-	/* Make sure we transfer all bytes if 16bit IO writes */
-	if (count & 0x1)
+	/* Make sure we transfer all bytes अगर 16bit IO ग_लिखोs */
+	अगर (count & 0x1)
 		count++;
 
-	if (ei_local->dmaing) {
-		mcf8390_dmaing_err(__func__, dev, ei_local);
-		return;
-	}
+	अगर (ei_local->dमुख्यg) अणु
+		mcf8390_dमुख्यg_err(__func__, dev, ei_local);
+		वापस;
+	पूर्ण
 
-	ei_local->dmaing |= 0x01;
-	/* We should already be in page 0, but to be safe... */
+	ei_local->dमुख्यg |= 0x01;
+	/* We should alपढ़ोy be in page 0, but to be safe... */
 	ei_outb(E8390_PAGE0 + E8390_START + E8390_NODMA, addr + NE_CMD);
 
 	ei_outb(ENISR_RDC, addr + NE_EN0_ISR);
@@ -284,97 +285,97 @@ static void mcf8390_block_output(struct net_device *dev, int count,
 
 	ei_outsw(addr + NE_DATAPORT, buf, count >> 1);
 
-	dma_start = jiffies;
-	while ((ei_inb(addr + NE_EN0_ISR) & ENISR_RDC) == 0) {
-		if (time_after(jiffies, dma_start + 2 * HZ / 100)) { /* 20ms */
+	dma_start = jअगरfies;
+	जबतक ((ei_inb(addr + NE_EN0_ISR) & ENISR_RDC) == 0) अणु
+		अगर (समय_after(jअगरfies, dma_start + 2 * HZ / 100)) अणु /* 20ms */
 			netdev_warn(dev, "timeout waiting for Tx RDC\n");
 			mcf8390_reset_8390(dev);
 			__NS8390_init(dev, 1);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	ei_outb(ENISR_RDC, addr + NE_EN0_ISR);	/* Ack intr */
-	ei_local->dmaing &= ~0x01;
-}
+	ei_outb(ENISR_RDC, addr + NE_EN0_ISR);	/* Ack पूर्णांकr */
+	ei_local->dमुख्यg &= ~0x01;
+पूर्ण
 
-static const struct net_device_ops mcf8390_netdev_ops = {
-	.ndo_open		= __ei_open,
-	.ndo_stop		= __ei_close,
-	.ndo_start_xmit		= __ei_start_xmit,
-	.ndo_tx_timeout		= __ei_tx_timeout,
-	.ndo_get_stats		= __ei_get_stats,
-	.ndo_set_rx_mode	= __ei_set_multicast_list,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= __ei_poll,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops mcf8390_netdev_ops = अणु
+	.nकरो_खोलो		= __ei_खोलो,
+	.nकरो_stop		= __ei_बंद,
+	.nकरो_start_xmit		= __ei_start_xmit,
+	.nकरो_tx_समयout		= __ei_tx_समयout,
+	.nकरो_get_stats		= __ei_get_stats,
+	.nकरो_set_rx_mode	= __ei_set_multicast_list,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	= __ei_poll,
+#पूर्ण_अगर
+पूर्ण;
 
-static int mcf8390_init(struct net_device *dev)
-{
-	static u32 offsets[] = {
+अटल पूर्णांक mcf8390_init(काष्ठा net_device *dev)
+अणु
+	अटल u32 offsets[] = अणु
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-	};
-	struct ei_device *ei_local = netdev_priv(dev);
-	unsigned char SA_prom[32];
+	पूर्ण;
+	काष्ठा ei_device *ei_local = netdev_priv(dev);
+	अचिन्हित अक्षर SA_prom[32];
 	u32 addr = dev->base_addr;
-	int start_page, stop_page;
-	int i, ret;
+	पूर्णांक start_page, stop_page;
+	पूर्णांक i, ret;
 
 	mcf8390_reset_8390(dev);
 
 	/*
 	 * Read the 16 bytes of station address PROM.
-	 * We must first initialize registers,
-	 * similar to NS8390_init(eifdev, 0).
-	 * We can't reliably read the SAPROM address without this.
+	 * We must first initialize रेजिस्टरs,
+	 * similar to NS8390_init(eअगरdev, 0).
+	 * We can't reliably पढ़ो the SAPROM address without this.
 	 * (I learned the hard way!).
 	 */
-	{
-		static const struct {
+	अणु
+		अटल स्थिर काष्ठा अणु
 			u32 value;
 			u32 offset;
-		} program_seq[] = {
-			{E8390_NODMA + E8390_PAGE0 + E8390_STOP, NE_CMD},
+		पूर्ण program_seq[] = अणु
+			अणुE8390_NODMA + E8390_PAGE0 + E8390_STOP, NE_CMDपूर्ण,
 						/* Select page 0 */
-			{0x48,	NE_EN0_DCFG},	/* 0x48: Set byte-wide access */
-			{0x00,	NE_EN0_RCNTLO},	/* Clear the count regs */
-			{0x00,	NE_EN0_RCNTHI},
-			{0x00,	NE_EN0_IMR},	/* Mask completion irq */
-			{0xFF,	NE_EN0_ISR},
-			{E8390_RXOFF, NE_EN0_RXCR}, /* 0x20 Set to monitor */
-			{E8390_TXOFF, NE_EN0_TXCR}, /* 0x02 and loopback mode */
-			{32,	NE_EN0_RCNTLO},
-			{0x00,	NE_EN0_RCNTHI},
-			{0x00,	NE_EN0_RSARLO},	/* DMA starting at 0x0000 */
-			{0x00,	NE_EN0_RSARHI},
-			{E8390_RREAD + E8390_START, NE_CMD},
-		};
-		for (i = 0; i < ARRAY_SIZE(program_seq); i++) {
+			अणु0x48,	NE_EN0_DCFGपूर्ण,	/* 0x48: Set byte-wide access */
+			अणु0x00,	NE_EN0_RCNTLOपूर्ण,	/* Clear the count regs */
+			अणु0x00,	NE_EN0_RCNTHIपूर्ण,
+			अणु0x00,	NE_EN0_IMRपूर्ण,	/* Mask completion irq */
+			अणु0xFF,	NE_EN0_ISRपूर्ण,
+			अणुE8390_RXOFF, NE_EN0_RXCRपूर्ण, /* 0x20 Set to monitor */
+			अणुE8390_TXOFF, NE_EN0_TXCRपूर्ण, /* 0x02 and loopback mode */
+			अणु32,	NE_EN0_RCNTLOपूर्ण,
+			अणु0x00,	NE_EN0_RCNTHIपूर्ण,
+			अणु0x00,	NE_EN0_RSARLOपूर्ण,	/* DMA starting at 0x0000 */
+			अणु0x00,	NE_EN0_RSARHIपूर्ण,
+			अणुE8390_RREAD + E8390_START, NE_CMDपूर्ण,
+		पूर्ण;
+		क्रम (i = 0; i < ARRAY_SIZE(program_seq); i++) अणु
 			ei_outb(program_seq[i].value,
 				 addr + program_seq[i].offset);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < 16; i++) {
+	क्रम (i = 0; i < 16; i++) अणु
 		SA_prom[i] = ei_inb(addr + NE_DATAPORT);
 		ei_inb(addr + NE_DATAPORT);
-	}
+	पूर्ण
 
-	/* We must set the 8390 for word mode. */
+	/* We must set the 8390 क्रम word mode. */
 	ei_outb(0x49, addr + NE_EN0_DCFG);
 	start_page = NESM_START_PG;
 	stop_page = NESM_STOP_PG;
 
 	/* Install the Interrupt handler */
-	ret = request_irq(dev->irq, __ei_interrupt, 0, dev->name, dev);
-	if (ret)
-		return ret;
+	ret = request_irq(dev->irq, __ei_पूर्णांकerrupt, 0, dev->name, dev);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < ETH_ALEN; i++)
+	क्रम (i = 0; i < ETH_ALEN; i++)
 		dev->dev_addr[i] = SA_prom[i];
 
 	netdev_dbg(dev, "Found ethernet address: %pM\n", dev->dev_addr);
@@ -392,82 +393,82 @@ static int mcf8390_init(struct net_device *dev)
 
 	dev->netdev_ops = &mcf8390_netdev_ops;
 	__NS8390_init(dev, 0);
-	ret = register_netdev(dev);
-	if (ret) {
-		free_irq(dev->irq, dev);
-		return ret;
-	}
+	ret = रेजिस्टर_netdev(dev);
+	अगर (ret) अणु
+		मुक्त_irq(dev->irq, dev);
+		वापस ret;
+	पूर्ण
 
 	netdev_info(dev, "addr=0x%08x irq=%d, Ethernet Address %pM\n",
 		addr, dev->irq, dev->dev_addr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mcf8390_probe(struct platform_device *pdev)
-{
-	struct net_device *dev;
-	struct resource *mem, *irq;
-	resource_size_t msize;
-	int ret;
+अटल पूर्णांक mcf8390_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा resource *mem, *irq;
+	resource_माप_प्रकार msize;
+	पूर्णांक ret;
 
-	irq = platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-	if (irq == NULL) {
+	irq = platक्रमm_get_resource(pdev, IORESOURCE_IRQ, 0);
+	अगर (irq == शून्य) अणु
 		dev_err(&pdev->dev, "no IRQ specified?\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (mem == NULL) {
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (mem == शून्य) अणु
 		dev_err(&pdev->dev, "no memory address specified?\n");
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 	msize = resource_size(mem);
-	if (!request_mem_region(mem->start, msize, pdev->name))
-		return -EBUSY;
+	अगर (!request_mem_region(mem->start, msize, pdev->name))
+		वापस -EBUSY;
 
 	dev = ____alloc_ei_netdev(0);
-	if (dev == NULL) {
+	अगर (dev == शून्य) अणु
 		release_mem_region(mem->start, msize);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	SET_NETDEV_DEV(dev, &pdev->dev);
-	platform_set_drvdata(pdev, dev);
+	platक्रमm_set_drvdata(pdev, dev);
 
 	dev->irq = irq->start;
 	dev->base_addr = mem->start;
 
 	ret = mcf8390_init(dev);
-	if (ret) {
+	अगर (ret) अणु
 		release_mem_region(mem->start, msize);
-		free_netdev(dev);
-		return ret;
-	}
-	return 0;
-}
+		मुक्त_netdev(dev);
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int mcf8390_remove(struct platform_device *pdev)
-{
-	struct net_device *dev = platform_get_drvdata(pdev);
-	struct resource *mem;
+अटल पूर्णांक mcf8390_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा net_device *dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा resource *mem;
 
-	unregister_netdev(dev);
-	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (mem)
+	unरेजिस्टर_netdev(dev);
+	mem = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (mem)
 		release_mem_region(mem->start, resource_size(mem));
-	free_netdev(dev);
-	return 0;
-}
+	मुक्त_netdev(dev);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver mcf8390_drv = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver mcf8390_drv = अणु
+	.driver = अणु
 		.name	= "mcf8390",
-	},
+	पूर्ण,
 	.probe		= mcf8390_probe,
-	.remove		= mcf8390_remove,
-};
+	.हटाओ		= mcf8390_हटाओ,
+पूर्ण;
 
-module_platform_driver(mcf8390_drv);
+module_platक्रमm_driver(mcf8390_drv);
 
 MODULE_DESCRIPTION("MCF8390 ColdFire NS8390 driver");
 MODULE_AUTHOR("Greg Ungerer <gerg@uclinux.org>");

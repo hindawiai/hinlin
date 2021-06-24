@@ -1,31 +1,32 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#ifndef __MOCK_CONTEXT_H
-#define __MOCK_CONTEXT_H
+#अगर_अघोषित __MOCK_CONTEXT_H
+#घोषणा __MOCK_CONTEXT_H
 
-struct file;
-struct drm_i915_private;
-struct intel_engine_cs;
+काष्ठा file;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_engine_cs;
 
-void mock_init_contexts(struct drm_i915_private *i915);
+व्योम mock_init_contexts(काष्ठा drm_i915_निजी *i915);
 
-struct i915_gem_context *
-mock_context(struct drm_i915_private *i915,
-	     const char *name);
+काष्ठा i915_gem_context *
+mock_context(काष्ठा drm_i915_निजी *i915,
+	     स्थिर अक्षर *name);
 
-void mock_context_close(struct i915_gem_context *ctx);
+व्योम mock_context_बंद(काष्ठा i915_gem_context *ctx);
 
-struct i915_gem_context *
-live_context(struct drm_i915_private *i915, struct file *file);
+काष्ठा i915_gem_context *
+live_context(काष्ठा drm_i915_निजी *i915, काष्ठा file *file);
 
-struct i915_gem_context *
-live_context_for_engine(struct intel_engine_cs *engine, struct file *file);
+काष्ठा i915_gem_context *
+live_context_क्रम_engine(काष्ठा पूर्णांकel_engine_cs *engine, काष्ठा file *file);
 
-struct i915_gem_context *kernel_context(struct drm_i915_private *i915);
-void kernel_context_close(struct i915_gem_context *ctx);
+काष्ठा i915_gem_context *kernel_context(काष्ठा drm_i915_निजी *i915);
+व्योम kernel_context_बंद(काष्ठा i915_gem_context *ctx);
 
-#endif /* !__MOCK_CONTEXT_H */
+#पूर्ण_अगर /* !__MOCK_CONTEXT_H */

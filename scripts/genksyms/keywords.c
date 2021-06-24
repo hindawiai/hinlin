@@ -1,78 +1,79 @@
-// SPDX-License-Identifier: GPL-2.0-only
-static struct resword {
-	const char *name;
-	int token;
-} keywords[] = {
-	{ "__GENKSYMS_EXPORT_SYMBOL", EXPORT_SYMBOL_KEYW },
-	{ "__asm", ASM_KEYW },
-	{ "__asm__", ASM_KEYW },
-	{ "__attribute", ATTRIBUTE_KEYW },
-	{ "__attribute__", ATTRIBUTE_KEYW },
-	{ "__const", CONST_KEYW },
-	{ "__const__", CONST_KEYW },
-	{ "__extension__", EXTENSION_KEYW },
-	{ "__inline", INLINE_KEYW },
-	{ "__inline__", INLINE_KEYW },
-	{ "__signed", SIGNED_KEYW },
-	{ "__signed__", SIGNED_KEYW },
-	{ "__typeof", TYPEOF_KEYW },
-	{ "__typeof__", TYPEOF_KEYW },
-	{ "__volatile", VOLATILE_KEYW },
-	{ "__volatile__", VOLATILE_KEYW },
-	{ "__builtin_va_list", VA_LIST_KEYW },
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+अटल काष्ठा resword अणु
+	स्थिर अक्षर *name;
+	पूर्णांक token;
+पूर्ण keywords[] = अणु
+	अणु "__GENKSYMS_EXPORT_SYMBOL", EXPORT_SYMBOL_KEYW पूर्ण,
+	अणु "__asm", ASM_KEYW पूर्ण,
+	अणु "__asm__", ASM_KEYW पूर्ण,
+	अणु "__attribute", ATTRIBUTE_KEYW पूर्ण,
+	अणु "__attribute__", ATTRIBUTE_KEYW पूर्ण,
+	अणु "__const", CONST_KEYW पूर्ण,
+	अणु "__const__", CONST_KEYW पूर्ण,
+	अणु "__extension__", EXTENSION_KEYW पूर्ण,
+	अणु "__inline", INLINE_KEYW पूर्ण,
+	अणु "__inline__", INLINE_KEYW पूर्ण,
+	अणु "__signed", SIGNED_KEYW पूर्ण,
+	अणु "__signed__", SIGNED_KEYW पूर्ण,
+	अणु "__typeof", TYPखातापूर्ण_KEYW पूर्ण,
+	अणु "__typeof__", TYPखातापूर्ण_KEYW पूर्ण,
+	अणु "__volatile", VOLATILE_KEYW पूर्ण,
+	अणु "__volatile__", VOLATILE_KEYW पूर्ण,
+	अणु "__builtin_va_list", VA_LIST_KEYW पूर्ण,
 
-	{ "__int128", BUILTIN_INT_KEYW },
-	{ "__int128_t", BUILTIN_INT_KEYW },
-	{ "__uint128_t", BUILTIN_INT_KEYW },
+	अणु "__int128", BUILTIN_INT_KEYW पूर्ण,
+	अणु "__int128_t", BUILTIN_INT_KEYW पूर्ण,
+	अणु "__uint128_t", BUILTIN_INT_KEYW पूर्ण,
 
 	// According to rth, c99 defines "_Bool", "__restrict", "__restrict__", "restrict".  KAO
-	{ "_Bool", BOOL_KEYW },
-	{ "__restrict", RESTRICT_KEYW },
-	{ "__restrict__", RESTRICT_KEYW },
-	{ "restrict", RESTRICT_KEYW },
-	{ "asm", ASM_KEYW },
+	अणु "_Bool", BOOL_KEYW पूर्ण,
+	अणु "__restrict", RESTRICT_KEYW पूर्ण,
+	अणु "__restrict__", RESTRICT_KEYW पूर्ण,
+	अणु "restrict", RESTRICT_KEYW पूर्ण,
+	अणु "asm", ASM_KEYW पूर्ण,
 
 	// c11 keywords that can be used at module scope
-	{ "_Static_assert", STATIC_ASSERT_KEYW },
+	अणु "_Static_assert", STATIC_ASSERT_KEYW पूर्ण,
 
 	// attribute commented out in modutils 2.4.2.  People are using 'attribute' as a
-	// field name which breaks the genksyms parser.  It is not a gcc keyword anyway.
-	// KAO. },
-	// { "attribute", ATTRIBUTE_KEYW },
+	// field name which अवरोधs the genksyms parser.  It is not a gcc keyword anyway.
+	// KAO. पूर्ण,
+	// अणु "attribute", ATTRIBUTE_KEYW पूर्ण,
 
-	{ "auto", AUTO_KEYW },
-	{ "char", CHAR_KEYW },
-	{ "const", CONST_KEYW },
-	{ "double", DOUBLE_KEYW },
-	{ "enum", ENUM_KEYW },
-	{ "extern", EXTERN_KEYW },
-	{ "float", FLOAT_KEYW },
-	{ "inline", INLINE_KEYW },
-	{ "int", INT_KEYW },
-	{ "long", LONG_KEYW },
-	{ "register", REGISTER_KEYW },
-	{ "short", SHORT_KEYW },
-	{ "signed", SIGNED_KEYW },
-	{ "static", STATIC_KEYW },
-	{ "struct", STRUCT_KEYW },
-	{ "typedef", TYPEDEF_KEYW },
-	{ "typeof", TYPEOF_KEYW },
-	{ "union", UNION_KEYW },
-	{ "unsigned", UNSIGNED_KEYW },
-	{ "void", VOID_KEYW },
-	{ "volatile", VOLATILE_KEYW },
-};
+	अणु "auto", AUTO_KEYW पूर्ण,
+	अणु "char", CHAR_KEYW पूर्ण,
+	अणु "const", CONST_KEYW पूर्ण,
+	अणु "double", DOUBLE_KEYW पूर्ण,
+	अणु "enum", ENUM_KEYW पूर्ण,
+	अणु "extern", EXTERN_KEYW पूर्ण,
+	अणु "float", FLOAT_KEYW पूर्ण,
+	अणु "inline", INLINE_KEYW पूर्ण,
+	अणु "int", INT_KEYW पूर्ण,
+	अणु "long", LONG_KEYW पूर्ण,
+	अणु "register", REGISTER_KEYW पूर्ण,
+	अणु "short", SHORT_KEYW पूर्ण,
+	अणु "signed", SIGNED_KEYW पूर्ण,
+	अणु "static", STATIC_KEYW पूर्ण,
+	अणु "struct", STRUCT_KEYW पूर्ण,
+	अणु "typedef", TYPEDEF_KEYW पूर्ण,
+	अणु "typeof", TYPखातापूर्ण_KEYW पूर्ण,
+	अणु "union", UNION_KEYW पूर्ण,
+	अणु "unsigned", UNSIGNED_KEYW पूर्ण,
+	अणु "void", VOID_KEYW पूर्ण,
+	अणु "volatile", VOLATILE_KEYW पूर्ण,
+पूर्ण;
 
-#define NR_KEYWORDS (sizeof(keywords)/sizeof(struct resword))
+#घोषणा NR_KEYWORDS (माप(keywords)/माप(काष्ठा resword))
 
-static int is_reserved_word(register const char *str, register unsigned int len)
-{
-	int i;
-	for (i = 0; i < NR_KEYWORDS; i++) {
-		struct resword *r = keywords + i;
-		int l = strlen(r->name);
-		if (len == l && !memcmp(str, r->name, len))
-			return r->token;
-	}
-	return -1;
-}
+अटल पूर्णांक is_reserved_word(रेजिस्टर स्थिर अक्षर *str, रेजिस्टर अचिन्हित पूर्णांक len)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < NR_KEYWORDS; i++) अणु
+		काष्ठा resword *r = keywords + i;
+		पूर्णांक l = म_माप(r->name);
+		अगर (len == l && !स_भेद(str, r->name, len))
+			वापस r->token;
+	पूर्ण
+	वापस -1;
+पूर्ण

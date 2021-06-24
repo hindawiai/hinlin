@@ -1,130 +1,131 @@
+<शैली गुरु>
 /*
  * Stack trace management functions
  *
  *  Copyright (C) 2006-2009 Red Hat, Inc., Ingo Molnar <mingo@redhat.com>
  */
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/sched/task_stack.h>
-#include <linux/stacktrace.h>
-#include <linux/export.h>
-#include <linux/uaccess.h>
-#include <asm/stacktrace.h>
-#include <asm/unwind.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/stacktrace.h>
+#समावेश <linux/export.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/stacktrace.h>
+#समावेश <यंत्र/unwind.h>
 
-void arch_stack_walk(stack_trace_consume_fn consume_entry, void *cookie,
-		     struct task_struct *task, struct pt_regs *regs)
-{
-	struct unwind_state state;
-	unsigned long addr;
+व्योम arch_stack_walk(stack_trace_consume_fn consume_entry, व्योम *cookie,
+		     काष्ठा task_काष्ठा *task, काष्ठा pt_regs *regs)
+अणु
+	काष्ठा unwind_state state;
+	अचिन्हित दीर्घ addr;
 
-	if (regs && !consume_entry(cookie, regs->ip))
-		return;
+	अगर (regs && !consume_entry(cookie, regs->ip))
+		वापस;
 
-	for (unwind_start(&state, task, regs, NULL); !unwind_done(&state);
-	     unwind_next_frame(&state)) {
-		addr = unwind_get_return_address(&state);
-		if (!addr || !consume_entry(cookie, addr))
-			break;
-	}
-}
+	क्रम (unwind_start(&state, task, regs, शून्य); !unwind_करोne(&state);
+	     unwind_next_frame(&state)) अणु
+		addr = unwind_get_वापस_address(&state);
+		अगर (!addr || !consume_entry(cookie, addr))
+			अवरोध;
+	पूर्ण
+पूर्ण
 
-int arch_stack_walk_reliable(stack_trace_consume_fn consume_entry,
-			     void *cookie, struct task_struct *task)
-{
-	struct unwind_state state;
-	struct pt_regs *regs;
-	unsigned long addr;
+पूर्णांक arch_stack_walk_reliable(stack_trace_consume_fn consume_entry,
+			     व्योम *cookie, काष्ठा task_काष्ठा *task)
+अणु
+	काष्ठा unwind_state state;
+	काष्ठा pt_regs *regs;
+	अचिन्हित दीर्घ addr;
 
-	for (unwind_start(&state, task, NULL, NULL);
-	     !unwind_done(&state) && !unwind_error(&state);
-	     unwind_next_frame(&state)) {
+	क्रम (unwind_start(&state, task, शून्य, शून्य);
+	     !unwind_करोne(&state) && !unwind_error(&state);
+	     unwind_next_frame(&state)) अणु
 
-		regs = unwind_get_entry_regs(&state, NULL);
-		if (regs) {
-			/* Success path for user tasks */
-			if (user_mode(regs))
-				return 0;
+		regs = unwind_get_entry_regs(&state, शून्य);
+		अगर (regs) अणु
+			/* Success path क्रम user tasks */
+			अगर (user_mode(regs))
+				वापस 0;
 
 			/*
-			 * Kernel mode registers on the stack indicate an
-			 * in-kernel interrupt or exception (e.g., preemption
-			 * or a page fault), which can make frame pointers
+			 * Kernel mode रेजिस्टरs on the stack indicate an
+			 * in-kernel पूर्णांकerrupt or exception (e.g., preemption
+			 * or a page fault), which can make frame poपूर्णांकers
 			 * unreliable.
 			 */
-			if (IS_ENABLED(CONFIG_FRAME_POINTER))
-				return -EINVAL;
-		}
+			अगर (IS_ENABLED(CONFIG_FRAME_POINTER))
+				वापस -EINVAL;
+		पूर्ण
 
-		addr = unwind_get_return_address(&state);
+		addr = unwind_get_वापस_address(&state);
 
 		/*
-		 * A NULL or invalid return address probably means there's some
-		 * generated code which __kernel_text_address() doesn't know
+		 * A शून्य or invalid वापस address probably means there's some
+		 * generated code which __kernel_text_address() करोesn't know
 		 * about.
 		 */
-		if (!addr)
-			return -EINVAL;
+		अगर (!addr)
+			वापस -EINVAL;
 
-		if (!consume_entry(cookie, addr))
-			return -EINVAL;
-	}
+		अगर (!consume_entry(cookie, addr))
+			वापस -EINVAL;
+	पूर्ण
 
-	/* Check for stack corruption */
-	if (unwind_error(&state))
-		return -EINVAL;
+	/* Check क्रम stack corruption */
+	अगर (unwind_error(&state))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Userspace stacktrace - based on kernel/trace/trace_sysprof.c */
 
-struct stack_frame_user {
-	const void __user	*next_fp;
-	unsigned long		ret_addr;
-};
+काष्ठा stack_frame_user अणु
+	स्थिर व्योम __user	*next_fp;
+	अचिन्हित दीर्घ		ret_addr;
+पूर्ण;
 
-static int
-copy_stack_frame(const struct stack_frame_user __user *fp,
-		 struct stack_frame_user *frame)
-{
-	int ret;
+अटल पूर्णांक
+copy_stack_frame(स्थिर काष्ठा stack_frame_user __user *fp,
+		 काष्ठा stack_frame_user *frame)
+अणु
+	पूर्णांक ret;
 
-	if (__range_not_ok(fp, sizeof(*frame), TASK_SIZE))
-		return 0;
+	अगर (__range_not_ok(fp, माप(*frame), TASK_SIZE))
+		वापस 0;
 
 	ret = 1;
 	pagefault_disable();
-	if (__get_user(frame->next_fp, &fp->next_fp) ||
+	अगर (__get_user(frame->next_fp, &fp->next_fp) ||
 	    __get_user(frame->ret_addr, &fp->ret_addr))
 		ret = 0;
 	pagefault_enable();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void arch_stack_walk_user(stack_trace_consume_fn consume_entry, void *cookie,
-			  const struct pt_regs *regs)
-{
-	const void __user *fp = (const void __user *)regs->bp;
+व्योम arch_stack_walk_user(stack_trace_consume_fn consume_entry, व्योम *cookie,
+			  स्थिर काष्ठा pt_regs *regs)
+अणु
+	स्थिर व्योम __user *fp = (स्थिर व्योम __user *)regs->bp;
 
-	if (!consume_entry(cookie, regs->ip))
-		return;
+	अगर (!consume_entry(cookie, regs->ip))
+		वापस;
 
-	while (1) {
-		struct stack_frame_user frame;
+	जबतक (1) अणु
+		काष्ठा stack_frame_user frame;
 
-		frame.next_fp = NULL;
+		frame.next_fp = शून्य;
 		frame.ret_addr = 0;
-		if (!copy_stack_frame(fp, &frame))
-			break;
-		if ((unsigned long)fp < regs->sp)
-			break;
-		if (!frame.ret_addr)
-			break;
-		if (!consume_entry(cookie, frame.ret_addr))
-			break;
+		अगर (!copy_stack_frame(fp, &frame))
+			अवरोध;
+		अगर ((अचिन्हित दीर्घ)fp < regs->sp)
+			अवरोध;
+		अगर (!frame.ret_addr)
+			अवरोध;
+		अगर (!consume_entry(cookie, frame.ret_addr))
+			अवरोध;
 		fp = frame.next_fp;
-	}
-}
+	पूर्ण
+पूर्ण
 

@@ -1,16 +1,17 @@
+<शैली गुरु>
 
 /*
- *	The firmware this driver downloads into the Localtalk card is a
+ *	The firmware this driver करोwnloads पूर्णांकo the Localtalk card is a
  *	separate program and is not GPL'd source code, even though the Linux
- *	side driver and the routine that loads this data into the card are.
+ *	side driver and the routine that loads this data पूर्णांकo the card are.
  *	
  *	It is taken from the COPS SDK and is under the following license
  *
- *	This material is licensed to you strictly for use in conjunction with
+ *	This material is licensed to you strictly क्रम use in conjunction with
  *	the use of COPS LocalTalk adapters.
- *	There is no charge for this SDK. And no waranty express or implied
- *	about its fitness for any purpose. However, we will cheerefully
- *	refund every penny you paid for this SDK...
+ *	There is no अक्षरge क्रम this SDK. And no waranty express or implied
+ *	about its fitness क्रम any purpose. However, we will cheerefully
+ *	refund every penny you paid क्रम this SDK...
  *	Regards,
  *
  *	Thomas F. Divine
@@ -18,16 +19,16 @@
  */
 
 
-/*      cops_ffdrv.h: LocalTalk driver firmware dump for Linux.
+/*      cops_ffdrv.h: LocalTalk driver firmware dump क्रम Linux.
  *
  *      Authors:
  *      - Jay Schulist <jschlst@samba.org>
  */
 
 
-#ifdef CONFIG_COPS_DAYNA
+#अगर_घोषित CONFIG_COPS_DAYNA
 
-static const unsigned char ffdrv_code[] = {
+अटल स्थिर अचिन्हित अक्षर ffdrv_code[] = अणु
 	58,3,0,50,228,149,33,255,255,34,226,149,
 	249,17,40,152,33,202,154,183,237,82,77,68,
 	11,107,98,19,54,0,237,176,175,50,80,0,
@@ -527,6 +528,6 @@ static const unsigned char ffdrv_code[] = {
 	0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0
-	} ;
+	पूर्ण ;
 
-#endif
+#पूर्ण_अगर

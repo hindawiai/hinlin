@@ -1,11 +1,12 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _TOOLS_PERF_LINUX_BUG_H
-#define _TOOLS_PERF_LINUX_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _TOOLS_PERF_LINUX_BUG_H
+#घोषणा _TOOLS_PERF_LINUX_BUG_H
 
-/* Force a compilation error if condition is true, but also produce a
-   result (of value 0 and type size_t), so the expression can be used
-   e.g. in a structure initializer (or where-ever else comma expressions
+/* Force a compilation error अगर condition is true, but also produce a
+   result (of value 0 and type माप_प्रकार), so the expression can be used
+   e.g. in a काष्ठाure initializer (or where-ever अन्यथा comma expressions
    aren't permitted). */
-#define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
+#घोषणा BUILD_BUG_ON_ZERO(e) (माप(काष्ठा अणु पूर्णांक:-!!(e); पूर्ण))
 
-#endif	/* _TOOLS_PERF_LINUX_BUG_H */
+#पूर्ण_अगर	/* _TOOLS_PERF_LINUX_BUG_H */

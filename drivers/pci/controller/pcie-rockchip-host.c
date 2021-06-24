@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Rockchip AXI PCIe host controller driver
  *
@@ -11,495 +12,495 @@
  * ARM PCI Host generic driver.
  */
 
-#include <linux/bitrev.h>
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/gpio/consumer.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/iopoll.h>
-#include <linux/irq.h>
-#include <linux/irqchip/chained_irq.h>
-#include <linux/irqdomain.h>
-#include <linux/kernel.h>
-#include <linux/mfd/syscon.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
-#include <linux/of_pci.h>
-#include <linux/of_platform.h>
-#include <linux/of_irq.h>
-#include <linux/pci.h>
-#include <linux/pci_ids.h>
-#include <linux/phy/phy.h>
-#include <linux/platform_device.h>
-#include <linux/reset.h>
-#include <linux/regmap.h>
+#समावेश <linux/bitrev.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/irqchip/chained_irq.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_pci.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pci_ids.h>
+#समावेश <linux/phy/phy.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/reset.h>
+#समावेश <linux/regmap.h>
 
-#include "../pci.h"
-#include "pcie-rockchip.h"
+#समावेश "../pci.h"
+#समावेश "pcie-rockchip.h"
 
-static void rockchip_pcie_enable_bw_int(struct rockchip_pcie *rockchip)
-{
+अटल व्योम rockchip_pcie_enable_bw_पूर्णांक(काष्ठा rockchip_pcie *rockchip)
+अणु
 	u32 status;
 
-	status = rockchip_pcie_read(rockchip, PCIE_RC_CONFIG_LCS);
+	status = rockchip_pcie_पढ़ो(rockchip, PCIE_RC_CONFIG_LCS);
 	status |= (PCI_EXP_LNKCTL_LBMIE | PCI_EXP_LNKCTL_LABIE);
-	rockchip_pcie_write(rockchip, status, PCIE_RC_CONFIG_LCS);
-}
+	rockchip_pcie_ग_लिखो(rockchip, status, PCIE_RC_CONFIG_LCS);
+पूर्ण
 
-static void rockchip_pcie_clr_bw_int(struct rockchip_pcie *rockchip)
-{
+अटल व्योम rockchip_pcie_clr_bw_पूर्णांक(काष्ठा rockchip_pcie *rockchip)
+अणु
 	u32 status;
 
-	status = rockchip_pcie_read(rockchip, PCIE_RC_CONFIG_LCS);
+	status = rockchip_pcie_पढ़ो(rockchip, PCIE_RC_CONFIG_LCS);
 	status |= (PCI_EXP_LNKSTA_LBMS | PCI_EXP_LNKSTA_LABS) << 16;
-	rockchip_pcie_write(rockchip, status, PCIE_RC_CONFIG_LCS);
-}
+	rockchip_pcie_ग_लिखो(rockchip, status, PCIE_RC_CONFIG_LCS);
+पूर्ण
 
-static void rockchip_pcie_update_txcredit_mui(struct rockchip_pcie *rockchip)
-{
+अटल व्योम rockchip_pcie_update_txcredit_mui(काष्ठा rockchip_pcie *rockchip)
+अणु
 	u32 val;
 
-	/* Update Tx credit maximum update interval */
-	val = rockchip_pcie_read(rockchip, PCIE_CORE_TXCREDIT_CFG1);
+	/* Update Tx credit maximum update पूर्णांकerval */
+	val = rockchip_pcie_पढ़ो(rockchip, PCIE_CORE_TXCREDIT_CFG1);
 	val &= ~PCIE_CORE_TXCREDIT_CFG1_MUI_MASK;
 	val |= PCIE_CORE_TXCREDIT_CFG1_MUI_ENCODE(24000);	/* ns */
-	rockchip_pcie_write(rockchip, val, PCIE_CORE_TXCREDIT_CFG1);
-}
+	rockchip_pcie_ग_लिखो(rockchip, val, PCIE_CORE_TXCREDIT_CFG1);
+पूर्ण
 
-static int rockchip_pcie_valid_device(struct rockchip_pcie *rockchip,
-				      struct pci_bus *bus, int dev)
-{
+अटल पूर्णांक rockchip_pcie_valid_device(काष्ठा rockchip_pcie *rockchip,
+				      काष्ठा pci_bus *bus, पूर्णांक dev)
+अणु
 	/*
 	 * Access only one slot on each root port.
-	 * Do not read more than one device on the bus directly attached
-	 * to RC's downstream side.
+	 * Do not पढ़ो more than one device on the bus directly attached
+	 * to RC's करोwnstream side.
 	 */
-	if (pci_is_root_bus(bus) || pci_is_root_bus(bus->parent))
-		return dev == 0;
+	अगर (pci_is_root_bus(bus) || pci_is_root_bus(bus->parent))
+		वापस dev == 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static u8 rockchip_pcie_lane_map(struct rockchip_pcie *rockchip)
-{
+अटल u8 rockchip_pcie_lane_map(काष्ठा rockchip_pcie *rockchip)
+अणु
 	u32 val;
 	u8 map;
 
-	if (rockchip->legacy_phy)
-		return GENMASK(MAX_LANE_NUM - 1, 0);
+	अगर (rockchip->legacy_phy)
+		वापस GENMASK(MAX_LANE_NUM - 1, 0);
 
-	val = rockchip_pcie_read(rockchip, PCIE_CORE_LANE_MAP);
+	val = rockchip_pcie_पढ़ो(rockchip, PCIE_CORE_LANE_MAP);
 	map = val & PCIE_CORE_LANE_MAP_MASK;
 
 	/* The link may be using a reverse-indexed mapping. */
-	if (val & PCIE_CORE_LANE_MAP_REVERSE)
+	अगर (val & PCIE_CORE_LANE_MAP_REVERSE)
 		map = bitrev8(map) >> 4;
 
-	return map;
-}
+	वापस map;
+पूर्ण
 
-static int rockchip_pcie_rd_own_conf(struct rockchip_pcie *rockchip,
-				     int where, int size, u32 *val)
-{
-	void __iomem *addr;
+अटल पूर्णांक rockchip_pcie_rd_own_conf(काष्ठा rockchip_pcie *rockchip,
+				     पूर्णांक where, पूर्णांक size, u32 *val)
+अणु
+	व्योम __iomem *addr;
 
 	addr = rockchip->apb_base + PCIE_RC_CONFIG_NORMAL_BASE + where;
 
-	if (!IS_ALIGNED((uintptr_t)addr, size)) {
+	अगर (!IS_ALIGNED((uपूर्णांकptr_t)addr, size)) अणु
 		*val = 0;
-		return PCIBIOS_BAD_REGISTER_NUMBER;
-	}
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+	पूर्ण
 
-	if (size == 4) {
-		*val = readl(addr);
-	} else if (size == 2) {
-		*val = readw(addr);
-	} else if (size == 1) {
-		*val = readb(addr);
-	} else {
+	अगर (size == 4) अणु
+		*val = पढ़ोl(addr);
+	पूर्ण अन्यथा अगर (size == 2) अणु
+		*val = पढ़ोw(addr);
+	पूर्ण अन्यथा अगर (size == 1) अणु
+		*val = पढ़ोb(addr);
+	पूर्ण अन्यथा अणु
 		*val = 0;
-		return PCIBIOS_BAD_REGISTER_NUMBER;
-	}
-	return PCIBIOS_SUCCESSFUL;
-}
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+	पूर्ण
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int rockchip_pcie_wr_own_conf(struct rockchip_pcie *rockchip,
-				     int where, int size, u32 val)
-{
-	u32 mask, tmp, offset;
-	void __iomem *addr;
+अटल पूर्णांक rockchip_pcie_wr_own_conf(काष्ठा rockchip_pcie *rockchip,
+				     पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	u32 mask, पंचांगp, offset;
+	व्योम __iomem *addr;
 
 	offset = where & ~0x3;
 	addr = rockchip->apb_base + PCIE_RC_CONFIG_NORMAL_BASE + offset;
 
-	if (size == 4) {
-		writel(val, addr);
-		return PCIBIOS_SUCCESSFUL;
-	}
+	अगर (size == 4) अणु
+		ग_लिखोl(val, addr);
+		वापस PCIBIOS_SUCCESSFUL;
+	पूर्ण
 
 	mask = ~(((1 << (size * 8)) - 1) << ((where & 0x3) * 8));
 
 	/*
-	 * N.B. This read/modify/write isn't safe in general because it can
-	 * corrupt RW1C bits in adjacent registers.  But the hardware
-	 * doesn't support smaller writes.
+	 * N.B. This पढ़ो/modअगरy/ग_लिखो isn't safe in general because it can
+	 * corrupt RW1C bits in adjacent रेजिस्टरs.  But the hardware
+	 * करोesn't support smaller ग_लिखोs.
 	 */
-	tmp = readl(addr) & mask;
-	tmp |= val << ((where & 0x3) * 8);
-	writel(tmp, addr);
+	पंचांगp = पढ़ोl(addr) & mask;
+	पंचांगp |= val << ((where & 0x3) * 8);
+	ग_लिखोl(पंचांगp, addr);
 
-	return PCIBIOS_SUCCESSFUL;
-}
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-static int rockchip_pcie_rd_other_conf(struct rockchip_pcie *rockchip,
-				       struct pci_bus *bus, u32 devfn,
-				       int where, int size, u32 *val)
-{
-	void __iomem *addr;
-
-	addr = rockchip->reg_base + PCIE_ECAM_OFFSET(bus->number, devfn, where);
-
-	if (!IS_ALIGNED((uintptr_t)addr, size)) {
-		*val = 0;
-		return PCIBIOS_BAD_REGISTER_NUMBER;
-	}
-
-	if (pci_is_root_bus(bus->parent))
-		rockchip_pcie_cfg_configuration_accesses(rockchip,
-						AXI_WRAPPER_TYPE0_CFG);
-	else
-		rockchip_pcie_cfg_configuration_accesses(rockchip,
-						AXI_WRAPPER_TYPE1_CFG);
-
-	if (size == 4) {
-		*val = readl(addr);
-	} else if (size == 2) {
-		*val = readw(addr);
-	} else if (size == 1) {
-		*val = readb(addr);
-	} else {
-		*val = 0;
-		return PCIBIOS_BAD_REGISTER_NUMBER;
-	}
-	return PCIBIOS_SUCCESSFUL;
-}
-
-static int rockchip_pcie_wr_other_conf(struct rockchip_pcie *rockchip,
-				       struct pci_bus *bus, u32 devfn,
-				       int where, int size, u32 val)
-{
-	void __iomem *addr;
+अटल पूर्णांक rockchip_pcie_rd_other_conf(काष्ठा rockchip_pcie *rockchip,
+				       काष्ठा pci_bus *bus, u32 devfn,
+				       पूर्णांक where, पूर्णांक size, u32 *val)
+अणु
+	व्योम __iomem *addr;
 
 	addr = rockchip->reg_base + PCIE_ECAM_OFFSET(bus->number, devfn, where);
 
-	if (!IS_ALIGNED((uintptr_t)addr, size))
-		return PCIBIOS_BAD_REGISTER_NUMBER;
+	अगर (!IS_ALIGNED((uपूर्णांकptr_t)addr, size)) अणु
+		*val = 0;
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+	पूर्ण
 
-	if (pci_is_root_bus(bus->parent))
+	अगर (pci_is_root_bus(bus->parent))
 		rockchip_pcie_cfg_configuration_accesses(rockchip,
 						AXI_WRAPPER_TYPE0_CFG);
-	else
+	अन्यथा
 		rockchip_pcie_cfg_configuration_accesses(rockchip,
 						AXI_WRAPPER_TYPE1_CFG);
 
-	if (size == 4)
-		writel(val, addr);
-	else if (size == 2)
-		writew(val, addr);
-	else if (size == 1)
-		writeb(val, addr);
-	else
-		return PCIBIOS_BAD_REGISTER_NUMBER;
+	अगर (size == 4) अणु
+		*val = पढ़ोl(addr);
+	पूर्ण अन्यथा अगर (size == 2) अणु
+		*val = पढ़ोw(addr);
+	पूर्ण अन्यथा अगर (size == 1) अणु
+		*val = पढ़ोb(addr);
+	पूर्ण अन्यथा अणु
+		*val = 0;
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+	पूर्ण
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
 
-	return PCIBIOS_SUCCESSFUL;
-}
+अटल पूर्णांक rockchip_pcie_wr_other_conf(काष्ठा rockchip_pcie *rockchip,
+				       काष्ठा pci_bus *bus, u32 devfn,
+				       पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	व्योम __iomem *addr;
 
-static int rockchip_pcie_rd_conf(struct pci_bus *bus, u32 devfn, int where,
-				 int size, u32 *val)
-{
-	struct rockchip_pcie *rockchip = bus->sysdata;
+	addr = rockchip->reg_base + PCIE_ECAM_OFFSET(bus->number, devfn, where);
 
-	if (!rockchip_pcie_valid_device(rockchip, bus, PCI_SLOT(devfn))) {
+	अगर (!IS_ALIGNED((uपूर्णांकptr_t)addr, size))
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+
+	अगर (pci_is_root_bus(bus->parent))
+		rockchip_pcie_cfg_configuration_accesses(rockchip,
+						AXI_WRAPPER_TYPE0_CFG);
+	अन्यथा
+		rockchip_pcie_cfg_configuration_accesses(rockchip,
+						AXI_WRAPPER_TYPE1_CFG);
+
+	अगर (size == 4)
+		ग_लिखोl(val, addr);
+	अन्यथा अगर (size == 2)
+		ग_लिखोw(val, addr);
+	अन्यथा अगर (size == 1)
+		ग_लिखोb(val, addr);
+	अन्यथा
+		वापस PCIBIOS_BAD_REGISTER_NUMBER;
+
+	वापस PCIBIOS_SUCCESSFUL;
+पूर्ण
+
+अटल पूर्णांक rockchip_pcie_rd_conf(काष्ठा pci_bus *bus, u32 devfn, पूर्णांक where,
+				 पूर्णांक size, u32 *val)
+अणु
+	काष्ठा rockchip_pcie *rockchip = bus->sysdata;
+
+	अगर (!rockchip_pcie_valid_device(rockchip, bus, PCI_SLOT(devfn))) अणु
 		*val = 0xffffffff;
-		return PCIBIOS_DEVICE_NOT_FOUND;
-	}
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
+	पूर्ण
 
-	if (pci_is_root_bus(bus))
-		return rockchip_pcie_rd_own_conf(rockchip, where, size, val);
+	अगर (pci_is_root_bus(bus))
+		वापस rockchip_pcie_rd_own_conf(rockchip, where, size, val);
 
-	return rockchip_pcie_rd_other_conf(rockchip, bus, devfn, where, size,
+	वापस rockchip_pcie_rd_other_conf(rockchip, bus, devfn, where, size,
 					   val);
-}
+पूर्ण
 
-static int rockchip_pcie_wr_conf(struct pci_bus *bus, u32 devfn,
-				 int where, int size, u32 val)
-{
-	struct rockchip_pcie *rockchip = bus->sysdata;
+अटल पूर्णांक rockchip_pcie_wr_conf(काष्ठा pci_bus *bus, u32 devfn,
+				 पूर्णांक where, पूर्णांक size, u32 val)
+अणु
+	काष्ठा rockchip_pcie *rockchip = bus->sysdata;
 
-	if (!rockchip_pcie_valid_device(rockchip, bus, PCI_SLOT(devfn)))
-		return PCIBIOS_DEVICE_NOT_FOUND;
+	अगर (!rockchip_pcie_valid_device(rockchip, bus, PCI_SLOT(devfn)))
+		वापस PCIBIOS_DEVICE_NOT_FOUND;
 
-	if (pci_is_root_bus(bus))
-		return rockchip_pcie_wr_own_conf(rockchip, where, size, val);
+	अगर (pci_is_root_bus(bus))
+		वापस rockchip_pcie_wr_own_conf(rockchip, where, size, val);
 
-	return rockchip_pcie_wr_other_conf(rockchip, bus, devfn, where, size,
+	वापस rockchip_pcie_wr_other_conf(rockchip, bus, devfn, where, size,
 					   val);
-}
+पूर्ण
 
-static struct pci_ops rockchip_pcie_ops = {
-	.read = rockchip_pcie_rd_conf,
-	.write = rockchip_pcie_wr_conf,
-};
+अटल काष्ठा pci_ops rockchip_pcie_ops = अणु
+	.पढ़ो = rockchip_pcie_rd_conf,
+	.ग_लिखो = rockchip_pcie_wr_conf,
+पूर्ण;
 
-static void rockchip_pcie_set_power_limit(struct rockchip_pcie *rockchip)
-{
-	int curr;
-	u32 status, scale, power;
+अटल व्योम rockchip_pcie_set_घातer_limit(काष्ठा rockchip_pcie *rockchip)
+अणु
+	पूर्णांक curr;
+	u32 status, scale, घातer;
 
-	if (IS_ERR(rockchip->vpcie3v3))
-		return;
+	अगर (IS_ERR(rockchip->vpcie3v3))
+		वापस;
 
 	/*
-	 * Set RC's captured slot power limit and scale if
-	 * vpcie3v3 available. The default values are both zero
+	 * Set RC's captured slot घातer limit and scale अगर
+	 * vpcie3v3 available. The शेष values are both zero
 	 * which means the software should set these two according
-	 * to the actual power supply.
+	 * to the actual घातer supply.
 	 */
 	curr = regulator_get_current_limit(rockchip->vpcie3v3);
-	if (curr <= 0)
-		return;
+	अगर (curr <= 0)
+		वापस;
 
 	scale = 3; /* 0.001x */
 	curr = curr / 1000; /* convert to mA */
-	power = (curr * 3300) / 1000; /* milliwatt */
-	while (power > PCIE_RC_CONFIG_DCR_CSPL_LIMIT) {
-		if (!scale) {
+	घातer = (curr * 3300) / 1000; /* milliwatt */
+	जबतक (घातer > PCIE_RC_CONFIG_DCR_CSPL_LIMIT) अणु
+		अगर (!scale) अणु
 			dev_warn(rockchip->dev, "invalid power supply\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		scale--;
-		power = power / 10;
-	}
+		घातer = घातer / 10;
+	पूर्ण
 
-	status = rockchip_pcie_read(rockchip, PCIE_RC_CONFIG_DCR);
-	status |= (power << PCIE_RC_CONFIG_DCR_CSPL_SHIFT) |
+	status = rockchip_pcie_पढ़ो(rockchip, PCIE_RC_CONFIG_DCR);
+	status |= (घातer << PCIE_RC_CONFIG_DCR_CSPL_SHIFT) |
 		  (scale << PCIE_RC_CONFIG_DCR_CPLS_SHIFT);
-	rockchip_pcie_write(rockchip, status, PCIE_RC_CONFIG_DCR);
-}
+	rockchip_pcie_ग_लिखो(rockchip, status, PCIE_RC_CONFIG_DCR);
+पूर्ण
 
 /**
  * rockchip_pcie_host_init_port - Initialize hardware
- * @rockchip: PCIe port information
+ * @rockchip: PCIe port inक्रमmation
  */
-static int rockchip_pcie_host_init_port(struct rockchip_pcie *rockchip)
-{
-	struct device *dev = rockchip->dev;
-	int err, i = MAX_LANE_NUM;
+अटल पूर्णांक rockchip_pcie_host_init_port(काष्ठा rockchip_pcie *rockchip)
+अणु
+	काष्ठा device *dev = rockchip->dev;
+	पूर्णांक err, i = MAX_LANE_NUM;
 	u32 status;
 
 	gpiod_set_value_cansleep(rockchip->ep_gpio, 0);
 
 	err = rockchip_pcie_init_port(rockchip);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	/* Fix the transmitted FTS count desired to exit from L0s. */
-	status = rockchip_pcie_read(rockchip, PCIE_CORE_CTRL_PLC1);
+	/* Fix the transmitted FTS count desired to निकास from L0s. */
+	status = rockchip_pcie_पढ़ो(rockchip, PCIE_CORE_CTRL_PLC1);
 	status = (status & ~PCIE_CORE_CTRL_PLC1_FTS_MASK) |
 		 (PCIE_CORE_CTRL_PLC1_FTS_CNT << PCIE_CORE_CTRL_PLC1_FTS_SHIFT);
-	rockchip_pcie_write(rockchip, status, PCIE_CORE_CTRL_PLC1);
+	rockchip_pcie_ग_लिखो(rockchip, status, PCIE_CORE_CTRL_PLC1);
 
-	rockchip_pcie_set_power_limit(rockchip);
+	rockchip_pcie_set_घातer_limit(rockchip);
 
-	/* Set RC's clock architecture as common clock */
-	status = rockchip_pcie_read(rockchip, PCIE_RC_CONFIG_LCS);
+	/* Set RC's घड़ी architecture as common घड़ी */
+	status = rockchip_pcie_पढ़ो(rockchip, PCIE_RC_CONFIG_LCS);
 	status |= PCI_EXP_LNKSTA_SLC << 16;
-	rockchip_pcie_write(rockchip, status, PCIE_RC_CONFIG_LCS);
+	rockchip_pcie_ग_लिखो(rockchip, status, PCIE_RC_CONFIG_LCS);
 
 	/* Set RC's RCB to 128 */
-	status = rockchip_pcie_read(rockchip, PCIE_RC_CONFIG_LCS);
+	status = rockchip_pcie_पढ़ो(rockchip, PCIE_RC_CONFIG_LCS);
 	status |= PCI_EXP_LNKCTL_RCB;
-	rockchip_pcie_write(rockchip, status, PCIE_RC_CONFIG_LCS);
+	rockchip_pcie_ग_लिखो(rockchip, status, PCIE_RC_CONFIG_LCS);
 
 	/* Enable Gen1 training */
-	rockchip_pcie_write(rockchip, PCIE_CLIENT_LINK_TRAIN_ENABLE,
+	rockchip_pcie_ग_लिखो(rockchip, PCIE_CLIENT_LINK_TRAIN_ENABLE,
 			    PCIE_CLIENT_CONFIG);
 
 	gpiod_set_value_cansleep(rockchip->ep_gpio, 1);
 
-	/* 500ms timeout value should be enough for Gen1/2 training */
-	err = readl_poll_timeout(rockchip->apb_base + PCIE_CLIENT_BASIC_STATUS1,
+	/* 500ms समयout value should be enough क्रम Gen1/2 training */
+	err = पढ़ोl_poll_समयout(rockchip->apb_base + PCIE_CLIENT_BASIC_STATUS1,
 				 status, PCIE_LINK_UP(status), 20,
 				 500 * USEC_PER_MSEC);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "PCIe link training gen1 timeout!\n");
-		goto err_power_off_phy;
-	}
+		जाओ err_घातer_off_phy;
+	पूर्ण
 
-	if (rockchip->link_gen == 2) {
+	अगर (rockchip->link_gen == 2) अणु
 		/*
-		 * Enable retrain for gen2. This should be configured only after
+		 * Enable retrain क्रम gen2. This should be configured only after
 		 * gen1 finished.
 		 */
-		status = rockchip_pcie_read(rockchip, PCIE_RC_CONFIG_LCS);
+		status = rockchip_pcie_पढ़ो(rockchip, PCIE_RC_CONFIG_LCS);
 		status |= PCI_EXP_LNKCTL_RL;
-		rockchip_pcie_write(rockchip, status, PCIE_RC_CONFIG_LCS);
+		rockchip_pcie_ग_लिखो(rockchip, status, PCIE_RC_CONFIG_LCS);
 
-		err = readl_poll_timeout(rockchip->apb_base + PCIE_CORE_CTRL,
+		err = पढ़ोl_poll_समयout(rockchip->apb_base + PCIE_CORE_CTRL,
 					 status, PCIE_LINK_IS_GEN2(status), 20,
 					 500 * USEC_PER_MSEC);
-		if (err)
+		अगर (err)
 			dev_dbg(dev, "PCIe link training gen2 timeout, fall back to gen1!\n");
-	}
+	पूर्ण
 
 	/* Check the final link width from negotiated lane counter from MGMT */
-	status = rockchip_pcie_read(rockchip, PCIE_CORE_CTRL);
+	status = rockchip_pcie_पढ़ो(rockchip, PCIE_CORE_CTRL);
 	status = 0x1 << ((status & PCIE_CORE_PL_CONF_LANE_MASK) >>
 			  PCIE_CORE_PL_CONF_LANE_SHIFT);
 	dev_dbg(dev, "current link width is x%d\n", status);
 
 	/* Power off unused lane(s) */
 	rockchip->lanes_map = rockchip_pcie_lane_map(rockchip);
-	for (i = 0; i < MAX_LANE_NUM; i++) {
-		if (!(rockchip->lanes_map & BIT(i))) {
+	क्रम (i = 0; i < MAX_LANE_NUM; i++) अणु
+		अगर (!(rockchip->lanes_map & BIT(i))) अणु
 			dev_dbg(dev, "idling lane %d\n", i);
-			phy_power_off(rockchip->phys[i]);
-		}
-	}
+			phy_घातer_off(rockchip->phys[i]);
+		पूर्ण
+	पूर्ण
 
-	rockchip_pcie_write(rockchip, ROCKCHIP_VENDOR_ID,
+	rockchip_pcie_ग_लिखो(rockchip, ROCKCHIP_VENDOR_ID,
 			    PCIE_CORE_CONFIG_VENDOR);
-	rockchip_pcie_write(rockchip,
+	rockchip_pcie_ग_लिखो(rockchip,
 			    PCI_CLASS_BRIDGE_PCI << PCIE_RC_CONFIG_SCC_SHIFT,
 			    PCIE_RC_CONFIG_RID_CCR);
 
-	/* Clear THP cap's next cap pointer to remove L1 substate cap */
-	status = rockchip_pcie_read(rockchip, PCIE_RC_CONFIG_THP_CAP);
+	/* Clear THP cap's next cap poपूर्णांकer to हटाओ L1 substate cap */
+	status = rockchip_pcie_पढ़ो(rockchip, PCIE_RC_CONFIG_THP_CAP);
 	status &= ~PCIE_RC_CONFIG_THP_CAP_NEXT_MASK;
-	rockchip_pcie_write(rockchip, status, PCIE_RC_CONFIG_THP_CAP);
+	rockchip_pcie_ग_लिखो(rockchip, status, PCIE_RC_CONFIG_THP_CAP);
 
 	/* Clear L0s from RC's link cap */
-	if (of_property_read_bool(dev->of_node, "aspm-no-l0s")) {
-		status = rockchip_pcie_read(rockchip, PCIE_RC_CONFIG_LINK_CAP);
+	अगर (of_property_पढ़ो_bool(dev->of_node, "aspm-no-l0s")) अणु
+		status = rockchip_pcie_पढ़ो(rockchip, PCIE_RC_CONFIG_LINK_CAP);
 		status &= ~PCIE_RC_CONFIG_LINK_CAP_L0S;
-		rockchip_pcie_write(rockchip, status, PCIE_RC_CONFIG_LINK_CAP);
-	}
+		rockchip_pcie_ग_लिखो(rockchip, status, PCIE_RC_CONFIG_LINK_CAP);
+	पूर्ण
 
-	status = rockchip_pcie_read(rockchip, PCIE_RC_CONFIG_DCSR);
+	status = rockchip_pcie_पढ़ो(rockchip, PCIE_RC_CONFIG_DCSR);
 	status &= ~PCIE_RC_CONFIG_DCSR_MPS_MASK;
 	status |= PCIE_RC_CONFIG_DCSR_MPS_256;
-	rockchip_pcie_write(rockchip, status, PCIE_RC_CONFIG_DCSR);
+	rockchip_pcie_ग_लिखो(rockchip, status, PCIE_RC_CONFIG_DCSR);
 
-	return 0;
-err_power_off_phy:
-	while (i--)
-		phy_power_off(rockchip->phys[i]);
+	वापस 0;
+err_घातer_off_phy:
+	जबतक (i--)
+		phy_घातer_off(rockchip->phys[i]);
 	i = MAX_LANE_NUM;
-	while (i--)
-		phy_exit(rockchip->phys[i]);
-	return err;
-}
+	जबतक (i--)
+		phy_निकास(rockchip->phys[i]);
+	वापस err;
+पूर्ण
 
-static irqreturn_t rockchip_pcie_subsys_irq_handler(int irq, void *arg)
-{
-	struct rockchip_pcie *rockchip = arg;
-	struct device *dev = rockchip->dev;
+अटल irqवापस_t rockchip_pcie_subsys_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा rockchip_pcie *rockchip = arg;
+	काष्ठा device *dev = rockchip->dev;
 	u32 reg;
 	u32 sub_reg;
 
-	reg = rockchip_pcie_read(rockchip, PCIE_CLIENT_INT_STATUS);
-	if (reg & PCIE_CLIENT_INT_LOCAL) {
+	reg = rockchip_pcie_पढ़ो(rockchip, PCIE_CLIENT_INT_STATUS);
+	अगर (reg & PCIE_CLIENT_INT_LOCAL) अणु
 		dev_dbg(dev, "local interrupt received\n");
-		sub_reg = rockchip_pcie_read(rockchip, PCIE_CORE_INT_STATUS);
-		if (sub_reg & PCIE_CORE_INT_PRFPE)
+		sub_reg = rockchip_pcie_पढ़ो(rockchip, PCIE_CORE_INT_STATUS);
+		अगर (sub_reg & PCIE_CORE_INT_PRFPE)
 			dev_dbg(dev, "parity error detected while reading from the PNP receive FIFO RAM\n");
 
-		if (sub_reg & PCIE_CORE_INT_CRFPE)
+		अगर (sub_reg & PCIE_CORE_INT_CRFPE)
 			dev_dbg(dev, "parity error detected while reading from the Completion Receive FIFO RAM\n");
 
-		if (sub_reg & PCIE_CORE_INT_RRPE)
+		अगर (sub_reg & PCIE_CORE_INT_RRPE)
 			dev_dbg(dev, "parity error detected while reading from replay buffer RAM\n");
 
-		if (sub_reg & PCIE_CORE_INT_PRFO)
+		अगर (sub_reg & PCIE_CORE_INT_PRFO)
 			dev_dbg(dev, "overflow occurred in the PNP receive FIFO\n");
 
-		if (sub_reg & PCIE_CORE_INT_CRFO)
+		अगर (sub_reg & PCIE_CORE_INT_CRFO)
 			dev_dbg(dev, "overflow occurred in the completion receive FIFO\n");
 
-		if (sub_reg & PCIE_CORE_INT_RT)
+		अगर (sub_reg & PCIE_CORE_INT_RT)
 			dev_dbg(dev, "replay timer timed out\n");
 
-		if (sub_reg & PCIE_CORE_INT_RTR)
+		अगर (sub_reg & PCIE_CORE_INT_RTR)
 			dev_dbg(dev, "replay timer rolled over after 4 transmissions of the same TLP\n");
 
-		if (sub_reg & PCIE_CORE_INT_PE)
+		अगर (sub_reg & PCIE_CORE_INT_PE)
 			dev_dbg(dev, "phy error detected on receive side\n");
 
-		if (sub_reg & PCIE_CORE_INT_MTR)
+		अगर (sub_reg & PCIE_CORE_INT_MTR)
 			dev_dbg(dev, "malformed TLP received from the link\n");
 
-		if (sub_reg & PCIE_CORE_INT_UCR)
+		अगर (sub_reg & PCIE_CORE_INT_UCR)
 			dev_dbg(dev, "malformed TLP received from the link\n");
 
-		if (sub_reg & PCIE_CORE_INT_FCE)
+		अगर (sub_reg & PCIE_CORE_INT_FCE)
 			dev_dbg(dev, "an error was observed in the flow control advertisements from the other side\n");
 
-		if (sub_reg & PCIE_CORE_INT_CT)
+		अगर (sub_reg & PCIE_CORE_INT_CT)
 			dev_dbg(dev, "a request timed out waiting for completion\n");
 
-		if (sub_reg & PCIE_CORE_INT_UTC)
+		अगर (sub_reg & PCIE_CORE_INT_UTC)
 			dev_dbg(dev, "unmapped TC error\n");
 
-		if (sub_reg & PCIE_CORE_INT_MMVC)
+		अगर (sub_reg & PCIE_CORE_INT_MMVC)
 			dev_dbg(dev, "MSI mask register changes\n");
 
-		rockchip_pcie_write(rockchip, sub_reg, PCIE_CORE_INT_STATUS);
-	} else if (reg & PCIE_CLIENT_INT_PHY) {
+		rockchip_pcie_ग_लिखो(rockchip, sub_reg, PCIE_CORE_INT_STATUS);
+	पूर्ण अन्यथा अगर (reg & PCIE_CLIENT_INT_PHY) अणु
 		dev_dbg(dev, "phy link changes\n");
 		rockchip_pcie_update_txcredit_mui(rockchip);
-		rockchip_pcie_clr_bw_int(rockchip);
-	}
+		rockchip_pcie_clr_bw_पूर्णांक(rockchip);
+	पूर्ण
 
-	rockchip_pcie_write(rockchip, reg & PCIE_CLIENT_INT_LOCAL,
+	rockchip_pcie_ग_लिखो(rockchip, reg & PCIE_CLIENT_INT_LOCAL,
 			    PCIE_CLIENT_INT_STATUS);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t rockchip_pcie_client_irq_handler(int irq, void *arg)
-{
-	struct rockchip_pcie *rockchip = arg;
-	struct device *dev = rockchip->dev;
+अटल irqवापस_t rockchip_pcie_client_irq_handler(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा rockchip_pcie *rockchip = arg;
+	काष्ठा device *dev = rockchip->dev;
 	u32 reg;
 
-	reg = rockchip_pcie_read(rockchip, PCIE_CLIENT_INT_STATUS);
-	if (reg & PCIE_CLIENT_INT_LEGACY_DONE)
+	reg = rockchip_pcie_पढ़ो(rockchip, PCIE_CLIENT_INT_STATUS);
+	अगर (reg & PCIE_CLIENT_INT_LEGACY_DONE)
 		dev_dbg(dev, "legacy done interrupt received\n");
 
-	if (reg & PCIE_CLIENT_INT_MSG)
+	अगर (reg & PCIE_CLIENT_INT_MSG)
 		dev_dbg(dev, "message done interrupt received\n");
 
-	if (reg & PCIE_CLIENT_INT_HOT_RST)
+	अगर (reg & PCIE_CLIENT_INT_HOT_RST)
 		dev_dbg(dev, "hot reset interrupt received\n");
 
-	if (reg & PCIE_CLIENT_INT_DPA)
+	अगर (reg & PCIE_CLIENT_INT_DPA)
 		dev_dbg(dev, "dpa interrupt received\n");
 
-	if (reg & PCIE_CLIENT_INT_FATAL_ERR)
+	अगर (reg & PCIE_CLIENT_INT_FATAL_ERR)
 		dev_dbg(dev, "fatal error interrupt received\n");
 
-	if (reg & PCIE_CLIENT_INT_NFATAL_ERR)
+	अगर (reg & PCIE_CLIENT_INT_NFATAL_ERR)
 		dev_dbg(dev, "no fatal error interrupt received\n");
 
-	if (reg & PCIE_CLIENT_INT_CORR_ERR)
+	अगर (reg & PCIE_CLIENT_INT_CORR_ERR)
 		dev_dbg(dev, "correctable error interrupt received\n");
 
-	if (reg & PCIE_CLIENT_INT_PHY)
+	अगर (reg & PCIE_CLIENT_INT_PHY)
 		dev_dbg(dev, "phy interrupt received\n");
 
-	rockchip_pcie_write(rockchip, reg & (PCIE_CLIENT_INT_LEGACY_DONE |
+	rockchip_pcie_ग_लिखो(rockchip, reg & (PCIE_CLIENT_INT_LEGACY_DONE |
 			      PCIE_CLIENT_INT_MSG | PCIE_CLIENT_INT_HOT_RST |
 			      PCIE_CLIENT_INT_DPA | PCIE_CLIENT_INT_FATAL_ERR |
 			      PCIE_CLIENT_INT_NFATAL_ERR |
@@ -507,234 +508,234 @@ static irqreturn_t rockchip_pcie_client_irq_handler(int irq, void *arg)
 			      PCIE_CLIENT_INT_PHY),
 		   PCIE_CLIENT_INT_STATUS);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void rockchip_pcie_legacy_int_handler(struct irq_desc *desc)
-{
-	struct irq_chip *chip = irq_desc_get_chip(desc);
-	struct rockchip_pcie *rockchip = irq_desc_get_handler_data(desc);
-	struct device *dev = rockchip->dev;
+अटल व्योम rockchip_pcie_legacy_पूर्णांक_handler(काष्ठा irq_desc *desc)
+अणु
+	काष्ठा irq_chip *chip = irq_desc_get_chip(desc);
+	काष्ठा rockchip_pcie *rockchip = irq_desc_get_handler_data(desc);
+	काष्ठा device *dev = rockchip->dev;
 	u32 reg;
 	u32 hwirq;
 	u32 virq;
 
 	chained_irq_enter(chip, desc);
 
-	reg = rockchip_pcie_read(rockchip, PCIE_CLIENT_INT_STATUS);
+	reg = rockchip_pcie_पढ़ो(rockchip, PCIE_CLIENT_INT_STATUS);
 	reg = (reg & PCIE_CLIENT_INTR_MASK) >> PCIE_CLIENT_INTR_SHIFT;
 
-	while (reg) {
+	जबतक (reg) अणु
 		hwirq = ffs(reg) - 1;
 		reg &= ~BIT(hwirq);
 
-		virq = irq_find_mapping(rockchip->irq_domain, hwirq);
-		if (virq)
+		virq = irq_find_mapping(rockchip->irq_करोमुख्य, hwirq);
+		अगर (virq)
 			generic_handle_irq(virq);
-		else
+		अन्यथा
 			dev_err(dev, "unexpected IRQ, INT%d\n", hwirq);
-	}
+	पूर्ण
 
-	chained_irq_exit(chip, desc);
-}
+	chained_irq_निकास(chip, desc);
+पूर्ण
 
-static int rockchip_pcie_setup_irq(struct rockchip_pcie *rockchip)
-{
-	int irq, err;
-	struct device *dev = rockchip->dev;
-	struct platform_device *pdev = to_platform_device(dev);
+अटल पूर्णांक rockchip_pcie_setup_irq(काष्ठा rockchip_pcie *rockchip)
+अणु
+	पूर्णांक irq, err;
+	काष्ठा device *dev = rockchip->dev;
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
 
-	irq = platform_get_irq_byname(pdev, "sys");
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq_byname(pdev, "sys");
+	अगर (irq < 0)
+		वापस irq;
 
 	err = devm_request_irq(dev, irq, rockchip_pcie_subsys_irq_handler,
 			       IRQF_SHARED, "pcie-sys", rockchip);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "failed to request PCIe subsystem IRQ\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	irq = platform_get_irq_byname(pdev, "legacy");
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq_byname(pdev, "legacy");
+	अगर (irq < 0)
+		वापस irq;
 
 	irq_set_chained_handler_and_data(irq,
-					 rockchip_pcie_legacy_int_handler,
+					 rockchip_pcie_legacy_पूर्णांक_handler,
 					 rockchip);
 
-	irq = platform_get_irq_byname(pdev, "client");
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq_byname(pdev, "client");
+	अगर (irq < 0)
+		वापस irq;
 
 	err = devm_request_irq(dev, irq, rockchip_pcie_client_irq_handler,
 			       IRQF_SHARED, "pcie-client", rockchip);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "failed to request PCIe client IRQ\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * rockchip_pcie_parse_host_dt - Parse Device Tree
- * @rockchip: PCIe port information
+ * @rockchip: PCIe port inक्रमmation
  *
  * Return: '0' on success and error value on failure
  */
-static int rockchip_pcie_parse_host_dt(struct rockchip_pcie *rockchip)
-{
-	struct device *dev = rockchip->dev;
-	int err;
+अटल पूर्णांक rockchip_pcie_parse_host_dt(काष्ठा rockchip_pcie *rockchip)
+अणु
+	काष्ठा device *dev = rockchip->dev;
+	पूर्णांक err;
 
 	err = rockchip_pcie_parse_dt(rockchip);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = rockchip_pcie_setup_irq(rockchip);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	rockchip->vpcie12v = devm_regulator_get_optional(dev, "vpcie12v");
-	if (IS_ERR(rockchip->vpcie12v)) {
-		if (PTR_ERR(rockchip->vpcie12v) != -ENODEV)
-			return PTR_ERR(rockchip->vpcie12v);
+	अगर (IS_ERR(rockchip->vpcie12v)) अणु
+		अगर (PTR_ERR(rockchip->vpcie12v) != -ENODEV)
+			वापस PTR_ERR(rockchip->vpcie12v);
 		dev_info(dev, "no vpcie12v regulator found\n");
-	}
+	पूर्ण
 
 	rockchip->vpcie3v3 = devm_regulator_get_optional(dev, "vpcie3v3");
-	if (IS_ERR(rockchip->vpcie3v3)) {
-		if (PTR_ERR(rockchip->vpcie3v3) != -ENODEV)
-			return PTR_ERR(rockchip->vpcie3v3);
+	अगर (IS_ERR(rockchip->vpcie3v3)) अणु
+		अगर (PTR_ERR(rockchip->vpcie3v3) != -ENODEV)
+			वापस PTR_ERR(rockchip->vpcie3v3);
 		dev_info(dev, "no vpcie3v3 regulator found\n");
-	}
+	पूर्ण
 
 	rockchip->vpcie1v8 = devm_regulator_get(dev, "vpcie1v8");
-	if (IS_ERR(rockchip->vpcie1v8))
-		return PTR_ERR(rockchip->vpcie1v8);
+	अगर (IS_ERR(rockchip->vpcie1v8))
+		वापस PTR_ERR(rockchip->vpcie1v8);
 
 	rockchip->vpcie0v9 = devm_regulator_get(dev, "vpcie0v9");
-	if (IS_ERR(rockchip->vpcie0v9))
-		return PTR_ERR(rockchip->vpcie0v9);
+	अगर (IS_ERR(rockchip->vpcie0v9))
+		वापस PTR_ERR(rockchip->vpcie0v9);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_pcie_set_vpcie(struct rockchip_pcie *rockchip)
-{
-	struct device *dev = rockchip->dev;
-	int err;
+अटल पूर्णांक rockchip_pcie_set_vpcie(काष्ठा rockchip_pcie *rockchip)
+अणु
+	काष्ठा device *dev = rockchip->dev;
+	पूर्णांक err;
 
-	if (!IS_ERR(rockchip->vpcie12v)) {
+	अगर (!IS_ERR(rockchip->vpcie12v)) अणु
 		err = regulator_enable(rockchip->vpcie12v);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "fail to enable vpcie12v regulator\n");
-			goto err_out;
-		}
-	}
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	if (!IS_ERR(rockchip->vpcie3v3)) {
+	अगर (!IS_ERR(rockchip->vpcie3v3)) अणु
 		err = regulator_enable(rockchip->vpcie3v3);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "fail to enable vpcie3v3 regulator\n");
-			goto err_disable_12v;
-		}
-	}
+			जाओ err_disable_12v;
+		पूर्ण
+	पूर्ण
 
 	err = regulator_enable(rockchip->vpcie1v8);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "fail to enable vpcie1v8 regulator\n");
-		goto err_disable_3v3;
-	}
+		जाओ err_disable_3v3;
+	पूर्ण
 
 	err = regulator_enable(rockchip->vpcie0v9);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "fail to enable vpcie0v9 regulator\n");
-		goto err_disable_1v8;
-	}
+		जाओ err_disable_1v8;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_disable_1v8:
 	regulator_disable(rockchip->vpcie1v8);
 err_disable_3v3:
-	if (!IS_ERR(rockchip->vpcie3v3))
+	अगर (!IS_ERR(rockchip->vpcie3v3))
 		regulator_disable(rockchip->vpcie3v3);
 err_disable_12v:
-	if (!IS_ERR(rockchip->vpcie12v))
+	अगर (!IS_ERR(rockchip->vpcie12v))
 		regulator_disable(rockchip->vpcie12v);
 err_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rockchip_pcie_enable_interrupts(struct rockchip_pcie *rockchip)
-{
-	rockchip_pcie_write(rockchip, (PCIE_CLIENT_INT_CLI << 16) &
+अटल व्योम rockchip_pcie_enable_पूर्णांकerrupts(काष्ठा rockchip_pcie *rockchip)
+अणु
+	rockchip_pcie_ग_लिखो(rockchip, (PCIE_CLIENT_INT_CLI << 16) &
 			    (~PCIE_CLIENT_INT_CLI), PCIE_CLIENT_INT_MASK);
-	rockchip_pcie_write(rockchip, (u32)(~PCIE_CORE_INT),
+	rockchip_pcie_ग_लिखो(rockchip, (u32)(~PCIE_CORE_INT),
 			    PCIE_CORE_INT_MASK);
 
-	rockchip_pcie_enable_bw_int(rockchip);
-}
+	rockchip_pcie_enable_bw_पूर्णांक(rockchip);
+पूर्ण
 
-static int rockchip_pcie_intx_map(struct irq_domain *domain, unsigned int irq,
+अटल पूर्णांक rockchip_pcie_पूर्णांकx_map(काष्ठा irq_करोमुख्य *करोमुख्य, अचिन्हित पूर्णांक irq,
 				  irq_hw_number_t hwirq)
-{
+अणु
 	irq_set_chip_and_handler(irq, &dummy_irq_chip, handle_simple_irq);
-	irq_set_chip_data(irq, domain->host_data);
+	irq_set_chip_data(irq, करोमुख्य->host_data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct irq_domain_ops intx_domain_ops = {
-	.map = rockchip_pcie_intx_map,
-};
+अटल स्थिर काष्ठा irq_करोमुख्य_ops पूर्णांकx_करोमुख्य_ops = अणु
+	.map = rockchip_pcie_पूर्णांकx_map,
+पूर्ण;
 
-static int rockchip_pcie_init_irq_domain(struct rockchip_pcie *rockchip)
-{
-	struct device *dev = rockchip->dev;
-	struct device_node *intc = of_get_next_child(dev->of_node, NULL);
+अटल पूर्णांक rockchip_pcie_init_irq_करोमुख्य(काष्ठा rockchip_pcie *rockchip)
+अणु
+	काष्ठा device *dev = rockchip->dev;
+	काष्ठा device_node *पूर्णांकc = of_get_next_child(dev->of_node, शून्य);
 
-	if (!intc) {
+	अगर (!पूर्णांकc) अणु
 		dev_err(dev, "missing child interrupt-controller node\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	rockchip->irq_domain = irq_domain_add_linear(intc, PCI_NUM_INTX,
-						    &intx_domain_ops, rockchip);
-	of_node_put(intc);
-	if (!rockchip->irq_domain) {
+	rockchip->irq_करोमुख्य = irq_करोमुख्य_add_linear(पूर्णांकc, PCI_NUM_INTX,
+						    &पूर्णांकx_करोमुख्य_ops, rockchip);
+	of_node_put(पूर्णांकc);
+	अगर (!rockchip->irq_करोमुख्य) अणु
 		dev_err(dev, "failed to get a INTx IRQ domain\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_pcie_prog_ob_atu(struct rockchip_pcie *rockchip,
-				     int region_no, int type, u8 num_pass_bits,
+अटल पूर्णांक rockchip_pcie_prog_ob_atu(काष्ठा rockchip_pcie *rockchip,
+				     पूर्णांक region_no, पूर्णांक type, u8 num_pass_bits,
 				     u32 lower_addr, u32 upper_addr)
-{
+अणु
 	u32 ob_addr_0;
 	u32 ob_addr_1;
 	u32 ob_desc_0;
 	u32 aw_offset;
 
-	if (region_no >= MAX_AXI_WRAPPER_REGION_NUM)
-		return -EINVAL;
-	if (num_pass_bits + 1 < 8)
-		return -EINVAL;
-	if (num_pass_bits > 63)
-		return -EINVAL;
-	if (region_no == 0) {
-		if (AXI_REGION_0_SIZE < (2ULL << num_pass_bits))
-			return -EINVAL;
-	}
-	if (region_no != 0) {
-		if (AXI_REGION_SIZE < (2ULL << num_pass_bits))
-			return -EINVAL;
-	}
+	अगर (region_no >= MAX_AXI_WRAPPER_REGION_NUM)
+		वापस -EINVAL;
+	अगर (num_pass_bits + 1 < 8)
+		वापस -EINVAL;
+	अगर (num_pass_bits > 63)
+		वापस -EINVAL;
+	अगर (region_no == 0) अणु
+		अगर (AXI_REGION_0_SIZE < (2ULL << num_pass_bits))
+			वापस -EINVAL;
+	पूर्ण
+	अगर (region_no != 0) अणु
+		अगर (AXI_REGION_SIZE < (2ULL << num_pass_bits))
+			वापस -EINVAL;
+	पूर्ण
 
 	aw_offset = (region_no << OB_REG_SIZE_SHIFT);
 
@@ -743,32 +744,32 @@ static int rockchip_pcie_prog_ob_atu(struct rockchip_pcie *rockchip,
 	ob_addr_1 = upper_addr;
 	ob_desc_0 = (1 << 23 | type);
 
-	rockchip_pcie_write(rockchip, ob_addr_0,
+	rockchip_pcie_ग_लिखो(rockchip, ob_addr_0,
 			    PCIE_CORE_OB_REGION_ADDR0 + aw_offset);
-	rockchip_pcie_write(rockchip, ob_addr_1,
+	rockchip_pcie_ग_लिखो(rockchip, ob_addr_1,
 			    PCIE_CORE_OB_REGION_ADDR1 + aw_offset);
-	rockchip_pcie_write(rockchip, ob_desc_0,
+	rockchip_pcie_ग_लिखो(rockchip, ob_desc_0,
 			    PCIE_CORE_OB_REGION_DESC0 + aw_offset);
-	rockchip_pcie_write(rockchip, 0,
+	rockchip_pcie_ग_लिखो(rockchip, 0,
 			    PCIE_CORE_OB_REGION_DESC1 + aw_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_pcie_prog_ib_atu(struct rockchip_pcie *rockchip,
-				     int region_no, u8 num_pass_bits,
+अटल पूर्णांक rockchip_pcie_prog_ib_atu(काष्ठा rockchip_pcie *rockchip,
+				     पूर्णांक region_no, u8 num_pass_bits,
 				     u32 lower_addr, u32 upper_addr)
-{
+अणु
 	u32 ib_addr_0;
 	u32 ib_addr_1;
 	u32 aw_offset;
 
-	if (region_no > MAX_AXI_IB_ROOTPORT_REGION_NUM)
-		return -EINVAL;
-	if (num_pass_bits + 1 < MIN_AXI_ADDR_BITS_PASSED)
-		return -EINVAL;
-	if (num_pass_bits > 63)
-		return -EINVAL;
+	अगर (region_no > MAX_AXI_IB_ROOTPORT_REGION_NUM)
+		वापस -EINVAL;
+	अगर (num_pass_bits + 1 < MIN_AXI_ADDR_BITS_PASSED)
+		वापस -EINVAL;
+	अगर (num_pass_bits > 63)
+		वापस -EINVAL;
 
 	aw_offset = (region_no << IB_ROOT_PORT_REG_SIZE_SHIFT);
 
@@ -776,72 +777,72 @@ static int rockchip_pcie_prog_ib_atu(struct rockchip_pcie *rockchip,
 	ib_addr_0 |= (lower_addr << 8) & PCIE_CORE_IB_REGION_ADDR0_LO_ADDR;
 	ib_addr_1 = upper_addr;
 
-	rockchip_pcie_write(rockchip, ib_addr_0, PCIE_RP_IB_ADDR0 + aw_offset);
-	rockchip_pcie_write(rockchip, ib_addr_1, PCIE_RP_IB_ADDR1 + aw_offset);
+	rockchip_pcie_ग_लिखो(rockchip, ib_addr_0, PCIE_RP_IB_ADDR0 + aw_offset);
+	rockchip_pcie_ग_लिखो(rockchip, ib_addr_1, PCIE_RP_IB_ADDR1 + aw_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int rockchip_pcie_cfg_atu(struct rockchip_pcie *rockchip)
-{
-	struct device *dev = rockchip->dev;
-	struct pci_host_bridge *bridge = pci_host_bridge_from_priv(rockchip);
-	struct resource_entry *entry;
+अटल पूर्णांक rockchip_pcie_cfg_atu(काष्ठा rockchip_pcie *rockchip)
+अणु
+	काष्ठा device *dev = rockchip->dev;
+	काष्ठा pci_host_bridge *bridge = pci_host_bridge_from_priv(rockchip);
+	काष्ठा resource_entry *entry;
 	u64 pci_addr, size;
-	int offset;
-	int err;
-	int reg_no;
+	पूर्णांक offset;
+	पूर्णांक err;
+	पूर्णांक reg_no;
 
 	rockchip_pcie_cfg_configuration_accesses(rockchip,
 						 AXI_WRAPPER_TYPE0_CFG);
-	entry = resource_list_first_type(&bridge->windows, IORESOURCE_MEM);
-	if (!entry)
-		return -ENODEV;
+	entry = resource_list_first_type(&bridge->winकरोws, IORESOURCE_MEM);
+	अगर (!entry)
+		वापस -ENODEV;
 
 	size = resource_size(entry->res);
 	pci_addr = entry->res->start - entry->offset;
 	rockchip->msg_bus_addr = pci_addr;
 
-	for (reg_no = 0; reg_no < (size >> 20); reg_no++) {
+	क्रम (reg_no = 0; reg_no < (size >> 20); reg_no++) अणु
 		err = rockchip_pcie_prog_ob_atu(rockchip, reg_no + 1,
 						AXI_WRAPPER_MEM_WRITE,
 						20 - 1,
 						pci_addr + (reg_no << 20),
 						0);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "program RC mem outbound ATU failed\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	err = rockchip_pcie_prog_ib_atu(rockchip, 2, 32 - 1, 0x0, 0);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "program RC mem inbound ATU failed\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	entry = resource_list_first_type(&bridge->windows, IORESOURCE_IO);
-	if (!entry)
-		return -ENODEV;
+	entry = resource_list_first_type(&bridge->winकरोws, IORESOURCE_IO);
+	अगर (!entry)
+		वापस -ENODEV;
 
-	/* store the register number offset to program RC io outbound ATU */
+	/* store the रेजिस्टर number offset to program RC io outbound ATU */
 	offset = size >> 20;
 
 	size = resource_size(entry->res);
 	pci_addr = entry->res->start - entry->offset;
 
-	for (reg_no = 0; reg_no < (size >> 20); reg_no++) {
+	क्रम (reg_no = 0; reg_no < (size >> 20); reg_no++) अणु
 		err = rockchip_pcie_prog_ob_atu(rockchip,
 						reg_no + 1 + offset,
 						AXI_WRAPPER_IO_WRITE,
 						20 - 1,
 						pci_addr + (reg_no << 20),
 						0);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "program RC io outbound ATU failed\n");
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	/* assign message regions */
 	rockchip_pcie_prog_ob_atu(rockchip, reg_no + 1 + offset,
@@ -849,216 +850,216 @@ static int rockchip_pcie_cfg_atu(struct rockchip_pcie *rockchip)
 				  20 - 1, 0, 0);
 
 	rockchip->msg_bus_addr += ((reg_no + offset) << 20);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rockchip_pcie_wait_l2(struct rockchip_pcie *rockchip)
-{
+अटल पूर्णांक rockchip_pcie_रुको_l2(काष्ठा rockchip_pcie *rockchip)
+अणु
 	u32 value;
-	int err;
+	पूर्णांक err;
 
 	/* send PME_TURN_OFF message */
-	writel(0x0, rockchip->msg_region + PCIE_RC_SEND_PME_OFF);
+	ग_लिखोl(0x0, rockchip->msg_region + PCIE_RC_SEND_PME_OFF);
 
-	/* read LTSSM and wait for falling into L2 link state */
-	err = readl_poll_timeout(rockchip->apb_base + PCIE_CLIENT_DEBUG_OUT_0,
+	/* पढ़ो LTSSM and रुको क्रम falling पूर्णांकo L2 link state */
+	err = पढ़ोl_poll_समयout(rockchip->apb_base + PCIE_CLIENT_DEBUG_OUT_0,
 				 value, PCIE_LINK_IS_L2(value), 20,
-				 jiffies_to_usecs(5 * HZ));
-	if (err) {
+				 jअगरfies_to_usecs(5 * HZ));
+	अगर (err) अणु
 		dev_err(rockchip->dev, "PCIe link enter L2 timeout!\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused rockchip_pcie_suspend_noirq(struct device *dev)
-{
-	struct rockchip_pcie *rockchip = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक __maybe_unused rockchip_pcie_suspend_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा rockchip_pcie *rockchip = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	/* disable core and cli int since we don't need to ack PME_ACK */
-	rockchip_pcie_write(rockchip, (PCIE_CLIENT_INT_CLI << 16) |
+	/* disable core and cli पूर्णांक since we करोn't need to ack PME_ACK */
+	rockchip_pcie_ग_लिखो(rockchip, (PCIE_CLIENT_INT_CLI << 16) |
 			    PCIE_CLIENT_INT_CLI, PCIE_CLIENT_INT_MASK);
-	rockchip_pcie_write(rockchip, (u32)PCIE_CORE_INT, PCIE_CORE_INT_MASK);
+	rockchip_pcie_ग_लिखो(rockchip, (u32)PCIE_CORE_INT, PCIE_CORE_INT_MASK);
 
-	ret = rockchip_pcie_wait_l2(rockchip);
-	if (ret) {
-		rockchip_pcie_enable_interrupts(rockchip);
-		return ret;
-	}
+	ret = rockchip_pcie_रुको_l2(rockchip);
+	अगर (ret) अणु
+		rockchip_pcie_enable_पूर्णांकerrupts(rockchip);
+		वापस ret;
+	पूर्ण
 
 	rockchip_pcie_deinit_phys(rockchip);
 
-	rockchip_pcie_disable_clocks(rockchip);
+	rockchip_pcie_disable_घड़ीs(rockchip);
 
 	regulator_disable(rockchip->vpcie0v9);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __maybe_unused rockchip_pcie_resume_noirq(struct device *dev)
-{
-	struct rockchip_pcie *rockchip = dev_get_drvdata(dev);
-	int err;
+अटल पूर्णांक __maybe_unused rockchip_pcie_resume_noirq(काष्ठा device *dev)
+अणु
+	काष्ठा rockchip_pcie *rockchip = dev_get_drvdata(dev);
+	पूर्णांक err;
 
 	err = regulator_enable(rockchip->vpcie0v9);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "fail to enable vpcie0v9 regulator\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	err = rockchip_pcie_enable_clocks(rockchip);
-	if (err)
-		goto err_disable_0v9;
+	err = rockchip_pcie_enable_घड़ीs(rockchip);
+	अगर (err)
+		जाओ err_disable_0v9;
 
 	err = rockchip_pcie_host_init_port(rockchip);
-	if (err)
-		goto err_pcie_resume;
+	अगर (err)
+		जाओ err_pcie_resume;
 
 	err = rockchip_pcie_cfg_atu(rockchip);
-	if (err)
-		goto err_err_deinit_port;
+	अगर (err)
+		जाओ err_err_deinit_port;
 
 	/* Need this to enter L1 again */
 	rockchip_pcie_update_txcredit_mui(rockchip);
-	rockchip_pcie_enable_interrupts(rockchip);
+	rockchip_pcie_enable_पूर्णांकerrupts(rockchip);
 
-	return 0;
+	वापस 0;
 
 err_err_deinit_port:
 	rockchip_pcie_deinit_phys(rockchip);
 err_pcie_resume:
-	rockchip_pcie_disable_clocks(rockchip);
+	rockchip_pcie_disable_घड़ीs(rockchip);
 err_disable_0v9:
 	regulator_disable(rockchip->vpcie0v9);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rockchip_pcie_probe(struct platform_device *pdev)
-{
-	struct rockchip_pcie *rockchip;
-	struct device *dev = &pdev->dev;
-	struct pci_host_bridge *bridge;
-	int err;
+अटल पूर्णांक rockchip_pcie_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rockchip_pcie *rockchip;
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा pci_host_bridge *bridge;
+	पूर्णांक err;
 
-	if (!dev->of_node)
-		return -ENODEV;
+	अगर (!dev->of_node)
+		वापस -ENODEV;
 
-	bridge = devm_pci_alloc_host_bridge(dev, sizeof(*rockchip));
-	if (!bridge)
-		return -ENOMEM;
+	bridge = devm_pci_alloc_host_bridge(dev, माप(*rockchip));
+	अगर (!bridge)
+		वापस -ENOMEM;
 
 	rockchip = pci_host_bridge_priv(bridge);
 
-	platform_set_drvdata(pdev, rockchip);
+	platक्रमm_set_drvdata(pdev, rockchip);
 	rockchip->dev = dev;
 	rockchip->is_rc = true;
 
 	err = rockchip_pcie_parse_host_dt(rockchip);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	err = rockchip_pcie_enable_clocks(rockchip);
-	if (err)
-		return err;
+	err = rockchip_pcie_enable_घड़ीs(rockchip);
+	अगर (err)
+		वापस err;
 
 	err = rockchip_pcie_set_vpcie(rockchip);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "failed to set vpcie regulator\n");
-		goto err_set_vpcie;
-	}
+		जाओ err_set_vpcie;
+	पूर्ण
 
 	err = rockchip_pcie_host_init_port(rockchip);
-	if (err)
-		goto err_vpcie;
+	अगर (err)
+		जाओ err_vpcie;
 
-	rockchip_pcie_enable_interrupts(rockchip);
+	rockchip_pcie_enable_पूर्णांकerrupts(rockchip);
 
-	err = rockchip_pcie_init_irq_domain(rockchip);
-	if (err < 0)
-		goto err_deinit_port;
+	err = rockchip_pcie_init_irq_करोमुख्य(rockchip);
+	अगर (err < 0)
+		जाओ err_deinit_port;
 
 	err = rockchip_pcie_cfg_atu(rockchip);
-	if (err)
-		goto err_remove_irq_domain;
+	अगर (err)
+		जाओ err_हटाओ_irq_करोमुख्य;
 
 	rockchip->msg_region = devm_ioremap(dev, rockchip->msg_bus_addr, SZ_1M);
-	if (!rockchip->msg_region) {
+	अगर (!rockchip->msg_region) अणु
 		err = -ENOMEM;
-		goto err_remove_irq_domain;
-	}
+		जाओ err_हटाओ_irq_करोमुख्य;
+	पूर्ण
 
 	bridge->sysdata = rockchip;
 	bridge->ops = &rockchip_pcie_ops;
 
 	err = pci_host_probe(bridge);
-	if (err < 0)
-		goto err_remove_irq_domain;
+	अगर (err < 0)
+		जाओ err_हटाओ_irq_करोमुख्य;
 
-	return 0;
+	वापस 0;
 
-err_remove_irq_domain:
-	irq_domain_remove(rockchip->irq_domain);
+err_हटाओ_irq_करोमुख्य:
+	irq_करोमुख्य_हटाओ(rockchip->irq_करोमुख्य);
 err_deinit_port:
 	rockchip_pcie_deinit_phys(rockchip);
 err_vpcie:
-	if (!IS_ERR(rockchip->vpcie12v))
+	अगर (!IS_ERR(rockchip->vpcie12v))
 		regulator_disable(rockchip->vpcie12v);
-	if (!IS_ERR(rockchip->vpcie3v3))
+	अगर (!IS_ERR(rockchip->vpcie3v3))
 		regulator_disable(rockchip->vpcie3v3);
 	regulator_disable(rockchip->vpcie1v8);
 	regulator_disable(rockchip->vpcie0v9);
 err_set_vpcie:
-	rockchip_pcie_disable_clocks(rockchip);
-	return err;
-}
+	rockchip_pcie_disable_घड़ीs(rockchip);
+	वापस err;
+पूर्ण
 
-static int rockchip_pcie_remove(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct rockchip_pcie *rockchip = dev_get_drvdata(dev);
-	struct pci_host_bridge *bridge = pci_host_bridge_from_priv(rockchip);
+अटल पूर्णांक rockchip_pcie_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा rockchip_pcie *rockchip = dev_get_drvdata(dev);
+	काष्ठा pci_host_bridge *bridge = pci_host_bridge_from_priv(rockchip);
 
 	pci_stop_root_bus(bridge->bus);
-	pci_remove_root_bus(bridge->bus);
-	irq_domain_remove(rockchip->irq_domain);
+	pci_हटाओ_root_bus(bridge->bus);
+	irq_करोमुख्य_हटाओ(rockchip->irq_करोमुख्य);
 
 	rockchip_pcie_deinit_phys(rockchip);
 
-	rockchip_pcie_disable_clocks(rockchip);
+	rockchip_pcie_disable_घड़ीs(rockchip);
 
-	if (!IS_ERR(rockchip->vpcie12v))
+	अगर (!IS_ERR(rockchip->vpcie12v))
 		regulator_disable(rockchip->vpcie12v);
-	if (!IS_ERR(rockchip->vpcie3v3))
+	अगर (!IS_ERR(rockchip->vpcie3v3))
 		regulator_disable(rockchip->vpcie3v3);
 	regulator_disable(rockchip->vpcie1v8);
 	regulator_disable(rockchip->vpcie0v9);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops rockchip_pcie_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops rockchip_pcie_pm_ops = अणु
 	SET_NOIRQ_SYSTEM_SLEEP_PM_OPS(rockchip_pcie_suspend_noirq,
 				      rockchip_pcie_resume_noirq)
-};
+पूर्ण;
 
-static const struct of_device_id rockchip_pcie_of_match[] = {
-	{ .compatible = "rockchip,rk3399-pcie", },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id rockchip_pcie_of_match[] = अणु
+	अणु .compatible = "rockchip,rk3399-pcie", पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, rockchip_pcie_of_match);
 
-static struct platform_driver rockchip_pcie_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver rockchip_pcie_driver = अणु
+	.driver = अणु
 		.name = "rockchip-pcie",
 		.of_match_table = rockchip_pcie_of_match,
 		.pm = &rockchip_pcie_pm_ops,
-	},
+	पूर्ण,
 	.probe = rockchip_pcie_probe,
-	.remove = rockchip_pcie_remove,
-};
-module_platform_driver(rockchip_pcie_driver);
+	.हटाओ = rockchip_pcie_हटाओ,
+पूर्ण;
+module_platक्रमm_driver(rockchip_pcie_driver);
 
 MODULE_AUTHOR("Rockchip Inc");
 MODULE_DESCRIPTION("Rockchip AXI PCIe driver");

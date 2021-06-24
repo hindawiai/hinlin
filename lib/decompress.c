@@ -1,84 +1,85 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * decompress.c
  *
  * Detect the decompression method based on magic number
  */
 
-#include <linux/decompress/generic.h>
+#समावेश <linux/decompress/generic.h>
 
-#include <linux/decompress/bunzip2.h>
-#include <linux/decompress/unlzma.h>
-#include <linux/decompress/unxz.h>
-#include <linux/decompress/inflate.h>
-#include <linux/decompress/unlzo.h>
-#include <linux/decompress/unlz4.h>
-#include <linux/decompress/unzstd.h>
+#समावेश <linux/decompress/bunzip2.h>
+#समावेश <linux/decompress/unlzma.h>
+#समावेश <linux/decompress/unxz.h>
+#समावेश <linux/decompress/inflate.h>
+#समावेश <linux/decompress/unlzo.h>
+#समावेश <linux/decompress/unlz4.h>
+#समावेश <linux/decompress/unzstd.h>
 
-#include <linux/types.h>
-#include <linux/string.h>
-#include <linux/init.h>
-#include <linux/printk.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/init.h>
+#समावेश <linux/prपूर्णांकk.h>
 
-#ifndef CONFIG_DECOMPRESS_GZIP
-# define gunzip NULL
-#endif
-#ifndef CONFIG_DECOMPRESS_BZIP2
-# define bunzip2 NULL
-#endif
-#ifndef CONFIG_DECOMPRESS_LZMA
-# define unlzma NULL
-#endif
-#ifndef CONFIG_DECOMPRESS_XZ
-# define unxz NULL
-#endif
-#ifndef CONFIG_DECOMPRESS_LZO
-# define unlzo NULL
-#endif
-#ifndef CONFIG_DECOMPRESS_LZ4
-# define unlz4 NULL
-#endif
-#ifndef CONFIG_DECOMPRESS_ZSTD
-# define unzstd NULL
-#endif
+#अगर_अघोषित CONFIG_DECOMPRESS_GZIP
+# define gunzip शून्य
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_DECOMPRESS_BZIP2
+# define bunzip2 शून्य
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_DECOMPRESS_LZMA
+# define unlzma शून्य
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_DECOMPRESS_XZ
+# define unxz शून्य
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_DECOMPRESS_LZO
+# define unlzo शून्य
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_DECOMPRESS_LZ4
+# define unlz4 शून्य
+#पूर्ण_अगर
+#अगर_अघोषित CONFIG_DECOMPRESS_ZSTD
+# define unzstd शून्य
+#पूर्ण_अगर
 
-struct compress_format {
-	unsigned char magic[2];
-	const char *name;
+काष्ठा compress_क्रमmat अणु
+	अचिन्हित अक्षर magic[2];
+	स्थिर अक्षर *name;
 	decompress_fn decompressor;
-};
+पूर्ण;
 
-static const struct compress_format compressed_formats[] __initconst = {
-	{ {0x1f, 0x8b}, "gzip", gunzip },
-	{ {0x1f, 0x9e}, "gzip", gunzip },
-	{ {0x42, 0x5a}, "bzip2", bunzip2 },
-	{ {0x5d, 0x00}, "lzma", unlzma },
-	{ {0xfd, 0x37}, "xz", unxz },
-	{ {0x89, 0x4c}, "lzo", unlzo },
-	{ {0x02, 0x21}, "lz4", unlz4 },
-	{ {0x28, 0xb5}, "zstd", unzstd },
-	{ {0, 0}, NULL, NULL }
-};
+अटल स्थिर काष्ठा compress_क्रमmat compressed_क्रमmats[] __initस्थिर = अणु
+	अणु अणु0x1f, 0x8bपूर्ण, "gzip", gunzip पूर्ण,
+	अणु अणु0x1f, 0x9eपूर्ण, "gzip", gunzip पूर्ण,
+	अणु अणु0x42, 0x5aपूर्ण, "bzip2", bunzip2 पूर्ण,
+	अणु अणु0x5d, 0x00पूर्ण, "lzma", unlzma पूर्ण,
+	अणु अणु0xfd, 0x37पूर्ण, "xz", unxz पूर्ण,
+	अणु अणु0x89, 0x4cपूर्ण, "lzo", unlzo पूर्ण,
+	अणु अणु0x02, 0x21पूर्ण, "lz4", unlz4 पूर्ण,
+	अणु अणु0x28, 0xb5पूर्ण, "zstd", unzstd पूर्ण,
+	अणु अणु0, 0पूर्ण, शून्य, शून्य पूर्ण
+पूर्ण;
 
-decompress_fn __init decompress_method(const unsigned char *inbuf, long len,
-				const char **name)
-{
-	const struct compress_format *cf;
+decompress_fn __init decompress_method(स्थिर अचिन्हित अक्षर *inbuf, दीर्घ len,
+				स्थिर अक्षर **name)
+अणु
+	स्थिर काष्ठा compress_क्रमmat *cf;
 
-	if (len < 2) {
-		if (name)
-			*name = NULL;
-		return NULL;	/* Need at least this much... */
-	}
+	अगर (len < 2) अणु
+		अगर (name)
+			*name = शून्य;
+		वापस शून्य;	/* Need at least this much... */
+	पूर्ण
 
 	pr_debug("Compressed data magic: %#.2x %#.2x\n", inbuf[0], inbuf[1]);
 
-	for (cf = compressed_formats; cf->name; cf++) {
-		if (!memcmp(inbuf, cf->magic, 2))
-			break;
+	क्रम (cf = compressed_क्रमmats; cf->name; cf++) अणु
+		अगर (!स_भेद(inbuf, cf->magic, 2))
+			अवरोध;
 
-	}
-	if (name)
+	पूर्ण
+	अगर (name)
 		*name = cf->name;
-	return cf->decompressor;
-}
+	वापस cf->decompressor;
+पूर्ण

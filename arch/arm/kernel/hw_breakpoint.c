@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) 2009, 2010 ARM Limited
@@ -7,55 +8,55 @@
  */
 
 /*
- * HW_breakpoint: a unified kernel/user-space hardware breakpoint facility,
- * using the CPU's debug registers.
+ * HW_अवरोधpoपूर्णांक: a unअगरied kernel/user-space hardware अवरोधpoपूर्णांक facility,
+ * using the CPU's debug रेजिस्टरs.
  */
-#define pr_fmt(fmt) "hw-breakpoint: " fmt
+#घोषणा pr_fmt(fmt) "hw-breakpoint: " fmt
 
-#include <linux/errno.h>
-#include <linux/hardirq.h>
-#include <linux/perf_event.h>
-#include <linux/hw_breakpoint.h>
-#include <linux/smp.h>
-#include <linux/cpu_pm.h>
-#include <linux/coresight.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/hw_अवरोधpoपूर्णांक.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/cpu_pm.h>
+#समावेश <linux/coresight.h>
 
-#include <asm/cacheflush.h>
-#include <asm/cputype.h>
-#include <asm/current.h>
-#include <asm/hw_breakpoint.h>
-#include <asm/traps.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/cputype.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/hw_अवरोधpoपूर्णांक.h>
+#समावेश <यंत्र/traps.h>
 
-/* Breakpoint currently in use for each BRP. */
-static DEFINE_PER_CPU(struct perf_event *, bp_on_reg[ARM_MAX_BRP]);
+/* Breakpoपूर्णांक currently in use क्रम each BRP. */
+अटल DEFINE_PER_CPU(काष्ठा perf_event *, bp_on_reg[ARM_MAX_BRP]);
 
-/* Watchpoint currently in use for each WRP. */
-static DEFINE_PER_CPU(struct perf_event *, wp_on_reg[ARM_MAX_WRP]);
+/* Watchpoपूर्णांक currently in use क्रम each WRP. */
+अटल DEFINE_PER_CPU(काष्ठा perf_event *, wp_on_reg[ARM_MAX_WRP]);
 
-/* Number of BRP/WRP registers on this CPU. */
-static int core_num_brps __ro_after_init;
-static int core_num_wrps __ro_after_init;
+/* Number of BRP/WRP रेजिस्टरs on this CPU. */
+अटल पूर्णांक core_num_brps __ro_after_init;
+अटल पूर्णांक core_num_wrps __ro_after_init;
 
 /* Debug architecture version. */
-static u8 debug_arch __ro_after_init;
+अटल u8 debug_arch __ro_after_init;
 
 /* Does debug architecture support OS Save and Restore? */
-static bool has_ossr __ro_after_init;
+अटल bool has_ossr __ro_after_init;
 
-/* Maximum supported watchpoint length. */
-static u8 max_watchpoint_len __ro_after_init;
+/* Maximum supported watchpoपूर्णांक length. */
+अटल u8 max_watchpoपूर्णांक_len __ro_after_init;
 
-#define READ_WB_REG_CASE(OP2, M, VAL)			\
-	case ((OP2 << 4) + M):				\
+#घोषणा READ_WB_REG_CASE(OP2, M, VAL)			\
+	हाल ((OP2 << 4) + M):				\
 		ARM_DBG_READ(c0, c ## M, OP2, VAL);	\
-		break
+		अवरोध
 
-#define WRITE_WB_REG_CASE(OP2, M, VAL)			\
-	case ((OP2 << 4) + M):				\
+#घोषणा WRITE_WB_REG_CASE(OP2, M, VAL)			\
+	हाल ((OP2 << 4) + M):				\
 		ARM_DBG_WRITE(c0, c ## M, OP2, VAL);	\
-		break
+		अवरोध
 
-#define GEN_READ_WB_REG_CASES(OP2, VAL)		\
+#घोषणा GEN_READ_WB_REG_CASES(OP2, VAL)		\
 	READ_WB_REG_CASE(OP2, 0, VAL);		\
 	READ_WB_REG_CASE(OP2, 1, VAL);		\
 	READ_WB_REG_CASE(OP2, 2, VAL);		\
@@ -73,7 +74,7 @@ static u8 max_watchpoint_len __ro_after_init;
 	READ_WB_REG_CASE(OP2, 14, VAL);		\
 	READ_WB_REG_CASE(OP2, 15, VAL)
 
-#define GEN_WRITE_WB_REG_CASES(OP2, VAL)	\
+#घोषणा GEN_WRITE_WB_REG_CASES(OP2, VAL)	\
 	WRITE_WB_REG_CASE(OP2, 0, VAL);		\
 	WRITE_WB_REG_CASE(OP2, 1, VAL);		\
 	WRITE_WB_REG_CASE(OP2, 2, VAL);		\
@@ -91,484 +92,484 @@ static u8 max_watchpoint_len __ro_after_init;
 	WRITE_WB_REG_CASE(OP2, 14, VAL);	\
 	WRITE_WB_REG_CASE(OP2, 15, VAL)
 
-static u32 read_wb_reg(int n)
-{
+अटल u32 पढ़ो_wb_reg(पूर्णांक n)
+अणु
 	u32 val = 0;
 
-	switch (n) {
+	चयन (n) अणु
 	GEN_READ_WB_REG_CASES(ARM_OP2_BVR, val);
 	GEN_READ_WB_REG_CASES(ARM_OP2_BCR, val);
 	GEN_READ_WB_REG_CASES(ARM_OP2_WVR, val);
 	GEN_READ_WB_REG_CASES(ARM_OP2_WCR, val);
-	default:
+	शेष:
 		pr_warn("attempt to read from unknown breakpoint register %d\n",
 			n);
-	}
+	पूर्ण
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void write_wb_reg(int n, u32 val)
-{
-	switch (n) {
+अटल व्योम ग_लिखो_wb_reg(पूर्णांक n, u32 val)
+अणु
+	चयन (n) अणु
 	GEN_WRITE_WB_REG_CASES(ARM_OP2_BVR, val);
 	GEN_WRITE_WB_REG_CASES(ARM_OP2_BCR, val);
 	GEN_WRITE_WB_REG_CASES(ARM_OP2_WVR, val);
 	GEN_WRITE_WB_REG_CASES(ARM_OP2_WCR, val);
-	default:
+	शेष:
 		pr_warn("attempt to write to unknown breakpoint register %d\n",
 			n);
-	}
+	पूर्ण
 	isb();
-}
+पूर्ण
 
 /* Determine debug architecture. */
-static u8 get_debug_arch(void)
-{
+अटल u8 get_debug_arch(व्योम)
+अणु
 	u32 didr;
 
-	/* Do we implement the extended CPUID interface? */
-	if (((read_cpuid_id() >> 16) & 0xf) != 0xf) {
+	/* Do we implement the extended CPUID पूर्णांकerface? */
+	अगर (((पढ़ो_cpuid_id() >> 16) & 0xf) != 0xf) अणु
 		pr_warn_once("CPUID feature registers not supported. "
 			     "Assuming v6 debug is present.\n");
-		return ARM_DEBUG_ARCH_V6;
-	}
+		वापस ARM_DEBUG_ARCH_V6;
+	पूर्ण
 
 	ARM_DBG_READ(c0, c0, 0, didr);
-	return (didr >> 16) & 0xf;
-}
+	वापस (didr >> 16) & 0xf;
+पूर्ण
 
-u8 arch_get_debug_arch(void)
-{
-	return debug_arch;
-}
+u8 arch_get_debug_arch(व्योम)
+अणु
+	वापस debug_arch;
+पूर्ण
 
-static int debug_arch_supported(void)
-{
+अटल पूर्णांक debug_arch_supported(व्योम)
+अणु
 	u8 arch = get_debug_arch();
 
-	/* We don't support the memory-mapped interface. */
-	return (arch >= ARM_DEBUG_ARCH_V6 && arch <= ARM_DEBUG_ARCH_V7_ECP14) ||
+	/* We करोn't support the memory-mapped पूर्णांकerface. */
+	वापस (arch >= ARM_DEBUG_ARCH_V6 && arch <= ARM_DEBUG_ARCH_V7_ECP14) ||
 		arch >= ARM_DEBUG_ARCH_V7_1;
-}
+पूर्ण
 
-/* Can we determine the watchpoint access type from the fsr? */
-static int debug_exception_updates_fsr(void)
-{
-	return get_debug_arch() >= ARM_DEBUG_ARCH_V8;
-}
+/* Can we determine the watchpoपूर्णांक access type from the fsr? */
+अटल पूर्णांक debug_exception_updates_fsr(व्योम)
+अणु
+	वापस get_debug_arch() >= ARM_DEBUG_ARCH_V8;
+पूर्ण
 
-/* Determine number of WRP registers available. */
-static int get_num_wrp_resources(void)
-{
+/* Determine number of WRP रेजिस्टरs available. */
+अटल पूर्णांक get_num_wrp_resources(व्योम)
+अणु
 	u32 didr;
 	ARM_DBG_READ(c0, c0, 0, didr);
-	return ((didr >> 28) & 0xf) + 1;
-}
+	वापस ((didr >> 28) & 0xf) + 1;
+पूर्ण
 
-/* Determine number of BRP registers available. */
-static int get_num_brp_resources(void)
-{
+/* Determine number of BRP रेजिस्टरs available. */
+अटल पूर्णांक get_num_brp_resources(व्योम)
+अणु
 	u32 didr;
 	ARM_DBG_READ(c0, c0, 0, didr);
-	return ((didr >> 24) & 0xf) + 1;
-}
+	वापस ((didr >> 24) & 0xf) + 1;
+पूर्ण
 
-/* Does this core support mismatch breakpoints? */
-static int core_has_mismatch_brps(void)
-{
-	return (get_debug_arch() >= ARM_DEBUG_ARCH_V7_ECP14 &&
+/* Does this core support mismatch अवरोधpoपूर्णांकs? */
+अटल पूर्णांक core_has_mismatch_brps(व्योम)
+अणु
+	वापस (get_debug_arch() >= ARM_DEBUG_ARCH_V7_ECP14 &&
 		get_num_brp_resources() > 1);
-}
+पूर्ण
 
 /* Determine number of usable WRPs available. */
-static int get_num_wrps(void)
-{
+अटल पूर्णांक get_num_wrps(व्योम)
+अणु
 	/*
-	 * On debug architectures prior to 7.1, when a watchpoint fires, the
-	 * only way to work out which watchpoint it was is by disassembling
-	 * the faulting instruction and working out the address of the memory
+	 * On debug architectures prior to 7.1, when a watchpoपूर्णांक fires, the
+	 * only way to work out which watchpoपूर्णांक it was is by disassembling
+	 * the faulting inकाष्ठाion and working out the address of the memory
 	 * access.
 	 *
-	 * Furthermore, we can only do this if the watchpoint was precise
-	 * since imprecise watchpoints prevent us from calculating register
+	 * Furthermore, we can only करो this अगर the watchpoपूर्णांक was precise
+	 * since imprecise watchpoपूर्णांकs prevent us from calculating रेजिस्टर
 	 * based addresses.
 	 *
-	 * Providing we have more than 1 breakpoint register, we only report
-	 * a single watchpoint register for the time being. This way, we always
-	 * know which watchpoint fired. In the future we can either add a
+	 * Providing we have more than 1 अवरोधpoपूर्णांक रेजिस्टर, we only report
+	 * a single watchpoपूर्णांक रेजिस्टर क्रम the समय being. This way, we always
+	 * know which watchpoपूर्णांक fired. In the future we can either add a
 	 * disassembler and address generation emulator, or we can insert a
-	 * check to see if the DFAR is set on watchpoint exception entry
+	 * check to see अगर the DFAR is set on watchpoपूर्णांक exception entry
 	 * [the ARM ARM states that the DFAR is UNKNOWN, but experience shows
 	 * that it is set on some implementations].
 	 */
-	if (get_debug_arch() < ARM_DEBUG_ARCH_V7_1)
-		return 1;
+	अगर (get_debug_arch() < ARM_DEBUG_ARCH_V7_1)
+		वापस 1;
 
-	return get_num_wrp_resources();
-}
+	वापस get_num_wrp_resources();
+पूर्ण
 
 /* Determine number of usable BRPs available. */
-static int get_num_brps(void)
-{
-	int brps = get_num_brp_resources();
-	return core_has_mismatch_brps() ? brps - 1 : brps;
-}
+अटल पूर्णांक get_num_brps(व्योम)
+अणु
+	पूर्णांक brps = get_num_brp_resources();
+	वापस core_has_mismatch_brps() ? brps - 1 : brps;
+पूर्ण
 
 /*
- * In order to access the breakpoint/watchpoint control registers,
- * we must be running in debug monitor mode. Unfortunately, we can
- * be put into halting debug mode at any time by an external debugger
- * but there is nothing we can do to prevent that.
+ * In order to access the अवरोधpoपूर्णांक/watchpoपूर्णांक control रेजिस्टरs,
+ * we must be running in debug monitor mode. Unक्रमtunately, we can
+ * be put पूर्णांकo halting debug mode at any समय by an बाह्यal debugger
+ * but there is nothing we can करो to prevent that.
  */
-static int monitor_mode_enabled(void)
-{
+अटल पूर्णांक monitor_mode_enabled(व्योम)
+अणु
 	u32 dscr;
 	ARM_DBG_READ(c0, c1, 0, dscr);
-	return !!(dscr & ARM_DSCR_MDBGEN);
-}
+	वापस !!(dscr & ARM_DSCR_MDBGEN);
+पूर्ण
 
-static int enable_monitor_mode(void)
-{
+अटल पूर्णांक enable_monitor_mode(व्योम)
+अणु
 	u32 dscr;
 	ARM_DBG_READ(c0, c1, 0, dscr);
 
-	/* If monitor mode is already enabled, just return. */
-	if (dscr & ARM_DSCR_MDBGEN)
-		goto out;
+	/* If monitor mode is alपढ़ोy enabled, just वापस. */
+	अगर (dscr & ARM_DSCR_MDBGEN)
+		जाओ out;
 
 	/* Write to the corresponding DSCR. */
-	switch (get_debug_arch()) {
-	case ARM_DEBUG_ARCH_V6:
-	case ARM_DEBUG_ARCH_V6_1:
+	चयन (get_debug_arch()) अणु
+	हाल ARM_DEBUG_ARCH_V6:
+	हाल ARM_DEBUG_ARCH_V6_1:
 		ARM_DBG_WRITE(c0, c1, 0, (dscr | ARM_DSCR_MDBGEN));
-		break;
-	case ARM_DEBUG_ARCH_V7_ECP14:
-	case ARM_DEBUG_ARCH_V7_1:
-	case ARM_DEBUG_ARCH_V8:
-	case ARM_DEBUG_ARCH_V8_1:
-	case ARM_DEBUG_ARCH_V8_2:
-	case ARM_DEBUG_ARCH_V8_4:
+		अवरोध;
+	हाल ARM_DEBUG_ARCH_V7_ECP14:
+	हाल ARM_DEBUG_ARCH_V7_1:
+	हाल ARM_DEBUG_ARCH_V8:
+	हाल ARM_DEBUG_ARCH_V8_1:
+	हाल ARM_DEBUG_ARCH_V8_2:
+	हाल ARM_DEBUG_ARCH_V8_4:
 		ARM_DBG_WRITE(c0, c2, 2, (dscr | ARM_DSCR_MDBGEN));
 		isb();
-		break;
-	default:
-		return -ENODEV;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Check that the write made it through. */
+	/* Check that the ग_लिखो made it through. */
 	ARM_DBG_READ(c0, c1, 0, dscr);
-	if (!(dscr & ARM_DSCR_MDBGEN)) {
+	अगर (!(dscr & ARM_DSCR_MDBGEN)) अणु
 		pr_warn_once("Failed to enable monitor mode on CPU %d.\n",
 				smp_processor_id());
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 out:
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int hw_breakpoint_slots(int type)
-{
-	if (!debug_arch_supported())
-		return 0;
+पूर्णांक hw_अवरोधpoपूर्णांक_slots(पूर्णांक type)
+अणु
+	अगर (!debug_arch_supported())
+		वापस 0;
 
 	/*
-	 * We can be called early, so don't rely on
-	 * our static variables being initialised.
+	 * We can be called early, so करोn't rely on
+	 * our अटल variables being initialised.
 	 */
-	switch (type) {
-	case TYPE_INST:
-		return get_num_brps();
-	case TYPE_DATA:
-		return get_num_wrps();
-	default:
+	चयन (type) अणु
+	हाल TYPE_INST:
+		वापस get_num_brps();
+	हाल TYPE_DATA:
+		वापस get_num_wrps();
+	शेष:
 		pr_warn("unknown slot type: %d\n", type);
-		return 0;
-	}
-}
+		वापस 0;
+	पूर्ण
+पूर्ण
 
 /*
- * Check if 8-bit byte-address select is available.
+ * Check अगर 8-bit byte-address select is available.
  * This clobbers WRP 0.
  */
-static u8 get_max_wp_len(void)
-{
+अटल u8 get_max_wp_len(व्योम)
+अणु
 	u32 ctrl_reg;
-	struct arch_hw_breakpoint_ctrl ctrl;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl ctrl;
 	u8 size = 4;
 
-	if (debug_arch < ARM_DEBUG_ARCH_V7_ECP14)
-		goto out;
+	अगर (debug_arch < ARM_DEBUG_ARCH_V7_ECP14)
+		जाओ out;
 
-	memset(&ctrl, 0, sizeof(ctrl));
+	स_रखो(&ctrl, 0, माप(ctrl));
 	ctrl.len = ARM_BREAKPOINT_LEN_8;
 	ctrl_reg = encode_ctrl_reg(ctrl);
 
-	write_wb_reg(ARM_BASE_WVR, 0);
-	write_wb_reg(ARM_BASE_WCR, ctrl_reg);
-	if ((read_wb_reg(ARM_BASE_WCR) & ctrl_reg) == ctrl_reg)
+	ग_लिखो_wb_reg(ARM_BASE_WVR, 0);
+	ग_लिखो_wb_reg(ARM_BASE_WCR, ctrl_reg);
+	अगर ((पढ़ो_wb_reg(ARM_BASE_WCR) & ctrl_reg) == ctrl_reg)
 		size = 8;
 
 out:
-	return size;
-}
+	वापस size;
+पूर्ण
 
-u8 arch_get_max_wp_len(void)
-{
-	return max_watchpoint_len;
-}
+u8 arch_get_max_wp_len(व्योम)
+अणु
+	वापस max_watchpoपूर्णांक_len;
+पूर्ण
 
 /*
- * Install a perf counter breakpoint.
+ * Install a perf counter अवरोधpoपूर्णांक.
  */
-int arch_install_hw_breakpoint(struct perf_event *bp)
-{
-	struct arch_hw_breakpoint *info = counter_arch_bp(bp);
-	struct perf_event **slot, **slots;
-	int i, max_slots, ctrl_base, val_base;
+पूर्णांक arch_install_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info = counter_arch_bp(bp);
+	काष्ठा perf_event **slot, **slots;
+	पूर्णांक i, max_slots, ctrl_base, val_base;
 	u32 addr, ctrl;
 
 	addr = info->address;
 	ctrl = encode_ctrl_reg(info->ctrl) | 0x1;
 
-	if (info->ctrl.type == ARM_BREAKPOINT_EXECUTE) {
-		/* Breakpoint */
+	अगर (info->ctrl.type == ARM_BREAKPOINT_EXECUTE) अणु
+		/* Breakpoपूर्णांक */
 		ctrl_base = ARM_BASE_BCR;
 		val_base = ARM_BASE_BVR;
 		slots = this_cpu_ptr(bp_on_reg);
 		max_slots = core_num_brps;
-	} else {
-		/* Watchpoint */
+	पूर्ण अन्यथा अणु
+		/* Watchpoपूर्णांक */
 		ctrl_base = ARM_BASE_WCR;
 		val_base = ARM_BASE_WVR;
 		slots = this_cpu_ptr(wp_on_reg);
 		max_slots = core_num_wrps;
-	}
+	पूर्ण
 
-	for (i = 0; i < max_slots; ++i) {
+	क्रम (i = 0; i < max_slots; ++i) अणु
 		slot = &slots[i];
 
-		if (!*slot) {
+		अगर (!*slot) अणु
 			*slot = bp;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == max_slots) {
+	अगर (i == max_slots) अणु
 		pr_warn("Can't find any breakpoint slot\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	/* Override the breakpoint data with the step data. */
-	if (info->step_ctrl.enabled) {
+	/* Override the अवरोधpoपूर्णांक data with the step data. */
+	अगर (info->step_ctrl.enabled) अणु
 		addr = info->trigger & ~0x3;
 		ctrl = encode_ctrl_reg(info->step_ctrl);
-		if (info->ctrl.type != ARM_BREAKPOINT_EXECUTE) {
+		अगर (info->ctrl.type != ARM_BREAKPOINT_EXECUTE) अणु
 			i = 0;
 			ctrl_base = ARM_BASE_BCR + core_num_brps;
 			val_base = ARM_BASE_BVR + core_num_brps;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* Setup the address register. */
-	write_wb_reg(val_base + i, addr);
+	/* Setup the address रेजिस्टर. */
+	ग_लिखो_wb_reg(val_base + i, addr);
 
-	/* Setup the control register. */
-	write_wb_reg(ctrl_base + i, ctrl);
-	return 0;
-}
+	/* Setup the control रेजिस्टर. */
+	ग_लिखो_wb_reg(ctrl_base + i, ctrl);
+	वापस 0;
+पूर्ण
 
-void arch_uninstall_hw_breakpoint(struct perf_event *bp)
-{
-	struct arch_hw_breakpoint *info = counter_arch_bp(bp);
-	struct perf_event **slot, **slots;
-	int i, max_slots, base;
+व्योम arch_uninstall_hw_अवरोधpoपूर्णांक(काष्ठा perf_event *bp)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info = counter_arch_bp(bp);
+	काष्ठा perf_event **slot, **slots;
+	पूर्णांक i, max_slots, base;
 
-	if (info->ctrl.type == ARM_BREAKPOINT_EXECUTE) {
-		/* Breakpoint */
+	अगर (info->ctrl.type == ARM_BREAKPOINT_EXECUTE) अणु
+		/* Breakpoपूर्णांक */
 		base = ARM_BASE_BCR;
 		slots = this_cpu_ptr(bp_on_reg);
 		max_slots = core_num_brps;
-	} else {
-		/* Watchpoint */
+	पूर्ण अन्यथा अणु
+		/* Watchpoपूर्णांक */
 		base = ARM_BASE_WCR;
 		slots = this_cpu_ptr(wp_on_reg);
 		max_slots = core_num_wrps;
-	}
+	पूर्ण
 
-	/* Remove the breakpoint. */
-	for (i = 0; i < max_slots; ++i) {
+	/* Remove the अवरोधpoपूर्णांक. */
+	क्रम (i = 0; i < max_slots; ++i) अणु
 		slot = &slots[i];
 
-		if (*slot == bp) {
-			*slot = NULL;
-			break;
-		}
-	}
+		अगर (*slot == bp) अणु
+			*slot = शून्य;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (i == max_slots) {
+	अगर (i == max_slots) अणु
 		pr_warn("Can't find any breakpoint slot\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Ensure that we disable the mismatch breakpoint. */
-	if (info->ctrl.type != ARM_BREAKPOINT_EXECUTE &&
-	    info->step_ctrl.enabled) {
+	/* Ensure that we disable the mismatch अवरोधpoपूर्णांक. */
+	अगर (info->ctrl.type != ARM_BREAKPOINT_EXECUTE &&
+	    info->step_ctrl.enabled) अणु
 		i = 0;
 		base = ARM_BASE_BCR + core_num_brps;
-	}
+	पूर्ण
 
-	/* Reset the control register. */
-	write_wb_reg(base + i, 0);
-}
+	/* Reset the control रेजिस्टर. */
+	ग_लिखो_wb_reg(base + i, 0);
+पूर्ण
 
-static int get_hbp_len(u8 hbp_len)
-{
-	unsigned int len_in_bytes = 0;
+अटल पूर्णांक get_hbp_len(u8 hbp_len)
+अणु
+	अचिन्हित पूर्णांक len_in_bytes = 0;
 
-	switch (hbp_len) {
-	case ARM_BREAKPOINT_LEN_1:
+	चयन (hbp_len) अणु
+	हाल ARM_BREAKPOINT_LEN_1:
 		len_in_bytes = 1;
-		break;
-	case ARM_BREAKPOINT_LEN_2:
+		अवरोध;
+	हाल ARM_BREAKPOINT_LEN_2:
 		len_in_bytes = 2;
-		break;
-	case ARM_BREAKPOINT_LEN_4:
+		अवरोध;
+	हाल ARM_BREAKPOINT_LEN_4:
 		len_in_bytes = 4;
-		break;
-	case ARM_BREAKPOINT_LEN_8:
+		अवरोध;
+	हाल ARM_BREAKPOINT_LEN_8:
 		len_in_bytes = 8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return len_in_bytes;
-}
+	वापस len_in_bytes;
+पूर्ण
 
 /*
- * Check whether bp virtual address is in kernel space.
+ * Check whether bp भव address is in kernel space.
  */
-int arch_check_bp_in_kernelspace(struct arch_hw_breakpoint *hw)
-{
-	unsigned int len;
-	unsigned long va;
+पूर्णांक arch_check_bp_in_kernelspace(काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
+	अचिन्हित पूर्णांक len;
+	अचिन्हित दीर्घ va;
 
 	va = hw->address;
 	len = get_hbp_len(hw->ctrl.len);
 
-	return (va >= TASK_SIZE) && ((va + len - 1) >= TASK_SIZE);
-}
+	वापस (va >= TASK_SIZE) && ((va + len - 1) >= TASK_SIZE);
+पूर्ण
 
 /*
- * Extract generic type and length encodings from an arch_hw_breakpoint_ctrl.
+ * Extract generic type and length encodings from an arch_hw_अवरोधpoपूर्णांक_ctrl.
  * Hopefully this will disappear when ptrace can bypass the conversion
- * to generic breakpoint descriptions.
+ * to generic अवरोधpoपूर्णांक descriptions.
  */
-int arch_bp_generic_fields(struct arch_hw_breakpoint_ctrl ctrl,
-			   int *gen_len, int *gen_type)
-{
+पूर्णांक arch_bp_generic_fields(काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl ctrl,
+			   पूर्णांक *gen_len, पूर्णांक *gen_type)
+अणु
 	/* Type */
-	switch (ctrl.type) {
-	case ARM_BREAKPOINT_EXECUTE:
+	चयन (ctrl.type) अणु
+	हाल ARM_BREAKPOINT_EXECUTE:
 		*gen_type = HW_BREAKPOINT_X;
-		break;
-	case ARM_BREAKPOINT_LOAD:
+		अवरोध;
+	हाल ARM_BREAKPOINT_LOAD:
 		*gen_type = HW_BREAKPOINT_R;
-		break;
-	case ARM_BREAKPOINT_STORE:
+		अवरोध;
+	हाल ARM_BREAKPOINT_STORE:
 		*gen_type = HW_BREAKPOINT_W;
-		break;
-	case ARM_BREAKPOINT_LOAD | ARM_BREAKPOINT_STORE:
+		अवरोध;
+	हाल ARM_BREAKPOINT_LOAD | ARM_BREAKPOINT_STORE:
 		*gen_type = HW_BREAKPOINT_RW;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Len */
-	switch (ctrl.len) {
-	case ARM_BREAKPOINT_LEN_1:
+	चयन (ctrl.len) अणु
+	हाल ARM_BREAKPOINT_LEN_1:
 		*gen_len = HW_BREAKPOINT_LEN_1;
-		break;
-	case ARM_BREAKPOINT_LEN_2:
+		अवरोध;
+	हाल ARM_BREAKPOINT_LEN_2:
 		*gen_len = HW_BREAKPOINT_LEN_2;
-		break;
-	case ARM_BREAKPOINT_LEN_4:
+		अवरोध;
+	हाल ARM_BREAKPOINT_LEN_4:
 		*gen_len = HW_BREAKPOINT_LEN_4;
-		break;
-	case ARM_BREAKPOINT_LEN_8:
+		अवरोध;
+	हाल ARM_BREAKPOINT_LEN_8:
 		*gen_len = HW_BREAKPOINT_LEN_8;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Construct an arch_hw_breakpoint from a perf_event.
+ * Conकाष्ठा an arch_hw_अवरोधpoपूर्णांक from a perf_event.
  */
-static int arch_build_bp_info(struct perf_event *bp,
-			      const struct perf_event_attr *attr,
-			      struct arch_hw_breakpoint *hw)
-{
+अटल पूर्णांक arch_build_bp_info(काष्ठा perf_event *bp,
+			      स्थिर काष्ठा perf_event_attr *attr,
+			      काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
 	/* Type */
-	switch (attr->bp_type) {
-	case HW_BREAKPOINT_X:
+	चयन (attr->bp_type) अणु
+	हाल HW_BREAKPOINT_X:
 		hw->ctrl.type = ARM_BREAKPOINT_EXECUTE;
-		break;
-	case HW_BREAKPOINT_R:
+		अवरोध;
+	हाल HW_BREAKPOINT_R:
 		hw->ctrl.type = ARM_BREAKPOINT_LOAD;
-		break;
-	case HW_BREAKPOINT_W:
+		अवरोध;
+	हाल HW_BREAKPOINT_W:
 		hw->ctrl.type = ARM_BREAKPOINT_STORE;
-		break;
-	case HW_BREAKPOINT_RW:
+		अवरोध;
+	हाल HW_BREAKPOINT_RW:
 		hw->ctrl.type = ARM_BREAKPOINT_LOAD | ARM_BREAKPOINT_STORE;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Len */
-	switch (attr->bp_len) {
-	case HW_BREAKPOINT_LEN_1:
+	चयन (attr->bp_len) अणु
+	हाल HW_BREAKPOINT_LEN_1:
 		hw->ctrl.len = ARM_BREAKPOINT_LEN_1;
-		break;
-	case HW_BREAKPOINT_LEN_2:
+		अवरोध;
+	हाल HW_BREAKPOINT_LEN_2:
 		hw->ctrl.len = ARM_BREAKPOINT_LEN_2;
-		break;
-	case HW_BREAKPOINT_LEN_4:
+		अवरोध;
+	हाल HW_BREAKPOINT_LEN_4:
 		hw->ctrl.len = ARM_BREAKPOINT_LEN_4;
-		break;
-	case HW_BREAKPOINT_LEN_8:
+		अवरोध;
+	हाल HW_BREAKPOINT_LEN_8:
 		hw->ctrl.len = ARM_BREAKPOINT_LEN_8;
-		if ((hw->ctrl.type != ARM_BREAKPOINT_EXECUTE)
-			&& max_watchpoint_len >= 8)
-			break;
+		अगर ((hw->ctrl.type != ARM_BREAKPOINT_EXECUTE)
+			&& max_watchpoपूर्णांक_len >= 8)
+			अवरोध;
 		fallthrough;
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Breakpoints must be of length 2 (thumb) or 4 (ARM) bytes.
-	 * Watchpoints can be of length 1, 2, 4 or 8 bytes if supported
+	 * Breakpoपूर्णांकs must be of length 2 (thumb) or 4 (ARM) bytes.
+	 * Watchpoपूर्णांकs can be of length 1, 2, 4 or 8 bytes अगर supported
 	 * by the hardware and must be aligned to the appropriate number of
 	 * bytes.
 	 */
-	if (hw->ctrl.type == ARM_BREAKPOINT_EXECUTE &&
+	अगर (hw->ctrl.type == ARM_BREAKPOINT_EXECUTE &&
 	    hw->ctrl.len != ARM_BREAKPOINT_LEN_2 &&
 	    hw->ctrl.len != ARM_BREAKPOINT_LEN_4)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Address */
 	hw->address = attr->bp_addr;
 
 	/* Privilege */
 	hw->ctrl.privilege = ARM_BREAKPOINT_USER;
-	if (arch_check_bp_in_kernelspace(hw))
+	अगर (arch_check_bp_in_kernelspace(hw))
 		hw->ctrl.privilege |= ARM_BREAKPOINT_PRIV;
 
 	/* Enabled? */
@@ -577,130 +578,130 @@ static int arch_build_bp_info(struct perf_event *bp,
 	/* Mismatch */
 	hw->ctrl.mismatch = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Validate the arch-specific HW Breakpoint register settings.
+ * Validate the arch-specअगरic HW Breakpoपूर्णांक रेजिस्टर settings.
  */
-int hw_breakpoint_arch_parse(struct perf_event *bp,
-			     const struct perf_event_attr *attr,
-			     struct arch_hw_breakpoint *hw)
-{
-	int ret = 0;
+पूर्णांक hw_अवरोधpoपूर्णांक_arch_parse(काष्ठा perf_event *bp,
+			     स्थिर काष्ठा perf_event_attr *attr,
+			     काष्ठा arch_hw_अवरोधpoपूर्णांक *hw)
+अणु
+	पूर्णांक ret = 0;
 	u32 offset, alignment_mask = 0x3;
 
 	/* Ensure that we are in monitor debug mode. */
-	if (!monitor_mode_enabled())
-		return -ENODEV;
+	अगर (!monitor_mode_enabled())
+		वापस -ENODEV;
 
-	/* Build the arch_hw_breakpoint. */
+	/* Build the arch_hw_अवरोधpoपूर्णांक. */
 	ret = arch_build_bp_info(bp, attr, hw);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	/* Check address alignment. */
-	if (hw->ctrl.len == ARM_BREAKPOINT_LEN_8)
+	अगर (hw->ctrl.len == ARM_BREAKPOINT_LEN_8)
 		alignment_mask = 0x7;
 	offset = hw->address & alignment_mask;
-	switch (offset) {
-	case 0:
+	चयन (offset) अणु
+	हाल 0:
 		/* Aligned */
-		break;
-	case 1:
-	case 2:
-		/* Allow halfword watchpoints and breakpoints. */
-		if (hw->ctrl.len == ARM_BREAKPOINT_LEN_2)
-			break;
+		अवरोध;
+	हाल 1:
+	हाल 2:
+		/* Allow halfword watchpoपूर्णांकs and अवरोधpoपूर्णांकs. */
+		अगर (hw->ctrl.len == ARM_BREAKPOINT_LEN_2)
+			अवरोध;
 		fallthrough;
-	case 3:
-		/* Allow single byte watchpoint. */
-		if (hw->ctrl.len == ARM_BREAKPOINT_LEN_1)
-			break;
+	हाल 3:
+		/* Allow single byte watchpoपूर्णांक. */
+		अगर (hw->ctrl.len == ARM_BREAKPOINT_LEN_1)
+			अवरोध;
 		fallthrough;
-	default:
+	शेष:
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hw->address &= ~alignment_mask;
 	hw->ctrl.len <<= offset;
 
-	if (is_default_overflow_handler(bp)) {
+	अगर (is_शेष_overflow_handler(bp)) अणु
 		/*
-		 * Mismatch breakpoints are required for single-stepping
-		 * breakpoints.
+		 * Mismatch अवरोधpoपूर्णांकs are required क्रम single-stepping
+		 * अवरोधpoपूर्णांकs.
 		 */
-		if (!core_has_mismatch_brps())
-			return -EINVAL;
+		अगर (!core_has_mismatch_brps())
+			वापस -EINVAL;
 
-		/* We don't allow mismatch breakpoints in kernel space. */
-		if (arch_check_bp_in_kernelspace(hw))
-			return -EPERM;
+		/* We करोn't allow mismatch अवरोधpoपूर्णांकs in kernel space. */
+		अगर (arch_check_bp_in_kernelspace(hw))
+			वापस -EPERM;
 
 		/*
-		 * Per-cpu breakpoints are not supported by our stepping
+		 * Per-cpu अवरोधpoपूर्णांकs are not supported by our stepping
 		 * mechanism.
 		 */
-		if (!bp->hw.target)
-			return -EINVAL;
+		अगर (!bp->hw.target)
+			वापस -EINVAL;
 
 		/*
-		 * We only support specific access types if the fsr
+		 * We only support specअगरic access types अगर the fsr
 		 * reports them.
 		 */
-		if (!debug_exception_updates_fsr() &&
+		अगर (!debug_exception_updates_fsr() &&
 		    (hw->ctrl.type == ARM_BREAKPOINT_LOAD ||
 		     hw->ctrl.type == ARM_BREAKPOINT_STORE))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Enable/disable single-stepping over the breakpoint bp at address addr.
+ * Enable/disable single-stepping over the अवरोधpoपूर्णांक bp at address addr.
  */
-static void enable_single_step(struct perf_event *bp, u32 addr)
-{
-	struct arch_hw_breakpoint *info = counter_arch_bp(bp);
+अटल व्योम enable_single_step(काष्ठा perf_event *bp, u32 addr)
+अणु
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info = counter_arch_bp(bp);
 
-	arch_uninstall_hw_breakpoint(bp);
+	arch_uninstall_hw_अवरोधpoपूर्णांक(bp);
 	info->step_ctrl.mismatch  = 1;
 	info->step_ctrl.len	  = ARM_BREAKPOINT_LEN_4;
 	info->step_ctrl.type	  = ARM_BREAKPOINT_EXECUTE;
 	info->step_ctrl.privilege = info->ctrl.privilege;
 	info->step_ctrl.enabled	  = 1;
 	info->trigger		  = addr;
-	arch_install_hw_breakpoint(bp);
-}
+	arch_install_hw_अवरोधpoपूर्णांक(bp);
+पूर्ण
 
-static void disable_single_step(struct perf_event *bp)
-{
-	arch_uninstall_hw_breakpoint(bp);
+अटल व्योम disable_single_step(काष्ठा perf_event *bp)
+अणु
+	arch_uninstall_hw_अवरोधpoपूर्णांक(bp);
 	counter_arch_bp(bp)->step_ctrl.enabled = 0;
-	arch_install_hw_breakpoint(bp);
-}
+	arch_install_hw_अवरोधpoपूर्णांक(bp);
+पूर्ण
 
 /*
- * Arm32 hardware does not always report a watchpoint hit address that matches
- * one of the watchpoints set. It can also report an address "near" the
- * watchpoint if a single instruction access both watched and unwatched
- * addresses. There is no straight-forward way, short of disassembling the
- * offending instruction, to map that address back to the watchpoint. This
- * function computes the distance of the memory access from the watchpoint as a
- * heuristic for the likelyhood that a given access triggered the watchpoint.
+ * Arm32 hardware करोes not always report a watchpoपूर्णांक hit address that matches
+ * one of the watchpoपूर्णांकs set. It can also report an address "near" the
+ * watchpoपूर्णांक अगर a single inकाष्ठाion access both watched and unwatched
+ * addresses. There is no straight-क्रमward way, लघु of disassembling the
+ * offending inकाष्ठाion, to map that address back to the watchpoपूर्णांक. This
+ * function computes the distance of the memory access from the watchpoपूर्णांक as a
+ * heuristic क्रम the likelyhood that a given access triggered the watchpoपूर्णांक.
  *
- * See this same function in the arm64 platform code, which has the same
+ * See this same function in the arm64 platक्रमm code, which has the same
  * problem.
  *
- * The function returns the distance of the address from the bytes watched by
- * the watchpoint. In case of an exact match, it returns 0.
+ * The function वापसs the distance of the address from the bytes watched by
+ * the watchpoपूर्णांक. In हाल of an exact match, it वापसs 0.
  */
-static u32 get_distance_from_watchpoint(unsigned long addr, u32 val,
-					struct arch_hw_breakpoint_ctrl *ctrl)
-{
+अटल u32 get_distance_from_watchpoपूर्णांक(अचिन्हित दीर्घ addr, u32 val,
+					काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl *ctrl)
+अणु
 	u32 wp_low, wp_high;
 	u32 lens, lene;
 
@@ -709,433 +710,433 @@ static u32 get_distance_from_watchpoint(unsigned long addr, u32 val,
 
 	wp_low = val + lens;
 	wp_high = val + lene;
-	if (addr < wp_low)
-		return wp_low - addr;
-	else if (addr > wp_high)
-		return addr - wp_high;
-	else
-		return 0;
-}
+	अगर (addr < wp_low)
+		वापस wp_low - addr;
+	अन्यथा अगर (addr > wp_high)
+		वापस addr - wp_high;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-static int watchpoint_fault_on_uaccess(struct pt_regs *regs,
-				       struct arch_hw_breakpoint *info)
-{
-	return !user_mode(regs) && info->ctrl.privilege == ARM_BREAKPOINT_USER;
-}
+अटल पूर्णांक watchpoपूर्णांक_fault_on_uaccess(काष्ठा pt_regs *regs,
+				       काष्ठा arch_hw_अवरोधpoपूर्णांक *info)
+अणु
+	वापस !user_mode(regs) && info->ctrl.privilege == ARM_BREAKPOINT_USER;
+पूर्ण
 
-static void watchpoint_handler(unsigned long addr, unsigned int fsr,
-			       struct pt_regs *regs)
-{
-	int i, access, closest_match = 0;
+अटल व्योम watchpoपूर्णांक_handler(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक fsr,
+			       काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक i, access, बंदst_match = 0;
 	u32 min_dist = -1, dist;
 	u32 val, ctrl_reg;
-	struct perf_event *wp, **slots;
-	struct arch_hw_breakpoint *info;
-	struct arch_hw_breakpoint_ctrl ctrl;
+	काष्ठा perf_event *wp, **slots;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl ctrl;
 
 	slots = this_cpu_ptr(wp_on_reg);
 
 	/*
-	 * Find all watchpoints that match the reported address. If no exact
-	 * match is found. Attribute the hit to the closest watchpoint.
+	 * Find all watchpoपूर्णांकs that match the reported address. If no exact
+	 * match is found. Attribute the hit to the बंदst watchpoपूर्णांक.
 	 */
-	rcu_read_lock();
-	for (i = 0; i < core_num_wrps; ++i) {
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < core_num_wrps; ++i) अणु
 		wp = slots[i];
-		if (wp == NULL)
-			continue;
+		अगर (wp == शून्य)
+			जारी;
 
 		/*
 		 * The DFAR is an unknown value on debug architectures prior
-		 * to 7.1. Since we only allow a single watchpoint on these
+		 * to 7.1. Since we only allow a single watchpoपूर्णांक on these
 		 * older CPUs, we can set the trigger to the lowest possible
 		 * faulting address.
 		 */
-		if (debug_arch < ARM_DEBUG_ARCH_V7_1) {
+		अगर (debug_arch < ARM_DEBUG_ARCH_V7_1) अणु
 			BUG_ON(i > 0);
 			info = counter_arch_bp(wp);
 			info->trigger = wp->attr.bp_addr;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Check that the access type matches. */
-			if (debug_exception_updates_fsr()) {
+			अगर (debug_exception_updates_fsr()) अणु
 				access = (fsr & ARM_FSR_ACCESS_MASK) ?
 					  HW_BREAKPOINT_W : HW_BREAKPOINT_R;
-				if (!(access & hw_breakpoint_type(wp)))
-					continue;
-			}
+				अगर (!(access & hw_अवरोधpoपूर्णांक_type(wp)))
+					जारी;
+			पूर्ण
 
-			val = read_wb_reg(ARM_BASE_WVR + i);
-			ctrl_reg = read_wb_reg(ARM_BASE_WCR + i);
+			val = पढ़ो_wb_reg(ARM_BASE_WVR + i);
+			ctrl_reg = पढ़ो_wb_reg(ARM_BASE_WCR + i);
 			decode_ctrl_reg(ctrl_reg, &ctrl);
-			dist = get_distance_from_watchpoint(addr, val, &ctrl);
-			if (dist < min_dist) {
+			dist = get_distance_from_watchpoपूर्णांक(addr, val, &ctrl);
+			अगर (dist < min_dist) अणु
 				min_dist = dist;
-				closest_match = i;
-			}
+				बंदst_match = i;
+			पूर्ण
 			/* Is this an exact match? */
-			if (dist != 0)
-				continue;
+			अगर (dist != 0)
+				जारी;
 
 			/* We have a winner. */
 			info = counter_arch_bp(wp);
 			info->trigger = addr;
-		}
+		पूर्ण
 
 		pr_debug("watchpoint fired: address = 0x%x\n", info->trigger);
 
 		/*
-		 * If we triggered a user watchpoint from a uaccess routine,
+		 * If we triggered a user watchpoपूर्णांक from a uaccess routine,
 		 * then handle the stepping ourselves since userspace really
 		 * can't help us with this.
 		 */
-		if (watchpoint_fault_on_uaccess(regs, info))
-			goto step;
+		अगर (watchpoपूर्णांक_fault_on_uaccess(regs, info))
+			जाओ step;
 
 		perf_bp_event(wp, regs);
 
 		/*
-		 * Defer stepping to the overflow handler if one is installed.
-		 * Otherwise, insert a temporary mismatch breakpoint so that
-		 * we can single-step over the watchpoint trigger.
+		 * Defer stepping to the overflow handler अगर one is installed.
+		 * Otherwise, insert a temporary mismatch अवरोधpoपूर्णांक so that
+		 * we can single-step over the watchpoपूर्णांक trigger.
 		 */
-		if (!is_default_overflow_handler(wp))
-			continue;
+		अगर (!is_शेष_overflow_handler(wp))
+			जारी;
 step:
-		enable_single_step(wp, instruction_pointer(regs));
-	}
+		enable_single_step(wp, inकाष्ठाion_poपूर्णांकer(regs));
+	पूर्ण
 
-	if (min_dist > 0 && min_dist != -1) {
+	अगर (min_dist > 0 && min_dist != -1) अणु
 		/* No exact match found. */
-		wp = slots[closest_match];
+		wp = slots[बंदst_match];
 		info = counter_arch_bp(wp);
 		info->trigger = addr;
 		pr_debug("watchpoint fired: address = 0x%x\n", info->trigger);
 		perf_bp_event(wp, regs);
-		if (is_default_overflow_handler(wp))
-			enable_single_step(wp, instruction_pointer(regs));
-	}
+		अगर (is_शेष_overflow_handler(wp))
+			enable_single_step(wp, inकाष्ठाion_poपूर्णांकer(regs));
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void watchpoint_single_step_handler(unsigned long pc)
-{
-	int i;
-	struct perf_event *wp, **slots;
-	struct arch_hw_breakpoint *info;
+अटल व्योम watchpoपूर्णांक_single_step_handler(अचिन्हित दीर्घ pc)
+अणु
+	पूर्णांक i;
+	काष्ठा perf_event *wp, **slots;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info;
 
 	slots = this_cpu_ptr(wp_on_reg);
 
-	for (i = 0; i < core_num_wrps; ++i) {
-		rcu_read_lock();
+	क्रम (i = 0; i < core_num_wrps; ++i) अणु
+		rcu_पढ़ो_lock();
 
 		wp = slots[i];
 
-		if (wp == NULL)
-			goto unlock;
+		अगर (wp == शून्य)
+			जाओ unlock;
 
 		info = counter_arch_bp(wp);
-		if (!info->step_ctrl.enabled)
-			goto unlock;
+		अगर (!info->step_ctrl.enabled)
+			जाओ unlock;
 
 		/*
-		 * Restore the original watchpoint if we've completed the
+		 * Restore the original watchpoपूर्णांक अगर we've completed the
 		 * single-step.
 		 */
-		if (info->trigger != pc)
+		अगर (info->trigger != pc)
 			disable_single_step(wp);
 
 unlock:
-		rcu_read_unlock();
-	}
-}
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
-static void breakpoint_handler(unsigned long unknown, struct pt_regs *regs)
-{
-	int i;
+अटल व्योम अवरोधpoपूर्णांक_handler(अचिन्हित दीर्घ unknown, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक i;
 	u32 ctrl_reg, val, addr;
-	struct perf_event *bp, **slots;
-	struct arch_hw_breakpoint *info;
-	struct arch_hw_breakpoint_ctrl ctrl;
+	काष्ठा perf_event *bp, **slots;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक *info;
+	काष्ठा arch_hw_अवरोधpoपूर्णांक_ctrl ctrl;
 
 	slots = this_cpu_ptr(bp_on_reg);
 
 	/* The exception entry code places the amended lr in the PC. */
 	addr = regs->ARM_pc;
 
-	/* Check the currently installed breakpoints first. */
-	for (i = 0; i < core_num_brps; ++i) {
-		rcu_read_lock();
+	/* Check the currently installed अवरोधpoपूर्णांकs first. */
+	क्रम (i = 0; i < core_num_brps; ++i) अणु
+		rcu_पढ़ो_lock();
 
 		bp = slots[i];
 
-		if (bp == NULL)
-			goto unlock;
+		अगर (bp == शून्य)
+			जाओ unlock;
 
 		info = counter_arch_bp(bp);
 
-		/* Check if the breakpoint value matches. */
-		val = read_wb_reg(ARM_BASE_BVR + i);
-		if (val != (addr & ~0x3))
-			goto mismatch;
+		/* Check अगर the अवरोधpoपूर्णांक value matches. */
+		val = पढ़ो_wb_reg(ARM_BASE_BVR + i);
+		अगर (val != (addr & ~0x3))
+			जाओ mismatch;
 
 		/* Possible match, check the byte address select to confirm. */
-		ctrl_reg = read_wb_reg(ARM_BASE_BCR + i);
+		ctrl_reg = पढ़ो_wb_reg(ARM_BASE_BCR + i);
 		decode_ctrl_reg(ctrl_reg, &ctrl);
-		if ((1 << (addr & 0x3)) & ctrl.len) {
+		अगर ((1 << (addr & 0x3)) & ctrl.len) अणु
 			info->trigger = addr;
 			pr_debug("breakpoint fired: address = 0x%x\n", addr);
 			perf_bp_event(bp, regs);
-			if (is_default_overflow_handler(bp))
+			अगर (is_शेष_overflow_handler(bp))
 				enable_single_step(bp, addr);
-			goto unlock;
-		}
+			जाओ unlock;
+		पूर्ण
 
 mismatch:
-		/* If we're stepping a breakpoint, it can now be restored. */
-		if (info->step_ctrl.enabled)
+		/* If we're stepping a अवरोधpoपूर्णांक, it can now be restored. */
+		अगर (info->step_ctrl.enabled)
 			disable_single_step(bp);
 unlock:
-		rcu_read_unlock();
-	}
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	/* Handle any pending watchpoint single-step breakpoints. */
-	watchpoint_single_step_handler(addr);
-}
+	/* Handle any pending watchpoपूर्णांक single-step अवरोधpoपूर्णांकs. */
+	watchpoपूर्णांक_single_step_handler(addr);
+पूर्ण
 
 /*
- * Called from either the Data Abort Handler [watchpoint] or the
- * Prefetch Abort Handler [breakpoint] with interrupts disabled.
+ * Called from either the Data Abort Handler [watchpoपूर्णांक] or the
+ * Prefetch Abort Handler [अवरोधpoपूर्णांक] with पूर्णांकerrupts disabled.
  */
-static int hw_breakpoint_pending(unsigned long addr, unsigned int fsr,
-				 struct pt_regs *regs)
-{
-	int ret = 0;
+अटल पूर्णांक hw_अवरोधpoपूर्णांक_pending(अचिन्हित दीर्घ addr, अचिन्हित पूर्णांक fsr,
+				 काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक ret = 0;
 	u32 dscr;
 
 	preempt_disable();
 
-	if (interrupts_enabled(regs))
+	अगर (पूर्णांकerrupts_enabled(regs))
 		local_irq_enable();
 
-	/* We only handle watchpoints and hardware breakpoints. */
+	/* We only handle watchpoपूर्णांकs and hardware अवरोधpoपूर्णांकs. */
 	ARM_DBG_READ(c0, c1, 0, dscr);
 
-	/* Perform perf callbacks. */
-	switch (ARM_DSCR_MOE(dscr)) {
-	case ARM_ENTRY_BREAKPOINT:
-		breakpoint_handler(addr, regs);
-		break;
-	case ARM_ENTRY_ASYNC_WATCHPOINT:
+	/* Perक्रमm perf callbacks. */
+	चयन (ARM_DSCR_MOE(dscr)) अणु
+	हाल ARM_ENTRY_BREAKPOINT:
+		अवरोधpoपूर्णांक_handler(addr, regs);
+		अवरोध;
+	हाल ARM_ENTRY_ASYNC_WATCHPOINT:
 		WARN(1, "Asynchronous watchpoint exception taken. Debugging results may be unreliable\n");
 		fallthrough;
-	case ARM_ENTRY_SYNC_WATCHPOINT:
-		watchpoint_handler(addr, fsr, regs);
-		break;
-	default:
+	हाल ARM_ENTRY_SYNC_WATCHPOINT:
+		watchpoपूर्णांक_handler(addr, fsr, regs);
+		अवरोध;
+	शेष:
 		ret = 1; /* Unhandled fault. */
-	}
+	पूर्ण
 
 	preempt_enable();
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * One-time initialisation.
+ * One-समय initialisation.
  */
-static cpumask_t debug_err_mask;
+अटल cpumask_t debug_err_mask;
 
-static int debug_reg_trap(struct pt_regs *regs, unsigned int instr)
-{
-	int cpu = smp_processor_id();
+अटल पूर्णांक debug_reg_trap(काष्ठा pt_regs *regs, अचिन्हित पूर्णांक instr)
+अणु
+	पूर्णांक cpu = smp_processor_id();
 
 	pr_warn("Debug register access (0x%x) caused undefined instruction on CPU %d\n",
 		instr, cpu);
 
-	/* Set the error flag for this CPU and skip the faulting instruction. */
+	/* Set the error flag क्रम this CPU and skip the faulting inकाष्ठाion. */
 	cpumask_set_cpu(cpu, &debug_err_mask);
-	instruction_pointer(regs) += 4;
-	return 0;
-}
+	inकाष्ठाion_poपूर्णांकer(regs) += 4;
+	वापस 0;
+पूर्ण
 
-static struct undef_hook debug_reg_hook = {
+अटल काष्ठा undef_hook debug_reg_hook = अणु
 	.instr_mask	= 0x0fe80f10,
 	.instr_val	= 0x0e000e10,
 	.fn		= debug_reg_trap,
-};
+पूर्ण;
 
 /* Does this core support OS Save and Restore? */
-static bool core_has_os_save_restore(void)
-{
+अटल bool core_has_os_save_restore(व्योम)
+अणु
 	u32 oslsr;
 
-	switch (get_debug_arch()) {
-	case ARM_DEBUG_ARCH_V7_1:
-		return true;
-	case ARM_DEBUG_ARCH_V7_ECP14:
+	चयन (get_debug_arch()) अणु
+	हाल ARM_DEBUG_ARCH_V7_1:
+		वापस true;
+	हाल ARM_DEBUG_ARCH_V7_ECP14:
 		ARM_DBG_READ(c1, c1, 4, oslsr);
-		if (oslsr & ARM_OSLSR_OSLM0)
-			return true;
+		अगर (oslsr & ARM_OSLSR_OSLM0)
+			वापस true;
 		fallthrough;
-	default:
-		return false;
-	}
-}
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static void reset_ctrl_regs(unsigned int cpu)
-{
-	int i, raw_num_brps, err = 0;
+अटल व्योम reset_ctrl_regs(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक i, raw_num_brps, err = 0;
 	u32 val;
 
 	/*
-	 * v7 debug contains save and restore registers so that debug state
-	 * can be maintained across low-power modes without leaving the debug
-	 * logic powered up. It is IMPLEMENTATION DEFINED whether we can access
-	 * the debug registers out of reset, so we must unlock the OS Lock
-	 * Access Register to avoid taking undefined instruction exceptions
+	 * v7 debug contains save and restore रेजिस्टरs so that debug state
+	 * can be मुख्यtained across low-घातer modes without leaving the debug
+	 * logic घातered up. It is IMPLEMENTATION DEFINED whether we can access
+	 * the debug रेजिस्टरs out of reset, so we must unlock the OS Lock
+	 * Access Register to aव्योम taking undefined inकाष्ठाion exceptions
 	 * later on.
 	 */
-	switch (debug_arch) {
-	case ARM_DEBUG_ARCH_V6:
-	case ARM_DEBUG_ARCH_V6_1:
-		/* ARMv6 cores clear the registers out of reset. */
-		goto out_mdbgen;
-	case ARM_DEBUG_ARCH_V7_ECP14:
+	चयन (debug_arch) अणु
+	हाल ARM_DEBUG_ARCH_V6:
+	हाल ARM_DEBUG_ARCH_V6_1:
+		/* ARMv6 cores clear the रेजिस्टरs out of reset. */
+		जाओ out_mdbgen;
+	हाल ARM_DEBUG_ARCH_V7_ECP14:
 		/*
-		 * Ensure sticky power-down is clear (i.e. debug logic is
-		 * powered up).
+		 * Ensure sticky घातer-करोwn is clear (i.e. debug logic is
+		 * घातered up).
 		 */
 		ARM_DBG_READ(c1, c5, 4, val);
-		if ((val & 0x1) == 0)
+		अगर ((val & 0x1) == 0)
 			err = -EPERM;
 
-		if (!has_ossr)
-			goto clear_vcr;
-		break;
-	case ARM_DEBUG_ARCH_V7_1:
+		अगर (!has_ossr)
+			जाओ clear_vcr;
+		अवरोध;
+	हाल ARM_DEBUG_ARCH_V7_1:
 		/*
-		 * Ensure the OS double lock is clear.
+		 * Ensure the OS द्विगुन lock is clear.
 		 */
 		ARM_DBG_READ(c1, c3, 4, val);
-		if ((val & 0x1) == 1)
+		अगर ((val & 0x1) == 1)
 			err = -EPERM;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (err) {
+	अगर (err) अणु
 		pr_warn_once("CPU %d debug is powered down!\n", cpu);
 		cpumask_or(&debug_err_mask, &debug_err_mask, cpumask_of(cpu));
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Unconditionally clear the OS lock by writing a value
-	 * other than CS_LAR_KEY to the access register.
+	 * other than CS_LAR_KEY to the access रेजिस्टर.
 	 */
 	ARM_DBG_WRITE(c1, c0, 4, ~CORESIGHT_UNLOCK);
 	isb();
 
 	/*
-	 * Clear any configured vector-catch events before
+	 * Clear any configured vector-catch events beक्रमe
 	 * enabling monitor mode.
 	 */
 clear_vcr:
 	ARM_DBG_WRITE(c0, c7, 0, 0);
 	isb();
 
-	if (cpumask_intersects(&debug_err_mask, cpumask_of(cpu))) {
+	अगर (cpumask_पूर्णांकersects(&debug_err_mask, cpumask_of(cpu))) अणु
 		pr_warn_once("CPU %d failed to disable vector catch\n", cpu);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * The control/value register pairs are UNKNOWN out of reset so
-	 * clear them to avoid spurious debug events.
+	 * The control/value रेजिस्टर pairs are UNKNOWN out of reset so
+	 * clear them to aव्योम spurious debug events.
 	 */
 	raw_num_brps = get_num_brp_resources();
-	for (i = 0; i < raw_num_brps; ++i) {
-		write_wb_reg(ARM_BASE_BCR + i, 0UL);
-		write_wb_reg(ARM_BASE_BVR + i, 0UL);
-	}
+	क्रम (i = 0; i < raw_num_brps; ++i) अणु
+		ग_लिखो_wb_reg(ARM_BASE_BCR + i, 0UL);
+		ग_लिखो_wb_reg(ARM_BASE_BVR + i, 0UL);
+	पूर्ण
 
-	for (i = 0; i < core_num_wrps; ++i) {
-		write_wb_reg(ARM_BASE_WCR + i, 0UL);
-		write_wb_reg(ARM_BASE_WVR + i, 0UL);
-	}
+	क्रम (i = 0; i < core_num_wrps; ++i) अणु
+		ग_लिखो_wb_reg(ARM_BASE_WCR + i, 0UL);
+		ग_लिखो_wb_reg(ARM_BASE_WVR + i, 0UL);
+	पूर्ण
 
-	if (cpumask_intersects(&debug_err_mask, cpumask_of(cpu))) {
+	अगर (cpumask_पूर्णांकersects(&debug_err_mask, cpumask_of(cpu))) अणु
 		pr_warn_once("CPU %d failed to clear debug register pairs\n", cpu);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Have a crack at enabling monitor mode. We don't actually need
-	 * it yet, but reporting an error early is useful if it fails.
+	 * Have a crack at enabling monitor mode. We करोn't actually need
+	 * it yet, but reporting an error early is useful अगर it fails.
 	 */
 out_mdbgen:
-	if (enable_monitor_mode())
+	अगर (enable_monitor_mode())
 		cpumask_or(&debug_err_mask, &debug_err_mask, cpumask_of(cpu));
-}
+पूर्ण
 
-static int dbg_reset_online(unsigned int cpu)
-{
+अटल पूर्णांक dbg_reset_online(अचिन्हित पूर्णांक cpu)
+अणु
 	local_irq_disable();
 	reset_ctrl_regs(cpu);
 	local_irq_enable();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_CPU_PM
-static int dbg_cpu_pm_notify(struct notifier_block *self, unsigned long action,
-			     void *v)
-{
-	if (action == CPU_PM_EXIT)
+#अगर_घोषित CONFIG_CPU_PM
+अटल पूर्णांक dbg_cpu_pm_notअगरy(काष्ठा notअगरier_block *self, अचिन्हित दीर्घ action,
+			     व्योम *v)
+अणु
+	अगर (action == CPU_PM_EXIT)
 		reset_ctrl_regs(smp_processor_id());
 
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block dbg_cpu_pm_nb = {
-	.notifier_call = dbg_cpu_pm_notify,
-};
+अटल काष्ठा notअगरier_block dbg_cpu_pm_nb = अणु
+	.notअगरier_call = dbg_cpu_pm_notअगरy,
+पूर्ण;
 
-static void __init pm_init(void)
-{
-	cpu_pm_register_notifier(&dbg_cpu_pm_nb);
-}
-#else
-static inline void pm_init(void)
-{
-}
-#endif
+अटल व्योम __init pm_init(व्योम)
+अणु
+	cpu_pm_रेजिस्टर_notअगरier(&dbg_cpu_pm_nb);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम pm_init(व्योम)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static int __init arch_hw_breakpoint_init(void)
-{
-	int ret;
+अटल पूर्णांक __init arch_hw_अवरोधpoपूर्णांक_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	debug_arch = get_debug_arch();
 
-	if (!debug_arch_supported()) {
+	अगर (!debug_arch_supported()) अणु
 		pr_info("debug architecture 0x%x unsupported.\n", debug_arch);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
 	 * Scorpion CPUs (at least those in APQ8060) seem to set DBGPRSR.SPD
-	 * whenever a WFI is issued, even if the core is not powered down, in
+	 * whenever a WFI is issued, even अगर the core is not घातered करोwn, in
 	 * violation of the architecture.  When DBGPRSR.SPD is set, accesses to
-	 * breakpoint and watchpoint registers are treated as undefined, so
-	 * this results in boot time and runtime failures when these are
+	 * अवरोधpoपूर्णांक and watchpoपूर्णांक रेजिस्टरs are treated as undefined, so
+	 * this results in boot समय and runसमय failures when these are
 	 * accessed and we unexpectedly take a trap.
 	 *
-	 * It's not clear if/how this can be worked around, so we blacklist
-	 * Scorpion CPUs to avoid these issues.
+	 * It's not clear अगर/how this can be worked around, so we blacklist
+	 * Scorpion CPUs to aव्योम these issues.
 	*/
-	if (read_cpuid_part() == ARM_CPU_PART_SCORPION) {
+	अगर (पढ़ो_cpuid_part() == ARM_CPU_PART_SCORPION) अणु
 		pr_info("Scorpion CPU detected. Hardware breakpoints and watchpoints disabled\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	has_ossr = core_has_os_save_restore();
 
@@ -1144,62 +1145,62 @@ static int __init arch_hw_breakpoint_init(void)
 	core_num_wrps = get_num_wrps();
 
 	/*
-	 * We need to tread carefully here because DBGSWENABLE may be
+	 * We need to tपढ़ो carefully here because DBGSWENABLE may be
 	 * driven low on this core and there isn't an architected way to
 	 * determine that.
 	 */
-	cpus_read_lock();
-	register_undef_hook(&debug_reg_hook);
+	cpus_पढ़ो_lock();
+	रेजिस्टर_undef_hook(&debug_reg_hook);
 
 	/*
-	 * Register CPU notifier which resets the breakpoint resources. We
+	 * Register CPU notअगरier which resets the अवरोधpoपूर्णांक resources. We
 	 * assume that a halting debugger will leave the world in a nice state
-	 * for us.
+	 * क्रम us.
 	 */
 	ret = cpuhp_setup_state_cpuslocked(CPUHP_AP_ONLINE_DYN,
 					   "arm/hw_breakpoint:online",
-					   dbg_reset_online, NULL);
-	unregister_undef_hook(&debug_reg_hook);
-	if (WARN_ON(ret < 0) || !cpumask_empty(&debug_err_mask)) {
+					   dbg_reset_online, शून्य);
+	unरेजिस्टर_undef_hook(&debug_reg_hook);
+	अगर (WARN_ON(ret < 0) || !cpumask_empty(&debug_err_mask)) अणु
 		core_num_brps = 0;
 		core_num_wrps = 0;
-		if (ret > 0)
-			cpuhp_remove_state_nocalls_cpuslocked(ret);
-		cpus_read_unlock();
-		return 0;
-	}
+		अगर (ret > 0)
+			cpuhp_हटाओ_state_nocalls_cpuslocked(ret);
+		cpus_पढ़ो_unlock();
+		वापस 0;
+	पूर्ण
 
 	pr_info("found %d " "%s" "breakpoint and %d watchpoint registers.\n",
 		core_num_brps, core_has_mismatch_brps() ? "(+1 reserved) " :
 		"", core_num_wrps);
 
-	/* Work out the maximum supported watchpoint length. */
-	max_watchpoint_len = get_max_wp_len();
+	/* Work out the maximum supported watchpoपूर्णांक length. */
+	max_watchpoपूर्णांक_len = get_max_wp_len();
 	pr_info("maximum watchpoint size is %u bytes.\n",
-			max_watchpoint_len);
+			max_watchpoपूर्णांक_len);
 
 	/* Register debug fault handler. */
-	hook_fault_code(FAULT_CODE_DEBUG, hw_breakpoint_pending, SIGTRAP,
+	hook_fault_code(FAULT_CODE_DEBUG, hw_अवरोधpoपूर्णांक_pending, SIGTRAP,
 			TRAP_HWBKPT, "watchpoint debug exception");
-	hook_ifault_code(FAULT_CODE_DEBUG, hw_breakpoint_pending, SIGTRAP,
+	hook_अगरault_code(FAULT_CODE_DEBUG, hw_अवरोधpoपूर्णांक_pending, SIGTRAP,
 			TRAP_HWBKPT, "breakpoint debug exception");
-	cpus_read_unlock();
+	cpus_पढ़ो_unlock();
 
-	/* Register PM notifiers. */
+	/* Register PM notअगरiers. */
 	pm_init();
-	return 0;
-}
-arch_initcall(arch_hw_breakpoint_init);
+	वापस 0;
+पूर्ण
+arch_initcall(arch_hw_अवरोधpoपूर्णांक_init);
 
-void hw_breakpoint_pmu_read(struct perf_event *bp)
-{
-}
+व्योम hw_अवरोधpoपूर्णांक_pmu_पढ़ो(काष्ठा perf_event *bp)
+अणु
+पूर्ण
 
 /*
- * Dummy function to register with die_notifier.
+ * Dummy function to रेजिस्टर with die_notअगरier.
  */
-int hw_breakpoint_exceptions_notify(struct notifier_block *unused,
-					unsigned long val, void *data)
-{
-	return NOTIFY_DONE;
-}
+पूर्णांक hw_अवरोधpoपूर्णांक_exceptions_notअगरy(काष्ठा notअगरier_block *unused,
+					अचिन्हित दीर्घ val, व्योम *data)
+अणु
+	वापस NOTIFY_DONE;
+पूर्ण

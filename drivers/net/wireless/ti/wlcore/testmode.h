@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * This file is part of wl1271
  *
@@ -7,12 +8,12 @@
  * Contact: Luciano Coelho <luciano.coelho@nokia.com>
  */
 
-#ifndef __TESTMODE_H__
-#define __TESTMODE_H__
+#अगर_अघोषित __TESTMODE_H__
+#घोषणा __TESTMODE_H__
 
-#include <net/mac80211.h>
+#समावेश <net/mac80211.h>
 
-int wl1271_tm_cmd(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		  void *data, int len);
+पूर्णांक wl1271_पंचांग_cmd(काष्ठा ieee80211_hw *hw, काष्ठा ieee80211_vअगर *vअगर,
+		  व्योम *data, पूर्णांक len);
 
-#endif /* __WL1271_TESTMODE_H__ */
+#पूर्ण_अगर /* __WL1271_TESTMODE_H__ */

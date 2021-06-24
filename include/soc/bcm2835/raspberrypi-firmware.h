@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  Copyright © 2015 Broadcom
+ *  Copyright तऊ 2015 Broadcom
  */
 
-#ifndef __SOC_RASPBERRY_FIRMWARE_H__
-#define __SOC_RASPBERRY_FIRMWARE_H__
+#अगर_अघोषित __SOC_RASPBERRY_FIRMWARE_H__
+#घोषणा __SOC_RASPBERRY_FIRMWARE_H__
 
-#include <linux/types.h>
-#include <linux/of_device.h>
+#समावेश <linux/types.h>
+#समावेश <linux/of_device.h>
 
-struct rpi_firmware;
+काष्ठा rpi_firmware;
 
-enum rpi_firmware_property_status {
+क्रमागत rpi_firmware_property_status अणु
 	RPI_FIRMWARE_STATUS_REQUEST = 0,
 	RPI_FIRMWARE_STATUS_SUCCESS = 0x80000000,
 	RPI_FIRMWARE_STATUS_ERROR =   0x80000001,
-};
+पूर्ण;
 
 /**
- * struct rpi_firmware_property_tag_header - Firmware property tag header
- * @tag:		One of enum_mbox_property_tag.
+ * काष्ठा rpi_firmware_property_tag_header - Firmware property tag header
+ * @tag:		One of क्रमागत_mbox_property_tag.
  * @buf_size:		The number of bytes in the value buffer following this
- *			struct.
- * @req_resp_size:	On submit, the length of the request (though it doesn't
- *			appear to be currently used by the firmware).  On return,
+ *			काष्ठा.
+ * @req_resp_size:	On submit, the length of the request (though it करोesn't
+ *			appear to be currently used by the firmware).  On वापस,
  *			the length of the response (always 4 byte aligned), with
  *			the low bit set.
  */
-struct rpi_firmware_property_tag_header {
+काष्ठा rpi_firmware_property_tag_header अणु
 	u32 tag;
 	u32 buf_size;
 	u32 req_resp_size;
-};
+पूर्ण;
 
-enum rpi_firmware_property_tag {
+क्रमागत rpi_firmware_property_tag अणु
 	RPI_FIRMWARE_PROPERTY_END =                           0,
 	RPI_FIRMWARE_GET_FIRMWARE_REVISION =                  0x00000001,
 
@@ -133,41 +134,41 @@ enum rpi_firmware_property_tag {
 
 	RPI_FIRMWARE_GET_COMMAND_LINE =                       0x00050001,
 	RPI_FIRMWARE_GET_DMA_CHANNELS =                       0x00060001,
-};
+पूर्ण;
 
-#if IS_ENABLED(CONFIG_RASPBERRYPI_FIRMWARE)
-int rpi_firmware_property(struct rpi_firmware *fw,
-			  u32 tag, void *data, size_t len);
-int rpi_firmware_property_list(struct rpi_firmware *fw,
-			       void *data, size_t tag_size);
-void rpi_firmware_put(struct rpi_firmware *fw);
-struct rpi_firmware *rpi_firmware_get(struct device_node *firmware_node);
-struct rpi_firmware *devm_rpi_firmware_get(struct device *dev,
-					   struct device_node *firmware_node);
-#else
-static inline int rpi_firmware_property(struct rpi_firmware *fw, u32 tag,
-					void *data, size_t len)
-{
-	return -ENOSYS;
-}
+#अगर IS_ENABLED(CONFIG_RASPBERRYPI_FIRMWARE)
+पूर्णांक rpi_firmware_property(काष्ठा rpi_firmware *fw,
+			  u32 tag, व्योम *data, माप_प्रकार len);
+पूर्णांक rpi_firmware_property_list(काष्ठा rpi_firmware *fw,
+			       व्योम *data, माप_प्रकार tag_size);
+व्योम rpi_firmware_put(काष्ठा rpi_firmware *fw);
+काष्ठा rpi_firmware *rpi_firmware_get(काष्ठा device_node *firmware_node);
+काष्ठा rpi_firmware *devm_rpi_firmware_get(काष्ठा device *dev,
+					   काष्ठा device_node *firmware_node);
+#अन्यथा
+अटल अंतरभूत पूर्णांक rpi_firmware_property(काष्ठा rpi_firmware *fw, u32 tag,
+					व्योम *data, माप_प्रकार len)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int rpi_firmware_property_list(struct rpi_firmware *fw,
-					     void *data, size_t tag_size)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक rpi_firmware_property_list(काष्ठा rpi_firmware *fw,
+					     व्योम *data, माप_प्रकार tag_size)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline void rpi_firmware_put(struct rpi_firmware *fw) { }
-static inline struct rpi_firmware *rpi_firmware_get(struct device_node *firmware_node)
-{
-	return NULL;
-}
+अटल अंतरभूत व्योम rpi_firmware_put(काष्ठा rpi_firmware *fw) अणु पूर्ण
+अटल अंतरभूत काष्ठा rpi_firmware *rpi_firmware_get(काष्ठा device_node *firmware_node)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline struct rpi_firmware *devm_rpi_firmware_get(struct device *dev,
-					struct device_node *firmware_node)
-{
-	return NULL;
-}
-#endif
+अटल अंतरभूत काष्ठा rpi_firmware *devm_rpi_firmware_get(काष्ठा device *dev,
+					काष्ठा device_node *firmware_node)
+अणु
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* __SOC_RASPBERRY_FIRMWARE_H__ */
+#पूर्ण_अगर /* __SOC_RASPBERRY_FIRMWARE_H__ */

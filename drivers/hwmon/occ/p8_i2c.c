@@ -1,252 +1,253 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 // Copyright IBM Corp 2019
 
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/fsi-occ.h>
-#include <linux/i2c.h>
-#include <linux/jiffies.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <asm/unaligned.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fsi-occ.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-#define OCC_TIMEOUT_MS			1000
-#define OCC_CMD_IN_PRG_WAIT_MS		50
+#घोषणा OCC_TIMEOUT_MS			1000
+#घोषणा OCC_CMD_IN_PRG_WAIT_MS		50
 
-/* OCB (on-chip control bridge - interface to OCC) registers */
-#define OCB_DATA1			0x6B035
-#define OCB_ADDR			0x6B070
-#define OCB_DATA3			0x6B075
+/* OCB (on-chip control bridge - पूर्णांकerface to OCC) रेजिस्टरs */
+#घोषणा OCB_DATA1			0x6B035
+#घोषणा OCB_ADDR			0x6B070
+#घोषणा OCB_DATA3			0x6B075
 
 /* OCC SRAM address space */
-#define OCC_SRAM_ADDR_CMD		0xFFFF6000
-#define OCC_SRAM_ADDR_RESP		0xFFFF7000
+#घोषणा OCC_SRAM_ADDR_CMD		0xFFFF6000
+#घोषणा OCC_SRAM_ADDR_RESP		0xFFFF7000
 
-#define OCC_DATA_ATTN			0x20010000
+#घोषणा OCC_DATA_ATTN			0x20010000
 
-struct p8_i2c_occ {
-	struct occ occ;
-	struct i2c_client *client;
-};
+काष्ठा p8_i2c_occ अणु
+	काष्ठा occ occ;
+	काष्ठा i2c_client *client;
+पूर्ण;
 
-#define to_p8_i2c_occ(x)	container_of((x), struct p8_i2c_occ, occ)
+#घोषणा to_p8_i2c_occ(x)	container_of((x), काष्ठा p8_i2c_occ, occ)
 
-static int p8_i2c_occ_getscom(struct i2c_client *client, u32 address, u8 *data)
-{
-	ssize_t rc;
+अटल पूर्णांक p8_i2c_occ_माला_लोcom(काष्ठा i2c_client *client, u32 address, u8 *data)
+अणु
+	sमाप_प्रकार rc;
 	__be64 buf;
-	struct i2c_msg msgs[2];
+	काष्ठा i2c_msg msgs[2];
 
-	/* p8 i2c slave requires shift */
+	/* p8 i2c slave requires shअगरt */
 	address <<= 1;
 
 	msgs[0].addr = client->addr;
 	msgs[0].flags = client->flags & I2C_M_TEN;
-	msgs[0].len = sizeof(u32);
+	msgs[0].len = माप(u32);
 	/* address is a scom address; bus-endian */
-	msgs[0].buf = (char *)&address;
+	msgs[0].buf = (अक्षर *)&address;
 
 	/* data from OCC is big-endian */
 	msgs[1].addr = client->addr;
 	msgs[1].flags = (client->flags & I2C_M_TEN) | I2C_M_RD;
-	msgs[1].len = sizeof(u64);
-	msgs[1].buf = (char *)&buf;
+	msgs[1].len = माप(u64);
+	msgs[1].buf = (अक्षर *)&buf;
 
 	rc = i2c_transfer(client->adapter, msgs, 2);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	*(u64 *)data = be64_to_cpu(buf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int p8_i2c_occ_putscom(struct i2c_client *client, u32 address, u8 *data)
-{
+अटल पूर्णांक p8_i2c_occ_माला_दोcom(काष्ठा i2c_client *client, u32 address, u8 *data)
+अणु
 	u32 buf[3];
-	ssize_t rc;
+	sमाप_प्रकार rc;
 
-	/* p8 i2c slave requires shift */
+	/* p8 i2c slave requires shअगरt */
 	address <<= 1;
 
 	/* address is bus-endian; data passed through from user as-is */
 	buf[0] = address;
-	memcpy(&buf[1], &data[4], sizeof(u32));
-	memcpy(&buf[2], data, sizeof(u32));
+	स_नकल(&buf[1], &data[4], माप(u32));
+	स_नकल(&buf[2], data, माप(u32));
 
-	rc = i2c_master_send(client, (const char *)buf, sizeof(buf));
-	if (rc < 0)
-		return rc;
-	else if (rc != sizeof(buf))
-		return -EIO;
+	rc = i2c_master_send(client, (स्थिर अक्षर *)buf, माप(buf));
+	अगर (rc < 0)
+		वापस rc;
+	अन्यथा अगर (rc != माप(buf))
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int p8_i2c_occ_putscom_u32(struct i2c_client *client, u32 address,
+अटल पूर्णांक p8_i2c_occ_माला_दोcom_u32(काष्ठा i2c_client *client, u32 address,
 				  u32 data0, u32 data1)
-{
+अणु
 	u8 buf[8];
 
-	memcpy(buf, &data0, 4);
-	memcpy(buf + 4, &data1, 4);
+	स_नकल(buf, &data0, 4);
+	स_नकल(buf + 4, &data1, 4);
 
-	return p8_i2c_occ_putscom(client, address, buf);
-}
+	वापस p8_i2c_occ_माला_दोcom(client, address, buf);
+पूर्ण
 
-static int p8_i2c_occ_putscom_be(struct i2c_client *client, u32 address,
+अटल पूर्णांक p8_i2c_occ_माला_दोcom_be(काष्ठा i2c_client *client, u32 address,
 				 u8 *data)
-{
+अणु
 	__be32 data0, data1;
 
-	memcpy(&data0, data, 4);
-	memcpy(&data1, data + 4, 4);
+	स_नकल(&data0, data, 4);
+	स_नकल(&data1, data + 4, 4);
 
-	return p8_i2c_occ_putscom_u32(client, address, be32_to_cpu(data0),
+	वापस p8_i2c_occ_माला_दोcom_u32(client, address, be32_to_cpu(data0),
 				      be32_to_cpu(data1));
-}
+पूर्ण
 
-static int p8_i2c_occ_send_cmd(struct occ *occ, u8 *cmd)
-{
-	int i, rc;
-	unsigned long start;
+अटल पूर्णांक p8_i2c_occ_send_cmd(काष्ठा occ *occ, u8 *cmd)
+अणु
+	पूर्णांक i, rc;
+	अचिन्हित दीर्घ start;
 	u16 data_length;
-	const unsigned long timeout = msecs_to_jiffies(OCC_TIMEOUT_MS);
-	const long wait_time = msecs_to_jiffies(OCC_CMD_IN_PRG_WAIT_MS);
-	struct p8_i2c_occ *ctx = to_p8_i2c_occ(occ);
-	struct i2c_client *client = ctx->client;
-	struct occ_response *resp = &occ->resp;
+	स्थिर अचिन्हित दीर्घ समयout = msecs_to_jअगरfies(OCC_TIMEOUT_MS);
+	स्थिर दीर्घ रुको_समय = msecs_to_jअगरfies(OCC_CMD_IN_PRG_WAIT_MS);
+	काष्ठा p8_i2c_occ *ctx = to_p8_i2c_occ(occ);
+	काष्ठा i2c_client *client = ctx->client;
+	काष्ठा occ_response *resp = &occ->resp;
 
-	start = jiffies;
+	start = jअगरfies;
 
-	/* set sram address for command */
-	rc = p8_i2c_occ_putscom_u32(client, OCB_ADDR, OCC_SRAM_ADDR_CMD, 0);
-	if (rc)
-		return rc;
+	/* set sram address क्रम command */
+	rc = p8_i2c_occ_माला_दोcom_u32(client, OCB_ADDR, OCC_SRAM_ADDR_CMD, 0);
+	अगर (rc)
+		वापस rc;
 
-	/* write command (expected to already be BE), we need bus-endian... */
-	rc = p8_i2c_occ_putscom_be(client, OCB_DATA3, cmd);
-	if (rc)
-		return rc;
+	/* ग_लिखो command (expected to alपढ़ोy be BE), we need bus-endian... */
+	rc = p8_i2c_occ_माला_दोcom_be(client, OCB_DATA3, cmd);
+	अगर (rc)
+		वापस rc;
 
 	/* trigger OCC attention */
-	rc = p8_i2c_occ_putscom_u32(client, OCB_DATA1, OCC_DATA_ATTN, 0);
-	if (rc)
-		return rc;
+	rc = p8_i2c_occ_माला_दोcom_u32(client, OCB_DATA1, OCC_DATA_ATTN, 0);
+	अगर (rc)
+		वापस rc;
 
-	do {
-		/* set sram address for response */
-		rc = p8_i2c_occ_putscom_u32(client, OCB_ADDR,
+	करो अणु
+		/* set sram address क्रम response */
+		rc = p8_i2c_occ_माला_दोcom_u32(client, OCB_ADDR,
 					    OCC_SRAM_ADDR_RESP, 0);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
-		rc = p8_i2c_occ_getscom(client, OCB_DATA3, (u8 *)resp);
-		if (rc)
-			return rc;
+		rc = p8_i2c_occ_माला_लोcom(client, OCB_DATA3, (u8 *)resp);
+		अगर (rc)
+			वापस rc;
 
-		/* wait for OCC */
-		if (resp->return_status == OCC_RESP_CMD_IN_PRG) {
+		/* रुको क्रम OCC */
+		अगर (resp->वापस_status == OCC_RESP_CMD_IN_PRG) अणु
 			rc = -EALREADY;
 
-			if (time_after(jiffies, start + timeout))
-				break;
+			अगर (समय_after(jअगरfies, start + समयout))
+				अवरोध;
 
 			set_current_state(TASK_INTERRUPTIBLE);
-			schedule_timeout(wait_time);
-		}
-	} while (rc);
+			schedule_समयout(रुको_समय);
+		पूर्ण
+	पूर्ण जबतक (rc);
 
 	/* check the OCC response */
-	switch (resp->return_status) {
-	case OCC_RESP_CMD_IN_PRG:
+	चयन (resp->वापस_status) अणु
+	हाल OCC_RESP_CMD_IN_PRG:
 		rc = -ETIMEDOUT;
-		break;
-	case OCC_RESP_SUCCESS:
+		अवरोध;
+	हाल OCC_RESP_SUCCESS:
 		rc = 0;
-		break;
-	case OCC_RESP_CMD_INVAL:
-	case OCC_RESP_CMD_LEN_INVAL:
-	case OCC_RESP_DATA_INVAL:
-	case OCC_RESP_CHKSUM_ERR:
+		अवरोध;
+	हाल OCC_RESP_CMD_INVAL:
+	हाल OCC_RESP_CMD_LEN_INVAL:
+	हाल OCC_RESP_DATA_INVAL:
+	हाल OCC_RESP_CHKSUM_ERR:
 		rc = -EINVAL;
-		break;
-	case OCC_RESP_INT_ERR:
-	case OCC_RESP_BAD_STATE:
-	case OCC_RESP_CRIT_EXCEPT:
-	case OCC_RESP_CRIT_INIT:
-	case OCC_RESP_CRIT_WATCHDOG:
-	case OCC_RESP_CRIT_OCB:
-	case OCC_RESP_CRIT_HW:
+		अवरोध;
+	हाल OCC_RESP_INT_ERR:
+	हाल OCC_RESP_BAD_STATE:
+	हाल OCC_RESP_CRIT_EXCEPT:
+	हाल OCC_RESP_CRIT_INIT:
+	हाल OCC_RESP_CRIT_WATCHDOG:
+	हाल OCC_RESP_CRIT_OCB:
+	हाल OCC_RESP_CRIT_HW:
 		rc = -EREMOTEIO;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EPROTO;
-	}
+	पूर्ण
 
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	data_length = get_unaligned_be16(&resp->data_length);
-	if (data_length > OCC_RESP_DATA_BYTES)
-		return -EMSGSIZE;
+	अगर (data_length > OCC_RESP_DATA_BYTES)
+		वापस -EMSGSIZE;
 
 	/* fetch the rest of the response data */
-	for (i = 8; i < data_length + 7; i += 8) {
-		rc = p8_i2c_occ_getscom(client, OCB_DATA3, ((u8 *)resp) + i);
-		if (rc)
-			return rc;
-	}
+	क्रम (i = 8; i < data_length + 7; i += 8) अणु
+		rc = p8_i2c_occ_माला_लोcom(client, OCB_DATA3, ((u8 *)resp) + i);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int p8_i2c_occ_probe(struct i2c_client *client)
-{
-	struct occ *occ;
-	struct p8_i2c_occ *ctx = devm_kzalloc(&client->dev, sizeof(*ctx),
+अटल पूर्णांक p8_i2c_occ_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा occ *occ;
+	काष्ठा p8_i2c_occ *ctx = devm_kzalloc(&client->dev, माप(*ctx),
 					      GFP_KERNEL);
-	if (!ctx)
-		return -ENOMEM;
+	अगर (!ctx)
+		वापस -ENOMEM;
 
 	ctx->client = client;
 	occ = &ctx->occ;
 	occ->bus_dev = &client->dev;
 	dev_set_drvdata(&client->dev, occ);
 
-	occ->powr_sample_time_us = 250;
+	occ->घातr_sample_समय_us = 250;
 	occ->poll_cmd_data = 0x10;		/* P8 OCC poll data */
 	occ->send_cmd = p8_i2c_occ_send_cmd;
 
-	return occ_setup(occ, "p8_occ");
-}
+	वापस occ_setup(occ, "p8_occ");
+पूर्ण
 
-static int p8_i2c_occ_remove(struct i2c_client *client)
-{
-	struct occ *occ = dev_get_drvdata(&client->dev);
+अटल पूर्णांक p8_i2c_occ_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा occ *occ = dev_get_drvdata(&client->dev);
 
-	occ_shutdown(occ);
+	occ_shutकरोwn(occ);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id p8_i2c_occ_of_match[] = {
-	{ .compatible = "ibm,p8-occ-hwmon" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id p8_i2c_occ_of_match[] = अणु
+	अणु .compatible = "ibm,p8-occ-hwmon" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, p8_i2c_occ_of_match);
 
-static struct i2c_driver p8_i2c_occ_driver = {
+अटल काष्ठा i2c_driver p8_i2c_occ_driver = अणु
 	.class = I2C_CLASS_HWMON,
-	.driver = {
+	.driver = अणु
 		.name = "occ-hwmon",
 		.of_match_table = p8_i2c_occ_of_match,
-	},
+	पूर्ण,
 	.probe_new = p8_i2c_occ_probe,
-	.remove = p8_i2c_occ_remove,
-};
+	.हटाओ = p8_i2c_occ_हटाओ,
+पूर्ण;
 
 module_i2c_driver(p8_i2c_occ_driver);
 

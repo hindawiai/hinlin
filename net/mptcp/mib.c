@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/seq_file.h>
-#include <net/ip.h>
-#include <net/mptcp.h>
-#include <net/snmp.h>
-#include <net/net_namespace.h>
+#समावेश <linux/seq_file.h>
+#समावेश <net/ip.h>
+#समावेश <net/mptcp.h>
+#समावेश <net/snmp.h>
+#समावेश <net/net_namespace.h>
 
-#include "mib.h"
+#समावेश "mib.h"
 
-static const struct snmp_mib mptcp_snmp_list[] = {
+अटल स्थिर काष्ठा snmp_mib mptcp_snmp_list[] = अणु
 	SNMP_MIB_ITEM("MPCapableSYNRX", MPTCP_MIB_MPCAPABLEPASSIVE),
 	SNMP_MIB_ITEM("MPCapableSYNTX", MPTCP_MIB_MPCAPABLEACTIVE),
 	SNMP_MIB_ITEM("MPCapableSYNACKRX", MPTCP_MIB_MPCAPABLEACTIVEACK),
@@ -43,48 +44,48 @@ static const struct snmp_mib mptcp_snmp_list[] = {
 	SNMP_MIB_ITEM("MPPrioTx", MPTCP_MIB_MPPRIOTX),
 	SNMP_MIB_ITEM("MPPrioRx", MPTCP_MIB_MPPRIORX),
 	SNMP_MIB_SENTINEL
-};
+पूर्ण;
 
 /* mptcp_mib_alloc - allocate percpu mib counters
  *
  * These are allocated when the first mptcp socket is created so
- * we do not waste percpu memory if mptcp isn't in use.
+ * we करो not waste percpu memory अगर mptcp isn't in use.
  */
-bool mptcp_mib_alloc(struct net *net)
-{
-	struct mptcp_mib __percpu *mib = alloc_percpu(struct mptcp_mib);
+bool mptcp_mib_alloc(काष्ठा net *net)
+अणु
+	काष्ठा mptcp_mib __percpu *mib = alloc_percpu(काष्ठा mptcp_mib);
 
-	if (!mib)
-		return false;
+	अगर (!mib)
+		वापस false;
 
-	if (cmpxchg(&net->mib.mptcp_statistics, NULL, mib))
-		free_percpu(mib);
+	अगर (cmpxchg(&net->mib.mptcp_statistics, शून्य, mib))
+		मुक्त_percpu(mib);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void mptcp_seq_show(struct seq_file *seq)
-{
-	struct net *net = seq->private;
-	int i;
+व्योम mptcp_seq_show(काष्ठा seq_file *seq)
+अणु
+	काष्ठा net *net = seq->निजी;
+	पूर्णांक i;
 
-	seq_puts(seq, "MPTcpExt:");
-	for (i = 0; mptcp_snmp_list[i].name; i++)
-		seq_printf(seq, " %s", mptcp_snmp_list[i].name);
+	seq_माला_दो(seq, "MPTcpExt:");
+	क्रम (i = 0; mptcp_snmp_list[i].name; i++)
+		seq_म_लिखो(seq, " %s", mptcp_snmp_list[i].name);
 
-	seq_puts(seq, "\nMPTcpExt:");
+	seq_माला_दो(seq, "\nMPTcpExt:");
 
-	if (!net->mib.mptcp_statistics) {
-		for (i = 0; mptcp_snmp_list[i].name; i++)
-			seq_puts(seq, " 0");
+	अगर (!net->mib.mptcp_statistics) अणु
+		क्रम (i = 0; mptcp_snmp_list[i].name; i++)
+			seq_माला_दो(seq, " 0");
 
-		seq_putc(seq, '\n');
-		return;
-	}
+		seq_अ_दो(seq, '\n');
+		वापस;
+	पूर्ण
 
-	for (i = 0; mptcp_snmp_list[i].name; i++)
-		seq_printf(seq, " %lu",
+	क्रम (i = 0; mptcp_snmp_list[i].name; i++)
+		seq_म_लिखो(seq, " %lu",
 			   snmp_fold_field(net->mib.mptcp_statistics,
 					   mptcp_snmp_list[i].entry));
-	seq_putc(seq, '\n');
-}
+	seq_अ_दो(seq, '\n');
+पूर्ण

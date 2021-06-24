@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2018 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -30,17 +31,17 @@
  * SOFTWARE.
  *
  */
-#ifndef __MLX5E_TLS_H__
-#define __MLX5E_TLS_H__
+#अगर_अघोषित __MLX5E_TLS_H__
+#घोषणा __MLX5E_TLS_H__
 
-#include "accel/tls.h"
-#include "en_accel/ktls.h"
+#समावेश "accel/tls.h"
+#समावेश "en_accel/ktls.h"
 
-#ifdef CONFIG_MLX5_EN_TLS
-#include <net/tls.h>
-#include "en.h"
+#अगर_घोषित CONFIG_MLX5_EN_TLS
+#समावेश <net/tls.h>
+#समावेश "en.h"
 
-struct mlx5e_tls_sw_stats {
+काष्ठा mlx5e_tls_sw_stats अणु
 	atomic64_t tx_tls_ctx;
 	atomic64_t tx_tls_drop_metadata;
 	atomic64_t tx_tls_drop_resync_alloc;
@@ -52,72 +53,72 @@ struct mlx5e_tls_sw_stats {
 	atomic64_t rx_tls_resync_request;
 	atomic64_t rx_tls_resync_reply;
 	atomic64_t rx_tls_auth_fail;
-};
+पूर्ण;
 
-struct mlx5e_tls {
-	struct mlx5e_tls_sw_stats sw_stats;
-	struct workqueue_struct *rx_wq;
-};
+काष्ठा mlx5e_tls अणु
+	काष्ठा mlx5e_tls_sw_stats sw_stats;
+	काष्ठा workqueue_काष्ठा *rx_wq;
+पूर्ण;
 
-struct mlx5e_tls_offload_context_tx {
-	struct tls_offload_context_tx base;
+काष्ठा mlx5e_tls_offload_context_tx अणु
+	काष्ठा tls_offload_context_tx base;
 	u32 expected_seq;
 	__be32 swid;
-};
+पूर्ण;
 
-static inline struct mlx5e_tls_offload_context_tx *
-mlx5e_get_tls_tx_context(struct tls_context *tls_ctx)
-{
-	BUILD_BUG_ON(sizeof(struct mlx5e_tls_offload_context_tx) >
+अटल अंतरभूत काष्ठा mlx5e_tls_offload_context_tx *
+mlx5e_get_tls_tx_context(काष्ठा tls_context *tls_ctx)
+अणु
+	BUILD_BUG_ON(माप(काष्ठा mlx5e_tls_offload_context_tx) >
 		     TLS_OFFLOAD_CONTEXT_SIZE_TX);
-	return container_of(tls_offload_ctx_tx(tls_ctx),
-			    struct mlx5e_tls_offload_context_tx,
+	वापस container_of(tls_offload_ctx_tx(tls_ctx),
+			    काष्ठा mlx5e_tls_offload_context_tx,
 			    base);
-}
+पूर्ण
 
-struct mlx5e_tls_offload_context_rx {
-	struct tls_offload_context_rx base;
+काष्ठा mlx5e_tls_offload_context_rx अणु
+	काष्ठा tls_offload_context_rx base;
 	__be32 handle;
-};
+पूर्ण;
 
-static inline struct mlx5e_tls_offload_context_rx *
-mlx5e_get_tls_rx_context(struct tls_context *tls_ctx)
-{
-	BUILD_BUG_ON(sizeof(struct mlx5e_tls_offload_context_rx) >
+अटल अंतरभूत काष्ठा mlx5e_tls_offload_context_rx *
+mlx5e_get_tls_rx_context(काष्ठा tls_context *tls_ctx)
+अणु
+	BUILD_BUG_ON(माप(काष्ठा mlx5e_tls_offload_context_rx) >
 		     TLS_OFFLOAD_CONTEXT_SIZE_RX);
-	return container_of(tls_offload_ctx_rx(tls_ctx),
-			    struct mlx5e_tls_offload_context_rx,
+	वापस container_of(tls_offload_ctx_rx(tls_ctx),
+			    काष्ठा mlx5e_tls_offload_context_rx,
 			    base);
-}
+पूर्ण
 
-static inline bool mlx5e_is_tls_on(struct mlx5e_priv *priv)
-{
-	return priv->tls;
-}
+अटल अंतरभूत bool mlx5e_is_tls_on(काष्ठा mlx5e_priv *priv)
+अणु
+	वापस priv->tls;
+पूर्ण
 
-void mlx5e_tls_build_netdev(struct mlx5e_priv *priv);
-int mlx5e_tls_init(struct mlx5e_priv *priv);
-void mlx5e_tls_cleanup(struct mlx5e_priv *priv);
+व्योम mlx5e_tls_build_netdev(काष्ठा mlx5e_priv *priv);
+पूर्णांक mlx5e_tls_init(काष्ठा mlx5e_priv *priv);
+व्योम mlx5e_tls_cleanup(काष्ठा mlx5e_priv *priv);
 
-int mlx5e_tls_get_count(struct mlx5e_priv *priv);
-int mlx5e_tls_get_strings(struct mlx5e_priv *priv, uint8_t *data);
-int mlx5e_tls_get_stats(struct mlx5e_priv *priv, u64 *data);
+पूर्णांक mlx5e_tls_get_count(काष्ठा mlx5e_priv *priv);
+पूर्णांक mlx5e_tls_get_strings(काष्ठा mlx5e_priv *priv, uपूर्णांक8_t *data);
+पूर्णांक mlx5e_tls_get_stats(काष्ठा mlx5e_priv *priv, u64 *data);
 
-#else
+#अन्यथा
 
-static inline void mlx5e_tls_build_netdev(struct mlx5e_priv *priv)
-{
-	if (mlx5_accel_is_ktls_device(priv->mdev))
+अटल अंतरभूत व्योम mlx5e_tls_build_netdev(काष्ठा mlx5e_priv *priv)
+अणु
+	अगर (mlx5_accel_is_ktls_device(priv->mdev))
 		mlx5e_ktls_build_netdev(priv);
-}
+पूर्ण
 
-static inline bool mlx5e_is_tls_on(struct mlx5e_priv *priv) { return false; }
-static inline int mlx5e_tls_init(struct mlx5e_priv *priv) { return 0; }
-static inline void mlx5e_tls_cleanup(struct mlx5e_priv *priv) { }
-static inline int mlx5e_tls_get_count(struct mlx5e_priv *priv) { return 0; }
-static inline int mlx5e_tls_get_strings(struct mlx5e_priv *priv, uint8_t *data) { return 0; }
-static inline int mlx5e_tls_get_stats(struct mlx5e_priv *priv, u64 *data) { return 0; }
+अटल अंतरभूत bool mlx5e_is_tls_on(काष्ठा mlx5e_priv *priv) अणु वापस false; पूर्ण
+अटल अंतरभूत पूर्णांक mlx5e_tls_init(काष्ठा mlx5e_priv *priv) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम mlx5e_tls_cleanup(काष्ठा mlx5e_priv *priv) अणु पूर्ण
+अटल अंतरभूत पूर्णांक mlx5e_tls_get_count(काष्ठा mlx5e_priv *priv) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक mlx5e_tls_get_strings(काष्ठा mlx5e_priv *priv, uपूर्णांक8_t *data) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक mlx5e_tls_get_stats(काष्ठा mlx5e_priv *priv, u64 *data) अणु वापस 0; पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif /* __MLX5E_TLS_H__ */
+#पूर्ण_अगर /* __MLX5E_TLS_H__ */

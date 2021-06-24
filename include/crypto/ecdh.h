@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * ECDH params to be used with kpp API
  *
  * Copyright (c) 2016, Intel Corporation
- * Authors: Salvatore Benedetto <salvatore.benedetto@intel.com>
+ * Authors: Salvatore Benedetto <salvatore.benedetto@पूर्णांकel.com>
  */
-#ifndef _CRYPTO_ECDH_
-#define _CRYPTO_ECDH_
+#अगर_अघोषित _CRYPTO_ECDH_
+#घोषणा _CRYPTO_ECDH_
 
 /**
  * DOC: ECDH Helper Functions
  *
- * To use ECDH with the KPP cipher API, the following data structure and
+ * To use ECDH with the KPP cipher API, the following data काष्ठाure and
  * functions should be used.
  *
- * The ECC curves known to the ECDH implementation are specified in this
+ * The ECC curves known to the ECDH implementation are specअगरied in this
  * header file.
  *
  * To use ECDH with KPP, the following functions should be used to operate on
- * an ECDH private key. The packet private key that can be set with
+ * an ECDH निजी key. The packet निजी key that can be set with
  * the KPP API function call of crypto_kpp_set_secret.
  */
 
 /* Curves IDs */
-#define ECC_CURVE_NIST_P192	0x0001
-#define ECC_CURVE_NIST_P256	0x0002
-#define ECC_CURVE_NIST_P384	0x0003
+#घोषणा ECC_CURVE_NIST_P192	0x0001
+#घोषणा ECC_CURVE_NIST_P256	0x0002
+#घोषणा ECC_CURVE_NIST_P384	0x0003
 
 /**
- * struct ecdh - define an ECDH private key
+ * काष्ठा ecdh - define an ECDH निजी key
  *
  * @key:	Private ECDH key
- * @key_size:	Size of the private ECDH key
+ * @key_size:	Size of the निजी ECDH key
  */
-struct ecdh {
-	char *key;
-	unsigned short key_size;
-};
+काष्ठा ecdh अणु
+	अक्षर *key;
+	अचिन्हित लघु key_size;
+पूर्ण;
 
 /**
- * crypto_ecdh_key_len() - Obtain the size of the private ECDH key
- * @params:	private ECDH key
+ * crypto_ecdh_key_len() - Obtain the size of the निजी ECDH key
+ * @params:	निजी ECDH key
  *
- * This function returns the packet ECDH key size. A caller can use that
- * with the provided ECDH private key reference to obtain the required
+ * This function वापसs the packet ECDH key size. A caller can use that
+ * with the provided ECDH निजी key reference to obtain the required
  * memory size to hold a packet key.
  *
  * Return: size of the key in bytes
  */
-unsigned int crypto_ecdh_key_len(const struct ecdh *params);
+अचिन्हित पूर्णांक crypto_ecdh_key_len(स्थिर काष्ठा ecdh *params);
 
 /**
- * crypto_ecdh_encode_key() - encode the private key
+ * crypto_ecdh_encode_key() - encode the निजी key
  * @buf:	Buffer allocated by the caller to hold the packet ECDH
- *		private key. The buffer should be at least crypto_ecdh_key_len
+ *		निजी key. The buffer should be at least crypto_ecdh_key_len
  *		bytes in size.
- * @len:	Length of the packet private key buffer
- * @p:		Buffer with the caller-specified private key
+ * @len:	Length of the packet निजी key buffer
+ * @p:		Buffer with the caller-specअगरied निजी key
  *
- * The ECDH implementations operate on a packet representation of the private
+ * The ECDH implementations operate on a packet representation of the निजी
  * key.
  *
- * Return:	-EINVAL if buffer has insufficient size, 0 on success
+ * Return:	-EINVAL अगर buffer has insufficient size, 0 on success
  */
-int crypto_ecdh_encode_key(char *buf, unsigned int len, const struct ecdh *p);
+पूर्णांक crypto_ecdh_encode_key(अक्षर *buf, अचिन्हित पूर्णांक len, स्थिर काष्ठा ecdh *p);
 
 /**
- * crypto_ecdh_decode_key() - decode a private key
+ * crypto_ecdh_decode_key() - decode a निजी key
  * @buf:	Buffer holding a packet key that should be decoded
- * @len:	Length of the packet private key buffer
+ * @len:	Length of the packet निजी key buffer
  * @p:		Buffer allocated by the caller that is filled with the
- *		unpacked ECDH private key.
+ *		unpacked ECDH निजी key.
  *
- * The unpacking obtains the private key by pointing @p to the correct location
- * in @buf. Thus, both pointers refer to the same memory.
+ * The unpacking obtains the निजी key by poपूर्णांकing @p to the correct location
+ * in @buf. Thus, both poपूर्णांकers refer to the same memory.
  *
- * Return:	-EINVAL if buffer has insufficient size, 0 on success
+ * Return:	-EINVAL अगर buffer has insufficient size, 0 on success
  */
-int crypto_ecdh_decode_key(const char *buf, unsigned int len, struct ecdh *p);
+पूर्णांक crypto_ecdh_decode_key(स्थिर अक्षर *buf, अचिन्हित पूर्णांक len, काष्ठा ecdh *p);
 
-#endif
+#पूर्ण_अगर

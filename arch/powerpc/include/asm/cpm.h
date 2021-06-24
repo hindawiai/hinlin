@@ -1,1 +1,2 @@
-#include <soc/fsl/cpm.h>
+<शैली गुरु>
+#समावेश <soc/fsl/cpm.h>

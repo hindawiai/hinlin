@@ -1,300 +1,301 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * int340x_thermal_zone.c
+ * पूर्णांक340x_thermal_zone.c
  * Copyright (c) 2015, Intel Corporation.
  */
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/acpi.h>
-#include <linux/thermal.h>
-#include <linux/units.h>
-#include "int340x_thermal_zone.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/thermal.h>
+#समावेश <linux/units.h>
+#समावेश "int340x_thermal_zone.h"
 
-static int int340x_thermal_get_zone_temp(struct thermal_zone_device *zone,
-					 int *temp)
-{
-	struct int34x_thermal_zone *d = zone->devdata;
-	unsigned long long tmp;
+अटल पूर्णांक पूर्णांक340x_thermal_get_zone_temp(काष्ठा thermal_zone_device *zone,
+					 पूर्णांक *temp)
+अणु
+	काष्ठा पूर्णांक34x_thermal_zone *d = zone->devdata;
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
 	acpi_status status;
 
-	if (d->override_ops && d->override_ops->get_temp)
-		return d->override_ops->get_temp(zone, temp);
+	अगर (d->override_ops && d->override_ops->get_temp)
+		वापस d->override_ops->get_temp(zone, temp);
 
-	status = acpi_evaluate_integer(d->adev->handle, "_TMP", NULL, &tmp);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	status = acpi_evaluate_पूर्णांकeger(d->adev->handle, "_TMP", शून्य, &पंचांगp);
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
-	if (d->lpat_table) {
-		int conv_temp;
+	अगर (d->lpat_table) अणु
+		पूर्णांक conv_temp;
 
-		conv_temp = acpi_lpat_raw_to_temp(d->lpat_table, (int)tmp);
-		if (conv_temp < 0)
-			return conv_temp;
+		conv_temp = acpi_lpat_raw_to_temp(d->lpat_table, (पूर्णांक)पंचांगp);
+		अगर (conv_temp < 0)
+			वापस conv_temp;
 
-		*temp = (unsigned long)conv_temp * 10;
-	} else
-		/* _TMP returns the temperature in tenths of degrees Kelvin */
-		*temp = deci_kelvin_to_millicelsius(tmp);
+		*temp = (अचिन्हित दीर्घ)conv_temp * 10;
+	पूर्ण अन्यथा
+		/* _TMP वापसs the temperature in tenths of degrees Kelvin */
+		*temp = deci_kelvin_to_millicelsius(पंचांगp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int int340x_thermal_get_trip_temp(struct thermal_zone_device *zone,
-					 int trip, int *temp)
-{
-	struct int34x_thermal_zone *d = zone->devdata;
-	int i;
+अटल पूर्णांक पूर्णांक340x_thermal_get_trip_temp(काष्ठा thermal_zone_device *zone,
+					 पूर्णांक trip, पूर्णांक *temp)
+अणु
+	काष्ठा पूर्णांक34x_thermal_zone *d = zone->devdata;
+	पूर्णांक i;
 
-	if (d->override_ops && d->override_ops->get_trip_temp)
-		return d->override_ops->get_trip_temp(zone, trip, temp);
+	अगर (d->override_ops && d->override_ops->get_trip_temp)
+		वापस d->override_ops->get_trip_temp(zone, trip, temp);
 
-	if (trip < d->aux_trip_nr)
+	अगर (trip < d->aux_trip_nr)
 		*temp = d->aux_trips[trip];
-	else if (trip == d->crt_trip_id)
+	अन्यथा अगर (trip == d->crt_trip_id)
 		*temp = d->crt_temp;
-	else if (trip == d->psv_trip_id)
+	अन्यथा अगर (trip == d->psv_trip_id)
 		*temp = d->psv_temp;
-	else if (trip == d->hot_trip_id)
+	अन्यथा अगर (trip == d->hot_trip_id)
 		*temp = d->hot_temp;
-	else {
-		for (i = 0; i < INT340X_THERMAL_MAX_ACT_TRIP_COUNT; i++) {
-			if (d->act_trips[i].valid &&
-			    d->act_trips[i].id == trip) {
+	अन्यथा अणु
+		क्रम (i = 0; i < INT340X_THERMAL_MAX_ACT_TRIP_COUNT; i++) अणु
+			अगर (d->act_trips[i].valid &&
+			    d->act_trips[i].id == trip) अणु
 				*temp = d->act_trips[i].temp;
-				break;
-			}
-		}
-		if (i == INT340X_THERMAL_MAX_ACT_TRIP_COUNT)
-			return -EINVAL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i == INT340X_THERMAL_MAX_ACT_TRIP_COUNT)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int int340x_thermal_get_trip_type(struct thermal_zone_device *zone,
-					 int trip,
-					 enum thermal_trip_type *type)
-{
-	struct int34x_thermal_zone *d = zone->devdata;
-	int i;
+अटल पूर्णांक पूर्णांक340x_thermal_get_trip_type(काष्ठा thermal_zone_device *zone,
+					 पूर्णांक trip,
+					 क्रमागत thermal_trip_type *type)
+अणु
+	काष्ठा पूर्णांक34x_thermal_zone *d = zone->devdata;
+	पूर्णांक i;
 
-	if (d->override_ops && d->override_ops->get_trip_type)
-		return d->override_ops->get_trip_type(zone, trip, type);
+	अगर (d->override_ops && d->override_ops->get_trip_type)
+		वापस d->override_ops->get_trip_type(zone, trip, type);
 
-	if (trip < d->aux_trip_nr)
+	अगर (trip < d->aux_trip_nr)
 		*type = THERMAL_TRIP_PASSIVE;
-	else if (trip == d->crt_trip_id)
+	अन्यथा अगर (trip == d->crt_trip_id)
 		*type = THERMAL_TRIP_CRITICAL;
-	else if (trip == d->hot_trip_id)
+	अन्यथा अगर (trip == d->hot_trip_id)
 		*type = THERMAL_TRIP_HOT;
-	else if (trip == d->psv_trip_id)
+	अन्यथा अगर (trip == d->psv_trip_id)
 		*type = THERMAL_TRIP_PASSIVE;
-	else {
-		for (i = 0; i < INT340X_THERMAL_MAX_ACT_TRIP_COUNT; i++) {
-			if (d->act_trips[i].valid &&
-			    d->act_trips[i].id == trip) {
+	अन्यथा अणु
+		क्रम (i = 0; i < INT340X_THERMAL_MAX_ACT_TRIP_COUNT; i++) अणु
+			अगर (d->act_trips[i].valid &&
+			    d->act_trips[i].id == trip) अणु
 				*type = THERMAL_TRIP_ACTIVE;
-				break;
-			}
-		}
-		if (i == INT340X_THERMAL_MAX_ACT_TRIP_COUNT)
-			return -EINVAL;
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i == INT340X_THERMAL_MAX_ACT_TRIP_COUNT)
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int int340x_thermal_set_trip_temp(struct thermal_zone_device *zone,
-				      int trip, int temp)
-{
-	struct int34x_thermal_zone *d = zone->devdata;
+अटल पूर्णांक पूर्णांक340x_thermal_set_trip_temp(काष्ठा thermal_zone_device *zone,
+				      पूर्णांक trip, पूर्णांक temp)
+अणु
+	काष्ठा पूर्णांक34x_thermal_zone *d = zone->devdata;
 	acpi_status status;
-	char name[10];
+	अक्षर name[10];
 
-	if (d->override_ops && d->override_ops->set_trip_temp)
-		return d->override_ops->set_trip_temp(zone, trip, temp);
+	अगर (d->override_ops && d->override_ops->set_trip_temp)
+		वापस d->override_ops->set_trip_temp(zone, trip, temp);
 
-	snprintf(name, sizeof(name), "PAT%d", trip);
+	snम_लिखो(name, माप(name), "PAT%d", trip);
 	status = acpi_execute_simple_method(d->adev->handle, name,
 			millicelsius_to_deci_kelvin(temp));
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
 	d->aux_trips[trip] = temp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int int340x_thermal_get_trip_hyst(struct thermal_zone_device *zone,
-		int trip, int *temp)
-{
-	struct int34x_thermal_zone *d = zone->devdata;
+अटल पूर्णांक पूर्णांक340x_thermal_get_trip_hyst(काष्ठा thermal_zone_device *zone,
+		पूर्णांक trip, पूर्णांक *temp)
+अणु
+	काष्ठा पूर्णांक34x_thermal_zone *d = zone->devdata;
 	acpi_status status;
-	unsigned long long hyst;
+	अचिन्हित दीर्घ दीर्घ hyst;
 
-	if (d->override_ops && d->override_ops->get_trip_hyst)
-		return d->override_ops->get_trip_hyst(zone, trip, temp);
+	अगर (d->override_ops && d->override_ops->get_trip_hyst)
+		वापस d->override_ops->get_trip_hyst(zone, trip, temp);
 
-	status = acpi_evaluate_integer(d->adev->handle, "GTSH", NULL, &hyst);
-	if (ACPI_FAILURE(status))
+	status = acpi_evaluate_पूर्णांकeger(d->adev->handle, "GTSH", शून्य, &hyst);
+	अगर (ACPI_FAILURE(status))
 		*temp = 0;
-	else
+	अन्यथा
 		*temp = hyst * 100;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void int340x_thermal_critical(struct thermal_zone_device *zone)
-{
+अटल व्योम पूर्णांक340x_thermal_critical(काष्ठा thermal_zone_device *zone)
+अणु
 	dev_dbg(&zone->device, "%s: critical temperature reached\n", zone->type);
-}
+पूर्ण
 
-static struct thermal_zone_device_ops int340x_thermal_zone_ops = {
-	.get_temp       = int340x_thermal_get_zone_temp,
-	.get_trip_temp	= int340x_thermal_get_trip_temp,
-	.get_trip_type	= int340x_thermal_get_trip_type,
-	.set_trip_temp	= int340x_thermal_set_trip_temp,
-	.get_trip_hyst =  int340x_thermal_get_trip_hyst,
-	.critical	= int340x_thermal_critical,
-};
+अटल काष्ठा thermal_zone_device_ops पूर्णांक340x_thermal_zone_ops = अणु
+	.get_temp       = पूर्णांक340x_thermal_get_zone_temp,
+	.get_trip_temp	= पूर्णांक340x_thermal_get_trip_temp,
+	.get_trip_type	= पूर्णांक340x_thermal_get_trip_type,
+	.set_trip_temp	= पूर्णांक340x_thermal_set_trip_temp,
+	.get_trip_hyst =  पूर्णांक340x_thermal_get_trip_hyst,
+	.critical	= पूर्णांक340x_thermal_critical,
+पूर्ण;
 
-static int int340x_thermal_get_trip_config(acpi_handle handle, char *name,
-				      int *temp)
-{
-	unsigned long long r;
+अटल पूर्णांक पूर्णांक340x_thermal_get_trip_config(acpi_handle handle, अक्षर *name,
+				      पूर्णांक *temp)
+अणु
+	अचिन्हित दीर्घ दीर्घ r;
 	acpi_status status;
 
-	status = acpi_evaluate_integer(handle, name, NULL, &r);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	status = acpi_evaluate_पूर्णांकeger(handle, name, शून्य, &r);
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
 	*temp = deci_kelvin_to_millicelsius(r);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int int340x_thermal_read_trips(struct int34x_thermal_zone *int34x_zone)
-{
-	int trip_cnt = int34x_zone->aux_trip_nr;
-	int i;
+पूर्णांक पूर्णांक340x_thermal_पढ़ो_trips(काष्ठा पूर्णांक34x_thermal_zone *पूर्णांक34x_zone)
+अणु
+	पूर्णांक trip_cnt = पूर्णांक34x_zone->aux_trip_nr;
+	पूर्णांक i;
 
-	int34x_zone->crt_trip_id = -1;
-	if (!int340x_thermal_get_trip_config(int34x_zone->adev->handle, "_CRT",
-					     &int34x_zone->crt_temp))
-		int34x_zone->crt_trip_id = trip_cnt++;
+	पूर्णांक34x_zone->crt_trip_id = -1;
+	अगर (!पूर्णांक340x_thermal_get_trip_config(पूर्णांक34x_zone->adev->handle, "_CRT",
+					     &पूर्णांक34x_zone->crt_temp))
+		पूर्णांक34x_zone->crt_trip_id = trip_cnt++;
 
-	int34x_zone->hot_trip_id = -1;
-	if (!int340x_thermal_get_trip_config(int34x_zone->adev->handle, "_HOT",
-					     &int34x_zone->hot_temp))
-		int34x_zone->hot_trip_id = trip_cnt++;
+	पूर्णांक34x_zone->hot_trip_id = -1;
+	अगर (!पूर्णांक340x_thermal_get_trip_config(पूर्णांक34x_zone->adev->handle, "_HOT",
+					     &पूर्णांक34x_zone->hot_temp))
+		पूर्णांक34x_zone->hot_trip_id = trip_cnt++;
 
-	int34x_zone->psv_trip_id = -1;
-	if (!int340x_thermal_get_trip_config(int34x_zone->adev->handle, "_PSV",
-					     &int34x_zone->psv_temp))
-		int34x_zone->psv_trip_id = trip_cnt++;
+	पूर्णांक34x_zone->psv_trip_id = -1;
+	अगर (!पूर्णांक340x_thermal_get_trip_config(पूर्णांक34x_zone->adev->handle, "_PSV",
+					     &पूर्णांक34x_zone->psv_temp))
+		पूर्णांक34x_zone->psv_trip_id = trip_cnt++;
 
-	for (i = 0; i < INT340X_THERMAL_MAX_ACT_TRIP_COUNT; i++) {
-		char name[5] = { '_', 'A', 'C', '0' + i, '\0' };
+	क्रम (i = 0; i < INT340X_THERMAL_MAX_ACT_TRIP_COUNT; i++) अणु
+		अक्षर name[5] = अणु '_', 'A', 'C', '0' + i, '\0' पूर्ण;
 
-		if (int340x_thermal_get_trip_config(int34x_zone->adev->handle,
+		अगर (पूर्णांक340x_thermal_get_trip_config(पूर्णांक34x_zone->adev->handle,
 					name,
-					&int34x_zone->act_trips[i].temp))
-			break;
+					&पूर्णांक34x_zone->act_trips[i].temp))
+			अवरोध;
 
-		int34x_zone->act_trips[i].id = trip_cnt++;
-		int34x_zone->act_trips[i].valid = true;
-	}
+		पूर्णांक34x_zone->act_trips[i].id = trip_cnt++;
+		पूर्णांक34x_zone->act_trips[i].valid = true;
+	पूर्ण
 
-	return trip_cnt;
-}
-EXPORT_SYMBOL_GPL(int340x_thermal_read_trips);
+	वापस trip_cnt;
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांक340x_thermal_पढ़ो_trips);
 
-static struct thermal_zone_params int340x_thermal_params = {
+अटल काष्ठा thermal_zone_params पूर्णांक340x_thermal_params = अणु
 	.governor_name = "user_space",
 	.no_hwmon = true,
-};
+पूर्ण;
 
-struct int34x_thermal_zone *int340x_thermal_zone_add(struct acpi_device *adev,
-				struct thermal_zone_device_ops *override_ops)
-{
-	struct int34x_thermal_zone *int34x_thermal_zone;
+काष्ठा पूर्णांक34x_thermal_zone *पूर्णांक340x_thermal_zone_add(काष्ठा acpi_device *adev,
+				काष्ठा thermal_zone_device_ops *override_ops)
+अणु
+	काष्ठा पूर्णांक34x_thermal_zone *पूर्णांक34x_thermal_zone;
 	acpi_status status;
-	unsigned long long trip_cnt;
-	int trip_mask = 0;
-	int ret;
+	अचिन्हित दीर्घ दीर्घ trip_cnt;
+	पूर्णांक trip_mask = 0;
+	पूर्णांक ret;
 
-	int34x_thermal_zone = kzalloc(sizeof(*int34x_thermal_zone),
+	पूर्णांक34x_thermal_zone = kzalloc(माप(*पूर्णांक34x_thermal_zone),
 				      GFP_KERNEL);
-	if (!int34x_thermal_zone)
-		return ERR_PTR(-ENOMEM);
+	अगर (!पूर्णांक34x_thermal_zone)
+		वापस ERR_PTR(-ENOMEM);
 
-	int34x_thermal_zone->adev = adev;
-	int34x_thermal_zone->override_ops = override_ops;
+	पूर्णांक34x_thermal_zone->adev = adev;
+	पूर्णांक34x_thermal_zone->override_ops = override_ops;
 
-	status = acpi_evaluate_integer(adev->handle, "PATC", NULL, &trip_cnt);
-	if (ACPI_FAILURE(status))
+	status = acpi_evaluate_पूर्णांकeger(adev->handle, "PATC", शून्य, &trip_cnt);
+	अगर (ACPI_FAILURE(status))
 		trip_cnt = 0;
-	else {
-		int i;
+	अन्यथा अणु
+		पूर्णांक i;
 
-		int34x_thermal_zone->aux_trips =
-			kcalloc(trip_cnt,
-				sizeof(*int34x_thermal_zone->aux_trips),
+		पूर्णांक34x_thermal_zone->aux_trips =
+			kसुस्मृति(trip_cnt,
+				माप(*पूर्णांक34x_thermal_zone->aux_trips),
 				GFP_KERNEL);
-		if (!int34x_thermal_zone->aux_trips) {
+		अगर (!पूर्णांक34x_thermal_zone->aux_trips) अणु
 			ret = -ENOMEM;
-			goto err_trip_alloc;
-		}
+			जाओ err_trip_alloc;
+		पूर्ण
 		trip_mask = BIT(trip_cnt) - 1;
-		int34x_thermal_zone->aux_trip_nr = trip_cnt;
-		for (i = 0; i < trip_cnt; ++i)
-			int34x_thermal_zone->aux_trips[i] = THERMAL_TEMP_INVALID;
-	}
+		पूर्णांक34x_thermal_zone->aux_trip_nr = trip_cnt;
+		क्रम (i = 0; i < trip_cnt; ++i)
+			पूर्णांक34x_thermal_zone->aux_trips[i] = THERMAL_TEMP_INVALID;
+	पूर्ण
 
-	trip_cnt = int340x_thermal_read_trips(int34x_thermal_zone);
+	trip_cnt = पूर्णांक340x_thermal_पढ़ो_trips(पूर्णांक34x_thermal_zone);
 
-	int34x_thermal_zone->lpat_table = acpi_lpat_get_conversion_table(
+	पूर्णांक34x_thermal_zone->lpat_table = acpi_lpat_get_conversion_table(
 								adev->handle);
 
-	int34x_thermal_zone->zone = thermal_zone_device_register(
+	पूर्णांक34x_thermal_zone->zone = thermal_zone_device_रेजिस्टर(
 						acpi_device_bid(adev),
 						trip_cnt,
-						trip_mask, int34x_thermal_zone,
-						&int340x_thermal_zone_ops,
-						&int340x_thermal_params,
+						trip_mask, पूर्णांक34x_thermal_zone,
+						&पूर्णांक340x_thermal_zone_ops,
+						&पूर्णांक340x_thermal_params,
 						0, 0);
-	if (IS_ERR(int34x_thermal_zone->zone)) {
-		ret = PTR_ERR(int34x_thermal_zone->zone);
-		goto err_thermal_zone;
-	}
-	ret = thermal_zone_device_enable(int34x_thermal_zone->zone);
-	if (ret)
-		goto err_enable;
+	अगर (IS_ERR(पूर्णांक34x_thermal_zone->zone)) अणु
+		ret = PTR_ERR(पूर्णांक34x_thermal_zone->zone);
+		जाओ err_thermal_zone;
+	पूर्ण
+	ret = thermal_zone_device_enable(पूर्णांक34x_thermal_zone->zone);
+	अगर (ret)
+		जाओ err_enable;
 
-	return int34x_thermal_zone;
+	वापस पूर्णांक34x_thermal_zone;
 
 err_enable:
-	thermal_zone_device_unregister(int34x_thermal_zone->zone);
+	thermal_zone_device_unरेजिस्टर(पूर्णांक34x_thermal_zone->zone);
 err_thermal_zone:
-	acpi_lpat_free_conversion_table(int34x_thermal_zone->lpat_table);
-	kfree(int34x_thermal_zone->aux_trips);
+	acpi_lpat_मुक्त_conversion_table(पूर्णांक34x_thermal_zone->lpat_table);
+	kमुक्त(पूर्णांक34x_thermal_zone->aux_trips);
 err_trip_alloc:
-	kfree(int34x_thermal_zone);
-	return ERR_PTR(ret);
-}
-EXPORT_SYMBOL_GPL(int340x_thermal_zone_add);
+	kमुक्त(पूर्णांक34x_thermal_zone);
+	वापस ERR_PTR(ret);
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांक340x_thermal_zone_add);
 
-void int340x_thermal_zone_remove(struct int34x_thermal_zone
-				 *int34x_thermal_zone)
-{
-	thermal_zone_device_unregister(int34x_thermal_zone->zone);
-	acpi_lpat_free_conversion_table(int34x_thermal_zone->lpat_table);
-	kfree(int34x_thermal_zone->aux_trips);
-	kfree(int34x_thermal_zone);
-}
-EXPORT_SYMBOL_GPL(int340x_thermal_zone_remove);
+व्योम पूर्णांक340x_thermal_zone_हटाओ(काष्ठा पूर्णांक34x_thermal_zone
+				 *पूर्णांक34x_thermal_zone)
+अणु
+	thermal_zone_device_unरेजिस्टर(पूर्णांक34x_thermal_zone->zone);
+	acpi_lpat_मुक्त_conversion_table(पूर्णांक34x_thermal_zone->lpat_table);
+	kमुक्त(पूर्णांक34x_thermal_zone->aux_trips);
+	kमुक्त(पूर्णांक34x_thermal_zone);
+पूर्ण
+EXPORT_SYMBOL_GPL(पूर्णांक340x_thermal_zone_हटाओ);
 
 MODULE_AUTHOR("Aaron Lu <aaron.lu@intel.com>");
 MODULE_AUTHOR("Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>");

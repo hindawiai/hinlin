@@ -1,129 +1,130 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2011 matt mooney <mfm@muteddisk.com>
  *               2005-2007 Takahiro Hirofuchi
  */
 
-#include <libudev.h>
+#समावेश <libudev.h>
 
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
 
-#include <getopt.h>
+#समावेश <getopt.h>
 
-#include "usbip_common.h"
-#include "utils.h"
-#include "usbip.h"
-#include "sysfs_utils.h"
+#समावेश "usbip_common.h"
+#समावेश "utils.h"
+#समावेश "usbip.h"
+#समावेश "sysfs_utils.h"
 
-static const char usbip_unbind_usage_string[] =
+अटल स्थिर अक्षर usbip_unbind_usage_string[] =
 	"usbip unbind <args>\n"
 	"    -b, --busid=<busid>    Unbind " USBIP_HOST_DRV_NAME ".ko from "
 	"device on <busid>\n";
 
-void usbip_unbind_usage(void)
-{
-	printf("usage: %s", usbip_unbind_usage_string);
-}
+व्योम usbip_unbind_usage(व्योम)
+अणु
+	म_लिखो("usage: %s", usbip_unbind_usage_string);
+पूर्ण
 
-static int unbind_device(char *busid)
-{
-	char bus_type[] = "usb";
-	int rc, ret = -1;
+अटल पूर्णांक unbind_device(अक्षर *busid)
+अणु
+	अक्षर bus_type[] = "usb";
+	पूर्णांक rc, ret = -1;
 
-	char unbind_attr_name[] = "unbind";
-	char unbind_attr_path[SYSFS_PATH_MAX];
-	char rebind_attr_name[] = "rebind";
-	char rebind_attr_path[SYSFS_PATH_MAX];
+	अक्षर unbind_attr_name[] = "unbind";
+	अक्षर unbind_attr_path[SYSFS_PATH_MAX];
+	अक्षर rebind_attr_name[] = "rebind";
+	अक्षर rebind_attr_path[SYSFS_PATH_MAX];
 
-	struct udev *udev;
-	struct udev_device *dev;
-	const char *driver;
+	काष्ठा udev *udev;
+	काष्ठा udev_device *dev;
+	स्थिर अक्षर *driver;
 
 	/* Create libudev context. */
 	udev = udev_new();
 
 	/* Check whether the device with this bus ID exists. */
-	dev = udev_device_new_from_subsystem_sysname(udev, "usb", busid);
-	if (!dev) {
+	dev = udev_device_new_from_subप्रणाली_sysname(udev, "usb", busid);
+	अगर (!dev) अणु
 		err("device with the specified bus ID does not exist");
-		goto err_close_udev;
-	}
+		जाओ err_बंद_udev;
+	पूर्ण
 
 	/* Check whether the device is using usbip-host driver. */
 	driver = udev_device_get_driver(dev);
-	if (!driver || strcmp(driver, "usbip-host")) {
+	अगर (!driver || म_भेद(driver, "usbip-host")) अणु
 		err("device is not bound to usbip-host driver");
-		goto err_close_udev;
-	}
+		जाओ err_बंद_udev;
+	पूर्ण
 
 	/* Unbind device from driver. */
-	snprintf(unbind_attr_path, sizeof(unbind_attr_path), "%s/%s/%s/%s/%s/%s",
+	snम_लिखो(unbind_attr_path, माप(unbind_attr_path), "%s/%s/%s/%s/%s/%s",
 		 SYSFS_MNT_PATH, SYSFS_BUS_NAME, bus_type, SYSFS_DRIVERS_NAME,
 		 USBIP_HOST_DRV_NAME, unbind_attr_name);
 
-	rc = write_sysfs_attribute(unbind_attr_path, busid, strlen(busid));
-	if (rc < 0) {
+	rc = ग_लिखो_sysfs_attribute(unbind_attr_path, busid, म_माप(busid));
+	अगर (rc < 0) अणु
 		err("error unbinding device %s from driver", busid);
-		goto err_close_udev;
-	}
+		जाओ err_बंद_udev;
+	पूर्ण
 
-	/* Notify driver of unbind. */
-	rc = modify_match_busid(busid, 0);
-	if (rc < 0) {
+	/* Notअगरy driver of unbind. */
+	rc = modअगरy_match_busid(busid, 0);
+	अगर (rc < 0) अणु
 		err("unable to unbind device on %s", busid);
-		goto err_close_udev;
-	}
+		जाओ err_बंद_udev;
+	पूर्ण
 
 	/* Trigger new probing. */
-	snprintf(rebind_attr_path, sizeof(unbind_attr_path), "%s/%s/%s/%s/%s/%s",
+	snम_लिखो(rebind_attr_path, माप(unbind_attr_path), "%s/%s/%s/%s/%s/%s",
 			SYSFS_MNT_PATH, SYSFS_BUS_NAME, bus_type, SYSFS_DRIVERS_NAME,
 			USBIP_HOST_DRV_NAME, rebind_attr_name);
 
-	rc = write_sysfs_attribute(rebind_attr_path, busid, strlen(busid));
-	if (rc < 0) {
+	rc = ग_लिखो_sysfs_attribute(rebind_attr_path, busid, म_माप(busid));
+	अगर (rc < 0) अणु
 		err("error rebinding");
-		goto err_close_udev;
-	}
+		जाओ err_बंद_udev;
+	पूर्ण
 
 	ret = 0;
 	info("unbind device on busid %s: complete", busid);
 
-err_close_udev:
+err_बंद_udev:
 	udev_device_unref(dev);
 	udev_unref(udev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int usbip_unbind(int argc, char *argv[])
-{
-	static const struct option opts[] = {
-		{ "busid", required_argument, NULL, 'b' },
-		{ NULL,    0,                 NULL,  0  }
-	};
+पूर्णांक usbip_unbind(पूर्णांक argc, अक्षर *argv[])
+अणु
+	अटल स्थिर काष्ठा option opts[] = अणु
+		अणु "busid", required_argument, शून्य, 'b' पूर्ण,
+		अणु शून्य,    0,                 शून्य,  0  पूर्ण
+	पूर्ण;
 
-	int opt;
-	int ret = -1;
+	पूर्णांक opt;
+	पूर्णांक ret = -1;
 
-	for (;;) {
-		opt = getopt_long(argc, argv, "b:", opts, NULL);
+	क्रम (;;) अणु
+		opt = getopt_दीर्घ(argc, argv, "b:", opts, शून्य);
 
-		if (opt == -1)
-			break;
+		अगर (opt == -1)
+			अवरोध;
 
-		switch (opt) {
-		case 'b':
+		चयन (opt) अणु
+		हाल 'b':
 			ret = unbind_device(optarg);
-			goto out;
-		default:
-			goto err_out;
-		}
-	}
+			जाओ out;
+		शेष:
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
 err_out:
 	usbip_unbind_usage();
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण

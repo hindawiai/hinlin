@@ -1,210 +1,211 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for STM32 Digital Camera Memory Interface
+ * Driver क्रम STM32 Digital Camera Memory Interface
  *
  * Copyright (C) STMicroelectronics SA 2017
  * Authors: Yannick Fertre <yannick.fertre@st.com>
  *          Hugues Fruchet <hugues.fruchet@st.com>
- *          for STMicroelectronics.
+ *          क्रम STMicroelectronics.
  *
- * This driver is based on atmel_isi.c
+ * This driver is based on aपंचांगel_isi.c
  *
  */
 
-#include <linux/clk.h>
-#include <linux/completion.h>
-#include <linux/delay.h>
-#include <linux/dmaengine.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/of_graph.h>
-#include <linux/pinctrl/consumer.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/reset.h>
-#include <linux/videodev2.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/dmaengine.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_graph.h>
+#समावेश <linux/pinctrl/consumer.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/reset.h>
+#समावेश <linux/videodev2.h>
 
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-dev.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-event.h>
-#include <media/v4l2-fwnode.h>
-#include <media/v4l2-image-sizes.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-rect.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-dev.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/v4l2-fwnode.h>
+#समावेश <media/v4l2-image-sizes.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-rect.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-#define DRV_NAME "stm32-dcmi"
+#घोषणा DRV_NAME "stm32-dcmi"
 
-/* Registers offset for DCMI */
-#define DCMI_CR		0x00 /* Control Register */
-#define DCMI_SR		0x04 /* Status Register */
-#define DCMI_RIS	0x08 /* Raw Interrupt Status register */
-#define DCMI_IER	0x0C /* Interrupt Enable Register */
-#define DCMI_MIS	0x10 /* Masked Interrupt Status register */
-#define DCMI_ICR	0x14 /* Interrupt Clear Register */
-#define DCMI_ESCR	0x18 /* Embedded Synchronization Code Register */
-#define DCMI_ESUR	0x1C /* Embedded Synchronization Unmask Register */
-#define DCMI_CWSTRT	0x20 /* Crop Window STaRT */
-#define DCMI_CWSIZE	0x24 /* Crop Window SIZE */
-#define DCMI_DR		0x28 /* Data Register */
-#define DCMI_IDR	0x2C /* IDentifier Register */
+/* Registers offset क्रम DCMI */
+#घोषणा DCMI_CR		0x00 /* Control Register */
+#घोषणा DCMI_SR		0x04 /* Status Register */
+#घोषणा DCMI_RIS	0x08 /* Raw Interrupt Status रेजिस्टर */
+#घोषणा DCMI_IER	0x0C /* Interrupt Enable Register */
+#घोषणा DCMI_MIS	0x10 /* Masked Interrupt Status रेजिस्टर */
+#घोषणा DCMI_ICR	0x14 /* Interrupt Clear Register */
+#घोषणा DCMI_ESCR	0x18 /* Embedded Synchronization Code Register */
+#घोषणा DCMI_ESUR	0x1C /* Embedded Synchronization Unmask Register */
+#घोषणा DCMI_CWSTRT	0x20 /* Crop Winकरोw STaRT */
+#घोषणा DCMI_CWSIZE	0x24 /* Crop Winकरोw SIZE */
+#घोषणा DCMI_DR		0x28 /* Data Register */
+#घोषणा DCMI_IDR	0x2C /* IDentअगरier Register */
 
-/* Bits definition for control register (DCMI_CR) */
-#define CR_CAPTURE	BIT(0)
-#define CR_CM		BIT(1)
-#define CR_CROP		BIT(2)
-#define CR_JPEG		BIT(3)
-#define CR_ESS		BIT(4)
-#define CR_PCKPOL	BIT(5)
-#define CR_HSPOL	BIT(6)
-#define CR_VSPOL	BIT(7)
-#define CR_FCRC_0	BIT(8)
-#define CR_FCRC_1	BIT(9)
-#define CR_EDM_0	BIT(10)
-#define CR_EDM_1	BIT(11)
-#define CR_ENABLE	BIT(14)
+/* Bits definition क्रम control रेजिस्टर (DCMI_CR) */
+#घोषणा CR_CAPTURE	BIT(0)
+#घोषणा CR_CM		BIT(1)
+#घोषणा CR_CROP		BIT(2)
+#घोषणा CR_JPEG		BIT(3)
+#घोषणा CR_ESS		BIT(4)
+#घोषणा CR_PCKPOL	BIT(5)
+#घोषणा CR_HSPOL	BIT(6)
+#घोषणा CR_VSPOL	BIT(7)
+#घोषणा CR_FCRC_0	BIT(8)
+#घोषणा CR_FCRC_1	BIT(9)
+#घोषणा CR_EDM_0	BIT(10)
+#घोषणा CR_EDM_1	BIT(11)
+#घोषणा CR_ENABLE	BIT(14)
 
-/* Bits definition for status register (DCMI_SR) */
-#define SR_HSYNC	BIT(0)
-#define SR_VSYNC	BIT(1)
-#define SR_FNE		BIT(2)
+/* Bits definition क्रम status रेजिस्टर (DCMI_SR) */
+#घोषणा SR_HSYNC	BIT(0)
+#घोषणा SR_VSYNC	BIT(1)
+#घोषणा SR_FNE		BIT(2)
 
 /*
- * Bits definition for interrupt registers
+ * Bits definition क्रम पूर्णांकerrupt रेजिस्टरs
  * (DCMI_RIS, DCMI_IER, DCMI_MIS, DCMI_ICR)
  */
-#define IT_FRAME	BIT(0)
-#define IT_OVR		BIT(1)
-#define IT_ERR		BIT(2)
-#define IT_VSYNC	BIT(3)
-#define IT_LINE		BIT(4)
+#घोषणा IT_FRAME	BIT(0)
+#घोषणा IT_OVR		BIT(1)
+#घोषणा IT_ERR		BIT(2)
+#घोषणा IT_VSYNC	BIT(3)
+#घोषणा IT_LINE		BIT(4)
 
-enum state {
+क्रमागत state अणु
 	STOPPED = 0,
 	WAIT_FOR_BUFFER,
 	RUNNING,
-};
+पूर्ण;
 
-#define MIN_WIDTH	16U
-#define MAX_WIDTH	2592U
-#define MIN_HEIGHT	16U
-#define MAX_HEIGHT	2592U
+#घोषणा MIN_WIDTH	16U
+#घोषणा MAX_WIDTH	2592U
+#घोषणा MIN_HEIGHT	16U
+#घोषणा MAX_HEIGHT	2592U
 
-#define TIMEOUT_MS	1000
+#घोषणा TIMEOUT_MS	1000
 
-#define OVERRUN_ERROR_THRESHOLD	3
+#घोषणा OVERRUN_ERROR_THRESHOLD	3
 
-struct dcmi_format {
+काष्ठा dcmi_क्रमmat अणु
 	u32	fourcc;
 	u32	mbus_code;
 	u8	bpp;
-};
+पूर्ण;
 
-struct dcmi_framesize {
+काष्ठा dcmi_framesize अणु
 	u32	width;
 	u32	height;
-};
+पूर्ण;
 
-struct dcmi_buf {
-	struct vb2_v4l2_buffer	vb;
+काष्ठा dcmi_buf अणु
+	काष्ठा vb2_v4l2_buffer	vb;
 	bool			prepared;
 	dma_addr_t		paddr;
-	size_t			size;
-	struct list_head	list;
-};
+	माप_प्रकार			size;
+	काष्ठा list_head	list;
+पूर्ण;
 
-struct stm32_dcmi {
-	/* Protects the access of variables shared within the interrupt */
+काष्ठा sपंचांग32_dcmi अणु
+	/* Protects the access of variables shared within the पूर्णांकerrupt */
 	spinlock_t			irqlock;
-	struct device			*dev;
-	void __iomem			*regs;
-	struct resource			*res;
-	struct reset_control		*rstc;
-	int				sequence;
-	struct list_head		buffers;
-	struct dcmi_buf			*active;
+	काष्ठा device			*dev;
+	व्योम __iomem			*regs;
+	काष्ठा resource			*res;
+	काष्ठा reset_control		*rstc;
+	पूर्णांक				sequence;
+	काष्ठा list_head		buffers;
+	काष्ठा dcmi_buf			*active;
 
-	struct v4l2_device		v4l2_dev;
-	struct video_device		*vdev;
-	struct v4l2_async_notifier	notifier;
-	struct v4l2_subdev		*source;
-	struct v4l2_format		fmt;
-	struct v4l2_rect		crop;
-	bool				do_crop;
+	काष्ठा v4l2_device		v4l2_dev;
+	काष्ठा video_device		*vdev;
+	काष्ठा v4l2_async_notअगरier	notअगरier;
+	काष्ठा v4l2_subdev		*source;
+	काष्ठा v4l2_क्रमmat		fmt;
+	काष्ठा v4l2_rect		crop;
+	bool				करो_crop;
 
-	const struct dcmi_format	**sd_formats;
-	unsigned int			num_of_sd_formats;
-	const struct dcmi_format	*sd_format;
-	struct dcmi_framesize		*sd_framesizes;
-	unsigned int			num_of_sd_framesizes;
-	struct dcmi_framesize		sd_framesize;
-	struct v4l2_rect		sd_bounds;
+	स्थिर काष्ठा dcmi_क्रमmat	**sd_क्रमmats;
+	अचिन्हित पूर्णांक			num_of_sd_क्रमmats;
+	स्थिर काष्ठा dcmi_क्रमmat	*sd_क्रमmat;
+	काष्ठा dcmi_framesize		*sd_framesizes;
+	अचिन्हित पूर्णांक			num_of_sd_framesizes;
+	काष्ठा dcmi_framesize		sd_framesize;
+	काष्ठा v4l2_rect		sd_bounds;
 
-	/* Protect this data structure */
-	struct mutex			lock;
-	struct vb2_queue		queue;
+	/* Protect this data काष्ठाure */
+	काष्ठा mutex			lock;
+	काष्ठा vb2_queue		queue;
 
-	struct v4l2_fwnode_bus_parallel	bus;
-	enum v4l2_mbus_type		bus_type;
-	struct completion		complete;
-	struct clk			*mclk;
-	enum state			state;
-	struct dma_chan			*dma_chan;
+	काष्ठा v4l2_fwnode_bus_parallel	bus;
+	क्रमागत v4l2_mbus_type		bus_type;
+	काष्ठा completion		complete;
+	काष्ठा clk			*mclk;
+	क्रमागत state			state;
+	काष्ठा dma_chan			*dma_chan;
 	dma_cookie_t			dma_cookie;
 	u32				misr;
-	int				errors_count;
-	int				overrun_count;
-	int				buffers_count;
+	पूर्णांक				errors_count;
+	पूर्णांक				overrun_count;
+	पूर्णांक				buffers_count;
 
 	/* Ensure DMA operations atomicity */
-	struct mutex			dma_lock;
+	काष्ठा mutex			dma_lock;
 
-	struct media_device		mdev;
-	struct media_pad		vid_cap_pad;
-	struct media_pipeline		pipeline;
-};
+	काष्ठा media_device		mdev;
+	काष्ठा media_pad		vid_cap_pad;
+	काष्ठा media_pipeline		pipeline;
+पूर्ण;
 
-static inline struct stm32_dcmi *notifier_to_dcmi(struct v4l2_async_notifier *n)
-{
-	return container_of(n, struct stm32_dcmi, notifier);
-}
+अटल अंतरभूत काष्ठा sपंचांग32_dcmi *notअगरier_to_dcmi(काष्ठा v4l2_async_notअगरier *n)
+अणु
+	वापस container_of(n, काष्ठा sपंचांग32_dcmi, notअगरier);
+पूर्ण
 
-static inline u32 reg_read(void __iomem *base, u32 reg)
-{
-	return readl_relaxed(base + reg);
-}
+अटल अंतरभूत u32 reg_पढ़ो(व्योम __iomem *base, u32 reg)
+अणु
+	वापस पढ़ोl_relaxed(base + reg);
+पूर्ण
 
-static inline void reg_write(void __iomem *base, u32 reg, u32 val)
-{
-	writel_relaxed(val, base + reg);
-}
+अटल अंतरभूत व्योम reg_ग_लिखो(व्योम __iomem *base, u32 reg, u32 val)
+अणु
+	ग_लिखोl_relaxed(val, base + reg);
+पूर्ण
 
-static inline void reg_set(void __iomem *base, u32 reg, u32 mask)
-{
-	reg_write(base, reg, reg_read(base, reg) | mask);
-}
+अटल अंतरभूत व्योम reg_set(व्योम __iomem *base, u32 reg, u32 mask)
+अणु
+	reg_ग_लिखो(base, reg, reg_पढ़ो(base, reg) | mask);
+पूर्ण
 
-static inline void reg_clear(void __iomem *base, u32 reg, u32 mask)
-{
-	reg_write(base, reg, reg_read(base, reg) & ~mask);
-}
+अटल अंतरभूत व्योम reg_clear(व्योम __iomem *base, u32 reg, u32 mask)
+अणु
+	reg_ग_लिखो(base, reg, reg_पढ़ो(base, reg) & ~mask);
+पूर्ण
 
-static int dcmi_start_capture(struct stm32_dcmi *dcmi, struct dcmi_buf *buf);
+अटल पूर्णांक dcmi_start_capture(काष्ठा sपंचांग32_dcmi *dcmi, काष्ठा dcmi_buf *buf);
 
-static void dcmi_buffer_done(struct stm32_dcmi *dcmi,
-			     struct dcmi_buf *buf,
-			     size_t bytesused,
-			     int err)
-{
-	struct vb2_v4l2_buffer *vbuf;
+अटल व्योम dcmi_buffer_करोne(काष्ठा sपंचांग32_dcmi *dcmi,
+			     काष्ठा dcmi_buf *buf,
+			     माप_प्रकार bytesused,
+			     पूर्णांक err)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf;
 
-	if (!buf)
-		return;
+	अगर (!buf)
+		वापस;
 
 	list_del_init(&buf->list);
 
@@ -212,97 +213,97 @@ static void dcmi_buffer_done(struct stm32_dcmi *dcmi,
 
 	vbuf->sequence = dcmi->sequence++;
 	vbuf->field = V4L2_FIELD_NONE;
-	vbuf->vb2_buf.timestamp = ktime_get_ns();
+	vbuf->vb2_buf.बारtamp = kसमय_get_ns();
 	vb2_set_plane_payload(&vbuf->vb2_buf, 0, bytesused);
-	vb2_buffer_done(&vbuf->vb2_buf,
+	vb2_buffer_करोne(&vbuf->vb2_buf,
 			err ? VB2_BUF_STATE_ERROR : VB2_BUF_STATE_DONE);
 	dev_dbg(dcmi->dev, "buffer[%d] done seq=%d, bytesused=%zu\n",
 		vbuf->vb2_buf.index, vbuf->sequence, bytesused);
 
 	dcmi->buffers_count++;
-	dcmi->active = NULL;
-}
+	dcmi->active = शून्य;
+पूर्ण
 
-static int dcmi_restart_capture(struct stm32_dcmi *dcmi)
-{
-	struct dcmi_buf *buf;
+अटल पूर्णांक dcmi_restart_capture(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
+	काष्ठा dcmi_buf *buf;
 
 	spin_lock_irq(&dcmi->irqlock);
 
-	if (dcmi->state != RUNNING) {
+	अगर (dcmi->state != RUNNING) अणु
 		spin_unlock_irq(&dcmi->irqlock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Restart a new DMA transfer with next buffer */
-	if (list_empty(&dcmi->buffers)) {
+	अगर (list_empty(&dcmi->buffers)) अणु
 		dev_dbg(dcmi->dev, "Capture restart is deferred to next buffer queueing\n");
 		dcmi->state = WAIT_FOR_BUFFER;
 		spin_unlock_irq(&dcmi->irqlock);
-		return 0;
-	}
-	buf = list_entry(dcmi->buffers.next, struct dcmi_buf, list);
+		वापस 0;
+	पूर्ण
+	buf = list_entry(dcmi->buffers.next, काष्ठा dcmi_buf, list);
 	dcmi->active = buf;
 
 	spin_unlock_irq(&dcmi->irqlock);
 
-	return dcmi_start_capture(dcmi, buf);
-}
+	वापस dcmi_start_capture(dcmi, buf);
+पूर्ण
 
-static void dcmi_dma_callback(void *param)
-{
-	struct stm32_dcmi *dcmi = (struct stm32_dcmi *)param;
-	struct dma_tx_state state;
-	enum dma_status status;
-	struct dcmi_buf *buf = dcmi->active;
+अटल व्योम dcmi_dma_callback(व्योम *param)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = (काष्ठा sपंचांग32_dcmi *)param;
+	काष्ठा dma_tx_state state;
+	क्रमागत dma_status status;
+	काष्ठा dcmi_buf *buf = dcmi->active;
 
 	spin_lock_irq(&dcmi->irqlock);
 
 	/* Check DMA status */
 	status = dmaengine_tx_status(dcmi->dma_chan, dcmi->dma_cookie, &state);
 
-	switch (status) {
-	case DMA_IN_PROGRESS:
+	चयन (status) अणु
+	हाल DMA_IN_PROGRESS:
 		dev_dbg(dcmi->dev, "%s: Received DMA_IN_PROGRESS\n", __func__);
-		break;
-	case DMA_PAUSED:
+		अवरोध;
+	हाल DMA_PAUSED:
 		dev_err(dcmi->dev, "%s: Received DMA_PAUSED\n", __func__);
-		break;
-	case DMA_ERROR:
+		अवरोध;
+	हाल DMA_ERROR:
 		dev_err(dcmi->dev, "%s: Received DMA_ERROR\n", __func__);
 
 		/* Return buffer to V4L2 in error state */
-		dcmi_buffer_done(dcmi, buf, 0, -EIO);
-		break;
-	case DMA_COMPLETE:
+		dcmi_buffer_करोne(dcmi, buf, 0, -EIO);
+		अवरोध;
+	हाल DMA_COMPLETE:
 		dev_dbg(dcmi->dev, "%s: Received DMA_COMPLETE\n", __func__);
 
 		/* Return buffer to V4L2 */
-		dcmi_buffer_done(dcmi, buf, buf->size, 0);
+		dcmi_buffer_करोne(dcmi, buf, buf->size, 0);
 
 		spin_unlock_irq(&dcmi->irqlock);
 
 		/* Restart capture */
-		if (dcmi_restart_capture(dcmi))
+		अगर (dcmi_restart_capture(dcmi))
 			dev_err(dcmi->dev, "%s: Cannot restart capture on DMA complete\n",
 				__func__);
-		return;
-	default:
+		वापस;
+	शेष:
 		dev_err(dcmi->dev, "%s: Received unknown status\n", __func__);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_unlock_irq(&dcmi->irqlock);
-}
+पूर्ण
 
-static int dcmi_start_dma(struct stm32_dcmi *dcmi,
-			  struct dcmi_buf *buf)
-{
-	struct dma_async_tx_descriptor *desc = NULL;
-	struct dma_slave_config config;
-	int ret;
+अटल पूर्णांक dcmi_start_dma(काष्ठा sपंचांग32_dcmi *dcmi,
+			  काष्ठा dcmi_buf *buf)
+अणु
+	काष्ठा dma_async_tx_descriptor *desc = शून्य;
+	काष्ठा dma_slave_config config;
+	पूर्णांक ret;
 
-	memset(&config, 0, sizeof(config));
+	स_रखो(&config, 0, माप(config));
 
 	config.src_addr = (dma_addr_t)dcmi->res->start + DCMI_DR;
 	config.src_addr_width = DMA_SLAVE_BUSWIDTH_4_BYTES;
@@ -311,14 +312,14 @@ static int dcmi_start_dma(struct stm32_dcmi *dcmi,
 
 	/* Configure DMA channel */
 	ret = dmaengine_slave_config(dcmi->dma_chan, &config);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dcmi->dev, "%s: DMA channel config failed (%d)\n",
 			__func__, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/*
-	 * Avoid call of dmaengine_terminate_sync() between
+	 * Aव्योम call of dmaengine_terminate_sync() between
 	 * dmaengine_prep_slave_single() and dmaengine_submit()
 	 * by locking the whole DMA submission sequence
 	 */
@@ -329,64 +330,64 @@ static int dcmi_start_dma(struct stm32_dcmi *dcmi,
 					   buf->size,
 					   DMA_DEV_TO_MEM,
 					   DMA_PREP_INTERRUPT);
-	if (!desc) {
+	अगर (!desc) अणु
 		dev_err(dcmi->dev, "%s: DMA dmaengine_prep_slave_single failed for buffer phy=%pad size=%zu\n",
 			__func__, &buf->paddr, buf->size);
 		mutex_unlock(&dcmi->dma_lock);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Set completion callback routine for notification */
+	/* Set completion callback routine क्रम notअगरication */
 	desc->callback = dcmi_dma_callback;
 	desc->callback_param = dcmi;
 
 	/* Push current DMA transaction in the pending queue */
 	dcmi->dma_cookie = dmaengine_submit(desc);
-	if (dma_submit_error(dcmi->dma_cookie)) {
+	अगर (dma_submit_error(dcmi->dma_cookie)) अणु
 		dev_err(dcmi->dev, "%s: DMA submission failed\n", __func__);
 		mutex_unlock(&dcmi->dma_lock);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	mutex_unlock(&dcmi->dma_lock);
 
 	dma_async_issue_pending(dcmi->dma_chan);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_start_capture(struct stm32_dcmi *dcmi, struct dcmi_buf *buf)
-{
-	int ret;
+अटल पूर्णांक dcmi_start_capture(काष्ठा sपंचांग32_dcmi *dcmi, काष्ठा dcmi_buf *buf)
+अणु
+	पूर्णांक ret;
 
-	if (!buf)
-		return -EINVAL;
+	अगर (!buf)
+		वापस -EINVAL;
 
 	ret = dcmi_start_dma(dcmi, buf);
-	if (ret) {
+	अगर (ret) अणु
 		dcmi->errors_count++;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Enable capture */
 	reg_set(dcmi->regs, DCMI_CR, CR_CAPTURE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dcmi_set_crop(struct stm32_dcmi *dcmi)
-{
+अटल व्योम dcmi_set_crop(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
 	u32 size, start;
 
 	/* Crop resolution */
 	size = ((dcmi->crop.height - 1) << 16) |
 		((dcmi->crop.width << 1) - 1);
-	reg_write(dcmi->regs, DCMI_CWSIZE, size);
+	reg_ग_लिखो(dcmi->regs, DCMI_CWSIZE, size);
 
-	/* Crop start point */
+	/* Crop start poपूर्णांक */
 	start = ((dcmi->crop.top) << 16) |
 		 ((dcmi->crop.left << 1));
-	reg_write(dcmi->regs, DCMI_CWSTRT, start);
+	reg_ग_लिखो(dcmi->regs, DCMI_CWSTRT, start);
 
 	dev_dbg(dcmi->dev, "Cropping to %ux%u@%u:%u\n",
 		dcmi->crop.width, dcmi->crop.height,
@@ -394,16 +395,16 @@ static void dcmi_set_crop(struct stm32_dcmi *dcmi)
 
 	/* Enable crop */
 	reg_set(dcmi->regs, DCMI_CR, CR_CROP);
-}
+पूर्ण
 
-static void dcmi_process_jpeg(struct stm32_dcmi *dcmi)
-{
-	struct dma_tx_state state;
-	enum dma_status status;
-	struct dcmi_buf *buf = dcmi->active;
+अटल व्योम dcmi_process_jpeg(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
+	काष्ठा dma_tx_state state;
+	क्रमागत dma_status status;
+	काष्ठा dcmi_buf *buf = dcmi->active;
 
-	if (!buf)
-		return;
+	अगर (!buf)
+		वापस;
 
 	/*
 	 * Because of variable JPEG buffer size sent by sensor,
@@ -411,7 +412,7 @@ static void dcmi_process_jpeg(struct stm32_dcmi *dcmi)
 	 * In order to ensure that all the JPEG data are transferred
 	 * in active buffer memory, DMA is drained.
 	 * Then DMA tx status gives the amount of data transferred
-	 * to memory, which is then returned to V4L2 through the active
+	 * to memory, which is then वापसed to V4L2 through the active
 	 * buffer payload.
 	 */
 
@@ -420,83 +421,83 @@ static void dcmi_process_jpeg(struct stm32_dcmi *dcmi)
 
 	/* Get DMA residue to get JPEG size */
 	status = dmaengine_tx_status(dcmi->dma_chan, dcmi->dma_cookie, &state);
-	if (status != DMA_ERROR && state.residue < buf->size) {
+	अगर (status != DMA_ERROR && state.residue < buf->size) अणु
 		/* Return JPEG buffer to V4L2 with received JPEG buffer size */
-		dcmi_buffer_done(dcmi, buf, buf->size - state.residue, 0);
-	} else {
+		dcmi_buffer_करोne(dcmi, buf, buf->size - state.residue, 0);
+	पूर्ण अन्यथा अणु
 		dcmi->errors_count++;
 		dev_err(dcmi->dev, "%s: Cannot get JPEG size from DMA\n",
 			__func__);
 		/* Return JPEG buffer to V4L2 in ERROR state */
-		dcmi_buffer_done(dcmi, buf, 0, -EIO);
-	}
+		dcmi_buffer_करोne(dcmi, buf, 0, -EIO);
+	पूर्ण
 
 	/* Abort DMA operation */
 	dmaengine_terminate_sync(dcmi->dma_chan);
 
 	/* Restart capture */
-	if (dcmi_restart_capture(dcmi))
+	अगर (dcmi_restart_capture(dcmi))
 		dev_err(dcmi->dev, "%s: Cannot restart capture on JPEG received\n",
 			__func__);
-}
+पूर्ण
 
-static irqreturn_t dcmi_irq_thread(int irq, void *arg)
-{
-	struct stm32_dcmi *dcmi = arg;
+अटल irqवापस_t dcmi_irq_thपढ़ो(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = arg;
 
 	spin_lock_irq(&dcmi->irqlock);
 
-	if (dcmi->misr & IT_OVR) {
+	अगर (dcmi->misr & IT_OVR) अणु
 		dcmi->overrun_count++;
-		if (dcmi->overrun_count > OVERRUN_ERROR_THRESHOLD)
+		अगर (dcmi->overrun_count > OVERRUN_ERROR_THRESHOLD)
 			dcmi->errors_count++;
-	}
-	if (dcmi->misr & IT_ERR)
+	पूर्ण
+	अगर (dcmi->misr & IT_ERR)
 		dcmi->errors_count++;
 
-	if (dcmi->sd_format->fourcc == V4L2_PIX_FMT_JPEG &&
-	    dcmi->misr & IT_FRAME) {
+	अगर (dcmi->sd_क्रमmat->fourcc == V4L2_PIX_FMT_JPEG &&
+	    dcmi->misr & IT_FRAME) अणु
 		/* JPEG received */
 		spin_unlock_irq(&dcmi->irqlock);
 		dcmi_process_jpeg(dcmi);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	spin_unlock_irq(&dcmi->irqlock);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static irqreturn_t dcmi_irq_callback(int irq, void *arg)
-{
-	struct stm32_dcmi *dcmi = arg;
-	unsigned long flags;
+अटल irqवापस_t dcmi_irq_callback(पूर्णांक irq, व्योम *arg)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = arg;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&dcmi->irqlock, flags);
 
-	dcmi->misr = reg_read(dcmi->regs, DCMI_MIS);
+	dcmi->misr = reg_पढ़ो(dcmi->regs, DCMI_MIS);
 
-	/* Clear interrupt */
+	/* Clear पूर्णांकerrupt */
 	reg_set(dcmi->regs, DCMI_ICR, IT_FRAME | IT_OVR | IT_ERR);
 
 	spin_unlock_irqrestore(&dcmi->irqlock, flags);
 
-	return IRQ_WAKE_THREAD;
-}
+	वापस IRQ_WAKE_THREAD;
+पूर्ण
 
-static int dcmi_queue_setup(struct vb2_queue *vq,
-			    unsigned int *nbuffers,
-			    unsigned int *nplanes,
-			    unsigned int sizes[],
-			    struct device *alloc_devs[])
-{
-	struct stm32_dcmi *dcmi = vb2_get_drv_priv(vq);
-	unsigned int size;
+अटल पूर्णांक dcmi_queue_setup(काष्ठा vb2_queue *vq,
+			    अचिन्हित पूर्णांक *nbuffers,
+			    अचिन्हित पूर्णांक *nplanes,
+			    अचिन्हित पूर्णांक sizes[],
+			    काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = vb2_get_drv_priv(vq);
+	अचिन्हित पूर्णांक size;
 
 	size = dcmi->fmt.fmt.pix.sizeimage;
 
 	/* Make sure the image size is large enough */
-	if (*nplanes)
-		return sizes[0] < size ? -EINVAL : 0;
+	अगर (*nplanes)
+		वापस sizes[0] < size ? -EINVAL : 0;
 
 	*nplanes = 1;
 	sizes[0] = size;
@@ -504,37 +505,37 @@ static int dcmi_queue_setup(struct vb2_queue *vq,
 	dev_dbg(dcmi->dev, "Setup queue, count=%d, size=%d\n",
 		*nbuffers, size);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_buf_init(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct dcmi_buf *buf = container_of(vbuf, struct dcmi_buf, vb);
+अटल पूर्णांक dcmi_buf_init(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा dcmi_buf *buf = container_of(vbuf, काष्ठा dcmi_buf, vb);
 
 	INIT_LIST_HEAD(&buf->list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_buf_prepare(struct vb2_buffer *vb)
-{
-	struct stm32_dcmi *dcmi =  vb2_get_drv_priv(vb->vb2_queue);
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct dcmi_buf *buf = container_of(vbuf, struct dcmi_buf, vb);
-	unsigned long size;
+अटल पूर्णांक dcmi_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi =  vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा dcmi_buf *buf = container_of(vbuf, काष्ठा dcmi_buf, vb);
+	अचिन्हित दीर्घ size;
 
 	size = dcmi->fmt.fmt.pix.sizeimage;
 
-	if (vb2_plane_size(vb, 0) < size) {
+	अगर (vb2_plane_size(vb, 0) < size) अणु
 		dev_err(dcmi->dev, "%s data will not fit into plane (%lu < %lu)\n",
 			__func__, vb2_plane_size(vb, 0), size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vb2_set_plane_payload(vb, 0, size);
 
-	if (!buf->prepared) {
+	अगर (!buf->prepared) अणु
 		/* Get memory addresses */
 		buf->paddr =
 			vb2_dma_contig_plane_dma_addr(&buf->vb.vb2_buf, 0);
@@ -545,23 +546,23 @@ static int dcmi_buf_prepare(struct vb2_buffer *vb)
 
 		dev_dbg(dcmi->dev, "buffer[%d] phy=%pad size=%zu\n",
 			vb->index, &buf->paddr, buf->size);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dcmi_buf_queue(struct vb2_buffer *vb)
-{
-	struct stm32_dcmi *dcmi =  vb2_get_drv_priv(vb->vb2_queue);
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct dcmi_buf *buf = container_of(vbuf, struct dcmi_buf, vb);
+अटल व्योम dcmi_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi =  vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा dcmi_buf *buf = container_of(vbuf, काष्ठा dcmi_buf, vb);
 
 	spin_lock_irq(&dcmi->irqlock);
 
 	/* Enqueue to video buffers list */
 	list_add_tail(&buf->list, &dcmi->buffers);
 
-	if (dcmi->state == WAIT_FOR_BUFFER) {
+	अगर (dcmi->state == WAIT_FOR_BUFFER) अणु
 		dcmi->state = RUNNING;
 		dcmi->active = buf;
 
@@ -569,233 +570,233 @@ static void dcmi_buf_queue(struct vb2_buffer *vb)
 			buf->vb.vb2_buf.index);
 
 		spin_unlock_irq(&dcmi->irqlock);
-		if (dcmi_start_capture(dcmi, buf))
+		अगर (dcmi_start_capture(dcmi, buf))
 			dev_err(dcmi->dev, "%s: Cannot restart capture on overflow or error\n",
 				__func__);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	spin_unlock_irq(&dcmi->irqlock);
-}
+पूर्ण
 
-static struct media_entity *dcmi_find_source(struct stm32_dcmi *dcmi)
-{
-	struct media_entity *entity = &dcmi->vdev->entity;
-	struct media_pad *pad;
+अटल काष्ठा media_entity *dcmi_find_source(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
+	काष्ठा media_entity *entity = &dcmi->vdev->entity;
+	काष्ठा media_pad *pad;
 
-	/* Walk searching for entity having no sink */
-	while (1) {
+	/* Walk searching क्रम entity having no sink */
+	जबतक (1) अणु
 		pad = &entity->pads[0];
-		if (!(pad->flags & MEDIA_PAD_FL_SINK))
-			break;
+		अगर (!(pad->flags & MEDIA_PAD_FL_SINK))
+			अवरोध;
 
 		pad = media_entity_remote_pad(pad);
-		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			break;
+		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			अवरोध;
 
 		entity = pad->entity;
-	}
+	पूर्ण
 
-	return entity;
-}
+	वापस entity;
+पूर्ण
 
-static int dcmi_pipeline_s_fmt(struct stm32_dcmi *dcmi,
-			       struct v4l2_subdev_pad_config *pad_cfg,
-			       struct v4l2_subdev_format *format)
-{
-	struct media_entity *entity = &dcmi->source->entity;
-	struct v4l2_subdev *subdev;
-	struct media_pad *sink_pad = NULL;
-	struct media_pad *src_pad = NULL;
-	struct media_pad *pad = NULL;
-	struct v4l2_subdev_format fmt = *format;
+अटल पूर्णांक dcmi_pipeline_s_fmt(काष्ठा sपंचांग32_dcmi *dcmi,
+			       काष्ठा v4l2_subdev_pad_config *pad_cfg,
+			       काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
+अणु
+	काष्ठा media_entity *entity = &dcmi->source->entity;
+	काष्ठा v4l2_subdev *subdev;
+	काष्ठा media_pad *sink_pad = शून्य;
+	काष्ठा media_pad *src_pad = शून्य;
+	काष्ठा media_pad *pad = शून्य;
+	काष्ठा v4l2_subdev_क्रमmat fmt = *क्रमmat;
 	bool found = false;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * Starting from sensor subdevice, walk within
-	 * pipeline and set format on each subdevice
+	 * pipeline and set क्रमmat on each subdevice
 	 */
-	while (1) {
-		unsigned int i;
+	जबतक (1) अणु
+		अचिन्हित पूर्णांक i;
 
-		/* Search if current entity has a source pad */
-		for (i = 0; i < entity->num_pads; i++) {
+		/* Search अगर current entity has a source pad */
+		क्रम (i = 0; i < entity->num_pads; i++) अणु
 			pad = &entity->pads[i];
-			if (pad->flags & MEDIA_PAD_FL_SOURCE) {
+			अगर (pad->flags & MEDIA_PAD_FL_SOURCE) अणु
 				src_pad = pad;
 				found = true;
-				break;
-			}
-		}
-		if (!found)
-			break;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (!found)
+			अवरोध;
 
 		subdev = media_entity_to_v4l2_subdev(entity);
 
-		/* Propagate format on sink pad if any, otherwise source pad */
-		if (sink_pad)
+		/* Propagate क्रमmat on sink pad अगर any, otherwise source pad */
+		अगर (sink_pad)
 			pad = sink_pad;
 
 		dev_dbg(dcmi->dev, "\"%s\":%d pad format set to 0x%x %ux%u\n",
-			subdev->name, pad->index, format->format.code,
-			format->format.width, format->format.height);
+			subdev->name, pad->index, क्रमmat->क्रमmat.code,
+			क्रमmat->क्रमmat.width, क्रमmat->क्रमmat.height);
 
 		fmt.pad = pad->index;
 		ret = v4l2_subdev_call(subdev, pad, set_fmt, pad_cfg, &fmt);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			dev_err(dcmi->dev, "%s: Failed to set format 0x%x %ux%u on \"%s\":%d pad (%d)\n",
-				__func__, format->format.code,
-				format->format.width, format->format.height,
+				__func__, क्रमmat->क्रमmat.code,
+				क्रमmat->क्रमmat.width, क्रमmat->क्रमmat.height,
 				subdev->name, pad->index, ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
-		if (fmt.format.code != format->format.code ||
-		    fmt.format.width != format->format.width ||
-		    fmt.format.height != format->format.height) {
+		अगर (fmt.क्रमmat.code != क्रमmat->क्रमmat.code ||
+		    fmt.क्रमmat.width != क्रमmat->क्रमmat.width ||
+		    fmt.क्रमmat.height != क्रमmat->क्रमmat.height) अणु
 			dev_dbg(dcmi->dev, "\"%s\":%d pad format has been changed to 0x%x %ux%u\n",
-				subdev->name, pad->index, fmt.format.code,
-				fmt.format.width, fmt.format.height);
-		}
+				subdev->name, pad->index, fmt.क्रमmat.code,
+				fmt.क्रमmat.width, fmt.क्रमmat.height);
+		पूर्ण
 
 		/* Walk to next entity */
 		sink_pad = media_entity_remote_pad(src_pad);
-		if (!sink_pad || !is_media_entity_v4l2_subdev(sink_pad->entity))
-			break;
+		अगर (!sink_pad || !is_media_entity_v4l2_subdev(sink_pad->entity))
+			अवरोध;
 
 		entity = sink_pad->entity;
-	}
-	*format = fmt;
+	पूर्ण
+	*क्रमmat = fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_pipeline_s_stream(struct stm32_dcmi *dcmi, int state)
-{
-	struct media_entity *entity = &dcmi->vdev->entity;
-	struct v4l2_subdev *subdev;
-	struct media_pad *pad;
-	int ret;
+अटल पूर्णांक dcmi_pipeline_s_stream(काष्ठा sपंचांग32_dcmi *dcmi, पूर्णांक state)
+अणु
+	काष्ठा media_entity *entity = &dcmi->vdev->entity;
+	काष्ठा v4l2_subdev *subdev;
+	काष्ठा media_pad *pad;
+	पूर्णांक ret;
 
 	/* Start/stop all entities within pipeline */
-	while (1) {
+	जबतक (1) अणु
 		pad = &entity->pads[0];
-		if (!(pad->flags & MEDIA_PAD_FL_SINK))
-			break;
+		अगर (!(pad->flags & MEDIA_PAD_FL_SINK))
+			अवरोध;
 
 		pad = media_entity_remote_pad(pad);
-		if (!pad || !is_media_entity_v4l2_subdev(pad->entity))
-			break;
+		अगर (!pad || !is_media_entity_v4l2_subdev(pad->entity))
+			अवरोध;
 
 		entity = pad->entity;
 		subdev = media_entity_to_v4l2_subdev(entity);
 
 		ret = v4l2_subdev_call(subdev, video, s_stream, state);
-		if (ret < 0 && ret != -ENOIOCTLCMD) {
+		अगर (ret < 0 && ret != -ENOIOCTLCMD) अणु
 			dev_err(dcmi->dev, "%s: \"%s\" failed to %s streaming (%d)\n",
 				__func__, subdev->name,
 				state ? "start" : "stop", ret);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 
 		dev_dbg(dcmi->dev, "\"%s\" is %s\n",
 			subdev->name, state ? "started" : "stopped");
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_pipeline_start(struct stm32_dcmi *dcmi)
-{
-	return dcmi_pipeline_s_stream(dcmi, 1);
-}
+अटल पूर्णांक dcmi_pipeline_start(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
+	वापस dcmi_pipeline_s_stream(dcmi, 1);
+पूर्ण
 
-static void dcmi_pipeline_stop(struct stm32_dcmi *dcmi)
-{
+अटल व्योम dcmi_pipeline_stop(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
 	dcmi_pipeline_s_stream(dcmi, 0);
-}
+पूर्ण
 
-static int dcmi_start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct stm32_dcmi *dcmi = vb2_get_drv_priv(vq);
-	struct dcmi_buf *buf, *node;
+अटल पूर्णांक dcmi_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = vb2_get_drv_priv(vq);
+	काष्ठा dcmi_buf *buf, *node;
 	u32 val = 0;
-	int ret;
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(dcmi->dev);
-	if (ret < 0) {
+	ret = pm_runसमय_get_sync(dcmi->dev);
+	अगर (ret < 0) अणु
 		dev_err(dcmi->dev, "%s: Failed to start streaming, cannot get sync (%d)\n",
 			__func__, ret);
-		goto err_pm_put;
-	}
+		जाओ err_pm_put;
+	पूर्ण
 
 	ret = media_pipeline_start(&dcmi->vdev->entity, &dcmi->pipeline);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(dcmi->dev, "%s: Failed to start streaming, media pipeline start error (%d)\n",
 			__func__, ret);
-		goto err_pm_put;
-	}
+		जाओ err_pm_put;
+	पूर्ण
 
 	ret = dcmi_pipeline_start(dcmi);
-	if (ret)
-		goto err_media_pipeline_stop;
+	अगर (ret)
+		जाओ err_media_pipeline_stop;
 
 	spin_lock_irq(&dcmi->irqlock);
 
 	/* Set bus width */
-	switch (dcmi->bus.bus_width) {
-	case 14:
+	चयन (dcmi->bus.bus_width) अणु
+	हाल 14:
 		val |= CR_EDM_0 | CR_EDM_1;
-		break;
-	case 12:
+		अवरोध;
+	हाल 12:
 		val |= CR_EDM_1;
-		break;
-	case 10:
+		अवरोध;
+	हाल 10:
 		val |= CR_EDM_0;
-		break;
-	default:
-		/* Set bus width to 8 bits by default */
-		break;
-	}
+		अवरोध;
+	शेष:
+		/* Set bus width to 8 bits by शेष */
+		अवरोध;
+	पूर्ण
 
 	/* Set vertical synchronization polarity */
-	if (dcmi->bus.flags & V4L2_MBUS_VSYNC_ACTIVE_HIGH)
+	अगर (dcmi->bus.flags & V4L2_MBUS_VSYNC_ACTIVE_HIGH)
 		val |= CR_VSPOL;
 
 	/* Set horizontal synchronization polarity */
-	if (dcmi->bus.flags & V4L2_MBUS_HSYNC_ACTIVE_HIGH)
+	अगर (dcmi->bus.flags & V4L2_MBUS_HSYNC_ACTIVE_HIGH)
 		val |= CR_HSPOL;
 
-	/* Set pixel clock polarity */
-	if (dcmi->bus.flags & V4L2_MBUS_PCLK_SAMPLE_RISING)
+	/* Set pixel घड़ी polarity */
+	अगर (dcmi->bus.flags & V4L2_MBUS_PCLK_SAMPLE_RISING)
 		val |= CR_PCKPOL;
 
 	/*
 	 * BT656 embedded synchronisation bus mode.
 	 *
-	 * Default SAV/EAV mode is supported here with default codes
+	 * Default SAV/EAV mode is supported here with शेष codes
 	 * SAV=0xff000080 & EAV=0xff00009d.
 	 * With DCMI this means LSC=SAV=0x80 & LEC=EAV=0x9d.
 	 */
-	if (dcmi->bus_type == V4L2_MBUS_BT656) {
+	अगर (dcmi->bus_type == V4L2_MBUS_BT656) अणु
 		val |= CR_ESS;
 
 		/* Unmask all codes */
-		reg_write(dcmi->regs, DCMI_ESUR, 0xffffffff);/* FEC:LEC:LSC:FSC */
+		reg_ग_लिखो(dcmi->regs, DCMI_ESUR, 0xffffffff);/* FEC:LEC:LSC:FSC */
 
 		/* Trig on LSC=0x80 & LEC=0x9d codes, ignore FSC and FEC */
-		reg_write(dcmi->regs, DCMI_ESCR, 0xff9d80ff);/* FEC:LEC:LSC:FSC */
-	}
+		reg_ग_लिखो(dcmi->regs, DCMI_ESCR, 0xff9d80ff);/* FEC:LEC:LSC:FSC */
+	पूर्ण
 
-	reg_write(dcmi->regs, DCMI_CR, val);
+	reg_ग_लिखो(dcmi->regs, DCMI_CR, val);
 
 	/* Set crop */
-	if (dcmi->do_crop)
+	अगर (dcmi->करो_crop)
 		dcmi_set_crop(dcmi);
 
 	/* Enable jpeg capture */
-	if (dcmi->sd_format->fourcc == V4L2_PIX_FMT_JPEG)
+	अगर (dcmi->sd_क्रमmat->fourcc == V4L2_PIX_FMT_JPEG)
 		reg_set(dcmi->regs, DCMI_CR, CR_CM);/* Snapshot mode */
 
 	/* Enable dcmi */
@@ -807,17 +808,17 @@ static int dcmi_start_streaming(struct vb2_queue *vq, unsigned int count)
 	dcmi->buffers_count = 0;
 
 	/*
-	 * Start transfer if at least one buffer has been queued,
+	 * Start transfer अगर at least one buffer has been queued,
 	 * otherwise transfer is deferred at buffer queueing
 	 */
-	if (list_empty(&dcmi->buffers)) {
+	अगर (list_empty(&dcmi->buffers)) अणु
 		dev_dbg(dcmi->dev, "Start streaming is deferred to next buffer queueing\n");
 		dcmi->state = WAIT_FOR_BUFFER;
 		spin_unlock_irq(&dcmi->irqlock);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	buf = list_entry(dcmi->buffers.next, struct dcmi_buf, list);
+	buf = list_entry(dcmi->buffers.next, काष्ठा dcmi_buf, list);
 	dcmi->active = buf;
 
 	dcmi->state = RUNNING;
@@ -826,19 +827,19 @@ static int dcmi_start_streaming(struct vb2_queue *vq, unsigned int count)
 
 	spin_unlock_irq(&dcmi->irqlock);
 	ret = dcmi_start_capture(dcmi, buf);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dcmi->dev, "%s: Start streaming failed, cannot start capture\n",
 			__func__);
-		goto err_pipeline_stop;
-	}
+		जाओ err_pipeline_stop;
+	पूर्ण
 
-	/* Enable interruptions */
-	if (dcmi->sd_format->fourcc == V4L2_PIX_FMT_JPEG)
+	/* Enable पूर्णांकerruptions */
+	अगर (dcmi->sd_क्रमmat->fourcc == V4L2_PIX_FMT_JPEG)
 		reg_set(dcmi->regs, DCMI_IER, IT_FRAME | IT_OVR | IT_ERR);
-	else
+	अन्यथा
 		reg_set(dcmi->regs, DCMI_IER, IT_OVR | IT_ERR);
 
-	return 0;
+	वापस 0;
 
 err_pipeline_stop:
 	dcmi_pipeline_stop(dcmi);
@@ -847,26 +848,26 @@ err_media_pipeline_stop:
 	media_pipeline_stop(&dcmi->vdev->entity);
 
 err_pm_put:
-	pm_runtime_put(dcmi->dev);
+	pm_runसमय_put(dcmi->dev);
 	spin_lock_irq(&dcmi->irqlock);
 	/*
 	 * Return all buffers to vb2 in QUEUED state.
 	 * This will give ownership back to userspace
 	 */
-	list_for_each_entry_safe(buf, node, &dcmi->buffers, list) {
+	list_क्रम_each_entry_safe(buf, node, &dcmi->buffers, list) अणु
 		list_del_init(&buf->list);
-		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_QUEUED);
-	}
-	dcmi->active = NULL;
+		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_QUEUED);
+	पूर्ण
+	dcmi->active = शून्य;
 	spin_unlock_irq(&dcmi->irqlock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void dcmi_stop_streaming(struct vb2_queue *vq)
-{
-	struct stm32_dcmi *dcmi = vb2_get_drv_priv(vq);
-	struct dcmi_buf *buf, *node;
+अटल व्योम dcmi_stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = vb2_get_drv_priv(vq);
+	काष्ठा dcmi_buf *buf, *node;
 
 	dcmi_pipeline_stop(dcmi);
 
@@ -874,19 +875,19 @@ static void dcmi_stop_streaming(struct vb2_queue *vq)
 
 	spin_lock_irq(&dcmi->irqlock);
 
-	/* Disable interruptions */
+	/* Disable पूर्णांकerruptions */
 	reg_clear(dcmi->regs, DCMI_IER, IT_FRAME | IT_OVR | IT_ERR);
 
 	/* Disable DCMI */
 	reg_clear(dcmi->regs, DCMI_CR, CR_ENABLE);
 
 	/* Return all queued buffers to vb2 in ERROR state */
-	list_for_each_entry_safe(buf, node, &dcmi->buffers, list) {
+	list_क्रम_each_entry_safe(buf, node, &dcmi->buffers, list) अणु
 		list_del_init(&buf->list);
-		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-	}
+		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	पूर्ण
 
-	dcmi->active = NULL;
+	dcmi->active = शून्य;
 	dcmi->state = STOPPED;
 
 	spin_unlock_irq(&dcmi->irqlock);
@@ -896,111 +897,111 @@ static void dcmi_stop_streaming(struct vb2_queue *vq)
 	dmaengine_terminate_sync(dcmi->dma_chan);
 	mutex_unlock(&dcmi->dma_lock);
 
-	pm_runtime_put(dcmi->dev);
+	pm_runसमय_put(dcmi->dev);
 
-	if (dcmi->errors_count)
+	अगर (dcmi->errors_count)
 		dev_warn(dcmi->dev, "Some errors found while streaming: errors=%d (overrun=%d), buffers=%d\n",
 			 dcmi->errors_count, dcmi->overrun_count,
 			 dcmi->buffers_count);
 	dev_dbg(dcmi->dev, "Stop streaming, errors=%d (overrun=%d), buffers=%d\n",
 		dcmi->errors_count, dcmi->overrun_count,
 		dcmi->buffers_count);
-}
+पूर्ण
 
-static const struct vb2_ops dcmi_video_qops = {
+अटल स्थिर काष्ठा vb2_ops dcmi_video_qops = अणु
 	.queue_setup		= dcmi_queue_setup,
 	.buf_init		= dcmi_buf_init,
 	.buf_prepare		= dcmi_buf_prepare,
 	.buf_queue		= dcmi_buf_queue,
 	.start_streaming	= dcmi_start_streaming,
 	.stop_streaming		= dcmi_stop_streaming,
-	.wait_prepare		= vb2_ops_wait_prepare,
-	.wait_finish		= vb2_ops_wait_finish,
-};
+	.रुको_prepare		= vb2_ops_रुको_prepare,
+	.रुको_finish		= vb2_ops_रुको_finish,
+पूर्ण;
 
-static int dcmi_g_fmt_vid_cap(struct file *file, void *priv,
-			      struct v4l2_format *fmt)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
+अटल पूर्णांक dcmi_g_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+			      काष्ठा v4l2_क्रमmat *fmt)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
 
 	*fmt = dcmi->fmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dcmi_format *find_format_by_fourcc(struct stm32_dcmi *dcmi,
-						       unsigned int fourcc)
-{
-	unsigned int num_formats = dcmi->num_of_sd_formats;
-	const struct dcmi_format *fmt;
-	unsigned int i;
+अटल स्थिर काष्ठा dcmi_क्रमmat *find_क्रमmat_by_fourcc(काष्ठा sपंचांग32_dcmi *dcmi,
+						       अचिन्हित पूर्णांक fourcc)
+अणु
+	अचिन्हित पूर्णांक num_क्रमmats = dcmi->num_of_sd_क्रमmats;
+	स्थिर काष्ठा dcmi_क्रमmat *fmt;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < num_formats; i++) {
-		fmt = dcmi->sd_formats[i];
-		if (fmt->fourcc == fourcc)
-			return fmt;
-	}
+	क्रम (i = 0; i < num_क्रमmats; i++) अणु
+		fmt = dcmi->sd_क्रमmats[i];
+		अगर (fmt->fourcc == fourcc)
+			वापस fmt;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __find_outer_frame_size(struct stm32_dcmi *dcmi,
-				    struct v4l2_pix_format *pix,
-				    struct dcmi_framesize *framesize)
-{
-	struct dcmi_framesize *match = NULL;
-	unsigned int i;
-	unsigned int min_err = UINT_MAX;
+अटल व्योम __find_outer_frame_size(काष्ठा sपंचांग32_dcmi *dcmi,
+				    काष्ठा v4l2_pix_क्रमmat *pix,
+				    काष्ठा dcmi_framesize *framesize)
+अणु
+	काष्ठा dcmi_framesize *match = शून्य;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक min_err = अच_पूर्णांक_उच्च;
 
-	for (i = 0; i < dcmi->num_of_sd_framesizes; i++) {
-		struct dcmi_framesize *fsize = &dcmi->sd_framesizes[i];
-		int w_err = (fsize->width - pix->width);
-		int h_err = (fsize->height - pix->height);
-		int err = w_err + h_err;
+	क्रम (i = 0; i < dcmi->num_of_sd_framesizes; i++) अणु
+		काष्ठा dcmi_framesize *fsize = &dcmi->sd_framesizes[i];
+		पूर्णांक w_err = (fsize->width - pix->width);
+		पूर्णांक h_err = (fsize->height - pix->height);
+		पूर्णांक err = w_err + h_err;
 
-		if (w_err >= 0 && h_err >= 0 && err < min_err) {
+		अगर (w_err >= 0 && h_err >= 0 && err < min_err) अणु
 			min_err = err;
 			match = fsize;
-		}
-	}
-	if (!match)
+		पूर्ण
+	पूर्ण
+	अगर (!match)
 		match = &dcmi->sd_framesizes[0];
 
 	*framesize = *match;
-}
+पूर्ण
 
-static int dcmi_try_fmt(struct stm32_dcmi *dcmi, struct v4l2_format *f,
-			const struct dcmi_format **sd_format,
-			struct dcmi_framesize *sd_framesize)
-{
-	const struct dcmi_format *sd_fmt;
-	struct dcmi_framesize sd_fsize;
-	struct v4l2_pix_format *pix = &f->fmt.pix;
-	struct v4l2_subdev_pad_config pad_cfg;
-	struct v4l2_subdev_format format = {
+अटल पूर्णांक dcmi_try_fmt(काष्ठा sपंचांग32_dcmi *dcmi, काष्ठा v4l2_क्रमmat *f,
+			स्थिर काष्ठा dcmi_क्रमmat **sd_क्रमmat,
+			काष्ठा dcmi_framesize *sd_framesize)
+अणु
+	स्थिर काष्ठा dcmi_क्रमmat *sd_fmt;
+	काष्ठा dcmi_framesize sd_fsize;
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
+	काष्ठा v4l2_subdev_pad_config pad_cfg;
+	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
 		.which = V4L2_SUBDEV_FORMAT_TRY,
-	};
-	bool do_crop;
-	int ret;
+	पूर्ण;
+	bool करो_crop;
+	पूर्णांक ret;
 
-	sd_fmt = find_format_by_fourcc(dcmi, pix->pixelformat);
-	if (!sd_fmt) {
-		if (!dcmi->num_of_sd_formats)
-			return -ENODATA;
+	sd_fmt = find_क्रमmat_by_fourcc(dcmi, pix->pixelक्रमmat);
+	अगर (!sd_fmt) अणु
+		अगर (!dcmi->num_of_sd_क्रमmats)
+			वापस -ENODATA;
 
-		sd_fmt = dcmi->sd_formats[dcmi->num_of_sd_formats - 1];
-		pix->pixelformat = sd_fmt->fourcc;
-	}
+		sd_fmt = dcmi->sd_क्रमmats[dcmi->num_of_sd_क्रमmats - 1];
+		pix->pixelक्रमmat = sd_fmt->fourcc;
+	पूर्ण
 
 	/* Limit to hardware capabilities */
 	pix->width = clamp(pix->width, MIN_WIDTH, MAX_WIDTH);
 	pix->height = clamp(pix->height, MIN_HEIGHT, MAX_HEIGHT);
 
-	/* No crop if JPEG is requested */
-	do_crop = dcmi->do_crop && (pix->pixelformat != V4L2_PIX_FMT_JPEG);
+	/* No crop अगर JPEG is requested */
+	करो_crop = dcmi->करो_crop && (pix->pixelक्रमmat != V4L2_PIX_FMT_JPEG);
 
-	if (do_crop && dcmi->num_of_sd_framesizes) {
-		struct dcmi_framesize outer_sd_fsize;
+	अगर (करो_crop && dcmi->num_of_sd_framesizes) अणु
+		काष्ठा dcmi_framesize outer_sd_fsize;
 		/*
 		 * If crop is requested and sensor have discrete frame sizes,
 		 * select the frame size that is just larger than request
@@ -1008,28 +1009,28 @@ static int dcmi_try_fmt(struct stm32_dcmi *dcmi, struct v4l2_format *f,
 		__find_outer_frame_size(dcmi, pix, &outer_sd_fsize);
 		pix->width = outer_sd_fsize.width;
 		pix->height = outer_sd_fsize.height;
-	}
+	पूर्ण
 
-	v4l2_fill_mbus_format(&format.format, pix, sd_fmt->mbus_code);
+	v4l2_fill_mbus_क्रमmat(&क्रमmat.क्रमmat, pix, sd_fmt->mbus_code);
 	ret = v4l2_subdev_call(dcmi->source, pad, set_fmt,
-			       &pad_cfg, &format);
-	if (ret < 0)
-		return ret;
+			       &pad_cfg, &क्रमmat);
+	अगर (ret < 0)
+		वापस ret;
 
-	/* Update pix regarding to what sensor can do */
-	v4l2_fill_pix_format(pix, &format.format);
+	/* Update pix regarding to what sensor can करो */
+	v4l2_fill_pix_क्रमmat(pix, &क्रमmat.क्रमmat);
 
-	/* Save resolution that sensor can actually do */
+	/* Save resolution that sensor can actually करो */
 	sd_fsize.width = pix->width;
 	sd_fsize.height = pix->height;
 
-	if (do_crop) {
-		struct v4l2_rect c = dcmi->crop;
-		struct v4l2_rect max_rect;
+	अगर (करो_crop) अणु
+		काष्ठा v4l2_rect c = dcmi->crop;
+		काष्ठा v4l2_rect max_rect;
 
 		/*
-		 * Adjust crop by making the intersection between
-		 * format resolution request and crop request
+		 * Adjust crop by making the पूर्णांकersection between
+		 * क्रमmat resolution request and crop request
 		 */
 		max_rect.top = 0;
 		max_rect.left = 0;
@@ -1040,262 +1041,262 @@ static int dcmi_try_fmt(struct stm32_dcmi *dcmi, struct v4l2_format *f,
 		c.left = clamp_t(s32, c.left, 0, pix->width - c.width);
 		dcmi->crop = c;
 
-		/* Adjust format resolution request to crop */
+		/* Adjust क्रमmat resolution request to crop */
 		pix->width = dcmi->crop.width;
 		pix->height = dcmi->crop.height;
-	}
+	पूर्ण
 
 	pix->field = V4L2_FIELD_NONE;
 	pix->bytesperline = pix->width * sd_fmt->bpp;
 	pix->sizeimage = pix->bytesperline * pix->height;
 
-	if (sd_format)
-		*sd_format = sd_fmt;
-	if (sd_framesize)
+	अगर (sd_क्रमmat)
+		*sd_क्रमmat = sd_fmt;
+	अगर (sd_framesize)
 		*sd_framesize = sd_fsize;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_set_fmt(struct stm32_dcmi *dcmi, struct v4l2_format *f)
-{
-	struct v4l2_subdev_format format = {
+अटल पूर्णांक dcmi_set_fmt(काष्ठा sपंचांग32_dcmi *dcmi, काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	};
-	const struct dcmi_format *sd_format;
-	struct dcmi_framesize sd_framesize;
-	struct v4l2_mbus_framefmt *mf = &format.format;
-	struct v4l2_pix_format *pix = &f->fmt.pix;
-	int ret;
+	पूर्ण;
+	स्थिर काष्ठा dcmi_क्रमmat *sd_क्रमmat;
+	काष्ठा dcmi_framesize sd_framesize;
+	काष्ठा v4l2_mbus_framefmt *mf = &क्रमmat.क्रमmat;
+	काष्ठा v4l2_pix_क्रमmat *pix = &f->fmt.pix;
+	पूर्णांक ret;
 
 	/*
-	 * Try format, fmt.width/height could have been changed
+	 * Try क्रमmat, fmt.width/height could have been changed
 	 * to match sensor capability or crop request
-	 * sd_format & sd_framesize will contain what subdev
-	 * can do for this request.
+	 * sd_क्रमmat & sd_framesize will contain what subdev
+	 * can करो क्रम this request.
 	 */
-	ret = dcmi_try_fmt(dcmi, f, &sd_format, &sd_framesize);
-	if (ret)
-		return ret;
+	ret = dcmi_try_fmt(dcmi, f, &sd_क्रमmat, &sd_framesize);
+	अगर (ret)
+		वापस ret;
 
-	/* Disable crop if JPEG is requested or BT656 bus is selected */
-	if (pix->pixelformat == V4L2_PIX_FMT_JPEG &&
+	/* Disable crop अगर JPEG is requested or BT656 bus is selected */
+	अगर (pix->pixelक्रमmat == V4L2_PIX_FMT_JPEG &&
 	    dcmi->bus_type != V4L2_MBUS_BT656)
-		dcmi->do_crop = false;
+		dcmi->करो_crop = false;
 
-	/* pix to mbus format */
-	v4l2_fill_mbus_format(mf, pix,
-			      sd_format->mbus_code);
+	/* pix to mbus क्रमmat */
+	v4l2_fill_mbus_क्रमmat(mf, pix,
+			      sd_क्रमmat->mbus_code);
 	mf->width = sd_framesize.width;
 	mf->height = sd_framesize.height;
 
-	ret = dcmi_pipeline_s_fmt(dcmi, NULL, &format);
-	if (ret < 0)
-		return ret;
+	ret = dcmi_pipeline_s_fmt(dcmi, शून्य, &क्रमmat);
+	अगर (ret < 0)
+		वापस ret;
 
 	dev_dbg(dcmi->dev, "Sensor format set to 0x%x %ux%u\n",
 		mf->code, mf->width, mf->height);
 	dev_dbg(dcmi->dev, "Buffer format set to %4.4s %ux%u\n",
-		(char *)&pix->pixelformat,
+		(अक्षर *)&pix->pixelक्रमmat,
 		pix->width, pix->height);
 
 	dcmi->fmt = *f;
-	dcmi->sd_format = sd_format;
+	dcmi->sd_क्रमmat = sd_क्रमmat;
 	dcmi->sd_framesize = sd_framesize;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_s_fmt_vid_cap(struct file *file, void *priv,
-			      struct v4l2_format *f)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
+अटल पूर्णांक dcmi_s_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+			      काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
 
-	if (vb2_is_streaming(&dcmi->queue))
-		return -EBUSY;
+	अगर (vb2_is_streaming(&dcmi->queue))
+		वापस -EBUSY;
 
-	return dcmi_set_fmt(dcmi, f);
-}
+	वापस dcmi_set_fmt(dcmi, f);
+पूर्ण
 
-static int dcmi_try_fmt_vid_cap(struct file *file, void *priv,
-				struct v4l2_format *f)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
+अटल पूर्णांक dcmi_try_fmt_vid_cap(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
 
-	return dcmi_try_fmt(dcmi, f, NULL, NULL);
-}
+	वापस dcmi_try_fmt(dcmi, f, शून्य, शून्य);
+पूर्ण
 
-static int dcmi_enum_fmt_vid_cap(struct file *file, void  *priv,
-				 struct v4l2_fmtdesc *f)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
+अटल पूर्णांक dcmi_क्रमागत_fmt_vid_cap(काष्ठा file *file, व्योम  *priv,
+				 काष्ठा v4l2_fmtdesc *f)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
 
-	if (f->index >= dcmi->num_of_sd_formats)
-		return -EINVAL;
+	अगर (f->index >= dcmi->num_of_sd_क्रमmats)
+		वापस -EINVAL;
 
-	f->pixelformat = dcmi->sd_formats[f->index]->fourcc;
-	return 0;
-}
+	f->pixelक्रमmat = dcmi->sd_क्रमmats[f->index]->fourcc;
+	वापस 0;
+पूर्ण
 
-static int dcmi_get_sensor_format(struct stm32_dcmi *dcmi,
-				  struct v4l2_pix_format *pix)
-{
-	struct v4l2_subdev_format fmt = {
+अटल पूर्णांक dcmi_get_sensor_क्रमmat(काष्ठा sपंचांग32_dcmi *dcmi,
+				  काष्ठा v4l2_pix_क्रमmat *pix)
+अणु
+	काष्ठा v4l2_subdev_क्रमmat fmt = अणु
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	ret = v4l2_subdev_call(dcmi->source, pad, get_fmt, NULL, &fmt);
-	if (ret)
-		return ret;
+	ret = v4l2_subdev_call(dcmi->source, pad, get_fmt, शून्य, &fmt);
+	अगर (ret)
+		वापस ret;
 
-	v4l2_fill_pix_format(pix, &fmt.format);
+	v4l2_fill_pix_क्रमmat(pix, &fmt.क्रमmat);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_set_sensor_format(struct stm32_dcmi *dcmi,
-				  struct v4l2_pix_format *pix)
-{
-	const struct dcmi_format *sd_fmt;
-	struct v4l2_subdev_format format = {
+अटल पूर्णांक dcmi_set_sensor_क्रमmat(काष्ठा sपंचांग32_dcmi *dcmi,
+				  काष्ठा v4l2_pix_क्रमmat *pix)
+अणु
+	स्थिर काष्ठा dcmi_क्रमmat *sd_fmt;
+	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
 		.which = V4L2_SUBDEV_FORMAT_TRY,
-	};
-	struct v4l2_subdev_pad_config pad_cfg;
-	int ret;
+	पूर्ण;
+	काष्ठा v4l2_subdev_pad_config pad_cfg;
+	पूर्णांक ret;
 
-	sd_fmt = find_format_by_fourcc(dcmi, pix->pixelformat);
-	if (!sd_fmt) {
-		if (!dcmi->num_of_sd_formats)
-			return -ENODATA;
+	sd_fmt = find_क्रमmat_by_fourcc(dcmi, pix->pixelक्रमmat);
+	अगर (!sd_fmt) अणु
+		अगर (!dcmi->num_of_sd_क्रमmats)
+			वापस -ENODATA;
 
-		sd_fmt = dcmi->sd_formats[dcmi->num_of_sd_formats - 1];
-		pix->pixelformat = sd_fmt->fourcc;
-	}
+		sd_fmt = dcmi->sd_क्रमmats[dcmi->num_of_sd_क्रमmats - 1];
+		pix->pixelक्रमmat = sd_fmt->fourcc;
+	पूर्ण
 
-	v4l2_fill_mbus_format(&format.format, pix, sd_fmt->mbus_code);
+	v4l2_fill_mbus_क्रमmat(&क्रमmat.क्रमmat, pix, sd_fmt->mbus_code);
 	ret = v4l2_subdev_call(dcmi->source, pad, set_fmt,
-			       &pad_cfg, &format);
-	if (ret < 0)
-		return ret;
+			       &pad_cfg, &क्रमmat);
+	अगर (ret < 0)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_get_sensor_bounds(struct stm32_dcmi *dcmi,
-				  struct v4l2_rect *r)
-{
-	struct v4l2_subdev_selection bounds = {
+अटल पूर्णांक dcmi_get_sensor_bounds(काष्ठा sपंचांग32_dcmi *dcmi,
+				  काष्ठा v4l2_rect *r)
+अणु
+	काष्ठा v4l2_subdev_selection bounds = अणु
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		.target = V4L2_SEL_TGT_CROP_BOUNDS,
-	};
-	unsigned int max_width, max_height, max_pixsize;
-	struct v4l2_pix_format pix;
-	unsigned int i;
-	int ret;
+	पूर्ण;
+	अचिन्हित पूर्णांक max_width, max_height, max_pixsize;
+	काष्ठा v4l2_pix_क्रमmat pix;
+	अचिन्हित पूर्णांक i;
+	पूर्णांक ret;
 
 	/*
 	 * Get sensor bounds first
 	 */
 	ret = v4l2_subdev_call(dcmi->source, pad, get_selection,
-			       NULL, &bounds);
-	if (!ret)
+			       शून्य, &bounds);
+	अगर (!ret)
 		*r = bounds.r;
-	if (ret != -ENOIOCTLCMD)
-		return ret;
+	अगर (ret != -ENOIOCTLCMD)
+		वापस ret;
 
 	/*
 	 * If selection is not implemented,
-	 * fallback by enumerating sensor frame sizes
+	 * fallback by क्रमागतerating sensor frame sizes
 	 * and take the largest one
 	 */
 	max_width = 0;
 	max_height = 0;
 	max_pixsize = 0;
-	for (i = 0; i < dcmi->num_of_sd_framesizes; i++) {
-		struct dcmi_framesize *fsize = &dcmi->sd_framesizes[i];
-		unsigned int pixsize = fsize->width * fsize->height;
+	क्रम (i = 0; i < dcmi->num_of_sd_framesizes; i++) अणु
+		काष्ठा dcmi_framesize *fsize = &dcmi->sd_framesizes[i];
+		अचिन्हित पूर्णांक pixsize = fsize->width * fsize->height;
 
-		if (pixsize > max_pixsize) {
+		अगर (pixsize > max_pixsize) अणु
 			max_pixsize = pixsize;
 			max_width = fsize->width;
 			max_height = fsize->height;
-		}
-	}
-	if (max_pixsize > 0) {
+		पूर्ण
+	पूर्ण
+	अगर (max_pixsize > 0) अणु
 		r->top = 0;
 		r->left = 0;
 		r->width = max_width;
 		r->height = max_height;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 * If frame sizes enumeration is not implemented,
+	 * If frame sizes क्रमागतeration is not implemented,
 	 * fallback by getting current sensor frame size
 	 */
-	ret = dcmi_get_sensor_format(dcmi, &pix);
-	if (ret)
-		return ret;
+	ret = dcmi_get_sensor_क्रमmat(dcmi, &pix);
+	अगर (ret)
+		वापस ret;
 
 	r->top = 0;
 	r->left = 0;
 	r->width = pix.width;
 	r->height = pix.height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_g_selection(struct file *file, void *fh,
-			    struct v4l2_selection *s)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
+अटल पूर्णांक dcmi_g_selection(काष्ठा file *file, व्योम *fh,
+			    काष्ठा v4l2_selection *s)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
 
-	if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
-		return -EINVAL;
+	अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		वापस -EINVAL;
 
-	switch (s->target) {
-	case V4L2_SEL_TGT_CROP_DEFAULT:
-	case V4L2_SEL_TGT_CROP_BOUNDS:
+	चयन (s->target) अणु
+	हाल V4L2_SEL_TGT_CROP_DEFAULT:
+	हाल V4L2_SEL_TGT_CROP_BOUNDS:
 		s->r = dcmi->sd_bounds;
-		return 0;
-	case V4L2_SEL_TGT_CROP:
-		if (dcmi->do_crop) {
+		वापस 0;
+	हाल V4L2_SEL_TGT_CROP:
+		अगर (dcmi->करो_crop) अणु
 			s->r = dcmi->crop;
-		} else {
+		पूर्ण अन्यथा अणु
 			s->r.top = 0;
 			s->r.left = 0;
 			s->r.width = dcmi->fmt.fmt.pix.width;
 			s->r.height = dcmi->fmt.fmt.pix.height;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_s_selection(struct file *file, void *priv,
-			    struct v4l2_selection *s)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
-	struct v4l2_rect r = s->r;
-	struct v4l2_rect max_rect;
-	struct v4l2_pix_format pix;
+अटल पूर्णांक dcmi_s_selection(काष्ठा file *file, व्योम *priv,
+			    काष्ठा v4l2_selection *s)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
+	काष्ठा v4l2_rect r = s->r;
+	काष्ठा v4l2_rect max_rect;
+	काष्ठा v4l2_pix_क्रमmat pix;
 
-	if (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
+	अगर (s->type != V4L2_BUF_TYPE_VIDEO_CAPTURE ||
 	    s->target != V4L2_SEL_TGT_CROP)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	/* Reset sensor resolution to max resolution */
-	pix.pixelformat = dcmi->fmt.fmt.pix.pixelformat;
+	pix.pixelक्रमmat = dcmi->fmt.fmt.pix.pixelक्रमmat;
 	pix.width = dcmi->sd_bounds.width;
 	pix.height = dcmi->sd_bounds.height;
-	dcmi_set_sensor_format(dcmi, &pix);
+	dcmi_set_sensor_क्रमmat(dcmi, &pix);
 
 	/*
-	 * Make the intersection between
+	 * Make the पूर्णांकersection between
 	 * sensor resolution
 	 * and crop request
 	 */
@@ -1307,212 +1308,212 @@ static int dcmi_s_selection(struct file *file, void *priv,
 	r.top  = clamp_t(s32, r.top, 0, pix.height - r.height);
 	r.left = clamp_t(s32, r.left, 0, pix.width - r.width);
 
-	if (!(r.top == dcmi->sd_bounds.top &&
+	अगर (!(r.top == dcmi->sd_bounds.top &&
 	      r.left == dcmi->sd_bounds.left &&
 	      r.width == dcmi->sd_bounds.width &&
-	      r.height == dcmi->sd_bounds.height)) {
-		/* Crop if request is different than sensor resolution */
-		dcmi->do_crop = true;
+	      r.height == dcmi->sd_bounds.height)) अणु
+		/* Crop अगर request is dअगरferent than sensor resolution */
+		dcmi->करो_crop = true;
 		dcmi->crop = r;
 		dev_dbg(dcmi->dev, "s_selection: crop %ux%u@(%u,%u) from %ux%u\n",
 			r.width, r.height, r.left, r.top,
 			pix.width, pix.height);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Disable crop */
-		dcmi->do_crop = false;
+		dcmi->करो_crop = false;
 		dev_dbg(dcmi->dev, "s_selection: crop is disabled\n");
-	}
+	पूर्ण
 
 	s->r = r;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_querycap(struct file *file, void *priv,
-			 struct v4l2_capability *cap)
-{
-	strscpy(cap->driver, DRV_NAME, sizeof(cap->driver));
+अटल पूर्णांक dcmi_querycap(काष्ठा file *file, व्योम *priv,
+			 काष्ठा v4l2_capability *cap)
+अणु
+	strscpy(cap->driver, DRV_NAME, माप(cap->driver));
 	strscpy(cap->card, "STM32 Camera Memory Interface",
-		sizeof(cap->card));
-	strscpy(cap->bus_info, "platform:dcmi", sizeof(cap->bus_info));
-	return 0;
-}
+		माप(cap->card));
+	strscpy(cap->bus_info, "platform:dcmi", माप(cap->bus_info));
+	वापस 0;
+पूर्ण
 
-static int dcmi_enum_input(struct file *file, void *priv,
-			   struct v4l2_input *i)
-{
-	if (i->index != 0)
-		return -EINVAL;
+अटल पूर्णांक dcmi_क्रमागत_input(काष्ठा file *file, व्योम *priv,
+			   काष्ठा v4l2_input *i)
+अणु
+	अगर (i->index != 0)
+		वापस -EINVAL;
 
 	i->type = V4L2_INPUT_TYPE_CAMERA;
-	strscpy(i->name, "Camera", sizeof(i->name));
-	return 0;
-}
+	strscpy(i->name, "Camera", माप(i->name));
+	वापस 0;
+पूर्ण
 
-static int dcmi_g_input(struct file *file, void *priv, unsigned int *i)
-{
+अटल पूर्णांक dcmi_g_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *i)
+अणु
 	*i = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_s_input(struct file *file, void *priv, unsigned int i)
-{
-	if (i > 0)
-		return -EINVAL;
-	return 0;
-}
+अटल पूर्णांक dcmi_s_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक i)
+अणु
+	अगर (i > 0)
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
-static int dcmi_enum_framesizes(struct file *file, void *fh,
-				struct v4l2_frmsizeenum *fsize)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
-	const struct dcmi_format *sd_fmt;
-	struct v4l2_subdev_frame_size_enum fse = {
+अटल पूर्णांक dcmi_क्रमागत_framesizes(काष्ठा file *file, व्योम *fh,
+				काष्ठा v4l2_frmsizeक्रमागत *fsize)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
+	स्थिर काष्ठा dcmi_क्रमmat *sd_fmt;
+	काष्ठा v4l2_subdev_frame_size_क्रमागत fse = अणु
 		.index = fsize->index,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	sd_fmt = find_format_by_fourcc(dcmi, fsize->pixel_format);
-	if (!sd_fmt)
-		return -EINVAL;
+	sd_fmt = find_क्रमmat_by_fourcc(dcmi, fsize->pixel_क्रमmat);
+	अगर (!sd_fmt)
+		वापस -EINVAL;
 
 	fse.code = sd_fmt->mbus_code;
 
-	ret = v4l2_subdev_call(dcmi->source, pad, enum_frame_size,
-			       NULL, &fse);
-	if (ret)
-		return ret;
+	ret = v4l2_subdev_call(dcmi->source, pad, क्रमागत_frame_size,
+			       शून्य, &fse);
+	अगर (ret)
+		वापस ret;
 
 	fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
 	fsize->discrete.width = fse.max_width;
 	fsize->discrete.height = fse.max_height;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_g_parm(struct file *file, void *priv,
-		       struct v4l2_streamparm *p)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
+अटल पूर्णांक dcmi_g_parm(काष्ठा file *file, व्योम *priv,
+		       काष्ठा v4l2_streamparm *p)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
 
-	return v4l2_g_parm_cap(video_devdata(file), dcmi->source, p);
-}
+	वापस v4l2_g_parm_cap(video_devdata(file), dcmi->source, p);
+पूर्ण
 
-static int dcmi_s_parm(struct file *file, void *priv,
-		       struct v4l2_streamparm *p)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
+अटल पूर्णांक dcmi_s_parm(काष्ठा file *file, व्योम *priv,
+		       काष्ठा v4l2_streamparm *p)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
 
-	return v4l2_s_parm_cap(video_devdata(file), dcmi->source, p);
-}
+	वापस v4l2_s_parm_cap(video_devdata(file), dcmi->source, p);
+पूर्ण
 
-static int dcmi_enum_frameintervals(struct file *file, void *fh,
-				    struct v4l2_frmivalenum *fival)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
-	const struct dcmi_format *sd_fmt;
-	struct v4l2_subdev_frame_interval_enum fie = {
+अटल पूर्णांक dcmi_क्रमागत_frameपूर्णांकervals(काष्ठा file *file, व्योम *fh,
+				    काष्ठा v4l2_frmivalक्रमागत *fival)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
+	स्थिर काष्ठा dcmi_क्रमmat *sd_fmt;
+	काष्ठा v4l2_subdev_frame_पूर्णांकerval_क्रमागत fie = अणु
 		.index = fival->index,
 		.width = fival->width,
 		.height = fival->height,
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	sd_fmt = find_format_by_fourcc(dcmi, fival->pixel_format);
-	if (!sd_fmt)
-		return -EINVAL;
+	sd_fmt = find_क्रमmat_by_fourcc(dcmi, fival->pixel_क्रमmat);
+	अगर (!sd_fmt)
+		वापस -EINVAL;
 
 	fie.code = sd_fmt->mbus_code;
 
 	ret = v4l2_subdev_call(dcmi->source, pad,
-			       enum_frame_interval, NULL, &fie);
-	if (ret)
-		return ret;
+			       क्रमागत_frame_पूर्णांकerval, शून्य, &fie);
+	अगर (ret)
+		वापस ret;
 
 	fival->type = V4L2_FRMIVAL_TYPE_DISCRETE;
-	fival->discrete = fie.interval;
+	fival->discrete = fie.पूर्णांकerval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id stm32_dcmi_of_match[] = {
-	{ .compatible = "st,stm32-dcmi"},
-	{ /* end node */ },
-};
-MODULE_DEVICE_TABLE(of, stm32_dcmi_of_match);
+अटल स्थिर काष्ठा of_device_id sपंचांग32_dcmi_of_match[] = अणु
+	अणु .compatible = "st,stm32-dcmi"पूर्ण,
+	अणु /* end node */ पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(of, sपंचांग32_dcmi_of_match);
 
-static int dcmi_open(struct file *file)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
-	struct v4l2_subdev *sd = dcmi->source;
-	int ret;
+अटल पूर्णांक dcmi_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
+	काष्ठा v4l2_subdev *sd = dcmi->source;
+	पूर्णांक ret;
 
-	if (mutex_lock_interruptible(&dcmi->lock))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&dcmi->lock))
+		वापस -ERESTARTSYS;
 
-	ret = v4l2_fh_open(file);
-	if (ret < 0)
-		goto unlock;
+	ret = v4l2_fh_खोलो(file);
+	अगर (ret < 0)
+		जाओ unlock;
 
-	if (!v4l2_fh_is_singular_file(file))
-		goto fh_rel;
+	अगर (!v4l2_fh_is_singular_file(file))
+		जाओ fh_rel;
 
-	ret = v4l2_subdev_call(sd, core, s_power, 1);
-	if (ret < 0 && ret != -ENOIOCTLCMD)
-		goto fh_rel;
+	ret = v4l2_subdev_call(sd, core, s_घातer, 1);
+	अगर (ret < 0 && ret != -ENOIOCTLCMD)
+		जाओ fh_rel;
 
 	ret = dcmi_set_fmt(dcmi, &dcmi->fmt);
-	if (ret)
-		v4l2_subdev_call(sd, core, s_power, 0);
+	अगर (ret)
+		v4l2_subdev_call(sd, core, s_घातer, 0);
 fh_rel:
-	if (ret)
+	अगर (ret)
 		v4l2_fh_release(file);
 unlock:
 	mutex_unlock(&dcmi->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dcmi_release(struct file *file)
-{
-	struct stm32_dcmi *dcmi = video_drvdata(file);
-	struct v4l2_subdev *sd = dcmi->source;
+अटल पूर्णांक dcmi_release(काष्ठा file *file)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = video_drvdata(file);
+	काष्ठा v4l2_subdev *sd = dcmi->source;
 	bool fh_singular;
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&dcmi->lock);
 
 	fh_singular = v4l2_fh_is_singular_file(file);
 
-	ret = _vb2_fop_release(file, NULL);
+	ret = _vb2_fop_release(file, शून्य);
 
-	if (fh_singular)
-		v4l2_subdev_call(sd, core, s_power, 0);
+	अगर (fh_singular)
+		v4l2_subdev_call(sd, core, s_घातer, 0);
 
 	mutex_unlock(&dcmi->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_ioctl_ops dcmi_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops dcmi_ioctl_ops = अणु
 	.vidioc_querycap		= dcmi_querycap,
 
 	.vidioc_try_fmt_vid_cap		= dcmi_try_fmt_vid_cap,
 	.vidioc_g_fmt_vid_cap		= dcmi_g_fmt_vid_cap,
 	.vidioc_s_fmt_vid_cap		= dcmi_s_fmt_vid_cap,
-	.vidioc_enum_fmt_vid_cap	= dcmi_enum_fmt_vid_cap,
+	.vidioc_क्रमागत_fmt_vid_cap	= dcmi_क्रमागत_fmt_vid_cap,
 	.vidioc_g_selection		= dcmi_g_selection,
 	.vidioc_s_selection		= dcmi_s_selection,
 
-	.vidioc_enum_input		= dcmi_enum_input,
+	.vidioc_क्रमागत_input		= dcmi_क्रमागत_input,
 	.vidioc_g_input			= dcmi_g_input,
 	.vidioc_s_input			= dcmi_s_input,
 
 	.vidioc_g_parm			= dcmi_g_parm,
 	.vidioc_s_parm			= dcmi_s_parm,
 
-	.vidioc_enum_framesizes		= dcmi_enum_framesizes,
-	.vidioc_enum_frameintervals	= dcmi_enum_frameintervals,
+	.vidioc_क्रमागत_framesizes		= dcmi_क्रमागत_framesizes,
+	.vidioc_क्रमागत_frameपूर्णांकervals	= dcmi_क्रमागत_frameपूर्णांकervals,
 
 	.vidioc_reqbufs			= vb2_ioctl_reqbufs,
 	.vidioc_create_bufs		= vb2_ioctl_create_bufs,
@@ -1527,253 +1528,253 @@ static const struct v4l2_ioctl_ops dcmi_ioctl_ops = {
 	.vidioc_log_status		= v4l2_ctrl_log_status,
 	.vidioc_subscribe_event		= v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
-};
+पूर्ण;
 
-static const struct v4l2_file_operations dcmi_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations dcmi_fops = अणु
 	.owner		= THIS_MODULE,
 	.unlocked_ioctl	= video_ioctl2,
-	.open		= dcmi_open,
+	.खोलो		= dcmi_खोलो,
 	.release	= dcmi_release,
 	.poll		= vb2_fop_poll,
 	.mmap		= vb2_fop_mmap,
-#ifndef CONFIG_MMU
+#अगर_अघोषित CONFIG_MMU
 	.get_unmapped_area = vb2_fop_get_unmapped_area,
-#endif
-	.read		= vb2_fop_read,
-};
+#पूर्ण_अगर
+	.पढ़ो		= vb2_fop_पढ़ो,
+पूर्ण;
 
-static int dcmi_set_default_fmt(struct stm32_dcmi *dcmi)
-{
-	struct v4l2_format f = {
+अटल पूर्णांक dcmi_set_शेष_fmt(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
+	काष्ठा v4l2_क्रमmat f = अणु
 		.type = V4L2_BUF_TYPE_VIDEO_CAPTURE,
-		.fmt.pix = {
+		.fmt.pix = अणु
 			.width		= CIF_WIDTH,
 			.height		= CIF_HEIGHT,
 			.field		= V4L2_FIELD_NONE,
-			.pixelformat	= dcmi->sd_formats[0]->fourcc,
-		},
-	};
-	int ret;
+			.pixelक्रमmat	= dcmi->sd_क्रमmats[0]->fourcc,
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक ret;
 
-	ret = dcmi_try_fmt(dcmi, &f, NULL, NULL);
-	if (ret)
-		return ret;
-	dcmi->sd_format = dcmi->sd_formats[0];
+	ret = dcmi_try_fmt(dcmi, &f, शून्य, शून्य);
+	अगर (ret)
+		वापस ret;
+	dcmi->sd_क्रमmat = dcmi->sd_क्रमmats[0];
 	dcmi->fmt = f;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * FIXME: For the time being we only support subdevices
+ * FIXME: For the समय being we only support subdevices
  * which expose RGB & YUV "parallel form" mbus code (_2X8).
  * Nevertheless, this allows to support serial source subdevices
- * and serial to parallel bridges which conform to this.
+ * and serial to parallel bridges which conक्रमm to this.
  */
-static const struct dcmi_format dcmi_formats[] = {
-	{
+अटल स्थिर काष्ठा dcmi_क्रमmat dcmi_क्रमmats[] = अणु
+	अणु
 		.fourcc = V4L2_PIX_FMT_RGB565,
 		.mbus_code = MEDIA_BUS_FMT_RGB565_2X8_LE,
 		.bpp = 2,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_YUYV,
 		.mbus_code = MEDIA_BUS_FMT_YUYV8_2X8,
 		.bpp = 2,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_UYVY,
 		.mbus_code = MEDIA_BUS_FMT_UYVY8_2X8,
 		.bpp = 2,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_JPEG,
 		.mbus_code = MEDIA_BUS_FMT_JPEG_1X8,
 		.bpp = 1,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SBGGR8,
 		.mbus_code = MEDIA_BUS_FMT_SBGGR8_1X8,
 		.bpp = 1,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SGBRG8,
 		.mbus_code = MEDIA_BUS_FMT_SGBRG8_1X8,
 		.bpp = 1,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SGRBG8,
 		.mbus_code = MEDIA_BUS_FMT_SGRBG8_1X8,
 		.bpp = 1,
-	}, {
+	पूर्ण, अणु
 		.fourcc = V4L2_PIX_FMT_SRGGB8,
 		.mbus_code = MEDIA_BUS_FMT_SRGGB8_1X8,
 		.bpp = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int dcmi_formats_init(struct stm32_dcmi *dcmi)
-{
-	const struct dcmi_format *sd_fmts[ARRAY_SIZE(dcmi_formats)];
-	unsigned int num_fmts = 0, i, j;
-	struct v4l2_subdev *subdev = dcmi->source;
-	struct v4l2_subdev_mbus_code_enum mbus_code = {
+अटल पूर्णांक dcmi_क्रमmats_init(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
+	स्थिर काष्ठा dcmi_क्रमmat *sd_fmts[ARRAY_SIZE(dcmi_क्रमmats)];
+	अचिन्हित पूर्णांक num_fmts = 0, i, j;
+	काष्ठा v4l2_subdev *subdev = dcmi->source;
+	काष्ठा v4l2_subdev_mbus_code_क्रमागत mbus_code = अणु
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-	};
+	पूर्ण;
 
-	while (!v4l2_subdev_call(subdev, pad, enum_mbus_code,
-				 NULL, &mbus_code)) {
-		for (i = 0; i < ARRAY_SIZE(dcmi_formats); i++) {
-			if (dcmi_formats[i].mbus_code != mbus_code.code)
-				continue;
+	जबतक (!v4l2_subdev_call(subdev, pad, क्रमागत_mbus_code,
+				 शून्य, &mbus_code)) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(dcmi_क्रमmats); i++) अणु
+			अगर (dcmi_क्रमmats[i].mbus_code != mbus_code.code)
+				जारी;
 
-			/* Exclude JPEG if BT656 bus is selected */
-			if (dcmi_formats[i].fourcc == V4L2_PIX_FMT_JPEG &&
+			/* Exclude JPEG अगर BT656 bus is selected */
+			अगर (dcmi_क्रमmats[i].fourcc == V4L2_PIX_FMT_JPEG &&
 			    dcmi->bus_type == V4L2_MBUS_BT656)
-				continue;
+				जारी;
 
 			/* Code supported, have we got this fourcc yet? */
-			for (j = 0; j < num_fmts; j++)
-				if (sd_fmts[j]->fourcc ==
-						dcmi_formats[i].fourcc) {
-					/* Already available */
+			क्रम (j = 0; j < num_fmts; j++)
+				अगर (sd_fmts[j]->fourcc ==
+						dcmi_क्रमmats[i].fourcc) अणु
+					/* Alपढ़ोy available */
 					dev_dbg(dcmi->dev, "Skipping fourcc/code: %4.4s/0x%x\n",
-						(char *)&sd_fmts[j]->fourcc,
+						(अक्षर *)&sd_fmts[j]->fourcc,
 						mbus_code.code);
-					break;
-				}
-			if (j == num_fmts) {
+					अवरोध;
+				पूर्ण
+			अगर (j == num_fmts) अणु
 				/* New */
-				sd_fmts[num_fmts++] = dcmi_formats + i;
+				sd_fmts[num_fmts++] = dcmi_क्रमmats + i;
 				dev_dbg(dcmi->dev, "Supported fourcc/code: %4.4s/0x%x\n",
-					(char *)&sd_fmts[num_fmts - 1]->fourcc,
+					(अक्षर *)&sd_fmts[num_fmts - 1]->fourcc,
 					sd_fmts[num_fmts - 1]->mbus_code);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		mbus_code.index++;
-	}
+	पूर्ण
 
-	if (!num_fmts)
-		return -ENXIO;
+	अगर (!num_fmts)
+		वापस -ENXIO;
 
-	dcmi->num_of_sd_formats = num_fmts;
-	dcmi->sd_formats = devm_kcalloc(dcmi->dev,
-					num_fmts, sizeof(struct dcmi_format *),
+	dcmi->num_of_sd_क्रमmats = num_fmts;
+	dcmi->sd_क्रमmats = devm_kसुस्मृति(dcmi->dev,
+					num_fmts, माप(काष्ठा dcmi_क्रमmat *),
 					GFP_KERNEL);
-	if (!dcmi->sd_formats) {
+	अगर (!dcmi->sd_क्रमmats) अणु
 		dev_err(dcmi->dev, "Could not allocate memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(dcmi->sd_formats, sd_fmts,
-	       num_fmts * sizeof(struct dcmi_format *));
-	dcmi->sd_format = dcmi->sd_formats[0];
+	स_नकल(dcmi->sd_क्रमmats, sd_fmts,
+	       num_fmts * माप(काष्ठा dcmi_क्रमmat *));
+	dcmi->sd_क्रमmat = dcmi->sd_क्रमmats[0];
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_framesizes_init(struct stm32_dcmi *dcmi)
-{
-	unsigned int num_fsize = 0;
-	struct v4l2_subdev *subdev = dcmi->source;
-	struct v4l2_subdev_frame_size_enum fse = {
+अटल पूर्णांक dcmi_framesizes_init(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
+	अचिन्हित पूर्णांक num_fsize = 0;
+	काष्ठा v4l2_subdev *subdev = dcmi->source;
+	काष्ठा v4l2_subdev_frame_size_क्रमागत fse = अणु
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
-		.code = dcmi->sd_format->mbus_code,
-	};
-	unsigned int ret;
-	unsigned int i;
+		.code = dcmi->sd_क्रमmat->mbus_code,
+	पूर्ण;
+	अचिन्हित पूर्णांक ret;
+	अचिन्हित पूर्णांक i;
 
 	/* Allocate discrete framesizes array */
-	while (!v4l2_subdev_call(subdev, pad, enum_frame_size,
-				 NULL, &fse))
+	जबतक (!v4l2_subdev_call(subdev, pad, क्रमागत_frame_size,
+				 शून्य, &fse))
 		fse.index++;
 
 	num_fsize = fse.index;
-	if (!num_fsize)
-		return 0;
+	अगर (!num_fsize)
+		वापस 0;
 
 	dcmi->num_of_sd_framesizes = num_fsize;
-	dcmi->sd_framesizes = devm_kcalloc(dcmi->dev, num_fsize,
-					   sizeof(struct dcmi_framesize),
+	dcmi->sd_framesizes = devm_kसुस्मृति(dcmi->dev, num_fsize,
+					   माप(काष्ठा dcmi_framesize),
 					   GFP_KERNEL);
-	if (!dcmi->sd_framesizes) {
+	अगर (!dcmi->sd_framesizes) अणु
 		dev_err(dcmi->dev, "Could not allocate memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* Fill array with sensor supported framesizes */
 	dev_dbg(dcmi->dev, "Sensor supports %u frame sizes:\n", num_fsize);
-	for (i = 0; i < dcmi->num_of_sd_framesizes; i++) {
+	क्रम (i = 0; i < dcmi->num_of_sd_framesizes; i++) अणु
 		fse.index = i;
-		ret = v4l2_subdev_call(subdev, pad, enum_frame_size,
-				       NULL, &fse);
-		if (ret)
-			return ret;
+		ret = v4l2_subdev_call(subdev, pad, क्रमागत_frame_size,
+				       शून्य, &fse);
+		अगर (ret)
+			वापस ret;
 		dcmi->sd_framesizes[fse.index].width = fse.max_width;
 		dcmi->sd_framesizes[fse.index].height = fse.max_height;
 		dev_dbg(dcmi->dev, "%ux%u\n", fse.max_width, fse.max_height);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_graph_notify_complete(struct v4l2_async_notifier *notifier)
-{
-	struct stm32_dcmi *dcmi = notifier_to_dcmi(notifier);
-	int ret;
+अटल पूर्णांक dcmi_graph_notअगरy_complete(काष्ठा v4l2_async_notअगरier *notअगरier)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = notअगरier_to_dcmi(notअगरier);
+	पूर्णांक ret;
 
 	/*
 	 * Now that the graph is complete,
-	 * we search for the source subdevice
-	 * in order to expose it through V4L2 interface
+	 * we search क्रम the source subdevice
+	 * in order to expose it through V4L2 पूर्णांकerface
 	 */
 	dcmi->source = media_entity_to_v4l2_subdev(dcmi_find_source(dcmi));
-	if (!dcmi->source) {
+	अगर (!dcmi->source) अणु
 		dev_err(dcmi->dev, "Source subdevice not found\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dcmi->vdev->ctrl_handler = dcmi->source->ctrl_handler;
 
-	ret = dcmi_formats_init(dcmi);
-	if (ret) {
+	ret = dcmi_क्रमmats_init(dcmi);
+	अगर (ret) अणु
 		dev_err(dcmi->dev, "No supported mediabus format found\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = dcmi_framesizes_init(dcmi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dcmi->dev, "Could not initialize framesizes\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = dcmi_get_sensor_bounds(dcmi, &dcmi->sd_bounds);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dcmi->dev, "Could not get sensor bounds\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = dcmi_set_default_fmt(dcmi);
-	if (ret) {
+	ret = dcmi_set_शेष_fmt(dcmi);
+	अगर (ret) अणु
 		dev_err(dcmi->dev, "Could not set default format\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dcmi_graph_notify_unbind(struct v4l2_async_notifier *notifier,
-				     struct v4l2_subdev *sd,
-				     struct v4l2_async_subdev *asd)
-{
-	struct stm32_dcmi *dcmi = notifier_to_dcmi(notifier);
+अटल व्योम dcmi_graph_notअगरy_unbind(काष्ठा v4l2_async_notअगरier *notअगरier,
+				     काष्ठा v4l2_subdev *sd,
+				     काष्ठा v4l2_async_subdev *asd)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = notअगरier_to_dcmi(notअगरier);
 
 	dev_dbg(dcmi->dev, "Removing %s\n", video_device_node_name(dcmi->vdev));
 
-	/* Checks internally if vdev has been init or not */
-	video_unregister_device(dcmi->vdev);
-}
+	/* Checks पूर्णांकernally अगर vdev has been init or not */
+	video_unरेजिस्टर_device(dcmi->vdev);
+पूर्ण
 
-static int dcmi_graph_notify_bound(struct v4l2_async_notifier *notifier,
-				   struct v4l2_subdev *subdev,
-				   struct v4l2_async_subdev *asd)
-{
-	struct stm32_dcmi *dcmi = notifier_to_dcmi(notifier);
-	unsigned int ret;
-	int src_pad;
+अटल पूर्णांक dcmi_graph_notअगरy_bound(काष्ठा v4l2_async_notअगरier *notअगरier,
+				   काष्ठा v4l2_subdev *subdev,
+				   काष्ठा v4l2_async_subdev *asd)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = notअगरier_to_dcmi(notअगरier);
+	अचिन्हित पूर्णांक ret;
+	पूर्णांक src_pad;
 
 	dev_dbg(dcmi->dev, "Subdev \"%s\" bound\n", subdev->name);
 
@@ -1789,159 +1790,159 @@ static int dcmi_graph_notify_bound(struct v4l2_async_notifier *notifier,
 				    &dcmi->vdev->entity, 0,
 				    MEDIA_LNK_FL_IMMUTABLE |
 				    MEDIA_LNK_FL_ENABLED);
-	if (ret)
+	अगर (ret)
 		dev_err(dcmi->dev, "Failed to create media pad link with subdev \"%s\"\n",
 			subdev->name);
-	else
+	अन्यथा
 		dev_dbg(dcmi->dev, "DCMI is now linked to \"%s\"\n",
 			subdev->name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_async_notifier_operations dcmi_graph_notify_ops = {
-	.bound = dcmi_graph_notify_bound,
-	.unbind = dcmi_graph_notify_unbind,
-	.complete = dcmi_graph_notify_complete,
-};
+अटल स्थिर काष्ठा v4l2_async_notअगरier_operations dcmi_graph_notअगरy_ops = अणु
+	.bound = dcmi_graph_notअगरy_bound,
+	.unbind = dcmi_graph_notअगरy_unbind,
+	.complete = dcmi_graph_notअगरy_complete,
+पूर्ण;
 
-static int dcmi_graph_init(struct stm32_dcmi *dcmi)
-{
-	struct v4l2_async_subdev *asd;
-	struct device_node *ep;
-	int ret;
+अटल पूर्णांक dcmi_graph_init(काष्ठा sपंचांग32_dcmi *dcmi)
+अणु
+	काष्ठा v4l2_async_subdev *asd;
+	काष्ठा device_node *ep;
+	पूर्णांक ret;
 
-	ep = of_graph_get_next_endpoint(dcmi->dev->of_node, NULL);
-	if (!ep) {
+	ep = of_graph_get_next_endpoपूर्णांक(dcmi->dev->of_node, शून्य);
+	अगर (!ep) अणु
 		dev_err(dcmi->dev, "Failed to get next endpoint\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	v4l2_async_notifier_init(&dcmi->notifier);
+	v4l2_async_notअगरier_init(&dcmi->notअगरier);
 
-	asd = v4l2_async_notifier_add_fwnode_remote_subdev(
-		&dcmi->notifier, of_fwnode_handle(ep),
-		struct v4l2_async_subdev);
+	asd = v4l2_async_notअगरier_add_fwnode_remote_subdev(
+		&dcmi->notअगरier, of_fwnode_handle(ep),
+		काष्ठा v4l2_async_subdev);
 
 	of_node_put(ep);
 
-	if (IS_ERR(asd)) {
+	अगर (IS_ERR(asd)) अणु
 		dev_err(dcmi->dev, "Failed to add subdev notifier\n");
-		return PTR_ERR(asd);
-	}
+		वापस PTR_ERR(asd);
+	पूर्ण
 
-	dcmi->notifier.ops = &dcmi_graph_notify_ops;
+	dcmi->notअगरier.ops = &dcmi_graph_notअगरy_ops;
 
-	ret = v4l2_async_notifier_register(&dcmi->v4l2_dev, &dcmi->notifier);
-	if (ret < 0) {
+	ret = v4l2_async_notअगरier_रेजिस्टर(&dcmi->v4l2_dev, &dcmi->notअगरier);
+	अगर (ret < 0) अणु
 		dev_err(dcmi->dev, "Failed to register notifier\n");
-		v4l2_async_notifier_cleanup(&dcmi->notifier);
-		return ret;
-	}
+		v4l2_async_notअगरier_cleanup(&dcmi->notअगरier);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dcmi_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	const struct of_device_id *match = NULL;
-	struct v4l2_fwnode_endpoint ep = { .bus_type = 0 };
-	struct stm32_dcmi *dcmi;
-	struct vb2_queue *q;
-	struct dma_chan *chan;
-	struct clk *mclk;
-	int irq;
-	int ret = 0;
+अटल पूर्णांक dcmi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	स्थिर काष्ठा of_device_id *match = शून्य;
+	काष्ठा v4l2_fwnode_endpoपूर्णांक ep = अणु .bus_type = 0 पूर्ण;
+	काष्ठा sपंचांग32_dcmi *dcmi;
+	काष्ठा vb2_queue *q;
+	काष्ठा dma_chan *chan;
+	काष्ठा clk *mclk;
+	पूर्णांक irq;
+	पूर्णांक ret = 0;
 
-	match = of_match_device(of_match_ptr(stm32_dcmi_of_match), &pdev->dev);
-	if (!match) {
+	match = of_match_device(of_match_ptr(sपंचांग32_dcmi_of_match), &pdev->dev);
+	अगर (!match) अणु
 		dev_err(&pdev->dev, "Could not find a match in devicetree\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	dcmi = devm_kzalloc(&pdev->dev, sizeof(struct stm32_dcmi), GFP_KERNEL);
-	if (!dcmi)
-		return -ENOMEM;
+	dcmi = devm_kzalloc(&pdev->dev, माप(काष्ठा sपंचांग32_dcmi), GFP_KERNEL);
+	अगर (!dcmi)
+		वापस -ENOMEM;
 
-	dcmi->rstc = devm_reset_control_get_exclusive(&pdev->dev, NULL);
-	if (IS_ERR(dcmi->rstc)) {
-		if (PTR_ERR(dcmi->rstc) != -EPROBE_DEFER)
+	dcmi->rstc = devm_reset_control_get_exclusive(&pdev->dev, शून्य);
+	अगर (IS_ERR(dcmi->rstc)) अणु
+		अगर (PTR_ERR(dcmi->rstc) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Could not get reset control\n");
 
-		return PTR_ERR(dcmi->rstc);
-	}
+		वापस PTR_ERR(dcmi->rstc);
+	पूर्ण
 
-	/* Get bus characteristics from devicetree */
-	np = of_graph_get_next_endpoint(np, NULL);
-	if (!np) {
+	/* Get bus अक्षरacteristics from devicetree */
+	np = of_graph_get_next_endpoपूर्णांक(np, शून्य);
+	अगर (!np) अणु
 		dev_err(&pdev->dev, "Could not find the endpoint\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = v4l2_fwnode_endpoint_parse(of_fwnode_handle(np), &ep);
+	ret = v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(np), &ep);
 	of_node_put(np);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Could not parse the endpoint\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (ep.bus_type == V4L2_MBUS_CSI2_DPHY) {
+	अगर (ep.bus_type == V4L2_MBUS_CSI2_DPHY) अणु
 		dev_err(&pdev->dev, "CSI bus not supported\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (ep.bus_type == V4L2_MBUS_BT656 &&
-	    ep.bus.parallel.bus_width != 8) {
+	अगर (ep.bus_type == V4L2_MBUS_BT656 &&
+	    ep.bus.parallel.bus_width != 8) अणु
 		dev_err(&pdev->dev, "BT656 bus conflicts with %u bits bus width (8 bits required)\n",
 			ep.bus.parallel.bus_width);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dcmi->bus.flags = ep.bus.parallel.flags;
 	dcmi->bus.bus_width = ep.bus.parallel.bus_width;
-	dcmi->bus.data_shift = ep.bus.parallel.data_shift;
+	dcmi->bus.data_shअगरt = ep.bus.parallel.data_shअगरt;
 	dcmi->bus_type = ep.bus_type;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq <= 0)
-		return irq ? irq : -ENXIO;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq <= 0)
+		वापस irq ? irq : -ENXIO;
 
-	dcmi->res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!dcmi->res) {
+	dcmi->res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!dcmi->res) अणु
 		dev_err(&pdev->dev, "Could not get resource\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	dcmi->regs = devm_ioremap_resource(&pdev->dev, dcmi->res);
-	if (IS_ERR(dcmi->regs)) {
+	अगर (IS_ERR(dcmi->regs)) अणु
 		dev_err(&pdev->dev, "Could not map registers\n");
-		return PTR_ERR(dcmi->regs);
-	}
+		वापस PTR_ERR(dcmi->regs);
+	पूर्ण
 
-	ret = devm_request_threaded_irq(&pdev->dev, irq, dcmi_irq_callback,
-					dcmi_irq_thread, IRQF_ONESHOT,
+	ret = devm_request_thपढ़ोed_irq(&pdev->dev, irq, dcmi_irq_callback,
+					dcmi_irq_thपढ़ो, IRQF_ONESHOT,
 					dev_name(&pdev->dev), dcmi);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Unable to request irq %d\n", irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	mclk = devm_clk_get(&pdev->dev, "mclk");
-	if (IS_ERR(mclk)) {
-		if (PTR_ERR(mclk) != -EPROBE_DEFER)
+	अगर (IS_ERR(mclk)) अणु
+		अगर (PTR_ERR(mclk) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "Unable to get mclk\n");
-		return PTR_ERR(mclk);
-	}
+		वापस PTR_ERR(mclk);
+	पूर्ण
 
 	chan = dma_request_chan(&pdev->dev, "tx");
-	if (IS_ERR(chan)) {
+	अगर (IS_ERR(chan)) अणु
 		ret = PTR_ERR(chan);
-		if (ret != -EPROBE_DEFER)
+		अगर (ret != -EPROBE_DEFER)
 			dev_err(&pdev->dev,
 				"Failed to request DMA channel: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	spin_lock_init(&dcmi->irqlock);
 	mutex_init(&dcmi->lock);
@@ -1959,28 +1960,28 @@ static int dcmi_probe(struct platform_device *pdev)
 	dcmi->v4l2_dev.mdev = &dcmi->mdev;
 
 	/* Initialize media device */
-	strscpy(dcmi->mdev.model, DRV_NAME, sizeof(dcmi->mdev.model));
-	snprintf(dcmi->mdev.bus_info, sizeof(dcmi->mdev.bus_info),
+	strscpy(dcmi->mdev.model, DRV_NAME, माप(dcmi->mdev.model));
+	snम_लिखो(dcmi->mdev.bus_info, माप(dcmi->mdev.bus_info),
 		 "platform:%s", DRV_NAME);
 	dcmi->mdev.dev = &pdev->dev;
 	media_device_init(&dcmi->mdev);
 
-	/* Initialize the top-level structure */
-	ret = v4l2_device_register(&pdev->dev, &dcmi->v4l2_dev);
-	if (ret)
-		goto err_media_device_cleanup;
+	/* Initialize the top-level काष्ठाure */
+	ret = v4l2_device_रेजिस्टर(&pdev->dev, &dcmi->v4l2_dev);
+	अगर (ret)
+		जाओ err_media_device_cleanup;
 
 	dcmi->vdev = video_device_alloc();
-	if (!dcmi->vdev) {
+	अगर (!dcmi->vdev) अणु
 		ret = -ENOMEM;
-		goto err_device_unregister;
-	}
+		जाओ err_device_unरेजिस्टर;
+	पूर्ण
 
 	/* Video node */
 	dcmi->vdev->fops = &dcmi_fops;
 	dcmi->vdev->v4l2_dev = &dcmi->v4l2_dev;
 	dcmi->vdev->queue = &dcmi->queue;
-	strscpy(dcmi->vdev->name, KBUILD_MODNAME, sizeof(dcmi->vdev->name));
+	strscpy(dcmi->vdev->name, KBUILD_MODNAME, माप(dcmi->vdev->name));
 	dcmi->vdev->release = video_device_release;
 	dcmi->vdev->ioctl_ops = &dcmi_ioctl_ops;
 	dcmi->vdev->lock = &dcmi->lock;
@@ -1992,17 +1993,17 @@ static int dcmi_probe(struct platform_device *pdev)
 	dcmi->vid_cap_pad.flags = MEDIA_PAD_FL_SINK;
 	ret = media_entity_pads_init(&dcmi->vdev->entity,
 				     1, &dcmi->vid_cap_pad);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dcmi->dev, "Failed to init media entity pad\n");
-		goto err_device_release;
-	}
+		जाओ err_device_release;
+	पूर्ण
 	dcmi->vdev->entity.flags |= MEDIA_ENT_FL_DEFAULT;
 
-	ret = video_register_device(dcmi->vdev, VFL_TYPE_VIDEO, -1);
-	if (ret) {
+	ret = video_रेजिस्टर_device(dcmi->vdev, VFL_TYPE_VIDEO, -1);
+	अगर (ret) अणु
 		dev_err(dcmi->dev, "Failed to register video device\n");
-		goto err_media_entity_cleanup;
-	}
+		जाओ err_media_entity_cleanup;
+	पूर्ण
 
 	dev_dbg(dcmi->dev, "Device registered as %s\n",
 		video_device_node_name(dcmi->vdev));
@@ -2012,138 +2013,138 @@ static int dcmi_probe(struct platform_device *pdev)
 	q->io_modes = VB2_MMAP | VB2_READ | VB2_DMABUF;
 	q->lock = &dcmi->lock;
 	q->drv_priv = dcmi;
-	q->buf_struct_size = sizeof(struct dcmi_buf);
+	q->buf_काष्ठा_size = माप(काष्ठा dcmi_buf);
 	q->ops = &dcmi_video_qops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	q->min_buffers_needed = 2;
 	q->dev = &pdev->dev;
 
 	ret = vb2_queue_init(q);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Failed to initialize vb2 queue\n");
-		goto err_media_entity_cleanup;
-	}
+		जाओ err_media_entity_cleanup;
+	पूर्ण
 
 	ret = dcmi_graph_init(dcmi);
-	if (ret < 0)
-		goto err_media_entity_cleanup;
+	अगर (ret < 0)
+		जाओ err_media_entity_cleanup;
 
 	/* Reset device */
-	ret = reset_control_assert(dcmi->rstc);
-	if (ret) {
+	ret = reset_control_निश्चित(dcmi->rstc);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to assert the reset line\n");
-		goto err_cleanup;
-	}
+		जाओ err_cleanup;
+	पूर्ण
 
 	usleep_range(3000, 5000);
 
-	ret = reset_control_deassert(dcmi->rstc);
-	if (ret) {
+	ret = reset_control_deनिश्चित(dcmi->rstc);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to deassert the reset line\n");
-		goto err_cleanup;
-	}
+		जाओ err_cleanup;
+	पूर्ण
 
 	dev_info(&pdev->dev, "Probe done\n");
 
-	platform_set_drvdata(pdev, dcmi);
+	platक्रमm_set_drvdata(pdev, dcmi);
 
-	pm_runtime_enable(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
 
-	return 0;
+	वापस 0;
 
 err_cleanup:
-	v4l2_async_notifier_cleanup(&dcmi->notifier);
+	v4l2_async_notअगरier_cleanup(&dcmi->notअगरier);
 err_media_entity_cleanup:
 	media_entity_cleanup(&dcmi->vdev->entity);
 err_device_release:
 	video_device_release(dcmi->vdev);
-err_device_unregister:
-	v4l2_device_unregister(&dcmi->v4l2_dev);
+err_device_unरेजिस्टर:
+	v4l2_device_unरेजिस्टर(&dcmi->v4l2_dev);
 err_media_device_cleanup:
 	media_device_cleanup(&dcmi->mdev);
 	dma_release_channel(dcmi->dma_chan);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dcmi_remove(struct platform_device *pdev)
-{
-	struct stm32_dcmi *dcmi = platform_get_drvdata(pdev);
+अटल पूर्णांक dcmi_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = platक्रमm_get_drvdata(pdev);
 
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	v4l2_async_notifier_unregister(&dcmi->notifier);
-	v4l2_async_notifier_cleanup(&dcmi->notifier);
+	v4l2_async_notअगरier_unरेजिस्टर(&dcmi->notअगरier);
+	v4l2_async_notअगरier_cleanup(&dcmi->notअगरier);
 	media_entity_cleanup(&dcmi->vdev->entity);
-	v4l2_device_unregister(&dcmi->v4l2_dev);
+	v4l2_device_unरेजिस्टर(&dcmi->v4l2_dev);
 	media_device_cleanup(&dcmi->mdev);
 
 	dma_release_channel(dcmi->dma_chan);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused int dcmi_runtime_suspend(struct device *dev)
-{
-	struct stm32_dcmi *dcmi = dev_get_drvdata(dev);
+अटल __maybe_unused पूर्णांक dcmi_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = dev_get_drvdata(dev);
 
 	clk_disable_unprepare(dcmi->mclk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused int dcmi_runtime_resume(struct device *dev)
-{
-	struct stm32_dcmi *dcmi = dev_get_drvdata(dev);
-	int ret;
+अटल __maybe_unused पूर्णांक dcmi_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा sपंचांग32_dcmi *dcmi = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
 	ret = clk_prepare_enable(dcmi->mclk);
-	if (ret)
+	अगर (ret)
 		dev_err(dev, "%s: Failed to prepare_enable clock\n", __func__);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __maybe_unused int dcmi_suspend(struct device *dev)
-{
-	/* disable clock */
-	pm_runtime_force_suspend(dev);
+अटल __maybe_unused पूर्णांक dcmi_suspend(काष्ठा device *dev)
+अणु
+	/* disable घड़ी */
+	pm_runसमय_क्रमce_suspend(dev);
 
 	/* change pinctrl state */
 	pinctrl_pm_select_sleep_state(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused int dcmi_resume(struct device *dev)
-{
-	/* restore pinctl default state */
-	pinctrl_pm_select_default_state(dev);
+अटल __maybe_unused पूर्णांक dcmi_resume(काष्ठा device *dev)
+अणु
+	/* restore pinctl शेष state */
+	pinctrl_pm_select_शेष_state(dev);
 
-	/* clock enable */
-	pm_runtime_force_resume(dev);
+	/* घड़ी enable */
+	pm_runसमय_क्रमce_resume(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops dcmi_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops dcmi_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(dcmi_suspend, dcmi_resume)
-	SET_RUNTIME_PM_OPS(dcmi_runtime_suspend,
-			   dcmi_runtime_resume, NULL)
-};
+	SET_RUNTIME_PM_OPS(dcmi_runसमय_suspend,
+			   dcmi_runसमय_resume, शून्य)
+पूर्ण;
 
-static struct platform_driver stm32_dcmi_driver = {
+अटल काष्ठा platक्रमm_driver sपंचांग32_dcmi_driver = अणु
 	.probe		= dcmi_probe,
-	.remove		= dcmi_remove,
-	.driver		= {
+	.हटाओ		= dcmi_हटाओ,
+	.driver		= अणु
 		.name = DRV_NAME,
-		.of_match_table = of_match_ptr(stm32_dcmi_of_match),
+		.of_match_table = of_match_ptr(sपंचांग32_dcmi_of_match),
 		.pm = &dcmi_pm_ops,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(stm32_dcmi_driver);
+module_platक्रमm_driver(sपंचांग32_dcmi_driver);
 
 MODULE_AUTHOR("Yannick Fertre <yannick.fertre@st.com>");
 MODULE_AUTHOR("Hugues Fruchet <hugues.fruchet@st.com>");

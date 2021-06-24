@@ -1,465 +1,466 @@
-// SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause)
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause)
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#include <linux/types.h>
-#include <linux/dma-mapping.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/pci.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include "qed.h"
-#include "qed_iscsi.h"
-#include "qed_ll2.h"
-#include "qed_ooo.h"
-#include "qed_cxt.h"
+#समावेश <linux/types.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश "qed.h"
+#समावेश "qed_iscsi.h"
+#समावेश "qed_ll2.h"
+#समावेश "qed_ooo.h"
+#समावेश "qed_cxt.h"
 
-static struct qed_ooo_archipelago
-*qed_ooo_seek_archipelago(struct qed_hwfn *p_hwfn,
-			  struct qed_ooo_info
+अटल काष्ठा qed_ooo_archipelago
+*qed_ooo_seek_archipelago(काष्ठा qed_hwfn *p_hwfn,
+			  काष्ठा qed_ooo_info
 			  *p_ooo_info,
 			  u32 cid)
-{
+अणु
 	u32 idx = (cid & 0xffff) - p_ooo_info->cid_base;
-	struct qed_ooo_archipelago *p_archipelago;
+	काष्ठा qed_ooo_archipelago *p_archipelago;
 
-	if (idx >= p_ooo_info->max_num_archipelagos)
-		return NULL;
+	अगर (idx >= p_ooo_info->max_num_archipelagos)
+		वापस शून्य;
 
 	p_archipelago = &p_ooo_info->p_archipelagos_mem[idx];
 
-	if (list_empty(&p_archipelago->isles_list))
-		return NULL;
+	अगर (list_empty(&p_archipelago->isles_list))
+		वापस शून्य;
 
-	return p_archipelago;
-}
+	वापस p_archipelago;
+पूर्ण
 
-static struct qed_ooo_isle *qed_ooo_seek_isle(struct qed_hwfn *p_hwfn,
-					      struct qed_ooo_info *p_ooo_info,
+अटल काष्ठा qed_ooo_isle *qed_ooo_seek_isle(काष्ठा qed_hwfn *p_hwfn,
+					      काष्ठा qed_ooo_info *p_ooo_info,
 					      u32 cid, u8 isle)
-{
-	struct qed_ooo_archipelago *p_archipelago = NULL;
-	struct qed_ooo_isle *p_isle = NULL;
+अणु
+	काष्ठा qed_ooo_archipelago *p_archipelago = शून्य;
+	काष्ठा qed_ooo_isle *p_isle = शून्य;
 	u8 the_num_of_isle = 1;
 
 	p_archipelago = qed_ooo_seek_archipelago(p_hwfn, p_ooo_info, cid);
-	if (!p_archipelago) {
+	अगर (!p_archipelago) अणु
 		DP_NOTICE(p_hwfn,
 			  "Connection %d is not found in OOO list\n", cid);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	list_for_each_entry(p_isle, &p_archipelago->isles_list, list_entry) {
-		if (the_num_of_isle == isle)
-			return p_isle;
+	list_क्रम_each_entry(p_isle, &p_archipelago->isles_list, list_entry) अणु
+		अगर (the_num_of_isle == isle)
+			वापस p_isle;
 		the_num_of_isle++;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void qed_ooo_save_history_entry(struct qed_hwfn *p_hwfn,
-				struct qed_ooo_info *p_ooo_info,
-				struct ooo_opaque *p_cqe)
-{
-	struct qed_ooo_history *p_history = &p_ooo_info->ooo_history;
+व्योम qed_ooo_save_history_entry(काष्ठा qed_hwfn *p_hwfn,
+				काष्ठा qed_ooo_info *p_ooo_info,
+				काष्ठा ooo_opaque *p_cqe)
+अणु
+	काष्ठा qed_ooo_history *p_history = &p_ooo_info->ooo_history;
 
-	if (p_history->head_idx == p_history->num_of_cqes)
+	अगर (p_history->head_idx == p_history->num_of_cqes)
 		p_history->head_idx = 0;
 	p_history->p_cqes[p_history->head_idx] = *p_cqe;
 	p_history->head_idx++;
-}
+पूर्ण
 
-int qed_ooo_alloc(struct qed_hwfn *p_hwfn)
-{
+पूर्णांक qed_ooo_alloc(काष्ठा qed_hwfn *p_hwfn)
+अणु
 	u16 max_num_archipelagos = 0, cid_base;
-	struct qed_ooo_info *p_ooo_info;
-	enum protocol_type proto;
+	काष्ठा qed_ooo_info *p_ooo_info;
+	क्रमागत protocol_type proto;
 	u16 max_num_isles = 0;
 	u32 i;
 
-	switch (p_hwfn->hw_info.personality) {
-	case QED_PCI_ISCSI:
+	चयन (p_hwfn->hw_info.personality) अणु
+	हाल QED_PCI_ISCSI:
 		proto = PROTOCOLID_ISCSI;
-		break;
-	case QED_PCI_ETH_RDMA:
-	case QED_PCI_ETH_IWARP:
+		अवरोध;
+	हाल QED_PCI_ETH_RDMA:
+	हाल QED_PCI_ETH_IWARP:
 		proto = PROTOCOLID_IWARP;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DP_NOTICE(p_hwfn,
 			  "Failed to allocate qed_ooo_info: unknown personality\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	max_num_archipelagos = (u16)qed_cxt_get_proto_cid_count(p_hwfn, proto,
-								NULL);
+								शून्य);
 	max_num_isles = QED_MAX_NUM_ISLES + max_num_archipelagos;
 	cid_base = (u16)qed_cxt_get_proto_cid_start(p_hwfn, proto);
 
-	if (!max_num_archipelagos) {
+	अगर (!max_num_archipelagos) अणु
 		DP_NOTICE(p_hwfn,
 			  "Failed to allocate qed_ooo_info: unknown amount of connections\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	p_ooo_info = kzalloc(sizeof(*p_ooo_info), GFP_KERNEL);
-	if (!p_ooo_info)
-		return -ENOMEM;
+	p_ooo_info = kzalloc(माप(*p_ooo_info), GFP_KERNEL);
+	अगर (!p_ooo_info)
+		वापस -ENOMEM;
 
 	p_ooo_info->cid_base = cid_base;
 	p_ooo_info->max_num_archipelagos = max_num_archipelagos;
 
-	INIT_LIST_HEAD(&p_ooo_info->free_buffers_list);
-	INIT_LIST_HEAD(&p_ooo_info->ready_buffers_list);
-	INIT_LIST_HEAD(&p_ooo_info->free_isles_list);
+	INIT_LIST_HEAD(&p_ooo_info->मुक्त_buffers_list);
+	INIT_LIST_HEAD(&p_ooo_info->पढ़ोy_buffers_list);
+	INIT_LIST_HEAD(&p_ooo_info->मुक्त_isles_list);
 
-	p_ooo_info->p_isles_mem = kcalloc(max_num_isles,
-					  sizeof(struct qed_ooo_isle),
+	p_ooo_info->p_isles_mem = kसुस्मृति(max_num_isles,
+					  माप(काष्ठा qed_ooo_isle),
 					  GFP_KERNEL);
-	if (!p_ooo_info->p_isles_mem)
-		goto no_isles_mem;
+	अगर (!p_ooo_info->p_isles_mem)
+		जाओ no_isles_mem;
 
-	for (i = 0; i < max_num_isles; i++) {
+	क्रम (i = 0; i < max_num_isles; i++) अणु
 		INIT_LIST_HEAD(&p_ooo_info->p_isles_mem[i].buffers_list);
 		list_add_tail(&p_ooo_info->p_isles_mem[i].list_entry,
-			      &p_ooo_info->free_isles_list);
-	}
+			      &p_ooo_info->मुक्त_isles_list);
+	पूर्ण
 
 	p_ooo_info->p_archipelagos_mem =
-				kcalloc(max_num_archipelagos,
-					sizeof(struct qed_ooo_archipelago),
+				kसुस्मृति(max_num_archipelagos,
+					माप(काष्ठा qed_ooo_archipelago),
 					GFP_KERNEL);
-	if (!p_ooo_info->p_archipelagos_mem)
-		goto no_archipelagos_mem;
+	अगर (!p_ooo_info->p_archipelagos_mem)
+		जाओ no_archipelagos_mem;
 
-	for (i = 0; i < max_num_archipelagos; i++)
+	क्रम (i = 0; i < max_num_archipelagos; i++)
 		INIT_LIST_HEAD(&p_ooo_info->p_archipelagos_mem[i].isles_list);
 
 	p_ooo_info->ooo_history.p_cqes =
-				kcalloc(QED_MAX_NUM_OOO_HISTORY_ENTRIES,
-					sizeof(struct ooo_opaque),
+				kसुस्मृति(QED_MAX_NUM_OOO_HISTORY_ENTRIES,
+					माप(काष्ठा ooo_opaque),
 					GFP_KERNEL);
-	if (!p_ooo_info->ooo_history.p_cqes)
-		goto no_history_mem;
+	अगर (!p_ooo_info->ooo_history.p_cqes)
+		जाओ no_history_mem;
 
 	p_ooo_info->ooo_history.num_of_cqes = QED_MAX_NUM_OOO_HISTORY_ENTRIES;
 
 	p_hwfn->p_ooo_info = p_ooo_info;
-	return 0;
+	वापस 0;
 
 no_history_mem:
-	kfree(p_ooo_info->p_archipelagos_mem);
+	kमुक्त(p_ooo_info->p_archipelagos_mem);
 no_archipelagos_mem:
-	kfree(p_ooo_info->p_isles_mem);
+	kमुक्त(p_ooo_info->p_isles_mem);
 no_isles_mem:
-	kfree(p_ooo_info);
-	return -ENOMEM;
-}
+	kमुक्त(p_ooo_info);
+	वापस -ENOMEM;
+पूर्ण
 
-void qed_ooo_release_connection_isles(struct qed_hwfn *p_hwfn,
-				      struct qed_ooo_info *p_ooo_info, u32 cid)
-{
-	struct qed_ooo_archipelago *p_archipelago;
-	struct qed_ooo_buffer *p_buffer;
-	struct qed_ooo_isle *p_isle;
+व्योम qed_ooo_release_connection_isles(काष्ठा qed_hwfn *p_hwfn,
+				      काष्ठा qed_ooo_info *p_ooo_info, u32 cid)
+अणु
+	काष्ठा qed_ooo_archipelago *p_archipelago;
+	काष्ठा qed_ooo_buffer *p_buffer;
+	काष्ठा qed_ooo_isle *p_isle;
 
 	p_archipelago = qed_ooo_seek_archipelago(p_hwfn, p_ooo_info, cid);
-	if (!p_archipelago)
-		return;
+	अगर (!p_archipelago)
+		वापस;
 
-	while (!list_empty(&p_archipelago->isles_list)) {
+	जबतक (!list_empty(&p_archipelago->isles_list)) अणु
 		p_isle = list_first_entry(&p_archipelago->isles_list,
-					  struct qed_ooo_isle, list_entry);
+					  काष्ठा qed_ooo_isle, list_entry);
 
 		list_del(&p_isle->list_entry);
 
-		while (!list_empty(&p_isle->buffers_list)) {
+		जबतक (!list_empty(&p_isle->buffers_list)) अणु
 			p_buffer = list_first_entry(&p_isle->buffers_list,
-						    struct qed_ooo_buffer,
+						    काष्ठा qed_ooo_buffer,
 						    list_entry);
 
-			if (!p_buffer)
-				break;
+			अगर (!p_buffer)
+				अवरोध;
 
 			list_move_tail(&p_buffer->list_entry,
-				       &p_ooo_info->free_buffers_list);
-		}
+				       &p_ooo_info->मुक्त_buffers_list);
+		पूर्ण
 		list_add_tail(&p_isle->list_entry,
-			      &p_ooo_info->free_isles_list);
-	}
-}
+			      &p_ooo_info->मुक्त_isles_list);
+	पूर्ण
+पूर्ण
 
-void qed_ooo_release_all_isles(struct qed_hwfn *p_hwfn,
-			       struct qed_ooo_info *p_ooo_info)
-{
-	struct qed_ooo_archipelago *p_archipelago;
-	struct qed_ooo_buffer *p_buffer;
-	struct qed_ooo_isle *p_isle;
+व्योम qed_ooo_release_all_isles(काष्ठा qed_hwfn *p_hwfn,
+			       काष्ठा qed_ooo_info *p_ooo_info)
+अणु
+	काष्ठा qed_ooo_archipelago *p_archipelago;
+	काष्ठा qed_ooo_buffer *p_buffer;
+	काष्ठा qed_ooo_isle *p_isle;
 	u32 i;
 
-	for (i = 0; i < p_ooo_info->max_num_archipelagos; i++) {
+	क्रम (i = 0; i < p_ooo_info->max_num_archipelagos; i++) अणु
 		p_archipelago = &(p_ooo_info->p_archipelagos_mem[i]);
 
-		while (!list_empty(&p_archipelago->isles_list)) {
+		जबतक (!list_empty(&p_archipelago->isles_list)) अणु
 			p_isle = list_first_entry(&p_archipelago->isles_list,
-						  struct qed_ooo_isle,
+						  काष्ठा qed_ooo_isle,
 						  list_entry);
 
 			list_del(&p_isle->list_entry);
 
-			while (!list_empty(&p_isle->buffers_list)) {
+			जबतक (!list_empty(&p_isle->buffers_list)) अणु
 				p_buffer =
 				    list_first_entry(&p_isle->buffers_list,
-						     struct qed_ooo_buffer,
+						     काष्ठा qed_ooo_buffer,
 						     list_entry);
 
-				if (!p_buffer)
-					break;
+				अगर (!p_buffer)
+					अवरोध;
 
 				list_move_tail(&p_buffer->list_entry,
-					       &p_ooo_info->free_buffers_list);
-			}
+					       &p_ooo_info->मुक्त_buffers_list);
+			पूर्ण
 			list_add_tail(&p_isle->list_entry,
-				      &p_ooo_info->free_isles_list);
-		}
-	}
-	if (!list_empty(&p_ooo_info->ready_buffers_list))
-		list_splice_tail_init(&p_ooo_info->ready_buffers_list,
-				      &p_ooo_info->free_buffers_list);
-}
+				      &p_ooo_info->मुक्त_isles_list);
+		पूर्ण
+	पूर्ण
+	अगर (!list_empty(&p_ooo_info->पढ़ोy_buffers_list))
+		list_splice_tail_init(&p_ooo_info->पढ़ोy_buffers_list,
+				      &p_ooo_info->मुक्त_buffers_list);
+पूर्ण
 
-void qed_ooo_setup(struct qed_hwfn *p_hwfn)
-{
+व्योम qed_ooo_setup(काष्ठा qed_hwfn *p_hwfn)
+अणु
 	qed_ooo_release_all_isles(p_hwfn, p_hwfn->p_ooo_info);
-	memset(p_hwfn->p_ooo_info->ooo_history.p_cqes, 0,
+	स_रखो(p_hwfn->p_ooo_info->ooo_history.p_cqes, 0,
 	       p_hwfn->p_ooo_info->ooo_history.num_of_cqes *
-	       sizeof(struct ooo_opaque));
+	       माप(काष्ठा ooo_opaque));
 	p_hwfn->p_ooo_info->ooo_history.head_idx = 0;
-}
+पूर्ण
 
-void qed_ooo_free(struct qed_hwfn *p_hwfn)
-{
-	struct qed_ooo_info *p_ooo_info  = p_hwfn->p_ooo_info;
-	struct qed_ooo_buffer *p_buffer;
+व्योम qed_ooo_मुक्त(काष्ठा qed_hwfn *p_hwfn)
+अणु
+	काष्ठा qed_ooo_info *p_ooo_info  = p_hwfn->p_ooo_info;
+	काष्ठा qed_ooo_buffer *p_buffer;
 
-	if (!p_ooo_info)
-		return;
+	अगर (!p_ooo_info)
+		वापस;
 
 	qed_ooo_release_all_isles(p_hwfn, p_ooo_info);
-	while (!list_empty(&p_ooo_info->free_buffers_list)) {
-		p_buffer = list_first_entry(&p_ooo_info->free_buffers_list,
-					    struct qed_ooo_buffer, list_entry);
+	जबतक (!list_empty(&p_ooo_info->मुक्त_buffers_list)) अणु
+		p_buffer = list_first_entry(&p_ooo_info->मुक्त_buffers_list,
+					    काष्ठा qed_ooo_buffer, list_entry);
 
-		if (!p_buffer)
-			break;
+		अगर (!p_buffer)
+			अवरोध;
 
 		list_del(&p_buffer->list_entry);
-		dma_free_coherent(&p_hwfn->cdev->pdev->dev,
+		dma_मुक्त_coherent(&p_hwfn->cdev->pdev->dev,
 				  p_buffer->rx_buffer_size,
 				  p_buffer->rx_buffer_virt_addr,
 				  p_buffer->rx_buffer_phys_addr);
-		kfree(p_buffer);
-	}
+		kमुक्त(p_buffer);
+	पूर्ण
 
-	kfree(p_ooo_info->p_isles_mem);
-	kfree(p_ooo_info->p_archipelagos_mem);
-	kfree(p_ooo_info->ooo_history.p_cqes);
-	kfree(p_ooo_info);
-	p_hwfn->p_ooo_info = NULL;
-}
+	kमुक्त(p_ooo_info->p_isles_mem);
+	kमुक्त(p_ooo_info->p_archipelagos_mem);
+	kमुक्त(p_ooo_info->ooo_history.p_cqes);
+	kमुक्त(p_ooo_info);
+	p_hwfn->p_ooo_info = शून्य;
+पूर्ण
 
-void qed_ooo_put_free_buffer(struct qed_hwfn *p_hwfn,
-			     struct qed_ooo_info *p_ooo_info,
-			     struct qed_ooo_buffer *p_buffer)
-{
-	list_add_tail(&p_buffer->list_entry, &p_ooo_info->free_buffers_list);
-}
+व्योम qed_ooo_put_मुक्त_buffer(काष्ठा qed_hwfn *p_hwfn,
+			     काष्ठा qed_ooo_info *p_ooo_info,
+			     काष्ठा qed_ooo_buffer *p_buffer)
+अणु
+	list_add_tail(&p_buffer->list_entry, &p_ooo_info->मुक्त_buffers_list);
+पूर्ण
 
-struct qed_ooo_buffer *qed_ooo_get_free_buffer(struct qed_hwfn *p_hwfn,
-					       struct qed_ooo_info *p_ooo_info)
-{
-	struct qed_ooo_buffer *p_buffer = NULL;
+काष्ठा qed_ooo_buffer *qed_ooo_get_मुक्त_buffer(काष्ठा qed_hwfn *p_hwfn,
+					       काष्ठा qed_ooo_info *p_ooo_info)
+अणु
+	काष्ठा qed_ooo_buffer *p_buffer = शून्य;
 
-	if (!list_empty(&p_ooo_info->free_buffers_list)) {
-		p_buffer = list_first_entry(&p_ooo_info->free_buffers_list,
-					    struct qed_ooo_buffer, list_entry);
+	अगर (!list_empty(&p_ooo_info->मुक्त_buffers_list)) अणु
+		p_buffer = list_first_entry(&p_ooo_info->मुक्त_buffers_list,
+					    काष्ठा qed_ooo_buffer, list_entry);
 
 		list_del(&p_buffer->list_entry);
-	}
+	पूर्ण
 
-	return p_buffer;
-}
+	वापस p_buffer;
+पूर्ण
 
-void qed_ooo_put_ready_buffer(struct qed_hwfn *p_hwfn,
-			      struct qed_ooo_info *p_ooo_info,
-			      struct qed_ooo_buffer *p_buffer, u8 on_tail)
-{
-	if (on_tail)
+व्योम qed_ooo_put_पढ़ोy_buffer(काष्ठा qed_hwfn *p_hwfn,
+			      काष्ठा qed_ooo_info *p_ooo_info,
+			      काष्ठा qed_ooo_buffer *p_buffer, u8 on_tail)
+अणु
+	अगर (on_tail)
 		list_add_tail(&p_buffer->list_entry,
-			      &p_ooo_info->ready_buffers_list);
-	else
+			      &p_ooo_info->पढ़ोy_buffers_list);
+	अन्यथा
 		list_add(&p_buffer->list_entry,
-			 &p_ooo_info->ready_buffers_list);
-}
+			 &p_ooo_info->पढ़ोy_buffers_list);
+पूर्ण
 
-struct qed_ooo_buffer *qed_ooo_get_ready_buffer(struct qed_hwfn *p_hwfn,
-						struct qed_ooo_info *p_ooo_info)
-{
-	struct qed_ooo_buffer *p_buffer = NULL;
+काष्ठा qed_ooo_buffer *qed_ooo_get_पढ़ोy_buffer(काष्ठा qed_hwfn *p_hwfn,
+						काष्ठा qed_ooo_info *p_ooo_info)
+अणु
+	काष्ठा qed_ooo_buffer *p_buffer = शून्य;
 
-	if (!list_empty(&p_ooo_info->ready_buffers_list)) {
-		p_buffer = list_first_entry(&p_ooo_info->ready_buffers_list,
-					    struct qed_ooo_buffer, list_entry);
+	अगर (!list_empty(&p_ooo_info->पढ़ोy_buffers_list)) अणु
+		p_buffer = list_first_entry(&p_ooo_info->पढ़ोy_buffers_list,
+					    काष्ठा qed_ooo_buffer, list_entry);
 
 		list_del(&p_buffer->list_entry);
-	}
+	पूर्ण
 
-	return p_buffer;
-}
+	वापस p_buffer;
+पूर्ण
 
-void qed_ooo_delete_isles(struct qed_hwfn *p_hwfn,
-			  struct qed_ooo_info *p_ooo_info,
+व्योम qed_ooo_delete_isles(काष्ठा qed_hwfn *p_hwfn,
+			  काष्ठा qed_ooo_info *p_ooo_info,
 			  u32 cid, u8 drop_isle, u8 drop_size)
-{
-	struct qed_ooo_isle *p_isle = NULL;
+अणु
+	काष्ठा qed_ooo_isle *p_isle = शून्य;
 	u8 isle_idx;
 
-	for (isle_idx = 0; isle_idx < drop_size; isle_idx++) {
+	क्रम (isle_idx = 0; isle_idx < drop_size; isle_idx++) अणु
 		p_isle = qed_ooo_seek_isle(p_hwfn, p_ooo_info, cid, drop_isle);
-		if (!p_isle) {
+		अगर (!p_isle) अणु
 			DP_NOTICE(p_hwfn,
 				  "Isle %d is not found(cid %d)\n",
 				  drop_isle, cid);
-			return;
-		}
-		if (list_empty(&p_isle->buffers_list))
+			वापस;
+		पूर्ण
+		अगर (list_empty(&p_isle->buffers_list))
 			DP_NOTICE(p_hwfn,
 				  "Isle %d is empty(cid %d)\n", drop_isle, cid);
-		else
+		अन्यथा
 			list_splice_tail_init(&p_isle->buffers_list,
-					      &p_ooo_info->free_buffers_list);
+					      &p_ooo_info->मुक्त_buffers_list);
 
 		list_del(&p_isle->list_entry);
 		p_ooo_info->cur_isles_number--;
-		list_add(&p_isle->list_entry, &p_ooo_info->free_isles_list);
-	}
-}
+		list_add(&p_isle->list_entry, &p_ooo_info->मुक्त_isles_list);
+	पूर्ण
+पूर्ण
 
-void qed_ooo_add_new_isle(struct qed_hwfn *p_hwfn,
-			  struct qed_ooo_info *p_ooo_info,
+व्योम qed_ooo_add_new_isle(काष्ठा qed_hwfn *p_hwfn,
+			  काष्ठा qed_ooo_info *p_ooo_info,
 			  u32 cid, u8 ooo_isle,
-			  struct qed_ooo_buffer *p_buffer)
-{
-	struct qed_ooo_archipelago *p_archipelago = NULL;
-	struct qed_ooo_isle *p_prev_isle = NULL;
-	struct qed_ooo_isle *p_isle = NULL;
+			  काष्ठा qed_ooo_buffer *p_buffer)
+अणु
+	काष्ठा qed_ooo_archipelago *p_archipelago = शून्य;
+	काष्ठा qed_ooo_isle *p_prev_isle = शून्य;
+	काष्ठा qed_ooo_isle *p_isle = शून्य;
 
-	if (ooo_isle > 1) {
+	अगर (ooo_isle > 1) अणु
 		p_prev_isle = qed_ooo_seek_isle(p_hwfn,
 						p_ooo_info, cid, ooo_isle - 1);
-		if (!p_prev_isle) {
+		अगर (!p_prev_isle) अणु
 			DP_NOTICE(p_hwfn,
 				  "Isle %d is not found(cid %d)\n",
 				  ooo_isle - 1, cid);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 	p_archipelago = qed_ooo_seek_archipelago(p_hwfn, p_ooo_info, cid);
-	if (!p_archipelago && (ooo_isle != 1)) {
+	अगर (!p_archipelago && (ooo_isle != 1)) अणु
 		DP_NOTICE(p_hwfn,
 			  "Connection %d is not found in OOO list\n", cid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!list_empty(&p_ooo_info->free_isles_list)) {
-		p_isle = list_first_entry(&p_ooo_info->free_isles_list,
-					  struct qed_ooo_isle, list_entry);
+	अगर (!list_empty(&p_ooo_info->मुक्त_isles_list)) अणु
+		p_isle = list_first_entry(&p_ooo_info->मुक्त_isles_list,
+					  काष्ठा qed_ooo_isle, list_entry);
 
 		list_del(&p_isle->list_entry);
-		if (!list_empty(&p_isle->buffers_list)) {
+		अगर (!list_empty(&p_isle->buffers_list)) अणु
 			DP_NOTICE(p_hwfn, "Free isle is not empty\n");
 			INIT_LIST_HEAD(&p_isle->buffers_list);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		DP_NOTICE(p_hwfn, "No more free isles\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!p_archipelago) {
+	अगर (!p_archipelago) अणु
 		u32 idx = (cid & 0xffff) - p_ooo_info->cid_base;
 
 		p_archipelago = &p_ooo_info->p_archipelagos_mem[idx];
-	}
+	पूर्ण
 
 	list_add(&p_buffer->list_entry, &p_isle->buffers_list);
 	p_ooo_info->cur_isles_number++;
 	p_ooo_info->gen_isles_number++;
 
-	if (p_ooo_info->cur_isles_number > p_ooo_info->max_isles_number)
+	अगर (p_ooo_info->cur_isles_number > p_ooo_info->max_isles_number)
 		p_ooo_info->max_isles_number = p_ooo_info->cur_isles_number;
 
-	if (!p_prev_isle)
+	अगर (!p_prev_isle)
 		list_add(&p_isle->list_entry, &p_archipelago->isles_list);
-	else
+	अन्यथा
 		list_add(&p_isle->list_entry, &p_prev_isle->list_entry);
-}
+पूर्ण
 
-void qed_ooo_add_new_buffer(struct qed_hwfn *p_hwfn,
-			    struct qed_ooo_info *p_ooo_info,
+व्योम qed_ooo_add_new_buffer(काष्ठा qed_hwfn *p_hwfn,
+			    काष्ठा qed_ooo_info *p_ooo_info,
 			    u32 cid,
 			    u8 ooo_isle,
-			    struct qed_ooo_buffer *p_buffer, u8 buffer_side)
-{
-	struct qed_ooo_isle *p_isle = NULL;
+			    काष्ठा qed_ooo_buffer *p_buffer, u8 buffer_side)
+अणु
+	काष्ठा qed_ooo_isle *p_isle = शून्य;
 
 	p_isle = qed_ooo_seek_isle(p_hwfn, p_ooo_info, cid, ooo_isle);
-	if (!p_isle) {
+	अगर (!p_isle) अणु
 		DP_NOTICE(p_hwfn,
 			  "Isle %d is not found(cid %d)\n", ooo_isle, cid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (buffer_side == QED_OOO_LEFT_BUF)
+	अगर (buffer_side == QED_OOO_LEFT_BUF)
 		list_add(&p_buffer->list_entry, &p_isle->buffers_list);
-	else
+	अन्यथा
 		list_add_tail(&p_buffer->list_entry, &p_isle->buffers_list);
-}
+पूर्ण
 
-void qed_ooo_join_isles(struct qed_hwfn *p_hwfn,
-			struct qed_ooo_info *p_ooo_info, u32 cid, u8 left_isle)
-{
-	struct qed_ooo_isle *p_right_isle = NULL;
-	struct qed_ooo_isle *p_left_isle = NULL;
+व्योम qed_ooo_join_isles(काष्ठा qed_hwfn *p_hwfn,
+			काष्ठा qed_ooo_info *p_ooo_info, u32 cid, u8 left_isle)
+अणु
+	काष्ठा qed_ooo_isle *p_right_isle = शून्य;
+	काष्ठा qed_ooo_isle *p_left_isle = शून्य;
 
 	p_right_isle = qed_ooo_seek_isle(p_hwfn, p_ooo_info, cid,
 					 left_isle + 1);
-	if (!p_right_isle) {
+	अगर (!p_right_isle) अणु
 		DP_NOTICE(p_hwfn,
 			  "Right isle %d is not found(cid %d)\n",
 			  left_isle + 1, cid);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	list_del(&p_right_isle->list_entry);
 	p_ooo_info->cur_isles_number--;
-	if (left_isle) {
+	अगर (left_isle) अणु
 		p_left_isle = qed_ooo_seek_isle(p_hwfn, p_ooo_info, cid,
 						left_isle);
-		if (!p_left_isle) {
+		अगर (!p_left_isle) अणु
 			DP_NOTICE(p_hwfn,
 				  "Left isle %d is not found(cid %d)\n",
 				  left_isle, cid);
-			return;
-		}
+			वापस;
+		पूर्ण
 		list_splice_tail_init(&p_right_isle->buffers_list,
 				      &p_left_isle->buffers_list);
-	} else {
+	पूर्ण अन्यथा अणु
 		list_splice_tail_init(&p_right_isle->buffers_list,
-				      &p_ooo_info->ready_buffers_list);
-	}
-	list_add_tail(&p_right_isle->list_entry, &p_ooo_info->free_isles_list);
-}
+				      &p_ooo_info->पढ़ोy_buffers_list);
+	पूर्ण
+	list_add_tail(&p_right_isle->list_entry, &p_ooo_info->मुक्त_isles_list);
+पूर्ण

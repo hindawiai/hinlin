@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /**
-Support for Intel Camera Imaging ISP subsystem.
+Support क्रम Intel Camera Imaging ISP subप्रणाली.
 Copyright (c) 2010 - 2015, Intel Corporation.
 
-This program is free software; you can redistribute it and/or modify it
+This program is मुक्त software; you can redistribute it and/or modअगरy it
 under the terms and conditions of the GNU General Public License,
 version 2, as published by the Free Software Foundation.
 
 This program is distributed in the hope it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
 more details.
 */
 
-#ifndef __IA_CSS_YUV444_IO_TYPES
-#define __IA_CSS_YUV444_IO_TYPES
+#अगर_अघोषित __IA_CSS_YUV444_IO_TYPES
+#घोषणा __IA_CSS_YUV444_IO_TYPES
 
-#include "../common/ia_css_common_io_types.h"
+#समावेश "../common/ia_css_common_io_types.h"
 
-#endif
+#पूर्ण_अगर

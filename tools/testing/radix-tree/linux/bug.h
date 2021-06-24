@@ -1,2 +1,3 @@
-#include <stdio.h>
-#include "asm/bug.h"
+<शैली गुरु>
+#समावेश <मानकपन.स>
+#समावेश "asm/bug.h"

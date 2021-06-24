@@ -1,157 +1,158 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * linux/drivers/misc/xillybus.h
  *
  * Copyright 2011 Xillybus Ltd, http://xillybus.com
  *
- * Header file for the Xillybus FPGA/host framework.
+ * Header file क्रम the Xillybus FPGA/host framework.
  */
 
-#ifndef __XILLYBUS_H
-#define __XILLYBUS_H
+#अगर_अघोषित __XILLYBUS_H
+#घोषणा __XILLYBUS_H
 
-#include <linux/list.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#include <linux/cdev.h>
-#include <linux/spinlock.h>
-#include <linux/mutex.h>
-#include <linux/workqueue.h>
+#समावेश <linux/list.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/workqueue.h>
 
-struct xilly_endpoint_hardware;
+काष्ठा xilly_endpoपूर्णांक_hardware;
 
-struct xilly_buffer {
-	void *addr;
+काष्ठा xilly_buffer अणु
+	व्योम *addr;
 	dma_addr_t dma_addr;
-	int end_offset; /* Counting elements, not bytes */
-};
+	पूर्णांक end_offset; /* Counting elements, not bytes */
+पूर्ण;
 
-struct xilly_idt_handle {
-	unsigned char *chandesc;
-	unsigned char *idt;
-	int entries;
-};
+काष्ठा xilly_idt_handle अणु
+	अचिन्हित अक्षर *chandesc;
+	अचिन्हित अक्षर *idt;
+	पूर्णांक entries;
+पूर्ण;
 
 /*
- * Read-write confusion: wr_* and rd_* notation sticks to FPGA view, so
- * wr_* buffers are those consumed by read(), since the FPGA writes to them
+ * Read-ग_लिखो confusion: wr_* and rd_* notation sticks to FPGA view, so
+ * wr_* buffers are those consumed by पढ़ो(), since the FPGA ग_लिखोs to them
  * and vice versa.
  */
 
-struct xilly_channel {
-	struct xilly_endpoint *endpoint;
-	int chan_num;
-	int log2_element_size;
-	int seekable;
+काष्ठा xilly_channel अणु
+	काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक;
+	पूर्णांक chan_num;
+	पूर्णांक log2_element_size;
+	पूर्णांक seekable;
 
-	struct xilly_buffer **wr_buffers; /* FPGA writes, driver reads! */
-	int num_wr_buffers;
-	unsigned int wr_buf_size; /* In bytes */
-	int wr_fpga_buf_idx;
-	int wr_host_buf_idx;
-	int wr_host_buf_pos;
-	int wr_empty;
-	int wr_ready; /* Significant only when wr_empty == 1 */
-	int wr_sleepy;
-	int wr_eof;
-	int wr_hangup;
+	काष्ठा xilly_buffer **wr_buffers; /* FPGA ग_लिखोs, driver पढ़ोs! */
+	पूर्णांक num_wr_buffers;
+	अचिन्हित पूर्णांक wr_buf_size; /* In bytes */
+	पूर्णांक wr_fpga_buf_idx;
+	पूर्णांक wr_host_buf_idx;
+	पूर्णांक wr_host_buf_pos;
+	पूर्णांक wr_empty;
+	पूर्णांक wr_पढ़ोy; /* Signअगरicant only when wr_empty == 1 */
+	पूर्णांक wr_sleepy;
+	पूर्णांक wr_eof;
+	पूर्णांक wr_hangup;
 	spinlock_t wr_spinlock;
-	struct mutex wr_mutex;
-	wait_queue_head_t wr_wait;
-	wait_queue_head_t wr_ready_wait;
-	int wr_ref_count;
-	int wr_synchronous;
-	int wr_allow_partial;
-	int wr_exclusive_open;
-	int wr_supports_nonempty;
+	काष्ठा mutex wr_mutex;
+	रुको_queue_head_t wr_रुको;
+	रुको_queue_head_t wr_पढ़ोy_रुको;
+	पूर्णांक wr_ref_count;
+	पूर्णांक wr_synchronous;
+	पूर्णांक wr_allow_partial;
+	पूर्णांक wr_exclusive_खोलो;
+	पूर्णांक wr_supports_nonempty;
 
-	struct xilly_buffer **rd_buffers; /* FPGA reads, driver writes! */
-	int num_rd_buffers;
-	unsigned int rd_buf_size; /* In bytes */
-	int rd_fpga_buf_idx;
-	int rd_host_buf_pos;
-	int rd_host_buf_idx;
-	int rd_full;
+	काष्ठा xilly_buffer **rd_buffers; /* FPGA पढ़ोs, driver ग_लिखोs! */
+	पूर्णांक num_rd_buffers;
+	अचिन्हित पूर्णांक rd_buf_size; /* In bytes */
+	पूर्णांक rd_fpga_buf_idx;
+	पूर्णांक rd_host_buf_pos;
+	पूर्णांक rd_host_buf_idx;
+	पूर्णांक rd_full;
 	spinlock_t rd_spinlock;
-	struct mutex rd_mutex;
-	wait_queue_head_t rd_wait;
-	int rd_ref_count;
-	int rd_allow_partial;
-	int rd_synchronous;
-	int rd_exclusive_open;
-	struct delayed_work rd_workitem;
-	unsigned char rd_leftovers[4];
-};
+	काष्ठा mutex rd_mutex;
+	रुको_queue_head_t rd_रुको;
+	पूर्णांक rd_ref_count;
+	पूर्णांक rd_allow_partial;
+	पूर्णांक rd_synchronous;
+	पूर्णांक rd_exclusive_खोलो;
+	काष्ठा delayed_work rd_workitem;
+	अचिन्हित अक्षर rd_leftovers[4];
+पूर्ण;
 
-struct xilly_endpoint {
+काष्ठा xilly_endpoपूर्णांक अणु
 	/*
-	 * One of pdev and dev is always NULL, and the other is a valid
-	 * pointer, depending on the type of device
+	 * One of pdev and dev is always शून्य, and the other is a valid
+	 * poपूर्णांकer, depending on the type of device
 	 */
-	struct pci_dev *pdev;
-	struct device *dev;
-	struct xilly_endpoint_hardware *ephw;
+	काष्ठा pci_dev *pdev;
+	काष्ठा device *dev;
+	काष्ठा xilly_endpoपूर्णांक_hardware *ephw;
 
-	struct list_head ep_list;
-	int dma_using_dac; /* =1 if 64-bit DMA is used, =0 otherwise. */
-	__iomem void *registers;
-	int fatal_error;
+	काष्ठा list_head ep_list;
+	पूर्णांक dma_using_dac; /* =1 अगर 64-bit DMA is used, =0 otherwise. */
+	__iomem व्योम *रेजिस्टरs;
+	पूर्णांक fatal_error;
 
-	struct mutex register_mutex;
-	wait_queue_head_t ep_wait;
+	काष्ठा mutex रेजिस्टर_mutex;
+	रुको_queue_head_t ep_रुको;
 
 	/* Channels and message handling */
-	struct cdev cdev;
+	काष्ठा cdev cdev;
 
-	int major;
-	int lowest_minor; /* Highest minor = lowest_minor + num_channels - 1 */
+	पूर्णांक major;
+	पूर्णांक lowest_minor; /* Highest minor = lowest_minor + num_channels - 1 */
 
-	int num_channels; /* EXCLUDING message buffer */
-	struct xilly_channel **channels;
-	int msg_counter;
-	int failed_messages;
-	int idtlen;
+	पूर्णांक num_channels; /* EXCLUDING message buffer */
+	काष्ठा xilly_channel **channels;
+	पूर्णांक msg_counter;
+	पूर्णांक failed_messages;
+	पूर्णांक idtlen;
 
 	u32 *msgbuf_addr;
 	dma_addr_t msgbuf_dma_addr;
-	unsigned int msg_buf_size;
-};
+	अचिन्हित पूर्णांक msg_buf_size;
+पूर्ण;
 
-struct xilly_endpoint_hardware {
-	struct module *owner;
-	void (*hw_sync_sgl_for_cpu)(struct xilly_endpoint *,
+काष्ठा xilly_endpoपूर्णांक_hardware अणु
+	काष्ठा module *owner;
+	व्योम (*hw_sync_sgl_क्रम_cpu)(काष्ठा xilly_endpoपूर्णांक *,
 				    dma_addr_t,
-				    size_t,
-				    int);
-	void (*hw_sync_sgl_for_device)(struct xilly_endpoint *,
+				    माप_प्रकार,
+				    पूर्णांक);
+	व्योम (*hw_sync_sgl_क्रम_device)(काष्ठा xilly_endpoपूर्णांक *,
 				       dma_addr_t,
-				       size_t,
-				       int);
-	int (*map_single)(struct xilly_endpoint *,
-			  void *,
-			  size_t,
-			  int,
+				       माप_प्रकार,
+				       पूर्णांक);
+	पूर्णांक (*map_single)(काष्ठा xilly_endpoपूर्णांक *,
+			  व्योम *,
+			  माप_प्रकार,
+			  पूर्णांक,
 			  dma_addr_t *);
-};
+पूर्ण;
 
-struct xilly_mapping {
-	void *device;
+काष्ठा xilly_mapping अणु
+	व्योम *device;
 	dma_addr_t dma_addr;
-	size_t size;
-	int direction;
-};
+	माप_प्रकार size;
+	पूर्णांक direction;
+पूर्ण;
 
-irqreturn_t xillybus_isr(int irq, void *data);
+irqवापस_t xillybus_isr(पूर्णांक irq, व्योम *data);
 
-struct xilly_endpoint *xillybus_init_endpoint(struct pci_dev *pdev,
-					      struct device *dev,
-					      struct xilly_endpoint_hardware
+काष्ठा xilly_endpoपूर्णांक *xillybus_init_endpoपूर्णांक(काष्ठा pci_dev *pdev,
+					      काष्ठा device *dev,
+					      काष्ठा xilly_endpoपूर्णांक_hardware
 					      *ephw);
 
-int xillybus_endpoint_discovery(struct xilly_endpoint *endpoint);
+पूर्णांक xillybus_endpoपूर्णांक_discovery(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक);
 
-void xillybus_endpoint_remove(struct xilly_endpoint *endpoint);
+व्योम xillybus_endpoपूर्णांक_हटाओ(काष्ठा xilly_endpoपूर्णांक *endpoपूर्णांक);
 
-#endif /* __XILLYBUS_H */
+#पूर्ण_अगर /* __XILLYBUS_H */

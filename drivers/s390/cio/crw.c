@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *   Channel report handling code
  *
@@ -9,155 +10,155 @@
  *		 Heiko Carstens <heiko.carstens@de.ibm.com>,
  */
 
-#include <linux/mutex.h>
-#include <linux/kthread.h>
-#include <linux/init.h>
-#include <linux/wait.h>
-#include <asm/crw.h>
-#include <asm/ctl_reg.h>
-#include "ioasm.h"
+#समावेश <linux/mutex.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/init.h>
+#समावेश <linux/रुको.h>
+#समावेश <यंत्र/crw.h>
+#समावेश <यंत्र/ctl_reg.h>
+#समावेश "ioasm.h"
 
-static DEFINE_MUTEX(crw_handler_mutex);
-static crw_handler_t crw_handlers[NR_RSCS];
-static atomic_t crw_nr_req = ATOMIC_INIT(0);
-static DECLARE_WAIT_QUEUE_HEAD(crw_handler_wait_q);
+अटल DEFINE_MUTEX(crw_handler_mutex);
+अटल crw_handler_t crw_handlers[NR_RSCS];
+अटल atomic_t crw_nr_req = ATOMIC_INIT(0);
+अटल DECLARE_WAIT_QUEUE_HEAD(crw_handler_रुको_q);
 
 /**
- * crw_register_handler() - register a channel report word handler
+ * crw_रेजिस्टर_handler() - रेजिस्टर a channel report word handler
  * @rsc: reporting source code to handle
- * @handler: handler to be registered
+ * @handler: handler to be रेजिस्टरed
  *
  * Returns %0 on success and a negative error value otherwise.
  */
-int crw_register_handler(int rsc, crw_handler_t handler)
-{
-	int rc = 0;
+पूर्णांक crw_रेजिस्टर_handler(पूर्णांक rsc, crw_handler_t handler)
+अणु
+	पूर्णांक rc = 0;
 
-	if ((rsc < 0) || (rsc >= NR_RSCS))
-		return -EINVAL;
+	अगर ((rsc < 0) || (rsc >= NR_RSCS))
+		वापस -EINVAL;
 	mutex_lock(&crw_handler_mutex);
-	if (crw_handlers[rsc])
+	अगर (crw_handlers[rsc])
 		rc = -EBUSY;
-	else
+	अन्यथा
 		crw_handlers[rsc] = handler;
 	mutex_unlock(&crw_handler_mutex);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * crw_unregister_handler() - unregister a channel report word handler
+ * crw_unरेजिस्टर_handler() - unरेजिस्टर a channel report word handler
  * @rsc: reporting source code to handle
  */
-void crw_unregister_handler(int rsc)
-{
-	if ((rsc < 0) || (rsc >= NR_RSCS))
-		return;
+व्योम crw_unरेजिस्टर_handler(पूर्णांक rsc)
+अणु
+	अगर ((rsc < 0) || (rsc >= NR_RSCS))
+		वापस;
 	mutex_lock(&crw_handler_mutex);
-	crw_handlers[rsc] = NULL;
+	crw_handlers[rsc] = शून्य;
 	mutex_unlock(&crw_handler_mutex);
-}
+पूर्ण
 
 /*
  * Retrieve CRWs and call function to handle event.
  */
-static int crw_collect_info(void *unused)
-{
-	struct crw crw[2];
-	int ccode, signal;
-	unsigned int chain;
+अटल पूर्णांक crw_collect_info(व्योम *unused)
+अणु
+	काष्ठा crw crw[2];
+	पूर्णांक ccode, संकेत;
+	अचिन्हित पूर्णांक chain;
 
 repeat:
-	signal = wait_event_interruptible(crw_handler_wait_q,
-					  atomic_read(&crw_nr_req) > 0);
-	if (unlikely(signal))
+	संकेत = रुको_event_पूर्णांकerruptible(crw_handler_रुको_q,
+					  atomic_पढ़ो(&crw_nr_req) > 0);
+	अगर (unlikely(संकेत))
 		atomic_inc(&crw_nr_req);
 	chain = 0;
-	while (1) {
+	जबतक (1) अणु
 		crw_handler_t handler;
 
-		if (unlikely(chain > 1)) {
-			struct crw tmp_crw;
+		अगर (unlikely(chain > 1)) अणु
+			काष्ठा crw पंचांगp_crw;
 
-			printk(KERN_WARNING"%s: Code does not support more "
+			prपूर्णांकk(KERN_WARNING"%s: Code does not support more "
 			       "than two chained crws; please report to "
 			       "linux390@de.ibm.com!\n", __func__);
-			ccode = stcrw(&tmp_crw);
-			printk(KERN_WARNING"%s: crw reports slct=%d, oflw=%d, "
+			ccode = stcrw(&पंचांगp_crw);
+			prपूर्णांकk(KERN_WARNING"%s: crw reports slct=%d, oflw=%d, "
 			       "chn=%d, rsc=%X, anc=%d, erc=%X, rsid=%X\n",
-			       __func__, tmp_crw.slct, tmp_crw.oflw,
-			       tmp_crw.chn, tmp_crw.rsc, tmp_crw.anc,
-			       tmp_crw.erc, tmp_crw.rsid);
-			printk(KERN_WARNING"%s: This was crw number %x in the "
+			       __func__, पंचांगp_crw.slct, पंचांगp_crw.oflw,
+			       पंचांगp_crw.chn, पंचांगp_crw.rsc, पंचांगp_crw.anc,
+			       पंचांगp_crw.erc, पंचांगp_crw.rsid);
+			prपूर्णांकk(KERN_WARNING"%s: This was crw number %x in the "
 			       "chain\n", __func__, chain);
-			if (ccode != 0)
-				break;
-			chain = tmp_crw.chn ? chain + 1 : 0;
-			continue;
-		}
+			अगर (ccode != 0)
+				अवरोध;
+			chain = पंचांगp_crw.chn ? chain + 1 : 0;
+			जारी;
+		पूर्ण
 		ccode = stcrw(&crw[chain]);
-		if (ccode != 0)
-			break;
-		printk(KERN_DEBUG "crw_info : CRW reports slct=%d, oflw=%d, "
+		अगर (ccode != 0)
+			अवरोध;
+		prपूर्णांकk(KERN_DEBUG "crw_info : CRW reports slct=%d, oflw=%d, "
 		       "chn=%d, rsc=%X, anc=%d, erc=%X, rsid=%X\n",
 		       crw[chain].slct, crw[chain].oflw, crw[chain].chn,
 		       crw[chain].rsc, crw[chain].anc, crw[chain].erc,
 		       crw[chain].rsid);
-		/* Check for overflows. */
-		if (crw[chain].oflw) {
-			int i;
+		/* Check क्रम overflows. */
+		अगर (crw[chain].oflw) अणु
+			पूर्णांक i;
 
 			pr_debug("%s: crw overflow detected!\n", __func__);
 			mutex_lock(&crw_handler_mutex);
-			for (i = 0; i < NR_RSCS; i++) {
-				if (crw_handlers[i])
-					crw_handlers[i](NULL, NULL, 1);
-			}
+			क्रम (i = 0; i < NR_RSCS; i++) अणु
+				अगर (crw_handlers[i])
+					crw_handlers[i](शून्य, शून्य, 1);
+			पूर्ण
 			mutex_unlock(&crw_handler_mutex);
 			chain = 0;
-			continue;
-		}
-		if (crw[0].chn && !chain) {
+			जारी;
+		पूर्ण
+		अगर (crw[0].chn && !chain) अणु
 			chain++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		mutex_lock(&crw_handler_mutex);
 		handler = crw_handlers[crw[chain].rsc];
-		if (handler)
-			handler(&crw[0], chain ? &crw[1] : NULL, 0);
+		अगर (handler)
+			handler(&crw[0], chain ? &crw[1] : शून्य, 0);
 		mutex_unlock(&crw_handler_mutex);
 		/* chain is always 0 or 1 here. */
 		chain = crw[chain].chn ? chain + 1 : 0;
-	}
-	if (atomic_dec_and_test(&crw_nr_req))
-		wake_up(&crw_handler_wait_q);
-	goto repeat;
-	return 0;
-}
+	पूर्ण
+	अगर (atomic_dec_and_test(&crw_nr_req))
+		wake_up(&crw_handler_रुको_q);
+	जाओ repeat;
+	वापस 0;
+पूर्ण
 
-void crw_handle_channel_report(void)
-{
+व्योम crw_handle_channel_report(व्योम)
+अणु
 	atomic_inc(&crw_nr_req);
-	wake_up(&crw_handler_wait_q);
-}
+	wake_up(&crw_handler_रुको_q);
+पूर्ण
 
-void crw_wait_for_channel_report(void)
-{
+व्योम crw_रुको_क्रम_channel_report(व्योम)
+अणु
 	crw_handle_channel_report();
-	wait_event(crw_handler_wait_q, atomic_read(&crw_nr_req) == 0);
-}
+	रुको_event(crw_handler_रुको_q, atomic_पढ़ो(&crw_nr_req) == 0);
+पूर्ण
 
 /*
- * Machine checks for the channel subsystem must be enabled
- * after the channel subsystem is initialized
+ * Machine checks क्रम the channel subप्रणाली must be enabled
+ * after the channel subप्रणाली is initialized
  */
-static int __init crw_machine_check_init(void)
-{
-	struct task_struct *task;
+अटल पूर्णांक __init crw_machine_check_init(व्योम)
+अणु
+	काष्ठा task_काष्ठा *task;
 
-	task = kthread_run(crw_collect_info, NULL, "kmcheck");
-	if (IS_ERR(task))
-		return PTR_ERR(task);
+	task = kthपढ़ो_run(crw_collect_info, शून्य, "kmcheck");
+	अगर (IS_ERR(task))
+		वापस PTR_ERR(task);
 	ctl_set_bit(14, 28);	/* enable channel report MCH */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 device_initcall(crw_machine_check_init);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * OpenRISC Linux
  *
@@ -12,21 +13,21 @@
  * et al.
  */
 
-#ifndef __ASM_OPENRISC_SERIAL_H
-#define __ASM_OPENRISC_SERIAL_H
+#अगर_अघोषित __ASM_OPENRISC_SERIAL_H
+#घोषणा __ASM_OPENRISC_SERIAL_H
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <asm/cpuinfo.h>
+#समावेश <यंत्र/cpuinfo.h>
 
 /* There's a generic version of this file, but it assumes a 1.8MHz UART clk...
- * this, on the other hand, assumes the UART clock is tied to the system
- * clock... 8250_early.c (early 8250 serial console) actually uses this, so
+ * this, on the other hand, assumes the UART घड़ी is tied to the प्रणाली
+ * घड़ी... 8250_early.c (early 8250 serial console) actually uses this, so
  * it needs to be correct to get the early console working.
  */
 
-#define BASE_BAUD (cpuinfo_or1k[smp_processor_id()].clock_frequency/16)
+#घोषणा BASE_BAUD (cpuinfo_or1k[smp_processor_id()].घड़ी_frequency/16)
 
-#endif /* __KERNEL__ */
+#पूर्ण_अगर /* __KERNEL__ */
 
-#endif /* __ASM_OPENRISC_SERIAL_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_SERIAL_H */

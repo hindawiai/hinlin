@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  *  and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,15 +24,15 @@
  *
  */
 
-#ifndef __DC_TIMING_GENERATOR_DCN10_H__
-#define __DC_TIMING_GENERATOR_DCN10_H__
+#अगर_अघोषित __DC_TIMING_GENERATOR_DCN10_H__
+#घोषणा __DC_TIMING_GENERATOR_DCN10_H__
 
-#include "timing_generator.h"
+#समावेश "timing_generator.h"
 
-#define DCN10TG_FROM_TG(tg)\
-	container_of(tg, struct optc, base)
+#घोषणा DCN10TG_FROM_TG(tg)\
+	container_of(tg, काष्ठा optc, base)
 
-#define TG_COMMON_REG_LIST_DCN(inst) \
+#घोषणा TG_COMMON_REG_LIST_DCN(inst) \
 	SRI(OTG_VSTARTUP_PARAM, OTG, inst),\
 	SRI(OTG_VUPDATE_PARAM, OTG, inst),\
 	SRI(OTG_VREADY_PARAM, OTG, inst),\
@@ -90,7 +91,7 @@
 	SRI(OTG_GLOBAL_CONTROL2, OTG, inst),\
 	SRI(OTG_TRIGA_MANUAL_TRIG, OTG, inst)
 
-#define TG_COMMON_REG_LIST_DCN1_0(inst) \
+#घोषणा TG_COMMON_REG_LIST_DCN1_0(inst) \
 	TG_COMMON_REG_LIST_DCN(inst),\
 	SRI(OTG_TEST_PATTERN_PARAMETERS, OTG, inst),\
 	SRI(OTG_TEST_PATTERN_CONTROL, OTG, inst),\
@@ -98,89 +99,89 @@
 	SRI(OTG_MANUAL_FLOW_CONTROL, OTG, inst)
 
 
-struct dcn_optc_registers {
-	uint32_t OTG_GLOBAL_CONTROL1;
-	uint32_t OTG_GLOBAL_CONTROL2;
-	uint32_t OTG_VERT_SYNC_CONTROL;
-	uint32_t OTG_MASTER_UPDATE_MODE;
-	uint32_t OTG_GSL_CONTROL;
-	uint32_t OTG_VSTARTUP_PARAM;
-	uint32_t OTG_VUPDATE_PARAM;
-	uint32_t OTG_VREADY_PARAM;
-	uint32_t OTG_BLANK_CONTROL;
-	uint32_t OTG_MASTER_UPDATE_LOCK;
-	uint32_t OTG_GLOBAL_CONTROL0;
-	uint32_t OTG_DOUBLE_BUFFER_CONTROL;
-	uint32_t OTG_H_TOTAL;
-	uint32_t OTG_H_BLANK_START_END;
-	uint32_t OTG_H_SYNC_A;
-	uint32_t OTG_H_SYNC_A_CNTL;
-	uint32_t OTG_H_TIMING_CNTL;
-	uint32_t OTG_V_TOTAL;
-	uint32_t OTG_V_BLANK_START_END;
-	uint32_t OTG_V_SYNC_A;
-	uint32_t OTG_V_SYNC_A_CNTL;
-	uint32_t OTG_INTERLACE_CONTROL;
-	uint32_t OTG_CONTROL;
-	uint32_t OTG_STEREO_CONTROL;
-	uint32_t OTG_3D_STRUCTURE_CONTROL;
-	uint32_t OTG_STEREO_STATUS;
-	uint32_t OTG_V_TOTAL_MAX;
-	uint32_t OTG_V_TOTAL_MID;
-	uint32_t OTG_V_TOTAL_MIN;
-	uint32_t OTG_V_TOTAL_CONTROL;
-	uint32_t OTG_TRIGA_CNTL;
-	uint32_t OTG_TRIGA_MANUAL_TRIG;
-	uint32_t OTG_MANUAL_FLOW_CONTROL;
-	uint32_t OTG_FORCE_COUNT_NOW_CNTL;
-	uint32_t OTG_STATIC_SCREEN_CONTROL;
-	uint32_t OTG_STATUS_FRAME_COUNT;
-	uint32_t OTG_STATUS;
-	uint32_t OTG_STATUS_POSITION;
-	uint32_t OTG_NOM_VERT_POSITION;
-	uint32_t OTG_BLACK_COLOR;
-	uint32_t OTG_TEST_PATTERN_PARAMETERS;
-	uint32_t OTG_TEST_PATTERN_CONTROL;
-	uint32_t OTG_TEST_PATTERN_COLOR;
-	uint32_t OTG_CLOCK_CONTROL;
-	uint32_t OTG_VERTICAL_INTERRUPT0_CONTROL;
-	uint32_t OTG_VERTICAL_INTERRUPT0_POSITION;
-	uint32_t OTG_VERTICAL_INTERRUPT1_CONTROL;
-	uint32_t OTG_VERTICAL_INTERRUPT1_POSITION;
-	uint32_t OTG_VERTICAL_INTERRUPT2_CONTROL;
-	uint32_t OTG_VERTICAL_INTERRUPT2_POSITION;
-	uint32_t OPTC_INPUT_CLOCK_CONTROL;
-	uint32_t OPTC_DATA_SOURCE_SELECT;
-	uint32_t OPTC_MEMORY_CONFIG;
-	uint32_t OPTC_INPUT_GLOBAL_CONTROL;
-	uint32_t CONTROL;
-	uint32_t OTG_GSL_WINDOW_X;
-	uint32_t OTG_GSL_WINDOW_Y;
-	uint32_t OTG_VUPDATE_KEEPOUT;
-	uint32_t OTG_CRC_CNTL;
-	uint32_t OTG_CRC_CNTL2;
-	uint32_t OTG_CRC0_DATA_RG;
-	uint32_t OTG_CRC0_DATA_B;
-	uint32_t OTG_CRC0_WINDOWA_X_CONTROL;
-	uint32_t OTG_CRC0_WINDOWA_Y_CONTROL;
-	uint32_t OTG_CRC0_WINDOWB_X_CONTROL;
-	uint32_t OTG_CRC0_WINDOWB_Y_CONTROL;
-	uint32_t GSL_SOURCE_SELECT;
-	uint32_t DWB_SOURCE_SELECT;
-	uint32_t OTG_DSC_START_POSITION;
-	uint32_t OPTC_DATA_FORMAT_CONTROL;
-	uint32_t OPTC_BYTES_PER_PIXEL;
-	uint32_t OPTC_WIDTH_CONTROL;
-	uint32_t OTG_BLANK_DATA_COLOR;
-	uint32_t OTG_BLANK_DATA_COLOR_EXT;
-	uint32_t OTG_DRR_TRIGGER_WINDOW;
-	uint32_t OTG_M_CONST_DTO0;
-	uint32_t OTG_M_CONST_DTO1;
-	uint32_t OTG_DRR_V_TOTAL_CHANGE;
-	uint32_t OTG_GLOBAL_CONTROL4;
-};
+काष्ठा dcn_optc_रेजिस्टरs अणु
+	uपूर्णांक32_t OTG_GLOBAL_CONTROL1;
+	uपूर्णांक32_t OTG_GLOBAL_CONTROL2;
+	uपूर्णांक32_t OTG_VERT_SYNC_CONTROL;
+	uपूर्णांक32_t OTG_MASTER_UPDATE_MODE;
+	uपूर्णांक32_t OTG_GSL_CONTROL;
+	uपूर्णांक32_t OTG_VSTARTUP_PARAM;
+	uपूर्णांक32_t OTG_VUPDATE_PARAM;
+	uपूर्णांक32_t OTG_VREADY_PARAM;
+	uपूर्णांक32_t OTG_BLANK_CONTROL;
+	uपूर्णांक32_t OTG_MASTER_UPDATE_LOCK;
+	uपूर्णांक32_t OTG_GLOBAL_CONTROL0;
+	uपूर्णांक32_t OTG_DOUBLE_BUFFER_CONTROL;
+	uपूर्णांक32_t OTG_H_TOTAL;
+	uपूर्णांक32_t OTG_H_BLANK_START_END;
+	uपूर्णांक32_t OTG_H_SYNC_A;
+	uपूर्णांक32_t OTG_H_SYNC_A_CNTL;
+	uपूर्णांक32_t OTG_H_TIMING_CNTL;
+	uपूर्णांक32_t OTG_V_TOTAL;
+	uपूर्णांक32_t OTG_V_BLANK_START_END;
+	uपूर्णांक32_t OTG_V_SYNC_A;
+	uपूर्णांक32_t OTG_V_SYNC_A_CNTL;
+	uपूर्णांक32_t OTG_INTERLACE_CONTROL;
+	uपूर्णांक32_t OTG_CONTROL;
+	uपूर्णांक32_t OTG_STEREO_CONTROL;
+	uपूर्णांक32_t OTG_3D_STRUCTURE_CONTROL;
+	uपूर्णांक32_t OTG_STEREO_STATUS;
+	uपूर्णांक32_t OTG_V_TOTAL_MAX;
+	uपूर्णांक32_t OTG_V_TOTAL_MID;
+	uपूर्णांक32_t OTG_V_TOTAL_MIN;
+	uपूर्णांक32_t OTG_V_TOTAL_CONTROL;
+	uपूर्णांक32_t OTG_TRIGA_CNTL;
+	uपूर्णांक32_t OTG_TRIGA_MANUAL_TRIG;
+	uपूर्णांक32_t OTG_MANUAL_FLOW_CONTROL;
+	uपूर्णांक32_t OTG_FORCE_COUNT_NOW_CNTL;
+	uपूर्णांक32_t OTG_STATIC_SCREEN_CONTROL;
+	uपूर्णांक32_t OTG_STATUS_FRAME_COUNT;
+	uपूर्णांक32_t OTG_STATUS;
+	uपूर्णांक32_t OTG_STATUS_POSITION;
+	uपूर्णांक32_t OTG_NOM_VERT_POSITION;
+	uपूर्णांक32_t OTG_BLACK_COLOR;
+	uपूर्णांक32_t OTG_TEST_PATTERN_PARAMETERS;
+	uपूर्णांक32_t OTG_TEST_PATTERN_CONTROL;
+	uपूर्णांक32_t OTG_TEST_PATTERN_COLOR;
+	uपूर्णांक32_t OTG_CLOCK_CONTROL;
+	uपूर्णांक32_t OTG_VERTICAL_INTERRUPT0_CONTROL;
+	uपूर्णांक32_t OTG_VERTICAL_INTERRUPT0_POSITION;
+	uपूर्णांक32_t OTG_VERTICAL_INTERRUPT1_CONTROL;
+	uपूर्णांक32_t OTG_VERTICAL_INTERRUPT1_POSITION;
+	uपूर्णांक32_t OTG_VERTICAL_INTERRUPT2_CONTROL;
+	uपूर्णांक32_t OTG_VERTICAL_INTERRUPT2_POSITION;
+	uपूर्णांक32_t OPTC_INPUT_CLOCK_CONTROL;
+	uपूर्णांक32_t OPTC_DATA_SOURCE_SELECT;
+	uपूर्णांक32_t OPTC_MEMORY_CONFIG;
+	uपूर्णांक32_t OPTC_INPUT_GLOBAL_CONTROL;
+	uपूर्णांक32_t CONTROL;
+	uपूर्णांक32_t OTG_GSL_WINDOW_X;
+	uपूर्णांक32_t OTG_GSL_WINDOW_Y;
+	uपूर्णांक32_t OTG_VUPDATE_KEEPOUT;
+	uपूर्णांक32_t OTG_CRC_CNTL;
+	uपूर्णांक32_t OTG_CRC_CNTL2;
+	uपूर्णांक32_t OTG_CRC0_DATA_RG;
+	uपूर्णांक32_t OTG_CRC0_DATA_B;
+	uपूर्णांक32_t OTG_CRC0_WINDOWA_X_CONTROL;
+	uपूर्णांक32_t OTG_CRC0_WINDOWA_Y_CONTROL;
+	uपूर्णांक32_t OTG_CRC0_WINDOWB_X_CONTROL;
+	uपूर्णांक32_t OTG_CRC0_WINDOWB_Y_CONTROL;
+	uपूर्णांक32_t GSL_SOURCE_SELECT;
+	uपूर्णांक32_t DWB_SOURCE_SELECT;
+	uपूर्णांक32_t OTG_DSC_START_POSITION;
+	uपूर्णांक32_t OPTC_DATA_FORMAT_CONTROL;
+	uपूर्णांक32_t OPTC_BYTES_PER_PIXEL;
+	uपूर्णांक32_t OPTC_WIDTH_CONTROL;
+	uपूर्णांक32_t OTG_BLANK_DATA_COLOR;
+	uपूर्णांक32_t OTG_BLANK_DATA_COLOR_EXT;
+	uपूर्णांक32_t OTG_DRR_TRIGGER_WINDOW;
+	uपूर्णांक32_t OTG_M_CONST_DTO0;
+	uपूर्णांक32_t OTG_M_CONST_DTO1;
+	uपूर्णांक32_t OTG_DRR_V_TOTAL_CHANGE;
+	uपूर्णांक32_t OTG_GLOBAL_CONTROL4;
+पूर्ण;
 
-#define TG_COMMON_MASK_SH_LIST_DCN(mask_sh)\
+#घोषणा TG_COMMON_MASK_SH_LIST_DCN(mask_sh)\
 	SF(OTG0_OTG_VSTARTUP_PARAM, VSTARTUP_START, mask_sh),\
 	SF(OTG0_OTG_VUPDATE_PARAM, VUPDATE_OFFSET, mask_sh),\
 	SF(OTG0_OTG_VUPDATE_PARAM, VUPDATE_WIDTH, mask_sh),\
@@ -309,7 +310,7 @@ struct dcn_optc_registers {
 
 
 
-#define TG_COMMON_MASK_SH_LIST_DCN1_0(mask_sh)\
+#घोषणा TG_COMMON_MASK_SH_LIST_DCN1_0(mask_sh)\
 	TG_COMMON_MASK_SH_LIST_DCN(mask_sh),\
 	SF(OTG0_OTG_TEST_PATTERN_PARAMETERS, OTG_TEST_PATTERN_INC0, mask_sh),\
 	SF(OTG0_OTG_TEST_PATTERN_PARAMETERS, OTG_TEST_PATTERN_INC1, mask_sh),\
@@ -325,7 +326,7 @@ struct dcn_optc_registers {
 	SF(ODM0_OPTC_DATA_SOURCE_SELECT, OPTC_SRC_SEL, mask_sh),\
 	SF(OTG0_OTG_MANUAL_FLOW_CONTROL, MANUAL_FLOW_CONTROL, mask_sh),\
 
-#define TG_REG_FIELD_LIST_DCN1_0(type) \
+#घोषणा TG_REG_FIELD_LIST_DCN1_0(type) \
 	type VSTARTUP_START;\
 	type VUPDATE_OFFSET;\
 	type VUPDATE_WIDTH;\
@@ -477,7 +478,7 @@ struct dcn_optc_registers {
 	type MANUAL_FLOW_CONTROL;\
 	type MANUAL_FLOW_CONTROL_SEL;
 
-#define TG_REG_FIELD_LIST(type) \
+#घोषणा TG_REG_FIELD_LIST(type) \
 	TG_REG_FIELD_LIST_DCN1_0(type)\
 	type OTG_V_SYNC_MODE;\
 	type OTG_DRR_TRIGGER_WINDOW_START_X;\
@@ -520,192 +521,192 @@ struct dcn_optc_registers {
 	type OTG_CRC_DATA_FORMAT;
 
 
-struct dcn_optc_shift {
-	TG_REG_FIELD_LIST(uint8_t)
-};
+काष्ठा dcn_optc_shअगरt अणु
+	TG_REG_FIELD_LIST(uपूर्णांक8_t)
+पूर्ण;
 
-struct dcn_optc_mask {
-	TG_REG_FIELD_LIST(uint32_t)
-};
+काष्ठा dcn_optc_mask अणु
+	TG_REG_FIELD_LIST(uपूर्णांक32_t)
+पूर्ण;
 
-struct optc {
-	struct timing_generator base;
+काष्ठा optc अणु
+	काष्ठा timing_generator base;
 
-	const struct dcn_optc_registers *tg_regs;
-	const struct dcn_optc_shift *tg_shift;
-	const struct dcn_optc_mask *tg_mask;
+	स्थिर काष्ठा dcn_optc_रेजिस्टरs *tg_regs;
+	स्थिर काष्ठा dcn_optc_shअगरt *tg_shअगरt;
+	स्थिर काष्ठा dcn_optc_mask *tg_mask;
 
-	int opp_count;
+	पूर्णांक opp_count;
 
-	uint32_t max_h_total;
-	uint32_t max_v_total;
+	uपूर्णांक32_t max_h_total;
+	uपूर्णांक32_t max_v_total;
 
-	uint32_t min_h_blank;
+	uपूर्णांक32_t min_h_blank;
 
-	uint32_t min_h_sync_width;
-	uint32_t min_v_sync_width;
-	uint32_t min_v_blank;
-	uint32_t min_v_blank_interlace;
+	uपूर्णांक32_t min_h_sync_width;
+	uपूर्णांक32_t min_v_sync_width;
+	uपूर्णांक32_t min_v_blank;
+	uपूर्णांक32_t min_v_blank_पूर्णांकerlace;
 
-	int vstartup_start;
-	int vupdate_offset;
-	int vupdate_width;
-	int vready_offset;
-	enum signal_type signal;
-};
+	पूर्णांक vstartup_start;
+	पूर्णांक vupdate_offset;
+	पूर्णांक vupdate_width;
+	पूर्णांक vपढ़ोy_offset;
+	क्रमागत संकेत_type संकेत;
+पूर्ण;
 
-void dcn10_timing_generator_init(struct optc *optc);
+व्योम dcn10_timing_generator_init(काष्ठा optc *optc);
 
-struct dcn_otg_state {
-	uint32_t v_blank_start;
-	uint32_t v_blank_end;
-	uint32_t v_sync_a_pol;
-	uint32_t v_total;
-	uint32_t v_total_max;
-	uint32_t v_total_min;
-	uint32_t v_total_min_sel;
-	uint32_t v_total_max_sel;
-	uint32_t v_sync_a_start;
-	uint32_t v_sync_a_end;
-	uint32_t h_blank_start;
-	uint32_t h_blank_end;
-	uint32_t h_sync_a_start;
-	uint32_t h_sync_a_end;
-	uint32_t h_sync_a_pol;
-	uint32_t h_total;
-	uint32_t underflow_occurred_status;
-	uint32_t otg_enabled;
-	uint32_t blank_enabled;
-};
+काष्ठा dcn_otg_state अणु
+	uपूर्णांक32_t v_blank_start;
+	uपूर्णांक32_t v_blank_end;
+	uपूर्णांक32_t v_sync_a_pol;
+	uपूर्णांक32_t v_total;
+	uपूर्णांक32_t v_total_max;
+	uपूर्णांक32_t v_total_min;
+	uपूर्णांक32_t v_total_min_sel;
+	uपूर्णांक32_t v_total_max_sel;
+	uपूर्णांक32_t v_sync_a_start;
+	uपूर्णांक32_t v_sync_a_end;
+	uपूर्णांक32_t h_blank_start;
+	uपूर्णांक32_t h_blank_end;
+	uपूर्णांक32_t h_sync_a_start;
+	uपूर्णांक32_t h_sync_a_end;
+	uपूर्णांक32_t h_sync_a_pol;
+	uपूर्णांक32_t h_total;
+	uपूर्णांक32_t underflow_occurred_status;
+	uपूर्णांक32_t otg_enabled;
+	uपूर्णांक32_t blank_enabled;
+पूर्ण;
 
-void optc1_read_otg_state(struct optc *optc1,
-		struct dcn_otg_state *s);
+व्योम optc1_पढ़ो_otg_state(काष्ठा optc *optc1,
+		काष्ठा dcn_otg_state *s);
 
-bool optc1_get_hw_timing(struct timing_generator *tg,
-		struct dc_crtc_timing *hw_crtc_timing);
+bool optc1_get_hw_timing(काष्ठा timing_generator *tg,
+		काष्ठा dc_crtc_timing *hw_crtc_timing);
 
 bool optc1_validate_timing(
-	struct timing_generator *optc,
-	const struct dc_crtc_timing *timing);
+	काष्ठा timing_generator *optc,
+	स्थिर काष्ठा dc_crtc_timing *timing);
 
-void optc1_program_timing(
-	struct timing_generator *optc,
-	const struct dc_crtc_timing *dc_crtc_timing,
-	int vready_offset,
-	int vstartup_start,
-	int vupdate_offset,
-	int vupdate_width,
-	const enum signal_type signal,
+व्योम optc1_program_timing(
+	काष्ठा timing_generator *optc,
+	स्थिर काष्ठा dc_crtc_timing *dc_crtc_timing,
+	पूर्णांक vपढ़ोy_offset,
+	पूर्णांक vstartup_start,
+	पूर्णांक vupdate_offset,
+	पूर्णांक vupdate_width,
+	स्थिर क्रमागत संकेत_type संकेत,
 	bool use_vbios);
 
-void optc1_setup_vertical_interrupt0(
-		struct timing_generator *optc,
-		uint32_t start_line,
-		uint32_t end_line);
-void optc1_setup_vertical_interrupt1(
-		struct timing_generator *optc,
-		uint32_t start_line);
-void optc1_setup_vertical_interrupt2(
-		struct timing_generator *optc,
-		uint32_t start_line);
+व्योम optc1_setup_vertical_पूर्णांकerrupt0(
+		काष्ठा timing_generator *optc,
+		uपूर्णांक32_t start_line,
+		uपूर्णांक32_t end_line);
+व्योम optc1_setup_vertical_पूर्णांकerrupt1(
+		काष्ठा timing_generator *optc,
+		uपूर्णांक32_t start_line);
+व्योम optc1_setup_vertical_पूर्णांकerrupt2(
+		काष्ठा timing_generator *optc,
+		uपूर्णांक32_t start_line);
 
-void optc1_program_global_sync(
-		struct timing_generator *optc,
-		int vready_offset,
-		int vstartup_start,
-		int vupdate_offset,
-		int vupdate_width);
+व्योम optc1_program_global_sync(
+		काष्ठा timing_generator *optc,
+		पूर्णांक vपढ़ोy_offset,
+		पूर्णांक vstartup_start,
+		पूर्णांक vupdate_offset,
+		पूर्णांक vupdate_width);
 
-bool optc1_disable_crtc(struct timing_generator *optc);
+bool optc1_disable_crtc(काष्ठा timing_generator *optc);
 
-bool optc1_is_counter_moving(struct timing_generator *optc);
+bool optc1_is_counter_moving(काष्ठा timing_generator *optc);
 
-void optc1_get_position(struct timing_generator *optc,
-		struct crtc_position *position);
+व्योम optc1_get_position(काष्ठा timing_generator *optc,
+		काष्ठा crtc_position *position);
 
-uint32_t optc1_get_vblank_counter(struct timing_generator *optc);
+uपूर्णांक32_t optc1_get_vblank_counter(काष्ठा timing_generator *optc);
 
-void optc1_get_crtc_scanoutpos(
-	struct timing_generator *optc,
-	uint32_t *v_blank_start,
-	uint32_t *v_blank_end,
-	uint32_t *h_position,
-	uint32_t *v_position);
+व्योम optc1_get_crtc_scanoutpos(
+	काष्ठा timing_generator *optc,
+	uपूर्णांक32_t *v_blank_start,
+	uपूर्णांक32_t *v_blank_end,
+	uपूर्णांक32_t *h_position,
+	uपूर्णांक32_t *v_position);
 
-void optc1_set_early_control(
-	struct timing_generator *optc,
-	uint32_t early_cntl);
+व्योम optc1_set_early_control(
+	काष्ठा timing_generator *optc,
+	uपूर्णांक32_t early_cntl);
 
-void optc1_wait_for_state(struct timing_generator *optc,
-		enum crtc_state state);
+व्योम optc1_रुको_क्रम_state(काष्ठा timing_generator *optc,
+		क्रमागत crtc_state state);
 
-void optc1_set_blank(struct timing_generator *optc,
+व्योम optc1_set_blank(काष्ठा timing_generator *optc,
 		bool enable_blanking);
 
-bool optc1_is_blanked(struct timing_generator *optc);
-bool optc1_is_locked(struct timing_generator *optc);
+bool optc1_is_blanked(काष्ठा timing_generator *optc);
+bool optc1_is_locked(काष्ठा timing_generator *optc);
 
-void optc1_program_blank_color(
-		struct timing_generator *optc,
-		const struct tg_color *black_color);
+व्योम optc1_program_blank_color(
+		काष्ठा timing_generator *optc,
+		स्थिर काष्ठा tg_color *black_color);
 
 bool optc1_did_triggered_reset_occur(
-	struct timing_generator *optc);
+	काष्ठा timing_generator *optc);
 
-void optc1_enable_reset_trigger(struct timing_generator *optc, int source_tg_inst);
+व्योम optc1_enable_reset_trigger(काष्ठा timing_generator *optc, पूर्णांक source_tg_inst);
 
-void optc1_disable_reset_trigger(struct timing_generator *optc);
+व्योम optc1_disable_reset_trigger(काष्ठा timing_generator *optc);
 
-void optc1_lock(struct timing_generator *optc);
+व्योम optc1_lock(काष्ठा timing_generator *optc);
 
-void optc1_unlock(struct timing_generator *optc);
+व्योम optc1_unlock(काष्ठा timing_generator *optc);
 
-void optc1_enable_optc_clock(struct timing_generator *optc, bool enable);
+व्योम optc1_enable_optc_घड़ी(काष्ठा timing_generator *optc, bool enable);
 
-void optc1_set_drr(
-	struct timing_generator *optc,
-	const struct drr_params *params);
+व्योम optc1_set_drr(
+	काष्ठा timing_generator *optc,
+	स्थिर काष्ठा drr_params *params);
 
-void optc1_set_static_screen_control(
-	struct timing_generator *optc,
-	uint32_t event_triggers,
-	uint32_t num_frames);
+व्योम optc1_set_अटल_screen_control(
+	काष्ठा timing_generator *optc,
+	uपूर्णांक32_t event_triggers,
+	uपूर्णांक32_t num_frames);
 
-void optc1_program_stereo(struct timing_generator *optc,
-	const struct dc_crtc_timing *timing, struct crtc_stereo_flags *flags);
+व्योम optc1_program_stereo(काष्ठा timing_generator *optc,
+	स्थिर काष्ठा dc_crtc_timing *timing, काष्ठा crtc_stereo_flags *flags);
 
-bool optc1_is_stereo_left_eye(struct timing_generator *optc);
+bool optc1_is_stereo_left_eye(काष्ठा timing_generator *optc);
 
-void optc1_clear_optc_underflow(struct timing_generator *optc);
+व्योम optc1_clear_optc_underflow(काष्ठा timing_generator *optc);
 
-void optc1_tg_init(struct timing_generator *optc);
+व्योम optc1_tg_init(काष्ठा timing_generator *optc);
 
-bool optc1_is_tg_enabled(struct timing_generator *optc);
+bool optc1_is_tg_enabled(काष्ठा timing_generator *optc);
 
-bool optc1_is_optc_underflow_occurred(struct timing_generator *optc);
+bool optc1_is_optc_underflow_occurred(काष्ठा timing_generator *optc);
 
-void optc1_set_blank_data_double_buffer(struct timing_generator *optc, bool enable);
+व्योम optc1_set_blank_data_द्विगुन_buffer(काष्ठा timing_generator *optc, bool enable);
 
-void optc1_set_timing_double_buffer(struct timing_generator *optc, bool enable);
+व्योम optc1_set_timing_द्विगुन_buffer(काष्ठा timing_generator *optc, bool enable);
 
-bool optc1_get_otg_active_size(struct timing_generator *optc,
-		uint32_t *otg_active_width,
-		uint32_t *otg_active_height);
+bool optc1_get_otg_active_size(काष्ठा timing_generator *optc,
+		uपूर्णांक32_t *otg_active_width,
+		uपूर्णांक32_t *otg_active_height);
 
-void optc1_enable_crtc_reset(
-		struct timing_generator *optc,
-		int source_tg_inst,
-		struct crtc_trigger_info *crtc_tp);
+व्योम optc1_enable_crtc_reset(
+		काष्ठा timing_generator *optc,
+		पूर्णांक source_tg_inst,
+		काष्ठा crtc_trigger_info *crtc_tp);
 
-bool optc1_configure_crc(struct timing_generator *optc,
-			  const struct crc_params *params);
+bool optc1_configure_crc(काष्ठा timing_generator *optc,
+			  स्थिर काष्ठा crc_params *params);
 
-bool optc1_get_crc(struct timing_generator *optc,
-		    uint32_t *r_cr, uint32_t *g_y, uint32_t *b_cb);
+bool optc1_get_crc(काष्ठा timing_generator *optc,
+		    uपूर्णांक32_t *r_cr, uपूर्णांक32_t *g_y, uपूर्णांक32_t *b_cb);
 
-bool optc1_is_two_pixels_per_containter(const struct dc_crtc_timing *timing);
+bool optc1_is_two_pixels_per_contaपूर्णांकer(स्थिर काष्ठा dc_crtc_timing *timing);
 
-void optc1_set_vtg_params(struct timing_generator *optc,
-		const struct dc_crtc_timing *dc_crtc_timing, bool program_fp2);
+व्योम optc1_set_vtg_params(काष्ठा timing_generator *optc,
+		स्थिर काष्ठा dc_crtc_timing *dc_crtc_timing, bool program_fp2);
 
-#endif /* __DC_TIMING_GENERATOR_DCN10_H__ */
+#पूर्ण_अगर /* __DC_TIMING_GENERATOR_DCN10_H__ */

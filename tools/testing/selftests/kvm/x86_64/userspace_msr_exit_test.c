@@ -1,226 +1,227 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2020, Google LLC.
  *
- * Tests for exiting into userspace on registered MSRs
+ * Tests क्रम निकासing पूर्णांकo userspace on रेजिस्टरed MSRs
  */
 
-#define _GNU_SOURCE /* for program_invocation_short_name */
-#include <sys/ioctl.h>
+#घोषणा _GNU_SOURCE /* क्रम program_invocation_लघु_name */
+#समावेश <sys/ioctl.h>
 
-#include "test_util.h"
-#include "kvm_util.h"
-#include "vmx.h"
+#समावेश "test_util.h"
+#समावेश "kvm_util.h"
+#समावेश "vmx.h"
 
 /* Forced emulation prefix, used to invoke the emulator unconditionally. */
-#define KVM_FEP "ud2; .byte 'k', 'v', 'm';"
-#define KVM_FEP_LENGTH 5
-static int fep_available = 1;
+#घोषणा KVM_FEP "ud2; .byte 'k', 'v', 'm';"
+#घोषणा KVM_FEP_LENGTH 5
+अटल पूर्णांक fep_available = 1;
 
-#define VCPU_ID	      1
-#define MSR_NON_EXISTENT 0x474f4f00
+#घोषणा VCPU_ID	      1
+#घोषणा MSR_NON_EXISTENT 0x474f4f00
 
-static u64 deny_bits = 0;
-struct kvm_msr_filter filter_allow = {
+अटल u64 deny_bits = 0;
+काष्ठा kvm_msr_filter filter_allow = अणु
 	.flags = KVM_MSR_FILTER_DEFAULT_ALLOW,
-	.ranges = {
-		{
+	.ranges = अणु
+		अणु
 			.flags = KVM_MSR_FILTER_READ |
 				 KVM_MSR_FILTER_WRITE,
 			.nmsrs = 1,
 			/* Test an MSR the kernel knows about. */
 			.base = MSR_IA32_XSS,
-			.bitmap = (uint8_t*)&deny_bits,
-		}, {
+			.biपंचांगap = (uपूर्णांक8_t*)&deny_bits,
+		पूर्ण, अणु
 			.flags = KVM_MSR_FILTER_READ |
 				 KVM_MSR_FILTER_WRITE,
 			.nmsrs = 1,
-			/* Test an MSR the kernel doesn't know about. */
+			/* Test an MSR the kernel करोesn't know about. */
 			.base = MSR_IA32_FLUSH_CMD,
-			.bitmap = (uint8_t*)&deny_bits,
-		}, {
+			.biपंचांगap = (uपूर्णांक8_t*)&deny_bits,
+		पूर्ण, अणु
 			.flags = KVM_MSR_FILTER_READ |
 				 KVM_MSR_FILTER_WRITE,
 			.nmsrs = 1,
 			/* Test a fabricated MSR that no one knows about. */
 			.base = MSR_NON_EXISTENT,
-			.bitmap = (uint8_t*)&deny_bits,
-		},
-	},
-};
+			.biपंचांगap = (uपूर्णांक8_t*)&deny_bits,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-struct kvm_msr_filter filter_fs = {
+काष्ठा kvm_msr_filter filter_fs = अणु
 	.flags = KVM_MSR_FILTER_DEFAULT_ALLOW,
-	.ranges = {
-		{
+	.ranges = अणु
+		अणु
 			.flags = KVM_MSR_FILTER_READ,
 			.nmsrs = 1,
 			.base = MSR_FS_BASE,
-			.bitmap = (uint8_t*)&deny_bits,
-		},
-	},
-};
+			.biपंचांगap = (uपूर्णांक8_t*)&deny_bits,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-struct kvm_msr_filter filter_gs = {
+काष्ठा kvm_msr_filter filter_gs = अणु
 	.flags = KVM_MSR_FILTER_DEFAULT_ALLOW,
-	.ranges = {
-		{
+	.ranges = अणु
+		अणु
 			.flags = KVM_MSR_FILTER_READ,
 			.nmsrs = 1,
 			.base = MSR_GS_BASE,
-			.bitmap = (uint8_t*)&deny_bits,
-		},
-	},
-};
+			.biपंचांगap = (uपूर्णांक8_t*)&deny_bits,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static uint64_t msr_non_existent_data;
-static int guest_exception_count;
-static u32 msr_reads, msr_writes;
+अटल uपूर्णांक64_t msr_non_existent_data;
+अटल पूर्णांक guest_exception_count;
+अटल u32 msr_पढ़ोs, msr_ग_लिखोs;
 
-static u8 bitmap_00000000[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
-static u8 bitmap_00000000_write[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
-static u8 bitmap_40000000[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
-static u8 bitmap_c0000000[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
-static u8 bitmap_c0000000_read[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
-static u8 bitmap_deadbeef[1] = { 0x1 };
+अटल u8 biपंचांगap_00000000[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
+अटल u8 biपंचांगap_00000000_ग_लिखो[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
+अटल u8 biपंचांगap_40000000[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
+अटल u8 biपंचांगap_c0000000[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
+अटल u8 biपंचांगap_c0000000_पढ़ो[KVM_MSR_FILTER_MAX_BITMAP_SIZE];
+अटल u8 biपंचांगap_deadbeef[1] = अणु 0x1 पूर्ण;
 
-static void deny_msr(uint8_t *bitmap, u32 msr)
-{
+अटल व्योम deny_msr(uपूर्णांक8_t *biपंचांगap, u32 msr)
+अणु
 	u32 idx = msr & (KVM_MSR_FILTER_MAX_BITMAP_SIZE - 1);
 
-	bitmap[idx / 8] &= ~(1 << (idx % 8));
-}
+	biपंचांगap[idx / 8] &= ~(1 << (idx % 8));
+पूर्ण
 
-static void prepare_bitmaps(void)
-{
-	memset(bitmap_00000000, 0xff, sizeof(bitmap_00000000));
-	memset(bitmap_00000000_write, 0xff, sizeof(bitmap_00000000_write));
-	memset(bitmap_40000000, 0xff, sizeof(bitmap_40000000));
-	memset(bitmap_c0000000, 0xff, sizeof(bitmap_c0000000));
-	memset(bitmap_c0000000_read, 0xff, sizeof(bitmap_c0000000_read));
+अटल व्योम prepare_biपंचांगaps(व्योम)
+अणु
+	स_रखो(biपंचांगap_00000000, 0xff, माप(biपंचांगap_00000000));
+	स_रखो(biपंचांगap_00000000_ग_लिखो, 0xff, माप(biपंचांगap_00000000_ग_लिखो));
+	स_रखो(biपंचांगap_40000000, 0xff, माप(biपंचांगap_40000000));
+	स_रखो(biपंचांगap_c0000000, 0xff, माप(biपंचांगap_c0000000));
+	स_रखो(biपंचांगap_c0000000_पढ़ो, 0xff, माप(biपंचांगap_c0000000_पढ़ो));
 
-	deny_msr(bitmap_00000000_write, MSR_IA32_POWER_CTL);
-	deny_msr(bitmap_c0000000_read, MSR_SYSCALL_MASK);
-	deny_msr(bitmap_c0000000_read, MSR_GS_BASE);
-}
+	deny_msr(biपंचांगap_00000000_ग_लिखो, MSR_IA32_POWER_CTL);
+	deny_msr(biपंचांगap_c0000000_पढ़ो, MSR_SYSCALL_MASK);
+	deny_msr(biपंचांगap_c0000000_पढ़ो, MSR_GS_BASE);
+पूर्ण
 
-struct kvm_msr_filter filter_deny = {
+काष्ठा kvm_msr_filter filter_deny = अणु
 	.flags = KVM_MSR_FILTER_DEFAULT_DENY,
-	.ranges = {
-		{
+	.ranges = अणु
+		अणु
 			.flags = KVM_MSR_FILTER_READ,
 			.base = 0x00000000,
 			.nmsrs = KVM_MSR_FILTER_MAX_BITMAP_SIZE * BITS_PER_BYTE,
-			.bitmap = bitmap_00000000,
-		}, {
+			.biपंचांगap = biपंचांगap_00000000,
+		पूर्ण, अणु
 			.flags = KVM_MSR_FILTER_WRITE,
 			.base = 0x00000000,
 			.nmsrs = KVM_MSR_FILTER_MAX_BITMAP_SIZE * BITS_PER_BYTE,
-			.bitmap = bitmap_00000000_write,
-		}, {
+			.biपंचांगap = biपंचांगap_00000000_ग_लिखो,
+		पूर्ण, अणु
 			.flags = KVM_MSR_FILTER_READ | KVM_MSR_FILTER_WRITE,
 			.base = 0x40000000,
 			.nmsrs = KVM_MSR_FILTER_MAX_BITMAP_SIZE * BITS_PER_BYTE,
-			.bitmap = bitmap_40000000,
-		}, {
+			.biपंचांगap = biपंचांगap_40000000,
+		पूर्ण, अणु
 			.flags = KVM_MSR_FILTER_READ,
 			.base = 0xc0000000,
 			.nmsrs = KVM_MSR_FILTER_MAX_BITMAP_SIZE * BITS_PER_BYTE,
-			.bitmap = bitmap_c0000000_read,
-		}, {
+			.biपंचांगap = biपंचांगap_c0000000_पढ़ो,
+		पूर्ण, अणु
 			.flags = KVM_MSR_FILTER_WRITE,
 			.base = 0xc0000000,
 			.nmsrs = KVM_MSR_FILTER_MAX_BITMAP_SIZE * BITS_PER_BYTE,
-			.bitmap = bitmap_c0000000,
-		}, {
+			.biपंचांगap = biपंचांगap_c0000000,
+		पूर्ण, अणु
 			.flags = KVM_MSR_FILTER_WRITE | KVM_MSR_FILTER_READ,
 			.base = 0xdeadbeef,
 			.nmsrs = 1,
-			.bitmap = bitmap_deadbeef,
-		},
-	},
-};
+			.biपंचांगap = biपंचांगap_deadbeef,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-struct kvm_msr_filter no_filter_deny = {
+काष्ठा kvm_msr_filter no_filter_deny = अणु
 	.flags = KVM_MSR_FILTER_DEFAULT_ALLOW,
-};
+पूर्ण;
 
 /*
- * Note: Force test_rdmsr() to not be inlined to prevent the labels,
- * rdmsr_start and rdmsr_end, from being defined multiple times.
+ * Note: Force test_rdmsr() to not be अंतरभूतd to prevent the labels,
+ * rdmsr_start and rdmsr_end, from being defined multiple बार.
  */
-static noinline uint64_t test_rdmsr(uint32_t msr)
-{
-	uint32_t a, d;
+अटल noअंतरभूत uपूर्णांक64_t test_rdmsr(uपूर्णांक32_t msr)
+अणु
+	uपूर्णांक32_t a, d;
 
 	guest_exception_count = 0;
 
-	__asm__ __volatile__("rdmsr_start: rdmsr; rdmsr_end:" :
+	__यंत्र__ __अस्थिर__("rdmsr_start: rdmsr; rdmsr_end:" :
 			"=a"(a), "=d"(d) : "c"(msr) : "memory");
 
-	return a | ((uint64_t) d << 32);
-}
+	वापस a | ((uपूर्णांक64_t) d << 32);
+पूर्ण
 
 /*
- * Note: Force test_wrmsr() to not be inlined to prevent the labels,
- * wrmsr_start and wrmsr_end, from being defined multiple times.
+ * Note: Force test_wrmsr() to not be अंतरभूतd to prevent the labels,
+ * wrmsr_start and wrmsr_end, from being defined multiple बार.
  */
-static noinline void test_wrmsr(uint32_t msr, uint64_t value)
-{
-	uint32_t a = value;
-	uint32_t d = value >> 32;
+अटल noअंतरभूत व्योम test_wrmsr(uपूर्णांक32_t msr, uपूर्णांक64_t value)
+अणु
+	uपूर्णांक32_t a = value;
+	uपूर्णांक32_t d = value >> 32;
 
 	guest_exception_count = 0;
 
-	__asm__ __volatile__("wrmsr_start: wrmsr; wrmsr_end:" ::
+	__यंत्र__ __अस्थिर__("wrmsr_start: wrmsr; wrmsr_end:" ::
 			"a"(a), "d"(d), "c"(msr) : "memory");
-}
+पूर्ण
 
-extern char rdmsr_start, rdmsr_end;
-extern char wrmsr_start, wrmsr_end;
+बाह्य अक्षर rdmsr_start, rdmsr_end;
+बाह्य अक्षर wrmsr_start, wrmsr_end;
 
 /*
- * Note: Force test_em_rdmsr() to not be inlined to prevent the labels,
- * rdmsr_start and rdmsr_end, from being defined multiple times.
+ * Note: Force test_em_rdmsr() to not be अंतरभूतd to prevent the labels,
+ * rdmsr_start and rdmsr_end, from being defined multiple बार.
  */
-static noinline uint64_t test_em_rdmsr(uint32_t msr)
-{
-	uint32_t a, d;
+अटल noअंतरभूत uपूर्णांक64_t test_em_rdmsr(uपूर्णांक32_t msr)
+अणु
+	uपूर्णांक32_t a, d;
 
 	guest_exception_count = 0;
 
-	__asm__ __volatile__(KVM_FEP "em_rdmsr_start: rdmsr; em_rdmsr_end:" :
+	__यंत्र__ __अस्थिर__(KVM_FEP "em_rdmsr_start: rdmsr; em_rdmsr_end:" :
 			"=a"(a), "=d"(d) : "c"(msr) : "memory");
 
-	return a | ((uint64_t) d << 32);
-}
+	वापस a | ((uपूर्णांक64_t) d << 32);
+पूर्ण
 
 /*
- * Note: Force test_em_wrmsr() to not be inlined to prevent the labels,
- * wrmsr_start and wrmsr_end, from being defined multiple times.
+ * Note: Force test_em_wrmsr() to not be अंतरभूतd to prevent the labels,
+ * wrmsr_start and wrmsr_end, from being defined multiple बार.
  */
-static noinline void test_em_wrmsr(uint32_t msr, uint64_t value)
-{
-	uint32_t a = value;
-	uint32_t d = value >> 32;
+अटल noअंतरभूत व्योम test_em_wrmsr(uपूर्णांक32_t msr, uपूर्णांक64_t value)
+अणु
+	uपूर्णांक32_t a = value;
+	uपूर्णांक32_t d = value >> 32;
 
 	guest_exception_count = 0;
 
-	__asm__ __volatile__(KVM_FEP "em_wrmsr_start: wrmsr; em_wrmsr_end:" ::
+	__यंत्र__ __अस्थिर__(KVM_FEP "em_wrmsr_start: wrmsr; em_wrmsr_end:" ::
 			"a"(a), "d"(d), "c"(msr) : "memory");
-}
+पूर्ण
 
-extern char em_rdmsr_start, em_rdmsr_end;
-extern char em_wrmsr_start, em_wrmsr_end;
+बाह्य अक्षर em_rdmsr_start, em_rdmsr_end;
+बाह्य अक्षर em_wrmsr_start, em_wrmsr_end;
 
-static void guest_code_filter_allow(void)
-{
-	uint64_t data;
+अटल व्योम guest_code_filter_allow(व्योम)
+अणु
+	uपूर्णांक64_t data;
 
 	/*
-	 * Test userspace intercepting rdmsr / wrmsr for MSR_IA32_XSS.
+	 * Test userspace पूर्णांकercepting rdmsr / wrmsr क्रम MSR_IA32_XSS.
 	 *
-	 * A GP is thrown if anything other than 0 is written to
+	 * A GP is thrown अगर anything other than 0 is written to
 	 * MSR_IA32_XSS.
 	 */
 	data = test_rdmsr(MSR_IA32_XSS);
@@ -234,10 +235,10 @@ static void guest_code_filter_allow(void)
 	GUEST_ASSERT(guest_exception_count == 1);
 
 	/*
-	 * Test userspace intercepting rdmsr / wrmsr for MSR_IA32_FLUSH_CMD.
+	 * Test userspace पूर्णांकercepting rdmsr / wrmsr क्रम MSR_IA32_FLUSH_CMD.
 	 *
-	 * A GP is thrown if MSR_IA32_FLUSH_CMD is read
-	 * from or if a value other than 1 is written to it.
+	 * A GP is thrown अगर MSR_IA32_FLUSH_CMD is पढ़ो
+	 * from or अगर a value other than 1 is written to it.
 	 */
 	test_rdmsr(MSR_IA32_FLUSH_CMD);
 	GUEST_ASSERT(guest_exception_count == 1);
@@ -249,7 +250,7 @@ static void guest_code_filter_allow(void)
 	GUEST_ASSERT(guest_exception_count == 0);
 
 	/*
-	 * Test userspace intercepting rdmsr / wrmsr for MSR_NON_EXISTENT.
+	 * Test userspace पूर्णांकercepting rdmsr / wrmsr क्रम MSR_NON_EXISTENT.
 	 *
 	 * Test that a fabricated MSR can pass through the kernel
 	 * and be handled in userspace.
@@ -262,18 +263,18 @@ static void guest_code_filter_allow(void)
 	GUEST_ASSERT(guest_exception_count == 0);
 
 	/*
-	 * Test to see if the instruction emulator is available (ie: the module
-	 * parameter 'kvm.force_emulation_prefix=1' is set).  This instruction
-	 * will #UD if it isn't available.
+	 * Test to see अगर the inकाष्ठाion emulator is available (ie: the module
+	 * parameter 'kvm.force_emulation_prefix=1' is set).  This inकाष्ठाion
+	 * will #UD अगर it isn't available.
 	 */
-	__asm__ __volatile__(KVM_FEP "nop");
+	__यंत्र__ __अस्थिर__(KVM_FEP "nop");
 
-	if (fep_available) {
-		/* Let userspace know we aren't done. */
+	अगर (fep_available) अणु
+		/* Let userspace know we aren't करोne. */
 		GUEST_SYNC(0);
 
 		/*
-		 * Now run the same tests with the instruction emulator.
+		 * Now run the same tests with the inकाष्ठाion emulator.
 		 */
 		data = test_em_rdmsr(MSR_IA32_XSS);
 		GUEST_ASSERT(data == 0);
@@ -295,38 +296,38 @@ static void guest_code_filter_allow(void)
 		data = test_em_rdmsr(MSR_NON_EXISTENT);
 		GUEST_ASSERT(data == 2);
 		GUEST_ASSERT(guest_exception_count == 0);
-	}
+	पूर्ण
 
 	GUEST_DONE();
-}
+पूर्ण
 
-static void guest_msr_calls(bool trapped)
-{
-	/* This goes into the in-kernel emulation */
+अटल व्योम guest_msr_calls(bool trapped)
+अणु
+	/* This goes पूर्णांकo the in-kernel emulation */
 	wrmsr(MSR_SYSCALL_MASK, 0);
 
-	if (trapped) {
-		/* This goes into user space emulation */
+	अगर (trapped) अणु
+		/* This goes पूर्णांकo user space emulation */
 		GUEST_ASSERT(rdmsr(MSR_SYSCALL_MASK) == MSR_SYSCALL_MASK);
 		GUEST_ASSERT(rdmsr(MSR_GS_BASE) == MSR_GS_BASE);
-	} else {
+	पूर्ण अन्यथा अणु
 		GUEST_ASSERT(rdmsr(MSR_SYSCALL_MASK) != MSR_SYSCALL_MASK);
 		GUEST_ASSERT(rdmsr(MSR_GS_BASE) != MSR_GS_BASE);
-	}
+	पूर्ण
 
-	/* If trapped == true, this goes into user space emulation */
+	/* If trapped == true, this goes पूर्णांकo user space emulation */
 	wrmsr(MSR_IA32_POWER_CTL, 0x1234);
 
-	/* This goes into the in-kernel emulation */
+	/* This goes पूर्णांकo the in-kernel emulation */
 	rdmsr(MSR_IA32_POWER_CTL);
 
-	/* Invalid MSR, should always be handled by user space exit */
+	/* Invalid MSR, should always be handled by user space निकास */
 	GUEST_ASSERT(rdmsr(0xdeadbeef) == 0xdeadbeef);
 	wrmsr(0xdeadbeef, 0x1234);
-}
+पूर्ण
 
-static void guest_code_filter_deny(void)
-{
+अटल व्योम guest_code_filter_deny(व्योम)
+अणु
 	guest_msr_calls(true);
 
 	/*
@@ -338,18 +339,18 @@ static void guest_code_filter_deny(void)
 	guest_msr_calls(false);
 
 	GUEST_DONE();
-}
+पूर्ण
 
-static void guest_code_permission_bitmap(void)
-{
-	uint64_t data;
+अटल व्योम guest_code_permission_biपंचांगap(व्योम)
+अणु
+	uपूर्णांक64_t data;
 
 	data = test_rdmsr(MSR_FS_BASE);
 	GUEST_ASSERT(data == MSR_FS_BASE);
 	data = test_rdmsr(MSR_GS_BASE);
 	GUEST_ASSERT(data != MSR_GS_BASE);
 
-	/* Let userspace know to switch the filter */
+	/* Let userspace know to चयन the filter */
 	GUEST_SYNC(0);
 
 	data = test_rdmsr(MSR_FS_BASE);
@@ -358,208 +359,208 @@ static void guest_code_permission_bitmap(void)
 	GUEST_ASSERT(data == MSR_GS_BASE);
 
 	GUEST_DONE();
-}
+पूर्ण
 
-static void __guest_gp_handler(struct ex_regs *regs,
-			       char *r_start, char *r_end,
-			       char *w_start, char *w_end)
-{
-	if (regs->rip == (uintptr_t)r_start) {
-		regs->rip = (uintptr_t)r_end;
+अटल व्योम __guest_gp_handler(काष्ठा ex_regs *regs,
+			       अक्षर *r_start, अक्षर *r_end,
+			       अक्षर *w_start, अक्षर *w_end)
+अणु
+	अगर (regs->rip == (uपूर्णांकptr_t)r_start) अणु
+		regs->rip = (uपूर्णांकptr_t)r_end;
 		regs->rax = 0;
 		regs->rdx = 0;
-	} else if (regs->rip == (uintptr_t)w_start) {
-		regs->rip = (uintptr_t)w_end;
-	} else {
+	पूर्ण अन्यथा अगर (regs->rip == (uपूर्णांकptr_t)w_start) अणु
+		regs->rip = (uपूर्णांकptr_t)w_end;
+	पूर्ण अन्यथा अणु
 		GUEST_ASSERT(!"RIP is at an unknown location!");
-	}
+	पूर्ण
 
 	++guest_exception_count;
-}
+पूर्ण
 
-static void guest_gp_handler(struct ex_regs *regs)
-{
+अटल व्योम guest_gp_handler(काष्ठा ex_regs *regs)
+अणु
 	__guest_gp_handler(regs, &rdmsr_start, &rdmsr_end,
 			   &wrmsr_start, &wrmsr_end);
-}
+पूर्ण
 
-static void guest_fep_gp_handler(struct ex_regs *regs)
-{
+अटल व्योम guest_fep_gp_handler(काष्ठा ex_regs *regs)
+अणु
 	__guest_gp_handler(regs, &em_rdmsr_start, &em_rdmsr_end,
 			   &em_wrmsr_start, &em_wrmsr_end);
-}
+पूर्ण
 
-static void guest_ud_handler(struct ex_regs *regs)
-{
+अटल व्योम guest_ud_handler(काष्ठा ex_regs *regs)
+अणु
 	fep_available = 0;
 	regs->rip += KVM_FEP_LENGTH;
-}
+पूर्ण
 
-static void run_guest(struct kvm_vm *vm)
-{
-	int rc;
+अटल व्योम run_guest(काष्ठा kvm_vm *vm)
+अणु
+	पूर्णांक rc;
 
 	rc = _vcpu_run(vm, VCPU_ID);
 	TEST_ASSERT(rc == 0, "vcpu_run failed: %d\n", rc);
-}
+पूर्ण
 
-static void check_for_guest_assert(struct kvm_vm *vm)
-{
-	struct kvm_run *run = vcpu_state(vm, VCPU_ID);
-	struct ucall uc;
+अटल व्योम check_क्रम_guest_निश्चित(काष्ठा kvm_vm *vm)
+अणु
+	काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
+	काष्ठा ucall uc;
 
-	if (run->exit_reason == KVM_EXIT_IO &&
-		get_ucall(vm, VCPU_ID, &uc) == UCALL_ABORT) {
-			TEST_FAIL("%s at %s:%ld", (const char *)uc.args[0],
-				__FILE__, uc.args[1]);
-	}
-}
+	अगर (run->निकास_reason == KVM_EXIT_IO &&
+		get_ucall(vm, VCPU_ID, &uc) == UCALL_ABORT) अणु
+			TEST_FAIL("%s at %s:%ld", (स्थिर अक्षर *)uc.args[0],
+				__खाता__, uc.args[1]);
+	पूर्ण
+पूर्ण
 
-static void process_rdmsr(struct kvm_vm *vm, uint32_t msr_index)
-{
-	struct kvm_run *run = vcpu_state(vm, VCPU_ID);
+अटल व्योम process_rdmsr(काष्ठा kvm_vm *vm, uपूर्णांक32_t msr_index)
+अणु
+	काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
 
-	check_for_guest_assert(vm);
+	check_क्रम_guest_निश्चित(vm);
 
-	TEST_ASSERT(run->exit_reason == KVM_EXIT_X86_RDMSR,
+	TEST_ASSERT(run->निकास_reason == KVM_EXIT_X86_RDMSR,
 		    "Unexpected exit reason: %u (%s),\n",
-		    run->exit_reason,
-		    exit_reason_str(run->exit_reason));
+		    run->निकास_reason,
+		    निकास_reason_str(run->निकास_reason));
 	TEST_ASSERT(run->msr.index == msr_index,
 			"Unexpected msr (0x%04x), expected 0x%04x",
 			run->msr.index, msr_index);
 
-	switch (run->msr.index) {
-	case MSR_IA32_XSS:
+	चयन (run->msr.index) अणु
+	हाल MSR_IA32_XSS:
 		run->msr.data = 0;
-		break;
-	case MSR_IA32_FLUSH_CMD:
+		अवरोध;
+	हाल MSR_IA32_FLUSH_CMD:
 		run->msr.error = 1;
-		break;
-	case MSR_NON_EXISTENT:
+		अवरोध;
+	हाल MSR_NON_EXISTENT:
 		run->msr.data = msr_non_existent_data;
-		break;
-	case MSR_FS_BASE:
+		अवरोध;
+	हाल MSR_FS_BASE:
 		run->msr.data = MSR_FS_BASE;
-		break;
-	case MSR_GS_BASE:
+		अवरोध;
+	हाल MSR_GS_BASE:
 		run->msr.data = MSR_GS_BASE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		TEST_ASSERT(false, "Unexpected MSR: 0x%04x", run->msr.index);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void process_wrmsr(struct kvm_vm *vm, uint32_t msr_index)
-{
-	struct kvm_run *run = vcpu_state(vm, VCPU_ID);
+अटल व्योम process_wrmsr(काष्ठा kvm_vm *vm, uपूर्णांक32_t msr_index)
+अणु
+	काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
 
-	check_for_guest_assert(vm);
+	check_क्रम_guest_निश्चित(vm);
 
-	TEST_ASSERT(run->exit_reason == KVM_EXIT_X86_WRMSR,
+	TEST_ASSERT(run->निकास_reason == KVM_EXIT_X86_WRMSR,
 		    "Unexpected exit reason: %u (%s),\n",
-		    run->exit_reason,
-		    exit_reason_str(run->exit_reason));
+		    run->निकास_reason,
+		    निकास_reason_str(run->निकास_reason));
 	TEST_ASSERT(run->msr.index == msr_index,
 			"Unexpected msr (0x%04x), expected 0x%04x",
 			run->msr.index, msr_index);
 
-	switch (run->msr.index) {
-	case MSR_IA32_XSS:
-		if (run->msr.data != 0)
+	चयन (run->msr.index) अणु
+	हाल MSR_IA32_XSS:
+		अगर (run->msr.data != 0)
 			run->msr.error = 1;
-		break;
-	case MSR_IA32_FLUSH_CMD:
-		if (run->msr.data != 1)
+		अवरोध;
+	हाल MSR_IA32_FLUSH_CMD:
+		अगर (run->msr.data != 1)
 			run->msr.error = 1;
-		break;
-	case MSR_NON_EXISTENT:
+		अवरोध;
+	हाल MSR_NON_EXISTENT:
 		msr_non_existent_data = run->msr.data;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		TEST_ASSERT(false, "Unexpected MSR: 0x%04x", run->msr.index);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void process_ucall_done(struct kvm_vm *vm)
-{
-	struct kvm_run *run = vcpu_state(vm, VCPU_ID);
-	struct ucall uc;
+अटल व्योम process_ucall_करोne(काष्ठा kvm_vm *vm)
+अणु
+	काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
+	काष्ठा ucall uc;
 
-	check_for_guest_assert(vm);
+	check_क्रम_guest_निश्चित(vm);
 
-	TEST_ASSERT(run->exit_reason == KVM_EXIT_IO,
+	TEST_ASSERT(run->निकास_reason == KVM_EXIT_IO,
 		    "Unexpected exit reason: %u (%s)",
-		    run->exit_reason,
-		    exit_reason_str(run->exit_reason));
+		    run->निकास_reason,
+		    निकास_reason_str(run->निकास_reason));
 
 	TEST_ASSERT(get_ucall(vm, VCPU_ID, &uc) == UCALL_DONE,
 		    "Unexpected ucall command: %lu, expected UCALL_DONE (%d)",
 		    uc.cmd, UCALL_DONE);
-}
+पूर्ण
 
-static uint64_t process_ucall(struct kvm_vm *vm)
-{
-	struct kvm_run *run = vcpu_state(vm, VCPU_ID);
-	struct ucall uc = {};
+अटल uपूर्णांक64_t process_ucall(काष्ठा kvm_vm *vm)
+अणु
+	काष्ठा kvm_run *run = vcpu_state(vm, VCPU_ID);
+	काष्ठा ucall uc = अणुपूर्ण;
 
-	check_for_guest_assert(vm);
+	check_क्रम_guest_निश्चित(vm);
 
-	TEST_ASSERT(run->exit_reason == KVM_EXIT_IO,
+	TEST_ASSERT(run->निकास_reason == KVM_EXIT_IO,
 		    "Unexpected exit reason: %u (%s)",
-		    run->exit_reason,
-		    exit_reason_str(run->exit_reason));
+		    run->निकास_reason,
+		    निकास_reason_str(run->निकास_reason));
 
-	switch (get_ucall(vm, VCPU_ID, &uc)) {
-	case UCALL_SYNC:
-		break;
-	case UCALL_ABORT:
-		check_for_guest_assert(vm);
-		break;
-	case UCALL_DONE:
-		process_ucall_done(vm);
-		break;
-	default:
+	चयन (get_ucall(vm, VCPU_ID, &uc)) अणु
+	हाल UCALL_SYNC:
+		अवरोध;
+	हाल UCALL_ABORT:
+		check_क्रम_guest_निश्चित(vm);
+		अवरोध;
+	हाल UCALL_DONE:
+		process_ucall_करोne(vm);
+		अवरोध;
+	शेष:
 		TEST_ASSERT(false, "Unexpected ucall");
-	}
+	पूर्ण
 
-	return uc.cmd;
-}
+	वापस uc.cmd;
+पूर्ण
 
-static void run_guest_then_process_rdmsr(struct kvm_vm *vm, uint32_t msr_index)
-{
+अटल व्योम run_guest_then_process_rdmsr(काष्ठा kvm_vm *vm, uपूर्णांक32_t msr_index)
+अणु
 	run_guest(vm);
 	process_rdmsr(vm, msr_index);
-}
+पूर्ण
 
-static void run_guest_then_process_wrmsr(struct kvm_vm *vm, uint32_t msr_index)
-{
+अटल व्योम run_guest_then_process_wrmsr(काष्ठा kvm_vm *vm, uपूर्णांक32_t msr_index)
+अणु
 	run_guest(vm);
 	process_wrmsr(vm, msr_index);
-}
+पूर्ण
 
-static uint64_t run_guest_then_process_ucall(struct kvm_vm *vm)
-{
+अटल uपूर्णांक64_t run_guest_then_process_ucall(काष्ठा kvm_vm *vm)
+अणु
 	run_guest(vm);
-	return process_ucall(vm);
-}
+	वापस process_ucall(vm);
+पूर्ण
 
-static void run_guest_then_process_ucall_done(struct kvm_vm *vm)
-{
+अटल व्योम run_guest_then_process_ucall_करोne(काष्ठा kvm_vm *vm)
+अणु
 	run_guest(vm);
-	process_ucall_done(vm);
-}
+	process_ucall_करोne(vm);
+पूर्ण
 
-static void test_msr_filter_allow(void) {
-	struct kvm_enable_cap cap = {
+अटल व्योम test_msr_filter_allow(व्योम) अणु
+	काष्ठा kvm_enable_cap cap = अणु
 		.cap = KVM_CAP_X86_USER_SPACE_MSR,
 		.args[0] = KVM_MSR_EXIT_REASON_FILTER,
-	};
-	struct kvm_vm *vm;
-	int rc;
+	पूर्ण;
+	काष्ठा kvm_vm *vm;
+	पूर्णांक rc;
 
 	/* Create VM */
-	vm = vm_create_default(VCPU_ID, 0, guest_code_filter_allow);
+	vm = vm_create_शेष(VCPU_ID, 0, guest_code_filter_allow);
 	vcpu_set_cpuid(vm, VCPU_ID, kvm_get_supported_cpuid());
 
 	rc = kvm_check_cap(KVM_CAP_X86_USER_SPACE_MSR);
@@ -576,7 +577,7 @@ static void test_msr_filter_allow(void) {
 
 	vm_handle_exception(vm, GP_VECTOR, guest_gp_handler);
 
-	/* Process guest code userspace exits. */
+	/* Process guest code userspace निकासs. */
 	run_guest_then_process_rdmsr(vm, MSR_IA32_XSS);
 	run_guest_then_process_wrmsr(vm, MSR_IA32_XSS);
 	run_guest_then_process_wrmsr(vm, MSR_IA32_XSS);
@@ -590,12 +591,12 @@ static void test_msr_filter_allow(void) {
 
 	vm_handle_exception(vm, UD_VECTOR, guest_ud_handler);
 	run_guest(vm);
-	vm_handle_exception(vm, UD_VECTOR, NULL);
+	vm_handle_exception(vm, UD_VECTOR, शून्य);
 
-	if (process_ucall(vm) != UCALL_DONE) {
+	अगर (process_ucall(vm) != UCALL_DONE) अणु
 		vm_handle_exception(vm, GP_VECTOR, guest_fep_gp_handler);
 
-		/* Process emulated rdmsr and wrmsr instructions. */
+		/* Process emulated rdmsr and wrmsr inकाष्ठाions. */
 		run_guest_then_process_rdmsr(vm, MSR_IA32_XSS);
 		run_guest_then_process_wrmsr(vm, MSR_IA32_XSS);
 		run_guest_then_process_wrmsr(vm, MSR_IA32_XSS);
@@ -608,84 +609,84 @@ static void test_msr_filter_allow(void) {
 		run_guest_then_process_rdmsr(vm, MSR_NON_EXISTENT);
 
 		/* Confirm the guest completed without issues. */
-		run_guest_then_process_ucall_done(vm);
-	} else {
-		printf("To run the instruction emulated tests set the module parameter 'kvm.force_emulation_prefix=1'\n");
-	}
+		run_guest_then_process_ucall_करोne(vm);
+	पूर्ण अन्यथा अणु
+		म_लिखो("To run the instruction emulated tests set the module parameter 'kvm.force_emulation_prefix=1'\n");
+	पूर्ण
 
-	kvm_vm_free(vm);
-}
+	kvm_vm_मुक्त(vm);
+पूर्ण
 
-static int handle_ucall(struct kvm_vm *vm)
-{
-	struct ucall uc;
+अटल पूर्णांक handle_ucall(काष्ठा kvm_vm *vm)
+अणु
+	काष्ठा ucall uc;
 
-	switch (get_ucall(vm, VCPU_ID, &uc)) {
-	case UCALL_ABORT:
+	चयन (get_ucall(vm, VCPU_ID, &uc)) अणु
+	हाल UCALL_ABORT:
 		TEST_FAIL("Guest assertion not met");
-		break;
-	case UCALL_SYNC:
+		अवरोध;
+	हाल UCALL_SYNC:
 		vm_ioctl(vm, KVM_X86_SET_MSR_FILTER, &no_filter_deny);
-		break;
-	case UCALL_DONE:
-		return 1;
-	default:
+		अवरोध;
+	हाल UCALL_DONE:
+		वापस 1;
+	शेष:
 		TEST_FAIL("Unknown ucall %lu", uc.cmd);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void handle_rdmsr(struct kvm_run *run)
-{
+अटल व्योम handle_rdmsr(काष्ठा kvm_run *run)
+अणु
 	run->msr.data = run->msr.index;
-	msr_reads++;
+	msr_पढ़ोs++;
 
-	if (run->msr.index == MSR_SYSCALL_MASK ||
-	    run->msr.index == MSR_GS_BASE) {
+	अगर (run->msr.index == MSR_SYSCALL_MASK ||
+	    run->msr.index == MSR_GS_BASE) अणु
 		TEST_ASSERT(run->msr.reason == KVM_MSR_EXIT_REASON_FILTER,
 			    "MSR read trap w/o access fault");
-	}
+	पूर्ण
 
-	if (run->msr.index == 0xdeadbeef) {
+	अगर (run->msr.index == 0xdeadbeef) अणु
 		TEST_ASSERT(run->msr.reason == KVM_MSR_EXIT_REASON_UNKNOWN,
 			    "MSR deadbeef read trap w/o inval fault");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void handle_wrmsr(struct kvm_run *run)
-{
+अटल व्योम handle_wrmsr(काष्ठा kvm_run *run)
+अणु
 	/* ignore */
-	msr_writes++;
+	msr_ग_लिखोs++;
 
-	if (run->msr.index == MSR_IA32_POWER_CTL) {
+	अगर (run->msr.index == MSR_IA32_POWER_CTL) अणु
 		TEST_ASSERT(run->msr.data == 0x1234,
 			    "MSR data for MSR_IA32_POWER_CTL incorrect");
 		TEST_ASSERT(run->msr.reason == KVM_MSR_EXIT_REASON_FILTER,
 			    "MSR_IA32_POWER_CTL trap w/o access fault");
-	}
+	पूर्ण
 
-	if (run->msr.index == 0xdeadbeef) {
+	अगर (run->msr.index == 0xdeadbeef) अणु
 		TEST_ASSERT(run->msr.data == 0x1234,
 			    "MSR data for deadbeef incorrect");
 		TEST_ASSERT(run->msr.reason == KVM_MSR_EXIT_REASON_UNKNOWN,
 			    "deadbeef trap w/o inval fault");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void test_msr_filter_deny(void) {
-	struct kvm_enable_cap cap = {
+अटल व्योम test_msr_filter_deny(व्योम) अणु
+	काष्ठा kvm_enable_cap cap = अणु
 		.cap = KVM_CAP_X86_USER_SPACE_MSR,
 		.args[0] = KVM_MSR_EXIT_REASON_INVAL |
 			   KVM_MSR_EXIT_REASON_UNKNOWN |
 			   KVM_MSR_EXIT_REASON_FILTER,
-	};
-	struct kvm_vm *vm;
-	struct kvm_run *run;
-	int rc;
+	पूर्ण;
+	काष्ठा kvm_vm *vm;
+	काष्ठा kvm_run *run;
+	पूर्णांक rc;
 
 	/* Create VM */
-	vm = vm_create_default(VCPU_ID, 0, guest_code_filter_deny);
+	vm = vm_create_शेष(VCPU_ID, 0, guest_code_filter_deny);
 	vcpu_set_cpuid(vm, VCPU_ID, kvm_get_supported_cpuid());
 	run = vcpu_state(vm, VCPU_ID);
 
@@ -696,46 +697,46 @@ static void test_msr_filter_deny(void) {
 	rc = kvm_check_cap(KVM_CAP_X86_MSR_FILTER);
 	TEST_ASSERT(rc, "KVM_CAP_X86_MSR_FILTER is available");
 
-	prepare_bitmaps();
+	prepare_biपंचांगaps();
 	vm_ioctl(vm, KVM_X86_SET_MSR_FILTER, &filter_deny);
 
-	while (1) {
+	जबतक (1) अणु
 		rc = _vcpu_run(vm, VCPU_ID);
 
 		TEST_ASSERT(rc == 0, "vcpu_run failed: %d\n", rc);
 
-		switch (run->exit_reason) {
-		case KVM_EXIT_X86_RDMSR:
+		चयन (run->निकास_reason) अणु
+		हाल KVM_EXIT_X86_RDMSR:
 			handle_rdmsr(run);
-			break;
-		case KVM_EXIT_X86_WRMSR:
+			अवरोध;
+		हाल KVM_EXIT_X86_WRMSR:
 			handle_wrmsr(run);
-			break;
-		case KVM_EXIT_IO:
-			if (handle_ucall(vm))
-				goto done;
-			break;
-		}
+			अवरोध;
+		हाल KVM_EXIT_IO:
+			अगर (handle_ucall(vm))
+				जाओ करोne;
+			अवरोध;
+		पूर्ण
 
-	}
+	पूर्ण
 
-done:
-	TEST_ASSERT(msr_reads == 4, "Handled 4 rdmsr in user space");
-	TEST_ASSERT(msr_writes == 3, "Handled 3 wrmsr in user space");
+करोne:
+	TEST_ASSERT(msr_पढ़ोs == 4, "Handled 4 rdmsr in user space");
+	TEST_ASSERT(msr_ग_लिखोs == 3, "Handled 3 wrmsr in user space");
 
-	kvm_vm_free(vm);
-}
+	kvm_vm_मुक्त(vm);
+पूर्ण
 
-static void test_msr_permission_bitmap(void) {
-	struct kvm_enable_cap cap = {
+अटल व्योम test_msr_permission_biपंचांगap(व्योम) अणु
+	काष्ठा kvm_enable_cap cap = अणु
 		.cap = KVM_CAP_X86_USER_SPACE_MSR,
 		.args[0] = KVM_MSR_EXIT_REASON_FILTER,
-	};
-	struct kvm_vm *vm;
-	int rc;
+	पूर्ण;
+	काष्ठा kvm_vm *vm;
+	पूर्णांक rc;
 
 	/* Create VM */
-	vm = vm_create_default(VCPU_ID, 0, guest_code_permission_bitmap);
+	vm = vm_create_शेष(VCPU_ID, 0, guest_code_permission_biपंचांगap);
 	vcpu_set_cpuid(vm, VCPU_ID, kvm_get_supported_cpuid());
 
 	rc = kvm_check_cap(KVM_CAP_X86_USER_SPACE_MSR);
@@ -750,21 +751,21 @@ static void test_msr_permission_bitmap(void) {
 	TEST_ASSERT(run_guest_then_process_ucall(vm) == UCALL_SYNC, "Expected ucall state to be UCALL_SYNC.");
 	vm_ioctl(vm, KVM_X86_SET_MSR_FILTER, &filter_gs);
 	run_guest_then_process_rdmsr(vm, MSR_GS_BASE);
-	run_guest_then_process_ucall_done(vm);
+	run_guest_then_process_ucall_करोne(vm);
 
-	kvm_vm_free(vm);
-}
+	kvm_vm_मुक्त(vm);
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	/* Tell stdout not to buffer its content */
-	setbuf(stdout, NULL);
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	/* Tell मानक_निकास not to buffer its content */
+	रखो_बफ(मानक_निकास, शून्य);
 
 	test_msr_filter_allow();
 
 	test_msr_filter_deny();
 
-	test_msr_permission_bitmap();
+	test_msr_permission_biपंचांगap();
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,73 +1,74 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2010 Realtek Corporation. All rights reserved.
  *
- * Modifications for inclusion into the Linux staging tree are
+ * Modअगरications क्रम inclusion पूर्णांकo the Linux staging tree are
  * Copyright(c) 2010 Larry Finger. All rights reserved.
  *
- * Contact information:
+ * Contact inक्रमmation:
  * WLAN FAE <wlanfae@realtek.com>
  * Larry Finger <Larry.Finger@lwfinger.net>
  *
  ******************************************************************************/
-#ifndef __STA_INFO_H_
-#define __STA_INFO_H_
+#अगर_अघोषित __STA_INFO_H_
+#घोषणा __STA_INFO_H_
 
-#include "osdep_service.h"
-#include "drv_types.h"
-#include "wifi.h"
+#समावेश "osdep_service.h"
+#समावेश "drv_types.h"
+#समावेश "wifi.h"
 
-#define NUM_STA 32
-#define NUM_ACL 64
+#घोषणा NUM_STA 32
+#घोषणा NUM_ACL 64
 
 
-/* if mode ==0, then the sta is allowed once the addr is hit.
- * if mode ==1, then the sta is rejected once the addr is non-hit.
+/* अगर mode ==0, then the sta is allowed once the addr is hit.
+ * अगर mode ==1, then the sta is rejected once the addr is non-hit.
  */
-struct wlan_acl_node {
-	struct list_head list;
+काष्ठा wlan_acl_node अणु
+	काष्ठा list_head list;
 	u8       addr[ETH_ALEN];
 	u8       mode;
-};
+पूर्ण;
 
-struct wlan_acl_pool {
-	struct wlan_acl_node aclnode[NUM_ACL];
-};
+काष्ठा wlan_acl_pool अणु
+	काष्ठा wlan_acl_node aclnode[NUM_ACL];
+पूर्ण;
 
-struct	stainfo_stats {
-	uint	rx_pkts;
-	uint	rx_bytes;
+काष्ठा	stainfo_stats अणु
+	uपूर्णांक	rx_pkts;
+	uपूर्णांक	rx_bytes;
 	u64	tx_pkts;
-	uint	tx_bytes;
-};
+	uपूर्णांक	tx_bytes;
+पूर्ण;
 
-struct sta_info {
+काष्ठा sta_info अणु
 	spinlock_t lock;
-	struct list_head list; /*free_sta_queue*/
-	struct list_head hash_list; /*sta_hash*/
-	struct sta_xmit_priv sta_xmitpriv;
-	struct sta_recv_priv sta_recvpriv;
-	uint state;
-	uint aid;
-	uint	mac_id;
-	uint	qos_option;
+	काष्ठा list_head list; /*मुक्त_sta_queue*/
+	काष्ठा list_head hash_list; /*sta_hash*/
+	काष्ठा sta_xmit_priv sta_xmitpriv;
+	काष्ठा sta_recv_priv sta_recvpriv;
+	uपूर्णांक state;
+	uपूर्णांक aid;
+	uपूर्णांक	mac_id;
+	uपूर्णांक	qos_option;
 	u8	hwaddr[ETH_ALEN];
-	uint	ieee8021x_blocked;	/*0: allowed, 1:blocked */
-	uint	XPrivacy; /*aes, tkip...*/
-	union Keytype	tkiptxmickey;
-	union Keytype	tkiprxmickey;
-	union Keytype	x_UncstKey;
-	union pn48		txpn;	/* PN48 used for Unicast xmit.*/
-	union pn48		rxpn;	/* PN48 used for Unicast recv.*/
+	uपूर्णांक	ieee8021x_blocked;	/*0: allowed, 1:blocked */
+	uपूर्णांक	XPrivacy; /*aes, tkip...*/
+	जोड़ Keytype	tkiptxmickey;
+	जोड़ Keytype	tkiprxmickey;
+	जोड़ Keytype	x_UncstKey;
+	जोड़ pn48		txpn;	/* PN48 used क्रम Unicast xmit.*/
+	जोड़ pn48		rxpn;	/* PN48 used क्रम Unicast recv.*/
 	u8	bssrateset[16];
-	uint	bssratelen;
+	uपूर्णांक	bssratelen;
 	s32  rssi;
-	s32	signal_quality;
-	struct stainfo_stats sta_stats;
-	/*for A-MPDU Rx reordering buffer control */
-	struct recv_reorder_ctrl recvreorder_ctrl[16];
-	struct ht_priv	htpriv;
+	s32	संकेत_quality;
+	काष्ठा stainfo_stats sta_stats;
+	/*क्रम A-MPDU Rx reordering buffer control */
+	काष्ठा recv_reorder_ctrl recvreorder_ctrl[16];
+	काष्ठा ht_priv	htpriv;
 	/* Notes:
 	 * STA_Mode:
 	 * curr_network(mlme_priv/security_priv/qos/ht)
@@ -77,34 +78,34 @@ struct sta_info {
 	 * curr_network(mlme_priv/security_priv/qos/ht) : AP CAP/INFO
 	 * sta_info: (AP & STA) CAP/INFO
 	 */
-	struct list_head asoc_list;
-	struct list_head auth_list;
-	unsigned int expire_to;
-	unsigned int auth_seq;
-	unsigned int authalg;
-	unsigned char chg_txt[128];
-	unsigned int tx_ra_bitmap;
-};
+	काष्ठा list_head asoc_list;
+	काष्ठा list_head auth_list;
+	अचिन्हित पूर्णांक expire_to;
+	अचिन्हित पूर्णांक auth_seq;
+	अचिन्हित पूर्णांक authalg;
+	अचिन्हित अक्षर chg_txt[128];
+	अचिन्हित पूर्णांक tx_ra_biपंचांगap;
+पूर्ण;
 
-struct	sta_priv {
+काष्ठा	sta_priv अणु
 	u8 *pallocated_stainfo_buf;
 	u8 *pstainfo_buf;
-	struct  __queue	free_sta_queue;
+	काष्ठा  __queue	मुक्त_sta_queue;
 	spinlock_t sta_hash_lock;
-	struct list_head sta_hash[NUM_STA];
-	int asoc_sta_count;
-	struct  __queue sleep_q;
-	struct  __queue wakeup_q;
-	struct _adapter *padapter;
-	struct list_head asoc_list;
-	struct list_head auth_list;
-	unsigned int auth_to;  /* sec, time to expire in authenticating. */
-	unsigned int assoc_to; /* sec, time to expire before associating. */
-	unsigned int expire_to; /* sec , time to expire after associated. */
-};
+	काष्ठा list_head sta_hash[NUM_STA];
+	पूर्णांक asoc_sta_count;
+	काष्ठा  __queue sleep_q;
+	काष्ठा  __queue wakeup_q;
+	काष्ठा _adapter *padapter;
+	काष्ठा list_head asoc_list;
+	काष्ठा list_head auth_list;
+	अचिन्हित पूर्णांक auth_to;  /* sec, समय to expire in authenticating. */
+	अचिन्हित पूर्णांक assoc_to; /* sec, समय to expire beक्रमe associating. */
+	अचिन्हित पूर्णांक expire_to; /* sec , समय to expire after associated. */
+पूर्ण;
 
-static inline u32 wifi_mac_hash(u8 *mac)
-{
+अटल अंतरभूत u32 wअगरi_mac_hash(u8 *mac)
+अणु
 	u32 x;
 
 	x = mac[0];
@@ -115,19 +116,19 @@ static inline u32 wifi_mac_hash(u8 *mac)
 	x = (x << 2) ^ mac[5];
 	x ^= x >> 8;
 	x  = x & (NUM_STA - 1);
-	return x;
-}
+	वापस x;
+पूर्ण
 
-int _r8712_init_sta_priv(struct sta_priv *pstapriv);
-void _r8712_free_sta_priv(struct sta_priv *pstapriv);
-struct sta_info *r8712_alloc_stainfo(struct sta_priv *pstapriv,
+पूर्णांक _r8712_init_sta_priv(काष्ठा sta_priv *pstapriv);
+व्योम _r8712_मुक्त_sta_priv(काष्ठा sta_priv *pstapriv);
+काष्ठा sta_info *r8712_alloc_stainfo(काष्ठा sta_priv *pstapriv,
 				     u8 *hwaddr);
-void r8712_free_stainfo(struct _adapter *padapter, struct sta_info *psta);
-void r8712_free_all_stainfo(struct _adapter *padapter);
-struct sta_info *r8712_get_stainfo(struct sta_priv *pstapriv, u8 *hwaddr);
-void r8712_init_bcmc_stainfo(struct _adapter *padapter);
-struct sta_info *r8712_get_bcmc_stainfo(struct _adapter *padapter);
-u8 r8712_access_ctrl(struct wlan_acl_pool *pacl_list, u8 *mac_addr);
+व्योम r8712_मुक्त_stainfo(काष्ठा _adapter *padapter, काष्ठा sta_info *psta);
+व्योम r8712_मुक्त_all_stainfo(काष्ठा _adapter *padapter);
+काष्ठा sta_info *r8712_get_stainfo(काष्ठा sta_priv *pstapriv, u8 *hwaddr);
+व्योम r8712_init_bcmc_stainfo(काष्ठा _adapter *padapter);
+काष्ठा sta_info *r8712_get_bcmc_stainfo(काष्ठा _adapter *padapter);
+u8 r8712_access_ctrl(काष्ठा wlan_acl_pool *pacl_list, u8 *mac_addr);
 
-#endif /* _STA_INFO_H_ */
+#पूर्ण_अगर /* _STA_INFO_H_ */
 

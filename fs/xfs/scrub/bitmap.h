@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2018 Oracle.  All Rights Reserved.
  * Author: Darrick J. Wong <darrick.wong@oracle.com>
  */
-#ifndef __XFS_SCRUB_BITMAP_H__
-#define __XFS_SCRUB_BITMAP_H__
+#अगर_अघोषित __XFS_SCRUB_BITMAP_H__
+#घोषणा __XFS_SCRUB_BITMAP_H__
 
-struct xbitmap_range {
-	struct list_head	list;
-	uint64_t		start;
-	uint64_t		len;
-};
+काष्ठा xbiपंचांगap_range अणु
+	काष्ठा list_head	list;
+	uपूर्णांक64_t		start;
+	uपूर्णांक64_t		len;
+पूर्ण;
 
-struct xbitmap {
-	struct list_head	list;
-};
+काष्ठा xbiपंचांगap अणु
+	काष्ठा list_head	list;
+पूर्ण;
 
-void xbitmap_init(struct xbitmap *bitmap);
-void xbitmap_destroy(struct xbitmap *bitmap);
+व्योम xbiपंचांगap_init(काष्ठा xbiपंचांगap *biपंचांगap);
+व्योम xbiपंचांगap_destroy(काष्ठा xbiपंचांगap *biपंचांगap);
 
-#define for_each_xbitmap_extent(bex, n, bitmap) \
-	list_for_each_entry_safe((bex), (n), &(bitmap)->list, list)
+#घोषणा क्रम_each_xbiपंचांगap_extent(bex, n, biपंचांगap) \
+	list_क्रम_each_entry_safe((bex), (n), &(biपंचांगap)->list, list)
 
-#define for_each_xbitmap_block(b, bex, n, bitmap) \
-	list_for_each_entry_safe((bex), (n), &(bitmap)->list, list) \
-		for ((b) = (bex)->start; (b) < (bex)->start + (bex)->len; (b)++)
+#घोषणा क्रम_each_xbiपंचांगap_block(b, bex, n, biपंचांगap) \
+	list_क्रम_each_entry_safe((bex), (n), &(biपंचांगap)->list, list) \
+		क्रम ((b) = (bex)->start; (b) < (bex)->start + (bex)->len; (b)++)
 
-int xbitmap_set(struct xbitmap *bitmap, uint64_t start, uint64_t len);
-int xbitmap_disunion(struct xbitmap *bitmap, struct xbitmap *sub);
-int xbitmap_set_btcur_path(struct xbitmap *bitmap,
-		struct xfs_btree_cur *cur);
-int xbitmap_set_btblocks(struct xbitmap *bitmap,
-		struct xfs_btree_cur *cur);
-uint64_t xbitmap_hweight(struct xbitmap *bitmap);
+पूर्णांक xbiपंचांगap_set(काष्ठा xbiपंचांगap *biपंचांगap, uपूर्णांक64_t start, uपूर्णांक64_t len);
+पूर्णांक xbiपंचांगap_disजोड़(काष्ठा xbiपंचांगap *biपंचांगap, काष्ठा xbiपंचांगap *sub);
+पूर्णांक xbiपंचांगap_set_btcur_path(काष्ठा xbiपंचांगap *biपंचांगap,
+		काष्ठा xfs_btree_cur *cur);
+पूर्णांक xbiपंचांगap_set_btblocks(काष्ठा xbiपंचांगap *biपंचांगap,
+		काष्ठा xfs_btree_cur *cur);
+uपूर्णांक64_t xbiपंचांगap_hweight(काष्ठा xbiपंचांगap *biपंचांगap);
 
-#endif	/* __XFS_SCRUB_BITMAP_H__ */
+#पूर्ण_अगर	/* __XFS_SCRUB_BITMAP_H__ */

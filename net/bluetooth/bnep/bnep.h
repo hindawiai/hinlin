@@ -1,173 +1,174 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
-  BNEP protocol definition for Linux Bluetooth stack (BlueZ).
+  BNEP protocol definition क्रम Linux Bluetooth stack (BlueZ).
   Copyright (C) 2002 Maxim Krasnyansky <maxk@qualcomm.com>
 
 */
 
-#ifndef _BNEP_H
-#define _BNEP_H
+#अगर_अघोषित _BNEP_H
+#घोषणा _BNEP_H
 
-#include <linux/types.h>
-#include <linux/crc32.h>
-#include <net/bluetooth/bluetooth.h>
+#समावेश <linux/types.h>
+#समावेश <linux/crc32.h>
+#समावेश <net/bluetooth/bluetooth.h>
 
 /* Limits */
-#define BNEP_MAX_PROTO_FILTERS		5
-#define BNEP_MAX_MULTICAST_FILTERS	20
+#घोषणा BNEP_MAX_PROTO_FILTERS		5
+#घोषणा BNEP_MAX_MULTICAST_FILTERS	20
 
 /* UUIDs */
-#define BNEP_BASE_UUID	0x0000000000001000800000805F9B34FB
-#define BNEP_UUID16	0x02
-#define BNEP_UUID32	0x04
-#define BNEP_UUID128	0x16
+#घोषणा BNEP_BASE_UUID	0x0000000000001000800000805F9B34FB
+#घोषणा BNEP_UUID16	0x02
+#घोषणा BNEP_UUID32	0x04
+#घोषणा BNEP_UUID128	0x16
 
-#define BNEP_SVC_PANU	0x1115
-#define BNEP_SVC_NAP	0x1116
-#define BNEP_SVC_GN	0x1117
+#घोषणा BNEP_SVC_PANU	0x1115
+#घोषणा BNEP_SVC_NAP	0x1116
+#घोषणा BNEP_SVC_GN	0x1117
 
 /* Packet types */
-#define BNEP_GENERAL			0x00
-#define BNEP_CONTROL			0x01
-#define BNEP_COMPRESSED			0x02
-#define BNEP_COMPRESSED_SRC_ONLY	0x03
-#define BNEP_COMPRESSED_DST_ONLY	0x04
+#घोषणा BNEP_GENERAL			0x00
+#घोषणा BNEP_CONTROL			0x01
+#घोषणा BNEP_COMPRESSED			0x02
+#घोषणा BNEP_COMPRESSED_SRC_ONLY	0x03
+#घोषणा BNEP_COMPRESSED_DST_ONLY	0x04
 
 /* Control types */
-#define BNEP_CMD_NOT_UNDERSTOOD		0x00
-#define BNEP_SETUP_CONN_REQ		0x01
-#define BNEP_SETUP_CONN_RSP		0x02
-#define BNEP_FILTER_NET_TYPE_SET	0x03
-#define BNEP_FILTER_NET_TYPE_RSP	0x04
-#define BNEP_FILTER_MULTI_ADDR_SET	0x05
-#define BNEP_FILTER_MULTI_ADDR_RSP	0x06
+#घोषणा BNEP_CMD_NOT_UNDERSTOOD		0x00
+#घोषणा BNEP_SETUP_CONN_REQ		0x01
+#घोषणा BNEP_SETUP_CONN_RSP		0x02
+#घोषणा BNEP_FILTER_NET_TYPE_SET	0x03
+#घोषणा BNEP_FILTER_NET_TYPE_RSP	0x04
+#घोषणा BNEP_FILTER_MULTI_ADDR_SET	0x05
+#घोषणा BNEP_FILTER_MULTI_ADDR_RSP	0x06
 
 /* Extension types */
-#define BNEP_EXT_CONTROL 0x00
+#घोषणा BNEP_EXT_CONTROL 0x00
 
 /* Response messages */
-#define BNEP_SUCCESS 0x00
+#घोषणा BNEP_SUCCESS 0x00
 
-#define BNEP_CONN_INVALID_DST 0x01
-#define BNEP_CONN_INVALID_SRC 0x02
-#define BNEP_CONN_INVALID_SVC 0x03
-#define BNEP_CONN_NOT_ALLOWED 0x04
+#घोषणा BNEP_CONN_INVALID_DST 0x01
+#घोषणा BNEP_CONN_INVALID_SRC 0x02
+#घोषणा BNEP_CONN_INVALID_SVC 0x03
+#घोषणा BNEP_CONN_NOT_ALLOWED 0x04
 
-#define BNEP_FILTER_UNSUPPORTED_REQ	0x01
-#define BNEP_FILTER_INVALID_RANGE	0x02
-#define BNEP_FILTER_INVALID_MCADDR	0x02
-#define BNEP_FILTER_LIMIT_REACHED	0x03
-#define BNEP_FILTER_DENIED_SECURITY	0x04
+#घोषणा BNEP_FILTER_UNSUPPORTED_REQ	0x01
+#घोषणा BNEP_FILTER_INVALID_RANGE	0x02
+#घोषणा BNEP_FILTER_INVALID_MCADDR	0x02
+#घोषणा BNEP_FILTER_LIMIT_REACHED	0x03
+#घोषणा BNEP_FILTER_DENIED_SECURITY	0x04
 
 /* L2CAP settings */
-#define BNEP_MTU	1691
-#define BNEP_PSM	0x0f
-#define BNEP_FLUSH_TO	0xffff
-#define BNEP_CONNECT_TO	15
-#define BNEP_FILTER_TO	15
+#घोषणा BNEP_MTU	1691
+#घोषणा BNEP_PSM	0x0f
+#घोषणा BNEP_FLUSH_TO	0xffff
+#घोषणा BNEP_CONNECT_TO	15
+#घोषणा BNEP_FILTER_TO	15
 
 /* Headers */
-#define BNEP_TYPE_MASK	0x7f
-#define BNEP_EXT_HEADER	0x80
+#घोषणा BNEP_TYPE_MASK	0x7f
+#घोषणा BNEP_EXT_HEADER	0x80
 
-struct bnep_setup_conn_req {
+काष्ठा bnep_setup_conn_req अणु
 	__u8 type;
 	__u8 ctrl;
 	__u8 uuid_size;
 	__u8 service[];
-} __packed;
+पूर्ण __packed;
 
-struct bnep_set_filter_req {
+काष्ठा bnep_set_filter_req अणु
 	__u8 type;
 	__u8 ctrl;
 	__be16 len;
 	__u8 list[];
-} __packed;
+पूर्ण __packed;
 
-struct bnep_control_rsp {
+काष्ठा bnep_control_rsp अणु
 	__u8 type;
 	__u8 ctrl;
 	__be16 resp;
-} __packed;
+पूर्ण __packed;
 
-struct bnep_ext_hdr {
+काष्ठा bnep_ext_hdr अणु
 	__u8 type;
 	__u8 len;
 	__u8 data[];
-} __packed;
+पूर्ण __packed;
 
 /* BNEP ioctl defines */
-#define BNEPCONNADD	_IOW('B', 200, int)
-#define BNEPCONNDEL	_IOW('B', 201, int)
-#define BNEPGETCONNLIST	_IOR('B', 210, int)
-#define BNEPGETCONNINFO	_IOR('B', 211, int)
-#define BNEPGETSUPPFEAT	_IOR('B', 212, int)
+#घोषणा BNEPCONNADD	_IOW('B', 200, पूर्णांक)
+#घोषणा BNEPCONNDEL	_IOW('B', 201, पूर्णांक)
+#घोषणा BNEPGETCONNLIST	_IOR('B', 210, पूर्णांक)
+#घोषणा BNEPGETCONNINFO	_IOR('B', 211, पूर्णांक)
+#घोषणा BNEPGETSUPPFEAT	_IOR('B', 212, पूर्णांक)
 
-#define BNEP_SETUP_RESPONSE	0
-#define BNEP_SETUP_RSP_SENT	10
+#घोषणा BNEP_SETUP_RESPONSE	0
+#घोषणा BNEP_SETUP_RSP_SENT	10
 
-struct bnep_connadd_req {
-	int   sock;		/* Connected socket */
+काष्ठा bnep_connadd_req अणु
+	पूर्णांक   sock;		/* Connected socket */
 	__u32 flags;
 	__u16 role;
-	char  device[16];	/* Name of the Ethernet device */
-};
+	अक्षर  device[16];	/* Name of the Ethernet device */
+पूर्ण;
 
-struct bnep_conndel_req {
+काष्ठा bnep_conndel_req अणु
 	__u32 flags;
 	__u8  dst[ETH_ALEN];
-};
+पूर्ण;
 
-struct bnep_conninfo {
+काष्ठा bnep_conninfo अणु
 	__u32 flags;
 	__u16 role;
 	__u16 state;
 	__u8  dst[ETH_ALEN];
-	char  device[16];
-};
+	अक्षर  device[16];
+पूर्ण;
 
-struct bnep_connlist_req {
+काष्ठा bnep_connlist_req अणु
 	__u32  cnum;
-	struct bnep_conninfo __user *ci;
-};
+	काष्ठा bnep_conninfo __user *ci;
+पूर्ण;
 
-struct bnep_proto_filter {
+काष्ठा bnep_proto_filter अणु
 	__u16 start;
 	__u16 end;
-};
+पूर्ण;
 
-int bnep_add_connection(struct bnep_connadd_req *req, struct socket *sock);
-int bnep_del_connection(struct bnep_conndel_req *req);
-int bnep_get_connlist(struct bnep_connlist_req *req);
-int bnep_get_conninfo(struct bnep_conninfo *ci);
+पूर्णांक bnep_add_connection(काष्ठा bnep_connadd_req *req, काष्ठा socket *sock);
+पूर्णांक bnep_del_connection(काष्ठा bnep_conndel_req *req);
+पूर्णांक bnep_get_connlist(काष्ठा bnep_connlist_req *req);
+पूर्णांक bnep_get_conninfo(काष्ठा bnep_conninfo *ci);
 
 /* BNEP sessions */
-struct bnep_session {
-	struct list_head list;
+काष्ठा bnep_session अणु
+	काष्ठा list_head list;
 
-	unsigned int  role;
-	unsigned long state;
-	unsigned long flags;
+	अचिन्हित पूर्णांक  role;
+	अचिन्हित दीर्घ state;
+	अचिन्हित दीर्घ flags;
 	atomic_t      terminate;
-	struct task_struct *task;
+	काष्ठा task_काष्ठा *task;
 
-	struct ethhdr eh;
-	struct msghdr msg;
+	काष्ठा ethhdr eh;
+	काष्ठा msghdr msg;
 
-	struct bnep_proto_filter proto_filter[BNEP_MAX_PROTO_FILTERS];
-	unsigned long long mc_filter;
+	काष्ठा bnep_proto_filter proto_filter[BNEP_MAX_PROTO_FILTERS];
+	अचिन्हित दीर्घ दीर्घ mc_filter;
 
-	struct socket    *sock;
-	struct net_device *dev;
-};
+	काष्ठा socket    *sock;
+	काष्ठा net_device *dev;
+पूर्ण;
 
-void bnep_net_setup(struct net_device *dev);
-int bnep_sock_init(void);
-void bnep_sock_cleanup(void);
+व्योम bnep_net_setup(काष्ठा net_device *dev);
+पूर्णांक bnep_sock_init(व्योम);
+व्योम bnep_sock_cleanup(व्योम);
 
-static inline int bnep_mc_hash(__u8 *addr)
-{
-	return crc32_be(~0, addr, ETH_ALEN) >> 26;
-}
+अटल अंतरभूत पूर्णांक bnep_mc_hash(__u8 *addr)
+अणु
+	वापस crc32_be(~0, addr, ETH_ALEN) >> 26;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

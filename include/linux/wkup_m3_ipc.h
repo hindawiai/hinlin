@@ -1,64 +1,65 @@
+<शैली गुरु>
 /*
- * TI Wakeup M3 for AMx3 SoCs Power Management Routines
+ * TI Wakeup M3 क्रम AMx3 SoCs Power Management Routines
  *
  * Copyright (C) 2015 Texas Instruments Incorporated - https://www.ti.com/
  * Dave Gerlach <d-gerlach@ti.com>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#ifndef _LINUX_WKUP_M3_IPC_H
-#define _LINUX_WKUP_M3_IPC_H
+#अगर_अघोषित _LINUX_WKUP_M3_IPC_H
+#घोषणा _LINUX_WKUP_M3_IPC_H
 
-#define WKUP_M3_DEEPSLEEP	1
-#define WKUP_M3_STANDBY		2
-#define WKUP_M3_IDLE		3
+#घोषणा WKUP_M3_DEEPSLEEP	1
+#घोषणा WKUP_M3_STANDBY		2
+#घोषणा WKUP_M3_IDLE		3
 
-#include <linux/mailbox_client.h>
+#समावेश <linux/mailbox_client.h>
 
-struct wkup_m3_ipc_ops;
+काष्ठा wkup_m3_ipc_ops;
 
-struct wkup_m3_ipc {
-	struct rproc *rproc;
+काष्ठा wkup_m3_ipc अणु
+	काष्ठा rproc *rproc;
 
-	void __iomem *ipc_mem_base;
-	struct device *dev;
+	व्योम __iomem *ipc_mem_base;
+	काष्ठा device *dev;
 
-	int mem_type;
-	unsigned long resume_addr;
-	int state;
+	पूर्णांक mem_type;
+	अचिन्हित दीर्घ resume_addr;
+	पूर्णांक state;
 
-	struct completion sync_complete;
-	struct mbox_client mbox_client;
-	struct mbox_chan *mbox;
+	काष्ठा completion sync_complete;
+	काष्ठा mbox_client mbox_client;
+	काष्ठा mbox_chan *mbox;
 
-	struct wkup_m3_ipc_ops *ops;
-	int is_rtc_only;
-};
+	काष्ठा wkup_m3_ipc_ops *ops;
+	पूर्णांक is_rtc_only;
+पूर्ण;
 
-struct wkup_m3_wakeup_src {
-	int irq_nr;
-	char src[10];
-};
+काष्ठा wkup_m3_wakeup_src अणु
+	पूर्णांक irq_nr;
+	अक्षर src[10];
+पूर्ण;
 
-struct wkup_m3_ipc_ops {
-	void (*set_mem_type)(struct wkup_m3_ipc *m3_ipc, int mem_type);
-	void (*set_resume_address)(struct wkup_m3_ipc *m3_ipc, void *addr);
-	int (*prepare_low_power)(struct wkup_m3_ipc *m3_ipc, int state);
-	int (*finish_low_power)(struct wkup_m3_ipc *m3_ipc);
-	int (*request_pm_status)(struct wkup_m3_ipc *m3_ipc);
-	const char *(*request_wake_src)(struct wkup_m3_ipc *m3_ipc);
-	void (*set_rtc_only)(struct wkup_m3_ipc *m3_ipc);
-};
+काष्ठा wkup_m3_ipc_ops अणु
+	व्योम (*set_mem_type)(काष्ठा wkup_m3_ipc *m3_ipc, पूर्णांक mem_type);
+	व्योम (*set_resume_address)(काष्ठा wkup_m3_ipc *m3_ipc, व्योम *addr);
+	पूर्णांक (*prepare_low_घातer)(काष्ठा wkup_m3_ipc *m3_ipc, पूर्णांक state);
+	पूर्णांक (*finish_low_घातer)(काष्ठा wkup_m3_ipc *m3_ipc);
+	पूर्णांक (*request_pm_status)(काष्ठा wkup_m3_ipc *m3_ipc);
+	स्थिर अक्षर *(*request_wake_src)(काष्ठा wkup_m3_ipc *m3_ipc);
+	व्योम (*set_rtc_only)(काष्ठा wkup_m3_ipc *m3_ipc);
+पूर्ण;
 
-struct wkup_m3_ipc *wkup_m3_ipc_get(void);
-void wkup_m3_ipc_put(struct wkup_m3_ipc *m3_ipc);
-void wkup_m3_set_rtc_only_mode(void);
-#endif /* _LINUX_WKUP_M3_IPC_H */
+काष्ठा wkup_m3_ipc *wkup_m3_ipc_get(व्योम);
+व्योम wkup_m3_ipc_put(काष्ठा wkup_m3_ipc *m3_ipc);
+व्योम wkup_m3_set_rtc_only_mode(व्योम);
+#पूर्ण_अगर /* _LINUX_WKUP_M3_IPC_H */

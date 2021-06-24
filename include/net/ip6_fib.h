@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *	Linux INET6 implementation 
  *
@@ -6,185 +7,185 @@
  *	Pedro Roque		<roque@di.fc.ul.pt>	
  */
 
-#ifndef _IP6_FIB_H
-#define _IP6_FIB_H
+#अगर_अघोषित _IP6_FIB_H
+#घोषणा _IP6_FIB_H
 
-#include <linux/ipv6_route.h>
-#include <linux/rtnetlink.h>
-#include <linux/spinlock.h>
-#include <linux/notifier.h>
-#include <net/dst.h>
-#include <net/flow.h>
-#include <net/ip_fib.h>
-#include <net/netlink.h>
-#include <net/inetpeer.h>
-#include <net/fib_notifier.h>
-#include <linux/indirect_call_wrapper.h>
+#समावेश <linux/ipv6_route.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <net/dst.h>
+#समावेश <net/flow.h>
+#समावेश <net/ip_fib.h>
+#समावेश <net/netlink.h>
+#समावेश <net/inetpeer.h>
+#समावेश <net/fib_notअगरier.h>
+#समावेश <linux/indirect_call_wrapper.h>
 
-#ifdef CONFIG_IPV6_MULTIPLE_TABLES
-#define FIB6_TABLE_HASHSZ 256
-#else
-#define FIB6_TABLE_HASHSZ 1
-#endif
+#अगर_घोषित CONFIG_IPV6_MULTIPLE_TABLES
+#घोषणा FIB6_TABLE_HASHSZ 256
+#अन्यथा
+#घोषणा FIB6_TABLE_HASHSZ 1
+#पूर्ण_अगर
 
-#define RT6_DEBUG 2
+#घोषणा RT6_DEBUG 2
 
-#if RT6_DEBUG >= 3
-#define RT6_TRACE(x...) pr_debug(x)
-#else
-#define RT6_TRACE(x...) do { ; } while (0)
-#endif
+#अगर RT6_DEBUG >= 3
+#घोषणा RT6_TRACE(x...) pr_debug(x)
+#अन्यथा
+#घोषणा RT6_TRACE(x...) करो अणु ; पूर्ण जबतक (0)
+#पूर्ण_अगर
 
-struct rt6_info;
-struct fib6_info;
+काष्ठा rt6_info;
+काष्ठा fib6_info;
 
-struct fib6_config {
+काष्ठा fib6_config अणु
 	u32		fc_table;
 	u32		fc_metric;
-	int		fc_dst_len;
-	int		fc_src_len;
-	int		fc_ifindex;
+	पूर्णांक		fc_dst_len;
+	पूर्णांक		fc_src_len;
+	पूर्णांक		fc_अगरindex;
 	u32		fc_flags;
 	u32		fc_protocol;
 	u16		fc_type;        /* only 8 bits are used */
 	u16		fc_delete_all_nh : 1,
-			fc_ignore_dev_down:1,
+			fc_ignore_dev_करोwn:1,
 			__unused : 14;
 	u32		fc_nh_id;
 
-	struct in6_addr	fc_dst;
-	struct in6_addr	fc_src;
-	struct in6_addr	fc_prefsrc;
-	struct in6_addr	fc_gateway;
+	काष्ठा in6_addr	fc_dst;
+	काष्ठा in6_addr	fc_src;
+	काष्ठा in6_addr	fc_prefsrc;
+	काष्ठा in6_addr	fc_gateway;
 
-	unsigned long	fc_expires;
-	struct nlattr	*fc_mx;
-	int		fc_mx_len;
-	int		fc_mp_len;
-	struct nlattr	*fc_mp;
+	अचिन्हित दीर्घ	fc_expires;
+	काष्ठा nlattr	*fc_mx;
+	पूर्णांक		fc_mx_len;
+	पूर्णांक		fc_mp_len;
+	काष्ठा nlattr	*fc_mp;
 
-	struct nl_info	fc_nlinfo;
-	struct nlattr	*fc_encap;
+	काष्ठा nl_info	fc_nlinfo;
+	काष्ठा nlattr	*fc_encap;
 	u16		fc_encap_type;
 	bool		fc_is_fdb;
-};
+पूर्ण;
 
-struct fib6_node {
-	struct fib6_node __rcu	*parent;
-	struct fib6_node __rcu	*left;
-	struct fib6_node __rcu	*right;
-#ifdef CONFIG_IPV6_SUBTREES
-	struct fib6_node __rcu	*subtree;
-#endif
-	struct fib6_info __rcu	*leaf;
+काष्ठा fib6_node अणु
+	काष्ठा fib6_node __rcu	*parent;
+	काष्ठा fib6_node __rcu	*left;
+	काष्ठा fib6_node __rcu	*right;
+#अगर_घोषित CONFIG_IPV6_SUBTREES
+	काष्ठा fib6_node __rcu	*subtree;
+#पूर्ण_अगर
+	काष्ठा fib6_info __rcu	*leaf;
 
 	__u16			fn_bit;		/* bit key */
 	__u16			fn_flags;
-	int			fn_sernum;
-	struct fib6_info __rcu	*rr_ptr;
-	struct rcu_head		rcu;
-};
+	पूर्णांक			fn_sernum;
+	काष्ठा fib6_info __rcu	*rr_ptr;
+	काष्ठा rcu_head		rcu;
+पूर्ण;
 
-struct fib6_gc_args {
-	int			timeout;
-	int			more;
-};
+काष्ठा fib6_gc_args अणु
+	पूर्णांक			समयout;
+	पूर्णांक			more;
+पूर्ण;
 
-#ifndef CONFIG_IPV6_SUBTREES
-#define FIB6_SUBTREE(fn)	NULL
+#अगर_अघोषित CONFIG_IPV6_SUBTREES
+#घोषणा FIB6_SUBTREE(fn)	शून्य
 
-static inline bool fib6_routes_require_src(const struct net *net)
-{
-	return false;
-}
+अटल अंतरभूत bool fib6_routes_require_src(स्थिर काष्ठा net *net)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void fib6_routes_require_src_inc(struct net *net) {}
-static inline void fib6_routes_require_src_dec(struct net *net) {}
+अटल अंतरभूत व्योम fib6_routes_require_src_inc(काष्ठा net *net) अणुपूर्ण
+अटल अंतरभूत व्योम fib6_routes_require_src_dec(काष्ठा net *net) अणुपूर्ण
 
-#else
+#अन्यथा
 
-static inline bool fib6_routes_require_src(const struct net *net)
-{
-	return net->ipv6.fib6_routes_require_src > 0;
-}
+अटल अंतरभूत bool fib6_routes_require_src(स्थिर काष्ठा net *net)
+अणु
+	वापस net->ipv6.fib6_routes_require_src > 0;
+पूर्ण
 
-static inline void fib6_routes_require_src_inc(struct net *net)
-{
+अटल अंतरभूत व्योम fib6_routes_require_src_inc(काष्ठा net *net)
+अणु
 	net->ipv6.fib6_routes_require_src++;
-}
+पूर्ण
 
-static inline void fib6_routes_require_src_dec(struct net *net)
-{
+अटल अंतरभूत व्योम fib6_routes_require_src_dec(काष्ठा net *net)
+अणु
 	net->ipv6.fib6_routes_require_src--;
-}
+पूर्ण
 
-#define FIB6_SUBTREE(fn)	(rcu_dereference_protected((fn)->subtree, 1))
-#endif
+#घोषणा FIB6_SUBTREE(fn)	(rcu_dereference_रक्षित((fn)->subtree, 1))
+#पूर्ण_अगर
 
 /*
- *	routing information
+ *	routing inक्रमmation
  *
  */
 
-struct rt6key {
-	struct in6_addr	addr;
-	int		plen;
-};
+काष्ठा rt6key अणु
+	काष्ठा in6_addr	addr;
+	पूर्णांक		plen;
+पूर्ण;
 
-struct fib6_table;
+काष्ठा fib6_table;
 
-struct rt6_exception_bucket {
-	struct hlist_head	chain;
-	int			depth;
-};
+काष्ठा rt6_exception_bucket अणु
+	काष्ठा hlist_head	chain;
+	पूर्णांक			depth;
+पूर्ण;
 
-struct rt6_exception {
-	struct hlist_node	hlist;
-	struct rt6_info		*rt6i;
-	unsigned long		stamp;
-	struct rcu_head		rcu;
-};
+काष्ठा rt6_exception अणु
+	काष्ठा hlist_node	hlist;
+	काष्ठा rt6_info		*rt6i;
+	अचिन्हित दीर्घ		stamp;
+	काष्ठा rcu_head		rcu;
+पूर्ण;
 
-#define FIB6_EXCEPTION_BUCKET_SIZE_SHIFT 10
-#define FIB6_EXCEPTION_BUCKET_SIZE (1 << FIB6_EXCEPTION_BUCKET_SIZE_SHIFT)
-#define FIB6_MAX_DEPTH 5
+#घोषणा FIB6_EXCEPTION_BUCKET_SIZE_SHIFT 10
+#घोषणा FIB6_EXCEPTION_BUCKET_SIZE (1 << FIB6_EXCEPTION_BUCKET_SIZE_SHIFT)
+#घोषणा FIB6_MAX_DEPTH 5
 
-struct fib6_nh {
-	struct fib_nh_common	nh_common;
+काष्ठा fib6_nh अणु
+	काष्ठा fib_nh_common	nh_common;
 
-#ifdef CONFIG_IPV6_ROUTER_PREF
-	unsigned long		last_probe;
-#endif
+#अगर_घोषित CONFIG_IPV6_ROUTER_PREF
+	अचिन्हित दीर्घ		last_probe;
+#पूर्ण_अगर
 
-	struct rt6_info * __percpu *rt6i_pcpu;
-	struct rt6_exception_bucket __rcu *rt6i_exception_bucket;
-};
+	काष्ठा rt6_info * __percpu *rt6i_pcpu;
+	काष्ठा rt6_exception_bucket __rcu *rt6i_exception_bucket;
+पूर्ण;
 
-struct fib6_info {
-	struct fib6_table		*fib6_table;
-	struct fib6_info __rcu		*fib6_next;
-	struct fib6_node __rcu		*fib6_node;
+काष्ठा fib6_info अणु
+	काष्ठा fib6_table		*fib6_table;
+	काष्ठा fib6_info __rcu		*fib6_next;
+	काष्ठा fib6_node __rcu		*fib6_node;
 
 	/* Multipath routes:
 	 * siblings is a list of fib6_info that have the same metric/weight,
 	 * destination, but not the same gateway. nsiblings is just a cache
 	 * to speed up lookup.
 	 */
-	union {
-		struct list_head	fib6_siblings;
-		struct list_head	nh_list;
-	};
-	unsigned int			fib6_nsiblings;
+	जोड़ अणु
+		काष्ठा list_head	fib6_siblings;
+		काष्ठा list_head	nh_list;
+	पूर्ण;
+	अचिन्हित पूर्णांक			fib6_nsiblings;
 
 	refcount_t			fib6_ref;
-	unsigned long			expires;
-	struct dst_metrics		*fib6_metrics;
-#define fib6_pmtu		fib6_metrics->metrics[RTAX_MTU-1]
+	अचिन्हित दीर्घ			expires;
+	काष्ठा dst_metrics		*fib6_metrics;
+#घोषणा fib6_pmtu		fib6_metrics->metrics[RTAX_MTU-1]
 
-	struct rt6key			fib6_dst;
+	काष्ठा rt6key			fib6_dst;
 	u32				fib6_flags;
-	struct rt6key			fib6_src;
-	struct rt6key			fib6_prefsrc;
+	काष्ठा rt6key			fib6_src;
+	काष्ठा rt6key			fib6_prefsrc;
 
 	u32				fib6_metric;
 	u8				fib6_protocol;
@@ -198,182 +199,182 @@ struct fib6_info {
 					offload_failed:1,
 					unused:1;
 
-	struct rcu_head			rcu;
-	struct nexthop			*nh;
-	struct fib6_nh			fib6_nh[];
-};
+	काष्ठा rcu_head			rcu;
+	काष्ठा nexthop			*nh;
+	काष्ठा fib6_nh			fib6_nh[];
+पूर्ण;
 
-struct rt6_info {
-	struct dst_entry		dst;
-	struct fib6_info __rcu		*from;
-	int				sernum;
+काष्ठा rt6_info अणु
+	काष्ठा dst_entry		dst;
+	काष्ठा fib6_info __rcu		*from;
+	पूर्णांक				sernum;
 
-	struct rt6key			rt6i_dst;
-	struct rt6key			rt6i_src;
-	struct in6_addr			rt6i_gateway;
-	struct inet6_dev		*rt6i_idev;
+	काष्ठा rt6key			rt6i_dst;
+	काष्ठा rt6key			rt6i_src;
+	काष्ठा in6_addr			rt6i_gateway;
+	काष्ठा inet6_dev		*rt6i_idev;
 	u32				rt6i_flags;
 
-	struct list_head		rt6i_uncached;
-	struct uncached_list		*rt6i_uncached_list;
+	काष्ठा list_head		rt6i_uncached;
+	काष्ठा uncached_list		*rt6i_uncached_list;
 
 	/* more non-fragment space at head required */
-	unsigned short			rt6i_nfheader_len;
-};
+	अचिन्हित लघु			rt6i_nfheader_len;
+पूर्ण;
 
-struct fib6_result {
-	struct fib6_nh		*nh;
-	struct fib6_info	*f6i;
+काष्ठा fib6_result अणु
+	काष्ठा fib6_nh		*nh;
+	काष्ठा fib6_info	*f6i;
 	u32			fib6_flags;
 	u8			fib6_type;
-	struct rt6_info		*rt6;
-};
+	काष्ठा rt6_info		*rt6;
+पूर्ण;
 
-#define for_each_fib6_node_rt_rcu(fn)					\
-	for (rt = rcu_dereference((fn)->leaf); rt;			\
+#घोषणा क्रम_each_fib6_node_rt_rcu(fn)					\
+	क्रम (rt = rcu_dereference((fn)->leaf); rt;			\
 	     rt = rcu_dereference(rt->fib6_next))
 
-#define for_each_fib6_walker_rt(w)					\
-	for (rt = (w)->leaf; rt;					\
-	     rt = rcu_dereference_protected(rt->fib6_next, 1))
+#घोषणा क्रम_each_fib6_walker_rt(w)					\
+	क्रम (rt = (w)->leaf; rt;					\
+	     rt = rcu_dereference_रक्षित(rt->fib6_next, 1))
 
-static inline struct inet6_dev *ip6_dst_idev(struct dst_entry *dst)
-{
-	return ((struct rt6_info *)dst)->rt6i_idev;
-}
+अटल अंतरभूत काष्ठा inet6_dev *ip6_dst_idev(काष्ठा dst_entry *dst)
+अणु
+	वापस ((काष्ठा rt6_info *)dst)->rt6i_idev;
+पूर्ण
 
-static inline bool fib6_requires_src(const struct fib6_info *rt)
-{
-	return rt->fib6_src.plen > 0;
-}
+अटल अंतरभूत bool fib6_requires_src(स्थिर काष्ठा fib6_info *rt)
+अणु
+	वापस rt->fib6_src.plen > 0;
+पूर्ण
 
-static inline void fib6_clean_expires(struct fib6_info *f6i)
-{
+अटल अंतरभूत व्योम fib6_clean_expires(काष्ठा fib6_info *f6i)
+अणु
 	f6i->fib6_flags &= ~RTF_EXPIRES;
 	f6i->expires = 0;
-}
+पूर्ण
 
-static inline void fib6_set_expires(struct fib6_info *f6i,
-				    unsigned long expires)
-{
+अटल अंतरभूत व्योम fib6_set_expires(काष्ठा fib6_info *f6i,
+				    अचिन्हित दीर्घ expires)
+अणु
 	f6i->expires = expires;
 	f6i->fib6_flags |= RTF_EXPIRES;
-}
+पूर्ण
 
-static inline bool fib6_check_expired(const struct fib6_info *f6i)
-{
-	if (f6i->fib6_flags & RTF_EXPIRES)
-		return time_after(jiffies, f6i->expires);
-	return false;
-}
+अटल अंतरभूत bool fib6_check_expired(स्थिर काष्ठा fib6_info *f6i)
+अणु
+	अगर (f6i->fib6_flags & RTF_EXPIRES)
+		वापस समय_after(jअगरfies, f6i->expires);
+	वापस false;
+पूर्ण
 
-/* Function to safely get fn->sernum for passed in rt
+/* Function to safely get fn->sernum क्रम passed in rt
  * and store result in passed in cookie.
- * Return true if we can get cookie safely
- * Return false if not
+ * Return true अगर we can get cookie safely
+ * Return false अगर not
  */
-static inline bool fib6_get_cookie_safe(const struct fib6_info *f6i,
+अटल अंतरभूत bool fib6_get_cookie_safe(स्थिर काष्ठा fib6_info *f6i,
 					u32 *cookie)
-{
-	struct fib6_node *fn;
+अणु
+	काष्ठा fib6_node *fn;
 	bool status = false;
 
 	fn = rcu_dereference(f6i->fib6_node);
 
-	if (fn) {
+	अगर (fn) अणु
 		*cookie = fn->fn_sernum;
 		/* pairs with smp_wmb() in fib6_update_sernum_upto_root() */
 		smp_rmb();
 		status = true;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static inline u32 rt6_get_cookie(const struct rt6_info *rt)
-{
-	struct fib6_info *from;
+अटल अंतरभूत u32 rt6_get_cookie(स्थिर काष्ठा rt6_info *rt)
+अणु
+	काष्ठा fib6_info *from;
 	u32 cookie = 0;
 
-	if (rt->sernum)
-		return rt->sernum;
+	अगर (rt->sernum)
+		वापस rt->sernum;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	from = rcu_dereference(rt->from);
-	if (from)
+	अगर (from)
 		fib6_get_cookie_safe(from, &cookie);
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return cookie;
-}
+	वापस cookie;
+पूर्ण
 
-static inline void ip6_rt_put(struct rt6_info *rt)
-{
-	/* dst_release() accepts a NULL parameter.
-	 * We rely on dst being first structure in struct rt6_info
+अटल अंतरभूत व्योम ip6_rt_put(काष्ठा rt6_info *rt)
+अणु
+	/* dst_release() accepts a शून्य parameter.
+	 * We rely on dst being first काष्ठाure in काष्ठा rt6_info
 	 */
-	BUILD_BUG_ON(offsetof(struct rt6_info, dst) != 0);
+	BUILD_BUG_ON(दुरत्व(काष्ठा rt6_info, dst) != 0);
 	dst_release(&rt->dst);
-}
+पूर्ण
 
-struct fib6_info *fib6_info_alloc(gfp_t gfp_flags, bool with_fib6_nh);
-void fib6_info_destroy_rcu(struct rcu_head *head);
+काष्ठा fib6_info *fib6_info_alloc(gfp_t gfp_flags, bool with_fib6_nh);
+व्योम fib6_info_destroy_rcu(काष्ठा rcu_head *head);
 
-static inline void fib6_info_hold(struct fib6_info *f6i)
-{
+अटल अंतरभूत व्योम fib6_info_hold(काष्ठा fib6_info *f6i)
+अणु
 	refcount_inc(&f6i->fib6_ref);
-}
+पूर्ण
 
-static inline bool fib6_info_hold_safe(struct fib6_info *f6i)
-{
-	return refcount_inc_not_zero(&f6i->fib6_ref);
-}
+अटल अंतरभूत bool fib6_info_hold_safe(काष्ठा fib6_info *f6i)
+अणु
+	वापस refcount_inc_not_zero(&f6i->fib6_ref);
+पूर्ण
 
-static inline void fib6_info_release(struct fib6_info *f6i)
-{
-	if (f6i && refcount_dec_and_test(&f6i->fib6_ref))
+अटल अंतरभूत व्योम fib6_info_release(काष्ठा fib6_info *f6i)
+अणु
+	अगर (f6i && refcount_dec_and_test(&f6i->fib6_ref))
 		call_rcu(&f6i->rcu, fib6_info_destroy_rcu);
-}
+पूर्ण
 
-enum fib6_walk_state {
-#ifdef CONFIG_IPV6_SUBTREES
+क्रमागत fib6_walk_state अणु
+#अगर_घोषित CONFIG_IPV6_SUBTREES
 	FWS_S,
-#endif
+#पूर्ण_अगर
 	FWS_L,
 	FWS_R,
 	FWS_C,
 	FWS_U
-};
+पूर्ण;
 
-struct fib6_walker {
-	struct list_head lh;
-	struct fib6_node *root, *node;
-	struct fib6_info *leaf;
-	enum fib6_walk_state state;
-	unsigned int skip;
-	unsigned int count;
-	unsigned int skip_in_node;
-	int (*func)(struct fib6_walker *);
-	void *args;
-};
+काष्ठा fib6_walker अणु
+	काष्ठा list_head lh;
+	काष्ठा fib6_node *root, *node;
+	काष्ठा fib6_info *leaf;
+	क्रमागत fib6_walk_state state;
+	अचिन्हित पूर्णांक skip;
+	अचिन्हित पूर्णांक count;
+	अचिन्हित पूर्णांक skip_in_node;
+	पूर्णांक (*func)(काष्ठा fib6_walker *);
+	व्योम *args;
+पूर्ण;
 
-struct rt6_statistics {
+काष्ठा rt6_statistics अणु
 	__u32		fib_nodes;		/* all fib6 nodes */
-	__u32		fib_route_nodes;	/* intermediate nodes */
+	__u32		fib_route_nodes;	/* पूर्णांकermediate nodes */
 	__u32		fib_rt_entries;		/* rt entries in fib table */
 	__u32		fib_rt_cache;		/* cached rt entries in exception table */
 	__u32		fib_discarded_routes;	/* total number of routes delete */
 
-	/* The following stats are not protected by any lock */
+	/* The following stats are not रक्षित by any lock */
 	atomic_t	fib_rt_alloc;		/* total number of routes alloced */
 	atomic_t	fib_rt_uncache;		/* rt entries in uncached list */
-};
+पूर्ण;
 
-#define RTN_TL_ROOT	0x0001
-#define RTN_ROOT	0x0002		/* tree root node		*/
-#define RTN_RTINFO	0x0004		/* node with valid routing info	*/
+#घोषणा RTN_TL_ROOT	0x0001
+#घोषणा RTN_ROOT	0x0002		/* tree root node		*/
+#घोषणा RTN_RTINFO	0x0004		/* node with valid routing info	*/
 
 /*
  *	priority levels (or metrics)
@@ -381,271 +382,271 @@ struct rt6_statistics {
  */
 
 
-struct fib6_table {
-	struct hlist_node	tb6_hlist;
+काष्ठा fib6_table अणु
+	काष्ठा hlist_node	tb6_hlist;
 	u32			tb6_id;
 	spinlock_t		tb6_lock;
-	struct fib6_node	tb6_root;
-	struct inet_peer_base	tb6_peers;
-	unsigned int		flags;
-	unsigned int		fib_seq;
-#define RT6_TABLE_HAS_DFLT_ROUTER	BIT(0)
-};
+	काष्ठा fib6_node	tb6_root;
+	काष्ठा inet_peer_base	tb6_peers;
+	अचिन्हित पूर्णांक		flags;
+	अचिन्हित पूर्णांक		fib_seq;
+#घोषणा RT6_TABLE_HAS_DFLT_ROUTER	BIT(0)
+पूर्ण;
 
-#define RT6_TABLE_UNSPEC	RT_TABLE_UNSPEC
-#define RT6_TABLE_MAIN		RT_TABLE_MAIN
-#define RT6_TABLE_DFLT		RT6_TABLE_MAIN
-#define RT6_TABLE_INFO		RT6_TABLE_MAIN
-#define RT6_TABLE_PREFIX	RT6_TABLE_MAIN
+#घोषणा RT6_TABLE_UNSPEC	RT_TABLE_UNSPEC
+#घोषणा RT6_TABLE_MAIN		RT_TABLE_MAIN
+#घोषणा RT6_TABLE_DFLT		RT6_TABLE_MAIN
+#घोषणा RT6_TABLE_INFO		RT6_TABLE_MAIN
+#घोषणा RT6_TABLE_PREFIX	RT6_TABLE_MAIN
 
-#ifdef CONFIG_IPV6_MULTIPLE_TABLES
-#define FIB6_TABLE_MIN		1
-#define FIB6_TABLE_MAX		RT_TABLE_MAX
-#define RT6_TABLE_LOCAL		RT_TABLE_LOCAL
-#else
-#define FIB6_TABLE_MIN		RT_TABLE_MAIN
-#define FIB6_TABLE_MAX		FIB6_TABLE_MIN
-#define RT6_TABLE_LOCAL		RT6_TABLE_MAIN
-#endif
+#अगर_घोषित CONFIG_IPV6_MULTIPLE_TABLES
+#घोषणा FIB6_TABLE_MIN		1
+#घोषणा FIB6_TABLE_MAX		RT_TABLE_MAX
+#घोषणा RT6_TABLE_LOCAL		RT_TABLE_LOCAL
+#अन्यथा
+#घोषणा FIB6_TABLE_MIN		RT_TABLE_MAIN
+#घोषणा FIB6_TABLE_MAX		FIB6_TABLE_MIN
+#घोषणा RT6_TABLE_LOCAL		RT6_TABLE_MAIN
+#पूर्ण_अगर
 
-typedef struct rt6_info *(*pol_lookup_t)(struct net *,
-					 struct fib6_table *,
-					 struct flowi6 *,
-					 const struct sk_buff *, int);
+प्रकार काष्ठा rt6_info *(*pol_lookup_t)(काष्ठा net *,
+					 काष्ठा fib6_table *,
+					 काष्ठा flowi6 *,
+					 स्थिर काष्ठा sk_buff *, पूर्णांक);
 
-struct fib6_entry_notifier_info {
-	struct fib_notifier_info info; /* must be first */
-	struct fib6_info *rt;
-	unsigned int nsiblings;
-};
+काष्ठा fib6_entry_notअगरier_info अणु
+	काष्ठा fib_notअगरier_info info; /* must be first */
+	काष्ठा fib6_info *rt;
+	अचिन्हित पूर्णांक nsiblings;
+पूर्ण;
 
 /*
  *	exported functions
  */
 
-struct fib6_table *fib6_get_table(struct net *net, u32 id);
-struct fib6_table *fib6_new_table(struct net *net, u32 id);
-struct dst_entry *fib6_rule_lookup(struct net *net, struct flowi6 *fl6,
-				   const struct sk_buff *skb,
-				   int flags, pol_lookup_t lookup);
+काष्ठा fib6_table *fib6_get_table(काष्ठा net *net, u32 id);
+काष्ठा fib6_table *fib6_new_table(काष्ठा net *net, u32 id);
+काष्ठा dst_entry *fib6_rule_lookup(काष्ठा net *net, काष्ठा flowi6 *fl6,
+				   स्थिर काष्ठा sk_buff *skb,
+				   पूर्णांक flags, pol_lookup_t lookup);
 
-/* called with rcu lock held; can return error pointer
+/* called with rcu lock held; can वापस error poपूर्णांकer
  * caller needs to select path
  */
-int fib6_lookup(struct net *net, int oif, struct flowi6 *fl6,
-		struct fib6_result *res, int flags);
+पूर्णांक fib6_lookup(काष्ठा net *net, पूर्णांक oअगर, काष्ठा flowi6 *fl6,
+		काष्ठा fib6_result *res, पूर्णांक flags);
 
 /* called with rcu lock held; caller needs to select path */
-int fib6_table_lookup(struct net *net, struct fib6_table *table,
-		      int oif, struct flowi6 *fl6, struct fib6_result *res,
-		      int strict);
+पूर्णांक fib6_table_lookup(काष्ठा net *net, काष्ठा fib6_table *table,
+		      पूर्णांक oअगर, काष्ठा flowi6 *fl6, काष्ठा fib6_result *res,
+		      पूर्णांक strict);
 
-void fib6_select_path(const struct net *net, struct fib6_result *res,
-		      struct flowi6 *fl6, int oif, bool have_oif_match,
-		      const struct sk_buff *skb, int strict);
-struct fib6_node *fib6_node_lookup(struct fib6_node *root,
-				   const struct in6_addr *daddr,
-				   const struct in6_addr *saddr);
+व्योम fib6_select_path(स्थिर काष्ठा net *net, काष्ठा fib6_result *res,
+		      काष्ठा flowi6 *fl6, पूर्णांक oअगर, bool have_oअगर_match,
+		      स्थिर काष्ठा sk_buff *skb, पूर्णांक strict);
+काष्ठा fib6_node *fib6_node_lookup(काष्ठा fib6_node *root,
+				   स्थिर काष्ठा in6_addr *daddr,
+				   स्थिर काष्ठा in6_addr *saddr);
 
-struct fib6_node *fib6_locate(struct fib6_node *root,
-			      const struct in6_addr *daddr, int dst_len,
-			      const struct in6_addr *saddr, int src_len,
+काष्ठा fib6_node *fib6_locate(काष्ठा fib6_node *root,
+			      स्थिर काष्ठा in6_addr *daddr, पूर्णांक dst_len,
+			      स्थिर काष्ठा in6_addr *saddr, पूर्णांक src_len,
 			      bool exact_match);
 
-void fib6_clean_all(struct net *net, int (*func)(struct fib6_info *, void *arg),
-		    void *arg);
-void fib6_clean_all_skip_notify(struct net *net,
-				int (*func)(struct fib6_info *, void *arg),
-				void *arg);
+व्योम fib6_clean_all(काष्ठा net *net, पूर्णांक (*func)(काष्ठा fib6_info *, व्योम *arg),
+		    व्योम *arg);
+व्योम fib6_clean_all_skip_notअगरy(काष्ठा net *net,
+				पूर्णांक (*func)(काष्ठा fib6_info *, व्योम *arg),
+				व्योम *arg);
 
-int fib6_add(struct fib6_node *root, struct fib6_info *rt,
-	     struct nl_info *info, struct netlink_ext_ack *extack);
-int fib6_del(struct fib6_info *rt, struct nl_info *info);
+पूर्णांक fib6_add(काष्ठा fib6_node *root, काष्ठा fib6_info *rt,
+	     काष्ठा nl_info *info, काष्ठा netlink_ext_ack *extack);
+पूर्णांक fib6_del(काष्ठा fib6_info *rt, काष्ठा nl_info *info);
 
-static inline
-void rt6_get_prefsrc(const struct rt6_info *rt, struct in6_addr *addr)
-{
-	const struct fib6_info *from;
+अटल अंतरभूत
+व्योम rt6_get_prefsrc(स्थिर काष्ठा rt6_info *rt, काष्ठा in6_addr *addr)
+अणु
+	स्थिर काष्ठा fib6_info *from;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	from = rcu_dereference(rt->from);
-	if (from) {
+	अगर (from) अणु
 		*addr = from->fib6_prefsrc.addr;
-	} else {
-		struct in6_addr in6_zero = {};
+	पूर्ण अन्यथा अणु
+		काष्ठा in6_addr in6_zero = अणुपूर्ण;
 
 		*addr = in6_zero;
-	}
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-int fib6_nh_init(struct net *net, struct fib6_nh *fib6_nh,
-		 struct fib6_config *cfg, gfp_t gfp_flags,
-		 struct netlink_ext_ack *extack);
-void fib6_nh_release(struct fib6_nh *fib6_nh);
+पूर्णांक fib6_nh_init(काष्ठा net *net, काष्ठा fib6_nh *fib6_nh,
+		 काष्ठा fib6_config *cfg, gfp_t gfp_flags,
+		 काष्ठा netlink_ext_ack *extack);
+व्योम fib6_nh_release(काष्ठा fib6_nh *fib6_nh);
 
-int call_fib6_entry_notifiers(struct net *net,
-			      enum fib_event_type event_type,
-			      struct fib6_info *rt,
-			      struct netlink_ext_ack *extack);
-int call_fib6_multipath_entry_notifiers(struct net *net,
-					enum fib_event_type event_type,
-					struct fib6_info *rt,
-					unsigned int nsiblings,
-					struct netlink_ext_ack *extack);
-int call_fib6_entry_notifiers_replace(struct net *net, struct fib6_info *rt);
-void fib6_rt_update(struct net *net, struct fib6_info *rt,
-		    struct nl_info *info);
-void inet6_rt_notify(int event, struct fib6_info *rt, struct nl_info *info,
-		     unsigned int flags);
+पूर्णांक call_fib6_entry_notअगरiers(काष्ठा net *net,
+			      क्रमागत fib_event_type event_type,
+			      काष्ठा fib6_info *rt,
+			      काष्ठा netlink_ext_ack *extack);
+पूर्णांक call_fib6_multipath_entry_notअगरiers(काष्ठा net *net,
+					क्रमागत fib_event_type event_type,
+					काष्ठा fib6_info *rt,
+					अचिन्हित पूर्णांक nsiblings,
+					काष्ठा netlink_ext_ack *extack);
+पूर्णांक call_fib6_entry_notअगरiers_replace(काष्ठा net *net, काष्ठा fib6_info *rt);
+व्योम fib6_rt_update(काष्ठा net *net, काष्ठा fib6_info *rt,
+		    काष्ठा nl_info *info);
+व्योम inet6_rt_notअगरy(पूर्णांक event, काष्ठा fib6_info *rt, काष्ठा nl_info *info,
+		     अचिन्हित पूर्णांक flags);
 
-void fib6_run_gc(unsigned long expires, struct net *net, bool force);
+व्योम fib6_run_gc(अचिन्हित दीर्घ expires, काष्ठा net *net, bool क्रमce);
 
-void fib6_gc_cleanup(void);
+व्योम fib6_gc_cleanup(व्योम);
 
-int fib6_init(void);
+पूर्णांक fib6_init(व्योम);
 
-struct ipv6_route_iter {
-	struct seq_net_private p;
-	struct fib6_walker w;
+काष्ठा ipv6_route_iter अणु
+	काष्ठा seq_net_निजी p;
+	काष्ठा fib6_walker w;
 	loff_t skip;
-	struct fib6_table *tbl;
-	int sernum;
-};
+	काष्ठा fib6_table *tbl;
+	पूर्णांक sernum;
+पूर्ण;
 
-extern const struct seq_operations ipv6_route_seq_ops;
+बाह्य स्थिर काष्ठा seq_operations ipv6_route_seq_ops;
 
-int call_fib6_notifier(struct notifier_block *nb,
-		       enum fib_event_type event_type,
-		       struct fib_notifier_info *info);
-int call_fib6_notifiers(struct net *net, enum fib_event_type event_type,
-			struct fib_notifier_info *info);
+पूर्णांक call_fib6_notअगरier(काष्ठा notअगरier_block *nb,
+		       क्रमागत fib_event_type event_type,
+		       काष्ठा fib_notअगरier_info *info);
+पूर्णांक call_fib6_notअगरiers(काष्ठा net *net, क्रमागत fib_event_type event_type,
+			काष्ठा fib_notअगरier_info *info);
 
-int __net_init fib6_notifier_init(struct net *net);
-void __net_exit fib6_notifier_exit(struct net *net);
+पूर्णांक __net_init fib6_notअगरier_init(काष्ठा net *net);
+व्योम __net_निकास fib6_notअगरier_निकास(काष्ठा net *net);
 
-unsigned int fib6_tables_seq_read(struct net *net);
-int fib6_tables_dump(struct net *net, struct notifier_block *nb,
-		     struct netlink_ext_ack *extack);
+अचिन्हित पूर्णांक fib6_tables_seq_पढ़ो(काष्ठा net *net);
+पूर्णांक fib6_tables_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+		     काष्ठा netlink_ext_ack *extack);
 
-void fib6_update_sernum(struct net *net, struct fib6_info *rt);
-void fib6_update_sernum_upto_root(struct net *net, struct fib6_info *rt);
-void fib6_update_sernum_stub(struct net *net, struct fib6_info *f6i);
+व्योम fib6_update_sernum(काष्ठा net *net, काष्ठा fib6_info *rt);
+व्योम fib6_update_sernum_upto_root(काष्ठा net *net, काष्ठा fib6_info *rt);
+व्योम fib6_update_sernum_stub(काष्ठा net *net, काष्ठा fib6_info *f6i);
 
-void fib6_metric_set(struct fib6_info *f6i, int metric, u32 val);
-static inline bool fib6_metric_locked(struct fib6_info *f6i, int metric)
-{
-	return !!(f6i->fib6_metrics->metrics[RTAX_LOCK - 1] & (1 << metric));
-}
-void fib6_info_hw_flags_set(struct net *net, struct fib6_info *f6i,
+व्योम fib6_metric_set(काष्ठा fib6_info *f6i, पूर्णांक metric, u32 val);
+अटल अंतरभूत bool fib6_metric_locked(काष्ठा fib6_info *f6i, पूर्णांक metric)
+अणु
+	वापस !!(f6i->fib6_metrics->metrics[RTAX_LOCK - 1] & (1 << metric));
+पूर्ण
+व्योम fib6_info_hw_flags_set(काष्ठा net *net, काष्ठा fib6_info *f6i,
 			    bool offload, bool trap, bool offload_failed);
 
-#if IS_BUILTIN(CONFIG_IPV6) && defined(CONFIG_BPF_SYSCALL)
-struct bpf_iter__ipv6_route {
-	__bpf_md_ptr(struct bpf_iter_meta *, meta);
-	__bpf_md_ptr(struct fib6_info *, rt);
-};
-#endif
+#अगर IS_BUILTIN(CONFIG_IPV6) && defined(CONFIG_BPF_SYSCALL)
+काष्ठा bpf_iter__ipv6_route अणु
+	__bpf_md_ptr(काष्ठा bpf_iter_meta *, meta);
+	__bpf_md_ptr(काष्ठा fib6_info *, rt);
+पूर्ण;
+#पूर्ण_अगर
 
-INDIRECT_CALLABLE_DECLARE(struct rt6_info *ip6_pol_route_output(struct net *net,
-					     struct fib6_table *table,
-					     struct flowi6 *fl6,
-					     const struct sk_buff *skb,
-					     int flags));
-INDIRECT_CALLABLE_DECLARE(struct rt6_info *ip6_pol_route_input(struct net *net,
-					     struct fib6_table *table,
-					     struct flowi6 *fl6,
-					     const struct sk_buff *skb,
-					     int flags));
-INDIRECT_CALLABLE_DECLARE(struct rt6_info *__ip6_route_redirect(struct net *net,
-					     struct fib6_table *table,
-					     struct flowi6 *fl6,
-					     const struct sk_buff *skb,
-					     int flags));
-INDIRECT_CALLABLE_DECLARE(struct rt6_info *ip6_pol_route_lookup(struct net *net,
-					     struct fib6_table *table,
-					     struct flowi6 *fl6,
-					     const struct sk_buff *skb,
-					     int flags));
-static inline struct rt6_info *pol_lookup_func(pol_lookup_t lookup,
-						struct net *net,
-						struct fib6_table *table,
-						struct flowi6 *fl6,
-						const struct sk_buff *skb,
-						int flags)
-{
-	return INDIRECT_CALL_4(lookup,
+INसूचीECT_CALLABLE_DECLARE(काष्ठा rt6_info *ip6_pol_route_output(काष्ठा net *net,
+					     काष्ठा fib6_table *table,
+					     काष्ठा flowi6 *fl6,
+					     स्थिर काष्ठा sk_buff *skb,
+					     पूर्णांक flags));
+INसूचीECT_CALLABLE_DECLARE(काष्ठा rt6_info *ip6_pol_route_input(काष्ठा net *net,
+					     काष्ठा fib6_table *table,
+					     काष्ठा flowi6 *fl6,
+					     स्थिर काष्ठा sk_buff *skb,
+					     पूर्णांक flags));
+INसूचीECT_CALLABLE_DECLARE(काष्ठा rt6_info *__ip6_route_redirect(काष्ठा net *net,
+					     काष्ठा fib6_table *table,
+					     काष्ठा flowi6 *fl6,
+					     स्थिर काष्ठा sk_buff *skb,
+					     पूर्णांक flags));
+INसूचीECT_CALLABLE_DECLARE(काष्ठा rt6_info *ip6_pol_route_lookup(काष्ठा net *net,
+					     काष्ठा fib6_table *table,
+					     काष्ठा flowi6 *fl6,
+					     स्थिर काष्ठा sk_buff *skb,
+					     पूर्णांक flags));
+अटल अंतरभूत काष्ठा rt6_info *pol_lookup_func(pol_lookup_t lookup,
+						काष्ठा net *net,
+						काष्ठा fib6_table *table,
+						काष्ठा flowi6 *fl6,
+						स्थिर काष्ठा sk_buff *skb,
+						पूर्णांक flags)
+अणु
+	वापस INसूचीECT_CALL_4(lookup,
 			       ip6_pol_route_output,
 			       ip6_pol_route_input,
 			       ip6_pol_route_lookup,
 			       __ip6_route_redirect,
 			       net, table, fl6, skb, flags);
-}
+पूर्ण
 
-#ifdef CONFIG_IPV6_MULTIPLE_TABLES
-static inline bool fib6_has_custom_rules(const struct net *net)
-{
-	return net->ipv6.fib6_has_custom_rules;
-}
+#अगर_घोषित CONFIG_IPV6_MULTIPLE_TABLES
+अटल अंतरभूत bool fib6_has_custom_rules(स्थिर काष्ठा net *net)
+अणु
+	वापस net->ipv6.fib6_has_custom_rules;
+पूर्ण
 
-int fib6_rules_init(void);
-void fib6_rules_cleanup(void);
-bool fib6_rule_default(const struct fib_rule *rule);
-int fib6_rules_dump(struct net *net, struct notifier_block *nb,
-		    struct netlink_ext_ack *extack);
-unsigned int fib6_rules_seq_read(struct net *net);
+पूर्णांक fib6_rules_init(व्योम);
+व्योम fib6_rules_cleanup(व्योम);
+bool fib6_rule_शेष(स्थिर काष्ठा fib_rule *rule);
+पूर्णांक fib6_rules_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+		    काष्ठा netlink_ext_ack *extack);
+अचिन्हित पूर्णांक fib6_rules_seq_पढ़ो(काष्ठा net *net);
 
-static inline bool fib6_rules_early_flow_dissect(struct net *net,
-						 struct sk_buff *skb,
-						 struct flowi6 *fl6,
-						 struct flow_keys *flkeys)
-{
-	unsigned int flag = FLOW_DISSECTOR_F_STOP_AT_ENCAP;
+अटल अंतरभूत bool fib6_rules_early_flow_dissect(काष्ठा net *net,
+						 काष्ठा sk_buff *skb,
+						 काष्ठा flowi6 *fl6,
+						 काष्ठा flow_keys *flkeys)
+अणु
+	अचिन्हित पूर्णांक flag = FLOW_DISSECTOR_F_STOP_AT_ENCAP;
 
-	if (!net->ipv6.fib6_rules_require_fldissect)
-		return false;
+	अगर (!net->ipv6.fib6_rules_require_fldissect)
+		वापस false;
 
 	skb_flow_dissect_flow_keys(skb, flkeys, flag);
 	fl6->fl6_sport = flkeys->ports.src;
 	fl6->fl6_dport = flkeys->ports.dst;
 	fl6->flowi6_proto = flkeys->basic.ip_proto;
 
-	return true;
-}
-#else
-static inline bool fib6_has_custom_rules(const struct net *net)
-{
-	return false;
-}
-static inline int               fib6_rules_init(void)
-{
-	return 0;
-}
-static inline void              fib6_rules_cleanup(void)
-{
-	return ;
-}
-static inline bool fib6_rule_default(const struct fib_rule *rule)
-{
-	return true;
-}
-static inline int fib6_rules_dump(struct net *net, struct notifier_block *nb,
-				  struct netlink_ext_ack *extack)
-{
-	return 0;
-}
-static inline unsigned int fib6_rules_seq_read(struct net *net)
-{
-	return 0;
-}
-static inline bool fib6_rules_early_flow_dissect(struct net *net,
-						 struct sk_buff *skb,
-						 struct flowi6 *fl6,
-						 struct flow_keys *flkeys)
-{
-	return false;
-}
-#endif
-#endif
+	वापस true;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool fib6_has_custom_rules(स्थिर काष्ठा net *net)
+अणु
+	वापस false;
+पूर्ण
+अटल अंतरभूत पूर्णांक               fib6_rules_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत व्योम              fib6_rules_cleanup(व्योम)
+अणु
+	वापस ;
+पूर्ण
+अटल अंतरभूत bool fib6_rule_शेष(स्थिर काष्ठा fib_rule *rule)
+अणु
+	वापस true;
+पूर्ण
+अटल अंतरभूत पूर्णांक fib6_rules_dump(काष्ठा net *net, काष्ठा notअगरier_block *nb,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत अचिन्हित पूर्णांक fib6_rules_seq_पढ़ो(काष्ठा net *net)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत bool fib6_rules_early_flow_dissect(काष्ठा net *net,
+						 काष्ठा sk_buff *skb,
+						 काष्ठा flowi6 *fl6,
+						 काष्ठा flow_keys *flkeys)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
+#पूर्ण_अगर

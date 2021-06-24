@@ -1,59 +1,60 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- *  Silicon Labs C2 port Linux support
+ *  Silicon Lअसल C2 port Linux support
  *
- *  Copyright (c) 2007 Rodolfo Giometti <giometti@linux.it>
+ *  Copyright (c) 2007 Roकरोlfo Giometti <giometti@linux.it>
  *  Copyright (c) 2007 Eurotech S.p.A. <info@eurotech.it>
  */
 
-#define C2PORT_NAME_LEN			32
+#घोषणा C2PORT_NAME_LEN			32
 
-struct device;
+काष्ठा device;
 
 /*
- * C2 port basic structs
+ * C2 port basic काष्ठाs
  */
 
-/* Main struct */
-struct c2port_ops;
-struct c2port_device {
-	unsigned int access:1;
-	unsigned int flash_access:1;
+/* Main काष्ठा */
+काष्ठा c2port_ops;
+काष्ठा c2port_device अणु
+	अचिन्हित पूर्णांक access:1;
+	अचिन्हित पूर्णांक flash_access:1;
 
-	int id;
-	char name[C2PORT_NAME_LEN];
-	struct c2port_ops *ops;
-	struct mutex mutex;		/* prevent races during read/write */
+	पूर्णांक id;
+	अक्षर name[C2PORT_NAME_LEN];
+	काष्ठा c2port_ops *ops;
+	काष्ठा mutex mutex;		/* prevent races during पढ़ो/ग_लिखो */
 
-	struct device *dev;
+	काष्ठा device *dev;
 
-	void *private_data;
-};
+	व्योम *निजी_data;
+पूर्ण;
 
 /* Basic operations */
-struct c2port_ops {
+काष्ठा c2port_ops अणु
 	/* Flash layout */
-	unsigned short block_size;	/* flash block size in bytes */
-	unsigned short blocks_num;	/* flash blocks number */
+	अचिन्हित लघु block_size;	/* flash block size in bytes */
+	अचिन्हित लघु blocks_num;	/* flash blocks number */
 
 	/* Enable or disable the access to C2 port */
-	void (*access)(struct c2port_device *dev, int status);
+	व्योम (*access)(काष्ठा c2port_device *dev, पूर्णांक status);
 
 	/* Set C2D data line as input/output */
-	void (*c2d_dir)(struct c2port_device *dev, int dir);
+	व्योम (*c2d_dir)(काष्ठा c2port_device *dev, पूर्णांक dir);
 
-	/* Read/write C2D data line */
-	int (*c2d_get)(struct c2port_device *dev);
-	void (*c2d_set)(struct c2port_device *dev, int status);
+	/* Read/ग_लिखो C2D data line */
+	पूर्णांक (*c2d_get)(काष्ठा c2port_device *dev);
+	व्योम (*c2d_set)(काष्ठा c2port_device *dev, पूर्णांक status);
 
-	/* Write C2CK clock line */
-	void (*c2ck_set)(struct c2port_device *dev, int status);
-};
+	/* Write C2CK घड़ी line */
+	व्योम (*c2ck_set)(काष्ठा c2port_device *dev, पूर्णांक status);
+पूर्ण;
 
 /*
  * Exported functions
  */
 
-extern struct c2port_device *c2port_device_register(char *name,
-					struct c2port_ops *ops, void *devdata);
-extern void c2port_device_unregister(struct c2port_device *dev);
+बाह्य काष्ठा c2port_device *c2port_device_रेजिस्टर(अक्षर *name,
+					काष्ठा c2port_ops *ops, व्योम *devdata);
+बाह्य व्योम c2port_device_unरेजिस्टर(काष्ठा c2port_device *dev);

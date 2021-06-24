@@ -1,14 +1,15 @@
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM netlink
+<शैली गुरु>
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM netlink
 
-#if !defined(_TRACE_NETLINK_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_NETLINK_H
+#अगर !defined(_TRACE_NETLINK_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_NETLINK_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_EVENT(netlink_extack,
 
-	TP_PROTO(const char *msg),
+	TP_PROTO(स्थिर अक्षर *msg),
 
 	TP_ARGS(msg),
 
@@ -20,10 +21,10 @@ TRACE_EVENT(netlink_extack,
 		__assign_str(msg, msg);
 	),
 
-	TP_printk("msg=%s", __get_str(msg))
+	TP_prपूर्णांकk("msg=%s", __get_str(msg))
 );
 
-#endif /* _TRACE_NETLINK_H */
+#पूर्ण_अगर /* _TRACE_NETLINK_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

@@ -1,34 +1,35 @@
-// SPDX-License-Identifier: (GPL-2.0 OR BSD-3-Clause)
-/* gw.c - CAN frame Gateway/Router/Bridge with netlink interface
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR BSD-3-Clause)
+/* gw.c - CAN frame Gateway/Router/Bridge with netlink पूर्णांकerface
  *
  * Copyright (c) 2019 Volkswagen Group Electronic Research
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. Neither the name of Volkswagen nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *    may be used to enकरोrse or promote products derived from this software
+ *    without specअगरic prior written permission.
  *
  * Alternatively, provided that this notice is retained in full, this
  * software may be distributed under the terms of the GNU General
- * Public License ("GPL") version 2, in which case the provisions of the
+ * Public License ("GPL") version 2, in which हाल the provisions of the
  * GPL apply INSTEAD OF those given above.
  *
- * The provided data structures and external interfaces from this code
+ * The provided data काष्ठाures and बाह्यal पूर्णांकerfaces from this code
  * are not restricted to be used by modules with a GPL compatible license.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -39,119 +40,119 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/spinlock.h>
-#include <linux/rcupdate.h>
-#include <linux/rculist.h>
-#include <linux/net.h>
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/skbuff.h>
-#include <linux/can.h>
-#include <linux/can/core.h>
-#include <linux/can/skb.h>
-#include <linux/can/gw.h>
-#include <net/rtnetlink.h>
-#include <net/net_namespace.h>
-#include <net/sock.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/net.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/can.h>
+#समावेश <linux/can/core.h>
+#समावेश <linux/can/skb.h>
+#समावेश <linux/can/gw.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/sock.h>
 
-#define CAN_GW_NAME "can-gw"
+#घोषणा CAN_GW_NAME "can-gw"
 
 MODULE_DESCRIPTION("PF_CAN netlink gateway");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Oliver Hartkopp <oliver.hartkopp@volkswagen.de>");
 MODULE_ALIAS(CAN_GW_NAME);
 
-#define CGW_MIN_HOPS 1
-#define CGW_MAX_HOPS 6
-#define CGW_DEFAULT_HOPS 1
+#घोषणा CGW_MIN_HOPS 1
+#घोषणा CGW_MAX_HOPS 6
+#घोषणा CGW_DEFAULT_HOPS 1
 
-static unsigned int max_hops __read_mostly = CGW_DEFAULT_HOPS;
-module_param(max_hops, uint, 0444);
+अटल अचिन्हित पूर्णांक max_hops __पढ़ो_mostly = CGW_DEFAULT_HOPS;
+module_param(max_hops, uपूर्णांक, 0444);
 MODULE_PARM_DESC(max_hops,
 		 "maximum " CAN_GW_NAME " routing hops for CAN frames "
-		 "(valid values: " __stringify(CGW_MIN_HOPS) "-"
-		 __stringify(CGW_MAX_HOPS) " hops, "
-		 "default: " __stringify(CGW_DEFAULT_HOPS) ")");
+		 "(valid values: " __stringअगरy(CGW_MIN_HOPS) "-"
+		 __stringअगरy(CGW_MAX_HOPS) " hops, "
+		 "default: " __stringअगरy(CGW_DEFAULT_HOPS) ")");
 
-static struct notifier_block notifier;
-static struct kmem_cache *cgw_cache __read_mostly;
+अटल काष्ठा notअगरier_block notअगरier;
+अटल काष्ठा kmem_cache *cgw_cache __पढ़ो_mostly;
 
-/* structure that contains the (on-the-fly) CAN frame modifications */
-struct cf_mod {
-	struct {
-		struct canfd_frame and;
-		struct canfd_frame or;
-		struct canfd_frame xor;
-		struct canfd_frame set;
-	} modframe;
-	struct {
+/* काष्ठाure that contains the (on-the-fly) CAN frame modअगरications */
+काष्ठा cf_mod अणु
+	काष्ठा अणु
+		काष्ठा canfd_frame and;
+		काष्ठा canfd_frame or;
+		काष्ठा canfd_frame xor;
+		काष्ठा canfd_frame set;
+	पूर्ण modframe;
+	काष्ठा अणु
 		u8 and;
 		u8 or;
 		u8 xor;
 		u8 set;
-	} modtype;
-	void (*modfunc[MAX_MODFUNCTIONS])(struct canfd_frame *cf,
-					  struct cf_mod *mod);
+	पूर्ण modtype;
+	व्योम (*modfunc[MAX_MODFUNCTIONS])(काष्ठा canfd_frame *cf,
+					  काष्ठा cf_mod *mod);
 
-	/* CAN frame checksum calculation after CAN frame modifications */
-	struct {
-		struct cgw_csum_xor xor;
-		struct cgw_csum_crc8 crc8;
-	} csum;
-	struct {
-		void (*xor)(struct canfd_frame *cf,
-			    struct cgw_csum_xor *xor);
-		void (*crc8)(struct canfd_frame *cf,
-			     struct cgw_csum_crc8 *crc8);
-	} csumfunc;
+	/* CAN frame checksum calculation after CAN frame modअगरications */
+	काष्ठा अणु
+		काष्ठा cgw_csum_xor xor;
+		काष्ठा cgw_csum_crc8 crc8;
+	पूर्ण csum;
+	काष्ठा अणु
+		व्योम (*xor)(काष्ठा canfd_frame *cf,
+			    काष्ठा cgw_csum_xor *xor);
+		व्योम (*crc8)(काष्ठा canfd_frame *cf,
+			     काष्ठा cgw_csum_crc8 *crc8);
+	पूर्ण csumfunc;
 	u32 uid;
-};
+पूर्ण;
 
-/* So far we just support CAN -> CAN routing and frame modifications.
+/* So far we just support CAN -> CAN routing and frame modअगरications.
  *
- * The internal can_can_gw structure contains data and attributes for
+ * The पूर्णांकernal can_can_gw काष्ठाure contains data and attributes क्रम
  * a CAN -> CAN gateway job.
  */
-struct can_can_gw {
-	struct can_filter filter;
-	int src_idx;
-	int dst_idx;
-};
+काष्ठा can_can_gw अणु
+	काष्ठा can_filter filter;
+	पूर्णांक src_idx;
+	पूर्णांक dst_idx;
+पूर्ण;
 
-/* list entry for CAN gateways jobs */
-struct cgw_job {
-	struct hlist_node list;
-	struct rcu_head rcu;
+/* list entry क्रम CAN gateways jobs */
+काष्ठा cgw_job अणु
+	काष्ठा hlist_node list;
+	काष्ठा rcu_head rcu;
 	u32 handled_frames;
 	u32 dropped_frames;
 	u32 deleted_frames;
-	struct cf_mod mod;
-	union {
+	काष्ठा cf_mod mod;
+	जोड़ अणु
 		/* CAN frame data source */
-		struct net_device *dev;
-	} src;
-	union {
+		काष्ठा net_device *dev;
+	पूर्ण src;
+	जोड़ अणु
 		/* CAN frame data destination */
-		struct net_device *dev;
-	} dst;
-	union {
-		struct can_can_gw ccgw;
+		काष्ठा net_device *dev;
+	पूर्ण dst;
+	जोड़ अणु
+		काष्ठा can_can_gw ccgw;
 		/* tbc */
-	};
+	पूर्ण;
 	u8 gwtype;
 	u8 limit_hops;
 	u16 flags;
-};
+पूर्ण;
 
-/* modification functions that are invoked in the hot path in can_can_gw_rcv */
+/* modअगरication functions that are invoked in the hot path in can_can_gw_rcv */
 
-#define MODFUNC(func, op) static void func(struct canfd_frame *cf, \
-					   struct cf_mod *mod) { op ; }
+#घोषणा MODFUNC(func, op) अटल व्योम func(काष्ठा canfd_frame *cf, \
+					   काष्ठा cf_mod *mod) अणु op ; पूर्ण
 
 MODFUNC(mod_and_id, cf->can_id &= mod->modframe.and.can_id)
 MODFUNC(mod_and_len, cf->len &= mod->modframe.and.len)
@@ -170,938 +171,938 @@ MODFUNC(mod_set_len, cf->len = mod->modframe.set.len)
 MODFUNC(mod_set_flags, cf->flags = mod->modframe.set.flags)
 MODFUNC(mod_set_data, *(u64 *)cf->data = *(u64 *)mod->modframe.set.data)
 
-static void mod_and_fddata(struct canfd_frame *cf, struct cf_mod *mod)
-{
-	int i;
+अटल व्योम mod_and_fddata(काष्ठा canfd_frame *cf, काष्ठा cf_mod *mod)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < CANFD_MAX_DLEN; i += 8)
+	क्रम (i = 0; i < CANFD_MAX_DLEN; i += 8)
 		*(u64 *)(cf->data + i) &= *(u64 *)(mod->modframe.and.data + i);
-}
+पूर्ण
 
-static void mod_or_fddata(struct canfd_frame *cf, struct cf_mod *mod)
-{
-	int i;
+अटल व्योम mod_or_fddata(काष्ठा canfd_frame *cf, काष्ठा cf_mod *mod)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < CANFD_MAX_DLEN; i += 8)
+	क्रम (i = 0; i < CANFD_MAX_DLEN; i += 8)
 		*(u64 *)(cf->data + i) |= *(u64 *)(mod->modframe.or.data + i);
-}
+पूर्ण
 
-static void mod_xor_fddata(struct canfd_frame *cf, struct cf_mod *mod)
-{
-	int i;
+अटल व्योम mod_xor_fddata(काष्ठा canfd_frame *cf, काष्ठा cf_mod *mod)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < CANFD_MAX_DLEN; i += 8)
+	क्रम (i = 0; i < CANFD_MAX_DLEN; i += 8)
 		*(u64 *)(cf->data + i) ^= *(u64 *)(mod->modframe.xor.data + i);
-}
+पूर्ण
 
-static void mod_set_fddata(struct canfd_frame *cf, struct cf_mod *mod)
-{
-	memcpy(cf->data, mod->modframe.set.data, CANFD_MAX_DLEN);
-}
+अटल व्योम mod_set_fddata(काष्ठा canfd_frame *cf, काष्ठा cf_mod *mod)
+अणु
+	स_नकल(cf->data, mod->modframe.set.data, CANFD_MAX_DLEN);
+पूर्ण
 
-/* retrieve valid CC DLC value and store it into 'len' */
-static void mod_retrieve_ccdlc(struct canfd_frame *cf)
-{
-	struct can_frame *ccf = (struct can_frame *)cf;
+/* retrieve valid CC DLC value and store it पूर्णांकo 'len' */
+अटल व्योम mod_retrieve_ccdlc(काष्ठा canfd_frame *cf)
+अणु
+	काष्ठा can_frame *ccf = (काष्ठा can_frame *)cf;
 
-	/* len8_dlc is only valid if len == CAN_MAX_DLEN */
-	if (ccf->len != CAN_MAX_DLEN)
-		return;
+	/* len8_dlc is only valid अगर len == CAN_MAX_DLEN */
+	अगर (ccf->len != CAN_MAX_DLEN)
+		वापस;
 
-	/* do we have a valid len8_dlc value from 9 .. 15 ? */
-	if (ccf->len8_dlc > CAN_MAX_DLEN && ccf->len8_dlc <= CAN_MAX_RAW_DLC)
+	/* करो we have a valid len8_dlc value from 9 .. 15 ? */
+	अगर (ccf->len8_dlc > CAN_MAX_DLEN && ccf->len8_dlc <= CAN_MAX_RAW_DLC)
 		ccf->len = ccf->len8_dlc;
-}
+पूर्ण
 
-/* convert valid CC DLC value in 'len' into struct can_frame elements */
-static void mod_store_ccdlc(struct canfd_frame *cf)
-{
-	struct can_frame *ccf = (struct can_frame *)cf;
+/* convert valid CC DLC value in 'len' पूर्णांकo काष्ठा can_frame elements */
+अटल व्योम mod_store_ccdlc(काष्ठा canfd_frame *cf)
+अणु
+	काष्ठा can_frame *ccf = (काष्ठा can_frame *)cf;
 
 	/* clear potential leftovers */
 	ccf->len8_dlc = 0;
 
 	/* plain data length 0 .. 8 - that was easy */
-	if (ccf->len <= CAN_MAX_DLEN)
-		return;
+	अगर (ccf->len <= CAN_MAX_DLEN)
+		वापस;
 
 	/* potentially broken values are caught in can_can_gw_rcv() */
-	if (ccf->len > CAN_MAX_RAW_DLC)
-		return;
+	अगर (ccf->len > CAN_MAX_RAW_DLC)
+		वापस;
 
 	/* we have a valid dlc value from 9 .. 15 in ccf->len */
 	ccf->len8_dlc = ccf->len;
 	ccf->len = CAN_MAX_DLEN;
-}
+पूर्ण
 
-static void mod_and_ccdlc(struct canfd_frame *cf, struct cf_mod *mod)
-{
+अटल व्योम mod_and_ccdlc(काष्ठा canfd_frame *cf, काष्ठा cf_mod *mod)
+अणु
 	mod_retrieve_ccdlc(cf);
 	mod_and_len(cf, mod);
 	mod_store_ccdlc(cf);
-}
+पूर्ण
 
-static void mod_or_ccdlc(struct canfd_frame *cf, struct cf_mod *mod)
-{
+अटल व्योम mod_or_ccdlc(काष्ठा canfd_frame *cf, काष्ठा cf_mod *mod)
+अणु
 	mod_retrieve_ccdlc(cf);
 	mod_or_len(cf, mod);
 	mod_store_ccdlc(cf);
-}
+पूर्ण
 
-static void mod_xor_ccdlc(struct canfd_frame *cf, struct cf_mod *mod)
-{
+अटल व्योम mod_xor_ccdlc(काष्ठा canfd_frame *cf, काष्ठा cf_mod *mod)
+अणु
 	mod_retrieve_ccdlc(cf);
 	mod_xor_len(cf, mod);
 	mod_store_ccdlc(cf);
-}
+पूर्ण
 
-static void mod_set_ccdlc(struct canfd_frame *cf, struct cf_mod *mod)
-{
+अटल व्योम mod_set_ccdlc(काष्ठा canfd_frame *cf, काष्ठा cf_mod *mod)
+अणु
 	mod_set_len(cf, mod);
 	mod_store_ccdlc(cf);
-}
+पूर्ण
 
-static void canframecpy(struct canfd_frame *dst, struct can_frame *src)
-{
-	/* Copy the struct members separately to ensure that no uninitialized
-	 * data are copied in the 3 bytes hole of the struct. This is needed
-	 * to make easy compares of the data in the struct cf_mod.
+अटल व्योम canframecpy(काष्ठा canfd_frame *dst, काष्ठा can_frame *src)
+अणु
+	/* Copy the काष्ठा members separately to ensure that no uninitialized
+	 * data are copied in the 3 bytes hole of the काष्ठा. This is needed
+	 * to make easy compares of the data in the काष्ठा cf_mod.
 	 */
 
 	dst->can_id = src->can_id;
 	dst->len = src->len;
 	*(u64 *)dst->data = *(u64 *)src->data;
-}
+पूर्ण
 
-static void canfdframecpy(struct canfd_frame *dst, struct canfd_frame *src)
-{
-	/* Copy the struct members separately to ensure that no uninitialized
-	 * data are copied in the 2 bytes hole of the struct. This is needed
-	 * to make easy compares of the data in the struct cf_mod.
+अटल व्योम canfdframecpy(काष्ठा canfd_frame *dst, काष्ठा canfd_frame *src)
+अणु
+	/* Copy the काष्ठा members separately to ensure that no uninitialized
+	 * data are copied in the 2 bytes hole of the काष्ठा. This is needed
+	 * to make easy compares of the data in the काष्ठा cf_mod.
 	 */
 
 	dst->can_id = src->can_id;
 	dst->flags = src->flags;
 	dst->len = src->len;
-	memcpy(dst->data, src->data, CANFD_MAX_DLEN);
-}
+	स_नकल(dst->data, src->data, CANFD_MAX_DLEN);
+पूर्ण
 
-static int cgw_chk_csum_parms(s8 fr, s8 to, s8 re, struct rtcanmsg *r)
-{
+अटल पूर्णांक cgw_chk_csum_parms(s8 fr, s8 to, s8 re, काष्ठा rtcanmsg *r)
+अणु
 	s8 dlen = CAN_MAX_DLEN;
 
-	if (r->flags & CGW_FLAGS_CAN_FD)
+	अगर (r->flags & CGW_FLAGS_CAN_FD)
 		dlen = CANFD_MAX_DLEN;
 
-	/* absolute dlc values 0 .. 7 => 0 .. 7, e.g. data [0]
+	/* असलolute dlc values 0 .. 7 => 0 .. 7, e.g. data [0]
 	 * relative to received dlc -1 .. -8 :
-	 * e.g. for received dlc = 8
+	 * e.g. क्रम received dlc = 8
 	 * -1 => index = 7 (data[7])
 	 * -3 => index = 5 (data[5])
 	 * -8 => index = 0 (data[0])
 	 */
 
-	if (fr >= -dlen && fr < dlen &&
+	अगर (fr >= -dlen && fr < dlen &&
 	    to >= -dlen && to < dlen &&
 	    re >= -dlen && re < dlen)
-		return 0;
-	else
-		return -EINVAL;
-}
+		वापस 0;
+	अन्यथा
+		वापस -EINVAL;
+पूर्ण
 
-static inline int calc_idx(int idx, int rx_len)
-{
-	if (idx < 0)
-		return rx_len + idx;
-	else
-		return idx;
-}
+अटल अंतरभूत पूर्णांक calc_idx(पूर्णांक idx, पूर्णांक rx_len)
+अणु
+	अगर (idx < 0)
+		वापस rx_len + idx;
+	अन्यथा
+		वापस idx;
+पूर्ण
 
-static void cgw_csum_xor_rel(struct canfd_frame *cf, struct cgw_csum_xor *xor)
-{
-	int from = calc_idx(xor->from_idx, cf->len);
-	int to = calc_idx(xor->to_idx, cf->len);
-	int res = calc_idx(xor->result_idx, cf->len);
+अटल व्योम cgw_csum_xor_rel(काष्ठा canfd_frame *cf, काष्ठा cgw_csum_xor *xor)
+अणु
+	पूर्णांक from = calc_idx(xor->from_idx, cf->len);
+	पूर्णांक to = calc_idx(xor->to_idx, cf->len);
+	पूर्णांक res = calc_idx(xor->result_idx, cf->len);
 	u8 val = xor->init_xor_val;
-	int i;
+	पूर्णांक i;
 
-	if (from < 0 || to < 0 || res < 0)
-		return;
+	अगर (from < 0 || to < 0 || res < 0)
+		वापस;
 
-	if (from <= to) {
-		for (i = from; i <= to; i++)
+	अगर (from <= to) अणु
+		क्रम (i = from; i <= to; i++)
 			val ^= cf->data[i];
-	} else {
-		for (i = from; i >= to; i--)
+	पूर्ण अन्यथा अणु
+		क्रम (i = from; i >= to; i--)
 			val ^= cf->data[i];
-	}
+	पूर्ण
 
 	cf->data[res] = val;
-}
+पूर्ण
 
-static void cgw_csum_xor_pos(struct canfd_frame *cf, struct cgw_csum_xor *xor)
-{
+अटल व्योम cgw_csum_xor_pos(काष्ठा canfd_frame *cf, काष्ठा cgw_csum_xor *xor)
+अणु
 	u8 val = xor->init_xor_val;
-	int i;
+	पूर्णांक i;
 
-	for (i = xor->from_idx; i <= xor->to_idx; i++)
+	क्रम (i = xor->from_idx; i <= xor->to_idx; i++)
 		val ^= cf->data[i];
 
 	cf->data[xor->result_idx] = val;
-}
+पूर्ण
 
-static void cgw_csum_xor_neg(struct canfd_frame *cf, struct cgw_csum_xor *xor)
-{
+अटल व्योम cgw_csum_xor_neg(काष्ठा canfd_frame *cf, काष्ठा cgw_csum_xor *xor)
+अणु
 	u8 val = xor->init_xor_val;
-	int i;
+	पूर्णांक i;
 
-	for (i = xor->from_idx; i >= xor->to_idx; i--)
+	क्रम (i = xor->from_idx; i >= xor->to_idx; i--)
 		val ^= cf->data[i];
 
 	cf->data[xor->result_idx] = val;
-}
+पूर्ण
 
-static void cgw_csum_crc8_rel(struct canfd_frame *cf,
-			      struct cgw_csum_crc8 *crc8)
-{
-	int from = calc_idx(crc8->from_idx, cf->len);
-	int to = calc_idx(crc8->to_idx, cf->len);
-	int res = calc_idx(crc8->result_idx, cf->len);
+अटल व्योम cgw_csum_crc8_rel(काष्ठा canfd_frame *cf,
+			      काष्ठा cgw_csum_crc8 *crc8)
+अणु
+	पूर्णांक from = calc_idx(crc8->from_idx, cf->len);
+	पूर्णांक to = calc_idx(crc8->to_idx, cf->len);
+	पूर्णांक res = calc_idx(crc8->result_idx, cf->len);
 	u8 crc = crc8->init_crc_val;
-	int i;
+	पूर्णांक i;
 
-	if (from < 0 || to < 0 || res < 0)
-		return;
+	अगर (from < 0 || to < 0 || res < 0)
+		वापस;
 
-	if (from <= to) {
-		for (i = crc8->from_idx; i <= crc8->to_idx; i++)
+	अगर (from <= to) अणु
+		क्रम (i = crc8->from_idx; i <= crc8->to_idx; i++)
 			crc = crc8->crctab[crc ^ cf->data[i]];
-	} else {
-		for (i = crc8->from_idx; i >= crc8->to_idx; i--)
+	पूर्ण अन्यथा अणु
+		क्रम (i = crc8->from_idx; i >= crc8->to_idx; i--)
 			crc = crc8->crctab[crc ^ cf->data[i]];
-	}
+	पूर्ण
 
-	switch (crc8->profile) {
-	case CGW_CRC8PRF_1U8:
+	चयन (crc8->profile) अणु
+	हाल CGW_CRC8PRF_1U8:
 		crc = crc8->crctab[crc ^ crc8->profile_data[0]];
-		break;
+		अवरोध;
 
-	case  CGW_CRC8PRF_16U8:
+	हाल  CGW_CRC8PRF_16U8:
 		crc = crc8->crctab[crc ^ crc8->profile_data[cf->data[1] & 0xF]];
-		break;
+		अवरोध;
 
-	case CGW_CRC8PRF_SFFID_XOR:
+	हाल CGW_CRC8PRF_SFFID_XOR:
 		crc = crc8->crctab[crc ^ (cf->can_id & 0xFF) ^
 				   (cf->can_id >> 8 & 0xFF)];
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cf->data[crc8->result_idx] = crc ^ crc8->final_xor_val;
-}
+पूर्ण
 
-static void cgw_csum_crc8_pos(struct canfd_frame *cf,
-			      struct cgw_csum_crc8 *crc8)
-{
+अटल व्योम cgw_csum_crc8_pos(काष्ठा canfd_frame *cf,
+			      काष्ठा cgw_csum_crc8 *crc8)
+अणु
 	u8 crc = crc8->init_crc_val;
-	int i;
+	पूर्णांक i;
 
-	for (i = crc8->from_idx; i <= crc8->to_idx; i++)
+	क्रम (i = crc8->from_idx; i <= crc8->to_idx; i++)
 		crc = crc8->crctab[crc ^ cf->data[i]];
 
-	switch (crc8->profile) {
-	case CGW_CRC8PRF_1U8:
+	चयन (crc8->profile) अणु
+	हाल CGW_CRC8PRF_1U8:
 		crc = crc8->crctab[crc ^ crc8->profile_data[0]];
-		break;
+		अवरोध;
 
-	case  CGW_CRC8PRF_16U8:
+	हाल  CGW_CRC8PRF_16U8:
 		crc = crc8->crctab[crc ^ crc8->profile_data[cf->data[1] & 0xF]];
-		break;
+		अवरोध;
 
-	case CGW_CRC8PRF_SFFID_XOR:
+	हाल CGW_CRC8PRF_SFFID_XOR:
 		crc = crc8->crctab[crc ^ (cf->can_id & 0xFF) ^
 				   (cf->can_id >> 8 & 0xFF)];
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cf->data[crc8->result_idx] = crc ^ crc8->final_xor_val;
-}
+पूर्ण
 
-static void cgw_csum_crc8_neg(struct canfd_frame *cf,
-			      struct cgw_csum_crc8 *crc8)
-{
+अटल व्योम cgw_csum_crc8_neg(काष्ठा canfd_frame *cf,
+			      काष्ठा cgw_csum_crc8 *crc8)
+अणु
 	u8 crc = crc8->init_crc_val;
-	int i;
+	पूर्णांक i;
 
-	for (i = crc8->from_idx; i >= crc8->to_idx; i--)
+	क्रम (i = crc8->from_idx; i >= crc8->to_idx; i--)
 		crc = crc8->crctab[crc ^ cf->data[i]];
 
-	switch (crc8->profile) {
-	case CGW_CRC8PRF_1U8:
+	चयन (crc8->profile) अणु
+	हाल CGW_CRC8PRF_1U8:
 		crc = crc8->crctab[crc ^ crc8->profile_data[0]];
-		break;
+		अवरोध;
 
-	case  CGW_CRC8PRF_16U8:
+	हाल  CGW_CRC8PRF_16U8:
 		crc = crc8->crctab[crc ^ crc8->profile_data[cf->data[1] & 0xF]];
-		break;
+		अवरोध;
 
-	case CGW_CRC8PRF_SFFID_XOR:
+	हाल CGW_CRC8PRF_SFFID_XOR:
 		crc = crc8->crctab[crc ^ (cf->can_id & 0xFF) ^
 				   (cf->can_id >> 8 & 0xFF)];
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cf->data[crc8->result_idx] = crc ^ crc8->final_xor_val;
-}
+पूर्ण
 
 /* the receive & process & send function */
-static void can_can_gw_rcv(struct sk_buff *skb, void *data)
-{
-	struct cgw_job *gwj = (struct cgw_job *)data;
-	struct canfd_frame *cf;
-	struct sk_buff *nskb;
-	int modidx = 0;
+अटल व्योम can_can_gw_rcv(काष्ठा sk_buff *skb, व्योम *data)
+अणु
+	काष्ठा cgw_job *gwj = (काष्ठा cgw_job *)data;
+	काष्ठा canfd_frame *cf;
+	काष्ठा sk_buff *nskb;
+	पूर्णांक modidx = 0;
 
 	/* process strictly Classic CAN or CAN FD frames */
-	if (gwj->flags & CGW_FLAGS_CAN_FD) {
-		if (skb->len != CANFD_MTU)
-			return;
-	} else {
-		if (skb->len != CAN_MTU)
-			return;
-	}
+	अगर (gwj->flags & CGW_FLAGS_CAN_FD) अणु
+		अगर (skb->len != CANFD_MTU)
+			वापस;
+	पूर्ण अन्यथा अणु
+		अगर (skb->len != CAN_MTU)
+			वापस;
+	पूर्ण
 
-	/* Do not handle CAN frames routed more than 'max_hops' times.
-	 * In general we should never catch this delimiter which is intended
+	/* Do not handle CAN frames routed more than 'max_hops' बार.
+	 * In general we should never catch this delimiter which is पूर्णांकended
 	 * to cover a misconfiguration protection (e.g. circular CAN routes).
 	 *
 	 * The Controller Area Network controllers only accept CAN frames with
-	 * correct CRCs - which are not visible in the controller registers.
-	 * According to skbuff.h documentation the csum_start element for IP
+	 * correct CRCs - which are not visible in the controller रेजिस्टरs.
+	 * According to skbuff.h करोcumentation the csum_start element क्रम IP
 	 * checksums is undefined/unused when ip_summed == CHECKSUM_UNNECESSARY.
-	 * Only CAN skbs can be processed here which already have this property.
+	 * Only CAN skbs can be processed here which alपढ़ोy have this property.
 	 */
 
-#define cgw_hops(skb) ((skb)->csum_start)
+#घोषणा cgw_hops(skb) ((skb)->csum_start)
 
 	BUG_ON(skb->ip_summed != CHECKSUM_UNNECESSARY);
 
-	if (cgw_hops(skb) >= max_hops) {
+	अगर (cgw_hops(skb) >= max_hops) अणु
 		/* indicate deleted frames due to misconfiguration */
 		gwj->deleted_frames++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!(gwj->dst.dev->flags & IFF_UP)) {
+	अगर (!(gwj->dst.dev->flags & IFF_UP)) अणु
 		gwj->dropped_frames++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* is sending the skb back to the incoming interface not allowed? */
-	if (!(gwj->flags & CGW_FLAGS_CAN_IIF_TX_OK) &&
-	    can_skb_prv(skb)->ifindex == gwj->dst.dev->ifindex)
-		return;
+	/* is sending the skb back to the incoming पूर्णांकerface not allowed? */
+	अगर (!(gwj->flags & CGW_FLAGS_CAN_IIF_TX_OK) &&
+	    can_skb_prv(skb)->अगरindex == gwj->dst.dev->अगरindex)
+		वापस;
 
-	/* clone the given skb, which has not been done in can_rcv()
+	/* clone the given skb, which has not been करोne in can_rcv()
 	 *
-	 * When there is at least one modification function activated,
-	 * we need to copy the skb as we want to modify skb->data.
+	 * When there is at least one modअगरication function activated,
+	 * we need to copy the skb as we want to modअगरy skb->data.
 	 */
-	if (gwj->mod.modfunc[0])
+	अगर (gwj->mod.modfunc[0])
 		nskb = skb_copy(skb, GFP_ATOMIC);
-	else
+	अन्यथा
 		nskb = skb_clone(skb, GFP_ATOMIC);
 
-	if (!nskb) {
+	अगर (!nskb) अणु
 		gwj->dropped_frames++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* put the incremented hop counter in the cloned skb */
 	cgw_hops(nskb) = cgw_hops(skb) + 1;
 
-	/* first processing of this CAN frame -> adjust to private hop limit */
-	if (gwj->limit_hops && cgw_hops(nskb) == 1)
+	/* first processing of this CAN frame -> adjust to निजी hop limit */
+	अगर (gwj->limit_hops && cgw_hops(nskb) == 1)
 		cgw_hops(nskb) = max_hops - gwj->limit_hops + 1;
 
 	nskb->dev = gwj->dst.dev;
 
-	/* pointer to modifiable CAN frame */
-	cf = (struct canfd_frame *)nskb->data;
+	/* poपूर्णांकer to modअगरiable CAN frame */
+	cf = (काष्ठा canfd_frame *)nskb->data;
 
-	/* perform preprocessed modification functions if there are any */
-	while (modidx < MAX_MODFUNCTIONS && gwj->mod.modfunc[modidx])
+	/* perक्रमm preprocessed modअगरication functions अगर there are any */
+	जबतक (modidx < MAX_MODFUNCTIONS && gwj->mod.modfunc[modidx])
 		(*gwj->mod.modfunc[modidx++])(cf, &gwj->mod);
 
-	/* Has the CAN frame been modified? */
-	if (modidx) {
-		/* get available space for the processed CAN frame type */
-		int max_len = nskb->len - offsetof(struct canfd_frame, data);
+	/* Has the CAN frame been modअगरied? */
+	अगर (modidx) अणु
+		/* get available space क्रम the processed CAN frame type */
+		पूर्णांक max_len = nskb->len - दुरत्व(काष्ठा canfd_frame, data);
 
 		/* dlc may have changed, make sure it fits to the CAN frame */
-		if (cf->len > max_len) {
+		अगर (cf->len > max_len) अणु
 			/* delete frame due to misconfiguration */
 			gwj->deleted_frames++;
-			kfree_skb(nskb);
-			return;
-		}
+			kमुक्त_skb(nskb);
+			वापस;
+		पूर्ण
 
-		/* check for checksum updates */
-		if (gwj->mod.csumfunc.crc8)
+		/* check क्रम checksum updates */
+		अगर (gwj->mod.csumfunc.crc8)
 			(*gwj->mod.csumfunc.crc8)(cf, &gwj->mod.csum.crc8);
 
-		if (gwj->mod.csumfunc.xor)
+		अगर (gwj->mod.csumfunc.xor)
 			(*gwj->mod.csumfunc.xor)(cf, &gwj->mod.csum.xor);
-	}
+	पूर्ण
 
-	/* clear the skb timestamp if not configured the other way */
-	if (!(gwj->flags & CGW_FLAGS_CAN_SRC_TSTAMP))
+	/* clear the skb बारtamp अगर not configured the other way */
+	अगर (!(gwj->flags & CGW_FLAGS_CAN_SRC_TSTAMP))
 		nskb->tstamp = 0;
 
 	/* send to netdevice */
-	if (can_send(nskb, gwj->flags & CGW_FLAGS_CAN_ECHO))
+	अगर (can_send(nskb, gwj->flags & CGW_FLAGS_CAN_ECHO))
 		gwj->dropped_frames++;
-	else
+	अन्यथा
 		gwj->handled_frames++;
-}
+पूर्ण
 
-static inline int cgw_register_filter(struct net *net, struct cgw_job *gwj)
-{
-	return can_rx_register(net, gwj->src.dev, gwj->ccgw.filter.can_id,
+अटल अंतरभूत पूर्णांक cgw_रेजिस्टर_filter(काष्ठा net *net, काष्ठा cgw_job *gwj)
+अणु
+	वापस can_rx_रेजिस्टर(net, gwj->src.dev, gwj->ccgw.filter.can_id,
 			       gwj->ccgw.filter.can_mask, can_can_gw_rcv,
-			       gwj, "gw", NULL);
-}
+			       gwj, "gw", शून्य);
+पूर्ण
 
-static inline void cgw_unregister_filter(struct net *net, struct cgw_job *gwj)
-{
-	can_rx_unregister(net, gwj->src.dev, gwj->ccgw.filter.can_id,
+अटल अंतरभूत व्योम cgw_unरेजिस्टर_filter(काष्ठा net *net, काष्ठा cgw_job *gwj)
+अणु
+	can_rx_unरेजिस्टर(net, gwj->src.dev, gwj->ccgw.filter.can_id,
 			  gwj->ccgw.filter.can_mask, can_can_gw_rcv, gwj);
-}
+पूर्ण
 
-static int cgw_notifier(struct notifier_block *nb,
-			unsigned long msg, void *ptr)
-{
-	struct net_device *dev = netdev_notifier_info_to_dev(ptr);
-	struct net *net = dev_net(dev);
+अटल पूर्णांक cgw_notअगरier(काष्ठा notअगरier_block *nb,
+			अचिन्हित दीर्घ msg, व्योम *ptr)
+अणु
+	काष्ठा net_device *dev = netdev_notअगरier_info_to_dev(ptr);
+	काष्ठा net *net = dev_net(dev);
 
-	if (dev->type != ARPHRD_CAN)
-		return NOTIFY_DONE;
+	अगर (dev->type != ARPHRD_CAN)
+		वापस NOTIFY_DONE;
 
-	if (msg == NETDEV_UNREGISTER) {
-		struct cgw_job *gwj = NULL;
-		struct hlist_node *nx;
+	अगर (msg == NETDEV_UNREGISTER) अणु
+		काष्ठा cgw_job *gwj = शून्य;
+		काष्ठा hlist_node *nx;
 
 		ASSERT_RTNL();
 
-		hlist_for_each_entry_safe(gwj, nx, &net->can.cgw_list, list) {
-			if (gwj->src.dev == dev || gwj->dst.dev == dev) {
+		hlist_क्रम_each_entry_safe(gwj, nx, &net->can.cgw_list, list) अणु
+			अगर (gwj->src.dev == dev || gwj->dst.dev == dev) अणु
 				hlist_del(&gwj->list);
-				cgw_unregister_filter(net, gwj);
-				kmem_cache_free(cgw_cache, gwj);
-			}
-		}
-	}
+				cgw_unरेजिस्टर_filter(net, gwj);
+				kmem_cache_मुक्त(cgw_cache, gwj);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int cgw_put_job(struct sk_buff *skb, struct cgw_job *gwj, int type,
-		       u32 pid, u32 seq, int flags)
-{
-	struct rtcanmsg *rtcan;
-	struct nlmsghdr *nlh;
+अटल पूर्णांक cgw_put_job(काष्ठा sk_buff *skb, काष्ठा cgw_job *gwj, पूर्णांक type,
+		       u32 pid, u32 seq, पूर्णांक flags)
+अणु
+	काष्ठा rtcanmsg *rtcan;
+	काष्ठा nlmsghdr *nlh;
 
-	nlh = nlmsg_put(skb, pid, seq, type, sizeof(*rtcan), flags);
-	if (!nlh)
-		return -EMSGSIZE;
+	nlh = nlmsg_put(skb, pid, seq, type, माप(*rtcan), flags);
+	अगर (!nlh)
+		वापस -EMSGSIZE;
 
 	rtcan = nlmsg_data(nlh);
 	rtcan->can_family = AF_CAN;
 	rtcan->gwtype = gwj->gwtype;
 	rtcan->flags = gwj->flags;
 
-	/* add statistics if available */
+	/* add statistics अगर available */
 
-	if (gwj->handled_frames) {
-		if (nla_put_u32(skb, CGW_HANDLED, gwj->handled_frames) < 0)
-			goto cancel;
-	}
+	अगर (gwj->handled_frames) अणु
+		अगर (nla_put_u32(skb, CGW_HANDLED, gwj->handled_frames) < 0)
+			जाओ cancel;
+	पूर्ण
 
-	if (gwj->dropped_frames) {
-		if (nla_put_u32(skb, CGW_DROPPED, gwj->dropped_frames) < 0)
-			goto cancel;
-	}
+	अगर (gwj->dropped_frames) अणु
+		अगर (nla_put_u32(skb, CGW_DROPPED, gwj->dropped_frames) < 0)
+			जाओ cancel;
+	पूर्ण
 
-	if (gwj->deleted_frames) {
-		if (nla_put_u32(skb, CGW_DELETED, gwj->deleted_frames) < 0)
-			goto cancel;
-	}
+	अगर (gwj->deleted_frames) अणु
+		अगर (nla_put_u32(skb, CGW_DELETED, gwj->deleted_frames) < 0)
+			जाओ cancel;
+	पूर्ण
 
-	/* check non default settings of attributes */
+	/* check non शेष settings of attributes */
 
-	if (gwj->limit_hops) {
-		if (nla_put_u8(skb, CGW_LIM_HOPS, gwj->limit_hops) < 0)
-			goto cancel;
-	}
+	अगर (gwj->limit_hops) अणु
+		अगर (nla_put_u8(skb, CGW_LIM_HOPS, gwj->limit_hops) < 0)
+			जाओ cancel;
+	पूर्ण
 
-	if (gwj->flags & CGW_FLAGS_CAN_FD) {
-		struct cgw_fdframe_mod mb;
+	अगर (gwj->flags & CGW_FLAGS_CAN_FD) अणु
+		काष्ठा cgw_fdframe_mod mb;
 
-		if (gwj->mod.modtype.and) {
-			memcpy(&mb.cf, &gwj->mod.modframe.and, sizeof(mb.cf));
+		अगर (gwj->mod.modtype.and) अणु
+			स_नकल(&mb.cf, &gwj->mod.modframe.and, माप(mb.cf));
 			mb.modtype = gwj->mod.modtype.and;
-			if (nla_put(skb, CGW_FDMOD_AND, sizeof(mb), &mb) < 0)
-				goto cancel;
-		}
+			अगर (nla_put(skb, CGW_FDMOD_AND, माप(mb), &mb) < 0)
+				जाओ cancel;
+		पूर्ण
 
-		if (gwj->mod.modtype.or) {
-			memcpy(&mb.cf, &gwj->mod.modframe.or, sizeof(mb.cf));
+		अगर (gwj->mod.modtype.or) अणु
+			स_नकल(&mb.cf, &gwj->mod.modframe.or, माप(mb.cf));
 			mb.modtype = gwj->mod.modtype.or;
-			if (nla_put(skb, CGW_FDMOD_OR, sizeof(mb), &mb) < 0)
-				goto cancel;
-		}
+			अगर (nla_put(skb, CGW_FDMOD_OR, माप(mb), &mb) < 0)
+				जाओ cancel;
+		पूर्ण
 
-		if (gwj->mod.modtype.xor) {
-			memcpy(&mb.cf, &gwj->mod.modframe.xor, sizeof(mb.cf));
+		अगर (gwj->mod.modtype.xor) अणु
+			स_नकल(&mb.cf, &gwj->mod.modframe.xor, माप(mb.cf));
 			mb.modtype = gwj->mod.modtype.xor;
-			if (nla_put(skb, CGW_FDMOD_XOR, sizeof(mb), &mb) < 0)
-				goto cancel;
-		}
+			अगर (nla_put(skb, CGW_FDMOD_XOR, माप(mb), &mb) < 0)
+				जाओ cancel;
+		पूर्ण
 
-		if (gwj->mod.modtype.set) {
-			memcpy(&mb.cf, &gwj->mod.modframe.set, sizeof(mb.cf));
+		अगर (gwj->mod.modtype.set) अणु
+			स_नकल(&mb.cf, &gwj->mod.modframe.set, माप(mb.cf));
 			mb.modtype = gwj->mod.modtype.set;
-			if (nla_put(skb, CGW_FDMOD_SET, sizeof(mb), &mb) < 0)
-				goto cancel;
-		}
-	} else {
-		struct cgw_frame_mod mb;
+			अगर (nla_put(skb, CGW_FDMOD_SET, माप(mb), &mb) < 0)
+				जाओ cancel;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा cgw_frame_mod mb;
 
-		if (gwj->mod.modtype.and) {
-			memcpy(&mb.cf, &gwj->mod.modframe.and, sizeof(mb.cf));
+		अगर (gwj->mod.modtype.and) अणु
+			स_नकल(&mb.cf, &gwj->mod.modframe.and, माप(mb.cf));
 			mb.modtype = gwj->mod.modtype.and;
-			if (nla_put(skb, CGW_MOD_AND, sizeof(mb), &mb) < 0)
-				goto cancel;
-		}
+			अगर (nla_put(skb, CGW_MOD_AND, माप(mb), &mb) < 0)
+				जाओ cancel;
+		पूर्ण
 
-		if (gwj->mod.modtype.or) {
-			memcpy(&mb.cf, &gwj->mod.modframe.or, sizeof(mb.cf));
+		अगर (gwj->mod.modtype.or) अणु
+			स_नकल(&mb.cf, &gwj->mod.modframe.or, माप(mb.cf));
 			mb.modtype = gwj->mod.modtype.or;
-			if (nla_put(skb, CGW_MOD_OR, sizeof(mb), &mb) < 0)
-				goto cancel;
-		}
+			अगर (nla_put(skb, CGW_MOD_OR, माप(mb), &mb) < 0)
+				जाओ cancel;
+		पूर्ण
 
-		if (gwj->mod.modtype.xor) {
-			memcpy(&mb.cf, &gwj->mod.modframe.xor, sizeof(mb.cf));
+		अगर (gwj->mod.modtype.xor) अणु
+			स_नकल(&mb.cf, &gwj->mod.modframe.xor, माप(mb.cf));
 			mb.modtype = gwj->mod.modtype.xor;
-			if (nla_put(skb, CGW_MOD_XOR, sizeof(mb), &mb) < 0)
-				goto cancel;
-		}
+			अगर (nla_put(skb, CGW_MOD_XOR, माप(mb), &mb) < 0)
+				जाओ cancel;
+		पूर्ण
 
-		if (gwj->mod.modtype.set) {
-			memcpy(&mb.cf, &gwj->mod.modframe.set, sizeof(mb.cf));
+		अगर (gwj->mod.modtype.set) अणु
+			स_नकल(&mb.cf, &gwj->mod.modframe.set, माप(mb.cf));
 			mb.modtype = gwj->mod.modtype.set;
-			if (nla_put(skb, CGW_MOD_SET, sizeof(mb), &mb) < 0)
-				goto cancel;
-		}
-	}
+			अगर (nla_put(skb, CGW_MOD_SET, माप(mb), &mb) < 0)
+				जाओ cancel;
+		पूर्ण
+	पूर्ण
 
-	if (gwj->mod.uid) {
-		if (nla_put_u32(skb, CGW_MOD_UID, gwj->mod.uid) < 0)
-			goto cancel;
-	}
+	अगर (gwj->mod.uid) अणु
+		अगर (nla_put_u32(skb, CGW_MOD_UID, gwj->mod.uid) < 0)
+			जाओ cancel;
+	पूर्ण
 
-	if (gwj->mod.csumfunc.crc8) {
-		if (nla_put(skb, CGW_CS_CRC8, CGW_CS_CRC8_LEN,
+	अगर (gwj->mod.csumfunc.crc8) अणु
+		अगर (nla_put(skb, CGW_CS_CRC8, CGW_CS_CRC8_LEN,
 			    &gwj->mod.csum.crc8) < 0)
-			goto cancel;
-	}
+			जाओ cancel;
+	पूर्ण
 
-	if (gwj->mod.csumfunc.xor) {
-		if (nla_put(skb, CGW_CS_XOR, CGW_CS_XOR_LEN,
+	अगर (gwj->mod.csumfunc.xor) अणु
+		अगर (nla_put(skb, CGW_CS_XOR, CGW_CS_XOR_LEN,
 			    &gwj->mod.csum.xor) < 0)
-			goto cancel;
-	}
+			जाओ cancel;
+	पूर्ण
 
-	if (gwj->gwtype == CGW_TYPE_CAN_CAN) {
-		if (gwj->ccgw.filter.can_id || gwj->ccgw.filter.can_mask) {
-			if (nla_put(skb, CGW_FILTER, sizeof(struct can_filter),
+	अगर (gwj->gwtype == CGW_TYPE_CAN_CAN) अणु
+		अगर (gwj->ccgw.filter.can_id || gwj->ccgw.filter.can_mask) अणु
+			अगर (nla_put(skb, CGW_FILTER, माप(काष्ठा can_filter),
 				    &gwj->ccgw.filter) < 0)
-				goto cancel;
-		}
+				जाओ cancel;
+		पूर्ण
 
-		if (nla_put_u32(skb, CGW_SRC_IF, gwj->ccgw.src_idx) < 0)
-			goto cancel;
+		अगर (nla_put_u32(skb, CGW_SRC_IF, gwj->ccgw.src_idx) < 0)
+			जाओ cancel;
 
-		if (nla_put_u32(skb, CGW_DST_IF, gwj->ccgw.dst_idx) < 0)
-			goto cancel;
-	}
+		अगर (nla_put_u32(skb, CGW_DST_IF, gwj->ccgw.dst_idx) < 0)
+			जाओ cancel;
+	पूर्ण
 
 	nlmsg_end(skb, nlh);
-	return 0;
+	वापस 0;
 
 cancel:
 	nlmsg_cancel(skb, nlh);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
-/* Dump information about all CAN gateway jobs, in response to RTM_GETROUTE */
-static int cgw_dump_jobs(struct sk_buff *skb, struct netlink_callback *cb)
-{
-	struct net *net = sock_net(skb->sk);
-	struct cgw_job *gwj = NULL;
-	int idx = 0;
-	int s_idx = cb->args[0];
+/* Dump inक्रमmation about all CAN gateway jobs, in response to RTM_GETROUTE */
+अटल पूर्णांक cgw_dump_jobs(काष्ठा sk_buff *skb, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा cgw_job *gwj = शून्य;
+	पूर्णांक idx = 0;
+	पूर्णांक s_idx = cb->args[0];
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(gwj, &net->can.cgw_list, list) {
-		if (idx < s_idx)
-			goto cont;
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(gwj, &net->can.cgw_list, list) अणु
+		अगर (idx < s_idx)
+			जाओ cont;
 
-		if (cgw_put_job(skb, gwj, RTM_NEWROUTE,
+		अगर (cgw_put_job(skb, gwj, RTM_NEWROUTE,
 				NETLINK_CB(cb->skb).portid,
 				cb->nlh->nlmsg_seq, NLM_F_MULTI) < 0)
-			break;
+			अवरोध;
 cont:
 		idx++;
-	}
-	rcu_read_unlock();
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	cb->args[0] = idx;
 
-	return skb->len;
-}
+	वापस skb->len;
+पूर्ण
 
-static const struct nla_policy cgw_policy[CGW_MAX + 1] = {
-	[CGW_MOD_AND]	= { .len = sizeof(struct cgw_frame_mod) },
-	[CGW_MOD_OR]	= { .len = sizeof(struct cgw_frame_mod) },
-	[CGW_MOD_XOR]	= { .len = sizeof(struct cgw_frame_mod) },
-	[CGW_MOD_SET]	= { .len = sizeof(struct cgw_frame_mod) },
-	[CGW_CS_XOR]	= { .len = sizeof(struct cgw_csum_xor) },
-	[CGW_CS_CRC8]	= { .len = sizeof(struct cgw_csum_crc8) },
-	[CGW_SRC_IF]	= { .type = NLA_U32 },
-	[CGW_DST_IF]	= { .type = NLA_U32 },
-	[CGW_FILTER]	= { .len = sizeof(struct can_filter) },
-	[CGW_LIM_HOPS]	= { .type = NLA_U8 },
-	[CGW_MOD_UID]	= { .type = NLA_U32 },
-	[CGW_FDMOD_AND]	= { .len = sizeof(struct cgw_fdframe_mod) },
-	[CGW_FDMOD_OR]	= { .len = sizeof(struct cgw_fdframe_mod) },
-	[CGW_FDMOD_XOR]	= { .len = sizeof(struct cgw_fdframe_mod) },
-	[CGW_FDMOD_SET]	= { .len = sizeof(struct cgw_fdframe_mod) },
-};
+अटल स्थिर काष्ठा nla_policy cgw_policy[CGW_MAX + 1] = अणु
+	[CGW_MOD_AND]	= अणु .len = माप(काष्ठा cgw_frame_mod) पूर्ण,
+	[CGW_MOD_OR]	= अणु .len = माप(काष्ठा cgw_frame_mod) पूर्ण,
+	[CGW_MOD_XOR]	= अणु .len = माप(काष्ठा cgw_frame_mod) पूर्ण,
+	[CGW_MOD_SET]	= अणु .len = माप(काष्ठा cgw_frame_mod) पूर्ण,
+	[CGW_CS_XOR]	= अणु .len = माप(काष्ठा cgw_csum_xor) पूर्ण,
+	[CGW_CS_CRC8]	= अणु .len = माप(काष्ठा cgw_csum_crc8) पूर्ण,
+	[CGW_SRC_IF]	= अणु .type = NLA_U32 पूर्ण,
+	[CGW_DST_IF]	= अणु .type = NLA_U32 पूर्ण,
+	[CGW_FILTER]	= अणु .len = माप(काष्ठा can_filter) पूर्ण,
+	[CGW_LIM_HOPS]	= अणु .type = NLA_U8 पूर्ण,
+	[CGW_MOD_UID]	= अणु .type = NLA_U32 पूर्ण,
+	[CGW_FDMOD_AND]	= अणु .len = माप(काष्ठा cgw_fdframe_mod) पूर्ण,
+	[CGW_FDMOD_OR]	= अणु .len = माप(काष्ठा cgw_fdframe_mod) पूर्ण,
+	[CGW_FDMOD_XOR]	= अणु .len = माप(काष्ठा cgw_fdframe_mod) पूर्ण,
+	[CGW_FDMOD_SET]	= अणु .len = माप(काष्ठा cgw_fdframe_mod) पूर्ण,
+पूर्ण;
 
-/* check for common and gwtype specific attributes */
-static int cgw_parse_attr(struct nlmsghdr *nlh, struct cf_mod *mod,
-			  u8 gwtype, void *gwtypeattr, u8 *limhops)
-{
-	struct nlattr *tb[CGW_MAX + 1];
-	struct rtcanmsg *r = nlmsg_data(nlh);
-	int modidx = 0;
-	int err = 0;
+/* check क्रम common and gwtype specअगरic attributes */
+अटल पूर्णांक cgw_parse_attr(काष्ठा nlmsghdr *nlh, काष्ठा cf_mod *mod,
+			  u8 gwtype, व्योम *gwtypeattr, u8 *limhops)
+अणु
+	काष्ठा nlattr *tb[CGW_MAX + 1];
+	काष्ठा rtcanmsg *r = nlmsg_data(nlh);
+	पूर्णांक modidx = 0;
+	पूर्णांक err = 0;
 
-	/* initialize modification & checksum data space */
-	memset(mod, 0, sizeof(*mod));
+	/* initialize modअगरication & checksum data space */
+	स_रखो(mod, 0, माप(*mod));
 
-	err = nlmsg_parse_deprecated(nlh, sizeof(struct rtcanmsg), tb,
-				     CGW_MAX, cgw_policy, NULL);
-	if (err < 0)
-		return err;
+	err = nlmsg_parse_deprecated(nlh, माप(काष्ठा rtcanmsg), tb,
+				     CGW_MAX, cgw_policy, शून्य);
+	अगर (err < 0)
+		वापस err;
 
-	if (tb[CGW_LIM_HOPS]) {
+	अगर (tb[CGW_LIM_HOPS]) अणु
 		*limhops = nla_get_u8(tb[CGW_LIM_HOPS]);
 
-		if (*limhops < 1 || *limhops > max_hops)
-			return -EINVAL;
-	}
+		अगर (*limhops < 1 || *limhops > max_hops)
+			वापस -EINVAL;
+	पूर्ण
 
-	/* check for AND/OR/XOR/SET modifications */
-	if (r->flags & CGW_FLAGS_CAN_FD) {
-		struct cgw_fdframe_mod mb;
+	/* check क्रम AND/OR/XOR/SET modअगरications */
+	अगर (r->flags & CGW_FLAGS_CAN_FD) अणु
+		काष्ठा cgw_fdframe_mod mb;
 
-		if (tb[CGW_FDMOD_AND]) {
-			nla_memcpy(&mb, tb[CGW_FDMOD_AND], CGW_FDMODATTR_LEN);
+		अगर (tb[CGW_FDMOD_AND]) अणु
+			nla_स_नकल(&mb, tb[CGW_FDMOD_AND], CGW_FDMODATTR_LEN);
 
 			canfdframecpy(&mod->modframe.and, &mb.cf);
 			mod->modtype.and = mb.modtype;
 
-			if (mb.modtype & CGW_MOD_ID)
+			अगर (mb.modtype & CGW_MOD_ID)
 				mod->modfunc[modidx++] = mod_and_id;
 
-			if (mb.modtype & CGW_MOD_LEN)
+			अगर (mb.modtype & CGW_MOD_LEN)
 				mod->modfunc[modidx++] = mod_and_len;
 
-			if (mb.modtype & CGW_MOD_FLAGS)
+			अगर (mb.modtype & CGW_MOD_FLAGS)
 				mod->modfunc[modidx++] = mod_and_flags;
 
-			if (mb.modtype & CGW_MOD_DATA)
+			अगर (mb.modtype & CGW_MOD_DATA)
 				mod->modfunc[modidx++] = mod_and_fddata;
-		}
+		पूर्ण
 
-		if (tb[CGW_FDMOD_OR]) {
-			nla_memcpy(&mb, tb[CGW_FDMOD_OR], CGW_FDMODATTR_LEN);
+		अगर (tb[CGW_FDMOD_OR]) अणु
+			nla_स_नकल(&mb, tb[CGW_FDMOD_OR], CGW_FDMODATTR_LEN);
 
 			canfdframecpy(&mod->modframe.or, &mb.cf);
 			mod->modtype.or = mb.modtype;
 
-			if (mb.modtype & CGW_MOD_ID)
+			अगर (mb.modtype & CGW_MOD_ID)
 				mod->modfunc[modidx++] = mod_or_id;
 
-			if (mb.modtype & CGW_MOD_LEN)
+			अगर (mb.modtype & CGW_MOD_LEN)
 				mod->modfunc[modidx++] = mod_or_len;
 
-			if (mb.modtype & CGW_MOD_FLAGS)
+			अगर (mb.modtype & CGW_MOD_FLAGS)
 				mod->modfunc[modidx++] = mod_or_flags;
 
-			if (mb.modtype & CGW_MOD_DATA)
+			अगर (mb.modtype & CGW_MOD_DATA)
 				mod->modfunc[modidx++] = mod_or_fddata;
-		}
+		पूर्ण
 
-		if (tb[CGW_FDMOD_XOR]) {
-			nla_memcpy(&mb, tb[CGW_FDMOD_XOR], CGW_FDMODATTR_LEN);
+		अगर (tb[CGW_FDMOD_XOR]) अणु
+			nla_स_नकल(&mb, tb[CGW_FDMOD_XOR], CGW_FDMODATTR_LEN);
 
 			canfdframecpy(&mod->modframe.xor, &mb.cf);
 			mod->modtype.xor = mb.modtype;
 
-			if (mb.modtype & CGW_MOD_ID)
+			अगर (mb.modtype & CGW_MOD_ID)
 				mod->modfunc[modidx++] = mod_xor_id;
 
-			if (mb.modtype & CGW_MOD_LEN)
+			अगर (mb.modtype & CGW_MOD_LEN)
 				mod->modfunc[modidx++] = mod_xor_len;
 
-			if (mb.modtype & CGW_MOD_FLAGS)
+			अगर (mb.modtype & CGW_MOD_FLAGS)
 				mod->modfunc[modidx++] = mod_xor_flags;
 
-			if (mb.modtype & CGW_MOD_DATA)
+			अगर (mb.modtype & CGW_MOD_DATA)
 				mod->modfunc[modidx++] = mod_xor_fddata;
-		}
+		पूर्ण
 
-		if (tb[CGW_FDMOD_SET]) {
-			nla_memcpy(&mb, tb[CGW_FDMOD_SET], CGW_FDMODATTR_LEN);
+		अगर (tb[CGW_FDMOD_SET]) अणु
+			nla_स_नकल(&mb, tb[CGW_FDMOD_SET], CGW_FDMODATTR_LEN);
 
 			canfdframecpy(&mod->modframe.set, &mb.cf);
 			mod->modtype.set = mb.modtype;
 
-			if (mb.modtype & CGW_MOD_ID)
+			अगर (mb.modtype & CGW_MOD_ID)
 				mod->modfunc[modidx++] = mod_set_id;
 
-			if (mb.modtype & CGW_MOD_LEN)
+			अगर (mb.modtype & CGW_MOD_LEN)
 				mod->modfunc[modidx++] = mod_set_len;
 
-			if (mb.modtype & CGW_MOD_FLAGS)
+			अगर (mb.modtype & CGW_MOD_FLAGS)
 				mod->modfunc[modidx++] = mod_set_flags;
 
-			if (mb.modtype & CGW_MOD_DATA)
+			अगर (mb.modtype & CGW_MOD_DATA)
 				mod->modfunc[modidx++] = mod_set_fddata;
-		}
-	} else {
-		struct cgw_frame_mod mb;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		काष्ठा cgw_frame_mod mb;
 
-		if (tb[CGW_MOD_AND]) {
-			nla_memcpy(&mb, tb[CGW_MOD_AND], CGW_MODATTR_LEN);
+		अगर (tb[CGW_MOD_AND]) अणु
+			nla_स_नकल(&mb, tb[CGW_MOD_AND], CGW_MODATTR_LEN);
 
 			canframecpy(&mod->modframe.and, &mb.cf);
 			mod->modtype.and = mb.modtype;
 
-			if (mb.modtype & CGW_MOD_ID)
+			अगर (mb.modtype & CGW_MOD_ID)
 				mod->modfunc[modidx++] = mod_and_id;
 
-			if (mb.modtype & CGW_MOD_DLC)
+			अगर (mb.modtype & CGW_MOD_DLC)
 				mod->modfunc[modidx++] = mod_and_ccdlc;
 
-			if (mb.modtype & CGW_MOD_DATA)
+			अगर (mb.modtype & CGW_MOD_DATA)
 				mod->modfunc[modidx++] = mod_and_data;
-		}
+		पूर्ण
 
-		if (tb[CGW_MOD_OR]) {
-			nla_memcpy(&mb, tb[CGW_MOD_OR], CGW_MODATTR_LEN);
+		अगर (tb[CGW_MOD_OR]) अणु
+			nla_स_नकल(&mb, tb[CGW_MOD_OR], CGW_MODATTR_LEN);
 
 			canframecpy(&mod->modframe.or, &mb.cf);
 			mod->modtype.or = mb.modtype;
 
-			if (mb.modtype & CGW_MOD_ID)
+			अगर (mb.modtype & CGW_MOD_ID)
 				mod->modfunc[modidx++] = mod_or_id;
 
-			if (mb.modtype & CGW_MOD_DLC)
+			अगर (mb.modtype & CGW_MOD_DLC)
 				mod->modfunc[modidx++] = mod_or_ccdlc;
 
-			if (mb.modtype & CGW_MOD_DATA)
+			अगर (mb.modtype & CGW_MOD_DATA)
 				mod->modfunc[modidx++] = mod_or_data;
-		}
+		पूर्ण
 
-		if (tb[CGW_MOD_XOR]) {
-			nla_memcpy(&mb, tb[CGW_MOD_XOR], CGW_MODATTR_LEN);
+		अगर (tb[CGW_MOD_XOR]) अणु
+			nla_स_नकल(&mb, tb[CGW_MOD_XOR], CGW_MODATTR_LEN);
 
 			canframecpy(&mod->modframe.xor, &mb.cf);
 			mod->modtype.xor = mb.modtype;
 
-			if (mb.modtype & CGW_MOD_ID)
+			अगर (mb.modtype & CGW_MOD_ID)
 				mod->modfunc[modidx++] = mod_xor_id;
 
-			if (mb.modtype & CGW_MOD_DLC)
+			अगर (mb.modtype & CGW_MOD_DLC)
 				mod->modfunc[modidx++] = mod_xor_ccdlc;
 
-			if (mb.modtype & CGW_MOD_DATA)
+			अगर (mb.modtype & CGW_MOD_DATA)
 				mod->modfunc[modidx++] = mod_xor_data;
-		}
+		पूर्ण
 
-		if (tb[CGW_MOD_SET]) {
-			nla_memcpy(&mb, tb[CGW_MOD_SET], CGW_MODATTR_LEN);
+		अगर (tb[CGW_MOD_SET]) अणु
+			nla_स_नकल(&mb, tb[CGW_MOD_SET], CGW_MODATTR_LEN);
 
 			canframecpy(&mod->modframe.set, &mb.cf);
 			mod->modtype.set = mb.modtype;
 
-			if (mb.modtype & CGW_MOD_ID)
+			अगर (mb.modtype & CGW_MOD_ID)
 				mod->modfunc[modidx++] = mod_set_id;
 
-			if (mb.modtype & CGW_MOD_DLC)
+			अगर (mb.modtype & CGW_MOD_DLC)
 				mod->modfunc[modidx++] = mod_set_ccdlc;
 
-			if (mb.modtype & CGW_MOD_DATA)
+			अगर (mb.modtype & CGW_MOD_DATA)
 				mod->modfunc[modidx++] = mod_set_data;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	/* check for checksum operations after CAN frame modifications */
-	if (modidx) {
-		if (tb[CGW_CS_CRC8]) {
-			struct cgw_csum_crc8 *c = nla_data(tb[CGW_CS_CRC8]);
+	/* check क्रम checksum operations after CAN frame modअगरications */
+	अगर (modidx) अणु
+		अगर (tb[CGW_CS_CRC8]) अणु
+			काष्ठा cgw_csum_crc8 *c = nla_data(tb[CGW_CS_CRC8]);
 
 			err = cgw_chk_csum_parms(c->from_idx, c->to_idx,
 						 c->result_idx, r);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 
-			nla_memcpy(&mod->csum.crc8, tb[CGW_CS_CRC8],
+			nla_स_नकल(&mod->csum.crc8, tb[CGW_CS_CRC8],
 				   CGW_CS_CRC8_LEN);
 
 			/* select dedicated processing function to reduce
-			 * runtime operations in receive hot path.
+			 * runसमय operations in receive hot path.
 			 */
-			if (c->from_idx < 0 || c->to_idx < 0 ||
+			अगर (c->from_idx < 0 || c->to_idx < 0 ||
 			    c->result_idx < 0)
 				mod->csumfunc.crc8 = cgw_csum_crc8_rel;
-			else if (c->from_idx <= c->to_idx)
+			अन्यथा अगर (c->from_idx <= c->to_idx)
 				mod->csumfunc.crc8 = cgw_csum_crc8_pos;
-			else
+			अन्यथा
 				mod->csumfunc.crc8 = cgw_csum_crc8_neg;
-		}
+		पूर्ण
 
-		if (tb[CGW_CS_XOR]) {
-			struct cgw_csum_xor *c = nla_data(tb[CGW_CS_XOR]);
+		अगर (tb[CGW_CS_XOR]) अणु
+			काष्ठा cgw_csum_xor *c = nla_data(tb[CGW_CS_XOR]);
 
 			err = cgw_chk_csum_parms(c->from_idx, c->to_idx,
 						 c->result_idx, r);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 
-			nla_memcpy(&mod->csum.xor, tb[CGW_CS_XOR],
+			nla_स_नकल(&mod->csum.xor, tb[CGW_CS_XOR],
 				   CGW_CS_XOR_LEN);
 
 			/* select dedicated processing function to reduce
-			 * runtime operations in receive hot path.
+			 * runसमय operations in receive hot path.
 			 */
-			if (c->from_idx < 0 || c->to_idx < 0 ||
+			अगर (c->from_idx < 0 || c->to_idx < 0 ||
 			    c->result_idx < 0)
 				mod->csumfunc.xor = cgw_csum_xor_rel;
-			else if (c->from_idx <= c->to_idx)
+			अन्यथा अगर (c->from_idx <= c->to_idx)
 				mod->csumfunc.xor = cgw_csum_xor_pos;
-			else
+			अन्यथा
 				mod->csumfunc.xor = cgw_csum_xor_neg;
-		}
+		पूर्ण
 
-		if (tb[CGW_MOD_UID])
-			nla_memcpy(&mod->uid, tb[CGW_MOD_UID], sizeof(u32));
-	}
+		अगर (tb[CGW_MOD_UID])
+			nla_स_नकल(&mod->uid, tb[CGW_MOD_UID], माप(u32));
+	पूर्ण
 
-	if (gwtype == CGW_TYPE_CAN_CAN) {
-		/* check CGW_TYPE_CAN_CAN specific attributes */
-		struct can_can_gw *ccgw = (struct can_can_gw *)gwtypeattr;
+	अगर (gwtype == CGW_TYPE_CAN_CAN) अणु
+		/* check CGW_TYPE_CAN_CAN specअगरic attributes */
+		काष्ठा can_can_gw *ccgw = (काष्ठा can_can_gw *)gwtypeattr;
 
-		memset(ccgw, 0, sizeof(*ccgw));
+		स_रखो(ccgw, 0, माप(*ccgw));
 
-		/* check for can_filter in attributes */
-		if (tb[CGW_FILTER])
-			nla_memcpy(&ccgw->filter, tb[CGW_FILTER],
-				   sizeof(struct can_filter));
+		/* check क्रम can_filter in attributes */
+		अगर (tb[CGW_FILTER])
+			nla_स_नकल(&ccgw->filter, tb[CGW_FILTER],
+				   माप(काष्ठा can_filter));
 
 		err = -ENODEV;
 
-		/* specifying two interfaces is mandatory */
-		if (!tb[CGW_SRC_IF] || !tb[CGW_DST_IF])
-			return err;
+		/* specअगरying two पूर्णांकerfaces is mandatory */
+		अगर (!tb[CGW_SRC_IF] || !tb[CGW_DST_IF])
+			वापस err;
 
 		ccgw->src_idx = nla_get_u32(tb[CGW_SRC_IF]);
 		ccgw->dst_idx = nla_get_u32(tb[CGW_DST_IF]);
 
-		/* both indices set to 0 for flushing all routing entries */
-		if (!ccgw->src_idx && !ccgw->dst_idx)
-			return 0;
+		/* both indices set to 0 क्रम flushing all routing entries */
+		अगर (!ccgw->src_idx && !ccgw->dst_idx)
+			वापस 0;
 
 		/* only one index set to 0 is an error */
-		if (!ccgw->src_idx || !ccgw->dst_idx)
-			return err;
-	}
+		अगर (!ccgw->src_idx || !ccgw->dst_idx)
+			वापस err;
+	पूर्ण
 
-	/* add the checks for other gwtypes here */
+	/* add the checks क्रम other gwtypes here */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cgw_create_job(struct sk_buff *skb,  struct nlmsghdr *nlh,
-			  struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct rtcanmsg *r;
-	struct cgw_job *gwj;
-	struct cf_mod mod;
-	struct can_can_gw ccgw;
+अटल पूर्णांक cgw_create_job(काष्ठा sk_buff *skb,  काष्ठा nlmsghdr *nlh,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा rtcanmsg *r;
+	काष्ठा cgw_job *gwj;
+	काष्ठा cf_mod mod;
+	काष्ठा can_can_gw ccgw;
 	u8 limhops = 0;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (nlmsg_len(nlh) < sizeof(*r))
-		return -EINVAL;
+	अगर (nlmsg_len(nlh) < माप(*r))
+		वापस -EINVAL;
 
 	r = nlmsg_data(nlh);
-	if (r->can_family != AF_CAN)
-		return -EPFNOSUPPORT;
+	अगर (r->can_family != AF_CAN)
+		वापस -EPFNOSUPPORT;
 
 	/* so far we only support CAN -> CAN routings */
-	if (r->gwtype != CGW_TYPE_CAN_CAN)
-		return -EINVAL;
+	अगर (r->gwtype != CGW_TYPE_CAN_CAN)
+		वापस -EINVAL;
 
 	err = cgw_parse_attr(nlh, &mod, CGW_TYPE_CAN_CAN, &ccgw, &limhops);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	if (mod.uid) {
+	अगर (mod.uid) अणु
 		ASSERT_RTNL();
 
-		/* check for updating an existing job with identical uid */
-		hlist_for_each_entry(gwj, &net->can.cgw_list, list) {
-			if (gwj->mod.uid != mod.uid)
-				continue;
+		/* check क्रम updating an existing job with identical uid */
+		hlist_क्रम_each_entry(gwj, &net->can.cgw_list, list) अणु
+			अगर (gwj->mod.uid != mod.uid)
+				जारी;
 
-			/* interfaces & filters must be identical */
-			if (memcmp(&gwj->ccgw, &ccgw, sizeof(ccgw)))
-				return -EINVAL;
+			/* पूर्णांकerfaces & filters must be identical */
+			अगर (स_भेद(&gwj->ccgw, &ccgw, माप(ccgw)))
+				वापस -EINVAL;
 
-			/* update modifications with disabled softirq & quit */
+			/* update modअगरications with disabled softirq & quit */
 			local_bh_disable();
-			memcpy(&gwj->mod, &mod, sizeof(mod));
+			स_नकल(&gwj->mod, &mod, माप(mod));
 			local_bh_enable();
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	/* ifindex == 0 is not allowed for job creation */
-	if (!ccgw.src_idx || !ccgw.dst_idx)
-		return -ENODEV;
+	/* अगरindex == 0 is not allowed क्रम job creation */
+	अगर (!ccgw.src_idx || !ccgw.dst_idx)
+		वापस -ENODEV;
 
 	gwj = kmem_cache_alloc(cgw_cache, GFP_KERNEL);
-	if (!gwj)
-		return -ENOMEM;
+	अगर (!gwj)
+		वापस -ENOMEM;
 
 	gwj->handled_frames = 0;
 	gwj->dropped_frames = 0;
@@ -1110,210 +1111,210 @@ static int cgw_create_job(struct sk_buff *skb,  struct nlmsghdr *nlh,
 	gwj->gwtype = r->gwtype;
 	gwj->limit_hops = limhops;
 
-	/* insert already parsed information */
-	memcpy(&gwj->mod, &mod, sizeof(mod));
-	memcpy(&gwj->ccgw, &ccgw, sizeof(ccgw));
+	/* insert alपढ़ोy parsed inक्रमmation */
+	स_नकल(&gwj->mod, &mod, माप(mod));
+	स_नकल(&gwj->ccgw, &ccgw, माप(ccgw));
 
 	err = -ENODEV;
 
 	gwj->src.dev = __dev_get_by_index(net, gwj->ccgw.src_idx);
 
-	if (!gwj->src.dev)
-		goto out;
+	अगर (!gwj->src.dev)
+		जाओ out;
 
-	if (gwj->src.dev->type != ARPHRD_CAN)
-		goto out;
+	अगर (gwj->src.dev->type != ARPHRD_CAN)
+		जाओ out;
 
 	gwj->dst.dev = __dev_get_by_index(net, gwj->ccgw.dst_idx);
 
-	if (!gwj->dst.dev)
-		goto out;
+	अगर (!gwj->dst.dev)
+		जाओ out;
 
-	if (gwj->dst.dev->type != ARPHRD_CAN)
-		goto out;
+	अगर (gwj->dst.dev->type != ARPHRD_CAN)
+		जाओ out;
 
 	ASSERT_RTNL();
 
-	err = cgw_register_filter(net, gwj);
-	if (!err)
+	err = cgw_रेजिस्टर_filter(net, gwj);
+	अगर (!err)
 		hlist_add_head_rcu(&gwj->list, &net->can.cgw_list);
 out:
-	if (err)
-		kmem_cache_free(cgw_cache, gwj);
+	अगर (err)
+		kmem_cache_मुक्त(cgw_cache, gwj);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void cgw_remove_all_jobs(struct net *net)
-{
-	struct cgw_job *gwj = NULL;
-	struct hlist_node *nx;
+अटल व्योम cgw_हटाओ_all_jobs(काष्ठा net *net)
+अणु
+	काष्ठा cgw_job *gwj = शून्य;
+	काष्ठा hlist_node *nx;
 
 	ASSERT_RTNL();
 
-	hlist_for_each_entry_safe(gwj, nx, &net->can.cgw_list, list) {
+	hlist_क्रम_each_entry_safe(gwj, nx, &net->can.cgw_list, list) अणु
 		hlist_del(&gwj->list);
-		cgw_unregister_filter(net, gwj);
-		kmem_cache_free(cgw_cache, gwj);
-	}
-}
+		cgw_unरेजिस्टर_filter(net, gwj);
+		kmem_cache_मुक्त(cgw_cache, gwj);
+	पूर्ण
+पूर्ण
 
-static int cgw_remove_job(struct sk_buff *skb, struct nlmsghdr *nlh,
-			  struct netlink_ext_ack *extack)
-{
-	struct net *net = sock_net(skb->sk);
-	struct cgw_job *gwj = NULL;
-	struct hlist_node *nx;
-	struct rtcanmsg *r;
-	struct cf_mod mod;
-	struct can_can_gw ccgw;
+अटल पूर्णांक cgw_हटाओ_job(काष्ठा sk_buff *skb, काष्ठा nlmsghdr *nlh,
+			  काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा net *net = sock_net(skb->sk);
+	काष्ठा cgw_job *gwj = शून्य;
+	काष्ठा hlist_node *nx;
+	काष्ठा rtcanmsg *r;
+	काष्ठा cf_mod mod;
+	काष्ठा can_can_gw ccgw;
 	u8 limhops = 0;
-	int err = 0;
+	पूर्णांक err = 0;
 
-	if (!netlink_capable(skb, CAP_NET_ADMIN))
-		return -EPERM;
+	अगर (!netlink_capable(skb, CAP_NET_ADMIN))
+		वापस -EPERM;
 
-	if (nlmsg_len(nlh) < sizeof(*r))
-		return -EINVAL;
+	अगर (nlmsg_len(nlh) < माप(*r))
+		वापस -EINVAL;
 
 	r = nlmsg_data(nlh);
-	if (r->can_family != AF_CAN)
-		return -EPFNOSUPPORT;
+	अगर (r->can_family != AF_CAN)
+		वापस -EPFNOSUPPORT;
 
 	/* so far we only support CAN -> CAN routings */
-	if (r->gwtype != CGW_TYPE_CAN_CAN)
-		return -EINVAL;
+	अगर (r->gwtype != CGW_TYPE_CAN_CAN)
+		वापस -EINVAL;
 
 	err = cgw_parse_attr(nlh, &mod, CGW_TYPE_CAN_CAN, &ccgw, &limhops);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	/* two interface indices both set to 0 => remove all entries */
-	if (!ccgw.src_idx && !ccgw.dst_idx) {
-		cgw_remove_all_jobs(net);
-		return 0;
-	}
+	/* two पूर्णांकerface indices both set to 0 => हटाओ all entries */
+	अगर (!ccgw.src_idx && !ccgw.dst_idx) अणु
+		cgw_हटाओ_all_jobs(net);
+		वापस 0;
+	पूर्ण
 
 	err = -EINVAL;
 
 	ASSERT_RTNL();
 
-	/* remove only the first matching entry */
-	hlist_for_each_entry_safe(gwj, nx, &net->can.cgw_list, list) {
-		if (gwj->flags != r->flags)
-			continue;
+	/* हटाओ only the first matching entry */
+	hlist_क्रम_each_entry_safe(gwj, nx, &net->can.cgw_list, list) अणु
+		अगर (gwj->flags != r->flags)
+			जारी;
 
-		if (gwj->limit_hops != limhops)
-			continue;
+		अगर (gwj->limit_hops != limhops)
+			जारी;
 
 		/* we have a match when uid is enabled and identical */
-		if (gwj->mod.uid || mod.uid) {
-			if (gwj->mod.uid != mod.uid)
-				continue;
-		} else {
-			/* no uid => check for identical modifications */
-			if (memcmp(&gwj->mod, &mod, sizeof(mod)))
-				continue;
-		}
+		अगर (gwj->mod.uid || mod.uid) अणु
+			अगर (gwj->mod.uid != mod.uid)
+				जारी;
+		पूर्ण अन्यथा अणु
+			/* no uid => check क्रम identical modअगरications */
+			अगर (स_भेद(&gwj->mod, &mod, माप(mod)))
+				जारी;
+		पूर्ण
 
-		/* if (r->gwtype == CGW_TYPE_CAN_CAN) - is made sure here */
-		if (memcmp(&gwj->ccgw, &ccgw, sizeof(ccgw)))
-			continue;
+		/* अगर (r->gwtype == CGW_TYPE_CAN_CAN) - is made sure here */
+		अगर (स_भेद(&gwj->ccgw, &ccgw, माप(ccgw)))
+			जारी;
 
 		hlist_del(&gwj->list);
-		cgw_unregister_filter(net, gwj);
-		kmem_cache_free(cgw_cache, gwj);
+		cgw_unरेजिस्टर_filter(net, gwj);
+		kmem_cache_मुक्त(cgw_cache, gwj);
 		err = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int __net_init cangw_pernet_init(struct net *net)
-{
+अटल पूर्णांक __net_init cangw_pernet_init(काष्ठा net *net)
+अणु
 	INIT_HLIST_HEAD(&net->can.cgw_list);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __net_exit cangw_pernet_exit(struct net *net)
-{
+अटल व्योम __net_निकास cangw_pernet_निकास(काष्ठा net *net)
+अणु
 	rtnl_lock();
-	cgw_remove_all_jobs(net);
+	cgw_हटाओ_all_jobs(net);
 	rtnl_unlock();
-}
+पूर्ण
 
-static struct pernet_operations cangw_pernet_ops = {
+अटल काष्ठा pernet_operations cangw_pernet_ops = अणु
 	.init = cangw_pernet_init,
-	.exit = cangw_pernet_exit,
-};
+	.निकास = cangw_pernet_निकास,
+पूर्ण;
 
-static __init int cgw_module_init(void)
-{
-	int ret;
+अटल __init पूर्णांक cgw_module_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	/* sanitize given module parameter */
-	max_hops = clamp_t(unsigned int, max_hops, CGW_MIN_HOPS, CGW_MAX_HOPS);
+	max_hops = clamp_t(अचिन्हित पूर्णांक, max_hops, CGW_MIN_HOPS, CGW_MAX_HOPS);
 
 	pr_info("can: netlink gateway - max_hops=%d\n",	max_hops);
 
-	ret = register_pernet_subsys(&cangw_pernet_ops);
-	if (ret)
-		return ret;
+	ret = रेजिस्टर_pernet_subsys(&cangw_pernet_ops);
+	अगर (ret)
+		वापस ret;
 
 	ret = -ENOMEM;
-	cgw_cache = kmem_cache_create("can_gw", sizeof(struct cgw_job),
-				      0, 0, NULL);
-	if (!cgw_cache)
-		goto out_cache_create;
+	cgw_cache = kmem_cache_create("can_gw", माप(काष्ठा cgw_job),
+				      0, 0, शून्य);
+	अगर (!cgw_cache)
+		जाओ out_cache_create;
 
-	/* set notifier */
-	notifier.notifier_call = cgw_notifier;
-	ret = register_netdevice_notifier(&notifier);
-	if (ret)
-		goto out_register_notifier;
+	/* set notअगरier */
+	notअगरier.notअगरier_call = cgw_notअगरier;
+	ret = रेजिस्टर_netdevice_notअगरier(&notअगरier);
+	अगर (ret)
+		जाओ out_रेजिस्टर_notअगरier;
 
-	ret = rtnl_register_module(THIS_MODULE, PF_CAN, RTM_GETROUTE,
-				   NULL, cgw_dump_jobs, 0);
-	if (ret)
-		goto out_rtnl_register1;
+	ret = rtnl_रेजिस्टर_module(THIS_MODULE, PF_CAN, RTM_GETROUTE,
+				   शून्य, cgw_dump_jobs, 0);
+	अगर (ret)
+		जाओ out_rtnl_रेजिस्टर1;
 
-	ret = rtnl_register_module(THIS_MODULE, PF_CAN, RTM_NEWROUTE,
-				   cgw_create_job, NULL, 0);
-	if (ret)
-		goto out_rtnl_register2;
-	ret = rtnl_register_module(THIS_MODULE, PF_CAN, RTM_DELROUTE,
-				   cgw_remove_job, NULL, 0);
-	if (ret)
-		goto out_rtnl_register3;
+	ret = rtnl_रेजिस्टर_module(THIS_MODULE, PF_CAN, RTM_NEWROUTE,
+				   cgw_create_job, शून्य, 0);
+	अगर (ret)
+		जाओ out_rtnl_रेजिस्टर2;
+	ret = rtnl_रेजिस्टर_module(THIS_MODULE, PF_CAN, RTM_DELROUTE,
+				   cgw_हटाओ_job, शून्य, 0);
+	अगर (ret)
+		जाओ out_rtnl_रेजिस्टर3;
 
-	return 0;
+	वापस 0;
 
-out_rtnl_register3:
-	rtnl_unregister(PF_CAN, RTM_NEWROUTE);
-out_rtnl_register2:
-	rtnl_unregister(PF_CAN, RTM_GETROUTE);
-out_rtnl_register1:
-	unregister_netdevice_notifier(&notifier);
-out_register_notifier:
+out_rtnl_रेजिस्टर3:
+	rtnl_unरेजिस्टर(PF_CAN, RTM_NEWROUTE);
+out_rtnl_रेजिस्टर2:
+	rtnl_unरेजिस्टर(PF_CAN, RTM_GETROUTE);
+out_rtnl_रेजिस्टर1:
+	unरेजिस्टर_netdevice_notअगरier(&notअगरier);
+out_रेजिस्टर_notअगरier:
 	kmem_cache_destroy(cgw_cache);
 out_cache_create:
-	unregister_pernet_subsys(&cangw_pernet_ops);
+	unरेजिस्टर_pernet_subsys(&cangw_pernet_ops);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static __exit void cgw_module_exit(void)
-{
-	rtnl_unregister_all(PF_CAN);
+अटल __निकास व्योम cgw_module_निकास(व्योम)
+अणु
+	rtnl_unरेजिस्टर_all(PF_CAN);
 
-	unregister_netdevice_notifier(&notifier);
+	unरेजिस्टर_netdevice_notअगरier(&notअगरier);
 
-	unregister_pernet_subsys(&cangw_pernet_ops);
-	rcu_barrier(); /* Wait for completion of call_rcu()'s */
+	unरेजिस्टर_pernet_subsys(&cangw_pernet_ops);
+	rcu_barrier(); /* Wait क्रम completion of call_rcu()'s */
 
 	kmem_cache_destroy(cgw_cache);
-}
+पूर्ण
 
 module_init(cgw_module_init);
-module_exit(cgw_module_exit);
+module_निकास(cgw_module_निकास);

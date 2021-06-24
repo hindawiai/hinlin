@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2019 Arm Ltd. */
 
-#ifndef __KVM_ARM_HYPERCALLS_H
-#define __KVM_ARM_HYPERCALLS_H
+#अगर_अघोषित __KVM_ARM_HYPERCALLS_H
+#घोषणा __KVM_ARM_HYPERCALLS_H
 
-#include <asm/kvm_emulate.h>
+#समावेश <यंत्र/kvm_emulate.h>
 
-int kvm_hvc_call_handler(struct kvm_vcpu *vcpu);
+पूर्णांक kvm_hvc_call_handler(काष्ठा kvm_vcpu *vcpu);
 
-static inline u32 smccc_get_function(struct kvm_vcpu *vcpu)
-{
-	return vcpu_get_reg(vcpu, 0);
-}
+अटल अंतरभूत u32 smccc_get_function(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu_get_reg(vcpu, 0);
+पूर्ण
 
-static inline unsigned long smccc_get_arg1(struct kvm_vcpu *vcpu)
-{
-	return vcpu_get_reg(vcpu, 1);
-}
+अटल अंतरभूत अचिन्हित दीर्घ smccc_get_arg1(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu_get_reg(vcpu, 1);
+पूर्ण
 
-static inline unsigned long smccc_get_arg2(struct kvm_vcpu *vcpu)
-{
-	return vcpu_get_reg(vcpu, 2);
-}
+अटल अंतरभूत अचिन्हित दीर्घ smccc_get_arg2(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu_get_reg(vcpu, 2);
+पूर्ण
 
-static inline unsigned long smccc_get_arg3(struct kvm_vcpu *vcpu)
-{
-	return vcpu_get_reg(vcpu, 3);
-}
+अटल अंतरभूत अचिन्हित दीर्घ smccc_get_arg3(काष्ठा kvm_vcpu *vcpu)
+अणु
+	वापस vcpu_get_reg(vcpu, 3);
+पूर्ण
 
-static inline void smccc_set_retval(struct kvm_vcpu *vcpu,
-				    unsigned long a0,
-				    unsigned long a1,
-				    unsigned long a2,
-				    unsigned long a3)
-{
+अटल अंतरभूत व्योम smccc_set_retval(काष्ठा kvm_vcpu *vcpu,
+				    अचिन्हित दीर्घ a0,
+				    अचिन्हित दीर्घ a1,
+				    अचिन्हित दीर्घ a2,
+				    अचिन्हित दीर्घ a3)
+अणु
 	vcpu_set_reg(vcpu, 0, a0);
 	vcpu_set_reg(vcpu, 1, a1);
 	vcpu_set_reg(vcpu, 2, a2);
 	vcpu_set_reg(vcpu, 3, a3);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

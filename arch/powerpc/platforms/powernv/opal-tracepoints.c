@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/percpu.h>
-#include <linux/jump_label.h>
-#include <asm/trace.h>
-#include <asm/asm-prototypes.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/percpu.h>
+#समावेश <linux/jump_label.h>
+#समावेश <यंत्र/trace.h>
+#समावेश <यंत्र/यंत्र-prototypes.h>
 
-#ifdef CONFIG_JUMP_LABEL
-struct static_key opal_tracepoint_key = STATIC_KEY_INIT;
+#अगर_घोषित CONFIG_JUMP_LABEL
+काष्ठा अटल_key opal_tracepoपूर्णांक_key = STATIC_KEY_INIT;
 
-int opal_tracepoint_regfunc(void)
-{
-	static_key_slow_inc(&opal_tracepoint_key);
-	return 0;
-}
+पूर्णांक opal_tracepoपूर्णांक_regfunc(व्योम)
+अणु
+	अटल_key_slow_inc(&opal_tracepoपूर्णांक_key);
+	वापस 0;
+पूर्ण
 
-void opal_tracepoint_unregfunc(void)
-{
-	static_key_slow_dec(&opal_tracepoint_key);
-}
-#else
+व्योम opal_tracepoपूर्णांक_unregfunc(व्योम)
+अणु
+	अटल_key_slow_dec(&opal_tracepoपूर्णांक_key);
+पूर्ण
+#अन्यथा
 /*
- * We optimise OPAL calls by placing opal_tracepoint_refcount
- * directly in the TOC so we can check if the opal tracepoints are
+ * We optimise OPAL calls by placing opal_tracepoपूर्णांक_refcount
+ * directly in the TOC so we can check अगर the opal tracepoपूर्णांकs are
  * enabled via a single load.
  */
 
-/* NB: reg/unreg are called while guarded with the tracepoints_mutex */
-extern long opal_tracepoint_refcount;
+/* NB: reg/unreg are called जबतक guarded with the tracepoपूर्णांकs_mutex */
+बाह्य दीर्घ opal_tracepoपूर्णांक_refcount;
 
-int opal_tracepoint_regfunc(void)
-{
-	opal_tracepoint_refcount++;
-	return 0;
-}
+पूर्णांक opal_tracepoपूर्णांक_regfunc(व्योम)
+अणु
+	opal_tracepoपूर्णांक_refcount++;
+	वापस 0;
+पूर्ण
 
-void opal_tracepoint_unregfunc(void)
-{
-	opal_tracepoint_refcount--;
-}
-#endif
+व्योम opal_tracepoपूर्णांक_unregfunc(व्योम)
+अणु
+	opal_tracepoपूर्णांक_refcount--;
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * Since the tracing code might execute OPAL calls we need to guard against
  * recursion.
  */
-static DEFINE_PER_CPU(unsigned int, opal_trace_depth);
+अटल DEFINE_PER_CPU(अचिन्हित पूर्णांक, opal_trace_depth);
 
-void __trace_opal_entry(unsigned long opcode, unsigned long *args)
-{
-	unsigned long flags;
-	unsigned int *depth;
+व्योम __trace_opal_entry(अचिन्हित दीर्घ opcode, अचिन्हित दीर्घ *args)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक *depth;
 
 	local_irq_save(flags);
 
 	depth = this_cpu_ptr(&opal_trace_depth);
 
-	if (*depth)
-		goto out;
+	अगर (*depth)
+		जाओ out;
 
 	(*depth)++;
 	preempt_disable();
@@ -64,25 +65,25 @@ void __trace_opal_entry(unsigned long opcode, unsigned long *args)
 
 out:
 	local_irq_restore(flags);
-}
+पूर्ण
 
-void __trace_opal_exit(long opcode, unsigned long retval)
-{
-	unsigned long flags;
-	unsigned int *depth;
+व्योम __trace_opal_निकास(दीर्घ opcode, अचिन्हित दीर्घ retval)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक *depth;
 
 	local_irq_save(flags);
 
 	depth = this_cpu_ptr(&opal_trace_depth);
 
-	if (*depth)
-		goto out;
+	अगर (*depth)
+		जाओ out;
 
 	(*depth)++;
-	trace_opal_exit(opcode, retval);
+	trace_opal_निकास(opcode, retval);
 	preempt_enable();
 	(*depth)--;
 
 out:
 	local_irq_restore(flags);
-}
+पूर्ण

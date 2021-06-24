@@ -1,30 +1,31 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_BUG_H
-#define _ASM_X86_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_BUG_H
+#घोषणा _ASM_X86_BUG_H
 
-#include <linux/stringify.h>
-#include <linux/instrumentation.h>
+#समावेश <linux/stringअगरy.h>
+#समावेश <linux/instrumentation.h>
 
 /*
- * Despite that some emulators terminate on UD2, we use it for WARN().
+ * Despite that some emulators terminate on UD2, we use it क्रम WARN().
  */
-#define ASM_UD2		".byte 0x0f, 0x0b"
-#define INSN_UD2	0x0b0f
-#define LEN_UD2		2
+#घोषणा ASM_UD2		".byte 0x0f, 0x0b"
+#घोषणा INSN_UD2	0x0b0f
+#घोषणा LEN_UD2		2
 
-#ifdef CONFIG_GENERIC_BUG
+#अगर_घोषित CONFIG_GENERIC_BUG
 
-#ifdef CONFIG_X86_32
-# define __BUG_REL(val)	".long " __stringify(val)
-#else
-# define __BUG_REL(val)	".long " __stringify(val) " - 2b"
-#endif
+#अगर_घोषित CONFIG_X86_32
+# define __BUG_REL(val)	".long " __stringअगरy(val)
+#अन्यथा
+# define __BUG_REL(val)	".long " __stringअगरy(val) " - 2b"
+#पूर्ण_अगर
 
-#ifdef CONFIG_DEBUG_BUGVERBOSE
+#अगर_घोषित CONFIG_DEBUG_BUGVERBOSE
 
-#define _BUG_FLAGS(ins, flags)						\
-do {									\
-	asm_inline volatile("1:\t" ins "\n"				\
+#घोषणा _BUG_FLAGS(ins, flags)						\
+करो अणु									\
+	यंत्र_अंतरभूत अस्थिर("1:\t" ins "\n"				\
 		     ".pushsection __bug_table,\"aw\"\n"		\
 		     "2:\t" __BUG_REL(1b) "\t# bug_entry::bug_addr\n"	\
 		     "\t"  __BUG_REL(%c0) "\t# bug_entry::file\n"	\
@@ -32,55 +33,55 @@ do {									\
 		     "\t.word %c2"        "\t# bug_entry::flags\n"	\
 		     "\t.org 2b+%c3\n"					\
 		     ".popsection"					\
-		     : : "i" (__FILE__), "i" (__LINE__),		\
+		     : : "i" (__खाता__), "i" (__LINE__),		\
 			 "i" (flags),					\
-			 "i" (sizeof(struct bug_entry)));		\
-} while (0)
+			 "i" (माप(काष्ठा bug_entry)));		\
+पूर्ण जबतक (0)
 
-#else /* !CONFIG_DEBUG_BUGVERBOSE */
+#अन्यथा /* !CONFIG_DEBUG_BUGVERBOSE */
 
-#define _BUG_FLAGS(ins, flags)						\
-do {									\
-	asm_inline volatile("1:\t" ins "\n"				\
+#घोषणा _BUG_FLAGS(ins, flags)						\
+करो अणु									\
+	यंत्र_अंतरभूत अस्थिर("1:\t" ins "\n"				\
 		     ".pushsection __bug_table,\"aw\"\n"		\
 		     "2:\t" __BUG_REL(1b) "\t# bug_entry::bug_addr\n"	\
 		     "\t.word %c0"        "\t# bug_entry::flags\n"	\
 		     "\t.org 2b+%c1\n"					\
 		     ".popsection"					\
 		     : : "i" (flags),					\
-			 "i" (sizeof(struct bug_entry)));		\
-} while (0)
+			 "i" (माप(काष्ठा bug_entry)));		\
+पूर्ण जबतक (0)
 
-#endif /* CONFIG_DEBUG_BUGVERBOSE */
+#पूर्ण_अगर /* CONFIG_DEBUG_BUGVERBOSE */
 
-#else
+#अन्यथा
 
-#define _BUG_FLAGS(ins, flags)  asm volatile(ins)
+#घोषणा _BUG_FLAGS(ins, flags)  यंत्र अस्थिर(ins)
 
-#endif /* CONFIG_GENERIC_BUG */
+#पूर्ण_अगर /* CONFIG_GENERIC_BUG */
 
-#define HAVE_ARCH_BUG
-#define BUG()							\
-do {								\
+#घोषणा HAVE_ARCH_BUG
+#घोषणा BUG()							\
+करो अणु								\
 	instrumentation_begin();				\
 	_BUG_FLAGS(ASM_UD2, 0);					\
 	unreachable();						\
-} while (0)
+पूर्ण जबतक (0)
 
 /*
  * This instrumentation_begin() is strictly speaking incorrect; but it
- * suppresses the complaints from WARN()s in noinstr code. If such a WARN()
+ * suppresses the complaपूर्णांकs from WARN()s in noinstr code. If such a WARN()
  * were to trigger, we'd rather wreck the machine in an attempt to get the
  * message out than not know about it.
  */
-#define __WARN_FLAGS(flags)					\
-do {								\
+#घोषणा __WARN_FLAGS(flags)					\
+करो अणु								\
 	instrumentation_begin();				\
 	_BUG_FLAGS(ASM_UD2, BUGFLAG_WARNING|(flags));		\
 	annotate_reachable();					\
 	instrumentation_end();					\
-} while (0)
+पूर्ण जबतक (0)
 
-#include <asm-generic/bug.h>
+#समावेश <यंत्र-generic/bug.h>
 
-#endif /* _ASM_X86_BUG_H */
+#पूर्ण_अगर /* _ASM_X86_BUG_H */

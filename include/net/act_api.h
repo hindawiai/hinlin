@@ -1,263 +1,264 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_ACT_API_H
-#define __NET_ACT_API_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_ACT_API_H
+#घोषणा __NET_ACT_API_H
 
 /*
- * Public action API for classifiers/qdiscs
+ * Public action API क्रम classअगरiers/qdiscs
 */
 
-#include <linux/refcount.h>
-#include <net/sch_generic.h>
-#include <net/pkt_sched.h>
-#include <net/net_namespace.h>
-#include <net/netns/generic.h>
+#समावेश <linux/refcount.h>
+#समावेश <net/sch_generic.h>
+#समावेश <net/pkt_sched.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/netns/generic.h>
 
-struct tcf_idrinfo {
-	struct mutex	lock;
-	struct idr	action_idr;
-	struct net	*net;
-};
+काष्ठा tcf_idrinfo अणु
+	काष्ठा mutex	lock;
+	काष्ठा idr	action_idr;
+	काष्ठा net	*net;
+पूर्ण;
 
-struct tc_action_ops;
+काष्ठा tc_action_ops;
 
-struct tc_action {
-	const struct tc_action_ops	*ops;
-	__u32				type; /* for backward compat(TCA_OLD_COMPAT) */
-	struct tcf_idrinfo		*idrinfo;
+काष्ठा tc_action अणु
+	स्थिर काष्ठा tc_action_ops	*ops;
+	__u32				type; /* क्रम backward compat(TCA_OLD_COMPAT) */
+	काष्ठा tcf_idrinfo		*idrinfo;
 
 	u32				tcfa_index;
 	refcount_t			tcfa_refcnt;
 	atomic_t			tcfa_bindcnt;
-	int				tcfa_action;
-	struct tcf_t			tcfa_tm;
-	struct gnet_stats_basic_packed	tcfa_bstats;
-	struct gnet_stats_basic_packed	tcfa_bstats_hw;
-	struct gnet_stats_queue		tcfa_qstats;
-	struct net_rate_estimator __rcu *tcfa_rate_est;
+	पूर्णांक				tcfa_action;
+	काष्ठा tcf_t			tcfa_पंचांग;
+	काष्ठा gnet_stats_basic_packed	tcfa_bstats;
+	काष्ठा gnet_stats_basic_packed	tcfa_bstats_hw;
+	काष्ठा gnet_stats_queue		tcfa_qstats;
+	काष्ठा net_rate_estimator __rcu *tcfa_rate_est;
 	spinlock_t			tcfa_lock;
-	struct gnet_stats_basic_cpu __percpu *cpu_bstats;
-	struct gnet_stats_basic_cpu __percpu *cpu_bstats_hw;
-	struct gnet_stats_queue __percpu *cpu_qstats;
-	struct tc_cookie	__rcu *act_cookie;
-	struct tcf_chain	__rcu *goto_chain;
+	काष्ठा gnet_stats_basic_cpu __percpu *cpu_bstats;
+	काष्ठा gnet_stats_basic_cpu __percpu *cpu_bstats_hw;
+	काष्ठा gnet_stats_queue __percpu *cpu_qstats;
+	काष्ठा tc_cookie	__rcu *act_cookie;
+	काष्ठा tcf_chain	__rcu *जाओ_chain;
 	u32			tcfa_flags;
 	u8			hw_stats;
 	u8			used_hw_stats;
 	bool			used_hw_stats_valid;
-};
-#define tcf_index	common.tcfa_index
-#define tcf_refcnt	common.tcfa_refcnt
-#define tcf_bindcnt	common.tcfa_bindcnt
-#define tcf_action	common.tcfa_action
-#define tcf_tm		common.tcfa_tm
-#define tcf_bstats	common.tcfa_bstats
-#define tcf_qstats	common.tcfa_qstats
-#define tcf_rate_est	common.tcfa_rate_est
-#define tcf_lock	common.tcfa_lock
+पूर्ण;
+#घोषणा tcf_index	common.tcfa_index
+#घोषणा tcf_refcnt	common.tcfa_refcnt
+#घोषणा tcf_bindcnt	common.tcfa_bindcnt
+#घोषणा tcf_action	common.tcfa_action
+#घोषणा tcf_पंचांग		common.tcfa_पंचांग
+#घोषणा tcf_bstats	common.tcfa_bstats
+#घोषणा tcf_qstats	common.tcfa_qstats
+#घोषणा tcf_rate_est	common.tcfa_rate_est
+#घोषणा tcf_lock	common.tcfa_lock
 
-#define TCA_ACT_HW_STATS_ANY (TCA_ACT_HW_STATS_IMMEDIATE | \
+#घोषणा TCA_ACT_HW_STATS_ANY (TCA_ACT_HW_STATS_IMMEDIATE | \
 			      TCA_ACT_HW_STATS_DELAYED)
 
-/* Update lastuse only if needed, to avoid dirtying a cache line.
- * We use a temp variable to avoid fetching jiffies twice.
+/* Update lastuse only अगर needed, to aव्योम dirtying a cache line.
+ * We use a temp variable to aव्योम fetching jअगरfies twice.
  */
-static inline void tcf_lastuse_update(struct tcf_t *tm)
-{
-	unsigned long now = jiffies;
+अटल अंतरभूत व्योम tcf_lastuse_update(काष्ठा tcf_t *पंचांग)
+अणु
+	अचिन्हित दीर्घ now = jअगरfies;
 
-	if (tm->lastuse != now)
-		tm->lastuse = now;
-	if (unlikely(!tm->firstuse))
-		tm->firstuse = now;
-}
+	अगर (पंचांग->lastuse != now)
+		पंचांग->lastuse = now;
+	अगर (unlikely(!पंचांग->firstuse))
+		पंचांग->firstuse = now;
+पूर्ण
 
-static inline void tcf_tm_dump(struct tcf_t *dtm, const struct tcf_t *stm)
-{
-	dtm->install = jiffies_to_clock_t(jiffies - stm->install);
-	dtm->lastuse = jiffies_to_clock_t(jiffies - stm->lastuse);
-	dtm->firstuse = stm->firstuse ?
-		jiffies_to_clock_t(jiffies - stm->firstuse) : 0;
-	dtm->expires = jiffies_to_clock_t(stm->expires);
-}
+अटल अंतरभूत व्योम tcf_पंचांग_dump(काष्ठा tcf_t *dपंचांग, स्थिर काष्ठा tcf_t *sपंचांग)
+अणु
+	dपंचांग->install = jअगरfies_to_घड़ी_प्रकार(jअगरfies - sपंचांग->install);
+	dपंचांग->lastuse = jअगरfies_to_घड़ी_प्रकार(jअगरfies - sपंचांग->lastuse);
+	dपंचांग->firstuse = sपंचांग->firstuse ?
+		jअगरfies_to_घड़ी_प्रकार(jअगरfies - sपंचांग->firstuse) : 0;
+	dपंचांग->expires = jअगरfies_to_घड़ी_प्रकार(sपंचांग->expires);
+पूर्ण
 
-#ifdef CONFIG_NET_CLS_ACT
+#अगर_घोषित CONFIG_NET_CLS_ACT
 
-#define ACT_P_CREATED 1
-#define ACT_P_DELETED 1
+#घोषणा ACT_P_CREATED 1
+#घोषणा ACT_P_DELETED 1
 
-typedef void (*tc_action_priv_destructor)(void *priv);
+प्रकार व्योम (*tc_action_priv_deकाष्ठाor)(व्योम *priv);
 
-struct tc_action_ops {
-	struct list_head head;
-	char    kind[IFNAMSIZ];
-	enum tca_id  id; /* identifier should match kind */
-	size_t	size;
-	struct module		*owner;
-	int     (*act)(struct sk_buff *, const struct tc_action *,
-		       struct tcf_result *); /* called under RCU BH lock*/
-	int     (*dump)(struct sk_buff *, struct tc_action *, int, int);
-	void	(*cleanup)(struct tc_action *);
-	int     (*lookup)(struct net *net, struct tc_action **a, u32 index);
-	int     (*init)(struct net *net, struct nlattr *nla,
-			struct nlattr *est, struct tc_action **act, int ovr,
-			int bind, bool rtnl_held, struct tcf_proto *tp,
-			u32 flags, struct netlink_ext_ack *extack);
-	int     (*walk)(struct net *, struct sk_buff *,
-			struct netlink_callback *, int,
-			const struct tc_action_ops *,
-			struct netlink_ext_ack *);
-	void	(*stats_update)(struct tc_action *, u64, u64, u64, u64, bool);
-	size_t  (*get_fill_size)(const struct tc_action *act);
-	struct net_device *(*get_dev)(const struct tc_action *a,
-				      tc_action_priv_destructor *destructor);
-	struct psample_group *
-	(*get_psample_group)(const struct tc_action *a,
-			     tc_action_priv_destructor *destructor);
-};
+काष्ठा tc_action_ops अणु
+	काष्ठा list_head head;
+	अक्षर    kind[IFNAMSIZ];
+	क्रमागत tca_id  id; /* identअगरier should match kind */
+	माप_प्रकार	size;
+	काष्ठा module		*owner;
+	पूर्णांक     (*act)(काष्ठा sk_buff *, स्थिर काष्ठा tc_action *,
+		       काष्ठा tcf_result *); /* called under RCU BH lock*/
+	पूर्णांक     (*dump)(काष्ठा sk_buff *, काष्ठा tc_action *, पूर्णांक, पूर्णांक);
+	व्योम	(*cleanup)(काष्ठा tc_action *);
+	पूर्णांक     (*lookup)(काष्ठा net *net, काष्ठा tc_action **a, u32 index);
+	पूर्णांक     (*init)(काष्ठा net *net, काष्ठा nlattr *nla,
+			काष्ठा nlattr *est, काष्ठा tc_action **act, पूर्णांक ovr,
+			पूर्णांक bind, bool rtnl_held, काष्ठा tcf_proto *tp,
+			u32 flags, काष्ठा netlink_ext_ack *extack);
+	पूर्णांक     (*walk)(काष्ठा net *, काष्ठा sk_buff *,
+			काष्ठा netlink_callback *, पूर्णांक,
+			स्थिर काष्ठा tc_action_ops *,
+			काष्ठा netlink_ext_ack *);
+	व्योम	(*stats_update)(काष्ठा tc_action *, u64, u64, u64, u64, bool);
+	माप_प्रकार  (*get_fill_size)(स्थिर काष्ठा tc_action *act);
+	काष्ठा net_device *(*get_dev)(स्थिर काष्ठा tc_action *a,
+				      tc_action_priv_deकाष्ठाor *deकाष्ठाor);
+	काष्ठा psample_group *
+	(*get_psample_group)(स्थिर काष्ठा tc_action *a,
+			     tc_action_priv_deकाष्ठाor *deकाष्ठाor);
+पूर्ण;
 
-struct tc_action_net {
-	struct tcf_idrinfo *idrinfo;
-	const struct tc_action_ops *ops;
-};
+काष्ठा tc_action_net अणु
+	काष्ठा tcf_idrinfo *idrinfo;
+	स्थिर काष्ठा tc_action_ops *ops;
+पूर्ण;
 
-static inline
-int tc_action_net_init(struct net *net, struct tc_action_net *tn,
-		       const struct tc_action_ops *ops)
-{
-	int err = 0;
+अटल अंतरभूत
+पूर्णांक tc_action_net_init(काष्ठा net *net, काष्ठा tc_action_net *tn,
+		       स्थिर काष्ठा tc_action_ops *ops)
+अणु
+	पूर्णांक err = 0;
 
-	tn->idrinfo = kmalloc(sizeof(*tn->idrinfo), GFP_KERNEL);
-	if (!tn->idrinfo)
-		return -ENOMEM;
+	tn->idrinfo = kदो_स्मृति(माप(*tn->idrinfo), GFP_KERNEL);
+	अगर (!tn->idrinfo)
+		वापस -ENOMEM;
 	tn->ops = ops;
 	tn->idrinfo->net = net;
 	mutex_init(&tn->idrinfo->lock);
 	idr_init(&tn->idrinfo->action_idr);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void tcf_idrinfo_destroy(const struct tc_action_ops *ops,
-			 struct tcf_idrinfo *idrinfo);
+व्योम tcf_idrinfo_destroy(स्थिर काष्ठा tc_action_ops *ops,
+			 काष्ठा tcf_idrinfo *idrinfo);
 
-static inline void tc_action_net_exit(struct list_head *net_list,
-				      unsigned int id)
-{
-	struct net *net;
+अटल अंतरभूत व्योम tc_action_net_निकास(काष्ठा list_head *net_list,
+				      अचिन्हित पूर्णांक id)
+अणु
+	काष्ठा net *net;
 
 	rtnl_lock();
-	list_for_each_entry(net, net_list, exit_list) {
-		struct tc_action_net *tn = net_generic(net, id);
+	list_क्रम_each_entry(net, net_list, निकास_list) अणु
+		काष्ठा tc_action_net *tn = net_generic(net, id);
 
 		tcf_idrinfo_destroy(tn->ops, tn->idrinfo);
-		kfree(tn->idrinfo);
-	}
+		kमुक्त(tn->idrinfo);
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
-int tcf_generic_walker(struct tc_action_net *tn, struct sk_buff *skb,
-		       struct netlink_callback *cb, int type,
-		       const struct tc_action_ops *ops,
-		       struct netlink_ext_ack *extack);
-int tcf_idr_search(struct tc_action_net *tn, struct tc_action **a, u32 index);
-int tcf_idr_create(struct tc_action_net *tn, u32 index, struct nlattr *est,
-		   struct tc_action **a, const struct tc_action_ops *ops,
-		   int bind, bool cpustats, u32 flags);
-int tcf_idr_create_from_flags(struct tc_action_net *tn, u32 index,
-			      struct nlattr *est, struct tc_action **a,
-			      const struct tc_action_ops *ops, int bind,
+पूर्णांक tcf_generic_walker(काष्ठा tc_action_net *tn, काष्ठा sk_buff *skb,
+		       काष्ठा netlink_callback *cb, पूर्णांक type,
+		       स्थिर काष्ठा tc_action_ops *ops,
+		       काष्ठा netlink_ext_ack *extack);
+पूर्णांक tcf_idr_search(काष्ठा tc_action_net *tn, काष्ठा tc_action **a, u32 index);
+पूर्णांक tcf_idr_create(काष्ठा tc_action_net *tn, u32 index, काष्ठा nlattr *est,
+		   काष्ठा tc_action **a, स्थिर काष्ठा tc_action_ops *ops,
+		   पूर्णांक bind, bool cpustats, u32 flags);
+पूर्णांक tcf_idr_create_from_flags(काष्ठा tc_action_net *tn, u32 index,
+			      काष्ठा nlattr *est, काष्ठा tc_action **a,
+			      स्थिर काष्ठा tc_action_ops *ops, पूर्णांक bind,
 			      u32 flags);
-void tcf_idr_insert_many(struct tc_action *actions[]);
-void tcf_idr_cleanup(struct tc_action_net *tn, u32 index);
-int tcf_idr_check_alloc(struct tc_action_net *tn, u32 *index,
-			struct tc_action **a, int bind);
-int tcf_idr_release(struct tc_action *a, bool bind);
+व्योम tcf_idr_insert_many(काष्ठा tc_action *actions[]);
+व्योम tcf_idr_cleanup(काष्ठा tc_action_net *tn, u32 index);
+पूर्णांक tcf_idr_check_alloc(काष्ठा tc_action_net *tn, u32 *index,
+			काष्ठा tc_action **a, पूर्णांक bind);
+पूर्णांक tcf_idr_release(काष्ठा tc_action *a, bool bind);
 
-int tcf_register_action(struct tc_action_ops *a, struct pernet_operations *ops);
-int tcf_unregister_action(struct tc_action_ops *a,
-			  struct pernet_operations *ops);
-int tcf_action_destroy(struct tc_action *actions[], int bind);
-int tcf_action_exec(struct sk_buff *skb, struct tc_action **actions,
-		    int nr_actions, struct tcf_result *res);
-int tcf_action_init(struct net *net, struct tcf_proto *tp, struct nlattr *nla,
-		    struct nlattr *est, char *name, int ovr, int bind,
-		    struct tc_action *actions[], int init_res[], size_t *attr_size,
-		    bool rtnl_held, struct netlink_ext_ack *extack);
-struct tc_action_ops *tc_action_load_ops(char *name, struct nlattr *nla,
+पूर्णांक tcf_रेजिस्टर_action(काष्ठा tc_action_ops *a, काष्ठा pernet_operations *ops);
+पूर्णांक tcf_unरेजिस्टर_action(काष्ठा tc_action_ops *a,
+			  काष्ठा pernet_operations *ops);
+पूर्णांक tcf_action_destroy(काष्ठा tc_action *actions[], पूर्णांक bind);
+पूर्णांक tcf_action_exec(काष्ठा sk_buff *skb, काष्ठा tc_action **actions,
+		    पूर्णांक nr_actions, काष्ठा tcf_result *res);
+पूर्णांक tcf_action_init(काष्ठा net *net, काष्ठा tcf_proto *tp, काष्ठा nlattr *nla,
+		    काष्ठा nlattr *est, अक्षर *name, पूर्णांक ovr, पूर्णांक bind,
+		    काष्ठा tc_action *actions[], पूर्णांक init_res[], माप_प्रकार *attr_size,
+		    bool rtnl_held, काष्ठा netlink_ext_ack *extack);
+काष्ठा tc_action_ops *tc_action_load_ops(अक्षर *name, काष्ठा nlattr *nla,
 					 bool rtnl_held,
-					 struct netlink_ext_ack *extack);
-struct tc_action *tcf_action_init_1(struct net *net, struct tcf_proto *tp,
-				    struct nlattr *nla, struct nlattr *est,
-				    char *name, int ovr, int bind,
-				    struct tc_action_ops *a_o, int *init_res,
+					 काष्ठा netlink_ext_ack *extack);
+काष्ठा tc_action *tcf_action_init_1(काष्ठा net *net, काष्ठा tcf_proto *tp,
+				    काष्ठा nlattr *nla, काष्ठा nlattr *est,
+				    अक्षर *name, पूर्णांक ovr, पूर्णांक bind,
+				    काष्ठा tc_action_ops *a_o, पूर्णांक *init_res,
 				    bool rtnl_held,
-				    struct netlink_ext_ack *extack);
-int tcf_action_dump(struct sk_buff *skb, struct tc_action *actions[], int bind,
-		    int ref, bool terse);
-int tcf_action_dump_old(struct sk_buff *skb, struct tc_action *a, int, int);
-int tcf_action_dump_1(struct sk_buff *skb, struct tc_action *a, int, int);
+				    काष्ठा netlink_ext_ack *extack);
+पूर्णांक tcf_action_dump(काष्ठा sk_buff *skb, काष्ठा tc_action *actions[], पूर्णांक bind,
+		    पूर्णांक ref, bool terse);
+पूर्णांक tcf_action_dump_old(काष्ठा sk_buff *skb, काष्ठा tc_action *a, पूर्णांक, पूर्णांक);
+पूर्णांक tcf_action_dump_1(काष्ठा sk_buff *skb, काष्ठा tc_action *a, पूर्णांक, पूर्णांक);
 
-static inline void tcf_action_update_bstats(struct tc_action *a,
-					    struct sk_buff *skb)
-{
-	if (likely(a->cpu_bstats)) {
+अटल अंतरभूत व्योम tcf_action_update_bstats(काष्ठा tc_action *a,
+					    काष्ठा sk_buff *skb)
+अणु
+	अगर (likely(a->cpu_bstats)) अणु
 		bstats_cpu_update(this_cpu_ptr(a->cpu_bstats), skb);
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_lock(&a->tcfa_lock);
 	bstats_update(&a->tcfa_bstats, skb);
 	spin_unlock(&a->tcfa_lock);
-}
+पूर्ण
 
-static inline void tcf_action_inc_drop_qstats(struct tc_action *a)
-{
-	if (likely(a->cpu_qstats)) {
+अटल अंतरभूत व्योम tcf_action_inc_drop_qstats(काष्ठा tc_action *a)
+अणु
+	अगर (likely(a->cpu_qstats)) अणु
 		qstats_drop_inc(this_cpu_ptr(a->cpu_qstats));
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_lock(&a->tcfa_lock);
 	qstats_drop_inc(&a->tcfa_qstats);
 	spin_unlock(&a->tcfa_lock);
-}
+पूर्ण
 
-static inline void tcf_action_inc_overlimit_qstats(struct tc_action *a)
-{
-	if (likely(a->cpu_qstats)) {
+अटल अंतरभूत व्योम tcf_action_inc_overlimit_qstats(काष्ठा tc_action *a)
+अणु
+	अगर (likely(a->cpu_qstats)) अणु
 		qstats_overlimit_inc(this_cpu_ptr(a->cpu_qstats));
-		return;
-	}
+		वापस;
+	पूर्ण
 	spin_lock(&a->tcfa_lock);
 	qstats_overlimit_inc(&a->tcfa_qstats);
 	spin_unlock(&a->tcfa_lock);
-}
+पूर्ण
 
-void tcf_action_update_stats(struct tc_action *a, u64 bytes, u64 packets,
+व्योम tcf_action_update_stats(काष्ठा tc_action *a, u64 bytes, u64 packets,
 			     u64 drops, bool hw);
-int tcf_action_copy_stats(struct sk_buff *, struct tc_action *, int);
+पूर्णांक tcf_action_copy_stats(काष्ठा sk_buff *, काष्ठा tc_action *, पूर्णांक);
 
-int tcf_action_check_ctrlact(int action, struct tcf_proto *tp,
-			     struct tcf_chain **handle,
-			     struct netlink_ext_ack *newchain);
-struct tcf_chain *tcf_action_set_ctrlact(struct tc_action *a, int action,
-					 struct tcf_chain *newchain);
+पूर्णांक tcf_action_check_ctrlact(पूर्णांक action, काष्ठा tcf_proto *tp,
+			     काष्ठा tcf_chain **handle,
+			     काष्ठा netlink_ext_ack *newchain);
+काष्ठा tcf_chain *tcf_action_set_ctrlact(काष्ठा tc_action *a, पूर्णांक action,
+					 काष्ठा tcf_chain *newchain);
 
-#ifdef CONFIG_INET
+#अगर_घोषित CONFIG_INET
 DECLARE_STATIC_KEY_FALSE(tcf_frag_xmit_count);
-#endif
+#पूर्ण_अगर
 
-int tcf_dev_queue_xmit(struct sk_buff *skb, int (*xmit)(struct sk_buff *skb));
-#endif /* CONFIG_NET_CLS_ACT */
+पूर्णांक tcf_dev_queue_xmit(काष्ठा sk_buff *skb, पूर्णांक (*xmit)(काष्ठा sk_buff *skb));
+#पूर्ण_अगर /* CONFIG_NET_CLS_ACT */
 
-static inline void tcf_action_stats_update(struct tc_action *a, u64 bytes,
+अटल अंतरभूत व्योम tcf_action_stats_update(काष्ठा tc_action *a, u64 bytes,
 					   u64 packets, u64 drops,
 					   u64 lastuse, bool hw)
-{
-#ifdef CONFIG_NET_CLS_ACT
-	if (!a->ops->stats_update)
-		return;
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	अगर (!a->ops->stats_update)
+		वापस;
 
 	a->ops->stats_update(a, bytes, packets, drops, lastuse, hw);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 
-#endif
+#पूर्ण_अगर

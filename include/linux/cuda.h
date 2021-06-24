@@ -1,23 +1,24 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Definitions for talking to the CUDA.  The CUDA is a microcontroller
- * which controls the ADB, system power, RTC, and various other things.
+ * Definitions क्रम talking to the CUDA.  The CUDA is a microcontroller
+ * which controls the ADB, प्रणाली घातer, RTC, and various other things.
  *
  * Copyright (C) 1996 Paul Mackerras.
  */
-#ifndef _LINUX_CUDA_H
-#define _LINUX_CUDA_H
+#अगर_अघोषित _LINUX_CUDA_H
+#घोषणा _LINUX_CUDA_H
 
-#include <linux/rtc.h>
-#include <uapi/linux/cuda.h>
+#समावेश <linux/rtc.h>
+#समावेश <uapi/linux/cuda.h>
 
 
-extern int find_via_cuda(void);
-extern int cuda_request(struct adb_request *req,
-			void (*done)(struct adb_request *), int nbytes, ...);
-extern void cuda_poll(void);
+बाह्य पूर्णांक find_via_cuda(व्योम);
+बाह्य पूर्णांक cuda_request(काष्ठा adb_request *req,
+			व्योम (*करोne)(काष्ठा adb_request *), पूर्णांक nbytes, ...);
+बाह्य व्योम cuda_poll(व्योम);
 
-extern time64_t cuda_get_time(void);
-extern int cuda_set_rtc_time(struct rtc_time *tm);
+बाह्य समय64_t cuda_get_समय(व्योम);
+बाह्य पूर्णांक cuda_set_rtc_समय(काष्ठा rtc_समय *पंचांग);
 
-#endif /* _LINUX_CUDA_H */
+#पूर्ण_अगर /* _LINUX_CUDA_H */

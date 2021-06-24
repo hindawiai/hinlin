@@ -1,315 +1,316 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2019 Mellanox Technologies. All rights reserved */
 
-#include <linux/debugfs.h>
-#include <linux/err.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
+#समावेश <linux/debugfs.h>
+#समावेश <linux/err.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
 
-#include "netdevsim.h"
+#समावेश "netdevsim.h"
 
-static int
-nsim_dev_empty_reporter_dump(struct devlink_health_reporter *reporter,
-			     struct devlink_fmsg *fmsg, void *priv_ctx,
-			     struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल पूर्णांक
+nsim_dev_empty_reporter_dump(काष्ठा devlink_health_reporter *reporter,
+			     काष्ठा devlink_fmsg *fmsg, व्योम *priv_ctx,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static int
-nsim_dev_empty_reporter_diagnose(struct devlink_health_reporter *reporter,
-				 struct devlink_fmsg *fmsg,
-				 struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल पूर्णांक
+nsim_dev_empty_reporter_diagnose(काष्ठा devlink_health_reporter *reporter,
+				 काष्ठा devlink_fmsg *fmsg,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static const
-struct devlink_health_reporter_ops nsim_dev_empty_reporter_ops = {
+अटल स्थिर
+काष्ठा devlink_health_reporter_ops nsim_dev_empty_reporter_ops = अणु
 	.name = "empty",
 	.dump = nsim_dev_empty_reporter_dump,
 	.diagnose = nsim_dev_empty_reporter_diagnose,
-};
+पूर्ण;
 
-struct nsim_dev_dummy_reporter_ctx {
-	char *break_msg;
-};
+काष्ठा nsim_dev_dummy_reporter_ctx अणु
+	अक्षर *अवरोध_msg;
+पूर्ण;
 
-static int
-nsim_dev_dummy_reporter_recover(struct devlink_health_reporter *reporter,
-				void *priv_ctx,
-				struct netlink_ext_ack *extack)
-{
-	struct nsim_dev_health *health = devlink_health_reporter_priv(reporter);
-	struct nsim_dev_dummy_reporter_ctx *ctx = priv_ctx;
+अटल पूर्णांक
+nsim_dev_dummy_reporter_recover(काष्ठा devlink_health_reporter *reporter,
+				व्योम *priv_ctx,
+				काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nsim_dev_health *health = devlink_health_reporter_priv(reporter);
+	काष्ठा nsim_dev_dummy_reporter_ctx *ctx = priv_ctx;
 
-	if (health->fail_recover) {
+	अगर (health->fail_recover) अणु
 		/* For testing purposes, user set debugfs fail_recover
 		 * value to true. Fail right away.
 		 */
 		NL_SET_ERR_MSG_MOD(extack, "User setup the recover to fail for testing purposes");
-		return -EINVAL;
-	}
-	if (ctx) {
-		kfree(health->recovered_break_msg);
-		health->recovered_break_msg = kstrdup(ctx->break_msg,
+		वापस -EINVAL;
+	पूर्ण
+	अगर (ctx) अणु
+		kमुक्त(health->recovered_अवरोध_msg);
+		health->recovered_अवरोध_msg = kstrdup(ctx->अवरोध_msg,
 						      GFP_KERNEL);
-		if (!health->recovered_break_msg)
-			return -ENOMEM;
-	}
-	return 0;
-}
+		अगर (!health->recovered_अवरोध_msg)
+			वापस -ENOMEM;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int nsim_dev_dummy_fmsg_put(struct devlink_fmsg *fmsg, u32 binary_len)
-{
-	char *binary;
-	int err;
-	int i;
+अटल पूर्णांक nsim_dev_dummy_fmsg_put(काष्ठा devlink_fmsg *fmsg, u32 binary_len)
+अणु
+	अक्षर *binary;
+	पूर्णांक err;
+	पूर्णांक i;
 
 	err = devlink_fmsg_bool_pair_put(fmsg, "test_bool", true);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_u8_pair_put(fmsg, "test_u8", 1);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_u32_pair_put(fmsg, "test_u32", 3);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_u64_pair_put(fmsg, "test_u64", 4);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_string_pair_put(fmsg, "test_string", "somestring");
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	binary = kmalloc(binary_len, GFP_KERNEL | __GFP_NOWARN);
-	if (!binary)
-		return -ENOMEM;
-	get_random_bytes(binary, binary_len);
+	binary = kदो_स्मृति(binary_len, GFP_KERNEL | __GFP_NOWARN);
+	अगर (!binary)
+		वापस -ENOMEM;
+	get_अक्रमom_bytes(binary, binary_len);
 	err = devlink_fmsg_binary_pair_put(fmsg, "test_binary", binary, binary_len);
-	kfree(binary);
-	if (err)
-		return err;
+	kमुक्त(binary);
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_pair_nest_start(fmsg, "test_nest");
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_obj_nest_start(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_bool_pair_put(fmsg, "nested_test_bool", false);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_u8_pair_put(fmsg, "nested_test_u8", false);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_obj_nest_end(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	err = devlink_fmsg_pair_nest_end(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_arr_pair_nest_start(fmsg, "test_bool_array");
-	if (err)
-		return err;
-	for (i = 0; i < 10; i++) {
+	अगर (err)
+		वापस err;
+	क्रम (i = 0; i < 10; i++) अणु
 		err = devlink_fmsg_bool_put(fmsg, true);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 	err = devlink_fmsg_arr_pair_nest_end(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_arr_pair_nest_start(fmsg, "test_u8_array");
-	if (err)
-		return err;
-	for (i = 0; i < 10; i++) {
+	अगर (err)
+		वापस err;
+	क्रम (i = 0; i < 10; i++) अणु
 		err = devlink_fmsg_u8_put(fmsg, i);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 	err = devlink_fmsg_arr_pair_nest_end(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_arr_pair_nest_start(fmsg, "test_u32_array");
-	if (err)
-		return err;
-	for (i = 0; i < 10; i++) {
+	अगर (err)
+		वापस err;
+	क्रम (i = 0; i < 10; i++) अणु
 		err = devlink_fmsg_u32_put(fmsg, i);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 	err = devlink_fmsg_arr_pair_nest_end(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_arr_pair_nest_start(fmsg, "test_u64_array");
-	if (err)
-		return err;
-	for (i = 0; i < 10; i++) {
+	अगर (err)
+		वापस err;
+	क्रम (i = 0; i < 10; i++) अणु
 		err = devlink_fmsg_u64_put(fmsg, i);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 	err = devlink_fmsg_arr_pair_nest_end(fmsg);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = devlink_fmsg_arr_pair_nest_start(fmsg, "test_array_of_objects");
-	if (err)
-		return err;
-	for (i = 0; i < 10; i++) {
+	अगर (err)
+		वापस err;
+	क्रम (i = 0; i < 10; i++) अणु
 		err = devlink_fmsg_obj_nest_start(fmsg);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_bool_pair_put(fmsg,
 						 "in_array_nested_test_bool",
 						 false);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_u8_pair_put(fmsg,
 					       "in_array_nested_test_u8",
 					       i);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 		err = devlink_fmsg_obj_nest_end(fmsg);
-		if (err)
-			return err;
-	}
-	return devlink_fmsg_arr_pair_nest_end(fmsg);
-}
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस devlink_fmsg_arr_pair_nest_end(fmsg);
+पूर्ण
 
-static int
-nsim_dev_dummy_reporter_dump(struct devlink_health_reporter *reporter,
-			     struct devlink_fmsg *fmsg, void *priv_ctx,
-			     struct netlink_ext_ack *extack)
-{
-	struct nsim_dev_health *health = devlink_health_reporter_priv(reporter);
-	struct nsim_dev_dummy_reporter_ctx *ctx = priv_ctx;
-	int err;
+अटल पूर्णांक
+nsim_dev_dummy_reporter_dump(काष्ठा devlink_health_reporter *reporter,
+			     काष्ठा devlink_fmsg *fmsg, व्योम *priv_ctx,
+			     काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nsim_dev_health *health = devlink_health_reporter_priv(reporter);
+	काष्ठा nsim_dev_dummy_reporter_ctx *ctx = priv_ctx;
+	पूर्णांक err;
 
-	if (ctx) {
+	अगर (ctx) अणु
 		err = devlink_fmsg_string_pair_put(fmsg, "break_message",
-						   ctx->break_msg);
-		if (err)
-			return err;
-	}
-	return nsim_dev_dummy_fmsg_put(fmsg, health->binary_len);
-}
+						   ctx->अवरोध_msg);
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस nsim_dev_dummy_fmsg_put(fmsg, health->binary_len);
+पूर्ण
 
-static int
-nsim_dev_dummy_reporter_diagnose(struct devlink_health_reporter *reporter,
-				 struct devlink_fmsg *fmsg,
-				 struct netlink_ext_ack *extack)
-{
-	struct nsim_dev_health *health = devlink_health_reporter_priv(reporter);
-	int err;
+अटल पूर्णांक
+nsim_dev_dummy_reporter_diagnose(काष्ठा devlink_health_reporter *reporter,
+				 काष्ठा devlink_fmsg *fmsg,
+				 काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा nsim_dev_health *health = devlink_health_reporter_priv(reporter);
+	पूर्णांक err;
 
-	if (health->recovered_break_msg) {
+	अगर (health->recovered_अवरोध_msg) अणु
 		err = devlink_fmsg_string_pair_put(fmsg,
 						   "recovered_break_message",
-						   health->recovered_break_msg);
-		if (err)
-			return err;
-	}
-	return nsim_dev_dummy_fmsg_put(fmsg, health->binary_len);
-}
+						   health->recovered_अवरोध_msg);
+		अगर (err)
+			वापस err;
+	पूर्ण
+	वापस nsim_dev_dummy_fmsg_put(fmsg, health->binary_len);
+पूर्ण
 
-static const
-struct devlink_health_reporter_ops nsim_dev_dummy_reporter_ops = {
+अटल स्थिर
+काष्ठा devlink_health_reporter_ops nsim_dev_dummy_reporter_ops = अणु
 	.name = "dummy",
 	.recover = nsim_dev_dummy_reporter_recover,
 	.dump = nsim_dev_dummy_reporter_dump,
 	.diagnose = nsim_dev_dummy_reporter_diagnose,
-};
+पूर्ण;
 
-static ssize_t nsim_dev_health_break_write(struct file *file,
-					   const char __user *data,
-					   size_t count, loff_t *ppos)
-{
-	struct nsim_dev_health *health = file->private_data;
-	struct nsim_dev_dummy_reporter_ctx ctx;
-	char *break_msg;
-	int err;
+अटल sमाप_प्रकार nsim_dev_health_अवरोध_ग_लिखो(काष्ठा file *file,
+					   स्थिर अक्षर __user *data,
+					   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा nsim_dev_health *health = file->निजी_data;
+	काष्ठा nsim_dev_dummy_reporter_ctx ctx;
+	अक्षर *अवरोध_msg;
+	पूर्णांक err;
 
-	break_msg = memdup_user_nul(data, count);
-	if (IS_ERR(break_msg))
-		return PTR_ERR(break_msg);
+	अवरोध_msg = memdup_user_nul(data, count);
+	अगर (IS_ERR(अवरोध_msg))
+		वापस PTR_ERR(अवरोध_msg);
 
-	if (break_msg[count - 1] == '\n')
-		break_msg[count - 1] = '\0';
+	अगर (अवरोध_msg[count - 1] == '\n')
+		अवरोध_msg[count - 1] = '\0';
 
-	ctx.break_msg = break_msg;
-	err = devlink_health_report(health->dummy_reporter, break_msg, &ctx);
-	if (err)
-		goto out;
+	ctx.अवरोध_msg = अवरोध_msg;
+	err = devlink_health_report(health->dummy_reporter, अवरोध_msg, &ctx);
+	अगर (err)
+		जाओ out;
 
 out:
-	kfree(break_msg);
-	return err ?: count;
-}
+	kमुक्त(अवरोध_msg);
+	वापस err ?: count;
+पूर्ण
 
-static const struct file_operations nsim_dev_health_break_fops = {
-	.open = simple_open,
-	.write = nsim_dev_health_break_write,
+अटल स्थिर काष्ठा file_operations nsim_dev_health_अवरोध_fops = अणु
+	.खोलो = simple_खोलो,
+	.ग_लिखो = nsim_dev_health_अवरोध_ग_लिखो,
 	.llseek = generic_file_llseek,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-int nsim_dev_health_init(struct nsim_dev *nsim_dev, struct devlink *devlink)
-{
-	struct nsim_dev_health *health = &nsim_dev->health;
-	int err;
+पूर्णांक nsim_dev_health_init(काष्ठा nsim_dev *nsim_dev, काष्ठा devlink *devlink)
+अणु
+	काष्ठा nsim_dev_health *health = &nsim_dev->health;
+	पूर्णांक err;
 
 	health->empty_reporter =
 		devlink_health_reporter_create(devlink,
 					       &nsim_dev_empty_reporter_ops,
 					       0, health);
-	if (IS_ERR(health->empty_reporter))
-		return PTR_ERR(health->empty_reporter);
+	अगर (IS_ERR(health->empty_reporter))
+		वापस PTR_ERR(health->empty_reporter);
 
 	health->dummy_reporter =
 		devlink_health_reporter_create(devlink,
 					       &nsim_dev_dummy_reporter_ops,
 					       0, health);
-	if (IS_ERR(health->dummy_reporter)) {
+	अगर (IS_ERR(health->dummy_reporter)) अणु
 		err = PTR_ERR(health->dummy_reporter);
-		goto err_empty_reporter_destroy;
-	}
+		जाओ err_empty_reporter_destroy;
+	पूर्ण
 
 	health->ddir = debugfs_create_dir("health", nsim_dev->ddir);
-	if (IS_ERR(health->ddir)) {
+	अगर (IS_ERR(health->ddir)) अणु
 		err = PTR_ERR(health->ddir);
-		goto err_dummy_reporter_destroy;
-	}
+		जाओ err_dummy_reporter_destroy;
+	पूर्ण
 
-	health->recovered_break_msg = NULL;
+	health->recovered_अवरोध_msg = शून्य;
 	debugfs_create_file("break_health", 0200, health->ddir, health,
-			    &nsim_dev_health_break_fops);
+			    &nsim_dev_health_अवरोध_fops);
 	health->binary_len = 16;
 	debugfs_create_u32("binary_len", 0600, health->ddir,
 			   &health->binary_len);
 	health->fail_recover = false;
 	debugfs_create_bool("fail_recover", 0600, health->ddir,
 			    &health->fail_recover);
-	return 0;
+	वापस 0;
 
 err_dummy_reporter_destroy:
 	devlink_health_reporter_destroy(health->dummy_reporter);
 err_empty_reporter_destroy:
 	devlink_health_reporter_destroy(health->empty_reporter);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void nsim_dev_health_exit(struct nsim_dev *nsim_dev)
-{
-	struct nsim_dev_health *health = &nsim_dev->health;
+व्योम nsim_dev_health_निकास(काष्ठा nsim_dev *nsim_dev)
+अणु
+	काष्ठा nsim_dev_health *health = &nsim_dev->health;
 
-	debugfs_remove_recursive(health->ddir);
-	kfree(health->recovered_break_msg);
+	debugfs_हटाओ_recursive(health->ddir);
+	kमुक्त(health->recovered_अवरोध_msg);
 	devlink_health_reporter_destroy(health->dummy_reporter);
 	devlink_health_reporter_destroy(health->empty_reporter);
-}
+पूर्ण

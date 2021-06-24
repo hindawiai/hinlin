@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* sonet.h - SONET/SHD physical layer control */
-#ifndef LINUX_SONET_H
-#define LINUX_SONET_H
+#अगर_अघोषित LINUX_SONET_H
+#घोषणा LINUX_SONET_H
 
 
-#include <linux/atomic.h>
-#include <uapi/linux/sonet.h>
+#समावेश <linux/atomic.h>
+#समावेश <uapi/linux/sonet.h>
 
-struct k_sonet_stats {
-#define __HANDLE_ITEM(i) atomic_t i
+काष्ठा k_sonet_stats अणु
+#घोषणा __HANDLE_ITEM(i) atomic_t i
 	__SONET_ITEMS
-#undef __HANDLE_ITEM
-};
+#अघोषित __HANDLE_ITEM
+पूर्ण;
 
-extern void sonet_copy_stats(struct k_sonet_stats *from,struct sonet_stats *to);
-extern void sonet_subtract_stats(struct k_sonet_stats *from,
-    struct sonet_stats *to);
+बाह्य व्योम sonet_copy_stats(काष्ठा k_sonet_stats *from,काष्ठा sonet_stats *to);
+बाह्य व्योम sonet_subtract_stats(काष्ठा k_sonet_stats *from,
+    काष्ठा sonet_stats *to);
 
-#endif
+#पूर्ण_अगर

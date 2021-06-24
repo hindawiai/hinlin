@@ -1,61 +1,62 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * max44009.c - Support for MAX44009 Ambient Light Sensor
+ * max44009.c - Support क्रम MAX44009 Ambient Light Sensor
  *
  * Copyright (c) 2019 Robert Eshleman <bobbyeshleman@gmail.com>
  *
- * Datasheet: https://datasheets.maximintegrated.com/en/ds/MAX44009.pdf
+ * Datasheet: https://datasheets.maximपूर्णांकegrated.com/en/ds/MAX44009.pdf
  *
  * TODO: Support continuous mode and configuring from manual mode to
- *	 automatic mode.
+ *	 स्वतःmatic mode.
  *
  * Default I2C address: 0x4a
  */
 
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/bits.h>
-#include <linux/i2c.h>
-#include <linux/iio/events.h>
-#include <linux/iio/iio.h>
-#include <linux/iio/sysfs.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/util_macros.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/iio/events.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/iio/sysfs.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/util_macros.h>
 
-#define MAX44009_DRV_NAME "max44009"
+#घोषणा MAX44009_DRV_NAME "max44009"
 
 /* Registers in datasheet order */
-#define MAX44009_REG_INT_STATUS 0x0
-#define MAX44009_REG_INT_EN 0x1
-#define MAX44009_REG_CFG 0x2
-#define MAX44009_REG_LUX_HI 0x3
-#define MAX44009_REG_LUX_LO 0x4
-#define MAX44009_REG_UPPER_THR 0x5
-#define MAX44009_REG_LOWER_THR 0x6
-#define MAX44009_REG_THR_TIMER 0x7
+#घोषणा MAX44009_REG_INT_STATUS 0x0
+#घोषणा MAX44009_REG_INT_EN 0x1
+#घोषणा MAX44009_REG_CFG 0x2
+#घोषणा MAX44009_REG_LUX_HI 0x3
+#घोषणा MAX44009_REG_LUX_LO 0x4
+#घोषणा MAX44009_REG_UPPER_THR 0x5
+#घोषणा MAX44009_REG_LOWER_THR 0x6
+#घोषणा MAX44009_REG_THR_TIMER 0x7
 
-#define MAX44009_CFG_TIM_MASK GENMASK(2, 0)
-#define MAX44009_CFG_MAN_MODE_MASK BIT(6)
+#घोषणा MAX44009_CFG_TIM_MASK GENMASK(2, 0)
+#घोषणा MAX44009_CFG_MAN_MODE_MASK BIT(6)
 
-/* The maximum rising threshold for the max44009 */
-#define MAX44009_MAXIMUM_THRESHOLD 7520256
+/* The maximum rising threshold क्रम the max44009 */
+#घोषणा MAX44009_MAXIMUM_THRESHOLD 7520256
 
-#define MAX44009_THRESH_EXP_MASK (0xf << 4)
-#define MAX44009_THRESH_EXP_RSHIFT 4
-#define MAX44009_THRESH_MANT_LSHIFT 4
-#define MAX44009_THRESH_MANT_MASK 0xf
+#घोषणा MAX44009_THRESH_EXP_MASK (0xf << 4)
+#घोषणा MAX44009_THRESH_EXP_RSHIFT 4
+#घोषणा MAX44009_THRESH_MANT_LSHIFT 4
+#घोषणा MAX44009_THRESH_MANT_MASK 0xf
 
-#define MAX44009_UPPER_THR_MINIMUM 15
+#घोषणा MAX44009_UPPER_THR_MINIMUM 15
 
-/* The max44009 always scales raw readings by 0.045 and is non-configurable */
-#define MAX44009_SCALE_NUMERATOR 45
-#define MAX44009_SCALE_DENOMINATOR 1000
+/* The max44009 always scales raw पढ़ोings by 0.045 and is non-configurable */
+#घोषणा MAX44009_SCALE_NUMERATOR 45
+#घोषणा MAX44009_SCALE_DENOMINATOR 1000
 
-/* The fixed-point fractional multiplier for de-scaling threshold values */
-#define MAX44009_FRACT_MULT 1000000
+/* The fixed-poपूर्णांक fractional multiplier क्रम de-scaling threshold values */
+#घोषणा MAX44009_FRACT_MULT 1000000
 
-static const u32 max44009_int_time_ns_array[] = {
+अटल स्थिर u32 max44009_पूर्णांक_समय_ns_array[] = अणु
 	800000000,
 	400000000,
 	200000000,
@@ -64,9 +65,9 @@ static const u32 max44009_int_time_ns_array[] = {
 	25000000, /* Manual mode only */
 	12500000, /* Manual mode only */
 	6250000,  /* Manual mode only */
-};
+पूर्ण;
 
-static const char max44009_int_time_str[] =
+अटल स्थिर अक्षर max44009_पूर्णांक_समय_str[] =
 	"0.8 "
 	"0.4 "
 	"0.2 "
@@ -76,103 +77,103 @@ static const char max44009_int_time_str[] =
 	"0.0125 "
 	"0.00625";
 
-struct max44009_data {
-	struct i2c_client *client;
-	struct mutex lock;
-};
+काष्ठा max44009_data अणु
+	काष्ठा i2c_client *client;
+	काष्ठा mutex lock;
+पूर्ण;
 
-static const struct iio_event_spec max44009_event_spec[] = {
-	{
+अटल स्थिर काष्ठा iio_event_spec max44009_event_spec[] = अणु
+	अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_RISING,
+		.dir = IIO_EV_सूची_RISING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 				 BIT(IIO_EV_INFO_ENABLE),
-	},
-	{
+	पूर्ण,
+	अणु
 		.type = IIO_EV_TYPE_THRESH,
-		.dir = IIO_EV_DIR_FALLING,
+		.dir = IIO_EV_सूची_FALLING,
 		.mask_separate = BIT(IIO_EV_INFO_VALUE) |
 				 BIT(IIO_EV_INFO_ENABLE),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct iio_chan_spec max44009_channels[] = {
-	{
+अटल स्थिर काष्ठा iio_chan_spec max44009_channels[] = अणु
+	अणु
 		.type = IIO_LIGHT,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_PROCESSED) |
 				      BIT(IIO_CHAN_INFO_INT_TIME),
 		.event_spec = max44009_event_spec,
 		.num_event_specs = ARRAY_SIZE(max44009_event_spec),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int max44009_read_int_time(struct max44009_data *data)
-{
+अटल पूर्णांक max44009_पढ़ो_पूर्णांक_समय(काष्ठा max44009_data *data)
+अणु
 
-	int ret = i2c_smbus_read_byte_data(data->client, MAX44009_REG_CFG);
+	पूर्णांक ret = i2c_smbus_पढ़ो_byte_data(data->client, MAX44009_REG_CFG);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return max44009_int_time_ns_array[ret & MAX44009_CFG_TIM_MASK];
-}
+	वापस max44009_पूर्णांक_समय_ns_array[ret & MAX44009_CFG_TIM_MASK];
+पूर्ण
 
-static int max44009_write_int_time(struct max44009_data *data,
-				   int val, int val2)
-{
-	struct i2c_client *client = data->client;
-	int ret, int_time, config;
+अटल पूर्णांक max44009_ग_लिखो_पूर्णांक_समय(काष्ठा max44009_data *data,
+				   पूर्णांक val, पूर्णांक val2)
+अणु
+	काष्ठा i2c_client *client = data->client;
+	पूर्णांक ret, पूर्णांक_समय, config;
 	s64 ns;
 
 	ns = val * NSEC_PER_SEC + val2;
-	int_time = find_closest_descending(
+	पूर्णांक_समय = find_बंदst_descending(
 			ns,
-			max44009_int_time_ns_array,
-			ARRAY_SIZE(max44009_int_time_ns_array));
+			max44009_पूर्णांक_समय_ns_array,
+			ARRAY_SIZE(max44009_पूर्णांक_समय_ns_array));
 
-	ret = i2c_smbus_read_byte_data(client, MAX44009_REG_CFG);
-	if (ret < 0)
-		return ret;
+	ret = i2c_smbus_पढ़ो_byte_data(client, MAX44009_REG_CFG);
+	अगर (ret < 0)
+		वापस ret;
 
 	config = ret;
-	config &= int_time;
+	config &= पूर्णांक_समय;
 
 	/*
-	 * To set the integration time, the device must also be in manual
+	 * To set the पूर्णांकegration समय, the device must also be in manual
 	 * mode.
 	 */
 	config |= MAX44009_CFG_MAN_MODE_MASK;
 
-	return i2c_smbus_write_byte_data(client, MAX44009_REG_CFG, config);
-}
+	वापस i2c_smbus_ग_लिखो_byte_data(client, MAX44009_REG_CFG, config);
+पूर्ण
 
-static int max44009_write_raw(struct iio_dev *indio_dev,
-			      struct iio_chan_spec const *chan, int val,
-			      int val2, long mask)
-{
-	struct max44009_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक max44009_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
+			      काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val,
+			      पूर्णांक val2, दीर्घ mask)
+अणु
+	काष्ठा max44009_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	if (mask == IIO_CHAN_INFO_INT_TIME && chan->type == IIO_LIGHT) {
+	अगर (mask == IIO_CHAN_INFO_INT_TIME && chan->type == IIO_LIGHT) अणु
 		mutex_lock(&data->lock);
-		ret = max44009_write_int_time(data, val, val2);
+		ret = max44009_ग_लिखो_पूर्णांक_समय(data, val, val2);
 		mutex_unlock(&data->lock);
-		return ret;
-	}
-	return -EINVAL;
-}
+		वापस ret;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static int max44009_write_raw_get_fmt(struct iio_dev *indio_dev,
-				      struct iio_chan_spec const *chan,
-				      long mask)
-{
-	return IIO_VAL_INT_PLUS_NANO;
-}
+अटल पूर्णांक max44009_ग_लिखो_raw_get_fmt(काष्ठा iio_dev *indio_dev,
+				      काष्ठा iio_chan_spec स्थिर *chan,
+				      दीर्घ mask)
+अणु
+	वापस IIO_VAL_INT_PLUS_न_अंकO;
+पूर्ण
 
-static int max44009_lux_raw(u8 hi, u8 lo)
-{
-	int mantissa;
-	int exponent;
+अटल पूर्णांक max44009_lux_raw(u8 hi, u8 lo)
+अणु
+	पूर्णांक mantissa;
+	पूर्णांक exponent;
 
 	/*
 	 * The mantissa consists of the low nibble of the Lux High Byte
@@ -184,369 +185,369 @@ static int max44009_lux_raw(u8 hi, u8 lo)
 	exponent = (hi >> 4) & 0xf;
 
 	/*
-	 * The exponent value is base 2 to the power of the raw exponent byte.
+	 * The exponent value is base 2 to the घातer of the raw exponent byte.
 	 */
 	exponent = 1 << exponent;
 
-	return exponent * mantissa;
-}
+	वापस exponent * mantissa;
+पूर्ण
 
-#define MAX44009_READ_LUX_XFER_LEN (4)
+#घोषणा MAX44009_READ_LUX_XFER_LEN (4)
 
-static int max44009_read_lux_raw(struct max44009_data *data)
-{
-	int ret;
+अटल पूर्णांक max44009_पढ़ो_lux_raw(काष्ठा max44009_data *data)
+अणु
+	पूर्णांक ret;
 	u8 hireg = MAX44009_REG_LUX_HI;
 	u8 loreg = MAX44009_REG_LUX_LO;
 	u8 lo = 0;
 	u8 hi = 0;
 
-	struct i2c_msg msgs[] = {
-		{
+	काष्ठा i2c_msg msgs[] = अणु
+		अणु
 			.addr = data->client->addr,
 			.flags = 0,
-			.len = sizeof(hireg),
+			.len = माप(hireg),
 			.buf = &hireg,
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr = data->client->addr,
 			.flags = I2C_M_RD,
-			.len = sizeof(hi),
+			.len = माप(hi),
 			.buf = &hi,
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr = data->client->addr,
 			.flags = 0,
-			.len = sizeof(loreg),
+			.len = माप(loreg),
 			.buf = &loreg,
-		},
-		{
+		पूर्ण,
+		अणु
 			.addr = data->client->addr,
 			.flags = I2C_M_RD,
-			.len = sizeof(lo),
+			.len = माप(lo),
 			.buf = &lo,
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
 	/*
-	 * Use i2c_transfer instead of smbus read because i2c_transfer
-	 * does NOT use a stop bit between address write and data read.
-	 * Using a stop bit causes disjoint upper/lower byte reads and
+	 * Use i2c_transfer instead of smbus पढ़ो because i2c_transfer
+	 * करोes NOT use a stop bit between address ग_लिखो and data पढ़ो.
+	 * Using a stop bit causes disjoपूर्णांक upper/lower byte पढ़ोs and
 	 * reduces accuracy.
 	 */
 	ret = i2c_transfer(data->client->adapter,
 			   msgs, MAX44009_READ_LUX_XFER_LEN);
 
-	if (ret != MAX44009_READ_LUX_XFER_LEN)
-		return -EIO;
+	अगर (ret != MAX44009_READ_LUX_XFER_LEN)
+		वापस -EIO;
 
-	return max44009_lux_raw(hi, lo);
-}
+	वापस max44009_lux_raw(hi, lo);
+पूर्ण
 
-static int max44009_read_raw(struct iio_dev *indio_dev,
-			     struct iio_chan_spec const *chan, int *val,
-			     int *val2, long mask)
-{
-	struct max44009_data *data = iio_priv(indio_dev);
-	int lux_raw;
-	int ret;
+अटल पूर्णांक max44009_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
+			     काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
+			     पूर्णांक *val2, दीर्घ mask)
+अणु
+	काष्ठा max44009_data *data = iio_priv(indio_dev);
+	पूर्णांक lux_raw;
+	पूर्णांक ret;
 
-	switch (mask) {
-	case IIO_CHAN_INFO_PROCESSED:
-		switch (chan->type) {
-		case IIO_LIGHT:
-			ret = max44009_read_lux_raw(data);
-			if (ret < 0)
-				return ret;
+	चयन (mask) अणु
+	हाल IIO_CHAN_INFO_PROCESSED:
+		चयन (chan->type) अणु
+		हाल IIO_LIGHT:
+			ret = max44009_पढ़ो_lux_raw(data);
+			अगर (ret < 0)
+				वापस ret;
 			lux_raw = ret;
 
 			*val = lux_raw * MAX44009_SCALE_NUMERATOR;
 			*val2 = MAX44009_SCALE_DENOMINATOR;
-			return IIO_VAL_FRACTIONAL;
-		default:
-			return -EINVAL;
-		}
-	case IIO_CHAN_INFO_INT_TIME:
-		switch (chan->type) {
-		case IIO_LIGHT:
-			ret = max44009_read_int_time(data);
-			if (ret < 0)
-				return ret;
+			वापस IIO_VAL_FRACTIONAL;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	हाल IIO_CHAN_INFO_INT_TIME:
+		चयन (chan->type) अणु
+		हाल IIO_LIGHT:
+			ret = max44009_पढ़ो_पूर्णांक_समय(data);
+			अगर (ret < 0)
+				वापस ret;
 
 			*val2 = ret;
 			*val = 0;
-			return IIO_VAL_INT_PLUS_NANO;
-		default:
-			return -EINVAL;
-		}
-	default:
-		return -EINVAL;
-	}
-}
+			वापस IIO_VAL_INT_PLUS_न_अंकO;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static IIO_CONST_ATTR(illuminance_integration_time_available,
-		      max44009_int_time_str);
+अटल IIO_CONST_ATTR(illuminance_पूर्णांकegration_समय_available,
+		      max44009_पूर्णांक_समय_str);
 
-static struct attribute *max44009_attributes[] = {
-	&iio_const_attr_illuminance_integration_time_available.dev_attr.attr,
-	NULL,
-};
+अटल काष्ठा attribute *max44009_attributes[] = अणु
+	&iio_स्थिर_attr_illuminance_पूर्णांकegration_समय_available.dev_attr.attr,
+	शून्य,
+पूर्ण;
 
-static const struct attribute_group max44009_attribute_group = {
+अटल स्थिर काष्ठा attribute_group max44009_attribute_group = अणु
 	.attrs = max44009_attributes,
-};
+पूर्ण;
 
-static int max44009_threshold_byte_from_fraction(int integral, int fractional)
-{
-	int mantissa, exp;
+अटल पूर्णांक max44009_threshold_byte_from_fraction(पूर्णांक पूर्णांकegral, पूर्णांक fractional)
+अणु
+	पूर्णांक mantissa, exp;
 
-	if ((integral <= 0 && fractional <= 0) ||
-	     integral > MAX44009_MAXIMUM_THRESHOLD ||
-	     (integral == MAX44009_MAXIMUM_THRESHOLD && fractional != 0))
-		return -EINVAL;
+	अगर ((पूर्णांकegral <= 0 && fractional <= 0) ||
+	     पूर्णांकegral > MAX44009_MAXIMUM_THRESHOLD ||
+	     (पूर्णांकegral == MAX44009_MAXIMUM_THRESHOLD && fractional != 0))
+		वापस -EINVAL;
 
-	/* Reverse scaling of fixed-point integral */
-	mantissa = integral * MAX44009_SCALE_DENOMINATOR;
+	/* Reverse scaling of fixed-poपूर्णांक पूर्णांकegral */
+	mantissa = पूर्णांकegral * MAX44009_SCALE_DENOMINATOR;
 	mantissa /= MAX44009_SCALE_NUMERATOR;
 
-	/* Reverse scaling of fixed-point fractional */
+	/* Reverse scaling of fixed-poपूर्णांक fractional */
 	mantissa += fractional / MAX44009_FRACT_MULT *
 		    (MAX44009_SCALE_DENOMINATOR / MAX44009_SCALE_NUMERATOR);
 
-	for (exp = 0; mantissa > 0xff; exp++)
+	क्रम (exp = 0; mantissa > 0xff; exp++)
 		mantissa >>= 1;
 
 	mantissa >>= 4;
 	mantissa &= 0xf;
 	exp <<= 4;
 
-	return exp | mantissa;
-}
+	वापस exp | mantissa;
+पूर्ण
 
-static int max44009_get_thr_reg(enum iio_event_direction dir)
-{
-	switch (dir) {
-	case IIO_EV_DIR_RISING:
-		return MAX44009_REG_UPPER_THR;
-	case IIO_EV_DIR_FALLING:
-		return MAX44009_REG_LOWER_THR;
-	default:
-		return -EINVAL;
-	}
-}
+अटल पूर्णांक max44009_get_thr_reg(क्रमागत iio_event_direction dir)
+अणु
+	चयन (dir) अणु
+	हाल IIO_EV_सूची_RISING:
+		वापस MAX44009_REG_UPPER_THR;
+	हाल IIO_EV_सूची_FALLING:
+		वापस MAX44009_REG_LOWER_THR;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static int max44009_write_event_value(struct iio_dev *indio_dev,
-				      const struct iio_chan_spec *chan,
-				      enum iio_event_type type,
-				      enum iio_event_direction dir,
-				      enum iio_event_info info,
-				      int val, int val2)
-{
-	struct max44009_data *data = iio_priv(indio_dev);
-	int reg, threshold;
+अटल पूर्णांक max44009_ग_लिखो_event_value(काष्ठा iio_dev *indio_dev,
+				      स्थिर काष्ठा iio_chan_spec *chan,
+				      क्रमागत iio_event_type type,
+				      क्रमागत iio_event_direction dir,
+				      क्रमागत iio_event_info info,
+				      पूर्णांक val, पूर्णांक val2)
+अणु
+	काष्ठा max44009_data *data = iio_priv(indio_dev);
+	पूर्णांक reg, threshold;
 
-	if (info != IIO_EV_INFO_VALUE || chan->type != IIO_LIGHT)
-		return -EINVAL;
+	अगर (info != IIO_EV_INFO_VALUE || chan->type != IIO_LIGHT)
+		वापस -EINVAL;
 
 	threshold = max44009_threshold_byte_from_fraction(val, val2);
-	if (threshold < 0)
-		return threshold;
+	अगर (threshold < 0)
+		वापस threshold;
 
 	reg = max44009_get_thr_reg(dir);
-	if (reg < 0)
-		return reg;
+	अगर (reg < 0)
+		वापस reg;
 
-	return i2c_smbus_write_byte_data(data->client, reg, threshold);
-}
+	वापस i2c_smbus_ग_लिखो_byte_data(data->client, reg, threshold);
+पूर्ण
 
-static int max44009_read_threshold(struct iio_dev *indio_dev,
-				   enum iio_event_direction dir)
-{
-	struct max44009_data *data = iio_priv(indio_dev);
-	int byte, reg;
-	int mantissa, exponent;
+अटल पूर्णांक max44009_पढ़ो_threshold(काष्ठा iio_dev *indio_dev,
+				   क्रमागत iio_event_direction dir)
+अणु
+	काष्ठा max44009_data *data = iio_priv(indio_dev);
+	पूर्णांक byte, reg;
+	पूर्णांक mantissa, exponent;
 
 	reg = max44009_get_thr_reg(dir);
-	if (reg < 0)
-		return reg;
+	अगर (reg < 0)
+		वापस reg;
 
-	byte = i2c_smbus_read_byte_data(data->client, reg);
-	if (byte < 0)
-		return byte;
+	byte = i2c_smbus_पढ़ो_byte_data(data->client, reg);
+	अगर (byte < 0)
+		वापस byte;
 
 	mantissa = byte & MAX44009_THRESH_MANT_MASK;
 	mantissa <<= MAX44009_THRESH_MANT_LSHIFT;
 
 	/*
 	 * To get the upper threshold, always adds the minimum upper threshold
-	 * value to the shifted byte value (see datasheet).
+	 * value to the shअगरted byte value (see datasheet).
 	 */
-	if (dir == IIO_EV_DIR_RISING)
+	अगर (dir == IIO_EV_सूची_RISING)
 		mantissa += MAX44009_UPPER_THR_MINIMUM;
 
 	/*
-	 * Exponent is base 2 to the power of the threshold exponent byte
+	 * Exponent is base 2 to the घातer of the threshold exponent byte
 	 * value
 	 */
 	exponent = byte & MAX44009_THRESH_EXP_MASK;
 	exponent >>= MAX44009_THRESH_EXP_RSHIFT;
 
-	return (1 << exponent) * mantissa;
-}
+	वापस (1 << exponent) * mantissa;
+पूर्ण
 
-static int max44009_read_event_value(struct iio_dev *indio_dev,
-				     const struct iio_chan_spec *chan,
-				     enum iio_event_type type,
-				     enum iio_event_direction dir,
-				     enum iio_event_info info,
-				     int *val, int *val2)
-{
-	int ret;
-	int threshold;
+अटल पूर्णांक max44009_पढ़ो_event_value(काष्ठा iio_dev *indio_dev,
+				     स्थिर काष्ठा iio_chan_spec *chan,
+				     क्रमागत iio_event_type type,
+				     क्रमागत iio_event_direction dir,
+				     क्रमागत iio_event_info info,
+				     पूर्णांक *val, पूर्णांक *val2)
+अणु
+	पूर्णांक ret;
+	पूर्णांक threshold;
 
-	if (chan->type != IIO_LIGHT || type != IIO_EV_TYPE_THRESH)
-		return -EINVAL;
+	अगर (chan->type != IIO_LIGHT || type != IIO_EV_TYPE_THRESH)
+		वापस -EINVAL;
 
-	ret = max44009_read_threshold(indio_dev, dir);
-	if (ret < 0)
-		return ret;
+	ret = max44009_पढ़ो_threshold(indio_dev, dir);
+	अगर (ret < 0)
+		वापस ret;
 	threshold = ret;
 
 	*val = threshold * MAX44009_SCALE_NUMERATOR;
 	*val2 = MAX44009_SCALE_DENOMINATOR;
 
-	return IIO_VAL_FRACTIONAL;
-}
+	वापस IIO_VAL_FRACTIONAL;
+पूर्ण
 
-static int max44009_write_event_config(struct iio_dev *indio_dev,
-				       const struct iio_chan_spec *chan,
-				       enum iio_event_type type,
-				       enum iio_event_direction dir,
-				       int state)
-{
-	struct max44009_data *data = iio_priv(indio_dev);
-	int ret;
+अटल पूर्णांक max44009_ग_लिखो_event_config(काष्ठा iio_dev *indio_dev,
+				       स्थिर काष्ठा iio_chan_spec *chan,
+				       क्रमागत iio_event_type type,
+				       क्रमागत iio_event_direction dir,
+				       पूर्णांक state)
+अणु
+	काष्ठा max44009_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	if (chan->type != IIO_LIGHT || type != IIO_EV_TYPE_THRESH)
-		return -EINVAL;
+	अगर (chan->type != IIO_LIGHT || type != IIO_EV_TYPE_THRESH)
+		वापस -EINVAL;
 
-	ret = i2c_smbus_write_byte_data(data->client,
+	ret = i2c_smbus_ग_लिखो_byte_data(data->client,
 					MAX44009_REG_INT_EN, state);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	/*
-	 * Set device to trigger interrupt immediately upon exceeding
+	 * Set device to trigger पूर्णांकerrupt immediately upon exceeding
 	 * the threshold limit.
 	 */
-	return i2c_smbus_write_byte_data(data->client,
+	वापस i2c_smbus_ग_लिखो_byte_data(data->client,
 					 MAX44009_REG_THR_TIMER, 0);
-}
+पूर्ण
 
-static int max44009_read_event_config(struct iio_dev *indio_dev,
-				      const struct iio_chan_spec *chan,
-				      enum iio_event_type type,
-				      enum iio_event_direction dir)
-{
-	struct max44009_data *data = iio_priv(indio_dev);
+अटल पूर्णांक max44009_पढ़ो_event_config(काष्ठा iio_dev *indio_dev,
+				      स्थिर काष्ठा iio_chan_spec *chan,
+				      क्रमागत iio_event_type type,
+				      क्रमागत iio_event_direction dir)
+अणु
+	काष्ठा max44009_data *data = iio_priv(indio_dev);
 
-	if (chan->type != IIO_LIGHT || type != IIO_EV_TYPE_THRESH)
-		return -EINVAL;
+	अगर (chan->type != IIO_LIGHT || type != IIO_EV_TYPE_THRESH)
+		वापस -EINVAL;
 
-	return i2c_smbus_read_byte_data(data->client, MAX44009_REG_INT_EN);
-}
+	वापस i2c_smbus_पढ़ो_byte_data(data->client, MAX44009_REG_INT_EN);
+पूर्ण
 
-static const struct iio_info max44009_info = {
-	.read_raw = max44009_read_raw,
-	.write_raw = max44009_write_raw,
-	.write_raw_get_fmt = max44009_write_raw_get_fmt,
-	.read_event_value = max44009_read_event_value,
-	.read_event_config = max44009_read_event_config,
-	.write_event_value = max44009_write_event_value,
-	.write_event_config = max44009_write_event_config,
+अटल स्थिर काष्ठा iio_info max44009_info = अणु
+	.पढ़ो_raw = max44009_पढ़ो_raw,
+	.ग_लिखो_raw = max44009_ग_लिखो_raw,
+	.ग_लिखो_raw_get_fmt = max44009_ग_लिखो_raw_get_fmt,
+	.पढ़ो_event_value = max44009_पढ़ो_event_value,
+	.पढ़ो_event_config = max44009_पढ़ो_event_config,
+	.ग_लिखो_event_value = max44009_ग_लिखो_event_value,
+	.ग_लिखो_event_config = max44009_ग_लिखो_event_config,
 	.attrs = &max44009_attribute_group,
-};
+पूर्ण;
 
-static irqreturn_t max44009_threaded_irq_handler(int irq, void *p)
-{
-	struct iio_dev *indio_dev = p;
-	struct max44009_data *data = iio_priv(indio_dev);
-	int ret;
+अटल irqवापस_t max44009_thपढ़ोed_irq_handler(पूर्णांक irq, व्योम *p)
+अणु
+	काष्ठा iio_dev *indio_dev = p;
+	काष्ठा max44009_data *data = iio_priv(indio_dev);
+	पूर्णांक ret;
 
-	ret = i2c_smbus_read_byte_data(data->client, MAX44009_REG_INT_STATUS);
-	if (ret) {
+	ret = i2c_smbus_पढ़ो_byte_data(data->client, MAX44009_REG_INT_STATUS);
+	अगर (ret) अणु
 		iio_push_event(indio_dev,
 			       IIO_UNMOD_EVENT_CODE(IIO_LIGHT, 0,
 						    IIO_EV_TYPE_THRESH,
-						    IIO_EV_DIR_EITHER),
-			       iio_get_time_ns(indio_dev));
+						    IIO_EV_सूची_EITHER),
+			       iio_get_समय_ns(indio_dev));
 
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
-static int max44009_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct max44009_data *data;
-	struct iio_dev *indio_dev;
-	int ret;
+अटल पूर्णांक max44009_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा max44009_data *data;
+	काष्ठा iio_dev *indio_dev;
+	पूर्णांक ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
-	if (!indio_dev)
-		return -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
+	अगर (!indio_dev)
+		वापस -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
 	data->client = client;
 	indio_dev->info = &max44009_info;
-	indio_dev->modes = INDIO_DIRECT_MODE;
+	indio_dev->modes = INDIO_सूचीECT_MODE;
 	indio_dev->name = MAX44009_DRV_NAME;
 	indio_dev->channels = max44009_channels;
 	indio_dev->num_channels = ARRAY_SIZE(max44009_channels);
 	mutex_init(&data->lock);
 
-	/* Clear any stale interrupt bit */
-	ret = i2c_smbus_read_byte_data(client, MAX44009_REG_CFG);
-	if (ret < 0)
-		return ret;
+	/* Clear any stale पूर्णांकerrupt bit */
+	ret = i2c_smbus_पढ़ो_byte_data(client, MAX44009_REG_CFG);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (client->irq > 0) {
-		ret = devm_request_threaded_irq(&client->dev, client->irq,
-						NULL,
-						max44009_threaded_irq_handler,
+	अगर (client->irq > 0) अणु
+		ret = devm_request_thपढ़ोed_irq(&client->dev, client->irq,
+						शून्य,
+						max44009_thपढ़ोed_irq_handler,
 						IRQF_TRIGGER_FALLING |
 						IRQF_ONESHOT | IRQF_SHARED,
 						"max44009_event",
 						indio_dev);
-		if (ret < 0)
-			return ret;
-	}
+		अगर (ret < 0)
+			वापस ret;
+	पूर्ण
 
-	return devm_iio_device_register(&client->dev, indio_dev);
-}
+	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
+पूर्ण
 
-static const struct i2c_device_id max44009_id[] = {
-	{ "max44009", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id max44009_id[] = अणु
+	अणु "max44009", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, max44009_id);
 
-static struct i2c_driver max44009_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver max44009_driver = अणु
+	.driver = अणु
 		.name = MAX44009_DRV_NAME,
-	},
+	पूर्ण,
 	.probe = max44009_probe,
 	.id_table = max44009_id,
-};
+पूर्ण;
 module_i2c_driver(max44009_driver);
 
-static const struct of_device_id max44009_of_match[] = {
-	{ .compatible = "maxim,max44009" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id max44009_of_match[] = अणु
+	अणु .compatible = "maxim,max44009" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, max44009_of_match);
 
 MODULE_AUTHOR("Robert Eshleman <bobbyeshleman@gmail.com>");

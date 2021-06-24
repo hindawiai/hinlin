@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Behringer BCD2000 driver
  *
  *   Copyright (C) 2014 Mario Kicherer (dev@kicherer.org)
  */
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/bitmap.h>
-#include <linux/usb.h>
-#include <linux/usb/audio.h>
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/rawmidi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/audपन.स>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/rawmidi.h>
 
-#define PREFIX "snd-bcd2000: "
-#define BUFSIZE 64
+#घोषणा PREFIX "snd-bcd2000: "
+#घोषणा बफ_मानE 64
 
-static const struct usb_device_id id_table[] = {
-	{ USB_DEVICE(0x1397, 0x00bd) },
-	{ },
-};
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
+	अणु USB_DEVICE(0x1397, 0x00bd) पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 
-static const unsigned char device_cmd_prefix[] = {0x03, 0x00};
+अटल स्थिर अचिन्हित अक्षर device_cmd_prefix[] = अणु0x03, 0x00पूर्ण;
 
-static const unsigned char bcd2000_init_sequence[] = {
+अटल स्थिर अचिन्हित अक्षर bcd2000_init_sequence[] = अणु
 	0x07, 0x00, 0x00, 0x00, 0x78, 0x48, 0x1c, 0x81,
 	0xc4, 0x00, 0x00, 0x00, 0x5e, 0x53, 0x4a, 0xf7,
 	0x18, 0xfa, 0x11, 0xff, 0x6c, 0xf3, 0x90, 0xff,
@@ -35,84 +36,84 @@ static const unsigned char bcd2000_init_sequence[] = {
 	0x18, 0xfa, 0x11, 0xff, 0x14, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0xf2, 0x34, 0x4a, 0xf7,
 	0x18, 0xfa, 0x11, 0xff
-};
+पूर्ण;
 
-struct bcd2000 {
-	struct usb_device *dev;
-	struct snd_card *card;
-	struct usb_interface *intf;
-	int card_index;
+काष्ठा bcd2000 अणु
+	काष्ठा usb_device *dev;
+	काष्ठा snd_card *card;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	पूर्णांक card_index;
 
-	int midi_out_active;
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_substream *midi_receive_substream;
-	struct snd_rawmidi_substream *midi_out_substream;
+	पूर्णांक midi_out_active;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_substream *midi_receive_substream;
+	काष्ठा snd_rawmidi_substream *midi_out_substream;
 
-	unsigned char midi_in_buf[BUFSIZE];
-	unsigned char midi_out_buf[BUFSIZE];
+	अचिन्हित अक्षर midi_in_buf[बफ_मानE];
+	अचिन्हित अक्षर midi_out_buf[बफ_मानE];
 
-	struct urb *midi_out_urb;
-	struct urb *midi_in_urb;
+	काष्ठा urb *midi_out_urb;
+	काष्ठा urb *midi_in_urb;
 
-	struct usb_anchor anchor;
-};
+	काष्ठा usb_anchor anchor;
+पूर्ण;
 
-static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
-static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
+अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;
+अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;
 
-static DEFINE_MUTEX(devices_mutex);
-static DECLARE_BITMAP(devices_used, SNDRV_CARDS);
-static struct usb_driver bcd2000_driver;
+अटल DEFINE_MUTEX(devices_mutex);
+अटल DECLARE_BITMAP(devices_used, SNDRV_CARDS);
+अटल काष्ठा usb_driver bcd2000_driver;
 
-#ifdef CONFIG_SND_DEBUG
-static void bcd2000_dump_buffer(const char *prefix, const char *buf, int len)
-{
-	print_hex_dump(KERN_DEBUG, prefix,
+#अगर_घोषित CONFIG_SND_DEBUG
+अटल व्योम bcd2000_dump_buffer(स्थिर अक्षर *prefix, स्थिर अक्षर *buf, पूर्णांक len)
+अणु
+	prपूर्णांक_hex_dump(KERN_DEBUG, prefix,
 			DUMP_PREFIX_NONE, 16, 1,
 			buf, len, false);
-}
-#else
-static void bcd2000_dump_buffer(const char *prefix, const char *buf, int len) {}
-#endif
+पूर्ण
+#अन्यथा
+अटल व्योम bcd2000_dump_buffer(स्थिर अक्षर *prefix, स्थिर अक्षर *buf, पूर्णांक len) अणुपूर्ण
+#पूर्ण_अगर
 
-static int bcd2000_midi_input_open(struct snd_rawmidi_substream *substream)
-{
-	return 0;
-}
+अटल पूर्णांक bcd2000_midi_input_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	वापस 0;
+पूर्ण
 
-static int bcd2000_midi_input_close(struct snd_rawmidi_substream *substream)
-{
-	return 0;
-}
+अटल पूर्णांक bcd2000_midi_input_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	वापस 0;
+पूर्ण
 
-/* (de)register midi substream from client */
-static void bcd2000_midi_input_trigger(struct snd_rawmidi_substream *substream,
-						int up)
-{
-	struct bcd2000 *bcd2k = substream->rmidi->private_data;
-	bcd2k->midi_receive_substream = up ? substream : NULL;
-}
+/* (de)रेजिस्टर midi substream from client */
+अटल व्योम bcd2000_midi_input_trigger(काष्ठा snd_rawmidi_substream *substream,
+						पूर्णांक up)
+अणु
+	काष्ठा bcd2000 *bcd2k = substream->rmidi->निजी_data;
+	bcd2k->midi_receive_substream = up ? substream : शून्य;
+पूर्ण
 
-static void bcd2000_midi_handle_input(struct bcd2000 *bcd2k,
-				const unsigned char *buf, unsigned int buf_len)
-{
-	unsigned int payload_length, tocopy;
-	struct snd_rawmidi_substream *midi_receive_substream;
+अटल व्योम bcd2000_midi_handle_input(काष्ठा bcd2000 *bcd2k,
+				स्थिर अचिन्हित अक्षर *buf, अचिन्हित पूर्णांक buf_len)
+अणु
+	अचिन्हित पूर्णांक payload_length, tocopy;
+	काष्ठा snd_rawmidi_substream *midi_receive_substream;
 
 	midi_receive_substream = READ_ONCE(bcd2k->midi_receive_substream);
-	if (!midi_receive_substream)
-		return;
+	अगर (!midi_receive_substream)
+		वापस;
 
 	bcd2000_dump_buffer(PREFIX "received from device: ", buf, buf_len);
 
-	if (buf_len < 2)
-		return;
+	अगर (buf_len < 2)
+		वापस;
 
 	payload_length = buf[0];
 
 	/* ignore packets without payload */
-	if (payload_length == 0)
-		return;
+	अगर (payload_length == 0)
+		वापस;
 
 	tocopy = min(payload_length, buf_len-1);
 
@@ -121,189 +122,189 @@ static void bcd2000_midi_handle_input(struct bcd2000 *bcd2k,
 
 	snd_rawmidi_receive(midi_receive_substream,
 					&buf[1], tocopy);
-}
+पूर्ण
 
-static void bcd2000_midi_send(struct bcd2000 *bcd2k)
-{
-	int len, ret;
-	struct snd_rawmidi_substream *midi_out_substream;
+अटल व्योम bcd2000_midi_send(काष्ठा bcd2000 *bcd2k)
+अणु
+	पूर्णांक len, ret;
+	काष्ठा snd_rawmidi_substream *midi_out_substream;
 
-	BUILD_BUG_ON(sizeof(device_cmd_prefix) >= BUFSIZE);
+	BUILD_BUG_ON(माप(device_cmd_prefix) >= बफ_मानE);
 
 	midi_out_substream = READ_ONCE(bcd2k->midi_out_substream);
-	if (!midi_out_substream)
-		return;
+	अगर (!midi_out_substream)
+		वापस;
 
 	/* copy command prefix bytes */
-	memcpy(bcd2k->midi_out_buf, device_cmd_prefix,
-		sizeof(device_cmd_prefix));
+	स_नकल(bcd2k->midi_out_buf, device_cmd_prefix,
+		माप(device_cmd_prefix));
 
 	/*
-	 * get MIDI packet and leave space for command prefix
+	 * get MIDI packet and leave space क्रम command prefix
 	 * and payload length
 	 */
 	len = snd_rawmidi_transmit(midi_out_substream,
-				bcd2k->midi_out_buf + 3, BUFSIZE - 3);
+				bcd2k->midi_out_buf + 3, बफ_मानE - 3);
 
-	if (len < 0)
+	अगर (len < 0)
 		dev_err(&bcd2k->dev->dev, "%s: snd_rawmidi_transmit error %d\n",
 				__func__, len);
 
-	if (len <= 0)
-		return;
+	अगर (len <= 0)
+		वापस;
 
 	/* set payload length */
 	bcd2k->midi_out_buf[2] = len;
-	bcd2k->midi_out_urb->transfer_buffer_length = BUFSIZE;
+	bcd2k->midi_out_urb->transfer_buffer_length = बफ_मानE;
 
 	bcd2000_dump_buffer(PREFIX "sending to device: ",
 			bcd2k->midi_out_buf, len+3);
 
 	/* send packet to the BCD2000 */
 	ret = usb_submit_urb(bcd2k->midi_out_urb, GFP_ATOMIC);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&bcd2k->dev->dev, PREFIX
 			"%s (%p): usb_submit_urb() failed, ret=%d, len=%d\n",
 			__func__, midi_out_substream, ret, len);
-	else
+	अन्यथा
 		bcd2k->midi_out_active = 1;
-}
+पूर्ण
 
-static int bcd2000_midi_output_open(struct snd_rawmidi_substream *substream)
-{
-	return 0;
-}
+अटल पूर्णांक bcd2000_midi_output_खोलो(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	वापस 0;
+पूर्ण
 
-static int bcd2000_midi_output_close(struct snd_rawmidi_substream *substream)
-{
-	struct bcd2000 *bcd2k = substream->rmidi->private_data;
+अटल पूर्णांक bcd2000_midi_output_बंद(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा bcd2000 *bcd2k = substream->rmidi->निजी_data;
 
-	if (bcd2k->midi_out_active) {
-		usb_kill_urb(bcd2k->midi_out_urb);
+	अगर (bcd2k->midi_out_active) अणु
+		usb_समाप्त_urb(bcd2k->midi_out_urb);
 		bcd2k->midi_out_active = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* (de)register midi substream from client */
-static void bcd2000_midi_output_trigger(struct snd_rawmidi_substream *substream,
-						int up)
-{
-	struct bcd2000 *bcd2k = substream->rmidi->private_data;
+/* (de)रेजिस्टर midi substream from client */
+अटल व्योम bcd2000_midi_output_trigger(काष्ठा snd_rawmidi_substream *substream,
+						पूर्णांक up)
+अणु
+	काष्ठा bcd2000 *bcd2k = substream->rmidi->निजी_data;
 
-	if (up) {
+	अगर (up) अणु
 		bcd2k->midi_out_substream = substream;
-		/* check if there is data userspace wants to send */
-		if (!bcd2k->midi_out_active)
+		/* check अगर there is data userspace wants to send */
+		अगर (!bcd2k->midi_out_active)
 			bcd2000_midi_send(bcd2k);
-	} else {
-		bcd2k->midi_out_substream = NULL;
-	}
-}
+	पूर्ण अन्यथा अणु
+		bcd2k->midi_out_substream = शून्य;
+	पूर्ण
+पूर्ण
 
-static void bcd2000_output_complete(struct urb *urb)
-{
-	struct bcd2000 *bcd2k = urb->context;
+अटल व्योम bcd2000_output_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा bcd2000 *bcd2k = urb->context;
 
 	bcd2k->midi_out_active = 0;
 
-	if (urb->status)
+	अगर (urb->status)
 		dev_warn(&urb->dev->dev,
 			PREFIX "output urb->status: %d\n", urb->status);
 
-	if (urb->status == -ESHUTDOWN)
-		return;
+	अगर (urb->status == -ESHUTDOWN)
+		वापस;
 
-	/* check if there is more data userspace wants to send */
+	/* check अगर there is more data userspace wants to send */
 	bcd2000_midi_send(bcd2k);
-}
+पूर्ण
 
-static void bcd2000_input_complete(struct urb *urb)
-{
-	int ret;
-	struct bcd2000 *bcd2k = urb->context;
+अटल व्योम bcd2000_input_complete(काष्ठा urb *urb)
+अणु
+	पूर्णांक ret;
+	काष्ठा bcd2000 *bcd2k = urb->context;
 
-	if (urb->status)
+	अगर (urb->status)
 		dev_warn(&urb->dev->dev,
 			PREFIX "input urb->status: %i\n", urb->status);
 
-	if (!bcd2k || urb->status == -ESHUTDOWN)
-		return;
+	अगर (!bcd2k || urb->status == -ESHUTDOWN)
+		वापस;
 
-	if (urb->actual_length > 0)
+	अगर (urb->actual_length > 0)
 		bcd2000_midi_handle_input(bcd2k, urb->transfer_buffer,
 					urb->actual_length);
 
-	/* return URB to device */
+	/* वापस URB to device */
 	ret = usb_submit_urb(bcd2k->midi_in_urb, GFP_ATOMIC);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&bcd2k->dev->dev, PREFIX
 			"%s: usb_submit_urb() failed, ret=%d\n",
 			__func__, ret);
-}
+पूर्ण
 
-static const struct snd_rawmidi_ops bcd2000_midi_output = {
-	.open =    bcd2000_midi_output_open,
-	.close =   bcd2000_midi_output_close,
+अटल स्थिर काष्ठा snd_rawmidi_ops bcd2000_midi_output = अणु
+	.खोलो =    bcd2000_midi_output_खोलो,
+	.बंद =   bcd2000_midi_output_बंद,
 	.trigger = bcd2000_midi_output_trigger,
-};
+पूर्ण;
 
-static const struct snd_rawmidi_ops bcd2000_midi_input = {
-	.open =    bcd2000_midi_input_open,
-	.close =   bcd2000_midi_input_close,
+अटल स्थिर काष्ठा snd_rawmidi_ops bcd2000_midi_input = अणु
+	.खोलो =    bcd2000_midi_input_खोलो,
+	.बंद =   bcd2000_midi_input_बंद,
 	.trigger = bcd2000_midi_input_trigger,
-};
+पूर्ण;
 
-static void bcd2000_init_device(struct bcd2000 *bcd2k)
-{
-	int ret;
+अटल व्योम bcd2000_init_device(काष्ठा bcd2000 *bcd2k)
+अणु
+	पूर्णांक ret;
 
 	init_usb_anchor(&bcd2k->anchor);
 	usb_anchor_urb(bcd2k->midi_out_urb, &bcd2k->anchor);
 	usb_anchor_urb(bcd2k->midi_in_urb, &bcd2k->anchor);
 
-	/* copy init sequence into buffer */
-	memcpy(bcd2k->midi_out_buf, bcd2000_init_sequence, 52);
+	/* copy init sequence पूर्णांकo buffer */
+	स_नकल(bcd2k->midi_out_buf, bcd2000_init_sequence, 52);
 	bcd2k->midi_out_urb->transfer_buffer_length = 52;
 
 	/* submit sequence */
 	ret = usb_submit_urb(bcd2k->midi_out_urb, GFP_KERNEL);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&bcd2k->dev->dev, PREFIX
 			"%s: usb_submit_urb() out failed, ret=%d: ",
 			__func__, ret);
-	else
+	अन्यथा
 		bcd2k->midi_out_active = 1;
 
 	/* pass URB to device to enable button and controller events */
 	ret = usb_submit_urb(bcd2k->midi_in_urb, GFP_KERNEL);
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(&bcd2k->dev->dev, PREFIX
 			"%s: usb_submit_urb() in failed, ret=%d: ",
 			__func__, ret);
 
 	/* ensure initialization is finished */
-	usb_wait_anchor_empty_timeout(&bcd2k->anchor, 1000);
-}
+	usb_रुको_anchor_empty_समयout(&bcd2k->anchor, 1000);
+पूर्ण
 
-static int bcd2000_init_midi(struct bcd2000 *bcd2k)
-{
-	int ret;
-	struct snd_rawmidi *rmidi;
+अटल पूर्णांक bcd2000_init_midi(काष्ठा bcd2000 *bcd2k)
+अणु
+	पूर्णांक ret;
+	काष्ठा snd_rawmidi *rmidi;
 
-	ret = snd_rawmidi_new(bcd2k->card, bcd2k->card->shortname, 0,
+	ret = snd_rawmidi_new(bcd2k->card, bcd2k->card->लघुname, 0,
 					1, /* output */
 					1, /* input */
 					&rmidi);
 
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	strscpy(rmidi->name, bcd2k->card->shortname, sizeof(rmidi->name));
+	strscpy(rmidi->name, bcd2k->card->लघुname, माप(rmidi->name));
 
 	rmidi->info_flags = SNDRV_RAWMIDI_INFO_DUPLEX;
-	rmidi->private_data = bcd2k;
+	rmidi->निजी_data = bcd2k;
 
 	rmidi->info_flags |= SNDRV_RAWMIDI_INFO_OUTPUT;
 	snd_rawmidi_set_ops(rmidi, SNDRV_RAWMIDI_STREAM_OUTPUT,
@@ -318,138 +319,138 @@ static int bcd2000_init_midi(struct bcd2000 *bcd2k)
 	bcd2k->midi_in_urb = usb_alloc_urb(0, GFP_KERNEL);
 	bcd2k->midi_out_urb = usb_alloc_urb(0, GFP_KERNEL);
 
-	if (!bcd2k->midi_in_urb || !bcd2k->midi_out_urb) {
+	अगर (!bcd2k->midi_in_urb || !bcd2k->midi_out_urb) अणु
 		dev_err(&bcd2k->dev->dev, PREFIX "usb_alloc_urb failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	usb_fill_int_urb(bcd2k->midi_in_urb, bcd2k->dev,
-				usb_rcvintpipe(bcd2k->dev, 0x81),
-				bcd2k->midi_in_buf, BUFSIZE,
+	usb_fill_पूर्णांक_urb(bcd2k->midi_in_urb, bcd2k->dev,
+				usb_rcvपूर्णांकpipe(bcd2k->dev, 0x81),
+				bcd2k->midi_in_buf, बफ_मानE,
 				bcd2000_input_complete, bcd2k, 1);
 
-	usb_fill_int_urb(bcd2k->midi_out_urb, bcd2k->dev,
-				usb_sndintpipe(bcd2k->dev, 0x1),
-				bcd2k->midi_out_buf, BUFSIZE,
+	usb_fill_पूर्णांक_urb(bcd2k->midi_out_urb, bcd2k->dev,
+				usb_sndपूर्णांकpipe(bcd2k->dev, 0x1),
+				bcd2k->midi_out_buf, बफ_मानE,
 				bcd2000_output_complete, bcd2k, 1);
 
-	/* sanity checks of EPs before actually submitting */
-	if (usb_urb_ep_type_check(bcd2k->midi_in_urb) ||
-	    usb_urb_ep_type_check(bcd2k->midi_out_urb)) {
+	/* sanity checks of EPs beक्रमe actually submitting */
+	अगर (usb_urb_ep_type_check(bcd2k->midi_in_urb) ||
+	    usb_urb_ep_type_check(bcd2k->midi_out_urb)) अणु
 		dev_err(&bcd2k->dev->dev, "invalid MIDI EP\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	bcd2000_init_device(bcd2k);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void bcd2000_free_usb_related_resources(struct bcd2000 *bcd2k,
-						struct usb_interface *interface)
-{
-	/* usb_kill_urb not necessary, urb is aborted automatically */
+अटल व्योम bcd2000_मुक्त_usb_related_resources(काष्ठा bcd2000 *bcd2k,
+						काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	/* usb_समाप्त_urb not necessary, urb is पातed स्वतःmatically */
 
-	usb_free_urb(bcd2k->midi_out_urb);
-	usb_free_urb(bcd2k->midi_in_urb);
+	usb_मुक्त_urb(bcd2k->midi_out_urb);
+	usb_मुक्त_urb(bcd2k->midi_in_urb);
 
-	if (bcd2k->intf) {
-		usb_set_intfdata(bcd2k->intf, NULL);
-		bcd2k->intf = NULL;
-	}
-}
+	अगर (bcd2k->पूर्णांकf) अणु
+		usb_set_पूर्णांकfdata(bcd2k->पूर्णांकf, शून्य);
+		bcd2k->पूर्णांकf = शून्य;
+	पूर्ण
+पूर्ण
 
-static int bcd2000_probe(struct usb_interface *interface,
-				const struct usb_device_id *usb_id)
-{
-	struct snd_card *card;
-	struct bcd2000 *bcd2k;
-	unsigned int card_index;
-	char usb_path[32];
-	int err;
+अटल पूर्णांक bcd2000_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+				स्थिर काष्ठा usb_device_id *usb_id)
+अणु
+	काष्ठा snd_card *card;
+	काष्ठा bcd2000 *bcd2k;
+	अचिन्हित पूर्णांक card_index;
+	अक्षर usb_path[32];
+	पूर्णांक err;
 
 	mutex_lock(&devices_mutex);
 
-	for (card_index = 0; card_index < SNDRV_CARDS; ++card_index)
-		if (!test_bit(card_index, devices_used))
-			break;
+	क्रम (card_index = 0; card_index < SNDRV_CARDS; ++card_index)
+		अगर (!test_bit(card_index, devices_used))
+			अवरोध;
 
-	if (card_index >= SNDRV_CARDS) {
+	अगर (card_index >= SNDRV_CARDS) अणु
 		mutex_unlock(&devices_mutex);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	err = snd_card_new(&interface->dev, index[card_index], id[card_index],
-			THIS_MODULE, sizeof(*bcd2k), &card);
-	if (err < 0) {
+	err = snd_card_new(&पूर्णांकerface->dev, index[card_index], id[card_index],
+			THIS_MODULE, माप(*bcd2k), &card);
+	अगर (err < 0) अणु
 		mutex_unlock(&devices_mutex);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	bcd2k = card->private_data;
-	bcd2k->dev = interface_to_usbdev(interface);
+	bcd2k = card->निजी_data;
+	bcd2k->dev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
 	bcd2k->card = card;
 	bcd2k->card_index = card_index;
-	bcd2k->intf = interface;
+	bcd2k->पूर्णांकf = पूर्णांकerface;
 
-	snd_card_set_dev(card, &interface->dev);
+	snd_card_set_dev(card, &पूर्णांकerface->dev);
 
-	strncpy(card->driver, "snd-bcd2000", sizeof(card->driver));
-	strncpy(card->shortname, "BCD2000", sizeof(card->shortname));
-	usb_make_path(bcd2k->dev, usb_path, sizeof(usb_path));
-	snprintf(bcd2k->card->longname, sizeof(bcd2k->card->longname),
+	म_नकलन(card->driver, "snd-bcd2000", माप(card->driver));
+	म_नकलन(card->लघुname, "BCD2000", माप(card->लघुname));
+	usb_make_path(bcd2k->dev, usb_path, माप(usb_path));
+	snम_लिखो(bcd2k->card->दीर्घname, माप(bcd2k->card->दीर्घname),
 		    "Behringer BCD2000 at %s",
 			usb_path);
 
 	err = bcd2000_init_midi(bcd2k);
-	if (err < 0)
-		goto probe_error;
+	अगर (err < 0)
+		जाओ probe_error;
 
-	err = snd_card_register(card);
-	if (err < 0)
-		goto probe_error;
+	err = snd_card_रेजिस्टर(card);
+	अगर (err < 0)
+		जाओ probe_error;
 
-	usb_set_intfdata(interface, bcd2k);
+	usb_set_पूर्णांकfdata(पूर्णांकerface, bcd2k);
 	set_bit(card_index, devices_used);
 
 	mutex_unlock(&devices_mutex);
-	return 0;
+	वापस 0;
 
 probe_error:
 	dev_info(&bcd2k->dev->dev, PREFIX "error during probing");
-	bcd2000_free_usb_related_resources(bcd2k, interface);
-	snd_card_free(card);
+	bcd2000_मुक्त_usb_related_resources(bcd2k, पूर्णांकerface);
+	snd_card_मुक्त(card);
 	mutex_unlock(&devices_mutex);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void bcd2000_disconnect(struct usb_interface *interface)
-{
-	struct bcd2000 *bcd2k = usb_get_intfdata(interface);
+अटल व्योम bcd2000_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा bcd2000 *bcd2k = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
-	if (!bcd2k)
-		return;
+	अगर (!bcd2k)
+		वापस;
 
 	mutex_lock(&devices_mutex);
 
 	/* make sure that userspace cannot create new requests */
 	snd_card_disconnect(bcd2k->card);
 
-	bcd2000_free_usb_related_resources(bcd2k, interface);
+	bcd2000_मुक्त_usb_related_resources(bcd2k, पूर्णांकerface);
 
 	clear_bit(bcd2k->card_index, devices_used);
 
-	snd_card_free_when_closed(bcd2k->card);
+	snd_card_मुक्त_when_बंदd(bcd2k->card);
 
 	mutex_unlock(&devices_mutex);
-}
+पूर्ण
 
-static struct usb_driver bcd2000_driver = {
+अटल काष्ठा usb_driver bcd2000_driver = अणु
 	.name =		"snd-bcd2000",
 	.probe =	bcd2000_probe,
 	.disconnect =	bcd2000_disconnect,
 	.id_table =	id_table,
-};
+पूर्ण;
 
 module_usb_driver(bcd2000_driver);
 

@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * TLB flush support for Hexagon
+ * TLB flush support क्रम Hexagon
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_TLBFLUSH_H
-#define _ASM_TLBFLUSH_H
+#अगर_अघोषित _ASM_TLBFLUSH_H
+#घोषणा _ASM_TLBFLUSH_H
 
-#include <linux/mm.h>
-#include <asm/processor.h>
+#समावेश <linux/mm.h>
+#समावेश <यंत्र/processor.h>
 
 /*
  * TLB flushing -- in "SMP", these routines get defined to be the
- * ones from smp.c, else they are some local flavors.
+ * ones from smp.c, अन्यथा they are some local flavors.
  */
 
 /*
- * These functions are commonly macros, but in the interests of
+ * These functions are commonly macros, but in the पूर्णांकerests of
  * VM vs. native implementation and code size, we simply declare
  * the function prototypes here.
  */
-extern void tlb_flush_all(void);
-extern void flush_tlb_mm(struct mm_struct *mm);
-extern void flush_tlb_page(struct vm_area_struct *vma, unsigned long addr);
-extern void flush_tlb_range(struct vm_area_struct *vma,
-				unsigned long start, unsigned long end);
-extern void flush_tlb_kernel_range(unsigned long start, unsigned long end);
-extern void flush_tlb_one(unsigned long);
+बाह्य व्योम tlb_flush_all(व्योम);
+बाह्य व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
+बाह्य व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr);
+बाह्य व्योम flush_tlb_range(काष्ठा vm_area_काष्ठा *vma,
+				अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+बाह्य व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
+बाह्य व्योम flush_tlb_one(अचिन्हित दीर्घ);
 
 /*
- * "This is called in munmap when we have freed up some page-table pages.
- * We don't need to do anything here..."
+ * "This is called in munmap when we have मुक्तd up some page-table pages.
+ * We करोn't need to करो anything here..."
  *
- * The VM kernel doesn't walk page tables, and they are passed to the VMM
- * by logical address. There doesn't seem to be any possibility that they
+ * The VM kernel करोesn't walk page tables, and they are passed to the VMM
+ * by logical address. There करोesn't seem to be any possibility that they
  * could be referenced by the VM kernel based on a stale mapping, since
- * they would only be located by consulting the mm structure, and they
- * will have been purged from that structure by the munmap.  Seems like
+ * they would only be located by consulting the mm काष्ठाure, and they
+ * will have been purged from that काष्ठाure by the munmap.  Seems like
  * a noop on HVM as well.
  */
-#define flush_tlb_pgtables(mm, start, end)
+#घोषणा flush_tlb_pgtables(mm, start, end)
 
-#endif
+#पूर्ण_अगर

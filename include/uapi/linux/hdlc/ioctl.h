@@ -1,94 +1,95 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __HDLC_IOCTL_H__
-#define __HDLC_IOCTL_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __HDLC_IOCTL_H__
+#घोषणा __HDLC_IOCTL_H__
 
 
-#define GENERIC_HDLC_VERSION 4	/* For synchronization with sethdlc utility */
+#घोषणा GENERIC_HDLC_VERSION 4	/* For synchronization with sethdlc utility */
 
-#define CLOCK_DEFAULT   0	/* Default setting */
-#define CLOCK_EXT	1	/* External TX and RX clock - DTE */
-#define CLOCK_INT	2	/* Internal TX and RX clock - DCE */
-#define CLOCK_TXINT	3	/* Internal TX and external RX clock */
-#define CLOCK_TXFROMRX	4	/* TX clock derived from external RX clock */
-
-
-#define ENCODING_DEFAULT	0 /* Default setting */
-#define ENCODING_NRZ		1
-#define ENCODING_NRZI		2
-#define ENCODING_FM_MARK	3
-#define ENCODING_FM_SPACE	4
-#define ENCODING_MANCHESTER	5
+#घोषणा CLOCK_DEFAULT   0	/* Default setting */
+#घोषणा CLOCK_EXT	1	/* External TX and RX घड़ी - DTE */
+#घोषणा CLOCK_INT	2	/* Internal TX and RX घड़ी - DCE */
+#घोषणा CLOCK_TXINT	3	/* Internal TX and बाह्यal RX घड़ी */
+#घोषणा CLOCK_TXFROMRX	4	/* TX घड़ी derived from बाह्यal RX घड़ी */
 
 
-#define PARITY_DEFAULT		0 /* Default setting */
-#define PARITY_NONE		1 /* No parity */
-#define PARITY_CRC16_PR0	2 /* CRC16, initial value 0x0000 */
-#define PARITY_CRC16_PR1	3 /* CRC16, initial value 0xFFFF */
-#define PARITY_CRC16_PR0_CCITT	4 /* CRC16, initial 0x0000, ITU-T version */
-#define PARITY_CRC16_PR1_CCITT	5 /* CRC16, initial 0xFFFF, ITU-T version */
-#define PARITY_CRC32_PR0_CCITT	6 /* CRC32, initial value 0x00000000 */
-#define PARITY_CRC32_PR1_CCITT	7 /* CRC32, initial value 0xFFFFFFFF */
+#घोषणा ENCODING_DEFAULT	0 /* Default setting */
+#घोषणा ENCODING_NRZ		1
+#घोषणा ENCODING_NRZI		2
+#घोषणा ENCODING_FM_MARK	3
+#घोषणा ENCODING_FM_SPACE	4
+#घोषणा ENCODING_MANCHESTER	5
 
-#define LMI_DEFAULT		0 /* Default setting */
-#define LMI_NONE		1 /* No LMI, all PVCs are static */
-#define LMI_ANSI		2 /* ANSI Annex D */
-#define LMI_CCITT		3 /* ITU-T Annex A */
-#define LMI_CISCO		4 /* The "original" LMI, aka Gang of Four */
 
-#ifndef __ASSEMBLY__
+#घोषणा PARITY_DEFAULT		0 /* Default setting */
+#घोषणा PARITY_NONE		1 /* No parity */
+#घोषणा PARITY_CRC16_PR0	2 /* CRC16, initial value 0x0000 */
+#घोषणा PARITY_CRC16_PR1	3 /* CRC16, initial value 0xFFFF */
+#घोषणा PARITY_CRC16_PR0_CCITT	4 /* CRC16, initial 0x0000, ITU-T version */
+#घोषणा PARITY_CRC16_PR1_CCITT	5 /* CRC16, initial 0xFFFF, ITU-T version */
+#घोषणा PARITY_CRC32_PR0_CCITT	6 /* CRC32, initial value 0x00000000 */
+#घोषणा PARITY_CRC32_PR1_CCITT	7 /* CRC32, initial value 0xFFFFFFFF */
 
-typedef struct {
-	unsigned int clock_rate; /* bits per second */
-	unsigned int clock_type; /* internal, external, TX-internal etc. */
-	unsigned short loopback;
-} sync_serial_settings;          /* V.35, V.24, X.21 */
+#घोषणा LMI_DEFAULT		0 /* Default setting */
+#घोषणा LMI_NONE		1 /* No LMI, all PVCs are अटल */
+#घोषणा LMI_ANSI		2 /* ANSI Annex D */
+#घोषणा LMI_CCITT		3 /* ITU-T Annex A */
+#घोषणा LMI_CISCO		4 /* The "original" LMI, aka Gang of Four */
 
-typedef struct {
-	unsigned int clock_rate; /* bits per second */
-	unsigned int clock_type; /* internal, external, TX-internal etc. */
-	unsigned short loopback;
-	unsigned int slot_map;
-} te1_settings;                  /* T1, E1 */
+#अगर_अघोषित __ASSEMBLY__
 
-typedef struct {
-	unsigned short encoding;
-	unsigned short parity;
-} raw_hdlc_proto;
+प्रकार काष्ठा अणु
+	अचिन्हित पूर्णांक घड़ी_rate; /* bits per second */
+	अचिन्हित पूर्णांक घड़ी_प्रकारype; /* पूर्णांकernal, बाह्यal, TX-पूर्णांकernal etc. */
+	अचिन्हित लघु loopback;
+पूर्ण sync_serial_settings;          /* V.35, V.24, X.21 */
 
-typedef struct {
-	unsigned int t391;
-	unsigned int t392;
-	unsigned int n391;
-	unsigned int n392;
-	unsigned int n393;
-	unsigned short lmi;
-	unsigned short dce; /* 1 for DCE (network side) operation */
-} fr_proto;
+प्रकार काष्ठा अणु
+	अचिन्हित पूर्णांक घड़ी_rate; /* bits per second */
+	अचिन्हित पूर्णांक घड़ी_प्रकारype; /* पूर्णांकernal, बाह्यal, TX-पूर्णांकernal etc. */
+	अचिन्हित लघु loopback;
+	अचिन्हित पूर्णांक slot_map;
+पूर्ण te1_settings;                  /* T1, E1 */
 
-typedef struct {
-	unsigned int dlci;
-} fr_proto_pvc;          /* for creating/deleting FR PVCs */
+प्रकार काष्ठा अणु
+	अचिन्हित लघु encoding;
+	अचिन्हित लघु parity;
+पूर्ण raw_hdlc_proto;
 
-typedef struct {
-	unsigned int dlci;
-	char master[IFNAMSIZ];	/* Name of master FRAD device */
-}fr_proto_pvc_info;		/* for returning PVC information only */
+प्रकार काष्ठा अणु
+	अचिन्हित पूर्णांक t391;
+	अचिन्हित पूर्णांक t392;
+	अचिन्हित पूर्णांक n391;
+	अचिन्हित पूर्णांक n392;
+	अचिन्हित पूर्णांक n393;
+	अचिन्हित लघु lmi;
+	अचिन्हित लघु dce; /* 1 क्रम DCE (network side) operation */
+पूर्ण fr_proto;
 
-typedef struct {
-    unsigned int interval;
-    unsigned int timeout;
-} cisco_proto;
+प्रकार काष्ठा अणु
+	अचिन्हित पूर्णांक dlci;
+पूर्ण fr_proto_pvc;          /* क्रम creating/deleting FR PVCs */
 
-typedef struct {
-	unsigned short dce; /* 1 for DCE (network side) operation */
-	unsigned int modulo; /* modulo (8 = basic / 128 = extended) */
-	unsigned int window; /* frame window size */
-	unsigned int t1; /* timeout t1 */
-	unsigned int t2; /* timeout t2 */
-	unsigned int n2; /* frame retry counter */
-} x25_hdlc_proto;
+प्रकार काष्ठा अणु
+	अचिन्हित पूर्णांक dlci;
+	अक्षर master[IFNAMSIZ];	/* Name of master FRAD device */
+पूर्णfr_proto_pvc_info;		/* क्रम वापसing PVC inक्रमmation only */
 
-/* PPP doesn't need any info now - supply length = 0 to ioctl */
+प्रकार काष्ठा अणु
+    अचिन्हित पूर्णांक पूर्णांकerval;
+    अचिन्हित पूर्णांक समयout;
+पूर्ण cisco_proto;
 
-#endif /* __ASSEMBLY__ */
-#endif /* __HDLC_IOCTL_H__ */
+प्रकार काष्ठा अणु
+	अचिन्हित लघु dce; /* 1 क्रम DCE (network side) operation */
+	अचिन्हित पूर्णांक modulo; /* modulo (8 = basic / 128 = extended) */
+	अचिन्हित पूर्णांक winकरोw; /* frame winकरोw size */
+	अचिन्हित पूर्णांक t1; /* समयout t1 */
+	अचिन्हित पूर्णांक t2; /* समयout t2 */
+	अचिन्हित पूर्णांक n2; /* frame retry counter */
+पूर्ण x25_hdlc_proto;
+
+/* PPP करोesn't need any info now - supply length = 0 to ioctl */
+
+#पूर्ण_अगर /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __HDLC_IOCTL_H__ */

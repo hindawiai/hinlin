@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-struct ata_port_info;
+काष्ठा ata_port_info;
 
 /* pata_sis.c */
-extern const struct ata_port_info sis_info133_for_sata;
+बाह्य स्थिर काष्ठा ata_port_info sis_info133_क्रम_sata;

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Applied Micro X-Gene SoC Ethernet v2 Driver
  *
@@ -7,61 +8,61 @@
  *	      Keyur Chudgar <kchudgar@apm.com>
  */
 
-#ifndef __XGENE_ENET_V2_MAIN_H__
-#define __XGENE_ENET_V2_MAIN_H__
+#अगर_अघोषित __XGENE_ENET_V2_MAIN_H__
+#घोषणा __XGENE_ENET_V2_MAIN_H__
 
-#include <linux/acpi.h>
-#include <linux/clk.h>
-#include <linux/efi.h>
-#include <linux/if_vlan.h>
-#include <linux/irq.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_platform.h>
-#include <linux/of_net.h>
-#include <linux/of_mdio.h>
-#include <linux/prefetch.h>
-#include <linux/phy.h>
-#include <net/ip.h>
-#include "mac.h"
-#include "enet.h"
-#include "ring.h"
-#include "ethtool.h"
+#समावेश <linux/acpi.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/efi.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_net.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/phy.h>
+#समावेश <net/ip.h>
+#समावेश "mac.h"
+#समावेश "enet.h"
+#समावेश "ring.h"
+#समावेश "ethtool.h"
 
-#define XGENE_ENET_STD_MTU	1536
-#define XGENE_ENET_MIN_FRAME	60
-#define IRQ_ID_SIZE             16
+#घोषणा XGENE_ENET_STD_MTU	1536
+#घोषणा XGENE_ENET_MIN_FRAME	60
+#घोषणा IRQ_ID_SIZE             16
 
-struct xge_resource {
-	void __iomem *base_addr;
-	int phy_mode;
+काष्ठा xge_resource अणु
+	व्योम __iomem *base_addr;
+	पूर्णांक phy_mode;
 	u32 irq;
-};
+पूर्ण;
 
-struct xge_stats {
+काष्ठा xge_stats अणु
 	u64 tx_packets;
 	u64 tx_bytes;
 	u64 rx_packets;
 	u64 rx_bytes;
 	u64 rx_errors;
-};
+पूर्ण;
 
-/* ethernet private data */
-struct xge_pdata {
-	struct xge_resource resources;
-	struct xge_desc_ring *tx_ring;
-	struct xge_desc_ring *rx_ring;
-	struct platform_device *pdev;
-	char irq_name[IRQ_ID_SIZE];
-	struct mii_bus *mdio_bus;
-	struct net_device *ndev;
-	struct napi_struct napi;
-	struct xge_stats stats;
-	int phy_speed;
+/* ethernet निजी data */
+काष्ठा xge_pdata अणु
+	काष्ठा xge_resource resources;
+	काष्ठा xge_desc_ring *tx_ring;
+	काष्ठा xge_desc_ring *rx_ring;
+	काष्ठा platक्रमm_device *pdev;
+	अक्षर irq_name[IRQ_ID_SIZE];
+	काष्ठा mii_bus *mdio_bus;
+	काष्ठा net_device *ndev;
+	काष्ठा napi_काष्ठा napi;
+	काष्ठा xge_stats stats;
+	पूर्णांक phy_speed;
 	u8 nbufs;
-};
+पूर्ण;
 
-int xge_mdio_config(struct net_device *ndev);
-void xge_mdio_remove(struct net_device *ndev);
+पूर्णांक xge_mdio_config(काष्ठा net_device *ndev);
+व्योम xge_mdio_हटाओ(काष्ठा net_device *ndev);
 
-#endif /* __XGENE_ENET_V2_MAIN_H__ */
+#पूर्ण_अगर /* __XGENE_ENET_V2_MAIN_H__ */

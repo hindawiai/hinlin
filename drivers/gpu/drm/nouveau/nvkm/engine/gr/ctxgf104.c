@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2013 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,67 +22,67 @@
  *
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
-#include "ctxgf100.h"
+#समावेश "ctxgf100.h"
 
 /*******************************************************************************
- * PGRAPH context register lists
+ * PGRAPH context रेजिस्टर lists
  ******************************************************************************/
 
-const struct gf100_gr_init
-gf104_grctx_init_tex_0[] = {
-	{ 0x419a00,   1, 0x04, 0x000001f0 },
-	{ 0x419a04,   1, 0x04, 0x00000001 },
-	{ 0x419a08,   1, 0x04, 0x00000023 },
-	{ 0x419a0c,   1, 0x04, 0x00020000 },
-	{ 0x419a10,   1, 0x04, 0x00000000 },
-	{ 0x419a14,   1, 0x04, 0x00000200 },
-	{ 0x419a1c,   1, 0x04, 0x00000000 },
-	{ 0x419a20,   1, 0x04, 0x00000800 },
-	{ 0x419ac4,   1, 0x04, 0x0007f440 },
-	{}
-};
+स्थिर काष्ठा gf100_gr_init
+gf104_grctx_init_tex_0[] = अणु
+	अणु 0x419a00,   1, 0x04, 0x000001f0 पूर्ण,
+	अणु 0x419a04,   1, 0x04, 0x00000001 पूर्ण,
+	अणु 0x419a08,   1, 0x04, 0x00000023 पूर्ण,
+	अणु 0x419a0c,   1, 0x04, 0x00020000 पूर्ण,
+	अणु 0x419a10,   1, 0x04, 0x00000000 पूर्ण,
+	अणु 0x419a14,   1, 0x04, 0x00000200 पूर्ण,
+	अणु 0x419a1c,   1, 0x04, 0x00000000 पूर्ण,
+	अणु 0x419a20,   1, 0x04, 0x00000800 पूर्ण,
+	अणु 0x419ac4,   1, 0x04, 0x0007f440 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-const struct gf100_gr_init
-gf104_grctx_init_l1c_0[] = {
-	{ 0x419cb0,   1, 0x04, 0x00020048 },
-	{ 0x419ce8,   1, 0x04, 0x00000000 },
-	{ 0x419cf4,   1, 0x04, 0x00000183 },
-	{}
-};
+स्थिर काष्ठा gf100_gr_init
+gf104_grctx_init_l1c_0[] = अणु
+	अणु 0x419cb0,   1, 0x04, 0x00020048 पूर्ण,
+	अणु 0x419ce8,   1, 0x04, 0x00000000 पूर्ण,
+	अणु 0x419cf4,   1, 0x04, 0x00000183 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-const struct gf100_gr_init
-gf104_grctx_init_sm_0[] = {
-	{ 0x419e04,   3, 0x04, 0x00000000 },
-	{ 0x419e10,   1, 0x04, 0x00000002 },
-	{ 0x419e44,   1, 0x04, 0x001beff2 },
-	{ 0x419e48,   1, 0x04, 0x00000000 },
-	{ 0x419e4c,   1, 0x04, 0x0000000f },
-	{ 0x419e50,  17, 0x04, 0x00000000 },
-	{ 0x419e98,   1, 0x04, 0x00000000 },
-	{ 0x419ee0,   1, 0x04, 0x00011110 },
-	{ 0x419f30,  11, 0x04, 0x00000000 },
-	{}
-};
+स्थिर काष्ठा gf100_gr_init
+gf104_grctx_init_sm_0[] = अणु
+	अणु 0x419e04,   3, 0x04, 0x00000000 पूर्ण,
+	अणु 0x419e10,   1, 0x04, 0x00000002 पूर्ण,
+	अणु 0x419e44,   1, 0x04, 0x001beff2 पूर्ण,
+	अणु 0x419e48,   1, 0x04, 0x00000000 पूर्ण,
+	अणु 0x419e4c,   1, 0x04, 0x0000000f पूर्ण,
+	अणु 0x419e50,  17, 0x04, 0x00000000 पूर्ण,
+	अणु 0x419e98,   1, 0x04, 0x00000000 पूर्ण,
+	अणु 0x419ee0,   1, 0x04, 0x00011110 पूर्ण,
+	अणु 0x419f30,  11, 0x04, 0x00000000 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static const struct gf100_gr_pack
-gf104_grctx_pack_tpc[] = {
-	{ gf100_grctx_init_pe_0 },
-	{ gf104_grctx_init_tex_0 },
-	{ gf100_grctx_init_wwdx_0 },
-	{ gf100_grctx_init_mpc_0 },
-	{ gf104_grctx_init_l1c_0 },
-	{ gf100_grctx_init_tpccs_0 },
-	{ gf104_grctx_init_sm_0 },
-	{}
-};
+अटल स्थिर काष्ठा gf100_gr_pack
+gf104_grctx_pack_tpc[] = अणु
+	अणु gf100_grctx_init_pe_0 पूर्ण,
+	अणु gf104_grctx_init_tex_0 पूर्ण,
+	अणु gf100_grctx_init_wwdx_0 पूर्ण,
+	अणु gf100_grctx_init_mpc_0 पूर्ण,
+	अणु gf104_grctx_init_l1c_0 पूर्ण,
+	अणु gf100_grctx_init_tpccs_0 पूर्ण,
+	अणु gf104_grctx_init_sm_0 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
 /*******************************************************************************
  * PGRAPH context implementation
  ******************************************************************************/
 
-const struct gf100_grctx_func
-gf104_grctx = {
-	.main  = gf100_grctx_generate_main,
+स्थिर काष्ठा gf100_grctx_func
+gf104_grctx = अणु
+	.मुख्य  = gf100_grctx_generate_मुख्य,
 	.unkn  = gf100_grctx_generate_unkn,
 	.hub   = gf100_grctx_pack_hub,
 	.gpc_0 = gf100_grctx_pack_gpc_0,
@@ -104,4 +105,4 @@ gf104_grctx = {
 	.alpha_beta_tables = gf100_grctx_generate_alpha_beta_tables,
 	.max_ways_evict = gf100_grctx_generate_max_ways_evict,
 	.r419cb8 = gf100_grctx_generate_r419cb8,
-};
+पूर्ण;

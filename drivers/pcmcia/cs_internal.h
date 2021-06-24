@@ -1,97 +1,98 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * cs_internal.h -- definitions internal to the PCMCIA core modules
+ * cs_पूर्णांकernal.h -- definitions पूर्णांकernal to the PCMCIA core modules
  *
  * The initial developer of the original code is David A. Hinds
- * <dahinds@users.sourceforge.net>.  Portions created by David A. Hinds
+ * <dahinds@users.sourceक्रमge.net>.  Portions created by David A. Hinds
  * are Copyright (C) 1999 David A. Hinds.  All Rights Reserved.
  *
  * (C) 1999		David A. Hinds
- * (C) 2003 - 2010	Dominik Brodowski
+ * (C) 2003 - 2010	Dominik Broकरोwski
  *
  * This file contains definitions _only_ needed by the PCMCIA core modules.
  * It must not be included by PCMCIA socket drivers or by PCMCIA device
  * drivers.
  */
 
-#ifndef _LINUX_CS_INTERNAL_H
-#define _LINUX_CS_INTERNAL_H
+#अगर_अघोषित _LINUX_CS_INTERNAL_H
+#घोषणा _LINUX_CS_INTERNAL_H
 
-#include <linux/kref.h>
+#समावेश <linux/kref.h>
 
 /* Flags in client state */
-#define CLIENT_WIN_REQ(i)	(0x1<<(i))
+#घोषणा CLIENT_WIN_REQ(i)	(0x1<<(i))
 
 /* Flag to access all functions */
-#define BIND_FN_ALL	0xff
+#घोषणा BIND_FN_ALL	0xff
 
-/* Each card function gets one of these guys */
-typedef struct config_t {
-	struct kref	ref;
-	unsigned int	state;
+/* Each card function माला_लो one of these guys */
+प्रकार काष्ठा config_t अणु
+	काष्ठा kref	ref;
+	अचिन्हित पूर्णांक	state;
 
-	struct resource io[MAX_IO_WIN]; /* io ports */
-	struct resource mem[MAX_WIN];   /* mem areas */
-} config_t;
+	काष्ठा resource io[MAX_IO_WIN]; /* io ports */
+	काष्ठा resource mem[MAX_WIN];   /* mem areas */
+पूर्ण config_t;
 
 
-struct cis_cache_entry {
-	struct list_head	node;
-	unsigned int		addr;
-	unsigned int		len;
-	unsigned int		attr;
-	unsigned char		cache[];
-};
+काष्ठा cis_cache_entry अणु
+	काष्ठा list_head	node;
+	अचिन्हित पूर्णांक		addr;
+	अचिन्हित पूर्णांक		len;
+	अचिन्हित पूर्णांक		attr;
+	अचिन्हित अक्षर		cache[];
+पूर्ण;
 
-struct pccard_resource_ops {
-	int	(*validate_mem)		(struct pcmcia_socket *s);
-	int	(*find_io)		(struct pcmcia_socket *s,
-					 unsigned int attr,
-					 unsigned int *base,
-					 unsigned int num,
-					 unsigned int align,
-					 struct resource **parent);
-	struct resource* (*find_mem)	(unsigned long base, unsigned long num,
-					 unsigned long align, int low,
-					 struct pcmcia_socket *s);
-	int	(*init)			(struct pcmcia_socket *s);
-	void	(*exit)			(struct pcmcia_socket *s);
-};
+काष्ठा pccard_resource_ops अणु
+	पूर्णांक	(*validate_mem)		(काष्ठा pcmcia_socket *s);
+	पूर्णांक	(*find_io)		(काष्ठा pcmcia_socket *s,
+					 अचिन्हित पूर्णांक attr,
+					 अचिन्हित पूर्णांक *base,
+					 अचिन्हित पूर्णांक num,
+					 अचिन्हित पूर्णांक align,
+					 काष्ठा resource **parent);
+	काष्ठा resource* (*find_mem)	(अचिन्हित दीर्घ base, अचिन्हित दीर्घ num,
+					 अचिन्हित दीर्घ align, पूर्णांक low,
+					 काष्ठा pcmcia_socket *s);
+	पूर्णांक	(*init)			(काष्ठा pcmcia_socket *s);
+	व्योम	(*निकास)			(काष्ठा pcmcia_socket *s);
+पूर्ण;
 
 /* Flags in config state */
-#define CONFIG_LOCKED		0x01
-#define CONFIG_IRQ_REQ		0x02
-#define CONFIG_IO_REQ		0x04
+#घोषणा CONFIG_LOCKED		0x01
+#घोषणा CONFIG_IRQ_REQ		0x02
+#घोषणा CONFIG_IO_REQ		0x04
 
 /* Flags in socket state */
-#define SOCKET_PRESENT		0x0008
-#define SOCKET_INUSE		0x0010
-#define SOCKET_IN_RESUME	0x0040
-#define SOCKET_SUSPEND		0x0080
-#define SOCKET_WIN_REQ(i)	(0x0100<<(i))
-#define SOCKET_CARDBUS		0x8000
-#define SOCKET_CARDBUS_CONFIG	0x10000
+#घोषणा SOCKET_PRESENT		0x0008
+#घोषणा SOCKET_INUSE		0x0010
+#घोषणा SOCKET_IN_RESUME	0x0040
+#घोषणा SOCKET_SUSPEND		0x0080
+#घोषणा SOCKET_WIN_REQ(i)	(0x0100<<(i))
+#घोषणा SOCKET_CARDBUS		0x8000
+#घोषणा SOCKET_CARDBUS_CONFIG	0x10000
 
 
 /*
- * Stuff internal to module "pcmcia_rsrc":
+ * Stuff पूर्णांकernal to module "pcmcia_rsrc":
  */
-extern int static_init(struct pcmcia_socket *s);
-extern struct resource *pcmcia_make_resource(resource_size_t start,
-					resource_size_t end,
-					unsigned long flags, const char *name);
+बाह्य पूर्णांक अटल_init(काष्ठा pcmcia_socket *s);
+बाह्य काष्ठा resource *pcmcia_make_resource(resource_माप_प्रकार start,
+					resource_माप_प्रकार end,
+					अचिन्हित दीर्घ flags, स्थिर अक्षर *name);
 
 /*
- * Stuff internal to module "pcmcia_core":
+ * Stuff पूर्णांकernal to module "pcmcia_core":
  */
 
 /* socket_sysfs.c */
-extern int pccard_sysfs_add_socket(struct device *dev);
-extern void pccard_sysfs_remove_socket(struct device *dev);
+बाह्य पूर्णांक pccard_sysfs_add_socket(काष्ठा device *dev);
+बाह्य व्योम pccard_sysfs_हटाओ_socket(काष्ठा device *dev);
 
 /* cardbus.c */
-int cb_alloc(struct pcmcia_socket *s);
-void cb_free(struct pcmcia_socket *s);
+पूर्णांक cb_alloc(काष्ठा pcmcia_socket *s);
+व्योम cb_मुक्त(काष्ठा pcmcia_socket *s);
 
 
 
@@ -99,77 +100,77 @@ void cb_free(struct pcmcia_socket *s);
  * Stuff exported by module "pcmcia_core" to module "pcmcia"
  */
 
-struct pcmcia_callback{
-	struct module	*owner;
-	int		(*add) (struct pcmcia_socket *s);
-	int		(*remove) (struct pcmcia_socket *s);
-	void		(*requery) (struct pcmcia_socket *s);
-	int		(*validate) (struct pcmcia_socket *s, unsigned int *i);
-	int		(*suspend) (struct pcmcia_socket *s);
-	int		(*early_resume) (struct pcmcia_socket *s);
-	int		(*resume) (struct pcmcia_socket *s);
-};
+काष्ठा pcmcia_callbackअणु
+	काष्ठा module	*owner;
+	पूर्णांक		(*add) (काष्ठा pcmcia_socket *s);
+	पूर्णांक		(*हटाओ) (काष्ठा pcmcia_socket *s);
+	व्योम		(*requery) (काष्ठा pcmcia_socket *s);
+	पूर्णांक		(*validate) (काष्ठा pcmcia_socket *s, अचिन्हित पूर्णांक *i);
+	पूर्णांक		(*suspend) (काष्ठा pcmcia_socket *s);
+	पूर्णांक		(*early_resume) (काष्ठा pcmcia_socket *s);
+	पूर्णांक		(*resume) (काष्ठा pcmcia_socket *s);
+पूर्ण;
 
 /* cs.c */
-extern struct rw_semaphore pcmcia_socket_list_rwsem;
-extern struct list_head pcmcia_socket_list;
-extern struct class pcmcia_socket_class;
+बाह्य काष्ठा rw_semaphore pcmcia_socket_list_rwsem;
+बाह्य काष्ठा list_head pcmcia_socket_list;
+बाह्य काष्ठा class pcmcia_socket_class;
 
-int pccard_register_pcmcia(struct pcmcia_socket *s, struct pcmcia_callback *c);
-struct pcmcia_socket *pcmcia_get_socket_by_nr(unsigned int nr);
+पूर्णांक pccard_रेजिस्टर_pcmcia(काष्ठा pcmcia_socket *s, काष्ठा pcmcia_callback *c);
+काष्ठा pcmcia_socket *pcmcia_get_socket_by_nr(अचिन्हित पूर्णांक nr);
 
-void pcmcia_parse_uevents(struct pcmcia_socket *socket, unsigned int events);
-#define PCMCIA_UEVENT_EJECT	0x0001
-#define PCMCIA_UEVENT_INSERT	0x0002
-#define PCMCIA_UEVENT_SUSPEND	0x0004
-#define PCMCIA_UEVENT_RESUME	0x0008
-#define PCMCIA_UEVENT_REQUERY	0x0010
+व्योम pcmcia_parse_uevents(काष्ठा pcmcia_socket *socket, अचिन्हित पूर्णांक events);
+#घोषणा PCMCIA_UEVENT_EJECT	0x0001
+#घोषणा PCMCIA_UEVENT_INSERT	0x0002
+#घोषणा PCMCIA_UEVENT_SUSPEND	0x0004
+#घोषणा PCMCIA_UEVENT_RESUME	0x0008
+#घोषणा PCMCIA_UEVENT_REQUERY	0x0010
 
-struct pcmcia_socket *pcmcia_get_socket(struct pcmcia_socket *skt);
-void pcmcia_put_socket(struct pcmcia_socket *skt);
+काष्ठा pcmcia_socket *pcmcia_get_socket(काष्ठा pcmcia_socket *skt);
+व्योम pcmcia_put_socket(काष्ठा pcmcia_socket *skt);
 
 /*
- * Stuff internal to module "pcmcia".
+ * Stuff पूर्णांकernal to module "pcmcia".
  */
 /* ds.c */
-extern struct bus_type pcmcia_bus_type;
+बाह्य काष्ठा bus_type pcmcia_bus_type;
 
-struct pcmcia_device;
+काष्ठा pcmcia_device;
 
 /* pcmcia_resource.c */
-extern int pcmcia_release_configuration(struct pcmcia_device *p_dev);
-extern int pcmcia_validate_mem(struct pcmcia_socket *s);
-extern struct resource *pcmcia_find_mem_region(u_long base,
-					       u_long num,
-					       u_long align,
-					       int low,
-					       struct pcmcia_socket *s);
+बाह्य पूर्णांक pcmcia_release_configuration(काष्ठा pcmcia_device *p_dev);
+बाह्य पूर्णांक pcmcia_validate_mem(काष्ठा pcmcia_socket *s);
+बाह्य काष्ठा resource *pcmcia_find_mem_region(u_दीर्घ base,
+					       u_दीर्घ num,
+					       u_दीर्घ align,
+					       पूर्णांक low,
+					       काष्ठा pcmcia_socket *s);
 
-void pcmcia_cleanup_irq(struct pcmcia_socket *s);
-int pcmcia_setup_irq(struct pcmcia_device *p_dev);
+व्योम pcmcia_cleanup_irq(काष्ठा pcmcia_socket *s);
+पूर्णांक pcmcia_setup_irq(काष्ठा pcmcia_device *p_dev);
 
 /* cistpl.c */
-extern const struct bin_attribute pccard_cis_attr;
+बाह्य स्थिर काष्ठा bin_attribute pccard_cis_attr;
 
-int pcmcia_read_cis_mem(struct pcmcia_socket *s, int attr,
-			u_int addr, u_int len, void *ptr);
-int pcmcia_write_cis_mem(struct pcmcia_socket *s, int attr,
-			u_int addr, u_int len, void *ptr);
-void release_cis_mem(struct pcmcia_socket *s);
-void destroy_cis_cache(struct pcmcia_socket *s);
-int pccard_read_tuple(struct pcmcia_socket *s, unsigned int function,
-		      cisdata_t code, void *parse);
-int pcmcia_replace_cis(struct pcmcia_socket *s,
-		       const u8 *data, const size_t len);
-int pccard_validate_cis(struct pcmcia_socket *s, unsigned int *count);
-int verify_cis_cache(struct pcmcia_socket *s);
+पूर्णांक pcmcia_पढ़ो_cis_mem(काष्ठा pcmcia_socket *s, पूर्णांक attr,
+			u_पूर्णांक addr, u_पूर्णांक len, व्योम *ptr);
+पूर्णांक pcmcia_ग_लिखो_cis_mem(काष्ठा pcmcia_socket *s, पूर्णांक attr,
+			u_पूर्णांक addr, u_पूर्णांक len, व्योम *ptr);
+व्योम release_cis_mem(काष्ठा pcmcia_socket *s);
+व्योम destroy_cis_cache(काष्ठा pcmcia_socket *s);
+पूर्णांक pccard_पढ़ो_tuple(काष्ठा pcmcia_socket *s, अचिन्हित पूर्णांक function,
+		      cisdata_t code, व्योम *parse);
+पूर्णांक pcmcia_replace_cis(काष्ठा pcmcia_socket *s,
+		       स्थिर u8 *data, स्थिर माप_प्रकार len);
+पूर्णांक pccard_validate_cis(काष्ठा pcmcia_socket *s, अचिन्हित पूर्णांक *count);
+पूर्णांक verअगरy_cis_cache(काष्ठा pcmcia_socket *s);
 
-int pccard_get_first_tuple(struct pcmcia_socket *s, unsigned int function,
+पूर्णांक pccard_get_first_tuple(काष्ठा pcmcia_socket *s, अचिन्हित पूर्णांक function,
 			tuple_t *tuple);
 
-int pccard_get_next_tuple(struct pcmcia_socket *s, unsigned int function,
+पूर्णांक pccard_get_next_tuple(काष्ठा pcmcia_socket *s, अचिन्हित पूर्णांक function,
 			tuple_t *tuple);
 
-int pccard_get_tuple_data(struct pcmcia_socket *s, tuple_t *tuple);
+पूर्णांक pccard_get_tuple_data(काष्ठा pcmcia_socket *s, tuple_t *tuple);
 
-#endif /* _LINUX_CS_INTERNAL_H */
+#पूर्ण_अगर /* _LINUX_CS_INTERNAL_H */

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  *	TURBOchannel driver services.
  *
@@ -8,102 +9,102 @@
  *	drivers/pci/pci-driver.c.
  *
  *	This file is subject to the terms and conditions of the GNU
- *	General Public License.  See the file "COPYING" in the main
- *	directory of this archive for more details.
+ *	General Public License.  See the file "COPYING" in the मुख्य
+ *	directory of this archive क्रम more details.
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/tc.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/tc.h>
 
 /**
- * tc_register_driver - register a new TC driver
- * @drv: the driver structure to register
+ * tc_रेजिस्टर_driver - रेजिस्टर a new TC driver
+ * @drv: the driver काष्ठाure to रेजिस्टर
  *
- * Adds the driver structure to the list of registered drivers
+ * Adds the driver काष्ठाure to the list of रेजिस्टरed drivers
  * Returns a negative value on error, otherwise 0.
- * If no error occurred, the driver remains registered even if
+ * If no error occurred, the driver reमुख्यs रेजिस्टरed even अगर
  * no device was claimed during registration.
  */
-int tc_register_driver(struct tc_driver *tdrv)
-{
-	return driver_register(&tdrv->driver);
-}
-EXPORT_SYMBOL(tc_register_driver);
+पूर्णांक tc_रेजिस्टर_driver(काष्ठा tc_driver *tdrv)
+अणु
+	वापस driver_रेजिस्टर(&tdrv->driver);
+पूर्ण
+EXPORT_SYMBOL(tc_रेजिस्टर_driver);
 
 /**
- * tc_unregister_driver - unregister a TC driver
- * @drv: the driver structure to unregister
+ * tc_unरेजिस्टर_driver - unरेजिस्टर a TC driver
+ * @drv: the driver काष्ठाure to unरेजिस्टर
  *
- * Deletes the driver structure from the list of registered TC drivers,
- * gives it a chance to clean up by calling its remove() function for
- * each device it was responsible for, and marks those devices as
+ * Deletes the driver काष्ठाure from the list of रेजिस्टरed TC drivers,
+ * gives it a chance to clean up by calling its हटाओ() function क्रम
+ * each device it was responsible क्रम, and marks those devices as
  * driverless.
  */
-void tc_unregister_driver(struct tc_driver *tdrv)
-{
-	driver_unregister(&tdrv->driver);
-}
-EXPORT_SYMBOL(tc_unregister_driver);
+व्योम tc_unरेजिस्टर_driver(काष्ठा tc_driver *tdrv)
+अणु
+	driver_unरेजिस्टर(&tdrv->driver);
+पूर्ण
+EXPORT_SYMBOL(tc_unरेजिस्टर_driver);
 
 /**
- * tc_match_device - tell if a TC device structure has a matching
- *                   TC device ID structure
- * @tdrv: the TC driver to earch for matching TC device ID strings
- * @tdev: the TC device structure to match against
+ * tc_match_device - tell अगर a TC device काष्ठाure has a matching
+ *                   TC device ID काष्ठाure
+ * @tdrv: the TC driver to earch क्रम matching TC device ID strings
+ * @tdev: the TC device काष्ठाure to match against
  *
  * Used by a driver to check whether a TC device present in the
- * system is in its list of supported devices.  Returns the matching
- * tc_device_id structure or %NULL if there is no match.
+ * प्रणाली is in its list of supported devices.  Returns the matching
+ * tc_device_id काष्ठाure or %शून्य अगर there is no match.
  */
-static const struct tc_device_id *tc_match_device(struct tc_driver *tdrv,
-						  struct tc_dev *tdev)
-{
-	const struct tc_device_id *id = tdrv->id_table;
+अटल स्थिर काष्ठा tc_device_id *tc_match_device(काष्ठा tc_driver *tdrv,
+						  काष्ठा tc_dev *tdev)
+अणु
+	स्थिर काष्ठा tc_device_id *id = tdrv->id_table;
 
-	if (id) {
-		while (id->name[0] || id->vendor[0]) {
-			if (strcmp(tdev->name, id->name) == 0 &&
-			    strcmp(tdev->vendor, id->vendor) == 0)
-				return id;
+	अगर (id) अणु
+		जबतक (id->name[0] || id->venकरोr[0]) अणु
+			अगर (म_भेद(tdev->name, id->name) == 0 &&
+			    म_भेद(tdev->venकरोr, id->venकरोr) == 0)
+				वापस id;
 			id++;
-		}
-	}
-	return NULL;
-}
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
- * tc_bus_match - Tell if a device structure has a matching
- *                TC device ID structure
- * @dev: the device structure to match against
- * @drv: the device driver to search for matching TC device ID strings
+ * tc_bus_match - Tell अगर a device काष्ठाure has a matching
+ *                TC device ID काष्ठाure
+ * @dev: the device काष्ठाure to match against
+ * @drv: the device driver to search क्रम matching TC device ID strings
  *
  * Used by a driver to check whether a TC device present in the
- * system is in its list of supported devices.  Returns 1 if there
+ * प्रणाली is in its list of supported devices.  Returns 1 अगर there
  * is a match or 0 otherwise.
  */
-static int tc_bus_match(struct device *dev, struct device_driver *drv)
-{
-	struct tc_dev *tdev = to_tc_dev(dev);
-	struct tc_driver *tdrv = to_tc_driver(drv);
-	const struct tc_device_id *id;
+अटल पूर्णांक tc_bus_match(काष्ठा device *dev, काष्ठा device_driver *drv)
+अणु
+	काष्ठा tc_dev *tdev = to_tc_dev(dev);
+	काष्ठा tc_driver *tdrv = to_tc_driver(drv);
+	स्थिर काष्ठा tc_device_id *id;
 
 	id = tc_match_device(tdrv, tdev);
-	if (id)
-		return 1;
+	अगर (id)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct bus_type tc_bus_type = {
+काष्ठा bus_type tc_bus_type = अणु
 	.name	= "tc",
 	.match	= tc_bus_match,
-};
+पूर्ण;
 EXPORT_SYMBOL(tc_bus_type);
 
-static int __init tc_driver_init(void)
-{
-	return bus_register(&tc_bus_type);
-}
+अटल पूर्णांक __init tc_driver_init(व्योम)
+अणु
+	वापस bus_रेजिस्टर(&tc_bus_type);
+पूर्ण
 
 postcore_initcall(tc_driver_init);

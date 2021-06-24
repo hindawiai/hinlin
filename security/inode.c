@@ -1,167 +1,168 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  inode.c - securityfs
  *
- *  Copyright (C) 2005 Greg Kroah-Hartman <gregkh@suse.de>
+ *  Copyright (C) 2005 Greg Kroah-Harपंचांगan <gregkh@suse.de>
  *
  *  Based on fs/debugfs/inode.c which had the following copyright notice:
- *    Copyright (C) 2004 Greg Kroah-Hartman <greg@kroah.com>
+ *    Copyright (C) 2004 Greg Kroah-Harपंचांगan <greg@kroah.com>
  *    Copyright (C) 2004 IBM Inc.
  */
 
-/* #define DEBUG */
-#include <linux/sysfs.h>
-#include <linux/kobject.h>
-#include <linux/fs.h>
-#include <linux/fs_context.h>
-#include <linux/mount.h>
-#include <linux/pagemap.h>
-#include <linux/init.h>
-#include <linux/namei.h>
-#include <linux/security.h>
-#include <linux/lsm_hooks.h>
-#include <linux/magic.h>
+/* #घोषणा DEBUG */
+#समावेश <linux/sysfs.h>
+#समावेश <linux/kobject.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/fs_context.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/security.h>
+#समावेश <linux/lsm_hooks.h>
+#समावेश <linux/magic.h>
 
-static struct vfsmount *mount;
-static int mount_count;
+अटल काष्ठा vfsmount *mount;
+अटल पूर्णांक mount_count;
 
-static void securityfs_free_inode(struct inode *inode)
-{
-	if (S_ISLNK(inode->i_mode))
-		kfree(inode->i_link);
-	free_inode_nonrcu(inode);
-}
+अटल व्योम securityfs_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	अगर (S_ISLNK(inode->i_mode))
+		kमुक्त(inode->i_link);
+	मुक्त_inode_nonrcu(inode);
+पूर्ण
 
-static const struct super_operations securityfs_super_operations = {
+अटल स्थिर काष्ठा super_operations securityfs_super_operations = अणु
 	.statfs		= simple_statfs,
-	.free_inode	= securityfs_free_inode,
-};
+	.मुक्त_inode	= securityfs_मुक्त_inode,
+पूर्ण;
 
-static int securityfs_fill_super(struct super_block *sb, struct fs_context *fc)
-{
-	static const struct tree_descr files[] = {{""}};
-	int error;
+अटल पूर्णांक securityfs_fill_super(काष्ठा super_block *sb, काष्ठा fs_context *fc)
+अणु
+	अटल स्थिर काष्ठा tree_descr files[] = अणुअणु""पूर्णपूर्ण;
+	पूर्णांक error;
 
 	error = simple_fill_super(sb, SECURITYFS_MAGIC, files);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	sb->s_op = &securityfs_super_operations;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int securityfs_get_tree(struct fs_context *fc)
-{
-	return get_tree_single(fc, securityfs_fill_super);
-}
+अटल पूर्णांक securityfs_get_tree(काष्ठा fs_context *fc)
+अणु
+	वापस get_tree_single(fc, securityfs_fill_super);
+पूर्ण
 
-static const struct fs_context_operations securityfs_context_ops = {
+अटल स्थिर काष्ठा fs_context_operations securityfs_context_ops = अणु
 	.get_tree	= securityfs_get_tree,
-};
+पूर्ण;
 
-static int securityfs_init_fs_context(struct fs_context *fc)
-{
+अटल पूर्णांक securityfs_init_fs_context(काष्ठा fs_context *fc)
+अणु
 	fc->ops = &securityfs_context_ops;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct file_system_type fs_type = {
+अटल काष्ठा file_प्रणाली_type fs_type = अणु
 	.owner =	THIS_MODULE,
 	.name =		"securityfs",
 	.init_fs_context = securityfs_init_fs_context,
-	.kill_sb =	kill_litter_super,
-};
+	.समाप्त_sb =	समाप्त_litter_super,
+पूर्ण;
 
 /**
- * securityfs_create_dentry - create a dentry in the securityfs filesystem
+ * securityfs_create_dentry - create a dentry in the securityfs fileप्रणाली
  *
- * @name: a pointer to a string containing the name of the file to create.
+ * @name: a poपूर्णांकer to a string containing the name of the file to create.
  * @mode: the permission that the file should have
- * @parent: a pointer to the parent dentry for this file.  This should be a
- *          directory dentry if set.  If this parameter is %NULL, then the
- *          file will be created in the root of the securityfs filesystem.
- * @data: a pointer to something that the caller will want to get to later
- *        on.  The inode.i_private pointer will point to this value on
- *        the open() call.
- * @fops: a pointer to a struct file_operations that should be used for
+ * @parent: a poपूर्णांकer to the parent dentry क्रम this file.  This should be a
+ *          directory dentry अगर set.  If this parameter is %शून्य, then the
+ *          file will be created in the root of the securityfs fileप्रणाली.
+ * @data: a poपूर्णांकer to something that the caller will want to get to later
+ *        on.  The inode.i_निजी poपूर्णांकer will poपूर्णांक to this value on
+ *        the खोलो() call.
+ * @fops: a poपूर्णांकer to a काष्ठा file_operations that should be used क्रम
  *        this file.
- * @iops: a point to a struct of inode_operations that should be used for
+ * @iops: a poपूर्णांक to a काष्ठा of inode_operations that should be used क्रम
  *        this file/dir
  *
- * This is the basic "create a file/dir/symlink" function for
- * securityfs.  It allows for a wide range of flexibility in creating
- * a file, or a directory (if you want to create a directory, the
+ * This is the basic "create a file/dir/symlink" function क्रम
+ * securityfs.  It allows क्रम a wide range of flexibility in creating
+ * a file, or a directory (अगर you want to create a directory, the
  * securityfs_create_dir() function is recommended to be used
  * instead).
  *
- * This function returns a pointer to a dentry if it succeeds.  This
- * pointer must be passed to the securityfs_remove() function when the
- * file is to be removed (no automatic cleanup happens if your module
+ * This function वापसs a poपूर्णांकer to a dentry अगर it succeeds.  This
+ * poपूर्णांकer must be passed to the securityfs_हटाओ() function when the
+ * file is to be हटाओd (no स्वतःmatic cleanup happens अगर your module
  * is unloaded, you are responsible here).  If an error occurs, the
- * function will return the error value (via ERR_PTR).
+ * function will वापस the error value (via ERR_PTR).
  *
  * If securityfs is not enabled in the kernel, the value %-ENODEV is
- * returned.
+ * वापसed.
  */
-static struct dentry *securityfs_create_dentry(const char *name, umode_t mode,
-					struct dentry *parent, void *data,
-					const struct file_operations *fops,
-					const struct inode_operations *iops)
-{
-	struct dentry *dentry;
-	struct inode *dir, *inode;
-	int error;
+अटल काष्ठा dentry *securityfs_create_dentry(स्थिर अक्षर *name, umode_t mode,
+					काष्ठा dentry *parent, व्योम *data,
+					स्थिर काष्ठा file_operations *fops,
+					स्थिर काष्ठा inode_operations *iops)
+अणु
+	काष्ठा dentry *dentry;
+	काष्ठा inode *dir, *inode;
+	पूर्णांक error;
 
-	if (!(mode & S_IFMT))
+	अगर (!(mode & S_IFMT))
 		mode = (mode & S_IALLUGO) | S_IFREG;
 
 	pr_debug("securityfs: creating file '%s'\n",name);
 
 	error = simple_pin_fs(&fs_type, &mount, &mount_count);
-	if (error)
-		return ERR_PTR(error);
+	अगर (error)
+		वापस ERR_PTR(error);
 
-	if (!parent)
+	अगर (!parent)
 		parent = mount->mnt_root;
 
 	dir = d_inode(parent);
 
 	inode_lock(dir);
-	dentry = lookup_one_len(name, parent, strlen(name));
-	if (IS_ERR(dentry))
-		goto out;
+	dentry = lookup_one_len(name, parent, म_माप(name));
+	अगर (IS_ERR(dentry))
+		जाओ out;
 
-	if (d_really_is_positive(dentry)) {
+	अगर (d_really_is_positive(dentry)) अणु
 		error = -EEXIST;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
 	inode = new_inode(dir->i_sb);
-	if (!inode) {
+	अगर (!inode) अणु
 		error = -ENOMEM;
-		goto out1;
-	}
+		जाओ out1;
+	पूर्ण
 
 	inode->i_ino = get_next_ino();
 	inode->i_mode = mode;
-	inode->i_atime = inode->i_mtime = inode->i_ctime = current_time(inode);
-	inode->i_private = data;
-	if (S_ISDIR(mode)) {
+	inode->i_aसमय = inode->i_mसमय = inode->i_स_समय = current_समय(inode);
+	inode->i_निजी = data;
+	अगर (S_ISसूची(mode)) अणु
 		inode->i_op = &simple_dir_inode_operations;
 		inode->i_fop = &simple_dir_operations;
 		inc_nlink(inode);
 		inc_nlink(dir);
-	} else if (S_ISLNK(mode)) {
+	पूर्ण अन्यथा अगर (S_ISLNK(mode)) अणु
 		inode->i_op = iops ? iops : &simple_symlink_inode_operations;
 		inode->i_link = data;
-	} else {
+	पूर्ण अन्यथा अणु
 		inode->i_fop = fops;
-	}
+	पूर्ण
 	d_instantiate(dentry, inode);
 	dget(dentry);
 	inode_unlock(dir);
-	return dentry;
+	वापस dentry;
 
 out1:
 	dput(dentry);
@@ -169,182 +170,182 @@ out1:
 out:
 	inode_unlock(dir);
 	simple_release_fs(&mount, &mount_count);
-	return dentry;
-}
+	वापस dentry;
+पूर्ण
 
 /**
- * securityfs_create_file - create a file in the securityfs filesystem
+ * securityfs_create_file - create a file in the securityfs fileप्रणाली
  *
- * @name: a pointer to a string containing the name of the file to create.
+ * @name: a poपूर्णांकer to a string containing the name of the file to create.
  * @mode: the permission that the file should have
- * @parent: a pointer to the parent dentry for this file.  This should be a
- *          directory dentry if set.  If this parameter is %NULL, then the
- *          file will be created in the root of the securityfs filesystem.
- * @data: a pointer to something that the caller will want to get to later
- *        on.  The inode.i_private pointer will point to this value on
- *        the open() call.
- * @fops: a pointer to a struct file_operations that should be used for
+ * @parent: a poपूर्णांकer to the parent dentry क्रम this file.  This should be a
+ *          directory dentry अगर set.  If this parameter is %शून्य, then the
+ *          file will be created in the root of the securityfs fileप्रणाली.
+ * @data: a poपूर्णांकer to something that the caller will want to get to later
+ *        on.  The inode.i_निजी poपूर्णांकer will poपूर्णांक to this value on
+ *        the खोलो() call.
+ * @fops: a poपूर्णांकer to a काष्ठा file_operations that should be used क्रम
  *        this file.
  *
  * This function creates a file in securityfs with the given @name.
  *
- * This function returns a pointer to a dentry if it succeeds.  This
- * pointer must be passed to the securityfs_remove() function when the file is
- * to be removed (no automatic cleanup happens if your module is unloaded,
- * you are responsible here).  If an error occurs, the function will return
+ * This function वापसs a poपूर्णांकer to a dentry अगर it succeeds.  This
+ * poपूर्णांकer must be passed to the securityfs_हटाओ() function when the file is
+ * to be हटाओd (no स्वतःmatic cleanup happens अगर your module is unloaded,
+ * you are responsible here).  If an error occurs, the function will वापस
  * the error value (via ERR_PTR).
  *
  * If securityfs is not enabled in the kernel, the value %-ENODEV is
- * returned.
+ * वापसed.
  */
-struct dentry *securityfs_create_file(const char *name, umode_t mode,
-				      struct dentry *parent, void *data,
-				      const struct file_operations *fops)
-{
-	return securityfs_create_dentry(name, mode, parent, data, fops, NULL);
-}
+काष्ठा dentry *securityfs_create_file(स्थिर अक्षर *name, umode_t mode,
+				      काष्ठा dentry *parent, व्योम *data,
+				      स्थिर काष्ठा file_operations *fops)
+अणु
+	वापस securityfs_create_dentry(name, mode, parent, data, fops, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(securityfs_create_file);
 
 /**
- * securityfs_create_dir - create a directory in the securityfs filesystem
+ * securityfs_create_dir - create a directory in the securityfs fileप्रणाली
  *
- * @name: a pointer to a string containing the name of the directory to
+ * @name: a poपूर्णांकer to a string containing the name of the directory to
  *        create.
- * @parent: a pointer to the parent dentry for this file.  This should be a
- *          directory dentry if set.  If this parameter is %NULL, then the
- *          directory will be created in the root of the securityfs filesystem.
+ * @parent: a poपूर्णांकer to the parent dentry क्रम this file.  This should be a
+ *          directory dentry अगर set.  If this parameter is %शून्य, then the
+ *          directory will be created in the root of the securityfs fileप्रणाली.
  *
  * This function creates a directory in securityfs with the given @name.
  *
- * This function returns a pointer to a dentry if it succeeds.  This
- * pointer must be passed to the securityfs_remove() function when the file is
- * to be removed (no automatic cleanup happens if your module is unloaded,
- * you are responsible here).  If an error occurs, the function will return
+ * This function वापसs a poपूर्णांकer to a dentry अगर it succeeds.  This
+ * poपूर्णांकer must be passed to the securityfs_हटाओ() function when the file is
+ * to be हटाओd (no स्वतःmatic cleanup happens अगर your module is unloaded,
+ * you are responsible here).  If an error occurs, the function will वापस
  * the error value (via ERR_PTR).
  *
  * If securityfs is not enabled in the kernel, the value %-ENODEV is
- * returned.
+ * वापसed.
  */
-struct dentry *securityfs_create_dir(const char *name, struct dentry *parent)
-{
-	return securityfs_create_file(name, S_IFDIR | 0755, parent, NULL, NULL);
-}
+काष्ठा dentry *securityfs_create_dir(स्थिर अक्षर *name, काष्ठा dentry *parent)
+अणु
+	वापस securityfs_create_file(name, S_IFसूची | 0755, parent, शून्य, शून्य);
+पूर्ण
 EXPORT_SYMBOL_GPL(securityfs_create_dir);
 
 /**
- * securityfs_create_symlink - create a symlink in the securityfs filesystem
+ * securityfs_create_symlink - create a symlink in the securityfs fileप्रणाली
  *
- * @name: a pointer to a string containing the name of the symlink to
+ * @name: a poपूर्णांकer to a string containing the name of the symlink to
  *        create.
- * @parent: a pointer to the parent dentry for the symlink.  This should be a
- *          directory dentry if set.  If this parameter is %NULL, then the
- *          directory will be created in the root of the securityfs filesystem.
- * @target: a pointer to a string containing the name of the symlink's target.
- *          If this parameter is %NULL, then the @iops parameter needs to be
- *          setup to handle .readlink and .get_link inode_operations.
- * @iops: a pointer to the struct inode_operations to use for the symlink. If
- *        this parameter is %NULL, then the default simple_symlink_inode
+ * @parent: a poपूर्णांकer to the parent dentry क्रम the symlink.  This should be a
+ *          directory dentry अगर set.  If this parameter is %शून्य, then the
+ *          directory will be created in the root of the securityfs fileप्रणाली.
+ * @target: a poपूर्णांकer to a string containing the name of the symlink's target.
+ *          If this parameter is %शून्य, then the @iops parameter needs to be
+ *          setup to handle .पढ़ोlink and .get_link inode_operations.
+ * @iops: a poपूर्णांकer to the काष्ठा inode_operations to use क्रम the symlink. If
+ *        this parameter is %शून्य, then the शेष simple_symlink_inode
  *        operations will be used.
  *
  * This function creates a symlink in securityfs with the given @name.
  *
- * This function returns a pointer to a dentry if it succeeds.  This
- * pointer must be passed to the securityfs_remove() function when the file is
- * to be removed (no automatic cleanup happens if your module is unloaded,
- * you are responsible here).  If an error occurs, the function will return
+ * This function वापसs a poपूर्णांकer to a dentry अगर it succeeds.  This
+ * poपूर्णांकer must be passed to the securityfs_हटाओ() function when the file is
+ * to be हटाओd (no स्वतःmatic cleanup happens अगर your module is unloaded,
+ * you are responsible here).  If an error occurs, the function will वापस
  * the error value (via ERR_PTR).
  *
  * If securityfs is not enabled in the kernel, the value %-ENODEV is
- * returned.
+ * वापसed.
  */
-struct dentry *securityfs_create_symlink(const char *name,
-					 struct dentry *parent,
-					 const char *target,
-					 const struct inode_operations *iops)
-{
-	struct dentry *dent;
-	char *link = NULL;
+काष्ठा dentry *securityfs_create_symlink(स्थिर अक्षर *name,
+					 काष्ठा dentry *parent,
+					 स्थिर अक्षर *target,
+					 स्थिर काष्ठा inode_operations *iops)
+अणु
+	काष्ठा dentry *dent;
+	अक्षर *link = शून्य;
 
-	if (target) {
+	अगर (target) अणु
 		link = kstrdup(target, GFP_KERNEL);
-		if (!link)
-			return ERR_PTR(-ENOMEM);
-	}
+		अगर (!link)
+			वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 	dent = securityfs_create_dentry(name, S_IFLNK | 0444, parent,
-					link, NULL, iops);
-	if (IS_ERR(dent))
-		kfree(link);
+					link, शून्य, iops);
+	अगर (IS_ERR(dent))
+		kमुक्त(link);
 
-	return dent;
-}
+	वापस dent;
+पूर्ण
 EXPORT_SYMBOL_GPL(securityfs_create_symlink);
 
 /**
- * securityfs_remove - removes a file or directory from the securityfs filesystem
+ * securityfs_हटाओ - हटाओs a file or directory from the securityfs fileप्रणाली
  *
- * @dentry: a pointer to a the dentry of the file or directory to be removed.
+ * @dentry: a poपूर्णांकer to a the dentry of the file or directory to be हटाओd.
  *
- * This function removes a file or directory in securityfs that was previously
+ * This function हटाओs a file or directory in securityfs that was previously
  * created with a call to another securityfs function (like
  * securityfs_create_file() or variants thereof.)
  *
- * This function is required to be called in order for the file to be
- * removed. No automatic cleanup of files will happen when a module is
- * removed; you are responsible here.
+ * This function is required to be called in order क्रम the file to be
+ * हटाओd. No स्वतःmatic cleanup of files will happen when a module is
+ * हटाओd; you are responsible here.
  */
-void securityfs_remove(struct dentry *dentry)
-{
-	struct inode *dir;
+व्योम securityfs_हटाओ(काष्ठा dentry *dentry)
+अणु
+	काष्ठा inode *dir;
 
-	if (!dentry || IS_ERR(dentry))
-		return;
+	अगर (!dentry || IS_ERR(dentry))
+		वापस;
 
 	dir = d_inode(dentry->d_parent);
 	inode_lock(dir);
-	if (simple_positive(dentry)) {
-		if (d_is_dir(dentry))
-			simple_rmdir(dir, dentry);
-		else
+	अगर (simple_positive(dentry)) अणु
+		अगर (d_is_dir(dentry))
+			simple_सूची_हटाओ(dir, dentry);
+		अन्यथा
 			simple_unlink(dir, dentry);
 		dput(dentry);
-	}
+	पूर्ण
 	inode_unlock(dir);
 	simple_release_fs(&mount, &mount_count);
-}
-EXPORT_SYMBOL_GPL(securityfs_remove);
+पूर्ण
+EXPORT_SYMBOL_GPL(securityfs_हटाओ);
 
-#ifdef CONFIG_SECURITY
-static struct dentry *lsm_dentry;
-static ssize_t lsm_read(struct file *filp, char __user *buf, size_t count,
+#अगर_घोषित CONFIG_SECURITY
+अटल काष्ठा dentry *lsm_dentry;
+अटल sमाप_प्रकार lsm_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार count,
 			loff_t *ppos)
-{
-	return simple_read_from_buffer(buf, count, ppos, lsm_names,
-		strlen(lsm_names));
-}
+अणु
+	वापस simple_पढ़ो_from_buffer(buf, count, ppos, lsm_names,
+		म_माप(lsm_names));
+पूर्ण
 
-static const struct file_operations lsm_ops = {
-	.read = lsm_read,
+अटल स्थिर काष्ठा file_operations lsm_ops = अणु
+	.पढ़ो = lsm_पढ़ो,
 	.llseek = generic_file_llseek,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static int __init securityfs_init(void)
-{
-	int retval;
+अटल पूर्णांक __init securityfs_init(व्योम)
+अणु
+	पूर्णांक retval;
 
-	retval = sysfs_create_mount_point(kernel_kobj, "security");
-	if (retval)
-		return retval;
+	retval = sysfs_create_mount_poपूर्णांक(kernel_kobj, "security");
+	अगर (retval)
+		वापस retval;
 
-	retval = register_filesystem(&fs_type);
-	if (retval) {
-		sysfs_remove_mount_point(kernel_kobj, "security");
-		return retval;
-	}
-#ifdef CONFIG_SECURITY
-	lsm_dentry = securityfs_create_file("lsm", 0444, NULL, NULL,
+	retval = रेजिस्टर_fileप्रणाली(&fs_type);
+	अगर (retval) अणु
+		sysfs_हटाओ_mount_poपूर्णांक(kernel_kobj, "security");
+		वापस retval;
+	पूर्ण
+#अगर_घोषित CONFIG_SECURITY
+	lsm_dentry = securityfs_create_file("lsm", 0444, शून्य, शून्य,
 						&lsm_ops);
-#endif
-	return 0;
-}
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 core_initcall(securityfs_init);

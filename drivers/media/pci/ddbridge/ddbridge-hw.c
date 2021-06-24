@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * ddbridge-hw.c: Digital Devices bridge hardware maps
  *
@@ -6,72 +7,72 @@
  *                         Ralph Metzler <rjkm@metzlerbros.de>
  *                         Marcus Metzler <mocm@metzlerbros.de>
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License
  * version 2 only, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
-#include "ddbridge.h"
-#include "ddbridge-hw.h"
+#समावेश "ddbridge.h"
+#समावेश "ddbridge-hw.h"
 
 /******************************************************************************/
 
-static const struct ddb_regset octopus_input = {
+अटल स्थिर काष्ठा ddb_regset octopus_input = अणु
 	.base = 0x200,
 	.num  = 0x08,
 	.size = 0x10,
-};
+पूर्ण;
 
-static const struct ddb_regset octopus_output = {
+अटल स्थिर काष्ठा ddb_regset octopus_output = अणु
 	.base = 0x280,
 	.num  = 0x08,
 	.size = 0x10,
-};
+पूर्ण;
 
-static const struct ddb_regset octopus_idma = {
+अटल स्थिर काष्ठा ddb_regset octopus_idma = अणु
 	.base = 0x300,
 	.num  = 0x08,
 	.size = 0x10,
-};
+पूर्ण;
 
-static const struct ddb_regset octopus_idma_buf = {
+अटल स्थिर काष्ठा ddb_regset octopus_idma_buf = अणु
 	.base = 0x2000,
 	.num  = 0x08,
 	.size = 0x100,
-};
+पूर्ण;
 
-static const struct ddb_regset octopus_odma = {
+अटल स्थिर काष्ठा ddb_regset octopus_odma = अणु
 	.base = 0x380,
 	.num  = 0x04,
 	.size = 0x10,
-};
+पूर्ण;
 
-static const struct ddb_regset octopus_odma_buf = {
+अटल स्थिर काष्ठा ddb_regset octopus_odma_buf = अणु
 	.base = 0x2800,
 	.num  = 0x04,
 	.size = 0x100,
-};
+पूर्ण;
 
-static const struct ddb_regset octopus_i2c = {
+अटल स्थिर काष्ठा ddb_regset octopus_i2c = अणु
 	.base = 0x80,
 	.num  = 0x04,
 	.size = 0x20,
-};
+पूर्ण;
 
-static const struct ddb_regset octopus_i2c_buf = {
+अटल स्थिर काष्ठा ddb_regset octopus_i2c_buf = अणु
 	.base = 0x1000,
 	.num  = 0x04,
 	.size = 0x200,
-};
+पूर्ण;
 
 /****************************************************************************/
 
-static const struct ddb_regmap octopus_map = {
+अटल स्थिर काष्ठा ddb_regmap octopus_map = अणु
 	.irq_base_i2c = 0,
 	.irq_base_idma = 8,
 	.irq_base_odma = 16,
@@ -83,41 +84,41 @@ static const struct ddb_regmap octopus_map = {
 	.odma_buf = &octopus_odma_buf,
 	.input = &octopus_input,
 	.output = &octopus_output,
-};
+पूर्ण;
 
 /****************************************************************************/
 
-static const struct ddb_info ddb_none = {
+अटल स्थिर काष्ठा ddb_info ddb_none = अणु
 	.type     = DDB_NONE,
 	.name     = "unknown Digital Devices PCIe card, install newer driver",
 	.regmap   = &octopus_map,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_octopus = {
+अटल स्थिर काष्ठा ddb_info ddb_octopus = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Octopus DVB adapter",
 	.regmap   = &octopus_map,
 	.port_num = 4,
 	.i2c_mask = 0x0f,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_octopusv3 = {
+अटल स्थिर काष्ठा ddb_info ddb_octopusv3 = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Octopus V3 DVB adapter",
 	.regmap   = &octopus_map,
 	.port_num = 4,
 	.i2c_mask = 0x0f,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_octopus_le = {
+अटल स्थिर काष्ठा ddb_info ddb_octopus_le = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Octopus LE DVB adapter",
 	.regmap   = &octopus_map,
 	.port_num = 2,
 	.i2c_mask = 0x03,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_octopus_oem = {
+अटल स्थिर काष्ठा ddb_info ddb_octopus_oem = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Octopus OEM",
 	.regmap   = &octopus_map,
@@ -127,33 +128,33 @@ static const struct ddb_info ddb_octopus_oem = {
 	.fan_num  = 1,
 	.temp_num = 1,
 	.temp_bus = 0,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_octopus_mini = {
+अटल स्थिर काष्ठा ddb_info ddb_octopus_mini = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Octopus Mini",
 	.regmap   = &octopus_map,
 	.port_num = 4,
 	.i2c_mask = 0x0f,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_v6 = {
+अटल स्थिर काष्ठा ddb_info ddb_v6 = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Cine S2 V6 DVB adapter",
 	.regmap   = &octopus_map,
 	.port_num = 3,
 	.i2c_mask = 0x07,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_v6_5 = {
+अटल स्थिर काष्ठा ddb_info ddb_v6_5 = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Cine S2 V6.5 DVB adapter",
 	.regmap   = &octopus_map,
 	.port_num = 4,
 	.i2c_mask = 0x0f,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_v7 = {
+अटल स्थिर काष्ठा ddb_info ddb_v7 = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Cine S2 V7 DVB adapter",
 	.regmap   = &octopus_map,
@@ -162,9 +163,9 @@ static const struct ddb_info ddb_v7 = {
 	.board_control   = 2,
 	.board_control_2 = 4,
 	.ts_quirks = TS_QUIRK_REVERSED,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_v7a = {
+अटल स्थिर काष्ठा ddb_info ddb_v7a = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Cine S2 V7 Advanced DVB adapter",
 	.regmap   = &octopus_map,
@@ -173,9 +174,9 @@ static const struct ddb_info ddb_v7a = {
 	.board_control   = 2,
 	.board_control_2 = 4,
 	.ts_quirks = TS_QUIRK_REVERSED,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_ctv7 = {
+अटल स्थिर काष्ठा ddb_info ddb_ctv7 = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices Cine CT V7 DVB adapter",
 	.regmap   = &octopus_map,
@@ -183,33 +184,33 @@ static const struct ddb_info ddb_ctv7 = {
 	.i2c_mask = 0x0f,
 	.board_control   = 3,
 	.board_control_2 = 4,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_satixs2v3 = {
+अटल स्थिर काष्ठा ddb_info ddb_satixs2v3 = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Mystique SaTiX-S2 V3 DVB adapter",
 	.regmap   = &octopus_map,
 	.port_num = 3,
 	.i2c_mask = 0x07,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_ci = {
+अटल स्थिर काष्ठा ddb_info ddb_ci = अणु
 	.type     = DDB_OCTOPUS_CI,
 	.name     = "Digital Devices Octopus CI",
 	.regmap   = &octopus_map,
 	.port_num = 4,
 	.i2c_mask = 0x03,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_cis = {
+अटल स्थिर काष्ठा ddb_info ddb_cis = अणु
 	.type     = DDB_OCTOPUS_CI,
 	.name     = "Digital Devices Octopus CI single",
 	.regmap   = &octopus_map,
 	.port_num = 3,
 	.i2c_mask = 0x03,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_ci_s2_pro = {
+अटल स्थिर काष्ठा ddb_info ddb_ci_s2_pro = अणु
 	.type     = DDB_OCTOPUS_CI,
 	.name     = "Digital Devices Octopus CI S2 Pro",
 	.regmap   = &octopus_map,
@@ -217,9 +218,9 @@ static const struct ddb_info ddb_ci_s2_pro = {
 	.i2c_mask = 0x01,
 	.board_control   = 2,
 	.board_control_2 = 4,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_ci_s2_pro_a = {
+अटल स्थिर काष्ठा ddb_info ddb_ci_s2_pro_a = अणु
 	.type     = DDB_OCTOPUS_CI,
 	.name     = "Digital Devices Octopus CI S2 Pro Advanced",
 	.regmap   = &octopus_map,
@@ -227,19 +228,19 @@ static const struct ddb_info ddb_ci_s2_pro_a = {
 	.i2c_mask = 0x01,
 	.board_control   = 2,
 	.board_control_2 = 4,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_dvbct = {
+अटल स्थिर काष्ठा ddb_info ddb_dvbct = अणु
 	.type     = DDB_OCTOPUS,
 	.name     = "Digital Devices DVBCT V6.1 DVB adapter",
 	.regmap   = &octopus_map,
 	.port_num = 3,
 	.i2c_mask = 0x07,
-};
+पूर्ण;
 
 /****************************************************************************/
 
-static const struct ddb_info ddb_ct2_8 = {
+अटल स्थिर काष्ठा ddb_info ddb_ct2_8 = अणु
 	.type     = DDB_OCTOPUS_MAX_CT,
 	.name     = "Digital Devices MAX A8 CT2",
 	.regmap   = &octopus_map,
@@ -249,9 +250,9 @@ static const struct ddb_info ddb_ct2_8 = {
 	.board_control_2 = 0xf00,
 	.ts_quirks = TS_QUIRK_SERIAL,
 	.tempmon_irq = 24,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_c2t2_8 = {
+अटल स्थिर काष्ठा ddb_info ddb_c2t2_8 = अणु
 	.type     = DDB_OCTOPUS_MAX_CT,
 	.name     = "Digital Devices MAX A8 C2T2",
 	.regmap   = &octopus_map,
@@ -261,9 +262,9 @@ static const struct ddb_info ddb_c2t2_8 = {
 	.board_control_2 = 0xf00,
 	.ts_quirks = TS_QUIRK_SERIAL,
 	.tempmon_irq = 24,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_isdbt_8 = {
+अटल स्थिर काष्ठा ddb_info ddb_isdbt_8 = अणु
 	.type     = DDB_OCTOPUS_MAX_CT,
 	.name     = "Digital Devices MAX A8 ISDBT",
 	.regmap   = &octopus_map,
@@ -273,9 +274,9 @@ static const struct ddb_info ddb_isdbt_8 = {
 	.board_control_2 = 0xf00,
 	.ts_quirks = TS_QUIRK_SERIAL,
 	.tempmon_irq = 24,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_c2t2i_v0_8 = {
+अटल स्थिर काष्ठा ddb_info ddb_c2t2i_v0_8 = अणु
 	.type     = DDB_OCTOPUS_MAX_CT,
 	.name     = "Digital Devices MAX A8 C2T2I V0",
 	.regmap   = &octopus_map,
@@ -285,9 +286,9 @@ static const struct ddb_info ddb_c2t2i_v0_8 = {
 	.board_control_2 = 0xf00,
 	.ts_quirks = TS_QUIRK_SERIAL | TS_QUIRK_ALT_OSC,
 	.tempmon_irq = 24,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_c2t2i_8 = {
+अटल स्थिर काष्ठा ddb_info ddb_c2t2i_8 = अणु
 	.type     = DDB_OCTOPUS_MAX_CT,
 	.name     = "Digital Devices MAX A8 C2T2I",
 	.regmap   = &octopus_map,
@@ -297,11 +298,11 @@ static const struct ddb_info ddb_c2t2i_8 = {
 	.board_control_2 = 0xf00,
 	.ts_quirks = TS_QUIRK_SERIAL,
 	.tempmon_irq = 24,
-};
+पूर्ण;
 
 /****************************************************************************/
 
-static const struct ddb_info ddb_s2_48 = {
+अटल स्थिर काष्ठा ddb_info ddb_s2_48 = अणु
 	.type     = DDB_OCTOPUS_MAX,
 	.name     = "Digital Devices MAX S8 4/8",
 	.regmap   = &octopus_map,
@@ -309,9 +310,9 @@ static const struct ddb_info ddb_s2_48 = {
 	.i2c_mask = 0x01,
 	.board_control = 1,
 	.tempmon_irq = 24,
-};
+पूर्ण;
 
-static const struct ddb_info ddb_s2x_48 = {
+अटल स्थिर काष्ठा ddb_info ddb_s2x_48 = अणु
 	.type     = DDB_OCTOPUS_MCI,
 	.name     = "Digital Devices MAX SX8",
 	.regmap   = &octopus_map,
@@ -320,20 +321,20 @@ static const struct ddb_info ddb_s2x_48 = {
 	.tempmon_irq = 24,
 	.mci_ports = 4,
 	.mci_type = 0,
-};
+पूर्ण;
 
 /****************************************************************************/
 /****************************************************************************/
 /****************************************************************************/
 
-#define DDB_DEVID(_device, _subdevice, _info) { \
-	.vendor = DDVID, \
+#घोषणा DDB_DEVID(_device, _subdevice, _info) अणु \
+	.venकरोr = DDVID, \
 	.device = _device, \
-	.subvendor = DDVID, \
+	.subvenकरोr = DDVID, \
 	.subdevice = _subdevice, \
-	.info = &_info }
+	.info = &_info पूर्ण
 
-static const struct ddb_device_id ddb_device_ids[] = {
+अटल स्थिर काष्ठा ddb_device_id ddb_device_ids[] = अणु
 	/* PCIe devices */
 	DDB_DEVID(0x0002, 0x0001, ddb_octopus),
 	DDB_DEVID(0x0003, 0x0001, ddb_octopus),
@@ -364,25 +365,25 @@ static const struct ddb_device_id ddb_device_ids[] = {
 	DDB_DEVID(0x0012, 0x0042, ddb_ci),
 	DDB_DEVID(0x0013, 0x0043, ddb_ci_s2_pro),
 	DDB_DEVID(0x0013, 0x0044, ddb_ci_s2_pro_a),
-};
+पूर्ण;
 
 /****************************************************************************/
 
-const struct ddb_info *get_ddb_info(u16 vendor, u16 device,
-				    u16 subvendor, u16 subdevice)
-{
-	int i;
+स्थिर काष्ठा ddb_info *get_ddb_info(u16 venकरोr, u16 device,
+				    u16 subvenकरोr, u16 subdevice)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(ddb_device_ids); i++) {
-		const struct ddb_device_id *id = &ddb_device_ids[i];
+	क्रम (i = 0; i < ARRAY_SIZE(ddb_device_ids); i++) अणु
+		स्थिर काष्ठा ddb_device_id *id = &ddb_device_ids[i];
 
-		if (vendor == id->vendor &&
+		अगर (venकरोr == id->venकरोr &&
 		    device == id->device &&
-		    subvendor == id->subvendor &&
+		    subvenकरोr == id->subvenकरोr &&
 		    (subdevice == id->subdevice ||
 		     id->subdevice == 0xffff))
-			return id->info;
-	}
+			वापस id->info;
+	पूर्ण
 
-	return &ddb_none;
-}
+	वापस &ddb_none;
+पूर्ण

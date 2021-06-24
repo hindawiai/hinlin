@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  PowerPC version
  *    Copyright (C) 1995-1996 Gary Thomas (gdt@linuxppc.org)
  *
- *  Modifications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
+ *  Modअगरications by Paul Mackerras (PowerMac) (paulus@cs.anu.edu.au)
  *  and Cort Dougan (PReP) (cort@cs.nmt.edu)
  *    Copyright (C) 1996 Paul Mackerras
  *
@@ -11,457 +12,457 @@
  *    Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  *
  *  Dave Engebretsen <engebret@us.ibm.com>
- *      Rework for PPC64 port.
+ *      Rework क्रम PPC64 port.
  */
 
-#undef DEBUG
+#अघोषित DEBUG
 
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/string.h>
-#include <linux/types.h>
-#include <linux/mman.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/stddef.h>
-#include <linux/vmalloc.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/highmem.h>
-#include <linux/idr.h>
-#include <linux/nodemask.h>
-#include <linux/module.h>
-#include <linux/poison.h>
-#include <linux/memblock.h>
-#include <linux/hugetlb.h>
-#include <linux/slab.h>
-#include <linux/of_fdt.h>
-#include <linux/libfdt.h>
-#include <linux/memremap.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/sched.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/types.h>
+#समावेश <linux/mman.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/idr.h>
+#समावेश <linux/nodemask.h>
+#समावेश <linux/module.h>
+#समावेश <linux/poison.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/libfdt.h>
+#समावेश <linux/memremap.h>
 
-#include <asm/pgalloc.h>
-#include <asm/page.h>
-#include <asm/prom.h>
-#include <asm/rtas.h>
-#include <asm/io.h>
-#include <asm/mmu_context.h>
-#include <asm/mmu.h>
-#include <linux/uaccess.h>
-#include <asm/smp.h>
-#include <asm/machdep.h>
-#include <asm/tlb.h>
-#include <asm/eeh.h>
-#include <asm/processor.h>
-#include <asm/mmzone.h>
-#include <asm/cputable.h>
-#include <asm/sections.h>
-#include <asm/iommu.h>
-#include <asm/vdso.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <यंत्र/rtas.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/smp.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/eeh.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/mmzone.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश <यंत्र/sections.h>
+#समावेश <यंत्र/iommu.h>
+#समावेश <यंत्र/vdso.h>
 
-#include <mm/mmu_decl.h>
+#समावेश <mm/mmu_decl.h>
 
-#ifdef CONFIG_SPARSEMEM_VMEMMAP
+#अगर_घोषित CONFIG_SPARSEMEM_VMEMMAP
 /*
  * Given an address within the vmemmap, determine the page that
  * represents the start of the subsection it is within.  Note that we have to
- * do this by hand as the proffered address may not be correctly aligned.
- * Subtraction of non-aligned pointers produces undefined results.
+ * करो this by hand as the proffered address may not be correctly aligned.
+ * Subtraction of non-aligned poपूर्णांकers produces undefined results.
  */
-static struct page * __meminit vmemmap_subsection_start(unsigned long vmemmap_addr)
-{
-	unsigned long start_pfn;
-	unsigned long offset = vmemmap_addr - ((unsigned long)(vmemmap));
+अटल काष्ठा page * __meminit vmemmap_subsection_start(अचिन्हित दीर्घ vmemmap_addr)
+अणु
+	अचिन्हित दीर्घ start_pfn;
+	अचिन्हित दीर्घ offset = vmemmap_addr - ((अचिन्हित दीर्घ)(vmemmap));
 
 	/* Return the pfn of the start of the section. */
-	start_pfn = (offset / sizeof(struct page)) & PAGE_SUBSECTION_MASK;
-	return pfn_to_page(start_pfn);
-}
+	start_pfn = (offset / माप(काष्ठा page)) & PAGE_SUBSECTION_MASK;
+	वापस pfn_to_page(start_pfn);
+पूर्ण
 
 /*
- * Since memory is added in sub-section chunks, before creating a new vmemmap
+ * Since memory is added in sub-section chunks, beक्रमe creating a new vmemmap
  * mapping, the kernel should check whether there is an existing memmap mapping
  * covering the new subsection added. This is needed because kernel can map
  * vmemmap area using 16MB pages which will cover a memory range of 16G. Such
  * a range covers multiple subsections (2M)
  *
  * If any subsection in the 16G range mapped by vmemmap is valid we consider the
- * vmemmap populated (There is a page table entry already present). We can't do
- * a page table lookup here because with the hash translation we don't keep
+ * vmemmap populated (There is a page table entry alपढ़ोy present). We can't करो
+ * a page table lookup here because with the hash translation we करोn't keep
  * vmemmap details in linux page table.
  */
-static int __meminit vmemmap_populated(unsigned long vmemmap_addr, int vmemmap_map_size)
-{
-	struct page *start;
-	unsigned long vmemmap_end = vmemmap_addr + vmemmap_map_size;
+अटल पूर्णांक __meminit vmemmap_populated(अचिन्हित दीर्घ vmemmap_addr, पूर्णांक vmemmap_map_size)
+अणु
+	काष्ठा page *start;
+	अचिन्हित दीर्घ vmemmap_end = vmemmap_addr + vmemmap_map_size;
 	start = vmemmap_subsection_start(vmemmap_addr);
 
-	for (; (unsigned long)start < vmemmap_end; start += PAGES_PER_SUBSECTION)
+	क्रम (; (अचिन्हित दीर्घ)start < vmemmap_end; start += PAGES_PER_SUBSECTION)
 		/*
-		 * pfn valid check here is intended to really check
-		 * whether we have any subsection already initialized
+		 * pfn valid check here is पूर्णांकended to really check
+		 * whether we have any subsection alपढ़ोy initialized
 		 * in this range.
 		 */
-		if (pfn_valid(page_to_pfn(start)))
-			return 1;
+		अगर (pfn_valid(page_to_pfn(start)))
+			वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * vmemmap virtual address space management does not have a traditonal page
- * table to track which virtual struct pages are backed by physical mapping.
- * The virtual to physical mappings are tracked in a simple linked list
- * format. 'vmemmap_list' maintains the entire vmemmap physical mapping at
- * all times where as the 'next' list maintains the available
- * vmemmap_backing structures which have been deleted from the
- * 'vmemmap_global' list during system runtime (memory hotplug remove
- * operation). The freed 'vmemmap_backing' structures are reused later when
- * new requests come in without allocating fresh memory. This pointer also
- * tracks the allocated 'vmemmap_backing' structures as we allocate one
- * full page memory at a time when we dont have any.
+ * vmemmap भव address space management करोes not have a traditonal page
+ * table to track which भव काष्ठा pages are backed by physical mapping.
+ * The भव to physical mappings are tracked in a simple linked list
+ * क्रमmat. 'vmemmap_list' मुख्यtains the entire vmemmap physical mapping at
+ * all बार where as the 'next' list मुख्यtains the available
+ * vmemmap_backing काष्ठाures which have been deleted from the
+ * 'vmemmap_global' list during प्रणाली runसमय (memory hotplug हटाओ
+ * operation). The मुक्तd 'vmemmap_backing' काष्ठाures are reused later when
+ * new requests come in without allocating fresh memory. This poपूर्णांकer also
+ * tracks the allocated 'vmemmap_backing' काष्ठाures as we allocate one
+ * full page memory at a समय when we करोnt have any.
  */
-struct vmemmap_backing *vmemmap_list;
-static struct vmemmap_backing *next;
+काष्ठा vmemmap_backing *vmemmap_list;
+अटल काष्ठा vmemmap_backing *next;
 
 /*
- * The same pointer 'next' tracks individual chunks inside the allocated
- * full page during the boot time and again tracks the freeed nodes during
- * runtime. It is racy but it does not happen as they are separated by the
- * boot process. Will create problem if some how we have memory hotplug
+ * The same poपूर्णांकer 'next' tracks inभागidual chunks inside the allocated
+ * full page during the boot समय and again tracks the मुक्तed nodes during
+ * runसमय. It is racy but it करोes not happen as they are separated by the
+ * boot process. Will create problem अगर some how we have memory hotplug
  * operation during boot !!
  */
-static int num_left;
-static int num_freed;
+अटल पूर्णांक num_left;
+अटल पूर्णांक num_मुक्तd;
 
-static __meminit struct vmemmap_backing * vmemmap_list_alloc(int node)
-{
-	struct vmemmap_backing *vmem_back;
-	/* get from freed entries first */
-	if (num_freed) {
-		num_freed--;
+अटल __meminit काष्ठा vmemmap_backing * vmemmap_list_alloc(पूर्णांक node)
+अणु
+	काष्ठा vmemmap_backing *vmem_back;
+	/* get from मुक्तd entries first */
+	अगर (num_मुक्तd) अणु
+		num_मुक्तd--;
 		vmem_back = next;
 		next = next->list;
 
-		return vmem_back;
-	}
+		वापस vmem_back;
+	पूर्ण
 
 	/* allocate a page when required and hand out chunks */
-	if (!num_left) {
+	अगर (!num_left) अणु
 		next = vmemmap_alloc_block(PAGE_SIZE, node);
-		if (unlikely(!next)) {
+		अगर (unlikely(!next)) अणु
 			WARN_ON(1);
-			return NULL;
-		}
-		num_left = PAGE_SIZE / sizeof(struct vmemmap_backing);
-	}
+			वापस शून्य;
+		पूर्ण
+		num_left = PAGE_SIZE / माप(काष्ठा vmemmap_backing);
+	पूर्ण
 
 	num_left--;
 
-	return next++;
-}
+	वापस next++;
+पूर्ण
 
-static __meminit int vmemmap_list_populate(unsigned long phys,
-					   unsigned long start,
-					   int node)
-{
-	struct vmemmap_backing *vmem_back;
+अटल __meminit पूर्णांक vmemmap_list_populate(अचिन्हित दीर्घ phys,
+					   अचिन्हित दीर्घ start,
+					   पूर्णांक node)
+अणु
+	काष्ठा vmemmap_backing *vmem_back;
 
 	vmem_back = vmemmap_list_alloc(node);
-	if (unlikely(!vmem_back)) {
+	अगर (unlikely(!vmem_back)) अणु
 		pr_debug("vmemap list allocation failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	vmem_back->phys = phys;
 	vmem_back->virt_addr = start;
 	vmem_back->list = vmemmap_list;
 
 	vmemmap_list = vmem_back;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool altmap_cross_boundary(struct vmem_altmap *altmap, unsigned long start,
-				unsigned long page_size)
-{
-	unsigned long nr_pfn = page_size / sizeof(struct page);
-	unsigned long start_pfn = page_to_pfn((struct page *)start);
+अटल bool alपंचांगap_cross_boundary(काष्ठा vmem_alपंचांगap *alपंचांगap, अचिन्हित दीर्घ start,
+				अचिन्हित दीर्घ page_size)
+अणु
+	अचिन्हित दीर्घ nr_pfn = page_size / माप(काष्ठा page);
+	अचिन्हित दीर्घ start_pfn = page_to_pfn((काष्ठा page *)start);
 
-	if ((start_pfn + nr_pfn) > altmap->end_pfn)
-		return true;
+	अगर ((start_pfn + nr_pfn) > alपंचांगap->end_pfn)
+		वापस true;
 
-	if (start_pfn < altmap->base_pfn)
-		return true;
+	अगर (start_pfn < alपंचांगap->base_pfn)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-int __meminit vmemmap_populate(unsigned long start, unsigned long end, int node,
-		struct vmem_altmap *altmap)
-{
-	bool altmap_alloc;
-	unsigned long page_size = 1 << mmu_psize_defs[mmu_vmemmap_psize].shift;
+पूर्णांक __meminit vmemmap_populate(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end, पूर्णांक node,
+		काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	bool alपंचांगap_alloc;
+	अचिन्हित दीर्घ page_size = 1 << mmu_psize_defs[mmu_vmemmap_psize].shअगरt;
 
 	/* Align to the page size of the linear mapping. */
 	start = ALIGN_DOWN(start, page_size);
 
 	pr_debug("vmemmap_populate %lx..%lx, node %d\n", start, end, node);
 
-	for (; start < end; start += page_size) {
-		void *p = NULL;
-		int rc;
+	क्रम (; start < end; start += page_size) अणु
+		व्योम *p = शून्य;
+		पूर्णांक rc;
 
 		/*
-		 * This vmemmap range is backing different subsections. If any
-		 * of that subsection is marked valid, that means we already
+		 * This vmemmap range is backing dअगरferent subsections. If any
+		 * of that subsection is marked valid, that means we alपढ़ोy
 		 * have initialized a page table covering this range and hence
 		 * the vmemmap range is populated.
 		 */
-		if (vmemmap_populated(start, page_size))
-			continue;
+		अगर (vmemmap_populated(start, page_size))
+			जारी;
 
 		/*
-		 * Allocate from the altmap first if we have one. This may
+		 * Allocate from the alपंचांगap first अगर we have one. This may
 		 * fail due to alignment issues when using 16MB hugepages, so
-		 * fall back to system memory if the altmap allocation fail.
+		 * fall back to प्रणाली memory अगर the alपंचांगap allocation fail.
 		 */
-		if (altmap && !altmap_cross_boundary(altmap, start, page_size)) {
-			p = vmemmap_alloc_block_buf(page_size, node, altmap);
-			if (!p)
+		अगर (alपंचांगap && !alपंचांगap_cross_boundary(alपंचांगap, start, page_size)) अणु
+			p = vmemmap_alloc_block_buf(page_size, node, alपंचांगap);
+			अगर (!p)
 				pr_debug("altmap block allocation failed, falling back to system memory");
-			else
-				altmap_alloc = true;
-		}
-		if (!p) {
-			p = vmemmap_alloc_block_buf(page_size, node, NULL);
-			altmap_alloc = false;
-		}
-		if (!p)
-			return -ENOMEM;
+			अन्यथा
+				alपंचांगap_alloc = true;
+		पूर्ण
+		अगर (!p) अणु
+			p = vmemmap_alloc_block_buf(page_size, node, शून्य);
+			alपंचांगap_alloc = false;
+		पूर्ण
+		अगर (!p)
+			वापस -ENOMEM;
 
-		if (vmemmap_list_populate(__pa(p), start, node)) {
+		अगर (vmemmap_list_populate(__pa(p), start, node)) अणु
 			/*
-			 * If we don't populate vmemap list, we don't have
-			 * the ability to free the allocated vmemmap
-			 * pages in section_deactivate. Hence free them
+			 * If we करोn't populate vmemap list, we don't have
+			 * the ability to मुक्त the allocated vmemmap
+			 * pages in section_deactivate. Hence मुक्त them
 			 * here.
 			 */
-			int nr_pfns = page_size >> PAGE_SHIFT;
-			unsigned long page_order = get_order(page_size);
+			पूर्णांक nr_pfns = page_size >> PAGE_SHIFT;
+			अचिन्हित दीर्घ page_order = get_order(page_size);
 
-			if (altmap_alloc)
-				vmem_altmap_free(altmap, nr_pfns);
-			else
-				free_pages((unsigned long)p, page_order);
-			return -ENOMEM;
-		}
+			अगर (alपंचांगap_alloc)
+				vmem_alपंचांगap_मुक्त(alपंचांगap, nr_pfns);
+			अन्यथा
+				मुक्त_pages((अचिन्हित दीर्घ)p, page_order);
+			वापस -ENOMEM;
+		पूर्ण
 
 		pr_debug("      * %016lx..%016lx allocated at %p\n",
 			 start, start + page_size, p);
 
 		rc = vmemmap_create_mapping(start, page_size, __pa(p));
-		if (rc < 0) {
+		अगर (rc < 0) अणु
 			pr_warn("%s: Unable to create vmemmap mapping: %d\n",
 				__func__, rc);
-			return -EFAULT;
-		}
-	}
+			वापस -EFAULT;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_MEMORY_HOTPLUG
-static unsigned long vmemmap_list_free(unsigned long start)
-{
-	struct vmemmap_backing *vmem_back, *vmem_back_prev;
+#अगर_घोषित CONFIG_MEMORY_HOTPLUG
+अटल अचिन्हित दीर्घ vmemmap_list_मुक्त(अचिन्हित दीर्घ start)
+अणु
+	काष्ठा vmemmap_backing *vmem_back, *vmem_back_prev;
 
 	vmem_back_prev = vmem_back = vmemmap_list;
 
-	/* look for it with prev pointer recorded */
-	for (; vmem_back; vmem_back = vmem_back->list) {
-		if (vmem_back->virt_addr == start)
-			break;
+	/* look क्रम it with prev poपूर्णांकer recorded */
+	क्रम (; vmem_back; vmem_back = vmem_back->list) अणु
+		अगर (vmem_back->virt_addr == start)
+			अवरोध;
 		vmem_back_prev = vmem_back;
-	}
+	पूर्ण
 
-	if (unlikely(!vmem_back))
-		return 0;
+	अगर (unlikely(!vmem_back))
+		वापस 0;
 
-	/* remove it from vmemmap_list */
-	if (vmem_back == vmemmap_list) /* remove head */
+	/* हटाओ it from vmemmap_list */
+	अगर (vmem_back == vmemmap_list) /* हटाओ head */
 		vmemmap_list = vmem_back->list;
-	else
+	अन्यथा
 		vmem_back_prev->list = vmem_back->list;
 
-	/* next point to this freed entry */
+	/* next poपूर्णांक to this मुक्तd entry */
 	vmem_back->list = next;
 	next = vmem_back;
-	num_freed++;
+	num_मुक्तd++;
 
-	return vmem_back->phys;
-}
+	वापस vmem_back->phys;
+पूर्ण
 
-void __ref vmemmap_free(unsigned long start, unsigned long end,
-		struct vmem_altmap *altmap)
-{
-	unsigned long page_size = 1 << mmu_psize_defs[mmu_vmemmap_psize].shift;
-	unsigned long page_order = get_order(page_size);
-	unsigned long alt_start = ~0, alt_end = ~0;
-	unsigned long base_pfn;
+व्योम __ref vmemmap_मुक्त(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
+		काष्ठा vmem_alपंचांगap *alपंचांगap)
+अणु
+	अचिन्हित दीर्घ page_size = 1 << mmu_psize_defs[mmu_vmemmap_psize].shअगरt;
+	अचिन्हित दीर्घ page_order = get_order(page_size);
+	अचिन्हित दीर्घ alt_start = ~0, alt_end = ~0;
+	अचिन्हित दीर्घ base_pfn;
 
 	start = ALIGN_DOWN(start, page_size);
-	if (altmap) {
-		alt_start = altmap->base_pfn;
-		alt_end = altmap->base_pfn + altmap->reserve +
-			  altmap->free + altmap->alloc + altmap->align;
-	}
+	अगर (alपंचांगap) अणु
+		alt_start = alपंचांगap->base_pfn;
+		alt_end = alपंचांगap->base_pfn + alपंचांगap->reserve +
+			  alपंचांगap->मुक्त + alपंचांगap->alloc + alपंचांगap->align;
+	पूर्ण
 
 	pr_debug("vmemmap_free %lx...%lx\n", start, end);
 
-	for (; start < end; start += page_size) {
-		unsigned long nr_pages, addr;
-		struct page *page;
+	क्रम (; start < end; start += page_size) अणु
+		अचिन्हित दीर्घ nr_pages, addr;
+		काष्ठा page *page;
 
 		/*
-		 * We have already marked the subsection we are trying to remove
-		 * invalid. So if we want to remove the vmemmap range, we
+		 * We have alपढ़ोy marked the subsection we are trying to हटाओ
+		 * invalid. So अगर we want to हटाओ the vmemmap range, we
 		 * need to make sure there is no subsection marked valid
 		 * in this range.
 		 */
-		if (vmemmap_populated(start, page_size))
-			continue;
+		अगर (vmemmap_populated(start, page_size))
+			जारी;
 
-		addr = vmemmap_list_free(start);
-		if (!addr)
-			continue;
+		addr = vmemmap_list_मुक्त(start);
+		अगर (!addr)
+			जारी;
 
 		page = pfn_to_page(addr >> PAGE_SHIFT);
 		nr_pages = 1 << page_order;
 		base_pfn = PHYS_PFN(addr);
 
-		if (base_pfn >= alt_start && base_pfn < alt_end) {
-			vmem_altmap_free(altmap, nr_pages);
-		} else if (PageReserved(page)) {
-			/* allocated from bootmem */
-			if (page_size < PAGE_SIZE) {
+		अगर (base_pfn >= alt_start && base_pfn < alt_end) अणु
+			vmem_alपंचांगap_मुक्त(alपंचांगap, nr_pages);
+		पूर्ण अन्यथा अगर (PageReserved(page)) अणु
+			/* allocated from booपंचांगem */
+			अगर (page_size < PAGE_SIZE) अणु
 				/*
-				 * this shouldn't happen, but if it is
-				 * the case, leave the memory there
+				 * this shouldn't happen, but अगर it is
+				 * the हाल, leave the memory there
 				 */
 				WARN_ON_ONCE(1);
-			} else {
-				while (nr_pages--)
-					free_reserved_page(page++);
-			}
-		} else {
-			free_pages((unsigned long)(__va(addr)), page_order);
-		}
+			पूर्ण अन्यथा अणु
+				जबतक (nr_pages--)
+					मुक्त_reserved_page(page++);
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			मुक्त_pages((अचिन्हित दीर्घ)(__va(addr)), page_order);
+		पूर्ण
 
-		vmemmap_remove_mapping(start, page_size);
-	}
-}
-#endif
-void register_page_bootmem_memmap(unsigned long section_nr,
-				  struct page *start_page, unsigned long size)
-{
-}
+		vmemmap_हटाओ_mapping(start, page_size);
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
+व्योम रेजिस्टर_page_booपंचांगem_memmap(अचिन्हित दीर्घ section_nr,
+				  काष्ठा page *start_page, अचिन्हित दीर्घ size)
+अणु
+पूर्ण
 
-#endif /* CONFIG_SPARSEMEM_VMEMMAP */
+#पूर्ण_अगर /* CONFIG_SPARSEMEM_VMEMMAP */
 
-#ifdef CONFIG_PPC_BOOK3S_64
-static bool disable_radix = !IS_ENABLED(CONFIG_PPC_RADIX_MMU_DEFAULT);
+#अगर_घोषित CONFIG_PPC_BOOK3S_64
+अटल bool disable_radix = !IS_ENABLED(CONFIG_PPC_RADIX_MMU_DEFAULT);
 
-static int __init parse_disable_radix(char *p)
-{
+अटल पूर्णांक __init parse_disable_radix(अक्षर *p)
+अणु
 	bool val;
 
-	if (!p)
+	अगर (!p)
 		val = true;
-	else if (kstrtobool(p, &val))
-		return -EINVAL;
+	अन्यथा अगर (kstrtobool(p, &val))
+		वापस -EINVAL;
 
 	disable_radix = val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 early_param("disable_radix", parse_disable_radix);
 
 /*
  * If we're running under a hypervisor, we need to check the contents of
- * /chosen/ibm,architecture-vec-5 to see if the hypervisor is willing to do
+ * /chosen/ibm,architecture-vec-5 to see अगर the hypervisor is willing to करो
  * radix.  If not, we clear the radix feature bit so we fall back to hash.
  */
-static void __init early_check_vec5(void)
-{
-	unsigned long root, chosen;
-	int size;
-	const u8 *vec5;
+अटल व्योम __init early_check_vec5(व्योम)
+अणु
+	अचिन्हित दीर्घ root, chosen;
+	पूर्णांक size;
+	स्थिर u8 *vec5;
 	u8 mmu_supported;
 
 	root = of_get_flat_dt_root();
 	chosen = of_get_flat_dt_subnode_by_name(root, "chosen");
-	if (chosen == -FDT_ERR_NOTFOUND) {
+	अगर (chosen == -FDT_ERR_NOTFOUND) अणु
 		cur_cpu_spec->mmu_features &= ~MMU_FTR_TYPE_RADIX;
-		return;
-	}
+		वापस;
+	पूर्ण
 	vec5 = of_get_flat_dt_prop(chosen, "ibm,architecture-vec-5", &size);
-	if (!vec5) {
+	अगर (!vec5) अणु
 		cur_cpu_spec->mmu_features &= ~MMU_FTR_TYPE_RADIX;
-		return;
-	}
-	if (size <= OV5_INDX(OV5_MMU_SUPPORT)) {
+		वापस;
+	पूर्ण
+	अगर (size <= OV5_INDX(OV5_MMU_SUPPORT)) अणु
 		cur_cpu_spec->mmu_features &= ~MMU_FTR_TYPE_RADIX;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Check for supported configuration */
+	/* Check क्रम supported configuration */
 	mmu_supported = vec5[OV5_INDX(OV5_MMU_SUPPORT)] &
 			OV5_FEAT(OV5_MMU_SUPPORT);
-	if (mmu_supported == OV5_FEAT(OV5_MMU_RADIX)) {
+	अगर (mmu_supported == OV5_FEAT(OV5_MMU_RADIX)) अणु
 		/* Hypervisor only supports radix - check enabled && GTSE */
-		if (!early_radix_enabled()) {
+		अगर (!early_radix_enabled()) अणु
 			pr_warn("WARNING: Ignoring cmdline option disable_radix\n");
-		}
-		if (!(vec5[OV5_INDX(OV5_RADIX_GTSE)] &
-						OV5_FEAT(OV5_RADIX_GTSE))) {
+		पूर्ण
+		अगर (!(vec5[OV5_INDX(OV5_RADIX_GTSE)] &
+						OV5_FEAT(OV5_RADIX_GTSE))) अणु
 			cur_cpu_spec->mmu_features &= ~MMU_FTR_GTSE;
-		} else
+		पूर्ण अन्यथा
 			cur_cpu_spec->mmu_features |= MMU_FTR_GTSE;
 		/* Do radix anyway - the hypervisor said we had to */
 		cur_cpu_spec->mmu_features |= MMU_FTR_TYPE_RADIX;
-	} else if (mmu_supported == OV5_FEAT(OV5_MMU_HASH)) {
+	पूर्ण अन्यथा अगर (mmu_supported == OV5_FEAT(OV5_MMU_HASH)) अणु
 		/* Hypervisor only supports hash - disable radix */
 		cur_cpu_spec->mmu_features &= ~MMU_FTR_TYPE_RADIX;
 		cur_cpu_spec->mmu_features &= ~MMU_FTR_GTSE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init mmu_early_init_devtree(void)
-{
+व्योम __init mmu_early_init_devtree(व्योम)
+अणु
 	/* Disable radix mode based on kernel command line. */
-	if (disable_radix)
+	अगर (disable_radix)
 		cur_cpu_spec->mmu_features &= ~MMU_FTR_TYPE_RADIX;
 
 	/*
-	 * Check /chosen/ibm,architecture-vec-5 if running as a guest.
-	 * When running bare-metal, we can use radix if we like
+	 * Check /chosen/ibm,architecture-vec-5 अगर running as a guest.
+	 * When running bare-metal, we can use radix अगर we like
 	 * even though the ibm,architecture-vec-5 property created by
-	 * skiboot doesn't have the necessary bits set.
+	 * skiboot करोesn't have the necessary bits set.
 	 */
-	if (!(mfmsr() & MSR_HV))
+	अगर (!(mfmsr() & MSR_HV))
 		early_check_vec5();
 
-	if (early_radix_enabled()) {
+	अगर (early_radix_enabled()) अणु
 		radix__early_init_devtree();
 		/*
 		 * We have finalized the translation we are going to use by now.
 		 * Radix mode is not limited by RMA / VRMA addressing.
-		 * Hence don't limit memblock allocations.
+		 * Hence करोn't limit memblock allocations.
 		 */
-		ppc64_rma_size = ULONG_MAX;
+		ppc64_rma_size = अच_दीर्घ_उच्च;
 		memblock_set_current_limit(MEMBLOCK_ALLOC_ANYWHERE);
-	} else
+	पूर्ण अन्यथा
 		hash__early_init_devtree();
-}
-#endif /* CONFIG_PPC_BOOK3S_64 */
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PPC_BOOK3S_64 */

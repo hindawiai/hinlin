@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Linux/SPARC PROM Configuration Driver
  * Copyright (C) 1996 Thomas K. Dyas (tdyas@noc.rutgers.edu)
  * Copyright (C) 1996 Eddie C. Dost  (ecd@skynet.be)
  *
- * This character device driver allows user programs to access the
- * PROM device tree. It is compatible with the SunOS /dev/openprom
- * driver and the NetBSD /dev/openprom driver. The SunOS eeprom
- * utility works without any modifications.
+ * This अक्षरacter device driver allows user programs to access the
+ * PROM device tree. It is compatible with the SunOS /dev/खोलोprom
+ * driver and the NetBSD /dev/खोलोprom driver. The SunOS eeprom
+ * utility works without any modअगरications.
  *
  * The driver uses a minor number under the misc device major. The
- * file read/write mode determines the type of access to the PROM.
- * Interrupts are disabled whenever the driver calls into the PROM for
+ * file पढ़ो/ग_लिखो mode determines the type of access to the PROM.
+ * Interrupts are disabled whenever the driver calls पूर्णांकo the PROM क्रम
  * sanity's sake.
  */
 
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/mutex.h>
-#include <linux/string.h>
-#include <linux/miscdevice.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <asm/oplib.h>
-#include <asm/prom.h>
-#include <linux/uaccess.h>
-#include <asm/openpromio.h>
-#ifdef CONFIG_PCI
-#include <linux/pci.h>
-#endif
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/init.h>
+#समावेश <linux/fs.h>
+#समावेश <यंत्र/oplib.h>
+#समावेश <यंत्र/prom.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/खोलोpromपन.स>
+#अगर_घोषित CONFIG_PCI
+#समावेश <linux/pci.h>
+#पूर्ण_अगर
 
 MODULE_AUTHOR("Thomas K. Dyas (tdyas@noc.rutgers.edu) and Eddie C. Dost  (ecd@skynet.be)");
 MODULE_DESCRIPTION("OPENPROM Configuration Driver");
@@ -39,688 +40,688 @@ MODULE_LICENSE("GPL");
 MODULE_VERSION("1.0");
 MODULE_ALIAS_MISCDEV(SUN_OPENPROM_MINOR);
 
-/* Private data kept by the driver for each descriptor. */
-typedef struct openprom_private_data
-{
-	struct device_node *current_node; /* Current node for SunOS ioctls. */
-	struct device_node *lastnode; /* Last valid node used by BSD ioctls. */
-} DATA;
+/* Private data kept by the driver क्रम each descriptor. */
+प्रकार काष्ठा खोलोprom_निजी_data
+अणु
+	काष्ठा device_node *current_node; /* Current node क्रम SunOS ioctls. */
+	काष्ठा device_node *lastnode; /* Last valid node used by BSD ioctls. */
+पूर्ण DATA;
 
 /* ID of the PROM node containing all of the EEPROM options. */
-static DEFINE_MUTEX(openprom_mutex);
-static struct device_node *options_node;
+अटल DEFINE_MUTEX(खोलोprom_mutex);
+अटल काष्ठा device_node *options_node;
 
 /*
- * Copy an openpromio structure into kernel space from user space.
- * This routine does error checking to make sure that all memory
- * accesses are within bounds. A pointer to the allocated openpromio
- * structure will be placed in "*opp_p". Return value is the length
+ * Copy an खोलोpromio काष्ठाure पूर्णांकo kernel space from user space.
+ * This routine करोes error checking to make sure that all memory
+ * accesses are within bounds. A poपूर्णांकer to the allocated खोलोpromio
+ * काष्ठाure will be placed in "*opp_p". Return value is the length
  * of the user supplied buffer.
  */
-static int copyin(struct openpromio __user *info, struct openpromio **opp_p)
-{
-	unsigned int bufsize;
+अटल पूर्णांक copyin(काष्ठा खोलोpromio __user *info, काष्ठा खोलोpromio **opp_p)
+अणु
+	अचिन्हित पूर्णांक bufsize;
 
-	if (!info || !opp_p)
-		return -EFAULT;
+	अगर (!info || !opp_p)
+		वापस -EFAULT;
 
-	if (get_user(bufsize, &info->oprom_size))
-		return -EFAULT;
+	अगर (get_user(bufsize, &info->oprom_size))
+		वापस -EFAULT;
 
-	if (bufsize == 0)
-		return -EINVAL;
+	अगर (bufsize == 0)
+		वापस -EINVAL;
 
 	/* If the bufsize is too large, just limit it.
 	 * Fix from Jason Rappleye.
 	 */
-	if (bufsize > OPROMMAXPARAM)
+	अगर (bufsize > OPROMMAXPARAM)
 		bufsize = OPROMMAXPARAM;
 
-	if (!(*opp_p = kzalloc(sizeof(int) + bufsize + 1, GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(*opp_p = kzalloc(माप(पूर्णांक) + bufsize + 1, GFP_KERNEL)))
+		वापस -ENOMEM;
 
-	if (copy_from_user(&(*opp_p)->oprom_array,
-			   &info->oprom_array, bufsize)) {
-		kfree(*opp_p);
-		return -EFAULT;
-	}
-	return bufsize;
-}
+	अगर (copy_from_user(&(*opp_p)->oprom_array,
+			   &info->oprom_array, bufsize)) अणु
+		kमुक्त(*opp_p);
+		वापस -EFAULT;
+	पूर्ण
+	वापस bufsize;
+पूर्ण
 
-static int getstrings(struct openpromio __user *info, struct openpromio **opp_p)
-{
-	int n, bufsize;
-	char c;
+अटल पूर्णांक माला_लोtrings(काष्ठा खोलोpromio __user *info, काष्ठा खोलोpromio **opp_p)
+अणु
+	पूर्णांक n, bufsize;
+	अक्षर c;
 
-	if (!info || !opp_p)
-		return -EFAULT;
+	अगर (!info || !opp_p)
+		वापस -EFAULT;
 
-	if (!(*opp_p = kzalloc(sizeof(int) + OPROMMAXPARAM + 1, GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(*opp_p = kzalloc(माप(पूर्णांक) + OPROMMAXPARAM + 1, GFP_KERNEL)))
+		वापस -ENOMEM;
 
 	(*opp_p)->oprom_size = 0;
 
 	n = bufsize = 0;
-	while ((n < 2) && (bufsize < OPROMMAXPARAM)) {
-		if (get_user(c, &info->oprom_array[bufsize])) {
-			kfree(*opp_p);
-			return -EFAULT;
-		}
-		if (c == '\0')
+	जबतक ((n < 2) && (bufsize < OPROMMAXPARAM)) अणु
+		अगर (get_user(c, &info->oprom_array[bufsize])) अणु
+			kमुक्त(*opp_p);
+			वापस -EFAULT;
+		पूर्ण
+		अगर (c == '\0')
 			n++;
 		(*opp_p)->oprom_array[bufsize++] = c;
-	}
-	if (!n) {
-		kfree(*opp_p);
-		return -EINVAL;
-	}
-	return bufsize;
-}
+	पूर्ण
+	अगर (!n) अणु
+		kमुक्त(*opp_p);
+		वापस -EINVAL;
+	पूर्ण
+	वापस bufsize;
+पूर्ण
 
 /*
- * Copy an openpromio structure in kernel space back to user space.
+ * Copy an खोलोpromio काष्ठाure in kernel space back to user space.
  */
-static int copyout(void __user *info, struct openpromio *opp, int len)
-{
-	if (copy_to_user(info, opp, len))
-		return -EFAULT;
-	return 0;
-}
+अटल पूर्णांक copyout(व्योम __user *info, काष्ठा खोलोpromio *opp, पूर्णांक len)
+अणु
+	अगर (copy_to_user(info, opp, len))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int opromgetprop(void __user *argp, struct device_node *dp, struct openpromio *op, int bufsize)
-{
-	const void *pval;
-	int len;
+अटल पूर्णांक opromgetprop(व्योम __user *argp, काष्ठा device_node *dp, काष्ठा खोलोpromio *op, पूर्णांक bufsize)
+अणु
+	स्थिर व्योम *pval;
+	पूर्णांक len;
 
-	if (!dp ||
+	अगर (!dp ||
 	    !(pval = of_get_property(dp, op->oprom_array, &len)) ||
 	    len <= 0 || len > bufsize)
-		return copyout(argp, op, sizeof(int));
+		वापस copyout(argp, op, माप(पूर्णांक));
 
-	memcpy(op->oprom_array, pval, len);
+	स_नकल(op->oprom_array, pval, len);
 	op->oprom_array[len] = '\0';
 	op->oprom_size = len;
 
-	return copyout(argp, op, sizeof(int) + bufsize);
-}
+	वापस copyout(argp, op, माप(पूर्णांक) + bufsize);
+पूर्ण
 
-static int opromnxtprop(void __user *argp, struct device_node *dp, struct openpromio *op, int bufsize)
-{
-	struct property *prop;
-	int len;
+अटल पूर्णांक opromnxtprop(व्योम __user *argp, काष्ठा device_node *dp, काष्ठा खोलोpromio *op, पूर्णांक bufsize)
+अणु
+	काष्ठा property *prop;
+	पूर्णांक len;
 
-	if (!dp)
-		return copyout(argp, op, sizeof(int));
-	if (op->oprom_array[0] == '\0') {
+	अगर (!dp)
+		वापस copyout(argp, op, माप(पूर्णांक));
+	अगर (op->oprom_array[0] == '\0') अणु
 		prop = dp->properties;
-		if (!prop)
-			return copyout(argp, op, sizeof(int));
-		len = strlen(prop->name);
-	} else {
-		prop = of_find_property(dp, op->oprom_array, NULL);
+		अगर (!prop)
+			वापस copyout(argp, op, माप(पूर्णांक));
+		len = म_माप(prop->name);
+	पूर्ण अन्यथा अणु
+		prop = of_find_property(dp, op->oprom_array, शून्य);
 
-		if (!prop ||
+		अगर (!prop ||
 		    !prop->next ||
-		    (len = strlen(prop->next->name)) + 1 > bufsize)
-			return copyout(argp, op, sizeof(int));
+		    (len = म_माप(prop->next->name)) + 1 > bufsize)
+			वापस copyout(argp, op, माप(पूर्णांक));
 
 		prop = prop->next;
-	}
+	पूर्ण
 
-	memcpy(op->oprom_array, prop->name, len);
+	स_नकल(op->oprom_array, prop->name, len);
 	op->oprom_array[len] = '\0';
 	op->oprom_size = ++len;
 
-	return copyout(argp, op, sizeof(int) + bufsize);
-}
+	वापस copyout(argp, op, माप(पूर्णांक) + bufsize);
+पूर्ण
 
-static int opromsetopt(struct device_node *dp, struct openpromio *op, int bufsize)
-{
-	char *buf = op->oprom_array + strlen(op->oprom_array) + 1;
-	int len = op->oprom_array + bufsize - buf;
+अटल पूर्णांक opromsetopt(काष्ठा device_node *dp, काष्ठा खोलोpromio *op, पूर्णांक bufsize)
+अणु
+	अक्षर *buf = op->oprom_array + म_माप(op->oprom_array) + 1;
+	पूर्णांक len = op->oprom_array + bufsize - buf;
 
-	return of_set_property(options_node, op->oprom_array, buf, len);
-}
+	वापस of_set_property(options_node, op->oprom_array, buf, len);
+पूर्ण
 
-static int opromnext(void __user *argp, unsigned int cmd, struct device_node *dp, struct openpromio *op, int bufsize, DATA *data)
-{
+अटल पूर्णांक opromnext(व्योम __user *argp, अचिन्हित पूर्णांक cmd, काष्ठा device_node *dp, काष्ठा खोलोpromio *op, पूर्णांक bufsize, DATA *data)
+अणु
 	phandle ph;
 
-	BUILD_BUG_ON(sizeof(phandle) != sizeof(int));
+	BUILD_BUG_ON(माप(phandle) != माप(पूर्णांक));
 
-	if (bufsize < sizeof(phandle))
-		return -EINVAL;
+	अगर (bufsize < माप(phandle))
+		वापस -EINVAL;
 
-	ph = *((int *) op->oprom_array);
-	if (ph) {
+	ph = *((पूर्णांक *) op->oprom_array);
+	अगर (ph) अणु
 		dp = of_find_node_by_phandle(ph);
-		if (!dp)
-			return -EINVAL;
+		अगर (!dp)
+			वापस -EINVAL;
 
-		switch (cmd) {
-		case OPROMNEXT:
+		चयन (cmd) अणु
+		हाल OPROMNEXT:
 			dp = dp->sibling;
-			break;
+			अवरोध;
 
-		case OPROMCHILD:
+		हाल OPROMCHILD:
 			dp = dp->child;
-			break;
+			अवरोध;
 
-		case OPROMSETCUR:
-		default:
-			break;
-		}
-	} else {
+		हाल OPROMSETCUR:
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/* Sibling of node zero is the root node.  */
-		if (cmd != OPROMNEXT)
-			return -EINVAL;
+		अगर (cmd != OPROMNEXT)
+			वापस -EINVAL;
 
 		dp = of_find_node_by_path("/");
-	}
+	पूर्ण
 
 	ph = 0;
-	if (dp)
+	अगर (dp)
 		ph = dp->phandle;
 
 	data->current_node = dp;
-	*((int *) op->oprom_array) = ph;
-	op->oprom_size = sizeof(phandle);
+	*((पूर्णांक *) op->oprom_array) = ph;
+	op->oprom_size = माप(phandle);
 
-	return copyout(argp, op, bufsize + sizeof(int));
-}
+	वापस copyout(argp, op, bufsize + माप(पूर्णांक));
+पूर्ण
 
-static int oprompci2node(void __user *argp, struct device_node *dp, struct openpromio *op, int bufsize, DATA *data)
-{
-	int err = -EINVAL;
+अटल पूर्णांक oprompci2node(व्योम __user *argp, काष्ठा device_node *dp, काष्ठा खोलोpromio *op, पूर्णांक bufsize, DATA *data)
+अणु
+	पूर्णांक err = -EINVAL;
 
-	if (bufsize >= 2*sizeof(int)) {
-#ifdef CONFIG_PCI
-		struct pci_dev *pdev;
-		struct device_node *dp;
+	अगर (bufsize >= 2*माप(पूर्णांक)) अणु
+#अगर_घोषित CONFIG_PCI
+		काष्ठा pci_dev *pdev;
+		काष्ठा device_node *dp;
 
-		pdev = pci_get_domain_bus_and_slot(0,
-						((int *) op->oprom_array)[0],
-						((int *) op->oprom_array)[1]);
+		pdev = pci_get_करोमुख्य_bus_and_slot(0,
+						((पूर्णांक *) op->oprom_array)[0],
+						((पूर्णांक *) op->oprom_array)[1]);
 
 		dp = pci_device_to_OF_node(pdev);
 		data->current_node = dp;
-		*((int *)op->oprom_array) = dp->phandle;
-		op->oprom_size = sizeof(int);
-		err = copyout(argp, op, bufsize + sizeof(int));
+		*((पूर्णांक *)op->oprom_array) = dp->phandle;
+		op->oprom_size = माप(पूर्णांक);
+		err = copyout(argp, op, bufsize + माप(पूर्णांक));
 
 		pci_dev_put(pdev);
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int oprompath2node(void __user *argp, struct device_node *dp, struct openpromio *op, int bufsize, DATA *data)
-{
+अटल पूर्णांक oprompath2node(व्योम __user *argp, काष्ठा device_node *dp, काष्ठा खोलोpromio *op, पूर्णांक bufsize, DATA *data)
+अणु
 	phandle ph = 0;
 
 	dp = of_find_node_by_path(op->oprom_array);
-	if (dp)
+	अगर (dp)
 		ph = dp->phandle;
 	data->current_node = dp;
-	*((int *)op->oprom_array) = ph;
-	op->oprom_size = sizeof(int);
+	*((पूर्णांक *)op->oprom_array) = ph;
+	op->oprom_size = माप(पूर्णांक);
 
-	return copyout(argp, op, bufsize + sizeof(int));
-}
+	वापस copyout(argp, op, bufsize + माप(पूर्णांक));
+पूर्ण
 
-static int opromgetbootargs(void __user *argp, struct openpromio *op, int bufsize)
-{
-	char *buf = saved_command_line;
-	int len = strlen(buf);
+अटल पूर्णांक opromgetbootargs(व्योम __user *argp, काष्ठा खोलोpromio *op, पूर्णांक bufsize)
+अणु
+	अक्षर *buf = saved_command_line;
+	पूर्णांक len = म_माप(buf);
 
-	if (len > bufsize)
-		return -EINVAL;
+	अगर (len > bufsize)
+		वापस -EINVAL;
 
-	strcpy(op->oprom_array, buf);
+	म_नकल(op->oprom_array, buf);
 	op->oprom_size = len;
 
-	return copyout(argp, op, bufsize + sizeof(int));
-}
+	वापस copyout(argp, op, bufsize + माप(पूर्णांक));
+पूर्ण
 
 /*
- *	SunOS and Solaris /dev/openprom ioctl calls.
+ *	SunOS and Solaris /dev/खोलोprom ioctl calls.
  */
-static long openprom_sunos_ioctl(struct file * file,
-				 unsigned int cmd, unsigned long arg,
-				 struct device_node *dp)
-{
-	DATA *data = file->private_data;
-	struct openpromio *opp = NULL;
-	int bufsize, error = 0;
-	static int cnt;
-	void __user *argp = (void __user *)arg;
+अटल दीर्घ खोलोprom_sunos_ioctl(काष्ठा file * file,
+				 अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg,
+				 काष्ठा device_node *dp)
+अणु
+	DATA *data = file->निजी_data;
+	काष्ठा खोलोpromio *opp = शून्य;
+	पूर्णांक bufsize, error = 0;
+	अटल पूर्णांक cnt;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	if (cmd == OPROMSETOPT)
-		bufsize = getstrings(argp, &opp);
-	else
+	अगर (cmd == OPROMSETOPT)
+		bufsize = माला_लोtrings(argp, &opp);
+	अन्यथा
 		bufsize = copyin(argp, &opp);
 
-	if (bufsize < 0)
-		return bufsize;
+	अगर (bufsize < 0)
+		वापस bufsize;
 
-	mutex_lock(&openprom_mutex);
+	mutex_lock(&खोलोprom_mutex);
 
-	switch (cmd) {
-	case OPROMGETOPT:
-	case OPROMGETPROP:
+	चयन (cmd) अणु
+	हाल OPROMGETOPT:
+	हाल OPROMGETPROP:
 		error = opromgetprop(argp, dp, opp, bufsize);
-		break;
+		अवरोध;
 
-	case OPROMNXTOPT:
-	case OPROMNXTPROP:
+	हाल OPROMNXTOPT:
+	हाल OPROMNXTPROP:
 		error = opromnxtprop(argp, dp, opp, bufsize);
-		break;
+		अवरोध;
 
-	case OPROMSETOPT:
-	case OPROMSETOPT2:
+	हाल OPROMSETOPT:
+	हाल OPROMSETOPT2:
 		error = opromsetopt(dp, opp, bufsize);
-		break;
+		अवरोध;
 
-	case OPROMNEXT:
-	case OPROMCHILD:
-	case OPROMSETCUR:
+	हाल OPROMNEXT:
+	हाल OPROMCHILD:
+	हाल OPROMSETCUR:
 		error = opromnext(argp, cmd, dp, opp, bufsize, data);
-		break;
+		अवरोध;
 
-	case OPROMPCI2NODE:
+	हाल OPROMPCI2NODE:
 		error = oprompci2node(argp, dp, opp, bufsize, data);
-		break;
+		अवरोध;
 
-	case OPROMPATH2NODE:
+	हाल OPROMPATH2NODE:
 		error = oprompath2node(argp, dp, opp, bufsize, data);
-		break;
+		अवरोध;
 
-	case OPROMGETBOOTARGS:
+	हाल OPROMGETBOOTARGS:
 		error = opromgetbootargs(argp, opp, bufsize);
-		break;
+		अवरोध;
 
-	case OPROMU2P:
-	case OPROMGETCONS:
-	case OPROMGETFBNAME:
-		if (cnt++ < 10)
-			printk(KERN_INFO "openprom_sunos_ioctl: unimplemented ioctl\n");
+	हाल OPROMU2P:
+	हाल OPROMGETCONS:
+	हाल OPROMGETFBNAME:
+		अगर (cnt++ < 10)
+			prपूर्णांकk(KERN_INFO "openprom_sunos_ioctl: unimplemented ioctl\n");
 		error = -EINVAL;
-		break;
-	default:
-		if (cnt++ < 10)
-			printk(KERN_INFO "openprom_sunos_ioctl: cmd 0x%X, arg 0x%lX\n", cmd, arg);
+		अवरोध;
+	शेष:
+		अगर (cnt++ < 10)
+			prपूर्णांकk(KERN_INFO "openprom_sunos_ioctl: cmd 0x%X, arg 0x%lX\n", cmd, arg);
 		error = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	kfree(opp);
-	mutex_unlock(&openprom_mutex);
+	kमुक्त(opp);
+	mutex_unlock(&खोलोprom_mutex);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static struct device_node *get_node(phandle n, DATA *data)
-{
-	struct device_node *dp = of_find_node_by_phandle(n);
+अटल काष्ठा device_node *get_node(phandle n, DATA *data)
+अणु
+	काष्ठा device_node *dp = of_find_node_by_phandle(n);
 
-	if (dp)
+	अगर (dp)
 		data->lastnode = dp;
 
-	return dp;
-}
+	वापस dp;
+पूर्ण
 
-/* Copy in a whole string from userspace into kernelspace. */
-static char * copyin_string(char __user *user, size_t len)
-{
-	if ((ssize_t)len < 0 || (ssize_t)(len + 1) < 0)
-		return ERR_PTR(-EINVAL);
+/* Copy in a whole string from userspace पूर्णांकo kernelspace. */
+अटल अक्षर * copyin_string(अक्षर __user *user, माप_प्रकार len)
+अणु
+	अगर ((sमाप_प्रकार)len < 0 || (sमाप_प्रकार)(len + 1) < 0)
+		वापस ERR_PTR(-EINVAL);
 
-	return memdup_user_nul(user, len);
-}
+	वापस memdup_user_nul(user, len);
+पूर्ण
 
 /*
- *	NetBSD /dev/openprom ioctl calls.
+ *	NetBSD /dev/खोलोprom ioctl calls.
  */
-static int opiocget(void __user *argp, DATA *data)
-{
-	struct opiocdesc op;
-	struct device_node *dp;
-	char *str;
-	const void *pval;
-	int err, len;
+अटल पूर्णांक opiocget(व्योम __user *argp, DATA *data)
+अणु
+	काष्ठा opiocdesc op;
+	काष्ठा device_node *dp;
+	अक्षर *str;
+	स्थिर व्योम *pval;
+	पूर्णांक err, len;
 
-	if (copy_from_user(&op, argp, sizeof(op)))
-		return -EFAULT;
+	अगर (copy_from_user(&op, argp, माप(op)))
+		वापस -EFAULT;
 
 	dp = get_node(op.op_nodeid, data);
 
 	str = copyin_string(op.op_name, op.op_namelen);
-	if (IS_ERR(str))
-		return PTR_ERR(str);
+	अगर (IS_ERR(str))
+		वापस PTR_ERR(str);
 
 	pval = of_get_property(dp, str, &len);
 	err = 0;
-	if (!pval || len > op.op_buflen) {
+	अगर (!pval || len > op.op_buflen) अणु
 		err = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		op.op_buflen = len;
-		if (copy_to_user(argp, &op, sizeof(op)) ||
+		अगर (copy_to_user(argp, &op, माप(op)) ||
 		    copy_to_user(op.op_buf, pval, len))
 			err = -EFAULT;
-	}
-	kfree(str);
+	पूर्ण
+	kमुक्त(str);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int opiocnextprop(void __user *argp, DATA *data)
-{
-	struct opiocdesc op;
-	struct device_node *dp;
-	struct property *prop;
-	char *str;
-	int len;
+अटल पूर्णांक opiocnextprop(व्योम __user *argp, DATA *data)
+अणु
+	काष्ठा opiocdesc op;
+	काष्ठा device_node *dp;
+	काष्ठा property *prop;
+	अक्षर *str;
+	पूर्णांक len;
 
-	if (copy_from_user(&op, argp, sizeof(op)))
-		return -EFAULT;
+	अगर (copy_from_user(&op, argp, माप(op)))
+		वापस -EFAULT;
 
 	dp = get_node(op.op_nodeid, data);
-	if (!dp)
-		return -EINVAL;
+	अगर (!dp)
+		वापस -EINVAL;
 
 	str = copyin_string(op.op_name, op.op_namelen);
-	if (IS_ERR(str))
-		return PTR_ERR(str);
+	अगर (IS_ERR(str))
+		वापस PTR_ERR(str);
 
-	if (str[0] == '\0') {
+	अगर (str[0] == '\0') अणु
 		prop = dp->properties;
-	} else {
-		prop = of_find_property(dp, str, NULL);
-		if (prop)
+	पूर्ण अन्यथा अणु
+		prop = of_find_property(dp, str, शून्य);
+		अगर (prop)
 			prop = prop->next;
-	}
-	kfree(str);
+	पूर्ण
+	kमुक्त(str);
 
-	if (!prop)
+	अगर (!prop)
 		len = 0;
-	else
+	अन्यथा
 		len = prop->length;
 
-	if (len > op.op_buflen)
+	अगर (len > op.op_buflen)
 		len = op.op_buflen;
 
-	if (copy_to_user(argp, &op, sizeof(op)))
-		return -EFAULT;
+	अगर (copy_to_user(argp, &op, माप(op)))
+		वापस -EFAULT;
 
-	if (len &&
+	अगर (len &&
 	    copy_to_user(op.op_buf, prop->value, len))
-		return -EFAULT;
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int opiocset(void __user *argp, DATA *data)
-{
-	struct opiocdesc op;
-	struct device_node *dp;
-	char *str, *tmp;
-	int err;
+अटल पूर्णांक opiocset(व्योम __user *argp, DATA *data)
+अणु
+	काष्ठा opiocdesc op;
+	काष्ठा device_node *dp;
+	अक्षर *str, *पंचांगp;
+	पूर्णांक err;
 
-	if (copy_from_user(&op, argp, sizeof(op)))
-		return -EFAULT;
+	अगर (copy_from_user(&op, argp, माप(op)))
+		वापस -EFAULT;
 
 	dp = get_node(op.op_nodeid, data);
-	if (!dp)
-		return -EINVAL;
+	अगर (!dp)
+		वापस -EINVAL;
 
 	str = copyin_string(op.op_name, op.op_namelen);
-	if (IS_ERR(str))
-		return PTR_ERR(str);
+	अगर (IS_ERR(str))
+		वापस PTR_ERR(str);
 
-	tmp = copyin_string(op.op_buf, op.op_buflen);
-	if (IS_ERR(tmp)) {
-		kfree(str);
-		return PTR_ERR(tmp);
-	}
+	पंचांगp = copyin_string(op.op_buf, op.op_buflen);
+	अगर (IS_ERR(पंचांगp)) अणु
+		kमुक्त(str);
+		वापस PTR_ERR(पंचांगp);
+	पूर्ण
 
-	err = of_set_property(dp, str, tmp, op.op_buflen);
+	err = of_set_property(dp, str, पंचांगp, op.op_buflen);
 
-	kfree(str);
-	kfree(tmp);
+	kमुक्त(str);
+	kमुक्त(पंचांगp);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int opiocgetnext(unsigned int cmd, void __user *argp)
-{
-	struct device_node *dp;
+अटल पूर्णांक opiocgetnext(अचिन्हित पूर्णांक cmd, व्योम __user *argp)
+अणु
+	काष्ठा device_node *dp;
 	phandle nd;
 
-	BUILD_BUG_ON(sizeof(phandle) != sizeof(int));
+	BUILD_BUG_ON(माप(phandle) != माप(पूर्णांक));
 
-	if (copy_from_user(&nd, argp, sizeof(phandle)))
-		return -EFAULT;
+	अगर (copy_from_user(&nd, argp, माप(phandle)))
+		वापस -EFAULT;
 
-	if (nd == 0) {
-		if (cmd != OPIOCGETNEXT)
-			return -EINVAL;
+	अगर (nd == 0) अणु
+		अगर (cmd != OPIOCGETNEXT)
+			वापस -EINVAL;
 		dp = of_find_node_by_path("/");
-	} else {
+	पूर्ण अन्यथा अणु
 		dp = of_find_node_by_phandle(nd);
 		nd = 0;
-		if (dp) {
-			if (cmd == OPIOCGETNEXT)
+		अगर (dp) अणु
+			अगर (cmd == OPIOCGETNEXT)
 				dp = dp->sibling;
-			else
+			अन्यथा
 				dp = dp->child;
-		}
-	}
-	if (dp)
+		पूर्ण
+	पूर्ण
+	अगर (dp)
 		nd = dp->phandle;
-	if (copy_to_user(argp, &nd, sizeof(phandle)))
-		return -EFAULT;
+	अगर (copy_to_user(argp, &nd, माप(phandle)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int openprom_bsd_ioctl(struct file * file,
-			      unsigned int cmd, unsigned long arg)
-{
-	DATA *data = file->private_data;
-	void __user *argp = (void __user *)arg;
-	int err;
+अटल पूर्णांक खोलोprom_bsd_ioctl(काष्ठा file * file,
+			      अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	DATA *data = file->निजी_data;
+	व्योम __user *argp = (व्योम __user *)arg;
+	पूर्णांक err;
 
-	mutex_lock(&openprom_mutex);
-	switch (cmd) {
-	case OPIOCGET:
+	mutex_lock(&खोलोprom_mutex);
+	चयन (cmd) अणु
+	हाल OPIOCGET:
 		err = opiocget(argp, data);
-		break;
+		अवरोध;
 
-	case OPIOCNEXTPROP:
+	हाल OPIOCNEXTPROP:
 		err = opiocnextprop(argp, data);
-		break;
+		अवरोध;
 
-	case OPIOCSET:
+	हाल OPIOCSET:
 		err = opiocset(argp, data);
-		break;
+		अवरोध;
 
-	case OPIOCGETOPTNODE:
-		BUILD_BUG_ON(sizeof(phandle) != sizeof(int));
+	हाल OPIOCGETOPTNODE:
+		BUILD_BUG_ON(माप(phandle) != माप(पूर्णांक));
 
 		err = 0;
-		if (copy_to_user(argp, &options_node->phandle, sizeof(phandle)))
+		अगर (copy_to_user(argp, &options_node->phandle, माप(phandle)))
 			err = -EFAULT;
-		break;
+		अवरोध;
 
-	case OPIOCGETNEXT:
-	case OPIOCGETCHILD:
+	हाल OPIOCGETNEXT:
+	हाल OPIOCGETCHILD:
 		err = opiocgetnext(cmd, argp);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		err = -EINVAL;
-		break;
-	}
-	mutex_unlock(&openprom_mutex);
+		अवरोध;
+	पूर्ण
+	mutex_unlock(&खोलोprom_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 
 /*
- *	Handoff control to the correct ioctl handler.
+ *	Hanकरोff control to the correct ioctl handler.
  */
-static long openprom_ioctl(struct file * file,
-			   unsigned int cmd, unsigned long arg)
-{
-	DATA *data = file->private_data;
+अटल दीर्घ खोलोprom_ioctl(काष्ठा file * file,
+			   अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	DATA *data = file->निजी_data;
 
-	switch (cmd) {
-	case OPROMGETOPT:
-	case OPROMNXTOPT:
-		if ((file->f_mode & FMODE_READ) == 0)
-			return -EPERM;
-		return openprom_sunos_ioctl(file, cmd, arg,
+	चयन (cmd) अणु
+	हाल OPROMGETOPT:
+	हाल OPROMNXTOPT:
+		अगर ((file->f_mode & FMODE_READ) == 0)
+			वापस -EPERM;
+		वापस खोलोprom_sunos_ioctl(file, cmd, arg,
 					    options_node);
 
-	case OPROMSETOPT:
-	case OPROMSETOPT2:
-		if ((file->f_mode & FMODE_WRITE) == 0)
-			return -EPERM;
-		return openprom_sunos_ioctl(file, cmd, arg,
+	हाल OPROMSETOPT:
+	हाल OPROMSETOPT2:
+		अगर ((file->f_mode & FMODE_WRITE) == 0)
+			वापस -EPERM;
+		वापस खोलोprom_sunos_ioctl(file, cmd, arg,
 					    options_node);
 
-	case OPROMNEXT:
-	case OPROMCHILD:
-	case OPROMGETPROP:
-	case OPROMNXTPROP:
-		if ((file->f_mode & FMODE_READ) == 0)
-			return -EPERM;
-		return openprom_sunos_ioctl(file, cmd, arg,
+	हाल OPROMNEXT:
+	हाल OPROMCHILD:
+	हाल OPROMGETPROP:
+	हाल OPROMNXTPROP:
+		अगर ((file->f_mode & FMODE_READ) == 0)
+			वापस -EPERM;
+		वापस खोलोprom_sunos_ioctl(file, cmd, arg,
 					    data->current_node);
 
-	case OPROMU2P:
-	case OPROMGETCONS:
-	case OPROMGETFBNAME:
-	case OPROMGETBOOTARGS:
-	case OPROMSETCUR:
-	case OPROMPCI2NODE:
-	case OPROMPATH2NODE:
-		if ((file->f_mode & FMODE_READ) == 0)
-			return -EPERM;
-		return openprom_sunos_ioctl(file, cmd, arg, NULL);
+	हाल OPROMU2P:
+	हाल OPROMGETCONS:
+	हाल OPROMGETFBNAME:
+	हाल OPROMGETBOOTARGS:
+	हाल OPROMSETCUR:
+	हाल OPROMPCI2NODE:
+	हाल OPROMPATH2NODE:
+		अगर ((file->f_mode & FMODE_READ) == 0)
+			वापस -EPERM;
+		वापस खोलोprom_sunos_ioctl(file, cmd, arg, शून्य);
 
-	case OPIOCGET:
-	case OPIOCNEXTPROP:
-	case OPIOCGETOPTNODE:
-	case OPIOCGETNEXT:
-	case OPIOCGETCHILD:
-		if ((file->f_mode & FMODE_READ) == 0)
-			return -EBADF;
-		return openprom_bsd_ioctl(file,cmd,arg);
+	हाल OPIOCGET:
+	हाल OPIOCNEXTPROP:
+	हाल OPIOCGETOPTNODE:
+	हाल OPIOCGETNEXT:
+	हाल OPIOCGETCHILD:
+		अगर ((file->f_mode & FMODE_READ) == 0)
+			वापस -EBADF;
+		वापस खोलोprom_bsd_ioctl(file,cmd,arg);
 
-	case OPIOCSET:
-		if ((file->f_mode & FMODE_WRITE) == 0)
-			return -EBADF;
-		return openprom_bsd_ioctl(file,cmd,arg);
+	हाल OPIOCSET:
+		अगर ((file->f_mode & FMODE_WRITE) == 0)
+			वापस -EBADF;
+		वापस खोलोprom_bsd_ioctl(file,cmd,arg);
 
-	default:
-		return -EINVAL;
-	};
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण;
+पूर्ण
 
-static long openprom_compat_ioctl(struct file *file, unsigned int cmd,
-		unsigned long arg)
-{
-	long rval = -ENOTTY;
+अटल दीर्घ खोलोprom_compat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+		अचिन्हित दीर्घ arg)
+अणु
+	दीर्घ rval = -ENOTTY;
 
 	/*
-	 * SunOS/Solaris only, the NetBSD one's have embedded pointers in
+	 * SunOS/Solaris only, the NetBSD one's have embedded poपूर्णांकers in
 	 * the arg which we'd need to clean up...
 	 */
-	switch (cmd) {
-	case OPROMGETOPT:
-	case OPROMSETOPT:
-	case OPROMNXTOPT:
-	case OPROMSETOPT2:
-	case OPROMNEXT:
-	case OPROMCHILD:
-	case OPROMGETPROP:
-	case OPROMNXTPROP:
-	case OPROMU2P:
-	case OPROMGETCONS:
-	case OPROMGETFBNAME:
-	case OPROMGETBOOTARGS:
-	case OPROMSETCUR:
-	case OPROMPCI2NODE:
-	case OPROMPATH2NODE:
-		rval = openprom_ioctl(file, cmd, arg);
-		break;
-	}
+	चयन (cmd) अणु
+	हाल OPROMGETOPT:
+	हाल OPROMSETOPT:
+	हाल OPROMNXTOPT:
+	हाल OPROMSETOPT2:
+	हाल OPROMNEXT:
+	हाल OPROMCHILD:
+	हाल OPROMGETPROP:
+	हाल OPROMNXTPROP:
+	हाल OPROMU2P:
+	हाल OPROMGETCONS:
+	हाल OPROMGETFBNAME:
+	हाल OPROMGETBOOTARGS:
+	हाल OPROMSETCUR:
+	हाल OPROMPCI2NODE:
+	हाल OPROMPATH2NODE:
+		rval = खोलोprom_ioctl(file, cmd, arg);
+		अवरोध;
+	पूर्ण
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-static int openprom_open(struct inode * inode, struct file * file)
-{
+अटल पूर्णांक खोलोprom_खोलो(काष्ठा inode * inode, काष्ठा file * file)
+अणु
 	DATA *data;
 
-	data = kmalloc(sizeof(DATA), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kदो_स्मृति(माप(DATA), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	mutex_lock(&openprom_mutex);
+	mutex_lock(&खोलोprom_mutex);
 	data->current_node = of_find_node_by_path("/");
 	data->lastnode = data->current_node;
-	file->private_data = (void *) data;
-	mutex_unlock(&openprom_mutex);
+	file->निजी_data = (व्योम *) data;
+	mutex_unlock(&खोलोprom_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int openprom_release(struct inode * inode, struct file * file)
-{
-	kfree(file->private_data);
-	return 0;
-}
+अटल पूर्णांक खोलोprom_release(काष्ठा inode * inode, काष्ठा file * file)
+अणु
+	kमुक्त(file->निजी_data);
+	वापस 0;
+पूर्ण
 
-static const struct file_operations openprom_fops = {
+अटल स्थिर काष्ठा file_operations खोलोprom_fops = अणु
 	.owner =	THIS_MODULE,
 	.llseek =	no_llseek,
-	.unlocked_ioctl = openprom_ioctl,
-	.compat_ioctl =	openprom_compat_ioctl,
-	.open =		openprom_open,
-	.release =	openprom_release,
-};
+	.unlocked_ioctl = खोलोprom_ioctl,
+	.compat_ioctl =	खोलोprom_compat_ioctl,
+	.खोलो =		खोलोprom_खोलो,
+	.release =	खोलोprom_release,
+पूर्ण;
 
-static struct miscdevice openprom_dev = {
+अटल काष्ठा miscdevice खोलोprom_dev = अणु
 	.minor		= SUN_OPENPROM_MINOR,
 	.name		= "openprom",
-	.fops		= &openprom_fops,
-};
+	.fops		= &खोलोprom_fops,
+पूर्ण;
 
-static int __init openprom_init(void)
-{
-	int err;
+अटल पूर्णांक __init खोलोprom_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = misc_register(&openprom_dev);
-	if (err)
-		return err;
+	err = misc_रेजिस्टर(&खोलोprom_dev);
+	अगर (err)
+		वापस err;
 
 	options_node = of_get_child_by_name(of_find_node_by_path("/"), "options");
-	if (!options_node) {
-		misc_deregister(&openprom_dev);
-		return -EIO;
-	}
+	अगर (!options_node) अणु
+		misc_deरेजिस्टर(&खोलोprom_dev);
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit openprom_cleanup(void)
-{
-	misc_deregister(&openprom_dev);
-}
+अटल व्योम __निकास खोलोprom_cleanup(व्योम)
+अणु
+	misc_deरेजिस्टर(&खोलोprom_dev);
+पूर्ण
 
-module_init(openprom_init);
-module_exit(openprom_cleanup);
+module_init(खोलोprom_init);
+module_निकास(खोलोprom_cleanup);

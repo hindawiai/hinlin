@@ -1,107 +1,108 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2016, Cyril Bur, IBM Corp.
  *
- * Sending one self a signal should always get delivered.
+ * Sending one self a संकेत should always get delivered.
  */
 
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <unistd.h>
 
-#include <altivec.h>
+#समावेश <altivec.h>
 
-#include "utils.h"
+#समावेश "utils.h"
 
-#define MAX_ATTEMPT 500000
-#define TIMEOUT 5
+#घोषणा MAX_ATTEMPT 500000
+#घोषणा TIMEOUT 5
 
-extern long signal_self(pid_t pid, int sig);
+बाह्य दीर्घ संकेत_self(pid_t pid, पूर्णांक sig);
 
-static sig_atomic_t signaled;
-static sig_atomic_t fail;
+अटल संक_पूर्ण_प्रकार संकेतed;
+अटल संक_पूर्ण_प्रकार fail;
 
-static void signal_handler(int sig)
-{
-	if (sig == SIGUSR1)
-		signaled = 1;
-	else
+अटल व्योम संकेत_handler(पूर्णांक sig)
+अणु
+	अगर (sig == SIGUSR1)
+		संकेतed = 1;
+	अन्यथा
 		fail = 1;
-}
+पूर्ण
 
-static int test_signal()
-{
-	int i;
-	struct sigaction act;
+अटल पूर्णांक test_संकेत()
+अणु
+	पूर्णांक i;
+	काष्ठा sigaction act;
 	pid_t ppid = getpid();
 	pid_t pid;
 
-	act.sa_handler = signal_handler;
+	act.sa_handler = संकेत_handler;
 	act.sa_flags = 0;
 	sigemptyset(&act.sa_mask);
-	if (sigaction(SIGUSR1, &act, NULL) < 0) {
-		perror("sigaction SIGUSR1");
-		exit(1);
-	}
-	if (sigaction(SIGALRM, &act, NULL) < 0) {
-		perror("sigaction SIGALRM");
-		exit(1);
-	}
+	अगर (sigaction(SIGUSR1, &act, शून्य) < 0) अणु
+		लिखो_त्रुटि("sigaction SIGUSR1");
+		निकास(1);
+	पूर्ण
+	अगर (sigaction(SIGALRM, &act, शून्य) < 0) अणु
+		लिखो_त्रुटि("sigaction SIGALRM");
+		निकास(1);
+	पूर्ण
 
-	/* Don't do this for MAX_ATTEMPT, its simply too long */
-	for(i  = 0; i < 1000; i++) {
-		pid = fork();
-		if (pid == -1) {
-			perror("fork");
-			exit(1);
-		}
-		if (pid == 0) {
-			signal_self(ppid, SIGUSR1);
-			exit(1);
-		} else {
+	/* Don't करो this क्रम MAX_ATTEMPT, its simply too दीर्घ */
+	क्रम(i  = 0; i < 1000; i++) अणु
+		pid = विभाजन();
+		अगर (pid == -1) अणु
+			लिखो_त्रुटि("fork");
+			निकास(1);
+		पूर्ण
+		अगर (pid == 0) अणु
+			संकेत_self(ppid, SIGUSR1);
+			निकास(1);
+		पूर्ण अन्यथा अणु
 			alarm(0); /* Disable any pending */
 			alarm(2);
-			while (!signaled && !fail)
-				asm volatile("": : :"memory");
-			if (!signaled) {
-				fprintf(stderr, "Didn't get signal from child\n");
+			जबतक (!संकेतed && !fail)
+				यंत्र अस्थिर("": : :"memory");
+			अगर (!संकेतed) अणु
+				ख_लिखो(मानक_त्रुटि, "Didn't get signal from child\n");
 				FAIL_IF(1); /* For the line number */
-			}
-			/* Otherwise we'll loop too fast and fork() will eventually fail */
-			waitpid(pid, NULL, 0);
-		}
-	}
+			पूर्ण
+			/* Otherwise we'll loop too fast and विभाजन() will eventually fail */
+			रुकोpid(pid, शून्य, 0);
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < MAX_ATTEMPT; i++) {
-		long rc;
+	क्रम (i = 0; i < MAX_ATTEMPT; i++) अणु
+		दीर्घ rc;
 
 		alarm(0); /* Disable any pending */
-		signaled = 0;
+		संकेतed = 0;
 		alarm(TIMEOUT);
-		rc = signal_self(ppid, SIGUSR1);
-		if (rc) {
-			fprintf(stderr, "(%d) Fail reason: %d rc=0x%lx",
+		rc = संकेत_self(ppid, SIGUSR1);
+		अगर (rc) अणु
+			ख_लिखो(मानक_त्रुटि, "(%d) Fail reason: %d rc=0x%lx",
 					i, fail, rc);
 			FAIL_IF(1); /* For the line number */
-		}
-		while (!signaled && !fail)
-			asm volatile("": : :"memory");
-		if (!signaled) {
-			fprintf(stderr, "(%d) Fail reason: %d rc=0x%lx",
+		पूर्ण
+		जबतक (!संकेतed && !fail)
+			यंत्र अस्थिर("": : :"memory");
+		अगर (!संकेतed) अणु
+			ख_लिखो(मानक_त्रुटि, "(%d) Fail reason: %d rc=0x%lx",
 					i, fail, rc);
 			FAIL_IF(1); /* For the line number */
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	test_harness_set_timeout(300);
-	return test_harness(test_signal, "signal");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	test_harness_set_समयout(300);
+	वापस test_harness(test_संकेत, "signal");
+पूर्ण

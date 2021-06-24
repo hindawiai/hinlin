@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR CDDL-1.0) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 OR CDDL-1.0) */
 /*
  * vboxguest vmm-req and hgcm-call code, VBoxGuestR0LibHGCMInternal.cpp,
  * VBoxGuestR0LibGenericRequest.cpp and RTErrConvertToErrno.cpp in vbox svn.
@@ -6,75 +7,75 @@
  * Copyright (C) 2006-2016 Oracle Corporation
  */
 
-#include <linux/errno.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/sizes.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/vmalloc.h>
-#include <linux/vbox_err.h>
-#include <linux/vbox_utils.h>
-#include "vboxguest_core.h"
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/vbox_err.h>
+#समावेश <linux/vbox_utils.h>
+#समावेश "vboxguest_core.h"
 
-/* Get the pointer to the first parameter of a HGCM call request. */
-#define VMMDEV_HGCM_CALL_PARMS(a) \
-	((struct vmmdev_hgcm_function_parameter *)( \
-		(u8 *)(a) + sizeof(struct vmmdev_hgcm_call)))
+/* Get the poपूर्णांकer to the first parameter of a HGCM call request. */
+#घोषणा VMMDEV_HGCM_CALL_PARMS(a) \
+	((काष्ठा vmmdev_hgcm_function_parameter *)( \
+		(u8 *)(a) + माप(काष्ठा vmmdev_hgcm_call)))
 
-/* The max parameter buffer size for a user request. */
-#define VBG_MAX_HGCM_USER_PARM		(24 * SZ_1M)
-/* The max parameter buffer size for a kernel request. */
-#define VBG_MAX_HGCM_KERNEL_PARM	(16 * SZ_1M)
+/* The max parameter buffer size क्रम a user request. */
+#घोषणा VBG_MAX_HGCM_USER_PARM		(24 * SZ_1M)
+/* The max parameter buffer size क्रम a kernel request. */
+#घोषणा VBG_MAX_HGCM_KERNEL_PARM	(16 * SZ_1M)
 
-#define VBG_DEBUG_PORT			0x504
+#घोषणा VBG_DEBUG_PORT			0x504
 
 /* This protects vbg_log_buf and serializes VBG_DEBUG_PORT accesses */
-static DEFINE_SPINLOCK(vbg_log_lock);
-static char vbg_log_buf[128];
+अटल DEFINE_SPINLOCK(vbg_log_lock);
+अटल अक्षर vbg_log_buf[128];
 
-#define VBG_LOG(name, pr_func) \
-void name(const char *fmt, ...)						\
-{									\
-	unsigned long flags;						\
-	va_list args;							\
-	int i, count;							\
+#घोषणा VBG_LOG(name, pr_func) \
+व्योम name(स्थिर अक्षर *fmt, ...)						\
+अणु									\
+	अचिन्हित दीर्घ flags;						\
+	बहु_सूची args;							\
+	पूर्णांक i, count;							\
 									\
-	va_start(args, fmt);						\
+	बहु_शुरू(args, fmt);						\
 	spin_lock_irqsave(&vbg_log_lock, flags);			\
 									\
-	count = vscnprintf(vbg_log_buf, sizeof(vbg_log_buf), fmt, args);\
-	for (i = 0; i < count; i++)					\
+	count = vscnम_लिखो(vbg_log_buf, माप(vbg_log_buf), fmt, args);\
+	क्रम (i = 0; i < count; i++)					\
 		outb(vbg_log_buf[i], VBG_DEBUG_PORT);			\
 									\
 	pr_func("%s", vbg_log_buf);					\
 									\
 	spin_unlock_irqrestore(&vbg_log_lock, flags);			\
-	va_end(args);							\
-}									\
+	बहु_पूर्ण(args);							\
+पूर्ण									\
 EXPORT_SYMBOL(name)
 
 VBG_LOG(vbg_info, pr_info);
 VBG_LOG(vbg_warn, pr_warn);
 VBG_LOG(vbg_err, pr_err);
 VBG_LOG(vbg_err_ratelimited, pr_err_ratelimited);
-#if defined(DEBUG) && !defined(CONFIG_DYNAMIC_DEBUG)
+#अगर defined(DEBUG) && !defined(CONFIG_DYNAMIC_DEBUG)
 VBG_LOG(vbg_debug, pr_debug);
-#endif
+#पूर्ण_अगर
 
-void *vbg_req_alloc(size_t len, enum vmmdev_request_type req_type,
+व्योम *vbg_req_alloc(माप_प्रकार len, क्रमागत vmmdev_request_type req_type,
 		    u32 requestor)
-{
-	struct vmmdev_request_header *req;
-	int order = get_order(PAGE_ALIGN(len));
+अणु
+	काष्ठा vmmdev_request_header *req;
+	पूर्णांक order = get_order(PAGE_ALIGN(len));
 
-	req = (void *)__get_free_pages(GFP_KERNEL | GFP_DMA32, order);
-	if (!req)
-		return NULL;
+	req = (व्योम *)__get_मुक्त_pages(GFP_KERNEL | GFP_DMA32, order);
+	अगर (!req)
+		वापस शून्य;
 
-	memset(req, 0xaa, len);
+	स_रखो(req, 0xaa, len);
 
 	req->size = len;
 	req->version = VMMDEV_REQUEST_HEADER_VERSION;
@@ -83,222 +84,222 @@ void *vbg_req_alloc(size_t len, enum vmmdev_request_type req_type,
 	req->reserved1 = 0;
 	req->requestor = requestor;
 
-	return req;
-}
+	वापस req;
+पूर्ण
 
-void vbg_req_free(void *req, size_t len)
-{
-	if (!req)
-		return;
+व्योम vbg_req_मुक्त(व्योम *req, माप_प्रकार len)
+अणु
+	अगर (!req)
+		वापस;
 
-	free_pages((unsigned long)req, get_order(PAGE_ALIGN(len)));
-}
+	मुक्त_pages((अचिन्हित दीर्घ)req, get_order(PAGE_ALIGN(len)));
+पूर्ण
 
-/* Note this function returns a VBox status code, not a negative errno!! */
-int vbg_req_perform(struct vbg_dev *gdev, void *req)
-{
-	unsigned long phys_req = virt_to_phys(req);
+/* Note this function वापसs a VBox status code, not a negative त्रुटि_सं!! */
+पूर्णांक vbg_req_perक्रमm(काष्ठा vbg_dev *gdev, व्योम *req)
+अणु
+	अचिन्हित दीर्घ phys_req = virt_to_phys(req);
 
 	outl(phys_req, gdev->io_port + VMMDEV_PORT_OFF_REQUEST);
 	/*
 	 * The host changes the request as a result of the outl, make sure
-	 * the outl and any reads of the req happen in the correct order.
+	 * the outl and any पढ़ोs of the req happen in the correct order.
 	 */
 	mb();
 
-	return ((struct vmmdev_request_header *)req)->rc;
-}
+	वापस ((काष्ठा vmmdev_request_header *)req)->rc;
+पूर्ण
 
-static bool hgcm_req_done(struct vbg_dev *gdev,
-			  struct vmmdev_hgcmreq_header *header)
-{
-	unsigned long flags;
-	bool done;
+अटल bool hgcm_req_करोne(काष्ठा vbg_dev *gdev,
+			  काष्ठा vmmdev_hgcmreq_header *header)
+अणु
+	अचिन्हित दीर्घ flags;
+	bool करोne;
 
 	spin_lock_irqsave(&gdev->event_spinlock, flags);
-	done = header->flags & VMMDEV_HGCM_REQ_DONE;
+	करोne = header->flags & VMMDEV_HGCM_REQ_DONE;
 	spin_unlock_irqrestore(&gdev->event_spinlock, flags);
 
-	return done;
-}
+	वापस करोne;
+पूर्ण
 
-int vbg_hgcm_connect(struct vbg_dev *gdev, u32 requestor,
-		     struct vmmdev_hgcm_service_location *loc,
-		     u32 *client_id, int *vbox_status)
-{
-	struct vmmdev_hgcm_connect *hgcm_connect = NULL;
-	int rc;
+पूर्णांक vbg_hgcm_connect(काष्ठा vbg_dev *gdev, u32 requestor,
+		     काष्ठा vmmdev_hgcm_service_location *loc,
+		     u32 *client_id, पूर्णांक *vbox_status)
+अणु
+	काष्ठा vmmdev_hgcm_connect *hgcm_connect = शून्य;
+	पूर्णांक rc;
 
-	hgcm_connect = vbg_req_alloc(sizeof(*hgcm_connect),
+	hgcm_connect = vbg_req_alloc(माप(*hgcm_connect),
 				     VMMDEVREQ_HGCM_CONNECT, requestor);
-	if (!hgcm_connect)
-		return -ENOMEM;
+	अगर (!hgcm_connect)
+		वापस -ENOMEM;
 
 	hgcm_connect->header.flags = 0;
-	memcpy(&hgcm_connect->loc, loc, sizeof(*loc));
+	स_नकल(&hgcm_connect->loc, loc, माप(*loc));
 	hgcm_connect->client_id = 0;
 
-	rc = vbg_req_perform(gdev, hgcm_connect);
+	rc = vbg_req_perक्रमm(gdev, hgcm_connect);
 
-	if (rc == VINF_HGCM_ASYNC_EXECUTE)
-		wait_event(gdev->hgcm_wq,
-			   hgcm_req_done(gdev, &hgcm_connect->header));
+	अगर (rc == VINF_HGCM_ASYNC_EXECUTE)
+		रुको_event(gdev->hgcm_wq,
+			   hgcm_req_करोne(gdev, &hgcm_connect->header));
 
-	if (rc >= 0) {
+	अगर (rc >= 0) अणु
 		*client_id = hgcm_connect->client_id;
 		rc = hgcm_connect->header.result;
-	}
+	पूर्ण
 
-	vbg_req_free(hgcm_connect, sizeof(*hgcm_connect));
+	vbg_req_मुक्त(hgcm_connect, माप(*hgcm_connect));
 
 	*vbox_status = rc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vbg_hgcm_connect);
 
-int vbg_hgcm_disconnect(struct vbg_dev *gdev, u32 requestor,
-			u32 client_id, int *vbox_status)
-{
-	struct vmmdev_hgcm_disconnect *hgcm_disconnect = NULL;
-	int rc;
+पूर्णांक vbg_hgcm_disconnect(काष्ठा vbg_dev *gdev, u32 requestor,
+			u32 client_id, पूर्णांक *vbox_status)
+अणु
+	काष्ठा vmmdev_hgcm_disconnect *hgcm_disconnect = शून्य;
+	पूर्णांक rc;
 
-	hgcm_disconnect = vbg_req_alloc(sizeof(*hgcm_disconnect),
+	hgcm_disconnect = vbg_req_alloc(माप(*hgcm_disconnect),
 					VMMDEVREQ_HGCM_DISCONNECT,
 					requestor);
-	if (!hgcm_disconnect)
-		return -ENOMEM;
+	अगर (!hgcm_disconnect)
+		वापस -ENOMEM;
 
 	hgcm_disconnect->header.flags = 0;
 	hgcm_disconnect->client_id = client_id;
 
-	rc = vbg_req_perform(gdev, hgcm_disconnect);
+	rc = vbg_req_perक्रमm(gdev, hgcm_disconnect);
 
-	if (rc == VINF_HGCM_ASYNC_EXECUTE)
-		wait_event(gdev->hgcm_wq,
-			   hgcm_req_done(gdev, &hgcm_disconnect->header));
+	अगर (rc == VINF_HGCM_ASYNC_EXECUTE)
+		रुको_event(gdev->hgcm_wq,
+			   hgcm_req_करोne(gdev, &hgcm_disconnect->header));
 
-	if (rc >= 0)
+	अगर (rc >= 0)
 		rc = hgcm_disconnect->header.result;
 
-	vbg_req_free(hgcm_disconnect, sizeof(*hgcm_disconnect));
+	vbg_req_मुक्त(hgcm_disconnect, माप(*hgcm_disconnect));
 
 	*vbox_status = rc;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(vbg_hgcm_disconnect);
 
-static u32 hgcm_call_buf_size_in_pages(void *buf, u32 len)
-{
-	u32 size = PAGE_ALIGN(len + ((unsigned long)buf & ~PAGE_MASK));
+अटल u32 hgcm_call_buf_size_in_pages(व्योम *buf, u32 len)
+अणु
+	u32 size = PAGE_ALIGN(len + ((अचिन्हित दीर्घ)buf & ~PAGE_MASK));
 
-	return size >> PAGE_SHIFT;
-}
+	वापस size >> PAGE_SHIFT;
+पूर्ण
 
-static void hgcm_call_add_pagelist_size(void *buf, u32 len, size_t *extra)
-{
+अटल व्योम hgcm_call_add_pagelist_size(व्योम *buf, u32 len, माप_प्रकार *extra)
+अणु
 	u32 page_count;
 
 	page_count = hgcm_call_buf_size_in_pages(buf, len);
-	*extra += offsetof(struct vmmdev_hgcm_pagelist, pages[page_count]);
-}
+	*extra += दुरत्व(काष्ठा vmmdev_hgcm_pagelist, pages[page_count]);
+पूर्ण
 
-static int hgcm_call_preprocess_linaddr(
-	const struct vmmdev_hgcm_function_parameter *src_parm,
-	void **bounce_buf_ret, size_t *extra)
-{
-	void *buf, *bounce_buf;
+अटल पूर्णांक hgcm_call_preprocess_linaddr(
+	स्थिर काष्ठा vmmdev_hgcm_function_parameter *src_parm,
+	व्योम **bounce_buf_ret, माप_प्रकार *extra)
+अणु
+	व्योम *buf, *bounce_buf;
 	bool copy_in;
 	u32 len;
-	int ret;
+	पूर्णांक ret;
 
-	buf = (void *)src_parm->u.pointer.u.linear_addr;
-	len = src_parm->u.pointer.size;
+	buf = (व्योम *)src_parm->u.poपूर्णांकer.u.linear_addr;
+	len = src_parm->u.poपूर्णांकer.size;
 	copy_in = src_parm->type != VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT;
 
-	if (len > VBG_MAX_HGCM_USER_PARM)
-		return -E2BIG;
+	अगर (len > VBG_MAX_HGCM_USER_PARM)
+		वापस -E2BIG;
 
-	bounce_buf = kvmalloc(len, GFP_KERNEL);
-	if (!bounce_buf)
-		return -ENOMEM;
+	bounce_buf = kvदो_स्मृति(len, GFP_KERNEL);
+	अगर (!bounce_buf)
+		वापस -ENOMEM;
 
 	*bounce_buf_ret = bounce_buf;
 
-	if (copy_in) {
-		ret = copy_from_user(bounce_buf, (void __user *)buf, len);
-		if (ret)
-			return -EFAULT;
-	} else {
-		memset(bounce_buf, 0, len);
-	}
+	अगर (copy_in) अणु
+		ret = copy_from_user(bounce_buf, (व्योम __user *)buf, len);
+		अगर (ret)
+			वापस -EFAULT;
+	पूर्ण अन्यथा अणु
+		स_रखो(bounce_buf, 0, len);
+	पूर्ण
 
 	hgcm_call_add_pagelist_size(bounce_buf, len, extra);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * Preprocesses the HGCM call, validate parameters, alloc bounce buffers and
- * figure out how much extra storage we need for page lists.
- * Return: 0 or negative errno value.
- * @src_parm:         Pointer to source function call parameters
+ * figure out how much extra storage we need क्रम page lists.
+ * Return: 0 or negative त्रुटि_सं value.
+ * @src_parm:         Poपूर्णांकer to source function call parameters
  * @parm_count:       Number of function call parameters.
- * @bounce_bufs_ret:  Where to return the allocated bouncebuffer array
- * @extra:            Where to return the extra request space needed for
+ * @bounce_bufs_ret:  Where to वापस the allocated bouncebuffer array
+ * @extra:            Where to वापस the extra request space needed क्रम
  *                    physical page lists.
  */
-static int hgcm_call_preprocess(
-	const struct vmmdev_hgcm_function_parameter *src_parm,
-	u32 parm_count, void ***bounce_bufs_ret, size_t *extra)
-{
-	void *buf, **bounce_bufs = NULL;
+अटल पूर्णांक hgcm_call_preprocess(
+	स्थिर काष्ठा vmmdev_hgcm_function_parameter *src_parm,
+	u32 parm_count, व्योम ***bounce_bufs_ret, माप_प्रकार *extra)
+अणु
+	व्योम *buf, **bounce_bufs = शून्य;
 	u32 i, len;
-	int ret;
+	पूर्णांक ret;
 
-	for (i = 0; i < parm_count; i++, src_parm++) {
-		switch (src_parm->type) {
-		case VMMDEV_HGCM_PARM_TYPE_32BIT:
-		case VMMDEV_HGCM_PARM_TYPE_64BIT:
-			break;
+	क्रम (i = 0; i < parm_count; i++, src_parm++) अणु
+		चयन (src_parm->type) अणु
+		हाल VMMDEV_HGCM_PARM_TYPE_32BIT:
+		हाल VMMDEV_HGCM_PARM_TYPE_64BIT:
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
-			if (!bounce_bufs) {
-				bounce_bufs = kcalloc(parm_count,
-						      sizeof(void *),
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
+			अगर (!bounce_bufs) अणु
+				bounce_bufs = kसुस्मृति(parm_count,
+						      माप(व्योम *),
 						      GFP_KERNEL);
-				if (!bounce_bufs)
-					return -ENOMEM;
+				अगर (!bounce_bufs)
+					वापस -ENOMEM;
 
 				*bounce_bufs_ret = bounce_bufs;
-			}
+			पूर्ण
 
 			ret = hgcm_call_preprocess_linaddr(src_parm,
 							   &bounce_bufs[i],
 							   extra);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
-			break;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_IN:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_OUT:
-			buf = (void *)src_parm->u.pointer.u.linear_addr;
-			len = src_parm->u.pointer.size;
-			if (WARN_ON(len > VBG_MAX_HGCM_KERNEL_PARM))
-				return -E2BIG;
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_IN:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_OUT:
+			buf = (व्योम *)src_parm->u.poपूर्णांकer.u.linear_addr;
+			len = src_parm->u.poपूर्णांकer.size;
+			अगर (WARN_ON(len > VBG_MAX_HGCM_KERNEL_PARM))
+				वापस -E2BIG;
 
 			hgcm_call_add_pagelist_size(buf, len, extra);
-			break;
+			अवरोध;
 
-		default:
-			return -EINVAL;
-		}
-	}
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * Translates linear address types to page list direction flags.
@@ -306,86 +307,86 @@ static int hgcm_call_preprocess(
  * Return: page list flags.
  * @type:  The type.
  */
-static u32 hgcm_call_linear_addr_type_to_pagelist_flags(
-	enum vmmdev_hgcm_function_parameter_type type)
-{
-	switch (type) {
-	default:
+अटल u32 hgcm_call_linear_addr_type_to_pagelist_flags(
+	क्रमागत vmmdev_hgcm_function_parameter_type type)
+अणु
+	चयन (type) अणु
+	शेष:
 		WARN_ON(1);
 		fallthrough;
-	case VMMDEV_HGCM_PARM_TYPE_LINADDR:
-	case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL:
-		return VMMDEV_HGCM_F_PARM_DIRECTION_BOTH;
+	हाल VMMDEV_HGCM_PARM_TYPE_LINADDR:
+	हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL:
+		वापस VMMDEV_HGCM_F_PARM_सूचीECTION_BOTH;
 
-	case VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
-	case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_IN:
-		return VMMDEV_HGCM_F_PARM_DIRECTION_TO_HOST;
+	हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
+	हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_IN:
+		वापस VMMDEV_HGCM_F_PARM_सूचीECTION_TO_HOST;
 
-	case VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
-	case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_OUT:
-		return VMMDEV_HGCM_F_PARM_DIRECTION_FROM_HOST;
-	}
-}
+	हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
+	हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_OUT:
+		वापस VMMDEV_HGCM_F_PARM_सूचीECTION_FROM_HOST;
+	पूर्ण
+पूर्ण
 
-static void hgcm_call_init_linaddr(struct vmmdev_hgcm_call *call,
-	struct vmmdev_hgcm_function_parameter *dst_parm, void *buf, u32 len,
-	enum vmmdev_hgcm_function_parameter_type type, u32 *off_extra)
-{
-	struct vmmdev_hgcm_pagelist *dst_pg_lst;
-	struct page *page;
-	bool is_vmalloc;
+अटल व्योम hgcm_call_init_linaddr(काष्ठा vmmdev_hgcm_call *call,
+	काष्ठा vmmdev_hgcm_function_parameter *dst_parm, व्योम *buf, u32 len,
+	क्रमागत vmmdev_hgcm_function_parameter_type type, u32 *off_extra)
+अणु
+	काष्ठा vmmdev_hgcm_pagelist *dst_pg_lst;
+	काष्ठा page *page;
+	bool is_vदो_स्मृति;
 	u32 i, page_count;
 
 	dst_parm->type = type;
 
-	if (len == 0) {
-		dst_parm->u.pointer.size = 0;
-		dst_parm->u.pointer.u.linear_addr = 0;
-		return;
-	}
+	अगर (len == 0) अणु
+		dst_parm->u.poपूर्णांकer.size = 0;
+		dst_parm->u.poपूर्णांकer.u.linear_addr = 0;
+		वापस;
+	पूर्ण
 
-	dst_pg_lst = (void *)call + *off_extra;
+	dst_pg_lst = (व्योम *)call + *off_extra;
 	page_count = hgcm_call_buf_size_in_pages(buf, len);
-	is_vmalloc = is_vmalloc_addr(buf);
+	is_vदो_स्मृति = is_vदो_स्मृति_addr(buf);
 
 	dst_parm->type = VMMDEV_HGCM_PARM_TYPE_PAGELIST;
 	dst_parm->u.page_list.size = len;
 	dst_parm->u.page_list.offset = *off_extra;
 	dst_pg_lst->flags = hgcm_call_linear_addr_type_to_pagelist_flags(type);
-	dst_pg_lst->offset_first_page = (unsigned long)buf & ~PAGE_MASK;
+	dst_pg_lst->offset_first_page = (अचिन्हित दीर्घ)buf & ~PAGE_MASK;
 	dst_pg_lst->page_count = page_count;
 
-	for (i = 0; i < page_count; i++) {
-		if (is_vmalloc)
-			page = vmalloc_to_page(buf);
-		else
+	क्रम (i = 0; i < page_count; i++) अणु
+		अगर (is_vदो_स्मृति)
+			page = vदो_स्मृति_to_page(buf);
+		अन्यथा
 			page = virt_to_page(buf);
 
 		dst_pg_lst->pages[i] = page_to_phys(page);
 		buf += PAGE_SIZE;
-	}
+	पूर्ण
 
-	*off_extra += offsetof(struct vmmdev_hgcm_pagelist, pages[page_count]);
-}
+	*off_extra += दुरत्व(काष्ठा vmmdev_hgcm_pagelist, pages[page_count]);
+पूर्ण
 
 /**
  * Initializes the call request that we're sending to the host.
  * @call:            The call to initialize.
  * @client_id:       The client ID of the caller.
  * @function:        The function number of the function to call.
- * @src_parm:        Pointer to source function call parameters.
+ * @src_parm:        Poपूर्णांकer to source function call parameters.
  * @parm_count:      Number of function call parameters.
  * @bounce_bufs:     The bouncebuffer array.
  */
-static void hgcm_call_init_call(
-	struct vmmdev_hgcm_call *call, u32 client_id, u32 function,
-	const struct vmmdev_hgcm_function_parameter *src_parm,
-	u32 parm_count, void **bounce_bufs)
-{
-	struct vmmdev_hgcm_function_parameter *dst_parm =
+अटल व्योम hgcm_call_init_call(
+	काष्ठा vmmdev_hgcm_call *call, u32 client_id, u32 function,
+	स्थिर काष्ठा vmmdev_hgcm_function_parameter *src_parm,
+	u32 parm_count, व्योम **bounce_bufs)
+अणु
+	काष्ठा vmmdev_hgcm_function_parameter *dst_parm =
 		VMMDEV_HGCM_CALL_PARMS(call);
-	u32 i, off_extra = (uintptr_t)(dst_parm + parm_count) - (uintptr_t)call;
-	void *buf;
+	u32 i, off_extra = (uपूर्णांकptr_t)(dst_parm + parm_count) - (uपूर्णांकptr_t)call;
+	व्योम *buf;
 
 	call->header.flags = 0;
 	call->header.result = VINF_SUCCESS;
@@ -393,352 +394,352 @@ static void hgcm_call_init_call(
 	call->function = function;
 	call->parm_count = parm_count;
 
-	for (i = 0; i < parm_count; i++, src_parm++, dst_parm++) {
-		switch (src_parm->type) {
-		case VMMDEV_HGCM_PARM_TYPE_32BIT:
-		case VMMDEV_HGCM_PARM_TYPE_64BIT:
+	क्रम (i = 0; i < parm_count; i++, src_parm++, dst_parm++) अणु
+		चयन (src_parm->type) अणु
+		हाल VMMDEV_HGCM_PARM_TYPE_32BIT:
+		हाल VMMDEV_HGCM_PARM_TYPE_64BIT:
 			*dst_parm = *src_parm;
-			break;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
 			hgcm_call_init_linaddr(call, dst_parm, bounce_bufs[i],
-					       src_parm->u.pointer.size,
+					       src_parm->u.poपूर्णांकer.size,
 					       src_parm->type, &off_extra);
-			break;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_IN:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_OUT:
-			buf = (void *)src_parm->u.pointer.u.linear_addr;
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_IN:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_OUT:
+			buf = (व्योम *)src_parm->u.poपूर्णांकer.u.linear_addr;
 			hgcm_call_init_linaddr(call, dst_parm, buf,
-					       src_parm->u.pointer.size,
+					       src_parm->u.poपूर्णांकer.size,
 					       src_parm->type, &off_extra);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			WARN_ON(1);
 			dst_parm->type = VMMDEV_HGCM_PARM_TYPE_INVALID;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * Tries to cancel a pending HGCM call.
  *
  * Return: VBox status code
  */
-static int hgcm_cancel_call(struct vbg_dev *gdev, struct vmmdev_hgcm_call *call)
-{
-	int rc;
+अटल पूर्णांक hgcm_cancel_call(काष्ठा vbg_dev *gdev, काष्ठा vmmdev_hgcm_call *call)
+अणु
+	पूर्णांक rc;
 
 	/*
-	 * We use a pre-allocated request for cancellations, which is
-	 * protected by cancel_req_mutex. This means that all cancellations
+	 * We use a pre-allocated request क्रम cancellations, which is
+	 * रक्षित by cancel_req_mutex. This means that all cancellations
 	 * get serialized, this should be fine since they should be rare.
 	 */
 	mutex_lock(&gdev->cancel_req_mutex);
 	gdev->cancel_req->phys_req_to_cancel = virt_to_phys(call);
-	rc = vbg_req_perform(gdev, gdev->cancel_req);
+	rc = vbg_req_perक्रमm(gdev, gdev->cancel_req);
 	mutex_unlock(&gdev->cancel_req_mutex);
 
-	if (rc == VERR_NOT_IMPLEMENTED) {
+	अगर (rc == VERR_NOT_IMPLEMENTED) अणु
 		call->header.flags |= VMMDEV_HGCM_REQ_CANCELLED;
 		call->header.header.request_type = VMMDEVREQ_HGCM_CANCEL;
 
-		rc = vbg_req_perform(gdev, call);
-		if (rc == VERR_INVALID_PARAMETER)
+		rc = vbg_req_perक्रमm(gdev, call);
+		अगर (rc == VERR_INVALID_PARAMETER)
 			rc = VERR_NOT_FOUND;
-	}
+	पूर्ण
 
-	if (rc >= 0)
+	अगर (rc >= 0)
 		call->header.flags |= VMMDEV_HGCM_REQ_CANCELLED;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /**
- * Performs the call and completion wait.
- * Return: 0 or negative errno value.
+ * Perक्रमms the call and completion रुको.
+ * Return: 0 or negative त्रुटि_सं value.
  * @gdev:        The VBoxGuest device extension.
  * @call:        The call to execute.
- * @timeout_ms:  Timeout in ms.
- * @leak_it:     Where to return the leak it / free it, indicator.
+ * @समयout_ms:  Timeout in ms.
+ * @leak_it:     Where to वापस the leak it / मुक्त it, indicator.
  *               Cancellation fun.
  */
-static int vbg_hgcm_do_call(struct vbg_dev *gdev, struct vmmdev_hgcm_call *call,
-			    u32 timeout_ms, bool interruptible, bool *leak_it)
-{
-	int rc, cancel_rc, ret;
-	long timeout;
+अटल पूर्णांक vbg_hgcm_करो_call(काष्ठा vbg_dev *gdev, काष्ठा vmmdev_hgcm_call *call,
+			    u32 समयout_ms, bool पूर्णांकerruptible, bool *leak_it)
+अणु
+	पूर्णांक rc, cancel_rc, ret;
+	दीर्घ समयout;
 
 	*leak_it = false;
 
-	rc = vbg_req_perform(gdev, call);
+	rc = vbg_req_perक्रमm(gdev, call);
 
 	/*
 	 * If the call failed, then pretend success. Upper layers will
-	 * interpret the result code in the packet.
+	 * पूर्णांकerpret the result code in the packet.
 	 */
-	if (rc < 0) {
+	अगर (rc < 0) अणु
 		call->header.result = rc;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (rc != VINF_HGCM_ASYNC_EXECUTE)
-		return 0;
+	अगर (rc != VINF_HGCM_ASYNC_EXECUTE)
+		वापस 0;
 
-	/* Host decided to process the request asynchronously, wait for it */
-	if (timeout_ms == U32_MAX)
-		timeout = MAX_SCHEDULE_TIMEOUT;
-	else
-		timeout = msecs_to_jiffies(timeout_ms);
+	/* Host decided to process the request asynchronously, रुको क्रम it */
+	अगर (समयout_ms == U32_MAX)
+		समयout = MAX_SCHEDULE_TIMEOUT;
+	अन्यथा
+		समयout = msecs_to_jअगरfies(समयout_ms);
 
-	if (interruptible) {
-		timeout = wait_event_interruptible_timeout(gdev->hgcm_wq,
-							   hgcm_req_done(gdev, &call->header),
-							   timeout);
-	} else {
-		timeout = wait_event_timeout(gdev->hgcm_wq,
-					     hgcm_req_done(gdev, &call->header),
-					     timeout);
-	}
+	अगर (पूर्णांकerruptible) अणु
+		समयout = रुको_event_पूर्णांकerruptible_समयout(gdev->hgcm_wq,
+							   hgcm_req_करोne(gdev, &call->header),
+							   समयout);
+	पूर्ण अन्यथा अणु
+		समयout = रुको_event_समयout(gdev->hgcm_wq,
+					     hgcm_req_करोne(gdev, &call->header),
+					     समयout);
+	पूर्ण
 
-	/* timeout > 0 means hgcm_req_done has returned true, so success */
-	if (timeout > 0)
-		return 0;
+	/* समयout > 0 means hgcm_req_करोne has वापसed true, so success */
+	अगर (समयout > 0)
+		वापस 0;
 
-	if (timeout == 0)
+	अगर (समयout == 0)
 		ret = -ETIMEDOUT;
-	else
+	अन्यथा
 		ret = -EINTR;
 
 	/* Cancel the request */
 	cancel_rc = hgcm_cancel_call(gdev, call);
-	if (cancel_rc >= 0)
-		return ret;
+	अगर (cancel_rc >= 0)
+		वापस ret;
 
 	/*
 	 * Failed to cancel, this should mean that the cancel has lost the
-	 * race with normal completion, wait while the host completes it.
+	 * race with normal completion, रुको जबतक the host completes it.
 	 */
-	if (cancel_rc == VERR_NOT_FOUND || cancel_rc == VERR_SEM_DESTROYED)
-		timeout = msecs_to_jiffies(500);
-	else
-		timeout = msecs_to_jiffies(2000);
+	अगर (cancel_rc == VERR_NOT_FOUND || cancel_rc == VERR_SEM_DESTROYED)
+		समयout = msecs_to_jअगरfies(500);
+	अन्यथा
+		समयout = msecs_to_jअगरfies(2000);
 
-	timeout = wait_event_timeout(gdev->hgcm_wq,
-				     hgcm_req_done(gdev, &call->header),
-				     timeout);
+	समयout = रुको_event_समयout(gdev->hgcm_wq,
+				     hgcm_req_करोne(gdev, &call->header),
+				     समयout);
 
-	if (WARN_ON(timeout == 0)) {
+	अगर (WARN_ON(समयout == 0)) अणु
 		/* We really should never get here */
 		vbg_err("%s: Call timedout and cancellation failed, leaking the request\n",
 			__func__);
 		*leak_it = true;
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* The call has completed normally after all */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * Copies the result of the call back to the caller info structure and user
+ * Copies the result of the call back to the caller info काष्ठाure and user
  * buffers.
- * Return: 0 or negative errno value.
+ * Return: 0 or negative त्रुटि_सं value.
  * @call:            HGCM call request.
- * @dst_parm:        Pointer to function call parameters destination.
+ * @dst_parm:        Poपूर्णांकer to function call parameters destination.
  * @parm_count:      Number of function call parameters.
  * @bounce_bufs:     The bouncebuffer array.
  */
-static int hgcm_call_copy_back_result(
-	const struct vmmdev_hgcm_call *call,
-	struct vmmdev_hgcm_function_parameter *dst_parm,
-	u32 parm_count, void **bounce_bufs)
-{
-	const struct vmmdev_hgcm_function_parameter *src_parm =
+अटल पूर्णांक hgcm_call_copy_back_result(
+	स्थिर काष्ठा vmmdev_hgcm_call *call,
+	काष्ठा vmmdev_hgcm_function_parameter *dst_parm,
+	u32 parm_count, व्योम **bounce_bufs)
+अणु
+	स्थिर काष्ठा vmmdev_hgcm_function_parameter *src_parm =
 		VMMDEV_HGCM_CALL_PARMS(call);
-	void __user *p;
-	int ret;
+	व्योम __user *p;
+	पूर्णांक ret;
 	u32 i;
 
 	/* Copy back parameters. */
-	for (i = 0; i < parm_count; i++, src_parm++, dst_parm++) {
-		switch (dst_parm->type) {
-		case VMMDEV_HGCM_PARM_TYPE_32BIT:
-		case VMMDEV_HGCM_PARM_TYPE_64BIT:
+	क्रम (i = 0; i < parm_count; i++, src_parm++, dst_parm++) अणु
+		चयन (dst_parm->type) अणु
+		हाल VMMDEV_HGCM_PARM_TYPE_32BIT:
+		हाल VMMDEV_HGCM_PARM_TYPE_64BIT:
 			*dst_parm = *src_parm;
-			break;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_PAGELIST:
+		हाल VMMDEV_HGCM_PARM_TYPE_PAGELIST:
 			dst_parm->u.page_list.size = src_parm->u.page_list.size;
-			break;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_IN:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_OUT:
-			dst_parm->u.pointer.size = src_parm->u.pointer.size;
-			break;
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_IN:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_KERNEL_OUT:
+			dst_parm->u.poपूर्णांकer.size = src_parm->u.poपूर्णांकer.size;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
-			dst_parm->u.pointer.size = src_parm->u.pointer.size;
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
+			dst_parm->u.poपूर्णांकer.size = src_parm->u.poपूर्णांकer.size;
 
-			p = (void __user *)dst_parm->u.pointer.u.linear_addr;
+			p = (व्योम __user *)dst_parm->u.poपूर्णांकer.u.linear_addr;
 			ret = copy_to_user(p, bounce_bufs[i],
-					   min(src_parm->u.pointer.size,
-					       dst_parm->u.pointer.size));
-			if (ret)
-				return -EFAULT;
-			break;
+					   min(src_parm->u.poपूर्णांकer.size,
+					       dst_parm->u.poपूर्णांकer.size));
+			अगर (ret)
+				वापस -EFAULT;
+			अवरोध;
 
-		default:
+		शेष:
 			WARN_ON(1);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vbg_hgcm_call(struct vbg_dev *gdev, u32 requestor, u32 client_id,
-		  u32 function, u32 timeout_ms,
-		  struct vmmdev_hgcm_function_parameter *parms, u32 parm_count,
-		  int *vbox_status)
-{
-	struct vmmdev_hgcm_call *call;
-	void **bounce_bufs = NULL;
+पूर्णांक vbg_hgcm_call(काष्ठा vbg_dev *gdev, u32 requestor, u32 client_id,
+		  u32 function, u32 समयout_ms,
+		  काष्ठा vmmdev_hgcm_function_parameter *parms, u32 parm_count,
+		  पूर्णांक *vbox_status)
+अणु
+	काष्ठा vmmdev_hgcm_call *call;
+	व्योम **bounce_bufs = शून्य;
 	bool leak_it;
-	size_t size;
-	int i, ret;
+	माप_प्रकार size;
+	पूर्णांक i, ret;
 
-	size = sizeof(struct vmmdev_hgcm_call) +
-		   parm_count * sizeof(struct vmmdev_hgcm_function_parameter);
+	size = माप(काष्ठा vmmdev_hgcm_call) +
+		   parm_count * माप(काष्ठा vmmdev_hgcm_function_parameter);
 	/*
-	 * Validate and buffer the parameters for the call. This also increases
-	 * call_size with the amount of extra space needed for page lists.
+	 * Validate and buffer the parameters क्रम the call. This also increases
+	 * call_size with the amount of extra space needed क्रम page lists.
 	 */
 	ret = hgcm_call_preprocess(parms, parm_count, &bounce_bufs, &size);
-	if (ret) {
+	अगर (ret) अणु
 		/* Even on error bounce bufs may still have been allocated */
-		goto free_bounce_bufs;
-	}
+		जाओ मुक्त_bounce_bufs;
+	पूर्ण
 
 	call = vbg_req_alloc(size, VMMDEVREQ_HGCM_CALL, requestor);
-	if (!call) {
+	अगर (!call) अणु
 		ret = -ENOMEM;
-		goto free_bounce_bufs;
-	}
+		जाओ मुक्त_bounce_bufs;
+	पूर्ण
 
 	hgcm_call_init_call(call, client_id, function, parms, parm_count,
 			    bounce_bufs);
 
-	ret = vbg_hgcm_do_call(gdev, call, timeout_ms,
+	ret = vbg_hgcm_करो_call(gdev, call, समयout_ms,
 			       requestor & VMMDEV_REQUESTOR_USERMODE, &leak_it);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		*vbox_status = call->header.result;
 		ret = hgcm_call_copy_back_result(call, parms, parm_count,
 						 bounce_bufs);
-	}
+	पूर्ण
 
-	if (!leak_it)
-		vbg_req_free(call, size);
+	अगर (!leak_it)
+		vbg_req_मुक्त(call, size);
 
-free_bounce_bufs:
-	if (bounce_bufs) {
-		for (i = 0; i < parm_count; i++)
-			kvfree(bounce_bufs[i]);
-		kfree(bounce_bufs);
-	}
+मुक्त_bounce_bufs:
+	अगर (bounce_bufs) अणु
+		क्रम (i = 0; i < parm_count; i++)
+			kvमुक्त(bounce_bufs[i]);
+		kमुक्त(bounce_bufs);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(vbg_hgcm_call);
 
-#ifdef CONFIG_COMPAT
-int vbg_hgcm_call32(
-	struct vbg_dev *gdev, u32 requestor, u32 client_id, u32 function,
-	u32 timeout_ms, struct vmmdev_hgcm_function_parameter32 *parm32,
-	u32 parm_count, int *vbox_status)
-{
-	struct vmmdev_hgcm_function_parameter *parm64 = NULL;
+#अगर_घोषित CONFIG_COMPAT
+पूर्णांक vbg_hgcm_call32(
+	काष्ठा vbg_dev *gdev, u32 requestor, u32 client_id, u32 function,
+	u32 समयout_ms, काष्ठा vmmdev_hgcm_function_parameter32 *parm32,
+	u32 parm_count, पूर्णांक *vbox_status)
+अणु
+	काष्ठा vmmdev_hgcm_function_parameter *parm64 = शून्य;
 	u32 i, size;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	/* KISS allocate a temporary request and convert the parameters. */
-	size = parm_count * sizeof(struct vmmdev_hgcm_function_parameter);
+	size = parm_count * माप(काष्ठा vmmdev_hgcm_function_parameter);
 	parm64 = kzalloc(size, GFP_KERNEL);
-	if (!parm64)
-		return -ENOMEM;
+	अगर (!parm64)
+		वापस -ENOMEM;
 
-	for (i = 0; i < parm_count; i++) {
-		switch (parm32[i].type) {
-		case VMMDEV_HGCM_PARM_TYPE_32BIT:
+	क्रम (i = 0; i < parm_count; i++) अणु
+		चयन (parm32[i].type) अणु
+		हाल VMMDEV_HGCM_PARM_TYPE_32BIT:
 			parm64[i].type = VMMDEV_HGCM_PARM_TYPE_32BIT;
 			parm64[i].u.value32 = parm32[i].u.value32;
-			break;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_64BIT:
+		हाल VMMDEV_HGCM_PARM_TYPE_64BIT:
 			parm64[i].type = VMMDEV_HGCM_PARM_TYPE_64BIT;
 			parm64[i].u.value64 = parm32[i].u.value64;
-			break;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
 			parm64[i].type = parm32[i].type;
-			parm64[i].u.pointer.size = parm32[i].u.pointer.size;
-			parm64[i].u.pointer.u.linear_addr =
-			    parm32[i].u.pointer.u.linear_addr;
-			break;
+			parm64[i].u.poपूर्णांकer.size = parm32[i].u.poपूर्णांकer.size;
+			parm64[i].u.poपूर्णांकer.u.linear_addr =
+			    parm32[i].u.poपूर्णांकer.u.linear_addr;
+			अवरोध;
 
-		default:
+		शेष:
 			ret = -EINVAL;
-		}
-		if (ret < 0)
-			goto out_free;
-	}
+		पूर्ण
+		अगर (ret < 0)
+			जाओ out_मुक्त;
+	पूर्ण
 
-	ret = vbg_hgcm_call(gdev, requestor, client_id, function, timeout_ms,
+	ret = vbg_hgcm_call(gdev, requestor, client_id, function, समयout_ms,
 			    parm64, parm_count, vbox_status);
-	if (ret < 0)
-		goto out_free;
+	अगर (ret < 0)
+		जाओ out_मुक्त;
 
 	/* Copy back. */
-	for (i = 0; i < parm_count; i++, parm32++, parm64++) {
-		switch (parm64[i].type) {
-		case VMMDEV_HGCM_PARM_TYPE_32BIT:
+	क्रम (i = 0; i < parm_count; i++, parm32++, parm64++) अणु
+		चयन (parm64[i].type) अणु
+		हाल VMMDEV_HGCM_PARM_TYPE_32BIT:
 			parm32[i].u.value32 = parm64[i].u.value32;
-			break;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_64BIT:
+		हाल VMMDEV_HGCM_PARM_TYPE_64BIT:
 			parm32[i].u.value64 = parm64[i].u.value64;
-			break;
+			अवरोध;
 
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR:
-		case VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
-			parm32[i].u.pointer.size = parm64[i].u.pointer.size;
-			break;
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_OUT:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR:
+		हाल VMMDEV_HGCM_PARM_TYPE_LINADDR_IN:
+			parm32[i].u.poपूर्णांकer.size = parm64[i].u.poपूर्णांकer.size;
+			अवरोध;
 
-		default:
+		शेष:
 			WARN_ON(1);
 			ret = -EINVAL;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-out_free:
-	kfree(parm64);
-	return ret;
-}
-#endif
+out_मुक्त:
+	kमुक्त(parm64);
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
-static const int vbg_status_code_to_errno_table[] = {
+अटल स्थिर पूर्णांक vbg_status_code_to_त्रुटि_सं_table[] = अणु
 	[-VERR_ACCESS_DENIED]                            = -EPERM,
-	[-VERR_FILE_NOT_FOUND]                           = -ENOENT,
+	[-VERR_खाता_NOT_FOUND]                           = -ENOENT,
 	[-VERR_PROCESS_NOT_FOUND]                        = -ESRCH,
 	[-VERR_INTERRUPTED]                              = -EINTR,
 	[-VERR_DEV_IO_ERROR]                             = -EIO,
@@ -751,27 +752,27 @@ static const int vbg_status_code_to_errno_table[] = {
 	[-VERR_RESOURCE_BUSY]                            = -EBUSY,
 	[-VERR_ALREADY_EXISTS]                           = -EEXIST,
 	[-VERR_NOT_SAME_DEVICE]                          = -EXDEV,
-	[-VERR_NOT_A_DIRECTORY]                          = -ENOTDIR,
-	[-VERR_PATH_NOT_FOUND]                           = -ENOTDIR,
+	[-VERR_NOT_A_सूचीECTORY]                          = -ENOTसूची,
+	[-VERR_PATH_NOT_FOUND]                           = -ENOTसूची,
 	[-VERR_INVALID_NAME]                             = -ENOENT,
-	[-VERR_IS_A_DIRECTORY]                           = -EISDIR,
+	[-VERR_IS_A_सूचीECTORY]                           = -EISसूची,
 	[-VERR_INVALID_PARAMETER]                        = -EINVAL,
-	[-VERR_TOO_MANY_OPEN_FILES]                      = -ENFILE,
+	[-VERR_TOO_MANY_OPEN_खाताS]                      = -ENखाता,
 	[-VERR_INVALID_FUNCTION]                         = -ENOTTY,
 	[-VERR_SHARING_VIOLATION]                        = -ETXTBSY,
-	[-VERR_FILE_TOO_BIG]                             = -EFBIG,
+	[-VERR_खाता_TOO_BIG]                             = -EFBIG,
 	[-VERR_DISK_FULL]                                = -ENOSPC,
 	[-VERR_SEEK_ON_DEVICE]                           = -ESPIPE,
 	[-VERR_WRITE_PROTECT]                            = -EROFS,
 	[-VERR_BROKEN_PIPE]                              = -EPIPE,
 	[-VERR_DEADLOCK]                                 = -EDEADLK,
-	[-VERR_FILENAME_TOO_LONG]                        = -ENAMETOOLONG,
-	[-VERR_FILE_LOCK_FAILED]                         = -ENOLCK,
+	[-VERR_खाताNAME_TOO_LONG]                        = -ENAMETOOLONG,
+	[-VERR_खाता_LOCK_FAILED]                         = -ENOLCK,
 	[-VERR_NOT_IMPLEMENTED]                          = -ENOSYS,
 	[-VERR_NOT_SUPPORTED]                            = -ENOSYS,
-	[-VERR_DIR_NOT_EMPTY]                            = -ENOTEMPTY,
+	[-VERR_सूची_NOT_EMPTY]                            = -ENOTEMPTY,
 	[-VERR_TOO_MANY_SYMLINKS]                        = -ELOOP,
-	[-VERR_NO_MORE_FILES]				 = -ENODATA,
+	[-VERR_NO_MORE_खाताS]				 = -ENODATA,
 	[-VERR_NO_DATA]                                  = -ENODATA,
 	[-VERR_NET_NO_NETWORK]                           = -ENONET,
 	[-VERR_NET_NOT_UNIQUE_NAME]                      = -ENOTUNIQ,
@@ -806,20 +807,20 @@ static const int vbg_status_code_to_errno_table[] = {
 	[-VERR_NET_IN_PROGRESS]                          = -EINPROGRESS,
 	[-VERR_MEDIA_NOT_PRESENT]                        = -ENOMEDIUM,
 	[-VERR_MEDIA_NOT_RECOGNIZED]                     = -EMEDIUMTYPE,
-};
+पूर्ण;
 
-int vbg_status_code_to_errno(int rc)
-{
-	if (rc >= 0)
-		return 0;
+पूर्णांक vbg_status_code_to_त्रुटि_सं(पूर्णांक rc)
+अणु
+	अगर (rc >= 0)
+		वापस 0;
 
 	rc = -rc;
-	if (rc >= ARRAY_SIZE(vbg_status_code_to_errno_table) ||
-	    vbg_status_code_to_errno_table[rc] == 0) {
+	अगर (rc >= ARRAY_SIZE(vbg_status_code_to_त्रुटि_सं_table) ||
+	    vbg_status_code_to_त्रुटि_सं_table[rc] == 0) अणु
 		vbg_warn("%s: Unhandled err %d\n", __func__, -rc);
-		return -EPROTO;
-	}
+		वापस -EPROTO;
+	पूर्ण
 
-	return vbg_status_code_to_errno_table[rc];
-}
-EXPORT_SYMBOL(vbg_status_code_to_errno);
+	वापस vbg_status_code_to_त्रुटि_सं_table[rc];
+पूर्ण
+EXPORT_SYMBOL(vbg_status_code_to_त्रुटि_सं);

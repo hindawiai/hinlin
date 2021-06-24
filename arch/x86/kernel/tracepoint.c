@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Code for supporting irq vector tracepoints.
+ * Code क्रम supporting irq vector tracepoपूर्णांकs.
  *
  * Copyright (C) 2013 Seiji Aguchi <seiji.aguchi@hds.com>
  *
  */
-#include <linux/jump_label.h>
-#include <linux/atomic.h>
+#समावेश <linux/jump_label.h>
+#समावेश <linux/atomic.h>
 
-#include <asm/hw_irq.h>
-#include <asm/desc.h>
-#include <asm/trace/exceptions.h>
-#include <asm/trace/irq_vectors.h>
+#समावेश <यंत्र/hw_irq.h>
+#समावेश <यंत्र/desc.h>
+#समावेश <यंत्र/trace/exceptions.h>
+#समावेश <यंत्र/trace/irq_vectors.h>
 
 DEFINE_STATIC_KEY_FALSE(trace_pagefault_key);
 
-int trace_pagefault_reg(void)
-{
-	static_branch_inc(&trace_pagefault_key);
-	return 0;
-}
+पूर्णांक trace_pagefault_reg(व्योम)
+अणु
+	अटल_branch_inc(&trace_pagefault_key);
+	वापस 0;
+पूर्ण
 
-void trace_pagefault_unreg(void)
-{
-	static_branch_dec(&trace_pagefault_key);
-}
+व्योम trace_pagefault_unreg(व्योम)
+अणु
+	अटल_branch_dec(&trace_pagefault_key);
+पूर्ण

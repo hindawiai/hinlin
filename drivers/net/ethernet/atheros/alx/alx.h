@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013 Johannes Berg <johannes@sipsolutions.net>
  *
- *  This file is free software: you may copy, redistribute and/or modify it
+ *  This file is मुक्त software: you may copy, redistribute and/or modअगरy it
  *  under the terms of the GNU General Public License as published by the
  *  Free Software Foundation, either version 2 of the License, or (at your
  *  option) any later version.
@@ -9,136 +10,136 @@
  *  This file is distributed in the hope that it will be useful, but
  *  WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License for more details.
+ *  General Public License क्रम more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * This file incorporates work covered by the following copyright and
  * permission notice:
  *
  * Copyright (c) 2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _ALX_H_
-#define _ALX_H_
+#अगर_अघोषित _ALX_H_
+#घोषणा _ALX_H_
 
-#include <linux/types.h>
-#include <linux/etherdevice.h>
-#include <linux/dma-mapping.h>
-#include <linux/spinlock.h>
-#include "hw.h"
+#समावेश <linux/types.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/spinlock.h>
+#समावेश "hw.h"
 
-#define ALX_WATCHDOG_TIME   (5 * HZ)
+#घोषणा ALX_WATCHDOG_TIME   (5 * HZ)
 
-struct alx_buffer {
-	struct sk_buff *skb;
+काष्ठा alx_buffer अणु
+	काष्ठा sk_buff *skb;
 	DEFINE_DMA_UNMAP_ADDR(dma);
 	DEFINE_DMA_UNMAP_LEN(size);
-};
+पूर्ण;
 
-struct alx_rx_queue {
-	struct net_device *netdev;
-	struct device *dev;
-	struct alx_napi *np;
+काष्ठा alx_rx_queue अणु
+	काष्ठा net_device *netdev;
+	काष्ठा device *dev;
+	काष्ठा alx_napi *np;
 
-	struct alx_rrd *rrd;
+	काष्ठा alx_rrd *rrd;
 	dma_addr_t rrd_dma;
 
-	struct alx_rfd *rfd;
+	काष्ठा alx_rfd *rfd;
 	dma_addr_t rfd_dma;
 
-	struct alx_buffer *bufs;
+	काष्ठा alx_buffer *bufs;
 
 	u16 count;
-	u16 write_idx, read_idx;
-	u16 rrd_read_idx;
+	u16 ग_लिखो_idx, पढ़ो_idx;
+	u16 rrd_पढ़ो_idx;
 	u16 queue_idx;
-};
-#define ALX_RX_ALLOC_THRESH	32
+पूर्ण;
+#घोषणा ALX_RX_ALLOC_THRESH	32
 
-struct alx_tx_queue {
-	struct net_device *netdev;
-	struct device *dev;
+काष्ठा alx_tx_queue अणु
+	काष्ठा net_device *netdev;
+	काष्ठा device *dev;
 
-	struct alx_txd *tpd;
+	काष्ठा alx_txd *tpd;
 	dma_addr_t tpd_dma;
 
-	struct alx_buffer *bufs;
+	काष्ठा alx_buffer *bufs;
 
 	u16 count;
-	u16 write_idx, read_idx;
+	u16 ग_लिखो_idx, पढ़ो_idx;
 	u16 queue_idx;
 	u16 p_reg, c_reg;
-};
+पूर्ण;
 
-#define ALX_DEFAULT_TX_WORK 128
+#घोषणा ALX_DEFAULT_TX_WORK 128
 
-enum alx_device_quirks {
+क्रमागत alx_device_quirks अणु
 	ALX_DEV_QUIRK_MSI_INTX_DISABLE_BUG = BIT(0),
-};
+पूर्ण;
 
-struct alx_napi {
-	struct napi_struct	napi;
-	struct alx_priv		*alx;
-	struct alx_rx_queue	*rxq;
-	struct alx_tx_queue	*txq;
-	int			vec_idx;
+काष्ठा alx_napi अणु
+	काष्ठा napi_काष्ठा	napi;
+	काष्ठा alx_priv		*alx;
+	काष्ठा alx_rx_queue	*rxq;
+	काष्ठा alx_tx_queue	*txq;
+	पूर्णांक			vec_idx;
 	u32			vec_mask;
-	char			irq_lbl[IFNAMSIZ + 8];
-};
+	अक्षर			irq_lbl[IFNAMSIZ + 8];
+पूर्ण;
 
-#define ALX_MAX_NAPIS 8
+#घोषणा ALX_MAX_NAPIS 8
 
-struct alx_priv {
-	struct net_device *dev;
+काष्ठा alx_priv अणु
+	काष्ठा net_device *dev;
 
-	struct alx_hw hw;
+	काष्ठा alx_hw hw;
 
 	/* msi-x vectors */
-	int num_vec;
+	पूर्णांक num_vec;
 
 	/* all descriptor memory */
-	struct {
+	काष्ठा अणु
 		dma_addr_t dma;
-		void *virt;
-		unsigned int size;
-	} descmem;
+		व्योम *virt;
+		अचिन्हित पूर्णांक size;
+	पूर्ण descmem;
 
-	struct alx_napi *qnapi[ALX_MAX_NAPIS];
-	int num_txq;
-	int num_rxq;
-	int num_napi;
+	काष्ठा alx_napi *qnapi[ALX_MAX_NAPIS];
+	पूर्णांक num_txq;
+	पूर्णांक num_rxq;
+	पूर्णांक num_napi;
 
-	/* protect int_mask updates */
+	/* protect पूर्णांक_mask updates */
 	spinlock_t irq_lock;
-	u32 int_mask;
+	u32 पूर्णांक_mask;
 
-	unsigned int tx_ringsz;
-	unsigned int rx_ringsz;
-	unsigned int rxbuf_size;
+	अचिन्हित पूर्णांक tx_ringsz;
+	अचिन्हित पूर्णांक rx_ringsz;
+	अचिन्हित पूर्णांक rxbuf_size;
 
-	struct work_struct link_check_wk;
-	struct work_struct reset_wk;
+	काष्ठा work_काष्ठा link_check_wk;
+	काष्ठा work_काष्ठा reset_wk;
 
 	u16 msg_enable;
 
 	/* protects hw.stats */
 	spinlock_t stats_lock;
-};
+पूर्ण;
 
-extern const struct ethtool_ops alx_ethtool_ops;
+बाह्य स्थिर काष्ठा ethtool_ops alx_ethtool_ops;
 
-#endif
+#पूर्ण_अगर

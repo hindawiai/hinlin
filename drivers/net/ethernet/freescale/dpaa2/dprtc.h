@@ -1,68 +1,69 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright 2013-2016 Freescale Semiconductor Inc.
  * Copyright 2016-2018 NXP
  */
 
-#ifndef __FSL_DPRTC_H
-#define __FSL_DPRTC_H
+#अगर_अघोषित __FSL_DPRTC_H
+#घोषणा __FSL_DPRTC_H
 
 /* Data Path Real Time Counter API
- * Contains initialization APIs and runtime control APIs for RTC
+ * Contains initialization APIs and runसमय control APIs क्रम RTC
  */
 
-struct fsl_mc_io;
+काष्ठा fsl_mc_io;
 
-#define DPRTC_MAX_IRQ_NUM	1
-#define DPRTC_IRQ_INDEX		0
+#घोषणा DPRTC_MAX_IRQ_NUM	1
+#घोषणा DPRTC_IRQ_INDEX		0
 
-#define DPRTC_EVENT_PPS		0x08000000
-#define DPRTC_EVENT_ETS1	0x00800000
-#define DPRTC_EVENT_ETS2	0x00400000
+#घोषणा DPRTC_EVENT_PPS		0x08000000
+#घोषणा DPRTC_EVENT_ETS1	0x00800000
+#घोषणा DPRTC_EVENT_ETS2	0x00400000
 
-int dprtc_open(struct fsl_mc_io *mc_io,
+पूर्णांक dprtc_खोलो(काष्ठा fsl_mc_io *mc_io,
 	       u32 cmd_flags,
-	       int dprtc_id,
+	       पूर्णांक dprtc_id,
 	       u16 *token);
 
-int dprtc_close(struct fsl_mc_io *mc_io,
+पूर्णांक dprtc_बंद(काष्ठा fsl_mc_io *mc_io,
 		u32 cmd_flags,
 		u16 token);
 
-int dprtc_set_irq_enable(struct fsl_mc_io *mc_io,
+पूर्णांक dprtc_set_irq_enable(काष्ठा fsl_mc_io *mc_io,
 			 u32 cmd_flags,
 			 u16 token,
 			 u8 irq_index,
 			 u8 en);
 
-int dprtc_get_irq_enable(struct fsl_mc_io *mc_io,
+पूर्णांक dprtc_get_irq_enable(काष्ठा fsl_mc_io *mc_io,
 			 u32 cmd_flags,
 			 u16 token,
 			 u8 irq_index,
 			 u8 *en);
 
-int dprtc_set_irq_mask(struct fsl_mc_io *mc_io,
+पूर्णांक dprtc_set_irq_mask(काष्ठा fsl_mc_io *mc_io,
 		       u32 cmd_flags,
 		       u16 token,
 		       u8 irq_index,
 		       u32 mask);
 
-int dprtc_get_irq_mask(struct fsl_mc_io *mc_io,
+पूर्णांक dprtc_get_irq_mask(काष्ठा fsl_mc_io *mc_io,
 		       u32 cmd_flags,
 		       u16 token,
 		       u8 irq_index,
 		       u32 *mask);
 
-int dprtc_get_irq_status(struct fsl_mc_io *mc_io,
+पूर्णांक dprtc_get_irq_status(काष्ठा fsl_mc_io *mc_io,
 			 u32 cmd_flags,
 			 u16 token,
 			 u8 irq_index,
 			 u32 *status);
 
-int dprtc_clear_irq_status(struct fsl_mc_io *mc_io,
+पूर्णांक dprtc_clear_irq_status(काष्ठा fsl_mc_io *mc_io,
 			   u32 cmd_flags,
 			   u16 token,
 			   u8 irq_index,
 			   u32 status);
 
-#endif /* __FSL_DPRTC_H */
+#पूर्ण_अगर /* __FSL_DPRTC_H */

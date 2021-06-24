@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Author(s)......: Holger Smolinski <Holger.Smolinski@de.ibm.com>
  * Based on.......: linux/drivers/s390/block/mdisk.c
- * ...............: by Hartmunt Penner <hpenner@de.ibm.com>
+ * ...............: by Harपंचांगunt Penner <hpenner@de.ibm.com>
  * Bugreports.to..: <Linux390@de.ibm.com>
  * Copyright IBM Corp. 1999, 2000
  *
  */
 
-#define KMSG_COMPONENT "dasd"
+#घोषणा KMSG_COMPONENT "dasd"
 
-#include <linux/kernel_stat.h>
-#include <linux/stddef.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/hdreg.h>
-#include <linux/bio.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/jiffies.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/jअगरfies.h>
 
-#include <asm/dasd.h>
-#include <asm/debug.h>
-#include <asm/diag.h>
-#include <asm/ebcdic.h>
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/vtoc.h>
+#समावेश <यंत्र/dasd.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/diag.h>
+#समावेश <यंत्र/ebcdic.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/vtoc.h>
 
-#include "dasd_int.h"
-#include "dasd_diag.h"
+#समावेश "dasd_int.h"
+#समावेश "dasd_diag.h"
 
-#define PRINTK_HEADER "dasd(diag):"
+#घोषणा PRINTK_HEADER "dasd(diag):"
 
 MODULE_LICENSE("GPL");
 
 /* The maximum number of blocks per request (max_blocks) is dependent on the
- * amount of storage that is available in the static I/O buffer for each
- * device. Currently each device gets 2 pages. We want to fit two requests
- * into the available memory so that we can immediately start the next if one
+ * amount of storage that is available in the अटल I/O buffer क्रम each
+ * device. Currently each device माला_लो 2 pages. We want to fit two requests
+ * पूर्णांकo the available memory so that we can immediately start the next अगर one
  * finishes. */
-#define DIAG_MAX_BLOCKS	(((2 * PAGE_SIZE - sizeof(struct dasd_ccw_req) - \
-			   sizeof(struct dasd_diag_req)) / \
-		           sizeof(struct dasd_diag_bio)) / 2)
-#define DIAG_MAX_RETRIES	32
-#define DIAG_TIMEOUT		50
+#घोषणा DIAG_MAX_BLOCKS	(((2 * PAGE_SIZE - माप(काष्ठा dasd_ccw_req) - \
+			   माप(काष्ठा dasd_diag_req)) / \
+		           माप(काष्ठा dasd_diag_bio)) / 2)
+#घोषणा DIAG_MAX_RETRIES	32
+#घोषणा DIAG_TIMEOUT		50
 
-static struct dasd_discipline dasd_diag_discipline;
+अटल काष्ठा dasd_discipline dasd_diag_discipline;
 
-struct dasd_diag_private {
-	struct dasd_diag_characteristics rdc_data;
-	struct dasd_diag_rw_io iob;
-	struct dasd_diag_init_io iib;
+काष्ठा dasd_diag_निजी अणु
+	काष्ठा dasd_diag_अक्षरacteristics rdc_data;
+	काष्ठा dasd_diag_rw_io iob;
+	काष्ठा dasd_diag_init_io iib;
 	blocknum_t pt_block;
-	struct ccw_dev_id dev_id;
-};
+	काष्ठा ccw_dev_id dev_id;
+पूर्ण;
 
-struct dasd_diag_req {
-	unsigned int block_count;
-	struct dasd_diag_bio bio[];
-};
+काष्ठा dasd_diag_req अणु
+	अचिन्हित पूर्णांक block_count;
+	काष्ठा dasd_diag_bio bio[];
+पूर्ण;
 
-static const u8 DASD_DIAG_CMS1[] = { 0xc3, 0xd4, 0xe2, 0xf1 };/* EBCDIC CMS1 */
+अटल स्थिर u8 DASD_DIAG_CMS1[] = अणु 0xc3, 0xd4, 0xe2, 0xf1 पूर्ण;/* EBCDIC CMS1 */
 
-/* Perform DIAG250 call with block I/O parameter list iob (input and output)
+/* Perक्रमm DIAG250 call with block I/O parameter list iob (input and output)
  * and function code cmd.
- * In case of an exception return 3. Otherwise return result of bitwise OR of
- * resulting condition code and DIAG return code. */
-static inline int __dia250(void *iob, int cmd)
-{
-	register unsigned long reg2 asm ("2") = (unsigned long) iob;
-	typedef union {
-		struct dasd_diag_init_io init_io;
-		struct dasd_diag_rw_io rw_io;
-	} addr_type;
-	int rc;
+ * In हाल of an exception वापस 3. Otherwise वापस result of bitwise OR of
+ * resulting condition code and DIAG वापस code. */
+अटल अंतरभूत पूर्णांक __dia250(व्योम *iob, पूर्णांक cmd)
+अणु
+	रेजिस्टर अचिन्हित दीर्घ reg2 यंत्र ("2") = (अचिन्हित दीर्घ) iob;
+	प्रकार जोड़ अणु
+		काष्ठा dasd_diag_init_io init_io;
+		काष्ठा dasd_diag_rw_io rw_io;
+	पूर्ण addr_type;
+	पूर्णांक rc;
 
 	rc = 3;
-	asm volatile(
+	यंत्र अस्थिर(
 		"	diag	2,%2,0x250\n"
 		"0:	ipm	%0\n"
 		"	srl	%0,28\n"
@@ -87,296 +88,296 @@ static inline int __dia250(void *iob, int cmd)
 		: "+d" (rc), "=m" (*(addr_type *) iob)
 		: "d" (cmd), "d" (reg2), "m" (*(addr_type *) iob)
 		: "3", "cc");
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline int dia250(void *iob, int cmd)
-{
+अटल अंतरभूत पूर्णांक dia250(व्योम *iob, पूर्णांक cmd)
+अणु
 	diag_stat_inc(DIAG_STAT_X250);
-	return __dia250(iob, cmd);
-}
+	वापस __dia250(iob, cmd);
+पूर्ण
 
-/* Initialize block I/O to DIAG device using the specified blocksize and
- * block offset. On success, return zero and set end_block to contain the
- * number of blocks on the device minus the specified offset. Return non-zero
+/* Initialize block I/O to DIAG device using the specअगरied blocksize and
+ * block offset. On success, वापस zero and set end_block to contain the
+ * number of blocks on the device minus the specअगरied offset. Return non-zero
  * otherwise. */
-static inline int
-mdsk_init_io(struct dasd_device *device, unsigned int blocksize,
+अटल अंतरभूत पूर्णांक
+mdsk_init_io(काष्ठा dasd_device *device, अचिन्हित पूर्णांक blocksize,
 	     blocknum_t offset, blocknum_t *end_block)
-{
-	struct dasd_diag_private *private = device->private;
-	struct dasd_diag_init_io *iib = &private->iib;
-	int rc;
+अणु
+	काष्ठा dasd_diag_निजी *निजी = device->निजी;
+	काष्ठा dasd_diag_init_io *iib = &निजी->iib;
+	पूर्णांक rc;
 
-	memset(iib, 0, sizeof (struct dasd_diag_init_io));
+	स_रखो(iib, 0, माप (काष्ठा dasd_diag_init_io));
 
-	iib->dev_nr = private->dev_id.devno;
+	iib->dev_nr = निजी->dev_id.devno;
 	iib->block_size = blocksize;
 	iib->offset = offset;
 	iib->flaga = DASD_DIAG_FLAGA_DEFAULT;
 
 	rc = dia250(iib, INIT_BIO);
 
-	if ((rc & 3) == 0 && end_block)
+	अगर ((rc & 3) == 0 && end_block)
 		*end_block = iib->end_block;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* Remove block I/O environment for device. Return zero on success, non-zero
+/* Remove block I/O environment क्रम device. Return zero on success, non-zero
  * otherwise. */
-static inline int
-mdsk_term_io(struct dasd_device * device)
-{
-	struct dasd_diag_private *private = device->private;
-	struct dasd_diag_init_io *iib = &private->iib;
-	int rc;
+अटल अंतरभूत पूर्णांक
+mdsk_term_io(काष्ठा dasd_device * device)
+अणु
+	काष्ठा dasd_diag_निजी *निजी = device->निजी;
+	काष्ठा dasd_diag_init_io *iib = &निजी->iib;
+	पूर्णांक rc;
 
-	memset(iib, 0, sizeof (struct dasd_diag_init_io));
-	iib->dev_nr = private->dev_id.devno;
+	स_रखो(iib, 0, माप (काष्ठा dasd_diag_init_io));
+	iib->dev_nr = निजी->dev_id.devno;
 	rc = dia250(iib, TERM_BIO);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* Error recovery for failed DIAG requests - try to reestablish the DIAG
+/* Error recovery क्रम failed DIAG requests - try to reestablish the DIAG
  * environment. */
-static void
-dasd_diag_erp(struct dasd_device *device)
-{
-	int rc;
+अटल व्योम
+dasd_diag_erp(काष्ठा dasd_device *device)
+अणु
+	पूर्णांक rc;
 
 	mdsk_term_io(device);
-	rc = mdsk_init_io(device, device->block->bp_block, 0, NULL);
-	if (rc == 4) {
-		if (!(test_and_set_bit(DASD_FLAG_DEVICE_RO, &device->flags)))
+	rc = mdsk_init_io(device, device->block->bp_block, 0, शून्य);
+	अगर (rc == 4) अणु
+		अगर (!(test_and_set_bit(DASD_FLAG_DEVICE_RO, &device->flags)))
 			pr_warn("%s: The access mode of a DIAG device changed to read-only\n",
 				dev_name(&device->cdev->dev));
 		rc = 0;
-	}
-	if (rc)
+	पूर्ण
+	अगर (rc)
 		pr_warn("%s: DIAG ERP failed with rc=%d\n",
 			dev_name(&device->cdev->dev), rc);
-}
+पूर्ण
 
 /* Start a given request at the device. Return zero on success, non-zero
  * otherwise. */
-static int
-dasd_start_diag(struct dasd_ccw_req * cqr)
-{
-	struct dasd_device *device;
-	struct dasd_diag_private *private;
-	struct dasd_diag_req *dreq;
-	int rc;
+अटल पूर्णांक
+dasd_start_diag(काष्ठा dasd_ccw_req * cqr)
+अणु
+	काष्ठा dasd_device *device;
+	काष्ठा dasd_diag_निजी *निजी;
+	काष्ठा dasd_diag_req *dreq;
+	पूर्णांक rc;
 
 	device = cqr->startdev;
-	if (cqr->retries < 0) {
+	अगर (cqr->retries < 0) अणु
 		DBF_DEV_EVENT(DBF_ERR, device, "DIAG start_IO: request %p "
 			    "- no retry left)", cqr);
 		cqr->status = DASD_CQR_ERROR;
-		return -EIO;
-	}
-	private = device->private;
+		वापस -EIO;
+	पूर्ण
+	निजी = device->निजी;
 	dreq = cqr->data;
 
-	private->iob.dev_nr = private->dev_id.devno;
-	private->iob.key = 0;
-	private->iob.flags = DASD_DIAG_RWFLAG_ASYNC;
-	private->iob.block_count = dreq->block_count;
-	private->iob.interrupt_params = (addr_t) cqr;
-	private->iob.bio_list = dreq->bio;
-	private->iob.flaga = DASD_DIAG_FLAGA_DEFAULT;
+	निजी->iob.dev_nr = निजी->dev_id.devno;
+	निजी->iob.key = 0;
+	निजी->iob.flags = DASD_DIAG_RWFLAG_ASYNC;
+	निजी->iob.block_count = dreq->block_count;
+	निजी->iob.पूर्णांकerrupt_params = (addr_t) cqr;
+	निजी->iob.bio_list = dreq->bio;
+	निजी->iob.flaga = DASD_DIAG_FLAGA_DEFAULT;
 
-	cqr->startclk = get_tod_clock();
-	cqr->starttime = jiffies;
+	cqr->startclk = get_tod_घड़ी();
+	cqr->startसमय = jअगरfies;
 	cqr->retries--;
 
-	rc = dia250(&private->iob, RW_BIO);
-	switch (rc) {
-	case 0: /* Synchronous I/O finished successfully */
-		cqr->stopclk = get_tod_clock();
+	rc = dia250(&निजी->iob, RW_BIO);
+	चयन (rc) अणु
+	हाल 0: /* Synchronous I/O finished successfully */
+		cqr->stopclk = get_tod_घड़ी();
 		cqr->status = DASD_CQR_SUCCESS;
 		/* Indicate to calling function that only a dasd_schedule_bh()
-		   and no timer is needed */
+		   and no समयr is needed */
                 rc = -EACCES;
-		break;
-	case 8: /* Asynchronous I/O was started */
+		अवरोध;
+	हाल 8: /* Asynchronous I/O was started */
 		cqr->status = DASD_CQR_IN_IO;
 		rc = 0;
-		break;
-	default: /* Error condition */
+		अवरोध;
+	शेष: /* Error condition */
 		cqr->status = DASD_CQR_QUEUED;
 		DBF_DEV_EVENT(DBF_WARNING, device, "dia250 returned rc=%d", rc);
 		dasd_diag_erp(device);
 		rc = -EIO;
-		break;
-	}
-	cqr->intrc = rc;
-	return rc;
-}
+		अवरोध;
+	पूर्ण
+	cqr->पूर्णांकrc = rc;
+	वापस rc;
+पूर्ण
 
 /* Terminate given request at the device. */
-static int
-dasd_diag_term_IO(struct dasd_ccw_req * cqr)
-{
-	struct dasd_device *device;
+अटल पूर्णांक
+dasd_diag_term_IO(काष्ठा dasd_ccw_req * cqr)
+अणु
+	काष्ठा dasd_device *device;
 
 	device = cqr->startdev;
 	mdsk_term_io(device);
-	mdsk_init_io(device, device->block->bp_block, 0, NULL);
+	mdsk_init_io(device, device->block->bp_block, 0, शून्य);
 	cqr->status = DASD_CQR_CLEAR_PENDING;
-	cqr->stopclk = get_tod_clock();
+	cqr->stopclk = get_tod_घड़ी();
 	dasd_schedule_device_bh(device);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Handle external interruption. */
-static void dasd_ext_handler(struct ext_code ext_code,
-			     unsigned int param32, unsigned long param64)
-{
-	struct dasd_ccw_req *cqr, *next;
-	struct dasd_device *device;
-	unsigned long expires;
-	unsigned long flags;
+/* Handle बाह्यal पूर्णांकerruption. */
+अटल व्योम dasd_ext_handler(काष्ठा ext_code ext_code,
+			     अचिन्हित पूर्णांक param32, अचिन्हित दीर्घ param64)
+अणु
+	काष्ठा dasd_ccw_req *cqr, *next;
+	काष्ठा dasd_device *device;
+	अचिन्हित दीर्घ expires;
+	अचिन्हित दीर्घ flags;
 	addr_t ip;
-	int rc;
+	पूर्णांक rc;
 
-	switch (ext_code.subcode >> 8) {
-	case DASD_DIAG_CODE_31BIT:
+	चयन (ext_code.subcode >> 8) अणु
+	हाल DASD_DIAG_CODE_31BIT:
 		ip = (addr_t) param32;
-		break;
-	case DASD_DIAG_CODE_64BIT:
+		अवरोध;
+	हाल DASD_DIAG_CODE_64BIT:
 		ip = (addr_t) param64;
-		break;
-	default:
-		return;
-	}
+		अवरोध;
+	शेष:
+		वापस;
+	पूर्ण
 	inc_irq_stat(IRQEXT_DSD);
-	if (!ip) {		/* no intparm: unsolicited interrupt */
+	अगर (!ip) अणु		/* no पूर्णांकparm: unsolicited पूर्णांकerrupt */
 		DBF_EVENT(DBF_NOTICE, "%s", "caught unsolicited "
 			      "interrupt");
-		return;
-	}
-	cqr = (struct dasd_ccw_req *) ip;
-	device = (struct dasd_device *) cqr->startdev;
-	if (strncmp(device->discipline->ebcname, (char *) &cqr->magic, 4)) {
+		वापस;
+	पूर्ण
+	cqr = (काष्ठा dasd_ccw_req *) ip;
+	device = (काष्ठा dasd_device *) cqr->startdev;
+	अगर (म_भेदन(device->discipline->ebcname, (अक्षर *) &cqr->magic, 4)) अणु
 		DBF_DEV_EVENT(DBF_WARNING, device,
 			    " magic number of dasd_ccw_req 0x%08X doesn't"
 			    " match discipline 0x%08X",
-			    cqr->magic, *(int *) (&device->discipline->name));
-		return;
-	}
+			    cqr->magic, *(पूर्णांक *) (&device->discipline->name));
+		वापस;
+	पूर्ण
 
-	/* get irq lock to modify request queue */
+	/* get irq lock to modअगरy request queue */
 	spin_lock_irqsave(get_ccwdev_lock(device->cdev), flags);
 
-	/* Check for a pending clear operation */
-	if (cqr->status == DASD_CQR_CLEAR_PENDING) {
+	/* Check क्रम a pending clear operation */
+	अगर (cqr->status == DASD_CQR_CLEAR_PENDING) अणु
 		cqr->status = DASD_CQR_CLEARED;
-		dasd_device_clear_timer(device);
+		dasd_device_clear_समयr(device);
 		dasd_schedule_device_bh(device);
 		spin_unlock_irqrestore(get_ccwdev_lock(device->cdev), flags);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	cqr->stopclk = get_tod_clock();
+	cqr->stopclk = get_tod_घड़ी();
 
 	expires = 0;
-	if ((ext_code.subcode & 0xff) == 0) {
+	अगर ((ext_code.subcode & 0xff) == 0) अणु
 		cqr->status = DASD_CQR_SUCCESS;
-		/* Start first request on queue if possible -> fast_io. */
-		if (!list_empty(&device->ccw_queue)) {
+		/* Start first request on queue अगर possible -> fast_io. */
+		अगर (!list_empty(&device->ccw_queue)) अणु
 			next = list_entry(device->ccw_queue.next,
-					  struct dasd_ccw_req, devlist);
-			if (next->status == DASD_CQR_QUEUED) {
+					  काष्ठा dasd_ccw_req, devlist);
+			अगर (next->status == DASD_CQR_QUEUED) अणु
 				rc = dasd_start_diag(next);
-				if (rc == 0)
+				अगर (rc == 0)
 					expires = next->expires;
-			}
-		}
-	} else {
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		cqr->status = DASD_CQR_QUEUED;
 		DBF_DEV_EVENT(DBF_DEBUG, device, "interrupt status for "
 			      "request %p was %d (%d retries left)", cqr,
 			      ext_code.subcode & 0xff, cqr->retries);
 		dasd_diag_erp(device);
-	}
+	पूर्ण
 
-	if (expires != 0)
-		dasd_device_set_timer(device, expires);
-	else
-		dasd_device_clear_timer(device);
+	अगर (expires != 0)
+		dasd_device_set_समयr(device, expires);
+	अन्यथा
+		dasd_device_clear_समयr(device);
 	dasd_schedule_device_bh(device);
 
 	spin_unlock_irqrestore(get_ccwdev_lock(device->cdev), flags);
-}
+पूर्ण
 
 /* Check whether device can be controlled by DIAG discipline. Return zero on
  * success, non-zero otherwise. */
-static int
-dasd_diag_check_device(struct dasd_device *device)
-{
-	struct dasd_diag_private *private = device->private;
-	struct dasd_diag_characteristics *rdc_data;
-	struct vtoc_cms_label *label;
-	struct dasd_block *block;
-	struct dasd_diag_bio *bio;
-	unsigned int sb, bsize;
+अटल पूर्णांक
+dasd_diag_check_device(काष्ठा dasd_device *device)
+अणु
+	काष्ठा dasd_diag_निजी *निजी = device->निजी;
+	काष्ठा dasd_diag_अक्षरacteristics *rdc_data;
+	काष्ठा vtoc_cms_label *label;
+	काष्ठा dasd_block *block;
+	काष्ठा dasd_diag_bio *bio;
+	अचिन्हित पूर्णांक sb, bsize;
 	blocknum_t end_block;
-	int rc;
+	पूर्णांक rc;
 
-	if (private == NULL) {
-		private = kzalloc(sizeof(*private), GFP_KERNEL);
-		if (private == NULL) {
+	अगर (निजी == शून्य) अणु
+		निजी = kzalloc(माप(*निजी), GFP_KERNEL);
+		अगर (निजी == शून्य) अणु
 			DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 				"Allocating memory for private DASD data "
 				      "failed\n");
-			return -ENOMEM;
-		}
-		ccw_device_get_id(device->cdev, &private->dev_id);
-		device->private = private;
-	}
+			वापस -ENOMEM;
+		पूर्ण
+		ccw_device_get_id(device->cdev, &निजी->dev_id);
+		device->निजी = निजी;
+	पूर्ण
 	block = dasd_alloc_block();
-	if (IS_ERR(block)) {
+	अगर (IS_ERR(block)) अणु
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "could not allocate dasd block structure");
-		device->private = NULL;
-		kfree(private);
-		return PTR_ERR(block);
-	}
+		device->निजी = शून्य;
+		kमुक्त(निजी);
+		वापस PTR_ERR(block);
+	पूर्ण
 	device->block = block;
 	block->base = device;
 
 	/* Read Device Characteristics */
-	rdc_data = &private->rdc_data;
-	rdc_data->dev_nr = private->dev_id.devno;
-	rdc_data->rdc_len = sizeof (struct dasd_diag_characteristics);
+	rdc_data = &निजी->rdc_data;
+	rdc_data->dev_nr = निजी->dev_id.devno;
+	rdc_data->rdc_len = माप (काष्ठा dasd_diag_अक्षरacteristics);
 
-	rc = diag210((struct diag210 *) rdc_data);
-	if (rc) {
+	rc = diag210((काष्ठा diag210 *) rdc_data);
+	अगर (rc) अणु
 		DBF_DEV_EVENT(DBF_WARNING, device, "failed to retrieve device "
 			    "information (rc=%d)", rc);
 		rc = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	device->default_expires = DIAG_TIMEOUT;
-	device->default_retries = DIAG_MAX_RETRIES;
+	device->शेष_expires = DIAG_TIMEOUT;
+	device->शेष_retries = DIAG_MAX_RETRIES;
 
 	/* Figure out position of label block */
-	switch (private->rdc_data.vdev_class) {
-	case DEV_CLASS_FBA:
-		private->pt_block = 1;
-		break;
-	case DEV_CLASS_ECKD:
-		private->pt_block = 2;
-		break;
-	default:
+	चयन (निजी->rdc_data.vdev_class) अणु
+	हाल DEV_CLASS_FBA:
+		निजी->pt_block = 1;
+		अवरोध;
+	हाल DEV_CLASS_ECKD:
+		निजी->pt_block = 2;
+		अवरोध;
+	शेष:
 		pr_warn("%s: Device type %d is not supported in DIAG mode\n",
 			dev_name(&device->cdev->dev),
-			private->rdc_data.vdev_class);
+			निजी->rdc_data.vdev_class);
 		rc = -EOPNOTSUPP;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	DBF_DEV_EVENT(DBF_INFO, device,
 		      "%04X: %04X on real %04X/%02X",
@@ -388,267 +389,267 @@ dasd_diag_check_device(struct dasd_device *device)
 	mdsk_term_io(device);
 
 	/* figure out blocksize of device */
-	label = (struct vtoc_cms_label *) get_zeroed_page(GFP_KERNEL);
-	if (label == NULL)  {
+	label = (काष्ठा vtoc_cms_label *) get_zeroed_page(GFP_KERNEL);
+	अगर (label == शून्य)  अणु
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			    "No memory to allocate initialization request");
 		rc = -ENOMEM;
-		goto out;
-	}
-	bio = kzalloc(sizeof(*bio), GFP_KERNEL);
-	if (bio == NULL)  {
+		जाओ out;
+	पूर्ण
+	bio = kzalloc(माप(*bio), GFP_KERNEL);
+	अगर (bio == शून्य)  अणु
 		DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 			      "No memory to allocate initialization bio");
 		rc = -ENOMEM;
-		goto out_label;
-	}
+		जाओ out_label;
+	पूर्ण
 	rc = 0;
 	end_block = 0;
-	/* try all sizes - needed for ECKD devices */
-	for (bsize = 512; bsize <= PAGE_SIZE; bsize <<= 1) {
+	/* try all sizes - needed क्रम ECKD devices */
+	क्रम (bsize = 512; bsize <= PAGE_SIZE; bsize <<= 1) अणु
 		mdsk_init_io(device, bsize, 0, &end_block);
-		memset(bio, 0, sizeof(*bio));
+		स_रखो(bio, 0, माप(*bio));
 		bio->type = MDSK_READ_REQ;
-		bio->block_number = private->pt_block + 1;
+		bio->block_number = निजी->pt_block + 1;
 		bio->buffer = label;
-		memset(&private->iob, 0, sizeof (struct dasd_diag_rw_io));
-		private->iob.dev_nr = rdc_data->dev_nr;
-		private->iob.key = 0;
-		private->iob.flags = 0;	/* do synchronous io */
-		private->iob.block_count = 1;
-		private->iob.interrupt_params = 0;
-		private->iob.bio_list = bio;
-		private->iob.flaga = DASD_DIAG_FLAGA_DEFAULT;
-		rc = dia250(&private->iob, RW_BIO);
-		if (rc == 3) {
+		स_रखो(&निजी->iob, 0, माप (काष्ठा dasd_diag_rw_io));
+		निजी->iob.dev_nr = rdc_data->dev_nr;
+		निजी->iob.key = 0;
+		निजी->iob.flags = 0;	/* करो synchronous io */
+		निजी->iob.block_count = 1;
+		निजी->iob.पूर्णांकerrupt_params = 0;
+		निजी->iob.bio_list = bio;
+		निजी->iob.flaga = DASD_DIAG_FLAGA_DEFAULT;
+		rc = dia250(&निजी->iob, RW_BIO);
+		अगर (rc == 3) अणु
 			pr_warn("%s: A 64-bit DIAG call failed\n",
 				dev_name(&device->cdev->dev));
 			rc = -EOPNOTSUPP;
-			goto out_bio;
-		}
+			जाओ out_bio;
+		पूर्ण
 		mdsk_term_io(device);
-		if (rc == 0)
-			break;
-	}
-	if (bsize > PAGE_SIZE) {
+		अगर (rc == 0)
+			अवरोध;
+	पूर्ण
+	अगर (bsize > PAGE_SIZE) अणु
 		pr_warn("%s: Accessing the DASD failed because of an incorrect format (rc=%d)\n",
 			dev_name(&device->cdev->dev), rc);
 		rc = -EIO;
-		goto out_bio;
-	}
-	/* check for label block */
-	if (memcmp(label->label_id, DASD_DIAG_CMS1,
-		  sizeof(DASD_DIAG_CMS1)) == 0) {
-		/* get formatted blocksize from label block */
-		bsize = (unsigned int) label->block_size;
-		block->blocks = (unsigned long) label->block_count;
-	} else
+		जाओ out_bio;
+	पूर्ण
+	/* check क्रम label block */
+	अगर (स_भेद(label->label_id, DASD_DIAG_CMS1,
+		  माप(DASD_DIAG_CMS1)) == 0) अणु
+		/* get क्रमmatted blocksize from label block */
+		bsize = (अचिन्हित पूर्णांक) label->block_size;
+		block->blocks = (अचिन्हित दीर्घ) label->block_count;
+	पूर्ण अन्यथा
 		block->blocks = end_block;
 	block->bp_block = bsize;
-	block->s2b_shift = 0;	/* bits to shift 512 to get a block */
-	for (sb = 512; sb < bsize; sb = sb << 1)
-		block->s2b_shift++;
-	rc = mdsk_init_io(device, block->bp_block, 0, NULL);
-	if (rc && (rc != 4)) {
+	block->s2b_shअगरt = 0;	/* bits to shअगरt 512 to get a block */
+	क्रम (sb = 512; sb < bsize; sb = sb << 1)
+		block->s2b_shअगरt++;
+	rc = mdsk_init_io(device, block->bp_block, 0, शून्य);
+	अगर (rc && (rc != 4)) अणु
 		pr_warn("%s: DIAG initialization failed with rc=%d\n",
 			dev_name(&device->cdev->dev), rc);
 		rc = -EIO;
-	} else {
-		if (rc == 4)
+	पूर्ण अन्यथा अणु
+		अगर (rc == 4)
 			set_bit(DASD_FLAG_DEVICE_RO, &device->flags);
 		pr_info("%s: New DASD with %ld byte/block, total size %ld "
 			"KB%s\n", dev_name(&device->cdev->dev),
-			(unsigned long) block->bp_block,
-			(unsigned long) (block->blocks <<
-					 block->s2b_shift) >> 1,
+			(अचिन्हित दीर्घ) block->bp_block,
+			(अचिन्हित दीर्घ) (block->blocks <<
+					 block->s2b_shअगरt) >> 1,
 			(rc == 4) ? ", read-only device" : "");
 		rc = 0;
-	}
+	पूर्ण
 out_bio:
-	kfree(bio);
+	kमुक्त(bio);
 out_label:
-	free_page((long) label);
+	मुक्त_page((दीर्घ) label);
 out:
-	if (rc) {
-		device->block = NULL;
-		dasd_free_block(block);
-		device->private = NULL;
-		kfree(private);
-	}
-	return rc;
-}
+	अगर (rc) अणु
+		device->block = शून्य;
+		dasd_मुक्त_block(block);
+		device->निजी = शून्य;
+		kमुक्त(निजी);
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-/* Fill in virtual disk geometry for device. Return zero on success, non-zero
+/* Fill in भव disk geometry क्रम device. Return zero on success, non-zero
  * otherwise. */
-static int
-dasd_diag_fill_geometry(struct dasd_block *block, struct hd_geometry *geo)
-{
-	if (dasd_check_blocksize(block->bp_block) != 0)
-		return -EINVAL;
-	geo->cylinders = (block->blocks << block->s2b_shift) >> 10;
+अटल पूर्णांक
+dasd_diag_fill_geometry(काष्ठा dasd_block *block, काष्ठा hd_geometry *geo)
+अणु
+	अगर (dasd_check_blocksize(block->bp_block) != 0)
+		वापस -EINVAL;
+	geo->cylinders = (block->blocks << block->s2b_shअगरt) >> 10;
 	geo->heads = 16;
-	geo->sectors = 128 >> block->s2b_shift;
-	return 0;
-}
+	geo->sectors = 128 >> block->s2b_shअगरt;
+	वापस 0;
+पूर्ण
 
-static dasd_erp_fn_t
-dasd_diag_erp_action(struct dasd_ccw_req * cqr)
-{
-	return dasd_default_erp_action;
-}
+अटल dasd_erp_fn_t
+dasd_diag_erp_action(काष्ठा dasd_ccw_req * cqr)
+अणु
+	वापस dasd_शेष_erp_action;
+पूर्ण
 
-static dasd_erp_fn_t
-dasd_diag_erp_postaction(struct dasd_ccw_req * cqr)
-{
-	return dasd_default_erp_postaction;
-}
+अटल dasd_erp_fn_t
+dasd_diag_erp_postaction(काष्ठा dasd_ccw_req * cqr)
+अणु
+	वापस dasd_शेष_erp_postaction;
+पूर्ण
 
-/* Create DASD request from block device request. Return pointer to new
+/* Create DASD request from block device request. Return poपूर्णांकer to new
  * request on success, ERR_PTR otherwise. */
-static struct dasd_ccw_req *dasd_diag_build_cp(struct dasd_device *memdev,
-					       struct dasd_block *block,
-					       struct request *req)
-{
-	struct dasd_ccw_req *cqr;
-	struct dasd_diag_req *dreq;
-	struct dasd_diag_bio *dbio;
-	struct req_iterator iter;
-	struct bio_vec bv;
-	char *dst;
-	unsigned int count;
+अटल काष्ठा dasd_ccw_req *dasd_diag_build_cp(काष्ठा dasd_device *memdev,
+					       काष्ठा dasd_block *block,
+					       काष्ठा request *req)
+अणु
+	काष्ठा dasd_ccw_req *cqr;
+	काष्ठा dasd_diag_req *dreq;
+	काष्ठा dasd_diag_bio *dbio;
+	काष्ठा req_iterator iter;
+	काष्ठा bio_vec bv;
+	अक्षर *dst;
+	अचिन्हित पूर्णांक count;
 	sector_t recid, first_rec, last_rec;
-	unsigned int blksize, off;
-	unsigned char rw_cmd;
+	अचिन्हित पूर्णांक blksize, off;
+	अचिन्हित अक्षर rw_cmd;
 
-	if (rq_data_dir(req) == READ)
+	अगर (rq_data_dir(req) == READ)
 		rw_cmd = MDSK_READ_REQ;
-	else if (rq_data_dir(req) == WRITE)
+	अन्यथा अगर (rq_data_dir(req) == WRITE)
 		rw_cmd = MDSK_WRITE_REQ;
-	else
-		return ERR_PTR(-EINVAL);
+	अन्यथा
+		वापस ERR_PTR(-EINVAL);
 	blksize = block->bp_block;
 	/* Calculate record id of first and last block. */
-	first_rec = blk_rq_pos(req) >> block->s2b_shift;
+	first_rec = blk_rq_pos(req) >> block->s2b_shअगरt;
 	last_rec =
-		(blk_rq_pos(req) + blk_rq_sectors(req) - 1) >> block->s2b_shift;
-	/* Check struct bio and count the number of blocks for the request. */
+		(blk_rq_pos(req) + blk_rq_sectors(req) - 1) >> block->s2b_shअगरt;
+	/* Check काष्ठा bio and count the number of blocks क्रम the request. */
 	count = 0;
-	rq_for_each_segment(bv, req, iter) {
-		if (bv.bv_len & (blksize - 1))
-			/* Fba can only do full blocks. */
-			return ERR_PTR(-EINVAL);
-		count += bv.bv_len >> (block->s2b_shift + 9);
-	}
+	rq_क्रम_each_segment(bv, req, iter) अणु
+		अगर (bv.bv_len & (blksize - 1))
+			/* Fba can only करो full blocks. */
+			वापस ERR_PTR(-EINVAL);
+		count += bv.bv_len >> (block->s2b_shअगरt + 9);
+	पूर्ण
 	/* Paranoia. */
-	if (count != last_rec - first_rec + 1)
-		return ERR_PTR(-EINVAL);
+	अगर (count != last_rec - first_rec + 1)
+		वापस ERR_PTR(-EINVAL);
 	/* Build the request */
-	cqr = dasd_smalloc_request(DASD_DIAG_MAGIC, 0, struct_size(dreq, bio, count),
+	cqr = dasd_sदो_स्मृति_request(DASD_DIAG_MAGIC, 0, काष्ठा_size(dreq, bio, count),
 				   memdev, blk_mq_rq_to_pdu(req));
-	if (IS_ERR(cqr))
-		return cqr;
+	अगर (IS_ERR(cqr))
+		वापस cqr;
 
-	dreq = (struct dasd_diag_req *) cqr->data;
+	dreq = (काष्ठा dasd_diag_req *) cqr->data;
 	dreq->block_count = count;
 	dbio = dreq->bio;
 	recid = first_rec;
-	rq_for_each_segment(bv, req, iter) {
+	rq_क्रम_each_segment(bv, req, iter) अणु
 		dst = page_address(bv.bv_page) + bv.bv_offset;
-		for (off = 0; off < bv.bv_len; off += blksize) {
-			memset(dbio, 0, sizeof (struct dasd_diag_bio));
+		क्रम (off = 0; off < bv.bv_len; off += blksize) अणु
+			स_रखो(dbio, 0, माप (काष्ठा dasd_diag_bio));
 			dbio->type = rw_cmd;
 			dbio->block_number = recid + 1;
 			dbio->buffer = dst;
 			dbio++;
 			dst += blksize;
 			recid++;
-		}
-	}
-	cqr->retries = memdev->default_retries;
-	cqr->buildclk = get_tod_clock();
-	if (blk_noretry_request(req) ||
+		पूर्ण
+	पूर्ण
+	cqr->retries = memdev->शेष_retries;
+	cqr->buildclk = get_tod_घड़ी();
+	अगर (blk_noretry_request(req) ||
 	    block->base->features & DASD_FEATURE_FAILFAST)
 		set_bit(DASD_CQR_FLAGS_FAILFAST, &cqr->flags);
 	cqr->startdev = memdev;
 	cqr->memdev = memdev;
 	cqr->block = block;
-	cqr->expires = memdev->default_expires * HZ;
+	cqr->expires = memdev->शेष_expires * HZ;
 	cqr->status = DASD_CQR_FILLED;
-	return cqr;
-}
+	वापस cqr;
+पूर्ण
 
-/* Release DASD request. Return non-zero if request was successful, zero
+/* Release DASD request. Return non-zero अगर request was successful, zero
  * otherwise. */
-static int
-dasd_diag_free_cp(struct dasd_ccw_req *cqr, struct request *req)
-{
-	int status;
+अटल पूर्णांक
+dasd_diag_मुक्त_cp(काष्ठा dasd_ccw_req *cqr, काष्ठा request *req)
+अणु
+	पूर्णांक status;
 
 	status = cqr->status == DASD_CQR_DONE;
-	dasd_sfree_request(cqr, cqr->memdev);
-	return status;
-}
+	dasd_sमुक्त_request(cqr, cqr->memdev);
+	वापस status;
+पूर्ण
 
-static void dasd_diag_handle_terminated_request(struct dasd_ccw_req *cqr)
-{
-	if (cqr->retries < 0)
+अटल व्योम dasd_diag_handle_terminated_request(काष्ठा dasd_ccw_req *cqr)
+अणु
+	अगर (cqr->retries < 0)
 		cqr->status = DASD_CQR_FAILED;
-	else
+	अन्यथा
 		cqr->status = DASD_CQR_FILLED;
-};
+पूर्ण;
 
-/* Fill in IOCTL data for device. */
-static int
-dasd_diag_fill_info(struct dasd_device * device,
-		    struct dasd_information2_t * info)
-{
-	struct dasd_diag_private *private = device->private;
+/* Fill in IOCTL data क्रम device. */
+अटल पूर्णांक
+dasd_diag_fill_info(काष्ठा dasd_device * device,
+		    काष्ठा dasd_inक्रमmation2_t * info)
+अणु
+	काष्ठा dasd_diag_निजी *निजी = device->निजी;
 
-	info->label_block = (unsigned int) private->pt_block;
+	info->label_block = (अचिन्हित पूर्णांक) निजी->pt_block;
 	info->FBA_layout = 1;
-	info->format = DASD_FORMAT_LDL;
-	info->characteristics_size = sizeof(private->rdc_data);
-	memcpy(info->characteristics, &private->rdc_data,
-	       sizeof(private->rdc_data));
+	info->क्रमmat = DASD_FORMAT_LDL;
+	info->अक्षरacteristics_size = माप(निजी->rdc_data);
+	स_नकल(info->अक्षरacteristics, &निजी->rdc_data,
+	       माप(निजी->rdc_data));
 	info->confdata_size = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-dasd_diag_dump_sense(struct dasd_device *device, struct dasd_ccw_req * req,
-		     struct irb *stat)
-{
+अटल व्योम
+dasd_diag_dump_sense(काष्ठा dasd_device *device, काष्ठा dasd_ccw_req * req,
+		     काष्ठा irb *stat)
+अणु
 	DBF_DEV_EVENT(DBF_WARNING, device, "%s",
 		    "dump sense not available for DIAG data");
-}
+पूर्ण
 
 /*
  * Initialize block layer request queue.
  */
-static void dasd_diag_setup_blk_queue(struct dasd_block *block)
-{
-	unsigned int logical_block_size = block->bp_block;
-	struct request_queue *q = block->request_queue;
-	int max;
+अटल व्योम dasd_diag_setup_blk_queue(काष्ठा dasd_block *block)
+अणु
+	अचिन्हित पूर्णांक logical_block_size = block->bp_block;
+	काष्ठा request_queue *q = block->request_queue;
+	पूर्णांक max;
 
-	max = DIAG_MAX_BLOCKS << block->s2b_shift;
+	max = DIAG_MAX_BLOCKS << block->s2b_shअगरt;
 	blk_queue_flag_set(QUEUE_FLAG_NONROT, q);
 	q->limits.max_dev_sectors = max;
 	blk_queue_logical_block_size(q, logical_block_size);
 	blk_queue_max_hw_sectors(q, max);
-	blk_queue_max_segments(q, USHRT_MAX);
-	/* With page sized segments each segment can be translated into one idaw/tidaw */
+	blk_queue_max_segments(q, अच_लघु_उच्च);
+	/* With page sized segments each segment can be translated पूर्णांकo one idaw/tidaw */
 	blk_queue_max_segment_size(q, PAGE_SIZE);
 	blk_queue_segment_boundary(q, PAGE_SIZE - 1);
-}
+पूर्ण
 
-static int dasd_diag_pe_handler(struct dasd_device *device,
+अटल पूर्णांक dasd_diag_pe_handler(काष्ठा dasd_device *device,
 				__u8 tbvpm, __u8 fcsecpm)
-{
-	return dasd_generic_verify_path(device, tbvpm);
-}
+अणु
+	वापस dasd_generic_verअगरy_path(device, tbvpm);
+पूर्ण
 
-static struct dasd_discipline dasd_diag_discipline = {
+अटल काष्ठा dasd_discipline dasd_diag_discipline = अणु
 	.owner = THIS_MODULE,
 	.name = "DIAG",
 	.ebcname = "DIAG",
@@ -662,34 +663,34 @@ static struct dasd_discipline dasd_diag_discipline = {
 	.erp_action = dasd_diag_erp_action,
 	.erp_postaction = dasd_diag_erp_postaction,
 	.build_cp = dasd_diag_build_cp,
-	.free_cp = dasd_diag_free_cp,
+	.मुक्त_cp = dasd_diag_मुक्त_cp,
 	.dump_sense = dasd_diag_dump_sense,
 	.fill_info = dasd_diag_fill_info,
-};
+पूर्ण;
 
-static int __init
-dasd_diag_init(void)
-{
-	if (!MACHINE_IS_VM) {
+अटल पूर्णांक __init
+dasd_diag_init(व्योम)
+अणु
+	अगर (!MACHINE_IS_VM) अणु
 		pr_info("Discipline %s cannot be used without z/VM\n",
 			dasd_diag_discipline.name);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	ASCEBC(dasd_diag_discipline.ebcname, 4);
 
-	irq_subclass_register(IRQ_SUBCLASS_SERVICE_SIGNAL);
-	register_external_irq(EXT_IRQ_CP_SERVICE, dasd_ext_handler);
-	dasd_diag_discipline_pointer = &dasd_diag_discipline;
-	return 0;
-}
+	irq_subclass_रेजिस्टर(IRQ_SUBCLASS_SERVICE_SIGNAL);
+	रेजिस्टर_बाह्यal_irq(EXT_IRQ_CP_SERVICE, dasd_ext_handler);
+	dasd_diag_discipline_poपूर्णांकer = &dasd_diag_discipline;
+	वापस 0;
+पूर्ण
 
-static void __exit
-dasd_diag_cleanup(void)
-{
-	unregister_external_irq(EXT_IRQ_CP_SERVICE, dasd_ext_handler);
-	irq_subclass_unregister(IRQ_SUBCLASS_SERVICE_SIGNAL);
-	dasd_diag_discipline_pointer = NULL;
-}
+अटल व्योम __निकास
+dasd_diag_cleanup(व्योम)
+अणु
+	unरेजिस्टर_बाह्यal_irq(EXT_IRQ_CP_SERVICE, dasd_ext_handler);
+	irq_subclass_unरेजिस्टर(IRQ_SUBCLASS_SERVICE_SIGNAL);
+	dasd_diag_discipline_poपूर्णांकer = शून्य;
+पूर्ण
 
 module_init(dasd_diag_init);
-module_exit(dasd_diag_cleanup);
+module_निकास(dasd_diag_cleanup);

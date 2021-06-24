@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2008 Intel Corporation
- * Author: Matthew Wilcox <willy@linux.intel.com>
+ * Author: Matthew Wilcox <willy@linux.पूर्णांकel.com>
  *
  * This file implements counting semaphores.
- * A counting semaphore may be acquired 'n' times before sleeping.
- * See mutex.c for single-acquisition sleeping locks which enforce
+ * A counting semaphore may be acquired 'n' बार beक्रमe sleeping.
+ * See mutex.c क्रम single-acquisition sleeping locks which enक्रमce
  * rules which allow code to be debugged more easily.
  */
 
@@ -13,250 +14,250 @@
  * Some notes on the implementation:
  *
  * The spinlock controls access to the other members of the semaphore.
- * down_trylock() and up() can be called from interrupt context, so we
- * have to disable interrupts when taking the lock.  It turns out various
- * parts of the kernel expect to be able to use down() on a semaphore in
- * interrupt context when they know it will succeed, so we have to use
- * irqsave variants for down(), down_interruptible() and down_killable()
+ * करोwn_trylock() and up() can be called from पूर्णांकerrupt context, so we
+ * have to disable पूर्णांकerrupts when taking the lock.  It turns out various
+ * parts of the kernel expect to be able to use करोwn() on a semaphore in
+ * पूर्णांकerrupt context when they know it will succeed, so we have to use
+ * irqsave variants क्रम करोwn(), करोwn_पूर्णांकerruptible() and करोwn_समाप्तable()
  * too.
  *
  * The ->count variable represents how many more tasks can acquire this
- * semaphore.  If it's zero, there may be tasks waiting on the wait_list.
+ * semaphore.  If it's zero, there may be tasks रुकोing on the रुको_list.
  */
 
-#include <linux/compiler.h>
-#include <linux/kernel.h>
-#include <linux/export.h>
-#include <linux/sched.h>
-#include <linux/sched/debug.h>
-#include <linux/semaphore.h>
-#include <linux/spinlock.h>
-#include <linux/ftrace.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/export.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/semaphore.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/ftrace.h>
 
-static noinline void __down(struct semaphore *sem);
-static noinline int __down_interruptible(struct semaphore *sem);
-static noinline int __down_killable(struct semaphore *sem);
-static noinline int __down_timeout(struct semaphore *sem, long timeout);
-static noinline void __up(struct semaphore *sem);
+अटल noअंतरभूत व्योम __करोwn(काष्ठा semaphore *sem);
+अटल noअंतरभूत पूर्णांक __करोwn_पूर्णांकerruptible(काष्ठा semaphore *sem);
+अटल noअंतरभूत पूर्णांक __करोwn_समाप्तable(काष्ठा semaphore *sem);
+अटल noअंतरभूत पूर्णांक __करोwn_समयout(काष्ठा semaphore *sem, दीर्घ समयout);
+अटल noअंतरभूत व्योम __up(काष्ठा semaphore *sem);
 
 /**
- * down - acquire the semaphore
+ * करोwn - acquire the semaphore
  * @sem: the semaphore to be acquired
  *
  * Acquires the semaphore.  If no more tasks are allowed to acquire the
  * semaphore, calling this function will put the task to sleep until the
  * semaphore is released.
  *
- * Use of this function is deprecated, please use down_interruptible() or
- * down_killable() instead.
+ * Use of this function is deprecated, please use करोwn_पूर्णांकerruptible() or
+ * करोwn_समाप्तable() instead.
  */
-void down(struct semaphore *sem)
-{
-	unsigned long flags;
+व्योम करोwn(काष्ठा semaphore *sem)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&sem->lock, flags);
-	if (likely(sem->count > 0))
+	अगर (likely(sem->count > 0))
 		sem->count--;
-	else
-		__down(sem);
+	अन्यथा
+		__करोwn(sem);
 	raw_spin_unlock_irqrestore(&sem->lock, flags);
-}
-EXPORT_SYMBOL(down);
+पूर्ण
+EXPORT_SYMBOL(करोwn);
 
 /**
- * down_interruptible - acquire the semaphore unless interrupted
+ * करोwn_पूर्णांकerruptible - acquire the semaphore unless पूर्णांकerrupted
  * @sem: the semaphore to be acquired
  *
  * Attempts to acquire the semaphore.  If no more tasks are allowed to
  * acquire the semaphore, calling this function will put the task to sleep.
- * If the sleep is interrupted by a signal, this function will return -EINTR.
- * If the semaphore is successfully acquired, this function returns 0.
+ * If the sleep is पूर्णांकerrupted by a संकेत, this function will वापस -EINTR.
+ * If the semaphore is successfully acquired, this function वापसs 0.
  */
-int down_interruptible(struct semaphore *sem)
-{
-	unsigned long flags;
-	int result = 0;
+पूर्णांक करोwn_पूर्णांकerruptible(काष्ठा semaphore *sem)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result = 0;
 
 	raw_spin_lock_irqsave(&sem->lock, flags);
-	if (likely(sem->count > 0))
+	अगर (likely(sem->count > 0))
 		sem->count--;
-	else
-		result = __down_interruptible(sem);
+	अन्यथा
+		result = __करोwn_पूर्णांकerruptible(sem);
 	raw_spin_unlock_irqrestore(&sem->lock, flags);
 
-	return result;
-}
-EXPORT_SYMBOL(down_interruptible);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL(करोwn_पूर्णांकerruptible);
 
 /**
- * down_killable - acquire the semaphore unless killed
+ * करोwn_समाप्तable - acquire the semaphore unless समाप्तed
  * @sem: the semaphore to be acquired
  *
  * Attempts to acquire the semaphore.  If no more tasks are allowed to
  * acquire the semaphore, calling this function will put the task to sleep.
- * If the sleep is interrupted by a fatal signal, this function will return
- * -EINTR.  If the semaphore is successfully acquired, this function returns
+ * If the sleep is पूर्णांकerrupted by a fatal संकेत, this function will वापस
+ * -EINTR.  If the semaphore is successfully acquired, this function वापसs
  * 0.
  */
-int down_killable(struct semaphore *sem)
-{
-	unsigned long flags;
-	int result = 0;
+पूर्णांक करोwn_समाप्तable(काष्ठा semaphore *sem)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result = 0;
 
 	raw_spin_lock_irqsave(&sem->lock, flags);
-	if (likely(sem->count > 0))
+	अगर (likely(sem->count > 0))
 		sem->count--;
-	else
-		result = __down_killable(sem);
+	अन्यथा
+		result = __करोwn_समाप्तable(sem);
 	raw_spin_unlock_irqrestore(&sem->lock, flags);
 
-	return result;
-}
-EXPORT_SYMBOL(down_killable);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL(करोwn_समाप्तable);
 
 /**
- * down_trylock - try to acquire the semaphore, without waiting
+ * करोwn_trylock - try to acquire the semaphore, without रुकोing
  * @sem: the semaphore to be acquired
  *
- * Try to acquire the semaphore atomically.  Returns 0 if the semaphore has
- * been acquired successfully or 1 if it cannot be acquired.
+ * Try to acquire the semaphore atomically.  Returns 0 अगर the semaphore has
+ * been acquired successfully or 1 अगर it cannot be acquired.
  *
- * NOTE: This return value is inverted from both spin_trylock and
+ * NOTE: This वापस value is inverted from both spin_trylock and
  * mutex_trylock!  Be careful about this when converting code.
  *
- * Unlike mutex_trylock, this function can be used from interrupt context,
- * and the semaphore can be released by any task or interrupt.
+ * Unlike mutex_trylock, this function can be used from पूर्णांकerrupt context,
+ * and the semaphore can be released by any task or पूर्णांकerrupt.
  */
-int down_trylock(struct semaphore *sem)
-{
-	unsigned long flags;
-	int count;
+पूर्णांक करोwn_trylock(काष्ठा semaphore *sem)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count;
 
 	raw_spin_lock_irqsave(&sem->lock, flags);
 	count = sem->count - 1;
-	if (likely(count >= 0))
+	अगर (likely(count >= 0))
 		sem->count = count;
 	raw_spin_unlock_irqrestore(&sem->lock, flags);
 
-	return (count < 0);
-}
-EXPORT_SYMBOL(down_trylock);
+	वापस (count < 0);
+पूर्ण
+EXPORT_SYMBOL(करोwn_trylock);
 
 /**
- * down_timeout - acquire the semaphore within a specified time
+ * करोwn_समयout - acquire the semaphore within a specअगरied समय
  * @sem: the semaphore to be acquired
- * @timeout: how long to wait before failing
+ * @समयout: how दीर्घ to रुको beक्रमe failing
  *
  * Attempts to acquire the semaphore.  If no more tasks are allowed to
  * acquire the semaphore, calling this function will put the task to sleep.
- * If the semaphore is not released within the specified number of jiffies,
- * this function returns -ETIME.  It returns 0 if the semaphore was acquired.
+ * If the semaphore is not released within the specअगरied number of jअगरfies,
+ * this function वापसs -ETIME.  It वापसs 0 अगर the semaphore was acquired.
  */
-int down_timeout(struct semaphore *sem, long timeout)
-{
-	unsigned long flags;
-	int result = 0;
+पूर्णांक करोwn_समयout(काष्ठा semaphore *sem, दीर्घ समयout)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result = 0;
 
 	raw_spin_lock_irqsave(&sem->lock, flags);
-	if (likely(sem->count > 0))
+	अगर (likely(sem->count > 0))
 		sem->count--;
-	else
-		result = __down_timeout(sem, timeout);
+	अन्यथा
+		result = __करोwn_समयout(sem, समयout);
 	raw_spin_unlock_irqrestore(&sem->lock, flags);
 
-	return result;
-}
-EXPORT_SYMBOL(down_timeout);
+	वापस result;
+पूर्ण
+EXPORT_SYMBOL(करोwn_समयout);
 
 /**
  * up - release the semaphore
  * @sem: the semaphore to release
  *
  * Release the semaphore.  Unlike mutexes, up() may be called from any
- * context and even by tasks which have never called down().
+ * context and even by tasks which have never called करोwn().
  */
-void up(struct semaphore *sem)
-{
-	unsigned long flags;
+व्योम up(काष्ठा semaphore *sem)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&sem->lock, flags);
-	if (likely(list_empty(&sem->wait_list)))
+	अगर (likely(list_empty(&sem->रुको_list)))
 		sem->count++;
-	else
+	अन्यथा
 		__up(sem);
 	raw_spin_unlock_irqrestore(&sem->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(up);
 
-/* Functions for the contended case */
+/* Functions क्रम the contended हाल */
 
-struct semaphore_waiter {
-	struct list_head list;
-	struct task_struct *task;
+काष्ठा semaphore_रुकोer अणु
+	काष्ठा list_head list;
+	काष्ठा task_काष्ठा *task;
 	bool up;
-};
+पूर्ण;
 
 /*
- * Because this function is inlined, the 'state' parameter will be
- * constant, and thus optimised away by the compiler.  Likewise the
- * 'timeout' parameter for the cases without timeouts.
+ * Because this function is अंतरभूतd, the 'state' parameter will be
+ * स्थिरant, and thus optimised away by the compiler.  Likewise the
+ * 'timeout' parameter क्रम the हालs without समयouts.
  */
-static inline int __sched __down_common(struct semaphore *sem, long state,
-								long timeout)
-{
-	struct semaphore_waiter waiter;
+अटल अंतरभूत पूर्णांक __sched __करोwn_common(काष्ठा semaphore *sem, दीर्घ state,
+								दीर्घ समयout)
+अणु
+	काष्ठा semaphore_रुकोer रुकोer;
 
-	list_add_tail(&waiter.list, &sem->wait_list);
-	waiter.task = current;
-	waiter.up = false;
+	list_add_tail(&रुकोer.list, &sem->रुको_list);
+	रुकोer.task = current;
+	रुकोer.up = false;
 
-	for (;;) {
-		if (signal_pending_state(state, current))
-			goto interrupted;
-		if (unlikely(timeout <= 0))
-			goto timed_out;
+	क्रम (;;) अणु
+		अगर (संकेत_pending_state(state, current))
+			जाओ पूर्णांकerrupted;
+		अगर (unlikely(समयout <= 0))
+			जाओ समयd_out;
 		__set_current_state(state);
 		raw_spin_unlock_irq(&sem->lock);
-		timeout = schedule_timeout(timeout);
+		समयout = schedule_समयout(समयout);
 		raw_spin_lock_irq(&sem->lock);
-		if (waiter.up)
-			return 0;
-	}
+		अगर (रुकोer.up)
+			वापस 0;
+	पूर्ण
 
- timed_out:
-	list_del(&waiter.list);
-	return -ETIME;
+ समयd_out:
+	list_del(&रुकोer.list);
+	वापस -ETIME;
 
- interrupted:
-	list_del(&waiter.list);
-	return -EINTR;
-}
+ पूर्णांकerrupted:
+	list_del(&रुकोer.list);
+	वापस -EINTR;
+पूर्ण
 
-static noinline void __sched __down(struct semaphore *sem)
-{
-	__down_common(sem, TASK_UNINTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
-}
+अटल noअंतरभूत व्योम __sched __करोwn(काष्ठा semaphore *sem)
+अणु
+	__करोwn_common(sem, TASK_UNINTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
+पूर्ण
 
-static noinline int __sched __down_interruptible(struct semaphore *sem)
-{
-	return __down_common(sem, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
-}
+अटल noअंतरभूत पूर्णांक __sched __करोwn_पूर्णांकerruptible(काष्ठा semaphore *sem)
+अणु
+	वापस __करोwn_common(sem, TASK_INTERRUPTIBLE, MAX_SCHEDULE_TIMEOUT);
+पूर्ण
 
-static noinline int __sched __down_killable(struct semaphore *sem)
-{
-	return __down_common(sem, TASK_KILLABLE, MAX_SCHEDULE_TIMEOUT);
-}
+अटल noअंतरभूत पूर्णांक __sched __करोwn_समाप्तable(काष्ठा semaphore *sem)
+अणु
+	वापस __करोwn_common(sem, TASK_KILLABLE, MAX_SCHEDULE_TIMEOUT);
+पूर्ण
 
-static noinline int __sched __down_timeout(struct semaphore *sem, long timeout)
-{
-	return __down_common(sem, TASK_UNINTERRUPTIBLE, timeout);
-}
+अटल noअंतरभूत पूर्णांक __sched __करोwn_समयout(काष्ठा semaphore *sem, दीर्घ समयout)
+अणु
+	वापस __करोwn_common(sem, TASK_UNINTERRUPTIBLE, समयout);
+पूर्ण
 
-static noinline void __sched __up(struct semaphore *sem)
-{
-	struct semaphore_waiter *waiter = list_first_entry(&sem->wait_list,
-						struct semaphore_waiter, list);
-	list_del(&waiter->list);
-	waiter->up = true;
-	wake_up_process(waiter->task);
-}
+अटल noअंतरभूत व्योम __sched __up(काष्ठा semaphore *sem)
+अणु
+	काष्ठा semaphore_रुकोer *रुकोer = list_first_entry(&sem->रुको_list,
+						काष्ठा semaphore_रुकोer, list);
+	list_del(&रुकोer->list);
+	रुकोer->up = true;
+	wake_up_process(रुकोer->task);
+पूर्ण

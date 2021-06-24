@@ -1,50 +1,51 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  *  S390 version
  *
  *  Derived from "include/asm-i386/termios.h"
  */
 
-#ifndef _UAPI_S390_TERMIOS_H
-#define _UAPI_S390_TERMIOS_H
+#अगर_अघोषित _UAPI_S390_TERMIOS_H
+#घोषणा _UAPI_S390_TERMIOS_H
 
-#include <asm/termbits.h>
-#include <asm/ioctls.h>
+#समावेश <यंत्र/termbits.h>
+#समावेश <यंत्र/ioctls.h>
 
-struct winsize {
-	unsigned short ws_row;
-	unsigned short ws_col;
-	unsigned short ws_xpixel;
-	unsigned short ws_ypixel;
-};
+काष्ठा winsize अणु
+	अचिन्हित लघु ws_row;
+	अचिन्हित लघु ws_col;
+	अचिन्हित लघु ws_xpixel;
+	अचिन्हित लघु ws_ypixel;
+पूर्ण;
 
-#define NCC 8
-struct termio {
-	unsigned short c_iflag;		/* input mode flags */
-	unsigned short c_oflag;		/* output mode flags */
-	unsigned short c_cflag;		/* control mode flags */
-	unsigned short c_lflag;		/* local mode flags */
-	unsigned char c_line;		/* line discipline */
-	unsigned char c_cc[NCC];	/* control characters */
-};
+#घोषणा NCC 8
+काष्ठा termio अणु
+	अचिन्हित लघु c_अगरlag;		/* input mode flags */
+	अचिन्हित लघु c_oflag;		/* output mode flags */
+	अचिन्हित लघु c_cflag;		/* control mode flags */
+	अचिन्हित लघु c_lflag;		/* local mode flags */
+	अचिन्हित अक्षर c_line;		/* line discipline */
+	अचिन्हित अक्षर c_cc[NCC];	/* control अक्षरacters */
+पूर्ण;
 
 /* modem lines */
-#define TIOCM_LE	0x001
-#define TIOCM_DTR	0x002
-#define TIOCM_RTS	0x004
-#define TIOCM_ST	0x008
-#define TIOCM_SR	0x010
-#define TIOCM_CTS	0x020
-#define TIOCM_CAR	0x040
-#define TIOCM_RNG	0x080
-#define TIOCM_DSR	0x100
-#define TIOCM_CD	TIOCM_CAR
-#define TIOCM_RI	TIOCM_RNG
-#define TIOCM_OUT1	0x2000
-#define TIOCM_OUT2	0x4000
-#define TIOCM_LOOP	0x8000
+#घोषणा TIOCM_LE	0x001
+#घोषणा TIOCM_DTR	0x002
+#घोषणा TIOCM_RTS	0x004
+#घोषणा TIOCM_ST	0x008
+#घोषणा TIOCM_SR	0x010
+#घोषणा TIOCM_CTS	0x020
+#घोषणा TIOCM_CAR	0x040
+#घोषणा TIOCM_RNG	0x080
+#घोषणा TIOCM_DSR	0x100
+#घोषणा TIOCM_CD	TIOCM_CAR
+#घोषणा TIOCM_RI	TIOCM_RNG
+#घोषणा TIOCM_OUT1	0x2000
+#घोषणा TIOCM_OUT2	0x4000
+#घोषणा TIOCM_LOOP	0x8000
 
 /* ioctl (fd, TIOCSERGETLSR, &result) where result may be as below */
 
 
-#endif /* _UAPI_S390_TERMIOS_H */
+#पूर्ण_अगर /* _UAPI_S390_TERMIOS_H */

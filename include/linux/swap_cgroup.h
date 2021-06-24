@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_SWAP_CGROUP_H
-#define __LINUX_SWAP_CGROUP_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_SWAP_CGROUP_H
+#घोषणा __LINUX_SWAP_CGROUP_H
 
-#include <linux/swap.h>
+#समावेश <linux/swap.h>
 
-#ifdef CONFIG_MEMCG_SWAP
+#अगर_घोषित CONFIG_MEMCG_SWAP
 
-extern unsigned short swap_cgroup_cmpxchg(swp_entry_t ent,
-					unsigned short old, unsigned short new);
-extern unsigned short swap_cgroup_record(swp_entry_t ent, unsigned short id,
-					 unsigned int nr_ents);
-extern unsigned short lookup_swap_cgroup_id(swp_entry_t ent);
-extern int swap_cgroup_swapon(int type, unsigned long max_pages);
-extern void swap_cgroup_swapoff(int type);
+बाह्य अचिन्हित लघु swap_cgroup_cmpxchg(swp_entry_t ent,
+					अचिन्हित लघु old, अचिन्हित लघु new);
+बाह्य अचिन्हित लघु swap_cgroup_record(swp_entry_t ent, अचिन्हित लघु id,
+					 अचिन्हित पूर्णांक nr_ents);
+बाह्य अचिन्हित लघु lookup_swap_cgroup_id(swp_entry_t ent);
+बाह्य पूर्णांक swap_cgroup_swapon(पूर्णांक type, अचिन्हित दीर्घ max_pages);
+बाह्य व्योम swap_cgroup_swapoff(पूर्णांक type);
 
-#else
+#अन्यथा
 
-static inline
-unsigned short swap_cgroup_record(swp_entry_t ent, unsigned short id,
-				  unsigned int nr_ents)
-{
-	return 0;
-}
+अटल अंतरभूत
+अचिन्हित लघु swap_cgroup_record(swp_entry_t ent, अचिन्हित लघु id,
+				  अचिन्हित पूर्णांक nr_ents)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-unsigned short lookup_swap_cgroup_id(swp_entry_t ent)
-{
-	return 0;
-}
+अटल अंतरभूत
+अचिन्हित लघु lookup_swap_cgroup_id(swp_entry_t ent)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline int
-swap_cgroup_swapon(int type, unsigned long max_pages)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक
+swap_cgroup_swapon(पूर्णांक type, अचिन्हित दीर्घ max_pages)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void swap_cgroup_swapoff(int type)
-{
-	return;
-}
+अटल अंतरभूत व्योम swap_cgroup_swapoff(पूर्णांक type)
+अणु
+	वापस;
+पूर्ण
 
-#endif /* CONFIG_MEMCG_SWAP */
+#पूर्ण_अगर /* CONFIG_MEMCG_SWAP */
 
-#endif /* __LINUX_SWAP_CGROUP_H */
+#पूर्ण_अगर /* __LINUX_SWAP_CGROUP_H */

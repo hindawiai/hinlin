@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,250 +24,250 @@
  *
  */
 
-#include <linux/irqdomain.h>
-#include <linux/pci.h>
-#include <linux/pm_domain.h>
-#include <linux/platform_device.h>
-#include <sound/designware_i2s.h>
-#include <sound/pcm.h>
+#समावेश <linux/irqकरोमुख्य.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/pm_करोमुख्य.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <sound/designware_i2s.h>
+#समावेश <sound/pcm.h>
 
-#include "amdgpu.h"
-#include "atom.h"
-#include "amdgpu_acp.h"
+#समावेश "amdgpu.h"
+#समावेश "atom.h"
+#समावेश "amdgpu_acp.h"
 
-#include "acp_gfx_if.h"
+#समावेश "acp_gfx_if.h"
 
-#define ACP_TILE_ON_MASK			0x03
-#define ACP_TILE_OFF_MASK			0x02
-#define ACP_TILE_ON_RETAIN_REG_MASK		0x1f
-#define ACP_TILE_OFF_RETAIN_REG_MASK		0x20
+#घोषणा ACP_TILE_ON_MASK			0x03
+#घोषणा ACP_TILE_OFF_MASK			0x02
+#घोषणा ACP_TILE_ON_RETAIN_REG_MASK		0x1f
+#घोषणा ACP_TILE_OFF_RETAIN_REG_MASK		0x20
 
-#define ACP_TILE_P1_MASK			0x3e
-#define ACP_TILE_P2_MASK			0x3d
-#define ACP_TILE_DSP0_MASK			0x3b
-#define ACP_TILE_DSP1_MASK			0x37
+#घोषणा ACP_TILE_P1_MASK			0x3e
+#घोषणा ACP_TILE_P2_MASK			0x3d
+#घोषणा ACP_TILE_DSP0_MASK			0x3b
+#घोषणा ACP_TILE_DSP1_MASK			0x37
 
-#define ACP_TILE_DSP2_MASK			0x2f
+#घोषणा ACP_TILE_DSP2_MASK			0x2f
 
-#define ACP_DMA_REGS_END			0x146c0
-#define ACP_I2S_PLAY_REGS_START			0x14840
-#define ACP_I2S_PLAY_REGS_END			0x148b4
-#define ACP_I2S_CAP_REGS_START			0x148b8
-#define ACP_I2S_CAP_REGS_END			0x1496c
+#घोषणा ACP_DMA_REGS_END			0x146c0
+#घोषणा ACP_I2S_PLAY_REGS_START			0x14840
+#घोषणा ACP_I2S_PLAY_REGS_END			0x148b4
+#घोषणा ACP_I2S_CAP_REGS_START			0x148b8
+#घोषणा ACP_I2S_CAP_REGS_END			0x1496c
 
-#define ACP_I2S_COMP1_CAP_REG_OFFSET		0xac
-#define ACP_I2S_COMP2_CAP_REG_OFFSET		0xa8
-#define ACP_I2S_COMP1_PLAY_REG_OFFSET		0x6c
-#define ACP_I2S_COMP2_PLAY_REG_OFFSET		0x68
-#define ACP_BT_PLAY_REGS_START			0x14970
-#define ACP_BT_PLAY_REGS_END			0x14a24
-#define ACP_BT_COMP1_REG_OFFSET			0xac
-#define ACP_BT_COMP2_REG_OFFSET			0xa8
+#घोषणा ACP_I2S_COMP1_CAP_REG_OFFSET		0xac
+#घोषणा ACP_I2S_COMP2_CAP_REG_OFFSET		0xa8
+#घोषणा ACP_I2S_COMP1_PLAY_REG_OFFSET		0x6c
+#घोषणा ACP_I2S_COMP2_PLAY_REG_OFFSET		0x68
+#घोषणा ACP_BT_PLAY_REGS_START			0x14970
+#घोषणा ACP_BT_PLAY_REGS_END			0x14a24
+#घोषणा ACP_BT_COMP1_REG_OFFSET			0xac
+#घोषणा ACP_BT_COMP2_REG_OFFSET			0xa8
 
-#define mmACP_PGFSM_RETAIN_REG			0x51c9
-#define mmACP_PGFSM_CONFIG_REG			0x51ca
-#define mmACP_PGFSM_READ_REG_0			0x51cc
+#घोषणा mmACP_PGFSM_RETAIN_REG			0x51c9
+#घोषणा mmACP_PGFSM_CONFIG_REG			0x51ca
+#घोषणा mmACP_PGFSM_READ_REG_0			0x51cc
 
-#define mmACP_MEM_SHUT_DOWN_REQ_LO		0x51f8
-#define mmACP_MEM_SHUT_DOWN_REQ_HI		0x51f9
-#define mmACP_MEM_SHUT_DOWN_STS_LO		0x51fa
-#define mmACP_MEM_SHUT_DOWN_STS_HI		0x51fb
+#घोषणा mmACP_MEM_SHUT_DOWN_REQ_LO		0x51f8
+#घोषणा mmACP_MEM_SHUT_DOWN_REQ_HI		0x51f9
+#घोषणा mmACP_MEM_SHUT_DOWN_STS_LO		0x51fa
+#घोषणा mmACP_MEM_SHUT_DOWN_STS_HI		0x51fb
 
-#define mmACP_CONTROL				0x5131
-#define mmACP_STATUS				0x5133
-#define mmACP_SOFT_RESET			0x5134
-#define ACP_CONTROL__ClkEn_MASK			0x1
-#define ACP_SOFT_RESET__SoftResetAud_MASK	0x100
-#define ACP_SOFT_RESET__SoftResetAudDone_MASK	0x1000000
-#define ACP_CLOCK_EN_TIME_OUT_VALUE		0x000000FF
-#define ACP_SOFT_RESET_DONE_TIME_OUT_VALUE	0x000000FF
+#घोषणा mmACP_CONTROL				0x5131
+#घोषणा mmACP_STATUS				0x5133
+#घोषणा mmACP_SOFT_RESET			0x5134
+#घोषणा ACP_CONTROL__ClkEn_MASK			0x1
+#घोषणा ACP_SOFT_RESET__SoftResetAud_MASK	0x100
+#घोषणा ACP_SOFT_RESET__SoftResetAudDone_MASK	0x1000000
+#घोषणा ACP_CLOCK_EN_TIME_OUT_VALUE		0x000000FF
+#घोषणा ACP_SOFT_RESET_DONE_TIME_OUT_VALUE	0x000000FF
 
-#define ACP_TIMEOUT_LOOP			0x000000FF
-#define ACP_DEVS				4
-#define ACP_SRC_ID				162
+#घोषणा ACP_TIMEOUT_LOOP			0x000000FF
+#घोषणा ACP_DEVS				4
+#घोषणा ACP_SRC_ID				162
 
-enum {
+क्रमागत अणु
 	ACP_TILE_P1 = 0,
 	ACP_TILE_P2,
 	ACP_TILE_DSP0,
 	ACP_TILE_DSP1,
 	ACP_TILE_DSP2,
-};
+पूर्ण;
 
-static int acp_sw_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक acp_sw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	adev->acp.parent = adev->dev;
 
 	adev->acp.cgs_device =
 		amdgpu_cgs_create_device(adev);
-	if (!adev->acp.cgs_device)
-		return -EINVAL;
+	अगर (!adev->acp.cgs_device)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acp_sw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक acp_sw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	if (adev->acp.cgs_device)
+	अगर (adev->acp.cgs_device)
 		amdgpu_cgs_destroy_device(adev->acp.cgs_device);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct acp_pm_domain {
-	void *adev;
-	struct generic_pm_domain gpd;
-};
+काष्ठा acp_pm_करोमुख्य अणु
+	व्योम *adev;
+	काष्ठा generic_pm_करोमुख्य gpd;
+पूर्ण;
 
-static int acp_poweroff(struct generic_pm_domain *genpd)
-{
-	struct acp_pm_domain *apd;
-	struct amdgpu_device *adev;
+अटल पूर्णांक acp_घातeroff(काष्ठा generic_pm_करोमुख्य *genpd)
+अणु
+	काष्ठा acp_pm_करोमुख्य *apd;
+	काष्ठा amdgpu_device *adev;
 
-	apd = container_of(genpd, struct acp_pm_domain, gpd);
-	if (apd != NULL) {
+	apd = container_of(genpd, काष्ठा acp_pm_करोमुख्य, gpd);
+	अगर (apd != शून्य) अणु
 		adev = apd->adev;
 	/* call smu to POWER GATE ACP block
 	 * smu will
-	 * 1. turn off the acp clock
-	 * 2. power off the acp tiles
+	 * 1. turn off the acp घड़ी
+	 * 2. घातer off the acp tiles
 	 * 3. check and enter ulv state
 	 */
-		amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, true);
-	}
-	return 0;
-}
+		amdgpu_dpm_set_घातergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, true);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int acp_poweron(struct generic_pm_domain *genpd)
-{
-	struct acp_pm_domain *apd;
-	struct amdgpu_device *adev;
+अटल पूर्णांक acp_घातeron(काष्ठा generic_pm_करोमुख्य *genpd)
+अणु
+	काष्ठा acp_pm_करोमुख्य *apd;
+	काष्ठा amdgpu_device *adev;
 
-	apd = container_of(genpd, struct acp_pm_domain, gpd);
-	if (apd != NULL) {
+	apd = container_of(genpd, काष्ठा acp_pm_करोमुख्य, gpd);
+	अगर (apd != शून्य) अणु
 		adev = apd->adev;
 	/* call smu to UNGATE ACP block
 	 * smu will
-	 * 1. exit ulv
-	 * 2. turn on acp clock
-	 * 3. power on acp tiles
+	 * 1. निकास ulv
+	 * 2. turn on acp घड़ी
+	 * 3. घातer on acp tiles
 	 */
-		amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, false);
-	}
-	return 0;
-}
+		amdgpu_dpm_set_घातergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, false);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct device *get_mfd_cell_dev(const char *device_name, int r)
-{
-	char auto_dev_name[25];
-	struct device *dev;
+अटल काष्ठा device *get_mfd_cell_dev(स्थिर अक्षर *device_name, पूर्णांक r)
+अणु
+	अक्षर स्वतः_dev_name[25];
+	काष्ठा device *dev;
 
-	snprintf(auto_dev_name, sizeof(auto_dev_name),
+	snम_लिखो(स्वतः_dev_name, माप(स्वतः_dev_name),
 		 "%s.%d.auto", device_name, r);
-	dev = bus_find_device_by_name(&platform_bus_type, NULL, auto_dev_name);
-	dev_info(dev, "device %s added to pm domain\n", auto_dev_name);
+	dev = bus_find_device_by_name(&platक्रमm_bus_type, शून्य, स्वतः_dev_name);
+	dev_info(dev, "device %s added to pm domain\n", स्वतः_dev_name);
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
 /**
  * acp_hw_init - start and test ACP block
  *
- * @handle: handle used to pass amdgpu_device pointer
+ * @handle: handle used to pass amdgpu_device poपूर्णांकer
  *
  */
-static int acp_hw_init(void *handle)
-{
-	int r, i;
-	uint64_t acp_base;
+अटल पूर्णांक acp_hw_init(व्योम *handle)
+अणु
+	पूर्णांक r, i;
+	uपूर्णांक64_t acp_base;
 	u32 val = 0;
 	u32 count = 0;
-	struct device *dev;
-	struct i2s_platform_data *i2s_pdata = NULL;
+	काष्ठा device *dev;
+	काष्ठा i2s_platक्रमm_data *i2s_pdata = शून्य;
 
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	const struct amdgpu_ip_block *ip_block =
+	स्थिर काष्ठा amdgpu_ip_block *ip_block =
 		amdgpu_device_ip_get_ip_block(adev, AMD_IP_BLOCK_TYPE_ACP);
 
-	if (!ip_block)
-		return -EINVAL;
+	अगर (!ip_block)
+		वापस -EINVAL;
 
 	r = amd_acp_hw_init(adev->acp.cgs_device,
 			    ip_block->version->major, ip_block->version->minor);
 	/* -ENODEV means board uses AZ rather than ACP */
-	if (r == -ENODEV) {
-		amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, true);
-		return 0;
-	} else if (r) {
-		return r;
-	}
+	अगर (r == -ENODEV) अणु
+		amdgpu_dpm_set_घातergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, true);
+		वापस 0;
+	पूर्ण अन्यथा अगर (r) अणु
+		वापस r;
+	पूर्ण
 
-	if (adev->rmmio_size == 0 || adev->rmmio_size < 0x5289)
-		return -EINVAL;
+	अगर (adev->rmmio_size == 0 || adev->rmmio_size < 0x5289)
+		वापस -EINVAL;
 
 	acp_base = adev->rmmio_base;
 
 
-	adev->acp.acp_genpd = kzalloc(sizeof(struct acp_pm_domain), GFP_KERNEL);
-	if (adev->acp.acp_genpd == NULL)
-		return -ENOMEM;
+	adev->acp.acp_genpd = kzalloc(माप(काष्ठा acp_pm_करोमुख्य), GFP_KERNEL);
+	अगर (adev->acp.acp_genpd == शून्य)
+		वापस -ENOMEM;
 
 	adev->acp.acp_genpd->gpd.name = "ACP_AUDIO";
-	adev->acp.acp_genpd->gpd.power_off = acp_poweroff;
-	adev->acp.acp_genpd->gpd.power_on = acp_poweron;
+	adev->acp.acp_genpd->gpd.घातer_off = acp_घातeroff;
+	adev->acp.acp_genpd->gpd.घातer_on = acp_घातeron;
 
 
 	adev->acp.acp_genpd->adev = adev;
 
-	pm_genpd_init(&adev->acp.acp_genpd->gpd, NULL, false);
+	pm_genpd_init(&adev->acp.acp_genpd->gpd, शून्य, false);
 
-	adev->acp.acp_cell = kcalloc(ACP_DEVS, sizeof(struct mfd_cell),
+	adev->acp.acp_cell = kसुस्मृति(ACP_DEVS, माप(काष्ठा mfd_cell),
 							GFP_KERNEL);
 
-	if (adev->acp.acp_cell == NULL) {
+	अगर (adev->acp.acp_cell == शून्य) अणु
 		r = -ENOMEM;
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
-	adev->acp.acp_res = kcalloc(5, sizeof(struct resource), GFP_KERNEL);
-	if (adev->acp.acp_res == NULL) {
+	adev->acp.acp_res = kसुस्मृति(5, माप(काष्ठा resource), GFP_KERNEL);
+	अगर (adev->acp.acp_res == शून्य) अणु
 		r = -ENOMEM;
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
-	i2s_pdata = kcalloc(3, sizeof(struct i2s_platform_data), GFP_KERNEL);
-	if (i2s_pdata == NULL) {
+	i2s_pdata = kसुस्मृति(3, माप(काष्ठा i2s_platक्रमm_data), GFP_KERNEL);
+	अगर (i2s_pdata == शून्य) अणु
 		r = -ENOMEM;
-		goto failure;
-	}
+		जाओ failure;
+	पूर्ण
 
-	switch (adev->asic_type) {
-	case CHIP_STONEY:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_STONEY:
 		i2s_pdata[0].quirks = DW_I2S_QUIRK_COMP_REG_OFFSET |
 			DW_I2S_QUIRK_16BIT_IDX_OVERRIDE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		i2s_pdata[0].quirks = DW_I2S_QUIRK_COMP_REG_OFFSET;
-	}
+	पूर्ण
 	i2s_pdata[0].cap = DWC_I2S_PLAY;
 	i2s_pdata[0].snd_rates = SNDRV_PCM_RATE_8000_96000;
 	i2s_pdata[0].i2s_reg_comp1 = ACP_I2S_COMP1_PLAY_REG_OFFSET;
 	i2s_pdata[0].i2s_reg_comp2 = ACP_I2S_COMP2_PLAY_REG_OFFSET;
-	switch (adev->asic_type) {
-	case CHIP_STONEY:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_STONEY:
 		i2s_pdata[1].quirks = DW_I2S_QUIRK_COMP_REG_OFFSET |
 			DW_I2S_QUIRK_COMP_PARAM1 |
 			DW_I2S_QUIRK_16BIT_IDX_OVERRIDE;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		i2s_pdata[1].quirks = DW_I2S_QUIRK_COMP_REG_OFFSET |
 			DW_I2S_QUIRK_COMP_PARAM1;
-	}
+	पूर्ण
 
 	i2s_pdata[1].cap = DWC_I2S_RECORD;
 	i2s_pdata[1].snd_rates = SNDRV_PCM_RATE_8000_96000;
@@ -274,13 +275,13 @@ static int acp_hw_init(void *handle)
 	i2s_pdata[1].i2s_reg_comp2 = ACP_I2S_COMP2_CAP_REG_OFFSET;
 
 	i2s_pdata[2].quirks = DW_I2S_QUIRK_COMP_REG_OFFSET;
-	switch (adev->asic_type) {
-	case CHIP_STONEY:
+	चयन (adev->asic_type) अणु
+	हाल CHIP_STONEY:
 		i2s_pdata[2].quirks |= DW_I2S_QUIRK_16BIT_IDX_OVERRIDE;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	i2s_pdata[2].cap = DWC_I2S_PLAY | DWC_I2S_RECORD;
 	i2s_pdata[2].snd_rates = SNDRV_PCM_RATE_8000_96000;
@@ -315,226 +316,226 @@ static int acp_hw_init(void *handle)
 	adev->acp.acp_cell[0].name = "acp_audio_dma";
 	adev->acp.acp_cell[0].num_resources = 5;
 	adev->acp.acp_cell[0].resources = &adev->acp.acp_res[0];
-	adev->acp.acp_cell[0].platform_data = &adev->asic_type;
-	adev->acp.acp_cell[0].pdata_size = sizeof(adev->asic_type);
+	adev->acp.acp_cell[0].platक्रमm_data = &adev->asic_type;
+	adev->acp.acp_cell[0].pdata_size = माप(adev->asic_type);
 
 	adev->acp.acp_cell[1].name = "designware-i2s";
 	adev->acp.acp_cell[1].num_resources = 1;
 	adev->acp.acp_cell[1].resources = &adev->acp.acp_res[1];
-	adev->acp.acp_cell[1].platform_data = &i2s_pdata[0];
-	adev->acp.acp_cell[1].pdata_size = sizeof(struct i2s_platform_data);
+	adev->acp.acp_cell[1].platक्रमm_data = &i2s_pdata[0];
+	adev->acp.acp_cell[1].pdata_size = माप(काष्ठा i2s_platक्रमm_data);
 
 	adev->acp.acp_cell[2].name = "designware-i2s";
 	adev->acp.acp_cell[2].num_resources = 1;
 	adev->acp.acp_cell[2].resources = &adev->acp.acp_res[2];
-	adev->acp.acp_cell[2].platform_data = &i2s_pdata[1];
-	adev->acp.acp_cell[2].pdata_size = sizeof(struct i2s_platform_data);
+	adev->acp.acp_cell[2].platक्रमm_data = &i2s_pdata[1];
+	adev->acp.acp_cell[2].pdata_size = माप(काष्ठा i2s_platक्रमm_data);
 
 	adev->acp.acp_cell[3].name = "designware-i2s";
 	adev->acp.acp_cell[3].num_resources = 1;
 	adev->acp.acp_cell[3].resources = &adev->acp.acp_res[3];
-	adev->acp.acp_cell[3].platform_data = &i2s_pdata[2];
-	adev->acp.acp_cell[3].pdata_size = sizeof(struct i2s_platform_data);
+	adev->acp.acp_cell[3].platक्रमm_data = &i2s_pdata[2];
+	adev->acp.acp_cell[3].pdata_size = माप(काष्ठा i2s_platक्रमm_data);
 
 	r = mfd_add_hotplug_devices(adev->acp.parent, adev->acp.acp_cell,
 								ACP_DEVS);
-	if (r)
-		goto failure;
+	अगर (r)
+		जाओ failure;
 
-	for (i = 0; i < ACP_DEVS ; i++) {
+	क्रम (i = 0; i < ACP_DEVS ; i++) अणु
 		dev = get_mfd_cell_dev(adev->acp.acp_cell[i].name, i);
 		r = pm_genpd_add_device(&adev->acp.acp_genpd->gpd, dev);
-		if (r) {
+		अगर (r) अणु
 			dev_err(dev, "Failed to add dev to genpd\n");
-			goto failure;
-		}
-	}
+			जाओ failure;
+		पूर्ण
+	पूर्ण
 
 
 	/* Assert Soft reset of ACP */
-	val = cgs_read_register(adev->acp.cgs_device, mmACP_SOFT_RESET);
+	val = cgs_पढ़ो_रेजिस्टर(adev->acp.cgs_device, mmACP_SOFT_RESET);
 
 	val |= ACP_SOFT_RESET__SoftResetAud_MASK;
-	cgs_write_register(adev->acp.cgs_device, mmACP_SOFT_RESET, val);
+	cgs_ग_लिखो_रेजिस्टर(adev->acp.cgs_device, mmACP_SOFT_RESET, val);
 
 	count = ACP_SOFT_RESET_DONE_TIME_OUT_VALUE;
-	while (true) {
-		val = cgs_read_register(adev->acp.cgs_device, mmACP_SOFT_RESET);
-		if (ACP_SOFT_RESET__SoftResetAudDone_MASK ==
+	जबतक (true) अणु
+		val = cgs_पढ़ो_रेजिस्टर(adev->acp.cgs_device, mmACP_SOFT_RESET);
+		अगर (ACP_SOFT_RESET__SoftResetAudDone_MASK ==
 		    (val & ACP_SOFT_RESET__SoftResetAudDone_MASK))
-			break;
-		if (--count == 0) {
+			अवरोध;
+		अगर (--count == 0) अणु
 			dev_err(&adev->pdev->dev, "Failed to reset ACP\n");
 			r = -ETIMEDOUT;
-			goto failure;
-		}
+			जाओ failure;
+		पूर्ण
 		udelay(100);
-	}
-	/* Enable clock to ACP and wait until the clock is enabled */
-	val = cgs_read_register(adev->acp.cgs_device, mmACP_CONTROL);
+	पूर्ण
+	/* Enable घड़ी to ACP and रुको until the घड़ी is enabled */
+	val = cgs_पढ़ो_रेजिस्टर(adev->acp.cgs_device, mmACP_CONTROL);
 	val = val | ACP_CONTROL__ClkEn_MASK;
-	cgs_write_register(adev->acp.cgs_device, mmACP_CONTROL, val);
+	cgs_ग_लिखो_रेजिस्टर(adev->acp.cgs_device, mmACP_CONTROL, val);
 
 	count = ACP_CLOCK_EN_TIME_OUT_VALUE;
 
-	while (true) {
-		val = cgs_read_register(adev->acp.cgs_device, mmACP_STATUS);
-		if (val & (u32) 0x1)
-			break;
-		if (--count == 0) {
+	जबतक (true) अणु
+		val = cgs_पढ़ो_रेजिस्टर(adev->acp.cgs_device, mmACP_STATUS);
+		अगर (val & (u32) 0x1)
+			अवरोध;
+		अगर (--count == 0) अणु
 			dev_err(&adev->pdev->dev, "Failed to reset ACP\n");
 			r = -ETIMEDOUT;
-			goto failure;
-		}
+			जाओ failure;
+		पूर्ण
 		udelay(100);
-	}
-	/* Deassert the SOFT RESET flags */
-	val = cgs_read_register(adev->acp.cgs_device, mmACP_SOFT_RESET);
+	पूर्ण
+	/* Deनिश्चित the SOFT RESET flags */
+	val = cgs_पढ़ो_रेजिस्टर(adev->acp.cgs_device, mmACP_SOFT_RESET);
 	val &= ~ACP_SOFT_RESET__SoftResetAud_MASK;
-	cgs_write_register(adev->acp.cgs_device, mmACP_SOFT_RESET, val);
-	return 0;
+	cgs_ग_लिखो_रेजिस्टर(adev->acp.cgs_device, mmACP_SOFT_RESET, val);
+	वापस 0;
 
 failure:
-	kfree(i2s_pdata);
-	kfree(adev->acp.acp_res);
-	kfree(adev->acp.acp_cell);
-	kfree(adev->acp.acp_genpd);
-	return r;
-}
+	kमुक्त(i2s_pdata);
+	kमुक्त(adev->acp.acp_res);
+	kमुक्त(adev->acp.acp_cell);
+	kमुक्त(adev->acp.acp_genpd);
+	वापस r;
+पूर्ण
 
 /**
  * acp_hw_fini - stop the hardware block
  *
- * @handle: handle used to pass amdgpu_device pointer
+ * @handle: handle used to pass amdgpu_device poपूर्णांकer
  *
  */
-static int acp_hw_fini(void *handle)
-{
-	int i, ret;
+अटल पूर्णांक acp_hw_fini(व्योम *handle)
+अणु
+	पूर्णांक i, ret;
 	u32 val = 0;
 	u32 count = 0;
-	struct device *dev;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	काष्ठा device *dev;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	/* return early if no ACP */
-	if (!adev->acp.acp_genpd) {
-		amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, false);
-		return 0;
-	}
+	/* वापस early अगर no ACP */
+	अगर (!adev->acp.acp_genpd) अणु
+		amdgpu_dpm_set_घातergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, false);
+		वापस 0;
+	पूर्ण
 
 	/* Assert Soft reset of ACP */
-	val = cgs_read_register(adev->acp.cgs_device, mmACP_SOFT_RESET);
+	val = cgs_पढ़ो_रेजिस्टर(adev->acp.cgs_device, mmACP_SOFT_RESET);
 
 	val |= ACP_SOFT_RESET__SoftResetAud_MASK;
-	cgs_write_register(adev->acp.cgs_device, mmACP_SOFT_RESET, val);
+	cgs_ग_लिखो_रेजिस्टर(adev->acp.cgs_device, mmACP_SOFT_RESET, val);
 
 	count = ACP_SOFT_RESET_DONE_TIME_OUT_VALUE;
-	while (true) {
-		val = cgs_read_register(adev->acp.cgs_device, mmACP_SOFT_RESET);
-		if (ACP_SOFT_RESET__SoftResetAudDone_MASK ==
+	जबतक (true) अणु
+		val = cgs_पढ़ो_रेजिस्टर(adev->acp.cgs_device, mmACP_SOFT_RESET);
+		अगर (ACP_SOFT_RESET__SoftResetAudDone_MASK ==
 		    (val & ACP_SOFT_RESET__SoftResetAudDone_MASK))
-			break;
-		if (--count == 0) {
+			अवरोध;
+		अगर (--count == 0) अणु
 			dev_err(&adev->pdev->dev, "Failed to reset ACP\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		udelay(100);
-	}
-	/* Disable ACP clock */
-	val = cgs_read_register(adev->acp.cgs_device, mmACP_CONTROL);
+	पूर्ण
+	/* Disable ACP घड़ी */
+	val = cgs_पढ़ो_रेजिस्टर(adev->acp.cgs_device, mmACP_CONTROL);
 	val &= ~ACP_CONTROL__ClkEn_MASK;
-	cgs_write_register(adev->acp.cgs_device, mmACP_CONTROL, val);
+	cgs_ग_लिखो_रेजिस्टर(adev->acp.cgs_device, mmACP_CONTROL, val);
 
 	count = ACP_CLOCK_EN_TIME_OUT_VALUE;
 
-	while (true) {
-		val = cgs_read_register(adev->acp.cgs_device, mmACP_STATUS);
-		if (val & (u32) 0x1)
-			break;
-		if (--count == 0) {
+	जबतक (true) अणु
+		val = cgs_पढ़ो_रेजिस्टर(adev->acp.cgs_device, mmACP_STATUS);
+		अगर (val & (u32) 0x1)
+			अवरोध;
+		अगर (--count == 0) अणु
 			dev_err(&adev->pdev->dev, "Failed to reset ACP\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		udelay(100);
-	}
+	पूर्ण
 
-	for (i = 0; i < ACP_DEVS ; i++) {
+	क्रम (i = 0; i < ACP_DEVS ; i++) अणु
 		dev = get_mfd_cell_dev(adev->acp.acp_cell[i].name, i);
-		ret = pm_genpd_remove_device(dev);
-		/* If removal fails, dont giveup and try rest */
-		if (ret)
+		ret = pm_genpd_हटाओ_device(dev);
+		/* If removal fails, करोnt giveup and try rest */
+		अगर (ret)
 			dev_err(dev, "remove dev from genpd failed\n");
-	}
+	पूर्ण
 
-	mfd_remove_devices(adev->acp.parent);
-	kfree(adev->acp.acp_res);
-	kfree(adev->acp.acp_genpd);
-	kfree(adev->acp.acp_cell);
+	mfd_हटाओ_devices(adev->acp.parent);
+	kमुक्त(adev->acp.acp_res);
+	kमुक्त(adev->acp.acp_genpd);
+	kमुक्त(adev->acp.acp_cell);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int acp_suspend(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक acp_suspend(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	/* power up on suspend */
-	if (!adev->acp.acp_cell)
-		amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, false);
-	return 0;
-}
+	/* घातer up on suspend */
+	अगर (!adev->acp.acp_cell)
+		amdgpu_dpm_set_घातergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, false);
+	वापस 0;
+पूर्ण
 
-static int acp_resume(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक acp_resume(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	/* power down again on resume */
-	if (!adev->acp.acp_cell)
-		amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, true);
-	return 0;
-}
+	/* घातer करोwn again on resume */
+	अगर (!adev->acp.acp_cell)
+		amdgpu_dpm_set_घातergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, true);
+	वापस 0;
+पूर्ण
 
-static int acp_early_init(void *handle)
-{
-	return 0;
-}
+अटल पूर्णांक acp_early_init(व्योम *handle)
+अणु
+	वापस 0;
+पूर्ण
 
-static bool acp_is_idle(void *handle)
-{
-	return true;
-}
+अटल bool acp_is_idle(व्योम *handle)
+अणु
+	वापस true;
+पूर्ण
 
-static int acp_wait_for_idle(void *handle)
-{
-	return 0;
-}
+अटल पूर्णांक acp_रुको_क्रम_idle(व्योम *handle)
+अणु
+	वापस 0;
+पूर्ण
 
-static int acp_soft_reset(void *handle)
-{
-	return 0;
-}
+अटल पूर्णांक acp_soft_reset(व्योम *handle)
+अणु
+	वापस 0;
+पूर्ण
 
-static int acp_set_clockgating_state(void *handle,
-				     enum amd_clockgating_state state)
-{
-	return 0;
-}
+अटल पूर्णांक acp_set_घड़ीgating_state(व्योम *handle,
+				     क्रमागत amd_घड़ीgating_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-static int acp_set_powergating_state(void *handle,
-				     enum amd_powergating_state state)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक acp_set_घातergating_state(व्योम *handle,
+				     क्रमागत amd_घातergating_state state)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 	bool enable = (state == AMD_PG_STATE_GATE);
 
-	amdgpu_dpm_set_powergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, enable);
+	amdgpu_dpm_set_घातergating_by_smu(adev, AMD_IP_BLOCK_TYPE_ACP, enable);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct amd_ip_funcs acp_ip_funcs = {
+अटल स्थिर काष्ठा amd_ip_funcs acp_ip_funcs = अणु
 	.name = "acp_ip",
 	.early_init = acp_early_init,
-	.late_init = NULL,
+	.late_init = शून्य,
 	.sw_init = acp_sw_init,
 	.sw_fini = acp_sw_fini,
 	.hw_init = acp_hw_init,
@@ -542,17 +543,17 @@ static const struct amd_ip_funcs acp_ip_funcs = {
 	.suspend = acp_suspend,
 	.resume = acp_resume,
 	.is_idle = acp_is_idle,
-	.wait_for_idle = acp_wait_for_idle,
+	.रुको_क्रम_idle = acp_रुको_क्रम_idle,
 	.soft_reset = acp_soft_reset,
-	.set_clockgating_state = acp_set_clockgating_state,
-	.set_powergating_state = acp_set_powergating_state,
-};
+	.set_घड़ीgating_state = acp_set_घड़ीgating_state,
+	.set_घातergating_state = acp_set_घातergating_state,
+पूर्ण;
 
-const struct amdgpu_ip_block_version acp_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version acp_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_ACP,
 	.major = 2,
 	.minor = 2,
 	.rev = 0,
 	.funcs = &acp_ip_funcs,
-};
+पूर्ण;

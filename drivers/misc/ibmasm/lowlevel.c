@@ -1,71 +1,72 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * IBM ASM Service Processor Device Driver
  *
  * Copyright (C) IBM Corporation, 2004
  *
- * Author: Max Asböck <amax@us.ibm.com>
+ * Author: Max Asbथघck <amax@us.ibm.com>
  */
 
-#include "ibmasm.h"
-#include "lowlevel.h"
-#include "i2o.h"
-#include "dot_command.h"
-#include "remote.h"
+#समावेश "ibmasm.h"
+#समावेश "lowlevel.h"
+#समावेश "i2o.h"
+#समावेश "dot_command.h"
+#समावेश "remote.h"
 
-static struct i2o_header header = I2O_HEADER_TEMPLATE;
+अटल काष्ठा i2o_header header = I2O_HEADER_TEMPLATE;
 
 
-int ibmasm_send_i2o_message(struct service_processor *sp)
-{
+पूर्णांक ibmयंत्र_send_i2o_message(काष्ठा service_processor *sp)
+अणु
 	u32 mfa;
-	unsigned int command_size;
-	struct i2o_message *message;
-	struct command *command = sp->current_command;
+	अचिन्हित पूर्णांक command_size;
+	काष्ठा i2o_message *message;
+	काष्ठा command *command = sp->current_command;
 
 	mfa = get_mfa_inbound(sp->base_address);
-	if (!mfa)
-		return 1;
+	अगर (!mfa)
+		वापस 1;
 
-	command_size = get_dot_command_size(command->buffer);
+	command_size = get_करोt_command_size(command->buffer);
 	header.message_size = outgoing_message_size(command_size);
 
 	message = get_i2o_message(sp->base_address, mfa);
 
-	memcpy_toio(&message->header, &header, sizeof(struct i2o_header));
-	memcpy_toio(&message->data, command->buffer, command_size);
+	स_नकल_toio(&message->header, &header, माप(काष्ठा i2o_header));
+	स_नकल_toio(&message->data, command->buffer, command_size);
 
 	set_mfa_inbound(sp->base_address, mfa);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-irqreturn_t ibmasm_interrupt_handler(int irq, void * dev_id)
-{
+irqवापस_t ibmयंत्र_पूर्णांकerrupt_handler(पूर्णांक irq, व्योम * dev_id)
+अणु
 	u32	mfa;
-	struct service_processor *sp = (struct service_processor *)dev_id;
-	void __iomem *base_address = sp->base_address;
-	char tsbuf[32];
+	काष्ठा service_processor *sp = (काष्ठा service_processor *)dev_id;
+	व्योम __iomem *base_address = sp->base_address;
+	अक्षर tsbuf[32];
 
-	if (!sp_interrupt_pending(base_address))
-		return IRQ_NONE;
+	अगर (!sp_पूर्णांकerrupt_pending(base_address))
+		वापस IRQ_NONE;
 
-	dbg("respond to interrupt at %s\n", get_timestamp(tsbuf));
+	dbg("respond to interrupt at %s\n", get_बारtamp(tsbuf));
 
-	if (mouse_interrupt_pending(sp)) {
-		ibmasm_handle_mouse_interrupt(sp);
-		clear_mouse_interrupt(sp);
-	}
+	अगर (mouse_पूर्णांकerrupt_pending(sp)) अणु
+		ibmयंत्र_handle_mouse_पूर्णांकerrupt(sp);
+		clear_mouse_पूर्णांकerrupt(sp);
+	पूर्ण
 
 	mfa = get_mfa_outbound(base_address);
-	if (valid_mfa(mfa)) {
-		struct i2o_message *msg = get_i2o_message(base_address, mfa);
-		ibmasm_receive_message(sp, &msg->data, incoming_data_size(msg));
-	} else
+	अगर (valid_mfa(mfa)) अणु
+		काष्ठा i2o_message *msg = get_i2o_message(base_address, mfa);
+		ibmयंत्र_receive_message(sp, &msg->data, incoming_data_size(msg));
+	पूर्ण अन्यथा
 		dbg("didn't get a valid MFA\n");
 
 	set_mfa_outbound(base_address, mfa);
-	dbg("finished interrupt at   %s\n", get_timestamp(tsbuf));
+	dbg("finished interrupt at   %s\n", get_बारtamp(tsbuf));
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण

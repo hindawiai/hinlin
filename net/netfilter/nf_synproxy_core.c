@@ -1,134 +1,135 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2013 Patrick McHardy <kaber@trash.net>
  */
 
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <asm/unaligned.h>
-#include <net/tcp.h>
-#include <net/netns/generic.h>
-#include <linux/proc_fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <net/tcp.h>
+#समावेश <net/netns/generic.h>
+#समावेश <linux/proc_fs.h>
 
-#include <linux/netfilter_ipv6.h>
-#include <linux/netfilter/nf_synproxy.h>
+#समावेश <linux/netfilter_ipv6.h>
+#समावेश <linux/netfilter/nf_synproxy.h>
 
-#include <net/netfilter/nf_conntrack.h>
-#include <net/netfilter/nf_conntrack_ecache.h>
-#include <net/netfilter/nf_conntrack_extend.h>
-#include <net/netfilter/nf_conntrack_seqadj.h>
-#include <net/netfilter/nf_conntrack_synproxy.h>
-#include <net/netfilter/nf_conntrack_zones.h>
-#include <net/netfilter/nf_synproxy.h>
+#समावेश <net/netfilter/nf_conntrack.h>
+#समावेश <net/netfilter/nf_conntrack_ecache.h>
+#समावेश <net/netfilter/nf_conntrack_extend.h>
+#समावेश <net/netfilter/nf_conntrack_seqadj.h>
+#समावेश <net/netfilter/nf_conntrack_synproxy.h>
+#समावेश <net/netfilter/nf_conntrack_zones.h>
+#समावेश <net/netfilter/nf_synproxy.h>
 
-unsigned int synproxy_net_id;
+अचिन्हित पूर्णांक synproxy_net_id;
 EXPORT_SYMBOL_GPL(synproxy_net_id);
 
 bool
-synproxy_parse_options(const struct sk_buff *skb, unsigned int doff,
-		       const struct tcphdr *th, struct synproxy_options *opts)
-{
-	int length = (th->doff * 4) - sizeof(*th);
+synproxy_parse_options(स्थिर काष्ठा sk_buff *skb, अचिन्हित पूर्णांक करोff,
+		       स्थिर काष्ठा tcphdr *th, काष्ठा synproxy_options *opts)
+अणु
+	पूर्णांक length = (th->करोff * 4) - माप(*th);
 	u8 buf[40], *ptr;
 
-	if (unlikely(length < 0))
-		return false;
+	अगर (unlikely(length < 0))
+		वापस false;
 
-	ptr = skb_header_pointer(skb, doff + sizeof(*th), length, buf);
-	if (ptr == NULL)
-		return false;
+	ptr = skb_header_poपूर्णांकer(skb, करोff + माप(*th), length, buf);
+	अगर (ptr == शून्य)
+		वापस false;
 
 	opts->options = 0;
-	while (length > 0) {
-		int opcode = *ptr++;
-		int opsize;
+	जबतक (length > 0) अणु
+		पूर्णांक opcode = *ptr++;
+		पूर्णांक opsize;
 
-		switch (opcode) {
-		case TCPOPT_EOL:
-			return true;
-		case TCPOPT_NOP:
+		चयन (opcode) अणु
+		हाल TCPOPT_EOL:
+			वापस true;
+		हाल TCPOPT_NOP:
 			length--;
-			continue;
-		default:
-			if (length < 2)
-				return true;
+			जारी;
+		शेष:
+			अगर (length < 2)
+				वापस true;
 			opsize = *ptr++;
-			if (opsize < 2)
-				return true;
-			if (opsize > length)
-				return true;
+			अगर (opsize < 2)
+				वापस true;
+			अगर (opsize > length)
+				वापस true;
 
-			switch (opcode) {
-			case TCPOPT_MSS:
-				if (opsize == TCPOLEN_MSS) {
+			चयन (opcode) अणु
+			हाल TCPOPT_MSS:
+				अगर (opsize == TCPOLEN_MSS) अणु
 					opts->mss_option = get_unaligned_be16(ptr);
 					opts->options |= NF_SYNPROXY_OPT_MSS;
-				}
-				break;
-			case TCPOPT_WINDOW:
-				if (opsize == TCPOLEN_WINDOW) {
+				पूर्ण
+				अवरोध;
+			हाल TCPOPT_WINDOW:
+				अगर (opsize == TCPOLEN_WINDOW) अणु
 					opts->wscale = *ptr;
-					if (opts->wscale > TCP_MAX_WSCALE)
+					अगर (opts->wscale > TCP_MAX_WSCALE)
 						opts->wscale = TCP_MAX_WSCALE;
 					opts->options |= NF_SYNPROXY_OPT_WSCALE;
-				}
-				break;
-			case TCPOPT_TIMESTAMP:
-				if (opsize == TCPOLEN_TIMESTAMP) {
+				पूर्ण
+				अवरोध;
+			हाल TCPOPT_TIMESTAMP:
+				अगर (opsize == TCPOLEN_TIMESTAMP) अणु
 					opts->tsval = get_unaligned_be32(ptr);
 					opts->tsecr = get_unaligned_be32(ptr + 4);
 					opts->options |= NF_SYNPROXY_OPT_TIMESTAMP;
-				}
-				break;
-			case TCPOPT_SACK_PERM:
-				if (opsize == TCPOLEN_SACK_PERM)
+				पूर्ण
+				अवरोध;
+			हाल TCPOPT_SACK_PERM:
+				अगर (opsize == TCPOLEN_SACK_PERM)
 					opts->options |= NF_SYNPROXY_OPT_SACK_PERM;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			ptr += opsize - 2;
 			length -= opsize;
-		}
-	}
-	return true;
-}
+		पूर्ण
+	पूर्ण
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(synproxy_parse_options);
 
-static unsigned int
-synproxy_options_size(const struct synproxy_options *opts)
-{
-	unsigned int size = 0;
+अटल अचिन्हित पूर्णांक
+synproxy_options_size(स्थिर काष्ठा synproxy_options *opts)
+अणु
+	अचिन्हित पूर्णांक size = 0;
 
-	if (opts->options & NF_SYNPROXY_OPT_MSS)
+	अगर (opts->options & NF_SYNPROXY_OPT_MSS)
 		size += TCPOLEN_MSS_ALIGNED;
-	if (opts->options & NF_SYNPROXY_OPT_TIMESTAMP)
+	अगर (opts->options & NF_SYNPROXY_OPT_TIMESTAMP)
 		size += TCPOLEN_TSTAMP_ALIGNED;
-	else if (opts->options & NF_SYNPROXY_OPT_SACK_PERM)
+	अन्यथा अगर (opts->options & NF_SYNPROXY_OPT_SACK_PERM)
 		size += TCPOLEN_SACKPERM_ALIGNED;
-	if (opts->options & NF_SYNPROXY_OPT_WSCALE)
+	अगर (opts->options & NF_SYNPROXY_OPT_WSCALE)
 		size += TCPOLEN_WSCALE_ALIGNED;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static void
-synproxy_build_options(struct tcphdr *th, const struct synproxy_options *opts)
-{
+अटल व्योम
+synproxy_build_options(काष्ठा tcphdr *th, स्थिर काष्ठा synproxy_options *opts)
+अणु
 	__be32 *ptr = (__be32 *)(th + 1);
 	u8 options = opts->options;
 
-	if (options & NF_SYNPROXY_OPT_MSS)
+	अगर (options & NF_SYNPROXY_OPT_MSS)
 		*ptr++ = htonl((TCPOPT_MSS << 24) |
 			       (TCPOLEN_MSS << 16) |
 			       opts->mss_option);
 
-	if (options & NF_SYNPROXY_OPT_TIMESTAMP) {
-		if (options & NF_SYNPROXY_OPT_SACK_PERM)
+	अगर (options & NF_SYNPROXY_OPT_TIMESTAMP) अणु
+		अगर (options & NF_SYNPROXY_OPT_SACK_PERM)
 			*ptr++ = htonl((TCPOPT_SACK_PERM << 24) |
 				       (TCPOLEN_SACK_PERM << 16) |
 				       (TCPOPT_TIMESTAMP << 8) |
 				       TCPOLEN_TIMESTAMP);
-		else
+		अन्यथा
 			*ptr++ = htonl((TCPOPT_NOP << 24) |
 				       (TCPOPT_NOP << 16) |
 				       (TCPOPT_TIMESTAMP << 8) |
@@ -136,354 +137,354 @@ synproxy_build_options(struct tcphdr *th, const struct synproxy_options *opts)
 
 		*ptr++ = htonl(opts->tsval);
 		*ptr++ = htonl(opts->tsecr);
-	} else if (options & NF_SYNPROXY_OPT_SACK_PERM)
+	पूर्ण अन्यथा अगर (options & NF_SYNPROXY_OPT_SACK_PERM)
 		*ptr++ = htonl((TCPOPT_NOP << 24) |
 			       (TCPOPT_NOP << 16) |
 			       (TCPOPT_SACK_PERM << 8) |
 			       TCPOLEN_SACK_PERM);
 
-	if (options & NF_SYNPROXY_OPT_WSCALE)
+	अगर (options & NF_SYNPROXY_OPT_WSCALE)
 		*ptr++ = htonl((TCPOPT_NOP << 24) |
 			       (TCPOPT_WINDOW << 16) |
 			       (TCPOLEN_WINDOW << 8) |
 			       opts->wscale);
-}
+पूर्ण
 
-void synproxy_init_timestamp_cookie(const struct nf_synproxy_info *info,
-				    struct synproxy_options *opts)
-{
+व्योम synproxy_init_बारtamp_cookie(स्थिर काष्ठा nf_synproxy_info *info,
+				    काष्ठा synproxy_options *opts)
+अणु
 	opts->tsecr = opts->tsval;
-	opts->tsval = tcp_time_stamp_raw() & ~0x3f;
+	opts->tsval = tcp_समय_stamp_raw() & ~0x3f;
 
-	if (opts->options & NF_SYNPROXY_OPT_WSCALE) {
+	अगर (opts->options & NF_SYNPROXY_OPT_WSCALE) अणु
 		opts->tsval |= opts->wscale;
 		opts->wscale = info->wscale;
-	} else
+	पूर्ण अन्यथा
 		opts->tsval |= 0xf;
 
-	if (opts->options & NF_SYNPROXY_OPT_SACK_PERM)
+	अगर (opts->options & NF_SYNPROXY_OPT_SACK_PERM)
 		opts->tsval |= 1 << 4;
 
-	if (opts->options & NF_SYNPROXY_OPT_ECN)
+	अगर (opts->options & NF_SYNPROXY_OPT_ECN)
 		opts->tsval |= 1 << 5;
-}
-EXPORT_SYMBOL_GPL(synproxy_init_timestamp_cookie);
+पूर्ण
+EXPORT_SYMBOL_GPL(synproxy_init_बारtamp_cookie);
 
-static void
-synproxy_check_timestamp_cookie(struct synproxy_options *opts)
-{
+अटल व्योम
+synproxy_check_बारtamp_cookie(काष्ठा synproxy_options *opts)
+अणु
 	opts->wscale = opts->tsecr & 0xf;
-	if (opts->wscale != 0xf)
+	अगर (opts->wscale != 0xf)
 		opts->options |= NF_SYNPROXY_OPT_WSCALE;
 
 	opts->options |= opts->tsecr & (1 << 4) ? NF_SYNPROXY_OPT_SACK_PERM : 0;
 
 	opts->options |= opts->tsecr & (1 << 5) ? NF_SYNPROXY_OPT_ECN : 0;
-}
+पूर्ण
 
-static unsigned int
-synproxy_tstamp_adjust(struct sk_buff *skb, unsigned int protoff,
-		       struct tcphdr *th, struct nf_conn *ct,
-		       enum ip_conntrack_info ctinfo,
-		       const struct nf_conn_synproxy *synproxy)
-{
-	unsigned int optoff, optend;
+अटल अचिन्हित पूर्णांक
+synproxy_tstamp_adjust(काष्ठा sk_buff *skb, अचिन्हित पूर्णांक protoff,
+		       काष्ठा tcphdr *th, काष्ठा nf_conn *ct,
+		       क्रमागत ip_conntrack_info ctinfo,
+		       स्थिर काष्ठा nf_conn_synproxy *synproxy)
+अणु
+	अचिन्हित पूर्णांक optoff, optend;
 	__be32 *ptr, old;
 
-	if (synproxy->tsoff == 0)
-		return 1;
+	अगर (synproxy->tsoff == 0)
+		वापस 1;
 
-	optoff = protoff + sizeof(struct tcphdr);
-	optend = protoff + th->doff * 4;
+	optoff = protoff + माप(काष्ठा tcphdr);
+	optend = protoff + th->करोff * 4;
 
-	if (skb_ensure_writable(skb, optend))
-		return 0;
+	अगर (skb_ensure_writable(skb, optend))
+		वापस 0;
 
-	while (optoff < optend) {
-		unsigned char *op = skb->data + optoff;
+	जबतक (optoff < optend) अणु
+		अचिन्हित अक्षर *op = skb->data + optoff;
 
-		switch (op[0]) {
-		case TCPOPT_EOL:
-			return 1;
-		case TCPOPT_NOP:
+		चयन (op[0]) अणु
+		हाल TCPOPT_EOL:
+			वापस 1;
+		हाल TCPOPT_NOP:
 			optoff++;
-			continue;
-		default:
-			if (optoff + 1 == optend ||
+			जारी;
+		शेष:
+			अगर (optoff + 1 == optend ||
 			    optoff + op[1] > optend ||
 			    op[1] < 2)
-				return 0;
-			if (op[0] == TCPOPT_TIMESTAMP &&
-			    op[1] == TCPOLEN_TIMESTAMP) {
-				if (CTINFO2DIR(ctinfo) == IP_CT_DIR_REPLY) {
+				वापस 0;
+			अगर (op[0] == TCPOPT_TIMESTAMP &&
+			    op[1] == TCPOLEN_TIMESTAMP) अणु
+				अगर (CTINFO2सूची(ctinfo) == IP_CT_सूची_REPLY) अणु
 					ptr = (__be32 *)&op[2];
 					old = *ptr;
 					*ptr = htonl(ntohl(*ptr) -
 						     synproxy->tsoff);
-				} else {
+				पूर्ण अन्यथा अणु
 					ptr = (__be32 *)&op[6];
 					old = *ptr;
 					*ptr = htonl(ntohl(*ptr) +
 						     synproxy->tsoff);
-				}
+				पूर्ण
 				inet_proto_csum_replace4(&th->check, skb,
 							 old, *ptr, false);
-				return 1;
-			}
+				वापस 1;
+			पूर्ण
 			optoff += op[1];
-		}
-	}
-	return 1;
-}
+		पूर्ण
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-static struct nf_ct_ext_type nf_ct_synproxy_extend __read_mostly = {
-	.len		= sizeof(struct nf_conn_synproxy),
-	.align		= __alignof__(struct nf_conn_synproxy),
+अटल काष्ठा nf_ct_ext_type nf_ct_synproxy_extend __पढ़ो_mostly = अणु
+	.len		= माप(काष्ठा nf_conn_synproxy),
+	.align		= __alignof__(काष्ठा nf_conn_synproxy),
 	.id		= NF_CT_EXT_SYNPROXY,
-};
+पूर्ण;
 
-#ifdef CONFIG_PROC_FS
-static void *synproxy_cpu_seq_start(struct seq_file *seq, loff_t *pos)
-{
-	struct synproxy_net *snet = synproxy_pernet(seq_file_net(seq));
-	int cpu;
+#अगर_घोषित CONFIG_PROC_FS
+अटल व्योम *synproxy_cpu_seq_start(काष्ठा seq_file *seq, loff_t *pos)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(seq_file_net(seq));
+	पूर्णांक cpu;
 
-	if (*pos == 0)
-		return SEQ_START_TOKEN;
+	अगर (*pos == 0)
+		वापस SEQ_START_TOKEN;
 
-	for (cpu = *pos - 1; cpu < nr_cpu_ids; cpu++) {
-		if (!cpu_possible(cpu))
-			continue;
+	क्रम (cpu = *pos - 1; cpu < nr_cpu_ids; cpu++) अणु
+		अगर (!cpu_possible(cpu))
+			जारी;
 		*pos = cpu + 1;
-		return per_cpu_ptr(snet->stats, cpu);
-	}
+		वापस per_cpu_ptr(snet->stats, cpu);
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void *synproxy_cpu_seq_next(struct seq_file *seq, void *v, loff_t *pos)
-{
-	struct synproxy_net *snet = synproxy_pernet(seq_file_net(seq));
-	int cpu;
+अटल व्योम *synproxy_cpu_seq_next(काष्ठा seq_file *seq, व्योम *v, loff_t *pos)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(seq_file_net(seq));
+	पूर्णांक cpu;
 
-	for (cpu = *pos; cpu < nr_cpu_ids; cpu++) {
-		if (!cpu_possible(cpu))
-			continue;
+	क्रम (cpu = *pos; cpu < nr_cpu_ids; cpu++) अणु
+		अगर (!cpu_possible(cpu))
+			जारी;
 		*pos = cpu + 1;
-		return per_cpu_ptr(snet->stats, cpu);
-	}
+		वापस per_cpu_ptr(snet->stats, cpu);
+	पूर्ण
 	(*pos)++;
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void synproxy_cpu_seq_stop(struct seq_file *seq, void *v)
-{
-	return;
-}
+अटल व्योम synproxy_cpu_seq_stop(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	वापस;
+पूर्ण
 
-static int synproxy_cpu_seq_show(struct seq_file *seq, void *v)
-{
-	struct synproxy_stats *stats = v;
+अटल पूर्णांक synproxy_cpu_seq_show(काष्ठा seq_file *seq, व्योम *v)
+अणु
+	काष्ठा synproxy_stats *stats = v;
 
-	if (v == SEQ_START_TOKEN) {
-		seq_puts(seq, "entries\t\tsyn_received\t"
+	अगर (v == SEQ_START_TOKEN) अणु
+		seq_माला_दो(seq, "entries\t\tsyn_received\t"
 			      "cookie_invalid\tcookie_valid\t"
 			      "cookie_retrans\tconn_reopened\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	seq_printf(seq, "%08x\t%08x\t%08x\t%08x\t%08x\t%08x\n", 0,
+	seq_म_लिखो(seq, "%08x\t%08x\t%08x\t%08x\t%08x\t%08x\n", 0,
 		   stats->syn_received,
 		   stats->cookie_invalid,
 		   stats->cookie_valid,
 		   stats->cookie_retrans,
-		   stats->conn_reopened);
+		   stats->conn_reखोलोed);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct seq_operations synproxy_cpu_seq_ops = {
+अटल स्थिर काष्ठा seq_operations synproxy_cpu_seq_ops = अणु
 	.start		= synproxy_cpu_seq_start,
 	.next		= synproxy_cpu_seq_next,
 	.stop		= synproxy_cpu_seq_stop,
 	.show		= synproxy_cpu_seq_show,
-};
+पूर्ण;
 
-static int __net_init synproxy_proc_init(struct net *net)
-{
-	if (!proc_create_net("synproxy", 0444, net->proc_net_stat,
-			&synproxy_cpu_seq_ops, sizeof(struct seq_net_private)))
-		return -ENOMEM;
-	return 0;
-}
+अटल पूर्णांक __net_init synproxy_proc_init(काष्ठा net *net)
+अणु
+	अगर (!proc_create_net("synproxy", 0444, net->proc_net_stat,
+			&synproxy_cpu_seq_ops, माप(काष्ठा seq_net_निजी)))
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static void __net_exit synproxy_proc_exit(struct net *net)
-{
-	remove_proc_entry("synproxy", net->proc_net_stat);
-}
-#else
-static int __net_init synproxy_proc_init(struct net *net)
-{
-	return 0;
-}
+अटल व्योम __net_निकास synproxy_proc_निकास(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("synproxy", net->proc_net_stat);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक __net_init synproxy_proc_init(काष्ठा net *net)
+अणु
+	वापस 0;
+पूर्ण
 
-static void __net_exit synproxy_proc_exit(struct net *net)
-{
-	return;
-}
-#endif /* CONFIG_PROC_FS */
+अटल व्योम __net_निकास synproxy_proc_निकास(काष्ठा net *net)
+अणु
+	वापस;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_PROC_FS */
 
-static int __net_init synproxy_net_init(struct net *net)
-{
-	struct synproxy_net *snet = synproxy_pernet(net);
-	struct nf_conn *ct;
-	int err = -ENOMEM;
+अटल पूर्णांक __net_init synproxy_net_init(काष्ठा net *net)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(net);
+	काष्ठा nf_conn *ct;
+	पूर्णांक err = -ENOMEM;
 
-	ct = nf_ct_tmpl_alloc(net, &nf_ct_zone_dflt, GFP_KERNEL);
-	if (!ct)
-		goto err1;
+	ct = nf_ct_पंचांगpl_alloc(net, &nf_ct_zone_dflt, GFP_KERNEL);
+	अगर (!ct)
+		जाओ err1;
 
-	if (!nfct_seqadj_ext_add(ct))
-		goto err2;
-	if (!nfct_synproxy_ext_add(ct))
-		goto err2;
+	अगर (!nfct_seqadj_ext_add(ct))
+		जाओ err2;
+	अगर (!nfct_synproxy_ext_add(ct))
+		जाओ err2;
 
 	__set_bit(IPS_CONFIRMED_BIT, &ct->status);
 	nf_conntrack_get(&ct->ct_general);
-	snet->tmpl = ct;
+	snet->पंचांगpl = ct;
 
-	snet->stats = alloc_percpu(struct synproxy_stats);
-	if (snet->stats == NULL)
-		goto err2;
+	snet->stats = alloc_percpu(काष्ठा synproxy_stats);
+	अगर (snet->stats == शून्य)
+		जाओ err2;
 
 	err = synproxy_proc_init(net);
-	if (err < 0)
-		goto err3;
+	अगर (err < 0)
+		जाओ err3;
 
-	return 0;
+	वापस 0;
 
 err3:
-	free_percpu(snet->stats);
+	मुक्त_percpu(snet->stats);
 err2:
-	nf_ct_tmpl_free(ct);
+	nf_ct_पंचांगpl_मुक्त(ct);
 err1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __net_exit synproxy_net_exit(struct net *net)
-{
-	struct synproxy_net *snet = synproxy_pernet(net);
+अटल व्योम __net_निकास synproxy_net_निकास(काष्ठा net *net)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(net);
 
-	nf_ct_put(snet->tmpl);
-	synproxy_proc_exit(net);
-	free_percpu(snet->stats);
-}
+	nf_ct_put(snet->पंचांगpl);
+	synproxy_proc_निकास(net);
+	मुक्त_percpu(snet->stats);
+पूर्ण
 
-static struct pernet_operations synproxy_net_ops = {
+अटल काष्ठा pernet_operations synproxy_net_ops = अणु
 	.init		= synproxy_net_init,
-	.exit		= synproxy_net_exit,
+	.निकास		= synproxy_net_निकास,
 	.id		= &synproxy_net_id,
-	.size		= sizeof(struct synproxy_net),
-};
+	.size		= माप(काष्ठा synproxy_net),
+पूर्ण;
 
-static int __init synproxy_core_init(void)
-{
-	int err;
+अटल पूर्णांक __init synproxy_core_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	err = nf_ct_extend_register(&nf_ct_synproxy_extend);
-	if (err < 0)
-		goto err1;
+	err = nf_ct_extend_रेजिस्टर(&nf_ct_synproxy_extend);
+	अगर (err < 0)
+		जाओ err1;
 
-	err = register_pernet_subsys(&synproxy_net_ops);
-	if (err < 0)
-		goto err2;
+	err = रेजिस्टर_pernet_subsys(&synproxy_net_ops);
+	अगर (err < 0)
+		जाओ err2;
 
-	return 0;
+	वापस 0;
 
 err2:
-	nf_ct_extend_unregister(&nf_ct_synproxy_extend);
+	nf_ct_extend_unरेजिस्टर(&nf_ct_synproxy_extend);
 err1:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit synproxy_core_exit(void)
-{
-	unregister_pernet_subsys(&synproxy_net_ops);
-	nf_ct_extend_unregister(&nf_ct_synproxy_extend);
-}
+अटल व्योम __निकास synproxy_core_निकास(व्योम)
+अणु
+	unरेजिस्टर_pernet_subsys(&synproxy_net_ops);
+	nf_ct_extend_unरेजिस्टर(&nf_ct_synproxy_extend);
+पूर्ण
 
 module_init(synproxy_core_init);
-module_exit(synproxy_core_exit);
+module_निकास(synproxy_core_निकास);
 
-static struct iphdr *
-synproxy_build_ip(struct net *net, struct sk_buff *skb, __be32 saddr,
+अटल काष्ठा iphdr *
+synproxy_build_ip(काष्ठा net *net, काष्ठा sk_buff *skb, __be32 saddr,
 		  __be32 daddr)
-{
-	struct iphdr *iph;
+अणु
+	काष्ठा iphdr *iph;
 
 	skb_reset_network_header(skb);
-	iph = skb_put(skb, sizeof(*iph));
+	iph = skb_put(skb, माप(*iph));
 	iph->version	= 4;
-	iph->ihl	= sizeof(*iph) / 4;
+	iph->ihl	= माप(*iph) / 4;
 	iph->tos	= 0;
 	iph->id		= 0;
 	iph->frag_off	= htons(IP_DF);
-	iph->ttl	= net->ipv4.sysctl_ip_default_ttl;
+	iph->ttl	= net->ipv4.sysctl_ip_शेष_ttl;
 	iph->protocol	= IPPROTO_TCP;
 	iph->check	= 0;
 	iph->saddr	= saddr;
 	iph->daddr	= daddr;
 
-	return iph;
-}
+	वापस iph;
+पूर्ण
 
-static void
-synproxy_send_tcp(struct net *net,
-		  const struct sk_buff *skb, struct sk_buff *nskb,
-		  struct nf_conntrack *nfct, enum ip_conntrack_info ctinfo,
-		  struct iphdr *niph, struct tcphdr *nth,
-		  unsigned int tcp_hdr_size)
-{
+अटल व्योम
+synproxy_send_tcp(काष्ठा net *net,
+		  स्थिर काष्ठा sk_buff *skb, काष्ठा sk_buff *nskb,
+		  काष्ठा nf_conntrack *nfct, क्रमागत ip_conntrack_info ctinfo,
+		  काष्ठा iphdr *niph, काष्ठा tcphdr *nth,
+		  अचिन्हित पूर्णांक tcp_hdr_size)
+अणु
 	nth->check = ~tcp_v4_check(tcp_hdr_size, niph->saddr, niph->daddr, 0);
 	nskb->ip_summed   = CHECKSUM_PARTIAL;
-	nskb->csum_start  = (unsigned char *)nth - nskb->head;
-	nskb->csum_offset = offsetof(struct tcphdr, check);
+	nskb->csum_start  = (अचिन्हित अक्षर *)nth - nskb->head;
+	nskb->csum_offset = दुरत्व(काष्ठा tcphdr, check);
 
 	skb_dst_set_noref(nskb, skb_dst(skb));
 	nskb->protocol = htons(ETH_P_IP);
-	if (ip_route_me_harder(net, nskb->sk, nskb, RTN_UNSPEC))
-		goto free_nskb;
+	अगर (ip_route_me_harder(net, nskb->sk, nskb, RTN_UNSPEC))
+		जाओ मुक्त_nskb;
 
-	if (nfct) {
-		nf_ct_set(nskb, (struct nf_conn *)nfct, ctinfo);
+	अगर (nfct) अणु
+		nf_ct_set(nskb, (काष्ठा nf_conn *)nfct, ctinfo);
 		nf_conntrack_get(nfct);
-	}
+	पूर्ण
 
 	ip_local_out(net, nskb->sk, nskb);
-	return;
+	वापस;
 
-free_nskb:
-	kfree_skb(nskb);
-}
+मुक्त_nskb:
+	kमुक्त_skb(nskb);
+पूर्ण
 
-void
-synproxy_send_client_synack(struct net *net,
-			    const struct sk_buff *skb, const struct tcphdr *th,
-			    const struct synproxy_options *opts)
-{
-	struct sk_buff *nskb;
-	struct iphdr *iph, *niph;
-	struct tcphdr *nth;
-	unsigned int tcp_hdr_size;
+व्योम
+synproxy_send_client_synack(काष्ठा net *net,
+			    स्थिर काष्ठा sk_buff *skb, स्थिर काष्ठा tcphdr *th,
+			    स्थिर काष्ठा synproxy_options *opts)
+अणु
+	काष्ठा sk_buff *nskb;
+	काष्ठा iphdr *iph, *niph;
+	काष्ठा tcphdr *nth;
+	अचिन्हित पूर्णांक tcp_hdr_size;
 	u16 mss = opts->mss_encode;
 
 	iph = ip_hdr(skb);
 
-	tcp_hdr_size = sizeof(*nth) + synproxy_options_size(opts);
-	nskb = alloc_skb(sizeof(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
+	tcp_hdr_size = माप(*nth) + synproxy_options_size(opts);
+	nskb = alloc_skb(माप(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
 			 GFP_ATOMIC);
-	if (!nskb)
-		return;
+	अगर (!nskb)
+		वापस;
 	skb_reserve(nskb, MAX_TCP_HEADER);
 
 	niph = synproxy_build_ip(net, nskb, iph->daddr, iph->saddr);
@@ -495,10 +496,10 @@ synproxy_send_client_synack(struct net *net,
 	nth->seq	= htonl(__cookie_v4_init_sequence(iph, th, &mss));
 	nth->ack_seq	= htonl(ntohl(th->seq) + 1);
 	tcp_flag_word(nth) = TCP_FLAG_SYN | TCP_FLAG_ACK;
-	if (opts->options & NF_SYNPROXY_OPT_ECN)
+	अगर (opts->options & NF_SYNPROXY_OPT_ECN)
 		tcp_flag_word(nth) |= TCP_FLAG_ECE;
-	nth->doff	= tcp_hdr_size / 4;
-	nth->window	= 0;
+	nth->करोff	= tcp_hdr_size / 4;
+	nth->winकरोw	= 0;
 	nth->check	= 0;
 	nth->urg_ptr	= 0;
 
@@ -506,27 +507,27 @@ synproxy_send_client_synack(struct net *net,
 
 	synproxy_send_tcp(net, skb, nskb, skb_nfct(skb),
 			  IP_CT_ESTABLISHED_REPLY, niph, nth, tcp_hdr_size);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(synproxy_send_client_synack);
 
-static void
-synproxy_send_server_syn(struct net *net,
-			 const struct sk_buff *skb, const struct tcphdr *th,
-			 const struct synproxy_options *opts, u32 recv_seq)
-{
-	struct synproxy_net *snet = synproxy_pernet(net);
-	struct sk_buff *nskb;
-	struct iphdr *iph, *niph;
-	struct tcphdr *nth;
-	unsigned int tcp_hdr_size;
+अटल व्योम
+synproxy_send_server_syn(काष्ठा net *net,
+			 स्थिर काष्ठा sk_buff *skb, स्थिर काष्ठा tcphdr *th,
+			 स्थिर काष्ठा synproxy_options *opts, u32 recv_seq)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(net);
+	काष्ठा sk_buff *nskb;
+	काष्ठा iphdr *iph, *niph;
+	काष्ठा tcphdr *nth;
+	अचिन्हित पूर्णांक tcp_hdr_size;
 
 	iph = ip_hdr(skb);
 
-	tcp_hdr_size = sizeof(*nth) + synproxy_options_size(opts);
-	nskb = alloc_skb(sizeof(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
+	tcp_hdr_size = माप(*nth) + synproxy_options_size(opts);
+	nskb = alloc_skb(माप(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
 			 GFP_ATOMIC);
-	if (!nskb)
-		return;
+	अगर (!nskb)
+		वापस;
 	skb_reserve(nskb, MAX_TCP_HEADER);
 
 	niph = synproxy_build_ip(net, nskb, iph->saddr, iph->daddr);
@@ -541,37 +542,37 @@ synproxy_send_server_syn(struct net *net,
 	 */
 	nth->ack_seq	= htonl(ntohl(th->ack_seq) - 1);
 	tcp_flag_word(nth) = TCP_FLAG_SYN;
-	if (opts->options & NF_SYNPROXY_OPT_ECN)
+	अगर (opts->options & NF_SYNPROXY_OPT_ECN)
 		tcp_flag_word(nth) |= TCP_FLAG_ECE | TCP_FLAG_CWR;
-	nth->doff	= tcp_hdr_size / 4;
-	nth->window	= th->window;
+	nth->करोff	= tcp_hdr_size / 4;
+	nth->winकरोw	= th->winकरोw;
 	nth->check	= 0;
 	nth->urg_ptr	= 0;
 
 	synproxy_build_options(nth, opts);
 
-	synproxy_send_tcp(net, skb, nskb, &snet->tmpl->ct_general, IP_CT_NEW,
+	synproxy_send_tcp(net, skb, nskb, &snet->पंचांगpl->ct_general, IP_CT_NEW,
 			  niph, nth, tcp_hdr_size);
-}
+पूर्ण
 
-static void
-synproxy_send_server_ack(struct net *net,
-			 const struct ip_ct_tcp *state,
-			 const struct sk_buff *skb, const struct tcphdr *th,
-			 const struct synproxy_options *opts)
-{
-	struct sk_buff *nskb;
-	struct iphdr *iph, *niph;
-	struct tcphdr *nth;
-	unsigned int tcp_hdr_size;
+अटल व्योम
+synproxy_send_server_ack(काष्ठा net *net,
+			 स्थिर काष्ठा ip_ct_tcp *state,
+			 स्थिर काष्ठा sk_buff *skb, स्थिर काष्ठा tcphdr *th,
+			 स्थिर काष्ठा synproxy_options *opts)
+अणु
+	काष्ठा sk_buff *nskb;
+	काष्ठा iphdr *iph, *niph;
+	काष्ठा tcphdr *nth;
+	अचिन्हित पूर्णांक tcp_hdr_size;
 
 	iph = ip_hdr(skb);
 
-	tcp_hdr_size = sizeof(*nth) + synproxy_options_size(opts);
-	nskb = alloc_skb(sizeof(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
+	tcp_hdr_size = माप(*nth) + synproxy_options_size(opts);
+	nskb = alloc_skb(माप(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
 			 GFP_ATOMIC);
-	if (!nskb)
-		return;
+	अगर (!nskb)
+		वापस;
 	skb_reserve(nskb, MAX_TCP_HEADER);
 
 	niph = synproxy_build_ip(net, nskb, iph->daddr, iph->saddr);
@@ -583,33 +584,33 @@ synproxy_send_server_ack(struct net *net,
 	nth->seq	= htonl(ntohl(th->ack_seq));
 	nth->ack_seq	= htonl(ntohl(th->seq) + 1);
 	tcp_flag_word(nth) = TCP_FLAG_ACK;
-	nth->doff	= tcp_hdr_size / 4;
-	nth->window	= htons(state->seen[IP_CT_DIR_ORIGINAL].td_maxwin);
+	nth->करोff	= tcp_hdr_size / 4;
+	nth->winकरोw	= htons(state->seen[IP_CT_सूची_ORIGINAL].td_maxwin);
 	nth->check	= 0;
 	nth->urg_ptr	= 0;
 
 	synproxy_build_options(nth, opts);
 
-	synproxy_send_tcp(net, skb, nskb, NULL, 0, niph, nth, tcp_hdr_size);
-}
+	synproxy_send_tcp(net, skb, nskb, शून्य, 0, niph, nth, tcp_hdr_size);
+पूर्ण
 
-static void
-synproxy_send_client_ack(struct net *net,
-			 const struct sk_buff *skb, const struct tcphdr *th,
-			 const struct synproxy_options *opts)
-{
-	struct sk_buff *nskb;
-	struct iphdr *iph, *niph;
-	struct tcphdr *nth;
-	unsigned int tcp_hdr_size;
+अटल व्योम
+synproxy_send_client_ack(काष्ठा net *net,
+			 स्थिर काष्ठा sk_buff *skb, स्थिर काष्ठा tcphdr *th,
+			 स्थिर काष्ठा synproxy_options *opts)
+अणु
+	काष्ठा sk_buff *nskb;
+	काष्ठा iphdr *iph, *niph;
+	काष्ठा tcphdr *nth;
+	अचिन्हित पूर्णांक tcp_hdr_size;
 
 	iph = ip_hdr(skb);
 
-	tcp_hdr_size = sizeof(*nth) + synproxy_options_size(opts);
-	nskb = alloc_skb(sizeof(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
+	tcp_hdr_size = माप(*nth) + synproxy_options_size(opts);
+	nskb = alloc_skb(माप(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
 			 GFP_ATOMIC);
-	if (!nskb)
-		return;
+	अगर (!nskb)
+		वापस;
 	skb_reserve(nskb, MAX_TCP_HEADER);
 
 	niph = synproxy_build_ip(net, nskb, iph->saddr, iph->daddr);
@@ -621,8 +622,8 @@ synproxy_send_client_ack(struct net *net,
 	nth->seq	= htonl(ntohl(th->seq) + 1);
 	nth->ack_seq	= th->ack_seq;
 	tcp_flag_word(nth) = TCP_FLAG_ACK;
-	nth->doff	= tcp_hdr_size / 4;
-	nth->window	= htons(ntohs(th->window) >> opts->wscale);
+	nth->करोff	= tcp_hdr_size / 4;
+	nth->winकरोw	= htons(ntohs(th->winकरोw) >> opts->wscale);
 	nth->check	= 0;
 	nth->urg_ptr	= 0;
 
@@ -630,123 +631,123 @@ synproxy_send_client_ack(struct net *net,
 
 	synproxy_send_tcp(net, skb, nskb, skb_nfct(skb),
 			  IP_CT_ESTABLISHED_REPLY, niph, nth, tcp_hdr_size);
-}
+पूर्ण
 
 bool
-synproxy_recv_client_ack(struct net *net,
-			 const struct sk_buff *skb, const struct tcphdr *th,
-			 struct synproxy_options *opts, u32 recv_seq)
-{
-	struct synproxy_net *snet = synproxy_pernet(net);
-	int mss;
+synproxy_recv_client_ack(काष्ठा net *net,
+			 स्थिर काष्ठा sk_buff *skb, स्थिर काष्ठा tcphdr *th,
+			 काष्ठा synproxy_options *opts, u32 recv_seq)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(net);
+	पूर्णांक mss;
 
 	mss = __cookie_v4_check(ip_hdr(skb), th, ntohl(th->ack_seq) - 1);
-	if (mss == 0) {
+	अगर (mss == 0) अणु
 		this_cpu_inc(snet->stats->cookie_invalid);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	this_cpu_inc(snet->stats->cookie_valid);
 	opts->mss_option = mss;
 	opts->options |= NF_SYNPROXY_OPT_MSS;
 
-	if (opts->options & NF_SYNPROXY_OPT_TIMESTAMP)
-		synproxy_check_timestamp_cookie(opts);
+	अगर (opts->options & NF_SYNPROXY_OPT_TIMESTAMP)
+		synproxy_check_बारtamp_cookie(opts);
 
 	synproxy_send_server_syn(net, skb, th, opts, recv_seq);
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(synproxy_recv_client_ack);
 
-unsigned int
-ipv4_synproxy_hook(void *priv, struct sk_buff *skb,
-		   const struct nf_hook_state *nhs)
-{
-	struct net *net = nhs->net;
-	struct synproxy_net *snet = synproxy_pernet(net);
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
-	struct nf_conn_synproxy *synproxy;
-	struct synproxy_options opts = {};
-	const struct ip_ct_tcp *state;
-	struct tcphdr *th, _th;
-	unsigned int thoff;
+अचिन्हित पूर्णांक
+ipv4_synproxy_hook(व्योम *priv, काष्ठा sk_buff *skb,
+		   स्थिर काष्ठा nf_hook_state *nhs)
+अणु
+	काष्ठा net *net = nhs->net;
+	काष्ठा synproxy_net *snet = synproxy_pernet(net);
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
+	काष्ठा nf_conn_synproxy *synproxy;
+	काष्ठा synproxy_options opts = अणुपूर्ण;
+	स्थिर काष्ठा ip_ct_tcp *state;
+	काष्ठा tcphdr *th, _th;
+	अचिन्हित पूर्णांक thoff;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct)
-		return NF_ACCEPT;
+	अगर (!ct)
+		वापस NF_ACCEPT;
 
 	synproxy = nfct_synproxy(ct);
-	if (!synproxy)
-		return NF_ACCEPT;
+	अगर (!synproxy)
+		वापस NF_ACCEPT;
 
-	if (nf_is_loopback_packet(skb) ||
+	अगर (nf_is_loopback_packet(skb) ||
 	    ip_hdr(skb)->protocol != IPPROTO_TCP)
-		return NF_ACCEPT;
+		वापस NF_ACCEPT;
 
 	thoff = ip_hdrlen(skb);
-	th = skb_header_pointer(skb, thoff, sizeof(_th), &_th);
-	if (!th)
-		return NF_DROP;
+	th = skb_header_poपूर्णांकer(skb, thoff, माप(_th), &_th);
+	अगर (!th)
+		वापस NF_DROP;
 
 	state = &ct->proto.tcp;
-	switch (state->state) {
-	case TCP_CONNTRACK_CLOSE:
-		if (th->rst && CTINFO2DIR(ctinfo) != IP_CT_DIR_ORIGINAL) {
+	चयन (state->state) अणु
+	हाल TCP_CONNTRACK_CLOSE:
+		अगर (th->rst && CTINFO2सूची(ctinfo) != IP_CT_सूची_ORIGINAL) अणु
 			nf_ct_seqadj_init(ct, ctinfo, synproxy->isn -
 						      ntohl(th->seq) + 1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!th->syn || th->ack ||
-		    CTINFO2DIR(ctinfo) != IP_CT_DIR_ORIGINAL)
-			break;
+		अगर (!th->syn || th->ack ||
+		    CTINFO2सूची(ctinfo) != IP_CT_सूची_ORIGINAL)
+			अवरोध;
 
-		/* Reopened connection - reset the sequence number and timestamp
-		 * adjustments, they will get initialized once the connection is
+		/* Reखोलोed connection - reset the sequence number and बारtamp
+		 * adjusपंचांगents, they will get initialized once the connection is
 		 * reestablished.
 		 */
 		nf_ct_seqadj_init(ct, ctinfo, 0);
 		synproxy->tsoff = 0;
-		this_cpu_inc(snet->stats->conn_reopened);
+		this_cpu_inc(snet->stats->conn_reखोलोed);
 		fallthrough;
-	case TCP_CONNTRACK_SYN_SENT:
-		if (!synproxy_parse_options(skb, thoff, th, &opts))
-			return NF_DROP;
+	हाल TCP_CONNTRACK_SYN_SENT:
+		अगर (!synproxy_parse_options(skb, thoff, th, &opts))
+			वापस NF_DROP;
 
-		if (!th->syn && th->ack &&
-		    CTINFO2DIR(ctinfo) == IP_CT_DIR_ORIGINAL) {
+		अगर (!th->syn && th->ack &&
+		    CTINFO2सूची(ctinfo) == IP_CT_सूची_ORIGINAL) अणु
 			/* Keep-Alives are sent with SEG.SEQ = SND.NXT-1,
-			 * therefore we need to add 1 to make the SYN sequence
+			 * thereक्रमe we need to add 1 to make the SYN sequence
 			 * number match the one of first SYN.
 			 */
-			if (synproxy_recv_client_ack(net, skb, th, &opts,
-						     ntohl(th->seq) + 1)) {
+			अगर (synproxy_recv_client_ack(net, skb, th, &opts,
+						     ntohl(th->seq) + 1)) अणु
 				this_cpu_inc(snet->stats->cookie_retrans);
 				consume_skb(skb);
-				return NF_STOLEN;
-			} else {
-				return NF_DROP;
-			}
-		}
+				वापस NF_STOLEN;
+			पूर्ण अन्यथा अणु
+				वापस NF_DROP;
+			पूर्ण
+		पूर्ण
 
 		synproxy->isn = ntohl(th->ack_seq);
-		if (opts.options & NF_SYNPROXY_OPT_TIMESTAMP)
+		अगर (opts.options & NF_SYNPROXY_OPT_TIMESTAMP)
 			synproxy->its = opts.tsecr;
 
 		nf_conntrack_event_cache(IPCT_SYNPROXY, ct);
-		break;
-	case TCP_CONNTRACK_SYN_RECV:
-		if (!th->syn || !th->ack)
-			break;
+		अवरोध;
+	हाल TCP_CONNTRACK_SYN_RECV:
+		अगर (!th->syn || !th->ack)
+			अवरोध;
 
-		if (!synproxy_parse_options(skb, thoff, th, &opts))
-			return NF_DROP;
+		अगर (!synproxy_parse_options(skb, thoff, th, &opts))
+			वापस NF_DROP;
 
-		if (opts.options & NF_SYNPROXY_OPT_TIMESTAMP) {
+		अगर (opts.options & NF_SYNPROXY_OPT_TIMESTAMP) अणु
 			synproxy->tsoff = opts.tsval - synproxy->its;
 			nf_conntrack_event_cache(IPCT_SYNPROXY, ct);
-		}
+		पूर्ण
 
 		opts.options &= ~(NF_SYNPROXY_OPT_MSS |
 				  NF_SYNPROXY_OPT_WSCALE |
@@ -762,141 +763,141 @@ ipv4_synproxy_hook(void *priv, struct sk_buff *skb,
 		synproxy_send_client_ack(net, skb, th, &opts);
 
 		consume_skb(skb);
-		return NF_STOLEN;
-	default:
-		break;
-	}
+		वापस NF_STOLEN;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	synproxy_tstamp_adjust(skb, thoff, th, ct, ctinfo, synproxy);
-	return NF_ACCEPT;
-}
+	वापस NF_ACCEPT;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipv4_synproxy_hook);
 
-static const struct nf_hook_ops ipv4_synproxy_ops[] = {
-	{
+अटल स्थिर काष्ठा nf_hook_ops ipv4_synproxy_ops[] = अणु
+	अणु
 		.hook		= ipv4_synproxy_hook,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP_PRI_CONNTRACK_CONFIRM - 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.hook		= ipv4_synproxy_hook,
 		.pf		= NFPROTO_IPV4,
 		.hooknum	= NF_INET_POST_ROUTING,
 		.priority	= NF_IP_PRI_CONNTRACK_CONFIRM - 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int nf_synproxy_ipv4_init(struct synproxy_net *snet, struct net *net)
-{
-	int err;
+पूर्णांक nf_synproxy_ipv4_init(काष्ठा synproxy_net *snet, काष्ठा net *net)
+अणु
+	पूर्णांक err;
 
-	if (snet->hook_ref4 == 0) {
-		err = nf_register_net_hooks(net, ipv4_synproxy_ops,
+	अगर (snet->hook_ref4 == 0) अणु
+		err = nf_रेजिस्टर_net_hooks(net, ipv4_synproxy_ops,
 					    ARRAY_SIZE(ipv4_synproxy_ops));
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	snet->hook_ref4++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_synproxy_ipv4_init);
 
-void nf_synproxy_ipv4_fini(struct synproxy_net *snet, struct net *net)
-{
+व्योम nf_synproxy_ipv4_fini(काष्ठा synproxy_net *snet, काष्ठा net *net)
+अणु
 	snet->hook_ref4--;
-	if (snet->hook_ref4 == 0)
-		nf_unregister_net_hooks(net, ipv4_synproxy_ops,
+	अगर (snet->hook_ref4 == 0)
+		nf_unरेजिस्टर_net_hooks(net, ipv4_synproxy_ops,
 					ARRAY_SIZE(ipv4_synproxy_ops));
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_synproxy_ipv4_fini);
 
-#if IS_ENABLED(CONFIG_IPV6)
-static struct ipv6hdr *
-synproxy_build_ip_ipv6(struct net *net, struct sk_buff *skb,
-		       const struct in6_addr *saddr,
-		       const struct in6_addr *daddr)
-{
-	struct ipv6hdr *iph;
+#अगर IS_ENABLED(CONFIG_IPV6)
+अटल काष्ठा ipv6hdr *
+synproxy_build_ip_ipv6(काष्ठा net *net, काष्ठा sk_buff *skb,
+		       स्थिर काष्ठा in6_addr *saddr,
+		       स्थिर काष्ठा in6_addr *daddr)
+अणु
+	काष्ठा ipv6hdr *iph;
 
 	skb_reset_network_header(skb);
-	iph = skb_put(skb, sizeof(*iph));
+	iph = skb_put(skb, माप(*iph));
 	ip6_flow_hdr(iph, 0, 0);
 	iph->hop_limit	= net->ipv6.devconf_all->hop_limit;
 	iph->nexthdr	= IPPROTO_TCP;
 	iph->saddr	= *saddr;
 	iph->daddr	= *daddr;
 
-	return iph;
-}
+	वापस iph;
+पूर्ण
 
-static void
-synproxy_send_tcp_ipv6(struct net *net,
-		       const struct sk_buff *skb, struct sk_buff *nskb,
-		       struct nf_conntrack *nfct, enum ip_conntrack_info ctinfo,
-		       struct ipv6hdr *niph, struct tcphdr *nth,
-		       unsigned int tcp_hdr_size)
-{
-	struct dst_entry *dst;
-	struct flowi6 fl6;
-	int err;
+अटल व्योम
+synproxy_send_tcp_ipv6(काष्ठा net *net,
+		       स्थिर काष्ठा sk_buff *skb, काष्ठा sk_buff *nskb,
+		       काष्ठा nf_conntrack *nfct, क्रमागत ip_conntrack_info ctinfo,
+		       काष्ठा ipv6hdr *niph, काष्ठा tcphdr *nth,
+		       अचिन्हित पूर्णांक tcp_hdr_size)
+अणु
+	काष्ठा dst_entry *dst;
+	काष्ठा flowi6 fl6;
+	पूर्णांक err;
 
 	nth->check = ~tcp_v6_check(tcp_hdr_size, &niph->saddr, &niph->daddr, 0);
 	nskb->ip_summed   = CHECKSUM_PARTIAL;
-	nskb->csum_start  = (unsigned char *)nth - nskb->head;
-	nskb->csum_offset = offsetof(struct tcphdr, check);
+	nskb->csum_start  = (अचिन्हित अक्षर *)nth - nskb->head;
+	nskb->csum_offset = दुरत्व(काष्ठा tcphdr, check);
 
-	memset(&fl6, 0, sizeof(fl6));
+	स_रखो(&fl6, 0, माप(fl6));
 	fl6.flowi6_proto = IPPROTO_TCP;
 	fl6.saddr = niph->saddr;
 	fl6.daddr = niph->daddr;
 	fl6.fl6_sport = nth->source;
 	fl6.fl6_dport = nth->dest;
-	security_skb_classify_flow((struct sk_buff *)skb,
+	security_skb_classअगरy_flow((काष्ठा sk_buff *)skb,
 				   flowi6_to_flowi_common(&fl6));
 	err = nf_ip6_route(net, &dst, flowi6_to_flowi(&fl6), false);
-	if (err) {
-		goto free_nskb;
-	}
+	अगर (err) अणु
+		जाओ मुक्त_nskb;
+	पूर्ण
 
-	dst = xfrm_lookup(net, dst, flowi6_to_flowi(&fl6), NULL, 0);
-	if (IS_ERR(dst))
-		goto free_nskb;
+	dst = xfrm_lookup(net, dst, flowi6_to_flowi(&fl6), शून्य, 0);
+	अगर (IS_ERR(dst))
+		जाओ मुक्त_nskb;
 
 	skb_dst_set(nskb, dst);
 
-	if (nfct) {
-		nf_ct_set(nskb, (struct nf_conn *)nfct, ctinfo);
+	अगर (nfct) अणु
+		nf_ct_set(nskb, (काष्ठा nf_conn *)nfct, ctinfo);
 		nf_conntrack_get(nfct);
-	}
+	पूर्ण
 
 	ip6_local_out(net, nskb->sk, nskb);
-	return;
+	वापस;
 
-free_nskb:
-	kfree_skb(nskb);
-}
+मुक्त_nskb:
+	kमुक्त_skb(nskb);
+पूर्ण
 
-void
-synproxy_send_client_synack_ipv6(struct net *net,
-				 const struct sk_buff *skb,
-				 const struct tcphdr *th,
-				 const struct synproxy_options *opts)
-{
-	struct sk_buff *nskb;
-	struct ipv6hdr *iph, *niph;
-	struct tcphdr *nth;
-	unsigned int tcp_hdr_size;
+व्योम
+synproxy_send_client_synack_ipv6(काष्ठा net *net,
+				 स्थिर काष्ठा sk_buff *skb,
+				 स्थिर काष्ठा tcphdr *th,
+				 स्थिर काष्ठा synproxy_options *opts)
+अणु
+	काष्ठा sk_buff *nskb;
+	काष्ठा ipv6hdr *iph, *niph;
+	काष्ठा tcphdr *nth;
+	अचिन्हित पूर्णांक tcp_hdr_size;
 	u16 mss = opts->mss_encode;
 
 	iph = ipv6_hdr(skb);
 
-	tcp_hdr_size = sizeof(*nth) + synproxy_options_size(opts);
-	nskb = alloc_skb(sizeof(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
+	tcp_hdr_size = माप(*nth) + synproxy_options_size(opts);
+	nskb = alloc_skb(माप(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
 			 GFP_ATOMIC);
-	if (!nskb)
-		return;
+	अगर (!nskb)
+		वापस;
 	skb_reserve(nskb, MAX_TCP_HEADER);
 
 	niph = synproxy_build_ip_ipv6(net, nskb, &iph->daddr, &iph->saddr);
@@ -908,10 +909,10 @@ synproxy_send_client_synack_ipv6(struct net *net,
 	nth->seq	= htonl(nf_ipv6_cookie_init_sequence(iph, th, &mss));
 	nth->ack_seq	= htonl(ntohl(th->seq) + 1);
 	tcp_flag_word(nth) = TCP_FLAG_SYN | TCP_FLAG_ACK;
-	if (opts->options & NF_SYNPROXY_OPT_ECN)
+	अगर (opts->options & NF_SYNPROXY_OPT_ECN)
 		tcp_flag_word(nth) |= TCP_FLAG_ECE;
-	nth->doff	= tcp_hdr_size / 4;
-	nth->window	= 0;
+	nth->करोff	= tcp_hdr_size / 4;
+	nth->winकरोw	= 0;
 	nth->check	= 0;
 	nth->urg_ptr	= 0;
 
@@ -920,27 +921,27 @@ synproxy_send_client_synack_ipv6(struct net *net,
 	synproxy_send_tcp_ipv6(net, skb, nskb, skb_nfct(skb),
 			       IP_CT_ESTABLISHED_REPLY, niph, nth,
 			       tcp_hdr_size);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(synproxy_send_client_synack_ipv6);
 
-static void
-synproxy_send_server_syn_ipv6(struct net *net, const struct sk_buff *skb,
-			      const struct tcphdr *th,
-			      const struct synproxy_options *opts, u32 recv_seq)
-{
-	struct synproxy_net *snet = synproxy_pernet(net);
-	struct sk_buff *nskb;
-	struct ipv6hdr *iph, *niph;
-	struct tcphdr *nth;
-	unsigned int tcp_hdr_size;
+अटल व्योम
+synproxy_send_server_syn_ipv6(काष्ठा net *net, स्थिर काष्ठा sk_buff *skb,
+			      स्थिर काष्ठा tcphdr *th,
+			      स्थिर काष्ठा synproxy_options *opts, u32 recv_seq)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(net);
+	काष्ठा sk_buff *nskb;
+	काष्ठा ipv6hdr *iph, *niph;
+	काष्ठा tcphdr *nth;
+	अचिन्हित पूर्णांक tcp_hdr_size;
 
 	iph = ipv6_hdr(skb);
 
-	tcp_hdr_size = sizeof(*nth) + synproxy_options_size(opts);
-	nskb = alloc_skb(sizeof(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
+	tcp_hdr_size = माप(*nth) + synproxy_options_size(opts);
+	nskb = alloc_skb(माप(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
 			 GFP_ATOMIC);
-	if (!nskb)
-		return;
+	अगर (!nskb)
+		वापस;
 	skb_reserve(nskb, MAX_TCP_HEADER);
 
 	niph = synproxy_build_ip_ipv6(net, nskb, &iph->saddr, &iph->daddr);
@@ -955,37 +956,37 @@ synproxy_send_server_syn_ipv6(struct net *net, const struct sk_buff *skb,
 	 */
 	nth->ack_seq	= htonl(ntohl(th->ack_seq) - 1);
 	tcp_flag_word(nth) = TCP_FLAG_SYN;
-	if (opts->options & NF_SYNPROXY_OPT_ECN)
+	अगर (opts->options & NF_SYNPROXY_OPT_ECN)
 		tcp_flag_word(nth) |= TCP_FLAG_ECE | TCP_FLAG_CWR;
-	nth->doff	= tcp_hdr_size / 4;
-	nth->window	= th->window;
+	nth->करोff	= tcp_hdr_size / 4;
+	nth->winकरोw	= th->winकरोw;
 	nth->check	= 0;
 	nth->urg_ptr	= 0;
 
 	synproxy_build_options(nth, opts);
 
-	synproxy_send_tcp_ipv6(net, skb, nskb, &snet->tmpl->ct_general,
+	synproxy_send_tcp_ipv6(net, skb, nskb, &snet->पंचांगpl->ct_general,
 			       IP_CT_NEW, niph, nth, tcp_hdr_size);
-}
+पूर्ण
 
-static void
-synproxy_send_server_ack_ipv6(struct net *net, const struct ip_ct_tcp *state,
-			      const struct sk_buff *skb,
-			      const struct tcphdr *th,
-			      const struct synproxy_options *opts)
-{
-	struct sk_buff *nskb;
-	struct ipv6hdr *iph, *niph;
-	struct tcphdr *nth;
-	unsigned int tcp_hdr_size;
+अटल व्योम
+synproxy_send_server_ack_ipv6(काष्ठा net *net, स्थिर काष्ठा ip_ct_tcp *state,
+			      स्थिर काष्ठा sk_buff *skb,
+			      स्थिर काष्ठा tcphdr *th,
+			      स्थिर काष्ठा synproxy_options *opts)
+अणु
+	काष्ठा sk_buff *nskb;
+	काष्ठा ipv6hdr *iph, *niph;
+	काष्ठा tcphdr *nth;
+	अचिन्हित पूर्णांक tcp_hdr_size;
 
 	iph = ipv6_hdr(skb);
 
-	tcp_hdr_size = sizeof(*nth) + synproxy_options_size(opts);
-	nskb = alloc_skb(sizeof(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
+	tcp_hdr_size = माप(*nth) + synproxy_options_size(opts);
+	nskb = alloc_skb(माप(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
 			 GFP_ATOMIC);
-	if (!nskb)
-		return;
+	अगर (!nskb)
+		वापस;
 	skb_reserve(nskb, MAX_TCP_HEADER);
 
 	niph = synproxy_build_ip_ipv6(net, nskb, &iph->daddr, &iph->saddr);
@@ -997,34 +998,34 @@ synproxy_send_server_ack_ipv6(struct net *net, const struct ip_ct_tcp *state,
 	nth->seq	= htonl(ntohl(th->ack_seq));
 	nth->ack_seq	= htonl(ntohl(th->seq) + 1);
 	tcp_flag_word(nth) = TCP_FLAG_ACK;
-	nth->doff	= tcp_hdr_size / 4;
-	nth->window	= htons(state->seen[IP_CT_DIR_ORIGINAL].td_maxwin);
+	nth->करोff	= tcp_hdr_size / 4;
+	nth->winकरोw	= htons(state->seen[IP_CT_सूची_ORIGINAL].td_maxwin);
 	nth->check	= 0;
 	nth->urg_ptr	= 0;
 
 	synproxy_build_options(nth, opts);
 
-	synproxy_send_tcp_ipv6(net, skb, nskb, NULL, 0, niph, nth,
+	synproxy_send_tcp_ipv6(net, skb, nskb, शून्य, 0, niph, nth,
 			       tcp_hdr_size);
-}
+पूर्ण
 
-static void
-synproxy_send_client_ack_ipv6(struct net *net, const struct sk_buff *skb,
-			      const struct tcphdr *th,
-			      const struct synproxy_options *opts)
-{
-	struct sk_buff *nskb;
-	struct ipv6hdr *iph, *niph;
-	struct tcphdr *nth;
-	unsigned int tcp_hdr_size;
+अटल व्योम
+synproxy_send_client_ack_ipv6(काष्ठा net *net, स्थिर काष्ठा sk_buff *skb,
+			      स्थिर काष्ठा tcphdr *th,
+			      स्थिर काष्ठा synproxy_options *opts)
+अणु
+	काष्ठा sk_buff *nskb;
+	काष्ठा ipv6hdr *iph, *niph;
+	काष्ठा tcphdr *nth;
+	अचिन्हित पूर्णांक tcp_hdr_size;
 
 	iph = ipv6_hdr(skb);
 
-	tcp_hdr_size = sizeof(*nth) + synproxy_options_size(opts);
-	nskb = alloc_skb(sizeof(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
+	tcp_hdr_size = माप(*nth) + synproxy_options_size(opts);
+	nskb = alloc_skb(माप(*niph) + tcp_hdr_size + MAX_TCP_HEADER,
 			 GFP_ATOMIC);
-	if (!nskb)
-		return;
+	अगर (!nskb)
+		वापस;
 	skb_reserve(nskb, MAX_TCP_HEADER);
 
 	niph = synproxy_build_ip_ipv6(net, nskb, &iph->saddr, &iph->daddr);
@@ -1036,8 +1037,8 @@ synproxy_send_client_ack_ipv6(struct net *net, const struct sk_buff *skb,
 	nth->seq	= htonl(ntohl(th->seq) + 1);
 	nth->ack_seq	= th->ack_seq;
 	tcp_flag_word(nth) = TCP_FLAG_ACK;
-	nth->doff	= tcp_hdr_size / 4;
-	nth->window	= htons(ntohs(th->window) >> opts->wscale);
+	nth->करोff	= tcp_hdr_size / 4;
+	nth->winकरोw	= htons(ntohs(th->winकरोw) >> opts->wscale);
 	nth->check	= 0;
 	nth->urg_ptr	= 0;
 
@@ -1046,130 +1047,130 @@ synproxy_send_client_ack_ipv6(struct net *net, const struct sk_buff *skb,
 	synproxy_send_tcp_ipv6(net, skb, nskb, skb_nfct(skb),
 			       IP_CT_ESTABLISHED_REPLY, niph, nth,
 			       tcp_hdr_size);
-}
+पूर्ण
 
 bool
-synproxy_recv_client_ack_ipv6(struct net *net,
-			      const struct sk_buff *skb,
-			      const struct tcphdr *th,
-			      struct synproxy_options *opts, u32 recv_seq)
-{
-	struct synproxy_net *snet = synproxy_pernet(net);
-	int mss;
+synproxy_recv_client_ack_ipv6(काष्ठा net *net,
+			      स्थिर काष्ठा sk_buff *skb,
+			      स्थिर काष्ठा tcphdr *th,
+			      काष्ठा synproxy_options *opts, u32 recv_seq)
+अणु
+	काष्ठा synproxy_net *snet = synproxy_pernet(net);
+	पूर्णांक mss;
 
 	mss = nf_cookie_v6_check(ipv6_hdr(skb), th, ntohl(th->ack_seq) - 1);
-	if (mss == 0) {
+	अगर (mss == 0) अणु
 		this_cpu_inc(snet->stats->cookie_invalid);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	this_cpu_inc(snet->stats->cookie_valid);
 	opts->mss_option = mss;
 	opts->options |= NF_SYNPROXY_OPT_MSS;
 
-	if (opts->options & NF_SYNPROXY_OPT_TIMESTAMP)
-		synproxy_check_timestamp_cookie(opts);
+	अगर (opts->options & NF_SYNPROXY_OPT_TIMESTAMP)
+		synproxy_check_बारtamp_cookie(opts);
 
 	synproxy_send_server_syn_ipv6(net, skb, th, opts, recv_seq);
-	return true;
-}
+	वापस true;
+पूर्ण
 EXPORT_SYMBOL_GPL(synproxy_recv_client_ack_ipv6);
 
-unsigned int
-ipv6_synproxy_hook(void *priv, struct sk_buff *skb,
-		   const struct nf_hook_state *nhs)
-{
-	struct net *net = nhs->net;
-	struct synproxy_net *snet = synproxy_pernet(net);
-	enum ip_conntrack_info ctinfo;
-	struct nf_conn *ct;
-	struct nf_conn_synproxy *synproxy;
-	struct synproxy_options opts = {};
-	const struct ip_ct_tcp *state;
-	struct tcphdr *th, _th;
+अचिन्हित पूर्णांक
+ipv6_synproxy_hook(व्योम *priv, काष्ठा sk_buff *skb,
+		   स्थिर काष्ठा nf_hook_state *nhs)
+अणु
+	काष्ठा net *net = nhs->net;
+	काष्ठा synproxy_net *snet = synproxy_pernet(net);
+	क्रमागत ip_conntrack_info ctinfo;
+	काष्ठा nf_conn *ct;
+	काष्ठा nf_conn_synproxy *synproxy;
+	काष्ठा synproxy_options opts = अणुपूर्ण;
+	स्थिर काष्ठा ip_ct_tcp *state;
+	काष्ठा tcphdr *th, _th;
 	__be16 frag_off;
 	u8 nexthdr;
-	int thoff;
+	पूर्णांक thoff;
 
 	ct = nf_ct_get(skb, &ctinfo);
-	if (!ct)
-		return NF_ACCEPT;
+	अगर (!ct)
+		वापस NF_ACCEPT;
 
 	synproxy = nfct_synproxy(ct);
-	if (!synproxy)
-		return NF_ACCEPT;
+	अगर (!synproxy)
+		वापस NF_ACCEPT;
 
-	if (nf_is_loopback_packet(skb))
-		return NF_ACCEPT;
+	अगर (nf_is_loopback_packet(skb))
+		वापस NF_ACCEPT;
 
 	nexthdr = ipv6_hdr(skb)->nexthdr;
-	thoff = ipv6_skip_exthdr(skb, sizeof(struct ipv6hdr), &nexthdr,
+	thoff = ipv6_skip_exthdr(skb, माप(काष्ठा ipv6hdr), &nexthdr,
 				 &frag_off);
-	if (thoff < 0 || nexthdr != IPPROTO_TCP)
-		return NF_ACCEPT;
+	अगर (thoff < 0 || nexthdr != IPPROTO_TCP)
+		वापस NF_ACCEPT;
 
-	th = skb_header_pointer(skb, thoff, sizeof(_th), &_th);
-	if (!th)
-		return NF_DROP;
+	th = skb_header_poपूर्णांकer(skb, thoff, माप(_th), &_th);
+	अगर (!th)
+		वापस NF_DROP;
 
 	state = &ct->proto.tcp;
-	switch (state->state) {
-	case TCP_CONNTRACK_CLOSE:
-		if (th->rst && CTINFO2DIR(ctinfo) != IP_CT_DIR_ORIGINAL) {
+	चयन (state->state) अणु
+	हाल TCP_CONNTRACK_CLOSE:
+		अगर (th->rst && CTINFO2सूची(ctinfo) != IP_CT_सूची_ORIGINAL) अणु
 			nf_ct_seqadj_init(ct, ctinfo, synproxy->isn -
 						      ntohl(th->seq) + 1);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (!th->syn || th->ack ||
-		    CTINFO2DIR(ctinfo) != IP_CT_DIR_ORIGINAL)
-			break;
+		अगर (!th->syn || th->ack ||
+		    CTINFO2सूची(ctinfo) != IP_CT_सूची_ORIGINAL)
+			अवरोध;
 
-		/* Reopened connection - reset the sequence number and timestamp
-		 * adjustments, they will get initialized once the connection is
+		/* Reखोलोed connection - reset the sequence number and बारtamp
+		 * adjusपंचांगents, they will get initialized once the connection is
 		 * reestablished.
 		 */
 		nf_ct_seqadj_init(ct, ctinfo, 0);
 		synproxy->tsoff = 0;
-		this_cpu_inc(snet->stats->conn_reopened);
+		this_cpu_inc(snet->stats->conn_reखोलोed);
 		fallthrough;
-	case TCP_CONNTRACK_SYN_SENT:
-		if (!synproxy_parse_options(skb, thoff, th, &opts))
-			return NF_DROP;
+	हाल TCP_CONNTRACK_SYN_SENT:
+		अगर (!synproxy_parse_options(skb, thoff, th, &opts))
+			वापस NF_DROP;
 
-		if (!th->syn && th->ack &&
-		    CTINFO2DIR(ctinfo) == IP_CT_DIR_ORIGINAL) {
+		अगर (!th->syn && th->ack &&
+		    CTINFO2सूची(ctinfo) == IP_CT_सूची_ORIGINAL) अणु
 			/* Keep-Alives are sent with SEG.SEQ = SND.NXT-1,
-			 * therefore we need to add 1 to make the SYN sequence
+			 * thereक्रमe we need to add 1 to make the SYN sequence
 			 * number match the one of first SYN.
 			 */
-			if (synproxy_recv_client_ack_ipv6(net, skb, th, &opts,
-							  ntohl(th->seq) + 1)) {
+			अगर (synproxy_recv_client_ack_ipv6(net, skb, th, &opts,
+							  ntohl(th->seq) + 1)) अणु
 				this_cpu_inc(snet->stats->cookie_retrans);
 				consume_skb(skb);
-				return NF_STOLEN;
-			} else {
-				return NF_DROP;
-			}
-		}
+				वापस NF_STOLEN;
+			पूर्ण अन्यथा अणु
+				वापस NF_DROP;
+			पूर्ण
+		पूर्ण
 
 		synproxy->isn = ntohl(th->ack_seq);
-		if (opts.options & NF_SYNPROXY_OPT_TIMESTAMP)
+		अगर (opts.options & NF_SYNPROXY_OPT_TIMESTAMP)
 			synproxy->its = opts.tsecr;
 
 		nf_conntrack_event_cache(IPCT_SYNPROXY, ct);
-		break;
-	case TCP_CONNTRACK_SYN_RECV:
-		if (!th->syn || !th->ack)
-			break;
+		अवरोध;
+	हाल TCP_CONNTRACK_SYN_RECV:
+		अगर (!th->syn || !th->ack)
+			अवरोध;
 
-		if (!synproxy_parse_options(skb, thoff, th, &opts))
-			return NF_DROP;
+		अगर (!synproxy_parse_options(skb, thoff, th, &opts))
+			वापस NF_DROP;
 
-		if (opts.options & NF_SYNPROXY_OPT_TIMESTAMP) {
+		अगर (opts.options & NF_SYNPROXY_OPT_TIMESTAMP) अणु
 			synproxy->tsoff = opts.tsval - synproxy->its;
 			nf_conntrack_event_cache(IPCT_SYNPROXY, ct);
-		}
+		पूर्ण
 
 		opts.options &= ~(NF_SYNPROXY_OPT_MSS |
 				  NF_SYNPROXY_OPT_WSCALE |
@@ -1185,58 +1186,58 @@ ipv6_synproxy_hook(void *priv, struct sk_buff *skb,
 		synproxy_send_client_ack_ipv6(net, skb, th, &opts);
 
 		consume_skb(skb);
-		return NF_STOLEN;
-	default:
-		break;
-	}
+		वापस NF_STOLEN;
+	शेष:
+		अवरोध;
+	पूर्ण
 
 	synproxy_tstamp_adjust(skb, thoff, th, ct, ctinfo, synproxy);
-	return NF_ACCEPT;
-}
+	वापस NF_ACCEPT;
+पूर्ण
 EXPORT_SYMBOL_GPL(ipv6_synproxy_hook);
 
-static const struct nf_hook_ops ipv6_synproxy_ops[] = {
-	{
+अटल स्थिर काष्ठा nf_hook_ops ipv6_synproxy_ops[] = अणु
+	अणु
 		.hook		= ipv6_synproxy_hook,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_LOCAL_IN,
 		.priority	= NF_IP_PRI_CONNTRACK_CONFIRM - 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.hook		= ipv6_synproxy_hook,
 		.pf		= NFPROTO_IPV6,
 		.hooknum	= NF_INET_POST_ROUTING,
 		.priority	= NF_IP_PRI_CONNTRACK_CONFIRM - 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-int
-nf_synproxy_ipv6_init(struct synproxy_net *snet, struct net *net)
-{
-	int err;
+पूर्णांक
+nf_synproxy_ipv6_init(काष्ठा synproxy_net *snet, काष्ठा net *net)
+अणु
+	पूर्णांक err;
 
-	if (snet->hook_ref6 == 0) {
-		err = nf_register_net_hooks(net, ipv6_synproxy_ops,
+	अगर (snet->hook_ref6 == 0) अणु
+		err = nf_रेजिस्टर_net_hooks(net, ipv6_synproxy_ops,
 					    ARRAY_SIZE(ipv6_synproxy_ops));
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	snet->hook_ref6++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_synproxy_ipv6_init);
 
-void
-nf_synproxy_ipv6_fini(struct synproxy_net *snet, struct net *net)
-{
+व्योम
+nf_synproxy_ipv6_fini(काष्ठा synproxy_net *snet, काष्ठा net *net)
+अणु
 	snet->hook_ref6--;
-	if (snet->hook_ref6 == 0)
-		nf_unregister_net_hooks(net, ipv6_synproxy_ops,
+	अगर (snet->hook_ref6 == 0)
+		nf_unरेजिस्टर_net_hooks(net, ipv6_synproxy_ops,
 					ARRAY_SIZE(ipv6_synproxy_ops));
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(nf_synproxy_ipv6_fini);
-#endif /* CONFIG_IPV6 */
+#पूर्ण_अगर /* CONFIG_IPV6 */
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Patrick McHardy <kaber@trash.net>");

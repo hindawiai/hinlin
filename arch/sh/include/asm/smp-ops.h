@@ -1,52 +1,53 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_SMP_OPS_H
-#define __ASM_SH_SMP_OPS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_SMP_OPS_H
+#घोषणा __ASM_SH_SMP_OPS_H
 
-struct plat_smp_ops {
-	void (*smp_setup)(void);
-	unsigned int (*smp_processor_id)(void);
-	void (*prepare_cpus)(unsigned int max_cpus);
-	void (*start_cpu)(unsigned int cpu, unsigned long entry_point);
-	void (*send_ipi)(unsigned int cpu, unsigned int message);
-	int (*cpu_disable)(unsigned int cpu);
-	void (*cpu_die)(unsigned int cpu);
-	void (*play_dead)(void);
-};
+काष्ठा plat_smp_ops अणु
+	व्योम (*smp_setup)(व्योम);
+	अचिन्हित पूर्णांक (*smp_processor_id)(व्योम);
+	व्योम (*prepare_cpus)(अचिन्हित पूर्णांक max_cpus);
+	व्योम (*start_cpu)(अचिन्हित पूर्णांक cpu, अचिन्हित दीर्घ entry_poपूर्णांक);
+	व्योम (*send_ipi)(अचिन्हित पूर्णांक cpu, अचिन्हित पूर्णांक message);
+	पूर्णांक (*cpu_disable)(अचिन्हित पूर्णांक cpu);
+	व्योम (*cpu_die)(अचिन्हित पूर्णांक cpu);
+	व्योम (*play_dead)(व्योम);
+पूर्ण;
 
-extern struct plat_smp_ops *mp_ops;
-extern struct plat_smp_ops shx3_smp_ops;
+बाह्य काष्ठा plat_smp_ops *mp_ops;
+बाह्य काष्ठा plat_smp_ops shx3_smp_ops;
 
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 
-static inline void plat_smp_setup(void)
-{
+अटल अंतरभूत व्योम plat_smp_setup(व्योम)
+अणु
 	BUG_ON(!mp_ops);
 	mp_ops->smp_setup();
-}
+पूर्ण
 
-static inline void play_dead(void)
-{
+अटल अंतरभूत व्योम play_dead(व्योम)
+अणु
 	mp_ops->play_dead();
-}
+पूर्ण
 
-extern void register_smp_ops(struct plat_smp_ops *ops);
+बाह्य व्योम रेजिस्टर_smp_ops(काष्ठा plat_smp_ops *ops);
 
-#else
+#अन्यथा
 
-static inline void plat_smp_setup(void)
-{
-	/* UP, nothing to do ... */
-}
+अटल अंतरभूत व्योम plat_smp_setup(व्योम)
+अणु
+	/* UP, nothing to करो ... */
+पूर्ण
 
-static inline void register_smp_ops(struct plat_smp_ops *ops)
-{
-}
+अटल अंतरभूत व्योम रेजिस्टर_smp_ops(काष्ठा plat_smp_ops *ops)
+अणु
+पूर्ण
 
-static inline void play_dead(void)
-{
+अटल अंतरभूत व्योम play_dead(व्योम)
+अणु
 	BUG();
-}
+पूर्ण
 
-#endif /* CONFIG_SMP */
+#पूर्ण_अगर /* CONFIG_SMP */
 
-#endif /* __ASM_SH_SMP_OPS_H */
+#पूर्ण_अगर /* __ASM_SH_SMP_OPS_H */

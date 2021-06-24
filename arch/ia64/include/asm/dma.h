@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_IA64_DMA_H
-#define _ASM_IA64_DMA_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_IA64_DMA_H
+#घोषणा _ASM_IA64_DMA_H
 
 /*
  * Copyright (C) 1998-2002 Hewlett-Packard Co
@@ -8,12 +9,12 @@
  */
 
 
-#include <asm/io.h>		/* need byte IO */
+#समावेश <यंत्र/पन.स>		/* need byte IO */
 
-extern unsigned long MAX_DMA_ADDRESS;
+बाह्य अचिन्हित दीर्घ MAX_DMA_ADDRESS;
 
-extern int isa_dma_bridge_buggy;
+बाह्य पूर्णांक isa_dma_bridge_buggy;
 
-#define free_dma(x)
+#घोषणा मुक्त_dma(x)
 
-#endif /* _ASM_IA64_DMA_H */
+#पूर्ण_अगर /* _ASM_IA64_DMA_H */

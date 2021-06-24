@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
-#include <linux/error-injection.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/percpu-defs.h>
-#include <linux/sysfs.h>
-#include <linux/tracepoint.h>
-#include "bpf_testmod.h"
+#समावेश <linux/error-injection.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/percpu-defs.h>
+#समावेश <linux/sysfs.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश "bpf_testmod.h"
 
-#define CREATE_TRACE_POINTS
-#include "bpf_testmod-events.h"
+#घोषणा CREATE_TRACE_POINTS
+#समावेश "bpf_testmod-events.h"
 
-DEFINE_PER_CPU(int, bpf_testmod_ksym_percpu) = 123;
+DEFINE_PER_CPU(पूर्णांक, bpf_tesपंचांगod_ksym_percpu) = 123;
 
-noinline ssize_t
-bpf_testmod_test_read(struct file *file, struct kobject *kobj,
-		      struct bin_attribute *bin_attr,
-		      char *buf, loff_t off, size_t len)
-{
-	struct bpf_testmod_test_read_ctx ctx = {
+noअंतरभूत sमाप_प्रकार
+bpf_tesपंचांगod_test_पढ़ो(काष्ठा file *file, काष्ठा kobject *kobj,
+		      काष्ठा bin_attribute *bin_attr,
+		      अक्षर *buf, loff_t off, माप_प्रकार len)
+अणु
+	काष्ठा bpf_tesपंचांगod_test_पढ़ो_ctx ctx = अणु
 		.buf = buf,
 		.off = off,
 		.len = len,
-	};
+	पूर्ण;
 
-	trace_bpf_testmod_test_read(current, &ctx);
+	trace_bpf_tesपंचांगod_test_पढ़ो(current, &ctx);
 
-	return -EIO; /* always fail */
-}
-EXPORT_SYMBOL(bpf_testmod_test_read);
-ALLOW_ERROR_INJECTION(bpf_testmod_test_read, ERRNO);
+	वापस -EIO; /* always fail */
+पूर्ण
+EXPORT_SYMBOL(bpf_tesपंचांगod_test_पढ़ो);
+ALLOW_ERROR_INJECTION(bpf_tesपंचांगod_test_पढ़ो, ERRNO);
 
-noinline ssize_t
-bpf_testmod_test_write(struct file *file, struct kobject *kobj,
-		      struct bin_attribute *bin_attr,
-		      char *buf, loff_t off, size_t len)
-{
-	struct bpf_testmod_test_write_ctx ctx = {
+noअंतरभूत sमाप_प्रकार
+bpf_tesपंचांगod_test_ग_लिखो(काष्ठा file *file, काष्ठा kobject *kobj,
+		      काष्ठा bin_attribute *bin_attr,
+		      अक्षर *buf, loff_t off, माप_प्रकार len)
+अणु
+	काष्ठा bpf_tesपंचांगod_test_ग_लिखो_ctx ctx = अणु
 		.buf = buf,
 		.off = off,
 		.len = len,
-	};
+	पूर्ण;
 
-	trace_bpf_testmod_test_write_bare(current, &ctx);
+	trace_bpf_tesपंचांगod_test_ग_लिखो_bare(current, &ctx);
 
-	return -EIO; /* always fail */
-}
-EXPORT_SYMBOL(bpf_testmod_test_write);
-ALLOW_ERROR_INJECTION(bpf_testmod_test_write, ERRNO);
+	वापस -EIO; /* always fail */
+पूर्ण
+EXPORT_SYMBOL(bpf_tesपंचांगod_test_ग_लिखो);
+ALLOW_ERROR_INJECTION(bpf_tesपंचांगod_test_ग_लिखो, ERRNO);
 
-static struct bin_attribute bin_attr_bpf_testmod_file __ro_after_init = {
-	.attr = { .name = "bpf_testmod", .mode = 0666, },
-	.read = bpf_testmod_test_read,
-	.write = bpf_testmod_test_write,
-};
+अटल काष्ठा bin_attribute bin_attr_bpf_tesपंचांगod_file __ro_after_init = अणु
+	.attr = अणु .name = "bpf_testmod", .mode = 0666, पूर्ण,
+	.पढ़ो = bpf_tesपंचांगod_test_पढ़ो,
+	.ग_लिखो = bpf_tesपंचांगod_test_ग_लिखो,
+पूर्ण;
 
-static int bpf_testmod_init(void)
-{
-	return sysfs_create_bin_file(kernel_kobj, &bin_attr_bpf_testmod_file);
-}
+अटल पूर्णांक bpf_tesपंचांगod_init(व्योम)
+अणु
+	वापस sysfs_create_bin_file(kernel_kobj, &bin_attr_bpf_tesपंचांगod_file);
+पूर्ण
 
-static void bpf_testmod_exit(void)
-{
-	return sysfs_remove_bin_file(kernel_kobj, &bin_attr_bpf_testmod_file);
-}
+अटल व्योम bpf_tesपंचांगod_निकास(व्योम)
+अणु
+	वापस sysfs_हटाओ_bin_file(kernel_kobj, &bin_attr_bpf_tesपंचांगod_file);
+पूर्ण
 
-module_init(bpf_testmod_init);
-module_exit(bpf_testmod_exit);
+module_init(bpf_tesपंचांगod_init);
+module_निकास(bpf_tesपंचांगod_निकास);
 
 MODULE_AUTHOR("Andrii Nakryiko");
 MODULE_DESCRIPTION("BPF selftests module");

@@ -1,159 +1,160 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /* vim: set ts=8 sw=8 noet tw=80 nowrap: */
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <errno.h>
-#include <stdlib.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <stdbool.h>
+#समावेश <मानकघोष.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <मानककोष.स>
 
-typedef uint8_t u8;
-typedef uint16_t u16;
-typedef int8_t  s8;
-#define __user
-#define BIT(x)  (1UL << (x))
+प्रकार uपूर्णांक8_t u8;
+प्रकार uपूर्णांक16_t u16;
+प्रकार पूर्णांक8_t  s8;
+#घोषणा __user
+#घोषणा BIT(x)  (1UL << (x))
 
-#define NI_ROUTE_VALUE_EXTERNAL_CONVERSION 1
+#घोषणा NI_ROUTE_VALUE_EXTERNAL_CONVERSION 1
 
-#include "../ni_route_values.c"
-#include "../ni_device_routes.c"
-#include "all_cfiles.c"
+#समावेश "../ni_route_values.c"
+#समावेश "../ni_device_routes.c"
+#समावेश "all_cfiles.c"
 
-#include <stdio.h>
+#समावेश <मानकपन.स>
 
-#define RVij(rv, src, dest)	((rv)->register_values[(dest)][(src)])
+#घोषणा RVij(rv, src, dest)	((rv)->रेजिस्टर_values[(dest)][(src)])
 
 /*
- * write out
- * {
+ * ग_लिखो out
+ * अणु
  *   "family" : "<family-name>",
- *   "register_values": {
+ *   "register_values": अणु
  *      <destination0>:[src0, src1, ...],
  *      <destination0>:[src0, src1, ...],
  *      ...
- *   }
- * }
+ *   पूर्ण
+ * पूर्ण
  */
-void family_write(const struct family_route_values *rv, FILE *fp)
-{
-	fprintf(fp,
+व्योम family_ग_लिखो(स्थिर काष्ठा family_route_values *rv, खाता *fp)
+अणु
+	ख_लिखो(fp,
 		"  \"%s\" : {\n"
 		"    # dest -> {src0:val0, src1:val1, ...}\n"
 		, rv->family);
-	for (unsigned int dest = NI_NAMES_BASE;
+	क्रम (अचिन्हित पूर्णांक dest = NI_NAMES_BASE;
 	     dest < (NI_NAMES_BASE + NI_NUM_NAMES);
-	     ++dest) {
-		unsigned int src = NI_NAMES_BASE;
+	     ++dest) अणु
+		अचिन्हित पूर्णांक src = NI_NAMES_BASE;
 
-		for (; src < (NI_NAMES_BASE + NI_NUM_NAMES) &&
+		क्रम (; src < (NI_NAMES_BASE + NI_NUM_NAMES) &&
 		     RVij(rv, B(src), B(dest)) == 0; ++src)
 			;
 
-		if (src >= (NI_NAMES_BASE + NI_NUM_NAMES))
-			continue; /* no data here */
+		अगर (src >= (NI_NAMES_BASE + NI_NUM_NAMES))
+			जारी; /* no data here */
 
-		fprintf(fp, "    %u : {\n", dest);
-		for (src = NI_NAMES_BASE; src < (NI_NAMES_BASE + NI_NUM_NAMES);
-		     ++src) {
-			register_type r = RVij(rv, B(src), B(dest));
-			const char *M;
+		ख_लिखो(fp, "    %u : {\n", dest);
+		क्रम (src = NI_NAMES_BASE; src < (NI_NAMES_BASE + NI_NUM_NAMES);
+		     ++src) अणु
+			रेजिस्टर_type r = RVij(rv, B(src), B(dest));
+			स्थिर अक्षर *M;
 
-			if (r == 0) {
-				continue;
-			} else if (MARKED_V(r)) {
+			अगर (r == 0) अणु
+				जारी;
+			पूर्ण अन्यथा अगर (MARKED_V(r)) अणु
 				M = "V";
-			} else if (MARKED_I(r)) {
+			पूर्ण अन्यथा अगर (MARKED_I(r)) अणु
 				M = "I";
-			} else if (MARKED_U(r)) {
+			पूर्ण अन्यथा अगर (MARKED_U(r)) अणु
 				M = "U";
-			} else {
-				fprintf(stderr,
+			पूर्ण अन्यथा अणु
+				ख_लिखो(मानक_त्रुटि,
 					"Invalid register marking %s[%u][%u] = %u\n",
 					rv->family, dest, src, r);
-				exit(1);
-			}
+				निकास(1);
+			पूर्ण
 
-			fprintf(fp, "      %u : \"%s(%u)\",\n",
+			ख_लिखो(fp, "      %u : \"%s(%u)\",\n",
 				src, M, UNMARK(r));
-		}
-		fprintf(fp, "    },\n");
-	}
-	fprintf(fp, "  },\n\n");
-}
+		पूर्ण
+		ख_लिखो(fp, "    },\n");
+	पूर्ण
+	ख_लिखो(fp, "  },\n\n");
+पूर्ण
 
-bool is_valid_ni_sig(unsigned int sig)
-{
-	return (sig >= NI_NAMES_BASE) && (sig < (NI_NAMES_BASE + NI_NUM_NAMES));
-}
+bool is_valid_ni_sig(अचिन्हित पूर्णांक sig)
+अणु
+	वापस (sig >= NI_NAMES_BASE) && (sig < (NI_NAMES_BASE + NI_NUM_NAMES));
+पूर्ण
 
 /*
- * write out
- * {
+ * ग_लिखो out
+ * अणु
  *   "family" : "<family-name>",
- *   "register_values": {
+ *   "register_values": अणु
  *      <destination0>:[src0, src1, ...],
  *      <destination0>:[src0, src1, ...],
  *      ...
- *   }
- * }
+ *   पूर्ण
+ * पूर्ण
  */
-void device_write(const struct ni_device_routes *dR, FILE *fp)
-{
-	fprintf(fp,
+व्योम device_ग_लिखो(स्थिर काष्ठा ni_device_routes *dR, खाता *fp)
+अणु
+	ख_लिखो(fp,
 		"  \"%s\" : {\n"
 		"    # dest -> [src0, src1, ...]\n"
 		, dR->device);
 
-	unsigned int i = 0;
+	अचिन्हित पूर्णांक i = 0;
 
-	while (dR->routes[i].dest != 0) {
-		if (!is_valid_ni_sig(dR->routes[i].dest)) {
-			fprintf(stderr,
+	जबतक (dR->routes[i].dest != 0) अणु
+		अगर (!is_valid_ni_sig(dR->routes[i].dest)) अणु
+			ख_लिखो(मानक_त्रुटि,
 				"Invalid NI signal value [%u] for destination %s.[%u]\n",
 				dR->routes[i].dest, dR->device, i);
-			exit(1);
-		}
+			निकास(1);
+		पूर्ण
 
-		fprintf(fp, "    %u : [", dR->routes[i].dest);
+		ख_लिखो(fp, "    %u : [", dR->routes[i].dest);
 
-		unsigned int j = 0;
+		अचिन्हित पूर्णांक j = 0;
 
-		while (dR->routes[i].src[j] != 0) {
-			if (!is_valid_ni_sig(dR->routes[i].src[j])) {
-				fprintf(stderr,
+		जबतक (dR->routes[i].src[j] != 0) अणु
+			अगर (!is_valid_ni_sig(dR->routes[i].src[j])) अणु
+				ख_लिखो(मानक_त्रुटि,
 					"Invalid NI signal value [%u] for source %s.[%u].[%u]\n",
 					dR->routes[i].src[j], dR->device, i, j);
-				exit(1);
-			}
+				निकास(1);
+			पूर्ण
 
-			fprintf(fp, "%u,", dR->routes[i].src[j]);
+			ख_लिखो(fp, "%u,", dR->routes[i].src[j]);
 
 			++j;
-		}
-		fprintf(fp, "],\n");
+		पूर्ण
+		ख_लिखो(fp, "],\n");
 
 		++i;
-	}
-	fprintf(fp, "  },\n\n");
-}
+	पूर्ण
+	ख_लिखो(fp, "  },\n\n");
+पूर्ण
 
-int main(void)
-{
-	FILE *fp = fopen("ni_values.py", "w");
+पूर्णांक मुख्य(व्योम)
+अणु
+	खाता *fp = ख_खोलो("ni_values.py", "w");
 
-	/* write route register values */
-	fprintf(fp, "ni_route_values = {\n");
-	for (int i = 0; ni_all_route_values[i]; ++i)
-		family_write(ni_all_route_values[i], fp);
-	fprintf(fp, "}\n\n");
+	/* ग_लिखो route रेजिस्टर values */
+	ख_लिखो(fp, "ni_route_values = {\n");
+	क्रम (पूर्णांक i = 0; ni_all_route_values[i]; ++i)
+		family_ग_लिखो(ni_all_route_values[i], fp);
+	ख_लिखो(fp, "}\n\n");
 
-	/* write valid device routes */
-	fprintf(fp, "ni_device_routes = {\n");
-	for (int i = 0; ni_device_routes_list[i]; ++i)
-		device_write(ni_device_routes_list[i], fp);
-	fprintf(fp, "}\n");
+	/* ग_लिखो valid device routes */
+	ख_लिखो(fp, "ni_device_routes = {\n");
+	क्रम (पूर्णांक i = 0; ni_device_routes_list[i]; ++i)
+		device_ग_लिखो(ni_device_routes_list[i], fp);
+	ख_लिखो(fp, "}\n");
 
-	/* finish; close file */
-	fclose(fp);
-	return 0;
-}
+	/* finish; बंद file */
+	ख_बंद(fp);
+	वापस 0;
+पूर्ण

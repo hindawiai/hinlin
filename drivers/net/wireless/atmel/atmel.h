@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*** -*- linux-c -*- **********************************************************
 
-     Driver for Atmel at76c502 at76c504 and at76c506 wireless cards.
+     Driver क्रम Aपंचांगel at76c502 at76c504 and at76c506 wireless cards.
 
          Copyright 2005 Dan Williams and Red Hat, Inc.
 
 
 ******************************************************************************/
 
-#ifndef _ATMEL_H
-#define _ATMEL_H
+#अगर_अघोषित _ATMEL_H
+#घोषणा _ATMEL_H
 
-typedef enum {
+प्रकार क्रमागत अणु
 	ATMEL_FW_TYPE_NONE = 0,
 	ATMEL_FW_TYPE_502,
 	ATMEL_FW_TYPE_502D,
@@ -21,11 +22,11 @@ typedef enum {
 	ATMEL_FW_TYPE_504_2958,
 	ATMEL_FW_TYPE_504A_2958,
 	ATMEL_FW_TYPE_506
-} AtmelFWType;
+पूर्ण AपंचांगelFWType;
 
-struct net_device *init_atmel_card(unsigned short, unsigned long, const AtmelFWType, struct device *, 
-				    int (*present_func)(void *), void * );
-void stop_atmel_card( struct net_device *);
-int atmel_open( struct net_device * );
+काष्ठा net_device *init_aपंचांगel_card(अचिन्हित लघु, अचिन्हित दीर्घ, स्थिर AपंचांगelFWType, काष्ठा device *, 
+				    पूर्णांक (*present_func)(व्योम *), व्योम * );
+व्योम stop_aपंचांगel_card( काष्ठा net_device *);
+पूर्णांक aपंचांगel_खोलो( काष्ठा net_device * );
 
-#endif
+#पूर्ण_अगर

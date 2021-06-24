@@ -1,32 +1,33 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/uaccess.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/uaccess.h>
 
-#include <asm/sfp-machine.h>
-#include <math-emu/soft-fp.h>
-#include <math-emu/double.h>
+#समावेश <यंत्र/sfp-machine.h>
+#समावेश <math-emu/soft-fp.h>
+#समावेश <math-emu/द्विगुन.h>
 
-int
-fcmpu(u32 *ccr, int crfD, void *frA, void *frB)
-{
+पूर्णांक
+fcmpu(u32 *ccr, पूर्णांक crfD, व्योम *frA, व्योम *frB)
+अणु
 	FP_DECL_D(A);
 	FP_DECL_D(B);
 	FP_DECL_EX;
-	int code[4] = { (1 << 3), (1 << 1), (1 << 2), (1 << 0) };
-	long cmp;
+	पूर्णांक code[4] = अणु (1 << 3), (1 << 1), (1 << 2), (1 << 0) पूर्ण;
+	दीर्घ cmp;
 
-#ifdef DEBUG
-	printk("%s: %p (%08x) %d %p %p\n", __func__, ccr, *ccr, crfD, frA, frB);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("%s: %p (%08x) %d %p %p\n", __func__, ccr, *ccr, crfD, frA, frB);
+#पूर्ण_अगर
 
 	FP_UNPACK_DP(A, frA);
 	FP_UNPACK_DP(B, frB);
 
-#ifdef DEBUG
-	printk("A: %ld %lu %lu %ld (%ld)\n", A_s, A_f1, A_f0, A_e, A_c);
-	printk("B: %ld %lu %lu %ld (%ld)\n", B_s, B_f1, B_f0, B_e, B_c);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("A: %ld %lu %lu %ld (%ld)\n", A_s, A_f1, A_f0, A_e, A_c);
+	prपूर्णांकk("B: %ld %lu %lu %ld (%ld)\n", B_s, B_f1, B_f0, B_e, B_c);
+#पूर्ण_अगर
 
 	FP_CMP_D(cmp, A, B, 2);
 	cmp = code[(cmp + 1) & 3];
@@ -37,9 +38,9 @@ fcmpu(u32 *ccr, int crfD, void *frA, void *frB)
 	*ccr &= ~(15 << ((7 - crfD) << 2));
 	*ccr |= (cmp << ((7 - crfD) << 2));
 
-#ifdef DEBUG
-	printk("CR: %08x\n", *ccr);
-#endif
+#अगर_घोषित DEBUG
+	prपूर्णांकk("CR: %08x\n", *ccr);
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

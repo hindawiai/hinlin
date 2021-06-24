@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2020 MediaTek Inc.
  *
@@ -6,12 +7,12 @@
  *
  */
 
-#ifndef __PINCTRL_MTK_MT8195_H
-#define __PINCTRL_MTK_MT8195_H
+#अगर_अघोषित __PINCTRL_MTK_MT8195_H
+#घोषणा __PINCTRL_MTK_MT8195_H
 
-#include "pinctrl-paris.h"
+#समावेश "pinctrl-paris.h"
 
-static const struct mtk_pin_desc mtk_pins_mt8195[] = {
+अटल स्थिर काष्ठा mtk_pin_desc mtk_pins_mt8195[] = अणु
 	MTK_PIN(
 		0, "GPIO0",
 		MTK_EINT_FUNCTION(0, 0),
@@ -1542,128 +1543,128 @@ static const struct mtk_pin_desc mtk_pins_mt8195[] = {
 		144, "GPIO144",
 		MTK_EINT_FUNCTION(0, 144),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		145, "GPIO145",
 		MTK_EINT_FUNCTION(0, 145),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		146, "GPIO146",
 		MTK_EINT_FUNCTION(0, 146),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		147, "GPIO147",
 		MTK_EINT_FUNCTION(0, 147),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		148, "GPIO148",
 		MTK_EINT_FUNCTION(0, 148),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		149, "GPIO149",
 		MTK_EINT_FUNCTION(0, 149),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		150, "GPIO150",
 		MTK_EINT_FUNCTION(0, 150),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		151, "GPIO151",
 		MTK_EINT_FUNCTION(0, 151),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		152, "GPIO152",
 		MTK_EINT_FUNCTION(0, 152),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		153, "GPIO153",
 		MTK_EINT_FUNCTION(0, 153),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		154, "GPIO154",
 		MTK_EINT_FUNCTION(0, 154),
 		DRV_GRP4,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		155, "GPIO155",
 		MTK_EINT_FUNCTION(0, 155),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		156, "GPIO156",
 		MTK_EINT_FUNCTION(0, 216),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		157, "GPIO157",
 		MTK_EINT_FUNCTION(0, 217),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		158, "GPIO158",
 		MTK_EINT_FUNCTION(0, 218),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		159, "GPIO159",
 		MTK_EINT_FUNCTION(0, 219),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		160, "GPIO160",
 		MTK_EINT_FUNCTION(0, 220),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		161, "GPIO161",
 		MTK_EINT_FUNCTION(0, 221),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		162, "GPIO162",
 		MTK_EINT_FUNCTION(0, 222),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		163, "GPIO163",
 		MTK_EINT_FUNCTION(0, 223),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	),
 	MTK_PIN(
 		164, "GPIO164",
 		MTK_EINT_FUNCTION(0, 224),
 		DRV_FIXED,
-		MTK_FUNCTION(0, NULL)
+		MTK_FUNCTION(0, शून्य)
 	)
-};
+पूर्ण;
 
-#endif /* __PINCTRL_MTK_MT8195_H */
+#पूर्ण_अगर /* __PINCTRL_MTK_MT8195_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * PCM179X ASoC SPI driver
  *
@@ -7,48 +8,48 @@
  *     Michael Trimarchi <michael@amarulasolutions.com>
  */
 
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/spi/spi.h>
-#include <linux/regmap.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/regmap.h>
 
-#include "pcm179x.h"
+#समावेश "pcm179x.h"
 
-static int pcm179x_spi_probe(struct spi_device *spi)
-{
-	struct regmap *regmap;
-	int ret;
+अटल पूर्णांक pcm179x_spi_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा regmap *regmap;
+	पूर्णांक ret;
 
 	regmap = devm_regmap_init_spi(spi, &pcm179x_regmap_config);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		ret = PTR_ERR(regmap);
 		dev_err(&spi->dev, "Failed to allocate regmap: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return pcm179x_common_init(&spi->dev, regmap);
-}
+	वापस pcm179x_common_init(&spi->dev, regmap);
+पूर्ण
 
-static const struct of_device_id pcm179x_of_match[] = {
-	{ .compatible = "ti,pcm1792a", },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id pcm179x_of_match[] = अणु
+	अणु .compatible = "ti,pcm1792a", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, pcm179x_of_match);
 
-static const struct spi_device_id pcm179x_spi_ids[] = {
-	{ "pcm179x", 0 },
-	{ },
-};
+अटल स्थिर काष्ठा spi_device_id pcm179x_spi_ids[] = अणु
+	अणु "pcm179x", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(spi, pcm179x_spi_ids);
 
-static struct spi_driver pcm179x_spi_driver = {
-	.driver = {
+अटल काष्ठा spi_driver pcm179x_spi_driver = अणु
+	.driver = अणु
 		.name = "pcm179x",
 		.of_match_table = of_match_ptr(pcm179x_of_match),
-	},
+	पूर्ण,
 	.id_table = pcm179x_spi_ids,
 	.probe = pcm179x_spi_probe,
-};
+पूर्ण;
 
 module_spi_driver(pcm179x_spi_driver);
 

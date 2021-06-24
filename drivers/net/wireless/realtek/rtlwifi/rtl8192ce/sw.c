@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright(c) 2009-2012  Realtek Corporation.*/
 
-#include "../wifi.h"
-#include "../core.h"
-#include "../pci.h"
-#include "../base.h"
-#include "reg.h"
-#include "def.h"
-#include "phy.h"
-#include "dm.h"
-#include "../rtl8192c/dm_common.h"
-#include "../rtl8192c/fw_common.h"
-#include "../rtl8192c/phy_common.h"
-#include "hw.h"
-#include "rf.h"
-#include "trx.h"
-#include "led.h"
+#समावेश "../wifi.h"
+#समावेश "../core.h"
+#समावेश "../pci.h"
+#समावेश "../base.h"
+#समावेश "reg.h"
+#समावेश "def.h"
+#समावेश "phy.h"
+#समावेश "dm.h"
+#समावेश "../rtl8192c/dm_common.h"
+#समावेश "../rtl8192c/fw_common.h"
+#समावेश "../rtl8192c/phy_common.h"
+#समावेश "hw.h"
+#समावेश "rf.h"
+#समावेश "trx.h"
+#समावेश "led.h"
 
-#include <linux/module.h>
+#समावेश <linux/module.h>
 
-static void rtl92c_init_aspm_vars(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+अटल व्योम rtl92c_init_aspm_vars(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
 
-	/*close ASPM for AMD defaultly */
-	rtlpci->const_amdpci_aspm = 0;
+	/*बंद ASPM क्रम AMD शेषly */
+	rtlpci->स्थिर_amdpci_aspm = 0;
 
 	/*
 	 * ASPM PS mode.
@@ -36,13 +37,13 @@ static void rtl92c_init_aspm_vars(struct ieee80211_hw *hw)
 	 * 4 - Always Enable ASPM without Clock Req.
 	 * set defult to RTL8192CE:3 RTL8192E:2
 	 * */
-	rtlpci->const_pci_aspm = 3;
+	rtlpci->स्थिर_pci_aspm = 3;
 
-	/*Setting for PCI-E device */
-	rtlpci->const_devicepci_aspm_setting = 0x03;
+	/*Setting क्रम PCI-E device */
+	rtlpci->स्थिर_devicepci_aspm_setting = 0x03;
 
-	/*Setting for PCI-E bridge */
-	rtlpci->const_hostpci_aspm_setting = 0x02;
+	/*Setting क्रम PCI-E bridge */
+	rtlpci->स्थिर_hostpci_aspm_setting = 0x02;
 
 	/*
 	 * In Hw/Sw Radio Off situation.
@@ -50,27 +51,27 @@ static void rtl92c_init_aspm_vars(struct ieee80211_hw *hw)
 	 * 1 - From ASPM setting without low Mac Pwr,
 	 * 2 - From ASPM setting with low Mac Pwr,
 	 * 3 - Bus D3
-	 * set default to RTL8192CE:0 RTL8192SE:2
+	 * set शेष to RTL8192CE:0 RTL8192SE:2
 	 */
-	rtlpci->const_hwsw_rfoff_d3 = 0;
+	rtlpci->स्थिर_hwsw_rfoff_d3 = 0;
 
 	/*
-	 * This setting works for those device with
-	 * backdoor ASPM setting such as EPHY setting.
+	 * This setting works क्रम those device with
+	 * backकरोor ASPM setting such as EPHY setting.
 	 * 0 - Not support ASPM,
 	 * 1 - Support ASPM,
 	 * 2 - According to chipset.
 	 */
-	rtlpci->const_support_pciaspm = rtlpriv->cfg->mod_params->aspm_support;
-}
+	rtlpci->स्थिर_support_pciaspm = rtlpriv->cfg->mod_params->aspm_support;
+पूर्ण
 
-static int rtl92c_init_sw_vars(struct ieee80211_hw *hw)
-{
-	int err;
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
-	struct rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
-	struct rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
-	char *fw_name;
+अटल पूर्णांक rtl92c_init_sw_vars(काष्ठा ieee80211_hw *hw)
+अणु
+	पूर्णांक err;
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
+	काष्ठा rtl_pci *rtlpci = rtl_pcidev(rtl_pcipriv(hw));
+	काष्ठा rtl_hal *rtlhal = rtl_hal(rtl_priv(hw));
+	अक्षर *fw_name;
 
 	rtl8192ce_bt_reg_init(hw);
 
@@ -108,85 +109,85 @@ static int rtl92c_init_sw_vars(struct ieee80211_hw *hw)
 
 	rtlpci->irq_mask[1] = (u32) (IMR_CPWM | IMR_C2HCMD | 0);
 
-	/* for LPS & IPS */
+	/* क्रम LPS & IPS */
 	rtlpriv->psc.inactiveps = rtlpriv->cfg->mod_params->inactiveps;
 	rtlpriv->psc.swctrl_lps = rtlpriv->cfg->mod_params->swctrl_lps;
 	rtlpriv->psc.fwctrl_lps = rtlpriv->cfg->mod_params->fwctrl_lps;
-	if (!rtlpriv->psc.inactiveps)
+	अगर (!rtlpriv->psc.inactiveps)
 		pr_info("rtl8192ce: Power Save off (module option)\n");
-	if (!rtlpriv->psc.fwctrl_lps)
+	अगर (!rtlpriv->psc.fwctrl_lps)
 		pr_info("rtl8192ce: FW Power Save off (module option)\n");
 	rtlpriv->psc.reg_fwctrl_lps = 3;
-	rtlpriv->psc.reg_max_lps_awakeintvl = 5;
-	/* for ASPM, you can close aspm through
-	 * set const_support_pciaspm = 0 */
+	rtlpriv->psc.reg_max_lps_awakeपूर्णांकvl = 5;
+	/* क्रम ASPM, you can बंद aspm through
+	 * set स्थिर_support_pciaspm = 0 */
 	rtl92c_init_aspm_vars(hw);
 
-	if (rtlpriv->psc.reg_fwctrl_lps == 1)
+	अगर (rtlpriv->psc.reg_fwctrl_lps == 1)
 		rtlpriv->psc.fwctrl_psmode = FW_PS_MIN_MODE;
-	else if (rtlpriv->psc.reg_fwctrl_lps == 2)
+	अन्यथा अगर (rtlpriv->psc.reg_fwctrl_lps == 2)
 		rtlpriv->psc.fwctrl_psmode = FW_PS_MAX_MODE;
-	else if (rtlpriv->psc.reg_fwctrl_lps == 3)
+	अन्यथा अगर (rtlpriv->psc.reg_fwctrl_lps == 3)
 		rtlpriv->psc.fwctrl_psmode = FW_PS_DTIM_MODE;
 
-	/* for firmware buf */
+	/* क्रम firmware buf */
 	rtlpriv->rtlhal.pfirmware = vzalloc(0x4000);
-	if (!rtlpriv->rtlhal.pfirmware) {
+	अगर (!rtlpriv->rtlhal.pfirmware) अणु
 		pr_err("Can't alloc buffer for fw\n");
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	/* request fw */
-	if (IS_VENDOR_UMC_A_CUT(rtlhal->version) &&
+	अगर (IS_VENDOR_UMC_A_CUT(rtlhal->version) &&
 	    !IS_92C_SERIAL(rtlhal->version))
 		fw_name = "rtlwifi/rtl8192cfwU.bin";
-	else if (IS_81XXC_VENDOR_UMC_B_CUT(rtlhal->version))
+	अन्यथा अगर (IS_81XXC_VENDOR_UMC_B_CUT(rtlhal->version))
 		fw_name = "rtlwifi/rtl8192cfwU_B.bin";
-	else
+	अन्यथा
 		fw_name = "rtlwifi/rtl8192cfw.bin";
 
 	rtlpriv->max_fw_size = 0x4000;
 	pr_info("Using firmware %s\n", fw_name);
-	err = request_firmware_nowait(THIS_MODULE, 1, fw_name,
+	err = request_firmware_noरुको(THIS_MODULE, 1, fw_name,
 				      rtlpriv->io.dev, GFP_KERNEL, hw,
 				      rtl_fw_cb);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Failed to request firmware!\n");
-		vfree(rtlpriv->rtlhal.pfirmware);
-		rtlpriv->rtlhal.pfirmware = NULL;
-		return 1;
-	}
+		vमुक्त(rtlpriv->rtlhal.pfirmware);
+		rtlpriv->rtlhal.pfirmware = शून्य;
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtl92c_deinit_sw_vars(struct ieee80211_hw *hw)
-{
-	struct rtl_priv *rtlpriv = rtl_priv(hw);
+अटल व्योम rtl92c_deinit_sw_vars(काष्ठा ieee80211_hw *hw)
+अणु
+	काष्ठा rtl_priv *rtlpriv = rtl_priv(hw);
 
-	if (rtlpriv->rtlhal.pfirmware) {
-		vfree(rtlpriv->rtlhal.pfirmware);
-		rtlpriv->rtlhal.pfirmware = NULL;
-	}
-}
+	अगर (rtlpriv->rtlhal.pfirmware) अणु
+		vमुक्त(rtlpriv->rtlhal.pfirmware);
+		rtlpriv->rtlhal.pfirmware = शून्य;
+	पूर्ण
+पूर्ण
 
-static struct rtl_hal_ops rtl8192ce_hal_ops = {
+अटल काष्ठा rtl_hal_ops rtl8192ce_hal_ops = अणु
 	.init_sw_vars = rtl92c_init_sw_vars,
 	.deinit_sw_vars = rtl92c_deinit_sw_vars,
-	.read_eeprom_info = rtl92ce_read_eeprom_info,
-	.interrupt_recognized = rtl92ce_interrupt_recognized,
+	.पढ़ो_eeprom_info = rtl92ce_पढ़ो_eeprom_info,
+	.पूर्णांकerrupt_recognized = rtl92ce_पूर्णांकerrupt_recognized,
 	.hw_init = rtl92ce_hw_init,
 	.hw_disable = rtl92ce_card_disable,
 	.hw_suspend = rtl92ce_suspend,
 	.hw_resume = rtl92ce_resume,
-	.enable_interrupt = rtl92ce_enable_interrupt,
-	.disable_interrupt = rtl92ce_disable_interrupt,
+	.enable_पूर्णांकerrupt = rtl92ce_enable_पूर्णांकerrupt,
+	.disable_पूर्णांकerrupt = rtl92ce_disable_पूर्णांकerrupt,
 	.set_network_type = rtl92ce_set_network_type,
 	.set_chk_bssid = rtl92ce_set_check_bssid,
 	.set_qos = rtl92ce_set_qos,
-	.set_bcn_reg = rtl92ce_set_beacon_related_registers,
-	.set_bcn_intv = rtl92ce_set_beacon_interval,
-	.update_interrupt_mask = rtl92ce_update_interrupt_mask,
+	.set_bcn_reg = rtl92ce_set_beacon_related_रेजिस्टरs,
+	.set_bcn_पूर्णांकv = rtl92ce_set_beacon_पूर्णांकerval,
+	.update_पूर्णांकerrupt_mask = rtl92ce_update_पूर्णांकerrupt_mask,
 	.get_hw_reg = rtl92ce_get_hw_reg,
 	.set_hw_reg = rtl92ce_set_hw_reg,
 	.update_rate_tbl = rtl92ce_update_hal_rate_tbl,
@@ -196,14 +197,14 @@ static struct rtl_hal_ops rtl8192ce_hal_ops = {
 	.set_channel_access = rtl92ce_update_channel_access_setting,
 	.radio_onoff_checking = rtl92ce_gpio_radio_on_off_checking,
 	.set_bw_mode = rtl92c_phy_set_bw_mode,
-	.switch_channel = rtl92c_phy_sw_chnl,
-	.dm_watchdog = rtl92c_dm_watchdog,
+	.चयन_channel = rtl92c_phy_sw_chnl,
+	.dm_watchकरोg = rtl92c_dm_watchकरोg,
 	.scan_operation_backup = rtl_phy_scan_operation_backup,
-	.set_rf_power_state = rtl92c_phy_set_rf_power_state,
+	.set_rf_घातer_state = rtl92c_phy_set_rf_घातer_state,
 	.led_control = rtl92ce_led_control,
 	.set_desc = rtl92ce_set_desc,
 	.get_desc = rtl92ce_get_desc,
-	.is_tx_desc_closed = rtl92ce_is_tx_desc_closed,
+	.is_tx_desc_बंदd = rtl92ce_is_tx_desc_बंदd,
 	.tx_polling = rtl92ce_tx_polling,
 	.enable_hw_sec = rtl92ce_enable_hw_security_config,
 	.set_key = rtl92ce_set_key,
@@ -213,17 +214,17 @@ static struct rtl_hal_ops rtl8192ce_hal_ops = {
 	.set_rfreg = rtl92ce_phy_set_rf_reg,
 	.get_rfreg = rtl92c_phy_query_rf_reg,
 	.phy_rf6052_config = rtl92ce_phy_rf6052_config,
-	.phy_rf6052_set_cck_txpower = rtl92ce_phy_rf6052_set_cck_txpower,
-	.phy_rf6052_set_ofdm_txpower = rtl92ce_phy_rf6052_set_ofdm_txpower,
+	.phy_rf6052_set_cck_txघातer = rtl92ce_phy_rf6052_set_cck_txघातer,
+	.phy_rf6052_set_ofdm_txघातer = rtl92ce_phy_rf6052_set_ofdm_txघातer,
 	.config_bb_with_headerfile = _rtl92ce_phy_config_bb_with_headerfile,
 	.config_bb_with_pgheaderfile = _rtl92ce_phy_config_bb_with_pgheaderfile,
 	.phy_lc_calibrate = _rtl92ce_phy_lc_calibrate,
 	.phy_set_bw_mode_callback = rtl92ce_phy_set_bw_mode_callback,
-	.dm_dynamic_txpower = rtl92ce_dm_dynamic_txpower,
+	.dm_dynamic_txघातer = rtl92ce_dm_dynamic_txघातer,
 	.get_btc_status = rtl_btc_status_false,
-};
+पूर्ण;
 
-static struct rtl_mod_params rtl92ce_mod_params = {
+अटल काष्ठा rtl_mod_params rtl92ce_mod_params = अणु
 	.sw_crypto = false,
 	.inactiveps = true,
 	.swctrl_lps = false,
@@ -231,11 +232,11 @@ static struct rtl_mod_params rtl92ce_mod_params = {
 	.aspm_support = 1,
 	.debug_level = 0,
 	.debug_mask = 0,
-};
+पूर्ण;
 
-static const struct rtl_hal_cfg rtl92ce_hal_cfg = {
+अटल स्थिर काष्ठा rtl_hal_cfg rtl92ce_hal_cfg = अणु
 	.bar_id = 2,
-	.write_readback = true,
+	.ग_लिखो_पढ़ोback = true,
 	.name = "rtl92c_pci",
 	.ops = &rtl8192ce_hal_ops,
 	.mod_params = &rtl92ce_mod_params,
@@ -325,15 +326,15 @@ static const struct rtl_hal_cfg rtl92ce_hal_cfg = {
 
 	.maps[RTL_RC_HT_RATEMCS7] = DESC_RATEMCS7,
 	.maps[RTL_RC_HT_RATEMCS15] = DESC_RATEMCS15,
-};
+पूर्ण;
 
-static const struct pci_device_id rtl92ce_pci_ids[] = {
-	{RTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8191, rtl92ce_hal_cfg)},
-	{RTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8178, rtl92ce_hal_cfg)},
-	{RTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8177, rtl92ce_hal_cfg)},
-	{RTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8176, rtl92ce_hal_cfg)},
-	{},
-};
+अटल स्थिर काष्ठा pci_device_id rtl92ce_pci_ids[] = अणु
+	अणुRTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8191, rtl92ce_hal_cfg)पूर्ण,
+	अणुRTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8178, rtl92ce_hal_cfg)पूर्ण,
+	अणुRTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8177, rtl92ce_hal_cfg)पूर्ण,
+	अणुRTL_PCI_DEVICE(PCI_VENDOR_ID_REALTEK, 0x8176, rtl92ce_hal_cfg)पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, rtl92ce_pci_ids);
 
@@ -347,12 +348,12 @@ MODULE_FIRMWARE("rtlwifi/rtl8192cfwU.bin");
 MODULE_FIRMWARE("rtlwifi/rtl8192cfwU_B.bin");
 
 module_param_named(swenc, rtl92ce_mod_params.sw_crypto, bool, 0444);
-module_param_named(debug_level, rtl92ce_mod_params.debug_level, int, 0644);
-module_param_named(debug_mask, rtl92ce_mod_params.debug_mask, ullong, 0644);
+module_param_named(debug_level, rtl92ce_mod_params.debug_level, पूर्णांक, 0644);
+module_param_named(debug_mask, rtl92ce_mod_params.debug_mask, ulदीर्घ, 0644);
 module_param_named(ips, rtl92ce_mod_params.inactiveps, bool, 0444);
 module_param_named(swlps, rtl92ce_mod_params.swctrl_lps, bool, 0444);
 module_param_named(fwlps, rtl92ce_mod_params.fwctrl_lps, bool, 0444);
-module_param_named(aspm, rtl92ce_mod_params.aspm_support, int, 0444);
+module_param_named(aspm, rtl92ce_mod_params.aspm_support, पूर्णांक, 0444);
 MODULE_PARM_DESC(swenc, "Set to 1 for software crypto (default 0)\n");
 MODULE_PARM_DESC(ips, "Set to 0 to not use link power save (default 1)\n");
 MODULE_PARM_DESC(swlps, "Set to 1 to use SW control power save (default 0)\n");
@@ -361,14 +362,14 @@ MODULE_PARM_DESC(aspm, "Set to 1 to enable ASPM (default 1)\n");
 MODULE_PARM_DESC(debug_level, "Set debug level (0-5) (default 0)");
 MODULE_PARM_DESC(debug_mask, "Set debug mask (default 0)");
 
-static SIMPLE_DEV_PM_OPS(rtlwifi_pm_ops, rtl_pci_suspend, rtl_pci_resume);
+अटल SIMPLE_DEV_PM_OPS(rtlwअगरi_pm_ops, rtl_pci_suspend, rtl_pci_resume);
 
-static struct pci_driver rtl92ce_driver = {
+अटल काष्ठा pci_driver rtl92ce_driver = अणु
 	.name = KBUILD_MODNAME,
 	.id_table = rtl92ce_pci_ids,
 	.probe = rtl_pci_probe,
-	.remove = rtl_pci_disconnect,
-	.driver.pm = &rtlwifi_pm_ops,
-};
+	.हटाओ = rtl_pci_disconnect,
+	.driver.pm = &rtlwअगरi_pm_ops,
+पूर्ण;
 
 module_pci_driver(rtl92ce_driver);

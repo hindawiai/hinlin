@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /****************************************************************************/
 
 /*
@@ -9,595 +10,595 @@
 
 /****************************************************************************/
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/module.h>
-#include <linux/console.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/io.h>
-#include <linux/uaccess.h>
-#include <linux/platform_device.h>
-#include <asm/coldfire.h>
-#include <asm/mcfsim.h>
-#include <asm/mcfuart.h>
-#include <asm/nettel.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/console.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <यंत्र/coldfire.h>
+#समावेश <यंत्र/mcfsim.h>
+#समावेश <यंत्र/mcfuart.h>
+#समावेश <यंत्र/nettel.h>
 
 /****************************************************************************/
 
 /*
  *	Some boards implement the DTR/DCD lines using GPIO lines, most
- *	don't. Dummy out the access macros for those that don't. Those
- *	that do should define these macros somewhere in there board
- *	specific inlude files.
+ *	करोn't. Dummy out the access macros for those that don't. Those
+ *	that करो should define these macros somewhere in there board
+ *	specअगरic inlude files.
  */
-#if !defined(mcf_getppdcd)
-#define	mcf_getppdcd(p)		(1)
-#endif
-#if !defined(mcf_getppdtr)
-#define	mcf_getppdtr(p)		(1)
-#endif
-#if !defined(mcf_setppdtr)
-#define	mcf_setppdtr(p, v)	do { } while (0)
-#endif
+#अगर !defined(mcf_getppdcd)
+#घोषणा	mcf_getppdcd(p)		(1)
+#पूर्ण_अगर
+#अगर !defined(mcf_getppdtr)
+#घोषणा	mcf_getppdtr(p)		(1)
+#पूर्ण_अगर
+#अगर !defined(mcf_setppdtr)
+#घोषणा	mcf_setppdtr(p, v)	करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /****************************************************************************/
 
 /*
- *	Local per-uart structure.
+ *	Local per-uart काष्ठाure.
  */
-struct mcf_uart {
-	struct uart_port	port;
-	unsigned int		sigs;		/* Local copy of line sigs */
-	unsigned char		imr;		/* Local IMR mirror */
-};
+काष्ठा mcf_uart अणु
+	काष्ठा uart_port	port;
+	अचिन्हित पूर्णांक		sigs;		/* Local copy of line sigs */
+	अचिन्हित अक्षर		imr;		/* Local IMR mirror */
+पूर्ण;
 
 /****************************************************************************/
 
-static unsigned int mcf_tx_empty(struct uart_port *port)
-{
-	return (readb(port->membase + MCFUART_USR) & MCFUART_USR_TXEMPTY) ?
+अटल अचिन्हित पूर्णांक mcf_tx_empty(काष्ठा uart_port *port)
+अणु
+	वापस (पढ़ोb(port->membase + MCFUART_USR) & MCFUART_USR_TXEMPTY) ?
 		TIOCSER_TEMT : 0;
-}
+पूर्ण
 
 /****************************************************************************/
 
-static unsigned int mcf_get_mctrl(struct uart_port *port)
-{
-	struct mcf_uart *pp = container_of(port, struct mcf_uart, port);
-	unsigned int sigs;
+अटल अचिन्हित पूर्णांक mcf_get_mctrl(काष्ठा uart_port *port)
+अणु
+	काष्ठा mcf_uart *pp = container_of(port, काष्ठा mcf_uart, port);
+	अचिन्हित पूर्णांक sigs;
 
-	sigs = (readb(port->membase + MCFUART_UIPR) & MCFUART_UIPR_CTS) ?
+	sigs = (पढ़ोb(port->membase + MCFUART_UIPR) & MCFUART_UIPR_CTS) ?
 		0 : TIOCM_CTS;
 	sigs |= (pp->sigs & TIOCM_RTS);
 	sigs |= (mcf_getppdcd(port->line) ? TIOCM_CD : 0);
 	sigs |= (mcf_getppdtr(port->line) ? TIOCM_DTR : 0);
 
-	return sigs;
-}
+	वापस sigs;
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_set_mctrl(struct uart_port *port, unsigned int sigs)
-{
-	struct mcf_uart *pp = container_of(port, struct mcf_uart, port);
+अटल व्योम mcf_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक sigs)
+अणु
+	काष्ठा mcf_uart *pp = container_of(port, काष्ठा mcf_uart, port);
 
 	pp->sigs = sigs;
 	mcf_setppdtr(port->line, (sigs & TIOCM_DTR));
-	if (sigs & TIOCM_RTS)
-		writeb(MCFUART_UOP_RTS, port->membase + MCFUART_UOP1);
-	else
-		writeb(MCFUART_UOP_RTS, port->membase + MCFUART_UOP0);
-}
+	अगर (sigs & TIOCM_RTS)
+		ग_लिखोb(MCFUART_UOP_RTS, port->membase + MCFUART_UOP1);
+	अन्यथा
+		ग_लिखोb(MCFUART_UOP_RTS, port->membase + MCFUART_UOP0);
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_start_tx(struct uart_port *port)
-{
-	struct mcf_uart *pp = container_of(port, struct mcf_uart, port);
+अटल व्योम mcf_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा mcf_uart *pp = container_of(port, काष्ठा mcf_uart, port);
 
-	if (port->rs485.flags & SER_RS485_ENABLED) {
+	अगर (port->rs485.flags & SER_RS485_ENABLED) अणु
 		/* Enable Transmitter */
-		writeb(MCFUART_UCR_TXENABLE, port->membase + MCFUART_UCR);
-		/* Manually assert RTS */
-		writeb(MCFUART_UOP_RTS, port->membase + MCFUART_UOP1);
-	}
+		ग_लिखोb(MCFUART_UCR_TXENABLE, port->membase + MCFUART_UCR);
+		/* Manually निश्चित RTS */
+		ग_लिखोb(MCFUART_UOP_RTS, port->membase + MCFUART_UOP1);
+	पूर्ण
 	pp->imr |= MCFUART_UIR_TXREADY;
-	writeb(pp->imr, port->membase + MCFUART_UIMR);
-}
+	ग_लिखोb(pp->imr, port->membase + MCFUART_UIMR);
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_stop_tx(struct uart_port *port)
-{
-	struct mcf_uart *pp = container_of(port, struct mcf_uart, port);
+अटल व्योम mcf_stop_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा mcf_uart *pp = container_of(port, काष्ठा mcf_uart, port);
 
 	pp->imr &= ~MCFUART_UIR_TXREADY;
-	writeb(pp->imr, port->membase + MCFUART_UIMR);
-}
+	ग_लिखोb(pp->imr, port->membase + MCFUART_UIMR);
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_stop_rx(struct uart_port *port)
-{
-	struct mcf_uart *pp = container_of(port, struct mcf_uart, port);
+अटल व्योम mcf_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा mcf_uart *pp = container_of(port, काष्ठा mcf_uart, port);
 
 	pp->imr &= ~MCFUART_UIR_RXREADY;
-	writeb(pp->imr, port->membase + MCFUART_UIMR);
-}
+	ग_लिखोb(pp->imr, port->membase + MCFUART_UIMR);
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_break_ctl(struct uart_port *port, int break_state)
-{
-	unsigned long flags;
+अटल व्योम mcf_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
-	if (break_state == -1)
-		writeb(MCFUART_UCR_CMDBREAKSTART, port->membase + MCFUART_UCR);
-	else
-		writeb(MCFUART_UCR_CMDBREAKSTOP, port->membase + MCFUART_UCR);
+	अगर (अवरोध_state == -1)
+		ग_लिखोb(MCFUART_UCR_CMDBREAKSTART, port->membase + MCFUART_UCR);
+	अन्यथा
+		ग_लिखोb(MCFUART_UCR_CMDBREAKSTOP, port->membase + MCFUART_UCR);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
 /****************************************************************************/
 
-static int mcf_startup(struct uart_port *port)
-{
-	struct mcf_uart *pp = container_of(port, struct mcf_uart, port);
-	unsigned long flags;
+अटल पूर्णांक mcf_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा mcf_uart *pp = container_of(port, काष्ठा mcf_uart, port);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Reset UART, get it into known state... */
-	writeb(MCFUART_UCR_CMDRESETRX, port->membase + MCFUART_UCR);
-	writeb(MCFUART_UCR_CMDRESETTX, port->membase + MCFUART_UCR);
+	/* Reset UART, get it पूर्णांकo known state... */
+	ग_लिखोb(MCFUART_UCR_CMDRESETRX, port->membase + MCFUART_UCR);
+	ग_लिखोb(MCFUART_UCR_CMDRESETTX, port->membase + MCFUART_UCR);
 
 	/* Enable the UART transmitter and receiver */
-	writeb(MCFUART_UCR_RXENABLE | MCFUART_UCR_TXENABLE,
+	ग_लिखोb(MCFUART_UCR_RXENABLE | MCFUART_UCR_TXENABLE,
 		port->membase + MCFUART_UCR);
 
-	/* Enable RX interrupts now */
+	/* Enable RX पूर्णांकerrupts now */
 	pp->imr = MCFUART_UIR_RXREADY;
-	writeb(pp->imr, port->membase + MCFUART_UIMR);
+	ग_लिखोb(pp->imr, port->membase + MCFUART_UIMR);
 
 	spin_unlock_irqrestore(&port->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_shutdown(struct uart_port *port)
-{
-	struct mcf_uart *pp = container_of(port, struct mcf_uart, port);
-	unsigned long flags;
+अटल व्योम mcf_shutकरोwn(काष्ठा uart_port *port)
+अणु
+	काष्ठा mcf_uart *pp = container_of(port, काष्ठा mcf_uart, port);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
-	/* Disable all interrupts now */
+	/* Disable all पूर्णांकerrupts now */
 	pp->imr = 0;
-	writeb(pp->imr, port->membase + MCFUART_UIMR);
+	ग_लिखोb(pp->imr, port->membase + MCFUART_UIMR);
 
 	/* Disable UART transmitter and receiver */
-	writeb(MCFUART_UCR_CMDRESETRX, port->membase + MCFUART_UCR);
-	writeb(MCFUART_UCR_CMDRESETTX, port->membase + MCFUART_UCR);
+	ग_लिखोb(MCFUART_UCR_CMDRESETRX, port->membase + MCFUART_UCR);
+	ग_लिखोb(MCFUART_UCR_CMDRESETTX, port->membase + MCFUART_UCR);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_set_termios(struct uart_port *port, struct ktermios *termios,
-	struct ktermios *old)
-{
-	unsigned long flags;
-	unsigned int baud, baudclk;
-#if defined(CONFIG_M5272)
-	unsigned int baudfr;
-#endif
-	unsigned char mr1, mr2;
+अटल व्योम mcf_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *termios,
+	काष्ठा ktermios *old)
+अणु
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक baud, baudclk;
+#अगर defined(CONFIG_M5272)
+	अचिन्हित पूर्णांक baudfr;
+#पूर्ण_अगर
+	अचिन्हित अक्षर mr1, mr2;
 
 	baud = uart_get_baud_rate(port, termios, old, 0, 230400);
-#if defined(CONFIG_M5272)
+#अगर defined(CONFIG_M5272)
 	baudclk = (MCF_BUSCLK / baud) / 32;
 	baudfr = (((MCF_BUSCLK / baud) + 1) / 2) % 16;
-#else
+#अन्यथा
 	baudclk = ((MCF_BUSCLK / baud) + 16) / 32;
-#endif
+#पूर्ण_अगर
 
 	mr1 = MCFUART_MR1_RXIRQRDY | MCFUART_MR1_RXERRCHAR;
 	mr2 = 0;
 
-	switch (termios->c_cflag & CSIZE) {
-	case CS5: mr1 |= MCFUART_MR1_CS5; break;
-	case CS6: mr1 |= MCFUART_MR1_CS6; break;
-	case CS7: mr1 |= MCFUART_MR1_CS7; break;
-	case CS8:
-	default:  mr1 |= MCFUART_MR1_CS8; break;
-	}
+	चयन (termios->c_cflag & CSIZE) अणु
+	हाल CS5: mr1 |= MCFUART_MR1_CS5; अवरोध;
+	हाल CS6: mr1 |= MCFUART_MR1_CS6; अवरोध;
+	हाल CS7: mr1 |= MCFUART_MR1_CS7; अवरोध;
+	हाल CS8:
+	शेष:  mr1 |= MCFUART_MR1_CS8; अवरोध;
+	पूर्ण
 
-	if (termios->c_cflag & PARENB) {
-		if (termios->c_cflag & CMSPAR) {
-			if (termios->c_cflag & PARODD)
+	अगर (termios->c_cflag & PARENB) अणु
+		अगर (termios->c_cflag & CMSPAR) अणु
+			अगर (termios->c_cflag & PARODD)
 				mr1 |= MCFUART_MR1_PARITYMARK;
-			else
+			अन्यथा
 				mr1 |= MCFUART_MR1_PARITYSPACE;
-		} else {
-			if (termios->c_cflag & PARODD)
+		पूर्ण अन्यथा अणु
+			अगर (termios->c_cflag & PARODD)
 				mr1 |= MCFUART_MR1_PARITYODD;
-			else
+			अन्यथा
 				mr1 |= MCFUART_MR1_PARITYEVEN;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		mr1 |= MCFUART_MR1_PARITYNONE;
-	}
+	पूर्ण
 
 	/*
-	 * FIXME: port->read_status_mask and port->ignore_status_mask
-	 * need to be initialized based on termios settings for
+	 * FIXME: port->पढ़ो_status_mask and port->ignore_status_mask
+	 * need to be initialized based on termios settings क्रम
 	 * INPCK, IGNBRK, IGNPAR, PARMRK, BRKINT
 	 */
 
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		mr2 |= MCFUART_MR2_STOP2;
-	else
+	अन्यथा
 		mr2 |= MCFUART_MR2_STOP1;
 
-	if (termios->c_cflag & CRTSCTS) {
+	अगर (termios->c_cflag & CRTSCTS) अणु
 		mr1 |= MCFUART_MR1_RXRTS;
 		mr2 |= MCFUART_MR2_TXCTS;
-	}
+	पूर्ण
 
 	spin_lock_irqsave(&port->lock, flags);
-	if (port->rs485.flags & SER_RS485_ENABLED) {
+	अगर (port->rs485.flags & SER_RS485_ENABLED) अणु
 		dev_dbg(port->dev, "Setting UART to RS485\n");
 		mr2 |= MCFUART_MR2_TXRTS;
-	}
+	पूर्ण
 
-	uart_update_timeout(port, termios->c_cflag, baud);
-	writeb(MCFUART_UCR_CMDRESETRX, port->membase + MCFUART_UCR);
-	writeb(MCFUART_UCR_CMDRESETTX, port->membase + MCFUART_UCR);
-	writeb(MCFUART_UCR_CMDRESETMRPTR, port->membase + MCFUART_UCR);
-	writeb(mr1, port->membase + MCFUART_UMR);
-	writeb(mr2, port->membase + MCFUART_UMR);
-	writeb((baudclk & 0xff00) >> 8, port->membase + MCFUART_UBG1);
-	writeb((baudclk & 0xff), port->membase + MCFUART_UBG2);
-#if defined(CONFIG_M5272)
-	writeb((baudfr & 0x0f), port->membase + MCFUART_UFPD);
-#endif
-	writeb(MCFUART_UCSR_RXCLKTIMER | MCFUART_UCSR_TXCLKTIMER,
+	uart_update_समयout(port, termios->c_cflag, baud);
+	ग_लिखोb(MCFUART_UCR_CMDRESETRX, port->membase + MCFUART_UCR);
+	ग_लिखोb(MCFUART_UCR_CMDRESETTX, port->membase + MCFUART_UCR);
+	ग_लिखोb(MCFUART_UCR_CMDRESETMRPTR, port->membase + MCFUART_UCR);
+	ग_लिखोb(mr1, port->membase + MCFUART_UMR);
+	ग_लिखोb(mr2, port->membase + MCFUART_UMR);
+	ग_लिखोb((baudclk & 0xff00) >> 8, port->membase + MCFUART_UBG1);
+	ग_लिखोb((baudclk & 0xff), port->membase + MCFUART_UBG2);
+#अगर defined(CONFIG_M5272)
+	ग_लिखोb((baudfr & 0x0f), port->membase + MCFUART_UFPD);
+#पूर्ण_अगर
+	ग_लिखोb(MCFUART_UCSR_RXCLKTIMER | MCFUART_UCSR_TXCLKTIMER,
 		port->membase + MCFUART_UCSR);
-	writeb(MCFUART_UCR_RXENABLE | MCFUART_UCR_TXENABLE,
+	ग_लिखोb(MCFUART_UCR_RXENABLE | MCFUART_UCR_TXENABLE,
 		port->membase + MCFUART_UCR);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_rx_chars(struct mcf_uart *pp)
-{
-	struct uart_port *port = &pp->port;
-	unsigned char status, ch, flag;
+अटल व्योम mcf_rx_अक्षरs(काष्ठा mcf_uart *pp)
+अणु
+	काष्ठा uart_port *port = &pp->port;
+	अचिन्हित अक्षर status, ch, flag;
 
-	while ((status = readb(port->membase + MCFUART_USR)) & MCFUART_USR_RXREADY) {
-		ch = readb(port->membase + MCFUART_URB);
+	जबतक ((status = पढ़ोb(port->membase + MCFUART_USR)) & MCFUART_USR_RXREADY) अणु
+		ch = पढ़ोb(port->membase + MCFUART_URB);
 		flag = TTY_NORMAL;
 		port->icount.rx++;
 
-		if (status & MCFUART_USR_RXERR) {
-			writeb(MCFUART_UCR_CMDRESETERR,
+		अगर (status & MCFUART_USR_RXERR) अणु
+			ग_लिखोb(MCFUART_UCR_CMDRESETERR,
 				port->membase + MCFUART_UCR);
 
-			if (status & MCFUART_USR_RXBREAK) {
+			अगर (status & MCFUART_USR_RXBREAK) अणु
 				port->icount.brk++;
-				if (uart_handle_break(port))
-					continue;
-			} else if (status & MCFUART_USR_RXPARITY) {
+				अगर (uart_handle_अवरोध(port))
+					जारी;
+			पूर्ण अन्यथा अगर (status & MCFUART_USR_RXPARITY) अणु
 				port->icount.parity++;
-			} else if (status & MCFUART_USR_RXOVERRUN) {
+			पूर्ण अन्यथा अगर (status & MCFUART_USR_RXOVERRUN) अणु
 				port->icount.overrun++;
-			} else if (status & MCFUART_USR_RXFRAMING) {
+			पूर्ण अन्यथा अगर (status & MCFUART_USR_RXFRAMING) अणु
 				port->icount.frame++;
-			}
+			पूर्ण
 
-			status &= port->read_status_mask;
+			status &= port->पढ़ो_status_mask;
 
-			if (status & MCFUART_USR_RXBREAK)
+			अगर (status & MCFUART_USR_RXBREAK)
 				flag = TTY_BREAK;
-			else if (status & MCFUART_USR_RXPARITY)
+			अन्यथा अगर (status & MCFUART_USR_RXPARITY)
 				flag = TTY_PARITY;
-			else if (status & MCFUART_USR_RXFRAMING)
+			अन्यथा अगर (status & MCFUART_USR_RXFRAMING)
 				flag = TTY_FRAME;
-		}
+		पूर्ण
 
-		if (uart_handle_sysrq_char(port, ch))
-			continue;
-		uart_insert_char(port, status, MCFUART_USR_RXOVERRUN, ch, flag);
-	}
+		अगर (uart_handle_sysrq_अक्षर(port, ch))
+			जारी;
+		uart_insert_अक्षर(port, status, MCFUART_USR_RXOVERRUN, ch, flag);
+	पूर्ण
 
 	tty_flip_buffer_push(&port->state->port);
-}
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_tx_chars(struct mcf_uart *pp)
-{
-	struct uart_port *port = &pp->port;
-	struct circ_buf *xmit = &port->state->xmit;
+अटल व्योम mcf_tx_अक्षरs(काष्ठा mcf_uart *pp)
+अणु
+	काष्ठा uart_port *port = &pp->port;
+	काष्ठा circ_buf *xmit = &port->state->xmit;
 
-	if (port->x_char) {
-		/* Send special char - probably flow control */
-		writeb(port->x_char, port->membase + MCFUART_UTB);
-		port->x_char = 0;
+	अगर (port->x_अक्षर) अणु
+		/* Send special अक्षर - probably flow control */
+		ग_लिखोb(port->x_अक्षर, port->membase + MCFUART_UTB);
+		port->x_अक्षर = 0;
 		port->icount.tx++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	while (readb(port->membase + MCFUART_USR) & MCFUART_USR_TXREADY) {
-		if (xmit->head == xmit->tail)
-			break;
-		writeb(xmit->buf[xmit->tail], port->membase + MCFUART_UTB);
+	जबतक (पढ़ोb(port->membase + MCFUART_USR) & MCFUART_USR_TXREADY) अणु
+		अगर (xmit->head == xmit->tail)
+			अवरोध;
+		ग_लिखोb(xmit->buf[xmit->tail], port->membase + MCFUART_UTB);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE -1);
 		port->icount.tx++;
-	}
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
 
-	if (xmit->head == xmit->tail) {
+	अगर (xmit->head == xmit->tail) अणु
 		pp->imr &= ~MCFUART_UIR_TXREADY;
-		writeb(pp->imr, port->membase + MCFUART_UIMR);
-		/* Disable TX to negate RTS automatically */
-		if (port->rs485.flags & SER_RS485_ENABLED)
-			writeb(MCFUART_UCR_TXDISABLE,
+		ग_लिखोb(pp->imr, port->membase + MCFUART_UIMR);
+		/* Disable TX to negate RTS स्वतःmatically */
+		अगर (port->rs485.flags & SER_RS485_ENABLED)
+			ग_लिखोb(MCFUART_UCR_TXDISABLE,
 				port->membase + MCFUART_UCR);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /****************************************************************************/
 
-static irqreturn_t mcf_interrupt(int irq, void *data)
-{
-	struct uart_port *port = data;
-	struct mcf_uart *pp = container_of(port, struct mcf_uart, port);
-	unsigned int isr;
-	irqreturn_t ret = IRQ_NONE;
+अटल irqवापस_t mcf_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा uart_port *port = data;
+	काष्ठा mcf_uart *pp = container_of(port, काष्ठा mcf_uart, port);
+	अचिन्हित पूर्णांक isr;
+	irqवापस_t ret = IRQ_NONE;
 
-	isr = readb(port->membase + MCFUART_UISR) & pp->imr;
+	isr = पढ़ोb(port->membase + MCFUART_UISR) & pp->imr;
 
 	spin_lock(&port->lock);
-	if (isr & MCFUART_UIR_RXREADY) {
-		mcf_rx_chars(pp);
+	अगर (isr & MCFUART_UIR_RXREADY) अणु
+		mcf_rx_अक्षरs(pp);
 		ret = IRQ_HANDLED;
-	}
-	if (isr & MCFUART_UIR_TXREADY) {
-		mcf_tx_chars(pp);
+	पूर्ण
+	अगर (isr & MCFUART_UIR_TXREADY) अणु
+		mcf_tx_अक्षरs(pp);
 		ret = IRQ_HANDLED;
-	}
+	पूर्ण
 	spin_unlock(&port->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_config_port(struct uart_port *port, int flags)
-{
+अटल व्योम mcf_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
 	port->type = PORT_MCF;
-	port->fifosize = MCFUART_TXFIFOSIZE;
+	port->fअगरosize = MCFUART_TXFIFOSIZE;
 
-	/* Clear mask, so no surprise interrupts. */
-	writeb(0, port->membase + MCFUART_UIMR);
+	/* Clear mask, so no surprise पूर्णांकerrupts. */
+	ग_लिखोb(0, port->membase + MCFUART_UIMR);
 
-	if (request_irq(port->irq, mcf_interrupt, 0, "UART", port))
-		printk(KERN_ERR "MCF: unable to attach ColdFire UART %d "
+	अगर (request_irq(port->irq, mcf_पूर्णांकerrupt, 0, "UART", port))
+		prपूर्णांकk(KERN_ERR "MCF: unable to attach ColdFire UART %d "
 			"interrupt vector=%d\n", port->line, port->irq);
-}
+पूर्ण
 
 /****************************************************************************/
 
-static const char *mcf_type(struct uart_port *port)
-{
-	return (port->type == PORT_MCF) ? "ColdFire UART" : NULL;
-}
+अटल स्थिर अक्षर *mcf_type(काष्ठा uart_port *port)
+अणु
+	वापस (port->type == PORT_MCF) ? "ColdFire UART" : शून्य;
+पूर्ण
 
 /****************************************************************************/
 
-static int mcf_request_port(struct uart_port *port)
-{
+अटल पूर्णांक mcf_request_port(काष्ठा uart_port *port)
+अणु
 	/* UARTs always present */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_release_port(struct uart_port *port)
-{
+अटल व्योम mcf_release_port(काष्ठा uart_port *port)
+अणु
 	/* Nothing to release... */
-}
+पूर्ण
 
 /****************************************************************************/
 
-static int mcf_verify_port(struct uart_port *port, struct serial_struct *ser)
-{
-	if ((ser->type != PORT_UNKNOWN) && (ser->type != PORT_MCF))
-		return -EINVAL;
-	return 0;
-}
+अटल पूर्णांक mcf_verअगरy_port(काष्ठा uart_port *port, काष्ठा serial_काष्ठा *ser)
+अणु
+	अगर ((ser->type != PORT_UNKNOWN) && (ser->type != PORT_MCF))
+		वापस -EINVAL;
+	वापस 0;
+पूर्ण
 
 /****************************************************************************/
 
 /* Enable or disable the RS485 support */
-static int mcf_config_rs485(struct uart_port *port, struct serial_rs485 *rs485)
-{
-	unsigned char mr1, mr2;
+अटल पूर्णांक mcf_config_rs485(काष्ठा uart_port *port, काष्ठा serial_rs485 *rs485)
+अणु
+	अचिन्हित अक्षर mr1, mr2;
 
-	/* Get mode registers */
-	mr1 = readb(port->membase + MCFUART_UMR);
-	mr2 = readb(port->membase + MCFUART_UMR);
-	if (rs485->flags & SER_RS485_ENABLED) {
+	/* Get mode रेजिस्टरs */
+	mr1 = पढ़ोb(port->membase + MCFUART_UMR);
+	mr2 = पढ़ोb(port->membase + MCFUART_UMR);
+	अगर (rs485->flags & SER_RS485_ENABLED) अणु
 		dev_dbg(port->dev, "Setting UART to RS485\n");
 		/* Automatically negate RTS after TX completes */
 		mr2 |= MCFUART_MR2_TXRTS;
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(port->dev, "Setting UART to RS232\n");
 		mr2 &= ~MCFUART_MR2_TXRTS;
-	}
-	writeb(mr1, port->membase + MCFUART_UMR);
-	writeb(mr2, port->membase + MCFUART_UMR);
+	पूर्ण
+	ग_लिखोb(mr1, port->membase + MCFUART_UMR);
+	ग_लिखोb(mr2, port->membase + MCFUART_UMR);
 	port->rs485 = *rs485;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /****************************************************************************/
 
 /*
  *	Define the basic serial functions we support.
  */
-static const struct uart_ops mcf_uart_ops = {
+अटल स्थिर काष्ठा uart_ops mcf_uart_ops = अणु
 	.tx_empty	= mcf_tx_empty,
 	.get_mctrl	= mcf_get_mctrl,
 	.set_mctrl	= mcf_set_mctrl,
 	.start_tx	= mcf_start_tx,
 	.stop_tx	= mcf_stop_tx,
 	.stop_rx	= mcf_stop_rx,
-	.break_ctl	= mcf_break_ctl,
+	.अवरोध_ctl	= mcf_अवरोध_ctl,
 	.startup	= mcf_startup,
-	.shutdown	= mcf_shutdown,
+	.shutकरोwn	= mcf_shutकरोwn,
 	.set_termios	= mcf_set_termios,
 	.type		= mcf_type,
 	.request_port	= mcf_request_port,
 	.release_port	= mcf_release_port,
 	.config_port	= mcf_config_port,
-	.verify_port	= mcf_verify_port,
-};
+	.verअगरy_port	= mcf_verअगरy_port,
+पूर्ण;
 
-static struct mcf_uart mcf_ports[4];
+अटल काष्ठा mcf_uart mcf_ports[4];
 
-#define	MCF_MAXPORTS	ARRAY_SIZE(mcf_ports)
+#घोषणा	MCF_MAXPORTS	ARRAY_SIZE(mcf_ports)
 
 /****************************************************************************/
-#if defined(CONFIG_SERIAL_MCF_CONSOLE)
+#अगर defined(CONFIG_SERIAL_MCF_CONSOLE)
 /****************************************************************************/
 
-int __init early_mcf_setup(struct mcf_platform_uart *platp)
-{
-	struct uart_port *port;
-	int i;
+पूर्णांक __init early_mcf_setup(काष्ठा mcf_platक्रमm_uart *platp)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक i;
 
-	for (i = 0; ((i < MCF_MAXPORTS) && (platp[i].mapbase)); i++) {
+	क्रम (i = 0; ((i < MCF_MAXPORTS) && (platp[i].mapbase)); i++) अणु
 		port = &mcf_ports[i].port;
 
 		port->line = i;
 		port->type = PORT_MCF;
 		port->mapbase = platp[i].mapbase;
 		port->membase = (platp[i].membase) ? platp[i].membase :
-			(unsigned char __iomem *) port->mapbase;
+			(अचिन्हित अक्षर __iomem *) port->mapbase;
 		port->iotype = SERIAL_IO_MEM;
 		port->irq = platp[i].irq;
 		port->uartclk = MCF_BUSCLK;
 		port->flags = UPF_BOOT_AUTOCONF;
 		port->rs485_config = mcf_config_rs485;
 		port->ops = &mcf_uart_ops;
-	}
+	पूर्ण
 
-	return 0;
-}
-
-/****************************************************************************/
-
-static void mcf_console_putc(struct console *co, const char c)
-{
-	struct uart_port *port = &(mcf_ports + co->index)->port;
-	int i;
-
-	for (i = 0; (i < 0x10000); i++) {
-		if (readb(port->membase + MCFUART_USR) & MCFUART_USR_TXREADY)
-			break;
-	}
-	writeb(c, port->membase + MCFUART_UTB);
-	for (i = 0; (i < 0x10000); i++) {
-		if (readb(port->membase + MCFUART_USR) & MCFUART_USR_TXREADY)
-			break;
-	}
-}
+	वापस 0;
+पूर्ण
 
 /****************************************************************************/
 
-static void mcf_console_write(struct console *co, const char *s, unsigned int count)
-{
-	for (; (count); count--, s++) {
-		mcf_console_putc(co, *s);
-		if (*s == '\n')
-			mcf_console_putc(co, '\r');
-	}
-}
+अटल व्योम mcf_console_अ_दो(काष्ठा console *co, स्थिर अक्षर c)
+अणु
+	काष्ठा uart_port *port = &(mcf_ports + co->index)->port;
+	पूर्णांक i;
+
+	क्रम (i = 0; (i < 0x10000); i++) अणु
+		अगर (पढ़ोb(port->membase + MCFUART_USR) & MCFUART_USR_TXREADY)
+			अवरोध;
+	पूर्ण
+	ग_लिखोb(c, port->membase + MCFUART_UTB);
+	क्रम (i = 0; (i < 0x10000); i++) अणु
+		अगर (पढ़ोb(port->membase + MCFUART_USR) & MCFUART_USR_TXREADY)
+			अवरोध;
+	पूर्ण
+पूर्ण
 
 /****************************************************************************/
 
-static int __init mcf_console_setup(struct console *co, char *options)
-{
-	struct uart_port *port;
-	int baud = CONFIG_SERIAL_MCF_BAUDRATE;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल व्योम mcf_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s, अचिन्हित पूर्णांक count)
+अणु
+	क्रम (; (count); count--, s++) अणु
+		mcf_console_अ_दो(co, *s);
+		अगर (*s == '\n')
+			mcf_console_अ_दो(co, '\r');
+	पूर्ण
+पूर्ण
 
-	if ((co->index < 0) || (co->index >= MCF_MAXPORTS))
+/****************************************************************************/
+
+अटल पूर्णांक __init mcf_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक baud = CONFIG_SERIAL_MCF_BAUDRATE;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
+
+	अगर ((co->index < 0) || (co->index >= MCF_MAXPORTS))
 		co->index = 0;
 	port = &mcf_ports[co->index].port;
-	if (port->membase == 0)
-		return -ENODEV;
+	अगर (port->membase == 0)
+		वापस -ENODEV;
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
 /****************************************************************************/
 
-static struct uart_driver mcf_driver;
+अटल काष्ठा uart_driver mcf_driver;
 
-static struct console mcf_console = {
+अटल काष्ठा console mcf_console = अणु
 	.name		= "ttyS",
-	.write		= mcf_console_write,
+	.ग_लिखो		= mcf_console_ग_लिखो,
 	.device		= uart_console_device,
 	.setup		= mcf_console_setup,
 	.flags		= CON_PRINTBUFFER,
 	.index		= -1,
 	.data		= &mcf_driver,
-};
+पूर्ण;
 
-static int __init mcf_console_init(void)
-{
-	register_console(&mcf_console);
-	return 0;
-}
+अटल पूर्णांक __init mcf_console_init(व्योम)
+अणु
+	रेजिस्टर_console(&mcf_console);
+	वापस 0;
+पूर्ण
 
 console_initcall(mcf_console_init);
 
-#define	MCF_CONSOLE	&mcf_console
+#घोषणा	MCF_CONSOLE	&mcf_console
 
 /****************************************************************************/
-#else
+#अन्यथा
 /****************************************************************************/
 
-#define	MCF_CONSOLE	NULL
+#घोषणा	MCF_CONSOLE	शून्य
 
 /****************************************************************************/
-#endif /* CONFIG_SERIAL_MCF_CONSOLE */
+#पूर्ण_अगर /* CONFIG_SERIAL_MCF_CONSOLE */
 /****************************************************************************/
 
 /*
- *	Define the mcf UART driver structure.
+ *	Define the mcf UART driver काष्ठाure.
  */
-static struct uart_driver mcf_driver = {
+अटल काष्ठा uart_driver mcf_driver = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= "mcf",
 	.dev_name	= "ttyS",
@@ -605,24 +606,24 @@ static struct uart_driver mcf_driver = {
 	.minor		= 64,
 	.nr		= MCF_MAXPORTS,
 	.cons		= MCF_CONSOLE,
-};
+पूर्ण;
 
 /****************************************************************************/
 
-static int mcf_probe(struct platform_device *pdev)
-{
-	struct mcf_platform_uart *platp = dev_get_platdata(&pdev->dev);
-	struct uart_port *port;
-	int i;
+अटल पूर्णांक mcf_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mcf_platक्रमm_uart *platp = dev_get_platdata(&pdev->dev);
+	काष्ठा uart_port *port;
+	पूर्णांक i;
 
-	for (i = 0; ((i < MCF_MAXPORTS) && (platp[i].mapbase)); i++) {
+	क्रम (i = 0; ((i < MCF_MAXPORTS) && (platp[i].mapbase)); i++) अणु
 		port = &mcf_ports[i].port;
 
 		port->line = i;
 		port->type = PORT_MCF;
 		port->mapbase = platp[i].mapbase;
 		port->membase = (platp[i].membase) ? platp[i].membase :
-			(unsigned char __iomem *) platp[i].mapbase;
+			(अचिन्हित अक्षर __iomem *) platp[i].mapbase;
 		port->dev = &pdev->dev;
 		port->iotype = SERIAL_IO_MEM;
 		port->irq = platp[i].irq;
@@ -633,68 +634,68 @@ static int mcf_probe(struct platform_device *pdev)
 		port->has_sysrq = IS_ENABLED(CONFIG_SERIAL_MCF_CONSOLE);
 
 		uart_add_one_port(&mcf_driver, port);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /****************************************************************************/
 
-static int mcf_remove(struct platform_device *pdev)
-{
-	struct uart_port *port;
-	int i;
+अटल पूर्णांक mcf_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_port *port;
+	पूर्णांक i;
 
-	for (i = 0; (i < MCF_MAXPORTS); i++) {
+	क्रम (i = 0; (i < MCF_MAXPORTS); i++) अणु
 		port = &mcf_ports[i].port;
-		if (port)
-			uart_remove_one_port(&mcf_driver, port);
-	}
+		अगर (port)
+			uart_हटाओ_one_port(&mcf_driver, port);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /****************************************************************************/
 
-static struct platform_driver mcf_platform_driver = {
+अटल काष्ठा platक्रमm_driver mcf_platक्रमm_driver = अणु
 	.probe		= mcf_probe,
-	.remove		= mcf_remove,
-	.driver		= {
+	.हटाओ		= mcf_हटाओ,
+	.driver		= अणु
 		.name	= "mcfuart",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
 /****************************************************************************/
 
-static int __init mcf_init(void)
-{
-	int rc;
+अटल पूर्णांक __init mcf_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	printk("ColdFire internal UART serial driver\n");
+	prपूर्णांकk("ColdFire internal UART serial driver\n");
 
-	rc = uart_register_driver(&mcf_driver);
-	if (rc)
-		return rc;
-	rc = platform_driver_register(&mcf_platform_driver);
-	if (rc) {
-		uart_unregister_driver(&mcf_driver);
-		return rc;
-	}
-	return 0;
-}
+	rc = uart_रेजिस्टर_driver(&mcf_driver);
+	अगर (rc)
+		वापस rc;
+	rc = platक्रमm_driver_रेजिस्टर(&mcf_platक्रमm_driver);
+	अगर (rc) अणु
+		uart_unरेजिस्टर_driver(&mcf_driver);
+		वापस rc;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /****************************************************************************/
 
-static void __exit mcf_exit(void)
-{
-	platform_driver_unregister(&mcf_platform_driver);
-	uart_unregister_driver(&mcf_driver);
-}
+अटल व्योम __निकास mcf_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&mcf_platक्रमm_driver);
+	uart_unरेजिस्टर_driver(&mcf_driver);
+पूर्ण
 
 /****************************************************************************/
 
 module_init(mcf_init);
-module_exit(mcf_exit);
+module_निकास(mcf_निकास);
 
 MODULE_AUTHOR("Greg Ungerer <gerg@uclinux.org>");
 MODULE_DESCRIPTION("Freescale ColdFire UART driver");

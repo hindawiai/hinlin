@@ -1,153 +1,154 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Shadow Call Stack support.
+ * Shaकरोw Call Stack support.
  *
  * Copyright (C) 2019 Google LLC
  */
 
-#include <linux/cpuhotplug.h>
-#include <linux/kasan.h>
-#include <linux/mm.h>
-#include <linux/scs.h>
-#include <linux/vmalloc.h>
-#include <linux/vmstat.h>
+#समावेश <linux/cpuhotplug.h>
+#समावेश <linux/kasan.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/scs.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/vmस्थिति.स>
 
-static void __scs_account(void *s, int account)
-{
-	struct page *scs_page = vmalloc_to_page(s);
+अटल व्योम __scs_account(व्योम *s, पूर्णांक account)
+अणु
+	काष्ठा page *scs_page = vदो_स्मृति_to_page(s);
 
 	mod_node_page_state(page_pgdat(scs_page), NR_KERNEL_SCS_KB,
 			    account * (SCS_SIZE / SZ_1K));
-}
+पूर्ण
 
-/* Matches NR_CACHED_STACKS for VMAP_STACK */
-#define NR_CACHED_SCS 2
-static DEFINE_PER_CPU(void *, scs_cache[NR_CACHED_SCS]);
+/* Matches NR_CACHED_STACKS क्रम VMAP_STACK */
+#घोषणा NR_CACHED_SCS 2
+अटल DEFINE_PER_CPU(व्योम *, scs_cache[NR_CACHED_SCS]);
 
-static void *__scs_alloc(int node)
-{
-	int i;
-	void *s;
+अटल व्योम *__scs_alloc(पूर्णांक node)
+अणु
+	पूर्णांक i;
+	व्योम *s;
 
-	for (i = 0; i < NR_CACHED_SCS; i++) {
-		s = this_cpu_xchg(scs_cache[i], NULL);
-		if (s) {
-			kasan_unpoison_vmalloc(s, SCS_SIZE);
-			memset(s, 0, SCS_SIZE);
-			return s;
-		}
-	}
+	क्रम (i = 0; i < NR_CACHED_SCS; i++) अणु
+		s = this_cpu_xchg(scs_cache[i], शून्य);
+		अगर (s) अणु
+			kasan_unpoison_vदो_स्मृति(s, SCS_SIZE);
+			स_रखो(s, 0, SCS_SIZE);
+			वापस s;
+		पूर्ण
+	पूर्ण
 
-	return __vmalloc_node_range(SCS_SIZE, 1, VMALLOC_START, VMALLOC_END,
+	वापस __vदो_स्मृति_node_range(SCS_SIZE, 1, VMALLOC_START, VMALLOC_END,
 				    GFP_SCS, PAGE_KERNEL, 0, node,
-				    __builtin_return_address(0));
-}
+				    __builtin_वापस_address(0));
+पूर्ण
 
-void *scs_alloc(int node)
-{
-	void *s;
+व्योम *scs_alloc(पूर्णांक node)
+अणु
+	व्योम *s;
 
 	s = __scs_alloc(node);
-	if (!s)
-		return NULL;
+	अगर (!s)
+		वापस शून्य;
 
 	*__scs_magic(s) = SCS_END_MAGIC;
 
 	/*
-	 * Poison the allocation to catch unintentional accesses to
-	 * the shadow stack when KASAN is enabled.
+	 * Poison the allocation to catch unपूर्णांकentional accesses to
+	 * the shaकरोw stack when KASAN is enabled.
 	 */
-	kasan_poison_vmalloc(s, SCS_SIZE);
+	kasan_poison_vदो_स्मृति(s, SCS_SIZE);
 	__scs_account(s, 1);
-	return s;
-}
+	वापस s;
+पूर्ण
 
-void scs_free(void *s)
-{
-	int i;
+व्योम scs_मुक्त(व्योम *s)
+अणु
+	पूर्णांक i;
 
 	__scs_account(s, -1);
 
 	/*
-	 * We cannot sleep as this can be called in interrupt context,
-	 * so use this_cpu_cmpxchg to update the cache, and vfree_atomic
-	 * to free the stack.
+	 * We cannot sleep as this can be called in पूर्णांकerrupt context,
+	 * so use this_cpu_cmpxchg to update the cache, and vमुक्त_atomic
+	 * to मुक्त the stack.
 	 */
 
-	for (i = 0; i < NR_CACHED_SCS; i++)
-		if (this_cpu_cmpxchg(scs_cache[i], 0, s) == NULL)
-			return;
+	क्रम (i = 0; i < NR_CACHED_SCS; i++)
+		अगर (this_cpu_cmpxchg(scs_cache[i], 0, s) == शून्य)
+			वापस;
 
-	vfree_atomic(s);
-}
+	vमुक्त_atomic(s);
+पूर्ण
 
-static int scs_cleanup(unsigned int cpu)
-{
-	int i;
-	void **cache = per_cpu_ptr(scs_cache, cpu);
+अटल पूर्णांक scs_cleanup(अचिन्हित पूर्णांक cpu)
+अणु
+	पूर्णांक i;
+	व्योम **cache = per_cpu_ptr(scs_cache, cpu);
 
-	for (i = 0; i < NR_CACHED_SCS; i++) {
-		vfree(cache[i]);
-		cache[i] = NULL;
-	}
+	क्रम (i = 0; i < NR_CACHED_SCS; i++) अणु
+		vमुक्त(cache[i]);
+		cache[i] = शून्य;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init scs_init(void)
-{
-	cpuhp_setup_state(CPUHP_BP_PREPARE_DYN, "scs:scs_cache", NULL,
+व्योम __init scs_init(व्योम)
+अणु
+	cpuhp_setup_state(CPUHP_BP_PREPARE_DYN, "scs:scs_cache", शून्य,
 			  scs_cleanup);
-}
+पूर्ण
 
-int scs_prepare(struct task_struct *tsk, int node)
-{
-	void *s = scs_alloc(node);
+पूर्णांक scs_prepare(काष्ठा task_काष्ठा *tsk, पूर्णांक node)
+अणु
+	व्योम *s = scs_alloc(node);
 
-	if (!s)
-		return -ENOMEM;
+	अगर (!s)
+		वापस -ENOMEM;
 
 	task_scs(tsk) = task_scs_sp(tsk) = s;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void scs_check_usage(struct task_struct *tsk)
-{
-	static unsigned long highest;
+अटल व्योम scs_check_usage(काष्ठा task_काष्ठा *tsk)
+अणु
+	अटल अचिन्हित दीर्घ highest;
 
-	unsigned long *p, prev, curr = highest, used = 0;
+	अचिन्हित दीर्घ *p, prev, curr = highest, used = 0;
 
-	if (!IS_ENABLED(CONFIG_DEBUG_STACK_USAGE))
-		return;
+	अगर (!IS_ENABLED(CONFIG_DEBUG_STACK_USAGE))
+		वापस;
 
-	for (p = task_scs(tsk); p < __scs_magic(tsk); ++p) {
-		if (!READ_ONCE_NOCHECK(*p))
-			break;
-		used += sizeof(*p);
-	}
+	क्रम (p = task_scs(tsk); p < __scs_magic(tsk); ++p) अणु
+		अगर (!READ_ONCE_NOCHECK(*p))
+			अवरोध;
+		used += माप(*p);
+	पूर्ण
 
-	while (used > curr) {
+	जबतक (used > curr) अणु
 		prev = cmpxchg_relaxed(&highest, curr, used);
 
-		if (prev == curr) {
+		अगर (prev == curr) अणु
 			pr_info("%s (%d): highest shadow stack usage: %lu bytes\n",
 				tsk->comm, task_pid_nr(tsk), used);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		curr = prev;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void scs_release(struct task_struct *tsk)
-{
-	void *s = task_scs(tsk);
+व्योम scs_release(काष्ठा task_काष्ठा *tsk)
+अणु
+	व्योम *s = task_scs(tsk);
 
-	if (!s)
-		return;
+	अगर (!s)
+		वापस;
 
 	WARN(task_scs_end_corrupted(tsk),
 	     "corrupted shadow stack detected when freeing task\n");
 	scs_check_usage(tsk);
-	scs_free(s);
-}
+	scs_मुक्त(s);
+पूर्ण

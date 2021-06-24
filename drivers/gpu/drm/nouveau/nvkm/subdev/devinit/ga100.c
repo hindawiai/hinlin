@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2021 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,59 +20,59 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "nv50.h"
+#समावेश "nv50.h"
 
-#include <subdev/bios.h>
-#include <subdev/bios/pll.h>
-#include <subdev/clk/pll.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/pll.h>
+#समावेश <subdev/clk/pll.h>
 
-static int
-ga100_devinit_pll_set(struct nvkm_devinit *init, u32 type, u32 freq)
-{
-	struct nvkm_subdev *subdev = &init->subdev;
-	struct nvkm_device *device = subdev->device;
-	struct nvbios_pll info;
-	int head = type - PLL_VPLL0;
-	int N, fN, M, P;
-	int ret;
+अटल पूर्णांक
+ga100_devinit_pll_set(काष्ठा nvkm_devinit *init, u32 type, u32 freq)
+अणु
+	काष्ठा nvkm_subdev *subdev = &init->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
+	काष्ठा nvbios_pll info;
+	पूर्णांक head = type - PLL_VPLL0;
+	पूर्णांक N, fN, M, P;
+	पूर्णांक ret;
 
 	ret = nvbios_pll_parse(device->bios, type, &info);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = gt215_pll_calc(subdev, &info, freq, &N, &fN, &M, &P);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (info.type) {
-	case PLL_VPLL0:
-	case PLL_VPLL1:
-	case PLL_VPLL2:
-	case PLL_VPLL3:
+	चयन (info.type) अणु
+	हाल PLL_VPLL0:
+	हाल PLL_VPLL1:
+	हाल PLL_VPLL2:
+	हाल PLL_VPLL3:
 		nvkm_wr32(device, 0x00ef00 + (head * 0x40), 0x02080004);
 		nvkm_wr32(device, 0x00ef18 + (head * 0x40), (N << 16) | fN);
 		nvkm_wr32(device, 0x00ef04 + (head * 0x40), (P << 16) | M);
 		nvkm_wr32(device, 0x00e9c0 + (head * 0x04), 0x00000001);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		nvkm_warn(subdev, "%08x/%dKhz unimplemented\n", type, freq);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct nvkm_devinit_func
-ga100_devinit = {
+अटल स्थिर काष्ठा nvkm_devinit_func
+ga100_devinit = अणु
 	.init = nv50_devinit_init,
 	.post = tu102_devinit_post,
 	.pll_set = ga100_devinit_pll_set,
-};
+पूर्ण;
 
-int
-ga100_devinit_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-		  struct nvkm_devinit **pinit)
-{
-	return nv50_devinit_new_(&ga100_devinit, device, type, inst, pinit);
-}
+पूर्णांक
+ga100_devinit_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+		  काष्ठा nvkm_devinit **pinit)
+अणु
+	वापस nv50_devinit_new_(&ga100_devinit, device, type, inst, pinit);
+पूर्ण

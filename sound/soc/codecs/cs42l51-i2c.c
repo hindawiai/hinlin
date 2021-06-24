@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * cs42l56.c -- CS42L51 ALSA SoC I2C audio driver
  *
@@ -7,47 +8,47 @@
  * Author: Brian Austin <brian.austin@cirrus.com>
  */
 
-#include <linux/i2c.h>
-#include <linux/module.h>
-#include <sound/soc.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/module.h>
+#समावेश <sound/soc.h>
 
-#include "cs42l51.h"
+#समावेश "cs42l51.h"
 
-static struct i2c_device_id cs42l51_i2c_id[] = {
-	{"cs42l51", 0},
-	{}
-};
+अटल काष्ठा i2c_device_id cs42l51_i2c_id[] = अणु
+	अणु"cs42l51", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, cs42l51_i2c_id);
 
-static int cs42l51_i2c_probe(struct i2c_client *i2c,
-			     const struct i2c_device_id *id)
-{
-	struct regmap_config config;
+अटल पूर्णांक cs42l51_i2c_probe(काष्ठा i2c_client *i2c,
+			     स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा regmap_config config;
 
 	config = cs42l51_regmap;
 
-	return cs42l51_probe(&i2c->dev, devm_regmap_init_i2c(i2c, &config));
-}
+	वापस cs42l51_probe(&i2c->dev, devm_regmap_init_i2c(i2c, &config));
+पूर्ण
 
-static int cs42l51_i2c_remove(struct i2c_client *i2c)
-{
-	return cs42l51_remove(&i2c->dev);
-}
+अटल पूर्णांक cs42l51_i2c_हटाओ(काष्ठा i2c_client *i2c)
+अणु
+	वापस cs42l51_हटाओ(&i2c->dev);
+पूर्ण
 
-static const struct dev_pm_ops cs42l51_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops cs42l51_pm_ops = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(cs42l51_suspend, cs42l51_resume)
-};
+पूर्ण;
 
-static struct i2c_driver cs42l51_i2c_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver cs42l51_i2c_driver = अणु
+	.driver = अणु
 		.name = "cs42l51",
 		.of_match_table = cs42l51_of_match,
 		.pm = &cs42l51_pm_ops,
-	},
+	पूर्ण,
 	.probe = cs42l51_i2c_probe,
-	.remove = cs42l51_i2c_remove,
+	.हटाओ = cs42l51_i2c_हटाओ,
 	.id_table = cs42l51_i2c_id,
-};
+पूर्ण;
 
 module_i2c_driver(cs42l51_i2c_driver);
 

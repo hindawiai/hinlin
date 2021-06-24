@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ALPHA_CMPXCHG_H
-#error Do not include xchg.h directly!
-#else
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ALPHA_CMPXCHG_H
+#त्रुटि Do not include xchg.h directly!
+#अन्यथा
 /*
  * xchg/xchg_local and cmpxchg/cmpxchg_local share the same code
- * except that local version do not have the expensive memory barrier.
- * So this file is included twice from asm/cmpxchg.h.
+ * except that local version करो not have the expensive memory barrier.
+ * So this file is included twice from यंत्र/cmpxchg.h.
  */
 
 /*
  * Atomic exchange.
  * Since it can be used to implement critical sections
- * it must clobber "memory" (also for interrupts in UP).
+ * it must clobber "memory" (also क्रम पूर्णांकerrupts in UP).
  */
 
-static inline unsigned long
-____xchg(_u8, volatile char *m, unsigned long val)
-{
-	unsigned long ret, tmp, addr64;
+अटल अंतरभूत अचिन्हित दीर्घ
+____xchg(_u8, अस्थिर अक्षर *m, अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ ret, पंचांगp, addr64;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	andnot	%4,7,%3\n"
 	"	insbl	%1,%4,%1\n"
 	"1:	ldq_l	%2,0(%3)\n"
@@ -31,18 +32,18 @@ ____xchg(_u8, volatile char *m, unsigned long val)
 	".subsection 2\n"
 	"2:	br	1b\n"
 	".previous"
-	: "=&r" (ret), "=&r" (val), "=&r" (tmp), "=&r" (addr64)
-	: "r" ((long)m), "1" (val) : "memory");
+	: "=&r" (ret), "=&r" (val), "=&r" (पंचांगp), "=&r" (addr64)
+	: "r" ((दीर्घ)m), "1" (val) : "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline unsigned long
-____xchg(_u16, volatile short *m, unsigned long val)
-{
-	unsigned long ret, tmp, addr64;
+अटल अंतरभूत अचिन्हित दीर्घ
+____xchg(_u16, अस्थिर लघु *m, अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ ret, पंचांगp, addr64;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	andnot	%4,7,%3\n"
 	"	inswl	%1,%4,%1\n"
 	"1:	ldq_l	%2,0(%3)\n"
@@ -54,18 +55,18 @@ ____xchg(_u16, volatile short *m, unsigned long val)
 	".subsection 2\n"
 	"2:	br	1b\n"
 	".previous"
-	: "=&r" (ret), "=&r" (val), "=&r" (tmp), "=&r" (addr64)
-	: "r" ((long)m), "1" (val) : "memory");
+	: "=&r" (ret), "=&r" (val), "=&r" (पंचांगp), "=&r" (addr64)
+	: "r" ((दीर्घ)m), "1" (val) : "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline unsigned long
-____xchg(_u32, volatile int *m, unsigned long val)
-{
-	unsigned long dummy;
+अटल अंतरभूत अचिन्हित दीर्घ
+____xchg(_u32, अस्थिर पूर्णांक *m, अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ dummy;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"1:	ldl_l %0,%4\n"
 	"	bis $31,%3,%1\n"
 	"	stl_c %1,%2\n"
@@ -76,15 +77,15 @@ ____xchg(_u32, volatile int *m, unsigned long val)
 	: "=&r" (val), "=&r" (dummy), "=m" (*m)
 	: "rI" (val), "m" (*m) : "memory");
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static inline unsigned long
-____xchg(_u64, volatile long *m, unsigned long val)
-{
-	unsigned long dummy;
+अटल अंतरभूत अचिन्हित दीर्घ
+____xchg(_u64, अस्थिर दीर्घ *m, अचिन्हित दीर्घ val)
+अणु
+	अचिन्हित दीर्घ dummy;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"1:	ldq_l %0,%4\n"
 	"	bis $31,%3,%1\n"
 	"	stq_c %1,%2\n"
@@ -95,42 +96,42 @@ ____xchg(_u64, volatile long *m, unsigned long val)
 	: "=&r" (val), "=&r" (dummy), "=m" (*m)
 	: "rI" (val), "m" (*m) : "memory");
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-/* This function doesn't exist, so you'll get a linker error
-   if something tries to do an invalid xchg().  */
-extern void __xchg_called_with_bad_pointer(void);
+/* This function करोesn't exist, so you'll get a linker error
+   अगर something tries to करो an invalid xchg().  */
+बाह्य व्योम __xchg_called_with_bad_poपूर्णांकer(व्योम);
 
-static __always_inline unsigned long
-____xchg(, volatile void *ptr, unsigned long x, int size)
-{
-	switch (size) {
-		case 1:
-			return ____xchg(_u8, ptr, x);
-		case 2:
-			return ____xchg(_u16, ptr, x);
-		case 4:
-			return ____xchg(_u32, ptr, x);
-		case 8:
-			return ____xchg(_u64, ptr, x);
-	}
-	__xchg_called_with_bad_pointer();
-	return x;
-}
+अटल __always_अंतरभूत अचिन्हित दीर्घ
+____xchg(, अस्थिर व्योम *ptr, अचिन्हित दीर्घ x, पूर्णांक size)
+अणु
+	चयन (size) अणु
+		हाल 1:
+			वापस ____xchg(_u8, ptr, x);
+		हाल 2:
+			वापस ____xchg(_u16, ptr, x);
+		हाल 4:
+			वापस ____xchg(_u32, ptr, x);
+		हाल 8:
+			वापस ____xchg(_u64, ptr, x);
+	पूर्ण
+	__xchg_called_with_bad_poपूर्णांकer();
+	वापस x;
+पूर्ण
 
 /*
- * Atomic compare and exchange.  Compare OLD with MEM, if identical,
+ * Atomic compare and exchange.  Compare OLD with MEM, अगर identical,
  * store NEW in MEM.  Return the initial value in MEM.  Success is
  * indicated by comparing RETURN with OLD.
  */
 
-static inline unsigned long
-____cmpxchg(_u8, volatile char *m, unsigned char old, unsigned char new)
-{
-	unsigned long prev, tmp, cmp, addr64;
+अटल अंतरभूत अचिन्हित दीर्घ
+____cmpxchg(_u8, अस्थिर अक्षर *m, अचिन्हित अक्षर old, अचिन्हित अक्षर new)
+अणु
+	अचिन्हित दीर्घ prev, पंचांगp, cmp, addr64;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	andnot	%5,7,%4\n"
 	"	insbl	%1,%5,%1\n"
 	"1:	ldq_l	%2,0(%4)\n"
@@ -145,18 +146,18 @@ ____cmpxchg(_u8, volatile char *m, unsigned char old, unsigned char new)
 	".subsection 2\n"
 	"3:	br	1b\n"
 	".previous"
-	: "=&r" (prev), "=&r" (new), "=&r" (tmp), "=&r" (cmp), "=&r" (addr64)
-	: "r" ((long)m), "Ir" (old), "1" (new) : "memory");
+	: "=&r" (prev), "=&r" (new), "=&r" (पंचांगp), "=&r" (cmp), "=&r" (addr64)
+	: "r" ((दीर्घ)m), "Ir" (old), "1" (new) : "memory");
 
-	return prev;
-}
+	वापस prev;
+पूर्ण
 
-static inline unsigned long
-____cmpxchg(_u16, volatile short *m, unsigned short old, unsigned short new)
-{
-	unsigned long prev, tmp, cmp, addr64;
+अटल अंतरभूत अचिन्हित दीर्घ
+____cmpxchg(_u16, अस्थिर लघु *m, अचिन्हित लघु old, अचिन्हित लघु new)
+अणु
+	अचिन्हित दीर्घ prev, पंचांगp, cmp, addr64;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"	andnot	%5,7,%4\n"
 	"	inswl	%1,%5,%1\n"
 	"1:	ldq_l	%2,0(%4)\n"
@@ -171,18 +172,18 @@ ____cmpxchg(_u16, volatile short *m, unsigned short old, unsigned short new)
 	".subsection 2\n"
 	"3:	br	1b\n"
 	".previous"
-	: "=&r" (prev), "=&r" (new), "=&r" (tmp), "=&r" (cmp), "=&r" (addr64)
-	: "r" ((long)m), "Ir" (old), "1" (new) : "memory");
+	: "=&r" (prev), "=&r" (new), "=&r" (पंचांगp), "=&r" (cmp), "=&r" (addr64)
+	: "r" ((दीर्घ)m), "Ir" (old), "1" (new) : "memory");
 
-	return prev;
-}
+	वापस prev;
+पूर्ण
 
-static inline unsigned long
-____cmpxchg(_u32, volatile int *m, int old, int new)
-{
-	unsigned long prev, cmp;
+अटल अंतरभूत अचिन्हित दीर्घ
+____cmpxchg(_u32, अस्थिर पूर्णांक *m, पूर्णांक old, पूर्णांक new)
+अणु
+	अचिन्हित दीर्घ prev, cmp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"1:	ldl_l %0,%5\n"
 	"	cmpeq %0,%3,%1\n"
 	"	beq %1,2f\n"
@@ -194,17 +195,17 @@ ____cmpxchg(_u32, volatile int *m, int old, int new)
 	"3:	br 1b\n"
 	".previous"
 	: "=&r"(prev), "=&r"(cmp), "=m"(*m)
-	: "r"((long) old), "r"(new), "m"(*m) : "memory");
+	: "r"((दीर्घ) old), "r"(new), "m"(*m) : "memory");
 
-	return prev;
-}
+	वापस prev;
+पूर्ण
 
-static inline unsigned long
-____cmpxchg(_u64, volatile long *m, unsigned long old, unsigned long new)
-{
-	unsigned long prev, cmp;
+अटल अंतरभूत अचिन्हित दीर्घ
+____cmpxchg(_u64, अस्थिर दीर्घ *m, अचिन्हित दीर्घ old, अचिन्हित दीर्घ new)
+अणु
+	अचिन्हित दीर्घ prev, cmp;
 
-	__asm__ __volatile__(
+	__यंत्र__ __अस्थिर__(
 	"1:	ldq_l %0,%5\n"
 	"	cmpeq %0,%3,%1\n"
 	"	beq %1,2f\n"
@@ -216,31 +217,31 @@ ____cmpxchg(_u64, volatile long *m, unsigned long old, unsigned long new)
 	"3:	br 1b\n"
 	".previous"
 	: "=&r"(prev), "=&r"(cmp), "=m"(*m)
-	: "r"((long) old), "r"(new), "m"(*m) : "memory");
+	: "r"((दीर्घ) old), "r"(new), "m"(*m) : "memory");
 
-	return prev;
-}
+	वापस prev;
+पूर्ण
 
-/* This function doesn't exist, so you'll get a linker error
-   if something tries to do an invalid cmpxchg().  */
-extern void __cmpxchg_called_with_bad_pointer(void);
+/* This function करोesn't exist, so you'll get a linker error
+   अगर something tries to करो an invalid cmpxchg().  */
+बाह्य व्योम __cmpxchg_called_with_bad_poपूर्णांकer(व्योम);
 
-static __always_inline unsigned long
-____cmpxchg(, volatile void *ptr, unsigned long old, unsigned long new,
-	      int size)
-{
-	switch (size) {
-		case 1:
-			return ____cmpxchg(_u8, ptr, old, new);
-		case 2:
-			return ____cmpxchg(_u16, ptr, old, new);
-		case 4:
-			return ____cmpxchg(_u32, ptr, old, new);
-		case 8:
-			return ____cmpxchg(_u64, ptr, old, new);
-	}
-	__cmpxchg_called_with_bad_pointer();
-	return old;
-}
+अटल __always_अंतरभूत अचिन्हित दीर्घ
+____cmpxchg(, अस्थिर व्योम *ptr, अचिन्हित दीर्घ old, अचिन्हित दीर्घ new,
+	      पूर्णांक size)
+अणु
+	चयन (size) अणु
+		हाल 1:
+			वापस ____cmpxchg(_u8, ptr, old, new);
+		हाल 2:
+			वापस ____cmpxchg(_u16, ptr, old, new);
+		हाल 4:
+			वापस ____cmpxchg(_u32, ptr, old, new);
+		हाल 8:
+			वापस ____cmpxchg(_u64, ptr, old, new);
+	पूर्ण
+	__cmpxchg_called_with_bad_poपूर्णांकer();
+	वापस old;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

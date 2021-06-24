@@ -1,250 +1,251 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2018 Intel Corporation
  * Copyright 2018 Google LLC.
  *
  * Author: Tomasz Figa <tfiga@chromium.org>
- * Author: Yong Zhi <yong.zhi@intel.com>
+ * Author: Yong Zhi <yong.zhi@पूर्णांकel.com>
  */
 
-#include <linux/vmalloc.h>
+#समावेश <linux/vदो_स्मृति.h>
 
-#include "ipu3.h"
-#include "ipu3-css-pool.h"
-#include "ipu3-mmu.h"
-#include "ipu3-dmamap.h"
+#समावेश "ipu3.h"
+#समावेश "ipu3-css-pool.h"
+#समावेश "ipu3-mmu.h"
+#समावेश "ipu3-dmamap.h"
 
 /*
  * Free a buffer allocated by imgu_dmamap_alloc_buffer()
  */
-static void imgu_dmamap_free_buffer(struct page **pages,
-				    size_t size)
-{
-	int count = size >> PAGE_SHIFT;
+अटल व्योम imgu_dmamap_मुक्त_buffer(काष्ठा page **pages,
+				    माप_प्रकार size)
+अणु
+	पूर्णांक count = size >> PAGE_SHIFT;
 
-	while (count--)
-		__free_page(pages[count]);
-	kvfree(pages);
-}
+	जबतक (count--)
+		__मुक्त_page(pages[count]);
+	kvमुक्त(pages);
+पूर्ण
 
 /*
  * Based on the implementation of __iommu_dma_alloc_pages()
  * defined in drivers/iommu/dma-iommu.c
  */
-static struct page **imgu_dmamap_alloc_buffer(size_t size, gfp_t gfp)
-{
-	struct page **pages;
-	unsigned int i = 0, count = size >> PAGE_SHIFT;
-	unsigned int order_mask = 1;
-	const gfp_t high_order_gfp = __GFP_NOWARN | __GFP_NORETRY;
+अटल काष्ठा page **imgu_dmamap_alloc_buffer(माप_प्रकार size, gfp_t gfp)
+अणु
+	काष्ठा page **pages;
+	अचिन्हित पूर्णांक i = 0, count = size >> PAGE_SHIFT;
+	अचिन्हित पूर्णांक order_mask = 1;
+	स्थिर gfp_t high_order_gfp = __GFP_NOWARN | __GFP_NORETRY;
 
-	/* Allocate mem for array of page ptrs */
-	pages = kvmalloc_array(count, sizeof(*pages), GFP_KERNEL);
+	/* Allocate mem क्रम array of page ptrs */
+	pages = kvदो_स्मृति_array(count, माप(*pages), GFP_KERNEL);
 
-	if (!pages)
-		return NULL;
+	अगर (!pages)
+		वापस शून्य;
 
 	gfp |= __GFP_HIGHMEM | __GFP_ZERO;
 
-	while (count) {
-		struct page *page = NULL;
-		unsigned int order_size;
+	जबतक (count) अणु
+		काष्ठा page *page = शून्य;
+		अचिन्हित पूर्णांक order_size;
 
-		for (order_mask &= (2U << __fls(count)) - 1;
-		     order_mask; order_mask &= ~order_size) {
-			unsigned int order = __fls(order_mask);
+		क्रम (order_mask &= (2U << __fls(count)) - 1;
+		     order_mask; order_mask &= ~order_size) अणु
+			अचिन्हित पूर्णांक order = __fls(order_mask);
 
 			order_size = 1U << order;
 			page = alloc_pages((order_mask - order_size) ?
 					   gfp | high_order_gfp : gfp, order);
-			if (!page)
-				continue;
-			if (!order)
-				break;
-			if (!PageCompound(page)) {
+			अगर (!page)
+				जारी;
+			अगर (!order)
+				अवरोध;
+			अगर (!PageCompound(page)) अणु
 				split_page(page, order);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			__free_pages(page, order);
-		}
-		if (!page) {
-			imgu_dmamap_free_buffer(pages, i << PAGE_SHIFT);
-			return NULL;
-		}
+			__मुक्त_pages(page, order);
+		पूर्ण
+		अगर (!page) अणु
+			imgu_dmamap_मुक्त_buffer(pages, i << PAGE_SHIFT);
+			वापस शून्य;
+		पूर्ण
 		count -= order_size;
-		while (order_size--)
+		जबतक (order_size--)
 			pages[i++] = page++;
-	}
+	पूर्ण
 
-	return pages;
-}
+	वापस pages;
+पूर्ण
 
 /**
- * imgu_dmamap_alloc - allocate and map a buffer into KVA
- * @imgu: struct device pointer
- * @map: struct to store mapping variables
+ * imgu_dmamap_alloc - allocate and map a buffer पूर्णांकo KVA
+ * @imgu: काष्ठा device poपूर्णांकer
+ * @map: काष्ठा to store mapping variables
  * @len: size required
  *
  * Returns:
  *  KVA on success
- *  %NULL on failure
+ *  %शून्य on failure
  */
-void *imgu_dmamap_alloc(struct imgu_device *imgu, struct imgu_css_map *map,
-			size_t len)
-{
-	unsigned long shift = iova_shift(&imgu->iova_domain);
-	struct device *dev = &imgu->pci_dev->dev;
-	size_t size = PAGE_ALIGN(len);
-	int count = size >> PAGE_SHIFT;
-	struct page **pages;
+व्योम *imgu_dmamap_alloc(काष्ठा imgu_device *imgu, काष्ठा imgu_css_map *map,
+			माप_प्रकार len)
+अणु
+	अचिन्हित दीर्घ shअगरt = iova_shअगरt(&imgu->iova_करोमुख्य);
+	काष्ठा device *dev = &imgu->pci_dev->dev;
+	माप_प्रकार size = PAGE_ALIGN(len);
+	पूर्णांक count = size >> PAGE_SHIFT;
+	काष्ठा page **pages;
 	dma_addr_t iovaddr;
-	struct iova *iova;
-	int i, rval;
+	काष्ठा iova *iova;
+	पूर्णांक i, rval;
 
 	dev_dbg(dev, "%s: allocating %zu\n", __func__, size);
 
-	iova = alloc_iova(&imgu->iova_domain, size >> shift,
-			  imgu->mmu->aperture_end >> shift, 0);
-	if (!iova)
-		return NULL;
+	iova = alloc_iova(&imgu->iova_करोमुख्य, size >> shअगरt,
+			  imgu->mmu->aperture_end >> shअगरt, 0);
+	अगर (!iova)
+		वापस शून्य;
 
 	pages = imgu_dmamap_alloc_buffer(size, GFP_KERNEL);
-	if (!pages)
-		goto out_free_iova;
+	अगर (!pages)
+		जाओ out_मुक्त_iova;
 
 	/* Call IOMMU driver to setup pgt */
-	iovaddr = iova_dma_addr(&imgu->iova_domain, iova);
-	for (i = 0; i < count; ++i) {
+	iovaddr = iova_dma_addr(&imgu->iova_करोमुख्य, iova);
+	क्रम (i = 0; i < count; ++i) अणु
 		rval = imgu_mmu_map(imgu->mmu, iovaddr,
 				    page_to_phys(pages[i]), PAGE_SIZE);
-		if (rval)
-			goto out_unmap;
+		अगर (rval)
+			जाओ out_unmap;
 
 		iovaddr += PAGE_SIZE;
-	}
+	पूर्ण
 
 	map->vaddr = vmap(pages, count, VM_USERMAP, PAGE_KERNEL);
-	if (!map->vaddr)
-		goto out_unmap;
+	अगर (!map->vaddr)
+		जाओ out_unmap;
 
 	map->pages = pages;
 	map->size = size;
-	map->daddr = iova_dma_addr(&imgu->iova_domain, iova);
+	map->daddr = iova_dma_addr(&imgu->iova_करोमुख्य, iova);
 
 	dev_dbg(dev, "%s: allocated %zu @ IOVA %pad @ VA %p\n", __func__,
 		size, &map->daddr, map->vaddr);
 
-	return map->vaddr;
+	वापस map->vaddr;
 
 out_unmap:
-	imgu_dmamap_free_buffer(pages, size);
-	imgu_mmu_unmap(imgu->mmu, iova_dma_addr(&imgu->iova_domain, iova),
+	imgu_dmamap_मुक्त_buffer(pages, size);
+	imgu_mmu_unmap(imgu->mmu, iova_dma_addr(&imgu->iova_करोमुख्य, iova),
 		       i * PAGE_SIZE);
 
-out_free_iova:
-	__free_iova(&imgu->iova_domain, iova);
+out_मुक्त_iova:
+	__मुक्त_iova(&imgu->iova_करोमुख्य, iova);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void imgu_dmamap_unmap(struct imgu_device *imgu, struct imgu_css_map *map)
-{
-	struct iova *iova;
+व्योम imgu_dmamap_unmap(काष्ठा imgu_device *imgu, काष्ठा imgu_css_map *map)
+अणु
+	काष्ठा iova *iova;
 
-	iova = find_iova(&imgu->iova_domain,
-			 iova_pfn(&imgu->iova_domain, map->daddr));
-	if (WARN_ON(!iova))
-		return;
+	iova = find_iova(&imgu->iova_करोमुख्य,
+			 iova_pfn(&imgu->iova_करोमुख्य, map->daddr));
+	अगर (WARN_ON(!iova))
+		वापस;
 
-	imgu_mmu_unmap(imgu->mmu, iova_dma_addr(&imgu->iova_domain, iova),
-		       iova_size(iova) << iova_shift(&imgu->iova_domain));
+	imgu_mmu_unmap(imgu->mmu, iova_dma_addr(&imgu->iova_करोमुख्य, iova),
+		       iova_size(iova) << iova_shअगरt(&imgu->iova_करोमुख्य));
 
-	__free_iova(&imgu->iova_domain, iova);
-}
+	__मुक्त_iova(&imgu->iova_करोमुख्य, iova);
+पूर्ण
 
 /*
  * Counterpart of imgu_dmamap_alloc
  */
-void imgu_dmamap_free(struct imgu_device *imgu, struct imgu_css_map *map)
-{
+व्योम imgu_dmamap_मुक्त(काष्ठा imgu_device *imgu, काष्ठा imgu_css_map *map)
+अणु
 	dev_dbg(&imgu->pci_dev->dev, "%s: freeing %zu @ IOVA %pad @ VA %p\n",
 		__func__, map->size, &map->daddr, map->vaddr);
 
-	if (!map->vaddr)
-		return;
+	अगर (!map->vaddr)
+		वापस;
 
 	imgu_dmamap_unmap(imgu, map);
 
 	vunmap(map->vaddr);
-	imgu_dmamap_free_buffer(map->pages, map->size);
-	map->vaddr = NULL;
-}
+	imgu_dmamap_मुक्त_buffer(map->pages, map->size);
+	map->vaddr = शून्य;
+पूर्ण
 
-int imgu_dmamap_map_sg(struct imgu_device *imgu, struct scatterlist *sglist,
-		       int nents, struct imgu_css_map *map)
-{
-	unsigned long shift = iova_shift(&imgu->iova_domain);
-	struct scatterlist *sg;
-	struct iova *iova;
-	size_t size = 0;
-	int i;
+पूर्णांक imgu_dmamap_map_sg(काष्ठा imgu_device *imgu, काष्ठा scatterlist *sglist,
+		       पूर्णांक nents, काष्ठा imgu_css_map *map)
+अणु
+	अचिन्हित दीर्घ shअगरt = iova_shअगरt(&imgu->iova_करोमुख्य);
+	काष्ठा scatterlist *sg;
+	काष्ठा iova *iova;
+	माप_प्रकार size = 0;
+	पूर्णांक i;
 
-	for_each_sg(sglist, sg, nents, i) {
-		if (sg->offset)
-			return -EINVAL;
+	क्रम_each_sg(sglist, sg, nents, i) अणु
+		अगर (sg->offset)
+			वापस -EINVAL;
 
-		if (i != nents - 1 && !PAGE_ALIGNED(sg->length))
-			return -EINVAL;
+		अगर (i != nents - 1 && !PAGE_ALIGNED(sg->length))
+			वापस -EINVAL;
 
 		size += sg->length;
-	}
+	पूर्ण
 
-	size = iova_align(&imgu->iova_domain, size);
+	size = iova_align(&imgu->iova_करोमुख्य, size);
 	dev_dbg(&imgu->pci_dev->dev, "dmamap: mapping sg %d entries, %zu pages\n",
-		nents, size >> shift);
+		nents, size >> shअगरt);
 
-	iova = alloc_iova(&imgu->iova_domain, size >> shift,
-			  imgu->mmu->aperture_end >> shift, 0);
-	if (!iova)
-		return -ENOMEM;
+	iova = alloc_iova(&imgu->iova_करोमुख्य, size >> shअगरt,
+			  imgu->mmu->aperture_end >> shअगरt, 0);
+	अगर (!iova)
+		वापस -ENOMEM;
 
 	dev_dbg(&imgu->pci_dev->dev, "dmamap: iova low pfn %lu, high pfn %lu\n",
 		iova->pfn_lo, iova->pfn_hi);
 
-	if (imgu_mmu_map_sg(imgu->mmu, iova_dma_addr(&imgu->iova_domain, iova),
+	अगर (imgu_mmu_map_sg(imgu->mmu, iova_dma_addr(&imgu->iova_करोमुख्य, iova),
 			    sglist, nents) < size)
-		goto out_fail;
+		जाओ out_fail;
 
-	memset(map, 0, sizeof(*map));
-	map->daddr = iova_dma_addr(&imgu->iova_domain, iova);
+	स_रखो(map, 0, माप(*map));
+	map->daddr = iova_dma_addr(&imgu->iova_करोमुख्य, iova);
 	map->size = size;
 
-	return 0;
+	वापस 0;
 
 out_fail:
-	__free_iova(&imgu->iova_domain, iova);
+	__मुक्त_iova(&imgu->iova_करोमुख्य, iova);
 
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-int imgu_dmamap_init(struct imgu_device *imgu)
-{
-	unsigned long order, base_pfn;
-	int ret = iova_cache_get();
+पूर्णांक imgu_dmamap_init(काष्ठा imgu_device *imgu)
+अणु
+	अचिन्हित दीर्घ order, base_pfn;
+	पूर्णांक ret = iova_cache_get();
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	order = __ffs(IPU3_PAGE_SIZE);
-	base_pfn = max_t(unsigned long, 1, imgu->mmu->aperture_start >> order);
-	init_iova_domain(&imgu->iova_domain, 1UL << order, base_pfn);
+	base_pfn = max_t(अचिन्हित दीर्घ, 1, imgu->mmu->aperture_start >> order);
+	init_iova_करोमुख्य(&imgu->iova_करोमुख्य, 1UL << order, base_pfn);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void imgu_dmamap_exit(struct imgu_device *imgu)
-{
-	put_iova_domain(&imgu->iova_domain);
+व्योम imgu_dmamap_निकास(काष्ठा imgu_device *imgu)
+अणु
+	put_iova_करोमुख्य(&imgu->iova_करोमुख्य);
 	iova_cache_put();
-}
+पूर्ण

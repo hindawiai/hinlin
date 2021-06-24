@@ -1,79 +1,80 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1992 Linus Torvalds
  * Copyright (C) 1994 - 2001, 2003, 07 Ralf Baechle
  */
-#include <linux/clockchips.h>
-#include <linux/i8253.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/smp.h>
-#include <linux/spinlock.h>
-#include <linux/irq.h>
-#include <linux/pgtable.h>
+#समावेश <linux/घड़ीchips.h>
+#समावेश <linux/i8253.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/irq_cpu.h>
-#include <asm/i8259.h>
-#include <asm/io.h>
-#include <asm/jazz.h>
-#include <asm/tlbmisc.h>
+#समावेश <यंत्र/irq_cpu.h>
+#समावेश <यंत्र/i8259.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/jazz.h>
+#समावेश <यंत्र/tlbmisc.h>
 
-static DEFINE_RAW_SPINLOCK(r4030_lock);
+अटल DEFINE_RAW_SPINLOCK(r4030_lock);
 
-static void enable_r4030_irq(struct irq_data *d)
-{
-	unsigned int mask = 1 << (d->irq - JAZZ_IRQ_START);
-	unsigned long flags;
-
-	raw_spin_lock_irqsave(&r4030_lock, flags);
-	mask |= r4030_read_reg16(JAZZ_IO_IRQ_ENABLE);
-	r4030_write_reg16(JAZZ_IO_IRQ_ENABLE, mask);
-	raw_spin_unlock_irqrestore(&r4030_lock, flags);
-}
-
-void disable_r4030_irq(struct irq_data *d)
-{
-	unsigned int mask = ~(1 << (d->irq - JAZZ_IRQ_START));
-	unsigned long flags;
+अटल व्योम enable_r4030_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक mask = 1 << (d->irq - JAZZ_IRQ_START);
+	अचिन्हित दीर्घ flags;
 
 	raw_spin_lock_irqsave(&r4030_lock, flags);
-	mask &= r4030_read_reg16(JAZZ_IO_IRQ_ENABLE);
-	r4030_write_reg16(JAZZ_IO_IRQ_ENABLE, mask);
+	mask |= r4030_पढ़ो_reg16(JAZZ_IO_IRQ_ENABLE);
+	r4030_ग_लिखो_reg16(JAZZ_IO_IRQ_ENABLE, mask);
 	raw_spin_unlock_irqrestore(&r4030_lock, flags);
-}
+पूर्ण
 
-static struct irq_chip r4030_irq_type = {
+व्योम disable_r4030_irq(काष्ठा irq_data *d)
+अणु
+	अचिन्हित पूर्णांक mask = ~(1 << (d->irq - JAZZ_IRQ_START));
+	अचिन्हित दीर्घ flags;
+
+	raw_spin_lock_irqsave(&r4030_lock, flags);
+	mask &= r4030_पढ़ो_reg16(JAZZ_IO_IRQ_ENABLE);
+	r4030_ग_लिखो_reg16(JAZZ_IO_IRQ_ENABLE, mask);
+	raw_spin_unlock_irqrestore(&r4030_lock, flags);
+पूर्ण
+
+अटल काष्ठा irq_chip r4030_irq_type = अणु
 	.name = "R4030",
 	.irq_mask = disable_r4030_irq,
 	.irq_unmask = enable_r4030_irq,
-};
+पूर्ण;
 
-void __init init_r4030_ints(void)
-{
-	int i;
+व्योम __init init_r4030_पूर्णांकs(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = JAZZ_IRQ_START; i <= JAZZ_IRQ_END; i++)
+	क्रम (i = JAZZ_IRQ_START; i <= JAZZ_IRQ_END; i++)
 		irq_set_chip_and_handler(i, &r4030_irq_type, handle_level_irq);
 
-	r4030_write_reg16(JAZZ_IO_IRQ_ENABLE, 0);
-	r4030_read_reg16(JAZZ_IO_IRQ_SOURCE);		/* clear pending IRQs */
-	r4030_read_reg32(JAZZ_R4030_INVAL_ADDR);	/* clear error bits */
-}
+	r4030_ग_लिखो_reg16(JAZZ_IO_IRQ_ENABLE, 0);
+	r4030_पढ़ो_reg16(JAZZ_IO_IRQ_SOURCE);		/* clear pending IRQs */
+	r4030_पढ़ो_reg32(JAZZ_R4030_INVAL_ADDR);	/* clear error bits */
+पूर्ण
 
 /*
- * On systems with i8259-style interrupt controllers we assume for
- * driver compatibility reasons interrupts 0 - 15 to be the i8259
- * interrupts even if the hardware uses a different interrupt numbering.
+ * On प्रणालीs with i8259-style पूर्णांकerrupt controllers we assume क्रम
+ * driver compatibility reasons पूर्णांकerrupts 0 - 15 to be the i8259
+ * पूर्णांकerrupts even अगर the hardware uses a dअगरferent पूर्णांकerrupt numbering.
  */
-void __init arch_init_irq(void)
-{
+व्योम __init arch_init_irq(व्योम)
+अणु
 	/*
 	 * this is a hack to get back the still needed wired mapping
-	 * killed by init_mm()
+	 * समाप्तed by init_mm()
 	 */
 
 	/* Map 0xe0000000 -> 0x0:800005C0, 0xe0010000 -> 0x1:30000580 */
@@ -85,65 +86,65 @@ void __init arch_init_irq(void)
 
 	init_i8259_irqs();			/* Integrated i8259  */
 	mips_cpu_irq_init();
-	init_r4030_ints();
+	init_r4030_पूर्णांकs();
 
 	change_c0_status(ST0_IM, IE_IRQ2 | IE_IRQ1);
-}
+पूर्ण
 
-asmlinkage void plat_irq_dispatch(void)
-{
-	unsigned int pending = read_c0_cause() & read_c0_status();
-	unsigned int irq;
+यंत्रlinkage व्योम plat_irq_dispatch(व्योम)
+अणु
+	अचिन्हित पूर्णांक pending = पढ़ो_c0_cause() & पढ़ो_c0_status();
+	अचिन्हित पूर्णांक irq;
 
-	if (pending & IE_IRQ4) {
-		r4030_read_reg32(JAZZ_TIMER_REGISTER);
-		do_IRQ(JAZZ_TIMER_IRQ);
-	} else if (pending & IE_IRQ2) {
-		irq = *(volatile u8 *)JAZZ_EISA_IRQ_ACK;
-		do_IRQ(irq);
-	} else if (pending & IE_IRQ1) {
-		irq = *(volatile u8 *)JAZZ_IO_IRQ_SOURCE >> 2;
-		if (likely(irq > 0))
-			do_IRQ(irq + JAZZ_IRQ_START - 1);
-		else
+	अगर (pending & IE_IRQ4) अणु
+		r4030_पढ़ो_reg32(JAZZ_TIMER_REGISTER);
+		करो_IRQ(JAZZ_TIMER_IRQ);
+	पूर्ण अन्यथा अगर (pending & IE_IRQ2) अणु
+		irq = *(अस्थिर u8 *)JAZZ_EISA_IRQ_ACK;
+		करो_IRQ(irq);
+	पूर्ण अन्यथा अगर (pending & IE_IRQ1) अणु
+		irq = *(अस्थिर u8 *)JAZZ_IO_IRQ_SOURCE >> 2;
+		अगर (likely(irq > 0))
+			करो_IRQ(irq + JAZZ_IRQ_START - 1);
+		अन्यथा
 			panic("Unimplemented loc_no_irq handler");
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct clock_event_device r4030_clockevent = {
+काष्ठा घड़ी_event_device r4030_घड़ीevent = अणु
 	.name		= "r4030",
 	.features	= CLOCK_EVT_FEAT_PERIODIC,
 	.rating		= 300,
 	.irq		= JAZZ_TIMER_IRQ,
-};
+पूर्ण;
 
-static irqreturn_t r4030_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *cd = dev_id;
+अटल irqवापस_t r4030_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *cd = dev_id;
 
 	cd->event_handler(cd);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-void __init plat_time_init(void)
-{
-	struct clock_event_device *cd = &r4030_clockevent;
-	unsigned int cpu = smp_processor_id();
+व्योम __init plat_समय_init(व्योम)
+अणु
+	काष्ठा घड़ी_event_device *cd = &r4030_घड़ीevent;
+	अचिन्हित पूर्णांक cpu = smp_processor_id();
 
 	BUG_ON(HZ != 100);
 
 	cd->cpumask		= cpumask_of(cpu);
-	clockevents_register_device(cd);
-	if (request_irq(JAZZ_TIMER_IRQ, r4030_timer_interrupt, IRQF_TIMER,
+	घड़ीevents_रेजिस्टर_device(cd);
+	अगर (request_irq(JAZZ_TIMER_IRQ, r4030_समयr_पूर्णांकerrupt, IRQF_TIMER,
 			"R4030 timer", cd))
 		pr_err("Failed to register R4030 timer interrupt\n");
 
 	/*
-	 * Set clock to 100Hz.
+	 * Set घड़ी to 100Hz.
 	 *
-	 * The R4030 timer receives an input clock of 1kHz which is divieded by
-	 * a programmable 4-bit divider.  This makes it fairly inflexible.
+	 * The R4030 समयr receives an input घड़ी of 1kHz which is भागieded by
+	 * a programmable 4-bit भागider.  This makes it fairly inflexible.
 	 */
-	r4030_write_reg32(JAZZ_TIMER_INTERVAL, 9);
-	setup_pit_timer();
-}
+	r4030_ग_लिखो_reg32(JAZZ_TIMER_INTERVAL, 9);
+	setup_pit_समयr();
+पूर्ण

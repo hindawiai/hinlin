@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2009 Lemote Inc.
  * Author: Wu Zhangjin, wuzhangjin@gmail.com
  */
-#include <asm/bootinfo.h>
+#समावेश <यंत्र/bootinfo.h>
 
-#include <loongson.h>
+#समावेश <loongson.h>
 
-void __init mach_prom_init_machtype(void)
-{
+व्योम __init mach_prom_init_machtype(व्योम)
+अणु
 	/* We share the same kernel image file among Lemote 2F family
 	 * of machines, and provide the machtype= kernel command line
 	 * to users to indicate their machine, this command line will
-	 * be passed by the latest PMON automatically. and fortunately,
+	 * be passed by the latest PMON स्वतःmatically. and क्रमtunately,
 	 * up to now, we can get the machine type from the PMON_VER=
 	 * commandline directly except the NAS machine, In the old
 	 * machines, this will help the users a lot.
@@ -24,18 +25,18 @@ void __init mach_prom_init_machtype(void)
 	 *		 LM6XXX		Lemote FuLoong(2F) box series
 	 *		 LM9XXX		Lemote LynLoong PC series
 	 */
-	if (strstr(arcs_cmdline, "PMON_VER=LM")) {
-		if (strstr(arcs_cmdline, "PMON_VER=LM8"))
+	अगर (म_माला(arcs_cmdline, "PMON_VER=LM")) अणु
+		अगर (म_माला(arcs_cmdline, "PMON_VER=LM8"))
 			mips_machtype = MACH_LEMOTE_YL2F89;
-		else if (strstr(arcs_cmdline, "PMON_VER=LM6"))
+		अन्यथा अगर (म_माला(arcs_cmdline, "PMON_VER=LM6"))
 			mips_machtype = MACH_LEMOTE_FL2F;
-		else if (strstr(arcs_cmdline, "PMON_VER=LM9"))
+		अन्यथा अगर (म_माला(arcs_cmdline, "PMON_VER=LM9"))
 			mips_machtype = MACH_LEMOTE_LL2F;
-		else
+		अन्यथा
 			mips_machtype = MACH_LEMOTE_NAS;
 
-		strcat(arcs_cmdline, " machtype=");
-		strcat(arcs_cmdline, get_system_type());
-		strcat(arcs_cmdline, " ");
-	}
-}
+		म_जोड़ो(arcs_cmdline, " machtype=");
+		म_जोड़ो(arcs_cmdline, get_प्रणाली_type());
+		म_जोड़ो(arcs_cmdline, " ");
+	पूर्ण
+पूर्ण

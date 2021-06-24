@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2001, 2002 Sistina Software (UK) Limited.
  * Copyright (C) 2004 - 2006 Red Hat, Inc. All rights reserved.
@@ -5,388 +6,388 @@
  * This file is released under the GPL.
  */
 
-#include "dm-core.h"
+#समावेश "dm-core.h"
 
-#include <linux/module.h>
-#include <linux/vmalloc.h>
-#include <linux/miscdevice.h>
-#include <linux/sched/mm.h>
-#include <linux/init.h>
-#include <linux/wait.h>
-#include <linux/slab.h>
-#include <linux/rbtree.h>
-#include <linux/dm-ioctl.h>
-#include <linux/hdreg.h>
-#include <linux/compat.h>
+#समावेश <linux/module.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/init.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/rbtree.h>
+#समावेश <linux/dm-ioctl.h>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/compat.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#define DM_MSG_PREFIX "ioctl"
-#define DM_DRIVER_EMAIL "dm-devel@redhat.com"
+#घोषणा DM_MSG_PREFIX "ioctl"
+#घोषणा DM_DRIVER_EMAIL "dm-devel@redhat.com"
 
-struct dm_file {
+काष्ठा dm_file अणु
 	/*
-	 * poll will wait until the global event number is greater than
+	 * poll will रुको until the global event number is greater than
 	 * this value.
 	 */
-	volatile unsigned global_event_nr;
-};
+	अस्थिर अचिन्हित global_event_nr;
+पूर्ण;
 
 /*-----------------------------------------------------------------
- * The ioctl interface needs to be able to look up devices by
+ * The ioctl पूर्णांकerface needs to be able to look up devices by
  * name or uuid.
  *---------------------------------------------------------------*/
-struct hash_cell {
-	struct rb_node name_node;
-	struct rb_node uuid_node;
+काष्ठा hash_cell अणु
+	काष्ठा rb_node name_node;
+	काष्ठा rb_node uuid_node;
 	bool name_set;
 	bool uuid_set;
 
-	char *name;
-	char *uuid;
-	struct mapped_device *md;
-	struct dm_table *new_map;
-};
+	अक्षर *name;
+	अक्षर *uuid;
+	काष्ठा mapped_device *md;
+	काष्ठा dm_table *new_map;
+पूर्ण;
 
-struct vers_iter {
-    size_t param_size;
-    struct dm_target_versions *vers, *old_vers;
-    char *end;
-    uint32_t flags;
-};
+काष्ठा vers_iter अणु
+    माप_प्रकार param_size;
+    काष्ठा dm_target_versions *vers, *old_vers;
+    अक्षर *end;
+    uपूर्णांक32_t flags;
+पूर्ण;
 
 
-static struct rb_root name_rb_tree = RB_ROOT;
-static struct rb_root uuid_rb_tree = RB_ROOT;
+अटल काष्ठा rb_root name_rb_tree = RB_ROOT;
+अटल काष्ठा rb_root uuid_rb_tree = RB_ROOT;
 
-static void dm_hash_remove_all(bool keep_open_devices, bool mark_deferred, bool only_deferred);
+अटल व्योम dm_hash_हटाओ_all(bool keep_खोलो_devices, bool mark_deferred, bool only_deferred);
 
 /*
  * Guards access to both hash tables.
  */
-static DECLARE_RWSEM(_hash_lock);
+अटल DECLARE_RWSEM(_hash_lock);
 
 /*
  * Protects use of mdptr to obtain hash cell name and uuid from mapped device.
  */
-static DEFINE_MUTEX(dm_hash_cells_mutex);
+अटल DEFINE_MUTEX(dm_hash_cells_mutex);
 
-static void dm_hash_exit(void)
-{
-	dm_hash_remove_all(false, false, false);
-}
+अटल व्योम dm_hash_निकास(व्योम)
+अणु
+	dm_hash_हटाओ_all(false, false, false);
+पूर्ण
 
 /*-----------------------------------------------------------------
- * Code for looking up a device by name
+ * Code क्रम looking up a device by name
  *---------------------------------------------------------------*/
-static struct hash_cell *__get_name_cell(const char *str)
-{
-	struct rb_node *n = name_rb_tree.rb_node;
+अटल काष्ठा hash_cell *__get_name_cell(स्थिर अक्षर *str)
+अणु
+	काष्ठा rb_node *n = name_rb_tree.rb_node;
 
-	while (n) {
-		struct hash_cell *hc = container_of(n, struct hash_cell, name_node);
-		int c = strcmp(hc->name, str);
-		if (!c) {
+	जबतक (n) अणु
+		काष्ठा hash_cell *hc = container_of(n, काष्ठा hash_cell, name_node);
+		पूर्णांक c = म_भेद(hc->name, str);
+		अगर (!c) अणु
 			dm_get(hc->md);
-			return hc;
-		}
+			वापस hc;
+		पूर्ण
 		n = c >= 0 ? n->rb_left : n->rb_right;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct hash_cell *__get_uuid_cell(const char *str)
-{
-	struct rb_node *n = uuid_rb_tree.rb_node;
+अटल काष्ठा hash_cell *__get_uuid_cell(स्थिर अक्षर *str)
+अणु
+	काष्ठा rb_node *n = uuid_rb_tree.rb_node;
 
-	while (n) {
-		struct hash_cell *hc = container_of(n, struct hash_cell, uuid_node);
-		int c = strcmp(hc->uuid, str);
-		if (!c) {
+	जबतक (n) अणु
+		काष्ठा hash_cell *hc = container_of(n, काष्ठा hash_cell, uuid_node);
+		पूर्णांक c = म_भेद(hc->uuid, str);
+		अगर (!c) अणु
 			dm_get(hc->md);
-			return hc;
-		}
+			वापस hc;
+		पूर्ण
 		n = c >= 0 ? n->rb_left : n->rb_right;
-	}
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __unlink_name(struct hash_cell *hc)
-{
-	if (hc->name_set) {
+अटल व्योम __unlink_name(काष्ठा hash_cell *hc)
+अणु
+	अगर (hc->name_set) अणु
 		hc->name_set = false;
 		rb_erase(&hc->name_node, &name_rb_tree);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __unlink_uuid(struct hash_cell *hc)
-{
-	if (hc->uuid_set) {
+अटल व्योम __unlink_uuid(काष्ठा hash_cell *hc)
+अणु
+	अगर (hc->uuid_set) अणु
 		hc->uuid_set = false;
 		rb_erase(&hc->uuid_node, &uuid_rb_tree);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __link_name(struct hash_cell *new_hc)
-{
-	struct rb_node **n, *parent;
+अटल व्योम __link_name(काष्ठा hash_cell *new_hc)
+अणु
+	काष्ठा rb_node **n, *parent;
 
 	__unlink_name(new_hc);
 
 	new_hc->name_set = true;
 
 	n = &name_rb_tree.rb_node;
-	parent = NULL;
+	parent = शून्य;
 
-	while (*n) {
-		struct hash_cell *hc = container_of(*n, struct hash_cell, name_node);
-		int c = strcmp(hc->name, new_hc->name);
+	जबतक (*n) अणु
+		काष्ठा hash_cell *hc = container_of(*n, काष्ठा hash_cell, name_node);
+		पूर्णांक c = म_भेद(hc->name, new_hc->name);
 		BUG_ON(!c);
 		parent = *n;
 		n = c >= 0 ? &hc->name_node.rb_left : &hc->name_node.rb_right;
-	}
+	पूर्ण
 
 	rb_link_node(&new_hc->name_node, parent, n);
 	rb_insert_color(&new_hc->name_node, &name_rb_tree);
-}
+पूर्ण
 
-static void __link_uuid(struct hash_cell *new_hc)
-{
-	struct rb_node **n, *parent;
+अटल व्योम __link_uuid(काष्ठा hash_cell *new_hc)
+अणु
+	काष्ठा rb_node **n, *parent;
 
 	__unlink_uuid(new_hc);
 
 	new_hc->uuid_set = true;
 
 	n = &uuid_rb_tree.rb_node;
-	parent = NULL;
+	parent = शून्य;
 
-	while (*n) {
-		struct hash_cell *hc = container_of(*n, struct hash_cell, uuid_node);
-		int c = strcmp(hc->uuid, new_hc->uuid);
+	जबतक (*n) अणु
+		काष्ठा hash_cell *hc = container_of(*n, काष्ठा hash_cell, uuid_node);
+		पूर्णांक c = म_भेद(hc->uuid, new_hc->uuid);
 		BUG_ON(!c);
 		parent = *n;
 		n = c > 0 ? &hc->uuid_node.rb_left : &hc->uuid_node.rb_right;
-	}
+	पूर्ण
 
 	rb_link_node(&new_hc->uuid_node, parent, n);
 	rb_insert_color(&new_hc->uuid_node, &uuid_rb_tree);
-}
+पूर्ण
 
-static struct hash_cell *__get_dev_cell(uint64_t dev)
-{
-	struct mapped_device *md;
-	struct hash_cell *hc;
+अटल काष्ठा hash_cell *__get_dev_cell(uपूर्णांक64_t dev)
+अणु
+	काष्ठा mapped_device *md;
+	काष्ठा hash_cell *hc;
 
 	md = dm_get_md(huge_decode_dev(dev));
-	if (!md)
-		return NULL;
+	अगर (!md)
+		वापस शून्य;
 
 	hc = dm_get_mdptr(md);
-	if (!hc) {
+	अगर (!hc) अणु
 		dm_put(md);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	return hc;
-}
+	वापस hc;
+पूर्ण
 
 /*-----------------------------------------------------------------
  * Inserting, removing and renaming a device.
  *---------------------------------------------------------------*/
-static struct hash_cell *alloc_cell(const char *name, const char *uuid,
-				    struct mapped_device *md)
-{
-	struct hash_cell *hc;
+अटल काष्ठा hash_cell *alloc_cell(स्थिर अक्षर *name, स्थिर अक्षर *uuid,
+				    काष्ठा mapped_device *md)
+अणु
+	काष्ठा hash_cell *hc;
 
-	hc = kmalloc(sizeof(*hc), GFP_KERNEL);
-	if (!hc)
-		return NULL;
+	hc = kदो_स्मृति(माप(*hc), GFP_KERNEL);
+	अगर (!hc)
+		वापस शून्य;
 
 	hc->name = kstrdup(name, GFP_KERNEL);
-	if (!hc->name) {
-		kfree(hc);
-		return NULL;
-	}
+	अगर (!hc->name) अणु
+		kमुक्त(hc);
+		वापस शून्य;
+	पूर्ण
 
-	if (!uuid)
-		hc->uuid = NULL;
+	अगर (!uuid)
+		hc->uuid = शून्य;
 
-	else {
+	अन्यथा अणु
 		hc->uuid = kstrdup(uuid, GFP_KERNEL);
-		if (!hc->uuid) {
-			kfree(hc->name);
-			kfree(hc);
-			return NULL;
-		}
-	}
+		अगर (!hc->uuid) अणु
+			kमुक्त(hc->name);
+			kमुक्त(hc);
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
 
 	hc->name_set = hc->uuid_set = false;
 	hc->md = md;
-	hc->new_map = NULL;
-	return hc;
-}
+	hc->new_map = शून्य;
+	वापस hc;
+पूर्ण
 
-static void free_cell(struct hash_cell *hc)
-{
-	if (hc) {
-		kfree(hc->name);
-		kfree(hc->uuid);
-		kfree(hc);
-	}
-}
+अटल व्योम मुक्त_cell(काष्ठा hash_cell *hc)
+अणु
+	अगर (hc) अणु
+		kमुक्त(hc->name);
+		kमुक्त(hc->uuid);
+		kमुक्त(hc);
+	पूर्ण
+पूर्ण
 
 /*
  * The kdev_t and uuid of a device can never change once it is
  * initially inserted.
  */
-static int dm_hash_insert(const char *name, const char *uuid, struct mapped_device *md)
-{
-	struct hash_cell *cell, *hc;
+अटल पूर्णांक dm_hash_insert(स्थिर अक्षर *name, स्थिर अक्षर *uuid, काष्ठा mapped_device *md)
+अणु
+	काष्ठा hash_cell *cell, *hc;
 
 	/*
 	 * Allocate the new cells.
 	 */
 	cell = alloc_cell(name, uuid, md);
-	if (!cell)
-		return -ENOMEM;
+	अगर (!cell)
+		वापस -ENOMEM;
 
 	/*
-	 * Insert the cell into both hash tables.
+	 * Insert the cell पूर्णांकo both hash tables.
 	 */
-	down_write(&_hash_lock);
+	करोwn_ग_लिखो(&_hash_lock);
 	hc = __get_name_cell(name);
-	if (hc) {
+	अगर (hc) अणु
 		dm_put(hc->md);
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
 	__link_name(cell);
 
-	if (uuid) {
+	अगर (uuid) अणु
 		hc = __get_uuid_cell(uuid);
-		if (hc) {
+		अगर (hc) अणु
 			__unlink_name(cell);
 			dm_put(hc->md);
-			goto bad;
-		}
+			जाओ bad;
+		पूर्ण
 		__link_uuid(cell);
-	}
+	पूर्ण
 	dm_get(md);
 	mutex_lock(&dm_hash_cells_mutex);
 	dm_set_mdptr(md, cell);
 	mutex_unlock(&dm_hash_cells_mutex);
-	up_write(&_hash_lock);
+	up_ग_लिखो(&_hash_lock);
 
-	return 0;
+	वापस 0;
 
  bad:
-	up_write(&_hash_lock);
-	free_cell(cell);
-	return -EBUSY;
-}
+	up_ग_लिखो(&_hash_lock);
+	मुक्त_cell(cell);
+	वापस -EBUSY;
+पूर्ण
 
-static struct dm_table *__hash_remove(struct hash_cell *hc)
-{
-	struct dm_table *table;
-	int srcu_idx;
+अटल काष्ठा dm_table *__hash_हटाओ(काष्ठा hash_cell *hc)
+अणु
+	काष्ठा dm_table *table;
+	पूर्णांक srcu_idx;
 
-	/* remove from the dev trees */
+	/* हटाओ from the dev trees */
 	__unlink_name(hc);
 	__unlink_uuid(hc);
 	mutex_lock(&dm_hash_cells_mutex);
-	dm_set_mdptr(hc->md, NULL);
+	dm_set_mdptr(hc->md, शून्य);
 	mutex_unlock(&dm_hash_cells_mutex);
 
 	table = dm_get_live_table(hc->md, &srcu_idx);
-	if (table)
+	अगर (table)
 		dm_table_event(table);
 	dm_put_live_table(hc->md, srcu_idx);
 
-	table = NULL;
-	if (hc->new_map)
+	table = शून्य;
+	अगर (hc->new_map)
 		table = hc->new_map;
 	dm_put(hc->md);
-	free_cell(hc);
+	मुक्त_cell(hc);
 
-	return table;
-}
+	वापस table;
+पूर्ण
 
-static void dm_hash_remove_all(bool keep_open_devices, bool mark_deferred, bool only_deferred)
-{
-	int dev_skipped;
-	struct rb_node *n;
-	struct hash_cell *hc;
-	struct mapped_device *md;
-	struct dm_table *t;
+अटल व्योम dm_hash_हटाओ_all(bool keep_खोलो_devices, bool mark_deferred, bool only_deferred)
+अणु
+	पूर्णांक dev_skipped;
+	काष्ठा rb_node *n;
+	काष्ठा hash_cell *hc;
+	काष्ठा mapped_device *md;
+	काष्ठा dm_table *t;
 
 retry:
 	dev_skipped = 0;
 
-	down_write(&_hash_lock);
+	करोwn_ग_लिखो(&_hash_lock);
 
-	for (n = rb_first(&name_rb_tree); n; n = rb_next(n)) {
-		hc = container_of(n, struct hash_cell, name_node);
+	क्रम (n = rb_first(&name_rb_tree); n; n = rb_next(n)) अणु
+		hc = container_of(n, काष्ठा hash_cell, name_node);
 		md = hc->md;
 		dm_get(md);
 
-		if (keep_open_devices &&
-		    dm_lock_for_deletion(md, mark_deferred, only_deferred)) {
+		अगर (keep_खोलो_devices &&
+		    dm_lock_क्रम_deletion(md, mark_deferred, only_deferred)) अणु
 			dm_put(md);
 			dev_skipped++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		t = __hash_remove(hc);
+		t = __hash_हटाओ(hc);
 
-		up_write(&_hash_lock);
+		up_ग_लिखो(&_hash_lock);
 
-		if (t) {
+		अगर (t) अणु
 			dm_sync_table(md);
 			dm_table_destroy(t);
-		}
+		पूर्ण
 		dm_put(md);
-		if (likely(keep_open_devices))
+		अगर (likely(keep_खोलो_devices))
 			dm_destroy(md);
-		else
+		अन्यथा
 			dm_destroy_immediate(md);
 
 		/*
 		 * Some mapped devices may be using other mapped
 		 * devices, so repeat until we make no further
 		 * progress.  If a new mapped device is created
-		 * here it will also get removed.
+		 * here it will also get हटाओd.
 		 */
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	up_write(&_hash_lock);
+	up_ग_लिखो(&_hash_lock);
 
-	if (dev_skipped)
+	अगर (dev_skipped)
 		DMWARN("remove_all left %d open device(s)", dev_skipped);
-}
+पूर्ण
 
 /*
- * Set the uuid of a hash_cell that isn't already set.
+ * Set the uuid of a hash_cell that isn't alपढ़ोy set.
  */
-static void __set_cell_uuid(struct hash_cell *hc, char *new_uuid)
-{
+अटल व्योम __set_cell_uuid(काष्ठा hash_cell *hc, अक्षर *new_uuid)
+अणु
 	mutex_lock(&dm_hash_cells_mutex);
 	hc->uuid = new_uuid;
 	mutex_unlock(&dm_hash_cells_mutex);
 
 	__link_uuid(hc);
-}
+पूर्ण
 
 /*
- * Changes the name of a hash_cell and returns the old name for
- * the caller to free.
+ * Changes the name of a hash_cell and वापसs the old name क्रम
+ * the caller to मुक्त.
  */
-static char *__change_cell_name(struct hash_cell *hc, char *new_name)
-{
-	char *old_name;
+अटल अक्षर *__change_cell_name(काष्ठा hash_cell *hc, अक्षर *new_name)
+अणु
+	अक्षर *old_name;
 
 	/*
 	 * Rename and move the name cell.
@@ -400,99 +401,99 @@ static char *__change_cell_name(struct hash_cell *hc, char *new_name)
 
 	__link_name(hc);
 
-	return old_name;
-}
+	वापस old_name;
+पूर्ण
 
-static struct mapped_device *dm_hash_rename(struct dm_ioctl *param,
-					    const char *new)
-{
-	char *new_data, *old_name = NULL;
-	struct hash_cell *hc;
-	struct dm_table *table;
-	struct mapped_device *md;
-	unsigned change_uuid = (param->flags & DM_UUID_FLAG) ? 1 : 0;
-	int srcu_idx;
+अटल काष्ठा mapped_device *dm_hash_नाम(काष्ठा dm_ioctl *param,
+					    स्थिर अक्षर *new)
+अणु
+	अक्षर *new_data, *old_name = शून्य;
+	काष्ठा hash_cell *hc;
+	काष्ठा dm_table *table;
+	काष्ठा mapped_device *md;
+	अचिन्हित change_uuid = (param->flags & DM_UUID_FLAG) ? 1 : 0;
+	पूर्णांक srcu_idx;
 
 	/*
 	 * duplicate new.
 	 */
 	new_data = kstrdup(new, GFP_KERNEL);
-	if (!new_data)
-		return ERR_PTR(-ENOMEM);
+	अगर (!new_data)
+		वापस ERR_PTR(-ENOMEM);
 
-	down_write(&_hash_lock);
+	करोwn_ग_लिखो(&_hash_lock);
 
 	/*
-	 * Is new free ?
+	 * Is new मुक्त ?
 	 */
-	if (change_uuid)
+	अगर (change_uuid)
 		hc = __get_uuid_cell(new);
-	else
+	अन्यथा
 		hc = __get_name_cell(new);
 
-	if (hc) {
+	अगर (hc) अणु
 		DMWARN("Unable to change %s on mapped device %s to one that "
 		       "already exists: %s",
 		       change_uuid ? "uuid" : "name",
 		       param->name, new);
 		dm_put(hc->md);
-		up_write(&_hash_lock);
-		kfree(new_data);
-		return ERR_PTR(-EBUSY);
-	}
+		up_ग_लिखो(&_hash_lock);
+		kमुक्त(new_data);
+		वापस ERR_PTR(-EBUSY);
+	पूर्ण
 
 	/*
 	 * Is there such a device as 'old' ?
 	 */
 	hc = __get_name_cell(param->name);
-	if (!hc) {
+	अगर (!hc) अणु
 		DMWARN("Unable to rename non-existent device, %s to %s%s",
 		       param->name, change_uuid ? "uuid " : "", new);
-		up_write(&_hash_lock);
-		kfree(new_data);
-		return ERR_PTR(-ENXIO);
-	}
+		up_ग_लिखो(&_hash_lock);
+		kमुक्त(new_data);
+		वापस ERR_PTR(-ENXIO);
+	पूर्ण
 
 	/*
-	 * Does this device already have a uuid?
+	 * Does this device alपढ़ोy have a uuid?
 	 */
-	if (change_uuid && hc->uuid) {
+	अगर (change_uuid && hc->uuid) अणु
 		DMWARN("Unable to change uuid of mapped device %s to %s "
 		       "because uuid is already set to %s",
 		       param->name, new, hc->uuid);
 		dm_put(hc->md);
-		up_write(&_hash_lock);
-		kfree(new_data);
-		return ERR_PTR(-EINVAL);
-	}
+		up_ग_लिखो(&_hash_lock);
+		kमुक्त(new_data);
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (change_uuid)
+	अगर (change_uuid)
 		__set_cell_uuid(hc, new_data);
-	else
+	अन्यथा
 		old_name = __change_cell_name(hc, new_data);
 
 	/*
-	 * Wake up any dm event waiters.
+	 * Wake up any dm event रुकोers.
 	 */
 	table = dm_get_live_table(hc->md, &srcu_idx);
-	if (table)
+	अगर (table)
 		dm_table_event(table);
 	dm_put_live_table(hc->md, srcu_idx);
 
-	if (!dm_kobject_uevent(hc->md, KOBJ_CHANGE, param->event_nr))
+	अगर (!dm_kobject_uevent(hc->md, KOBJ_CHANGE, param->event_nr))
 		param->flags |= DM_UEVENT_GENERATED_FLAG;
 
 	md = hc->md;
-	up_write(&_hash_lock);
-	kfree(old_name);
+	up_ग_लिखो(&_hash_lock);
+	kमुक्त(old_name);
 
-	return md;
-}
+	वापस md;
+पूर्ण
 
-void dm_deferred_remove(void)
-{
-	dm_hash_remove_all(true, false, true);
-}
+व्योम dm_deferred_हटाओ(व्योम)
+अणु
+	dm_hash_हटाओ_all(true, false, true);
+पूर्ण
 
 /*-----------------------------------------------------------------
  * Implementation of the ioctl commands
@@ -501,102 +502,102 @@ void dm_deferred_remove(void)
  * All the ioctl commands get dispatched to functions with this
  * prototype.
  */
-typedef int (*ioctl_fn)(struct file *filp, struct dm_ioctl *param, size_t param_size);
+प्रकार पूर्णांक (*ioctl_fn)(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size);
 
-static int remove_all(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	dm_hash_remove_all(true, !!(param->flags & DM_DEFERRED_REMOVE), false);
+अटल पूर्णांक हटाओ_all(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	dm_hash_हटाओ_all(true, !!(param->flags & DM_DEFERRED_REMOVE), false);
 	param->data_size = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Round up the ptr to an 8-byte boundary.
  */
-#define ALIGN_MASK 7
-static inline size_t align_val(size_t val)
-{
-	return (val + ALIGN_MASK) & ~ALIGN_MASK;
-}
-static inline void *align_ptr(void *ptr)
-{
-	return (void *)align_val((size_t)ptr);
-}
+#घोषणा ALIGN_MASK 7
+अटल अंतरभूत माप_प्रकार align_val(माप_प्रकार val)
+अणु
+	वापस (val + ALIGN_MASK) & ~ALIGN_MASK;
+पूर्ण
+अटल अंतरभूत व्योम *align_ptr(व्योम *ptr)
+अणु
+	वापस (व्योम *)align_val((माप_प्रकार)ptr);
+पूर्ण
 
 /*
- * Retrieves the data payload buffer from an already allocated
- * struct dm_ioctl.
+ * Retrieves the data payload buffer from an alपढ़ोy allocated
+ * काष्ठा dm_ioctl.
  */
-static void *get_result_buffer(struct dm_ioctl *param, size_t param_size,
-			       size_t *len)
-{
-	param->data_start = align_ptr(param + 1) - (void *) param;
+अटल व्योम *get_result_buffer(काष्ठा dm_ioctl *param, माप_प्रकार param_size,
+			       माप_प्रकार *len)
+अणु
+	param->data_start = align_ptr(param + 1) - (व्योम *) param;
 
-	if (param->data_start < param_size)
+	अगर (param->data_start < param_size)
 		*len = param_size - param->data_start;
-	else
+	अन्यथा
 		*len = 0;
 
-	return ((void *) param) + param->data_start;
-}
+	वापस ((व्योम *) param) + param->data_start;
+पूर्ण
 
-static bool filter_device(struct hash_cell *hc, const char *pfx_name, const char *pfx_uuid)
-{
-	const char *val;
-	size_t val_len, pfx_len;
+अटल bool filter_device(काष्ठा hash_cell *hc, स्थिर अक्षर *pfx_name, स्थिर अक्षर *pfx_uuid)
+अणु
+	स्थिर अक्षर *val;
+	माप_प्रकार val_len, pfx_len;
 
 	val = hc->name;
-	val_len = strlen(val);
+	val_len = म_माप(val);
 	pfx_len = strnlen(pfx_name, DM_NAME_LEN);
-	if (pfx_len > val_len)
-		return false;
-	if (memcmp(val, pfx_name, pfx_len))
-		return false;
+	अगर (pfx_len > val_len)
+		वापस false;
+	अगर (स_भेद(val, pfx_name, pfx_len))
+		वापस false;
 
 	val = hc->uuid ? hc->uuid : "";
-	val_len = strlen(val);
+	val_len = म_माप(val);
 	pfx_len = strnlen(pfx_uuid, DM_UUID_LEN);
-	if (pfx_len > val_len)
-		return false;
-	if (memcmp(val, pfx_uuid, pfx_len))
-		return false;
+	अगर (pfx_len > val_len)
+		वापस false;
+	अगर (स_भेद(val, pfx_uuid, pfx_len))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int list_devices(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	struct rb_node *n;
-	struct hash_cell *hc;
-	size_t len, needed = 0;
-	struct gendisk *disk;
-	struct dm_name_list *orig_nl, *nl, *old_nl = NULL;
-	uint32_t *event_nr;
+अटल पूर्णांक list_devices(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	काष्ठा rb_node *n;
+	काष्ठा hash_cell *hc;
+	माप_प्रकार len, needed = 0;
+	काष्ठा gendisk *disk;
+	काष्ठा dm_name_list *orig_nl, *nl, *old_nl = शून्य;
+	uपूर्णांक32_t *event_nr;
 
-	down_write(&_hash_lock);
+	करोwn_ग_लिखो(&_hash_lock);
 
 	/*
 	 * Loop through all the devices working out how much
 	 * space we need.
 	 */
-	for (n = rb_first(&name_rb_tree); n; n = rb_next(n)) {
-		hc = container_of(n, struct hash_cell, name_node);
-		if (!filter_device(hc, param->name, param->uuid))
-			continue;
-		needed += align_val(offsetof(struct dm_name_list, name) + strlen(hc->name) + 1);
-		needed += align_val(sizeof(uint32_t) * 2);
-		if (param->flags & DM_UUID_FLAG && hc->uuid)
-			needed += align_val(strlen(hc->uuid) + 1);
-	}
+	क्रम (n = rb_first(&name_rb_tree); n; n = rb_next(n)) अणु
+		hc = container_of(n, काष्ठा hash_cell, name_node);
+		अगर (!filter_device(hc, param->name, param->uuid))
+			जारी;
+		needed += align_val(दुरत्व(काष्ठा dm_name_list, name) + म_माप(hc->name) + 1);
+		needed += align_val(माप(uपूर्णांक32_t) * 2);
+		अगर (param->flags & DM_UUID_FLAG && hc->uuid)
+			needed += align_val(म_माप(hc->uuid) + 1);
+	पूर्ण
 
 	/*
 	 * Grab our output buffer.
 	 */
 	nl = orig_nl = get_result_buffer(param, param_size, &len);
-	if (len < needed || len < sizeof(nl->dev)) {
+	अगर (len < needed || len < माप(nl->dev)) अणु
 		param->flags |= DM_BUFFER_FULL_FLAG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	param->data_size = param->data_start + needed;
 
 	nl->dev = 0;	/* Flags no data */
@@ -604,269 +605,269 @@ static int list_devices(struct file *filp, struct dm_ioctl *param, size_t param_
 	/*
 	 * Now loop through filling out the names.
 	 */
-	for (n = rb_first(&name_rb_tree); n; n = rb_next(n)) {
-		void *uuid_ptr;
-		hc = container_of(n, struct hash_cell, name_node);
-		if (!filter_device(hc, param->name, param->uuid))
-			continue;
-		if (old_nl)
-			old_nl->next = (uint32_t) ((void *) nl -
-						   (void *) old_nl);
+	क्रम (n = rb_first(&name_rb_tree); n; n = rb_next(n)) अणु
+		व्योम *uuid_ptr;
+		hc = container_of(n, काष्ठा hash_cell, name_node);
+		अगर (!filter_device(hc, param->name, param->uuid))
+			जारी;
+		अगर (old_nl)
+			old_nl->next = (uपूर्णांक32_t) ((व्योम *) nl -
+						   (व्योम *) old_nl);
 		disk = dm_disk(hc->md);
 		nl->dev = huge_encode_dev(disk_devt(disk));
 		nl->next = 0;
-		strcpy(nl->name, hc->name);
+		म_नकल(nl->name, hc->name);
 
 		old_nl = nl;
-		event_nr = align_ptr(nl->name + strlen(hc->name) + 1);
+		event_nr = align_ptr(nl->name + म_माप(hc->name) + 1);
 		event_nr[0] = dm_get_event_nr(hc->md);
 		event_nr[1] = 0;
 		uuid_ptr = align_ptr(event_nr + 2);
-		if (param->flags & DM_UUID_FLAG) {
-			if (hc->uuid) {
+		अगर (param->flags & DM_UUID_FLAG) अणु
+			अगर (hc->uuid) अणु
 				event_nr[1] |= DM_NAME_LIST_FLAG_HAS_UUID;
-				strcpy(uuid_ptr, hc->uuid);
-				uuid_ptr = align_ptr(uuid_ptr + strlen(hc->uuid) + 1);
-			} else {
+				म_नकल(uuid_ptr, hc->uuid);
+				uuid_ptr = align_ptr(uuid_ptr + म_माप(hc->uuid) + 1);
+			पूर्ण अन्यथा अणु
 				event_nr[1] |= DM_NAME_LIST_FLAG_DOESNT_HAVE_UUID;
-			}
-		}
+			पूर्ण
+		पूर्ण
 		nl = uuid_ptr;
-	}
+	पूर्ण
 	/*
 	 * If mismatch happens, security may be compromised due to buffer
 	 * overflow, so it's better to crash.
 	 */
-	BUG_ON((char *)nl - (char *)orig_nl != needed);
+	BUG_ON((अक्षर *)nl - (अक्षर *)orig_nl != needed);
 
  out:
-	up_write(&_hash_lock);
-	return 0;
-}
+	up_ग_लिखो(&_hash_lock);
+	वापस 0;
+पूर्ण
 
-static void list_version_get_needed(struct target_type *tt, void *needed_param)
-{
-    size_t *needed = needed_param;
+अटल व्योम list_version_get_needed(काष्ठा target_type *tt, व्योम *needed_param)
+अणु
+    माप_प्रकार *needed = needed_param;
 
-    *needed += sizeof(struct dm_target_versions);
-    *needed += strlen(tt->name);
+    *needed += माप(काष्ठा dm_target_versions);
+    *needed += म_माप(tt->name);
     *needed += ALIGN_MASK;
-}
+पूर्ण
 
-static void list_version_get_info(struct target_type *tt, void *param)
-{
-    struct vers_iter *info = param;
+अटल व्योम list_version_get_info(काष्ठा target_type *tt, व्योम *param)
+अणु
+    काष्ठा vers_iter *info = param;
 
     /* Check space - it might have changed since the first iteration */
-    if ((char *)info->vers + sizeof(tt->version) + strlen(tt->name) + 1 >
-	info->end) {
+    अगर ((अक्षर *)info->vers + माप(tt->version) + म_माप(tt->name) + 1 >
+	info->end) अणु
 
 	info->flags = DM_BUFFER_FULL_FLAG;
-	return;
-    }
+	वापस;
+    पूर्ण
 
-    if (info->old_vers)
-	info->old_vers->next = (uint32_t) ((void *)info->vers -
-					   (void *)info->old_vers);
+    अगर (info->old_vers)
+	info->old_vers->next = (uपूर्णांक32_t) ((व्योम *)info->vers -
+					   (व्योम *)info->old_vers);
     info->vers->version[0] = tt->version[0];
     info->vers->version[1] = tt->version[1];
     info->vers->version[2] = tt->version[2];
     info->vers->next = 0;
-    strcpy(info->vers->name, tt->name);
+    म_नकल(info->vers->name, tt->name);
 
     info->old_vers = info->vers;
-    info->vers = align_ptr(((void *) ++info->vers) + strlen(tt->name) + 1);
-}
+    info->vers = align_ptr(((व्योम *) ++info->vers) + म_माप(tt->name) + 1);
+पूर्ण
 
-static int __list_versions(struct dm_ioctl *param, size_t param_size, const char *name)
-{
-	size_t len, needed = 0;
-	struct dm_target_versions *vers;
-	struct vers_iter iter_info;
-	struct target_type *tt = NULL;
+अटल पूर्णांक __list_versions(काष्ठा dm_ioctl *param, माप_प्रकार param_size, स्थिर अक्षर *name)
+अणु
+	माप_प्रकार len, needed = 0;
+	काष्ठा dm_target_versions *vers;
+	काष्ठा vers_iter iter_info;
+	काष्ठा target_type *tt = शून्य;
 
-	if (name) {
+	अगर (name) अणु
 		tt = dm_get_target_type(name);
-		if (!tt)
-			return -EINVAL;
-	}
+		अगर (!tt)
+			वापस -EINVAL;
+	पूर्ण
 
 	/*
 	 * Loop through all the devices working out how much
 	 * space we need.
 	 */
-	if (!tt)
+	अगर (!tt)
 		dm_target_iterate(list_version_get_needed, &needed);
-	else
+	अन्यथा
 		list_version_get_needed(tt, &needed);
 
 	/*
 	 * Grab our output buffer.
 	 */
 	vers = get_result_buffer(param, param_size, &len);
-	if (len < needed) {
+	अगर (len < needed) अणु
 		param->flags |= DM_BUFFER_FULL_FLAG;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	param->data_size = param->data_start + needed;
 
 	iter_info.param_size = param_size;
-	iter_info.old_vers = NULL;
+	iter_info.old_vers = शून्य;
 	iter_info.vers = vers;
 	iter_info.flags = 0;
-	iter_info.end = (char *)vers+len;
+	iter_info.end = (अक्षर *)vers+len;
 
 	/*
 	 * Now loop through filling out the names & versions.
 	 */
-	if (!tt)
+	अगर (!tt)
 		dm_target_iterate(list_version_get_info, &iter_info);
-	else
+	अन्यथा
 		list_version_get_info(tt, &iter_info);
 	param->flags |= iter_info.flags;
 
  out:
-	if (tt)
+	अगर (tt)
 		dm_put_target_type(tt);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int list_versions(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	return __list_versions(param, param_size, NULL);
-}
+अटल पूर्णांक list_versions(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	वापस __list_versions(param, param_size, शून्य);
+पूर्ण
 
-static int get_target_version(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	return __list_versions(param, param_size, param->name);
-}
+अटल पूर्णांक get_target_version(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	वापस __list_versions(param, param_size, param->name);
+पूर्ण
 
-static int check_name(const char *name)
-{
-	if (strchr(name, '/')) {
+अटल पूर्णांक check_name(स्थिर अक्षर *name)
+अणु
+	अगर (म_अक्षर(name, '/')) अणु
 		DMWARN("invalid device name");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * On successful return, the caller must not attempt to acquire
+ * On successful वापस, the caller must not attempt to acquire
  * _hash_lock without first calling dm_put_live_table, because dm_table_destroy
- * waits for this dm_put_live_table and could be called under this lock.
+ * रुकोs क्रम this dm_put_live_table and could be called under this lock.
  */
-static struct dm_table *dm_get_inactive_table(struct mapped_device *md, int *srcu_idx)
-{
-	struct hash_cell *hc;
-	struct dm_table *table = NULL;
+अटल काष्ठा dm_table *dm_get_inactive_table(काष्ठा mapped_device *md, पूर्णांक *srcu_idx)
+अणु
+	काष्ठा hash_cell *hc;
+	काष्ठा dm_table *table = शून्य;
 
-	/* increment rcu count, we don't care about the table pointer */
+	/* increment rcu count, we करोn't care about the table poपूर्णांकer */
 	dm_get_live_table(md, srcu_idx);
 
-	down_read(&_hash_lock);
+	करोwn_पढ़ो(&_hash_lock);
 	hc = dm_get_mdptr(md);
-	if (!hc || hc->md != md) {
+	अगर (!hc || hc->md != md) अणु
 		DMWARN("device has been removed from the dev hash table.");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	table = hc->new_map;
 
 out:
-	up_read(&_hash_lock);
+	up_पढ़ो(&_hash_lock);
 
-	return table;
-}
+	वापस table;
+पूर्ण
 
-static struct dm_table *dm_get_live_or_inactive_table(struct mapped_device *md,
-						      struct dm_ioctl *param,
-						      int *srcu_idx)
-{
-	return (param->flags & DM_QUERY_INACTIVE_TABLE_FLAG) ?
+अटल काष्ठा dm_table *dm_get_live_or_inactive_table(काष्ठा mapped_device *md,
+						      काष्ठा dm_ioctl *param,
+						      पूर्णांक *srcu_idx)
+अणु
+	वापस (param->flags & DM_QUERY_INACTIVE_TABLE_FLAG) ?
 		dm_get_inactive_table(md, srcu_idx) : dm_get_live_table(md, srcu_idx);
-}
+पूर्ण
 
 /*
- * Fills in a dm_ioctl structure, ready for sending back to
+ * Fills in a dm_ioctl काष्ठाure, पढ़ोy क्रम sending back to
  * userland.
  */
-static void __dev_status(struct mapped_device *md, struct dm_ioctl *param)
-{
-	struct gendisk *disk = dm_disk(md);
-	struct dm_table *table;
-	int srcu_idx;
+अटल व्योम __dev_status(काष्ठा mapped_device *md, काष्ठा dm_ioctl *param)
+अणु
+	काष्ठा gendisk *disk = dm_disk(md);
+	काष्ठा dm_table *table;
+	पूर्णांक srcu_idx;
 
 	param->flags &= ~(DM_SUSPEND_FLAG | DM_READONLY_FLAG |
 			  DM_ACTIVE_PRESENT_FLAG | DM_INTERNAL_SUSPEND_FLAG);
 
-	if (dm_suspended_md(md))
+	अगर (dm_suspended_md(md))
 		param->flags |= DM_SUSPEND_FLAG;
 
-	if (dm_suspended_internally_md(md))
+	अगर (dm_suspended_पूर्णांकernally_md(md))
 		param->flags |= DM_INTERNAL_SUSPEND_FLAG;
 
-	if (dm_test_deferred_remove_flag(md))
+	अगर (dm_test_deferred_हटाओ_flag(md))
 		param->flags |= DM_DEFERRED_REMOVE;
 
 	param->dev = huge_encode_dev(disk_devt(disk));
 
 	/*
-	 * Yes, this will be out of date by the time it gets back
-	 * to userland, but it is still very useful for
+	 * Yes, this will be out of date by the समय it माला_लो back
+	 * to userland, but it is still very useful क्रम
 	 * debugging.
 	 */
-	param->open_count = dm_open_count(md);
+	param->खोलो_count = dm_खोलो_count(md);
 
 	param->event_nr = dm_get_event_nr(md);
 	param->target_count = 0;
 
 	table = dm_get_live_table(md, &srcu_idx);
-	if (table) {
-		if (!(param->flags & DM_QUERY_INACTIVE_TABLE_FLAG)) {
-			if (get_disk_ro(disk))
+	अगर (table) अणु
+		अगर (!(param->flags & DM_QUERY_INACTIVE_TABLE_FLAG)) अणु
+			अगर (get_disk_ro(disk))
 				param->flags |= DM_READONLY_FLAG;
-			param->target_count = dm_table_get_num_targets(table);
-		}
+			param->target_count = dm_table_get_num_tarमाला_लो(table);
+		पूर्ण
 
 		param->flags |= DM_ACTIVE_PRESENT_FLAG;
-	}
+	पूर्ण
 	dm_put_live_table(md, srcu_idx);
 
-	if (param->flags & DM_QUERY_INACTIVE_TABLE_FLAG) {
-		int srcu_idx;
+	अगर (param->flags & DM_QUERY_INACTIVE_TABLE_FLAG) अणु
+		पूर्णांक srcu_idx;
 		table = dm_get_inactive_table(md, &srcu_idx);
-		if (table) {
-			if (!(dm_table_get_mode(table) & FMODE_WRITE))
+		अगर (table) अणु
+			अगर (!(dm_table_get_mode(table) & FMODE_WRITE))
 				param->flags |= DM_READONLY_FLAG;
-			param->target_count = dm_table_get_num_targets(table);
-		}
+			param->target_count = dm_table_get_num_tarमाला_लो(table);
+		पूर्ण
 		dm_put_live_table(md, srcu_idx);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int dev_create(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	int r, m = DM_ANY_MINOR;
-	struct mapped_device *md;
+अटल पूर्णांक dev_create(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	पूर्णांक r, m = DM_ANY_MINOR;
+	काष्ठा mapped_device *md;
 
 	r = check_name(param->name);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (param->flags & DM_PERSISTENT_DEV_FLAG)
+	अगर (param->flags & DM_PERSISTENT_DEV_FLAG)
 		m = MINOR(huge_decode_dev(param->dev));
 
 	r = dm_create(m, &md);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	r = dm_hash_insert(param->name, *param->uuid ? param->uuid : NULL, md);
-	if (r) {
+	r = dm_hash_insert(param->name, *param->uuid ? param->uuid : शून्य, md);
+	अगर (r) अणु
 		dm_put(md);
 		dm_destroy(md);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
 
@@ -874,196 +875,196 @@ static int dev_create(struct file *filp, struct dm_ioctl *param, size_t param_si
 
 	dm_put(md);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Always use UUID for lookups if it's present, otherwise use name or dev.
+ * Always use UUID क्रम lookups अगर it's present, otherwise use name or dev.
  */
-static struct hash_cell *__find_device_hash_cell(struct dm_ioctl *param)
-{
-	struct hash_cell *hc = NULL;
+अटल काष्ठा hash_cell *__find_device_hash_cell(काष्ठा dm_ioctl *param)
+अणु
+	काष्ठा hash_cell *hc = शून्य;
 
-	if (*param->uuid) {
-		if (*param->name || param->dev)
-			return NULL;
+	अगर (*param->uuid) अणु
+		अगर (*param->name || param->dev)
+			वापस शून्य;
 
 		hc = __get_uuid_cell(param->uuid);
-		if (!hc)
-			return NULL;
-	} else if (*param->name) {
-		if (param->dev)
-			return NULL;
+		अगर (!hc)
+			वापस शून्य;
+	पूर्ण अन्यथा अगर (*param->name) अणु
+		अगर (param->dev)
+			वापस शून्य;
 
 		hc = __get_name_cell(param->name);
-		if (!hc)
-			return NULL;
-	} else if (param->dev) {
+		अगर (!hc)
+			वापस शून्य;
+	पूर्ण अन्यथा अगर (param->dev) अणु
 		hc = __get_dev_cell(param->dev);
-		if (!hc)
-			return NULL;
-	} else
-		return NULL;
+		अगर (!hc)
+			वापस शून्य;
+	पूर्ण अन्यथा
+		वापस शून्य;
 
 	/*
-	 * Sneakily write in both the name and the uuid
-	 * while we have the cell.
+	 * Sneakily ग_लिखो in both the name and the uuid
+	 * जबतक we have the cell.
 	 */
-	strlcpy(param->name, hc->name, sizeof(param->name));
-	if (hc->uuid)
-		strlcpy(param->uuid, hc->uuid, sizeof(param->uuid));
-	else
+	strlcpy(param->name, hc->name, माप(param->name));
+	अगर (hc->uuid)
+		strlcpy(param->uuid, hc->uuid, माप(param->uuid));
+	अन्यथा
 		param->uuid[0] = '\0';
 
-	if (hc->new_map)
+	अगर (hc->new_map)
 		param->flags |= DM_INACTIVE_PRESENT_FLAG;
-	else
+	अन्यथा
 		param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
 
-	return hc;
-}
+	वापस hc;
+पूर्ण
 
-static struct mapped_device *find_device(struct dm_ioctl *param)
-{
-	struct hash_cell *hc;
-	struct mapped_device *md = NULL;
+अटल काष्ठा mapped_device *find_device(काष्ठा dm_ioctl *param)
+अणु
+	काष्ठा hash_cell *hc;
+	काष्ठा mapped_device *md = शून्य;
 
-	down_read(&_hash_lock);
+	करोwn_पढ़ो(&_hash_lock);
 	hc = __find_device_hash_cell(param);
-	if (hc)
+	अगर (hc)
 		md = hc->md;
-	up_read(&_hash_lock);
+	up_पढ़ो(&_hash_lock);
 
-	return md;
-}
+	वापस md;
+पूर्ण
 
-static int dev_remove(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	struct hash_cell *hc;
-	struct mapped_device *md;
-	int r;
-	struct dm_table *t;
+अटल पूर्णांक dev_हटाओ(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	काष्ठा hash_cell *hc;
+	काष्ठा mapped_device *md;
+	पूर्णांक r;
+	काष्ठा dm_table *t;
 
-	down_write(&_hash_lock);
+	करोwn_ग_लिखो(&_hash_lock);
 	hc = __find_device_hash_cell(param);
 
-	if (!hc) {
+	अगर (!hc) अणु
 		DMDEBUG_LIMIT("device doesn't appear to be in the dev hash table.");
-		up_write(&_hash_lock);
-		return -ENXIO;
-	}
+		up_ग_लिखो(&_hash_lock);
+		वापस -ENXIO;
+	पूर्ण
 
 	md = hc->md;
 
 	/*
-	 * Ensure the device is not open and nothing further can open it.
+	 * Ensure the device is not खोलो and nothing further can खोलो it.
 	 */
-	r = dm_lock_for_deletion(md, !!(param->flags & DM_DEFERRED_REMOVE), false);
-	if (r) {
-		if (r == -EBUSY && param->flags & DM_DEFERRED_REMOVE) {
-			up_write(&_hash_lock);
+	r = dm_lock_क्रम_deletion(md, !!(param->flags & DM_DEFERRED_REMOVE), false);
+	अगर (r) अणु
+		अगर (r == -EBUSY && param->flags & DM_DEFERRED_REMOVE) अणु
+			up_ग_लिखो(&_hash_lock);
 			dm_put(md);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		DMDEBUG_LIMIT("unable to remove open device %s", hc->name);
-		up_write(&_hash_lock);
+		up_ग_लिखो(&_hash_lock);
 		dm_put(md);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
-	t = __hash_remove(hc);
-	up_write(&_hash_lock);
+	t = __hash_हटाओ(hc);
+	up_ग_लिखो(&_hash_lock);
 
-	if (t) {
+	अगर (t) अणु
 		dm_sync_table(md);
 		dm_table_destroy(t);
-	}
+	पूर्ण
 
 	param->flags &= ~DM_DEFERRED_REMOVE;
 
-	if (!dm_kobject_uevent(md, KOBJ_REMOVE, param->event_nr))
+	अगर (!dm_kobject_uevent(md, KOBJ_REMOVE, param->event_nr))
 		param->flags |= DM_UEVENT_GENERATED_FLAG;
 
 	dm_put(md);
 	dm_destroy(md);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Check a string doesn't overrun the chunk of
+ * Check a string करोesn't overrun the chunk of
  * memory we copied from userland.
  */
-static int invalid_str(char *str, void *end)
-{
-	while ((void *) str < end)
-		if (!*str++)
-			return 0;
+अटल पूर्णांक invalid_str(अक्षर *str, व्योम *end)
+अणु
+	जबतक ((व्योम *) str < end)
+		अगर (!*str++)
+			वापस 0;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int dev_rename(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	int r;
-	char *new_data = (char *) param + param->data_start;
-	struct mapped_device *md;
-	unsigned change_uuid = (param->flags & DM_UUID_FLAG) ? 1 : 0;
+अटल पूर्णांक dev_नाम(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	पूर्णांक r;
+	अक्षर *new_data = (अक्षर *) param + param->data_start;
+	काष्ठा mapped_device *md;
+	अचिन्हित change_uuid = (param->flags & DM_UUID_FLAG) ? 1 : 0;
 
-	if (new_data < param->data ||
-	    invalid_str(new_data, (void *) param + param_size) || !*new_data ||
-	    strlen(new_data) > (change_uuid ? DM_UUID_LEN - 1 : DM_NAME_LEN - 1)) {
+	अगर (new_data < param->data ||
+	    invalid_str(new_data, (व्योम *) param + param_size) || !*new_data ||
+	    म_माप(new_data) > (change_uuid ? DM_UUID_LEN - 1 : DM_NAME_LEN - 1)) अणु
 		DMWARN("Invalid new mapped device name or uuid string supplied.");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!change_uuid) {
+	अगर (!change_uuid) अणु
 		r = check_name(new_data);
-		if (r)
-			return r;
-	}
+		अगर (r)
+			वापस r;
+	पूर्ण
 
-	md = dm_hash_rename(param, new_data);
-	if (IS_ERR(md))
-		return PTR_ERR(md);
+	md = dm_hash_नाम(param, new_data);
+	अगर (IS_ERR(md))
+		वापस PTR_ERR(md);
 
 	__dev_status(md, param);
 	dm_put(md);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dev_set_geometry(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	int r = -EINVAL, x;
-	struct mapped_device *md;
-	struct hd_geometry geometry;
-	unsigned long indata[4];
-	char *geostr = (char *) param + param->data_start;
-	char dummy;
+अटल पूर्णांक dev_set_geometry(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	पूर्णांक r = -EINVAL, x;
+	काष्ठा mapped_device *md;
+	काष्ठा hd_geometry geometry;
+	अचिन्हित दीर्घ indata[4];
+	अक्षर *geostr = (अक्षर *) param + param->data_start;
+	अक्षर dummy;
 
 	md = find_device(param);
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
-	if (geostr < param->data ||
-	    invalid_str(geostr, (void *) param + param_size)) {
+	अगर (geostr < param->data ||
+	    invalid_str(geostr, (व्योम *) param + param_size)) अणु
 		DMWARN("Invalid geometry supplied.");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	x = sscanf(geostr, "%lu %lu %lu %lu%c", indata,
+	x = माला_पूछो(geostr, "%lu %lu %lu %lu%c", indata,
 		   indata + 1, indata + 2, indata + 3, &dummy);
 
-	if (x != 4) {
+	अगर (x != 4) अणु
 		DMWARN("Unable to interpret geometry settings.");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (indata[0] > 65535 || indata[1] > 255 ||
-	    indata[2] > 255 || indata[3] > ULONG_MAX) {
+	अगर (indata[0] > 65535 || indata[1] > 255 ||
+	    indata[2] > 255 || indata[3] > अच_दीर्घ_उच्च) अणु
 		DMWARN("Geometry exceeds range limits.");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	geometry.cylinders = indata[0];
 	geometry.heads = indata[1];
@@ -1076,232 +1077,232 @@ static int dev_set_geometry(struct file *filp, struct dm_ioctl *param, size_t pa
 
 out:
 	dm_put(md);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int do_suspend(struct dm_ioctl *param)
-{
-	int r = 0;
-	unsigned suspend_flags = DM_SUSPEND_LOCKFS_FLAG;
-	struct mapped_device *md;
+अटल पूर्णांक करो_suspend(काष्ठा dm_ioctl *param)
+अणु
+	पूर्णांक r = 0;
+	अचिन्हित suspend_flags = DM_SUSPEND_LOCKFS_FLAG;
+	काष्ठा mapped_device *md;
 
 	md = find_device(param);
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
-	if (param->flags & DM_SKIP_LOCKFS_FLAG)
+	अगर (param->flags & DM_SKIP_LOCKFS_FLAG)
 		suspend_flags &= ~DM_SUSPEND_LOCKFS_FLAG;
-	if (param->flags & DM_NOFLUSH_FLAG)
+	अगर (param->flags & DM_NOFLUSH_FLAG)
 		suspend_flags |= DM_SUSPEND_NOFLUSH_FLAG;
 
-	if (!dm_suspended_md(md)) {
+	अगर (!dm_suspended_md(md)) अणु
 		r = dm_suspend(md, suspend_flags);
-		if (r)
-			goto out;
-	}
+		अगर (r)
+			जाओ out;
+	पूर्ण
 
 	__dev_status(md, param);
 
 out:
 	dm_put(md);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int do_resume(struct dm_ioctl *param)
-{
-	int r = 0;
-	unsigned suspend_flags = DM_SUSPEND_LOCKFS_FLAG;
-	struct hash_cell *hc;
-	struct mapped_device *md;
-	struct dm_table *new_map, *old_map = NULL;
+अटल पूर्णांक करो_resume(काष्ठा dm_ioctl *param)
+अणु
+	पूर्णांक r = 0;
+	अचिन्हित suspend_flags = DM_SUSPEND_LOCKFS_FLAG;
+	काष्ठा hash_cell *hc;
+	काष्ठा mapped_device *md;
+	काष्ठा dm_table *new_map, *old_map = शून्य;
 
-	down_write(&_hash_lock);
+	करोwn_ग_लिखो(&_hash_lock);
 
 	hc = __find_device_hash_cell(param);
-	if (!hc) {
+	अगर (!hc) अणु
 		DMDEBUG_LIMIT("device doesn't appear to be in the dev hash table.");
-		up_write(&_hash_lock);
-		return -ENXIO;
-	}
+		up_ग_लिखो(&_hash_lock);
+		वापस -ENXIO;
+	पूर्ण
 
 	md = hc->md;
 
 	new_map = hc->new_map;
-	hc->new_map = NULL;
+	hc->new_map = शून्य;
 	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
 
-	up_write(&_hash_lock);
+	up_ग_लिखो(&_hash_lock);
 
 	/* Do we need to load a new map ? */
-	if (new_map) {
-		/* Suspend if it isn't already suspended */
-		if (param->flags & DM_SKIP_LOCKFS_FLAG)
+	अगर (new_map) अणु
+		/* Suspend अगर it isn't alपढ़ोy suspended */
+		अगर (param->flags & DM_SKIP_LOCKFS_FLAG)
 			suspend_flags &= ~DM_SUSPEND_LOCKFS_FLAG;
-		if (param->flags & DM_NOFLUSH_FLAG)
+		अगर (param->flags & DM_NOFLUSH_FLAG)
 			suspend_flags |= DM_SUSPEND_NOFLUSH_FLAG;
-		if (!dm_suspended_md(md))
+		अगर (!dm_suspended_md(md))
 			dm_suspend(md, suspend_flags);
 
 		old_map = dm_swap_table(md, new_map);
-		if (IS_ERR(old_map)) {
+		अगर (IS_ERR(old_map)) अणु
 			dm_sync_table(md);
 			dm_table_destroy(new_map);
 			dm_put(md);
-			return PTR_ERR(old_map);
-		}
+			वापस PTR_ERR(old_map);
+		पूर्ण
 
-		if (dm_table_get_mode(new_map) & FMODE_WRITE)
+		अगर (dm_table_get_mode(new_map) & FMODE_WRITE)
 			set_disk_ro(dm_disk(md), 0);
-		else
+		अन्यथा
 			set_disk_ro(dm_disk(md), 1);
-	}
+	पूर्ण
 
-	if (dm_suspended_md(md)) {
+	अगर (dm_suspended_md(md)) अणु
 		r = dm_resume(md);
-		if (!r && !dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr))
+		अगर (!r && !dm_kobject_uevent(md, KOBJ_CHANGE, param->event_nr))
 			param->flags |= DM_UEVENT_GENERATED_FLAG;
-	}
+	पूर्ण
 
 	/*
 	 * Since dm_swap_table synchronizes RCU, nobody should be in
-	 * read-side critical section already.
+	 * पढ़ो-side critical section alपढ़ोy.
 	 */
-	if (old_map)
+	अगर (old_map)
 		dm_table_destroy(old_map);
 
-	if (!r)
+	अगर (!r)
 		__dev_status(md, param);
 
 	dm_put(md);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * Set or unset the suspension state of a device.
- * If the device already is in the requested state we just return its status.
+ * If the device alपढ़ोy is in the requested state we just वापस its status.
  */
-static int dev_suspend(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	if (param->flags & DM_SUSPEND_FLAG)
-		return do_suspend(param);
+अटल पूर्णांक dev_suspend(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	अगर (param->flags & DM_SUSPEND_FLAG)
+		वापस करो_suspend(param);
 
-	return do_resume(param);
-}
+	वापस करो_resume(param);
+पूर्ण
 
 /*
  * Copies device info back to user space, used by
  * the create and info ioctls.
  */
-static int dev_status(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	struct mapped_device *md;
+अटल पूर्णांक dev_status(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	काष्ठा mapped_device *md;
 
 	md = find_device(param);
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
 	__dev_status(md, param);
 	dm_put(md);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Build up the status struct for each target
+ * Build up the status काष्ठा क्रम each target
  */
-static void retrieve_status(struct dm_table *table,
-			    struct dm_ioctl *param, size_t param_size)
-{
-	unsigned int i, num_targets;
-	struct dm_target_spec *spec;
-	char *outbuf, *outptr;
+अटल व्योम retrieve_status(काष्ठा dm_table *table,
+			    काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	अचिन्हित पूर्णांक i, num_tarमाला_लो;
+	काष्ठा dm_target_spec *spec;
+	अक्षर *outbuf, *outptr;
 	status_type_t type;
-	size_t remaining, len, used = 0;
-	unsigned status_flags = 0;
+	माप_प्रकार reमुख्यing, len, used = 0;
+	अचिन्हित status_flags = 0;
 
 	outptr = outbuf = get_result_buffer(param, param_size, &len);
 
-	if (param->flags & DM_STATUS_TABLE_FLAG)
+	अगर (param->flags & DM_STATUS_TABLE_FLAG)
 		type = STATUSTYPE_TABLE;
-	else
+	अन्यथा
 		type = STATUSTYPE_INFO;
 
 	/* Get all the target info */
-	num_targets = dm_table_get_num_targets(table);
-	for (i = 0; i < num_targets; i++) {
-		struct dm_target *ti = dm_table_get_target(table, i);
-		size_t l;
+	num_tarमाला_लो = dm_table_get_num_tarमाला_लो(table);
+	क्रम (i = 0; i < num_tarमाला_लो; i++) अणु
+		काष्ठा dm_target *ti = dm_table_get_target(table, i);
+		माप_प्रकार l;
 
-		remaining = len - (outptr - outbuf);
-		if (remaining <= sizeof(struct dm_target_spec)) {
+		reमुख्यing = len - (outptr - outbuf);
+		अगर (reमुख्यing <= माप(काष्ठा dm_target_spec)) अणु
 			param->flags |= DM_BUFFER_FULL_FLAG;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		spec = (struct dm_target_spec *) outptr;
+		spec = (काष्ठा dm_target_spec *) outptr;
 
 		spec->status = 0;
 		spec->sector_start = ti->begin;
 		spec->length = ti->len;
-		strncpy(spec->target_type, ti->type->name,
-			sizeof(spec->target_type) - 1);
+		म_नकलन(spec->target_type, ti->type->name,
+			माप(spec->target_type) - 1);
 
-		outptr += sizeof(struct dm_target_spec);
-		remaining = len - (outptr - outbuf);
-		if (remaining <= 0) {
+		outptr += माप(काष्ठा dm_target_spec);
+		reमुख्यing = len - (outptr - outbuf);
+		अगर (reमुख्यing <= 0) अणु
 			param->flags |= DM_BUFFER_FULL_FLAG;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* Get the status/table string from the target driver */
-		if (ti->type->status) {
-			if (param->flags & DM_NOFLUSH_FLAG)
+		अगर (ti->type->status) अणु
+			अगर (param->flags & DM_NOFLUSH_FLAG)
 				status_flags |= DM_STATUS_NOFLUSH_FLAG;
-			ti->type->status(ti, type, status_flags, outptr, remaining);
-		} else
+			ti->type->status(ti, type, status_flags, outptr, reमुख्यing);
+		पूर्ण अन्यथा
 			outptr[0] = '\0';
 
-		l = strlen(outptr) + 1;
-		if (l == remaining) {
+		l = म_माप(outptr) + 1;
+		अगर (l == reमुख्यing) अणु
 			param->flags |= DM_BUFFER_FULL_FLAG;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		outptr += l;
 		used = param->data_start + (outptr - outbuf);
 
 		outptr = align_ptr(outptr);
 		spec->next = outptr - outbuf;
-	}
+	पूर्ण
 
-	if (used)
+	अगर (used)
 		param->data_size = used;
 
-	param->target_count = num_targets;
-}
+	param->target_count = num_tarमाला_लो;
+पूर्ण
 
 /*
- * Wait for a device to report an event
+ * Wait क्रम a device to report an event
  */
-static int dev_wait(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	int r = 0;
-	struct mapped_device *md;
-	struct dm_table *table;
-	int srcu_idx;
+अटल पूर्णांक dev_रुको(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	पूर्णांक r = 0;
+	काष्ठा mapped_device *md;
+	काष्ठा dm_table *table;
+	पूर्णांक srcu_idx;
 
 	md = find_device(param);
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
 	/*
-	 * Wait for a notification event
+	 * Wait क्रम a notअगरication event
 	 */
-	if (dm_wait_event(md, param->event_nr)) {
+	अगर (dm_रुको_event(md, param->event_nr)) अणु
 		r = -ERESTARTSYS;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * The userland program is going to want to know what
@@ -1311,175 +1312,175 @@ static int dev_wait(struct file *filp, struct dm_ioctl *param, size_t param_size
 	__dev_status(md, param);
 
 	table = dm_get_live_or_inactive_table(md, param, &srcu_idx);
-	if (table)
+	अगर (table)
 		retrieve_status(table, param, param_size);
 	dm_put_live_table(md, srcu_idx);
 
 out:
 	dm_put(md);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * Remember the global event number and make it possible to poll
- * for further events.
+ * क्रम further events.
  */
-static int dev_arm_poll(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	struct dm_file *priv = filp->private_data;
+अटल पूर्णांक dev_arm_poll(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	काष्ठा dm_file *priv = filp->निजी_data;
 
-	priv->global_event_nr = atomic_read(&dm_global_event_nr);
+	priv->global_event_nr = atomic_पढ़ो(&dm_global_event_nr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline fmode_t get_mode(struct dm_ioctl *param)
-{
-	fmode_t mode = FMODE_READ | FMODE_WRITE;
+अटल अंतरभूत भ_शेषe_t get_mode(काष्ठा dm_ioctl *param)
+अणु
+	भ_शेषe_t mode = FMODE_READ | FMODE_WRITE;
 
-	if (param->flags & DM_READONLY_FLAG)
+	अगर (param->flags & DM_READONLY_FLAG)
 		mode = FMODE_READ;
 
-	return mode;
-}
+	वापस mode;
+पूर्ण
 
-static int next_target(struct dm_target_spec *last, uint32_t next, void *end,
-		       struct dm_target_spec **spec, char **target_params)
-{
-	*spec = (struct dm_target_spec *) ((unsigned char *) last + next);
-	*target_params = (char *) (*spec + 1);
+अटल पूर्णांक next_target(काष्ठा dm_target_spec *last, uपूर्णांक32_t next, व्योम *end,
+		       काष्ठा dm_target_spec **spec, अक्षर **target_params)
+अणु
+	*spec = (काष्ठा dm_target_spec *) ((अचिन्हित अक्षर *) last + next);
+	*target_params = (अक्षर *) (*spec + 1);
 
-	if (*spec < (last + 1))
-		return -EINVAL;
+	अगर (*spec < (last + 1))
+		वापस -EINVAL;
 
-	return invalid_str(*target_params, end);
-}
+	वापस invalid_str(*target_params, end);
+पूर्ण
 
-static int populate_table(struct dm_table *table,
-			  struct dm_ioctl *param, size_t param_size)
-{
-	int r;
-	unsigned int i = 0;
-	struct dm_target_spec *spec = (struct dm_target_spec *) param;
-	uint32_t next = param->data_start;
-	void *end = (void *) param + param_size;
-	char *target_params;
+अटल पूर्णांक populate_table(काष्ठा dm_table *table,
+			  काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	पूर्णांक r;
+	अचिन्हित पूर्णांक i = 0;
+	काष्ठा dm_target_spec *spec = (काष्ठा dm_target_spec *) param;
+	uपूर्णांक32_t next = param->data_start;
+	व्योम *end = (व्योम *) param + param_size;
+	अक्षर *target_params;
 
-	if (!param->target_count) {
+	अगर (!param->target_count) अणु
 		DMWARN("populate_table: no targets specified");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < param->target_count; i++) {
+	क्रम (i = 0; i < param->target_count; i++) अणु
 
 		r = next_target(spec, next, end, &spec, &target_params);
-		if (r) {
+		अगर (r) अणु
 			DMWARN("unable to find target");
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		r = dm_table_add_target(table, spec->target_type,
 					(sector_t) spec->sector_start,
 					(sector_t) spec->length,
 					target_params);
-		if (r) {
+		अगर (r) अणु
 			DMWARN("error adding target to table");
-			return r;
-		}
+			वापस r;
+		पूर्ण
 
 		next = spec->next;
-	}
+	पूर्ण
 
-	return dm_table_complete(table);
-}
+	वापस dm_table_complete(table);
+पूर्ण
 
-static bool is_valid_type(enum dm_queue_mode cur, enum dm_queue_mode new)
-{
-	if (cur == new ||
+अटल bool is_valid_type(क्रमागत dm_queue_mode cur, क्रमागत dm_queue_mode new)
+अणु
+	अगर (cur == new ||
 	    (cur == DM_TYPE_BIO_BASED && new == DM_TYPE_DAX_BIO_BASED))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int table_load(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	int r;
-	struct hash_cell *hc;
-	struct dm_table *t, *old_map = NULL;
-	struct mapped_device *md;
-	struct target_type *immutable_target_type;
+अटल पूर्णांक table_load(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	पूर्णांक r;
+	काष्ठा hash_cell *hc;
+	काष्ठा dm_table *t, *old_map = शून्य;
+	काष्ठा mapped_device *md;
+	काष्ठा target_type *immutable_target_type;
 
 	md = find_device(param);
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
 	r = dm_table_create(&t, get_mode(param), param->target_count, md);
-	if (r)
-		goto err;
+	अगर (r)
+		जाओ err;
 
 	/* Protect md->type and md->queue against concurrent table loads. */
 	dm_lock_md_type(md);
 	r = populate_table(t, param, param_size);
-	if (r)
-		goto err_unlock_md_type;
+	अगर (r)
+		जाओ err_unlock_md_type;
 
 	immutable_target_type = dm_get_immutable_target_type(md);
-	if (immutable_target_type &&
+	अगर (immutable_target_type &&
 	    (immutable_target_type != dm_table_get_immutable_target_type(t)) &&
-	    !dm_table_get_wildcard_target(t)) {
+	    !dm_table_get_wildcard_target(t)) अणु
 		DMWARN("can't replace immutable target type %s",
 		       immutable_target_type->name);
 		r = -EINVAL;
-		goto err_unlock_md_type;
-	}
+		जाओ err_unlock_md_type;
+	पूर्ण
 
-	if (dm_get_md_type(md) == DM_TYPE_NONE) {
+	अगर (dm_get_md_type(md) == DM_TYPE_NONE) अणु
 		/* Initial table load: acquire type of table. */
 		dm_set_md_type(md, dm_table_get_type(t));
 
 		/* setup md->queue to reflect md's type (may block) */
 		r = dm_setup_md_queue(md, t);
-		if (r) {
+		अगर (r) अणु
 			DMWARN("unable to set up device queue for new table.");
-			goto err_unlock_md_type;
-		}
-	} else if (!is_valid_type(dm_get_md_type(md), dm_table_get_type(t))) {
+			जाओ err_unlock_md_type;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!is_valid_type(dm_get_md_type(md), dm_table_get_type(t))) अणु
 		DMWARN("can't change device type (old=%u vs new=%u) after initial table load.",
 		       dm_get_md_type(md), dm_table_get_type(t));
 		r = -EINVAL;
-		goto err_unlock_md_type;
-	}
+		जाओ err_unlock_md_type;
+	पूर्ण
 
 	dm_unlock_md_type(md);
 
 	/* stage inactive table */
-	down_write(&_hash_lock);
+	करोwn_ग_लिखो(&_hash_lock);
 	hc = dm_get_mdptr(md);
-	if (!hc || hc->md != md) {
+	अगर (!hc || hc->md != md) अणु
 		DMWARN("device has been removed from the dev hash table.");
-		up_write(&_hash_lock);
+		up_ग_लिखो(&_hash_lock);
 		r = -ENXIO;
-		goto err_destroy_table;
-	}
+		जाओ err_destroy_table;
+	पूर्ण
 
-	if (hc->new_map)
+	अगर (hc->new_map)
 		old_map = hc->new_map;
 	hc->new_map = t;
-	up_write(&_hash_lock);
+	up_ग_लिखो(&_hash_lock);
 
 	param->flags |= DM_INACTIVE_PRESENT_FLAG;
 	__dev_status(md, param);
 
-	if (old_map) {
+	अगर (old_map) अणु
 		dm_sync_table(md);
 		dm_table_destroy(old_map);
-	}
+	पूर्ण
 
 	dm_put(md);
 
-	return 0;
+	वापस 0;
 
 err_unlock_md_type:
 	dm_unlock_md_type(md);
@@ -1488,316 +1489,316 @@ err_destroy_table:
 err:
 	dm_put(md);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int table_clear(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	struct hash_cell *hc;
-	struct mapped_device *md;
-	struct dm_table *old_map = NULL;
+अटल पूर्णांक table_clear(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	काष्ठा hash_cell *hc;
+	काष्ठा mapped_device *md;
+	काष्ठा dm_table *old_map = शून्य;
 
-	down_write(&_hash_lock);
+	करोwn_ग_लिखो(&_hash_lock);
 
 	hc = __find_device_hash_cell(param);
-	if (!hc) {
+	अगर (!hc) अणु
 		DMDEBUG_LIMIT("device doesn't appear to be in the dev hash table.");
-		up_write(&_hash_lock);
-		return -ENXIO;
-	}
+		up_ग_लिखो(&_hash_lock);
+		वापस -ENXIO;
+	पूर्ण
 
-	if (hc->new_map) {
+	अगर (hc->new_map) अणु
 		old_map = hc->new_map;
-		hc->new_map = NULL;
-	}
+		hc->new_map = शून्य;
+	पूर्ण
 
 	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
 
 	__dev_status(hc->md, param);
 	md = hc->md;
-	up_write(&_hash_lock);
-	if (old_map) {
+	up_ग_लिखो(&_hash_lock);
+	अगर (old_map) अणु
 		dm_sync_table(md);
 		dm_table_destroy(old_map);
-	}
+	पूर्ण
 	dm_put(md);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Retrieves a list of devices used by a particular dm device.
  */
-static void retrieve_deps(struct dm_table *table,
-			  struct dm_ioctl *param, size_t param_size)
-{
-	unsigned int count = 0;
-	struct list_head *tmp;
-	size_t len, needed;
-	struct dm_dev_internal *dd;
-	struct dm_target_deps *deps;
+अटल व्योम retrieve_deps(काष्ठा dm_table *table,
+			  काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	अचिन्हित पूर्णांक count = 0;
+	काष्ठा list_head *पंचांगp;
+	माप_प्रकार len, needed;
+	काष्ठा dm_dev_पूर्णांकernal *dd;
+	काष्ठा dm_target_deps *deps;
 
 	deps = get_result_buffer(param, param_size, &len);
 
 	/*
 	 * Count the devices.
 	 */
-	list_for_each (tmp, dm_table_get_devices(table))
+	list_क्रम_each (पंचांगp, dm_table_get_devices(table))
 		count++;
 
 	/*
 	 * Check we have enough space.
 	 */
-	needed = struct_size(deps, dev, count);
-	if (len < needed) {
+	needed = काष्ठा_size(deps, dev, count);
+	अगर (len < needed) अणु
 		param->flags |= DM_BUFFER_FULL_FLAG;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * Fill in the devices.
 	 */
 	deps->count = count;
 	count = 0;
-	list_for_each_entry (dd, dm_table_get_devices(table), list)
+	list_क्रम_each_entry (dd, dm_table_get_devices(table), list)
 		deps->dev[count++] = huge_encode_dev(dd->dm_dev->bdev->bd_dev);
 
 	param->data_size = param->data_start + needed;
-}
+पूर्ण
 
-static int table_deps(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	struct mapped_device *md;
-	struct dm_table *table;
-	int srcu_idx;
+अटल पूर्णांक table_deps(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	काष्ठा mapped_device *md;
+	काष्ठा dm_table *table;
+	पूर्णांक srcu_idx;
 
 	md = find_device(param);
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
 	__dev_status(md, param);
 
 	table = dm_get_live_or_inactive_table(md, param, &srcu_idx);
-	if (table)
+	अगर (table)
 		retrieve_deps(table, param, param_size);
 	dm_put_live_table(md, srcu_idx);
 
 	dm_put(md);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Return the status of a device as a text string for each
+ * Return the status of a device as a text string क्रम each
  * target.
  */
-static int table_status(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	struct mapped_device *md;
-	struct dm_table *table;
-	int srcu_idx;
+अटल पूर्णांक table_status(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	काष्ठा mapped_device *md;
+	काष्ठा dm_table *table;
+	पूर्णांक srcu_idx;
 
 	md = find_device(param);
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
 	__dev_status(md, param);
 
 	table = dm_get_live_or_inactive_table(md, param, &srcu_idx);
-	if (table)
+	अगर (table)
 		retrieve_status(table, param, param_size);
 	dm_put_live_table(md, srcu_idx);
 
 	dm_put(md);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Process device-mapper dependent messages.  Messages prefixed with '@'
  * are processed by the DM core.  All others are delivered to the target.
- * Returns a number <= 1 if message was processed by device mapper.
- * Returns 2 if message should be delivered to the target.
+ * Returns a number <= 1 अगर message was processed by device mapper.
+ * Returns 2 अगर message should be delivered to the target.
  */
-static int message_for_md(struct mapped_device *md, unsigned argc, char **argv,
-			  char *result, unsigned maxlen)
-{
-	int r;
+अटल पूर्णांक message_क्रम_md(काष्ठा mapped_device *md, अचिन्हित argc, अक्षर **argv,
+			  अक्षर *result, अचिन्हित maxlen)
+अणु
+	पूर्णांक r;
 
-	if (**argv != '@')
-		return 2; /* no '@' prefix, deliver to target */
+	अगर (**argv != '@')
+		वापस 2; /* no '@' prefix, deliver to target */
 
-	if (!strcasecmp(argv[0], "@cancel_deferred_remove")) {
-		if (argc != 1) {
+	अगर (!strहालcmp(argv[0], "@cancel_deferred_remove")) अणु
+		अगर (argc != 1) अणु
 			DMERR("Invalid arguments for @cancel_deferred_remove");
-			return -EINVAL;
-		}
-		return dm_cancel_deferred_remove(md);
-	}
+			वापस -EINVAL;
+		पूर्ण
+		वापस dm_cancel_deferred_हटाओ(md);
+	पूर्ण
 
 	r = dm_stats_message(md, argc, argv, result, maxlen);
-	if (r < 2)
-		return r;
+	अगर (r < 2)
+		वापस r;
 
 	DMERR("Unsupported message sent to DM core: %s", argv[0]);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * Pass a message to the target that's at the supplied device offset.
  */
-static int target_message(struct file *filp, struct dm_ioctl *param, size_t param_size)
-{
-	int r, argc;
-	char **argv;
-	struct mapped_device *md;
-	struct dm_table *table;
-	struct dm_target *ti;
-	struct dm_target_msg *tmsg = (void *) param + param->data_start;
-	size_t maxlen;
-	char *result = get_result_buffer(param, param_size, &maxlen);
-	int srcu_idx;
+अटल पूर्णांक target_message(काष्ठा file *filp, काष्ठा dm_ioctl *param, माप_प्रकार param_size)
+अणु
+	पूर्णांक r, argc;
+	अक्षर **argv;
+	काष्ठा mapped_device *md;
+	काष्ठा dm_table *table;
+	काष्ठा dm_target *ti;
+	काष्ठा dm_target_msg *पंचांगsg = (व्योम *) param + param->data_start;
+	माप_प्रकार maxlen;
+	अक्षर *result = get_result_buffer(param, param_size, &maxlen);
+	पूर्णांक srcu_idx;
 
 	md = find_device(param);
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
-	if (tmsg < (struct dm_target_msg *) param->data ||
-	    invalid_str(tmsg->message, (void *) param + param_size)) {
+	अगर (पंचांगsg < (काष्ठा dm_target_msg *) param->data ||
+	    invalid_str(पंचांगsg->message, (व्योम *) param + param_size)) अणु
 		DMWARN("Invalid target message parameters.");
 		r = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	r = dm_split_args(&argc, &argv, tmsg->message);
-	if (r) {
+	r = dm_split_args(&argc, &argv, पंचांगsg->message);
+	अगर (r) अणु
 		DMWARN("Failed to split target message parameters");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (!argc) {
+	अगर (!argc) अणु
 		DMWARN("Empty message received.");
 		r = -EINVAL;
-		goto out_argv;
-	}
+		जाओ out_argv;
+	पूर्ण
 
-	r = message_for_md(md, argc, argv, result, maxlen);
-	if (r <= 1)
-		goto out_argv;
+	r = message_क्रम_md(md, argc, argv, result, maxlen);
+	अगर (r <= 1)
+		जाओ out_argv;
 
 	table = dm_get_live_table(md, &srcu_idx);
-	if (!table)
-		goto out_table;
+	अगर (!table)
+		जाओ out_table;
 
-	if (dm_deleting_md(md)) {
+	अगर (dm_deleting_md(md)) अणु
 		r = -ENXIO;
-		goto out_table;
-	}
+		जाओ out_table;
+	पूर्ण
 
-	ti = dm_table_find_target(table, tmsg->sector);
-	if (!ti) {
+	ti = dm_table_find_target(table, पंचांगsg->sector);
+	अगर (!ti) अणु
 		DMWARN("Target message sector outside device.");
 		r = -EINVAL;
-	} else if (ti->type->message)
+	पूर्ण अन्यथा अगर (ti->type->message)
 		r = ti->type->message(ti, argc, argv, result, maxlen);
-	else {
+	अन्यथा अणु
 		DMWARN("Target type does not support messages");
 		r = -EINVAL;
-	}
+	पूर्ण
 
  out_table:
 	dm_put_live_table(md, srcu_idx);
  out_argv:
-	kfree(argv);
+	kमुक्त(argv);
  out:
-	if (r >= 0)
+	अगर (r >= 0)
 		__dev_status(md, param);
 
-	if (r == 1) {
+	अगर (r == 1) अणु
 		param->flags |= DM_DATA_OUT_FLAG;
-		if (dm_message_test_buffer_overflow(result, maxlen))
+		अगर (dm_message_test_buffer_overflow(result, maxlen))
 			param->flags |= DM_BUFFER_FULL_FLAG;
-		else
-			param->data_size = param->data_start + strlen(result) + 1;
+		अन्यथा
+			param->data_size = param->data_start + म_माप(result) + 1;
 		r = 0;
-	}
+	पूर्ण
 
 	dm_put(md);
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * The ioctl parameter block consists of two parts, a dm_ioctl struct
- * followed by a data buffer.  This flag is set if the second part,
+ * The ioctl parameter block consists of two parts, a dm_ioctl काष्ठा
+ * followed by a data buffer.  This flag is set अगर the second part,
  * which has a variable size, is not used by the function processing
  * the ioctl.
  */
-#define IOCTL_FLAGS_NO_PARAMS		1
-#define IOCTL_FLAGS_ISSUE_GLOBAL_EVENT	2
+#घोषणा IOCTL_FLAGS_NO_PARAMS		1
+#घोषणा IOCTL_FLAGS_ISSUE_GLOBAL_EVENT	2
 
 /*-----------------------------------------------------------------
- * Implementation of open/close/ioctl on the special char
+ * Implementation of खोलो/बंद/ioctl on the special अक्षर
  * device.
  *---------------------------------------------------------------*/
-static ioctl_fn lookup_ioctl(unsigned int cmd, int *ioctl_flags)
-{
-	static const struct {
-		int cmd;
-		int flags;
+अटल ioctl_fn lookup_ioctl(अचिन्हित पूर्णांक cmd, पूर्णांक *ioctl_flags)
+अणु
+	अटल स्थिर काष्ठा अणु
+		पूर्णांक cmd;
+		पूर्णांक flags;
 		ioctl_fn fn;
-	} _ioctls[] = {
-		{DM_VERSION_CMD, 0, NULL}, /* version is dealt with elsewhere */
-		{DM_REMOVE_ALL_CMD, IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, remove_all},
-		{DM_LIST_DEVICES_CMD, 0, list_devices},
+	पूर्ण _ioctls[] = अणु
+		अणुDM_VERSION_CMD, 0, शून्यपूर्ण, /* version is dealt with अन्यथाwhere */
+		अणुDM_REMOVE_ALL_CMD, IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, हटाओ_allपूर्ण,
+		अणुDM_LIST_DEVICES_CMD, 0, list_devicesपूर्ण,
 
-		{DM_DEV_CREATE_CMD, IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_create},
-		{DM_DEV_REMOVE_CMD, IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_remove},
-		{DM_DEV_RENAME_CMD, IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_rename},
-		{DM_DEV_SUSPEND_CMD, IOCTL_FLAGS_NO_PARAMS, dev_suspend},
-		{DM_DEV_STATUS_CMD, IOCTL_FLAGS_NO_PARAMS, dev_status},
-		{DM_DEV_WAIT_CMD, 0, dev_wait},
+		अणुDM_DEV_CREATE_CMD, IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_createपूर्ण,
+		अणुDM_DEV_REMOVE_CMD, IOCTL_FLAGS_NO_PARAMS | IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_हटाओपूर्ण,
+		अणुDM_DEV_RENAME_CMD, IOCTL_FLAGS_ISSUE_GLOBAL_EVENT, dev_नामपूर्ण,
+		अणुDM_DEV_SUSPEND_CMD, IOCTL_FLAGS_NO_PARAMS, dev_suspendपूर्ण,
+		अणुDM_DEV_STATUS_CMD, IOCTL_FLAGS_NO_PARAMS, dev_statusपूर्ण,
+		अणुDM_DEV_WAIT_CMD, 0, dev_रुकोपूर्ण,
 
-		{DM_TABLE_LOAD_CMD, 0, table_load},
-		{DM_TABLE_CLEAR_CMD, IOCTL_FLAGS_NO_PARAMS, table_clear},
-		{DM_TABLE_DEPS_CMD, 0, table_deps},
-		{DM_TABLE_STATUS_CMD, 0, table_status},
+		अणुDM_TABLE_LOAD_CMD, 0, table_loadपूर्ण,
+		अणुDM_TABLE_CLEAR_CMD, IOCTL_FLAGS_NO_PARAMS, table_clearपूर्ण,
+		अणुDM_TABLE_DEPS_CMD, 0, table_depsपूर्ण,
+		अणुDM_TABLE_STATUS_CMD, 0, table_statusपूर्ण,
 
-		{DM_LIST_VERSIONS_CMD, 0, list_versions},
+		अणुDM_LIST_VERSIONS_CMD, 0, list_versionsपूर्ण,
 
-		{DM_TARGET_MSG_CMD, 0, target_message},
-		{DM_DEV_SET_GEOMETRY_CMD, 0, dev_set_geometry},
-		{DM_DEV_ARM_POLL, IOCTL_FLAGS_NO_PARAMS, dev_arm_poll},
-		{DM_GET_TARGET_VERSION, 0, get_target_version},
-	};
+		अणुDM_TARGET_MSG_CMD, 0, target_messageपूर्ण,
+		अणुDM_DEV_SET_GEOMETRY_CMD, 0, dev_set_geometryपूर्ण,
+		अणुDM_DEV_ARM_POLL, IOCTL_FLAGS_NO_PARAMS, dev_arm_pollपूर्ण,
+		अणुDM_GET_TARGET_VERSION, 0, get_target_versionपूर्ण,
+	पूर्ण;
 
-	if (unlikely(cmd >= ARRAY_SIZE(_ioctls)))
-		return NULL;
+	अगर (unlikely(cmd >= ARRAY_SIZE(_ioctls)))
+		वापस शून्य;
 
 	*ioctl_flags = _ioctls[cmd].flags;
-	return _ioctls[cmd].fn;
-}
+	वापस _ioctls[cmd].fn;
+पूर्ण
 
 /*
  * As well as checking the version compatibility this always
- * copies the kernel interface version out.
+ * copies the kernel पूर्णांकerface version out.
  */
-static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
-{
-	uint32_t version[3];
-	int r = 0;
+अटल पूर्णांक check_version(अचिन्हित पूर्णांक cmd, काष्ठा dm_ioctl __user *user)
+अणु
+	uपूर्णांक32_t version[3];
+	पूर्णांक r = 0;
 
-	if (copy_from_user(version, user->version, sizeof(version)))
-		return -EFAULT;
+	अगर (copy_from_user(version, user->version, माप(version)))
+		वापस -EFAULT;
 
-	if ((DM_VERSION_MAJOR != version[0]) ||
-	    (DM_VERSION_MINOR < version[1])) {
+	अगर ((DM_VERSION_MAJOR != version[0]) ||
+	    (DM_VERSION_MINOR < version[1])) अणु
 		DMWARN("ioctl interface mismatch: "
 		       "kernel(%u.%u.%u), user(%u.%u.%u), cmd(%d)",
 		       DM_VERSION_MAJOR, DM_VERSION_MINOR,
 		       DM_VERSION_PATCHLEVEL,
 		       version[0], version[1], version[2], cmd);
 		r = -EINVAL;
-	}
+	पूर्ण
 
 	/*
 	 * Fill in the kernel version.
@@ -1805,88 +1806,88 @@ static int check_version(unsigned int cmd, struct dm_ioctl __user *user)
 	version[0] = DM_VERSION_MAJOR;
 	version[1] = DM_VERSION_MINOR;
 	version[2] = DM_VERSION_PATCHLEVEL;
-	if (copy_to_user(user->version, version, sizeof(version)))
-		return -EFAULT;
+	अगर (copy_to_user(user->version, version, माप(version)))
+		वापस -EFAULT;
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-#define DM_PARAMS_MALLOC	0x0001	/* Params allocated with kvmalloc() */
-#define DM_WIPE_BUFFER		0x0010	/* Wipe input buffer before returning from ioctl */
+#घोषणा DM_PARAMS_MALLOC	0x0001	/* Params allocated with kvदो_स्मृति() */
+#घोषणा DM_WIPE_BUFFER		0x0010	/* Wipe input buffer beक्रमe वापसing from ioctl */
 
-static void free_params(struct dm_ioctl *param, size_t param_size, int param_flags)
-{
-	if (param_flags & DM_WIPE_BUFFER)
-		memset(param, 0, param_size);
+अटल व्योम मुक्त_params(काष्ठा dm_ioctl *param, माप_प्रकार param_size, पूर्णांक param_flags)
+अणु
+	अगर (param_flags & DM_WIPE_BUFFER)
+		स_रखो(param, 0, param_size);
 
-	if (param_flags & DM_PARAMS_MALLOC)
-		kvfree(param);
-}
+	अगर (param_flags & DM_PARAMS_MALLOC)
+		kvमुक्त(param);
+पूर्ण
 
-static int copy_params(struct dm_ioctl __user *user, struct dm_ioctl *param_kernel,
-		       int ioctl_flags, struct dm_ioctl **param, int *param_flags)
-{
-	struct dm_ioctl *dmi;
-	int secure_data;
-	const size_t minimum_data_size = offsetof(struct dm_ioctl, data);
-	unsigned noio_flag;
+अटल पूर्णांक copy_params(काष्ठा dm_ioctl __user *user, काष्ठा dm_ioctl *param_kernel,
+		       पूर्णांक ioctl_flags, काष्ठा dm_ioctl **param, पूर्णांक *param_flags)
+अणु
+	काष्ठा dm_ioctl *dmi;
+	पूर्णांक secure_data;
+	स्थिर माप_प्रकार minimum_data_size = दुरत्व(काष्ठा dm_ioctl, data);
+	अचिन्हित noio_flag;
 
-	if (copy_from_user(param_kernel, user, minimum_data_size))
-		return -EFAULT;
+	अगर (copy_from_user(param_kernel, user, minimum_data_size))
+		वापस -EFAULT;
 
-	if (param_kernel->data_size < minimum_data_size)
-		return -EINVAL;
+	अगर (param_kernel->data_size < minimum_data_size)
+		वापस -EINVAL;
 
 	secure_data = param_kernel->flags & DM_SECURE_DATA_FLAG;
 
 	*param_flags = secure_data ? DM_WIPE_BUFFER : 0;
 
-	if (ioctl_flags & IOCTL_FLAGS_NO_PARAMS) {
+	अगर (ioctl_flags & IOCTL_FLAGS_NO_PARAMS) अणु
 		dmi = param_kernel;
 		dmi->data_size = minimum_data_size;
-		goto data_copied;
-	}
+		जाओ data_copied;
+	पूर्ण
 
 	/*
-	 * Use __GFP_HIGH to avoid low memory issues when a device is
+	 * Use __GFP_HIGH to aव्योम low memory issues when a device is
 	 * suspended and the ioctl is needed to resume it.
-	 * Use kmalloc() rather than vmalloc() when we can.
+	 * Use kदो_स्मृति() rather than vदो_स्मृति() when we can.
 	 */
-	dmi = NULL;
-	noio_flag = memalloc_noio_save();
-	dmi = kvmalloc(param_kernel->data_size, GFP_KERNEL | __GFP_HIGH);
-	memalloc_noio_restore(noio_flag);
+	dmi = शून्य;
+	noio_flag = meदो_स्मृति_noio_save();
+	dmi = kvदो_स्मृति(param_kernel->data_size, GFP_KERNEL | __GFP_HIGH);
+	meदो_स्मृति_noio_restore(noio_flag);
 
-	if (!dmi) {
-		if (secure_data && clear_user(user, param_kernel->data_size))
-			return -EFAULT;
-		return -ENOMEM;
-	}
+	अगर (!dmi) अणु
+		अगर (secure_data && clear_user(user, param_kernel->data_size))
+			वापस -EFAULT;
+		वापस -ENOMEM;
+	पूर्ण
 
 	*param_flags |= DM_PARAMS_MALLOC;
 
-	/* Copy from param_kernel (which was already copied from user) */
-	memcpy(dmi, param_kernel, minimum_data_size);
+	/* Copy from param_kernel (which was alपढ़ोy copied from user) */
+	स_नकल(dmi, param_kernel, minimum_data_size);
 
-	if (copy_from_user(&dmi->data, (char __user *)user + minimum_data_size,
+	अगर (copy_from_user(&dmi->data, (अक्षर __user *)user + minimum_data_size,
 			   param_kernel->data_size - minimum_data_size))
-		goto bad;
+		जाओ bad;
 data_copied:
-	/* Wipe the user buffer so we do not return it to userspace */
-	if (secure_data && clear_user(user, param_kernel->data_size))
-		goto bad;
+	/* Wipe the user buffer so we करो not वापस it to userspace */
+	अगर (secure_data && clear_user(user, param_kernel->data_size))
+		जाओ bad;
 
 	*param = dmi;
-	return 0;
+	वापस 0;
 
 bad:
-	free_params(dmi, param_kernel->data_size, *param_flags);
+	मुक्त_params(dmi, param_kernel->data_size, *param_flags);
 
-	return -EFAULT;
-}
+	वापस -EFAULT;
+पूर्ण
 
-static int validate_params(uint cmd, struct dm_ioctl *param)
-{
+अटल पूर्णांक validate_params(uपूर्णांक cmd, काष्ठा dm_ioctl *param)
+अणु
 	/* Always clear this flag */
 	param->flags &= ~DM_BUFFER_FULL_FLAG;
 	param->flags &= ~DM_UEVENT_GENERATED_FLAG;
@@ -1894,333 +1895,333 @@ static int validate_params(uint cmd, struct dm_ioctl *param)
 	param->flags &= ~DM_DATA_OUT_FLAG;
 
 	/* Ignores parameters */
-	if (cmd == DM_REMOVE_ALL_CMD ||
+	अगर (cmd == DM_REMOVE_ALL_CMD ||
 	    cmd == DM_LIST_DEVICES_CMD ||
 	    cmd == DM_LIST_VERSIONS_CMD)
-		return 0;
+		वापस 0;
 
-	if (cmd == DM_DEV_CREATE_CMD) {
-		if (!*param->name) {
+	अगर (cmd == DM_DEV_CREATE_CMD) अणु
+		अगर (!*param->name) अणु
 			DMWARN("name not supplied when creating device");
-			return -EINVAL;
-		}
-	} else if (*param->uuid && *param->name) {
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण अन्यथा अगर (*param->uuid && *param->name) अणु
 		DMWARN("only supply one of name or uuid, cmd(%u)", cmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Ensure strings are terminated */
 	param->name[DM_NAME_LEN - 1] = '\0';
 	param->uuid[DM_UUID_LEN - 1] = '\0';
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ctl_ioctl(struct file *file, uint command, struct dm_ioctl __user *user)
-{
-	int r = 0;
-	int ioctl_flags;
-	int param_flags;
-	unsigned int cmd;
-	struct dm_ioctl *param;
-	ioctl_fn fn = NULL;
-	size_t input_param_size;
-	struct dm_ioctl param_kernel;
+अटल पूर्णांक ctl_ioctl(काष्ठा file *file, uपूर्णांक command, काष्ठा dm_ioctl __user *user)
+अणु
+	पूर्णांक r = 0;
+	पूर्णांक ioctl_flags;
+	पूर्णांक param_flags;
+	अचिन्हित पूर्णांक cmd;
+	काष्ठा dm_ioctl *param;
+	ioctl_fn fn = शून्य;
+	माप_प्रकार input_param_size;
+	काष्ठा dm_ioctl param_kernel;
 
 	/* only root can play with this */
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
 
-	if (_IOC_TYPE(command) != DM_IOCTL)
-		return -ENOTTY;
+	अगर (_IOC_TYPE(command) != DM_IOCTL)
+		वापस -ENOTTY;
 
 	cmd = _IOC_NR(command);
 
 	/*
-	 * Check the interface version passed in.  This also
-	 * writes out the kernel's interface version.
+	 * Check the पूर्णांकerface version passed in.  This also
+	 * ग_लिखोs out the kernel's पूर्णांकerface version.
 	 */
 	r = check_version(cmd, user);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/*
-	 * Nothing more to do for the version command.
+	 * Nothing more to करो क्रम the version command.
 	 */
-	if (cmd == DM_VERSION_CMD)
-		return 0;
+	अगर (cmd == DM_VERSION_CMD)
+		वापस 0;
 
 	fn = lookup_ioctl(cmd, &ioctl_flags);
-	if (!fn) {
+	अगर (!fn) अणु
 		DMWARN("dm_ctl_ioctl: unknown command 0x%x", command);
-		return -ENOTTY;
-	}
+		वापस -ENOTTY;
+	पूर्ण
 
 	/*
-	 * Copy the parameters into kernel space.
+	 * Copy the parameters पूर्णांकo kernel space.
 	 */
 	r = copy_params(user, &param_kernel, ioctl_flags, &param, &param_flags);
 
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	input_param_size = param->data_size;
 	r = validate_params(cmd, param);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 
-	param->data_size = offsetof(struct dm_ioctl, data);
+	param->data_size = दुरत्व(काष्ठा dm_ioctl, data);
 	r = fn(file, param, input_param_size);
 
-	if (unlikely(param->flags & DM_BUFFER_FULL_FLAG) &&
+	अगर (unlikely(param->flags & DM_BUFFER_FULL_FLAG) &&
 	    unlikely(ioctl_flags & IOCTL_FLAGS_NO_PARAMS))
 		DMERR("ioctl %d tried to output some data but has IOCTL_FLAGS_NO_PARAMS set", cmd);
 
-	if (!r && ioctl_flags & IOCTL_FLAGS_ISSUE_GLOBAL_EVENT)
+	अगर (!r && ioctl_flags & IOCTL_FLAGS_ISSUE_GLOBAL_EVENT)
 		dm_issue_global_event();
 
 	/*
 	 * Copy the results back to userland.
 	 */
-	if (!r && copy_to_user(user, param, param->data_size))
+	अगर (!r && copy_to_user(user, param, param->data_size))
 		r = -EFAULT;
 
 out:
-	free_params(param, input_param_size, param_flags);
-	return r;
-}
+	मुक्त_params(param, input_param_size, param_flags);
+	वापस r;
+पूर्ण
 
-static long dm_ctl_ioctl(struct file *file, uint command, ulong u)
-{
-	return (long)ctl_ioctl(file, command, (struct dm_ioctl __user *)u);
-}
+अटल दीर्घ dm_ctl_ioctl(काष्ठा file *file, uपूर्णांक command, uदीर्घ u)
+अणु
+	वापस (दीर्घ)ctl_ioctl(file, command, (काष्ठा dm_ioctl __user *)u);
+पूर्ण
 
-#ifdef CONFIG_COMPAT
-static long dm_compat_ctl_ioctl(struct file *file, uint command, ulong u)
-{
-	return (long)dm_ctl_ioctl(file, command, (ulong) compat_ptr(u));
-}
-#else
-#define dm_compat_ctl_ioctl NULL
-#endif
+#अगर_घोषित CONFIG_COMPAT
+अटल दीर्घ dm_compat_ctl_ioctl(काष्ठा file *file, uपूर्णांक command, uदीर्घ u)
+अणु
+	वापस (दीर्घ)dm_ctl_ioctl(file, command, (uदीर्घ) compat_ptr(u));
+पूर्ण
+#अन्यथा
+#घोषणा dm_compat_ctl_ioctl शून्य
+#पूर्ण_अगर
 
-static int dm_open(struct inode *inode, struct file *filp)
-{
-	int r;
-	struct dm_file *priv;
+अटल पूर्णांक dm_खोलो(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_file *priv;
 
-	r = nonseekable_open(inode, filp);
-	if (unlikely(r))
-		return r;
+	r = nonseekable_खोलो(inode, filp);
+	अगर (unlikely(r))
+		वापस r;
 
-	priv = filp->private_data = kmalloc(sizeof(struct dm_file), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = filp->निजी_data = kदो_स्मृति(माप(काष्ठा dm_file), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	priv->global_event_nr = atomic_read(&dm_global_event_nr);
+	priv->global_event_nr = atomic_पढ़ो(&dm_global_event_nr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dm_release(struct inode *inode, struct file *filp)
-{
-	kfree(filp->private_data);
-	return 0;
-}
+अटल पूर्णांक dm_release(काष्ठा inode *inode, काष्ठा file *filp)
+अणु
+	kमुक्त(filp->निजी_data);
+	वापस 0;
+पूर्ण
 
-static __poll_t dm_poll(struct file *filp, poll_table *wait)
-{
-	struct dm_file *priv = filp->private_data;
+अटल __poll_t dm_poll(काष्ठा file *filp, poll_table *रुको)
+अणु
+	काष्ठा dm_file *priv = filp->निजी_data;
 	__poll_t mask = 0;
 
-	poll_wait(filp, &dm_global_eventq, wait);
+	poll_रुको(filp, &dm_global_eventq, रुको);
 
-	if ((int)(atomic_read(&dm_global_event_nr) - priv->global_event_nr) > 0)
+	अगर ((पूर्णांक)(atomic_पढ़ो(&dm_global_event_nr) - priv->global_event_nr) > 0)
 		mask |= EPOLLIN;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static const struct file_operations _ctl_fops = {
-	.open    = dm_open,
+अटल स्थिर काष्ठा file_operations _ctl_fops = अणु
+	.खोलो    = dm_खोलो,
 	.release = dm_release,
 	.poll    = dm_poll,
 	.unlocked_ioctl	 = dm_ctl_ioctl,
 	.compat_ioctl = dm_compat_ctl_ioctl,
 	.owner	 = THIS_MODULE,
 	.llseek  = noop_llseek,
-};
+पूर्ण;
 
-static struct miscdevice _dm_misc = {
+अटल काष्ठा miscdevice _dm_misc = अणु
 	.minor		= MAPPER_CTRL_MINOR,
 	.name  		= DM_NAME,
-	.nodename	= DM_DIR "/" DM_CONTROL_NODE,
+	.nodename	= DM_सूची "/" DM_CONTROL_NODE,
 	.fops  		= &_ctl_fops
-};
+पूर्ण;
 
 MODULE_ALIAS_MISCDEV(MAPPER_CTRL_MINOR);
-MODULE_ALIAS("devname:" DM_DIR "/" DM_CONTROL_NODE);
+MODULE_ALIAS("devname:" DM_सूची "/" DM_CONTROL_NODE);
 
 /*
- * Create misc character device and link to DM_DIR/control.
+ * Create misc अक्षरacter device and link to DM_सूची/control.
  */
-int __init dm_interface_init(void)
-{
-	int r;
+पूर्णांक __init dm_पूर्णांकerface_init(व्योम)
+अणु
+	पूर्णांक r;
 
-	r = misc_register(&_dm_misc);
-	if (r) {
+	r = misc_रेजिस्टर(&_dm_misc);
+	अगर (r) अणु
 		DMERR("misc_register failed for control device");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	DMINFO("%d.%d.%d%s initialised: %s", DM_VERSION_MAJOR,
 	       DM_VERSION_MINOR, DM_VERSION_PATCHLEVEL, DM_VERSION_EXTRA,
 	       DM_DRIVER_EMAIL);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dm_interface_exit(void)
-{
-	misc_deregister(&_dm_misc);
-	dm_hash_exit();
-}
+व्योम dm_पूर्णांकerface_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&_dm_misc);
+	dm_hash_निकास();
+पूर्ण
 
 /**
- * dm_copy_name_and_uuid - Copy mapped device name & uuid into supplied buffers
- * @md: Pointer to mapped_device
- * @name: Buffer (size DM_NAME_LEN) for name
- * @uuid: Buffer (size DM_UUID_LEN) for uuid or empty string if uuid not defined
+ * dm_copy_name_and_uuid - Copy mapped device name & uuid पूर्णांकo supplied buffers
+ * @md: Poपूर्णांकer to mapped_device
+ * @name: Buffer (size DM_NAME_LEN) क्रम name
+ * @uuid: Buffer (size DM_UUID_LEN) क्रम uuid or empty string अगर uuid not defined
  */
-int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid)
-{
-	int r = 0;
-	struct hash_cell *hc;
+पूर्णांक dm_copy_name_and_uuid(काष्ठा mapped_device *md, अक्षर *name, अक्षर *uuid)
+अणु
+	पूर्णांक r = 0;
+	काष्ठा hash_cell *hc;
 
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
 	mutex_lock(&dm_hash_cells_mutex);
 	hc = dm_get_mdptr(md);
-	if (!hc || hc->md != md) {
+	अगर (!hc || hc->md != md) अणु
 		r = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (name)
-		strcpy(name, hc->name);
-	if (uuid)
-		strcpy(uuid, hc->uuid ? : "");
+	अगर (name)
+		म_नकल(name, hc->name);
+	अगर (uuid)
+		म_नकल(uuid, hc->uuid ? : "");
 
 out:
 	mutex_unlock(&dm_hash_cells_mutex);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_copy_name_and_uuid);
 
 /**
  * dm_early_create - create a mapped device in early boot.
  *
- * @dmi: Contains main information of the device mapping to be created.
- * @spec_array: array of pointers to struct dm_target_spec. Describes the
+ * @dmi: Contains मुख्य inक्रमmation of the device mapping to be created.
+ * @spec_array: array of poपूर्णांकers to काष्ठा dm_target_spec. Describes the
  * mapping table of the device.
- * @target_params_array: array of strings with the parameters to a specific
+ * @target_params_array: array of strings with the parameters to a specअगरic
  * target.
  *
- * Instead of having the struct dm_target_spec and the parameters for every
- * target embedded at the end of struct dm_ioctl (as performed in a normal
- * ioctl), pass them as arguments, so the caller doesn't need to serialize them.
+ * Instead of having the काष्ठा dm_target_spec and the parameters क्रम every
+ * target embedded at the end of काष्ठा dm_ioctl (as perक्रमmed in a normal
+ * ioctl), pass them as arguments, so the caller करोesn't need to serialize them.
  * The size of the spec_array and target_params_array is given by
  * @dmi->target_count.
  * This function is supposed to be called in early boot, so locking mechanisms
  * to protect against concurrent loads are not required.
  */
-int __init dm_early_create(struct dm_ioctl *dmi,
-			   struct dm_target_spec **spec_array,
-			   char **target_params_array)
-{
-	int r, m = DM_ANY_MINOR;
-	struct dm_table *t, *old_map;
-	struct mapped_device *md;
-	unsigned int i;
+पूर्णांक __init dm_early_create(काष्ठा dm_ioctl *dmi,
+			   काष्ठा dm_target_spec **spec_array,
+			   अक्षर **target_params_array)
+अणु
+	पूर्णांक r, m = DM_ANY_MINOR;
+	काष्ठा dm_table *t, *old_map;
+	काष्ठा mapped_device *md;
+	अचिन्हित पूर्णांक i;
 
-	if (!dmi->target_count)
-		return -EINVAL;
+	अगर (!dmi->target_count)
+		वापस -EINVAL;
 
 	r = check_name(dmi->name);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	if (dmi->flags & DM_PERSISTENT_DEV_FLAG)
+	अगर (dmi->flags & DM_PERSISTENT_DEV_FLAG)
 		m = MINOR(huge_decode_dev(dmi->dev));
 
 	/* alloc dm device */
 	r = dm_create(m, &md);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	/* hash insert */
-	r = dm_hash_insert(dmi->name, *dmi->uuid ? dmi->uuid : NULL, md);
-	if (r)
-		goto err_destroy_dm;
+	r = dm_hash_insert(dmi->name, *dmi->uuid ? dmi->uuid : शून्य, md);
+	अगर (r)
+		जाओ err_destroy_dm;
 
 	/* alloc table */
 	r = dm_table_create(&t, get_mode(dmi), dmi->target_count, md);
-	if (r)
-		goto err_hash_remove;
+	अगर (r)
+		जाओ err_hash_हटाओ;
 
-	/* add targets */
-	for (i = 0; i < dmi->target_count; i++) {
+	/* add tarमाला_लो */
+	क्रम (i = 0; i < dmi->target_count; i++) अणु
 		r = dm_table_add_target(t, spec_array[i]->target_type,
 					(sector_t) spec_array[i]->sector_start,
 					(sector_t) spec_array[i]->length,
 					target_params_array[i]);
-		if (r) {
+		अगर (r) अणु
 			DMWARN("error adding target to table");
-			goto err_destroy_table;
-		}
-	}
+			जाओ err_destroy_table;
+		पूर्ण
+	पूर्ण
 
 	/* finish table */
 	r = dm_table_complete(t);
-	if (r)
-		goto err_destroy_table;
+	अगर (r)
+		जाओ err_destroy_table;
 
 	md->type = dm_table_get_type(t);
 	/* setup md->queue to reflect md's type (may block) */
 	r = dm_setup_md_queue(md, t);
-	if (r) {
+	अगर (r) अणु
 		DMWARN("unable to set up device queue for new table.");
-		goto err_destroy_table;
-	}
+		जाओ err_destroy_table;
+	पूर्ण
 
 	/* Set new map */
 	dm_suspend(md, 0);
 	old_map = dm_swap_table(md, t);
-	if (IS_ERR(old_map)) {
+	अगर (IS_ERR(old_map)) अणु
 		r = PTR_ERR(old_map);
-		goto err_destroy_table;
-	}
+		जाओ err_destroy_table;
+	पूर्ण
 	set_disk_ro(dm_disk(md), !!(dmi->flags & DM_READONLY_FLAG));
 
 	/* resume device */
 	r = dm_resume(md);
-	if (r)
-		goto err_destroy_table;
+	अगर (r)
+		जाओ err_destroy_table;
 
 	DMINFO("%s (%s) is ready", md->disk->disk_name, dmi->name);
 	dm_put(md);
-	return 0;
+	वापस 0;
 
 err_destroy_table:
 	dm_table_destroy(t);
-err_hash_remove:
-	(void) __hash_remove(__get_name_cell(dmi->name));
+err_hash_हटाओ:
+	(व्योम) __hash_हटाओ(__get_name_cell(dmi->name));
 	/* release reference from __get_name_cell */
 	dm_put(md);
 err_destroy_dm:
 	dm_put(md);
 	dm_destroy(md);
-	return r;
-}
+	वापस r;
+पूर्ण

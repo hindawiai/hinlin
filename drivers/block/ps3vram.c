@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * ps3vram - Use extra PS3 video ram as block device.
  *
@@ -6,230 +7,230 @@
  *
  * Based on the MTD ps3vram driver, which is
  * Copyright (c) 2007-2008 Jim Paris <jim@jtan.com>
- * Added support RSX DMA Vivien Chappelier <vivien.chappelier@free.fr>
+ * Added support RSX DMA Vivien Chappelier <vivien.chappelier@मुक्त.fr>
  */
 
-#include <linux/blkdev.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/proc_fs.h>
-#include <linux/seq_file.h>
-#include <linux/slab.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/slab.h>
 
-#include <asm/cell-regs.h>
-#include <asm/firmware.h>
-#include <asm/lv1call.h>
-#include <asm/ps3.h>
-#include <asm/ps3gpu.h>
-
-
-#define DEVICE_NAME		"ps3vram"
+#समावेश <यंत्र/cell-regs.h>
+#समावेश <यंत्र/firmware.h>
+#समावेश <यंत्र/lv1call.h>
+#समावेश <यंत्र/ps3.h>
+#समावेश <यंत्र/ps3gpu.h>
 
 
-#define XDR_BUF_SIZE (2 * 1024 * 1024) /* XDR buffer (must be 1MiB aligned) */
-#define XDR_IOIF 0x0c000000
+#घोषणा DEVICE_NAME		"ps3vram"
 
-#define FIFO_BASE XDR_IOIF
-#define FIFO_SIZE (64 * 1024)
 
-#define DMA_PAGE_SIZE (4 * 1024)
+#घोषणा XDR_BUF_SIZE (2 * 1024 * 1024) /* XDR buffer (must be 1MiB aligned) */
+#घोषणा XDR_IOIF 0x0c000000
 
-#define CACHE_PAGE_SIZE (256 * 1024)
-#define CACHE_PAGE_COUNT ((XDR_BUF_SIZE - FIFO_SIZE) / CACHE_PAGE_SIZE)
+#घोषणा FIFO_BASE XDR_IOIF
+#घोषणा FIFO_SIZE (64 * 1024)
 
-#define CACHE_OFFSET CACHE_PAGE_SIZE
-#define FIFO_OFFSET 0
+#घोषणा DMA_PAGE_SIZE (4 * 1024)
 
-#define CTRL_PUT 0x10
-#define CTRL_GET 0x11
-#define CTRL_TOP 0x15
+#घोषणा CACHE_PAGE_SIZE (256 * 1024)
+#घोषणा CACHE_PAGE_COUNT ((XDR_BUF_SIZE - FIFO_SIZE) / CACHE_PAGE_SIZE)
 
-#define UPLOAD_SUBCH	1
-#define DOWNLOAD_SUBCH	2
+#घोषणा CACHE_OFFSET CACHE_PAGE_SIZE
+#घोषणा FIFO_OFFSET 0
 
-#define NV_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN	0x0000030c
-#define NV_MEMORY_TO_MEMORY_FORMAT_NOTIFY	0x00000104
+#घोषणा CTRL_PUT 0x10
+#घोषणा CTRL_GET 0x11
+#घोषणा CTRL_TOP 0x15
 
-#define CACHE_PAGE_PRESENT 1
-#define CACHE_PAGE_DIRTY   2
+#घोषणा UPLOAD_SUBCH	1
+#घोषणा DOWNLOAD_SUBCH	2
 
-struct ps3vram_tag {
-	unsigned int address;
-	unsigned int flags;
-};
+#घोषणा NV_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN	0x0000030c
+#घोषणा NV_MEMORY_TO_MEMORY_FORMAT_NOTIFY	0x00000104
 
-struct ps3vram_cache {
-	unsigned int page_count;
-	unsigned int page_size;
-	struct ps3vram_tag *tags;
-	unsigned int hit;
-	unsigned int miss;
-};
+#घोषणा CACHE_PAGE_PRESENT 1
+#घोषणा CACHE_PAGE_सूचीTY   2
 
-struct ps3vram_priv {
-	struct request_queue *queue;
-	struct gendisk *gendisk;
+काष्ठा ps3vram_tag अणु
+	अचिन्हित पूर्णांक address;
+	अचिन्हित पूर्णांक flags;
+पूर्ण;
+
+काष्ठा ps3vram_cache अणु
+	अचिन्हित पूर्णांक page_count;
+	अचिन्हित पूर्णांक page_size;
+	काष्ठा ps3vram_tag *tags;
+	अचिन्हित पूर्णांक hit;
+	अचिन्हित पूर्णांक miss;
+पूर्ण;
+
+काष्ठा ps3vram_priv अणु
+	काष्ठा request_queue *queue;
+	काष्ठा gendisk *gendisk;
 
 	u64 size;
 
 	u64 memory_handle;
 	u64 context_handle;
 	u32 __iomem *ctrl;
-	void __iomem *reports;
+	व्योम __iomem *reports;
 	u8 *xdr_buf;
 
-	u32 *fifo_base;
-	u32 *fifo_ptr;
+	u32 *fअगरo_base;
+	u32 *fअगरo_ptr;
 
-	struct ps3vram_cache cache;
+	काष्ठा ps3vram_cache cache;
 
 	spinlock_t lock;	/* protecting list of bios */
-	struct bio_list list;
-};
+	काष्ठा bio_list list;
+पूर्ण;
 
 
-static int ps3vram_major;
+अटल पूर्णांक ps3vram_major;
 
-#define DMA_NOTIFIER_HANDLE_BASE 0x66604200 /* first DMA notifier handle */
-#define DMA_NOTIFIER_OFFSET_BASE 0x1000     /* first DMA notifier offset */
-#define DMA_NOTIFIER_SIZE        0x40
-#define NOTIFIER 7	/* notifier used for completion report */
+#घोषणा DMA_NOTIFIER_HANDLE_BASE 0x66604200 /* first DMA notअगरier handle */
+#घोषणा DMA_NOTIFIER_OFFSET_BASE 0x1000     /* first DMA notअगरier offset */
+#घोषणा DMA_NOTIFIER_SIZE        0x40
+#घोषणा NOTIFIER 7	/* notअगरier used क्रम completion report */
 
-static char *size = "256M";
-module_param(size, charp, 0);
+अटल अक्षर *size = "256M";
+module_param(size, अक्षरp, 0);
 MODULE_PARM_DESC(size, "memory size");
 
-static u32 __iomem *ps3vram_get_notifier(void __iomem *reports, int notifier)
-{
-	return reports + DMA_NOTIFIER_OFFSET_BASE +
-	       DMA_NOTIFIER_SIZE * notifier;
-}
+अटल u32 __iomem *ps3vram_get_notअगरier(व्योम __iomem *reports, पूर्णांक notअगरier)
+अणु
+	वापस reports + DMA_NOTIFIER_OFFSET_BASE +
+	       DMA_NOTIFIER_SIZE * notअगरier;
+पूर्ण
 
-static void ps3vram_notifier_reset(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	u32 __iomem *notify = ps3vram_get_notifier(priv->reports, NOTIFIER);
-	int i;
+अटल व्योम ps3vram_notअगरier_reset(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	u32 __iomem *notअगरy = ps3vram_get_notअगरier(priv->reports, NOTIFIER);
+	पूर्णांक i;
 
-	for (i = 0; i < 4; i++)
-		iowrite32be(0xffffffff, notify + i);
-}
+	क्रम (i = 0; i < 4; i++)
+		ioग_लिखो32be(0xffffffff, notअगरy + i);
+पूर्ण
 
-static int ps3vram_notifier_wait(struct ps3_system_bus_device *dev,
-				 unsigned int timeout_ms)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	u32 __iomem *notify = ps3vram_get_notifier(priv->reports, NOTIFIER);
-	unsigned long timeout;
+अटल पूर्णांक ps3vram_notअगरier_रुको(काष्ठा ps3_प्रणाली_bus_device *dev,
+				 अचिन्हित पूर्णांक समयout_ms)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	u32 __iomem *notअगरy = ps3vram_get_notअगरier(priv->reports, NOTIFIER);
+	अचिन्हित दीर्घ समयout;
 
-	for (timeout = 20; timeout; timeout--) {
-		if (!ioread32be(notify + 3))
-			return 0;
+	क्रम (समयout = 20; समयout; समयout--) अणु
+		अगर (!ioपढ़ो32be(notअगरy + 3))
+			वापस 0;
 		udelay(10);
-	}
+	पूर्ण
 
-	timeout = jiffies + msecs_to_jiffies(timeout_ms);
+	समयout = jअगरfies + msecs_to_jअगरfies(समयout_ms);
 
-	do {
-		if (!ioread32be(notify + 3))
-			return 0;
+	करो अणु
+		अगर (!ioपढ़ो32be(notअगरy + 3))
+			वापस 0;
 		msleep(1);
-	} while (time_before(jiffies, timeout));
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static void ps3vram_init_ring(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+अटल व्योम ps3vram_init_ring(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
 
-	iowrite32be(FIFO_BASE + FIFO_OFFSET, priv->ctrl + CTRL_PUT);
-	iowrite32be(FIFO_BASE + FIFO_OFFSET, priv->ctrl + CTRL_GET);
-}
+	ioग_लिखो32be(FIFO_BASE + FIFO_OFFSET, priv->ctrl + CTRL_PUT);
+	ioग_लिखो32be(FIFO_BASE + FIFO_OFFSET, priv->ctrl + CTRL_GET);
+पूर्ण
 
-static int ps3vram_wait_ring(struct ps3_system_bus_device *dev,
-			     unsigned int timeout_ms)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	unsigned long timeout = jiffies + msecs_to_jiffies(timeout_ms);
+अटल पूर्णांक ps3vram_रुको_ring(काष्ठा ps3_प्रणाली_bus_device *dev,
+			     अचिन्हित पूर्णांक समयout_ms)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	अचिन्हित दीर्घ समयout = jअगरfies + msecs_to_jअगरfies(समयout_ms);
 
-	do {
-		if (ioread32be(priv->ctrl + CTRL_PUT) == ioread32be(priv->ctrl + CTRL_GET))
-			return 0;
+	करो अणु
+		अगर (ioपढ़ो32be(priv->ctrl + CTRL_PUT) == ioपढ़ो32be(priv->ctrl + CTRL_GET))
+			वापस 0;
 		msleep(1);
-	} while (time_before(jiffies, timeout));
+	पूर्ण जबतक (समय_beक्रमe(jअगरfies, समयout));
 
 	dev_warn(&dev->core, "FIFO timeout (%08x/%08x/%08x)\n",
-		 ioread32be(priv->ctrl + CTRL_PUT), ioread32be(priv->ctrl + CTRL_GET),
-		 ioread32be(priv->ctrl + CTRL_TOP));
+		 ioपढ़ो32be(priv->ctrl + CTRL_PUT), ioपढ़ो32be(priv->ctrl + CTRL_GET),
+		 ioपढ़ो32be(priv->ctrl + CTRL_TOP));
 
-	return -ETIMEDOUT;
-}
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static void ps3vram_out_ring(struct ps3vram_priv *priv, u32 data)
-{
-	*(priv->fifo_ptr)++ = data;
-}
+अटल व्योम ps3vram_out_ring(काष्ठा ps3vram_priv *priv, u32 data)
+अणु
+	*(priv->fअगरo_ptr)++ = data;
+पूर्ण
 
-static void ps3vram_begin_ring(struct ps3vram_priv *priv, u32 chan, u32 tag,
+अटल व्योम ps3vram_begin_ring(काष्ठा ps3vram_priv *priv, u32 chan, u32 tag,
 			       u32 size)
-{
+अणु
 	ps3vram_out_ring(priv, (size << 18) | (chan << 13) | tag);
-}
+पूर्ण
 
-static void ps3vram_rewind_ring(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	int status;
+अटल व्योम ps3vram_शुरुआत_ring(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	पूर्णांक status;
 
 	ps3vram_out_ring(priv, 0x20000000 | (FIFO_BASE + FIFO_OFFSET));
 
-	iowrite32be(FIFO_BASE + FIFO_OFFSET, priv->ctrl + CTRL_PUT);
+	ioग_लिखो32be(FIFO_BASE + FIFO_OFFSET, priv->ctrl + CTRL_PUT);
 
-	/* asking the HV for a blit will kick the FIFO */
+	/* asking the HV क्रम a blit will kick the FIFO */
 	status = lv1_gpu_fb_blit(priv->context_handle, 0, 0, 0, 0);
-	if (status)
+	अगर (status)
 		dev_err(&dev->core, "%s: lv1_gpu_fb_blit failed %d\n",
 			__func__, status);
 
-	priv->fifo_ptr = priv->fifo_base;
-}
+	priv->fअगरo_ptr = priv->fअगरo_base;
+पूर्ण
 
-static void ps3vram_fire_ring(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	int status;
+अटल व्योम ps3vram_fire_ring(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	पूर्णांक status;
 
 	mutex_lock(&ps3_gpu_mutex);
 
-	iowrite32be(FIFO_BASE + FIFO_OFFSET + (priv->fifo_ptr - priv->fifo_base)
-		* sizeof(u32), priv->ctrl + CTRL_PUT);
+	ioग_लिखो32be(FIFO_BASE + FIFO_OFFSET + (priv->fअगरo_ptr - priv->fअगरo_base)
+		* माप(u32), priv->ctrl + CTRL_PUT);
 
-	/* asking the HV for a blit will kick the FIFO */
+	/* asking the HV क्रम a blit will kick the FIFO */
 	status = lv1_gpu_fb_blit(priv->context_handle, 0, 0, 0, 0);
-	if (status)
+	अगर (status)
 		dev_err(&dev->core, "%s: lv1_gpu_fb_blit failed %d\n",
 			__func__, status);
 
-	if ((priv->fifo_ptr - priv->fifo_base) * sizeof(u32) >
-	    FIFO_SIZE - 1024) {
+	अगर ((priv->fअगरo_ptr - priv->fअगरo_base) * माप(u32) >
+	    FIFO_SIZE - 1024) अणु
 		dev_dbg(&dev->core, "FIFO full, rewinding\n");
-		ps3vram_wait_ring(dev, 200);
-		ps3vram_rewind_ring(dev);
-	}
+		ps3vram_रुको_ring(dev, 200);
+		ps3vram_शुरुआत_ring(dev);
+	पूर्ण
 
 	mutex_unlock(&ps3_gpu_mutex);
-}
+पूर्ण
 
-static void ps3vram_bind(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+अटल व्योम ps3vram_bind(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
 
 	ps3vram_begin_ring(priv, UPLOAD_SUBCH, 0, 1);
 	ps3vram_out_ring(priv, 0x31337303);
 	ps3vram_begin_ring(priv, UPLOAD_SUBCH, 0x180, 3);
 	ps3vram_out_ring(priv, DMA_NOTIFIER_HANDLE_BASE + NOTIFIER);
-	ps3vram_out_ring(priv, 0xfeed0001);	/* DMA system RAM instance */
+	ps3vram_out_ring(priv, 0xfeed0001);	/* DMA प्रणाली RAM instance */
 	ps3vram_out_ring(priv, 0xfeed0000);     /* DMA video RAM instance */
 
 	ps3vram_begin_ring(priv, DOWNLOAD_SUBCH, 0, 1);
@@ -237,16 +238,16 @@ static void ps3vram_bind(struct ps3_system_bus_device *dev)
 	ps3vram_begin_ring(priv, DOWNLOAD_SUBCH, 0x180, 3);
 	ps3vram_out_ring(priv, DMA_NOTIFIER_HANDLE_BASE + NOTIFIER);
 	ps3vram_out_ring(priv, 0xfeed0000);	/* DMA video RAM instance */
-	ps3vram_out_ring(priv, 0xfeed0001);	/* DMA system RAM instance */
+	ps3vram_out_ring(priv, 0xfeed0001);	/* DMA प्रणाली RAM instance */
 
 	ps3vram_fire_ring(dev);
-}
+पूर्ण
 
-static int ps3vram_upload(struct ps3_system_bus_device *dev,
-			  unsigned int src_offset, unsigned int dst_offset,
-			  int len, int count)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+अटल पूर्णांक ps3vram_upload(काष्ठा ps3_प्रणाली_bus_device *dev,
+			  अचिन्हित पूर्णांक src_offset, अचिन्हित पूर्णांक dst_offset,
+			  पूर्णांक len, पूर्णांक count)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
 
 	ps3vram_begin_ring(priv, UPLOAD_SUBCH,
 			   NV_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 8);
@@ -259,26 +260,26 @@ static int ps3vram_upload(struct ps3_system_bus_device *dev,
 	ps3vram_out_ring(priv, (1 << 8) | 1);
 	ps3vram_out_ring(priv, 0);
 
-	ps3vram_notifier_reset(dev);
+	ps3vram_notअगरier_reset(dev);
 	ps3vram_begin_ring(priv, UPLOAD_SUBCH,
 			   NV_MEMORY_TO_MEMORY_FORMAT_NOTIFY, 1);
 	ps3vram_out_ring(priv, 0);
 	ps3vram_begin_ring(priv, UPLOAD_SUBCH, 0x100, 1);
 	ps3vram_out_ring(priv, 0);
 	ps3vram_fire_ring(dev);
-	if (ps3vram_notifier_wait(dev, 200) < 0) {
+	अगर (ps3vram_notअगरier_रुको(dev, 200) < 0) अणु
 		dev_warn(&dev->core, "%s: Notifier timeout\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ps3vram_download(struct ps3_system_bus_device *dev,
-			    unsigned int src_offset, unsigned int dst_offset,
-			    int len, int count)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+अटल पूर्णांक ps3vram_करोwnload(काष्ठा ps3_प्रणाली_bus_device *dev,
+			    अचिन्हित पूर्णांक src_offset, अचिन्हित पूर्णांक dst_offset,
+			    पूर्णांक len, पूर्णांक count)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
 
 	ps3vram_begin_ring(priv, DOWNLOAD_SUBCH,
 			   NV_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 8);
@@ -291,159 +292,159 @@ static int ps3vram_download(struct ps3_system_bus_device *dev,
 	ps3vram_out_ring(priv, (1 << 8) | 1);
 	ps3vram_out_ring(priv, 0);
 
-	ps3vram_notifier_reset(dev);
+	ps3vram_notअगरier_reset(dev);
 	ps3vram_begin_ring(priv, DOWNLOAD_SUBCH,
 			   NV_MEMORY_TO_MEMORY_FORMAT_NOTIFY, 1);
 	ps3vram_out_ring(priv, 0);
 	ps3vram_begin_ring(priv, DOWNLOAD_SUBCH, 0x100, 1);
 	ps3vram_out_ring(priv, 0);
 	ps3vram_fire_ring(dev);
-	if (ps3vram_notifier_wait(dev, 200) < 0) {
+	अगर (ps3vram_notअगरier_रुको(dev, 200) < 0) अणु
 		dev_warn(&dev->core, "%s: Notifier timeout\n", __func__);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ps3vram_cache_evict(struct ps3_system_bus_device *dev, int entry)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	struct ps3vram_cache *cache = &priv->cache;
+अटल व्योम ps3vram_cache_evict(काष्ठा ps3_प्रणाली_bus_device *dev, पूर्णांक entry)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	काष्ठा ps3vram_cache *cache = &priv->cache;
 
-	if (!(cache->tags[entry].flags & CACHE_PAGE_DIRTY))
-		return;
+	अगर (!(cache->tags[entry].flags & CACHE_PAGE_सूचीTY))
+		वापस;
 
 	dev_dbg(&dev->core, "Flushing %d: 0x%08x\n", entry,
 		cache->tags[entry].address);
-	if (ps3vram_upload(dev, CACHE_OFFSET + entry * cache->page_size,
+	अगर (ps3vram_upload(dev, CACHE_OFFSET + entry * cache->page_size,
 			   cache->tags[entry].address, DMA_PAGE_SIZE,
-			   cache->page_size / DMA_PAGE_SIZE) < 0) {
+			   cache->page_size / DMA_PAGE_SIZE) < 0) अणु
 		dev_err(&dev->core,
 			"Failed to upload from 0x%x to " "0x%x size 0x%x\n",
 			entry * cache->page_size, cache->tags[entry].address,
 			cache->page_size);
-	}
-	cache->tags[entry].flags &= ~CACHE_PAGE_DIRTY;
-}
+	पूर्ण
+	cache->tags[entry].flags &= ~CACHE_PAGE_सूचीTY;
+पूर्ण
 
-static void ps3vram_cache_load(struct ps3_system_bus_device *dev, int entry,
-			       unsigned int address)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	struct ps3vram_cache *cache = &priv->cache;
+अटल व्योम ps3vram_cache_load(काष्ठा ps3_प्रणाली_bus_device *dev, पूर्णांक entry,
+			       अचिन्हित पूर्णांक address)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	काष्ठा ps3vram_cache *cache = &priv->cache;
 
 	dev_dbg(&dev->core, "Fetching %d: 0x%08x\n", entry, address);
-	if (ps3vram_download(dev, address,
+	अगर (ps3vram_करोwnload(dev, address,
 			     CACHE_OFFSET + entry * cache->page_size,
 			     DMA_PAGE_SIZE,
-			     cache->page_size / DMA_PAGE_SIZE) < 0) {
+			     cache->page_size / DMA_PAGE_SIZE) < 0) अणु
 		dev_err(&dev->core,
 			"Failed to download from 0x%x to 0x%x size 0x%x\n",
 			address, entry * cache->page_size, cache->page_size);
-	}
+	पूर्ण
 
 	cache->tags[entry].address = address;
 	cache->tags[entry].flags |= CACHE_PAGE_PRESENT;
-}
+पूर्ण
 
 
-static void ps3vram_cache_flush(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	struct ps3vram_cache *cache = &priv->cache;
-	int i;
+अटल व्योम ps3vram_cache_flush(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	काष्ठा ps3vram_cache *cache = &priv->cache;
+	पूर्णांक i;
 
 	dev_dbg(&dev->core, "FLUSH\n");
-	for (i = 0; i < cache->page_count; i++) {
+	क्रम (i = 0; i < cache->page_count; i++) अणु
 		ps3vram_cache_evict(dev, i);
 		cache->tags[i].flags = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static unsigned int ps3vram_cache_match(struct ps3_system_bus_device *dev,
+अटल अचिन्हित पूर्णांक ps3vram_cache_match(काष्ठा ps3_प्रणाली_bus_device *dev,
 					loff_t address)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	struct ps3vram_cache *cache = &priv->cache;
-	unsigned int base;
-	unsigned int offset;
-	int i;
-	static int counter;
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	काष्ठा ps3vram_cache *cache = &priv->cache;
+	अचिन्हित पूर्णांक base;
+	अचिन्हित पूर्णांक offset;
+	पूर्णांक i;
+	अटल पूर्णांक counter;
 
-	offset = (unsigned int) (address & (cache->page_size - 1));
-	base = (unsigned int) (address - offset);
+	offset = (अचिन्हित पूर्णांक) (address & (cache->page_size - 1));
+	base = (अचिन्हित पूर्णांक) (address - offset);
 
 	/* fully associative check */
-	for (i = 0; i < cache->page_count; i++) {
-		if ((cache->tags[i].flags & CACHE_PAGE_PRESENT) &&
-		    cache->tags[i].address == base) {
+	क्रम (i = 0; i < cache->page_count; i++) अणु
+		अगर ((cache->tags[i].flags & CACHE_PAGE_PRESENT) &&
+		    cache->tags[i].address == base) अणु
 			cache->hit++;
 			dev_dbg(&dev->core, "Found entry %d: 0x%08x\n", i,
 				cache->tags[i].address);
-			return i;
-		}
-	}
+			वापस i;
+		पूर्ण
+	पूर्ण
 
-	/* choose a random entry */
-	i = (jiffies + (counter++)) % cache->page_count;
+	/* choose a अक्रमom entry */
+	i = (jअगरfies + (counter++)) % cache->page_count;
 	dev_dbg(&dev->core, "Using entry %d\n", i);
 
 	ps3vram_cache_evict(dev, i);
 	ps3vram_cache_load(dev, i, base);
 
 	cache->miss++;
-	return i;
-}
+	वापस i;
+पूर्ण
 
-static int ps3vram_cache_init(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+अटल पूर्णांक ps3vram_cache_init(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
 
 	priv->cache.page_count = CACHE_PAGE_COUNT;
 	priv->cache.page_size = CACHE_PAGE_SIZE;
-	priv->cache.tags = kcalloc(CACHE_PAGE_COUNT,
-				   sizeof(struct ps3vram_tag),
+	priv->cache.tags = kसुस्मृति(CACHE_PAGE_COUNT,
+				   माप(काष्ठा ps3vram_tag),
 				   GFP_KERNEL);
-	if (!priv->cache.tags)
-		return -ENOMEM;
+	अगर (!priv->cache.tags)
+		वापस -ENOMEM;
 
 	dev_info(&dev->core, "Created ram cache: %d entries, %d KiB each\n",
 		CACHE_PAGE_COUNT, CACHE_PAGE_SIZE / 1024);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ps3vram_cache_cleanup(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+अटल व्योम ps3vram_cache_cleanup(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
 
 	ps3vram_cache_flush(dev);
-	kfree(priv->cache.tags);
-}
+	kमुक्त(priv->cache.tags);
+पूर्ण
 
-static blk_status_t ps3vram_read(struct ps3_system_bus_device *dev, loff_t from,
-			size_t len, size_t *retlen, u_char *buf)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	unsigned int cached, count;
+अटल blk_status_t ps3vram_पढ़ो(काष्ठा ps3_प्रणाली_bus_device *dev, loff_t from,
+			माप_प्रकार len, माप_प्रकार *retlen, u_अक्षर *buf)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	अचिन्हित पूर्णांक cached, count;
 
 	dev_dbg(&dev->core, "%s: from=0x%08x len=0x%zx\n", __func__,
-		(unsigned int)from, len);
+		(अचिन्हित पूर्णांक)from, len);
 
-	if (from >= priv->size)
-		return BLK_STS_IOERR;
+	अगर (from >= priv->size)
+		वापस BLK_STS_IOERR;
 
-	if (len > priv->size - from)
+	अगर (len > priv->size - from)
 		len = priv->size - from;
 
 	/* Copy from vram to buf */
 	count = len;
-	while (count) {
-		unsigned int offset, avail;
-		unsigned int entry;
+	जबतक (count) अणु
+		अचिन्हित पूर्णांक offset, avail;
+		अचिन्हित पूर्णांक entry;
 
-		offset = (unsigned int) (from & (priv->cache.page_size - 1));
+		offset = (अचिन्हित पूर्णांक) (from & (priv->cache.page_size - 1));
 		avail  = priv->cache.page_size - offset;
 
 		entry = ps3vram_cache_match(dev, from);
@@ -451,120 +452,120 @@ static blk_status_t ps3vram_read(struct ps3_system_bus_device *dev, loff_t from,
 
 		dev_dbg(&dev->core, "%s: from=%08x cached=%08x offset=%08x "
 			"avail=%08x count=%08x\n", __func__,
-			(unsigned int)from, cached, offset, avail, count);
+			(अचिन्हित पूर्णांक)from, cached, offset, avail, count);
 
-		if (avail > count)
+		अगर (avail > count)
 			avail = count;
-		memcpy(buf, priv->xdr_buf + cached, avail);
+		स_नकल(buf, priv->xdr_buf + cached, avail);
 
 		buf += avail;
 		count -= avail;
 		from += avail;
-	}
+	पूर्ण
 
 	*retlen = len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static blk_status_t ps3vram_write(struct ps3_system_bus_device *dev, loff_t to,
-			 size_t len, size_t *retlen, const u_char *buf)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	unsigned int cached, count;
+अटल blk_status_t ps3vram_ग_लिखो(काष्ठा ps3_प्रणाली_bus_device *dev, loff_t to,
+			 माप_प्रकार len, माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	अचिन्हित पूर्णांक cached, count;
 
-	if (to >= priv->size)
-		return BLK_STS_IOERR;
+	अगर (to >= priv->size)
+		वापस BLK_STS_IOERR;
 
-	if (len > priv->size - to)
+	अगर (len > priv->size - to)
 		len = priv->size - to;
 
 	/* Copy from buf to vram */
 	count = len;
-	while (count) {
-		unsigned int offset, avail;
-		unsigned int entry;
+	जबतक (count) अणु
+		अचिन्हित पूर्णांक offset, avail;
+		अचिन्हित पूर्णांक entry;
 
-		offset = (unsigned int) (to & (priv->cache.page_size - 1));
+		offset = (अचिन्हित पूर्णांक) (to & (priv->cache.page_size - 1));
 		avail  = priv->cache.page_size - offset;
 
 		entry = ps3vram_cache_match(dev, to);
 		cached = CACHE_OFFSET + entry * priv->cache.page_size + offset;
 
 		dev_dbg(&dev->core, "%s: to=%08x cached=%08x offset=%08x "
-			"avail=%08x count=%08x\n", __func__, (unsigned int)to,
+			"avail=%08x count=%08x\n", __func__, (अचिन्हित पूर्णांक)to,
 			cached, offset, avail, count);
 
-		if (avail > count)
+		अगर (avail > count)
 			avail = count;
-		memcpy(priv->xdr_buf + cached, buf, avail);
+		स_नकल(priv->xdr_buf + cached, buf, avail);
 
-		priv->cache.tags[entry].flags |= CACHE_PAGE_DIRTY;
+		priv->cache.tags[entry].flags |= CACHE_PAGE_सूचीTY;
 
 		buf += avail;
 		count -= avail;
 		to += avail;
-	}
+	पूर्ण
 
 	*retlen = len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ps3vram_proc_show(struct seq_file *m, void *v)
-{
-	struct ps3vram_priv *priv = m->private;
+अटल पूर्णांक ps3vram_proc_show(काष्ठा seq_file *m, व्योम *v)
+अणु
+	काष्ठा ps3vram_priv *priv = m->निजी;
 
-	seq_printf(m, "hit:%u\nmiss:%u\n", priv->cache.hit, priv->cache.miss);
-	return 0;
-}
+	seq_म_लिखो(m, "hit:%u\nmiss:%u\n", priv->cache.hit, priv->cache.miss);
+	वापस 0;
+पूर्ण
 
-static void ps3vram_proc_init(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	struct proc_dir_entry *pde;
+अटल व्योम ps3vram_proc_init(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	काष्ठा proc_dir_entry *pde;
 
-	pde = proc_create_single_data(DEVICE_NAME, 0444, NULL,
+	pde = proc_create_single_data(DEVICE_NAME, 0444, शून्य,
 			ps3vram_proc_show, priv);
-	if (!pde)
+	अगर (!pde)
 		dev_warn(&dev->core, "failed to create /proc entry\n");
-}
+पूर्ण
 
-static struct bio *ps3vram_do_bio(struct ps3_system_bus_device *dev,
-				  struct bio *bio)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	int write = bio_data_dir(bio) == WRITE;
-	const char *op = write ? "write" : "read";
+अटल काष्ठा bio *ps3vram_करो_bio(काष्ठा ps3_प्रणाली_bus_device *dev,
+				  काष्ठा bio *bio)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	पूर्णांक ग_लिखो = bio_data_dir(bio) == WRITE;
+	स्थिर अक्षर *op = ग_लिखो ? "write" : "read";
 	loff_t offset = bio->bi_iter.bi_sector << 9;
 	blk_status_t error = 0;
-	struct bio_vec bvec;
-	struct bvec_iter iter;
-	struct bio *next;
+	काष्ठा bio_vec bvec;
+	काष्ठा bvec_iter iter;
+	काष्ठा bio *next;
 
-	bio_for_each_segment(bvec, bio, iter) {
-		/* PS3 is ppc64, so we don't handle highmem */
-		char *ptr = page_address(bvec.bv_page) + bvec.bv_offset;
-		size_t len = bvec.bv_len, retlen;
+	bio_क्रम_each_segment(bvec, bio, iter) अणु
+		/* PS3 is ppc64, so we करोn't handle highmem */
+		अक्षर *ptr = page_address(bvec.bv_page) + bvec.bv_offset;
+		माप_प्रकार len = bvec.bv_len, retlen;
 
 		dev_dbg(&dev->core, "    %s %zu bytes at offset %llu\n", op,
 			len, offset);
-		if (write)
-			error = ps3vram_write(dev, offset, len, &retlen, ptr);
-		else
-			error = ps3vram_read(dev, offset, len, &retlen, ptr);
+		अगर (ग_लिखो)
+			error = ps3vram_ग_लिखो(dev, offset, len, &retlen, ptr);
+		अन्यथा
+			error = ps3vram_पढ़ो(dev, offset, len, &retlen, ptr);
 
-		if (error) {
+		अगर (error) अणु
 			dev_err(&dev->core, "%s failed\n", op);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (retlen != len) {
+		अगर (retlen != len) अणु
 			dev_err(&dev->core, "Short %s\n", op);
 			error = BLK_STS_IOERR;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		offset += len;
-	}
+	पूर्ण
 
 	dev_dbg(&dev->core, "%s completed\n", op);
 
@@ -576,14 +577,14 @@ out:
 
 	bio->bi_status = error;
 	bio_endio(bio);
-	return next;
-}
+	वापस next;
+पूर्ण
 
-static blk_qc_t ps3vram_submit_bio(struct bio *bio)
-{
-	struct ps3_system_bus_device *dev = bio->bi_bdev->bd_disk->private_data;
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
-	int busy;
+अटल blk_qc_t ps3vram_submit_bio(काष्ठा bio *bio)
+अणु
+	काष्ठा ps3_प्रणाली_bus_device *dev = bio->bi_bdev->bd_disk->निजी_data;
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
+	पूर्णांक busy;
 
 	dev_dbg(&dev->core, "%s\n", __func__);
 
@@ -594,96 +595,96 @@ static blk_qc_t ps3vram_submit_bio(struct bio *bio)
 	bio_list_add(&priv->list, bio);
 	spin_unlock_irq(&priv->lock);
 
-	if (busy)
-		return BLK_QC_T_NONE;
+	अगर (busy)
+		वापस BLK_QC_T_NONE;
 
-	do {
-		bio = ps3vram_do_bio(dev, bio);
-	} while (bio);
+	करो अणु
+		bio = ps3vram_करो_bio(dev, bio);
+	पूर्ण जबतक (bio);
 
-	return BLK_QC_T_NONE;
-}
+	वापस BLK_QC_T_NONE;
+पूर्ण
 
-static const struct block_device_operations ps3vram_fops = {
+अटल स्थिर काष्ठा block_device_operations ps3vram_fops = अणु
 	.owner		= THIS_MODULE,
 	.submit_bio	= ps3vram_submit_bio,
-};
+पूर्ण;
 
-static int ps3vram_probe(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv;
-	int error, status;
-	struct request_queue *queue;
-	struct gendisk *gendisk;
+अटल पूर्णांक ps3vram_probe(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv;
+	पूर्णांक error, status;
+	काष्ठा request_queue *queue;
+	काष्ठा gendisk *gendisk;
 	u64 ddr_size, ddr_lpar, ctrl_lpar, info_lpar, reports_lpar,
 	    reports_size, xdr_lpar;
-	char *rest;
+	अक्षर *rest;
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv) अणु
 		error = -ENOMEM;
-		goto fail;
-	}
+		जाओ fail;
+	पूर्ण
 
 	spin_lock_init(&priv->lock);
 	bio_list_init(&priv->list);
-	ps3_system_bus_set_drvdata(dev, priv);
+	ps3_प्रणाली_bus_set_drvdata(dev, priv);
 
 	/* Allocate XDR buffer (1MiB aligned) */
-	priv->xdr_buf = (void *)__get_free_pages(GFP_KERNEL,
+	priv->xdr_buf = (व्योम *)__get_मुक्त_pages(GFP_KERNEL,
 		get_order(XDR_BUF_SIZE));
-	if (priv->xdr_buf == NULL) {
+	अगर (priv->xdr_buf == शून्य) अणु
 		dev_err(&dev->core, "Could not allocate XDR buffer\n");
 		error = -ENOMEM;
-		goto fail_free_priv;
-	}
+		जाओ fail_मुक्त_priv;
+	पूर्ण
 
 	/* Put FIFO at begginning of XDR buffer */
-	priv->fifo_base = (u32 *) (priv->xdr_buf + FIFO_OFFSET);
-	priv->fifo_ptr = priv->fifo_base;
+	priv->fअगरo_base = (u32 *) (priv->xdr_buf + FIFO_OFFSET);
+	priv->fअगरo_ptr = priv->fअगरo_base;
 
-	/* XXX: Need to open GPU, in case ps3fb or snd_ps3 aren't loaded */
-	if (ps3_open_hv_device(dev)) {
+	/* XXX: Need to खोलो GPU, in हाल ps3fb or snd_ps3 aren't loaded */
+	अगर (ps3_खोलो_hv_device(dev)) अणु
 		dev_err(&dev->core, "ps3_open_hv_device failed\n");
 		error = -EAGAIN;
-		goto out_free_xdr_buf;
-	}
+		जाओ out_मुक्त_xdr_buf;
+	पूर्ण
 
 	/* Request memory */
 	status = -1;
 	ddr_size = ALIGN(memparse(size, &rest), 1024*1024);
-	if (!ddr_size) {
+	अगर (!ddr_size) अणु
 		dev_err(&dev->core, "Specified size is too small\n");
 		error = -EINVAL;
-		goto out_close_gpu;
-	}
+		जाओ out_बंद_gpu;
+	पूर्ण
 
-	while (ddr_size > 0) {
+	जबतक (ddr_size > 0) अणु
 		status = lv1_gpu_memory_allocate(ddr_size, 0, 0, 0, 0,
 						 &priv->memory_handle,
 						 &ddr_lpar);
-		if (!status)
-			break;
+		अगर (!status)
+			अवरोध;
 		ddr_size -= 1024*1024;
-	}
-	if (status) {
+	पूर्ण
+	अगर (status) अणु
 		dev_err(&dev->core, "lv1_gpu_memory_allocate failed %d\n",
 			status);
 		error = -ENOMEM;
-		goto out_close_gpu;
-	}
+		जाओ out_बंद_gpu;
+	पूर्ण
 
 	/* Request context */
 	status = lv1_gpu_context_allocate(priv->memory_handle, 0,
 					  &priv->context_handle, &ctrl_lpar,
 					  &info_lpar, &reports_lpar,
 					  &reports_size);
-	if (status) {
+	अगर (status) अणु
 		dev_err(&dev->core, "lv1_gpu_context_allocate failed %d\n",
 			status);
 		error = -ENOMEM;
-		goto out_free_memory;
-	}
+		जाओ out_मुक्त_memory;
+	पूर्ण
 
 	/* Map XDR buffer to RSX */
 	xdr_lpar = ps3_mm_phys_to_lpar(__pa(priv->xdr_buf));
@@ -691,26 +692,26 @@ static int ps3vram_probe(struct ps3_system_bus_device *dev)
 				       xdr_lpar, XDR_BUF_SIZE,
 				       CBE_IOPTE_PP_W | CBE_IOPTE_PP_R |
 				       CBE_IOPTE_M);
-	if (status) {
+	अगर (status) अणु
 		dev_err(&dev->core, "lv1_gpu_context_iomap failed %d\n",
 			status);
 		error = -ENOMEM;
-		goto out_free_context;
-	}
+		जाओ out_मुक्त_context;
+	पूर्ण
 
 	priv->ctrl = ioremap(ctrl_lpar, 64 * 1024);
-	if (!priv->ctrl) {
+	अगर (!priv->ctrl) अणु
 		dev_err(&dev->core, "ioremap CTRL failed\n");
 		error = -ENOMEM;
-		goto out_unmap_context;
-	}
+		जाओ out_unmap_context;
+	पूर्ण
 
 	priv->reports = ioremap(reports_lpar, reports_size);
-	if (!priv->reports) {
+	अगर (!priv->reports) अणु
 		dev_err(&dev->core, "ioremap REPORTS failed\n");
 		error = -ENOMEM;
-		goto out_unmap_ctrl;
-	}
+		जाओ out_unmap_ctrl;
+	पूर्ण
 
 	mutex_lock(&ps3_gpu_mutex);
 	ps3vram_init_ring(dev);
@@ -721,27 +722,27 @@ static int ps3vram_probe(struct ps3_system_bus_device *dev)
 	ps3vram_bind(dev);
 
 	mutex_lock(&ps3_gpu_mutex);
-	error = ps3vram_wait_ring(dev, 100);
+	error = ps3vram_रुको_ring(dev, 100);
 	mutex_unlock(&ps3_gpu_mutex);
-	if (error < 0) {
+	अगर (error < 0) अणु
 		dev_err(&dev->core, "Failed to initialize channels\n");
 		error = -ETIMEDOUT;
-		goto out_unmap_reports;
-	}
+		जाओ out_unmap_reports;
+	पूर्ण
 
 	error = ps3vram_cache_init(dev);
-	if (error < 0) {
-		goto out_unmap_reports;
-	}
+	अगर (error < 0) अणु
+		जाओ out_unmap_reports;
+	पूर्ण
 
 	ps3vram_proc_init(dev);
 
 	queue = blk_alloc_queue(NUMA_NO_NODE);
-	if (!queue) {
+	अगर (!queue) अणु
 		dev_err(&dev->core, "blk_alloc_queue failed\n");
 		error = -ENOMEM;
-		goto out_cache_cleanup;
-	}
+		जाओ out_cache_cleanup;
+	पूर्ण
 
 	priv->queue = queue;
 	blk_queue_max_segments(queue, BLK_MAX_SEGMENTS);
@@ -749,31 +750,31 @@ static int ps3vram_probe(struct ps3_system_bus_device *dev)
 	blk_queue_max_hw_sectors(queue, BLK_SAFE_MAX_SECTORS);
 
 	gendisk = alloc_disk(1);
-	if (!gendisk) {
+	अगर (!gendisk) अणु
 		dev_err(&dev->core, "alloc_disk failed\n");
 		error = -ENOMEM;
-		goto fail_cleanup_queue;
-	}
+		जाओ fail_cleanup_queue;
+	पूर्ण
 
 	priv->gendisk = gendisk;
 	gendisk->major = ps3vram_major;
 	gendisk->first_minor = 0;
 	gendisk->fops = &ps3vram_fops;
 	gendisk->queue = queue;
-	gendisk->private_data = dev;
-	strlcpy(gendisk->disk_name, DEVICE_NAME, sizeof(gendisk->disk_name));
+	gendisk->निजी_data = dev;
+	strlcpy(gendisk->disk_name, DEVICE_NAME, माप(gendisk->disk_name));
 	set_capacity(gendisk, priv->size >> 9);
 
 	dev_info(&dev->core, "%s: Using %llu MiB of GPU memory\n",
 		 gendisk->disk_name, get_capacity(gendisk) >> 11);
 
-	device_add_disk(&dev->core, gendisk, NULL);
-	return 0;
+	device_add_disk(&dev->core, gendisk, शून्य);
+	वापस 0;
 
 fail_cleanup_queue:
 	blk_cleanup_queue(queue);
 out_cache_cleanup:
-	remove_proc_entry(DEVICE_NAME, NULL);
+	हटाओ_proc_entry(DEVICE_NAME, शून्य);
 	ps3vram_cache_cleanup(dev);
 out_unmap_reports:
 	iounmap(priv->reports);
@@ -782,86 +783,86 @@ out_unmap_ctrl:
 out_unmap_context:
 	lv1_gpu_context_iomap(priv->context_handle, XDR_IOIF, xdr_lpar,
 			      XDR_BUF_SIZE, CBE_IOPTE_M);
-out_free_context:
-	lv1_gpu_context_free(priv->context_handle);
-out_free_memory:
-	lv1_gpu_memory_free(priv->memory_handle);
-out_close_gpu:
-	ps3_close_hv_device(dev);
-out_free_xdr_buf:
-	free_pages((unsigned long) priv->xdr_buf, get_order(XDR_BUF_SIZE));
-fail_free_priv:
-	kfree(priv);
-	ps3_system_bus_set_drvdata(dev, NULL);
+out_मुक्त_context:
+	lv1_gpu_context_मुक्त(priv->context_handle);
+out_मुक्त_memory:
+	lv1_gpu_memory_मुक्त(priv->memory_handle);
+out_बंद_gpu:
+	ps3_बंद_hv_device(dev);
+out_मुक्त_xdr_buf:
+	मुक्त_pages((अचिन्हित दीर्घ) priv->xdr_buf, get_order(XDR_BUF_SIZE));
+fail_मुक्त_priv:
+	kमुक्त(priv);
+	ps3_प्रणाली_bus_set_drvdata(dev, शून्य);
 fail:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void ps3vram_remove(struct ps3_system_bus_device *dev)
-{
-	struct ps3vram_priv *priv = ps3_system_bus_get_drvdata(dev);
+अटल व्योम ps3vram_हटाओ(काष्ठा ps3_प्रणाली_bus_device *dev)
+अणु
+	काष्ठा ps3vram_priv *priv = ps3_प्रणाली_bus_get_drvdata(dev);
 
 	del_gendisk(priv->gendisk);
 	put_disk(priv->gendisk);
 	blk_cleanup_queue(priv->queue);
-	remove_proc_entry(DEVICE_NAME, NULL);
+	हटाओ_proc_entry(DEVICE_NAME, शून्य);
 	ps3vram_cache_cleanup(dev);
 	iounmap(priv->reports);
 	iounmap(priv->ctrl);
 	lv1_gpu_context_iomap(priv->context_handle, XDR_IOIF,
 			      ps3_mm_phys_to_lpar(__pa(priv->xdr_buf)),
 			      XDR_BUF_SIZE, CBE_IOPTE_M);
-	lv1_gpu_context_free(priv->context_handle);
-	lv1_gpu_memory_free(priv->memory_handle);
-	ps3_close_hv_device(dev);
-	free_pages((unsigned long) priv->xdr_buf, get_order(XDR_BUF_SIZE));
-	kfree(priv);
-	ps3_system_bus_set_drvdata(dev, NULL);
-}
+	lv1_gpu_context_मुक्त(priv->context_handle);
+	lv1_gpu_memory_मुक्त(priv->memory_handle);
+	ps3_बंद_hv_device(dev);
+	मुक्त_pages((अचिन्हित दीर्घ) priv->xdr_buf, get_order(XDR_BUF_SIZE));
+	kमुक्त(priv);
+	ps3_प्रणाली_bus_set_drvdata(dev, शून्य);
+पूर्ण
 
-static struct ps3_system_bus_driver ps3vram = {
+अटल काष्ठा ps3_प्रणाली_bus_driver ps3vram = अणु
 	.match_id	= PS3_MATCH_ID_GPU,
 	.match_sub_id	= PS3_MATCH_SUB_ID_GPU_RAMDISK,
 	.core.name	= DEVICE_NAME,
 	.core.owner	= THIS_MODULE,
 	.probe		= ps3vram_probe,
-	.remove		= ps3vram_remove,
-	.shutdown	= ps3vram_remove,
-};
+	.हटाओ		= ps3vram_हटाओ,
+	.shutकरोwn	= ps3vram_हटाओ,
+पूर्ण;
 
 
-static int __init ps3vram_init(void)
-{
-	int error;
+अटल पूर्णांक __init ps3vram_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	if (!firmware_has_feature(FW_FEATURE_PS3_LV1))
-		return -ENODEV;
+	अगर (!firmware_has_feature(FW_FEATURE_PS3_LV1))
+		वापस -ENODEV;
 
-	error = register_blkdev(0, DEVICE_NAME);
-	if (error <= 0) {
+	error = रेजिस्टर_blkdev(0, DEVICE_NAME);
+	अगर (error <= 0) अणु
 		pr_err("%s: register_blkdev failed %d\n", DEVICE_NAME, error);
-		return error;
-	}
+		वापस error;
+	पूर्ण
 	ps3vram_major = error;
 
 	pr_info("%s: registered block device major %d\n", DEVICE_NAME,
 		ps3vram_major);
 
-	error = ps3_system_bus_driver_register(&ps3vram);
-	if (error)
-		unregister_blkdev(ps3vram_major, DEVICE_NAME);
+	error = ps3_प्रणाली_bus_driver_रेजिस्टर(&ps3vram);
+	अगर (error)
+		unरेजिस्टर_blkdev(ps3vram_major, DEVICE_NAME);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static void __exit ps3vram_exit(void)
-{
-	ps3_system_bus_driver_unregister(&ps3vram);
-	unregister_blkdev(ps3vram_major, DEVICE_NAME);
-}
+अटल व्योम __निकास ps3vram_निकास(व्योम)
+अणु
+	ps3_प्रणाली_bus_driver_unरेजिस्टर(&ps3vram);
+	unरेजिस्टर_blkdev(ps3vram_major, DEVICE_NAME);
+पूर्ण
 
 module_init(ps3vram_init);
-module_exit(ps3vram_exit);
+module_निकास(ps3vram_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("PS3 Video RAM Storage Driver");

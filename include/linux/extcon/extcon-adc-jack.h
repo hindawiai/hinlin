@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * include/linux/extcon/extcon-adc-jack.h
  *
@@ -8,61 +9,61 @@
  * MyungJoo Ham <myungjoo.ham@samsung.com>
  */
 
-#ifndef _EXTCON_ADC_JACK_H_
-#define _EXTCON_ADC_JACK_H_ __FILE__
+#अगर_अघोषित _EXTCON_ADC_JACK_H_
+#घोषणा _EXTCON_ADC_JACK_H_ __खाता__
 
-#include <linux/module.h>
-#include <linux/extcon.h>
+#समावेश <linux/module.h>
+#समावेश <linux/extcon.h>
 
 /**
- * struct adc_jack_cond - condition to use an extcon state
+ * काष्ठा adc_jack_cond - condition to use an extcon state
  *			denotes the last adc_jack_cond element among the array)
- * @id:			the unique id of each external connector
- * @min_adc:		min adc value for this condition
- * @max_adc:		max adc value for this condition
+ * @id:			the unique id of each बाह्यal connector
+ * @min_adc:		min adc value क्रम this condition
+ * @max_adc:		max adc value क्रम this condition
  *
- * For example, if { .state = 0x3, .min_adc = 100, .max_adc = 200}, it means
- * that if ADC value is between (inclusive) 100 and 200, than the cable 0 and
+ * For example, अगर अणु .state = 0x3, .min_adc = 100, .max_adc = 200पूर्ण, it means
+ * that अगर ADC value is between (inclusive) 100 and 200, than the cable 0 and
  * 1 are attached (1<<0 | 1<<1 == 0x3)
  *
- * Note that you don't need to describe condition for "no cable attached"
- * because when no adc_jack_cond is met, state = 0 is automatically chosen.
+ * Note that you करोn't need to describe condition क्रम "no cable attached"
+ * because when no adc_jack_cond is met, state = 0 is स्वतःmatically chosen.
  */
-struct adc_jack_cond {
-	unsigned int id;
+काष्ठा adc_jack_cond अणु
+	अचिन्हित पूर्णांक id;
 	u32 min_adc;
 	u32 max_adc;
-};
+पूर्ण;
 
 /**
- * struct adc_jack_pdata - platform data for adc jack device.
+ * काष्ठा adc_jack_pdata - platक्रमm data क्रम adc jack device.
  * @name:		name of the extcon device. If null, "adc-jack" is used.
- * @consumer_channel:	Unique name to identify the channel on the consumer
+ * @consumer_channel:	Unique name to identअगरy the channel on the consumer
  *			side. This typically describes the channels used within
  *			the consumer. E.g. 'battery_voltage'
- * @cable_names:	array of extcon id for supported cables.
- * @adc_contitions:	array of struct adc_jack_cond conditions ending
+ * @cable_names:	array of extcon id क्रम supported cables.
+ * @adc_contitions:	array of काष्ठा adc_jack_cond conditions ending
  *			with .state = 0 entry. This describes how to decode
- *			adc values into extcon state.
- * @irq_flags:		irq flags used for the @irq
- * @handling_delay_ms:	in some devices, we need to read ADC value some
- *			milli-seconds after the interrupt occurs. You may
+ *			adc values पूर्णांकo extcon state.
+ * @irq_flags:		irq flags used क्रम the @irq
+ * @handling_delay_ms:	in some devices, we need to पढ़ो ADC value some
+ *			milli-seconds after the पूर्णांकerrupt occurs. You may
  *			describe such delays with @handling_delay_ms, which
- *			is rounded-off by jiffies.
- * @wakeup_source:	flag to wake up the system for extcon events.
+ *			is rounded-off by jअगरfies.
+ * @wakeup_source:	flag to wake up the प्रणाली क्रम extcon events.
  */
-struct adc_jack_pdata {
-	const char *name;
-	const char *consumer_channel;
+काष्ठा adc_jack_pdata अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *consumer_channel;
 
-	const unsigned int *cable_names;
+	स्थिर अचिन्हित पूर्णांक *cable_names;
 
 	/* The last entry's state should be 0 */
-	struct adc_jack_cond *adc_conditions;
+	काष्ठा adc_jack_cond *adc_conditions;
 
-	unsigned long irq_flags;
-	unsigned long handling_delay_ms; /* in ms */
+	अचिन्हित दीर्घ irq_flags;
+	अचिन्हित दीर्घ handling_delay_ms; /* in ms */
 	bool wakeup_source;
-};
+पूर्ण;
 
-#endif /* _EXTCON_ADC_JACK_H */
+#पूर्ण_अगर /* _EXTCON_ADC_JACK_H */

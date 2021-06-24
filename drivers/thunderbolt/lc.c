@@ -1,225 +1,226 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Thunderbolt link controller support
  *
  * Copyright (C) 2019, Intel Corporation
- * Author: Mika Westerberg <mika.westerberg@linux.intel.com>
+ * Author: Mika Westerberg <mika.westerberg@linux.पूर्णांकel.com>
  */
 
-#include "tb.h"
+#समावेश "tb.h"
 
 /**
- * tb_lc_read_uuid() - Read switch UUID from link controller common register
- * @sw: Switch whose UUID is read
+ * tb_lc_पढ़ो_uuid() - Read चयन UUID from link controller common रेजिस्टर
+ * @sw: Switch whose UUID is पढ़ो
  * @uuid: UUID is placed here
  */
-int tb_lc_read_uuid(struct tb_switch *sw, u32 *uuid)
-{
-	if (!sw->cap_lc)
-		return -EINVAL;
-	return tb_sw_read(sw, uuid, TB_CFG_SWITCH, sw->cap_lc + TB_LC_FUSE, 4);
-}
+पूर्णांक tb_lc_पढ़ो_uuid(काष्ठा tb_चयन *sw, u32 *uuid)
+अणु
+	अगर (!sw->cap_lc)
+		वापस -EINVAL;
+	वापस tb_sw_पढ़ो(sw, uuid, TB_CFG_SWITCH, sw->cap_lc + TB_LC_FUSE, 4);
+पूर्ण
 
-static int read_lc_desc(struct tb_switch *sw, u32 *desc)
-{
-	if (!sw->cap_lc)
-		return -EINVAL;
-	return tb_sw_read(sw, desc, TB_CFG_SWITCH, sw->cap_lc + TB_LC_DESC, 1);
-}
+अटल पूर्णांक पढ़ो_lc_desc(काष्ठा tb_चयन *sw, u32 *desc)
+अणु
+	अगर (!sw->cap_lc)
+		वापस -EINVAL;
+	वापस tb_sw_पढ़ो(sw, desc, TB_CFG_SWITCH, sw->cap_lc + TB_LC_DESC, 1);
+पूर्ण
 
-static int find_port_lc_cap(struct tb_port *port)
-{
-	struct tb_switch *sw = port->sw;
-	int start, phys, ret, size;
+अटल पूर्णांक find_port_lc_cap(काष्ठा tb_port *port)
+अणु
+	काष्ठा tb_चयन *sw = port->sw;
+	पूर्णांक start, phys, ret, size;
 	u32 desc;
 
-	ret = read_lc_desc(sw, &desc);
-	if (ret)
-		return ret;
+	ret = पढ़ो_lc_desc(sw, &desc);
+	अगर (ret)
+		वापस ret;
 
-	/* Start of port LC registers */
+	/* Start of port LC रेजिस्टरs */
 	start = (desc & TB_LC_DESC_SIZE_MASK) >> TB_LC_DESC_SIZE_SHIFT;
 	size = (desc & TB_LC_DESC_PORT_SIZE_MASK) >> TB_LC_DESC_PORT_SIZE_SHIFT;
 	phys = tb_phy_port_from_link(port->port);
 
-	return sw->cap_lc + start + phys * size;
-}
+	वापस sw->cap_lc + start + phys * size;
+पूर्ण
 
-static int tb_lc_set_port_configured(struct tb_port *port, bool configured)
-{
+अटल पूर्णांक tb_lc_set_port_configured(काष्ठा tb_port *port, bool configured)
+अणु
 	bool upstream = tb_is_upstream_port(port);
-	struct tb_switch *sw = port->sw;
+	काष्ठा tb_चयन *sw = port->sw;
 	u32 ctrl, lane;
-	int cap, ret;
+	पूर्णांक cap, ret;
 
-	if (sw->generation < 2)
-		return 0;
+	अगर (sw->generation < 2)
+		वापस 0;
 
 	cap = find_port_lc_cap(port);
-	if (cap < 0)
-		return cap;
+	अगर (cap < 0)
+		वापस cap;
 
-	ret = tb_sw_read(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
-	if (ret)
-		return ret;
+	ret = tb_sw_पढ़ो(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
+	अगर (ret)
+		वापस ret;
 
 	/* Resolve correct lane */
-	if (port->port % 2)
+	अगर (port->port % 2)
 		lane = TB_LC_SX_CTRL_L1C;
-	else
+	अन्यथा
 		lane = TB_LC_SX_CTRL_L2C;
 
-	if (configured) {
+	अगर (configured) अणु
 		ctrl |= lane;
-		if (upstream)
+		अगर (upstream)
 			ctrl |= TB_LC_SX_CTRL_UPSTREAM;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctrl &= ~lane;
-		if (upstream)
+		अगर (upstream)
 			ctrl &= ~TB_LC_SX_CTRL_UPSTREAM;
-	}
+	पूर्ण
 
-	return tb_sw_write(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
-}
+	वापस tb_sw_ग_लिखो(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
+पूर्ण
 
 /**
  * tb_lc_configure_port() - Let LC know about configured port
  * @port: Port that is set as configured
  *
- * Sets the port configured for power management purposes.
+ * Sets the port configured क्रम घातer management purposes.
  */
-int tb_lc_configure_port(struct tb_port *port)
-{
-	return tb_lc_set_port_configured(port, true);
-}
+पूर्णांक tb_lc_configure_port(काष्ठा tb_port *port)
+अणु
+	वापस tb_lc_set_port_configured(port, true);
+पूर्ण
 
 /**
  * tb_lc_unconfigure_port() - Let LC know about unconfigured port
  * @port: Port that is set as configured
  *
- * Sets the port unconfigured for power management purposes.
+ * Sets the port unconfigured क्रम घातer management purposes.
  */
-void tb_lc_unconfigure_port(struct tb_port *port)
-{
+व्योम tb_lc_unconfigure_port(काष्ठा tb_port *port)
+अणु
 	tb_lc_set_port_configured(port, false);
-}
+पूर्ण
 
-static int tb_lc_set_xdomain_configured(struct tb_port *port, bool configure)
-{
-	struct tb_switch *sw = port->sw;
+अटल पूर्णांक tb_lc_set_xकरोमुख्य_configured(काष्ठा tb_port *port, bool configure)
+अणु
+	काष्ठा tb_चयन *sw = port->sw;
 	u32 ctrl, lane;
-	int cap, ret;
+	पूर्णांक cap, ret;
 
-	if (sw->generation < 2)
-		return 0;
+	अगर (sw->generation < 2)
+		वापस 0;
 
 	cap = find_port_lc_cap(port);
-	if (cap < 0)
-		return cap;
+	अगर (cap < 0)
+		वापस cap;
 
-	ret = tb_sw_read(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
-	if (ret)
-		return ret;
+	ret = tb_sw_पढ़ो(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
+	अगर (ret)
+		वापस ret;
 
 	/* Resolve correct lane */
-	if (port->port % 2)
+	अगर (port->port % 2)
 		lane = TB_LC_SX_CTRL_L1D;
-	else
+	अन्यथा
 		lane = TB_LC_SX_CTRL_L2D;
 
-	if (configure)
+	अगर (configure)
 		ctrl |= lane;
-	else
+	अन्यथा
 		ctrl &= ~lane;
 
-	return tb_sw_write(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
-}
+	वापस tb_sw_ग_लिखो(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
+पूर्ण
 
 /**
- * tb_lc_configure_xdomain() - Inform LC that the link is XDomain
- * @port: Switch downstream port connected to another host
+ * tb_lc_configure_xकरोमुख्य() - Inक्रमm LC that the link is XDoमुख्य
+ * @port: Switch करोwnstream port connected to another host
  *
- * Sets the lane configured for XDomain accordingly so that the LC knows
- * about this. Returns %0 in success and negative errno in failure.
+ * Sets the lane configured क्रम XDoमुख्य accordingly so that the LC knows
+ * about this. Returns %0 in success and negative त्रुटि_सं in failure.
  */
-int tb_lc_configure_xdomain(struct tb_port *port)
-{
-	return tb_lc_set_xdomain_configured(port, true);
-}
+पूर्णांक tb_lc_configure_xकरोमुख्य(काष्ठा tb_port *port)
+अणु
+	वापस tb_lc_set_xकरोमुख्य_configured(port, true);
+पूर्ण
 
 /**
- * tb_lc_unconfigure_xdomain() - Unconfigure XDomain from port
- * @port: Switch downstream port that was connected to another host
+ * tb_lc_unconfigure_xकरोमुख्य() - Unconfigure XDoमुख्य from port
+ * @port: Switch करोwnstream port that was connected to another host
  *
- * Unsets the lane XDomain configuration.
+ * Unsets the lane XDoमुख्य configuration.
  */
-void tb_lc_unconfigure_xdomain(struct tb_port *port)
-{
-	tb_lc_set_xdomain_configured(port, false);
-}
+व्योम tb_lc_unconfigure_xकरोमुख्य(काष्ठा tb_port *port)
+अणु
+	tb_lc_set_xकरोमुख्य_configured(port, false);
+पूर्ण
 
 /**
  * tb_lc_start_lane_initialization() - Start lane initialization
  * @port: Device router lane 0 adapter
  *
- * Starts lane initialization for @port after the router resumed from
- * sleep. Should be called for those downstream lane adapters that were
- * not connected (tb_lc_configure_port() was not called) before sleep.
+ * Starts lane initialization क्रम @port after the router resumed from
+ * sleep. Should be called क्रम those करोwnstream lane adapters that were
+ * not connected (tb_lc_configure_port() was not called) beक्रमe sleep.
  *
- * Returns %0 in success and negative errno in case of failure.
+ * Returns %0 in success and negative त्रुटि_सं in हाल of failure.
  */
-int tb_lc_start_lane_initialization(struct tb_port *port)
-{
-	struct tb_switch *sw = port->sw;
-	int ret, cap;
+पूर्णांक tb_lc_start_lane_initialization(काष्ठा tb_port *port)
+अणु
+	काष्ठा tb_चयन *sw = port->sw;
+	पूर्णांक ret, cap;
 	u32 ctrl;
 
-	if (!tb_route(sw))
-		return 0;
+	अगर (!tb_route(sw))
+		वापस 0;
 
-	if (sw->generation < 2)
-		return 0;
+	अगर (sw->generation < 2)
+		वापस 0;
 
 	cap = find_port_lc_cap(port);
-	if (cap < 0)
-		return cap;
+	अगर (cap < 0)
+		वापस cap;
 
-	ret = tb_sw_read(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
-	if (ret)
-		return ret;
+	ret = tb_sw_पढ़ो(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
+	अगर (ret)
+		वापस ret;
 
 	ctrl |= TB_LC_SX_CTRL_SLI;
 
-	return tb_sw_write(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
-}
+	वापस tb_sw_ग_लिखो(sw, &ctrl, TB_CFG_SWITCH, cap + TB_LC_SX_CTRL, 1);
+पूर्ण
 
-static int tb_lc_set_wake_one(struct tb_switch *sw, unsigned int offset,
-			      unsigned int flags)
-{
+अटल पूर्णांक tb_lc_set_wake_one(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक offset,
+			      अचिन्हित पूर्णांक flags)
+अणु
 	u32 ctrl;
-	int ret;
+	पूर्णांक ret;
 
 	/*
 	 * Enable wake on PCIe and USB4 (wake coming from another
 	 * router).
 	 */
-	ret = tb_sw_read(sw, &ctrl, TB_CFG_SWITCH,
+	ret = tb_sw_पढ़ो(sw, &ctrl, TB_CFG_SWITCH,
 			 offset + TB_LC_SX_CTRL, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ctrl &= ~(TB_LC_SX_CTRL_WOC | TB_LC_SX_CTRL_WOD | TB_LC_SX_CTRL_WOP |
 		  TB_LC_SX_CTRL_WOU4);
 
-	if (flags & TB_WAKE_ON_CONNECT)
+	अगर (flags & TB_WAKE_ON_CONNECT)
 		ctrl |= TB_LC_SX_CTRL_WOC | TB_LC_SX_CTRL_WOD;
-	if (flags & TB_WAKE_ON_USB4)
+	अगर (flags & TB_WAKE_ON_USB4)
 		ctrl |= TB_LC_SX_CTRL_WOU4;
-	if (flags & TB_WAKE_ON_PCIE)
+	अगर (flags & TB_WAKE_ON_PCIE)
 		ctrl |= TB_LC_SX_CTRL_WOP;
 
-	return tb_sw_write(sw, &ctrl, TB_CFG_SWITCH, offset + TB_LC_SX_CTRL, 1);
-}
+	वापस tb_sw_ग_लिखो(sw, &ctrl, TB_CFG_SWITCH, offset + TB_LC_SX_CTRL, 1);
+पूर्ण
 
 /**
  * tb_lc_set_wake() - Enable/disable wake
@@ -228,20 +229,20 @@ static int tb_lc_set_wake_one(struct tb_switch *sw, unsigned int offset,
  *
  * For each LC sets wake bits accordingly.
  */
-int tb_lc_set_wake(struct tb_switch *sw, unsigned int flags)
-{
-	int start, size, nlc, ret, i;
+पूर्णांक tb_lc_set_wake(काष्ठा tb_चयन *sw, अचिन्हित पूर्णांक flags)
+अणु
+	पूर्णांक start, size, nlc, ret, i;
 	u32 desc;
 
-	if (sw->generation < 2)
-		return 0;
+	अगर (sw->generation < 2)
+		वापस 0;
 
-	if (!tb_route(sw))
-		return 0;
+	अगर (!tb_route(sw))
+		वापस 0;
 
-	ret = read_lc_desc(sw, &desc);
-	if (ret)
-		return ret;
+	ret = पढ़ो_lc_desc(sw, &desc);
+	अगर (ret)
+		वापस ret;
 
 	/* Figure out number of link controllers */
 	nlc = desc & TB_LC_DESC_NLC_MASK;
@@ -249,35 +250,35 @@ int tb_lc_set_wake(struct tb_switch *sw, unsigned int flags)
 	size = (desc & TB_LC_DESC_PORT_SIZE_MASK) >> TB_LC_DESC_PORT_SIZE_SHIFT;
 
 	/* For each link controller set sleep bit */
-	for (i = 0; i < nlc; i++) {
-		unsigned int offset = sw->cap_lc + start + i * size;
+	क्रम (i = 0; i < nlc; i++) अणु
+		अचिन्हित पूर्णांक offset = sw->cap_lc + start + i * size;
 
 		ret = tb_lc_set_wake_one(sw, offset, flags);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tb_lc_set_sleep() - Inform LC that the switch is going to sleep
+ * tb_lc_set_sleep() - Inक्रमm LC that the चयन is going to sleep
  * @sw: Switch to set sleep
  *
- * Let the switch link controllers know that the switch is going to
+ * Let the चयन link controllers know that the चयन is going to
  * sleep.
  */
-int tb_lc_set_sleep(struct tb_switch *sw)
-{
-	int start, size, nlc, ret, i;
+पूर्णांक tb_lc_set_sleep(काष्ठा tb_चयन *sw)
+अणु
+	पूर्णांक start, size, nlc, ret, i;
 	u32 desc;
 
-	if (sw->generation < 2)
-		return 0;
+	अगर (sw->generation < 2)
+		वापस 0;
 
-	ret = read_lc_desc(sw, &desc);
-	if (ret)
-		return ret;
+	ret = पढ़ो_lc_desc(sw, &desc);
+	अगर (ret)
+		वापस ret;
 
 	/* Figure out number of link controllers */
 	nlc = desc & TB_LC_DESC_NLC_MASK;
@@ -285,224 +286,224 @@ int tb_lc_set_sleep(struct tb_switch *sw)
 	size = (desc & TB_LC_DESC_PORT_SIZE_MASK) >> TB_LC_DESC_PORT_SIZE_SHIFT;
 
 	/* For each link controller set sleep bit */
-	for (i = 0; i < nlc; i++) {
-		unsigned int offset = sw->cap_lc + start + i * size;
+	क्रम (i = 0; i < nlc; i++) अणु
+		अचिन्हित पूर्णांक offset = sw->cap_lc + start + i * size;
 		u32 ctrl;
 
-		ret = tb_sw_read(sw, &ctrl, TB_CFG_SWITCH,
+		ret = tb_sw_पढ़ो(sw, &ctrl, TB_CFG_SWITCH,
 				 offset + TB_LC_SX_CTRL, 1);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		ctrl |= TB_LC_SX_CTRL_SLP;
-		ret = tb_sw_write(sw, &ctrl, TB_CFG_SWITCH,
+		ret = tb_sw_ग_लिखो(sw, &ctrl, TB_CFG_SWITCH,
 				  offset + TB_LC_SX_CTRL, 1);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tb_lc_lane_bonding_possible() - Is lane bonding possible towards switch
+ * tb_lc_lane_bonding_possible() - Is lane bonding possible towards चयन
  * @sw: Switch to check
  *
- * Checks whether conditions for lane bonding from parent to @sw are
+ * Checks whether conditions क्रम lane bonding from parent to @sw are
  * possible.
  */
-bool tb_lc_lane_bonding_possible(struct tb_switch *sw)
-{
-	struct tb_port *up;
-	int cap, ret;
+bool tb_lc_lane_bonding_possible(काष्ठा tb_चयन *sw)
+अणु
+	काष्ठा tb_port *up;
+	पूर्णांक cap, ret;
 	u32 val;
 
-	if (sw->generation < 2)
-		return false;
+	अगर (sw->generation < 2)
+		वापस false;
 
 	up = tb_upstream_port(sw);
 	cap = find_port_lc_cap(up);
-	if (cap < 0)
-		return false;
+	अगर (cap < 0)
+		वापस false;
 
-	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH, cap + TB_LC_PORT_ATTR, 1);
-	if (ret)
-		return false;
+	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH, cap + TB_LC_PORT_ATTR, 1);
+	अगर (ret)
+		वापस false;
 
-	return !!(val & TB_LC_PORT_ATTR_BE);
-}
+	वापस !!(val & TB_LC_PORT_ATTR_BE);
+पूर्ण
 
-static int tb_lc_dp_sink_from_port(const struct tb_switch *sw,
-				   struct tb_port *in)
-{
-	struct tb_port *port;
+अटल पूर्णांक tb_lc_dp_sink_from_port(स्थिर काष्ठा tb_चयन *sw,
+				   काष्ठा tb_port *in)
+अणु
+	काष्ठा tb_port *port;
 
 	/* The first DP IN port is sink 0 and second is sink 1 */
-	tb_switch_for_each_port(sw, port) {
-		if (tb_port_is_dpin(port))
-			return in != port;
-	}
+	tb_चयन_क्रम_each_port(sw, port) अणु
+		अगर (tb_port_is_dpin(port))
+			वापस in != port;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int tb_lc_dp_sink_available(struct tb_switch *sw, int sink)
-{
+अटल पूर्णांक tb_lc_dp_sink_available(काष्ठा tb_चयन *sw, पूर्णांक sink)
+अणु
 	u32 val, alloc;
-	int ret;
+	पूर्णांक ret;
 
-	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH,
+	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH,
 			 sw->cap_lc + TB_LC_SNK_ALLOCATION, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Sink is available for CM/SW to use if the allocation valie is
+	 * Sink is available क्रम CM/SW to use अगर the allocation valie is
 	 * either 0 or 1.
 	 */
-	if (!sink) {
+	अगर (!sink) अणु
 		alloc = val & TB_LC_SNK_ALLOCATION_SNK0_MASK;
-		if (!alloc || alloc == TB_LC_SNK_ALLOCATION_SNK0_CM)
-			return 0;
-	} else {
+		अगर (!alloc || alloc == TB_LC_SNK_ALLOCATION_SNK0_CM)
+			वापस 0;
+	पूर्ण अन्यथा अणु
 		alloc = (val & TB_LC_SNK_ALLOCATION_SNK1_MASK) >>
 			TB_LC_SNK_ALLOCATION_SNK1_SHIFT;
-		if (!alloc || alloc == TB_LC_SNK_ALLOCATION_SNK1_CM)
-			return 0;
-	}
+		अगर (!alloc || alloc == TB_LC_SNK_ALLOCATION_SNK1_CM)
+			वापस 0;
+	पूर्ण
 
-	return -EBUSY;
-}
+	वापस -EBUSY;
+पूर्ण
 
 /**
- * tb_lc_dp_sink_query() - Is DP sink available for DP IN port
+ * tb_lc_dp_sink_query() - Is DP sink available क्रम DP IN port
  * @sw: Switch whose DP sink is queried
  * @in: DP IN port to check
  *
- * Queries through LC SNK_ALLOCATION registers whether DP sink is available
- * for the given DP IN port or not.
+ * Queries through LC SNK_ALLOCATION रेजिस्टरs whether DP sink is available
+ * क्रम the given DP IN port or not.
  */
-bool tb_lc_dp_sink_query(struct tb_switch *sw, struct tb_port *in)
-{
-	int sink;
+bool tb_lc_dp_sink_query(काष्ठा tb_चयन *sw, काष्ठा tb_port *in)
+अणु
+	पूर्णांक sink;
 
 	/*
 	 * For older generations sink is always available as there is no
 	 * allocation mechanism.
 	 */
-	if (sw->generation < 3)
-		return true;
+	अगर (sw->generation < 3)
+		वापस true;
 
 	sink = tb_lc_dp_sink_from_port(sw, in);
-	if (sink < 0)
-		return false;
+	अगर (sink < 0)
+		वापस false;
 
-	return !tb_lc_dp_sink_available(sw, sink);
-}
+	वापस !tb_lc_dp_sink_available(sw, sink);
+पूर्ण
 
 /**
  * tb_lc_dp_sink_alloc() - Allocate DP sink
  * @sw: Switch whose DP sink is allocated
- * @in: DP IN port the DP sink is allocated for
+ * @in: DP IN port the DP sink is allocated क्रम
  *
- * Allocate DP sink for @in via LC SNK_ALLOCATION registers. If the
- * resource is available and allocation is successful returns %0. In all
- * other cases returs negative errno. In particular %-EBUSY is returned if
+ * Allocate DP sink क्रम @in via LC SNK_ALLOCATION रेजिस्टरs. If the
+ * resource is available and allocation is successful वापसs %0. In all
+ * other हालs returs negative त्रुटि_सं. In particular %-EBUSY is वापसed अगर
  * the resource was not available.
  */
-int tb_lc_dp_sink_alloc(struct tb_switch *sw, struct tb_port *in)
-{
-	int ret, sink;
+पूर्णांक tb_lc_dp_sink_alloc(काष्ठा tb_चयन *sw, काष्ठा tb_port *in)
+अणु
+	पूर्णांक ret, sink;
 	u32 val;
 
-	if (sw->generation < 3)
-		return 0;
+	अगर (sw->generation < 3)
+		वापस 0;
 
 	sink = tb_lc_dp_sink_from_port(sw, in);
-	if (sink < 0)
-		return sink;
+	अगर (sink < 0)
+		वापस sink;
 
 	ret = tb_lc_dp_sink_available(sw, sink);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH,
+	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH,
 			 sw->cap_lc + TB_LC_SNK_ALLOCATION, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!sink) {
+	अगर (!sink) अणु
 		val &= ~TB_LC_SNK_ALLOCATION_SNK0_MASK;
 		val |= TB_LC_SNK_ALLOCATION_SNK0_CM;
-	} else {
+	पूर्ण अन्यथा अणु
 		val &= ~TB_LC_SNK_ALLOCATION_SNK1_MASK;
 		val |= TB_LC_SNK_ALLOCATION_SNK1_CM <<
 			TB_LC_SNK_ALLOCATION_SNK1_SHIFT;
-	}
+	पूर्ण
 
-	ret = tb_sw_write(sw, &val, TB_CFG_SWITCH,
+	ret = tb_sw_ग_लिखो(sw, &val, TB_CFG_SWITCH,
 			  sw->cap_lc + TB_LC_SNK_ALLOCATION, 1);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	tb_port_dbg(in, "sink %d allocated\n", sink);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * tb_lc_dp_sink_dealloc() - De-allocate DP sink
  * @sw: Switch whose DP sink is de-allocated
  * @in: DP IN port whose DP sink is de-allocated
  *
- * De-allocate DP sink from @in using LC SNK_ALLOCATION registers.
+ * De-allocate DP sink from @in using LC SNK_ALLOCATION रेजिस्टरs.
  */
-int tb_lc_dp_sink_dealloc(struct tb_switch *sw, struct tb_port *in)
-{
-	int ret, sink;
+पूर्णांक tb_lc_dp_sink_dealloc(काष्ठा tb_चयन *sw, काष्ठा tb_port *in)
+अणु
+	पूर्णांक ret, sink;
 	u32 val;
 
-	if (sw->generation < 3)
-		return 0;
+	अगर (sw->generation < 3)
+		वापस 0;
 
 	sink = tb_lc_dp_sink_from_port(sw, in);
-	if (sink < 0)
-		return sink;
+	अगर (sink < 0)
+		वापस sink;
 
 	/* Needs to be owned by CM/SW */
 	ret = tb_lc_dp_sink_available(sw, sink);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = tb_sw_read(sw, &val, TB_CFG_SWITCH,
+	ret = tb_sw_पढ़ो(sw, &val, TB_CFG_SWITCH,
 			 sw->cap_lc + TB_LC_SNK_ALLOCATION, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (!sink)
+	अगर (!sink)
 		val &= ~TB_LC_SNK_ALLOCATION_SNK0_MASK;
-	else
+	अन्यथा
 		val &= ~TB_LC_SNK_ALLOCATION_SNK1_MASK;
 
-	ret = tb_sw_write(sw, &val, TB_CFG_SWITCH,
+	ret = tb_sw_ग_लिखो(sw, &val, TB_CFG_SWITCH,
 			  sw->cap_lc + TB_LC_SNK_ALLOCATION, 1);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	tb_port_dbg(in, "sink %d de-allocated\n", sink);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * tb_lc_force_power() - Forces LC to be powered on
- * @sw: Thunderbolt switch
+ * tb_lc_क्रमce_घातer() - Forces LC to be घातered on
+ * @sw: Thunderbolt चयन
  *
  * This is useful to let authentication cycle pass even without
  * a Thunderbolt link present.
  */
-int tb_lc_force_power(struct tb_switch *sw)
-{
+पूर्णांक tb_lc_क्रमce_घातer(काष्ठा tb_चयन *sw)
+अणु
 	u32 in = 0xffff;
 
-	return tb_sw_write(sw, &in, TB_CFG_SWITCH, TB_LC_POWER, 1);
-}
+	वापस tb_sw_ग_लिखो(sw, &in, TB_CFG_SWITCH, TB_LC_POWER, 1);
+पूर्ण

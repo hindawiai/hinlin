@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * lib80211 -- common bits for IEEE802.11 drivers
+ * lib80211 -- common bits क्रम IEEE802.11 drivers
  *
  * Copyright(c) 2008 John W. Linville <linville@tuxdriver.com>
  *
@@ -10,165 +11,165 @@
  * Host AP crypto routines
  *
  * Copyright (c) 2002-2003, Jouni Malinen <j@w1.fi>
- * Portions Copyright (C) 2004, Intel Corporation <jketreno@linux.intel.com>
+ * Portions Copyright (C) 2004, Intel Corporation <jketreno@linux.पूर्णांकel.com>
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/ctype.h>
-#include <linux/ieee80211.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/string.h>
+#समावेश <linux/module.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/ieee80211.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
 
-#include <net/lib80211.h>
+#समावेश <net/lib80211.h>
 
-#define DRV_DESCRIPTION	"common routines for IEEE802.11 drivers"
+#घोषणा DRV_DESCRIPTION	"common routines for IEEE802.11 drivers"
 
 MODULE_DESCRIPTION(DRV_DESCRIPTION);
 MODULE_AUTHOR("John W. Linville <linville@tuxdriver.com>");
 MODULE_LICENSE("GPL");
 
-struct lib80211_crypto_alg {
-	struct list_head list;
-	struct lib80211_crypto_ops *ops;
-};
+काष्ठा lib80211_crypto_alg अणु
+	काष्ठा list_head list;
+	काष्ठा lib80211_crypto_ops *ops;
+पूर्ण;
 
-static LIST_HEAD(lib80211_crypto_algs);
-static DEFINE_SPINLOCK(lib80211_crypto_lock);
+अटल LIST_HEAD(lib80211_crypto_algs);
+अटल DEFINE_SPINLOCK(lib80211_crypto_lock);
 
-static void lib80211_crypt_deinit_entries(struct lib80211_crypt_info *info,
-					  int force);
-static void lib80211_crypt_quiescing(struct lib80211_crypt_info *info);
-static void lib80211_crypt_deinit_handler(struct timer_list *t);
+अटल व्योम lib80211_crypt_deinit_entries(काष्ठा lib80211_crypt_info *info,
+					  पूर्णांक क्रमce);
+अटल व्योम lib80211_crypt_quiescing(काष्ठा lib80211_crypt_info *info);
+अटल व्योम lib80211_crypt_deinit_handler(काष्ठा समयr_list *t);
 
-int lib80211_crypt_info_init(struct lib80211_crypt_info *info, char *name,
+पूर्णांक lib80211_crypt_info_init(काष्ठा lib80211_crypt_info *info, अक्षर *name,
 				spinlock_t *lock)
-{
-	memset(info, 0, sizeof(*info));
+अणु
+	स_रखो(info, 0, माप(*info));
 
 	info->name = name;
 	info->lock = lock;
 
 	INIT_LIST_HEAD(&info->crypt_deinit_list);
-	timer_setup(&info->crypt_deinit_timer, lib80211_crypt_deinit_handler,
+	समयr_setup(&info->crypt_deinit_समयr, lib80211_crypt_deinit_handler,
 		    0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(lib80211_crypt_info_init);
 
-void lib80211_crypt_info_free(struct lib80211_crypt_info *info)
-{
-	int i;
+व्योम lib80211_crypt_info_मुक्त(काष्ठा lib80211_crypt_info *info)
+अणु
+	पूर्णांक i;
 
         lib80211_crypt_quiescing(info);
-        del_timer_sync(&info->crypt_deinit_timer);
+        del_समयr_sync(&info->crypt_deinit_समयr);
         lib80211_crypt_deinit_entries(info, 1);
 
-        for (i = 0; i < NUM_WEP_KEYS; i++) {
-                struct lib80211_crypt_data *crypt = info->crypt[i];
-                if (crypt) {
-                        if (crypt->ops) {
+        क्रम (i = 0; i < NUM_WEP_KEYS; i++) अणु
+                काष्ठा lib80211_crypt_data *crypt = info->crypt[i];
+                अगर (crypt) अणु
+                        अगर (crypt->ops) अणु
                                 crypt->ops->deinit(crypt->priv);
                                 module_put(crypt->ops->owner);
-                        }
-                        kfree(crypt);
-                        info->crypt[i] = NULL;
-                }
-        }
-}
-EXPORT_SYMBOL(lib80211_crypt_info_free);
+                        पूर्ण
+                        kमुक्त(crypt);
+                        info->crypt[i] = शून्य;
+                पूर्ण
+        पूर्ण
+पूर्ण
+EXPORT_SYMBOL(lib80211_crypt_info_मुक्त);
 
-static void lib80211_crypt_deinit_entries(struct lib80211_crypt_info *info,
-					  int force)
-{
-	struct lib80211_crypt_data *entry, *next;
-	unsigned long flags;
+अटल व्योम lib80211_crypt_deinit_entries(काष्ठा lib80211_crypt_info *info,
+					  पूर्णांक क्रमce)
+अणु
+	काष्ठा lib80211_crypt_data *entry, *next;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(info->lock, flags);
-	list_for_each_entry_safe(entry, next, &info->crypt_deinit_list, list) {
-		if (atomic_read(&entry->refcnt) != 0 && !force)
-			continue;
+	list_क्रम_each_entry_safe(entry, next, &info->crypt_deinit_list, list) अणु
+		अगर (atomic_पढ़ो(&entry->refcnt) != 0 && !क्रमce)
+			जारी;
 
 		list_del(&entry->list);
 
-		if (entry->ops) {
+		अगर (entry->ops) अणु
 			entry->ops->deinit(entry->priv);
 			module_put(entry->ops->owner);
-		}
-		kfree(entry);
-	}
+		पूर्ण
+		kमुक्त(entry);
+	पूर्ण
 	spin_unlock_irqrestore(info->lock, flags);
-}
+पूर्ण
 
 /* After this, crypt_deinit_list won't accept new members */
-static void lib80211_crypt_quiescing(struct lib80211_crypt_info *info)
-{
-	unsigned long flags;
+अटल व्योम lib80211_crypt_quiescing(काष्ठा lib80211_crypt_info *info)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(info->lock, flags);
 	info->crypt_quiesced = 1;
 	spin_unlock_irqrestore(info->lock, flags);
-}
+पूर्ण
 
-static void lib80211_crypt_deinit_handler(struct timer_list *t)
-{
-	struct lib80211_crypt_info *info = from_timer(info, t,
-						      crypt_deinit_timer);
-	unsigned long flags;
+अटल व्योम lib80211_crypt_deinit_handler(काष्ठा समयr_list *t)
+अणु
+	काष्ठा lib80211_crypt_info *info = from_समयr(info, t,
+						      crypt_deinit_समयr);
+	अचिन्हित दीर्घ flags;
 
 	lib80211_crypt_deinit_entries(info, 0);
 
 	spin_lock_irqsave(info->lock, flags);
-	if (!list_empty(&info->crypt_deinit_list) && !info->crypt_quiesced) {
-		printk(KERN_DEBUG "%s: entries remaining in delayed crypt "
+	अगर (!list_empty(&info->crypt_deinit_list) && !info->crypt_quiesced) अणु
+		prपूर्णांकk(KERN_DEBUG "%s: entries remaining in delayed crypt "
 		       "deletion list\n", info->name);
-		info->crypt_deinit_timer.expires = jiffies + HZ;
-		add_timer(&info->crypt_deinit_timer);
-	}
+		info->crypt_deinit_समयr.expires = jअगरfies + HZ;
+		add_समयr(&info->crypt_deinit_समयr);
+	पूर्ण
 	spin_unlock_irqrestore(info->lock, flags);
-}
+पूर्ण
 
-void lib80211_crypt_delayed_deinit(struct lib80211_crypt_info *info,
-				    struct lib80211_crypt_data **crypt)
-{
-	struct lib80211_crypt_data *tmp;
-	unsigned long flags;
+व्योम lib80211_crypt_delayed_deinit(काष्ठा lib80211_crypt_info *info,
+				    काष्ठा lib80211_crypt_data **crypt)
+अणु
+	काष्ठा lib80211_crypt_data *पंचांगp;
+	अचिन्हित दीर्घ flags;
 
-	if (*crypt == NULL)
-		return;
+	अगर (*crypt == शून्य)
+		वापस;
 
-	tmp = *crypt;
-	*crypt = NULL;
+	पंचांगp = *crypt;
+	*crypt = शून्य;
 
-	/* must not run ops->deinit() while there may be pending encrypt or
-	 * decrypt operations. Use a list of delayed deinits to avoid needing
+	/* must not run ops->deinit() जबतक there may be pending encrypt or
+	 * decrypt operations. Use a list of delayed deinits to aव्योम needing
 	 * locking. */
 
 	spin_lock_irqsave(info->lock, flags);
-	if (!info->crypt_quiesced) {
-		list_add(&tmp->list, &info->crypt_deinit_list);
-		if (!timer_pending(&info->crypt_deinit_timer)) {
-			info->crypt_deinit_timer.expires = jiffies + HZ;
-			add_timer(&info->crypt_deinit_timer);
-		}
-	}
+	अगर (!info->crypt_quiesced) अणु
+		list_add(&पंचांगp->list, &info->crypt_deinit_list);
+		अगर (!समयr_pending(&info->crypt_deinit_समयr)) अणु
+			info->crypt_deinit_समयr.expires = jअगरfies + HZ;
+			add_समयr(&info->crypt_deinit_समयr);
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(info->lock, flags);
-}
+पूर्ण
 EXPORT_SYMBOL(lib80211_crypt_delayed_deinit);
 
-int lib80211_register_crypto_ops(struct lib80211_crypto_ops *ops)
-{
-	unsigned long flags;
-	struct lib80211_crypto_alg *alg;
+पूर्णांक lib80211_रेजिस्टर_crypto_ops(काष्ठा lib80211_crypto_ops *ops)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा lib80211_crypto_alg *alg;
 
-	alg = kzalloc(sizeof(*alg), GFP_KERNEL);
-	if (alg == NULL)
-		return -ENOMEM;
+	alg = kzalloc(माप(*alg), GFP_KERNEL);
+	अगर (alg == शून्य)
+		वापस -ENOMEM;
 
 	alg->ops = ops;
 
@@ -176,82 +177,82 @@ int lib80211_register_crypto_ops(struct lib80211_crypto_ops *ops)
 	list_add(&alg->list, &lib80211_crypto_algs);
 	spin_unlock_irqrestore(&lib80211_crypto_lock, flags);
 
-	printk(KERN_DEBUG "lib80211_crypt: registered algorithm '%s'\n",
+	prपूर्णांकk(KERN_DEBUG "lib80211_crypt: registered algorithm '%s'\n",
 	       ops->name);
 
-	return 0;
-}
-EXPORT_SYMBOL(lib80211_register_crypto_ops);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(lib80211_रेजिस्टर_crypto_ops);
 
-int lib80211_unregister_crypto_ops(struct lib80211_crypto_ops *ops)
-{
-	struct lib80211_crypto_alg *alg;
-	unsigned long flags;
+पूर्णांक lib80211_unरेजिस्टर_crypto_ops(काष्ठा lib80211_crypto_ops *ops)
+अणु
+	काष्ठा lib80211_crypto_alg *alg;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&lib80211_crypto_lock, flags);
-	list_for_each_entry(alg, &lib80211_crypto_algs, list) {
-		if (alg->ops == ops)
-			goto found;
-	}
+	list_क्रम_each_entry(alg, &lib80211_crypto_algs, list) अणु
+		अगर (alg->ops == ops)
+			जाओ found;
+	पूर्ण
 	spin_unlock_irqrestore(&lib80211_crypto_lock, flags);
-	return -EINVAL;
+	वापस -EINVAL;
 
       found:
-	printk(KERN_DEBUG "lib80211_crypt: unregistered algorithm '%s'\n",
+	prपूर्णांकk(KERN_DEBUG "lib80211_crypt: unregistered algorithm '%s'\n",
 	       ops->name);
 	list_del(&alg->list);
 	spin_unlock_irqrestore(&lib80211_crypto_lock, flags);
-	kfree(alg);
-	return 0;
-}
-EXPORT_SYMBOL(lib80211_unregister_crypto_ops);
+	kमुक्त(alg);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(lib80211_unरेजिस्टर_crypto_ops);
 
-struct lib80211_crypto_ops *lib80211_get_crypto_ops(const char *name)
-{
-	struct lib80211_crypto_alg *alg;
-	unsigned long flags;
+काष्ठा lib80211_crypto_ops *lib80211_get_crypto_ops(स्थिर अक्षर *name)
+अणु
+	काष्ठा lib80211_crypto_alg *alg;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&lib80211_crypto_lock, flags);
-	list_for_each_entry(alg, &lib80211_crypto_algs, list) {
-		if (strcmp(alg->ops->name, name) == 0)
-			goto found;
-	}
+	list_क्रम_each_entry(alg, &lib80211_crypto_algs, list) अणु
+		अगर (म_भेद(alg->ops->name, name) == 0)
+			जाओ found;
+	पूर्ण
 	spin_unlock_irqrestore(&lib80211_crypto_lock, flags);
-	return NULL;
+	वापस शून्य;
 
       found:
 	spin_unlock_irqrestore(&lib80211_crypto_lock, flags);
-	return alg->ops;
-}
+	वापस alg->ops;
+पूर्ण
 EXPORT_SYMBOL(lib80211_get_crypto_ops);
 
-static void *lib80211_crypt_null_init(int keyidx)
-{
-	return (void *)1;
-}
+अटल व्योम *lib80211_crypt_null_init(पूर्णांक keyidx)
+अणु
+	वापस (व्योम *)1;
+पूर्ण
 
-static void lib80211_crypt_null_deinit(void *priv)
-{
-}
+अटल व्योम lib80211_crypt_null_deinit(व्योम *priv)
+अणु
+पूर्ण
 
-static struct lib80211_crypto_ops lib80211_crypt_null = {
+अटल काष्ठा lib80211_crypto_ops lib80211_crypt_null = अणु
 	.name = "NULL",
 	.init = lib80211_crypt_null_init,
 	.deinit = lib80211_crypt_null_deinit,
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int __init lib80211_init(void)
-{
+अटल पूर्णांक __init lib80211_init(व्योम)
+अणु
 	pr_info(DRV_DESCRIPTION "\n");
-	return lib80211_register_crypto_ops(&lib80211_crypt_null);
-}
+	वापस lib80211_रेजिस्टर_crypto_ops(&lib80211_crypt_null);
+पूर्ण
 
-static void __exit lib80211_exit(void)
-{
-	lib80211_unregister_crypto_ops(&lib80211_crypt_null);
+अटल व्योम __निकास lib80211_निकास(व्योम)
+अणु
+	lib80211_unरेजिस्टर_crypto_ops(&lib80211_crypt_null);
 	BUG_ON(!list_empty(&lib80211_crypto_algs));
-}
+पूर्ण
 
 module_init(lib80211_init);
-module_exit(lib80211_exit);
+module_निकास(lib80211_निकास);

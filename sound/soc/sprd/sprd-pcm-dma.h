@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#ifndef __SPRD_PCM_DMA_H
-#define __SPRD_PCM_DMA_H
+#अगर_अघोषित __SPRD_PCM_DMA_H
+#घोषणा __SPRD_PCM_DMA_H
 
-#define DRV_NAME		"sprd_pcm_dma"
-#define SPRD_PCM_CHANNEL_MAX	2
+#घोषणा DRV_NAME		"sprd_pcm_dma"
+#घोषणा SPRD_PCM_CHANNEL_MAX	2
 
-extern const struct snd_compress_ops sprd_platform_compress_ops;
+बाह्य स्थिर काष्ठा snd_compress_ops sprd_platक्रमm_compress_ops;
 
-struct sprd_pcm_dma_params {
+काष्ठा sprd_pcm_dma_params अणु
 	dma_addr_t dev_phys[SPRD_PCM_CHANNEL_MAX];
 	u32 datawidth[SPRD_PCM_CHANNEL_MAX];
 	u32 fragment_len[SPRD_PCM_CHANNEL_MAX];
-	const char *chan_name[SPRD_PCM_CHANNEL_MAX];
-};
+	स्थिर अक्षर *chan_name[SPRD_PCM_CHANNEL_MAX];
+पूर्ण;
 
-struct sprd_compr_playinfo {
-	int total_time;
-	int current_time;
-	int total_data_length;
-	int current_data_offset;
-};
+काष्ठा sprd_compr_playinfo अणु
+	पूर्णांक total_समय;
+	पूर्णांक current_समय;
+	पूर्णांक total_data_length;
+	पूर्णांक current_data_offset;
+पूर्ण;
 
-struct sprd_compr_params {
+काष्ठा sprd_compr_params अणु
 	u32 direction;
 	u32 rate;
 	u32 sample_rate;
 	u32 channels;
-	u32 format;
+	u32 क्रमmat;
 	u32 period;
 	u32 periods;
 	u32 info_phys;
 	u32 info_size;
-};
+पूर्ण;
 
-struct sprd_compr_callback {
-	void (*drain_notify)(void *data);
-	void *drain_data;
-};
+काष्ठा sprd_compr_callback अणु
+	व्योम (*drain_notअगरy)(व्योम *data);
+	व्योम *drain_data;
+पूर्ण;
 
-struct sprd_compr_ops {
-	int (*open)(int str_id, struct sprd_compr_callback *cb);
-	int (*close)(int str_id);
-	int (*start)(int str_id);
-	int (*stop)(int str_id);
-	int (*pause)(int str_id);
-	int (*pause_release)(int str_id);
-	int (*drain)(int received_total);
-	int (*set_params)(int str_id, struct sprd_compr_params *params);
-};
+काष्ठा sprd_compr_ops अणु
+	पूर्णांक (*खोलो)(पूर्णांक str_id, काष्ठा sprd_compr_callback *cb);
+	पूर्णांक (*बंद)(पूर्णांक str_id);
+	पूर्णांक (*start)(पूर्णांक str_id);
+	पूर्णांक (*stop)(पूर्णांक str_id);
+	पूर्णांक (*छोड़ो)(पूर्णांक str_id);
+	पूर्णांक (*छोड़ो_release)(पूर्णांक str_id);
+	पूर्णांक (*drain)(पूर्णांक received_total);
+	पूर्णांक (*set_params)(पूर्णांक str_id, काष्ठा sprd_compr_params *params);
+पूर्ण;
 
-struct sprd_compr_data {
-	struct sprd_compr_ops *ops;
-	struct sprd_pcm_dma_params *dma_params;
-};
+काष्ठा sprd_compr_data अणु
+	काष्ठा sprd_compr_ops *ops;
+	काष्ठा sprd_pcm_dma_params *dma_params;
+पूर्ण;
 
-#endif /* __SPRD_PCM_DMA_H */
+#पूर्ण_अगर /* __SPRD_PCM_DMA_H */

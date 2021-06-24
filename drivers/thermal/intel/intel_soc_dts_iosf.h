@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * intel_soc_dts_iosf.h
+ * पूर्णांकel_soc_dts_iosf.h
  * Copyright (c) 2015, Intel Corporation.
  */
 
-#ifndef _INTEL_SOC_DTS_IOSF_CORE_H
-#define _INTEL_SOC_DTS_IOSF_CORE_H
+#अगर_अघोषित _INTEL_SOC_DTS_IOSF_CORE_H
+#घोषणा _INTEL_SOC_DTS_IOSF_CORE_H
 
-#include <linux/thermal.h>
+#समावेश <linux/thermal.h>
 
 /* DTS0 and DTS 1 */
-#define SOC_MAX_DTS_SENSORS	2
+#घोषणा SOC_MAX_DTS_SENSORS	2
 
-enum intel_soc_dts_interrupt_type {
+क्रमागत पूर्णांकel_soc_dts_पूर्णांकerrupt_type अणु
 	INTEL_SOC_DTS_INTERRUPT_NONE,
 	INTEL_SOC_DTS_INTERRUPT_APIC,
 	INTEL_SOC_DTS_INTERRUPT_MSI,
 	INTEL_SOC_DTS_INTERRUPT_SCI,
 	INTEL_SOC_DTS_INTERRUPT_SMI,
-};
+पूर्ण;
 
-struct intel_soc_dts_sensors;
+काष्ठा पूर्णांकel_soc_dts_sensors;
 
-struct intel_soc_dts_sensor_entry {
-	int id;
+काष्ठा पूर्णांकel_soc_dts_sensor_entry अणु
+	पूर्णांक id;
 	u32 store_status;
 	u32 trip_mask;
 	u32 trip_count;
-	enum thermal_trip_type trip_types[2];
-	struct thermal_zone_device *tzone;
-	struct intel_soc_dts_sensors *sensors;
-};
+	क्रमागत thermal_trip_type trip_types[2];
+	काष्ठा thermal_zone_device *tzone;
+	काष्ठा पूर्णांकel_soc_dts_sensors *sensors;
+पूर्ण;
 
-struct intel_soc_dts_sensors {
+काष्ठा पूर्णांकel_soc_dts_sensors अणु
 	u32 tj_max;
-	spinlock_t intr_notify_lock;
-	struct mutex dts_update_lock;
-	enum intel_soc_dts_interrupt_type intr_type;
-	struct intel_soc_dts_sensor_entry soc_dts[SOC_MAX_DTS_SENSORS];
-};
+	spinlock_t पूर्णांकr_notअगरy_lock;
+	काष्ठा mutex dts_update_lock;
+	क्रमागत पूर्णांकel_soc_dts_पूर्णांकerrupt_type पूर्णांकr_type;
+	काष्ठा पूर्णांकel_soc_dts_sensor_entry soc_dts[SOC_MAX_DTS_SENSORS];
+पूर्ण;
 
-struct intel_soc_dts_sensors *intel_soc_dts_iosf_init(
-	enum intel_soc_dts_interrupt_type intr_type, int trip_count,
-	int read_only_trip_count);
-void intel_soc_dts_iosf_exit(struct intel_soc_dts_sensors *sensors);
-void intel_soc_dts_iosf_interrupt_handler(
-				struct intel_soc_dts_sensors *sensors);
-int intel_soc_dts_iosf_add_read_only_critical_trip(
-	struct intel_soc_dts_sensors *sensors, int critical_offset);
-#endif
+काष्ठा पूर्णांकel_soc_dts_sensors *पूर्णांकel_soc_dts_iosf_init(
+	क्रमागत पूर्णांकel_soc_dts_पूर्णांकerrupt_type पूर्णांकr_type, पूर्णांक trip_count,
+	पूर्णांक पढ़ो_only_trip_count);
+व्योम पूर्णांकel_soc_dts_iosf_निकास(काष्ठा पूर्णांकel_soc_dts_sensors *sensors);
+व्योम पूर्णांकel_soc_dts_iosf_पूर्णांकerrupt_handler(
+				काष्ठा पूर्णांकel_soc_dts_sensors *sensors);
+पूर्णांक पूर्णांकel_soc_dts_iosf_add_पढ़ो_only_critical_trip(
+	काष्ठा पूर्णांकel_soc_dts_sensors *sensors, पूर्णांक critical_offset);
+#पूर्ण_अगर

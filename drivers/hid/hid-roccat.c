@@ -1,339 +1,340 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Roccat driver for Linux
+ * Roccat driver क्रम Linux
  *
- * Copyright (c) 2010 Stefan Achatz <erazor_de@users.sourceforge.net>
+ * Copyright (c) 2010 Stefan Achatz <erazor_de@users.sourceक्रमge.net>
  */
 
 /*
  */
 
 /*
- * Module roccat is a char device used to report special events of roccat
- * hardware to userland. These events include requests for on-screen-display of
- * profile or dpi settings or requests for execution of macro sequences that are
- * not stored in device. The information in these events depends on hid device
+ * Module roccat is a अक्षर device used to report special events of roccat
+ * hardware to userland. These events include requests क्रम on-screen-display of
+ * profile or dpi settings or requests क्रम execution of macro sequences that are
+ * not stored in device. The inक्रमmation in these events depends on hid device
  * implementation and contains data that is not available in a single hid event
- * or else hidraw could have been used.
- * It is inspired by hidraw, but uses only one circular buffer for all readers.
+ * or अन्यथा hidraw could have been used.
+ * It is inspired by hidraw, but uses only one circular buffer क्रम all पढ़ोers.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/cdev.h>
-#include <linux/poll.h>
-#include <linux/sched/signal.h>
-#include <linux/hid-roccat.h>
-#include <linux/module.h>
+#समावेश <linux/cdev.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/hid-roccat.h>
+#समावेश <linux/module.h>
 
-#define ROCCAT_FIRST_MINOR 0
-#define ROCCAT_MAX_DEVICES 8
+#घोषणा ROCCAT_FIRST_MINOR 0
+#घोषणा ROCCAT_MAX_DEVICES 8
 
-/* should be a power of 2 for performance reason */
-#define ROCCAT_CBUF_SIZE 16
+/* should be a घातer of 2 क्रम perक्रमmance reason */
+#घोषणा ROCCAT_CBUF_SIZE 16
 
-struct roccat_report {
-	uint8_t *value;
-};
+काष्ठा roccat_report अणु
+	uपूर्णांक8_t *value;
+पूर्ण;
 
-struct roccat_device {
-	unsigned int minor;
-	int report_size;
-	int open;
-	int exist;
-	wait_queue_head_t wait;
-	struct device *dev;
-	struct hid_device *hid;
-	struct list_head readers;
-	/* protects modifications of readers list */
-	struct mutex readers_lock;
+काष्ठा roccat_device अणु
+	अचिन्हित पूर्णांक minor;
+	पूर्णांक report_size;
+	पूर्णांक खोलो;
+	पूर्णांक exist;
+	रुको_queue_head_t रुको;
+	काष्ठा device *dev;
+	काष्ठा hid_device *hid;
+	काष्ठा list_head पढ़ोers;
+	/* protects modअगरications of पढ़ोers list */
+	काष्ठा mutex पढ़ोers_lock;
 
 	/*
-	 * circular_buffer has one writer and multiple readers with their own
-	 * read pointers
+	 * circular_buffer has one ग_लिखोr and multiple पढ़ोers with their own
+	 * पढ़ो poपूर्णांकers
 	 */
-	struct roccat_report cbuf[ROCCAT_CBUF_SIZE];
-	int cbuf_end;
-	struct mutex cbuf_lock;
-};
+	काष्ठा roccat_report cbuf[ROCCAT_CBUF_SIZE];
+	पूर्णांक cbuf_end;
+	काष्ठा mutex cbuf_lock;
+पूर्ण;
 
-struct roccat_reader {
-	struct list_head node;
-	struct roccat_device *device;
-	int cbuf_start;
-};
+काष्ठा roccat_पढ़ोer अणु
+	काष्ठा list_head node;
+	काष्ठा roccat_device *device;
+	पूर्णांक cbuf_start;
+पूर्ण;
 
-static int roccat_major;
-static struct cdev roccat_cdev;
+अटल पूर्णांक roccat_major;
+अटल काष्ठा cdev roccat_cdev;
 
-static struct roccat_device *devices[ROCCAT_MAX_DEVICES];
-/* protects modifications of devices array */
-static DEFINE_MUTEX(devices_lock);
+अटल काष्ठा roccat_device *devices[ROCCAT_MAX_DEVICES];
+/* protects modअगरications of devices array */
+अटल DEFINE_MUTEX(devices_lock);
 
-static ssize_t roccat_read(struct file *file, char __user *buffer,
-		size_t count, loff_t *ppos)
-{
-	struct roccat_reader *reader = file->private_data;
-	struct roccat_device *device = reader->device;
-	struct roccat_report *report;
-	ssize_t retval = 0, len;
-	DECLARE_WAITQUEUE(wait, current);
+अटल sमाप_प्रकार roccat_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
+		माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा roccat_पढ़ोer *पढ़ोer = file->निजी_data;
+	काष्ठा roccat_device *device = पढ़ोer->device;
+	काष्ठा roccat_report *report;
+	sमाप_प्रकार retval = 0, len;
+	DECLARE_WAITQUEUE(रुको, current);
 
 	mutex_lock(&device->cbuf_lock);
 
 	/* no data? */
-	if (reader->cbuf_start == device->cbuf_end) {
-		add_wait_queue(&device->wait, &wait);
+	अगर (पढ़ोer->cbuf_start == device->cbuf_end) अणु
+		add_रुको_queue(&device->रुको, &रुको);
 		set_current_state(TASK_INTERRUPTIBLE);
 
-		/* wait for data */
-		while (reader->cbuf_start == device->cbuf_end) {
-			if (file->f_flags & O_NONBLOCK) {
+		/* रुको क्रम data */
+		जबतक (पढ़ोer->cbuf_start == device->cbuf_end) अणु
+			अगर (file->f_flags & O_NONBLOCK) अणु
 				retval = -EAGAIN;
-				break;
-			}
-			if (signal_pending(current)) {
+				अवरोध;
+			पूर्ण
+			अगर (संकेत_pending(current)) अणु
 				retval = -ERESTARTSYS;
-				break;
-			}
-			if (!device->exist) {
+				अवरोध;
+			पूर्ण
+			अगर (!device->exist) अणु
 				retval = -EIO;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			mutex_unlock(&device->cbuf_lock);
 			schedule();
 			mutex_lock(&device->cbuf_lock);
 			set_current_state(TASK_INTERRUPTIBLE);
-		}
+		पूर्ण
 
 		set_current_state(TASK_RUNNING);
-		remove_wait_queue(&device->wait, &wait);
-	}
+		हटाओ_रुको_queue(&device->रुको, &रुको);
+	पूर्ण
 
-	/* here we either have data or a reason to return if retval is set */
-	if (retval)
-		goto exit_unlock;
+	/* here we either have data or a reason to वापस अगर retval is set */
+	अगर (retval)
+		जाओ निकास_unlock;
 
-	report = &device->cbuf[reader->cbuf_start];
+	report = &device->cbuf[पढ़ोer->cbuf_start];
 	/*
 	 * If report is larger than requested amount of data, rest of report
 	 * is lost!
 	 */
 	len = device->report_size > count ? count : device->report_size;
 
-	if (copy_to_user(buffer, report->value, len)) {
+	अगर (copy_to_user(buffer, report->value, len)) अणु
 		retval = -EFAULT;
-		goto exit_unlock;
-	}
+		जाओ निकास_unlock;
+	पूर्ण
 	retval += len;
-	reader->cbuf_start = (reader->cbuf_start + 1) % ROCCAT_CBUF_SIZE;
+	पढ़ोer->cbuf_start = (पढ़ोer->cbuf_start + 1) % ROCCAT_CBUF_SIZE;
 
-exit_unlock:
+निकास_unlock:
 	mutex_unlock(&device->cbuf_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static __poll_t roccat_poll(struct file *file, poll_table *wait)
-{
-	struct roccat_reader *reader = file->private_data;
-	poll_wait(file, &reader->device->wait, wait);
-	if (reader->cbuf_start != reader->device->cbuf_end)
-		return EPOLLIN | EPOLLRDNORM;
-	if (!reader->device->exist)
-		return EPOLLERR | EPOLLHUP;
-	return 0;
-}
+अटल __poll_t roccat_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा roccat_पढ़ोer *पढ़ोer = file->निजी_data;
+	poll_रुको(file, &पढ़ोer->device->रुको, रुको);
+	अगर (पढ़ोer->cbuf_start != पढ़ोer->device->cbuf_end)
+		वापस EPOLLIN | EPOLLRDNORM;
+	अगर (!पढ़ोer->device->exist)
+		वापस EPOLLERR | EPOLLHUP;
+	वापस 0;
+पूर्ण
 
-static int roccat_open(struct inode *inode, struct file *file)
-{
-	unsigned int minor = iminor(inode);
-	struct roccat_reader *reader;
-	struct roccat_device *device;
-	int error = 0;
+अटल पूर्णांक roccat_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अचिन्हित पूर्णांक minor = iminor(inode);
+	काष्ठा roccat_पढ़ोer *पढ़ोer;
+	काष्ठा roccat_device *device;
+	पूर्णांक error = 0;
 
-	reader = kzalloc(sizeof(struct roccat_reader), GFP_KERNEL);
-	if (!reader)
-		return -ENOMEM;
+	पढ़ोer = kzalloc(माप(काष्ठा roccat_पढ़ोer), GFP_KERNEL);
+	अगर (!पढ़ोer)
+		वापस -ENOMEM;
 
 	mutex_lock(&devices_lock);
 
 	device = devices[minor];
 
-	if (!device) {
+	अगर (!device) अणु
 		pr_emerg("roccat device with minor %d doesn't exist\n", minor);
 		error = -ENODEV;
-		goto exit_err_devices;
-	}
+		जाओ निकास_err_devices;
+	पूर्ण
 
-	mutex_lock(&device->readers_lock);
+	mutex_lock(&device->पढ़ोers_lock);
 
-	if (!device->open++) {
-		/* power on device on adding first reader */
-		error = hid_hw_power(device->hid, PM_HINT_FULLON);
-		if (error < 0) {
-			--device->open;
-			goto exit_err_readers;
-		}
+	अगर (!device->खोलो++) अणु
+		/* घातer on device on adding first पढ़ोer */
+		error = hid_hw_घातer(device->hid, PM_HINT_FULLON);
+		अगर (error < 0) अणु
+			--device->खोलो;
+			जाओ निकास_err_पढ़ोers;
+		पूर्ण
 
-		error = hid_hw_open(device->hid);
-		if (error < 0) {
-			hid_hw_power(device->hid, PM_HINT_NORMAL);
-			--device->open;
-			goto exit_err_readers;
-		}
-	}
+		error = hid_hw_खोलो(device->hid);
+		अगर (error < 0) अणु
+			hid_hw_घातer(device->hid, PM_HINT_NORMAL);
+			--device->खोलो;
+			जाओ निकास_err_पढ़ोers;
+		पूर्ण
+	पूर्ण
 
-	reader->device = device;
-	/* new reader doesn't get old events */
-	reader->cbuf_start = device->cbuf_end;
+	पढ़ोer->device = device;
+	/* new पढ़ोer करोesn't get old events */
+	पढ़ोer->cbuf_start = device->cbuf_end;
 
-	list_add_tail(&reader->node, &device->readers);
-	file->private_data = reader;
+	list_add_tail(&पढ़ोer->node, &device->पढ़ोers);
+	file->निजी_data = पढ़ोer;
 
-exit_err_readers:
-	mutex_unlock(&device->readers_lock);
-exit_err_devices:
+निकास_err_पढ़ोers:
+	mutex_unlock(&device->पढ़ोers_lock);
+निकास_err_devices:
 	mutex_unlock(&devices_lock);
-	if (error)
-		kfree(reader);
-	return error;
-}
+	अगर (error)
+		kमुक्त(पढ़ोer);
+	वापस error;
+पूर्ण
 
-static int roccat_release(struct inode *inode, struct file *file)
-{
-	unsigned int minor = iminor(inode);
-	struct roccat_reader *reader = file->private_data;
-	struct roccat_device *device;
+अटल पूर्णांक roccat_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अचिन्हित पूर्णांक minor = iminor(inode);
+	काष्ठा roccat_पढ़ोer *पढ़ोer = file->निजी_data;
+	काष्ठा roccat_device *device;
 
 	mutex_lock(&devices_lock);
 
 	device = devices[minor];
-	if (!device) {
+	अगर (!device) अणु
 		mutex_unlock(&devices_lock);
 		pr_emerg("roccat device with minor %d doesn't exist\n", minor);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	mutex_lock(&device->readers_lock);
-	list_del(&reader->node);
-	mutex_unlock(&device->readers_lock);
-	kfree(reader);
+	mutex_lock(&device->पढ़ोers_lock);
+	list_del(&पढ़ोer->node);
+	mutex_unlock(&device->पढ़ोers_lock);
+	kमुक्त(पढ़ोer);
 
-	if (!--device->open) {
-		/* removing last reader */
-		if (device->exist) {
-			hid_hw_power(device->hid, PM_HINT_NORMAL);
-			hid_hw_close(device->hid);
-		} else {
-			kfree(device);
-		}
-	}
+	अगर (!--device->खोलो) अणु
+		/* removing last पढ़ोer */
+		अगर (device->exist) अणु
+			hid_hw_घातer(device->hid, PM_HINT_NORMAL);
+			hid_hw_बंद(device->hid);
+		पूर्ण अन्यथा अणु
+			kमुक्त(device);
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&devices_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * roccat_report_event() - output data to readers
- * @minor: minor device number returned by roccat_connect()
- * @data: pointer to data
+ * roccat_report_event() - output data to पढ़ोers
+ * @minor: minor device number वापसed by roccat_connect()
+ * @data: poपूर्णांकer to data
  *
  * Return value is zero on success, a negative error code on failure.
  *
- * This is called from interrupt handler.
+ * This is called from पूर्णांकerrupt handler.
  */
-int roccat_report_event(int minor, u8 const *data)
-{
-	struct roccat_device *device;
-	struct roccat_reader *reader;
-	struct roccat_report *report;
-	uint8_t *new_value;
+पूर्णांक roccat_report_event(पूर्णांक minor, u8 स्थिर *data)
+अणु
+	काष्ठा roccat_device *device;
+	काष्ठा roccat_पढ़ोer *पढ़ोer;
+	काष्ठा roccat_report *report;
+	uपूर्णांक8_t *new_value;
 
 	device = devices[minor];
 
 	new_value = kmemdup(data, device->report_size, GFP_ATOMIC);
-	if (!new_value)
-		return -ENOMEM;
+	अगर (!new_value)
+		वापस -ENOMEM;
 
 	report = &device->cbuf[device->cbuf_end];
 
-	/* passing NULL is safe */
-	kfree(report->value);
+	/* passing शून्य is safe */
+	kमुक्त(report->value);
 
 	report->value = new_value;
 	device->cbuf_end = (device->cbuf_end + 1) % ROCCAT_CBUF_SIZE;
 
-	list_for_each_entry(reader, &device->readers, node) {
+	list_क्रम_each_entry(पढ़ोer, &device->पढ़ोers, node) अणु
 		/*
-		 * As we already inserted one element, the buffer can't be
+		 * As we alपढ़ोy inserted one element, the buffer can't be
 		 * empty. If start and end are equal, buffer is full and we
-		 * increase start, so that slow reader misses one event, but
-		 * gets the newer ones in the right order.
+		 * increase start, so that slow पढ़ोer misses one event, but
+		 * माला_लो the newer ones in the right order.
 		 */
-		if (reader->cbuf_start == device->cbuf_end)
-			reader->cbuf_start = (reader->cbuf_start + 1) % ROCCAT_CBUF_SIZE;
-	}
+		अगर (पढ़ोer->cbuf_start == device->cbuf_end)
+			पढ़ोer->cbuf_start = (पढ़ोer->cbuf_start + 1) % ROCCAT_CBUF_SIZE;
+	पूर्ण
 
-	wake_up_interruptible(&device->wait);
-	return 0;
-}
+	wake_up_पूर्णांकerruptible(&device->रुको);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(roccat_report_event);
 
 /*
- * roccat_connect() - create a char device for special event output
+ * roccat_connect() - create a अक्षर device क्रम special event output
  * @class: the class thats used to create the device. Meant to hold device
- * specific sysfs attributes.
- * @hid: the hid device the char device should be connected to.
+ * specअगरic sysfs attributes.
+ * @hid: the hid device the अक्षर device should be connected to.
  * @report_size: size of reports
  *
  * Return value is minor device number in Range [0, ROCCAT_MAX_DEVICES] on
  * success, a negative error code on failure.
  */
-int roccat_connect(struct class *klass, struct hid_device *hid, int report_size)
-{
-	unsigned int minor;
-	struct roccat_device *device;
-	int temp;
+पूर्णांक roccat_connect(काष्ठा class *klass, काष्ठा hid_device *hid, पूर्णांक report_size)
+अणु
+	अचिन्हित पूर्णांक minor;
+	काष्ठा roccat_device *device;
+	पूर्णांक temp;
 
-	device = kzalloc(sizeof(struct roccat_device), GFP_KERNEL);
-	if (!device)
-		return -ENOMEM;
+	device = kzalloc(माप(काष्ठा roccat_device), GFP_KERNEL);
+	अगर (!device)
+		वापस -ENOMEM;
 
 	mutex_lock(&devices_lock);
 
-	for (minor = 0; minor < ROCCAT_MAX_DEVICES; ++minor) {
-		if (devices[minor])
-			continue;
-		break;
-	}
+	क्रम (minor = 0; minor < ROCCAT_MAX_DEVICES; ++minor) अणु
+		अगर (devices[minor])
+			जारी;
+		अवरोध;
+	पूर्ण
 
-	if (minor < ROCCAT_MAX_DEVICES) {
+	अगर (minor < ROCCAT_MAX_DEVICES) अणु
 		devices[minor] = device;
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_unlock(&devices_lock);
-		kfree(device);
-		return -EINVAL;
-	}
+		kमुक्त(device);
+		वापस -EINVAL;
+	पूर्ण
 
 	device->dev = device_create(klass, &hid->dev,
-			MKDEV(roccat_major, minor), NULL,
+			MKDEV(roccat_major, minor), शून्य,
 			"%s%s%d", "roccat", hid->driver->name, minor);
 
-	if (IS_ERR(device->dev)) {
-		devices[minor] = NULL;
+	अगर (IS_ERR(device->dev)) अणु
+		devices[minor] = शून्य;
 		mutex_unlock(&devices_lock);
 		temp = PTR_ERR(device->dev);
-		kfree(device);
-		return temp;
-	}
+		kमुक्त(device);
+		वापस temp;
+	पूर्ण
 
 	mutex_unlock(&devices_lock);
 
-	init_waitqueue_head(&device->wait);
-	INIT_LIST_HEAD(&device->readers);
-	mutex_init(&device->readers_lock);
+	init_रुकोqueue_head(&device->रुको);
+	INIT_LIST_HEAD(&device->पढ़ोers);
+	mutex_init(&device->पढ़ोers_lock);
 	mutex_init(&device->cbuf_lock);
 	device->minor = minor;
 	device->hid = hid;
@@ -341,16 +342,16 @@ int roccat_connect(struct class *klass, struct hid_device *hid, int report_size)
 	device->cbuf_end = 0;
 	device->report_size = report_size;
 
-	return minor;
-}
+	वापस minor;
+पूर्ण
 EXPORT_SYMBOL_GPL(roccat_connect);
 
-/* roccat_disconnect() - remove char device from hid device
- * @minor: the minor device number returned by roccat_connect()
+/* roccat_disconnect() - हटाओ अक्षर device from hid device
+ * @minor: the minor device number वापसed by roccat_connect()
  */
-void roccat_disconnect(int minor)
-{
-	struct roccat_device *device;
+व्योम roccat_disconnect(पूर्णांक minor)
+अणु
+	काष्ठा roccat_device *device;
 
 	mutex_lock(&devices_lock);
 	device = devices[minor];
@@ -361,96 +362,96 @@ void roccat_disconnect(int minor)
 	device_destroy(device->dev->class, MKDEV(roccat_major, minor));
 
 	mutex_lock(&devices_lock);
-	devices[minor] = NULL;
+	devices[minor] = शून्य;
 	mutex_unlock(&devices_lock);
 
-	if (device->open) {
-		hid_hw_close(device->hid);
-		wake_up_interruptible(&device->wait);
-	} else {
-		kfree(device);
-	}
-}
+	अगर (device->खोलो) अणु
+		hid_hw_बंद(device->hid);
+		wake_up_पूर्णांकerruptible(&device->रुको);
+	पूर्ण अन्यथा अणु
+		kमुक्त(device);
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(roccat_disconnect);
 
-static long roccat_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct inode *inode = file_inode(file);
-	struct roccat_device *device;
-	unsigned int minor = iminor(inode);
-	long retval = 0;
+अटल दीर्घ roccat_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा inode *inode = file_inode(file);
+	काष्ठा roccat_device *device;
+	अचिन्हित पूर्णांक minor = iminor(inode);
+	दीर्घ retval = 0;
 
 	mutex_lock(&devices_lock);
 
 	device = devices[minor];
-	if (!device) {
+	अगर (!device) अणु
 		retval = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	switch (cmd) {
-	case ROCCATIOCGREPSIZE:
-		if (put_user(device->report_size, (int __user *)arg))
+	चयन (cmd) अणु
+	हाल ROCCATIOCGREPSIZE:
+		अगर (put_user(device->report_size, (पूर्णांक __user *)arg))
 			retval = -EFAULT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		retval = -ENOTTY;
-	}
+	पूर्ण
 out:
 	mutex_unlock(&devices_lock);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static const struct file_operations roccat_ops = {
+अटल स्थिर काष्ठा file_operations roccat_ops = अणु
 	.owner = THIS_MODULE,
-	.read = roccat_read,
+	.पढ़ो = roccat_पढ़ो,
 	.poll = roccat_poll,
-	.open = roccat_open,
+	.खोलो = roccat_खोलो,
 	.release = roccat_release,
 	.llseek = noop_llseek,
 	.unlocked_ioctl = roccat_ioctl,
-};
+पूर्ण;
 
-static int __init roccat_init(void)
-{
-	int retval;
+अटल पूर्णांक __init roccat_init(व्योम)
+अणु
+	पूर्णांक retval;
 	dev_t dev_id;
 
 	retval = alloc_chrdev_region(&dev_id, ROCCAT_FIRST_MINOR,
 			ROCCAT_MAX_DEVICES, "roccat");
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		pr_warn("can't get major number\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	roccat_major = MAJOR(dev_id);
 
 	cdev_init(&roccat_cdev, &roccat_ops);
 	retval = cdev_add(&roccat_cdev, dev_id, ROCCAT_MAX_DEVICES);
 
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		pr_warn("cannot add cdev\n");
-		goto cleanup_alloc_chrdev_region;
-	}
-	return 0;
+		जाओ cleanup_alloc_chrdev_region;
+	पूर्ण
+	वापस 0;
 
 
  cleanup_alloc_chrdev_region:
-	unregister_chrdev_region(dev_id, ROCCAT_MAX_DEVICES);
+	unरेजिस्टर_chrdev_region(dev_id, ROCCAT_MAX_DEVICES);
  error:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void __exit roccat_exit(void)
-{
+अटल व्योम __निकास roccat_निकास(व्योम)
+अणु
 	dev_t dev_id = MKDEV(roccat_major, 0);
 
 	cdev_del(&roccat_cdev);
-	unregister_chrdev_region(dev_id, ROCCAT_MAX_DEVICES);
-}
+	unरेजिस्टर_chrdev_region(dev_id, ROCCAT_MAX_DEVICES);
+पूर्ण
 
 module_init(roccat_init);
-module_exit(roccat_exit);
+module_निकास(roccat_निकास);
 
 MODULE_AUTHOR("Stefan Achatz");
 MODULE_DESCRIPTION("USB Roccat char device");

@@ -1,481 +1,482 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Qualcomm Serial USB driver
  *
  *	Copyright (c) 2008 QUALCOMM Incorporated.
- *	Copyright (c) 2009 Greg Kroah-Hartman <gregkh@suse.de>
+ *	Copyright (c) 2009 Greg Kroah-Harपंचांगan <gregkh@suse.de>
  *	Copyright (c) 2009 Novell Inc.
  */
 
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/module.h>
-#include <linux/usb.h>
-#include <linux/usb/serial.h>
-#include <linux/slab.h>
-#include "usb-wwan.h"
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/module.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/usb/serial.h>
+#समावेश <linux/slab.h>
+#समावेश "usb-wwan.h"
 
-#define DRIVER_AUTHOR "Qualcomm Inc"
-#define DRIVER_DESC "Qualcomm USB Serial driver"
+#घोषणा DRIVER_AUTHOR "Qualcomm Inc"
+#घोषणा DRIVER_DESC "Qualcomm USB Serial driver"
 
-#define QUECTEL_EC20_PID	0x9215
+#घोषणा QUECTEL_EC20_PID	0x9215
 
 /* standard device layouts supported by this driver */
-enum qcserial_layouts {
+क्रमागत qcserial_layouts अणु
 	QCSERIAL_G2K = 0,	/* Gobi 2000 */
 	QCSERIAL_G1K = 1,	/* Gobi 1000 */
 	QCSERIAL_SWI = 2,	/* Sierra Wireless */
 	QCSERIAL_HWI = 3,	/* Huawei */
-};
+पूर्ण;
 
-#define DEVICE_G1K(v, p) \
+#घोषणा DEVICE_G1K(v, p) \
 	USB_DEVICE(v, p), .driver_info = QCSERIAL_G1K
-#define DEVICE_SWI(v, p) \
+#घोषणा DEVICE_SWI(v, p) \
 	USB_DEVICE(v, p), .driver_info = QCSERIAL_SWI
-#define DEVICE_HWI(v, p) \
+#घोषणा DEVICE_HWI(v, p) \
 	USB_DEVICE(v, p), .driver_info = QCSERIAL_HWI
 
-static const struct usb_device_id id_table[] = {
+अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
 	/* Gobi 1000 devices */
-	{DEVICE_G1K(0x05c6, 0x9211)},	/* Acer Gobi QDL device */
-	{DEVICE_G1K(0x05c6, 0x9212)},	/* Acer Gobi Modem Device */
-	{DEVICE_G1K(0x03f0, 0x1f1d)},	/* HP un2400 Gobi Modem Device */
-	{DEVICE_G1K(0x03f0, 0x201d)},	/* HP un2400 Gobi QDL Device */
-	{DEVICE_G1K(0x04da, 0x250d)},	/* Panasonic Gobi Modem device */
-	{DEVICE_G1K(0x04da, 0x250c)},	/* Panasonic Gobi QDL device */
-	{DEVICE_G1K(0x413c, 0x8172)},	/* Dell Gobi Modem device */
-	{DEVICE_G1K(0x413c, 0x8171)},	/* Dell Gobi QDL device */
-	{DEVICE_G1K(0x1410, 0xa001)},	/* Novatel/Verizon USB-1000 */
-	{DEVICE_G1K(0x1410, 0xa002)},	/* Novatel Gobi Modem device */
-	{DEVICE_G1K(0x1410, 0xa003)},	/* Novatel Gobi Modem device */
-	{DEVICE_G1K(0x1410, 0xa004)},	/* Novatel Gobi Modem device */
-	{DEVICE_G1K(0x1410, 0xa005)},	/* Novatel Gobi Modem device */
-	{DEVICE_G1K(0x1410, 0xa006)},	/* Novatel Gobi Modem device */
-	{DEVICE_G1K(0x1410, 0xa007)},	/* Novatel Gobi Modem device */
-	{DEVICE_G1K(0x1410, 0xa008)},	/* Novatel Gobi QDL device */
-	{DEVICE_G1K(0x0b05, 0x1776)},	/* Asus Gobi Modem device */
-	{DEVICE_G1K(0x0b05, 0x1774)},	/* Asus Gobi QDL device */
-	{DEVICE_G1K(0x19d2, 0xfff3)},	/* ONDA Gobi Modem device */
-	{DEVICE_G1K(0x19d2, 0xfff2)},	/* ONDA Gobi QDL device */
-	{DEVICE_G1K(0x1557, 0x0a80)},	/* OQO Gobi QDL device */
-	{DEVICE_G1K(0x05c6, 0x9001)},   /* Generic Gobi Modem device */
-	{DEVICE_G1K(0x05c6, 0x9002)},	/* Generic Gobi Modem device */
-	{DEVICE_G1K(0x05c6, 0x9202)},	/* Generic Gobi Modem device */
-	{DEVICE_G1K(0x05c6, 0x9203)},	/* Generic Gobi Modem device */
-	{DEVICE_G1K(0x05c6, 0x9222)},	/* Generic Gobi Modem device */
-	{DEVICE_G1K(0x05c6, 0x9008)},	/* Generic Gobi QDL device */
-	{DEVICE_G1K(0x05c6, 0x9009)},	/* Generic Gobi Modem device */
-	{DEVICE_G1K(0x05c6, 0x9201)},	/* Generic Gobi QDL device */
-	{DEVICE_G1K(0x05c6, 0x9221)},	/* Generic Gobi QDL device */
-	{DEVICE_G1K(0x05c6, 0x9231)},	/* Generic Gobi QDL device */
-	{DEVICE_G1K(0x1f45, 0x0001)},	/* Unknown Gobi QDL device */
-	{DEVICE_G1K(0x1bc7, 0x900e)},	/* Telit Gobi QDL device */
+	अणुDEVICE_G1K(0x05c6, 0x9211)पूर्ण,	/* Acer Gobi QDL device */
+	अणुDEVICE_G1K(0x05c6, 0x9212)पूर्ण,	/* Acer Gobi Modem Device */
+	अणुDEVICE_G1K(0x03f0, 0x1f1d)पूर्ण,	/* HP un2400 Gobi Modem Device */
+	अणुDEVICE_G1K(0x03f0, 0x201d)पूर्ण,	/* HP un2400 Gobi QDL Device */
+	अणुDEVICE_G1K(0x04da, 0x250d)पूर्ण,	/* Panasonic Gobi Modem device */
+	अणुDEVICE_G1K(0x04da, 0x250c)पूर्ण,	/* Panasonic Gobi QDL device */
+	अणुDEVICE_G1K(0x413c, 0x8172)पूर्ण,	/* Dell Gobi Modem device */
+	अणुDEVICE_G1K(0x413c, 0x8171)पूर्ण,	/* Dell Gobi QDL device */
+	अणुDEVICE_G1K(0x1410, 0xa001)पूर्ण,	/* Novatel/Verizon USB-1000 */
+	अणुDEVICE_G1K(0x1410, 0xa002)पूर्ण,	/* Novatel Gobi Modem device */
+	अणुDEVICE_G1K(0x1410, 0xa003)पूर्ण,	/* Novatel Gobi Modem device */
+	अणुDEVICE_G1K(0x1410, 0xa004)पूर्ण,	/* Novatel Gobi Modem device */
+	अणुDEVICE_G1K(0x1410, 0xa005)पूर्ण,	/* Novatel Gobi Modem device */
+	अणुDEVICE_G1K(0x1410, 0xa006)पूर्ण,	/* Novatel Gobi Modem device */
+	अणुDEVICE_G1K(0x1410, 0xa007)पूर्ण,	/* Novatel Gobi Modem device */
+	अणुDEVICE_G1K(0x1410, 0xa008)पूर्ण,	/* Novatel Gobi QDL device */
+	अणुDEVICE_G1K(0x0b05, 0x1776)पूर्ण,	/* Asus Gobi Modem device */
+	अणुDEVICE_G1K(0x0b05, 0x1774)पूर्ण,	/* Asus Gobi QDL device */
+	अणुDEVICE_G1K(0x19d2, 0xfff3)पूर्ण,	/* ONDA Gobi Modem device */
+	अणुDEVICE_G1K(0x19d2, 0xfff2)पूर्ण,	/* ONDA Gobi QDL device */
+	अणुDEVICE_G1K(0x1557, 0x0a80)पूर्ण,	/* OQO Gobi QDL device */
+	अणुDEVICE_G1K(0x05c6, 0x9001)पूर्ण,   /* Generic Gobi Modem device */
+	अणुDEVICE_G1K(0x05c6, 0x9002)पूर्ण,	/* Generic Gobi Modem device */
+	अणुDEVICE_G1K(0x05c6, 0x9202)पूर्ण,	/* Generic Gobi Modem device */
+	अणुDEVICE_G1K(0x05c6, 0x9203)पूर्ण,	/* Generic Gobi Modem device */
+	अणुDEVICE_G1K(0x05c6, 0x9222)पूर्ण,	/* Generic Gobi Modem device */
+	अणुDEVICE_G1K(0x05c6, 0x9008)पूर्ण,	/* Generic Gobi QDL device */
+	अणुDEVICE_G1K(0x05c6, 0x9009)पूर्ण,	/* Generic Gobi Modem device */
+	अणुDEVICE_G1K(0x05c6, 0x9201)पूर्ण,	/* Generic Gobi QDL device */
+	अणुDEVICE_G1K(0x05c6, 0x9221)पूर्ण,	/* Generic Gobi QDL device */
+	अणुDEVICE_G1K(0x05c6, 0x9231)पूर्ण,	/* Generic Gobi QDL device */
+	अणुDEVICE_G1K(0x1f45, 0x0001)पूर्ण,	/* Unknown Gobi QDL device */
+	अणुDEVICE_G1K(0x1bc7, 0x900e)पूर्ण,	/* Telit Gobi QDL device */
 
 	/* Gobi 2000 devices */
-	{USB_DEVICE(0x1410, 0xa010)},	/* Novatel Gobi 2000 QDL device */
-	{USB_DEVICE(0x1410, 0xa011)},	/* Novatel Gobi 2000 QDL device */
-	{USB_DEVICE(0x1410, 0xa012)},	/* Novatel Gobi 2000 QDL device */
-	{USB_DEVICE(0x1410, 0xa013)},	/* Novatel Gobi 2000 QDL device */
-	{USB_DEVICE(0x1410, 0xa014)},	/* Novatel Gobi 2000 QDL device */
-	{USB_DEVICE(0x413c, 0x8185)},	/* Dell Gobi 2000 QDL device (N0218, VU936) */
-	{USB_DEVICE(0x413c, 0x8186)},	/* Dell Gobi 2000 Modem device (N0218, VU936) */
-	{USB_DEVICE(0x05c6, 0x9208)},	/* Generic Gobi 2000 QDL device */
-	{USB_DEVICE(0x05c6, 0x920b)},	/* Generic Gobi 2000 Modem device */
-	{USB_DEVICE(0x05c6, 0x9224)},	/* Sony Gobi 2000 QDL device (N0279, VU730) */
-	{USB_DEVICE(0x05c6, 0x9225)},	/* Sony Gobi 2000 Modem device (N0279, VU730) */
-	{USB_DEVICE(0x05c6, 0x9244)},	/* Samsung Gobi 2000 QDL device (VL176) */
-	{USB_DEVICE(0x05c6, 0x9245)},	/* Samsung Gobi 2000 Modem device (VL176) */
-	{USB_DEVICE(0x03f0, 0x241d)},	/* HP Gobi 2000 QDL device (VP412) */
-	{USB_DEVICE(0x03f0, 0x251d)},	/* HP Gobi 2000 Modem device (VP412) */
-	{USB_DEVICE(0x05c6, 0x9214)},	/* Acer Gobi 2000 QDL device (VP413) */
-	{USB_DEVICE(0x05c6, 0x9215)},	/* Acer Gobi 2000 Modem device (VP413) */
-	{USB_DEVICE(0x05c6, 0x9264)},	/* Asus Gobi 2000 QDL device (VR305) */
-	{USB_DEVICE(0x05c6, 0x9265)},	/* Asus Gobi 2000 Modem device (VR305) */
-	{USB_DEVICE(0x05c6, 0x9234)},	/* Top Global Gobi 2000 QDL device (VR306) */
-	{USB_DEVICE(0x05c6, 0x9235)},	/* Top Global Gobi 2000 Modem device (VR306) */
-	{USB_DEVICE(0x05c6, 0x9274)},	/* iRex Technologies Gobi 2000 QDL device (VR307) */
-	{USB_DEVICE(0x05c6, 0x9275)},	/* iRex Technologies Gobi 2000 Modem device (VR307) */
-	{USB_DEVICE(0x1199, 0x9000)},	/* Sierra Wireless Gobi 2000 QDL device (VT773) */
-	{USB_DEVICE(0x1199, 0x9001)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x9002)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x9003)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x9004)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x9005)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x9006)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x9007)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x9008)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x9009)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x900a)},	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
-	{USB_DEVICE(0x1199, 0x9011)},   /* Sierra Wireless Gobi 2000 Modem device (MC8305) */
-	{USB_DEVICE(0x16d8, 0x8001)},	/* CMDTech Gobi 2000 QDL device (VU922) */
-	{USB_DEVICE(0x16d8, 0x8002)},	/* CMDTech Gobi 2000 Modem device (VU922) */
-	{USB_DEVICE(0x05c6, 0x9204)},	/* Gobi 2000 QDL device */
-	{USB_DEVICE(0x05c6, 0x9205)},	/* Gobi 2000 Modem device */
+	अणुUSB_DEVICE(0x1410, 0xa010)पूर्ण,	/* Novatel Gobi 2000 QDL device */
+	अणुUSB_DEVICE(0x1410, 0xa011)पूर्ण,	/* Novatel Gobi 2000 QDL device */
+	अणुUSB_DEVICE(0x1410, 0xa012)पूर्ण,	/* Novatel Gobi 2000 QDL device */
+	अणुUSB_DEVICE(0x1410, 0xa013)पूर्ण,	/* Novatel Gobi 2000 QDL device */
+	अणुUSB_DEVICE(0x1410, 0xa014)पूर्ण,	/* Novatel Gobi 2000 QDL device */
+	अणुUSB_DEVICE(0x413c, 0x8185)पूर्ण,	/* Dell Gobi 2000 QDL device (N0218, VU936) */
+	अणुUSB_DEVICE(0x413c, 0x8186)पूर्ण,	/* Dell Gobi 2000 Modem device (N0218, VU936) */
+	अणुUSB_DEVICE(0x05c6, 0x9208)पूर्ण,	/* Generic Gobi 2000 QDL device */
+	अणुUSB_DEVICE(0x05c6, 0x920b)पूर्ण,	/* Generic Gobi 2000 Modem device */
+	अणुUSB_DEVICE(0x05c6, 0x9224)पूर्ण,	/* Sony Gobi 2000 QDL device (N0279, VU730) */
+	अणुUSB_DEVICE(0x05c6, 0x9225)पूर्ण,	/* Sony Gobi 2000 Modem device (N0279, VU730) */
+	अणुUSB_DEVICE(0x05c6, 0x9244)पूर्ण,	/* Samsung Gobi 2000 QDL device (VL176) */
+	अणुUSB_DEVICE(0x05c6, 0x9245)पूर्ण,	/* Samsung Gobi 2000 Modem device (VL176) */
+	अणुUSB_DEVICE(0x03f0, 0x241d)पूर्ण,	/* HP Gobi 2000 QDL device (VP412) */
+	अणुUSB_DEVICE(0x03f0, 0x251d)पूर्ण,	/* HP Gobi 2000 Modem device (VP412) */
+	अणुUSB_DEVICE(0x05c6, 0x9214)पूर्ण,	/* Acer Gobi 2000 QDL device (VP413) */
+	अणुUSB_DEVICE(0x05c6, 0x9215)पूर्ण,	/* Acer Gobi 2000 Modem device (VP413) */
+	अणुUSB_DEVICE(0x05c6, 0x9264)पूर्ण,	/* Asus Gobi 2000 QDL device (VR305) */
+	अणुUSB_DEVICE(0x05c6, 0x9265)पूर्ण,	/* Asus Gobi 2000 Modem device (VR305) */
+	अणुUSB_DEVICE(0x05c6, 0x9234)पूर्ण,	/* Top Global Gobi 2000 QDL device (VR306) */
+	अणुUSB_DEVICE(0x05c6, 0x9235)पूर्ण,	/* Top Global Gobi 2000 Modem device (VR306) */
+	अणुUSB_DEVICE(0x05c6, 0x9274)पूर्ण,	/* iRex Technologies Gobi 2000 QDL device (VR307) */
+	अणुUSB_DEVICE(0x05c6, 0x9275)पूर्ण,	/* iRex Technologies Gobi 2000 Modem device (VR307) */
+	अणुUSB_DEVICE(0x1199, 0x9000)पूर्ण,	/* Sierra Wireless Gobi 2000 QDL device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9001)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9002)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9003)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9004)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9005)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9006)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9007)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9008)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9009)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x900a)पूर्ण,	/* Sierra Wireless Gobi 2000 Modem device (VT773) */
+	अणुUSB_DEVICE(0x1199, 0x9011)पूर्ण,   /* Sierra Wireless Gobi 2000 Modem device (MC8305) */
+	अणुUSB_DEVICE(0x16d8, 0x8001)पूर्ण,	/* CMDTech Gobi 2000 QDL device (VU922) */
+	अणुUSB_DEVICE(0x16d8, 0x8002)पूर्ण,	/* CMDTech Gobi 2000 Modem device (VU922) */
+	अणुUSB_DEVICE(0x05c6, 0x9204)पूर्ण,	/* Gobi 2000 QDL device */
+	अणुUSB_DEVICE(0x05c6, 0x9205)पूर्ण,	/* Gobi 2000 Modem device */
 
 	/* Gobi 3000 devices */
-	{USB_DEVICE(0x03f0, 0x371d)},	/* HP un2430 Gobi 3000 QDL */
-	{USB_DEVICE(0x05c6, 0x920c)},	/* Gobi 3000 QDL */
-	{USB_DEVICE(0x05c6, 0x920d)},	/* Gobi 3000 Composite */
-	{USB_DEVICE(0x1410, 0xa020)},   /* Novatel Gobi 3000 QDL */
-	{USB_DEVICE(0x1410, 0xa021)},	/* Novatel Gobi 3000 Composite */
-	{USB_DEVICE(0x413c, 0x8193)},	/* Dell Gobi 3000 QDL */
-	{USB_DEVICE(0x413c, 0x8194)},	/* Dell Gobi 3000 Composite */
-	{USB_DEVICE(0x413c, 0x81a6)},	/* Dell DW5570 QDL (MC8805) */
-	{USB_DEVICE(0x1199, 0x68a4)},	/* Sierra Wireless QDL */
-	{USB_DEVICE(0x1199, 0x68a5)},	/* Sierra Wireless Modem */
-	{USB_DEVICE(0x1199, 0x68a8)},	/* Sierra Wireless QDL */
-	{USB_DEVICE(0x1199, 0x68a9)},	/* Sierra Wireless Modem */
-	{USB_DEVICE(0x1199, 0x9010)},	/* Sierra Wireless Gobi 3000 QDL */
-	{USB_DEVICE(0x1199, 0x9012)},	/* Sierra Wireless Gobi 3000 QDL */
-	{USB_DEVICE(0x1199, 0x9013)},	/* Sierra Wireless Gobi 3000 Modem device (MC8355) */
-	{USB_DEVICE(0x1199, 0x9014)},	/* Sierra Wireless Gobi 3000 QDL */
-	{USB_DEVICE(0x1199, 0x9015)},	/* Sierra Wireless Gobi 3000 Modem device */
-	{USB_DEVICE(0x1199, 0x9018)},	/* Sierra Wireless Gobi 3000 QDL */
-	{USB_DEVICE(0x1199, 0x9019)},	/* Sierra Wireless Gobi 3000 Modem device */
-	{USB_DEVICE(0x1199, 0x901b)},	/* Sierra Wireless MC7770 */
-	{USB_DEVICE(0x12D1, 0x14F0)},	/* Sony Gobi 3000 QDL */
-	{USB_DEVICE(0x12D1, 0x14F1)},	/* Sony Gobi 3000 Composite */
-	{USB_DEVICE(0x0AF0, 0x8120)},	/* Option GTM681W */
+	अणुUSB_DEVICE(0x03f0, 0x371d)पूर्ण,	/* HP un2430 Gobi 3000 QDL */
+	अणुUSB_DEVICE(0x05c6, 0x920c)पूर्ण,	/* Gobi 3000 QDL */
+	अणुUSB_DEVICE(0x05c6, 0x920d)पूर्ण,	/* Gobi 3000 Composite */
+	अणुUSB_DEVICE(0x1410, 0xa020)पूर्ण,   /* Novatel Gobi 3000 QDL */
+	अणुUSB_DEVICE(0x1410, 0xa021)पूर्ण,	/* Novatel Gobi 3000 Composite */
+	अणुUSB_DEVICE(0x413c, 0x8193)पूर्ण,	/* Dell Gobi 3000 QDL */
+	अणुUSB_DEVICE(0x413c, 0x8194)पूर्ण,	/* Dell Gobi 3000 Composite */
+	अणुUSB_DEVICE(0x413c, 0x81a6)पूर्ण,	/* Dell DW5570 QDL (MC8805) */
+	अणुUSB_DEVICE(0x1199, 0x68a4)पूर्ण,	/* Sierra Wireless QDL */
+	अणुUSB_DEVICE(0x1199, 0x68a5)पूर्ण,	/* Sierra Wireless Modem */
+	अणुUSB_DEVICE(0x1199, 0x68a8)पूर्ण,	/* Sierra Wireless QDL */
+	अणुUSB_DEVICE(0x1199, 0x68a9)पूर्ण,	/* Sierra Wireless Modem */
+	अणुUSB_DEVICE(0x1199, 0x9010)पूर्ण,	/* Sierra Wireless Gobi 3000 QDL */
+	अणुUSB_DEVICE(0x1199, 0x9012)पूर्ण,	/* Sierra Wireless Gobi 3000 QDL */
+	अणुUSB_DEVICE(0x1199, 0x9013)पूर्ण,	/* Sierra Wireless Gobi 3000 Modem device (MC8355) */
+	अणुUSB_DEVICE(0x1199, 0x9014)पूर्ण,	/* Sierra Wireless Gobi 3000 QDL */
+	अणुUSB_DEVICE(0x1199, 0x9015)पूर्ण,	/* Sierra Wireless Gobi 3000 Modem device */
+	अणुUSB_DEVICE(0x1199, 0x9018)पूर्ण,	/* Sierra Wireless Gobi 3000 QDL */
+	अणुUSB_DEVICE(0x1199, 0x9019)पूर्ण,	/* Sierra Wireless Gobi 3000 Modem device */
+	अणुUSB_DEVICE(0x1199, 0x901b)पूर्ण,	/* Sierra Wireless MC7770 */
+	अणुUSB_DEVICE(0x12D1, 0x14F0)पूर्ण,	/* Sony Gobi 3000 QDL */
+	अणुUSB_DEVICE(0x12D1, 0x14F1)पूर्ण,	/* Sony Gobi 3000 Composite */
+	अणुUSB_DEVICE(0x0AF0, 0x8120)पूर्ण,	/* Option GTM681W */
 
 	/* non-Gobi Sierra Wireless devices */
-	{DEVICE_SWI(0x03f0, 0x4e1d)},	/* HP lt4111 LTE/EV-DO/HSPA+ Gobi 4G Module */
-	{DEVICE_SWI(0x0f3d, 0x68a2)},	/* Sierra Wireless MC7700 */
-	{DEVICE_SWI(0x114f, 0x68a2)},	/* Sierra Wireless MC7750 */
-	{DEVICE_SWI(0x1199, 0x68a2)},	/* Sierra Wireless MC7710 */
-	{DEVICE_SWI(0x1199, 0x68c0)},	/* Sierra Wireless MC7304/MC7354 */
-	{DEVICE_SWI(0x1199, 0x901c)},	/* Sierra Wireless EM7700 */
-	{DEVICE_SWI(0x1199, 0x901e)},	/* Sierra Wireless EM7355 QDL */
-	{DEVICE_SWI(0x1199, 0x901f)},	/* Sierra Wireless EM7355 */
-	{DEVICE_SWI(0x1199, 0x9040)},	/* Sierra Wireless Modem */
-	{DEVICE_SWI(0x1199, 0x9041)},	/* Sierra Wireless MC7305/MC7355 */
-	{DEVICE_SWI(0x1199, 0x9051)},	/* Netgear AirCard 340U */
-	{DEVICE_SWI(0x1199, 0x9053)},	/* Sierra Wireless Modem */
-	{DEVICE_SWI(0x1199, 0x9054)},	/* Sierra Wireless Modem */
-	{DEVICE_SWI(0x1199, 0x9055)},	/* Netgear AirCard 341U */
-	{DEVICE_SWI(0x1199, 0x9056)},	/* Sierra Wireless Modem */
-	{DEVICE_SWI(0x1199, 0x9060)},	/* Sierra Wireless Modem */
-	{DEVICE_SWI(0x1199, 0x9061)},	/* Sierra Wireless Modem */
-	{DEVICE_SWI(0x1199, 0x9062)},	/* Sierra Wireless EM7305 QDL */
-	{DEVICE_SWI(0x1199, 0x9063)},	/* Sierra Wireless EM7305 */
-	{DEVICE_SWI(0x1199, 0x9070)},	/* Sierra Wireless MC74xx */
-	{DEVICE_SWI(0x1199, 0x9071)},	/* Sierra Wireless MC74xx */
-	{DEVICE_SWI(0x1199, 0x9078)},	/* Sierra Wireless EM74xx */
-	{DEVICE_SWI(0x1199, 0x9079)},	/* Sierra Wireless EM74xx */
-	{DEVICE_SWI(0x1199, 0x907a)},	/* Sierra Wireless EM74xx QDL */
-	{DEVICE_SWI(0x1199, 0x907b)},	/* Sierra Wireless EM74xx */
-	{DEVICE_SWI(0x1199, 0x9090)},	/* Sierra Wireless EM7565 QDL */
-	{DEVICE_SWI(0x1199, 0x9091)},	/* Sierra Wireless EM7565 */
-	{DEVICE_SWI(0x413c, 0x81a2)},	/* Dell Wireless 5806 Gobi(TM) 4G LTE Mobile Broadband Card */
-	{DEVICE_SWI(0x413c, 0x81a3)},	/* Dell Wireless 5570 HSPA+ (42Mbps) Mobile Broadband Card */
-	{DEVICE_SWI(0x413c, 0x81a4)},	/* Dell Wireless 5570e HSPA+ (42Mbps) Mobile Broadband Card */
-	{DEVICE_SWI(0x413c, 0x81a8)},	/* Dell Wireless 5808 Gobi(TM) 4G LTE Mobile Broadband Card */
-	{DEVICE_SWI(0x413c, 0x81a9)},	/* Dell Wireless 5808e Gobi(TM) 4G LTE Mobile Broadband Card */
-	{DEVICE_SWI(0x413c, 0x81b1)},	/* Dell Wireless 5809e Gobi(TM) 4G LTE Mobile Broadband Card */
-	{DEVICE_SWI(0x413c, 0x81b3)},	/* Dell Wireless 5809e Gobi(TM) 4G LTE Mobile Broadband Card (rev3) */
-	{DEVICE_SWI(0x413c, 0x81b5)},	/* Dell Wireless 5811e QDL */
-	{DEVICE_SWI(0x413c, 0x81b6)},	/* Dell Wireless 5811e QDL */
-	{DEVICE_SWI(0x413c, 0x81cb)},	/* Dell Wireless 5816e QDL */
-	{DEVICE_SWI(0x413c, 0x81cc)},	/* Dell Wireless 5816e */
-	{DEVICE_SWI(0x413c, 0x81cf)},   /* Dell Wireless 5819 */
-	{DEVICE_SWI(0x413c, 0x81d0)},   /* Dell Wireless 5819 */
-	{DEVICE_SWI(0x413c, 0x81d1)},   /* Dell Wireless 5818 */
-	{DEVICE_SWI(0x413c, 0x81d2)},   /* Dell Wireless 5818 */
+	अणुDEVICE_SWI(0x03f0, 0x4e1d)पूर्ण,	/* HP lt4111 LTE/EV-DO/HSPA+ Gobi 4G Module */
+	अणुDEVICE_SWI(0x0f3d, 0x68a2)पूर्ण,	/* Sierra Wireless MC7700 */
+	अणुDEVICE_SWI(0x114f, 0x68a2)पूर्ण,	/* Sierra Wireless MC7750 */
+	अणुDEVICE_SWI(0x1199, 0x68a2)पूर्ण,	/* Sierra Wireless MC7710 */
+	अणुDEVICE_SWI(0x1199, 0x68c0)पूर्ण,	/* Sierra Wireless MC7304/MC7354 */
+	अणुDEVICE_SWI(0x1199, 0x901c)पूर्ण,	/* Sierra Wireless EM7700 */
+	अणुDEVICE_SWI(0x1199, 0x901e)पूर्ण,	/* Sierra Wireless EM7355 QDL */
+	अणुDEVICE_SWI(0x1199, 0x901f)पूर्ण,	/* Sierra Wireless EM7355 */
+	अणुDEVICE_SWI(0x1199, 0x9040)पूर्ण,	/* Sierra Wireless Modem */
+	अणुDEVICE_SWI(0x1199, 0x9041)पूर्ण,	/* Sierra Wireless MC7305/MC7355 */
+	अणुDEVICE_SWI(0x1199, 0x9051)पूर्ण,	/* Netgear AirCard 340U */
+	अणुDEVICE_SWI(0x1199, 0x9053)पूर्ण,	/* Sierra Wireless Modem */
+	अणुDEVICE_SWI(0x1199, 0x9054)पूर्ण,	/* Sierra Wireless Modem */
+	अणुDEVICE_SWI(0x1199, 0x9055)पूर्ण,	/* Netgear AirCard 341U */
+	अणुDEVICE_SWI(0x1199, 0x9056)पूर्ण,	/* Sierra Wireless Modem */
+	अणुDEVICE_SWI(0x1199, 0x9060)पूर्ण,	/* Sierra Wireless Modem */
+	अणुDEVICE_SWI(0x1199, 0x9061)पूर्ण,	/* Sierra Wireless Modem */
+	अणुDEVICE_SWI(0x1199, 0x9062)पूर्ण,	/* Sierra Wireless EM7305 QDL */
+	अणुDEVICE_SWI(0x1199, 0x9063)पूर्ण,	/* Sierra Wireless EM7305 */
+	अणुDEVICE_SWI(0x1199, 0x9070)पूर्ण,	/* Sierra Wireless MC74xx */
+	अणुDEVICE_SWI(0x1199, 0x9071)पूर्ण,	/* Sierra Wireless MC74xx */
+	अणुDEVICE_SWI(0x1199, 0x9078)पूर्ण,	/* Sierra Wireless EM74xx */
+	अणुDEVICE_SWI(0x1199, 0x9079)पूर्ण,	/* Sierra Wireless EM74xx */
+	अणुDEVICE_SWI(0x1199, 0x907a)पूर्ण,	/* Sierra Wireless EM74xx QDL */
+	अणुDEVICE_SWI(0x1199, 0x907b)पूर्ण,	/* Sierra Wireless EM74xx */
+	अणुDEVICE_SWI(0x1199, 0x9090)पूर्ण,	/* Sierra Wireless EM7565 QDL */
+	अणुDEVICE_SWI(0x1199, 0x9091)पूर्ण,	/* Sierra Wireless EM7565 */
+	अणुDEVICE_SWI(0x413c, 0x81a2)पूर्ण,	/* Dell Wireless 5806 Gobi(TM) 4G LTE Mobile Broadband Card */
+	अणुDEVICE_SWI(0x413c, 0x81a3)पूर्ण,	/* Dell Wireless 5570 HSPA+ (42Mbps) Mobile Broadband Card */
+	अणुDEVICE_SWI(0x413c, 0x81a4)पूर्ण,	/* Dell Wireless 5570e HSPA+ (42Mbps) Mobile Broadband Card */
+	अणुDEVICE_SWI(0x413c, 0x81a8)पूर्ण,	/* Dell Wireless 5808 Gobi(TM) 4G LTE Mobile Broadband Card */
+	अणुDEVICE_SWI(0x413c, 0x81a9)पूर्ण,	/* Dell Wireless 5808e Gobi(TM) 4G LTE Mobile Broadband Card */
+	अणुDEVICE_SWI(0x413c, 0x81b1)पूर्ण,	/* Dell Wireless 5809e Gobi(TM) 4G LTE Mobile Broadband Card */
+	अणुDEVICE_SWI(0x413c, 0x81b3)पूर्ण,	/* Dell Wireless 5809e Gobi(TM) 4G LTE Mobile Broadband Card (rev3) */
+	अणुDEVICE_SWI(0x413c, 0x81b5)पूर्ण,	/* Dell Wireless 5811e QDL */
+	अणुDEVICE_SWI(0x413c, 0x81b6)पूर्ण,	/* Dell Wireless 5811e QDL */
+	अणुDEVICE_SWI(0x413c, 0x81cb)पूर्ण,	/* Dell Wireless 5816e QDL */
+	अणुDEVICE_SWI(0x413c, 0x81cc)पूर्ण,	/* Dell Wireless 5816e */
+	अणुDEVICE_SWI(0x413c, 0x81cf)पूर्ण,   /* Dell Wireless 5819 */
+	अणुDEVICE_SWI(0x413c, 0x81d0)पूर्ण,   /* Dell Wireless 5819 */
+	अणुDEVICE_SWI(0x413c, 0x81d1)पूर्ण,   /* Dell Wireless 5818 */
+	अणुDEVICE_SWI(0x413c, 0x81d2)पूर्ण,   /* Dell Wireless 5818 */
 
 	/* Huawei devices */
-	{DEVICE_HWI(0x03f0, 0x581d)},	/* HP lt4112 LTE/HSPA+ Gobi 4G Modem (Huawei me906e) */
+	अणुDEVICE_HWI(0x03f0, 0x581d)पूर्ण,	/* HP lt4112 LTE/HSPA+ Gobi 4G Modem (Huawei me906e) */
 
-	{ }				/* Terminating entry */
-};
+	अणु पूर्ण				/* Terminating entry */
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, id_table);
 
-static int handle_quectel_ec20(struct device *dev, int ifnum)
-{
-	int altsetting = 0;
+अटल पूर्णांक handle_quectel_ec20(काष्ठा device *dev, पूर्णांक अगरnum)
+अणु
+	पूर्णांक altsetting = 0;
 
 	/*
 	 * Quectel EC20 Mini PCIe LTE module layout:
-	 * 0: DM/DIAG (use libqcdm from ModemManager for communication)
+	 * 0: DM/DIAG (use libqcdm from ModemManager क्रम communication)
 	 * 1: NMEA
 	 * 2: AT-capable modem port
-	 * 3: Modem interface
+	 * 3: Modem पूर्णांकerface
 	 * 4: NDIS
 	 */
-	switch (ifnum) {
-	case 0:
+	चयन (अगरnum) अणु
+	हाल 0:
 		dev_dbg(dev, "Quectel EC20 DM/DIAG interface found\n");
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		dev_dbg(dev, "Quectel EC20 NMEA GPS interface found\n");
-		break;
-	case 2:
-	case 3:
+		अवरोध;
+	हाल 2:
+	हाल 3:
 		dev_dbg(dev, "Quectel EC20 Modem port found\n");
-		break;
-	case 4:
-		/* Don't claim the QMI/net interface */
+		अवरोध;
+	हाल 4:
+		/* Don't claim the QMI/net पूर्णांकerface */
 		altsetting = -1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return altsetting;
-}
+	वापस altsetting;
+पूर्ण
 
-static int qcprobe(struct usb_serial *serial, const struct usb_device_id *id)
-{
-	struct usb_host_interface *intf = serial->interface->cur_altsetting;
-	struct device *dev = &serial->dev->dev;
-	int retval = -ENODEV;
-	__u8 nintf;
-	__u8 ifnum;
-	int altsetting = -1;
+अटल पूर्णांक qcprobe(काष्ठा usb_serial *serial, स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा usb_host_पूर्णांकerface *पूर्णांकf = serial->पूर्णांकerface->cur_altsetting;
+	काष्ठा device *dev = &serial->dev->dev;
+	पूर्णांक retval = -ENODEV;
+	__u8 nपूर्णांकf;
+	__u8 अगरnum;
+	पूर्णांक altsetting = -1;
 	bool sendsetup = false;
 
-	/* we only support vendor specific functions */
-	if (intf->desc.bInterfaceClass != USB_CLASS_VENDOR_SPEC)
-		goto done;
+	/* we only support venकरोr specअगरic functions */
+	अगर (पूर्णांकf->desc.bInterfaceClass != USB_CLASS_VENDOR_SPEC)
+		जाओ करोne;
 
-	nintf = serial->dev->actconfig->desc.bNumInterfaces;
-	dev_dbg(dev, "Num Interfaces = %d\n", nintf);
-	ifnum = intf->desc.bInterfaceNumber;
-	dev_dbg(dev, "This Interface = %d\n", ifnum);
+	nपूर्णांकf = serial->dev->actconfig->desc.bNumInterfaces;
+	dev_dbg(dev, "Num Interfaces = %d\n", nपूर्णांकf);
+	अगरnum = पूर्णांकf->desc.bInterfaceNumber;
+	dev_dbg(dev, "This Interface = %d\n", अगरnum);
 
-	if (nintf == 1) {
+	अगर (nपूर्णांकf == 1) अणु
 		/* QDL mode */
 		/* Gobi 2000 has a single altsetting, older ones have two */
-		if (serial->interface->num_altsetting == 2)
-			intf = usb_altnum_to_altsetting(serial->interface, 1);
-		else if (serial->interface->num_altsetting > 2)
-			goto done;
+		अगर (serial->पूर्णांकerface->num_altsetting == 2)
+			पूर्णांकf = usb_altnum_to_altsetting(serial->पूर्णांकerface, 1);
+		अन्यथा अगर (serial->पूर्णांकerface->num_altsetting > 2)
+			जाओ करोne;
 
-		if (intf && intf->desc.bNumEndpoints == 2 &&
-		    usb_endpoint_is_bulk_in(&intf->endpoint[0].desc) &&
-		    usb_endpoint_is_bulk_out(&intf->endpoint[1].desc)) {
+		अगर (पूर्णांकf && पूर्णांकf->desc.bNumEndpoपूर्णांकs == 2 &&
+		    usb_endpoपूर्णांक_is_bulk_in(&पूर्णांकf->endpoपूर्णांक[0].desc) &&
+		    usb_endpoपूर्णांक_is_bulk_out(&पूर्णांकf->endpoपूर्णांक[1].desc)) अणु
 			dev_dbg(dev, "QDL port found\n");
 
-			if (serial->interface->num_altsetting == 1)
+			अगर (serial->पूर्णांकerface->num_altsetting == 1)
 				retval = 0; /* Success */
-			else
+			अन्यथा
 				altsetting = 1;
-		}
-		goto done;
+		पूर्ण
+		जाओ करोne;
 
-	}
+	पूर्ण
 
-	/* default to enabling interface */
+	/* शेष to enabling पूर्णांकerface */
 	altsetting = 0;
 
 	/*
-	 * Composite mode; don't bind to the QMI/net interface as that
-	 * gets handled by other drivers.
+	 * Composite mode; करोn't bind to the QMI/net पूर्णांकerface as that
+	 * माला_लो handled by other drivers.
 	 */
 
-	switch (id->driver_info) {
-	case QCSERIAL_G1K:
+	चयन (id->driver_info) अणु
+	हाल QCSERIAL_G1K:
 		/*
 		 * Gobi 1K USB layout:
-		 * 0: DM/DIAG (use libqcdm from ModemManager for communication)
-		 * 1: serial port (doesn't respond)
+		 * 0: DM/DIAG (use libqcdm from ModemManager क्रम communication)
+		 * 1: serial port (करोesn't respond)
 		 * 2: AT-capable modem port
 		 * 3: QMI/net
 		 */
-		if (nintf < 3 || nintf > 4) {
-			dev_err(dev, "unknown number of interfaces: %d\n", nintf);
+		अगर (nपूर्णांकf < 3 || nपूर्णांकf > 4) अणु
+			dev_err(dev, "unknown number of interfaces: %d\n", nपूर्णांकf);
 			altsetting = -1;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		if (ifnum == 0) {
+		अगर (अगरnum == 0) अणु
 			dev_dbg(dev, "Gobi 1K DM/DIAG interface found\n");
 			altsetting = 1;
-		} else if (ifnum == 2)
+		पूर्ण अन्यथा अगर (अगरnum == 2)
 			dev_dbg(dev, "Modem port found\n");
-		else
+		अन्यथा
 			altsetting = -1;
-		break;
-	case QCSERIAL_G2K:
+		अवरोध;
+	हाल QCSERIAL_G2K:
 		/* handle non-standard layouts */
-		if (nintf == 5 && id->idProduct == QUECTEL_EC20_PID) {
-			altsetting = handle_quectel_ec20(dev, ifnum);
-			goto done;
-		}
+		अगर (nपूर्णांकf == 5 && id->idProduct == QUECTEL_EC20_PID) अणु
+			altsetting = handle_quectel_ec20(dev, अगरnum);
+			जाओ करोne;
+		पूर्ण
 
 		/*
 		 * Gobi 2K+ USB layout:
 		 * 0: QMI/net
-		 * 1: DM/DIAG (use libqcdm from ModemManager for communication)
+		 * 1: DM/DIAG (use libqcdm from ModemManager क्रम communication)
 		 * 2: AT-capable modem port
 		 * 3: NMEA
 		 */
-		if (nintf < 3 || nintf > 4) {
-			dev_err(dev, "unknown number of interfaces: %d\n", nintf);
+		अगर (nपूर्णांकf < 3 || nपूर्णांकf > 4) अणु
+			dev_err(dev, "unknown number of interfaces: %d\n", nपूर्णांकf);
 			altsetting = -1;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		switch (ifnum) {
-		case 0:
-			/* Don't claim the QMI/net interface */
+		चयन (अगरnum) अणु
+		हाल 0:
+			/* Don't claim the QMI/net पूर्णांकerface */
 			altsetting = -1;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			dev_dbg(dev, "Gobi 2K+ DM/DIAG interface found\n");
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			dev_dbg(dev, "Modem port found\n");
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			/*
 			 * NMEA (serial line 9600 8N1)
 			 * # echo "\$GPS_START" > /dev/ttyUSBx
 			 * # echo "\$GPS_STOP"  > /dev/ttyUSBx
 			 */
 			dev_dbg(dev, "Gobi 2K+ NMEA GPS interface found\n");
-			break;
-		}
-		break;
-	case QCSERIAL_SWI:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल QCSERIAL_SWI:
 		/*
 		 * Sierra Wireless layout:
-		 * 0: DM/DIAG (use libqcdm from ModemManager for communication)
+		 * 0: DM/DIAG (use libqcdm from ModemManager क्रम communication)
 		 * 2: NMEA
 		 * 3: AT-capable modem port
 		 * 8: QMI/net
 		 */
-		switch (ifnum) {
-		case 0:
+		चयन (अगरnum) अणु
+		हाल 0:
 			dev_dbg(dev, "DM/DIAG interface found\n");
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			dev_dbg(dev, "NMEA GPS interface found\n");
 			sendsetup = true;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			dev_dbg(dev, "Modem port found\n");
 			sendsetup = true;
-			break;
-		default:
-			/* don't claim any unsupported interface */
+			अवरोध;
+		शेष:
+			/* करोn't claim any unsupported पूर्णांकerface */
 			altsetting = -1;
-			break;
-		}
-		break;
-	case QCSERIAL_HWI:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल QCSERIAL_HWI:
 		/*
 		 * Huawei devices map functions by subclass + protocol
-		 * instead of interface numbers. The protocol identify
-		 * a specific function, while the subclass indicate a
-		 * specific firmware source
+		 * instead of पूर्णांकerface numbers. The protocol identअगरy
+		 * a specअगरic function, जबतक the subclass indicate a
+		 * specअगरic firmware source
 		 *
 		 * This is a list of functions known to be non-serial.  The rest
 		 * are assumed to be serial and will be handled by this driver
 		 */
-		switch (intf->desc.bInterfaceProtocol) {
+		चयन (पूर्णांकf->desc.bInterfaceProtocol) अणु
 			/* QMI combined (qmi_wwan) */
-		case 0x07:
-		case 0x37:
-		case 0x67:
+		हाल 0x07:
+		हाल 0x37:
+		हाल 0x67:
 			/* QMI data (qmi_wwan) */
-		case 0x08:
-		case 0x38:
-		case 0x68:
+		हाल 0x08:
+		हाल 0x38:
+		हाल 0x68:
 			/* QMI control (qmi_wwan) */
-		case 0x09:
-		case 0x39:
-		case 0x69:
+		हाल 0x09:
+		हाल 0x39:
+		हाल 0x69:
 			/* NCM like (huawei_cdc_ncm) */
-		case 0x16:
-		case 0x46:
-		case 0x76:
+		हाल 0x16:
+		हाल 0x46:
+		हाल 0x76:
 			altsetting = -1;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_dbg(dev, "Huawei type serial port found (%02x/%02x/%02x)\n",
-				intf->desc.bInterfaceClass,
-				intf->desc.bInterfaceSubClass,
-				intf->desc.bInterfaceProtocol);
-		}
-		break;
-	default:
+				पूर्णांकf->desc.bInterfaceClass,
+				पूर्णांकf->desc.bInterfaceSubClass,
+				पूर्णांकf->desc.bInterfaceProtocol);
+		पूर्ण
+		अवरोध;
+	शेष:
 		dev_err(dev, "unsupported device layout type: %lu\n",
 			id->driver_info);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-done:
-	if (altsetting >= 0) {
-		retval = usb_set_interface(serial->dev, ifnum, altsetting);
-		if (retval < 0) {
+करोne:
+	अगर (altsetting >= 0) अणु
+		retval = usb_set_पूर्णांकerface(serial->dev, अगरnum, altsetting);
+		अगर (retval < 0) अणु
 			dev_err(dev,
 				"Could not set interface, error %d\n",
 				retval);
 			retval = -ENODEV;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!retval)
-		usb_set_serial_data(serial, (void *)(unsigned long)sendsetup);
+	अगर (!retval)
+		usb_set_serial_data(serial, (व्योम *)(अचिन्हित दीर्घ)sendsetup);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int qc_attach(struct usb_serial *serial)
-{
-	struct usb_wwan_intf_private *data;
+अटल पूर्णांक qc_attach(काष्ठा usb_serial *serial)
+अणु
+	काष्ठा usb_wwan_पूर्णांकf_निजी *data;
 	bool sendsetup;
 
-	data = kzalloc(sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = kzalloc(माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	sendsetup = !!(unsigned long)(usb_get_serial_data(serial));
-	if (sendsetup)
+	sendsetup = !!(अचिन्हित दीर्घ)(usb_get_serial_data(serial));
+	अगर (sendsetup)
 		data->use_send_setup = 1;
 
 	spin_lock_init(&data->susp_lock);
 
 	usb_set_serial_data(serial, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void qc_release(struct usb_serial *serial)
-{
-	struct usb_wwan_intf_private *priv = usb_get_serial_data(serial);
+अटल व्योम qc_release(काष्ठा usb_serial *serial)
+अणु
+	काष्ठा usb_wwan_पूर्णांकf_निजी *priv = usb_get_serial_data(serial);
 
-	usb_set_serial_data(serial, NULL);
-	kfree(priv);
-}
+	usb_set_serial_data(serial, शून्य);
+	kमुक्त(priv);
+पूर्ण
 
-static struct usb_serial_driver qcdevice = {
-	.driver = {
+अटल काष्ठा usb_serial_driver qcdevice = अणु
+	.driver = अणु
 		.owner     = THIS_MODULE,
 		.name      = "qcserial",
-	},
+	पूर्ण,
 	.description         = "Qualcomm USB modem",
 	.id_table            = id_table,
 	.num_ports           = 1,
 	.probe               = qcprobe,
-	.open		     = usb_wwan_open,
-	.close		     = usb_wwan_close,
+	.खोलो		     = usb_wwan_खोलो,
+	.बंद		     = usb_wwan_बंद,
 	.dtr_rts	     = usb_wwan_dtr_rts,
-	.write		     = usb_wwan_write,
-	.write_room	     = usb_wwan_write_room,
-	.chars_in_buffer     = usb_wwan_chars_in_buffer,
+	.ग_लिखो		     = usb_wwan_ग_लिखो,
+	.ग_लिखो_room	     = usb_wwan_ग_लिखो_room,
+	.अक्षरs_in_buffer     = usb_wwan_अक्षरs_in_buffer,
 	.tiocmget            = usb_wwan_tiocmget,
 	.tiocmset            = usb_wwan_tiocmset,
 	.attach              = qc_attach,
 	.release	     = qc_release,
 	.port_probe          = usb_wwan_port_probe,
-	.port_remove	     = usb_wwan_port_remove,
-#ifdef CONFIG_PM
+	.port_हटाओ	     = usb_wwan_port_हटाओ,
+#अगर_घोषित CONFIG_PM
 	.suspend	     = usb_wwan_suspend,
 	.resume		     = usb_wwan_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static struct usb_serial_driver * const serial_drivers[] = {
-	&qcdevice, NULL
-};
+अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+	&qcdevice, शून्य
+पूर्ण;
 
 module_usb_serial_driver(serial_drivers, id_table);
 

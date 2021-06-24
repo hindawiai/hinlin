@@ -1,4 +1,5 @@
-/* sbni.c:  Granch SBNI12 leased line adapters driver for linux
+<शैली गुरु>
+/* sbni.c:  Granch SBNI12 leased line adapters driver क्रम linux
  *
  *	Written 2001 by Denis I.Timofeev (timofeev@granch.ru)
  *
@@ -6,7 +7,7 @@
  *	Alexey Zverev and Max Khon.
  *
  *	Driver supports SBNI12-02,-04,-05,-10,-11 cards, single and
- *	double-channel, PCI and ISA modifications.
+ *	द्विगुन-channel, PCI and ISA modअगरications.
  *	More info and useful utilities to work with SBNI12 cards you can find
  *	at http://www.granch.com (English) or http://www.granch.ru (Russian)
  *
@@ -17,348 +18,348 @@
  *  5.0.1	Jun 22 2001
  *	  - Fixed bug in probe
  *  5.0.0	Jun 06 2001
- *	  - Driver was completely redesigned by Denis I.Timofeev,
- *	  - now PCI/Dual, ISA/Dual (with single interrupt line) models are
+ *	  - Driver was completely redeचिन्हित by Denis I.Timofeev,
+ *	  - now PCI/Dual, ISA/Dual (with single पूर्णांकerrupt line) models are
  *	  - supported
  *  3.3.0	Thu Feb 24 21:30:28 NOVT 2000 
  *        - PCI cards support
  *  3.2.0	Mon Dec 13 22:26:53 NOVT 1999
- * 	  - Completely rebuilt all the packet storage system
+ * 	  - Completely rebuilt all the packet storage प्रणाली
  * 	  -    to work in Ethernet-like style.
  *  3.1.1	just fixed some bugs (5 aug 1999)
  *  3.1.0	added balancing feature	(26 apr 1999)
  *  3.0.1	just fixed some bugs (14 apr 1999).
  *  3.0.0	Initial Revision, Yaroslav Polyakov (24 Feb 1999)
- *        - added pre-calculation for CRC, fixed bug with "len-2" frames, 
- *        - removed outbound fragmentation (MTU=1000), written CRC-calculation 
- *        - on asm, added work with hard_headers and now we have our own cache 
- *        - for them, optionally supported word-interchange on some chipsets,
+ *        - added pre-calculation क्रम CRC, fixed bug with "len-2" frames, 
+ *        - हटाओd outbound fragmentation (MTU=1000), written CRC-calculation 
+ *        - on यंत्र, added work with hard_headers and now we have our own cache 
+ *        - क्रम them, optionally supported word-पूर्णांकerchange on some chipsets,
  * 
  *	Known problem: this driver wasn't tested on multiprocessor machine.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/ptrace.h>
-#include <linux/fcntl.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/pci.h>
-#include <linux/skbuff.h>
-#include <linux/timer.h>
-#include <linux/init.h>
-#include <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
 
-#include <net/net_namespace.h>
-#include <net/arp.h>
-#include <net/Space.h>
+#समावेश <net/net_namespace.h>
+#समावेश <net/arp.h>
+#समावेश <net/Space.h>
 
-#include <asm/io.h>
-#include <asm/types.h>
-#include <asm/byteorder.h>
-#include <asm/irq.h>
-#include <linux/uaccess.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/types.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <linux/uaccess.h>
 
-#include "sbni.h"
+#समावेश "sbni.h"
 
-/* device private data */
+/* device निजी data */
 
-struct net_local {
-	struct timer_list	watchdog;
-	struct net_device	*watchdog_dev;
+काष्ठा net_local अणु
+	काष्ठा समयr_list	watchकरोg;
+	काष्ठा net_device	*watchकरोg_dev;
 
 	spinlock_t	lock;
-	struct sk_buff  *rx_buf_p;		/* receive buffer ptr */
-	struct sk_buff  *tx_buf_p;		/* transmit buffer ptr */
+	काष्ठा sk_buff  *rx_buf_p;		/* receive buffer ptr */
+	काष्ठा sk_buff  *tx_buf_p;		/* transmit buffer ptr */
 	
-	unsigned int	framelen;		/* current frame length */
-	unsigned int	maxframe;		/* maximum valid frame length */
-	unsigned int	state;
-	unsigned int	inppos, outpos;		/* positions in rx/tx buffers */
+	अचिन्हित पूर्णांक	framelen;		/* current frame length */
+	अचिन्हित पूर्णांक	maxframe;		/* maximum valid frame length */
+	अचिन्हित पूर्णांक	state;
+	अचिन्हित पूर्णांक	inppos, outpos;		/* positions in rx/tx buffers */
 
 	/* transmitting frame number - from frames qty to 1 */
-	unsigned int	tx_frameno;
+	अचिन्हित पूर्णांक	tx_frameno;
 
 	/* expected number of next receiving frame */
-	unsigned int	wait_frameno;
+	अचिन्हित पूर्णांक	रुको_frameno;
 
-	/* count of failed attempts to frame send - 32 attempts do before
-	   error - while receiver tunes on opposite side of wire */
-	unsigned int	trans_errors;
+	/* count of failed attempts to frame send - 32 attempts करो beक्रमe
+	   error - जबतक receiver tunes on opposite side of wire */
+	अचिन्हित पूर्णांक	trans_errors;
 
-	/* idle time; send pong when limit exceeded */
-	unsigned int	timer_ticks;
+	/* idle समय; send pong when limit exceeded */
+	अचिन्हित पूर्णांक	समयr_ticks;
 
-	/* fields used for receive level autoselection */
-	int	delta_rxl;
-	unsigned int	cur_rxl_index, timeout_rxl;
-	unsigned long	cur_rxl_rcvd, prev_rxl_rcvd;
+	/* fields used क्रम receive level स्वतःselection */
+	पूर्णांक	delta_rxl;
+	अचिन्हित पूर्णांक	cur_rxl_index, समयout_rxl;
+	अचिन्हित दीर्घ	cur_rxl_rcvd, prev_rxl_rcvd;
 
-	struct sbni_csr1	csr1;		/* current value of CSR1 */
-	struct sbni_in_stats	in_stats; 	/* internal statistics */ 
+	काष्ठा sbni_csr1	csr1;		/* current value of CSR1 */
+	काष्ठा sbni_in_stats	in_stats; 	/* पूर्णांकernal statistics */ 
 
-	struct net_device		*second;	/* for ISA/dual cards */
+	काष्ठा net_device		*second;	/* क्रम ISA/dual cards */
 
-#ifdef CONFIG_SBNI_MULTILINE
-	struct net_device		*master;
-	struct net_device		*link;
-#endif
-};
+#अगर_घोषित CONFIG_SBNI_MULTILINE
+	काष्ठा net_device		*master;
+	काष्ठा net_device		*link;
+#पूर्ण_अगर
+पूर्ण;
 
 
-static int  sbni_card_probe( unsigned long );
-static int  sbni_pci_probe( struct net_device  * );
-static struct net_device  *sbni_probe1(struct net_device *, unsigned long, int);
-static int  sbni_open( struct net_device * );
-static int  sbni_close( struct net_device * );
-static netdev_tx_t sbni_start_xmit(struct sk_buff *,
-					 struct net_device * );
-static int  sbni_ioctl( struct net_device *, struct ifreq *, int );
-static void  set_multicast_list( struct net_device * );
+अटल पूर्णांक  sbni_card_probe( अचिन्हित दीर्घ );
+अटल पूर्णांक  sbni_pci_probe( काष्ठा net_device  * );
+अटल काष्ठा net_device  *sbni_probe1(काष्ठा net_device *, अचिन्हित दीर्घ, पूर्णांक);
+अटल पूर्णांक  sbni_खोलो( काष्ठा net_device * );
+अटल पूर्णांक  sbni_बंद( काष्ठा net_device * );
+अटल netdev_tx_t sbni_start_xmit(काष्ठा sk_buff *,
+					 काष्ठा net_device * );
+अटल पूर्णांक  sbni_ioctl( काष्ठा net_device *, काष्ठा अगरreq *, पूर्णांक );
+अटल व्योम  set_multicast_list( काष्ठा net_device * );
 
-static irqreturn_t sbni_interrupt( int, void * );
-static void  handle_channel( struct net_device * );
-static int   recv_frame( struct net_device * );
-static void  send_frame( struct net_device * );
-static int   upload_data( struct net_device *,
-			  unsigned, unsigned, unsigned, u32 );
-static void  download_data( struct net_device *, u32 * );
-static void  sbni_watchdog(struct timer_list *);
-static void  interpret_ack( struct net_device *, unsigned );
-static int   append_frame_to_pkt( struct net_device *, unsigned, u32 );
-static void  indicate_pkt( struct net_device * );
-static void  card_start( struct net_device * );
-static void  prepare_to_send( struct sk_buff *, struct net_device * );
-static void  drop_xmit_queue( struct net_device * );
-static void  send_frame_header( struct net_device *, u32 * );
-static int   skip_tail( unsigned int, unsigned int, u32 );
-static int   check_fhdr( u32, u32 *, u32 *, u32 *, u32 *, u32 * );
-static void  change_level( struct net_device * );
-static void  timeout_change_level( struct net_device * );
-static u32   calc_crc32( u32, u8 *, u32 );
-static struct sk_buff *  get_rx_buf( struct net_device * );
-static int  sbni_init( struct net_device * );
+अटल irqवापस_t sbni_पूर्णांकerrupt( पूर्णांक, व्योम * );
+अटल व्योम  handle_channel( काष्ठा net_device * );
+अटल पूर्णांक   recv_frame( काष्ठा net_device * );
+अटल व्योम  send_frame( काष्ठा net_device * );
+अटल पूर्णांक   upload_data( काष्ठा net_device *,
+			  अचिन्हित, अचिन्हित, अचिन्हित, u32 );
+अटल व्योम  करोwnload_data( काष्ठा net_device *, u32 * );
+अटल व्योम  sbni_watchकरोg(काष्ठा समयr_list *);
+अटल व्योम  पूर्णांकerpret_ack( काष्ठा net_device *, अचिन्हित );
+अटल पूर्णांक   append_frame_to_pkt( काष्ठा net_device *, अचिन्हित, u32 );
+अटल व्योम  indicate_pkt( काष्ठा net_device * );
+अटल व्योम  card_start( काष्ठा net_device * );
+अटल व्योम  prepare_to_send( काष्ठा sk_buff *, काष्ठा net_device * );
+अटल व्योम  drop_xmit_queue( काष्ठा net_device * );
+अटल व्योम  send_frame_header( काष्ठा net_device *, u32 * );
+अटल पूर्णांक   skip_tail( अचिन्हित पूर्णांक, अचिन्हित पूर्णांक, u32 );
+अटल पूर्णांक   check_fhdr( u32, u32 *, u32 *, u32 *, u32 *, u32 * );
+अटल व्योम  change_level( काष्ठा net_device * );
+अटल व्योम  समयout_change_level( काष्ठा net_device * );
+अटल u32   calc_crc32( u32, u8 *, u32 );
+अटल काष्ठा sk_buff *  get_rx_buf( काष्ठा net_device * );
+अटल पूर्णांक  sbni_init( काष्ठा net_device * );
 
-#ifdef CONFIG_SBNI_MULTILINE
-static int  enslave( struct net_device *, struct net_device * );
-static int  emancipate( struct net_device * );
-#endif
+#अगर_घोषित CONFIG_SBNI_MULTILINE
+अटल पूर्णांक  enslave( काष्ठा net_device *, काष्ठा net_device * );
+अटल पूर्णांक  emancipate( काष्ठा net_device * );
+#पूर्ण_अगर
 
-static const char  version[] =
+अटल स्थिर अक्षर  version[] =
 	"Granch SBNI12 driver ver 5.0.1  Jun 22 2001  Denis I.Timofeev.\n";
 
-static bool skip_pci_probe	__initdata = false;
-static int  scandone	__initdata = 0;
-static int  num		__initdata = 0;
+अटल bool skip_pci_probe	__initdata = false;
+अटल पूर्णांक  scanकरोne	__initdata = 0;
+अटल पूर्णांक  num		__initdata = 0;
 
-static unsigned char  rxl_tab[];
-static u32  crc32tab[];
+अटल अचिन्हित अक्षर  rxl_tab[];
+अटल u32  crc32tab[];
 
-/* A list of all installed devices, for removing the driver module. */
-static struct net_device  *sbni_cards[ SBNI_MAX_NUM_CARDS ];
+/* A list of all installed devices, क्रम removing the driver module. */
+अटल काष्ठा net_device  *sbni_cards[ SBNI_MAX_NUM_CARDS ];
 
 /* Lists of device's parameters */
-static u32	io[   SBNI_MAX_NUM_CARDS ] __initdata =
-	{ [0 ... SBNI_MAX_NUM_CARDS-1] = -1 };
-static u32	irq[  SBNI_MAX_NUM_CARDS ] __initdata;
-static u32	baud[ SBNI_MAX_NUM_CARDS ] __initdata;
-static u32	rxl[  SBNI_MAX_NUM_CARDS ] __initdata =
-	{ [0 ... SBNI_MAX_NUM_CARDS-1] = -1 };
-static u32	mac[  SBNI_MAX_NUM_CARDS ] __initdata;
+अटल u32	io[   SBNI_MAX_NUM_CARDS ] __initdata =
+	अणु [0 ... SBNI_MAX_NUM_CARDS-1] = -1 पूर्ण;
+अटल u32	irq[  SBNI_MAX_NUM_CARDS ] __initdata;
+अटल u32	baud[ SBNI_MAX_NUM_CARDS ] __initdata;
+अटल u32	rxl[  SBNI_MAX_NUM_CARDS ] __initdata =
+	अणु [0 ... SBNI_MAX_NUM_CARDS-1] = -1 पूर्ण;
+अटल u32	mac[  SBNI_MAX_NUM_CARDS ] __initdata;
 
-#ifndef MODULE
-typedef u32  iarr[];
-static iarr *dest[5] __initdata = { &io, &irq, &baud, &rxl, &mac };
-#endif
+#अगर_अघोषित MODULE
+प्रकार u32  iarr[];
+अटल iarr *dest[5] __initdata = अणु &io, &irq, &baud, &rxl, &mac पूर्ण;
+#पूर्ण_अगर
 
 /* A zero-terminated list of I/O addresses to be probed on ISA bus */
-static unsigned int  netcard_portlist[ ] __initdata = { 
+अटल अचिन्हित पूर्णांक  netcard_portlist[ ] __initdata = अणु 
 	0x210, 0x214, 0x220, 0x224, 0x230, 0x234, 0x240, 0x244, 0x250, 0x254,
 	0x260, 0x264, 0x270, 0x274, 0x280, 0x284, 0x290, 0x294, 0x2a0, 0x2a4,
 	0x2b0, 0x2b4, 0x2c0, 0x2c4, 0x2d0, 0x2d4, 0x2e0, 0x2e4, 0x2f0, 0x2f4,
-	0 };
+	0 पूर्ण;
 
-#define NET_LOCAL_LOCK(dev) (((struct net_local *)netdev_priv(dev))->lock)
+#घोषणा NET_LOCAL_LOCK(dev) (((काष्ठा net_local *)netdev_priv(dev))->lock)
 
 /*
- * Look for SBNI card which addr stored in dev->base_addr, if nonzero.
+ * Look क्रम SBNI card which addr stored in dev->base_addr, अगर nonzero.
  * Otherwise, look through PCI bus. If none PCI-card was found, scan ISA.
  */
 
-static inline int __init
-sbni_isa_probe( struct net_device  *dev )
-{
-	if( dev->base_addr > 0x1ff &&
+अटल अंतरभूत पूर्णांक __init
+sbni_isa_probe( काष्ठा net_device  *dev )
+अणु
+	अगर( dev->base_addr > 0x1ff &&
 	    request_region( dev->base_addr, SBNI_IO_EXTENT, dev->name ) &&
 	    sbni_probe1( dev, dev->base_addr, dev->irq ) )
 
-		return  0;
-	else {
+		वापस  0;
+	अन्यथा अणु
 		pr_err("base address 0x%lx is busy, or adapter is malfunctional!\n",
 		       dev->base_addr);
-		return  -ENODEV;
-	}
-}
+		वापस  -ENODEV;
+	पूर्ण
+पूर्ण
 
-static const struct net_device_ops sbni_netdev_ops = {
-	.ndo_open		= sbni_open,
-	.ndo_stop		= sbni_close,
-	.ndo_start_xmit		= sbni_start_xmit,
-	.ndo_set_rx_mode	= set_multicast_list,
-	.ndo_do_ioctl		= sbni_ioctl,
-	.ndo_set_mac_address 	= eth_mac_addr,
-	.ndo_validate_addr	= eth_validate_addr,
-};
+अटल स्थिर काष्ठा net_device_ops sbni_netdev_ops = अणु
+	.nकरो_खोलो		= sbni_खोलो,
+	.nकरो_stop		= sbni_बंद,
+	.nकरो_start_xmit		= sbni_start_xmit,
+	.nकरो_set_rx_mode	= set_multicast_list,
+	.nकरो_करो_ioctl		= sbni_ioctl,
+	.nकरो_set_mac_address 	= eth_mac_addr,
+	.nकरो_validate_addr	= eth_validate_addr,
+पूर्ण;
 
-static void __init sbni_devsetup(struct net_device *dev)
-{
+अटल व्योम __init sbni_devsetup(काष्ठा net_device *dev)
+अणु
 	ether_setup( dev );
 	dev->netdev_ops = &sbni_netdev_ops;
-}
+पूर्ण
 
-int __init sbni_probe(int unit)
-{
-	struct net_device *dev;
-	int err;
+पूर्णांक __init sbni_probe(पूर्णांक unit)
+अणु
+	काष्ठा net_device *dev;
+	पूर्णांक err;
 
-	dev = alloc_netdev(sizeof(struct net_local), "sbni",
+	dev = alloc_netdev(माप(काष्ठा net_local), "sbni",
 			   NET_NAME_UNKNOWN, sbni_devsetup);
-	if (!dev)
-		return -ENOMEM;
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	dev->netdev_ops = &sbni_netdev_ops;
 
-	sprintf(dev->name, "sbni%d", unit);
+	प्र_लिखो(dev->name, "sbni%d", unit);
 	netdev_boot_setup_check(dev);
 
 	err = sbni_init(dev);
-	if (err) {
-		free_netdev(dev);
-		return err;
-	}
+	अगर (err) अणु
+		मुक्त_netdev(dev);
+		वापस err;
+	पूर्ण
 
-	err = register_netdev(dev);
-	if (err) {
+	err = रेजिस्टर_netdev(dev);
+	अगर (err) अणु
 		release_region( dev->base_addr, SBNI_IO_EXTENT );
-		free_netdev(dev);
-		return err;
-	}
+		मुक्त_netdev(dev);
+		वापस err;
+	पूर्ण
 	pr_info_once("%s", version);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __init sbni_init(struct net_device *dev)
-{
-	int  i;
-	if( dev->base_addr )
-		return  sbni_isa_probe( dev );
-	/* otherwise we have to perform search our adapter */
+अटल पूर्णांक __init sbni_init(काष्ठा net_device *dev)
+अणु
+	पूर्णांक  i;
+	अगर( dev->base_addr )
+		वापस  sbni_isa_probe( dev );
+	/* otherwise we have to perक्रमm search our adapter */
 
-	if( io[ num ] != -1 ) {
+	अगर( io[ num ] != -1 ) अणु
 		dev->base_addr	= io[ num ];
 		dev->irq	= irq[ num ];
-	} else if( scandone  ||  io[ 0 ] != -1 ) {
-		return  -ENODEV;
-	}
+	पूर्ण अन्यथा अगर( scanकरोne  ||  io[ 0 ] != -1 ) अणु
+		वापस  -ENODEV;
+	पूर्ण
 
-	/* if io[ num ] contains non-zero address, then that is on ISA bus */
-	if( dev->base_addr )
-		return  sbni_isa_probe( dev );
+	/* अगर io[ num ] contains non-zero address, then that is on ISA bus */
+	अगर( dev->base_addr )
+		वापस  sbni_isa_probe( dev );
 
 	/* ...otherwise - scan PCI first */
-	if( !skip_pci_probe  &&  !sbni_pci_probe( dev ) )
-		return  0;
+	अगर( !skip_pci_probe  &&  !sbni_pci_probe( dev ) )
+		वापस  0;
 
-	if( io[ num ] == -1 ) {
+	अगर( io[ num ] == -1 ) अणु
 		/* Auto-scan will be stopped when first ISA card were found */
-		scandone = 1;
-		if( num > 0 )
-			return  -ENODEV;
-	}
+		scanकरोne = 1;
+		अगर( num > 0 )
+			वापस  -ENODEV;
+	पूर्ण
 
-	for( i = 0;  netcard_portlist[ i ];  ++i ) {
-		int  ioaddr = netcard_portlist[ i ];
-		if( request_region( ioaddr, SBNI_IO_EXTENT, dev->name ) &&
+	क्रम( i = 0;  netcard_portlist[ i ];  ++i ) अणु
+		पूर्णांक  ioaddr = netcard_portlist[ i ];
+		अगर( request_region( ioaddr, SBNI_IO_EXTENT, dev->name ) &&
 		    sbni_probe1( dev, ioaddr, 0 ))
-			return 0;
-	}
+			वापस 0;
+	पूर्ण
 
-	return  -ENODEV;
-}
+	वापस  -ENODEV;
+पूर्ण
 
 
-static int __init
-sbni_pci_probe( struct net_device  *dev )
-{
-	struct pci_dev  *pdev = NULL;
+अटल पूर्णांक __init
+sbni_pci_probe( काष्ठा net_device  *dev )
+अणु
+	काष्ठा pci_dev  *pdev = शून्य;
 
-	while( (pdev = pci_get_class( PCI_CLASS_NETWORK_OTHER << 8, pdev ))
-	       != NULL ) {
-		int  pci_irq_line;
-		unsigned long  pci_ioaddr;
+	जबतक( (pdev = pci_get_class( PCI_CLASS_NETWORK_OTHER << 8, pdev ))
+	       != शून्य ) अणु
+		पूर्णांक  pci_irq_line;
+		अचिन्हित दीर्घ  pci_ioaddr;
 
-		if( pdev->vendor != SBNI_PCI_VENDOR &&
+		अगर( pdev->venकरोr != SBNI_PCI_VENDOR &&
 		    pdev->device != SBNI_PCI_DEVICE )
-			continue;
+			जारी;
 
 		pci_ioaddr = pci_resource_start( pdev, 0 );
 		pci_irq_line = pdev->irq;
 
-		/* Avoid already found cards from previous calls */
-		if( !request_region( pci_ioaddr, SBNI_IO_EXTENT, dev->name ) ) {
-			if (pdev->subsystem_device != 2)
-				continue;
+		/* Aव्योम alपढ़ोy found cards from previous calls */
+		अगर( !request_region( pci_ioaddr, SBNI_IO_EXTENT, dev->name ) ) अणु
+			अगर (pdev->subप्रणाली_device != 2)
+				जारी;
 
 			/* Dual adapter is present */
-			if (!request_region(pci_ioaddr += 4, SBNI_IO_EXTENT,
+			अगर (!request_region(pci_ioaddr += 4, SBNI_IO_EXTENT,
 							dev->name ) )
-				continue;
-		}
+				जारी;
+		पूर्ण
 
-		if (pci_irq_line <= 0 || pci_irq_line >= nr_irqs)
+		अगर (pci_irq_line <= 0 || pci_irq_line >= nr_irqs)
 			pr_warn(
 "WARNING: The PCI BIOS assigned this PCI card to IRQ %d, which is unlikely to work!.\n"
 "You should use the PCI BIOS setup to assign a valid IRQ line.\n",
 				pci_irq_line );
 
-		/* avoiding re-enable dual adapters */
-		if( (pci_ioaddr & 7) == 0  &&  pci_enable_device( pdev ) ) {
+		/* aव्योमing re-enable dual adapters */
+		अगर( (pci_ioaddr & 7) == 0  &&  pci_enable_device( pdev ) ) अणु
 			release_region( pci_ioaddr, SBNI_IO_EXTENT );
 			pci_dev_put( pdev );
-			return  -EIO;
-		}
-		if( sbni_probe1( dev, pci_ioaddr, pci_irq_line ) ) {
+			वापस  -EIO;
+		पूर्ण
+		अगर( sbni_probe1( dev, pci_ioaddr, pci_irq_line ) ) अणु
 			SET_NETDEV_DEV(dev, &pdev->dev);
-			/* not the best thing to do, but this is all messed up 
-			   for hotplug systems anyway... */
+			/* not the best thing to करो, but this is all messed up 
+			   क्रम hotplug प्रणालीs anyway... */
 			pci_dev_put( pdev );
-			return  0;
-		}
-	}
-	return  -ENODEV;
-}
+			वापस  0;
+		पूर्ण
+	पूर्ण
+	वापस  -ENODEV;
+पूर्ण
 
 
-static struct net_device * __init
-sbni_probe1( struct net_device  *dev,  unsigned long  ioaddr,  int  irq )
-{
-	struct net_local  *nl;
+अटल काष्ठा net_device * __init
+sbni_probe1( काष्ठा net_device  *dev,  अचिन्हित दीर्घ  ioaddr,  पूर्णांक  irq )
+अणु
+	काष्ठा net_local  *nl;
 
-	if( sbni_card_probe( ioaddr ) ) {
+	अगर( sbni_card_probe( ioaddr ) ) अणु
 		release_region( ioaddr, SBNI_IO_EXTENT );
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
 	outb( 0, ioaddr + CSR0 );
 
-	if( irq < 2 ) {
-		unsigned long irq_mask;
+	अगर( irq < 2 ) अणु
+		अचिन्हित दीर्घ irq_mask;
 
 		irq_mask = probe_irq_on();
 		outb( EN_INT | TR_REQ, ioaddr + CSR0 );
@@ -367,48 +368,48 @@ sbni_probe1( struct net_device  *dev,  unsigned long  ioaddr,  int  irq )
 		irq = probe_irq_off(irq_mask);
 		outb( 0, ioaddr + CSR0 );
 
-		if( !irq ) {
+		अगर( !irq ) अणु
 			pr_err("%s: can't detect device irq!\n", dev->name);
 			release_region( ioaddr, SBNI_IO_EXTENT );
-			return NULL;
-		}
-	} else if( irq == 2 )
+			वापस शून्य;
+		पूर्ण
+	पूर्ण अन्यथा अगर( irq == 2 )
 		irq = 9;
 
 	dev->irq = irq;
 	dev->base_addr = ioaddr;
 
-	/* Fill in sbni-specific dev fields. */
+	/* Fill in sbni-specअगरic dev fields. */
 	nl = netdev_priv(dev);
-	if( !nl ) {
+	अगर( !nl ) अणु
 		pr_err("%s: unable to get memory!\n", dev->name);
 		release_region( ioaddr, SBNI_IO_EXTENT );
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	memset( nl, 0, sizeof(struct net_local) );
+	स_रखो( nl, 0, माप(काष्ठा net_local) );
 	spin_lock_init( &nl->lock );
 
-	/* store MAC address (generate if that isn't known) */
+	/* store MAC address (generate अगर that isn't known) */
 	*(__be16 *)dev->dev_addr = htons( 0x00ff );
 	*(__be32 *)(dev->dev_addr + 2) = htonl( 0x01000000 |
 		((mac[num] ?
 		mac[num] :
-		(u32)((long)netdev_priv(dev))) & 0x00ffffff));
+		(u32)((दीर्घ)netdev_priv(dev))) & 0x00ffffff));
 
 	/* store link settings (speed, receive level ) */
 	nl->maxframe  = DEFAULT_FRAME_LEN;
 	nl->csr1.rate = baud[ num ];
 
-	if( (nl->cur_rxl_index = rxl[ num ]) == -1 ) {
-		/* autotune rxl */
+	अगर( (nl->cur_rxl_index = rxl[ num ]) == -1 ) अणु
+		/* स्वतःtune rxl */
 		nl->cur_rxl_index = DEF_RXL;
 		nl->delta_rxl = DEF_RXL_DELTA;
-	} else {
+	पूर्ण अन्यथा अणु
 		nl->delta_rxl = 0;
-	}
+	पूर्ण
 	nl->csr1.rxl  = rxl_tab[ nl->cur_rxl_index ];
-	if( inb( ioaddr + CSR0 ) & 0x01 )
+	अगर( inb( ioaddr + CSR0 ) & 0x01 )
 		nl->state |= FL_SLOW_MODE;
 
 	pr_notice("%s: ioaddr %#lx, irq %d, MAC: 00:ff:01:%02x:%02x:%02x\n",
@@ -422,392 +423,392 @@ sbni_probe1( struct net_device  *dev,  unsigned long  ioaddr,  int  irq )
 		  ((nl->state & FL_SLOW_MODE) ? 500000 : 2000000)
 		  / (1 << nl->csr1.rate));
 
-	if( nl->delta_rxl == 0 )
+	अगर( nl->delta_rxl == 0 )
 		pr_cont(", receive level 0x%x (fixed)\n", nl->cur_rxl_index);
-	else
+	अन्यथा
 		pr_cont(", receive level (auto)\n");
 
-#ifdef CONFIG_SBNI_MULTILINE
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 	nl->master = dev;
-	nl->link   = NULL;
-#endif
+	nl->link   = शून्य;
+#पूर्ण_अगर
    
 	sbni_cards[ num++ ] = dev;
-	return  dev;
-}
+	वापस  dev;
+पूर्ण
 
 /* -------------------------------------------------------------------------- */
 
-#ifdef CONFIG_SBNI_MULTILINE
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 
-static netdev_tx_t
-sbni_start_xmit( struct sk_buff  *skb,  struct net_device  *dev )
-{
-	struct net_device  *p;
+अटल netdev_tx_t
+sbni_start_xmit( काष्ठा sk_buff  *skb,  काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_device  *p;
 
-	netif_stop_queue( dev );
+	netअगर_stop_queue( dev );
 
-	/* Looking for idle device in the list */
-	for( p = dev;  p; ) {
-		struct net_local  *nl = netdev_priv(p);
+	/* Looking क्रम idle device in the list */
+	क्रम( p = dev;  p; ) अणु
+		काष्ठा net_local  *nl = netdev_priv(p);
 		spin_lock( &nl->lock );
-		if( nl->tx_buf_p  ||  (nl->state & FL_LINE_DOWN) ) {
+		अगर( nl->tx_buf_p  ||  (nl->state & FL_LINE_DOWN) ) अणु
 			p = nl->link;
 			spin_unlock( &nl->lock );
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Idle dev is found */
 			prepare_to_send( skb, p );
 			spin_unlock( &nl->lock );
-			netif_start_queue( dev );
-			return NETDEV_TX_OK;
-		}
-	}
+			netअगर_start_queue( dev );
+			वापस NETDEV_TX_OK;
+		पूर्ण
+	पूर्ण
 
-	return NETDEV_TX_BUSY;
-}
+	वापस NETDEV_TX_BUSY;
+पूर्ण
 
-#else	/* CONFIG_SBNI_MULTILINE */
+#अन्यथा	/* CONFIG_SBNI_MULTILINE */
 
-static netdev_tx_t
-sbni_start_xmit( struct sk_buff  *skb,  struct net_device  *dev )
-{
-	struct net_local  *nl  = netdev_priv(dev);
+अटल netdev_tx_t
+sbni_start_xmit( काष्ठा sk_buff  *skb,  काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl  = netdev_priv(dev);
 
-	netif_stop_queue( dev );
+	netअगर_stop_queue( dev );
 	spin_lock( &nl->lock );
 
 	prepare_to_send( skb, dev );
 
 	spin_unlock( &nl->lock );
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-#endif	/* CONFIG_SBNI_MULTILINE */
+#पूर्ण_अगर	/* CONFIG_SBNI_MULTILINE */
 
 /* -------------------------------------------------------------------------- */
 
-/* interrupt handler */
+/* पूर्णांकerrupt handler */
 
 /*
  * 	SBNI12D-10, -11/ISA boards within "common interrupt" mode could not
  * be looked as two independent single-channel devices. Every channel seems
- * as Ethernet interface but interrupt handler must be common. Really, first
- * channel ("master") driver only registers the handler. In its struct net_local
- * it has got pointer to "slave" channel's struct net_local and handles that's
- * interrupts too.
+ * as Ethernet पूर्णांकerface but पूर्णांकerrupt handler must be common. Really, first
+ * channel ("master") driver only रेजिस्टरs the handler. In its काष्ठा net_local
+ * it has got poपूर्णांकer to "slave" channel's struct net_local and handles that's
+ * पूर्णांकerrupts too.
  *	dev of successfully attached ISA SBNI boards is linked to list.
  * While next board driver is initialized, it scans this list. If one
- * has found dev with same irq and ioaddr different by 4 then it assumes
+ * has found dev with same irq and ioaddr dअगरferent by 4 then it assumes
  * this board to be "master".
  */ 
 
-static irqreturn_t
-sbni_interrupt( int  irq,  void  *dev_id )
-{
-	struct net_device	  *dev = dev_id;
-	struct net_local  *nl  = netdev_priv(dev);
-	int	repeat;
+अटल irqवापस_t
+sbni_पूर्णांकerrupt( पूर्णांक  irq,  व्योम  *dev_id )
+अणु
+	काष्ठा net_device	  *dev = dev_id;
+	काष्ठा net_local  *nl  = netdev_priv(dev);
+	पूर्णांक	repeat;
 
 	spin_lock( &nl->lock );
-	if( nl->second )
+	अगर( nl->second )
 		spin_lock(&NET_LOCAL_LOCK(nl->second));
 
-	do {
+	करो अणु
 		repeat = 0;
-		if( inb( dev->base_addr + CSR0 ) & (RC_RDY | TR_RDY) ) {
+		अगर( inb( dev->base_addr + CSR0 ) & (RC_RDY | TR_RDY) ) अणु
 			handle_channel( dev );
 			repeat = 1;
-		}
-		if( nl->second  && 	/* second channel present */
-		    (inb( nl->second->base_addr+CSR0 ) & (RC_RDY | TR_RDY)) ) {
+		पूर्ण
+		अगर( nl->second  && 	/* second channel present */
+		    (inb( nl->second->base_addr+CSR0 ) & (RC_RDY | TR_RDY)) ) अणु
 			handle_channel( nl->second );
 			repeat = 1;
-		}
-	} while( repeat );
+		पूर्ण
+	पूर्ण जबतक( repeat );
 
-	if( nl->second )
+	अगर( nl->second )
 		spin_unlock(&NET_LOCAL_LOCK(nl->second));
 	spin_unlock( &nl->lock );
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 
-static void
-handle_channel( struct net_device  *dev )
-{
-	struct net_local	*nl    = netdev_priv(dev);
-	unsigned long		ioaddr = dev->base_addr;
+अटल व्योम
+handle_channel( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local	*nl    = netdev_priv(dev);
+	अचिन्हित दीर्घ		ioaddr = dev->base_addr;
 
-	int  req_ans;
-	unsigned char  csr0;
+	पूर्णांक  req_ans;
+	अचिन्हित अक्षर  csr0;
 
-#ifdef CONFIG_SBNI_MULTILINE
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 	/* Lock the master device because we going to change its local data */
-	if( nl->state & FL_SLAVE )
+	अगर( nl->state & FL_SLAVE )
 		spin_lock(&NET_LOCAL_LOCK(nl->master));
-#endif
+#पूर्ण_अगर
 
 	outb( (inb( ioaddr + CSR0 ) & ~EN_INT) | TR_REQ, ioaddr + CSR0 );
 
-	nl->timer_ticks = CHANGE_LEVEL_START_TICKS;
-	for(;;) {
+	nl->समयr_ticks = CHANGE_LEVEL_START_TICKS;
+	क्रम(;;) अणु
 		csr0 = inb( ioaddr + CSR0 );
-		if( ( csr0 & (RC_RDY | TR_RDY) ) == 0 )
-			break;
+		अगर( ( csr0 & (RC_RDY | TR_RDY) ) == 0 )
+			अवरोध;
 
 		req_ans = !(nl->state & FL_PREV_OK);
 
-		if( csr0 & RC_RDY )
+		अगर( csr0 & RC_RDY )
 			req_ans = recv_frame( dev );
 
 		/*
 		 * TR_RDY always equals 1 here because we have owned the marker,
-		 * and we set TR_REQ when disabled interrupts
+		 * and we set TR_REQ when disabled पूर्णांकerrupts
 		 */
 		csr0 = inb( ioaddr + CSR0 );
-		if( !(csr0 & TR_RDY)  ||  (csr0 & RC_RDY) )
+		अगर( !(csr0 & TR_RDY)  ||  (csr0 & RC_RDY) )
 			netdev_err(dev, "internal error!\n");
 
-		/* if state & FL_NEED_RESEND != 0 then tx_frameno != 0 */
-		if( req_ans  ||  nl->tx_frameno != 0 )
+		/* अगर state & FL_NEED_RESEND != 0 then tx_frameno != 0 */
+		अगर( req_ans  ||  nl->tx_frameno != 0 )
 			send_frame( dev );
-		else
+		अन्यथा
 			/* send marker without any data */
 			outb( inb( ioaddr + CSR0 ) & ~TR_REQ, ioaddr + CSR0 );
-	}
+	पूर्ण
 
 	outb( inb( ioaddr + CSR0 ) | EN_INT, ioaddr + CSR0 );
 
-#ifdef CONFIG_SBNI_MULTILINE
-	if( nl->state & FL_SLAVE )
+#अगर_घोषित CONFIG_SBNI_MULTILINE
+	अगर( nl->state & FL_SLAVE )
 		spin_unlock(&NET_LOCAL_LOCK(nl->master));
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 
 /*
- * Routine returns 1 if it needs to acknowledge received frame.
+ * Routine वापसs 1 अगर it needs to acknowledge received frame.
  * Empty frame received without errors won't be acknowledged.
  */
 
-static int
-recv_frame( struct net_device  *dev )
-{
-	struct net_local  *nl   = netdev_priv(dev);
-	unsigned long  ioaddr	= dev->base_addr;
+अटल पूर्णांक
+recv_frame( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl   = netdev_priv(dev);
+	अचिन्हित दीर्घ  ioaddr	= dev->base_addr;
 
 	u32  crc = CRC32_INITIAL;
 
-	unsigned  framelen = 0, frameno, ack;
-	unsigned  is_first, frame_ok = 0;
+	अचिन्हित  framelen = 0, frameno, ack;
+	अचिन्हित  is_first, frame_ok = 0;
 
-	if( check_fhdr( ioaddr, &framelen, &frameno, &ack, &is_first, &crc ) ) {
+	अगर( check_fhdr( ioaddr, &framelen, &frameno, &ack, &is_first, &crc ) ) अणु
 		frame_ok = framelen > 4
 			?  upload_data( dev, framelen, frameno, is_first, crc )
 			:  skip_tail( ioaddr, framelen, crc );
-		if( frame_ok )
-			interpret_ack( dev, ack );
-	}
+		अगर( frame_ok )
+			पूर्णांकerpret_ack( dev, ack );
+	पूर्ण
 
 	outb( inb( ioaddr + CSR0 ) ^ CT_ZER, ioaddr + CSR0 );
-	if( frame_ok ) {
+	अगर( frame_ok ) अणु
 		nl->state |= FL_PREV_OK;
-		if( framelen > 4 )
+		अगर( framelen > 4 )
 			nl->in_stats.all_rx_number++;
-	} else {
+	पूर्ण अन्यथा अणु
 		nl->state &= ~FL_PREV_OK;
 		change_level( dev );
 		nl->in_stats.all_rx_number++;
 		nl->in_stats.bad_rx_number++;
-	}
+	पूर्ण
 
-	return  !frame_ok  ||  framelen > 4;
-}
+	वापस  !frame_ok  ||  framelen > 4;
+पूर्ण
 
 
-static void
-send_frame( struct net_device  *dev )
-{
-	struct net_local  *nl    = netdev_priv(dev);
+अटल व्योम
+send_frame( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl    = netdev_priv(dev);
 
 	u32  crc = CRC32_INITIAL;
 
-	if( nl->state & FL_NEED_RESEND ) {
+	अगर( nl->state & FL_NEED_RESEND ) अणु
 
-		/* if frame was sended but not ACK'ed - resend it */
-		if( nl->trans_errors ) {
+		/* अगर frame was sended but not ACK'ed - resend it */
+		अगर( nl->trans_errors ) अणु
 			--nl->trans_errors;
-			if( nl->framelen != 0 )
+			अगर( nl->framelen != 0 )
 				nl->in_stats.resend_tx_number++;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* cannot xmit with many attempts */
-#ifdef CONFIG_SBNI_MULTILINE
-			if( (nl->state & FL_SLAVE)  ||  nl->link )
-#endif
+#अगर_घोषित CONFIG_SBNI_MULTILINE
+			अगर( (nl->state & FL_SLAVE)  ||  nl->link )
+#पूर्ण_अगर
 			nl->state |= FL_LINE_DOWN;
 			drop_xmit_queue( dev );
-			goto  do_send;
-		}
-	} else
+			जाओ  करो_send;
+		पूर्ण
+	पूर्ण अन्यथा
 		nl->trans_errors = TR_ERROR_COUNT;
 
 	send_frame_header( dev, &crc );
 	nl->state |= FL_NEED_RESEND;
 	/*
-	 * FL_NEED_RESEND will be cleared after ACK, but if empty
+	 * FL_NEED_RESEND will be cleared after ACK, but अगर empty
 	 * frame sended then in prepare_to_send next frame
 	 */
 
 
-	if( nl->framelen ) {
-		download_data( dev, &crc );
+	अगर( nl->framelen ) अणु
+		करोwnload_data( dev, &crc );
 		nl->in_stats.all_tx_number++;
 		nl->state |= FL_WAIT_ACK;
-	}
+	पूर्ण
 
-	outsb( dev->base_addr + DAT, (u8 *)&crc, sizeof crc );
+	outsb( dev->base_addr + DAT, (u8 *)&crc, माप crc );
 
-do_send:
+करो_send:
 	outb( inb( dev->base_addr + CSR0 ) & ~TR_REQ, dev->base_addr + CSR0 );
 
-	if( nl->tx_frameno )
+	अगर( nl->tx_frameno )
 		/* next frame exists - we request card to send it */
 		outb( inb( dev->base_addr + CSR0 ) | TR_REQ,
 		      dev->base_addr + CSR0 );
-}
+पूर्ण
 
 
 /*
- * Write the frame data into adapter's buffer memory, and calculate CRC.
- * Do padding if necessary.
+ * Write the frame data पूर्णांकo adapter's buffer memory, and calculate CRC.
+ * Do padding अगर necessary.
  */
 
-static void
-download_data( struct net_device  *dev,  u32  *crc_p )
-{
-	struct net_local  *nl    = netdev_priv(dev);
-	struct sk_buff    *skb	 = nl->tx_buf_p;
+अटल व्योम
+करोwnload_data( काष्ठा net_device  *dev,  u32  *crc_p )
+अणु
+	काष्ठा net_local  *nl    = netdev_priv(dev);
+	काष्ठा sk_buff    *skb	 = nl->tx_buf_p;
 
-	unsigned  len = min_t(unsigned int, skb->len - nl->outpos, nl->framelen);
+	अचिन्हित  len = min_t(अचिन्हित पूर्णांक, skb->len - nl->outpos, nl->framelen);
 
 	outsb( dev->base_addr + DAT, skb->data + nl->outpos, len );
 	*crc_p = calc_crc32( *crc_p, skb->data + nl->outpos, len );
 
-	/* if packet too short we should write some more bytes to pad */
-	for( len = nl->framelen - len;  len--; ) {
+	/* अगर packet too लघु we should ग_लिखो some more bytes to pad */
+	क्रम( len = nl->framelen - len;  len--; ) अणु
 		outb( 0, dev->base_addr + DAT );
 		*crc_p = CRC32( 0, *crc_p );
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static int
-upload_data( struct net_device  *dev,  unsigned  framelen,  unsigned  frameno,
-	     unsigned  is_first,  u32  crc )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल पूर्णांक
+upload_data( काष्ठा net_device  *dev,  अचिन्हित  framelen,  अचिन्हित  frameno,
+	     अचिन्हित  is_first,  u32  crc )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
-	int  frame_ok;
+	पूर्णांक  frame_ok;
 
-	if( is_first ) {
-		nl->wait_frameno = frameno;
+	अगर( is_first ) अणु
+		nl->रुको_frameno = frameno;
 		nl->inppos = 0;
-	}
+	पूर्ण
 
-	if( nl->wait_frameno == frameno ) {
+	अगर( nl->रुको_frameno == frameno ) अणु
 
-		if( nl->inppos + framelen  <=  ETHER_MAX_LEN )
+		अगर( nl->inppos + framelen  <=  ETHER_MAX_LEN )
 			frame_ok = append_frame_to_pkt( dev, framelen, crc );
 
 		/*
-		 * if CRC is right but framelen incorrect then transmitter
+		 * अगर CRC is right but framelen incorrect then transmitter
 		 * error was occurred... drop entire packet
 		 */
-		else if( (frame_ok = skip_tail( dev->base_addr, framelen, crc ))
-			 != 0 ) {
-			nl->wait_frameno = 0;
+		अन्यथा अगर( (frame_ok = skip_tail( dev->base_addr, framelen, crc ))
+			 != 0 ) अणु
+			nl->रुको_frameno = 0;
 			nl->inppos = 0;
-#ifdef CONFIG_SBNI_MULTILINE
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 			nl->master->stats.rx_errors++;
 			nl->master->stats.rx_missed_errors++;
-#else
+#अन्यथा
 		        dev->stats.rx_errors++;
 			dev->stats.rx_missed_errors++;
-#endif
-		}
+#पूर्ण_अगर
+		पूर्ण
 			/* now skip all frames until is_first != 0 */
-	} else
+	पूर्ण अन्यथा
 		frame_ok = skip_tail( dev->base_addr, framelen, crc );
 
-	if( is_first  &&  !frame_ok ) {
+	अगर( is_first  &&  !frame_ok ) अणु
 		/*
-		 * Frame has been broken, but we had already stored
+		 * Frame has been broken, but we had alपढ़ोy stored
 		 * is_first... Drop entire packet.
 		 */
-		nl->wait_frameno = 0;
-#ifdef CONFIG_SBNI_MULTILINE
+		nl->रुको_frameno = 0;
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 		nl->master->stats.rx_errors++;
 		nl->master->stats.rx_crc_errors++;
-#else
+#अन्यथा
 		dev->stats.rx_errors++;
 		dev->stats.rx_crc_errors++;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	return  frame_ok;
-}
+	वापस  frame_ok;
+पूर्ण
 
 
-static inline void
-send_complete( struct net_device *dev )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल अंतरभूत व्योम
+send_complete( काष्ठा net_device *dev )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
-#ifdef CONFIG_SBNI_MULTILINE
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 	nl->master->stats.tx_packets++;
 	nl->master->stats.tx_bytes += nl->tx_buf_p->len;
-#else
+#अन्यथा
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += nl->tx_buf_p->len;
-#endif
+#पूर्ण_अगर
 	dev_consume_skb_irq(nl->tx_buf_p);
 
-	nl->tx_buf_p = NULL;
+	nl->tx_buf_p = शून्य;
 
 	nl->outpos = 0;
 	nl->state &= ~(FL_WAIT_ACK | FL_NEED_RESEND);
 	nl->framelen   = 0;
-}
+पूर्ण
 
 
-static void
-interpret_ack( struct net_device  *dev,  unsigned  ack )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल व्योम
+पूर्णांकerpret_ack( काष्ठा net_device  *dev,  अचिन्हित  ack )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
-	if( ack == FRAME_SENT_OK ) {
+	अगर( ack == FRAME_SENT_OK ) अणु
 		nl->state &= ~FL_NEED_RESEND;
 
-		if( nl->state & FL_WAIT_ACK ) {
+		अगर( nl->state & FL_WAIT_ACK ) अणु
 			nl->outpos += nl->framelen;
 
-			if( --nl->tx_frameno ) {
-				nl->framelen = min_t(unsigned int,
+			अगर( --nl->tx_frameno ) अणु
+				nl->framelen = min_t(अचिन्हित पूर्णांक,
 						   nl->maxframe,
 						   nl->tx_buf_p->len - nl->outpos);
-			} else {
+			पूर्ण अन्यथा अणु
 				send_complete( dev );
-#ifdef CONFIG_SBNI_MULTILINE
-				netif_wake_queue( nl->master );
-#else
-				netif_wake_queue( dev );
-#endif
-			}
-		}
-	}
+#अगर_घोषित CONFIG_SBNI_MULTILINE
+				netअगर_wake_queue( nl->master );
+#अन्यथा
+				netअगर_wake_queue( dev );
+#पूर्ण_अगर
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	nl->state &= ~FL_WAIT_ACK;
-}
+पूर्ण
 
 
 /*
@@ -815,30 +816,30 @@ interpret_ack( struct net_device  *dev,  unsigned  ack )
  * Indicate packet when last frame would be accepted.
  */
 
-static int
-append_frame_to_pkt( struct net_device  *dev,  unsigned  framelen,  u32  crc )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल पूर्णांक
+append_frame_to_pkt( काष्ठा net_device  *dev,  अचिन्हित  framelen,  u32  crc )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
 	u8  *p;
 
-	if( nl->inppos + framelen  >  ETHER_MAX_LEN )
-		return  0;
+	अगर( nl->inppos + framelen  >  ETHER_MAX_LEN )
+		वापस  0;
 
-	if( !nl->rx_buf_p  &&  !(nl->rx_buf_p = get_rx_buf( dev )) )
-		return  0;
+	अगर( !nl->rx_buf_p  &&  !(nl->rx_buf_p = get_rx_buf( dev )) )
+		वापस  0;
 
 	p = nl->rx_buf_p->data + nl->inppos;
 	insb( dev->base_addr + DAT, p, framelen );
-	if( calc_crc32( crc, p, framelen ) != CRC32_REMAINDER )
-		return  0;
+	अगर( calc_crc32( crc, p, framelen ) != CRC32_REMAINDER )
+		वापस  0;
 
 	nl->inppos += framelen - 4;
-	if( --nl->wait_frameno == 0 )		/* last frame received */
+	अगर( --nl->रुको_frameno == 0 )		/* last frame received */
 		indicate_pkt( dev );
 
-	return  1;
-}
+	वापस  1;
+पूर्ण
 
 
 /*
@@ -846,22 +847,22 @@ append_frame_to_pkt( struct net_device  *dev,  unsigned  framelen,  u32  crc )
  * Transmitter will be actually activated when marker is accepted.
  */
 
-static void
-prepare_to_send( struct sk_buff  *skb,  struct net_device  *dev )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल व्योम
+prepare_to_send( काष्ठा sk_buff  *skb,  काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
-	unsigned int  len;
+	अचिन्हित पूर्णांक  len;
 
-	/* nl->tx_buf_p == NULL here! */
-	if( nl->tx_buf_p )
+	/* nl->tx_buf_p == शून्य here! */
+	अगर( nl->tx_buf_p )
 		netdev_err(dev, "memory leak!\n");
 
 	nl->outpos = 0;
 	nl->state &= ~(FL_WAIT_ACK | FL_NEED_RESEND);
 
 	len = skb->len;
-	if( len < SBNI_MIN_LEN )
+	अगर( len < SBNI_MIN_LEN )
 		len = SBNI_MIN_LEN;
 
 	nl->tx_buf_p	= skb;
@@ -869,58 +870,58 @@ prepare_to_send( struct sk_buff  *skb,  struct net_device  *dev )
 	nl->framelen	= len < nl->maxframe  ?  len  :  nl->maxframe;
 
 	outb( inb( dev->base_addr + CSR0 ) | TR_REQ,  dev->base_addr + CSR0 );
-#ifdef CONFIG_SBNI_MULTILINE
-	netif_trans_update(nl->master);
-#else
-	netif_trans_update(dev);
-#endif
-}
+#अगर_घोषित CONFIG_SBNI_MULTILINE
+	netअगर_trans_update(nl->master);
+#अन्यथा
+	netअगर_trans_update(dev);
+#पूर्ण_अगर
+पूर्ण
 
 
-static void
-drop_xmit_queue( struct net_device  *dev )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल व्योम
+drop_xmit_queue( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
-	if( nl->tx_buf_p ) {
-		dev_kfree_skb_any( nl->tx_buf_p );
-		nl->tx_buf_p = NULL;
-#ifdef CONFIG_SBNI_MULTILINE
+	अगर( nl->tx_buf_p ) अणु
+		dev_kमुक्त_skb_any( nl->tx_buf_p );
+		nl->tx_buf_p = शून्य;
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 		nl->master->stats.tx_errors++;
 		nl->master->stats.tx_carrier_errors++;
-#else
+#अन्यथा
 		dev->stats.tx_errors++;
 		dev->stats.tx_carrier_errors++;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
 	nl->tx_frameno	= 0;
 	nl->framelen	= 0;
 	nl->outpos	= 0;
 	nl->state &= ~(FL_WAIT_ACK | FL_NEED_RESEND);
-#ifdef CONFIG_SBNI_MULTILINE
-	netif_start_queue( nl->master );
-	netif_trans_update(nl->master);
-#else
-	netif_start_queue( dev );
-	netif_trans_update(dev);
-#endif
-}
+#अगर_घोषित CONFIG_SBNI_MULTILINE
+	netअगर_start_queue( nl->master );
+	netअगर_trans_update(nl->master);
+#अन्यथा
+	netअगर_start_queue( dev );
+	netअगर_trans_update(dev);
+#पूर्ण_अगर
+पूर्ण
 
 
-static void
-send_frame_header( struct net_device  *dev,  u32  *crc_p )
-{
-	struct net_local  *nl  = netdev_priv(dev);
+अटल व्योम
+send_frame_header( काष्ठा net_device  *dev,  u32  *crc_p )
+अणु
+	काष्ठा net_local  *nl  = netdev_priv(dev);
 
 	u32  crc = *crc_p;
 	u32  len_field = nl->framelen + 6;	/* CRC + frameno + reserved */
 	u8   value;
 
-	if( nl->state & FL_NEED_RESEND )
+	अगर( nl->state & FL_NEED_RESEND )
 		len_field |= FRAME_RETRY;	/* non-first attempt... */
 
-	if( nl->outpos == 0 )
+	अगर( nl->outpos == 0 )
 		len_field |= FRAME_FIRST;
 
 	len_field |= (nl->state & FL_PREV_OK) ? FRAME_SENT_OK : FRAME_SENT_BAD;
@@ -938,38 +939,38 @@ send_frame_header( struct net_device  *dev,  u32  *crc_p )
 	outb( 0, dev->base_addr + DAT );
 	crc = CRC32( 0, crc );
 	*crc_p = crc;
-}
+पूर्ण
 
 
 /*
- * if frame tail not needed (incorrect number or received twice),
+ * अगर frame tail not needed (incorrect number or received twice),
  * it won't store, but CRC will be calculated
  */
 
-static int
-skip_tail( unsigned int  ioaddr,  unsigned int  tail_len,  u32 crc )
-{
-	while( tail_len-- )
+अटल पूर्णांक
+skip_tail( अचिन्हित पूर्णांक  ioaddr,  अचिन्हित पूर्णांक  tail_len,  u32 crc )
+अणु
+	जबतक( tail_len-- )
 		crc = CRC32( inb( ioaddr + DAT ), crc );
 
-	return  crc == CRC32_REMAINDER;
-}
+	वापस  crc == CRC32_REMAINDER;
+पूर्ण
 
 
 /*
- * Preliminary checks if frame header is correct, calculates its CRC
+ * Preliminary checks अगर frame header is correct, calculates its CRC
  * and split it to simple fields
  */
 
-static int
+अटल पूर्णांक
 check_fhdr( u32  ioaddr,  u32  *framelen,  u32  *frameno,  u32  *ack,
 	    u32  *is_first,  u32  *crc_p )
-{
+अणु
 	u32  crc = *crc_p;
 	u8   value;
 
-	if( inb( ioaddr + DAT ) != SBNI_SIG )
-		return  0;
+	अगर( inb( ioaddr + DAT ) != SBNI_SIG )
+		वापस  0;
 
 	value = inb( ioaddr + DAT );
 	*framelen = (u32)value;
@@ -981,9 +982,9 @@ check_fhdr( u32  ioaddr,  u32  *framelen,  u32  *frameno,  u32  *ack,
 	*ack = *framelen & FRAME_ACK_MASK;
 	*is_first = (*framelen & FRAME_FIRST) != 0;
 
-	if( (*framelen &= FRAME_LEN_MASK) < 6 ||
+	अगर( (*framelen &= FRAME_LEN_MASK) < 6 ||
 	    *framelen > SBNI_MAX_FRAME - 3 )
-		return  0;
+		वापस  0;
 
 	value = inb( ioaddr + DAT );
 	*frameno = (u32)value;
@@ -993,164 +994,164 @@ check_fhdr( u32  ioaddr,  u32  *framelen,  u32  *frameno,  u32  *ack,
 	*framelen -= 2;
 
 	*crc_p = crc;
-	return  1;
-}
+	वापस  1;
+पूर्ण
 
 
-static struct sk_buff *
-get_rx_buf( struct net_device  *dev )
-{
-	/* +2 is to compensate for the alignment fixup below */
-	struct sk_buff  *skb = dev_alloc_skb( ETHER_MAX_LEN + 2 );
-	if( !skb )
-		return  NULL;
+अटल काष्ठा sk_buff *
+get_rx_buf( काष्ठा net_device  *dev )
+अणु
+	/* +2 is to compensate क्रम the alignment fixup below */
+	काष्ठा sk_buff  *skb = dev_alloc_skb( ETHER_MAX_LEN + 2 );
+	अगर( !skb )
+		वापस  शून्य;
 
-	skb_reserve( skb, 2 );		/* Align IP on longword boundaries */
-	return  skb;
-}
+	skb_reserve( skb, 2 );		/* Align IP on दीर्घword boundaries */
+	वापस  skb;
+पूर्ण
 
 
-static void
-indicate_pkt( struct net_device  *dev )
-{
-	struct net_local  *nl  = netdev_priv(dev);
-	struct sk_buff    *skb = nl->rx_buf_p;
+अटल व्योम
+indicate_pkt( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl  = netdev_priv(dev);
+	काष्ठा sk_buff    *skb = nl->rx_buf_p;
 
 	skb_put( skb, nl->inppos );
 
-#ifdef CONFIG_SBNI_MULTILINE
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 	skb->protocol = eth_type_trans( skb, nl->master );
-	netif_rx( skb );
+	netअगर_rx( skb );
 	++nl->master->stats.rx_packets;
 	nl->master->stats.rx_bytes += nl->inppos;
-#else
+#अन्यथा
 	skb->protocol = eth_type_trans( skb, dev );
-	netif_rx( skb );
+	netअगर_rx( skb );
 	++dev->stats.rx_packets;
 	dev->stats.rx_bytes += nl->inppos;
-#endif
-	nl->rx_buf_p = NULL;	/* protocol driver will clear this sk_buff */
-}
+#पूर्ण_अगर
+	nl->rx_buf_p = शून्य;	/* protocol driver will clear this sk_buff */
+पूर्ण
 
 
 /* -------------------------------------------------------------------------- */
 
 /*
- * Routine checks periodically wire activity and regenerates marker if
- * connect was inactive for a long time.
+ * Routine checks periodically wire activity and regenerates marker अगर
+ * connect was inactive क्रम a दीर्घ समय.
  */
 
-static void
-sbni_watchdog(struct timer_list *t)
-{
-	struct net_local   *nl  = from_timer(nl, t, watchdog);
-	struct net_device  *dev = nl->watchdog_dev;
-	unsigned long	   flags;
-	unsigned char	   csr0;
+अटल व्योम
+sbni_watchकरोg(काष्ठा समयr_list *t)
+अणु
+	काष्ठा net_local   *nl  = from_समयr(nl, t, watchकरोg);
+	काष्ठा net_device  *dev = nl->watchकरोg_dev;
+	अचिन्हित दीर्घ	   flags;
+	अचिन्हित अक्षर	   csr0;
 
 	spin_lock_irqsave( &nl->lock, flags );
 
 	csr0 = inb( dev->base_addr + CSR0 );
-	if( csr0 & RC_CHK ) {
+	अगर( csr0 & RC_CHK ) अणु
 
-		if( nl->timer_ticks ) {
-			if( csr0 & (RC_RDY | BU_EMP) )
+		अगर( nl->समयr_ticks ) अणु
+			अगर( csr0 & (RC_RDY | BU_EMP) )
 				/* receiving not active */
-				nl->timer_ticks--;
-		} else {
-			nl->in_stats.timeout_number++;
-			if( nl->delta_rxl )
-				timeout_change_level( dev );
+				nl->समयr_ticks--;
+		पूर्ण अन्यथा अणु
+			nl->in_stats.समयout_number++;
+			अगर( nl->delta_rxl )
+				समयout_change_level( dev );
 
-			outb( *(u_char *)&nl->csr1 | PR_RES,
+			outb( *(u_अक्षर *)&nl->csr1 | PR_RES,
 			      dev->base_addr + CSR1 );
 			csr0 = inb( dev->base_addr + CSR0 );
-		}
-	} else
+		पूर्ण
+	पूर्ण अन्यथा
 		nl->state &= ~FL_LINE_DOWN;
 
 	outb( csr0 | RC_CHK, dev->base_addr + CSR0 ); 
 
-	mod_timer(t, jiffies + SBNI_TIMEOUT);
+	mod_समयr(t, jअगरfies + SBNI_TIMEOUT);
 
 	spin_unlock_irqrestore( &nl->lock, flags );
-}
+पूर्ण
 
 
-static unsigned char  rxl_tab[] = {
+अटल अचिन्हित अक्षर  rxl_tab[] = अणु
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x08,
 	0x0a, 0x0c, 0x0f, 0x16, 0x18, 0x1a, 0x1c, 0x1f
-};
+पूर्ण;
 
-#define SIZE_OF_TIMEOUT_RXL_TAB 4
-static unsigned char  timeout_rxl_tab[] = {
+#घोषणा SIZE_OF_TIMEOUT_RXL_TAB 4
+अटल अचिन्हित अक्षर  समयout_rxl_tab[] = अणु
 	0x03, 0x05, 0x08, 0x0b
-};
+पूर्ण;
 
 /* -------------------------------------------------------------------------- */
 
-static void
-card_start( struct net_device  *dev )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल व्योम
+card_start( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
-	nl->timer_ticks = CHANGE_LEVEL_START_TICKS;
+	nl->समयr_ticks = CHANGE_LEVEL_START_TICKS;
 	nl->state &= ~(FL_WAIT_ACK | FL_NEED_RESEND);
 	nl->state |= FL_PREV_OK;
 
 	nl->inppos = nl->outpos = 0;
-	nl->wait_frameno = 0;
+	nl->रुको_frameno = 0;
 	nl->tx_frameno	 = 0;
 	nl->framelen	 = 0;
 
-	outb( *(u_char *)&nl->csr1 | PR_RES, dev->base_addr + CSR1 );
+	outb( *(u_अक्षर *)&nl->csr1 | PR_RES, dev->base_addr + CSR1 );
 	outb( EN_INT, dev->base_addr + CSR0 );
-}
+पूर्ण
 
 /* -------------------------------------------------------------------------- */
 
-/* Receive level auto-selection */
+/* Receive level स्वतः-selection */
 
-static void
-change_level( struct net_device  *dev )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल व्योम
+change_level( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
-	if( nl->delta_rxl == 0 )	/* do not auto-negotiate RxL */
-		return;
+	अगर( nl->delta_rxl == 0 )	/* करो not स्वतः-negotiate RxL */
+		वापस;
 
-	if( nl->cur_rxl_index == 0 )
+	अगर( nl->cur_rxl_index == 0 )
 		nl->delta_rxl = 1;
-	else if( nl->cur_rxl_index == 15 )
+	अन्यथा अगर( nl->cur_rxl_index == 15 )
 		nl->delta_rxl = -1;
-	else if( nl->cur_rxl_rcvd < nl->prev_rxl_rcvd )
+	अन्यथा अगर( nl->cur_rxl_rcvd < nl->prev_rxl_rcvd )
 		nl->delta_rxl = -nl->delta_rxl;
 
 	nl->csr1.rxl = rxl_tab[ nl->cur_rxl_index += nl->delta_rxl ];
-	inb( dev->base_addr + CSR0 );	/* needs for PCI cards */
+	inb( dev->base_addr + CSR0 );	/* needs क्रम PCI cards */
 	outb( *(u8 *)&nl->csr1, dev->base_addr + CSR1 );
 
 	nl->prev_rxl_rcvd = nl->cur_rxl_rcvd;
 	nl->cur_rxl_rcvd  = 0;
-}
+पूर्ण
 
 
-static void
-timeout_change_level( struct net_device  *dev )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल व्योम
+समयout_change_level( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
-	nl->cur_rxl_index = timeout_rxl_tab[ nl->timeout_rxl ];
-	if( ++nl->timeout_rxl >= 4 )
-		nl->timeout_rxl = 0;
+	nl->cur_rxl_index = समयout_rxl_tab[ nl->समयout_rxl ];
+	अगर( ++nl->समयout_rxl >= 4 )
+		nl->समयout_rxl = 0;
 
 	nl->csr1.rxl = rxl_tab[ nl->cur_rxl_index ];
 	inb( dev->base_addr + CSR0 );
-	outb( *(unsigned char *)&nl->csr1, dev->base_addr + CSR1 );
+	outb( *(अचिन्हित अक्षर *)&nl->csr1, dev->base_addr + CSR1 );
 
 	nl->prev_rxl_rcvd = nl->cur_rxl_rcvd;
 	nl->cur_rxl_rcvd  = 0;
-}
+पूर्ण
 
 /* -------------------------------------------------------------------------- */
 
@@ -1158,100 +1159,100 @@ timeout_change_level( struct net_device  *dev )
  *	Open/initialize the board. 
  */
 
-static int
-sbni_open( struct net_device  *dev )
-{
-	struct net_local	*nl = netdev_priv(dev);
-	struct timer_list	*w  = &nl->watchdog;
+अटल पूर्णांक
+sbni_खोलो( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local	*nl = netdev_priv(dev);
+	काष्ठा समयr_list	*w  = &nl->watchकरोg;
 
 	/*
-	 * For double ISA adapters within "common irq" mode, we have to
+	 * For द्विगुन ISA adapters within "common irq" mode, we have to
 	 * determine whether primary or secondary channel is initialized,
-	 * and set the irq handler only in first case.
+	 * and set the irq handler only in first हाल.
 	 */
-	if( dev->base_addr < 0x400 ) {		/* ISA only */
-		struct net_device  **p = sbni_cards;
-		for( ;  *p  &&  p < sbni_cards + SBNI_MAX_NUM_CARDS;  ++p )
-			if( (*p)->irq == dev->irq &&
+	अगर( dev->base_addr < 0x400 ) अणु		/* ISA only */
+		काष्ठा net_device  **p = sbni_cards;
+		क्रम( ;  *p  &&  p < sbni_cards + SBNI_MAX_NUM_CARDS;  ++p )
+			अगर( (*p)->irq == dev->irq &&
 			    ((*p)->base_addr == dev->base_addr + 4 ||
 			     (*p)->base_addr == dev->base_addr - 4) &&
-			    (*p)->flags & IFF_UP ) {
+			    (*p)->flags & IFF_UP ) अणु
 
-				((struct net_local *) (netdev_priv(*p)))
+				((काष्ठा net_local *) (netdev_priv(*p)))
 					->second = dev;
 				netdev_notice(dev, "using shared irq with %s\n",
 					      (*p)->name);
 				nl->state |= FL_SECONDARY;
-				goto  handler_attached;
-			}
-	}
+				जाओ  handler_attached;
+			पूर्ण
+	पूर्ण
 
-	if( request_irq(dev->irq, sbni_interrupt, IRQF_SHARED, dev->name, dev) ) {
+	अगर( request_irq(dev->irq, sbni_पूर्णांकerrupt, IRQF_SHARED, dev->name, dev) ) अणु
 		netdev_err(dev, "unable to get IRQ %d\n", dev->irq);
-		return  -EAGAIN;
-	}
+		वापस  -EAGAIN;
+	पूर्ण
 
 handler_attached:
 
 	spin_lock( &nl->lock );
-	memset( &dev->stats, 0, sizeof(struct net_device_stats) );
-	memset( &nl->in_stats, 0, sizeof(struct sbni_in_stats) );
+	स_रखो( &dev->stats, 0, माप(काष्ठा net_device_stats) );
+	स_रखो( &nl->in_stats, 0, माप(काष्ठा sbni_in_stats) );
 
 	card_start( dev );
 
-	netif_start_queue( dev );
+	netअगर_start_queue( dev );
 
-	/* set timer watchdog */
-	nl->watchdog_dev = dev;
-	timer_setup(w, sbni_watchdog, 0);
-	w->expires	= jiffies + SBNI_TIMEOUT;
-	add_timer( w );
+	/* set समयr watchकरोg */
+	nl->watchकरोg_dev = dev;
+	समयr_setup(w, sbni_watchकरोg, 0);
+	w->expires	= jअगरfies + SBNI_TIMEOUT;
+	add_समयr( w );
    
 	spin_unlock( &nl->lock );
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static int
-sbni_close( struct net_device  *dev )
-{
-	struct net_local  *nl = netdev_priv(dev);
+अटल पूर्णांक
+sbni_बंद( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
 
-	if( nl->second  &&  nl->second->flags & IFF_UP ) {
+	अगर( nl->second  &&  nl->second->flags & IFF_UP ) अणु
 		netdev_notice(dev, "Secondary channel (%s) is active!\n",
 			      nl->second->name);
-		return  -EBUSY;
-	}
+		वापस  -EBUSY;
+	पूर्ण
 
-#ifdef CONFIG_SBNI_MULTILINE
-	if( nl->state & FL_SLAVE )
+#अगर_घोषित CONFIG_SBNI_MULTILINE
+	अगर( nl->state & FL_SLAVE )
 		emancipate( dev );
-	else
-		while( nl->link )	/* it's master device! */
+	अन्यथा
+		जबतक( nl->link )	/* it's master device! */
 			emancipate( nl->link );
-#endif
+#पूर्ण_अगर
 
 	spin_lock( &nl->lock );
 
-	nl->second = NULL;
+	nl->second = शून्य;
 	drop_xmit_queue( dev );	
-	netif_stop_queue( dev );
+	netअगर_stop_queue( dev );
    
-	del_timer( &nl->watchdog );
+	del_समयr( &nl->watchकरोg );
 
 	outb( 0, dev->base_addr + CSR0 );
 
-	if( !(nl->state & FL_SECONDARY) )
-		free_irq( dev->irq, dev );
+	अगर( !(nl->state & FL_SECONDARY) )
+		मुक्त_irq( dev->irq, dev );
 	nl->state &= FL_SECONDARY;
 
 	spin_unlock( &nl->lock );
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
-	Valid combinations in CSR0 (for probing):
+	Valid combinations in CSR0 (क्रम probing):
 
 	VALID_DECODER	0000,0011,1011,1010
 
@@ -1273,133 +1274,133 @@ sbni_close( struct net_device  *dev )
 	RC_RDY	BU_EMP	TR_RDY	TR_REQ	; 15  ; -
 */
 
-#define VALID_DECODER (2 + 8 + 0x10 + 0x20 + 0x80 + 0x100 + 0x200)
+#घोषणा VALID_DECODER (2 + 8 + 0x10 + 0x20 + 0x80 + 0x100 + 0x200)
 
 
-static int
-sbni_card_probe( unsigned long  ioaddr )
-{
-	unsigned char  csr0;
+अटल पूर्णांक
+sbni_card_probe( अचिन्हित दीर्घ  ioaddr )
+अणु
+	अचिन्हित अक्षर  csr0;
 
 	csr0 = inb( ioaddr + CSR0 );
-	if( csr0 != 0xff  &&  csr0 != 0x00 ) {
+	अगर( csr0 != 0xff  &&  csr0 != 0x00 ) अणु
 		csr0 &= ~EN_INT;
-		if( csr0 & BU_EMP )
+		अगर( csr0 & BU_EMP )
 			csr0 |= EN_INT;
       
-		if( VALID_DECODER & (1 << (csr0 >> 4)) )
-			return  0;
-	}
+		अगर( VALID_DECODER & (1 << (csr0 >> 4)) )
+			वापस  0;
+	पूर्ण
    
-	return  -ENODEV;
-}
+	वापस  -ENODEV;
+पूर्ण
 
 /* -------------------------------------------------------------------------- */
 
-static int
-sbni_ioctl( struct net_device  *dev,  struct ifreq  *ifr,  int  cmd )
-{
-	struct net_local  *nl = netdev_priv(dev);
-	struct sbni_flags  flags;
-	int  error = 0;
+अटल पूर्णांक
+sbni_ioctl( काष्ठा net_device  *dev,  काष्ठा अगरreq  *अगरr,  पूर्णांक  cmd )
+अणु
+	काष्ठा net_local  *nl = netdev_priv(dev);
+	काष्ठा sbni_flags  flags;
+	पूर्णांक  error = 0;
 
-#ifdef CONFIG_SBNI_MULTILINE
-	struct net_device  *slave_dev;
-	char  slave_name[ 8 ];
-#endif
+#अगर_घोषित CONFIG_SBNI_MULTILINE
+	काष्ठा net_device  *slave_dev;
+	अक्षर  slave_name[ 8 ];
+#पूर्ण_अगर
   
-	switch( cmd ) {
-	case  SIOCDEVGETINSTATS :
-		if (copy_to_user( ifr->ifr_data, &nl->in_stats,
-					sizeof(struct sbni_in_stats) ))
+	चयन( cmd ) अणु
+	हाल  SIOCDEVGETINSTATS :
+		अगर (copy_to_user( अगरr->अगरr_data, &nl->in_stats,
+					माप(काष्ठा sbni_in_stats) ))
 			error = -EFAULT;
-		break;
+		अवरोध;
 
-	case  SIOCDEVRESINSTATS :
-		if (!capable(CAP_NET_ADMIN))
-			return  -EPERM;
-		memset( &nl->in_stats, 0, sizeof(struct sbni_in_stats) );
-		break;
+	हाल  SIOCDEVRESINSTATS :
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस  -EPERM;
+		स_रखो( &nl->in_stats, 0, माप(काष्ठा sbni_in_stats) );
+		अवरोध;
 
-	case  SIOCDEVGHWSTATE :
+	हाल  SIOCDEVGHWSTATE :
 		flags.mac_addr	= *(u32 *)(dev->dev_addr + 3);
 		flags.rate	= nl->csr1.rate;
 		flags.slow_mode	= (nl->state & FL_SLOW_MODE) != 0;
 		flags.rxl	= nl->cur_rxl_index;
 		flags.fixed_rxl	= nl->delta_rxl == 0;
 
-		if (copy_to_user( ifr->ifr_data, &flags, sizeof flags ))
+		अगर (copy_to_user( अगरr->अगरr_data, &flags, माप flags ))
 			error = -EFAULT;
-		break;
+		अवरोध;
 
-	case  SIOCDEVSHWSTATE :
-		if (!capable(CAP_NET_ADMIN))
-			return  -EPERM;
+	हाल  SIOCDEVSHWSTATE :
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस  -EPERM;
 
 		spin_lock( &nl->lock );
-		flags = *(struct sbni_flags*) &ifr->ifr_ifru;
-		if( flags.fixed_rxl ) {
+		flags = *(काष्ठा sbni_flags*) &अगरr->अगरr_अगरru;
+		अगर( flags.fixed_rxl ) अणु
 			nl->delta_rxl = 0;
 			nl->cur_rxl_index = flags.rxl;
-		} else {
+		पूर्ण अन्यथा अणु
 			nl->delta_rxl = DEF_RXL_DELTA;
 			nl->cur_rxl_index = DEF_RXL;
-		}
+		पूर्ण
 
 		nl->csr1.rxl = rxl_tab[ nl->cur_rxl_index ];
 		nl->csr1.rate = flags.rate;
 		outb( *(u8 *)&nl->csr1 | PR_RES, dev->base_addr + CSR1 );
 		spin_unlock( &nl->lock );
-		break;
+		अवरोध;
 
-#ifdef CONFIG_SBNI_MULTILINE
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 
-	case  SIOCDEVENSLAVE :
-		if (!capable(CAP_NET_ADMIN))
-			return  -EPERM;
+	हाल  SIOCDEVENSLAVE :
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस  -EPERM;
 
-		if (copy_from_user( slave_name, ifr->ifr_data, sizeof slave_name ))
-			return -EFAULT;
+		अगर (copy_from_user( slave_name, अगरr->अगरr_data, माप slave_name ))
+			वापस -EFAULT;
 		slave_dev = dev_get_by_name(&init_net, slave_name );
-		if( !slave_dev  ||  !(slave_dev->flags & IFF_UP) ) {
+		अगर( !slave_dev  ||  !(slave_dev->flags & IFF_UP) ) अणु
 			netdev_err(dev, "trying to enslave non-active device %s\n",
 				   slave_name);
-			if (slave_dev)
+			अगर (slave_dev)
 				dev_put(slave_dev);
-			return  -EPERM;
-		}
+			वापस  -EPERM;
+		पूर्ण
 
-		return  enslave( dev, slave_dev );
+		वापस  enslave( dev, slave_dev );
 
-	case  SIOCDEVEMANSIPATE :
-		if (!capable(CAP_NET_ADMIN))
-			return  -EPERM;
+	हाल  SIOCDEVEMANSIPATE :
+		अगर (!capable(CAP_NET_ADMIN))
+			वापस  -EPERM;
 
-		return  emancipate( dev );
+		वापस  emancipate( dev );
 
-#endif	/* CONFIG_SBNI_MULTILINE */
+#पूर्ण_अगर	/* CONFIG_SBNI_MULTILINE */
 
-	default :
-		return  -EOPNOTSUPP;
-	}
+	शेष :
+		वापस  -EOPNOTSUPP;
+	पूर्ण
 
-	return  error;
-}
+	वापस  error;
+पूर्ण
 
 
-#ifdef CONFIG_SBNI_MULTILINE
+#अगर_घोषित CONFIG_SBNI_MULTILINE
 
-static int
-enslave( struct net_device  *dev,  struct net_device  *slave_dev )
-{
-	struct net_local  *nl  = netdev_priv(dev);
-	struct net_local  *snl = netdev_priv(slave_dev);
+अटल पूर्णांक
+enslave( काष्ठा net_device  *dev,  काष्ठा net_device  *slave_dev )
+अणु
+	काष्ठा net_local  *nl  = netdev_priv(dev);
+	काष्ठा net_local  *snl = netdev_priv(slave_dev);
 
-	if( nl->state & FL_SLAVE )	/* This isn't master or free device */
-		return  -EBUSY;
+	अगर( nl->state & FL_SLAVE )	/* This isn't master or मुक्त device */
+		वापस  -EBUSY;
 
-	if( snl->state & FL_SLAVE )	/* That was already enslaved */
-		return  -EBUSY;
+	अगर( snl->state & FL_SLAVE )	/* That was alपढ़ोy enslaved */
+		वापस  -EBUSY;
 
 	spin_lock( &nl->lock );
 	spin_lock( &snl->lock );
@@ -1412,164 +1413,164 @@ enslave( struct net_device  *dev,  struct net_device  *slave_dev )
 
 	/* Summary statistics of MultiLine operation will be stored
 	   in master's counters */
-	memset( &slave_dev->stats, 0, sizeof(struct net_device_stats) );
-	netif_stop_queue( slave_dev );
-	netif_wake_queue( dev );	/* Now we are able to transmit */
+	स_रखो( &slave_dev->stats, 0, माप(काष्ठा net_device_stats) );
+	netअगर_stop_queue( slave_dev );
+	netअगर_wake_queue( dev );	/* Now we are able to transmit */
 
 	spin_unlock( &snl->lock );
 	spin_unlock( &nl->lock );
 	netdev_notice(dev, "slave device (%s) attached\n", slave_dev->name);
-	return  0;
-}
+	वापस  0;
+पूर्ण
 
 
-static int
-emancipate( struct net_device  *dev )
-{
-	struct net_local   *snl = netdev_priv(dev);
-	struct net_device  *p   = snl->master;
-	struct net_local   *nl  = netdev_priv(p);
+अटल पूर्णांक
+emancipate( काष्ठा net_device  *dev )
+अणु
+	काष्ठा net_local   *snl = netdev_priv(dev);
+	काष्ठा net_device  *p   = snl->master;
+	काष्ठा net_local   *nl  = netdev_priv(p);
 
-	if( !(snl->state & FL_SLAVE) )
-		return  -EINVAL;
+	अगर( !(snl->state & FL_SLAVE) )
+		वापस  -EINVAL;
 
 	spin_lock( &nl->lock );
 	spin_lock( &snl->lock );
 	drop_xmit_queue( dev );
 
 	/* exclude from list */
-	for(;;) {	/* must be in list */
-		struct net_local  *t = netdev_priv(p);
-		if( t->link == dev ) {
+	क्रम(;;) अणु	/* must be in list */
+		काष्ठा net_local  *t = netdev_priv(p);
+		अगर( t->link == dev ) अणु
 			t->link = snl->link;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		p = t->link;
-	}
+	पूर्ण
 
-	snl->link = NULL;
+	snl->link = शून्य;
 	snl->master = dev;
 	snl->state &= ~FL_SLAVE;
 
-	netif_start_queue( dev );
+	netअगर_start_queue( dev );
 
 	spin_unlock( &snl->lock );
 	spin_unlock( &nl->lock );
 
 	dev_put( dev );
-	return  0;
-}
+	वापस  0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static void
-set_multicast_list( struct net_device  *dev )
-{
-	return;		/* sbni always operate in promiscuos mode */
-}
+अटल व्योम
+set_multicast_list( काष्ठा net_device  *dev )
+अणु
+	वापस;		/* sbni always operate in promiscuos mode */
+पूर्ण
 
 
-#ifdef MODULE
-module_param_hw_array(io, int, ioport, NULL, 0);
-module_param_hw_array(irq, int, irq, NULL, 0);
-module_param_array(baud, int, NULL, 0);
-module_param_array(rxl, int, NULL, 0);
-module_param_array(mac, int, NULL, 0);
+#अगर_घोषित MODULE
+module_param_hw_array(io, पूर्णांक, ioport, शून्य, 0);
+module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0);
+module_param_array(baud, पूर्णांक, शून्य, 0);
+module_param_array(rxl, पूर्णांक, शून्य, 0);
+module_param_array(mac, पूर्णांक, शून्य, 0);
 module_param(skip_pci_probe, bool, 0);
 
 MODULE_LICENSE("GPL");
 
 
-int __init init_module( void )
-{
-	struct net_device  *dev;
-	int err;
+पूर्णांक __init init_module( व्योम )
+अणु
+	काष्ठा net_device  *dev;
+	पूर्णांक err;
 
-	while( num < SBNI_MAX_NUM_CARDS ) {
-		dev = alloc_netdev(sizeof(struct net_local), "sbni%d",
+	जबतक( num < SBNI_MAX_NUM_CARDS ) अणु
+		dev = alloc_netdev(माप(काष्ठा net_local), "sbni%d",
 				   NET_NAME_UNKNOWN, sbni_devsetup);
-		if( !dev)
-			break;
+		अगर( !dev)
+			अवरोध;
 
-		sprintf( dev->name, "sbni%d", num );
+		प्र_लिखो( dev->name, "sbni%d", num );
 
 		err = sbni_init(dev);
-		if (err) {
-			free_netdev(dev);
-			break;
-		}
+		अगर (err) अणु
+			मुक्त_netdev(dev);
+			अवरोध;
+		पूर्ण
 
-		if( register_netdev( dev ) ) {
+		अगर( रेजिस्टर_netdev( dev ) ) अणु
 			release_region( dev->base_addr, SBNI_IO_EXTENT );
-			free_netdev( dev );
-			break;
-		}
-	}
+			मुक्त_netdev( dev );
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return  *sbni_cards  ?  0  :  -ENODEV;
-}
+	वापस  *sbni_cards  ?  0  :  -ENODEV;
+पूर्ण
 
-void
-cleanup_module(void)
-{
-	int i;
+व्योम
+cleanup_module(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0;  i < SBNI_MAX_NUM_CARDS;  ++i) {
-		struct net_device *dev = sbni_cards[i];
-		if (dev != NULL) {
-			unregister_netdev(dev);
+	क्रम (i = 0;  i < SBNI_MAX_NUM_CARDS;  ++i) अणु
+		काष्ठा net_device *dev = sbni_cards[i];
+		अगर (dev != शून्य) अणु
+			unरेजिस्टर_netdev(dev);
 			release_region(dev->base_addr, SBNI_IO_EXTENT);
-			free_netdev(dev);
-		}
-	}
-}
+			मुक्त_netdev(dev);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#else	/* MODULE */
+#अन्यथा	/* MODULE */
 
-static int __init
-sbni_setup( char  *p )
-{
-	int  n, parm;
+अटल पूर्णांक __init
+sbni_setup( अक्षर  *p )
+अणु
+	पूर्णांक  n, parm;
 
-	if( *p++ != '(' )
-		goto  bad_param;
+	अगर( *p++ != '(' )
+		जाओ  bad_param;
 
-	for( n = 0, parm = 0;  *p  &&  n < 8; ) {
-		(*dest[ parm ])[ n ] = simple_strtoul( p, &p, 0 );
-		if( !*p  ||  *p == ')' )
-			return 1;
-		if( *p == ';' ) {
+	क्रम( n = 0, parm = 0;  *p  &&  n < 8; ) अणु
+		(*dest[ parm ])[ n ] = simple_म_से_अदीर्घ( p, &p, 0 );
+		अगर( !*p  ||  *p == ')' )
+			वापस 1;
+		अगर( *p == ';' ) अणु
 			++p;
 			++n;
 			parm = 0;
-		} else if( *p++ != ',' ) {
-			break;
-		} else {
-			if( ++parm >= 5 )
-				break;
-		}
-	}
+		पूर्ण अन्यथा अगर( *p++ != ',' ) अणु
+			अवरोध;
+		पूर्ण अन्यथा अणु
+			अगर( ++parm >= 5 )
+				अवरोध;
+		पूर्ण
+	पूर्ण
 bad_param:
 	pr_err("Error in sbni kernel parameter!\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 __setup( "sbni=", sbni_setup );
 
-#endif	/* MODULE */
+#पूर्ण_अगर	/* MODULE */
 
 /* -------------------------------------------------------------------------- */
 
-static u32
+अटल u32
 calc_crc32( u32  crc,  u8  *p,  u32  len )
-{
-	while( len-- )
+अणु
+	जबतक( len-- )
 		crc = CRC32( *p++, crc );
 
-	return  crc;
-}
+	वापस  crc;
+पूर्ण
 
-static u32  crc32tab[] __attribute__ ((aligned(8))) = {
+अटल u32  crc32tab[] __attribute__ ((aligned(8))) = अणु
 	0xD202EF8D,  0xA505DF1B,  0x3C0C8EA1,  0x4B0BBE37,
 	0xD56F2B94,  0xA2681B02,  0x3B614AB8,  0x4C667A2E,
 	0xDCD967BF,  0xABDE5729,  0x32D70693,  0x45D03605,
@@ -1634,5 +1635,5 @@ static u32  crc32tab[] __attribute__ ((aligned(8))) = {
 	0x68D2D988,  0x1FD5E91E,  0x86DCB8A4,  0xF1DB8832,
 	0x616495A3,  0x1663A535,  0x8F6AF48F,  0xF86DC419,
 	0x660951BA,  0x110E612C,  0x88073096,  0xFF000000
-};
+पूर्ण;
 

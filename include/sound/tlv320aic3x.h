@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Platform data for Texas Instruments TLV320AIC3x codec
+ * Platक्रमm data क्रम Texas Instruments TLV320AIC3x codec
  *
- * Author: Jarkko Nikula <jarkko.nikula@bitmer.com>
+ * Author: Jarkko Nikula <jarkko.nikula@biपंचांगer.com>
  */
-#ifndef __TLV320AIC3x_H__
-#define __TLV320AIC3x_H__
+#अगर_अघोषित __TLV320AIC3x_H__
+#घोषणा __TLV320AIC3x_H__
 
 /* GPIO API */
-enum {
+क्रमागत अणु
 	AIC3X_GPIO1_FUNC_DISABLED		= 0,
 	AIC3X_GPIO1_FUNC_AUDIO_WORDCLK_ADC	= 1,
 	AIC3X_GPIO1_FUNC_CLOCK_MUX		= 2,
@@ -25,9 +26,9 @@ enum {
 	AIC3X_GPIO1_FUNC_HEADSET_DETECT_IRQ	= 13,
 	AIC3X_GPIO1_FUNC_HEADSET_DETECT_OR_BUTTON_IRQ	= 14,
 	AIC3X_GPIO1_FUNC_ALL_IRQ		= 16
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	AIC3X_GPIO2_FUNC_DISABLED		= 0,
 	AIC3X_GPIO2_FUNC_HEADSET_DETECT_IRQ	= 2,
 	AIC3X_GPIO2_FUNC_INPUT			= 3,
@@ -41,25 +42,25 @@ enum {
 	AIC3X_GPIO2_FUNC_SHORT_CIRCUIT_IRQ	= 13,
 	AIC3X_GPIO2_FUNC_AGC_NOISE_IRQ		= 14,
 	AIC3X_GPIO2_FUNC_BUTTON_PRESS_IRQ	= 15
-};
+पूर्ण;
 
-enum aic3x_micbias_voltage {
+क्रमागत aic3x_micbias_voltage अणु
 	AIC3X_MICBIAS_OFF = 0,
 	AIC3X_MICBIAS_2_0V = 1,
 	AIC3X_MICBIAS_2_5V = 2,
 	AIC3X_MICBIAS_AVDDV = 3,
-};
+पूर्ण;
 
-struct aic3x_setup_data {
-	unsigned int gpio_func[2];
-};
+काष्ठा aic3x_setup_data अणु
+	अचिन्हित पूर्णांक gpio_func[2];
+पूर्ण;
 
-struct aic3x_pdata {
-	int gpio_reset; /* < 0 if not used */
-	struct aic3x_setup_data *setup;
+काष्ठा aic3x_pdata अणु
+	पूर्णांक gpio_reset; /* < 0 अगर not used */
+	काष्ठा aic3x_setup_data *setup;
 
 	/* Selects the micbias voltage */
-	enum aic3x_micbias_voltage micbias_vg;
-};
+	क्रमागत aic3x_micbias_voltage micbias_vg;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  OLPC XO-1.5 ebook switch driver
+ *  OLPC XO-1.5 ebook चयन driver
  *  (based on generic ACPI button driver)
  *
  *  Copyright (C) 2009 Paul Fox <pgf@laptop.org>
  *  Copyright (C) 2010 One Laptop per Child
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/input.h>
-#include <linux/acpi.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/types.h>
+#समावेश <linux/input.h>
+#समावेश <linux/acpi.h>
 
-#define MODULE_NAME "xo15-ebook"
+#घोषणा MODULE_NAME "xo15-ebook"
 
-#define XO15_EBOOK_CLASS		MODULE_NAME
-#define XO15_EBOOK_TYPE_UNKNOWN	0x00
-#define XO15_EBOOK_NOTIFY_STATUS	0x80
+#घोषणा XO15_EBOOK_CLASS		MODULE_NAME
+#घोषणा XO15_EBOOK_TYPE_UNKNOWN	0x00
+#घोषणा XO15_EBOOK_NOTIFY_STATUS	0x80
 
-#define XO15_EBOOK_SUBCLASS		"ebook"
-#define XO15_EBOOK_HID			"XO15EBK"
-#define XO15_EBOOK_DEVICE_NAME		"EBook Switch"
+#घोषणा XO15_EBOOK_SUBCLASS		"ebook"
+#घोषणा XO15_EBOOK_HID			"XO15EBK"
+#घोषणा XO15_EBOOK_DEVICE_NAME		"EBook Switch"
 
 MODULE_DESCRIPTION("OLPC XO-1.5 ebook switch driver");
 MODULE_LICENSE("GPL");
 
-static const struct acpi_device_id ebook_device_ids[] = {
-	{ XO15_EBOOK_HID, 0 },
-	{ "", 0 },
-};
+अटल स्थिर काष्ठा acpi_device_id ebook_device_ids[] = अणु
+	अणु XO15_EBOOK_HID, 0 पूर्ण,
+	अणु "", 0 पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, ebook_device_ids);
 
-struct ebook_switch {
-	struct input_dev *input;
-	char phys[32];			/* for input device */
-};
+काष्ठा ebook_चयन अणु
+	काष्ठा input_dev *input;
+	अक्षर phys[32];			/* क्रम input device */
+पूर्ण;
 
-static int ebook_send_state(struct acpi_device *device)
-{
-	struct ebook_switch *button = acpi_driver_data(device);
-	unsigned long long state;
+अटल पूर्णांक ebook_send_state(काष्ठा acpi_device *device)
+अणु
+	काष्ठा ebook_चयन *button = acpi_driver_data(device);
+	अचिन्हित दीर्घ दीर्घ state;
 	acpi_status status;
 
-	status = acpi_evaluate_integer(device->handle, "EBK", NULL, &state);
-	if (ACPI_FAILURE(status))
-		return -EIO;
+	status = acpi_evaluate_पूर्णांकeger(device->handle, "EBK", शून्य, &state);
+	अगर (ACPI_FAILURE(status))
+		वापस -EIO;
 
-	/* input layer checks if event is redundant */
-	input_report_switch(button->input, SW_TABLET_MODE, !state);
+	/* input layer checks अगर event is redundant */
+	input_report_चयन(button->input, SW_TABLET_MODE, !state);
 	input_sync(button->input);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ebook_switch_notify(struct acpi_device *device, u32 event)
-{
-	switch (event) {
-	case ACPI_FIXED_HARDWARE_EVENT:
-	case XO15_EBOOK_NOTIFY_STATUS:
+अटल व्योम ebook_चयन_notअगरy(काष्ठा acpi_device *device, u32 event)
+अणु
+	चयन (event) अणु
+	हाल ACPI_FIXED_HARDWARE_EVENT:
+	हाल XO15_EBOOK_NOTIFY_STATUS:
 		ebook_send_state(device);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		acpi_handle_debug(device->handle,
 				  "Unsupported event [0x%x]\n", event);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int ebook_switch_resume(struct device *dev)
-{
-	return ebook_send_state(to_acpi_device(dev));
-}
-#endif
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक ebook_चयन_resume(काष्ठा device *dev)
+अणु
+	वापस ebook_send_state(to_acpi_device(dev));
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(ebook_switch_pm, NULL, ebook_switch_resume);
+अटल SIMPLE_DEV_PM_OPS(ebook_चयन_pm, शून्य, ebook_चयन_resume);
 
-static int ebook_switch_add(struct acpi_device *device)
-{
-	struct ebook_switch *button;
-	struct input_dev *input;
-	const char *hid = acpi_device_hid(device);
-	char *name, *class;
-	int error;
+अटल पूर्णांक ebook_चयन_add(काष्ठा acpi_device *device)
+अणु
+	काष्ठा ebook_चयन *button;
+	काष्ठा input_dev *input;
+	स्थिर अक्षर *hid = acpi_device_hid(device);
+	अक्षर *name, *class;
+	पूर्णांक error;
 
-	button = kzalloc(sizeof(struct ebook_switch), GFP_KERNEL);
-	if (!button)
-		return -ENOMEM;
+	button = kzalloc(माप(काष्ठा ebook_चयन), GFP_KERNEL);
+	अगर (!button)
+		वापस -ENOMEM;
 
 	device->driver_data = button;
 
 	button->input = input = input_allocate_device();
-	if (!input) {
+	अगर (!input) अणु
 		error = -ENOMEM;
-		goto err_free_button;
-	}
+		जाओ err_मुक्त_button;
+	पूर्ण
 
 	name = acpi_device_name(device);
 	class = acpi_device_class(device);
 
-	if (strcmp(hid, XO15_EBOOK_HID)) {
+	अगर (म_भेद(hid, XO15_EBOOK_HID)) अणु
 		pr_err("Unsupported hid [%s]\n", hid);
 		error = -ENODEV;
-		goto err_free_input;
-	}
+		जाओ err_मुक्त_input;
+	पूर्ण
 
-	strcpy(name, XO15_EBOOK_DEVICE_NAME);
-	sprintf(class, "%s/%s", XO15_EBOOK_CLASS, XO15_EBOOK_SUBCLASS);
+	म_नकल(name, XO15_EBOOK_DEVICE_NAME);
+	प्र_लिखो(class, "%s/%s", XO15_EBOOK_CLASS, XO15_EBOOK_SUBCLASS);
 
-	snprintf(button->phys, sizeof(button->phys), "%s/button/input0", hid);
+	snम_लिखो(button->phys, माप(button->phys), "%s/button/input0", hid);
 
 	input->name = name;
 	input->phys = button->phys;
@@ -121,46 +122,46 @@ static int ebook_switch_add(struct acpi_device *device)
 	input->evbit[0] = BIT_MASK(EV_SW);
 	set_bit(SW_TABLET_MODE, input->swbit);
 
-	error = input_register_device(input);
-	if (error)
-		goto err_free_input;
+	error = input_रेजिस्टर_device(input);
+	अगर (error)
+		जाओ err_मुक्त_input;
 
 	ebook_send_state(device);
 
-	if (device->wakeup.flags.valid) {
+	अगर (device->wakeup.flags.valid) अणु
 		/* Button's GPE is run-wake GPE */
 		acpi_enable_gpe(device->wakeup.gpe_device,
 				device->wakeup.gpe_number);
 		device_set_wakeup_enable(&device->dev, true);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
- err_free_input:
-	input_free_device(input);
- err_free_button:
-	kfree(button);
-	return error;
-}
+ err_मुक्त_input:
+	input_मुक्त_device(input);
+ err_मुक्त_button:
+	kमुक्त(button);
+	वापस error;
+पूर्ण
 
-static int ebook_switch_remove(struct acpi_device *device)
-{
-	struct ebook_switch *button = acpi_driver_data(device);
+अटल पूर्णांक ebook_चयन_हटाओ(काष्ठा acpi_device *device)
+अणु
+	काष्ठा ebook_चयन *button = acpi_driver_data(device);
 
-	input_unregister_device(button->input);
-	kfree(button);
-	return 0;
-}
+	input_unरेजिस्टर_device(button->input);
+	kमुक्त(button);
+	वापस 0;
+पूर्ण
 
-static struct acpi_driver xo15_ebook_driver = {
+अटल काष्ठा acpi_driver xo15_ebook_driver = अणु
 	.name = MODULE_NAME,
 	.class = XO15_EBOOK_CLASS,
 	.ids = ebook_device_ids,
-	.ops = {
-		.add = ebook_switch_add,
-		.remove = ebook_switch_remove,
-		.notify = ebook_switch_notify,
-	},
-	.drv.pm = &ebook_switch_pm,
-};
+	.ops = अणु
+		.add = ebook_चयन_add,
+		.हटाओ = ebook_चयन_हटाओ,
+		.notअगरy = ebook_चयन_notअगरy,
+	पूर्ण,
+	.drv.pm = &ebook_चयन_pm,
+पूर्ण;
 module_acpi_driver(xo15_ebook_driver);

@@ -1,345 +1,346 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
  */
 
-#include "dtc.h"
-#include "srcpos.h"
+#समावेश "dtc.h"
+#समावेश "srcpos.h"
 
-extern FILE *yyin;
-extern int yyparse(void);
-extern YYLTYPE yylloc;
+बाह्य खाता *yyin;
+बाह्य पूर्णांक yyparse(व्योम);
+बाह्य YYLTYPE yylloc;
 
-struct dt_info *parser_output;
+काष्ठा dt_info *parser_output;
 bool treesource_error;
 
-struct dt_info *dt_from_source(const char *fname)
-{
-	parser_output = NULL;
+काष्ठा dt_info *dt_from_source(स्थिर अक्षर *fname)
+अणु
+	parser_output = शून्य;
 	treesource_error = false;
 
 	srcfile_push(fname);
 	yyin = current_srcfile->f;
 	yylloc.file = current_srcfile;
 
-	if (yyparse() != 0)
+	अगर (yyparse() != 0)
 		die("Unable to parse input tree\n");
 
-	if (treesource_error)
+	अगर (treesource_error)
 		die("Syntax error parsing input tree\n");
 
-	return parser_output;
-}
+	वापस parser_output;
+पूर्ण
 
-static void write_prefix(FILE *f, int level)
-{
-	int i;
+अटल व्योम ग_लिखो_prefix(खाता *f, पूर्णांक level)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < level; i++)
-		fputc('\t', f);
-}
+	क्रम (i = 0; i < level; i++)
+		ख_अक्षर_दो('\t', f);
+पूर्ण
 
-static bool isstring(char c)
-{
-	return (isprint((unsigned char)c)
+अटल bool isstring(अक्षर c)
+अणु
+	वापस (है_छाप((अचिन्हित अक्षर)c)
 		|| (c == '\0')
-		|| strchr("\a\b\t\n\v\f\r", c));
-}
+		|| म_अक्षर("\a\b\t\n\v\f\r", c));
+पूर्ण
 
-static void write_propval_string(FILE *f, const char *s, size_t len)
-{
-	const char *end = s + len - 1;
+अटल व्योम ग_लिखो_propval_string(खाता *f, स्थिर अक्षर *s, माप_प्रकार len)
+अणु
+	स्थिर अक्षर *end = s + len - 1;
 
-	if (!len)
-		return;
+	अगर (!len)
+		वापस;
 
-	assert(*end == '\0');
+	निश्चित(*end == '\0');
 
-	fprintf(f, "\"");
-	while (s < end) {
-		char c = *s++;
-		switch (c) {
-		case '\a':
-			fprintf(f, "\\a");
-			break;
-		case '\b':
-			fprintf(f, "\\b");
-			break;
-		case '\t':
-			fprintf(f, "\\t");
-			break;
-		case '\n':
-			fprintf(f, "\\n");
-			break;
-		case '\v':
-			fprintf(f, "\\v");
-			break;
-		case '\f':
-			fprintf(f, "\\f");
-			break;
-		case '\r':
-			fprintf(f, "\\r");
-			break;
-		case '\\':
-			fprintf(f, "\\\\");
-			break;
-		case '\"':
-			fprintf(f, "\\\"");
-			break;
-		case '\0':
-			fprintf(f, "\\0");
-			break;
-		default:
-			if (isprint((unsigned char)c))
-				fprintf(f, "%c", c);
-			else
-				fprintf(f, "\\x%02"PRIx8, c);
-		}
-	}
-	fprintf(f, "\"");
-}
+	ख_लिखो(f, "\"");
+	जबतक (s < end) अणु
+		अक्षर c = *s++;
+		चयन (c) अणु
+		हाल '\a':
+			ख_लिखो(f, "\\a");
+			अवरोध;
+		हाल '\b':
+			ख_लिखो(f, "\\b");
+			अवरोध;
+		हाल '\t':
+			ख_लिखो(f, "\\t");
+			अवरोध;
+		हाल '\n':
+			ख_लिखो(f, "\\n");
+			अवरोध;
+		हाल '\v':
+			ख_लिखो(f, "\\v");
+			अवरोध;
+		हाल '\f':
+			ख_लिखो(f, "\\f");
+			अवरोध;
+		हाल '\r':
+			ख_लिखो(f, "\\r");
+			अवरोध;
+		हाल '\\':
+			ख_लिखो(f, "\\\\");
+			अवरोध;
+		हाल '\"':
+			ख_लिखो(f, "\\\"");
+			अवरोध;
+		हाल '\0':
+			ख_लिखो(f, "\\0");
+			अवरोध;
+		शेष:
+			अगर (है_छाप((अचिन्हित अक्षर)c))
+				ख_लिखो(f, "%c", c);
+			अन्यथा
+				ख_लिखो(f, "\\x%02"PRIx8, c);
+		पूर्ण
+	पूर्ण
+	ख_लिखो(f, "\"");
+पूर्ण
 
-static void write_propval_int(FILE *f, const char *p, size_t len, size_t width)
-{
-	const char *end = p + len;
-	assert(len % width == 0);
+अटल व्योम ग_लिखो_propval_पूर्णांक(खाता *f, स्थिर अक्षर *p, माप_प्रकार len, माप_प्रकार width)
+अणु
+	स्थिर अक्षर *end = p + len;
+	निश्चित(len % width == 0);
 
-	for (; p < end; p += width) {
-		switch (width) {
-		case 1:
-			fprintf(f, "%02"PRIx8, *(const uint8_t*)p);
-			break;
-		case 2:
-			fprintf(f, "0x%02"PRIx16, dtb_ld16(p));
-			break;
-		case 4:
-			fprintf(f, "0x%02"PRIx32, dtb_ld32(p));
-			break;
-		case 8:
-			fprintf(f, "0x%02"PRIx64, dtb_ld64(p));
-			break;
-		}
-		if (p + width < end)
-			fputc(' ', f);
-	}
-}
+	क्रम (; p < end; p += width) अणु
+		चयन (width) अणु
+		हाल 1:
+			ख_लिखो(f, "%02"PRIx8, *(स्थिर uपूर्णांक8_t*)p);
+			अवरोध;
+		हाल 2:
+			ख_लिखो(f, "0x%02"PRIx16, dtb_ld16(p));
+			अवरोध;
+		हाल 4:
+			ख_लिखो(f, "0x%02"PRIx32, dtb_ld32(p));
+			अवरोध;
+		हाल 8:
+			ख_लिखो(f, "0x%02"PRIx64, dtb_ld64(p));
+			अवरोध;
+		पूर्ण
+		अगर (p + width < end)
+			ख_अक्षर_दो(' ', f);
+	पूर्ण
+पूर्ण
 
-static bool has_data_type_information(struct marker *m)
-{
-	return m->type >= TYPE_UINT8;
-}
+अटल bool has_data_type_inक्रमmation(काष्ठा marker *m)
+अणु
+	वापस m->type >= TYPE_UINT8;
+पूर्ण
 
-static struct marker *next_type_marker(struct marker *m)
-{
-	while (m && !has_data_type_information(m))
+अटल काष्ठा marker *next_type_marker(काष्ठा marker *m)
+अणु
+	जबतक (m && !has_data_type_inक्रमmation(m))
 		m = m->next;
-	return m;
-}
+	वापस m;
+पूर्ण
 
-size_t type_marker_length(struct marker *m)
-{
-	struct marker *next = next_type_marker(m->next);
+माप_प्रकार type_marker_length(काष्ठा marker *m)
+अणु
+	काष्ठा marker *next = next_type_marker(m->next);
 
-	if (next)
-		return next->offset - m->offset;
-	return 0;
-}
+	अगर (next)
+		वापस next->offset - m->offset;
+	वापस 0;
+पूर्ण
 
-static const char *delim_start[] = {
+अटल स्थिर अक्षर *delim_start[] = अणु
 	[TYPE_UINT8] = "[",
 	[TYPE_UINT16] = "/bits/ 16 <",
 	[TYPE_UINT32] = "<",
 	[TYPE_UINT64] = "/bits/ 64 <",
 	[TYPE_STRING] = "",
-};
-static const char *delim_end[] = {
+पूर्ण;
+अटल स्थिर अक्षर *delim_end[] = अणु
 	[TYPE_UINT8] = "]",
 	[TYPE_UINT16] = ">",
 	[TYPE_UINT32] = ">",
 	[TYPE_UINT64] = ">",
 	[TYPE_STRING] = "",
-};
+पूर्ण;
 
-static enum markertype guess_value_type(struct property *prop)
-{
-	int len = prop->val.len;
-	const char *p = prop->val.val;
-	struct marker *m = prop->val.markers;
-	int nnotstring = 0, nnul = 0;
-	int nnotstringlbl = 0, nnotcelllbl = 0;
-	int i;
+अटल क्रमागत markertype guess_value_type(काष्ठा property *prop)
+अणु
+	पूर्णांक len = prop->val.len;
+	स्थिर अक्षर *p = prop->val.val;
+	काष्ठा marker *m = prop->val.markers;
+	पूर्णांक nnotstring = 0, nnul = 0;
+	पूर्णांक nnotstringlbl = 0, nnotcelllbl = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < len; i++) {
-		if (! isstring(p[i]))
+	क्रम (i = 0; i < len; i++) अणु
+		अगर (! isstring(p[i]))
 			nnotstring++;
-		if (p[i] == '\0')
+		अगर (p[i] == '\0')
 			nnul++;
-	}
+	पूर्ण
 
-	for_each_marker_of_type(m, LABEL) {
-		if ((m->offset > 0) && (prop->val.val[m->offset - 1] != '\0'))
+	क्रम_each_marker_of_type(m, LABEL) अणु
+		अगर ((m->offset > 0) && (prop->val.val[m->offset - 1] != '\0'))
 			nnotstringlbl++;
-		if ((m->offset % sizeof(cell_t)) != 0)
+		अगर ((m->offset % माप(cell_t)) != 0)
 			nnotcelllbl++;
-	}
+	पूर्ण
 
-	if ((p[len-1] == '\0') && (nnotstring == 0) && (nnul <= (len-nnul))
-	    && (nnotstringlbl == 0)) {
-		return TYPE_STRING;
-	} else if (((len % sizeof(cell_t)) == 0) && (nnotcelllbl == 0)) {
-		return TYPE_UINT32;
-	}
+	अगर ((p[len-1] == '\0') && (nnotstring == 0) && (nnul <= (len-nnul))
+	    && (nnotstringlbl == 0)) अणु
+		वापस TYPE_STRING;
+	पूर्ण अन्यथा अगर (((len % माप(cell_t)) == 0) && (nnotcelllbl == 0)) अणु
+		वापस TYPE_UINT32;
+	पूर्ण
 
-	return TYPE_UINT8;
-}
+	वापस TYPE_UINT8;
+पूर्ण
 
-static void write_propval(FILE *f, struct property *prop)
-{
-	size_t len = prop->val.len;
-	struct marker *m = prop->val.markers;
-	struct marker dummy_marker;
-	enum markertype emit_type = TYPE_NONE;
-	char *srcstr;
+अटल व्योम ग_लिखो_propval(खाता *f, काष्ठा property *prop)
+अणु
+	माप_प्रकार len = prop->val.len;
+	काष्ठा marker *m = prop->val.markers;
+	काष्ठा marker dummy_marker;
+	क्रमागत markertype emit_type = TYPE_NONE;
+	अक्षर *srcstr;
 
-	if (len == 0) {
-		fprintf(f, ";");
-		if (annotate) {
+	अगर (len == 0) अणु
+		ख_लिखो(f, ";");
+		अगर (annotate) अणु
 			srcstr = srcpos_string_first(prop->srcpos, annotate);
-			if (srcstr) {
-				fprintf(f, " /* %s */", srcstr);
-				free(srcstr);
-			}
-		}
-		fprintf(f, "\n");
-		return;
-	}
+			अगर (srcstr) अणु
+				ख_लिखो(f, " /* %s */", srcstr);
+				मुक्त(srcstr);
+			पूर्ण
+		पूर्ण
+		ख_लिखो(f, "\n");
+		वापस;
+	पूर्ण
 
-	fprintf(f, " =");
+	ख_लिखो(f, " =");
 
-	if (!next_type_marker(m)) {
-		/* data type information missing, need to guess */
+	अगर (!next_type_marker(m)) अणु
+		/* data type inक्रमmation missing, need to guess */
 		dummy_marker.type = guess_value_type(prop);
 		dummy_marker.next = prop->val.markers;
 		dummy_marker.offset = 0;
-		dummy_marker.ref = NULL;
+		dummy_marker.ref = शून्य;
 		m = &dummy_marker;
-	}
+	पूर्ण
 
-	for_each_marker(m) {
-		size_t chunk_len = (m->next ? m->next->offset : len) - m->offset;
-		size_t data_len = type_marker_length(m) ? : len - m->offset;
-		const char *p = &prop->val.val[m->offset];
+	क्रम_each_marker(m) अणु
+		माप_प्रकार chunk_len = (m->next ? m->next->offset : len) - m->offset;
+		माप_प्रकार data_len = type_marker_length(m) ? : len - m->offset;
+		स्थिर अक्षर *p = &prop->val.val[m->offset];
 
-		if (has_data_type_information(m)) {
+		अगर (has_data_type_inक्रमmation(m)) अणु
 			emit_type = m->type;
-			fprintf(f, " %s", delim_start[emit_type]);
-		} else if (m->type == LABEL)
-			fprintf(f, " %s:", m->ref);
-		else if (m->offset)
-			fputc(' ', f);
+			ख_लिखो(f, " %s", delim_start[emit_type]);
+		पूर्ण अन्यथा अगर (m->type == LABEL)
+			ख_लिखो(f, " %s:", m->ref);
+		अन्यथा अगर (m->offset)
+			ख_अक्षर_दो(' ', f);
 
-		if (emit_type == TYPE_NONE) {
-			assert(chunk_len == 0);
-			continue;
-		}
+		अगर (emit_type == TYPE_NONE) अणु
+			निश्चित(chunk_len == 0);
+			जारी;
+		पूर्ण
 
-		switch(emit_type) {
-		case TYPE_UINT16:
-			write_propval_int(f, p, chunk_len, 2);
-			break;
-		case TYPE_UINT32:
-			write_propval_int(f, p, chunk_len, 4);
-			break;
-		case TYPE_UINT64:
-			write_propval_int(f, p, chunk_len, 8);
-			break;
-		case TYPE_STRING:
-			write_propval_string(f, p, chunk_len);
-			break;
-		default:
-			write_propval_int(f, p, chunk_len, 1);
-		}
+		चयन(emit_type) अणु
+		हाल TYPE_UINT16:
+			ग_लिखो_propval_पूर्णांक(f, p, chunk_len, 2);
+			अवरोध;
+		हाल TYPE_UINT32:
+			ग_लिखो_propval_पूर्णांक(f, p, chunk_len, 4);
+			अवरोध;
+		हाल TYPE_UINT64:
+			ग_लिखो_propval_पूर्णांक(f, p, chunk_len, 8);
+			अवरोध;
+		हाल TYPE_STRING:
+			ग_लिखो_propval_string(f, p, chunk_len);
+			अवरोध;
+		शेष:
+			ग_लिखो_propval_पूर्णांक(f, p, chunk_len, 1);
+		पूर्ण
 
-		if (chunk_len == data_len) {
-			size_t pos = m->offset + chunk_len;
-			fprintf(f, pos == len ? "%s" : "%s,",
+		अगर (chunk_len == data_len) अणु
+			माप_प्रकार pos = m->offset + chunk_len;
+			ख_लिखो(f, pos == len ? "%s" : "%s,",
 			        delim_end[emit_type] ? : "");
 			emit_type = TYPE_NONE;
-		}
-	}
-	fprintf(f, ";");
-	if (annotate) {
+		पूर्ण
+	पूर्ण
+	ख_लिखो(f, ";");
+	अगर (annotate) अणु
 		srcstr = srcpos_string_first(prop->srcpos, annotate);
-		if (srcstr) {
-			fprintf(f, " /* %s */", srcstr);
-			free(srcstr);
-		}
-	}
-	fprintf(f, "\n");
-}
+		अगर (srcstr) अणु
+			ख_लिखो(f, " /* %s */", srcstr);
+			मुक्त(srcstr);
+		पूर्ण
+	पूर्ण
+	ख_लिखो(f, "\n");
+पूर्ण
 
-static void write_tree_source_node(FILE *f, struct node *tree, int level)
-{
-	struct property *prop;
-	struct node *child;
-	struct label *l;
-	char *srcstr;
+अटल व्योम ग_लिखो_tree_source_node(खाता *f, काष्ठा node *tree, पूर्णांक level)
+अणु
+	काष्ठा property *prop;
+	काष्ठा node *child;
+	काष्ठा label *l;
+	अक्षर *srcstr;
 
-	write_prefix(f, level);
-	for_each_label(tree->labels, l)
-		fprintf(f, "%s: ", l->label);
-	if (tree->name && (*tree->name))
-		fprintf(f, "%s {", tree->name);
-	else
-		fprintf(f, "/ {");
+	ग_लिखो_prefix(f, level);
+	क्रम_each_label(tree->labels, l)
+		ख_लिखो(f, "%s: ", l->label);
+	अगर (tree->name && (*tree->name))
+		ख_लिखो(f, "%s {", tree->name);
+	अन्यथा
+		ख_लिखो(f, "/ {");
 
-	if (annotate) {
+	अगर (annotate) अणु
 		srcstr = srcpos_string_first(tree->srcpos, annotate);
-		if (srcstr) {
-			fprintf(f, " /* %s */", srcstr);
-			free(srcstr);
-		}
-	}
-	fprintf(f, "\n");
+		अगर (srcstr) अणु
+			ख_लिखो(f, " /* %s */", srcstr);
+			मुक्त(srcstr);
+		पूर्ण
+	पूर्ण
+	ख_लिखो(f, "\n");
 
-	for_each_property(tree, prop) {
-		write_prefix(f, level+1);
-		for_each_label(prop->labels, l)
-			fprintf(f, "%s: ", l->label);
-		fprintf(f, "%s", prop->name);
-		write_propval(f, prop);
-	}
-	for_each_child(tree, child) {
-		fprintf(f, "\n");
-		write_tree_source_node(f, child, level+1);
-	}
-	write_prefix(f, level);
-	fprintf(f, "};");
-	if (annotate) {
+	क्रम_each_property(tree, prop) अणु
+		ग_लिखो_prefix(f, level+1);
+		क्रम_each_label(prop->labels, l)
+			ख_लिखो(f, "%s: ", l->label);
+		ख_लिखो(f, "%s", prop->name);
+		ग_लिखो_propval(f, prop);
+	पूर्ण
+	क्रम_each_child(tree, child) अणु
+		ख_लिखो(f, "\n");
+		ग_लिखो_tree_source_node(f, child, level+1);
+	पूर्ण
+	ग_लिखो_prefix(f, level);
+	ख_लिखो(f, "};");
+	अगर (annotate) अणु
 		srcstr = srcpos_string_last(tree->srcpos, annotate);
-		if (srcstr) {
-			fprintf(f, " /* %s */", srcstr);
-			free(srcstr);
-		}
-	}
-	fprintf(f, "\n");
-}
+		अगर (srcstr) अणु
+			ख_लिखो(f, " /* %s */", srcstr);
+			मुक्त(srcstr);
+		पूर्ण
+	पूर्ण
+	ख_लिखो(f, "\n");
+पूर्ण
 
-void dt_to_source(FILE *f, struct dt_info *dti)
-{
-	struct reserve_info *re;
+व्योम dt_to_source(खाता *f, काष्ठा dt_info *dti)
+अणु
+	काष्ठा reserve_info *re;
 
-	fprintf(f, "/dts-v1/;\n\n");
+	ख_लिखो(f, "/dts-v1/;\n\n");
 
-	for (re = dti->reservelist; re; re = re->next) {
-		struct label *l;
+	क्रम (re = dti->reservelist; re; re = re->next) अणु
+		काष्ठा label *l;
 
-		for_each_label(re->labels, l)
-			fprintf(f, "%s: ", l->label);
-		fprintf(f, "/memreserve/\t0x%016llx 0x%016llx;\n",
-			(unsigned long long)re->address,
-			(unsigned long long)re->size);
-	}
+		क्रम_each_label(re->labels, l)
+			ख_लिखो(f, "%s: ", l->label);
+		ख_लिखो(f, "/memreserve/\t0x%016llx 0x%016llx;\n",
+			(अचिन्हित दीर्घ दीर्घ)re->address,
+			(अचिन्हित दीर्घ दीर्घ)re->size);
+	पूर्ण
 
-	write_tree_source_node(f, dti->dt, 0);
-}
+	ग_लिखो_tree_source_node(f, dti->dt, 0);
+पूर्ण

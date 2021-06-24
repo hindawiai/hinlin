@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (C) 2008-2009 Michal Simek <monstr@monstr.eu>
  * Copyright (C) 2008-2009 PetaLogix
- * Copyright (C) 2006 Atmark Techno, Inc.
+ * Copyright (C) 2006 Aपंचांगark Techno, Inc.
  */
 
-#ifndef _ASM_MICROBLAZE_CURRENT_H
-#define _ASM_MICROBLAZE_CURRENT_H
+#अगर_अघोषित _ASM_MICROBLAZE_CURRENT_H
+#घोषणा _ASM_MICROBLAZE_CURRENT_H
 
 /*
- * Register used to hold the current task pointer while in the kernel.
- * Any `call clobbered' register without a special meaning should be OK,
- * but check asm/microblaze/kernel/entry.S to be sure.
+ * Register used to hold the current task poपूर्णांकer जबतक in the kernel.
+ * Any `call clobbered' रेजिस्टर without a special meaning should be OK,
+ * but check यंत्र/microblaze/kernel/entry.S to be sure.
  */
-#define CURRENT_TASK	r31
-# ifndef __ASSEMBLY__
+#घोषणा CURRENT_TASK	r31
+# अगरndef __ASSEMBLY__
 /*
- * Dedicate r31 to keeping the current task pointer
+ * Dedicate r31 to keeping the current task poपूर्णांकer
  */
-register struct task_struct *current asm("r31");
+रेजिस्टर काष्ठा task_काष्ठा *current यंत्र("r31");
 
 # define get_current()	current
-# endif /* __ASSEMBLY__ */
+# endअगर /* __ASSEMBLY__ */
 
-#endif /* _ASM_MICROBLAZE_CURRENT_H */
+#पूर्ण_अगर /* _ASM_MICROBLAZE_CURRENT_H */

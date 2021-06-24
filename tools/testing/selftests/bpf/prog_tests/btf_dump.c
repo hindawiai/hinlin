@@ -1,183 +1,184 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
-#include <bpf/btf.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
+#समावेश <bpf/btf.h>
 
-static int duration = 0;
+अटल पूर्णांक duration = 0;
 
-void btf_dump_printf(void *ctx, const char *fmt, va_list args)
-{
-	vfprintf(ctx, fmt, args);
-}
+व्योम btf_dump_म_लिखो(व्योम *ctx, स्थिर अक्षर *fmt, बहु_सूची args)
+अणु
+	भख_लिखो(ctx, fmt, args);
+पूर्ण
 
-static struct btf_dump_test_case {
-	const char *name;
-	const char *file;
+अटल काष्ठा btf_dump_test_हाल अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *file;
 	bool known_ptr_sz;
-	struct btf_dump_opts opts;
-} btf_dump_test_cases[] = {
-	{"btf_dump: syntax", "btf_dump_test_case_syntax", true, {}},
-	{"btf_dump: ordering", "btf_dump_test_case_ordering", false, {}},
-	{"btf_dump: padding", "btf_dump_test_case_padding", true, {}},
-	{"btf_dump: packing", "btf_dump_test_case_packing", true, {}},
-	{"btf_dump: bitfields", "btf_dump_test_case_bitfields", true, {}},
-	{"btf_dump: multidim", "btf_dump_test_case_multidim", false, {}},
-	{"btf_dump: namespacing", "btf_dump_test_case_namespacing", false, {}},
-};
+	काष्ठा btf_dump_opts opts;
+पूर्ण btf_dump_test_हालs[] = अणु
+	अणु"btf_dump: syntax", "btf_dump_test_case_syntax", true, अणुपूर्णपूर्ण,
+	अणु"btf_dump: ordering", "btf_dump_test_case_ordering", false, अणुपूर्णपूर्ण,
+	अणु"btf_dump: padding", "btf_dump_test_case_padding", true, अणुपूर्णपूर्ण,
+	अणु"btf_dump: packing", "btf_dump_test_case_packing", true, अणुपूर्णपूर्ण,
+	अणु"btf_dump: bitfields", "btf_dump_test_case_bitfields", true, अणुपूर्णपूर्ण,
+	अणु"btf_dump: multidim", "btf_dump_test_case_multidim", false, अणुपूर्णपूर्ण,
+	अणु"btf_dump: namespacing", "btf_dump_test_case_namespacing", false, अणुपूर्णपूर्ण,
+पूर्ण;
 
-static int btf_dump_all_types(const struct btf *btf,
-			      const struct btf_dump_opts *opts)
-{
-	size_t type_cnt = btf__get_nr_types(btf);
-	struct btf_dump *d;
-	int err = 0, id;
+अटल पूर्णांक btf_dump_all_types(स्थिर काष्ठा btf *btf,
+			      स्थिर काष्ठा btf_dump_opts *opts)
+अणु
+	माप_प्रकार type_cnt = btf__get_nr_types(btf);
+	काष्ठा btf_dump *d;
+	पूर्णांक err = 0, id;
 
-	d = btf_dump__new(btf, NULL, opts, btf_dump_printf);
-	if (IS_ERR(d))
-		return PTR_ERR(d);
+	d = btf_dump__new(btf, शून्य, opts, btf_dump_म_लिखो);
+	अगर (IS_ERR(d))
+		वापस PTR_ERR(d);
 
-	for (id = 1; id <= type_cnt; id++) {
+	क्रम (id = 1; id <= type_cnt; id++) अणु
 		err = btf_dump__dump_type(d, id);
-		if (err)
-			goto done;
-	}
+		अगर (err)
+			जाओ करोne;
+	पूर्ण
 
-done:
-	btf_dump__free(d);
-	return err;
-}
+करोne:
+	btf_dump__मुक्त(d);
+	वापस err;
+पूर्ण
 
-static int test_btf_dump_case(int n, struct btf_dump_test_case *t)
-{
-	char test_file[256], out_file[256], diff_cmd[1024];
-	struct btf *btf = NULL;
-	int err = 0, fd = -1;
-	FILE *f = NULL;
+अटल पूर्णांक test_btf_dump_हाल(पूर्णांक n, काष्ठा btf_dump_test_हाल *t)
+अणु
+	अक्षर test_file[256], out_file[256], dअगरf_cmd[1024];
+	काष्ठा btf *btf = शून्य;
+	पूर्णांक err = 0, fd = -1;
+	खाता *f = शून्य;
 
-	snprintf(test_file, sizeof(test_file), "%s.o", t->file);
+	snम_लिखो(test_file, माप(test_file), "%s.o", t->file);
 
-	btf = btf__parse_elf(test_file, NULL);
-	if (CHECK(IS_ERR(btf), "btf_parse_elf",
-	    "failed to load test BTF: %ld\n", PTR_ERR(btf))) {
+	btf = btf__parse_elf(test_file, शून्य);
+	अगर (CHECK(IS_ERR(btf), "btf_parse_elf",
+	    "failed to load test BTF: %ld\n", PTR_ERR(btf))) अणु
 		err = -PTR_ERR(btf);
-		btf = NULL;
-		goto done;
-	}
+		btf = शून्य;
+		जाओ करोne;
+	पूर्ण
 
 	/* tests with t->known_ptr_sz have no "long" or "unsigned long" type,
-	 * so it's impossible to determine correct pointer size; but if they
-	 * do, it should be 8 regardless of host architecture, becaues BPF
+	 * so it's impossible to determine correct poपूर्णांकer size; but अगर they
+	 * करो, it should be 8 regardless of host architecture, becaues BPF
 	 * target is always 64-bit
 	 */
-	if (!t->known_ptr_sz) {
-		btf__set_pointer_size(btf, 8);
-	} else {
-		CHECK(btf__pointer_size(btf) != 8, "ptr_sz", "exp %d, got %zu\n",
-		      8, btf__pointer_size(btf));
-	}
+	अगर (!t->known_ptr_sz) अणु
+		btf__set_poपूर्णांकer_size(btf, 8);
+	पूर्ण अन्यथा अणु
+		CHECK(btf__poपूर्णांकer_size(btf) != 8, "ptr_sz", "exp %d, got %zu\n",
+		      8, btf__poपूर्णांकer_size(btf));
+	पूर्ण
 
-	snprintf(out_file, sizeof(out_file), "/tmp/%s.output.XXXXXX", t->file);
+	snम_लिखो(out_file, माप(out_file), "/tmp/%s.output.XXXXXX", t->file);
 	fd = mkstemp(out_file);
-	if (!ASSERT_GE(fd, 0, "create_tmp")) {
+	अगर (!ASSERT_GE(fd, 0, "create_tmp")) अणु
 		err = fd;
-		goto done;
-	}
-	f = fdopen(fd, "w");
-	if (CHECK(f == NULL, "open_tmp",  "failed to open file: %s(%d)\n",
-		  strerror(errno), errno)) {
-		close(fd);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
+	f = fकरोpen(fd, "w");
+	अगर (CHECK(f == शून्य, "open_tmp",  "failed to open file: %s(%d)\n",
+		  म_त्रुटि(त्रुटि_सं), त्रुटि_सं)) अणु
+		बंद(fd);
+		जाओ करोne;
+	पूर्ण
 
 	t->opts.ctx = f;
 	err = btf_dump_all_types(btf, &t->opts);
-	fclose(f);
-	close(fd);
-	if (CHECK(err, "btf_dump", "failure during C dumping: %d\n", err)) {
-		goto done;
-	}
+	ख_बंद(f);
+	बंद(fd);
+	अगर (CHECK(err, "btf_dump", "failure during C dumping: %d\n", err)) अणु
+		जाओ करोne;
+	पूर्ण
 
-	snprintf(test_file, sizeof(test_file), "progs/%s.c", t->file);
-	if (access(test_file, R_OK) == -1)
+	snम_लिखो(test_file, माप(test_file), "progs/%s.c", t->file);
+	अगर (access(test_file, R_OK) == -1)
 		/*
-		 * When the test is run with O=, kselftest copies TEST_FILES
-		 * without preserving the directory structure.
+		 * When the test is run with O=, kselftest copies TEST_खाताS
+		 * without preserving the directory काष्ठाure.
 		 */
-		snprintf(test_file, sizeof(test_file), "%s.c", t->file);
+		snम_लिखो(test_file, माप(test_file), "%s.c", t->file);
 	/*
-	 * Diff test output and expected test output, contained between
-	 * START-EXPECTED-OUTPUT and END-EXPECTED-OUTPUT lines in test case.
-	 * For expected output lines, everything before '*' is stripped out.
+	 * Dअगरf test output and expected test output, contained between
+	 * START-EXPECTED-OUTPUT and END-EXPECTED-OUTPUT lines in test हाल.
+	 * For expected output lines, everything beक्रमe '*' is stripped out.
 	 * Also lines containing comment start and comment end markers are
 	 * ignored. 
 	 */
-	snprintf(diff_cmd, sizeof(diff_cmd),
+	snम_लिखो(dअगरf_cmd, माप(dअगरf_cmd),
 		 "awk '/START-EXPECTED-OUTPUT/{out=1;next} "
 		 "/END-EXPECTED-OUTPUT/{out=0} "
 		 "/\\/\\*|\\*\\//{next} " /* ignore comment start/end lines */
-		 "out {sub(/^[ \\t]*\\*/, \"\"); print}' '%s' | diff -u - '%s'",
+		 "out अणुsub(/^[ \\ट]*\\*/, \"\"); print}' '%s' | diff -u - '%s'",
 		 test_file, out_file);
-	err = system(diff_cmd);
-	if (CHECK(err, "diff",
+	err = प्रणाली(dअगरf_cmd);
+	अगर (CHECK(err, "diff",
 		  "differing test output, output=%s, err=%d, diff cmd:\n%s\n",
-		  out_file, err, diff_cmd))
-		goto done;
+		  out_file, err, dअगरf_cmd))
+		जाओ करोne;
 
-	remove(out_file);
+	हटाओ(out_file);
 
-done:
-	btf__free(btf);
-	return err;
-}
+करोne:
+	btf__मुक्त(btf);
+	वापस err;
+पूर्ण
 
-static char *dump_buf;
-static size_t dump_buf_sz;
-static FILE *dump_buf_file;
+अटल अक्षर *dump_buf;
+अटल माप_प्रकार dump_buf_sz;
+अटल खाता *dump_buf_file;
 
-void test_btf_dump_incremental(void)
-{
-	struct btf *btf = NULL;
-	struct btf_dump *d = NULL;
-	struct btf_dump_opts opts;
-	int id, err, i;
+व्योम test_btf_dump_incremental(व्योम)
+अणु
+	काष्ठा btf *btf = शून्य;
+	काष्ठा btf_dump *d = शून्य;
+	काष्ठा btf_dump_opts opts;
+	पूर्णांक id, err, i;
 
-	dump_buf_file = open_memstream(&dump_buf, &dump_buf_sz);
-	if (!ASSERT_OK_PTR(dump_buf_file, "dump_memstream"))
-		return;
+	dump_buf_file = खोलो_memstream(&dump_buf, &dump_buf_sz);
+	अगर (!ASSERT_OK_PTR(dump_buf_file, "dump_memstream"))
+		वापस;
 	btf = btf__new_empty();
-	if (!ASSERT_OK_PTR(btf, "new_empty"))
-		goto err_out;
+	अगर (!ASSERT_OK_PTR(btf, "new_empty"))
+		जाओ err_out;
 	opts.ctx = dump_buf_file;
-	d = btf_dump__new(btf, NULL, &opts, btf_dump_printf);
-	if (!ASSERT_OK(libbpf_get_error(d), "btf_dump__new"))
-		goto err_out;
+	d = btf_dump__new(btf, शून्य, &opts, btf_dump_म_लिखो);
+	अगर (!ASSERT_OK(libbpf_get_error(d), "btf_dump__new"))
+		जाओ err_out;
 
 	/* First, generate BTF corresponding to the following C code:
 	 *
-	 * enum { VAL = 1 };
+	 * क्रमागत अणु VAL = 1 पूर्ण;
 	 *
-	 * struct s { int x; };
+	 * काष्ठा s अणु पूर्णांक x; पूर्ण;
 	 *
 	 */
-	id = btf__add_enum(btf, NULL, 4);
+	id = btf__add_क्रमागत(btf, शून्य, 4);
 	ASSERT_EQ(id, 1, "enum_id");
-	err = btf__add_enum_value(btf, "VAL", 1);
+	err = btf__add_क्रमागत_value(btf, "VAL", 1);
 	ASSERT_OK(err, "enum_val_ok");
 
-	id = btf__add_int(btf, "int", 4, BTF_INT_SIGNED);
+	id = btf__add_पूर्णांक(btf, "int", 4, BTF_INT_SIGNED);
 	ASSERT_EQ(id, 2, "int_id");
 
-	id = btf__add_struct(btf, "s", 4);
+	id = btf__add_काष्ठा(btf, "s", 4);
 	ASSERT_EQ(id, 3, "struct_id");
 	err = btf__add_field(btf, "x", 2, 0, 0);
 	ASSERT_OK(err, "field_ok");
 
-	for (i = 1; i <= btf__get_nr_types(btf); i++) {
+	क्रम (i = 1; i <= btf__get_nr_types(btf); i++) अणु
 		err = btf_dump__dump_type(d, i);
 		ASSERT_OK(err, "dump_type_ok");
-	}
+	पूर्ण
 
-	fflush(dump_buf_file);
-	dump_buf[dump_buf_sz] = 0; /* some libc implementations don't do this */
+	ख_साफ(dump_buf_file);
+	dump_buf[dump_buf_sz] = 0; /* some libc implementations करोn't करो this */
 	ASSERT_STREQ(dump_buf,
 "enum {\n"
 "	VAL = 1,\n"
@@ -187,36 +188,36 @@ void test_btf_dump_incremental(void)
 "	int x;\n"
 "};\n\n", "c_dump1");
 
-	/* Now, after dumping original BTF, append another struct that embeds
-	 * anonymous enum. It also has a name conflict with the first struct:
+	/* Now, after dumping original BTF, append another काष्ठा that embeds
+	 * anonymous क्रमागत. It also has a name conflict with the first काष्ठा:
 	 *
-	 * struct s___2 {
-	 *     enum { VAL___2 = 1 } x;
-	 *     struct s s;
-	 * };
+	 * काष्ठा s___2 अणु
+	 *     क्रमागत अणु VAL___2 = 1 पूर्ण x;
+	 *     काष्ठा s s;
+	 * पूर्ण;
 	 *
-	 * This will test that btf_dump'er maintains internal state properly.
-	 * Note that VAL___2 enum value. It's because we've already emitted
-	 * that enum as a global anonymous enum, so btf_dump will ensure that
-	 * enum values don't conflict;
+	 * This will test that btf_dump'er मुख्यtains पूर्णांकernal state properly.
+	 * Note that VAL___2 क्रमागत value. It's because we've alपढ़ोy emitted
+	 * that क्रमागत as a global anonymous क्रमागत, so btf_dump will ensure that
+	 * क्रमागत values करोn't conflict;
 	 *
 	 */
-	fseek(dump_buf_file, 0, SEEK_SET);
+	ख_जाओ(dump_buf_file, 0, शुरू_से);
 
-	id = btf__add_struct(btf, "s", 4);
+	id = btf__add_काष्ठा(btf, "s", 4);
 	ASSERT_EQ(id, 4, "struct_id");
 	err = btf__add_field(btf, "x", 1, 0, 0);
 	ASSERT_OK(err, "field_ok");
 	err = btf__add_field(btf, "s", 3, 32, 0);
 	ASSERT_OK(err, "field_ok");
 
-	for (i = 1; i <= btf__get_nr_types(btf); i++) {
+	क्रम (i = 1; i <= btf__get_nr_types(btf); i++) अणु
 		err = btf_dump__dump_type(d, i);
 		ASSERT_OK(err, "dump_type_ok");
-	}
+	पूर्ण
 
-	fflush(dump_buf_file);
-	dump_buf[dump_buf_sz] = 0; /* some libc implementations don't do this */
+	ख_साफ(dump_buf_file);
+	dump_buf[dump_buf_sz] = 0; /* some libc implementations करोn't करो this */
 	ASSERT_STREQ(dump_buf,
 "struct s___2 {\n"
 "	enum {\n"
@@ -226,23 +227,23 @@ void test_btf_dump_incremental(void)
 "};\n\n" , "c_dump1");
 
 err_out:
-	fclose(dump_buf_file);
-	free(dump_buf);
-	btf_dump__free(d);
-	btf__free(btf);
-}
+	ख_बंद(dump_buf_file);
+	मुक्त(dump_buf);
+	btf_dump__मुक्त(d);
+	btf__मुक्त(btf);
+पूर्ण
 
-void test_btf_dump() {
-	int i;
+व्योम test_btf_dump() अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(btf_dump_test_cases); i++) {
-		struct btf_dump_test_case *t = &btf_dump_test_cases[i];
+	क्रम (i = 0; i < ARRAY_SIZE(btf_dump_test_हालs); i++) अणु
+		काष्ठा btf_dump_test_हाल *t = &btf_dump_test_हालs[i];
 
-		if (!test__start_subtest(t->name))
-			continue;
+		अगर (!test__start_subtest(t->name))
+			जारी;
 
-		test_btf_dump_case(i, &btf_dump_test_cases[i]);
-	}
-	if (test__start_subtest("btf_dump: incremental"))
+		test_btf_dump_हाल(i, &btf_dump_test_हालs[i]);
+	पूर्ण
+	अगर (test__start_subtest("btf_dump: incremental"))
 		test_btf_dump_incremental();
-}
+पूर्ण

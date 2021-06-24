@@ -1,113 +1,114 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Intel Speed Select Interface: OS to hardware Interface
  * Copyright (c) 2019, Intel Corporation.
  * All rights reserved.
  *
- * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
+ * Author: Srinivas Pandruvada <srinivas.pandruvada@linux.पूर्णांकel.com>
  */
 
-#ifndef __ISST_IF_H
-#define __ISST_IF_H
+#अगर_अघोषित __ISST_IF_H
+#घोषणा __ISST_IF_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /**
- * struct isst_if_platform_info - Define platform information
- * @api_version:	Version of the firmware document, which this driver
+ * काष्ठा isst_अगर_platक्रमm_info - Define platक्रमm inक्रमmation
+ * @api_version:	Version of the firmware करोcument, which this driver
  *			can communicate
  * @driver_version:	Driver version, which will help user to send right
- *			commands. Even if the firmware is capable, driver may
- *			not be ready
+ *			commands. Even अगर the firmware is capable, driver may
+ *			not be पढ़ोy
  * @max_cmds_per_ioctl:	Returns the maximum number of commands driver will
  *			accept in a single ioctl
- * @mbox_supported:	Support of mail box interface
- * @mmio_supported:	Support of mmio interface for core-power feature
+ * @mbox_supported:	Support of mail box पूर्णांकerface
+ * @mmio_supported:	Support of mmio पूर्णांकerface क्रम core-घातer feature
  *
- * Used to return output of IOCTL ISST_IF_GET_PLATFORM_INFO. This
- * information can be used by the user space, to get the driver, firmware
+ * Used to वापस output of IOCTL ISST_IF_GET_PLATFORM_INFO. This
+ * inक्रमmation can be used by the user space, to get the driver, firmware
  * support and also number of commands to send in a single IOCTL request.
  */
-struct isst_if_platform_info {
+काष्ठा isst_अगर_platक्रमm_info अणु
 	__u16 api_version;
 	__u16 driver_version;
 	__u16 max_cmds_per_ioctl;
 	__u8 mbox_supported;
 	__u8 mmio_supported;
-};
+पूर्ण;
 
 /**
- * struct isst_if_cpu_map - CPU mapping between logical and physical CPU
+ * काष्ठा isst_अगर_cpu_map - CPU mapping between logical and physical CPU
  * @logical_cpu:	Linux logical CPU number
  * @physical_cpu:	PUNIT CPU number
  *
  * Used to convert from Linux logical CPU to PUNIT CPU numbering scheme.
- * The PUNIT CPU number is different than APIC ID based CPU numbering.
+ * The PUNIT CPU number is dअगरferent than APIC ID based CPU numbering.
  */
-struct isst_if_cpu_map {
+काष्ठा isst_अगर_cpu_map अणु
 	__u32 logical_cpu;
 	__u32 physical_cpu;
-};
+पूर्ण;
 
 /**
- * struct isst_if_cpu_maps - structure for CPU map IOCTL
+ * काष्ठा isst_अगर_cpu_maps - काष्ठाure क्रम CPU map IOCTL
  * @cmd_count:	Number of CPU mapping command in cpu_map[]
- * @cpu_map[]:	Holds one or more CPU map data structure
+ * @cpu_map[]:	Holds one or more CPU map data काष्ठाure
  *
- * This structure used with ioctl ISST_IF_GET_PHY_ID to send
- * one or more CPU mapping commands. Here IOCTL return value indicates
- * number of commands sent or error number if no commands have been sent.
+ * This काष्ठाure used with ioctl ISST_IF_GET_PHY_ID to send
+ * one or more CPU mapping commands. Here IOCTL वापस value indicates
+ * number of commands sent or error number अगर no commands have been sent.
  */
-struct isst_if_cpu_maps {
+काष्ठा isst_अगर_cpu_maps अणु
 	__u32 cmd_count;
-	struct isst_if_cpu_map cpu_map[1];
-};
+	काष्ठा isst_अगर_cpu_map cpu_map[1];
+पूर्ण;
 
 /**
- * struct isst_if_io_reg - Read write PUNIT IO register
- * @read_write:		Value 0: Read, 1: Write
+ * काष्ठा isst_अगर_io_reg - Read ग_लिखो PUNIT IO रेजिस्टर
+ * @पढ़ो_ग_लिखो:		Value 0: Read, 1: Write
  * @logical_cpu:	Logical CPU number to get target PCI device.
- * @reg:		PUNIT register offset
- * @value:		For write operation value to write and for
- *			read placeholder read value
+ * @reg:		PUNIT रेजिस्टर offset
+ * @value:		For ग_लिखो operation value to ग_लिखो and क्रम
+ *			पढ़ो placeholder पढ़ो value
  *
- * Structure to specify read/write data to PUNIT registers.
+ * Structure to specअगरy पढ़ो/ग_लिखो data to PUNIT रेजिस्टरs.
  */
-struct isst_if_io_reg {
-	__u32 read_write; /* Read:0, Write:1 */
+काष्ठा isst_अगर_io_reg अणु
+	__u32 पढ़ो_ग_लिखो; /* Read:0, Write:1 */
 	__u32 logical_cpu;
 	__u32 reg;
 	__u32 value;
-};
+पूर्ण;
 
 /**
- * struct isst_if_io_regs - structure for IO register commands
+ * काष्ठा isst_अगर_io_regs - काष्ठाure क्रम IO रेजिस्टर commands
  * @cmd_count:	Number of io reg commands in io_reg[]
- * @io_reg[]:	Holds one or more io_reg command structure
+ * @io_reg[]:	Holds one or more io_reg command काष्ठाure
  *
- * This structure used with ioctl ISST_IF_IO_CMD to send
- * one or more read/write commands to PUNIT. Here IOCTL return value
- * indicates number of requests sent or error number if no requests have
+ * This काष्ठाure used with ioctl ISST_IF_IO_CMD to send
+ * one or more पढ़ो/ग_लिखो commands to PUNIT. Here IOCTL वापस value
+ * indicates number of requests sent or error number अगर no requests have
  * been sent.
  */
-struct isst_if_io_regs {
+काष्ठा isst_अगर_io_regs अणु
 	__u32 req_count;
-	struct isst_if_io_reg io_reg[1];
-};
+	काष्ठा isst_अगर_io_reg io_reg[1];
+पूर्ण;
 
 /**
- * struct isst_if_mbox_cmd - Structure to define mail box command
+ * काष्ठा isst_अगर_mbox_cmd - Structure to define mail box command
  * @logical_cpu:	Logical CPU number to get target PCI device
  * @parameter:		Mailbox parameter value
- * @req_data:		Request data for the mailbox
- * @resp_data:		Response data for mailbox command response
+ * @req_data:		Request data क्रम the mailbox
+ * @resp_data:		Response data क्रम mailbox command response
  * @command:		Mailbox command value
  * @sub_command:	Mailbox sub command value
  * @reserved:		Unused, set to 0
  *
- * Structure to specify mailbox command to be sent to PUNIT.
+ * Structure to specअगरy mailbox command to be sent to PUNIT.
  */
-struct isst_if_mbox_cmd {
+काष्ठा isst_अगर_mbox_cmd अणु
 	__u32 logical_cpu;
 	__u32 parameter;
 	__u32 req_data;
@@ -115,58 +116,58 @@ struct isst_if_mbox_cmd {
 	__u16 command;
 	__u16 sub_command;
 	__u32 reserved;
-};
+पूर्ण;
 
 /**
- * struct isst_if_mbox_cmds - structure for mailbox commands
+ * काष्ठा isst_अगर_mbox_cmds - काष्ठाure क्रम mailbox commands
  * @cmd_count:	Number of mailbox commands in mbox_cmd[]
  * @mbox_cmd[]:	Holds one or more mbox commands
  *
- * This structure used with ioctl ISST_IF_MBOX_COMMAND to send
- * one or more mailbox commands to PUNIT. Here IOCTL return value
- * indicates number of commands sent or error number if no commands have
+ * This काष्ठाure used with ioctl ISST_IF_MBOX_COMMAND to send
+ * one or more mailbox commands to PUNIT. Here IOCTL वापस value
+ * indicates number of commands sent or error number अगर no commands have
  * been sent.
  */
-struct isst_if_mbox_cmds {
+काष्ठा isst_अगर_mbox_cmds अणु
 	__u32 cmd_count;
-	struct isst_if_mbox_cmd mbox_cmd[1];
-};
+	काष्ठा isst_अगर_mbox_cmd mbox_cmd[1];
+पूर्ण;
 
 /**
- * struct isst_if_msr_cmd - Structure to define msr command
- * @read_write:		Value 0: Read, 1: Write
+ * काष्ठा isst_अगर_msr_cmd - Structure to define msr command
+ * @पढ़ो_ग_लिखो:		Value 0: Read, 1: Write
  * @logical_cpu:	Logical CPU number
  * @msr:		MSR number
- * @data:		For write operation, data to write, for read
+ * @data:		For ग_लिखो operation, data to ग_लिखो, क्रम पढ़ो
  *			place holder
  *
- * Structure to specify MSR command related to PUNIT.
+ * Structure to specअगरy MSR command related to PUNIT.
  */
-struct isst_if_msr_cmd {
-	__u32 read_write; /* Read:0, Write:1 */
+काष्ठा isst_अगर_msr_cmd अणु
+	__u32 पढ़ो_ग_लिखो; /* Read:0, Write:1 */
 	__u32 logical_cpu;
 	__u64 msr;
 	__u64 data;
-};
+पूर्ण;
 
 /**
- * struct isst_if_msr_cmds - structure for msr commands
+ * काष्ठा isst_अगर_msr_cmds - काष्ठाure क्रम msr commands
  * @cmd_count:	Number of mailbox commands in msr_cmd[]
  * @msr_cmd[]:	Holds one or more msr commands
  *
- * This structure used with ioctl ISST_IF_MSR_COMMAND to send
- * one or more MSR commands. IOCTL return value indicates number of
- * commands sent or error number if no commands have been sent.
+ * This काष्ठाure used with ioctl ISST_IF_MSR_COMMAND to send
+ * one or more MSR commands. IOCTL वापस value indicates number of
+ * commands sent or error number अगर no commands have been sent.
  */
-struct isst_if_msr_cmds {
+काष्ठा isst_अगर_msr_cmds अणु
 	__u32 cmd_count;
-	struct isst_if_msr_cmd msr_cmd[1];
-};
+	काष्ठा isst_अगर_msr_cmd msr_cmd[1];
+पूर्ण;
 
-#define ISST_IF_MAGIC			0xFE
-#define ISST_IF_GET_PLATFORM_INFO	_IOR(ISST_IF_MAGIC, 0, struct isst_if_platform_info *)
-#define ISST_IF_GET_PHY_ID		_IOWR(ISST_IF_MAGIC, 1, struct isst_if_cpu_map *)
-#define ISST_IF_IO_CMD		_IOW(ISST_IF_MAGIC, 2, struct isst_if_io_regs *)
-#define ISST_IF_MBOX_COMMAND	_IOWR(ISST_IF_MAGIC, 3, struct isst_if_mbox_cmds *)
-#define ISST_IF_MSR_COMMAND	_IOWR(ISST_IF_MAGIC, 4, struct isst_if_msr_cmds *)
-#endif
+#घोषणा ISST_IF_MAGIC			0xFE
+#घोषणा ISST_IF_GET_PLATFORM_INFO	_IOR(ISST_IF_MAGIC, 0, काष्ठा isst_अगर_platक्रमm_info *)
+#घोषणा ISST_IF_GET_PHY_ID		_IOWR(ISST_IF_MAGIC, 1, काष्ठा isst_अगर_cpu_map *)
+#घोषणा ISST_IF_IO_CMD		_IOW(ISST_IF_MAGIC, 2, काष्ठा isst_अगर_io_regs *)
+#घोषणा ISST_IF_MBOX_COMMAND	_IOWR(ISST_IF_MAGIC, 3, काष्ठा isst_अगर_mbox_cmds *)
+#घोषणा ISST_IF_MSR_COMMAND	_IOWR(ISST_IF_MAGIC, 4, काष्ठा isst_अगर_msr_cmds *)
+#पूर्ण_अगर

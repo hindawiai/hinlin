@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  UDPLITE     An implementation of the UDP-Lite protocol (RFC 3828).
  *
@@ -8,43 +9,43 @@
  *  Fixes:
  */
 
-#define pr_fmt(fmt) "UDPLite: " fmt
+#घोषणा pr_fmt(fmt) "UDPLite: " fmt
 
-#include <linux/export.h>
-#include <linux/proc_fs.h>
-#include "udp_impl.h"
+#समावेश <linux/export.h>
+#समावेश <linux/proc_fs.h>
+#समावेश "udp_impl.h"
 
-struct udp_table 	udplite_table __read_mostly;
+काष्ठा udp_table 	udplite_table __पढ़ो_mostly;
 EXPORT_SYMBOL(udplite_table);
 
-static int udplite_rcv(struct sk_buff *skb)
-{
-	return __udp4_lib_rcv(skb, &udplite_table, IPPROTO_UDPLITE);
-}
+अटल पूर्णांक udplite_rcv(काष्ठा sk_buff *skb)
+अणु
+	वापस __udp4_lib_rcv(skb, &udplite_table, IPPROTO_UDPLITE);
+पूर्ण
 
-static int udplite_err(struct sk_buff *skb, u32 info)
-{
-	return __udp4_lib_err(skb, info, &udplite_table);
-}
+अटल पूर्णांक udplite_err(काष्ठा sk_buff *skb, u32 info)
+अणु
+	वापस __udp4_lib_err(skb, info, &udplite_table);
+पूर्ण
 
-static const struct net_protocol udplite_protocol = {
+अटल स्थिर काष्ठा net_protocol udplite_protocol = अणु
 	.handler	= udplite_rcv,
 	.err_handler	= udplite_err,
 	.no_policy	= 1,
 	.netns_ok	= 1,
-};
+पूर्ण;
 
-struct proto 	udplite_prot = {
+काष्ठा proto 	udplite_prot = अणु
 	.name		   = "UDP-Lite",
 	.owner		   = THIS_MODULE,
-	.close		   = udp_lib_close,
+	.बंद		   = udp_lib_बंद,
 	.connect	   = ip4_datagram_connect,
 	.disconnect	   = udp_disconnect,
 	.ioctl		   = udp_ioctl,
 	.init		   = udplite_sk_init,
 	.destroy	   = udp_destroy_sock,
 	.setsockopt	   = udp_setsockopt,
-	.getsockopt	   = udp_getsockopt,
+	.माला_लोockopt	   = udp_माला_लोockopt,
 	.sendmsg	   = udp_sendmsg,
 	.recvmsg	   = udp_recvmsg,
 	.sendpage	   = udp_sendpage,
@@ -54,71 +55,71 @@ struct proto 	udplite_prot = {
 	.get_port	   = udp_v4_get_port,
 	.memory_allocated  = &udp_memory_allocated,
 	.sysctl_mem	   = sysctl_udp_mem,
-	.obj_size	   = sizeof(struct udp_sock),
+	.obj_size	   = माप(काष्ठा udp_sock),
 	.h.udp_table	   = &udplite_table,
-};
+पूर्ण;
 EXPORT_SYMBOL(udplite_prot);
 
-static struct inet_protosw udplite4_protosw = {
+अटल काष्ठा inet_protosw udplite4_protosw = अणु
 	.type		=  SOCK_DGRAM,
 	.protocol	=  IPPROTO_UDPLITE,
 	.prot		=  &udplite_prot,
 	.ops		=  &inet_dgram_ops,
 	.flags		=  INET_PROTOSW_PERMANENT,
-};
+पूर्ण;
 
-#ifdef CONFIG_PROC_FS
-static struct udp_seq_afinfo udplite4_seq_afinfo = {
+#अगर_घोषित CONFIG_PROC_FS
+अटल काष्ठा udp_seq_afinfo udplite4_seq_afinfo = अणु
 	.family		= AF_INET,
 	.udp_table 	= &udplite_table,
-};
+पूर्ण;
 
-static int __net_init udplite4_proc_init_net(struct net *net)
-{
-	if (!proc_create_net_data("udplite", 0444, net->proc_net, &udp_seq_ops,
-			sizeof(struct udp_iter_state), &udplite4_seq_afinfo))
-		return -ENOMEM;
-	return 0;
-}
+अटल पूर्णांक __net_init udplite4_proc_init_net(काष्ठा net *net)
+अणु
+	अगर (!proc_create_net_data("udplite", 0444, net->proc_net, &udp_seq_ops,
+			माप(काष्ठा udp_iter_state), &udplite4_seq_afinfo))
+		वापस -ENOMEM;
+	वापस 0;
+पूर्ण
 
-static void __net_exit udplite4_proc_exit_net(struct net *net)
-{
-	remove_proc_entry("udplite", net->proc_net);
-}
+अटल व्योम __net_निकास udplite4_proc_निकास_net(काष्ठा net *net)
+अणु
+	हटाओ_proc_entry("udplite", net->proc_net);
+पूर्ण
 
-static struct pernet_operations udplite4_net_ops = {
+अटल काष्ठा pernet_operations udplite4_net_ops = अणु
 	.init = udplite4_proc_init_net,
-	.exit = udplite4_proc_exit_net,
-};
+	.निकास = udplite4_proc_निकास_net,
+पूर्ण;
 
-static __init int udplite4_proc_init(void)
-{
-	return register_pernet_subsys(&udplite4_net_ops);
-}
-#else
-static inline int udplite4_proc_init(void)
-{
-	return 0;
-}
-#endif
+अटल __init पूर्णांक udplite4_proc_init(व्योम)
+अणु
+	वापस रेजिस्टर_pernet_subsys(&udplite4_net_ops);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक udplite4_proc_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-void __init udplite4_register(void)
-{
+व्योम __init udplite4_रेजिस्टर(व्योम)
+अणु
 	udp_table_init(&udplite_table, "UDP-Lite");
-	if (proto_register(&udplite_prot, 1))
-		goto out_register_err;
+	अगर (proto_रेजिस्टर(&udplite_prot, 1))
+		जाओ out_रेजिस्टर_err;
 
-	if (inet_add_protocol(&udplite_protocol, IPPROTO_UDPLITE) < 0)
-		goto out_unregister_proto;
+	अगर (inet_add_protocol(&udplite_protocol, IPPROTO_UDPLITE) < 0)
+		जाओ out_unरेजिस्टर_proto;
 
-	inet_register_protosw(&udplite4_protosw);
+	inet_रेजिस्टर_protosw(&udplite4_protosw);
 
-	if (udplite4_proc_init())
+	अगर (udplite4_proc_init())
 		pr_err("%s: Cannot register /proc!\n", __func__);
-	return;
+	वापस;
 
-out_unregister_proto:
-	proto_unregister(&udplite_prot);
-out_register_err:
+out_unरेजिस्टर_proto:
+	proto_unरेजिस्टर(&udplite_prot);
+out_रेजिस्टर_err:
 	pr_crit("%s: Cannot add UDP-Lite protocol\n", __func__);
-}
+पूर्ण

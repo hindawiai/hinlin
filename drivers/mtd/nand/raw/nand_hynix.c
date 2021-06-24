@@ -1,415 +1,416 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Free Electrons
  * Copyright (C) 2017 NextThing Co
  *
- * Author: Boris Brezillon <boris.brezillon@free-electrons.com>
+ * Author: Boris Brezillon <boris.brezillon@मुक्त-electrons.com>
  */
 
-#include <linux/sizes.h>
-#include <linux/slab.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/slab.h>
 
-#include "internals.h"
+#समावेश "internals.h"
 
-#define NAND_HYNIX_CMD_SET_PARAMS	0x36
-#define NAND_HYNIX_CMD_APPLY_PARAMS	0x16
+#घोषणा न_अंकD_HYNIX_CMD_SET_PARAMS	0x36
+#घोषणा न_अंकD_HYNIX_CMD_APPLY_PARAMS	0x16
 
-#define NAND_HYNIX_1XNM_RR_REPEAT	8
+#घोषणा न_अंकD_HYNIX_1XNM_RR_REPEAT	8
 
 /**
- * struct hynix_read_retry - read-retry data
- * @nregs: number of register to set when applying a new read-retry mode
- * @regs: register offsets (NAND chip dependent)
- * @values: array of values to set in registers. The array size is equal to
+ * काष्ठा hynix_पढ़ो_retry - पढ़ो-retry data
+ * @nregs: number of रेजिस्टर to set when applying a new पढ़ो-retry mode
+ * @regs: रेजिस्टर offsets (न_अंकD chip dependent)
+ * @values: array of values to set in रेजिस्टरs. The array size is equal to
  *	    (nregs * nmodes)
  */
-struct hynix_read_retry {
-	int nregs;
-	const u8 *regs;
+काष्ठा hynix_पढ़ो_retry अणु
+	पूर्णांक nregs;
+	स्थिर u8 *regs;
 	u8 values[];
-};
+पूर्ण;
 
 /**
- * struct hynix_nand - private Hynix NAND struct
+ * काष्ठा hynix_nand - निजी Hynix न_अंकD काष्ठा
  * @nand_technology: manufacturing process expressed in picometer
- * @read_retry: read-retry information
+ * @पढ़ो_retry: पढ़ो-retry inक्रमmation
  */
-struct hynix_nand {
-	const struct hynix_read_retry *read_retry;
-};
+काष्ठा hynix_nand अणु
+	स्थिर काष्ठा hynix_पढ़ो_retry *पढ़ो_retry;
+पूर्ण;
 
 /**
- * struct hynix_read_retry_otp - structure describing how the read-retry OTP
+ * काष्ठा hynix_पढ़ो_retry_otp - काष्ठाure describing how the पढ़ो-retry OTP
  *				 area
- * @nregs: number of hynix private registers to set before reading the reading
+ * @nregs: number of hynix निजी रेजिस्टरs to set beक्रमe पढ़ोing the पढ़ोing
  *	   the OTP area
- * @regs: registers that should be configured
+ * @regs: रेजिस्टरs that should be configured
  * @values: values that should be set in regs
- * @page: the address to pass to the READ_PAGE command. Depends on the NAND
+ * @page: the address to pass to the READ_PAGE command. Depends on the न_अंकD
  *	  chip
- * @size: size of the read-retry OTP section
+ * @size: size of the पढ़ो-retry OTP section
  */
-struct hynix_read_retry_otp {
-	int nregs;
-	const u8 *regs;
-	const u8 *values;
-	int page;
-	int size;
-};
+काष्ठा hynix_पढ़ो_retry_otp अणु
+	पूर्णांक nregs;
+	स्थिर u8 *regs;
+	स्थिर u8 *values;
+	पूर्णांक page;
+	पूर्णांक size;
+पूर्ण;
 
-static bool hynix_nand_has_valid_jedecid(struct nand_chip *chip)
-{
-	u8 jedecid[5] = { };
-	int ret;
+अटल bool hynix_nand_has_valid_jedecid(काष्ठा nand_chip *chip)
+अणु
+	u8 jedecid[5] = अणु पूर्ण;
+	पूर्णांक ret;
 
-	ret = nand_readid_op(chip, 0x40, jedecid, sizeof(jedecid));
-	if (ret)
-		return false;
+	ret = nand_पढ़ोid_op(chip, 0x40, jedecid, माप(jedecid));
+	अगर (ret)
+		वापस false;
 
-	return !strncmp("JEDEC", jedecid, sizeof(jedecid));
-}
+	वापस !म_भेदन("JEDEC", jedecid, माप(jedecid));
+पूर्ण
 
-static int hynix_nand_cmd_op(struct nand_chip *chip, u8 cmd)
-{
-	if (nand_has_exec_op(chip)) {
-		struct nand_op_instr instrs[] = {
-			NAND_OP_CMD(cmd, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+अटल पूर्णांक hynix_nand_cmd_op(काष्ठा nand_chip *chip, u8 cmd)
+अणु
+	अगर (nand_has_exec_op(chip)) अणु
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_CMD(cmd, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
 	chip->legacy.cmdfunc(chip, cmd, -1, -1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hynix_nand_reg_write_op(struct nand_chip *chip, u8 addr, u8 val)
-{
+अटल पूर्णांक hynix_nand_reg_ग_लिखो_op(काष्ठा nand_chip *chip, u8 addr, u8 val)
+अणु
 	u16 column = ((u16)addr << 8) | addr;
 
-	if (nand_has_exec_op(chip)) {
-		struct nand_op_instr instrs[] = {
-			NAND_OP_ADDR(1, &addr, 0),
-			NAND_OP_8BIT_DATA_OUT(1, &val, 0),
-		};
-		struct nand_operation op = NAND_OPERATION(chip->cur_cs, instrs);
+	अगर (nand_has_exec_op(chip)) अणु
+		काष्ठा nand_op_instr instrs[] = अणु
+			न_अंकD_OP_ADDR(1, &addr, 0),
+			न_अंकD_OP_8BIT_DATA_OUT(1, &val, 0),
+		पूर्ण;
+		काष्ठा nand_operation op = न_अंकD_OPERATION(chip->cur_cs, instrs);
 
-		return nand_exec_op(chip, &op);
-	}
+		वापस nand_exec_op(chip, &op);
+	पूर्ण
 
-	chip->legacy.cmdfunc(chip, NAND_CMD_NONE, column, -1);
-	chip->legacy.write_byte(chip, val);
+	chip->legacy.cmdfunc(chip, न_अंकD_CMD_NONE, column, -1);
+	chip->legacy.ग_लिखो_byte(chip, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hynix_nand_setup_read_retry(struct nand_chip *chip, int retry_mode)
-{
-	struct hynix_nand *hynix = nand_get_manufacturer_data(chip);
-	const u8 *values;
-	int i, ret;
+अटल पूर्णांक hynix_nand_setup_पढ़ो_retry(काष्ठा nand_chip *chip, पूर्णांक retry_mode)
+अणु
+	काष्ठा hynix_nand *hynix = nand_get_manufacturer_data(chip);
+	स्थिर u8 *values;
+	पूर्णांक i, ret;
 
-	values = hynix->read_retry->values +
-		 (retry_mode * hynix->read_retry->nregs);
+	values = hynix->पढ़ो_retry->values +
+		 (retry_mode * hynix->पढ़ो_retry->nregs);
 
 	/* Enter 'Set Hynix Parameters' mode */
-	ret = hynix_nand_cmd_op(chip, NAND_HYNIX_CMD_SET_PARAMS);
-	if (ret)
-		return ret;
+	ret = hynix_nand_cmd_op(chip, न_अंकD_HYNIX_CMD_SET_PARAMS);
+	अगर (ret)
+		वापस ret;
 
 	/*
-	 * Configure the NAND in the requested read-retry mode.
-	 * This is done by setting pre-defined values in internal NAND
-	 * registers.
+	 * Configure the न_अंकD in the requested पढ़ो-retry mode.
+	 * This is करोne by setting pre-defined values in पूर्णांकernal न_अंकD
+	 * रेजिस्टरs.
 	 *
-	 * The set of registers is NAND specific, and the values are either
-	 * predefined or extracted from an OTP area on the NAND (values are
-	 * probably tweaked at production in this case).
+	 * The set of रेजिस्टरs is न_अंकD specअगरic, and the values are either
+	 * predefined or extracted from an OTP area on the न_अंकD (values are
+	 * probably tweaked at production in this हाल).
 	 */
-	for (i = 0; i < hynix->read_retry->nregs; i++) {
-		ret = hynix_nand_reg_write_op(chip, hynix->read_retry->regs[i],
+	क्रम (i = 0; i < hynix->पढ़ो_retry->nregs; i++) अणु
+		ret = hynix_nand_reg_ग_लिखो_op(chip, hynix->पढ़ो_retry->regs[i],
 					      values[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	/* Apply the new settings. */
-	return hynix_nand_cmd_op(chip, NAND_HYNIX_CMD_APPLY_PARAMS);
-}
+	वापस hynix_nand_cmd_op(chip, न_अंकD_HYNIX_CMD_APPLY_PARAMS);
+पूर्ण
 
 /**
  * hynix_get_majority - get the value that is occurring the most in a given
  *			set of values
  * @in: the array of values to test
  * @repeat: the size of the in array
- * @out: pointer used to store the output value
+ * @out: poपूर्णांकer used to store the output value
  *
  * This function implements the 'majority check' logic that is supposed to
- * overcome the unreliability of MLC NANDs when reading the OTP area storing
- * the read-retry parameters.
+ * overcome the unreliability of MLC न_अंकDs when पढ़ोing the OTP area storing
+ * the पढ़ो-retry parameters.
  *
- * It's based on a pretty simple assumption: if we repeat the same value
- * several times and then take the one that is occurring the most, we should
+ * It's based on a pretty simple assumption: अगर we repeat the same value
+ * several बार and then take the one that is occurring the most, we should
  * find the correct value.
- * Let's hope this dummy algorithm prevents us from losing the read-retry
+ * Let's hope this dummy algorithm prevents us from losing the पढ़ो-retry
  * parameters.
  */
-static int hynix_get_majority(const u8 *in, int repeat, u8 *out)
-{
-	int i, j, half = repeat / 2;
+अटल पूर्णांक hynix_get_majority(स्थिर u8 *in, पूर्णांक repeat, u8 *out)
+अणु
+	पूर्णांक i, j, half = repeat / 2;
 
 	/*
 	 * We only test the first half of the in array because we must ensure
-	 * that the value is at least occurring repeat / 2 times.
+	 * that the value is at least occurring repeat / 2 बार.
 	 *
 	 * This loop is suboptimal since we may count the occurrences of the
-	 * same value several time, but we are doing that on small sets, which
+	 * same value several समय, but we are करोing that on small sets, which
 	 * makes it acceptable.
 	 */
-	for (i = 0; i < half; i++) {
-		int cnt = 0;
+	क्रम (i = 0; i < half; i++) अणु
+		पूर्णांक cnt = 0;
 		u8 val = in[i];
 
 		/* Count all values that are matching the one at index i. */
-		for (j = i + 1; j < repeat; j++) {
-			if (in[j] == val)
+		क्रम (j = i + 1; j < repeat; j++) अणु
+			अगर (in[j] == val)
 				cnt++;
-		}
+		पूर्ण
 
 		/* We found a value occurring more than repeat / 2. */
-		if (cnt > half) {
+		अगर (cnt > half) अणु
 			*out = val;
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-static int hynix_read_rr_otp(struct nand_chip *chip,
-			     const struct hynix_read_retry_otp *info,
-			     void *buf)
-{
-	int i, ret;
+अटल पूर्णांक hynix_पढ़ो_rr_otp(काष्ठा nand_chip *chip,
+			     स्थिर काष्ठा hynix_पढ़ो_retry_otp *info,
+			     व्योम *buf)
+अणु
+	पूर्णांक i, ret;
 
 	ret = nand_reset_op(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = hynix_nand_cmd_op(chip, NAND_HYNIX_CMD_SET_PARAMS);
-	if (ret)
-		return ret;
+	ret = hynix_nand_cmd_op(chip, न_अंकD_HYNIX_CMD_SET_PARAMS);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < info->nregs; i++) {
-		ret = hynix_nand_reg_write_op(chip, info->regs[i],
+	क्रम (i = 0; i < info->nregs; i++) अणु
+		ret = hynix_nand_reg_ग_लिखो_op(chip, info->regs[i],
 					      info->values[i]);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	ret = hynix_nand_cmd_op(chip, NAND_HYNIX_CMD_APPLY_PARAMS);
-	if (ret)
-		return ret;
+	ret = hynix_nand_cmd_op(chip, न_अंकD_HYNIX_CMD_APPLY_PARAMS);
+	अगर (ret)
+		वापस ret;
 
 	/* Sequence to enter OTP mode? */
 	ret = hynix_nand_cmd_op(chip, 0x17);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = hynix_nand_cmd_op(chip, 0x4);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = hynix_nand_cmd_op(chip, 0x19);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	/* Now read the page */
-	ret = nand_read_page_op(chip, info->page, 0, buf, info->size);
-	if (ret)
-		return ret;
+	/* Now पढ़ो the page */
+	ret = nand_पढ़ो_page_op(chip, info->page, 0, buf, info->size);
+	अगर (ret)
+		वापस ret;
 
 	/* Put everything back to normal */
 	ret = nand_reset_op(chip);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = hynix_nand_cmd_op(chip, NAND_HYNIX_CMD_SET_PARAMS);
-	if (ret)
-		return ret;
+	ret = hynix_nand_cmd_op(chip, न_अंकD_HYNIX_CMD_SET_PARAMS);
+	अगर (ret)
+		वापस ret;
 
-	ret = hynix_nand_reg_write_op(chip, 0x38, 0);
-	if (ret)
-		return ret;
+	ret = hynix_nand_reg_ग_लिखो_op(chip, 0x38, 0);
+	अगर (ret)
+		वापस ret;
 
-	ret = hynix_nand_cmd_op(chip, NAND_HYNIX_CMD_APPLY_PARAMS);
-	if (ret)
-		return ret;
+	ret = hynix_nand_cmd_op(chip, न_अंकD_HYNIX_CMD_APPLY_PARAMS);
+	अगर (ret)
+		वापस ret;
 
-	return nand_read_page_op(chip, 0, 0, NULL, 0);
-}
+	वापस nand_पढ़ो_page_op(chip, 0, 0, शून्य, 0);
+पूर्ण
 
-#define NAND_HYNIX_1XNM_RR_COUNT_OFFS				0
-#define NAND_HYNIX_1XNM_RR_REG_COUNT_OFFS			8
-#define NAND_HYNIX_1XNM_RR_SET_OFFS(x, setsize, inv)		\
+#घोषणा न_अंकD_HYNIX_1XNM_RR_COUNT_OFFS				0
+#घोषणा न_अंकD_HYNIX_1XNM_RR_REG_COUNT_OFFS			8
+#घोषणा न_अंकD_HYNIX_1XNM_RR_SET_OFFS(x, setsize, inv)		\
 	(16 + ((((x) * 2) + ((inv) ? 1 : 0)) * (setsize)))
 
-static int hynix_mlc_1xnm_rr_value(const u8 *buf, int nmodes, int nregs,
-				   int mode, int reg, bool inv, u8 *val)
-{
-	u8 tmp[NAND_HYNIX_1XNM_RR_REPEAT];
-	int val_offs = (mode * nregs) + reg;
-	int set_size = nmodes * nregs;
-	int i, ret;
+अटल पूर्णांक hynix_mlc_1xnm_rr_value(स्थिर u8 *buf, पूर्णांक nmodes, पूर्णांक nregs,
+				   पूर्णांक mode, पूर्णांक reg, bool inv, u8 *val)
+अणु
+	u8 पंचांगp[न_अंकD_HYNIX_1XNM_RR_REPEAT];
+	पूर्णांक val_offs = (mode * nregs) + reg;
+	पूर्णांक set_size = nmodes * nregs;
+	पूर्णांक i, ret;
 
-	for (i = 0; i < NAND_HYNIX_1XNM_RR_REPEAT; i++) {
-		int set_offs = NAND_HYNIX_1XNM_RR_SET_OFFS(i, set_size, inv);
+	क्रम (i = 0; i < न_अंकD_HYNIX_1XNM_RR_REPEAT; i++) अणु
+		पूर्णांक set_offs = न_अंकD_HYNIX_1XNM_RR_SET_OFFS(i, set_size, inv);
 
-		tmp[i] = buf[val_offs + set_offs];
-	}
+		पंचांगp[i] = buf[val_offs + set_offs];
+	पूर्ण
 
-	ret = hynix_get_majority(tmp, NAND_HYNIX_1XNM_RR_REPEAT, val);
-	if (ret)
-		return ret;
+	ret = hynix_get_majority(पंचांगp, न_अंकD_HYNIX_1XNM_RR_REPEAT, val);
+	अगर (ret)
+		वापस ret;
 
-	if (inv)
+	अगर (inv)
 		*val = ~*val;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 hynix_1xnm_mlc_read_retry_regs[] = {
+अटल u8 hynix_1xnm_mlc_पढ़ो_retry_regs[] = अणु
 	0xcc, 0xbf, 0xaa, 0xab, 0xcd, 0xad, 0xae, 0xaf
-};
+पूर्ण;
 
-static int hynix_mlc_1xnm_rr_init(struct nand_chip *chip,
-				  const struct hynix_read_retry_otp *info)
-{
-	struct hynix_nand *hynix = nand_get_manufacturer_data(chip);
-	struct hynix_read_retry *rr = NULL;
-	int ret, i, j;
+अटल पूर्णांक hynix_mlc_1xnm_rr_init(काष्ठा nand_chip *chip,
+				  स्थिर काष्ठा hynix_पढ़ो_retry_otp *info)
+अणु
+	काष्ठा hynix_nand *hynix = nand_get_manufacturer_data(chip);
+	काष्ठा hynix_पढ़ो_retry *rr = शून्य;
+	पूर्णांक ret, i, j;
 	u8 nregs, nmodes;
 	u8 *buf;
 
-	buf = kmalloc(info->size, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(info->size, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	ret = hynix_read_rr_otp(chip, info, buf);
-	if (ret)
-		goto out;
+	ret = hynix_पढ़ो_rr_otp(chip, info, buf);
+	अगर (ret)
+		जाओ out;
 
-	ret = hynix_get_majority(buf, NAND_HYNIX_1XNM_RR_REPEAT,
+	ret = hynix_get_majority(buf, न_अंकD_HYNIX_1XNM_RR_REPEAT,
 				 &nmodes);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	ret = hynix_get_majority(buf + NAND_HYNIX_1XNM_RR_REPEAT,
-				 NAND_HYNIX_1XNM_RR_REPEAT,
+	ret = hynix_get_majority(buf + न_अंकD_HYNIX_1XNM_RR_REPEAT,
+				 न_अंकD_HYNIX_1XNM_RR_REPEAT,
 				 &nregs);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	rr = kzalloc(sizeof(*rr) + (nregs * nmodes), GFP_KERNEL);
-	if (!rr) {
+	rr = kzalloc(माप(*rr) + (nregs * nmodes), GFP_KERNEL);
+	अगर (!rr) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < nmodes; i++) {
-		for (j = 0; j < nregs; j++) {
+	क्रम (i = 0; i < nmodes; i++) अणु
+		क्रम (j = 0; j < nregs; j++) अणु
 			u8 *val = rr->values + (i * nregs);
 
 			ret = hynix_mlc_1xnm_rr_value(buf, nmodes, nregs, i, j,
 						      false, val);
-			if (!ret)
-				continue;
+			अगर (!ret)
+				जारी;
 
 			ret = hynix_mlc_1xnm_rr_value(buf, nmodes, nregs, i, j,
 						      true, val);
-			if (ret)
-				goto out;
-		}
-	}
+			अगर (ret)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 	rr->nregs = nregs;
-	rr->regs = hynix_1xnm_mlc_read_retry_regs;
-	hynix->read_retry = rr;
-	chip->ops.setup_read_retry = hynix_nand_setup_read_retry;
-	chip->read_retries = nmodes;
+	rr->regs = hynix_1xnm_mlc_पढ़ो_retry_regs;
+	hynix->पढ़ो_retry = rr;
+	chip->ops.setup_पढ़ो_retry = hynix_nand_setup_पढ़ो_retry;
+	chip->पढ़ो_retries = nmodes;
 
 out:
-	kfree(buf);
+	kमुक्त(buf);
 
-	if (ret)
-		kfree(rr);
+	अगर (ret)
+		kमुक्त(rr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const u8 hynix_mlc_1xnm_rr_otp_regs[] = { 0x38 };
-static const u8 hynix_mlc_1xnm_rr_otp_values[] = { 0x52 };
+अटल स्थिर u8 hynix_mlc_1xnm_rr_otp_regs[] = अणु 0x38 पूर्ण;
+अटल स्थिर u8 hynix_mlc_1xnm_rr_otp_values[] = अणु 0x52 पूर्ण;
 
-static const struct hynix_read_retry_otp hynix_mlc_1xnm_rr_otps[] = {
-	{
+अटल स्थिर काष्ठा hynix_पढ़ो_retry_otp hynix_mlc_1xnm_rr_otps[] = अणु
+	अणु
 		.nregs = ARRAY_SIZE(hynix_mlc_1xnm_rr_otp_regs),
 		.regs = hynix_mlc_1xnm_rr_otp_regs,
 		.values = hynix_mlc_1xnm_rr_otp_values,
 		.page = 0x21f,
 		.size = 784
-	},
-	{
+	पूर्ण,
+	अणु
 		.nregs = ARRAY_SIZE(hynix_mlc_1xnm_rr_otp_regs),
 		.regs = hynix_mlc_1xnm_rr_otp_regs,
 		.values = hynix_mlc_1xnm_rr_otp_values,
 		.page = 0x200,
 		.size = 528,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int hynix_nand_rr_init(struct nand_chip *chip)
-{
-	int i, ret = 0;
+अटल पूर्णांक hynix_nand_rr_init(काष्ठा nand_chip *chip)
+अणु
+	पूर्णांक i, ret = 0;
 	bool valid_jedecid;
 
 	valid_jedecid = hynix_nand_has_valid_jedecid(chip);
 
 	/*
-	 * We only support read-retry for 1xnm NANDs, and those NANDs all
+	 * We only support पढ़ो-retry क्रम 1xnm न_अंकDs, and those न_अंकDs all
 	 * expose a valid JEDEC ID.
 	 */
-	if (valid_jedecid) {
+	अगर (valid_jedecid) अणु
 		u8 nand_tech = chip->id.data[5] >> 4;
 
 		/* 1xnm technology */
-		if (nand_tech == 4) {
-			for (i = 0; i < ARRAY_SIZE(hynix_mlc_1xnm_rr_otps);
-			     i++) {
+		अगर (nand_tech == 4) अणु
+			क्रम (i = 0; i < ARRAY_SIZE(hynix_mlc_1xnm_rr_otps);
+			     i++) अणु
 				/*
 				 * FIXME: Hynix recommend to copy the
-				 * read-retry OTP area into a normal page.
+				 * पढ़ो-retry OTP area पूर्णांकo a normal page.
 				 */
 				ret = hynix_mlc_1xnm_rr_init(chip,
 						hynix_mlc_1xnm_rr_otps);
-				if (!ret)
-					break;
-			}
-		}
-	}
+				अगर (!ret)
+					अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (ret)
+	अगर (ret)
 		pr_warn("failed to initialize read-retry infrastructure");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hynix_nand_extract_oobsize(struct nand_chip *chip,
+अटल व्योम hynix_nand_extract_oobsize(काष्ठा nand_chip *chip,
 				       bool valid_jedecid)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_memory_organization *memorg;
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_memory_organization *memorg;
 	u8 oobsize;
 
 	memorg = nanddev_get_memorg(&chip->base);
@@ -417,63 +418,63 @@ static void hynix_nand_extract_oobsize(struct nand_chip *chip,
 	oobsize = ((chip->id.data[3] >> 2) & 0x3) |
 		  ((chip->id.data[3] >> 4) & 0x4);
 
-	if (valid_jedecid) {
-		switch (oobsize) {
-		case 0:
+	अगर (valid_jedecid) अणु
+		चयन (oobsize) अणु
+		हाल 0:
 			memorg->oobsize = 2048;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			memorg->oobsize = 1664;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			memorg->oobsize = 1024;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			memorg->oobsize = 640;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
-			 * We should never reach this case, but if that
+			 * We should never reach this हाल, but अगर that
 			 * happens, this probably means Hynix decided to use
-			 * a different extended ID format, and we should find
+			 * a dअगरferent extended ID क्रमmat, and we should find
 			 * a way to support it.
 			 */
 			WARN(1, "Invalid OOB size");
-			break;
-		}
-	} else {
-		switch (oobsize) {
-		case 0:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (oobsize) अणु
+		हाल 0:
 			memorg->oobsize = 128;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			memorg->oobsize = 224;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			memorg->oobsize = 448;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			memorg->oobsize = 64;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			memorg->oobsize = 32;
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			memorg->oobsize = 16;
-			break;
-		case 6:
+			अवरोध;
+		हाल 6:
 			memorg->oobsize = 640;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
-			 * We should never reach this case, but if that
+			 * We should never reach this हाल, but अगर that
 			 * happens, this probably means Hynix decided to use
-			 * a different extended ID format, and we should find
+			 * a dअगरferent extended ID क्रमmat, and we should find
 			 * a way to support it.
 			 */
 			WARN(1, "Invalid OOB size");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
 		 * The datasheet of H27UCG8T2BTR mentions that the "Redundant
@@ -481,241 +482,241 @@ static void hynix_nand_extract_oobsize(struct nand_chip *chip,
 		 * a page size of 16KiB. The datasheet mentions an OOB size of
 		 * 1.280 bytes, but the OOB size encoded in the ID bytes (using
 		 * the existing logic above) is 640 bytes.
-		 * Update the OOB size for this chip by taking the value
+		 * Update the OOB size क्रम this chip by taking the value
 		 * determined above and scaling it to the actual page size (so
-		 * the actual OOB size for this chip is: 640 * 16k / 8k).
+		 * the actual OOB size क्रम this chip is: 640 * 16k / 8k).
 		 */
-		if (chip->id.data[1] == 0xde)
+		अगर (chip->id.data[1] == 0xde)
 			memorg->oobsize *= memorg->pagesize / SZ_8K;
-	}
+	पूर्ण
 
 	mtd->oobsize = memorg->oobsize;
-}
+पूर्ण
 
-static void hynix_nand_extract_ecc_requirements(struct nand_chip *chip,
+अटल व्योम hynix_nand_extract_ecc_requirements(काष्ठा nand_chip *chip,
 						bool valid_jedecid)
-{
-	struct nand_device *base = &chip->base;
-	struct nand_ecc_props requirements = {};
+अणु
+	काष्ठा nand_device *base = &chip->base;
+	काष्ठा nand_ecc_props requirements = अणुपूर्ण;
 	u8 ecc_level = (chip->id.data[4] >> 4) & 0x7;
 
-	if (valid_jedecid) {
+	अगर (valid_jedecid) अणु
 		/* Reference: H27UCG8T2E datasheet */
 		requirements.step_size = 1024;
 
-		switch (ecc_level) {
-		case 0:
+		चयन (ecc_level) अणु
+		हाल 0:
 			requirements.step_size = 0;
 			requirements.strength = 0;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			requirements.strength = 4;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			requirements.strength = 24;
-			break;
-		case 3:
+			अवरोध;
+		हाल 3:
 			requirements.strength = 32;
-			break;
-		case 4:
+			अवरोध;
+		हाल 4:
 			requirements.strength = 40;
-			break;
-		case 5:
+			अवरोध;
+		हाल 5:
 			requirements.strength = 50;
-			break;
-		case 6:
+			अवरोध;
+		हाल 6:
 			requirements.strength = 60;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/*
-			 * We should never reach this case, but if that
+			 * We should never reach this हाल, but अगर that
 			 * happens, this probably means Hynix decided to use
-			 * a different extended ID format, and we should find
+			 * a dअगरferent extended ID क्रमmat, and we should find
 			 * a way to support it.
 			 */
 			WARN(1, "Invalid ECC requirements");
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * The ECC requirements field meaning depends on the
-		 * NAND technology.
+		 * न_अंकD technology.
 		 */
 		u8 nand_tech = chip->id.data[5] & 0x7;
 
-		if (nand_tech < 3) {
+		अगर (nand_tech < 3) अणु
 			/* > 26nm, reference: H27UBG8T2A datasheet */
-			if (ecc_level < 5) {
+			अगर (ecc_level < 5) अणु
 				requirements.step_size = 512;
 				requirements.strength = 1 << ecc_level;
-			} else if (ecc_level < 7) {
-				if (ecc_level == 5)
+			पूर्ण अन्यथा अगर (ecc_level < 7) अणु
+				अगर (ecc_level == 5)
 					requirements.step_size = 2048;
-				else
+				अन्यथा
 					requirements.step_size = 1024;
 				requirements.strength = 24;
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
-				 * We should never reach this case, but if that
+				 * We should never reach this हाल, but अगर that
 				 * happens, this probably means Hynix decided
-				 * to use a different extended ID format, and
+				 * to use a dअगरferent extended ID क्रमmat, and
 				 * we should find a way to support it.
 				 */
 				WARN(1, "Invalid ECC requirements");
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			/* <= 26nm, reference: H27UBG8T2B datasheet */
-			if (!ecc_level) {
+			अगर (!ecc_level) अणु
 				requirements.step_size = 0;
 				requirements.strength = 0;
-			} else if (ecc_level < 5) {
+			पूर्ण अन्यथा अगर (ecc_level < 5) अणु
 				requirements.step_size = 512;
 				requirements.strength = 1 << (ecc_level - 1);
-			} else {
+			पूर्ण अन्यथा अणु
 				requirements.step_size = 1024;
 				requirements.strength = 24 +
 							(8 * (ecc_level - 5));
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	nanddev_set_ecc_requirements(base, &requirements);
-}
+पूर्ण
 
-static void hynix_nand_extract_scrambling_requirements(struct nand_chip *chip,
+अटल व्योम hynix_nand_extract_scrambling_requirements(काष्ठा nand_chip *chip,
 						       bool valid_jedecid)
-{
+अणु
 	u8 nand_tech;
 
-	/* We need scrambling on all TLC NANDs*/
-	if (nanddev_bits_per_cell(&chip->base) > 2)
-		chip->options |= NAND_NEED_SCRAMBLING;
+	/* We need scrambling on all TLC न_अंकDs*/
+	अगर (nanddev_bits_per_cell(&chip->base) > 2)
+		chip->options |= न_अंकD_NEED_SCRAMBLING;
 
-	/* And on MLC NANDs with sub-3xnm process */
-	if (valid_jedecid) {
+	/* And on MLC न_अंकDs with sub-3xnm process */
+	अगर (valid_jedecid) अणु
 		nand_tech = chip->id.data[5] >> 4;
 
 		/* < 3xnm */
-		if (nand_tech > 0)
-			chip->options |= NAND_NEED_SCRAMBLING;
-	} else {
+		अगर (nand_tech > 0)
+			chip->options |= न_अंकD_NEED_SCRAMBLING;
+	पूर्ण अन्यथा अणु
 		nand_tech = chip->id.data[5] & 0x7;
 
 		/* < 32nm */
-		if (nand_tech > 2)
-			chip->options |= NAND_NEED_SCRAMBLING;
-	}
-}
+		अगर (nand_tech > 2)
+			chip->options |= न_अंकD_NEED_SCRAMBLING;
+	पूर्ण
+पूर्ण
 
-static void hynix_nand_decode_id(struct nand_chip *chip)
-{
-	struct mtd_info *mtd = nand_to_mtd(chip);
-	struct nand_memory_organization *memorg;
+अटल व्योम hynix_nand_decode_id(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा mtd_info *mtd = nand_to_mtd(chip);
+	काष्ठा nand_memory_organization *memorg;
 	bool valid_jedecid;
-	u8 tmp;
+	u8 पंचांगp;
 
 	memorg = nanddev_get_memorg(&chip->base);
 
 	/*
-	 * Exclude all SLC NANDs from this advanced detection scheme.
+	 * Exclude all SLC न_अंकDs from this advanced detection scheme.
 	 * According to the ranges defined in several datasheets, it might
-	 * appear that even SLC NANDs could fall in this extended ID scheme.
-	 * If that the case rework the test to let SLC NANDs go through the
+	 * appear that even SLC न_अंकDs could fall in this extended ID scheme.
+	 * If that the हाल rework the test to let SLC न_अंकDs go through the
 	 * detection process.
 	 */
-	if (chip->id.len < 6 || nand_is_slc(chip)) {
+	अगर (chip->id.len < 6 || nand_is_slc(chip)) अणु
 		nand_decode_ext_id(chip);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Extract pagesize */
 	memorg->pagesize = 2048 << (chip->id.data[3] & 0x03);
-	mtd->writesize = memorg->pagesize;
+	mtd->ग_लिखोsize = memorg->pagesize;
 
-	tmp = (chip->id.data[3] >> 4) & 0x3;
+	पंचांगp = (chip->id.data[3] >> 4) & 0x3;
 	/*
 	 * When bit7 is set that means we start counting at 1MiB, otherwise
-	 * we start counting at 128KiB and shift this value the content of
+	 * we start counting at 128KiB and shअगरt this value the content of
 	 * ID[3][4:5].
 	 * The only exception is when ID[3][4:5] == 3 and ID[3][7] == 0, in
-	 * this case the erasesize is set to 768KiB.
+	 * this हाल the erasesize is set to 768KiB.
 	 */
-	if (chip->id.data[3] & 0x80) {
-		memorg->pages_per_eraseblock = (SZ_1M << tmp) /
+	अगर (chip->id.data[3] & 0x80) अणु
+		memorg->pages_per_eraseblock = (SZ_1M << पंचांगp) /
 					       memorg->pagesize;
-		mtd->erasesize = SZ_1M << tmp;
-	} else if (tmp == 3) {
+		mtd->erasesize = SZ_1M << पंचांगp;
+	पूर्ण अन्यथा अगर (पंचांगp == 3) अणु
 		memorg->pages_per_eraseblock = (SZ_512K + SZ_256K) /
 					       memorg->pagesize;
 		mtd->erasesize = SZ_512K + SZ_256K;
-	} else {
-		memorg->pages_per_eraseblock = (SZ_128K << tmp) /
+	पूर्ण अन्यथा अणु
+		memorg->pages_per_eraseblock = (SZ_128K << पंचांगp) /
 					       memorg->pagesize;
-		mtd->erasesize = SZ_128K << tmp;
-	}
+		mtd->erasesize = SZ_128K << पंचांगp;
+	पूर्ण
 
 	/*
-	 * Modern Toggle DDR NANDs have a valid JEDECID even though they are
+	 * Modern Toggle DDR न_अंकDs have a valid JEDECID even though they are
 	 * not exposing a valid JEDEC parameter table.
-	 * These NANDs use a different NAND ID scheme.
+	 * These न_अंकDs use a dअगरferent न_अंकD ID scheme.
 	 */
 	valid_jedecid = hynix_nand_has_valid_jedecid(chip);
 
 	hynix_nand_extract_oobsize(chip, valid_jedecid);
 	hynix_nand_extract_ecc_requirements(chip, valid_jedecid);
 	hynix_nand_extract_scrambling_requirements(chip, valid_jedecid);
-}
+पूर्ण
 
-static void hynix_nand_cleanup(struct nand_chip *chip)
-{
-	struct hynix_nand *hynix = nand_get_manufacturer_data(chip);
+अटल व्योम hynix_nand_cleanup(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा hynix_nand *hynix = nand_get_manufacturer_data(chip);
 
-	if (!hynix)
-		return;
+	अगर (!hynix)
+		वापस;
 
-	kfree(hynix->read_retry);
-	kfree(hynix);
-	nand_set_manufacturer_data(chip, NULL);
-}
+	kमुक्त(hynix->पढ़ो_retry);
+	kमुक्त(hynix);
+	nand_set_manufacturer_data(chip, शून्य);
+पूर्ण
 
-static int
-h27ucg8t2atrbc_choose_interface_config(struct nand_chip *chip,
-				       struct nand_interface_config *iface)
-{
-	onfi_fill_interface_config(chip, iface, NAND_SDR_IFACE, 4);
+अटल पूर्णांक
+h27ucg8t2atrbc_choose_पूर्णांकerface_config(काष्ठा nand_chip *chip,
+				       काष्ठा nand_पूर्णांकerface_config *अगरace)
+अणु
+	onfi_fill_पूर्णांकerface_config(chip, अगरace, न_अंकD_SDR_IFACE, 4);
 
-	return nand_choose_best_sdr_timings(chip, iface, NULL);
-}
+	वापस nand_choose_best_sdr_timings(chip, अगरace, शून्य);
+पूर्ण
 
-static int hynix_nand_init(struct nand_chip *chip)
-{
-	struct hynix_nand *hynix;
-	int ret;
+अटल पूर्णांक hynix_nand_init(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा hynix_nand *hynix;
+	पूर्णांक ret;
 
-	if (!nand_is_slc(chip))
-		chip->options |= NAND_BBM_LASTPAGE;
-	else
-		chip->options |= NAND_BBM_FIRSTPAGE | NAND_BBM_SECONDPAGE;
+	अगर (!nand_is_slc(chip))
+		chip->options |= न_अंकD_BBM_LASTPAGE;
+	अन्यथा
+		chip->options |= न_अंकD_BBM_FIRSTPAGE | न_अंकD_BBM_SECONDPAGE;
 
-	hynix = kzalloc(sizeof(*hynix), GFP_KERNEL);
-	if (!hynix)
-		return -ENOMEM;
+	hynix = kzalloc(माप(*hynix), GFP_KERNEL);
+	अगर (!hynix)
+		वापस -ENOMEM;
 
 	nand_set_manufacturer_data(chip, hynix);
 
-	if (!strncmp("H27UCG8T2ATR-BC", chip->parameters.model,
-		     sizeof("H27UCG8T2ATR-BC") - 1))
-		chip->ops.choose_interface_config =
-			h27ucg8t2atrbc_choose_interface_config;
+	अगर (!म_भेदन("H27UCG8T2ATR-BC", chip->parameters.model,
+		     माप("H27UCG8T2ATR-BC") - 1))
+		chip->ops.choose_पूर्णांकerface_config =
+			h27ucg8t2atrbc_choose_पूर्णांकerface_config;
 
 	ret = hynix_nand_rr_init(chip);
-	if (ret)
+	अगर (ret)
 		hynix_nand_cleanup(chip);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-const struct nand_manufacturer_ops hynix_nand_manuf_ops = {
+स्थिर काष्ठा nand_manufacturer_ops hynix_nand_manuf_ops = अणु
 	.detect = hynix_nand_decode_id,
 	.init = hynix_nand_init,
 	.cleanup = hynix_nand_cleanup,
-};
+पूर्ण;

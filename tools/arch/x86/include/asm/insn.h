@@ -1,276 +1,277 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-#ifndef _ASM_X86_INSN_H
-#define _ASM_X86_INSN_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+#अगर_अघोषित _ASM_X86_INSN_H
+#घोषणा _ASM_X86_INSN_H
 /*
- * x86 instruction analysis
+ * x86 inकाष्ठाion analysis
  *
  * Copyright (C) IBM Corporation, 2009
  */
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 /* insn_attr_t is defined in inat.h */
-#include "inat.h" /* __ignore_sync_check__ */
+#समावेश "inat.h" /* __ignore_sync_check__ */
 
-#if defined(__BYTE_ORDER) ? __BYTE_ORDER == __LITTLE_ENDIAN : defined(__LITTLE_ENDIAN)
+#अगर defined(__BYTE_ORDER) ? __BYTE_ORDER == __LITTLE_ENDIAN : defined(__LITTLE_ENDIAN)
 
-struct insn_field {
-	union {
+काष्ठा insn_field अणु
+	जोड़ अणु
 		insn_value_t value;
 		insn_byte_t bytes[4];
-	};
-	/* !0 if we've run insn_get_xxx() for this field */
-	unsigned char got;
-	unsigned char nbytes;
-};
+	पूर्ण;
+	/* !0 अगर we've run insn_get_xxx() क्रम this field */
+	अचिन्हित अक्षर got;
+	अचिन्हित अक्षर nbytes;
+पूर्ण;
 
-static inline void insn_field_set(struct insn_field *p, insn_value_t v,
-				  unsigned char n)
-{
+अटल अंतरभूत व्योम insn_field_set(काष्ठा insn_field *p, insn_value_t v,
+				  अचिन्हित अक्षर n)
+अणु
 	p->value = v;
 	p->nbytes = n;
-}
+पूर्ण
 
-static inline void insn_set_byte(struct insn_field *p, unsigned char n,
+अटल अंतरभूत व्योम insn_set_byte(काष्ठा insn_field *p, अचिन्हित अक्षर n,
 				 insn_byte_t v)
-{
+अणु
 	p->bytes[n] = v;
-}
+पूर्ण
 
-#else
+#अन्यथा
 
-struct insn_field {
+काष्ठा insn_field अणु
 	insn_value_t value;
-	union {
+	जोड़ अणु
 		insn_value_t little;
 		insn_byte_t bytes[4];
-	};
-	/* !0 if we've run insn_get_xxx() for this field */
-	unsigned char got;
-	unsigned char nbytes;
-};
+	पूर्ण;
+	/* !0 अगर we've run insn_get_xxx() क्रम this field */
+	अचिन्हित अक्षर got;
+	अचिन्हित अक्षर nbytes;
+पूर्ण;
 
-static inline void insn_field_set(struct insn_field *p, insn_value_t v,
-				  unsigned char n)
-{
+अटल अंतरभूत व्योम insn_field_set(काष्ठा insn_field *p, insn_value_t v,
+				  अचिन्हित अक्षर n)
+अणु
 	p->value = v;
 	p->little = __cpu_to_le32(v);
 	p->nbytes = n;
-}
+पूर्ण
 
-static inline void insn_set_byte(struct insn_field *p, unsigned char n,
+अटल अंतरभूत व्योम insn_set_byte(काष्ठा insn_field *p, अचिन्हित अक्षर n,
 				 insn_byte_t v)
-{
+अणु
 	p->bytes[n] = v;
 	p->value = __le32_to_cpu(p->little);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
-struct insn {
-	struct insn_field prefixes;	/*
+काष्ठा insn अणु
+	काष्ठा insn_field prefixes;	/*
 					 * Prefixes
 					 * prefixes.bytes[3]: last prefix
 					 */
-	struct insn_field rex_prefix;	/* REX prefix */
-	struct insn_field vex_prefix;	/* VEX prefix */
-	struct insn_field opcode;	/*
+	काष्ठा insn_field rex_prefix;	/* REX prefix */
+	काष्ठा insn_field vex_prefix;	/* VEX prefix */
+	काष्ठा insn_field opcode;	/*
 					 * opcode.bytes[0]: opcode1
 					 * opcode.bytes[1]: opcode2
 					 * opcode.bytes[2]: opcode3
 					 */
-	struct insn_field modrm;
-	struct insn_field sib;
-	struct insn_field displacement;
-	union {
-		struct insn_field immediate;
-		struct insn_field moffset1;	/* for 64bit MOV */
-		struct insn_field immediate1;	/* for 64bit imm or off16/32 */
-	};
-	union {
-		struct insn_field moffset2;	/* for 64bit MOV */
-		struct insn_field immediate2;	/* for 64bit imm or seg16 */
-	};
+	काष्ठा insn_field modrm;
+	काष्ठा insn_field sib;
+	काष्ठा insn_field displacement;
+	जोड़ अणु
+		काष्ठा insn_field immediate;
+		काष्ठा insn_field moffset1;	/* क्रम 64bit MOV */
+		काष्ठा insn_field immediate1;	/* क्रम 64bit imm or off16/32 */
+	पूर्ण;
+	जोड़ अणु
+		काष्ठा insn_field moffset2;	/* क्रम 64bit MOV */
+		काष्ठा insn_field immediate2;	/* क्रम 64bit imm or seg16 */
+	पूर्ण;
 
-	int	emulate_prefix_size;
+	पूर्णांक	emulate_prefix_size;
 	insn_attr_t attr;
-	unsigned char opnd_bytes;
-	unsigned char addr_bytes;
-	unsigned char length;
-	unsigned char x86_64;
+	अचिन्हित अक्षर opnd_bytes;
+	अचिन्हित अक्षर addr_bytes;
+	अचिन्हित अक्षर length;
+	अचिन्हित अक्षर x86_64;
 
-	const insn_byte_t *kaddr;	/* kernel address of insn to analyze */
-	const insn_byte_t *end_kaddr;	/* kernel address of last insn in buffer */
-	const insn_byte_t *next_byte;
-};
+	स्थिर insn_byte_t *kaddr;	/* kernel address of insn to analyze */
+	स्थिर insn_byte_t *end_kaddr;	/* kernel address of last insn in buffer */
+	स्थिर insn_byte_t *next_byte;
+पूर्ण;
 
-#define MAX_INSN_SIZE	15
+#घोषणा MAX_INSN_SIZE	15
 
-#define X86_MODRM_MOD(modrm) (((modrm) & 0xc0) >> 6)
-#define X86_MODRM_REG(modrm) (((modrm) & 0x38) >> 3)
-#define X86_MODRM_RM(modrm) ((modrm) & 0x07)
+#घोषणा X86_MODRM_MOD(modrm) (((modrm) & 0xc0) >> 6)
+#घोषणा X86_MODRM_REG(modrm) (((modrm) & 0x38) >> 3)
+#घोषणा X86_MODRM_RM(modrm) ((modrm) & 0x07)
 
-#define X86_SIB_SCALE(sib) (((sib) & 0xc0) >> 6)
-#define X86_SIB_INDEX(sib) (((sib) & 0x38) >> 3)
-#define X86_SIB_BASE(sib) ((sib) & 0x07)
+#घोषणा X86_SIB_SCALE(sib) (((sib) & 0xc0) >> 6)
+#घोषणा X86_SIB_INDEX(sib) (((sib) & 0x38) >> 3)
+#घोषणा X86_SIB_BASE(sib) ((sib) & 0x07)
 
-#define X86_REX_W(rex) ((rex) & 8)
-#define X86_REX_R(rex) ((rex) & 4)
-#define X86_REX_X(rex) ((rex) & 2)
-#define X86_REX_B(rex) ((rex) & 1)
+#घोषणा X86_REX_W(rex) ((rex) & 8)
+#घोषणा X86_REX_R(rex) ((rex) & 4)
+#घोषणा X86_REX_X(rex) ((rex) & 2)
+#घोषणा X86_REX_B(rex) ((rex) & 1)
 
 /* VEX bit flags  */
-#define X86_VEX_W(vex)	((vex) & 0x80)	/* VEX3 Byte2 */
-#define X86_VEX_R(vex)	((vex) & 0x80)	/* VEX2/3 Byte1 */
-#define X86_VEX_X(vex)	((vex) & 0x40)	/* VEX3 Byte1 */
-#define X86_VEX_B(vex)	((vex) & 0x20)	/* VEX3 Byte1 */
-#define X86_VEX_L(vex)	((vex) & 0x04)	/* VEX3 Byte2, VEX2 Byte1 */
+#घोषणा X86_VEX_W(vex)	((vex) & 0x80)	/* VEX3 Byte2 */
+#घोषणा X86_VEX_R(vex)	((vex) & 0x80)	/* VEX2/3 Byte1 */
+#घोषणा X86_VEX_X(vex)	((vex) & 0x40)	/* VEX3 Byte1 */
+#घोषणा X86_VEX_B(vex)	((vex) & 0x20)	/* VEX3 Byte1 */
+#घोषणा X86_VEX_L(vex)	((vex) & 0x04)	/* VEX3 Byte2, VEX2 Byte1 */
 /* VEX bit fields */
-#define X86_EVEX_M(vex)	((vex) & 0x03)		/* EVEX Byte1 */
-#define X86_VEX3_M(vex)	((vex) & 0x1f)		/* VEX3 Byte1 */
-#define X86_VEX2_M	1			/* VEX2.M always 1 */
-#define X86_VEX_V(vex)	(((vex) & 0x78) >> 3)	/* VEX3 Byte2, VEX2 Byte1 */
-#define X86_VEX_P(vex)	((vex) & 0x03)		/* VEX3 Byte2, VEX2 Byte1 */
-#define X86_VEX_M_MAX	0x1f			/* VEX3.M Maximum value */
+#घोषणा X86_EVEX_M(vex)	((vex) & 0x03)		/* EVEX Byte1 */
+#घोषणा X86_VEX3_M(vex)	((vex) & 0x1f)		/* VEX3 Byte1 */
+#घोषणा X86_VEX2_M	1			/* VEX2.M always 1 */
+#घोषणा X86_VEX_V(vex)	(((vex) & 0x78) >> 3)	/* VEX3 Byte2, VEX2 Byte1 */
+#घोषणा X86_VEX_P(vex)	((vex) & 0x03)		/* VEX3 Byte2, VEX2 Byte1 */
+#घोषणा X86_VEX_M_MAX	0x1f			/* VEX3.M Maximum value */
 
-extern void insn_init(struct insn *insn, const void *kaddr, int buf_len, int x86_64);
-extern int insn_get_prefixes(struct insn *insn);
-extern int insn_get_opcode(struct insn *insn);
-extern int insn_get_modrm(struct insn *insn);
-extern int insn_get_sib(struct insn *insn);
-extern int insn_get_displacement(struct insn *insn);
-extern int insn_get_immediate(struct insn *insn);
-extern int insn_get_length(struct insn *insn);
+बाह्य व्योम insn_init(काष्ठा insn *insn, स्थिर व्योम *kaddr, पूर्णांक buf_len, पूर्णांक x86_64);
+बाह्य पूर्णांक insn_get_prefixes(काष्ठा insn *insn);
+बाह्य पूर्णांक insn_get_opcode(काष्ठा insn *insn);
+बाह्य पूर्णांक insn_get_modrm(काष्ठा insn *insn);
+बाह्य पूर्णांक insn_get_sib(काष्ठा insn *insn);
+बाह्य पूर्णांक insn_get_displacement(काष्ठा insn *insn);
+बाह्य पूर्णांक insn_get_immediate(काष्ठा insn *insn);
+बाह्य पूर्णांक insn_get_length(काष्ठा insn *insn);
 
-enum insn_mode {
+क्रमागत insn_mode अणु
 	INSN_MODE_32,
 	INSN_MODE_64,
 	/* Mode is determined by the current kernel build. */
 	INSN_MODE_KERN,
 	INSN_NUM_MODES,
-};
+पूर्ण;
 
-extern int insn_decode(struct insn *insn, const void *kaddr, int buf_len, enum insn_mode m);
+बाह्य पूर्णांक insn_decode(काष्ठा insn *insn, स्थिर व्योम *kaddr, पूर्णांक buf_len, क्रमागत insn_mode m);
 
-#define insn_decode_kernel(_insn, _ptr) insn_decode((_insn), (_ptr), MAX_INSN_SIZE, INSN_MODE_KERN)
+#घोषणा insn_decode_kernel(_insn, _ptr) insn_decode((_insn), (_ptr), MAX_INSN_SIZE, INSN_MODE_KERN)
 
-/* Attribute will be determined after getting ModRM (for opcode groups) */
-static inline void insn_get_attribute(struct insn *insn)
-{
+/* Attribute will be determined after getting ModRM (क्रम opcode groups) */
+अटल अंतरभूत व्योम insn_get_attribute(काष्ठा insn *insn)
+अणु
 	insn_get_modrm(insn);
-}
+पूर्ण
 
-/* Instruction uses RIP-relative addressing */
-extern int insn_rip_relative(struct insn *insn);
+/* Inकाष्ठाion uses RIP-relative addressing */
+बाह्य पूर्णांक insn_rip_relative(काष्ठा insn *insn);
 
-static inline int insn_is_avx(struct insn *insn)
-{
-	if (!insn->prefixes.got)
+अटल अंतरभूत पूर्णांक insn_is_avx(काष्ठा insn *insn)
+अणु
+	अगर (!insn->prefixes.got)
 		insn_get_prefixes(insn);
-	return (insn->vex_prefix.value != 0);
-}
+	वापस (insn->vex_prefix.value != 0);
+पूर्ण
 
-static inline int insn_is_evex(struct insn *insn)
-{
-	if (!insn->prefixes.got)
+अटल अंतरभूत पूर्णांक insn_is_evex(काष्ठा insn *insn)
+अणु
+	अगर (!insn->prefixes.got)
 		insn_get_prefixes(insn);
-	return (insn->vex_prefix.nbytes == 4);
-}
+	वापस (insn->vex_prefix.nbytes == 4);
+पूर्ण
 
-static inline int insn_has_emulate_prefix(struct insn *insn)
-{
-	return !!insn->emulate_prefix_size;
-}
+अटल अंतरभूत पूर्णांक insn_has_emulate_prefix(काष्ठा insn *insn)
+अणु
+	वापस !!insn->emulate_prefix_size;
+पूर्ण
 
-static inline insn_byte_t insn_vex_m_bits(struct insn *insn)
-{
-	if (insn->vex_prefix.nbytes == 2)	/* 2 bytes VEX */
-		return X86_VEX2_M;
-	else if (insn->vex_prefix.nbytes == 3)	/* 3 bytes VEX */
-		return X86_VEX3_M(insn->vex_prefix.bytes[1]);
-	else					/* EVEX */
-		return X86_EVEX_M(insn->vex_prefix.bytes[1]);
-}
+अटल अंतरभूत insn_byte_t insn_vex_m_bits(काष्ठा insn *insn)
+अणु
+	अगर (insn->vex_prefix.nbytes == 2)	/* 2 bytes VEX */
+		वापस X86_VEX2_M;
+	अन्यथा अगर (insn->vex_prefix.nbytes == 3)	/* 3 bytes VEX */
+		वापस X86_VEX3_M(insn->vex_prefix.bytes[1]);
+	अन्यथा					/* EVEX */
+		वापस X86_EVEX_M(insn->vex_prefix.bytes[1]);
+पूर्ण
 
-static inline insn_byte_t insn_vex_p_bits(struct insn *insn)
-{
-	if (insn->vex_prefix.nbytes == 2)	/* 2 bytes VEX */
-		return X86_VEX_P(insn->vex_prefix.bytes[1]);
-	else
-		return X86_VEX_P(insn->vex_prefix.bytes[2]);
-}
+अटल अंतरभूत insn_byte_t insn_vex_p_bits(काष्ठा insn *insn)
+अणु
+	अगर (insn->vex_prefix.nbytes == 2)	/* 2 bytes VEX */
+		वापस X86_VEX_P(insn->vex_prefix.bytes[1]);
+	अन्यथा
+		वापस X86_VEX_P(insn->vex_prefix.bytes[2]);
+पूर्ण
 
 /* Get the last prefix id from last prefix or VEX prefix */
-static inline int insn_last_prefix_id(struct insn *insn)
-{
-	if (insn_is_avx(insn))
-		return insn_vex_p_bits(insn);	/* VEX_p is a SIMD prefix id */
+अटल अंतरभूत पूर्णांक insn_last_prefix_id(काष्ठा insn *insn)
+अणु
+	अगर (insn_is_avx(insn))
+		वापस insn_vex_p_bits(insn);	/* VEX_p is a SIMD prefix id */
 
-	if (insn->prefixes.bytes[3])
-		return inat_get_last_prefix_id(insn->prefixes.bytes[3]);
+	अगर (insn->prefixes.bytes[3])
+		वापस inat_get_last_prefix_id(insn->prefixes.bytes[3]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Offset of each field from kaddr */
-static inline int insn_offset_rex_prefix(struct insn *insn)
-{
-	return insn->prefixes.nbytes;
-}
-static inline int insn_offset_vex_prefix(struct insn *insn)
-{
-	return insn_offset_rex_prefix(insn) + insn->rex_prefix.nbytes;
-}
-static inline int insn_offset_opcode(struct insn *insn)
-{
-	return insn_offset_vex_prefix(insn) + insn->vex_prefix.nbytes;
-}
-static inline int insn_offset_modrm(struct insn *insn)
-{
-	return insn_offset_opcode(insn) + insn->opcode.nbytes;
-}
-static inline int insn_offset_sib(struct insn *insn)
-{
-	return insn_offset_modrm(insn) + insn->modrm.nbytes;
-}
-static inline int insn_offset_displacement(struct insn *insn)
-{
-	return insn_offset_sib(insn) + insn->sib.nbytes;
-}
-static inline int insn_offset_immediate(struct insn *insn)
-{
-	return insn_offset_displacement(insn) + insn->displacement.nbytes;
-}
+अटल अंतरभूत पूर्णांक insn_offset_rex_prefix(काष्ठा insn *insn)
+अणु
+	वापस insn->prefixes.nbytes;
+पूर्ण
+अटल अंतरभूत पूर्णांक insn_offset_vex_prefix(काष्ठा insn *insn)
+अणु
+	वापस insn_offset_rex_prefix(insn) + insn->rex_prefix.nbytes;
+पूर्ण
+अटल अंतरभूत पूर्णांक insn_offset_opcode(काष्ठा insn *insn)
+अणु
+	वापस insn_offset_vex_prefix(insn) + insn->vex_prefix.nbytes;
+पूर्ण
+अटल अंतरभूत पूर्णांक insn_offset_modrm(काष्ठा insn *insn)
+अणु
+	वापस insn_offset_opcode(insn) + insn->opcode.nbytes;
+पूर्ण
+अटल अंतरभूत पूर्णांक insn_offset_sib(काष्ठा insn *insn)
+अणु
+	वापस insn_offset_modrm(insn) + insn->modrm.nbytes;
+पूर्ण
+अटल अंतरभूत पूर्णांक insn_offset_displacement(काष्ठा insn *insn)
+अणु
+	वापस insn_offset_sib(insn) + insn->sib.nbytes;
+पूर्ण
+अटल अंतरभूत पूर्णांक insn_offset_immediate(काष्ठा insn *insn)
+अणु
+	वापस insn_offset_displacement(insn) + insn->displacement.nbytes;
+पूर्ण
 
 /**
- * for_each_insn_prefix() -- Iterate prefixes in the instruction
- * @insn: Pointer to struct insn.
+ * क्रम_each_insn_prefix() -- Iterate prefixes in the inकाष्ठाion
+ * @insn: Poपूर्णांकer to काष्ठा insn.
  * @idx:  Index storage.
  * @prefix: Prefix byte.
  *
  * Iterate prefix bytes of given @insn. Each prefix byte is stored in @prefix
- * and the index is stored in @idx (note that this @idx is just for a cursor,
- * do not change it.)
- * Since prefixes.nbytes can be bigger than 4 if some prefixes
- * are repeated, it cannot be used for looping over the prefixes.
+ * and the index is stored in @idx (note that this @idx is just क्रम a cursor,
+ * करो not change it.)
+ * Since prefixes.nbytes can be bigger than 4 अगर some prefixes
+ * are repeated, it cannot be used क्रम looping over the prefixes.
  */
-#define for_each_insn_prefix(insn, idx, prefix)	\
-	for (idx = 0; idx < ARRAY_SIZE(insn->prefixes.bytes) && (prefix = insn->prefixes.bytes[idx]) != 0; idx++)
+#घोषणा क्रम_each_insn_prefix(insn, idx, prefix)	\
+	क्रम (idx = 0; idx < ARRAY_SIZE(insn->prefixes.bytes) && (prefix = insn->prefixes.bytes[idx]) != 0; idx++)
 
-#define POP_SS_OPCODE 0x1f
-#define MOV_SREG_OPCODE 0x8e
+#घोषणा POP_SS_OPCODE 0x1f
+#घोषणा MOV_SREG_OPCODE 0x8e
 
 /*
  * Intel SDM Vol.3A 6.8.3 states;
  * "Any single-step trap that would be delivered following the MOV to SS
- * instruction or POP to SS instruction (because EFLAGS.TF is 1) is
+ * inकाष्ठाion or POP to SS inकाष्ठाion (because EFLAGS.TF is 1) is
  * suppressed."
- * This function returns true if @insn is MOV SS or POP SS. On these
- * instructions, single stepping is suppressed.
+ * This function वापसs true अगर @insn is MOV SS or POP SS. On these
+ * inकाष्ठाions, single stepping is suppressed.
  */
-static inline int insn_masking_exception(struct insn *insn)
-{
-	return insn->opcode.bytes[0] == POP_SS_OPCODE ||
+अटल अंतरभूत पूर्णांक insn_masking_exception(काष्ठा insn *insn)
+अणु
+	वापस insn->opcode.bytes[0] == POP_SS_OPCODE ||
 		(insn->opcode.bytes[0] == MOV_SREG_OPCODE &&
 		 X86_MODRM_REG(insn->modrm.bytes[0]) == 2);
-}
+पूर्ण
 
-#endif /* _ASM_X86_INSN_H */
+#पूर्ण_अगर /* _ASM_X86_INSN_H */

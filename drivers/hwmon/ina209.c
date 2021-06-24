@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for the Texas Instruments / Burr Brown INA209
+ * Driver क्रम the Texas Instruments / Burr Brown INA209
  * Bidirectional Current/Power Monitor
  *
  * Copyright (C) 2012 Guenter Roeck <linux@roeck-us.net>
@@ -17,421 +18,421 @@
  * https://www.ti.com/lit/gpn/ina209
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/bug.h>
-#include <linux/i2c.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/bug.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
 
-#include <linux/platform_data/ina2xx.h>
+#समावेश <linux/platक्रमm_data/ina2xx.h>
 
-/* register definitions */
-#define INA209_CONFIGURATION		0x00
-#define INA209_STATUS			0x01
-#define INA209_STATUS_MASK		0x02
-#define INA209_SHUNT_VOLTAGE		0x03
-#define INA209_BUS_VOLTAGE		0x04
-#define INA209_POWER			0x05
-#define INA209_CURRENT			0x06
-#define INA209_SHUNT_VOLTAGE_POS_PEAK	0x07
-#define INA209_SHUNT_VOLTAGE_NEG_PEAK	0x08
-#define INA209_BUS_VOLTAGE_MAX_PEAK	0x09
-#define INA209_BUS_VOLTAGE_MIN_PEAK	0x0a
-#define INA209_POWER_PEAK		0x0b
-#define INA209_SHUNT_VOLTAGE_POS_WARN	0x0c
-#define INA209_SHUNT_VOLTAGE_NEG_WARN	0x0d
-#define INA209_POWER_WARN		0x0e
-#define INA209_BUS_VOLTAGE_OVER_WARN	0x0f
-#define INA209_BUS_VOLTAGE_UNDER_WARN	0x10
-#define INA209_POWER_OVER_LIMIT		0x11
-#define INA209_BUS_VOLTAGE_OVER_LIMIT	0x12
-#define INA209_BUS_VOLTAGE_UNDER_LIMIT	0x13
-#define INA209_CRITICAL_DAC_POS		0x14
-#define INA209_CRITICAL_DAC_NEG		0x15
-#define INA209_CALIBRATION		0x16
+/* रेजिस्टर definitions */
+#घोषणा INA209_CONFIGURATION		0x00
+#घोषणा INA209_STATUS			0x01
+#घोषणा INA209_STATUS_MASK		0x02
+#घोषणा INA209_SHUNT_VOLTAGE		0x03
+#घोषणा INA209_BUS_VOLTAGE		0x04
+#घोषणा INA209_POWER			0x05
+#घोषणा INA209_CURRENT			0x06
+#घोषणा INA209_SHUNT_VOLTAGE_POS_PEAK	0x07
+#घोषणा INA209_SHUNT_VOLTAGE_NEG_PEAK	0x08
+#घोषणा INA209_BUS_VOLTAGE_MAX_PEAK	0x09
+#घोषणा INA209_BUS_VOLTAGE_MIN_PEAK	0x0a
+#घोषणा INA209_POWER_PEAK		0x0b
+#घोषणा INA209_SHUNT_VOLTAGE_POS_WARN	0x0c
+#घोषणा INA209_SHUNT_VOLTAGE_NEG_WARN	0x0d
+#घोषणा INA209_POWER_WARN		0x0e
+#घोषणा INA209_BUS_VOLTAGE_OVER_WARN	0x0f
+#घोषणा INA209_BUS_VOLTAGE_UNDER_WARN	0x10
+#घोषणा INA209_POWER_OVER_LIMIT		0x11
+#घोषणा INA209_BUS_VOLTAGE_OVER_LIMIT	0x12
+#घोषणा INA209_BUS_VOLTAGE_UNDER_LIMIT	0x13
+#घोषणा INA209_CRITICAL_DAC_POS		0x14
+#घोषणा INA209_CRITICAL_DAC_NEG		0x15
+#घोषणा INA209_CALIBRATION		0x16
 
-#define INA209_REGISTERS		0x17
+#घोषणा INA209_REGISTERS		0x17
 
-#define INA209_CONFIG_DEFAULT		0x3c47	/* PGA=8, full range */
-#define INA209_SHUNT_DEFAULT		10000	/* uOhm */
+#घोषणा INA209_CONFIG_DEFAULT		0x3c47	/* PGA=8, full range */
+#घोषणा INA209_SHUNT_DEFAULT		10000	/* uOhm */
 
-struct ina209_data {
-	struct i2c_client *client;
+काष्ठा ina209_data अणु
+	काष्ठा i2c_client *client;
 
-	struct mutex update_lock;
+	काष्ठा mutex update_lock;
 	bool valid;
-	unsigned long last_updated;	/* in jiffies */
+	अचिन्हित दीर्घ last_updated;	/* in jअगरfies */
 
-	u16 regs[INA209_REGISTERS];	/* All chip registers */
+	u16 regs[INA209_REGISTERS];	/* All chip रेजिस्टरs */
 
 	u16 config_orig;		/* Original configuration */
 	u16 calibration_orig;		/* Original calibration */
-	u16 update_interval;
-};
+	u16 update_पूर्णांकerval;
+पूर्ण;
 
-static struct ina209_data *ina209_update_device(struct device *dev)
-{
-	struct ina209_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
-	struct ina209_data *ret = data;
+अटल काष्ठा ina209_data *ina209_update_device(काष्ठा device *dev)
+अणु
+	काष्ठा ina209_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
+	काष्ठा ina209_data *ret = data;
 	s32 val;
-	int i;
+	पूर्णांक i;
 
 	mutex_lock(&data->update_lock);
 
-	if (!data->valid ||
-	    time_after(jiffies, data->last_updated + data->update_interval)) {
-		for (i = 0; i < ARRAY_SIZE(data->regs); i++) {
-			val = i2c_smbus_read_word_swapped(client, i);
-			if (val < 0) {
+	अगर (!data->valid ||
+	    समय_after(jअगरfies, data->last_updated + data->update_पूर्णांकerval)) अणु
+		क्रम (i = 0; i < ARRAY_SIZE(data->regs); i++) अणु
+			val = i2c_smbus_पढ़ो_word_swapped(client, i);
+			अगर (val < 0) अणु
 				ret = ERR_PTR(val);
-				goto abort;
-			}
+				जाओ पात;
+			पूर्ण
 			data->regs[i] = val;
-		}
-		data->last_updated = jiffies;
+		पूर्ण
+		data->last_updated = jअगरfies;
 		data->valid = true;
-	}
-abort:
+	पूर्ण
+पात:
 	mutex_unlock(&data->update_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Read a value from a device register and convert it to the
+ * Read a value from a device रेजिस्टर and convert it to the
  * appropriate sysfs units
  */
-static long ina209_from_reg(const u8 reg, const u16 val)
-{
-	switch (reg) {
-	case INA209_SHUNT_VOLTAGE:
-	case INA209_SHUNT_VOLTAGE_POS_PEAK:
-	case INA209_SHUNT_VOLTAGE_NEG_PEAK:
-	case INA209_SHUNT_VOLTAGE_POS_WARN:
-	case INA209_SHUNT_VOLTAGE_NEG_WARN:
+अटल दीर्घ ina209_from_reg(स्थिर u8 reg, स्थिर u16 val)
+अणु
+	चयन (reg) अणु
+	हाल INA209_SHUNT_VOLTAGE:
+	हाल INA209_SHUNT_VOLTAGE_POS_PEAK:
+	हाल INA209_SHUNT_VOLTAGE_NEG_PEAK:
+	हाल INA209_SHUNT_VOLTAGE_POS_WARN:
+	हाल INA209_SHUNT_VOLTAGE_NEG_WARN:
 		/* LSB=10 uV. Convert to mV. */
-		return DIV_ROUND_CLOSEST((s16)val, 100);
+		वापस DIV_ROUND_CLOSEST((s16)val, 100);
 
-	case INA209_BUS_VOLTAGE:
-	case INA209_BUS_VOLTAGE_MAX_PEAK:
-	case INA209_BUS_VOLTAGE_MIN_PEAK:
-	case INA209_BUS_VOLTAGE_OVER_WARN:
-	case INA209_BUS_VOLTAGE_UNDER_WARN:
-	case INA209_BUS_VOLTAGE_OVER_LIMIT:
-	case INA209_BUS_VOLTAGE_UNDER_LIMIT:
+	हाल INA209_BUS_VOLTAGE:
+	हाल INA209_BUS_VOLTAGE_MAX_PEAK:
+	हाल INA209_BUS_VOLTAGE_MIN_PEAK:
+	हाल INA209_BUS_VOLTAGE_OVER_WARN:
+	हाल INA209_BUS_VOLTAGE_UNDER_WARN:
+	हाल INA209_BUS_VOLTAGE_OVER_LIMIT:
+	हाल INA209_BUS_VOLTAGE_UNDER_LIMIT:
 		/* LSB=4 mV, last 3 bits unused */
-		return (val >> 3) * 4;
+		वापस (val >> 3) * 4;
 
-	case INA209_CRITICAL_DAC_POS:
+	हाल INA209_CRITICAL_DAC_POS:
 		/* LSB=1 mV, in the upper 8 bits */
-		return val >> 8;
+		वापस val >> 8;
 
-	case INA209_CRITICAL_DAC_NEG:
+	हाल INA209_CRITICAL_DAC_NEG:
 		/* LSB=1 mV, in the upper 8 bits */
-		return -1 * (val >> 8);
+		वापस -1 * (val >> 8);
 
-	case INA209_POWER:
-	case INA209_POWER_PEAK:
-	case INA209_POWER_WARN:
-	case INA209_POWER_OVER_LIMIT:
+	हाल INA209_POWER:
+	हाल INA209_POWER_PEAK:
+	हाल INA209_POWER_WARN:
+	हाल INA209_POWER_OVER_LIMIT:
 		/* LSB=20 mW. Convert to uW */
-		return val * 20 * 1000L;
+		वापस val * 20 * 1000L;
 
-	case INA209_CURRENT:
+	हाल INA209_CURRENT:
 		/* LSB=1 mA (selected). Is in mA */
-		return (s16)val;
-	}
+		वापस (s16)val;
+	पूर्ण
 
 	/* programmer goofed */
 	WARN_ON_ONCE(1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Take a value and convert it to register format, clamping the value
+ * Take a value and convert it to रेजिस्टर क्रमmat, clamping the value
  * to the appropriate range.
  */
-static int ina209_to_reg(u8 reg, u16 old, long val)
-{
-	switch (reg) {
-	case INA209_SHUNT_VOLTAGE_POS_WARN:
-	case INA209_SHUNT_VOLTAGE_NEG_WARN:
+अटल पूर्णांक ina209_to_reg(u8 reg, u16 old, दीर्घ val)
+अणु
+	चयन (reg) अणु
+	हाल INA209_SHUNT_VOLTAGE_POS_WARN:
+	हाल INA209_SHUNT_VOLTAGE_NEG_WARN:
 		/* Limit to +- 320 mV, 10 uV LSB */
-		return clamp_val(val, -320, 320) * 100;
+		वापस clamp_val(val, -320, 320) * 100;
 
-	case INA209_BUS_VOLTAGE_OVER_WARN:
-	case INA209_BUS_VOLTAGE_UNDER_WARN:
-	case INA209_BUS_VOLTAGE_OVER_LIMIT:
-	case INA209_BUS_VOLTAGE_UNDER_LIMIT:
+	हाल INA209_BUS_VOLTAGE_OVER_WARN:
+	हाल INA209_BUS_VOLTAGE_UNDER_WARN:
+	हाल INA209_BUS_VOLTAGE_OVER_LIMIT:
+	हाल INA209_BUS_VOLTAGE_UNDER_LIMIT:
 		/*
 		 * Limit to 0-32000 mV, 4 mV LSB
 		 *
 		 * The last three bits aren't part of the value, but we'll
 		 * preserve them in their original state.
 		 */
-		return (DIV_ROUND_CLOSEST(clamp_val(val, 0, 32000), 4) << 3)
+		वापस (DIV_ROUND_CLOSEST(clamp_val(val, 0, 32000), 4) << 3)
 		  | (old & 0x7);
 
-	case INA209_CRITICAL_DAC_NEG:
+	हाल INA209_CRITICAL_DAC_NEG:
 		/*
 		 * Limit to -255-0 mV, 1 mV LSB
-		 * Convert the value to a positive value for the register
+		 * Convert the value to a positive value क्रम the रेजिस्टर
 		 *
 		 * The value lives in the top 8 bits only, be careful
 		 * and keep original value of other bits.
 		 */
-		return (clamp_val(-val, 0, 255) << 8) | (old & 0xff);
+		वापस (clamp_val(-val, 0, 255) << 8) | (old & 0xff);
 
-	case INA209_CRITICAL_DAC_POS:
+	हाल INA209_CRITICAL_DAC_POS:
 		/*
 		 * Limit to 0-255 mV, 1 mV LSB
 		 *
 		 * The value lives in the top 8 bits only, be careful
 		 * and keep original value of other bits.
 		 */
-		return (clamp_val(val, 0, 255) << 8) | (old & 0xff);
+		वापस (clamp_val(val, 0, 255) << 8) | (old & 0xff);
 
-	case INA209_POWER_WARN:
-	case INA209_POWER_OVER_LIMIT:
+	हाल INA209_POWER_WARN:
+	हाल INA209_POWER_OVER_LIMIT:
 		/* 20 mW LSB */
-		return DIV_ROUND_CLOSEST(val, 20 * 1000);
-	}
+		वापस DIV_ROUND_CLOSEST(val, 20 * 1000);
+	पूर्ण
 
-	/* Other registers are read-only, return access error */
-	return -EACCES;
-}
+	/* Other रेजिस्टरs are पढ़ो-only, वापस access error */
+	वापस -EACCES;
+पूर्ण
 
-static int ina209_interval_from_reg(u16 reg)
-{
-	return 68 >> (15 - ((reg >> 3) & 0x0f));
-}
+अटल पूर्णांक ina209_पूर्णांकerval_from_reg(u16 reg)
+अणु
+	वापस 68 >> (15 - ((reg >> 3) & 0x0f));
+पूर्ण
 
-static u16 ina209_reg_from_interval(u16 config, long interval)
-{
-	int i, adc;
+अटल u16 ina209_reg_from_पूर्णांकerval(u16 config, दीर्घ पूर्णांकerval)
+अणु
+	पूर्णांक i, adc;
 
-	if (interval <= 0) {
+	अगर (पूर्णांकerval <= 0) अणु
 		adc = 8;
-	} else {
+	पूर्ण अन्यथा अणु
 		adc = 15;
-		for (i = 34 + 34 / 2; i; i >>= 1) {
-			if (i < interval)
-				break;
+		क्रम (i = 34 + 34 / 2; i; i >>= 1) अणु
+			अगर (i < पूर्णांकerval)
+				अवरोध;
 			adc--;
-		}
-	}
-	return (config & 0xf807) | (adc << 3) | (adc << 7);
-}
+		पूर्ण
+	पूर्ण
+	वापस (config & 0xf807) | (adc << 3) | (adc << 7);
+पूर्ण
 
-static ssize_t ina209_interval_store(struct device *dev,
-				     struct device_attribute *da,
-				     const char *buf, size_t count)
-{
-	struct ina209_data *data = ina209_update_device(dev);
-	long val;
+अटल sमाप_प्रकार ina209_पूर्णांकerval_store(काष्ठा device *dev,
+				     काष्ठा device_attribute *da,
+				     स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ina209_data *data = ina209_update_device(dev);
+	दीर्घ val;
 	u16 regval;
-	int ret;
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	ret = kstrtol(buf, 10, &val);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_दीर्घ(buf, 10, &val);
+	अगर (ret < 0)
+		वापस ret;
 
 	mutex_lock(&data->update_lock);
-	regval = ina209_reg_from_interval(data->regs[INA209_CONFIGURATION],
+	regval = ina209_reg_from_पूर्णांकerval(data->regs[INA209_CONFIGURATION],
 					  val);
-	i2c_smbus_write_word_swapped(data->client, INA209_CONFIGURATION,
+	i2c_smbus_ग_लिखो_word_swapped(data->client, INA209_CONFIGURATION,
 				     regval);
 	data->regs[INA209_CONFIGURATION] = regval;
-	data->update_interval = ina209_interval_from_reg(regval);
+	data->update_पूर्णांकerval = ina209_पूर्णांकerval_from_reg(regval);
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t ina209_interval_show(struct device *dev,
-				    struct device_attribute *da, char *buf)
-{
-	struct ina209_data *data = dev_get_drvdata(dev);
+अटल sमाप_प्रकार ina209_पूर्णांकerval_show(काष्ठा device *dev,
+				    काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा ina209_data *data = dev_get_drvdata(dev);
 
-	return sysfs_emit(buf, "%d\n", data->update_interval);
-}
+	वापस sysfs_emit(buf, "%d\n", data->update_पूर्णांकerval);
+पूर्ण
 
 /*
- * History is reset by writing 1 into bit 0 of the respective peak register.
- * Since more than one peak register may be affected by the scope of a
- * reset_history attribute write, use a bit mask in attr->index to identify
- * which registers are affected.
+ * History is reset by writing 1 पूर्णांकo bit 0 of the respective peak रेजिस्टर.
+ * Since more than one peak रेजिस्टर may be affected by the scope of a
+ * reset_history attribute ग_लिखो, use a bit mask in attr->index to identअगरy
+ * which रेजिस्टरs are affected.
  */
-static u16 ina209_reset_history_regs[] = {
+अटल u16 ina209_reset_history_regs[] = अणु
 	INA209_SHUNT_VOLTAGE_POS_PEAK,
 	INA209_SHUNT_VOLTAGE_NEG_PEAK,
 	INA209_BUS_VOLTAGE_MAX_PEAK,
 	INA209_BUS_VOLTAGE_MIN_PEAK,
 	INA209_POWER_PEAK
-};
+पूर्ण;
 
-static ssize_t ina209_history_store(struct device *dev,
-				    struct device_attribute *da,
-				    const char *buf, size_t count)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct ina209_data *data = dev_get_drvdata(dev);
-	struct i2c_client *client = data->client;
+अटल sमाप_प्रकार ina209_history_store(काष्ठा device *dev,
+				    काष्ठा device_attribute *da,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा ina209_data *data = dev_get_drvdata(dev);
+	काष्ठा i2c_client *client = data->client;
 	u32 mask = attr->index;
-	long val;
-	int i, ret;
+	दीर्घ val;
+	पूर्णांक i, ret;
 
-	ret = kstrtol(buf, 10, &val);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_दीर्घ(buf, 10, &val);
+	अगर (ret < 0)
+		वापस ret;
 
 	mutex_lock(&data->update_lock);
-	for (i = 0; i < ARRAY_SIZE(ina209_reset_history_regs); i++) {
-		if (mask & (1 << i))
-			i2c_smbus_write_word_swapped(client,
+	क्रम (i = 0; i < ARRAY_SIZE(ina209_reset_history_regs); i++) अणु
+		अगर (mask & (1 << i))
+			i2c_smbus_ग_लिखो_word_swapped(client,
 					ina209_reset_history_regs[i], 1);
-	}
+	पूर्ण
 	data->valid = false;
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t ina209_value_store(struct device *dev,
-				  struct device_attribute *da,
-				  const char *buf, size_t count)
-{
-	struct ina209_data *data = ina209_update_device(dev);
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	int reg = attr->index;
-	long val;
-	int ret;
+अटल sमाप_प्रकार ina209_value_store(काष्ठा device *dev,
+				  काष्ठा device_attribute *da,
+				  स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा ina209_data *data = ina209_update_device(dev);
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	पूर्णांक reg = attr->index;
+	दीर्घ val;
+	पूर्णांक ret;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
-	ret = kstrtol(buf, 10, &val);
-	if (ret < 0)
-		return ret;
+	ret = kम_से_दीर्घ(buf, 10, &val);
+	अगर (ret < 0)
+		वापस ret;
 
 	mutex_lock(&data->update_lock);
 	ret = ina209_to_reg(reg, data->regs[reg], val);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		count = ret;
-		goto abort;
-	}
-	i2c_smbus_write_word_swapped(data->client, reg, ret);
+		जाओ पात;
+	पूर्ण
+	i2c_smbus_ग_लिखो_word_swapped(data->client, reg, ret);
 	data->regs[reg] = ret;
-abort:
+पात:
 	mutex_unlock(&data->update_lock);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t ina209_value_show(struct device *dev,
-				 struct device_attribute *da, char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct ina209_data *data = ina209_update_device(dev);
-	long val;
+अटल sमाप_प्रकार ina209_value_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा ina209_data *data = ina209_update_device(dev);
+	दीर्घ val;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	val = ina209_from_reg(attr->index, data->regs[attr->index]);
-	return sysfs_emit(buf, "%ld\n", val);
-}
+	वापस sysfs_emit(buf, "%ld\n", val);
+पूर्ण
 
-static ssize_t ina209_alarm_show(struct device *dev,
-				 struct device_attribute *da, char *buf)
-{
-	struct sensor_device_attribute *attr = to_sensor_dev_attr(da);
-	struct ina209_data *data = ina209_update_device(dev);
-	const unsigned int mask = attr->index;
+अटल sमाप_प्रकार ina209_alarm_show(काष्ठा device *dev,
+				 काष्ठा device_attribute *da, अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute *attr = to_sensor_dev_attr(da);
+	काष्ठा ina209_data *data = ina209_update_device(dev);
+	स्थिर अचिन्हित पूर्णांक mask = attr->index;
 	u16 status;
 
-	if (IS_ERR(data))
-		return PTR_ERR(data);
+	अगर (IS_ERR(data))
+		वापस PTR_ERR(data);
 
 	status = data->regs[INA209_STATUS];
 
 	/*
-	 * All alarms are in the INA209_STATUS register. To avoid a long
-	 * switch statement, the mask is passed in attr->index
+	 * All alarms are in the INA209_STATUS रेजिस्टर. To aव्योम a दीर्घ
+	 * चयन statement, the mask is passed in attr->index
 	 */
-	return sysfs_emit(buf, "%u\n", !!(status & mask));
-}
+	वापस sysfs_emit(buf, "%u\n", !!(status & mask));
+पूर्ण
 
 /* Shunt voltage, history, limits, alarms */
-static SENSOR_DEVICE_ATTR_RO(in0_input, ina209_value, INA209_SHUNT_VOLTAGE);
-static SENSOR_DEVICE_ATTR_RO(in0_input_highest, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RO(in0_input, ina209_value, INA209_SHUNT_VOLTAGE);
+अटल SENSOR_DEVICE_ATTR_RO(in0_input_highest, ina209_value,
 			     INA209_SHUNT_VOLTAGE_POS_PEAK);
-static SENSOR_DEVICE_ATTR_RO(in0_input_lowest, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RO(in0_input_lowest, ina209_value,
 			     INA209_SHUNT_VOLTAGE_NEG_PEAK);
-static SENSOR_DEVICE_ATTR_WO(in0_reset_history, ina209_history,
+अटल SENSOR_DEVICE_ATTR_WO(in0_reset_history, ina209_history,
 			     (1 << 0) | (1 << 1));
-static SENSOR_DEVICE_ATTR_RW(in0_max, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RW(in0_max, ina209_value,
 			     INA209_SHUNT_VOLTAGE_POS_WARN);
-static SENSOR_DEVICE_ATTR_RW(in0_min, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RW(in0_min, ina209_value,
 			     INA209_SHUNT_VOLTAGE_NEG_WARN);
-static SENSOR_DEVICE_ATTR_RW(in0_crit_max, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RW(in0_crit_max, ina209_value,
 			     INA209_CRITICAL_DAC_POS);
-static SENSOR_DEVICE_ATTR_RW(in0_crit_min, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RW(in0_crit_min, ina209_value,
 			     INA209_CRITICAL_DAC_NEG);
 
-static SENSOR_DEVICE_ATTR_RO(in0_min_alarm, ina209_alarm, 1 << 11);
-static SENSOR_DEVICE_ATTR_RO(in0_max_alarm, ina209_alarm, 1 << 12);
-static SENSOR_DEVICE_ATTR_RO(in0_crit_min_alarm, ina209_alarm, 1 << 6);
-static SENSOR_DEVICE_ATTR_RO(in0_crit_max_alarm, ina209_alarm, 1 << 7);
+अटल SENSOR_DEVICE_ATTR_RO(in0_min_alarm, ina209_alarm, 1 << 11);
+अटल SENSOR_DEVICE_ATTR_RO(in0_max_alarm, ina209_alarm, 1 << 12);
+अटल SENSOR_DEVICE_ATTR_RO(in0_crit_min_alarm, ina209_alarm, 1 << 6);
+अटल SENSOR_DEVICE_ATTR_RO(in0_crit_max_alarm, ina209_alarm, 1 << 7);
 
 /* Bus voltage, history, limits, alarms */
-static SENSOR_DEVICE_ATTR_RO(in1_input, ina209_value, INA209_BUS_VOLTAGE);
-static SENSOR_DEVICE_ATTR_RO(in1_input_highest, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RO(in1_input, ina209_value, INA209_BUS_VOLTAGE);
+अटल SENSOR_DEVICE_ATTR_RO(in1_input_highest, ina209_value,
 			     INA209_BUS_VOLTAGE_MAX_PEAK);
-static SENSOR_DEVICE_ATTR_RO(in1_input_lowest, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RO(in1_input_lowest, ina209_value,
 			     INA209_BUS_VOLTAGE_MIN_PEAK);
-static SENSOR_DEVICE_ATTR_WO(in1_reset_history, ina209_history,
+अटल SENSOR_DEVICE_ATTR_WO(in1_reset_history, ina209_history,
 			     (1 << 2) | (1 << 3));
-static SENSOR_DEVICE_ATTR_RW(in1_max, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RW(in1_max, ina209_value,
 			     INA209_BUS_VOLTAGE_OVER_WARN);
-static SENSOR_DEVICE_ATTR_RW(in1_min, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RW(in1_min, ina209_value,
 			     INA209_BUS_VOLTAGE_UNDER_WARN);
-static SENSOR_DEVICE_ATTR_RW(in1_crit_max, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RW(in1_crit_max, ina209_value,
 			     INA209_BUS_VOLTAGE_OVER_LIMIT);
-static SENSOR_DEVICE_ATTR_RW(in1_crit_min, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RW(in1_crit_min, ina209_value,
 			     INA209_BUS_VOLTAGE_UNDER_LIMIT);
 
-static SENSOR_DEVICE_ATTR_RO(in1_min_alarm, ina209_alarm, 1 << 14);
-static SENSOR_DEVICE_ATTR_RO(in1_max_alarm, ina209_alarm, 1 << 15);
-static SENSOR_DEVICE_ATTR_RO(in1_crit_min_alarm, ina209_alarm, 1 << 9);
-static SENSOR_DEVICE_ATTR_RO(in1_crit_max_alarm, ina209_alarm, 1 << 10);
+अटल SENSOR_DEVICE_ATTR_RO(in1_min_alarm, ina209_alarm, 1 << 14);
+अटल SENSOR_DEVICE_ATTR_RO(in1_max_alarm, ina209_alarm, 1 << 15);
+अटल SENSOR_DEVICE_ATTR_RO(in1_crit_min_alarm, ina209_alarm, 1 << 9);
+अटल SENSOR_DEVICE_ATTR_RO(in1_crit_max_alarm, ina209_alarm, 1 << 10);
 
 /* Power */
-static SENSOR_DEVICE_ATTR_RO(power1_input, ina209_value, INA209_POWER);
-static SENSOR_DEVICE_ATTR_RO(power1_input_highest, ina209_value,
+अटल SENSOR_DEVICE_ATTR_RO(घातer1_input, ina209_value, INA209_POWER);
+अटल SENSOR_DEVICE_ATTR_RO(घातer1_input_highest, ina209_value,
 			     INA209_POWER_PEAK);
-static SENSOR_DEVICE_ATTR_WO(power1_reset_history, ina209_history, 1 << 4);
-static SENSOR_DEVICE_ATTR_RW(power1_max, ina209_value, INA209_POWER_WARN);
-static SENSOR_DEVICE_ATTR_RW(power1_crit, ina209_value,
+अटल SENSOR_DEVICE_ATTR_WO(घातer1_reset_history, ina209_history, 1 << 4);
+अटल SENSOR_DEVICE_ATTR_RW(घातer1_max, ina209_value, INA209_POWER_WARN);
+अटल SENSOR_DEVICE_ATTR_RW(घातer1_crit, ina209_value,
 			     INA209_POWER_OVER_LIMIT);
 
-static SENSOR_DEVICE_ATTR_RO(power1_max_alarm, ina209_alarm, 1 << 13);
-static SENSOR_DEVICE_ATTR_RO(power1_crit_alarm, ina209_alarm, 1 << 8);
+अटल SENSOR_DEVICE_ATTR_RO(घातer1_max_alarm, ina209_alarm, 1 << 13);
+अटल SENSOR_DEVICE_ATTR_RO(घातer1_crit_alarm, ina209_alarm, 1 << 8);
 
 /* Current */
-static SENSOR_DEVICE_ATTR_RO(curr1_input, ina209_value, INA209_CURRENT);
+अटल SENSOR_DEVICE_ATTR_RO(curr1_input, ina209_value, INA209_CURRENT);
 
-static SENSOR_DEVICE_ATTR_RW(update_interval, ina209_interval, 0);
+अटल SENSOR_DEVICE_ATTR_RW(update_पूर्णांकerval, ina209_पूर्णांकerval, 0);
 
 /*
- * Finally, construct an array of pointers to members of the above objects,
- * as required for sysfs_create_group()
+ * Finally, स्थिरruct an array of poपूर्णांकers to members of the above objects,
+ * as required क्रम sysfs_create_group()
  */
-static struct attribute *ina209_attrs[] = {
+अटल काष्ठा attribute *ina209_attrs[] = अणु
 	&sensor_dev_attr_in0_input.dev_attr.attr,
 	&sensor_dev_attr_in0_input_highest.dev_attr.attr,
 	&sensor_dev_attr_in0_input_lowest.dev_attr.attr,
@@ -458,148 +459,148 @@ static struct attribute *ina209_attrs[] = {
 	&sensor_dev_attr_in1_crit_max_alarm.dev_attr.attr,
 	&sensor_dev_attr_in1_crit_min_alarm.dev_attr.attr,
 
-	&sensor_dev_attr_power1_input.dev_attr.attr,
-	&sensor_dev_attr_power1_input_highest.dev_attr.attr,
-	&sensor_dev_attr_power1_reset_history.dev_attr.attr,
-	&sensor_dev_attr_power1_max.dev_attr.attr,
-	&sensor_dev_attr_power1_crit.dev_attr.attr,
-	&sensor_dev_attr_power1_max_alarm.dev_attr.attr,
-	&sensor_dev_attr_power1_crit_alarm.dev_attr.attr,
+	&sensor_dev_attr_घातer1_input.dev_attr.attr,
+	&sensor_dev_attr_घातer1_input_highest.dev_attr.attr,
+	&sensor_dev_attr_घातer1_reset_history.dev_attr.attr,
+	&sensor_dev_attr_घातer1_max.dev_attr.attr,
+	&sensor_dev_attr_घातer1_crit.dev_attr.attr,
+	&sensor_dev_attr_घातer1_max_alarm.dev_attr.attr,
+	&sensor_dev_attr_घातer1_crit_alarm.dev_attr.attr,
 
 	&sensor_dev_attr_curr1_input.dev_attr.attr,
 
-	&sensor_dev_attr_update_interval.dev_attr.attr,
+	&sensor_dev_attr_update_पूर्णांकerval.dev_attr.attr,
 
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(ina209);
 
-static void ina209_restore_conf(struct i2c_client *client,
-				struct ina209_data *data)
-{
+अटल व्योम ina209_restore_conf(काष्ठा i2c_client *client,
+				काष्ठा ina209_data *data)
+अणु
 	/* Restore initial configuration */
-	i2c_smbus_write_word_swapped(client, INA209_CONFIGURATION,
+	i2c_smbus_ग_लिखो_word_swapped(client, INA209_CONFIGURATION,
 				     data->config_orig);
-	i2c_smbus_write_word_swapped(client, INA209_CALIBRATION,
+	i2c_smbus_ग_लिखो_word_swapped(client, INA209_CALIBRATION,
 				     data->calibration_orig);
-}
+पूर्ण
 
-static int ina209_init_client(struct i2c_client *client,
-			      struct ina209_data *data)
-{
-	struct ina2xx_platform_data *pdata = dev_get_platdata(&client->dev);
+अटल पूर्णांक ina209_init_client(काष्ठा i2c_client *client,
+			      काष्ठा ina209_data *data)
+अणु
+	काष्ठा ina2xx_platक्रमm_data *pdata = dev_get_platdata(&client->dev);
 	u32 shunt;
-	int reg;
+	पूर्णांक reg;
 
-	reg = i2c_smbus_read_word_swapped(client, INA209_CALIBRATION);
-	if (reg < 0)
-		return reg;
+	reg = i2c_smbus_पढ़ो_word_swapped(client, INA209_CALIBRATION);
+	अगर (reg < 0)
+		वापस reg;
 	data->calibration_orig = reg;
 
-	reg = i2c_smbus_read_word_swapped(client, INA209_CONFIGURATION);
-	if (reg < 0)
-		return reg;
+	reg = i2c_smbus_पढ़ो_word_swapped(client, INA209_CONFIGURATION);
+	अगर (reg < 0)
+		वापस reg;
 	data->config_orig = reg;
 
-	if (pdata) {
-		if (pdata->shunt_uohms <= 0)
-			return -EINVAL;
+	अगर (pdata) अणु
+		अगर (pdata->shunt_uohms <= 0)
+			वापस -EINVAL;
 		shunt = pdata->shunt_uohms;
-	} else if (!of_property_read_u32(client->dev.of_node, "shunt-resistor",
-					 &shunt)) {
-		if (shunt == 0)
-			return -EINVAL;
-	} else {
+	पूर्ण अन्यथा अगर (!of_property_पढ़ो_u32(client->dev.of_node, "shunt-resistor",
+					 &shunt)) अणु
+		अगर (shunt == 0)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
 		shunt = data->calibration_orig ?
 		  40960000 / data->calibration_orig : INA209_SHUNT_DEFAULT;
-	}
+	पूर्ण
 
-	i2c_smbus_write_word_swapped(client, INA209_CONFIGURATION,
+	i2c_smbus_ग_लिखो_word_swapped(client, INA209_CONFIGURATION,
 				     INA209_CONFIG_DEFAULT);
-	data->update_interval = ina209_interval_from_reg(INA209_CONFIG_DEFAULT);
+	data->update_पूर्णांकerval = ina209_पूर्णांकerval_from_reg(INA209_CONFIG_DEFAULT);
 
 	/*
 	 * Calibrate current LSB to 1mA. Shunt is in uOhms.
 	 * See equation 13 in datasheet.
 	 */
-	i2c_smbus_write_word_swapped(client, INA209_CALIBRATION,
+	i2c_smbus_ग_लिखो_word_swapped(client, INA209_CALIBRATION,
 				     clamp_val(40960000 / shunt, 1, 65535));
 
-	/* Clear status register */
-	i2c_smbus_read_word_swapped(client, INA209_STATUS);
+	/* Clear status रेजिस्टर */
+	i2c_smbus_पढ़ो_word_swapped(client, INA209_STATUS);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ina209_probe(struct i2c_client *client)
-{
-	struct i2c_adapter *adapter = client->adapter;
-	struct ina209_data *data;
-	struct device *hwmon_dev;
-	int ret;
+अटल पूर्णांक ina209_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा i2c_adapter *adapter = client->adapter;
+	काष्ठा ina209_data *data;
+	काष्ठा device *hwmon_dev;
+	पूर्णांक ret;
 
-	if (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_WORD_DATA))
-		return -ENODEV;
+	अगर (!i2c_check_functionality(adapter, I2C_FUNC_SMBUS_WORD_DATA))
+		वापस -ENODEV;
 
-	data = devm_kzalloc(&client->dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(&client->dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(client, data);
 	data->client = client;
 	mutex_init(&data->update_lock);
 
 	ret = ina209_init_client(client, data);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	hwmon_dev = devm_hwmon_device_register_with_groups(&client->dev,
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_groups(&client->dev,
 							   client->name,
 							   data, ina209_groups);
-	if (IS_ERR(hwmon_dev)) {
+	अगर (IS_ERR(hwmon_dev)) अणु
 		ret = PTR_ERR(hwmon_dev);
-		goto out_restore_conf;
-	}
+		जाओ out_restore_conf;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_restore_conf:
 	ina209_restore_conf(client, data);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ina209_remove(struct i2c_client *client)
-{
-	struct ina209_data *data = i2c_get_clientdata(client);
+अटल पूर्णांक ina209_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा ina209_data *data = i2c_get_clientdata(client);
 
 	ina209_restore_conf(client, data);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id ina209_id[] = {
-	{ "ina209", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id ina209_id[] = अणु
+	अणु "ina209", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ina209_id);
 
-static const struct of_device_id __maybe_unused ina209_of_match[] = {
-	{ .compatible = "ti,ina209" },
-	{ },
-};
+अटल स्थिर काष्ठा of_device_id __maybe_unused ina209_of_match[] = अणु
+	अणु .compatible = "ti,ina209" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ina209_of_match);
 
 /* This is the driver that will be inserted */
-static struct i2c_driver ina209_driver = {
+अटल काष्ठा i2c_driver ina209_driver = अणु
 	.class		= I2C_CLASS_HWMON,
-	.driver = {
+	.driver = अणु
 		.name	= "ina209",
 		.of_match_table = of_match_ptr(ina209_of_match),
-	},
+	पूर्ण,
 	.probe_new	= ina209_probe,
-	.remove		= ina209_remove,
+	.हटाओ		= ina209_हटाओ,
 	.id_table	= ina209_id,
-};
+पूर्ण;
 
 module_i2c_driver(ina209_driver);
 

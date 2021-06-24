@@ -1,132 +1,133 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015 Imagination Technologies
  * Author: Alex Smith <alex.smith@imgtec.com>
  */
 
-static inline bool FUNC(patch_vdso)(const char *path, void *vdso)
-{
-	const ELF(Ehdr) *ehdr = vdso;
-	void *shdrs;
+अटल अंतरभूत bool FUNC(patch_vdso)(स्थिर अक्षर *path, व्योम *vdso)
+अणु
+	स्थिर ELF(Ehdr) *ehdr = vdso;
+	व्योम *shdrs;
 	ELF(Shdr) *shdr;
-	char *shstrtab, *name;
-	uint16_t sh_count, sh_entsize, i;
+	अक्षर *shstrtab, *name;
+	uपूर्णांक16_t sh_count, sh_entsize, i;
 
-	shdrs = vdso + FUNC(swap_uint)(ehdr->e_shoff);
-	sh_count = swap_uint16(ehdr->e_shnum);
-	sh_entsize = swap_uint16(ehdr->e_shentsize);
+	shdrs = vdso + FUNC(swap_uपूर्णांक)(ehdr->e_shoff);
+	sh_count = swap_uपूर्णांक16(ehdr->e_shnum);
+	sh_entsize = swap_uपूर्णांक16(ehdr->e_shentsize);
 
-	shdr = shdrs + (sh_entsize * swap_uint16(ehdr->e_shstrndx));
-	shstrtab = vdso + FUNC(swap_uint)(shdr->sh_offset);
+	shdr = shdrs + (sh_entsize * swap_uपूर्णांक16(ehdr->e_shstrndx));
+	shstrtab = vdso + FUNC(swap_uपूर्णांक)(shdr->sh_offset);
 
-	for (i = 0; i < sh_count; i++) {
+	क्रम (i = 0; i < sh_count; i++) अणु
 		shdr = shdrs + (i * sh_entsize);
-		name = shstrtab + swap_uint32(shdr->sh_name);
+		name = shstrtab + swap_uपूर्णांक32(shdr->sh_name);
 
 		/*
-		 * Ensure there are no relocation sections - ld.so does not
-		 * relocate the VDSO so if there are relocations things will
-		 * break.
+		 * Ensure there are no relocation sections - ld.so करोes not
+		 * relocate the VDSO so अगर there are relocations things will
+		 * अवरोध.
 		 */
-		switch (swap_uint32(shdr->sh_type)) {
-		case SHT_REL:
-		case SHT_RELA:
-			fprintf(stderr,
+		चयन (swap_uपूर्णांक32(shdr->sh_type)) अणु
+		हाल SHT_REL:
+		हाल SHT_RELA:
+			ख_लिखो(मानक_त्रुटि,
 				"%s: '%s' contains relocation sections\n",
 				program_name, path);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		/* Check for existing sections. */
-		if (strcmp(name, ".MIPS.abiflags") == 0) {
-			fprintf(stderr,
+		/* Check क्रम existing sections. */
+		अगर (म_भेद(name, ".MIPS.abiflags") == 0) अणु
+			ख_लिखो(मानक_त्रुटि,
 				"%s: '%s' already contains a '.MIPS.abiflags' section\n",
 				program_name, path);
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-		if (strcmp(name, ".mips_abiflags") == 0) {
-			strcpy(name, ".MIPS.abiflags");
-			shdr->sh_type = swap_uint32(SHT_MIPS_ABIFLAGS);
+		अगर (म_भेद(name, ".mips_abiflags") == 0) अणु
+			म_नकल(name, ".MIPS.abiflags");
+			shdr->sh_type = swap_uपूर्णांक32(SHT_MIPS_ABIFLAGS);
 			shdr->sh_entsize = shdr->sh_size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool FUNC(get_symbols)(const char *path, void *vdso)
-{
-	const ELF(Ehdr) *ehdr = vdso;
-	void *shdrs, *symtab;
+अटल अंतरभूत bool FUNC(get_symbols)(स्थिर अक्षर *path, व्योम *vdso)
+अणु
+	स्थिर ELF(Ehdr) *ehdr = vdso;
+	व्योम *shdrs, *symtab;
 	ELF(Shdr) *shdr;
-	const ELF(Sym) *sym;
-	char *strtab, *name;
-	uint16_t sh_count, sh_entsize, st_count, st_entsize, i, j;
-	uint64_t offset;
-	uint32_t flags;
+	स्थिर ELF(Sym) *sym;
+	अक्षर *strtab, *name;
+	uपूर्णांक16_t sh_count, sh_entsize, st_count, st_entsize, i, j;
+	uपूर्णांक64_t offset;
+	uपूर्णांक32_t flags;
 
-	shdrs = vdso + FUNC(swap_uint)(ehdr->e_shoff);
-	sh_count = swap_uint16(ehdr->e_shnum);
-	sh_entsize = swap_uint16(ehdr->e_shentsize);
+	shdrs = vdso + FUNC(swap_uपूर्णांक)(ehdr->e_shoff);
+	sh_count = swap_uपूर्णांक16(ehdr->e_shnum);
+	sh_entsize = swap_uपूर्णांक16(ehdr->e_shentsize);
 
-	for (i = 0; i < sh_count; i++) {
+	क्रम (i = 0; i < sh_count; i++) अणु
 		shdr = shdrs + (i * sh_entsize);
 
-		if (swap_uint32(shdr->sh_type) == SHT_SYMTAB)
-			break;
-	}
+		अगर (swap_uपूर्णांक32(shdr->sh_type) == SHT_SYMTAB)
+			अवरोध;
+	पूर्ण
 
-	if (i == sh_count) {
-		fprintf(stderr, "%s: '%s' has no symbol table\n", program_name,
+	अगर (i == sh_count) अणु
+		ख_लिखो(मानक_त्रुटि, "%s: '%s' has no symbol table\n", program_name,
 			path);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* Get flags */
-	flags = swap_uint32(ehdr->e_flags);
-	if (elf_class == ELFCLASS64)
+	flags = swap_uपूर्णांक32(ehdr->e_flags);
+	अगर (elf_class == ELFCLASS64)
 		elf_abi = ABI_N64;
-	else if (flags & EF_MIPS_ABI2)
+	अन्यथा अगर (flags & EF_MIPS_ABI2)
 		elf_abi = ABI_N32;
-	else
+	अन्यथा
 		elf_abi = ABI_O32;
 
 	/* Get symbol table. */
-	symtab = vdso + FUNC(swap_uint)(shdr->sh_offset);
-	st_entsize = FUNC(swap_uint)(shdr->sh_entsize);
-	st_count = FUNC(swap_uint)(shdr->sh_size) / st_entsize;
+	symtab = vdso + FUNC(swap_uपूर्णांक)(shdr->sh_offset);
+	st_entsize = FUNC(swap_uपूर्णांक)(shdr->sh_entsize);
+	st_count = FUNC(swap_uपूर्णांक)(shdr->sh_size) / st_entsize;
 
 	/* Get string table. */
-	shdr = shdrs + (swap_uint32(shdr->sh_link) * sh_entsize);
-	strtab = vdso + FUNC(swap_uint)(shdr->sh_offset);
+	shdr = shdrs + (swap_uपूर्णांक32(shdr->sh_link) * sh_entsize);
+	strtab = vdso + FUNC(swap_uपूर्णांक)(shdr->sh_offset);
 
-	/* Write offsets for symbols needed by the kernel. */
-	for (i = 0; vdso_symbols[i].name; i++) {
-		if (!(vdso_symbols[i].abis & elf_abi))
-			continue;
+	/* Write offsets क्रम symbols needed by the kernel. */
+	क्रम (i = 0; vdso_symbols[i].name; i++) अणु
+		अगर (!(vdso_symbols[i].abis & elf_abi))
+			जारी;
 
-		for (j = 0; j < st_count; j++) {
+		क्रम (j = 0; j < st_count; j++) अणु
 			sym = symtab + (j * st_entsize);
-			name = strtab + swap_uint32(sym->st_name);
+			name = strtab + swap_uपूर्णांक32(sym->st_name);
 
-			if (!strcmp(name, vdso_symbols[i].name)) {
-				offset = FUNC(swap_uint)(sym->st_value);
+			अगर (!म_भेद(name, vdso_symbols[i].name)) अणु
+				offset = FUNC(swap_uपूर्णांक)(sym->st_value);
 
-				fprintf(out_file,
+				ख_लिखो(out_file,
 					"\t.%s = 0x%" PRIx64 ",\n",
 					vdso_symbols[i].offset_name, offset);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (j == st_count) {
-			fprintf(stderr,
+		अगर (j == st_count) अणु
+			ख_लिखो(मानक_त्रुटि,
 				"%s: '%s' is missing required symbol '%s'\n",
 				program_name, path, vdso_symbols[i].name);
-			return false;
-		}
-	}
+			वापस false;
+		पूर्ण
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण

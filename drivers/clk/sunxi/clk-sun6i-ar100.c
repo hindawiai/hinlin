@@ -1,106 +1,107 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Free Electrons
  *
- * Author: Boris BREZILLON <boris.brezillon@free-electrons.com>
+ * Author: Boris BREZILLON <boris.brezillon@मुक्त-electrons.com>
  *
- * Allwinner A31 AR100 clock driver
+ * Allwinner A31 AR100 घड़ी driver
  */
 
-#include <linux/bitops.h>
-#include <linux/clk-provider.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/spinlock.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/spinlock.h>
 
-#include "clk-factors.h"
+#समावेश "clk-factors.h"
 
 /*
- * sun6i_get_ar100_factors - Calculates factors p, m for AR100
+ * sun6i_get_ar100_factors - Calculates factors p, m क्रम AR100
  *
  * AR100 rate is calculated as follows
  * rate = (parent_rate >> p) / (m + 1);
  */
-static void sun6i_get_ar100_factors(struct factors_request *req)
-{
-	unsigned long div;
-	int shift;
+अटल व्योम sun6i_get_ar100_factors(काष्ठा factors_request *req)
+अणु
+	अचिन्हित दीर्घ भाग;
+	पूर्णांक shअगरt;
 
-	/* clock only divides */
-	if (req->rate > req->parent_rate)
+	/* घड़ी only भागides */
+	अगर (req->rate > req->parent_rate)
 		req->rate = req->parent_rate;
 
-	div = DIV_ROUND_UP(req->parent_rate, req->rate);
+	भाग = DIV_ROUND_UP(req->parent_rate, req->rate);
 
-	if (div < 32)
-		shift = 0;
-	else if (div >> 1 < 32)
-		shift = 1;
-	else if (div >> 2 < 32)
-		shift = 2;
-	else
-		shift = 3;
+	अगर (भाग < 32)
+		shअगरt = 0;
+	अन्यथा अगर (भाग >> 1 < 32)
+		shअगरt = 1;
+	अन्यथा अगर (भाग >> 2 < 32)
+		shअगरt = 2;
+	अन्यथा
+		shअगरt = 3;
 
-	div >>= shift;
+	भाग >>= shअगरt;
 
-	if (div > 32)
-		div = 32;
+	अगर (भाग > 32)
+		भाग = 32;
 
-	req->rate = (req->parent_rate >> shift) / div;
-	req->m = div - 1;
-	req->p = shift;
-}
+	req->rate = (req->parent_rate >> shअगरt) / भाग;
+	req->m = भाग - 1;
+	req->p = shअगरt;
+पूर्ण
 
-static const struct clk_factors_config sun6i_ar100_config = {
+अटल स्थिर काष्ठा clk_factors_config sun6i_ar100_config = अणु
 	.mwidth = 5,
-	.mshift = 8,
+	.mshअगरt = 8,
 	.pwidth = 2,
-	.pshift = 4,
-};
+	.pshअगरt = 4,
+पूर्ण;
 
-static const struct factors_data sun6i_ar100_data = {
+अटल स्थिर काष्ठा factors_data sun6i_ar100_data = अणु
 	.mux = 16,
 	.muxmask = GENMASK(1, 0),
 	.table = &sun6i_ar100_config,
 	.getter = sun6i_get_ar100_factors,
-};
+पूर्ण;
 
-static DEFINE_SPINLOCK(sun6i_ar100_lock);
+अटल DEFINE_SPINLOCK(sun6i_ar100_lock);
 
-static int sun6i_a31_ar100_clk_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct resource *r;
-	void __iomem *reg;
-	struct clk *clk;
+अटल पूर्णांक sun6i_a31_ar100_clk_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा resource *r;
+	व्योम __iomem *reg;
+	काष्ठा clk *clk;
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	reg = devm_ioremap_resource(&pdev->dev, r);
-	if (IS_ERR(reg))
-		return PTR_ERR(reg);
+	अगर (IS_ERR(reg))
+		वापस PTR_ERR(reg);
 
-	clk = sunxi_factors_register(np, &sun6i_ar100_data, &sun6i_ar100_lock,
+	clk = sunxi_factors_रेजिस्टर(np, &sun6i_ar100_data, &sun6i_ar100_lock,
 				     reg);
-	if (!clk)
-		return -ENOMEM;
+	अगर (!clk)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, clk);
+	platक्रमm_set_drvdata(pdev, clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id sun6i_a31_ar100_clk_dt_ids[] = {
-	{ .compatible = "allwinner,sun6i-a31-ar100-clk" },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id sun6i_a31_ar100_clk_dt_ids[] = अणु
+	अणु .compatible = "allwinner,sun6i-a31-ar100-clk" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 
-static struct platform_driver sun6i_a31_ar100_clk_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sun6i_a31_ar100_clk_driver = अणु
+	.driver = अणु
 		.name = "sun6i-a31-ar100-clk",
 		.of_match_table = sun6i_a31_ar100_clk_dt_ids,
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe = sun6i_a31_ar100_clk_probe,
-};
-builtin_platform_driver(sun6i_a31_ar100_clk_driver);
+पूर्ण;
+builtin_platक्रमm_driver(sun6i_a31_ar100_clk_driver);

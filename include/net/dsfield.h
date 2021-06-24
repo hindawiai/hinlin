@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-/* include/net/dsfield.h - Manipulation of the Differentiated Services field */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+/* include/net/dsfield.h - Manipulation of the Dअगरferentiated Services field */
 
 /* Written 1998-2000 by Werner Almesberger, EPFL ICA */
 
 
-#ifndef __NET_DSFIELD_H
-#define __NET_DSFIELD_H
+#अगर_अघोषित __NET_DSFIELD_H
+#घोषणा __NET_DSFIELD_H
 
-#include <linux/types.h>
-#include <linux/ip.h>
-#include <linux/ipv6.h>
-#include <asm/byteorder.h>
-
-
-static inline __u8 ipv4_get_dsfield(const struct iphdr *iph)
-{
-	return iph->tos;
-}
+#समावेश <linux/types.h>
+#समावेश <linux/ip.h>
+#समावेश <linux/ipv6.h>
+#समावेश <यंत्र/byteorder.h>
 
 
-static inline __u8 ipv6_get_dsfield(const struct ipv6hdr *ipv6h)
-{
-	return ntohs(*(__force const __be16 *)ipv6h) >> 4;
-}
+अटल अंतरभूत __u8 ipv4_get_dsfield(स्थिर काष्ठा iphdr *iph)
+अणु
+	वापस iph->tos;
+पूर्ण
 
 
-static inline void ipv4_change_dsfield(struct iphdr *iph,__u8 mask,
+अटल अंतरभूत __u8 ipv6_get_dsfield(स्थिर काष्ठा ipv6hdr *ipv6h)
+अणु
+	वापस ntohs(*(__क्रमce स्थिर __be16 *)ipv6h) >> 4;
+पूर्ण
+
+
+अटल अंतरभूत व्योम ipv4_change_dsfield(काष्ठा iphdr *iph,__u8 mask,
     __u8 value)
-{
-        __u32 check = ntohs((__force __be16)iph->check);
+अणु
+        __u32 check = ntohs((__क्रमce __be16)iph->check);
 	__u8 dsfield;
 
 	dsfield = (iph->tos & mask) | value;
 	check += iph->tos;
-	if ((check+1) >> 16) check = (check+1) & 0xffff;
+	अगर ((check+1) >> 16) check = (check+1) & 0xffff;
 	check -= dsfield;
 	check += check >> 16; /* adjust carry */
-	iph->check = (__force __sum16)htons(check);
+	iph->check = (__क्रमce __sum16)htons(check);
 	iph->tos = dsfield;
-}
+पूर्ण
 
 
-static inline void ipv6_change_dsfield(struct ipv6hdr *ipv6h,__u8 mask,
+अटल अंतरभूत व्योम ipv6_change_dsfield(काष्ठा ipv6hdr *ipv6h,__u8 mask,
     __u8 value)
-{
-	__be16 *p = (__force __be16 *)ipv6h;
+अणु
+	__be16 *p = (__क्रमce __be16 *)ipv6h;
 
 	*p = (*p & htons((((u16)mask << 4) | 0xf00f))) | htons((u16)value << 4);
-}
+पूर्ण
 
 
-#endif
+#पूर्ण_अगर

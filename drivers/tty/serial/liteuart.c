@@ -1,27 +1,28 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * LiteUART serial controller (LiteX) Driver
  *
- * Copyright (C) 2019-2020 Antmicro <www.antmicro.com>
+ * Copyright (C) 2019-2020 Anपंचांगicro <www.anपंचांगicro.com>
  */
 
-#include <linux/console.h>
-#include <linux/litex.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_platform.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/slab.h>
-#include <linux/timer.h>
-#include <linux/tty_flip.h>
-#include <linux/xarray.h>
+#समावेश <linux/console.h>
+#समावेश <linux/litex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/xarray.h>
 
 /*
  * CSRs definitions (base address offsets + width)
  *
- * The definitions below are true for LiteX SoC configured for 8-bit CSR Bus,
+ * The definitions below are true क्रम LiteX SoC configured क्रम 8-bit CSR Bus,
  * 32-bit aligned.
  *
  * Supporting other configurations might require new definitions or a more
@@ -30,373 +31,373 @@
  * For more details on how CSRs are defined and handled in LiteX, see comments
  * in the LiteX SoC Driver: drivers/soc/litex/litex_soc_ctrl.c
  */
-#define OFF_RXTX	0x00
-#define OFF_TXFULL	0x04
-#define OFF_RXEMPTY	0x08
-#define OFF_EV_STATUS	0x0c
-#define OFF_EV_PENDING	0x10
-#define OFF_EV_ENABLE	0x14
+#घोषणा OFF_RXTX	0x00
+#घोषणा OFF_TXFULL	0x04
+#घोषणा OFF_RXEMPTY	0x08
+#घोषणा OFF_EV_STATUS	0x0c
+#घोषणा OFF_EV_PENDING	0x10
+#घोषणा OFF_EV_ENABLE	0x14
 
 /* events */
-#define EV_TX		0x1
-#define EV_RX		0x2
+#घोषणा EV_TX		0x1
+#घोषणा EV_RX		0x2
 
-struct liteuart_port {
-	struct uart_port port;
-	struct timer_list timer;
+काष्ठा liteuart_port अणु
+	काष्ठा uart_port port;
+	काष्ठा समयr_list समयr;
 	u32 id;
-};
+पूर्ण;
 
-#define to_liteuart_port(port)	container_of(port, struct liteuart_port, port)
+#घोषणा to_liteuart_port(port)	container_of(port, काष्ठा liteuart_port, port)
 
-static DEFINE_XARRAY_FLAGS(liteuart_array, XA_FLAGS_ALLOC);
+अटल DEFINE_XARRAY_FLAGS(liteuart_array, XA_FLAGS_ALLOC);
 
-#ifdef CONFIG_SERIAL_LITEUART_CONSOLE
-static struct console liteuart_console;
-#endif
+#अगर_घोषित CONFIG_SERIAL_LITEUART_CONSOLE
+अटल काष्ठा console liteuart_console;
+#पूर्ण_अगर
 
-static struct uart_driver liteuart_driver = {
+अटल काष्ठा uart_driver liteuart_driver = अणु
 	.owner = THIS_MODULE,
 	.driver_name = "liteuart",
 	.dev_name = "ttyLXU",
 	.major = 0,
 	.minor = 0,
 	.nr = CONFIG_SERIAL_LITEUART_MAX_PORTS,
-#ifdef CONFIG_SERIAL_LITEUART_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_LITEUART_CONSOLE
 	.cons = &liteuart_console,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static void liteuart_timer(struct timer_list *t)
-{
-	struct liteuart_port *uart = from_timer(uart, t, timer);
-	struct uart_port *port = &uart->port;
-	unsigned char __iomem *membase = port->membase;
-	unsigned int flg = TTY_NORMAL;
-	int ch;
-	unsigned long status;
+अटल व्योम liteuart_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा liteuart_port *uart = from_समयr(uart, t, समयr);
+	काष्ठा uart_port *port = &uart->port;
+	अचिन्हित अक्षर __iomem *membase = port->membase;
+	अचिन्हित पूर्णांक flg = TTY_NORMAL;
+	पूर्णांक ch;
+	अचिन्हित दीर्घ status;
 
-	while ((status = !litex_read8(membase + OFF_RXEMPTY)) == 1) {
-		ch = litex_read8(membase + OFF_RXTX);
+	जबतक ((status = !litex_पढ़ो8(membase + OFF_RXEMPTY)) == 1) अणु
+		ch = litex_पढ़ो8(membase + OFF_RXTX);
 		port->icount.rx++;
 
-		/* necessary for RXEMPTY to refresh its value */
-		litex_write8(membase + OFF_EV_PENDING, EV_TX | EV_RX);
+		/* necessary क्रम RXEMPTY to refresh its value */
+		litex_ग_लिखो8(membase + OFF_EV_PENDING, EV_TX | EV_RX);
 
 		/* no overflow bits in status */
-		if (!(uart_handle_sysrq_char(port, ch)))
-			uart_insert_char(port, status, 0, ch, flg);
+		अगर (!(uart_handle_sysrq_अक्षर(port, ch)))
+			uart_insert_अक्षर(port, status, 0, ch, flg);
 
 		tty_flip_buffer_push(&port->state->port);
-	}
+	पूर्ण
 
-	mod_timer(&uart->timer, jiffies + uart_poll_timeout(port));
-}
+	mod_समयr(&uart->समयr, jअगरfies + uart_poll_समयout(port));
+पूर्ण
 
-static void liteuart_putchar(struct uart_port *port, int ch)
-{
-	while (litex_read8(port->membase + OFF_TXFULL))
+अटल व्योम liteuart_अक्षर_दो(काष्ठा uart_port *port, पूर्णांक ch)
+अणु
+	जबतक (litex_पढ़ो8(port->membase + OFF_TXFULL))
 		cpu_relax();
 
-	litex_write8(port->membase + OFF_RXTX, ch);
-}
+	litex_ग_लिखो8(port->membase + OFF_RXTX, ch);
+पूर्ण
 
-static unsigned int liteuart_tx_empty(struct uart_port *port)
-{
-	/* not really tx empty, just checking if tx is not full */
-	if (!litex_read8(port->membase + OFF_TXFULL))
-		return TIOCSER_TEMT;
+अटल अचिन्हित पूर्णांक liteuart_tx_empty(काष्ठा uart_port *port)
+अणु
+	/* not really tx empty, just checking अगर tx is not full */
+	अगर (!litex_पढ़ो8(port->membase + OFF_TXFULL))
+		वापस TIOCSER_TEMT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void liteuart_set_mctrl(struct uart_port *port, unsigned int mctrl)
-{
-	/* modem control register is not present in LiteUART */
-}
+अटल व्योम liteuart_set_mctrl(काष्ठा uart_port *port, अचिन्हित पूर्णांक mctrl)
+अणु
+	/* modem control रेजिस्टर is not present in LiteUART */
+पूर्ण
 
-static unsigned int liteuart_get_mctrl(struct uart_port *port)
-{
-	return TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
-}
+अटल अचिन्हित पूर्णांक liteuart_get_mctrl(काष्ठा uart_port *port)
+अणु
+	वापस TIOCM_CTS | TIOCM_DSR | TIOCM_CAR;
+पूर्ण
 
-static void liteuart_stop_tx(struct uart_port *port)
-{
-}
+अटल व्योम liteuart_stop_tx(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
-static void liteuart_start_tx(struct uart_port *port)
-{
-	struct circ_buf *xmit = &port->state->xmit;
-	unsigned char ch;
+अटल व्योम liteuart_start_tx(काष्ठा uart_port *port)
+अणु
+	काष्ठा circ_buf *xmit = &port->state->xmit;
+	अचिन्हित अक्षर ch;
 
-	if (unlikely(port->x_char)) {
-		litex_write8(port->membase + OFF_RXTX, port->x_char);
+	अगर (unlikely(port->x_अक्षर)) अणु
+		litex_ग_लिखो8(port->membase + OFF_RXTX, port->x_अक्षर);
 		port->icount.tx++;
-		port->x_char = 0;
-	} else if (!uart_circ_empty(xmit)) {
-		while (xmit->head != xmit->tail) {
+		port->x_अक्षर = 0;
+	पूर्ण अन्यथा अगर (!uart_circ_empty(xmit)) अणु
+		जबतक (xmit->head != xmit->tail) अणु
 			ch = xmit->buf[xmit->tail];
 			xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 			port->icount.tx++;
-			liteuart_putchar(port, ch);
-		}
-	}
+			liteuart_अक्षर_दो(port, ch);
+		पूर्ण
+	पूर्ण
 
-	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-		uart_write_wakeup(port);
-}
+	अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+		uart_ग_लिखो_wakeup(port);
+पूर्ण
 
-static void liteuart_stop_rx(struct uart_port *port)
-{
-	struct liteuart_port *uart = to_liteuart_port(port);
+अटल व्योम liteuart_stop_rx(काष्ठा uart_port *port)
+अणु
+	काष्ठा liteuart_port *uart = to_liteuart_port(port);
 
-	/* just delete timer */
-	del_timer(&uart->timer);
-}
+	/* just delete समयr */
+	del_समयr(&uart->समयr);
+पूर्ण
 
-static void liteuart_break_ctl(struct uart_port *port, int break_state)
-{
-	/* LiteUART doesn't support sending break signal */
-}
+अटल व्योम liteuart_अवरोध_ctl(काष्ठा uart_port *port, पूर्णांक अवरोध_state)
+अणु
+	/* LiteUART करोesn't support sending अवरोध संकेत */
+पूर्ण
 
-static int liteuart_startup(struct uart_port *port)
-{
-	struct liteuart_port *uart = to_liteuart_port(port);
+अटल पूर्णांक liteuart_startup(काष्ठा uart_port *port)
+अणु
+	काष्ठा liteuart_port *uart = to_liteuart_port(port);
 
 	/* disable events */
-	litex_write8(port->membase + OFF_EV_ENABLE, 0);
+	litex_ग_लिखो8(port->membase + OFF_EV_ENABLE, 0);
 
-	/* prepare timer for polling */
-	timer_setup(&uart->timer, liteuart_timer, 0);
-	mod_timer(&uart->timer, jiffies + uart_poll_timeout(port));
+	/* prepare समयr क्रम polling */
+	समयr_setup(&uart->समयr, liteuart_समयr, 0);
+	mod_समयr(&uart->समयr, jअगरfies + uart_poll_समयout(port));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void liteuart_shutdown(struct uart_port *port)
-{
-}
+अटल व्योम liteuart_shutकरोwn(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
-static void liteuart_set_termios(struct uart_port *port, struct ktermios *new,
-				 struct ktermios *old)
-{
-	unsigned int baud;
-	unsigned long flags;
+अटल व्योम liteuart_set_termios(काष्ठा uart_port *port, काष्ठा ktermios *new,
+				 काष्ठा ktermios *old)
+अणु
+	अचिन्हित पूर्णांक baud;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&port->lock, flags);
 
 	/* update baudrate */
 	baud = uart_get_baud_rate(port, new, old, 0, 460800);
-	uart_update_timeout(port, new->c_cflag, baud);
+	uart_update_समयout(port, new->c_cflag, baud);
 
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static const char *liteuart_type(struct uart_port *port)
-{
-	return "liteuart";
-}
+अटल स्थिर अक्षर *liteuart_type(काष्ठा uart_port *port)
+अणु
+	वापस "liteuart";
+पूर्ण
 
-static void liteuart_release_port(struct uart_port *port)
-{
-}
+अटल व्योम liteuart_release_port(काष्ठा uart_port *port)
+अणु
+पूर्ण
 
-static int liteuart_request_port(struct uart_port *port)
-{
-	return 0;
-}
+अटल पूर्णांक liteuart_request_port(काष्ठा uart_port *port)
+अणु
+	वापस 0;
+पूर्ण
 
-static void liteuart_config_port(struct uart_port *port, int flags)
-{
+अटल व्योम liteuart_config_port(काष्ठा uart_port *port, पूर्णांक flags)
+अणु
 	/*
-	 * Driver core for serial ports forces a non-zero value for port type.
+	 * Driver core क्रम serial ports क्रमces a non-zero value क्रम port type.
 	 * Write an arbitrary value here to accommodate the serial core driver,
 	 * as ID part of UAPI is redundant.
 	 */
 	port->type = 1;
-}
+पूर्ण
 
-static int liteuart_verify_port(struct uart_port *port,
-				struct serial_struct *ser)
-{
-	if (port->type != PORT_UNKNOWN && ser->type != 1)
-		return -EINVAL;
+अटल पूर्णांक liteuart_verअगरy_port(काष्ठा uart_port *port,
+				काष्ठा serial_काष्ठा *ser)
+अणु
+	अगर (port->type != PORT_UNKNOWN && ser->type != 1)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct uart_ops liteuart_ops = {
+अटल स्थिर काष्ठा uart_ops liteuart_ops = अणु
 	.tx_empty	= liteuart_tx_empty,
 	.set_mctrl	= liteuart_set_mctrl,
 	.get_mctrl	= liteuart_get_mctrl,
 	.stop_tx	= liteuart_stop_tx,
 	.start_tx	= liteuart_start_tx,
 	.stop_rx	= liteuart_stop_rx,
-	.break_ctl	= liteuart_break_ctl,
+	.अवरोध_ctl	= liteuart_अवरोध_ctl,
 	.startup	= liteuart_startup,
-	.shutdown	= liteuart_shutdown,
+	.shutकरोwn	= liteuart_shutकरोwn,
 	.set_termios	= liteuart_set_termios,
 	.type		= liteuart_type,
 	.release_port	= liteuart_release_port,
 	.request_port	= liteuart_request_port,
 	.config_port	= liteuart_config_port,
-	.verify_port	= liteuart_verify_port,
-};
+	.verअगरy_port	= liteuart_verअगरy_port,
+पूर्ण;
 
-static int liteuart_probe(struct platform_device *pdev)
-{
-	struct liteuart_port *uart;
-	struct uart_port *port;
-	struct xa_limit limit;
-	int dev_id, ret;
+अटल पूर्णांक liteuart_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा liteuart_port *uart;
+	काष्ठा uart_port *port;
+	काष्ठा xa_limit limit;
+	पूर्णांक dev_id, ret;
 
-	/* look for aliases; auto-enumerate for free index if not found */
+	/* look क्रम aliases; स्वतः-क्रमागतerate क्रम मुक्त index अगर not found */
 	dev_id = of_alias_get_id(pdev->dev.of_node, "serial");
-	if (dev_id < 0)
+	अगर (dev_id < 0)
 		limit = XA_LIMIT(0, CONFIG_SERIAL_LITEUART_MAX_PORTS);
-	else
+	अन्यथा
 		limit = XA_LIMIT(dev_id, dev_id);
 
-	uart = devm_kzalloc(&pdev->dev, sizeof(struct liteuart_port), GFP_KERNEL);
-	if (!uart)
-		return -ENOMEM;
+	uart = devm_kzalloc(&pdev->dev, माप(काष्ठा liteuart_port), GFP_KERNEL);
+	अगर (!uart)
+		वापस -ENOMEM;
 
 	ret = xa_alloc(&liteuart_array, &dev_id, uart, limit, GFP_KERNEL);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	uart->id = dev_id;
 	port = &uart->port;
 
 	/* get membase */
-	port->membase = devm_platform_get_and_ioremap_resource(pdev, 0, NULL);
-	if (IS_ERR(port->membase))
-		return PTR_ERR(port->membase);
+	port->membase = devm_platक्रमm_get_and_ioremap_resource(pdev, 0, शून्य);
+	अगर (IS_ERR(port->membase))
+		वापस PTR_ERR(port->membase);
 
 	/* values not from device tree */
 	port->dev = &pdev->dev;
 	port->iotype = UPIO_MEM;
 	port->flags = UPF_BOOT_AUTOCONF;
 	port->ops = &liteuart_ops;
-	port->regshift = 2;
-	port->fifosize = 16;
+	port->regshअगरt = 2;
+	port->fअगरosize = 16;
 	port->iobase = 1;
 	port->type = PORT_UNKNOWN;
 	port->line = dev_id;
 	spin_lock_init(&port->lock);
 
-	return uart_add_one_port(&liteuart_driver, &uart->port);
-}
+	वापस uart_add_one_port(&liteuart_driver, &uart->port);
+पूर्ण
 
-static int liteuart_remove(struct platform_device *pdev)
-{
-	struct uart_port *port = platform_get_drvdata(pdev);
-	struct liteuart_port *uart = to_liteuart_port(port);
+अटल पूर्णांक liteuart_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uart_port *port = platक्रमm_get_drvdata(pdev);
+	काष्ठा liteuart_port *uart = to_liteuart_port(port);
 
 	xa_erase(&liteuart_array, uart->id);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id liteuart_of_match[] = {
-	{ .compatible = "litex,liteuart" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id liteuart_of_match[] = अणु
+	अणु .compatible = "litex,liteuart" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, liteuart_of_match);
 
-static struct platform_driver liteuart_platform_driver = {
+अटल काष्ठा platक्रमm_driver liteuart_platक्रमm_driver = अणु
 	.probe = liteuart_probe,
-	.remove = liteuart_remove,
-	.driver = {
+	.हटाओ = liteuart_हटाओ,
+	.driver = अणु
 		.name = "liteuart",
 		.of_match_table = liteuart_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_SERIAL_LITEUART_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_LITEUART_CONSOLE
 
-static void liteuart_console_write(struct console *co, const char *s,
-	unsigned int count)
-{
-	struct liteuart_port *uart;
-	struct uart_port *port;
-	unsigned long flags;
+अटल व्योम liteuart_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+	अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा liteuart_port *uart;
+	काष्ठा uart_port *port;
+	अचिन्हित दीर्घ flags;
 
-	uart = (struct liteuart_port *)xa_load(&liteuart_array, co->index);
+	uart = (काष्ठा liteuart_port *)xa_load(&liteuart_array, co->index);
 	port = &uart->port;
 
 	spin_lock_irqsave(&port->lock, flags);
-	uart_console_write(port, s, count, liteuart_putchar);
+	uart_console_ग_लिखो(port, s, count, liteuart_अक्षर_दो);
 	spin_unlock_irqrestore(&port->lock, flags);
-}
+पूर्ण
 
-static int liteuart_console_setup(struct console *co, char *options)
-{
-	struct liteuart_port *uart;
-	struct uart_port *port;
-	int baud = 115200;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
+अटल पूर्णांक liteuart_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	काष्ठा liteuart_port *uart;
+	काष्ठा uart_port *port;
+	पूर्णांक baud = 115200;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
 
-	uart = (struct liteuart_port *)xa_load(&liteuart_array, co->index);
-	if (!uart)
-		return -ENODEV;
+	uart = (काष्ठा liteuart_port *)xa_load(&liteuart_array, co->index);
+	अगर (!uart)
+		वापस -ENODEV;
 
 	port = &uart->port;
-	if (!port->membase)
-		return -ENODEV;
+	अगर (!port->membase)
+		वापस -ENODEV;
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
 
-	return uart_set_options(port, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(port, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct console liteuart_console = {
+अटल काष्ठा console liteuart_console = अणु
 	.name = "liteuart",
-	.write = liteuart_console_write,
+	.ग_लिखो = liteuart_console_ग_लिखो,
 	.device = uart_console_device,
 	.setup = liteuart_console_setup,
 	.flags = CON_PRINTBUFFER,
 	.index = -1,
 	.data = &liteuart_driver,
-};
+पूर्ण;
 
-static int __init liteuart_console_init(void)
-{
-	register_console(&liteuart_console);
+अटल पूर्णांक __init liteuart_console_init(व्योम)
+अणु
+	रेजिस्टर_console(&liteuart_console);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 console_initcall(liteuart_console_init);
-#endif /* CONFIG_SERIAL_LITEUART_CONSOLE */
+#पूर्ण_अगर /* CONFIG_SERIAL_LITEUART_CONSOLE */
 
-static int __init liteuart_init(void)
-{
-	int res;
+अटल पूर्णांक __init liteuart_init(व्योम)
+अणु
+	पूर्णांक res;
 
-	res = uart_register_driver(&liteuart_driver);
-	if (res)
-		return res;
+	res = uart_रेजिस्टर_driver(&liteuart_driver);
+	अगर (res)
+		वापस res;
 
-	res = platform_driver_register(&liteuart_platform_driver);
-	if (res) {
-		uart_unregister_driver(&liteuart_driver);
-		return res;
-	}
+	res = platक्रमm_driver_रेजिस्टर(&liteuart_platक्रमm_driver);
+	अगर (res) अणु
+		uart_unरेजिस्टर_driver(&liteuart_driver);
+		वापस res;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit liteuart_exit(void)
-{
-	platform_driver_unregister(&liteuart_platform_driver);
-	uart_unregister_driver(&liteuart_driver);
-}
+अटल व्योम __निकास liteuart_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&liteuart_platक्रमm_driver);
+	uart_unरेजिस्टर_driver(&liteuart_driver);
+पूर्ण
 
 module_init(liteuart_init);
-module_exit(liteuart_exit);
+module_निकास(liteuart_निकास);
 
 MODULE_AUTHOR("Antmicro <www.antmicro.com>");
 MODULE_DESCRIPTION("LiteUART serial driver");

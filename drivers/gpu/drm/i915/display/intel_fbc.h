@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: MIT */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright तऊ 2019 Intel Corporation
  */
 
-#ifndef __INTEL_FBC_H__
-#define __INTEL_FBC_H__
+#अगर_अघोषित __INTEL_FBC_H__
+#घोषणा __INTEL_FBC_H__
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#include "intel_frontbuffer.h"
+#समावेश "intel_frontbuffer.h"
 
-struct drm_i915_private;
-struct intel_atomic_state;
-struct intel_crtc;
-struct intel_crtc_state;
-struct intel_plane_state;
+काष्ठा drm_i915_निजी;
+काष्ठा पूर्णांकel_atomic_state;
+काष्ठा पूर्णांकel_crtc;
+काष्ठा पूर्णांकel_crtc_state;
+काष्ठा पूर्णांकel_plane_state;
 
-void intel_fbc_choose_crtc(struct drm_i915_private *dev_priv,
-			   struct intel_atomic_state *state);
-bool intel_fbc_is_active(struct drm_i915_private *dev_priv);
-bool intel_fbc_pre_update(struct intel_atomic_state *state,
-			  struct intel_crtc *crtc);
-void intel_fbc_post_update(struct intel_atomic_state *state,
-			   struct intel_crtc *crtc);
-void intel_fbc_init(struct drm_i915_private *dev_priv);
-void intel_fbc_enable(struct intel_atomic_state *state,
-		      struct intel_crtc *crtc);
-void intel_fbc_disable(struct intel_crtc *crtc);
-void intel_fbc_global_disable(struct drm_i915_private *dev_priv);
-void intel_fbc_invalidate(struct drm_i915_private *dev_priv,
-			  unsigned int frontbuffer_bits,
-			  enum fb_op_origin origin);
-void intel_fbc_flush(struct drm_i915_private *dev_priv,
-		     unsigned int frontbuffer_bits, enum fb_op_origin origin);
-void intel_fbc_cleanup_cfb(struct drm_i915_private *dev_priv);
-void intel_fbc_handle_fifo_underrun_irq(struct drm_i915_private *dev_priv);
-int intel_fbc_reset_underrun(struct drm_i915_private *dev_priv);
+व्योम पूर्णांकel_fbc_choose_crtc(काष्ठा drm_i915_निजी *dev_priv,
+			   काष्ठा पूर्णांकel_atomic_state *state);
+bool पूर्णांकel_fbc_is_active(काष्ठा drm_i915_निजी *dev_priv);
+bool पूर्णांकel_fbc_pre_update(काष्ठा पूर्णांकel_atomic_state *state,
+			  काष्ठा पूर्णांकel_crtc *crtc);
+व्योम पूर्णांकel_fbc_post_update(काष्ठा पूर्णांकel_atomic_state *state,
+			   काष्ठा पूर्णांकel_crtc *crtc);
+व्योम पूर्णांकel_fbc_init(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_fbc_enable(काष्ठा पूर्णांकel_atomic_state *state,
+		      काष्ठा पूर्णांकel_crtc *crtc);
+व्योम पूर्णांकel_fbc_disable(काष्ठा पूर्णांकel_crtc *crtc);
+व्योम पूर्णांकel_fbc_global_disable(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_fbc_invalidate(काष्ठा drm_i915_निजी *dev_priv,
+			  अचिन्हित पूर्णांक frontbuffer_bits,
+			  क्रमागत fb_op_origin origin);
+व्योम पूर्णांकel_fbc_flush(काष्ठा drm_i915_निजी *dev_priv,
+		     अचिन्हित पूर्णांक frontbuffer_bits, क्रमागत fb_op_origin origin);
+व्योम पूर्णांकel_fbc_cleanup_cfb(काष्ठा drm_i915_निजी *dev_priv);
+व्योम पूर्णांकel_fbc_handle_fअगरo_underrun_irq(काष्ठा drm_i915_निजी *dev_priv);
+पूर्णांक पूर्णांकel_fbc_reset_underrun(काष्ठा drm_i915_निजी *dev_priv);
 
-#endif /* __INTEL_FBC_H__ */
+#पूर्ण_अगर /* __INTEL_FBC_H__ */

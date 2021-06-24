@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _CS4271_PRIV_H
-#define _CS4271_PRIV_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _CS4271_PRIV_H
+#घोषणा _CS4271_PRIV_H
 
-#include <linux/regmap.h>
+#समावेश <linux/regmap.h>
 
-extern const struct of_device_id cs4271_dt_ids[];
-extern const struct regmap_config cs4271_regmap_config;
+बाह्य स्थिर काष्ठा of_device_id cs4271_dt_ids[];
+बाह्य स्थिर काष्ठा regmap_config cs4271_regmap_config;
 
-int cs4271_probe(struct device *dev, struct regmap *regmap);
+पूर्णांक cs4271_probe(काष्ठा device *dev, काष्ठा regmap *regmap);
 
-#endif
+#पूर्ण_अगर

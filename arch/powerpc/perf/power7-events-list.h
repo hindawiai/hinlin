@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Performance counter support for POWER7 processors.
+ * Perक्रमmance counter support क्रम POWER7 processors.
  *
  * Copyright 2013 Runzhen Wang, IBM Corporation.
  */
@@ -167,7 +168,7 @@ EVENT(PM_PMC4_REWIND,                         0x10020)
 EVENT(PM_L2_RCLD_DISP,                        0x16280)
 EVENT(PM_THRD_PRIO_2_3_CYC,                   0x040b2)
 EVENT(PM_MRK_PTEG_FROM_L2MISS,                0x4d058)
-EVENT(PM_IC_DEMAND_L2_BHT_REDIRECT,           0x04098)
+EVENT(PM_IC_DEMAND_L2_BHT_REसूचीECT,           0x04098)
 EVENT(PM_LSU_DERAT_MISS,                      0x200f6)
 EVENT(PM_IC_PREF_CANCEL_L2,                   0x04094)
 EVENT(PM_MRK_FIN_STALL_CYC_COUNT,             0x1003d)
@@ -182,7 +183,7 @@ EVENT(PM_FLUSH_DISP_TLBIE,                    0x0208a)
 EVENT(PM_VSU1_FCONV,                          0x0a0b2)
 EVENT(PM_DERAT_MISS_16G,                      0x4c05c)
 EVENT(PM_INST_FROM_LMEM,                      0x3404a)
-EVENT(PM_IC_DEMAND_L2_BR_REDIRECT,            0x0409a)
+EVENT(PM_IC_DEMAND_L2_BR_REसूचीECT,            0x0409a)
 EVENT(PM_CMPLU_STALL_SCALAR_LONG,             0x20018)
 EVENT(PM_INST_PTEG_FROM_L2,                   0x1e050)
 EVENT(PM_PTEG_FROM_L2,                        0x1c050)

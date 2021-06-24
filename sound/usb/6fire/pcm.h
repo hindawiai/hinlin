@@ -1,71 +1,72 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Linux driver for TerraTec DMX 6Fire USB
+ * Linux driver क्रम TerraTec DMX 6Fire USB
  *
  * Author:	Torsten Schenk <torsten.schenk@zoho.com>
  * Created:	Jan 01, 2011
  * Copyright:	(C) Torsten Schenk
  */
 
-#ifndef USB6FIRE_PCM_H
-#define USB6FIRE_PCM_H
+#अगर_अघोषित USB6FIRE_PCM_H
+#घोषणा USB6FIRE_PCM_H
 
-#include <sound/pcm.h>
-#include <linux/mutex.h>
+#समावेश <sound/pcm.h>
+#समावेश <linux/mutex.h>
 
-#include "common.h"
+#समावेश "common.h"
 
-enum /* settings for pcm */
-{
+क्रमागत /* settings क्रम pcm */
+अणु
 	/* maximum of EP_W_MAX_PACKET_SIZE[] (see firmware.c) */
 	PCM_N_URBS = 16, PCM_N_PACKETS_PER_URB = 8, PCM_MAX_PACKET_SIZE = 604
-};
+पूर्ण;
 
-struct pcm_urb {
-	struct sfire_chip *chip;
+काष्ठा pcm_urb अणु
+	काष्ठा sfire_chip *chip;
 
 	/* BEGIN DO NOT SEPARATE */
-	struct urb instance;
-	struct usb_iso_packet_descriptor packets[PCM_N_PACKETS_PER_URB];
+	काष्ठा urb instance;
+	काष्ठा usb_iso_packet_descriptor packets[PCM_N_PACKETS_PER_URB];
 	/* END DO NOT SEPARATE */
 	u8 *buffer;
 
-	struct pcm_urb *peer;
-};
+	काष्ठा pcm_urb *peer;
+पूर्ण;
 
-struct pcm_substream {
+काष्ठा pcm_substream अणु
 	spinlock_t lock;
-	struct snd_pcm_substream *instance;
+	काष्ठा snd_pcm_substream *instance;
 
 	bool active;
 
 	snd_pcm_uframes_t dma_off; /* current position in alsa dma_area */
 	snd_pcm_uframes_t period_off; /* current position in current period */
-};
+पूर्ण;
 
-struct pcm_runtime {
-	struct sfire_chip *chip;
-	struct snd_pcm *instance;
+काष्ठा pcm_runसमय अणु
+	काष्ठा sfire_chip *chip;
+	काष्ठा snd_pcm *instance;
 
-	struct pcm_substream playback;
-	struct pcm_substream capture;
-	bool panic; /* if set driver won't do anymore pcm on device */
+	काष्ठा pcm_substream playback;
+	काष्ठा pcm_substream capture;
+	bool panic; /* अगर set driver won't करो anymore pcm on device */
 
-	struct pcm_urb in_urbs[PCM_N_URBS];
-	struct pcm_urb out_urbs[PCM_N_URBS];
-	int in_packet_size;
-	int out_packet_size;
-	int in_n_analog; /* number of analog channels soundcard sends */
-	int out_n_analog; /* number of analog channels soundcard receives */
+	काष्ठा pcm_urb in_urbs[PCM_N_URBS];
+	काष्ठा pcm_urb out_urbs[PCM_N_URBS];
+	पूर्णांक in_packet_size;
+	पूर्णांक out_packet_size;
+	पूर्णांक in_n_analog; /* number of analog channels soundcard sends */
+	पूर्णांक out_n_analog; /* number of analog channels soundcard receives */
 
-	struct mutex stream_mutex;
+	काष्ठा mutex stream_mutex;
 	u8 stream_state; /* one of STREAM_XXX (pcm.c) */
 	u8 rate; /* one of PCM_RATE_XXX */
-	wait_queue_head_t stream_wait_queue;
-	bool stream_wait_cond;
-};
+	रुको_queue_head_t stream_रुको_queue;
+	bool stream_रुको_cond;
+पूर्ण;
 
-int usb6fire_pcm_init(struct sfire_chip *chip);
-void usb6fire_pcm_abort(struct sfire_chip *chip);
-void usb6fire_pcm_destroy(struct sfire_chip *chip);
-#endif /* USB6FIRE_PCM_H */
+पूर्णांक usb6fire_pcm_init(काष्ठा sfire_chip *chip);
+व्योम usb6fire_pcm_पात(काष्ठा sfire_chip *chip);
+व्योम usb6fire_pcm_destroy(काष्ठा sfire_chip *chip);
+#पूर्ण_अगर /* USB6FIRE_PCM_H */

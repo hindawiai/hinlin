@@ -1,136 +1,137 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Driver for the NXP ISP1761 device controller
+ * Driver क्रम the NXP ISP1761 device controller
  *
  * Copyright 2014 Ideas on Board Oy
  *
  * Contacts:
- *	Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+ *	Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/timer.h>
-#include <linux/usb.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/usb.h>
 
-#include "isp1760-core.h"
-#include "isp1760-regs.h"
-#include "isp1760-udc.h"
+#समावेश "isp1760-core.h"
+#समावेश "isp1760-regs.h"
+#समावेश "isp1760-udc.h"
 
-#define ISP1760_VBUS_POLL_INTERVAL	msecs_to_jiffies(500)
+#घोषणा ISP1760_VBUS_POLL_INTERVAL	msecs_to_jअगरfies(500)
 
-struct isp1760_request {
-	struct usb_request req;
-	struct list_head queue;
-	struct isp1760_ep *ep;
-	unsigned int packet_size;
-};
+काष्ठा isp1760_request अणु
+	काष्ठा usb_request req;
+	काष्ठा list_head queue;
+	काष्ठा isp1760_ep *ep;
+	अचिन्हित पूर्णांक packet_size;
+पूर्ण;
 
-static inline struct isp1760_udc *gadget_to_udc(struct usb_gadget *gadget)
-{
-	return container_of(gadget, struct isp1760_udc, gadget);
-}
+अटल अंतरभूत काष्ठा isp1760_udc *gadget_to_udc(काष्ठा usb_gadget *gadget)
+अणु
+	वापस container_of(gadget, काष्ठा isp1760_udc, gadget);
+पूर्ण
 
-static inline struct isp1760_ep *ep_to_udc_ep(struct usb_ep *ep)
-{
-	return container_of(ep, struct isp1760_ep, ep);
-}
+अटल अंतरभूत काष्ठा isp1760_ep *ep_to_udc_ep(काष्ठा usb_ep *ep)
+अणु
+	वापस container_of(ep, काष्ठा isp1760_ep, ep);
+पूर्ण
 
-static inline struct isp1760_request *req_to_udc_req(struct usb_request *req)
-{
-	return container_of(req, struct isp1760_request, req);
-}
+अटल अंतरभूत काष्ठा isp1760_request *req_to_udc_req(काष्ठा usb_request *req)
+अणु
+	वापस container_of(req, काष्ठा isp1760_request, req);
+पूर्ण
 
-static inline u32 isp1760_udc_read(struct isp1760_udc *udc, u16 reg)
-{
-	return isp1760_read32(udc->regs, reg);
-}
+अटल अंतरभूत u32 isp1760_udc_पढ़ो(काष्ठा isp1760_udc *udc, u16 reg)
+अणु
+	वापस isp1760_पढ़ो32(udc->regs, reg);
+पूर्ण
 
-static inline void isp1760_udc_write(struct isp1760_udc *udc, u16 reg, u32 val)
-{
-	isp1760_write32(udc->regs, reg, val);
-}
+अटल अंतरभूत व्योम isp1760_udc_ग_लिखो(काष्ठा isp1760_udc *udc, u16 reg, u32 val)
+अणु
+	isp1760_ग_लिखो32(udc->regs, reg, val);
+पूर्ण
 
 /* -----------------------------------------------------------------------------
- * Endpoint Management
+ * Endpoपूर्णांक Management
  */
 
-static struct isp1760_ep *isp1760_udc_find_ep(struct isp1760_udc *udc,
+अटल काष्ठा isp1760_ep *isp1760_udc_find_ep(काष्ठा isp1760_udc *udc,
 					      u16 index)
-{
-	unsigned int i;
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (index == 0)
-		return &udc->ep[0];
+	अगर (index == 0)
+		वापस &udc->ep[0];
 
-	for (i = 1; i < ARRAY_SIZE(udc->ep); ++i) {
-		if (udc->ep[i].addr == index)
-			return udc->ep[i].desc ? &udc->ep[i] : NULL;
-	}
+	क्रम (i = 1; i < ARRAY_SIZE(udc->ep); ++i) अणु
+		अगर (udc->ep[i].addr == index)
+			वापस udc->ep[i].desc ? &udc->ep[i] : शून्य;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void __isp1760_udc_select_ep(struct isp1760_ep *ep, int dir)
-{
-	isp1760_udc_write(ep->udc, DC_EPINDEX,
+अटल व्योम __isp1760_udc_select_ep(काष्ठा isp1760_ep *ep, पूर्णांक dir)
+अणु
+	isp1760_udc_ग_लिखो(ep->udc, DC_EPINDEX,
 			  DC_ENDPIDX(ep->addr & USB_ENDPOINT_NUMBER_MASK) |
-			  (dir == USB_DIR_IN ? DC_EPDIR : 0));
-}
+			  (dir == USB_सूची_IN ? DC_EPसूची : 0));
+पूर्ण
 
 /**
- * isp1760_udc_select_ep - Select an endpoint for register access
- * @ep: The endpoint
+ * isp1760_udc_select_ep - Select an endpoपूर्णांक क्रम रेजिस्टर access
+ * @ep: The endpoपूर्णांक
  *
- * The ISP1761 endpoint registers are banked. This function selects the target
- * endpoint for banked register access. The selection remains valid until the
- * next call to this function, the next direct access to the EPINDEX register
+ * The ISP1761 endpoपूर्णांक रेजिस्टरs are banked. This function selects the target
+ * endpoपूर्णांक क्रम banked रेजिस्टर access. The selection reमुख्यs valid until the
+ * next call to this function, the next direct access to the EPINDEX रेजिस्टर
  * or the next reset, whichever comes first.
  *
  * Called with the UDC spinlock held.
  */
-static void isp1760_udc_select_ep(struct isp1760_ep *ep)
-{
-	__isp1760_udc_select_ep(ep, ep->addr & USB_ENDPOINT_DIR_MASK);
-}
+अटल व्योम isp1760_udc_select_ep(काष्ठा isp1760_ep *ep)
+अणु
+	__isp1760_udc_select_ep(ep, ep->addr & USB_ENDPOINT_सूची_MASK);
+पूर्ण
 
 /* Called with the UDC spinlock held. */
-static void isp1760_udc_ctrl_send_status(struct isp1760_ep *ep, int dir)
-{
-	struct isp1760_udc *udc = ep->udc;
+अटल व्योम isp1760_udc_ctrl_send_status(काष्ठा isp1760_ep *ep, पूर्णांक dir)
+अणु
+	काष्ठा isp1760_udc *udc = ep->udc;
 
 	/*
 	 * Proceed to the status stage. The status stage data packet flows in
 	 * the direction opposite to the data stage data packets, we thus need
-	 * to select the OUT/IN endpoint for IN/OUT transfers.
+	 * to select the OUT/IN endpoपूर्णांक क्रम IN/OUT transfers.
 	 */
-	isp1760_udc_write(udc, DC_EPINDEX, DC_ENDPIDX(0) |
-			  (dir == USB_DIR_IN ? 0 : DC_EPDIR));
-	isp1760_udc_write(udc, DC_CTRLFUNC, DC_STATUS);
+	isp1760_udc_ग_लिखो(udc, DC_EPINDEX, DC_ENDPIDX(0) |
+			  (dir == USB_सूची_IN ? 0 : DC_EPसूची));
+	isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_STATUS);
 
 	/*
-	 * The hardware will terminate the request automatically and go back to
-	 * the setup stage without notifying us.
+	 * The hardware will terminate the request स्वतःmatically and go back to
+	 * the setup stage without notअगरying us.
 	 */
 	udc->ep0_state = ISP1760_CTRL_SETUP;
-}
+पूर्ण
 
 /* Called without the UDC spinlock held. */
-static void isp1760_udc_request_complete(struct isp1760_ep *ep,
-					 struct isp1760_request *req,
-					 int status)
-{
-	struct isp1760_udc *udc = ep->udc;
-	unsigned long flags;
+अटल व्योम isp1760_udc_request_complete(काष्ठा isp1760_ep *ep,
+					 काष्ठा isp1760_request *req,
+					 पूर्णांक status)
+अणु
+	काष्ठा isp1760_udc *udc = ep->udc;
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(ep->udc->isp->dev, "completing request %p with status %d\n",
 		req, status);
 
-	req->ep = NULL;
+	req->ep = शून्य;
 	req->req.status = status;
 	req->req.complete(&ep->ep, &req->req);
 
@@ -139,84 +140,84 @@ static void isp1760_udc_request_complete(struct isp1760_ep *ep,
 	/*
 	 * When completing control OUT requests, move to the status stage after
 	 * calling the request complete callback. This gives the gadget an
-	 * opportunity to stall the control transfer if needed.
+	 * opportunity to stall the control transfer अगर needed.
 	 */
-	if (status == 0 && ep->addr == 0 && udc->ep0_dir == USB_DIR_OUT)
-		isp1760_udc_ctrl_send_status(ep, USB_DIR_OUT);
+	अगर (status == 0 && ep->addr == 0 && udc->ep0_dir == USB_सूची_OUT)
+		isp1760_udc_ctrl_send_status(ep, USB_सूची_OUT);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-}
+पूर्ण
 
-static void isp1760_udc_ctrl_send_stall(struct isp1760_ep *ep)
-{
-	struct isp1760_udc *udc = ep->udc;
-	unsigned long flags;
+अटल व्योम isp1760_udc_ctrl_send_stall(काष्ठा isp1760_ep *ep)
+अणु
+	काष्ठा isp1760_udc *udc = ep->udc;
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(ep->udc->isp->dev, "%s(ep%02x)\n", __func__, ep->addr);
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	/* Stall both the IN and OUT endpoints. */
-	__isp1760_udc_select_ep(ep, USB_DIR_OUT);
-	isp1760_udc_write(udc, DC_CTRLFUNC, DC_STALL);
-	__isp1760_udc_select_ep(ep, USB_DIR_IN);
-	isp1760_udc_write(udc, DC_CTRLFUNC, DC_STALL);
+	/* Stall both the IN and OUT endpoपूर्णांकs. */
+	__isp1760_udc_select_ep(ep, USB_सूची_OUT);
+	isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_STALL);
+	__isp1760_udc_select_ep(ep, USB_सूची_IN);
+	isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_STALL);
 
 	/* A protocol stall completes the control transaction. */
 	udc->ep0_state = ISP1760_CTRL_SETUP;
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
- * Data Endpoints
+ * Data Endpoपूर्णांकs
  */
 
 /* Called with the UDC spinlock held. */
-static bool isp1760_udc_receive(struct isp1760_ep *ep,
-				struct isp1760_request *req)
-{
-	struct isp1760_udc *udc = ep->udc;
-	unsigned int len;
+अटल bool isp1760_udc_receive(काष्ठा isp1760_ep *ep,
+				काष्ठा isp1760_request *req)
+अणु
+	काष्ठा isp1760_udc *udc = ep->udc;
+	अचिन्हित पूर्णांक len;
 	u32 *buf;
-	int i;
+	पूर्णांक i;
 
 	isp1760_udc_select_ep(ep);
-	len = isp1760_udc_read(udc, DC_BUFLEN) & DC_DATACOUNT_MASK;
+	len = isp1760_udc_पढ़ो(udc, DC_BUFLEN) & DC_DATACOUNT_MASK;
 
 	dev_dbg(udc->isp->dev, "%s: received %u bytes (%u/%u done)\n",
 		__func__, len, req->req.actual, req->req.length);
 
 	len = min(len, req->req.length - req->req.actual);
 
-	if (!len) {
+	अगर (!len) अणु
 		/*
-		 * There's no data to be read from the FIFO, acknowledge the RX
-		 * interrupt by clearing the buffer.
+		 * There's no data to be पढ़ो from the FIFO, acknowledge the RX
+		 * पूर्णांकerrupt by clearing the buffer.
 		 *
-		 * TODO: What if another packet arrives in the meantime ? The
-		 * datasheet doesn't clearly document how this should be
+		 * TODO: What अगर another packet arrives in the meanसमय ? The
+		 * datasheet करोesn't clearly करोcument how this should be
 		 * handled.
 		 */
-		isp1760_udc_write(udc, DC_CTRLFUNC, DC_CLBUF);
-		return false;
-	}
+		isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_CLBUF);
+		वापस false;
+	पूर्ण
 
 	buf = req->req.buf + req->req.actual;
 
 	/*
-	 * Make sure not to read more than one extra byte, otherwise data from
-	 * the next packet might be removed from the FIFO.
+	 * Make sure not to पढ़ो more than one extra byte, otherwise data from
+	 * the next packet might be हटाओd from the FIFO.
 	 */
-	for (i = len; i > 2; i -= 4, ++buf)
-		*buf = le32_to_cpu(isp1760_udc_read(udc, DC_DATAPORT));
-	if (i > 0)
-		*(u16 *)buf = le16_to_cpu(readw(udc->regs + DC_DATAPORT));
+	क्रम (i = len; i > 2; i -= 4, ++buf)
+		*buf = le32_to_cpu(isp1760_udc_पढ़ो(udc, DC_DATAPORT));
+	अगर (i > 0)
+		*(u16 *)buf = le16_to_cpu(पढ़ोw(udc->regs + DC_DATAPORT));
 
 	req->req.actual += len;
 
 	/*
-	 * TODO: The short_not_ok flag isn't supported yet, but isn't used by
+	 * TODO: The लघु_not_ok flag isn't supported yet, but isn't used by
 	 * any gadget driver either.
 	 */
 
@@ -228,23 +229,23 @@ static bool isp1760_udc_receive(struct isp1760_ep *ep,
 	ep->rx_pending = false;
 
 	/*
-	 * Complete the request if all data has been received or if a short
+	 * Complete the request अगर all data has been received or अगर a लघु
 	 * packet has been received.
 	 */
-	if (req->req.actual == req->req.length || len < ep->maxpacket) {
+	अगर (req->req.actual == req->req.length || len < ep->maxpacket) अणु
 		list_del(&req->queue);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void isp1760_udc_transmit(struct isp1760_ep *ep,
-				 struct isp1760_request *req)
-{
-	struct isp1760_udc *udc = ep->udc;
+अटल व्योम isp1760_udc_transmit(काष्ठा isp1760_ep *ep,
+				 काष्ठा isp1760_request *req)
+अणु
+	काष्ठा isp1760_udc *udc = ep->udc;
 	u32 *buf = req->req.buf + req->req.actual;
-	int i;
+	पूर्णांक i;
 
 	req->packet_size = min(req->req.length - req->req.actual,
 			       ep->maxpacket);
@@ -253,103 +254,103 @@ static void isp1760_udc_transmit(struct isp1760_ep *ep,
 		__func__, req->packet_size, req->req.actual,
 		req->req.length);
 
-	__isp1760_udc_select_ep(ep, USB_DIR_IN);
+	__isp1760_udc_select_ep(ep, USB_सूची_IN);
 
-	if (req->packet_size)
-		isp1760_udc_write(udc, DC_BUFLEN, req->packet_size);
+	अगर (req->packet_size)
+		isp1760_udc_ग_लिखो(udc, DC_BUFLEN, req->packet_size);
 
 	/*
-	 * Make sure not to write more than one extra byte, otherwise extra data
+	 * Make sure not to ग_लिखो more than one extra byte, otherwise extra data
 	 * will stay in the FIFO and will be transmitted during the next control
-	 * request. The endpoint control CLBUF bit is supposed to allow flushing
-	 * the FIFO for this kind of conditions, but doesn't seem to work.
+	 * request. The endpoपूर्णांक control CLBUF bit is supposed to allow flushing
+	 * the FIFO क्रम this kind of conditions, but करोesn't seem to work.
 	 */
-	for (i = req->packet_size; i > 2; i -= 4, ++buf)
-		isp1760_udc_write(udc, DC_DATAPORT, cpu_to_le32(*buf));
-	if (i > 0)
-		writew(cpu_to_le16(*(u16 *)buf), udc->regs + DC_DATAPORT);
+	क्रम (i = req->packet_size; i > 2; i -= 4, ++buf)
+		isp1760_udc_ग_लिखो(udc, DC_DATAPORT, cpu_to_le32(*buf));
+	अगर (i > 0)
+		ग_लिखोw(cpu_to_le16(*(u16 *)buf), udc->regs + DC_DATAPORT);
 
-	if (ep->addr == 0)
-		isp1760_udc_write(udc, DC_CTRLFUNC, DC_DSEN);
-	if (!req->packet_size)
-		isp1760_udc_write(udc, DC_CTRLFUNC, DC_VENDP);
-}
+	अगर (ep->addr == 0)
+		isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_DSEN);
+	अगर (!req->packet_size)
+		isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_VENDP);
+पूर्ण
 
-static void isp1760_ep_rx_ready(struct isp1760_ep *ep)
-{
-	struct isp1760_udc *udc = ep->udc;
-	struct isp1760_request *req;
+अटल व्योम isp1760_ep_rx_पढ़ोy(काष्ठा isp1760_ep *ep)
+अणु
+	काष्ठा isp1760_udc *udc = ep->udc;
+	काष्ठा isp1760_request *req;
 	bool complete;
 
 	spin_lock(&udc->lock);
 
-	if (ep->addr == 0 && udc->ep0_state != ISP1760_CTRL_DATA_OUT) {
+	अगर (ep->addr == 0 && udc->ep0_state != ISP1760_CTRL_DATA_OUT) अणु
 		spin_unlock(&udc->lock);
 		dev_dbg(udc->isp->dev, "%s: invalid ep0 state %u\n", __func__,
 			udc->ep0_state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ep->addr != 0 && !ep->desc) {
+	अगर (ep->addr != 0 && !ep->desc) अणु
 		spin_unlock(&udc->lock);
 		dev_dbg(udc->isp->dev, "%s: ep%02x is disabled\n", __func__,
 			ep->addr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (list_empty(&ep->queue)) {
+	अगर (list_empty(&ep->queue)) अणु
 		ep->rx_pending = true;
 		spin_unlock(&udc->lock);
 		dev_dbg(udc->isp->dev, "%s: ep%02x (%p) has no request queued\n",
 			__func__, ep->addr, ep);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	req = list_first_entry(&ep->queue, struct isp1760_request,
+	req = list_first_entry(&ep->queue, काष्ठा isp1760_request,
 			       queue);
 	complete = isp1760_udc_receive(ep, req);
 
 	spin_unlock(&udc->lock);
 
-	if (complete)
+	अगर (complete)
 		isp1760_udc_request_complete(ep, req, 0);
-}
+पूर्ण
 
-static void isp1760_ep_tx_complete(struct isp1760_ep *ep)
-{
-	struct isp1760_udc *udc = ep->udc;
-	struct isp1760_request *complete = NULL;
-	struct isp1760_request *req;
+अटल व्योम isp1760_ep_tx_complete(काष्ठा isp1760_ep *ep)
+अणु
+	काष्ठा isp1760_udc *udc = ep->udc;
+	काष्ठा isp1760_request *complete = शून्य;
+	काष्ठा isp1760_request *req;
 	bool need_zlp;
 
 	spin_lock(&udc->lock);
 
-	if (ep->addr == 0 && udc->ep0_state != ISP1760_CTRL_DATA_IN) {
+	अगर (ep->addr == 0 && udc->ep0_state != ISP1760_CTRL_DATA_IN) अणु
 		spin_unlock(&udc->lock);
 		dev_dbg(udc->isp->dev, "TX IRQ: invalid endpoint state %u\n",
 			udc->ep0_state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (list_empty(&ep->queue)) {
+	अगर (list_empty(&ep->queue)) अणु
 		/*
-		 * This can happen for the control endpoint when the reply to
+		 * This can happen क्रम the control endpoपूर्णांक when the reply to
 		 * the GET_STATUS IN control request is sent directly by the
 		 * setup IRQ handler. Just proceed to the status stage.
 		 */
-		if (ep->addr == 0) {
-			isp1760_udc_ctrl_send_status(ep, USB_DIR_IN);
+		अगर (ep->addr == 0) अणु
+			isp1760_udc_ctrl_send_status(ep, USB_सूची_IN);
 			spin_unlock(&udc->lock);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		spin_unlock(&udc->lock);
 		dev_dbg(udc->isp->dev, "%s: ep%02x has no request queued\n",
 			__func__, ep->addr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	req = list_first_entry(&ep->queue, struct isp1760_request,
+	req = list_first_entry(&ep->queue, काष्ठा isp1760_request,
 			       queue);
 	req->req.actual += req->packet_size;
 
@@ -363,324 +364,324 @@ static void isp1760_ep_tx_complete(struct isp1760_ep *ep)
 		 req->packet_size, req->req.zero, need_zlp);
 
 	/*
-	 * Complete the request if all data has been sent and we don't need to
+	 * Complete the request अगर all data has been sent and we करोn't need to
 	 * transmit a zero length packet.
 	 */
-	if (req->req.actual == req->req.length && !need_zlp) {
+	अगर (req->req.actual == req->req.length && !need_zlp) अणु
 		complete = req;
 		list_del(&req->queue);
 
-		if (ep->addr == 0)
-			isp1760_udc_ctrl_send_status(ep, USB_DIR_IN);
+		अगर (ep->addr == 0)
+			isp1760_udc_ctrl_send_status(ep, USB_सूची_IN);
 
-		if (!list_empty(&ep->queue))
+		अगर (!list_empty(&ep->queue))
 			req = list_first_entry(&ep->queue,
-					       struct isp1760_request, queue);
-		else
-			req = NULL;
-	}
+					       काष्ठा isp1760_request, queue);
+		अन्यथा
+			req = शून्य;
+	पूर्ण
 
 	/*
-	 * Transmit the next packet or start the next request, if any.
+	 * Transmit the next packet or start the next request, अगर any.
 	 *
-	 * TODO: If the endpoint is stalled the next request shouldn't be
+	 * TODO: If the endpoपूर्णांक is stalled the next request shouldn't be
 	 * started, but what about the next packet ?
 	 */
-	if (req)
+	अगर (req)
 		isp1760_udc_transmit(ep, req);
 
 	spin_unlock(&udc->lock);
 
-	if (complete)
+	अगर (complete)
 		isp1760_udc_request_complete(ep, complete, 0);
-}
+पूर्ण
 
-static int __isp1760_udc_set_halt(struct isp1760_ep *ep, bool halt)
-{
-	struct isp1760_udc *udc = ep->udc;
+अटल पूर्णांक __isp1760_udc_set_halt(काष्ठा isp1760_ep *ep, bool halt)
+अणु
+	काष्ठा isp1760_udc *udc = ep->udc;
 
 	dev_dbg(udc->isp->dev, "%s: %s halt on ep%02x\n", __func__,
 		halt ? "set" : "clear", ep->addr);
 
-	if (ep->desc && usb_endpoint_xfer_isoc(ep->desc)) {
+	अगर (ep->desc && usb_endpoपूर्णांक_xfer_isoc(ep->desc)) अणु
 		dev_dbg(udc->isp->dev, "%s: ep%02x is isochronous\n", __func__,
 			ep->addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	isp1760_udc_select_ep(ep);
-	isp1760_udc_write(udc, DC_CTRLFUNC, halt ? DC_STALL : 0);
+	isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, halt ? DC_STALL : 0);
 
-	if (ep->addr == 0) {
-		/* When halting the control endpoint, stall both IN and OUT. */
-		__isp1760_udc_select_ep(ep, USB_DIR_IN);
-		isp1760_udc_write(udc, DC_CTRLFUNC, halt ? DC_STALL : 0);
-	} else if (!halt) {
-		/* Reset the data PID by cycling the endpoint enable bit. */
-		u16 eptype = isp1760_udc_read(udc, DC_EPTYPE);
+	अगर (ep->addr == 0) अणु
+		/* When halting the control endpoपूर्णांक, stall both IN and OUT. */
+		__isp1760_udc_select_ep(ep, USB_सूची_IN);
+		isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, halt ? DC_STALL : 0);
+	पूर्ण अन्यथा अगर (!halt) अणु
+		/* Reset the data PID by cycling the endpoपूर्णांक enable bit. */
+		u16 eptype = isp1760_udc_पढ़ो(udc, DC_EPTYPE);
 
-		isp1760_udc_write(udc, DC_EPTYPE, eptype & ~DC_EPENABLE);
-		isp1760_udc_write(udc, DC_EPTYPE, eptype);
+		isp1760_udc_ग_लिखो(udc, DC_EPTYPE, eptype & ~DC_EPENABLE);
+		isp1760_udc_ग_लिखो(udc, DC_EPTYPE, eptype);
 
 		/*
-		 * Disabling the endpoint emptied the transmit FIFO, fill it
-		 * again if a request is pending.
+		 * Disabling the endpoपूर्णांक emptied the transmit FIFO, fill it
+		 * again अगर a request is pending.
 		 *
 		 * TODO: Does the gadget framework require synchronizatino with
 		 * the TX IRQ handler ?
 		 */
-		if ((ep->addr & USB_DIR_IN) && !list_empty(&ep->queue)) {
-			struct isp1760_request *req;
+		अगर ((ep->addr & USB_सूची_IN) && !list_empty(&ep->queue)) अणु
+			काष्ठा isp1760_request *req;
 
 			req = list_first_entry(&ep->queue,
-					       struct isp1760_request, queue);
+					       काष्ठा isp1760_request, queue);
 			isp1760_udc_transmit(ep, req);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ep->halted = halt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* -----------------------------------------------------------------------------
- * Control Endpoint
+ * Control Endpoपूर्णांक
  */
 
-static int isp1760_udc_get_status(struct isp1760_udc *udc,
-				  const struct usb_ctrlrequest *req)
-{
-	struct isp1760_ep *ep;
+अटल पूर्णांक isp1760_udc_get_status(काष्ठा isp1760_udc *udc,
+				  स्थिर काष्ठा usb_ctrlrequest *req)
+अणु
+	काष्ठा isp1760_ep *ep;
 	u16 status;
 
-	if (req->wLength != cpu_to_le16(2) || req->wValue != cpu_to_le16(0))
-		return -EINVAL;
+	अगर (req->wLength != cpu_to_le16(2) || req->wValue != cpu_to_le16(0))
+		वापस -EINVAL;
 
-	switch (req->bRequestType) {
-	case USB_DIR_IN | USB_RECIP_DEVICE:
+	चयन (req->bRequestType) अणु
+	हाल USB_सूची_IN | USB_RECIP_DEVICE:
 		status = udc->devstatus;
-		break;
+		अवरोध;
 
-	case USB_DIR_IN | USB_RECIP_INTERFACE:
+	हाल USB_सूची_IN | USB_RECIP_INTERFACE:
 		status = 0;
-		break;
+		अवरोध;
 
-	case USB_DIR_IN | USB_RECIP_ENDPOINT:
+	हाल USB_सूची_IN | USB_RECIP_ENDPOINT:
 		ep = isp1760_udc_find_ep(udc, le16_to_cpu(req->wIndex));
-		if (!ep)
-			return -EINVAL;
+		अगर (!ep)
+			वापस -EINVAL;
 
 		status = 0;
-		if (ep->halted)
+		अगर (ep->halted)
 			status |= 1 << USB_ENDPOINT_HALT;
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	isp1760_udc_write(udc, DC_EPINDEX, DC_ENDPIDX(0) | DC_EPDIR);
-	isp1760_udc_write(udc, DC_BUFLEN, 2);
+	isp1760_udc_ग_लिखो(udc, DC_EPINDEX, DC_ENDPIDX(0) | DC_EPसूची);
+	isp1760_udc_ग_लिखो(udc, DC_BUFLEN, 2);
 
-	writew(cpu_to_le16(status), udc->regs + DC_DATAPORT);
+	ग_लिखोw(cpu_to_le16(status), udc->regs + DC_DATAPORT);
 
-	isp1760_udc_write(udc, DC_CTRLFUNC, DC_DSEN);
+	isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_DSEN);
 
 	dev_dbg(udc->isp->dev, "%s: status 0x%04x\n", __func__, status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp1760_udc_set_address(struct isp1760_udc *udc, u16 addr)
-{
-	if (addr > 127) {
+अटल पूर्णांक isp1760_udc_set_address(काष्ठा isp1760_udc *udc, u16 addr)
+अणु
+	अगर (addr > 127) अणु
 		dev_dbg(udc->isp->dev, "invalid device address %u\n", addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (udc->gadget.state != USB_STATE_DEFAULT &&
-	    udc->gadget.state != USB_STATE_ADDRESS) {
+	अगर (udc->gadget.state != USB_STATE_DEFAULT &&
+	    udc->gadget.state != USB_STATE_ADDRESS) अणु
 		dev_dbg(udc->isp->dev, "can't set address in state %u\n",
 			udc->gadget.state);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	usb_gadget_set_state(&udc->gadget, addr ? USB_STATE_ADDRESS :
 			     USB_STATE_DEFAULT);
 
-	isp1760_udc_write(udc, DC_ADDRESS, DC_DEVEN | addr);
+	isp1760_udc_ग_लिखो(udc, DC_ADDRESS, DC_DEVEN | addr);
 
 	spin_lock(&udc->lock);
-	isp1760_udc_ctrl_send_status(&udc->ep[0], USB_DIR_OUT);
+	isp1760_udc_ctrl_send_status(&udc->ep[0], USB_सूची_OUT);
 	spin_unlock(&udc->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool isp1760_ep0_setup_standard(struct isp1760_udc *udc,
-				       struct usb_ctrlrequest *req)
-{
+अटल bool isp1760_ep0_setup_standard(काष्ठा isp1760_udc *udc,
+				       काष्ठा usb_ctrlrequest *req)
+अणु
 	bool stall;
 
-	switch (req->bRequest) {
-	case USB_REQ_GET_STATUS:
-		return isp1760_udc_get_status(udc, req);
+	चयन (req->bRequest) अणु
+	हाल USB_REQ_GET_STATUS:
+		वापस isp1760_udc_get_status(udc, req);
 
-	case USB_REQ_CLEAR_FEATURE:
-		switch (req->bRequestType) {
-		case USB_DIR_OUT | USB_RECIP_DEVICE: {
+	हाल USB_REQ_CLEAR_FEATURE:
+		चयन (req->bRequestType) अणु
+		हाल USB_सूची_OUT | USB_RECIP_DEVICE: अणु
 			/* TODO: Handle remote wakeup feature. */
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
-		case USB_DIR_OUT | USB_RECIP_ENDPOINT: {
+		हाल USB_सूची_OUT | USB_RECIP_ENDPOINT: अणु
 			u16 index = le16_to_cpu(req->wIndex);
-			struct isp1760_ep *ep;
+			काष्ठा isp1760_ep *ep;
 
-			if (req->wLength != cpu_to_le16(0) ||
+			अगर (req->wLength != cpu_to_le16(0) ||
 			    req->wValue != cpu_to_le16(USB_ENDPOINT_HALT))
-				return true;
+				वापस true;
 
 			ep = isp1760_udc_find_ep(udc, index);
-			if (!ep)
-				return true;
+			अगर (!ep)
+				वापस true;
 
 			spin_lock(&udc->lock);
 
 			/*
-			 * If the endpoint is wedged only the gadget can clear
-			 * the halt feature. Pretend success in that case, but
-			 * keep the endpoint halted.
+			 * If the endpoपूर्णांक is wedged only the gadget can clear
+			 * the halt feature. Pretend success in that हाल, but
+			 * keep the endpoपूर्णांक halted.
 			 */
-			if (!ep->wedged)
+			अगर (!ep->wedged)
 				stall = __isp1760_udc_set_halt(ep, false);
-			else
+			अन्यथा
 				stall = false;
 
-			if (!stall)
+			अगर (!stall)
 				isp1760_udc_ctrl_send_status(&udc->ep[0],
-							     USB_DIR_OUT);
+							     USB_सूची_OUT);
 
 			spin_unlock(&udc->lock);
-			return stall;
-		}
+			वापस stall;
+		पूर्ण
 
-		default:
-			return true;
-		}
-		break;
+		शेष:
+			वापस true;
+		पूर्ण
+		अवरोध;
 
-	case USB_REQ_SET_FEATURE:
-		switch (req->bRequestType) {
-		case USB_DIR_OUT | USB_RECIP_DEVICE: {
+	हाल USB_REQ_SET_FEATURE:
+		चयन (req->bRequestType) अणु
+		हाल USB_सूची_OUT | USB_RECIP_DEVICE: अणु
 			/* TODO: Handle remote wakeup and test mode features */
-			return true;
-		}
+			वापस true;
+		पूर्ण
 
-		case USB_DIR_OUT | USB_RECIP_ENDPOINT: {
+		हाल USB_सूची_OUT | USB_RECIP_ENDPOINT: अणु
 			u16 index = le16_to_cpu(req->wIndex);
-			struct isp1760_ep *ep;
+			काष्ठा isp1760_ep *ep;
 
-			if (req->wLength != cpu_to_le16(0) ||
+			अगर (req->wLength != cpu_to_le16(0) ||
 			    req->wValue != cpu_to_le16(USB_ENDPOINT_HALT))
-				return true;
+				वापस true;
 
 			ep = isp1760_udc_find_ep(udc, index);
-			if (!ep)
-				return true;
+			अगर (!ep)
+				वापस true;
 
 			spin_lock(&udc->lock);
 
 			stall = __isp1760_udc_set_halt(ep, true);
-			if (!stall)
+			अगर (!stall)
 				isp1760_udc_ctrl_send_status(&udc->ep[0],
-							     USB_DIR_OUT);
+							     USB_सूची_OUT);
 
 			spin_unlock(&udc->lock);
-			return stall;
-		}
+			वापस stall;
+		पूर्ण
 
-		default:
-			return true;
-		}
-		break;
+		शेष:
+			वापस true;
+		पूर्ण
+		अवरोध;
 
-	case USB_REQ_SET_ADDRESS:
-		if (req->bRequestType != (USB_DIR_OUT | USB_RECIP_DEVICE))
-			return true;
+	हाल USB_REQ_SET_ADDRESS:
+		अगर (req->bRequestType != (USB_सूची_OUT | USB_RECIP_DEVICE))
+			वापस true;
 
-		return isp1760_udc_set_address(udc, le16_to_cpu(req->wValue));
+		वापस isp1760_udc_set_address(udc, le16_to_cpu(req->wValue));
 
-	case USB_REQ_SET_CONFIGURATION:
-		if (req->bRequestType != (USB_DIR_OUT | USB_RECIP_DEVICE))
-			return true;
+	हाल USB_REQ_SET_CONFIGURATION:
+		अगर (req->bRequestType != (USB_सूची_OUT | USB_RECIP_DEVICE))
+			वापस true;
 
-		if (udc->gadget.state != USB_STATE_ADDRESS &&
+		अगर (udc->gadget.state != USB_STATE_ADDRESS &&
 		    udc->gadget.state != USB_STATE_CONFIGURED)
-			return true;
+			वापस true;
 
 		stall = udc->driver->setup(&udc->gadget, req) < 0;
-		if (stall)
-			return true;
+		अगर (stall)
+			वापस true;
 
 		usb_gadget_set_state(&udc->gadget, req->wValue ?
 				     USB_STATE_CONFIGURED : USB_STATE_ADDRESS);
 
 		/*
 		 * SET_CONFIGURATION (and SET_INTERFACE) must reset the halt
-		 * feature on all endpoints. There is however no need to do so
+		 * feature on all endpoपूर्णांकs. There is however no need to करो so
 		 * explicitly here as the gadget driver will disable and
-		 * reenable endpoints, clearing the halt feature.
+		 * reenable endpoपूर्णांकs, clearing the halt feature.
 		 */
-		return false;
+		वापस false;
 
-	default:
-		return udc->driver->setup(&udc->gadget, req) < 0;
-	}
-}
+	शेष:
+		वापस udc->driver->setup(&udc->gadget, req) < 0;
+	पूर्ण
+पूर्ण
 
-static void isp1760_ep0_setup(struct isp1760_udc *udc)
-{
-	union {
-		struct usb_ctrlrequest r;
+अटल व्योम isp1760_ep0_setup(काष्ठा isp1760_udc *udc)
+अणु
+	जोड़ अणु
+		काष्ठा usb_ctrlrequest r;
 		u32 data[2];
-	} req;
-	unsigned int count;
+	पूर्ण req;
+	अचिन्हित पूर्णांक count;
 	bool stall = false;
 
 	spin_lock(&udc->lock);
 
-	isp1760_udc_write(udc, DC_EPINDEX, DC_EP0SETUP);
+	isp1760_udc_ग_लिखो(udc, DC_EPINDEX, DC_EP0SETUP);
 
-	count = isp1760_udc_read(udc, DC_BUFLEN) & DC_DATACOUNT_MASK;
-	if (count != sizeof(req)) {
+	count = isp1760_udc_पढ़ो(udc, DC_BUFLEN) & DC_DATACOUNT_MASK;
+	अगर (count != माप(req)) अणु
 		spin_unlock(&udc->lock);
 
 		dev_err(udc->isp->dev, "invalid length %u for setup packet\n",
 			count);
 
 		isp1760_udc_ctrl_send_stall(&udc->ep[0]);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	req.data[0] = isp1760_udc_read(udc, DC_DATAPORT);
-	req.data[1] = isp1760_udc_read(udc, DC_DATAPORT);
+	req.data[0] = isp1760_udc_पढ़ो(udc, DC_DATAPORT);
+	req.data[1] = isp1760_udc_पढ़ो(udc, DC_DATAPORT);
 
-	if (udc->ep0_state != ISP1760_CTRL_SETUP) {
+	अगर (udc->ep0_state != ISP1760_CTRL_SETUP) अणु
 		spin_unlock(&udc->lock);
 		dev_dbg(udc->isp->dev, "unexpected SETUP packet\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Move to the data stage. */
-	if (!req.r.wLength)
+	अगर (!req.r.wLength)
 		udc->ep0_state = ISP1760_CTRL_STATUS;
-	else if (req.r.bRequestType & USB_DIR_IN)
+	अन्यथा अगर (req.r.bRequestType & USB_सूची_IN)
 		udc->ep0_state = ISP1760_CTRL_DATA_IN;
-	else
+	अन्यथा
 		udc->ep0_state = ISP1760_CTRL_DATA_OUT;
 
-	udc->ep0_dir = req.r.bRequestType & USB_DIR_IN;
+	udc->ep0_dir = req.r.bRequestType & USB_सूची_IN;
 	udc->ep0_length = le16_to_cpu(req.r.wLength);
 
 	spin_unlock(&udc->lock);
@@ -691,61 +692,61 @@ static void isp1760_ep0_setup(struct isp1760_udc *udc)
 		le16_to_cpu(req.r.wValue), le16_to_cpu(req.r.wIndex),
 		le16_to_cpu(req.r.wLength));
 
-	if ((req.r.bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD)
+	अगर ((req.r.bRequestType & USB_TYPE_MASK) == USB_TYPE_STANDARD)
 		stall = isp1760_ep0_setup_standard(udc, &req.r);
-	else
+	अन्यथा
 		stall = udc->driver->setup(&udc->gadget, &req.r) < 0;
 
-	if (stall)
+	अगर (stall)
 		isp1760_udc_ctrl_send_stall(&udc->ep[0]);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
- * Gadget Endpoint Operations
+ * Gadget Endpoपूर्णांक Operations
  */
 
-static int isp1760_ep_enable(struct usb_ep *ep,
-			     const struct usb_endpoint_descriptor *desc)
-{
-	struct isp1760_ep *uep = ep_to_udc_ep(ep);
-	struct isp1760_udc *udc = uep->udc;
-	unsigned long flags;
-	unsigned int type;
+अटल पूर्णांक isp1760_ep_enable(काष्ठा usb_ep *ep,
+			     स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
+अणु
+	काष्ठा isp1760_ep *uep = ep_to_udc_ep(ep);
+	काष्ठा isp1760_udc *udc = uep->udc;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक type;
 
 	dev_dbg(uep->udc->isp->dev, "%s\n", __func__);
 
 	/*
-	 * Validate the descriptor. The control endpoint can't be enabled
+	 * Validate the descriptor. The control endpoपूर्णांक can't be enabled
 	 * manually.
 	 */
-	if (desc->bDescriptorType != USB_DT_ENDPOINT ||
-	    desc->bEndpointAddress == 0 ||
-	    desc->bEndpointAddress != uep->addr ||
-	    le16_to_cpu(desc->wMaxPacketSize) > ep->maxpacket) {
+	अगर (desc->bDescriptorType != USB_DT_ENDPOINT ||
+	    desc->bEndpoपूर्णांकAddress == 0 ||
+	    desc->bEndpoपूर्णांकAddress != uep->addr ||
+	    le16_to_cpu(desc->wMaxPacketSize) > ep->maxpacket) अणु
 		dev_dbg(udc->isp->dev,
 			"%s: invalid descriptor type %u addr %02x ep addr %02x max packet size %u/%u\n",
 			__func__, desc->bDescriptorType,
-			desc->bEndpointAddress, uep->addr,
+			desc->bEndpoपूर्णांकAddress, uep->addr,
 			le16_to_cpu(desc->wMaxPacketSize), ep->maxpacket);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	switch (usb_endpoint_type(desc)) {
-	case USB_ENDPOINT_XFER_ISOC:
+	चयन (usb_endpoपूर्णांक_type(desc)) अणु
+	हाल USB_ENDPOINT_XFER_ISOC:
 		type = DC_ENDPTYP_ISOC;
-		break;
-	case USB_ENDPOINT_XFER_BULK:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_BULK:
 		type = DC_ENDPTYP_BULK;
-		break;
-	case USB_ENDPOINT_XFER_INT:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_INT:
 		type = DC_ENDPTYP_INTERRUPT;
-		break;
-	case USB_ENDPOINT_XFER_CONTROL:
-	default:
+		अवरोध;
+	हाल USB_ENDPOINT_XFER_CONTROL:
+	शेष:
 		dev_dbg(udc->isp->dev, "%s: control endpoints unsupported\n",
 			__func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&udc->lock, flags);
 
@@ -756,38 +757,38 @@ static int isp1760_ep_enable(struct usb_ep *ep,
 	uep->wedged = false;
 
 	isp1760_udc_select_ep(uep);
-	isp1760_udc_write(udc, DC_EPMAXPKTSZ, uep->maxpacket);
-	isp1760_udc_write(udc, DC_BUFLEN, uep->maxpacket);
-	isp1760_udc_write(udc, DC_EPTYPE, DC_EPENABLE | type);
+	isp1760_udc_ग_लिखो(udc, DC_EPMAXPKTSZ, uep->maxpacket);
+	isp1760_udc_ग_लिखो(udc, DC_BUFLEN, uep->maxpacket);
+	isp1760_udc_ग_लिखो(udc, DC_EPTYPE, DC_EPENABLE | type);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp1760_ep_disable(struct usb_ep *ep)
-{
-	struct isp1760_ep *uep = ep_to_udc_ep(ep);
-	struct isp1760_udc *udc = uep->udc;
-	struct isp1760_request *req, *nreq;
+अटल पूर्णांक isp1760_ep_disable(काष्ठा usb_ep *ep)
+अणु
+	काष्ठा isp1760_ep *uep = ep_to_udc_ep(ep);
+	काष्ठा isp1760_udc *udc = uep->udc;
+	काष्ठा isp1760_request *req, *nreq;
 	LIST_HEAD(req_list);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(udc->isp->dev, "%s\n", __func__);
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	if (!uep->desc) {
+	अगर (!uep->desc) अणु
 		dev_dbg(udc->isp->dev, "%s: endpoint not enabled\n", __func__);
 		spin_unlock_irqrestore(&udc->lock, flags);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	uep->desc = NULL;
+	uep->desc = शून्य;
 	uep->maxpacket = 0;
 
 	isp1760_udc_select_ep(uep);
-	isp1760_udc_write(udc, DC_EPTYPE, 0);
+	isp1760_udc_ग_लिखो(udc, DC_EPTYPE, 0);
 
 	/* TODO Synchronize with the IRQ handler */
 
@@ -795,42 +796,42 @@ static int isp1760_ep_disable(struct usb_ep *ep)
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	list_for_each_entry_safe(req, nreq, &req_list, queue) {
+	list_क्रम_each_entry_safe(req, nreq, &req_list, queue) अणु
 		list_del(&req->queue);
 		isp1760_udc_request_complete(uep, req, -ESHUTDOWN);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct usb_request *isp1760_ep_alloc_request(struct usb_ep *ep,
+अटल काष्ठा usb_request *isp1760_ep_alloc_request(काष्ठा usb_ep *ep,
 						    gfp_t gfp_flags)
-{
-	struct isp1760_request *req;
+अणु
+	काष्ठा isp1760_request *req;
 
-	req = kzalloc(sizeof(*req), gfp_flags);
-	if (!req)
-		return NULL;
+	req = kzalloc(माप(*req), gfp_flags);
+	अगर (!req)
+		वापस शून्य;
 
-	return &req->req;
-}
+	वापस &req->req;
+पूर्ण
 
-static void isp1760_ep_free_request(struct usb_ep *ep, struct usb_request *_req)
-{
-	struct isp1760_request *req = req_to_udc_req(_req);
+अटल व्योम isp1760_ep_मुक्त_request(काष्ठा usb_ep *ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा isp1760_request *req = req_to_udc_req(_req);
 
-	kfree(req);
-}
+	kमुक्त(req);
+पूर्ण
 
-static int isp1760_ep_queue(struct usb_ep *ep, struct usb_request *_req,
+अटल पूर्णांक isp1760_ep_queue(काष्ठा usb_ep *ep, काष्ठा usb_request *_req,
 			    gfp_t gfp_flags)
-{
-	struct isp1760_request *req = req_to_udc_req(_req);
-	struct isp1760_ep *uep = ep_to_udc_ep(ep);
-	struct isp1760_udc *udc = uep->udc;
+अणु
+	काष्ठा isp1760_request *req = req_to_udc_req(_req);
+	काष्ठा isp1760_ep *uep = ep_to_udc_ep(ep);
+	काष्ठा isp1760_udc *udc = uep->udc;
 	bool complete = false;
-	unsigned long flags;
-	int ret = 0;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret = 0;
 
 	_req->status = -EINPROGRESS;
 	_req->actual = 0;
@@ -843,153 +844,153 @@ static int isp1760_ep_queue(struct usb_ep *ep, struct usb_request *_req,
 
 	req->ep = uep;
 
-	if (uep->addr == 0) {
-		if (_req->length != udc->ep0_length &&
-		    udc->ep0_state != ISP1760_CTRL_DATA_IN) {
+	अगर (uep->addr == 0) अणु
+		अगर (_req->length != udc->ep0_length &&
+		    udc->ep0_state != ISP1760_CTRL_DATA_IN) अणु
 			dev_dbg(udc->isp->dev,
 				"%s: invalid length %u for req %p\n",
 				__func__, _req->length, req);
 			ret = -EINVAL;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 
-		switch (udc->ep0_state) {
-		case ISP1760_CTRL_DATA_IN:
+		चयन (udc->ep0_state) अणु
+		हाल ISP1760_CTRL_DATA_IN:
 			dev_dbg(udc->isp->dev, "%s: transmitting req %p\n",
 				__func__, req);
 
 			list_add_tail(&req->queue, &uep->queue);
 			isp1760_udc_transmit(uep, req);
-			break;
+			अवरोध;
 
-		case ISP1760_CTRL_DATA_OUT:
+		हाल ISP1760_CTRL_DATA_OUT:
 			list_add_tail(&req->queue, &uep->queue);
-			__isp1760_udc_select_ep(uep, USB_DIR_OUT);
-			isp1760_udc_write(udc, DC_CTRLFUNC, DC_DSEN);
-			break;
+			__isp1760_udc_select_ep(uep, USB_सूची_OUT);
+			isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_DSEN);
+			अवरोध;
 
-		case ISP1760_CTRL_STATUS:
+		हाल ISP1760_CTRL_STATUS:
 			complete = true;
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			dev_dbg(udc->isp->dev, "%s: invalid ep0 state\n",
 				__func__);
 			ret = -EINVAL;
-			break;
-		}
-	} else if (uep->desc) {
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अगर (uep->desc) अणु
 		bool empty = list_empty(&uep->queue);
 
 		list_add_tail(&req->queue, &uep->queue);
-		if ((uep->addr & USB_DIR_IN) && !uep->halted && empty)
+		अगर ((uep->addr & USB_सूची_IN) && !uep->halted && empty)
 			isp1760_udc_transmit(uep, req);
-		else if (!(uep->addr & USB_DIR_IN) && uep->rx_pending)
+		अन्यथा अगर (!(uep->addr & USB_सूची_IN) && uep->rx_pending)
 			complete = isp1760_udc_receive(uep, req);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(udc->isp->dev,
 			"%s: can't queue request to disabled ep%02x\n",
 			__func__, uep->addr);
 		ret = -ESHUTDOWN;
-	}
+	पूर्ण
 
-done:
-	if (ret < 0)
-		req->ep = NULL;
+करोne:
+	अगर (ret < 0)
+		req->ep = शून्य;
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	if (complete)
+	अगर (complete)
 		isp1760_udc_request_complete(uep, req, 0);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int isp1760_ep_dequeue(struct usb_ep *ep, struct usb_request *_req)
-{
-	struct isp1760_request *req = req_to_udc_req(_req);
-	struct isp1760_ep *uep = ep_to_udc_ep(ep);
-	struct isp1760_udc *udc = uep->udc;
-	unsigned long flags;
+अटल पूर्णांक isp1760_ep_dequeue(काष्ठा usb_ep *ep, काष्ठा usb_request *_req)
+अणु
+	काष्ठा isp1760_request *req = req_to_udc_req(_req);
+	काष्ठा isp1760_ep *uep = ep_to_udc_ep(ep);
+	काष्ठा isp1760_udc *udc = uep->udc;
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(uep->udc->isp->dev, "%s(ep%02x)\n", __func__, uep->addr);
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	if (req->ep != uep)
-		req = NULL;
-	else
+	अगर (req->ep != uep)
+		req = शून्य;
+	अन्यथा
 		list_del(&req->queue);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	if (!req)
-		return -EINVAL;
+	अगर (!req)
+		वापस -EINVAL;
 
 	isp1760_udc_request_complete(uep, req, -ECONNRESET);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __isp1760_ep_set_halt(struct isp1760_ep *uep, bool stall, bool wedge)
-{
-	struct isp1760_udc *udc = uep->udc;
-	int ret;
+अटल पूर्णांक __isp1760_ep_set_halt(काष्ठा isp1760_ep *uep, bool stall, bool wedge)
+अणु
+	काष्ठा isp1760_udc *udc = uep->udc;
+	पूर्णांक ret;
 
-	if (!uep->addr) {
+	अगर (!uep->addr) अणु
 		/*
-		 * Halting the control endpoint is only valid as a delayed error
+		 * Halting the control endpoपूर्णांक is only valid as a delayed error
 		 * response to a SETUP packet. Make sure EP0 is in the right
 		 * stage and that the gadget isn't trying to clear the halt
 		 * condition.
 		 */
-		if (WARN_ON(udc->ep0_state == ISP1760_CTRL_SETUP || !stall ||
-			     wedge)) {
-			return -EINVAL;
-		}
-	}
+		अगर (WARN_ON(udc->ep0_state == ISP1760_CTRL_SETUP || !stall ||
+			     wedge)) अणु
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	if (uep->addr && !uep->desc) {
+	अगर (uep->addr && !uep->desc) अणु
 		dev_dbg(udc->isp->dev, "%s: ep%02x is disabled\n", __func__,
 			uep->addr);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (uep->addr & USB_DIR_IN) {
-		/* Refuse to halt IN endpoints with active transfers. */
-		if (!list_empty(&uep->queue)) {
+	अगर (uep->addr & USB_सूची_IN) अणु
+		/* Refuse to halt IN endpoपूर्णांकs with active transfers. */
+		अगर (!list_empty(&uep->queue)) अणु
 			dev_dbg(udc->isp->dev,
 				"%s: ep%02x has request pending\n", __func__,
 				uep->addr);
-			return -EAGAIN;
-		}
-	}
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण
 
 	ret = __isp1760_udc_set_halt(uep, stall);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (!uep->addr) {
+	अगर (!uep->addr) अणु
 		/*
 		 * Stalling EP0 completes the control transaction, move back to
 		 * the SETUP state.
 		 */
 		udc->ep0_state = ISP1760_CTRL_SETUP;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (wedge)
+	अगर (wedge)
 		uep->wedged = true;
-	else if (!stall)
+	अन्यथा अगर (!stall)
 		uep->wedged = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp1760_ep_set_halt(struct usb_ep *ep, int value)
-{
-	struct isp1760_ep *uep = ep_to_udc_ep(ep);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक isp1760_ep_set_halt(काष्ठा usb_ep *ep, पूर्णांक value)
+अणु
+	काष्ठा isp1760_ep *uep = ep_to_udc_ep(ep);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	dev_dbg(uep->udc->isp->dev, "%s: %s halt on ep%02x\n", __func__,
 		value ? "set" : "clear", uep->addr);
@@ -998,14 +999,14 @@ static int isp1760_ep_set_halt(struct usb_ep *ep, int value)
 	ret = __isp1760_ep_set_halt(uep, value, false);
 	spin_unlock_irqrestore(&uep->udc->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int isp1760_ep_set_wedge(struct usb_ep *ep)
-{
-	struct isp1760_ep *uep = ep_to_udc_ep(ep);
-	unsigned long flags;
-	int ret;
+अटल पूर्णांक isp1760_ep_set_wedge(काष्ठा usb_ep *ep)
+अणु
+	काष्ठा isp1760_ep *uep = ep_to_udc_ep(ep);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक ret;
 
 	dev_dbg(uep->udc->isp->dev, "%s: set wedge on ep%02x)\n", __func__,
 		uep->addr);
@@ -1014,57 +1015,57 @@ static int isp1760_ep_set_wedge(struct usb_ep *ep)
 	ret = __isp1760_ep_set_halt(uep, true, true);
 	spin_unlock_irqrestore(&uep->udc->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void isp1760_ep_fifo_flush(struct usb_ep *ep)
-{
-	struct isp1760_ep *uep = ep_to_udc_ep(ep);
-	struct isp1760_udc *udc = uep->udc;
-	unsigned long flags;
+अटल व्योम isp1760_ep_fअगरo_flush(काष्ठा usb_ep *ep)
+अणु
+	काष्ठा isp1760_ep *uep = ep_to_udc_ep(ep);
+	काष्ठा isp1760_udc *udc = uep->udc;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
 	isp1760_udc_select_ep(uep);
 
 	/*
-	 * Set the CLBUF bit twice to flush both buffers in case double
+	 * Set the CLBUF bit twice to flush both buffers in हाल द्विगुन
 	 * buffering is enabled.
 	 */
-	isp1760_udc_write(udc, DC_CTRLFUNC, DC_CLBUF);
-	isp1760_udc_write(udc, DC_CTRLFUNC, DC_CLBUF);
+	isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_CLBUF);
+	isp1760_udc_ग_लिखो(udc, DC_CTRLFUNC, DC_CLBUF);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-}
+पूर्ण
 
-static const struct usb_ep_ops isp1760_ep_ops = {
+अटल स्थिर काष्ठा usb_ep_ops isp1760_ep_ops = अणु
 	.enable = isp1760_ep_enable,
 	.disable = isp1760_ep_disable,
 	.alloc_request = isp1760_ep_alloc_request,
-	.free_request = isp1760_ep_free_request,
+	.मुक्त_request = isp1760_ep_मुक्त_request,
 	.queue = isp1760_ep_queue,
 	.dequeue = isp1760_ep_dequeue,
 	.set_halt = isp1760_ep_set_halt,
 	.set_wedge = isp1760_ep_set_wedge,
-	.fifo_flush = isp1760_ep_fifo_flush,
-};
+	.fअगरo_flush = isp1760_ep_fअगरo_flush,
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Device States
  */
 
 /* Called with the UDC spinlock held. */
-static void isp1760_udc_connect(struct isp1760_udc *udc)
-{
+अटल व्योम isp1760_udc_connect(काष्ठा isp1760_udc *udc)
+अणु
 	usb_gadget_set_state(&udc->gadget, USB_STATE_POWERED);
-	mod_timer(&udc->vbus_timer, jiffies + ISP1760_VBUS_POLL_INTERVAL);
-}
+	mod_समयr(&udc->vbus_समयr, jअगरfies + ISP1760_VBUS_POLL_INTERVAL);
+पूर्ण
 
 /* Called with the UDC spinlock held. */
-static void isp1760_udc_disconnect(struct isp1760_udc *udc)
-{
-	if (udc->gadget.state < USB_STATE_POWERED)
-		return;
+अटल व्योम isp1760_udc_disconnect(काष्ठा isp1760_udc *udc)
+अणु
+	अगर (udc->gadget.state < USB_STATE_POWERED)
+		वापस;
 
 	dev_dbg(udc->isp->dev, "Device disconnected in state %u\n",
 		 udc->gadget.state);
@@ -1072,48 +1073,48 @@ static void isp1760_udc_disconnect(struct isp1760_udc *udc)
 	udc->gadget.speed = USB_SPEED_UNKNOWN;
 	usb_gadget_set_state(&udc->gadget, USB_STATE_ATTACHED);
 
-	if (udc->driver->disconnect)
+	अगर (udc->driver->disconnect)
 		udc->driver->disconnect(&udc->gadget);
 
-	del_timer(&udc->vbus_timer);
+	del_समयr(&udc->vbus_समयr);
 
-	/* TODO Reset all endpoints ? */
-}
+	/* TODO Reset all endpoपूर्णांकs ? */
+पूर्ण
 
-static void isp1760_udc_init_hw(struct isp1760_udc *udc)
-{
+अटल व्योम isp1760_udc_init_hw(काष्ठा isp1760_udc *udc)
+अणु
 	/*
-	 * The device controller currently shares its interrupt with the host
-	 * controller, the DC_IRQ polarity and signaling mode are ignored. Set
+	 * The device controller currently shares its पूर्णांकerrupt with the host
+	 * controller, the DC_IRQ polarity and संकेतing mode are ignored. Set
 	 * the to active-low level-triggered.
 	 *
-	 * Configure the control, in and out pipes to generate interrupts on
-	 * ACK tokens only (and NYET for the out pipe). The default
-	 * configuration also generates an interrupt on the first NACK token.
+	 * Configure the control, in and out pipes to generate पूर्णांकerrupts on
+	 * ACK tokens only (and NYET क्रम the out pipe). The शेष
+	 * configuration also generates an पूर्णांकerrupt on the first NACK token.
 	 */
-	isp1760_udc_write(udc, DC_INTCONF, DC_CDBGMOD_ACK | DC_DDBGMODIN_ACK |
+	isp1760_udc_ग_लिखो(udc, DC_INTCONF, DC_CDBGMOD_ACK | DC_DDBGMODIN_ACK |
 			  DC_DDBGMODOUT_ACK_NYET);
 
-	isp1760_udc_write(udc, DC_INTENABLE, DC_IEPRXTX(7) | DC_IEPRXTX(6) |
+	isp1760_udc_ग_लिखो(udc, DC_INTENABLE, DC_IEPRXTX(7) | DC_IEPRXTX(6) |
 			  DC_IEPRXTX(5) | DC_IEPRXTX(4) | DC_IEPRXTX(3) |
 			  DC_IEPRXTX(2) | DC_IEPRXTX(1) | DC_IEPRXTX(0) |
 			  DC_IEP0SETUP | DC_IEVBUS | DC_IERESM | DC_IESUSP |
 			  DC_IEHS_STA | DC_IEBRST);
 
-	if (udc->connected)
+	अगर (udc->connected)
 		isp1760_set_pullup(udc->isp, true);
 
-	isp1760_udc_write(udc, DC_ADDRESS, DC_DEVEN);
-}
+	isp1760_udc_ग_लिखो(udc, DC_ADDRESS, DC_DEVEN);
+पूर्ण
 
-static void isp1760_udc_reset(struct isp1760_udc *udc)
-{
-	unsigned long flags;
+अटल व्योम isp1760_udc_reset(काष्ठा isp1760_udc *udc)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
 	/*
-	 * The bus reset has reset most registers to their default value,
+	 * The bus reset has reset most रेजिस्टरs to their शेष value,
 	 * reinitialize the UDC hardware.
 	 */
 	isp1760_udc_init_hw(udc);
@@ -1124,87 +1125,87 @@ static void isp1760_udc_reset(struct isp1760_udc *udc)
 	usb_gadget_udc_reset(&udc->gadget, udc->driver);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-}
+पूर्ण
 
-static void isp1760_udc_suspend(struct isp1760_udc *udc)
-{
-	if (udc->gadget.state < USB_STATE_DEFAULT)
-		return;
+अटल व्योम isp1760_udc_suspend(काष्ठा isp1760_udc *udc)
+अणु
+	अगर (udc->gadget.state < USB_STATE_DEFAULT)
+		वापस;
 
-	if (udc->driver->suspend)
+	अगर (udc->driver->suspend)
 		udc->driver->suspend(&udc->gadget);
-}
+पूर्ण
 
-static void isp1760_udc_resume(struct isp1760_udc *udc)
-{
-	if (udc->gadget.state < USB_STATE_DEFAULT)
-		return;
+अटल व्योम isp1760_udc_resume(काष्ठा isp1760_udc *udc)
+अणु
+	अगर (udc->gadget.state < USB_STATE_DEFAULT)
+		वापस;
 
-	if (udc->driver->resume)
+	अगर (udc->driver->resume)
 		udc->driver->resume(&udc->gadget);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Gadget Operations
  */
 
-static int isp1760_udc_get_frame(struct usb_gadget *gadget)
-{
-	struct isp1760_udc *udc = gadget_to_udc(gadget);
+अटल पूर्णांक isp1760_udc_get_frame(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा isp1760_udc *udc = gadget_to_udc(gadget);
 
-	return isp1760_udc_read(udc, DC_FRAMENUM) & ((1 << 11) - 1);
-}
+	वापस isp1760_udc_पढ़ो(udc, DC_FRAMENUM) & ((1 << 11) - 1);
+पूर्ण
 
-static int isp1760_udc_wakeup(struct usb_gadget *gadget)
-{
-	struct isp1760_udc *udc = gadget_to_udc(gadget);
+अटल पूर्णांक isp1760_udc_wakeup(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा isp1760_udc *udc = gadget_to_udc(gadget);
 
 	dev_dbg(udc->isp->dev, "%s\n", __func__);
-	return -ENOTSUPP;
-}
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int isp1760_udc_set_selfpowered(struct usb_gadget *gadget,
-				       int is_selfpowered)
-{
-	struct isp1760_udc *udc = gadget_to_udc(gadget);
+अटल पूर्णांक isp1760_udc_set_selfघातered(काष्ठा usb_gadget *gadget,
+				       पूर्णांक is_selfघातered)
+अणु
+	काष्ठा isp1760_udc *udc = gadget_to_udc(gadget);
 
-	if (is_selfpowered)
+	अगर (is_selfघातered)
 		udc->devstatus |= 1 << USB_DEVICE_SELF_POWERED;
-	else
+	अन्यथा
 		udc->devstatus &= ~(1 << USB_DEVICE_SELF_POWERED);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp1760_udc_pullup(struct usb_gadget *gadget, int is_on)
-{
-	struct isp1760_udc *udc = gadget_to_udc(gadget);
+अटल पूर्णांक isp1760_udc_pullup(काष्ठा usb_gadget *gadget, पूर्णांक is_on)
+अणु
+	काष्ठा isp1760_udc *udc = gadget_to_udc(gadget);
 
 	isp1760_set_pullup(udc->isp, is_on);
 	udc->connected = is_on;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp1760_udc_start(struct usb_gadget *gadget,
-			     struct usb_gadget_driver *driver)
-{
-	struct isp1760_udc *udc = gadget_to_udc(gadget);
-	unsigned long flags;
+अटल पूर्णांक isp1760_udc_start(काष्ठा usb_gadget *gadget,
+			     काष्ठा usb_gadget_driver *driver)
+अणु
+	काष्ठा isp1760_udc *udc = gadget_to_udc(gadget);
+	अचिन्हित दीर्घ flags;
 
-	/* The hardware doesn't support low speed. */
-	if (driver->max_speed < USB_SPEED_FULL) {
+	/* The hardware करोesn't support low speed. */
+	अगर (driver->max_speed < USB_SPEED_FULL) अणु
 		dev_err(udc->isp->dev, "Invalid gadget driver\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	if (udc->driver) {
+	अगर (udc->driver) अणु
 		dev_err(udc->isp->dev, "UDC already has a gadget driver\n");
 		spin_unlock_irqrestore(&udc->lock, flags);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	udc->driver = driver;
 
@@ -1218,256 +1219,256 @@ static int isp1760_udc_start(struct usb_gadget *gadget,
 
 	usb_gadget_set_state(&udc->gadget, USB_STATE_ATTACHED);
 
-	/* DMA isn't supported yet, don't enable the DMA clock. */
-	isp1760_udc_write(udc, DC_MODE, DC_GLINTENA);
+	/* DMA isn't supported yet, don't enable the DMA घड़ी. */
+	isp1760_udc_ग_लिखो(udc, DC_MODE, DC_GLINTENA);
 
 	isp1760_udc_init_hw(udc);
 
 	dev_dbg(udc->isp->dev, "UDC started with driver %s\n",
 		driver->function);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int isp1760_udc_stop(struct usb_gadget *gadget)
-{
-	struct isp1760_udc *udc = gadget_to_udc(gadget);
-	unsigned long flags;
+अटल पूर्णांक isp1760_udc_stop(काष्ठा usb_gadget *gadget)
+अणु
+	काष्ठा isp1760_udc *udc = gadget_to_udc(gadget);
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(udc->isp->dev, "%s\n", __func__);
 
-	del_timer_sync(&udc->vbus_timer);
+	del_समयr_sync(&udc->vbus_समयr);
 
-	isp1760_udc_write(udc, DC_MODE, 0);
+	isp1760_udc_ग_लिखो(udc, DC_MODE, 0);
 
 	spin_lock_irqsave(&udc->lock, flags);
-	udc->driver = NULL;
+	udc->driver = शून्य;
 	spin_unlock_irqrestore(&udc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct usb_gadget_ops isp1760_udc_ops = {
+अटल स्थिर काष्ठा usb_gadget_ops isp1760_udc_ops = अणु
 	.get_frame = isp1760_udc_get_frame,
 	.wakeup = isp1760_udc_wakeup,
-	.set_selfpowered = isp1760_udc_set_selfpowered,
+	.set_selfघातered = isp1760_udc_set_selfघातered,
 	.pullup = isp1760_udc_pullup,
 	.udc_start = isp1760_udc_start,
 	.udc_stop = isp1760_udc_stop,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------------------
  * Interrupt Handling
  */
 
-static irqreturn_t isp1760_udc_irq(int irq, void *dev)
-{
-	struct isp1760_udc *udc = dev;
-	unsigned int i;
+अटल irqवापस_t isp1760_udc_irq(पूर्णांक irq, व्योम *dev)
+अणु
+	काष्ठा isp1760_udc *udc = dev;
+	अचिन्हित पूर्णांक i;
 	u32 status;
 
-	status = isp1760_udc_read(udc, DC_INTERRUPT)
-	       & isp1760_udc_read(udc, DC_INTENABLE);
-	isp1760_udc_write(udc, DC_INTERRUPT, status);
+	status = isp1760_udc_पढ़ो(udc, DC_INTERRUPT)
+	       & isp1760_udc_पढ़ो(udc, DC_INTENABLE);
+	isp1760_udc_ग_लिखो(udc, DC_INTERRUPT, status);
 
-	if (status & DC_IEVBUS) {
+	अगर (status & DC_IEVBUS) अणु
 		dev_dbg(udc->isp->dev, "%s(VBUS)\n", __func__);
-		/* The VBUS interrupt is only triggered when VBUS appears. */
+		/* The VBUS पूर्णांकerrupt is only triggered when VBUS appears. */
 		spin_lock(&udc->lock);
 		isp1760_udc_connect(udc);
 		spin_unlock(&udc->lock);
-	}
+	पूर्ण
 
-	if (status & DC_IEBRST) {
+	अगर (status & DC_IEBRST) अणु
 		dev_dbg(udc->isp->dev, "%s(BRST)\n", __func__);
 
 		isp1760_udc_reset(udc);
-	}
+	पूर्ण
 
-	for (i = 0; i <= 7; ++i) {
-		struct isp1760_ep *ep = &udc->ep[i*2];
+	क्रम (i = 0; i <= 7; ++i) अणु
+		काष्ठा isp1760_ep *ep = &udc->ep[i*2];
 
-		if (status & DC_IEPTX(i)) {
+		अगर (status & DC_IEPTX(i)) अणु
 			dev_dbg(udc->isp->dev, "%s(EPTX%u)\n", __func__, i);
 			isp1760_ep_tx_complete(ep);
-		}
+		पूर्ण
 
-		if (status & DC_IEPRX(i)) {
+		अगर (status & DC_IEPRX(i)) अणु
 			dev_dbg(udc->isp->dev, "%s(EPRX%u)\n", __func__, i);
-			isp1760_ep_rx_ready(i ? ep - 1 : ep);
-		}
-	}
+			isp1760_ep_rx_पढ़ोy(i ? ep - 1 : ep);
+		पूर्ण
+	पूर्ण
 
-	if (status & DC_IEP0SETUP) {
+	अगर (status & DC_IEP0SETUP) अणु
 		dev_dbg(udc->isp->dev, "%s(EP0SETUP)\n", __func__);
 
 		isp1760_ep0_setup(udc);
-	}
+	पूर्ण
 
-	if (status & DC_IERESM) {
+	अगर (status & DC_IERESM) अणु
 		dev_dbg(udc->isp->dev, "%s(RESM)\n", __func__);
 		isp1760_udc_resume(udc);
-	}
+	पूर्ण
 
-	if (status & DC_IESUSP) {
+	अगर (status & DC_IESUSP) अणु
 		dev_dbg(udc->isp->dev, "%s(SUSP)\n", __func__);
 
 		spin_lock(&udc->lock);
-		if (!(isp1760_udc_read(udc, DC_MODE) & DC_VBUSSTAT))
+		अगर (!(isp1760_udc_पढ़ो(udc, DC_MODE) & DC_VBUSSTAT))
 			isp1760_udc_disconnect(udc);
-		else
+		अन्यथा
 			isp1760_udc_suspend(udc);
 		spin_unlock(&udc->lock);
-	}
+	पूर्ण
 
-	if (status & DC_IEHS_STA) {
+	अगर (status & DC_IEHS_STA) अणु
 		dev_dbg(udc->isp->dev, "%s(HS_STA)\n", __func__);
 		udc->gadget.speed = USB_SPEED_HIGH;
-	}
+	पूर्ण
 
-	return status ? IRQ_HANDLED : IRQ_NONE;
-}
+	वापस status ? IRQ_HANDLED : IRQ_NONE;
+पूर्ण
 
-static void isp1760_udc_vbus_poll(struct timer_list *t)
-{
-	struct isp1760_udc *udc = from_timer(udc, t, vbus_timer);
-	unsigned long flags;
+अटल व्योम isp1760_udc_vbus_poll(काष्ठा समयr_list *t)
+अणु
+	काष्ठा isp1760_udc *udc = from_समयr(udc, t, vbus_समयr);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&udc->lock, flags);
 
-	if (!(isp1760_udc_read(udc, DC_MODE) & DC_VBUSSTAT))
+	अगर (!(isp1760_udc_पढ़ो(udc, DC_MODE) & DC_VBUSSTAT))
 		isp1760_udc_disconnect(udc);
-	else if (udc->gadget.state >= USB_STATE_POWERED)
-		mod_timer(&udc->vbus_timer,
-			  jiffies + ISP1760_VBUS_POLL_INTERVAL);
+	अन्यथा अगर (udc->gadget.state >= USB_STATE_POWERED)
+		mod_समयr(&udc->vbus_समयr,
+			  jअगरfies + ISP1760_VBUS_POLL_INTERVAL);
 
 	spin_unlock_irqrestore(&udc->lock, flags);
-}
+पूर्ण
 
 /* -----------------------------------------------------------------------------
  * Registration
  */
 
-static void isp1760_udc_init_eps(struct isp1760_udc *udc)
-{
-	unsigned int i;
+अटल व्योम isp1760_udc_init_eps(काष्ठा isp1760_udc *udc)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	INIT_LIST_HEAD(&udc->gadget.ep_list);
 
-	for (i = 0; i < ARRAY_SIZE(udc->ep); ++i) {
-		struct isp1760_ep *ep = &udc->ep[i];
-		unsigned int ep_num = (i + 1) / 2;
+	क्रम (i = 0; i < ARRAY_SIZE(udc->ep); ++i) अणु
+		काष्ठा isp1760_ep *ep = &udc->ep[i];
+		अचिन्हित पूर्णांक ep_num = (i + 1) / 2;
 		bool is_in = !(i & 1);
 
 		ep->udc = udc;
 
 		INIT_LIST_HEAD(&ep->queue);
 
-		ep->addr = (ep_num && is_in ? USB_DIR_IN : USB_DIR_OUT)
+		ep->addr = (ep_num && is_in ? USB_सूची_IN : USB_सूची_OUT)
 			 | ep_num;
-		ep->desc = NULL;
+		ep->desc = शून्य;
 
-		sprintf(ep->name, "ep%u%s", ep_num,
+		प्र_लिखो(ep->name, "ep%u%s", ep_num,
 			ep_num ? (is_in ? "in" : "out") : "");
 
 		ep->ep.ops = &isp1760_ep_ops;
 		ep->ep.name = ep->name;
 
 		/*
-		 * Hardcode the maximum packet sizes for now, to 64 bytes for
-		 * the control endpoint and 512 bytes for all other endpoints.
-		 * This fits in the 8kB FIFO without double-buffering.
+		 * Hardcode the maximum packet sizes क्रम now, to 64 bytes क्रम
+		 * the control endpoपूर्णांक and 512 bytes क्रम all other endpoपूर्णांकs.
+		 * This fits in the 8kB FIFO without द्विगुन-buffering.
 		 */
-		if (ep_num == 0) {
+		अगर (ep_num == 0) अणु
 			usb_ep_set_maxpacket_limit(&ep->ep, 64);
 			ep->ep.caps.type_control = true;
 			ep->ep.caps.dir_in = true;
 			ep->ep.caps.dir_out = true;
 			ep->maxpacket = 64;
 			udc->gadget.ep0 = &ep->ep;
-		} else {
+		पूर्ण अन्यथा अणु
 			usb_ep_set_maxpacket_limit(&ep->ep, 512);
 			ep->ep.caps.type_iso = true;
 			ep->ep.caps.type_bulk = true;
-			ep->ep.caps.type_int = true;
+			ep->ep.caps.type_पूर्णांक = true;
 			ep->maxpacket = 0;
 			list_add_tail(&ep->ep.ep_list, &udc->gadget.ep_list);
-		}
+		पूर्ण
 
-		if (is_in)
+		अगर (is_in)
 			ep->ep.caps.dir_in = true;
-		else
+		अन्यथा
 			ep->ep.caps.dir_out = true;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int isp1760_udc_init(struct isp1760_udc *udc)
-{
+अटल पूर्णांक isp1760_udc_init(काष्ठा isp1760_udc *udc)
+अणु
 	u16 scratch;
 	u32 chipid;
 
 	/*
 	 * Check that the controller is present by writing to the scratch
-	 * register, modifying the bus pattern by reading from the chip ID
-	 * register, and reading the scratch register value back. The chip ID
-	 * and scratch register contents must match the expected values.
+	 * रेजिस्टर, modअगरying the bus pattern by पढ़ोing from the chip ID
+	 * रेजिस्टर, and पढ़ोing the scratch रेजिस्टर value back. The chip ID
+	 * and scratch रेजिस्टर contents must match the expected values.
 	 */
-	isp1760_udc_write(udc, DC_SCRATCH, 0xbabe);
-	chipid = isp1760_udc_read(udc, DC_CHIPID);
-	scratch = isp1760_udc_read(udc, DC_SCRATCH);
+	isp1760_udc_ग_लिखो(udc, DC_SCRATCH, 0xbabe);
+	chipid = isp1760_udc_पढ़ो(udc, DC_CHIPID);
+	scratch = isp1760_udc_पढ़ो(udc, DC_SCRATCH);
 
-	if (scratch != 0xbabe) {
+	अगर (scratch != 0xbabe) अणु
 		dev_err(udc->isp->dev,
 			"udc: scratch test failed (0x%04x/0x%08x)\n",
 			scratch, chipid);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (chipid != 0x00011582 && chipid != 0x00158210) {
+	अगर (chipid != 0x00011582 && chipid != 0x00158210) अणु
 		dev_err(udc->isp->dev, "udc: invalid chip ID 0x%08x\n", chipid);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	/* Reset the device controller. */
-	isp1760_udc_write(udc, DC_MODE, DC_SFRESET);
+	isp1760_udc_ग_लिखो(udc, DC_MODE, DC_SFRESET);
 	usleep_range(10000, 11000);
-	isp1760_udc_write(udc, DC_MODE, 0);
+	isp1760_udc_ग_लिखो(udc, DC_MODE, 0);
 	usleep_range(10000, 11000);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int isp1760_udc_register(struct isp1760_device *isp, int irq,
-			 unsigned long irqflags)
-{
-	struct isp1760_udc *udc = &isp->udc;
-	int ret;
+पूर्णांक isp1760_udc_रेजिस्टर(काष्ठा isp1760_device *isp, पूर्णांक irq,
+			 अचिन्हित दीर्घ irqflags)
+अणु
+	काष्ठा isp1760_udc *udc = &isp->udc;
+	पूर्णांक ret;
 
 	udc->irq = -1;
 	udc->isp = isp;
 	udc->regs = isp->regs;
 
 	spin_lock_init(&udc->lock);
-	timer_setup(&udc->vbus_timer, isp1760_udc_vbus_poll, 0);
+	समयr_setup(&udc->vbus_समयr, isp1760_udc_vbus_poll, 0);
 
 	ret = isp1760_udc_init(udc);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	udc->irqname = kasprintf(GFP_KERNEL, "%s (udc)", dev_name(isp->dev));
-	if (!udc->irqname)
-		return -ENOMEM;
+	udc->irqname = kaप्र_लिखो(GFP_KERNEL, "%s (udc)", dev_name(isp->dev));
+	अगर (!udc->irqname)
+		वापस -ENOMEM;
 
 	ret = request_irq(irq, isp1760_udc_irq, IRQF_SHARED | irqflags,
 			  udc->irqname, udc);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
 	udc->irq = irq;
 
 	/*
-	 * Initialize the gadget static fields and register its device. Gadget
-	 * fields that vary during the life time of the gadget are initialized
+	 * Initialize the gadget अटल fields and रेजिस्टर its device. Gadget
+	 * fields that vary during the lअगरe समय of the gadget are initialized
 	 * by the UDC core.
 	 */
 	udc->gadget.ops = &isp1760_udc_ops;
@@ -1478,28 +1479,28 @@ int isp1760_udc_register(struct isp1760_device *isp, int irq,
 	isp1760_udc_init_eps(udc);
 
 	ret = usb_add_gadget_udc(isp->dev, &udc->gadget);
-	if (ret < 0)
-		goto error;
+	अगर (ret < 0)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
-	if (udc->irq >= 0)
-		free_irq(udc->irq, udc);
-	kfree(udc->irqname);
+	अगर (udc->irq >= 0)
+		मुक्त_irq(udc->irq, udc);
+	kमुक्त(udc->irqname);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void isp1760_udc_unregister(struct isp1760_device *isp)
-{
-	struct isp1760_udc *udc = &isp->udc;
+व्योम isp1760_udc_unरेजिस्टर(काष्ठा isp1760_device *isp)
+अणु
+	काष्ठा isp1760_udc *udc = &isp->udc;
 
-	if (!udc->isp)
-		return;
+	अगर (!udc->isp)
+		वापस;
 
 	usb_del_gadget_udc(&udc->gadget);
 
-	free_irq(udc->irq, udc);
-	kfree(udc->irqname);
-}
+	मुक्त_irq(udc->irq, udc);
+	kमुक्त(udc->irqname);
+पूर्ण

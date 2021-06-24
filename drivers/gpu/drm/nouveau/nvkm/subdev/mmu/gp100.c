@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2017 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,28 +20,28 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "mem.h"
-#include "vmm.h"
+#समावेश "mem.h"
+#समावेश "vmm.h"
 
-#include <core/option.h>
+#समावेश <core/option.h>
 
-#include <nvif/class.h>
+#समावेश <nvअगर/class.h>
 
-static const struct nvkm_mmu_func
-gp100_mmu = {
+अटल स्थिर काष्ठा nvkm_mmu_func
+gp100_mmu = अणु
 	.dma_bits = 47,
-	.mmu = {{ -1, -1, NVIF_CLASS_MMU_GF100}},
-	.mem = {{ -1,  0, NVIF_CLASS_MEM_GF100}, gf100_mem_new, gf100_mem_map },
-	.vmm = {{ -1,  0, NVIF_CLASS_VMM_GP100}, gp100_vmm_new },
+	.mmu = अणुअणु -1, -1, NVIF_CLASS_MMU_GF100पूर्णपूर्ण,
+	.mem = अणुअणु -1,  0, NVIF_CLASS_MEM_GF100पूर्ण, gf100_mem_new, gf100_mem_map पूर्ण,
+	.vmm = अणुअणु -1,  0, NVIF_CLASS_VMM_GP100पूर्ण, gp100_vmm_new पूर्ण,
 	.kind = gm200_mmu_kind,
 	.kind_sys = true,
-};
+पूर्ण;
 
-int
-gp100_mmu_new(struct nvkm_device *device, enum nvkm_subdev_type type, int inst,
-	      struct nvkm_mmu **pmmu)
-{
-	if (!nvkm_boolopt(device->cfgopt, "GP100MmuLayout", true))
-		return gm200_mmu_new(device, type, inst, pmmu);
-	return nvkm_mmu_new_(&gp100_mmu, device, type, inst, pmmu);
-}
+पूर्णांक
+gp100_mmu_new(काष्ठा nvkm_device *device, क्रमागत nvkm_subdev_type type, पूर्णांक inst,
+	      काष्ठा nvkm_mmu **pmmu)
+अणु
+	अगर (!nvkm_boolopt(device->cfgopt, "GP100MmuLayout", true))
+		वापस gm200_mmu_new(device, type, inst, pmmu);
+	वापस nvkm_mmu_new_(&gp100_mmu, device, type, inst, pmmu);
+पूर्ण

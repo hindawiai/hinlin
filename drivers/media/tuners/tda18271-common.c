@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
-    tda18271-common.c - driver for the Philips / NXP TDA18271 silicon tuner
+    tda18271-common.c - driver क्रम the Philips / NXP TDA18271 silicon tuner
 
     Copyright (C) 2007, 2008 Michael Krufky <mkrufky@linuxtv.org>
 
 */
 
-#include "tda18271-priv.h"
+#समावेश "tda18271-priv.h"
 
-static int tda18271_i2c_gate_ctrl(struct dvb_frontend *fe, int enable)
-{
-	struct tda18271_priv *priv = fe->tuner_priv;
-	enum tda18271_i2c_gate gate;
-	int ret = 0;
+अटल पूर्णांक tda18271_i2c_gate_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक enable)
+अणु
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	क्रमागत tda18271_i2c_gate gate;
+	पूर्णांक ret = 0;
 
-	switch (priv->gate) {
-	case TDA18271_GATE_DIGITAL:
-	case TDA18271_GATE_ANALOG:
+	चयन (priv->gate) अणु
+	हाल TDA18271_GATE_DIGITAL:
+	हाल TDA18271_GATE_ANALOG:
 		gate = priv->gate;
-		break;
-	case TDA18271_GATE_AUTO:
-	default:
-		switch (priv->mode) {
-		case TDA18271_DIGITAL:
+		अवरोध;
+	हाल TDA18271_GATE_AUTO:
+	शेष:
+		चयन (priv->mode) अणु
+		हाल TDA18271_DIGITAL:
 			gate = TDA18271_GATE_DIGITAL;
-			break;
-		case TDA18271_ANALOG:
-		default:
+			अवरोध;
+		हाल TDA18271_ANALOG:
+		शेष:
 			gate = TDA18271_GATE_ANALOG;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	switch (gate) {
-	case TDA18271_GATE_ANALOG:
-		if (fe->ops.analog_ops.i2c_gate_ctrl)
+	चयन (gate) अणु
+	हाल TDA18271_GATE_ANALOG:
+		अगर (fe->ops.analog_ops.i2c_gate_ctrl)
 			ret = fe->ops.analog_ops.i2c_gate_ctrl(fe, enable);
-		break;
-	case TDA18271_GATE_DIGITAL:
-		if (fe->ops.i2c_gate_ctrl)
+		अवरोध;
+	हाल TDA18271_GATE_DIGITAL:
+		अगर (fe->ops.i2c_gate_ctrl)
 			ret = fe->ops.i2c_gate_ctrl(fe, enable);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-};
+	वापस ret;
+पूर्ण;
 
 /*---------------------------------------------------------------------*/
 
-static void tda18271_dump_regs(struct dvb_frontend *fe, int extended)
-{
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+अटल व्योम tda18271_dump_regs(काष्ठा dvb_frontend *fe, पूर्णांक extended)
+अणु
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 
 	tda_reg("=== TDA18271 REG DUMP ===\n");
 	tda_reg("ID_BYTE            = 0x%02x\n", 0xff & regs[R_ID]);
@@ -74,12 +75,12 @@ static void tda18271_dump_regs(struct dvb_frontend *fe, int extended)
 	tda_reg("MAIN_DIV_BYTE_2    = 0x%02x\n", 0xff & regs[R_MD2]);
 	tda_reg("MAIN_DIV_BYTE_3    = 0x%02x\n", 0xff & regs[R_MD3]);
 
-	/* only dump extended regs if DBG_ADV is set */
-	if (!(tda18271_debug & DBG_ADV))
-		return;
+	/* only dump extended regs अगर DBG_ADV is set */
+	अगर (!(tda18271_debug & DBG_ADV))
+		वापस;
 
-	/* W indicates write-only registers.
-	 * Register dump for write-only registers shows last value written. */
+	/* W indicates ग_लिखो-only रेजिस्टरs.
+	 * Register dump क्रम ग_लिखो-only रेजिस्टरs shows last value written. */
 
 	tda_reg("EXTENDED_BYTE_1    = 0x%02x\n", 0xff & regs[R_EB1]);
 	tda_reg("EXTENDED_BYTE_2    = 0x%02x\n", 0xff & regs[R_EB2]);
@@ -104,180 +105,180 @@ static void tda18271_dump_regs(struct dvb_frontend *fe, int extended)
 	tda_reg("EXTENDED_BYTE_21   = 0x%02x\n", 0xff & regs[R_EB21]);
 	tda_reg("EXTENDED_BYTE_22   = 0x%02x\n", 0xff & regs[R_EB22]);
 	tda_reg("EXTENDED_BYTE_23   = 0x%02x\n", 0xff & regs[R_EB23]);
-}
+पूर्ण
 
-int tda18271_read_regs(struct dvb_frontend *fe)
-{
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
-	unsigned char buf = 0x00;
-	int ret;
-	struct i2c_msg msg[] = {
-		{ .addr = priv->i2c_props.addr, .flags = 0,
-		  .buf = &buf, .len = 1 },
-		{ .addr = priv->i2c_props.addr, .flags = I2C_M_RD,
-		  .buf = regs, .len = 16 }
-	};
+पूर्णांक tda18271_पढ़ो_regs(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
+	अचिन्हित अक्षर buf = 0x00;
+	पूर्णांक ret;
+	काष्ठा i2c_msg msg[] = अणु
+		अणु .addr = priv->i2c_props.addr, .flags = 0,
+		  .buf = &buf, .len = 1 पूर्ण,
+		अणु .addr = priv->i2c_props.addr, .flags = I2C_M_RD,
+		  .buf = regs, .len = 16 पूर्ण
+	पूर्ण;
 
 	tda18271_i2c_gate_ctrl(fe, 1);
 
-	/* read all registers */
+	/* पढ़ो all रेजिस्टरs */
 	ret = i2c_transfer(priv->i2c_props.adap, msg, 2);
 
 	tda18271_i2c_gate_ctrl(fe, 0);
 
-	if (ret != 2)
+	अगर (ret != 2)
 		tda_err("ERROR: i2c_transfer returned: %d\n", ret);
 
-	if (tda18271_debug & DBG_REG)
+	अगर (tda18271_debug & DBG_REG)
 		tda18271_dump_regs(fe, 0);
 
-	return (ret == 2 ? 0 : ret);
-}
+	वापस (ret == 2 ? 0 : ret);
+पूर्ण
 
-int tda18271_read_extended(struct dvb_frontend *fe)
-{
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
-	unsigned char regdump[TDA18271_NUM_REGS];
-	unsigned char buf = 0x00;
-	int ret, i;
-	struct i2c_msg msg[] = {
-		{ .addr = priv->i2c_props.addr, .flags = 0,
-		  .buf = &buf, .len = 1 },
-		{ .addr = priv->i2c_props.addr, .flags = I2C_M_RD,
-		  .buf = regdump, .len = TDA18271_NUM_REGS }
-	};
+पूर्णांक tda18271_पढ़ो_extended(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
+	अचिन्हित अक्षर regdump[TDA18271_NUM_REGS];
+	अचिन्हित अक्षर buf = 0x00;
+	पूर्णांक ret, i;
+	काष्ठा i2c_msg msg[] = अणु
+		अणु .addr = priv->i2c_props.addr, .flags = 0,
+		  .buf = &buf, .len = 1 पूर्ण,
+		अणु .addr = priv->i2c_props.addr, .flags = I2C_M_RD,
+		  .buf = regdump, .len = TDA18271_NUM_REGS पूर्ण
+	पूर्ण;
 
 	tda18271_i2c_gate_ctrl(fe, 1);
 
-	/* read all registers */
+	/* पढ़ो all रेजिस्टरs */
 	ret = i2c_transfer(priv->i2c_props.adap, msg, 2);
 
 	tda18271_i2c_gate_ctrl(fe, 0);
 
-	if (ret != 2)
+	अगर (ret != 2)
 		tda_err("ERROR: i2c_transfer returned: %d\n", ret);
 
-	for (i = 0; i < TDA18271_NUM_REGS; i++) {
-		/* don't update write-only registers */
-		if ((i != R_EB9)  &&
+	क्रम (i = 0; i < TDA18271_NUM_REGS; i++) अणु
+		/* करोn't update ग_लिखो-only रेजिस्टरs */
+		अगर ((i != R_EB9)  &&
 		    (i != R_EB16) &&
 		    (i != R_EB17) &&
 		    (i != R_EB19) &&
 		    (i != R_EB20))
 			regs[i] = regdump[i];
-	}
+	पूर्ण
 
-	if (tda18271_debug & DBG_REG)
+	अगर (tda18271_debug & DBG_REG)
 		tda18271_dump_regs(fe, 1);
 
-	return (ret == 2 ? 0 : ret);
-}
+	वापस (ret == 2 ? 0 : ret);
+पूर्ण
 
-static int __tda18271_write_regs(struct dvb_frontend *fe, int idx, int len,
+अटल पूर्णांक __tda18271_ग_लिखो_regs(काष्ठा dvb_frontend *fe, पूर्णांक idx, पूर्णांक len,
 			bool lock_i2c)
-{
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
-	unsigned char buf[TDA18271_NUM_REGS + 1];
-	struct i2c_msg msg = { .addr = priv->i2c_props.addr, .flags = 0,
-			       .buf = buf };
-	int i, ret = 1, max;
+अणु
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
+	अचिन्हित अक्षर buf[TDA18271_NUM_REGS + 1];
+	काष्ठा i2c_msg msg = अणु .addr = priv->i2c_props.addr, .flags = 0,
+			       .buf = buf पूर्ण;
+	पूर्णांक i, ret = 1, max;
 
-	BUG_ON((len == 0) || (idx + len > sizeof(buf)));
+	BUG_ON((len == 0) || (idx + len > माप(buf)));
 
-	switch (priv->small_i2c) {
-	case TDA18271_03_BYTE_CHUNK_INIT:
+	चयन (priv->small_i2c) अणु
+	हाल TDA18271_03_BYTE_CHUNK_INIT:
 		max = 3;
-		break;
-	case TDA18271_08_BYTE_CHUNK_INIT:
+		अवरोध;
+	हाल TDA18271_08_BYTE_CHUNK_INIT:
 		max = 8;
-		break;
-	case TDA18271_16_BYTE_CHUNK_INIT:
+		अवरोध;
+	हाल TDA18271_16_BYTE_CHUNK_INIT:
 		max = 16;
-		break;
-	case TDA18271_39_BYTE_CHUNK_INIT:
-	default:
+		अवरोध;
+	हाल TDA18271_39_BYTE_CHUNK_INIT:
+	शेष:
 		max = 39;
-	}
+	पूर्ण
 
 
 	/*
-	 * If lock_i2c is true, it will take the I2C bus for tda18271 private
-	 * usage during the entire write ops, as otherwise, bad things could
+	 * If lock_i2c is true, it will take the I2C bus क्रम tda18271 निजी
+	 * usage during the entire ग_लिखो ops, as otherwise, bad things could
 	 * happen.
-	 * During device init, several write operations will happen. So,
+	 * During device init, several ग_लिखो operations will happen. So,
 	 * tda18271_init_regs controls the I2C lock directly,
 	 * disabling lock_i2c here.
 	 */
-	if (lock_i2c) {
+	अगर (lock_i2c) अणु
 		tda18271_i2c_gate_ctrl(fe, 1);
 		i2c_lock_bus(priv->i2c_props.adap, I2C_LOCK_SEGMENT);
-	}
-	while (len) {
-		if (max > len)
+	पूर्ण
+	जबतक (len) अणु
+		अगर (max > len)
 			max = len;
 
 		buf[0] = idx;
-		for (i = 1; i <= max; i++)
+		क्रम (i = 1; i <= max; i++)
 			buf[i] = regs[idx - 1 + i];
 
 		msg.len = max + 1;
 
-		/* write registers */
+		/* ग_लिखो रेजिस्टरs */
 		ret = __i2c_transfer(priv->i2c_props.adap, &msg, 1);
-		if (ret != 1)
-			break;
+		अगर (ret != 1)
+			अवरोध;
 
 		idx += max;
 		len -= max;
-	}
-	if (lock_i2c) {
+	पूर्ण
+	अगर (lock_i2c) अणु
 		i2c_unlock_bus(priv->i2c_props.adap, I2C_LOCK_SEGMENT);
 		tda18271_i2c_gate_ctrl(fe, 0);
-	}
+	पूर्ण
 
-	if (ret != 1)
+	अगर (ret != 1)
 		tda_err("ERROR: idx = 0x%x, len = %d, i2c_transfer returned: %d\n",
 			idx, max, ret);
 
-	return (ret == 1 ? 0 : ret);
-}
+	वापस (ret == 1 ? 0 : ret);
+पूर्ण
 
-int tda18271_write_regs(struct dvb_frontend *fe, int idx, int len)
-{
-	return __tda18271_write_regs(fe, idx, len, true);
-}
+पूर्णांक tda18271_ग_लिखो_regs(काष्ठा dvb_frontend *fe, पूर्णांक idx, पूर्णांक len)
+अणु
+	वापस __tda18271_ग_लिखो_regs(fe, idx, len, true);
+पूर्ण
 
 /*---------------------------------------------------------------------*/
 
-static int __tda18271_charge_pump_source(struct dvb_frontend *fe,
-					 enum tda18271_pll pll, int force,
+अटल पूर्णांक __tda18271_अक्षरge_pump_source(काष्ठा dvb_frontend *fe,
+					 क्रमागत tda18271_pll pll, पूर्णांक क्रमce,
 					 bool lock_i2c)
-{
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+अणु
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 
-	int r_cp = (pll == TDA18271_CAL_PLL) ? R_EB7 : R_EB4;
+	पूर्णांक r_cp = (pll == TDA18271_CAL_PLL) ? R_EB7 : R_EB4;
 
 	regs[r_cp] &= ~0x20;
-	regs[r_cp] |= ((force & 1) << 5);
+	regs[r_cp] |= ((क्रमce & 1) << 5);
 
-	return __tda18271_write_regs(fe, r_cp, 1, lock_i2c);
-}
+	वापस __tda18271_ग_लिखो_regs(fe, r_cp, 1, lock_i2c);
+पूर्ण
 
-int tda18271_charge_pump_source(struct dvb_frontend *fe,
-				enum tda18271_pll pll, int force)
-{
-	return __tda18271_charge_pump_source(fe, pll, force, true);
-}
+पूर्णांक tda18271_अक्षरge_pump_source(काष्ठा dvb_frontend *fe,
+				क्रमागत tda18271_pll pll, पूर्णांक क्रमce)
+अणु
+	वापस __tda18271_अक्षरge_pump_source(fe, pll, क्रमce, true);
+पूर्ण
 
 
-int tda18271_init_regs(struct dvb_frontend *fe)
-{
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_init_regs(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 
 	tda_dbg("initializing registers for device @ %d-%04x\n",
 		i2c_adapter_id(priv->i2c_props.adap),
@@ -290,15 +291,15 @@ int tda18271_init_regs(struct dvb_frontend *fe)
 	tda18271_i2c_gate_ctrl(fe, 1);
 	i2c_lock_bus(priv->i2c_props.adap, I2C_LOCK_SEGMENT);
 
-	/* initialize registers */
-	switch (priv->id) {
-	case TDA18271HDC1:
+	/* initialize रेजिस्टरs */
+	चयन (priv->id) अणु
+	हाल TDA18271HDC1:
 		regs[R_ID]   = 0x83;
-		break;
-	case TDA18271HDC2:
+		अवरोध;
+	हाल TDA18271HDC2:
 		regs[R_ID]   = 0x84;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	regs[R_TM]   = 0x08;
 	regs[R_PL]   = 0x80;
@@ -316,14 +317,14 @@ int tda18271_init_regs(struct dvb_frontend *fe)
 	regs[R_MD2]  = 0x00;
 	regs[R_MD3]  = 0x00;
 
-	switch (priv->id) {
-	case TDA18271HDC1:
+	चयन (priv->id) अणु
+	हाल TDA18271HDC1:
 		regs[R_EB1]  = 0xff;
-		break;
-	case TDA18271HDC2:
+		अवरोध;
+	हाल TDA18271HDC2:
 		regs[R_EB1]  = 0xfc;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	regs[R_EB2]  = 0x01;
 	regs[R_EB3]  = 0x84;
@@ -336,14 +337,14 @@ int tda18271_init_regs(struct dvb_frontend *fe)
 	regs[R_EB10] = 0x00;
 	regs[R_EB11] = 0x96;
 
-	switch (priv->id) {
-	case TDA18271HDC1:
+	चयन (priv->id) अणु
+	हाल TDA18271HDC1:
 		regs[R_EB12] = 0x0f;
-		break;
-	case TDA18271HDC2:
+		अवरोध;
+	हाल TDA18271HDC2:
 		regs[R_EB12] = 0x33;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	regs[R_EB13] = 0xc1;
 	regs[R_EB14] = 0x00;
@@ -351,53 +352,53 @@ int tda18271_init_regs(struct dvb_frontend *fe)
 	regs[R_EB16] = 0x00;
 	regs[R_EB17] = 0x00;
 
-	switch (priv->id) {
-	case TDA18271HDC1:
+	चयन (priv->id) अणु
+	हाल TDA18271HDC1:
 		regs[R_EB18] = 0x00;
-		break;
-	case TDA18271HDC2:
+		अवरोध;
+	हाल TDA18271HDC2:
 		regs[R_EB18] = 0x8c;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	regs[R_EB19] = 0x00;
 	regs[R_EB20] = 0x20;
 
-	switch (priv->id) {
-	case TDA18271HDC1:
+	चयन (priv->id) अणु
+	हाल TDA18271HDC1:
 		regs[R_EB21] = 0x33;
-		break;
-	case TDA18271HDC2:
+		अवरोध;
+	हाल TDA18271HDC2:
 		regs[R_EB21] = 0xb3;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	regs[R_EB22] = 0x48;
 	regs[R_EB23] = 0xb0;
 
-	__tda18271_write_regs(fe, 0x00, TDA18271_NUM_REGS, false);
+	__tda18271_ग_लिखो_regs(fe, 0x00, TDA18271_NUM_REGS, false);
 
 	/* setup agc1 gain */
 	regs[R_EB17] = 0x00;
-	__tda18271_write_regs(fe, R_EB17, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EB17, 1, false);
 	regs[R_EB17] = 0x03;
-	__tda18271_write_regs(fe, R_EB17, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EB17, 1, false);
 	regs[R_EB17] = 0x43;
-	__tda18271_write_regs(fe, R_EB17, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EB17, 1, false);
 	regs[R_EB17] = 0x4c;
-	__tda18271_write_regs(fe, R_EB17, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EB17, 1, false);
 
 	/* setup agc2 gain */
-	if ((priv->id) == TDA18271HDC1) {
+	अगर ((priv->id) == TDA18271HDC1) अणु
 		regs[R_EB20] = 0xa0;
-		__tda18271_write_regs(fe, R_EB20, 1, false);
+		__tda18271_ग_लिखो_regs(fe, R_EB20, 1, false);
 		regs[R_EB20] = 0xa7;
-		__tda18271_write_regs(fe, R_EB20, 1, false);
+		__tda18271_ग_लिखो_regs(fe, R_EB20, 1, false);
 		regs[R_EB20] = 0xe7;
-		__tda18271_write_regs(fe, R_EB20, 1, false);
+		__tda18271_ग_लिखो_regs(fe, R_EB20, 1, false);
 		regs[R_EB20] = 0xec;
-		__tda18271_write_regs(fe, R_EB20, 1, false);
-	}
+		__tda18271_ग_लिखो_regs(fe, R_EB20, 1, false);
+	पूर्ण
 
 	/* image rejection calibration */
 
@@ -414,21 +415,21 @@ int tda18271_init_regs(struct dvb_frontend *fe)
 	regs[R_MD2] = 0x08;
 	regs[R_MD3] = 0x00;
 
-	__tda18271_write_regs(fe, R_EP3, 11, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP3, 11, false);
 
-	if ((priv->id) == TDA18271HDC2) {
-		/* main pll cp source on */
-		__tda18271_charge_pump_source(fe, TDA18271_MAIN_PLL, 1, false);
+	अगर ((priv->id) == TDA18271HDC2) अणु
+		/* मुख्य pll cp source on */
+		__tda18271_अक्षरge_pump_source(fe, TDA18271_MAIN_PLL, 1, false);
 		msleep(1);
 
-		/* main pll cp source off */
-		__tda18271_charge_pump_source(fe, TDA18271_MAIN_PLL, 0, false);
-	}
+		/* मुख्य pll cp source off */
+		__tda18271_अक्षरge_pump_source(fe, TDA18271_MAIN_PLL, 0, false);
+	पूर्ण
 
 	msleep(5); /* pll locking */
 
 	/* launch detector */
-	__tda18271_write_regs(fe, R_EP1, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP1, 1, false);
 	msleep(5); /* wanted low measurement */
 
 	regs[R_EP5] = 0x85;
@@ -436,11 +437,11 @@ int tda18271_init_regs(struct dvb_frontend *fe)
 	regs[R_CD1] = 0x66;
 	regs[R_CD2] = 0x70;
 
-	__tda18271_write_regs(fe, R_EP3, 7, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP3, 7, false);
 	msleep(5); /* pll locking */
 
 	/* launch optimization algorithm */
-	__tda18271_write_regs(fe, R_EP2, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP2, 1, false);
 	msleep(30); /* image low optimization completion */
 
 	/* mid-band */
@@ -451,11 +452,11 @@ int tda18271_init_regs(struct dvb_frontend *fe)
 	regs[R_MD1] = 0x73;
 	regs[R_MD2] = 0x1a;
 
-	__tda18271_write_regs(fe, R_EP3, 11, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP3, 11, false);
 	msleep(5); /* pll locking */
 
 	/* launch detector */
-	__tda18271_write_regs(fe, R_EP1, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP1, 1, false);
 	msleep(5); /* wanted mid measurement */
 
 	regs[R_EP5] = 0x86;
@@ -463,11 +464,11 @@ int tda18271_init_regs(struct dvb_frontend *fe)
 	regs[R_CD1] = 0x66;
 	regs[R_CD2] = 0xa0;
 
-	__tda18271_write_regs(fe, R_EP3, 7, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP3, 7, false);
 	msleep(5); /* pll locking */
 
 	/* launch optimization algorithm */
-	__tda18271_write_regs(fe, R_EP2, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP2, 1, false);
 	msleep(30); /* image mid optimization completion */
 
 	/* high-band */
@@ -479,36 +480,36 @@ int tda18271_init_regs(struct dvb_frontend *fe)
 	regs[R_MD1] = 0x71;
 	regs[R_MD2] = 0xcd;
 
-	__tda18271_write_regs(fe, R_EP3, 11, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP3, 11, false);
 	msleep(5); /* pll locking */
 
 	/* launch detector */
-	__tda18271_write_regs(fe, R_EP1, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP1, 1, false);
 	msleep(5); /* wanted high measurement */
 
 	regs[R_EP5] = 0x87;
 	regs[R_CD1] = 0x65;
 	regs[R_CD2] = 0x50;
 
-	__tda18271_write_regs(fe, R_EP3, 7, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP3, 7, false);
 	msleep(5); /* pll locking */
 
 	/* launch optimization algorithm */
-	__tda18271_write_regs(fe, R_EP2, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP2, 1, false);
 	msleep(30); /* image high optimization completion */
 
-	/* return to normal mode */
+	/* वापस to normal mode */
 	regs[R_EP4] = 0x64;
-	__tda18271_write_regs(fe, R_EP4, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP4, 1, false);
 
 	/* synchronize */
-	__tda18271_write_regs(fe, R_EP1, 1, false);
+	__tda18271_ग_लिखो_regs(fe, R_EP1, 1, false);
 
 	i2c_unlock_bus(priv->i2c_props.adap, I2C_LOCK_SEGMENT);
 	tda18271_i2c_gate_ctrl(fe, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*---------------------------------------------------------------------*/
 
@@ -524,17 +525,17 @@ int tda18271_init_regs(struct dvb_frontend *fe)
  *  |-----||-------||-------||------------------------------------
  *  |  1  ||   1   ||   0   || standby mode w/ xtal oscillator on
  *  |-----||-------||-------||------------------------------------
- *  |  1  ||   1   ||   1   || power off
+ *  |  1  ||   1   ||   1   || घातer off
  *
  */
 
-int tda18271_set_standby_mode(struct dvb_frontend *fe,
-			      int sm, int sm_lt, int sm_xt)
-{
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_set_standby_mode(काष्ठा dvb_frontend *fe,
+			      पूर्णांक sm, पूर्णांक sm_lt, पूर्णांक sm_xt)
+अणु
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 
-	if (tda18271_debug & DBG_ADV)
+	अगर (tda18271_debug & DBG_ADV)
 		tda_dbg("sm = %d, sm_lt = %d, sm_xt = %d\n", sm, sm_lt, sm_xt);
 
 	regs[R_EP3]  &= ~0xe0; /* clear sm, sm_lt, sm_xt */
@@ -542,185 +543,185 @@ int tda18271_set_standby_mode(struct dvb_frontend *fe,
 			(sm_lt ? (1 << 6) : 0) |
 			(sm_xt ? (1 << 5) : 0);
 
-	return tda18271_write_regs(fe, R_EP3, 1);
-}
+	वापस tda18271_ग_लिखो_regs(fe, R_EP3, 1);
+पूर्ण
 
 /*---------------------------------------------------------------------*/
 
-int tda18271_calc_main_pll(struct dvb_frontend *fe, u32 freq)
-{
-	/* sets main post divider & divider bytes, but does not write them */
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_calc_मुख्य_pll(काष्ठा dvb_frontend *fe, u32 freq)
+अणु
+	/* sets मुख्य post भागider & भागider bytes, but करोes not ग_लिखो them */
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 	u8 d, pd;
-	u32 div;
+	u32 भाग;
 
-	int ret = tda18271_lookup_pll_map(fe, MAIN_PLL, &freq, &pd, &d);
-	if (tda_fail(ret))
-		goto fail;
+	पूर्णांक ret = tda18271_lookup_pll_map(fe, MAIN_PLL, &freq, &pd, &d);
+	अगर (tda_fail(ret))
+		जाओ fail;
 
 	regs[R_MPD]   = (0x7f & pd);
 
-	div =  ((d * (freq / 1000)) << 7) / 125;
+	भाग =  ((d * (freq / 1000)) << 7) / 125;
 
-	regs[R_MD1]   = 0x7f & (div >> 16);
-	regs[R_MD2]   = 0xff & (div >> 8);
-	regs[R_MD3]   = 0xff & div;
+	regs[R_MD1]   = 0x7f & (भाग >> 16);
+	regs[R_MD2]   = 0xff & (भाग >> 8);
+	regs[R_MD3]   = 0xff & भाग;
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tda18271_calc_cal_pll(struct dvb_frontend *fe, u32 freq)
-{
-	/* sets cal post divider & divider bytes, but does not write them */
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_calc_cal_pll(काष्ठा dvb_frontend *fe, u32 freq)
+अणु
+	/* sets cal post भागider & भागider bytes, but करोes not ग_लिखो them */
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 	u8 d, pd;
-	u32 div;
+	u32 भाग;
 
-	int ret = tda18271_lookup_pll_map(fe, CAL_PLL, &freq, &pd, &d);
-	if (tda_fail(ret))
-		goto fail;
+	पूर्णांक ret = tda18271_lookup_pll_map(fe, CAL_PLL, &freq, &pd, &d);
+	अगर (tda_fail(ret))
+		जाओ fail;
 
 	regs[R_CPD]   = pd;
 
-	div =  ((d * (freq / 1000)) << 7) / 125;
+	भाग =  ((d * (freq / 1000)) << 7) / 125;
 
-	regs[R_CD1]   = 0x7f & (div >> 16);
-	regs[R_CD2]   = 0xff & (div >> 8);
-	regs[R_CD3]   = 0xff & div;
+	regs[R_CD1]   = 0x7f & (भाग >> 16);
+	regs[R_CD2]   = 0xff & (भाग >> 8);
+	regs[R_CD3]   = 0xff & भाग;
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*---------------------------------------------------------------------*/
 
-int tda18271_calc_bp_filter(struct dvb_frontend *fe, u32 *freq)
-{
-	/* sets bp filter bits, but does not write them */
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_calc_bp_filter(काष्ठा dvb_frontend *fe, u32 *freq)
+अणु
+	/* sets bp filter bits, but करोes not ग_लिखो them */
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 	u8 val;
 
-	int ret = tda18271_lookup_map(fe, BP_FILTER, freq, &val);
-	if (tda_fail(ret))
-		goto fail;
+	पूर्णांक ret = tda18271_lookup_map(fe, BP_FILTER, freq, &val);
+	अगर (tda_fail(ret))
+		जाओ fail;
 
 	regs[R_EP1]  &= ~0x07; /* clear bp filter bits */
 	regs[R_EP1]  |= (0x07 & val);
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tda18271_calc_km(struct dvb_frontend *fe, u32 *freq)
-{
-	/* sets K & M bits, but does not write them */
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_calc_km(काष्ठा dvb_frontend *fe, u32 *freq)
+अणु
+	/* sets K & M bits, but करोes not ग_लिखो them */
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 	u8 val;
 
-	int ret = tda18271_lookup_map(fe, RF_CAL_KMCO, freq, &val);
-	if (tda_fail(ret))
-		goto fail;
+	पूर्णांक ret = tda18271_lookup_map(fe, RF_CAL_KMCO, freq, &val);
+	अगर (tda_fail(ret))
+		जाओ fail;
 
 	regs[R_EB13] &= ~0x7c; /* clear k & m bits */
 	regs[R_EB13] |= (0x7c & val);
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tda18271_calc_rf_band(struct dvb_frontend *fe, u32 *freq)
-{
-	/* sets rf band bits, but does not write them */
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_calc_rf_band(काष्ठा dvb_frontend *fe, u32 *freq)
+अणु
+	/* sets rf band bits, but करोes not ग_लिखो them */
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 	u8 val;
 
-	int ret = tda18271_lookup_map(fe, RF_BAND, freq, &val);
-	if (tda_fail(ret))
-		goto fail;
+	पूर्णांक ret = tda18271_lookup_map(fe, RF_BAND, freq, &val);
+	अगर (tda_fail(ret))
+		जाओ fail;
 
 	regs[R_EP2]  &= ~0xe0; /* clear rf band bits */
 	regs[R_EP2]  |= (0xe0 & (val << 5));
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tda18271_calc_gain_taper(struct dvb_frontend *fe, u32 *freq)
-{
-	/* sets gain taper bits, but does not write them */
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_calc_gain_taper(काष्ठा dvb_frontend *fe, u32 *freq)
+अणु
+	/* sets gain taper bits, but करोes not ग_लिखो them */
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 	u8 val;
 
-	int ret = tda18271_lookup_map(fe, GAIN_TAPER, freq, &val);
-	if (tda_fail(ret))
-		goto fail;
+	पूर्णांक ret = tda18271_lookup_map(fe, GAIN_TAPER, freq, &val);
+	अगर (tda_fail(ret))
+		जाओ fail;
 
 	regs[R_EP2]  &= ~0x1f; /* clear gain taper bits */
 	regs[R_EP2]  |= (0x1f & val);
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tda18271_calc_ir_measure(struct dvb_frontend *fe, u32 *freq)
-{
-	/* sets IR Meas bits, but does not write them */
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_calc_ir_measure(काष्ठा dvb_frontend *fe, u32 *freq)
+अणु
+	/* sets IR Meas bits, but करोes not ग_लिखो them */
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 	u8 val;
 
-	int ret = tda18271_lookup_map(fe, IR_MEASURE, freq, &val);
-	if (tda_fail(ret))
-		goto fail;
+	पूर्णांक ret = tda18271_lookup_map(fe, IR_MEASURE, freq, &val);
+	अगर (tda_fail(ret))
+		जाओ fail;
 
 	regs[R_EP5] &= ~0x07;
 	regs[R_EP5] |= (0x07 & val);
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int tda18271_calc_rf_cal(struct dvb_frontend *fe, u32 *freq)
-{
-	/* sets rf cal byte (RFC_Cprog), but does not write it */
-	struct tda18271_priv *priv = fe->tuner_priv;
-	unsigned char *regs = priv->tda18271_regs;
+पूर्णांक tda18271_calc_rf_cal(काष्ठा dvb_frontend *fe, u32 *freq)
+अणु
+	/* sets rf cal byte (RFC_Cprog), but करोes not ग_लिखो it */
+	काष्ठा tda18271_priv *priv = fe->tuner_priv;
+	अचिन्हित अक्षर *regs = priv->tda18271_regs;
 	u8 val;
 
-	int ret = tda18271_lookup_map(fe, RF_CAL, freq, &val);
+	पूर्णांक ret = tda18271_lookup_map(fe, RF_CAL, freq, &val);
 	/* The TDA18271HD/C1 rf_cal map lookup is expected to go out of range
-	 * for frequencies above 61.1 MHz.  In these cases, the internal RF
+	 * क्रम frequencies above 61.1 MHz.  In these हालs, the पूर्णांकernal RF
 	 * tracking filters calibration mechanism is used.
 	 *
 	 * There is no need to warn the user about this.
 	 */
-	if (ret < 0)
-		goto fail;
+	अगर (ret < 0)
+		जाओ fail;
 
 	regs[R_EB14] = val;
 fail:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void _tda_printk(struct tda18271_priv *state, const char *level,
-		 const char *func, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम _tda_prपूर्णांकk(काष्ठा tda18271_priv *state, स्थिर अक्षर *level,
+		 स्थिर अक्षर *func, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	if (state)
-		printk("%s%s: [%d-%04x|%c] %pV",
+	अगर (state)
+		prपूर्णांकk("%s%s: [%d-%04x|%c] %pV",
 		       level, func, i2c_adapter_id(state->i2c_props.adap),
 		       state->i2c_props.addr,
 		       (state->role == TDA18271_MASTER) ? 'M' : 'S',
 		       &vaf);
-	else
-		printk("%s%s: %pV", level, func, &vaf);
+	अन्यथा
+		prपूर्णांकk("%s%s: %pV", level, func, &vaf);
 
-	va_end(args);
-}
+	बहु_पूर्ण(args);
+पूर्ण

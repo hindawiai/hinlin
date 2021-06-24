@@ -1,876 +1,877 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * LEGO USB Tower driver
  *
- * Copyright (C) 2003 David Glance <davidgsf@sourceforge.net>
- *               2001-2004 Juergen Stuber <starblue@users.sourceforge.net>
+ * Copyright (C) 2003 David Glance <davidgsf@sourceक्रमge.net>
+ *               2001-2004 Juergen Stuber <starblue@users.sourceक्रमge.net>
  *
  * derived from USB Skeleton driver - 0.5
- * Copyright (C) 2001 Greg Kroah-Hartman (greg@kroah.com)
+ * Copyright (C) 2001 Greg Kroah-Harपंचांगan (greg@kroah.com)
  *
  * History:
  *
  * 2001-10-13 - 0.1 js
  *   - first version
  * 2001-11-03 - 0.2 js
- *   - simplified buffering, one-shot URBs for writing
+ *   - simplअगरied buffering, one-shot URBs क्रम writing
  * 2001-11-10 - 0.3 js
- *   - removed IOCTL (setting power/mode is more complicated, postponed)
+ *   - हटाओd IOCTL (setting घातer/mode is more complicated, postponed)
  * 2001-11-28 - 0.4 js
- *   - added vendor commands for mode of operation and power level in open
+ *   - added venकरोr commands क्रम mode of operation and घातer level in खोलो
  * 2001-12-04 - 0.5 js
- *   - set IR mode by default (by oversight 0.4 set VLL mode)
+ *   - set IR mode by शेष (by oversight 0.4 set VLL mode)
  * 2002-01-11 - 0.5? pcchan
- *   - make read buffer reusable and work around bytes_to_write issue between
+ *   - make पढ़ो buffer reusable and work around bytes_to_ग_लिखो issue between
  *     uhci and legusbtower
  * 2002-09-23 - 0.52 david (david@csse.uwa.edu.au)
- *   - imported into lejos project
- *   - changed wake_up to wake_up_interruptible
+ *   - imported पूर्णांकo lejos project
+ *   - changed wake_up to wake_up_पूर्णांकerruptible
  *   - changed to use lego0 rather than tower0
  *   - changed dbg() to use __func__ rather than deprecated __func__
  * 2003-01-12 - 0.53 david (david@csse.uwa.edu.au)
- *   - changed read and write to write everything or
- *     timeout (from a patch by Chris Riesen and Brett Thaeler driver)
- *   - added ioctl functionality to set timeouts
+ *   - changed पढ़ो and ग_लिखो to ग_लिखो everything or
+ *     समयout (from a patch by Chris Riesen and Brett Thaeler driver)
+ *   - added ioctl functionality to set समयouts
  * 2003-07-18 - 0.54 davidgsf (david@csse.uwa.edu.au)
- *   - initial import into LegoUSB project
+ *   - initial import पूर्णांकo LegoUSB project
  *   - merge of existing LegoUSB.c driver
  * 2003-07-18 - 0.56 davidgsf (david@csse.uwa.edu.au)
  *   - port to 2.6 style driver
- * 2004-02-29 - 0.6 Juergen Stuber <starblue@users.sourceforge.net>
+ * 2004-02-29 - 0.6 Juergen Stuber <starblue@users.sourceक्रमge.net>
  *   - fix locking
- *   - unlink read URBs which are no longer needed
- *   - allow increased buffer size, eliminates need for timeout on write
- *   - have read URB running continuously
+ *   - unlink पढ़ो URBs which are no दीर्घer needed
+ *   - allow increased buffer size, eliminates need क्रम समयout on ग_लिखो
+ *   - have पढ़ो URB running continuously
  *   - added poll
- *   - forbid seeking
+ *   - क्रमbid seeking
  *   - added nonblocking I/O
  *   - changed back __func__ to __func__
- *   - read and log tower firmware version
- *   - reset tower on probe, avoids failure of first write
- * 2004-03-09 - 0.7 Juergen Stuber <starblue@users.sourceforge.net>
- *   - timeout read now only after inactivity, shorten default accordingly
- * 2004-03-11 - 0.8 Juergen Stuber <starblue@users.sourceforge.net>
+ *   - पढ़ो and log tower firmware version
+ *   - reset tower on probe, aव्योमs failure of first ग_लिखो
+ * 2004-03-09 - 0.7 Juergen Stuber <starblue@users.sourceक्रमge.net>
+ *   - समयout पढ़ो now only after inactivity, लघुen शेष accordingly
+ * 2004-03-11 - 0.8 Juergen Stuber <starblue@users.sourceक्रमge.net>
  *   - log major, minor instead of possibly confusing device filename
  *   - whitespace cleanup
- * 2004-03-12 - 0.9 Juergen Stuber <starblue@users.sourceforge.net>
+ * 2004-03-12 - 0.9 Juergen Stuber <starblue@users.sourceक्रमge.net>
  *   - normalize whitespace in debug messages
  *   - take care about endianness in control message responses
- * 2004-03-13 - 0.91 Juergen Stuber <starblue@users.sourceforge.net>
- *   - make default intervals longer to accommodate current EHCI driver
- * 2004-03-19 - 0.92 Juergen Stuber <starblue@users.sourceforge.net>
+ * 2004-03-13 - 0.91 Juergen Stuber <starblue@users.sourceक्रमge.net>
+ *   - make शेष पूर्णांकervals दीर्घer to accommodate current EHCI driver
+ * 2004-03-19 - 0.92 Juergen Stuber <starblue@users.sourceक्रमge.net>
  *   - replaced atomic_t by memory barriers
- * 2004-04-21 - 0.93 Juergen Stuber <starblue@users.sourceforge.net>
- *   - wait for completion of write urb in release (needed for remotecontrol)
- *   - corrected poll for write direction (missing negation)
- * 2004-04-22 - 0.94 Juergen Stuber <starblue@users.sourceforge.net>
- *   - make device locking interruptible
- * 2004-04-30 - 0.95 Juergen Stuber <starblue@users.sourceforge.net>
- *   - check for valid udev on resubmitting and unlinking urbs
- * 2004-08-03 - 0.96 Juergen Stuber <starblue@users.sourceforge.net>
- *   - move reset into open to clean out spurious data
+ * 2004-04-21 - 0.93 Juergen Stuber <starblue@users.sourceक्रमge.net>
+ *   - रुको क्रम completion of ग_लिखो urb in release (needed क्रम remotecontrol)
+ *   - corrected poll क्रम ग_लिखो direction (missing negation)
+ * 2004-04-22 - 0.94 Juergen Stuber <starblue@users.sourceक्रमge.net>
+ *   - make device locking पूर्णांकerruptible
+ * 2004-04-30 - 0.95 Juergen Stuber <starblue@users.sourceक्रमge.net>
+ *   - check क्रम valid udev on resubmitting and unlinking urbs
+ * 2004-08-03 - 0.96 Juergen Stuber <starblue@users.sourceक्रमge.net>
+ *   - move reset पूर्णांकo खोलो to clean out spurious data
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/completion.h>
-#include <linux/mutex.h>
-#include <linux/uaccess.h>
-#include <linux/usb.h>
-#include <linux/poll.h>
-
-
-#define DRIVER_AUTHOR "Juergen Stuber <starblue@sourceforge.net>"
-#define DRIVER_DESC "LEGO USB Tower Driver"
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/poll.h>
 
 
-/* The defaults are chosen to work with the latest versions of leJOS and NQC.
+#घोषणा DRIVER_AUTHOR "Juergen Stuber <starblue@sourceforge.net>"
+#घोषणा DRIVER_DESC "LEGO USB Tower Driver"
+
+
+/* The शेषs are chosen to work with the latest versions of leJOS and NQC.
  */
 
 /* Some legacy software likes to receive packets in one piece.
- * In this case read_buffer_size should exceed the maximal packet length
- * (417 for datalog uploads), and packet_timeout should be set.
+ * In this हाल पढ़ो_buffer_size should exceed the maximal packet length
+ * (417 क्रम datalog uploads), and packet_समयout should be set.
  */
-static int read_buffer_size = 480;
-module_param(read_buffer_size, int, 0);
-MODULE_PARM_DESC(read_buffer_size, "Read buffer size");
+अटल पूर्णांक पढ़ो_buffer_size = 480;
+module_param(पढ़ो_buffer_size, पूर्णांक, 0);
+MODULE_PARM_DESC(पढ़ो_buffer_size, "Read buffer size");
 
 /* Some legacy software likes to send packets in one piece.
- * In this case write_buffer_size should exceed the maximal packet length
- * (417 for firmware and program downloads).
- * A problem with long writes is that the following read may time out
- * if the software is not prepared to wait long enough.
+ * In this हाल ग_लिखो_buffer_size should exceed the maximal packet length
+ * (417 क्रम firmware and program करोwnloads).
+ * A problem with दीर्घ ग_लिखोs is that the following पढ़ो may समय out
+ * अगर the software is not prepared to रुको दीर्घ enough.
  */
-static int write_buffer_size = 480;
-module_param(write_buffer_size, int, 0);
-MODULE_PARM_DESC(write_buffer_size, "Write buffer size");
+अटल पूर्णांक ग_लिखो_buffer_size = 480;
+module_param(ग_लिखो_buffer_size, पूर्णांक, 0);
+MODULE_PARM_DESC(ग_लिखो_buffer_size, "Write buffer size");
 
-/* Some legacy software expects reads to contain whole LASM packets.
- * To achieve this, characters which arrive before a packet timeout
- * occurs will be returned in a single read operation.
- * A problem with long reads is that the software may time out
- * if it is not prepared to wait long enough.
- * The packet timeout should be greater than the time between the
- * reception of subsequent characters, which should arrive about
- * every 5ms for the standard 2400 baud.
+/* Some legacy software expects पढ़ोs to contain whole LASM packets.
+ * To achieve this, अक्षरacters which arrive beक्रमe a packet समयout
+ * occurs will be वापसed in a single पढ़ो operation.
+ * A problem with दीर्घ पढ़ोs is that the software may समय out
+ * अगर it is not prepared to रुको दीर्घ enough.
+ * The packet समयout should be greater than the समय between the
+ * reception of subsequent अक्षरacters, which should arrive about
+ * every 5ms क्रम the standard 2400 baud.
  * Set it to 0 to disable.
  */
-static int packet_timeout = 50;
-module_param(packet_timeout, int, 0);
-MODULE_PARM_DESC(packet_timeout, "Packet timeout in ms");
+अटल पूर्णांक packet_समयout = 50;
+module_param(packet_समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(packet_समयout, "Packet timeout in ms");
 
-/* Some legacy software expects blocking reads to time out.
- * Timeout occurs after the specified time of read and write inactivity.
+/* Some legacy software expects blocking पढ़ोs to समय out.
+ * Timeout occurs after the specअगरied समय of पढ़ो and ग_लिखो inactivity.
  * Set it to 0 to disable.
  */
-static int read_timeout = 200;
-module_param(read_timeout, int, 0);
-MODULE_PARM_DESC(read_timeout, "Read timeout in ms");
+अटल पूर्णांक पढ़ो_समयout = 200;
+module_param(पढ़ो_समयout, पूर्णांक, 0);
+MODULE_PARM_DESC(पढ़ो_समयout, "Read timeout in ms");
 
 /* As of kernel version 2.6.4 ehci-hcd uses an
- * "only one interrupt transfer per frame" shortcut
- * to simplify the scheduling of periodic transfers.
- * This conflicts with our standard 1ms intervals for in and out URBs.
- * We use default intervals of 2ms for in and 8ms for out transfers,
- * which is fast enough for 2400 baud and allows a small additional load.
- * Increase the interval to allow more devices that do interrupt transfers,
- * or set to 0 to use the standard interval from the endpoint descriptors.
+ * "only one interrupt transfer per frame" लघुcut
+ * to simplअगरy the scheduling of periodic transfers.
+ * This conflicts with our standard 1ms पूर्णांकervals क्रम in and out URBs.
+ * We use शेष पूर्णांकervals of 2ms क्रम in and 8ms क्रम out transfers,
+ * which is fast enough क्रम 2400 baud and allows a small additional load.
+ * Increase the पूर्णांकerval to allow more devices that करो पूर्णांकerrupt transfers,
+ * or set to 0 to use the standard पूर्णांकerval from the endpoपूर्णांक descriptors.
  */
-static int interrupt_in_interval = 2;
-module_param(interrupt_in_interval, int, 0);
-MODULE_PARM_DESC(interrupt_in_interval, "Interrupt in interval in ms");
+अटल पूर्णांक पूर्णांकerrupt_in_पूर्णांकerval = 2;
+module_param(पूर्णांकerrupt_in_पूर्णांकerval, पूर्णांक, 0);
+MODULE_PARM_DESC(पूर्णांकerrupt_in_पूर्णांकerval, "Interrupt in interval in ms");
 
-static int interrupt_out_interval = 8;
-module_param(interrupt_out_interval, int, 0);
-MODULE_PARM_DESC(interrupt_out_interval, "Interrupt out interval in ms");
+अटल पूर्णांक पूर्णांकerrupt_out_पूर्णांकerval = 8;
+module_param(पूर्णांकerrupt_out_पूर्णांकerval, पूर्णांक, 0);
+MODULE_PARM_DESC(पूर्णांकerrupt_out_पूर्णांकerval, "Interrupt out interval in ms");
 
 /* Define these values to match your device */
-#define LEGO_USB_TOWER_VENDOR_ID	0x0694
-#define LEGO_USB_TOWER_PRODUCT_ID	0x0001
+#घोषणा LEGO_USB_TOWER_VENDOR_ID	0x0694
+#घोषणा LEGO_USB_TOWER_PRODUCT_ID	0x0001
 
-/* Vendor requests */
-#define LEGO_USB_TOWER_REQUEST_RESET		0x04
-#define LEGO_USB_TOWER_REQUEST_GET_VERSION	0xFD
+/* Venकरोr requests */
+#घोषणा LEGO_USB_TOWER_REQUEST_RESET		0x04
+#घोषणा LEGO_USB_TOWER_REQUEST_GET_VERSION	0xFD
 
-struct tower_reset_reply {
+काष्ठा tower_reset_reply अणु
 	__le16 size;
 	__u8 err_code;
 	__u8 spare;
-};
+पूर्ण;
 
-struct tower_get_version_reply {
+काष्ठा tower_get_version_reply अणु
 	__le16 size;
 	__u8 err_code;
 	__u8 spare;
 	__u8 major;
 	__u8 minor;
 	__le16 build_no;
-};
+पूर्ण;
 
 
 /* table of devices that work with this driver */
-static const struct usb_device_id tower_table[] = {
-	{ USB_DEVICE(LEGO_USB_TOWER_VENDOR_ID, LEGO_USB_TOWER_PRODUCT_ID) },
-	{ }					/* Terminating entry */
-};
+अटल स्थिर काष्ठा usb_device_id tower_table[] = अणु
+	अणु USB_DEVICE(LEGO_USB_TOWER_VENDOR_ID, LEGO_USB_TOWER_PRODUCT_ID) पूर्ण,
+	अणु पूर्ण					/* Terminating entry */
+पूर्ण;
 
 MODULE_DEVICE_TABLE(usb, tower_table);
 
-#define LEGO_USB_TOWER_MINOR_BASE	160
+#घोषणा LEGO_USB_TOWER_MINOR_BASE	160
 
 
-/* Structure to hold all of our device specific stuff */
-struct lego_usb_tower {
-	struct mutex		lock;		/* locks this structure */
-	struct usb_device	*udev;		/* save off the usb device pointer */
-	unsigned char		minor;		/* the starting minor number for this device */
+/* Structure to hold all of our device specअगरic stuff */
+काष्ठा lego_usb_tower अणु
+	काष्ठा mutex		lock;		/* locks this काष्ठाure */
+	काष्ठा usb_device	*udev;		/* save off the usb device poपूर्णांकer */
+	अचिन्हित अक्षर		minor;		/* the starting minor number क्रम this device */
 
-	int			open_count;	/* number of times this port has been opened */
-	unsigned long		disconnected:1;
+	पूर्णांक			खोलो_count;	/* number of बार this port has been खोलोed */
+	अचिन्हित दीर्घ		disconnected:1;
 
-	char			*read_buffer;
-	size_t			read_buffer_length; /* this much came in */
-	size_t			read_packet_length; /* this much will be returned on read */
-	spinlock_t		read_buffer_lock;
-	int			packet_timeout_jiffies;
-	unsigned long		read_last_arrival;
+	अक्षर			*पढ़ो_buffer;
+	माप_प्रकार			पढ़ो_buffer_length; /* this much came in */
+	माप_प्रकार			पढ़ो_packet_length; /* this much will be वापसed on पढ़ो */
+	spinlock_t		पढ़ो_buffer_lock;
+	पूर्णांक			packet_समयout_jअगरfies;
+	अचिन्हित दीर्घ		पढ़ो_last_arrival;
 
-	wait_queue_head_t	read_wait;
-	wait_queue_head_t	write_wait;
+	रुको_queue_head_t	पढ़ो_रुको;
+	रुको_queue_head_t	ग_लिखो_रुको;
 
-	char			*interrupt_in_buffer;
-	struct usb_endpoint_descriptor *interrupt_in_endpoint;
-	struct urb		*interrupt_in_urb;
-	int			interrupt_in_interval;
-	int			interrupt_in_done;
+	अक्षर			*पूर्णांकerrupt_in_buffer;
+	काष्ठा usb_endpoपूर्णांक_descriptor *पूर्णांकerrupt_in_endpoपूर्णांक;
+	काष्ठा urb		*पूर्णांकerrupt_in_urb;
+	पूर्णांक			पूर्णांकerrupt_in_पूर्णांकerval;
+	पूर्णांक			पूर्णांकerrupt_in_करोne;
 
-	char			*interrupt_out_buffer;
-	struct usb_endpoint_descriptor *interrupt_out_endpoint;
-	struct urb		*interrupt_out_urb;
-	int			interrupt_out_interval;
-	int			interrupt_out_busy;
+	अक्षर			*पूर्णांकerrupt_out_buffer;
+	काष्ठा usb_endpoपूर्णांक_descriptor *पूर्णांकerrupt_out_endpoपूर्णांक;
+	काष्ठा urb		*पूर्णांकerrupt_out_urb;
+	पूर्णांक			पूर्णांकerrupt_out_पूर्णांकerval;
+	पूर्णांक			पूर्णांकerrupt_out_busy;
 
-};
+पूर्ण;
 
 
 /* local function prototypes */
-static ssize_t tower_read(struct file *file, char __user *buffer, size_t count, loff_t *ppos);
-static ssize_t tower_write(struct file *file, const char __user *buffer, size_t count, loff_t *ppos);
-static inline void tower_delete(struct lego_usb_tower *dev);
-static int tower_open(struct inode *inode, struct file *file);
-static int tower_release(struct inode *inode, struct file *file);
-static __poll_t tower_poll(struct file *file, poll_table *wait);
-static loff_t tower_llseek(struct file *file, loff_t off, int whence);
+अटल sमाप_प्रकार tower_पढ़ो(काष्ठा file *file, अक्षर __user *buffer, माप_प्रकार count, loff_t *ppos);
+अटल sमाप_प्रकार tower_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *ppos);
+अटल अंतरभूत व्योम tower_delete(काष्ठा lego_usb_tower *dev);
+अटल पूर्णांक tower_खोलो(काष्ठा inode *inode, काष्ठा file *file);
+अटल पूर्णांक tower_release(काष्ठा inode *inode, काष्ठा file *file);
+अटल __poll_t tower_poll(काष्ठा file *file, poll_table *रुको);
+अटल loff_t tower_llseek(काष्ठा file *file, loff_t off, पूर्णांक whence);
 
-static void tower_check_for_read_packet(struct lego_usb_tower *dev);
-static void tower_interrupt_in_callback(struct urb *urb);
-static void tower_interrupt_out_callback(struct urb *urb);
+अटल व्योम tower_check_क्रम_पढ़ो_packet(काष्ठा lego_usb_tower *dev);
+अटल व्योम tower_पूर्णांकerrupt_in_callback(काष्ठा urb *urb);
+अटल व्योम tower_पूर्णांकerrupt_out_callback(काष्ठा urb *urb);
 
-static int  tower_probe(struct usb_interface *interface, const struct usb_device_id *id);
-static void tower_disconnect(struct usb_interface *interface);
+अटल पूर्णांक  tower_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface, स्थिर काष्ठा usb_device_id *id);
+अटल व्योम tower_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface);
 
 
-/* file operations needed when we register this driver */
-static const struct file_operations tower_fops = {
+/* file operations needed when we रेजिस्टर this driver */
+अटल स्थिर काष्ठा file_operations tower_fops = अणु
 	.owner =	THIS_MODULE,
-	.read  =	tower_read,
-	.write =	tower_write,
-	.open =		tower_open,
+	.पढ़ो  =	tower_पढ़ो,
+	.ग_लिखो =	tower_ग_लिखो,
+	.खोलो =		tower_खोलो,
 	.release =	tower_release,
 	.poll =		tower_poll,
 	.llseek =	tower_llseek,
-};
+पूर्ण;
 
-static char *legousbtower_devnode(struct device *dev, umode_t *mode)
-{
-	return kasprintf(GFP_KERNEL, "usb/%s", dev_name(dev));
-}
+अटल अक्षर *legousbtower_devnode(काष्ठा device *dev, umode_t *mode)
+अणु
+	वापस kaप्र_लिखो(GFP_KERNEL, "usb/%s", dev_name(dev));
+पूर्ण
 
 /*
  * usb class driver info in order to get a minor number from the usb core,
- * and to have the device registered with the driver core
+ * and to have the device रेजिस्टरed with the driver core
  */
-static struct usb_class_driver tower_class = {
+अटल काष्ठा usb_class_driver tower_class = अणु
 	.name =		"legousbtower%d",
 	.devnode = 	legousbtower_devnode,
 	.fops =		&tower_fops,
 	.minor_base =	LEGO_USB_TOWER_MINOR_BASE,
-};
+पूर्ण;
 
 
-/* usb specific object needed to register this driver with the usb subsystem */
-static struct usb_driver tower_driver = {
+/* usb specअगरic object needed to रेजिस्टर this driver with the usb subप्रणाली */
+अटल काष्ठा usb_driver tower_driver = अणु
 	.name =		"legousbtower",
 	.probe =	tower_probe,
 	.disconnect =	tower_disconnect,
 	.id_table =	tower_table,
-};
+पूर्ण;
 
 
 /*
  *	lego_usb_tower_debug_data
  */
-static inline void lego_usb_tower_debug_data(struct device *dev,
-					     const char *function, int size,
-					     const unsigned char *data)
-{
+अटल अंतरभूत व्योम lego_usb_tower_debug_data(काष्ठा device *dev,
+					     स्थिर अक्षर *function, पूर्णांक size,
+					     स्थिर अचिन्हित अक्षर *data)
+अणु
 	dev_dbg(dev, "%s - length = %d, data = %*ph\n",
 		function, size, size, data);
-}
+पूर्ण
 
 
 /*
  *	tower_delete
  */
-static inline void tower_delete(struct lego_usb_tower *dev)
-{
-	/* free data structures */
-	usb_free_urb(dev->interrupt_in_urb);
-	usb_free_urb(dev->interrupt_out_urb);
-	kfree(dev->read_buffer);
-	kfree(dev->interrupt_in_buffer);
-	kfree(dev->interrupt_out_buffer);
+अटल अंतरभूत व्योम tower_delete(काष्ठा lego_usb_tower *dev)
+अणु
+	/* मुक्त data काष्ठाures */
+	usb_मुक्त_urb(dev->पूर्णांकerrupt_in_urb);
+	usb_मुक्त_urb(dev->पूर्णांकerrupt_out_urb);
+	kमुक्त(dev->पढ़ो_buffer);
+	kमुक्त(dev->पूर्णांकerrupt_in_buffer);
+	kमुक्त(dev->पूर्णांकerrupt_out_buffer);
 	usb_put_dev(dev->udev);
-	kfree(dev);
-}
+	kमुक्त(dev);
+पूर्ण
 
 
 /*
- *	tower_open
+ *	tower_खोलो
  */
-static int tower_open(struct inode *inode, struct file *file)
-{
-	struct lego_usb_tower *dev = NULL;
-	int subminor;
-	int retval = 0;
-	struct usb_interface *interface;
-	struct tower_reset_reply reset_reply;
-	int result;
+अटल पूर्णांक tower_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा lego_usb_tower *dev = शून्य;
+	पूर्णांक subminor;
+	पूर्णांक retval = 0;
+	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
+	काष्ठा tower_reset_reply reset_reply;
+	पूर्णांक result;
 
-	nonseekable_open(inode, file);
+	nonseekable_खोलो(inode, file);
 	subminor = iminor(inode);
 
-	interface = usb_find_interface(&tower_driver, subminor);
-	if (!interface) {
+	पूर्णांकerface = usb_find_पूर्णांकerface(&tower_driver, subminor);
+	अगर (!पूर्णांकerface) अणु
 		pr_err("error, can't find device for minor %d\n", subminor);
 		retval = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	dev = usb_get_intfdata(interface);
-	if (!dev) {
+	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
+	अगर (!dev) अणु
 		retval = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	/* lock this device */
-	if (mutex_lock_interruptible(&dev->lock)) {
+	अगर (mutex_lock_पूर्णांकerruptible(&dev->lock)) अणु
 	        retval = -ERESTARTSYS;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 
-	/* allow opening only once */
-	if (dev->open_count) {
+	/* allow खोलोing only once */
+	अगर (dev->खोलो_count) अणु
 		retval = -EBUSY;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
 	/* reset the tower */
 	result = usb_control_msg_recv(dev->udev, 0,
 				      LEGO_USB_TOWER_REQUEST_RESET,
-				      USB_TYPE_VENDOR | USB_DIR_IN | USB_RECIP_DEVICE,
+				      USB_TYPE_VENDOR | USB_सूची_IN | USB_RECIP_DEVICE,
 				      0, 0,
-				      &reset_reply, sizeof(reset_reply), 1000,
+				      &reset_reply, माप(reset_reply), 1000,
 				      GFP_KERNEL);
-	if (result < 0) {
+	अगर (result < 0) अणु
 		dev_err(&dev->udev->dev,
 			"LEGO USB Tower reset control request failed\n");
 		retval = result;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
 	/* initialize in direction */
-	dev->read_buffer_length = 0;
-	dev->read_packet_length = 0;
-	usb_fill_int_urb(dev->interrupt_in_urb,
+	dev->पढ़ो_buffer_length = 0;
+	dev->पढ़ो_packet_length = 0;
+	usb_fill_पूर्णांक_urb(dev->पूर्णांकerrupt_in_urb,
 			 dev->udev,
-			 usb_rcvintpipe(dev->udev, dev->interrupt_in_endpoint->bEndpointAddress),
-			 dev->interrupt_in_buffer,
-			 usb_endpoint_maxp(dev->interrupt_in_endpoint),
-			 tower_interrupt_in_callback,
+			 usb_rcvपूर्णांकpipe(dev->udev, dev->पूर्णांकerrupt_in_endpoपूर्णांक->bEndpoपूर्णांकAddress),
+			 dev->पूर्णांकerrupt_in_buffer,
+			 usb_endpoपूर्णांक_maxp(dev->पूर्णांकerrupt_in_endpoपूर्णांक),
+			 tower_पूर्णांकerrupt_in_callback,
 			 dev,
-			 dev->interrupt_in_interval);
+			 dev->पूर्णांकerrupt_in_पूर्णांकerval);
 
-	dev->interrupt_in_done = 0;
+	dev->पूर्णांकerrupt_in_करोne = 0;
 	mb();
 
-	retval = usb_submit_urb(dev->interrupt_in_urb, GFP_KERNEL);
-	if (retval) {
+	retval = usb_submit_urb(dev->पूर्णांकerrupt_in_urb, GFP_KERNEL);
+	अगर (retval) अणु
 		dev_err(&dev->udev->dev,
 			"Couldn't submit interrupt_in_urb %d\n", retval);
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	/* save device in the file's private structure */
-	file->private_data = dev;
+	/* save device in the file's निजी काष्ठाure */
+	file->निजी_data = dev;
 
-	dev->open_count = 1;
+	dev->खोलो_count = 1;
 
-unlock_exit:
+unlock_निकास:
 	mutex_unlock(&dev->lock);
 
-exit:
-	return retval;
-}
+निकास:
+	वापस retval;
+पूर्ण
 
 /*
  *	tower_release
  */
-static int tower_release(struct inode *inode, struct file *file)
-{
-	struct lego_usb_tower *dev;
-	int retval = 0;
+अटल पूर्णांक tower_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा lego_usb_tower *dev;
+	पूर्णांक retval = 0;
 
-	dev = file->private_data;
-	if (dev == NULL) {
+	dev = file->निजी_data;
+	अगर (dev == शून्य) अणु
 		retval = -ENODEV;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
 	mutex_lock(&dev->lock);
 
-	if (dev->disconnected) {
-		/* the device was unplugged before the file was released */
+	अगर (dev->disconnected) अणु
+		/* the device was unplugged beक्रमe the file was released */
 
-		/* unlock here as tower_delete frees dev */
+		/* unlock here as tower_delete मुक्तs dev */
 		mutex_unlock(&dev->lock);
 		tower_delete(dev);
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* wait until write transfer is finished */
-	if (dev->interrupt_out_busy) {
-		wait_event_interruptible_timeout(dev->write_wait, !dev->interrupt_out_busy,
+	/* रुको until ग_लिखो transfer is finished */
+	अगर (dev->पूर्णांकerrupt_out_busy) अणु
+		रुको_event_पूर्णांकerruptible_समयout(dev->ग_लिखो_रुको, !dev->पूर्णांकerrupt_out_busy,
 						 2 * HZ);
-	}
+	पूर्ण
 
-	/* shutdown transfers */
-	usb_kill_urb(dev->interrupt_in_urb);
-	usb_kill_urb(dev->interrupt_out_urb);
+	/* shutकरोwn transfers */
+	usb_समाप्त_urb(dev->पूर्णांकerrupt_in_urb);
+	usb_समाप्त_urb(dev->पूर्णांकerrupt_out_urb);
 
-	dev->open_count = 0;
+	dev->खोलो_count = 0;
 
 	mutex_unlock(&dev->lock);
-exit:
-	return retval;
-}
+निकास:
+	वापस retval;
+पूर्ण
 
 /*
- *	tower_check_for_read_packet
+ *	tower_check_क्रम_पढ़ो_packet
  *
- *      To get correct semantics for signals and non-blocking I/O
- *      with packetizing we pretend not to see any data in the read buffer
- *      until it has been there unchanged for at least
- *      dev->packet_timeout_jiffies, or until the buffer is full.
+ *      To get correct semantics क्रम संकेतs and non-blocking I/O
+ *      with packetizing we pretend not to see any data in the पढ़ो buffer
+ *      until it has been there unchanged क्रम at least
+ *      dev->packet_समयout_jअगरfies, or until the buffer is full.
  */
-static void tower_check_for_read_packet(struct lego_usb_tower *dev)
-{
-	spin_lock_irq(&dev->read_buffer_lock);
-	if (!packet_timeout
-	    || time_after(jiffies, dev->read_last_arrival + dev->packet_timeout_jiffies)
-	    || dev->read_buffer_length == read_buffer_size) {
-		dev->read_packet_length = dev->read_buffer_length;
-	}
-	dev->interrupt_in_done = 0;
-	spin_unlock_irq(&dev->read_buffer_lock);
-}
+अटल व्योम tower_check_क्रम_पढ़ो_packet(काष्ठा lego_usb_tower *dev)
+अणु
+	spin_lock_irq(&dev->पढ़ो_buffer_lock);
+	अगर (!packet_समयout
+	    || समय_after(jअगरfies, dev->पढ़ो_last_arrival + dev->packet_समयout_jअगरfies)
+	    || dev->पढ़ो_buffer_length == पढ़ो_buffer_size) अणु
+		dev->पढ़ो_packet_length = dev->पढ़ो_buffer_length;
+	पूर्ण
+	dev->पूर्णांकerrupt_in_करोne = 0;
+	spin_unlock_irq(&dev->पढ़ो_buffer_lock);
+पूर्ण
 
 
 /*
  *	tower_poll
  */
-static __poll_t tower_poll(struct file *file, poll_table *wait)
-{
-	struct lego_usb_tower *dev;
+अटल __poll_t tower_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा lego_usb_tower *dev;
 	__poll_t mask = 0;
 
-	dev = file->private_data;
+	dev = file->निजी_data;
 
-	if (dev->disconnected)
-		return EPOLLERR | EPOLLHUP;
+	अगर (dev->disconnected)
+		वापस EPOLLERR | EPOLLHUP;
 
-	poll_wait(file, &dev->read_wait, wait);
-	poll_wait(file, &dev->write_wait, wait);
+	poll_रुको(file, &dev->पढ़ो_रुको, रुको);
+	poll_रुको(file, &dev->ग_लिखो_रुको, रुको);
 
-	tower_check_for_read_packet(dev);
-	if (dev->read_packet_length > 0)
+	tower_check_क्रम_पढ़ो_packet(dev);
+	अगर (dev->पढ़ो_packet_length > 0)
 		mask |= EPOLLIN | EPOLLRDNORM;
-	if (!dev->interrupt_out_busy)
+	अगर (!dev->पूर्णांकerrupt_out_busy)
 		mask |= EPOLLOUT | EPOLLWRNORM;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
 
 /*
  *	tower_llseek
  */
-static loff_t tower_llseek(struct file *file, loff_t off, int whence)
-{
-	return -ESPIPE;		/* unseekable */
-}
+अटल loff_t tower_llseek(काष्ठा file *file, loff_t off, पूर्णांक whence)
+अणु
+	वापस -ESPIPE;		/* unseekable */
+पूर्ण
 
 
 /*
- *	tower_read
+ *	tower_पढ़ो
  */
-static ssize_t tower_read(struct file *file, char __user *buffer, size_t count, loff_t *ppos)
-{
-	struct lego_usb_tower *dev;
-	size_t bytes_to_read;
-	int i;
-	int retval = 0;
-	unsigned long timeout = 0;
+अटल sमाप_प्रकार tower_पढ़ो(काष्ठा file *file, अक्षर __user *buffer, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा lego_usb_tower *dev;
+	माप_प्रकार bytes_to_पढ़ो;
+	पूर्णांक i;
+	पूर्णांक retval = 0;
+	अचिन्हित दीर्घ समयout = 0;
 
-	dev = file->private_data;
+	dev = file->निजी_data;
 
 	/* lock this object */
-	if (mutex_lock_interruptible(&dev->lock)) {
+	अगर (mutex_lock_पूर्णांकerruptible(&dev->lock)) अणु
 		retval = -ERESTARTSYS;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* verify that the device wasn't unplugged */
-	if (dev->disconnected) {
+	/* verअगरy that the device wasn't unplugged */
+	अगर (dev->disconnected) अणु
 		retval = -ENODEV;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	/* verify that we actually have some data to read */
-	if (count == 0) {
+	/* verअगरy that we actually have some data to पढ़ो */
+	अगर (count == 0) अणु
 		dev_dbg(&dev->udev->dev, "read request of 0 bytes\n");
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	if (read_timeout)
-		timeout = jiffies + msecs_to_jiffies(read_timeout);
+	अगर (पढ़ो_समयout)
+		समयout = jअगरfies + msecs_to_jअगरfies(पढ़ो_समयout);
 
-	/* wait for data */
-	tower_check_for_read_packet(dev);
-	while (dev->read_packet_length == 0) {
-		if (file->f_flags & O_NONBLOCK) {
+	/* रुको क्रम data */
+	tower_check_क्रम_पढ़ो_packet(dev);
+	जबतक (dev->पढ़ो_packet_length == 0) अणु
+		अगर (file->f_flags & O_NONBLOCK) अणु
 			retval = -EAGAIN;
-			goto unlock_exit;
-		}
-		retval = wait_event_interruptible_timeout(dev->read_wait, dev->interrupt_in_done, dev->packet_timeout_jiffies);
-		if (retval < 0)
-			goto unlock_exit;
+			जाओ unlock_निकास;
+		पूर्ण
+		retval = रुको_event_पूर्णांकerruptible_समयout(dev->पढ़ो_रुको, dev->पूर्णांकerrupt_in_करोne, dev->packet_समयout_jअगरfies);
+		अगर (retval < 0)
+			जाओ unlock_निकास;
 
-		/* reset read timeout during read or write activity */
-		if (read_timeout
-		    && (dev->read_buffer_length || dev->interrupt_out_busy)) {
-			timeout = jiffies + msecs_to_jiffies(read_timeout);
-		}
-		/* check for read timeout */
-		if (read_timeout && time_after(jiffies, timeout)) {
+		/* reset पढ़ो समयout during पढ़ो or ग_लिखो activity */
+		अगर (पढ़ो_समयout
+		    && (dev->पढ़ो_buffer_length || dev->पूर्णांकerrupt_out_busy)) अणु
+			समयout = jअगरfies + msecs_to_jअगरfies(पढ़ो_समयout);
+		पूर्ण
+		/* check क्रम पढ़ो समयout */
+		अगर (पढ़ो_समयout && समय_after(jअगरfies, समयout)) अणु
 			retval = -ETIMEDOUT;
-			goto unlock_exit;
-		}
-		tower_check_for_read_packet(dev);
-	}
+			जाओ unlock_निकास;
+		पूर्ण
+		tower_check_क्रम_पढ़ो_packet(dev);
+	पूर्ण
 
-	/* copy the data from read_buffer into userspace */
-	bytes_to_read = min(count, dev->read_packet_length);
+	/* copy the data from पढ़ो_buffer पूर्णांकo userspace */
+	bytes_to_पढ़ो = min(count, dev->पढ़ो_packet_length);
 
-	if (copy_to_user(buffer, dev->read_buffer, bytes_to_read)) {
+	अगर (copy_to_user(buffer, dev->पढ़ो_buffer, bytes_to_पढ़ो)) अणु
 		retval = -EFAULT;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	spin_lock_irq(&dev->read_buffer_lock);
-	dev->read_buffer_length -= bytes_to_read;
-	dev->read_packet_length -= bytes_to_read;
-	for (i = 0; i < dev->read_buffer_length; i++)
-		dev->read_buffer[i] = dev->read_buffer[i+bytes_to_read];
-	spin_unlock_irq(&dev->read_buffer_lock);
+	spin_lock_irq(&dev->पढ़ो_buffer_lock);
+	dev->पढ़ो_buffer_length -= bytes_to_पढ़ो;
+	dev->पढ़ो_packet_length -= bytes_to_पढ़ो;
+	क्रम (i = 0; i < dev->पढ़ो_buffer_length; i++)
+		dev->पढ़ो_buffer[i] = dev->पढ़ो_buffer[i+bytes_to_पढ़ो];
+	spin_unlock_irq(&dev->पढ़ो_buffer_lock);
 
-	retval = bytes_to_read;
+	retval = bytes_to_पढ़ो;
 
-unlock_exit:
+unlock_निकास:
 	/* unlock the device */
 	mutex_unlock(&dev->lock);
 
-exit:
-	return retval;
-}
+निकास:
+	वापस retval;
+पूर्ण
 
 
 /*
- *	tower_write
+ *	tower_ग_लिखो
  */
-static ssize_t tower_write(struct file *file, const char __user *buffer, size_t count, loff_t *ppos)
-{
-	struct lego_usb_tower *dev;
-	size_t bytes_to_write;
-	int retval = 0;
+अटल sमाप_प्रकार tower_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा lego_usb_tower *dev;
+	माप_प्रकार bytes_to_ग_लिखो;
+	पूर्णांक retval = 0;
 
-	dev = file->private_data;
+	dev = file->निजी_data;
 
 	/* lock this object */
-	if (mutex_lock_interruptible(&dev->lock)) {
+	अगर (mutex_lock_पूर्णांकerruptible(&dev->lock)) अणु
 		retval = -ERESTARTSYS;
-		goto exit;
-	}
+		जाओ निकास;
+	पूर्ण
 
-	/* verify that the device wasn't unplugged */
-	if (dev->disconnected) {
+	/* verअगरy that the device wasn't unplugged */
+	अगर (dev->disconnected) अणु
 		retval = -ENODEV;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	/* verify that we actually have some data to write */
-	if (count == 0) {
+	/* verअगरy that we actually have some data to ग_लिखो */
+	अगर (count == 0) अणु
 		dev_dbg(&dev->udev->dev, "write request of 0 bytes\n");
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
-	/* wait until previous transfer is finished */
-	while (dev->interrupt_out_busy) {
-		if (file->f_flags & O_NONBLOCK) {
+	/* रुको until previous transfer is finished */
+	जबतक (dev->पूर्णांकerrupt_out_busy) अणु
+		अगर (file->f_flags & O_NONBLOCK) अणु
 			retval = -EAGAIN;
-			goto unlock_exit;
-		}
-		retval = wait_event_interruptible(dev->write_wait,
-						  !dev->interrupt_out_busy);
-		if (retval)
-			goto unlock_exit;
-	}
+			जाओ unlock_निकास;
+		पूर्ण
+		retval = रुको_event_पूर्णांकerruptible(dev->ग_लिखो_रुको,
+						  !dev->पूर्णांकerrupt_out_busy);
+		अगर (retval)
+			जाओ unlock_निकास;
+	पूर्ण
 
-	/* write the data into interrupt_out_buffer from userspace */
-	bytes_to_write = min_t(int, count, write_buffer_size);
+	/* ग_लिखो the data पूर्णांकo पूर्णांकerrupt_out_buffer from userspace */
+	bytes_to_ग_लिखो = min_t(पूर्णांक, count, ग_लिखो_buffer_size);
 	dev_dbg(&dev->udev->dev, "%s: count = %zd, bytes_to_write = %zd\n",
-		__func__, count, bytes_to_write);
+		__func__, count, bytes_to_ग_लिखो);
 
-	if (copy_from_user(dev->interrupt_out_buffer, buffer, bytes_to_write)) {
+	अगर (copy_from_user(dev->पूर्णांकerrupt_out_buffer, buffer, bytes_to_ग_लिखो)) अणु
 		retval = -EFAULT;
-		goto unlock_exit;
-	}
+		जाओ unlock_निकास;
+	पूर्ण
 
 	/* send off the urb */
-	usb_fill_int_urb(dev->interrupt_out_urb,
+	usb_fill_पूर्णांक_urb(dev->पूर्णांकerrupt_out_urb,
 			 dev->udev,
-			 usb_sndintpipe(dev->udev, dev->interrupt_out_endpoint->bEndpointAddress),
-			 dev->interrupt_out_buffer,
-			 bytes_to_write,
-			 tower_interrupt_out_callback,
+			 usb_sndपूर्णांकpipe(dev->udev, dev->पूर्णांकerrupt_out_endpoपूर्णांक->bEndpoपूर्णांकAddress),
+			 dev->पूर्णांकerrupt_out_buffer,
+			 bytes_to_ग_लिखो,
+			 tower_पूर्णांकerrupt_out_callback,
 			 dev,
-			 dev->interrupt_out_interval);
+			 dev->पूर्णांकerrupt_out_पूर्णांकerval);
 
-	dev->interrupt_out_busy = 1;
+	dev->पूर्णांकerrupt_out_busy = 1;
 	wmb();
 
-	retval = usb_submit_urb(dev->interrupt_out_urb, GFP_KERNEL);
-	if (retval) {
-		dev->interrupt_out_busy = 0;
+	retval = usb_submit_urb(dev->पूर्णांकerrupt_out_urb, GFP_KERNEL);
+	अगर (retval) अणु
+		dev->पूर्णांकerrupt_out_busy = 0;
 		dev_err(&dev->udev->dev,
 			"Couldn't submit interrupt_out_urb %d\n", retval);
-		goto unlock_exit;
-	}
-	retval = bytes_to_write;
+		जाओ unlock_निकास;
+	पूर्ण
+	retval = bytes_to_ग_लिखो;
 
-unlock_exit:
+unlock_निकास:
 	/* unlock the device */
 	mutex_unlock(&dev->lock);
 
-exit:
-	return retval;
-}
+निकास:
+	वापस retval;
+पूर्ण
 
 
 /*
- *	tower_interrupt_in_callback
+ *	tower_पूर्णांकerrupt_in_callback
  */
-static void tower_interrupt_in_callback(struct urb *urb)
-{
-	struct lego_usb_tower *dev = urb->context;
-	int status = urb->status;
-	int retval;
-	unsigned long flags;
+अटल व्योम tower_पूर्णांकerrupt_in_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा lego_usb_tower *dev = urb->context;
+	पूर्णांक status = urb->status;
+	पूर्णांक retval;
+	अचिन्हित दीर्घ flags;
 
 	lego_usb_tower_debug_data(&dev->udev->dev, __func__,
 				  urb->actual_length, urb->transfer_buffer);
 
-	if (status) {
-		if (status == -ENOENT ||
+	अगर (status) अणु
+		अगर (status == -ENOENT ||
 		    status == -ECONNRESET ||
-		    status == -ESHUTDOWN) {
-			goto exit;
-		} else {
+		    status == -ESHUTDOWN) अणु
+			जाओ निकास;
+		पूर्ण अन्यथा अणु
 			dev_dbg(&dev->udev->dev,
 				"%s: nonzero status received: %d\n", __func__,
 				status);
-			goto resubmit; /* maybe we can recover */
-		}
-	}
+			जाओ resubmit; /* maybe we can recover */
+		पूर्ण
+	पूर्ण
 
-	if (urb->actual_length > 0) {
-		spin_lock_irqsave(&dev->read_buffer_lock, flags);
-		if (dev->read_buffer_length + urb->actual_length < read_buffer_size) {
-			memcpy(dev->read_buffer + dev->read_buffer_length,
-			       dev->interrupt_in_buffer,
+	अगर (urb->actual_length > 0) अणु
+		spin_lock_irqsave(&dev->पढ़ो_buffer_lock, flags);
+		अगर (dev->पढ़ो_buffer_length + urb->actual_length < पढ़ो_buffer_size) अणु
+			स_नकल(dev->पढ़ो_buffer + dev->पढ़ो_buffer_length,
+			       dev->पूर्णांकerrupt_in_buffer,
 			       urb->actual_length);
-			dev->read_buffer_length += urb->actual_length;
-			dev->read_last_arrival = jiffies;
+			dev->पढ़ो_buffer_length += urb->actual_length;
+			dev->पढ़ो_last_arrival = jअगरfies;
 			dev_dbg(&dev->udev->dev, "%s: received %d bytes\n",
 				__func__, urb->actual_length);
-		} else {
+		पूर्ण अन्यथा अणु
 			pr_warn("read_buffer overflow, %d bytes dropped\n",
 				urb->actual_length);
-		}
-		spin_unlock_irqrestore(&dev->read_buffer_lock, flags);
-	}
+		पूर्ण
+		spin_unlock_irqrestore(&dev->पढ़ो_buffer_lock, flags);
+	पूर्ण
 
 resubmit:
-	retval = usb_submit_urb(dev->interrupt_in_urb, GFP_ATOMIC);
-	if (retval) {
+	retval = usb_submit_urb(dev->पूर्णांकerrupt_in_urb, GFP_ATOMIC);
+	अगर (retval) अणु
 		dev_err(&dev->udev->dev, "%s: usb_submit_urb failed (%d)\n",
 			__func__, retval);
-	}
-exit:
-	dev->interrupt_in_done = 1;
-	wake_up_interruptible(&dev->read_wait);
-}
+	पूर्ण
+निकास:
+	dev->पूर्णांकerrupt_in_करोne = 1;
+	wake_up_पूर्णांकerruptible(&dev->पढ़ो_रुको);
+पूर्ण
 
 
 /*
- *	tower_interrupt_out_callback
+ *	tower_पूर्णांकerrupt_out_callback
  */
-static void tower_interrupt_out_callback(struct urb *urb)
-{
-	struct lego_usb_tower *dev = urb->context;
-	int status = urb->status;
+अटल व्योम tower_पूर्णांकerrupt_out_callback(काष्ठा urb *urb)
+अणु
+	काष्ठा lego_usb_tower *dev = urb->context;
+	पूर्णांक status = urb->status;
 
 	lego_usb_tower_debug_data(&dev->udev->dev, __func__,
 				  urb->actual_length, urb->transfer_buffer);
 
 	/* sync/async unlink faults aren't errors */
-	if (status && !(status == -ENOENT ||
+	अगर (status && !(status == -ENOENT ||
 			status == -ECONNRESET ||
-			status == -ESHUTDOWN)) {
+			status == -ESHUTDOWN)) अणु
 		dev_dbg(&dev->udev->dev,
 			"%s: nonzero write bulk status received: %d\n", __func__,
 			status);
-	}
+	पूर्ण
 
-	dev->interrupt_out_busy = 0;
-	wake_up_interruptible(&dev->write_wait);
-}
+	dev->पूर्णांकerrupt_out_busy = 0;
+	wake_up_पूर्णांकerruptible(&dev->ग_लिखो_रुको);
+पूर्ण
 
 
 /*
  *	tower_probe
  *
  *	Called by the usb core when a new device is connected that it thinks
- *	this driver might be interested in.
+ *	this driver might be पूर्णांकerested in.
  */
-static int tower_probe(struct usb_interface *interface, const struct usb_device_id *id)
-{
-	struct device *idev = &interface->dev;
-	struct usb_device *udev = interface_to_usbdev(interface);
-	struct lego_usb_tower *dev;
-	struct tower_get_version_reply get_version_reply;
-	int retval = -ENOMEM;
-	int result;
+अटल पूर्णांक tower_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface, स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा device *idev = &पूर्णांकerface->dev;
+	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+	काष्ठा lego_usb_tower *dev;
+	काष्ठा tower_get_version_reply get_version_reply;
+	पूर्णांक retval = -ENOMEM;
+	पूर्णांक result;
 
-	/* allocate memory for our device state and initialize it */
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		goto exit;
+	/* allocate memory क्रम our device state and initialize it */
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		जाओ निकास;
 
 	mutex_init(&dev->lock);
 	dev->udev = usb_get_dev(udev);
-	spin_lock_init(&dev->read_buffer_lock);
-	dev->packet_timeout_jiffies = msecs_to_jiffies(packet_timeout);
-	dev->read_last_arrival = jiffies;
-	init_waitqueue_head(&dev->read_wait);
-	init_waitqueue_head(&dev->write_wait);
+	spin_lock_init(&dev->पढ़ो_buffer_lock);
+	dev->packet_समयout_jअगरfies = msecs_to_jअगरfies(packet_समयout);
+	dev->पढ़ो_last_arrival = jअगरfies;
+	init_रुकोqueue_head(&dev->पढ़ो_रुको);
+	init_रुकोqueue_head(&dev->ग_लिखो_रुको);
 
-	result = usb_find_common_endpoints_reverse(interface->cur_altsetting,
-			NULL, NULL,
-			&dev->interrupt_in_endpoint,
-			&dev->interrupt_out_endpoint);
-	if (result) {
+	result = usb_find_common_endpoपूर्णांकs_reverse(पूर्णांकerface->cur_altsetting,
+			शून्य, शून्य,
+			&dev->पूर्णांकerrupt_in_endpoपूर्णांक,
+			&dev->पूर्णांकerrupt_out_endpoपूर्णांक);
+	अगर (result) अणु
 		dev_err(idev, "interrupt endpoints not found\n");
 		retval = result;
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
-	dev->read_buffer = kmalloc(read_buffer_size, GFP_KERNEL);
-	if (!dev->read_buffer)
-		goto error;
-	dev->interrupt_in_buffer = kmalloc(usb_endpoint_maxp(dev->interrupt_in_endpoint), GFP_KERNEL);
-	if (!dev->interrupt_in_buffer)
-		goto error;
-	dev->interrupt_in_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!dev->interrupt_in_urb)
-		goto error;
-	dev->interrupt_out_buffer = kmalloc(write_buffer_size, GFP_KERNEL);
-	if (!dev->interrupt_out_buffer)
-		goto error;
-	dev->interrupt_out_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!dev->interrupt_out_urb)
-		goto error;
-	dev->interrupt_in_interval = interrupt_in_interval ? interrupt_in_interval : dev->interrupt_in_endpoint->bInterval;
-	dev->interrupt_out_interval = interrupt_out_interval ? interrupt_out_interval : dev->interrupt_out_endpoint->bInterval;
+	dev->पढ़ो_buffer = kदो_स्मृति(पढ़ो_buffer_size, GFP_KERNEL);
+	अगर (!dev->पढ़ो_buffer)
+		जाओ error;
+	dev->पूर्णांकerrupt_in_buffer = kदो_स्मृति(usb_endpoपूर्णांक_maxp(dev->पूर्णांकerrupt_in_endpoपूर्णांक), GFP_KERNEL);
+	अगर (!dev->पूर्णांकerrupt_in_buffer)
+		जाओ error;
+	dev->पूर्णांकerrupt_in_urb = usb_alloc_urb(0, GFP_KERNEL);
+	अगर (!dev->पूर्णांकerrupt_in_urb)
+		जाओ error;
+	dev->पूर्णांकerrupt_out_buffer = kदो_स्मृति(ग_लिखो_buffer_size, GFP_KERNEL);
+	अगर (!dev->पूर्णांकerrupt_out_buffer)
+		जाओ error;
+	dev->पूर्णांकerrupt_out_urb = usb_alloc_urb(0, GFP_KERNEL);
+	अगर (!dev->पूर्णांकerrupt_out_urb)
+		जाओ error;
+	dev->पूर्णांकerrupt_in_पूर्णांकerval = पूर्णांकerrupt_in_पूर्णांकerval ? पूर्णांकerrupt_in_पूर्णांकerval : dev->पूर्णांकerrupt_in_endpoपूर्णांक->bInterval;
+	dev->पूर्णांकerrupt_out_पूर्णांकerval = पूर्णांकerrupt_out_पूर्णांकerval ? पूर्णांकerrupt_out_पूर्णांकerval : dev->पूर्णांकerrupt_out_endpoपूर्णांक->bInterval;
 
 	/* get the firmware version and log it */
 	result = usb_control_msg_recv(udev, 0,
 				      LEGO_USB_TOWER_REQUEST_GET_VERSION,
-				      USB_TYPE_VENDOR | USB_DIR_IN | USB_RECIP_DEVICE,
+				      USB_TYPE_VENDOR | USB_सूची_IN | USB_RECIP_DEVICE,
 				      0,
 				      0,
 				      &get_version_reply,
-				      sizeof(get_version_reply),
+				      माप(get_version_reply),
 				      1000, GFP_KERNEL);
-	if (result) {
+	अगर (result) अणु
 		dev_err(idev, "get version request failed: %d\n", result);
 		retval = result;
-		goto error;
-	}
-	dev_info(&interface->dev,
+		जाओ error;
+	पूर्ण
+	dev_info(&पूर्णांकerface->dev,
 		 "LEGO USB Tower firmware version is %d.%d build %d\n",
 		 get_version_reply.major,
 		 get_version_reply.minor,
 		 le16_to_cpu(get_version_reply.build_no));
 
-	/* we can register the device now, as it is ready */
-	usb_set_intfdata(interface, dev);
+	/* we can रेजिस्टर the device now, as it is पढ़ोy */
+	usb_set_पूर्णांकfdata(पूर्णांकerface, dev);
 
-	retval = usb_register_dev(interface, &tower_class);
-	if (retval) {
-		/* something prevented us from registering this driver */
+	retval = usb_रेजिस्टर_dev(पूर्णांकerface, &tower_class);
+	अगर (retval) अणु
+		/* something prevented us from रेजिस्टरing this driver */
 		dev_err(idev, "Not able to get a minor for this device.\n");
-		goto error;
-	}
-	dev->minor = interface->minor;
+		जाओ error;
+	पूर्ण
+	dev->minor = पूर्णांकerface->minor;
 
 	/* let the user know what node this device is now attached to */
-	dev_info(&interface->dev, "LEGO USB Tower #%d now attached to major "
+	dev_info(&पूर्णांकerface->dev, "LEGO USB Tower #%d now attached to major "
 		 "%d minor %d\n", (dev->minor - LEGO_USB_TOWER_MINOR_BASE),
 		 USB_MAJOR, dev->minor);
 
-exit:
-	return retval;
+निकास:
+	वापस retval;
 
 error:
 	tower_delete(dev);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 
 /*
  *	tower_disconnect
  *
- *	Called by the usb core when the device is removed from the system.
+ *	Called by the usb core when the device is हटाओd from the प्रणाली.
  */
-static void tower_disconnect(struct usb_interface *interface)
-{
-	struct lego_usb_tower *dev;
-	int minor;
+अटल व्योम tower_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
+अणु
+	काष्ठा lego_usb_tower *dev;
+	पूर्णांक minor;
 
-	dev = usb_get_intfdata(interface);
+	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
 
 	minor = dev->minor;
 
-	/* give back our minor and prevent further open() */
-	usb_deregister_dev(interface, &tower_class);
+	/* give back our minor and prevent further खोलो() */
+	usb_deरेजिस्टर_dev(पूर्णांकerface, &tower_class);
 
 	/* stop I/O */
-	usb_poison_urb(dev->interrupt_in_urb);
-	usb_poison_urb(dev->interrupt_out_urb);
+	usb_poison_urb(dev->पूर्णांकerrupt_in_urb);
+	usb_poison_urb(dev->पूर्णांकerrupt_out_urb);
 
 	mutex_lock(&dev->lock);
 
-	/* if the device is not opened, then we clean up right now */
-	if (!dev->open_count) {
+	/* अगर the device is not खोलोed, then we clean up right now */
+	अगर (!dev->खोलो_count) अणु
 		mutex_unlock(&dev->lock);
 		tower_delete(dev);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev->disconnected = 1;
 		/* wake up pollers */
-		wake_up_interruptible_all(&dev->read_wait);
-		wake_up_interruptible_all(&dev->write_wait);
+		wake_up_पूर्णांकerruptible_all(&dev->पढ़ो_रुको);
+		wake_up_पूर्णांकerruptible_all(&dev->ग_लिखो_रुको);
 		mutex_unlock(&dev->lock);
-	}
+	पूर्ण
 
-	dev_info(&interface->dev, "LEGO USB Tower #%d now disconnected\n",
+	dev_info(&पूर्णांकerface->dev, "LEGO USB Tower #%d now disconnected\n",
 		 (minor - LEGO_USB_TOWER_MINOR_BASE));
-}
+पूर्ण
 
 module_usb_driver(tower_driver);
 

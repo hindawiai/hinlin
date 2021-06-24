@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_CONNLIMIT_H
-#define _XT_CONNLIMIT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_CONNLIMIT_H
+#घोषणा _XT_CONNLIMIT_H
 
-#include <linux/types.h>
-#include <linux/netfilter.h>
+#समावेश <linux/types.h>
+#समावेश <linux/netfilter.h>
 
-struct xt_connlimit_data;
+काष्ठा xt_connlimit_data;
 
-enum {
+क्रमागत अणु
 	XT_CONNLIMIT_INVERT = 1 << 0,
 	XT_CONNLIMIT_DADDR  = 1 << 1,
-};
+पूर्ण;
 
-struct xt_connlimit_info {
-	union {
-		union nf_inet_addr mask;
-#ifndef __KERNEL__
-		union {
+काष्ठा xt_connlimit_info अणु
+	जोड़ अणु
+		जोड़ nf_inet_addr mask;
+#अगर_अघोषित __KERNEL__
+		जोड़ अणु
 			__be32 v4_mask;
 			__be32 v6_mask[4];
-		};
-#endif
-	};
-	unsigned int limit;
+		पूर्ण;
+#पूर्ण_अगर
+	पूर्ण;
+	अचिन्हित पूर्णांक limit;
 	/* revision 1 */
 	__u32 flags;
 
-	/* Used internally by the kernel */
-	struct nf_conncount_data *data __attribute__((aligned(8)));
-};
+	/* Used पूर्णांकernally by the kernel */
+	काष्ठा nf_conncount_data *data __attribute__((aligned(8)));
+पूर्ण;
 
-#endif /* _XT_CONNLIMIT_H */
+#पूर्ण_अगर /* _XT_CONNLIMIT_H */

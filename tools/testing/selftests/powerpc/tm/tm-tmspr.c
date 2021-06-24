@@ -1,75 +1,76 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2015, Michael Neuling, IBM Corp.
  *
  * Original: Michael Neuling 3/4/2014
- * Modified: Rashmica Gupta 8/12/2015
+ * Modअगरied: Rashmica Gupta 8/12/2015
  *
- * Check if any of the Transaction Memory SPRs get corrupted.
+ * Check अगर any of the Transaction Memory SPRs get corrupted.
  * - TFIAR  - stores address of location of transaction failure
- * - TFHAR  - stores address of software failure handler (if transaction
+ * - TFHAR  - stores address of software failure handler (अगर transaction
  *   fails)
  * - TEXASR - lots of info about the transacion(s)
  *
- * (1) create more threads than cpus
- * (2) in each thread:
+ * (1) create more thपढ़ोs than cpus
+ * (2) in each thपढ़ो:
  * 	(a) set TFIAR and TFHAR a unique value
- * 	(b) loop for awhile, continually checking to see if
- * 	either register has been corrupted.
+ * 	(b) loop क्रम aजबतक, continually checking to see अगर
+ * 	either रेजिस्टर has been corrupted.
  *
  * (3) Loop:
  * 	(a) begin transaction
- *    	(b) abort transaction
- *	(c) check TEXASR to see if FS has been corrupted
+ *    	(b) पात transaction
+ *	(c) check TEXASR to see अगर FS has been corrupted
  */
 
-#define _GNU_SOURCE
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <string.h>
+#घोषणा _GNU_SOURCE
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <माला.स>
 
-#include "utils.h"
-#include "tm.h"
+#समावेश "utils.h"
+#समावेश "tm.h"
 
-int	num_loops	= 1000000;
-int	passed = 1;
+पूर्णांक	num_loops	= 1000000;
+पूर्णांक	passed = 1;
 
-void tfiar_tfhar(void *in)
-{
-	unsigned long tfhar, tfhar_rd, tfiar, tfiar_rd;
-	int i;
+व्योम tfiar_tfhar(व्योम *in)
+अणु
+	अचिन्हित दीर्घ tfhar, tfhar_rd, tfiar, tfiar_rd;
+	पूर्णांक i;
 
-	/* TFIAR: Last bit has to be high so userspace can read register */
-	tfiar = ((unsigned long)in) + 1;
+	/* TFIAR: Last bit has to be high so userspace can पढ़ो रेजिस्टर */
+	tfiar = ((अचिन्हित दीर्घ)in) + 1;
 	tfiar += 2;
 	mtspr(SPRN_TFIAR, tfiar);
 
 	/* TFHAR: Last two bits are reserved */
-	tfhar = ((unsigned long)in);
+	tfhar = ((अचिन्हित दीर्घ)in);
 	tfhar &= ~0x3UL;
 	tfhar += 4;
 	mtspr(SPRN_TFHAR, tfhar);
 
-	for (i = 0; i < num_loops; i++)	{
+	क्रम (i = 0; i < num_loops; i++)	अणु
 		tfhar_rd = mfspr(SPRN_TFHAR);
 		tfiar_rd = mfspr(SPRN_TFIAR);
-		if ( (tfhar != tfhar_rd) || (tfiar != tfiar_rd) ) {
+		अगर ( (tfhar != tfhar_rd) || (tfiar != tfiar_rd) ) अणु
 			passed = 0;
-			return;
-		}
-	}
-	return;
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+	वापस;
+पूर्ण
 
-void texasr(void *in)
-{
-	unsigned long i;
-	uint64_t result = 0;
+व्योम texasr(व्योम *in)
+अणु
+	अचिन्हित दीर्घ i;
+	uपूर्णांक64_t result = 0;
 
-	for (i = 0; i < num_loops; i++) {
-		asm __volatile__(
+	क्रम (i = 0; i < num_loops; i++) अणु
+		यंत्र __अस्थिर__(
 			"tbegin.;"
 			"beq    3f ;"
 			"tabort. 0 ;"
@@ -81,63 +82,63 @@ void texasr(void *in)
 
                 /* Check the TEXASR */
                 result = mfspr(SPRN_TEXASR);
-		if ((result & TEXASR_FS) == 0) {
+		अगर ((result & TEXASR_FS) == 0) अणु
 			passed = 0;
-			return;
-		}
-	}
-	return;
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+	वापस;
+पूर्ण
 
-int test_tmspr()
-{
-	pthread_t	*thread;
-	int	   	thread_num;
-	unsigned long	i;
+पूर्णांक test_पंचांगspr()
+अणु
+	pthपढ़ो_t	*thपढ़ो;
+	पूर्णांक	   	thपढ़ो_num;
+	अचिन्हित दीर्घ	i;
 
-	SKIP_IF(!have_htm());
+	SKIP_IF(!have_hपंचांग());
 
-	/* To cause some context switching */
-	thread_num = 10 * sysconf(_SC_NPROCESSORS_ONLN);
+	/* To cause some context चयनing */
+	thपढ़ो_num = 10 * sysconf(_SC_NPROCESSORS_ONLN);
 
-	thread = malloc(thread_num * sizeof(pthread_t));
-	if (thread == NULL)
-		return EXIT_FAILURE;
+	thपढ़ो = दो_स्मृति(thपढ़ो_num * माप(pthपढ़ो_t));
+	अगर (thपढ़ो == शून्य)
+		वापस निकास_त्रुटि;
 
 	/* Test TFIAR and TFHAR */
-	for (i = 0; i < thread_num; i += 2) {
-		if (pthread_create(&thread[i], NULL, (void *)tfiar_tfhar,
-				   (void *)i))
-			return EXIT_FAILURE;
-	}
+	क्रम (i = 0; i < thपढ़ो_num; i += 2) अणु
+		अगर (pthपढ़ो_create(&thपढ़ो[i], शून्य, (व्योम *)tfiar_tfhar,
+				   (व्योम *)i))
+			वापस निकास_त्रुटि;
+	पूर्ण
 	/* Test TEXASR */
-	for (i = 1; i < thread_num; i += 2) {
-		if (pthread_create(&thread[i], NULL, (void *)texasr, (void *)i))
-			return EXIT_FAILURE;
-	}
+	क्रम (i = 1; i < thपढ़ो_num; i += 2) अणु
+		अगर (pthपढ़ो_create(&thपढ़ो[i], शून्य, (व्योम *)texasr, (व्योम *)i))
+			वापस निकास_त्रुटि;
+	पूर्ण
 
-	for (i = 0; i < thread_num; i++) {
-		if (pthread_join(thread[i], NULL) != 0)
-			return EXIT_FAILURE;
-	}
+	क्रम (i = 0; i < thपढ़ो_num; i++) अणु
+		अगर (pthपढ़ो_join(thपढ़ो[i], शून्य) != 0)
+			वापस निकास_त्रुटि;
+	पूर्ण
 
-	free(thread);
+	मुक्त(thपढ़ो);
 
-	if (passed)
-		return 0;
-	else
-		return 1;
-}
+	अगर (passed)
+		वापस 0;
+	अन्यथा
+		वापस 1;
+पूर्ण
 
-int main(int argc, char *argv[])
-{
-	if (argc > 1) {
-		if (strcmp(argv[1], "-h") == 0) {
-			printf("Syntax:\t [<num loops>]\n");
-			return 0;
-		} else {
-			num_loops = atoi(argv[1]);
-		}
-	}
-	return test_harness(test_tmspr, "tm_tmspr");
-}
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर *argv[])
+अणु
+	अगर (argc > 1) अणु
+		अगर (म_भेद(argv[1], "-h") == 0) अणु
+			म_लिखो("Syntax:\t [<num loops>]\n");
+			वापस 0;
+		पूर्ण अन्यथा अणु
+			num_loops = म_से_प(argv[1]);
+		पूर्ण
+	पूर्ण
+	वापस test_harness(test_पंचांगspr, "tm_tmspr");
+पूर्ण

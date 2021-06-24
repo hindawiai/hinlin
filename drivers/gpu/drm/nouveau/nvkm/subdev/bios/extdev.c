@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012 Nouveau Community
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,90 +22,90 @@
  *
  * Authors: Martin Peres
  */
-#include <subdev/bios.h>
-#include <subdev/bios/dcb.h>
-#include <subdev/bios/extdev.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/dcb.h>
+#समावेश <subdev/bios/extdev.h>
 
-static u16
-extdev_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *len, u8 *cnt)
-{
+अटल u16
+extdev_table(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *len, u8 *cnt)
+अणु
 	u8  dcb_ver, dcb_hdr, dcb_cnt, dcb_len;
 	u16 dcb, extdev = 0;
 
 	dcb = dcb_table(bios, &dcb_ver, &dcb_hdr, &dcb_cnt, &dcb_len);
-	if (!dcb || (dcb_ver != 0x30 && dcb_ver != 0x40 && dcb_ver != 0x41))
-		return 0x0000;
+	अगर (!dcb || (dcb_ver != 0x30 && dcb_ver != 0x40 && dcb_ver != 0x41))
+		वापस 0x0000;
 
 	extdev = nvbios_rd16(bios, dcb + 18);
-	if (!extdev)
-		return 0x0000;
+	अगर (!extdev)
+		वापस 0x0000;
 
 	*ver = nvbios_rd08(bios, extdev + 0);
 	*hdr = nvbios_rd08(bios, extdev + 1);
 	*cnt = nvbios_rd08(bios, extdev + 2);
 	*len = nvbios_rd08(bios, extdev + 3);
-	return extdev + *hdr;
-}
+	वापस extdev + *hdr;
+पूर्ण
 
 bool
-nvbios_extdev_skip_probe(struct nvkm_bios *bios)
-{
+nvbios_extdev_skip_probe(काष्ठा nvkm_bios *bios)
+अणु
 	u8  ver, hdr, len, cnt;
 	u16 data = extdev_table(bios, &ver, &hdr, &len, &cnt);
-	if (data && ver == 0x40 && hdr >= 5) {
+	अगर (data && ver == 0x40 && hdr >= 5) अणु
 		u8 flags = nvbios_rd08(bios, data - hdr + 4);
-		if (flags & 1)
-			return true;
-	}
-	return false;
-}
+		अगर (flags & 1)
+			वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
-static u16
-nvbios_extdev_entry(struct nvkm_bios *bios, int idx, u8 *ver, u8 *len)
-{
+अटल u16
+nvbios_extdev_entry(काष्ठा nvkm_bios *bios, पूर्णांक idx, u8 *ver, u8 *len)
+अणु
 	u8 hdr, cnt;
 	u16 extdev = extdev_table(bios, ver, &hdr, len, &cnt);
-	if (extdev && idx < cnt)
-		return extdev + idx * *len;
-	return 0x0000;
-}
+	अगर (extdev && idx < cnt)
+		वापस extdev + idx * *len;
+	वापस 0x0000;
+पूर्ण
 
-static void
-extdev_parse_entry(struct nvkm_bios *bios, u16 offset,
-		   struct nvbios_extdev_func *entry)
-{
+अटल व्योम
+extdev_parse_entry(काष्ठा nvkm_bios *bios, u16 offset,
+		   काष्ठा nvbios_extdev_func *entry)
+अणु
 	entry->type = nvbios_rd08(bios, offset + 0);
 	entry->addr = nvbios_rd08(bios, offset + 1);
 	entry->bus = (nvbios_rd08(bios, offset + 2) >> 4) & 1;
-}
+पूर्ण
 
-int
-nvbios_extdev_parse(struct nvkm_bios *bios, int idx,
-		    struct nvbios_extdev_func *func)
-{
+पूर्णांक
+nvbios_extdev_parse(काष्ठा nvkm_bios *bios, पूर्णांक idx,
+		    काष्ठा nvbios_extdev_func *func)
+अणु
 	u8 ver, len;
 	u16 entry;
 
-	if (!(entry = nvbios_extdev_entry(bios, idx, &ver, &len)))
-		return -EINVAL;
+	अगर (!(entry = nvbios_extdev_entry(bios, idx, &ver, &len)))
+		वापस -EINVAL;
 
 	extdev_parse_entry(bios, entry, func);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-nvbios_extdev_find(struct nvkm_bios *bios, enum nvbios_extdev_type type,
-		   struct nvbios_extdev_func *func)
-{
+पूर्णांक
+nvbios_extdev_find(काष्ठा nvkm_bios *bios, क्रमागत nvbios_extdev_type type,
+		   काष्ठा nvbios_extdev_func *func)
+अणु
 	u8 ver, len, i;
 	u16 entry;
 
 	i = 0;
-	while ((entry = nvbios_extdev_entry(bios, i++, &ver, &len))) {
+	जबतक ((entry = nvbios_extdev_entry(bios, i++, &ver, &len))) अणु
 		extdev_parse_entry(bios, entry, func);
-		if (func->type == type)
-			return 0;
-	}
+		अगर (func->type == type)
+			वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण

@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Copyright 2016-2018 HabanaLabs, Ltd.
+ * Copyright 2016-2018 HabanaLअसल, Ltd.
  * All Rights Reserved.
  */
 
-#include "gaudiP.h"
-#include "../include/gaudi/gaudi_coresight.h"
-#include "../include/gaudi/asic_reg/gaudi_regs.h"
-#include "../include/gaudi/gaudi_masks.h"
-#include "../include/gaudi/gaudi_reg_map.h"
+#समावेश "gaudiP.h"
+#समावेश "../include/gaudi/gaudi_coresight.h"
+#समावेश "../include/gaudi/asic_reg/gaudi_regs.h"
+#समावेश "../include/gaudi/gaudi_masks.h"
+#समावेश "../include/gaudi/gaudi_reg_map.h"
 
-#include <uapi/misc/habanalabs.h>
-#define SPMU_SECTION_SIZE		MME0_ACC_SPMU_MAX_OFFSET
-#define SPMU_EVENT_TYPES_OFFSET		0x400
-#define SPMU_MAX_COUNTERS		6
+#समावेश <uapi/misc/habanaद_असल.h>
+#घोषणा SPMU_SECTION_SIZE		MME0_ACC_SPMU_MAX_OFFSET
+#घोषणा SPMU_EVENT_TYPES_OFFSET		0x400
+#घोषणा SPMU_MAX_COUNTERS		6
 
-static u64 debug_stm_regs[GAUDI_STM_LAST + 1] = {
+अटल u64 debug_sपंचांग_regs[GAUDI_STM_LAST + 1] = अणु
 	[GAUDI_STM_MME0_ACC]	= mmMME0_ACC_STM_BASE,
 	[GAUDI_STM_MME0_SBAB]	= mmMME0_SBAB_STM_BASE,
 	[GAUDI_STM_MME0_CTRL]	= mmMME0_CTRL_STM_BASE,
@@ -63,9 +64,9 @@ static u64 debug_stm_regs[GAUDI_STM_LAST + 1] = {
 	[GAUDI_STM_TPC5_EML]	= mmTPC5_EML_STM_BASE,
 	[GAUDI_STM_TPC6_EML]	= mmTPC6_EML_STM_BASE,
 	[GAUDI_STM_TPC7_EML]	= mmTPC7_EML_STM_BASE
-};
+पूर्ण;
 
-static u64 debug_etf_regs[GAUDI_ETF_LAST + 1] = {
+अटल u64 debug_etf_regs[GAUDI_ETF_LAST + 1] = अणु
 	[GAUDI_ETF_MME0_ACC]		= mmMME0_ACC_ETF_BASE,
 	[GAUDI_ETF_MME0_SBAB]		= mmMME0_SBAB_ETF_BASE,
 	[GAUDI_ETF_MME0_CTRL]		= mmMME0_CTRL_ETF_BASE,
@@ -114,9 +115,9 @@ static u64 debug_etf_regs[GAUDI_ETF_LAST + 1] = {
 	[GAUDI_ETF_TPC5_EML]		= mmTPC5_EML_ETF_BASE,
 	[GAUDI_ETF_TPC6_EML]		= mmTPC6_EML_ETF_BASE,
 	[GAUDI_ETF_TPC7_EML]		= mmTPC7_EML_ETF_BASE
-};
+पूर्ण;
 
-static u64 debug_funnel_regs[GAUDI_FUNNEL_LAST + 1] = {
+अटल u64 debug_funnel_regs[GAUDI_FUNNEL_LAST + 1] = अणु
 	[GAUDI_FUNNEL_MME0_ACC]		= mmMME0_ACC_FUNNEL_BASE,
 	[GAUDI_FUNNEL_MME1_ACC]		= mmMME1_ACC_FUNNEL_BASE,
 	[GAUDI_FUNNEL_MME2_ACC]		= mmMME2_ACC_FUNNEL_BASE,
@@ -193,9 +194,9 @@ static u64 debug_funnel_regs[GAUDI_FUNNEL_LAST + 1] = {
 	[GAUDI_FUNNEL_TPC5_EML]		= mmTPC5_EML_FUNNEL_BASE,
 	[GAUDI_FUNNEL_TPC6_EML]		= mmTPC6_EML_FUNNEL_BASE,
 	[GAUDI_FUNNEL_TPC7_EML]		= mmTPC7_EML_FUNNEL_BASE
-};
+पूर्ण;
 
-static u64 debug_bmon_regs[GAUDI_BMON_LAST + 1] = {
+अटल u64 debug_bmon_regs[GAUDI_BMON_LAST + 1] = अणु
 	[GAUDI_BMON_MME0_ACC_0]		= mmMME0_ACC_BMON0_BASE,
 	[GAUDI_BMON_MME0_SBAB_0]	= mmMME0_SBAB_BMON0_BASE,
 	[GAUDI_BMON_MME0_SBAB_1]	= mmMME0_SBAB_BMON1_BASE,
@@ -317,9 +318,9 @@ static u64 debug_bmon_regs[GAUDI_BMON_LAST + 1] = {
 	[GAUDI_BMON_TPC7_EML_1]		= mmTPC7_EML_BUSMON_1_BASE,
 	[GAUDI_BMON_TPC7_EML_2]		= mmTPC7_EML_BUSMON_2_BASE,
 	[GAUDI_BMON_TPC7_EML_3]		= mmTPC7_EML_BUSMON_3_BASE
-};
+पूर्ण;
 
-static u64 debug_spmu_regs[GAUDI_SPMU_LAST + 1] = {
+अटल u64 debug_spmu_regs[GAUDI_SPMU_LAST + 1] = अणु
 	[GAUDI_SPMU_MME0_ACC]		= mmMME0_ACC_SPMU_BASE,
 	[GAUDI_SPMU_MME0_SBAB]		= mmMME0_SBAB_SPMU_BASE,
 	[GAUDI_SPMU_MME0_CTRL]		= mmMME0_CTRL_SPMU_BASE,
@@ -360,15 +361,15 @@ static u64 debug_spmu_regs[GAUDI_SPMU_LAST + 1] = {
 	[GAUDI_SPMU_TPC5_EML]		= mmTPC5_EML_SPMU_BASE,
 	[GAUDI_SPMU_TPC6_EML]		= mmTPC6_EML_SPMU_BASE,
 	[GAUDI_SPMU_TPC7_EML]		= mmTPC7_EML_SPMU_BASE
-};
+पूर्ण;
 
-static int gaudi_coresight_timeout(struct hl_device *hdev, u64 addr,
-		int position, bool up)
-{
-	int rc;
+अटल पूर्णांक gaudi_coresight_समयout(काष्ठा hl_device *hdev, u64 addr,
+		पूर्णांक position, bool up)
+अणु
+	पूर्णांक rc;
 	u32 val;
 
-	rc = hl_poll_timeout(
+	rc = hl_poll_समयout(
 		hdev,
 		addr,
 		val,
@@ -376,38 +377,38 @@ static int gaudi_coresight_timeout(struct hl_device *hdev, u64 addr,
 		1000,
 		CORESIGHT_TIMEOUT_USEC);
 
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(hdev->dev,
 			"Timeout while waiting for coresight, addr: 0x%llx, position: %d, up: %d\n",
 				addr, position, up);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gaudi_config_stm(struct hl_device *hdev,
-		struct hl_debug_params *params)
-{
-	struct hl_debug_params_stm *input;
+अटल पूर्णांक gaudi_config_sपंचांग(काष्ठा hl_device *hdev,
+		काष्ठा hl_debug_params *params)
+अणु
+	काष्ठा hl_debug_params_sपंचांग *input;
 	u64 base_reg;
 	u32 frequency;
-	int rc;
+	पूर्णांक rc;
 
-	if (params->reg_idx >= ARRAY_SIZE(debug_stm_regs)) {
+	अगर (params->reg_idx >= ARRAY_SIZE(debug_sपंचांग_regs)) अणु
 		dev_err(hdev->dev, "Invalid register index in STM\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	base_reg = debug_stm_regs[params->reg_idx] - CFG_BASE;
+	base_reg = debug_sपंचांग_regs[params->reg_idx] - CFG_BASE;
 
 	WREG32(base_reg + 0xFB0, CORESIGHT_UNLOCK);
 
-	if (params->enable) {
+	अगर (params->enable) अणु
 		input = params->input;
 
-		if (!input)
-			return -EINVAL;
+		अगर (!input)
+			वापस -EINVAL;
 
 		WREG32(base_reg + 0xE80, 0x80004);
 		WREG32(base_reg + 0xD64, 7);
@@ -420,22 +421,22 @@ static int gaudi_config_stm(struct hl_device *hdev,
 		WREG32(base_reg + 0xE00, lower_32_bits(input->sp_mask));
 		WREG32(base_reg + 0xEF4, input->id);
 		WREG32(base_reg + 0xDF4, 0x80);
-		frequency = hdev->asic_prop.psoc_timestamp_frequency;
-		if (frequency == 0)
+		frequency = hdev->asic_prop.psoc_बारtamp_frequency;
+		अगर (frequency == 0)
 			frequency = input->frequency;
 		WREG32(base_reg + 0xE8C, frequency);
 		WREG32(base_reg + 0xE90, 0x7FF);
 
-		/* SW-2176 - SW WA for HW bug */
-		if ((CFG_BASE + base_reg) >= mmDMA_CH_0_CS_STM_BASE &&
-			(CFG_BASE + base_reg) <= mmDMA_CH_7_CS_STM_BASE) {
+		/* SW-2176 - SW WA क्रम HW bug */
+		अगर ((CFG_BASE + base_reg) >= mmDMA_CH_0_CS_STM_BASE &&
+			(CFG_BASE + base_reg) <= mmDMA_CH_7_CS_STM_BASE) अणु
 
 			WREG32(base_reg + 0xE68, 0xffff8005);
 			WREG32(base_reg + 0xE6C, 0x0);
-		}
+		पूर्ण
 
 		WREG32(base_reg + 0xE80, 0x27 | (input->id << 16));
-	} else {
+	पूर्ण अन्यथा अणु
 		WREG32(base_reg + 0xE80, 4);
 		WREG32(base_reg + 0xD64, 0);
 		WREG32(base_reg + 0xD60, 1);
@@ -450,32 +451,32 @@ static int gaudi_config_stm(struct hl_device *hdev,
 		WREG32(base_reg + 0xE64, 0);
 		WREG32(base_reg + 0xE8C, 0);
 
-		rc = gaudi_coresight_timeout(hdev, base_reg + 0xE80, 23, false);
-		if (rc) {
+		rc = gaudi_coresight_समयout(hdev, base_reg + 0xE80, 23, false);
+		अगर (rc) अणु
 			dev_err(hdev->dev,
 				"Failed to disable STM on timeout, error %d\n",
 				rc);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
 		WREG32(base_reg + 0xE80, 4);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gaudi_config_etf(struct hl_device *hdev,
-		struct hl_debug_params *params)
-{
-	struct hl_debug_params_etf *input;
+अटल पूर्णांक gaudi_config_etf(काष्ठा hl_device *hdev,
+		काष्ठा hl_debug_params *params)
+अणु
+	काष्ठा hl_debug_params_etf *input;
 	u64 base_reg;
 	u32 val;
-	int rc;
+	पूर्णांक rc;
 
-	if (params->reg_idx >= ARRAY_SIZE(debug_etf_regs)) {
+	अगर (params->reg_idx >= ARRAY_SIZE(debug_etf_regs)) अणु
 		dev_err(hdev->dev, "Invalid register index in ETF\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	base_reg = debug_etf_regs[params->reg_idx] - CFG_BASE;
 
@@ -487,95 +488,95 @@ static int gaudi_config_etf(struct hl_device *hdev,
 	val |= 0x40;
 	WREG32(base_reg + 0x304, val);
 
-	rc = gaudi_coresight_timeout(hdev, base_reg + 0x304, 6, false);
-	if (rc) {
+	rc = gaudi_coresight_समयout(hdev, base_reg + 0x304, 6, false);
+	अगर (rc) अणु
 		dev_err(hdev->dev,
 			"Failed to %s ETF on timeout, error %d\n",
 				params->enable ? "enable" : "disable", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = gaudi_coresight_timeout(hdev, base_reg + 0xC, 2, true);
-	if (rc) {
+	rc = gaudi_coresight_समयout(hdev, base_reg + 0xC, 2, true);
+	अगर (rc) अणु
 		dev_err(hdev->dev,
 			"Failed to %s ETF on timeout, error %d\n",
 				params->enable ? "enable" : "disable", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	WREG32(base_reg + 0x20, 0);
 
-	if (params->enable) {
+	अगर (params->enable) अणु
 		input = params->input;
 
-		if (!input)
-			return -EINVAL;
+		अगर (!input)
+			वापस -EINVAL;
 
 		WREG32(base_reg + 0x34, 0x3FFC);
 		WREG32(base_reg + 0x28, input->sink_mode);
 		WREG32(base_reg + 0x304, 0x4001);
 		WREG32(base_reg + 0x308, 0xA);
 		WREG32(base_reg + 0x20, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		WREG32(base_reg + 0x34, 0);
 		WREG32(base_reg + 0x28, 0);
 		WREG32(base_reg + 0x304, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool gaudi_etr_validate_address(struct hl_device *hdev, u64 addr,
+अटल bool gaudi_etr_validate_address(काष्ठा hl_device *hdev, u64 addr,
 					u64 size, bool *is_host)
-{
-	struct asic_fixed_properties *prop = &hdev->asic_prop;
-	struct gaudi_device *gaudi = hdev->asic_specific;
+अणु
+	काष्ठा asic_fixed_properties *prop = &hdev->asic_prop;
+	काष्ठा gaudi_device *gaudi = hdev->asic_specअगरic;
 
 	/* maximum address length is 50 bits */
-	if (addr >> 50) {
+	अगर (addr >> 50) अणु
 		dev_err(hdev->dev,
 			"ETR buffer address shouldn't exceed 50 bits\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (addr > (addr + size)) {
+	अगर (addr > (addr + size)) अणु
 		dev_err(hdev->dev,
 			"ETR buffer size %llu overflow\n", size);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* PMMU and HPMMU addresses are equal, check only one of them */
-	if ((gaudi->hw_cap_initialized & HW_CAP_MMU) &&
+	अगर ((gaudi->hw_cap_initialized & HW_CAP_MMU) &&
 		hl_mem_area_inside_range(addr, size,
 				prop->pmmu.start_addr,
-				prop->pmmu.end_addr)) {
+				prop->pmmu.end_addr)) अणु
 		*is_host = true;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (hl_mem_area_inside_range(addr, size,
+	अगर (hl_mem_area_inside_range(addr, size,
 			prop->dram_user_base_address,
 			prop->dram_end_address))
-		return true;
+		वापस true;
 
-	if (hl_mem_area_inside_range(addr, size,
+	अगर (hl_mem_area_inside_range(addr, size,
 			prop->sram_user_base_address,
 			prop->sram_end_address))
-		return true;
+		वापस true;
 
-	if (!(gaudi->hw_cap_initialized & HW_CAP_MMU))
+	अगर (!(gaudi->hw_cap_initialized & HW_CAP_MMU))
 		dev_err(hdev->dev, "ETR buffer should be in SRAM/DRAM\n");
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int gaudi_config_etr(struct hl_device *hdev,
-		struct hl_debug_params *params)
-{
-	struct hl_debug_params_etr *input;
+अटल पूर्णांक gaudi_config_etr(काष्ठा hl_device *hdev,
+		काष्ठा hl_debug_params *params)
+अणु
+	काष्ठा hl_debug_params_etr *input;
 	u64 msb;
 	u32 val;
-	int rc;
+	पूर्णांक rc;
 
 	WREG32(mmPSOC_ETR_LAR, CORESIGHT_UNLOCK);
 
@@ -585,42 +586,42 @@ static int gaudi_config_etr(struct hl_device *hdev,
 	val |= 0x40;
 	WREG32(mmPSOC_ETR_FFCR, val);
 
-	rc = gaudi_coresight_timeout(hdev, mmPSOC_ETR_FFCR, 6, false);
-	if (rc) {
+	rc = gaudi_coresight_समयout(hdev, mmPSOC_ETR_FFCR, 6, false);
+	अगर (rc) अणु
 		dev_err(hdev->dev, "Failed to %s ETR on timeout, error %d\n",
 				params->enable ? "enable" : "disable", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = gaudi_coresight_timeout(hdev, mmPSOC_ETR_STS, 2, true);
-	if (rc) {
+	rc = gaudi_coresight_समयout(hdev, mmPSOC_ETR_STS, 2, true);
+	अगर (rc) अणु
 		dev_err(hdev->dev, "Failed to %s ETR on timeout, error %d\n",
 				params->enable ? "enable" : "disable", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	WREG32(mmPSOC_ETR_CTL, 0);
 
-	if (params->enable) {
+	अगर (params->enable) अणु
 		bool is_host = false;
 
 		input = params->input;
 
-		if (!input)
-			return -EINVAL;
+		अगर (!input)
+			वापस -EINVAL;
 
-		if (input->buffer_size == 0) {
+		अगर (input->buffer_size == 0) अणु
 			dev_err(hdev->dev,
 				"ETR buffer size should be bigger than 0\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (!gaudi_etr_validate_address(hdev,
+		अगर (!gaudi_etr_validate_address(hdev,
 				input->buffer_address, input->buffer_size,
-				&is_host)) {
+				&is_host)) अणु
 			dev_err(hdev->dev, "ETR buffer address is invalid\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		gaudi_mmu_prepare_reg(hdev, mmPSOC_GLOBAL_CONF_TRACE_ARUSER,
 						hdev->compute_ctx->asid);
@@ -634,7 +635,7 @@ static int gaudi_config_etr(struct hl_device *hdev,
 		WREG32(mmPSOC_ETR_BUFWM, 0x3FFC);
 		WREG32(mmPSOC_ETR_RSZ, input->buffer_size);
 		WREG32(mmPSOC_ETR_MODE, input->sink_mode);
-		if (hdev->asic_prop.fw_security_disabled) {
+		अगर (hdev->asic_prop.fw_security_disabled) अणु
 			/* make ETR not privileged */
 			val = FIELD_PREP(
 					PSOC_ETR_AXICTL_PROTCTRLBIT0_MASK, 0);
@@ -642,13 +643,13 @@ static int gaudi_config_etr(struct hl_device *hdev,
 			val |= FIELD_PREP(
 					PSOC_ETR_AXICTL_PROTCTRLBIT1_MASK, 1);
 			/*
-			 * Workaround for H3 #HW-2075 bug: use small data
+			 * Workaround क्रम H3 #HW-2075 bug: use small data
 			 * chunks
 			 */
 			val |= FIELD_PREP(PSOC_ETR_AXICTL_WRBURSTLEN_MASK,
 							is_host ? 0 : 7);
 			WREG32(mmPSOC_ETR_AXICTL, val);
-		}
+		पूर्ण
 		WREG32(mmPSOC_ETR_DBALO,
 				lower_32_bits(input->buffer_address));
 		WREG32(mmPSOC_ETR_DBAHI,
@@ -656,7 +657,7 @@ static int gaudi_config_etr(struct hl_device *hdev,
 		WREG32(mmPSOC_ETR_FFCR, 3);
 		WREG32(mmPSOC_ETR_PSCR, 0xA);
 		WREG32(mmPSOC_ETR_CTL, 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		WREG32(mmPSOC_ETR_BUFWM, 0);
 		WREG32(mmPSOC_ETR_RSZ, 0x400);
 		WREG32(mmPSOC_ETR_DBALO, 0);
@@ -665,15 +666,15 @@ static int gaudi_config_etr(struct hl_device *hdev,
 		WREG32(mmPSOC_ETR_MODE, 0);
 		WREG32(mmPSOC_ETR_FFCR, 0);
 
-		if (params->output_size >= sizeof(u64)) {
+		अगर (params->output_size >= माप(u64)) अणु
 			u32 rwp, rwphi;
 
 			/*
 			 * The trace buffer address is 50 bits wide. The end of
-			 * the buffer is set in the RWP register (lower 32
-			 * bits), and in the RWPHI register (upper 8 bits).
+			 * the buffer is set in the RWP रेजिस्टर (lower 32
+			 * bits), and in the RWPHI रेजिस्टर (upper 8 bits).
 			 * The 10 msb of the 50-bit address are stored in a
-			 * global configuration register.
+			 * global configuration रेजिस्टर.
 			 */
 			rwp = RREG32(mmPSOC_ETR_RWP);
 			rwphi = RREG32(mmPSOC_ETR_RWPHI) & 0xff;
@@ -681,21 +682,21 @@ static int gaudi_config_etr(struct hl_device *hdev,
 					PSOC_GLOBAL_CONF_TRACE_ADDR_MSB_MASK;
 			*(u64 *) params->output = ((u64) msb << 40) |
 						((u64) rwphi << 32) | rwp;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gaudi_config_funnel(struct hl_device *hdev,
-		struct hl_debug_params *params)
-{
+अटल पूर्णांक gaudi_config_funnel(काष्ठा hl_device *hdev,
+		काष्ठा hl_debug_params *params)
+अणु
 	u64 base_reg;
 
-	if (params->reg_idx >= ARRAY_SIZE(debug_funnel_regs)) {
+	अगर (params->reg_idx >= ARRAY_SIZE(debug_funnel_regs)) अणु
 		dev_err(hdev->dev, "Invalid register index in FUNNEL\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	base_reg = debug_funnel_regs[params->reg_idx] - CFG_BASE;
 
@@ -703,29 +704,29 @@ static int gaudi_config_funnel(struct hl_device *hdev,
 
 	WREG32(base_reg, params->enable ? 0x33F : 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gaudi_config_bmon(struct hl_device *hdev,
-		struct hl_debug_params *params)
-{
-	struct hl_debug_params_bmon *input;
+अटल पूर्णांक gaudi_config_bmon(काष्ठा hl_device *hdev,
+		काष्ठा hl_debug_params *params)
+अणु
+	काष्ठा hl_debug_params_bmon *input;
 	u64 base_reg;
 
-	if (params->reg_idx >= ARRAY_SIZE(debug_bmon_regs)) {
+	अगर (params->reg_idx >= ARRAY_SIZE(debug_bmon_regs)) अणु
 		dev_err(hdev->dev, "Invalid register index in BMON\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	base_reg = debug_bmon_regs[params->reg_idx] - CFG_BASE;
 
 	WREG32(base_reg + 0x104, 1);
 
-	if (params->enable) {
+	अगर (params->enable) अणु
 		input = params->input;
 
-		if (!input)
-			return -EINVAL;
+		अगर (!input)
+			वापस -EINVAL;
 
 		WREG32(base_reg + 0x200, lower_32_bits(input->start_addr0));
 		WREG32(base_reg + 0x204, upper_32_bits(input->start_addr0));
@@ -744,7 +745,7 @@ static int gaudi_config_bmon(struct hl_device *hdev,
 		WREG32(base_reg + 0x70C, 0xA000C00 | (input->id << 12));
 		WREG32(base_reg + 0x100, 0x11);
 		WREG32(base_reg + 0x304, 0x1);
-	} else {
+	पूर्ण अन्यथा अणु
 		WREG32(base_reg + 0x200, 0);
 		WREG32(base_reg + 0x204, 0);
 		WREG32(base_reg + 0x208, 0xFFFFFFFF);
@@ -763,82 +764,82 @@ static int gaudi_config_bmon(struct hl_device *hdev,
 		WREG32(base_reg + 0x100, 1);
 		WREG32(base_reg + 0x304, 0);
 		WREG32(base_reg + 0x104, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int gaudi_config_spmu(struct hl_device *hdev,
-		struct hl_debug_params *params)
-{
+अटल पूर्णांक gaudi_config_spmu(काष्ठा hl_device *hdev,
+		काष्ठा hl_debug_params *params)
+अणु
 	u64 base_reg;
-	struct hl_debug_params_spmu *input = params->input;
+	काष्ठा hl_debug_params_spmu *input = params->input;
 	u64 *output;
 	u32 output_arr_len;
 	u32 events_num;
 	u32 overflow_idx;
 	u32 cycle_cnt_idx;
-	int i;
+	पूर्णांक i;
 
-	if (params->reg_idx >= ARRAY_SIZE(debug_spmu_regs)) {
+	अगर (params->reg_idx >= ARRAY_SIZE(debug_spmu_regs)) अणु
 		dev_err(hdev->dev, "Invalid register index in SPMU\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	base_reg = debug_spmu_regs[params->reg_idx] - CFG_BASE;
 
-	if (params->enable) {
+	अगर (params->enable) अणु
 		input = params->input;
 
-		if (!input)
-			return -EINVAL;
+		अगर (!input)
+			वापस -EINVAL;
 
-		if (input->event_types_num < 3) {
+		अगर (input->event_types_num < 3) अणु
 			dev_err(hdev->dev,
 				"not enough event types values for SPMU enable\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (input->event_types_num > SPMU_MAX_COUNTERS) {
+		अगर (input->event_types_num > SPMU_MAX_COUNTERS) अणु
 			dev_err(hdev->dev,
 				"too many event types values for SPMU enable\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		WREG32(base_reg + 0xE04, 0x41013046);
 		WREG32(base_reg + 0xE04, 0x41013040);
 
-		for (i = 0 ; i < input->event_types_num ; i++)
+		क्रम (i = 0 ; i < input->event_types_num ; i++)
 			WREG32(base_reg + SPMU_EVENT_TYPES_OFFSET + i * 4,
 				input->event_types[i]);
 
 		WREG32(base_reg + 0xE04, 0x41013041);
 		WREG32(base_reg + 0xC00, 0x8000003F);
-	} else {
+	पूर्ण अन्यथा अणु
 		output = params->output;
 		output_arr_len = params->output_size / 8;
 		events_num = output_arr_len - 2;
 		overflow_idx = output_arr_len - 2;
 		cycle_cnt_idx = output_arr_len - 1;
 
-		if (!output)
-			return -EINVAL;
+		अगर (!output)
+			वापस -EINVAL;
 
-		if (output_arr_len < 3) {
+		अगर (output_arr_len < 3) अणु
 			dev_err(hdev->dev,
 				"not enough values for SPMU disable\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (events_num > SPMU_MAX_COUNTERS) {
+		अगर (events_num > SPMU_MAX_COUNTERS) अणु
 			dev_err(hdev->dev,
 				"too many events values for SPMU disable\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		WREG32(base_reg + 0xE04, 0x41013040);
 
-		for (i = 0 ; i < events_num ; i++)
+		क्रम (i = 0 ; i < events_num ; i++)
 			output[i] = RREG32(base_reg + i * 8);
 
 		output[overflow_idx] = RREG32(base_reg + 0xCC0);
@@ -848,63 +849,63 @@ static int gaudi_config_spmu(struct hl_device *hdev,
 		output[cycle_cnt_idx] |= RREG32(base_reg + 0xF8);
 
 		WREG32(base_reg + 0xCC0, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int gaudi_debug_coresight(struct hl_device *hdev, void *data)
-{
-	struct hl_debug_params *params = data;
-	int rc = 0;
+पूर्णांक gaudi_debug_coresight(काष्ठा hl_device *hdev, व्योम *data)
+अणु
+	काष्ठा hl_debug_params *params = data;
+	पूर्णांक rc = 0;
 
-	switch (params->op) {
-	case HL_DEBUG_OP_STM:
-		rc = gaudi_config_stm(hdev, params);
-		break;
-	case HL_DEBUG_OP_ETF:
+	चयन (params->op) अणु
+	हाल HL_DEBUG_OP_STM:
+		rc = gaudi_config_sपंचांग(hdev, params);
+		अवरोध;
+	हाल HL_DEBUG_OP_ETF:
 		rc = gaudi_config_etf(hdev, params);
-		break;
-	case HL_DEBUG_OP_ETR:
+		अवरोध;
+	हाल HL_DEBUG_OP_ETR:
 		rc = gaudi_config_etr(hdev, params);
-		break;
-	case HL_DEBUG_OP_FUNNEL:
+		अवरोध;
+	हाल HL_DEBUG_OP_FUNNEL:
 		rc = gaudi_config_funnel(hdev, params);
-		break;
-	case HL_DEBUG_OP_BMON:
+		अवरोध;
+	हाल HL_DEBUG_OP_BMON:
 		rc = gaudi_config_bmon(hdev, params);
-		break;
-	case HL_DEBUG_OP_SPMU:
+		अवरोध;
+	हाल HL_DEBUG_OP_SPMU:
 		rc = gaudi_config_spmu(hdev, params);
-		break;
-	case HL_DEBUG_OP_TIMESTAMP:
+		अवरोध;
+	हाल HL_DEBUG_OP_TIMESTAMP:
 		/* Do nothing as this opcode is deprecated */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(hdev->dev, "Unknown coresight id %d\n", params->op);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Perform read from the device to flush all configuration */
+	/* Perक्रमm पढ़ो from the device to flush all configuration */
 	RREG32(mmHW_STATE);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-void gaudi_halt_coresight(struct hl_device *hdev)
-{
-	struct hl_debug_params params = {};
-	int i, rc;
+व्योम gaudi_halt_coresight(काष्ठा hl_device *hdev)
+अणु
+	काष्ठा hl_debug_params params = अणुपूर्ण;
+	पूर्णांक i, rc;
 
-	for (i = GAUDI_ETF_FIRST ; i <= GAUDI_ETF_LAST ; i++) {
+	क्रम (i = GAUDI_ETF_FIRST ; i <= GAUDI_ETF_LAST ; i++) अणु
 		params.reg_idx = i;
 		rc = gaudi_config_etf(hdev, &params);
-		if (rc)
+		अगर (rc)
 			dev_err(hdev->dev, "halt ETF failed, %d/%d\n", rc, i);
-	}
+	पूर्ण
 
 	rc = gaudi_config_etr(hdev, &params);
-	if (rc)
+	अगर (rc)
 		dev_err(hdev->dev, "halt ETR failed, %d\n", rc);
-}
+पूर्ण

@@ -1,81 +1,82 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (C) 2012 ARM Ltd.
  */
-#ifndef __ASM_SIGNAL32_H
-#define __ASM_SIGNAL32_H
+#अगर_अघोषित __ASM_SIGNAL32_H
+#घोषणा __ASM_SIGNAL32_H
 
-#ifdef CONFIG_COMPAT
-#include <linux/compat.h>
+#अगर_घोषित CONFIG_COMPAT
+#समावेश <linux/compat.h>
 
-struct compat_sigcontext {
+काष्ठा compat_sigcontext अणु
 	/* We always set these two fields to 0 */
-	compat_ulong_t			trap_no;
-	compat_ulong_t			error_code;
+	compat_uदीर्घ_t			trap_no;
+	compat_uदीर्घ_t			error_code;
 
-	compat_ulong_t			oldmask;
-	compat_ulong_t			arm_r0;
-	compat_ulong_t			arm_r1;
-	compat_ulong_t			arm_r2;
-	compat_ulong_t			arm_r3;
-	compat_ulong_t			arm_r4;
-	compat_ulong_t			arm_r5;
-	compat_ulong_t			arm_r6;
-	compat_ulong_t			arm_r7;
-	compat_ulong_t			arm_r8;
-	compat_ulong_t			arm_r9;
-	compat_ulong_t			arm_r10;
-	compat_ulong_t			arm_fp;
-	compat_ulong_t			arm_ip;
-	compat_ulong_t			arm_sp;
-	compat_ulong_t			arm_lr;
-	compat_ulong_t			arm_pc;
-	compat_ulong_t			arm_cpsr;
-	compat_ulong_t			fault_address;
-};
+	compat_uदीर्घ_t			oldmask;
+	compat_uदीर्घ_t			arm_r0;
+	compat_uदीर्घ_t			arm_r1;
+	compat_uदीर्घ_t			arm_r2;
+	compat_uदीर्घ_t			arm_r3;
+	compat_uदीर्घ_t			arm_r4;
+	compat_uदीर्घ_t			arm_r5;
+	compat_uदीर्घ_t			arm_r6;
+	compat_uदीर्घ_t			arm_r7;
+	compat_uदीर्घ_t			arm_r8;
+	compat_uदीर्घ_t			arm_r9;
+	compat_uदीर्घ_t			arm_r10;
+	compat_uदीर्घ_t			arm_fp;
+	compat_uदीर्घ_t			arm_ip;
+	compat_uदीर्घ_t			arm_sp;
+	compat_uदीर्घ_t			arm_lr;
+	compat_uदीर्घ_t			arm_pc;
+	compat_uदीर्घ_t			arm_cpsr;
+	compat_uदीर्घ_t			fault_address;
+पूर्ण;
 
-struct compat_ucontext {
-	compat_ulong_t			uc_flags;
+काष्ठा compat_ucontext अणु
+	compat_uदीर्घ_t			uc_flags;
 	compat_uptr_t			uc_link;
 	compat_stack_t			uc_stack;
-	struct compat_sigcontext	uc_mcontext;
+	काष्ठा compat_sigcontext	uc_mcontext;
 	compat_sigset_t			uc_sigmask;
-	int 				__unused[32 - (sizeof(compat_sigset_t) / sizeof(int))];
-	compat_ulong_t			uc_regspace[128] __attribute__((__aligned__(8)));
-};
+	पूर्णांक 				__unused[32 - (माप(compat_sigset_t) / माप(पूर्णांक))];
+	compat_uदीर्घ_t			uc_regspace[128] __attribute__((__aligned__(8)));
+पूर्ण;
 
-struct compat_sigframe {
-	struct compat_ucontext	uc;
-	compat_ulong_t		retcode[2];
-};
+काष्ठा compat_sigframe अणु
+	काष्ठा compat_ucontext	uc;
+	compat_uदीर्घ_t		retcode[2];
+पूर्ण;
 
-struct compat_rt_sigframe {
-	struct compat_siginfo info;
-	struct compat_sigframe sig;
-};
+काष्ठा compat_rt_sigframe अणु
+	काष्ठा compat_siginfo info;
+	काष्ठा compat_sigframe sig;
+पूर्ण;
 
-int compat_setup_frame(int usig, struct ksignal *ksig, sigset_t *set,
-		       struct pt_regs *regs);
-int compat_setup_rt_frame(int usig, struct ksignal *ksig, sigset_t *set,
-			  struct pt_regs *regs);
+पूर्णांक compat_setup_frame(पूर्णांक usig, काष्ठा kसंकेत *ksig, sigset_t *set,
+		       काष्ठा pt_regs *regs);
+पूर्णांक compat_setup_rt_frame(पूर्णांक usig, काष्ठा kसंकेत *ksig, sigset_t *set,
+			  काष्ठा pt_regs *regs);
 
-void compat_setup_restart_syscall(struct pt_regs *regs);
-#else
+व्योम compat_setup_restart_syscall(काष्ठा pt_regs *regs);
+#अन्यथा
 
-static inline int compat_setup_frame(int usid, struct ksignal *ksig,
-				     sigset_t *set, struct pt_regs *regs)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक compat_setup_frame(पूर्णांक usid, काष्ठा kसंकेत *ksig,
+				     sigset_t *set, काष्ठा pt_regs *regs)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline int compat_setup_rt_frame(int usig, struct ksignal *ksig, sigset_t *set,
-					struct pt_regs *regs)
-{
-	return -ENOSYS;
-}
+अटल अंतरभूत पूर्णांक compat_setup_rt_frame(पूर्णांक usig, काष्ठा kसंकेत *ksig, sigset_t *set,
+					काष्ठा pt_regs *regs)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static inline void compat_setup_restart_syscall(struct pt_regs *regs)
-{
-}
-#endif /* CONFIG_COMPAT */
-#endif /* __ASM_SIGNAL32_H */
+अटल अंतरभूत व्योम compat_setup_restart_syscall(काष्ठा pt_regs *regs)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COMPAT */
+#पूर्ण_अगर /* __ASM_SIGNAL32_H */

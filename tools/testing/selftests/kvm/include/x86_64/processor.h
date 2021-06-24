@@ -1,62 +1,63 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * tools/testing/selftests/kvm/include/x86_64/processor.h
  *
  * Copyright (C) 2018, Google LLC.
  */
 
-#ifndef SELFTEST_KVM_PROCESSOR_H
-#define SELFTEST_KVM_PROCESSOR_H
+#अगर_अघोषित SELFTEST_KVM_PROCESSOR_H
+#घोषणा SELFTEST_KVM_PROCESSOR_H
 
-#include <assert.h>
-#include <stdint.h>
+#समावेश <निश्चित.स>
+#समावेश <मानक_निवेशt.h>
 
-#include <asm/msr-index.h>
+#समावेश <यंत्र/msr-index.h>
 
-#define X86_EFLAGS_FIXED	 (1u << 1)
+#घोषणा X86_EFLAGS_FIXED	 (1u << 1)
 
-#define X86_CR4_VME		(1ul << 0)
-#define X86_CR4_PVI		(1ul << 1)
-#define X86_CR4_TSD		(1ul << 2)
-#define X86_CR4_DE		(1ul << 3)
-#define X86_CR4_PSE		(1ul << 4)
-#define X86_CR4_PAE		(1ul << 5)
-#define X86_CR4_MCE		(1ul << 6)
-#define X86_CR4_PGE		(1ul << 7)
-#define X86_CR4_PCE		(1ul << 8)
-#define X86_CR4_OSFXSR		(1ul << 9)
-#define X86_CR4_OSXMMEXCPT	(1ul << 10)
-#define X86_CR4_UMIP		(1ul << 11)
-#define X86_CR4_LA57		(1ul << 12)
-#define X86_CR4_VMXE		(1ul << 13)
-#define X86_CR4_SMXE		(1ul << 14)
-#define X86_CR4_FSGSBASE	(1ul << 16)
-#define X86_CR4_PCIDE		(1ul << 17)
-#define X86_CR4_OSXSAVE		(1ul << 18)
-#define X86_CR4_SMEP		(1ul << 20)
-#define X86_CR4_SMAP		(1ul << 21)
-#define X86_CR4_PKE		(1ul << 22)
+#घोषणा X86_CR4_VME		(1ul << 0)
+#घोषणा X86_CR4_PVI		(1ul << 1)
+#घोषणा X86_CR4_TSD		(1ul << 2)
+#घोषणा X86_CR4_DE		(1ul << 3)
+#घोषणा X86_CR4_PSE		(1ul << 4)
+#घोषणा X86_CR4_PAE		(1ul << 5)
+#घोषणा X86_CR4_MCE		(1ul << 6)
+#घोषणा X86_CR4_PGE		(1ul << 7)
+#घोषणा X86_CR4_PCE		(1ul << 8)
+#घोषणा X86_CR4_OSFXSR		(1ul << 9)
+#घोषणा X86_CR4_OSXMMEXCPT	(1ul << 10)
+#घोषणा X86_CR4_UMIP		(1ul << 11)
+#घोषणा X86_CR4_LA57		(1ul << 12)
+#घोषणा X86_CR4_VMXE		(1ul << 13)
+#घोषणा X86_CR4_SMXE		(1ul << 14)
+#घोषणा X86_CR4_FSGSBASE	(1ul << 16)
+#घोषणा X86_CR4_PCIDE		(1ul << 17)
+#घोषणा X86_CR4_OSXSAVE		(1ul << 18)
+#घोषणा X86_CR4_SMEP		(1ul << 20)
+#घोषणा X86_CR4_SMAP		(1ul << 21)
+#घोषणा X86_CR4_PKE		(1ul << 22)
 
 /* CPUID.1.ECX */
-#define CPUID_VMX		(1ul << 5)
-#define CPUID_SMX		(1ul << 6)
-#define CPUID_PCID		(1ul << 17)
-#define CPUID_XSAVE		(1ul << 26)
+#घोषणा CPUID_VMX		(1ul << 5)
+#घोषणा CPUID_SMX		(1ul << 6)
+#घोषणा CPUID_PCID		(1ul << 17)
+#घोषणा CPUID_XSAVE		(1ul << 26)
 
 /* CPUID.7.EBX */
-#define CPUID_FSGSBASE		(1ul << 0)
-#define CPUID_SMEP		(1ul << 7)
-#define CPUID_SMAP		(1ul << 20)
+#घोषणा CPUID_FSGSBASE		(1ul << 0)
+#घोषणा CPUID_SMEP		(1ul << 7)
+#घोषणा CPUID_SMAP		(1ul << 20)
 
 /* CPUID.7.ECX */
-#define CPUID_UMIP		(1ul << 2)
-#define CPUID_PKU		(1ul << 3)
-#define CPUID_LA57		(1ul << 16)
+#घोषणा CPUID_UMIP		(1ul << 2)
+#घोषणा CPUID_PKU		(1ul << 3)
+#घोषणा CPUID_LA57		(1ul << 16)
 
-#define UNEXPECTED_VECTOR_PORT 0xfff0u
+#घोषणा UNEXPECTED_VECTOR_PORT 0xfff0u
 
 /* General Registers in 64-Bit Mode */
-struct gpr64_regs {
+काष्ठा gpr64_regs अणु
 	u64 rax;
 	u64 rcx;
 	u64 rdx;
@@ -73,406 +74,406 @@ struct gpr64_regs {
 	u64 r13;
 	u64 r14;
 	u64 r15;
-};
+पूर्ण;
 
-struct desc64 {
-	uint16_t limit0;
-	uint16_t base0;
-	unsigned base1:8, type:4, s:1, dpl:2, p:1;
-	unsigned limit1:4, avl:1, l:1, db:1, g:1, base2:8;
-	uint32_t base3;
-	uint32_t zero1;
-} __attribute__((packed));
+काष्ठा desc64 अणु
+	uपूर्णांक16_t limit0;
+	uपूर्णांक16_t base0;
+	अचिन्हित base1:8, type:4, s:1, dpl:2, p:1;
+	अचिन्हित limit1:4, avl:1, l:1, db:1, g:1, base2:8;
+	uपूर्णांक32_t base3;
+	uपूर्णांक32_t zero1;
+पूर्ण __attribute__((packed));
 
-struct desc_ptr {
-	uint16_t size;
-	uint64_t address;
-} __attribute__((packed));
+काष्ठा desc_ptr अणु
+	uपूर्णांक16_t size;
+	uपूर्णांक64_t address;
+पूर्ण __attribute__((packed));
 
-static inline uint64_t get_desc64_base(const struct desc64 *desc)
-{
-	return ((uint64_t)desc->base3 << 32) |
+अटल अंतरभूत uपूर्णांक64_t get_desc64_base(स्थिर काष्ठा desc64 *desc)
+अणु
+	वापस ((uपूर्णांक64_t)desc->base3 << 32) |
 		(desc->base0 | ((desc->base1) << 16) | ((desc->base2) << 24));
-}
+पूर्ण
 
-static inline uint64_t rdtsc(void)
-{
-	uint32_t eax, edx;
-	uint64_t tsc_val;
+अटल अंतरभूत uपूर्णांक64_t rdtsc(व्योम)
+अणु
+	uपूर्णांक32_t eax, edx;
+	uपूर्णांक64_t tsc_val;
 	/*
-	 * The lfence is to wait (on Intel CPUs) until all previous
-	 * instructions have been executed. If software requires RDTSC to be
-	 * executed prior to execution of any subsequent instruction, it can
+	 * The lfence is to रुको (on Intel CPUs) until all previous
+	 * inकाष्ठाions have been executed. If software requires RDTSC to be
+	 * executed prior to execution of any subsequent inकाष्ठाion, it can
 	 * execute LFENCE immediately after RDTSC
 	 */
-	__asm__ __volatile__("lfence; rdtsc; lfence" : "=a"(eax), "=d"(edx));
-	tsc_val = ((uint64_t)edx) << 32 | eax;
-	return tsc_val;
-}
+	__यंत्र__ __अस्थिर__("lfence; rdtsc; lfence" : "=a"(eax), "=d"(edx));
+	tsc_val = ((uपूर्णांक64_t)edx) << 32 | eax;
+	वापस tsc_val;
+पूर्ण
 
-static inline uint64_t rdtscp(uint32_t *aux)
-{
-	uint32_t eax, edx;
+अटल अंतरभूत uपूर्णांक64_t rdtscp(uपूर्णांक32_t *aux)
+अणु
+	uपूर्णांक32_t eax, edx;
 
-	__asm__ __volatile__("rdtscp" : "=a"(eax), "=d"(edx), "=c"(*aux));
-	return ((uint64_t)edx) << 32 | eax;
-}
+	__यंत्र__ __अस्थिर__("rdtscp" : "=a"(eax), "=d"(edx), "=c"(*aux));
+	वापस ((uपूर्णांक64_t)edx) << 32 | eax;
+पूर्ण
 
-static inline uint64_t rdmsr(uint32_t msr)
-{
-	uint32_t a, d;
+अटल अंतरभूत uपूर्णांक64_t rdmsr(uपूर्णांक32_t msr)
+अणु
+	uपूर्णांक32_t a, d;
 
-	__asm__ __volatile__("rdmsr" : "=a"(a), "=d"(d) : "c"(msr) : "memory");
+	__यंत्र__ __अस्थिर__("rdmsr" : "=a"(a), "=d"(d) : "c"(msr) : "memory");
 
-	return a | ((uint64_t) d << 32);
-}
+	वापस a | ((uपूर्णांक64_t) d << 32);
+पूर्ण
 
-static inline void wrmsr(uint32_t msr, uint64_t value)
-{
-	uint32_t a = value;
-	uint32_t d = value >> 32;
+अटल अंतरभूत व्योम wrmsr(uपूर्णांक32_t msr, uपूर्णांक64_t value)
+अणु
+	uपूर्णांक32_t a = value;
+	uपूर्णांक32_t d = value >> 32;
 
-	__asm__ __volatile__("wrmsr" :: "a"(a), "d"(d), "c"(msr) : "memory");
-}
+	__यंत्र__ __अस्थिर__("wrmsr" :: "a"(a), "d"(d), "c"(msr) : "memory");
+पूर्ण
 
 
-static inline uint16_t inw(uint16_t port)
-{
-	uint16_t tmp;
+अटल अंतरभूत uपूर्णांक16_t inw(uपूर्णांक16_t port)
+अणु
+	uपूर्णांक16_t पंचांगp;
 
-	__asm__ __volatile__("in %%dx, %%ax"
-		: /* output */ "=a" (tmp)
+	__यंत्र__ __अस्थिर__("in %%dx, %%ax"
+		: /* output */ "=a" (पंचांगp)
 		: /* input */ "d" (port));
 
-	return tmp;
-}
+	वापस पंचांगp;
+पूर्ण
 
-static inline uint16_t get_es(void)
-{
-	uint16_t es;
+अटल अंतरभूत uपूर्णांक16_t get_es(व्योम)
+अणु
+	uपूर्णांक16_t es;
 
-	__asm__ __volatile__("mov %%es, %[es]"
+	__यंत्र__ __अस्थिर__("mov %%es, %[es]"
 			     : /* output */ [es]"=rm"(es));
-	return es;
-}
+	वापस es;
+पूर्ण
 
-static inline uint16_t get_cs(void)
-{
-	uint16_t cs;
+अटल अंतरभूत uपूर्णांक16_t get_cs(व्योम)
+अणु
+	uपूर्णांक16_t cs;
 
-	__asm__ __volatile__("mov %%cs, %[cs]"
+	__यंत्र__ __अस्थिर__("mov %%cs, %[cs]"
 			     : /* output */ [cs]"=rm"(cs));
-	return cs;
-}
+	वापस cs;
+पूर्ण
 
-static inline uint16_t get_ss(void)
-{
-	uint16_t ss;
+अटल अंतरभूत uपूर्णांक16_t get_ss(व्योम)
+अणु
+	uपूर्णांक16_t ss;
 
-	__asm__ __volatile__("mov %%ss, %[ss]"
+	__यंत्र__ __अस्थिर__("mov %%ss, %[ss]"
 			     : /* output */ [ss]"=rm"(ss));
-	return ss;
-}
+	वापस ss;
+पूर्ण
 
-static inline uint16_t get_ds(void)
-{
-	uint16_t ds;
+अटल अंतरभूत uपूर्णांक16_t get_ds(व्योम)
+अणु
+	uपूर्णांक16_t ds;
 
-	__asm__ __volatile__("mov %%ds, %[ds]"
+	__यंत्र__ __अस्थिर__("mov %%ds, %[ds]"
 			     : /* output */ [ds]"=rm"(ds));
-	return ds;
-}
+	वापस ds;
+पूर्ण
 
-static inline uint16_t get_fs(void)
-{
-	uint16_t fs;
+अटल अंतरभूत uपूर्णांक16_t get_fs(व्योम)
+अणु
+	uपूर्णांक16_t fs;
 
-	__asm__ __volatile__("mov %%fs, %[fs]"
+	__यंत्र__ __अस्थिर__("mov %%fs, %[fs]"
 			     : /* output */ [fs]"=rm"(fs));
-	return fs;
-}
+	वापस fs;
+पूर्ण
 
-static inline uint16_t get_gs(void)
-{
-	uint16_t gs;
+अटल अंतरभूत uपूर्णांक16_t get_gs(व्योम)
+अणु
+	uपूर्णांक16_t gs;
 
-	__asm__ __volatile__("mov %%gs, %[gs]"
+	__यंत्र__ __अस्थिर__("mov %%gs, %[gs]"
 			     : /* output */ [gs]"=rm"(gs));
-	return gs;
-}
+	वापस gs;
+पूर्ण
 
-static inline uint16_t get_tr(void)
-{
-	uint16_t tr;
+अटल अंतरभूत uपूर्णांक16_t get_tr(व्योम)
+अणु
+	uपूर्णांक16_t tr;
 
-	__asm__ __volatile__("str %[tr]"
+	__यंत्र__ __अस्थिर__("str %[tr]"
 			     : /* output */ [tr]"=rm"(tr));
-	return tr;
-}
+	वापस tr;
+पूर्ण
 
-static inline uint64_t get_cr0(void)
-{
-	uint64_t cr0;
+अटल अंतरभूत uपूर्णांक64_t get_cr0(व्योम)
+अणु
+	uपूर्णांक64_t cr0;
 
-	__asm__ __volatile__("mov %%cr0, %[cr0]"
+	__यंत्र__ __अस्थिर__("mov %%cr0, %[cr0]"
 			     : /* output */ [cr0]"=r"(cr0));
-	return cr0;
-}
+	वापस cr0;
+पूर्ण
 
-static inline uint64_t get_cr3(void)
-{
-	uint64_t cr3;
+अटल अंतरभूत uपूर्णांक64_t get_cr3(व्योम)
+अणु
+	uपूर्णांक64_t cr3;
 
-	__asm__ __volatile__("mov %%cr3, %[cr3]"
+	__यंत्र__ __अस्थिर__("mov %%cr3, %[cr3]"
 			     : /* output */ [cr3]"=r"(cr3));
-	return cr3;
-}
+	वापस cr3;
+पूर्ण
 
-static inline uint64_t get_cr4(void)
-{
-	uint64_t cr4;
+अटल अंतरभूत uपूर्णांक64_t get_cr4(व्योम)
+अणु
+	uपूर्णांक64_t cr4;
 
-	__asm__ __volatile__("mov %%cr4, %[cr4]"
+	__यंत्र__ __अस्थिर__("mov %%cr4, %[cr4]"
 			     : /* output */ [cr4]"=r"(cr4));
-	return cr4;
-}
+	वापस cr4;
+पूर्ण
 
-static inline void set_cr4(uint64_t val)
-{
-	__asm__ __volatile__("mov %0, %%cr4" : : "r" (val) : "memory");
-}
+अटल अंतरभूत व्योम set_cr4(uपूर्णांक64_t val)
+अणु
+	__यंत्र__ __अस्थिर__("mov %0, %%cr4" : : "r" (val) : "memory");
+पूर्ण
 
-static inline struct desc_ptr get_gdt(void)
-{
-	struct desc_ptr gdt;
-	__asm__ __volatile__("sgdt %[gdt]"
+अटल अंतरभूत काष्ठा desc_ptr get_gdt(व्योम)
+अणु
+	काष्ठा desc_ptr gdt;
+	__यंत्र__ __अस्थिर__("sgdt %[gdt]"
 			     : /* output */ [gdt]"=m"(gdt));
-	return gdt;
-}
+	वापस gdt;
+पूर्ण
 
-static inline struct desc_ptr get_idt(void)
-{
-	struct desc_ptr idt;
-	__asm__ __volatile__("sidt %[idt]"
+अटल अंतरभूत काष्ठा desc_ptr get_idt(व्योम)
+अणु
+	काष्ठा desc_ptr idt;
+	__यंत्र__ __अस्थिर__("sidt %[idt]"
 			     : /* output */ [idt]"=m"(idt));
-	return idt;
-}
+	वापस idt;
+पूर्ण
 
-static inline void outl(uint16_t port, uint32_t value)
-{
-	__asm__ __volatile__("outl %%eax, %%dx" : : "d"(port), "a"(value));
-}
+अटल अंतरभूत व्योम outl(uपूर्णांक16_t port, uपूर्णांक32_t value)
+अणु
+	__यंत्र__ __अस्थिर__("outl %%eax, %%dx" : : "d"(port), "a"(value));
+पूर्ण
 
-static inline void cpuid(uint32_t *eax, uint32_t *ebx,
-			 uint32_t *ecx, uint32_t *edx)
-{
+अटल अंतरभूत व्योम cpuid(uपूर्णांक32_t *eax, uपूर्णांक32_t *ebx,
+			 uपूर्णांक32_t *ecx, uपूर्णांक32_t *edx)
+अणु
 	/* ecx is often an input as well as an output. */
-	asm volatile("cpuid"
+	यंत्र अस्थिर("cpuid"
 	    : "=a" (*eax),
 	      "=b" (*ebx),
 	      "=c" (*ecx),
 	      "=d" (*edx)
 	    : "0" (*eax), "2" (*ecx)
 	    : "memory");
-}
+पूर्ण
 
-#define SET_XMM(__var, __xmm) \
-	asm volatile("movq %0, %%"#__xmm : : "r"(__var) : #__xmm)
+#घोषणा SET_XMM(__var, __xmm) \
+	यंत्र अस्थिर("movq %0, %%"#__xmm : : "r"(__var) : #__xmm)
 
-static inline void set_xmm(int n, unsigned long val)
-{
-	switch (n) {
-	case 0:
+अटल अंतरभूत व्योम set_xmm(पूर्णांक n, अचिन्हित दीर्घ val)
+अणु
+	चयन (n) अणु
+	हाल 0:
 		SET_XMM(val, xmm0);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		SET_XMM(val, xmm1);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		SET_XMM(val, xmm2);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		SET_XMM(val, xmm3);
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		SET_XMM(val, xmm4);
-		break;
-	case 5:
+		अवरोध;
+	हाल 5:
 		SET_XMM(val, xmm5);
-		break;
-	case 6:
+		अवरोध;
+	हाल 6:
 		SET_XMM(val, xmm6);
-		break;
-	case 7:
+		अवरोध;
+	हाल 7:
 		SET_XMM(val, xmm7);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-typedef unsigned long v1di __attribute__ ((vector_size (8)));
-static inline unsigned long get_xmm(int n)
-{
-	assert(n >= 0 && n <= 7);
+प्रकार अचिन्हित दीर्घ v1di __attribute__ ((vector_size (8)));
+अटल अंतरभूत अचिन्हित दीर्घ get_xmm(पूर्णांक n)
+अणु
+	निश्चित(n >= 0 && n <= 7);
 
-	register v1di xmm0 __asm__("%xmm0");
-	register v1di xmm1 __asm__("%xmm1");
-	register v1di xmm2 __asm__("%xmm2");
-	register v1di xmm3 __asm__("%xmm3");
-	register v1di xmm4 __asm__("%xmm4");
-	register v1di xmm5 __asm__("%xmm5");
-	register v1di xmm6 __asm__("%xmm6");
-	register v1di xmm7 __asm__("%xmm7");
-	switch (n) {
-	case 0:
-		return (unsigned long)xmm0;
-	case 1:
-		return (unsigned long)xmm1;
-	case 2:
-		return (unsigned long)xmm2;
-	case 3:
-		return (unsigned long)xmm3;
-	case 4:
-		return (unsigned long)xmm4;
-	case 5:
-		return (unsigned long)xmm5;
-	case 6:
-		return (unsigned long)xmm6;
-	case 7:
-		return (unsigned long)xmm7;
-	}
-	return 0;
-}
+	रेजिस्टर v1di xmm0 __यंत्र__("%xmm0");
+	रेजिस्टर v1di xmm1 __यंत्र__("%xmm1");
+	रेजिस्टर v1di xmm2 __यंत्र__("%xmm2");
+	रेजिस्टर v1di xmm3 __यंत्र__("%xmm3");
+	रेजिस्टर v1di xmm4 __यंत्र__("%xmm4");
+	रेजिस्टर v1di xmm5 __यंत्र__("%xmm5");
+	रेजिस्टर v1di xmm6 __यंत्र__("%xmm6");
+	रेजिस्टर v1di xmm7 __यंत्र__("%xmm7");
+	चयन (n) अणु
+	हाल 0:
+		वापस (अचिन्हित दीर्घ)xmm0;
+	हाल 1:
+		वापस (अचिन्हित दीर्घ)xmm1;
+	हाल 2:
+		वापस (अचिन्हित दीर्घ)xmm2;
+	हाल 3:
+		वापस (अचिन्हित दीर्घ)xmm3;
+	हाल 4:
+		वापस (अचिन्हित दीर्घ)xmm4;
+	हाल 5:
+		वापस (अचिन्हित दीर्घ)xmm5;
+	हाल 6:
+		वापस (अचिन्हित दीर्घ)xmm6;
+	हाल 7:
+		वापस (अचिन्हित दीर्घ)xmm7;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-bool is_intel_cpu(void);
+bool is_पूर्णांकel_cpu(व्योम);
 
-struct kvm_x86_state;
-struct kvm_x86_state *vcpu_save_state(struct kvm_vm *vm, uint32_t vcpuid);
-void vcpu_load_state(struct kvm_vm *vm, uint32_t vcpuid,
-		     struct kvm_x86_state *state);
+काष्ठा kvm_x86_state;
+काष्ठा kvm_x86_state *vcpu_save_state(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+व्योम vcpu_load_state(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		     काष्ठा kvm_x86_state *state);
 
-struct kvm_msr_list *kvm_get_msr_index_list(void);
-uint64_t kvm_get_feature_msr(uint64_t msr_index);
-struct kvm_cpuid2 *kvm_get_supported_cpuid(void);
+काष्ठा kvm_msr_list *kvm_get_msr_index_list(व्योम);
+uपूर्णांक64_t kvm_get_feature_msr(uपूर्णांक64_t msr_index);
+काष्ठा kvm_cpuid2 *kvm_get_supported_cpuid(व्योम);
 
-struct kvm_cpuid2 *vcpu_get_cpuid(struct kvm_vm *vm, uint32_t vcpuid);
-void vcpu_set_cpuid(struct kvm_vm *vm, uint32_t vcpuid,
-		    struct kvm_cpuid2 *cpuid);
+काष्ठा kvm_cpuid2 *vcpu_get_cpuid(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+व्योम vcpu_set_cpuid(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid,
+		    काष्ठा kvm_cpuid2 *cpuid);
 
-struct kvm_cpuid_entry2 *
-kvm_get_supported_cpuid_index(uint32_t function, uint32_t index);
+काष्ठा kvm_cpuid_entry2 *
+kvm_get_supported_cpuid_index(uपूर्णांक32_t function, uपूर्णांक32_t index);
 
-static inline struct kvm_cpuid_entry2 *
-kvm_get_supported_cpuid_entry(uint32_t function)
-{
-	return kvm_get_supported_cpuid_index(function, 0);
-}
+अटल अंतरभूत काष्ठा kvm_cpuid_entry2 *
+kvm_get_supported_cpuid_entry(uपूर्णांक32_t function)
+अणु
+	वापस kvm_get_supported_cpuid_index(function, 0);
+पूर्ण
 
-uint64_t vcpu_get_msr(struct kvm_vm *vm, uint32_t vcpuid, uint64_t msr_index);
-int _vcpu_set_msr(struct kvm_vm *vm, uint32_t vcpuid, uint64_t msr_index,
-		  uint64_t msr_value);
-void vcpu_set_msr(struct kvm_vm *vm, uint32_t vcpuid, uint64_t msr_index,
-	  	  uint64_t msr_value);
+uपूर्णांक64_t vcpu_get_msr(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, uपूर्णांक64_t msr_index);
+पूर्णांक _vcpu_set_msr(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, uपूर्णांक64_t msr_index,
+		  uपूर्णांक64_t msr_value);
+व्योम vcpu_set_msr(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid, uपूर्णांक64_t msr_index,
+	  	  uपूर्णांक64_t msr_value);
 
-uint32_t kvm_get_cpuid_max_basic(void);
-uint32_t kvm_get_cpuid_max_extended(void);
-void kvm_get_cpu_address_width(unsigned int *pa_bits, unsigned int *va_bits);
+uपूर्णांक32_t kvm_get_cpuid_max_basic(व्योम);
+uपूर्णांक32_t kvm_get_cpuid_max_extended(व्योम);
+व्योम kvm_get_cpu_address_width(अचिन्हित पूर्णांक *pa_bits, अचिन्हित पूर्णांक *va_bits);
 
-struct ex_regs {
-	uint64_t rax, rcx, rdx, rbx;
-	uint64_t rbp, rsi, rdi;
-	uint64_t r8, r9, r10, r11;
-	uint64_t r12, r13, r14, r15;
-	uint64_t vector;
-	uint64_t error_code;
-	uint64_t rip;
-	uint64_t cs;
-	uint64_t rflags;
-};
+काष्ठा ex_regs अणु
+	uपूर्णांक64_t rax, rcx, rdx, rbx;
+	uपूर्णांक64_t rbp, rsi, rdi;
+	uपूर्णांक64_t r8, r9, r10, r11;
+	uपूर्णांक64_t r12, r13, r14, r15;
+	uपूर्णांक64_t vector;
+	uपूर्णांक64_t error_code;
+	uपूर्णांक64_t rip;
+	uपूर्णांक64_t cs;
+	uपूर्णांक64_t rflags;
+पूर्ण;
 
-void vm_init_descriptor_tables(struct kvm_vm *vm);
-void vcpu_init_descriptor_tables(struct kvm_vm *vm, uint32_t vcpuid);
-void vm_handle_exception(struct kvm_vm *vm, int vector,
-			void (*handler)(struct ex_regs *));
+व्योम vm_init_descriptor_tables(काष्ठा kvm_vm *vm);
+व्योम vcpu_init_descriptor_tables(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+व्योम vm_handle_exception(काष्ठा kvm_vm *vm, पूर्णांक vector,
+			व्योम (*handler)(काष्ठा ex_regs *));
 
 /*
- * set_cpuid() - overwrites a matching cpuid entry with the provided value.
- *		 matches based on ent->function && ent->index. returns true
- *		 if a match was found and successfully overwritten.
- * @cpuid: the kvm cpuid list to modify.
+ * set_cpuid() - overग_लिखोs a matching cpuid entry with the provided value.
+ *		 matches based on ent->function && ent->index. वापसs true
+ *		 अगर a match was found and successfully overwritten.
+ * @cpuid: the kvm cpuid list to modअगरy.
  * @ent: cpuid entry to insert
  */
-bool set_cpuid(struct kvm_cpuid2 *cpuid, struct kvm_cpuid_entry2 *ent);
+bool set_cpuid(काष्ठा kvm_cpuid2 *cpuid, काष्ठा kvm_cpuid_entry2 *ent);
 
-uint64_t kvm_hypercall(uint64_t nr, uint64_t a0, uint64_t a1, uint64_t a2,
-		       uint64_t a3);
+uपूर्णांक64_t kvm_hypercall(uपूर्णांक64_t nr, uपूर्णांक64_t a0, uपूर्णांक64_t a1, uपूर्णांक64_t a2,
+		       uपूर्णांक64_t a3);
 
-struct kvm_cpuid2 *kvm_get_supported_hv_cpuid(void);
-void vcpu_set_hv_cpuid(struct kvm_vm *vm, uint32_t vcpuid);
-struct kvm_cpuid2 *vcpu_get_supported_hv_cpuid(struct kvm_vm *vm, uint32_t vcpuid);
+काष्ठा kvm_cpuid2 *kvm_get_supported_hv_cpuid(व्योम);
+व्योम vcpu_set_hv_cpuid(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
+काष्ठा kvm_cpuid2 *vcpu_get_supported_hv_cpuid(काष्ठा kvm_vm *vm, uपूर्णांक32_t vcpuid);
 
 /*
  * Basic CPU control in CR0
  */
-#define X86_CR0_PE          (1UL<<0) /* Protection Enable */
-#define X86_CR0_MP          (1UL<<1) /* Monitor Coprocessor */
-#define X86_CR0_EM          (1UL<<2) /* Emulation */
-#define X86_CR0_TS          (1UL<<3) /* Task Switched */
-#define X86_CR0_ET          (1UL<<4) /* Extension Type */
-#define X86_CR0_NE          (1UL<<5) /* Numeric Error */
-#define X86_CR0_WP          (1UL<<16) /* Write Protect */
-#define X86_CR0_AM          (1UL<<18) /* Alignment Mask */
-#define X86_CR0_NW          (1UL<<29) /* Not Write-through */
-#define X86_CR0_CD          (1UL<<30) /* Cache Disable */
-#define X86_CR0_PG          (1UL<<31) /* Paging */
+#घोषणा X86_CR0_PE          (1UL<<0) /* Protection Enable */
+#घोषणा X86_CR0_MP          (1UL<<1) /* Monitor Coprocessor */
+#घोषणा X86_CR0_EM          (1UL<<2) /* Emulation */
+#घोषणा X86_CR0_TS          (1UL<<3) /* Task Switched */
+#घोषणा X86_CR0_ET          (1UL<<4) /* Extension Type */
+#घोषणा X86_CR0_NE          (1UL<<5) /* Numeric Error */
+#घोषणा X86_CR0_WP          (1UL<<16) /* Write Protect */
+#घोषणा X86_CR0_AM          (1UL<<18) /* Alignment Mask */
+#घोषणा X86_CR0_NW          (1UL<<29) /* Not Write-through */
+#घोषणा X86_CR0_CD          (1UL<<30) /* Cache Disable */
+#घोषणा X86_CR0_PG          (1UL<<31) /* Paging */
 
-#define APIC_DEFAULT_GPA		0xfee00000ULL
+#घोषणा APIC_DEFAULT_GPA		0xfee00000ULL
 
 /* APIC base address MSR and fields */
-#define MSR_IA32_APICBASE		0x0000001b
-#define MSR_IA32_APICBASE_BSP		(1<<8)
-#define MSR_IA32_APICBASE_EXTD		(1<<10)
-#define MSR_IA32_APICBASE_ENABLE	(1<<11)
-#define MSR_IA32_APICBASE_BASE		(0xfffff<<12)
-#define		GET_APIC_BASE(x)	(((x) >> 12) << 12)
+#घोषणा MSR_IA32_APICBASE		0x0000001b
+#घोषणा MSR_IA32_APICBASE_BSP		(1<<8)
+#घोषणा MSR_IA32_APICBASE_EXTD		(1<<10)
+#घोषणा MSR_IA32_APICBASE_ENABLE	(1<<11)
+#घोषणा MSR_IA32_APICBASE_BASE		(0xfffff<<12)
+#घोषणा		GET_APIC_BASE(x)	(((x) >> 12) << 12)
 
-#define APIC_BASE_MSR	0x800
-#define X2APIC_ENABLE	(1UL << 10)
-#define	APIC_ID		0x20
-#define	APIC_LVR	0x30
-#define		GET_APIC_ID_FIELD(x)	(((x) >> 24) & 0xFF)
-#define	APIC_TASKPRI	0x80
-#define	APIC_PROCPRI	0xA0
-#define	APIC_EOI	0xB0
-#define	APIC_SPIV	0xF0
-#define		APIC_SPIV_FOCUS_DISABLED	(1 << 9)
-#define		APIC_SPIV_APIC_ENABLED		(1 << 8)
-#define	APIC_ICR	0x300
-#define		APIC_DEST_SELF		0x40000
-#define		APIC_DEST_ALLINC	0x80000
-#define		APIC_DEST_ALLBUT	0xC0000
-#define		APIC_ICR_RR_MASK	0x30000
-#define		APIC_ICR_RR_INVALID	0x00000
-#define		APIC_ICR_RR_INPROG	0x10000
-#define		APIC_ICR_RR_VALID	0x20000
-#define		APIC_INT_LEVELTRIG	0x08000
-#define		APIC_INT_ASSERT		0x04000
-#define		APIC_ICR_BUSY		0x01000
-#define		APIC_DEST_LOGICAL	0x00800
-#define		APIC_DEST_PHYSICAL	0x00000
-#define		APIC_DM_FIXED		0x00000
-#define		APIC_DM_FIXED_MASK	0x00700
-#define		APIC_DM_LOWEST		0x00100
-#define		APIC_DM_SMI		0x00200
-#define		APIC_DM_REMRD		0x00300
-#define		APIC_DM_NMI		0x00400
-#define		APIC_DM_INIT		0x00500
-#define		APIC_DM_STARTUP		0x00600
-#define		APIC_DM_EXTINT		0x00700
-#define		APIC_VECTOR_MASK	0x000FF
-#define	APIC_ICR2	0x310
-#define		SET_APIC_DEST_FIELD(x)	((x) << 24)
+#घोषणा APIC_BASE_MSR	0x800
+#घोषणा X2APIC_ENABLE	(1UL << 10)
+#घोषणा	APIC_ID		0x20
+#घोषणा	APIC_LVR	0x30
+#घोषणा		GET_APIC_ID_FIELD(x)	(((x) >> 24) & 0xFF)
+#घोषणा	APIC_TASKPRI	0x80
+#घोषणा	APIC_PROCPRI	0xA0
+#घोषणा	APIC_EOI	0xB0
+#घोषणा	APIC_SPIV	0xF0
+#घोषणा		APIC_SPIV_FOCUS_DISABLED	(1 << 9)
+#घोषणा		APIC_SPIV_APIC_ENABLED		(1 << 8)
+#घोषणा	APIC_ICR	0x300
+#घोषणा		APIC_DEST_SELF		0x40000
+#घोषणा		APIC_DEST_ALLINC	0x80000
+#घोषणा		APIC_DEST_ALLBUT	0xC0000
+#घोषणा		APIC_ICR_RR_MASK	0x30000
+#घोषणा		APIC_ICR_RR_INVALID	0x00000
+#घोषणा		APIC_ICR_RR_INPROG	0x10000
+#घोषणा		APIC_ICR_RR_VALID	0x20000
+#घोषणा		APIC_INT_LEVELTRIG	0x08000
+#घोषणा		APIC_INT_ASSERT		0x04000
+#घोषणा		APIC_ICR_BUSY		0x01000
+#घोषणा		APIC_DEST_LOGICAL	0x00800
+#घोषणा		APIC_DEST_PHYSICAL	0x00000
+#घोषणा		APIC_DM_FIXED		0x00000
+#घोषणा		APIC_DM_FIXED_MASK	0x00700
+#घोषणा		APIC_DM_LOWEST		0x00100
+#घोषणा		APIC_DM_SMI		0x00200
+#घोषणा		APIC_DM_REMRD		0x00300
+#घोषणा		APIC_DM_NMI		0x00400
+#घोषणा		APIC_DM_INIT		0x00500
+#घोषणा		APIC_DM_STARTUP		0x00600
+#घोषणा		APIC_DM_EXTINT		0x00700
+#घोषणा		APIC_VECTOR_MASK	0x000FF
+#घोषणा	APIC_ICR2	0x310
+#घोषणा		SET_APIC_DEST_FIELD(x)	((x) << 24)
 
 /* VMX_EPT_VPID_CAP bits */
-#define VMX_EPT_VPID_CAP_AD_BITS       (1ULL << 21)
+#घोषणा VMX_EPT_VPID_CAP_AD_BITS       (1ULL << 21)
 
-#endif /* SELFTEST_KVM_PROCESSOR_H */
+#पूर्ण_अगर /* SELFTEST_KVM_PROCESSOR_H */

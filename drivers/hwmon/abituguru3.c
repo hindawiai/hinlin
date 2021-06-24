@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * abituguru3.c
  *
@@ -8,166 +9,166 @@
 /*
  * This driver supports the sensor part of revision 3 of the custom Abit uGuru
  * chip found on newer Abit uGuru motherboards. Note: because of lack of specs
- * only reading the sensors and their settings is supported.
+ * only पढ़ोing the sensors and their settings is supported.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/jiffies.h>
-#include <linux/mutex.h>
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/platform_device.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/dmi.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/पन.स>
 
 /* uGuru3 bank addresses */
-#define ABIT_UGURU3_SETTINGS_BANK		0x01
-#define ABIT_UGURU3_SENSORS_BANK		0x08
-#define ABIT_UGURU3_MISC_BANK			0x09
-#define ABIT_UGURU3_ALARMS_START		0x1E
-#define ABIT_UGURU3_SETTINGS_START		0x24
-#define ABIT_UGURU3_VALUES_START		0x80
-#define ABIT_UGURU3_BOARD_ID			0x0A
-/* uGuru3 sensor bank flags */			     /* Alarm if: */
-#define ABIT_UGURU3_TEMP_HIGH_ALARM_ENABLE	0x01 /*  temp over warn */
-#define ABIT_UGURU3_VOLT_HIGH_ALARM_ENABLE	0x02 /*  volt over max */
-#define ABIT_UGURU3_VOLT_LOW_ALARM_ENABLE	0x04 /*  volt under min */
-#define ABIT_UGURU3_TEMP_HIGH_ALARM_FLAG	0x10 /* temp is over warn */
-#define ABIT_UGURU3_VOLT_HIGH_ALARM_FLAG	0x20 /* volt is over max */
-#define ABIT_UGURU3_VOLT_LOW_ALARM_FLAG		0x40 /* volt is under min */
-#define ABIT_UGURU3_FAN_LOW_ALARM_ENABLE	0x01 /*   fan under min */
-#define ABIT_UGURU3_BEEP_ENABLE			0x08 /* beep if alarm */
-#define ABIT_UGURU3_SHUTDOWN_ENABLE		0x80 /* shutdown if alarm */
+#घोषणा ABIT_UGURU3_SETTINGS_BANK		0x01
+#घोषणा ABIT_UGURU3_SENSORS_BANK		0x08
+#घोषणा ABIT_UGURU3_MISC_BANK			0x09
+#घोषणा ABIT_UGURU3_ALARMS_START		0x1E
+#घोषणा ABIT_UGURU3_SETTINGS_START		0x24
+#घोषणा ABIT_UGURU3_VALUES_START		0x80
+#घोषणा ABIT_UGURU3_BOARD_ID			0x0A
+/* uGuru3 sensor bank flags */			     /* Alarm अगर: */
+#घोषणा ABIT_UGURU3_TEMP_HIGH_ALARM_ENABLE	0x01 /*  temp over warn */
+#घोषणा ABIT_UGURU3_VOLT_HIGH_ALARM_ENABLE	0x02 /*  volt over max */
+#घोषणा ABIT_UGURU3_VOLT_LOW_ALARM_ENABLE	0x04 /*  volt under min */
+#घोषणा ABIT_UGURU3_TEMP_HIGH_ALARM_FLAG	0x10 /* temp is over warn */
+#घोषणा ABIT_UGURU3_VOLT_HIGH_ALARM_FLAG	0x20 /* volt is over max */
+#घोषणा ABIT_UGURU3_VOLT_LOW_ALARM_FLAG		0x40 /* volt is under min */
+#घोषणा ABIT_UGURU3_FAN_LOW_ALARM_ENABLE	0x01 /*   fan under min */
+#घोषणा ABIT_UGURU3_BEEP_ENABLE			0x08 /* beep अगर alarm */
+#घोषणा ABIT_UGURU3_SHUTDOWN_ENABLE		0x80 /* shutकरोwn अगर alarm */
 /* sensor types */
-#define ABIT_UGURU3_IN_SENSOR			0
-#define ABIT_UGURU3_TEMP_SENSOR			1
-#define ABIT_UGURU3_FAN_SENSOR			2
+#घोषणा ABIT_UGURU3_IN_SENSOR			0
+#घोषणा ABIT_UGURU3_TEMP_SENSOR			1
+#घोषणा ABIT_UGURU3_FAN_SENSOR			2
 
 /*
- * Timeouts / Retries, if these turn out to need a lot of fiddling we could
+ * Timeouts / Retries, अगर these turn out to need a lot of fiddling we could
  * convert them to params. Determined by trial and error. I assume this is
  * cpu-speed independent, since the ISA-bus and not the CPU should be the
  * bottleneck.
  */
-#define ABIT_UGURU3_WAIT_TIMEOUT		250
+#घोषणा ABIT_UGURU3_WAIT_TIMEOUT		250
 /*
  * Normally the 0xAC at the end of synchronize() is reported after the
- * first read, but sometimes not and we need to poll
+ * first पढ़ो, but someबार not and we need to poll
  */
-#define ABIT_UGURU3_SYNCHRONIZE_TIMEOUT		5
+#घोषणा ABIT_UGURU3_SYNCHRONIZE_TIMEOUT		5
 /* utility macros */
-#define ABIT_UGURU3_NAME			"abituguru3"
-#define ABIT_UGURU3_DEBUG(format, arg...)		\
-	do {						\
-		if (verbose)				\
-			pr_debug(format , ## arg);	\
-	} while (0)
+#घोषणा ABIT_UGURU3_NAME			"abituguru3"
+#घोषणा ABIT_UGURU3_DEBUG(क्रमmat, arg...)		\
+	करो अणु						\
+		अगर (verbose)				\
+			pr_debug(क्रमmat , ## arg);	\
+	पूर्ण जबतक (0)
 
 /* Macros to help calculate the sysfs_names array length */
-#define ABIT_UGURU3_MAX_NO_SENSORS 26
+#घोषणा ABIT_UGURU3_MAX_NO_SENSORS 26
 /*
- * sum of strlen +1 of: in??_input\0, in??_{min,max}\0, in??_{min,max}_alarm\0,
- * in??_{min,max}_alarm_enable\0, in??_beep\0, in??_shutdown\0, in??_label\0
+ * sum of म_माप +1 of: in??_input\0, in??_अणुmin,maxपूर्ण\0, in??_अणुmin,maxपूर्ण_alarm\0,
+ * in??_अणुmin,maxपूर्ण_alarm_enable\0, in??_beep\0, in??_shutकरोwn\0, in??_label\0
  */
-#define ABIT_UGURU3_IN_NAMES_LENGTH \
+#घोषणा ABIT_UGURU3_IN_NAMES_LENGTH \
 				(11 + 2 * 9 + 2 * 15 + 2 * 22 + 10 + 14 + 11)
 /*
- * sum of strlen +1 of: temp??_input\0, temp??_max\0, temp??_crit\0,
- * temp??_alarm\0, temp??_alarm_enable\0, temp??_beep\0, temp??_shutdown\0,
+ * sum of म_माप +1 of: temp??_input\0, temp??_max\0, temp??_crit\0,
+ * temp??_alarm\0, temp??_alarm_enable\0, temp??_beep\0, temp??_shutकरोwn\0,
  * temp??_label\0
  */
-#define ABIT_UGURU3_TEMP_NAMES_LENGTH (13 + 11 + 12 + 13 + 20 + 12 + 16 + 13)
+#घोषणा ABIT_UGURU3_TEMP_NAMES_LENGTH (13 + 11 + 12 + 13 + 20 + 12 + 16 + 13)
 /*
- * sum of strlen +1 of: fan??_input\0, fan??_min\0, fan??_alarm\0,
- * fan??_alarm_enable\0, fan??_beep\0, fan??_shutdown\0, fan??_label\0
+ * sum of म_माप +1 of: fan??_input\0, fan??_min\0, fan??_alarm\0,
+ * fan??_alarm_enable\0, fan??_beep\0, fan??_shutकरोwn\0, fan??_label\0
  */
-#define ABIT_UGURU3_FAN_NAMES_LENGTH (12 + 10 + 12 + 19 + 11 + 15 + 12)
+#घोषणा ABIT_UGURU3_FAN_NAMES_LENGTH (12 + 10 + 12 + 19 + 11 + 15 + 12)
 /*
- * Worst case scenario 16 in sensors (longest names_length) and the rest
- * temp sensors (second longest names_length).
+ * Worst हाल scenario 16 in sensors (दीर्घest names_length) and the rest
+ * temp sensors (second दीर्घest names_length).
  */
-#define ABIT_UGURU3_SYSFS_NAMES_LENGTH (16 * ABIT_UGURU3_IN_NAMES_LENGTH + \
+#घोषणा ABIT_UGURU3_SYSFS_NAMES_LENGTH (16 * ABIT_UGURU3_IN_NAMES_LENGTH + \
 	(ABIT_UGURU3_MAX_NO_SENSORS - 16) * ABIT_UGURU3_TEMP_NAMES_LENGTH)
 
 /*
- * All the macros below are named identical to the openguru2 program
+ * All the macros below are named identical to the खोलोguru2 program
  * reverse engineered by Louis Kruger, hence the names might not be 100%
  * logical. I could come up with better names, but I prefer keeping the names
  * identical so that this driver can be compared with his work more easily.
  */
 /* Two i/o-ports are used by uGuru */
-#define ABIT_UGURU3_BASE			0x00E0
-#define ABIT_UGURU3_CMD				0x00
-#define ABIT_UGURU3_DATA			0x04
-#define ABIT_UGURU3_REGION_LENGTH		5
+#घोषणा ABIT_UGURU3_BASE			0x00E0
+#घोषणा ABIT_UGURU3_CMD				0x00
+#घोषणा ABIT_UGURU3_DATA			0x04
+#घोषणा ABIT_UGURU3_REGION_LENGTH		5
 /*
- * The wait_xxx functions return this on success and the last contents
- * of the DATA register (0-255) on failure.
+ * The रुको_xxx functions वापस this on success and the last contents
+ * of the DATA रेजिस्टर (0-255) on failure.
  */
-#define ABIT_UGURU3_SUCCESS			-1
+#घोषणा ABIT_UGURU3_SUCCESS			-1
 /* uGuru status flags */
-#define ABIT_UGURU3_STATUS_READY_FOR_READ	0x01
-#define ABIT_UGURU3_STATUS_BUSY			0x02
+#घोषणा ABIT_UGURU3_STATUS_READY_FOR_READ	0x01
+#घोषणा ABIT_UGURU3_STATUS_BUSY			0x02
 
 
 /* Structures */
-struct abituguru3_sensor_info {
-	const char *name;
-	int port;
-	int type;
-	int multiplier;
-	int divisor;
-	int offset;
-};
+काष्ठा abituguru3_sensor_info अणु
+	स्थिर अक्षर *name;
+	पूर्णांक port;
+	पूर्णांक type;
+	पूर्णांक multiplier;
+	पूर्णांक भागisor;
+	पूर्णांक offset;
+पूर्ण;
 
-/* Avoid use of flexible array members */
-#define ABIT_UGURU3_MAX_DMI_NAMES 2
+/* Aव्योम use of flexible array members */
+#घोषणा ABIT_UGURU3_MAX_DMI_NAMES 2
 
-struct abituguru3_motherboard_info {
+काष्ठा abituguru3_motherboard_info अणु
 	u16 id;
-	const char *dmi_name[ABIT_UGURU3_MAX_DMI_NAMES + 1];
-	/* + 1 -> end of sensors indicated by a sensor with name == NULL */
-	struct abituguru3_sensor_info sensors[ABIT_UGURU3_MAX_NO_SENSORS + 1];
-};
+	स्थिर अक्षर *dmi_name[ABIT_UGURU3_MAX_DMI_NAMES + 1];
+	/* + 1 -> end of sensors indicated by a sensor with name == शून्य */
+	काष्ठा abituguru3_sensor_info sensors[ABIT_UGURU3_MAX_NO_SENSORS + 1];
+पूर्ण;
 
 /*
  * For the Abit uGuru, we need to keep some data in memory.
- * The structure is dynamically allocated, at the same time when a new
+ * The काष्ठाure is dynamically allocated, at the same समय when a new
  * abituguru3 device is allocated.
  */
-struct abituguru3_data {
-	struct device *hwmon_dev;	/* hwmon registered device */
-	struct mutex update_lock;	/* protect access to data and uGuru */
-	unsigned short addr;		/* uguru base address */
-	char valid;			/* !=0 if following fields are valid */
-	unsigned long last_updated;	/* In jiffies */
+काष्ठा abituguru3_data अणु
+	काष्ठा device *hwmon_dev;	/* hwmon रेजिस्टरed device */
+	काष्ठा mutex update_lock;	/* protect access to data and uGuru */
+	अचिन्हित लघु addr;		/* uguru base address */
+	अक्षर valid;			/* !=0 अगर following fields are valid */
+	अचिन्हित दीर्घ last_updated;	/* In jअगरfies */
 
 	/*
 	 * For convenience the sysfs attr and their names are generated
-	 * automatically. We have max 10 entries per sensor (for in sensors)
+	 * स्वतःmatically. We have max 10 entries per sensor (क्रम in sensors)
 	 */
-	struct sensor_device_attribute_2 sysfs_attr[ABIT_UGURU3_MAX_NO_SENSORS
+	काष्ठा sensor_device_attribute_2 sysfs_attr[ABIT_UGURU3_MAX_NO_SENSORS
 		* 10];
 
 	/* Buffer to store the dynamically generated sysfs names */
-	char sysfs_names[ABIT_UGURU3_SYSFS_NAMES_LENGTH];
+	अक्षर sysfs_names[ABIT_UGURU3_SYSFS_NAMES_LENGTH];
 
-	/* Pointer to the sensors info for the detected motherboard */
-	const struct abituguru3_sensor_info *sensors;
+	/* Poपूर्णांकer to the sensors info क्रम the detected motherboard */
+	स्थिर काष्ठा abituguru3_sensor_info *sensors;
 
 	/*
-	 * The abituguru3 supports up to 48 sensors, and thus has registers
-	 * sets for 48 sensors, for convenience reasons / simplicity of the
-	 * code we always read and store all registers for all 48 sensors
+	 * The abituguru3 supports up to 48 sensors, and thus has रेजिस्टरs
+	 * sets क्रम 48 sensors, क्रम convenience reasons / simplicity of the
+	 * code we always पढ़ो and store all रेजिस्टरs क्रम all 48 sensors
 	 */
 
-	/* Alarms for all 48 sensors (1 bit per sensor) */
+	/* Alarms क्रम all 48 sensors (1 bit per sensor) */
 	u8 alarms[48/8];
 
 	/* Value of all 48 sensors */
@@ -175,844 +176,844 @@ struct abituguru3_data {
 
 	/*
 	 * Settings of all 48 sensors, note in and temp sensors (the first 32
-	 * sensors) have 3 bytes of settings, while fans only have 2 bytes,
-	 * for convenience we use 3 bytes for all sensors
+	 * sensors) have 3 bytes of settings, जबतक fans only have 2 bytes,
+	 * क्रम convenience we use 3 bytes क्रम all sensors
 	 */
 	u8 settings[48][3];
-};
+पूर्ण;
 
 
 /* Constants */
-static const struct abituguru3_motherboard_info abituguru3_motherboards[] = {
-	{ 0x000C, { NULL } /* Unknown, need DMI string */, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 10, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT 1.2V",	 3, 0, 10, 1, 0 },
-		{ "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 },
-		{ "MCH 2.5V",		 5, 0, 20, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM",		26, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS FAN",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		35, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x000D, { NULL } /* Abit AW8, need DMI string */, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 10, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT 1.2V",	 3, 0, 10, 1, 0 },
-		{ "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 },
-		{ "MCH 2.5V",		 5, 0, 20, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM1",		26, 1, 1, 1, 0 },
-		{ "PWM2",		27, 1, 1, 1, 0 },
-		{ "PWM3",		28, 1, 1, 1, 0 },
-		{ "PWM4",		29, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		35, 2, 60, 1, 0 },
-		{ "AUX2 Fan",		36, 2, 60, 1, 0 },
-		{ "AUX3 Fan",		37, 2, 60, 1, 0 },
-		{ "AUX4 Fan",		38, 2, 60, 1, 0 },
-		{ "AUX5 Fan",		39, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x000E, { NULL } /* AL-8, need DMI string */, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 10, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT 1.2V",	 3, 0, 10, 1, 0 },
-		{ "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 },
-		{ "MCH 2.5V",		 5, 0, 20, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM",		26, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x000F, { NULL } /* Unknown, need DMI string */, {
+अटल स्थिर काष्ठा abituguru3_motherboard_info abituguru3_motherboards[] = अणु
+	अणु 0x000C, अणु शून्य पूर्ण /* Unknown, need DMI string */, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT 1.2V",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 2.5V",		 5, 0, 20, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS FAN",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x000D, अणु शून्य पूर्ण /* Abit AW8, need DMI string */, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT 1.2V",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 2.5V",		 5, 0, 20, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM1",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM2",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM3",		28, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM4",		29, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 Fan",		37, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX4 Fan",		38, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX5 Fan",		39, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x000E, अणु शून्य पूर्ण /* AL-8, need DMI string */, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT 1.2V",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 2.5V",		 5, 0, 20, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x000F, अणु शून्य पूर्ण /* Unknown, need DMI string */, अणु
 
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 10, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT 1.2V",	 3, 0, 10, 1, 0 },
-		{ "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 },
-		{ "MCH 2.5V",		 5, 0, 20, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM",		26, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0010, { NULL } /* Abit NI8 SLI GR, need DMI string */, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 10, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT 1.2V",	 3, 0, 10, 1, 0 },
-		{ "NB 1.4V",		 4, 0, 10, 1, 0 },
-		{ "SB 1.5V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "SYS",		25, 1, 1, 1, 0 },
-		{ "PWM",		26, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		35, 2, 60, 1, 0 },
-		{ "OTES1 Fan",		36, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0011, { "AT8 32X", NULL }, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 20, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VDDA 2.5V",	 6, 0, 20, 1, 0 },
-		{ "NB 1.8V",		 4, 0, 10, 1, 0 },
-		{ "NB 1.8V Dual",	 5, 0, 10, 1, 0 },
-		{ "HTV 1.2",		 3, 0, 10, 1, 0 },
-		{ "PCIE 1.2V",		12, 0, 10, 1, 0 },
-		{ "NB 1.2V",		13, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "NB",			25, 1, 1, 1, 0 },
-		{ "System",		26, 1, 1, 1, 0 },
-		{ "PWM",		27, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		35, 2, 60, 1, 0 },
-		{ "AUX2 Fan",		36, 2, 60, 1, 0 },
-		{ "AUX3 Fan",		37, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0012, { NULL } /* Abit AN8 32X, need DMI string */, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 20, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "HyperTransport",	 3, 0, 10, 1, 0 },
-		{ "CPU VDDA 2.5V",	 5, 0, 20, 1, 0 },
-		{ "NB",			 4, 0, 10, 1, 0 },
-		{ "SB",			 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "SYS",		25, 1, 1, 1, 0 },
-		{ "PWM",		26, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		36, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0013, { NULL } /* Abit AW8D, need DMI string */, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 10, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT 1.2V",	 3, 0, 10, 1, 0 },
-		{ "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 },
-		{ "MCH 2.5V",		 5, 0, 20, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM1",		26, 1, 1, 1, 0 },
-		{ "PWM2",		27, 1, 1, 1, 0 },
-		{ "PWM3",		28, 1, 1, 1, 0 },
-		{ "PWM4",		29, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		35, 2, 60, 1, 0 },
-		{ "AUX2 Fan",		36, 2, 60, 1, 0 },
-		{ "AUX3 Fan",		37, 2, 60, 1, 0 },
-		{ "AUX4 Fan",		38, 2, 60, 1, 0 },
-		{ "AUX5 Fan",		39, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0014, { "AB9", "AB9 Pro", NULL }, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 10, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT 1.2V",	 3, 0, 10, 1, 0 },
-		{ "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 },
-		{ "MCH 2.5V",		 5, 0, 20, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM",		26, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0015, { NULL } /* Unknown, need DMI string */, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR",		 1, 0, 20, 1, 0 },
-		{ "DDR VTT",		 2, 0, 10, 1, 0 },
-		{ "HyperTransport",	 3, 0, 10, 1, 0 },
-		{ "CPU VDDA 2.5V",	 5, 0, 20, 1, 0 },
-		{ "NB",			 4, 0, 10, 1, 0 },
-		{ "SB",			 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "SYS",		25, 1, 1, 1, 0 },
-		{ "PWM",		26, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		33, 2, 60, 1, 0 },
-		{ "AUX2 Fan",		35, 2, 60, 1, 0 },
-		{ "AUX3 Fan",		36, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0016, { "AW9D-MAX", NULL }, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR2",		 1, 0, 20, 1, 0 },
-		{ "DDR2 VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT 1.2V",	 3, 0, 10, 1, 0 },
-		{ "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 },
-		{ "MCH 2.5V",		 5, 0, 20, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM1",		26, 1, 1, 1, 0 },
-		{ "PWM2",		27, 1, 1, 1, 0 },
-		{ "PWM3",		28, 1, 1, 1, 0 },
-		{ "PWM4",		29, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "NB Fan",		33, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		35, 2, 60, 1, 0 },
-		{ "AUX2 Fan",		36, 2, 60, 1, 0 },
-		{ "AUX3 Fan",		37, 2, 60, 1, 0 },
-		{ "OTES1 Fan",		38, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0017, { NULL } /* Unknown, need DMI string */, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR2",		 1, 0, 20, 1, 0 },
-		{ "DDR2 VTT",		 2, 0, 10, 1, 0 },
-		{ "HyperTransport",	 3, 0, 10, 1, 0 },
-		{ "CPU VDDA 2.5V",	 6, 0, 20, 1, 0 },
-		{ "NB 1.8V",		 4, 0, 10, 1, 0 },
-		{ "NB 1.2V ",		13, 0, 10, 1, 0 },
-		{ "SB 1.2V",		 5, 0, 10, 1, 0 },
-		{ "PCIE 1.2V",		12, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "ATX +3.3V",		10, 0, 20, 1, 0 },
-		{ "ATX 5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		26, 1, 1, 1, 0 },
-		{ "PWM",		27, 1, 1, 1, 0 },
-		{ "CPU FAN",		32, 2, 60, 1, 0 },
-		{ "SYS FAN",		34, 2, 60, 1, 0 },
-		{ "AUX1 FAN",		35, 2, 60, 1, 0 },
-		{ "AUX2 FAN",		36, 2, 60, 1, 0 },
-		{ "AUX3 FAN",		37, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0018, { "AB9 QuadGT", NULL }, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR2",		 1, 0, 20, 1, 0 },
-		{ "DDR2 VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT",		 3, 0, 10, 1, 0 },
-		{ "MCH 1.25V",		 4, 0, 10, 1, 0 },
-		{ "ICHIO 1.5V",		 5, 0, 10, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM Phase1",		26, 1, 1, 1, 0 },
-		{ "PWM Phase2",		27, 1, 1, 1, 0 },
-		{ "PWM Phase3",		28, 1, 1, 1, 0 },
-		{ "PWM Phase4",		29, 1, 1, 1, 0 },
-		{ "PWM Phase5",		30, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		33, 2, 60, 1, 0 },
-		{ "AUX2 Fan",		35, 2, 60, 1, 0 },
-		{ "AUX3 Fan",		36, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0019, { "IN9 32X MAX", NULL }, {
-		{ "CPU Core",		 7, 0, 10, 1, 0 },
-		{ "DDR2",		13, 0, 20, 1, 0 },
-		{ "DDR2 VTT",		14, 0, 10, 1, 0 },
-		{ "CPU VTT",		 3, 0, 20, 1, 0 },
-		{ "NB 1.2V",		 4, 0, 10, 1, 0 },
-		{ "SB 1.5V",		 6, 0, 10, 1, 0 },
-		{ "HyperTransport",	 5, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	12, 0, 60, 1, 0 },
-		{ "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "ATX +3.3V",		10, 0, 20, 1, 0 },
-		{ "ATX 5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM Phase1",		26, 1, 1, 1, 0 },
-		{ "PWM Phase2",		27, 1, 1, 1, 0 },
-		{ "PWM Phase3",		28, 1, 1, 1, 0 },
-		{ "PWM Phase4",		29, 1, 1, 1, 0 },
-		{ "PWM Phase5",		30, 1, 1, 1, 0 },
-		{ "CPU FAN",		32, 2, 60, 1, 0 },
-		{ "SYS FAN",		34, 2, 60, 1, 0 },
-		{ "AUX1 FAN",		33, 2, 60, 1, 0 },
-		{ "AUX2 FAN",		35, 2, 60, 1, 0 },
-		{ "AUX3 FAN",		36, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x001A, { "IP35 Pro", "IP35 Pro XE", NULL }, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR2",		 1, 0, 20, 1, 0 },
-		{ "DDR2 VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT 1.2V",	 3, 0, 10, 1, 0 },
-		{ "MCH 1.25V",		 4, 0, 10, 1, 0 },
-		{ "ICHIO 1.5V",		 5, 0, 10, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (8-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM",		26, 1, 1, 1, 0 },
-		{ "PWM Phase2",		27, 1, 1, 1, 0 },
-		{ "PWM Phase3",		28, 1, 1, 1, 0 },
-		{ "PWM Phase4",		29, 1, 1, 1, 0 },
-		{ "PWM Phase5",		30, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		33, 2, 60, 1, 0 },
-		{ "AUX2 Fan",		35, 2, 60, 1, 0 },
-		{ "AUX3 Fan",		36, 2, 60, 1, 0 },
-		{ "AUX4 Fan",		37, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x001B, { NULL } /* Unknown, need DMI string */, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR3",		 1, 0, 20, 1, 0 },
-		{ "DDR3 VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT",		 3, 0, 10, 1, 0 },
-		{ "MCH 1.25V",		 4, 0, 10, 1, 0 },
-		{ "ICHIO 1.5V",		 5, 0, 10, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (8-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM Phase1",		26, 1, 1, 1, 0 },
-		{ "PWM Phase2",		27, 1, 1, 1, 0 },
-		{ "PWM Phase3",		28, 1, 1, 1, 0 },
-		{ "PWM Phase4",		29, 1, 1, 1, 0 },
-		{ "PWM Phase5",		30, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		33, 2, 60, 1, 0 },
-		{ "AUX2 Fan",		35, 2, 60, 1, 0 },
-		{ "AUX3 Fan",		36, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x001C, { "IX38 QuadGT", NULL }, {
-		{ "CPU Core",		 0, 0, 10, 1, 0 },
-		{ "DDR2",		 1, 0, 20, 1, 0 },
-		{ "DDR2 VTT",		 2, 0, 10, 1, 0 },
-		{ "CPU VTT",		 3, 0, 10, 1, 0 },
-		{ "MCH 1.25V",		 4, 0, 10, 1, 0 },
-		{ "ICHIO 1.5V",		 5, 0, 10, 1, 0 },
-		{ "ICH 1.05V",		 6, 0, 10, 1, 0 },
-		{ "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 },
-		{ "ATX +12V (8-pin)",	 8, 0, 60, 1, 0 },
-		{ "ATX +5V",		 9, 0, 30, 1, 0 },
-		{ "+3.3V",		10, 0, 20, 1, 0 },
-		{ "5VSB",		11, 0, 30, 1, 0 },
-		{ "CPU",		24, 1, 1, 1, 0 },
-		{ "System",		25, 1, 1, 1, 0 },
-		{ "PWM Phase1",		26, 1, 1, 1, 0 },
-		{ "PWM Phase2",		27, 1, 1, 1, 0 },
-		{ "PWM Phase3",		28, 1, 1, 1, 0 },
-		{ "PWM Phase4",		29, 1, 1, 1, 0 },
-		{ "PWM Phase5",		30, 1, 1, 1, 0 },
-		{ "CPU Fan",		32, 2, 60, 1, 0 },
-		{ "SYS Fan",		34, 2, 60, 1, 0 },
-		{ "AUX1 Fan",		33, 2, 60, 1, 0 },
-		{ "AUX2 Fan",		35, 2, 60, 1, 0 },
-		{ "AUX3 Fan",		36, 2, 60, 1, 0 },
-		{ NULL, 0, 0, 0, 0, 0 } }
-	},
-	{ 0x0000, { NULL }, { { NULL, 0, 0, 0, 0, 0 } } }
-};
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT 1.2V",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 2.5V",		 5, 0, 20, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0010, अणु शून्य पूर्ण /* Abit NI8 SLI GR, need DMI string */, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT 1.2V",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "NB 1.4V",		 4, 0, 10, 1, 0 पूर्ण,
+		अणु "SB 1.5V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "SYS",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "OTES1 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0011, अणु "AT8 32X", शून्य पूर्ण, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VDDA 2.5V",	 6, 0, 20, 1, 0 पूर्ण,
+		अणु "NB 1.8V",		 4, 0, 10, 1, 0 पूर्ण,
+		अणु "NB 1.8V Dual",	 5, 0, 10, 1, 0 पूर्ण,
+		अणु "HTV 1.2",		 3, 0, 10, 1, 0 पूर्ण,
+		अणु "PCIE 1.2V",		12, 0, 10, 1, 0 पूर्ण,
+		अणु "NB 1.2V",		13, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "NB",			25, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 Fan",		37, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0012, अणु शून्य पूर्ण /* Abit AN8 32X, need DMI string */, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "HyperTransport",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VDDA 2.5V",	 5, 0, 20, 1, 0 पूर्ण,
+		अणु "NB",			 4, 0, 10, 1, 0 पूर्ण,
+		अणु "SB",			 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "SYS",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0013, अणु शून्य पूर्ण /* Abit AW8D, need DMI string */, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT 1.2V",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 2.5V",		 5, 0, 20, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM1",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM2",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM3",		28, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM4",		29, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 Fan",		37, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX4 Fan",		38, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX5 Fan",		39, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0014, अणु "AB9", "AB9 Pro", शून्य पूर्ण, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT 1.2V",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 2.5V",		 5, 0, 20, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0015, अणु शून्य पूर्ण /* Unknown, need DMI string */, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR",		 1, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "HyperTransport",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VDDA 2.5V",	 5, 0, 20, 1, 0 पूर्ण,
+		अणु "NB",			 4, 0, 10, 1, 0 पूर्ण,
+		अणु "SB",			 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "SYS",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0016, अणु "AW9D-MAX", शून्य पूर्ण, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR2",		 1, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR2 VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT 1.2V",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH & PCIE 1.5V",	 4, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 2.5V",		 5, 0, 20, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM1",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM2",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM3",		28, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM4",		29, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "NB Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 Fan",		37, 2, 60, 1, 0 पूर्ण,
+		अणु "OTES1 Fan",		38, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0017, अणु शून्य पूर्ण /* Unknown, need DMI string */, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR2",		 1, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR2 VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "HyperTransport",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VDDA 2.5V",	 6, 0, 20, 1, 0 पूर्ण,
+		अणु "NB 1.8V",		 4, 0, 10, 1, 0 पूर्ण,
+		अणु "NB 1.2V ",		13, 0, 10, 1, 0 पूर्ण,
+		अणु "SB 1.2V",		 5, 0, 10, 1, 0 पूर्ण,
+		अणु "PCIE 1.2V",		12, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "ATX +3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "ATX 5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU FAN",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS FAN",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 FAN",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 FAN",		36, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 FAN",		37, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0018, अणु "AB9 QuadGT", शून्य पूर्ण, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR2",		 1, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR2 VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT",		 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 1.25V",		 4, 0, 10, 1, 0 पूर्ण,
+		अणु "ICHIO 1.5V",		 5, 0, 10, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase1",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase2",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase3",		28, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase4",		29, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase5",		30, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0019, अणु "IN9 32X MAX", शून्य पूर्ण, अणु
+		अणु "CPU Core",		 7, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR2",		13, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR2 VTT",		14, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT",		 3, 0, 20, 1, 0 पूर्ण,
+		अणु "NB 1.2V",		 4, 0, 10, 1, 0 पूर्ण,
+		अणु "SB 1.5V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "HyperTransport",	 5, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	12, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (4-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "ATX +3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "ATX 5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase1",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase2",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase3",		28, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase4",		29, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase5",		30, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU FAN",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS FAN",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 FAN",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 FAN",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 FAN",		36, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x001A, अणु "IP35 Pro", "IP35 Pro XE", शून्य पूर्ण, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR2",		 1, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR2 VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT 1.2V",	 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 1.25V",		 4, 0, 10, 1, 0 पूर्ण,
+		अणु "ICHIO 1.5V",		 5, 0, 10, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (8-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase2",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase3",		28, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase4",		29, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase5",		30, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX4 Fan",		37, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x001B, अणु शून्य पूर्ण /* Unknown, need DMI string */, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR3",		 1, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR3 VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT",		 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 1.25V",		 4, 0, 10, 1, 0 पूर्ण,
+		अणु "ICHIO 1.5V",		 5, 0, 10, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (8-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase1",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase2",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase3",		28, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase4",		29, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase5",		30, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x001C, अणु "IX38 QuadGT", शून्य पूर्ण, अणु
+		अणु "CPU Core",		 0, 0, 10, 1, 0 पूर्ण,
+		अणु "DDR2",		 1, 0, 20, 1, 0 पूर्ण,
+		अणु "DDR2 VTT",		 2, 0, 10, 1, 0 पूर्ण,
+		अणु "CPU VTT",		 3, 0, 10, 1, 0 पूर्ण,
+		अणु "MCH 1.25V",		 4, 0, 10, 1, 0 पूर्ण,
+		अणु "ICHIO 1.5V",		 5, 0, 10, 1, 0 पूर्ण,
+		अणु "ICH 1.05V",		 6, 0, 10, 1, 0 पूर्ण,
+		अणु "ATX +12V (24-Pin)",	 7, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +12V (8-pin)",	 8, 0, 60, 1, 0 पूर्ण,
+		अणु "ATX +5V",		 9, 0, 30, 1, 0 पूर्ण,
+		अणु "+3.3V",		10, 0, 20, 1, 0 पूर्ण,
+		अणु "5VSB",		11, 0, 30, 1, 0 पूर्ण,
+		अणु "CPU",		24, 1, 1, 1, 0 पूर्ण,
+		अणु "System",		25, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase1",		26, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase2",		27, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase3",		28, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase4",		29, 1, 1, 1, 0 पूर्ण,
+		अणु "PWM Phase5",		30, 1, 1, 1, 0 पूर्ण,
+		अणु "CPU Fan",		32, 2, 60, 1, 0 पूर्ण,
+		अणु "SYS Fan",		34, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX1 Fan",		33, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX2 Fan",		35, 2, 60, 1, 0 पूर्ण,
+		अणु "AUX3 Fan",		36, 2, 60, 1, 0 पूर्ण,
+		अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण
+	पूर्ण,
+	अणु 0x0000, अणु शून्य पूर्ण, अणु अणु शून्य, 0, 0, 0, 0, 0 पूर्ण पूर्ण पूर्ण
+पूर्ण;
 
 
 /* Insmod parameters */
-static bool force;
-module_param(force, bool, 0);
-MODULE_PARM_DESC(force, "Set to one to force detection.");
+अटल bool क्रमce;
+module_param(क्रमce, bool, 0);
+MODULE_PARM_DESC(क्रमce, "Set to one to force detection.");
 /* Default verbose is 1, since this driver is still in the testing phase */
-static bool verbose = 1;
+अटल bool verbose = 1;
 module_param(verbose, bool, 0644);
 MODULE_PARM_DESC(verbose, "Enable/disable verbose error reporting");
 
-static const char *never_happen = "This should never happen.";
-static const char *report_this =
+अटल स्थिर अक्षर *never_happen = "This should never happen.";
+अटल स्थिर अक्षर *report_this =
 	"Please report this to the abituguru3 maintainer (see MAINTAINERS)";
 
-/* wait while the uguru is busy (usually after a write) */
-static int abituguru3_wait_while_busy(struct abituguru3_data *data)
-{
+/* रुको जबतक the uguru is busy (usually after a ग_लिखो) */
+अटल पूर्णांक abituguru3_रुको_जबतक_busy(काष्ठा abituguru3_data *data)
+अणु
 	u8 x;
-	int timeout = ABIT_UGURU3_WAIT_TIMEOUT;
+	पूर्णांक समयout = ABIT_UGURU3_WAIT_TIMEOUT;
 
-	while ((x = inb_p(data->addr + ABIT_UGURU3_DATA)) &
-			ABIT_UGURU3_STATUS_BUSY) {
-		timeout--;
-		if (timeout == 0)
-			return x;
+	जबतक ((x = inb_p(data->addr + ABIT_UGURU3_DATA)) &
+			ABIT_UGURU3_STATUS_BUSY) अणु
+		समयout--;
+		अगर (समयout == 0)
+			वापस x;
 		/*
-		 * sleep a bit before our last try, to give the uGuru3 one
+		 * sleep a bit beक्रमe our last try, to give the uGuru3 one
 		 * last chance to respond.
 		 */
-		if (timeout == 1)
+		अगर (समयout == 1)
 			msleep(1);
-	}
-	return ABIT_UGURU3_SUCCESS;
-}
+	पूर्ण
+	वापस ABIT_UGURU3_SUCCESS;
+पूर्ण
 
-/* wait till uguru is ready to be read */
-static int abituguru3_wait_for_read(struct abituguru3_data *data)
-{
+/* रुको till uguru is पढ़ोy to be पढ़ो */
+अटल पूर्णांक abituguru3_रुको_क्रम_पढ़ो(काष्ठा abituguru3_data *data)
+अणु
 	u8 x;
-	int timeout = ABIT_UGURU3_WAIT_TIMEOUT;
+	पूर्णांक समयout = ABIT_UGURU3_WAIT_TIMEOUT;
 
-	while (!((x = inb_p(data->addr + ABIT_UGURU3_DATA)) &
-			ABIT_UGURU3_STATUS_READY_FOR_READ)) {
-		timeout--;
-		if (timeout == 0)
-			return x;
+	जबतक (!((x = inb_p(data->addr + ABIT_UGURU3_DATA)) &
+			ABIT_UGURU3_STATUS_READY_FOR_READ)) अणु
+		समयout--;
+		अगर (समयout == 0)
+			वापस x;
 		/*
-		 * sleep a bit before our last try, to give the uGuru3 one
+		 * sleep a bit beक्रमe our last try, to give the uGuru3 one
 		 * last chance to respond.
 		 */
-		if (timeout == 1)
+		अगर (समयout == 1)
 			msleep(1);
-	}
-	return ABIT_UGURU3_SUCCESS;
-}
+	पूर्ण
+	वापस ABIT_UGURU3_SUCCESS;
+पूर्ण
 
 /*
  * This synchronizes us with the uGuru3's protocol state machine, this
- * must be done before each command.
+ * must be करोne beक्रमe each command.
  */
-static int abituguru3_synchronize(struct abituguru3_data *data)
-{
-	int x, timeout = ABIT_UGURU3_SYNCHRONIZE_TIMEOUT;
+अटल पूर्णांक abituguru3_synchronize(काष्ठा abituguru3_data *data)
+अणु
+	पूर्णांक x, समयout = ABIT_UGURU3_SYNCHRONIZE_TIMEOUT;
 
-	x = abituguru3_wait_while_busy(data);
-	if (x != ABIT_UGURU3_SUCCESS) {
+	x = abituguru3_रुको_जबतक_busy(data);
+	अगर (x != ABIT_UGURU3_SUCCESS) अणु
 		ABIT_UGURU3_DEBUG("synchronize timeout during initial busy "
 			"wait, status: 0x%02x\n", x);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	outb(0x20, data->addr + ABIT_UGURU3_DATA);
-	x = abituguru3_wait_while_busy(data);
-	if (x != ABIT_UGURU3_SUCCESS) {
+	x = abituguru3_रुको_जबतक_busy(data);
+	अगर (x != ABIT_UGURU3_SUCCESS) अणु
 		ABIT_UGURU3_DEBUG("synchronize timeout after sending 0x20, "
 			"status: 0x%02x\n", x);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	outb(0x10, data->addr + ABIT_UGURU3_CMD);
-	x = abituguru3_wait_while_busy(data);
-	if (x != ABIT_UGURU3_SUCCESS) {
+	x = abituguru3_रुको_जबतक_busy(data);
+	अगर (x != ABIT_UGURU3_SUCCESS) अणु
 		ABIT_UGURU3_DEBUG("synchronize timeout after sending 0x10, "
 			"status: 0x%02x\n", x);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	outb(0x00, data->addr + ABIT_UGURU3_CMD);
-	x = abituguru3_wait_while_busy(data);
-	if (x != ABIT_UGURU3_SUCCESS) {
+	x = abituguru3_रुको_जबतक_busy(data);
+	अगर (x != ABIT_UGURU3_SUCCESS) अणु
 		ABIT_UGURU3_DEBUG("synchronize timeout after sending 0x00, "
 			"status: 0x%02x\n", x);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	x = abituguru3_wait_for_read(data);
-	if (x != ABIT_UGURU3_SUCCESS) {
+	x = abituguru3_रुको_क्रम_पढ़ो(data);
+	अगर (x != ABIT_UGURU3_SUCCESS) अणु
 		ABIT_UGURU3_DEBUG("synchronize timeout waiting for read, "
 			"status: 0x%02x\n", x);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	while ((x = inb(data->addr + ABIT_UGURU3_CMD)) != 0xAC) {
-		timeout--;
-		if (timeout == 0) {
+	जबतक ((x = inb(data->addr + ABIT_UGURU3_CMD)) != 0xAC) अणु
+		समयout--;
+		अगर (समयout == 0) अणु
 			ABIT_UGURU3_DEBUG("synchronize timeout cmd does not "
 				"hold 0xAC after synchronize, cmd: 0x%02x\n",
 				x);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		msleep(1);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Read count bytes from sensor sensor_addr in bank bank_addr and store the
  * result in buf
  */
-static int abituguru3_read(struct abituguru3_data *data, u8 bank, u8 offset,
+अटल पूर्णांक abituguru3_पढ़ो(काष्ठा abituguru3_data *data, u8 bank, u8 offset,
 	u8 count, u8 *buf)
-{
-	int i, x;
+अणु
+	पूर्णांक i, x;
 
 	x = abituguru3_synchronize(data);
-	if (x)
-		return x;
+	अगर (x)
+		वापस x;
 
 	outb(0x1A, data->addr + ABIT_UGURU3_DATA);
-	x = abituguru3_wait_while_busy(data);
-	if (x != ABIT_UGURU3_SUCCESS) {
+	x = abituguru3_रुको_जबतक_busy(data);
+	अगर (x != ABIT_UGURU3_SUCCESS) अणु
 		ABIT_UGURU3_DEBUG("read from 0x%02x:0x%02x timed out after "
-			"sending 0x1A, status: 0x%02x\n", (unsigned int)bank,
-			(unsigned int)offset, x);
-		return -EIO;
-	}
+			"sending 0x1A, status: 0x%02x\n", (अचिन्हित पूर्णांक)bank,
+			(अचिन्हित पूर्णांक)offset, x);
+		वापस -EIO;
+	पूर्ण
 
 	outb(bank, data->addr + ABIT_UGURU3_CMD);
-	x = abituguru3_wait_while_busy(data);
-	if (x != ABIT_UGURU3_SUCCESS) {
+	x = abituguru3_रुको_जबतक_busy(data);
+	अगर (x != ABIT_UGURU3_SUCCESS) अणु
 		ABIT_UGURU3_DEBUG("read from 0x%02x:0x%02x timed out after "
 			"sending the bank, status: 0x%02x\n",
-			(unsigned int)bank, (unsigned int)offset, x);
-		return -EIO;
-	}
+			(अचिन्हित पूर्णांक)bank, (अचिन्हित पूर्णांक)offset, x);
+		वापस -EIO;
+	पूर्ण
 
 	outb(offset, data->addr + ABIT_UGURU3_CMD);
-	x = abituguru3_wait_while_busy(data);
-	if (x != ABIT_UGURU3_SUCCESS) {
+	x = abituguru3_रुको_जबतक_busy(data);
+	अगर (x != ABIT_UGURU3_SUCCESS) अणु
 		ABIT_UGURU3_DEBUG("read from 0x%02x:0x%02x timed out after "
 			"sending the offset, status: 0x%02x\n",
-			(unsigned int)bank, (unsigned int)offset, x);
-		return -EIO;
-	}
+			(अचिन्हित पूर्णांक)bank, (अचिन्हित पूर्णांक)offset, x);
+		वापस -EIO;
+	पूर्ण
 
 	outb(count, data->addr + ABIT_UGURU3_CMD);
-	x = abituguru3_wait_while_busy(data);
-	if (x != ABIT_UGURU3_SUCCESS) {
+	x = abituguru3_रुको_जबतक_busy(data);
+	अगर (x != ABIT_UGURU3_SUCCESS) अणु
 		ABIT_UGURU3_DEBUG("read from 0x%02x:0x%02x timed out after "
 			"sending the count, status: 0x%02x\n",
-			(unsigned int)bank, (unsigned int)offset, x);
-		return -EIO;
-	}
+			(अचिन्हित पूर्णांक)bank, (अचिन्हित पूर्णांक)offset, x);
+		वापस -EIO;
+	पूर्ण
 
-	for (i = 0; i < count; i++) {
-		x = abituguru3_wait_for_read(data);
-		if (x != ABIT_UGURU3_SUCCESS) {
+	क्रम (i = 0; i < count; i++) अणु
+		x = abituguru3_रुको_क्रम_पढ़ो(data);
+		अगर (x != ABIT_UGURU3_SUCCESS) अणु
 			ABIT_UGURU3_DEBUG("timeout reading byte %d from "
 				"0x%02x:0x%02x, status: 0x%02x\n", i,
-				(unsigned int)bank, (unsigned int)offset, x);
-			break;
-		}
+				(अचिन्हित पूर्णांक)bank, (अचिन्हित पूर्णांक)offset, x);
+			अवरोध;
+		पूर्ण
 		buf[i] = inb(data->addr + ABIT_UGURU3_CMD);
-	}
-	return i;
-}
+	पूर्ण
+	वापस i;
+पूर्ण
 
 /*
  * Sensor settings are stored 1 byte per offset with the bytes
  * placed add consecutive offsets.
  */
-static int abituguru3_read_increment_offset(struct abituguru3_data *data,
+अटल पूर्णांक abituguru3_पढ़ो_increment_offset(काष्ठा abituguru3_data *data,
 					    u8 bank, u8 offset, u8 count,
-					    u8 *buf, int offset_count)
-{
-	int i, x;
+					    u8 *buf, पूर्णांक offset_count)
+अणु
+	पूर्णांक i, x;
 
-	for (i = 0; i < offset_count; i++) {
-		x = abituguru3_read(data, bank, offset + i, count,
+	क्रम (i = 0; i < offset_count; i++) अणु
+		x = abituguru3_पढ़ो(data, bank, offset + i, count,
 				    buf + i * count);
-		if (x != count) {
-			if (x < 0)
-				return x;
-			return i * count + x;
-		}
-	}
+		अगर (x != count) अणु
+			अगर (x < 0)
+				वापस x;
+			वापस i * count + x;
+		पूर्ण
+	पूर्ण
 
-	return i * count;
-}
+	वापस i * count;
+पूर्ण
 
 /*
  * Following are the sysfs callback functions. These functions expect:
- * sensor_device_attribute_2->index:   index into the data->sensors array
- * sensor_device_attribute_2->nr:      register offset, bitmask or NA.
+ * sensor_device_attribute_2->index:   index पूर्णांकo the data->sensors array
+ * sensor_device_attribute_2->nr:      रेजिस्टर offset, biपंचांगask or NA.
  */
-static struct abituguru3_data *abituguru3_update_device(struct device *dev);
+अटल काष्ठा abituguru3_data *abituguru3_update_device(काष्ठा device *dev);
 
-static ssize_t show_value(struct device *dev,
-	struct device_attribute *devattr, char *buf)
-{
-	int value;
-	struct sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
-	struct abituguru3_data *data = abituguru3_update_device(dev);
-	const struct abituguru3_sensor_info *sensor;
+अटल sमाप_प्रकार show_value(काष्ठा device *dev,
+	काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	पूर्णांक value;
+	काष्ठा sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
+	काष्ठा abituguru3_data *data = abituguru3_update_device(dev);
+	स्थिर काष्ठा abituguru3_sensor_info *sensor;
 
-	if (!data)
-		return -EIO;
+	अगर (!data)
+		वापस -EIO;
 
 	sensor = &data->sensors[attr->index];
 
-	/* are we reading a setting, or is this a normal read? */
-	if (attr->nr)
+	/* are we पढ़ोing a setting, or is this a normal पढ़ो? */
+	अगर (attr->nr)
 		value = data->settings[sensor->port][attr->nr];
-	else
+	अन्यथा
 		value = data->value[sensor->port];
 
 	/* convert the value */
-	value = (value * sensor->multiplier) / sensor->divisor +
+	value = (value * sensor->multiplier) / sensor->भागisor +
 		sensor->offset;
 
 	/*
-	 * alternatively we could update the sensors settings struct for this,
-	 * but then its contents would differ from the windows sw ini files
+	 * alternatively we could update the sensors settings काष्ठा क्रम this,
+	 * but then its contents would dअगरfer from the winकरोws sw ini files
 	 */
-	if (sensor->type == ABIT_UGURU3_TEMP_SENSOR)
+	अगर (sensor->type == ABIT_UGURU3_TEMP_SENSOR)
 		value *= 1000;
 
-	return sprintf(buf, "%d\n", value);
-}
+	वापस प्र_लिखो(buf, "%d\n", value);
+पूर्ण
 
-static ssize_t show_alarm(struct device *dev,
-	struct device_attribute *devattr, char *buf)
-{
-	int port;
-	struct sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
-	struct abituguru3_data *data = abituguru3_update_device(dev);
+अटल sमाप_प्रकार show_alarm(काष्ठा device *dev,
+	काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	पूर्णांक port;
+	काष्ठा sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
+	काष्ठा abituguru3_data *data = abituguru3_update_device(dev);
 
-	if (!data)
-		return -EIO;
+	अगर (!data)
+		वापस -EIO;
 
 	port = data->sensors[attr->index].port;
 
 	/*
-	 * See if the alarm bit for this sensor is set and if a bitmask is
-	 * given in attr->nr also check if the alarm matches the type of alarm
-	 * we're looking for (for volt it can be either low or high). The type
-	 * is stored in a few readonly bits in the settings of the sensor.
+	 * See अगर the alarm bit क्रम this sensor is set and अगर a biपंचांगask is
+	 * given in attr->nr also check अगर the alarm matches the type of alarm
+	 * we're looking क्रम (क्रम volt it can be either low or high). The type
+	 * is stored in a few पढ़ोonly bits in the settings of the sensor.
 	 */
-	if ((data->alarms[port / 8] & (0x01 << (port % 8))) &&
+	अगर ((data->alarms[port / 8] & (0x01 << (port % 8))) &&
 			(!attr->nr || (data->settings[port][0] & attr->nr)))
-		return sprintf(buf, "1\n");
-	else
-		return sprintf(buf, "0\n");
-}
+		वापस प्र_लिखो(buf, "1\n");
+	अन्यथा
+		वापस प्र_लिखो(buf, "0\n");
+पूर्ण
 
-static ssize_t show_mask(struct device *dev,
-	struct device_attribute *devattr, char *buf)
-{
-	struct sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
-	struct abituguru3_data *data = dev_get_drvdata(dev);
+अटल sमाप_प्रकार show_mask(काष्ठा device *dev,
+	काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
+	काष्ठा abituguru3_data *data = dev_get_drvdata(dev);
 
-	if (data->settings[data->sensors[attr->index].port][0] & attr->nr)
-		return sprintf(buf, "1\n");
-	else
-		return sprintf(buf, "0\n");
-}
+	अगर (data->settings[data->sensors[attr->index].port][0] & attr->nr)
+		वापस प्र_लिखो(buf, "1\n");
+	अन्यथा
+		वापस प्र_लिखो(buf, "0\n");
+पूर्ण
 
-static ssize_t show_label(struct device *dev,
-	struct device_attribute *devattr, char *buf)
-{
-	struct sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
-	struct abituguru3_data *data = dev_get_drvdata(dev);
+अटल sमाप_प्रकार show_label(काष्ठा device *dev,
+	काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	काष्ठा sensor_device_attribute_2 *attr = to_sensor_dev_attr_2(devattr);
+	काष्ठा abituguru3_data *data = dev_get_drvdata(dev);
 
-	return sprintf(buf, "%s\n", data->sensors[attr->index].name);
-}
+	वापस प्र_लिखो(buf, "%s\n", data->sensors[attr->index].name);
+पूर्ण
 
-static ssize_t show_name(struct device *dev,
-	struct device_attribute *devattr, char *buf)
-{
-	return sprintf(buf, "%s\n", ABIT_UGURU3_NAME);
-}
+अटल sमाप_प्रकार show_name(काष्ठा device *dev,
+	काष्ठा device_attribute *devattr, अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%s\n", ABIT_UGURU3_NAME);
+पूर्ण
 
-/* Sysfs attr templates, the real entries are generated automatically. */
-static const
-struct sensor_device_attribute_2 abituguru3_sysfs_templ[3][10] = { {
-	SENSOR_ATTR_2(in%d_input, 0444, show_value, NULL, 0, 0),
-	SENSOR_ATTR_2(in%d_min, 0444, show_value, NULL, 1, 0),
-	SENSOR_ATTR_2(in%d_max, 0444, show_value, NULL, 2, 0),
-	SENSOR_ATTR_2(in%d_min_alarm, 0444, show_alarm, NULL,
+/* Sysfs attr ढाँचाs, the real entries are generated स्वतःmatically. */
+अटल स्थिर
+काष्ठा sensor_device_attribute_2 abituguru3_sysfs_templ[3][10] = अणु अणु
+	SENSOR_ATTR_2(in%d_input, 0444, show_value, शून्य, 0, 0),
+	SENSOR_ATTR_2(in%d_min, 0444, show_value, शून्य, 1, 0),
+	SENSOR_ATTR_2(in%d_max, 0444, show_value, शून्य, 2, 0),
+	SENSOR_ATTR_2(in%d_min_alarm, 0444, show_alarm, शून्य,
 		ABIT_UGURU3_VOLT_LOW_ALARM_FLAG, 0),
-	SENSOR_ATTR_2(in%d_max_alarm, 0444, show_alarm, NULL,
+	SENSOR_ATTR_2(in%d_max_alarm, 0444, show_alarm, शून्य,
 		ABIT_UGURU3_VOLT_HIGH_ALARM_FLAG, 0),
-	SENSOR_ATTR_2(in%d_beep, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(in%d_beep, 0444, show_mask, शून्य,
 		ABIT_UGURU3_BEEP_ENABLE, 0),
-	SENSOR_ATTR_2(in%d_shutdown, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(in%d_shutकरोwn, 0444, show_mask, शून्य,
 		ABIT_UGURU3_SHUTDOWN_ENABLE, 0),
-	SENSOR_ATTR_2(in%d_min_alarm_enable, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(in%d_min_alarm_enable, 0444, show_mask, शून्य,
 		ABIT_UGURU3_VOLT_LOW_ALARM_ENABLE, 0),
-	SENSOR_ATTR_2(in%d_max_alarm_enable, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(in%d_max_alarm_enable, 0444, show_mask, शून्य,
 		ABIT_UGURU3_VOLT_HIGH_ALARM_ENABLE, 0),
-	SENSOR_ATTR_2(in%d_label, 0444, show_label, NULL, 0, 0)
-	}, {
-	SENSOR_ATTR_2(temp%d_input, 0444, show_value, NULL, 0, 0),
-	SENSOR_ATTR_2(temp%d_max, 0444, show_value, NULL, 1, 0),
-	SENSOR_ATTR_2(temp%d_crit, 0444, show_value, NULL, 2, 0),
-	SENSOR_ATTR_2(temp%d_alarm, 0444, show_alarm, NULL, 0, 0),
-	SENSOR_ATTR_2(temp%d_beep, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(in%d_label, 0444, show_label, शून्य, 0, 0)
+	पूर्ण, अणु
+	SENSOR_ATTR_2(temp%d_input, 0444, show_value, शून्य, 0, 0),
+	SENSOR_ATTR_2(temp%d_max, 0444, show_value, शून्य, 1, 0),
+	SENSOR_ATTR_2(temp%d_crit, 0444, show_value, शून्य, 2, 0),
+	SENSOR_ATTR_2(temp%d_alarm, 0444, show_alarm, शून्य, 0, 0),
+	SENSOR_ATTR_2(temp%d_beep, 0444, show_mask, शून्य,
 		ABIT_UGURU3_BEEP_ENABLE, 0),
-	SENSOR_ATTR_2(temp%d_shutdown, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(temp%d_shutकरोwn, 0444, show_mask, शून्य,
 		ABIT_UGURU3_SHUTDOWN_ENABLE, 0),
-	SENSOR_ATTR_2(temp%d_alarm_enable, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(temp%d_alarm_enable, 0444, show_mask, शून्य,
 		ABIT_UGURU3_TEMP_HIGH_ALARM_ENABLE, 0),
-	SENSOR_ATTR_2(temp%d_label, 0444, show_label, NULL, 0, 0)
-	}, {
-	SENSOR_ATTR_2(fan%d_input, 0444, show_value, NULL, 0, 0),
-	SENSOR_ATTR_2(fan%d_min, 0444, show_value, NULL, 1, 0),
-	SENSOR_ATTR_2(fan%d_alarm, 0444, show_alarm, NULL, 0, 0),
-	SENSOR_ATTR_2(fan%d_beep, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(temp%d_label, 0444, show_label, शून्य, 0, 0)
+	पूर्ण, अणु
+	SENSOR_ATTR_2(fan%d_input, 0444, show_value, शून्य, 0, 0),
+	SENSOR_ATTR_2(fan%d_min, 0444, show_value, शून्य, 1, 0),
+	SENSOR_ATTR_2(fan%d_alarm, 0444, show_alarm, शून्य, 0, 0),
+	SENSOR_ATTR_2(fan%d_beep, 0444, show_mask, शून्य,
 		ABIT_UGURU3_BEEP_ENABLE, 0),
-	SENSOR_ATTR_2(fan%d_shutdown, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(fan%d_shutकरोwn, 0444, show_mask, शून्य,
 		ABIT_UGURU3_SHUTDOWN_ENABLE, 0),
-	SENSOR_ATTR_2(fan%d_alarm_enable, 0444, show_mask, NULL,
+	SENSOR_ATTR_2(fan%d_alarm_enable, 0444, show_mask, शून्य,
 		ABIT_UGURU3_FAN_LOW_ALARM_ENABLE, 0),
-	SENSOR_ATTR_2(fan%d_label, 0444, show_label, NULL, 0, 0)
-} };
+	SENSOR_ATTR_2(fan%d_label, 0444, show_label, शून्य, 0, 0)
+पूर्ण पूर्ण;
 
-static struct sensor_device_attribute_2 abituguru3_sysfs_attr[] = {
-	SENSOR_ATTR_2(name, 0444, show_name, NULL, 0, 0),
-};
+अटल काष्ठा sensor_device_attribute_2 abituguru3_sysfs_attr[] = अणु
+	SENSOR_ATTR_2(name, 0444, show_name, शून्य, 0, 0),
+पूर्ण;
 
-static int abituguru3_probe(struct platform_device *pdev)
-{
-	const int no_sysfs_attr[3] = { 10, 8, 7 };
-	int sensor_index[3] = { 0, 1, 1 };
-	struct abituguru3_data *data;
-	int i, j, type, used, sysfs_names_free, sysfs_attr_i, res = -ENODEV;
-	char *sysfs_filename;
+अटल पूर्णांक abituguru3_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर पूर्णांक no_sysfs_attr[3] = अणु 10, 8, 7 पूर्ण;
+	पूर्णांक sensor_index[3] = अणु 0, 1, 1 पूर्ण;
+	काष्ठा abituguru3_data *data;
+	पूर्णांक i, j, type, used, sysfs_names_मुक्त, sysfs_attr_i, res = -ENODEV;
+	अक्षर *sysfs_filename;
 	u8 buf[2];
 	u16 id;
 
-	data = devm_kzalloc(&pdev->dev, sizeof(struct abituguru3_data),
+	data = devm_kzalloc(&pdev->dev, माप(काष्ठा abituguru3_data),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
-	data->addr = platform_get_resource(pdev, IORESOURCE_IO, 0)->start;
+	data->addr = platक्रमm_get_resource(pdev, IORESOURCE_IO, 0)->start;
 	mutex_init(&data->update_lock);
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
 	/* Read the motherboard ID */
-	i = abituguru3_read(data, ABIT_UGURU3_MISC_BANK, ABIT_UGURU3_BOARD_ID,
+	i = abituguru3_पढ़ो(data, ABIT_UGURU3_MISC_BANK, ABIT_UGURU3_BOARD_ID,
 			    2, buf);
-	if (i != 2)
-		goto abituguru3_probe_error;
+	अगर (i != 2)
+		जाओ abituguru3_probe_error;
 
-	/* Completely read the uGuru to see if one really is there */
-	if (!abituguru3_update_device(&pdev->dev))
-		goto abituguru3_probe_error;
+	/* Completely पढ़ो the uGuru to see अगर one really is there */
+	अगर (!abituguru3_update_device(&pdev->dev))
+		जाओ abituguru3_probe_error;
 
 	/* lookup the ID in our motherboard table */
 	id = ((u16)buf[0] << 8) | (u16)buf[1];
-	for (i = 0; abituguru3_motherboards[i].id; i++)
-		if (abituguru3_motherboards[i].id == id)
-			break;
-	if (!abituguru3_motherboards[i].id) {
+	क्रम (i = 0; abituguru3_motherboards[i].id; i++)
+		अगर (abituguru3_motherboards[i].id == id)
+			अवरोध;
+	अगर (!abituguru3_motherboards[i].id) अणु
 		pr_err("error unknown motherboard ID: %04X. %s\n",
-		       (unsigned int)id, report_this);
-		goto abituguru3_probe_error;
-	}
+		       (अचिन्हित पूर्णांक)id, report_this);
+		जाओ abituguru3_probe_error;
+	पूर्ण
 	data->sensors = abituguru3_motherboards[i].sensors;
 
-	pr_info("found Abit uGuru3, motherboard ID: %04X\n", (unsigned int)id);
+	pr_info("found Abit uGuru3, motherboard ID: %04X\n", (अचिन्हित पूर्णांक)id);
 
 	/* Fill the sysfs attr array */
 	sysfs_attr_i = 0;
 	sysfs_filename = data->sysfs_names;
-	sysfs_names_free = ABIT_UGURU3_SYSFS_NAMES_LENGTH;
-	for (i = 0; data->sensors[i].name; i++) {
+	sysfs_names_मुक्त = ABIT_UGURU3_SYSFS_NAMES_LENGTH;
+	क्रम (i = 0; data->sensors[i].name; i++) अणु
 		/* Fail safe check, this should never happen! */
-		if (i >= ABIT_UGURU3_MAX_NO_SENSORS) {
+		अगर (i >= ABIT_UGURU3_MAX_NO_SENSORS) अणु
 			pr_err("Fatal error motherboard has more sensors then ABIT_UGURU3_MAX_NO_SENSORS. %s %s\n",
 			       never_happen, report_this);
 			res = -ENAMETOOLONG;
-			goto abituguru3_probe_error;
-		}
+			जाओ abituguru3_probe_error;
+		पूर्ण
 		type = data->sensors[i].type;
-		for (j = 0; j < no_sysfs_attr[type]; j++) {
-			used = snprintf(sysfs_filename, sysfs_names_free,
+		क्रम (j = 0; j < no_sysfs_attr[type]; j++) अणु
+			used = snम_लिखो(sysfs_filename, sysfs_names_मुक्त,
 				abituguru3_sysfs_templ[type][j].dev_attr.attr.
 				name, sensor_index[type]) + 1;
 			data->sysfs_attr[sysfs_attr_i] =
@@ -1021,288 +1022,288 @@ static int abituguru3_probe(struct platform_device *pdev)
 				sysfs_filename;
 			data->sysfs_attr[sysfs_attr_i].index = i;
 			sysfs_filename += used;
-			sysfs_names_free -= used;
+			sysfs_names_मुक्त -= used;
 			sysfs_attr_i++;
-		}
+		पूर्ण
 		sensor_index[type]++;
-	}
+	पूर्ण
 	/* Fail safe check, this should never happen! */
-	if (sysfs_names_free < 0) {
+	अगर (sysfs_names_मुक्त < 0) अणु
 		pr_err("Fatal error ran out of space for sysfs attr names. %s %s\n",
 		       never_happen, report_this);
 		res = -ENAMETOOLONG;
-		goto abituguru3_probe_error;
-	}
+		जाओ abituguru3_probe_error;
+	पूर्ण
 
 	/* Register sysfs hooks */
-	for (i = 0; i < sysfs_attr_i; i++)
-		if (device_create_file(&pdev->dev,
+	क्रम (i = 0; i < sysfs_attr_i; i++)
+		अगर (device_create_file(&pdev->dev,
 				&data->sysfs_attr[i].dev_attr))
-			goto abituguru3_probe_error;
-	for (i = 0; i < ARRAY_SIZE(abituguru3_sysfs_attr); i++)
-		if (device_create_file(&pdev->dev,
+			जाओ abituguru3_probe_error;
+	क्रम (i = 0; i < ARRAY_SIZE(abituguru3_sysfs_attr); i++)
+		अगर (device_create_file(&pdev->dev,
 				&abituguru3_sysfs_attr[i].dev_attr))
-			goto abituguru3_probe_error;
+			जाओ abituguru3_probe_error;
 
-	data->hwmon_dev = hwmon_device_register(&pdev->dev);
-	if (IS_ERR(data->hwmon_dev)) {
+	data->hwmon_dev = hwmon_device_रेजिस्टर(&pdev->dev);
+	अगर (IS_ERR(data->hwmon_dev)) अणु
 		res = PTR_ERR(data->hwmon_dev);
-		goto abituguru3_probe_error;
-	}
+		जाओ abituguru3_probe_error;
+	पूर्ण
 
-	return 0; /* success */
+	वापस 0; /* success */
 
 abituguru3_probe_error:
-	for (i = 0; data->sysfs_attr[i].dev_attr.attr.name; i++)
-		device_remove_file(&pdev->dev, &data->sysfs_attr[i].dev_attr);
-	for (i = 0; i < ARRAY_SIZE(abituguru3_sysfs_attr); i++)
-		device_remove_file(&pdev->dev,
+	क्रम (i = 0; data->sysfs_attr[i].dev_attr.attr.name; i++)
+		device_हटाओ_file(&pdev->dev, &data->sysfs_attr[i].dev_attr);
+	क्रम (i = 0; i < ARRAY_SIZE(abituguru3_sysfs_attr); i++)
+		device_हटाओ_file(&pdev->dev,
 			&abituguru3_sysfs_attr[i].dev_attr);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int abituguru3_remove(struct platform_device *pdev)
-{
-	int i;
-	struct abituguru3_data *data = platform_get_drvdata(pdev);
+अटल पूर्णांक abituguru3_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक i;
+	काष्ठा abituguru3_data *data = platक्रमm_get_drvdata(pdev);
 
-	hwmon_device_unregister(data->hwmon_dev);
-	for (i = 0; data->sysfs_attr[i].dev_attr.attr.name; i++)
-		device_remove_file(&pdev->dev, &data->sysfs_attr[i].dev_attr);
-	for (i = 0; i < ARRAY_SIZE(abituguru3_sysfs_attr); i++)
-		device_remove_file(&pdev->dev,
+	hwmon_device_unरेजिस्टर(data->hwmon_dev);
+	क्रम (i = 0; data->sysfs_attr[i].dev_attr.attr.name; i++)
+		device_हटाओ_file(&pdev->dev, &data->sysfs_attr[i].dev_attr);
+	क्रम (i = 0; i < ARRAY_SIZE(abituguru3_sysfs_attr); i++)
+		device_हटाओ_file(&pdev->dev,
 			&abituguru3_sysfs_attr[i].dev_attr);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct abituguru3_data *abituguru3_update_device(struct device *dev)
-{
-	int i;
-	struct abituguru3_data *data = dev_get_drvdata(dev);
+अटल काष्ठा abituguru3_data *abituguru3_update_device(काष्ठा device *dev)
+अणु
+	पूर्णांक i;
+	काष्ठा abituguru3_data *data = dev_get_drvdata(dev);
 
 	mutex_lock(&data->update_lock);
-	if (!data->valid || time_after(jiffies, data->last_updated + HZ)) {
-		/* Clear data->valid while updating */
+	अगर (!data->valid || समय_after(jअगरfies, data->last_updated + HZ)) अणु
+		/* Clear data->valid जबतक updating */
 		data->valid = 0;
 		/* Read alarms */
-		if (abituguru3_read_increment_offset(data,
+		अगर (abituguru3_पढ़ो_increment_offset(data,
 				ABIT_UGURU3_SETTINGS_BANK,
 				ABIT_UGURU3_ALARMS_START,
 				1, data->alarms, 48/8) != (48/8))
-			goto LEAVE_UPDATE;
+			जाओ LEAVE_UPDATE;
 		/* Read in and temp sensors (3 byte settings / sensor) */
-		for (i = 0; i < 32; i++) {
-			if (abituguru3_read(data, ABIT_UGURU3_SENSORS_BANK,
+		क्रम (i = 0; i < 32; i++) अणु
+			अगर (abituguru3_पढ़ो(data, ABIT_UGURU3_SENSORS_BANK,
 					ABIT_UGURU3_VALUES_START + i,
 					1, &data->value[i]) != 1)
-				goto LEAVE_UPDATE;
-			if (abituguru3_read_increment_offset(data,
+				जाओ LEAVE_UPDATE;
+			अगर (abituguru3_पढ़ो_increment_offset(data,
 					ABIT_UGURU3_SETTINGS_BANK,
 					ABIT_UGURU3_SETTINGS_START + i * 3,
 					1,
 					data->settings[i], 3) != 3)
-				goto LEAVE_UPDATE;
-		}
+				जाओ LEAVE_UPDATE;
+		पूर्ण
 		/* Read temp sensors (2 byte settings / sensor) */
-		for (i = 0; i < 16; i++) {
-			if (abituguru3_read(data, ABIT_UGURU3_SENSORS_BANK,
+		क्रम (i = 0; i < 16; i++) अणु
+			अगर (abituguru3_पढ़ो(data, ABIT_UGURU3_SENSORS_BANK,
 					ABIT_UGURU3_VALUES_START + 32 + i,
 					1, &data->value[32 + i]) != 1)
-				goto LEAVE_UPDATE;
-			if (abituguru3_read_increment_offset(data,
+				जाओ LEAVE_UPDATE;
+			अगर (abituguru3_पढ़ो_increment_offset(data,
 					ABIT_UGURU3_SETTINGS_BANK,
 					ABIT_UGURU3_SETTINGS_START + 32 * 3 +
 						i * 2, 1,
 					data->settings[32 + i], 2) != 2)
-				goto LEAVE_UPDATE;
-		}
-		data->last_updated = jiffies;
+				जाओ LEAVE_UPDATE;
+		पूर्ण
+		data->last_updated = jअगरfies;
 		data->valid = 1;
-	}
+	पूर्ण
 LEAVE_UPDATE:
 	mutex_unlock(&data->update_lock);
-	if (data->valid)
-		return data;
-	else
-		return NULL;
-}
+	अगर (data->valid)
+		वापस data;
+	अन्यथा
+		वापस शून्य;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int abituguru3_suspend(struct device *dev)
-{
-	struct abituguru3_data *data = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक abituguru3_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा abituguru3_data *data = dev_get_drvdata(dev);
 	/*
-	 * make sure all communications with the uguru3 are done and no new
+	 * make sure all communications with the uguru3 are करोne and no new
 	 * ones are started
 	 */
 	mutex_lock(&data->update_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int abituguru3_resume(struct device *dev)
-{
-	struct abituguru3_data *data = dev_get_drvdata(dev);
+अटल पूर्णांक abituguru3_resume(काष्ठा device *dev)
+अणु
+	काष्ठा abituguru3_data *data = dev_get_drvdata(dev);
 	mutex_unlock(&data->update_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(abituguru3_pm, abituguru3_suspend, abituguru3_resume);
-#define ABIT_UGURU3_PM	(&abituguru3_pm)
-#else
-#define ABIT_UGURU3_PM	NULL
-#endif /* CONFIG_PM */
+अटल SIMPLE_DEV_PM_OPS(abituguru3_pm, abituguru3_suspend, abituguru3_resume);
+#घोषणा ABIT_UGURU3_PM	(&abituguru3_pm)
+#अन्यथा
+#घोषणा ABIT_UGURU3_PM	शून्य
+#पूर्ण_अगर /* CONFIG_PM */
 
-static struct platform_driver abituguru3_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver abituguru3_driver = अणु
+	.driver = अणु
 		.name	= ABIT_UGURU3_NAME,
 		.pm	= ABIT_UGURU3_PM
-	},
+	पूर्ण,
 	.probe	= abituguru3_probe,
-	.remove	= abituguru3_remove,
-};
+	.हटाओ	= abituguru3_हटाओ,
+पूर्ण;
 
-static int __init abituguru3_dmi_detect(void)
-{
-	const char *board_vendor, *board_name;
-	int i, err = (force) ? 1 : -ENODEV;
-	const char *const *dmi_name;
-	size_t sublen;
+अटल पूर्णांक __init abituguru3_dmi_detect(व्योम)
+अणु
+	स्थिर अक्षर *board_venकरोr, *board_name;
+	पूर्णांक i, err = (क्रमce) ? 1 : -ENODEV;
+	स्थिर अक्षर *स्थिर *dmi_name;
+	माप_प्रकार sublen;
 
-	board_vendor = dmi_get_system_info(DMI_BOARD_VENDOR);
-	if (!board_vendor || strcmp(board_vendor, "http://www.abit.com.tw/"))
-		return err;
+	board_venकरोr = dmi_get_प्रणाली_info(DMI_BOARD_VENDOR);
+	अगर (!board_venकरोr || म_भेद(board_venकरोr, "http://www.abit.com.tw/"))
+		वापस err;
 
-	board_name = dmi_get_system_info(DMI_BOARD_NAME);
-	if (!board_name)
-		return err;
+	board_name = dmi_get_प्रणाली_info(DMI_BOARD_NAME);
+	अगर (!board_name)
+		वापस err;
 
 	/*
-	 * At the moment, we don't care about the part of the vendor
+	 * At the moment, we करोn't care about the part of the venकरोr
 	 * DMI string contained in brackets. Truncate the string at
 	 * the first occurrence of a bracket. Trim any trailing space
 	 * from the substring.
 	 */
-	sublen = strcspn(board_name, "(");
-	while (sublen > 0 && board_name[sublen - 1] == ' ')
+	sublen = म_खोज(board_name, "(");
+	जबतक (sublen > 0 && board_name[sublen - 1] == ' ')
 		sublen--;
 
-	for (i = 0; abituguru3_motherboards[i].id; i++) {
+	क्रम (i = 0; abituguru3_motherboards[i].id; i++) अणु
 		dmi_name = abituguru3_motherboards[i].dmi_name;
-		for ( ; *dmi_name; dmi_name++) {
-			if (strlen(*dmi_name) != sublen)
-				continue;
-			if (!strncasecmp(board_name, *dmi_name, sublen))
-				return 0;
-		}
-	}
+		क्रम ( ; *dmi_name; dmi_name++) अणु
+			अगर (म_माप(*dmi_name) != sublen)
+				जारी;
+			अगर (!strnहालcmp(board_name, *dmi_name, sublen))
+				वापस 0;
+		पूर्ण
+	पूर्ण
 
 	/* No match found */
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
  * FIXME: Manual detection should die eventually; we need to collect stable
- *        DMI model names first before we can rely entirely on CONFIG_DMI.
+ *        DMI model names first beक्रमe we can rely entirely on CONFIG_DMI.
  */
 
-static int __init abituguru3_detect(void)
-{
+अटल पूर्णांक __init abituguru3_detect(व्योम)
+अणु
 	/*
-	 * See if there is an uguru3 there. An idle uGuru3 will hold 0x00 or
-	 * 0x08 at DATA and 0xAC at CMD. Sometimes the uGuru3 will hold 0x05
+	 * See अगर there is an uguru3 there. An idle uGuru3 will hold 0x00 or
+	 * 0x08 at DATA and 0xAC at CMD. Someबार the uGuru3 will hold 0x05
 	 * or 0x55 at CMD instead, why is unknown.
 	 */
 	u8 data_val = inb_p(ABIT_UGURU3_BASE + ABIT_UGURU3_DATA);
 	u8 cmd_val = inb_p(ABIT_UGURU3_BASE + ABIT_UGURU3_CMD);
-	if (((data_val == 0x00) || (data_val == 0x08)) &&
+	अगर (((data_val == 0x00) || (data_val == 0x08)) &&
 			((cmd_val == 0xAC) || (cmd_val == 0x05) ||
 			 (cmd_val == 0x55)))
-		return 0;
+		वापस 0;
 
 	ABIT_UGURU3_DEBUG("no Abit uGuru3 found, data = 0x%02X, cmd = "
-		"0x%02X\n", (unsigned int)data_val, (unsigned int)cmd_val);
+		"0x%02X\n", (अचिन्हित पूर्णांक)data_val, (अचिन्हित पूर्णांक)cmd_val);
 
-	if (force) {
+	अगर (क्रमce) अणु
 		pr_info("Assuming Abit uGuru3 is present because of \"force\" parameter\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* No uGuru3 found */
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static struct platform_device *abituguru3_pdev;
+अटल काष्ठा platक्रमm_device *abituguru3_pdev;
 
-static int __init abituguru3_init(void)
-{
-	struct resource res = { .flags = IORESOURCE_IO };
-	int err;
+अटल पूर्णांक __init abituguru3_init(व्योम)
+अणु
+	काष्ठा resource res = अणु .flags = IORESOURCE_IO पूर्ण;
+	पूर्णांक err;
 
 	/* Attempt DMI detection first */
 	err = abituguru3_dmi_detect();
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/*
-	 * Fall back to manual detection if there was no exact
-	 * board name match, or force was specified.
+	 * Fall back to manual detection अगर there was no exact
+	 * board name match, or क्रमce was specअगरied.
 	 */
-	if (err > 0) {
+	अगर (err > 0) अणु
 		err = abituguru3_detect();
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		pr_warn("this motherboard was not detected using DMI. "
 			"Please send the output of \"dmidecode\" to the abituguru3 maintainer (see MAINTAINERS)\n");
-	}
+	पूर्ण
 
-	err = platform_driver_register(&abituguru3_driver);
-	if (err)
-		goto exit;
+	err = platक्रमm_driver_रेजिस्टर(&abituguru3_driver);
+	अगर (err)
+		जाओ निकास;
 
-	abituguru3_pdev = platform_device_alloc(ABIT_UGURU3_NAME,
+	abituguru3_pdev = platक्रमm_device_alloc(ABIT_UGURU3_NAME,
 						ABIT_UGURU3_BASE);
-	if (!abituguru3_pdev) {
+	अगर (!abituguru3_pdev) अणु
 		pr_err("Device allocation failed\n");
 		err = -ENOMEM;
-		goto exit_driver_unregister;
-	}
+		जाओ निकास_driver_unरेजिस्टर;
+	पूर्ण
 
 	res.start = ABIT_UGURU3_BASE;
 	res.end = ABIT_UGURU3_BASE + ABIT_UGURU3_REGION_LENGTH - 1;
 	res.name = ABIT_UGURU3_NAME;
 
-	err = platform_device_add_resources(abituguru3_pdev, &res, 1);
-	if (err) {
+	err = platक्रमm_device_add_resources(abituguru3_pdev, &res, 1);
+	अगर (err) अणु
 		pr_err("Device resource addition failed (%d)\n", err);
-		goto exit_device_put;
-	}
+		जाओ निकास_device_put;
+	पूर्ण
 
-	err = platform_device_add(abituguru3_pdev);
-	if (err) {
+	err = platक्रमm_device_add(abituguru3_pdev);
+	अगर (err) अणु
 		pr_err("Device addition failed (%d)\n", err);
-		goto exit_device_put;
-	}
+		जाओ निकास_device_put;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-exit_device_put:
-	platform_device_put(abituguru3_pdev);
-exit_driver_unregister:
-	platform_driver_unregister(&abituguru3_driver);
-exit:
-	return err;
-}
+निकास_device_put:
+	platक्रमm_device_put(abituguru3_pdev);
+निकास_driver_unरेजिस्टर:
+	platक्रमm_driver_unरेजिस्टर(&abituguru3_driver);
+निकास:
+	वापस err;
+पूर्ण
 
-static void __exit abituguru3_exit(void)
-{
-	platform_device_unregister(abituguru3_pdev);
-	platform_driver_unregister(&abituguru3_driver);
-}
+अटल व्योम __निकास abituguru3_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(abituguru3_pdev);
+	platक्रमm_driver_unरेजिस्टर(&abituguru3_driver);
+पूर्ण
 
 MODULE_AUTHOR("Hans de Goede <hdegoede@redhat.com>");
 MODULE_DESCRIPTION("Abit uGuru3 Sensor device");
 MODULE_LICENSE("GPL");
 
 module_init(abituguru3_init);
-module_exit(abituguru3_exit);
+module_निकास(abituguru3_निकास);

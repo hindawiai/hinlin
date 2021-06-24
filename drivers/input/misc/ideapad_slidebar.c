@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Input driver for slidebars on some Lenovo IdeaPad laptops
+ * Input driver क्रम slidebars on some Lenovo IdeaPad laptops
  *
  * Copyright (C) 2013 Andrey Moiseev <o2g.org.ru@gmail.com>
  *
@@ -18,8 +19,8 @@
  * load with 'force' parameter set 'true'.
  *
  * LEDs blinking and input mode are managed via sysfs,
- * (hex, unsigned byte value):
- * /sys/devices/platform/ideapad_slidebar/slidebar_mode
+ * (hex, अचिन्हित byte value):
+ * /sys/devices/platक्रमm/ideapad_slidebar/slidebar_mode
  *
  * The value is in byte range, however, I only figured out
  * how bits 0b10011001 work. Some other bits, probably,
@@ -36,11 +37,11 @@
  * LAST      at last pos   lights follow the finger
  * OFF       no lights     no lights
  *
- * INT       all input events are generated, interrupts are used
- * POLL      no input events by default, to get them,
- *	     send 0b10000000 (read below)
+ * INT       all input events are generated, पूर्णांकerrupts are used
+ * POLL      no input events by शेष, to get them,
+ *	     send 0b10000000 (पढ़ो below)
  *
- * Commands: write
+ * Commands: ग_लिखो
  *
  * All      |  0b01001 -> STD_INT
  * possible |  0b10001 -> ONMOV_INT
@@ -54,14 +55,14 @@
  * OFF_INT or OFF_POLL  |
  *                      |  0b1 -> OFF_INT
  *
- * Any state |   0b10000000 ->  if the slidebar has updated data,
+ * Any state |   0b10000000 ->  अगर the slidebar has updated data,
  *				produce one input event (last position),
- *				switch to respective POLL mode
- *				(like 0x0), if not in POLL mode yet.
+ *				चयन to respective POLL mode
+ *				(like 0x0), अगर not in POLL mode yet.
  *
- * Get current state: read
+ * Get current state: पढ़ो
  *
- * masked by 0x11 read value means:
+ * masked by 0x11 पढ़ो value means:
  *
  * 0x00   LAST
  * 0x01   STD
@@ -69,34 +70,34 @@
  * 0x11   ONMOV
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/dmi.h>
-#include <linux/spinlock.h>
-#include <linux/platform_device.h>
-#include <linux/input.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/i8042.h>
-#include <linux/serio.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/i8042.h>
+#समावेश <linux/serपन.स>
 
-#define IDEAPAD_BASE	0xff29
+#घोषणा IDEAPAD_BASE	0xff29
 
-static bool force;
-module_param(force, bool, 0);
-MODULE_PARM_DESC(force, "Force driver load, ignore DMI data");
+अटल bool क्रमce;
+module_param(क्रमce, bool, 0);
+MODULE_PARM_DESC(क्रमce, "Force driver load, ignore DMI data");
 
-static DEFINE_SPINLOCK(io_lock);
+अटल DEFINE_SPINLOCK(io_lock);
 
-static struct input_dev *slidebar_input_dev;
-static struct platform_device *slidebar_platform_dev;
+अटल काष्ठा input_dev *slidebar_input_dev;
+अटल काष्ठा platक्रमm_device *slidebar_platक्रमm_dev;
 
-static u8 slidebar_pos_get(void)
-{
+अटल u8 slidebar_pos_get(व्योम)
+अणु
 	u8 res;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&io_lock, flags);
 	outb(0xf4, 0xff29);
@@ -104,13 +105,13 @@ static u8 slidebar_pos_get(void)
 	res = inb(0xff2b);
 	spin_unlock_irqrestore(&io_lock, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static u8 slidebar_mode_get(void)
-{
+अटल u8 slidebar_mode_get(व्योम)
+अणु
 	u8 res;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&io_lock, flags);
 	outb(0xf7, 0xff29);
@@ -118,235 +119,235 @@ static u8 slidebar_mode_get(void)
 	res = inb(0xff2b);
 	spin_unlock_irqrestore(&io_lock, flags);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void slidebar_mode_set(u8 mode)
-{
-	unsigned long flags;
+अटल व्योम slidebar_mode_set(u8 mode)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&io_lock, flags);
 	outb(0xf7, 0xff29);
 	outb(0x8b, 0xff2a);
 	outb(mode, 0xff2b);
 	spin_unlock_irqrestore(&io_lock, flags);
-}
+पूर्ण
 
-static bool slidebar_i8042_filter(unsigned char data, unsigned char str,
-				  struct serio *port)
-{
-	static bool extended = false;
+अटल bool slidebar_i8042_filter(अचिन्हित अक्षर data, अचिन्हित अक्षर str,
+				  काष्ठा serio *port)
+अणु
+	अटल bool extended = false;
 
-	/* We are only interested in data coming form KBC port */
-	if (str & I8042_STR_AUXDATA)
-		return false;
+	/* We are only पूर्णांकerested in data coming क्रमm KBC port */
+	अगर (str & I8042_STR_AUXDATA)
+		वापस false;
 
 	/* Scancodes: e03b on move, e0bb on release. */
-	if (data == 0xe0) {
+	अगर (data == 0xe0) अणु
 		extended = true;
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	if (!extended)
-		return false;
+	अगर (!extended)
+		वापस false;
 
 	extended = false;
 
-	if (likely((data & 0x7f) != 0x3b)) {
-		serio_interrupt(port, 0xe0, 0);
-		return false;
-	}
+	अगर (likely((data & 0x7f) != 0x3b)) अणु
+		serio_पूर्णांकerrupt(port, 0xe0, 0);
+		वापस false;
+	पूर्ण
 
-	if (data & 0x80) {
+	अगर (data & 0x80) अणु
 		input_report_key(slidebar_input_dev, BTN_TOUCH, 0);
-	} else {
+	पूर्ण अन्यथा अणु
 		input_report_key(slidebar_input_dev, BTN_TOUCH, 1);
-		input_report_abs(slidebar_input_dev, ABS_X, slidebar_pos_get());
-	}
+		input_report_असल(slidebar_input_dev, ABS_X, slidebar_pos_get());
+	पूर्ण
 	input_sync(slidebar_input_dev);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static ssize_t show_slidebar_mode(struct device *dev,
-				  struct device_attribute *attr,
-				  char *buf)
-{
-	return sprintf(buf, "%x\n", slidebar_mode_get());
-}
+अटल sमाप_प्रकार show_slidebar_mode(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr,
+				  अक्षर *buf)
+अणु
+	वापस प्र_लिखो(buf, "%x\n", slidebar_mode_get());
+पूर्ण
 
-static ssize_t store_slidebar_mode(struct device *dev,
-				   struct device_attribute *attr,
-				   const char *buf, size_t count)
-{
+अटल sमाप_प्रकार store_slidebar_mode(काष्ठा device *dev,
+				   काष्ठा device_attribute *attr,
+				   स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u8 mode;
-	int error;
+	पूर्णांक error;
 
 	error = kstrtou8(buf, 0, &mode);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	slidebar_mode_set(mode);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(slidebar_mode, S_IWUSR | S_IRUGO,
+अटल DEVICE_ATTR(slidebar_mode, S_IWUSR | S_IRUGO,
 		   show_slidebar_mode, store_slidebar_mode);
 
-static struct attribute *ideapad_attrs[] = {
+अटल काष्ठा attribute *ideapad_attrs[] = अणु
 	&dev_attr_slidebar_mode.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct attribute_group ideapad_attr_group = {
+अटल काष्ठा attribute_group ideapad_attr_group = अणु
 	.attrs = ideapad_attrs
-};
+पूर्ण;
 
-static const struct attribute_group *ideapad_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *ideapad_attr_groups[] = अणु
 	&ideapad_attr_group,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static int __init ideapad_probe(struct platform_device* pdev)
-{
-	int err;
+अटल पूर्णांक __init ideapad_probe(काष्ठा platक्रमm_device* pdev)
+अणु
+	पूर्णांक err;
 
-	if (!request_region(IDEAPAD_BASE, 3, "ideapad_slidebar")) {
+	अगर (!request_region(IDEAPAD_BASE, 3, "ideapad_slidebar")) अणु
 		dev_err(&pdev->dev, "IO ports are busy\n");
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
 	slidebar_input_dev = input_allocate_device();
-	if (!slidebar_input_dev) {
+	अगर (!slidebar_input_dev) अणु
 		dev_err(&pdev->dev, "Failed to allocate input device\n");
 		err = -ENOMEM;
-		goto err_release_ports;
-	}
+		जाओ err_release_ports;
+	पूर्ण
 
 	slidebar_input_dev->name = "IdeaPad Slidebar";
 	slidebar_input_dev->id.bustype = BUS_HOST;
 	slidebar_input_dev->dev.parent = &pdev->dev;
 	input_set_capability(slidebar_input_dev, EV_KEY, BTN_TOUCH);
 	input_set_capability(slidebar_input_dev, EV_ABS, ABS_X);
-	input_set_abs_params(slidebar_input_dev, ABS_X, 0, 0xff, 0, 0);
+	input_set_असल_params(slidebar_input_dev, ABS_X, 0, 0xff, 0, 0);
 
 	err = i8042_install_filter(slidebar_i8042_filter);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev,
 			"Failed to install i8042 filter: %d\n", err);
-		goto err_free_dev;
-	}
+		जाओ err_मुक्त_dev;
+	पूर्ण
 
-	err = input_register_device(slidebar_input_dev);
-	if (err) {
+	err = input_रेजिस्टर_device(slidebar_input_dev);
+	अगर (err) अणु
 		dev_err(&pdev->dev,
 			"Failed to register input device: %d\n", err);
-		goto err_remove_filter;
-	}
+		जाओ err_हटाओ_filter;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-err_remove_filter:
-	i8042_remove_filter(slidebar_i8042_filter);
-err_free_dev:
-	input_free_device(slidebar_input_dev);
+err_हटाओ_filter:
+	i8042_हटाओ_filter(slidebar_i8042_filter);
+err_मुक्त_dev:
+	input_मुक्त_device(slidebar_input_dev);
 err_release_ports:
 	release_region(IDEAPAD_BASE, 3);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ideapad_remove(struct platform_device *pdev)
-{
-	i8042_remove_filter(slidebar_i8042_filter);
-	input_unregister_device(slidebar_input_dev);
+अटल पूर्णांक ideapad_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	i8042_हटाओ_filter(slidebar_i8042_filter);
+	input_unरेजिस्टर_device(slidebar_input_dev);
 	release_region(IDEAPAD_BASE, 3);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver slidebar_drv = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver slidebar_drv = अणु
+	.driver = अणु
 		.name = "ideapad_slidebar",
-	},
-	.remove = ideapad_remove,
-};
+	पूर्ण,
+	.हटाओ = ideapad_हटाओ,
+पूर्ण;
 
-static int __init ideapad_dmi_check(const struct dmi_system_id *id)
-{
+अटल पूर्णांक __init ideapad_dmi_check(स्थिर काष्ठा dmi_प्रणाली_id *id)
+अणु
 	pr_info("Laptop model '%s'\n", id->ident);
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static const struct dmi_system_id ideapad_dmi[] __initconst = {
-	{
+अटल स्थिर काष्ठा dmi_प्रणाली_id ideapad_dmi[] __initस्थिर = अणु
+	अणु
 		.ident = "Lenovo IdeaPad Y550",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "20017"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "Lenovo IdeaPad Y550")
-		},
+		पूर्ण,
 		.callback = ideapad_dmi_check
-	},
-	{
+	पूर्ण,
+	अणु
 		.ident = "Lenovo IdeaPad Y550P",
-		.matches = {
+		.matches = अणु
 			DMI_MATCH(DMI_SYS_VENDOR, "LENOVO"),
 			DMI_MATCH(DMI_PRODUCT_NAME, "20035"),
 			DMI_MATCH(DMI_PRODUCT_VERSION, "Lenovo IdeaPad Y550P")
-		},
+		पूर्ण,
 		.callback = ideapad_dmi_check
-	},
-	{ NULL, }
-};
+	पूर्ण,
+	अणु शून्य, पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(dmi, ideapad_dmi);
 
-static int __init slidebar_init(void)
-{
-	int err;
+अटल पूर्णांक __init slidebar_init(व्योम)
+अणु
+	पूर्णांक err;
 
-	if (!force && !dmi_check_system(ideapad_dmi)) {
+	अगर (!क्रमce && !dmi_check_प्रणाली(ideapad_dmi)) अणु
 		pr_err("DMI does not match\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	slidebar_platform_dev = platform_device_alloc("ideapad_slidebar", -1);
-	if (!slidebar_platform_dev) {
+	slidebar_platक्रमm_dev = platक्रमm_device_alloc("ideapad_slidebar", -1);
+	अगर (!slidebar_platक्रमm_dev) अणु
 		pr_err("Not enough memory\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	slidebar_platform_dev->dev.groups = ideapad_attr_groups;
+	slidebar_platक्रमm_dev->dev.groups = ideapad_attr_groups;
 
-	err = platform_device_add(slidebar_platform_dev);
-	if (err) {
+	err = platक्रमm_device_add(slidebar_platक्रमm_dev);
+	अगर (err) अणु
 		pr_err("Failed to register platform device\n");
-		goto err_free_dev;
-	}
+		जाओ err_मुक्त_dev;
+	पूर्ण
 
-	err = platform_driver_probe(&slidebar_drv, ideapad_probe);
-	if (err) {
+	err = platक्रमm_driver_probe(&slidebar_drv, ideapad_probe);
+	अगर (err) अणु
 		pr_err("Failed to register platform driver\n");
-		goto err_delete_dev;
-	}
+		जाओ err_delete_dev;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_delete_dev:
-	platform_device_del(slidebar_platform_dev);
-err_free_dev:
-	platform_device_put(slidebar_platform_dev);
-	return err;
-}
+	platक्रमm_device_del(slidebar_platक्रमm_dev);
+err_मुक्त_dev:
+	platक्रमm_device_put(slidebar_platक्रमm_dev);
+	वापस err;
+पूर्ण
 
-static void __exit slidebar_exit(void)
-{
-	platform_device_unregister(slidebar_platform_dev);
-	platform_driver_unregister(&slidebar_drv);
-}
+अटल व्योम __निकास slidebar_निकास(व्योम)
+अणु
+	platक्रमm_device_unरेजिस्टर(slidebar_platक्रमm_dev);
+	platक्रमm_driver_unरेजिस्टर(&slidebar_drv);
+पूर्ण
 
 module_init(slidebar_init);
-module_exit(slidebar_exit);
+module_निकास(slidebar_निकास);
 
 MODULE_AUTHOR("Andrey Moiseev <o2g.org.ru@gmail.com>");
 MODULE_DESCRIPTION("Slidebar input support for some Lenovo IdeaPad laptops");

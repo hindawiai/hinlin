@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _XBC_LINUX_MEMBLOCK_H
-#define _XBC_LINUX_MEMBLOCK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _XBC_LINUX_MEMBLOCK_H
+#घोषणा _XBC_LINUX_MEMBLOCK_H
 
-#include <stdlib.h>
+#समावेश <मानककोष.स>
 
-#define __pa(addr)	(addr)
-#define SMP_CACHE_BYTES	0
-#define memblock_alloc(size, align)	malloc(size)
-#define memblock_free(paddr, size)	free(paddr)
+#घोषणा __pa(addr)	(addr)
+#घोषणा SMP_CACHE_BYTES	0
+#घोषणा memblock_alloc(size, align)	दो_स्मृति(size)
+#घोषणा memblock_मुक्त(paddr, size)	मुक्त(paddr)
 
-#endif
+#पूर्ण_अगर

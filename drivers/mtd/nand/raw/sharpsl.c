@@ -1,115 +1,116 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Copyright (C) 2004 Richard Purdie
+ *  Copyright (C) 2004 Riअक्षरd Purdie
  *  Copyright (C) 2008 Dmitry Baryshkov
  *
- *  Based on Sharp's NAND driver sharp_sl.c
+ *  Based on Sharp's न_अंकD driver sharp_sl.c
  */
 
-#include <linux/genhd.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/nand-ecc-sw-hamming.h>
-#include <linux/mtd/rawnand.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/sharpsl.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/io.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/nand-ecc-sw-hamming.h>
+#समावेश <linux/mtd/rawnand.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/sharpsl.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पन.स>
 
-struct sharpsl_nand {
-	struct nand_controller	controller;
-	struct nand_chip	chip;
+काष्ठा sharpsl_nand अणु
+	काष्ठा nand_controller	controller;
+	काष्ठा nand_chip	chip;
 
-	void __iomem		*io;
-};
+	व्योम __iomem		*io;
+पूर्ण;
 
-static inline struct sharpsl_nand *mtd_to_sharpsl(struct mtd_info *mtd)
-{
-	return container_of(mtd_to_nand(mtd), struct sharpsl_nand, chip);
-}
+अटल अंतरभूत काष्ठा sharpsl_nand *mtd_to_sharpsl(काष्ठा mtd_info *mtd)
+अणु
+	वापस container_of(mtd_to_nand(mtd), काष्ठा sharpsl_nand, chip);
+पूर्ण
 
-/* register offset */
-#define ECCLPLB		0x00	/* line parity 7 - 0 bit */
-#define ECCLPUB		0x04	/* line parity 15 - 8 bit */
-#define ECCCP		0x08	/* column parity 5 - 0 bit */
-#define ECCCNTR		0x0C	/* ECC byte counter */
-#define ECCCLRR		0x10	/* cleare ECC */
-#define FLASHIO		0x14	/* Flash I/O */
-#define FLASHCTL	0x18	/* Flash Control */
+/* रेजिस्टर offset */
+#घोषणा ECCLPLB		0x00	/* line parity 7 - 0 bit */
+#घोषणा ECCLPUB		0x04	/* line parity 15 - 8 bit */
+#घोषणा ECCCP		0x08	/* column parity 5 - 0 bit */
+#घोषणा ECCCNTR		0x0C	/* ECC byte counter */
+#घोषणा ECCCLRR		0x10	/* cleare ECC */
+#घोषणा FLASHIO		0x14	/* Flash I/O */
+#घोषणा FLASHCTL	0x18	/* Flash Control */
 
 /* Flash control bit */
-#define FLRYBY		(1 << 5)
-#define FLCE1		(1 << 4)
-#define FLWP		(1 << 3)
-#define FLALE		(1 << 2)
-#define FLCLE		(1 << 1)
-#define FLCE0		(1 << 0)
+#घोषणा FLRYBY		(1 << 5)
+#घोषणा FLCE1		(1 << 4)
+#घोषणा FLWP		(1 << 3)
+#घोषणा FLALE		(1 << 2)
+#घोषणा FLCLE		(1 << 1)
+#घोषणा FLCE0		(1 << 0)
 
 /*
- *	hardware specific access to control-lines
+ *	hardware specअगरic access to control-lines
  *	ctrl:
- *	NAND_CNE: bit 0 -> ! bit 0 & 4
- *	NAND_CLE: bit 1 -> bit 1
- *	NAND_ALE: bit 2 -> bit 2
+ *	न_अंकD_CNE: bit 0 -> ! bit 0 & 4
+ *	न_अंकD_CLE: bit 1 -> bit 1
+ *	न_अंकD_ALE: bit 2 -> bit 2
  *
  */
-static void sharpsl_nand_hwcontrol(struct nand_chip *chip, int cmd,
-				   unsigned int ctrl)
-{
-	struct sharpsl_nand *sharpsl = mtd_to_sharpsl(nand_to_mtd(chip));
+अटल व्योम sharpsl_nand_hwcontrol(काष्ठा nand_chip *chip, पूर्णांक cmd,
+				   अचिन्हित पूर्णांक ctrl)
+अणु
+	काष्ठा sharpsl_nand *sharpsl = mtd_to_sharpsl(nand_to_mtd(chip));
 
-	if (ctrl & NAND_CTRL_CHANGE) {
-		unsigned char bits = ctrl & 0x07;
+	अगर (ctrl & न_अंकD_CTRL_CHANGE) अणु
+		अचिन्हित अक्षर bits = ctrl & 0x07;
 
 		bits |= (ctrl & 0x01) << 4;
 
 		bits ^= 0x11;
 
-		writeb((readb(sharpsl->io + FLASHCTL) & ~0x17) | bits, sharpsl->io + FLASHCTL);
-	}
+		ग_लिखोb((पढ़ोb(sharpsl->io + FLASHCTL) & ~0x17) | bits, sharpsl->io + FLASHCTL);
+	पूर्ण
 
-	if (cmd != NAND_CMD_NONE)
-		writeb(cmd, chip->legacy.IO_ADDR_W);
-}
+	अगर (cmd != न_अंकD_CMD_NONE)
+		ग_लिखोb(cmd, chip->legacy.IO_ADDR_W);
+पूर्ण
 
-static int sharpsl_nand_dev_ready(struct nand_chip *chip)
-{
-	struct sharpsl_nand *sharpsl = mtd_to_sharpsl(nand_to_mtd(chip));
-	return !((readb(sharpsl->io + FLASHCTL) & FLRYBY) == 0);
-}
+अटल पूर्णांक sharpsl_nand_dev_पढ़ोy(काष्ठा nand_chip *chip)
+अणु
+	काष्ठा sharpsl_nand *sharpsl = mtd_to_sharpsl(nand_to_mtd(chip));
+	वापस !((पढ़ोb(sharpsl->io + FLASHCTL) & FLRYBY) == 0);
+पूर्ण
 
-static void sharpsl_nand_enable_hwecc(struct nand_chip *chip, int mode)
-{
-	struct sharpsl_nand *sharpsl = mtd_to_sharpsl(nand_to_mtd(chip));
-	writeb(0, sharpsl->io + ECCCLRR);
-}
+अटल व्योम sharpsl_nand_enable_hwecc(काष्ठा nand_chip *chip, पूर्णांक mode)
+अणु
+	काष्ठा sharpsl_nand *sharpsl = mtd_to_sharpsl(nand_to_mtd(chip));
+	ग_लिखोb(0, sharpsl->io + ECCCLRR);
+पूर्ण
 
-static int sharpsl_nand_calculate_ecc(struct nand_chip *chip,
-				      const u_char * dat, u_char * ecc_code)
-{
-	struct sharpsl_nand *sharpsl = mtd_to_sharpsl(nand_to_mtd(chip));
-	ecc_code[0] = ~readb(sharpsl->io + ECCLPUB);
-	ecc_code[1] = ~readb(sharpsl->io + ECCLPLB);
-	ecc_code[2] = (~readb(sharpsl->io + ECCCP) << 2) | 0x03;
-	return readb(sharpsl->io + ECCCNTR) != 0;
-}
+अटल पूर्णांक sharpsl_nand_calculate_ecc(काष्ठा nand_chip *chip,
+				      स्थिर u_अक्षर * dat, u_अक्षर * ecc_code)
+अणु
+	काष्ठा sharpsl_nand *sharpsl = mtd_to_sharpsl(nand_to_mtd(chip));
+	ecc_code[0] = ~पढ़ोb(sharpsl->io + ECCLPUB);
+	ecc_code[1] = ~पढ़ोb(sharpsl->io + ECCLPLB);
+	ecc_code[2] = (~पढ़ोb(sharpsl->io + ECCCP) << 2) | 0x03;
+	वापस पढ़ोb(sharpsl->io + ECCCNTR) != 0;
+पूर्ण
 
-static int sharpsl_nand_correct_ecc(struct nand_chip *chip,
-				    unsigned char *buf,
-				    unsigned char *read_ecc,
-				    unsigned char *calc_ecc)
-{
-	return ecc_sw_hamming_correct(buf, read_ecc, calc_ecc,
+अटल पूर्णांक sharpsl_nand_correct_ecc(काष्ठा nand_chip *chip,
+				    अचिन्हित अक्षर *buf,
+				    अचिन्हित अक्षर *पढ़ो_ecc,
+				    अचिन्हित अक्षर *calc_ecc)
+अणु
+	वापस ecc_sw_hamming_correct(buf, पढ़ो_ecc, calc_ecc,
 				      chip->ecc.size, false);
-}
+पूर्ण
 
-static int sharpsl_attach_chip(struct nand_chip *chip)
-{
-	if (chip->ecc.engine_type != NAND_ECC_ENGINE_TYPE_ON_HOST)
-		return 0;
+अटल पूर्णांक sharpsl_attach_chip(काष्ठा nand_chip *chip)
+अणु
+	अगर (chip->ecc.engine_type != न_अंकD_ECC_ENGINE_TYPE_ON_HOST)
+		वापस 0;
 
 	chip->ecc.size = 256;
 	chip->ecc.bytes = 3;
@@ -118,94 +119,94 @@ static int sharpsl_attach_chip(struct nand_chip *chip)
 	chip->ecc.calculate = sharpsl_nand_calculate_ecc;
 	chip->ecc.correct = sharpsl_nand_correct_ecc;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct nand_controller_ops sharpsl_ops = {
+अटल स्थिर काष्ठा nand_controller_ops sharpsl_ops = अणु
 	.attach_chip = sharpsl_attach_chip,
-};
+पूर्ण;
 
 /*
  * Main initialization routine
  */
-static int sharpsl_nand_probe(struct platform_device *pdev)
-{
-	struct nand_chip *this;
-	struct mtd_info *mtd;
-	struct resource *r;
-	int err = 0;
-	struct sharpsl_nand *sharpsl;
-	struct sharpsl_nand_platform_data *data = dev_get_platdata(&pdev->dev);
+अटल पूर्णांक sharpsl_nand_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा nand_chip *this;
+	काष्ठा mtd_info *mtd;
+	काष्ठा resource *r;
+	पूर्णांक err = 0;
+	काष्ठा sharpsl_nand *sharpsl;
+	काष्ठा sharpsl_nand_platक्रमm_data *data = dev_get_platdata(&pdev->dev);
 
-	if (!data) {
+	अगर (!data) अणु
 		dev_err(&pdev->dev, "no platform data!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Allocate memory for MTD device structure and private data */
-	sharpsl = kzalloc(sizeof(struct sharpsl_nand), GFP_KERNEL);
-	if (!sharpsl)
-		return -ENOMEM;
+	/* Allocate memory क्रम MTD device काष्ठाure and निजी data */
+	sharpsl = kzalloc(माप(काष्ठा sharpsl_nand), GFP_KERNEL);
+	अगर (!sharpsl)
+		वापस -ENOMEM;
 
-	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!r) {
+	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!r) अणु
 		dev_err(&pdev->dev, "no io memory resource defined!\n");
 		err = -ENODEV;
-		goto err_get_res;
-	}
+		जाओ err_get_res;
+	पूर्ण
 
 	/* map physical address */
 	sharpsl->io = ioremap(r->start, resource_size(r));
-	if (!sharpsl->io) {
+	अगर (!sharpsl->io) अणु
 		dev_err(&pdev->dev, "ioremap to access Sharp SL NAND chip failed\n");
 		err = -EIO;
-		goto err_ioremap;
-	}
+		जाओ err_ioremap;
+	पूर्ण
 
-	/* Get pointer to private data */
-	this = (struct nand_chip *)(&sharpsl->chip);
+	/* Get poपूर्णांकer to निजी data */
+	this = (काष्ठा nand_chip *)(&sharpsl->chip);
 
 	nand_controller_init(&sharpsl->controller);
 	sharpsl->controller.ops = &sharpsl_ops;
 	this->controller = &sharpsl->controller;
 
-	/* Link the private data with the MTD structure */
+	/* Link the निजी data with the MTD काष्ठाure */
 	mtd = nand_to_mtd(this);
 	mtd->dev.parent = &pdev->dev;
 	mtd_set_ooblayout(mtd, data->ecc_layout);
 
-	platform_set_drvdata(pdev, sharpsl);
+	platक्रमm_set_drvdata(pdev, sharpsl);
 
 	/*
 	 * PXA initialize
 	 */
-	writeb(readb(sharpsl->io + FLASHCTL) | FLWP, sharpsl->io + FLASHCTL);
+	ग_लिखोb(पढ़ोb(sharpsl->io + FLASHCTL) | FLWP, sharpsl->io + FLASHCTL);
 
-	/* Set address of NAND IO lines */
+	/* Set address of न_अंकD IO lines */
 	this->legacy.IO_ADDR_R = sharpsl->io + FLASHIO;
 	this->legacy.IO_ADDR_W = sharpsl->io + FLASHIO;
 	/* Set address of hardware control function */
 	this->legacy.cmd_ctrl = sharpsl_nand_hwcontrol;
-	this->legacy.dev_ready = sharpsl_nand_dev_ready;
-	/* 15 us command delay time */
+	this->legacy.dev_पढ़ोy = sharpsl_nand_dev_पढ़ोy;
+	/* 15 us command delay समय */
 	this->legacy.chip_delay = 15;
 	this->badblock_pattern = data->badblock_pattern;
 
 	/* Scan to find existence of the device */
 	err = nand_scan(this, 1);
-	if (err)
-		goto err_scan;
+	अगर (err)
+		जाओ err_scan;
 
 	/* Register the partitions */
 	mtd->name = "sharpsl-nand";
 
-	err = mtd_device_parse_register(mtd, data->part_parsers, NULL,
+	err = mtd_device_parse_रेजिस्टर(mtd, data->part_parsers, शून्य,
 					data->partitions, data->nr_partitions);
-	if (err)
-		goto err_add;
+	अगर (err)
+		जाओ err_add;
 
 	/* Return happy */
-	return 0;
+	वापस 0;
 
 err_add:
 	nand_cleanup(this);
@@ -214,21 +215,21 @@ err_scan:
 	iounmap(sharpsl->io);
 err_ioremap:
 err_get_res:
-	kfree(sharpsl);
-	return err;
-}
+	kमुक्त(sharpsl);
+	वापस err;
+पूर्ण
 
 /*
  * Clean up routine
  */
-static int sharpsl_nand_remove(struct platform_device *pdev)
-{
-	struct sharpsl_nand *sharpsl = platform_get_drvdata(pdev);
-	struct nand_chip *chip = &sharpsl->chip;
-	int ret;
+अटल पूर्णांक sharpsl_nand_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sharpsl_nand *sharpsl = platक्रमm_get_drvdata(pdev);
+	काष्ठा nand_chip *chip = &sharpsl->chip;
+	पूर्णांक ret;
 
-	/* Unregister device */
-	ret = mtd_device_unregister(nand_to_mtd(chip));
+	/* Unरेजिस्टर device */
+	ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
 	WARN_ON(ret);
 
 	/* Release resources */
@@ -236,21 +237,21 @@ static int sharpsl_nand_remove(struct platform_device *pdev)
 
 	iounmap(sharpsl->io);
 
-	/* Free the driver's structure */
-	kfree(sharpsl);
+	/* Free the driver's काष्ठाure */
+	kमुक्त(sharpsl);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver sharpsl_nand_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver sharpsl_nand_driver = अणु
+	.driver = अणु
 		.name	= "sharpsl-nand",
-	},
+	पूर्ण,
 	.probe		= sharpsl_nand_probe,
-	.remove		= sharpsl_nand_remove,
-};
+	.हटाओ		= sharpsl_nand_हटाओ,
+पूर्ण;
 
-module_platform_driver(sharpsl_nand_driver);
+module_platक्रमm_driver(sharpsl_nand_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Richard Purdie <rpurdie@rpsys.net>");

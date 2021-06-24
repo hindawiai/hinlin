@@ -1,48 +1,49 @@
+<शैली गुरु>
 /*
  * Programmable Real-Time Unit Sub System (PRUSS) UIO driver (uio_pruss)
  *
- * This driver exports PRUSS host event out interrupts and PRUSS, L3 RAM,
- * and DDR RAM to user space for applications interacting with PRUSS firmware
+ * This driver exports PRUSS host event out पूर्णांकerrupts and PRUSS, L3 RAM,
+ * and DDR RAM to user space क्रम applications पूर्णांकeracting with PRUSS firmware
  *
  * Copyright (C) 2010-11 Texas Instruments Incorporated - http://www.ti.com/
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
-#include <linux/device.h>
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/platform_device.h>
-#include <linux/uio_driver.h>
-#include <linux/platform_data/uio_pruss.h>
-#include <linux/io.h>
-#include <linux/clk.h>
-#include <linux/dma-mapping.h>
-#include <linux/sizes.h>
-#include <linux/slab.h>
-#include <linux/genalloc.h>
+#समावेश <linux/device.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/uio_driver.h>
+#समावेश <linux/platक्रमm_data/uio_pruss.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/clk.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/sizes.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/genभाग.स>
 
-#define DRV_NAME "pruss_uio"
-#define DRV_VERSION "1.0"
+#घोषणा DRV_NAME "pruss_uio"
+#घोषणा DRV_VERSION "1.0"
 
-static int sram_pool_sz = SZ_16K;
-module_param(sram_pool_sz, int, 0);
+अटल पूर्णांक sram_pool_sz = SZ_16K;
+module_param(sram_pool_sz, पूर्णांक, 0);
 MODULE_PARM_DESC(sram_pool_sz, "sram pool size to allocate ");
 
-static int extram_pool_sz = SZ_256K;
-module_param(extram_pool_sz, int, 0);
+अटल पूर्णांक extram_pool_sz = SZ_256K;
+module_param(extram_pool_sz, पूर्णांक, 0);
 MODULE_PARM_DESC(extram_pool_sz, "external ram pool size to allocate");
 
 /*
- * Host event IRQ numbers from PRUSS - PRUSS can generate up to 8 interrupt
- * events to AINTC of ARM host processor - which can be used for IPC b/w PRUSS
- * firmware and user space application, async notification from PRU firmware
+ * Host event IRQ numbers from PRUSS - PRUSS can generate up to 8 पूर्णांकerrupt
+ * events to AINTC of ARM host processor - which can be used क्रम IPC b/w PRUSS
+ * firmware and user space application, async notअगरication from PRU firmware
  * to user space application
  * 3	PRU_EVTOUT0
  * 4	PRU_EVTOUT1
@@ -53,140 +54,140 @@ MODULE_PARM_DESC(extram_pool_sz, "external ram pool size to allocate");
  * 9	PRU_EVTOUT6
  * 10	PRU_EVTOUT7
 */
-#define MAX_PRUSS_EVT	8
+#घोषणा MAX_PRUSS_EVT	8
 
-#define PINTC_HIDISR	0x0038
-#define PINTC_HIPIR	0x0900
-#define HIPIR_NOPEND	0x80000000
-#define PINTC_HIER	0x1500
+#घोषणा PINTC_HIDISR	0x0038
+#घोषणा PINTC_HIPIR	0x0900
+#घोषणा HIPIR_NOPEND	0x80000000
+#घोषणा PINTC_HIER	0x1500
 
-struct uio_pruss_dev {
-	struct uio_info *info;
-	struct clk *pruss_clk;
+काष्ठा uio_pruss_dev अणु
+	काष्ठा uio_info *info;
+	काष्ठा clk *pruss_clk;
 	dma_addr_t sram_paddr;
 	dma_addr_t ddr_paddr;
-	void __iomem *prussio_vaddr;
-	unsigned long sram_vaddr;
-	void *ddr_vaddr;
-	unsigned int hostirq_start;
-	unsigned int pintc_base;
-	struct gen_pool *sram_pool;
-};
+	व्योम __iomem *prussio_vaddr;
+	अचिन्हित दीर्घ sram_vaddr;
+	व्योम *ddr_vaddr;
+	अचिन्हित पूर्णांक hostirq_start;
+	अचिन्हित पूर्णांक pपूर्णांकc_base;
+	काष्ठा gen_pool *sram_pool;
+पूर्ण;
 
-static irqreturn_t pruss_handler(int irq, struct uio_info *info)
-{
-	struct uio_pruss_dev *gdev = info->priv;
-	int intr_bit = (irq - gdev->hostirq_start + 2);
-	int val, intr_mask = (1 << intr_bit);
-	void __iomem *base = gdev->prussio_vaddr + gdev->pintc_base;
-	void __iomem *intren_reg = base + PINTC_HIER;
-	void __iomem *intrdis_reg = base + PINTC_HIDISR;
-	void __iomem *intrstat_reg = base + PINTC_HIPIR + (intr_bit << 2);
+अटल irqवापस_t pruss_handler(पूर्णांक irq, काष्ठा uio_info *info)
+अणु
+	काष्ठा uio_pruss_dev *gdev = info->priv;
+	पूर्णांक पूर्णांकr_bit = (irq - gdev->hostirq_start + 2);
+	पूर्णांक val, पूर्णांकr_mask = (1 << पूर्णांकr_bit);
+	व्योम __iomem *base = gdev->prussio_vaddr + gdev->pपूर्णांकc_base;
+	व्योम __iomem *पूर्णांकren_reg = base + PINTC_HIER;
+	व्योम __iomem *पूर्णांकrdis_reg = base + PINTC_HIDISR;
+	व्योम __iomem *पूर्णांकrstat_reg = base + PINTC_HIPIR + (पूर्णांकr_bit << 2);
 
-	val = ioread32(intren_reg);
-	/* Is interrupt enabled and active ? */
-	if (!(val & intr_mask) && (ioread32(intrstat_reg) & HIPIR_NOPEND))
-		return IRQ_NONE;
-	/* Disable interrupt */
-	iowrite32(intr_bit, intrdis_reg);
-	return IRQ_HANDLED;
-}
+	val = ioपढ़ो32(पूर्णांकren_reg);
+	/* Is पूर्णांकerrupt enabled and active ? */
+	अगर (!(val & पूर्णांकr_mask) && (ioपढ़ो32(पूर्णांकrstat_reg) & HIPIR_NOPEND))
+		वापस IRQ_NONE;
+	/* Disable पूर्णांकerrupt */
+	ioग_लिखो32(पूर्णांकr_bit, पूर्णांकrdis_reg);
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void pruss_cleanup(struct device *dev, struct uio_pruss_dev *gdev)
-{
-	int cnt;
-	struct uio_info *p = gdev->info;
+अटल व्योम pruss_cleanup(काष्ठा device *dev, काष्ठा uio_pruss_dev *gdev)
+अणु
+	पूर्णांक cnt;
+	काष्ठा uio_info *p = gdev->info;
 
-	for (cnt = 0; cnt < MAX_PRUSS_EVT; cnt++, p++) {
-		uio_unregister_device(p);
-	}
+	क्रम (cnt = 0; cnt < MAX_PRUSS_EVT; cnt++, p++) अणु
+		uio_unरेजिस्टर_device(p);
+	पूर्ण
 	iounmap(gdev->prussio_vaddr);
-	if (gdev->ddr_vaddr) {
-		dma_free_coherent(dev, extram_pool_sz, gdev->ddr_vaddr,
+	अगर (gdev->ddr_vaddr) अणु
+		dma_मुक्त_coherent(dev, extram_pool_sz, gdev->ddr_vaddr,
 			gdev->ddr_paddr);
-	}
-	if (gdev->sram_vaddr)
-		gen_pool_free(gdev->sram_pool,
+	पूर्ण
+	अगर (gdev->sram_vaddr)
+		gen_pool_मुक्त(gdev->sram_pool,
 			      gdev->sram_vaddr,
 			      sram_pool_sz);
 	clk_disable(gdev->pruss_clk);
-}
+पूर्ण
 
-static int pruss_probe(struct platform_device *pdev)
-{
-	struct uio_info *p;
-	struct uio_pruss_dev *gdev;
-	struct resource *regs_prussio;
-	struct device *dev = &pdev->dev;
-	int ret, cnt, i, len;
-	struct uio_pruss_pdata *pdata = dev_get_platdata(dev);
+अटल पूर्णांक pruss_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uio_info *p;
+	काष्ठा uio_pruss_dev *gdev;
+	काष्ठा resource *regs_prussio;
+	काष्ठा device *dev = &pdev->dev;
+	पूर्णांक ret, cnt, i, len;
+	काष्ठा uio_pruss_pdata *pdata = dev_get_platdata(dev);
 
-	gdev = devm_kzalloc(dev, sizeof(struct uio_pruss_dev), GFP_KERNEL);
-	if (!gdev)
-		return -ENOMEM;
+	gdev = devm_kzalloc(dev, माप(काष्ठा uio_pruss_dev), GFP_KERNEL);
+	अगर (!gdev)
+		वापस -ENOMEM;
 
-	gdev->info = devm_kcalloc(dev, MAX_PRUSS_EVT, sizeof(*p), GFP_KERNEL);
-	if (!gdev->info)
-		return -ENOMEM;
+	gdev->info = devm_kसुस्मृति(dev, MAX_PRUSS_EVT, माप(*p), GFP_KERNEL);
+	अगर (!gdev->info)
+		वापस -ENOMEM;
 
-	/* Power on PRU in case its not done as part of boot-loader */
+	/* Power on PRU in हाल its not करोne as part of boot-loader */
 	gdev->pruss_clk = devm_clk_get(dev, "pruss");
-	if (IS_ERR(gdev->pruss_clk)) {
+	अगर (IS_ERR(gdev->pruss_clk)) अणु
 		dev_err(dev, "Failed to get clock\n");
-		return PTR_ERR(gdev->pruss_clk);
-	}
+		वापस PTR_ERR(gdev->pruss_clk);
+	पूर्ण
 
 	ret = clk_enable(gdev->pruss_clk);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to enable clock\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	regs_prussio = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!regs_prussio) {
+	regs_prussio = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!regs_prussio) अणु
 		dev_err(dev, "No PRUSS I/O resource specified\n");
 		ret = -EIO;
-		goto err_clk_disable;
-	}
+		जाओ err_clk_disable;
+	पूर्ण
 
-	if (!regs_prussio->start) {
+	अगर (!regs_prussio->start) अणु
 		dev_err(dev, "Invalid memory resource\n");
 		ret = -EIO;
-		goto err_clk_disable;
-	}
+		जाओ err_clk_disable;
+	पूर्ण
 
-	if (pdata->sram_pool) {
+	अगर (pdata->sram_pool) अणु
 		gdev->sram_pool = pdata->sram_pool;
 		gdev->sram_vaddr =
-			(unsigned long)gen_pool_dma_alloc(gdev->sram_pool,
+			(अचिन्हित दीर्घ)gen_pool_dma_alloc(gdev->sram_pool,
 					sram_pool_sz, &gdev->sram_paddr);
-		if (!gdev->sram_vaddr) {
+		अगर (!gdev->sram_vaddr) अणु
 			dev_err(dev, "Could not allocate SRAM pool\n");
 			ret = -ENOMEM;
-			goto err_clk_disable;
-		}
-	}
+			जाओ err_clk_disable;
+		पूर्ण
+	पूर्ण
 
 	gdev->ddr_vaddr = dma_alloc_coherent(dev, extram_pool_sz,
 				&(gdev->ddr_paddr), GFP_KERNEL | GFP_DMA);
-	if (!gdev->ddr_vaddr) {
+	अगर (!gdev->ddr_vaddr) अणु
 		dev_err(dev, "Could not allocate external memory\n");
 		ret = -ENOMEM;
-		goto err_free_sram;
-	}
+		जाओ err_मुक्त_sram;
+	पूर्ण
 
 	len = resource_size(regs_prussio);
 	gdev->prussio_vaddr = ioremap(regs_prussio->start, len);
-	if (!gdev->prussio_vaddr) {
+	अगर (!gdev->prussio_vaddr) अणु
 		dev_err(dev, "Can't remap PRUSS I/O  address range\n");
 		ret = -ENOMEM;
-		goto err_free_ddr_vaddr;
-	}
+		जाओ err_मुक्त_ddr_vaddr;
+	पूर्ण
 
-	gdev->pintc_base = pdata->pintc_base;
-	gdev->hostirq_start = platform_get_irq(pdev, 0);
+	gdev->pपूर्णांकc_base = pdata->pपूर्णांकc_base;
+	gdev->hostirq_start = platक्रमm_get_irq(pdev, 0);
 
-	for (cnt = 0, p = gdev->info; cnt < MAX_PRUSS_EVT; cnt++, p++) {
+	क्रम (cnt = 0, p = gdev->info; cnt < MAX_PRUSS_EVT; cnt++, p++) अणु
 		p->mem[0].addr = regs_prussio->start;
 		p->mem[0].size = resource_size(regs_prussio);
 		p->mem[0].memtype = UIO_MEM_PHYS;
@@ -199,7 +200,7 @@ static int pruss_probe(struct platform_device *pdev)
 		p->mem[2].size = extram_pool_sz;
 		p->mem[2].memtype = UIO_MEM_PHYS;
 
-		p->name = devm_kasprintf(dev, GFP_KERNEL, "pruss_evt%d", cnt);
+		p->name = devm_kaप्र_लिखो(dev, GFP_KERNEL, "pruss_evt%d", cnt);
 		p->version = DRV_VERSION;
 
 		/* Register PRUSS IRQ lines */
@@ -207,48 +208,48 @@ static int pruss_probe(struct platform_device *pdev)
 		p->handler = pruss_handler;
 		p->priv = gdev;
 
-		ret = uio_register_device(dev, p);
-		if (ret < 0)
-			goto err_unloop;
-	}
+		ret = uio_रेजिस्टर_device(dev, p);
+		अगर (ret < 0)
+			जाओ err_unloop;
+	पूर्ण
 
-	platform_set_drvdata(pdev, gdev);
-	return 0;
+	platक्रमm_set_drvdata(pdev, gdev);
+	वापस 0;
 
 err_unloop:
-	for (i = 0, p = gdev->info; i < cnt; i++, p++) {
-		uio_unregister_device(p);
-	}
+	क्रम (i = 0, p = gdev->info; i < cnt; i++, p++) अणु
+		uio_unरेजिस्टर_device(p);
+	पूर्ण
 	iounmap(gdev->prussio_vaddr);
-err_free_ddr_vaddr:
-	dma_free_coherent(dev, extram_pool_sz, gdev->ddr_vaddr,
+err_मुक्त_ddr_vaddr:
+	dma_मुक्त_coherent(dev, extram_pool_sz, gdev->ddr_vaddr,
 			  gdev->ddr_paddr);
-err_free_sram:
-	if (pdata->sram_pool)
-		gen_pool_free(gdev->sram_pool, gdev->sram_vaddr, sram_pool_sz);
+err_मुक्त_sram:
+	अगर (pdata->sram_pool)
+		gen_pool_मुक्त(gdev->sram_pool, gdev->sram_vaddr, sram_pool_sz);
 err_clk_disable:
 	clk_disable(gdev->pruss_clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int pruss_remove(struct platform_device *dev)
-{
-	struct uio_pruss_dev *gdev = platform_get_drvdata(dev);
+अटल पूर्णांक pruss_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा uio_pruss_dev *gdev = platक्रमm_get_drvdata(dev);
 
 	pruss_cleanup(&dev->dev, gdev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver pruss_driver = {
+अटल काष्ठा platक्रमm_driver pruss_driver = अणु
 	.probe = pruss_probe,
-	.remove = pruss_remove,
-	.driver = {
+	.हटाओ = pruss_हटाओ,
+	.driver = अणु
 		   .name = DRV_NAME,
-		   },
-};
+		   पूर्ण,
+पूर्ण;
 
-module_platform_driver(pruss_driver);
+module_platक्रमm_driver(pruss_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_VERSION(DRV_VERSION);

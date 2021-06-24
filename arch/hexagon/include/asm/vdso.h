@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * vDSO implementation for Hexagon
+ * vDSO implementation क्रम Hexagon
  *
  * Copyright (c) 2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef __ASM_VDSO_H
-#define __ASM_VDSO_H
+#अगर_अघोषित __ASM_VDSO_H
+#घोषणा __ASM_VDSO_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct hexagon_vdso {
-	u32 rt_signal_trampoline[2];
-};
+काष्ठा hexagon_vdso अणु
+	u32 rt_संकेत_trampoline[2];
+पूर्ण;
 
-#endif /* __ASM_VDSO_H */
+#पूर्ण_अगर /* __ASM_VDSO_H */

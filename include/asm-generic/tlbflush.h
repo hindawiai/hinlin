@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_GENERIC_TLBFLUSH_H
-#define __ASM_GENERIC_TLBFLUSH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_GENERIC_TLBFLUSH_H
+#घोषणा __ASM_GENERIC_TLBFLUSH_H
 /*
  * This is a dummy tlbflush implementation that can be used on all
  * nommu architectures.
- * If you have an MMU, you need to write your own functions.
+ * If you have an MMU, you need to ग_लिखो your own functions.
  */
-#ifdef CONFIG_MMU
-#error need to implement an architecture specific asm/tlbflush.h
-#endif
+#अगर_घोषित CONFIG_MMU
+#त्रुटि need to implement an architecture specअगरic यंत्र/tlbflush.h
+#पूर्ण_अगर
 
-#include <linux/bug.h>
+#समावेश <linux/bug.h>
 
-static inline void flush_tlb_mm(struct mm_struct *mm)
-{
+अटल अंतरभूत व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
 	BUG();
-}
+पूर्ण
 
 
-#endif /* __ASM_GENERIC_TLBFLUSH_H */
+#पूर्ण_अगर /* __ASM_GENERIC_TLBFLUSH_H */

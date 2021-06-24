@@ -1,170 +1,171 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * TS3A227E Autonomous Audio Accessory Detection and Configuration Switch
  *
  * Copyright (C) 2014 Google, Inc.
  */
 
-#include <linux/gpio.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/input.h>
-#include <linux/module.h>
-#include <linux/of_gpio.h>
-#include <linux/regmap.h>
-#include <linux/acpi.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/input.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/regmap.h>
+#समावेश <linux/acpi.h>
 
-#include <sound/core.h>
-#include <sound/jack.h>
-#include <sound/soc.h>
+#समावेश <sound/core.h>
+#समावेश <sound/jack.h>
+#समावेश <sound/soc.h>
 
-#include "ts3a227e.h"
+#समावेश "ts3a227e.h"
 
-struct ts3a227e {
-	struct device *dev;
-	struct regmap *regmap;
-	struct snd_soc_jack *jack;
+काष्ठा ts3a227e अणु
+	काष्ठा device *dev;
+	काष्ठा regmap *regmap;
+	काष्ठा snd_soc_jack *jack;
 	bool plugged;
 	bool mic_present;
-	unsigned int buttons_held;
-	int irq;
-};
+	अचिन्हित पूर्णांक buttons_held;
+	पूर्णांक irq;
+पूर्ण;
 
 /* Button values to be reported on the jack */
-static const int ts3a227e_buttons[] = {
+अटल स्थिर पूर्णांक ts3a227e_buttons[] = अणु
 	SND_JACK_BTN_0,
 	SND_JACK_BTN_1,
 	SND_JACK_BTN_2,
 	SND_JACK_BTN_3,
-};
+पूर्ण;
 
-#define TS3A227E_NUM_BUTTONS 4
-#define TS3A227E_JACK_MASK (SND_JACK_HEADPHONE | \
+#घोषणा TS3A227E_NUM_BUTTONS 4
+#घोषणा TS3A227E_JACK_MASK (SND_JACK_HEADPHONE | \
 			    SND_JACK_MICROPHONE | \
 			    SND_JACK_BTN_0 | \
 			    SND_JACK_BTN_1 | \
 			    SND_JACK_BTN_2 | \
 			    SND_JACK_BTN_3)
 
-/* TS3A227E registers */
-#define TS3A227E_REG_DEVICE_ID		0x00
-#define TS3A227E_REG_INTERRUPT		0x01
-#define TS3A227E_REG_KP_INTERRUPT	0x02
-#define TS3A227E_REG_INTERRUPT_DISABLE	0x03
-#define TS3A227E_REG_SETTING_1		0x04
-#define TS3A227E_REG_SETTING_2		0x05
-#define TS3A227E_REG_SETTING_3		0x06
-#define TS3A227E_REG_SWITCH_CONTROL_1	0x07
-#define TS3A227E_REG_SWITCH_CONTROL_2	0x08
-#define TS3A227E_REG_SWITCH_STATUS_1	0x09
-#define TS3A227E_REG_SWITCH_STATUS_2	0x0a
-#define TS3A227E_REG_ACCESSORY_STATUS	0x0b
-#define TS3A227E_REG_ADC_OUTPUT		0x0c
-#define TS3A227E_REG_KP_THRESHOLD_1	0x0d
-#define TS3A227E_REG_KP_THRESHOLD_2	0x0e
-#define TS3A227E_REG_KP_THRESHOLD_3	0x0f
+/* TS3A227E रेजिस्टरs */
+#घोषणा TS3A227E_REG_DEVICE_ID		0x00
+#घोषणा TS3A227E_REG_INTERRUPT		0x01
+#घोषणा TS3A227E_REG_KP_INTERRUPT	0x02
+#घोषणा TS3A227E_REG_INTERRUPT_DISABLE	0x03
+#घोषणा TS3A227E_REG_SETTING_1		0x04
+#घोषणा TS3A227E_REG_SETTING_2		0x05
+#घोषणा TS3A227E_REG_SETTING_3		0x06
+#घोषणा TS3A227E_REG_SWITCH_CONTROL_1	0x07
+#घोषणा TS3A227E_REG_SWITCH_CONTROL_2	0x08
+#घोषणा TS3A227E_REG_SWITCH_STATUS_1	0x09
+#घोषणा TS3A227E_REG_SWITCH_STATUS_2	0x0a
+#घोषणा TS3A227E_REG_ACCESSORY_STATUS	0x0b
+#घोषणा TS3A227E_REG_ADC_OUTPUT		0x0c
+#घोषणा TS3A227E_REG_KP_THRESHOLD_1	0x0d
+#घोषणा TS3A227E_REG_KP_THRESHOLD_2	0x0e
+#घोषणा TS3A227E_REG_KP_THRESHOLD_3	0x0f
 
 /* TS3A227E_REG_INTERRUPT 0x01 */
-#define INS_REM_EVENT 0x01
-#define DETECTION_COMPLETE_EVENT 0x02
+#घोषणा INS_REM_EVENT 0x01
+#घोषणा DETECTION_COMPLETE_EVENT 0x02
 
 /* TS3A227E_REG_KP_INTERRUPT 0x02 */
-#define PRESS_MASK(idx) (0x01 << (2 * (idx)))
-#define RELEASE_MASK(idx) (0x02 << (2 * (idx)))
+#घोषणा PRESS_MASK(idx) (0x01 << (2 * (idx)))
+#घोषणा RELEASE_MASK(idx) (0x02 << (2 * (idx)))
 
 /* TS3A227E_REG_INTERRUPT_DISABLE 0x03 */
-#define INS_REM_INT_DISABLE 0x01
-#define DETECTION_COMPLETE_INT_DISABLE 0x02
-#define ADC_COMPLETE_INT_DISABLE 0x04
-#define INTB_DISABLE 0x08
+#घोषणा INS_REM_INT_DISABLE 0x01
+#घोषणा DETECTION_COMPLETE_INT_DISABLE 0x02
+#घोषणा ADC_COMPLETE_INT_DISABLE 0x04
+#घोषणा INTB_DISABLE 0x08
 
 /* TS3A227E_REG_SETTING_2 0x05 */
-#define KP_ENABLE 0x04
+#घोषणा KP_ENABLE 0x04
 
 /* TS3A227E_REG_SETTING_3 0x06 */
-#define MICBIAS_SETTING_SFT (3)
-#define MICBIAS_SETTING_MASK (0x7 << MICBIAS_SETTING_SFT)
+#घोषणा MICBIAS_SETTING_SFT (3)
+#घोषणा MICBIAS_SETTING_MASK (0x7 << MICBIAS_SETTING_SFT)
 
 /* TS3A227E_REG_ACCESSORY_STATUS  0x0b */
-#define TYPE_3_POLE 0x01
-#define TYPE_4_POLE_OMTP 0x02
-#define TYPE_4_POLE_STANDARD 0x04
-#define JACK_INSERTED 0x08
-#define EITHER_MIC_MASK (TYPE_4_POLE_OMTP | TYPE_4_POLE_STANDARD)
+#घोषणा TYPE_3_POLE 0x01
+#घोषणा TYPE_4_POLE_OMTP 0x02
+#घोषणा TYPE_4_POLE_STANDARD 0x04
+#घोषणा JACK_INSERTED 0x08
+#घोषणा EITHER_MIC_MASK (TYPE_4_POLE_OMTP | TYPE_4_POLE_STANDARD)
 
-static const struct reg_default ts3a227e_reg_defaults[] = {
-	{ TS3A227E_REG_DEVICE_ID, 0x10 },
-	{ TS3A227E_REG_INTERRUPT, 0x00 },
-	{ TS3A227E_REG_KP_INTERRUPT, 0x00 },
-	{ TS3A227E_REG_INTERRUPT_DISABLE, 0x08 },
-	{ TS3A227E_REG_SETTING_1, 0x23 },
-	{ TS3A227E_REG_SETTING_2, 0x00 },
-	{ TS3A227E_REG_SETTING_3, 0x0e },
-	{ TS3A227E_REG_SWITCH_CONTROL_1, 0x00 },
-	{ TS3A227E_REG_SWITCH_CONTROL_2, 0x00 },
-	{ TS3A227E_REG_SWITCH_STATUS_1, 0x0c },
-	{ TS3A227E_REG_SWITCH_STATUS_2, 0x00 },
-	{ TS3A227E_REG_ACCESSORY_STATUS, 0x00 },
-	{ TS3A227E_REG_ADC_OUTPUT, 0x00 },
-	{ TS3A227E_REG_KP_THRESHOLD_1, 0x20 },
-	{ TS3A227E_REG_KP_THRESHOLD_2, 0x40 },
-	{ TS3A227E_REG_KP_THRESHOLD_3, 0x68 },
-};
+अटल स्थिर काष्ठा reg_शेष ts3a227e_reg_शेषs[] = अणु
+	अणु TS3A227E_REG_DEVICE_ID, 0x10 पूर्ण,
+	अणु TS3A227E_REG_INTERRUPT, 0x00 पूर्ण,
+	अणु TS3A227E_REG_KP_INTERRUPT, 0x00 पूर्ण,
+	अणु TS3A227E_REG_INTERRUPT_DISABLE, 0x08 पूर्ण,
+	अणु TS3A227E_REG_SETTING_1, 0x23 पूर्ण,
+	अणु TS3A227E_REG_SETTING_2, 0x00 पूर्ण,
+	अणु TS3A227E_REG_SETTING_3, 0x0e पूर्ण,
+	अणु TS3A227E_REG_SWITCH_CONTROL_1, 0x00 पूर्ण,
+	अणु TS3A227E_REG_SWITCH_CONTROL_2, 0x00 पूर्ण,
+	अणु TS3A227E_REG_SWITCH_STATUS_1, 0x0c पूर्ण,
+	अणु TS3A227E_REG_SWITCH_STATUS_2, 0x00 पूर्ण,
+	अणु TS3A227E_REG_ACCESSORY_STATUS, 0x00 पूर्ण,
+	अणु TS3A227E_REG_ADC_OUTPUT, 0x00 पूर्ण,
+	अणु TS3A227E_REG_KP_THRESHOLD_1, 0x20 पूर्ण,
+	अणु TS3A227E_REG_KP_THRESHOLD_2, 0x40 पूर्ण,
+	अणु TS3A227E_REG_KP_THRESHOLD_3, 0x68 पूर्ण,
+पूर्ण;
 
-static bool ts3a227e_readable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case TS3A227E_REG_DEVICE_ID ... TS3A227E_REG_KP_THRESHOLD_3:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool ts3a227e_पढ़ोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल TS3A227E_REG_DEVICE_ID ... TS3A227E_REG_KP_THRESHOLD_3:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool ts3a227e_writeable_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case TS3A227E_REG_INTERRUPT_DISABLE ... TS3A227E_REG_SWITCH_CONTROL_2:
-	case TS3A227E_REG_KP_THRESHOLD_1 ... TS3A227E_REG_KP_THRESHOLD_3:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool ts3a227e_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल TS3A227E_REG_INTERRUPT_DISABLE ... TS3A227E_REG_SWITCH_CONTROL_2:
+	हाल TS3A227E_REG_KP_THRESHOLD_1 ... TS3A227E_REG_KP_THRESHOLD_3:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static bool ts3a227e_volatile_reg(struct device *dev, unsigned int reg)
-{
-	switch (reg) {
-	case TS3A227E_REG_INTERRUPT ... TS3A227E_REG_INTERRUPT_DISABLE:
-	case TS3A227E_REG_SETTING_2:
-	case TS3A227E_REG_SWITCH_STATUS_1 ... TS3A227E_REG_ADC_OUTPUT:
-		return true;
-	default:
-		return false;
-	}
-}
+अटल bool ts3a227e_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल TS3A227E_REG_INTERRUPT ... TS3A227E_REG_INTERRUPT_DISABLE:
+	हाल TS3A227E_REG_SETTING_2:
+	हाल TS3A227E_REG_SWITCH_STATUS_1 ... TS3A227E_REG_ADC_OUTPUT:
+		वापस true;
+	शेष:
+		वापस false;
+	पूर्ण
+पूर्ण
 
-static void ts3a227e_jack_report(struct ts3a227e *ts3a227e)
-{
-	unsigned int i;
-	int report = 0;
+अटल व्योम ts3a227e_jack_report(काष्ठा ts3a227e *ts3a227e)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक report = 0;
 
-	if (!ts3a227e->jack)
-		return;
+	अगर (!ts3a227e->jack)
+		वापस;
 
-	if (ts3a227e->plugged)
+	अगर (ts3a227e->plugged)
 		report = SND_JACK_HEADPHONE;
-	if (ts3a227e->mic_present)
+	अगर (ts3a227e->mic_present)
 		report |= SND_JACK_MICROPHONE;
-	for (i = 0; i < TS3A227E_NUM_BUTTONS; i++) {
-		if (ts3a227e->buttons_held & (1 << i))
+	क्रम (i = 0; i < TS3A227E_NUM_BUTTONS; i++) अणु
+		अगर (ts3a227e->buttons_held & (1 << i))
 			report |= ts3a227e_buttons[i];
-	}
+	पूर्ण
 	snd_soc_jack_report(ts3a227e->jack, report, TS3A227E_JACK_MASK);
-}
+पूर्ण
 
-static void ts3a227e_new_jack_state(struct ts3a227e *ts3a227e, unsigned acc_reg)
-{
+अटल व्योम ts3a227e_new_jack_state(काष्ठा ts3a227e *ts3a227e, अचिन्हित acc_reg)
+अणु
 	bool plugged, mic_present;
 
 	plugged = !!(acc_reg & JACK_INSERTED);
@@ -172,71 +173,71 @@ static void ts3a227e_new_jack_state(struct ts3a227e *ts3a227e, unsigned acc_reg)
 
 	ts3a227e->plugged = plugged;
 
-	if (mic_present != ts3a227e->mic_present) {
+	अगर (mic_present != ts3a227e->mic_present) अणु
 		ts3a227e->mic_present = mic_present;
 		ts3a227e->buttons_held = 0;
-		if (mic_present) {
+		अगर (mic_present) अणु
 			/* Enable key press detection. */
 			regmap_update_bits(ts3a227e->regmap,
 					   TS3A227E_REG_SETTING_2,
 					   KP_ENABLE, KP_ENABLE);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static irqreturn_t ts3a227e_interrupt(int irq, void *data)
-{
-	struct ts3a227e *ts3a227e = (struct ts3a227e *)data;
-	struct regmap *regmap = ts3a227e->regmap;
-	unsigned int int_reg, kp_int_reg, acc_reg, i;
-	struct device *dev = ts3a227e->dev;
-	int ret;
+अटल irqवापस_t ts3a227e_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा ts3a227e *ts3a227e = (काष्ठा ts3a227e *)data;
+	काष्ठा regmap *regmap = ts3a227e->regmap;
+	अचिन्हित पूर्णांक पूर्णांक_reg, kp_पूर्णांक_reg, acc_reg, i;
+	काष्ठा device *dev = ts3a227e->dev;
+	पूर्णांक ret;
 
-	/* Check for plug/unplug. */
-	ret = regmap_read(regmap, TS3A227E_REG_INTERRUPT, &int_reg);
-	if (ret) {
+	/* Check क्रम plug/unplug. */
+	ret = regmap_पढ़ो(regmap, TS3A227E_REG_INTERRUPT, &पूर्णांक_reg);
+	अगर (ret) अणु
 		dev_err(dev, "failed to clear interrupt ret=%d\n", ret);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	if (int_reg & (DETECTION_COMPLETE_EVENT | INS_REM_EVENT)) {
-		regmap_read(regmap, TS3A227E_REG_ACCESSORY_STATUS, &acc_reg);
+	अगर (पूर्णांक_reg & (DETECTION_COMPLETE_EVENT | INS_REM_EVENT)) अणु
+		regmap_पढ़ो(regmap, TS3A227E_REG_ACCESSORY_STATUS, &acc_reg);
 		ts3a227e_new_jack_state(ts3a227e, acc_reg);
-	}
+	पूर्ण
 
 	/* Report any key events. */
-	ret = regmap_read(regmap, TS3A227E_REG_KP_INTERRUPT, &kp_int_reg);
-	if (ret) {
+	ret = regmap_पढ़ो(regmap, TS3A227E_REG_KP_INTERRUPT, &kp_पूर्णांक_reg);
+	अगर (ret) अणु
 		dev_err(dev, "failed to clear key interrupt ret=%d\n", ret);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
-	for (i = 0; i < TS3A227E_NUM_BUTTONS; i++) {
-		if (kp_int_reg & PRESS_MASK(i))
+	क्रम (i = 0; i < TS3A227E_NUM_BUTTONS; i++) अणु
+		अगर (kp_पूर्णांक_reg & PRESS_MASK(i))
 			ts3a227e->buttons_held |= (1 << i);
-		if (kp_int_reg & RELEASE_MASK(i))
+		अगर (kp_पूर्णांक_reg & RELEASE_MASK(i))
 			ts3a227e->buttons_held &= ~(1 << i);
-	}
+	पूर्ण
 
 	ts3a227e_jack_report(ts3a227e);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
 /**
- * ts3a227e_enable_jack_detect - Specify a jack for event reporting
+ * ts3a227e_enable_jack_detect - Specअगरy a jack क्रम event reporting
  *
- * @component:  component to register the jack with
+ * @component:  component to रेजिस्टर the jack with
  * @jack: jack to use to report headset and button events on
  *
- * After this function has been called the headset insert/remove and button
+ * After this function has been called the headset insert/हटाओ and button
  * events 0-3 will be routed to the given jack.  Jack can be null to stop
  * reporting.
  */
-int ts3a227e_enable_jack_detect(struct snd_soc_component *component,
-				struct snd_soc_jack *jack)
-{
-	struct ts3a227e *ts3a227e = snd_soc_component_get_drvdata(component);
+पूर्णांक ts3a227e_enable_jack_detect(काष्ठा snd_soc_component *component,
+				काष्ठा snd_soc_jack *jack)
+अणु
+	काष्ठा ts3a227e *ts3a227e = snd_soc_component_get_drvdata(component);
 
 	snd_jack_set_key(jack->jack, SND_JACK_BTN_0, KEY_PLAYPAUSE);
 	snd_jack_set_key(jack->jack, SND_JACK_BTN_1, KEY_VOICECOMMAND);
@@ -246,152 +247,152 @@ int ts3a227e_enable_jack_detect(struct snd_soc_component *component,
 	ts3a227e->jack = jack;
 	ts3a227e_jack_report(ts3a227e);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(ts3a227e_enable_jack_detect);
 
-static struct snd_soc_component_driver ts3a227e_soc_driver;
+अटल काष्ठा snd_soc_component_driver ts3a227e_soc_driver;
 
-static const struct regmap_config ts3a227e_regmap_config = {
+अटल स्थिर काष्ठा regmap_config ts3a227e_regmap_config = अणु
 	.val_bits = 8,
 	.reg_bits = 8,
 
-	.max_register = TS3A227E_REG_KP_THRESHOLD_3,
-	.readable_reg = ts3a227e_readable_reg,
-	.writeable_reg = ts3a227e_writeable_reg,
-	.volatile_reg = ts3a227e_volatile_reg,
+	.max_रेजिस्टर = TS3A227E_REG_KP_THRESHOLD_3,
+	.पढ़ोable_reg = ts3a227e_पढ़ोable_reg,
+	.ग_लिखोable_reg = ts3a227e_ग_लिखोable_reg,
+	.अस्थिर_reg = ts3a227e_अस्थिर_reg,
 
 	.cache_type = REGCACHE_RBTREE,
-	.reg_defaults = ts3a227e_reg_defaults,
-	.num_reg_defaults = ARRAY_SIZE(ts3a227e_reg_defaults),
-};
+	.reg_शेषs = ts3a227e_reg_शेषs,
+	.num_reg_शेषs = ARRAY_SIZE(ts3a227e_reg_शेषs),
+पूर्ण;
 
-static int ts3a227e_parse_device_property(struct ts3a227e *ts3a227e,
-				struct device *dev)
-{
+अटल पूर्णांक ts3a227e_parse_device_property(काष्ठा ts3a227e *ts3a227e,
+				काष्ठा device *dev)
+अणु
 	u32 micbias;
-	int err;
+	पूर्णांक err;
 
-	err = device_property_read_u32(dev, "ti,micbias", &micbias);
-	if (!err) {
+	err = device_property_पढ़ो_u32(dev, "ti,micbias", &micbias);
+	अगर (!err) अणु
 		regmap_update_bits(ts3a227e->regmap, TS3A227E_REG_SETTING_3,
 			MICBIAS_SETTING_MASK,
 			(micbias & 0x07) << MICBIAS_SETTING_SFT);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ts3a227e_i2c_probe(struct i2c_client *i2c,
-			      const struct i2c_device_id *id)
-{
-	struct ts3a227e *ts3a227e;
-	struct device *dev = &i2c->dev;
-	int ret;
-	unsigned int acc_reg;
+अटल पूर्णांक ts3a227e_i2c_probe(काष्ठा i2c_client *i2c,
+			      स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा ts3a227e *ts3a227e;
+	काष्ठा device *dev = &i2c->dev;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक acc_reg;
 
-	ts3a227e = devm_kzalloc(&i2c->dev, sizeof(*ts3a227e), GFP_KERNEL);
-	if (ts3a227e == NULL)
-		return -ENOMEM;
+	ts3a227e = devm_kzalloc(&i2c->dev, माप(*ts3a227e), GFP_KERNEL);
+	अगर (ts3a227e == शून्य)
+		वापस -ENOMEM;
 
 	i2c_set_clientdata(i2c, ts3a227e);
 	ts3a227e->dev = dev;
 	ts3a227e->irq = i2c->irq;
 
 	ts3a227e->regmap = devm_regmap_init_i2c(i2c, &ts3a227e_regmap_config);
-	if (IS_ERR(ts3a227e->regmap))
-		return PTR_ERR(ts3a227e->regmap);
+	अगर (IS_ERR(ts3a227e->regmap))
+		वापस PTR_ERR(ts3a227e->regmap);
 
 	ret = ts3a227e_parse_device_property(ts3a227e, dev);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Failed to parse device property: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_request_threaded_irq(dev, i2c->irq, NULL, ts3a227e_interrupt,
+	ret = devm_request_thपढ़ोed_irq(dev, i2c->irq, शून्य, ts3a227e_पूर्णांकerrupt,
 					IRQF_TRIGGER_LOW | IRQF_ONESHOT,
 					"TS3A227E", ts3a227e);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(dev, "Cannot request irq %d (%d)\n", i2c->irq, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = devm_snd_soc_register_component(&i2c->dev, &ts3a227e_soc_driver,
-					      NULL, 0);
-	if (ret)
-		return ret;
+	ret = devm_snd_soc_रेजिस्टर_component(&i2c->dev, &ts3a227e_soc_driver,
+					      शून्य, 0);
+	अगर (ret)
+		वापस ret;
 
-	/* Enable interrupts except for ADC complete. */
+	/* Enable पूर्णांकerrupts except क्रम ADC complete. */
 	regmap_update_bits(ts3a227e->regmap, TS3A227E_REG_INTERRUPT_DISABLE,
 			   INTB_DISABLE | ADC_COMPLETE_INT_DISABLE,
 			   ADC_COMPLETE_INT_DISABLE);
 
-	/* Read jack status because chip might not trigger interrupt at boot. */
-	regmap_read(ts3a227e->regmap, TS3A227E_REG_ACCESSORY_STATUS, &acc_reg);
+	/* Read jack status because chip might not trigger पूर्णांकerrupt at boot. */
+	regmap_पढ़ो(ts3a227e->regmap, TS3A227E_REG_ACCESSORY_STATUS, &acc_reg);
 	ts3a227e_new_jack_state(ts3a227e, acc_reg);
 	ts3a227e_jack_report(ts3a227e);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int ts3a227e_suspend(struct device *dev)
-{
-	struct ts3a227e *ts3a227e = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक ts3a227e_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ts3a227e *ts3a227e = dev_get_drvdata(dev);
 
 	dev_dbg(ts3a227e->dev, "suspend disable irq\n");
 	disable_irq(ts3a227e->irq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ts3a227e_resume(struct device *dev)
-{
-	struct ts3a227e *ts3a227e = dev_get_drvdata(dev);
+अटल पूर्णांक ts3a227e_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ts3a227e *ts3a227e = dev_get_drvdata(dev);
 
 	dev_dbg(ts3a227e->dev, "resume enable irq\n");
 	enable_irq(ts3a227e->irq);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dev_pm_ops ts3a227e_pm = {
+अटल स्थिर काष्ठा dev_pm_ops ts3a227e_pm = अणु
 	SET_SYSTEM_SLEEP_PM_OPS(ts3a227e_suspend, ts3a227e_resume)
-};
+पूर्ण;
 
-static const struct i2c_device_id ts3a227e_i2c_ids[] = {
-	{ "ts3a227e", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id ts3a227e_i2c_ids[] = अणु
+	अणु "ts3a227e", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, ts3a227e_i2c_ids);
 
-#ifdef CONFIG_OF
-static const struct of_device_id ts3a227e_of_match[] = {
-	{ .compatible = "ti,ts3a227e", },
-	{ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id ts3a227e_of_match[] = अणु
+	अणु .compatible = "ti,ts3a227e", पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ts3a227e_of_match);
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_ACPI
-static struct acpi_device_id ts3a227e_acpi_match[] = {
-	{ "104C227E", 0 },
-	{},
-};
+#अगर_घोषित CONFIG_ACPI
+अटल काष्ठा acpi_device_id ts3a227e_acpi_match[] = अणु
+	अणु "104C227E", 0 पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, ts3a227e_acpi_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver ts3a227e_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver ts3a227e_driver = अणु
+	.driver = अणु
 		.name = "ts3a227e",
 		.pm = &ts3a227e_pm,
 		.of_match_table = of_match_ptr(ts3a227e_of_match),
 		.acpi_match_table = ACPI_PTR(ts3a227e_acpi_match),
-	},
+	पूर्ण,
 	.probe = ts3a227e_i2c_probe,
 	.id_table = ts3a227e_i2c_ids,
-};
+पूर्ण;
 module_i2c_driver(ts3a227e_driver);
 
 MODULE_DESCRIPTION("ASoC ts3a227e driver");

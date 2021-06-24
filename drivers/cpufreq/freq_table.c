@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * linux/drivers/cpufreq/freq_table.c
  *
- * Copyright (C) 2002 - 2003 Dominik Brodowski
+ * Copyright (C) 2002 - 2003 Dominik Broकरोwski
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/cpufreq.h>
-#include <linux/module.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/module.h>
 
 /*********************************************************************
  *                     FREQUENCY TABLE HELPERS                       *
  *********************************************************************/
 
-bool policy_has_boost_freq(struct cpufreq_policy *policy)
-{
-	struct cpufreq_frequency_table *pos, *table = policy->freq_table;
+bool policy_has_boost_freq(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा cpufreq_frequency_table *pos, *table = policy->freq_table;
 
-	if (!table)
-		return false;
+	अगर (!table)
+		वापस false;
 
-	cpufreq_for_each_valid_entry(pos, table)
-		if (pos->flags & CPUFREQ_BOOST_FREQ)
-			return true;
+	cpufreq_क्रम_each_valid_entry(pos, table)
+		अगर (pos->flags & CPUFREQ_BOOST_FREQ)
+			वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 EXPORT_SYMBOL_GPL(policy_has_boost_freq);
 
-int cpufreq_frequency_table_cpuinfo(struct cpufreq_policy *policy,
-				    struct cpufreq_frequency_table *table)
-{
-	struct cpufreq_frequency_table *pos;
-	unsigned int min_freq = ~0;
-	unsigned int max_freq = 0;
-	unsigned int freq;
+पूर्णांक cpufreq_frequency_table_cpuinfo(काष्ठा cpufreq_policy *policy,
+				    काष्ठा cpufreq_frequency_table *table)
+अणु
+	काष्ठा cpufreq_frequency_table *pos;
+	अचिन्हित पूर्णांक min_freq = ~0;
+	अचिन्हित पूर्णांक max_freq = 0;
+	अचिन्हित पूर्णांक freq;
 
-	cpufreq_for_each_valid_entry(pos, table) {
+	cpufreq_क्रम_each_valid_entry(pos, table) अणु
 		freq = pos->frequency;
 
-		if (!cpufreq_boost_enabled()
+		अगर (!cpufreq_boost_enabled()
 		    && (pos->flags & CPUFREQ_BOOST_FREQ))
-			continue;
+			जारी;
 
-		pr_debug("table entry %u: %u kHz\n", (int)(pos - table), freq);
-		if (freq < min_freq)
+		pr_debug("table entry %u: %u kHz\n", (पूर्णांक)(pos - table), freq);
+		अगर (freq < min_freq)
 			min_freq = freq;
-		if (freq > max_freq)
+		अगर (freq > max_freq)
 			max_freq = freq;
-	}
+	पूर्ण
 
 	policy->min = policy->cpuinfo.min_freq = min_freq;
 	policy->max = max_freq;
@@ -57,313 +58,313 @@ int cpufreq_frequency_table_cpuinfo(struct cpufreq_policy *policy,
 	 * If the driver has set its own cpuinfo.max_freq above max_freq, leave
 	 * it as is.
 	 */
-	if (policy->cpuinfo.max_freq < max_freq)
+	अगर (policy->cpuinfo.max_freq < max_freq)
 		policy->max = policy->cpuinfo.max_freq = max_freq;
 
-	if (policy->min == ~0)
-		return -EINVAL;
-	else
-		return 0;
-}
+	अगर (policy->min == ~0)
+		वापस -EINVAL;
+	अन्यथा
+		वापस 0;
+पूर्ण
 
-int cpufreq_frequency_table_verify(struct cpufreq_policy_data *policy,
-				   struct cpufreq_frequency_table *table)
-{
-	struct cpufreq_frequency_table *pos;
-	unsigned int freq, next_larger = ~0;
+पूर्णांक cpufreq_frequency_table_verअगरy(काष्ठा cpufreq_policy_data *policy,
+				   काष्ठा cpufreq_frequency_table *table)
+अणु
+	काष्ठा cpufreq_frequency_table *pos;
+	अचिन्हित पूर्णांक freq, next_larger = ~0;
 	bool found = false;
 
 	pr_debug("request for verification of policy (%u - %u kHz) for cpu %u\n",
 					policy->min, policy->max, policy->cpu);
 
-	cpufreq_verify_within_cpu_limits(policy);
+	cpufreq_verअगरy_within_cpu_limits(policy);
 
-	cpufreq_for_each_valid_entry(pos, table) {
+	cpufreq_क्रम_each_valid_entry(pos, table) अणु
 		freq = pos->frequency;
 
-		if ((freq >= policy->min) && (freq <= policy->max)) {
+		अगर ((freq >= policy->min) && (freq <= policy->max)) अणु
 			found = true;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if ((next_larger > freq) && (freq > policy->max))
+		अगर ((next_larger > freq) && (freq > policy->max))
 			next_larger = freq;
-	}
+	पूर्ण
 
-	if (!found) {
+	अगर (!found) अणु
 		policy->max = next_larger;
-		cpufreq_verify_within_cpu_limits(policy);
-	}
+		cpufreq_verअगरy_within_cpu_limits(policy);
+	पूर्ण
 
 	pr_debug("verification lead to (%u - %u kHz) for cpu %u\n",
 				policy->min, policy->max, policy->cpu);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(cpufreq_frequency_table_verify);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(cpufreq_frequency_table_verअगरy);
 
 /*
- * Generic routine to verify policy & frequency table, requires driver to set
+ * Generic routine to verअगरy policy & frequency table, requires driver to set
  * policy->freq_table prior to it.
  */
-int cpufreq_generic_frequency_table_verify(struct cpufreq_policy_data *policy)
-{
-	if (!policy->freq_table)
-		return -ENODEV;
+पूर्णांक cpufreq_generic_frequency_table_verअगरy(काष्ठा cpufreq_policy_data *policy)
+अणु
+	अगर (!policy->freq_table)
+		वापस -ENODEV;
 
-	return cpufreq_frequency_table_verify(policy, policy->freq_table);
-}
-EXPORT_SYMBOL_GPL(cpufreq_generic_frequency_table_verify);
+	वापस cpufreq_frequency_table_verअगरy(policy, policy->freq_table);
+पूर्ण
+EXPORT_SYMBOL_GPL(cpufreq_generic_frequency_table_verअगरy);
 
-int cpufreq_table_index_unsorted(struct cpufreq_policy *policy,
-				 unsigned int target_freq,
-				 unsigned int relation)
-{
-	struct cpufreq_frequency_table optimal = {
+पूर्णांक cpufreq_table_index_unsorted(काष्ठा cpufreq_policy *policy,
+				 अचिन्हित पूर्णांक target_freq,
+				 अचिन्हित पूर्णांक relation)
+अणु
+	काष्ठा cpufreq_frequency_table optimal = अणु
 		.driver_data = ~0,
 		.frequency = 0,
-	};
-	struct cpufreq_frequency_table suboptimal = {
+	पूर्ण;
+	काष्ठा cpufreq_frequency_table suboptimal = अणु
 		.driver_data = ~0,
 		.frequency = 0,
-	};
-	struct cpufreq_frequency_table *pos;
-	struct cpufreq_frequency_table *table = policy->freq_table;
-	unsigned int freq, diff, i = 0;
-	int index;
+	पूर्ण;
+	काष्ठा cpufreq_frequency_table *pos;
+	काष्ठा cpufreq_frequency_table *table = policy->freq_table;
+	अचिन्हित पूर्णांक freq, dअगरf, i = 0;
+	पूर्णांक index;
 
 	pr_debug("request for target %u kHz (relation: %u) for cpu %u\n",
 					target_freq, relation, policy->cpu);
 
-	switch (relation) {
-	case CPUFREQ_RELATION_H:
+	चयन (relation) अणु
+	हाल CPUFREQ_RELATION_H:
 		suboptimal.frequency = ~0;
-		break;
-	case CPUFREQ_RELATION_L:
-	case CPUFREQ_RELATION_C:
+		अवरोध;
+	हाल CPUFREQ_RELATION_L:
+	हाल CPUFREQ_RELATION_C:
 		optimal.frequency = ~0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	cpufreq_for_each_valid_entry_idx(pos, table, i) {
+	cpufreq_क्रम_each_valid_entry_idx(pos, table, i) अणु
 		freq = pos->frequency;
 
-		if ((freq < policy->min) || (freq > policy->max))
-			continue;
-		if (freq == target_freq) {
+		अगर ((freq < policy->min) || (freq > policy->max))
+			जारी;
+		अगर (freq == target_freq) अणु
 			optimal.driver_data = i;
-			break;
-		}
-		switch (relation) {
-		case CPUFREQ_RELATION_H:
-			if (freq < target_freq) {
-				if (freq >= optimal.frequency) {
+			अवरोध;
+		पूर्ण
+		चयन (relation) अणु
+		हाल CPUFREQ_RELATION_H:
+			अगर (freq < target_freq) अणु
+				अगर (freq >= optimal.frequency) अणु
 					optimal.frequency = freq;
 					optimal.driver_data = i;
-				}
-			} else {
-				if (freq <= suboptimal.frequency) {
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (freq <= suboptimal.frequency) अणु
 					suboptimal.frequency = freq;
 					suboptimal.driver_data = i;
-				}
-			}
-			break;
-		case CPUFREQ_RELATION_L:
-			if (freq > target_freq) {
-				if (freq <= optimal.frequency) {
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल CPUFREQ_RELATION_L:
+			अगर (freq > target_freq) अणु
+				अगर (freq <= optimal.frequency) अणु
 					optimal.frequency = freq;
 					optimal.driver_data = i;
-				}
-			} else {
-				if (freq >= suboptimal.frequency) {
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (freq >= suboptimal.frequency) अणु
 					suboptimal.frequency = freq;
 					suboptimal.driver_data = i;
-				}
-			}
-			break;
-		case CPUFREQ_RELATION_C:
-			diff = abs(freq - target_freq);
-			if (diff < optimal.frequency ||
-			    (diff == optimal.frequency &&
-			     freq > table[optimal.driver_data].frequency)) {
-				optimal.frequency = diff;
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल CPUFREQ_RELATION_C:
+			dअगरf = असल(freq - target_freq);
+			अगर (dअगरf < optimal.frequency ||
+			    (dअगरf == optimal.frequency &&
+			     freq > table[optimal.driver_data].frequency)) अणु
+				optimal.frequency = dअगरf;
 				optimal.driver_data = i;
-			}
-			break;
-		}
-	}
-	if (optimal.driver_data > i) {
-		if (suboptimal.driver_data > i) {
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (optimal.driver_data > i) अणु
+		अगर (suboptimal.driver_data > i) अणु
 			WARN(1, "Invalid frequency table: %d\n", policy->cpu);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		index = suboptimal.driver_data;
-	} else
+	पूर्ण अन्यथा
 		index = optimal.driver_data;
 
 	pr_debug("target index is %u, freq is:%u kHz\n", index,
 		 table[index].frequency);
-	return index;
-}
+	वापस index;
+पूर्ण
 EXPORT_SYMBOL_GPL(cpufreq_table_index_unsorted);
 
-int cpufreq_frequency_table_get_index(struct cpufreq_policy *policy,
-		unsigned int freq)
-{
-	struct cpufreq_frequency_table *pos, *table = policy->freq_table;
-	int idx;
+पूर्णांक cpufreq_frequency_table_get_index(काष्ठा cpufreq_policy *policy,
+		अचिन्हित पूर्णांक freq)
+अणु
+	काष्ठा cpufreq_frequency_table *pos, *table = policy->freq_table;
+	पूर्णांक idx;
 
-	if (unlikely(!table)) {
+	अगर (unlikely(!table)) अणु
 		pr_debug("%s: Unable to find frequency table\n", __func__);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 
-	cpufreq_for_each_valid_entry_idx(pos, table, idx)
-		if (pos->frequency == freq)
-			return idx;
+	cpufreq_क्रम_each_valid_entry_idx(pos, table, idx)
+		अगर (pos->frequency == freq)
+			वापस idx;
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 EXPORT_SYMBOL_GPL(cpufreq_frequency_table_get_index);
 
 /*
- * show_available_freqs - show available frequencies for the specified CPU
+ * show_available_freqs - show available frequencies क्रम the specअगरied CPU
  */
-static ssize_t show_available_freqs(struct cpufreq_policy *policy, char *buf,
+अटल sमाप_प्रकार show_available_freqs(काष्ठा cpufreq_policy *policy, अक्षर *buf,
 				    bool show_boost)
-{
-	ssize_t count = 0;
-	struct cpufreq_frequency_table *pos, *table = policy->freq_table;
+अणु
+	sमाप_प्रकार count = 0;
+	काष्ठा cpufreq_frequency_table *pos, *table = policy->freq_table;
 
-	if (!table)
-		return -ENODEV;
+	अगर (!table)
+		वापस -ENODEV;
 
-	cpufreq_for_each_valid_entry(pos, table) {
+	cpufreq_क्रम_each_valid_entry(pos, table) अणु
 		/*
 		 * show_boost = true and driver_data = BOOST freq
 		 * display BOOST freqs
 		 *
 		 * show_boost = false and driver_data = BOOST freq
 		 * show_boost = true and driver_data != BOOST freq
-		 * continue - do not display anything
+		 * जारी - करो not display anything
 		 *
 		 * show_boost = false and driver_data != BOOST freq
 		 * display NON BOOST freqs
 		 */
-		if (show_boost ^ (pos->flags & CPUFREQ_BOOST_FREQ))
-			continue;
+		अगर (show_boost ^ (pos->flags & CPUFREQ_BOOST_FREQ))
+			जारी;
 
-		count += sprintf(&buf[count], "%d ", pos->frequency);
-	}
-	count += sprintf(&buf[count], "\n");
+		count += प्र_लिखो(&buf[count], "%d ", pos->frequency);
+	पूर्ण
+	count += प्र_लिखो(&buf[count], "\n");
 
-	return count;
+	वापस count;
 
-}
+पूर्ण
 
-#define cpufreq_attr_available_freq(_name)	  \
-struct freq_attr cpufreq_freq_attr_##_name##_freqs =     \
+#घोषणा cpufreq_attr_available_freq(_name)	  \
+काष्ठा freq_attr cpufreq_freq_attr_##_name##_freqs =     \
 __ATTR_RO(_name##_frequencies)
 
 /*
- * scaling_available_frequencies_show - show available normal frequencies for
- * the specified CPU
+ * scaling_available_frequencies_show - show available normal frequencies क्रम
+ * the specअगरied CPU
  */
-static ssize_t scaling_available_frequencies_show(struct cpufreq_policy *policy,
-						  char *buf)
-{
-	return show_available_freqs(policy, buf, false);
-}
+अटल sमाप_प्रकार scaling_available_frequencies_show(काष्ठा cpufreq_policy *policy,
+						  अक्षर *buf)
+अणु
+	वापस show_available_freqs(policy, buf, false);
+पूर्ण
 cpufreq_attr_available_freq(scaling_available);
 EXPORT_SYMBOL_GPL(cpufreq_freq_attr_scaling_available_freqs);
 
 /*
- * scaling_boost_frequencies_show - show available boost frequencies for
- * the specified CPU
+ * scaling_boost_frequencies_show - show available boost frequencies क्रम
+ * the specअगरied CPU
  */
-static ssize_t scaling_boost_frequencies_show(struct cpufreq_policy *policy,
-					      char *buf)
-{
-	return show_available_freqs(policy, buf, true);
-}
+अटल sमाप_प्रकार scaling_boost_frequencies_show(काष्ठा cpufreq_policy *policy,
+					      अक्षर *buf)
+अणु
+	वापस show_available_freqs(policy, buf, true);
+पूर्ण
 cpufreq_attr_available_freq(scaling_boost);
 EXPORT_SYMBOL_GPL(cpufreq_freq_attr_scaling_boost_freqs);
 
-struct freq_attr *cpufreq_generic_attr[] = {
+काष्ठा freq_attr *cpufreq_generic_attr[] = अणु
 	&cpufreq_freq_attr_scaling_available_freqs,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 EXPORT_SYMBOL_GPL(cpufreq_generic_attr);
 
-static int set_freq_table_sorted(struct cpufreq_policy *policy)
-{
-	struct cpufreq_frequency_table *pos, *table = policy->freq_table;
-	struct cpufreq_frequency_table *prev = NULL;
-	int ascending = 0;
+अटल पूर्णांक set_freq_table_sorted(काष्ठा cpufreq_policy *policy)
+अणु
+	काष्ठा cpufreq_frequency_table *pos, *table = policy->freq_table;
+	काष्ठा cpufreq_frequency_table *prev = शून्य;
+	पूर्णांक ascending = 0;
 
 	policy->freq_table_sorted = CPUFREQ_TABLE_UNSORTED;
 
-	cpufreq_for_each_valid_entry(pos, table) {
-		if (!prev) {
+	cpufreq_क्रम_each_valid_entry(pos, table) अणु
+		अगर (!prev) अणु
 			prev = pos;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (pos->frequency == prev->frequency) {
+		अगर (pos->frequency == prev->frequency) अणु
 			pr_warn("Duplicate freq-table entries: %u\n",
 				pos->frequency);
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* Frequency increased from prev to pos */
-		if (pos->frequency > prev->frequency) {
+		अगर (pos->frequency > prev->frequency) अणु
 			/* But frequency was decreasing earlier */
-			if (ascending < 0) {
+			अगर (ascending < 0) अणु
 				pr_debug("Freq table is unsorted\n");
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 
 			ascending++;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Frequency decreased from prev to pos */
 
 			/* But frequency was increasing earlier */
-			if (ascending > 0) {
+			अगर (ascending > 0) अणु
 				pr_debug("Freq table is unsorted\n");
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 
 			ascending--;
-		}
+		पूर्ण
 
 		prev = pos;
-	}
+	पूर्ण
 
-	if (ascending > 0)
+	अगर (ascending > 0)
 		policy->freq_table_sorted = CPUFREQ_TABLE_SORTED_ASCENDING;
-	else
+	अन्यथा
 		policy->freq_table_sorted = CPUFREQ_TABLE_SORTED_DESCENDING;
 
 	pr_debug("Freq table is sorted in %s order\n",
 		 ascending > 0 ? "ascending" : "descending");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cpufreq_table_validate_and_sort(struct cpufreq_policy *policy)
-{
-	int ret;
+पूर्णांक cpufreq_table_validate_and_sort(काष्ठा cpufreq_policy *policy)
+अणु
+	पूर्णांक ret;
 
-	if (!policy->freq_table)
-		return 0;
+	अगर (!policy->freq_table)
+		वापस 0;
 
 	ret = cpufreq_frequency_table_cpuinfo(policy, policy->freq_table);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return set_freq_table_sorted(policy);
-}
+	वापस set_freq_table_sorted(policy);
+पूर्ण
 
 MODULE_AUTHOR("Dominik Brodowski <linux@brodo.de>");
 MODULE_DESCRIPTION("CPUfreq frequency table helpers");

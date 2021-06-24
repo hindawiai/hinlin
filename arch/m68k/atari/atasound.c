@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * linux/arch/m68k/atari/atasound.c
  *
@@ -7,103 +8,103 @@
  * unknown. (++roman: That's me... :-)
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * 1998-05-31 ++andreas: atari_mksound rewritten to always use the envelope,
- *			 no timer, atari_nosound removed.
+ *			 no समयr, atari_nosound हटाओd.
  *
  */
 
 
-#include <linux/sched.h>
-#include <linux/timer.h>
-#include <linux/major.h>
-#include <linux/fcntl.h>
-#include <linux/errno.h>
-#include <linux/mm.h>
-#include <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/major.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
 
-#include <asm/atarihw.h>
-#include <asm/irq.h>
-#include <asm/atariints.h>
+#समावेश <यंत्र/atarihw.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/atariपूर्णांकs.h>
 
 
 /*
  * stuff from the old atasound.c
  */
 
-void atari_microwire_cmd (int cmd)
-{
+व्योम atari_microwire_cmd (पूर्णांक cmd)
+अणु
 	tt_microwire.mask = 0x7ff;
 	tt_microwire.data = MW_LM1992_ADDR | cmd;
 
-	/* Busy wait for data being completely sent :-( */
-	while( tt_microwire.mask != 0x7ff)
+	/* Busy रुको क्रम data being completely sent :-( */
+	जबतक( tt_microwire.mask != 0x7ff)
 		;
-}
+पूर्ण
 EXPORT_SYMBOL(atari_microwire_cmd);
 
 
 /* PSG base frequency */
-#define	PSG_FREQ	125000
-/* PSG envelope base frequency times 10 */
-#define PSG_ENV_FREQ_10	78125
+#घोषणा	PSG_FREQ	125000
+/* PSG envelope base frequency बार 10 */
+#घोषणा PSG_ENV_FREQ_10	78125
 
-void atari_mksound (unsigned int hz, unsigned int ticks)
-{
-	/* Generates sound of some frequency for some number of clock
+व्योम atari_mksound (अचिन्हित पूर्णांक hz, अचिन्हित पूर्णांक ticks)
+अणु
+	/* Generates sound of some frequency क्रम some number of घड़ी
 	   ticks.  */
-	unsigned long flags;
-	unsigned char tmp;
-	int period;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर पंचांगp;
+	पूर्णांक period;
 
 	local_irq_save(flags);
 
 
 	/* Disable generator A in mixer control.  */
 	sound_ym.rd_data_reg_sel = 7;
-	tmp = sound_ym.rd_data_reg_sel;
-	tmp |= 011;
-	sound_ym.wd_data = tmp;
+	पंचांगp = sound_ym.rd_data_reg_sel;
+	पंचांगp |= 011;
+	sound_ym.wd_data = पंचांगp;
 
-	if (hz) {
+	अगर (hz) अणु
 	    /* Convert from frequency value to PSG period value (base
 	       frequency 125 kHz).  */
 
 	    period = PSG_FREQ / hz;
 
-	    if (period > 0xfff) period = 0xfff;
+	    अगर (period > 0xfff) period = 0xfff;
 
 	/* Set generator A frequency to hz.  */
 	sound_ym.rd_data_reg_sel = 0;
 	sound_ym.wd_data = period & 0xff;
 	sound_ym.rd_data_reg_sel = 1;
 	sound_ym.wd_data = (period >> 8) & 0xf;
-	if (ticks) {
+	अगर (ticks) अणु
 		/* Set length of envelope (max 8 sec).  */
-		int length = (ticks * PSG_ENV_FREQ_10) / HZ / 10;
+		पूर्णांक length = (ticks * PSG_ENV_FREQ_10) / HZ / 10;
 
-		if (length > 0xffff) length = 0xffff;
+		अगर (length > 0xffff) length = 0xffff;
 		sound_ym.rd_data_reg_sel = 11;
 		sound_ym.wd_data = length & 0xff;
 		sound_ym.rd_data_reg_sel = 12;
 		sound_ym.wd_data = length >> 8;
-		/* Envelope form: max -> min single.  */
+		/* Envelope क्रमm: max -> min single.  */
 		sound_ym.rd_data_reg_sel = 13;
 		sound_ym.wd_data = 0;
-		/* Use envelope for generator A.  */
+		/* Use envelope क्रम generator A.  */
 		sound_ym.rd_data_reg_sel = 8;
 		sound_ym.wd_data = 0x10;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Set generator A level to maximum, no envelope.  */
 		sound_ym.rd_data_reg_sel = 8;
 		sound_ym.wd_data = 15;
-	}
+	पूर्ण
 	/* Turn on generator A in mixer control.  */
 	sound_ym.rd_data_reg_sel = 7;
-	tmp &= ~1;
-	sound_ym.wd_data = tmp;
-	}
+	पंचांगp &= ~1;
+	sound_ym.wd_data = पंचांगp;
+	पूर्ण
 	local_irq_restore(flags);
-}
+पूर्ण

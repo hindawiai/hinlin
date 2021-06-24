@@ -1,263 +1,264 @@
+<शैली गुरु>
 /*
- * Watchdog driver for SBC-FITPC2 board
+ * Watchकरोg driver क्रम SBC-FITPC2 board
  *
  * Author: Denis Turischev <denis@compulab.co.il>
  *
- * Adapted from the IXP2000 watchdog driver by Deepak Saxena.
+ * Adapted from the IXP2000 watchकरोg driver by Deepak Saxena.
  *
  * This file is licensed under  the terms of the GNU General Public
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME " WATCHDOG: " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME " WATCHDOG: " fmt
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/miscdevice.h>
-#include <linux/watchdog.h>
-#include <linux/ioport.h>
-#include <linux/delay.h>
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/moduleparam.h>
-#include <linux/dmi.h>
-#include <linux/io.h>
-#include <linux/uaccess.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/uaccess.h>
 
 
-static bool nowayout = WATCHDOG_NOWAYOUT;
-static unsigned int margin = 60;	/* (secs) Default is 1 minute */
-static unsigned long wdt_status;
-static DEFINE_MUTEX(wdt_lock);
+अटल bool nowayout = WATCHDOG_NOWAYOUT;
+अटल अचिन्हित पूर्णांक margin = 60;	/* (secs) Default is 1 minute */
+अटल अचिन्हित दीर्घ wdt_status;
+अटल DEFINE_MUTEX(wdt_lock);
 
-#define WDT_IN_USE		0
-#define WDT_OK_TO_CLOSE		1
+#घोषणा WDT_IN_USE		0
+#घोषणा WDT_OK_TO_CLOSE		1
 
-#define COMMAND_PORT		0x4c
-#define DATA_PORT		0x48
+#घोषणा COMMAND_PORT		0x4c
+#घोषणा DATA_PORT		0x48
 
-#define IFACE_ON_COMMAND	1
-#define REBOOT_COMMAND		2
+#घोषणा IFACE_ON_COMMAND	1
+#घोषणा REBOOT_COMMAND		2
 
-#define WATCHDOG_NAME		"SBC-FITPC2 Watchdog"
+#घोषणा WATCHDOG_NAME		"SBC-FITPC2 Watchdog"
 
-static void wdt_send_data(unsigned char command, unsigned char data)
-{
+अटल व्योम wdt_send_data(अचिन्हित अक्षर command, अचिन्हित अक्षर data)
+अणु
 	outb(data, DATA_PORT);
 	msleep(200);
 	outb(command, COMMAND_PORT);
 	msleep(100);
-}
+पूर्ण
 
-static void wdt_enable(void)
-{
+अटल व्योम wdt_enable(व्योम)
+अणु
 	mutex_lock(&wdt_lock);
 	wdt_send_data(IFACE_ON_COMMAND, 1);
 	wdt_send_data(REBOOT_COMMAND, margin);
 	mutex_unlock(&wdt_lock);
-}
+पूर्ण
 
-static void wdt_disable(void)
-{
+अटल व्योम wdt_disable(व्योम)
+अणु
 	mutex_lock(&wdt_lock);
 	wdt_send_data(IFACE_ON_COMMAND, 0);
 	wdt_send_data(REBOOT_COMMAND, 0);
 	mutex_unlock(&wdt_lock);
-}
+पूर्ण
 
-static int fitpc2_wdt_open(struct inode *inode, struct file *file)
-{
-	if (test_and_set_bit(WDT_IN_USE, &wdt_status))
-		return -EBUSY;
+अटल पूर्णांक fitpc2_wdt_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_and_set_bit(WDT_IN_USE, &wdt_status))
+		वापस -EBUSY;
 
 	clear_bit(WDT_OK_TO_CLOSE, &wdt_status);
 
 	wdt_enable();
 
-	return stream_open(inode, file);
-}
+	वापस stream_खोलो(inode, file);
+पूर्ण
 
-static ssize_t fitpc2_wdt_write(struct file *file, const char __user *data,
-						size_t len, loff_t *ppos)
-{
-	size_t i;
+अटल sमाप_प्रकार fitpc2_wdt_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *data,
+						माप_प्रकार len, loff_t *ppos)
+अणु
+	माप_प्रकार i;
 
-	if (!len)
-		return 0;
+	अगर (!len)
+		वापस 0;
 
-	if (nowayout) {
+	अगर (nowayout) अणु
 		len = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	clear_bit(WDT_OK_TO_CLOSE, &wdt_status);
 
-	for (i = 0; i != len; i++) {
-		char c;
+	क्रम (i = 0; i != len; i++) अणु
+		अक्षर c;
 
-		if (get_user(c, data + i))
-			return -EFAULT;
+		अगर (get_user(c, data + i))
+			वापस -EFAULT;
 
-		if (c == 'V')
+		अगर (c == 'V')
 			set_bit(WDT_OK_TO_CLOSE, &wdt_status);
-	}
+	पूर्ण
 
 out:
 	wdt_enable();
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
 
-static const struct watchdog_info ident = {
+अटल स्थिर काष्ठा watchकरोg_info ident = अणु
 	.options	= WDIOF_MAGICCLOSE | WDIOF_SETTIMEOUT |
 				WDIOF_KEEPALIVEPING,
 	.identity	= WATCHDOG_NAME,
-};
+पूर्ण;
 
 
-static long fitpc2_wdt_ioctl(struct file *file, unsigned int cmd,
-							unsigned long arg)
-{
-	int ret = -ENOTTY;
-	int time;
+अटल दीर्घ fitpc2_wdt_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
+							अचिन्हित दीर्घ arg)
+अणु
+	पूर्णांक ret = -ENOTTY;
+	पूर्णांक समय;
 
-	switch (cmd) {
-	case WDIOC_GETSUPPORT:
-		ret = copy_to_user((struct watchdog_info __user *)arg, &ident,
-				   sizeof(ident)) ? -EFAULT : 0;
-		break;
+	चयन (cmd) अणु
+	हाल WDIOC_GETSUPPORT:
+		ret = copy_to_user((काष्ठा watchकरोg_info __user *)arg, &ident,
+				   माप(ident)) ? -EFAULT : 0;
+		अवरोध;
 
-	case WDIOC_GETSTATUS:
-		ret = put_user(0, (int __user *)arg);
-		break;
+	हाल WDIOC_GETSTATUS:
+		ret = put_user(0, (पूर्णांक __user *)arg);
+		अवरोध;
 
-	case WDIOC_GETBOOTSTATUS:
-		ret = put_user(0, (int __user *)arg);
-		break;
+	हाल WDIOC_GETBOOTSTATUS:
+		ret = put_user(0, (पूर्णांक __user *)arg);
+		अवरोध;
 
-	case WDIOC_KEEPALIVE:
+	हाल WDIOC_KEEPALIVE:
 		wdt_enable();
 		ret = 0;
-		break;
+		अवरोध;
 
-	case WDIOC_SETTIMEOUT:
-		ret = get_user(time, (int __user *)arg);
-		if (ret)
-			break;
+	हाल WDIOC_SETTIMEOUT:
+		ret = get_user(समय, (पूर्णांक __user *)arg);
+		अगर (ret)
+			अवरोध;
 
-		if (time < 31 || time > 255) {
+		अगर (समय < 31 || समय > 255) अणु
 			ret = -EINVAL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		margin = time;
+		margin = समय;
 		wdt_enable();
 		fallthrough;
 
-	case WDIOC_GETTIMEOUT:
-		ret = put_user(margin, (int __user *)arg);
-		break;
-	}
+	हाल WDIOC_GETTIMEOUT:
+		ret = put_user(margin, (पूर्णांक __user *)arg);
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int fitpc2_wdt_release(struct inode *inode, struct file *file)
-{
-	if (test_bit(WDT_OK_TO_CLOSE, &wdt_status)) {
+अटल पूर्णांक fitpc2_wdt_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अगर (test_bit(WDT_OK_TO_CLOSE, &wdt_status)) अणु
 		wdt_disable();
 		pr_info("Device disabled\n");
-	} else {
+	पूर्ण अन्यथा अणु
 		pr_warn("Device closed unexpectedly - timer will not stop\n");
 		wdt_enable();
-	}
+	पूर्ण
 
 	clear_bit(WDT_IN_USE, &wdt_status);
 	clear_bit(WDT_OK_TO_CLOSE, &wdt_status);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-static const struct file_operations fitpc2_wdt_fops = {
+अटल स्थिर काष्ठा file_operations fitpc2_wdt_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.write		= fitpc2_wdt_write,
+	.ग_लिखो		= fitpc2_wdt_ग_लिखो,
 	.unlocked_ioctl	= fitpc2_wdt_ioctl,
 	.compat_ioctl	= compat_ptr_ioctl,
-	.open		= fitpc2_wdt_open,
+	.खोलो		= fitpc2_wdt_खोलो,
 	.release	= fitpc2_wdt_release,
-};
+पूर्ण;
 
-static struct miscdevice fitpc2_wdt_miscdev = {
+अटल काष्ठा miscdevice fitpc2_wdt_miscdev = अणु
 	.minor		= WATCHDOG_MINOR,
 	.name		= "watchdog",
 	.fops		= &fitpc2_wdt_fops,
-};
+पूर्ण;
 
-static int __init fitpc2_wdt_init(void)
-{
-	int err;
-	const char *brd_name;
+अटल पूर्णांक __init fitpc2_wdt_init(व्योम)
+अणु
+	पूर्णांक err;
+	स्थिर अक्षर *brd_name;
 
-	brd_name = dmi_get_system_info(DMI_BOARD_NAME);
+	brd_name = dmi_get_प्रणाली_info(DMI_BOARD_NAME);
 
-	if (!brd_name || !strstr(brd_name, "SBC-FITPC2"))
-		return -ENODEV;
+	अगर (!brd_name || !म_माला(brd_name, "SBC-FITPC2"))
+		वापस -ENODEV;
 
 	pr_info("%s found\n", brd_name);
 
-	if (!request_region(COMMAND_PORT, 1, WATCHDOG_NAME)) {
+	अगर (!request_region(COMMAND_PORT, 1, WATCHDOG_NAME)) अणु
 		pr_err("I/O address 0x%04x already in use\n", COMMAND_PORT);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	if (!request_region(DATA_PORT, 1, WATCHDOG_NAME)) {
+	अगर (!request_region(DATA_PORT, 1, WATCHDOG_NAME)) अणु
 		pr_err("I/O address 0x%04x already in use\n", DATA_PORT);
 		err = -EIO;
-		goto err_data_port;
-	}
+		जाओ err_data_port;
+	पूर्ण
 
-	if (margin < 31 || margin > 255) {
+	अगर (margin < 31 || margin > 255) अणु
 		pr_err("margin must be in range 31 - 255 seconds, you tried to set %d\n",
 		       margin);
 		err = -EINVAL;
-		goto err_margin;
-	}
+		जाओ err_margin;
+	पूर्ण
 
-	err = misc_register(&fitpc2_wdt_miscdev);
-	if (err) {
+	err = misc_रेजिस्टर(&fitpc2_wdt_miscdev);
+	अगर (err) अणु
 		pr_err("cannot register miscdev on minor=%d (err=%d)\n",
 		       WATCHDOG_MINOR, err);
-		goto err_margin;
-	}
+		जाओ err_margin;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_margin:
 	release_region(DATA_PORT, 1);
 err_data_port:
 	release_region(COMMAND_PORT, 1);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit fitpc2_wdt_exit(void)
-{
-	misc_deregister(&fitpc2_wdt_miscdev);
+अटल व्योम __निकास fitpc2_wdt_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&fitpc2_wdt_miscdev);
 	release_region(DATA_PORT, 1);
 	release_region(COMMAND_PORT, 1);
-}
+पूर्ण
 
 module_init(fitpc2_wdt_init);
-module_exit(fitpc2_wdt_exit);
+module_निकास(fitpc2_wdt_निकास);
 
 MODULE_AUTHOR("Denis Turischev <denis@compulab.co.il>");
 MODULE_DESCRIPTION("SBC-FITPC2 Watchdog");
 
-module_param(margin, int, 0);
+module_param(margin, पूर्णांक, 0);
 MODULE_PARM_DESC(margin, "Watchdog margin in seconds (default 60s)");
 
 module_param(nowayout, bool, 0);

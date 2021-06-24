@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_MACH_TOPOLOGY_H
-#define _ASM_MACH_TOPOLOGY_H	1
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_MACH_TOPOLOGY_H
+#घोषणा _ASM_MACH_TOPOLOGY_H	1
 
-#include <asm/sn/types.h>
-#include <asm/mmzone.h>
+#समावेश <यंत्र/sn/types.h>
+#समावेश <यंत्र/mmzone.h>
 
-struct cpuinfo_ip27 {
+काष्ठा cpuinfo_ip27 अणु
 	nasid_t		p_nasid;	/* my node ID in numa-as-id-space */
-	unsigned short	p_speed;	/* cpu speed in MHz */
-	unsigned char	p_slice;	/* Physical position on node board */
-};
+	अचिन्हित लघु	p_speed;	/* cpu speed in MHz */
+	अचिन्हित अक्षर	p_slice;	/* Physical position on node board */
+पूर्ण;
 
-extern struct cpuinfo_ip27 sn_cpu_info[NR_CPUS];
+बाह्य काष्ठा cpuinfo_ip27 sn_cpu_info[NR_CPUS];
 
-#define cpu_to_node(cpu)	(cputonasid(cpu))
-#define cpumask_of_node(node)	((node) == -1 ?				\
+#घोषणा cpu_to_node(cpu)	(cputonasid(cpu))
+#घोषणा cpumask_of_node(node)	((node) == -1 ?				\
 				 cpu_all_mask :				\
 				 &hub_data(node)->h_cpus)
-struct pci_bus;
-extern int pcibus_to_node(struct pci_bus *);
+काष्ठा pci_bus;
+बाह्य पूर्णांक pcibus_to_node(काष्ठा pci_bus *);
 
-#define cpumask_of_pcibus(bus)	(cpumask_of_node(pcibus_to_node(bus)))
+#घोषणा cpumask_of_pcibus(bus)	(cpumask_of_node(pcibus_to_node(bus)))
 
-extern unsigned char __node_distances[MAX_NUMNODES][MAX_NUMNODES];
+बाह्य अचिन्हित अक्षर __node_distances[MAX_NUMNODES][MAX_NUMNODES];
 
-#define node_distance(from, to) (__node_distances[(from)][(to)])
+#घोषणा node_distance(from, to) (__node_distances[(from)][(to)])
 
-#include <asm-generic/topology.h>
+#समावेश <यंत्र-generic/topology.h>
 
-#endif /* _ASM_MACH_TOPOLOGY_H */
+#पूर्ण_अगर /* _ASM_MACH_TOPOLOGY_H */

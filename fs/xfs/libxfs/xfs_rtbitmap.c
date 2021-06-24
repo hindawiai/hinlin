@@ -1,461 +1,462 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_bit.h"
-#include "xfs_mount.h"
-#include "xfs_inode.h"
-#include "xfs_bmap.h"
-#include "xfs_trans.h"
-#include "xfs_rtalloc.h"
-#include "xfs_error.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_bit.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_inode.h"
+#समावेश "xfs_bmap.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_rtalloc.h"
+#समावेश "xfs_error.h"
 
 /*
- * Realtime allocator bitmap functions shared with userspace.
+ * Realसमय allocator biपंचांगap functions shared with userspace.
  */
 
 /*
- * Real time buffers need verifiers to avoid runtime warnings during IO.
- * We don't have anything to verify, however, so these are just dummy
+ * Real समय buffers need verअगरiers to aव्योम runसमय warnings during IO.
+ * We करोn't have anything to verअगरy, however, so these are just dummy
  * operations.
  */
-static void
-xfs_rtbuf_verify_read(
-	struct xfs_buf	*bp)
-{
-	return;
-}
+अटल व्योम
+xfs_rtbuf_verअगरy_पढ़ो(
+	काष्ठा xfs_buf	*bp)
+अणु
+	वापस;
+पूर्ण
 
-static void
-xfs_rtbuf_verify_write(
-	struct xfs_buf	*bp)
-{
-	return;
-}
+अटल व्योम
+xfs_rtbuf_verअगरy_ग_लिखो(
+	काष्ठा xfs_buf	*bp)
+अणु
+	वापस;
+पूर्ण
 
-const struct xfs_buf_ops xfs_rtbuf_ops = {
+स्थिर काष्ठा xfs_buf_ops xfs_rtbuf_ops = अणु
 	.name = "rtbuf",
-	.verify_read = xfs_rtbuf_verify_read,
-	.verify_write = xfs_rtbuf_verify_write,
-};
+	.verअगरy_पढ़ो = xfs_rtbuf_verअगरy_पढ़ो,
+	.verअगरy_ग_लिखो = xfs_rtbuf_verअगरy_ग_लिखो,
+पूर्ण;
 
 /*
- * Get a buffer for the bitmap or summary file block specified.
- * The buffer is returned read and locked.
+ * Get a buffer क्रम the biपंचांगap or summary file block specअगरied.
+ * The buffer is वापसed पढ़ो and locked.
  */
-int
+पूर्णांक
 xfs_rtbuf_get(
-	xfs_mount_t	*mp,		/* file system mount structure */
-	xfs_trans_t	*tp,		/* transaction pointer */
-	xfs_rtblock_t	block,		/* block number in bitmap or summary */
-	int		issum,		/* is summary not bitmap */
-	struct xfs_buf	**bpp)		/* output: buffer for the block */
-{
-	struct xfs_buf	*bp;		/* block buffer, result */
-	xfs_inode_t	*ip;		/* bitmap or summary inode */
+	xfs_mount_t	*mp,		/* file प्रणाली mount काष्ठाure */
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
+	xfs_rtblock_t	block,		/* block number in biपंचांगap or summary */
+	पूर्णांक		issum,		/* is summary not biपंचांगap */
+	काष्ठा xfs_buf	**bpp)		/* output: buffer क्रम the block */
+अणु
+	काष्ठा xfs_buf	*bp;		/* block buffer, result */
+	xfs_inode_t	*ip;		/* biपंचांगap or summary inode */
 	xfs_bmbt_irec_t	map;
-	int		nmap = 1;
-	int		error;		/* error value */
+	पूर्णांक		nmap = 1;
+	पूर्णांक		error;		/* error value */
 
 	ip = issum ? mp->m_rsumip : mp->m_rbmip;
 
-	error = xfs_bmapi_read(ip, block, 1, &map, &nmap, 0);
-	if (error)
-		return error;
+	error = xfs_bmapi_पढ़ो(ip, block, 1, &map, &nmap, 0);
+	अगर (error)
+		वापस error;
 
-	if (XFS_IS_CORRUPT(mp, nmap == 0 || !xfs_bmap_is_written_extent(&map)))
-		return -EFSCORRUPTED;
+	अगर (XFS_IS_CORRUPT(mp, nmap == 0 || !xfs_bmap_is_written_extent(&map)))
+		वापस -EFSCORRUPTED;
 
-	ASSERT(map.br_startblock != NULLFSBLOCK);
-	error = xfs_trans_read_buf(mp, tp, mp->m_ddev_targp,
+	ASSERT(map.br_startblock != शून्यFSBLOCK);
+	error = xfs_trans_पढ़ो_buf(mp, tp, mp->m_ddev_targp,
 				   XFS_FSB_TO_DADDR(mp, map.br_startblock),
 				   mp->m_bsize, 0, &bp, &xfs_rtbuf_ops);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	xfs_trans_buf_set_type(tp, bp, issum ? XFS_BLFT_RTSUMMARY_BUF
 					     : XFS_BLFT_RTBITMAP_BUF);
 	*bpp = bp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Searching backward from start to limit, find the first block whose
- * allocated/free state is different from start's.
+ * allocated/मुक्त state is dअगरferent from start's.
  */
-int
+पूर्णांक
 xfs_rtfind_back(
-	xfs_mount_t	*mp,		/* file system mount point */
-	xfs_trans_t	*tp,		/* transaction pointer */
+	xfs_mount_t	*mp,		/* file प्रणाली mount poपूर्णांक */
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
 	xfs_rtblock_t	start,		/* starting block to look at */
 	xfs_rtblock_t	limit,		/* last block to look at */
 	xfs_rtblock_t	*rtblock)	/* out: start block found */
-{
+अणु
 	xfs_rtword_t	*b;		/* current word in buffer */
-	int		bit;		/* bit number in the word */
-	xfs_rtblock_t	block;		/* bitmap block number */
-	struct xfs_buf	*bp;		/* buf for the block */
+	पूर्णांक		bit;		/* bit number in the word */
+	xfs_rtblock_t	block;		/* biपंचांगap block number */
+	काष्ठा xfs_buf	*bp;		/* buf क्रम the block */
 	xfs_rtword_t	*bufp;		/* starting word in buffer */
-	int		error;		/* error value */
+	पूर्णांक		error;		/* error value */
 	xfs_rtblock_t	firstbit;	/* first useful bit in the word */
 	xfs_rtblock_t	i;		/* current bit number rel. to start */
 	xfs_rtblock_t	len;		/* length of inspected area */
-	xfs_rtword_t	mask;		/* mask of relevant bits for value */
-	xfs_rtword_t	want;		/* mask for "good" values */
-	xfs_rtword_t	wdiff;		/* difference from wanted value */
-	int		word;		/* word number in the buffer */
+	xfs_rtword_t	mask;		/* mask of relevant bits क्रम value */
+	xfs_rtword_t	want;		/* mask क्रम "good" values */
+	xfs_rtword_t	wdअगरf;		/* dअगरference from wanted value */
+	पूर्णांक		word;		/* word number in the buffer */
 
 	/*
-	 * Compute and read in starting bitmap block for starting block.
+	 * Compute and पढ़ो in starting biपंचांगap block क्रम starting block.
 	 */
 	block = XFS_BITTOBLOCK(mp, start);
 	error = xfs_rtbuf_get(mp, tp, block, 0, &bp);
-	if (error) {
-		return error;
-	}
+	अगर (error) अणु
+		वापस error;
+	पूर्ण
 	bufp = bp->b_addr;
 	/*
-	 * Get the first word's index & point to it.
+	 * Get the first word's index & poपूर्णांक to it.
 	 */
 	word = XFS_BITTOWORD(mp, start);
 	b = &bufp[word];
-	bit = (int)(start & (XFS_NBWORD - 1));
+	bit = (पूर्णांक)(start & (XFS_NBWORD - 1));
 	len = start - limit + 1;
 	/*
-	 * Compute match value, based on the bit at start: if 1 (free)
-	 * then all-ones, else all-zeroes.
+	 * Compute match value, based on the bit at start: अगर 1 (मुक्त)
+	 * then all-ones, अन्यथा all-zeroes.
 	 */
 	want = (*b & ((xfs_rtword_t)1 << bit)) ? -1 : 0;
 	/*
 	 * If the starting position is not word-aligned, deal with the
 	 * partial word.
 	 */
-	if (bit < XFS_NBWORD - 1) {
+	अगर (bit < XFS_NBWORD - 1) अणु
 		/*
-		 * Calculate first (leftmost) bit number to look at,
-		 * and mask for all the relevant bits in this word.
+		 * Calculate first (lefपंचांगost) bit number to look at,
+		 * and mask क्रम all the relevant bits in this word.
 		 */
 		firstbit = XFS_RTMAX((xfs_srtblock_t)(bit - len + 1), 0);
 		mask = (((xfs_rtword_t)1 << (bit - firstbit + 1)) - 1) <<
 			firstbit;
 		/*
-		 * Calculate the difference between the value there
-		 * and what we're looking for.
+		 * Calculate the dअगरference between the value there
+		 * and what we're looking क्रम.
 		 */
-		if ((wdiff = (*b ^ want) & mask)) {
+		अगर ((wdअगरf = (*b ^ want) & mask)) अणु
 			/*
-			 * Different.  Mark where we are and return.
+			 * Dअगरferent.  Mark where we are and वापस.
 			 */
-			xfs_trans_brelse(tp, bp);
-			i = bit - XFS_RTHIBIT(wdiff);
+			xfs_trans_brअन्यथा(tp, bp);
+			i = bit - XFS_RTHIBIT(wdअगरf);
 			*rtblock = start - i + 1;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		i = bit - firstbit + 1;
 		/*
-		 * Go on to previous block if that's where the previous word is
+		 * Go on to previous block अगर that's where the previous word is
 		 * and we need the previous word.
 		 */
-		if (--word == -1 && i < len) {
+		अगर (--word == -1 && i < len) अणु
 			/*
-			 * If done with this block, get the previous one.
+			 * If करोne with this block, get the previous one.
 			 */
-			xfs_trans_brelse(tp, bp);
+			xfs_trans_brअन्यथा(tp, bp);
 			error = xfs_rtbuf_get(mp, tp, --block, 0, &bp);
-			if (error) {
-				return error;
-			}
+			अगर (error) अणु
+				वापस error;
+			पूर्ण
 			bufp = bp->b_addr;
 			word = XFS_BLOCKWMASK(mp);
 			b = &bufp[word];
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Go on to the previous word in the buffer.
 			 */
 			b--;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * Starting on a word boundary, no partial word.
 		 */
 		i = 0;
-	}
+	पूर्ण
 	/*
 	 * Loop over whole words in buffers.  When we use up one buffer
 	 * we move on to the previous one.
 	 */
-	while (len - i >= XFS_NBWORD) {
+	जबतक (len - i >= XFS_NBWORD) अणु
 		/*
-		 * Compute difference between actual and desired value.
+		 * Compute dअगरference between actual and desired value.
 		 */
-		if ((wdiff = *b ^ want)) {
+		अगर ((wdअगरf = *b ^ want)) अणु
 			/*
-			 * Different, mark where we are and return.
+			 * Dअगरferent, mark where we are and वापस.
 			 */
-			xfs_trans_brelse(tp, bp);
-			i += XFS_NBWORD - 1 - XFS_RTHIBIT(wdiff);
+			xfs_trans_brअन्यथा(tp, bp);
+			i += XFS_NBWORD - 1 - XFS_RTHIBIT(wdअगरf);
 			*rtblock = start - i + 1;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		i += XFS_NBWORD;
 		/*
-		 * Go on to previous block if that's where the previous word is
+		 * Go on to previous block अगर that's where the previous word is
 		 * and we need the previous word.
 		 */
-		if (--word == -1 && i < len) {
+		अगर (--word == -1 && i < len) अणु
 			/*
-			 * If done with this block, get the previous one.
+			 * If करोne with this block, get the previous one.
 			 */
-			xfs_trans_brelse(tp, bp);
+			xfs_trans_brअन्यथा(tp, bp);
 			error = xfs_rtbuf_get(mp, tp, --block, 0, &bp);
-			if (error) {
-				return error;
-			}
+			अगर (error) अणु
+				वापस error;
+			पूर्ण
 			bufp = bp->b_addr;
 			word = XFS_BLOCKWMASK(mp);
 			b = &bufp[word];
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Go on to the previous word in the buffer.
 			 */
 			b--;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * If not ending on a word boundary, deal with the last
 	 * (partial) word.
 	 */
-	if (len - i) {
+	अगर (len - i) अणु
 		/*
-		 * Calculate first (leftmost) bit number to look at,
-		 * and mask for all the relevant bits in this word.
+		 * Calculate first (lefपंचांगost) bit number to look at,
+		 * and mask क्रम all the relevant bits in this word.
 		 */
 		firstbit = XFS_NBWORD - (len - i);
 		mask = (((xfs_rtword_t)1 << (len - i)) - 1) << firstbit;
 		/*
-		 * Compute difference between actual and desired value.
+		 * Compute dअगरference between actual and desired value.
 		 */
-		if ((wdiff = (*b ^ want) & mask)) {
+		अगर ((wdअगरf = (*b ^ want) & mask)) अणु
 			/*
-			 * Different, mark where we are and return.
+			 * Dअगरferent, mark where we are and वापस.
 			 */
-			xfs_trans_brelse(tp, bp);
-			i += XFS_NBWORD - 1 - XFS_RTHIBIT(wdiff);
+			xfs_trans_brअन्यथा(tp, bp);
+			i += XFS_NBWORD - 1 - XFS_RTHIBIT(wdअगरf);
 			*rtblock = start - i + 1;
-			return 0;
-		} else
+			वापस 0;
+		पूर्ण अन्यथा
 			i = len;
-	}
+	पूर्ण
 	/*
-	 * No match, return that we scanned the whole area.
+	 * No match, वापस that we scanned the whole area.
 	 */
-	xfs_trans_brelse(tp, bp);
+	xfs_trans_brअन्यथा(tp, bp);
 	*rtblock = start - i + 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Searching forward from start to limit, find the first block whose
- * allocated/free state is different from start's.
+ * Searching क्रमward from start to limit, find the first block whose
+ * allocated/मुक्त state is dअगरferent from start's.
  */
-int
-xfs_rtfind_forw(
-	xfs_mount_t	*mp,		/* file system mount point */
-	xfs_trans_t	*tp,		/* transaction pointer */
+पूर्णांक
+xfs_rtfind_क्रमw(
+	xfs_mount_t	*mp,		/* file प्रणाली mount poपूर्णांक */
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
 	xfs_rtblock_t	start,		/* starting block to look at */
 	xfs_rtblock_t	limit,		/* last block to look at */
 	xfs_rtblock_t	*rtblock)	/* out: start block found */
-{
+अणु
 	xfs_rtword_t	*b;		/* current word in buffer */
-	int		bit;		/* bit number in the word */
-	xfs_rtblock_t	block;		/* bitmap block number */
-	struct xfs_buf	*bp;		/* buf for the block */
+	पूर्णांक		bit;		/* bit number in the word */
+	xfs_rtblock_t	block;		/* biपंचांगap block number */
+	काष्ठा xfs_buf	*bp;		/* buf क्रम the block */
 	xfs_rtword_t	*bufp;		/* starting word in buffer */
-	int		error;		/* error value */
+	पूर्णांक		error;		/* error value */
 	xfs_rtblock_t	i;		/* current bit number rel. to start */
 	xfs_rtblock_t	lastbit;	/* last useful bit in the word */
 	xfs_rtblock_t	len;		/* length of inspected area */
-	xfs_rtword_t	mask;		/* mask of relevant bits for value */
-	xfs_rtword_t	want;		/* mask for "good" values */
-	xfs_rtword_t	wdiff;		/* difference from wanted value */
-	int		word;		/* word number in the buffer */
+	xfs_rtword_t	mask;		/* mask of relevant bits क्रम value */
+	xfs_rtword_t	want;		/* mask क्रम "good" values */
+	xfs_rtword_t	wdअगरf;		/* dअगरference from wanted value */
+	पूर्णांक		word;		/* word number in the buffer */
 
 	/*
-	 * Compute and read in starting bitmap block for starting block.
+	 * Compute and पढ़ो in starting biपंचांगap block क्रम starting block.
 	 */
 	block = XFS_BITTOBLOCK(mp, start);
 	error = xfs_rtbuf_get(mp, tp, block, 0, &bp);
-	if (error) {
-		return error;
-	}
+	अगर (error) अणु
+		वापस error;
+	पूर्ण
 	bufp = bp->b_addr;
 	/*
-	 * Get the first word's index & point to it.
+	 * Get the first word's index & poपूर्णांक to it.
 	 */
 	word = XFS_BITTOWORD(mp, start);
 	b = &bufp[word];
-	bit = (int)(start & (XFS_NBWORD - 1));
+	bit = (पूर्णांक)(start & (XFS_NBWORD - 1));
 	len = limit - start + 1;
 	/*
-	 * Compute match value, based on the bit at start: if 1 (free)
-	 * then all-ones, else all-zeroes.
+	 * Compute match value, based on the bit at start: अगर 1 (मुक्त)
+	 * then all-ones, अन्यथा all-zeroes.
 	 */
 	want = (*b & ((xfs_rtword_t)1 << bit)) ? -1 : 0;
 	/*
 	 * If the starting position is not word-aligned, deal with the
 	 * partial word.
 	 */
-	if (bit) {
+	अगर (bit) अणु
 		/*
-		 * Calculate last (rightmost) bit number to look at,
-		 * and mask for all the relevant bits in this word.
+		 * Calculate last (righपंचांगost) bit number to look at,
+		 * and mask क्रम all the relevant bits in this word.
 		 */
 		lastbit = XFS_RTMIN(bit + len, XFS_NBWORD);
 		mask = (((xfs_rtword_t)1 << (lastbit - bit)) - 1) << bit;
 		/*
-		 * Calculate the difference between the value there
-		 * and what we're looking for.
+		 * Calculate the dअगरference between the value there
+		 * and what we're looking क्रम.
 		 */
-		if ((wdiff = (*b ^ want) & mask)) {
+		अगर ((wdअगरf = (*b ^ want) & mask)) अणु
 			/*
-			 * Different.  Mark where we are and return.
+			 * Dअगरferent.  Mark where we are and वापस.
 			 */
-			xfs_trans_brelse(tp, bp);
-			i = XFS_RTLOBIT(wdiff) - bit;
+			xfs_trans_brअन्यथा(tp, bp);
+			i = XFS_RTLOBIT(wdअगरf) - bit;
 			*rtblock = start + i - 1;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		i = lastbit - bit;
 		/*
-		 * Go on to next block if that's where the next word is
+		 * Go on to next block अगर that's where the next word is
 		 * and we need the next word.
 		 */
-		if (++word == XFS_BLOCKWSIZE(mp) && i < len) {
+		अगर (++word == XFS_BLOCKWSIZE(mp) && i < len) अणु
 			/*
-			 * If done with this block, get the previous one.
+			 * If करोne with this block, get the previous one.
 			 */
-			xfs_trans_brelse(tp, bp);
+			xfs_trans_brअन्यथा(tp, bp);
 			error = xfs_rtbuf_get(mp, tp, ++block, 0, &bp);
-			if (error) {
-				return error;
-			}
+			अगर (error) अणु
+				वापस error;
+			पूर्ण
 			b = bufp = bp->b_addr;
 			word = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Go on to the previous word in the buffer.
 			 */
 			b++;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * Starting on a word boundary, no partial word.
 		 */
 		i = 0;
-	}
+	पूर्ण
 	/*
 	 * Loop over whole words in buffers.  When we use up one buffer
 	 * we move on to the next one.
 	 */
-	while (len - i >= XFS_NBWORD) {
+	जबतक (len - i >= XFS_NBWORD) अणु
 		/*
-		 * Compute difference between actual and desired value.
+		 * Compute dअगरference between actual and desired value.
 		 */
-		if ((wdiff = *b ^ want)) {
+		अगर ((wdअगरf = *b ^ want)) अणु
 			/*
-			 * Different, mark where we are and return.
+			 * Dअगरferent, mark where we are and वापस.
 			 */
-			xfs_trans_brelse(tp, bp);
-			i += XFS_RTLOBIT(wdiff);
+			xfs_trans_brअन्यथा(tp, bp);
+			i += XFS_RTLOBIT(wdअगरf);
 			*rtblock = start + i - 1;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		i += XFS_NBWORD;
 		/*
-		 * Go on to next block if that's where the next word is
+		 * Go on to next block अगर that's where the next word is
 		 * and we need the next word.
 		 */
-		if (++word == XFS_BLOCKWSIZE(mp) && i < len) {
+		अगर (++word == XFS_BLOCKWSIZE(mp) && i < len) अणु
 			/*
-			 * If done with this block, get the next one.
+			 * If करोne with this block, get the next one.
 			 */
-			xfs_trans_brelse(tp, bp);
+			xfs_trans_brअन्यथा(tp, bp);
 			error = xfs_rtbuf_get(mp, tp, ++block, 0, &bp);
-			if (error) {
-				return error;
-			}
+			अगर (error) अणु
+				वापस error;
+			पूर्ण
 			b = bufp = bp->b_addr;
 			word = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Go on to the next word in the buffer.
 			 */
 			b++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * If not ending on a word boundary, deal with the last
 	 * (partial) word.
 	 */
-	if ((lastbit = len - i)) {
+	अगर ((lastbit = len - i)) अणु
 		/*
-		 * Calculate mask for all the relevant bits in this word.
+		 * Calculate mask क्रम all the relevant bits in this word.
 		 */
 		mask = ((xfs_rtword_t)1 << lastbit) - 1;
 		/*
-		 * Compute difference between actual and desired value.
+		 * Compute dअगरference between actual and desired value.
 		 */
-		if ((wdiff = (*b ^ want) & mask)) {
+		अगर ((wdअगरf = (*b ^ want) & mask)) अणु
 			/*
-			 * Different, mark where we are and return.
+			 * Dअगरferent, mark where we are and वापस.
 			 */
-			xfs_trans_brelse(tp, bp);
-			i += XFS_RTLOBIT(wdiff);
+			xfs_trans_brअन्यथा(tp, bp);
+			i += XFS_RTLOBIT(wdअगरf);
 			*rtblock = start + i - 1;
-			return 0;
-		} else
+			वापस 0;
+		पूर्ण अन्यथा
 			i = len;
-	}
+	पूर्ण
 	/*
-	 * No match, return that we scanned the whole area.
+	 * No match, वापस that we scanned the whole area.
 	 */
-	xfs_trans_brelse(tp, bp);
+	xfs_trans_brअन्यथा(tp, bp);
 	*rtblock = start + i - 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Read and/or modify the summary information for a given extent size,
- * bitmap block combination.
- * Keeps track of a current summary block, so we don't keep reading
+ * Read and/or modअगरy the summary inक्रमmation क्रम a given extent size,
+ * biपंचांगap block combination.
+ * Keeps track of a current summary block, so we करोn't keep पढ़ोing
  * it from the buffer cache.
  *
- * Summary information is returned in *sum if specified.
- * If no delta is specified, returns summary only.
+ * Summary inक्रमmation is वापसed in *sum अगर specअगरied.
+ * If no delta is specअगरied, वापसs summary only.
  */
-int
-xfs_rtmodify_summary_int(
-	xfs_mount_t	*mp,		/* file system mount structure */
-	xfs_trans_t	*tp,		/* transaction pointer */
-	int		log,		/* log2 of extent size */
-	xfs_rtblock_t	bbno,		/* bitmap block number */
-	int		delta,		/* change to make to summary info */
-	struct xfs_buf	**rbpp,		/* in/out: summary block buffer */
+पूर्णांक
+xfs_rपंचांगodअगरy_summary_पूर्णांक(
+	xfs_mount_t	*mp,		/* file प्रणाली mount काष्ठाure */
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
+	पूर्णांक		log,		/* log2 of extent size */
+	xfs_rtblock_t	bbno,		/* biपंचांगap block number */
+	पूर्णांक		delta,		/* change to make to summary info */
+	काष्ठा xfs_buf	**rbpp,		/* in/out: summary block buffer */
 	xfs_fsblock_t	*rsb,		/* in/out: summary block number */
-	xfs_suminfo_t	*sum)		/* out: summary info for this block */
-{
-	struct xfs_buf	*bp;		/* buffer for the summary block */
-	int		error;		/* error value */
+	xfs_suminfo_t	*sum)		/* out: summary info क्रम this block */
+अणु
+	काष्ठा xfs_buf	*bp;		/* buffer क्रम the summary block */
+	पूर्णांक		error;		/* error value */
 	xfs_fsblock_t	sb;		/* summary fsblock */
-	int		so;		/* index into the summary file */
-	xfs_suminfo_t	*sp;		/* pointer to returned data */
+	पूर्णांक		so;		/* index पूर्णांकo the summary file */
+	xfs_suminfo_t	*sp;		/* poपूर्णांकer to वापसed data */
 
 	/*
 	 * Compute entry number in the summary file.
@@ -468,113 +469,113 @@ xfs_rtmodify_summary_int(
 	/*
 	 * If we have an old buffer, and the block number matches, use that.
 	 */
-	if (*rbpp && *rsb == sb)
+	अगर (*rbpp && *rsb == sb)
 		bp = *rbpp;
 	/*
 	 * Otherwise we have to get the buffer.
 	 */
-	else {
+	अन्यथा अणु
 		/*
 		 * If there was an old one, get rid of it first.
 		 */
-		if (*rbpp)
-			xfs_trans_brelse(tp, *rbpp);
+		अगर (*rbpp)
+			xfs_trans_brअन्यथा(tp, *rbpp);
 		error = xfs_rtbuf_get(mp, tp, sb, 1, &bp);
-		if (error) {
-			return error;
-		}
+		अगर (error) अणु
+			वापस error;
+		पूर्ण
 		/*
-		 * Remember this buffer and block for the next call.
+		 * Remember this buffer and block क्रम the next call.
 		 */
 		*rbpp = bp;
 		*rsb = sb;
-	}
+	पूर्ण
 	/*
-	 * Point to the summary information, modify/log it, and/or copy it out.
+	 * Poपूर्णांक to the summary inक्रमmation, modअगरy/log it, and/or copy it out.
 	 */
 	sp = XFS_SUMPTR(mp, bp, so);
-	if (delta) {
-		uint first = (uint)((char *)sp - (char *)bp->b_addr);
+	अगर (delta) अणु
+		uपूर्णांक first = (uपूर्णांक)((अक्षर *)sp - (अक्षर *)bp->b_addr);
 
 		*sp += delta;
-		if (mp->m_rsum_cache) {
-			if (*sp == 0 && log == mp->m_rsum_cache[bbno])
+		अगर (mp->m_rsum_cache) अणु
+			अगर (*sp == 0 && log == mp->m_rsum_cache[bbno])
 				mp->m_rsum_cache[bbno]++;
-			if (*sp != 0 && log < mp->m_rsum_cache[bbno])
+			अगर (*sp != 0 && log < mp->m_rsum_cache[bbno])
 				mp->m_rsum_cache[bbno] = log;
-		}
-		xfs_trans_log_buf(tp, bp, first, first + sizeof(*sp) - 1);
-	}
-	if (sum)
+		पूर्ण
+		xfs_trans_log_buf(tp, bp, first, first + माप(*sp) - 1);
+	पूर्ण
+	अगर (sum)
 		*sum = *sp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-xfs_rtmodify_summary(
-	xfs_mount_t	*mp,		/* file system mount structure */
-	xfs_trans_t	*tp,		/* transaction pointer */
-	int		log,		/* log2 of extent size */
-	xfs_rtblock_t	bbno,		/* bitmap block number */
-	int		delta,		/* change to make to summary info */
-	struct xfs_buf	**rbpp,		/* in/out: summary block buffer */
+पूर्णांक
+xfs_rपंचांगodअगरy_summary(
+	xfs_mount_t	*mp,		/* file प्रणाली mount काष्ठाure */
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
+	पूर्णांक		log,		/* log2 of extent size */
+	xfs_rtblock_t	bbno,		/* biपंचांगap block number */
+	पूर्णांक		delta,		/* change to make to summary info */
+	काष्ठा xfs_buf	**rbpp,		/* in/out: summary block buffer */
 	xfs_fsblock_t	*rsb)		/* in/out: summary block number */
-{
-	return xfs_rtmodify_summary_int(mp, tp, log, bbno,
-					delta, rbpp, rsb, NULL);
-}
+अणु
+	वापस xfs_rपंचांगodअगरy_summary_पूर्णांक(mp, tp, log, bbno,
+					delta, rbpp, rsb, शून्य);
+पूर्ण
 
 /*
- * Set the given range of bitmap bits to the given value.
+ * Set the given range of biपंचांगap bits to the given value.
  * Do whatever I/O and logging is required.
  */
-int
-xfs_rtmodify_range(
-	xfs_mount_t	*mp,		/* file system mount point */
-	xfs_trans_t	*tp,		/* transaction pointer */
-	xfs_rtblock_t	start,		/* starting block to modify */
-	xfs_extlen_t	len,		/* length of extent to modify */
-	int		val)		/* 1 for free, 0 for allocated */
-{
+पूर्णांक
+xfs_rपंचांगodअगरy_range(
+	xfs_mount_t	*mp,		/* file प्रणाली mount poपूर्णांक */
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
+	xfs_rtblock_t	start,		/* starting block to modअगरy */
+	xfs_extlen_t	len,		/* length of extent to modअगरy */
+	पूर्णांक		val)		/* 1 क्रम मुक्त, 0 क्रम allocated */
+अणु
 	xfs_rtword_t	*b;		/* current word in buffer */
-	int		bit;		/* bit number in the word */
-	xfs_rtblock_t	block;		/* bitmap block number */
-	struct xfs_buf	*bp;		/* buf for the block */
+	पूर्णांक		bit;		/* bit number in the word */
+	xfs_rtblock_t	block;		/* biपंचांगap block number */
+	काष्ठा xfs_buf	*bp;		/* buf क्रम the block */
 	xfs_rtword_t	*bufp;		/* starting word in buffer */
-	int		error;		/* error value */
+	पूर्णांक		error;		/* error value */
 	xfs_rtword_t	*first;		/* first used word in the buffer */
-	int		i;		/* current bit number rel. to start */
-	int		lastbit;	/* last useful bit in word */
-	xfs_rtword_t	mask;		/* mask o frelevant bits for value */
-	int		word;		/* word number in the buffer */
+	पूर्णांक		i;		/* current bit number rel. to start */
+	पूर्णांक		lastbit;	/* last useful bit in word */
+	xfs_rtword_t	mask;		/* mask o frelevant bits क्रम value */
+	पूर्णांक		word;		/* word number in the buffer */
 
 	/*
-	 * Compute starting bitmap block number.
+	 * Compute starting biपंचांगap block number.
 	 */
 	block = XFS_BITTOBLOCK(mp, start);
 	/*
-	 * Read the bitmap block, and point to its data.
+	 * Read the biपंचांगap block, and poपूर्णांक to its data.
 	 */
 	error = xfs_rtbuf_get(mp, tp, block, 0, &bp);
-	if (error) {
-		return error;
-	}
+	अगर (error) अणु
+		वापस error;
+	पूर्ण
 	bufp = bp->b_addr;
 	/*
 	 * Compute the starting word's address, and starting bit.
 	 */
 	word = XFS_BITTOWORD(mp, start);
 	first = b = &bufp[word];
-	bit = (int)(start & (XFS_NBWORD - 1));
+	bit = (पूर्णांक)(start & (XFS_NBWORD - 1));
 	/*
-	 * 0 (allocated) => all zeroes; 1 (free) => all ones.
+	 * 0 (allocated) => all zeroes; 1 (मुक्त) => all ones.
 	 */
 	val = -val;
 	/*
 	 * If not starting on a word boundary, deal with the first
 	 * (partial) word.
 	 */
-	if (bit) {
+	अगर (bit) अणु
 		/*
 		 * Compute first bit not changed and mask of relevant bits.
 		 */
@@ -583,81 +584,81 @@ xfs_rtmodify_range(
 		/*
 		 * Set/clear the active bits.
 		 */
-		if (val)
+		अगर (val)
 			*b |= mask;
-		else
+		अन्यथा
 			*b &= ~mask;
 		i = lastbit - bit;
 		/*
-		 * Go on to the next block if that's where the next word is
+		 * Go on to the next block अगर that's where the next word is
 		 * and we need the next word.
 		 */
-		if (++word == XFS_BLOCKWSIZE(mp) && i < len) {
+		अगर (++word == XFS_BLOCKWSIZE(mp) && i < len) अणु
 			/*
 			 * Log the changed part of this block.
 			 * Get the next one.
 			 */
 			xfs_trans_log_buf(tp, bp,
-				(uint)((char *)first - (char *)bufp),
-				(uint)((char *)b - (char *)bufp));
+				(uपूर्णांक)((अक्षर *)first - (अक्षर *)bufp),
+				(uपूर्णांक)((अक्षर *)b - (अक्षर *)bufp));
 			error = xfs_rtbuf_get(mp, tp, ++block, 0, &bp);
-			if (error) {
-				return error;
-			}
+			अगर (error) अणु
+				वापस error;
+			पूर्ण
 			first = b = bufp = bp->b_addr;
 			word = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Go on to the next word in the buffer
 			 */
 			b++;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * Starting on a word boundary, no partial word.
 		 */
 		i = 0;
-	}
+	पूर्ण
 	/*
 	 * Loop over whole words in buffers.  When we use up one buffer
 	 * we move on to the next one.
 	 */
-	while (len - i >= XFS_NBWORD) {
+	जबतक (len - i >= XFS_NBWORD) अणु
 		/*
 		 * Set the word value correctly.
 		 */
 		*b = val;
 		i += XFS_NBWORD;
 		/*
-		 * Go on to the next block if that's where the next word is
+		 * Go on to the next block अगर that's where the next word is
 		 * and we need the next word.
 		 */
-		if (++word == XFS_BLOCKWSIZE(mp) && i < len) {
+		अगर (++word == XFS_BLOCKWSIZE(mp) && i < len) अणु
 			/*
 			 * Log the changed part of this block.
 			 * Get the next one.
 			 */
 			xfs_trans_log_buf(tp, bp,
-				(uint)((char *)first - (char *)bufp),
-				(uint)((char *)b - (char *)bufp));
+				(uपूर्णांक)((अक्षर *)first - (अक्षर *)bufp),
+				(uपूर्णांक)((अक्षर *)b - (अक्षर *)bufp));
 			error = xfs_rtbuf_get(mp, tp, ++block, 0, &bp);
-			if (error) {
-				return error;
-			}
+			अगर (error) अणु
+				वापस error;
+			पूर्ण
 			first = b = bufp = bp->b_addr;
 			word = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Go on to the next word in the buffer
 			 */
 			b++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * If not ending on a word boundary, deal with the last
 	 * (partial) word.
 	 */
-	if ((lastbit = len - i)) {
+	अगर ((lastbit = len - i)) अणु
 		/*
 		 * Compute a mask of relevant bits.
 		 */
@@ -665,141 +666,141 @@ xfs_rtmodify_range(
 		/*
 		 * Set/clear the active bits.
 		 */
-		if (val)
+		अगर (val)
 			*b |= mask;
-		else
+		अन्यथा
 			*b &= ~mask;
 		b++;
-	}
+	पूर्ण
 	/*
-	 * Log any remaining changed bytes.
+	 * Log any reमुख्यing changed bytes.
 	 */
-	if (b > first)
-		xfs_trans_log_buf(tp, bp, (uint)((char *)first - (char *)bufp),
-			(uint)((char *)b - (char *)bufp - 1));
-	return 0;
-}
+	अगर (b > first)
+		xfs_trans_log_buf(tp, bp, (uपूर्णांक)((अक्षर *)first - (अक्षर *)bufp),
+			(uपूर्णांक)((अक्षर *)b - (अक्षर *)bufp - 1));
+	वापस 0;
+पूर्ण
 
 /*
- * Mark an extent specified by start and len freed.
- * Updates all the summary information as well as the bitmap.
+ * Mark an extent specअगरied by start and len मुक्तd.
+ * Updates all the summary inक्रमmation as well as the biपंचांगap.
  */
-int
-xfs_rtfree_range(
-	xfs_mount_t	*mp,		/* file system mount point */
-	xfs_trans_t	*tp,		/* transaction pointer */
-	xfs_rtblock_t	start,		/* starting block to free */
-	xfs_extlen_t	len,		/* length to free */
-	struct xfs_buf	**rbpp,		/* in/out: summary block buffer */
+पूर्णांक
+xfs_rtमुक्त_range(
+	xfs_mount_t	*mp,		/* file प्रणाली mount poपूर्णांक */
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
+	xfs_rtblock_t	start,		/* starting block to मुक्त */
+	xfs_extlen_t	len,		/* length to मुक्त */
+	काष्ठा xfs_buf	**rbpp,		/* in/out: summary block buffer */
 	xfs_fsblock_t	*rsb)		/* in/out: summary block number */
-{
-	xfs_rtblock_t	end;		/* end of the freed extent */
-	int		error;		/* error value */
-	xfs_rtblock_t	postblock;	/* first block freed > end */
-	xfs_rtblock_t	preblock;	/* first block freed < start */
+अणु
+	xfs_rtblock_t	end;		/* end of the मुक्तd extent */
+	पूर्णांक		error;		/* error value */
+	xfs_rtblock_t	postblock;	/* first block मुक्तd > end */
+	xfs_rtblock_t	preblock;	/* first block मुक्तd < start */
 
 	end = start + len - 1;
 	/*
-	 * Modify the bitmap to mark this extent freed.
+	 * Modअगरy the biपंचांगap to mark this extent मुक्तd.
 	 */
-	error = xfs_rtmodify_range(mp, tp, start, len, 1);
-	if (error) {
-		return error;
-	}
+	error = xfs_rपंचांगodअगरy_range(mp, tp, start, len, 1);
+	अगर (error) अणु
+		वापस error;
+	पूर्ण
 	/*
-	 * Assume we're freeing out of the middle of an allocated extent.
+	 * Assume we're मुक्तing out of the middle of an allocated extent.
 	 * We need to find the beginning and end of the extent so we can
 	 * properly update the summary.
 	 */
 	error = xfs_rtfind_back(mp, tp, start, 0, &preblock);
-	if (error) {
-		return error;
-	}
+	अगर (error) अणु
+		वापस error;
+	पूर्ण
 	/*
 	 * Find the next allocated block (end of allocated extent).
 	 */
-	error = xfs_rtfind_forw(mp, tp, end, mp->m_sb.sb_rextents - 1,
+	error = xfs_rtfind_क्रमw(mp, tp, end, mp->m_sb.sb_rextents - 1,
 		&postblock);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	/*
-	 * If there are blocks not being freed at the front of the
-	 * old extent, add summary data for them to be allocated.
+	 * If there are blocks not being मुक्तd at the front of the
+	 * old extent, add summary data क्रम them to be allocated.
 	 */
-	if (preblock < start) {
-		error = xfs_rtmodify_summary(mp, tp,
+	अगर (preblock < start) अणु
+		error = xfs_rपंचांगodअगरy_summary(mp, tp,
 			XFS_RTBLOCKLOG(start - preblock),
 			XFS_BITTOBLOCK(mp, preblock), -1, rbpp, rsb);
-		if (error) {
-			return error;
-		}
-	}
+		अगर (error) अणु
+			वापस error;
+		पूर्ण
+	पूर्ण
 	/*
-	 * If there are blocks not being freed at the end of the
-	 * old extent, add summary data for them to be allocated.
+	 * If there are blocks not being मुक्तd at the end of the
+	 * old extent, add summary data क्रम them to be allocated.
 	 */
-	if (postblock > end) {
-		error = xfs_rtmodify_summary(mp, tp,
+	अगर (postblock > end) अणु
+		error = xfs_rपंचांगodअगरy_summary(mp, tp,
 			XFS_RTBLOCKLOG(postblock - end),
 			XFS_BITTOBLOCK(mp, end + 1), -1, rbpp, rsb);
-		if (error) {
-			return error;
-		}
-	}
+		अगर (error) अणु
+			वापस error;
+		पूर्ण
+	पूर्ण
 	/*
-	 * Increment the summary information corresponding to the entire
-	 * (new) free extent.
+	 * Increment the summary inक्रमmation corresponding to the entire
+	 * (new) मुक्त extent.
 	 */
-	error = xfs_rtmodify_summary(mp, tp,
+	error = xfs_rपंचांगodअगरy_summary(mp, tp,
 		XFS_RTBLOCKLOG(postblock + 1 - preblock),
 		XFS_BITTOBLOCK(mp, preblock), 1, rbpp, rsb);
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
  * Check that the given range is either all allocated (val = 0) or
- * all free (val = 1).
+ * all मुक्त (val = 1).
  */
-int
+पूर्णांक
 xfs_rtcheck_range(
-	xfs_mount_t	*mp,		/* file system mount point */
-	xfs_trans_t	*tp,		/* transaction pointer */
+	xfs_mount_t	*mp,		/* file प्रणाली mount poपूर्णांक */
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
 	xfs_rtblock_t	start,		/* starting block number of extent */
 	xfs_extlen_t	len,		/* length of extent */
-	int		val,		/* 1 for free, 0 for allocated */
+	पूर्णांक		val,		/* 1 क्रम मुक्त, 0 क्रम allocated */
 	xfs_rtblock_t	*new,		/* out: first block not matching */
-	int		*stat)		/* out: 1 for matches, 0 for not */
-{
+	पूर्णांक		*stat)		/* out: 1 क्रम matches, 0 क्रम not */
+अणु
 	xfs_rtword_t	*b;		/* current word in buffer */
-	int		bit;		/* bit number in the word */
-	xfs_rtblock_t	block;		/* bitmap block number */
-	struct xfs_buf	*bp;		/* buf for the block */
+	पूर्णांक		bit;		/* bit number in the word */
+	xfs_rtblock_t	block;		/* biपंचांगap block number */
+	काष्ठा xfs_buf	*bp;		/* buf क्रम the block */
 	xfs_rtword_t	*bufp;		/* starting word in buffer */
-	int		error;		/* error value */
+	पूर्णांक		error;		/* error value */
 	xfs_rtblock_t	i;		/* current bit number rel. to start */
 	xfs_rtblock_t	lastbit;	/* last useful bit in word */
-	xfs_rtword_t	mask;		/* mask of relevant bits for value */
-	xfs_rtword_t	wdiff;		/* difference from wanted value */
-	int		word;		/* word number in the buffer */
+	xfs_rtword_t	mask;		/* mask of relevant bits क्रम value */
+	xfs_rtword_t	wdअगरf;		/* dअगरference from wanted value */
+	पूर्णांक		word;		/* word number in the buffer */
 
 	/*
-	 * Compute starting bitmap block number
+	 * Compute starting biपंचांगap block number
 	 */
 	block = XFS_BITTOBLOCK(mp, start);
 	/*
-	 * Read the bitmap block.
+	 * Read the biपंचांगap block.
 	 */
 	error = xfs_rtbuf_get(mp, tp, block, 0, &bp);
-	if (error) {
-		return error;
-	}
+	अगर (error) अणु
+		वापस error;
+	पूर्ण
 	bufp = bp->b_addr;
 	/*
 	 * Compute the starting word's address, and starting bit.
 	 */
 	word = XFS_BITTOWORD(mp, start);
 	b = &bufp[word];
-	bit = (int)(start & (XFS_NBWORD - 1));
+	bit = (पूर्णांक)(start & (XFS_NBWORD - 1));
 	/*
 	 * 0 (allocated) => all zero's; 1 (free) => all one's.
 	 */
@@ -808,7 +809,7 @@ xfs_rtcheck_range(
 	 * If not starting on a word boundary, deal with the first
 	 * (partial) word.
 	 */
-	if (bit) {
+	अगर (bit) अणु
 		/*
 		 * Compute first bit not examined.
 		 */
@@ -818,280 +819,280 @@ xfs_rtcheck_range(
 		 */
 		mask = (((xfs_rtword_t)1 << (lastbit - bit)) - 1) << bit;
 		/*
-		 * Compute difference between actual and desired value.
+		 * Compute dअगरference between actual and desired value.
 		 */
-		if ((wdiff = (*b ^ val) & mask)) {
+		अगर ((wdअगरf = (*b ^ val) & mask)) अणु
 			/*
-			 * Different, compute first wrong bit and return.
+			 * Dअगरferent, compute first wrong bit and वापस.
 			 */
-			xfs_trans_brelse(tp, bp);
-			i = XFS_RTLOBIT(wdiff) - bit;
+			xfs_trans_brअन्यथा(tp, bp);
+			i = XFS_RTLOBIT(wdअगरf) - bit;
 			*new = start + i;
 			*stat = 0;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		i = lastbit - bit;
 		/*
-		 * Go on to next block if that's where the next word is
+		 * Go on to next block अगर that's where the next word is
 		 * and we need the next word.
 		 */
-		if (++word == XFS_BLOCKWSIZE(mp) && i < len) {
+		अगर (++word == XFS_BLOCKWSIZE(mp) && i < len) अणु
 			/*
-			 * If done with this block, get the next one.
+			 * If करोne with this block, get the next one.
 			 */
-			xfs_trans_brelse(tp, bp);
+			xfs_trans_brअन्यथा(tp, bp);
 			error = xfs_rtbuf_get(mp, tp, ++block, 0, &bp);
-			if (error) {
-				return error;
-			}
+			अगर (error) अणु
+				वापस error;
+			पूर्ण
 			b = bufp = bp->b_addr;
 			word = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Go on to the next word in the buffer.
 			 */
 			b++;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
 		 * Starting on a word boundary, no partial word.
 		 */
 		i = 0;
-	}
+	पूर्ण
 	/*
 	 * Loop over whole words in buffers.  When we use up one buffer
 	 * we move on to the next one.
 	 */
-	while (len - i >= XFS_NBWORD) {
+	जबतक (len - i >= XFS_NBWORD) अणु
 		/*
-		 * Compute difference between actual and desired value.
+		 * Compute dअगरference between actual and desired value.
 		 */
-		if ((wdiff = *b ^ val)) {
+		अगर ((wdअगरf = *b ^ val)) अणु
 			/*
-			 * Different, compute first wrong bit and return.
+			 * Dअगरferent, compute first wrong bit and वापस.
 			 */
-			xfs_trans_brelse(tp, bp);
-			i += XFS_RTLOBIT(wdiff);
+			xfs_trans_brअन्यथा(tp, bp);
+			i += XFS_RTLOBIT(wdअगरf);
 			*new = start + i;
 			*stat = 0;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 		i += XFS_NBWORD;
 		/*
-		 * Go on to next block if that's where the next word is
+		 * Go on to next block अगर that's where the next word is
 		 * and we need the next word.
 		 */
-		if (++word == XFS_BLOCKWSIZE(mp) && i < len) {
+		अगर (++word == XFS_BLOCKWSIZE(mp) && i < len) अणु
 			/*
-			 * If done with this block, get the next one.
+			 * If करोne with this block, get the next one.
 			 */
-			xfs_trans_brelse(tp, bp);
+			xfs_trans_brअन्यथा(tp, bp);
 			error = xfs_rtbuf_get(mp, tp, ++block, 0, &bp);
-			if (error) {
-				return error;
-			}
+			अगर (error) अणु
+				वापस error;
+			पूर्ण
 			b = bufp = bp->b_addr;
 			word = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Go on to the next word in the buffer.
 			 */
 			b++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/*
 	 * If not ending on a word boundary, deal with the last
 	 * (partial) word.
 	 */
-	if ((lastbit = len - i)) {
+	अगर ((lastbit = len - i)) अणु
 		/*
 		 * Mask of relevant bits.
 		 */
 		mask = ((xfs_rtword_t)1 << lastbit) - 1;
 		/*
-		 * Compute difference between actual and desired value.
+		 * Compute dअगरference between actual and desired value.
 		 */
-		if ((wdiff = (*b ^ val) & mask)) {
+		अगर ((wdअगरf = (*b ^ val) & mask)) अणु
 			/*
-			 * Different, compute first wrong bit and return.
+			 * Dअगरferent, compute first wrong bit and वापस.
 			 */
-			xfs_trans_brelse(tp, bp);
-			i += XFS_RTLOBIT(wdiff);
+			xfs_trans_brअन्यथा(tp, bp);
+			i += XFS_RTLOBIT(wdअगरf);
 			*new = start + i;
 			*stat = 0;
-			return 0;
-		} else
+			वापस 0;
+		पूर्ण अन्यथा
 			i = len;
-	}
+	पूर्ण
 	/*
-	 * Successful, return.
+	 * Successful, वापस.
 	 */
-	xfs_trans_brelse(tp, bp);
+	xfs_trans_brअन्यथा(tp, bp);
 	*new = start + i;
 	*stat = 1;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 /*
- * Check that the given extent (block range) is allocated already.
+ * Check that the given extent (block range) is allocated alपढ़ोy.
  */
-STATIC int				/* error */
+STATIC पूर्णांक				/* error */
 xfs_rtcheck_alloc_range(
-	xfs_mount_t	*mp,		/* file system mount point */
-	xfs_trans_t	*tp,		/* transaction pointer */
+	xfs_mount_t	*mp,		/* file प्रणाली mount poपूर्णांक */
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
 	xfs_rtblock_t	bno,		/* starting block number of extent */
 	xfs_extlen_t	len)		/* length of extent */
-{
-	xfs_rtblock_t	new;		/* dummy for xfs_rtcheck_range */
-	int		stat;
-	int		error;
+अणु
+	xfs_rtblock_t	new;		/* dummy क्रम xfs_rtcheck_range */
+	पूर्णांक		stat;
+	पूर्णांक		error;
 
 	error = xfs_rtcheck_range(mp, tp, bno, len, 0, &new, &stat);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 	ASSERT(stat);
-	return 0;
-}
-#else
-#define xfs_rtcheck_alloc_range(m,t,b,l)	(0)
-#endif
+	वापस 0;
+पूर्ण
+#अन्यथा
+#घोषणा xfs_rtcheck_alloc_range(m,t,b,l)	(0)
+#पूर्ण_अगर
 /*
- * Free an extent in the realtime subvolume.  Length is expressed in
- * realtime extents, as is the block number.
+ * Free an extent in the realसमय subvolume.  Length is expressed in
+ * realसमय extents, as is the block number.
  */
-int					/* error */
-xfs_rtfree_extent(
-	xfs_trans_t	*tp,		/* transaction pointer */
-	xfs_rtblock_t	bno,		/* starting block number to free */
-	xfs_extlen_t	len)		/* length of extent freed */
-{
-	int		error;		/* error value */
-	xfs_mount_t	*mp;		/* file system mount structure */
+पूर्णांक					/* error */
+xfs_rtमुक्त_extent(
+	xfs_trans_t	*tp,		/* transaction poपूर्णांकer */
+	xfs_rtblock_t	bno,		/* starting block number to मुक्त */
+	xfs_extlen_t	len)		/* length of extent मुक्तd */
+अणु
+	पूर्णांक		error;		/* error value */
+	xfs_mount_t	*mp;		/* file प्रणाली mount काष्ठाure */
 	xfs_fsblock_t	sb;		/* summary file block number */
-	struct xfs_buf	*sumbp = NULL;	/* summary file block buffer */
+	काष्ठा xfs_buf	*sumbp = शून्य;	/* summary file block buffer */
 
 	mp = tp->t_mountp;
 
-	ASSERT(mp->m_rbmip->i_itemp != NULL);
+	ASSERT(mp->m_rbmip->i_itemp != शून्य);
 	ASSERT(xfs_isilocked(mp->m_rbmip, XFS_ILOCK_EXCL));
 
 	error = xfs_rtcheck_alloc_range(mp, tp, bno, len);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	/*
-	 * Free the range of realtime blocks.
+	 * Free the range of realसमय blocks.
 	 */
-	error = xfs_rtfree_range(mp, tp, bno, len, &sumbp, &sb);
-	if (error) {
-		return error;
-	}
+	error = xfs_rtमुक्त_range(mp, tp, bno, len, &sumbp, &sb);
+	अगर (error) अणु
+		वापस error;
+	पूर्ण
 	/*
-	 * Mark more blocks free in the superblock.
+	 * Mark more blocks मुक्त in the superblock.
 	 */
-	xfs_trans_mod_sb(tp, XFS_TRANS_SB_FREXTENTS, (long)len);
+	xfs_trans_mod_sb(tp, XFS_TRANS_SB_FREXTENTS, (दीर्घ)len);
 	/*
-	 * If we've now freed all the blocks, reset the file sequence
+	 * If we've now मुक्तd all the blocks, reset the file sequence
 	 * number to 0.
 	 */
-	if (tp->t_frextents_delta + mp->m_sb.sb_frextents ==
-	    mp->m_sb.sb_rextents) {
-		if (!(mp->m_rbmip->i_diflags & XFS_DIFLAG_NEWRTBM))
-			mp->m_rbmip->i_diflags |= XFS_DIFLAG_NEWRTBM;
-		*(uint64_t *)&VFS_I(mp->m_rbmip)->i_atime = 0;
+	अगर (tp->t_frextents_delta + mp->m_sb.sb_frextents ==
+	    mp->m_sb.sb_rextents) अणु
+		अगर (!(mp->m_rbmip->i_dअगरlags & XFS_DIFLAG_NEWRTBM))
+			mp->m_rbmip->i_dअगरlags |= XFS_DIFLAG_NEWRTBM;
+		*(uपूर्णांक64_t *)&VFS_I(mp->m_rbmip)->i_aसमय = 0;
 		xfs_trans_log_inode(tp, mp->m_rbmip, XFS_ILOG_CORE);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Find all the free records within a given range. */
-int
+/* Find all the मुक्त records within a given range. */
+पूर्णांक
 xfs_rtalloc_query_range(
-	struct xfs_trans		*tp,
-	struct xfs_rtalloc_rec		*low_rec,
-	struct xfs_rtalloc_rec		*high_rec,
+	काष्ठा xfs_trans		*tp,
+	काष्ठा xfs_rtalloc_rec		*low_rec,
+	काष्ठा xfs_rtalloc_rec		*high_rec,
 	xfs_rtalloc_query_range_fn	fn,
-	void				*priv)
-{
-	struct xfs_rtalloc_rec		rec;
-	struct xfs_mount		*mp = tp->t_mountp;
+	व्योम				*priv)
+अणु
+	काष्ठा xfs_rtalloc_rec		rec;
+	काष्ठा xfs_mount		*mp = tp->t_mountp;
 	xfs_rtblock_t			rtstart;
 	xfs_rtblock_t			rtend;
-	int				is_free;
-	int				error = 0;
+	पूर्णांक				is_मुक्त;
+	पूर्णांक				error = 0;
 
-	if (low_rec->ar_startext > high_rec->ar_startext)
-		return -EINVAL;
-	if (low_rec->ar_startext >= mp->m_sb.sb_rextents ||
+	अगर (low_rec->ar_startext > high_rec->ar_startext)
+		वापस -EINVAL;
+	अगर (low_rec->ar_startext >= mp->m_sb.sb_rextents ||
 	    low_rec->ar_startext == high_rec->ar_startext)
-		return 0;
+		वापस 0;
 	high_rec->ar_startext = min(high_rec->ar_startext,
 			mp->m_sb.sb_rextents - 1);
 
-	/* Iterate the bitmap, looking for discrepancies. */
+	/* Iterate the biपंचांगap, looking क्रम discrepancies. */
 	rtstart = low_rec->ar_startext;
-	while (rtstart <= high_rec->ar_startext) {
-		/* Is the first block free? */
+	जबतक (rtstart <= high_rec->ar_startext) अणु
+		/* Is the first block मुक्त? */
 		error = xfs_rtcheck_range(mp, tp, rtstart, 1, 1, &rtend,
-				&is_free);
-		if (error)
-			break;
+				&is_मुक्त);
+		अगर (error)
+			अवरोध;
 
-		/* How long does the extent go for? */
-		error = xfs_rtfind_forw(mp, tp, rtstart,
+		/* How दीर्घ करोes the extent go क्रम? */
+		error = xfs_rtfind_क्रमw(mp, tp, rtstart,
 				high_rec->ar_startext, &rtend);
-		if (error)
-			break;
+		अगर (error)
+			अवरोध;
 
-		if (is_free) {
+		अगर (is_मुक्त) अणु
 			rec.ar_startext = rtstart;
 			rec.ar_extcount = rtend - rtstart + 1;
 
 			error = fn(tp, &rec, priv);
-			if (error)
-				break;
-		}
+			अगर (error)
+				अवरोध;
+		पूर्ण
 
 		rtstart = rtend + 1;
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-/* Find all the free records. */
-int
+/* Find all the मुक्त records. */
+पूर्णांक
 xfs_rtalloc_query_all(
-	struct xfs_trans		*tp,
+	काष्ठा xfs_trans		*tp,
 	xfs_rtalloc_query_range_fn	fn,
-	void				*priv)
-{
-	struct xfs_rtalloc_rec		keys[2];
+	व्योम				*priv)
+अणु
+	काष्ठा xfs_rtalloc_rec		keys[2];
 
 	keys[0].ar_startext = 0;
 	keys[1].ar_startext = tp->t_mountp->m_sb.sb_rextents - 1;
 	keys[0].ar_extcount = keys[1].ar_extcount = 0;
 
-	return xfs_rtalloc_query_range(tp, &keys[0], &keys[1], fn, priv);
-}
+	वापस xfs_rtalloc_query_range(tp, &keys[0], &keys[1], fn, priv);
+पूर्ण
 
-/* Is the given extent all free? */
-int
-xfs_rtalloc_extent_is_free(
-	struct xfs_mount		*mp,
-	struct xfs_trans		*tp,
+/* Is the given extent all मुक्त? */
+पूर्णांक
+xfs_rtalloc_extent_is_मुक्त(
+	काष्ठा xfs_mount		*mp,
+	काष्ठा xfs_trans		*tp,
 	xfs_rtblock_t			start,
 	xfs_extlen_t			len,
-	bool				*is_free)
-{
+	bool				*is_मुक्त)
+अणु
 	xfs_rtblock_t			end;
-	int				matches;
-	int				error;
+	पूर्णांक				matches;
+	पूर्णांक				error;
 
 	error = xfs_rtcheck_range(mp, tp, start, len, 1, &end, &matches);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	*is_free = matches;
-	return 0;
-}
+	*is_मुक्त = matches;
+	वापस 0;
+पूर्ण

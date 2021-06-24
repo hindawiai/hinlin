@@ -1,145 +1,146 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  bt819 - BT819A VideoStream Decoder (Rockwell Part)
  *
  * Copyright (C) 1999 Mike Bernson <mike@mlb.org>
  * Copyright (C) 1998 Dave Perks <dperks@ibm.net>
  *
- * Modifications for LML33/DC10plus unified driver
- * Copyright (C) 2000 Serguei Miridonov <mirsev@cicese.mx>
+ * Modअगरications क्रम LML33/DC10plus unअगरied driver
+ * Copyright (C) 2000 Serguei Miriकरोnov <mirsev@cicese.mx>
  *
  * Changes by Ronald Bultje <rbultje@ronald.bitfreak.net>
  *    - moved over to linux>=2.4.x i2c protocol (9/9/2002)
  *
- * This code was modify/ported from the saa7111 driver written
+ * This code was modअगरy/ported from the saa7111 driver written
  * by Dave Perks.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/ioctl.h>
-#include <linux/delay.h>
-#include <linux/i2c.h>
-#include <linux/videodev2.h>
-#include <linux/slab.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ctrls.h>
-#include <media/i2c/bt819.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/slab.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/i2c/bt819.h>
 
 MODULE_DESCRIPTION("Brooktree-819 video decoder driver");
 MODULE_AUTHOR("Mike Bernson & Dave Perks");
 MODULE_LICENSE("GPL");
 
-static int debug;
-module_param(debug, int, 0);
+अटल पूर्णांक debug;
+module_param(debug, पूर्णांक, 0);
 MODULE_PARM_DESC(debug, "Debug level (0-1)");
 
 
 /* ----------------------------------------------------------------------- */
 
-struct bt819 {
-	struct v4l2_subdev sd;
-	struct v4l2_ctrl_handler hdl;
-	unsigned char reg[32];
+काष्ठा bt819 अणु
+	काष्ठा v4l2_subdev sd;
+	काष्ठा v4l2_ctrl_handler hdl;
+	अचिन्हित अक्षर reg[32];
 
 	v4l2_std_id norm;
-	int input;
-	int enable;
-};
+	पूर्णांक input;
+	पूर्णांक enable;
+पूर्ण;
 
-static inline struct bt819 *to_bt819(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct bt819, sd);
-}
+अटल अंतरभूत काष्ठा bt819 *to_bt819(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा bt819, sd);
+पूर्ण
 
-static inline struct v4l2_subdev *to_sd(struct v4l2_ctrl *ctrl)
-{
-	return &container_of(ctrl->handler, struct bt819, hdl)->sd;
-}
+अटल अंतरभूत काष्ठा v4l2_subdev *to_sd(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	वापस &container_of(ctrl->handler, काष्ठा bt819, hdl)->sd;
+पूर्ण
 
-struct timing {
-	int hactive;
-	int hdelay;
-	int vactive;
-	int vdelay;
-	int hscale;
-	int vscale;
-};
+काष्ठा timing अणु
+	पूर्णांक hactive;
+	पूर्णांक hdelay;
+	पूर्णांक vactive;
+	पूर्णांक vdelay;
+	पूर्णांक hscale;
+	पूर्णांक vscale;
+पूर्ण;
 
-/* for values, see the bt819 datasheet */
-static struct timing timing_data[] = {
-	{864 - 24, 20, 625 - 2, 1, 0x0504, 0x0000},
-	{858 - 24, 20, 525 - 2, 1, 0x00f8, 0x0000},
-};
+/* क्रम values, see the bt819 datasheet */
+अटल काष्ठा timing timing_data[] = अणु
+	अणु864 - 24, 20, 625 - 2, 1, 0x0504, 0x0000पूर्ण,
+	अणु858 - 24, 20, 525 - 2, 1, 0x00f8, 0x0000पूर्ण,
+पूर्ण;
 
 /* ----------------------------------------------------------------------- */
 
-static inline int bt819_write(struct bt819 *decoder, u8 reg, u8 value)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&decoder->sd);
+अटल अंतरभूत पूर्णांक bt819_ग_लिखो(काष्ठा bt819 *decoder, u8 reg, u8 value)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&decoder->sd);
 
 	decoder->reg[reg] = value;
-	return i2c_smbus_write_byte_data(client, reg, value);
-}
+	वापस i2c_smbus_ग_लिखो_byte_data(client, reg, value);
+पूर्ण
 
-static inline int bt819_setbit(struct bt819 *decoder, u8 reg, u8 bit, u8 value)
-{
-	return bt819_write(decoder, reg,
+अटल अंतरभूत पूर्णांक bt819_setbit(काष्ठा bt819 *decoder, u8 reg, u8 bit, u8 value)
+अणु
+	वापस bt819_ग_लिखो(decoder, reg,
 		(decoder->reg[reg] & ~(1 << bit)) | (value ? (1 << bit) : 0));
-}
+पूर्ण
 
-static int bt819_write_block(struct bt819 *decoder, const u8 *data, unsigned int len)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&decoder->sd);
-	int ret = -1;
+अटल पूर्णांक bt819_ग_लिखो_block(काष्ठा bt819 *decoder, स्थिर u8 *data, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&decoder->sd);
+	पूर्णांक ret = -1;
 	u8 reg;
 
-	/* the bt819 has an autoincrement function, use it if
+	/* the bt819 has an स्वतःincrement function, use it अगर
 	 * the adapter understands raw I2C */
-	if (i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) {
-		/* do raw I2C, not smbus compatible */
+	अगर (i2c_check_functionality(client->adapter, I2C_FUNC_I2C)) अणु
+		/* करो raw I2C, not smbus compatible */
 		u8 block_data[32];
-		int block_len;
+		पूर्णांक block_len;
 
-		while (len >= 2) {
+		जबतक (len >= 2) अणु
 			block_len = 0;
 			block_data[block_len++] = reg = data[0];
-			do {
+			करो अणु
 				block_data[block_len++] =
 				    decoder->reg[reg++] = data[1];
 				len -= 2;
 				data += 2;
-			} while (len >= 2 && data[0] == reg && block_len < 32);
+			पूर्ण जबतक (len >= 2 && data[0] == reg && block_len < 32);
 			ret = i2c_master_send(client, block_data, block_len);
-			if (ret < 0)
-				break;
-		}
-	} else {
-		/* do some slow I2C emulation kind of thing */
-		while (len >= 2) {
+			अगर (ret < 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		/* करो some slow I2C emulation kind of thing */
+		जबतक (len >= 2) अणु
 			reg = *data++;
-			ret = bt819_write(decoder, reg, *data++);
-			if (ret < 0)
-				break;
+			ret = bt819_ग_लिखो(decoder, reg, *data++);
+			अगर (ret < 0)
+				अवरोध;
 			len -= 2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline int bt819_read(struct bt819 *decoder, u8 reg)
-{
-	struct i2c_client *client = v4l2_get_subdevdata(&decoder->sd);
+अटल अंतरभूत पूर्णांक bt819_पढ़ो(काष्ठा bt819 *decoder, u8 reg)
+अणु
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(&decoder->sd);
 
-	return i2c_smbus_read_byte_data(client, reg);
-}
+	वापस i2c_smbus_पढ़ो_byte_data(client, reg);
+पूर्ण
 
-static int bt819_init(struct v4l2_subdev *sd)
-{
-	static unsigned char init[] = {
+अटल पूर्णांक bt819_init(काष्ठा v4l2_subdev *sd)
+अणु
+	अटल अचिन्हित अक्षर init[] = अणु
 		/*0x1f, 0x00,*/     /* Reset */
-		0x01, 0x59,	/* 0x01 input format */
+		0x01, 0x59,	/* 0x01 input क्रमmat */
 		0x02, 0x00,	/* 0x02 temporal decimation */
 		0x03, 0x12,	/* 0x03 Cropping msb */
 		0x04, 0x16,	/* 0x04 Vertical Delay, lsb */
@@ -156,8 +157,8 @@ static int bt819_init(struct v4l2_subdev *sd)
 		0x0f, 0x00,	/* 0x0f Hue control */
 		0x12, 0x04,	/* 0x12 Output Format */
 		0x13, 0x20,	/* 0x13 Vertical Scaling msb 0x00
-					   chroma comb OFF, line drop scaling, interlace scaling
-					   BUG? Why does turning the chroma comb on screw up color?
+					   chroma comb OFF, line drop scaling, पूर्णांकerlace scaling
+					   BUG? Why करोes turning the chroma comb on screw up color?
 					   Bug in the bt819 stepping on my board?
 					*/
 		0x14, 0x00,	/* 0x14 Vertical Scaling lsb */
@@ -169,10 +170,10 @@ static int bt819_init(struct v4l2_subdev *sd)
 		0x18, 0x68,	/* 0x18 AGC Delay */
 		0x19, 0x5d,	/* 0x19 Burst Gate Delay */
 		0x1a, 0x80,	/* 0x1a ADC Interface */
-	};
+	पूर्ण;
 
-	struct bt819 *decoder = to_bt819(sd);
-	struct timing *timing = &timing_data[(decoder->norm & V4L2_STD_525_60) ? 1 : 0];
+	काष्ठा bt819 *decoder = to_bt819(sd);
+	काष्ठा timing *timing = &timing_data[(decoder->norm & V4L2_STD_525_60) ? 1 : 0];
 
 	init[0x03 * 2 - 1] =
 	    (((timing->vdelay >> 8) & 0x03) << 6) |
@@ -188,232 +189,232 @@ static int bt819_init(struct v4l2_subdev *sd)
 	/* 0x15 in array is address 0x19 */
 	init[0x15 * 2 - 1] = (decoder->norm & V4L2_STD_625_50) ? 115 : 93;	/* Chroma burst delay */
 	/* reset */
-	bt819_write(decoder, 0x1f, 0x00);
+	bt819_ग_लिखो(decoder, 0x1f, 0x00);
 	mdelay(1);
 
 	/* init */
-	return bt819_write_block(decoder, init, sizeof(init));
-}
+	वापस bt819_ग_लिखो_block(decoder, init, माप(init));
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static int bt819_status(struct v4l2_subdev *sd, u32 *pstatus, v4l2_std_id *pstd)
-{
-	struct bt819 *decoder = to_bt819(sd);
-	int status = bt819_read(decoder, 0x00);
-	int res = V4L2_IN_ST_NO_SIGNAL;
+अटल पूर्णांक bt819_status(काष्ठा v4l2_subdev *sd, u32 *pstatus, v4l2_std_id *pstd)
+अणु
+	काष्ठा bt819 *decoder = to_bt819(sd);
+	पूर्णांक status = bt819_पढ़ो(decoder, 0x00);
+	पूर्णांक res = V4L2_IN_ST_NO_SIGNAL;
 	v4l2_std_id std = pstd ? *pstd : V4L2_STD_ALL;
 
-	if ((status & 0x80))
+	अगर ((status & 0x80))
 		res = 0;
-	else
+	अन्यथा
 		std = V4L2_STD_UNKNOWN;
 
-	if ((status & 0x10))
+	अगर ((status & 0x10))
 		std &= V4L2_STD_PAL;
-	else
+	अन्यथा
 		std &= V4L2_STD_NTSC;
-	if (pstd)
+	अगर (pstd)
 		*pstd = std;
-	if (pstatus)
+	अगर (pstatus)
 		*pstatus = res;
 
 	v4l2_dbg(1, debug, sd, "get status %x\n", status);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bt819_querystd(struct v4l2_subdev *sd, v4l2_std_id *std)
-{
-	return bt819_status(sd, NULL, std);
-}
+अटल पूर्णांक bt819_querystd(काष्ठा v4l2_subdev *sd, v4l2_std_id *std)
+अणु
+	वापस bt819_status(sd, शून्य, std);
+पूर्ण
 
-static int bt819_g_input_status(struct v4l2_subdev *sd, u32 *status)
-{
-	return bt819_status(sd, status, NULL);
-}
+अटल पूर्णांक bt819_g_input_status(काष्ठा v4l2_subdev *sd, u32 *status)
+अणु
+	वापस bt819_status(sd, status, शून्य);
+पूर्ण
 
-static int bt819_s_std(struct v4l2_subdev *sd, v4l2_std_id std)
-{
-	struct bt819 *decoder = to_bt819(sd);
-	struct timing *timing = NULL;
+अटल पूर्णांक bt819_s_std(काष्ठा v4l2_subdev *sd, v4l2_std_id std)
+अणु
+	काष्ठा bt819 *decoder = to_bt819(sd);
+	काष्ठा timing *timing = शून्य;
 
-	v4l2_dbg(1, debug, sd, "set norm %llx\n", (unsigned long long)std);
+	v4l2_dbg(1, debug, sd, "set norm %llx\n", (अचिन्हित दीर्घ दीर्घ)std);
 
-	if (sd->v4l2_dev == NULL || sd->v4l2_dev->notify == NULL)
+	अगर (sd->v4l2_dev == शून्य || sd->v4l2_dev->notअगरy == शून्य)
 		v4l2_err(sd, "no notify found!\n");
 
-	if (std & V4L2_STD_NTSC) {
-		v4l2_subdev_notify(sd, BT819_FIFO_RESET_LOW, NULL);
+	अगर (std & V4L2_STD_NTSC) अणु
+		v4l2_subdev_notअगरy(sd, BT819_FIFO_RESET_LOW, शून्य);
 		bt819_setbit(decoder, 0x01, 0, 1);
 		bt819_setbit(decoder, 0x01, 1, 0);
 		bt819_setbit(decoder, 0x01, 5, 0);
-		bt819_write(decoder, 0x18, 0x68);
-		bt819_write(decoder, 0x19, 0x5d);
+		bt819_ग_लिखो(decoder, 0x18, 0x68);
+		bt819_ग_लिखो(decoder, 0x19, 0x5d);
 		/* bt819_setbit(decoder, 0x1a,  5, 1); */
 		timing = &timing_data[1];
-	} else if (std & V4L2_STD_PAL) {
-		v4l2_subdev_notify(sd, BT819_FIFO_RESET_LOW, NULL);
+	पूर्ण अन्यथा अगर (std & V4L2_STD_PAL) अणु
+		v4l2_subdev_notअगरy(sd, BT819_FIFO_RESET_LOW, शून्य);
 		bt819_setbit(decoder, 0x01, 0, 1);
 		bt819_setbit(decoder, 0x01, 1, 1);
 		bt819_setbit(decoder, 0x01, 5, 1);
-		bt819_write(decoder, 0x18, 0x7f);
-		bt819_write(decoder, 0x19, 0x72);
+		bt819_ग_लिखो(decoder, 0x18, 0x7f);
+		bt819_ग_लिखो(decoder, 0x19, 0x72);
 		/* bt819_setbit(decoder, 0x1a,  5, 0); */
 		timing = &timing_data[0];
-	} else {
+	पूर्ण अन्यथा अणु
 		v4l2_dbg(1, debug, sd, "unsupported norm %llx\n",
-				(unsigned long long)std);
-		return -EINVAL;
-	}
-	bt819_write(decoder, 0x03,
+				(अचिन्हित दीर्घ दीर्घ)std);
+		वापस -EINVAL;
+	पूर्ण
+	bt819_ग_लिखो(decoder, 0x03,
 			(((timing->vdelay >> 8) & 0x03) << 6) |
 			(((timing->vactive >> 8) & 0x03) << 4) |
 			(((timing->hdelay >> 8) & 0x03) << 2) |
 			((timing->hactive >> 8) & 0x03));
-	bt819_write(decoder, 0x04, timing->vdelay & 0xff);
-	bt819_write(decoder, 0x05, timing->vactive & 0xff);
-	bt819_write(decoder, 0x06, timing->hdelay & 0xff);
-	bt819_write(decoder, 0x07, timing->hactive & 0xff);
-	bt819_write(decoder, 0x08, (timing->hscale >> 8) & 0xff);
-	bt819_write(decoder, 0x09, timing->hscale & 0xff);
+	bt819_ग_लिखो(decoder, 0x04, timing->vdelay & 0xff);
+	bt819_ग_लिखो(decoder, 0x05, timing->vactive & 0xff);
+	bt819_ग_लिखो(decoder, 0x06, timing->hdelay & 0xff);
+	bt819_ग_लिखो(decoder, 0x07, timing->hactive & 0xff);
+	bt819_ग_लिखो(decoder, 0x08, (timing->hscale >> 8) & 0xff);
+	bt819_ग_लिखो(decoder, 0x09, timing->hscale & 0xff);
 	decoder->norm = std;
-	v4l2_subdev_notify(sd, BT819_FIFO_RESET_HIGH, NULL);
-	return 0;
-}
+	v4l2_subdev_notअगरy(sd, BT819_FIFO_RESET_HIGH, शून्य);
+	वापस 0;
+पूर्ण
 
-static int bt819_s_routing(struct v4l2_subdev *sd,
+अटल पूर्णांक bt819_s_routing(काष्ठा v4l2_subdev *sd,
 			   u32 input, u32 output, u32 config)
-{
-	struct bt819 *decoder = to_bt819(sd);
+अणु
+	काष्ठा bt819 *decoder = to_bt819(sd);
 
 	v4l2_dbg(1, debug, sd, "set input %x\n", input);
 
-	if (input > 7)
-		return -EINVAL;
+	अगर (input > 7)
+		वापस -EINVAL;
 
-	if (sd->v4l2_dev == NULL || sd->v4l2_dev->notify == NULL)
+	अगर (sd->v4l2_dev == शून्य || sd->v4l2_dev->notअगरy == शून्य)
 		v4l2_err(sd, "no notify found!\n");
 
-	if (decoder->input != input) {
-		v4l2_subdev_notify(sd, BT819_FIFO_RESET_LOW, NULL);
+	अगर (decoder->input != input) अणु
+		v4l2_subdev_notअगरy(sd, BT819_FIFO_RESET_LOW, शून्य);
 		decoder->input = input;
 		/* select mode */
-		if (decoder->input == 0) {
+		अगर (decoder->input == 0) अणु
 			bt819_setbit(decoder, 0x0b, 6, 0);
 			bt819_setbit(decoder, 0x1a, 1, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			bt819_setbit(decoder, 0x0b, 6, 1);
 			bt819_setbit(decoder, 0x1a, 1, 0);
-		}
-		v4l2_subdev_notify(sd, BT819_FIFO_RESET_HIGH, NULL);
-	}
-	return 0;
-}
+		पूर्ण
+		v4l2_subdev_notअगरy(sd, BT819_FIFO_RESET_HIGH, शून्य);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bt819_s_stream(struct v4l2_subdev *sd, int enable)
-{
-	struct bt819 *decoder = to_bt819(sd);
+अटल पूर्णांक bt819_s_stream(काष्ठा v4l2_subdev *sd, पूर्णांक enable)
+अणु
+	काष्ठा bt819 *decoder = to_bt819(sd);
 
 	v4l2_dbg(1, debug, sd, "enable output %x\n", enable);
 
-	if (decoder->enable != enable) {
+	अगर (decoder->enable != enable) अणु
 		decoder->enable = enable;
 		bt819_setbit(decoder, 0x16, 7, !enable);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int bt819_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct v4l2_subdev *sd = to_sd(ctrl);
-	struct bt819 *decoder = to_bt819(sd);
-	int temp;
+अटल पूर्णांक bt819_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा v4l2_subdev *sd = to_sd(ctrl);
+	काष्ठा bt819 *decoder = to_bt819(sd);
+	पूर्णांक temp;
 
-	switch (ctrl->id) {
-	case V4L2_CID_BRIGHTNESS:
-		bt819_write(decoder, 0x0a, ctrl->val);
-		break;
+	चयन (ctrl->id) अणु
+	हाल V4L2_CID_BRIGHTNESS:
+		bt819_ग_लिखो(decoder, 0x0a, ctrl->val);
+		अवरोध;
 
-	case V4L2_CID_CONTRAST:
-		bt819_write(decoder, 0x0c, ctrl->val & 0xff);
+	हाल V4L2_CID_CONTRAST:
+		bt819_ग_लिखो(decoder, 0x0c, ctrl->val & 0xff);
 		bt819_setbit(decoder, 0x0b, 2, ((ctrl->val >> 8) & 0x01));
-		break;
+		अवरोध;
 
-	case V4L2_CID_SATURATION:
-		bt819_write(decoder, 0x0d, (ctrl->val >> 7) & 0xff);
+	हाल V4L2_CID_SATURATION:
+		bt819_ग_लिखो(decoder, 0x0d, (ctrl->val >> 7) & 0xff);
 		bt819_setbit(decoder, 0x0b, 1, ((ctrl->val >> 15) & 0x01));
 
 		/* Ratio between U gain and V gain must stay the same as
-		   the ratio between the default U and V gain values. */
+		   the ratio between the शेष U and V gain values. */
 		temp = (ctrl->val * 180) / 254;
-		bt819_write(decoder, 0x0e, (temp >> 7) & 0xff);
+		bt819_ग_लिखो(decoder, 0x0e, (temp >> 7) & 0xff);
 		bt819_setbit(decoder, 0x0b, 0, (temp >> 15) & 0x01);
-		break;
+		अवरोध;
 
-	case V4L2_CID_HUE:
-		bt819_write(decoder, 0x0f, ctrl->val);
-		break;
+	हाल V4L2_CID_HUE:
+		bt819_ग_लिखो(decoder, 0x0f, ctrl->val);
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static const struct v4l2_ctrl_ops bt819_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops bt819_ctrl_ops = अणु
 	.s_ctrl = bt819_s_ctrl,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_video_ops bt819_video_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_video_ops bt819_video_ops = अणु
 	.s_std = bt819_s_std,
 	.s_routing = bt819_s_routing,
 	.s_stream = bt819_s_stream,
 	.querystd = bt819_querystd,
 	.g_input_status = bt819_g_input_status,
-};
+पूर्ण;
 
-static const struct v4l2_subdev_ops bt819_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops bt819_ops = अणु
 	.video = &bt819_video_ops,
-};
+पूर्ण;
 
 /* ----------------------------------------------------------------------- */
 
-static int bt819_probe(struct i2c_client *client,
-			const struct i2c_device_id *id)
-{
-	int i, ver;
-	struct bt819 *decoder;
-	struct v4l2_subdev *sd;
-	const char *name;
+अटल पूर्णांक bt819_probe(काष्ठा i2c_client *client,
+			स्थिर काष्ठा i2c_device_id *id)
+अणु
+	पूर्णांक i, ver;
+	काष्ठा bt819 *decoder;
+	काष्ठा v4l2_subdev *sd;
+	स्थिर अक्षर *name;
 
-	/* Check if the adapter supports the needed features */
-	if (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
-		return -ENODEV;
+	/* Check अगर the adapter supports the needed features */
+	अगर (!i2c_check_functionality(client->adapter, I2C_FUNC_SMBUS_BYTE_DATA))
+		वापस -ENODEV;
 
-	decoder = devm_kzalloc(&client->dev, sizeof(*decoder), GFP_KERNEL);
-	if (decoder == NULL)
-		return -ENOMEM;
+	decoder = devm_kzalloc(&client->dev, माप(*decoder), GFP_KERNEL);
+	अगर (decoder == शून्य)
+		वापस -ENOMEM;
 	sd = &decoder->sd;
 	v4l2_i2c_subdev_init(sd, client, &bt819_ops);
 
-	ver = bt819_read(decoder, 0x17);
-	switch (ver & 0xf0) {
-	case 0x70:
+	ver = bt819_पढ़ो(decoder, 0x17);
+	चयन (ver & 0xf0) अणु
+	हाल 0x70:
 		name = "bt819a";
-		break;
-	case 0x60:
+		अवरोध;
+	हाल 0x60:
 		name = "bt817a";
-		break;
-	case 0x20:
+		अवरोध;
+	हाल 0x20:
 		name = "bt815a";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		v4l2_dbg(1, debug, sd,
 			"unknown chip version 0x%02x\n", ver);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	v4l_info(client, "%s found @ 0x%x (%s)\n", name,
 			client->addr << 1, client->adapter->name);
@@ -423,7 +424,7 @@ static int bt819_probe(struct i2c_client *client,
 	decoder->enable = 1;
 
 	i = bt819_init(sd);
-	if (i < 0)
+	अगर (i < 0)
 		v4l2_dbg(1, debug, sd, "init status %d\n", i);
 
 	v4l2_ctrl_handler_init(&decoder->hdl, 4);
@@ -436,43 +437,43 @@ static int bt819_probe(struct i2c_client *client,
 	v4l2_ctrl_new_std(&decoder->hdl, &bt819_ctrl_ops,
 			V4L2_CID_HUE, -128, 127, 1, 0);
 	sd->ctrl_handler = &decoder->hdl;
-	if (decoder->hdl.error) {
-		int err = decoder->hdl.error;
+	अगर (decoder->hdl.error) अणु
+		पूर्णांक err = decoder->hdl.error;
 
-		v4l2_ctrl_handler_free(&decoder->hdl);
-		return err;
-	}
+		v4l2_ctrl_handler_मुक्त(&decoder->hdl);
+		वापस err;
+	पूर्ण
 	v4l2_ctrl_handler_setup(&decoder->hdl);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int bt819_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
-	struct bt819 *decoder = to_bt819(sd);
+अटल पूर्णांक bt819_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
+	काष्ठा bt819 *decoder = to_bt819(sd);
 
-	v4l2_device_unregister_subdev(sd);
-	v4l2_ctrl_handler_free(&decoder->hdl);
-	return 0;
-}
+	v4l2_device_unरेजिस्टर_subdev(sd);
+	v4l2_ctrl_handler_मुक्त(&decoder->hdl);
+	वापस 0;
+पूर्ण
 
 /* ----------------------------------------------------------------------- */
 
-static const struct i2c_device_id bt819_id[] = {
-	{ "bt819a", 0 },
-	{ "bt817a", 0 },
-	{ "bt815a", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id bt819_id[] = अणु
+	अणु "bt819a", 0 पूर्ण,
+	अणु "bt817a", 0 पूर्ण,
+	अणु "bt815a", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, bt819_id);
 
-static struct i2c_driver bt819_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver bt819_driver = अणु
+	.driver = अणु
 		.name	= "bt819",
-	},
+	पूर्ण,
 	.probe		= bt819_probe,
-	.remove		= bt819_remove,
+	.हटाओ		= bt819_हटाओ,
 	.id_table	= bt819_id,
-};
+पूर्ण;
 
 module_i2c_driver(bt819_driver);

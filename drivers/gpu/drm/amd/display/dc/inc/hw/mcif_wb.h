@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2012-17 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,88 +23,88 @@
  *
  */
 
-#ifndef __DC_MCIF_WB_H__
-#define __DC_MCIF_WB_H__
+#अगर_अघोषित __DC_MCIF_WB_H__
+#घोषणा __DC_MCIF_WB_H__
 
-#include "dc_hw_types.h"
+#समावेश "dc_hw_types.h"
 
 
-enum mmhubbub_wbif_mode {
+क्रमागत mmhubbub_wbअगर_mode अणु
 	PACKED_444 = 0,
 	PACKED_444_FP16 = 1,
 	PLANAR_420_8BPC = 2,
 	PLANAR_420_10BPC = 3
-};
+पूर्ण;
 
-struct mcif_arb_params {
+काष्ठा mcअगर_arb_params अणु
 
-	unsigned int		time_per_pixel;
-	unsigned int		cli_watermark[4];
-	unsigned int		pstate_watermark[4];
-	unsigned int		arbitration_slice;
-	unsigned int		slice_lines;
-	unsigned int		max_scaled_time;
-	unsigned int		dram_speed_change_duration;
-};
+	अचिन्हित पूर्णांक		समय_per_pixel;
+	अचिन्हित पूर्णांक		cli_watermark[4];
+	अचिन्हित पूर्णांक		pstate_watermark[4];
+	अचिन्हित पूर्णांक		arbitration_slice;
+	अचिन्हित पूर्णांक		slice_lines;
+	अचिन्हित पूर्णांक		max_scaled_समय;
+	अचिन्हित पूर्णांक		dram_speed_change_duration;
+पूर्ण;
 
-struct mcif_irq_params {
-	unsigned int		sw_int_en;
-	unsigned int		sw_slice_int_en;
-	unsigned int		sw_overrun_int_en;
-	unsigned int		vce_int_en;
-	unsigned int		vce_slice_int_en;
-};
+काष्ठा mcअगर_irq_params अणु
+	अचिन्हित पूर्णांक		sw_पूर्णांक_en;
+	अचिन्हित पूर्णांक		sw_slice_पूर्णांक_en;
+	अचिन्हित पूर्णांक		sw_overrun_पूर्णांक_en;
+	अचिन्हित पूर्णांक		vce_पूर्णांक_en;
+	अचिन्हित पूर्णांक		vce_slice_पूर्णांक_en;
+पूर्ण;
 
 
-/* / - mcif_wb_frame_dump_info is the info of the dumping WB data */
-struct mcif_wb_frame_dump_info {
-	unsigned int		size;
-	unsigned int		width;
-	unsigned int		height;
-	unsigned int		luma_pitch;
-	unsigned int		chroma_pitch;
-	enum dwb_scaler_mode	format;
-};
+/* / - mcअगर_wb_frame_dump_info is the info of the dumping WB data */
+काष्ठा mcअगर_wb_frame_dump_info अणु
+	अचिन्हित पूर्णांक		size;
+	अचिन्हित पूर्णांक		width;
+	अचिन्हित पूर्णांक		height;
+	अचिन्हित पूर्णांक		luma_pitch;
+	अचिन्हित पूर्णांक		chroma_pitch;
+	क्रमागत dwb_scaler_mode	क्रमmat;
+पूर्ण;
 
-struct mcif_wb {
-	const struct mcif_wb_funcs *funcs;
-	struct dc_context *ctx;
-	int inst;
-};
+काष्ठा mcअगर_wb अणु
+	स्थिर काष्ठा mcअगर_wb_funcs *funcs;
+	काष्ठा dc_context *ctx;
+	पूर्णांक inst;
+पूर्ण;
 
-struct mcif_wb_funcs {
+काष्ठा mcअगर_wb_funcs अणु
 
-	void (*warmup_mcif)(
-		struct mcif_wb *mcif_wb,
-		struct mcif_warmup_params *params);
-	void (*enable_mcif)(struct mcif_wb *mcif_wb);
+	व्योम (*warmup_mcअगर)(
+		काष्ठा mcअगर_wb *mcअगर_wb,
+		काष्ठा mcअगर_warmup_params *params);
+	व्योम (*enable_mcअगर)(काष्ठा mcअगर_wb *mcअगर_wb);
 
-	void (*disable_mcif)(struct mcif_wb *mcif_wb);
+	व्योम (*disable_mcअगर)(काष्ठा mcअगर_wb *mcअगर_wb);
 
-	void (*config_mcif_buf)(
-		struct mcif_wb *mcif_wb,
-		struct mcif_buf_params *params,
-		unsigned int dest_height);
+	व्योम (*config_mcअगर_buf)(
+		काष्ठा mcअगर_wb *mcअगर_wb,
+		काष्ठा mcअगर_buf_params *params,
+		अचिन्हित पूर्णांक dest_height);
 
-	 void (*config_mcif_arb)(
-		struct mcif_wb *mcif_wb,
-		struct mcif_arb_params *params);
+	 व्योम (*config_mcअगर_arb)(
+		काष्ठा mcअगर_wb *mcअगर_wb,
+		काष्ठा mcअगर_arb_params *params);
 
-	 void (*config_mcif_irq)(
-		struct mcif_wb *mcif_wb,
-		struct mcif_irq_params *params);
+	 व्योम (*config_mcअगर_irq)(
+		काष्ठा mcअगर_wb *mcअगर_wb,
+		काष्ठा mcअगर_irq_params *params);
 
-	void (*dump_frame)(
-		struct mcif_wb *mcif_wb,
-		struct mcif_buf_params *mcif_params,
-		enum dwb_scaler_mode out_format,
-		unsigned int dest_width,
-		unsigned int dest_height,
-		struct mcif_wb_frame_dump_info *dump_info,
-		unsigned char *luma_buffer,
-		unsigned char *chroma_buffer,
-		unsigned char *dest_luma_buffer,
-		unsigned char *dest_chroma_buffer);
-};
+	व्योम (*dump_frame)(
+		काष्ठा mcअगर_wb *mcअगर_wb,
+		काष्ठा mcअगर_buf_params *mcअगर_params,
+		क्रमागत dwb_scaler_mode out_क्रमmat,
+		अचिन्हित पूर्णांक dest_width,
+		अचिन्हित पूर्णांक dest_height,
+		काष्ठा mcअगर_wb_frame_dump_info *dump_info,
+		अचिन्हित अक्षर *luma_buffer,
+		अचिन्हित अक्षर *chroma_buffer,
+		अचिन्हित अक्षर *dest_luma_buffer,
+		अचिन्हित अक्षर *dest_chroma_buffer);
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

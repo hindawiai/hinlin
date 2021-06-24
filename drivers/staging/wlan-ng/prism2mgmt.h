@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR MPL-1.1) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 OR MPL-1.1) */
 /* prism2mgmt.h
  *
  * Declares the mgmt command handler functions
@@ -15,17 +16,17 @@
  *
  *   Software distributed under the License is distributed on an "AS
  *   IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
- *   implied. See the License for the specific language governing
+ *   implied. See the License क्रम the specअगरic language governing
  *   rights and limitations under the License.
  *
  *   Alternatively, the contents of this file may be used under the
  *   terms of the GNU Public License version 2 (the "GPL"), in which
- *   case the provisions of the GPL are applicable instead of the
+ *   हाल the provisions of the GPL are applicable instead of the
  *   above.  If you wish to allow the use of your version of this file
  *   only under the terms of the GPL and not to allow others to use
  *   your version of this file under the MPL, indicate your decision
  *   by deleting the provisions above and replace them with the notice
- *   and other provisions required by the GPL.  If you do not delete
+ *   and other provisions required by the GPL.  If you करो not delete
  *   the provisions above, a recipient may use your version of this
  *   file under either the MPL or the GPL.
  *
@@ -45,9 +46,9 @@
  *
  * --------------------------------------------------------------------
  *
- * This file contains the constants and data structures for interaction
+ * This file contains the स्थिरants and data काष्ठाures क्रम पूर्णांकeraction
  * with the hfa384x Wireless LAN (WLAN) Media Access Controller (MAC).
- * The hfa384x is a portion of the Harris PRISM(tm) WLAN chipset.
+ * The hfa384x is a portion of the Harris PRISM(पंचांग) WLAN chipset.
  *
  * [Implementation and usage notes]
  *
@@ -58,31 +59,31 @@
  *    --------------------------------------------------------------------
  */
 
-#ifndef _PRISM2MGMT_H
-#define _PRISM2MGMT_H
+#अगर_अघोषित _PRISM2MGMT_H
+#घोषणा _PRISM2MGMT_H
 
-extern int prism2_reset_holdtime;
-extern int prism2_reset_settletime;
+बाह्य पूर्णांक prism2_reset_holdसमय;
+बाह्य पूर्णांक prism2_reset_settleसमय;
 
-u32 prism2sta_ifstate(struct wlandevice *wlandev, u32 ifstate);
+u32 prism2sta_अगरstate(काष्ठा wlandevice *wlandev, u32 अगरstate);
 
-void prism2sta_ev_info(struct wlandevice *wlandev,
-		       struct hfa384x_inf_frame *inf);
-void prism2sta_ev_txexc(struct wlandevice *wlandev, u16 status);
-void prism2sta_ev_tx(struct wlandevice *wlandev, u16 status);
-void prism2sta_ev_alloc(struct wlandevice *wlandev);
+व्योम prism2sta_ev_info(काष्ठा wlandevice *wlandev,
+		       काष्ठा hfa384x_inf_frame *inf);
+व्योम prism2sta_ev_txexc(काष्ठा wlandevice *wlandev, u16 status);
+व्योम prism2sta_ev_tx(काष्ठा wlandevice *wlandev, u16 status);
+व्योम prism2sta_ev_alloc(काष्ठा wlandevice *wlandev);
 
-int prism2mgmt_mibset_mibget(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_scan(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_scan_results(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_start(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_wlansniff(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_readpda(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_ramdl_state(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_ramdl_write(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_flashdl_state(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_flashdl_write(struct wlandevice *wlandev, void *msgp);
-int prism2mgmt_autojoin(struct wlandevice *wlandev, void *msgp);
+पूर्णांक prism2mgmt_mibset_mibget(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_scan(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_scan_results(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_start(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_wlansnअगरf(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_पढ़ोpda(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_ramdl_state(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_ramdl_ग_लिखो(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_flashdl_state(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_flashdl_ग_लिखो(काष्ठा wlandevice *wlandev, व्योम *msgp);
+पूर्णांक prism2mgmt_स्वतःjoin(काष्ठा wlandevice *wlandev, व्योम *msgp);
 
 /*---------------------------------------------------------------
  * conversion functions going between wlan message data types and
@@ -91,30 +92,30 @@ int prism2mgmt_autojoin(struct wlandevice *wlandev, void *msgp);
  */
 
 /* byte area conversion functions*/
-void prism2mgmt_bytearea2pstr(u8 *bytearea, struct p80211pstrd *pstr, int len);
+व्योम prism2mgmt_bytearea2pstr(u8 *bytearea, काष्ठा p80211pstrd *pstr, पूर्णांक len);
 
 /* byte string conversion functions*/
-void prism2mgmt_pstr2bytestr(struct hfa384x_bytestr *bytestr,
-			     struct p80211pstrd *pstr);
-void prism2mgmt_bytestr2pstr(struct hfa384x_bytestr *bytestr,
-			     struct p80211pstrd *pstr);
+व्योम prism2mgmt_pstr2bytestr(काष्ठा hfa384x_bytestr *bytestr,
+			     काष्ठा p80211pstrd *pstr);
+व्योम prism2mgmt_bytestr2pstr(काष्ठा hfa384x_bytestr *bytestr,
+			     काष्ठा p80211pstrd *pstr);
 
 /* functions to convert Group Addresses */
-void prism2mgmt_get_grpaddr(u32 did, struct p80211pstrd *pstr,
-			    struct hfa384x *priv);
-int prism2mgmt_set_grpaddr(u32 did,
-			   u8 *prism2buf, struct p80211pstrd *pstr,
-			   struct hfa384x *priv);
-int prism2mgmt_get_grpaddr_index(u32 did);
+व्योम prism2mgmt_get_grpaddr(u32 did, काष्ठा p80211pstrd *pstr,
+			    काष्ठा hfa384x *priv);
+पूर्णांक prism2mgmt_set_grpaddr(u32 did,
+			   u8 *prism2buf, काष्ठा p80211pstrd *pstr,
+			   काष्ठा hfa384x *priv);
+पूर्णांक prism2mgmt_get_grpaddr_index(u32 did);
 
-void prism2sta_processing_defer(struct work_struct *data);
+व्योम prism2sta_processing_defer(काष्ठा work_काष्ठा *data);
 
-void prism2sta_commsqual_defer(struct work_struct *data);
-void prism2sta_commsqual_timer(struct timer_list *t);
+व्योम prism2sta_commsqual_defer(काष्ठा work_काष्ठा *data);
+व्योम prism2sta_commsqual_समयr(काष्ठा समयr_list *t);
 
 /* Interface callback functions, passing data back up to the cfg80211 layer */
-void prism2_connect_result(struct wlandevice *wlandev, u8 failed);
-void prism2_disconnected(struct wlandevice *wlandev);
-void prism2_roamed(struct wlandevice *wlandev);
+व्योम prism2_connect_result(काष्ठा wlandevice *wlandev, u8 failed);
+व्योम prism2_disconnected(काष्ठा wlandevice *wlandev);
+व्योम prism2_roamed(काष्ठा wlandevice *wlandev);
 
-#endif
+#पूर्ण_अगर

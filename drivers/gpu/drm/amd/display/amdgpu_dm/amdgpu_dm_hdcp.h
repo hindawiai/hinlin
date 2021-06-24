@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,54 +24,54 @@
  *
  */
 
-#ifndef AMDGPU_DM_AMDGPU_DM_HDCP_H_
-#define AMDGPU_DM_AMDGPU_DM_HDCP_H_
+#अगर_अघोषित AMDGPU_DM_AMDGPU_DM_HDCP_H_
+#घोषणा AMDGPU_DM_AMDGPU_DM_HDCP_H_
 
-#include "mod_hdcp.h"
-#include "hdcp.h"
-#include "dc.h"
-#include "dm_cp_psp.h"
-#include "amdgpu.h"
+#समावेश "mod_hdcp.h"
+#समावेश "hdcp.h"
+#समावेश "dc.h"
+#समावेश "dm_cp_psp.h"
+#समावेश "amdgpu.h"
 
-struct mod_hdcp;
-struct mod_hdcp_link;
-struct mod_hdcp_display;
-struct cp_psp;
+काष्ठा mod_hdcp;
+काष्ठा mod_hdcp_link;
+काष्ठा mod_hdcp_display;
+काष्ठा cp_psp;
 
-struct hdcp_workqueue {
-	struct work_struct cpirq_work;
-	struct work_struct property_update_work;
-	struct delayed_work callback_dwork;
-	struct delayed_work watchdog_timer_dwork;
-	struct delayed_work property_validate_dwork;
-	struct amdgpu_dm_connector *aconnector;
-	struct mutex mutex;
+काष्ठा hdcp_workqueue अणु
+	काष्ठा work_काष्ठा cpirq_work;
+	काष्ठा work_काष्ठा property_update_work;
+	काष्ठा delayed_work callback_dwork;
+	काष्ठा delayed_work watchकरोg_समयr_dwork;
+	काष्ठा delayed_work property_validate_dwork;
+	काष्ठा amdgpu_dm_connector *aconnector;
+	काष्ठा mutex mutex;
 
-	struct mod_hdcp hdcp;
-	struct mod_hdcp_output output;
-	struct mod_hdcp_display display;
-	struct mod_hdcp_link link;
+	काष्ठा mod_hdcp hdcp;
+	काष्ठा mod_hdcp_output output;
+	काष्ठा mod_hdcp_display display;
+	काष्ठा mod_hdcp_link link;
 
-	enum mod_hdcp_encryption_status encryption_status;
-	uint8_t max_link;
+	क्रमागत mod_hdcp_encryption_status encryption_status;
+	uपूर्णांक8_t max_link;
 
-	uint8_t *srm;
-	uint8_t *srm_temp;
-	uint32_t srm_version;
-	uint32_t srm_size;
-	struct bin_attribute attr;
-};
+	uपूर्णांक8_t *srm;
+	uपूर्णांक8_t *srm_temp;
+	uपूर्णांक32_t srm_version;
+	uपूर्णांक32_t srm_size;
+	काष्ठा bin_attribute attr;
+पूर्ण;
 
-void hdcp_update_display(struct hdcp_workqueue *hdcp_work,
-			 unsigned int link_index,
-			 struct amdgpu_dm_connector *aconnector,
-			 uint8_t content_type,
+व्योम hdcp_update_display(काष्ठा hdcp_workqueue *hdcp_work,
+			 अचिन्हित पूर्णांक link_index,
+			 काष्ठा amdgpu_dm_connector *aconnector,
+			 uपूर्णांक8_t content_type,
 			 bool enable_encryption);
 
-void hdcp_reset_display(struct hdcp_workqueue *work, unsigned int link_index);
-void hdcp_handle_cpirq(struct hdcp_workqueue *work, unsigned int link_index);
-void hdcp_destroy(struct kobject *kobj, struct hdcp_workqueue *work);
+व्योम hdcp_reset_display(काष्ठा hdcp_workqueue *work, अचिन्हित पूर्णांक link_index);
+व्योम hdcp_handle_cpirq(काष्ठा hdcp_workqueue *work, अचिन्हित पूर्णांक link_index);
+व्योम hdcp_destroy(काष्ठा kobject *kobj, काष्ठा hdcp_workqueue *work);
 
-struct hdcp_workqueue *hdcp_create_workqueue(struct amdgpu_device *adev, struct cp_psp *cp_psp, struct dc *dc);
+काष्ठा hdcp_workqueue *hdcp_create_workqueue(काष्ठा amdgpu_device *adev, काष्ठा cp_psp *cp_psp, काष्ठा dc *dc);
 
-#endif /* AMDGPU_DM_AMDGPU_DM_HDCP_H_ */
+#पूर्ण_अगर /* AMDGPU_DM_AMDGPU_DM_HDCP_H_ */

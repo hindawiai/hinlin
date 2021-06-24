@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: ISC
+<शैली गुरु>
+// SPDX-License-Identअगरier: ISC
 
-#include <linux/of.h>
-#include "mt7603.h"
-#include "eeprom.h"
+#समावेश <linux/of.h>
+#समावेश "mt7603.h"
+#समावेश "eeprom.h"
 
-static int
-mt7603_efuse_read(struct mt7603_dev *dev, u32 base, u16 addr, u8 *data)
-{
+अटल पूर्णांक
+mt7603_efuse_पढ़ो(काष्ठा mt7603_dev *dev, u32 base, u16 addr, u8 *data)
+अणु
 	u32 val;
-	int i;
+	पूर्णांक i;
 
 	val = mt76_rr(dev, base + MT_EFUSE_CTRL);
 	val &= ~(MT_EFUSE_CTRL_AIN |
@@ -17,171 +18,171 @@ mt7603_efuse_read(struct mt7603_dev *dev, u32 base, u16 addr, u8 *data)
 	val |= MT_EFUSE_CTRL_KICK;
 	mt76_wr(dev, base + MT_EFUSE_CTRL, val);
 
-	if (!mt76_poll(dev, base + MT_EFUSE_CTRL, MT_EFUSE_CTRL_KICK, 0, 1000))
-		return -ETIMEDOUT;
+	अगर (!mt76_poll(dev, base + MT_EFUSE_CTRL, MT_EFUSE_CTRL_KICK, 0, 1000))
+		वापस -ETIMEDOUT;
 
 	udelay(2);
 
 	val = mt76_rr(dev, base + MT_EFUSE_CTRL);
-	if ((val & MT_EFUSE_CTRL_AOUT) == MT_EFUSE_CTRL_AOUT ||
-	    WARN_ON_ONCE(!(val & MT_EFUSE_CTRL_VALID))) {
-		memset(data, 0xff, 16);
-		return 0;
-	}
+	अगर ((val & MT_EFUSE_CTRL_AOUT) == MT_EFUSE_CTRL_AOUT ||
+	    WARN_ON_ONCE(!(val & MT_EFUSE_CTRL_VALID))) अणु
+		स_रखो(data, 0xff, 16);
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < 4; i++) {
+	क्रम (i = 0; i < 4; i++) अणु
 		val = mt76_rr(dev, base + MT_EFUSE_RDATA(i));
 		put_unaligned_le32(val, data + 4 * i);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-mt7603_efuse_init(struct mt7603_dev *dev)
-{
+अटल पूर्णांक
+mt7603_efuse_init(काष्ठा mt7603_dev *dev)
+अणु
 	u32 base = mt7603_reg_map(dev, MT_EFUSE_BASE);
-	int len = MT7603_EEPROM_SIZE;
-	void *buf;
-	int ret, i;
+	पूर्णांक len = MT7603_EEPROM_SIZE;
+	व्योम *buf;
+	पूर्णांक ret, i;
 
-	if (mt76_rr(dev, base + MT_EFUSE_BASE_CTRL) & MT_EFUSE_BASE_CTRL_EMPTY)
-		return 0;
+	अगर (mt76_rr(dev, base + MT_EFUSE_BASE_CTRL) & MT_EFUSE_BASE_CTRL_EMPTY)
+		वापस 0;
 
 	dev->mt76.otp.data = devm_kzalloc(dev->mt76.dev, len, GFP_KERNEL);
 	dev->mt76.otp.size = len;
-	if (!dev->mt76.otp.data)
-		return -ENOMEM;
+	अगर (!dev->mt76.otp.data)
+		वापस -ENOMEM;
 
 	buf = dev->mt76.otp.data;
-	for (i = 0; i + 16 <= len; i += 16) {
-		ret = mt7603_efuse_read(dev, base, i, buf + i);
-		if (ret)
-			return ret;
-	}
+	क्रम (i = 0; i + 16 <= len; i += 16) अणु
+		ret = mt7603_efuse_पढ़ो(dev, base, i, buf + i);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool
-mt7603_has_cal_free_data(struct mt7603_dev *dev, u8 *efuse)
-{
-	if (!efuse[MT_EE_TEMP_SENSOR_CAL])
-		return false;
+अटल bool
+mt7603_has_cal_मुक्त_data(काष्ठा mt7603_dev *dev, u8 *efuse)
+अणु
+	अगर (!efuse[MT_EE_TEMP_SENSOR_CAL])
+		वापस false;
 
-	if (get_unaligned_le16(efuse + MT_EE_TX_POWER_0_START_2G) == 0)
-		return false;
+	अगर (get_unaligned_le16(efuse + MT_EE_TX_POWER_0_START_2G) == 0)
+		वापस false;
 
-	if (get_unaligned_le16(efuse + MT_EE_TX_POWER_1_START_2G) == 0)
-		return false;
+	अगर (get_unaligned_le16(efuse + MT_EE_TX_POWER_1_START_2G) == 0)
+		वापस false;
 
-	if (!efuse[MT_EE_CP_FT_VERSION])
-		return false;
+	अगर (!efuse[MT_EE_CP_FT_VERSION])
+		वापस false;
 
-	if (!efuse[MT_EE_XTAL_FREQ_OFFSET])
-		return false;
+	अगर (!efuse[MT_EE_XTAL_FREQ_OFFSET])
+		वापस false;
 
-	if (!efuse[MT_EE_XTAL_WF_RFCAL])
-		return false;
+	अगर (!efuse[MT_EE_XTAL_WF_RFCAL])
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-mt7603_apply_cal_free_data(struct mt7603_dev *dev, u8 *efuse)
-{
-	static const u8 cal_free_bytes[] = {
+अटल व्योम
+mt7603_apply_cal_मुक्त_data(काष्ठा mt7603_dev *dev, u8 *efuse)
+अणु
+	अटल स्थिर u8 cal_मुक्त_bytes[] = अणु
 		MT_EE_TEMP_SENSOR_CAL,
 		MT_EE_CP_FT_VERSION,
 		MT_EE_XTAL_FREQ_OFFSET,
 		MT_EE_XTAL_WF_RFCAL,
-		/* Skip for MT7628 */
+		/* Skip क्रम MT7628 */
 		MT_EE_TX_POWER_0_START_2G,
 		MT_EE_TX_POWER_0_START_2G + 1,
 		MT_EE_TX_POWER_1_START_2G,
 		MT_EE_TX_POWER_1_START_2G + 1,
-	};
-	struct device_node *np = dev->mt76.dev->of_node;
+	पूर्ण;
+	काष्ठा device_node *np = dev->mt76.dev->of_node;
 	u8 *eeprom = dev->mt76.eeprom.data;
-	int n = ARRAY_SIZE(cal_free_bytes);
-	int i;
+	पूर्णांक n = ARRAY_SIZE(cal_मुक्त_bytes);
+	पूर्णांक i;
 
-	if (!np || !of_property_read_bool(np, "mediatek,eeprom-merge-otp"))
-		return;
+	अगर (!np || !of_property_पढ़ो_bool(np, "mediatek,eeprom-merge-otp"))
+		वापस;
 
-	if (!mt7603_has_cal_free_data(dev, efuse))
-		return;
+	अगर (!mt7603_has_cal_मुक्त_data(dev, efuse))
+		वापस;
 
-	if (is_mt7628(dev))
+	अगर (is_mt7628(dev))
 		n -= 4;
 
-	for (i = 0; i < n; i++) {
-		int offset = cal_free_bytes[i];
+	क्रम (i = 0; i < n; i++) अणु
+		पूर्णांक offset = cal_मुक्त_bytes[i];
 
 		eeprom[offset] = efuse[offset];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-mt7603_eeprom_load(struct mt7603_dev *dev)
-{
-	int ret;
+अटल पूर्णांक
+mt7603_eeprom_load(काष्ठा mt7603_dev *dev)
+अणु
+	पूर्णांक ret;
 
 	ret = mt76_eeprom_init(&dev->mt76, MT7603_EEPROM_SIZE);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	return mt7603_efuse_init(dev);
-}
+	वापस mt7603_efuse_init(dev);
+पूर्ण
 
-static int mt7603_check_eeprom(struct mt76_dev *dev)
-{
+अटल पूर्णांक mt7603_check_eeprom(काष्ठा mt76_dev *dev)
+अणु
 	u16 val = get_unaligned_le16(dev->eeprom.data);
 
-	switch (val) {
-	case 0x7628:
-	case 0x7603:
-	case 0x7600:
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (val) अणु
+	हाल 0x7628:
+	हाल 0x7603:
+	हाल 0x7600:
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static inline bool is_mt7688(struct mt7603_dev *dev)
-{
-	return mt76_rr(dev, MT_EFUSE_BASE + 0x64) & BIT(4);
-}
+अटल अंतरभूत bool is_mt7688(काष्ठा mt7603_dev *dev)
+अणु
+	वापस mt76_rr(dev, MT_EFUSE_BASE + 0x64) & BIT(4);
+पूर्ण
 
-int mt7603_eeprom_init(struct mt7603_dev *dev)
-{
+पूर्णांक mt7603_eeprom_init(काष्ठा mt7603_dev *dev)
+अणु
 	u8 *eeprom;
-	int ret;
+	पूर्णांक ret;
 
 	ret = mt7603_eeprom_load(dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (dev->mt76.otp.data) {
-		if (mt7603_check_eeprom(&dev->mt76) == 0)
-			mt7603_apply_cal_free_data(dev, dev->mt76.otp.data);
-		else
-			memcpy(dev->mt76.eeprom.data, dev->mt76.otp.data,
+	अगर (dev->mt76.otp.data) अणु
+		अगर (mt7603_check_eeprom(&dev->mt76) == 0)
+			mt7603_apply_cal_मुक्त_data(dev, dev->mt76.otp.data);
+		अन्यथा
+			स_नकल(dev->mt76.eeprom.data, dev->mt76.otp.data,
 			       MT7603_EEPROM_SIZE);
-	}
+	पूर्ण
 
 	eeprom = (u8 *)dev->mt76.eeprom.data;
 	dev->mphy.cap.has_2ghz = true;
-	memcpy(dev->mphy.macaddr, eeprom + MT_EE_MAC_ADDR, ETH_ALEN);
+	स_नकल(dev->mphy.macaddr, eeprom + MT_EE_MAC_ADDR, ETH_ALEN);
 
-	/* Check for 1SS devices */
+	/* Check क्रम 1SS devices */
 	dev->mphy.antenna_mask = 3;
-	if (FIELD_GET(MT_EE_NIC_CONF_0_RX_PATH, eeprom[MT_EE_NIC_CONF_0]) == 1 ||
+	अगर (FIELD_GET(MT_EE_NIC_CONF_0_RX_PATH, eeprom[MT_EE_NIC_CONF_0]) == 1 ||
 	    FIELD_GET(MT_EE_NIC_CONF_0_TX_PATH, eeprom[MT_EE_NIC_CONF_0]) == 1 ||
 	    is_mt7688(dev))
 		dev->mphy.antenna_mask = 1;
 
 	mt76_eeprom_override(&dev->mphy);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

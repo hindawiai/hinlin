@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2001, 2002 Sistina Software (UK) Limited.
  * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
@@ -5,649 +6,649 @@
  * This file is released under the GPL.
  */
 
-#include "dm-core.h"
-#include "dm-rq.h"
-#include "dm-uevent.h"
+#समावेश "dm-core.h"
+#समावेश "dm-rq.h"
+#समावेश "dm-uevent.h"
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/mutex.h>
-#include <linux/sched/mm.h>
-#include <linux/sched/signal.h>
-#include <linux/blkpg.h>
-#include <linux/bio.h>
-#include <linux/mempool.h>
-#include <linux/dax.h>
-#include <linux/slab.h>
-#include <linux/idr.h>
-#include <linux/uio.h>
-#include <linux/hdreg.h>
-#include <linux/delay.h>
-#include <linux/wait.h>
-#include <linux/pr.h>
-#include <linux/refcount.h>
-#include <linux/part_stat.h>
-#include <linux/blk-crypto.h>
-#include <linux/keyslot-manager.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/blkpg.h>
+#समावेश <linux/bपन.स>
+#समावेश <linux/mempool.h>
+#समावेश <linux/dax.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/uपन.स>
+#समावेश <linux/hdreg.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/pr.h>
+#समावेश <linux/refcount.h>
+#समावेश <linux/part_स्थिति.स>
+#समावेश <linux/blk-crypto.h>
+#समावेश <linux/keyslot-manager.h>
 
-#define DM_MSG_PREFIX "core"
+#घोषणा DM_MSG_PREFIX "core"
 
 /*
  * Cookies are numeric values sent with CHANGE and REMOVE
- * uevents while resuming, removing or renaming the device.
+ * uevents जबतक resuming, removing or renaming the device.
  */
-#define DM_COOKIE_ENV_VAR_NAME "DM_COOKIE"
-#define DM_COOKIE_LENGTH 24
+#घोषणा DM_COOKIE_ENV_VAR_NAME "DM_COOKIE"
+#घोषणा DM_COOKIE_LENGTH 24
 
-static const char *_name = DM_NAME;
+अटल स्थिर अक्षर *_name = DM_NAME;
 
-static unsigned int major = 0;
-static unsigned int _major = 0;
+अटल अचिन्हित पूर्णांक major = 0;
+अटल अचिन्हित पूर्णांक _major = 0;
 
-static DEFINE_IDR(_minor_idr);
+अटल DEFINE_IDR(_minor_idr);
 
-static DEFINE_SPINLOCK(_minor_lock);
+अटल DEFINE_SPINLOCK(_minor_lock);
 
-static void do_deferred_remove(struct work_struct *w);
+अटल व्योम करो_deferred_हटाओ(काष्ठा work_काष्ठा *w);
 
-static DECLARE_WORK(deferred_remove_work, do_deferred_remove);
+अटल DECLARE_WORK(deferred_हटाओ_work, करो_deferred_हटाओ);
 
-static struct workqueue_struct *deferred_remove_workqueue;
+अटल काष्ठा workqueue_काष्ठा *deferred_हटाओ_workqueue;
 
 atomic_t dm_global_event_nr = ATOMIC_INIT(0);
 DECLARE_WAIT_QUEUE_HEAD(dm_global_eventq);
 
-void dm_issue_global_event(void)
-{
+व्योम dm_issue_global_event(व्योम)
+अणु
 	atomic_inc(&dm_global_event_nr);
 	wake_up(&dm_global_eventq);
-}
+पूर्ण
 
 /*
  * One of these is allocated (on-stack) per original bio.
  */
-struct clone_info {
-	struct dm_table *map;
-	struct bio *bio;
-	struct dm_io *io;
+काष्ठा clone_info अणु
+	काष्ठा dm_table *map;
+	काष्ठा bio *bio;
+	काष्ठा dm_io *io;
 	sector_t sector;
-	unsigned sector_count;
-};
+	अचिन्हित sector_count;
+पूर्ण;
 
 /*
  * One of these is allocated per clone bio.
  */
-#define DM_TIO_MAGIC 7282014
-struct dm_target_io {
-	unsigned magic;
-	struct dm_io *io;
-	struct dm_target *ti;
-	unsigned target_bio_nr;
-	unsigned *len_ptr;
+#घोषणा DM_TIO_MAGIC 7282014
+काष्ठा dm_target_io अणु
+	अचिन्हित magic;
+	काष्ठा dm_io *io;
+	काष्ठा dm_target *ti;
+	अचिन्हित target_bio_nr;
+	अचिन्हित *len_ptr;
 	bool inside_dm_io;
-	struct bio clone;
-};
+	काष्ठा bio clone;
+पूर्ण;
 
 /*
  * One of these is allocated per original bio.
- * It contains the first clone used for that original.
+ * It contains the first clone used क्रम that original.
  */
-#define DM_IO_MAGIC 5191977
-struct dm_io {
-	unsigned magic;
-	struct mapped_device *md;
+#घोषणा DM_IO_MAGIC 5191977
+काष्ठा dm_io अणु
+	अचिन्हित magic;
+	काष्ठा mapped_device *md;
 	blk_status_t status;
 	atomic_t io_count;
-	struct bio *orig_bio;
-	unsigned long start_time;
+	काष्ठा bio *orig_bio;
+	अचिन्हित दीर्घ start_समय;
 	spinlock_t endio_lock;
-	struct dm_stats_aux stats_aux;
+	काष्ठा dm_stats_aux stats_aux;
 	/* last member of dm_target_io is 'struct bio' */
-	struct dm_target_io tio;
-};
+	काष्ठा dm_target_io tio;
+पूर्ण;
 
-#define DM_TARGET_IO_BIO_OFFSET (offsetof(struct dm_target_io, clone))
-#define DM_IO_BIO_OFFSET \
-	(offsetof(struct dm_target_io, clone) + offsetof(struct dm_io, tio))
+#घोषणा DM_TARGET_IO_BIO_OFFSET (दुरत्व(काष्ठा dm_target_io, clone))
+#घोषणा DM_IO_BIO_OFFSET \
+	(दुरत्व(काष्ठा dm_target_io, clone) + दुरत्व(काष्ठा dm_io, tio))
 
-void *dm_per_bio_data(struct bio *bio, size_t data_size)
-{
-	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-	if (!tio->inside_dm_io)
-		return (char *)bio - DM_TARGET_IO_BIO_OFFSET - data_size;
-	return (char *)bio - DM_IO_BIO_OFFSET - data_size;
-}
+व्योम *dm_per_bio_data(काष्ठा bio *bio, माप_प्रकार data_size)
+अणु
+	काष्ठा dm_target_io *tio = container_of(bio, काष्ठा dm_target_io, clone);
+	अगर (!tio->inside_dm_io)
+		वापस (अक्षर *)bio - DM_TARGET_IO_BIO_OFFSET - data_size;
+	वापस (अक्षर *)bio - DM_IO_BIO_OFFSET - data_size;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_per_bio_data);
 
-struct bio *dm_bio_from_per_bio_data(void *data, size_t data_size)
-{
-	struct dm_io *io = (struct dm_io *)((char *)data + data_size);
-	if (io->magic == DM_IO_MAGIC)
-		return (struct bio *)((char *)io + DM_IO_BIO_OFFSET);
+काष्ठा bio *dm_bio_from_per_bio_data(व्योम *data, माप_प्रकार data_size)
+अणु
+	काष्ठा dm_io *io = (काष्ठा dm_io *)((अक्षर *)data + data_size);
+	अगर (io->magic == DM_IO_MAGIC)
+		वापस (काष्ठा bio *)((अक्षर *)io + DM_IO_BIO_OFFSET);
 	BUG_ON(io->magic != DM_TIO_MAGIC);
-	return (struct bio *)((char *)io + DM_TARGET_IO_BIO_OFFSET);
-}
+	वापस (काष्ठा bio *)((अक्षर *)io + DM_TARGET_IO_BIO_OFFSET);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bio_from_per_bio_data);
 
-unsigned dm_bio_get_target_bio_nr(const struct bio *bio)
-{
-	return container_of(bio, struct dm_target_io, clone)->target_bio_nr;
-}
+अचिन्हित dm_bio_get_target_bio_nr(स्थिर काष्ठा bio *bio)
+अणु
+	वापस container_of(bio, काष्ठा dm_target_io, clone)->target_bio_nr;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_bio_get_target_bio_nr);
 
-#define MINOR_ALLOCED ((void *)-1)
+#घोषणा MINOR_ALLOCED ((व्योम *)-1)
 
 /*
- * Bits for the md->flags field.
+ * Bits क्रम the md->flags field.
  */
-#define DMF_BLOCK_IO_FOR_SUSPEND 0
-#define DMF_SUSPENDED 1
-#define DMF_FROZEN 2
-#define DMF_FREEING 3
-#define DMF_DELETING 4
-#define DMF_NOFLUSH_SUSPENDING 5
-#define DMF_DEFERRED_REMOVE 6
-#define DMF_SUSPENDED_INTERNALLY 7
-#define DMF_POST_SUSPENDING 8
+#घोषणा DMF_BLOCK_IO_FOR_SUSPEND 0
+#घोषणा DMF_SUSPENDED 1
+#घोषणा DMF_FROZEN 2
+#घोषणा DMF_FREEING 3
+#घोषणा DMF_DELETING 4
+#घोषणा DMF_NOFLUSH_SUSPENDING 5
+#घोषणा DMF_DEFERRED_REMOVE 6
+#घोषणा DMF_SUSPENDED_INTERNALLY 7
+#घोषणा DMF_POST_SUSPENDING 8
 
-#define DM_NUMA_NODE NUMA_NO_NODE
-static int dm_numa_node = DM_NUMA_NODE;
+#घोषणा DM_NUMA_NODE NUMA_NO_NODE
+अटल पूर्णांक dm_numa_node = DM_NUMA_NODE;
 
-#define DEFAULT_SWAP_BIOS	(8 * 1048576 / PAGE_SIZE)
-static int swap_bios = DEFAULT_SWAP_BIOS;
-static int get_swap_bios(void)
-{
-	int latch = READ_ONCE(swap_bios);
-	if (unlikely(latch <= 0))
+#घोषणा DEFAULT_SWAP_BIOS	(8 * 1048576 / PAGE_SIZE)
+अटल पूर्णांक swap_bios = DEFAULT_SWAP_BIOS;
+अटल पूर्णांक get_swap_bios(व्योम)
+अणु
+	पूर्णांक latch = READ_ONCE(swap_bios);
+	अगर (unlikely(latch <= 0))
 		latch = DEFAULT_SWAP_BIOS;
-	return latch;
-}
+	वापस latch;
+पूर्ण
 
 /*
- * For mempools pre-allocation at the table loading time.
+ * For mempools pre-allocation at the table loading समय.
  */
-struct dm_md_mempools {
-	struct bio_set bs;
-	struct bio_set io_bs;
-};
+काष्ठा dm_md_mempools अणु
+	काष्ठा bio_set bs;
+	काष्ठा bio_set io_bs;
+पूर्ण;
 
-struct table_device {
-	struct list_head list;
+काष्ठा table_device अणु
+	काष्ठा list_head list;
 	refcount_t count;
-	struct dm_dev dm_dev;
-};
+	काष्ठा dm_dev dm_dev;
+पूर्ण;
 
 /*
  * Bio-based DM's mempools' reserved IOs set by the user.
  */
-#define RESERVED_BIO_BASED_IOS		16
-static unsigned reserved_bio_based_ios = RESERVED_BIO_BASED_IOS;
+#घोषणा RESERVED_BIO_BASED_IOS		16
+अटल अचिन्हित reserved_bio_based_ios = RESERVED_BIO_BASED_IOS;
 
-static int __dm_get_module_param_int(int *module_param, int min, int max)
-{
-	int param = READ_ONCE(*module_param);
-	int modified_param = 0;
-	bool modified = true;
+अटल पूर्णांक __dm_get_module_param_पूर्णांक(पूर्णांक *module_param, पूर्णांक min, पूर्णांक max)
+अणु
+	पूर्णांक param = READ_ONCE(*module_param);
+	पूर्णांक modअगरied_param = 0;
+	bool modअगरied = true;
 
-	if (param < min)
-		modified_param = min;
-	else if (param > max)
-		modified_param = max;
-	else
-		modified = false;
+	अगर (param < min)
+		modअगरied_param = min;
+	अन्यथा अगर (param > max)
+		modअगरied_param = max;
+	अन्यथा
+		modअगरied = false;
 
-	if (modified) {
-		(void)cmpxchg(module_param, param, modified_param);
-		param = modified_param;
-	}
+	अगर (modअगरied) अणु
+		(व्योम)cmpxchg(module_param, param, modअगरied_param);
+		param = modअगरied_param;
+	पूर्ण
 
-	return param;
-}
+	वापस param;
+पूर्ण
 
-unsigned __dm_get_module_param(unsigned *module_param,
-			       unsigned def, unsigned max)
-{
-	unsigned param = READ_ONCE(*module_param);
-	unsigned modified_param = 0;
+अचिन्हित __dm_get_module_param(अचिन्हित *module_param,
+			       अचिन्हित def, अचिन्हित max)
+अणु
+	अचिन्हित param = READ_ONCE(*module_param);
+	अचिन्हित modअगरied_param = 0;
 
-	if (!param)
-		modified_param = def;
-	else if (param > max)
-		modified_param = max;
+	अगर (!param)
+		modअगरied_param = def;
+	अन्यथा अगर (param > max)
+		modअगरied_param = max;
 
-	if (modified_param) {
-		(void)cmpxchg(module_param, param, modified_param);
-		param = modified_param;
-	}
+	अगर (modअगरied_param) अणु
+		(व्योम)cmpxchg(module_param, param, modअगरied_param);
+		param = modअगरied_param;
+	पूर्ण
 
-	return param;
-}
+	वापस param;
+पूर्ण
 
-unsigned dm_get_reserved_bio_based_ios(void)
-{
-	return __dm_get_module_param(&reserved_bio_based_ios,
+अचिन्हित dm_get_reserved_bio_based_ios(व्योम)
+अणु
+	वापस __dm_get_module_param(&reserved_bio_based_ios,
 				     RESERVED_BIO_BASED_IOS, DM_RESERVED_MAX_IOS);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_get_reserved_bio_based_ios);
 
-static unsigned dm_get_numa_node(void)
-{
-	return __dm_get_module_param_int(&dm_numa_node,
+अटल अचिन्हित dm_get_numa_node(व्योम)
+अणु
+	वापस __dm_get_module_param_पूर्णांक(&dm_numa_node,
 					 DM_NUMA_NODE, num_online_nodes() - 1);
-}
+पूर्ण
 
-static int __init local_init(void)
-{
-	int r;
+अटल पूर्णांक __init local_init(व्योम)
+अणु
+	पूर्णांक r;
 
 	r = dm_uevent_init();
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	deferred_remove_workqueue = alloc_workqueue("kdmremove", WQ_UNBOUND, 1);
-	if (!deferred_remove_workqueue) {
+	deferred_हटाओ_workqueue = alloc_workqueue("kdmremove", WQ_UNBOUND, 1);
+	अगर (!deferred_हटाओ_workqueue) अणु
 		r = -ENOMEM;
-		goto out_uevent_exit;
-	}
+		जाओ out_uevent_निकास;
+	पूर्ण
 
 	_major = major;
-	r = register_blkdev(_major, _name);
-	if (r < 0)
-		goto out_free_workqueue;
+	r = रेजिस्टर_blkdev(_major, _name);
+	अगर (r < 0)
+		जाओ out_मुक्त_workqueue;
 
-	if (!_major)
+	अगर (!_major)
 		_major = r;
 
-	return 0;
+	वापस 0;
 
-out_free_workqueue:
-	destroy_workqueue(deferred_remove_workqueue);
-out_uevent_exit:
-	dm_uevent_exit();
+out_मुक्त_workqueue:
+	destroy_workqueue(deferred_हटाओ_workqueue);
+out_uevent_निकास:
+	dm_uevent_निकास();
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void local_exit(void)
-{
+अटल व्योम local_निकास(व्योम)
+अणु
 	flush_scheduled_work();
-	destroy_workqueue(deferred_remove_workqueue);
+	destroy_workqueue(deferred_हटाओ_workqueue);
 
-	unregister_blkdev(_major, _name);
-	dm_uevent_exit();
+	unरेजिस्टर_blkdev(_major, _name);
+	dm_uevent_निकास();
 
 	_major = 0;
 
 	DMINFO("cleaned up");
-}
+पूर्ण
 
-static int (*_inits[])(void) __initdata = {
+अटल पूर्णांक (*_inits[])(व्योम) __initdata = अणु
 	local_init,
 	dm_target_init,
 	dm_linear_init,
 	dm_stripe_init,
 	dm_io_init,
 	dm_kcopyd_init,
-	dm_interface_init,
+	dm_पूर्णांकerface_init,
 	dm_statistics_init,
-};
+पूर्ण;
 
-static void (*_exits[])(void) = {
-	local_exit,
-	dm_target_exit,
-	dm_linear_exit,
-	dm_stripe_exit,
-	dm_io_exit,
-	dm_kcopyd_exit,
-	dm_interface_exit,
-	dm_statistics_exit,
-};
+अटल व्योम (*_निकासs[])(व्योम) = अणु
+	local_निकास,
+	dm_target_निकास,
+	dm_linear_निकास,
+	dm_stripe_निकास,
+	dm_io_निकास,
+	dm_kcopyd_निकास,
+	dm_पूर्णांकerface_निकास,
+	dm_statistics_निकास,
+पूर्ण;
 
-static int __init dm_init(void)
-{
-	const int count = ARRAY_SIZE(_inits);
+अटल पूर्णांक __init dm_init(व्योम)
+अणु
+	स्थिर पूर्णांक count = ARRAY_SIZE(_inits);
 
-	int r, i;
+	पूर्णांक r, i;
 
-	for (i = 0; i < count; i++) {
+	क्रम (i = 0; i < count; i++) अणु
 		r = _inits[i]();
-		if (r)
-			goto bad;
-	}
+		अगर (r)
+			जाओ bad;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
       bad:
-	while (i--)
-		_exits[i]();
+	जबतक (i--)
+		_निकासs[i]();
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void __exit dm_exit(void)
-{
-	int i = ARRAY_SIZE(_exits);
+अटल व्योम __निकास dm_निकास(व्योम)
+अणु
+	पूर्णांक i = ARRAY_SIZE(_निकासs);
 
-	while (i--)
-		_exits[i]();
+	जबतक (i--)
+		_निकासs[i]();
 
 	/*
-	 * Should be empty by this point.
+	 * Should be empty by this poपूर्णांक.
 	 */
 	idr_destroy(&_minor_idr);
-}
+पूर्ण
 
 /*
  * Block device functions
  */
-int dm_deleting_md(struct mapped_device *md)
-{
-	return test_bit(DMF_DELETING, &md->flags);
-}
+पूर्णांक dm_deleting_md(काष्ठा mapped_device *md)
+अणु
+	वापस test_bit(DMF_DELETING, &md->flags);
+पूर्ण
 
-static int dm_blk_open(struct block_device *bdev, fmode_t mode)
-{
-	struct mapped_device *md;
+अटल पूर्णांक dm_blk_खोलो(काष्ठा block_device *bdev, भ_शेषe_t mode)
+अणु
+	काष्ठा mapped_device *md;
 
 	spin_lock(&_minor_lock);
 
-	md = bdev->bd_disk->private_data;
-	if (!md)
-		goto out;
+	md = bdev->bd_disk->निजी_data;
+	अगर (!md)
+		जाओ out;
 
-	if (test_bit(DMF_FREEING, &md->flags) ||
-	    dm_deleting_md(md)) {
-		md = NULL;
-		goto out;
-	}
+	अगर (test_bit(DMF_FREEING, &md->flags) ||
+	    dm_deleting_md(md)) अणु
+		md = शून्य;
+		जाओ out;
+	पूर्ण
 
 	dm_get(md);
-	atomic_inc(&md->open_count);
+	atomic_inc(&md->खोलो_count);
 out:
 	spin_unlock(&_minor_lock);
 
-	return md ? 0 : -ENXIO;
-}
+	वापस md ? 0 : -ENXIO;
+पूर्ण
 
-static void dm_blk_close(struct gendisk *disk, fmode_t mode)
-{
-	struct mapped_device *md;
+अटल व्योम dm_blk_बंद(काष्ठा gendisk *disk, भ_शेषe_t mode)
+अणु
+	काष्ठा mapped_device *md;
 
 	spin_lock(&_minor_lock);
 
-	md = disk->private_data;
-	if (WARN_ON(!md))
-		goto out;
+	md = disk->निजी_data;
+	अगर (WARN_ON(!md))
+		जाओ out;
 
-	if (atomic_dec_and_test(&md->open_count) &&
+	अगर (atomic_dec_and_test(&md->खोलो_count) &&
 	    (test_bit(DMF_DEFERRED_REMOVE, &md->flags)))
-		queue_work(deferred_remove_workqueue, &deferred_remove_work);
+		queue_work(deferred_हटाओ_workqueue, &deferred_हटाओ_work);
 
 	dm_put(md);
 out:
 	spin_unlock(&_minor_lock);
-}
+पूर्ण
 
-int dm_open_count(struct mapped_device *md)
-{
-	return atomic_read(&md->open_count);
-}
+पूर्णांक dm_खोलो_count(काष्ठा mapped_device *md)
+अणु
+	वापस atomic_पढ़ो(&md->खोलो_count);
+पूर्ण
 
 /*
- * Guarantees nothing is using the device before it's deleted.
+ * Guarantees nothing is using the device beक्रमe it's deleted.
  */
-int dm_lock_for_deletion(struct mapped_device *md, bool mark_deferred, bool only_deferred)
-{
-	int r = 0;
+पूर्णांक dm_lock_क्रम_deletion(काष्ठा mapped_device *md, bool mark_deferred, bool only_deferred)
+अणु
+	पूर्णांक r = 0;
 
 	spin_lock(&_minor_lock);
 
-	if (dm_open_count(md)) {
+	अगर (dm_खोलो_count(md)) अणु
 		r = -EBUSY;
-		if (mark_deferred)
+		अगर (mark_deferred)
 			set_bit(DMF_DEFERRED_REMOVE, &md->flags);
-	} else if (only_deferred && !test_bit(DMF_DEFERRED_REMOVE, &md->flags))
+	पूर्ण अन्यथा अगर (only_deferred && !test_bit(DMF_DEFERRED_REMOVE, &md->flags))
 		r = -EEXIST;
-	else
+	अन्यथा
 		set_bit(DMF_DELETING, &md->flags);
 
 	spin_unlock(&_minor_lock);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-int dm_cancel_deferred_remove(struct mapped_device *md)
-{
-	int r = 0;
+पूर्णांक dm_cancel_deferred_हटाओ(काष्ठा mapped_device *md)
+अणु
+	पूर्णांक r = 0;
 
 	spin_lock(&_minor_lock);
 
-	if (test_bit(DMF_DELETING, &md->flags))
+	अगर (test_bit(DMF_DELETING, &md->flags))
 		r = -EBUSY;
-	else
+	अन्यथा
 		clear_bit(DMF_DEFERRED_REMOVE, &md->flags);
 
 	spin_unlock(&_minor_lock);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void do_deferred_remove(struct work_struct *w)
-{
-	dm_deferred_remove();
-}
+अटल व्योम करो_deferred_हटाओ(काष्ठा work_काष्ठा *w)
+अणु
+	dm_deferred_हटाओ();
+पूर्ण
 
-static int dm_blk_getgeo(struct block_device *bdev, struct hd_geometry *geo)
-{
-	struct mapped_device *md = bdev->bd_disk->private_data;
+अटल पूर्णांक dm_blk_getgeo(काष्ठा block_device *bdev, काष्ठा hd_geometry *geo)
+अणु
+	काष्ठा mapped_device *md = bdev->bd_disk->निजी_data;
 
-	return dm_get_geometry(md, geo);
-}
+	वापस dm_get_geometry(md, geo);
+पूर्ण
 
-#ifdef CONFIG_BLK_DEV_ZONED
-int dm_report_zones_cb(struct blk_zone *zone, unsigned int idx, void *data)
-{
-	struct dm_report_zones_args *args = data;
-	sector_t sector_diff = args->tgt->begin - args->start;
+#अगर_घोषित CONFIG_BLK_DEV_ZONED
+पूर्णांक dm_report_zones_cb(काष्ठा blk_zone *zone, अचिन्हित पूर्णांक idx, व्योम *data)
+अणु
+	काष्ठा dm_report_zones_args *args = data;
+	sector_t sector_dअगरf = args->tgt->begin - args->start;
 
 	/*
 	 * Ignore zones beyond the target range.
 	 */
-	if (zone->start >= args->start + args->tgt->len)
-		return 0;
+	अगर (zone->start >= args->start + args->tgt->len)
+		वापस 0;
 
 	/*
-	 * Remap the start sector and write pointer position of the zone
+	 * Remap the start sector and ग_लिखो poपूर्णांकer position of the zone
 	 * to match its position in the target range.
 	 */
-	zone->start += sector_diff;
-	if (zone->type != BLK_ZONE_TYPE_CONVENTIONAL) {
-		if (zone->cond == BLK_ZONE_COND_FULL)
+	zone->start += sector_dअगरf;
+	अगर (zone->type != BLK_ZONE_TYPE_CONVENTIONAL) अणु
+		अगर (zone->cond == BLK_ZONE_COND_FULL)
 			zone->wp = zone->start + zone->len;
-		else if (zone->cond == BLK_ZONE_COND_EMPTY)
+		अन्यथा अगर (zone->cond == BLK_ZONE_COND_EMPTY)
 			zone->wp = zone->start;
-		else
-			zone->wp += sector_diff;
-	}
+		अन्यथा
+			zone->wp += sector_dअगरf;
+	पूर्ण
 
 	args->next_sector = zone->start + zone->len;
-	return args->orig_cb(zone, args->zone_idx++, args->orig_data);
-}
+	वापस args->orig_cb(zone, args->zone_idx++, args->orig_data);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_report_zones_cb);
 
-static int dm_blk_report_zones(struct gendisk *disk, sector_t sector,
-		unsigned int nr_zones, report_zones_cb cb, void *data)
-{
-	struct mapped_device *md = disk->private_data;
-	struct dm_table *map;
-	int srcu_idx, ret;
-	struct dm_report_zones_args args = {
+अटल पूर्णांक dm_blk_report_zones(काष्ठा gendisk *disk, sector_t sector,
+		अचिन्हित पूर्णांक nr_zones, report_zones_cb cb, व्योम *data)
+अणु
+	काष्ठा mapped_device *md = disk->निजी_data;
+	काष्ठा dm_table *map;
+	पूर्णांक srcu_idx, ret;
+	काष्ठा dm_report_zones_args args = अणु
 		.next_sector = sector,
 		.orig_data = data,
 		.orig_cb = cb,
-	};
+	पूर्ण;
 
-	if (dm_suspended_md(md))
-		return -EAGAIN;
+	अगर (dm_suspended_md(md))
+		वापस -EAGAIN;
 
 	map = dm_get_live_table(md, &srcu_idx);
-	if (!map) {
+	अगर (!map) अणु
 		ret = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	do {
-		struct dm_target *tgt;
+	करो अणु
+		काष्ठा dm_target *tgt;
 
 		tgt = dm_table_find_target(map, args.next_sector);
-		if (WARN_ON_ONCE(!tgt->type->report_zones)) {
+		अगर (WARN_ON_ONCE(!tgt->type->report_zones)) अणु
 			ret = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		args.tgt = tgt;
 		ret = tgt->type->report_zones(tgt, &args,
 					      nr_zones - args.zone_idx);
-		if (ret < 0)
-			goto out;
-	} while (args.zone_idx < nr_zones &&
+		अगर (ret < 0)
+			जाओ out;
+	पूर्ण जबतक (args.zone_idx < nr_zones &&
 		 args.next_sector < get_capacity(disk));
 
 	ret = args.zone_idx;
 out:
 	dm_put_live_table(md, srcu_idx);
-	return ret;
-}
-#else
-#define dm_blk_report_zones		NULL
-#endif /* CONFIG_BLK_DEV_ZONED */
+	वापस ret;
+पूर्ण
+#अन्यथा
+#घोषणा dm_blk_report_zones		शून्य
+#पूर्ण_अगर /* CONFIG_BLK_DEV_ZONED */
 
-static int dm_prepare_ioctl(struct mapped_device *md, int *srcu_idx,
-			    struct block_device **bdev)
-{
-	struct dm_target *tgt;
-	struct dm_table *map;
-	int r;
+अटल पूर्णांक dm_prepare_ioctl(काष्ठा mapped_device *md, पूर्णांक *srcu_idx,
+			    काष्ठा block_device **bdev)
+अणु
+	काष्ठा dm_target *tgt;
+	काष्ठा dm_table *map;
+	पूर्णांक r;
 
 retry:
 	r = -ENOTTY;
 	map = dm_get_live_table(md, srcu_idx);
-	if (!map || !dm_table_get_size(map))
-		return r;
+	अगर (!map || !dm_table_get_size(map))
+		वापस r;
 
 	/* We only support devices that have a single target */
-	if (dm_table_get_num_targets(map) != 1)
-		return r;
+	अगर (dm_table_get_num_tarमाला_लो(map) != 1)
+		वापस r;
 
 	tgt = dm_table_get_target(map, 0);
-	if (!tgt->type->prepare_ioctl)
-		return r;
+	अगर (!tgt->type->prepare_ioctl)
+		वापस r;
 
-	if (dm_suspended_md(md))
-		return -EAGAIN;
+	अगर (dm_suspended_md(md))
+		वापस -EAGAIN;
 
 	r = tgt->type->prepare_ioctl(tgt, bdev);
-	if (r == -ENOTCONN && !fatal_signal_pending(current)) {
+	अगर (r == -ENOTCONN && !fatal_संकेत_pending(current)) अणु
 		dm_put_live_table(md, *srcu_idx);
 		msleep(10);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void dm_unprepare_ioctl(struct mapped_device *md, int srcu_idx)
-{
+अटल व्योम dm_unprepare_ioctl(काष्ठा mapped_device *md, पूर्णांक srcu_idx)
+अणु
 	dm_put_live_table(md, srcu_idx);
-}
+पूर्ण
 
-static int dm_blk_ioctl(struct block_device *bdev, fmode_t mode,
-			unsigned int cmd, unsigned long arg)
-{
-	struct mapped_device *md = bdev->bd_disk->private_data;
-	int r, srcu_idx;
+अटल पूर्णांक dm_blk_ioctl(काष्ठा block_device *bdev, भ_शेषe_t mode,
+			अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा mapped_device *md = bdev->bd_disk->निजी_data;
+	पूर्णांक r, srcu_idx;
 
 	r = dm_prepare_ioctl(md, &srcu_idx, &bdev);
-	if (r < 0)
-		goto out;
+	अगर (r < 0)
+		जाओ out;
 
-	if (r > 0) {
+	अगर (r > 0) अणु
 		/*
 		 * Target determined this ioctl is being issued against a
 		 * subset of the parent bdev; require extra privileges.
 		 */
-		if (!capable(CAP_SYS_RAWIO)) {
+		अगर (!capable(CAP_SYS_RAWIO)) अणु
 			DMDEBUG_LIMIT(
 	"%s: sending ioctl %x to DM device without required privilege.",
 				current->comm, cmd);
 			r = -ENOIOCTLCMD;
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (!bdev->bd_disk->fops->ioctl)
+	अगर (!bdev->bd_disk->fops->ioctl)
 		r = -ENOTTY;
-	else
+	अन्यथा
 		r = bdev->bd_disk->fops->ioctl(bdev, mode, cmd, arg);
 out:
 	dm_unprepare_ioctl(md, srcu_idx);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-u64 dm_start_time_ns_from_clone(struct bio *bio)
-{
-	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-	struct dm_io *io = tio->io;
+u64 dm_start_समय_ns_from_clone(काष्ठा bio *bio)
+अणु
+	काष्ठा dm_target_io *tio = container_of(bio, काष्ठा dm_target_io, clone);
+	काष्ठा dm_io *io = tio->io;
 
-	return jiffies_to_nsecs(io->start_time);
-}
-EXPORT_SYMBOL_GPL(dm_start_time_ns_from_clone);
+	वापस jअगरfies_to_nsecs(io->start_समय);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_start_समय_ns_from_clone);
 
-static void start_io_acct(struct dm_io *io)
-{
-	struct mapped_device *md = io->md;
-	struct bio *bio = io->orig_bio;
+अटल व्योम start_io_acct(काष्ठा dm_io *io)
+अणु
+	काष्ठा mapped_device *md = io->md;
+	काष्ठा bio *bio = io->orig_bio;
 
-	io->start_time = bio_start_io_acct(bio);
-	if (unlikely(dm_stats_used(&md->stats)))
+	io->start_समय = bio_start_io_acct(bio);
+	अगर (unlikely(dm_stats_used(&md->stats)))
 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
 				    bio->bi_iter.bi_sector, bio_sectors(bio),
 				    false, 0, &io->stats_aux);
-}
+पूर्ण
 
-static void end_io_acct(struct dm_io *io)
-{
-	struct mapped_device *md = io->md;
-	struct bio *bio = io->orig_bio;
-	unsigned long duration = jiffies - io->start_time;
+अटल व्योम end_io_acct(काष्ठा dm_io *io)
+अणु
+	काष्ठा mapped_device *md = io->md;
+	काष्ठा bio *bio = io->orig_bio;
+	अचिन्हित दीर्घ duration = jअगरfies - io->start_समय;
 
-	bio_end_io_acct(bio, io->start_time);
+	bio_end_io_acct(bio, io->start_समय);
 
-	if (unlikely(dm_stats_used(&md->stats)))
+	अगर (unlikely(dm_stats_used(&md->stats)))
 		dm_stats_account_io(&md->stats, bio_data_dir(bio),
 				    bio->bi_iter.bi_sector, bio_sectors(bio),
 				    true, duration, &io->stats_aux);
 
-	/* nudge anyone waiting on suspend queue */
-	if (unlikely(wq_has_sleeper(&md->wait)))
-		wake_up(&md->wait);
-}
+	/* nudge anyone रुकोing on suspend queue */
+	अगर (unlikely(wq_has_sleeper(&md->रुको)))
+		wake_up(&md->रुको);
+पूर्ण
 
-static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
-{
-	struct dm_io *io;
-	struct dm_target_io *tio;
-	struct bio *clone;
+अटल काष्ठा dm_io *alloc_io(काष्ठा mapped_device *md, काष्ठा bio *bio)
+अणु
+	काष्ठा dm_io *io;
+	काष्ठा dm_target_io *tio;
+	काष्ठा bio *clone;
 
 	clone = bio_alloc_bioset(GFP_NOIO, 0, &md->io_bs);
-	if (!clone)
-		return NULL;
+	अगर (!clone)
+		वापस शून्य;
 
-	tio = container_of(clone, struct dm_target_io, clone);
+	tio = container_of(clone, काष्ठा dm_target_io, clone);
 	tio->inside_dm_io = true;
-	tio->io = NULL;
+	tio->io = शून्य;
 
-	io = container_of(tio, struct dm_io, tio);
+	io = container_of(tio, काष्ठा dm_io, tio);
 	io->magic = DM_IO_MAGIC;
 	io->status = 0;
 	atomic_set(&io->io_count, 1);
@@ -657,408 +658,408 @@ static struct dm_io *alloc_io(struct mapped_device *md, struct bio *bio)
 
 	start_io_acct(io);
 
-	return io;
-}
+	वापस io;
+पूर्ण
 
-static void free_io(struct mapped_device *md, struct dm_io *io)
-{
+अटल व्योम मुक्त_io(काष्ठा mapped_device *md, काष्ठा dm_io *io)
+अणु
 	bio_put(&io->tio.clone);
-}
+पूर्ण
 
-static struct dm_target_io *alloc_tio(struct clone_info *ci, struct dm_target *ti,
-				      unsigned target_bio_nr, gfp_t gfp_mask)
-{
-	struct dm_target_io *tio;
+अटल काष्ठा dm_target_io *alloc_tio(काष्ठा clone_info *ci, काष्ठा dm_target *ti,
+				      अचिन्हित target_bio_nr, gfp_t gfp_mask)
+अणु
+	काष्ठा dm_target_io *tio;
 
-	if (!ci->io->tio.io) {
+	अगर (!ci->io->tio.io) अणु
 		/* the dm_target_io embedded in ci->io is available */
 		tio = &ci->io->tio;
-	} else {
-		struct bio *clone = bio_alloc_bioset(gfp_mask, 0, &ci->io->md->bs);
-		if (!clone)
-			return NULL;
+	पूर्ण अन्यथा अणु
+		काष्ठा bio *clone = bio_alloc_bioset(gfp_mask, 0, &ci->io->md->bs);
+		अगर (!clone)
+			वापस शून्य;
 
-		tio = container_of(clone, struct dm_target_io, clone);
+		tio = container_of(clone, काष्ठा dm_target_io, clone);
 		tio->inside_dm_io = false;
-	}
+	पूर्ण
 
 	tio->magic = DM_TIO_MAGIC;
 	tio->io = ci->io;
 	tio->ti = ti;
 	tio->target_bio_nr = target_bio_nr;
 
-	return tio;
-}
+	वापस tio;
+पूर्ण
 
-static void free_tio(struct dm_target_io *tio)
-{
-	if (tio->inside_dm_io)
-		return;
+अटल व्योम मुक्त_tio(काष्ठा dm_target_io *tio)
+अणु
+	अगर (tio->inside_dm_io)
+		वापस;
 	bio_put(&tio->clone);
-}
+पूर्ण
 
 /*
  * Add the bio to the list of deferred io.
  */
-static void queue_io(struct mapped_device *md, struct bio *bio)
-{
-	unsigned long flags;
+अटल व्योम queue_io(काष्ठा mapped_device *md, काष्ठा bio *bio)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&md->deferred_lock, flags);
 	bio_list_add(&md->deferred, bio);
 	spin_unlock_irqrestore(&md->deferred_lock, flags);
 	queue_work(md->wq, &md->work);
-}
+पूर्ण
 
 /*
  * Everyone (including functions in this file), should use this
  * function to access the md->map field, and make sure they call
  * dm_put_live_table() when finished.
  */
-struct dm_table *dm_get_live_table(struct mapped_device *md, int *srcu_idx) __acquires(md->io_barrier)
-{
-	*srcu_idx = srcu_read_lock(&md->io_barrier);
+काष्ठा dm_table *dm_get_live_table(काष्ठा mapped_device *md, पूर्णांक *srcu_idx) __acquires(md->io_barrier)
+अणु
+	*srcu_idx = srcu_पढ़ो_lock(&md->io_barrier);
 
-	return srcu_dereference(md->map, &md->io_barrier);
-}
+	वापस srcu_dereference(md->map, &md->io_barrier);
+पूर्ण
 
-void dm_put_live_table(struct mapped_device *md, int srcu_idx) __releases(md->io_barrier)
-{
-	srcu_read_unlock(&md->io_barrier, srcu_idx);
-}
+व्योम dm_put_live_table(काष्ठा mapped_device *md, पूर्णांक srcu_idx) __releases(md->io_barrier)
+अणु
+	srcu_पढ़ो_unlock(&md->io_barrier, srcu_idx);
+पूर्ण
 
-void dm_sync_table(struct mapped_device *md)
-{
+व्योम dm_sync_table(काष्ठा mapped_device *md)
+अणु
 	synchronize_srcu(&md->io_barrier);
 	synchronize_rcu_expedited();
-}
+पूर्ण
 
 /*
  * A fast alternative to dm_get_live_table/dm_put_live_table.
  * The caller must not block between these two functions.
  */
-static struct dm_table *dm_get_live_table_fast(struct mapped_device *md) __acquires(RCU)
-{
-	rcu_read_lock();
-	return rcu_dereference(md->map);
-}
+अटल काष्ठा dm_table *dm_get_live_table_fast(काष्ठा mapped_device *md) __acquires(RCU)
+अणु
+	rcu_पढ़ो_lock();
+	वापस rcu_dereference(md->map);
+पूर्ण
 
-static void dm_put_live_table_fast(struct mapped_device *md) __releases(RCU)
-{
-	rcu_read_unlock();
-}
+अटल व्योम dm_put_live_table_fast(काष्ठा mapped_device *md) __releases(RCU)
+अणु
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static char *_dm_claim_ptr = "I belong to device-mapper";
+अटल अक्षर *_dm_claim_ptr = "I belong to device-mapper";
 
 /*
  * Open a table device so we can use it as a map destination.
  */
-static int open_table_device(struct table_device *td, dev_t dev,
-			     struct mapped_device *md)
-{
-	struct block_device *bdev;
+अटल पूर्णांक खोलो_table_device(काष्ठा table_device *td, dev_t dev,
+			     काष्ठा mapped_device *md)
+अणु
+	काष्ठा block_device *bdev;
 
-	int r;
+	पूर्णांक r;
 
 	BUG_ON(td->dm_dev.bdev);
 
 	bdev = blkdev_get_by_dev(dev, td->dm_dev.mode | FMODE_EXCL, _dm_claim_ptr);
-	if (IS_ERR(bdev))
-		return PTR_ERR(bdev);
+	अगर (IS_ERR(bdev))
+		वापस PTR_ERR(bdev);
 
 	r = bd_link_disk_holder(bdev, dm_disk(md));
-	if (r) {
+	अगर (r) अणु
 		blkdev_put(bdev, td->dm_dev.mode | FMODE_EXCL);
-		return r;
-	}
+		वापस r;
+	पूर्ण
 
 	td->dm_dev.bdev = bdev;
 	td->dm_dev.dax_dev = dax_get_by_host(bdev->bd_disk->disk_name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Close a table device that we've been using.
  */
-static void close_table_device(struct table_device *td, struct mapped_device *md)
-{
-	if (!td->dm_dev.bdev)
-		return;
+अटल व्योम बंद_table_device(काष्ठा table_device *td, काष्ठा mapped_device *md)
+अणु
+	अगर (!td->dm_dev.bdev)
+		वापस;
 
 	bd_unlink_disk_holder(td->dm_dev.bdev, dm_disk(md));
 	blkdev_put(td->dm_dev.bdev, td->dm_dev.mode | FMODE_EXCL);
 	put_dax(td->dm_dev.dax_dev);
-	td->dm_dev.bdev = NULL;
-	td->dm_dev.dax_dev = NULL;
-}
+	td->dm_dev.bdev = शून्य;
+	td->dm_dev.dax_dev = शून्य;
+पूर्ण
 
-static struct table_device *find_table_device(struct list_head *l, dev_t dev,
-					      fmode_t mode)
-{
-	struct table_device *td;
+अटल काष्ठा table_device *find_table_device(काष्ठा list_head *l, dev_t dev,
+					      भ_शेषe_t mode)
+अणु
+	काष्ठा table_device *td;
 
-	list_for_each_entry(td, l, list)
-		if (td->dm_dev.bdev->bd_dev == dev && td->dm_dev.mode == mode)
-			return td;
+	list_क्रम_each_entry(td, l, list)
+		अगर (td->dm_dev.bdev->bd_dev == dev && td->dm_dev.mode == mode)
+			वापस td;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-int dm_get_table_device(struct mapped_device *md, dev_t dev, fmode_t mode,
-			struct dm_dev **result)
-{
-	int r;
-	struct table_device *td;
+पूर्णांक dm_get_table_device(काष्ठा mapped_device *md, dev_t dev, भ_शेषe_t mode,
+			काष्ठा dm_dev **result)
+अणु
+	पूर्णांक r;
+	काष्ठा table_device *td;
 
 	mutex_lock(&md->table_devices_lock);
 	td = find_table_device(&md->table_devices, dev, mode);
-	if (!td) {
-		td = kmalloc_node(sizeof(*td), GFP_KERNEL, md->numa_node_id);
-		if (!td) {
+	अगर (!td) अणु
+		td = kदो_स्मृति_node(माप(*td), GFP_KERNEL, md->numa_node_id);
+		अगर (!td) अणु
 			mutex_unlock(&md->table_devices_lock);
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 
 		td->dm_dev.mode = mode;
-		td->dm_dev.bdev = NULL;
+		td->dm_dev.bdev = शून्य;
 
-		if ((r = open_table_device(td, dev, md))) {
+		अगर ((r = खोलो_table_device(td, dev, md))) अणु
 			mutex_unlock(&md->table_devices_lock);
-			kfree(td);
-			return r;
-		}
+			kमुक्त(td);
+			वापस r;
+		पूर्ण
 
-		format_dev_t(td->dm_dev.name, dev);
+		क्रमmat_dev_t(td->dm_dev.name, dev);
 
 		refcount_set(&td->count, 1);
 		list_add(&td->list, &md->table_devices);
-	} else {
+	पूर्ण अन्यथा अणु
 		refcount_inc(&td->count);
-	}
+	पूर्ण
 	mutex_unlock(&md->table_devices_lock);
 
 	*result = &td->dm_dev;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void dm_put_table_device(struct mapped_device *md, struct dm_dev *d)
-{
-	struct table_device *td = container_of(d, struct table_device, dm_dev);
+व्योम dm_put_table_device(काष्ठा mapped_device *md, काष्ठा dm_dev *d)
+अणु
+	काष्ठा table_device *td = container_of(d, काष्ठा table_device, dm_dev);
 
 	mutex_lock(&md->table_devices_lock);
-	if (refcount_dec_and_test(&td->count)) {
-		close_table_device(td, md);
+	अगर (refcount_dec_and_test(&td->count)) अणु
+		बंद_table_device(td, md);
 		list_del(&td->list);
-		kfree(td);
-	}
+		kमुक्त(td);
+	पूर्ण
 	mutex_unlock(&md->table_devices_lock);
-}
+पूर्ण
 
-static void free_table_devices(struct list_head *devices)
-{
-	struct list_head *tmp, *next;
+अटल व्योम मुक्त_table_devices(काष्ठा list_head *devices)
+अणु
+	काष्ठा list_head *पंचांगp, *next;
 
-	list_for_each_safe(tmp, next, devices) {
-		struct table_device *td = list_entry(tmp, struct table_device, list);
+	list_क्रम_each_safe(पंचांगp, next, devices) अणु
+		काष्ठा table_device *td = list_entry(पंचांगp, काष्ठा table_device, list);
 
 		DMWARN("dm_destroy: %s still exists with %d references",
-		       td->dm_dev.name, refcount_read(&td->count));
-		kfree(td);
-	}
-}
+		       td->dm_dev.name, refcount_पढ़ो(&td->count));
+		kमुक्त(td);
+	पूर्ण
+पूर्ण
 
 /*
  * Get the geometry associated with a dm device
  */
-int dm_get_geometry(struct mapped_device *md, struct hd_geometry *geo)
-{
+पूर्णांक dm_get_geometry(काष्ठा mapped_device *md, काष्ठा hd_geometry *geo)
+अणु
 	*geo = md->geometry;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Set the geometry of a device.
  */
-int dm_set_geometry(struct mapped_device *md, struct hd_geometry *geo)
-{
+पूर्णांक dm_set_geometry(काष्ठा mapped_device *md, काष्ठा hd_geometry *geo)
+अणु
 	sector_t sz = (sector_t)geo->cylinders * geo->heads * geo->sectors;
 
-	if (geo->start > sz) {
+	अगर (geo->start > sz) अणु
 		DMWARN("Start sector is beyond the geometry limits.");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	md->geometry = *geo;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __noflush_suspending(struct mapped_device *md)
-{
-	return test_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
-}
+अटल पूर्णांक __noflush_suspending(काष्ठा mapped_device *md)
+अणु
+	वापस test_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
+पूर्ण
 
 /*
  * Decrements the number of outstanding ios that a bio has been
- * cloned into, completing the original io if necc.
+ * cloned पूर्णांकo, completing the original io अगर necc.
  */
-static void dec_pending(struct dm_io *io, blk_status_t error)
-{
-	unsigned long flags;
+अटल व्योम dec_pending(काष्ठा dm_io *io, blk_status_t error)
+अणु
+	अचिन्हित दीर्घ flags;
 	blk_status_t io_error;
-	struct bio *bio;
-	struct mapped_device *md = io->md;
+	काष्ठा bio *bio;
+	काष्ठा mapped_device *md = io->md;
 
 	/* Push-back supersedes any I/O errors */
-	if (unlikely(error)) {
+	अगर (unlikely(error)) अणु
 		spin_lock_irqsave(&io->endio_lock, flags);
-		if (!(io->status == BLK_STS_DM_REQUEUE && __noflush_suspending(md)))
+		अगर (!(io->status == BLK_STS_DM_REQUEUE && __noflush_suspending(md)))
 			io->status = error;
 		spin_unlock_irqrestore(&io->endio_lock, flags);
-	}
+	पूर्ण
 
-	if (atomic_dec_and_test(&io->io_count)) {
-		if (io->status == BLK_STS_DM_REQUEUE) {
+	अगर (atomic_dec_and_test(&io->io_count)) अणु
+		अगर (io->status == BLK_STS_DM_REQUEUE) अणु
 			/*
 			 * Target requested pushing back the I/O.
 			 */
 			spin_lock_irqsave(&md->deferred_lock, flags);
-			if (__noflush_suspending(md))
-				/* NOTE early return due to BLK_STS_DM_REQUEUE below */
+			अगर (__noflush_suspending(md))
+				/* NOTE early वापस due to BLK_STS_DM_REQUEUE below */
 				bio_list_add_head(&md->deferred, io->orig_bio);
-			else
-				/* noflush suspend was interrupted. */
+			अन्यथा
+				/* noflush suspend was पूर्णांकerrupted. */
 				io->status = BLK_STS_IOERR;
 			spin_unlock_irqrestore(&md->deferred_lock, flags);
-		}
+		पूर्ण
 
 		io_error = io->status;
 		bio = io->orig_bio;
 		end_io_acct(io);
-		free_io(md, io);
+		मुक्त_io(md, io);
 
-		if (io_error == BLK_STS_DM_REQUEUE)
-			return;
+		अगर (io_error == BLK_STS_DM_REQUEUE)
+			वापस;
 
-		if ((bio->bi_opf & REQ_PREFLUSH) && bio->bi_iter.bi_size) {
+		अगर ((bio->bi_opf & REQ_PREFLUSH) && bio->bi_iter.bi_size) अणु
 			/*
-			 * Preflush done for flush with data, reissue
+			 * Preflush करोne क्रम flush with data, reissue
 			 * without REQ_PREFLUSH.
 			 */
 			bio->bi_opf &= ~REQ_PREFLUSH;
 			queue_io(md, bio);
-		} else {
-			/* done with normal IO or empty flush */
-			if (io_error)
+		पूर्ण अन्यथा अणु
+			/* करोne with normal IO or empty flush */
+			अगर (io_error)
 				bio->bi_status = io_error;
 			bio_endio(bio);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-void disable_discard(struct mapped_device *md)
-{
-	struct queue_limits *limits = dm_get_queue_limits(md);
+व्योम disable_discard(काष्ठा mapped_device *md)
+अणु
+	काष्ठा queue_limits *limits = dm_get_queue_limits(md);
 
-	/* device doesn't really support DISCARD, disable it */
+	/* device करोesn't really support DISCARD, disable it */
 	limits->max_discard_sectors = 0;
 	blk_queue_flag_clear(QUEUE_FLAG_DISCARD, md->queue);
-}
+पूर्ण
 
-void disable_write_same(struct mapped_device *md)
-{
-	struct queue_limits *limits = dm_get_queue_limits(md);
+व्योम disable_ग_लिखो_same(काष्ठा mapped_device *md)
+अणु
+	काष्ठा queue_limits *limits = dm_get_queue_limits(md);
 
-	/* device doesn't really support WRITE SAME, disable it */
-	limits->max_write_same_sectors = 0;
-}
+	/* device करोesn't really support WRITE SAME, disable it */
+	limits->max_ग_लिखो_same_sectors = 0;
+पूर्ण
 
-void disable_write_zeroes(struct mapped_device *md)
-{
-	struct queue_limits *limits = dm_get_queue_limits(md);
+व्योम disable_ग_लिखो_zeroes(काष्ठा mapped_device *md)
+अणु
+	काष्ठा queue_limits *limits = dm_get_queue_limits(md);
 
-	/* device doesn't really support WRITE ZEROES, disable it */
-	limits->max_write_zeroes_sectors = 0;
-}
+	/* device करोesn't really support WRITE ZEROES, disable it */
+	limits->max_ग_लिखो_zeroes_sectors = 0;
+पूर्ण
 
-static bool swap_bios_limit(struct dm_target *ti, struct bio *bio)
-{
-	return unlikely((bio->bi_opf & REQ_SWAP) != 0) && unlikely(ti->limit_swap_bios);
-}
+अटल bool swap_bios_limit(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	वापस unlikely((bio->bi_opf & REQ_SWAP) != 0) && unlikely(ti->limit_swap_bios);
+पूर्ण
 
-static void clone_endio(struct bio *bio)
-{
+अटल व्योम clone_endio(काष्ठा bio *bio)
+अणु
 	blk_status_t error = bio->bi_status;
-	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-	struct dm_io *io = tio->io;
-	struct mapped_device *md = tio->io->md;
+	काष्ठा dm_target_io *tio = container_of(bio, काष्ठा dm_target_io, clone);
+	काष्ठा dm_io *io = tio->io;
+	काष्ठा mapped_device *md = tio->io->md;
 	dm_endio_fn endio = tio->ti->type->end_io;
-	struct bio *orig_bio = io->orig_bio;
-	struct request_queue *q = bio->bi_bdev->bd_disk->queue;
+	काष्ठा bio *orig_bio = io->orig_bio;
+	काष्ठा request_queue *q = bio->bi_bdev->bd_disk->queue;
 
-	if (unlikely(error == BLK_STS_TARGET)) {
-		if (bio_op(bio) == REQ_OP_DISCARD &&
+	अगर (unlikely(error == BLK_STS_TARGET)) अणु
+		अगर (bio_op(bio) == REQ_OP_DISCARD &&
 		    !q->limits.max_discard_sectors)
 			disable_discard(md);
-		else if (bio_op(bio) == REQ_OP_WRITE_SAME &&
-			 !q->limits.max_write_same_sectors)
-			disable_write_same(md);
-		else if (bio_op(bio) == REQ_OP_WRITE_ZEROES &&
-			 !q->limits.max_write_zeroes_sectors)
-			disable_write_zeroes(md);
-	}
+		अन्यथा अगर (bio_op(bio) == REQ_OP_WRITE_SAME &&
+			 !q->limits.max_ग_लिखो_same_sectors)
+			disable_ग_लिखो_same(md);
+		अन्यथा अगर (bio_op(bio) == REQ_OP_WRITE_ZEROES &&
+			 !q->limits.max_ग_लिखो_zeroes_sectors)
+			disable_ग_लिखो_zeroes(md);
+	पूर्ण
 
 	/*
 	 * For zone-append bios get offset in zone of the written
 	 * sector and add that to the original bio sector pos.
 	 */
-	if (bio_op(orig_bio) == REQ_OP_ZONE_APPEND) {
+	अगर (bio_op(orig_bio) == REQ_OP_ZONE_APPEND) अणु
 		sector_t written_sector = bio->bi_iter.bi_sector;
-		struct request_queue *q = orig_bio->bi_bdev->bd_disk->queue;
+		काष्ठा request_queue *q = orig_bio->bi_bdev->bd_disk->queue;
 		u64 mask = (u64)blk_queue_zone_sectors(q) - 1;
 
 		orig_bio->bi_iter.bi_sector += written_sector & mask;
-	}
+	पूर्ण
 
-	if (endio) {
-		int r = endio(tio->ti, bio, &error);
-		switch (r) {
-		case DM_ENDIO_REQUEUE:
+	अगर (endio) अणु
+		पूर्णांक r = endio(tio->ti, bio, &error);
+		चयन (r) अणु
+		हाल DM_ENDIO_REQUEUE:
 			error = BLK_STS_DM_REQUEUE;
 			fallthrough;
-		case DM_ENDIO_DONE:
-			break;
-		case DM_ENDIO_INCOMPLETE:
+		हाल DM_ENDIO_DONE:
+			अवरोध;
+		हाल DM_ENDIO_INCOMPLETE:
 			/* The target will handle the io */
-			return;
-		default:
+			वापस;
+		शेष:
 			DMWARN("unimplemented target endio return value: %d", r);
 			BUG();
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (unlikely(swap_bios_limit(tio->ti, bio))) {
-		struct mapped_device *md = io->md;
+	अगर (unlikely(swap_bios_limit(tio->ti, bio))) अणु
+		काष्ठा mapped_device *md = io->md;
 		up(&md->swap_bios_semaphore);
-	}
+	पूर्ण
 
-	free_tio(tio);
+	मुक्त_tio(tio);
 	dec_pending(io, error);
-}
+पूर्ण
 
 /*
  * Return maximum size of I/O possible at the supplied sector up to the current
  * target boundary.
  */
-static inline sector_t max_io_len_target_boundary(struct dm_target *ti,
+अटल अंतरभूत sector_t max_io_len_target_boundary(काष्ठा dm_target *ti,
 						  sector_t target_offset)
-{
-	return ti->len - target_offset;
-}
+अणु
+	वापस ti->len - target_offset;
+पूर्ण
 
-static sector_t max_io_len(struct dm_target *ti, sector_t sector)
-{
+अटल sector_t max_io_len(काष्ठा dm_target *ti, sector_t sector)
+अणु
 	sector_t target_offset = dm_target_offset(ti, sector);
 	sector_t len = max_io_len_target_boundary(ti, target_offset);
 	sector_t max_len;
@@ -1070,177 +1071,177 @@ static sector_t max_io_len(struct dm_target *ti, sector_t sector)
 	 *   blk_max_size_offset() isn't possible here. So pass in
 	 *   ti->max_io_len to override stacked chunk_sectors.
 	 */
-	if (ti->max_io_len) {
+	अगर (ti->max_io_len) अणु
 		max_len = blk_max_size_offset(ti->table->md->queue,
 					      target_offset, ti->max_io_len);
-		if (len > max_len)
+		अगर (len > max_len)
 			len = max_len;
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-int dm_set_target_max_io_len(struct dm_target *ti, sector_t len)
-{
-	if (len > UINT_MAX) {
+पूर्णांक dm_set_target_max_io_len(काष्ठा dm_target *ti, sector_t len)
+अणु
+	अगर (len > अच_पूर्णांक_उच्च) अणु
 		DMERR("Specified maximum size of target IO (%llu) exceeds limit (%u)",
-		      (unsigned long long)len, UINT_MAX);
+		      (अचिन्हित दीर्घ दीर्घ)len, अच_पूर्णांक_उच्च);
 		ti->error = "Maximum size of target IO is too large";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ti->max_io_len = (uint32_t) len;
+	ti->max_io_len = (uपूर्णांक32_t) len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_set_target_max_io_len);
 
-static struct dm_target *dm_dax_get_live_target(struct mapped_device *md,
-						sector_t sector, int *srcu_idx)
+अटल काष्ठा dm_target *dm_dax_get_live_target(काष्ठा mapped_device *md,
+						sector_t sector, पूर्णांक *srcu_idx)
 	__acquires(md->io_barrier)
-{
-	struct dm_table *map;
-	struct dm_target *ti;
+अणु
+	काष्ठा dm_table *map;
+	काष्ठा dm_target *ti;
 
 	map = dm_get_live_table(md, srcu_idx);
-	if (!map)
-		return NULL;
+	अगर (!map)
+		वापस शून्य;
 
 	ti = dm_table_find_target(map, sector);
-	if (!ti)
-		return NULL;
+	अगर (!ti)
+		वापस शून्य;
 
-	return ti;
-}
+	वापस ti;
+पूर्ण
 
-static long dm_dax_direct_access(struct dax_device *dax_dev, pgoff_t pgoff,
-				 long nr_pages, void **kaddr, pfn_t *pfn)
-{
-	struct mapped_device *md = dax_get_private(dax_dev);
+अटल दीर्घ dm_dax_direct_access(काष्ठा dax_device *dax_dev, pgoff_t pgoff,
+				 दीर्घ nr_pages, व्योम **kaddr, pfn_t *pfn)
+अणु
+	काष्ठा mapped_device *md = dax_get_निजी(dax_dev);
 	sector_t sector = pgoff * PAGE_SECTORS;
-	struct dm_target *ti;
-	long len, ret = -EIO;
-	int srcu_idx;
+	काष्ठा dm_target *ti;
+	दीर्घ len, ret = -EIO;
+	पूर्णांक srcu_idx;
 
 	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
 
-	if (!ti)
-		goto out;
-	if (!ti->type->direct_access)
-		goto out;
+	अगर (!ti)
+		जाओ out;
+	अगर (!ti->type->direct_access)
+		जाओ out;
 	len = max_io_len(ti, sector) / PAGE_SECTORS;
-	if (len < 1)
-		goto out;
+	अगर (len < 1)
+		जाओ out;
 	nr_pages = min(len, nr_pages);
 	ret = ti->type->direct_access(ti, pgoff, nr_pages, kaddr, pfn);
 
  out:
 	dm_put_live_table(md, srcu_idx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static bool dm_dax_supported(struct dax_device *dax_dev, struct block_device *bdev,
-		int blocksize, sector_t start, sector_t len)
-{
-	struct mapped_device *md = dax_get_private(dax_dev);
-	struct dm_table *map;
+अटल bool dm_dax_supported(काष्ठा dax_device *dax_dev, काष्ठा block_device *bdev,
+		पूर्णांक blocksize, sector_t start, sector_t len)
+अणु
+	काष्ठा mapped_device *md = dax_get_निजी(dax_dev);
+	काष्ठा dm_table *map;
 	bool ret = false;
-	int srcu_idx;
+	पूर्णांक srcu_idx;
 
 	map = dm_get_live_table(md, &srcu_idx);
-	if (!map)
-		goto out;
+	अगर (!map)
+		जाओ out;
 
 	ret = dm_table_supports_dax(map, device_not_dax_capable, &blocksize);
 
 out:
 	dm_put_live_table(md, srcu_idx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static size_t dm_dax_copy_from_iter(struct dax_device *dax_dev, pgoff_t pgoff,
-				    void *addr, size_t bytes, struct iov_iter *i)
-{
-	struct mapped_device *md = dax_get_private(dax_dev);
+अटल माप_प्रकार dm_dax_copy_from_iter(काष्ठा dax_device *dax_dev, pgoff_t pgoff,
+				    व्योम *addr, माप_प्रकार bytes, काष्ठा iov_iter *i)
+अणु
+	काष्ठा mapped_device *md = dax_get_निजी(dax_dev);
 	sector_t sector = pgoff * PAGE_SECTORS;
-	struct dm_target *ti;
-	long ret = 0;
-	int srcu_idx;
+	काष्ठा dm_target *ti;
+	दीर्घ ret = 0;
+	पूर्णांक srcu_idx;
 
 	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
 
-	if (!ti)
-		goto out;
-	if (!ti->type->dax_copy_from_iter) {
+	अगर (!ti)
+		जाओ out;
+	अगर (!ti->type->dax_copy_from_iter) अणु
 		ret = copy_from_iter(addr, bytes, i);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = ti->type->dax_copy_from_iter(ti, pgoff, addr, bytes, i);
  out:
 	dm_put_live_table(md, srcu_idx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static size_t dm_dax_copy_to_iter(struct dax_device *dax_dev, pgoff_t pgoff,
-		void *addr, size_t bytes, struct iov_iter *i)
-{
-	struct mapped_device *md = dax_get_private(dax_dev);
+अटल माप_प्रकार dm_dax_copy_to_iter(काष्ठा dax_device *dax_dev, pgoff_t pgoff,
+		व्योम *addr, माप_प्रकार bytes, काष्ठा iov_iter *i)
+अणु
+	काष्ठा mapped_device *md = dax_get_निजी(dax_dev);
 	sector_t sector = pgoff * PAGE_SECTORS;
-	struct dm_target *ti;
-	long ret = 0;
-	int srcu_idx;
+	काष्ठा dm_target *ti;
+	दीर्घ ret = 0;
+	पूर्णांक srcu_idx;
 
 	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
 
-	if (!ti)
-		goto out;
-	if (!ti->type->dax_copy_to_iter) {
+	अगर (!ti)
+		जाओ out;
+	अगर (!ti->type->dax_copy_to_iter) अणु
 		ret = copy_to_iter(addr, bytes, i);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = ti->type->dax_copy_to_iter(ti, pgoff, addr, bytes, i);
  out:
 	dm_put_live_table(md, srcu_idx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dm_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
-				  size_t nr_pages)
-{
-	struct mapped_device *md = dax_get_private(dax_dev);
+अटल पूर्णांक dm_dax_zero_page_range(काष्ठा dax_device *dax_dev, pgoff_t pgoff,
+				  माप_प्रकार nr_pages)
+अणु
+	काष्ठा mapped_device *md = dax_get_निजी(dax_dev);
 	sector_t sector = pgoff * PAGE_SECTORS;
-	struct dm_target *ti;
-	int ret = -EIO;
-	int srcu_idx;
+	काष्ठा dm_target *ti;
+	पूर्णांक ret = -EIO;
+	पूर्णांक srcu_idx;
 
 	ti = dm_dax_get_live_target(md, sector, &srcu_idx);
 
-	if (!ti)
-		goto out;
-	if (WARN_ON(!ti->type->dax_zero_page_range)) {
+	अगर (!ti)
+		जाओ out;
+	अगर (WARN_ON(!ti->type->dax_zero_page_range)) अणु
 		/*
 		 * ->zero_page_range() is mandatory dax operation. If we are
 		 *  here, something is wrong.
 		 */
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	ret = ti->type->dax_zero_page_range(ti, pgoff, nr_pages);
  out:
 	dm_put_live_table(md, srcu_idx);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * A target may call dm_accept_partial_bio only from the map routine.  It is
- * allowed for all bio types except REQ_PREFLUSH, REQ_OP_ZONE_RESET,
+ * allowed क्रम all bio types except REQ_PREFLUSH, REQ_OP_ZONE_RESET,
  * REQ_OP_ZONE_OPEN, REQ_OP_ZONE_CLOSE and REQ_OP_ZONE_FINISH.
  *
- * dm_accept_partial_bio informs the dm that the target only wants to process
+ * dm_accept_partial_bio inक्रमms the dm that the target only wants to process
  * additional n_sectors sectors of the bio and the rest of the data should be
  * sent in a next bio.
  *
@@ -1253,230 +1254,230 @@ static int dm_dax_zero_page_range(struct dax_device *dax_dev, pgoff_t pgoff,
  *                      <------- bi_size ------->
  *                      <-- n_sectors -->
  *
- * Region 1 was already iterated over with bio_advance or similar function.
- *	(it may be empty if the target doesn't use bio_advance)
- * Region 2 is the remaining bio size that the target wants to process.
- *	(it may be empty if region 1 is non-empty, although there is no reason
+ * Region 1 was alपढ़ोy iterated over with bio_advance or similar function.
+ *	(it may be empty अगर the target करोesn't use bio_advance)
+ * Region 2 is the reमुख्यing bio size that the target wants to process.
+ *	(it may be empty अगर region 1 is non-empty, although there is no reason
  *	 to make it empty)
  * The target requires that region 3 is to be sent in the next bio.
  *
  * If the target wants to receive multiple copies of the bio (via num_*bios, etc),
- * the partially processed part (the sum of regions 1+2) must be the same for all
+ * the partially processed part (the sum of regions 1+2) must be the same क्रम all
  * copies of the bio.
  */
-void dm_accept_partial_bio(struct bio *bio, unsigned n_sectors)
-{
-	struct dm_target_io *tio = container_of(bio, struct dm_target_io, clone);
-	unsigned bi_size = bio->bi_iter.bi_size >> SECTOR_SHIFT;
+व्योम dm_accept_partial_bio(काष्ठा bio *bio, अचिन्हित n_sectors)
+अणु
+	काष्ठा dm_target_io *tio = container_of(bio, काष्ठा dm_target_io, clone);
+	अचिन्हित bi_size = bio->bi_iter.bi_size >> SECTOR_SHIFT;
 	BUG_ON(bio->bi_opf & REQ_PREFLUSH);
 	BUG_ON(bi_size > *tio->len_ptr);
 	BUG_ON(n_sectors > bi_size);
 	*tio->len_ptr -= bi_size - n_sectors;
 	bio->bi_iter.bi_size = n_sectors << SECTOR_SHIFT;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_accept_partial_bio);
 
-static noinline void __set_swap_bios_limit(struct mapped_device *md, int latch)
-{
+अटल noअंतरभूत व्योम __set_swap_bios_limit(काष्ठा mapped_device *md, पूर्णांक latch)
+अणु
 	mutex_lock(&md->swap_bios_lock);
-	while (latch < md->swap_bios) {
+	जबतक (latch < md->swap_bios) अणु
 		cond_resched();
-		down(&md->swap_bios_semaphore);
+		करोwn(&md->swap_bios_semaphore);
 		md->swap_bios--;
-	}
-	while (latch > md->swap_bios) {
+	पूर्ण
+	जबतक (latch > md->swap_bios) अणु
 		cond_resched();
 		up(&md->swap_bios_semaphore);
 		md->swap_bios++;
-	}
+	पूर्ण
 	mutex_unlock(&md->swap_bios_lock);
-}
+पूर्ण
 
-static blk_qc_t __map_bio(struct dm_target_io *tio)
-{
-	int r;
+अटल blk_qc_t __map_bio(काष्ठा dm_target_io *tio)
+अणु
+	पूर्णांक r;
 	sector_t sector;
-	struct bio *clone = &tio->clone;
-	struct dm_io *io = tio->io;
-	struct dm_target *ti = tio->ti;
+	काष्ठा bio *clone = &tio->clone;
+	काष्ठा dm_io *io = tio->io;
+	काष्ठा dm_target *ti = tio->ti;
 	blk_qc_t ret = BLK_QC_T_NONE;
 
 	clone->bi_end_io = clone_endio;
 
 	/*
-	 * Map the clone.  If r == 0 we don't need to do
+	 * Map the clone.  If r == 0 we करोn't need to करो
 	 * anything, the target has assumed ownership of
 	 * this io.
 	 */
 	atomic_inc(&io->io_count);
 	sector = clone->bi_iter.bi_sector;
 
-	if (unlikely(swap_bios_limit(ti, clone))) {
-		struct mapped_device *md = io->md;
-		int latch = get_swap_bios();
-		if (unlikely(latch != md->swap_bios))
+	अगर (unlikely(swap_bios_limit(ti, clone))) अणु
+		काष्ठा mapped_device *md = io->md;
+		पूर्णांक latch = get_swap_bios();
+		अगर (unlikely(latch != md->swap_bios))
 			__set_swap_bios_limit(md, latch);
-		down(&md->swap_bios_semaphore);
-	}
+		करोwn(&md->swap_bios_semaphore);
+	पूर्ण
 
 	r = ti->type->map(ti, clone);
-	switch (r) {
-	case DM_MAPIO_SUBMITTED:
-		break;
-	case DM_MAPIO_REMAPPED:
+	चयन (r) अणु
+	हाल DM_MAPIO_SUBMITTED:
+		अवरोध;
+	हाल DM_MAPIO_REMAPPED:
 		/* the bio has been remapped so dispatch it */
 		trace_block_bio_remap(clone, bio_dev(io->orig_bio), sector);
 		ret = submit_bio_noacct(clone);
-		break;
-	case DM_MAPIO_KILL:
-		if (unlikely(swap_bios_limit(ti, clone))) {
-			struct mapped_device *md = io->md;
+		अवरोध;
+	हाल DM_MAPIO_KILL:
+		अगर (unlikely(swap_bios_limit(ti, clone))) अणु
+			काष्ठा mapped_device *md = io->md;
 			up(&md->swap_bios_semaphore);
-		}
-		free_tio(tio);
+		पूर्ण
+		मुक्त_tio(tio);
 		dec_pending(io, BLK_STS_IOERR);
-		break;
-	case DM_MAPIO_REQUEUE:
-		if (unlikely(swap_bios_limit(ti, clone))) {
-			struct mapped_device *md = io->md;
+		अवरोध;
+	हाल DM_MAPIO_REQUEUE:
+		अगर (unlikely(swap_bios_limit(ti, clone))) अणु
+			काष्ठा mapped_device *md = io->md;
 			up(&md->swap_bios_semaphore);
-		}
-		free_tio(tio);
+		पूर्ण
+		मुक्त_tio(tio);
 		dec_pending(io, BLK_STS_DM_REQUEUE);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DMWARN("unimplemented target map return value: %d", r);
 		BUG();
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void bio_setup_sector(struct bio *bio, sector_t sector, unsigned len)
-{
+अटल व्योम bio_setup_sector(काष्ठा bio *bio, sector_t sector, अचिन्हित len)
+अणु
 	bio->bi_iter.bi_sector = sector;
 	bio->bi_iter.bi_size = to_bytes(len);
-}
+पूर्ण
 
 /*
  * Creates a bio that consists of range of complete bvecs.
  */
-static int clone_bio(struct dm_target_io *tio, struct bio *bio,
-		     sector_t sector, unsigned len)
-{
-	struct bio *clone = &tio->clone;
-	int r;
+अटल पूर्णांक clone_bio(काष्ठा dm_target_io *tio, काष्ठा bio *bio,
+		     sector_t sector, अचिन्हित len)
+अणु
+	काष्ठा bio *clone = &tio->clone;
+	पूर्णांक r;
 
 	__bio_clone_fast(clone, bio);
 
 	r = bio_crypt_clone(clone, bio, GFP_NOIO);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
-	if (bio_integrity(bio)) {
-		if (unlikely(!dm_target_has_integrity(tio->ti->type) &&
-			     !dm_target_passes_integrity(tio->ti->type))) {
+	अगर (bio_पूर्णांकegrity(bio)) अणु
+		अगर (unlikely(!dm_target_has_पूर्णांकegrity(tio->ti->type) &&
+			     !dm_target_passes_पूर्णांकegrity(tio->ti->type))) अणु
 			DMWARN("%s: the target %s doesn't support integrity data.",
 				dm_device_name(tio->io->md),
 				tio->ti->type->name);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 
-		r = bio_integrity_clone(clone, bio, GFP_NOIO);
-		if (r < 0)
-			return r;
-	}
+		r = bio_पूर्णांकegrity_clone(clone, bio, GFP_NOIO);
+		अगर (r < 0)
+			वापस r;
+	पूर्ण
 
 	bio_advance(clone, to_bytes(sector - clone->bi_iter.bi_sector));
 	clone->bi_iter.bi_size = to_bytes(len);
 
-	if (bio_integrity(bio))
-		bio_integrity_trim(clone);
+	अगर (bio_पूर्णांकegrity(bio))
+		bio_पूर्णांकegrity_trim(clone);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void alloc_multiple_bios(struct bio_list *blist, struct clone_info *ci,
-				struct dm_target *ti, unsigned num_bios)
-{
-	struct dm_target_io *tio;
-	int try;
+अटल व्योम alloc_multiple_bios(काष्ठा bio_list *blist, काष्ठा clone_info *ci,
+				काष्ठा dm_target *ti, अचिन्हित num_bios)
+अणु
+	काष्ठा dm_target_io *tio;
+	पूर्णांक try;
 
-	if (!num_bios)
-		return;
+	अगर (!num_bios)
+		वापस;
 
-	if (num_bios == 1) {
+	अगर (num_bios == 1) अणु
 		tio = alloc_tio(ci, ti, 0, GFP_NOIO);
 		bio_list_add(blist, &tio->clone);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (try = 0; try < 2; try++) {
-		int bio_nr;
-		struct bio *bio;
+	क्रम (try = 0; try < 2; try++) अणु
+		पूर्णांक bio_nr;
+		काष्ठा bio *bio;
 
-		if (try)
+		अगर (try)
 			mutex_lock(&ci->io->md->table_devices_lock);
-		for (bio_nr = 0; bio_nr < num_bios; bio_nr++) {
+		क्रम (bio_nr = 0; bio_nr < num_bios; bio_nr++) अणु
 			tio = alloc_tio(ci, ti, bio_nr, try ? GFP_NOIO : GFP_NOWAIT);
-			if (!tio)
-				break;
+			अगर (!tio)
+				अवरोध;
 
 			bio_list_add(blist, &tio->clone);
-		}
-		if (try)
+		पूर्ण
+		अगर (try)
 			mutex_unlock(&ci->io->md->table_devices_lock);
-		if (bio_nr == num_bios)
-			return;
+		अगर (bio_nr == num_bios)
+			वापस;
 
-		while ((bio = bio_list_pop(blist))) {
-			tio = container_of(bio, struct dm_target_io, clone);
-			free_tio(tio);
-		}
-	}
-}
+		जबतक ((bio = bio_list_pop(blist))) अणु
+			tio = container_of(bio, काष्ठा dm_target_io, clone);
+			मुक्त_tio(tio);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static blk_qc_t __clone_and_map_simple_bio(struct clone_info *ci,
-					   struct dm_target_io *tio, unsigned *len)
-{
-	struct bio *clone = &tio->clone;
+अटल blk_qc_t __clone_and_map_simple_bio(काष्ठा clone_info *ci,
+					   काष्ठा dm_target_io *tio, अचिन्हित *len)
+अणु
+	काष्ठा bio *clone = &tio->clone;
 
 	tio->len_ptr = len;
 
 	__bio_clone_fast(clone, ci->bio);
-	if (len)
+	अगर (len)
 		bio_setup_sector(clone, ci->sector, *len);
 
-	return __map_bio(tio);
-}
+	वापस __map_bio(tio);
+पूर्ण
 
-static void __send_duplicate_bios(struct clone_info *ci, struct dm_target *ti,
-				  unsigned num_bios, unsigned *len)
-{
-	struct bio_list blist = BIO_EMPTY_LIST;
-	struct bio *bio;
-	struct dm_target_io *tio;
+अटल व्योम __send_duplicate_bios(काष्ठा clone_info *ci, काष्ठा dm_target *ti,
+				  अचिन्हित num_bios, अचिन्हित *len)
+अणु
+	काष्ठा bio_list blist = BIO_EMPTY_LIST;
+	काष्ठा bio *bio;
+	काष्ठा dm_target_io *tio;
 
 	alloc_multiple_bios(&blist, ci, ti, num_bios);
 
-	while ((bio = bio_list_pop(&blist))) {
-		tio = container_of(bio, struct dm_target_io, clone);
-		(void) __clone_and_map_simple_bio(ci, tio, len);
-	}
-}
+	जबतक ((bio = bio_list_pop(&blist))) अणु
+		tio = container_of(bio, काष्ठा dm_target_io, clone);
+		(व्योम) __clone_and_map_simple_bio(ci, tio, len);
+	पूर्ण
+पूर्ण
 
-static int __send_empty_flush(struct clone_info *ci)
-{
-	unsigned target_nr = 0;
-	struct dm_target *ti;
-	struct bio flush_bio;
+अटल पूर्णांक __send_empty_flush(काष्ठा clone_info *ci)
+अणु
+	अचिन्हित target_nr = 0;
+	काष्ठा dm_target *ti;
+	काष्ठा bio flush_bio;
 
 	/*
-	 * Use an on-stack bio for this, it's safe since we don't
+	 * Use an on-stack bio क्रम this, it's safe since we don't
 	 * need to reference it after submit. It's just used as
-	 * the basis for the clone(s).
+	 * the basis क्रम the clone(s).
 	 */
-	bio_init(&flush_bio, NULL, 0);
+	bio_init(&flush_bio, शून्य, 0);
 	flush_bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH | REQ_SYNC;
 	bio_set_dev(&flush_bio, ci->io->md->disk->part0);
 
@@ -1484,45 +1485,45 @@ static int __send_empty_flush(struct clone_info *ci)
 	ci->sector_count = 0;
 
 	BUG_ON(bio_has_data(ci->bio));
-	while ((ti = dm_table_get_target(ci->map, target_nr++)))
-		__send_duplicate_bios(ci, ti, ti->num_flush_bios, NULL);
+	जबतक ((ti = dm_table_get_target(ci->map, target_nr++)))
+		__send_duplicate_bios(ci, ti, ti->num_flush_bios, शून्य);
 
 	bio_uninit(ci->bio);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __clone_and_map_data_bio(struct clone_info *ci, struct dm_target *ti,
-				    sector_t sector, unsigned *len)
-{
-	struct bio *bio = ci->bio;
-	struct dm_target_io *tio;
-	int r;
+अटल पूर्णांक __clone_and_map_data_bio(काष्ठा clone_info *ci, काष्ठा dm_target *ti,
+				    sector_t sector, अचिन्हित *len)
+अणु
+	काष्ठा bio *bio = ci->bio;
+	काष्ठा dm_target_io *tio;
+	पूर्णांक r;
 
 	tio = alloc_tio(ci, ti, 0, GFP_NOIO);
 	tio->len_ptr = len;
 	r = clone_bio(tio, bio, sector, *len);
-	if (r < 0) {
-		free_tio(tio);
-		return r;
-	}
-	(void) __map_bio(tio);
+	अगर (r < 0) अणु
+		मुक्त_tio(tio);
+		वापस r;
+	पूर्ण
+	(व्योम) __map_bio(tio);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __send_changing_extent_only(struct clone_info *ci, struct dm_target *ti,
-				       unsigned num_bios)
-{
-	unsigned len;
+अटल पूर्णांक __send_changing_extent_only(काष्ठा clone_info *ci, काष्ठा dm_target *ti,
+				       अचिन्हित num_bios)
+अणु
+	अचिन्हित len;
 
 	/*
-	 * Even though the device advertised support for this type of
-	 * request, that does not mean every target supports it, and
+	 * Even though the device advertised support क्रम this type of
+	 * request, that करोes not mean every target supports it, and
 	 * reconfiguration might also have changed that since the
-	 * check was performed.
+	 * check was perक्रमmed.
 	 */
-	if (!num_bios)
-		return -EOPNOTSUPP;
+	अगर (!num_bios)
+		वापस -EOPNOTSUPP;
 
 	len = min_t(sector_t, ci->sector_count,
 		    max_io_len_target_boundary(ti, dm_target_offset(ti, ci->sector)));
@@ -1532,132 +1533,132 @@ static int __send_changing_extent_only(struct clone_info *ci, struct dm_target *
 	ci->sector += len;
 	ci->sector_count -= len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool is_abnormal_io(struct bio *bio)
-{
+अटल bool is_abnormal_io(काष्ठा bio *bio)
+अणु
 	bool r = false;
 
-	switch (bio_op(bio)) {
-	case REQ_OP_DISCARD:
-	case REQ_OP_SECURE_ERASE:
-	case REQ_OP_WRITE_SAME:
-	case REQ_OP_WRITE_ZEROES:
+	चयन (bio_op(bio)) अणु
+	हाल REQ_OP_DISCARD:
+	हाल REQ_OP_SECURE_ERASE:
+	हाल REQ_OP_WRITE_SAME:
+	हाल REQ_OP_WRITE_ZEROES:
 		r = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static bool __process_abnormal_io(struct clone_info *ci, struct dm_target *ti,
-				  int *result)
-{
-	struct bio *bio = ci->bio;
-	unsigned num_bios = 0;
+अटल bool __process_abnormal_io(काष्ठा clone_info *ci, काष्ठा dm_target *ti,
+				  पूर्णांक *result)
+अणु
+	काष्ठा bio *bio = ci->bio;
+	अचिन्हित num_bios = 0;
 
-	switch (bio_op(bio)) {
-	case REQ_OP_DISCARD:
+	चयन (bio_op(bio)) अणु
+	हाल REQ_OP_DISCARD:
 		num_bios = ti->num_discard_bios;
-		break;
-	case REQ_OP_SECURE_ERASE:
+		अवरोध;
+	हाल REQ_OP_SECURE_ERASE:
 		num_bios = ti->num_secure_erase_bios;
-		break;
-	case REQ_OP_WRITE_SAME:
-		num_bios = ti->num_write_same_bios;
-		break;
-	case REQ_OP_WRITE_ZEROES:
-		num_bios = ti->num_write_zeroes_bios;
-		break;
-	default:
-		return false;
-	}
+		अवरोध;
+	हाल REQ_OP_WRITE_SAME:
+		num_bios = ti->num_ग_लिखो_same_bios;
+		अवरोध;
+	हाल REQ_OP_WRITE_ZEROES:
+		num_bios = ti->num_ग_लिखो_zeroes_bios;
+		अवरोध;
+	शेष:
+		वापस false;
+	पूर्ण
 
 	*result = __send_changing_extent_only(ci, ti, num_bios);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Select the correct strategy for processing a non-flush bio.
+ * Select the correct strategy क्रम processing a non-flush bio.
  */
-static int __split_and_process_non_flush(struct clone_info *ci)
-{
-	struct dm_target *ti;
-	unsigned len;
-	int r;
+अटल पूर्णांक __split_and_process_non_flush(काष्ठा clone_info *ci)
+अणु
+	काष्ठा dm_target *ti;
+	अचिन्हित len;
+	पूर्णांक r;
 
 	ti = dm_table_find_target(ci->map, ci->sector);
-	if (!ti)
-		return -EIO;
+	अगर (!ti)
+		वापस -EIO;
 
-	if (__process_abnormal_io(ci, ti, &r))
-		return r;
+	अगर (__process_abnormal_io(ci, ti, &r))
+		वापस r;
 
 	len = min_t(sector_t, max_io_len(ti, ci->sector), ci->sector_count);
 
 	r = __clone_and_map_data_bio(ci, ti, ci->sector, &len);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	ci->sector += len;
 	ci->sector_count -= len;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void init_clone_info(struct clone_info *ci, struct mapped_device *md,
-			    struct dm_table *map, struct bio *bio)
-{
+अटल व्योम init_clone_info(काष्ठा clone_info *ci, काष्ठा mapped_device *md,
+			    काष्ठा dm_table *map, काष्ठा bio *bio)
+अणु
 	ci->map = map;
 	ci->io = alloc_io(md, bio);
 	ci->sector = bio->bi_iter.bi_sector;
-}
+पूर्ण
 
-#define __dm_part_stat_sub(part, field, subnd)	\
+#घोषणा __dm_part_stat_sub(part, field, subnd)	\
 	(part_stat_get(part, field) -= (subnd))
 
 /*
- * Entry point to split a bio into clones and submit them to the targets.
+ * Entry poपूर्णांक to split a bio पूर्णांकo clones and submit them to the tarमाला_लो.
  */
-static blk_qc_t __split_and_process_bio(struct mapped_device *md,
-					struct dm_table *map, struct bio *bio)
-{
-	struct clone_info ci;
+अटल blk_qc_t __split_and_process_bio(काष्ठा mapped_device *md,
+					काष्ठा dm_table *map, काष्ठा bio *bio)
+अणु
+	काष्ठा clone_info ci;
 	blk_qc_t ret = BLK_QC_T_NONE;
-	int error = 0;
+	पूर्णांक error = 0;
 
 	init_clone_info(&ci, md, map, bio);
 
-	if (bio->bi_opf & REQ_PREFLUSH) {
+	अगर (bio->bi_opf & REQ_PREFLUSH) अणु
 		error = __send_empty_flush(&ci);
 		/* dec_pending submits any data associated with flush */
-	} else if (op_is_zone_mgmt(bio_op(bio))) {
+	पूर्ण अन्यथा अगर (op_is_zone_mgmt(bio_op(bio))) अणु
 		ci.bio = bio;
 		ci.sector_count = 0;
 		error = __split_and_process_non_flush(&ci);
-	} else {
+	पूर्ण अन्यथा अणु
 		ci.bio = bio;
 		ci.sector_count = bio_sectors(bio);
 		error = __split_and_process_non_flush(&ci);
-		if (ci.sector_count && !error) {
+		अगर (ci.sector_count && !error) अणु
 			/*
-			 * Remainder must be passed to submit_bio_noacct()
-			 * so that it gets handled *after* bios already submitted
+			 * Reमुख्यder must be passed to submit_bio_noacct()
+			 * so that it माला_लो handled *after* bios alपढ़ोy submitted
 			 * have been completely processed.
 			 * We take a clone of the original to store in
 			 * ci.io->orig_bio to be used by end_io_acct() and
-			 * for dec_pending to use for completion handling.
+			 * क्रम dec_pending to use क्रम completion handling.
 			 */
-			struct bio *b = bio_split(bio, bio_sectors(bio) - ci.sector_count,
+			काष्ठा bio *b = bio_split(bio, bio_sectors(bio) - ci.sector_count,
 						  GFP_NOIO, &md->queue->bio_split);
 			ci.io->orig_bio = b;
 
 			/*
-			 * Adjust IO stats for each split, otherwise upon queue
+			 * Adjust IO stats क्रम each split, otherwise upon queue
 			 * reentry there will be redundant IO accounting.
 			 * NOTE: this is a stop-gap fix, a proper fix involves
-			 * significant refactoring of DM core's bio splitting
+			 * signअगरicant refactoring of DM core's bio splitting
 			 * (by eliminating DM's splitting and just using bio_split)
 			 */
 			part_stat_lock();
@@ -1668,72 +1669,72 @@ static blk_qc_t __split_and_process_bio(struct mapped_device *md,
 			bio_chain(b, bio);
 			trace_block_split(b, bio->bi_iter.bi_sector);
 			ret = submit_bio_noacct(bio);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* drop the extra reference count */
-	dec_pending(ci.io, errno_to_blk_status(error));
-	return ret;
-}
+	dec_pending(ci.io, त्रुटि_सं_to_blk_status(error));
+	वापस ret;
+पूर्ण
 
-static blk_qc_t dm_submit_bio(struct bio *bio)
-{
-	struct mapped_device *md = bio->bi_bdev->bd_disk->private_data;
+अटल blk_qc_t dm_submit_bio(काष्ठा bio *bio)
+अणु
+	काष्ठा mapped_device *md = bio->bi_bdev->bd_disk->निजी_data;
 	blk_qc_t ret = BLK_QC_T_NONE;
-	int srcu_idx;
-	struct dm_table *map;
+	पूर्णांक srcu_idx;
+	काष्ठा dm_table *map;
 
 	map = dm_get_live_table(md, &srcu_idx);
-	if (unlikely(!map)) {
+	अगर (unlikely(!map)) अणु
 		DMERR_LIMIT("%s: mapping table unavailable, erroring io",
 			    dm_device_name(md));
 		bio_io_error(bio);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* If suspended, queue this IO for later */
-	if (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags))) {
-		if (bio->bi_opf & REQ_NOWAIT)
+	/* If suspended, queue this IO क्रम later */
+	अगर (unlikely(test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags))) अणु
+		अगर (bio->bi_opf & REQ_NOWAIT)
 			bio_wouldblock_error(bio);
-		else if (bio->bi_opf & REQ_RAHEAD)
+		अन्यथा अगर (bio->bi_opf & REQ_RAHEAD)
 			bio_io_error(bio);
-		else
+		अन्यथा
 			queue_io(md, bio);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * Use blk_queue_split() for abnormal IO (e.g. discard, writesame, etc)
+	 * Use blk_queue_split() क्रम abnormal IO (e.g. discard, ग_लिखोsame, etc)
 	 * otherwise associated queue_limits won't be imposed.
 	 */
-	if (is_abnormal_io(bio))
+	अगर (is_abnormal_io(bio))
 		blk_queue_split(&bio);
 
 	ret = __split_and_process_bio(md, map, bio);
 out:
 	dm_put_live_table(md, srcu_idx);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*-----------------------------------------------------------------
  * An IDR is used to keep track of allocated minor numbers.
  *---------------------------------------------------------------*/
-static void free_minor(int minor)
-{
+अटल व्योम मुक्त_minor(पूर्णांक minor)
+अणु
 	spin_lock(&_minor_lock);
-	idr_remove(&_minor_idr, minor);
+	idr_हटाओ(&_minor_idr, minor);
 	spin_unlock(&_minor_lock);
-}
+पूर्ण
 
 /*
- * See if the device with a specific minor # is free.
+ * See अगर the device with a specअगरic minor # is मुक्त.
  */
-static int specific_minor(int minor)
-{
-	int r;
+अटल पूर्णांक specअगरic_minor(पूर्णांक minor)
+अणु
+	पूर्णांक r;
 
-	if (minor >= (1 << MINORBITS))
-		return -EINVAL;
+	अगर (minor >= (1 << MINORBITS))
+		वापस -EINVAL;
 
 	idr_preload(GFP_KERNEL);
 	spin_lock(&_minor_lock);
@@ -1742,14 +1743,14 @@ static int specific_minor(int minor)
 
 	spin_unlock(&_minor_lock);
 	idr_preload_end();
-	if (r < 0)
-		return r == -ENOSPC ? -EBUSY : r;
-	return 0;
-}
+	अगर (r < 0)
+		वापस r == -ENOSPC ? -EBUSY : r;
+	वापस 0;
+पूर्ण
 
-static int next_free_minor(int *minor)
-{
-	int r;
+अटल पूर्णांक next_मुक्त_minor(पूर्णांक *minor)
+अणु
+	पूर्णांक r;
 
 	idr_preload(GFP_KERNEL);
 	spin_lock(&_minor_lock);
@@ -1758,58 +1759,58 @@ static int next_free_minor(int *minor)
 
 	spin_unlock(&_minor_lock);
 	idr_preload_end();
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 	*minor = r;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct block_device_operations dm_blk_dops;
-static const struct block_device_operations dm_rq_blk_dops;
-static const struct dax_operations dm_dax_ops;
+अटल स्थिर काष्ठा block_device_operations dm_blk_करोps;
+अटल स्थिर काष्ठा block_device_operations dm_rq_blk_करोps;
+अटल स्थिर काष्ठा dax_operations dm_dax_ops;
 
-static void dm_wq_work(struct work_struct *work);
+अटल व्योम dm_wq_work(काष्ठा work_काष्ठा *work);
 
-#ifdef CONFIG_BLK_INLINE_ENCRYPTION
-static void dm_queue_destroy_keyslot_manager(struct request_queue *q)
-{
+#अगर_घोषित CONFIG_BLK_INLINE_ENCRYPTION
+अटल व्योम dm_queue_destroy_keyslot_manager(काष्ठा request_queue *q)
+अणु
 	dm_destroy_keyslot_manager(q->ksm);
-}
+पूर्ण
 
-#else /* CONFIG_BLK_INLINE_ENCRYPTION */
+#अन्यथा /* CONFIG_BLK_INLINE_ENCRYPTION */
 
-static inline void dm_queue_destroy_keyslot_manager(struct request_queue *q)
-{
-}
-#endif /* !CONFIG_BLK_INLINE_ENCRYPTION */
+अटल अंतरभूत व्योम dm_queue_destroy_keyslot_manager(काष्ठा request_queue *q)
+अणु
+पूर्ण
+#पूर्ण_अगर /* !CONFIG_BLK_INLINE_ENCRYPTION */
 
-static void cleanup_mapped_device(struct mapped_device *md)
-{
-	if (md->wq)
+अटल व्योम cleanup_mapped_device(काष्ठा mapped_device *md)
+अणु
+	अगर (md->wq)
 		destroy_workqueue(md->wq);
-	bioset_exit(&md->bs);
-	bioset_exit(&md->io_bs);
+	bioset_निकास(&md->bs);
+	bioset_निकास(&md->io_bs);
 
-	if (md->dax_dev) {
-		kill_dax(md->dax_dev);
+	अगर (md->dax_dev) अणु
+		समाप्त_dax(md->dax_dev);
 		put_dax(md->dax_dev);
-		md->dax_dev = NULL;
-	}
+		md->dax_dev = शून्य;
+	पूर्ण
 
-	if (md->disk) {
+	अगर (md->disk) अणु
 		spin_lock(&_minor_lock);
-		md->disk->private_data = NULL;
+		md->disk->निजी_data = शून्य;
 		spin_unlock(&_minor_lock);
 		del_gendisk(md->disk);
 		put_disk(md->disk);
-	}
+	पूर्ण
 
-	if (md->queue) {
+	अगर (md->queue) अणु
 		dm_queue_destroy_keyslot_manager(md->queue);
 		blk_cleanup_queue(md->queue);
-	}
+	पूर्ण
 
-	cleanup_srcu_struct(&md->io_barrier);
+	cleanup_srcu_काष्ठा(&md->io_barrier);
 
 	mutex_destroy(&md->suspend_lock);
 	mutex_destroy(&md->type_lock);
@@ -1817,37 +1818,37 @@ static void cleanup_mapped_device(struct mapped_device *md)
 	mutex_destroy(&md->swap_bios_lock);
 
 	dm_mq_cleanup_mapped_device(md);
-}
+पूर्ण
 
 /*
  * Allocate and initialise a blank device with a given minor.
  */
-static struct mapped_device *alloc_dev(int minor)
-{
-	int r, numa_node_id = dm_get_numa_node();
-	struct mapped_device *md;
-	void *old_md;
+अटल काष्ठा mapped_device *alloc_dev(पूर्णांक minor)
+अणु
+	पूर्णांक r, numa_node_id = dm_get_numa_node();
+	काष्ठा mapped_device *md;
+	व्योम *old_md;
 
-	md = kvzalloc_node(sizeof(*md), GFP_KERNEL, numa_node_id);
-	if (!md) {
+	md = kvzalloc_node(माप(*md), GFP_KERNEL, numa_node_id);
+	अगर (!md) अणु
 		DMWARN("unable to allocate device, out of memory.");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (!try_module_get(THIS_MODULE))
-		goto bad_module_get;
+	अगर (!try_module_get(THIS_MODULE))
+		जाओ bad_module_get;
 
-	/* get a minor number for the dev */
-	if (minor == DM_ANY_MINOR)
-		r = next_free_minor(&minor);
-	else
-		r = specific_minor(minor);
-	if (r < 0)
-		goto bad_minor;
+	/* get a minor number क्रम the dev */
+	अगर (minor == DM_ANY_MINOR)
+		r = next_मुक्त_minor(&minor);
+	अन्यथा
+		r = specअगरic_minor(minor);
+	अगर (r < 0)
+		जाओ bad_minor;
 
-	r = init_srcu_struct(&md->io_barrier);
-	if (r < 0)
-		goto bad_io_barrier;
+	r = init_srcu_काष्ठा(&md->io_barrier);
+	अगर (r < 0)
+		जाओ bad_io_barrier;
 
 	md->numa_node_id = numa_node_id;
 	md->init_tio_pdu = false;
@@ -1857,7 +1858,7 @@ static struct mapped_device *alloc_dev(int minor)
 	mutex_init(&md->table_devices_lock);
 	spin_lock_init(&md->deferred_lock);
 	atomic_set(&md->holders, 1);
-	atomic_set(&md->open_count, 0);
+	atomic_set(&md->खोलो_count, 0);
 	atomic_set(&md->event_nr, 0);
 	atomic_set(&md->uevent_seq, 0);
 	INIT_LIST_HEAD(&md->uevent_list);
@@ -1865,21 +1866,21 @@ static struct mapped_device *alloc_dev(int minor)
 	spin_lock_init(&md->uevent_lock);
 
 	/*
-	 * default to bio-based until DM table is loaded and md->type
+	 * शेष to bio-based until DM table is loaded and md->type
 	 * established. If request-based table is loaded: blk-mq will
 	 * override accordingly.
 	 */
 	md->queue = blk_alloc_queue(numa_node_id);
-	if (!md->queue)
-		goto bad;
+	अगर (!md->queue)
+		जाओ bad;
 
 	md->disk = alloc_disk_node(1, md->numa_node_id);
-	if (!md->disk)
-		goto bad;
+	अगर (!md->disk)
+		जाओ bad;
 
-	init_waitqueue_head(&md->wait);
+	init_रुकोqueue_head(&md->रुको);
 	INIT_WORK(&md->work, dm_wq_work);
-	init_waitqueue_head(&md->eventq);
+	init_रुकोqueue_head(&md->eventq);
 	init_completion(&md->kobj_holder.completion);
 
 	md->swap_bios = get_swap_bios();
@@ -1888,24 +1889,24 @@ static struct mapped_device *alloc_dev(int minor)
 
 	md->disk->major = _major;
 	md->disk->first_minor = minor;
-	md->disk->fops = &dm_blk_dops;
+	md->disk->fops = &dm_blk_करोps;
 	md->disk->queue = md->queue;
-	md->disk->private_data = md;
-	sprintf(md->disk->disk_name, "dm-%d", minor);
+	md->disk->निजी_data = md;
+	प्र_लिखो(md->disk->disk_name, "dm-%d", minor);
 
-	if (IS_ENABLED(CONFIG_DAX_DRIVER)) {
+	अगर (IS_ENABLED(CONFIG_DAX_DRIVER)) अणु
 		md->dax_dev = alloc_dax(md, md->disk->disk_name,
 					&dm_dax_ops, 0);
-		if (IS_ERR(md->dax_dev))
-			goto bad;
-	}
+		अगर (IS_ERR(md->dax_dev))
+			जाओ bad;
+	पूर्ण
 
 	add_disk_no_queue_reg(md->disk);
-	format_dev_t(md->name, MKDEV(_major, minor));
+	क्रमmat_dev_t(md->name, MKDEV(_major, minor));
 
 	md->wq = alloc_workqueue("kdmflush", WQ_MEM_RECLAIM, 0);
-	if (!md->wq)
-		goto bad;
+	अगर (!md->wq)
+		जाओ bad;
 
 	dm_stats_init(&md->stats);
 
@@ -1916,87 +1917,87 @@ static struct mapped_device *alloc_dev(int minor)
 
 	BUG_ON(old_md != MINOR_ALLOCED);
 
-	return md;
+	वापस md;
 
 bad:
 	cleanup_mapped_device(md);
 bad_io_barrier:
-	free_minor(minor);
+	मुक्त_minor(minor);
 bad_minor:
 	module_put(THIS_MODULE);
 bad_module_get:
-	kvfree(md);
-	return NULL;
-}
+	kvमुक्त(md);
+	वापस शून्य;
+पूर्ण
 
-static void unlock_fs(struct mapped_device *md);
+अटल व्योम unlock_fs(काष्ठा mapped_device *md);
 
-static void free_dev(struct mapped_device *md)
-{
-	int minor = MINOR(disk_devt(md->disk));
+अटल व्योम मुक्त_dev(काष्ठा mapped_device *md)
+अणु
+	पूर्णांक minor = MINOR(disk_devt(md->disk));
 
 	unlock_fs(md);
 
 	cleanup_mapped_device(md);
 
-	free_table_devices(&md->table_devices);
+	मुक्त_table_devices(&md->table_devices);
 	dm_stats_cleanup(&md->stats);
-	free_minor(minor);
+	मुक्त_minor(minor);
 
 	module_put(THIS_MODULE);
-	kvfree(md);
-}
+	kvमुक्त(md);
+पूर्ण
 
-static int __bind_mempools(struct mapped_device *md, struct dm_table *t)
-{
-	struct dm_md_mempools *p = dm_table_get_md_mempools(t);
-	int ret = 0;
+अटल पूर्णांक __bind_mempools(काष्ठा mapped_device *md, काष्ठा dm_table *t)
+अणु
+	काष्ठा dm_md_mempools *p = dm_table_get_md_mempools(t);
+	पूर्णांक ret = 0;
 
-	if (dm_table_bio_based(t)) {
+	अगर (dm_table_bio_based(t)) अणु
 		/*
-		 * The md may already have mempools that need changing.
+		 * The md may alपढ़ोy have mempools that need changing.
 		 * If so, reload bioset because front_pad may have changed
-		 * because a different table was loaded.
+		 * because a dअगरferent table was loaded.
 		 */
-		bioset_exit(&md->bs);
-		bioset_exit(&md->io_bs);
+		bioset_निकास(&md->bs);
+		bioset_निकास(&md->io_bs);
 
-	} else if (bioset_initialized(&md->bs)) {
+	पूर्ण अन्यथा अगर (bioset_initialized(&md->bs)) अणु
 		/*
 		 * There's no need to reload with request-based dm
-		 * because the size of front_pad doesn't change.
-		 * Note for future: If you are to reload bioset,
+		 * because the size of front_pad करोesn't change.
+		 * Note क्रम future: If you are to reload bioset,
 		 * prep-ed requests in the queue may refer
 		 * to bio from the old bioset, so you must walk
 		 * through the queue to unprep.
 		 */
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	BUG_ON(!p ||
 	       bioset_initialized(&md->bs) ||
 	       bioset_initialized(&md->io_bs));
 
 	ret = bioset_init_from_src(&md->bs, &p->bs);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 	ret = bioset_init_from_src(&md->io_bs, &p->io_bs);
-	if (ret)
-		bioset_exit(&md->bs);
+	अगर (ret)
+		bioset_निकास(&md->bs);
 out:
-	/* mempool bind completed, no longer need any mempools in the table */
-	dm_table_free_md_mempools(t);
-	return ret;
-}
+	/* mempool bind completed, no दीर्घer need any mempools in the table */
+	dm_table_मुक्त_md_mempools(t);
+	वापस ret;
+पूर्ण
 
 /*
  * Bind a table to the device.
  */
-static void event_callback(void *context)
-{
-	unsigned long flags;
+अटल व्योम event_callback(व्योम *context)
+अणु
+	अचिन्हित दीर्घ flags;
 	LIST_HEAD(uevents);
-	struct mapped_device *md = (struct mapped_device *) context;
+	काष्ठा mapped_device *md = (काष्ठा mapped_device *) context;
 
 	spin_lock_irqsave(&md->uevent_lock, flags);
 	list_splice_init(&md->uevent_list, &uevents);
@@ -2007,253 +2008,253 @@ static void event_callback(void *context)
 	atomic_inc(&md->event_nr);
 	wake_up(&md->eventq);
 	dm_issue_global_event();
-}
+पूर्ण
 
 /*
  * Returns old map, which caller must destroy.
  */
-static struct dm_table *__bind(struct mapped_device *md, struct dm_table *t,
-			       struct queue_limits *limits)
-{
-	struct dm_table *old_map;
-	struct request_queue *q = md->queue;
+अटल काष्ठा dm_table *__bind(काष्ठा mapped_device *md, काष्ठा dm_table *t,
+			       काष्ठा queue_limits *limits)
+अणु
+	काष्ठा dm_table *old_map;
+	काष्ठा request_queue *q = md->queue;
 	bool request_based = dm_table_request_based(t);
 	sector_t size;
-	int ret;
+	पूर्णांक ret;
 
-	lockdep_assert_held(&md->suspend_lock);
+	lockdep_निश्चित_held(&md->suspend_lock);
 
 	size = dm_table_get_size(t);
 
 	/*
-	 * Wipe any geometry if the size of the table changed.
+	 * Wipe any geometry अगर the size of the table changed.
 	 */
-	if (size != dm_get_size(md))
-		memset(&md->geometry, 0, sizeof(md->geometry));
+	अगर (size != dm_get_size(md))
+		स_रखो(&md->geometry, 0, माप(md->geometry));
 
-	if (!get_capacity(md->disk))
+	अगर (!get_capacity(md->disk))
 		set_capacity(md->disk, size);
-	else
-		set_capacity_and_notify(md->disk, size);
+	अन्यथा
+		set_capacity_and_notअगरy(md->disk, size);
 
 	dm_table_event_callback(t, event_callback, md);
 
 	/*
 	 * The queue hasn't been stopped yet, if the old table type wasn't
-	 * for request-based during suspension.  So stop it to prevent
-	 * I/O mapping before resume.
-	 * This must be done before setting the queue restrictions,
+	 * क्रम request-based during suspension.  So stop it to prevent
+	 * I/O mapping beक्रमe resume.
+	 * This must be करोne beक्रमe setting the queue restrictions,
 	 * because request-based dm may be run just after the setting.
 	 */
-	if (request_based)
+	अगर (request_based)
 		dm_stop_queue(q);
 
-	if (request_based) {
+	अगर (request_based) अणु
 		/*
-		 * Leverage the fact that request-based DM targets are
+		 * Leverage the fact that request-based DM tarमाला_लो are
 		 * immutable singletons - used to optimize dm_mq_queue_rq.
 		 */
 		md->immutable_target = dm_table_get_immutable_target(t);
-	}
+	पूर्ण
 
 	ret = __bind_mempools(md, t);
-	if (ret) {
+	अगर (ret) अणु
 		old_map = ERR_PTR(ret);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	old_map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
-	rcu_assign_pointer(md->map, (void *)t);
+	old_map = rcu_dereference_रक्षित(md->map, lockdep_is_held(&md->suspend_lock));
+	rcu_assign_poपूर्णांकer(md->map, (व्योम *)t);
 	md->immutable_target_type = dm_table_get_immutable_target_type(t);
 
 	dm_table_set_restrictions(t, q, limits);
-	if (old_map)
+	अगर (old_map)
 		dm_sync_table(md);
 
 out:
-	return old_map;
-}
+	वापस old_map;
+पूर्ण
 
 /*
- * Returns unbound table for the caller to free.
+ * Returns unbound table क्रम the caller to मुक्त.
  */
-static struct dm_table *__unbind(struct mapped_device *md)
-{
-	struct dm_table *map = rcu_dereference_protected(md->map, 1);
+अटल काष्ठा dm_table *__unbind(काष्ठा mapped_device *md)
+अणु
+	काष्ठा dm_table *map = rcu_dereference_रक्षित(md->map, 1);
 
-	if (!map)
-		return NULL;
+	अगर (!map)
+		वापस शून्य;
 
-	dm_table_event_callback(map, NULL, NULL);
-	RCU_INIT_POINTER(md->map, NULL);
+	dm_table_event_callback(map, शून्य, शून्य);
+	RCU_INIT_POINTER(md->map, शून्य);
 	dm_sync_table(md);
 
-	return map;
-}
+	वापस map;
+पूर्ण
 
 /*
- * Constructor for a new device.
+ * Conकाष्ठाor क्रम a new device.
  */
-int dm_create(int minor, struct mapped_device **result)
-{
-	int r;
-	struct mapped_device *md;
+पूर्णांक dm_create(पूर्णांक minor, काष्ठा mapped_device **result)
+अणु
+	पूर्णांक r;
+	काष्ठा mapped_device *md;
 
 	md = alloc_dev(minor);
-	if (!md)
-		return -ENXIO;
+	अगर (!md)
+		वापस -ENXIO;
 
 	r = dm_sysfs_init(md);
-	if (r) {
-		free_dev(md);
-		return r;
-	}
+	अगर (r) अणु
+		मुक्त_dev(md);
+		वापस r;
+	पूर्ण
 
 	*result = md;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Functions to manage md->type.
  * All are required to hold md->type_lock.
  */
-void dm_lock_md_type(struct mapped_device *md)
-{
+व्योम dm_lock_md_type(काष्ठा mapped_device *md)
+अणु
 	mutex_lock(&md->type_lock);
-}
+पूर्ण
 
-void dm_unlock_md_type(struct mapped_device *md)
-{
+व्योम dm_unlock_md_type(काष्ठा mapped_device *md)
+अणु
 	mutex_unlock(&md->type_lock);
-}
+पूर्ण
 
-void dm_set_md_type(struct mapped_device *md, enum dm_queue_mode type)
-{
+व्योम dm_set_md_type(काष्ठा mapped_device *md, क्रमागत dm_queue_mode type)
+अणु
 	BUG_ON(!mutex_is_locked(&md->type_lock));
 	md->type = type;
-}
+पूर्ण
 
-enum dm_queue_mode dm_get_md_type(struct mapped_device *md)
-{
-	return md->type;
-}
+क्रमागत dm_queue_mode dm_get_md_type(काष्ठा mapped_device *md)
+अणु
+	वापस md->type;
+पूर्ण
 
-struct target_type *dm_get_immutable_target_type(struct mapped_device *md)
-{
-	return md->immutable_target_type;
-}
+काष्ठा target_type *dm_get_immutable_target_type(काष्ठा mapped_device *md)
+अणु
+	वापस md->immutable_target_type;
+पूर्ण
 
 /*
- * The queue_limits are only valid as long as you have a reference
+ * The queue_limits are only valid as दीर्घ as you have a reference
  * count on 'md'.
  */
-struct queue_limits *dm_get_queue_limits(struct mapped_device *md)
-{
-	BUG_ON(!atomic_read(&md->holders));
-	return &md->queue->limits;
-}
+काष्ठा queue_limits *dm_get_queue_limits(काष्ठा mapped_device *md)
+अणु
+	BUG_ON(!atomic_पढ़ो(&md->holders));
+	वापस &md->queue->limits;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_get_queue_limits);
 
 /*
  * Setup the DM device's queue based on md's type
  */
-int dm_setup_md_queue(struct mapped_device *md, struct dm_table *t)
-{
-	int r;
-	struct queue_limits limits;
-	enum dm_queue_mode type = dm_get_md_type(md);
+पूर्णांक dm_setup_md_queue(काष्ठा mapped_device *md, काष्ठा dm_table *t)
+अणु
+	पूर्णांक r;
+	काष्ठा queue_limits limits;
+	क्रमागत dm_queue_mode type = dm_get_md_type(md);
 
-	switch (type) {
-	case DM_TYPE_REQUEST_BASED:
-		md->disk->fops = &dm_rq_blk_dops;
+	चयन (type) अणु
+	हाल DM_TYPE_REQUEST_BASED:
+		md->disk->fops = &dm_rq_blk_करोps;
 		r = dm_mq_init_request_queue(md, t);
-		if (r) {
+		अगर (r) अणु
 			DMERR("Cannot initialize queue for request-based dm mapped device");
-			return r;
-		}
-		break;
-	case DM_TYPE_BIO_BASED:
-	case DM_TYPE_DAX_BIO_BASED:
-		break;
-	case DM_TYPE_NONE:
+			वापस r;
+		पूर्ण
+		अवरोध;
+	हाल DM_TYPE_BIO_BASED:
+	हाल DM_TYPE_DAX_BIO_BASED:
+		अवरोध;
+	हाल DM_TYPE_NONE:
 		WARN_ON_ONCE(true);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	r = dm_calculate_queue_limits(t, &limits);
-	if (r) {
+	अगर (r) अणु
 		DMERR("Cannot calculate initial queue limits");
-		return r;
-	}
+		वापस r;
+	पूर्ण
 	dm_table_set_restrictions(t, md->queue, &limits);
-	blk_register_queue(md->disk);
+	blk_रेजिस्टर_queue(md->disk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct mapped_device *dm_get_md(dev_t dev)
-{
-	struct mapped_device *md;
-	unsigned minor = MINOR(dev);
+काष्ठा mapped_device *dm_get_md(dev_t dev)
+अणु
+	काष्ठा mapped_device *md;
+	अचिन्हित minor = MINOR(dev);
 
-	if (MAJOR(dev) != _major || minor >= (1 << MINORBITS))
-		return NULL;
+	अगर (MAJOR(dev) != _major || minor >= (1 << MINORBITS))
+		वापस शून्य;
 
 	spin_lock(&_minor_lock);
 
 	md = idr_find(&_minor_idr, minor);
-	if (!md || md == MINOR_ALLOCED || (MINOR(disk_devt(dm_disk(md))) != minor) ||
-	    test_bit(DMF_FREEING, &md->flags) || dm_deleting_md(md)) {
-		md = NULL;
-		goto out;
-	}
+	अगर (!md || md == MINOR_ALLOCED || (MINOR(disk_devt(dm_disk(md))) != minor) ||
+	    test_bit(DMF_FREEING, &md->flags) || dm_deleting_md(md)) अणु
+		md = शून्य;
+		जाओ out;
+	पूर्ण
 	dm_get(md);
 out:
 	spin_unlock(&_minor_lock);
 
-	return md;
-}
+	वापस md;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_get_md);
 
-void *dm_get_mdptr(struct mapped_device *md)
-{
-	return md->interface_ptr;
-}
+व्योम *dm_get_mdptr(काष्ठा mapped_device *md)
+अणु
+	वापस md->पूर्णांकerface_ptr;
+पूर्ण
 
-void dm_set_mdptr(struct mapped_device *md, void *ptr)
-{
-	md->interface_ptr = ptr;
-}
+व्योम dm_set_mdptr(काष्ठा mapped_device *md, व्योम *ptr)
+अणु
+	md->पूर्णांकerface_ptr = ptr;
+पूर्ण
 
-void dm_get(struct mapped_device *md)
-{
+व्योम dm_get(काष्ठा mapped_device *md)
+अणु
 	atomic_inc(&md->holders);
 	BUG_ON(test_bit(DMF_FREEING, &md->flags));
-}
+पूर्ण
 
-int dm_hold(struct mapped_device *md)
-{
+पूर्णांक dm_hold(काष्ठा mapped_device *md)
+अणु
 	spin_lock(&_minor_lock);
-	if (test_bit(DMF_FREEING, &md->flags)) {
+	अगर (test_bit(DMF_FREEING, &md->flags)) अणु
 		spin_unlock(&_minor_lock);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	dm_get(md);
 	spin_unlock(&_minor_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_hold);
 
-const char *dm_device_name(struct mapped_device *md)
-{
-	return md->name;
-}
+स्थिर अक्षर *dm_device_name(काष्ठा mapped_device *md)
+अणु
+	वापस md->name;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_device_name);
 
-static void __dm_destroy(struct mapped_device *md, bool wait)
-{
-	struct dm_table *map;
-	int srcu_idx;
+अटल व्योम __dm_destroy(काष्ठा mapped_device *md, bool रुको)
+अणु
+	काष्ठा dm_table *map;
+	पूर्णांक srcu_idx;
 
 	might_sleep();
 
@@ -2266,255 +2267,255 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
 
 	/*
 	 * Take suspend_lock so that presuspend and postsuspend methods
-	 * do not race with internal suspend.
+	 * करो not race with पूर्णांकernal suspend.
 	 */
 	mutex_lock(&md->suspend_lock);
 	map = dm_get_live_table(md, &srcu_idx);
-	if (!dm_suspended_md(md)) {
-		dm_table_presuspend_targets(map);
+	अगर (!dm_suspended_md(md)) अणु
+		dm_table_presuspend_tarमाला_लो(map);
 		set_bit(DMF_SUSPENDED, &md->flags);
 		set_bit(DMF_POST_SUSPENDING, &md->flags);
-		dm_table_postsuspend_targets(map);
-	}
-	/* dm_put_live_table must be before msleep, otherwise deadlock is possible */
+		dm_table_postsuspend_tarमाला_लो(map);
+	पूर्ण
+	/* dm_put_live_table must be beक्रमe msleep, otherwise deadlock is possible */
 	dm_put_live_table(md, srcu_idx);
 	mutex_unlock(&md->suspend_lock);
 
 	/*
 	 * Rare, but there may be I/O requests still going to complete,
-	 * for example.  Wait for all references to disappear.
+	 * क्रम example.  Wait क्रम all references to disappear.
 	 * No one should increment the reference count of the mapped_device,
 	 * after the mapped_device state becomes DMF_FREEING.
 	 */
-	if (wait)
-		while (atomic_read(&md->holders))
+	अगर (रुको)
+		जबतक (atomic_पढ़ो(&md->holders))
 			msleep(1);
-	else if (atomic_read(&md->holders))
+	अन्यथा अगर (atomic_पढ़ो(&md->holders))
 		DMWARN("%s: Forcibly removing mapped_device still in use! (%d users)",
-		       dm_device_name(md), atomic_read(&md->holders));
+		       dm_device_name(md), atomic_पढ़ो(&md->holders));
 
-	dm_sysfs_exit(md);
+	dm_sysfs_निकास(md);
 	dm_table_destroy(__unbind(md));
-	free_dev(md);
-}
+	मुक्त_dev(md);
+पूर्ण
 
-void dm_destroy(struct mapped_device *md)
-{
+व्योम dm_destroy(काष्ठा mapped_device *md)
+अणु
 	__dm_destroy(md, true);
-}
+पूर्ण
 
-void dm_destroy_immediate(struct mapped_device *md)
-{
+व्योम dm_destroy_immediate(काष्ठा mapped_device *md)
+अणु
 	__dm_destroy(md, false);
-}
+पूर्ण
 
-void dm_put(struct mapped_device *md)
-{
+व्योम dm_put(काष्ठा mapped_device *md)
+अणु
 	atomic_dec(&md->holders);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_put);
 
-static bool md_in_flight_bios(struct mapped_device *md)
-{
-	int cpu;
-	struct block_device *part = dm_disk(md)->part0;
-	long sum = 0;
+अटल bool md_in_flight_bios(काष्ठा mapped_device *md)
+अणु
+	पूर्णांक cpu;
+	काष्ठा block_device *part = dm_disk(md)->part0;
+	दीर्घ sum = 0;
 
-	for_each_possible_cpu(cpu) {
-		sum += part_stat_local_read_cpu(part, in_flight[0], cpu);
-		sum += part_stat_local_read_cpu(part, in_flight[1], cpu);
-	}
+	क्रम_each_possible_cpu(cpu) अणु
+		sum += part_stat_local_पढ़ो_cpu(part, in_flight[0], cpu);
+		sum += part_stat_local_पढ़ो_cpu(part, in_flight[1], cpu);
+	पूर्ण
 
-	return sum != 0;
-}
+	वापस sum != 0;
+पूर्ण
 
-static int dm_wait_for_bios_completion(struct mapped_device *md, long task_state)
-{
-	int r = 0;
-	DEFINE_WAIT(wait);
+अटल पूर्णांक dm_रुको_क्रम_bios_completion(काष्ठा mapped_device *md, दीर्घ task_state)
+अणु
+	पूर्णांक r = 0;
+	DEFINE_WAIT(रुको);
 
-	while (true) {
-		prepare_to_wait(&md->wait, &wait, task_state);
+	जबतक (true) अणु
+		prepare_to_रुको(&md->रुको, &रुको, task_state);
 
-		if (!md_in_flight_bios(md))
-			break;
+		अगर (!md_in_flight_bios(md))
+			अवरोध;
 
-		if (signal_pending_state(task_state, current)) {
+		अगर (संकेत_pending_state(task_state, current)) अणु
 			r = -EINTR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		io_schedule();
-	}
-	finish_wait(&md->wait, &wait);
+	पूर्ण
+	finish_रुको(&md->रुको, &रुको);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dm_wait_for_completion(struct mapped_device *md, long task_state)
-{
-	int r = 0;
+अटल पूर्णांक dm_रुको_क्रम_completion(काष्ठा mapped_device *md, दीर्घ task_state)
+अणु
+	पूर्णांक r = 0;
 
-	if (!queue_is_mq(md->queue))
-		return dm_wait_for_bios_completion(md, task_state);
+	अगर (!queue_is_mq(md->queue))
+		वापस dm_रुको_क्रम_bios_completion(md, task_state);
 
-	while (true) {
-		if (!blk_mq_queue_inflight(md->queue))
-			break;
+	जबतक (true) अणु
+		अगर (!blk_mq_queue_inflight(md->queue))
+			अवरोध;
 
-		if (signal_pending_state(task_state, current)) {
+		अगर (संकेत_pending_state(task_state, current)) अणु
 			r = -EINTR;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		msleep(5);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * Process the deferred bios
  */
-static void dm_wq_work(struct work_struct *work)
-{
-	struct mapped_device *md = container_of(work, struct mapped_device, work);
-	struct bio *bio;
+अटल व्योम dm_wq_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा mapped_device *md = container_of(work, काष्ठा mapped_device, work);
+	काष्ठा bio *bio;
 
-	while (!test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)) {
+	जबतक (!test_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags)) अणु
 		spin_lock_irq(&md->deferred_lock);
 		bio = bio_list_pop(&md->deferred);
 		spin_unlock_irq(&md->deferred_lock);
 
-		if (!bio)
-			break;
+		अगर (!bio)
+			अवरोध;
 
 		submit_bio_noacct(bio);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dm_queue_flush(struct mapped_device *md)
-{
+अटल व्योम dm_queue_flush(काष्ठा mapped_device *md)
+अणु
 	clear_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags);
 	smp_mb__after_atomic();
 	queue_work(md->wq, &md->work);
-}
+पूर्ण
 
 /*
- * Swap in a new table, returning the old one for the caller to destroy.
+ * Swap in a new table, वापसing the old one क्रम the caller to destroy.
  */
-struct dm_table *dm_swap_table(struct mapped_device *md, struct dm_table *table)
-{
-	struct dm_table *live_map = NULL, *map = ERR_PTR(-EINVAL);
-	struct queue_limits limits;
-	int r;
+काष्ठा dm_table *dm_swap_table(काष्ठा mapped_device *md, काष्ठा dm_table *table)
+अणु
+	काष्ठा dm_table *live_map = शून्य, *map = ERR_PTR(-EINVAL);
+	काष्ठा queue_limits limits;
+	पूर्णांक r;
 
 	mutex_lock(&md->suspend_lock);
 
 	/* device must be suspended */
-	if (!dm_suspended_md(md))
-		goto out;
+	अगर (!dm_suspended_md(md))
+		जाओ out;
 
 	/*
 	 * If the new table has no data devices, retain the existing limits.
-	 * This helps multipath with queue_if_no_path if all paths disappear,
+	 * This helps multipath with queue_अगर_no_path अगर all paths disappear,
 	 * then new I/O is queued based on these limits, and then some paths
 	 * reappear.
 	 */
-	if (dm_table_has_no_data_devices(table)) {
+	अगर (dm_table_has_no_data_devices(table)) अणु
 		live_map = dm_get_live_table_fast(md);
-		if (live_map)
+		अगर (live_map)
 			limits = md->queue->limits;
 		dm_put_live_table_fast(md);
-	}
+	पूर्ण
 
-	if (!live_map) {
+	अगर (!live_map) अणु
 		r = dm_calculate_queue_limits(table, &limits);
-		if (r) {
+		अगर (r) अणु
 			map = ERR_PTR(r);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
 	map = __bind(md, table, &limits);
 	dm_issue_global_event();
 
 out:
 	mutex_unlock(&md->suspend_lock);
-	return map;
-}
+	वापस map;
+पूर्ण
 
 /*
- * Functions to lock and unlock any filesystem running on the
+ * Functions to lock and unlock any fileप्रणाली running on the
  * device.
  */
-static int lock_fs(struct mapped_device *md)
-{
-	int r;
+अटल पूर्णांक lock_fs(काष्ठा mapped_device *md)
+अणु
+	पूर्णांक r;
 
 	WARN_ON(test_bit(DMF_FROZEN, &md->flags));
 
-	r = freeze_bdev(md->disk->part0);
-	if (!r)
+	r = मुक्तze_bdev(md->disk->part0);
+	अगर (!r)
 		set_bit(DMF_FROZEN, &md->flags);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void unlock_fs(struct mapped_device *md)
-{
-	if (!test_bit(DMF_FROZEN, &md->flags))
-		return;
+अटल व्योम unlock_fs(काष्ठा mapped_device *md)
+अणु
+	अगर (!test_bit(DMF_FROZEN, &md->flags))
+		वापस;
 	thaw_bdev(md->disk->part0);
 	clear_bit(DMF_FROZEN, &md->flags);
-}
+पूर्ण
 
 /*
  * @suspend_flags: DM_SUSPEND_LOCKFS_FLAG and/or DM_SUSPEND_NOFLUSH_FLAG
  * @task_state: e.g. TASK_INTERRUPTIBLE or TASK_UNINTERRUPTIBLE
  * @dmf_suspended_flag: DMF_SUSPENDED or DMF_SUSPENDED_INTERNALLY
  *
- * If __dm_suspend returns 0, the device is completely quiescent
+ * If __dm_suspend वापसs 0, the device is completely quiescent
  * now. There is no request-processing activity. All new requests
  * are being added to md->deferred list.
  */
-static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
-			unsigned suspend_flags, long task_state,
-			int dmf_suspended_flag)
-{
-	bool do_lockfs = suspend_flags & DM_SUSPEND_LOCKFS_FLAG;
+अटल पूर्णांक __dm_suspend(काष्ठा mapped_device *md, काष्ठा dm_table *map,
+			अचिन्हित suspend_flags, दीर्घ task_state,
+			पूर्णांक dmf_suspended_flag)
+अणु
+	bool करो_lockfs = suspend_flags & DM_SUSPEND_LOCKFS_FLAG;
 	bool noflush = suspend_flags & DM_SUSPEND_NOFLUSH_FLAG;
-	int r;
+	पूर्णांक r;
 
-	lockdep_assert_held(&md->suspend_lock);
+	lockdep_निश्चित_held(&md->suspend_lock);
 
 	/*
-	 * DMF_NOFLUSH_SUSPENDING must be set before presuspend.
-	 * This flag is cleared before dm_suspend returns.
+	 * DMF_NOFLUSH_SUSPENDING must be set beक्रमe presuspend.
+	 * This flag is cleared beक्रमe dm_suspend वापसs.
 	 */
-	if (noflush)
+	अगर (noflush)
 		set_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
-	else
+	अन्यथा
 		DMDEBUG("%s: suspending with flush", dm_device_name(md));
 
 	/*
-	 * This gets reverted if there's an error later and the targets
-	 * provide the .presuspend_undo hook.
+	 * This माला_लो reverted अगर there's an error later and the tarमाला_लो
+	 * provide the .presuspend_unकरो hook.
 	 */
-	dm_table_presuspend_targets(map);
+	dm_table_presuspend_tarमाला_लो(map);
 
 	/*
 	 * Flush I/O to the device.
 	 * Any I/O submitted after lock_fs() may not be flushed.
-	 * noflush takes precedence over do_lockfs.
-	 * (lock_fs() flushes I/Os and waits for them to complete.)
+	 * noflush takes precedence over करो_lockfs.
+	 * (lock_fs() flushes I/Os and रुकोs क्रम them to complete.)
 	 */
-	if (!noflush && do_lockfs) {
+	अगर (!noflush && करो_lockfs) अणु
 		r = lock_fs(md);
-		if (r) {
-			dm_table_presuspend_undo_targets(map);
-			return r;
-		}
-	}
+		अगर (r) अणु
+			dm_table_presuspend_unकरो_tarमाला_लो(map);
+			वापस r;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Here we must make sure that no processes are submitting requests
@@ -2522,657 +2523,657 @@ static int __dm_suspend(struct mapped_device *md, struct dm_table *map,
 	 * __split_and_process_bio from dm_submit_bio.
 	 *
 	 * To get all processes out of __split_and_process_bio in dm_submit_bio,
-	 * we take the write lock. To prevent any process from reentering
-	 * __split_and_process_bio from dm_submit_bio and quiesce the thread
+	 * we take the ग_लिखो lock. To prevent any process from reentering
+	 * __split_and_process_bio from dm_submit_bio and quiesce the thपढ़ो
 	 * (dm_wq_work), we set DMF_BLOCK_IO_FOR_SUSPEND and call
 	 * flush_workqueue(md->wq).
 	 */
 	set_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags);
-	if (map)
+	अगर (map)
 		synchronize_srcu(&md->io_barrier);
 
 	/*
-	 * Stop md->queue before flushing md->wq in case request-based
+	 * Stop md->queue beक्रमe flushing md->wq in हाल request-based
 	 * dm defers requests to md->wq from md->queue.
 	 */
-	if (dm_request_based(md))
+	अगर (dm_request_based(md))
 		dm_stop_queue(md->queue);
 
 	flush_workqueue(md->wq);
 
 	/*
-	 * At this point no more requests are entering target request routines.
-	 * We call dm_wait_for_completion to wait for all existing requests
+	 * At this poपूर्णांक no more requests are entering target request routines.
+	 * We call dm_रुको_क्रम_completion to रुको क्रम all existing requests
 	 * to finish.
 	 */
-	r = dm_wait_for_completion(md, task_state);
-	if (!r)
+	r = dm_रुको_क्रम_completion(md, task_state);
+	अगर (!r)
 		set_bit(dmf_suspended_flag, &md->flags);
 
-	if (noflush)
+	अगर (noflush)
 		clear_bit(DMF_NOFLUSH_SUSPENDING, &md->flags);
-	if (map)
+	अगर (map)
 		synchronize_srcu(&md->io_barrier);
 
-	/* were we interrupted ? */
-	if (r < 0) {
+	/* were we पूर्णांकerrupted ? */
+	अगर (r < 0) अणु
 		dm_queue_flush(md);
 
-		if (dm_request_based(md))
+		अगर (dm_request_based(md))
 			dm_start_queue(md->queue);
 
 		unlock_fs(md);
-		dm_table_presuspend_undo_targets(map);
-		/* pushback list is already flushed, so skip flush */
-	}
+		dm_table_presuspend_unकरो_tarमाला_लो(map);
+		/* pushback list is alपढ़ोy flushed, so skip flush */
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
  * We need to be able to change a mapping table under a mounted
- * filesystem.  For example we might want to move some data in
- * the background.  Before the table can be swapped with
+ * fileप्रणाली.  For example we might want to move some data in
+ * the background.  Beक्रमe the table can be swapped with
  * dm_bind_table, dm_suspend must be called to flush any in
- * flight bios and ensure that any further io gets deferred.
+ * flight bios and ensure that any further io माला_लो deferred.
  */
 /*
  * Suspend mechanism in request-based dm.
  *
- * 1. Flush all I/Os by lock_fs() if needed.
+ * 1. Flush all I/Os by lock_fs() अगर needed.
  * 2. Stop dispatching any I/O by stopping the request_queue.
- * 3. Wait for all in-flight I/Os to be completed or requeued.
+ * 3. Wait क्रम all in-flight I/Os to be completed or requeued.
  *
- * To abort suspend, start the request_queue.
+ * To पात suspend, start the request_queue.
  */
-int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
-{
-	struct dm_table *map = NULL;
-	int r = 0;
+पूर्णांक dm_suspend(काष्ठा mapped_device *md, अचिन्हित suspend_flags)
+अणु
+	काष्ठा dm_table *map = शून्य;
+	पूर्णांक r = 0;
 
 retry:
 	mutex_lock_nested(&md->suspend_lock, SINGLE_DEPTH_NESTING);
 
-	if (dm_suspended_md(md)) {
+	अगर (dm_suspended_md(md)) अणु
 		r = -EINVAL;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (dm_suspended_internally_md(md)) {
-		/* already internally suspended, wait for internal resume */
+	अगर (dm_suspended_पूर्णांकernally_md(md)) अणु
+		/* alपढ़ोy पूर्णांकernally suspended, रुको क्रम पूर्णांकernal resume */
 		mutex_unlock(&md->suspend_lock);
-		r = wait_on_bit(&md->flags, DMF_SUSPENDED_INTERNALLY, TASK_INTERRUPTIBLE);
-		if (r)
-			return r;
-		goto retry;
-	}
+		r = रुको_on_bit(&md->flags, DMF_SUSPENDED_INTERNALLY, TASK_INTERRUPTIBLE);
+		अगर (r)
+			वापस r;
+		जाओ retry;
+	पूर्ण
 
-	map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
+	map = rcu_dereference_रक्षित(md->map, lockdep_is_held(&md->suspend_lock));
 
 	r = __dm_suspend(md, map, suspend_flags, TASK_INTERRUPTIBLE, DMF_SUSPENDED);
-	if (r)
-		goto out_unlock;
+	अगर (r)
+		जाओ out_unlock;
 
 	set_bit(DMF_POST_SUSPENDING, &md->flags);
-	dm_table_postsuspend_targets(map);
+	dm_table_postsuspend_tarमाला_लो(map);
 	clear_bit(DMF_POST_SUSPENDING, &md->flags);
 
 out_unlock:
 	mutex_unlock(&md->suspend_lock);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int __dm_resume(struct mapped_device *md, struct dm_table *map)
-{
-	if (map) {
-		int r = dm_table_resume_targets(map);
-		if (r)
-			return r;
-	}
+अटल पूर्णांक __dm_resume(काष्ठा mapped_device *md, काष्ठा dm_table *map)
+अणु
+	अगर (map) अणु
+		पूर्णांक r = dm_table_resume_tarमाला_लो(map);
+		अगर (r)
+			वापस r;
+	पूर्ण
 
 	dm_queue_flush(md);
 
 	/*
-	 * Flushing deferred I/Os must be done after targets are resumed
-	 * so that mapping of targets can work correctly.
+	 * Flushing deferred I/Os must be करोne after tarमाला_लो are resumed
+	 * so that mapping of tarमाला_लो can work correctly.
 	 * Request-based dm is queueing the deferred I/Os in its request_queue.
 	 */
-	if (dm_request_based(md))
+	अगर (dm_request_based(md))
 		dm_start_queue(md->queue);
 
 	unlock_fs(md);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int dm_resume(struct mapped_device *md)
-{
-	int r;
-	struct dm_table *map = NULL;
+पूर्णांक dm_resume(काष्ठा mapped_device *md)
+अणु
+	पूर्णांक r;
+	काष्ठा dm_table *map = शून्य;
 
 retry:
 	r = -EINVAL;
 	mutex_lock_nested(&md->suspend_lock, SINGLE_DEPTH_NESTING);
 
-	if (!dm_suspended_md(md))
-		goto out;
+	अगर (!dm_suspended_md(md))
+		जाओ out;
 
-	if (dm_suspended_internally_md(md)) {
-		/* already internally suspended, wait for internal resume */
+	अगर (dm_suspended_पूर्णांकernally_md(md)) अणु
+		/* alपढ़ोy पूर्णांकernally suspended, रुको क्रम पूर्णांकernal resume */
 		mutex_unlock(&md->suspend_lock);
-		r = wait_on_bit(&md->flags, DMF_SUSPENDED_INTERNALLY, TASK_INTERRUPTIBLE);
-		if (r)
-			return r;
-		goto retry;
-	}
+		r = रुको_on_bit(&md->flags, DMF_SUSPENDED_INTERNALLY, TASK_INTERRUPTIBLE);
+		अगर (r)
+			वापस r;
+		जाओ retry;
+	पूर्ण
 
-	map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
-	if (!map || !dm_table_get_size(map))
-		goto out;
+	map = rcu_dereference_रक्षित(md->map, lockdep_is_held(&md->suspend_lock));
+	अगर (!map || !dm_table_get_size(map))
+		जाओ out;
 
 	r = __dm_resume(md, map);
-	if (r)
-		goto out;
+	अगर (r)
+		जाओ out;
 
 	clear_bit(DMF_SUSPENDED, &md->flags);
 out:
 	mutex_unlock(&md->suspend_lock);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * Internal suspend/resume works like userspace-driven suspend. It waits
+ * Internal suspend/resume works like userspace-driven suspend. It रुकोs
  * until all bios finish and prevents issuing new bios to the target drivers.
  * It may be used only from the kernel.
  */
 
-static void __dm_internal_suspend(struct mapped_device *md, unsigned suspend_flags)
-{
-	struct dm_table *map = NULL;
+अटल व्योम __dm_पूर्णांकernal_suspend(काष्ठा mapped_device *md, अचिन्हित suspend_flags)
+अणु
+	काष्ठा dm_table *map = शून्य;
 
-	lockdep_assert_held(&md->suspend_lock);
+	lockdep_निश्चित_held(&md->suspend_lock);
 
-	if (md->internal_suspend_count++)
-		return; /* nested internal suspend */
+	अगर (md->पूर्णांकernal_suspend_count++)
+		वापस; /* nested पूर्णांकernal suspend */
 
-	if (dm_suspended_md(md)) {
+	अगर (dm_suspended_md(md)) अणु
 		set_bit(DMF_SUSPENDED_INTERNALLY, &md->flags);
-		return; /* nest suspend */
-	}
+		वापस; /* nest suspend */
+	पूर्ण
 
-	map = rcu_dereference_protected(md->map, lockdep_is_held(&md->suspend_lock));
+	map = rcu_dereference_रक्षित(md->map, lockdep_is_held(&md->suspend_lock));
 
 	/*
-	 * Using TASK_UNINTERRUPTIBLE because only NOFLUSH internal suspend is
-	 * supported.  Properly supporting a TASK_INTERRUPTIBLE internal suspend
-	 * would require changing .presuspend to return an error -- avoid this
-	 * until there is a need for more elaborate variants of internal suspend.
+	 * Using TASK_UNINTERRUPTIBLE because only NOFLUSH पूर्णांकernal suspend is
+	 * supported.  Properly supporting a TASK_INTERRUPTIBLE पूर्णांकernal suspend
+	 * would require changing .presuspend to वापस an error -- aव्योम this
+	 * until there is a need क्रम more elaborate variants of पूर्णांकernal suspend.
 	 */
-	(void) __dm_suspend(md, map, suspend_flags, TASK_UNINTERRUPTIBLE,
+	(व्योम) __dm_suspend(md, map, suspend_flags, TASK_UNINTERRUPTIBLE,
 			    DMF_SUSPENDED_INTERNALLY);
 
 	set_bit(DMF_POST_SUSPENDING, &md->flags);
-	dm_table_postsuspend_targets(map);
+	dm_table_postsuspend_tarमाला_लो(map);
 	clear_bit(DMF_POST_SUSPENDING, &md->flags);
-}
+पूर्ण
 
-static void __dm_internal_resume(struct mapped_device *md)
-{
-	BUG_ON(!md->internal_suspend_count);
+अटल व्योम __dm_पूर्णांकernal_resume(काष्ठा mapped_device *md)
+अणु
+	BUG_ON(!md->पूर्णांकernal_suspend_count);
 
-	if (--md->internal_suspend_count)
-		return; /* resume from nested internal suspend */
+	अगर (--md->पूर्णांकernal_suspend_count)
+		वापस; /* resume from nested पूर्णांकernal suspend */
 
-	if (dm_suspended_md(md))
-		goto done; /* resume from nested suspend */
+	अगर (dm_suspended_md(md))
+		जाओ करोne; /* resume from nested suspend */
 
 	/*
-	 * NOTE: existing callers don't need to call dm_table_resume_targets
-	 * (which may fail -- so best to avoid it for now by passing NULL map)
+	 * NOTE: existing callers करोn't need to call dm_table_resume_tarमाला_लो
+	 * (which may fail -- so best to aव्योम it क्रम now by passing शून्य map)
 	 */
-	(void) __dm_resume(md, NULL);
+	(व्योम) __dm_resume(md, शून्य);
 
-done:
+करोne:
 	clear_bit(DMF_SUSPENDED_INTERNALLY, &md->flags);
 	smp_mb__after_atomic();
 	wake_up_bit(&md->flags, DMF_SUSPENDED_INTERNALLY);
-}
+पूर्ण
 
-void dm_internal_suspend_noflush(struct mapped_device *md)
-{
+व्योम dm_पूर्णांकernal_suspend_noflush(काष्ठा mapped_device *md)
+अणु
 	mutex_lock(&md->suspend_lock);
-	__dm_internal_suspend(md, DM_SUSPEND_NOFLUSH_FLAG);
+	__dm_पूर्णांकernal_suspend(md, DM_SUSPEND_NOFLUSH_FLAG);
 	mutex_unlock(&md->suspend_lock);
-}
-EXPORT_SYMBOL_GPL(dm_internal_suspend_noflush);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पूर्णांकernal_suspend_noflush);
 
-void dm_internal_resume(struct mapped_device *md)
-{
+व्योम dm_पूर्णांकernal_resume(काष्ठा mapped_device *md)
+अणु
 	mutex_lock(&md->suspend_lock);
-	__dm_internal_resume(md);
+	__dm_पूर्णांकernal_resume(md);
 	mutex_unlock(&md->suspend_lock);
-}
-EXPORT_SYMBOL_GPL(dm_internal_resume);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पूर्णांकernal_resume);
 
 /*
- * Fast variants of internal suspend/resume hold md->suspend_lock,
- * which prevents interaction with userspace-driven suspend.
+ * Fast variants of पूर्णांकernal suspend/resume hold md->suspend_lock,
+ * which prevents पूर्णांकeraction with userspace-driven suspend.
  */
 
-void dm_internal_suspend_fast(struct mapped_device *md)
-{
+व्योम dm_पूर्णांकernal_suspend_fast(काष्ठा mapped_device *md)
+अणु
 	mutex_lock(&md->suspend_lock);
-	if (dm_suspended_md(md) || dm_suspended_internally_md(md))
-		return;
+	अगर (dm_suspended_md(md) || dm_suspended_पूर्णांकernally_md(md))
+		वापस;
 
 	set_bit(DMF_BLOCK_IO_FOR_SUSPEND, &md->flags);
 	synchronize_srcu(&md->io_barrier);
 	flush_workqueue(md->wq);
-	dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
-}
-EXPORT_SYMBOL_GPL(dm_internal_suspend_fast);
+	dm_रुको_क्रम_completion(md, TASK_UNINTERRUPTIBLE);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पूर्णांकernal_suspend_fast);
 
-void dm_internal_resume_fast(struct mapped_device *md)
-{
-	if (dm_suspended_md(md) || dm_suspended_internally_md(md))
-		goto done;
+व्योम dm_पूर्णांकernal_resume_fast(काष्ठा mapped_device *md)
+अणु
+	अगर (dm_suspended_md(md) || dm_suspended_पूर्णांकernally_md(md))
+		जाओ करोne;
 
 	dm_queue_flush(md);
 
-done:
+करोne:
 	mutex_unlock(&md->suspend_lock);
-}
-EXPORT_SYMBOL_GPL(dm_internal_resume_fast);
+पूर्ण
+EXPORT_SYMBOL_GPL(dm_पूर्णांकernal_resume_fast);
 
 /*-----------------------------------------------------------------
- * Event notification.
+ * Event notअगरication.
  *---------------------------------------------------------------*/
-int dm_kobject_uevent(struct mapped_device *md, enum kobject_action action,
-		       unsigned cookie)
-{
-	int r;
-	unsigned noio_flag;
-	char udev_cookie[DM_COOKIE_LENGTH];
-	char *envp[] = { udev_cookie, NULL };
+पूर्णांक dm_kobject_uevent(काष्ठा mapped_device *md, क्रमागत kobject_action action,
+		       अचिन्हित cookie)
+अणु
+	पूर्णांक r;
+	अचिन्हित noio_flag;
+	अक्षर udev_cookie[DM_COOKIE_LENGTH];
+	अक्षर *envp[] = अणु udev_cookie, शून्य पूर्ण;
 
-	noio_flag = memalloc_noio_save();
+	noio_flag = meदो_स्मृति_noio_save();
 
-	if (!cookie)
+	अगर (!cookie)
 		r = kobject_uevent(&disk_to_dev(md->disk)->kobj, action);
-	else {
-		snprintf(udev_cookie, DM_COOKIE_LENGTH, "%s=%u",
+	अन्यथा अणु
+		snम_लिखो(udev_cookie, DM_COOKIE_LENGTH, "%s=%u",
 			 DM_COOKIE_ENV_VAR_NAME, cookie);
 		r = kobject_uevent_env(&disk_to_dev(md->disk)->kobj,
 				       action, envp);
-	}
+	पूर्ण
 
-	memalloc_noio_restore(noio_flag);
+	meदो_स्मृति_noio_restore(noio_flag);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-uint32_t dm_next_uevent_seq(struct mapped_device *md)
-{
-	return atomic_add_return(1, &md->uevent_seq);
-}
+uपूर्णांक32_t dm_next_uevent_seq(काष्ठा mapped_device *md)
+अणु
+	वापस atomic_add_वापस(1, &md->uevent_seq);
+पूर्ण
 
-uint32_t dm_get_event_nr(struct mapped_device *md)
-{
-	return atomic_read(&md->event_nr);
-}
+uपूर्णांक32_t dm_get_event_nr(काष्ठा mapped_device *md)
+अणु
+	वापस atomic_पढ़ो(&md->event_nr);
+पूर्ण
 
-int dm_wait_event(struct mapped_device *md, int event_nr)
-{
-	return wait_event_interruptible(md->eventq,
-			(event_nr != atomic_read(&md->event_nr)));
-}
+पूर्णांक dm_रुको_event(काष्ठा mapped_device *md, पूर्णांक event_nr)
+अणु
+	वापस रुको_event_पूर्णांकerruptible(md->eventq,
+			(event_nr != atomic_पढ़ो(&md->event_nr)));
+पूर्ण
 
-void dm_uevent_add(struct mapped_device *md, struct list_head *elist)
-{
-	unsigned long flags;
+व्योम dm_uevent_add(काष्ठा mapped_device *md, काष्ठा list_head *elist)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&md->uevent_lock, flags);
 	list_add(elist, &md->uevent_list);
 	spin_unlock_irqrestore(&md->uevent_lock, flags);
-}
+पूर्ण
 
 /*
- * The gendisk is only valid as long as you have a reference
+ * The gendisk is only valid as दीर्घ as you have a reference
  * count on 'md'.
  */
-struct gendisk *dm_disk(struct mapped_device *md)
-{
-	return md->disk;
-}
+काष्ठा gendisk *dm_disk(काष्ठा mapped_device *md)
+अणु
+	वापस md->disk;
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_disk);
 
-struct kobject *dm_kobject(struct mapped_device *md)
-{
-	return &md->kobj_holder.kobj;
-}
+काष्ठा kobject *dm_kobject(काष्ठा mapped_device *md)
+अणु
+	वापस &md->kobj_holder.kobj;
+पूर्ण
 
-struct mapped_device *dm_get_from_kobject(struct kobject *kobj)
-{
-	struct mapped_device *md;
+काष्ठा mapped_device *dm_get_from_kobject(काष्ठा kobject *kobj)
+अणु
+	काष्ठा mapped_device *md;
 
-	md = container_of(kobj, struct mapped_device, kobj_holder.kobj);
+	md = container_of(kobj, काष्ठा mapped_device, kobj_holder.kobj);
 
 	spin_lock(&_minor_lock);
-	if (test_bit(DMF_FREEING, &md->flags) || dm_deleting_md(md)) {
-		md = NULL;
-		goto out;
-	}
+	अगर (test_bit(DMF_FREEING, &md->flags) || dm_deleting_md(md)) अणु
+		md = शून्य;
+		जाओ out;
+	पूर्ण
 	dm_get(md);
 out:
 	spin_unlock(&_minor_lock);
 
-	return md;
-}
+	वापस md;
+पूर्ण
 
-int dm_suspended_md(struct mapped_device *md)
-{
-	return test_bit(DMF_SUSPENDED, &md->flags);
-}
+पूर्णांक dm_suspended_md(काष्ठा mapped_device *md)
+अणु
+	वापस test_bit(DMF_SUSPENDED, &md->flags);
+पूर्ण
 
-static int dm_post_suspending_md(struct mapped_device *md)
-{
-	return test_bit(DMF_POST_SUSPENDING, &md->flags);
-}
+अटल पूर्णांक dm_post_suspending_md(काष्ठा mapped_device *md)
+अणु
+	वापस test_bit(DMF_POST_SUSPENDING, &md->flags);
+पूर्ण
 
-int dm_suspended_internally_md(struct mapped_device *md)
-{
-	return test_bit(DMF_SUSPENDED_INTERNALLY, &md->flags);
-}
+पूर्णांक dm_suspended_पूर्णांकernally_md(काष्ठा mapped_device *md)
+अणु
+	वापस test_bit(DMF_SUSPENDED_INTERNALLY, &md->flags);
+पूर्ण
 
-int dm_test_deferred_remove_flag(struct mapped_device *md)
-{
-	return test_bit(DMF_DEFERRED_REMOVE, &md->flags);
-}
+पूर्णांक dm_test_deferred_हटाओ_flag(काष्ठा mapped_device *md)
+अणु
+	वापस test_bit(DMF_DEFERRED_REMOVE, &md->flags);
+पूर्ण
 
-int dm_suspended(struct dm_target *ti)
-{
-	return dm_suspended_md(ti->table->md);
-}
+पूर्णांक dm_suspended(काष्ठा dm_target *ti)
+अणु
+	वापस dm_suspended_md(ti->table->md);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_suspended);
 
-int dm_post_suspending(struct dm_target *ti)
-{
-	return dm_post_suspending_md(ti->table->md);
-}
+पूर्णांक dm_post_suspending(काष्ठा dm_target *ti)
+अणु
+	वापस dm_post_suspending_md(ti->table->md);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_post_suspending);
 
-int dm_noflush_suspending(struct dm_target *ti)
-{
-	return __noflush_suspending(ti->table->md);
-}
+पूर्णांक dm_noflush_suspending(काष्ठा dm_target *ti)
+अणु
+	वापस __noflush_suspending(ti->table->md);
+पूर्ण
 EXPORT_SYMBOL_GPL(dm_noflush_suspending);
 
-struct dm_md_mempools *dm_alloc_md_mempools(struct mapped_device *md, enum dm_queue_mode type,
-					    unsigned integrity, unsigned per_io_data_size,
-					    unsigned min_pool_size)
-{
-	struct dm_md_mempools *pools = kzalloc_node(sizeof(*pools), GFP_KERNEL, md->numa_node_id);
-	unsigned int pool_size = 0;
-	unsigned int front_pad, io_front_pad;
-	int ret;
+काष्ठा dm_md_mempools *dm_alloc_md_mempools(काष्ठा mapped_device *md, क्रमागत dm_queue_mode type,
+					    अचिन्हित पूर्णांकegrity, अचिन्हित per_io_data_size,
+					    अचिन्हित min_pool_size)
+अणु
+	काष्ठा dm_md_mempools *pools = kzalloc_node(माप(*pools), GFP_KERNEL, md->numa_node_id);
+	अचिन्हित पूर्णांक pool_size = 0;
+	अचिन्हित पूर्णांक front_pad, io_front_pad;
+	पूर्णांक ret;
 
-	if (!pools)
-		return NULL;
+	अगर (!pools)
+		वापस शून्य;
 
-	switch (type) {
-	case DM_TYPE_BIO_BASED:
-	case DM_TYPE_DAX_BIO_BASED:
+	चयन (type) अणु
+	हाल DM_TYPE_BIO_BASED:
+	हाल DM_TYPE_DAX_BIO_BASED:
 		pool_size = max(dm_get_reserved_bio_based_ios(), min_pool_size);
-		front_pad = roundup(per_io_data_size, __alignof__(struct dm_target_io)) + DM_TARGET_IO_BIO_OFFSET;
-		io_front_pad = roundup(per_io_data_size,  __alignof__(struct dm_io)) + DM_IO_BIO_OFFSET;
+		front_pad = roundup(per_io_data_size, __alignof__(काष्ठा dm_target_io)) + DM_TARGET_IO_BIO_OFFSET;
+		io_front_pad = roundup(per_io_data_size,  __alignof__(काष्ठा dm_io)) + DM_IO_BIO_OFFSET;
 		ret = bioset_init(&pools->io_bs, pool_size, io_front_pad, 0);
-		if (ret)
-			goto out;
-		if (integrity && bioset_integrity_create(&pools->io_bs, pool_size))
-			goto out;
-		break;
-	case DM_TYPE_REQUEST_BASED:
+		अगर (ret)
+			जाओ out;
+		अगर (पूर्णांकegrity && bioset_पूर्णांकegrity_create(&pools->io_bs, pool_size))
+			जाओ out;
+		अवरोध;
+	हाल DM_TYPE_REQUEST_BASED:
 		pool_size = max(dm_get_reserved_rq_based_ios(), min_pool_size);
-		front_pad = offsetof(struct dm_rq_clone_bio_info, clone);
-		/* per_io_data_size is used for blk-mq pdu at queue allocation */
-		break;
-	default:
+		front_pad = दुरत्व(काष्ठा dm_rq_clone_bio_info, clone);
+		/* per_io_data_size is used क्रम blk-mq pdu at queue allocation */
+		अवरोध;
+	शेष:
 		BUG();
-	}
+	पूर्ण
 
 	ret = bioset_init(&pools->bs, pool_size, front_pad, 0);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
-	if (integrity && bioset_integrity_create(&pools->bs, pool_size))
-		goto out;
+	अगर (पूर्णांकegrity && bioset_पूर्णांकegrity_create(&pools->bs, pool_size))
+		जाओ out;
 
-	return pools;
+	वापस pools;
 
 out:
-	dm_free_md_mempools(pools);
+	dm_मुक्त_md_mempools(pools);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-void dm_free_md_mempools(struct dm_md_mempools *pools)
-{
-	if (!pools)
-		return;
+व्योम dm_मुक्त_md_mempools(काष्ठा dm_md_mempools *pools)
+अणु
+	अगर (!pools)
+		वापस;
 
-	bioset_exit(&pools->bs);
-	bioset_exit(&pools->io_bs);
+	bioset_निकास(&pools->bs);
+	bioset_निकास(&pools->io_bs);
 
-	kfree(pools);
-}
+	kमुक्त(pools);
+पूर्ण
 
-struct dm_pr {
+काष्ठा dm_pr अणु
 	u64	old_key;
 	u64	new_key;
 	u32	flags;
 	bool	fail_early;
-};
+पूर्ण;
 
-static int dm_call_pr(struct block_device *bdev, iterate_devices_callout_fn fn,
-		      void *data)
-{
-	struct mapped_device *md = bdev->bd_disk->private_data;
-	struct dm_table *table;
-	struct dm_target *ti;
-	int ret = -ENOTTY, srcu_idx;
+अटल पूर्णांक dm_call_pr(काष्ठा block_device *bdev, iterate_devices_callout_fn fn,
+		      व्योम *data)
+अणु
+	काष्ठा mapped_device *md = bdev->bd_disk->निजी_data;
+	काष्ठा dm_table *table;
+	काष्ठा dm_target *ti;
+	पूर्णांक ret = -ENOTTY, srcu_idx;
 
 	table = dm_get_live_table(md, &srcu_idx);
-	if (!table || !dm_table_get_size(table))
-		goto out;
+	अगर (!table || !dm_table_get_size(table))
+		जाओ out;
 
 	/* We only support devices that have a single target */
-	if (dm_table_get_num_targets(table) != 1)
-		goto out;
+	अगर (dm_table_get_num_tarमाला_लो(table) != 1)
+		जाओ out;
 	ti = dm_table_get_target(table, 0);
 
 	ret = -EINVAL;
-	if (!ti->type->iterate_devices)
-		goto out;
+	अगर (!ti->type->iterate_devices)
+		जाओ out;
 
 	ret = ti->type->iterate_devices(ti, fn, data);
 out:
 	dm_put_live_table(md, srcu_idx);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * For register / unregister we need to manually call out to every path.
+ * For रेजिस्टर / unरेजिस्टर we need to manually call out to every path.
  */
-static int __dm_pr_register(struct dm_target *ti, struct dm_dev *dev,
-			    sector_t start, sector_t len, void *data)
-{
-	struct dm_pr *pr = data;
-	const struct pr_ops *ops = dev->bdev->bd_disk->fops->pr_ops;
+अटल पूर्णांक __dm_pr_रेजिस्टर(काष्ठा dm_target *ti, काष्ठा dm_dev *dev,
+			    sector_t start, sector_t len, व्योम *data)
+अणु
+	काष्ठा dm_pr *pr = data;
+	स्थिर काष्ठा pr_ops *ops = dev->bdev->bd_disk->fops->pr_ops;
 
-	if (!ops || !ops->pr_register)
-		return -EOPNOTSUPP;
-	return ops->pr_register(dev->bdev, pr->old_key, pr->new_key, pr->flags);
-}
+	अगर (!ops || !ops->pr_रेजिस्टर)
+		वापस -EOPNOTSUPP;
+	वापस ops->pr_रेजिस्टर(dev->bdev, pr->old_key, pr->new_key, pr->flags);
+पूर्ण
 
-static int dm_pr_register(struct block_device *bdev, u64 old_key, u64 new_key,
+अटल पूर्णांक dm_pr_रेजिस्टर(काष्ठा block_device *bdev, u64 old_key, u64 new_key,
 			  u32 flags)
-{
-	struct dm_pr pr = {
+अणु
+	काष्ठा dm_pr pr = अणु
 		.old_key	= old_key,
 		.new_key	= new_key,
 		.flags		= flags,
 		.fail_early	= true,
-	};
-	int ret;
+	पूर्ण;
+	पूर्णांक ret;
 
-	ret = dm_call_pr(bdev, __dm_pr_register, &pr);
-	if (ret && new_key) {
-		/* unregister all paths if we failed to register any path */
+	ret = dm_call_pr(bdev, __dm_pr_रेजिस्टर, &pr);
+	अगर (ret && new_key) अणु
+		/* unरेजिस्टर all paths अगर we failed to रेजिस्टर any path */
 		pr.old_key = new_key;
 		pr.new_key = 0;
 		pr.flags = 0;
 		pr.fail_early = false;
-		dm_call_pr(bdev, __dm_pr_register, &pr);
-	}
+		dm_call_pr(bdev, __dm_pr_रेजिस्टर, &pr);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dm_pr_reserve(struct block_device *bdev, u64 key, enum pr_type type,
+अटल पूर्णांक dm_pr_reserve(काष्ठा block_device *bdev, u64 key, क्रमागत pr_type type,
 			 u32 flags)
-{
-	struct mapped_device *md = bdev->bd_disk->private_data;
-	const struct pr_ops *ops;
-	int r, srcu_idx;
+अणु
+	काष्ठा mapped_device *md = bdev->bd_disk->निजी_data;
+	स्थिर काष्ठा pr_ops *ops;
+	पूर्णांक r, srcu_idx;
 
 	r = dm_prepare_ioctl(md, &srcu_idx, &bdev);
-	if (r < 0)
-		goto out;
+	अगर (r < 0)
+		जाओ out;
 
 	ops = bdev->bd_disk->fops->pr_ops;
-	if (ops && ops->pr_reserve)
+	अगर (ops && ops->pr_reserve)
 		r = ops->pr_reserve(bdev, key, type, flags);
-	else
+	अन्यथा
 		r = -EOPNOTSUPP;
 out:
 	dm_unprepare_ioctl(md, srcu_idx);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dm_pr_release(struct block_device *bdev, u64 key, enum pr_type type)
-{
-	struct mapped_device *md = bdev->bd_disk->private_data;
-	const struct pr_ops *ops;
-	int r, srcu_idx;
+अटल पूर्णांक dm_pr_release(काष्ठा block_device *bdev, u64 key, क्रमागत pr_type type)
+अणु
+	काष्ठा mapped_device *md = bdev->bd_disk->निजी_data;
+	स्थिर काष्ठा pr_ops *ops;
+	पूर्णांक r, srcu_idx;
 
 	r = dm_prepare_ioctl(md, &srcu_idx, &bdev);
-	if (r < 0)
-		goto out;
+	अगर (r < 0)
+		जाओ out;
 
 	ops = bdev->bd_disk->fops->pr_ops;
-	if (ops && ops->pr_release)
+	अगर (ops && ops->pr_release)
 		r = ops->pr_release(bdev, key, type);
-	else
+	अन्यथा
 		r = -EOPNOTSUPP;
 out:
 	dm_unprepare_ioctl(md, srcu_idx);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dm_pr_preempt(struct block_device *bdev, u64 old_key, u64 new_key,
-			 enum pr_type type, bool abort)
-{
-	struct mapped_device *md = bdev->bd_disk->private_data;
-	const struct pr_ops *ops;
-	int r, srcu_idx;
+अटल पूर्णांक dm_pr_preempt(काष्ठा block_device *bdev, u64 old_key, u64 new_key,
+			 क्रमागत pr_type type, bool पात)
+अणु
+	काष्ठा mapped_device *md = bdev->bd_disk->निजी_data;
+	स्थिर काष्ठा pr_ops *ops;
+	पूर्णांक r, srcu_idx;
 
 	r = dm_prepare_ioctl(md, &srcu_idx, &bdev);
-	if (r < 0)
-		goto out;
+	अगर (r < 0)
+		जाओ out;
 
 	ops = bdev->bd_disk->fops->pr_ops;
-	if (ops && ops->pr_preempt)
-		r = ops->pr_preempt(bdev, old_key, new_key, type, abort);
-	else
+	अगर (ops && ops->pr_preempt)
+		r = ops->pr_preempt(bdev, old_key, new_key, type, पात);
+	अन्यथा
 		r = -EOPNOTSUPP;
 out:
 	dm_unprepare_ioctl(md, srcu_idx);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static int dm_pr_clear(struct block_device *bdev, u64 key)
-{
-	struct mapped_device *md = bdev->bd_disk->private_data;
-	const struct pr_ops *ops;
-	int r, srcu_idx;
+अटल पूर्णांक dm_pr_clear(काष्ठा block_device *bdev, u64 key)
+अणु
+	काष्ठा mapped_device *md = bdev->bd_disk->निजी_data;
+	स्थिर काष्ठा pr_ops *ops;
+	पूर्णांक r, srcu_idx;
 
 	r = dm_prepare_ioctl(md, &srcu_idx, &bdev);
-	if (r < 0)
-		goto out;
+	अगर (r < 0)
+		जाओ out;
 
 	ops = bdev->bd_disk->fops->pr_ops;
-	if (ops && ops->pr_clear)
+	अगर (ops && ops->pr_clear)
 		r = ops->pr_clear(bdev, key);
-	else
+	अन्यथा
 		r = -EOPNOTSUPP;
 out:
 	dm_unprepare_ioctl(md, srcu_idx);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static const struct pr_ops dm_pr_ops = {
-	.pr_register	= dm_pr_register,
+अटल स्थिर काष्ठा pr_ops dm_pr_ops = अणु
+	.pr_रेजिस्टर	= dm_pr_रेजिस्टर,
 	.pr_reserve	= dm_pr_reserve,
 	.pr_release	= dm_pr_release,
 	.pr_preempt	= dm_pr_preempt,
 	.pr_clear	= dm_pr_clear,
-};
+पूर्ण;
 
-static const struct block_device_operations dm_blk_dops = {
+अटल स्थिर काष्ठा block_device_operations dm_blk_करोps = अणु
 	.submit_bio = dm_submit_bio,
-	.open = dm_blk_open,
-	.release = dm_blk_close,
+	.खोलो = dm_blk_खोलो,
+	.release = dm_blk_बंद,
 	.ioctl = dm_blk_ioctl,
 	.getgeo = dm_blk_getgeo,
 	.report_zones = dm_blk_report_zones,
 	.pr_ops = &dm_pr_ops,
 	.owner = THIS_MODULE
-};
+पूर्ण;
 
-static const struct block_device_operations dm_rq_blk_dops = {
-	.open = dm_blk_open,
-	.release = dm_blk_close,
+अटल स्थिर काष्ठा block_device_operations dm_rq_blk_करोps = अणु
+	.खोलो = dm_blk_खोलो,
+	.release = dm_blk_बंद,
 	.ioctl = dm_blk_ioctl,
 	.getgeo = dm_blk_getgeo,
 	.pr_ops = &dm_pr_ops,
 	.owner = THIS_MODULE
-};
+पूर्ण;
 
-static const struct dax_operations dm_dax_ops = {
+अटल स्थिर काष्ठा dax_operations dm_dax_ops = अणु
 	.direct_access = dm_dax_direct_access,
 	.dax_supported = dm_dax_supported,
 	.copy_from_iter = dm_dax_copy_from_iter,
 	.copy_to_iter = dm_dax_copy_to_iter,
 	.zero_page_range = dm_dax_zero_page_range,
-};
+पूर्ण;
 
 /*
  * module hooks
  */
 module_init(dm_init);
-module_exit(dm_exit);
+module_निकास(dm_निकास);
 
-module_param(major, uint, 0);
+module_param(major, uपूर्णांक, 0);
 MODULE_PARM_DESC(major, "The major number of the device mapper");
 
-module_param(reserved_bio_based_ios, uint, S_IRUGO | S_IWUSR);
+module_param(reserved_bio_based_ios, uपूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(reserved_bio_based_ios, "Reserved IOs in bio-based mempools");
 
-module_param(dm_numa_node, int, S_IRUGO | S_IWUSR);
+module_param(dm_numa_node, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(dm_numa_node, "NUMA node for DM device memory allocations");
 
-module_param(swap_bios, int, S_IRUGO | S_IWUSR);
+module_param(swap_bios, पूर्णांक, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(swap_bios, "Maximum allowed inflight swap IOs");
 
 MODULE_DESCRIPTION(DM_NAME " driver");

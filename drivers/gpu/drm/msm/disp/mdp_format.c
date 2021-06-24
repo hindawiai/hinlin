@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (c) 2014 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
@@ -6,67 +7,67 @@
  */
 
 
-#include "msm_drv.h"
-#include "mdp_kms.h"
+#समावेश "msm_drv.h"
+#समावेश "mdp_kms.h"
 
-static struct csc_cfg csc_convert[CSC_MAX] = {
-	[CSC_RGB2RGB] = {
+अटल काष्ठा csc_cfg csc_convert[CSC_MAX] = अणु
+	[CSC_RGB2RGB] = अणु
 		.type = CSC_RGB2RGB,
-		.matrix = {
+		.matrix = अणु
 			0x0200, 0x0000, 0x0000,
 			0x0000, 0x0200, 0x0000,
 			0x0000, 0x0000, 0x0200
-		},
-		.pre_bias =	{ 0x0, 0x0, 0x0 },
-		.post_bias =	{ 0x0, 0x0, 0x0 },
-		.pre_clamp =	{ 0x0, 0xff, 0x0, 0xff, 0x0, 0xff },
-		.post_clamp =	{ 0x0, 0xff, 0x0, 0xff, 0x0, 0xff },
-	},
-	[CSC_YUV2RGB] = {
+		पूर्ण,
+		.pre_bias =	अणु 0x0, 0x0, 0x0 पूर्ण,
+		.post_bias =	अणु 0x0, 0x0, 0x0 पूर्ण,
+		.pre_clamp =	अणु 0x0, 0xff, 0x0, 0xff, 0x0, 0xff पूर्ण,
+		.post_clamp =	अणु 0x0, 0xff, 0x0, 0xff, 0x0, 0xff पूर्ण,
+	पूर्ण,
+	[CSC_YUV2RGB] = अणु
 		.type = CSC_YUV2RGB,
-		.matrix = {
+		.matrix = अणु
 			0x0254, 0x0000, 0x0331,
 			0x0254, 0xff37, 0xfe60,
 			0x0254, 0x0409, 0x0000
-		},
-		.pre_bias =	{ 0xfff0, 0xff80, 0xff80 },
-		.post_bias =	{ 0x00, 0x00, 0x00 },
-		.pre_clamp =	{ 0x00, 0xff, 0x00, 0xff, 0x00, 0xff },
-		.post_clamp =	{ 0x00, 0xff, 0x00, 0xff, 0x00, 0xff },
-	},
-	[CSC_RGB2YUV] = {
+		पूर्ण,
+		.pre_bias =	अणु 0xfff0, 0xff80, 0xff80 पूर्ण,
+		.post_bias =	अणु 0x00, 0x00, 0x00 पूर्ण,
+		.pre_clamp =	अणु 0x00, 0xff, 0x00, 0xff, 0x00, 0xff पूर्ण,
+		.post_clamp =	अणु 0x00, 0xff, 0x00, 0xff, 0x00, 0xff पूर्ण,
+	पूर्ण,
+	[CSC_RGB2YUV] = अणु
 		.type = CSC_RGB2YUV,
-		.matrix = {
+		.matrix = अणु
 			0x0083, 0x0102, 0x0032,
 			0x1fb5, 0x1f6c, 0x00e1,
 			0x00e1, 0x1f45, 0x1fdc
-		},
-		.pre_bias =	{ 0x00, 0x00, 0x00 },
-		.post_bias =	{ 0x10, 0x80, 0x80 },
-		.pre_clamp =	{ 0x00, 0xff, 0x00, 0xff, 0x00, 0xff },
-		.post_clamp =	{ 0x10, 0xeb, 0x10, 0xf0, 0x10, 0xf0 },
-	},
-	[CSC_YUV2YUV] = {
+		पूर्ण,
+		.pre_bias =	अणु 0x00, 0x00, 0x00 पूर्ण,
+		.post_bias =	अणु 0x10, 0x80, 0x80 पूर्ण,
+		.pre_clamp =	अणु 0x00, 0xff, 0x00, 0xff, 0x00, 0xff पूर्ण,
+		.post_clamp =	अणु 0x10, 0xeb, 0x10, 0xf0, 0x10, 0xf0 पूर्ण,
+	पूर्ण,
+	[CSC_YUV2YUV] = अणु
 		.type = CSC_YUV2YUV,
-		.matrix = {
+		.matrix = अणु
 			0x0200, 0x0000, 0x0000,
 			0x0000, 0x0200, 0x0000,
 			0x0000, 0x0000, 0x0200
-		},
-		.pre_bias =	{ 0x00, 0x00, 0x00 },
-		.post_bias =	{ 0x00, 0x00, 0x00 },
-		.pre_clamp =	{ 0x00, 0xff, 0x00, 0xff, 0x00, 0xff },
-		.post_clamp =	{ 0x00, 0xff, 0x00, 0xff, 0x00, 0xff },
-	},
-};
+		पूर्ण,
+		.pre_bias =	अणु 0x00, 0x00, 0x00 पूर्ण,
+		.post_bias =	अणु 0x00, 0x00, 0x00 पूर्ण,
+		.pre_clamp =	अणु 0x00, 0xff, 0x00, 0xff, 0x00, 0xff पूर्ण,
+		.post_clamp =	अणु 0x00, 0xff, 0x00, 0xff, 0x00, 0xff पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-#define FMT(name, a, r, g, b, e0, e1, e2, e3, alpha, tight, c, cnt, fp, cs, yuv) { \
-		.base = { .pixel_format = DRM_FORMAT_ ## name }, \
+#घोषणा FMT(name, a, r, g, b, e0, e1, e2, e3, alpha, tight, c, cnt, fp, cs, yuv) अणु \
+		.base = अणु .pixel_क्रमmat = DRM_FORMAT_ ## name पूर्ण, \
 		.bpc_a = BPC ## a ## A,                          \
 		.bpc_r = BPC ## r,                               \
 		.bpc_g = BPC ## g,                               \
 		.bpc_b = BPC ## b,                               \
-		.unpack = { e0, e1, e2, e3 },                    \
+		.unpack = अणु e0, e1, e2, e3 पूर्ण,                    \
 		.alpha_enable = alpha,                           \
 		.unpack_tight = tight,                           \
 		.cpp = c,                                        \
@@ -74,15 +75,15 @@ static struct csc_cfg csc_convert[CSC_MAX] = {
 		.fetch_type = fp,                                \
 		.chroma_sample = cs,                             \
 		.is_yuv = yuv,                                   \
-}
+पूर्ण
 
-#define BPC0A 0
+#घोषणा BPC0A 0
 
 /*
- * Note: Keep RGB formats 1st, followed by YUV formats to avoid breaking
- * mdp_get_rgb_formats()'s implementation.
+ * Note: Keep RGB क्रमmats 1st, followed by YUV क्रमmats to aव्योम अवरोधing
+ * mdp_get_rgb_क्रमmats()'s implementation.
  */
-static const struct mdp_format formats[] = {
+अटल स्थिर काष्ठा mdp_क्रमmat क्रमmats[] = अणु
 	/*  name      a  r  g  b   e0 e1 e2 e3  alpha   tight  cpp cnt ... */
 	FMT(ARGB8888, 8, 8, 8, 8,  1, 0, 2, 3,  true,   true,  4,  4,
 			MDP_PLANE_INTERLEAVED, CHROMA_FULL, false),
@@ -109,7 +110,7 @@ static const struct mdp_format formats[] = {
 	FMT(BGR565,   0, 5, 6, 5,  2, 0, 1, 0,  false,  true,  2,  3,
 			MDP_PLANE_INTERLEAVED, CHROMA_FULL, false),
 
-	/* --- RGB formats above / YUV formats below this line --- */
+	/* --- RGB क्रमmats above / YUV क्रमmats below this line --- */
 
 	/* 2 plane YUV */
 	FMT(NV12,     0, 8, 8, 8,  1, 2, 0, 0,  false,  true,  2, 2,
@@ -134,48 +135,48 @@ static const struct mdp_format formats[] = {
 			MDP_PLANE_PLANAR, CHROMA_420, true),
 	FMT(YVU420,   0, 8, 8, 8,  1, 2, 0, 0,  false,  true,  1, 1,
 			MDP_PLANE_PLANAR, CHROMA_420, true),
-};
+पूर्ण;
 
 /*
  * Note:
  * @rgb_only must be set to true, when requesting
- * supported formats for RGB pipes.
+ * supported क्रमmats क्रम RGB pipes.
  */
-uint32_t mdp_get_formats(uint32_t *pixel_formats, uint32_t max_formats,
+uपूर्णांक32_t mdp_get_क्रमmats(uपूर्णांक32_t *pixel_क्रमmats, uपूर्णांक32_t max_क्रमmats,
 		bool rgb_only)
-{
-	uint32_t i;
-	for (i = 0; i < ARRAY_SIZE(formats); i++) {
-		const struct mdp_format *f = &formats[i];
+अणु
+	uपूर्णांक32_t i;
+	क्रम (i = 0; i < ARRAY_SIZE(क्रमmats); i++) अणु
+		स्थिर काष्ठा mdp_क्रमmat *f = &क्रमmats[i];
 
-		if (i == max_formats)
-			break;
+		अगर (i == max_क्रमmats)
+			अवरोध;
 
-		if (rgb_only && MDP_FORMAT_IS_YUV(f))
-			break;
+		अगर (rgb_only && MDP_FORMAT_IS_YUV(f))
+			अवरोध;
 
-		pixel_formats[i] = f->base.pixel_format;
-	}
+		pixel_क्रमmats[i] = f->base.pixel_क्रमmat;
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण
 
-const struct msm_format *mdp_get_format(struct msm_kms *kms, uint32_t format,
-		uint64_t modifier)
-{
-	int i;
-	for (i = 0; i < ARRAY_SIZE(formats); i++) {
-		const struct mdp_format *f = &formats[i];
-		if (f->base.pixel_format == format)
-			return &f->base;
-	}
-	return NULL;
-}
+स्थिर काष्ठा msm_क्रमmat *mdp_get_क्रमmat(काष्ठा msm_kms *kms, uपूर्णांक32_t क्रमmat,
+		uपूर्णांक64_t modअगरier)
+अणु
+	पूर्णांक i;
+	क्रम (i = 0; i < ARRAY_SIZE(क्रमmats); i++) अणु
+		स्थिर काष्ठा mdp_क्रमmat *f = &क्रमmats[i];
+		अगर (f->base.pixel_क्रमmat == क्रमmat)
+			वापस &f->base;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-struct csc_cfg *mdp_get_default_csc_cfg(enum csc_type type)
-{
-	if (WARN_ON(type >= CSC_MAX))
-		return NULL;
+काष्ठा csc_cfg *mdp_get_शेष_csc_cfg(क्रमागत csc_type type)
+अणु
+	अगर (WARN_ON(type >= CSC_MAX))
+		वापस शून्य;
 
-	return &csc_convert[type];
-}
+	वापस &csc_convert[type];
+पूर्ण

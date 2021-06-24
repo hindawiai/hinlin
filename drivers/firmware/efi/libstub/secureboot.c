@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Secure boot handling.
  *
@@ -7,56 +8,56 @@
  * Copyright (C) 2013 Red Hat, Inc.
  *     Mark Salter <msalter@redhat.com>
  */
-#include <linux/efi.h>
-#include <asm/efi.h>
+#समावेश <linux/efi.h>
+#समावेश <यंत्र/efi.h>
 
-#include "efistub.h"
+#समावेश "efistub.h"
 
 /* SHIM variables */
-static const efi_guid_t shim_guid = EFI_SHIM_LOCK_GUID;
-static const efi_char16_t shim_MokSBState_name[] = L"MokSBState";
+अटल स्थिर efi_guid_t shim_guid = EFI_SHIM_LOCK_GUID;
+अटल स्थिर efi_अक्षर16_t shim_MokSBState_name[] = L"MokSBState";
 
-static efi_status_t get_var(efi_char16_t *name, efi_guid_t *vendor, u32 *attr,
-			    unsigned long *data_size, void *data)
-{
-	return get_efi_var(name, vendor, attr, data_size, data);
-}
+अटल efi_status_t get_var(efi_अक्षर16_t *name, efi_guid_t *venकरोr, u32 *attr,
+			    अचिन्हित दीर्घ *data_size, व्योम *data)
+अणु
+	वापस get_efi_var(name, venकरोr, attr, data_size, data);
+पूर्ण
 
 /*
  * Determine whether we're in secure boot mode.
  */
-enum efi_secureboot_mode efi_get_secureboot(void)
-{
+क्रमागत efi_secureboot_mode efi_get_secureboot(व्योम)
+अणु
 	u32 attr;
-	unsigned long size;
-	enum efi_secureboot_mode mode;
+	अचिन्हित दीर्घ size;
+	क्रमागत efi_secureboot_mode mode;
 	efi_status_t status;
 	u8 moksbstate;
 
 	mode = efi_get_secureboot_mode(get_var);
-	if (mode == efi_secureboot_mode_unknown) {
+	अगर (mode == efi_secureboot_mode_unknown) अणु
 		efi_err("Could not determine UEFI Secure Boot status.\n");
-		return efi_secureboot_mode_unknown;
-	}
-	if (mode != efi_secureboot_mode_enabled)
-		return mode;
+		वापस efi_secureboot_mode_unknown;
+	पूर्ण
+	अगर (mode != efi_secureboot_mode_enabled)
+		वापस mode;
 
 	/*
-	 * See if a user has put the shim into insecure mode. If so, and if the
-	 * variable doesn't have the runtime attribute set, we might as well
+	 * See अगर a user has put the shim पूर्णांकo insecure mode. If so, and अगर the
+	 * variable करोesn't have the runसमय attribute set, we might as well
 	 * honor that.
 	 */
-	size = sizeof(moksbstate);
+	size = माप(moksbstate);
 	status = get_efi_var(shim_MokSBState_name, &shim_guid,
 			     &attr, &size, &moksbstate);
 
-	/* If it fails, we don't care why. Default to secure */
-	if (status != EFI_SUCCESS)
-		goto secure_boot_enabled;
-	if (!(attr & EFI_VARIABLE_RUNTIME_ACCESS) && moksbstate == 1)
-		return efi_secureboot_mode_disabled;
+	/* If it fails, we करोn't care why. Default to secure */
+	अगर (status != EFI_SUCCESS)
+		जाओ secure_boot_enabled;
+	अगर (!(attr & EFI_VARIABLE_RUNTIME_ACCESS) && moksbstate == 1)
+		वापस efi_secureboot_mode_disabled;
 
 secure_boot_enabled:
 	efi_info("UEFI Secure Boot is enabled.\n");
-	return efi_secureboot_mode_enabled;
-}
+	वापस efi_secureboot_mode_enabled;
+पूर्ण

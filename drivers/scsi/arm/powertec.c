@@ -1,150 +1,151 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  linux/drivers/acorn/scsi/powertec.c
+ *  linux/drivers/acorn/scsi/घातertec.c
  *
  *  Copyright (C) 1997-2005 Russell King
  */
-#include <linux/module.h>
-#include <linux/blkdev.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/ioport.h>
-#include <linux/proc_fs.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/dma-mapping.h>
-#include <linux/pgtable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/dma.h>
-#include <asm/ecard.h>
-#include <asm/io.h>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/ecard.h>
+#समावेश <यंत्र/पन.स>
 
-#include "../scsi.h"
-#include <scsi/scsi_host.h>
-#include "fas216.h"
-#include "scsi.h"
+#समावेश "../scsi.h"
+#समावेश <scsi/scsi_host.h>
+#समावेश "fas216.h"
+#समावेश "scsi.h"
 
-#include <scsi/scsicam.h>
+#समावेश <scsi/scsicam.h>
 
-#define POWERTEC_FAS216_OFFSET	0x3000
-#define POWERTEC_FAS216_SHIFT	6
+#घोषणा POWERTEC_FAS216_OFFSET	0x3000
+#घोषणा POWERTEC_FAS216_SHIFT	6
 
-#define POWERTEC_INTR_STATUS	0x2000
-#define POWERTEC_INTR_BIT	0x80
+#घोषणा POWERTEC_INTR_STATUS	0x2000
+#घोषणा POWERTEC_INTR_BIT	0x80
 
-#define POWERTEC_RESET_CONTROL	0x1018
-#define POWERTEC_RESET_BIT	1
+#घोषणा POWERTEC_RESET_CONTROL	0x1018
+#घोषणा POWERTEC_RESET_BIT	1
 
-#define POWERTEC_TERM_CONTROL	0x2018
-#define POWERTEC_TERM_ENABLE	1
+#घोषणा POWERTEC_TERM_CONTROL	0x2018
+#घोषणा POWERTEC_TERM_ENABLE	1
 
-#define POWERTEC_INTR_CONTROL	0x101c
-#define POWERTEC_INTR_ENABLE	1
-#define POWERTEC_INTR_DISABLE	0
+#घोषणा POWERTEC_INTR_CONTROL	0x101c
+#घोषणा POWERTEC_INTR_ENABLE	1
+#घोषणा POWERTEC_INTR_DISABLE	0
 
-#define VERSION	"1.10 (19/01/2003 2.5.59)"
+#घोषणा VERSION	"1.10 (19/01/2003 2.5.59)"
 
 /*
  * Use term=0,1,0,0,0 to turn terminators on/off.
  * One entry per slot.
  */
-static int term[MAX_ECARDS] = { 1, 1, 1, 1, 1, 1, 1, 1 };
+अटल पूर्णांक term[MAX_ECARDS] = अणु 1, 1, 1, 1, 1, 1, 1, 1 पूर्ण;
 
-#define NR_SG	256
+#घोषणा NR_SG	256
 
-struct powertec_info {
+काष्ठा घातertec_info अणु
 	FAS216_Info		info;
-	struct expansion_card	*ec;
-	void __iomem		*base;
-	unsigned int		term_ctl;
-	struct scatterlist	sg[NR_SG];
-};
+	काष्ठा expansion_card	*ec;
+	व्योम __iomem		*base;
+	अचिन्हित पूर्णांक		term_ctl;
+	काष्ठा scatterlist	sg[NR_SG];
+पूर्ण;
 
-/* Prototype: void powertecscsi_irqenable(ec, irqnr)
- * Purpose  : Enable interrupts on Powertec SCSI card
- * Params   : ec    - expansion card structure
- *          : irqnr - interrupt number
+/* Prototype: व्योम घातertecscsi_irqenable(ec, irqnr)
+ * Purpose  : Enable पूर्णांकerrupts on Powertec SCSI card
+ * Params   : ec    - expansion card काष्ठाure
+ *          : irqnr - पूर्णांकerrupt number
  */
-static void
-powertecscsi_irqenable(struct expansion_card *ec, int irqnr)
-{
-	struct powertec_info *info = ec->irq_data;
-	writeb(POWERTEC_INTR_ENABLE, info->base + POWERTEC_INTR_CONTROL);
-}
+अटल व्योम
+घातertecscsi_irqenable(काष्ठा expansion_card *ec, पूर्णांक irqnr)
+अणु
+	काष्ठा घातertec_info *info = ec->irq_data;
+	ग_लिखोb(POWERTEC_INTR_ENABLE, info->base + POWERTEC_INTR_CONTROL);
+पूर्ण
 
-/* Prototype: void powertecscsi_irqdisable(ec, irqnr)
- * Purpose  : Disable interrupts on Powertec SCSI card
- * Params   : ec    - expansion card structure
- *          : irqnr - interrupt number
+/* Prototype: व्योम घातertecscsi_irqdisable(ec, irqnr)
+ * Purpose  : Disable पूर्णांकerrupts on Powertec SCSI card
+ * Params   : ec    - expansion card काष्ठाure
+ *          : irqnr - पूर्णांकerrupt number
  */
-static void
-powertecscsi_irqdisable(struct expansion_card *ec, int irqnr)
-{
-	struct powertec_info *info = ec->irq_data;
-	writeb(POWERTEC_INTR_DISABLE, info->base + POWERTEC_INTR_CONTROL);
-}
+अटल व्योम
+घातertecscsi_irqdisable(काष्ठा expansion_card *ec, पूर्णांक irqnr)
+अणु
+	काष्ठा घातertec_info *info = ec->irq_data;
+	ग_लिखोb(POWERTEC_INTR_DISABLE, info->base + POWERTEC_INTR_CONTROL);
+पूर्ण
 
-static const expansioncard_ops_t powertecscsi_ops = {
-	.irqenable	= powertecscsi_irqenable,
-	.irqdisable	= powertecscsi_irqdisable,
-};
+अटल स्थिर expansioncard_ops_t घातertecscsi_ops = अणु
+	.irqenable	= घातertecscsi_irqenable,
+	.irqdisable	= घातertecscsi_irqdisable,
+पूर्ण;
 
-/* Prototype: void powertecscsi_terminator_ctl(host, on_off)
+/* Prototype: व्योम घातertecscsi_terminator_ctl(host, on_off)
  * Purpose  : Turn the Powertec SCSI terminators on or off
  * Params   : host   - card to turn on/off
  *          : on_off - !0 to turn on, 0 to turn off
  */
-static void
-powertecscsi_terminator_ctl(struct Scsi_Host *host, int on_off)
-{
-	struct powertec_info *info = (struct powertec_info *)host->hostdata;
+अटल व्योम
+घातertecscsi_terminator_ctl(काष्ठा Scsi_Host *host, पूर्णांक on_off)
+अणु
+	काष्ठा घातertec_info *info = (काष्ठा घातertec_info *)host->hostdata;
 
 	info->term_ctl = on_off ? POWERTEC_TERM_ENABLE : 0;
-	writeb(info->term_ctl, info->base + POWERTEC_TERM_CONTROL);
-}
+	ग_लिखोb(info->term_ctl, info->base + POWERTEC_TERM_CONTROL);
+पूर्ण
 
-/* Prototype: void powertecscsi_intr(irq, *dev_id, *regs)
- * Purpose  : handle interrupts from Powertec SCSI card
- * Params   : irq    - interrupt number
- *	      dev_id - user-defined (Scsi_Host structure)
+/* Prototype: व्योम घातertecscsi_पूर्णांकr(irq, *dev_id, *regs)
+ * Purpose  : handle पूर्णांकerrupts from Powertec SCSI card
+ * Params   : irq    - पूर्णांकerrupt number
+ *	      dev_id - user-defined (Scsi_Host काष्ठाure)
  */
-static irqreturn_t powertecscsi_intr(int irq, void *dev_id)
-{
-	struct powertec_info *info = dev_id;
+अटल irqवापस_t घातertecscsi_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घातertec_info *info = dev_id;
 
-	return fas216_intr(&info->info);
-}
+	वापस fas216_पूर्णांकr(&info->info);
+पूर्ण
 
-/* Prototype: fasdmatype_t powertecscsi_dma_setup(host, SCpnt, direction, min_type)
+/* Prototype: fasdmatype_t घातertecscsi_dma_setup(host, SCpnt, direction, min_type)
  * Purpose  : initialises DMA/PIO
  * Params   : host      - host
  *	      SCpnt     - command
  *	      direction - DMA on to/off of card
- *	      min_type  - minimum DMA support that we must have for this transfer
- * Returns  : type of transfer to be performed
+ *	      min_type  - minimum DMA support that we must have क्रम this transfer
+ * Returns  : type of transfer to be perक्रमmed
  */
-static fasdmatype_t
-powertecscsi_dma_setup(struct Scsi_Host *host, struct scsi_pointer *SCp,
+अटल fasdmatype_t
+घातertecscsi_dma_setup(काष्ठा Scsi_Host *host, काष्ठा scsi_poपूर्णांकer *SCp,
 		       fasdmadir_t direction, fasdmatype_t min_type)
-{
-	struct powertec_info *info = (struct powertec_info *)host->hostdata;
-	struct device *dev = scsi_get_device(host);
-	int dmach = info->info.scsi.dma;
+अणु
+	काष्ठा घातertec_info *info = (काष्ठा घातertec_info *)host->hostdata;
+	काष्ठा device *dev = scsi_get_device(host);
+	पूर्णांक dmach = info->info.scsi.dma;
 
-	if (info->info.ifcfg.capabilities & FASCAP_DMA &&
-	    min_type == fasdma_real_all) {
-		int bufs, map_dir, dma_dir;
+	अगर (info->info.अगरcfg.capabilities & FASCAP_DMA &&
+	    min_type == fasdma_real_all) अणु
+		पूर्णांक bufs, map_dir, dma_dir;
 
 		bufs = copy_SCp_to_sg(&info->sg[0], SCp, NR_SG);
 
-		if (direction == DMA_OUT) {
+		अगर (direction == DMA_OUT) अणु
 			map_dir = DMA_TO_DEVICE;
 			dma_dir = DMA_MODE_WRITE;
-		} else {
+		पूर्ण अन्यथा अणु
 			map_dir = DMA_FROM_DEVICE;
 			dma_dir = DMA_MODE_READ;
-		}
+		पूर्ण
 
 		dma_map_sg(dev, info->sg, bufs, map_dir);
 
@@ -152,140 +153,140 @@ powertecscsi_dma_setup(struct Scsi_Host *host, struct scsi_pointer *SCp,
 		set_dma_sg(dmach, info->sg, bufs);
 		set_dma_mode(dmach, dma_dir);
 		enable_dma(dmach);
-		return fasdma_real_all;
-	}
+		वापस fasdma_real_all;
+	पूर्ण
 
 	/*
-	 * If we're not doing DMA,
-	 *  we'll do slow PIO
+	 * If we're not करोing DMA,
+	 *  we'll करो slow PIO
 	 */
-	return fasdma_pio;
-}
+	वापस fasdma_pio;
+पूर्ण
 
-/* Prototype: int powertecscsi_dma_stop(host, SCpnt)
+/* Prototype: पूर्णांक घातertecscsi_dma_stop(host, SCpnt)
  * Purpose  : stops DMA/PIO
  * Params   : host  - host
  *	      SCpnt - command
  */
-static void
-powertecscsi_dma_stop(struct Scsi_Host *host, struct scsi_pointer *SCp)
-{
-	struct powertec_info *info = (struct powertec_info *)host->hostdata;
-	if (info->info.scsi.dma != NO_DMA)
+अटल व्योम
+घातertecscsi_dma_stop(काष्ठा Scsi_Host *host, काष्ठा scsi_poपूर्णांकer *SCp)
+अणु
+	काष्ठा घातertec_info *info = (काष्ठा घातertec_info *)host->hostdata;
+	अगर (info->info.scsi.dma != NO_DMA)
 		disable_dma(info->info.scsi.dma);
-}
+पूर्ण
 
-/* Prototype: const char *powertecscsi_info(struct Scsi_Host * host)
- * Purpose  : returns a descriptive string about this interface,
- * Params   : host - driver host structure to return info for.
- * Returns  : pointer to a static buffer containing null terminated string.
+/* Prototype: स्थिर अक्षर *घातertecscsi_info(काष्ठा Scsi_Host * host)
+ * Purpose  : वापसs a descriptive string about this पूर्णांकerface,
+ * Params   : host - driver host काष्ठाure to वापस info क्रम.
+ * Returns  : poपूर्णांकer to a अटल buffer containing null terminated string.
  */
-const char *powertecscsi_info(struct Scsi_Host *host)
-{
-	struct powertec_info *info = (struct powertec_info *)host->hostdata;
-	static char string[150];
+स्थिर अक्षर *घातertecscsi_info(काष्ठा Scsi_Host *host)
+अणु
+	काष्ठा घातertec_info *info = (काष्ठा घातertec_info *)host->hostdata;
+	अटल अक्षर string[150];
 
-	sprintf(string, "%s (%s) in slot %d v%s terminators o%s",
+	प्र_लिखो(string, "%s (%s) in slot %d v%s terminators o%s",
 		host->hostt->name, info->info.scsi.type, info->ec->slot_no,
 		VERSION, info->term_ctl ? "n" : "ff");
 
-	return string;
-}
+	वापस string;
+पूर्ण
 
-/* Prototype: int powertecscsi_set_proc_info(struct Scsi_Host *host, char *buffer, int length)
- * Purpose  : Set a driver specific function
+/* Prototype: पूर्णांक घातertecscsi_set_proc_info(काष्ठा Scsi_Host *host, अक्षर *buffer, पूर्णांक length)
+ * Purpose  : Set a driver specअगरic function
  * Params   : host   - host to setup
  *          : buffer - buffer containing string describing operation
  *          : length - length of string
  * Returns  : -EINVAL, or 0
  */
-static int
-powertecscsi_set_proc_info(struct Scsi_Host *host, char *buffer, int length)
-{
-	int ret = length;
+अटल पूर्णांक
+घातertecscsi_set_proc_info(काष्ठा Scsi_Host *host, अक्षर *buffer, पूर्णांक length)
+अणु
+	पूर्णांक ret = length;
 
-	if (length >= 12 && strncmp(buffer, "POWERTECSCSI", 12) == 0) {
+	अगर (length >= 12 && म_भेदन(buffer, "POWERTECSCSI", 12) == 0) अणु
 		buffer += 12;
 		length -= 12;
 
-		if (length >= 5 && strncmp(buffer, "term=", 5) == 0) {
-			if (buffer[5] == '1')
-				powertecscsi_terminator_ctl(host, 1);
-			else if (buffer[5] == '0')
-				powertecscsi_terminator_ctl(host, 0);
-			else
+		अगर (length >= 5 && म_भेदन(buffer, "term=", 5) == 0) अणु
+			अगर (buffer[5] == '1')
+				घातertecscsi_terminator_ctl(host, 1);
+			अन्यथा अगर (buffer[5] == '0')
+				घातertecscsi_terminator_ctl(host, 0);
+			अन्यथा
 				ret = -EINVAL;
-		} else
+		पूर्ण अन्यथा
 			ret = -EINVAL;
-	} else
+	पूर्ण अन्यथा
 		ret = -EINVAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* Prototype: int powertecscsi_proc_info(char *buffer, char **start, off_t offset,
- *					int length, int host_no, int inout)
- * Purpose  : Return information about the driver to a user process accessing
- *	      the /proc filesystem.
- * Params   : buffer  - a buffer to write information to
- *	      start   - a pointer into this buffer set by this routine to the start
- *		        of the required information.
- *	      offset  - offset into information that we have read up to.
+/* Prototype: पूर्णांक घातertecscsi_proc_info(अक्षर *buffer, अक्षर **start, off_t offset,
+ *					पूर्णांक length, पूर्णांक host_no, पूर्णांक inout)
+ * Purpose  : Return inक्रमmation about the driver to a user process accessing
+ *	      the /proc fileप्रणाली.
+ * Params   : buffer  - a buffer to ग_लिखो inक्रमmation to
+ *	      start   - a poपूर्णांकer पूर्णांकo this buffer set by this routine to the start
+ *		        of the required inक्रमmation.
+ *	      offset  - offset पूर्णांकo inक्रमmation that we have पढ़ो up to.
  *	      length  - length of buffer
- *	      inout   - 0 for reading, 1 for writing.
+ *	      inout   - 0 क्रम पढ़ोing, 1 क्रम writing.
  * Returns  : length of data written to buffer.
  */
-static int powertecscsi_show_info(struct seq_file *m, struct Scsi_Host *host)
-{
-	struct powertec_info *info;
+अटल पूर्णांक घातertecscsi_show_info(काष्ठा seq_file *m, काष्ठा Scsi_Host *host)
+अणु
+	काष्ठा घातertec_info *info;
 
-	info = (struct powertec_info *)host->hostdata;
+	info = (काष्ठा घातertec_info *)host->hostdata;
 
-	seq_printf(m, "PowerTec SCSI driver v%s\n", VERSION);
-	fas216_print_host(&info->info, m);
-	seq_printf(m, "Term    : o%s\n",
+	seq_म_लिखो(m, "PowerTec SCSI driver v%s\n", VERSION);
+	fas216_prपूर्णांक_host(&info->info, m);
+	seq_म_लिखो(m, "Term    : o%s\n",
 			info->term_ctl ? "n" : "ff");
 
-	fas216_print_stats(&info->info, m);
-	fas216_print_devices(&info->info, m);
-	return 0;
-}
+	fas216_prपूर्णांक_stats(&info->info, m);
+	fas216_prपूर्णांक_devices(&info->info, m);
+	वापस 0;
+पूर्ण
 
-static ssize_t powertecscsi_show_term(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct expansion_card *ec = ECARD_DEV(dev);
-	struct Scsi_Host *host = ecard_get_drvdata(ec);
-	struct powertec_info *info = (struct powertec_info *)host->hostdata;
+अटल sमाप_प्रकार घातertecscsi_show_term(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा expansion_card *ec = ECARD_DEV(dev);
+	काष्ठा Scsi_Host *host = ecard_get_drvdata(ec);
+	काष्ठा घातertec_info *info = (काष्ठा घातertec_info *)host->hostdata;
 
-	return sprintf(buf, "%d\n", info->term_ctl ? 1 : 0);
-}
+	वापस प्र_लिखो(buf, "%d\n", info->term_ctl ? 1 : 0);
+पूर्ण
 
-static ssize_t
-powertecscsi_store_term(struct device *dev, struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct expansion_card *ec = ECARD_DEV(dev);
-	struct Scsi_Host *host = ecard_get_drvdata(ec);
+अटल sमाप_प्रकार
+घातertecscsi_store_term(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा expansion_card *ec = ECARD_DEV(dev);
+	काष्ठा Scsi_Host *host = ecard_get_drvdata(ec);
 
-	if (len > 1)
-		powertecscsi_terminator_ctl(host, buf[0] != '0');
+	अगर (len > 1)
+		घातertecscsi_terminator_ctl(host, buf[0] != '0');
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR(bus_term, S_IRUGO | S_IWUSR,
-		   powertecscsi_show_term, powertecscsi_store_term);
+अटल DEVICE_ATTR(bus_term, S_IRUGO | S_IWUSR,
+		   घातertecscsi_show_term, घातertecscsi_store_term);
 
-static struct scsi_host_template powertecscsi_template = {
+अटल काष्ठा scsi_host_ढाँचा घातertecscsi_ढाँचा = अणु
 	.module				= THIS_MODULE,
-	.show_info			= powertecscsi_show_info,
-	.write_info			= powertecscsi_set_proc_info,
+	.show_info			= घातertecscsi_show_info,
+	.ग_लिखो_info			= घातertecscsi_set_proc_info,
 	.name				= "PowerTec SCSI",
-	.info				= powertecscsi_info,
+	.info				= घातertecscsi_info,
 	.queuecommand			= fas216_queue_command,
 	.eh_host_reset_handler		= fas216_eh_host_reset,
 	.eh_bus_reset_handler		= fas216_eh_bus_reset,
 	.eh_device_reset_handler	= fas216_eh_device_reset,
-	.eh_abort_handler		= fas216_eh_abort,
+	.eh_पात_handler		= fas216_eh_पात,
 
 	.can_queue			= 8,
 	.this_id			= 7,
@@ -293,156 +294,156 @@ static struct scsi_host_template powertecscsi_template = {
 	.dma_boundary			= IOMD_DMA_BOUNDARY,
 	.cmd_per_lun			= 2,
 	.proc_name			= "powertec",
-};
+पूर्ण;
 
-static int powertecscsi_probe(struct expansion_card *ec,
-			      const struct ecard_id *id)
-{
-	struct Scsi_Host *host;
-	struct powertec_info *info;
-	void __iomem *base;
-	int ret;
+अटल पूर्णांक घातertecscsi_probe(काष्ठा expansion_card *ec,
+			      स्थिर काष्ठा ecard_id *id)
+अणु
+	काष्ठा Scsi_Host *host;
+	काष्ठा घातertec_info *info;
+	व्योम __iomem *base;
+	पूर्णांक ret;
 
 	ret = ecard_request_resources(ec);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	base = ecardm_iomap(ec, ECARD_RES_IOCFAST, 0, 0);
-	if (!base) {
+	अगर (!base) अणु
 		ret = -ENOMEM;
-		goto out_region;
-	}
+		जाओ out_region;
+	पूर्ण
 
-	host = scsi_host_alloc(&powertecscsi_template,
-			       sizeof (struct powertec_info));
-	if (!host) {
+	host = scsi_host_alloc(&घातertecscsi_ढाँचा,
+			       माप (काष्ठा घातertec_info));
+	अगर (!host) अणु
 		ret = -ENOMEM;
-		goto out_region;
-	}
+		जाओ out_region;
+	पूर्ण
 
 	ecard_set_drvdata(ec, host);
 
-	info = (struct powertec_info *)host->hostdata;
+	info = (काष्ठा घातertec_info *)host->hostdata;
 	info->base = base;
-	powertecscsi_terminator_ctl(host, term[ec->slot_no]);
+	घातertecscsi_terminator_ctl(host, term[ec->slot_no]);
 
 	info->ec = ec;
 	info->info.scsi.io_base		= base + POWERTEC_FAS216_OFFSET;
-	info->info.scsi.io_shift	= POWERTEC_FAS216_SHIFT;
+	info->info.scsi.io_shअगरt	= POWERTEC_FAS216_SHIFT;
 	info->info.scsi.irq		= ec->irq;
 	info->info.scsi.dma		= ec->dma;
-	info->info.ifcfg.clockrate	= 40; /* MHz */
-	info->info.ifcfg.select_timeout	= 255;
-	info->info.ifcfg.asyncperiod	= 200; /* ns */
-	info->info.ifcfg.sync_max_depth	= 7;
-	info->info.ifcfg.cntl3		= CNTL3_BS8 | CNTL3_FASTSCSI | CNTL3_FASTCLK;
-	info->info.ifcfg.disconnect_ok	= 1;
-	info->info.ifcfg.wide_max_size	= 0;
-	info->info.ifcfg.capabilities	= 0;
-	info->info.dma.setup		= powertecscsi_dma_setup;
-	info->info.dma.pseudo		= NULL;
-	info->info.dma.stop		= powertecscsi_dma_stop;
+	info->info.अगरcfg.घड़ीrate	= 40; /* MHz */
+	info->info.अगरcfg.select_समयout	= 255;
+	info->info.अगरcfg.asyncperiod	= 200; /* ns */
+	info->info.अगरcfg.sync_max_depth	= 7;
+	info->info.अगरcfg.cntl3		= CNTL3_BS8 | CNTL3_FASTSCSI | CNTL3_FASTCLK;
+	info->info.अगरcfg.disconnect_ok	= 1;
+	info->info.अगरcfg.wide_max_size	= 0;
+	info->info.अगरcfg.capabilities	= 0;
+	info->info.dma.setup		= घातertecscsi_dma_setup;
+	info->info.dma.pseuकरो		= शून्य;
+	info->info.dma.stop		= घातertecscsi_dma_stop;
 
 	ec->irqaddr	= base + POWERTEC_INTR_STATUS;
 	ec->irqmask	= POWERTEC_INTR_BIT;
 
-	ecard_setirq(ec, &powertecscsi_ops, info);
+	ecard_setirq(ec, &घातertecscsi_ops, info);
 
 	device_create_file(&ec->dev, &dev_attr_bus_term);
 
 	ret = fas216_init(host);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	ret = request_irq(ec->irq, powertecscsi_intr,
+	ret = request_irq(ec->irq, घातertecscsi_पूर्णांकr,
 			  0, "powertec", info);
-	if (ret) {
-		printk("scsi%d: IRQ%d not free: %d\n",
+	अगर (ret) अणु
+		prपूर्णांकk("scsi%d: IRQ%d not free: %d\n",
 		       host->host_no, ec->irq, ret);
-		goto out_release;
-	}
+		जाओ out_release;
+	पूर्ण
 
-	if (info->info.scsi.dma != NO_DMA) {
-		if (request_dma(info->info.scsi.dma, "powertec")) {
-			printk("scsi%d: DMA%d not free, using PIO\n",
+	अगर (info->info.scsi.dma != NO_DMA) अणु
+		अगर (request_dma(info->info.scsi.dma, "powertec")) अणु
+			prपूर्णांकk("scsi%d: DMA%d not free, using PIO\n",
 			       host->host_no, info->info.scsi.dma);
 			info->info.scsi.dma = NO_DMA;
-		} else {
+		पूर्ण अन्यथा अणु
 			set_dma_speed(info->info.scsi.dma, 180);
-			info->info.ifcfg.capabilities |= FASCAP_DMA;
-		}
-	}
+			info->info.अगरcfg.capabilities |= FASCAP_DMA;
+		पूर्ण
+	पूर्ण
 
 	ret = fas216_add(host, &ec->dev);
-	if (ret == 0)
-		goto out;
+	अगर (ret == 0)
+		जाओ out;
 
-	if (info->info.scsi.dma != NO_DMA)
-		free_dma(info->info.scsi.dma);
-	free_irq(ec->irq, info);
+	अगर (info->info.scsi.dma != NO_DMA)
+		मुक्त_dma(info->info.scsi.dma);
+	मुक्त_irq(ec->irq, info);
 
  out_release:
 	fas216_release(host);
 
- out_free:
-	device_remove_file(&ec->dev, &dev_attr_bus_term);
+ out_मुक्त:
+	device_हटाओ_file(&ec->dev, &dev_attr_bus_term);
 	scsi_host_put(host);
 
  out_region:
 	ecard_release_resources(ec);
 
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void powertecscsi_remove(struct expansion_card *ec)
-{
-	struct Scsi_Host *host = ecard_get_drvdata(ec);
-	struct powertec_info *info = (struct powertec_info *)host->hostdata;
+अटल व्योम घातertecscsi_हटाओ(काष्ठा expansion_card *ec)
+अणु
+	काष्ठा Scsi_Host *host = ecard_get_drvdata(ec);
+	काष्ठा घातertec_info *info = (काष्ठा घातertec_info *)host->hostdata;
 
-	ecard_set_drvdata(ec, NULL);
-	fas216_remove(host);
+	ecard_set_drvdata(ec, शून्य);
+	fas216_हटाओ(host);
 
-	device_remove_file(&ec->dev, &dev_attr_bus_term);
+	device_हटाओ_file(&ec->dev, &dev_attr_bus_term);
 
-	if (info->info.scsi.dma != NO_DMA)
-		free_dma(info->info.scsi.dma);
-	free_irq(ec->irq, info);
+	अगर (info->info.scsi.dma != NO_DMA)
+		मुक्त_dma(info->info.scsi.dma);
+	मुक्त_irq(ec->irq, info);
 
 	fas216_release(host);
 	scsi_host_put(host);
 	ecard_release_resources(ec);
-}
+पूर्ण
 
-static const struct ecard_id powertecscsi_cids[] = {
-	{ MANU_ALSYSTEMS, PROD_ALSYS_SCSIATAPI },
-	{ 0xffff, 0xffff },
-};
+अटल स्थिर काष्ठा ecard_id घातertecscsi_cids[] = अणु
+	अणु MANU_ALSYSTEMS, PROD_ALSYS_SCSIATAPI पूर्ण,
+	अणु 0xffff, 0xffff पूर्ण,
+पूर्ण;
 
-static struct ecard_driver powertecscsi_driver = {
-	.probe		= powertecscsi_probe,
-	.remove		= powertecscsi_remove,
-	.id_table	= powertecscsi_cids,
-	.drv = {
+अटल काष्ठा ecard_driver घातertecscsi_driver = अणु
+	.probe		= घातertecscsi_probe,
+	.हटाओ		= घातertecscsi_हटाओ,
+	.id_table	= घातertecscsi_cids,
+	.drv = अणु
 		.name		= "powertecscsi",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init powertecscsi_init(void)
-{
-	return ecard_register_driver(&powertecscsi_driver);
-}
+अटल पूर्णांक __init घातertecscsi_init(व्योम)
+अणु
+	वापस ecard_रेजिस्टर_driver(&घातertecscsi_driver);
+पूर्ण
 
-static void __exit powertecscsi_exit(void)
-{
-	ecard_remove_driver(&powertecscsi_driver);
-}
+अटल व्योम __निकास घातertecscsi_निकास(व्योम)
+अणु
+	ecard_हटाओ_driver(&घातertecscsi_driver);
+पूर्ण
 
-module_init(powertecscsi_init);
-module_exit(powertecscsi_exit);
+module_init(घातertecscsi_init);
+module_निकास(घातertecscsi_निकास);
 
 MODULE_AUTHOR("Russell King");
 MODULE_DESCRIPTION("Powertec SCSI driver");
-module_param_array(term, int, NULL, 0);
+module_param_array(term, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(term, "SCSI bus termination");
 MODULE_LICENSE("GPL");

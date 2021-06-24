@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <string.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <मानकपन.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानककोष.स>
+#समावेश <unistd.h>
+#समावेश <sys/types.h>
+#समावेश <sys/स्थिति.स>
+#समावेश <fcntl.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <माला.स>
 
-int main(int argc, char **argv)
-{
-	const char *path;
-	char buf[4];
-	int fd, rc;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	स्थिर अक्षर *path;
+	अक्षर buf[4];
+	पूर्णांक fd, rc;
 
-	if (argc < 2) {
-		fprintf(stderr, "usage: %s <path>\n", argv[0]);
-		return EXIT_FAILURE;
-	}
+	अगर (argc < 2) अणु
+		ख_लिखो(मानक_त्रुटि, "usage: %s <path>\n", argv[0]);
+		वापस निकास_त्रुटि;
+	पूर्ण
 
 	path = argv[1];
 
 	/* create a test variable */
-	fd = open(path, O_RDWR | O_CREAT, 0600);
-	if (fd < 0) {
-		perror("open(O_WRONLY)");
-		return EXIT_FAILURE;
-	}
+	fd = खोलो(path, O_RDWR | O_CREAT, 0600);
+	अगर (fd < 0) अणु
+		लिखो_त्रुटि("open(O_WRONLY)");
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	rc = read(fd, buf, sizeof(buf));
-	if (rc != 0) {
-		fprintf(stderr, "Reading a new var should return EOF\n");
-		return EXIT_FAILURE;
-	}
+	rc = पढ़ो(fd, buf, माप(buf));
+	अगर (rc != 0) अणु
+		ख_लिखो(मानक_त्रुटि, "Reading a new var should return EOF\n");
+		वापस निकास_त्रुटि;
+	पूर्ण
 
-	return EXIT_SUCCESS;
-}
+	वापस निकास_सफल;
+पूर्ण

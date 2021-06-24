@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,117 +32,117 @@
  *
  */
 
-#include <linux/ethtool.h>
-#include <net/sock.h>
+#समावेश <linux/ethtool.h>
+#समावेश <net/sock.h>
 
-#include "en.h"
-#include "accel/ipsec.h"
-#include "fpga/sdk.h"
-#include "en_accel/ipsec.h"
-#include "fpga/ipsec.h"
+#समावेश "en.h"
+#समावेश "accel/ipsec.h"
+#समावेश "fpga/sdk.h"
+#समावेश "en_accel/ipsec.h"
+#समावेश "fpga/ipsec.h"
 
-static const struct counter_desc mlx5e_ipsec_hw_stats_desc[] = {
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_dec_in_packets) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_dec_out_packets) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_dec_bypass_packets) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_enc_in_packets) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_enc_out_packets) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_enc_bypass_packets) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_dec_drop_packets) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_dec_auth_fail_packets) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_enc_drop_packets) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_add_sa_success) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_add_sa_fail) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_del_sa_success) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_del_sa_fail) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_stats, ipsec_cmd_drop) },
-};
+अटल स्थिर काष्ठा counter_desc mlx5e_ipsec_hw_stats_desc[] = अणु
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_dec_in_packets) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_dec_out_packets) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_dec_bypass_packets) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_enc_in_packets) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_enc_out_packets) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_enc_bypass_packets) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_dec_drop_packets) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_dec_auth_fail_packets) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_enc_drop_packets) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_add_sa_success) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_add_sa_fail) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_del_sa_success) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_del_sa_fail) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_stats, ipsec_cmd_drop) पूर्ण,
+पूर्ण;
 
-static const struct counter_desc mlx5e_ipsec_sw_stats_desc[] = {
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_sw_stats, ipsec_rx_drop_sp_alloc) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_sw_stats, ipsec_rx_drop_sadb_miss) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_sw_stats, ipsec_rx_drop_syndrome) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_sw_stats, ipsec_tx_drop_bundle) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_sw_stats, ipsec_tx_drop_no_state) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_sw_stats, ipsec_tx_drop_not_ip) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_sw_stats, ipsec_tx_drop_trailer) },
-	{ MLX5E_DECLARE_STAT(struct mlx5e_ipsec_sw_stats, ipsec_tx_drop_metadata) },
-};
+अटल स्थिर काष्ठा counter_desc mlx5e_ipsec_sw_stats_desc[] = अणु
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_sw_stats, ipsec_rx_drop_sp_alloc) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_sw_stats, ipsec_rx_drop_sadb_miss) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_sw_stats, ipsec_rx_drop_syndrome) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_sw_stats, ipsec_tx_drop_bundle) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_sw_stats, ipsec_tx_drop_no_state) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_sw_stats, ipsec_tx_drop_not_ip) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_sw_stats, ipsec_tx_drop_trailer) पूर्ण,
+	अणु MLX5E_DECLARE_STAT(काष्ठा mlx5e_ipsec_sw_stats, ipsec_tx_drop_metadata) पूर्ण,
+पूर्ण;
 
-#define MLX5E_READ_CTR_ATOMIC64(ptr, dsc, i) \
-	atomic64_read((atomic64_t *)((char *)(ptr) + (dsc)[i].offset))
+#घोषणा MLX5E_READ_CTR_ATOMIC64(ptr, dsc, i) \
+	atomic64_पढ़ो((atomic64_t *)((अक्षर *)(ptr) + (dsc)[i].offset))
 
-#define NUM_IPSEC_HW_COUNTERS ARRAY_SIZE(mlx5e_ipsec_hw_stats_desc)
-#define NUM_IPSEC_SW_COUNTERS ARRAY_SIZE(mlx5e_ipsec_sw_stats_desc)
+#घोषणा NUM_IPSEC_HW_COUNTERS ARRAY_SIZE(mlx5e_ipsec_hw_stats_desc)
+#घोषणा NUM_IPSEC_SW_COUNTERS ARRAY_SIZE(mlx5e_ipsec_sw_stats_desc)
 
-static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(ipsec_sw)
-{
-	return priv->ipsec ? NUM_IPSEC_SW_COUNTERS : 0;
-}
+अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(ipsec_sw)
+अणु
+	वापस priv->ipsec ? NUM_IPSEC_SW_COUNTERS : 0;
+पूर्ण
 
-static inline MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(ipsec_sw) {}
+अटल अंतरभूत MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(ipsec_sw) अणुपूर्ण
 
-static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(ipsec_sw)
-{
-	unsigned int i;
+अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(ipsec_sw)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (priv->ipsec)
-		for (i = 0; i < NUM_IPSEC_SW_COUNTERS; i++)
-			strcpy(data + (idx++) * ETH_GSTRING_LEN,
-			       mlx5e_ipsec_sw_stats_desc[i].format);
-	return idx;
-}
+	अगर (priv->ipsec)
+		क्रम (i = 0; i < NUM_IPSEC_SW_COUNTERS; i++)
+			म_नकल(data + (idx++) * ETH_GSTRING_LEN,
+			       mlx5e_ipsec_sw_stats_desc[i].क्रमmat);
+	वापस idx;
+पूर्ण
 
-static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(ipsec_sw)
-{
-	int i;
+अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(ipsec_sw)
+अणु
+	पूर्णांक i;
 
-	if (priv->ipsec)
-		for (i = 0; i < NUM_IPSEC_SW_COUNTERS; i++)
+	अगर (priv->ipsec)
+		क्रम (i = 0; i < NUM_IPSEC_SW_COUNTERS; i++)
 			data[idx++] = MLX5E_READ_CTR_ATOMIC64(&priv->ipsec->sw_stats,
 							      mlx5e_ipsec_sw_stats_desc, i);
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(ipsec_hw)
-{
-	return (priv->ipsec && mlx5_fpga_ipsec_device_caps(priv->mdev)) ? NUM_IPSEC_HW_COUNTERS : 0;
-}
+अटल MLX5E_DECLARE_STATS_GRP_OP_NUM_STATS(ipsec_hw)
+अणु
+	वापस (priv->ipsec && mlx5_fpga_ipsec_device_caps(priv->mdev)) ? NUM_IPSEC_HW_COUNTERS : 0;
+पूर्ण
 
-static MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(ipsec_hw)
-{
-	int ret = 0;
+अटल MLX5E_DECLARE_STATS_GRP_OP_UPDATE_STATS(ipsec_hw)
+अणु
+	पूर्णांक ret = 0;
 
-	if (priv->ipsec)
-		ret = mlx5_accel_ipsec_counters_read(priv->mdev, (u64 *)&priv->ipsec->stats,
+	अगर (priv->ipsec)
+		ret = mlx5_accel_ipsec_counters_पढ़ो(priv->mdev, (u64 *)&priv->ipsec->stats,
 						     NUM_IPSEC_HW_COUNTERS);
-	if (ret)
-		memset(&priv->ipsec->stats, 0, sizeof(priv->ipsec->stats));
-}
+	अगर (ret)
+		स_रखो(&priv->ipsec->stats, 0, माप(priv->ipsec->stats));
+पूर्ण
 
-static MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(ipsec_hw)
-{
-	unsigned int i;
+अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STRS(ipsec_hw)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (priv->ipsec && mlx5_fpga_ipsec_device_caps(priv->mdev))
-		for (i = 0; i < NUM_IPSEC_HW_COUNTERS; i++)
-			strcpy(data + (idx++) * ETH_GSTRING_LEN,
-			       mlx5e_ipsec_hw_stats_desc[i].format);
+	अगर (priv->ipsec && mlx5_fpga_ipsec_device_caps(priv->mdev))
+		क्रम (i = 0; i < NUM_IPSEC_HW_COUNTERS; i++)
+			म_नकल(data + (idx++) * ETH_GSTRING_LEN,
+			       mlx5e_ipsec_hw_stats_desc[i].क्रमmat);
 
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
-static MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(ipsec_hw)
-{
-	int i;
+अटल MLX5E_DECLARE_STATS_GRP_OP_FILL_STATS(ipsec_hw)
+अणु
+	पूर्णांक i;
 
-	if (priv->ipsec && mlx5_fpga_ipsec_device_caps(priv->mdev))
-		for (i = 0; i < NUM_IPSEC_HW_COUNTERS; i++)
+	अगर (priv->ipsec && mlx5_fpga_ipsec_device_caps(priv->mdev))
+		क्रम (i = 0; i < NUM_IPSEC_HW_COUNTERS; i++)
 			data[idx++] = MLX5E_READ_CTR64_CPU(&priv->ipsec->stats,
 							   mlx5e_ipsec_hw_stats_desc,
 							   i);
-	return idx;
-}
+	वापस idx;
+पूर्ण
 
 MLX5E_DEFINE_STATS_GRP(ipsec_sw, 0);
 MLX5E_DEFINE_STATS_GRP(ipsec_hw, 0);

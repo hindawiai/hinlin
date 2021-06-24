@@ -1,37 +1,38 @@
+<शैली गुरु>
 /*
  * arch/arm/mach-mv78x00/mpp.c
  *
- * MPP functions for Marvell MV78x00 SoCs
+ * MPP functions क्रम Marvell MV78x00 SoCs
  *
  * This file is licensed under the terms of the GNU General Public
  * License version 2.  This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
-#include <linux/gpio.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <plat/mpp.h>
-#include "mv78xx0.h"
-#include "common.h"
-#include "mpp.h"
+#समावेश <linux/gpपन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <plat/mpp.h>
+#समावेश "mv78xx0.h"
+#समावेश "common.h"
+#समावेश "mpp.h"
 
-static unsigned int __init mv78xx0_variant(void)
-{
+अटल अचिन्हित पूर्णांक __init mv78xx0_variant(व्योम)
+अणु
 	u32 dev, rev;
 
 	mv78xx0_pcie_id(&dev, &rev);
 
-	if (dev == MV78100_DEV_ID && rev >= MV78100_REV_A0)
-		return MPP_78100_A0_MASK;
+	अगर (dev == MV78100_DEV_ID && rev >= MV78100_REV_A0)
+		वापस MPP_78100_A0_MASK;
 
-	printk(KERN_ERR "MPP setup: unknown mv78x00 variant "
+	prपूर्णांकk(KERN_ERR "MPP setup: unknown mv78x00 variant "
 			"(dev %#x rev %#x)\n", dev, rev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void __init mv78xx0_mpp_conf(unsigned int *mpp_list)
-{
+व्योम __init mv78xx0_mpp_conf(अचिन्हित पूर्णांक *mpp_list)
+अणु
 	orion_mpp_conf(mpp_list, mv78xx0_variant(),
 		       MPP_MAX, DEV_BUS_VIRT_BASE);
-}
+पूर्ण

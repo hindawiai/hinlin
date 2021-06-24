@@ -1,31 +1,32 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright 2015, Anton Blanchard, IBM Corp.
+ * Copyright 2015, Anton Blanअक्षरd, IBM Corp.
  */
 
-#include <sys/time.h>
-#include <stdio.h>
+#समावेश <sys/समय.स>
+#समावेश <मानकपन.स>
 
-#include "utils.h"
+#समावेश "utils.h"
 
-static int test_gettimeofday(void)
-{
-	int i;
+अटल पूर्णांक test_समय_लोofday(व्योम)
+अणु
+	पूर्णांक i;
 
-	struct timeval tv_start, tv_end;
+	काष्ठा समयval tv_start, tv_end;
 
-	gettimeofday(&tv_start, NULL);
+	समय_लोofday(&tv_start, शून्य);
 
-	for(i = 0; i < 100000000; i++) {
-		gettimeofday(&tv_end, NULL);
-	}
+	क्रम(i = 0; i < 100000000; i++) अणु
+		समय_लोofday(&tv_end, शून्य);
+	पूर्ण
 
-	printf("time = %.6f\n", tv_end.tv_sec - tv_start.tv_sec + (tv_end.tv_usec - tv_start.tv_usec) * 1e-6);
+	म_लिखो("time = %.6f\n", tv_end.tv_sec - tv_start.tv_sec + (tv_end.tv_usec - tv_start.tv_usec) * 1e-6);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int main(void)
-{
-	return test_harness(test_gettimeofday, "gettimeofday");
-}
+पूर्णांक मुख्य(व्योम)
+अणु
+	वापस test_harness(test_समय_लोofday, "gettimeofday");
+पूर्ण

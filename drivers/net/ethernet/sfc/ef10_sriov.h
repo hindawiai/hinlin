@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /****************************************************************************
- * Driver for Solarflare network controllers and boards
+ * Driver क्रम Solarflare network controllers and boards
  * Copyright 2015 Solarflare Communications Inc.
  */
 
-#ifndef EF10_SRIOV_H
-#define EF10_SRIOV_H
+#अगर_अघोषित EF10_SRIOV_H
+#घोषणा EF10_SRIOV_H
 
-#include "net_driver.h"
+#समावेश "net_driver.h"
 
 /**
- * struct ef10_vf - PF's store of VF data
- * @efx: efx_nic struct for the current VF
- * @pci_dev: the pci_dev struct for the VF, retained while the VF is assigned
- * @vport_id: vport ID for the VF
- * @vport_assigned: record whether the vport is currently assigned to the VF
- * @mac: MAC address for the VF, zero when address is removed from the vport
- * @vlan: Default VLAN for the VF or #EFX_EF10_NO_VLAN
+ * काष्ठा ef10_vf - PF's store of VF data
+ * @efx: efx_nic काष्ठा क्रम the current VF
+ * @pci_dev: the pci_dev काष्ठा क्रम the VF, retained जबतक the VF is asचिन्हित
+ * @vport_id: vport ID क्रम the VF
+ * @vport_asचिन्हित: record whether the vport is currently asचिन्हित to the VF
+ * @mac: MAC address क्रम the VF, zero when address is हटाओd from the vport
+ * @vlan: Default VLAN क्रम the VF or #EFX_EF10_NO_VLAN
  */
-struct ef10_vf {
-	struct efx_nic *efx;
-	struct pci_dev *pci_dev;
-	unsigned int vport_id;
-	unsigned int vport_assigned;
+काष्ठा ef10_vf अणु
+	काष्ठा efx_nic *efx;
+	काष्ठा pci_dev *pci_dev;
+	अचिन्हित पूर्णांक vport_id;
+	अचिन्हित पूर्णांक vport_asचिन्हित;
 	u8 mac[ETH_ALEN];
 	u16 vlan;
-#define EFX_EF10_NO_VLAN       0
-};
+#घोषणा EFX_EF10_NO_VLAN       0
+पूर्ण;
 
-static inline bool efx_ef10_sriov_wanted(struct efx_nic *efx)
-{
-	return false;
-}
+अटल अंतरभूत bool efx_ef10_sriov_wanted(काष्ठा efx_nic *efx)
+अणु
+	वापस false;
+पूर्ण
 
-int efx_ef10_sriov_configure(struct efx_nic *efx, int num_vfs);
-int efx_ef10_sriov_init(struct efx_nic *efx);
-static inline void efx_ef10_sriov_reset(struct efx_nic *efx) {}
-void efx_ef10_sriov_fini(struct efx_nic *efx);
-static inline void efx_ef10_sriov_flr(struct efx_nic *efx, unsigned vf_i) {}
+पूर्णांक efx_ef10_sriov_configure(काष्ठा efx_nic *efx, पूर्णांक num_vfs);
+पूर्णांक efx_ef10_sriov_init(काष्ठा efx_nic *efx);
+अटल अंतरभूत व्योम efx_ef10_sriov_reset(काष्ठा efx_nic *efx) अणुपूर्ण
+व्योम efx_ef10_sriov_fini(काष्ठा efx_nic *efx);
+अटल अंतरभूत व्योम efx_ef10_sriov_flr(काष्ठा efx_nic *efx, अचिन्हित vf_i) अणुपूर्ण
 
-int efx_ef10_sriov_set_vf_mac(struct efx_nic *efx, int vf, u8 *mac);
+पूर्णांक efx_ef10_sriov_set_vf_mac(काष्ठा efx_nic *efx, पूर्णांक vf, u8 *mac);
 
-int efx_ef10_sriov_set_vf_vlan(struct efx_nic *efx, int vf_i,
+पूर्णांक efx_ef10_sriov_set_vf_vlan(काष्ठा efx_nic *efx, पूर्णांक vf_i,
 			       u16 vlan, u8 qos);
 
-int efx_ef10_sriov_set_vf_spoofchk(struct efx_nic *efx, int vf,
+पूर्णांक efx_ef10_sriov_set_vf_spoofchk(काष्ठा efx_nic *efx, पूर्णांक vf,
 				   bool spoofchk);
 
-int efx_ef10_sriov_get_vf_config(struct efx_nic *efx, int vf_i,
-				 struct ifla_vf_info *ivf);
+पूर्णांक efx_ef10_sriov_get_vf_config(काष्ठा efx_nic *efx, पूर्णांक vf_i,
+				 काष्ठा अगरla_vf_info *ivf);
 
-int efx_ef10_sriov_set_vf_link_state(struct efx_nic *efx, int vf_i,
-				     int link_state);
+पूर्णांक efx_ef10_sriov_set_vf_link_state(काष्ठा efx_nic *efx, पूर्णांक vf_i,
+				     पूर्णांक link_state);
 
-int efx_ef10_vswitching_probe_pf(struct efx_nic *efx);
-int efx_ef10_vswitching_probe_vf(struct efx_nic *efx);
-int efx_ef10_vswitching_restore_pf(struct efx_nic *efx);
-int efx_ef10_vswitching_restore_vf(struct efx_nic *efx);
-void efx_ef10_vswitching_remove_pf(struct efx_nic *efx);
-void efx_ef10_vswitching_remove_vf(struct efx_nic *efx);
-int efx_ef10_vport_add_mac(struct efx_nic *efx,
-			   unsigned int port_id, u8 *mac);
-int efx_ef10_vport_del_mac(struct efx_nic *efx,
-			   unsigned int port_id, u8 *mac);
-int efx_ef10_vadaptor_alloc(struct efx_nic *efx, unsigned int port_id);
-int efx_ef10_vadaptor_query(struct efx_nic *efx, unsigned int port_id,
+पूर्णांक efx_ef10_vचयनing_probe_pf(काष्ठा efx_nic *efx);
+पूर्णांक efx_ef10_vचयनing_probe_vf(काष्ठा efx_nic *efx);
+पूर्णांक efx_ef10_vचयनing_restore_pf(काष्ठा efx_nic *efx);
+पूर्णांक efx_ef10_vचयनing_restore_vf(काष्ठा efx_nic *efx);
+व्योम efx_ef10_vचयनing_हटाओ_pf(काष्ठा efx_nic *efx);
+व्योम efx_ef10_vचयनing_हटाओ_vf(काष्ठा efx_nic *efx);
+पूर्णांक efx_ef10_vport_add_mac(काष्ठा efx_nic *efx,
+			   अचिन्हित पूर्णांक port_id, u8 *mac);
+पूर्णांक efx_ef10_vport_del_mac(काष्ठा efx_nic *efx,
+			   अचिन्हित पूर्णांक port_id, u8 *mac);
+पूर्णांक efx_ef10_vadaptor_alloc(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक port_id);
+पूर्णांक efx_ef10_vadaptor_query(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक port_id,
 			    u32 *port_flags, u32 *vadaptor_flags,
-			    unsigned int *vlan_tags);
-int efx_ef10_vadaptor_free(struct efx_nic *efx, unsigned int port_id);
+			    अचिन्हित पूर्णांक *vlan_tags);
+पूर्णांक efx_ef10_vadaptor_मुक्त(काष्ठा efx_nic *efx, अचिन्हित पूर्णांक port_id);
 
-#endif /* EF10_SRIOV_H */
+#पूर्ण_अगर /* EF10_SRIOV_H */

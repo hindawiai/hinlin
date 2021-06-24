@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Linux ARCnet driver - COM20020 PCMCIA support
  *
@@ -8,7 +9,7 @@
  * Some additional portions derived from skeleton.c by Donald Becker.
  *
  * Special thanks to Contemporary Controls, Inc. (www.ccontrols.com)
- *  for sponsoring the further development of this driver.
+ *  क्रम sponsoring the further development of this driver.
  *
  * **********************
  *
@@ -18,13 +19,13 @@
  * Copyright 1993 United States Government as represented by the
  * Director, National Security Agency.  This software may only be used
  * and distributed according to the terms of the GNU General Public License as
- * modified by SRC, incorporated herein by reference.
+ * modअगरied by SRC, incorporated herein by reference.
  *
  * **********************
  * Changes:
- * Arnaldo Carvalho de Melo <acme@conectiva.com.br> - 08/08/2000
- * - reorganize kmallocs in com20020_attach, checking all for failure
- *   and releasing the previous allocations if one fails
+ * Arnalकरो Carvalho de Melo <acme@conectiva.com.br> - 08/08/2000
+ * - reorganize kदो_स्मृतिs in com20020_attach, checking all क्रम failure
+ *   and releasing the previous allocations अगर one fails
  * **********************
  *
  * For more details, see drivers/net/arcnet.c
@@ -32,107 +33,107 @@
  * **********************
  */
 
-#define pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) "arcnet:" KBUILD_MODNAME ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/ptrace.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/module.h>
-#include <linux/netdevice.h>
-#include <linux/io.h>
-#include <pcmcia/cistpl.h>
-#include <pcmcia/ds.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/समयr.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/module.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/पन.स>
+#समावेश <pcmcia/cistpl.h>
+#समावेश <pcmcia/ds.h>
 
-#include "arcdevice.h"
-#include "com20020.h"
+#समावेश "arcdevice.h"
+#समावेश "com20020.h"
 
-static void regdump(struct net_device *dev)
-{
-#ifdef DEBUG
-	int ioaddr = dev->base_addr;
-	int count;
+अटल व्योम regdump(काष्ठा net_device *dev)
+अणु
+#अगर_घोषित DEBUG
+	पूर्णांक ioaddr = dev->base_addr;
+	पूर्णांक count;
 
 	netdev_dbg(dev, "register dump:\n");
-	for (count = 0; count < 16; count++) {
-		if (!(count % 16))
+	क्रम (count = 0; count < 16; count++) अणु
+		अगर (!(count % 16))
 			pr_cont("%04X:", ioaddr + count);
 		pr_cont(" %02X", arcnet_inb(ioaddr, count));
-	}
+	पूर्ण
 	pr_cont("\n");
 
 	netdev_dbg(dev, "buffer0 dump:\n");
-	/* set up the address register */
+	/* set up the address रेजिस्टर */
 	count = 0;
 	arcnet_outb((count >> 8) | RDDATAflag | AUTOINCflag,
 		    ioaddr, COM20020_REG_W_ADDR_HI);
 	arcnet_outb(count & 0xff, ioaddr, COM20020_REG_W_ADDR_LO);
 
-	for (count = 0; count < 256 + 32; count++) {
-		if (!(count % 16))
+	क्रम (count = 0; count < 256 + 32; count++) अणु
+		अगर (!(count % 16))
 			pr_cont("%04X:", count);
 
 		/* copy the data */
 		pr_cont(" %02X", arcnet_inb(ioaddr, COM20020_REG_RW_MEMDATA));
-	}
+	पूर्ण
 	pr_cont("\n");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /*====================================================================*/
 
 /* Parameters that can be set with 'insmod' */
 
-static int node;
-static int timeout = 3;
-static int backplane;
-static int clockp;
-static int clockm;
+अटल पूर्णांक node;
+अटल पूर्णांक समयout = 3;
+अटल पूर्णांक backplane;
+अटल पूर्णांक घड़ीp;
+अटल पूर्णांक घड़ीm;
 
-module_param(node, int, 0);
-module_param(timeout, int, 0);
-module_param(backplane, int, 0);
-module_param(clockp, int, 0);
-module_param(clockm, int, 0);
+module_param(node, पूर्णांक, 0);
+module_param(समयout, पूर्णांक, 0);
+module_param(backplane, पूर्णांक, 0);
+module_param(घड़ीp, पूर्णांक, 0);
+module_param(घड़ीm, पूर्णांक, 0);
 
 MODULE_LICENSE("GPL");
 
 /*====================================================================*/
 
-static int com20020_config(struct pcmcia_device *link);
-static void com20020_release(struct pcmcia_device *link);
+अटल पूर्णांक com20020_config(काष्ठा pcmcia_device *link);
+अटल व्योम com20020_release(काष्ठा pcmcia_device *link);
 
-static void com20020_detach(struct pcmcia_device *p_dev);
+अटल व्योम com20020_detach(काष्ठा pcmcia_device *p_dev);
 
 /*====================================================================*/
 
-static int com20020_probe(struct pcmcia_device *p_dev)
-{
-	struct com20020_dev *info;
-	struct net_device *dev;
-	struct arcnet_local *lp;
+अटल पूर्णांक com20020_probe(काष्ठा pcmcia_device *p_dev)
+अणु
+	काष्ठा com20020_dev *info;
+	काष्ठा net_device *dev;
+	काष्ठा arcnet_local *lp;
 
 	dev_dbg(&p_dev->dev, "com20020_attach()\n");
 
 	/* Create new network device */
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		goto fail_alloc_info;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		जाओ fail_alloc_info;
 
 	dev = alloc_arcdev("");
-	if (!dev)
-		goto fail_alloc_dev;
+	अगर (!dev)
+		जाओ fail_alloc_dev;
 
 	lp = netdev_priv(dev);
-	lp->timeout = timeout;
+	lp->समयout = समयout;
 	lp->backplane = backplane;
-	lp->clockp = clockp;
-	lp->clockm = clockm & 3;
+	lp->घड़ीp = घड़ीp;
+	lp->घड़ीm = घड़ीm & 3;
 	lp->hw.owner = THIS_MODULE;
 
-	/* fill in our module parameters as defaults */
+	/* fill in our module parameters as शेषs */
 	dev->dev_addr[0] = node;
 
 	p_dev->resource[0]->flags |= IO_DATA_PATH_WIDTH_8;
@@ -142,18 +143,18 @@ static int com20020_probe(struct pcmcia_device *p_dev)
 	info->dev = dev;
 	p_dev->priv = info;
 
-	return com20020_config(p_dev);
+	वापस com20020_config(p_dev);
 
 fail_alloc_dev:
-	kfree(info);
+	kमुक्त(info);
 fail_alloc_info:
-	return -ENOMEM;
-} /* com20020_attach */
+	वापस -ENOMEM;
+पूर्ण /* com20020_attach */
 
-static void com20020_detach(struct pcmcia_device *link)
-{
-	struct com20020_dev *info = link->priv;
-	struct net_device *dev = info->dev;
+अटल व्योम com20020_detach(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा com20020_dev *info = link->priv;
+	काष्ठा net_device *dev = info->dev;
 
 	dev_dbg(&link->dev, "detach...\n");
 
@@ -161,37 +162,37 @@ static void com20020_detach(struct pcmcia_device *link)
 
 	dev_dbg(&link->dev, "unregister...\n");
 
-	unregister_netdev(dev);
+	unरेजिस्टर_netdev(dev);
 
-	/* this is necessary because we register our IRQ separately
+	/* this is necessary because we रेजिस्टर our IRQ separately
 	 * from card services.
 	 */
-	if (dev->irq)
-		free_irq(dev->irq, dev);
+	अगर (dev->irq)
+		मुक्त_irq(dev->irq, dev);
 
 	com20020_release(link);
 
-	/* Unlink device structure, free bits */
+	/* Unlink device काष्ठाure, मुक्त bits */
 	dev_dbg(&link->dev, "unlinking...\n");
-	if (link->priv) {
+	अगर (link->priv) अणु
 		dev = info->dev;
-		if (dev) {
+		अगर (dev) अणु
 			dev_dbg(&link->dev, "kfree...\n");
-			free_arcdev(dev);
-		}
+			मुक्त_arcdev(dev);
+		पूर्ण
 		dev_dbg(&link->dev, "kfree2...\n");
-		kfree(info);
-	}
+		kमुक्त(info);
+	पूर्ण
 
-} /* com20020_detach */
+पूर्ण /* com20020_detach */
 
-static int com20020_config(struct pcmcia_device *link)
-{
-	struct arcnet_local *lp;
-	struct com20020_dev *info;
-	struct net_device *dev;
-	int i, ret;
-	int ioaddr;
+अटल पूर्णांक com20020_config(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा arcnet_local *lp;
+	काष्ठा com20020_dev *info;
+	काष्ठा net_device *dev;
+	पूर्णांक i, ret;
+	पूर्णांक ioaddr;
 
 	info = link->priv;
 	dev = info->dev;
@@ -201,47 +202,47 @@ static int com20020_config(struct pcmcia_device *link)
 	dev_dbg(&link->dev, "com20020_config\n");
 
 	dev_dbg(&link->dev, "baseport1 is %Xh\n",
-		(unsigned int)link->resource[0]->start);
+		(अचिन्हित पूर्णांक)link->resource[0]->start);
 
 	i = -ENODEV;
 	link->io_lines = 16;
 
-	if (!link->resource[0]->start) {
-		for (ioaddr = 0x100; ioaddr < 0x400; ioaddr += 0x10) {
+	अगर (!link->resource[0]->start) अणु
+		क्रम (ioaddr = 0x100; ioaddr < 0x400; ioaddr += 0x10) अणु
 			link->resource[0]->start = ioaddr;
 			i = pcmcia_request_io(link);
-			if (i == 0)
-				break;
-		}
-	} else {
+			अगर (i == 0)
+				अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		i = pcmcia_request_io(link);
-	}
+	पूर्ण
 
-	if (i != 0) {
+	अगर (i != 0) अणु
 		dev_dbg(&link->dev, "requestIO failed totally!\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	ioaddr = dev->base_addr = link->resource[0]->start;
 	dev_dbg(&link->dev, "got ioaddr %Xh\n", ioaddr);
 
 	dev_dbg(&link->dev, "request IRQ %d\n",
 		link->irq);
-	if (!link->irq) {
+	अगर (!link->irq) अणु
 		dev_dbg(&link->dev, "requestIRQ failed totally!\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	dev->irq = link->irq;
 
 	ret = pcmcia_enable_device(link);
-	if (ret)
-		goto failed;
+	अगर (ret)
+		जाओ failed;
 
-	if (com20020_check(dev)) {
+	अगर (com20020_check(dev)) अणु
 		regdump(dev);
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	lp = netdev_priv(dev);
 	lp->card_name = "PCMCIA COM20020";
@@ -249,74 +250,74 @@ static int com20020_config(struct pcmcia_device *link)
 
 	SET_NETDEV_DEV(dev, &link->dev);
 
-	i = com20020_found(dev, 0);	/* calls register_netdev */
+	i = com20020_found(dev, 0);	/* calls रेजिस्टर_netdev */
 
-	if (i != 0) {
+	अगर (i != 0) अणु
 		dev_notice(&link->dev,
 			   "com20020_found() failed\n");
-		goto failed;
-	}
+		जाओ failed;
+	पूर्ण
 
 	netdev_dbg(dev, "port %#3lx, irq %d\n",
 		   dev->base_addr, dev->irq);
-	return 0;
+	वापस 0;
 
 failed:
 	dev_dbg(&link->dev, "com20020_config failed...\n");
 	com20020_release(link);
-	return -ENODEV;
-} /* com20020_config */
+	वापस -ENODEV;
+पूर्ण /* com20020_config */
 
-static void com20020_release(struct pcmcia_device *link)
-{
+अटल व्योम com20020_release(काष्ठा pcmcia_device *link)
+अणु
 	dev_dbg(&link->dev, "com20020_release\n");
 	pcmcia_disable_device(link);
-}
+पूर्ण
 
-static int com20020_suspend(struct pcmcia_device *link)
-{
-	struct com20020_dev *info = link->priv;
-	struct net_device *dev = info->dev;
+अटल पूर्णांक com20020_suspend(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा com20020_dev *info = link->priv;
+	काष्ठा net_device *dev = info->dev;
 
-	if (link->open)
-		netif_device_detach(dev);
+	अगर (link->खोलो)
+		netअगर_device_detach(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int com20020_resume(struct pcmcia_device *link)
-{
-	struct com20020_dev *info = link->priv;
-	struct net_device *dev = info->dev;
+अटल पूर्णांक com20020_resume(काष्ठा pcmcia_device *link)
+अणु
+	काष्ठा com20020_dev *info = link->priv;
+	काष्ठा net_device *dev = info->dev;
 
-	if (link->open) {
-		int ioaddr = dev->base_addr;
-		struct arcnet_local *lp = netdev_priv(dev);
+	अगर (link->खोलो) अणु
+		पूर्णांक ioaddr = dev->base_addr;
+		काष्ठा arcnet_local *lp = netdev_priv(dev);
 
 		arcnet_outb(lp->config | 0x80, ioaddr, COM20020_REG_W_CONFIG);
 		udelay(5);
 		arcnet_outb(lp->config, ioaddr, COM20020_REG_W_CONFIG);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pcmcia_device_id com20020_ids[] = {
+अटल स्थिर काष्ठा pcmcia_device_id com20020_ids[] = अणु
 	PCMCIA_DEVICE_PROD_ID12("Contemporary Control Systems, Inc.",
 				"PCM20 Arcnet Adapter", 0x59991666, 0x95dfffaf),
 	PCMCIA_DEVICE_PROD_ID12("SoHard AG",
 				"SH ARC PCMCIA", 0xf8991729, 0x69dff0c7),
-	PCMCIA_DEVICE_NULL
-};
+	PCMCIA_DEVICE_शून्य
+पूर्ण;
 MODULE_DEVICE_TABLE(pcmcia, com20020_ids);
 
-static struct pcmcia_driver com20020_cs_driver = {
+अटल काष्ठा pcmcia_driver com20020_cs_driver = अणु
 	.owner		= THIS_MODULE,
 	.name		= "com20020_cs",
 	.probe		= com20020_probe,
-	.remove		= com20020_detach,
+	.हटाओ		= com20020_detach,
 	.id_table	= com20020_ids,
 	.suspend	= com20020_suspend,
 	.resume		= com20020_resume,
-};
+पूर्ण;
 module_pcmcia_driver(com20020_cs_driver);

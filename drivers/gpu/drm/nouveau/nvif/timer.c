@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2020 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -19,38 +20,38 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <nvif/timer.h>
-#include <nvif/device.h>
+#समावेश <nvअगर/समयr.h>
+#समावेश <nvअगर/device.h>
 
 s64
-nvif_timer_wait_test(struct nvif_timer_wait *wait)
-{
-	u64 time = nvif_device_time(wait->device);
+nvअगर_समयr_रुको_test(काष्ठा nvअगर_समयr_रुको *रुको)
+अणु
+	u64 समय = nvअगर_device_समय(रुको->device);
 
-	if (wait->reads == 0) {
-		wait->time0 = time;
-		wait->time1 = time;
-	}
+	अगर (रुको->पढ़ोs == 0) अणु
+		रुको->समय0 = समय;
+		रुको->समय1 = समय;
+	पूर्ण
 
-	if (wait->time1 == time) {
-		if (WARN_ON(wait->reads++ == 16))
-			return -ETIMEDOUT;
-	} else {
-		wait->time1 = time;
-		wait->reads = 1;
-	}
+	अगर (रुको->समय1 == समय) अणु
+		अगर (WARN_ON(रुको->पढ़ोs++ == 16))
+			वापस -ETIMEDOUT;
+	पूर्ण अन्यथा अणु
+		रुको->समय1 = समय;
+		रुको->पढ़ोs = 1;
+	पूर्ण
 
-	if (wait->time1 - wait->time0 > wait->limit)
-		return -ETIMEDOUT;
+	अगर (रुको->समय1 - रुको->समय0 > रुको->limit)
+		वापस -ETIMEDOUT;
 
-	return wait->time1 - wait->time0;
-}
+	वापस रुको->समय1 - रुको->समय0;
+पूर्ण
 
-void
-nvif_timer_wait_init(struct nvif_device *device, u64 nsec,
-		     struct nvif_timer_wait *wait)
-{
-	wait->device = device;
-	wait->limit = nsec;
-	wait->reads = 0;
-}
+व्योम
+nvअगर_समयr_रुको_init(काष्ठा nvअगर_device *device, u64 nsec,
+		     काष्ठा nvअगर_समयr_रुको *रुको)
+अणु
+	रुको->device = device;
+	रुको->limit = nsec;
+	रुको->पढ़ोs = 0;
+पूर्ण

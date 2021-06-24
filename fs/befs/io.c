@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/befs/io.c
  *
@@ -8,54 +9,54 @@
  * by Makoto Kato (m_kato@ga2.so-net.ne.jp)
  *
  * Many thanks to Dominic Giampaolo, author of Practical File System
- * Design with the Be File System, for such a helpful book.
+ * Design with the Be File System, क्रम such a helpful book.
  *
  */
 
-#include <linux/buffer_head.h>
+#समावेश <linux/buffer_head.h>
 
-#include "befs.h"
-#include "io.h"
+#समावेश "befs.h"
+#समावेश "io.h"
 
 /*
  * Converts befs notion of disk addr to a disk offset and uses
- * linux kernel function sb_bread() to get the buffer containing
+ * linux kernel function sb_bपढ़ो() to get the buffer containing
  * the offset.
  */
 
-struct buffer_head *
-befs_bread_iaddr(struct super_block *sb, befs_inode_addr iaddr)
-{
-	struct buffer_head *bh;
+काष्ठा buffer_head *
+befs_bपढ़ो_iaddr(काष्ठा super_block *sb, befs_inode_addr iaddr)
+अणु
+	काष्ठा buffer_head *bh;
 	befs_blocknr_t block;
-	struct befs_sb_info *befs_sb = BEFS_SB(sb);
+	काष्ठा befs_sb_info *befs_sb = BEFS_SB(sb);
 
 	befs_debug(sb, "---> Enter %s "
 		   "[%u, %hu, %hu]", __func__, iaddr.allocation_group,
 		   iaddr.start, iaddr.len);
 
-	if (iaddr.allocation_group > befs_sb->num_ags) {
+	अगर (iaddr.allocation_group > befs_sb->num_ags) अणु
 		befs_error(sb, "BEFS: Invalid allocation group %u, max is %u",
 			   iaddr.allocation_group, befs_sb->num_ags);
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	block = iaddr2blockno(sb, &iaddr);
 
-	befs_debug(sb, "%s: offset = %lu", __func__, (unsigned long)block);
+	befs_debug(sb, "%s: offset = %lu", __func__, (अचिन्हित दीर्घ)block);
 
-	bh = sb_bread(sb, block);
+	bh = sb_bपढ़ो(sb, block);
 
-	if (bh == NULL) {
+	अगर (bh == शून्य) अणु
 		befs_error(sb, "Failed to read block %lu",
-			   (unsigned long)block);
-		goto error;
-	}
+			   (अचिन्हित दीर्घ)block);
+		जाओ error;
+	पूर्ण
 
 	befs_debug(sb, "<--- %s", __func__);
-	return bh;
+	वापस bh;
 
 error:
 	befs_debug(sb, "<--- %s ERROR", __func__);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण

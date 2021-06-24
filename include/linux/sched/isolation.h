@@ -1,11 +1,12 @@
-#ifndef _LINUX_SCHED_ISOLATION_H
-#define _LINUX_SCHED_ISOLATION_H
+<शैली गुरु>
+#अगर_अघोषित _LINUX_SCHED_ISOLATION_H
+#घोषणा _LINUX_SCHED_ISOLATION_H
 
-#include <linux/cpumask.h>
-#include <linux/init.h>
-#include <linux/tick.h>
+#समावेश <linux/cpumask.h>
+#समावेश <linux/init.h>
+#समावेश <linux/tick.h>
 
-enum hk_flags {
+क्रमागत hk_flags अणु
 	HK_FLAG_TIMER		= 1,
 	HK_FLAG_RCU		= (1 << 1),
 	HK_FLAG_MISC		= (1 << 2),
@@ -15,46 +16,46 @@ enum hk_flags {
 	HK_FLAG_WQ		= (1 << 6),
 	HK_FLAG_MANAGED_IRQ	= (1 << 7),
 	HK_FLAG_KTHREAD		= (1 << 8),
-};
+पूर्ण;
 
-#ifdef CONFIG_CPU_ISOLATION
+#अगर_घोषित CONFIG_CPU_ISOLATION
 DECLARE_STATIC_KEY_FALSE(housekeeping_overridden);
-extern int housekeeping_any_cpu(enum hk_flags flags);
-extern const struct cpumask *housekeeping_cpumask(enum hk_flags flags);
-extern bool housekeeping_enabled(enum hk_flags flags);
-extern void housekeeping_affine(struct task_struct *t, enum hk_flags flags);
-extern bool housekeeping_test_cpu(int cpu, enum hk_flags flags);
-extern void __init housekeeping_init(void);
+बाह्य पूर्णांक housekeeping_any_cpu(क्रमागत hk_flags flags);
+बाह्य स्थिर काष्ठा cpumask *housekeeping_cpumask(क्रमागत hk_flags flags);
+बाह्य bool housekeeping_enabled(क्रमागत hk_flags flags);
+बाह्य व्योम housekeeping_affine(काष्ठा task_काष्ठा *t, क्रमागत hk_flags flags);
+बाह्य bool housekeeping_test_cpu(पूर्णांक cpu, क्रमागत hk_flags flags);
+बाह्य व्योम __init housekeeping_init(व्योम);
 
-#else
+#अन्यथा
 
-static inline int housekeeping_any_cpu(enum hk_flags flags)
-{
-	return smp_processor_id();
-}
+अटल अंतरभूत पूर्णांक housekeeping_any_cpu(क्रमागत hk_flags flags)
+अणु
+	वापस smp_processor_id();
+पूर्ण
 
-static inline const struct cpumask *housekeeping_cpumask(enum hk_flags flags)
-{
-	return cpu_possible_mask;
-}
+अटल अंतरभूत स्थिर काष्ठा cpumask *housekeeping_cpumask(क्रमागत hk_flags flags)
+अणु
+	वापस cpu_possible_mask;
+पूर्ण
 
-static inline bool housekeeping_enabled(enum hk_flags flags)
-{
-	return false;
-}
+अटल अंतरभूत bool housekeeping_enabled(क्रमागत hk_flags flags)
+अणु
+	वापस false;
+पूर्ण
 
-static inline void housekeeping_affine(struct task_struct *t,
-				       enum hk_flags flags) { }
-static inline void housekeeping_init(void) { }
-#endif /* CONFIG_CPU_ISOLATION */
+अटल अंतरभूत व्योम housekeeping_affine(काष्ठा task_काष्ठा *t,
+				       क्रमागत hk_flags flags) अणु पूर्ण
+अटल अंतरभूत व्योम housekeeping_init(व्योम) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_CPU_ISOLATION */
 
-static inline bool housekeeping_cpu(int cpu, enum hk_flags flags)
-{
-#ifdef CONFIG_CPU_ISOLATION
-	if (static_branch_unlikely(&housekeeping_overridden))
-		return housekeeping_test_cpu(cpu, flags);
-#endif
-	return true;
-}
+अटल अंतरभूत bool housekeeping_cpu(पूर्णांक cpu, क्रमागत hk_flags flags)
+अणु
+#अगर_घोषित CONFIG_CPU_ISOLATION
+	अगर (अटल_branch_unlikely(&housekeeping_overridden))
+		वापस housekeeping_test_cpu(cpu, flags);
+#पूर्ण_अगर
+	वापस true;
+पूर्ण
 
-#endif /* _LINUX_SCHED_ISOLATION_H */
+#पूर्ण_अगर /* _LINUX_SCHED_ISOLATION_H */

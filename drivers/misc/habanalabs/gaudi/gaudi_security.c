@@ -1,17 +1,18 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
 /*
- * Copyright 2016-2018 HabanaLabs, Ltd.
+ * Copyright 2016-2018 HabanaLअसल, Ltd.
  * All Rights Reserved.
  */
 
-#include "gaudiP.h"
-#include "../include/gaudi/asic_reg/gaudi_regs.h"
+#समावेश "gaudiP.h"
+#समावेश "../include/gaudi/asic_reg/gaudi_regs.h"
 
-#define GAUDI_NUMBER_OF_RR_REGS		24
-#define GAUDI_NUMBER_OF_LBW_RANGES	12
+#घोषणा GAUDI_NUMBER_OF_RR_REGS		24
+#घोषणा GAUDI_NUMBER_OF_LBW_RANGES	12
 
-static u64 gaudi_rr_lbw_hit_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_lbw_hit_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DMA0_HIT_WPROT,
 	mmDMA_IF_W_S_DMA1_HIT_WPROT,
 	mmDMA_IF_E_S_DMA0_HIT_WPROT,
@@ -36,9 +37,9 @@ static u64 gaudi_rr_lbw_hit_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_5_LBW_RANGE_PROT_HIT_AW,
 	mmNIF_RTR_6_LBW_RANGE_PROT_HIT_AW,
 	mmNIF_RTR_7_LBW_RANGE_PROT_HIT_AW,
-};
+पूर्ण;
 
-static u64 gaudi_rr_lbw_hit_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_lbw_hit_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DMA0_HIT_RPROT,
 	mmDMA_IF_W_S_DMA1_HIT_RPROT,
 	mmDMA_IF_E_S_DMA0_HIT_RPROT,
@@ -63,9 +64,9 @@ static u64 gaudi_rr_lbw_hit_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_5_LBW_RANGE_PROT_HIT_AR,
 	mmNIF_RTR_6_LBW_RANGE_PROT_HIT_AR,
 	mmNIF_RTR_7_LBW_RANGE_PROT_HIT_AR,
-};
+पूर्ण;
 
-static u64 gaudi_rr_lbw_min_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_lbw_min_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DMA0_MIN_WPROT_0,
 	mmDMA_IF_W_S_DMA1_MIN_WPROT_0,
 	mmDMA_IF_E_S_DMA0_MIN_WPROT_0,
@@ -90,9 +91,9 @@ static u64 gaudi_rr_lbw_min_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_5_LBW_RANGE_PROT_MIN_AW_0,
 	mmNIF_RTR_6_LBW_RANGE_PROT_MIN_AW_0,
 	mmNIF_RTR_7_LBW_RANGE_PROT_MIN_AW_0,
-};
+पूर्ण;
 
-static u64 gaudi_rr_lbw_max_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_lbw_max_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DMA0_MAX_WPROT_0,
 	mmDMA_IF_W_S_DMA1_MAX_WPROT_0,
 	mmDMA_IF_E_S_DMA0_MAX_WPROT_0,
@@ -117,9 +118,9 @@ static u64 gaudi_rr_lbw_max_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_5_LBW_RANGE_PROT_MAX_AW_0,
 	mmNIF_RTR_6_LBW_RANGE_PROT_MAX_AW_0,
 	mmNIF_RTR_7_LBW_RANGE_PROT_MAX_AW_0,
-};
+पूर्ण;
 
-static u64 gaudi_rr_lbw_min_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_lbw_min_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DMA0_MIN_RPROT_0,
 	mmDMA_IF_W_S_DMA1_MIN_RPROT_0,
 	mmDMA_IF_E_S_DMA0_MIN_RPROT_0,
@@ -144,9 +145,9 @@ static u64 gaudi_rr_lbw_min_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_5_LBW_RANGE_PROT_MIN_AR_0,
 	mmNIF_RTR_6_LBW_RANGE_PROT_MIN_AR_0,
 	mmNIF_RTR_7_LBW_RANGE_PROT_MIN_AR_0,
-};
+पूर्ण;
 
-static u64 gaudi_rr_lbw_max_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_lbw_max_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DMA0_MAX_RPROT_0,
 	mmDMA_IF_W_S_DMA1_MAX_RPROT_0,
 	mmDMA_IF_E_S_DMA0_MAX_RPROT_0,
@@ -171,9 +172,9 @@ static u64 gaudi_rr_lbw_max_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_5_LBW_RANGE_PROT_MAX_AR_0,
 	mmNIF_RTR_6_LBW_RANGE_PROT_MAX_AR_0,
 	mmNIF_RTR_7_LBW_RANGE_PROT_MAX_AR_0,
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_hit_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_hit_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_HIT_AW,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_HIT_AW,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_HIT_AW,
@@ -198,9 +199,9 @@ static u64 gaudi_rr_hbw_hit_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_HIT_AW,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_HIT_AW,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_HIT_AW
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_hit_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_hit_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_HIT_AR,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_HIT_AR,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_HIT_AR,
@@ -225,9 +226,9 @@ static u64 gaudi_rr_hbw_hit_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_HIT_AR,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_HIT_AR,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_HIT_AR
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_base_low_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_base_low_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_BASE_LOW_AW_0,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_BASE_LOW_AW_0,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_BASE_LOW_AW_0,
@@ -252,9 +253,9 @@ static u64 gaudi_rr_hbw_base_low_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_BASE_LOW_AW_0,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_BASE_LOW_AW_0,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_BASE_LOW_AW_0
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_base_high_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_base_high_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_BASE_HIGH_AW_0,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_BASE_HIGH_AW_0,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_BASE_HIGH_AW_0,
@@ -279,9 +280,9 @@ static u64 gaudi_rr_hbw_base_high_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_BASE_HIGH_AW_0,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_BASE_HIGH_AW_0,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_BASE_HIGH_AW_0
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_mask_low_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_mask_low_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_MASK_LOW_AW_0,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_MASK_LOW_AW_0,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_MASK_LOW_AW_0,
@@ -306,9 +307,9 @@ static u64 gaudi_rr_hbw_mask_low_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_MASK_LOW_AW_0,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_MASK_LOW_AW_0,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_MASK_LOW_AW_0
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_mask_high_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_mask_high_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_MASK_HIGH_AW_0,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_MASK_HIGH_AW_0,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_MASK_HIGH_AW_0,
@@ -333,9 +334,9 @@ static u64 gaudi_rr_hbw_mask_high_aw_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_MASK_HIGH_AW_0,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_MASK_HIGH_AW_0,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_MASK_HIGH_AW_0
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_base_low_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_base_low_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_BASE_LOW_AR_0,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_BASE_LOW_AR_0,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_BASE_LOW_AR_0,
@@ -360,9 +361,9 @@ static u64 gaudi_rr_hbw_base_low_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_BASE_LOW_AR_0,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_BASE_LOW_AR_0,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_BASE_LOW_AR_0
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_base_high_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_base_high_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_BASE_HIGH_AR_0,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_BASE_HIGH_AR_0,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_BASE_HIGH_AR_0,
@@ -387,9 +388,9 @@ static u64 gaudi_rr_hbw_base_high_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_BASE_HIGH_AR_0,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_BASE_HIGH_AR_0,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_BASE_HIGH_AR_0
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_mask_low_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_mask_low_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_MASK_LOW_AR_0,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_MASK_LOW_AR_0,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_MASK_LOW_AR_0,
@@ -414,9 +415,9 @@ static u64 gaudi_rr_hbw_mask_low_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_MASK_LOW_AR_0,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_MASK_LOW_AR_0,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_MASK_LOW_AR_0
-};
+पूर्ण;
 
-static u64 gaudi_rr_hbw_mask_high_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
+अटल u64 gaudi_rr_hbw_mask_high_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = अणु
 	mmDMA_IF_W_S_DOWN_CH0_RANGE_SEC_MASK_HIGH_AR_0,
 	mmDMA_IF_W_S_DOWN_CH1_RANGE_SEC_MASK_HIGH_AR_0,
 	mmDMA_IF_E_S_DOWN_CH0_RANGE_SEC_MASK_HIGH_AR_0,
@@ -441,26 +442,26 @@ static u64 gaudi_rr_hbw_mask_high_ar_regs[GAUDI_NUMBER_OF_RR_REGS] = {
 	mmNIF_RTR_CTRL_5_RANGE_SEC_MASK_HIGH_AR_0,
 	mmNIF_RTR_CTRL_6_RANGE_SEC_MASK_HIGH_AR_0,
 	mmNIF_RTR_CTRL_7_RANGE_SEC_MASK_HIGH_AR_0
-};
+पूर्ण;
 
 /**
- * gaudi_set_block_as_protected - set the given block as protected
+ * gaudi_set_block_as_रक्षित - set the given block as रक्षित
  *
- * @hdev: pointer to hl_device structure
+ * @hdev: poपूर्णांकer to hl_device काष्ठाure
  * @base: block base address
  */
-static void gaudi_pb_set_block(struct hl_device *hdev, u64 base)
-{
+अटल व्योम gaudi_pb_set_block(काष्ठा hl_device *hdev, u64 base)
+अणु
 	u32 pb_addr = base - CFG_BASE + PROT_BITS_OFFS;
 
-	while (pb_addr & 0xFFF) {
+	जबतक (pb_addr & 0xFFF) अणु
 		WREG32(pb_addr, 0);
 		pb_addr += 4;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void gaudi_init_mme_protection_bits(struct hl_device *hdev)
-{
+अटल व्योम gaudi_init_mme_protection_bits(काष्ठा hl_device *hdev)
+अणु
 	u32 pb_addr, mask;
 	u8 word_offset;
 
@@ -961,7 +962,7 @@ static void gaudi_init_mme_protection_bits(struct hl_device *hdev)
 
 	WREG32(pb_addr + word_offset, ~mask);
 
-	/* MME 1 is slave, hence its whole QM block is protected (with RR) */
+	/* MME 1 is slave, hence its whole QM block is रक्षित (with RR) */
 
 	pb_addr = (mmMME2_CTRL_RESET & ~0xFFF) + PROT_BITS_OFFS;
 	word_offset = ((mmMME2_CTRL_RESET & PROT_BITS_OFFS) >> 7) << 2;
@@ -1440,15 +1441,15 @@ static void gaudi_init_mme_protection_bits(struct hl_device *hdev)
 
 	WREG32(pb_addr + word_offset, ~mask);
 
-	/* MME 3 is slave, hence its whole QM block is protected (with RR) */
-}
+	/* MME 3 is slave, hence its whole QM block is रक्षित (with RR) */
+पूर्ण
 
-static void gaudi_init_dma_protection_bits(struct hl_device *hdev)
-{
+अटल व्योम gaudi_init_dma_protection_bits(काष्ठा hl_device *hdev)
+अणु
 	u32 pb_addr, mask;
 	u8 word_offset;
 
-	if (hdev->asic_prop.fw_security_disabled) {
+	अगर (hdev->asic_prop.fw_security_disabled) अणु
 		gaudi_pb_set_block(hdev, mmDMA_IF_E_S_BASE);
 		gaudi_pb_set_block(hdev, mmDMA_IF_E_S_DOWN_CH0_BASE);
 		gaudi_pb_set_block(hdev, mmDMA_IF_E_S_DOWN_CH1_BASE);
@@ -1464,7 +1465,7 @@ static void gaudi_init_dma_protection_bits(struct hl_device *hdev)
 		gaudi_pb_set_block(hdev, mmDMA_IF_E_N_DOWN_CH0_BASE);
 		gaudi_pb_set_block(hdev, mmDMA_IF_E_N_DOWN_CH1_BASE);
 		gaudi_pb_set_block(hdev, mmDMA_IF_E_N_DOWN_BASE);
-	}
+	पूर्ण
 
 	WREG32(mmDMA0_QM_BASE - CFG_BASE + PROT_BITS_OFFS + 0x7C, 0);
 	WREG32(mmDMA1_QM_BASE - CFG_BASE + PROT_BITS_OFFS + 0x7C, 0);
@@ -5157,10 +5158,10 @@ static void gaudi_init_dma_protection_bits(struct hl_device *hdev)
 	mask |= 1U << ((mmDMA7_CORE_DBG_WR_DESC_ID & 0x7F) >> 2);
 
 	WREG32(pb_addr + word_offset, ~mask);
-}
+पूर्ण
 
-static void gaudi_init_nic_protection_bits(struct hl_device *hdev)
-{
+अटल व्योम gaudi_init_nic_protection_bits(काष्ठा hl_device *hdev)
+अणु
 	u32 pb_addr, mask;
 	u8 word_offset;
 
@@ -9128,14 +9129,14 @@ static void gaudi_init_nic_protection_bits(struct hl_device *hdev)
 	mask = 1U << ((mmNIC4_QM1_GLBL_MEM_INIT_BUSY & 0x7F) >> 2);
 
 	WREG32(pb_addr + word_offset, ~mask);
-}
+पूर्ण
 
-static void gaudi_init_tpc_protection_bits(struct hl_device *hdev)
-{
+अटल व्योम gaudi_init_tpc_protection_bits(काष्ठा hl_device *hdev)
+अणु
 	u32 pb_addr, mask;
 	u8 word_offset;
 
-	if (hdev->asic_prop.fw_security_disabled) {
+	अगर (hdev->asic_prop.fw_security_disabled) अणु
 		gaudi_pb_set_block(hdev, mmTPC0_E2E_CRED_BASE);
 		gaudi_pb_set_block(hdev, mmTPC1_E2E_CRED_BASE);
 		gaudi_pb_set_block(hdev, mmTPC2_E2E_CRED_BASE);
@@ -9144,7 +9145,7 @@ static void gaudi_init_tpc_protection_bits(struct hl_device *hdev)
 		gaudi_pb_set_block(hdev, mmTPC5_E2E_CRED_BASE);
 		gaudi_pb_set_block(hdev, mmTPC6_E2E_CRED_BASE);
 		gaudi_pb_set_block(hdev, mmTPC7_E2E_CRED_BASE);
-	}
+	पूर्ण
 
 	WREG32(mmTPC0_QM_BASE - CFG_BASE + PROT_BITS_OFFS + 0x7C, 0);
 	WREG32(mmTPC0_CFG_BASE - CFG_BASE + PROT_BITS_OFFS + 0x7C, 0);
@@ -12777,24 +12778,24 @@ static void gaudi_init_tpc_protection_bits(struct hl_device *hdev)
 	mask |= 1U << ((mmTPC7_CFG_FUNC_MBIST_MEM_9 & 0x7F) >> 2);
 
 	WREG32(pb_addr + word_offset, ~mask);
-}
+पूर्ण
 
 /**
- * gaudi_init_protection_bits - Initialize protection bits of specific registers
+ * gaudi_init_protection_bits - Initialize protection bits of specअगरic रेजिस्टरs
  *
- * @hdev: pointer to hl_device structure
+ * @hdev: poपूर्णांकer to hl_device काष्ठाure
  *
- * All protection bits are 1 by default, means not protected. Need to set to 0
- * each bit that belongs to a protected register.
+ * All protection bits are 1 by शेष, means not रक्षित. Need to set to 0
+ * each bit that beदीर्घs to a रक्षित रेजिस्टर.
  *
  */
-static void gaudi_init_protection_bits(struct hl_device *hdev)
-{
+अटल व्योम gaudi_init_protection_bits(काष्ठा hl_device *hdev)
+अणु
 	/*
-	 * In each 4K block of registers, the last 128 bytes are protection
-	 * bits - total of 1024 bits, one for each register. Each bit is related
-	 * to a specific register, by the order of the registers.
-	 * So in order to calculate the bit that is related to a given register,
+	 * In each 4K block of रेजिस्टरs, the last 128 bytes are protection
+	 * bits - total of 1024 bits, one क्रम each रेजिस्टर. Each bit is related
+	 * to a specअगरic रेजिस्टर, by the order of the रेजिस्टरs.
+	 * So in order to calculate the bit that is related to a given रेजिस्टर,
 	 * we need to calculate its word offset and then the exact bit inside
 	 * the word (which is 4 bytes).
 	 *
@@ -12809,22 +12810,22 @@ static void gaudi_init_protection_bits(struct hl_device *hdev)
 	 * Bits 7-11 represents the word offset inside the 128 bytes.
 	 * Bits 2-6 represents the bit location inside the word.
 	 *
-	 * When a bit is cleared, it means the register it represents can only
+	 * When a bit is cleared, it means the रेजिस्टर it represents can only
 	 * be accessed by a secured entity. When the bit is set, any entity can
-	 * access the register.
+	 * access the रेजिस्टर.
 	 *
 	 * The last 4 bytes in the block of the PBs control the security of
 	 * the PBs themselves, so they always need to be configured to be
 	 * secured
 	 */
 
-	if (hdev->asic_prop.fw_security_disabled) {
+	अगर (hdev->asic_prop.fw_security_disabled) अणु
 		gaudi_pb_set_block(hdev, mmIF_E_PLL_BASE);
 		gaudi_pb_set_block(hdev, mmMESH_W_PLL_BASE);
 		gaudi_pb_set_block(hdev, mmSRAM_W_PLL_BASE);
 		gaudi_pb_set_block(hdev, mmMESH_E_PLL_BASE);
 		gaudi_pb_set_block(hdev, mmSRAM_E_PLL_BASE);
-	}
+	पूर्ण
 
 	gaudi_init_dma_protection_bits(hdev);
 
@@ -12833,13 +12834,13 @@ static void gaudi_init_protection_bits(struct hl_device *hdev)
 	gaudi_init_nic_protection_bits(hdev);
 
 	gaudi_init_tpc_protection_bits(hdev);
-}
+पूर्ण
 
-static void gaudi_init_range_registers_lbw(struct hl_device *hdev)
-{
+अटल व्योम gaudi_init_range_रेजिस्टरs_lbw(काष्ठा hl_device *hdev)
+अणु
 	u32 lbw_rng_start[GAUDI_NUMBER_OF_LBW_RANGES];
 	u32 lbw_rng_end[GAUDI_NUMBER_OF_LBW_RANGES];
-	int i, j;
+	पूर्णांक i, j;
 
 	lbw_rng_start[0]  = (0xFBFE0000 & 0x3FFFFFF) - 1;
 	lbw_rng_end[0]    = (0xFBFFF000 & 0x3FFFFFF) + 1;
@@ -12877,15 +12878,15 @@ static void gaudi_init_range_registers_lbw(struct hl_device *hdev)
 	lbw_rng_start[11] = (0xFE484000 & 0x3FFFFFF) - 1;
 	lbw_rng_end[11]   = (0xFE484FFF & 0x3FFFFFF) + 1;
 
-	for (i = 0 ; i < GAUDI_NUMBER_OF_RR_REGS ; i++) {
+	क्रम (i = 0 ; i < GAUDI_NUMBER_OF_RR_REGS ; i++) अणु
 		WREG32(gaudi_rr_lbw_hit_aw_regs[i],
 				(1 << GAUDI_NUMBER_OF_LBW_RANGES) - 1);
 		WREG32(gaudi_rr_lbw_hit_ar_regs[i],
 				(1 << GAUDI_NUMBER_OF_LBW_RANGES) - 1);
-	}
+	पूर्ण
 
-	for (i = 0 ; i < GAUDI_NUMBER_OF_RR_REGS ; i++)
-		for (j = 0 ; j < GAUDI_NUMBER_OF_LBW_RANGES ; j++) {
+	क्रम (i = 0 ; i < GAUDI_NUMBER_OF_RR_REGS ; i++)
+		क्रम (j = 0 ; j < GAUDI_NUMBER_OF_LBW_RANGES ; j++) अणु
 			WREG32(gaudi_rr_lbw_min_aw_regs[i] + (j << 2),
 							lbw_rng_start[j]);
 
@@ -12897,12 +12898,12 @@ static void gaudi_init_range_registers_lbw(struct hl_device *hdev)
 
 			WREG32(gaudi_rr_lbw_max_ar_regs[i] + (j << 2),
 							lbw_rng_end[j]);
-		}
-}
+		पूर्ण
+पूर्ण
 
-static void gaudi_init_range_registers_hbw(struct hl_device *hdev)
-{
-	struct gaudi_device *gaudi = hdev->asic_specific;
+अटल व्योम gaudi_init_range_रेजिस्टरs_hbw(काष्ठा hl_device *hdev)
+अणु
+	काष्ठा gaudi_device *gaudi = hdev->asic_specअगरic;
 
 	u32 dram_addr_lo = lower_32_bits(DRAM_PHYS_BASE);
 	u32 dram_addr_hi = upper_32_bits(DRAM_PHYS_BASE);
@@ -12919,24 +12920,24 @@ static void gaudi_init_range_registers_hbw(struct hl_device *hdev)
 	u32 spi_addr_lo = lower_32_bits(SPI_FLASH_BASE_ADDR);
 	u32 spi_addr_hi = upper_32_bits(SPI_FLASH_BASE_ADDR);
 
-	int i;
+	पूर्णांक i;
 
 	/* Configure HBW RR:
 	 * 1st range is the DRAM (first 512MB)
-	 * 2nd range is the 1st 128 bytes in SRAM (for tensor DMA). This area
-	 * is defined as read-only for user
+	 * 2nd range is the 1st 128 bytes in SRAM (क्रम tensor DMA). This area
+	 * is defined as पढ़ो-only क्रम user
 	 * 3rd range is the PSOC scratch-pad
 	 * 4th range is the PCIe F/W SRAM area
 	 * 5th range is the SPI FLASH area
 	 * 6th range is the host
 	 */
 
-	for (i = 0 ; i < GAUDI_NUMBER_OF_RR_REGS ; i++) {
+	क्रम (i = 0 ; i < GAUDI_NUMBER_OF_RR_REGS ; i++) अणु
 		WREG32(gaudi_rr_hbw_hit_aw_regs[i], 0x1F);
 		WREG32(gaudi_rr_hbw_hit_ar_regs[i], 0x1D);
-	}
+	पूर्ण
 
-	for (i = 0 ; i < GAUDI_NUMBER_OF_RR_REGS ; i++) {
+	क्रम (i = 0 ; i < GAUDI_NUMBER_OF_RR_REGS ; i++) अणु
 		WREG32(gaudi_rr_hbw_base_low_aw_regs[i], dram_addr_lo);
 		WREG32(gaudi_rr_hbw_base_low_ar_regs[i], dram_addr_lo);
 
@@ -12990,8 +12991,8 @@ static void gaudi_init_range_registers_hbw(struct hl_device *hdev)
 		WREG32(gaudi_rr_hbw_mask_high_aw_regs[i] + 16, 0x3FFFF);
 		WREG32(gaudi_rr_hbw_mask_high_ar_regs[i] + 16, 0x3FFFF);
 
-		if (gaudi->hw_cap_initialized & HW_CAP_MMU)
-			continue;
+		अगर (gaudi->hw_cap_initialized & HW_CAP_MMU)
+			जारी;
 
 		/* Protect HOST */
 		WREG32(gaudi_rr_hbw_base_low_aw_regs[i] + 20, 0);
@@ -13005,25 +13006,25 @@ static void gaudi_init_range_registers_hbw(struct hl_device *hdev)
 
 		WREG32(gaudi_rr_hbw_mask_high_aw_regs[i] + 20, 0xFFF80);
 		WREG32(gaudi_rr_hbw_mask_high_ar_regs[i] + 20, 0xFFF80);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * gaudi_init_security - Initialize security model
  *
- * @hdev: pointer to hl_device structure
+ * @hdev: poपूर्णांकer to hl_device काष्ठाure
  *
  * Initialize the security model of the device
- * That includes range registers and protection bit per register
+ * That includes range रेजिस्टरs and protection bit per रेजिस्टर
  *
  */
-void gaudi_init_security(struct hl_device *hdev)
-{
-	/* Due to H/W errata GAUDI0500, need to override default security
+व्योम gaudi_init_security(काष्ठा hl_device *hdev)
+अणु
+	/* Due to H/W errata GAUDI0500, need to override शेष security
 	 * property configuration of MME SBAB and ACC to be non-privileged and
 	 * non-secured
 	 */
-	if (hdev->asic_prop.fw_security_disabled) {
+	अगर (hdev->asic_prop.fw_security_disabled) अणु
 		WREG32(mmMME0_SBAB_PROT, 0x2);
 		WREG32(mmMME0_ACC_PROT, 0x2);
 		WREG32(mmMME1_SBAB_PROT, 0x2);
@@ -13032,20 +13033,20 @@ void gaudi_init_security(struct hl_device *hdev)
 		WREG32(mmMME2_ACC_PROT, 0x2);
 		WREG32(mmMME3_SBAB_PROT, 0x2);
 		WREG32(mmMME3_ACC_PROT, 0x2);
-	}
+	पूर्ण
 
-	/* On RAZWI, 0 will be returned from RR and 0xBABA0BAD from PB */
-	if (hdev->asic_prop.fw_security_disabled)
+	/* On RAZWI, 0 will be वापसed from RR and 0xBABA0BAD from PB */
+	अगर (hdev->asic_prop.fw_security_disabled)
 		WREG32(0xC01B28, 0x1);
 
-	gaudi_init_range_registers_lbw(hdev);
+	gaudi_init_range_रेजिस्टरs_lbw(hdev);
 
-	gaudi_init_range_registers_hbw(hdev);
+	gaudi_init_range_रेजिस्टरs_hbw(hdev);
 
 	gaudi_init_protection_bits(hdev);
-}
+पूर्ण
 
-void gaudi_ack_protection_bits_errors(struct hl_device *hdev)
-{
+व्योम gaudi_ack_protection_bits_errors(काष्ठा hl_device *hdev)
+अणु
 
-}
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2007-2012 Siemens AG
  *
@@ -9,125 +10,125 @@
  * Alexander Smirnov <alex.bluesman.smirnov@gmail.com>
  */
 
-#include <linux/netdevice.h>
-#include <linux/if_arp.h>
-#include <linux/crc-ccitt.h>
-#include <asm/unaligned.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/crc-ccitt.h>
+#समावेश <यंत्र/unaligned.h>
 
-#include <net/rtnetlink.h>
-#include <net/ieee802154_netdev.h>
-#include <net/mac802154.h>
-#include <net/cfg802154.h>
+#समावेश <net/rtnetlink.h>
+#समावेश <net/ieee802154_netdev.h>
+#समावेश <net/mac802154.h>
+#समावेश <net/cfg802154.h>
 
-#include "ieee802154_i.h"
-#include "driver-ops.h"
+#समावेश "ieee802154_i.h"
+#समावेश "driver-ops.h"
 
-void ieee802154_xmit_worker(struct work_struct *work)
-{
-	struct ieee802154_local *local =
-		container_of(work, struct ieee802154_local, tx_work);
-	struct sk_buff *skb = local->tx_skb;
-	struct net_device *dev = skb->dev;
-	int res;
+व्योम ieee802154_xmit_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ieee802154_local *local =
+		container_of(work, काष्ठा ieee802154_local, tx_work);
+	काष्ठा sk_buff *skb = local->tx_skb;
+	काष्ठा net_device *dev = skb->dev;
+	पूर्णांक res;
 
 	res = drv_xmit_sync(local, skb);
-	if (res)
-		goto err_tx;
+	अगर (res)
+		जाओ err_tx;
 
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += skb->len;
 
 	ieee802154_xmit_complete(&local->hw, skb, false);
 
-	return;
+	वापस;
 
 err_tx:
-	/* Restart the netif queue on each sub_if_data object. */
+	/* Restart the netअगर queue on each sub_अगर_data object. */
 	ieee802154_wake_queue(&local->hw);
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 	netdev_dbg(dev, "transmission failed\n");
-}
+पूर्ण
 
-static netdev_tx_t
-ieee802154_tx(struct ieee802154_local *local, struct sk_buff *skb)
-{
-	struct net_device *dev = skb->dev;
-	int ret;
+अटल netdev_tx_t
+ieee802154_tx(काष्ठा ieee802154_local *local, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा net_device *dev = skb->dev;
+	पूर्णांक ret;
 
-	if (!(local->hw.flags & IEEE802154_HW_TX_OMIT_CKSUM)) {
-		struct sk_buff *nskb;
+	अगर (!(local->hw.flags & IEEE802154_HW_TX_OMIT_CKSUM)) अणु
+		काष्ठा sk_buff *nskb;
 		u16 crc;
 
-		if (unlikely(skb_tailroom(skb) < IEEE802154_FCS_LEN)) {
+		अगर (unlikely(skb_tailroom(skb) < IEEE802154_FCS_LEN)) अणु
 			nskb = skb_copy_expand(skb, 0, IEEE802154_FCS_LEN,
 					       GFP_ATOMIC);
-			if (likely(nskb)) {
+			अगर (likely(nskb)) अणु
 				consume_skb(skb);
 				skb = nskb;
-			} else {
-				goto err_tx;
-			}
-		}
+			पूर्ण अन्यथा अणु
+				जाओ err_tx;
+			पूर्ण
+		पूर्ण
 
 		crc = crc_ccitt(0, skb->data, skb->len);
 		put_unaligned_le16(crc, skb_put(skb, 2));
-	}
+	पूर्ण
 
-	/* Stop the netif queue on each sub_if_data object. */
+	/* Stop the netअगर queue on each sub_अगर_data object. */
 	ieee802154_stop_queue(&local->hw);
 
 	/* async is priority, otherwise sync is fallback */
-	if (local->ops->xmit_async) {
-		unsigned int len = skb->len;
+	अगर (local->ops->xmit_async) अणु
+		अचिन्हित पूर्णांक len = skb->len;
 
 		ret = drv_xmit_async(local, skb);
-		if (ret) {
+		अगर (ret) अणु
 			ieee802154_wake_queue(&local->hw);
-			goto err_tx;
-		}
+			जाओ err_tx;
+		पूर्ण
 
 		dev->stats.tx_packets++;
 		dev->stats.tx_bytes += len;
-	} else {
+	पूर्ण अन्यथा अणु
 		local->tx_skb = skb;
 		queue_work(local->workqueue, &local->tx_work);
-	}
+	पूर्ण
 
-	return NETDEV_TX_OK;
+	वापस NETDEV_TX_OK;
 
 err_tx:
-	kfree_skb(skb);
-	return NETDEV_TX_OK;
-}
+	kमुक्त_skb(skb);
+	वापस NETDEV_TX_OK;
+पूर्ण
 
 netdev_tx_t
-ieee802154_monitor_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+ieee802154_monitor_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
 
-	skb->skb_iif = dev->ifindex;
+	skb->skb_iअगर = dev->अगरindex;
 
-	return ieee802154_tx(sdata->local, skb);
-}
+	वापस ieee802154_tx(sdata->local, skb);
+पूर्ण
 
 netdev_tx_t
-ieee802154_subif_start_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct ieee802154_sub_if_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
-	int rc;
+ieee802154_subअगर_start_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा ieee802154_sub_अगर_data *sdata = IEEE802154_DEV_TO_SUB_IF(dev);
+	पूर्णांक rc;
 
 	/* TODO we should move it to wpan_dev_hard_header and dev_hard_header
 	 * functions. The reason is wireshark will show a mac header which is
 	 * with security fields but the payload is not encrypted.
 	 */
 	rc = mac802154_llsec_encrypt(&sdata->sec, skb);
-	if (rc) {
+	अगर (rc) अणु
 		netdev_warn(dev, "encryption failed: %i\n", rc);
-		kfree_skb(skb);
-		return NETDEV_TX_OK;
-	}
+		kमुक्त_skb(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 
-	skb->skb_iif = dev->ifindex;
+	skb->skb_iअगर = dev->अगरindex;
 
-	return ieee802154_tx(sdata->local, skb);
-}
+	वापस ieee802154_tx(sdata->local, skb);
+पूर्ण

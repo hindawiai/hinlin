@@ -1,6 +1,7 @@
-#ifndef _ASM_FUTEX_H
-#define _ASM_FUTEX_H
+<शैली गुरु>
+#अगर_अघोषित _ASM_FUTEX_H
+#घोषणा _ASM_FUTEX_H
 
-#include <asm-generic/futex.h>
+#समावेश <यंत्र-generic/futex.h>
 
-#endif
+#पूर्ण_अगर

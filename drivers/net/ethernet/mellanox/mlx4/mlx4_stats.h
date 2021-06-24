@@ -1,128 +1,129 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _MLX4_STATS_
-#define _MLX4_STATS_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _MLX4_STATS_
+#घोषणा _MLX4_STATS_
 
-#define NUM_PRIORITIES	9
-#define NUM_PRIORITY_STATS 2
+#घोषणा NUM_PRIORITIES	9
+#घोषणा NUM_PRIORITY_STATS 2
 
-struct mlx4_en_pkt_stats {
-	unsigned long rx_multicast_packets;
-	unsigned long rx_broadcast_packets;
-	unsigned long rx_jabbers;
-	unsigned long rx_in_range_length_error;
-	unsigned long rx_out_range_length_error;
-	unsigned long tx_multicast_packets;
-	unsigned long tx_broadcast_packets;
-	unsigned long rx_prio[NUM_PRIORITIES][NUM_PRIORITY_STATS];
-	unsigned long tx_prio[NUM_PRIORITIES][NUM_PRIORITY_STATS];
-#define NUM_PKT_STATS		43
-};
+काष्ठा mlx4_en_pkt_stats अणु
+	अचिन्हित दीर्घ rx_multicast_packets;
+	अचिन्हित दीर्घ rx_broadcast_packets;
+	अचिन्हित दीर्घ rx_jabbers;
+	अचिन्हित दीर्घ rx_in_range_length_error;
+	अचिन्हित दीर्घ rx_out_range_length_error;
+	अचिन्हित दीर्घ tx_multicast_packets;
+	अचिन्हित दीर्घ tx_broadcast_packets;
+	अचिन्हित दीर्घ rx_prio[NUM_PRIORITIES][NUM_PRIORITY_STATS];
+	अचिन्हित दीर्घ tx_prio[NUM_PRIORITIES][NUM_PRIORITY_STATS];
+#घोषणा NUM_PKT_STATS		43
+पूर्ण;
 
-struct mlx4_en_counter_stats {
-	unsigned long rx_packets;
-	unsigned long rx_bytes;
-	unsigned long tx_packets;
-	unsigned long tx_bytes;
-#define NUM_PF_STATS      4
-};
+काष्ठा mlx4_en_counter_stats अणु
+	अचिन्हित दीर्घ rx_packets;
+	अचिन्हित दीर्घ rx_bytes;
+	अचिन्हित दीर्घ tx_packets;
+	अचिन्हित दीर्घ tx_bytes;
+#घोषणा NUM_PF_STATS      4
+पूर्ण;
 
-struct mlx4_en_port_stats {
-	unsigned long tso_packets;
-	unsigned long xmit_more;
-	unsigned long queue_stopped;
-	unsigned long wake_queue;
-	unsigned long tx_timeout;
-	unsigned long rx_alloc_pages;
-	unsigned long rx_chksum_good;
-	unsigned long rx_chksum_none;
-	unsigned long rx_chksum_complete;
-	unsigned long tx_chksum_offload;
-#define NUM_PORT_STATS		10
-};
+काष्ठा mlx4_en_port_stats अणु
+	अचिन्हित दीर्घ tso_packets;
+	अचिन्हित दीर्घ xmit_more;
+	अचिन्हित दीर्घ queue_stopped;
+	अचिन्हित दीर्घ wake_queue;
+	अचिन्हित दीर्घ tx_समयout;
+	अचिन्हित दीर्घ rx_alloc_pages;
+	अचिन्हित दीर्घ rx_chksum_good;
+	अचिन्हित दीर्घ rx_chksum_none;
+	अचिन्हित दीर्घ rx_chksum_complete;
+	अचिन्हित दीर्घ tx_chksum_offload;
+#घोषणा NUM_PORT_STATS		10
+पूर्ण;
 
-struct mlx4_en_xdp_stats {
-	unsigned long rx_xdp_drop;
-	unsigned long rx_xdp_tx;
-	unsigned long rx_xdp_tx_full;
-#define NUM_XDP_STATS		3
-};
+काष्ठा mlx4_en_xdp_stats अणु
+	अचिन्हित दीर्घ rx_xdp_drop;
+	अचिन्हित दीर्घ rx_xdp_tx;
+	अचिन्हित दीर्घ rx_xdp_tx_full;
+#घोषणा NUM_XDP_STATS		3
+पूर्ण;
 
-struct mlx4_en_phy_stats {
-	unsigned long rx_packets_phy;
-	unsigned long rx_bytes_phy;
-	unsigned long tx_packets_phy;
-	unsigned long tx_bytes_phy;
-#define NUM_PHY_STATS		4
-};
+काष्ठा mlx4_en_phy_stats अणु
+	अचिन्हित दीर्घ rx_packets_phy;
+	अचिन्हित दीर्घ rx_bytes_phy;
+	अचिन्हित दीर्घ tx_packets_phy;
+	अचिन्हित दीर्घ tx_bytes_phy;
+#घोषणा NUM_PHY_STATS		4
+पूर्ण;
 
-#define NUM_MAIN_STATS	21
+#घोषणा NUM_MAIN_STATS	21
 
-#define MLX4_NUM_PRIORITIES	8
+#घोषणा MLX4_NUM_PRIORITIES	8
 
-struct mlx4_en_flow_stats_rx {
-	u64 rx_pause;
-	u64 rx_pause_duration;
-	u64 rx_pause_transition;
-#define NUM_FLOW_STATS_RX	3
-#define NUM_FLOW_PRIORITY_STATS_RX	(NUM_FLOW_STATS_RX * \
+काष्ठा mlx4_en_flow_stats_rx अणु
+	u64 rx_छोड़ो;
+	u64 rx_छोड़ो_duration;
+	u64 rx_छोड़ो_transition;
+#घोषणा NUM_FLOW_STATS_RX	3
+#घोषणा NUM_FLOW_PRIORITY_STATS_RX	(NUM_FLOW_STATS_RX * \
 					 MLX4_NUM_PRIORITIES)
-};
+पूर्ण;
 
-#define FLOW_PRIORITY_STATS_IDX_RX_FRAMES	(NUM_MAIN_STATS +	\
+#घोषणा FLOW_PRIORITY_STATS_IDX_RX_FRAMES	(NUM_MAIN_STATS +	\
 						 NUM_PORT_STATS +	\
 						 NUM_PF_STATS +		\
 						 NUM_FLOW_PRIORITY_STATS_RX)
 
-struct mlx4_en_flow_stats_tx {
-	u64 tx_pause;
-	u64 tx_pause_duration;
-	u64 tx_pause_transition;
-#define NUM_FLOW_STATS_TX	3
-#define NUM_FLOW_PRIORITY_STATS_TX	(NUM_FLOW_STATS_TX * \
+काष्ठा mlx4_en_flow_stats_tx अणु
+	u64 tx_छोड़ो;
+	u64 tx_छोड़ो_duration;
+	u64 tx_छोड़ो_transition;
+#घोषणा NUM_FLOW_STATS_TX	3
+#घोषणा NUM_FLOW_PRIORITY_STATS_TX	(NUM_FLOW_STATS_TX * \
 					 MLX4_NUM_PRIORITIES)
-};
+पूर्ण;
 
-#define FLOW_PRIORITY_STATS_IDX_TX_FRAMES	(NUM_MAIN_STATS +	\
+#घोषणा FLOW_PRIORITY_STATS_IDX_TX_FRAMES	(NUM_MAIN_STATS +	\
 						 NUM_PORT_STATS +	\
 						 NUM_PF_STATS +		\
 						 NUM_FLOW_PRIORITY_STATS_RX + \
 						 NUM_FLOW_STATS_RX +	\
 						 NUM_FLOW_PRIORITY_STATS_TX)
 
-#define NUM_FLOW_STATS (NUM_FLOW_STATS_RX + NUM_FLOW_STATS_TX + \
+#घोषणा NUM_FLOW_STATS (NUM_FLOW_STATS_RX + NUM_FLOW_STATS_TX + \
 			NUM_FLOW_PRIORITY_STATS_TX + \
 			NUM_FLOW_PRIORITY_STATS_RX)
 
-struct mlx4_en_stat_out_flow_control_mbox {
+काष्ठा mlx4_en_stat_out_flow_control_mbox अणु
 	/* Total number of PAUSE frames received from the far-end port */
-	__be64 rx_pause;
-	/* Total number of microseconds that far-end port requested to pause
+	__be64 rx_छोड़ो;
+	/* Total number of microseconds that far-end port requested to छोड़ो
 	* transmission of packets
 	*/
-	__be64 rx_pause_duration;
+	__be64 rx_छोड़ो_duration;
 	/* Number of received transmission from XOFF state to XON state */
-	__be64 rx_pause_transition;
+	__be64 rx_छोड़ो_transition;
 	/* Total number of PAUSE frames sent from the far-end port */
-	__be64 tx_pause;
-	/* Total time in microseconds that transmission of packets has been
-	* paused
+	__be64 tx_छोड़ो;
+	/* Total समय in microseconds that transmission of packets has been
+	* छोड़ोd
 	*/
-	__be64 tx_pause_duration;
+	__be64 tx_छोड़ो_duration;
 	/* Number of transmitter transitions from XOFF state to XON state */
-	__be64 tx_pause_transition;
+	__be64 tx_छोड़ो_transition;
 	/* Reserverd */
 	__be64 reserved[2];
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	MLX4_DUMP_ETH_STATS_FLOW_CONTROL = 1 << 12
-};
+पूर्ण;
 
-#define NUM_ALL_STATS	(NUM_MAIN_STATS + NUM_PORT_STATS + NUM_PKT_STATS + \
+#घोषणा NUM_ALL_STATS	(NUM_MAIN_STATS + NUM_PORT_STATS + NUM_PKT_STATS + \
 			 NUM_FLOW_STATS + NUM_PF_STATS + \
 			 NUM_XDP_STATS + NUM_PHY_STATS)
 
-#define MLX4_FIND_NETDEV_STAT(n) (offsetof(struct net_device_stats, n) / \
-				  sizeof(((struct net_device_stats *)0)->n))
+#घोषणा MLX4_FIND_NETDEV_STAT(n) (दुरत्व(काष्ठा net_device_stats, n) / \
+				  माप(((काष्ठा net_device_stats *)0)->n))
 
-#endif
+#पूर्ण_अगर

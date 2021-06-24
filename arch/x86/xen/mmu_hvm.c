@@ -1,13 +1,14 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <linux/types.h>
-#include <linux/crash_dump.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <linux/types.h>
+#समावेश <linux/crash_dump.h>
 
-#include <xen/interface/xen.h>
-#include <xen/hvm.h>
+#समावेश <xen/पूर्णांकerface/xen.h>
+#समावेश <xen/hvm.h>
 
-#include "mmu.h"
+#समावेश "mmu.h"
 
-#ifdef CONFIG_PROC_VMCORE
+#अगर_घोषित CONFIG_PROC_VMCORE
 /*
  * This function is used in two contexts:
  * - the kdump kernel has to check whether a pfn of the crashed kernel
@@ -15,66 +16,66 @@
  *   whether to access a pfn of the crashed kernel.
  * - the kexec kernel has to check whether a pfn was ballooned by the
  *   previous kernel. If the pfn is ballooned, handle it properly.
- * Returns 0 if the pfn is not backed by a RAM page, the caller may
- * handle the pfn special in this case.
+ * Returns 0 अगर the pfn is not backed by a RAM page, the caller may
+ * handle the pfn special in this हाल.
  */
-static int xen_oldmem_pfn_is_ram(unsigned long pfn)
-{
-	struct xen_hvm_get_mem_type a = {
-		.domid = DOMID_SELF,
+अटल पूर्णांक xen_oldmem_pfn_is_ram(अचिन्हित दीर्घ pfn)
+अणु
+	काष्ठा xen_hvm_get_mem_type a = अणु
+		.करोmid = DOMID_SELF,
 		.pfn = pfn,
-	};
-	int ram;
+	पूर्ण;
+	पूर्णांक ram;
 
-	if (HYPERVISOR_hvm_op(HVMOP_get_mem_type, &a))
-		return -ENXIO;
+	अगर (HYPERVISOR_hvm_op(HVMOP_get_mem_type, &a))
+		वापस -ENXIO;
 
-	switch (a.mem_type) {
-	case HVMMEM_mmio_dm:
+	चयन (a.mem_type) अणु
+	हाल HVMMEM_mmio_dm:
 		ram = 0;
-		break;
-	case HVMMEM_ram_rw:
-	case HVMMEM_ram_ro:
-	default:
+		अवरोध;
+	हाल HVMMEM_ram_rw:
+	हाल HVMMEM_ram_ro:
+	शेष:
 		ram = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ram;
-}
-#endif
+	वापस ram;
+पूर्ण
+#पूर्ण_अगर
 
-static void xen_hvm_exit_mmap(struct mm_struct *mm)
-{
-	struct xen_hvm_pagetable_dying a;
-	int rc;
+अटल व्योम xen_hvm_निकास_mmap(काष्ठा mm_काष्ठा *mm)
+अणु
+	काष्ठा xen_hvm_pagetable_dying a;
+	पूर्णांक rc;
 
-	a.domid = DOMID_SELF;
+	a.करोmid = DOMID_SELF;
 	a.gpa = __pa(mm->pgd);
 	rc = HYPERVISOR_hvm_op(HVMOP_pagetable_dying, &a);
 	WARN_ON_ONCE(rc < 0);
-}
+पूर्ण
 
-static int is_pagetable_dying_supported(void)
-{
-	struct xen_hvm_pagetable_dying a;
-	int rc = 0;
+अटल पूर्णांक is_pagetable_dying_supported(व्योम)
+अणु
+	काष्ठा xen_hvm_pagetable_dying a;
+	पूर्णांक rc = 0;
 
-	a.domid = DOMID_SELF;
+	a.करोmid = DOMID_SELF;
 	a.gpa = 0x00;
 	rc = HYPERVISOR_hvm_op(HVMOP_pagetable_dying, &a);
-	if (rc < 0) {
-		printk(KERN_DEBUG "HVMOP_pagetable_dying not supported\n");
-		return 0;
-	}
-	return 1;
-}
+	अगर (rc < 0) अणु
+		prपूर्णांकk(KERN_DEBUG "HVMOP_pagetable_dying not supported\n");
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-void __init xen_hvm_init_mmu_ops(void)
-{
-	if (is_pagetable_dying_supported())
-		pv_ops.mmu.exit_mmap = xen_hvm_exit_mmap;
-#ifdef CONFIG_PROC_VMCORE
-	WARN_ON(register_oldmem_pfn_is_ram(&xen_oldmem_pfn_is_ram));
-#endif
-}
+व्योम __init xen_hvm_init_mmu_ops(व्योम)
+अणु
+	अगर (is_pagetable_dying_supported())
+		pv_ops.mmu.निकास_mmap = xen_hvm_निकास_mmap;
+#अगर_घोषित CONFIG_PROC_VMCORE
+	WARN_ON(रेजिस्टर_oldmem_pfn_is_ram(&xen_oldmem_pfn_is_ram));
+#पूर्ण_अगर
+पूर्ण

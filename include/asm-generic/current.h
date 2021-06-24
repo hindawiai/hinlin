@@ -1,10 +1,11 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_GENERIC_CURRENT_H
-#define __ASM_GENERIC_CURRENT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_GENERIC_CURRENT_H
+#घोषणा __ASM_GENERIC_CURRENT_H
 
-#include <linux/thread_info.h>
+#समावेश <linux/thपढ़ो_info.h>
 
-#define get_current() (current_thread_info()->task)
-#define current get_current()
+#घोषणा get_current() (current_thपढ़ो_info()->task)
+#घोषणा current get_current()
 
-#endif /* __ASM_GENERIC_CURRENT_H */
+#पूर्ण_अगर /* __ASM_GENERIC_CURRENT_H */

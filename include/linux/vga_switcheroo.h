@@ -1,17 +1,18 @@
+<शैली गुरु>
 /*
- * vga_switcheroo.h - Support for laptop with dual GPU using one set of outputs
+ * vga_चयनeroo.h - Support क्रम laptop with dual GPU using one set of outमाला_दो
  *
  * Copyright (c) 2010 Red Hat Inc.
  * Author : Dave Airlie <airlied@redhat.com>
  *
  * Copyright (c) 2015 Lukas Wunner <lukas@wunner.de>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -28,172 +29,172 @@
  *
  */
 
-#ifndef _LINUX_VGA_SWITCHEROO_H_
-#define _LINUX_VGA_SWITCHEROO_H_
+#अगर_अघोषित _LINUX_VGA_SWITCHEROO_H_
+#घोषणा _LINUX_VGA_SWITCHEROO_H_
 
-#include <linux/fb.h>
+#समावेश <linux/fb.h>
 
-struct pci_dev;
+काष्ठा pci_dev;
 
 /**
- * enum vga_switcheroo_handler_flags_t - handler flags bitmask
- * @VGA_SWITCHEROO_CAN_SWITCH_DDC: whether the handler is able to switch the
- * 	DDC lines separately. This signals to clients that they should call
- * 	drm_get_edid_switcheroo() to probe the EDID
- * @VGA_SWITCHEROO_NEEDS_EDP_CONFIG: whether the handler is unable to switch
- * 	the AUX channel separately. This signals to clients that the active
+ * क्रमागत vga_चयनeroo_handler_flags_t - handler flags biपंचांगask
+ * @VGA_SWITCHEROO_CAN_SWITCH_DDC: whether the handler is able to चयन the
+ * 	DDC lines separately. This संकेतs to clients that they should call
+ * 	drm_get_edid_चयनeroo() to probe the EDID
+ * @VGA_SWITCHEROO_NEEDS_EDP_CONFIG: whether the handler is unable to चयन
+ * 	the AUX channel separately. This संकेतs to clients that the active
  * 	GPU needs to train the link and communicate the link parameters to the
- * 	inactive GPU (mediated by vga_switcheroo). The inactive GPU may then
+ * 	inactive GPU (mediated by vga_चयनeroo). The inactive GPU may then
  * 	skip the AUX handshake and set up its output with these pre-calibrated
- * 	values (DisplayPort specification v1.1a, section 2.5.3.3)
+ * 	values (DisplayPort specअगरication v1.1a, section 2.5.3.3)
  *
- * Handler flags bitmask. Used by handlers to declare their capabilities upon
- * registering with vga_switcheroo.
+ * Handler flags biपंचांगask. Used by handlers to declare their capabilities upon
+ * रेजिस्टरing with vga_चयनeroo.
  */
-enum vga_switcheroo_handler_flags_t {
+क्रमागत vga_चयनeroo_handler_flags_t अणु
 	VGA_SWITCHEROO_CAN_SWITCH_DDC	= (1 << 0),
 	VGA_SWITCHEROO_NEEDS_EDP_CONFIG	= (1 << 1),
-};
+पूर्ण;
 
 /**
- * enum vga_switcheroo_state - client power state
+ * क्रमागत vga_चयनeroo_state - client घातer state
  * @VGA_SWITCHEROO_OFF: off
  * @VGA_SWITCHEROO_ON: on
- * @VGA_SWITCHEROO_NOT_FOUND: client has not registered with vga_switcheroo.
- * 	Only used in vga_switcheroo_get_client_state() which in turn is only
- * 	called from hda_intel.c
+ * @VGA_SWITCHEROO_NOT_FOUND: client has not रेजिस्टरed with vga_चयनeroo.
+ * 	Only used in vga_चयनeroo_get_client_state() which in turn is only
+ * 	called from hda_पूर्णांकel.c
  *
- * Client power state.
+ * Client घातer state.
  */
-enum vga_switcheroo_state {
+क्रमागत vga_चयनeroo_state अणु
 	VGA_SWITCHEROO_OFF,
 	VGA_SWITCHEROO_ON,
-	/* below are referred only from vga_switcheroo_get_client_state() */
+	/* below are referred only from vga_चयनeroo_get_client_state() */
 	VGA_SWITCHEROO_NOT_FOUND,
-};
+पूर्ण;
 
 /**
- * enum vga_switcheroo_client_id - client identifier
- * @VGA_SWITCHEROO_UNKNOWN_ID: initial identifier assigned to vga clients.
+ * क्रमागत vga_चयनeroo_client_id - client identअगरier
+ * @VGA_SWITCHEROO_UNKNOWN_ID: initial identअगरier asचिन्हित to vga clients.
  * 	Determining the id requires the handler, so GPUs are given their
- * 	true id in a delayed fashion in vga_switcheroo_enable()
- * @VGA_SWITCHEROO_IGD: integrated graphics device
+ * 	true id in a delayed fashion in vga_चयनeroo_enable()
+ * @VGA_SWITCHEROO_IGD: पूर्णांकegrated graphics device
  * @VGA_SWITCHEROO_DIS: discrete graphics device
  * @VGA_SWITCHEROO_MAX_CLIENTS: currently no more than two GPUs are supported
  *
- * Client identifier. Audio clients use the same identifier & 0x100.
+ * Client identअगरier. Audio clients use the same identअगरier & 0x100.
  */
-enum vga_switcheroo_client_id {
+क्रमागत vga_चयनeroo_client_id अणु
 	VGA_SWITCHEROO_UNKNOWN_ID = 0x1000,
 	VGA_SWITCHEROO_IGD = 0,
 	VGA_SWITCHEROO_DIS,
 	VGA_SWITCHEROO_MAX_CLIENTS,
-};
+पूर्ण;
 
 /**
- * struct vga_switcheroo_handler - handler callbacks
+ * काष्ठा vga_चयनeroo_handler - handler callbacks
  * @init: initialize handler.
- * 	Optional. This gets called when vga_switcheroo is enabled, i.e. when
- * 	two vga clients have registered. It allows the handler to perform
+ * 	Optional. This माला_लो called when vga_चयनeroo is enabled, i.e. when
+ * 	two vga clients have रेजिस्टरed. It allows the handler to perक्रमm
  * 	some delayed initialization that depends on the existence of the
  * 	vga clients. Currently only the radeon and amdgpu drivers use this.
- * 	The return value is ignored
- * @switchto: switch outputs to given client.
+ * 	The वापस value is ignored
+ * @चयनto: चयन outमाला_दो to given client.
  * 	Mandatory. For muxless machines this should be a no-op. Returning 0
- * 	denotes success, anything else failure (in which case the switch is
- * 	aborted)
- * @switch_ddc: switch DDC lines to given client.
- * 	Optional. Should return the previous DDC owner on success or a
- * 	negative int on failure
- * @power_state: cut or reinstate power of given client.
- * 	Optional. The return value is ignored
- * @get_client_id: determine if given pci device is integrated or discrete GPU.
+ * 	denotes success, anything अन्यथा failure (in which हाल the चयन is
+ * 	पातed)
+ * @चयन_ddc: चयन DDC lines to given client.
+ * 	Optional. Should वापस the previous DDC owner on success or a
+ * 	negative पूर्णांक on failure
+ * @घातer_state: cut or reinstate घातer of given client.
+ * 	Optional. The वापस value is ignored
+ * @get_client_id: determine अगर given pci device is पूर्णांकegrated or discrete GPU.
  * 	Mandatory
  *
- * Handler callbacks. The multiplexer itself. The @switchto and @get_client_id
- * methods are mandatory, all others may be set to NULL.
+ * Handler callbacks. The multiplexer itself. The @चयनto and @get_client_id
+ * methods are mandatory, all others may be set to शून्य.
  */
-struct vga_switcheroo_handler {
-	int (*init)(void);
-	int (*switchto)(enum vga_switcheroo_client_id id);
-	int (*switch_ddc)(enum vga_switcheroo_client_id id);
-	int (*power_state)(enum vga_switcheroo_client_id id,
-			   enum vga_switcheroo_state state);
-	enum vga_switcheroo_client_id (*get_client_id)(struct pci_dev *pdev);
-};
+काष्ठा vga_चयनeroo_handler अणु
+	पूर्णांक (*init)(व्योम);
+	पूर्णांक (*चयनto)(क्रमागत vga_चयनeroo_client_id id);
+	पूर्णांक (*चयन_ddc)(क्रमागत vga_चयनeroo_client_id id);
+	पूर्णांक (*घातer_state)(क्रमागत vga_चयनeroo_client_id id,
+			   क्रमागत vga_चयनeroo_state state);
+	क्रमागत vga_चयनeroo_client_id (*get_client_id)(काष्ठा pci_dev *pdev);
+पूर्ण;
 
 /**
- * struct vga_switcheroo_client_ops - client callbacks
- * @set_gpu_state: do the equivalent of suspend/resume for the card.
- * 	Mandatory. This should not cut power to the discrete GPU,
+ * काष्ठा vga_चयनeroo_client_ops - client callbacks
+ * @set_gpu_state: करो the equivalent of suspend/resume क्रम the card.
+ * 	Mandatory. This should not cut घातer to the discrete GPU,
  * 	which is the job of the handler
- * @reprobe: poll outputs.
- * 	Optional. This gets called after waking the GPU and switching
- * 	the outputs to it
- * @can_switch: check if the device is in a position to switch now.
- * 	Mandatory. The client should return false if a user space process
- * 	has one of its device files open
- * @gpu_bound: notify the client id to audio client when the GPU is bound.
+ * @reprobe: poll outमाला_दो.
+ * 	Optional. This माला_लो called after waking the GPU and चयनing
+ * 	the outमाला_दो to it
+ * @can_चयन: check अगर the device is in a position to चयन now.
+ * 	Mandatory. The client should वापस false अगर a user space process
+ * 	has one of its device files खोलो
+ * @gpu_bound: notअगरy the client id to audio client when the GPU is bound.
  *
  * Client callbacks. A client can be either a GPU or an audio device on a GPU.
- * The @set_gpu_state and @can_switch methods are mandatory, @reprobe may be
- * set to NULL. For audio clients, the @reprobe member is bogus.
- * OTOH, @gpu_bound is only for audio clients, and not used for GPU clients.
+ * The @set_gpu_state and @can_चयन methods are mandatory, @reprobe may be
+ * set to शून्य. For audio clients, the @reprobe member is bogus.
+ * OTOH, @gpu_bound is only क्रम audio clients, and not used क्रम GPU clients.
  */
-struct vga_switcheroo_client_ops {
-	void (*set_gpu_state)(struct pci_dev *dev, enum vga_switcheroo_state);
-	void (*reprobe)(struct pci_dev *dev);
-	bool (*can_switch)(struct pci_dev *dev);
-	void (*gpu_bound)(struct pci_dev *dev, enum vga_switcheroo_client_id);
-};
+काष्ठा vga_चयनeroo_client_ops अणु
+	व्योम (*set_gpu_state)(काष्ठा pci_dev *dev, क्रमागत vga_चयनeroo_state);
+	व्योम (*reprobe)(काष्ठा pci_dev *dev);
+	bool (*can_चयन)(काष्ठा pci_dev *dev);
+	व्योम (*gpu_bound)(काष्ठा pci_dev *dev, क्रमागत vga_चयनeroo_client_id);
+पूर्ण;
 
-#if defined(CONFIG_VGA_SWITCHEROO)
-void vga_switcheroo_unregister_client(struct pci_dev *dev);
-int vga_switcheroo_register_client(struct pci_dev *dev,
-				   const struct vga_switcheroo_client_ops *ops,
-				   bool driver_power_control);
-int vga_switcheroo_register_audio_client(struct pci_dev *pdev,
-					 const struct vga_switcheroo_client_ops *ops,
-					 struct pci_dev *vga_dev);
+#अगर defined(CONFIG_VGA_SWITCHEROO)
+व्योम vga_चयनeroo_unरेजिस्टर_client(काष्ठा pci_dev *dev);
+पूर्णांक vga_चयनeroo_रेजिस्टर_client(काष्ठा pci_dev *dev,
+				   स्थिर काष्ठा vga_चयनeroo_client_ops *ops,
+				   bool driver_घातer_control);
+पूर्णांक vga_चयनeroo_रेजिस्टर_audio_client(काष्ठा pci_dev *pdev,
+					 स्थिर काष्ठा vga_चयनeroo_client_ops *ops,
+					 काष्ठा pci_dev *vga_dev);
 
-void vga_switcheroo_client_fb_set(struct pci_dev *dev,
-				  struct fb_info *info);
+व्योम vga_चयनeroo_client_fb_set(काष्ठा pci_dev *dev,
+				  काष्ठा fb_info *info);
 
-int vga_switcheroo_register_handler(const struct vga_switcheroo_handler *handler,
-				    enum vga_switcheroo_handler_flags_t handler_flags);
-void vga_switcheroo_unregister_handler(void);
-enum vga_switcheroo_handler_flags_t vga_switcheroo_handler_flags(void);
-int vga_switcheroo_lock_ddc(struct pci_dev *pdev);
-int vga_switcheroo_unlock_ddc(struct pci_dev *pdev);
+पूर्णांक vga_चयनeroo_रेजिस्टर_handler(स्थिर काष्ठा vga_चयनeroo_handler *handler,
+				    क्रमागत vga_चयनeroo_handler_flags_t handler_flags);
+व्योम vga_चयनeroo_unरेजिस्टर_handler(व्योम);
+क्रमागत vga_चयनeroo_handler_flags_t vga_चयनeroo_handler_flags(व्योम);
+पूर्णांक vga_चयनeroo_lock_ddc(काष्ठा pci_dev *pdev);
+पूर्णांक vga_चयनeroo_unlock_ddc(काष्ठा pci_dev *pdev);
 
-int vga_switcheroo_process_delayed_switch(void);
+पूर्णांक vga_चयनeroo_process_delayed_चयन(व्योम);
 
-bool vga_switcheroo_client_probe_defer(struct pci_dev *pdev);
-enum vga_switcheroo_state vga_switcheroo_get_client_state(struct pci_dev *dev);
+bool vga_चयनeroo_client_probe_defer(काष्ठा pci_dev *pdev);
+क्रमागत vga_चयनeroo_state vga_चयनeroo_get_client_state(काष्ठा pci_dev *dev);
 
-int vga_switcheroo_init_domain_pm_ops(struct device *dev, struct dev_pm_domain *domain);
-void vga_switcheroo_fini_domain_pm_ops(struct device *dev);
-#else
+पूर्णांक vga_चयनeroo_init_करोमुख्य_pm_ops(काष्ठा device *dev, काष्ठा dev_pm_करोमुख्य *करोमुख्य);
+व्योम vga_चयनeroo_fini_करोमुख्य_pm_ops(काष्ठा device *dev);
+#अन्यथा
 
-static inline void vga_switcheroo_unregister_client(struct pci_dev *dev) {}
-static inline int vga_switcheroo_register_client(struct pci_dev *dev,
-		const struct vga_switcheroo_client_ops *ops, bool driver_power_control) { return 0; }
-static inline void vga_switcheroo_client_fb_set(struct pci_dev *dev, struct fb_info *info) {}
-static inline int vga_switcheroo_register_handler(const struct vga_switcheroo_handler *handler,
-		enum vga_switcheroo_handler_flags_t handler_flags) { return 0; }
-static inline int vga_switcheroo_register_audio_client(struct pci_dev *pdev,
-	const struct vga_switcheroo_client_ops *ops,
-	struct pci_dev *vga_dev) { return 0; }
-static inline void vga_switcheroo_unregister_handler(void) {}
-static inline enum vga_switcheroo_handler_flags_t vga_switcheroo_handler_flags(void) { return 0; }
-static inline int vga_switcheroo_lock_ddc(struct pci_dev *pdev) { return -ENODEV; }
-static inline int vga_switcheroo_unlock_ddc(struct pci_dev *pdev) { return -ENODEV; }
-static inline int vga_switcheroo_process_delayed_switch(void) { return 0; }
-static inline bool vga_switcheroo_client_probe_defer(struct pci_dev *pdev) { return false; }
-static inline enum vga_switcheroo_state vga_switcheroo_get_client_state(struct pci_dev *dev) { return VGA_SWITCHEROO_ON; }
+अटल अंतरभूत व्योम vga_चयनeroo_unरेजिस्टर_client(काष्ठा pci_dev *dev) अणुपूर्ण
+अटल अंतरभूत पूर्णांक vga_चयनeroo_रेजिस्टर_client(काष्ठा pci_dev *dev,
+		स्थिर काष्ठा vga_चयनeroo_client_ops *ops, bool driver_घातer_control) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम vga_चयनeroo_client_fb_set(काष्ठा pci_dev *dev, काष्ठा fb_info *info) अणुपूर्ण
+अटल अंतरभूत पूर्णांक vga_चयनeroo_रेजिस्टर_handler(स्थिर काष्ठा vga_चयनeroo_handler *handler,
+		क्रमागत vga_चयनeroo_handler_flags_t handler_flags) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक vga_चयनeroo_रेजिस्टर_audio_client(काष्ठा pci_dev *pdev,
+	स्थिर काष्ठा vga_चयनeroo_client_ops *ops,
+	काष्ठा pci_dev *vga_dev) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम vga_चयनeroo_unरेजिस्टर_handler(व्योम) अणुपूर्ण
+अटल अंतरभूत क्रमागत vga_चयनeroo_handler_flags_t vga_चयनeroo_handler_flags(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत पूर्णांक vga_चयनeroo_lock_ddc(काष्ठा pci_dev *pdev) अणु वापस -ENODEV; पूर्ण
+अटल अंतरभूत पूर्णांक vga_चयनeroo_unlock_ddc(काष्ठा pci_dev *pdev) अणु वापस -ENODEV; पूर्ण
+अटल अंतरभूत पूर्णांक vga_चयनeroo_process_delayed_चयन(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत bool vga_चयनeroo_client_probe_defer(काष्ठा pci_dev *pdev) अणु वापस false; पूर्ण
+अटल अंतरभूत क्रमागत vga_चयनeroo_state vga_चयनeroo_get_client_state(काष्ठा pci_dev *dev) अणु वापस VGA_SWITCHEROO_ON; पूर्ण
 
-static inline int vga_switcheroo_init_domain_pm_ops(struct device *dev, struct dev_pm_domain *domain) { return -EINVAL; }
-static inline void vga_switcheroo_fini_domain_pm_ops(struct device *dev) {}
+अटल अंतरभूत पूर्णांक vga_चयनeroo_init_करोमुख्य_pm_ops(काष्ठा device *dev, काष्ठा dev_pm_करोमुख्य *करोमुख्य) अणु वापस -EINVAL; पूर्ण
+अटल अंतरभूत व्योम vga_चयनeroo_fini_करोमुख्य_pm_ops(काष्ठा device *dev) अणुपूर्ण
 
-#endif
-#endif /* _LINUX_VGA_SWITCHEROO_H_ */
+#पूर्ण_अगर
+#पूर्ण_अगर /* _LINUX_VGA_SWITCHEROO_H_ */

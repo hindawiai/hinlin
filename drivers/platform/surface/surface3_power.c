@@ -1,439 +1,440 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Supports for the power IC on the Surface 3 tablet.
+ * Supports क्रम the घातer IC on the Surface 3 tablet.
  *
  * (C) Copyright 2016-2018 Red Hat, Inc
  * (C) Copyright 2016-2018 Benjamin Tissoires <benjamin.tissoires@gmail.com>
  * (C) Copyright 2016 Stephen Just <stephenjust@gmail.com>
  *
  * This driver has been reverse-engineered by parsing the DSDT of the Surface 3
- * and looking at the registers of the chips.
+ * and looking at the रेजिस्टरs of the chips.
  *
  * The DSDT allowed to find out that:
- * - the driver is required for the ACPI BAT0 device to communicate to the chip
+ * - the driver is required क्रम the ACPI BAT0 device to communicate to the chip
  *   through an operation region.
- * - the various defines for the operation region functions to communicate with
+ * - the various defines क्रम the operation region functions to communicate with
  *   this driver
  * - the DSM 3f99e367-6220-4955-8b0f-06ef2ae79412 allows to trigger ACPI
  *   events to BAT0 (the code is all available in the DSDT).
  *
  * Further findings regarding the 2 chips declared in the MSHW0011 are:
  * - there are 2 chips declared:
- *   . 0x22 seems to control the ADP1 line status (and probably the charger)
+ *   . 0x22 seems to control the ADP1 line status (and probably the अक्षरger)
  *   . 0x55 controls the battery directly
  * - the battery chip uses a SMBus protocol (using plain SMBus allows non
- *   destructive commands):
- *   . the commands/registers used are in the range 0x00..0x7F
- *   . if bit 8 (0x80) is set in the SMBus command, the returned value is the
+ *   deकाष्ठाive commands):
+ *   . the commands/रेजिस्टरs used are in the range 0x00..0x7F
+ *   . अगर bit 8 (0x80) is set in the SMBus command, the वापसed value is the
  *     same as when it is not set. There is a high chance this bit is the
- *     read/write
- *   . the various registers semantic as been deduced by observing the register
+ *     पढ़ो/ग_लिखो
+ *   . the various रेजिस्टरs semantic as been deduced by observing the रेजिस्टर
  *     dumps.
  */
 
-#include <linux/acpi.h>
-#include <linux/bits.h>
-#include <linux/freezer.h>
-#include <linux/i2c.h>
-#include <linux/kernel.h>
-#include <linux/kthread.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/uuid.h>
-#include <asm/unaligned.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/uuid.h>
+#समावेश <यंत्र/unaligned.h>
 
-#define SURFACE_3_POLL_INTERVAL		(2 * HZ)
-#define SURFACE_3_STRLEN		10
+#घोषणा SURFACE_3_POLL_INTERVAL		(2 * HZ)
+#घोषणा SURFACE_3_STRLEN		10
 
-struct mshw0011_data {
-	struct i2c_client	*adp1;
-	struct i2c_client	*bat0;
-	unsigned short		notify_mask;
-	struct task_struct	*poll_task;
-	bool			kthread_running;
+काष्ठा mshw0011_data अणु
+	काष्ठा i2c_client	*adp1;
+	काष्ठा i2c_client	*bat0;
+	अचिन्हित लघु		notअगरy_mask;
+	काष्ठा task_काष्ठा	*poll_task;
+	bool			kthपढ़ो_running;
 
-	bool			charging;
-	bool			bat_charging;
-	u8			trip_point;
+	bool			अक्षरging;
+	bool			bat_अक्षरging;
+	u8			trip_poपूर्णांक;
 	s32			full_capacity;
-};
+पूर्ण;
 
-struct mshw0011_handler_data {
-	struct acpi_connection_info	info;
-	struct i2c_client		*client;
-};
+काष्ठा mshw0011_handler_data अणु
+	काष्ठा acpi_connection_info	info;
+	काष्ठा i2c_client		*client;
+पूर्ण;
 
-struct bix {
+काष्ठा bix अणु
 	u32	revision;
-	u32	power_unit;
+	u32	घातer_unit;
 	u32	design_capacity;
-	u32	last_full_charg_capacity;
+	u32	last_full_अक्षरg_capacity;
 	u32	battery_technology;
 	u32	design_voltage;
 	u32	design_capacity_of_warning;
 	u32	design_capacity_of_low;
 	u32	cycle_count;
 	u32	measurement_accuracy;
-	u32	max_sampling_time;
-	u32	min_sampling_time;
-	u32	max_average_interval;
-	u32	min_average_interval;
+	u32	max_sampling_समय;
+	u32	min_sampling_समय;
+	u32	max_average_पूर्णांकerval;
+	u32	min_average_पूर्णांकerval;
 	u32	battery_capacity_granularity_1;
 	u32	battery_capacity_granularity_2;
-	char	model[SURFACE_3_STRLEN];
-	char	serial[SURFACE_3_STRLEN];
-	char	type[SURFACE_3_STRLEN];
-	char	OEM[SURFACE_3_STRLEN];
-} __packed;
+	अक्षर	model[SURFACE_3_STRLEN];
+	अक्षर	serial[SURFACE_3_STRLEN];
+	अक्षर	type[SURFACE_3_STRLEN];
+	अक्षर	OEM[SURFACE_3_STRLEN];
+पूर्ण __packed;
 
-struct bst {
+काष्ठा bst अणु
 	u32	battery_state;
 	s32	battery_present_rate;
-	u32	battery_remaining_capacity;
+	u32	battery_reमुख्यing_capacity;
 	u32	battery_present_voltage;
-} __packed;
+पूर्ण __packed;
 
-struct gsb_command {
+काष्ठा gsb_command अणु
 	u8	arg0;
 	u8	arg1;
 	u8	arg2;
-} __packed;
+पूर्ण __packed;
 
-struct gsb_buffer {
+काष्ठा gsb_buffer अणु
 	u8	status;
 	u8	len;
 	u8	ret;
-	union {
-		struct gsb_command	cmd;
-		struct bst		bst;
-		struct bix		bix;
-	} __packed;
-} __packed;
+	जोड़ अणु
+		काष्ठा gsb_command	cmd;
+		काष्ठा bst		bst;
+		काष्ठा bix		bix;
+	पूर्ण __packed;
+पूर्ण __packed;
 
-#define ACPI_BATTERY_STATE_DISCHARGING	BIT(0)
-#define ACPI_BATTERY_STATE_CHARGING	BIT(1)
-#define ACPI_BATTERY_STATE_CRITICAL	BIT(2)
+#घोषणा ACPI_BATTERY_STATE_DISCHARGING	BIT(0)
+#घोषणा ACPI_BATTERY_STATE_CHARGING	BIT(1)
+#घोषणा ACPI_BATTERY_STATE_CRITICAL	BIT(2)
 
-#define MSHW0011_CMD_DEST_BAT0		0x01
-#define MSHW0011_CMD_DEST_ADP1		0x03
+#घोषणा MSHW0011_CMD_DEST_BAT0		0x01
+#घोषणा MSHW0011_CMD_DEST_ADP1		0x03
 
-#define MSHW0011_CMD_BAT0_STA		0x01
-#define MSHW0011_CMD_BAT0_BIX		0x02
-#define MSHW0011_CMD_BAT0_BCT		0x03
-#define MSHW0011_CMD_BAT0_BTM		0x04
-#define MSHW0011_CMD_BAT0_BST		0x05
-#define MSHW0011_CMD_BAT0_BTP		0x06
-#define MSHW0011_CMD_ADP1_PSR		0x07
-#define MSHW0011_CMD_BAT0_PSOC		0x09
-#define MSHW0011_CMD_BAT0_PMAX		0x0a
-#define MSHW0011_CMD_BAT0_PSRC		0x0b
-#define MSHW0011_CMD_BAT0_CHGI		0x0c
-#define MSHW0011_CMD_BAT0_ARTG		0x0d
+#घोषणा MSHW0011_CMD_BAT0_STA		0x01
+#घोषणा MSHW0011_CMD_BAT0_BIX		0x02
+#घोषणा MSHW0011_CMD_BAT0_BCT		0x03
+#घोषणा MSHW0011_CMD_BAT0_BTM		0x04
+#घोषणा MSHW0011_CMD_BAT0_BST		0x05
+#घोषणा MSHW0011_CMD_BAT0_BTP		0x06
+#घोषणा MSHW0011_CMD_ADP1_PSR		0x07
+#घोषणा MSHW0011_CMD_BAT0_PSOC		0x09
+#घोषणा MSHW0011_CMD_BAT0_PMAX		0x0a
+#घोषणा MSHW0011_CMD_BAT0_PSRC		0x0b
+#घोषणा MSHW0011_CMD_BAT0_CHGI		0x0c
+#घोषणा MSHW0011_CMD_BAT0_ARTG		0x0d
 
-#define MSHW0011_NOTIFY_GET_VERSION	0x00
-#define MSHW0011_NOTIFY_ADP1		0x01
-#define MSHW0011_NOTIFY_BAT0_BST	0x02
-#define MSHW0011_NOTIFY_BAT0_BIX	0x05
+#घोषणा MSHW0011_NOTIFY_GET_VERSION	0x00
+#घोषणा MSHW0011_NOTIFY_ADP1		0x01
+#घोषणा MSHW0011_NOTIFY_BAT0_BST	0x02
+#घोषणा MSHW0011_NOTIFY_BAT0_BIX	0x05
 
-#define MSHW0011_ADP1_REG_PSR		0x04
+#घोषणा MSHW0011_ADP1_REG_PSR		0x04
 
-#define MSHW0011_BAT0_REG_CAPACITY		0x0c
-#define MSHW0011_BAT0_REG_FULL_CHG_CAPACITY	0x0e
-#define MSHW0011_BAT0_REG_DESIGN_CAPACITY	0x40
-#define MSHW0011_BAT0_REG_VOLTAGE	0x08
-#define MSHW0011_BAT0_REG_RATE		0x14
-#define MSHW0011_BAT0_REG_OEM		0x45
-#define MSHW0011_BAT0_REG_TYPE		0x4e
-#define MSHW0011_BAT0_REG_SERIAL_NO	0x56
-#define MSHW0011_BAT0_REG_CYCLE_CNT	0x6e
+#घोषणा MSHW0011_BAT0_REG_CAPACITY		0x0c
+#घोषणा MSHW0011_BAT0_REG_FULL_CHG_CAPACITY	0x0e
+#घोषणा MSHW0011_BAT0_REG_DESIGN_CAPACITY	0x40
+#घोषणा MSHW0011_BAT0_REG_VOLTAGE	0x08
+#घोषणा MSHW0011_BAT0_REG_RATE		0x14
+#घोषणा MSHW0011_BAT0_REG_OEM		0x45
+#घोषणा MSHW0011_BAT0_REG_TYPE		0x4e
+#घोषणा MSHW0011_BAT0_REG_SERIAL_NO	0x56
+#घोषणा MSHW0011_BAT0_REG_CYCLE_CNT	0x6e
 
-#define MSHW0011_EV_2_5_MASK		GENMASK(8, 0)
+#घोषणा MSHW0011_EV_2_5_MASK		GENMASK(8, 0)
 
 /* 3f99e367-6220-4955-8b0f-06ef2ae79412 */
-static const guid_t mshw0011_guid =
+अटल स्थिर guid_t mshw0011_guid =
 	GUID_INIT(0x3F99E367, 0x6220, 0x4955, 0x8B, 0x0F, 0x06, 0xEF,
 		  0x2A, 0xE7, 0x94, 0x12);
 
-static int
-mshw0011_notify(struct mshw0011_data *cdata, u8 arg1, u8 arg2,
-		unsigned int *ret_value)
-{
-	union acpi_object *obj;
-	struct acpi_device *adev;
+अटल पूर्णांक
+mshw0011_notअगरy(काष्ठा mshw0011_data *cdata, u8 arg1, u8 arg2,
+		अचिन्हित पूर्णांक *ret_value)
+अणु
+	जोड़ acpi_object *obj;
+	काष्ठा acpi_device *adev;
 	acpi_handle handle;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
 	handle = ACPI_HANDLE(&cdata->adp1->dev);
-	if (!handle || acpi_bus_get_device(handle, &adev))
-		return -ENODEV;
+	अगर (!handle || acpi_bus_get_device(handle, &adev))
+		वापस -ENODEV;
 
-	obj = acpi_evaluate_dsm_typed(handle, &mshw0011_guid, arg1, arg2, NULL,
+	obj = acpi_evaluate_dsm_typed(handle, &mshw0011_guid, arg1, arg2, शून्य,
 				      ACPI_TYPE_BUFFER);
-	if (!obj) {
+	अगर (!obj) अणु
 		dev_err(&cdata->adp1->dev, "device _DSM execution failed\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	*ret_value = 0;
-	for (i = 0; i < obj->buffer.length; i++)
-		*ret_value |= obj->buffer.pointer[i] << (i * 8);
+	क्रम (i = 0; i < obj->buffer.length; i++)
+		*ret_value |= obj->buffer.poपूर्णांकer[i] << (i * 8);
 
 	ACPI_FREE(obj);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct bix default_bix = {
+अटल स्थिर काष्ठा bix शेष_bix = अणु
 	.revision = 0x00,
-	.power_unit = 0x01,
+	.घातer_unit = 0x01,
 	.design_capacity = 0x1dca,
-	.last_full_charg_capacity = 0x1dca,
+	.last_full_अक्षरg_capacity = 0x1dca,
 	.battery_technology = 0x01,
 	.design_voltage = 0x10df,
 	.design_capacity_of_warning = 0x8f,
 	.design_capacity_of_low = 0x47,
 	.cycle_count = 0xffffffff,
 	.measurement_accuracy = 0x00015f90,
-	.max_sampling_time = 0x03e8,
-	.min_sampling_time = 0x03e8,
-	.max_average_interval = 0x03e8,
-	.min_average_interval = 0x03e8,
+	.max_sampling_समय = 0x03e8,
+	.min_sampling_समय = 0x03e8,
+	.max_average_पूर्णांकerval = 0x03e8,
+	.min_average_पूर्णांकerval = 0x03e8,
 	.battery_capacity_granularity_1 = 0x45,
 	.battery_capacity_granularity_2 = 0x11,
 	.model = "P11G8M",
 	.serial = "",
 	.type = "LION",
 	.OEM = "",
-};
+पूर्ण;
 
-static int mshw0011_bix(struct mshw0011_data *cdata, struct bix *bix)
-{
-	struct i2c_client *client = cdata->bat0;
-	char buf[SURFACE_3_STRLEN];
-	int ret;
+अटल पूर्णांक mshw0011_bix(काष्ठा mshw0011_data *cdata, काष्ठा bix *bix)
+अणु
+	काष्ठा i2c_client *client = cdata->bat0;
+	अक्षर buf[SURFACE_3_STRLEN];
+	पूर्णांक ret;
 
-	*bix = default_bix;
+	*bix = शेष_bix;
 
 	/* get design capacity */
-	ret = i2c_smbus_read_word_data(client,
+	ret = i2c_smbus_पढ़ो_word_data(client,
 				       MSHW0011_BAT0_REG_DESIGN_CAPACITY);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Error reading design capacity: %d\n",
 			ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	bix->design_capacity = ret;
 
-	/* get last full charge capacity */
-	ret = i2c_smbus_read_word_data(client,
+	/* get last full अक्षरge capacity */
+	ret = i2c_smbus_पढ़ो_word_data(client,
 				       MSHW0011_BAT0_REG_FULL_CHG_CAPACITY);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(&client->dev,
 			"Error reading last full charge capacity: %d\n", ret);
-		return ret;
-	}
-	bix->last_full_charg_capacity = ret;
+		वापस ret;
+	पूर्ण
+	bix->last_full_अक्षरg_capacity = ret;
 
 	/* get serial number */
-	ret = i2c_smbus_read_i2c_block_data(client, MSHW0011_BAT0_REG_SERIAL_NO,
-					    sizeof(buf), buf);
-	if (ret != sizeof(buf)) {
+	ret = i2c_smbus_पढ़ो_i2c_block_data(client, MSHW0011_BAT0_REG_SERIAL_NO,
+					    माप(buf), buf);
+	अगर (ret != माप(buf)) अणु
 		dev_err(&client->dev, "Error reading serial no: %d\n", ret);
-		return ret;
-	}
-	snprintf(bix->serial, ARRAY_SIZE(bix->serial), "%3pE%6pE", buf + 7, buf);
+		वापस ret;
+	पूर्ण
+	snम_लिखो(bix->serial, ARRAY_SIZE(bix->serial), "%3pE%6pE", buf + 7, buf);
 
 	/* get cycle count */
-	ret = i2c_smbus_read_word_data(client, MSHW0011_BAT0_REG_CYCLE_CNT);
-	if (ret < 0) {
+	ret = i2c_smbus_पढ़ो_word_data(client, MSHW0011_BAT0_REG_CYCLE_CNT);
+	अगर (ret < 0) अणु
 		dev_err(&client->dev, "Error reading cycle count: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	bix->cycle_count = ret;
 
 	/* get OEM name */
-	ret = i2c_smbus_read_i2c_block_data(client, MSHW0011_BAT0_REG_OEM,
+	ret = i2c_smbus_पढ़ो_i2c_block_data(client, MSHW0011_BAT0_REG_OEM,
 					    4, buf);
-	if (ret != 4) {
+	अगर (ret != 4) अणु
 		dev_err(&client->dev, "Error reading cycle count: %d\n", ret);
-		return ret;
-	}
-	snprintf(bix->OEM, ARRAY_SIZE(bix->OEM), "%3pE", buf);
+		वापस ret;
+	पूर्ण
+	snम_लिखो(bix->OEM, ARRAY_SIZE(bix->OEM), "%3pE", buf);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mshw0011_bst(struct mshw0011_data *cdata, struct bst *bst)
-{
-	struct i2c_client *client = cdata->bat0;
-	int rate, capacity, voltage, state;
-	s16 tmp;
+अटल पूर्णांक mshw0011_bst(काष्ठा mshw0011_data *cdata, काष्ठा bst *bst)
+अणु
+	काष्ठा i2c_client *client = cdata->bat0;
+	पूर्णांक rate, capacity, voltage, state;
+	s16 पंचांगp;
 
-	rate = i2c_smbus_read_word_data(client, MSHW0011_BAT0_REG_RATE);
-	if (rate < 0)
-		return rate;
+	rate = i2c_smbus_पढ़ो_word_data(client, MSHW0011_BAT0_REG_RATE);
+	अगर (rate < 0)
+		वापस rate;
 
-	capacity = i2c_smbus_read_word_data(client, MSHW0011_BAT0_REG_CAPACITY);
-	if (capacity < 0)
-		return capacity;
+	capacity = i2c_smbus_पढ़ो_word_data(client, MSHW0011_BAT0_REG_CAPACITY);
+	अगर (capacity < 0)
+		वापस capacity;
 
-	voltage = i2c_smbus_read_word_data(client, MSHW0011_BAT0_REG_VOLTAGE);
-	if (voltage < 0)
-		return voltage;
+	voltage = i2c_smbus_पढ़ो_word_data(client, MSHW0011_BAT0_REG_VOLTAGE);
+	अगर (voltage < 0)
+		वापस voltage;
 
-	tmp = rate;
-	bst->battery_present_rate = abs((s32)tmp);
+	पंचांगp = rate;
+	bst->battery_present_rate = असल((s32)पंचांगp);
 
 	state = 0;
-	if ((s32) tmp > 0)
+	अगर ((s32) पंचांगp > 0)
 		state |= ACPI_BATTERY_STATE_CHARGING;
-	else if ((s32) tmp < 0)
+	अन्यथा अगर ((s32) पंचांगp < 0)
 		state |= ACPI_BATTERY_STATE_DISCHARGING;
 	bst->battery_state = state;
 
-	bst->battery_remaining_capacity = capacity;
+	bst->battery_reमुख्यing_capacity = capacity;
 	bst->battery_present_voltage = voltage;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mshw0011_adp_psr(struct mshw0011_data *cdata)
-{
-	return i2c_smbus_read_byte_data(cdata->adp1, MSHW0011_ADP1_REG_PSR);
-}
+अटल पूर्णांक mshw0011_adp_psr(काष्ठा mshw0011_data *cdata)
+अणु
+	वापस i2c_smbus_पढ़ो_byte_data(cdata->adp1, MSHW0011_ADP1_REG_PSR);
+पूर्ण
 
-static int mshw0011_isr(struct mshw0011_data *cdata)
-{
-	struct bst bst;
-	struct bix bix;
-	int ret;
+अटल पूर्णांक mshw0011_isr(काष्ठा mshw0011_data *cdata)
+अणु
+	काष्ठा bst bst;
+	काष्ठा bix bix;
+	पूर्णांक ret;
 	bool status, bat_status;
 
 	ret = mshw0011_adp_psr(cdata);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	status = ret;
-	if (status != cdata->charging)
-		mshw0011_notify(cdata, cdata->notify_mask,
+	अगर (status != cdata->अक्षरging)
+		mshw0011_notअगरy(cdata, cdata->notअगरy_mask,
 				MSHW0011_NOTIFY_ADP1, &ret);
 
-	cdata->charging = status;
+	cdata->अक्षरging = status;
 
 	ret = mshw0011_bst(cdata, &bst);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	bat_status = bst.battery_state;
-	if (bat_status != cdata->bat_charging)
-		mshw0011_notify(cdata, cdata->notify_mask,
+	अगर (bat_status != cdata->bat_अक्षरging)
+		mshw0011_notअगरy(cdata, cdata->notअगरy_mask,
 				MSHW0011_NOTIFY_BAT0_BST, &ret);
 
-	cdata->bat_charging = bat_status;
+	cdata->bat_अक्षरging = bat_status;
 
 	ret = mshw0011_bix(cdata, &bix);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (bix.last_full_charg_capacity != cdata->full_capacity)
-		mshw0011_notify(cdata, cdata->notify_mask,
+	अगर (bix.last_full_अक्षरg_capacity != cdata->full_capacity)
+		mshw0011_notअगरy(cdata, cdata->notअगरy_mask,
 				MSHW0011_NOTIFY_BAT0_BIX, &ret);
 
-	cdata->full_capacity = bix.last_full_charg_capacity;
+	cdata->full_capacity = bix.last_full_अक्षरg_capacity;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mshw0011_poll_task(void *data)
-{
-	struct mshw0011_data *cdata = data;
-	int ret = 0;
+अटल पूर्णांक mshw0011_poll_task(व्योम *data)
+अणु
+	काष्ठा mshw0011_data *cdata = data;
+	पूर्णांक ret = 0;
 
-	cdata->kthread_running = true;
+	cdata->kthपढ़ो_running = true;
 
-	set_freezable();
+	set_मुक्तzable();
 
-	while (!kthread_should_stop()) {
-		schedule_timeout_interruptible(SURFACE_3_POLL_INTERVAL);
-		try_to_freeze();
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		schedule_समयout_पूर्णांकerruptible(SURFACE_3_POLL_INTERVAL);
+		try_to_मुक्तze();
 		ret = mshw0011_isr(data);
-		if (ret)
-			break;
-	}
+		अगर (ret)
+			अवरोध;
+	पूर्ण
 
-	cdata->kthread_running = false;
-	return ret;
-}
+	cdata->kthपढ़ो_running = false;
+	वापस ret;
+पूर्ण
 
-static acpi_status
+अटल acpi_status
 mshw0011_space_handler(u32 function, acpi_physical_address command,
 			u32 bits, u64 *value64,
-			void *handler_context, void *region_context)
-{
-	struct gsb_buffer *gsb = (struct gsb_buffer *)value64;
-	struct mshw0011_handler_data *data = handler_context;
-	struct acpi_connection_info *info = &data->info;
-	struct acpi_resource_i2c_serialbus *sb;
-	struct i2c_client *client = data->client;
-	struct mshw0011_data *cdata = i2c_get_clientdata(client);
-	struct acpi_resource *ares;
+			व्योम *handler_context, व्योम *region_context)
+अणु
+	काष्ठा gsb_buffer *gsb = (काष्ठा gsb_buffer *)value64;
+	काष्ठा mshw0011_handler_data *data = handler_context;
+	काष्ठा acpi_connection_info *info = &data->info;
+	काष्ठा acpi_resource_i2c_serialbus *sb;
+	काष्ठा i2c_client *client = data->client;
+	काष्ठा mshw0011_data *cdata = i2c_get_clientdata(client);
+	काष्ठा acpi_resource *ares;
 	u32 accessor_type = function >> 16;
 	acpi_status ret;
-	int status = 1;
+	पूर्णांक status = 1;
 
 	ret = acpi_buffer_to_resource(info->connection, info->length, &ares);
-	if (ACPI_FAILURE(ret))
-		return ret;
+	अगर (ACPI_FAILURE(ret))
+		वापस ret;
 
-	if (!value64 || ares->type != ACPI_RESOURCE_TYPE_SERIAL_BUS) {
+	अगर (!value64 || ares->type != ACPI_RESOURCE_TYPE_SERIAL_BUS) अणु
 		ret = AE_BAD_PARAMETER;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	sb = &ares->data.i2c_serial_bus;
-	if (sb->type != ACPI_RESOURCE_SERIAL_TYPE_I2C) {
+	अगर (sb->type != ACPI_RESOURCE_SERIAL_TYPE_I2C) अणु
 		ret = AE_BAD_PARAMETER;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (accessor_type != ACPI_GSB_ACCESS_ATTRIB_RAW_PROCESS) {
+	अगर (accessor_type != ACPI_GSB_ACCESS_ATTRIB_RAW_PROCESS) अणु
 		ret = AE_BAD_PARAMETER;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (gsb->cmd.arg0 == MSHW0011_CMD_DEST_ADP1 &&
-	    gsb->cmd.arg1 == MSHW0011_CMD_ADP1_PSR) {
+	अगर (gsb->cmd.arg0 == MSHW0011_CMD_DEST_ADP1 &&
+	    gsb->cmd.arg1 == MSHW0011_CMD_ADP1_PSR) अणु
 		status = mshw0011_adp_psr(cdata);
-		if (status >= 0) {
+		अगर (status >= 0) अणु
 			ret = AE_OK;
-			goto out;
-		} else {
+			जाओ out;
+		पूर्ण अन्यथा अणु
 			ret = AE_ERROR;
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	if (gsb->cmd.arg0 != MSHW0011_CMD_DEST_BAT0) {
+	अगर (gsb->cmd.arg0 != MSHW0011_CMD_DEST_BAT0) अणु
 		ret = AE_BAD_PARAMETER;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	switch (gsb->cmd.arg1) {
-	case MSHW0011_CMD_BAT0_STA:
-		break;
-	case MSHW0011_CMD_BAT0_BIX:
+	चयन (gsb->cmd.arg1) अणु
+	हाल MSHW0011_CMD_BAT0_STA:
+		अवरोध;
+	हाल MSHW0011_CMD_BAT0_BIX:
 		ret = mshw0011_bix(cdata, &gsb->bix);
-		break;
-	case MSHW0011_CMD_BAT0_BTP:
-		cdata->trip_point = gsb->cmd.arg2;
-		break;
-	case MSHW0011_CMD_BAT0_BST:
+		अवरोध;
+	हाल MSHW0011_CMD_BAT0_BTP:
+		cdata->trip_poपूर्णांक = gsb->cmd.arg2;
+		अवरोध;
+	हाल MSHW0011_CMD_BAT0_BST:
 		ret = mshw0011_bst(cdata, &gsb->bst);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_info(&cdata->bat0->dev, "command(0x%02x) is not supported.\n", gsb->cmd.arg1);
 		ret = AE_BAD_PARAMETER;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
  out:
 	gsb->ret = status;
@@ -441,147 +442,147 @@ mshw0011_space_handler(u32 function, acpi_physical_address command,
 
  err:
 	ACPI_FREE(ares);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int mshw0011_install_space_handler(struct i2c_client *client)
-{
+अटल पूर्णांक mshw0011_install_space_handler(काष्ठा i2c_client *client)
+अणु
 	acpi_handle handle;
-	struct mshw0011_handler_data *data;
+	काष्ठा mshw0011_handler_data *data;
 	acpi_status status;
 
 	handle = ACPI_HANDLE(&client->dev);
-	if (!handle)
-		return -ENODEV;
+	अगर (!handle)
+		वापस -ENODEV;
 
-	data = kzalloc(sizeof(struct mshw0011_handler_data),
+	data = kzalloc(माप(काष्ठा mshw0011_handler_data),
 			    GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->client = client;
-	status = acpi_bus_attach_private_data(handle, (void *)data);
-	if (ACPI_FAILURE(status)) {
-		kfree(data);
-		return -ENOMEM;
-	}
+	status = acpi_bus_attach_निजी_data(handle, (व्योम *)data);
+	अगर (ACPI_FAILURE(status)) अणु
+		kमुक्त(data);
+		वापस -ENOMEM;
+	पूर्ण
 
 	status = acpi_install_address_space_handler(handle,
 				ACPI_ADR_SPACE_GSBUS,
 				&mshw0011_space_handler,
-				NULL,
+				शून्य,
 				data);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		dev_err(&client->dev, "Error installing i2c space handler\n");
-		acpi_bus_detach_private_data(handle);
-		kfree(data);
-		return -ENOMEM;
-	}
+		acpi_bus_detach_निजी_data(handle);
+		kमुक्त(data);
+		वापस -ENOMEM;
+	पूर्ण
 
 	acpi_walk_dep_device_list(handle);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void mshw0011_remove_space_handler(struct i2c_client *client)
-{
-	struct mshw0011_handler_data *data;
+अटल व्योम mshw0011_हटाओ_space_handler(काष्ठा i2c_client *client)
+अणु
+	काष्ठा mshw0011_handler_data *data;
 	acpi_handle handle;
 	acpi_status status;
 
 	handle = ACPI_HANDLE(&client->dev);
-	if (!handle)
-		return;
+	अगर (!handle)
+		वापस;
 
-	acpi_remove_address_space_handler(handle,
+	acpi_हटाओ_address_space_handler(handle,
 				ACPI_ADR_SPACE_GSBUS,
 				&mshw0011_space_handler);
 
-	status = acpi_bus_get_private_data(handle, (void **)&data);
-	if (ACPI_SUCCESS(status))
-		kfree(data);
+	status = acpi_bus_get_निजी_data(handle, (व्योम **)&data);
+	अगर (ACPI_SUCCESS(status))
+		kमुक्त(data);
 
-	acpi_bus_detach_private_data(handle);
-}
+	acpi_bus_detach_निजी_data(handle);
+पूर्ण
 
-static int mshw0011_probe(struct i2c_client *client)
-{
-	struct i2c_board_info board_info;
-	struct device *dev = &client->dev;
-	struct i2c_client *bat0;
-	struct mshw0011_data *data;
-	int error, mask;
+अटल पूर्णांक mshw0011_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा i2c_board_info board_info;
+	काष्ठा device *dev = &client->dev;
+	काष्ठा i2c_client *bat0;
+	काष्ठा mshw0011_data *data;
+	पूर्णांक error, mask;
 
-	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->adp1 = client;
 	i2c_set_clientdata(client, data);
 
-	memset(&board_info, 0, sizeof(board_info));
+	स_रखो(&board_info, 0, माप(board_info));
 	strlcpy(board_info.type, "MSHW0011-bat0", I2C_NAME_SIZE);
 
 	bat0 = i2c_acpi_new_device(dev, 1, &board_info);
-	if (IS_ERR(bat0))
-		return PTR_ERR(bat0);
+	अगर (IS_ERR(bat0))
+		वापस PTR_ERR(bat0);
 
 	data->bat0 = bat0;
 	i2c_set_clientdata(bat0, data);
 
-	error = mshw0011_notify(data, 1, MSHW0011_NOTIFY_GET_VERSION, &mask);
-	if (error)
-		goto out_err;
+	error = mshw0011_notअगरy(data, 1, MSHW0011_NOTIFY_GET_VERSION, &mask);
+	अगर (error)
+		जाओ out_err;
 
-	data->notify_mask = mask == MSHW0011_EV_2_5_MASK;
+	data->notअगरy_mask = mask == MSHW0011_EV_2_5_MASK;
 
-	data->poll_task = kthread_run(mshw0011_poll_task, data, "mshw0011_adp");
-	if (IS_ERR(data->poll_task)) {
+	data->poll_task = kthपढ़ो_run(mshw0011_poll_task, data, "mshw0011_adp");
+	अगर (IS_ERR(data->poll_task)) अणु
 		error = PTR_ERR(data->poll_task);
 		dev_err(&client->dev, "Unable to run kthread err %d\n", error);
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	error = mshw0011_install_space_handler(client);
-	if (error)
-		goto out_err;
+	अगर (error)
+		जाओ out_err;
 
-	return 0;
+	वापस 0;
 
 out_err:
-	if (data->kthread_running)
-		kthread_stop(data->poll_task);
-	i2c_unregister_device(data->bat0);
-	return error;
-}
+	अगर (data->kthपढ़ो_running)
+		kthपढ़ो_stop(data->poll_task);
+	i2c_unरेजिस्टर_device(data->bat0);
+	वापस error;
+पूर्ण
 
-static int mshw0011_remove(struct i2c_client *client)
-{
-	struct mshw0011_data *cdata = i2c_get_clientdata(client);
+अटल पूर्णांक mshw0011_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा mshw0011_data *cdata = i2c_get_clientdata(client);
 
-	mshw0011_remove_space_handler(client);
+	mshw0011_हटाओ_space_handler(client);
 
-	if (cdata->kthread_running)
-		kthread_stop(cdata->poll_task);
+	अगर (cdata->kthपढ़ो_running)
+		kthपढ़ो_stop(cdata->poll_task);
 
-	i2c_unregister_device(cdata->bat0);
+	i2c_unरेजिस्टर_device(cdata->bat0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id mshw0011_acpi_match[] = {
-	{ "MSHW0011", 0 },
-	{ }
-};
+अटल स्थिर काष्ठा acpi_device_id mshw0011_acpi_match[] = अणु
+	अणु "MSHW0011", 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, mshw0011_acpi_match);
 
-static struct i2c_driver mshw0011_driver = {
+अटल काष्ठा i2c_driver mshw0011_driver = अणु
 	.probe_new = mshw0011_probe,
-	.remove = mshw0011_remove,
-	.driver = {
+	.हटाओ = mshw0011_हटाओ,
+	.driver = अणु
 		.name = "mshw0011",
 		.acpi_match_table = mshw0011_acpi_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 module_i2c_driver(mshw0011_driver);
 
 MODULE_AUTHOR("Benjamin Tissoires <benjamin.tissoires@gmail.com>");

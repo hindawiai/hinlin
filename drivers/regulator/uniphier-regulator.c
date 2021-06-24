@@ -1,94 +1,95 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Regulator controller driver for UniPhier SoC
+// Regulator controller driver क्रम UniPhier SoC
 // Copyright 2018 Socionext Inc.
 // Author: Kunihiko Hayashi <hayashi.kunihiko@socionext.com>
 
-#include <linux/clk.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
-#include <linux/platform_device.h>
-#include <linux/regmap.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/of_regulator.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/of_regulator.h>
+#समावेश <linux/reset.h>
 
-#define MAX_CLKS	2
-#define MAX_RSTS	2
+#घोषणा MAX_CLKS	2
+#घोषणा MAX_RSTS	2
 
-struct uniphier_regulator_soc_data {
-	int nclks;
-	const char * const *clock_names;
-	int nrsts;
-	const char * const *reset_names;
-	const struct regulator_desc *desc;
-	const struct regmap_config *regconf;
-};
+काष्ठा uniphier_regulator_soc_data अणु
+	पूर्णांक nclks;
+	स्थिर अक्षर * स्थिर *घड़ी_names;
+	पूर्णांक nrsts;
+	स्थिर अक्षर * स्थिर *reset_names;
+	स्थिर काष्ठा regulator_desc *desc;
+	स्थिर काष्ठा regmap_config *regconf;
+पूर्ण;
 
-struct uniphier_regulator_priv {
-	struct clk_bulk_data clk[MAX_CLKS];
-	struct reset_control *rst[MAX_RSTS];
-	const struct uniphier_regulator_soc_data *data;
-};
+काष्ठा uniphier_regulator_priv अणु
+	काष्ठा clk_bulk_data clk[MAX_CLKS];
+	काष्ठा reset_control *rst[MAX_RSTS];
+	स्थिर काष्ठा uniphier_regulator_soc_data *data;
+पूर्ण;
 
-static const struct regulator_ops uniphier_regulator_ops = {
+अटल स्थिर काष्ठा regulator_ops uniphier_regulator_ops = अणु
 	.enable     = regulator_enable_regmap,
 	.disable    = regulator_disable_regmap,
 	.is_enabled = regulator_is_enabled_regmap,
-};
+पूर्ण;
 
-static int uniphier_regulator_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct uniphier_regulator_priv *priv;
-	struct regulator_config config = { };
-	struct regulator_dev *rdev;
-	struct regmap *regmap;
-	void __iomem *base;
-	const char *name;
-	int i, ret, nr;
+अटल पूर्णांक uniphier_regulator_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा uniphier_regulator_priv *priv;
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा regulator_dev *rdev;
+	काष्ठा regmap *regmap;
+	व्योम __iomem *base;
+	स्थिर अक्षर *name;
+	पूर्णांक i, ret, nr;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
 	priv->data = of_device_get_match_data(dev);
-	if (WARN_ON(!priv->data))
-		return -EINVAL;
+	अगर (WARN_ON(!priv->data))
+		वापस -EINVAL;
 
-	base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
-	for (i = 0; i < priv->data->nclks; i++)
-		priv->clk[i].id = priv->data->clock_names[i];
+	क्रम (i = 0; i < priv->data->nclks; i++)
+		priv->clk[i].id = priv->data->घड़ी_names[i];
 	ret = devm_clk_bulk_get(dev, priv->data->nclks, priv->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < priv->data->nrsts; i++) {
+	क्रम (i = 0; i < priv->data->nrsts; i++) अणु
 		name = priv->data->reset_names[i];
 		priv->rst[i] = devm_reset_control_get_shared(dev, name);
-		if (IS_ERR(priv->rst[i]))
-			return PTR_ERR(priv->rst[i]);
-	}
+		अगर (IS_ERR(priv->rst[i]))
+			वापस PTR_ERR(priv->rst[i]);
+	पूर्ण
 
 	ret = clk_bulk_prepare_enable(priv->data->nclks, priv->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (nr = 0; nr < priv->data->nrsts; nr++) {
-		ret = reset_control_deassert(priv->rst[nr]);
-		if (ret)
-			goto out_rst_assert;
-	}
+	क्रम (nr = 0; nr < priv->data->nrsts; nr++) अणु
+		ret = reset_control_deनिश्चित(priv->rst[nr]);
+		अगर (ret)
+			जाओ out_rst_निश्चित;
+	पूर्ण
 
 	regmap = devm_regmap_init_mmio(dev, base, priv->data->regconf);
-	if (IS_ERR(regmap)) {
+	अगर (IS_ERR(regmap)) अणु
 		ret = PTR_ERR(regmap);
-		goto out_rst_assert;
-	}
+		जाओ out_rst_निश्चित;
+	पूर्ण
 
 	config.dev = dev;
 	config.driver_data = priv;
@@ -96,43 +97,43 @@ static int uniphier_regulator_probe(struct platform_device *pdev)
 	config.regmap = regmap;
 	config.init_data = of_get_regulator_init_data(dev, dev->of_node,
 						      priv->data->desc);
-	rdev = devm_regulator_register(dev, priv->data->desc, &config);
-	if (IS_ERR(rdev)) {
+	rdev = devm_regulator_रेजिस्टर(dev, priv->data->desc, &config);
+	अगर (IS_ERR(rdev)) अणु
 		ret = PTR_ERR(rdev);
-		goto out_rst_assert;
-	}
+		जाओ out_rst_निश्चित;
+	पूर्ण
 
-	platform_set_drvdata(pdev, priv);
+	platक्रमm_set_drvdata(pdev, priv);
 
-	return 0;
+	वापस 0;
 
-out_rst_assert:
-	while (nr--)
-		reset_control_assert(priv->rst[nr]);
-
-	clk_bulk_disable_unprepare(priv->data->nclks, priv->clk);
-
-	return ret;
-}
-
-static int uniphier_regulator_remove(struct platform_device *pdev)
-{
-	struct uniphier_regulator_priv *priv = platform_get_drvdata(pdev);
-	int i;
-
-	for (i = 0; i < priv->data->nrsts; i++)
-		reset_control_assert(priv->rst[i]);
+out_rst_निश्चित:
+	जबतक (nr--)
+		reset_control_निश्चित(priv->rst[nr]);
 
 	clk_bulk_disable_unprepare(priv->data->nclks, priv->clk);
 
-	return 0;
-}
+	वापस ret;
+पूर्ण
+
+अटल पूर्णांक uniphier_regulator_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा uniphier_regulator_priv *priv = platक्रमm_get_drvdata(pdev);
+	पूर्णांक i;
+
+	क्रम (i = 0; i < priv->data->nrsts; i++)
+		reset_control_निश्चित(priv->rst[i]);
+
+	clk_bulk_disable_unprepare(priv->data->nclks, priv->clk);
+
+	वापस 0;
+पूर्ण
 
 /* USB3 controller data */
-#define USB3VBUS_OFFSET		0x0
-#define USB3VBUS_REG		BIT(4)
-#define USB3VBUS_REG_EN		BIT(3)
-static const struct regulator_desc uniphier_usb3_regulator_desc = {
+#घोषणा USB3VBUS_OFFSET		0x0
+#घोषणा USB3VBUS_REG		BIT(4)
+#घोषणा USB3VBUS_REG_EN		BIT(3)
+अटल स्थिर काष्ठा regulator_desc uniphier_usb3_regulator_desc = अणु
 	.name = "vbus",
 	.of_match = of_match_ptr("vbus"),
 	.ops = &uniphier_regulator_ops,
@@ -142,75 +143,75 @@ static const struct regulator_desc uniphier_usb3_regulator_desc = {
 	.enable_mask = USB3VBUS_REG_EN | USB3VBUS_REG,
 	.enable_val  = USB3VBUS_REG_EN | USB3VBUS_REG,
 	.disable_val = USB3VBUS_REG_EN,
-};
+पूर्ण;
 
-static const struct regmap_config uniphier_usb3_regulator_regconf = {
+अटल स्थिर काष्ठा regmap_config uniphier_usb3_regulator_regconf = अणु
 	.reg_bits = 32,
 	.val_bits = 32,
 	.reg_stride = 4,
-	.max_register = 1,
-};
+	.max_रेजिस्टर = 1,
+पूर्ण;
 
-static const char * const uniphier_pro4_clock_reset_names[] = {
+अटल स्थिर अक्षर * स्थिर uniphier_pro4_घड़ी_reset_names[] = अणु
 	"gio", "link",
-};
+पूर्ण;
 
-static const struct uniphier_regulator_soc_data uniphier_pro4_usb3_data = {
-	.nclks = ARRAY_SIZE(uniphier_pro4_clock_reset_names),
-	.clock_names = uniphier_pro4_clock_reset_names,
-	.nrsts = ARRAY_SIZE(uniphier_pro4_clock_reset_names),
-	.reset_names = uniphier_pro4_clock_reset_names,
+अटल स्थिर काष्ठा uniphier_regulator_soc_data uniphier_pro4_usb3_data = अणु
+	.nclks = ARRAY_SIZE(uniphier_pro4_घड़ी_reset_names),
+	.घड़ी_names = uniphier_pro4_घड़ी_reset_names,
+	.nrsts = ARRAY_SIZE(uniphier_pro4_घड़ी_reset_names),
+	.reset_names = uniphier_pro4_घड़ी_reset_names,
 	.desc = &uniphier_usb3_regulator_desc,
 	.regconf = &uniphier_usb3_regulator_regconf,
-};
+पूर्ण;
 
-static const char * const uniphier_pxs2_clock_reset_names[] = {
+अटल स्थिर अक्षर * स्थिर uniphier_pxs2_घड़ी_reset_names[] = अणु
 	"link",
-};
+पूर्ण;
 
-static const struct uniphier_regulator_soc_data uniphier_pxs2_usb3_data = {
-	.nclks = ARRAY_SIZE(uniphier_pxs2_clock_reset_names),
-	.clock_names = uniphier_pxs2_clock_reset_names,
-	.nrsts = ARRAY_SIZE(uniphier_pxs2_clock_reset_names),
-	.reset_names = uniphier_pxs2_clock_reset_names,
+अटल स्थिर काष्ठा uniphier_regulator_soc_data uniphier_pxs2_usb3_data = अणु
+	.nclks = ARRAY_SIZE(uniphier_pxs2_घड़ी_reset_names),
+	.घड़ी_names = uniphier_pxs2_घड़ी_reset_names,
+	.nrsts = ARRAY_SIZE(uniphier_pxs2_घड़ी_reset_names),
+	.reset_names = uniphier_pxs2_घड़ी_reset_names,
 	.desc = &uniphier_usb3_regulator_desc,
 	.regconf = &uniphier_usb3_regulator_regconf,
-};
+पूर्ण;
 
-static const struct of_device_id uniphier_regulator_match[] = {
+अटल स्थिर काष्ठा of_device_id uniphier_regulator_match[] = अणु
 	/* USB VBUS */
-	{
+	अणु
 		.compatible = "socionext,uniphier-pro4-usb3-regulator",
 		.data = &uniphier_pro4_usb3_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "socionext,uniphier-pro5-usb3-regulator",
 		.data = &uniphier_pro4_usb3_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "socionext,uniphier-pxs2-usb3-regulator",
 		.data = &uniphier_pxs2_usb3_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "socionext,uniphier-ld20-usb3-regulator",
 		.data = &uniphier_pxs2_usb3_data,
-	},
-	{
+	पूर्ण,
+	अणु
 		.compatible = "socionext,uniphier-pxs3-usb3-regulator",
 		.data = &uniphier_pxs2_usb3_data,
-	},
-	{ /* Sentinel */ },
-};
+	पूर्ण,
+	अणु /* Sentinel */ पूर्ण,
+पूर्ण;
 
-static struct platform_driver uniphier_regulator_driver = {
+अटल काष्ठा platक्रमm_driver uniphier_regulator_driver = अणु
 	.probe = uniphier_regulator_probe,
-	.remove = uniphier_regulator_remove,
-	.driver = {
+	.हटाओ = uniphier_regulator_हटाओ,
+	.driver = अणु
 		.name  = "uniphier-regulator",
 		.of_match_table = uniphier_regulator_match,
-	},
-};
-module_platform_driver(uniphier_regulator_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(uniphier_regulator_driver);
 
 MODULE_AUTHOR("Kunihiko Hayashi <hayashi.kunihiko@socionext.com>");
 MODULE_DESCRIPTION("UniPhier Regulator Controller Driver");

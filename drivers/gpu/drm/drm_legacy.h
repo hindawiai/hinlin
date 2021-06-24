@@ -1,15 +1,16 @@
-#ifndef __DRM_LEGACY_H__
-#define __DRM_LEGACY_H__
+<शैली गुरु>
+#अगर_अघोषित __DRM_LEGACY_H__
+#घोषणा __DRM_LEGACY_H__
 
 /*
  * Copyright (c) 2014 David Herrmann <dh.herrmann@gmail.com>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,191 +25,191 @@
  */
 
 /*
- * This file contains legacy interfaces that modern drm drivers
- * should no longer be using. They cannot be removed as legacy
- * drivers use them, and removing them are API breaks.
+ * This file contains legacy पूर्णांकerfaces that modern drm drivers
+ * should no दीर्घer be using. They cannot be हटाओd as legacy
+ * drivers use them, and removing them are API अवरोधs.
  */
-#include <linux/list.h>
+#समावेश <linux/list.h>
 
-#include <drm/drm.h>
-#include <drm/drm_device.h>
-#include <drm/drm_legacy.h>
+#समावेश <drm/drm.h>
+#समावेश <drm/drm_device.h>
+#समावेश <drm/drm_legacy.h>
 
-struct agp_memory;
-struct drm_device;
-struct drm_file;
-struct drm_buf_desc;
+काष्ठा agp_memory;
+काष्ठा drm_device;
+काष्ठा drm_file;
+काष्ठा drm_buf_desc;
 
 /*
  * Generic DRM Contexts
  */
 
-#define DRM_KERNEL_CONTEXT		0
-#define DRM_RESERVED_CONTEXTS		1
+#घोषणा DRM_KERNEL_CONTEXT		0
+#घोषणा DRM_RESERVED_CONTEXTS		1
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-void drm_legacy_ctxbitmap_init(struct drm_device *dev);
-void drm_legacy_ctxbitmap_cleanup(struct drm_device *dev);
-void drm_legacy_ctxbitmap_flush(struct drm_device *dev, struct drm_file *file);
-#else
-static inline void drm_legacy_ctxbitmap_init(struct drm_device *dev) {}
-static inline void drm_legacy_ctxbitmap_cleanup(struct drm_device *dev) {}
-static inline void drm_legacy_ctxbitmap_flush(struct drm_device *dev, struct drm_file *file) {}
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+व्योम drm_legacy_ctxbiपंचांगap_init(काष्ठा drm_device *dev);
+व्योम drm_legacy_ctxbiपंचांगap_cleanup(काष्ठा drm_device *dev);
+व्योम drm_legacy_ctxbiपंचांगap_flush(काष्ठा drm_device *dev, काष्ठा drm_file *file);
+#अन्यथा
+अटल अंतरभूत व्योम drm_legacy_ctxbiपंचांगap_init(काष्ठा drm_device *dev) अणुपूर्ण
+अटल अंतरभूत व्योम drm_legacy_ctxbiपंचांगap_cleanup(काष्ठा drm_device *dev) अणुपूर्ण
+अटल अंतरभूत व्योम drm_legacy_ctxbiपंचांगap_flush(काष्ठा drm_device *dev, काष्ठा drm_file *file) अणुपूर्ण
+#पूर्ण_अगर
 
-void drm_legacy_ctxbitmap_free(struct drm_device *dev, int ctx_handle);
+व्योम drm_legacy_ctxbiपंचांगap_मुक्त(काष्ठा drm_device *dev, पूर्णांक ctx_handle);
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-int drm_legacy_resctx(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_addctx(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_getctx(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_switchctx(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_newctx(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_rmctx(struct drm_device *d, void *v, struct drm_file *f);
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+पूर्णांक drm_legacy_resctx(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_addctx(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_अ_लोtx(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_चयनctx(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_newctx(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_rmctx(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
 
-int drm_legacy_setsareactx(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_getsareactx(struct drm_device *d, void *v, struct drm_file *f);
-#endif
+पूर्णांक drm_legacy_setsareactx(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_माला_लोareactx(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+#पूर्ण_अगर
 
 /*
  * Generic Buffer Management
  */
 
-#define DRM_MAP_HASH_OFFSET 0x10000000
+#घोषणा DRM_MAP_HASH_OFFSET 0x10000000
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-static inline int drm_legacy_create_map_hash(struct drm_device *dev)
-{
-	return drm_ht_create(&dev->map_hash, 12);
-}
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+अटल अंतरभूत पूर्णांक drm_legacy_create_map_hash(काष्ठा drm_device *dev)
+अणु
+	वापस drm_ht_create(&dev->map_hash, 12);
+पूर्ण
 
-static inline void drm_legacy_remove_map_hash(struct drm_device *dev)
-{
-	drm_ht_remove(&dev->map_hash);
-}
-#else
-static inline int drm_legacy_create_map_hash(struct drm_device *dev)
-{
-	return 0;
-}
+अटल अंतरभूत व्योम drm_legacy_हटाओ_map_hash(काष्ठा drm_device *dev)
+अणु
+	drm_ht_हटाओ(&dev->map_hash);
+पूर्ण
+#अन्यथा
+अटल अंतरभूत पूर्णांक drm_legacy_create_map_hash(काष्ठा drm_device *dev)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void drm_legacy_remove_map_hash(struct drm_device *dev) {}
-#endif
+अटल अंतरभूत व्योम drm_legacy_हटाओ_map_hash(काष्ठा drm_device *dev) अणुपूर्ण
+#पूर्ण_अगर
 
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-int drm_legacy_getmap_ioctl(struct drm_device *dev, void *data,
-			    struct drm_file *file_priv);
-int drm_legacy_addmap_ioctl(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_rmmap_ioctl(struct drm_device *d, void *v, struct drm_file *f);
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+पूर्णांक drm_legacy_geपंचांगap_ioctl(काष्ठा drm_device *dev, व्योम *data,
+			    काष्ठा drm_file *file_priv);
+पूर्णांक drm_legacy_addmap_ioctl(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_rmmap_ioctl(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
 
-int drm_legacy_addbufs(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_infobufs(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_markbufs(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_freebufs(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_mapbufs(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_dma_ioctl(struct drm_device *d, void *v, struct drm_file *f);
-#endif
+पूर्णांक drm_legacy_addbufs(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_infobufs(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_markbufs(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_मुक्तbufs(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_mapbufs(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_dma_ioctl(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+#पूर्ण_अगर
 
-int __drm_legacy_infobufs(struct drm_device *, void *, int *,
-			  int (*)(void *, int, struct drm_buf_entry *));
-int __drm_legacy_mapbufs(struct drm_device *, void *, int *,
-			  void __user **,
-			  int (*)(void *, int, unsigned long, struct drm_buf *),
-			  struct drm_file *);
+पूर्णांक __drm_legacy_infobufs(काष्ठा drm_device *, व्योम *, पूर्णांक *,
+			  पूर्णांक (*)(व्योम *, पूर्णांक, काष्ठा drm_buf_entry *));
+पूर्णांक __drm_legacy_mapbufs(काष्ठा drm_device *, व्योम *, पूर्णांक *,
+			  व्योम __user **,
+			  पूर्णांक (*)(व्योम *, पूर्णांक, अचिन्हित दीर्घ, काष्ठा drm_buf *),
+			  काष्ठा drm_file *);
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-void drm_legacy_master_rmmaps(struct drm_device *dev,
-			      struct drm_master *master);
-void drm_legacy_rmmaps(struct drm_device *dev);
-#else
-static inline void drm_legacy_master_rmmaps(struct drm_device *dev,
-					    struct drm_master *master) {}
-static inline void drm_legacy_rmmaps(struct drm_device *dev) {}
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+व्योम drm_legacy_master_rmmaps(काष्ठा drm_device *dev,
+			      काष्ठा drm_master *master);
+व्योम drm_legacy_rmmaps(काष्ठा drm_device *dev);
+#अन्यथा
+अटल अंतरभूत व्योम drm_legacy_master_rmmaps(काष्ठा drm_device *dev,
+					    काष्ठा drm_master *master) अणुपूर्ण
+अटल अंतरभूत व्योम drm_legacy_rmmaps(काष्ठा drm_device *dev) अणुपूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-void drm_legacy_vma_flush(struct drm_device *d);
-#else
-static inline void drm_legacy_vma_flush(struct drm_device *d)
-{
-	/* do nothing */
-}
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+व्योम drm_legacy_vma_flush(काष्ठा drm_device *d);
+#अन्यथा
+अटल अंतरभूत व्योम drm_legacy_vma_flush(काष्ठा drm_device *d)
+अणु
+	/* करो nothing */
+पूर्ण
+#पूर्ण_अगर
 
 /*
  * AGP Support
  */
 
-struct drm_agp_mem {
-	unsigned long handle;
-	struct agp_memory *memory;
-	unsigned long bound;
-	int pages;
-	struct list_head head;
-};
+काष्ठा drm_agp_mem अणु
+	अचिन्हित दीर्घ handle;
+	काष्ठा agp_memory *memory;
+	अचिन्हित दीर्घ bound;
+	पूर्णांक pages;
+	काष्ठा list_head head;
+पूर्ण;
 
 /* drm_lock.c */
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-int drm_legacy_lock(struct drm_device *d, void *v, struct drm_file *f);
-int drm_legacy_unlock(struct drm_device *d, void *v, struct drm_file *f);
-void drm_legacy_lock_release(struct drm_device *dev, struct file *filp);
-#else
-static inline void drm_legacy_lock_release(struct drm_device *dev, struct file *filp) {}
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+पूर्णांक drm_legacy_lock(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+पूर्णांक drm_legacy_unlock(काष्ठा drm_device *d, व्योम *v, काष्ठा drm_file *f);
+व्योम drm_legacy_lock_release(काष्ठा drm_device *dev, काष्ठा file *filp);
+#अन्यथा
+अटल अंतरभूत व्योम drm_legacy_lock_release(काष्ठा drm_device *dev, काष्ठा file *filp) अणुपूर्ण
+#पूर्ण_अगर
 
 /* DMA support */
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-int drm_legacy_dma_setup(struct drm_device *dev);
-void drm_legacy_dma_takedown(struct drm_device *dev);
-#else
-static inline int drm_legacy_dma_setup(struct drm_device *dev)
-{
-	return 0;
-}
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+पूर्णांक drm_legacy_dma_setup(काष्ठा drm_device *dev);
+व्योम drm_legacy_dma_takeकरोwn(काष्ठा drm_device *dev);
+#अन्यथा
+अटल अंतरभूत पूर्णांक drm_legacy_dma_setup(काष्ठा drm_device *dev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-void drm_legacy_free_buffer(struct drm_device *dev,
-			    struct drm_buf * buf);
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-void drm_legacy_reclaim_buffers(struct drm_device *dev,
-				struct drm_file *filp);
-#else
-static inline void drm_legacy_reclaim_buffers(struct drm_device *dev,
-					      struct drm_file *filp) {}
-#endif
+व्योम drm_legacy_मुक्त_buffer(काष्ठा drm_device *dev,
+			    काष्ठा drm_buf * buf);
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+व्योम drm_legacy_reclaim_buffers(काष्ठा drm_device *dev,
+				काष्ठा drm_file *filp);
+#अन्यथा
+अटल अंतरभूत व्योम drm_legacy_reclaim_buffers(काष्ठा drm_device *dev,
+					      काष्ठा drm_file *filp) अणुपूर्ण
+#पूर्ण_अगर
 
 /* Scatter Gather Support */
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-void drm_legacy_sg_cleanup(struct drm_device *dev);
-int drm_legacy_sg_alloc(struct drm_device *dev, void *data,
-			struct drm_file *file_priv);
-int drm_legacy_sg_free(struct drm_device *dev, void *data,
-		       struct drm_file *file_priv);
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+व्योम drm_legacy_sg_cleanup(काष्ठा drm_device *dev);
+पूर्णांक drm_legacy_sg_alloc(काष्ठा drm_device *dev, व्योम *data,
+			काष्ठा drm_file *file_priv);
+पूर्णांक drm_legacy_sg_मुक्त(काष्ठा drm_device *dev, व्योम *data,
+		       काष्ठा drm_file *file_priv);
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-void drm_legacy_init_members(struct drm_device *dev);
-void drm_legacy_destroy_members(struct drm_device *dev);
-void drm_legacy_dev_reinit(struct drm_device *dev);
-int drm_legacy_setup(struct drm_device * dev);
-#else
-static inline void drm_legacy_init_members(struct drm_device *dev) {}
-static inline void drm_legacy_destroy_members(struct drm_device *dev) {}
-static inline void drm_legacy_dev_reinit(struct drm_device *dev) {}
-static inline int drm_legacy_setup(struct drm_device * dev) { return 0; }
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+व्योम drm_legacy_init_members(काष्ठा drm_device *dev);
+व्योम drm_legacy_destroy_members(काष्ठा drm_device *dev);
+व्योम drm_legacy_dev_reinit(काष्ठा drm_device *dev);
+पूर्णांक drm_legacy_setup(काष्ठा drm_device * dev);
+#अन्यथा
+अटल अंतरभूत व्योम drm_legacy_init_members(काष्ठा drm_device *dev) अणुपूर्ण
+अटल अंतरभूत व्योम drm_legacy_destroy_members(काष्ठा drm_device *dev) अणुपूर्ण
+अटल अंतरभूत व्योम drm_legacy_dev_reinit(काष्ठा drm_device *dev) अणुपूर्ण
+अटल अंतरभूत पूर्णांक drm_legacy_setup(काष्ठा drm_device * dev) अणु वापस 0; पूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-void drm_legacy_lock_master_cleanup(struct drm_device *dev, struct drm_master *master);
-#else
-static inline void drm_legacy_lock_master_cleanup(struct drm_device *dev, struct drm_master *master) {}
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+व्योम drm_legacy_lock_master_cleanup(काष्ठा drm_device *dev, काष्ठा drm_master *master);
+#अन्यथा
+अटल अंतरभूत व्योम drm_legacy_lock_master_cleanup(काष्ठा drm_device *dev, काष्ठा drm_master *master) अणुपूर्ण
+#पूर्ण_अगर
 
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-void drm_master_legacy_init(struct drm_master *master);
-#else
-static inline void drm_master_legacy_init(struct drm_master *master) {}
-#endif
+#अगर IS_ENABLED(CONFIG_DRM_LEGACY)
+व्योम drm_master_legacy_init(काष्ठा drm_master *master);
+#अन्यथा
+अटल अंतरभूत व्योम drm_master_legacy_init(काष्ठा drm_master *master) अणुपूर्ण
+#पूर्ण_अगर
 
-#endif /* __DRM_LEGACY_H__ */
+#पूर्ण_अगर /* __DRM_LEGACY_H__ */

@@ -1,57 +1,58 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Re-map IO memory to kernel address space so that we can access it.
  *
  * These functions should only be used when it is necessary to map a
- * physical address space into the kernel address space before ioremap()
- * can be used, e.g. early in boot before paging_init().
+ * physical address space पूर्णांकo the kernel address space beक्रमe ioremap()
+ * can be used, e.g. early in boot beक्रमe paging_init().
  *
  * Copyright (C) 2009  Matt Fleming
  */
 
-#include <linux/vmalloc.h>
-#include <linux/ioport.h>
-#include <linux/module.h>
-#include <linux/mm.h>
-#include <linux/io.h>
-#include <linux/memblock.h>
-#include <linux/proc_fs.h>
-#include <asm/fixmap.h>
-#include <asm/page.h>
-#include <asm/addrspace.h>
-#include <asm/cacheflush.h>
-#include <asm/tlbflush.h>
-#include <asm/mmu.h>
-#include <asm/mmu_context.h>
-#include "ioremap.h"
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/memblock.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/addrspace.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/mmu.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश "ioremap.h"
 
-struct ioremap_map {
-	void __iomem *addr;
-	unsigned long size;
-	unsigned long fixmap_addr;
-};
+काष्ठा ioremap_map अणु
+	व्योम __iomem *addr;
+	अचिन्हित दीर्घ size;
+	अचिन्हित दीर्घ fixmap_addr;
+पूर्ण;
 
-static struct ioremap_map ioremap_maps[FIX_N_IOREMAPS];
+अटल काष्ठा ioremap_map ioremap_maps[FIX_N_IOREMAPS];
 
-void __init ioremap_fixed_init(void)
-{
-	struct ioremap_map *map;
-	int i;
+व्योम __init ioremap_fixed_init(व्योम)
+अणु
+	काष्ठा ioremap_map *map;
+	पूर्णांक i;
 
-	for (i = 0; i < FIX_N_IOREMAPS; i++) {
+	क्रम (i = 0; i < FIX_N_IOREMAPS; i++) अणु
 		map = &ioremap_maps[i];
 		map->fixmap_addr = __fix_to_virt(FIX_IOREMAP_BEGIN + i);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void __init __iomem *
-ioremap_fixed(phys_addr_t phys_addr, unsigned long size, pgprot_t prot)
-{
-	enum fixed_addresses idx0, idx;
-	struct ioremap_map *map;
-	unsigned int nrpages;
-	unsigned long offset;
-	int i, slot;
+व्योम __init __iomem *
+ioremap_fixed(phys_addr_t phys_addr, अचिन्हित दीर्घ size, pgprot_t prot)
+अणु
+	क्रमागत fixed_addresses idx0, idx;
+	काष्ठा ioremap_map *map;
+	अचिन्हित पूर्णांक nrpages;
+	अचिन्हित दीर्घ offset;
+	पूर्णांक i, slot;
 
 	/*
 	 * Mappings have to be page-aligned
@@ -61,75 +62,75 @@ ioremap_fixed(phys_addr_t phys_addr, unsigned long size, pgprot_t prot)
 	size = PAGE_ALIGN(phys_addr + size) - phys_addr;
 
 	slot = -1;
-	for (i = 0; i < FIX_N_IOREMAPS; i++) {
+	क्रम (i = 0; i < FIX_N_IOREMAPS; i++) अणु
 		map = &ioremap_maps[i];
-		if (!map->addr) {
+		अगर (!map->addr) अणु
 			map->size = size;
 			slot = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (slot < 0)
-		return NULL;
+	अगर (slot < 0)
+		वापस शून्य;
 
 	/*
 	 * Mappings have to fit in the FIX_IOREMAP area.
 	 */
 	nrpages = size >> PAGE_SHIFT;
-	if (nrpages > FIX_N_IOREMAPS)
-		return NULL;
+	अगर (nrpages > FIX_N_IOREMAPS)
+		वापस शून्य;
 
 	/*
-	 * Ok, go for it..
+	 * Ok, go क्रम it..
 	 */
 	idx0 = FIX_IOREMAP_BEGIN + slot;
 	idx = idx0;
-	while (nrpages > 0) {
+	जबतक (nrpages > 0) अणु
 		pgprot_val(prot) |= _PAGE_WIRED;
 		__set_fixmap(idx, phys_addr, prot);
 		phys_addr += PAGE_SIZE;
 		idx++;
 		--nrpages;
-	}
+	पूर्ण
 
-	map->addr = (void __iomem *)(offset + map->fixmap_addr);
-	return map->addr;
-}
+	map->addr = (व्योम __iomem *)(offset + map->fixmap_addr);
+	वापस map->addr;
+पूर्ण
 
-int iounmap_fixed(void __iomem *addr)
-{
-	enum fixed_addresses idx;
-	struct ioremap_map *map;
-	unsigned int nrpages;
-	int i, slot;
+पूर्णांक iounmap_fixed(व्योम __iomem *addr)
+अणु
+	क्रमागत fixed_addresses idx;
+	काष्ठा ioremap_map *map;
+	अचिन्हित पूर्णांक nrpages;
+	पूर्णांक i, slot;
 
 	slot = -1;
-	for (i = 0; i < FIX_N_IOREMAPS; i++) {
+	क्रम (i = 0; i < FIX_N_IOREMAPS; i++) अणु
 		map = &ioremap_maps[i];
-		if (map->addr == addr) {
+		अगर (map->addr == addr) अणु
 			slot = i;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * If we don't match, it's not for us.
+	 * If we करोn't match, it's not क्रम us.
 	 */
-	if (slot < 0)
-		return -EINVAL;
+	अगर (slot < 0)
+		वापस -EINVAL;
 
 	nrpages = map->size >> PAGE_SHIFT;
 
 	idx = FIX_IOREMAP_BEGIN + slot + nrpages - 1;
-	while (nrpages > 0) {
+	जबतक (nrpages > 0) अणु
 		__clear_fixmap(idx, __pgprot(_PAGE_WIRED));
 		--idx;
 		--nrpages;
-	}
+	पूर्ण
 
 	map->size = 0;
-	map->addr = NULL;
+	map->addr = शून्य;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

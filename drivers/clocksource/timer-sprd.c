@@ -1,209 +1,210 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2017 Spreadtrum Communications Inc.
+ * Copyright (C) 2017 Spपढ़ोtrum Communications Inc.
  */
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include "timer-of.h"
+#समावेश "timer-of.h"
 
-#define TIMER_NAME		"sprd_timer"
+#घोषणा TIMER_NAME		"sprd_timer"
 
-#define TIMER_LOAD_LO		0x0
-#define TIMER_LOAD_HI		0x4
-#define TIMER_VALUE_LO		0x8
-#define TIMER_VALUE_HI		0xc
+#घोषणा TIMER_LOAD_LO		0x0
+#घोषणा TIMER_LOAD_HI		0x4
+#घोषणा TIMER_VALUE_LO		0x8
+#घोषणा TIMER_VALUE_HI		0xc
 
-#define TIMER_CTL		0x10
-#define TIMER_CTL_PERIOD_MODE	BIT(0)
-#define TIMER_CTL_ENABLE	BIT(1)
-#define TIMER_CTL_64BIT_WIDTH	BIT(16)
+#घोषणा TIMER_CTL		0x10
+#घोषणा TIMER_CTL_PERIOD_MODE	BIT(0)
+#घोषणा TIMER_CTL_ENABLE	BIT(1)
+#घोषणा TIMER_CTL_64BIT_WIDTH	BIT(16)
 
-#define TIMER_INT		0x14
-#define TIMER_INT_EN		BIT(0)
-#define TIMER_INT_RAW_STS	BIT(1)
-#define TIMER_INT_MASK_STS	BIT(2)
-#define TIMER_INT_CLR		BIT(3)
+#घोषणा TIMER_INT		0x14
+#घोषणा TIMER_INT_EN		BIT(0)
+#घोषणा TIMER_INT_RAW_STS	BIT(1)
+#घोषणा TIMER_INT_MASK_STS	BIT(2)
+#घोषणा TIMER_INT_CLR		BIT(3)
 
-#define TIMER_VALUE_SHDW_LO	0x18
-#define TIMER_VALUE_SHDW_HI	0x1c
+#घोषणा TIMER_VALUE_SHDW_LO	0x18
+#घोषणा TIMER_VALUE_SHDW_HI	0x1c
 
-#define TIMER_VALUE_LO_MASK	GENMASK(31, 0)
+#घोषणा TIMER_VALUE_LO_MASK	GENMASK(31, 0)
 
-static void sprd_timer_enable(void __iomem *base, u32 flag)
-{
-	u32 val = readl_relaxed(base + TIMER_CTL);
+अटल व्योम sprd_समयr_enable(व्योम __iomem *base, u32 flag)
+अणु
+	u32 val = पढ़ोl_relaxed(base + TIMER_CTL);
 
 	val |= TIMER_CTL_ENABLE;
-	if (flag & TIMER_CTL_64BIT_WIDTH)
+	अगर (flag & TIMER_CTL_64BIT_WIDTH)
 		val |= TIMER_CTL_64BIT_WIDTH;
-	else
+	अन्यथा
 		val &= ~TIMER_CTL_64BIT_WIDTH;
 
-	if (flag & TIMER_CTL_PERIOD_MODE)
+	अगर (flag & TIMER_CTL_PERIOD_MODE)
 		val |= TIMER_CTL_PERIOD_MODE;
-	else
+	अन्यथा
 		val &= ~TIMER_CTL_PERIOD_MODE;
 
-	writel_relaxed(val, base + TIMER_CTL);
-}
+	ग_लिखोl_relaxed(val, base + TIMER_CTL);
+पूर्ण
 
-static void sprd_timer_disable(void __iomem *base)
-{
-	u32 val = readl_relaxed(base + TIMER_CTL);
+अटल व्योम sprd_समयr_disable(व्योम __iomem *base)
+अणु
+	u32 val = पढ़ोl_relaxed(base + TIMER_CTL);
 
 	val &= ~TIMER_CTL_ENABLE;
-	writel_relaxed(val, base + TIMER_CTL);
-}
+	ग_लिखोl_relaxed(val, base + TIMER_CTL);
+पूर्ण
 
-static void sprd_timer_update_counter(void __iomem *base, unsigned long cycles)
-{
-	writel_relaxed(cycles & TIMER_VALUE_LO_MASK, base + TIMER_LOAD_LO);
-	writel_relaxed(0, base + TIMER_LOAD_HI);
-}
+अटल व्योम sprd_समयr_update_counter(व्योम __iomem *base, अचिन्हित दीर्घ cycles)
+अणु
+	ग_लिखोl_relaxed(cycles & TIMER_VALUE_LO_MASK, base + TIMER_LOAD_LO);
+	ग_लिखोl_relaxed(0, base + TIMER_LOAD_HI);
+पूर्ण
 
-static void sprd_timer_enable_interrupt(void __iomem *base)
-{
-	writel_relaxed(TIMER_INT_EN, base + TIMER_INT);
-}
+अटल व्योम sprd_समयr_enable_पूर्णांकerrupt(व्योम __iomem *base)
+अणु
+	ग_लिखोl_relaxed(TIMER_INT_EN, base + TIMER_INT);
+पूर्ण
 
-static void sprd_timer_clear_interrupt(void __iomem *base)
-{
-	u32 val = readl_relaxed(base + TIMER_INT);
+अटल व्योम sprd_समयr_clear_पूर्णांकerrupt(व्योम __iomem *base)
+अणु
+	u32 val = पढ़ोl_relaxed(base + TIMER_INT);
 
 	val |= TIMER_INT_CLR;
-	writel_relaxed(val, base + TIMER_INT);
-}
+	ग_लिखोl_relaxed(val, base + TIMER_INT);
+पूर्ण
 
-static int sprd_timer_set_next_event(unsigned long cycles,
-				     struct clock_event_device *ce)
-{
-	struct timer_of *to = to_timer_of(ce);
+अटल पूर्णांक sprd_समयr_set_next_event(अचिन्हित दीर्घ cycles,
+				     काष्ठा घड़ी_event_device *ce)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(ce);
 
-	sprd_timer_disable(timer_of_base(to));
-	sprd_timer_update_counter(timer_of_base(to), cycles);
-	sprd_timer_enable(timer_of_base(to), 0);
+	sprd_समयr_disable(समयr_of_base(to));
+	sprd_समयr_update_counter(समयr_of_base(to), cycles);
+	sprd_समयr_enable(समयr_of_base(to), 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sprd_timer_set_periodic(struct clock_event_device *ce)
-{
-	struct timer_of *to = to_timer_of(ce);
+अटल पूर्णांक sprd_समयr_set_periodic(काष्ठा घड़ी_event_device *ce)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(ce);
 
-	sprd_timer_disable(timer_of_base(to));
-	sprd_timer_update_counter(timer_of_base(to), timer_of_period(to));
-	sprd_timer_enable(timer_of_base(to), TIMER_CTL_PERIOD_MODE);
+	sprd_समयr_disable(समयr_of_base(to));
+	sprd_समयr_update_counter(समयr_of_base(to), समयr_of_period(to));
+	sprd_समयr_enable(समयr_of_base(to), TIMER_CTL_PERIOD_MODE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sprd_timer_shutdown(struct clock_event_device *ce)
-{
-	struct timer_of *to = to_timer_of(ce);
+अटल पूर्णांक sprd_समयr_shutकरोwn(काष्ठा घड़ी_event_device *ce)
+अणु
+	काष्ठा समयr_of *to = to_समयr_of(ce);
 
-	sprd_timer_disable(timer_of_base(to));
-	return 0;
-}
+	sprd_समयr_disable(समयr_of_base(to));
+	वापस 0;
+पूर्ण
 
-static irqreturn_t sprd_timer_interrupt(int irq, void *dev_id)
-{
-	struct clock_event_device *ce = (struct clock_event_device *)dev_id;
-	struct timer_of *to = to_timer_of(ce);
+अटल irqवापस_t sprd_समयr_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा घड़ी_event_device *ce = (काष्ठा घड़ी_event_device *)dev_id;
+	काष्ठा समयr_of *to = to_समयr_of(ce);
 
-	sprd_timer_clear_interrupt(timer_of_base(to));
+	sprd_समयr_clear_पूर्णांकerrupt(समयr_of_base(to));
 
-	if (clockevent_state_oneshot(ce))
-		sprd_timer_disable(timer_of_base(to));
+	अगर (घड़ीevent_state_oneshot(ce))
+		sprd_समयr_disable(समयr_of_base(to));
 
 	ce->event_handler(ce);
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static struct timer_of to = {
+अटल काष्ठा समयr_of to = अणु
 	.flags = TIMER_OF_IRQ | TIMER_OF_BASE | TIMER_OF_CLOCK,
 
-	.clkevt = {
+	.clkevt = अणु
 		.name = TIMER_NAME,
 		.rating = 300,
 		.features = CLOCK_EVT_FEAT_DYNIRQ | CLOCK_EVT_FEAT_PERIODIC |
 			CLOCK_EVT_FEAT_ONESHOT,
-		.set_state_shutdown = sprd_timer_shutdown,
-		.set_state_periodic = sprd_timer_set_periodic,
-		.set_next_event = sprd_timer_set_next_event,
+		.set_state_shutकरोwn = sprd_समयr_shutकरोwn,
+		.set_state_periodic = sprd_समयr_set_periodic,
+		.set_next_event = sprd_समयr_set_next_event,
 		.cpumask = cpu_possible_mask,
-	},
+	पूर्ण,
 
-	.of_irq = {
-		.handler = sprd_timer_interrupt,
+	.of_irq = अणु
+		.handler = sprd_समयr_पूर्णांकerrupt,
 		.flags = IRQF_TIMER | IRQF_IRQPOLL,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init sprd_timer_init(struct device_node *np)
-{
-	int ret;
+अटल पूर्णांक __init sprd_समयr_init(काष्ठा device_node *np)
+अणु
+	पूर्णांक ret;
 
-	ret = timer_of_init(np, &to);
-	if (ret)
-		return ret;
+	ret = समयr_of_init(np, &to);
+	अगर (ret)
+		वापस ret;
 
-	sprd_timer_enable_interrupt(timer_of_base(&to));
-	clockevents_config_and_register(&to.clkevt, timer_of_rate(&to),
-					1, UINT_MAX);
+	sprd_समयr_enable_पूर्णांकerrupt(समयr_of_base(&to));
+	घड़ीevents_config_and_रेजिस्टर(&to.clkevt, समयr_of_rate(&to),
+					1, अच_पूर्णांक_उच्च);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct timer_of suspend_to = {
+अटल काष्ठा समयr_of suspend_to = अणु
 	.flags = TIMER_OF_BASE | TIMER_OF_CLOCK,
-};
+पूर्ण;
 
-static u64 sprd_suspend_timer_read(struct clocksource *cs)
-{
-	return ~(u64)readl_relaxed(timer_of_base(&suspend_to) +
+अटल u64 sprd_suspend_समयr_पढ़ो(काष्ठा घड़ीsource *cs)
+अणु
+	वापस ~(u64)पढ़ोl_relaxed(समयr_of_base(&suspend_to) +
 				   TIMER_VALUE_SHDW_LO) & cs->mask;
-}
+पूर्ण
 
-static int sprd_suspend_timer_enable(struct clocksource *cs)
-{
-	sprd_timer_update_counter(timer_of_base(&suspend_to),
+अटल पूर्णांक sprd_suspend_समयr_enable(काष्ठा घड़ीsource *cs)
+अणु
+	sprd_समयr_update_counter(समयr_of_base(&suspend_to),
 				  TIMER_VALUE_LO_MASK);
-	sprd_timer_enable(timer_of_base(&suspend_to), TIMER_CTL_PERIOD_MODE);
+	sprd_समयr_enable(समयr_of_base(&suspend_to), TIMER_CTL_PERIOD_MODE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sprd_suspend_timer_disable(struct clocksource *cs)
-{
-	sprd_timer_disable(timer_of_base(&suspend_to));
-}
+अटल व्योम sprd_suspend_समयr_disable(काष्ठा घड़ीsource *cs)
+अणु
+	sprd_समयr_disable(समयr_of_base(&suspend_to));
+पूर्ण
 
-static struct clocksource suspend_clocksource = {
+अटल काष्ठा घड़ीsource suspend_घड़ीsource = अणु
 	.name	= "sprd_suspend_timer",
 	.rating	= 200,
-	.read	= sprd_suspend_timer_read,
-	.enable = sprd_suspend_timer_enable,
-	.disable = sprd_suspend_timer_disable,
+	.पढ़ो	= sprd_suspend_समयr_पढ़ो,
+	.enable = sprd_suspend_समयr_enable,
+	.disable = sprd_suspend_समयr_disable,
 	.mask	= CLOCKSOURCE_MASK(32),
 	.flags	= CLOCK_SOURCE_IS_CONTINUOUS | CLOCK_SOURCE_SUSPEND_NONSTOP,
-};
+पूर्ण;
 
-static int __init sprd_suspend_timer_init(struct device_node *np)
-{
-	int ret;
+अटल पूर्णांक __init sprd_suspend_समयr_init(काष्ठा device_node *np)
+अणु
+	पूर्णांक ret;
 
-	ret = timer_of_init(np, &suspend_to);
-	if (ret)
-		return ret;
+	ret = समयr_of_init(np, &suspend_to);
+	अगर (ret)
+		वापस ret;
 
-	clocksource_register_hz(&suspend_clocksource,
-				timer_of_rate(&suspend_to));
+	घड़ीsource_रेजिस्टर_hz(&suspend_घड़ीsource,
+				समयr_of_rate(&suspend_to));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-TIMER_OF_DECLARE(sc9860_timer, "sprd,sc9860-timer", sprd_timer_init);
-TIMER_OF_DECLARE(sc9860_persistent_timer, "sprd,sc9860-suspend-timer",
-		 sprd_suspend_timer_init);
+TIMER_OF_DECLARE(sc9860_समयr, "sprd,sc9860-timer", sprd_समयr_init);
+TIMER_OF_DECLARE(sc9860_persistent_समयr, "sprd,sc9860-suspend-timer",
+		 sprd_suspend_समयr_init);

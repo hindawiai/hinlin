@@ -1,456 +1,457 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * digi00x-stream.c - a part of driver for Digidesign Digi 002/003 family
+ * digi00x-stream.c - a part of driver क्रम Digidesign Digi 002/003 family
  *
  * Copyright (c) 2014-2015 Takashi Sakamoto
  */
 
-#include "digi00x.h"
+#समावेश "digi00x.h"
 
-#define CALLBACK_TIMEOUT 500
+#घोषणा CALLBACK_TIMEOUT 500
 
-const unsigned int snd_dg00x_stream_rates[SND_DG00X_RATE_COUNT] = {
+स्थिर अचिन्हित पूर्णांक snd_dg00x_stream_rates[SND_DG00X_RATE_COUNT] = अणु
 	[SND_DG00X_RATE_44100] = 44100,
 	[SND_DG00X_RATE_48000] = 48000,
 	[SND_DG00X_RATE_88200] = 88200,
 	[SND_DG00X_RATE_96000] = 96000,
-};
+पूर्ण;
 
-/* Multi Bit Linear Audio data channels for each sampling transfer frequency. */
-const unsigned int
-snd_dg00x_stream_pcm_channels[SND_DG00X_RATE_COUNT] = {
+/* Multi Bit Linear Audio data channels क्रम each sampling transfer frequency. */
+स्थिर अचिन्हित पूर्णांक
+snd_dg00x_stream_pcm_channels[SND_DG00X_RATE_COUNT] = अणु
 	/* Analog/ADAT/SPDIF */
 	[SND_DG00X_RATE_44100] = (8 + 8 + 2),
 	[SND_DG00X_RATE_48000] = (8 + 8 + 2),
 	/* Analog/SPDIF */
 	[SND_DG00X_RATE_88200] = (8 + 2),
 	[SND_DG00X_RATE_96000] = (8 + 2),
-};
+पूर्ण;
 
-int snd_dg00x_stream_get_local_rate(struct snd_dg00x *dg00x, unsigned int *rate)
-{
+पूर्णांक snd_dg00x_stream_get_local_rate(काष्ठा snd_dg00x *dg00x, अचिन्हित पूर्णांक *rate)
+अणु
 	u32 data;
 	__be32 reg;
-	int err;
+	पूर्णांक err;
 
 	err = snd_fw_transaction(dg00x->unit, TCODE_READ_QUADLET_REQUEST,
 				 DG00X_ADDR_BASE + DG00X_OFFSET_LOCAL_RATE,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
 	data = be32_to_cpu(reg) & 0x0f;
-	if (data < ARRAY_SIZE(snd_dg00x_stream_rates))
+	अगर (data < ARRAY_SIZE(snd_dg00x_stream_rates))
 		*rate = snd_dg00x_stream_rates[data];
-	else
+	अन्यथा
 		err = -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_dg00x_stream_set_local_rate(struct snd_dg00x *dg00x, unsigned int rate)
-{
+पूर्णांक snd_dg00x_stream_set_local_rate(काष्ठा snd_dg00x *dg00x, अचिन्हित पूर्णांक rate)
+अणु
 	__be32 reg;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(snd_dg00x_stream_rates); i++) {
-		if (rate == snd_dg00x_stream_rates[i])
-			break;
-	}
-	if (i == ARRAY_SIZE(snd_dg00x_stream_rates))
-		return -EINVAL;
+	क्रम (i = 0; i < ARRAY_SIZE(snd_dg00x_stream_rates); i++) अणु
+		अगर (rate == snd_dg00x_stream_rates[i])
+			अवरोध;
+	पूर्ण
+	अगर (i == ARRAY_SIZE(snd_dg00x_stream_rates))
+		वापस -EINVAL;
 
 	reg = cpu_to_be32(i);
-	return snd_fw_transaction(dg00x->unit, TCODE_WRITE_QUADLET_REQUEST,
+	वापस snd_fw_transaction(dg00x->unit, TCODE_WRITE_QUADLET_REQUEST,
 				  DG00X_ADDR_BASE + DG00X_OFFSET_LOCAL_RATE,
-				  &reg, sizeof(reg), 0);
-}
+				  &reg, माप(reg), 0);
+पूर्ण
 
-int snd_dg00x_stream_get_clock(struct snd_dg00x *dg00x,
-			       enum snd_dg00x_clock *clock)
-{
+पूर्णांक snd_dg00x_stream_get_घड़ी(काष्ठा snd_dg00x *dg00x,
+			       क्रमागत snd_dg00x_घड़ी *घड़ी)
+अणु
 	__be32 reg;
-	int err;
+	पूर्णांक err;
 
 	err = snd_fw_transaction(dg00x->unit, TCODE_READ_QUADLET_REQUEST,
 				 DG00X_ADDR_BASE + DG00X_OFFSET_CLOCK_SOURCE,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
-	*clock = be32_to_cpu(reg) & 0x0f;
-	if (*clock >= SND_DG00X_CLOCK_COUNT)
+	*घड़ी = be32_to_cpu(reg) & 0x0f;
+	अगर (*घड़ी >= SND_DG00X_CLOCK_COUNT)
 		err = -EIO;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_dg00x_stream_check_external_clock(struct snd_dg00x *dg00x, bool *detect)
-{
+पूर्णांक snd_dg00x_stream_check_बाह्यal_घड़ी(काष्ठा snd_dg00x *dg00x, bool *detect)
+अणु
 	__be32 reg;
-	int err;
+	पूर्णांक err;
 
 	err = snd_fw_transaction(dg00x->unit, TCODE_READ_QUADLET_REQUEST,
 				 DG00X_ADDR_BASE + DG00X_OFFSET_DETECT_EXTERNAL,
-				 &reg, sizeof(reg), 0);
-	if (err >= 0)
+				 &reg, माप(reg), 0);
+	अगर (err >= 0)
 		*detect = be32_to_cpu(reg) > 0;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int snd_dg00x_stream_get_external_rate(struct snd_dg00x *dg00x,
-				       unsigned int *rate)
-{
+पूर्णांक snd_dg00x_stream_get_बाह्यal_rate(काष्ठा snd_dg00x *dg00x,
+				       अचिन्हित पूर्णांक *rate)
+अणु
 	u32 data;
 	__be32 reg;
-	int err;
+	पूर्णांक err;
 
 	err = snd_fw_transaction(dg00x->unit, TCODE_READ_QUADLET_REQUEST,
 				 DG00X_ADDR_BASE + DG00X_OFFSET_EXTERNAL_RATE,
-				 &reg, sizeof(reg), 0);
-	if (err < 0)
-		return err;
+				 &reg, माप(reg), 0);
+	अगर (err < 0)
+		वापस err;
 
 	data = be32_to_cpu(reg) & 0x0f;
-	if (data < ARRAY_SIZE(snd_dg00x_stream_rates))
+	अगर (data < ARRAY_SIZE(snd_dg00x_stream_rates))
 		*rate = snd_dg00x_stream_rates[data];
 	/* This means desync. */
-	else
+	अन्यथा
 		err = -EBUSY;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void finish_session(struct snd_dg00x *dg00x)
-{
+अटल व्योम finish_session(काष्ठा snd_dg00x *dg00x)
+अणु
 	__be32 data;
 
 	data = cpu_to_be32(0x00000003);
 	snd_fw_transaction(dg00x->unit, TCODE_WRITE_QUADLET_REQUEST,
 			   DG00X_ADDR_BASE + DG00X_OFFSET_STREAMING_SET,
-			   &data, sizeof(data), 0);
+			   &data, माप(data), 0);
 
-	// Unregister isochronous channels for both direction.
+	// Unरेजिस्टर isochronous channels क्रम both direction.
 	data = 0;
 	snd_fw_transaction(dg00x->unit, TCODE_WRITE_QUADLET_REQUEST,
 			   DG00X_ADDR_BASE + DG00X_OFFSET_ISOC_CHANNELS,
-			   &data, sizeof(data), 0);
+			   &data, माप(data), 0);
 
 	// Just after finishing the session, the device may lost transmitting
-	// functionality for a short time.
+	// functionality क्रम a लघु समय.
 	msleep(50);
-}
+पूर्ण
 
-static int begin_session(struct snd_dg00x *dg00x)
-{
+अटल पूर्णांक begin_session(काष्ठा snd_dg00x *dg00x)
+अणु
 	__be32 data;
 	u32 curr;
-	int err;
+	पूर्णांक err;
 
-	// Register isochronous channels for both direction.
+	// Register isochronous channels क्रम both direction.
 	data = cpu_to_be32((dg00x->tx_resources.channel << 16) |
 			   dg00x->rx_resources.channel);
 	err = snd_fw_transaction(dg00x->unit, TCODE_WRITE_QUADLET_REQUEST,
 				 DG00X_ADDR_BASE + DG00X_OFFSET_ISOC_CHANNELS,
-				 &data, sizeof(data), 0);
-	if (err < 0)
-		return err;
+				 &data, माप(data), 0);
+	अगर (err < 0)
+		वापस err;
 
 	err = snd_fw_transaction(dg00x->unit, TCODE_READ_QUADLET_REQUEST,
 				 DG00X_ADDR_BASE + DG00X_OFFSET_STREAMING_STATE,
-				 &data, sizeof(data), 0);
-	if (err < 0)
-		return err;
+				 &data, माप(data), 0);
+	अगर (err < 0)
+		वापस err;
 	curr = be32_to_cpu(data);
 
-	if (curr == 0)
+	अगर (curr == 0)
 		curr = 2;
 
 	curr--;
-	while (curr > 0) {
+	जबतक (curr > 0) अणु
 		data = cpu_to_be32(curr);
 		err = snd_fw_transaction(dg00x->unit,
 					 TCODE_WRITE_QUADLET_REQUEST,
 					 DG00X_ADDR_BASE +
 					 DG00X_OFFSET_STREAMING_SET,
-					 &data, sizeof(data), 0);
-		if (err < 0)
-			break;
+					 &data, माप(data), 0);
+		अगर (err < 0)
+			अवरोध;
 
 		msleep(20);
 		curr--;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int keep_resources(struct snd_dg00x *dg00x, struct amdtp_stream *stream,
-			  unsigned int rate)
-{
-	struct fw_iso_resources *resources;
-	int i;
-	int err;
+अटल पूर्णांक keep_resources(काष्ठा snd_dg00x *dg00x, काष्ठा amdtp_stream *stream,
+			  अचिन्हित पूर्णांक rate)
+अणु
+	काष्ठा fw_iso_resources *resources;
+	पूर्णांक i;
+	पूर्णांक err;
 
 	// Check sampling rate.
-	for (i = 0; i < SND_DG00X_RATE_COUNT; i++) {
-		if (snd_dg00x_stream_rates[i] == rate)
-			break;
-	}
-	if (i == SND_DG00X_RATE_COUNT)
-		return -EINVAL;
+	क्रम (i = 0; i < SND_DG00X_RATE_COUNT; i++) अणु
+		अगर (snd_dg00x_stream_rates[i] == rate)
+			अवरोध;
+	पूर्ण
+	अगर (i == SND_DG00X_RATE_COUNT)
+		वापस -EINVAL;
 
-	if (stream == &dg00x->tx_stream)
+	अगर (stream == &dg00x->tx_stream)
 		resources = &dg00x->tx_resources;
-	else
+	अन्यथा
 		resources = &dg00x->rx_resources;
 
-	err = amdtp_dot_set_parameters(stream, rate,
+	err = amdtp_करोt_set_parameters(stream, rate,
 				       snd_dg00x_stream_pcm_channels[i]);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return fw_iso_resources_allocate(resources,
+	वापस fw_iso_resources_allocate(resources,
 				amdtp_stream_get_max_payload(stream),
 				fw_parent_device(dg00x->unit)->max_speed);
-}
+पूर्ण
 
-static int init_stream(struct snd_dg00x *dg00x, struct amdtp_stream *s)
-{
-	struct fw_iso_resources *resources;
-	enum amdtp_stream_direction dir;
-	int err;
+अटल पूर्णांक init_stream(काष्ठा snd_dg00x *dg00x, काष्ठा amdtp_stream *s)
+अणु
+	काष्ठा fw_iso_resources *resources;
+	क्रमागत amdtp_stream_direction dir;
+	पूर्णांक err;
 
-	if (s == &dg00x->tx_stream) {
+	अगर (s == &dg00x->tx_stream) अणु
 		resources = &dg00x->tx_resources;
 		dir = AMDTP_IN_STREAM;
-	} else {
+	पूर्ण अन्यथा अणु
 		resources = &dg00x->rx_resources;
 		dir = AMDTP_OUT_STREAM;
-	}
+	पूर्ण
 
 	err = fw_iso_resources_init(resources, dg00x->unit);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	err = amdtp_dot_init(s, dg00x->unit, dir);
-	if (err < 0)
+	err = amdtp_करोt_init(s, dg00x->unit, dir);
+	अगर (err < 0)
 		fw_iso_resources_destroy(resources);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void destroy_stream(struct snd_dg00x *dg00x, struct amdtp_stream *s)
-{
+अटल व्योम destroy_stream(काष्ठा snd_dg00x *dg00x, काष्ठा amdtp_stream *s)
+अणु
 	amdtp_stream_destroy(s);
 
-	if (s == &dg00x->tx_stream)
+	अगर (s == &dg00x->tx_stream)
 		fw_iso_resources_destroy(&dg00x->tx_resources);
-	else
+	अन्यथा
 		fw_iso_resources_destroy(&dg00x->rx_resources);
-}
+पूर्ण
 
-int snd_dg00x_stream_init_duplex(struct snd_dg00x *dg00x)
-{
-	int err;
+पूर्णांक snd_dg00x_stream_init_duplex(काष्ठा snd_dg00x *dg00x)
+अणु
+	पूर्णांक err;
 
 	err = init_stream(dg00x, &dg00x->rx_stream);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	err = init_stream(dg00x, &dg00x->tx_stream);
-	if (err < 0)
+	अगर (err < 0)
 		destroy_stream(dg00x, &dg00x->rx_stream);
 
-	err = amdtp_domain_init(&dg00x->domain);
-	if (err < 0) {
+	err = amdtp_करोमुख्य_init(&dg00x->करोमुख्य);
+	अगर (err < 0) अणु
 		destroy_stream(dg00x, &dg00x->rx_stream);
 		destroy_stream(dg00x, &dg00x->tx_stream);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * This function should be called before starting streams or after stopping
+ * This function should be called beक्रमe starting streams or after stopping
  * streams.
  */
-void snd_dg00x_stream_destroy_duplex(struct snd_dg00x *dg00x)
-{
-	amdtp_domain_destroy(&dg00x->domain);
+व्योम snd_dg00x_stream_destroy_duplex(काष्ठा snd_dg00x *dg00x)
+अणु
+	amdtp_करोमुख्य_destroy(&dg00x->करोमुख्य);
 
 	destroy_stream(dg00x, &dg00x->rx_stream);
 	destroy_stream(dg00x, &dg00x->tx_stream);
-}
+पूर्ण
 
-int snd_dg00x_stream_reserve_duplex(struct snd_dg00x *dg00x, unsigned int rate,
-				    unsigned int frames_per_period,
-				    unsigned int frames_per_buffer)
-{
-	unsigned int curr_rate;
-	int err;
+पूर्णांक snd_dg00x_stream_reserve_duplex(काष्ठा snd_dg00x *dg00x, अचिन्हित पूर्णांक rate,
+				    अचिन्हित पूर्णांक frames_per_period,
+				    अचिन्हित पूर्णांक frames_per_buffer)
+अणु
+	अचिन्हित पूर्णांक curr_rate;
+	पूर्णांक err;
 
 	err = snd_dg00x_stream_get_local_rate(dg00x, &curr_rate);
-	if (err < 0)
-		return err;
-	if (rate == 0)
+	अगर (err < 0)
+		वापस err;
+	अगर (rate == 0)
 		rate = curr_rate;
 
-	if (dg00x->substreams_counter == 0 || curr_rate != rate) {
-		amdtp_domain_stop(&dg00x->domain);
+	अगर (dg00x->substreams_counter == 0 || curr_rate != rate) अणु
+		amdtp_करोमुख्य_stop(&dg00x->करोमुख्य);
 
 		finish_session(dg00x);
 
-		fw_iso_resources_free(&dg00x->tx_resources);
-		fw_iso_resources_free(&dg00x->rx_resources);
+		fw_iso_resources_मुक्त(&dg00x->tx_resources);
+		fw_iso_resources_मुक्त(&dg00x->rx_resources);
 
 		err = snd_dg00x_stream_set_local_rate(dg00x, rate);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = keep_resources(dg00x, &dg00x->rx_stream, rate);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		err = keep_resources(dg00x, &dg00x->tx_stream, rate);
-		if (err < 0) {
-			fw_iso_resources_free(&dg00x->rx_resources);
-			return err;
-		}
+		अगर (err < 0) अणु
+			fw_iso_resources_मुक्त(&dg00x->rx_resources);
+			वापस err;
+		पूर्ण
 
-		err = amdtp_domain_set_events_per_period(&dg00x->domain,
+		err = amdtp_करोमुख्य_set_events_per_period(&dg00x->करोमुख्य,
 					frames_per_period, frames_per_buffer);
-		if (err < 0) {
-			fw_iso_resources_free(&dg00x->rx_resources);
-			fw_iso_resources_free(&dg00x->tx_resources);
-			return err;
-		}
-	}
+		अगर (err < 0) अणु
+			fw_iso_resources_मुक्त(&dg00x->rx_resources);
+			fw_iso_resources_मुक्त(&dg00x->tx_resources);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int snd_dg00x_stream_start_duplex(struct snd_dg00x *dg00x)
-{
-	unsigned int generation = dg00x->rx_resources.generation;
-	int err = 0;
+पूर्णांक snd_dg00x_stream_start_duplex(काष्ठा snd_dg00x *dg00x)
+अणु
+	अचिन्हित पूर्णांक generation = dg00x->rx_resources.generation;
+	पूर्णांक err = 0;
 
-	if (dg00x->substreams_counter == 0)
-		return 0;
+	अगर (dg00x->substreams_counter == 0)
+		वापस 0;
 
-	if (amdtp_streaming_error(&dg00x->tx_stream) ||
-	    amdtp_streaming_error(&dg00x->rx_stream)) {
-		amdtp_domain_stop(&dg00x->domain);
+	अगर (amdtp_streaming_error(&dg00x->tx_stream) ||
+	    amdtp_streaming_error(&dg00x->rx_stream)) अणु
+		amdtp_करोमुख्य_stop(&dg00x->करोमुख्य);
 		finish_session(dg00x);
-	}
+	पूर्ण
 
-	if (generation != fw_parent_device(dg00x->unit)->card->generation) {
+	अगर (generation != fw_parent_device(dg00x->unit)->card->generation) अणु
 		err = fw_iso_resources_update(&dg00x->tx_resources);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
 		err = fw_iso_resources_update(&dg00x->rx_resources);
-		if (err < 0)
-			goto error;
-	}
+		अगर (err < 0)
+			जाओ error;
+	पूर्ण
 
 	/*
 	 * No packets are transmitted without receiving packets, reagardless of
-	 * which source of clock is used.
+	 * which source of घड़ी is used.
 	 */
-	if (!amdtp_stream_running(&dg00x->rx_stream)) {
-		int spd = fw_parent_device(dg00x->unit)->max_speed;
+	अगर (!amdtp_stream_running(&dg00x->rx_stream)) अणु
+		पूर्णांक spd = fw_parent_device(dg00x->unit)->max_speed;
 
 		err = begin_session(dg00x);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = amdtp_domain_add_stream(&dg00x->domain, &dg00x->rx_stream,
+		err = amdtp_करोमुख्य_add_stream(&dg00x->करोमुख्य, &dg00x->rx_stream,
 					      dg00x->rx_resources.channel, spd);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = amdtp_domain_add_stream(&dg00x->domain, &dg00x->tx_stream,
+		err = amdtp_करोमुख्य_add_stream(&dg00x->करोमुख्य, &dg00x->tx_stream,
 					      dg00x->tx_resources.channel, spd);
-		if (err < 0)
-			goto error;
+		अगर (err < 0)
+			जाओ error;
 
-		err = amdtp_domain_start(&dg00x->domain, 0);
-		if (err < 0)
-			goto error;
+		err = amdtp_करोमुख्य_start(&dg00x->करोमुख्य, 0);
+		अगर (err < 0)
+			जाओ error;
 
-		if (!amdtp_stream_wait_callback(&dg00x->rx_stream,
+		अगर (!amdtp_stream_रुको_callback(&dg00x->rx_stream,
 						CALLBACK_TIMEOUT) ||
-		    !amdtp_stream_wait_callback(&dg00x->tx_stream,
-						CALLBACK_TIMEOUT)) {
+		    !amdtp_stream_रुको_callback(&dg00x->tx_stream,
+						CALLBACK_TIMEOUT)) अणु
 			err = -ETIMEDOUT;
-			goto error;
-		}
-	}
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error:
-	amdtp_domain_stop(&dg00x->domain);
+	amdtp_करोमुख्य_stop(&dg00x->करोमुख्य);
 	finish_session(dg00x);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void snd_dg00x_stream_stop_duplex(struct snd_dg00x *dg00x)
-{
-	if (dg00x->substreams_counter == 0) {
-		amdtp_domain_stop(&dg00x->domain);
+व्योम snd_dg00x_stream_stop_duplex(काष्ठा snd_dg00x *dg00x)
+अणु
+	अगर (dg00x->substreams_counter == 0) अणु
+		amdtp_करोमुख्य_stop(&dg00x->करोमुख्य);
 		finish_session(dg00x);
 
-		fw_iso_resources_free(&dg00x->tx_resources);
-		fw_iso_resources_free(&dg00x->rx_resources);
-	}
-}
+		fw_iso_resources_मुक्त(&dg00x->tx_resources);
+		fw_iso_resources_मुक्त(&dg00x->rx_resources);
+	पूर्ण
+पूर्ण
 
-void snd_dg00x_stream_update_duplex(struct snd_dg00x *dg00x)
-{
+व्योम snd_dg00x_stream_update_duplex(काष्ठा snd_dg00x *dg00x)
+अणु
 	fw_iso_resources_update(&dg00x->tx_resources);
 	fw_iso_resources_update(&dg00x->rx_resources);
 
 	amdtp_stream_update(&dg00x->tx_stream);
 	amdtp_stream_update(&dg00x->rx_stream);
-}
+पूर्ण
 
-void snd_dg00x_stream_lock_changed(struct snd_dg00x *dg00x)
-{
+व्योम snd_dg00x_stream_lock_changed(काष्ठा snd_dg00x *dg00x)
+अणु
 	dg00x->dev_lock_changed = true;
-	wake_up(&dg00x->hwdep_wait);
-}
+	wake_up(&dg00x->hwdep_रुको);
+पूर्ण
 
-int snd_dg00x_stream_lock_try(struct snd_dg00x *dg00x)
-{
-	int err;
+पूर्णांक snd_dg00x_stream_lock_try(काष्ठा snd_dg00x *dg00x)
+अणु
+	पूर्णांक err;
 
 	spin_lock_irq(&dg00x->lock);
 
 	/* user land lock this */
-	if (dg00x->dev_lock_count < 0) {
+	अगर (dg00x->dev_lock_count < 0) अणु
 		err = -EBUSY;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
-	/* this is the first time */
-	if (dg00x->dev_lock_count++ == 0)
+	/* this is the first समय */
+	अगर (dg00x->dev_lock_count++ == 0)
 		snd_dg00x_stream_lock_changed(dg00x);
 	err = 0;
 end:
 	spin_unlock_irq(&dg00x->lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void snd_dg00x_stream_lock_release(struct snd_dg00x *dg00x)
-{
+व्योम snd_dg00x_stream_lock_release(काष्ठा snd_dg00x *dg00x)
+अणु
 	spin_lock_irq(&dg00x->lock);
 
-	if (WARN_ON(dg00x->dev_lock_count <= 0))
-		goto end;
-	if (--dg00x->dev_lock_count == 0)
+	अगर (WARN_ON(dg00x->dev_lock_count <= 0))
+		जाओ end;
+	अगर (--dg00x->dev_lock_count == 0)
 		snd_dg00x_stream_lock_changed(dg00x);
 end:
 	spin_unlock_irq(&dg00x->lock);
-}
+पूर्ण

@@ -1,120 +1,121 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * tboot.c: main implementation of helper functions used by kernel for
- *          runtime support of Intel(R) Trusted Execution Technology
+ * tboot.c: मुख्य implementation of helper functions used by kernel क्रम
+ *          runसमय support of Intel(R) Trusted Execution Technology
  *
  * Copyright (c) 2006-2009, Intel Corporation
  */
 
-#include <linux/intel-iommu.h>
-#include <linux/init_task.h>
-#include <linux/spinlock.h>
-#include <linux/export.h>
-#include <linux/delay.h>
-#include <linux/sched.h>
-#include <linux/init.h>
-#include <linux/dmar.h>
-#include <linux/cpu.h>
-#include <linux/pfn.h>
-#include <linux/mm.h>
-#include <linux/tboot.h>
-#include <linux/debugfs.h>
+#समावेश <linux/पूर्णांकel-iommu.h>
+#समावेश <linux/init_task.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/export.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/init.h>
+#समावेश <linux/dmar.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/pfn.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/tboot.h>
+#समावेश <linux/debugfs.h>
 
-#include <asm/realmode.h>
-#include <asm/processor.h>
-#include <asm/bootparam.h>
-#include <asm/pgalloc.h>
-#include <asm/swiotlb.h>
-#include <asm/fixmap.h>
-#include <asm/proto.h>
-#include <asm/setup.h>
-#include <asm/e820/api.h>
-#include <asm/io.h>
+#समावेश <यंत्र/realmode.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/bootparam.h>
+#समावेश <यंत्र/pgभाग.स>
+#समावेश <यंत्र/swiotlb.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/proto.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <यंत्र/e820/api.h>
+#समावेश <यंत्र/पन.स>
 
-#include "../realmode/rm/wakeup.h"
+#समावेश "../realmode/rm/wakeup.h"
 
-/* Global pointer to shared data; NULL means no measured launch. */
-static struct tboot *tboot __read_mostly;
+/* Global poपूर्णांकer to shared data; शून्य means no measured launch. */
+अटल काष्ठा tboot *tboot __पढ़ो_mostly;
 
-/* timeout for APs (in secs) to enter wait-for-SIPI state during shutdown */
-#define AP_WAIT_TIMEOUT		1
+/* समयout क्रम APs (in secs) to enter रुको-क्रम-SIPI state during shutकरोwn */
+#घोषणा AP_WAIT_TIMEOUT		1
 
-#undef pr_fmt
-#define pr_fmt(fmt)	"tboot: " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt)	"tboot: " fmt
 
-static u8 tboot_uuid[16] __initdata = TBOOT_UUID;
+अटल u8 tboot_uuid[16] __initdata = TBOOT_UUID;
 
-bool tboot_enabled(void)
-{
-	return tboot != NULL;
-}
+bool tboot_enabled(व्योम)
+अणु
+	वापस tboot != शून्य;
+पूर्ण
 
-/* noinline to prevent gcc from warning about dereferencing constant fixaddr */
-static noinline __init bool check_tboot_version(void)
-{
-	if (memcmp(&tboot_uuid, &tboot->uuid, sizeof(tboot->uuid))) {
+/* noअंतरभूत to prevent gcc from warning about dereferencing स्थिरant fixaddr */
+अटल noअंतरभूत __init bool check_tboot_version(व्योम)
+अणु
+	अगर (स_भेद(&tboot_uuid, &tboot->uuid, माप(tboot->uuid))) अणु
 		pr_warn("tboot at 0x%llx is invalid\n", boot_params.tboot_addr);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	if (tboot->version < 5) {
+	अगर (tboot->version < 5) अणु
 		pr_warn("tboot version is invalid: %u\n", tboot->version);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	pr_info("found shared page at phys addr 0x%llx:\n",
 		boot_params.tboot_addr);
 	pr_debug("version: %d\n", tboot->version);
 	pr_debug("log_addr: 0x%08x\n", tboot->log_addr);
-	pr_debug("shutdown_entry: 0x%x\n", tboot->shutdown_entry);
+	pr_debug("shutdown_entry: 0x%x\n", tboot->shutकरोwn_entry);
 	pr_debug("tboot_base: 0x%08x\n", tboot->tboot_base);
 	pr_debug("tboot_size: 0x%x\n", tboot->tboot_size);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-void __init tboot_probe(void)
-{
-	/* Look for valid page-aligned address for shared page. */
-	if (!boot_params.tboot_addr)
-		return;
+व्योम __init tboot_probe(व्योम)
+अणु
+	/* Look क्रम valid page-aligned address क्रम shared page. */
+	अगर (!boot_params.tboot_addr)
+		वापस;
 	/*
-	 * also verify that it is mapped as we expect it before calling
+	 * also verअगरy that it is mapped as we expect it beक्रमe calling
 	 * set_fixmap(), to reduce chance of garbage value causing crash
 	 */
-	if (!e820__mapped_any(boot_params.tboot_addr,
-			     boot_params.tboot_addr, E820_TYPE_RESERVED)) {
+	अगर (!e820__mapped_any(boot_params.tboot_addr,
+			     boot_params.tboot_addr, E820_TYPE_RESERVED)) अणु
 		pr_warn("non-0 tboot_addr but it is not of type E820_TYPE_RESERVED\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Map and check for tboot UUID. */
+	/* Map and check क्रम tboot UUID. */
 	set_fixmap(FIX_TBOOT_BASE, boot_params.tboot_addr);
-	tboot = (void *)fix_to_virt(FIX_TBOOT_BASE);
-	if (!check_tboot_version())
-		tboot = NULL;
-}
+	tboot = (व्योम *)fix_to_virt(FIX_TBOOT_BASE);
+	अगर (!check_tboot_version())
+		tboot = शून्य;
+पूर्ण
 
-static pgd_t *tboot_pg_dir;
-static struct mm_struct tboot_mm = {
+अटल pgd_t *tboot_pg_dir;
+अटल काष्ठा mm_काष्ठा tboot_mm = अणु
 	.mm_rb          = RB_ROOT,
 	.pgd            = swapper_pg_dir,
 	.mm_users       = ATOMIC_INIT(2),
 	.mm_count       = ATOMIC_INIT(1),
-	.write_protect_seq = SEQCNT_ZERO(tboot_mm.write_protect_seq),
+	.ग_लिखो_protect_seq = SEQCNT_ZERO(tboot_mm.ग_लिखो_protect_seq),
 	MMAP_LOCK_INITIALIZER(init_mm)
 	.page_table_lock =  __SPIN_LOCK_UNLOCKED(init_mm.page_table_lock),
 	.mmlist         = LIST_HEAD_INIT(init_mm.mmlist),
-};
+पूर्ण;
 
-static inline void switch_to_tboot_pt(void)
-{
-	write_cr3(virt_to_phys(tboot_pg_dir));
-}
+अटल अंतरभूत व्योम चयन_to_tboot_pt(व्योम)
+अणु
+	ग_लिखो_cr3(virt_to_phys(tboot_pg_dir));
+पूर्ण
 
-static int map_tboot_page(unsigned long vaddr, unsigned long pfn,
+अटल पूर्णांक map_tboot_page(अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ pfn,
 			  pgprot_t prot)
-{
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
@@ -123,144 +124,144 @@ static int map_tboot_page(unsigned long vaddr, unsigned long pfn,
 
 	pgd = pgd_offset(&tboot_mm, vaddr);
 	p4d = p4d_alloc(&tboot_mm, pgd, vaddr);
-	if (!p4d)
-		return -1;
+	अगर (!p4d)
+		वापस -1;
 	pud = pud_alloc(&tboot_mm, p4d, vaddr);
-	if (!pud)
-		return -1;
+	अगर (!pud)
+		वापस -1;
 	pmd = pmd_alloc(&tboot_mm, pud, vaddr);
-	if (!pmd)
-		return -1;
+	अगर (!pmd)
+		वापस -1;
 	pte = pte_alloc_map(&tboot_mm, pmd, vaddr);
-	if (!pte)
-		return -1;
+	अगर (!pte)
+		वापस -1;
 	set_pte_at(&tboot_mm, vaddr, pte, pfn_pte(pfn, prot));
 	pte_unmap(pte);
 
 	/*
 	 * PTI poisons low addresses in the kernel page tables in the
-	 * name of making them unusable for userspace.  To execute
+	 * name of making them unusable क्रम userspace.  To execute
 	 * code at such a low address, the poison must be cleared.
 	 *
-	 * Note: 'pgd' actually gets set in p4d_alloc() _or_
+	 * Note: 'pgd' actually माला_लो set in p4d_alloc() _or_
 	 * pud_alloc() depending on 4/5-level paging.
 	 */
 	pgd->pgd &= ~_PAGE_NX;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int map_tboot_pages(unsigned long vaddr, unsigned long start_pfn,
-			   unsigned long nr)
-{
+अटल पूर्णांक map_tboot_pages(अचिन्हित दीर्घ vaddr, अचिन्हित दीर्घ start_pfn,
+			   अचिन्हित दीर्घ nr)
+अणु
 	/* Reuse the original kernel mapping */
 	tboot_pg_dir = pgd_alloc(&tboot_mm);
-	if (!tboot_pg_dir)
-		return -1;
+	अगर (!tboot_pg_dir)
+		वापस -1;
 
-	for (; nr > 0; nr--, vaddr += PAGE_SIZE, start_pfn++) {
-		if (map_tboot_page(vaddr, start_pfn, PAGE_KERNEL_EXEC))
-			return -1;
-	}
+	क्रम (; nr > 0; nr--, vaddr += PAGE_SIZE, start_pfn++) अणु
+		अगर (map_tboot_page(vaddr, start_pfn, PAGE_KERNEL_EXEC))
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void tboot_create_trampoline(void)
-{
+अटल व्योम tboot_create_trampoline(व्योम)
+अणु
 	u32 map_base, map_size;
 
-	/* Create identity map for tboot shutdown code. */
+	/* Create identity map क्रम tboot shutकरोwn code. */
 	map_base = PFN_DOWN(tboot->tboot_base);
 	map_size = PFN_UP(tboot->tboot_size);
-	if (map_tboot_pages(map_base << PAGE_SHIFT, map_base, map_size))
+	अगर (map_tboot_pages(map_base << PAGE_SHIFT, map_base, map_size))
 		panic("tboot: Error mapping tboot pages (mfns) @ 0x%x, 0x%x\n",
 		      map_base, map_size);
-}
+पूर्ण
 
-#ifdef CONFIG_ACPI_SLEEP
+#अगर_घोषित CONFIG_ACPI_SLEEP
 
-static void add_mac_region(phys_addr_t start, unsigned long size)
-{
-	struct tboot_mac_region *mr;
+अटल व्योम add_mac_region(phys_addr_t start, अचिन्हित दीर्घ size)
+अणु
+	काष्ठा tboot_mac_region *mr;
 	phys_addr_t end = start + size;
 
-	if (tboot->num_mac_regions >= MAX_TB_MAC_REGIONS)
+	अगर (tboot->num_mac_regions >= MAX_TB_MAC_REGIONS)
 		panic("tboot: Too many MAC regions\n");
 
-	if (start && size) {
+	अगर (start && size) अणु
 		mr = &tboot->mac_regions[tboot->num_mac_regions++];
-		mr->start = round_down(start, PAGE_SIZE);
+		mr->start = round_करोwn(start, PAGE_SIZE);
 		mr->size  = round_up(end, PAGE_SIZE) - mr->start;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int tboot_setup_sleep(void)
-{
-	int i;
+अटल पूर्णांक tboot_setup_sleep(व्योम)
+अणु
+	पूर्णांक i;
 
 	tboot->num_mac_regions = 0;
 
-	for (i = 0; i < e820_table->nr_entries; i++) {
-		if ((e820_table->entries[i].type != E820_TYPE_RAM)
+	क्रम (i = 0; i < e820_table->nr_entries; i++) अणु
+		अगर ((e820_table->entries[i].type != E820_TYPE_RAM)
 		 && (e820_table->entries[i].type != E820_TYPE_RESERVED_KERN))
-			continue;
+			जारी;
 
 		add_mac_region(e820_table->entries[i].addr, e820_table->entries[i].size);
-	}
+	पूर्ण
 
 	tboot->acpi_sinfo.kernel_s3_resume_vector =
 		real_mode_header->wakeup_start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#else /* no CONFIG_ACPI_SLEEP */
+#अन्यथा /* no CONFIG_ACPI_SLEEP */
 
-static int tboot_setup_sleep(void)
-{
-	/* S3 shutdown requested, but S3 not supported by the kernel... */
+अटल पूर्णांक tboot_setup_sleep(व्योम)
+अणु
+	/* S3 shutकरोwn requested, but S3 not supported by the kernel... */
 	BUG();
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-void tboot_shutdown(u32 shutdown_type)
-{
-	void (*shutdown)(void);
+व्योम tboot_shutकरोwn(u32 shutकरोwn_type)
+अणु
+	व्योम (*shutकरोwn)(व्योम);
 
-	if (!tboot_enabled())
-		return;
+	अगर (!tboot_enabled())
+		वापस;
 
 	/*
-	 * if we're being called before the 1:1 mapping is set up then just
-	 * return and let the normal shutdown happen; this should only be
+	 * अगर we're being called beक्रमe the 1:1 mapping is set up then just
+	 * वापस and let the normal shutकरोwn happen; this should only be
 	 * due to very early panic()
 	 */
-	if (!tboot_pg_dir)
-		return;
+	अगर (!tboot_pg_dir)
+		वापस;
 
-	/* if this is S3 then set regions to MAC */
-	if (shutdown_type == TB_SHUTDOWN_S3)
-		if (tboot_setup_sleep())
-			return;
+	/* अगर this is S3 then set regions to MAC */
+	अगर (shutकरोwn_type == TB_SHUTDOWN_S3)
+		अगर (tboot_setup_sleep())
+			वापस;
 
-	tboot->shutdown_type = shutdown_type;
+	tboot->shutकरोwn_type = shutकरोwn_type;
 
-	switch_to_tboot_pt();
+	चयन_to_tboot_pt();
 
-	shutdown = (void(*)(void))(unsigned long)tboot->shutdown_entry;
-	shutdown();
+	shutकरोwn = (व्योम(*)(व्योम))(अचिन्हित दीर्घ)tboot->shutकरोwn_entry;
+	shutकरोwn();
 
 	/* should not reach here */
-	while (1)
+	जबतक (1)
 		halt();
-}
+पूर्ण
 
-static void tboot_copy_fadt(const struct acpi_table_fadt *fadt)
-{
-#define TB_COPY_GAS(tbg, g)			\
+अटल व्योम tboot_copy_fadt(स्थिर काष्ठा acpi_table_fadt *fadt)
+अणु
+#घोषणा TB_COPY_GAS(tbg, g)			\
 	tbg.space_id     = g.space_id;		\
 	tbg.bit_width    = g.bit_width;		\
 	tbg.bit_offset   = g.bit_offset;	\
@@ -278,19 +279,19 @@ static void tboot_copy_fadt(const struct acpi_table_fadt *fadt)
 	 * addr.
 	 */
 	tboot->acpi_sinfo.wakeup_vector = fadt->facs +
-		offsetof(struct acpi_table_facs, firmware_waking_vector);
-}
+		दुरत्व(काष्ठा acpi_table_facs, firmware_waking_vector);
+पूर्ण
 
-static int tboot_sleep(u8 sleep_state, u32 pm1a_control, u32 pm1b_control)
-{
-	static u32 acpi_shutdown_map[ACPI_S_STATE_COUNT] = {
+अटल पूर्णांक tboot_sleep(u8 sleep_state, u32 pm1a_control, u32 pm1b_control)
+अणु
+	अटल u32 acpi_shutकरोwn_map[ACPI_S_STATE_COUNT] = अणु
 		/* S0,1,2: */ -1, -1, -1,
 		/* S3: */ TB_SHUTDOWN_S3,
 		/* S4: */ TB_SHUTDOWN_S4,
-		/* S5: */ TB_SHUTDOWN_S5 };
+		/* S5: */ TB_SHUTDOWN_S5 पूर्ण;
 
-	if (!tboot_enabled())
-		return 0;
+	अगर (!tboot_enabled())
+		वापस 0;
 
 	tboot_copy_fadt(&acpi_gbl_FADT);
 	tboot->acpi_sinfo.pm1a_cnt_val = pm1a_control;
@@ -298,173 +299,173 @@ static int tboot_sleep(u8 sleep_state, u32 pm1a_control, u32 pm1b_control)
 	/* we always use the 32b wakeup vector */
 	tboot->acpi_sinfo.vector_width = 32;
 
-	if (sleep_state >= ACPI_S_STATE_COUNT ||
-	    acpi_shutdown_map[sleep_state] == -1) {
+	अगर (sleep_state >= ACPI_S_STATE_COUNT ||
+	    acpi_shutकरोwn_map[sleep_state] == -1) अणु
 		pr_warn("unsupported sleep state 0x%x\n", sleep_state);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	tboot_shutdown(acpi_shutdown_map[sleep_state]);
-	return 0;
-}
+	tboot_shutकरोwn(acpi_shutकरोwn_map[sleep_state]);
+	वापस 0;
+पूर्ण
 
-static int tboot_extended_sleep(u8 sleep_state, u32 val_a, u32 val_b)
-{
-	if (!tboot_enabled())
-		return 0;
+अटल पूर्णांक tboot_extended_sleep(u8 sleep_state, u32 val_a, u32 val_b)
+अणु
+	अगर (!tboot_enabled())
+		वापस 0;
 
 	pr_warn("tboot is not able to suspend on platforms with reduced hardware sleep (ACPIv5)");
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 
-static atomic_t ap_wfs_count;
+अटल atomic_t ap_wfs_count;
 
-static int tboot_wait_for_aps(int num_aps)
-{
-	unsigned long timeout;
+अटल पूर्णांक tboot_रुको_क्रम_aps(पूर्णांक num_aps)
+अणु
+	अचिन्हित दीर्घ समयout;
 
-	timeout = AP_WAIT_TIMEOUT*HZ;
-	while (atomic_read((atomic_t *)&tboot->num_in_wfs) != num_aps &&
-	       timeout) {
+	समयout = AP_WAIT_TIMEOUT*HZ;
+	जबतक (atomic_पढ़ो((atomic_t *)&tboot->num_in_wfs) != num_aps &&
+	       समयout) अणु
 		mdelay(1);
-		timeout--;
-	}
+		समयout--;
+	पूर्ण
 
-	if (timeout)
+	अगर (समयout)
 		pr_warn("tboot wait for APs timeout\n");
 
-	return !(atomic_read((atomic_t *)&tboot->num_in_wfs) == num_aps);
-}
+	वापस !(atomic_पढ़ो((atomic_t *)&tboot->num_in_wfs) == num_aps);
+पूर्ण
 
-static int tboot_dying_cpu(unsigned int cpu)
-{
+अटल पूर्णांक tboot_dying_cpu(अचिन्हित पूर्णांक cpu)
+अणु
 	atomic_inc(&ap_wfs_count);
-	if (num_online_cpus() == 1) {
-		if (tboot_wait_for_aps(atomic_read(&ap_wfs_count)))
-			return -EBUSY;
-	}
-	return 0;
-}
+	अगर (num_online_cpus() == 1) अणु
+		अगर (tboot_रुको_क्रम_aps(atomic_पढ़ो(&ap_wfs_count)))
+			वापस -EBUSY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 
-#define TBOOT_LOG_UUID	{ 0x26, 0x25, 0x19, 0xc0, 0x30, 0x6b, 0xb4, 0x4d, \
-			  0x4c, 0x84, 0xa3, 0xe9, 0x53, 0xb8, 0x81, 0x74 }
+#घोषणा TBOOT_LOG_UUID	अणु 0x26, 0x25, 0x19, 0xc0, 0x30, 0x6b, 0xb4, 0x4d, \
+			  0x4c, 0x84, 0xa3, 0xe9, 0x53, 0xb8, 0x81, 0x74 पूर्ण
 
-#define TBOOT_SERIAL_LOG_ADDR	0x60000
-#define TBOOT_SERIAL_LOG_SIZE	0x08000
-#define LOG_MAX_SIZE_OFF	16
-#define LOG_BUF_OFF		24
+#घोषणा TBOOT_SERIAL_LOG_ADDR	0x60000
+#घोषणा TBOOT_SERIAL_LOG_SIZE	0x08000
+#घोषणा LOG_MAX_SIZE_OFF	16
+#घोषणा LOG_BUF_OFF		24
 
-static uint8_t tboot_log_uuid[16] = TBOOT_LOG_UUID;
+अटल uपूर्णांक8_t tboot_log_uuid[16] = TBOOT_LOG_UUID;
 
-static ssize_t tboot_log_read(struct file *file, char __user *user_buf, size_t count, loff_t *ppos)
-{
-	void __iomem *log_base;
+अटल sमाप_प्रकार tboot_log_पढ़ो(काष्ठा file *file, अक्षर __user *user_buf, माप_प्रकार count, loff_t *ppos)
+अणु
+	व्योम __iomem *log_base;
 	u8 log_uuid[16];
 	u32 max_size;
-	void *kbuf;
-	int ret = -EFAULT;
+	व्योम *kbuf;
+	पूर्णांक ret = -EFAULT;
 
 	log_base = ioremap(TBOOT_SERIAL_LOG_ADDR, TBOOT_SERIAL_LOG_SIZE);
-	if (!log_base)
-		return ret;
+	अगर (!log_base)
+		वापस ret;
 
-	memcpy_fromio(log_uuid, log_base, sizeof(log_uuid));
-	if (memcmp(&tboot_log_uuid, log_uuid, sizeof(log_uuid)))
-		goto err_iounmap;
+	स_नकल_fromio(log_uuid, log_base, माप(log_uuid));
+	अगर (स_भेद(&tboot_log_uuid, log_uuid, माप(log_uuid)))
+		जाओ err_iounmap;
 
-	max_size = readl(log_base + LOG_MAX_SIZE_OFF);
-	if (*ppos >= max_size) {
+	max_size = पढ़ोl(log_base + LOG_MAX_SIZE_OFF);
+	अगर (*ppos >= max_size) अणु
 		ret = 0;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	if (*ppos + count > max_size)
+	अगर (*ppos + count > max_size)
 		count = max_size - *ppos;
 
-	kbuf = kmalloc(count, GFP_KERNEL);
-	if (!kbuf) {
+	kbuf = kदो_स्मृति(count, GFP_KERNEL);
+	अगर (!kbuf) अणु
 		ret = -ENOMEM;
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
-	memcpy_fromio(kbuf, log_base + LOG_BUF_OFF + *ppos, count);
-	if (copy_to_user(user_buf, kbuf, count))
-		goto err_kfree;
+	स_नकल_fromio(kbuf, log_base + LOG_BUF_OFF + *ppos, count);
+	अगर (copy_to_user(user_buf, kbuf, count))
+		जाओ err_kमुक्त;
 
 	*ppos += count;
 
 	ret = count;
 
-err_kfree:
-	kfree(kbuf);
+err_kमुक्त:
+	kमुक्त(kbuf);
 
 err_iounmap:
 	iounmap(log_base);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct file_operations tboot_log_fops = {
-	.read	= tboot_log_read,
-	.llseek	= default_llseek,
-};
+अटल स्थिर काष्ठा file_operations tboot_log_fops = अणु
+	.पढ़ो	= tboot_log_पढ़ो,
+	.llseek	= शेष_llseek,
+पूर्ण;
 
-#endif /* CONFIG_DEBUG_FS */
+#पूर्ण_अगर /* CONFIG_DEBUG_FS */
 
-static __init int tboot_late_init(void)
-{
-	if (!tboot_enabled())
-		return 0;
+अटल __init पूर्णांक tboot_late_init(व्योम)
+अणु
+	अगर (!tboot_enabled())
+		वापस 0;
 
 	tboot_create_trampoline();
 
 	atomic_set(&ap_wfs_count, 0);
-	cpuhp_setup_state(CPUHP_AP_X86_TBOOT_DYING, "x86/tboot:dying", NULL,
+	cpuhp_setup_state(CPUHP_AP_X86_TBOOT_DYING, "x86/tboot:dying", शून्य,
 			  tboot_dying_cpu);
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	debugfs_create_file("tboot_log", S_IRUSR,
-			arch_debugfs_dir, NULL, &tboot_log_fops);
-#endif
+			arch_debugfs_dir, शून्य, &tboot_log_fops);
+#पूर्ण_अगर
 
 	acpi_os_set_prepare_sleep(&tboot_sleep);
 	acpi_os_set_prepare_extended_sleep(&tboot_extended_sleep);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 late_initcall(tboot_late_init);
 
 /*
- * TXT configuration registers (offsets from TXT_{PUB, PRIV}_CONFIG_REGS_BASE)
+ * TXT configuration रेजिस्टरs (offsets from TXT_अणुPUB, PRIVपूर्ण_CONFIG_REGS_BASE)
  */
 
-#define TXT_PUB_CONFIG_REGS_BASE       0xfed30000
-#define TXT_PRIV_CONFIG_REGS_BASE      0xfed20000
+#घोषणा TXT_PUB_CONFIG_REGS_BASE       0xfed30000
+#घोषणा TXT_PRIV_CONFIG_REGS_BASE      0xfed20000
 
-/* # pages for each config regs space - used by fixmap */
-#define NR_TXT_CONFIG_PAGES     ((TXT_PUB_CONFIG_REGS_BASE -                \
+/* # pages क्रम each config regs space - used by fixmap */
+#घोषणा NR_TXT_CONFIG_PAGES     ((TXT_PUB_CONFIG_REGS_BASE -                \
 				  TXT_PRIV_CONFIG_REGS_BASE) >> PAGE_SHIFT)
 
 /* offsets from pub/priv config space */
-#define TXTCR_HEAP_BASE             0x0300
-#define TXTCR_HEAP_SIZE             0x0308
+#घोषणा TXTCR_HEAP_BASE             0x0300
+#घोषणा TXTCR_HEAP_SIZE             0x0308
 
-#define SHA1_SIZE      20
+#घोषणा SHA1_SIZE      20
 
-struct sha1_hash {
+काष्ठा sha1_hash अणु
 	u8 hash[SHA1_SIZE];
-};
+पूर्ण;
 
-struct sinit_mle_data {
+काष्ठा sinit_mle_data अणु
 	u32               version;             /* currently 6 */
-	struct sha1_hash  bios_acm_id;
+	काष्ठा sha1_hash  bios_acm_id;
 	u32               edx_senter_flags;
 	u64               mseg_valid;
-	struct sha1_hash  sinit_hash;
-	struct sha1_hash  mle_hash;
-	struct sha1_hash  stm_hash;
-	struct sha1_hash  lcp_policy_hash;
+	काष्ठा sha1_hash  sinit_hash;
+	काष्ठा sha1_hash  mle_hash;
+	काष्ठा sha1_hash  sपंचांग_hash;
+	काष्ठा sha1_hash  lcp_policy_hash;
 	u32               lcp_policy_control;
 	u32               rlp_wakeup_addr;
 	u32               reserved;
@@ -472,32 +473,32 @@ struct sinit_mle_data {
 	u32               mdrs_off;
 	u32               num_vtd_dmars;
 	u32               vtd_dmars_off;
-} __packed;
+पूर्ण __packed;
 
-struct acpi_table_header *tboot_get_dmar_table(struct acpi_table_header *dmar_tbl)
-{
-	void *heap_base, *heap_ptr, *config;
+काष्ठा acpi_table_header *tboot_get_dmar_table(काष्ठा acpi_table_header *dmar_tbl)
+अणु
+	व्योम *heap_base, *heap_ptr, *config;
 
-	if (!tboot_enabled())
-		return dmar_tbl;
+	अगर (!tboot_enabled())
+		वापस dmar_tbl;
 
 	/*
-	 * ACPI tables may not be DMA protected by tboot, so use DMAR copy
-	 * SINIT saved in SinitMleData in TXT heap (which is DMA protected)
+	 * ACPI tables may not be DMA रक्षित by tboot, so use DMAR copy
+	 * SINIT saved in SinitMleData in TXT heap (which is DMA रक्षित)
 	 */
 
 	/* map config space in order to get heap addr */
 	config = ioremap(TXT_PUB_CONFIG_REGS_BASE, NR_TXT_CONFIG_PAGES *
 			 PAGE_SIZE);
-	if (!config)
-		return NULL;
+	अगर (!config)
+		वापस शून्य;
 
 	/* now map TXT heap */
 	heap_base = ioremap(*(u64 *)(config + TXTCR_HEAP_BASE),
 			    *(u64 *)(config + TXTCR_HEAP_SIZE));
 	iounmap(config);
-	if (!heap_base)
-		return NULL;
+	अगर (!heap_base)
+		वापस शून्य;
 
 	/* walk heap to SinitMleData */
 	/* skip BiosData */
@@ -506,28 +507,28 @@ struct acpi_table_header *tboot_get_dmar_table(struct acpi_table_header *dmar_tb
 	heap_ptr += *(u64 *)heap_ptr;
 	/* skip OsSinitData */
 	heap_ptr += *(u64 *)heap_ptr;
-	/* now points to SinitMleDataSize; set to SinitMleData */
-	heap_ptr += sizeof(u64);
+	/* now poपूर्णांकs to SinitMleDataSize; set to SinitMleData */
+	heap_ptr += माप(u64);
 	/* get addr of DMAR table */
-	dmar_tbl = (struct acpi_table_header *)(heap_ptr +
-		   ((struct sinit_mle_data *)heap_ptr)->vtd_dmars_off -
-		   sizeof(u64));
+	dmar_tbl = (काष्ठा acpi_table_header *)(heap_ptr +
+		   ((काष्ठा sinit_mle_data *)heap_ptr)->vtd_dmars_off -
+		   माप(u64));
 
-	/* don't unmap heap because dmar.c needs access to this */
+	/* करोn't unmap heap because dmar.c needs access to this */
 
-	return dmar_tbl;
-}
+	वापस dmar_tbl;
+पूर्ण
 
-int tboot_force_iommu(void)
-{
-	if (!tboot_enabled())
-		return 0;
+पूर्णांक tboot_क्रमce_iommu(व्योम)
+अणु
+	अगर (!tboot_enabled())
+		वापस 0;
 
-	if (no_iommu || dmar_disabled)
+	अगर (no_iommu || dmar_disabled)
 		pr_warn("Forcing Intel-IOMMU to enabled\n");
 
 	dmar_disabled = 0;
 	no_iommu = 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण

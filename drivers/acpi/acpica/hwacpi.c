@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
  * Module Name: hwacpi - ACPI Hardware Initialization/Mode Interface
@@ -7,13 +8,13 @@
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
 
-#define _COMPONENT          ACPI_HARDWARE
+#घोषणा _COMPONENT          ACPI_HARDWARE
 ACPI_MODULE_NAME("hwacpi")
 
-#if (!ACPI_REDUCED_HARDWARE)	/* Entire module */
+#अगर (!ACPI_REDUCED_HARDWARE)	/* Entire module */
 /******************************************************************************
  *
  * FUNCTION:    acpi_hw_set_mode
@@ -22,11 +23,11 @@ ACPI_MODULE_NAME("hwacpi")
  *
  * RETURN:      Status
  *
- * DESCRIPTION: Transitions the system into the requested mode.
+ * DESCRIPTION: Transitions the प्रणाली पूर्णांकo the requested mode.
  *
  ******************************************************************************/
 acpi_status acpi_hw_set_mode(u32 mode)
-{
+अणु
 
 	acpi_status status;
 
@@ -34,69 +35,69 @@ acpi_status acpi_hw_set_mode(u32 mode)
 
 	/* If the Hardware Reduced flag is set, machine is always in acpi mode */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_ACPI_STATUS(AE_OK);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
 	/*
-	 * ACPI 2.0 clarified that if SMI_CMD in FADT is zero,
-	 * system does not support mode transition.
+	 * ACPI 2.0 clarअगरied that अगर SMI_CMD in FADT is zero,
+	 * प्रणाली करोes not support mode transition.
 	 */
-	if (!acpi_gbl_FADT.smi_command) {
+	अगर (!acpi_gbl_FADT.smi_command) अणु
 		ACPI_ERROR((AE_INFO,
 			    "No SMI_CMD in FADT, mode transition failed"));
-		return_ACPI_STATUS(AE_NO_HARDWARE_RESPONSE);
-	}
+		वापस_ACPI_STATUS(AE_NO_HARDWARE_RESPONSE);
+	पूर्ण
 
 	/*
-	 * ACPI 2.0 clarified the meaning of ACPI_ENABLE and ACPI_DISABLE
+	 * ACPI 2.0 clarअगरied the meaning of ACPI_ENABLE and ACPI_DISABLE
 	 * in FADT: If it is zero, enabling or disabling is not supported.
-	 * As old systems may have used zero for mode transition,
+	 * As old प्रणालीs may have used zero क्रम mode transition,
 	 * we make sure both the numbers are zero to determine these
 	 * transitions are not supported.
 	 */
-	if (!acpi_gbl_FADT.acpi_enable && !acpi_gbl_FADT.acpi_disable) {
+	अगर (!acpi_gbl_FADT.acpi_enable && !acpi_gbl_FADT.acpi_disable) अणु
 		ACPI_ERROR((AE_INFO,
 			    "No ACPI mode transition supported in this system "
 			    "(enable/disable both zero)"));
-		return_ACPI_STATUS(AE_OK);
-	}
+		वापस_ACPI_STATUS(AE_OK);
+	पूर्ण
 
-	switch (mode) {
-	case ACPI_SYS_MODE_ACPI:
+	चयन (mode) अणु
+	हाल ACPI_SYS_MODE_ACPI:
 
 		/* BIOS should have disabled ALL fixed and GP events */
 
-		status = acpi_hw_write_port(acpi_gbl_FADT.smi_command,
+		status = acpi_hw_ग_लिखो_port(acpi_gbl_FADT.smi_command,
 					    (u32) acpi_gbl_FADT.acpi_enable, 8);
 		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 				  "Attempting to enable ACPI mode\n"));
-		break;
+		अवरोध;
 
-	case ACPI_SYS_MODE_LEGACY:
+	हाल ACPI_SYS_MODE_LEGACY:
 		/*
 		 * BIOS should clear all fixed status bits and restore fixed event
-		 * enable bits to default
+		 * enable bits to शेष
 		 */
-		status = acpi_hw_write_port(acpi_gbl_FADT.smi_command,
+		status = acpi_hw_ग_लिखो_port(acpi_gbl_FADT.smi_command,
 					    (u32)acpi_gbl_FADT.acpi_disable, 8);
 		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
 				  "Attempting to enable Legacy (non-ACPI) mode\n"));
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 
-		return_ACPI_STATUS(AE_BAD_PARAMETER);
-	}
+		वापस_ACPI_STATUS(AE_BAD_PARAMETER);
+	पूर्ण
 
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		ACPI_EXCEPTION((AE_INFO, status,
 				"Could not write ACPI mode change"));
-		return_ACPI_STATUS(status);
-	}
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
-	return_ACPI_STATUS(AE_OK);
-}
+	वापस_ACPI_STATUS(AE_OK);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -106,13 +107,13 @@ acpi_status acpi_hw_set_mode(u32 mode)
  *
  * RETURN:      SYS_MODE_ACPI or SYS_MODE_LEGACY
  *
- * DESCRIPTION: Return current operating state of system. Determined by
+ * DESCRIPTION: Return current operating state of प्रणाली. Determined by
  *              querying the SCI_EN bit.
  *
  ******************************************************************************/
 
-u32 acpi_hw_get_mode(void)
-{
+u32 acpi_hw_get_mode(व्योम)
+अणु
 	acpi_status status;
 	u32 value;
 
@@ -120,28 +121,28 @@ u32 acpi_hw_get_mode(void)
 
 	/* If the Hardware Reduced flag is set, machine is always in acpi mode */
 
-	if (acpi_gbl_reduced_hardware) {
-		return_UINT32(ACPI_SYS_MODE_ACPI);
-	}
+	अगर (acpi_gbl_reduced_hardware) अणु
+		वापस_UINT32(ACPI_SYS_MODE_ACPI);
+	पूर्ण
 
 	/*
-	 * ACPI 2.0 clarified that if SMI_CMD in FADT is zero,
-	 * system does not support mode transition.
+	 * ACPI 2.0 clarअगरied that अगर SMI_CMD in FADT is zero,
+	 * प्रणाली करोes not support mode transition.
 	 */
-	if (!acpi_gbl_FADT.smi_command) {
-		return_UINT32(ACPI_SYS_MODE_ACPI);
-	}
+	अगर (!acpi_gbl_FADT.smi_command) अणु
+		वापस_UINT32(ACPI_SYS_MODE_ACPI);
+	पूर्ण
 
-	status = acpi_read_bit_register(ACPI_BITREG_SCI_ENABLE, &value);
-	if (ACPI_FAILURE(status)) {
-		return_UINT32(ACPI_SYS_MODE_LEGACY);
-	}
+	status = acpi_पढ़ो_bit_रेजिस्टर(ACPI_BITREG_SCI_ENABLE, &value);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_UINT32(ACPI_SYS_MODE_LEGACY);
+	पूर्ण
 
-	if (value) {
-		return_UINT32(ACPI_SYS_MODE_ACPI);
-	} else {
-		return_UINT32(ACPI_SYS_MODE_LEGACY);
-	}
-}
+	अगर (value) अणु
+		वापस_UINT32(ACPI_SYS_MODE_ACPI);
+	पूर्ण अन्यथा अणु
+		वापस_UINT32(ACPI_SYS_MODE_LEGACY);
+	पूर्ण
+पूर्ण
 
-#endif				/* !ACPI_REDUCED_HARDWARE */
+#पूर्ण_अगर				/* !ACPI_REDUCED_HARDWARE */

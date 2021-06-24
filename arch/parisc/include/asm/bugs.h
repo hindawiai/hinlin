@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- *  include/asm-parisc/bugs.h
+ *  include/यंत्र-parisc/bugs.h
  *
  *  Copyright (C) 1999	Mike Shaver
  */
 
 /*
- * This is included by init/main.c to check for architecture-dependent bugs.
+ * This is included by init/मुख्य.c to check क्रम architecture-dependent bugs.
  *
  * Needs:
- *	void check_bugs(void);
+ *	व्योम check_bugs(व्योम);
  */
 
-#include <asm/processor.h>
+#समावेश <यंत्र/processor.h>
 
-static inline void check_bugs(void)
-{
-//	identify_cpu(&boot_cpu_data);
-}
+अटल अंतरभूत व्योम check_bugs(व्योम)
+अणु
+//	identअगरy_cpu(&boot_cpu_data);
+पूर्ण

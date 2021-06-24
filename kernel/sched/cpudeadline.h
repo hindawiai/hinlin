@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#define IDX_INVALID		-1
+#घोषणा IDX_INVALID		-1
 
-struct cpudl_item {
+काष्ठा cpudl_item अणु
 	u64			dl;
-	int			cpu;
-	int			idx;
-};
+	पूर्णांक			cpu;
+	पूर्णांक			idx;
+पूर्ण;
 
-struct cpudl {
+काष्ठा cpudl अणु
 	raw_spinlock_t		lock;
-	int			size;
-	cpumask_var_t		free_cpus;
-	struct cpudl_item	*elements;
-};
+	पूर्णांक			size;
+	cpumask_var_t		मुक्त_cpus;
+	काष्ठा cpudl_item	*elements;
+पूर्ण;
 
-#ifdef CONFIG_SMP
-int  cpudl_find(struct cpudl *cp, struct task_struct *p, struct cpumask *later_mask);
-void cpudl_set(struct cpudl *cp, int cpu, u64 dl);
-void cpudl_clear(struct cpudl *cp, int cpu);
-int  cpudl_init(struct cpudl *cp);
-void cpudl_set_freecpu(struct cpudl *cp, int cpu);
-void cpudl_clear_freecpu(struct cpudl *cp, int cpu);
-void cpudl_cleanup(struct cpudl *cp);
-#endif /* CONFIG_SMP */
+#अगर_घोषित CONFIG_SMP
+पूर्णांक  cpudl_find(काष्ठा cpudl *cp, काष्ठा task_काष्ठा *p, काष्ठा cpumask *later_mask);
+व्योम cpudl_set(काष्ठा cpudl *cp, पूर्णांक cpu, u64 dl);
+व्योम cpudl_clear(काष्ठा cpudl *cp, पूर्णांक cpu);
+पूर्णांक  cpudl_init(काष्ठा cpudl *cp);
+व्योम cpudl_set_मुक्तcpu(काष्ठा cpudl *cp, पूर्णांक cpu);
+व्योम cpudl_clear_मुक्तcpu(काष्ठा cpudl *cp, पूर्णांक cpu);
+व्योम cpudl_cleanup(काष्ठा cpudl *cp);
+#पूर्ण_अगर /* CONFIG_SMP */

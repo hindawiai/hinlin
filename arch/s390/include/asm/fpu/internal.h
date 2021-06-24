@@ -1,62 +1,63 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * FPU state and register content conversion primitives
+ * FPU state and रेजिस्टर content conversion primitives
  *
  * Copyright IBM Corp. 2015
  * Author(s): Hendrik Brueckner <brueckner@linux.vnet.ibm.com>
  */
 
-#ifndef _ASM_S390_FPU_INTERNAL_H
-#define _ASM_S390_FPU_INTERNAL_H
+#अगर_अघोषित _ASM_S390_FPU_INTERNAL_H
+#घोषणा _ASM_S390_FPU_INTERNAL_H
 
-#include <linux/string.h>
-#include <asm/ctl_reg.h>
-#include <asm/fpu/types.h>
+#समावेश <linux/माला.स>
+#समावेश <यंत्र/ctl_reg.h>
+#समावेश <यंत्र/fpu/types.h>
 
-static inline void save_vx_regs(__vector128 *vxrs)
-{
-	asm volatile(
+अटल अंतरभूत व्योम save_vx_regs(__vector128 *vxrs)
+अणु
+	यंत्र अस्थिर(
 		"	la	1,%0\n"
-		"	.word	0xe70f,0x1000,0x003e\n"	/* vstm 0,15,0(1) */
-		"	.word	0xe70f,0x1100,0x0c3e\n"	/* vstm 16,31,256(1) */
-		: "=Q" (*(struct vx_array *) vxrs) : : "1");
-}
+		"	.word	0xe70f,0x1000,0x003e\n"	/* vsपंचांग 0,15,0(1) */
+		"	.word	0xe70f,0x1100,0x0c3e\n"	/* vsपंचांग 16,31,256(1) */
+		: "=Q" (*(काष्ठा vx_array *) vxrs) : : "1");
+पूर्ण
 
-static inline void convert_vx_to_fp(freg_t *fprs, __vector128 *vxrs)
-{
-	int i;
+अटल अंतरभूत व्योम convert_vx_to_fp(freg_t *fprs, __vector128 *vxrs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < __NUM_FPRS; i++)
+	क्रम (i = 0; i < __NUM_FPRS; i++)
 		fprs[i] = *(freg_t *)(vxrs + i);
-}
+पूर्ण
 
-static inline void convert_fp_to_vx(__vector128 *vxrs, freg_t *fprs)
-{
-	int i;
+अटल अंतरभूत व्योम convert_fp_to_vx(__vector128 *vxrs, freg_t *fprs)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < __NUM_FPRS; i++)
+	क्रम (i = 0; i < __NUM_FPRS; i++)
 		*(freg_t *)(vxrs + i) = fprs[i];
-}
+पूर्ण
 
-static inline void fpregs_store(_s390_fp_regs *fpregs, struct fpu *fpu)
-{
+अटल अंतरभूत व्योम fpregs_store(_s390_fp_regs *fpregs, काष्ठा fpu *fpu)
+अणु
 	fpregs->pad = 0;
 	fpregs->fpc = fpu->fpc;
-	if (MACHINE_HAS_VX)
+	अगर (MACHINE_HAS_VX)
 		convert_vx_to_fp((freg_t *)&fpregs->fprs, fpu->vxrs);
-	else
-		memcpy((freg_t *)&fpregs->fprs, fpu->fprs,
-		       sizeof(fpregs->fprs));
-}
+	अन्यथा
+		स_नकल((freg_t *)&fpregs->fprs, fpu->fprs,
+		       माप(fpregs->fprs));
+पूर्ण
 
-static inline void fpregs_load(_s390_fp_regs *fpregs, struct fpu *fpu)
-{
+अटल अंतरभूत व्योम fpregs_load(_s390_fp_regs *fpregs, काष्ठा fpu *fpu)
+अणु
 	fpu->fpc = fpregs->fpc;
-	if (MACHINE_HAS_VX)
+	अगर (MACHINE_HAS_VX)
 		convert_fp_to_vx(fpu->vxrs, (freg_t *)&fpregs->fprs);
-	else
-		memcpy(fpu->fprs, (freg_t *)&fpregs->fprs,
-		       sizeof(fpregs->fprs));
-}
+	अन्यथा
+		स_नकल(fpu->fprs, (freg_t *)&fpregs->fprs,
+		       माप(fpregs->fprs));
+पूर्ण
 
-#endif /* _ASM_S390_FPU_INTERNAL_H */
+#पूर्ण_अगर /* _ASM_S390_FPU_INTERNAL_H */

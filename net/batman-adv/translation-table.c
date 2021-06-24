@@ -1,137 +1,138 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
  * Marek Lindner, Simon Wunderlich, Antonio Quartulli
  */
 
-#include "translation-table.h"
-#include "main.h"
+#समावेश "translation-table.h"
+#समावेश "main.h"
 
-#include <linux/atomic.h>
-#include <linux/bitops.h>
-#include <linux/build_bug.h>
-#include <linux/byteorder/generic.h>
-#include <linux/cache.h>
-#include <linux/compiler.h>
-#include <linux/crc32c.h>
-#include <linux/errno.h>
-#include <linux/etherdevice.h>
-#include <linux/gfp.h>
-#include <linux/if_ether.h>
-#include <linux/init.h>
-#include <linux/jhash.h>
-#include <linux/jiffies.h>
-#include <linux/kernel.h>
-#include <linux/kref.h>
-#include <linux/list.h>
-#include <linux/lockdep.h>
-#include <linux/net.h>
-#include <linux/netdevice.h>
-#include <linux/netlink.h>
-#include <linux/rculist.h>
-#include <linux/rcupdate.h>
-#include <linux/skbuff.h>
-#include <linux/slab.h>
-#include <linux/spinlock.h>
-#include <linux/stddef.h>
-#include <linux/string.h>
-#include <linux/workqueue.h>
-#include <net/genetlink.h>
-#include <net/netlink.h>
-#include <net/sock.h>
-#include <uapi/linux/batadv_packet.h>
-#include <uapi/linux/batman_adv.h>
+#समावेश <linux/atomic.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/build_bug.h>
+#समावेश <linux/byteorder/generic.h>
+#समावेश <linux/cache.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/crc32c.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/init.h>
+#समावेश <linux/jhash.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kref.h>
+#समावेश <linux/list.h>
+#समावेश <linux/lockdep.h>
+#समावेश <linux/net.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/netlink.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/rcupdate.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/माला.स>
+#समावेश <linux/workqueue.h>
+#समावेश <net/genetlink.h>
+#समावेश <net/netlink.h>
+#समावेश <net/sock.h>
+#समावेश <uapi/linux/batadv_packet.h>
+#समावेश <uapi/linux/baपंचांगan_adv.h>
 
-#include "bridge_loop_avoidance.h"
-#include "hard-interface.h"
-#include "hash.h"
-#include "log.h"
-#include "netlink.h"
-#include "originator.h"
-#include "soft-interface.h"
-#include "tvlv.h"
+#समावेश "bridge_loop_avoidance.h"
+#समावेश "hard-interface.h"
+#समावेश "hash.h"
+#समावेश "log.h"
+#समावेश "netlink.h"
+#समावेश "originator.h"
+#समावेश "soft-interface.h"
+#समावेश "tvlv.h"
 
-static struct kmem_cache *batadv_tl_cache __read_mostly;
-static struct kmem_cache *batadv_tg_cache __read_mostly;
-static struct kmem_cache *batadv_tt_orig_cache __read_mostly;
-static struct kmem_cache *batadv_tt_change_cache __read_mostly;
-static struct kmem_cache *batadv_tt_req_cache __read_mostly;
-static struct kmem_cache *batadv_tt_roam_cache __read_mostly;
+अटल काष्ठा kmem_cache *batadv_tl_cache __पढ़ो_mostly;
+अटल काष्ठा kmem_cache *batadv_tg_cache __पढ़ो_mostly;
+अटल काष्ठा kmem_cache *batadv_tt_orig_cache __पढ़ो_mostly;
+अटल काष्ठा kmem_cache *batadv_tt_change_cache __पढ़ो_mostly;
+अटल काष्ठा kmem_cache *batadv_tt_req_cache __पढ़ो_mostly;
+अटल काष्ठा kmem_cache *batadv_tt_roam_cache __पढ़ो_mostly;
 
 /* hash class keys */
-static struct lock_class_key batadv_tt_local_hash_lock_class_key;
-static struct lock_class_key batadv_tt_global_hash_lock_class_key;
+अटल काष्ठा lock_class_key batadv_tt_local_hash_lock_class_key;
+अटल काष्ठा lock_class_key batadv_tt_global_hash_lock_class_key;
 
-static void batadv_send_roam_adv(struct batadv_priv *bat_priv, u8 *client,
-				 unsigned short vid,
-				 struct batadv_orig_node *orig_node);
-static void batadv_tt_purge(struct work_struct *work);
-static void
-batadv_tt_global_del_orig_list(struct batadv_tt_global_entry *tt_global_entry);
-static void batadv_tt_global_del(struct batadv_priv *bat_priv,
-				 struct batadv_orig_node *orig_node,
-				 const unsigned char *addr,
-				 unsigned short vid, const char *message,
+अटल व्योम batadv_send_roam_adv(काष्ठा batadv_priv *bat_priv, u8 *client,
+				 अचिन्हित लघु vid,
+				 काष्ठा batadv_orig_node *orig_node);
+अटल व्योम batadv_tt_purge(काष्ठा work_काष्ठा *work);
+अटल व्योम
+batadv_tt_global_del_orig_list(काष्ठा batadv_tt_global_entry *tt_global_entry);
+अटल व्योम batadv_tt_global_del(काष्ठा batadv_priv *bat_priv,
+				 काष्ठा batadv_orig_node *orig_node,
+				 स्थिर अचिन्हित अक्षर *addr,
+				 अचिन्हित लघु vid, स्थिर अक्षर *message,
 				 bool roaming);
 
 /**
- * batadv_compare_tt() - check if two TT entries are the same
- * @node: the list element pointer of the first TT entry
- * @data2: pointer to the tt_common_entry of the second TT entry
+ * batadv_compare_tt() - check अगर two TT entries are the same
+ * @node: the list element poपूर्णांकer of the first TT entry
+ * @data2: poपूर्णांकer to the tt_common_entry of the second TT entry
  *
- * Compare the MAC address and the VLAN ID of the two TT entries and check if
+ * Compare the MAC address and the VLAN ID of the two TT entries and check अगर
  * they are the same TT client.
- * Return: true if the two TT clients are the same, false otherwise
+ * Return: true अगर the two TT clients are the same, false otherwise
  */
-static bool batadv_compare_tt(const struct hlist_node *node, const void *data2)
-{
-	const void *data1 = container_of(node, struct batadv_tt_common_entry,
+अटल bool batadv_compare_tt(स्थिर काष्ठा hlist_node *node, स्थिर व्योम *data2)
+अणु
+	स्थिर व्योम *data1 = container_of(node, काष्ठा batadv_tt_common_entry,
 					 hash_entry);
-	const struct batadv_tt_common_entry *tt1 = data1;
-	const struct batadv_tt_common_entry *tt2 = data2;
+	स्थिर काष्ठा batadv_tt_common_entry *tt1 = data1;
+	स्थिर काष्ठा batadv_tt_common_entry *tt2 = data2;
 
-	return (tt1->vid == tt2->vid) && batadv_compare_eth(data1, data2);
-}
+	वापस (tt1->vid == tt2->vid) && batadv_compare_eth(data1, data2);
+पूर्ण
 
 /**
- * batadv_choose_tt() - return the index of the tt entry in the hash table
- * @data: pointer to the tt_common_entry object to map
+ * batadv_choose_tt() - वापस the index of the tt entry in the hash table
+ * @data: poपूर्णांकer to the tt_common_entry object to map
  * @size: the size of the hash table
  *
  * Return: the hash index where the object represented by 'data' should be
  * stored at.
  */
-static inline u32 batadv_choose_tt(const void *data, u32 size)
-{
-	struct batadv_tt_common_entry *tt;
+अटल अंतरभूत u32 batadv_choose_tt(स्थिर व्योम *data, u32 size)
+अणु
+	काष्ठा batadv_tt_common_entry *tt;
 	u32 hash = 0;
 
-	tt = (struct batadv_tt_common_entry *)data;
+	tt = (काष्ठा batadv_tt_common_entry *)data;
 	hash = jhash(&tt->addr, ETH_ALEN, hash);
-	hash = jhash(&tt->vid, sizeof(tt->vid), hash);
+	hash = jhash(&tt->vid, माप(tt->vid), hash);
 
-	return hash % size;
-}
+	वापस hash % size;
+पूर्ण
 
 /**
- * batadv_tt_hash_find() - look for a client in the given hash table
+ * batadv_tt_hash_find() - look क्रम a client in the given hash table
  * @hash: the hash table to search
- * @addr: the mac address of the client to look for
- * @vid: VLAN identifier
+ * @addr: the mac address of the client to look क्रम
+ * @vid: VLAN identअगरier
  *
- * Return: a pointer to the tt_common struct belonging to the searched client if
- * found, NULL otherwise.
+ * Return: a poपूर्णांकer to the tt_common काष्ठा beदीर्घing to the searched client अगर
+ * found, शून्य otherwise.
  */
-static struct batadv_tt_common_entry *
-batadv_tt_hash_find(struct batadv_hashtable *hash, const u8 *addr,
-		    unsigned short vid)
-{
-	struct hlist_head *head;
-	struct batadv_tt_common_entry to_search, *tt, *tt_tmp = NULL;
+अटल काष्ठा batadv_tt_common_entry *
+batadv_tt_hash_find(काष्ठा batadv_hashtable *hash, स्थिर u8 *addr,
+		    अचिन्हित लघु vid)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_tt_common_entry to_search, *tt, *tt_पंचांगp = शून्य;
 	u32 index;
 
-	if (!hash)
-		return NULL;
+	अगर (!hash)
+		वापस शून्य;
 
 	ether_addr_copy(to_search.addr, addr);
 	to_search.vid = vid;
@@ -139,396 +140,396 @@ batadv_tt_hash_find(struct batadv_hashtable *hash, const u8 *addr,
 	index = batadv_choose_tt(&to_search, hash->size);
 	head = &hash->table[index];
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(tt, head, hash_entry) {
-		if (!batadv_compare_eth(tt, addr))
-			continue;
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(tt, head, hash_entry) अणु
+		अगर (!batadv_compare_eth(tt, addr))
+			जारी;
 
-		if (tt->vid != vid)
-			continue;
+		अगर (tt->vid != vid)
+			जारी;
 
-		if (!kref_get_unless_zero(&tt->refcount))
-			continue;
+		अगर (!kref_get_unless_zero(&tt->refcount))
+			जारी;
 
-		tt_tmp = tt;
-		break;
-	}
-	rcu_read_unlock();
+		tt_पंचांगp = tt;
+		अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return tt_tmp;
-}
+	वापस tt_पंचांगp;
+पूर्ण
 
 /**
- * batadv_tt_local_hash_find() - search the local table for a given client
- * @bat_priv: the bat priv with all the soft interface information
- * @addr: the mac address of the client to look for
- * @vid: VLAN identifier
+ * batadv_tt_local_hash_find() - search the local table क्रम a given client
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @addr: the mac address of the client to look क्रम
+ * @vid: VLAN identअगरier
  *
- * Return: a pointer to the corresponding tt_local_entry struct if the client is
- * found, NULL otherwise.
+ * Return: a poपूर्णांकer to the corresponding tt_local_entry काष्ठा अगर the client is
+ * found, शून्य otherwise.
  */
-static struct batadv_tt_local_entry *
-batadv_tt_local_hash_find(struct batadv_priv *bat_priv, const u8 *addr,
-			  unsigned short vid)
-{
-	struct batadv_tt_common_entry *tt_common_entry;
-	struct batadv_tt_local_entry *tt_local_entry = NULL;
+अटल काष्ठा batadv_tt_local_entry *
+batadv_tt_local_hash_find(काष्ठा batadv_priv *bat_priv, स्थिर u8 *addr,
+			  अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_tt_common_entry *tt_common_entry;
+	काष्ठा batadv_tt_local_entry *tt_local_entry = शून्य;
 
 	tt_common_entry = batadv_tt_hash_find(bat_priv->tt.local_hash, addr,
 					      vid);
-	if (tt_common_entry)
+	अगर (tt_common_entry)
 		tt_local_entry = container_of(tt_common_entry,
-					      struct batadv_tt_local_entry,
+					      काष्ठा batadv_tt_local_entry,
 					      common);
-	return tt_local_entry;
-}
+	वापस tt_local_entry;
+पूर्ण
 
 /**
- * batadv_tt_global_hash_find() - search the global table for a given client
- * @bat_priv: the bat priv with all the soft interface information
- * @addr: the mac address of the client to look for
- * @vid: VLAN identifier
+ * batadv_tt_global_hash_find() - search the global table क्रम a given client
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @addr: the mac address of the client to look क्रम
+ * @vid: VLAN identअगरier
  *
- * Return: a pointer to the corresponding tt_global_entry struct if the client
- * is found, NULL otherwise.
+ * Return: a poपूर्णांकer to the corresponding tt_global_entry काष्ठा अगर the client
+ * is found, शून्य otherwise.
  */
-struct batadv_tt_global_entry *
-batadv_tt_global_hash_find(struct batadv_priv *bat_priv, const u8 *addr,
-			   unsigned short vid)
-{
-	struct batadv_tt_common_entry *tt_common_entry;
-	struct batadv_tt_global_entry *tt_global_entry = NULL;
+काष्ठा batadv_tt_global_entry *
+batadv_tt_global_hash_find(काष्ठा batadv_priv *bat_priv, स्थिर u8 *addr,
+			   अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_tt_common_entry *tt_common_entry;
+	काष्ठा batadv_tt_global_entry *tt_global_entry = शून्य;
 
 	tt_common_entry = batadv_tt_hash_find(bat_priv->tt.global_hash, addr,
 					      vid);
-	if (tt_common_entry)
+	अगर (tt_common_entry)
 		tt_global_entry = container_of(tt_common_entry,
-					       struct batadv_tt_global_entry,
+					       काष्ठा batadv_tt_global_entry,
 					       common);
-	return tt_global_entry;
-}
+	वापस tt_global_entry;
+पूर्ण
 
 /**
- * batadv_tt_local_entry_free_rcu() - free the tt_local_entry
- * @rcu: rcu pointer of the tt_local_entry
+ * batadv_tt_local_entry_मुक्त_rcu() - मुक्त the tt_local_entry
+ * @rcu: rcu poपूर्णांकer of the tt_local_entry
  */
-static void batadv_tt_local_entry_free_rcu(struct rcu_head *rcu)
-{
-	struct batadv_tt_local_entry *tt_local_entry;
+अटल व्योम batadv_tt_local_entry_मुक्त_rcu(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा batadv_tt_local_entry *tt_local_entry;
 
-	tt_local_entry = container_of(rcu, struct batadv_tt_local_entry,
+	tt_local_entry = container_of(rcu, काष्ठा batadv_tt_local_entry,
 				      common.rcu);
 
-	kmem_cache_free(batadv_tl_cache, tt_local_entry);
-}
+	kmem_cache_मुक्त(batadv_tl_cache, tt_local_entry);
+पूर्ण
 
 /**
  * batadv_tt_local_entry_release() - release tt_local_entry from lists and queue
- *  for free after rcu grace period
- * @ref: kref pointer of the nc_node
+ *  क्रम मुक्त after rcu grace period
+ * @ref: kref poपूर्णांकer of the nc_node
  */
-static void batadv_tt_local_entry_release(struct kref *ref)
-{
-	struct batadv_tt_local_entry *tt_local_entry;
+अटल व्योम batadv_tt_local_entry_release(काष्ठा kref *ref)
+अणु
+	काष्ठा batadv_tt_local_entry *tt_local_entry;
 
-	tt_local_entry = container_of(ref, struct batadv_tt_local_entry,
+	tt_local_entry = container_of(ref, काष्ठा batadv_tt_local_entry,
 				      common.refcount);
 
-	batadv_softif_vlan_put(tt_local_entry->vlan);
+	batadv_softअगर_vlan_put(tt_local_entry->vlan);
 
-	call_rcu(&tt_local_entry->common.rcu, batadv_tt_local_entry_free_rcu);
-}
+	call_rcu(&tt_local_entry->common.rcu, batadv_tt_local_entry_मुक्त_rcu);
+पूर्ण
 
 /**
  * batadv_tt_local_entry_put() - decrement the tt_local_entry refcounter and
  *  possibly release it
- * @tt_local_entry: tt_local_entry to be free'd
+ * @tt_local_entry: tt_local_entry to be मुक्त'd
  */
-static void
-batadv_tt_local_entry_put(struct batadv_tt_local_entry *tt_local_entry)
-{
+अटल व्योम
+batadv_tt_local_entry_put(काष्ठा batadv_tt_local_entry *tt_local_entry)
+अणु
 	kref_put(&tt_local_entry->common.refcount,
 		 batadv_tt_local_entry_release);
-}
+पूर्ण
 
 /**
- * batadv_tt_global_entry_free_rcu() - free the tt_global_entry
- * @rcu: rcu pointer of the tt_global_entry
+ * batadv_tt_global_entry_मुक्त_rcu() - मुक्त the tt_global_entry
+ * @rcu: rcu poपूर्णांकer of the tt_global_entry
  */
-static void batadv_tt_global_entry_free_rcu(struct rcu_head *rcu)
-{
-	struct batadv_tt_global_entry *tt_global_entry;
+अटल व्योम batadv_tt_global_entry_मुक्त_rcu(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा batadv_tt_global_entry *tt_global_entry;
 
-	tt_global_entry = container_of(rcu, struct batadv_tt_global_entry,
+	tt_global_entry = container_of(rcu, काष्ठा batadv_tt_global_entry,
 				       common.rcu);
 
-	kmem_cache_free(batadv_tg_cache, tt_global_entry);
-}
+	kmem_cache_मुक्त(batadv_tg_cache, tt_global_entry);
+पूर्ण
 
 /**
  * batadv_tt_global_entry_release() - release tt_global_entry from lists and
- *  queue for free after rcu grace period
- * @ref: kref pointer of the nc_node
+ *  queue क्रम मुक्त after rcu grace period
+ * @ref: kref poपूर्णांकer of the nc_node
  */
-static void batadv_tt_global_entry_release(struct kref *ref)
-{
-	struct batadv_tt_global_entry *tt_global_entry;
+अटल व्योम batadv_tt_global_entry_release(काष्ठा kref *ref)
+अणु
+	काष्ठा batadv_tt_global_entry *tt_global_entry;
 
-	tt_global_entry = container_of(ref, struct batadv_tt_global_entry,
+	tt_global_entry = container_of(ref, काष्ठा batadv_tt_global_entry,
 				       common.refcount);
 
 	batadv_tt_global_del_orig_list(tt_global_entry);
 
-	call_rcu(&tt_global_entry->common.rcu, batadv_tt_global_entry_free_rcu);
-}
+	call_rcu(&tt_global_entry->common.rcu, batadv_tt_global_entry_मुक्त_rcu);
+पूर्ण
 
 /**
  * batadv_tt_global_entry_put() - decrement the tt_global_entry refcounter and
  *  possibly release it
- * @tt_global_entry: tt_global_entry to be free'd
+ * @tt_global_entry: tt_global_entry to be मुक्त'd
  */
-void batadv_tt_global_entry_put(struct batadv_tt_global_entry *tt_global_entry)
-{
+व्योम batadv_tt_global_entry_put(काष्ठा batadv_tt_global_entry *tt_global_entry)
+अणु
 	kref_put(&tt_global_entry->common.refcount,
 		 batadv_tt_global_entry_release);
-}
+पूर्ण
 
 /**
  * batadv_tt_global_hash_count() - count the number of orig entries
- * @bat_priv: the bat priv with all the soft interface information
- * @addr: the mac address of the client to count entries for
- * @vid: VLAN identifier
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @addr: the mac address of the client to count entries क्रम
+ * @vid: VLAN identअगरier
  *
  * Return: the number of originators advertising the given address/data
  * (excluding our self).
  */
-int batadv_tt_global_hash_count(struct batadv_priv *bat_priv,
-				const u8 *addr, unsigned short vid)
-{
-	struct batadv_tt_global_entry *tt_global_entry;
-	int count;
+पूर्णांक batadv_tt_global_hash_count(काष्ठा batadv_priv *bat_priv,
+				स्थिर u8 *addr, अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_tt_global_entry *tt_global_entry;
+	पूर्णांक count;
 
 	tt_global_entry = batadv_tt_global_hash_find(bat_priv, addr, vid);
-	if (!tt_global_entry)
-		return 0;
+	अगर (!tt_global_entry)
+		वापस 0;
 
-	count = atomic_read(&tt_global_entry->orig_list_count);
+	count = atomic_पढ़ो(&tt_global_entry->orig_list_count);
 	batadv_tt_global_entry_put(tt_global_entry);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
 /**
  * batadv_tt_local_size_mod() - change the size by v of the local table
- *  identified by vid
- * @bat_priv: the bat priv with all the soft interface information
- * @vid: the VLAN identifier of the sub-table to change
+ *  identअगरied by vid
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @vid: the VLAN identअगरier of the sub-table to change
  * @v: the amount to sum to the local table size
  */
-static void batadv_tt_local_size_mod(struct batadv_priv *bat_priv,
-				     unsigned short vid, int v)
-{
-	struct batadv_softif_vlan *vlan;
+अटल व्योम batadv_tt_local_size_mod(काष्ठा batadv_priv *bat_priv,
+				     अचिन्हित लघु vid, पूर्णांक v)
+अणु
+	काष्ठा batadv_softअगर_vlan *vlan;
 
-	vlan = batadv_softif_vlan_get(bat_priv, vid);
-	if (!vlan)
-		return;
+	vlan = batadv_softअगर_vlan_get(bat_priv, vid);
+	अगर (!vlan)
+		वापस;
 
 	atomic_add(v, &vlan->tt.num_entries);
 
-	batadv_softif_vlan_put(vlan);
-}
+	batadv_softअगर_vlan_put(vlan);
+पूर्ण
 
 /**
- * batadv_tt_local_size_inc() - increase by one the local table size for the
+ * batadv_tt_local_size_inc() - increase by one the local table size क्रम the
  *  given vid
- * @bat_priv: the bat priv with all the soft interface information
- * @vid: the VLAN identifier
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @vid: the VLAN identअगरier
  */
-static void batadv_tt_local_size_inc(struct batadv_priv *bat_priv,
-				     unsigned short vid)
-{
+अटल व्योम batadv_tt_local_size_inc(काष्ठा batadv_priv *bat_priv,
+				     अचिन्हित लघु vid)
+अणु
 	batadv_tt_local_size_mod(bat_priv, vid, 1);
-}
+पूर्ण
 
 /**
- * batadv_tt_local_size_dec() - decrease by one the local table size for the
+ * batadv_tt_local_size_dec() - decrease by one the local table size क्रम the
  *  given vid
- * @bat_priv: the bat priv with all the soft interface information
- * @vid: the VLAN identifier
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @vid: the VLAN identअगरier
  */
-static void batadv_tt_local_size_dec(struct batadv_priv *bat_priv,
-				     unsigned short vid)
-{
+अटल व्योम batadv_tt_local_size_dec(काष्ठा batadv_priv *bat_priv,
+				     अचिन्हित लघु vid)
+अणु
 	batadv_tt_local_size_mod(bat_priv, vid, -1);
-}
+पूर्ण
 
 /**
  * batadv_tt_global_size_mod() - change the size by v of the global table
- *  for orig_node identified by vid
- * @orig_node: the originator for which the table has to be modified
- * @vid: the VLAN identifier
+ *  क्रम orig_node identअगरied by vid
+ * @orig_node: the originator क्रम which the table has to be modअगरied
+ * @vid: the VLAN identअगरier
  * @v: the amount to sum to the global table size
  */
-static void batadv_tt_global_size_mod(struct batadv_orig_node *orig_node,
-				      unsigned short vid, int v)
-{
-	struct batadv_orig_node_vlan *vlan;
+अटल व्योम batadv_tt_global_size_mod(काष्ठा batadv_orig_node *orig_node,
+				      अचिन्हित लघु vid, पूर्णांक v)
+अणु
+	काष्ठा batadv_orig_node_vlan *vlan;
 
 	vlan = batadv_orig_node_vlan_new(orig_node, vid);
-	if (!vlan)
-		return;
+	अगर (!vlan)
+		वापस;
 
-	if (atomic_add_return(v, &vlan->tt.num_entries) == 0) {
+	अगर (atomic_add_वापस(v, &vlan->tt.num_entries) == 0) अणु
 		spin_lock_bh(&orig_node->vlan_list_lock);
-		if (!hlist_unhashed(&vlan->list)) {
+		अगर (!hlist_unhashed(&vlan->list)) अणु
 			hlist_del_init_rcu(&vlan->list);
 			batadv_orig_node_vlan_put(vlan);
-		}
+		पूर्ण
 		spin_unlock_bh(&orig_node->vlan_list_lock);
-	}
+	पूर्ण
 
 	batadv_orig_node_vlan_put(vlan);
-}
+पूर्ण
 
 /**
- * batadv_tt_global_size_inc() - increase by one the global table size for the
+ * batadv_tt_global_size_inc() - increase by one the global table size क्रम the
  *  given vid
  * @orig_node: the originator which global table size has to be decreased
- * @vid: the vlan identifier
+ * @vid: the vlan identअगरier
  */
-static void batadv_tt_global_size_inc(struct batadv_orig_node *orig_node,
-				      unsigned short vid)
-{
+अटल व्योम batadv_tt_global_size_inc(काष्ठा batadv_orig_node *orig_node,
+				      अचिन्हित लघु vid)
+अणु
 	batadv_tt_global_size_mod(orig_node, vid, 1);
-}
+पूर्ण
 
 /**
- * batadv_tt_global_size_dec() - decrease by one the global table size for the
+ * batadv_tt_global_size_dec() - decrease by one the global table size क्रम the
  *  given vid
  * @orig_node: the originator which global table size has to be decreased
- * @vid: the vlan identifier
+ * @vid: the vlan identअगरier
  */
-static void batadv_tt_global_size_dec(struct batadv_orig_node *orig_node,
-				      unsigned short vid)
-{
+अटल व्योम batadv_tt_global_size_dec(काष्ठा batadv_orig_node *orig_node,
+				      अचिन्हित लघु vid)
+अणु
 	batadv_tt_global_size_mod(orig_node, vid, -1);
-}
+पूर्ण
 
 /**
- * batadv_tt_orig_list_entry_free_rcu() - free the orig_entry
- * @rcu: rcu pointer of the orig_entry
+ * batadv_tt_orig_list_entry_मुक्त_rcu() - मुक्त the orig_entry
+ * @rcu: rcu poपूर्णांकer of the orig_entry
  */
-static void batadv_tt_orig_list_entry_free_rcu(struct rcu_head *rcu)
-{
-	struct batadv_tt_orig_list_entry *orig_entry;
+अटल व्योम batadv_tt_orig_list_entry_मुक्त_rcu(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा batadv_tt_orig_list_entry *orig_entry;
 
-	orig_entry = container_of(rcu, struct batadv_tt_orig_list_entry, rcu);
+	orig_entry = container_of(rcu, काष्ठा batadv_tt_orig_list_entry, rcu);
 
-	kmem_cache_free(batadv_tt_orig_cache, orig_entry);
-}
+	kmem_cache_मुक्त(batadv_tt_orig_cache, orig_entry);
+पूर्ण
 
 /**
  * batadv_tt_orig_list_entry_release() - release tt orig entry from lists and
- *  queue for free after rcu grace period
- * @ref: kref pointer of the tt orig entry
+ *  queue क्रम मुक्त after rcu grace period
+ * @ref: kref poपूर्णांकer of the tt orig entry
  */
-static void batadv_tt_orig_list_entry_release(struct kref *ref)
-{
-	struct batadv_tt_orig_list_entry *orig_entry;
+अटल व्योम batadv_tt_orig_list_entry_release(काष्ठा kref *ref)
+अणु
+	काष्ठा batadv_tt_orig_list_entry *orig_entry;
 
-	orig_entry = container_of(ref, struct batadv_tt_orig_list_entry,
+	orig_entry = container_of(ref, काष्ठा batadv_tt_orig_list_entry,
 				  refcount);
 
 	batadv_orig_node_put(orig_entry->orig_node);
-	call_rcu(&orig_entry->rcu, batadv_tt_orig_list_entry_free_rcu);
-}
+	call_rcu(&orig_entry->rcu, batadv_tt_orig_list_entry_मुक्त_rcu);
+पूर्ण
 
 /**
  * batadv_tt_orig_list_entry_put() - decrement the tt orig entry refcounter and
  *  possibly release it
- * @orig_entry: tt orig entry to be free'd
+ * @orig_entry: tt orig entry to be मुक्त'd
  */
-static void
-batadv_tt_orig_list_entry_put(struct batadv_tt_orig_list_entry *orig_entry)
-{
+अटल व्योम
+batadv_tt_orig_list_entry_put(काष्ठा batadv_tt_orig_list_entry *orig_entry)
+अणु
 	kref_put(&orig_entry->refcount, batadv_tt_orig_list_entry_release);
-}
+पूर्ण
 
 /**
  * batadv_tt_local_event() - store a local TT event (ADD/DEL)
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @tt_local_entry: the TT entry involved in the event
- * @event_flags: flags to store in the event structure
+ * @event_flags: flags to store in the event काष्ठाure
  */
-static void batadv_tt_local_event(struct batadv_priv *bat_priv,
-				  struct batadv_tt_local_entry *tt_local_entry,
+अटल व्योम batadv_tt_local_event(काष्ठा batadv_priv *bat_priv,
+				  काष्ठा batadv_tt_local_entry *tt_local_entry,
 				  u8 event_flags)
-{
-	struct batadv_tt_change_node *tt_change_node, *entry, *safe;
-	struct batadv_tt_common_entry *common = &tt_local_entry->common;
+अणु
+	काष्ठा batadv_tt_change_node *tt_change_node, *entry, *safe;
+	काष्ठा batadv_tt_common_entry *common = &tt_local_entry->common;
 	u8 flags = common->flags | event_flags;
-	bool event_removed = false;
+	bool event_हटाओd = false;
 	bool del_op_requested, del_op_entry;
 
 	tt_change_node = kmem_cache_alloc(batadv_tt_change_cache, GFP_ATOMIC);
-	if (!tt_change_node)
-		return;
+	अगर (!tt_change_node)
+		वापस;
 
 	tt_change_node->change.flags = flags;
-	memset(tt_change_node->change.reserved, 0,
-	       sizeof(tt_change_node->change.reserved));
+	स_रखो(tt_change_node->change.reserved, 0,
+	       माप(tt_change_node->change.reserved));
 	ether_addr_copy(tt_change_node->change.addr, common->addr);
 	tt_change_node->change.vid = htons(common->vid);
 
 	del_op_requested = flags & BATADV_TT_CLIENT_DEL;
 
-	/* check for ADD+DEL or DEL+ADD events */
+	/* check क्रम ADD+DEL or DEL+ADD events */
 	spin_lock_bh(&bat_priv->tt.changes_list_lock);
-	list_for_each_entry_safe(entry, safe, &bat_priv->tt.changes_list,
-				 list) {
-		if (!batadv_compare_eth(entry->change.addr, common->addr))
-			continue;
+	list_क्रम_each_entry_safe(entry, safe, &bat_priv->tt.changes_list,
+				 list) अणु
+		अगर (!batadv_compare_eth(entry->change.addr, common->addr))
+			जारी;
 
-		/* DEL+ADD in the same orig interval have no effect and can be
-		 * removed to avoid silly behaviour on the receiver side. The
-		 * other way around (ADD+DEL) can happen in case of roaming of
+		/* DEL+ADD in the same orig पूर्णांकerval have no effect and can be
+		 * हटाओd to aव्योम silly behaviour on the receiver side. The
+		 * other way around (ADD+DEL) can happen in हाल of roaming of
 		 * a client still in the NEW state. Roaming of NEW clients is
-		 * now possible due to automatically recognition of "temporary"
+		 * now possible due to स्वतःmatically recognition of "temporary"
 		 * clients
 		 */
 		del_op_entry = entry->change.flags & BATADV_TT_CLIENT_DEL;
-		if (!del_op_requested && del_op_entry)
-			goto del;
-		if (del_op_requested && !del_op_entry)
-			goto del;
+		अगर (!del_op_requested && del_op_entry)
+			जाओ del;
+		अगर (del_op_requested && !del_op_entry)
+			जाओ del;
 
-		/* this is a second add in the same originator interval. It
+		/* this is a second add in the same originator पूर्णांकerval. It
 		 * means that flags have been changed: update them!
 		 */
-		if (!del_op_requested && !del_op_entry)
+		अगर (!del_op_requested && !del_op_entry)
 			entry->change.flags = flags;
 
-		continue;
+		जारी;
 del:
 		list_del(&entry->list);
-		kmem_cache_free(batadv_tt_change_cache, entry);
-		kmem_cache_free(batadv_tt_change_cache, tt_change_node);
-		event_removed = true;
-		goto unlock;
-	}
+		kmem_cache_मुक्त(batadv_tt_change_cache, entry);
+		kmem_cache_मुक्त(batadv_tt_change_cache, tt_change_node);
+		event_हटाओd = true;
+		जाओ unlock;
+	पूर्ण
 
-	/* track the change in the OGMinterval list */
+	/* track the change in the OGMपूर्णांकerval list */
 	list_add_tail(&tt_change_node->list, &bat_priv->tt.changes_list);
 
 unlock:
 	spin_unlock_bh(&bat_priv->tt.changes_list_lock);
 
-	if (event_removed)
+	अगर (event_हटाओd)
 		atomic_dec(&bat_priv->tt.local_changes);
-	else
+	अन्यथा
 		atomic_inc(&bat_priv->tt.local_changes);
-}
+पूर्ण
 
 /**
  * batadv_tt_len() - compute length in bytes of given number of tt changes
@@ -536,10 +537,10 @@ unlock:
  *
  * Return: computed length in bytes.
  */
-static int batadv_tt_len(int changes_num)
-{
-	return changes_num * sizeof(struct batadv_tvlv_tt_change);
-}
+अटल पूर्णांक batadv_tt_len(पूर्णांक changes_num)
+अणु
+	वापस changes_num * माप(काष्ठा batadv_tvlv_tt_change);
+पूर्ण
 
 /**
  * batadv_tt_entries() - compute the number of entries fitting in tt_len bytes
@@ -547,144 +548,144 @@ static int batadv_tt_len(int changes_num)
  *
  * Return: the number of entries.
  */
-static u16 batadv_tt_entries(u16 tt_len)
-{
-	return tt_len / batadv_tt_len(1);
-}
+अटल u16 batadv_tt_entries(u16 tt_len)
+अणु
+	वापस tt_len / batadv_tt_len(1);
+पूर्ण
 
 /**
  * batadv_tt_local_table_transmit_size() - calculates the local translation
  *  table size when transmitted over the air
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  *
  * Return: local translation table size in bytes.
  */
-static int batadv_tt_local_table_transmit_size(struct batadv_priv *bat_priv)
-{
+अटल पूर्णांक batadv_tt_local_table_transmit_size(काष्ठा batadv_priv *bat_priv)
+अणु
 	u16 num_vlan = 0;
 	u16 tt_local_entries = 0;
-	struct batadv_softif_vlan *vlan;
-	int hdr_size;
+	काष्ठा batadv_softअगर_vlan *vlan;
+	पूर्णांक hdr_size;
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(vlan, &bat_priv->softif_vlan_list, list) {
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(vlan, &bat_priv->softअगर_vlan_list, list) अणु
 		num_vlan++;
-		tt_local_entries += atomic_read(&vlan->tt.num_entries);
-	}
-	rcu_read_unlock();
+		tt_local_entries += atomic_पढ़ो(&vlan->tt.num_entries);
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	/* header size of tvlv encapsulated tt response payload */
-	hdr_size = sizeof(struct batadv_unicast_tvlv_packet);
-	hdr_size += sizeof(struct batadv_tvlv_hdr);
-	hdr_size += sizeof(struct batadv_tvlv_tt_data);
-	hdr_size += num_vlan * sizeof(struct batadv_tvlv_tt_vlan_data);
+	hdr_size = माप(काष्ठा batadv_unicast_tvlv_packet);
+	hdr_size += माप(काष्ठा batadv_tvlv_hdr);
+	hdr_size += माप(काष्ठा batadv_tvlv_tt_data);
+	hdr_size += num_vlan * माप(काष्ठा batadv_tvlv_tt_vlan_data);
 
-	return hdr_size + batadv_tt_len(tt_local_entries);
-}
+	वापस hdr_size + batadv_tt_len(tt_local_entries);
+पूर्ण
 
-static int batadv_tt_local_init(struct batadv_priv *bat_priv)
-{
-	if (bat_priv->tt.local_hash)
-		return 0;
+अटल पूर्णांक batadv_tt_local_init(काष्ठा batadv_priv *bat_priv)
+अणु
+	अगर (bat_priv->tt.local_hash)
+		वापस 0;
 
 	bat_priv->tt.local_hash = batadv_hash_new(1024);
 
-	if (!bat_priv->tt.local_hash)
-		return -ENOMEM;
+	अगर (!bat_priv->tt.local_hash)
+		वापस -ENOMEM;
 
 	batadv_hash_set_lock_class(bat_priv->tt.local_hash,
 				   &batadv_tt_local_hash_lock_class_key);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void batadv_tt_global_free(struct batadv_priv *bat_priv,
-				  struct batadv_tt_global_entry *tt_global,
-				  const char *message)
-{
-	struct batadv_tt_global_entry *tt_removed_entry;
-	struct hlist_node *tt_removed_node;
+अटल व्योम batadv_tt_global_मुक्त(काष्ठा batadv_priv *bat_priv,
+				  काष्ठा batadv_tt_global_entry *tt_global,
+				  स्थिर अक्षर *message)
+अणु
+	काष्ठा batadv_tt_global_entry *tt_हटाओd_entry;
+	काष्ठा hlist_node *tt_हटाओd_node;
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
 		   "Deleting global tt entry %pM (vid: %d): %s\n",
 		   tt_global->common.addr,
-		   batadv_print_vid(tt_global->common.vid), message);
+		   batadv_prपूर्णांक_vid(tt_global->common.vid), message);
 
-	tt_removed_node = batadv_hash_remove(bat_priv->tt.global_hash,
+	tt_हटाओd_node = batadv_hash_हटाओ(bat_priv->tt.global_hash,
 					     batadv_compare_tt,
 					     batadv_choose_tt,
 					     &tt_global->common);
-	if (!tt_removed_node)
-		return;
+	अगर (!tt_हटाओd_node)
+		वापस;
 
-	/* drop reference of remove hash entry */
-	tt_removed_entry = hlist_entry(tt_removed_node,
-				       struct batadv_tt_global_entry,
+	/* drop reference of हटाओ hash entry */
+	tt_हटाओd_entry = hlist_entry(tt_हटाओd_node,
+				       काष्ठा batadv_tt_global_entry,
 				       common.hash_entry);
-	batadv_tt_global_entry_put(tt_removed_entry);
-}
+	batadv_tt_global_entry_put(tt_हटाओd_entry);
+पूर्ण
 
 /**
  * batadv_tt_local_add() - add a new client to the local table or update an
  *  existing client
- * @soft_iface: netdev struct of the mesh interface
+ * @soft_अगरace: netdev काष्ठा of the mesh पूर्णांकerface
  * @addr: the mac address of the client to add
- * @vid: VLAN identifier
- * @ifindex: index of the interface where the client is connected to (useful to
- *  identify wireless clients)
- * @mark: the value contained in the skb->mark field of the received packet (if
+ * @vid: VLAN identअगरier
+ * @अगरindex: index of the पूर्णांकerface where the client is connected to (useful to
+ *  identअगरy wireless clients)
+ * @mark: the value contained in the skb->mark field of the received packet (अगर
  *  any)
  *
- * Return: true if the client was successfully added, false otherwise.
+ * Return: true अगर the client was successfully added, false otherwise.
  */
-bool batadv_tt_local_add(struct net_device *soft_iface, const u8 *addr,
-			 unsigned short vid, int ifindex, u32 mark)
-{
-	struct batadv_priv *bat_priv = netdev_priv(soft_iface);
-	struct batadv_tt_local_entry *tt_local;
-	struct batadv_tt_global_entry *tt_global = NULL;
-	struct net *net = dev_net(soft_iface);
-	struct batadv_softif_vlan *vlan;
-	struct net_device *in_dev = NULL;
-	struct batadv_hard_iface *in_hardif = NULL;
-	struct hlist_head *head;
-	struct batadv_tt_orig_list_entry *orig_entry;
-	int hash_added, table_size, packet_size_max;
+bool batadv_tt_local_add(काष्ठा net_device *soft_अगरace, स्थिर u8 *addr,
+			 अचिन्हित लघु vid, पूर्णांक अगरindex, u32 mark)
+अणु
+	काष्ठा batadv_priv *bat_priv = netdev_priv(soft_अगरace);
+	काष्ठा batadv_tt_local_entry *tt_local;
+	काष्ठा batadv_tt_global_entry *tt_global = शून्य;
+	काष्ठा net *net = dev_net(soft_अगरace);
+	काष्ठा batadv_softअगर_vlan *vlan;
+	काष्ठा net_device *in_dev = शून्य;
+	काष्ठा batadv_hard_अगरace *in_hardअगर = शून्य;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_tt_orig_list_entry *orig_entry;
+	पूर्णांक hash_added, table_size, packet_size_max;
 	bool ret = false;
 	bool roamed_back = false;
 	u8 remote_flags;
 	u32 match_mark;
 
-	if (ifindex != BATADV_NULL_IFINDEX)
-		in_dev = dev_get_by_index(net, ifindex);
+	अगर (अगरindex != BATADV_शून्य_IFINDEX)
+		in_dev = dev_get_by_index(net, अगरindex);
 
-	if (in_dev)
-		in_hardif = batadv_hardif_get_by_netdev(in_dev);
+	अगर (in_dev)
+		in_hardअगर = batadv_hardअगर_get_by_netdev(in_dev);
 
 	tt_local = batadv_tt_local_hash_find(bat_priv, addr, vid);
 
-	if (!is_multicast_ether_addr(addr))
+	अगर (!is_multicast_ether_addr(addr))
 		tt_global = batadv_tt_global_hash_find(bat_priv, addr, vid);
 
-	if (tt_local) {
-		tt_local->last_seen = jiffies;
-		if (tt_local->common.flags & BATADV_TT_CLIENT_PENDING) {
+	अगर (tt_local) अणु
+		tt_local->last_seen = jअगरfies;
+		अगर (tt_local->common.flags & BATADV_TT_CLIENT_PENDING) अणु
 			batadv_dbg(BATADV_DBG_TT, bat_priv,
 				   "Re-adding pending client %pM (vid: %d)\n",
-				   addr, batadv_print_vid(vid));
+				   addr, batadv_prपूर्णांक_vid(vid));
 			/* whatever the reason why the PENDING flag was set,
-			 * this is a client which was enqueued to be removed in
-			 * this orig_interval. Since it popped up again, the
+			 * this is a client which was enqueued to be हटाओd in
+			 * this orig_पूर्णांकerval. Since it popped up again, the
 			 * flag can be reset like it was never enqueued
 			 */
 			tt_local->common.flags &= ~BATADV_TT_CLIENT_PENDING;
-			goto add_event;
-		}
+			जाओ add_event;
+		पूर्ण
 
-		if (tt_local->common.flags & BATADV_TT_CLIENT_ROAM) {
+		अगर (tt_local->common.flags & BATADV_TT_CLIENT_ROAM) अणु
 			batadv_dbg(BATADV_DBG_TT, bat_priv,
 				   "Roaming client %pM (vid: %d) came back to its original location\n",
-				   addr, batadv_print_vid(vid));
+				   addr, batadv_prपूर्णांक_vid(vid));
 			/* the ROAM flag is set because this client roamed away
 			 * and the node got a roaming_advertisement message. Now
 			 * that the client popped up again at its original
@@ -692,59 +693,59 @@ bool batadv_tt_local_add(struct net_device *soft_iface, const u8 *addr,
 			 */
 			tt_local->common.flags &= ~BATADV_TT_CLIENT_ROAM;
 			roamed_back = true;
-		}
-		goto check_roaming;
-	}
+		पूर्ण
+		जाओ check_roaming;
+	पूर्ण
 
-	/* Ignore the client if we cannot send it in a full table response. */
+	/* Ignore the client अगर we cannot send it in a full table response. */
 	table_size = batadv_tt_local_table_transmit_size(bat_priv);
 	table_size += batadv_tt_len(1);
-	packet_size_max = atomic_read(&bat_priv->packet_size_max);
-	if (table_size > packet_size_max) {
-		net_ratelimited_function(batadv_info, soft_iface,
+	packet_size_max = atomic_पढ़ो(&bat_priv->packet_size_max);
+	अगर (table_size > packet_size_max) अणु
+		net_ratelimited_function(batadv_info, soft_अगरace,
 					 "Local translation table size (%i) exceeds maximum packet size (%i); Ignoring new local tt entry: %pM\n",
 					 table_size, packet_size_max, addr);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	tt_local = kmem_cache_alloc(batadv_tl_cache, GFP_ATOMIC);
-	if (!tt_local)
-		goto out;
+	अगर (!tt_local)
+		जाओ out;
 
 	/* increase the refcounter of the related vlan */
-	vlan = batadv_softif_vlan_get(bat_priv, vid);
-	if (!vlan) {
-		net_ratelimited_function(batadv_info, soft_iface,
+	vlan = batadv_softअगर_vlan_get(bat_priv, vid);
+	अगर (!vlan) अणु
+		net_ratelimited_function(batadv_info, soft_अगरace,
 					 "adding TT local entry %pM to non-existent VLAN %d\n",
-					 addr, batadv_print_vid(vid));
-		kmem_cache_free(batadv_tl_cache, tt_local);
-		tt_local = NULL;
-		goto out;
-	}
+					 addr, batadv_prपूर्णांक_vid(vid));
+		kmem_cache_मुक्त(batadv_tl_cache, tt_local);
+		tt_local = शून्य;
+		जाओ out;
+	पूर्ण
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
 		   "Creating new local tt entry: %pM (vid: %d, ttvn: %d)\n",
-		   addr, batadv_print_vid(vid),
-		   (u8)atomic_read(&bat_priv->tt.vn));
+		   addr, batadv_prपूर्णांक_vid(vid),
+		   (u8)atomic_पढ़ो(&bat_priv->tt.vn));
 
 	ether_addr_copy(tt_local->common.addr, addr);
-	/* The local entry has to be marked as NEW to avoid to send it in
-	 * a full table response going out before the next ttvn increment
+	/* The local entry has to be marked as NEW to aव्योम to send it in
+	 * a full table response going out beक्रमe the next ttvn increment
 	 * (consistency check)
 	 */
 	tt_local->common.flags = BATADV_TT_CLIENT_NEW;
 	tt_local->common.vid = vid;
-	if (batadv_is_wifi_hardif(in_hardif))
+	अगर (batadv_is_wअगरi_hardअगर(in_hardअगर))
 		tt_local->common.flags |= BATADV_TT_CLIENT_WIFI;
 	kref_init(&tt_local->common.refcount);
-	tt_local->last_seen = jiffies;
+	tt_local->last_seen = jअगरfies;
 	tt_local->common.added_at = tt_local->last_seen;
 	tt_local->vlan = vlan;
 
-	/* the batman interface mac and multicast addresses should never be
+	/* the baपंचांगan पूर्णांकerface mac and multicast addresses should never be
 	 * purged
 	 */
-	if (batadv_compare_eth(addr, soft_iface->dev_addr) ||
+	अगर (batadv_compare_eth(addr, soft_अगरace->dev_addr) ||
 	    is_multicast_ether_addr(addr))
 		tt_local->common.flags |= BATADV_TT_CLIENT_NOPURGE;
 
@@ -753,758 +754,758 @@ bool batadv_tt_local_add(struct net_device *soft_iface, const u8 *addr,
 				     batadv_choose_tt, &tt_local->common,
 				     &tt_local->common.hash_entry);
 
-	if (unlikely(hash_added != 0)) {
-		/* remove the reference for the hash */
+	अगर (unlikely(hash_added != 0)) अणु
+		/* हटाओ the reference क्रम the hash */
 		batadv_tt_local_entry_put(tt_local);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 add_event:
 	batadv_tt_local_event(bat_priv, tt_local, BATADV_NO_FLAGS);
 
 check_roaming:
-	/* Check whether it is a roaming, but don't do anything if the roaming
-	 * process has already been handled
+	/* Check whether it is a roaming, but करोn't करो anything अगर the roaming
+	 * process has alपढ़ोy been handled
 	 */
-	if (tt_global && !(tt_global->common.flags & BATADV_TT_CLIENT_ROAM)) {
+	अगर (tt_global && !(tt_global->common.flags & BATADV_TT_CLIENT_ROAM)) अणु
 		/* These node are probably going to update their tt table */
 		head = &tt_global->orig_list;
-		rcu_read_lock();
-		hlist_for_each_entry_rcu(orig_entry, head, list) {
+		rcu_पढ़ो_lock();
+		hlist_क्रम_each_entry_rcu(orig_entry, head, list) अणु
 			batadv_send_roam_adv(bat_priv, tt_global->common.addr,
 					     tt_global->common.vid,
 					     orig_entry->orig_node);
-		}
-		rcu_read_unlock();
-		if (roamed_back) {
-			batadv_tt_global_free(bat_priv, tt_global,
+		पूर्ण
+		rcu_पढ़ो_unlock();
+		अगर (roamed_back) अणु
+			batadv_tt_global_मुक्त(bat_priv, tt_global,
 					      "Roaming canceled");
-			tt_global = NULL;
-		} else {
+			tt_global = शून्य;
+		पूर्ण अन्यथा अणु
 			/* The global entry has to be marked as ROAMING and
-			 * has to be kept for consistency purpose
+			 * has to be kept क्रम consistency purpose
 			 */
 			tt_global->common.flags |= BATADV_TT_CLIENT_ROAM;
-			tt_global->roam_at = jiffies;
-		}
-	}
+			tt_global->roam_at = jअगरfies;
+		पूर्ण
+	पूर्ण
 
-	/* store the current remote flags before altering them. This helps
+	/* store the current remote flags beक्रमe altering them. This helps
 	 * understanding is flags are changing or not
 	 */
 	remote_flags = tt_local->common.flags & BATADV_TT_REMOTE_MASK;
 
-	if (batadv_is_wifi_hardif(in_hardif))
+	अगर (batadv_is_wअगरi_hardअगर(in_hardअगर))
 		tt_local->common.flags |= BATADV_TT_CLIENT_WIFI;
-	else
+	अन्यथा
 		tt_local->common.flags &= ~BATADV_TT_CLIENT_WIFI;
 
-	/* check the mark in the skb: if it's equal to the configured
+	/* check the mark in the skb: अगर it's equal to the configured
 	 * isolation_mark, it means the packet is coming from an isolated
 	 * non-mesh client
 	 */
 	match_mark = (mark & bat_priv->isolation_mark_mask);
-	if (bat_priv->isolation_mark_mask &&
+	अगर (bat_priv->isolation_mark_mask &&
 	    match_mark == bat_priv->isolation_mark)
 		tt_local->common.flags |= BATADV_TT_CLIENT_ISOLA;
-	else
+	अन्यथा
 		tt_local->common.flags &= ~BATADV_TT_CLIENT_ISOLA;
 
-	/* if any "dynamic" flag has been modified, resend an ADD event for this
+	/* अगर any "dynamic" flag has been modअगरied, resend an ADD event क्रम this
 	 * entry so that all the nodes can get the new flags
 	 */
-	if (remote_flags ^ (tt_local->common.flags & BATADV_TT_REMOTE_MASK))
+	अगर (remote_flags ^ (tt_local->common.flags & BATADV_TT_REMOTE_MASK))
 		batadv_tt_local_event(bat_priv, tt_local, BATADV_NO_FLAGS);
 
 	ret = true;
 out:
-	if (in_hardif)
-		batadv_hardif_put(in_hardif);
-	if (in_dev)
+	अगर (in_hardअगर)
+		batadv_hardअगर_put(in_hardअगर);
+	अगर (in_dev)
 		dev_put(in_dev);
-	if (tt_local)
+	अगर (tt_local)
 		batadv_tt_local_entry_put(tt_local);
-	if (tt_global)
+	अगर (tt_global)
 		batadv_tt_global_entry_put(tt_global);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_tt_prepare_tvlv_global_data() - prepare the TVLV TT header to send
  *  within a TT Response directed to another node
- * @orig_node: originator for which the TT data has to be prepared
- * @tt_data: uninitialised pointer to the address of the TVLV buffer
- * @tt_change: uninitialised pointer to the address of the area where the TT
+ * @orig_node: originator क्रम which the TT data has to be prepared
+ * @tt_data: uninitialised poपूर्णांकer to the address of the TVLV buffer
+ * @tt_change: uninitialised poपूर्णांकer to the address of the area where the TT
  *  changed can be stored
- * @tt_len: pointer to the length to reserve to the tt_change. if -1 this
+ * @tt_len: poपूर्णांकer to the length to reserve to the tt_change. अगर -1 this
  *  function reserves the amount of space needed to send the entire global TT
- *  table. In case of success the value is updated with the real amount of
+ *  table. In हाल of success the value is updated with the real amount of
  *  reserved bytes
- * Allocate the needed amount of memory for the entire TT TVLV and write its
+ * Allocate the needed amount of memory क्रम the entire TT TVLV and ग_लिखो its
  * header made up of one tvlv_tt_data object and a series of tvlv_tt_vlan_data
  * objects, one per active VLAN served by the originator node.
  *
- * Return: the size of the allocated buffer or 0 in case of failure.
+ * Return: the size of the allocated buffer or 0 in हाल of failure.
  */
-static u16
-batadv_tt_prepare_tvlv_global_data(struct batadv_orig_node *orig_node,
-				   struct batadv_tvlv_tt_data **tt_data,
-				   struct batadv_tvlv_tt_change **tt_change,
+अटल u16
+batadv_tt_prepare_tvlv_global_data(काष्ठा batadv_orig_node *orig_node,
+				   काष्ठा batadv_tvlv_tt_data **tt_data,
+				   काष्ठा batadv_tvlv_tt_change **tt_change,
 				   s32 *tt_len)
-{
+अणु
 	u16 num_vlan = 0;
 	u16 num_entries = 0;
 	u16 change_offset;
 	u16 tvlv_len;
-	struct batadv_tvlv_tt_vlan_data *tt_vlan;
-	struct batadv_orig_node_vlan *vlan;
+	काष्ठा batadv_tvlv_tt_vlan_data *tt_vlan;
+	काष्ठा batadv_orig_node_vlan *vlan;
 	u8 *tt_change_ptr;
 
 	spin_lock_bh(&orig_node->vlan_list_lock);
-	hlist_for_each_entry(vlan, &orig_node->vlan_list, list) {
+	hlist_क्रम_each_entry(vlan, &orig_node->vlan_list, list) अणु
 		num_vlan++;
-		num_entries += atomic_read(&vlan->tt.num_entries);
-	}
+		num_entries += atomic_पढ़ो(&vlan->tt.num_entries);
+	पूर्ण
 
-	change_offset = sizeof(**tt_data);
-	change_offset += num_vlan * sizeof(*tt_vlan);
+	change_offset = माप(**tt_data);
+	change_offset += num_vlan * माप(*tt_vlan);
 
-	/* if tt_len is negative, allocate the space needed by the full table */
-	if (*tt_len < 0)
+	/* अगर tt_len is negative, allocate the space needed by the full table */
+	अगर (*tt_len < 0)
 		*tt_len = batadv_tt_len(num_entries);
 
 	tvlv_len = *tt_len;
 	tvlv_len += change_offset;
 
-	*tt_data = kmalloc(tvlv_len, GFP_ATOMIC);
-	if (!*tt_data) {
+	*tt_data = kदो_स्मृति(tvlv_len, GFP_ATOMIC);
+	अगर (!*tt_data) अणु
 		*tt_len = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	(*tt_data)->flags = BATADV_NO_FLAGS;
-	(*tt_data)->ttvn = atomic_read(&orig_node->last_ttvn);
+	(*tt_data)->ttvn = atomic_पढ़ो(&orig_node->last_ttvn);
 	(*tt_data)->num_vlan = htons(num_vlan);
 
-	tt_vlan = (struct batadv_tvlv_tt_vlan_data *)(*tt_data + 1);
-	hlist_for_each_entry(vlan, &orig_node->vlan_list, list) {
+	tt_vlan = (काष्ठा batadv_tvlv_tt_vlan_data *)(*tt_data + 1);
+	hlist_क्रम_each_entry(vlan, &orig_node->vlan_list, list) अणु
 		tt_vlan->vid = htons(vlan->vid);
 		tt_vlan->crc = htonl(vlan->tt.crc);
 		tt_vlan->reserved = 0;
 
 		tt_vlan++;
-	}
+	पूर्ण
 
 	tt_change_ptr = (u8 *)*tt_data + change_offset;
-	*tt_change = (struct batadv_tvlv_tt_change *)tt_change_ptr;
+	*tt_change = (काष्ठा batadv_tvlv_tt_change *)tt_change_ptr;
 
 out:
 	spin_unlock_bh(&orig_node->vlan_list_lock);
-	return tvlv_len;
-}
+	वापस tvlv_len;
+पूर्ण
 
 /**
- * batadv_tt_prepare_tvlv_local_data() - allocate and prepare the TT TVLV for
+ * batadv_tt_prepare_tvlv_local_data() - allocate and prepare the TT TVLV क्रम
  *  this node
- * @bat_priv: the bat priv with all the soft interface information
- * @tt_data: uninitialised pointer to the address of the TVLV buffer
- * @tt_change: uninitialised pointer to the address of the area where the TT
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @tt_data: uninitialised poपूर्णांकer to the address of the TVLV buffer
+ * @tt_change: uninitialised poपूर्णांकer to the address of the area where the TT
  *  changes can be stored
- * @tt_len: pointer to the length to reserve to the tt_change. if -1 this
+ * @tt_len: poपूर्णांकer to the length to reserve to the tt_change. अगर -1 this
  *  function reserves the amount of space needed to send the entire local TT
- *  table. In case of success the value is updated with the real amount of
+ *  table. In हाल of success the value is updated with the real amount of
  *  reserved bytes
  *
- * Allocate the needed amount of memory for the entire TT TVLV and write its
+ * Allocate the needed amount of memory क्रम the entire TT TVLV and ग_लिखो its
  * header made up by one tvlv_tt_data object and a series of tvlv_tt_vlan_data
  * objects, one per active VLAN.
  *
- * Return: the size of the allocated buffer or 0 in case of failure.
+ * Return: the size of the allocated buffer or 0 in हाल of failure.
  */
-static u16
-batadv_tt_prepare_tvlv_local_data(struct batadv_priv *bat_priv,
-				  struct batadv_tvlv_tt_data **tt_data,
-				  struct batadv_tvlv_tt_change **tt_change,
+अटल u16
+batadv_tt_prepare_tvlv_local_data(काष्ठा batadv_priv *bat_priv,
+				  काष्ठा batadv_tvlv_tt_data **tt_data,
+				  काष्ठा batadv_tvlv_tt_change **tt_change,
 				  s32 *tt_len)
-{
-	struct batadv_tvlv_tt_vlan_data *tt_vlan;
-	struct batadv_softif_vlan *vlan;
+अणु
+	काष्ठा batadv_tvlv_tt_vlan_data *tt_vlan;
+	काष्ठा batadv_softअगर_vlan *vlan;
 	u16 num_vlan = 0;
 	u16 vlan_entries = 0;
 	u16 total_entries = 0;
 	u16 tvlv_len;
 	u8 *tt_change_ptr;
-	int change_offset;
+	पूर्णांक change_offset;
 
-	spin_lock_bh(&bat_priv->softif_vlan_list_lock);
-	hlist_for_each_entry(vlan, &bat_priv->softif_vlan_list, list) {
-		vlan_entries = atomic_read(&vlan->tt.num_entries);
-		if (vlan_entries < 1)
-			continue;
+	spin_lock_bh(&bat_priv->softअगर_vlan_list_lock);
+	hlist_क्रम_each_entry(vlan, &bat_priv->softअगर_vlan_list, list) अणु
+		vlan_entries = atomic_पढ़ो(&vlan->tt.num_entries);
+		अगर (vlan_entries < 1)
+			जारी;
 
 		num_vlan++;
 		total_entries += vlan_entries;
-	}
+	पूर्ण
 
-	change_offset = sizeof(**tt_data);
-	change_offset += num_vlan * sizeof(*tt_vlan);
+	change_offset = माप(**tt_data);
+	change_offset += num_vlan * माप(*tt_vlan);
 
-	/* if tt_len is negative, allocate the space needed by the full table */
-	if (*tt_len < 0)
+	/* अगर tt_len is negative, allocate the space needed by the full table */
+	अगर (*tt_len < 0)
 		*tt_len = batadv_tt_len(total_entries);
 
 	tvlv_len = *tt_len;
 	tvlv_len += change_offset;
 
-	*tt_data = kmalloc(tvlv_len, GFP_ATOMIC);
-	if (!*tt_data) {
+	*tt_data = kदो_स्मृति(tvlv_len, GFP_ATOMIC);
+	अगर (!*tt_data) अणु
 		tvlv_len = 0;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	(*tt_data)->flags = BATADV_NO_FLAGS;
-	(*tt_data)->ttvn = atomic_read(&bat_priv->tt.vn);
+	(*tt_data)->ttvn = atomic_पढ़ो(&bat_priv->tt.vn);
 	(*tt_data)->num_vlan = htons(num_vlan);
 
-	tt_vlan = (struct batadv_tvlv_tt_vlan_data *)(*tt_data + 1);
-	hlist_for_each_entry(vlan, &bat_priv->softif_vlan_list, list) {
-		vlan_entries = atomic_read(&vlan->tt.num_entries);
-		if (vlan_entries < 1)
-			continue;
+	tt_vlan = (काष्ठा batadv_tvlv_tt_vlan_data *)(*tt_data + 1);
+	hlist_क्रम_each_entry(vlan, &bat_priv->softअगर_vlan_list, list) अणु
+		vlan_entries = atomic_पढ़ो(&vlan->tt.num_entries);
+		अगर (vlan_entries < 1)
+			जारी;
 
 		tt_vlan->vid = htons(vlan->vid);
 		tt_vlan->crc = htonl(vlan->tt.crc);
 		tt_vlan->reserved = 0;
 
 		tt_vlan++;
-	}
+	पूर्ण
 
 	tt_change_ptr = (u8 *)*tt_data + change_offset;
-	*tt_change = (struct batadv_tvlv_tt_change *)tt_change_ptr;
+	*tt_change = (काष्ठा batadv_tvlv_tt_change *)tt_change_ptr;
 
 out:
-	spin_unlock_bh(&bat_priv->softif_vlan_list_lock);
-	return tvlv_len;
-}
+	spin_unlock_bh(&bat_priv->softअगर_vlan_list_lock);
+	वापस tvlv_len;
+पूर्ण
 
 /**
  * batadv_tt_tvlv_container_update() - update the translation table tvlv
  *  container after local tt changes have been committed
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  */
-static void batadv_tt_tvlv_container_update(struct batadv_priv *bat_priv)
-{
-	struct batadv_tt_change_node *entry, *safe;
-	struct batadv_tvlv_tt_data *tt_data;
-	struct batadv_tvlv_tt_change *tt_change;
-	int tt_diff_len, tt_change_len = 0;
-	int tt_diff_entries_num = 0;
-	int tt_diff_entries_count = 0;
+अटल व्योम batadv_tt_tvlv_container_update(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_tt_change_node *entry, *safe;
+	काष्ठा batadv_tvlv_tt_data *tt_data;
+	काष्ठा batadv_tvlv_tt_change *tt_change;
+	पूर्णांक tt_dअगरf_len, tt_change_len = 0;
+	पूर्णांक tt_dअगरf_entries_num = 0;
+	पूर्णांक tt_dअगरf_entries_count = 0;
 	u16 tvlv_len;
 
-	tt_diff_entries_num = atomic_read(&bat_priv->tt.local_changes);
-	tt_diff_len = batadv_tt_len(tt_diff_entries_num);
+	tt_dअगरf_entries_num = atomic_पढ़ो(&bat_priv->tt.local_changes);
+	tt_dअगरf_len = batadv_tt_len(tt_dअगरf_entries_num);
 
-	/* if we have too many changes for one packet don't send any
-	 * and wait for the tt table request which will be fragmented
+	/* अगर we have too many changes क्रम one packet करोn't send any
+	 * and रुको क्रम the tt table request which will be fragmented
 	 */
-	if (tt_diff_len > bat_priv->soft_iface->mtu)
-		tt_diff_len = 0;
+	अगर (tt_dअगरf_len > bat_priv->soft_अगरace->mtu)
+		tt_dअगरf_len = 0;
 
 	tvlv_len = batadv_tt_prepare_tvlv_local_data(bat_priv, &tt_data,
-						     &tt_change, &tt_diff_len);
-	if (!tvlv_len)
-		return;
+						     &tt_change, &tt_dअगरf_len);
+	अगर (!tvlv_len)
+		वापस;
 
 	tt_data->flags = BATADV_TT_OGM_DIFF;
 
-	if (tt_diff_len == 0)
-		goto container_register;
+	अगर (tt_dअगरf_len == 0)
+		जाओ container_रेजिस्टर;
 
 	spin_lock_bh(&bat_priv->tt.changes_list_lock);
 	atomic_set(&bat_priv->tt.local_changes, 0);
 
-	list_for_each_entry_safe(entry, safe, &bat_priv->tt.changes_list,
-				 list) {
-		if (tt_diff_entries_count < tt_diff_entries_num) {
-			memcpy(tt_change + tt_diff_entries_count,
+	list_क्रम_each_entry_safe(entry, safe, &bat_priv->tt.changes_list,
+				 list) अणु
+		अगर (tt_dअगरf_entries_count < tt_dअगरf_entries_num) अणु
+			स_नकल(tt_change + tt_dअगरf_entries_count,
 			       &entry->change,
-			       sizeof(struct batadv_tvlv_tt_change));
-			tt_diff_entries_count++;
-		}
+			       माप(काष्ठा batadv_tvlv_tt_change));
+			tt_dअगरf_entries_count++;
+		पूर्ण
 		list_del(&entry->list);
-		kmem_cache_free(batadv_tt_change_cache, entry);
-	}
+		kmem_cache_मुक्त(batadv_tt_change_cache, entry);
+	पूर्ण
 	spin_unlock_bh(&bat_priv->tt.changes_list_lock);
 
-	/* Keep the buffer for possible tt_request */
+	/* Keep the buffer क्रम possible tt_request */
 	spin_lock_bh(&bat_priv->tt.last_changeset_lock);
-	kfree(bat_priv->tt.last_changeset);
+	kमुक्त(bat_priv->tt.last_changeset);
 	bat_priv->tt.last_changeset_len = 0;
-	bat_priv->tt.last_changeset = NULL;
-	tt_change_len = batadv_tt_len(tt_diff_entries_count);
+	bat_priv->tt.last_changeset = शून्य;
+	tt_change_len = batadv_tt_len(tt_dअगरf_entries_count);
 	/* check whether this new OGM has no changes due to size problems */
-	if (tt_diff_entries_count > 0) {
-		/* if kmalloc() fails we will reply with the full table
-		 * instead of providing the diff
+	अगर (tt_dअगरf_entries_count > 0) अणु
+		/* अगर kदो_स्मृति() fails we will reply with the full table
+		 * instead of providing the dअगरf
 		 */
-		bat_priv->tt.last_changeset = kzalloc(tt_diff_len, GFP_ATOMIC);
-		if (bat_priv->tt.last_changeset) {
-			memcpy(bat_priv->tt.last_changeset,
+		bat_priv->tt.last_changeset = kzalloc(tt_dअगरf_len, GFP_ATOMIC);
+		अगर (bat_priv->tt.last_changeset) अणु
+			स_नकल(bat_priv->tt.last_changeset,
 			       tt_change, tt_change_len);
-			bat_priv->tt.last_changeset_len = tt_diff_len;
-		}
-	}
+			bat_priv->tt.last_changeset_len = tt_dअगरf_len;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&bat_priv->tt.last_changeset_lock);
 
-container_register:
-	batadv_tvlv_container_register(bat_priv, BATADV_TVLV_TT, 1, tt_data,
+container_रेजिस्टर:
+	batadv_tvlv_container_रेजिस्टर(bat_priv, BATADV_TVLV_TT, 1, tt_data,
 				       tvlv_len);
-	kfree(tt_data);
-}
+	kमुक्त(tt_data);
+पूर्ण
 
 /**
- * batadv_tt_local_dump_entry() - Dump one TT local entry into a message
- * @msg :Netlink message to dump into
+ * batadv_tt_local_dump_entry() - Dump one TT local entry पूर्णांकo a message
+ * @msg :Netlink message to dump पूर्णांकo
  * @portid: Port making netlink request
  * @cb: Control block containing additional options
- * @bat_priv: The bat priv with all the soft interface information
+ * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
  * @common: tt local & tt global common data
  *
  * Return: Error code, or 0 on success
  */
-static int
-batadv_tt_local_dump_entry(struct sk_buff *msg, u32 portid,
-			   struct netlink_callback *cb,
-			   struct batadv_priv *bat_priv,
-			   struct batadv_tt_common_entry *common)
-{
-	void *hdr;
-	struct batadv_softif_vlan *vlan;
-	struct batadv_tt_local_entry *local;
-	unsigned int last_seen_msecs;
+अटल पूर्णांक
+batadv_tt_local_dump_entry(काष्ठा sk_buff *msg, u32 portid,
+			   काष्ठा netlink_callback *cb,
+			   काष्ठा batadv_priv *bat_priv,
+			   काष्ठा batadv_tt_common_entry *common)
+अणु
+	व्योम *hdr;
+	काष्ठा batadv_softअगर_vlan *vlan;
+	काष्ठा batadv_tt_local_entry *local;
+	अचिन्हित पूर्णांक last_seen_msecs;
 	u32 crc;
 
-	local = container_of(common, struct batadv_tt_local_entry, common);
-	last_seen_msecs = jiffies_to_msecs(jiffies - local->last_seen);
+	local = container_of(common, काष्ठा batadv_tt_local_entry, common);
+	last_seen_msecs = jअगरfies_to_msecs(jअगरfies - local->last_seen);
 
-	vlan = batadv_softif_vlan_get(bat_priv, common->vid);
-	if (!vlan)
-		return 0;
+	vlan = batadv_softअगर_vlan_get(bat_priv, common->vid);
+	अगर (!vlan)
+		वापस 0;
 
 	crc = vlan->tt.crc;
 
-	batadv_softif_vlan_put(vlan);
+	batadv_softअगर_vlan_put(vlan);
 
 	hdr = genlmsg_put(msg, portid, cb->nlh->nlmsg_seq,
 			  &batadv_netlink_family,  NLM_F_MULTI,
 			  BATADV_CMD_GET_TRANSTABLE_LOCAL);
-	if (!hdr)
-		return -ENOBUFS;
+	अगर (!hdr)
+		वापस -ENOBUFS;
 
 	genl_dump_check_consistent(cb, hdr);
 
-	if (nla_put(msg, BATADV_ATTR_TT_ADDRESS, ETH_ALEN, common->addr) ||
+	अगर (nla_put(msg, BATADV_ATTR_TT_ADDRESS, ETH_ALEN, common->addr) ||
 	    nla_put_u32(msg, BATADV_ATTR_TT_CRC32, crc) ||
 	    nla_put_u16(msg, BATADV_ATTR_TT_VID, common->vid) ||
 	    nla_put_u32(msg, BATADV_ATTR_TT_FLAGS, common->flags))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (!(common->flags & BATADV_TT_CLIENT_NOPURGE) &&
+	अगर (!(common->flags & BATADV_TT_CLIENT_NOPURGE) &&
 	    nla_put_u32(msg, BATADV_ATTR_LAST_SEEN_MSECS, last_seen_msecs))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	return 0;
+	वापस 0;
 
  nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
 /**
- * batadv_tt_local_dump_bucket() - Dump one TT local bucket into a message
- * @msg: Netlink message to dump into
+ * batadv_tt_local_dump_bucket() - Dump one TT local bucket पूर्णांकo a message
+ * @msg: Netlink message to dump पूर्णांकo
  * @portid: Port making netlink request
  * @cb: Control block containing additional options
- * @bat_priv: The bat priv with all the soft interface information
+ * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
  * @hash: hash to dump
  * @bucket: bucket index to dump
  * @idx_s: Number of entries to skip
  *
  * Return: Error code, or 0 on success
  */
-static int
-batadv_tt_local_dump_bucket(struct sk_buff *msg, u32 portid,
-			    struct netlink_callback *cb,
-			    struct batadv_priv *bat_priv,
-			    struct batadv_hashtable *hash, unsigned int bucket,
-			    int *idx_s)
-{
-	struct batadv_tt_common_entry *common;
-	int idx = 0;
+अटल पूर्णांक
+batadv_tt_local_dump_bucket(काष्ठा sk_buff *msg, u32 portid,
+			    काष्ठा netlink_callback *cb,
+			    काष्ठा batadv_priv *bat_priv,
+			    काष्ठा batadv_hashtable *hash, अचिन्हित पूर्णांक bucket,
+			    पूर्णांक *idx_s)
+अणु
+	काष्ठा batadv_tt_common_entry *common;
+	पूर्णांक idx = 0;
 
 	spin_lock_bh(&hash->list_locks[bucket]);
-	cb->seq = atomic_read(&hash->generation) << 1 | 1;
+	cb->seq = atomic_पढ़ो(&hash->generation) << 1 | 1;
 
-	hlist_for_each_entry(common, &hash->table[bucket], hash_entry) {
-		if (idx++ < *idx_s)
-			continue;
+	hlist_क्रम_each_entry(common, &hash->table[bucket], hash_entry) अणु
+		अगर (idx++ < *idx_s)
+			जारी;
 
-		if (batadv_tt_local_dump_entry(msg, portid, cb, bat_priv,
-					       common)) {
+		अगर (batadv_tt_local_dump_entry(msg, portid, cb, bat_priv,
+					       common)) अणु
 			spin_unlock_bh(&hash->list_locks[bucket]);
 			*idx_s = idx - 1;
-			return -EMSGSIZE;
-		}
-	}
+			वापस -EMSGSIZE;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&hash->list_locks[bucket]);
 
 	*idx_s = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * batadv_tt_local_dump() - Dump TT local entries into a message
- * @msg: Netlink message to dump into
+ * batadv_tt_local_dump() - Dump TT local entries पूर्णांकo a message
+ * @msg: Netlink message to dump पूर्णांकo
  * @cb: Parameters from query
  *
  * Return: Error code, or 0 on success
  */
-int batadv_tt_local_dump(struct sk_buff *msg, struct netlink_callback *cb)
-{
-	struct net *net = sock_net(cb->skb->sk);
-	struct net_device *soft_iface;
-	struct batadv_priv *bat_priv;
-	struct batadv_hard_iface *primary_if = NULL;
-	struct batadv_hashtable *hash;
-	int ret;
-	int ifindex;
-	int bucket = cb->args[0];
-	int idx = cb->args[1];
-	int portid = NETLINK_CB(cb->skb).portid;
+पूर्णांक batadv_tt_local_dump(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा net *net = sock_net(cb->skb->sk);
+	काष्ठा net_device *soft_अगरace;
+	काष्ठा batadv_priv *bat_priv;
+	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
+	काष्ठा batadv_hashtable *hash;
+	पूर्णांक ret;
+	पूर्णांक अगरindex;
+	पूर्णांक bucket = cb->args[0];
+	पूर्णांक idx = cb->args[1];
+	पूर्णांक portid = NETLINK_CB(cb->skb).portid;
 
-	ifindex = batadv_netlink_get_ifindex(cb->nlh, BATADV_ATTR_MESH_IFINDEX);
-	if (!ifindex)
-		return -EINVAL;
+	अगरindex = batadv_netlink_get_अगरindex(cb->nlh, BATADV_ATTR_MESH_IFINDEX);
+	अगर (!अगरindex)
+		वापस -EINVAL;
 
-	soft_iface = dev_get_by_index(net, ifindex);
-	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
+	soft_अगरace = dev_get_by_index(net, अगरindex);
+	अगर (!soft_अगरace || !batadv_softअगर_is_valid(soft_अगरace)) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	bat_priv = netdev_priv(soft_iface);
+	bat_priv = netdev_priv(soft_अगरace);
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर || primary_अगर->अगर_status != BATADV_IF_ACTIVE) अणु
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hash = bat_priv->tt.local_hash;
 
-	while (bucket < hash->size) {
-		if (batadv_tt_local_dump_bucket(msg, portid, cb, bat_priv,
+	जबतक (bucket < hash->size) अणु
+		अगर (batadv_tt_local_dump_bucket(msg, portid, cb, bat_priv,
 						hash, bucket, &idx))
-			break;
+			अवरोध;
 
 		bucket++;
-	}
+	पूर्ण
 
 	ret = msg->len;
 
  out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
-	if (soft_iface)
-		dev_put(soft_iface);
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
+	अगर (soft_अगरace)
+		dev_put(soft_अगरace);
 
 	cb->args[0] = bucket;
 	cb->args[1] = idx;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-batadv_tt_local_set_pending(struct batadv_priv *bat_priv,
-			    struct batadv_tt_local_entry *tt_local_entry,
-			    u16 flags, const char *message)
-{
+अटल व्योम
+batadv_tt_local_set_pending(काष्ठा batadv_priv *bat_priv,
+			    काष्ठा batadv_tt_local_entry *tt_local_entry,
+			    u16 flags, स्थिर अक्षर *message)
+अणु
 	batadv_tt_local_event(bat_priv, tt_local_entry, flags);
 
 	/* The local client has to be marked as "pending to be removed" but has
 	 * to be kept in the table in order to send it in a full table
-	 * response issued before the net ttvn increment (consistency check)
+	 * response issued beक्रमe the net ttvn increment (consistency check)
 	 */
 	tt_local_entry->common.flags |= BATADV_TT_CLIENT_PENDING;
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
 		   "Local tt entry (%pM, vid: %d) pending to be removed: %s\n",
 		   tt_local_entry->common.addr,
-		   batadv_print_vid(tt_local_entry->common.vid), message);
-}
+		   batadv_prपूर्णांक_vid(tt_local_entry->common.vid), message);
+पूर्ण
 
 /**
- * batadv_tt_local_remove() - logically remove an entry from the local table
- * @bat_priv: the bat priv with all the soft interface information
- * @addr: the MAC address of the client to remove
- * @vid: VLAN identifier
+ * batadv_tt_local_हटाओ() - logically हटाओ an entry from the local table
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @addr: the MAC address of the client to हटाओ
+ * @vid: VLAN identअगरier
  * @message: message to append to the log on deletion
- * @roaming: true if the deletion is due to a roaming event
+ * @roaming: true अगर the deletion is due to a roaming event
  *
- * Return: the flags assigned to the local entry before being deleted
+ * Return: the flags asचिन्हित to the local entry beक्रमe being deleted
  */
-u16 batadv_tt_local_remove(struct batadv_priv *bat_priv, const u8 *addr,
-			   unsigned short vid, const char *message,
+u16 batadv_tt_local_हटाओ(काष्ठा batadv_priv *bat_priv, स्थिर u8 *addr,
+			   अचिन्हित लघु vid, स्थिर अक्षर *message,
 			   bool roaming)
-{
-	struct batadv_tt_local_entry *tt_removed_entry;
-	struct batadv_tt_local_entry *tt_local_entry;
+अणु
+	काष्ठा batadv_tt_local_entry *tt_हटाओd_entry;
+	काष्ठा batadv_tt_local_entry *tt_local_entry;
 	u16 flags, curr_flags = BATADV_NO_FLAGS;
-	struct hlist_node *tt_removed_node;
+	काष्ठा hlist_node *tt_हटाओd_node;
 
 	tt_local_entry = batadv_tt_local_hash_find(bat_priv, addr, vid);
-	if (!tt_local_entry)
-		goto out;
+	अगर (!tt_local_entry)
+		जाओ out;
 
 	curr_flags = tt_local_entry->common.flags;
 
 	flags = BATADV_TT_CLIENT_DEL;
-	/* if this global entry addition is due to a roaming, the node has to
+	/* अगर this global entry addition is due to a roaming, the node has to
 	 * mark the local entry as "roamed" in order to correctly reroute
 	 * packets later
 	 */
-	if (roaming) {
+	अगर (roaming) अणु
 		flags |= BATADV_TT_CLIENT_ROAM;
 		/* mark the local client as ROAMed */
 		tt_local_entry->common.flags |= BATADV_TT_CLIENT_ROAM;
-	}
+	पूर्ण
 
-	if (!(tt_local_entry->common.flags & BATADV_TT_CLIENT_NEW)) {
+	अगर (!(tt_local_entry->common.flags & BATADV_TT_CLIENT_NEW)) अणु
 		batadv_tt_local_set_pending(bat_priv, tt_local_entry, flags,
 					    message);
-		goto out;
-	}
-	/* if this client has been added right now, it is possible to
+		जाओ out;
+	पूर्ण
+	/* अगर this client has been added right now, it is possible to
 	 * immediately purge it
 	 */
 	batadv_tt_local_event(bat_priv, tt_local_entry, BATADV_TT_CLIENT_DEL);
 
-	tt_removed_node = batadv_hash_remove(bat_priv->tt.local_hash,
+	tt_हटाओd_node = batadv_hash_हटाओ(bat_priv->tt.local_hash,
 					     batadv_compare_tt,
 					     batadv_choose_tt,
 					     &tt_local_entry->common);
-	if (!tt_removed_node)
-		goto out;
+	अगर (!tt_हटाओd_node)
+		जाओ out;
 
-	/* drop reference of remove hash entry */
-	tt_removed_entry = hlist_entry(tt_removed_node,
-				       struct batadv_tt_local_entry,
+	/* drop reference of हटाओ hash entry */
+	tt_हटाओd_entry = hlist_entry(tt_हटाओd_node,
+				       काष्ठा batadv_tt_local_entry,
 				       common.hash_entry);
-	batadv_tt_local_entry_put(tt_removed_entry);
+	batadv_tt_local_entry_put(tt_हटाओd_entry);
 
 out:
-	if (tt_local_entry)
+	अगर (tt_local_entry)
 		batadv_tt_local_entry_put(tt_local_entry);
 
-	return curr_flags;
-}
+	वापस curr_flags;
+पूर्ण
 
 /**
  * batadv_tt_local_purge_list() - purge inactive tt local entries
- * @bat_priv: the bat priv with all the soft interface information
- * @head: pointer to the list containing the local tt entries
- * @timeout: parameter deciding whether a given tt local entry is considered
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @head: poपूर्णांकer to the list containing the local tt entries
+ * @समयout: parameter deciding whether a given tt local entry is considered
  *  inactive or not
  */
-static void batadv_tt_local_purge_list(struct batadv_priv *bat_priv,
-				       struct hlist_head *head,
-				       int timeout)
-{
-	struct batadv_tt_local_entry *tt_local_entry;
-	struct batadv_tt_common_entry *tt_common_entry;
-	struct hlist_node *node_tmp;
+अटल व्योम batadv_tt_local_purge_list(काष्ठा batadv_priv *bat_priv,
+				       काष्ठा hlist_head *head,
+				       पूर्णांक समयout)
+अणु
+	काष्ठा batadv_tt_local_entry *tt_local_entry;
+	काष्ठा batadv_tt_common_entry *tt_common_entry;
+	काष्ठा hlist_node *node_पंचांगp;
 
-	hlist_for_each_entry_safe(tt_common_entry, node_tmp, head,
-				  hash_entry) {
+	hlist_क्रम_each_entry_safe(tt_common_entry, node_पंचांगp, head,
+				  hash_entry) अणु
 		tt_local_entry = container_of(tt_common_entry,
-					      struct batadv_tt_local_entry,
+					      काष्ठा batadv_tt_local_entry,
 					      common);
-		if (tt_local_entry->common.flags & BATADV_TT_CLIENT_NOPURGE)
-			continue;
+		अगर (tt_local_entry->common.flags & BATADV_TT_CLIENT_NOPURGE)
+			जारी;
 
-		/* entry already marked for deletion */
-		if (tt_local_entry->common.flags & BATADV_TT_CLIENT_PENDING)
-			continue;
+		/* entry alपढ़ोy marked क्रम deletion */
+		अगर (tt_local_entry->common.flags & BATADV_TT_CLIENT_PENDING)
+			जारी;
 
-		if (!batadv_has_timed_out(tt_local_entry->last_seen, timeout))
-			continue;
+		अगर (!batadv_has_समयd_out(tt_local_entry->last_seen, समयout))
+			जारी;
 
 		batadv_tt_local_set_pending(bat_priv, tt_local_entry,
 					    BATADV_TT_CLIENT_DEL, "timed out");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * batadv_tt_local_purge() - purge inactive tt local entries
- * @bat_priv: the bat priv with all the soft interface information
- * @timeout: parameter deciding whether a given tt local entry is considered
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @समयout: parameter deciding whether a given tt local entry is considered
  *  inactive or not
  */
-static void batadv_tt_local_purge(struct batadv_priv *bat_priv,
-				  int timeout)
-{
-	struct batadv_hashtable *hash = bat_priv->tt.local_hash;
-	struct hlist_head *head;
-	spinlock_t *list_lock; /* protects write access to the hash lists */
+अटल व्योम batadv_tt_local_purge(काष्ठा batadv_priv *bat_priv,
+				  पूर्णांक समयout)
+अणु
+	काष्ठा batadv_hashtable *hash = bat_priv->tt.local_hash;
+	काष्ठा hlist_head *head;
+	spinlock_t *list_lock; /* protects ग_लिखो access to the hash lists */
 	u32 i;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 		list_lock = &hash->list_locks[i];
 
 		spin_lock_bh(list_lock);
-		batadv_tt_local_purge_list(bat_priv, head, timeout);
+		batadv_tt_local_purge_list(bat_priv, head, समयout);
 		spin_unlock_bh(list_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void batadv_tt_local_table_free(struct batadv_priv *bat_priv)
-{
-	struct batadv_hashtable *hash;
-	spinlock_t *list_lock; /* protects write access to the hash lists */
-	struct batadv_tt_common_entry *tt_common_entry;
-	struct batadv_tt_local_entry *tt_local;
-	struct hlist_node *node_tmp;
-	struct hlist_head *head;
+अटल व्योम batadv_tt_local_table_मुक्त(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_hashtable *hash;
+	spinlock_t *list_lock; /* protects ग_लिखो access to the hash lists */
+	काष्ठा batadv_tt_common_entry *tt_common_entry;
+	काष्ठा batadv_tt_local_entry *tt_local;
+	काष्ठा hlist_node *node_पंचांगp;
+	काष्ठा hlist_head *head;
 	u32 i;
 
-	if (!bat_priv->tt.local_hash)
-		return;
+	अगर (!bat_priv->tt.local_hash)
+		वापस;
 
 	hash = bat_priv->tt.local_hash;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 		list_lock = &hash->list_locks[i];
 
 		spin_lock_bh(list_lock);
-		hlist_for_each_entry_safe(tt_common_entry, node_tmp,
-					  head, hash_entry) {
+		hlist_क्रम_each_entry_safe(tt_common_entry, node_पंचांगp,
+					  head, hash_entry) अणु
 			hlist_del_rcu(&tt_common_entry->hash_entry);
 			tt_local = container_of(tt_common_entry,
-						struct batadv_tt_local_entry,
+						काष्ठा batadv_tt_local_entry,
 						common);
 
 			batadv_tt_local_entry_put(tt_local);
-		}
+		पूर्ण
 		spin_unlock_bh(list_lock);
-	}
+	पूर्ण
 
 	batadv_hash_destroy(hash);
 
-	bat_priv->tt.local_hash = NULL;
-}
+	bat_priv->tt.local_hash = शून्य;
+पूर्ण
 
-static int batadv_tt_global_init(struct batadv_priv *bat_priv)
-{
-	if (bat_priv->tt.global_hash)
-		return 0;
+अटल पूर्णांक batadv_tt_global_init(काष्ठा batadv_priv *bat_priv)
+अणु
+	अगर (bat_priv->tt.global_hash)
+		वापस 0;
 
 	bat_priv->tt.global_hash = batadv_hash_new(1024);
 
-	if (!bat_priv->tt.global_hash)
-		return -ENOMEM;
+	अगर (!bat_priv->tt.global_hash)
+		वापस -ENOMEM;
 
 	batadv_hash_set_lock_class(bat_priv->tt.global_hash,
 				   &batadv_tt_global_hash_lock_class_key);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void batadv_tt_changes_list_free(struct batadv_priv *bat_priv)
-{
-	struct batadv_tt_change_node *entry, *safe;
+अटल व्योम batadv_tt_changes_list_मुक्त(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_tt_change_node *entry, *safe;
 
 	spin_lock_bh(&bat_priv->tt.changes_list_lock);
 
-	list_for_each_entry_safe(entry, safe, &bat_priv->tt.changes_list,
-				 list) {
+	list_क्रम_each_entry_safe(entry, safe, &bat_priv->tt.changes_list,
+				 list) अणु
 		list_del(&entry->list);
-		kmem_cache_free(batadv_tt_change_cache, entry);
-	}
+		kmem_cache_मुक्त(batadv_tt_change_cache, entry);
+	पूर्ण
 
 	atomic_set(&bat_priv->tt.local_changes, 0);
 	spin_unlock_bh(&bat_priv->tt.changes_list_lock);
-}
+पूर्ण
 
 /**
  * batadv_tt_global_orig_entry_find() - find a TT orig_list_entry
  * @entry: the TT global entry where the orig_list_entry has to be
  *  extracted from
- * @orig_node: the originator for which the orig_list_entry has to be found
+ * @orig_node: the originator क्रम which the orig_list_entry has to be found
  *
- * retrieve the orig_tt_list_entry belonging to orig_node from the
+ * retrieve the orig_tt_list_entry beदीर्घing to orig_node from the
  * batadv_tt_global_entry list
  *
- * Return: it with an increased refcounter, NULL if not found
+ * Return: it with an increased refcounter, शून्य अगर not found
  */
-static struct batadv_tt_orig_list_entry *
-batadv_tt_global_orig_entry_find(const struct batadv_tt_global_entry *entry,
-				 const struct batadv_orig_node *orig_node)
-{
-	struct batadv_tt_orig_list_entry *tmp_orig_entry, *orig_entry = NULL;
-	const struct hlist_head *head;
+अटल काष्ठा batadv_tt_orig_list_entry *
+batadv_tt_global_orig_entry_find(स्थिर काष्ठा batadv_tt_global_entry *entry,
+				 स्थिर काष्ठा batadv_orig_node *orig_node)
+अणु
+	काष्ठा batadv_tt_orig_list_entry *पंचांगp_orig_entry, *orig_entry = शून्य;
+	स्थिर काष्ठा hlist_head *head;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	head = &entry->orig_list;
-	hlist_for_each_entry_rcu(tmp_orig_entry, head, list) {
-		if (tmp_orig_entry->orig_node != orig_node)
-			continue;
-		if (!kref_get_unless_zero(&tmp_orig_entry->refcount))
-			continue;
+	hlist_क्रम_each_entry_rcu(पंचांगp_orig_entry, head, list) अणु
+		अगर (पंचांगp_orig_entry->orig_node != orig_node)
+			जारी;
+		अगर (!kref_get_unless_zero(&पंचांगp_orig_entry->refcount))
+			जारी;
 
-		orig_entry = tmp_orig_entry;
-		break;
-	}
-	rcu_read_unlock();
+		orig_entry = पंचांगp_orig_entry;
+		अवरोध;
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	return orig_entry;
-}
+	वापस orig_entry;
+पूर्ण
 
 /**
- * batadv_tt_global_entry_has_orig() - check if a TT global entry is also
+ * batadv_tt_global_entry_has_orig() - check अगर a TT global entry is also
  *  handled by a given originator
  * @entry: the TT global entry to check
  * @orig_node: the originator to search in the list
- * @flags: a pointer to store TT flags for the given @entry received
+ * @flags: a poपूर्णांकer to store TT flags क्रम the given @entry received
  *  from @orig_node
  *
- * find out if an orig_node is already in the list of a tt_global_entry.
+ * find out अगर an orig_node is alपढ़ोy in the list of a tt_global_entry.
  *
- * Return: true if found, false otherwise
+ * Return: true अगर found, false otherwise
  */
-static bool
-batadv_tt_global_entry_has_orig(const struct batadv_tt_global_entry *entry,
-				const struct batadv_orig_node *orig_node,
+अटल bool
+batadv_tt_global_entry_has_orig(स्थिर काष्ठा batadv_tt_global_entry *entry,
+				स्थिर काष्ठा batadv_orig_node *orig_node,
 				u8 *flags)
-{
-	struct batadv_tt_orig_list_entry *orig_entry;
+अणु
+	काष्ठा batadv_tt_orig_list_entry *orig_entry;
 	bool found = false;
 
 	orig_entry = batadv_tt_global_orig_entry_find(entry, orig_node);
-	if (orig_entry) {
+	अगर (orig_entry) अणु
 		found = true;
 
-		if (flags)
+		अगर (flags)
 			*flags = orig_entry->flags;
 
 		batadv_tt_orig_list_entry_put(orig_entry);
-	}
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
 /**
  * batadv_tt_global_sync_flags() - update TT sync flags
@@ -1513,52 +1514,52 @@ batadv_tt_global_entry_has_orig(const struct batadv_tt_global_entry *entry,
  * Updates the sync flag bits in the tt_global flag attribute with a logical
  * OR of all sync flags from any of its TT orig entries.
  */
-static void
-batadv_tt_global_sync_flags(struct batadv_tt_global_entry *tt_global)
-{
-	struct batadv_tt_orig_list_entry *orig_entry;
-	const struct hlist_head *head;
+अटल व्योम
+batadv_tt_global_sync_flags(काष्ठा batadv_tt_global_entry *tt_global)
+अणु
+	काष्ठा batadv_tt_orig_list_entry *orig_entry;
+	स्थिर काष्ठा hlist_head *head;
 	u16 flags = BATADV_NO_FLAGS;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	head = &tt_global->orig_list;
-	hlist_for_each_entry_rcu(orig_entry, head, list)
+	hlist_क्रम_each_entry_rcu(orig_entry, head, list)
 		flags |= orig_entry->flags;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	flags |= tt_global->common.flags & (~BATADV_TT_SYNC_MASK);
 	tt_global->common.flags = flags;
-}
+पूर्ण
 
 /**
  * batadv_tt_global_orig_entry_add() - add or update a TT orig entry
  * @tt_global: the TT global entry to add an orig entry in
- * @orig_node: the originator to add an orig entry for
+ * @orig_node: the originator to add an orig entry क्रम
  * @ttvn: translation table version number of this changeset
  * @flags: TT sync flags
  */
-static void
-batadv_tt_global_orig_entry_add(struct batadv_tt_global_entry *tt_global,
-				struct batadv_orig_node *orig_node, int ttvn,
+अटल व्योम
+batadv_tt_global_orig_entry_add(काष्ठा batadv_tt_global_entry *tt_global,
+				काष्ठा batadv_orig_node *orig_node, पूर्णांक ttvn,
 				u8 flags)
-{
-	struct batadv_tt_orig_list_entry *orig_entry;
+अणु
+	काष्ठा batadv_tt_orig_list_entry *orig_entry;
 
 	spin_lock_bh(&tt_global->list_lock);
 
 	orig_entry = batadv_tt_global_orig_entry_find(tt_global, orig_node);
-	if (orig_entry) {
+	अगर (orig_entry) अणु
 		/* refresh the ttvn: the current value could be a bogus one that
 		 * was added during a "temporary client detection"
 		 */
 		orig_entry->ttvn = ttvn;
 		orig_entry->flags = flags;
-		goto sync_flags;
-	}
+		जाओ sync_flags;
+	पूर्ण
 
 	orig_entry = kmem_cache_zalloc(batadv_tt_orig_cache, GFP_ATOMIC);
-	if (!orig_entry)
-		goto out;
+	अगर (!orig_entry)
+		जाओ out;
 
 	INIT_HLIST_NODE(&orig_entry->list);
 	kref_get(&orig_node->refcount);
@@ -1576,80 +1577,80 @@ batadv_tt_global_orig_entry_add(struct batadv_tt_global_entry *tt_global,
 sync_flags:
 	batadv_tt_global_sync_flags(tt_global);
 out:
-	if (orig_entry)
+	अगर (orig_entry)
 		batadv_tt_orig_list_entry_put(orig_entry);
 
 	spin_unlock_bh(&tt_global->list_lock);
-}
+पूर्ण
 
 /**
  * batadv_tt_global_add() - add a new TT global entry or update an existing one
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @orig_node: the originator announcing the client
  * @tt_addr: the mac address of the non-mesh client
- * @vid: VLAN identifier
- * @flags: TT flags that have to be set for this non-mesh client
+ * @vid: VLAN identअगरier
+ * @flags: TT flags that have to be set क्रम this non-mesh client
  * @ttvn: the tt version number ever announcing this non-mesh client
  *
- * Add a new TT global entry for the given originator. If the entry already
+ * Add a new TT global entry क्रम the given originator. If the entry alपढ़ोy
  * exists add a new reference to the given originator (a global entry can have
  * references to multiple originators) and adjust the flags attribute to reflect
  * the function argument.
- * If a TT local entry exists for this non-mesh client remove it.
+ * If a TT local entry exists क्रम this non-mesh client हटाओ it.
  *
  * The caller must hold the orig_node refcount.
  *
- * Return: true if the new entry has been added, false otherwise
+ * Return: true अगर the new entry has been added, false otherwise
  */
-static bool batadv_tt_global_add(struct batadv_priv *bat_priv,
-				 struct batadv_orig_node *orig_node,
-				 const unsigned char *tt_addr,
-				 unsigned short vid, u16 flags, u8 ttvn)
-{
-	struct batadv_tt_global_entry *tt_global_entry;
-	struct batadv_tt_local_entry *tt_local_entry;
+अटल bool batadv_tt_global_add(काष्ठा batadv_priv *bat_priv,
+				 काष्ठा batadv_orig_node *orig_node,
+				 स्थिर अचिन्हित अक्षर *tt_addr,
+				 अचिन्हित लघु vid, u16 flags, u8 ttvn)
+अणु
+	काष्ठा batadv_tt_global_entry *tt_global_entry;
+	काष्ठा batadv_tt_local_entry *tt_local_entry;
 	bool ret = false;
-	int hash_added;
-	struct batadv_tt_common_entry *common;
+	पूर्णांक hash_added;
+	काष्ठा batadv_tt_common_entry *common;
 	u16 local_flags;
 
 	/* ignore global entries from backbone nodes */
-	if (batadv_bla_is_backbone_gw_orig(bat_priv, orig_node->orig, vid))
-		return true;
+	अगर (batadv_bla_is_backbone_gw_orig(bat_priv, orig_node->orig, vid))
+		वापस true;
 
 	tt_global_entry = batadv_tt_global_hash_find(bat_priv, tt_addr, vid);
 	tt_local_entry = batadv_tt_local_hash_find(bat_priv, tt_addr, vid);
 
-	/* if the node already has a local client for this entry, it has to wait
-	 * for a roaming advertisement instead of manually messing up the global
+	/* अगर the node alपढ़ोy has a local client क्रम this entry, it has to रुको
+	 * क्रम a roaming advertisement instead of manually messing up the global
 	 * table
 	 */
-	if ((flags & BATADV_TT_CLIENT_TEMP) && tt_local_entry &&
+	अगर ((flags & BATADV_TT_CLIENT_TEMP) && tt_local_entry &&
 	    !(tt_local_entry->common.flags & BATADV_TT_CLIENT_NEW))
-		goto out;
+		जाओ out;
 
-	if (!tt_global_entry) {
+	अगर (!tt_global_entry) अणु
 		tt_global_entry = kmem_cache_zalloc(batadv_tg_cache,
 						    GFP_ATOMIC);
-		if (!tt_global_entry)
-			goto out;
+		अगर (!tt_global_entry)
+			जाओ out;
 
 		common = &tt_global_entry->common;
 		ether_addr_copy(common->addr, tt_addr);
 		common->vid = vid;
 
-		if (!is_multicast_ether_addr(common->addr))
+		अगर (!is_multicast_ether_addr(common->addr))
 			common->flags = flags & (~BATADV_TT_SYNC_MASK);
 
 		tt_global_entry->roam_at = 0;
-		/* node must store current time in case of roaming. This is
-		 * needed to purge this entry out on timeout (if nobody claims
+		/* node must store current समय in हाल of roaming. This is
+		 * needed to purge this entry out on समयout (अगर nobody claims
 		 * it)
 		 */
-		if (flags & BATADV_TT_CLIENT_ROAM)
-			tt_global_entry->roam_at = jiffies;
+		अगर (flags & BATADV_TT_CLIENT_ROAM)
+			tt_global_entry->roam_at = jअगरfies;
 		kref_init(&common->refcount);
-		common->added_at = jiffies;
+		common->added_at = jअगरfies;
 
 		INIT_HLIST_HEAD(&tt_global_entry->orig_list);
 		atomic_set(&tt_global_entry->orig_list_count, 0);
@@ -1661,174 +1662,174 @@ static bool batadv_tt_global_add(struct batadv_priv *bat_priv,
 					     batadv_choose_tt, common,
 					     &common->hash_entry);
 
-		if (unlikely(hash_added != 0)) {
-			/* remove the reference for the hash */
+		अगर (unlikely(hash_added != 0)) अणु
+			/* हटाओ the reference क्रम the hash */
 			batadv_tt_global_entry_put(tt_global_entry);
-			goto out_remove;
-		}
-	} else {
+			जाओ out_हटाओ;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		common = &tt_global_entry->common;
-		/* If there is already a global entry, we can use this one for
+		/* If there is alपढ़ोy a global entry, we can use this one क्रम
 		 * our processing.
-		 * But if we are trying to add a temporary client then here are
-		 * two options at this point:
+		 * But अगर we are trying to add a temporary client then here are
+		 * two options at this poपूर्णांक:
 		 * 1) the global client is not a temporary client: the global
-		 *    client has to be left as it is, temporary information
-		 *    should never override any already known client state
+		 *    client has to be left as it is, temporary inक्रमmation
+		 *    should never override any alपढ़ोy known client state
 		 * 2) the global client is a temporary client: purge the
 		 *    originator list and add the new one orig_entry
 		 */
-		if (flags & BATADV_TT_CLIENT_TEMP) {
-			if (!(common->flags & BATADV_TT_CLIENT_TEMP))
-				goto out;
-			if (batadv_tt_global_entry_has_orig(tt_global_entry,
-							    orig_node, NULL))
-				goto out_remove;
+		अगर (flags & BATADV_TT_CLIENT_TEMP) अणु
+			अगर (!(common->flags & BATADV_TT_CLIENT_TEMP))
+				जाओ out;
+			अगर (batadv_tt_global_entry_has_orig(tt_global_entry,
+							    orig_node, शून्य))
+				जाओ out_हटाओ;
 			batadv_tt_global_del_orig_list(tt_global_entry);
-			goto add_orig_entry;
-		}
+			जाओ add_orig_entry;
+		पूर्ण
 
-		/* if the client was temporary added before receiving the first
+		/* अगर the client was temporary added beक्रमe receiving the first
 		 * OGM announcing it, we have to clear the TEMP flag. Also,
-		 * remove the previous temporary orig node and re-add it
-		 * if required. If the orig entry changed, the new one which
+		 * हटाओ the previous temporary orig node and re-add it
+		 * अगर required. If the orig entry changed, the new one which
 		 * is a non-temporary entry is preferred.
 		 */
-		if (common->flags & BATADV_TT_CLIENT_TEMP) {
+		अगर (common->flags & BATADV_TT_CLIENT_TEMP) अणु
 			batadv_tt_global_del_orig_list(tt_global_entry);
 			common->flags &= ~BATADV_TT_CLIENT_TEMP;
-		}
+		पूर्ण
 
 		/* the change can carry possible "attribute" flags like the
-		 * TT_CLIENT_TEMP, therefore they have to be copied in the
+		 * TT_CLIENT_TEMP, thereक्रमe they have to be copied in the
 		 * client entry
 		 */
-		if (!is_multicast_ether_addr(common->addr))
+		अगर (!is_multicast_ether_addr(common->addr))
 			common->flags |= flags & (~BATADV_TT_SYNC_MASK);
 
 		/* If there is the BATADV_TT_CLIENT_ROAM flag set, there is only
 		 * one originator left in the list and we previously received a
-		 * delete + roaming change for this originator.
+		 * delete + roaming change क्रम this originator.
 		 *
-		 * We should first delete the old originator before adding the
+		 * We should first delete the old originator beक्रमe adding the
 		 * new one.
 		 */
-		if (common->flags & BATADV_TT_CLIENT_ROAM) {
+		अगर (common->flags & BATADV_TT_CLIENT_ROAM) अणु
 			batadv_tt_global_del_orig_list(tt_global_entry);
 			common->flags &= ~BATADV_TT_CLIENT_ROAM;
 			tt_global_entry->roam_at = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 add_orig_entry:
-	/* add the new orig_entry (if needed) or update it */
+	/* add the new orig_entry (अगर needed) or update it */
 	batadv_tt_global_orig_entry_add(tt_global_entry, orig_node, ttvn,
 					flags & BATADV_TT_SYNC_MASK);
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
 		   "Creating new global tt entry: %pM (vid: %d, via %pM)\n",
-		   common->addr, batadv_print_vid(common->vid),
+		   common->addr, batadv_prपूर्णांक_vid(common->vid),
 		   orig_node->orig);
 	ret = true;
 
-out_remove:
-	/* Do not remove multicast addresses from the local hash on
+out_हटाओ:
+	/* Do not हटाओ multicast addresses from the local hash on
 	 * global additions
 	 */
-	if (is_multicast_ether_addr(tt_addr))
-		goto out;
+	अगर (is_multicast_ether_addr(tt_addr))
+		जाओ out;
 
-	/* remove address from local hash if present */
-	local_flags = batadv_tt_local_remove(bat_priv, tt_addr, vid,
+	/* हटाओ address from local hash अगर present */
+	local_flags = batadv_tt_local_हटाओ(bat_priv, tt_addr, vid,
 					     "global tt received",
 					     flags & BATADV_TT_CLIENT_ROAM);
 	tt_global_entry->common.flags |= local_flags & BATADV_TT_CLIENT_WIFI;
 
-	if (!(flags & BATADV_TT_CLIENT_ROAM))
-		/* this is a normal global add. Therefore the client is not in a
+	अगर (!(flags & BATADV_TT_CLIENT_ROAM))
+		/* this is a normal global add. Thereक्रमe the client is not in a
 		 * roaming state anymore.
 		 */
 		tt_global_entry->common.flags &= ~BATADV_TT_CLIENT_ROAM;
 
 out:
-	if (tt_global_entry)
+	अगर (tt_global_entry)
 		batadv_tt_global_entry_put(tt_global_entry);
-	if (tt_local_entry)
+	अगर (tt_local_entry)
 		batadv_tt_local_entry_put(tt_local_entry);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_transtable_best_orig() - Get best originator list entry from tt entry
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @tt_global_entry: global translation table entry to be analyzed
  *
- * This function assumes the caller holds rcu_read_lock().
- * Return: best originator list entry or NULL on errors.
+ * This function assumes the caller holds rcu_पढ़ो_lock().
+ * Return: best originator list entry or शून्य on errors.
  */
-static struct batadv_tt_orig_list_entry *
-batadv_transtable_best_orig(struct batadv_priv *bat_priv,
-			    struct batadv_tt_global_entry *tt_global_entry)
-{
-	struct batadv_neigh_node *router, *best_router = NULL;
-	struct batadv_algo_ops *bao = bat_priv->algo_ops;
-	struct hlist_head *head;
-	struct batadv_tt_orig_list_entry *orig_entry, *best_entry = NULL;
+अटल काष्ठा batadv_tt_orig_list_entry *
+batadv_transtable_best_orig(काष्ठा batadv_priv *bat_priv,
+			    काष्ठा batadv_tt_global_entry *tt_global_entry)
+अणु
+	काष्ठा batadv_neigh_node *router, *best_router = शून्य;
+	काष्ठा batadv_algo_ops *bao = bat_priv->algo_ops;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_tt_orig_list_entry *orig_entry, *best_entry = शून्य;
 
 	head = &tt_global_entry->orig_list;
-	hlist_for_each_entry_rcu(orig_entry, head, list) {
+	hlist_क्रम_each_entry_rcu(orig_entry, head, list) अणु
 		router = batadv_orig_router_get(orig_entry->orig_node,
 						BATADV_IF_DEFAULT);
-		if (!router)
-			continue;
+		अगर (!router)
+			जारी;
 
-		if (best_router &&
+		अगर (best_router &&
 		    bao->neigh.cmp(router, BATADV_IF_DEFAULT, best_router,
-				   BATADV_IF_DEFAULT) <= 0) {
+				   BATADV_IF_DEFAULT) <= 0) अणु
 			batadv_neigh_node_put(router);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* release the refcount for the "old" best */
-		if (best_router)
+		/* release the refcount क्रम the "old" best */
+		अगर (best_router)
 			batadv_neigh_node_put(best_router);
 
 		best_entry = orig_entry;
 		best_router = router;
-	}
+	पूर्ण
 
-	if (best_router)
+	अगर (best_router)
 		batadv_neigh_node_put(best_router);
 
-	return best_entry;
-}
+	वापस best_entry;
+पूर्ण
 
 /**
- * batadv_tt_global_dump_subentry() - Dump all TT local entries into a message
- * @msg: Netlink message to dump into
+ * batadv_tt_global_dump_subentry() - Dump all TT local entries पूर्णांकo a message
+ * @msg: Netlink message to dump पूर्णांकo
  * @portid: Port making netlink request
  * @seq: Sequence number of netlink message
  * @common: tt local & tt global common data
  * @orig: Originator node announcing a non-mesh client
- * @best: Is the best originator for the TT entry
+ * @best: Is the best originator क्रम the TT entry
  *
  * Return: Error code, or 0 on success
  */
-static int
-batadv_tt_global_dump_subentry(struct sk_buff *msg, u32 portid, u32 seq,
-			       struct batadv_tt_common_entry *common,
-			       struct batadv_tt_orig_list_entry *orig,
+अटल पूर्णांक
+batadv_tt_global_dump_subentry(काष्ठा sk_buff *msg, u32 portid, u32 seq,
+			       काष्ठा batadv_tt_common_entry *common,
+			       काष्ठा batadv_tt_orig_list_entry *orig,
 			       bool best)
-{
+अणु
 	u16 flags = (common->flags & (~BATADV_TT_SYNC_MASK)) | orig->flags;
-	void *hdr;
-	struct batadv_orig_node_vlan *vlan;
+	व्योम *hdr;
+	काष्ठा batadv_orig_node_vlan *vlan;
 	u8 last_ttvn;
 	u32 crc;
 
 	vlan = batadv_orig_node_vlan_get(orig->orig_node,
 					 common->vid);
-	if (!vlan)
-		return 0;
+	अगर (!vlan)
+		वापस 0;
 
 	crc = vlan->tt.crc;
 
@@ -1837,12 +1838,12 @@ batadv_tt_global_dump_subentry(struct sk_buff *msg, u32 portid, u32 seq,
 	hdr = genlmsg_put(msg, portid, seq, &batadv_netlink_family,
 			  NLM_F_MULTI,
 			  BATADV_CMD_GET_TRANSTABLE_GLOBAL);
-	if (!hdr)
-		return -ENOBUFS;
+	अगर (!hdr)
+		वापस -ENOBUFS;
 
-	last_ttvn = atomic_read(&orig->orig_node->last_ttvn);
+	last_ttvn = atomic_पढ़ो(&orig->orig_node->last_ttvn);
 
-	if (nla_put(msg, BATADV_ATTR_TT_ADDRESS, ETH_ALEN, common->addr) ||
+	अगर (nla_put(msg, BATADV_ATTR_TT_ADDRESS, ETH_ALEN, common->addr) ||
 	    nla_put(msg, BATADV_ATTR_ORIG_ADDRESS, ETH_ALEN,
 		    orig->orig_node->orig) ||
 	    nla_put_u8(msg, BATADV_ATTR_TT_TTVN, orig->ttvn) ||
@@ -1850,187 +1851,187 @@ batadv_tt_global_dump_subentry(struct sk_buff *msg, u32 portid, u32 seq,
 	    nla_put_u32(msg, BATADV_ATTR_TT_CRC32, crc) ||
 	    nla_put_u16(msg, BATADV_ATTR_TT_VID, common->vid) ||
 	    nla_put_u32(msg, BATADV_ATTR_TT_FLAGS, flags))
-		goto nla_put_failure;
+		जाओ nla_put_failure;
 
-	if (best && nla_put_flag(msg, BATADV_ATTR_FLAG_BEST))
-		goto nla_put_failure;
+	अगर (best && nla_put_flag(msg, BATADV_ATTR_FLAG_BEST))
+		जाओ nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	return 0;
+	वापस 0;
 
  nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	return -EMSGSIZE;
-}
+	वापस -EMSGSIZE;
+पूर्ण
 
 /**
- * batadv_tt_global_dump_entry() - Dump one TT global entry into a message
- * @msg: Netlink message to dump into
+ * batadv_tt_global_dump_entry() - Dump one TT global entry पूर्णांकo a message
+ * @msg: Netlink message to dump पूर्णांकo
  * @portid: Port making netlink request
  * @seq: Sequence number of netlink message
- * @bat_priv: The bat priv with all the soft interface information
+ * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
  * @common: tt local & tt global common data
  * @sub_s: Number of entries to skip
  *
- * This function assumes the caller holds rcu_read_lock().
+ * This function assumes the caller holds rcu_पढ़ो_lock().
  *
  * Return: Error code, or 0 on success
  */
-static int
-batadv_tt_global_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
-			    struct batadv_priv *bat_priv,
-			    struct batadv_tt_common_entry *common, int *sub_s)
-{
-	struct batadv_tt_orig_list_entry *orig_entry, *best_entry;
-	struct batadv_tt_global_entry *global;
-	struct hlist_head *head;
-	int sub = 0;
+अटल पूर्णांक
+batadv_tt_global_dump_entry(काष्ठा sk_buff *msg, u32 portid, u32 seq,
+			    काष्ठा batadv_priv *bat_priv,
+			    काष्ठा batadv_tt_common_entry *common, पूर्णांक *sub_s)
+अणु
+	काष्ठा batadv_tt_orig_list_entry *orig_entry, *best_entry;
+	काष्ठा batadv_tt_global_entry *global;
+	काष्ठा hlist_head *head;
+	पूर्णांक sub = 0;
 	bool best;
 
-	global = container_of(common, struct batadv_tt_global_entry, common);
+	global = container_of(common, काष्ठा batadv_tt_global_entry, common);
 	best_entry = batadv_transtable_best_orig(bat_priv, global);
 	head = &global->orig_list;
 
-	hlist_for_each_entry_rcu(orig_entry, head, list) {
-		if (sub++ < *sub_s)
-			continue;
+	hlist_क्रम_each_entry_rcu(orig_entry, head, list) अणु
+		अगर (sub++ < *sub_s)
+			जारी;
 
 		best = (orig_entry == best_entry);
 
-		if (batadv_tt_global_dump_subentry(msg, portid, seq, common,
-						   orig_entry, best)) {
+		अगर (batadv_tt_global_dump_subentry(msg, portid, seq, common,
+						   orig_entry, best)) अणु
 			*sub_s = sub - 1;
-			return -EMSGSIZE;
-		}
-	}
+			वापस -EMSGSIZE;
+		पूर्ण
+	पूर्ण
 
 	*sub_s = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * batadv_tt_global_dump_bucket() - Dump one TT local bucket into a message
- * @msg: Netlink message to dump into
+ * batadv_tt_global_dump_bucket() - Dump one TT local bucket पूर्णांकo a message
+ * @msg: Netlink message to dump पूर्णांकo
  * @portid: Port making netlink request
  * @seq: Sequence number of netlink message
- * @bat_priv: The bat priv with all the soft interface information
- * @head: Pointer to the list containing the global tt entries
+ * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @head: Poपूर्णांकer to the list containing the global tt entries
  * @idx_s: Number of entries to skip
  * @sub: Number of entries to skip
  *
  * Return: Error code, or 0 on success
  */
-static int
-batadv_tt_global_dump_bucket(struct sk_buff *msg, u32 portid, u32 seq,
-			     struct batadv_priv *bat_priv,
-			     struct hlist_head *head, int *idx_s, int *sub)
-{
-	struct batadv_tt_common_entry *common;
-	int idx = 0;
+अटल पूर्णांक
+batadv_tt_global_dump_bucket(काष्ठा sk_buff *msg, u32 portid, u32 seq,
+			     काष्ठा batadv_priv *bat_priv,
+			     काष्ठा hlist_head *head, पूर्णांक *idx_s, पूर्णांक *sub)
+अणु
+	काष्ठा batadv_tt_common_entry *common;
+	पूर्णांक idx = 0;
 
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(common, head, hash_entry) {
-		if (idx++ < *idx_s)
-			continue;
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(common, head, hash_entry) अणु
+		अगर (idx++ < *idx_s)
+			जारी;
 
-		if (batadv_tt_global_dump_entry(msg, portid, seq, bat_priv,
-						common, sub)) {
-			rcu_read_unlock();
+		अगर (batadv_tt_global_dump_entry(msg, portid, seq, bat_priv,
+						common, sub)) अणु
+			rcu_पढ़ो_unlock();
 			*idx_s = idx - 1;
-			return -EMSGSIZE;
-		}
-	}
-	rcu_read_unlock();
+			वापस -EMSGSIZE;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
 	*idx_s = 0;
 	*sub = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * batadv_tt_global_dump() -  Dump TT global entries into a message
- * @msg: Netlink message to dump into
+ * batadv_tt_global_dump() -  Dump TT global entries पूर्णांकo a message
+ * @msg: Netlink message to dump पूर्णांकo
  * @cb: Parameters from query
  *
  * Return: Error code, or length of message on success
  */
-int batadv_tt_global_dump(struct sk_buff *msg, struct netlink_callback *cb)
-{
-	struct net *net = sock_net(cb->skb->sk);
-	struct net_device *soft_iface;
-	struct batadv_priv *bat_priv;
-	struct batadv_hard_iface *primary_if = NULL;
-	struct batadv_hashtable *hash;
-	struct hlist_head *head;
-	int ret;
-	int ifindex;
-	int bucket = cb->args[0];
-	int idx = cb->args[1];
-	int sub = cb->args[2];
-	int portid = NETLINK_CB(cb->skb).portid;
+पूर्णांक batadv_tt_global_dump(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb)
+अणु
+	काष्ठा net *net = sock_net(cb->skb->sk);
+	काष्ठा net_device *soft_अगरace;
+	काष्ठा batadv_priv *bat_priv;
+	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
+	काष्ठा batadv_hashtable *hash;
+	काष्ठा hlist_head *head;
+	पूर्णांक ret;
+	पूर्णांक अगरindex;
+	पूर्णांक bucket = cb->args[0];
+	पूर्णांक idx = cb->args[1];
+	पूर्णांक sub = cb->args[2];
+	पूर्णांक portid = NETLINK_CB(cb->skb).portid;
 
-	ifindex = batadv_netlink_get_ifindex(cb->nlh, BATADV_ATTR_MESH_IFINDEX);
-	if (!ifindex)
-		return -EINVAL;
+	अगरindex = batadv_netlink_get_अगरindex(cb->nlh, BATADV_ATTR_MESH_IFINDEX);
+	अगर (!अगरindex)
+		वापस -EINVAL;
 
-	soft_iface = dev_get_by_index(net, ifindex);
-	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
+	soft_अगरace = dev_get_by_index(net, अगरindex);
+	अगर (!soft_अगरace || !batadv_softअगर_is_valid(soft_अगरace)) अणु
 		ret = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	bat_priv = netdev_priv(soft_iface);
+	bat_priv = netdev_priv(soft_अगरace);
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if || primary_if->if_status != BATADV_IF_ACTIVE) {
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर || primary_अगर->अगर_status != BATADV_IF_ACTIVE) अणु
 		ret = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	hash = bat_priv->tt.global_hash;
 
-	while (bucket < hash->size) {
+	जबतक (bucket < hash->size) अणु
 		head = &hash->table[bucket];
 
-		if (batadv_tt_global_dump_bucket(msg, portid,
+		अगर (batadv_tt_global_dump_bucket(msg, portid,
 						 cb->nlh->nlmsg_seq, bat_priv,
 						 head, &idx, &sub))
-			break;
+			अवरोध;
 
 		bucket++;
-	}
+	पूर्ण
 
 	ret = msg->len;
 
  out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
-	if (soft_iface)
-		dev_put(soft_iface);
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
+	अगर (soft_अगरace)
+		dev_put(soft_अगरace);
 
 	cb->args[0] = bucket;
 	cb->args[1] = idx;
 	cb->args[2] = sub;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * _batadv_tt_global_del_orig_entry() - remove and free an orig_entry
- * @tt_global_entry: the global entry to remove the orig_entry from
- * @orig_entry: the orig entry to remove and free
+ * _batadv_tt_global_del_orig_entry() - हटाओ and मुक्त an orig_entry
+ * @tt_global_entry: the global entry to हटाओ the orig_entry from
+ * @orig_entry: the orig entry to हटाओ and मुक्त
  *
  * Remove an orig_entry from its list in the given tt_global_entry and
- * free this orig_entry afterwards.
+ * मुक्त this orig_entry afterwards.
  *
  * Caller must hold tt_global_entry->list_lock and ensure orig_entry->list is
  * part of a list.
  */
-static void
-_batadv_tt_global_del_orig_entry(struct batadv_tt_global_entry *tt_global_entry,
-				 struct batadv_tt_orig_list_entry *orig_entry)
-{
-	lockdep_assert_held(&tt_global_entry->list_lock);
+अटल व्योम
+_batadv_tt_global_del_orig_entry(काष्ठा batadv_tt_global_entry *tt_global_entry,
+				 काष्ठा batadv_tt_orig_list_entry *orig_entry)
+अणु
+	lockdep_निश्चित_held(&tt_global_entry->list_lock);
 
 	batadv_tt_global_size_dec(orig_entry->orig_node,
 				  tt_global_entry->common.vid);
@@ -2040,141 +2041,141 @@ _batadv_tt_global_del_orig_entry(struct batadv_tt_global_entry *tt_global_entry,
 	 */
 	hlist_del_rcu(&orig_entry->list);
 	batadv_tt_orig_list_entry_put(orig_entry);
-}
+पूर्ण
 
 /* deletes the orig list of a tt_global_entry */
-static void
-batadv_tt_global_del_orig_list(struct batadv_tt_global_entry *tt_global_entry)
-{
-	struct hlist_head *head;
-	struct hlist_node *safe;
-	struct batadv_tt_orig_list_entry *orig_entry;
+अटल व्योम
+batadv_tt_global_del_orig_list(काष्ठा batadv_tt_global_entry *tt_global_entry)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा hlist_node *safe;
+	काष्ठा batadv_tt_orig_list_entry *orig_entry;
 
 	spin_lock_bh(&tt_global_entry->list_lock);
 	head = &tt_global_entry->orig_list;
-	hlist_for_each_entry_safe(orig_entry, safe, head, list)
+	hlist_क्रम_each_entry_safe(orig_entry, safe, head, list)
 		_batadv_tt_global_del_orig_entry(tt_global_entry, orig_entry);
 	spin_unlock_bh(&tt_global_entry->list_lock);
-}
+पूर्ण
 
 /**
- * batadv_tt_global_del_orig_node() - remove orig_node from a global tt entry
- * @bat_priv: the bat priv with all the soft interface information
- * @tt_global_entry: the global entry to remove the orig_node from
+ * batadv_tt_global_del_orig_node() - हटाओ orig_node from a global tt entry
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @tt_global_entry: the global entry to हटाओ the orig_node from
  * @orig_node: the originator announcing the client
  * @message: message to append to the log on deletion
  *
  * Remove the given orig_node and its according orig_entry from the given
  * global tt entry.
  */
-static void
-batadv_tt_global_del_orig_node(struct batadv_priv *bat_priv,
-			       struct batadv_tt_global_entry *tt_global_entry,
-			       struct batadv_orig_node *orig_node,
-			       const char *message)
-{
-	struct hlist_head *head;
-	struct hlist_node *safe;
-	struct batadv_tt_orig_list_entry *orig_entry;
-	unsigned short vid;
+अटल व्योम
+batadv_tt_global_del_orig_node(काष्ठा batadv_priv *bat_priv,
+			       काष्ठा batadv_tt_global_entry *tt_global_entry,
+			       काष्ठा batadv_orig_node *orig_node,
+			       स्थिर अक्षर *message)
+अणु
+	काष्ठा hlist_head *head;
+	काष्ठा hlist_node *safe;
+	काष्ठा batadv_tt_orig_list_entry *orig_entry;
+	अचिन्हित लघु vid;
 
 	spin_lock_bh(&tt_global_entry->list_lock);
 	head = &tt_global_entry->orig_list;
-	hlist_for_each_entry_safe(orig_entry, safe, head, list) {
-		if (orig_entry->orig_node == orig_node) {
+	hlist_क्रम_each_entry_safe(orig_entry, safe, head, list) अणु
+		अगर (orig_entry->orig_node == orig_node) अणु
 			vid = tt_global_entry->common.vid;
 			batadv_dbg(BATADV_DBG_TT, bat_priv,
 				   "Deleting %pM from global tt entry %pM (vid: %d): %s\n",
 				   orig_node->orig,
 				   tt_global_entry->common.addr,
-				   batadv_print_vid(vid), message);
+				   batadv_prपूर्णांक_vid(vid), message);
 			_batadv_tt_global_del_orig_entry(tt_global_entry,
 							 orig_entry);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&tt_global_entry->list_lock);
-}
+पूर्ण
 
-/* If the client is to be deleted, we check if it is the last origantor entry
+/* If the client is to be deleted, we check अगर it is the last origantor entry
  * within tt_global entry. If yes, we set the BATADV_TT_CLIENT_ROAM flag and the
- * timer, otherwise we simply remove the originator scheduled for deletion.
+ * समयr, otherwise we simply हटाओ the originator scheduled क्रम deletion.
  */
-static void
-batadv_tt_global_del_roaming(struct batadv_priv *bat_priv,
-			     struct batadv_tt_global_entry *tt_global_entry,
-			     struct batadv_orig_node *orig_node,
-			     const char *message)
-{
+अटल व्योम
+batadv_tt_global_del_roaming(काष्ठा batadv_priv *bat_priv,
+			     काष्ठा batadv_tt_global_entry *tt_global_entry,
+			     काष्ठा batadv_orig_node *orig_node,
+			     स्थिर अक्षर *message)
+अणु
 	bool last_entry = true;
-	struct hlist_head *head;
-	struct batadv_tt_orig_list_entry *orig_entry;
+	काष्ठा hlist_head *head;
+	काष्ठा batadv_tt_orig_list_entry *orig_entry;
 
-	/* no local entry exists, case 1:
-	 * Check if this is the last one or if other entries exist.
+	/* no local entry exists, हाल 1:
+	 * Check अगर this is the last one or अगर other entries exist.
 	 */
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	head = &tt_global_entry->orig_list;
-	hlist_for_each_entry_rcu(orig_entry, head, list) {
-		if (orig_entry->orig_node != orig_node) {
+	hlist_क्रम_each_entry_rcu(orig_entry, head, list) अणु
+		अगर (orig_entry->orig_node != orig_node) अणु
 			last_entry = false;
-			break;
-		}
-	}
-	rcu_read_unlock();
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
 
-	if (last_entry) {
-		/* its the last one, mark for roaming. */
+	अगर (last_entry) अणु
+		/* its the last one, mark क्रम roaming. */
 		tt_global_entry->common.flags |= BATADV_TT_CLIENT_ROAM;
-		tt_global_entry->roam_at = jiffies;
-	} else {
+		tt_global_entry->roam_at = jअगरfies;
+	पूर्ण अन्यथा अणु
 		/* there is another entry, we can simply delete this
 		 * one and can still use the other one.
 		 */
 		batadv_tt_global_del_orig_node(bat_priv, tt_global_entry,
 					       orig_node, message);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * batadv_tt_global_del() - remove a client from the global table
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_tt_global_del() - हटाओ a client from the global table
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @orig_node: an originator serving this client
  * @addr: the mac address of the client
- * @vid: VLAN identifier
- * @message: a message explaining the reason for deleting the client to print
- *  for debugging purpose
- * @roaming: true if the deletion has been triggered by a roaming event
+ * @vid: VLAN identअगरier
+ * @message: a message explaining the reason क्रम deleting the client to prपूर्णांक
+ *  क्रम debugging purpose
+ * @roaming: true अगर the deletion has been triggered by a roaming event
  */
-static void batadv_tt_global_del(struct batadv_priv *bat_priv,
-				 struct batadv_orig_node *orig_node,
-				 const unsigned char *addr, unsigned short vid,
-				 const char *message, bool roaming)
-{
-	struct batadv_tt_global_entry *tt_global_entry;
-	struct batadv_tt_local_entry *local_entry = NULL;
+अटल व्योम batadv_tt_global_del(काष्ठा batadv_priv *bat_priv,
+				 काष्ठा batadv_orig_node *orig_node,
+				 स्थिर अचिन्हित अक्षर *addr, अचिन्हित लघु vid,
+				 स्थिर अक्षर *message, bool roaming)
+अणु
+	काष्ठा batadv_tt_global_entry *tt_global_entry;
+	काष्ठा batadv_tt_local_entry *local_entry = शून्य;
 
 	tt_global_entry = batadv_tt_global_hash_find(bat_priv, addr, vid);
-	if (!tt_global_entry)
-		goto out;
+	अगर (!tt_global_entry)
+		जाओ out;
 
-	if (!roaming) {
+	अगर (!roaming) अणु
 		batadv_tt_global_del_orig_node(bat_priv, tt_global_entry,
 					       orig_node, message);
 
-		if (hlist_empty(&tt_global_entry->orig_list))
-			batadv_tt_global_free(bat_priv, tt_global_entry,
+		अगर (hlist_empty(&tt_global_entry->orig_list))
+			batadv_tt_global_मुक्त(bat_priv, tt_global_entry,
 					      message);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	/* if we are deleting a global entry due to a roam
+	/* अगर we are deleting a global entry due to a roam
 	 * event, there are two possibilities:
-	 * 1) the client roamed from node A to node B => if there
-	 *    is only one originator left for this client, we mark
-	 *    it with BATADV_TT_CLIENT_ROAM, we start a timer and we
-	 *    wait for node B to claim it. In case of timeout
+	 * 1) the client roamed from node A to node B => अगर there
+	 *    is only one originator left क्रम this client, we mark
+	 *    it with BATADV_TT_CLIENT_ROAM, we start a समयr and we
+	 *    रुको क्रम node B to claim it. In हाल of समयout
 	 *    the entry is purged.
 	 *
 	 *    If there are other originators left, we directly delete
@@ -2185,264 +2186,264 @@ static void batadv_tt_global_del(struct batadv_priv *bat_priv,
 	local_entry = batadv_tt_local_hash_find(bat_priv,
 						tt_global_entry->common.addr,
 						vid);
-	if (local_entry) {
-		/* local entry exists, case 2: client roamed to us. */
+	अगर (local_entry) अणु
+		/* local entry exists, हाल 2: client roamed to us. */
 		batadv_tt_global_del_orig_list(tt_global_entry);
-		batadv_tt_global_free(bat_priv, tt_global_entry, message);
-	} else {
-		/* no local entry exists, case 1: check for roaming */
+		batadv_tt_global_मुक्त(bat_priv, tt_global_entry, message);
+	पूर्ण अन्यथा अणु
+		/* no local entry exists, हाल 1: check क्रम roaming */
 		batadv_tt_global_del_roaming(bat_priv, tt_global_entry,
 					     orig_node, message);
-	}
+	पूर्ण
 
 out:
-	if (tt_global_entry)
+	अगर (tt_global_entry)
 		batadv_tt_global_entry_put(tt_global_entry);
-	if (local_entry)
+	अगर (local_entry)
 		batadv_tt_local_entry_put(local_entry);
-}
+पूर्ण
 
 /**
- * batadv_tt_global_del_orig() - remove all the TT global entries belonging to
+ * batadv_tt_global_del_orig() - हटाओ all the TT global entries beदीर्घing to
  *  the given originator matching the provided vid
- * @bat_priv: the bat priv with all the soft interface information
- * @orig_node: the originator owning the entries to remove
- * @match_vid: the VLAN identifier to match. If negative all the entries will be
- *  removed
- * @message: debug message to print as "reason"
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @orig_node: the originator owning the entries to हटाओ
+ * @match_vid: the VLAN identअगरier to match. If negative all the entries will be
+ *  हटाओd
+ * @message: debug message to prपूर्णांक as "reason"
  */
-void batadv_tt_global_del_orig(struct batadv_priv *bat_priv,
-			       struct batadv_orig_node *orig_node,
+व्योम batadv_tt_global_del_orig(काष्ठा batadv_priv *bat_priv,
+			       काष्ठा batadv_orig_node *orig_node,
 			       s32 match_vid,
-			       const char *message)
-{
-	struct batadv_tt_global_entry *tt_global;
-	struct batadv_tt_common_entry *tt_common_entry;
+			       स्थिर अक्षर *message)
+अणु
+	काष्ठा batadv_tt_global_entry *tt_global;
+	काष्ठा batadv_tt_common_entry *tt_common_entry;
 	u32 i;
-	struct batadv_hashtable *hash = bat_priv->tt.global_hash;
-	struct hlist_node *safe;
-	struct hlist_head *head;
-	spinlock_t *list_lock; /* protects write access to the hash lists */
-	unsigned short vid;
+	काष्ठा batadv_hashtable *hash = bat_priv->tt.global_hash;
+	काष्ठा hlist_node *safe;
+	काष्ठा hlist_head *head;
+	spinlock_t *list_lock; /* protects ग_लिखो access to the hash lists */
+	अचिन्हित लघु vid;
 
-	if (!hash)
-		return;
+	अगर (!hash)
+		वापस;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 		list_lock = &hash->list_locks[i];
 
 		spin_lock_bh(list_lock);
-		hlist_for_each_entry_safe(tt_common_entry, safe,
-					  head, hash_entry) {
-			/* remove only matching entries */
-			if (match_vid >= 0 && tt_common_entry->vid != match_vid)
-				continue;
+		hlist_क्रम_each_entry_safe(tt_common_entry, safe,
+					  head, hash_entry) अणु
+			/* हटाओ only matching entries */
+			अगर (match_vid >= 0 && tt_common_entry->vid != match_vid)
+				जारी;
 
 			tt_global = container_of(tt_common_entry,
-						 struct batadv_tt_global_entry,
+						 काष्ठा batadv_tt_global_entry,
 						 common);
 
 			batadv_tt_global_del_orig_node(bat_priv, tt_global,
 						       orig_node, message);
 
-			if (hlist_empty(&tt_global->orig_list)) {
+			अगर (hlist_empty(&tt_global->orig_list)) अणु
 				vid = tt_global->common.vid;
 				batadv_dbg(BATADV_DBG_TT, bat_priv,
 					   "Deleting global tt entry %pM (vid: %d): %s\n",
 					   tt_global->common.addr,
-					   batadv_print_vid(vid), message);
+					   batadv_prपूर्णांक_vid(vid), message);
 				hlist_del_rcu(&tt_common_entry->hash_entry);
 				batadv_tt_global_entry_put(tt_global);
-			}
-		}
+			पूर्ण
+		पूर्ण
 		spin_unlock_bh(list_lock);
-	}
+	पूर्ण
 	clear_bit(BATADV_ORIG_CAPA_HAS_TT, &orig_node->capa_initialized);
-}
+पूर्ण
 
-static bool batadv_tt_global_to_purge(struct batadv_tt_global_entry *tt_global,
-				      char **msg)
-{
+अटल bool batadv_tt_global_to_purge(काष्ठा batadv_tt_global_entry *tt_global,
+				      अक्षर **msg)
+अणु
 	bool purge = false;
-	unsigned long roam_timeout = BATADV_TT_CLIENT_ROAM_TIMEOUT;
-	unsigned long temp_timeout = BATADV_TT_CLIENT_TEMP_TIMEOUT;
+	अचिन्हित दीर्घ roam_समयout = BATADV_TT_CLIENT_ROAM_TIMEOUT;
+	अचिन्हित दीर्घ temp_समयout = BATADV_TT_CLIENT_TEMP_TIMEOUT;
 
-	if ((tt_global->common.flags & BATADV_TT_CLIENT_ROAM) &&
-	    batadv_has_timed_out(tt_global->roam_at, roam_timeout)) {
+	अगर ((tt_global->common.flags & BATADV_TT_CLIENT_ROAM) &&
+	    batadv_has_समयd_out(tt_global->roam_at, roam_समयout)) अणु
 		purge = true;
 		*msg = "Roaming timeout\n";
-	}
+	पूर्ण
 
-	if ((tt_global->common.flags & BATADV_TT_CLIENT_TEMP) &&
-	    batadv_has_timed_out(tt_global->common.added_at, temp_timeout)) {
+	अगर ((tt_global->common.flags & BATADV_TT_CLIENT_TEMP) &&
+	    batadv_has_समयd_out(tt_global->common.added_at, temp_समयout)) अणु
 		purge = true;
 		*msg = "Temporary client timeout\n";
-	}
+	पूर्ण
 
-	return purge;
-}
+	वापस purge;
+पूर्ण
 
-static void batadv_tt_global_purge(struct batadv_priv *bat_priv)
-{
-	struct batadv_hashtable *hash = bat_priv->tt.global_hash;
-	struct hlist_head *head;
-	struct hlist_node *node_tmp;
-	spinlock_t *list_lock; /* protects write access to the hash lists */
+अटल व्योम batadv_tt_global_purge(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_hashtable *hash = bat_priv->tt.global_hash;
+	काष्ठा hlist_head *head;
+	काष्ठा hlist_node *node_पंचांगp;
+	spinlock_t *list_lock; /* protects ग_लिखो access to the hash lists */
 	u32 i;
-	char *msg = NULL;
-	struct batadv_tt_common_entry *tt_common;
-	struct batadv_tt_global_entry *tt_global;
+	अक्षर *msg = शून्य;
+	काष्ठा batadv_tt_common_entry *tt_common;
+	काष्ठा batadv_tt_global_entry *tt_global;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 		list_lock = &hash->list_locks[i];
 
 		spin_lock_bh(list_lock);
-		hlist_for_each_entry_safe(tt_common, node_tmp, head,
-					  hash_entry) {
+		hlist_क्रम_each_entry_safe(tt_common, node_पंचांगp, head,
+					  hash_entry) अणु
 			tt_global = container_of(tt_common,
-						 struct batadv_tt_global_entry,
+						 काष्ठा batadv_tt_global_entry,
 						 common);
 
-			if (!batadv_tt_global_to_purge(tt_global, &msg))
-				continue;
+			अगर (!batadv_tt_global_to_purge(tt_global, &msg))
+				जारी;
 
 			batadv_dbg(BATADV_DBG_TT, bat_priv,
 				   "Deleting global tt entry %pM (vid: %d): %s\n",
 				   tt_global->common.addr,
-				   batadv_print_vid(tt_global->common.vid),
+				   batadv_prपूर्णांक_vid(tt_global->common.vid),
 				   msg);
 
 			hlist_del_rcu(&tt_common->hash_entry);
 
 			batadv_tt_global_entry_put(tt_global);
-		}
+		पूर्ण
 		spin_unlock_bh(list_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void batadv_tt_global_table_free(struct batadv_priv *bat_priv)
-{
-	struct batadv_hashtable *hash;
-	spinlock_t *list_lock; /* protects write access to the hash lists */
-	struct batadv_tt_common_entry *tt_common_entry;
-	struct batadv_tt_global_entry *tt_global;
-	struct hlist_node *node_tmp;
-	struct hlist_head *head;
+अटल व्योम batadv_tt_global_table_मुक्त(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_hashtable *hash;
+	spinlock_t *list_lock; /* protects ग_लिखो access to the hash lists */
+	काष्ठा batadv_tt_common_entry *tt_common_entry;
+	काष्ठा batadv_tt_global_entry *tt_global;
+	काष्ठा hlist_node *node_पंचांगp;
+	काष्ठा hlist_head *head;
 	u32 i;
 
-	if (!bat_priv->tt.global_hash)
-		return;
+	अगर (!bat_priv->tt.global_hash)
+		वापस;
 
 	hash = bat_priv->tt.global_hash;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 		list_lock = &hash->list_locks[i];
 
 		spin_lock_bh(list_lock);
-		hlist_for_each_entry_safe(tt_common_entry, node_tmp,
-					  head, hash_entry) {
+		hlist_क्रम_each_entry_safe(tt_common_entry, node_पंचांगp,
+					  head, hash_entry) अणु
 			hlist_del_rcu(&tt_common_entry->hash_entry);
 			tt_global = container_of(tt_common_entry,
-						 struct batadv_tt_global_entry,
+						 काष्ठा batadv_tt_global_entry,
 						 common);
 			batadv_tt_global_entry_put(tt_global);
-		}
+		पूर्ण
 		spin_unlock_bh(list_lock);
-	}
+	पूर्ण
 
 	batadv_hash_destroy(hash);
 
-	bat_priv->tt.global_hash = NULL;
-}
+	bat_priv->tt.global_hash = शून्य;
+पूर्ण
 
-static bool
-_batadv_is_ap_isolated(struct batadv_tt_local_entry *tt_local_entry,
-		       struct batadv_tt_global_entry *tt_global_entry)
-{
-	if (tt_local_entry->common.flags & BATADV_TT_CLIENT_WIFI &&
+अटल bool
+_batadv_is_ap_isolated(काष्ठा batadv_tt_local_entry *tt_local_entry,
+		       काष्ठा batadv_tt_global_entry *tt_global_entry)
+अणु
+	अगर (tt_local_entry->common.flags & BATADV_TT_CLIENT_WIFI &&
 	    tt_global_entry->common.flags & BATADV_TT_CLIENT_WIFI)
-		return true;
+		वापस true;
 
-	/* check if the two clients are marked as isolated */
-	if (tt_local_entry->common.flags & BATADV_TT_CLIENT_ISOLA &&
+	/* check अगर the two clients are marked as isolated */
+	अगर (tt_local_entry->common.flags & BATADV_TT_CLIENT_ISOLA &&
 	    tt_global_entry->common.flags & BATADV_TT_CLIENT_ISOLA)
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /**
- * batadv_transtable_search() - get the mesh destination for a given client
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_transtable_search() - get the mesh destination क्रम a given client
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @src: mac address of the source client
  * @addr: mac address of the destination client
- * @vid: VLAN identifier
+ * @vid: VLAN identअगरier
  *
- * Return: a pointer to the originator that was selected as destination in the
- * mesh for contacting the client 'addr', NULL otherwise.
- * In case of multiple originators serving the same client, the function returns
+ * Return: a poपूर्णांकer to the originator that was selected as destination in the
+ * mesh क्रम contacting the client 'addr', शून्य otherwise.
+ * In हाल of multiple originators serving the same client, the function वापसs
  * the best one (best in terms of metric towards the destination node).
  *
- * If the two clients are AP isolated the function returns NULL.
+ * If the two clients are AP isolated the function वापसs शून्य.
  */
-struct batadv_orig_node *batadv_transtable_search(struct batadv_priv *bat_priv,
-						  const u8 *src,
-						  const u8 *addr,
-						  unsigned short vid)
-{
-	struct batadv_tt_local_entry *tt_local_entry = NULL;
-	struct batadv_tt_global_entry *tt_global_entry = NULL;
-	struct batadv_orig_node *orig_node = NULL;
-	struct batadv_tt_orig_list_entry *best_entry;
+काष्ठा batadv_orig_node *batadv_transtable_search(काष्ठा batadv_priv *bat_priv,
+						  स्थिर u8 *src,
+						  स्थिर u8 *addr,
+						  अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_tt_local_entry *tt_local_entry = शून्य;
+	काष्ठा batadv_tt_global_entry *tt_global_entry = शून्य;
+	काष्ठा batadv_orig_node *orig_node = शून्य;
+	काष्ठा batadv_tt_orig_list_entry *best_entry;
 
-	if (src && batadv_vlan_ap_isola_get(bat_priv, vid)) {
+	अगर (src && batadv_vlan_ap_isola_get(bat_priv, vid)) अणु
 		tt_local_entry = batadv_tt_local_hash_find(bat_priv, src, vid);
-		if (!tt_local_entry ||
+		अगर (!tt_local_entry ||
 		    (tt_local_entry->common.flags & BATADV_TT_CLIENT_PENDING))
-			goto out;
-	}
+			जाओ out;
+	पूर्ण
 
 	tt_global_entry = batadv_tt_global_hash_find(bat_priv, addr, vid);
-	if (!tt_global_entry)
-		goto out;
+	अगर (!tt_global_entry)
+		जाओ out;
 
 	/* check whether the clients should not communicate due to AP
 	 * isolation
 	 */
-	if (tt_local_entry &&
+	अगर (tt_local_entry &&
 	    _batadv_is_ap_isolated(tt_local_entry, tt_global_entry))
-		goto out;
+		जाओ out;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	best_entry = batadv_transtable_best_orig(bat_priv, tt_global_entry);
 	/* found anything? */
-	if (best_entry)
+	अगर (best_entry)
 		orig_node = best_entry->orig_node;
-	if (orig_node && !kref_get_unless_zero(&orig_node->refcount))
-		orig_node = NULL;
-	rcu_read_unlock();
+	अगर (orig_node && !kref_get_unless_zero(&orig_node->refcount))
+		orig_node = शून्य;
+	rcu_पढ़ो_unlock();
 
 out:
-	if (tt_global_entry)
+	अगर (tt_global_entry)
 		batadv_tt_global_entry_put(tt_global_entry);
-	if (tt_local_entry)
+	अगर (tt_local_entry)
 		batadv_tt_local_entry_put(tt_local_entry);
 
-	return orig_node;
-}
+	वापस orig_node;
+पूर्ण
 
 /**
- * batadv_tt_global_crc() - calculates the checksum of the local table belonging
+ * batadv_tt_global_crc() - calculates the checksum of the local table beदीर्घing
  *  to the given orig_node
- * @bat_priv: the bat priv with all the soft interface information
- * @orig_node: originator for which the CRC should be computed
- * @vid: VLAN identifier for which the CRC32 has to be computed
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @orig_node: originator क्रम which the CRC should be computed
+ * @vid: VLAN identअगरier क्रम which the CRC32 has to be computed
  *
- * This function computes the checksum for the global table corresponding to a
- * specific originator. In particular, the checksum is computed as follows: For
+ * This function computes the checksum क्रम the global table corresponding to a
+ * specअगरic originator. In particular, the checksum is computed as follows: For
  * each client connected to the originator the CRC32C of the MAC address and the
  * VID is computed and then all the CRC32Cs of the various clients are xor'ed
  * together.
@@ -2450,581 +2451,581 @@ out:
  * The idea behind is that CRC32C should be used as much as possible in order to
  * produce a unique hash of the table, but since the order which is used to feed
  * the CRC32C function affects the result and since every node in the network
- * probably sorts the clients differently, the hash function cannot be directly
+ * probably sorts the clients dअगरferently, the hash function cannot be directly
  * computed over the entire table. Hence the CRC32C is used only on
- * the single client entry, while all the results are then xor'ed together
- * because the XOR operation can combine them all while trying to reduce the
+ * the single client entry, जबतक all the results are then xor'ed together
+ * because the XOR operation can combine them all जबतक trying to reduce the
  * noise as much as possible.
  *
  * Return: the checksum of the global table of a given originator.
  */
-static u32 batadv_tt_global_crc(struct batadv_priv *bat_priv,
-				struct batadv_orig_node *orig_node,
-				unsigned short vid)
-{
-	struct batadv_hashtable *hash = bat_priv->tt.global_hash;
-	struct batadv_tt_orig_list_entry *tt_orig;
-	struct batadv_tt_common_entry *tt_common;
-	struct batadv_tt_global_entry *tt_global;
-	struct hlist_head *head;
-	u32 i, crc_tmp, crc = 0;
+अटल u32 batadv_tt_global_crc(काष्ठा batadv_priv *bat_priv,
+				काष्ठा batadv_orig_node *orig_node,
+				अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_hashtable *hash = bat_priv->tt.global_hash;
+	काष्ठा batadv_tt_orig_list_entry *tt_orig;
+	काष्ठा batadv_tt_common_entry *tt_common;
+	काष्ठा batadv_tt_global_entry *tt_global;
+	काष्ठा hlist_head *head;
+	u32 i, crc_पंचांगp, crc = 0;
 	u8 flags;
-	__be16 tmp_vid;
+	__be16 पंचांगp_vid;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 
-		rcu_read_lock();
-		hlist_for_each_entry_rcu(tt_common, head, hash_entry) {
+		rcu_पढ़ो_lock();
+		hlist_क्रम_each_entry_rcu(tt_common, head, hash_entry) अणु
 			tt_global = container_of(tt_common,
-						 struct batadv_tt_global_entry,
+						 काष्ठा batadv_tt_global_entry,
 						 common);
-			/* compute the CRC only for entries belonging to the
-			 * VLAN identified by the vid passed as parameter
+			/* compute the CRC only क्रम entries beदीर्घing to the
+			 * VLAN identअगरied by the vid passed as parameter
 			 */
-			if (tt_common->vid != vid)
-				continue;
+			अगर (tt_common->vid != vid)
+				जारी;
 
-			/* Roaming clients are in the global table for
-			 * consistency only. They don't have to be
-			 * taken into account while computing the
+			/* Roaming clients are in the global table क्रम
+			 * consistency only. They करोn't have to be
+			 * taken पूर्णांकo account जबतक computing the
 			 * global crc
 			 */
-			if (tt_common->flags & BATADV_TT_CLIENT_ROAM)
-				continue;
+			अगर (tt_common->flags & BATADV_TT_CLIENT_ROAM)
+				जारी;
 			/* Temporary clients have not been announced yet, so
-			 * they have to be skipped while computing the global
+			 * they have to be skipped जबतक computing the global
 			 * crc
 			 */
-			if (tt_common->flags & BATADV_TT_CLIENT_TEMP)
-				continue;
+			अगर (tt_common->flags & BATADV_TT_CLIENT_TEMP)
+				जारी;
 
-			/* find out if this global entry is announced by this
+			/* find out अगर this global entry is announced by this
 			 * originator
 			 */
 			tt_orig = batadv_tt_global_orig_entry_find(tt_global,
 								   orig_node);
-			if (!tt_orig)
-				continue;
+			अगर (!tt_orig)
+				जारी;
 
-			/* use network order to read the VID: this ensures that
-			 * every node reads the bytes in the same order.
+			/* use network order to पढ़ो the VID: this ensures that
+			 * every node पढ़ोs the bytes in the same order.
 			 */
-			tmp_vid = htons(tt_common->vid);
-			crc_tmp = crc32c(0, &tmp_vid, sizeof(tmp_vid));
+			पंचांगp_vid = htons(tt_common->vid);
+			crc_पंचांगp = crc32c(0, &पंचांगp_vid, माप(पंचांगp_vid));
 
 			/* compute the CRC on flags that have to be kept in sync
 			 * among nodes
 			 */
 			flags = tt_orig->flags;
-			crc_tmp = crc32c(crc_tmp, &flags, sizeof(flags));
+			crc_पंचांगp = crc32c(crc_पंचांगp, &flags, माप(flags));
 
-			crc ^= crc32c(crc_tmp, tt_common->addr, ETH_ALEN);
+			crc ^= crc32c(crc_पंचांगp, tt_common->addr, ETH_ALEN);
 
 			batadv_tt_orig_list_entry_put(tt_orig);
-		}
-		rcu_read_unlock();
-	}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
 /**
  * batadv_tt_local_crc() - calculates the checksum of the local table
- * @bat_priv: the bat priv with all the soft interface information
- * @vid: VLAN identifier for which the CRC32 has to be computed
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @vid: VLAN identअगरier क्रम which the CRC32 has to be computed
  *
- * For details about the computation, please refer to the documentation for
+ * For details about the computation, please refer to the करोcumentation क्रम
  * batadv_tt_global_crc().
  *
  * Return: the checksum of the local table
  */
-static u32 batadv_tt_local_crc(struct batadv_priv *bat_priv,
-			       unsigned short vid)
-{
-	struct batadv_hashtable *hash = bat_priv->tt.local_hash;
-	struct batadv_tt_common_entry *tt_common;
-	struct hlist_head *head;
-	u32 i, crc_tmp, crc = 0;
+अटल u32 batadv_tt_local_crc(काष्ठा batadv_priv *bat_priv,
+			       अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_hashtable *hash = bat_priv->tt.local_hash;
+	काष्ठा batadv_tt_common_entry *tt_common;
+	काष्ठा hlist_head *head;
+	u32 i, crc_पंचांगp, crc = 0;
 	u8 flags;
-	__be16 tmp_vid;
+	__be16 पंचांगp_vid;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 
-		rcu_read_lock();
-		hlist_for_each_entry_rcu(tt_common, head, hash_entry) {
-			/* compute the CRC only for entries belonging to the
-			 * VLAN identified by vid
+		rcu_पढ़ो_lock();
+		hlist_क्रम_each_entry_rcu(tt_common, head, hash_entry) अणु
+			/* compute the CRC only क्रम entries beदीर्घing to the
+			 * VLAN identअगरied by vid
 			 */
-			if (tt_common->vid != vid)
-				continue;
+			अगर (tt_common->vid != vid)
+				जारी;
 
-			/* not yet committed clients have not to be taken into
-			 * account while computing the CRC
+			/* not yet committed clients have not to be taken पूर्णांकo
+			 * account जबतक computing the CRC
 			 */
-			if (tt_common->flags & BATADV_TT_CLIENT_NEW)
-				continue;
+			अगर (tt_common->flags & BATADV_TT_CLIENT_NEW)
+				जारी;
 
-			/* use network order to read the VID: this ensures that
-			 * every node reads the bytes in the same order.
+			/* use network order to पढ़ो the VID: this ensures that
+			 * every node पढ़ोs the bytes in the same order.
 			 */
-			tmp_vid = htons(tt_common->vid);
-			crc_tmp = crc32c(0, &tmp_vid, sizeof(tmp_vid));
+			पंचांगp_vid = htons(tt_common->vid);
+			crc_पंचांगp = crc32c(0, &पंचांगp_vid, माप(पंचांगp_vid));
 
 			/* compute the CRC on flags that have to be kept in sync
 			 * among nodes
 			 */
 			flags = tt_common->flags & BATADV_TT_SYNC_MASK;
-			crc_tmp = crc32c(crc_tmp, &flags, sizeof(flags));
+			crc_पंचांगp = crc32c(crc_पंचांगp, &flags, माप(flags));
 
-			crc ^= crc32c(crc_tmp, tt_common->addr, ETH_ALEN);
-		}
-		rcu_read_unlock();
-	}
+			crc ^= crc32c(crc_पंचांगp, tt_common->addr, ETH_ALEN);
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
 /**
- * batadv_tt_req_node_release() - free tt_req node entry
- * @ref: kref pointer of the tt req_node entry
+ * batadv_tt_req_node_release() - मुक्त tt_req node entry
+ * @ref: kref poपूर्णांकer of the tt req_node entry
  */
-static void batadv_tt_req_node_release(struct kref *ref)
-{
-	struct batadv_tt_req_node *tt_req_node;
+अटल व्योम batadv_tt_req_node_release(काष्ठा kref *ref)
+अणु
+	काष्ठा batadv_tt_req_node *tt_req_node;
 
-	tt_req_node = container_of(ref, struct batadv_tt_req_node, refcount);
+	tt_req_node = container_of(ref, काष्ठा batadv_tt_req_node, refcount);
 
-	kmem_cache_free(batadv_tt_req_cache, tt_req_node);
-}
+	kmem_cache_मुक्त(batadv_tt_req_cache, tt_req_node);
+पूर्ण
 
 /**
  * batadv_tt_req_node_put() - decrement the tt_req_node refcounter and
  *  possibly release it
- * @tt_req_node: tt_req_node to be free'd
+ * @tt_req_node: tt_req_node to be मुक्त'd
  */
-static void batadv_tt_req_node_put(struct batadv_tt_req_node *tt_req_node)
-{
+अटल व्योम batadv_tt_req_node_put(काष्ठा batadv_tt_req_node *tt_req_node)
+अणु
 	kref_put(&tt_req_node->refcount, batadv_tt_req_node_release);
-}
+पूर्ण
 
-static void batadv_tt_req_list_free(struct batadv_priv *bat_priv)
-{
-	struct batadv_tt_req_node *node;
-	struct hlist_node *safe;
+अटल व्योम batadv_tt_req_list_मुक्त(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_tt_req_node *node;
+	काष्ठा hlist_node *safe;
 
 	spin_lock_bh(&bat_priv->tt.req_list_lock);
 
-	hlist_for_each_entry_safe(node, safe, &bat_priv->tt.req_list, list) {
+	hlist_क्रम_each_entry_safe(node, safe, &bat_priv->tt.req_list, list) अणु
 		hlist_del_init(&node->list);
 		batadv_tt_req_node_put(node);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&bat_priv->tt.req_list_lock);
-}
+पूर्ण
 
-static void batadv_tt_save_orig_buffer(struct batadv_priv *bat_priv,
-				       struct batadv_orig_node *orig_node,
-				       const void *tt_buff,
+अटल व्योम batadv_tt_save_orig_buffer(काष्ठा batadv_priv *bat_priv,
+				       काष्ठा batadv_orig_node *orig_node,
+				       स्थिर व्योम *tt_buff,
 				       u16 tt_buff_len)
-{
-	/* Replace the old buffer only if I received something in the
+अणु
+	/* Replace the old buffer only अगर I received something in the
 	 * last OGM (the OGM could carry no changes)
 	 */
 	spin_lock_bh(&orig_node->tt_buff_lock);
-	if (tt_buff_len > 0) {
-		kfree(orig_node->tt_buff);
+	अगर (tt_buff_len > 0) अणु
+		kमुक्त(orig_node->tt_buff);
 		orig_node->tt_buff_len = 0;
-		orig_node->tt_buff = kmalloc(tt_buff_len, GFP_ATOMIC);
-		if (orig_node->tt_buff) {
-			memcpy(orig_node->tt_buff, tt_buff, tt_buff_len);
+		orig_node->tt_buff = kदो_स्मृति(tt_buff_len, GFP_ATOMIC);
+		अगर (orig_node->tt_buff) अणु
+			स_नकल(orig_node->tt_buff, tt_buff, tt_buff_len);
 			orig_node->tt_buff_len = tt_buff_len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&orig_node->tt_buff_lock);
-}
+पूर्ण
 
-static void batadv_tt_req_purge(struct batadv_priv *bat_priv)
-{
-	struct batadv_tt_req_node *node;
-	struct hlist_node *safe;
+अटल व्योम batadv_tt_req_purge(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_tt_req_node *node;
+	काष्ठा hlist_node *safe;
 
 	spin_lock_bh(&bat_priv->tt.req_list_lock);
-	hlist_for_each_entry_safe(node, safe, &bat_priv->tt.req_list, list) {
-		if (batadv_has_timed_out(node->issued_at,
-					 BATADV_TT_REQUEST_TIMEOUT)) {
+	hlist_क्रम_each_entry_safe(node, safe, &bat_priv->tt.req_list, list) अणु
+		अगर (batadv_has_समयd_out(node->issued_at,
+					 BATADV_TT_REQUEST_TIMEOUT)) अणु
 			hlist_del_init(&node->list);
 			batadv_tt_req_node_put(node);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&bat_priv->tt.req_list_lock);
-}
+पूर्ण
 
 /**
  * batadv_tt_req_node_new() - search and possibly create a tt_req_node object
- * @bat_priv: the bat priv with all the soft interface information
- * @orig_node: orig node this request is being issued for
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @orig_node: orig node this request is being issued क्रम
  *
- * Return: the pointer to the new tt_req_node struct if no request
- * has already been issued for this orig_node, NULL otherwise.
+ * Return: the poपूर्णांकer to the new tt_req_node काष्ठा अगर no request
+ * has alपढ़ोy been issued क्रम this orig_node, शून्य otherwise.
  */
-static struct batadv_tt_req_node *
-batadv_tt_req_node_new(struct batadv_priv *bat_priv,
-		       struct batadv_orig_node *orig_node)
-{
-	struct batadv_tt_req_node *tt_req_node_tmp, *tt_req_node = NULL;
+अटल काष्ठा batadv_tt_req_node *
+batadv_tt_req_node_new(काष्ठा batadv_priv *bat_priv,
+		       काष्ठा batadv_orig_node *orig_node)
+अणु
+	काष्ठा batadv_tt_req_node *tt_req_node_पंचांगp, *tt_req_node = शून्य;
 
 	spin_lock_bh(&bat_priv->tt.req_list_lock);
-	hlist_for_each_entry(tt_req_node_tmp, &bat_priv->tt.req_list, list) {
-		if (batadv_compare_eth(tt_req_node_tmp, orig_node) &&
-		    !batadv_has_timed_out(tt_req_node_tmp->issued_at,
+	hlist_क्रम_each_entry(tt_req_node_पंचांगp, &bat_priv->tt.req_list, list) अणु
+		अगर (batadv_compare_eth(tt_req_node_पंचांगp, orig_node) &&
+		    !batadv_has_समयd_out(tt_req_node_पंचांगp->issued_at,
 					  BATADV_TT_REQUEST_TIMEOUT))
-			goto unlock;
-	}
+			जाओ unlock;
+	पूर्ण
 
 	tt_req_node = kmem_cache_alloc(batadv_tt_req_cache, GFP_ATOMIC);
-	if (!tt_req_node)
-		goto unlock;
+	अगर (!tt_req_node)
+		जाओ unlock;
 
 	kref_init(&tt_req_node->refcount);
 	ether_addr_copy(tt_req_node->addr, orig_node->orig);
-	tt_req_node->issued_at = jiffies;
+	tt_req_node->issued_at = jअगरfies;
 
 	kref_get(&tt_req_node->refcount);
 	hlist_add_head(&tt_req_node->list, &bat_priv->tt.req_list);
 unlock:
 	spin_unlock_bh(&bat_priv->tt.req_list_lock);
-	return tt_req_node;
-}
+	वापस tt_req_node;
+पूर्ण
 
 /**
- * batadv_tt_local_valid() - verify local tt entry and get flags
+ * batadv_tt_local_valid() - verअगरy local tt entry and get flags
  * @entry_ptr: to be checked local tt entry
  * @data_ptr: not used but definition required to satisfy the callback prototype
- * @flags: a pointer to store TT flags for this client to
+ * @flags: a poपूर्णांकer to store TT flags क्रम this client to
  *
  * Checks the validity of the given local TT entry. If it is, then the provided
- * flags pointer is updated.
+ * flags poपूर्णांकer is updated.
  *
- * Return: true if the entry is a valid, false otherwise.
+ * Return: true अगर the entry is a valid, false otherwise.
  */
-static bool batadv_tt_local_valid(const void *entry_ptr,
-				  const void *data_ptr,
+अटल bool batadv_tt_local_valid(स्थिर व्योम *entry_ptr,
+				  स्थिर व्योम *data_ptr,
 				  u8 *flags)
-{
-	const struct batadv_tt_common_entry *tt_common_entry = entry_ptr;
+अणु
+	स्थिर काष्ठा batadv_tt_common_entry *tt_common_entry = entry_ptr;
 
-	if (tt_common_entry->flags & BATADV_TT_CLIENT_NEW)
-		return false;
+	अगर (tt_common_entry->flags & BATADV_TT_CLIENT_NEW)
+		वापस false;
 
-	if (flags)
+	अगर (flags)
 		*flags = tt_common_entry->flags;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * batadv_tt_global_valid() - verify global tt entry and get flags
+ * batadv_tt_global_valid() - verअगरy global tt entry and get flags
  * @entry_ptr: to be checked global tt entry
- * @data_ptr: an orig_node object (may be NULL)
- * @flags: a pointer to store TT flags for this client to
+ * @data_ptr: an orig_node object (may be शून्य)
+ * @flags: a poपूर्णांकer to store TT flags क्रम this client to
  *
  * Checks the validity of the given global TT entry. If it is, then the provided
- * flags pointer is updated either with the common (summed) TT flags if data_ptr
- * is NULL or the specific, per originator TT flags otherwise.
+ * flags poपूर्णांकer is updated either with the common (summed) TT flags अगर data_ptr
+ * is शून्य or the specअगरic, per originator TT flags otherwise.
  *
- * Return: true if the entry is a valid, false otherwise.
+ * Return: true अगर the entry is a valid, false otherwise.
  */
-static bool batadv_tt_global_valid(const void *entry_ptr,
-				   const void *data_ptr,
+अटल bool batadv_tt_global_valid(स्थिर व्योम *entry_ptr,
+				   स्थिर व्योम *data_ptr,
 				   u8 *flags)
-{
-	const struct batadv_tt_common_entry *tt_common_entry = entry_ptr;
-	const struct batadv_tt_global_entry *tt_global_entry;
-	const struct batadv_orig_node *orig_node = data_ptr;
+अणु
+	स्थिर काष्ठा batadv_tt_common_entry *tt_common_entry = entry_ptr;
+	स्थिर काष्ठा batadv_tt_global_entry *tt_global_entry;
+	स्थिर काष्ठा batadv_orig_node *orig_node = data_ptr;
 
-	if (tt_common_entry->flags & BATADV_TT_CLIENT_ROAM ||
+	अगर (tt_common_entry->flags & BATADV_TT_CLIENT_ROAM ||
 	    tt_common_entry->flags & BATADV_TT_CLIENT_TEMP)
-		return false;
+		वापस false;
 
 	tt_global_entry = container_of(tt_common_entry,
-				       struct batadv_tt_global_entry,
+				       काष्ठा batadv_tt_global_entry,
 				       common);
 
-	return batadv_tt_global_entry_has_orig(tt_global_entry, orig_node,
+	वापस batadv_tt_global_entry_has_orig(tt_global_entry, orig_node,
 					       flags);
-}
+पूर्ण
 
 /**
  * batadv_tt_tvlv_generate() - fill the tvlv buff with the tt entries from the
- *  specified tt hash
- * @bat_priv: the bat priv with all the soft interface information
+ *  specअगरied tt hash
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @hash: hash table containing the tt entries
  * @tt_len: expected tvlv tt data buffer length in number of bytes
- * @tvlv_buff: pointer to the buffer to fill with the TT data
- * @valid_cb: function to filter tt change entries and to return TT flags
+ * @tvlv_buff: poपूर्णांकer to the buffer to fill with the TT data
+ * @valid_cb: function to filter tt change entries and to वापस TT flags
  * @cb_data: data passed to the filter function as argument
  *
- * Fills the tvlv buff with the tt entries from the specified hash. If valid_cb
+ * Fills the tvlv buff with the tt entries from the specअगरied hash. If valid_cb
  * is not provided then this becomes a no-op.
  */
-static void batadv_tt_tvlv_generate(struct batadv_priv *bat_priv,
-				    struct batadv_hashtable *hash,
-				    void *tvlv_buff, u16 tt_len,
-				    bool (*valid_cb)(const void *,
-						     const void *,
+अटल व्योम batadv_tt_tvlv_generate(काष्ठा batadv_priv *bat_priv,
+				    काष्ठा batadv_hashtable *hash,
+				    व्योम *tvlv_buff, u16 tt_len,
+				    bool (*valid_cb)(स्थिर व्योम *,
+						     स्थिर व्योम *,
 						     u8 *flags),
-				    void *cb_data)
-{
-	struct batadv_tt_common_entry *tt_common_entry;
-	struct batadv_tvlv_tt_change *tt_change;
-	struct hlist_head *head;
+				    व्योम *cb_data)
+अणु
+	काष्ठा batadv_tt_common_entry *tt_common_entry;
+	काष्ठा batadv_tvlv_tt_change *tt_change;
+	काष्ठा hlist_head *head;
 	u16 tt_tot, tt_num_entries = 0;
 	u8 flags;
 	bool ret;
 	u32 i;
 
 	tt_tot = batadv_tt_entries(tt_len);
-	tt_change = (struct batadv_tvlv_tt_change *)tvlv_buff;
+	tt_change = (काष्ठा batadv_tvlv_tt_change *)tvlv_buff;
 
-	if (!valid_cb)
-		return;
+	अगर (!valid_cb)
+		वापस;
 
-	rcu_read_lock();
-	for (i = 0; i < hash->size; i++) {
+	rcu_पढ़ो_lock();
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 
-		hlist_for_each_entry_rcu(tt_common_entry,
-					 head, hash_entry) {
-			if (tt_tot == tt_num_entries)
-				break;
+		hlist_क्रम_each_entry_rcu(tt_common_entry,
+					 head, hash_entry) अणु
+			अगर (tt_tot == tt_num_entries)
+				अवरोध;
 
 			ret = valid_cb(tt_common_entry, cb_data, &flags);
-			if (!ret)
-				continue;
+			अगर (!ret)
+				जारी;
 
 			ether_addr_copy(tt_change->addr, tt_common_entry->addr);
 			tt_change->flags = flags;
 			tt_change->vid = htons(tt_common_entry->vid);
-			memset(tt_change->reserved, 0,
-			       sizeof(tt_change->reserved));
+			स_रखो(tt_change->reserved, 0,
+			       माप(tt_change->reserved));
 
 			tt_num_entries++;
 			tt_change++;
-		}
-	}
-	rcu_read_unlock();
-}
+		पूर्ण
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
- * batadv_tt_global_check_crc() - check if all the CRCs are correct
- * @orig_node: originator for which the CRCs have to be checked
- * @tt_vlan: pointer to the first tvlv VLAN entry
+ * batadv_tt_global_check_crc() - check अगर all the CRCs are correct
+ * @orig_node: originator क्रम which the CRCs have to be checked
+ * @tt_vlan: poपूर्णांकer to the first tvlv VLAN entry
  * @num_vlan: number of tvlv VLAN entries
  *
- * Return: true if all the received CRCs match the locally stored ones, false
+ * Return: true अगर all the received CRCs match the locally stored ones, false
  * otherwise
  */
-static bool batadv_tt_global_check_crc(struct batadv_orig_node *orig_node,
-				       struct batadv_tvlv_tt_vlan_data *tt_vlan,
+अटल bool batadv_tt_global_check_crc(काष्ठा batadv_orig_node *orig_node,
+				       काष्ठा batadv_tvlv_tt_vlan_data *tt_vlan,
 				       u16 num_vlan)
-{
-	struct batadv_tvlv_tt_vlan_data *tt_vlan_tmp;
-	struct batadv_orig_node_vlan *vlan;
-	int i, orig_num_vlan;
+अणु
+	काष्ठा batadv_tvlv_tt_vlan_data *tt_vlan_पंचांगp;
+	काष्ठा batadv_orig_node_vlan *vlan;
+	पूर्णांक i, orig_num_vlan;
 	u32 crc;
 
-	/* check if each received CRC matches the locally stored one */
-	for (i = 0; i < num_vlan; i++) {
-		tt_vlan_tmp = tt_vlan + i;
+	/* check अगर each received CRC matches the locally stored one */
+	क्रम (i = 0; i < num_vlan; i++) अणु
+		tt_vlan_पंचांगp = tt_vlan + i;
 
-		/* if orig_node is a backbone node for this VLAN, don't check
+		/* अगर orig_node is a backbone node क्रम this VLAN, करोn't check
 		 * the CRC as we ignore all the global entries over it
 		 */
-		if (batadv_bla_is_backbone_gw_orig(orig_node->bat_priv,
+		अगर (batadv_bla_is_backbone_gw_orig(orig_node->bat_priv,
 						   orig_node->orig,
-						   ntohs(tt_vlan_tmp->vid)))
-			continue;
+						   ntohs(tt_vlan_पंचांगp->vid)))
+			जारी;
 
 		vlan = batadv_orig_node_vlan_get(orig_node,
-						 ntohs(tt_vlan_tmp->vid));
-		if (!vlan)
-			return false;
+						 ntohs(tt_vlan_पंचांगp->vid));
+		अगर (!vlan)
+			वापस false;
 
 		crc = vlan->tt.crc;
 		batadv_orig_node_vlan_put(vlan);
 
-		if (crc != ntohl(tt_vlan_tmp->crc))
-			return false;
-	}
+		अगर (crc != ntohl(tt_vlan_पंचांगp->crc))
+			वापस false;
+	पूर्ण
 
-	/* check if any excess VLANs exist locally for the originator
+	/* check अगर any excess VLANs exist locally क्रम the originator
 	 * which are not mentioned in the TVLV from the originator.
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	orig_num_vlan = 0;
-	hlist_for_each_entry_rcu(vlan, &orig_node->vlan_list, list)
+	hlist_क्रम_each_entry_rcu(vlan, &orig_node->vlan_list, list)
 		orig_num_vlan++;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	if (orig_num_vlan > num_vlan)
-		return false;
+	अगर (orig_num_vlan > num_vlan)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
  * batadv_tt_local_update_crc() - update all the local CRCs
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  */
-static void batadv_tt_local_update_crc(struct batadv_priv *bat_priv)
-{
-	struct batadv_softif_vlan *vlan;
+अटल व्योम batadv_tt_local_update_crc(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_softअगर_vlan *vlan;
 
-	/* recompute the global CRC for each VLAN */
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(vlan, &bat_priv->softif_vlan_list, list) {
+	/* recompute the global CRC क्रम each VLAN */
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(vlan, &bat_priv->softअगर_vlan_list, list) अणु
 		vlan->tt.crc = batadv_tt_local_crc(bat_priv, vlan->vid);
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
- * batadv_tt_global_update_crc() - update all the global CRCs for this orig_node
- * @bat_priv: the bat priv with all the soft interface information
- * @orig_node: the orig_node for which the CRCs have to be updated
+ * batadv_tt_global_update_crc() - update all the global CRCs क्रम this orig_node
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @orig_node: the orig_node क्रम which the CRCs have to be updated
  */
-static void batadv_tt_global_update_crc(struct batadv_priv *bat_priv,
-					struct batadv_orig_node *orig_node)
-{
-	struct batadv_orig_node_vlan *vlan;
+अटल व्योम batadv_tt_global_update_crc(काष्ठा batadv_priv *bat_priv,
+					काष्ठा batadv_orig_node *orig_node)
+अणु
+	काष्ठा batadv_orig_node_vlan *vlan;
 	u32 crc;
 
-	/* recompute the global CRC for each VLAN */
-	rcu_read_lock();
-	hlist_for_each_entry_rcu(vlan, &orig_node->vlan_list, list) {
-		/* if orig_node is a backbone node for this VLAN, don't compute
+	/* recompute the global CRC क्रम each VLAN */
+	rcu_पढ़ो_lock();
+	hlist_क्रम_each_entry_rcu(vlan, &orig_node->vlan_list, list) अणु
+		/* अगर orig_node is a backbone node क्रम this VLAN, करोn't compute
 		 * the CRC as we ignore all the global entries over it
 		 */
-		if (batadv_bla_is_backbone_gw_orig(bat_priv, orig_node->orig,
+		अगर (batadv_bla_is_backbone_gw_orig(bat_priv, orig_node->orig,
 						   vlan->vid))
-			continue;
+			जारी;
 
 		crc = batadv_tt_global_crc(bat_priv, orig_node, vlan->vid);
 		vlan->tt.crc = crc;
-	}
-	rcu_read_unlock();
-}
+	पूर्ण
+	rcu_पढ़ो_unlock();
+पूर्ण
 
 /**
  * batadv_send_tt_request() - send a TT Request message to a given node
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @dst_orig_node: the destination of the message
- * @ttvn: the version number that the source of the message is looking for
- * @tt_vlan: pointer to the first tvlv VLAN object to request
+ * @ttvn: the version number that the source of the message is looking क्रम
+ * @tt_vlan: poपूर्णांकer to the first tvlv VLAN object to request
  * @num_vlan: number of tvlv VLAN entries
- * @full_table: ask for the entire translation table if true, while only for the
- *  last TT diff otherwise
+ * @full_table: ask क्रम the entire translation table अगर true, जबतक only क्रम the
+ *  last TT dअगरf otherwise
  *
- * Return: true if the TT Request was sent, false otherwise
+ * Return: true अगर the TT Request was sent, false otherwise
  */
-static bool batadv_send_tt_request(struct batadv_priv *bat_priv,
-				   struct batadv_orig_node *dst_orig_node,
+अटल bool batadv_send_tt_request(काष्ठा batadv_priv *bat_priv,
+				   काष्ठा batadv_orig_node *dst_orig_node,
 				   u8 ttvn,
-				   struct batadv_tvlv_tt_vlan_data *tt_vlan,
+				   काष्ठा batadv_tvlv_tt_vlan_data *tt_vlan,
 				   u16 num_vlan, bool full_table)
-{
-	struct batadv_tvlv_tt_data *tvlv_tt_data = NULL;
-	struct batadv_tt_req_node *tt_req_node = NULL;
-	struct batadv_tvlv_tt_vlan_data *tt_vlan_req;
-	struct batadv_hard_iface *primary_if;
+अणु
+	काष्ठा batadv_tvlv_tt_data *tvlv_tt_data = शून्य;
+	काष्ठा batadv_tt_req_node *tt_req_node = शून्य;
+	काष्ठा batadv_tvlv_tt_vlan_data *tt_vlan_req;
+	काष्ठा batadv_hard_अगरace *primary_अगर;
 	bool ret = false;
-	int i, size;
+	पूर्णांक i, size;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		goto out;
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर)
+		जाओ out;
 
-	/* The new tt_req will be issued only if I'm not waiting for a
+	/* The new tt_req will be issued only अगर I'm not रुकोing क्रम a
 	 * reply from the same orig_node yet
 	 */
 	tt_req_node = batadv_tt_req_node_new(bat_priv, dst_orig_node);
-	if (!tt_req_node)
-		goto out;
+	अगर (!tt_req_node)
+		जाओ out;
 
-	size = sizeof(*tvlv_tt_data) + sizeof(*tt_vlan_req) * num_vlan;
+	size = माप(*tvlv_tt_data) + माप(*tt_vlan_req) * num_vlan;
 	tvlv_tt_data = kzalloc(size, GFP_ATOMIC);
-	if (!tvlv_tt_data)
-		goto out;
+	अगर (!tvlv_tt_data)
+		जाओ out;
 
 	tvlv_tt_data->flags = BATADV_TT_REQUEST;
 	tvlv_tt_data->ttvn = ttvn;
 	tvlv_tt_data->num_vlan = htons(num_vlan);
 
-	/* send all the CRCs within the request. This is needed by intermediate
-	 * nodes to ensure they have the correct table before replying
+	/* send all the CRCs within the request. This is needed by पूर्णांकermediate
+	 * nodes to ensure they have the correct table beक्रमe replying
 	 */
-	tt_vlan_req = (struct batadv_tvlv_tt_vlan_data *)(tvlv_tt_data + 1);
-	for (i = 0; i < num_vlan; i++) {
+	tt_vlan_req = (काष्ठा batadv_tvlv_tt_vlan_data *)(tvlv_tt_data + 1);
+	क्रम (i = 0; i < num_vlan; i++) अणु
 		tt_vlan_req->vid = tt_vlan->vid;
 		tt_vlan_req->crc = tt_vlan->crc;
 
 		tt_vlan_req++;
 		tt_vlan++;
-	}
+	पूर्ण
 
-	if (full_table)
+	अगर (full_table)
 		tvlv_tt_data->flags |= BATADV_TT_FULL_TABLE;
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv, "Sending TT_REQUEST to %pM [%c]\n",
 		   dst_orig_node->orig, full_table ? 'F' : '.');
 
 	batadv_inc_counter(bat_priv, BATADV_CNT_TT_REQUEST_TX);
-	batadv_tvlv_unicast_send(bat_priv, primary_if->net_dev->dev_addr,
+	batadv_tvlv_unicast_send(bat_priv, primary_अगर->net_dev->dev_addr,
 				 dst_orig_node->orig, BATADV_TVLV_TT, 1,
 				 tvlv_tt_data, size);
 	ret = true;
 
 out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
 
-	if (ret && tt_req_node) {
+	अगर (ret && tt_req_node) अणु
 		spin_lock_bh(&bat_priv->tt.req_list_lock);
-		if (!hlist_unhashed(&tt_req_node->list)) {
+		अगर (!hlist_unhashed(&tt_req_node->list)) अणु
 			hlist_del_init(&tt_req_node->list);
 			batadv_tt_req_node_put(tt_req_node);
-		}
+		पूर्ण
 		spin_unlock_bh(&bat_priv->tt.req_list_lock);
-	}
+	पूर्ण
 
-	if (tt_req_node)
+	अगर (tt_req_node)
 		batadv_tt_req_node_put(tt_req_node);
 
-	kfree(tvlv_tt_data);
-	return ret;
-}
+	kमुक्त(tvlv_tt_data);
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_send_other_tt_response() - send reply to tt request concerning another
  *  node's translation table
- * @bat_priv: the bat priv with all the soft interface information
- * @tt_data: tt data containing the tt request information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @tt_data: tt data containing the tt request inक्रमmation
  * @req_src: mac address of tt request sender
  * @req_dst: mac address of tt request recipient
  *
- * Return: true if tt request reply was sent, false otherwise.
+ * Return: true अगर tt request reply was sent, false otherwise.
  */
-static bool batadv_send_other_tt_response(struct batadv_priv *bat_priv,
-					  struct batadv_tvlv_tt_data *tt_data,
+अटल bool batadv_send_other_tt_response(काष्ठा batadv_priv *bat_priv,
+					  काष्ठा batadv_tvlv_tt_data *tt_data,
 					  u8 *req_src, u8 *req_dst)
-{
-	struct batadv_orig_node *req_dst_orig_node;
-	struct batadv_orig_node *res_dst_orig_node = NULL;
-	struct batadv_tvlv_tt_change *tt_change;
-	struct batadv_tvlv_tt_data *tvlv_tt_data = NULL;
-	struct batadv_tvlv_tt_vlan_data *tt_vlan;
+अणु
+	काष्ठा batadv_orig_node *req_dst_orig_node;
+	काष्ठा batadv_orig_node *res_dst_orig_node = शून्य;
+	काष्ठा batadv_tvlv_tt_change *tt_change;
+	काष्ठा batadv_tvlv_tt_data *tvlv_tt_data = शून्य;
+	काष्ठा batadv_tvlv_tt_vlan_data *tt_vlan;
 	bool ret = false, full_table;
 	u8 orig_ttvn, req_ttvn;
 	u16 tvlv_len;
@@ -3037,34 +3038,34 @@ static bool batadv_send_other_tt_response(struct batadv_priv *bat_priv,
 
 	/* Let's get the orig node of the REAL destination */
 	req_dst_orig_node = batadv_orig_hash_find(bat_priv, req_dst);
-	if (!req_dst_orig_node)
-		goto out;
+	अगर (!req_dst_orig_node)
+		जाओ out;
 
 	res_dst_orig_node = batadv_orig_hash_find(bat_priv, req_src);
-	if (!res_dst_orig_node)
-		goto out;
+	अगर (!res_dst_orig_node)
+		जाओ out;
 
-	orig_ttvn = (u8)atomic_read(&req_dst_orig_node->last_ttvn);
+	orig_ttvn = (u8)atomic_पढ़ो(&req_dst_orig_node->last_ttvn);
 	req_ttvn = tt_data->ttvn;
 
-	tt_vlan = (struct batadv_tvlv_tt_vlan_data *)(tt_data + 1);
-	/* this node doesn't have the requested data */
-	if (orig_ttvn != req_ttvn ||
+	tt_vlan = (काष्ठा batadv_tvlv_tt_vlan_data *)(tt_data + 1);
+	/* this node करोesn't have the requested data */
+	अगर (orig_ttvn != req_ttvn ||
 	    !batadv_tt_global_check_crc(req_dst_orig_node, tt_vlan,
 					ntohs(tt_data->num_vlan)))
-		goto out;
+		जाओ out;
 
 	/* If the full table has been explicitly requested */
-	if (tt_data->flags & BATADV_TT_FULL_TABLE ||
+	अगर (tt_data->flags & BATADV_TT_FULL_TABLE ||
 	    !req_dst_orig_node->tt_buff)
 		full_table = true;
-	else
+	अन्यथा
 		full_table = false;
 
 	/* TT fragmentation hasn't been implemented yet, so send as many
 	 * TT entries fit a single packet as possible only
 	 */
-	if (!full_table) {
+	अगर (!full_table) अणु
 		spin_lock_bh(&req_dst_orig_node->tt_buff_lock);
 		tt_len = req_dst_orig_node->tt_buff_len;
 
@@ -3072,14 +3073,14 @@ static bool batadv_send_other_tt_response(struct batadv_priv *bat_priv,
 							      &tvlv_tt_data,
 							      &tt_change,
 							      &tt_len);
-		if (!tt_len)
-			goto unlock;
+		अगर (!tt_len)
+			जाओ unlock;
 
 		/* Copy the last orig_node's OGM buffer */
-		memcpy(tt_change, req_dst_orig_node->tt_buff,
+		स_नकल(tt_change, req_dst_orig_node->tt_buff,
 		       req_dst_orig_node->tt_buff_len);
 		spin_unlock_bh(&req_dst_orig_node->tt_buff_lock);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* allocate the tvlv, put the tt_data and all the tt_vlan_data
 		 * in the initial part
 		 */
@@ -3088,29 +3089,29 @@ static bool batadv_send_other_tt_response(struct batadv_priv *bat_priv,
 							      &tvlv_tt_data,
 							      &tt_change,
 							      &tt_len);
-		if (!tt_len)
-			goto out;
+		अगर (!tt_len)
+			जाओ out;
 
 		/* fill the rest of the tvlv with the real TT entries */
 		batadv_tt_tvlv_generate(bat_priv, bat_priv->tt.global_hash,
 					tt_change, tt_len,
 					batadv_tt_global_valid,
 					req_dst_orig_node);
-	}
+	पूर्ण
 
-	/* Don't send the response, if larger than fragmented packet. */
-	tt_len = sizeof(struct batadv_unicast_tvlv_packet) + tvlv_len;
-	if (tt_len > atomic_read(&bat_priv->packet_size_max)) {
-		net_ratelimited_function(batadv_info, bat_priv->soft_iface,
+	/* Don't send the response, अगर larger than fragmented packet. */
+	tt_len = माप(काष्ठा batadv_unicast_tvlv_packet) + tvlv_len;
+	अगर (tt_len > atomic_पढ़ो(&bat_priv->packet_size_max)) अणु
+		net_ratelimited_function(batadv_info, bat_priv->soft_अगरace,
 					 "Ignoring TT_REQUEST from %pM; Response size exceeds max packet size.\n",
 					 res_dst_orig_node->orig);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	tvlv_tt_data->flags = BATADV_TT_RESPONSE;
 	tvlv_tt_data->ttvn = req_ttvn;
 
-	if (full_table)
+	अगर (full_table)
 		tvlv_tt_data->flags |= BATADV_TT_FULL_TABLE;
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
@@ -3125,37 +3126,37 @@ static bool batadv_send_other_tt_response(struct batadv_priv *bat_priv,
 				 tvlv_len);
 
 	ret = true;
-	goto out;
+	जाओ out;
 
 unlock:
 	spin_unlock_bh(&req_dst_orig_node->tt_buff_lock);
 
 out:
-	if (res_dst_orig_node)
+	अगर (res_dst_orig_node)
 		batadv_orig_node_put(res_dst_orig_node);
-	if (req_dst_orig_node)
+	अगर (req_dst_orig_node)
 		batadv_orig_node_put(req_dst_orig_node);
-	kfree(tvlv_tt_data);
-	return ret;
-}
+	kमुक्त(tvlv_tt_data);
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_send_my_tt_response() - send reply to tt request concerning this
  *  node's translation table
- * @bat_priv: the bat priv with all the soft interface information
- * @tt_data: tt data containing the tt request information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @tt_data: tt data containing the tt request inक्रमmation
  * @req_src: mac address of tt request sender
  *
- * Return: true if tt request reply was sent, false otherwise.
+ * Return: true अगर tt request reply was sent, false otherwise.
  */
-static bool batadv_send_my_tt_response(struct batadv_priv *bat_priv,
-				       struct batadv_tvlv_tt_data *tt_data,
+अटल bool batadv_send_my_tt_response(काष्ठा batadv_priv *bat_priv,
+				       काष्ठा batadv_tvlv_tt_data *tt_data,
 				       u8 *req_src)
-{
-	struct batadv_tvlv_tt_data *tvlv_tt_data = NULL;
-	struct batadv_hard_iface *primary_if = NULL;
-	struct batadv_tvlv_tt_change *tt_change;
-	struct batadv_orig_node *orig_node;
+अणु
+	काष्ठा batadv_tvlv_tt_data *tvlv_tt_data = शून्य;
+	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
+	काष्ठा batadv_tvlv_tt_change *tt_change;
+	काष्ठा batadv_orig_node *orig_node;
 	u8 my_ttvn, req_ttvn;
 	u16 tvlv_len;
 	bool full_table;
@@ -3168,30 +3169,30 @@ static bool batadv_send_my_tt_response(struct batadv_priv *bat_priv,
 
 	spin_lock_bh(&bat_priv->tt.commit_lock);
 
-	my_ttvn = (u8)atomic_read(&bat_priv->tt.vn);
+	my_ttvn = (u8)atomic_पढ़ो(&bat_priv->tt.vn);
 	req_ttvn = tt_data->ttvn;
 
 	orig_node = batadv_orig_hash_find(bat_priv, req_src);
-	if (!orig_node)
-		goto out;
+	अगर (!orig_node)
+		जाओ out;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		goto out;
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर)
+		जाओ out;
 
 	/* If the full table has been explicitly requested or the gap
 	 * is too big send the whole local translation table
 	 */
-	if (tt_data->flags & BATADV_TT_FULL_TABLE || my_ttvn != req_ttvn ||
+	अगर (tt_data->flags & BATADV_TT_FULL_TABLE || my_ttvn != req_ttvn ||
 	    !bat_priv->tt.last_changeset)
 		full_table = true;
-	else
+	अन्यथा
 		full_table = false;
 
 	/* TT fragmentation hasn't been implemented yet, so send as many
 	 * TT entries fit a single packet as possible only
 	 */
-	if (!full_table) {
+	अगर (!full_table) अणु
 		spin_lock_bh(&bat_priv->tt.last_changeset_lock);
 
 		tt_len = bat_priv->tt.last_changeset_len;
@@ -3199,15 +3200,15 @@ static bool batadv_send_my_tt_response(struct batadv_priv *bat_priv,
 							     &tvlv_tt_data,
 							     &tt_change,
 							     &tt_len);
-		if (!tt_len || !tvlv_len)
-			goto unlock;
+		अगर (!tt_len || !tvlv_len)
+			जाओ unlock;
 
 		/* Copy the last orig_node's OGM buffer */
-		memcpy(tt_change, bat_priv->tt.last_changeset,
+		स_नकल(tt_change, bat_priv->tt.last_changeset,
 		       bat_priv->tt.last_changeset_len);
 		spin_unlock_bh(&bat_priv->tt.last_changeset_lock);
-	} else {
-		req_ttvn = (u8)atomic_read(&bat_priv->tt.vn);
+	पूर्ण अन्यथा अणु
+		req_ttvn = (u8)atomic_पढ़ो(&bat_priv->tt.vn);
 
 		/* allocate the tvlv, put the tt_data and all the tt_vlan_data
 		 * in the initial part
@@ -3217,19 +3218,19 @@ static bool batadv_send_my_tt_response(struct batadv_priv *bat_priv,
 							     &tvlv_tt_data,
 							     &tt_change,
 							     &tt_len);
-		if (!tt_len || !tvlv_len)
-			goto out;
+		अगर (!tt_len || !tvlv_len)
+			जाओ out;
 
 		/* fill the rest of the tvlv with the real TT entries */
 		batadv_tt_tvlv_generate(bat_priv, bat_priv->tt.local_hash,
 					tt_change, tt_len,
-					batadv_tt_local_valid, NULL);
-	}
+					batadv_tt_local_valid, शून्य);
+	पूर्ण
 
 	tvlv_tt_data->flags = BATADV_TT_RESPONSE;
 	tvlv_tt_data->ttvn = req_ttvn;
 
-	if (full_table)
+	अगर (full_table)
 		tvlv_tt_data->flags |= BATADV_TT_FULL_TABLE;
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
@@ -3238,87 +3239,87 @@ static bool batadv_send_my_tt_response(struct batadv_priv *bat_priv,
 
 	batadv_inc_counter(bat_priv, BATADV_CNT_TT_RESPONSE_TX);
 
-	batadv_tvlv_unicast_send(bat_priv, primary_if->net_dev->dev_addr,
+	batadv_tvlv_unicast_send(bat_priv, primary_अगर->net_dev->dev_addr,
 				 req_src, BATADV_TVLV_TT, 1, tvlv_tt_data,
 				 tvlv_len);
 
-	goto out;
+	जाओ out;
 
 unlock:
 	spin_unlock_bh(&bat_priv->tt.last_changeset_lock);
 out:
 	spin_unlock_bh(&bat_priv->tt.commit_lock);
-	if (orig_node)
+	अगर (orig_node)
 		batadv_orig_node_put(orig_node);
-	if (primary_if)
-		batadv_hardif_put(primary_if);
-	kfree(tvlv_tt_data);
-	/* The packet was for this host, so it doesn't need to be re-routed */
-	return true;
-}
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
+	kमुक्त(tvlv_tt_data);
+	/* The packet was क्रम this host, so it करोesn't need to be re-routed */
+	वापस true;
+पूर्ण
 
 /**
  * batadv_send_tt_response() - send reply to tt request
- * @bat_priv: the bat priv with all the soft interface information
- * @tt_data: tt data containing the tt request information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @tt_data: tt data containing the tt request inक्रमmation
  * @req_src: mac address of tt request sender
  * @req_dst: mac address of tt request recipient
  *
- * Return: true if tt request reply was sent, false otherwise.
+ * Return: true अगर tt request reply was sent, false otherwise.
  */
-static bool batadv_send_tt_response(struct batadv_priv *bat_priv,
-				    struct batadv_tvlv_tt_data *tt_data,
+अटल bool batadv_send_tt_response(काष्ठा batadv_priv *bat_priv,
+				    काष्ठा batadv_tvlv_tt_data *tt_data,
 				    u8 *req_src, u8 *req_dst)
-{
-	if (batadv_is_my_mac(bat_priv, req_dst))
-		return batadv_send_my_tt_response(bat_priv, tt_data, req_src);
-	return batadv_send_other_tt_response(bat_priv, tt_data, req_src,
+अणु
+	अगर (batadv_is_my_mac(bat_priv, req_dst))
+		वापस batadv_send_my_tt_response(bat_priv, tt_data, req_src);
+	वापस batadv_send_other_tt_response(bat_priv, tt_data, req_src,
 					     req_dst);
-}
+पूर्ण
 
-static void _batadv_tt_update_changes(struct batadv_priv *bat_priv,
-				      struct batadv_orig_node *orig_node,
-				      struct batadv_tvlv_tt_change *tt_change,
+अटल व्योम _batadv_tt_update_changes(काष्ठा batadv_priv *bat_priv,
+				      काष्ठा batadv_orig_node *orig_node,
+				      काष्ठा batadv_tvlv_tt_change *tt_change,
 				      u16 tt_num_changes, u8 ttvn)
-{
-	int i;
-	int roams;
+अणु
+	पूर्णांक i;
+	पूर्णांक roams;
 
-	for (i = 0; i < tt_num_changes; i++) {
-		if ((tt_change + i)->flags & BATADV_TT_CLIENT_DEL) {
+	क्रम (i = 0; i < tt_num_changes; i++) अणु
+		अगर ((tt_change + i)->flags & BATADV_TT_CLIENT_DEL) अणु
 			roams = (tt_change + i)->flags & BATADV_TT_CLIENT_ROAM;
 			batadv_tt_global_del(bat_priv, orig_node,
 					     (tt_change + i)->addr,
 					     ntohs((tt_change + i)->vid),
 					     "tt removed by changes",
 					     roams);
-		} else {
-			if (!batadv_tt_global_add(bat_priv, orig_node,
+		पूर्ण अन्यथा अणु
+			अगर (!batadv_tt_global_add(bat_priv, orig_node,
 						  (tt_change + i)->addr,
 						  ntohs((tt_change + i)->vid),
 						  (tt_change + i)->flags, ttvn))
-				/* In case of problem while storing a
+				/* In हाल of problem जबतक storing a
 				 * global_entry, we stop the updating
 				 * procedure without committing the
-				 * ttvn change. This will avoid to send
+				 * ttvn change. This will aव्योम to send
 				 * corrupted data on tt_request
 				 */
-				return;
-		}
-	}
+				वापस;
+		पूर्ण
+	पूर्ण
 	set_bit(BATADV_ORIG_CAPA_HAS_TT, &orig_node->capa_initialized);
-}
+पूर्ण
 
-static void batadv_tt_fill_gtable(struct batadv_priv *bat_priv,
-				  struct batadv_tvlv_tt_change *tt_change,
+अटल व्योम batadv_tt_fill_gtable(काष्ठा batadv_priv *bat_priv,
+				  काष्ठा batadv_tvlv_tt_change *tt_change,
 				  u8 ttvn, u8 *resp_src,
 				  u16 num_entries)
-{
-	struct batadv_orig_node *orig_node;
+अणु
+	काष्ठा batadv_orig_node *orig_node;
 
 	orig_node = batadv_orig_hash_find(bat_priv, resp_src);
-	if (!orig_node)
-		goto out;
+	अगर (!orig_node)
+		जाओ out;
 
 	/* Purge the old table first.. */
 	batadv_tt_global_del_orig(bat_priv, orig_node, -1,
@@ -3328,76 +3329,76 @@ static void batadv_tt_fill_gtable(struct batadv_priv *bat_priv,
 				  ttvn);
 
 	spin_lock_bh(&orig_node->tt_buff_lock);
-	kfree(orig_node->tt_buff);
+	kमुक्त(orig_node->tt_buff);
 	orig_node->tt_buff_len = 0;
-	orig_node->tt_buff = NULL;
+	orig_node->tt_buff = शून्य;
 	spin_unlock_bh(&orig_node->tt_buff_lock);
 
 	atomic_set(&orig_node->last_ttvn, ttvn);
 
 out:
-	if (orig_node)
+	अगर (orig_node)
 		batadv_orig_node_put(orig_node);
-}
+पूर्ण
 
-static void batadv_tt_update_changes(struct batadv_priv *bat_priv,
-				     struct batadv_orig_node *orig_node,
+अटल व्योम batadv_tt_update_changes(काष्ठा batadv_priv *bat_priv,
+				     काष्ठा batadv_orig_node *orig_node,
 				     u16 tt_num_changes, u8 ttvn,
-				     struct batadv_tvlv_tt_change *tt_change)
-{
+				     काष्ठा batadv_tvlv_tt_change *tt_change)
+अणु
 	_batadv_tt_update_changes(bat_priv, orig_node, tt_change,
 				  tt_num_changes, ttvn);
 
 	batadv_tt_save_orig_buffer(bat_priv, orig_node, tt_change,
 				   batadv_tt_len(tt_num_changes));
 	atomic_set(&orig_node->last_ttvn, ttvn);
-}
+पूर्ण
 
 /**
- * batadv_is_my_client() - check if a client is served by the local node
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_is_my_client() - check अगर a client is served by the local node
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @addr: the mac address of the client to check
- * @vid: VLAN identifier
+ * @vid: VLAN identअगरier
  *
- * Return: true if the client is served by this node, false otherwise.
+ * Return: true अगर the client is served by this node, false otherwise.
  */
-bool batadv_is_my_client(struct batadv_priv *bat_priv, const u8 *addr,
-			 unsigned short vid)
-{
-	struct batadv_tt_local_entry *tt_local_entry;
+bool batadv_is_my_client(काष्ठा batadv_priv *bat_priv, स्थिर u8 *addr,
+			 अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_tt_local_entry *tt_local_entry;
 	bool ret = false;
 
 	tt_local_entry = batadv_tt_local_hash_find(bat_priv, addr, vid);
-	if (!tt_local_entry)
-		goto out;
-	/* Check if the client has been logically deleted (but is kept for
+	अगर (!tt_local_entry)
+		जाओ out;
+	/* Check अगर the client has been logically deleted (but is kept क्रम
 	 * consistency purpose)
 	 */
-	if ((tt_local_entry->common.flags & BATADV_TT_CLIENT_PENDING) ||
+	अगर ((tt_local_entry->common.flags & BATADV_TT_CLIENT_PENDING) ||
 	    (tt_local_entry->common.flags & BATADV_TT_CLIENT_ROAM))
-		goto out;
+		जाओ out;
 	ret = true;
 out:
-	if (tt_local_entry)
+	अगर (tt_local_entry)
 		batadv_tt_local_entry_put(tt_local_entry);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_handle_tt_response() - process incoming tt reply
- * @bat_priv: the bat priv with all the soft interface information
- * @tt_data: tt data containing the tt request information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @tt_data: tt data containing the tt request inक्रमmation
  * @resp_src: mac address of tt reply sender
  * @num_entries: number of tt change entries appended to the tt data
  */
-static void batadv_handle_tt_response(struct batadv_priv *bat_priv,
-				      struct batadv_tvlv_tt_data *tt_data,
+अटल व्योम batadv_handle_tt_response(काष्ठा batadv_priv *bat_priv,
+				      काष्ठा batadv_tvlv_tt_data *tt_data,
 				      u8 *resp_src, u16 num_entries)
-{
-	struct batadv_tt_req_node *node;
-	struct hlist_node *safe;
-	struct batadv_orig_node *orig_node = NULL;
-	struct batadv_tvlv_tt_change *tt_change;
+अणु
+	काष्ठा batadv_tt_req_node *node;
+	काष्ठा hlist_node *safe;
+	काष्ठा batadv_orig_node *orig_node = शून्य;
+	काष्ठा batadv_tvlv_tt_change *tt_change;
 	u8 *tvlv_ptr = (u8 *)tt_data;
 	u16 change_offset;
 
@@ -3407,186 +3408,186 @@ static void batadv_handle_tt_response(struct batadv_priv *bat_priv,
 		   ((tt_data->flags & BATADV_TT_FULL_TABLE) ? 'F' : '.'));
 
 	orig_node = batadv_orig_hash_find(bat_priv, resp_src);
-	if (!orig_node)
-		goto out;
+	अगर (!orig_node)
+		जाओ out;
 
 	spin_lock_bh(&orig_node->tt_lock);
 
-	change_offset = sizeof(struct batadv_tvlv_tt_vlan_data);
+	change_offset = माप(काष्ठा batadv_tvlv_tt_vlan_data);
 	change_offset *= ntohs(tt_data->num_vlan);
-	change_offset += sizeof(*tt_data);
+	change_offset += माप(*tt_data);
 	tvlv_ptr += change_offset;
 
-	tt_change = (struct batadv_tvlv_tt_change *)tvlv_ptr;
-	if (tt_data->flags & BATADV_TT_FULL_TABLE) {
+	tt_change = (काष्ठा batadv_tvlv_tt_change *)tvlv_ptr;
+	अगर (tt_data->flags & BATADV_TT_FULL_TABLE) अणु
 		batadv_tt_fill_gtable(bat_priv, tt_change, tt_data->ttvn,
 				      resp_src, num_entries);
-	} else {
+	पूर्ण अन्यथा अणु
 		batadv_tt_update_changes(bat_priv, orig_node, num_entries,
 					 tt_data->ttvn, tt_change);
-	}
+	पूर्ण
 
-	/* Recalculate the CRC for this orig_node and store it */
+	/* Recalculate the CRC क्रम this orig_node and store it */
 	batadv_tt_global_update_crc(bat_priv, orig_node);
 
 	spin_unlock_bh(&orig_node->tt_lock);
 
 	/* Delete the tt_req_node from pending tt_requests list */
 	spin_lock_bh(&bat_priv->tt.req_list_lock);
-	hlist_for_each_entry_safe(node, safe, &bat_priv->tt.req_list, list) {
-		if (!batadv_compare_eth(node->addr, resp_src))
-			continue;
+	hlist_क्रम_each_entry_safe(node, safe, &bat_priv->tt.req_list, list) अणु
+		अगर (!batadv_compare_eth(node->addr, resp_src))
+			जारी;
 		hlist_del_init(&node->list);
 		batadv_tt_req_node_put(node);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&bat_priv->tt.req_list_lock);
 out:
-	if (orig_node)
+	अगर (orig_node)
 		batadv_orig_node_put(orig_node);
-}
+पूर्ण
 
-static void batadv_tt_roam_list_free(struct batadv_priv *bat_priv)
-{
-	struct batadv_tt_roam_node *node, *safe;
+अटल व्योम batadv_tt_roam_list_मुक्त(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_tt_roam_node *node, *safe;
 
 	spin_lock_bh(&bat_priv->tt.roam_list_lock);
 
-	list_for_each_entry_safe(node, safe, &bat_priv->tt.roam_list, list) {
+	list_क्रम_each_entry_safe(node, safe, &bat_priv->tt.roam_list, list) अणु
 		list_del(&node->list);
-		kmem_cache_free(batadv_tt_roam_cache, node);
-	}
+		kmem_cache_मुक्त(batadv_tt_roam_cache, node);
+	पूर्ण
 
 	spin_unlock_bh(&bat_priv->tt.roam_list_lock);
-}
+पूर्ण
 
-static void batadv_tt_roam_purge(struct batadv_priv *bat_priv)
-{
-	struct batadv_tt_roam_node *node, *safe;
+अटल व्योम batadv_tt_roam_purge(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_tt_roam_node *node, *safe;
 
 	spin_lock_bh(&bat_priv->tt.roam_list_lock);
-	list_for_each_entry_safe(node, safe, &bat_priv->tt.roam_list, list) {
-		if (!batadv_has_timed_out(node->first_time,
+	list_क्रम_each_entry_safe(node, safe, &bat_priv->tt.roam_list, list) अणु
+		अगर (!batadv_has_समयd_out(node->first_समय,
 					  BATADV_ROAMING_MAX_TIME))
-			continue;
+			जारी;
 
 		list_del(&node->list);
-		kmem_cache_free(batadv_tt_roam_cache, node);
-	}
+		kmem_cache_मुक्त(batadv_tt_roam_cache, node);
+	पूर्ण
 	spin_unlock_bh(&bat_priv->tt.roam_list_lock);
-}
+पूर्ण
 
 /**
- * batadv_tt_check_roam_count() - check if a client has roamed too frequently
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_tt_check_roam_count() - check अगर a client has roamed too frequently
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @client: mac address of the roaming client
  *
- * This function checks whether the client already reached the
- * maximum number of possible roaming phases. In this case the ROAMING_ADV
+ * This function checks whether the client alपढ़ोy reached the
+ * maximum number of possible roaming phases. In this हाल the ROAMING_ADV
  * will not be sent.
  *
- * Return: true if the ROAMING_ADV can be sent, false otherwise
+ * Return: true अगर the ROAMING_ADV can be sent, false otherwise
  */
-static bool batadv_tt_check_roam_count(struct batadv_priv *bat_priv, u8 *client)
-{
-	struct batadv_tt_roam_node *tt_roam_node;
+अटल bool batadv_tt_check_roam_count(काष्ठा batadv_priv *bat_priv, u8 *client)
+अणु
+	काष्ठा batadv_tt_roam_node *tt_roam_node;
 	bool ret = false;
 
 	spin_lock_bh(&bat_priv->tt.roam_list_lock);
-	/* The new tt_req will be issued only if I'm not waiting for a
+	/* The new tt_req will be issued only अगर I'm not रुकोing क्रम a
 	 * reply from the same orig_node yet
 	 */
-	list_for_each_entry(tt_roam_node, &bat_priv->tt.roam_list, list) {
-		if (!batadv_compare_eth(tt_roam_node->addr, client))
-			continue;
+	list_क्रम_each_entry(tt_roam_node, &bat_priv->tt.roam_list, list) अणु
+		अगर (!batadv_compare_eth(tt_roam_node->addr, client))
+			जारी;
 
-		if (batadv_has_timed_out(tt_roam_node->first_time,
+		अगर (batadv_has_समयd_out(tt_roam_node->first_समय,
 					 BATADV_ROAMING_MAX_TIME))
-			continue;
+			जारी;
 
-		if (!batadv_atomic_dec_not_zero(&tt_roam_node->counter))
-			/* Sorry, you roamed too many times! */
-			goto unlock;
+		अगर (!batadv_atomic_dec_not_zero(&tt_roam_node->counter))
+			/* Sorry, you roamed too many बार! */
+			जाओ unlock;
 		ret = true;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (!ret) {
+	अगर (!ret) अणु
 		tt_roam_node = kmem_cache_alloc(batadv_tt_roam_cache,
 						GFP_ATOMIC);
-		if (!tt_roam_node)
-			goto unlock;
+		अगर (!tt_roam_node)
+			जाओ unlock;
 
-		tt_roam_node->first_time = jiffies;
+		tt_roam_node->first_समय = jअगरfies;
 		atomic_set(&tt_roam_node->counter,
 			   BATADV_ROAMING_MAX_COUNT - 1);
 		ether_addr_copy(tt_roam_node->addr, client);
 
 		list_add(&tt_roam_node->list, &bat_priv->tt.roam_list);
 		ret = true;
-	}
+	पूर्ण
 
 unlock:
 	spin_unlock_bh(&bat_priv->tt.roam_list_lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_send_roam_adv() - send a roaming advertisement message
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @client: mac address of the roaming client
- * @vid: VLAN identifier
+ * @vid: VLAN identअगरier
  * @orig_node: message destination
  *
  * Send a ROAMING_ADV message to the node which was previously serving this
- * client. This is done to inform the node that from now on all traffic destined
- * for this particular roamed client has to be forwarded to the sender of the
+ * client. This is करोne to inक्रमm the node that from now on all traffic destined
+ * क्रम this particular roamed client has to be क्रमwarded to the sender of the
  * roaming message.
  */
-static void batadv_send_roam_adv(struct batadv_priv *bat_priv, u8 *client,
-				 unsigned short vid,
-				 struct batadv_orig_node *orig_node)
-{
-	struct batadv_hard_iface *primary_if;
-	struct batadv_tvlv_roam_adv tvlv_roam;
+अटल व्योम batadv_send_roam_adv(काष्ठा batadv_priv *bat_priv, u8 *client,
+				 अचिन्हित लघु vid,
+				 काष्ठा batadv_orig_node *orig_node)
+अणु
+	काष्ठा batadv_hard_अगरace *primary_अगर;
+	काष्ठा batadv_tvlv_roam_adv tvlv_roam;
 
-	primary_if = batadv_primary_if_get_selected(bat_priv);
-	if (!primary_if)
-		goto out;
+	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	अगर (!primary_अगर)
+		जाओ out;
 
-	/* before going on we have to check whether the client has
-	 * already roamed to us too many times
+	/* beक्रमe going on we have to check whether the client has
+	 * alपढ़ोy roamed to us too many बार
 	 */
-	if (!batadv_tt_check_roam_count(bat_priv, client))
-		goto out;
+	अगर (!batadv_tt_check_roam_count(bat_priv, client))
+		जाओ out;
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
 		   "Sending ROAMING_ADV to %pM (client %pM, vid: %d)\n",
-		   orig_node->orig, client, batadv_print_vid(vid));
+		   orig_node->orig, client, batadv_prपूर्णांक_vid(vid));
 
 	batadv_inc_counter(bat_priv, BATADV_CNT_TT_ROAM_ADV_TX);
 
-	memcpy(tvlv_roam.client, client, sizeof(tvlv_roam.client));
+	स_नकल(tvlv_roam.client, client, माप(tvlv_roam.client));
 	tvlv_roam.vid = htons(vid);
 
-	batadv_tvlv_unicast_send(bat_priv, primary_if->net_dev->dev_addr,
+	batadv_tvlv_unicast_send(bat_priv, primary_अगर->net_dev->dev_addr,
 				 orig_node->orig, BATADV_TVLV_ROAM, 1,
-				 &tvlv_roam, sizeof(tvlv_roam));
+				 &tvlv_roam, माप(tvlv_roam));
 
 out:
-	if (primary_if)
-		batadv_hardif_put(primary_if);
-}
+	अगर (primary_अगर)
+		batadv_hardअगर_put(primary_अगर);
+पूर्ण
 
-static void batadv_tt_purge(struct work_struct *work)
-{
-	struct delayed_work *delayed_work;
-	struct batadv_priv_tt *priv_tt;
-	struct batadv_priv *bat_priv;
+अटल व्योम batadv_tt_purge(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा delayed_work *delayed_work;
+	काष्ठा batadv_priv_tt *priv_tt;
+	काष्ठा batadv_priv *bat_priv;
 
 	delayed_work = to_delayed_work(work);
-	priv_tt = container_of(delayed_work, struct batadv_priv_tt, work);
-	bat_priv = container_of(priv_tt, struct batadv_priv, tt);
+	priv_tt = container_of(delayed_work, काष्ठा batadv_priv_tt, work);
+	bat_priv = container_of(priv_tt, काष्ठा batadv_priv, tt);
 
 	batadv_tt_local_purge(bat_priv, BATADV_TT_LOCAL_TIMEOUT);
 	batadv_tt_global_purge(bat_priv);
@@ -3594,251 +3595,251 @@ static void batadv_tt_purge(struct work_struct *work)
 	batadv_tt_roam_purge(bat_priv);
 
 	queue_delayed_work(batadv_event_workqueue, &bat_priv->tt.work,
-			   msecs_to_jiffies(BATADV_TT_WORK_PERIOD));
-}
+			   msecs_to_jअगरfies(BATADV_TT_WORK_PERIOD));
+पूर्ण
 
 /**
- * batadv_tt_free() - Free translation table of soft interface
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_tt_मुक्त() - Free translation table of soft पूर्णांकerface
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  */
-void batadv_tt_free(struct batadv_priv *bat_priv)
-{
-	batadv_tvlv_handler_unregister(bat_priv, BATADV_TVLV_ROAM, 1);
+व्योम batadv_tt_मुक्त(काष्ठा batadv_priv *bat_priv)
+अणु
+	batadv_tvlv_handler_unरेजिस्टर(bat_priv, BATADV_TVLV_ROAM, 1);
 
-	batadv_tvlv_container_unregister(bat_priv, BATADV_TVLV_TT, 1);
-	batadv_tvlv_handler_unregister(bat_priv, BATADV_TVLV_TT, 1);
+	batadv_tvlv_container_unरेजिस्टर(bat_priv, BATADV_TVLV_TT, 1);
+	batadv_tvlv_handler_unरेजिस्टर(bat_priv, BATADV_TVLV_TT, 1);
 
 	cancel_delayed_work_sync(&bat_priv->tt.work);
 
-	batadv_tt_local_table_free(bat_priv);
-	batadv_tt_global_table_free(bat_priv);
-	batadv_tt_req_list_free(bat_priv);
-	batadv_tt_changes_list_free(bat_priv);
-	batadv_tt_roam_list_free(bat_priv);
+	batadv_tt_local_table_मुक्त(bat_priv);
+	batadv_tt_global_table_मुक्त(bat_priv);
+	batadv_tt_req_list_मुक्त(bat_priv);
+	batadv_tt_changes_list_मुक्त(bat_priv);
+	batadv_tt_roam_list_मुक्त(bat_priv);
 
-	kfree(bat_priv->tt.last_changeset);
-}
+	kमुक्त(bat_priv->tt.last_changeset);
+पूर्ण
 
 /**
- * batadv_tt_local_set_flags() - set or unset the specified flags on the local
+ * batadv_tt_local_set_flags() - set or unset the specअगरied flags on the local
  *  table and possibly count them in the TT size
- * @bat_priv: the bat priv with all the soft interface information
- * @flags: the flag to switch
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @flags: the flag to चयन
  * @enable: whether to set or unset the flag
  * @count: whether to increase the TT size by the number of changed entries
  */
-static void batadv_tt_local_set_flags(struct batadv_priv *bat_priv, u16 flags,
+अटल व्योम batadv_tt_local_set_flags(काष्ठा batadv_priv *bat_priv, u16 flags,
 				      bool enable, bool count)
-{
-	struct batadv_hashtable *hash = bat_priv->tt.local_hash;
-	struct batadv_tt_common_entry *tt_common_entry;
-	struct hlist_head *head;
+अणु
+	काष्ठा batadv_hashtable *hash = bat_priv->tt.local_hash;
+	काष्ठा batadv_tt_common_entry *tt_common_entry;
+	काष्ठा hlist_head *head;
 	u32 i;
 
-	if (!hash)
-		return;
+	अगर (!hash)
+		वापस;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 
-		rcu_read_lock();
-		hlist_for_each_entry_rcu(tt_common_entry,
-					 head, hash_entry) {
-			if (enable) {
-				if ((tt_common_entry->flags & flags) == flags)
-					continue;
+		rcu_पढ़ो_lock();
+		hlist_क्रम_each_entry_rcu(tt_common_entry,
+					 head, hash_entry) अणु
+			अगर (enable) अणु
+				अगर ((tt_common_entry->flags & flags) == flags)
+					जारी;
 				tt_common_entry->flags |= flags;
-			} else {
-				if (!(tt_common_entry->flags & flags))
-					continue;
+			पूर्ण अन्यथा अणु
+				अगर (!(tt_common_entry->flags & flags))
+					जारी;
 				tt_common_entry->flags &= ~flags;
-			}
+			पूर्ण
 
-			if (!count)
-				continue;
+			अगर (!count)
+				जारी;
 
 			batadv_tt_local_size_inc(bat_priv,
 						 tt_common_entry->vid);
-		}
-		rcu_read_unlock();
-	}
-}
+		पूर्ण
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
 /* Purge out all the tt local entries marked with BATADV_TT_CLIENT_PENDING */
-static void batadv_tt_local_purge_pending_clients(struct batadv_priv *bat_priv)
-{
-	struct batadv_hashtable *hash = bat_priv->tt.local_hash;
-	struct batadv_tt_common_entry *tt_common;
-	struct batadv_tt_local_entry *tt_local;
-	struct hlist_node *node_tmp;
-	struct hlist_head *head;
-	spinlock_t *list_lock; /* protects write access to the hash lists */
+अटल व्योम batadv_tt_local_purge_pending_clients(काष्ठा batadv_priv *bat_priv)
+अणु
+	काष्ठा batadv_hashtable *hash = bat_priv->tt.local_hash;
+	काष्ठा batadv_tt_common_entry *tt_common;
+	काष्ठा batadv_tt_local_entry *tt_local;
+	काष्ठा hlist_node *node_पंचांगp;
+	काष्ठा hlist_head *head;
+	spinlock_t *list_lock; /* protects ग_लिखो access to the hash lists */
 	u32 i;
 
-	if (!hash)
-		return;
+	अगर (!hash)
+		वापस;
 
-	for (i = 0; i < hash->size; i++) {
+	क्रम (i = 0; i < hash->size; i++) अणु
 		head = &hash->table[i];
 		list_lock = &hash->list_locks[i];
 
 		spin_lock_bh(list_lock);
-		hlist_for_each_entry_safe(tt_common, node_tmp, head,
-					  hash_entry) {
-			if (!(tt_common->flags & BATADV_TT_CLIENT_PENDING))
-				continue;
+		hlist_क्रम_each_entry_safe(tt_common, node_पंचांगp, head,
+					  hash_entry) अणु
+			अगर (!(tt_common->flags & BATADV_TT_CLIENT_PENDING))
+				जारी;
 
 			batadv_dbg(BATADV_DBG_TT, bat_priv,
 				   "Deleting local tt entry (%pM, vid: %d): pending\n",
 				   tt_common->addr,
-				   batadv_print_vid(tt_common->vid));
+				   batadv_prपूर्णांक_vid(tt_common->vid));
 
 			batadv_tt_local_size_dec(bat_priv, tt_common->vid);
 			hlist_del_rcu(&tt_common->hash_entry);
 			tt_local = container_of(tt_common,
-						struct batadv_tt_local_entry,
+						काष्ठा batadv_tt_local_entry,
 						common);
 
 			batadv_tt_local_entry_put(tt_local);
-		}
+		पूर्ण
 		spin_unlock_bh(list_lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * batadv_tt_local_commit_changes_nolock() - commit all pending local tt changes
- *  which have been queued in the time since the last commit
- * @bat_priv: the bat priv with all the soft interface information
+ *  which have been queued in the समय since the last commit
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  *
  * Caller must hold tt->commit_lock.
  */
-static void batadv_tt_local_commit_changes_nolock(struct batadv_priv *bat_priv)
-{
-	lockdep_assert_held(&bat_priv->tt.commit_lock);
+अटल व्योम batadv_tt_local_commit_changes_nolock(काष्ठा batadv_priv *bat_priv)
+अणु
+	lockdep_निश्चित_held(&bat_priv->tt.commit_lock);
 
-	if (atomic_read(&bat_priv->tt.local_changes) < 1) {
-		if (!batadv_atomic_dec_not_zero(&bat_priv->tt.ogm_append_cnt))
+	अगर (atomic_पढ़ो(&bat_priv->tt.local_changes) < 1) अणु
+		अगर (!batadv_atomic_dec_not_zero(&bat_priv->tt.ogm_append_cnt))
 			batadv_tt_tvlv_container_update(bat_priv);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	batadv_tt_local_set_flags(bat_priv, BATADV_TT_CLIENT_NEW, false, true);
 
 	batadv_tt_local_purge_pending_clients(bat_priv);
 	batadv_tt_local_update_crc(bat_priv);
 
-	/* Increment the TTVN only once per OGM interval */
+	/* Increment the TTVN only once per OGM पूर्णांकerval */
 	atomic_inc(&bat_priv->tt.vn);
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
 		   "Local changes committed, updating to ttvn %u\n",
-		   (u8)atomic_read(&bat_priv->tt.vn));
+		   (u8)atomic_पढ़ो(&bat_priv->tt.vn));
 
 	/* reset the sending counter */
 	atomic_set(&bat_priv->tt.ogm_append_cnt, BATADV_TT_OGM_APPEND_MAX);
 	batadv_tt_tvlv_container_update(bat_priv);
-}
+पूर्ण
 
 /**
  * batadv_tt_local_commit_changes() - commit all pending local tt changes which
- *  have been queued in the time since the last commit
- * @bat_priv: the bat priv with all the soft interface information
+ *  have been queued in the समय since the last commit
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  */
-void batadv_tt_local_commit_changes(struct batadv_priv *bat_priv)
-{
+व्योम batadv_tt_local_commit_changes(काष्ठा batadv_priv *bat_priv)
+अणु
 	spin_lock_bh(&bat_priv->tt.commit_lock);
 	batadv_tt_local_commit_changes_nolock(bat_priv);
 	spin_unlock_bh(&bat_priv->tt.commit_lock);
-}
+पूर्ण
 
 /**
- * batadv_is_ap_isolated() - Check if packet from upper layer should be dropped
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_is_ap_isolated() - Check अगर packet from upper layer should be dropped
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @src: source mac address of packet
  * @dst: destination mac address of packet
  * @vid: vlan id of packet
  *
  * Return: true when src+dst(+vid) pair should be isolated, false otherwise
  */
-bool batadv_is_ap_isolated(struct batadv_priv *bat_priv, u8 *src, u8 *dst,
-			   unsigned short vid)
-{
-	struct batadv_tt_local_entry *tt_local_entry;
-	struct batadv_tt_global_entry *tt_global_entry;
-	struct batadv_softif_vlan *vlan;
+bool batadv_is_ap_isolated(काष्ठा batadv_priv *bat_priv, u8 *src, u8 *dst,
+			   अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_tt_local_entry *tt_local_entry;
+	काष्ठा batadv_tt_global_entry *tt_global_entry;
+	काष्ठा batadv_softअगर_vlan *vlan;
 	bool ret = false;
 
-	vlan = batadv_softif_vlan_get(bat_priv, vid);
-	if (!vlan)
-		return false;
+	vlan = batadv_softअगर_vlan_get(bat_priv, vid);
+	अगर (!vlan)
+		वापस false;
 
-	if (!atomic_read(&vlan->ap_isolation))
-		goto vlan_put;
+	अगर (!atomic_पढ़ो(&vlan->ap_isolation))
+		जाओ vlan_put;
 
 	tt_local_entry = batadv_tt_local_hash_find(bat_priv, dst, vid);
-	if (!tt_local_entry)
-		goto vlan_put;
+	अगर (!tt_local_entry)
+		जाओ vlan_put;
 
 	tt_global_entry = batadv_tt_global_hash_find(bat_priv, src, vid);
-	if (!tt_global_entry)
-		goto local_entry_put;
+	अगर (!tt_global_entry)
+		जाओ local_entry_put;
 
-	if (_batadv_is_ap_isolated(tt_local_entry, tt_global_entry))
+	अगर (_batadv_is_ap_isolated(tt_local_entry, tt_global_entry))
 		ret = true;
 
 	batadv_tt_global_entry_put(tt_global_entry);
 local_entry_put:
 	batadv_tt_local_entry_put(tt_local_entry);
 vlan_put:
-	batadv_softif_vlan_put(vlan);
-	return ret;
-}
+	batadv_softअगर_vlan_put(vlan);
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_tt_update_orig() - update global translation table with new tt
- *  information received via ogms
- * @bat_priv: the bat priv with all the soft interface information
+ *  inक्रमmation received via ogms
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @orig_node: the orig_node of the ogm
- * @tt_buff: pointer to the first tvlv VLAN entry
+ * @tt_buff: poपूर्णांकer to the first tvlv VLAN entry
  * @tt_num_vlan: number of tvlv VLAN entries
- * @tt_change: pointer to the first entry in the TT buffer
+ * @tt_change: poपूर्णांकer to the first entry in the TT buffer
  * @tt_num_changes: number of tt changes inside the tt buffer
  * @ttvn: translation table version number of this changeset
  */
-static void batadv_tt_update_orig(struct batadv_priv *bat_priv,
-				  struct batadv_orig_node *orig_node,
-				  const void *tt_buff, u16 tt_num_vlan,
-				  struct batadv_tvlv_tt_change *tt_change,
+अटल व्योम batadv_tt_update_orig(काष्ठा batadv_priv *bat_priv,
+				  काष्ठा batadv_orig_node *orig_node,
+				  स्थिर व्योम *tt_buff, u16 tt_num_vlan,
+				  काष्ठा batadv_tvlv_tt_change *tt_change,
 				  u16 tt_num_changes, u8 ttvn)
-{
-	u8 orig_ttvn = (u8)atomic_read(&orig_node->last_ttvn);
-	struct batadv_tvlv_tt_vlan_data *tt_vlan;
+अणु
+	u8 orig_ttvn = (u8)atomic_पढ़ो(&orig_node->last_ttvn);
+	काष्ठा batadv_tvlv_tt_vlan_data *tt_vlan;
 	bool full_table = true;
 	bool has_tt_init;
 
-	tt_vlan = (struct batadv_tvlv_tt_vlan_data *)tt_buff;
+	tt_vlan = (काष्ठा batadv_tvlv_tt_vlan_data *)tt_buff;
 	has_tt_init = test_bit(BATADV_ORIG_CAPA_HAS_TT,
 			       &orig_node->capa_initialized);
 
-	/* orig table not initialised AND first diff is in the OGM OR the ttvn
+	/* orig table not initialised AND first dअगरf is in the OGM OR the ttvn
 	 * increased by one -> we can apply the attached changes
 	 */
-	if ((!has_tt_init && ttvn == 1) || ttvn - orig_ttvn == 1) {
+	अगर ((!has_tt_init && ttvn == 1) || ttvn - orig_ttvn == 1) अणु
 		/* the OGM could not contain the changes due to their size or
-		 * because they have already been sent BATADV_TT_OGM_APPEND_MAX
-		 * times.
-		 * In this case send a tt request
+		 * because they have alपढ़ोy been sent BATADV_TT_OGM_APPEND_MAX
+		 * बार.
+		 * In this हाल send a tt request
 		 */
-		if (!tt_num_changes) {
+		अगर (!tt_num_changes) अणु
 			full_table = false;
-			goto request_table;
-		}
+			जाओ request_table;
+		पूर्ण
 
 		spin_lock_bh(&orig_node->tt_lock);
 
 		batadv_tt_update_changes(bat_priv, orig_node, tt_num_changes,
 					 ttvn, tt_change);
 
-		/* Even if we received the precomputed crc with the OGM, we
+		/* Even अगर we received the precomputed crc with the OGM, we
 		 * prefer to recompute it to spot any possible inconsistency
 		 * in the global table
 		 */
@@ -3847,24 +3848,24 @@ static void batadv_tt_update_orig(struct batadv_priv *bat_priv,
 		spin_unlock_bh(&orig_node->tt_lock);
 
 		/* The ttvn alone is not enough to guarantee consistency
-		 * because a single value could represent different states
+		 * because a single value could represent dअगरferent states
 		 * (due to the wrap around). Thus a node has to check whether
 		 * the resulting table (after applying the changes) is still
-		 * consistent or not. E.g. a node could disconnect while its
-		 * ttvn is X and reconnect on ttvn = X + TTVN_MAX: in this case
+		 * consistent or not. E.g. a node could disconnect जबतक its
+		 * ttvn is X and reconnect on ttvn = X + TTVN_MAX: in this हाल
 		 * checking the CRC value is mandatory to detect the
 		 * inconsistency
 		 */
-		if (!batadv_tt_global_check_crc(orig_node, tt_vlan,
+		अगर (!batadv_tt_global_check_crc(orig_node, tt_vlan,
 						tt_num_vlan))
-			goto request_table;
-	} else {
-		/* if we missed more than one change or our tables are not
+			जाओ request_table;
+	पूर्ण अन्यथा अणु
+		/* अगर we missed more than one change or our tables are not
 		 * in sync anymore -> request fresh tt data
 		 */
-		if (!has_tt_init || ttvn != orig_ttvn ||
+		अगर (!has_tt_init || ttvn != orig_ttvn ||
 		    !batadv_tt_global_check_crc(orig_node, tt_vlan,
-						tt_num_vlan)) {
+						tt_num_vlan)) अणु
 request_table:
 			batadv_dbg(BATADV_DBG_TT, bat_priv,
 				   "TT inconsistency for %pM. Need to retrieve the correct information (ttvn: %u last_ttvn: %u num_changes: %u)\n",
@@ -3873,293 +3874,293 @@ request_table:
 			batadv_send_tt_request(bat_priv, orig_node, ttvn,
 					       tt_vlan, tt_num_vlan,
 					       full_table);
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * batadv_tt_global_client_is_roaming() - check if a client is marked as roaming
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_tt_global_client_is_roaming() - check अगर a client is marked as roaming
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @addr: the mac address of the client to check
- * @vid: VLAN identifier
+ * @vid: VLAN identअगरier
  *
- * Return: true if we know that the client has moved from its old originator
- * to another one. This entry is still kept for consistency purposes and will be
- * deleted later by a DEL or because of timeout
+ * Return: true अगर we know that the client has moved from its old originator
+ * to another one. This entry is still kept क्रम consistency purposes and will be
+ * deleted later by a DEL or because of समयout
  */
-bool batadv_tt_global_client_is_roaming(struct batadv_priv *bat_priv,
-					u8 *addr, unsigned short vid)
-{
-	struct batadv_tt_global_entry *tt_global_entry;
+bool batadv_tt_global_client_is_roaming(काष्ठा batadv_priv *bat_priv,
+					u8 *addr, अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_tt_global_entry *tt_global_entry;
 	bool ret = false;
 
 	tt_global_entry = batadv_tt_global_hash_find(bat_priv, addr, vid);
-	if (!tt_global_entry)
-		goto out;
+	अगर (!tt_global_entry)
+		जाओ out;
 
 	ret = tt_global_entry->common.flags & BATADV_TT_CLIENT_ROAM;
 	batadv_tt_global_entry_put(tt_global_entry);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_tt_local_client_is_roaming() - tells whether the client is roaming
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @addr: the mac address of the local client to query
- * @vid: VLAN identifier
+ * @vid: VLAN identअगरier
  *
- * Return: true if the local client is known to be roaming (it is not served by
+ * Return: true अगर the local client is known to be roaming (it is not served by
  * this node anymore) or not. If yes, the client is still present in the table
  * to keep the latter consistent with the node TTVN
  */
-bool batadv_tt_local_client_is_roaming(struct batadv_priv *bat_priv,
-				       u8 *addr, unsigned short vid)
-{
-	struct batadv_tt_local_entry *tt_local_entry;
+bool batadv_tt_local_client_is_roaming(काष्ठा batadv_priv *bat_priv,
+				       u8 *addr, अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_tt_local_entry *tt_local_entry;
 	bool ret = false;
 
 	tt_local_entry = batadv_tt_local_hash_find(bat_priv, addr, vid);
-	if (!tt_local_entry)
-		goto out;
+	अगर (!tt_local_entry)
+		जाओ out;
 
 	ret = tt_local_entry->common.flags & BATADV_TT_CLIENT_ROAM;
 	batadv_tt_local_entry_put(tt_local_entry);
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_tt_add_temporary_global_entry() - Add temporary entry to global TT
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @orig_node: orig node which the temporary entry should be associated with
  * @addr: mac address of the client
  * @vid: VLAN id of the new temporary global translation table
  *
  * Return: true when temporary tt entry could be added, false otherwise
  */
-bool batadv_tt_add_temporary_global_entry(struct batadv_priv *bat_priv,
-					  struct batadv_orig_node *orig_node,
-					  const unsigned char *addr,
-					  unsigned short vid)
-{
+bool batadv_tt_add_temporary_global_entry(काष्ठा batadv_priv *bat_priv,
+					  काष्ठा batadv_orig_node *orig_node,
+					  स्थिर अचिन्हित अक्षर *addr,
+					  अचिन्हित लघु vid)
+अणु
 	/* ignore loop detect macs, they are not supposed to be in the tt local
 	 * data as well.
 	 */
-	if (batadv_bla_is_loopdetect_mac(addr))
-		return false;
+	अगर (batadv_bla_is_loopdetect_mac(addr))
+		वापस false;
 
-	if (!batadv_tt_global_add(bat_priv, orig_node, addr, vid,
+	अगर (!batadv_tt_global_add(bat_priv, orig_node, addr, vid,
 				  BATADV_TT_CLIENT_TEMP,
-				  atomic_read(&orig_node->last_ttvn)))
-		return false;
+				  atomic_पढ़ो(&orig_node->last_ttvn)))
+		वापस false;
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
 		   "Added temporary global client (addr: %pM, vid: %d, orig: %pM)\n",
-		   addr, batadv_print_vid(vid), orig_node->orig);
+		   addr, batadv_prपूर्णांक_vid(vid), orig_node->orig);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /**
- * batadv_tt_local_resize_to_mtu() - resize the local translation table fit the
+ * batadv_tt_local_reमाप_प्रकारo_mtu() - resize the local translation table fit the
  *  maximum packet size that can be transported through the mesh
- * @soft_iface: netdev struct of the mesh interface
+ * @soft_अगरace: netdev काष्ठा of the mesh पूर्णांकerface
  *
- * Remove entries older than 'timeout' and half timeout if more entries need
- * to be removed.
+ * Remove entries older than 'timeout' and half समयout अगर more entries need
+ * to be हटाओd.
  */
-void batadv_tt_local_resize_to_mtu(struct net_device *soft_iface)
-{
-	struct batadv_priv *bat_priv = netdev_priv(soft_iface);
-	int packet_size_max = atomic_read(&bat_priv->packet_size_max);
-	int table_size, timeout = BATADV_TT_LOCAL_TIMEOUT / 2;
+व्योम batadv_tt_local_reमाप_प्रकारo_mtu(काष्ठा net_device *soft_अगरace)
+अणु
+	काष्ठा batadv_priv *bat_priv = netdev_priv(soft_अगरace);
+	पूर्णांक packet_size_max = atomic_पढ़ो(&bat_priv->packet_size_max);
+	पूर्णांक table_size, समयout = BATADV_TT_LOCAL_TIMEOUT / 2;
 	bool reduced = false;
 
 	spin_lock_bh(&bat_priv->tt.commit_lock);
 
-	while (true) {
+	जबतक (true) अणु
 		table_size = batadv_tt_local_table_transmit_size(bat_priv);
-		if (packet_size_max >= table_size)
-			break;
+		अगर (packet_size_max >= table_size)
+			अवरोध;
 
-		batadv_tt_local_purge(bat_priv, timeout);
+		batadv_tt_local_purge(bat_priv, समयout);
 		batadv_tt_local_purge_pending_clients(bat_priv);
 
-		timeout /= 2;
+		समयout /= 2;
 		reduced = true;
-		net_ratelimited_function(batadv_info, soft_iface,
+		net_ratelimited_function(batadv_info, soft_अगरace,
 					 "Forced to purge local tt entries to fit new maximum fragment MTU (%i)\n",
 					 packet_size_max);
-	}
+	पूर्ण
 
-	/* commit these changes immediately, to avoid synchronization problem
+	/* commit these changes immediately, to aव्योम synchronization problem
 	 * with the TTVN
 	 */
-	if (reduced)
+	अगर (reduced)
 		batadv_tt_local_commit_changes_nolock(bat_priv);
 
 	spin_unlock_bh(&bat_priv->tt.commit_lock);
-}
+पूर्ण
 
 /**
  * batadv_tt_tvlv_ogm_handler_v1() - process incoming tt tvlv container
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @orig: the orig_node of the ogm
  * @flags: flags indicating the tvlv state (see batadv_tvlv_handler_flags)
  * @tvlv_value: tvlv buffer containing the gateway data
  * @tvlv_value_len: tvlv buffer length
  */
-static void batadv_tt_tvlv_ogm_handler_v1(struct batadv_priv *bat_priv,
-					  struct batadv_orig_node *orig,
-					  u8 flags, void *tvlv_value,
+अटल व्योम batadv_tt_tvlv_ogm_handler_v1(काष्ठा batadv_priv *bat_priv,
+					  काष्ठा batadv_orig_node *orig,
+					  u8 flags, व्योम *tvlv_value,
 					  u16 tvlv_value_len)
-{
-	struct batadv_tvlv_tt_vlan_data *tt_vlan;
-	struct batadv_tvlv_tt_change *tt_change;
-	struct batadv_tvlv_tt_data *tt_data;
+अणु
+	काष्ठा batadv_tvlv_tt_vlan_data *tt_vlan;
+	काष्ठा batadv_tvlv_tt_change *tt_change;
+	काष्ठा batadv_tvlv_tt_data *tt_data;
 	u16 num_entries, num_vlan;
 
-	if (tvlv_value_len < sizeof(*tt_data))
-		return;
+	अगर (tvlv_value_len < माप(*tt_data))
+		वापस;
 
-	tt_data = (struct batadv_tvlv_tt_data *)tvlv_value;
-	tvlv_value_len -= sizeof(*tt_data);
+	tt_data = (काष्ठा batadv_tvlv_tt_data *)tvlv_value;
+	tvlv_value_len -= माप(*tt_data);
 
 	num_vlan = ntohs(tt_data->num_vlan);
 
-	if (tvlv_value_len < sizeof(*tt_vlan) * num_vlan)
-		return;
+	अगर (tvlv_value_len < माप(*tt_vlan) * num_vlan)
+		वापस;
 
-	tt_vlan = (struct batadv_tvlv_tt_vlan_data *)(tt_data + 1);
-	tt_change = (struct batadv_tvlv_tt_change *)(tt_vlan + num_vlan);
-	tvlv_value_len -= sizeof(*tt_vlan) * num_vlan;
+	tt_vlan = (काष्ठा batadv_tvlv_tt_vlan_data *)(tt_data + 1);
+	tt_change = (काष्ठा batadv_tvlv_tt_change *)(tt_vlan + num_vlan);
+	tvlv_value_len -= माप(*tt_vlan) * num_vlan;
 
 	num_entries = batadv_tt_entries(tvlv_value_len);
 
 	batadv_tt_update_orig(bat_priv, orig, tt_vlan, num_vlan, tt_change,
 			      num_entries, tt_data->ttvn);
-}
+पूर्ण
 
 /**
  * batadv_tt_tvlv_unicast_handler_v1() - process incoming (unicast) tt tvlv
  *  container
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @src: mac address of tt tvlv sender
  * @dst: mac address of tt tvlv recipient
  * @tvlv_value: tvlv buffer containing the tt data
  * @tvlv_value_len: tvlv buffer length
  *
- * Return: NET_RX_DROP if the tt tvlv is to be re-routed, NET_RX_SUCCESS
+ * Return: NET_RX_DROP अगर the tt tvlv is to be re-routed, NET_RX_SUCCESS
  * otherwise.
  */
-static int batadv_tt_tvlv_unicast_handler_v1(struct batadv_priv *bat_priv,
+अटल पूर्णांक batadv_tt_tvlv_unicast_handler_v1(काष्ठा batadv_priv *bat_priv,
 					     u8 *src, u8 *dst,
-					     void *tvlv_value,
+					     व्योम *tvlv_value,
 					     u16 tvlv_value_len)
-{
-	struct batadv_tvlv_tt_data *tt_data;
+अणु
+	काष्ठा batadv_tvlv_tt_data *tt_data;
 	u16 tt_vlan_len, tt_num_entries;
-	char tt_flag;
+	अक्षर tt_flag;
 	bool ret;
 
-	if (tvlv_value_len < sizeof(*tt_data))
-		return NET_RX_SUCCESS;
+	अगर (tvlv_value_len < माप(*tt_data))
+		वापस NET_RX_SUCCESS;
 
-	tt_data = (struct batadv_tvlv_tt_data *)tvlv_value;
-	tvlv_value_len -= sizeof(*tt_data);
+	tt_data = (काष्ठा batadv_tvlv_tt_data *)tvlv_value;
+	tvlv_value_len -= माप(*tt_data);
 
-	tt_vlan_len = sizeof(struct batadv_tvlv_tt_vlan_data);
+	tt_vlan_len = माप(काष्ठा batadv_tvlv_tt_vlan_data);
 	tt_vlan_len *= ntohs(tt_data->num_vlan);
 
-	if (tvlv_value_len < tt_vlan_len)
-		return NET_RX_SUCCESS;
+	अगर (tvlv_value_len < tt_vlan_len)
+		वापस NET_RX_SUCCESS;
 
 	tvlv_value_len -= tt_vlan_len;
 	tt_num_entries = batadv_tt_entries(tvlv_value_len);
 
-	switch (tt_data->flags & BATADV_TT_DATA_TYPE_MASK) {
-	case BATADV_TT_REQUEST:
+	चयन (tt_data->flags & BATADV_TT_DATA_TYPE_MASK) अणु
+	हाल BATADV_TT_REQUEST:
 		batadv_inc_counter(bat_priv, BATADV_CNT_TT_REQUEST_RX);
 
 		/* If this node cannot provide a TT response the tt_request is
-		 * forwarded
+		 * क्रमwarded
 		 */
 		ret = batadv_send_tt_response(bat_priv, tt_data, src, dst);
-		if (!ret) {
-			if (tt_data->flags & BATADV_TT_FULL_TABLE)
+		अगर (!ret) अणु
+			अगर (tt_data->flags & BATADV_TT_FULL_TABLE)
 				tt_flag = 'F';
-			else
+			अन्यथा
 				tt_flag = '.';
 
 			batadv_dbg(BATADV_DBG_TT, bat_priv,
 				   "Routing TT_REQUEST to %pM [%c]\n",
 				   dst, tt_flag);
 			/* tvlv API will re-route the packet */
-			return NET_RX_DROP;
-		}
-		break;
-	case BATADV_TT_RESPONSE:
+			वापस NET_RX_DROP;
+		पूर्ण
+		अवरोध;
+	हाल BATADV_TT_RESPONSE:
 		batadv_inc_counter(bat_priv, BATADV_CNT_TT_RESPONSE_RX);
 
-		if (batadv_is_my_mac(bat_priv, dst)) {
+		अगर (batadv_is_my_mac(bat_priv, dst)) अणु
 			batadv_handle_tt_response(bat_priv, tt_data,
 						  src, tt_num_entries);
-			return NET_RX_SUCCESS;
-		}
+			वापस NET_RX_SUCCESS;
+		पूर्ण
 
-		if (tt_data->flags & BATADV_TT_FULL_TABLE)
+		अगर (tt_data->flags & BATADV_TT_FULL_TABLE)
 			tt_flag =  'F';
-		else
+		अन्यथा
 			tt_flag = '.';
 
 		batadv_dbg(BATADV_DBG_TT, bat_priv,
 			   "Routing TT_RESPONSE to %pM [%c]\n", dst, tt_flag);
 
 		/* tvlv API will re-route the packet */
-		return NET_RX_DROP;
-	}
+		वापस NET_RX_DROP;
+	पूर्ण
 
-	return NET_RX_SUCCESS;
-}
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
 /**
  * batadv_roam_tvlv_unicast_handler_v1() - process incoming tt roam tvlv
  *  container
- * @bat_priv: the bat priv with all the soft interface information
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @src: mac address of tt tvlv sender
  * @dst: mac address of tt tvlv recipient
  * @tvlv_value: tvlv buffer containing the tt data
  * @tvlv_value_len: tvlv buffer length
  *
- * Return: NET_RX_DROP if the tt roam tvlv is to be re-routed, NET_RX_SUCCESS
+ * Return: NET_RX_DROP अगर the tt roam tvlv is to be re-routed, NET_RX_SUCCESS
  * otherwise.
  */
-static int batadv_roam_tvlv_unicast_handler_v1(struct batadv_priv *bat_priv,
+अटल पूर्णांक batadv_roam_tvlv_unicast_handler_v1(काष्ठा batadv_priv *bat_priv,
 					       u8 *src, u8 *dst,
-					       void *tvlv_value,
+					       व्योम *tvlv_value,
 					       u16 tvlv_value_len)
-{
-	struct batadv_tvlv_roam_adv *roaming_adv;
-	struct batadv_orig_node *orig_node = NULL;
+अणु
+	काष्ठा batadv_tvlv_roam_adv *roaming_adv;
+	काष्ठा batadv_orig_node *orig_node = शून्य;
 
-	/* If this node is not the intended recipient of the
-	 * roaming advertisement the packet is forwarded
+	/* If this node is not the पूर्णांकended recipient of the
+	 * roaming advertisement the packet is क्रमwarded
 	 * (the tvlv API will re-route the packet).
 	 */
-	if (!batadv_is_my_mac(bat_priv, dst))
-		return NET_RX_DROP;
+	अगर (!batadv_is_my_mac(bat_priv, dst))
+		वापस NET_RX_DROP;
 
-	if (tvlv_value_len < sizeof(*roaming_adv))
-		goto out;
+	अगर (tvlv_value_len < माप(*roaming_adv))
+		जाओ out;
 
 	orig_node = batadv_orig_hash_find(bat_priv, src);
-	if (!orig_node)
-		goto out;
+	अगर (!orig_node)
+		जाओ out;
 
 	batadv_inc_counter(bat_priv, BATADV_CNT_TT_ROAM_ADV_RX);
-	roaming_adv = (struct batadv_tvlv_roam_adv *)tvlv_value;
+	roaming_adv = (काष्ठा batadv_tvlv_roam_adv *)tvlv_value;
 
 	batadv_dbg(BATADV_DBG_TT, bat_priv,
 		   "Received ROAMING_ADV from %pM (client %pM)\n",
@@ -4167,154 +4168,154 @@ static int batadv_roam_tvlv_unicast_handler_v1(struct batadv_priv *bat_priv,
 
 	batadv_tt_global_add(bat_priv, orig_node, roaming_adv->client,
 			     ntohs(roaming_adv->vid), BATADV_TT_CLIENT_ROAM,
-			     atomic_read(&orig_node->last_ttvn) + 1);
+			     atomic_पढ़ो(&orig_node->last_ttvn) + 1);
 
 out:
-	if (orig_node)
+	अगर (orig_node)
 		batadv_orig_node_put(orig_node);
-	return NET_RX_SUCCESS;
-}
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
 /**
- * batadv_tt_init() - initialise the translation table internals
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_tt_init() - initialise the translation table पूर्णांकernals
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  *
- * Return: 0 on success or negative error number in case of failure.
+ * Return: 0 on success or negative error number in हाल of failure.
  */
-int batadv_tt_init(struct batadv_priv *bat_priv)
-{
-	int ret;
+पूर्णांक batadv_tt_init(काष्ठा batadv_priv *bat_priv)
+अणु
+	पूर्णांक ret;
 
 	/* synchronized flags must be remote */
 	BUILD_BUG_ON(!(BATADV_TT_SYNC_MASK & BATADV_TT_REMOTE_MASK));
 
 	ret = batadv_tt_local_init(bat_priv);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	ret = batadv_tt_global_init(bat_priv);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	batadv_tvlv_handler_register(bat_priv, batadv_tt_tvlv_ogm_handler_v1,
+	batadv_tvlv_handler_रेजिस्टर(bat_priv, batadv_tt_tvlv_ogm_handler_v1,
 				     batadv_tt_tvlv_unicast_handler_v1,
 				     BATADV_TVLV_TT, 1, BATADV_NO_FLAGS);
 
-	batadv_tvlv_handler_register(bat_priv, NULL,
+	batadv_tvlv_handler_रेजिस्टर(bat_priv, शून्य,
 				     batadv_roam_tvlv_unicast_handler_v1,
 				     BATADV_TVLV_ROAM, 1, BATADV_NO_FLAGS);
 
 	INIT_DELAYED_WORK(&bat_priv->tt.work, batadv_tt_purge);
 	queue_delayed_work(batadv_event_workqueue, &bat_priv->tt.work,
-			   msecs_to_jiffies(BATADV_TT_WORK_PERIOD));
+			   msecs_to_jअगरfies(BATADV_TT_WORK_PERIOD));
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /**
- * batadv_tt_global_is_isolated() - check if a client is marked as isolated
- * @bat_priv: the bat priv with all the soft interface information
+ * batadv_tt_global_is_isolated() - check अगर a client is marked as isolated
+ * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
  * @addr: the mac address of the client
- * @vid: the identifier of the VLAN where this client is connected
+ * @vid: the identअगरier of the VLAN where this client is connected
  *
- * Return: true if the client is marked with the TT_CLIENT_ISOLA flag, false
+ * Return: true अगर the client is marked with the TT_CLIENT_ISOLA flag, false
  * otherwise
  */
-bool batadv_tt_global_is_isolated(struct batadv_priv *bat_priv,
-				  const u8 *addr, unsigned short vid)
-{
-	struct batadv_tt_global_entry *tt;
+bool batadv_tt_global_is_isolated(काष्ठा batadv_priv *bat_priv,
+				  स्थिर u8 *addr, अचिन्हित लघु vid)
+अणु
+	काष्ठा batadv_tt_global_entry *tt;
 	bool ret;
 
 	tt = batadv_tt_global_hash_find(bat_priv, addr, vid);
-	if (!tt)
-		return false;
+	अगर (!tt)
+		वापस false;
 
 	ret = tt->common.flags & BATADV_TT_CLIENT_ISOLA;
 
 	batadv_tt_global_entry_put(tt);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * batadv_tt_cache_init() - Initialize tt memory object cache
  *
- * Return: 0 on success or negative error number in case of failure.
+ * Return: 0 on success or negative error number in हाल of failure.
  */
-int __init batadv_tt_cache_init(void)
-{
-	size_t tl_size = sizeof(struct batadv_tt_local_entry);
-	size_t tg_size = sizeof(struct batadv_tt_global_entry);
-	size_t tt_orig_size = sizeof(struct batadv_tt_orig_list_entry);
-	size_t tt_change_size = sizeof(struct batadv_tt_change_node);
-	size_t tt_req_size = sizeof(struct batadv_tt_req_node);
-	size_t tt_roam_size = sizeof(struct batadv_tt_roam_node);
+पूर्णांक __init batadv_tt_cache_init(व्योम)
+अणु
+	माप_प्रकार tl_size = माप(काष्ठा batadv_tt_local_entry);
+	माप_प्रकार tg_size = माप(काष्ठा batadv_tt_global_entry);
+	माप_प्रकार tt_orig_size = माप(काष्ठा batadv_tt_orig_list_entry);
+	माप_प्रकार tt_change_size = माप(काष्ठा batadv_tt_change_node);
+	माप_प्रकार tt_req_size = माप(काष्ठा batadv_tt_req_node);
+	माप_प्रकार tt_roam_size = माप(काष्ठा batadv_tt_roam_node);
 
 	batadv_tl_cache = kmem_cache_create("batadv_tl_cache", tl_size, 0,
-					    SLAB_HWCACHE_ALIGN, NULL);
-	if (!batadv_tl_cache)
-		return -ENOMEM;
+					    SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (!batadv_tl_cache)
+		वापस -ENOMEM;
 
 	batadv_tg_cache = kmem_cache_create("batadv_tg_cache", tg_size, 0,
-					    SLAB_HWCACHE_ALIGN, NULL);
-	if (!batadv_tg_cache)
-		goto err_tt_tl_destroy;
+					    SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (!batadv_tg_cache)
+		जाओ err_tt_tl_destroy;
 
 	batadv_tt_orig_cache = kmem_cache_create("batadv_tt_orig_cache",
 						 tt_orig_size, 0,
-						 SLAB_HWCACHE_ALIGN, NULL);
-	if (!batadv_tt_orig_cache)
-		goto err_tt_tg_destroy;
+						 SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (!batadv_tt_orig_cache)
+		जाओ err_tt_tg_destroy;
 
 	batadv_tt_change_cache = kmem_cache_create("batadv_tt_change_cache",
 						   tt_change_size, 0,
-						   SLAB_HWCACHE_ALIGN, NULL);
-	if (!batadv_tt_change_cache)
-		goto err_tt_orig_destroy;
+						   SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (!batadv_tt_change_cache)
+		जाओ err_tt_orig_destroy;
 
 	batadv_tt_req_cache = kmem_cache_create("batadv_tt_req_cache",
 						tt_req_size, 0,
-						SLAB_HWCACHE_ALIGN, NULL);
-	if (!batadv_tt_req_cache)
-		goto err_tt_change_destroy;
+						SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (!batadv_tt_req_cache)
+		जाओ err_tt_change_destroy;
 
 	batadv_tt_roam_cache = kmem_cache_create("batadv_tt_roam_cache",
 						 tt_roam_size, 0,
-						 SLAB_HWCACHE_ALIGN, NULL);
-	if (!batadv_tt_roam_cache)
-		goto err_tt_req_destroy;
+						 SLAB_HWCACHE_ALIGN, शून्य);
+	अगर (!batadv_tt_roam_cache)
+		जाओ err_tt_req_destroy;
 
-	return 0;
+	वापस 0;
 
 err_tt_req_destroy:
 	kmem_cache_destroy(batadv_tt_req_cache);
-	batadv_tt_req_cache = NULL;
+	batadv_tt_req_cache = शून्य;
 err_tt_change_destroy:
 	kmem_cache_destroy(batadv_tt_change_cache);
-	batadv_tt_change_cache = NULL;
+	batadv_tt_change_cache = शून्य;
 err_tt_orig_destroy:
 	kmem_cache_destroy(batadv_tt_orig_cache);
-	batadv_tt_orig_cache = NULL;
+	batadv_tt_orig_cache = शून्य;
 err_tt_tg_destroy:
 	kmem_cache_destroy(batadv_tg_cache);
-	batadv_tg_cache = NULL;
+	batadv_tg_cache = शून्य;
 err_tt_tl_destroy:
 	kmem_cache_destroy(batadv_tl_cache);
-	batadv_tl_cache = NULL;
+	batadv_tl_cache = शून्य;
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /**
  * batadv_tt_cache_destroy() - Destroy tt memory object cache
  */
-void batadv_tt_cache_destroy(void)
-{
+व्योम batadv_tt_cache_destroy(व्योम)
+अणु
 	kmem_cache_destroy(batadv_tl_cache);
 	kmem_cache_destroy(batadv_tg_cache);
 	kmem_cache_destroy(batadv_tt_orig_cache);
 	kmem_cache_destroy(batadv_tt_change_cache);
 	kmem_cache_destroy(batadv_tt_req_cache);
 	kmem_cache_destroy(batadv_tt_roam_cache);
-}
+पूर्ण

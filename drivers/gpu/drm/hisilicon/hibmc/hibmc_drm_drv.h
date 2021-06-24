@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /* Hisilicon Hibmc SoC drm driver
  *
  * Based on the bochs drm driver.
@@ -11,58 +12,58 @@
  *	Jianhua Li <lijianhua@huawei.com>
  */
 
-#ifndef HIBMC_DRM_DRV_H
-#define HIBMC_DRM_DRV_H
+#अगर_अघोषित HIBMC_DRM_DRV_H
+#घोषणा HIBMC_DRM_DRV_H
 
-#include <linux/gpio/consumer.h>
-#include <linux/i2c-algo-bit.h>
-#include <linux/i2c.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/i2c-algo-bit.h>
+#समावेश <linux/i2c.h>
 
-#include <drm/drm_edid.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_framebuffer.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_fb_helper.h>
+#समावेश <drm/drm_framebuffer.h>
 
-struct hibmc_connector {
-	struct drm_connector base;
+काष्ठा hibmc_connector अणु
+	काष्ठा drm_connector base;
 
-	struct i2c_adapter adapter;
-	struct i2c_algo_bit_data bit_data;
-};
+	काष्ठा i2c_adapter adapter;
+	काष्ठा i2c_algo_bit_data bit_data;
+पूर्ण;
 
-struct hibmc_drm_private {
+काष्ठा hibmc_drm_निजी अणु
 	/* hw */
-	void __iomem   *mmio;
-	void __iomem   *fb_map;
-	resource_size_t  fb_base;
-	resource_size_t  fb_size;
+	व्योम __iomem   *mmio;
+	व्योम __iomem   *fb_map;
+	resource_माप_प्रकार  fb_base;
+	resource_माप_प्रकार  fb_size;
 
 	/* drm */
-	struct drm_device dev;
-	struct drm_plane primary_plane;
-	struct drm_crtc crtc;
-	struct drm_encoder encoder;
-	struct hibmc_connector connector;
-};
+	काष्ठा drm_device dev;
+	काष्ठा drm_plane primary_plane;
+	काष्ठा drm_crtc crtc;
+	काष्ठा drm_encoder encoder;
+	काष्ठा hibmc_connector connector;
+पूर्ण;
 
-static inline struct hibmc_connector *to_hibmc_connector(struct drm_connector *connector)
-{
-	return container_of(connector, struct hibmc_connector, base);
-}
+अटल अंतरभूत काष्ठा hibmc_connector *to_hibmc_connector(काष्ठा drm_connector *connector)
+अणु
+	वापस container_of(connector, काष्ठा hibmc_connector, base);
+पूर्ण
 
-static inline struct hibmc_drm_private *to_hibmc_drm_private(struct drm_device *dev)
-{
-	return container_of(dev, struct hibmc_drm_private, dev);
-}
+अटल अंतरभूत काष्ठा hibmc_drm_निजी *to_hibmc_drm_निजी(काष्ठा drm_device *dev)
+अणु
+	वापस container_of(dev, काष्ठा hibmc_drm_निजी, dev);
+पूर्ण
 
-void hibmc_set_power_mode(struct hibmc_drm_private *priv,
-			  u32 power_mode);
-void hibmc_set_current_gate(struct hibmc_drm_private *priv,
+व्योम hibmc_set_घातer_mode(काष्ठा hibmc_drm_निजी *priv,
+			  u32 घातer_mode);
+व्योम hibmc_set_current_gate(काष्ठा hibmc_drm_निजी *priv,
 			    u32 gate);
 
-int hibmc_de_init(struct hibmc_drm_private *priv);
-int hibmc_vdac_init(struct hibmc_drm_private *priv);
+पूर्णांक hibmc_de_init(काष्ठा hibmc_drm_निजी *priv);
+पूर्णांक hibmc_vdac_init(काष्ठा hibmc_drm_निजी *priv);
 
-int hibmc_mm_init(struct hibmc_drm_private *hibmc);
-int hibmc_ddc_create(struct drm_device *drm_dev, struct hibmc_connector *connector);
+पूर्णांक hibmc_mm_init(काष्ठा hibmc_drm_निजी *hibmc);
+पूर्णांक hibmc_ddc_create(काष्ठा drm_device *drm_dev, काष्ठा hibmc_connector *connector);
 
-#endif
+#पूर्ण_अगर

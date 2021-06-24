@@ -1,231 +1,232 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  *
  * Authors:
- *    Scott  Bauer      <scott.bauer@intel.com>
- *    Rafael Antognolli <rafael.antognolli@intel.com>
+ *    Scott  Bauer      <scott.bauer@पूर्णांकel.com>
+ *    Rafael Antognolli <rafael.antognolli@पूर्णांकel.com>
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":OPAL: " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":OPAL: " fmt
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/kernel.h>
-#include <linux/list.h>
-#include <linux/genhd.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <uapi/linux/sed-opal.h>
-#include <linux/sed-opal.h>
-#include <linux/string.h>
-#include <linux/kdev_t.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/list.h>
+#समावेश <linux/genhd.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <uapi/linux/sed-opal.h>
+#समावेश <linux/sed-opal.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/kdev_t.h>
 
-#include "opal_proto.h"
+#समावेश "opal_proto.h"
 
-#define IO_BUFFER_LENGTH 2048
-#define MAX_TOKS 64
+#घोषणा IO_BUFFER_LENGTH 2048
+#घोषणा MAX_TOKS 64
 
 /* Number of bytes needed by cmd_finalize. */
-#define CMD_FINALIZE_BYTES_NEEDED 7
+#घोषणा CMD_FINALIZE_BYTES_NEEDED 7
 
-struct opal_step {
-	int (*fn)(struct opal_dev *dev, void *data);
-	void *data;
-};
-typedef int (cont_fn)(struct opal_dev *dev);
+काष्ठा opal_step अणु
+	पूर्णांक (*fn)(काष्ठा opal_dev *dev, व्योम *data);
+	व्योम *data;
+पूर्ण;
+प्रकार पूर्णांक (cont_fn)(काष्ठा opal_dev *dev);
 
-enum opal_atom_width {
+क्रमागत opal_atom_width अणु
 	OPAL_WIDTH_TINY,
 	OPAL_WIDTH_SHORT,
 	OPAL_WIDTH_MEDIUM,
 	OPAL_WIDTH_LONG,
 	OPAL_WIDTH_TOKEN
-};
+पूर्ण;
 
 /*
- * On the parsed response, we don't store again the toks that are already
- * stored in the response buffer. Instead, for each token, we just store a
- * pointer to the position in the buffer where the token starts, and the size
+ * On the parsed response, we करोn't store again the toks that are alपढ़ोy
+ * stored in the response buffer. Instead, क्रम each token, we just store a
+ * poपूर्णांकer to the position in the buffer where the token starts, and the size
  * of the token in bytes.
  */
-struct opal_resp_tok {
-	const u8 *pos;
-	size_t len;
-	enum opal_response_token type;
-	enum opal_atom_width width;
-	union {
+काष्ठा opal_resp_tok अणु
+	स्थिर u8 *pos;
+	माप_प्रकार len;
+	क्रमागत opal_response_token type;
+	क्रमागत opal_atom_width width;
+	जोड़ अणु
 		u64 u;
 		s64 s;
-	} stored;
-};
+	पूर्ण stored;
+पूर्ण;
 
 /*
  * From the response header it's not possible to know how many tokens there are
  * on the payload. So we hardcode that the maximum will be MAX_TOKS, and later
- * if we start dealing with messages that have more than that, we can increase
- * this number. This is done to avoid having to make two passes through the
+ * अगर we start dealing with messages that have more than that, we can increase
+ * this number. This is करोne to aव्योम having to make two passes through the
  * response, the first one counting how many tokens we have and the second one
  * actually storing the positions.
  */
-struct parsed_resp {
-	int num;
-	struct opal_resp_tok toks[MAX_TOKS];
-};
+काष्ठा parsed_resp अणु
+	पूर्णांक num;
+	काष्ठा opal_resp_tok toks[MAX_TOKS];
+पूर्ण;
 
-struct opal_dev {
+काष्ठा opal_dev अणु
 	bool supported;
 	bool mbr_enabled;
 
-	void *data;
+	व्योम *data;
 	sec_send_recv *send_recv;
 
-	struct mutex dev_lock;
+	काष्ठा mutex dev_lock;
 	u16 comid;
 	u32 hsn;
 	u32 tsn;
 	u64 align;
 	u64 lowest_lba;
 
-	size_t pos;
+	माप_प्रकार pos;
 	u8 cmd[IO_BUFFER_LENGTH];
 	u8 resp[IO_BUFFER_LENGTH];
 
-	struct parsed_resp parsed;
-	size_t prev_d_len;
-	void *prev_data;
+	काष्ठा parsed_resp parsed;
+	माप_प्रकार prev_d_len;
+	व्योम *prev_data;
 
-	struct list_head unlk_lst;
-};
+	काष्ठा list_head unlk_lst;
+पूर्ण;
 
 
-static const u8 opaluid[][OPAL_UID_LENGTH] = {
+अटल स्थिर u8 opaluid[][OPAL_UID_LENGTH] = अणु
 	/* users */
 	[OPAL_SMUID_UID] =
-		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff },
+		अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff पूर्ण,
 	[OPAL_THISSP_UID] =
-		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 पूर्ण,
 	[OPAL_ADMINSP_UID] =
-		{ 0x00, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x01 पूर्ण,
 	[OPAL_LOCKINGSP_UID] =
-		{ 0x00, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x02 },
+		अणु 0x00, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x02 पूर्ण,
 	[OPAL_ENTERPRISE_LOCKINGSP_UID] =
-		{ 0x00, 0x00, 0x02, 0x05, 0x00, 0x01, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x02, 0x05, 0x00, 0x01, 0x00, 0x01 पूर्ण,
 	[OPAL_ANYBODY_UID] =
-		{ 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x01 पूर्ण,
 	[OPAL_SID_UID] =
-		{ 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x06 },
+		अणु 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x06 पूर्ण,
 	[OPAL_ADMIN1_UID] =
-		{ 0x00, 0x00, 0x00, 0x09, 0x00, 0x01, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x09, 0x00, 0x01, 0x00, 0x01 पूर्ण,
 	[OPAL_USER1_UID] =
-		{ 0x00, 0x00, 0x00, 0x09, 0x00, 0x03, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x09, 0x00, 0x03, 0x00, 0x01 पूर्ण,
 	[OPAL_USER2_UID] =
-		{ 0x00, 0x00, 0x00, 0x09, 0x00, 0x03, 0x00, 0x02 },
+		अणु 0x00, 0x00, 0x00, 0x09, 0x00, 0x03, 0x00, 0x02 पूर्ण,
 	[OPAL_PSID_UID] =
-		{ 0x00, 0x00, 0x00, 0x09, 0x00, 0x01, 0xff, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x09, 0x00, 0x01, 0xff, 0x01 पूर्ण,
 	[OPAL_ENTERPRISE_BANDMASTER0_UID] =
-		{ 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x80, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x80, 0x01 पूर्ण,
 	[OPAL_ENTERPRISE_ERASEMASTER_UID] =
-		{ 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x84, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x84, 0x01 पूर्ण,
 
 	/* tables */
 	[OPAL_TABLE_TABLE] =
-		{ 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01 पूर्ण,
 	[OPAL_LOCKINGRANGE_GLOBAL] =
-		{ 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x08, 0x02, 0x00, 0x00, 0x00, 0x01 पूर्ण,
 	[OPAL_LOCKINGRANGE_ACE_RDLOCKED] =
-		{ 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0xE0, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0xE0, 0x01 पूर्ण,
 	[OPAL_LOCKINGRANGE_ACE_WRLOCKED] =
-		{ 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0xE8, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0xE8, 0x01 पूर्ण,
 	[OPAL_MBRCONTROL] =
-		{ 0x00, 0x00, 0x08, 0x03, 0x00, 0x00, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x08, 0x03, 0x00, 0x00, 0x00, 0x01 पूर्ण,
 	[OPAL_MBR] =
-		{ 0x00, 0x00, 0x08, 0x04, 0x00, 0x00, 0x00, 0x00 },
+		अणु 0x00, 0x00, 0x08, 0x04, 0x00, 0x00, 0x00, 0x00 पूर्ण,
 	[OPAL_AUTHORITY_TABLE] =
-		{ 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00},
+		अणु 0x00, 0x00, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00पूर्ण,
 	[OPAL_C_PIN_TABLE] =
-		{ 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0x00},
+		अणु 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0x00पूर्ण,
 	[OPAL_LOCKING_INFO_TABLE] =
-		{ 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x01 },
+		अणु 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x01 पूर्ण,
 	[OPAL_ENTERPRISE_LOCKING_INFO_TABLE] =
-		{ 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x00 },
+		अणु 0x00, 0x00, 0x08, 0x01, 0x00, 0x00, 0x00, 0x00 पूर्ण,
 	[OPAL_DATASTORE] =
-		{ 0x00, 0x00, 0x10, 0x01, 0x00, 0x00, 0x00, 0x00 },
+		अणु 0x00, 0x00, 0x10, 0x01, 0x00, 0x00, 0x00, 0x00 पूर्ण,
 
 	/* C_PIN_TABLE object ID's */
 	[OPAL_C_PIN_MSID] =
-		{ 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x84, 0x02},
+		अणु 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x84, 0x02पूर्ण,
 	[OPAL_C_PIN_SID] =
-		{ 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0x01},
+		अणु 0x00, 0x00, 0x00, 0x0B, 0x00, 0x00, 0x00, 0x01पूर्ण,
 	[OPAL_C_PIN_ADMIN1] =
-		{ 0x00, 0x00, 0x00, 0x0B, 0x00, 0x01, 0x00, 0x01},
+		अणु 0x00, 0x00, 0x00, 0x0B, 0x00, 0x01, 0x00, 0x01पूर्ण,
 
 	/* half UID's (only first 4 bytes used) */
 	[OPAL_HALF_UID_AUTHORITY_OBJ_REF] =
-		{ 0x00, 0x00, 0x0C, 0x05, 0xff, 0xff, 0xff, 0xff },
+		अणु 0x00, 0x00, 0x0C, 0x05, 0xff, 0xff, 0xff, 0xff पूर्ण,
 	[OPAL_HALF_UID_BOOLEAN_ACE] =
-		{ 0x00, 0x00, 0x04, 0x0E, 0xff, 0xff, 0xff, 0xff },
+		अणु 0x00, 0x00, 0x04, 0x0E, 0xff, 0xff, 0xff, 0xff पूर्ण,
 
-	/* special value for omitted optional parameter */
+	/* special value क्रम omitted optional parameter */
 	[OPAL_UID_HEXFF] =
-		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-};
+		अणु 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण,
+पूर्ण;
 
 /*
  * TCG Storage SSC Methods.
  * Derived from: TCG_Storage_Architecture_Core_Spec_v2.01_r1.00
- * Section: 6.3 Assigned UIDs
+ * Section: 6.3 Asचिन्हित UIDs
  */
-static const u8 opalmethod[][OPAL_METHOD_LENGTH] = {
+अटल स्थिर u8 opalmethod[][OPAL_METHOD_LENGTH] = अणु
 	[OPAL_PROPERTIES] =
-		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x01 पूर्ण,
 	[OPAL_STARTSESSION] =
-		{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x02 },
+		अणु 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x02 पूर्ण,
 	[OPAL_REVERT] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x02, 0x02 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x02, 0x02 पूर्ण,
 	[OPAL_ACTIVATE] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x02, 0x03 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x02, 0x03 पूर्ण,
 	[OPAL_EGET] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x06 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x06 पूर्ण,
 	[OPAL_ESET] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x07 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x07 पूर्ण,
 	[OPAL_NEXT] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x08 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x08 पूर्ण,
 	[OPAL_EAUTHENTICATE] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x0c },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x0c पूर्ण,
 	[OPAL_GETACL] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x0d },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x0d पूर्ण,
 	[OPAL_GENKEY] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x10 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x10 पूर्ण,
 	[OPAL_REVERTSP] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x11 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x11 पूर्ण,
 	[OPAL_GET] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x16 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x16 पूर्ण,
 	[OPAL_SET] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x17 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x17 पूर्ण,
 	[OPAL_AUTHENTICATE] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x1c },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x00, 0x1c पूर्ण,
 	[OPAL_RANDOM] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x06, 0x01 },
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x06, 0x01 पूर्ण,
 	[OPAL_ERASE] =
-		{ 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x08, 0x03 },
-};
+		अणु 0x00, 0x00, 0x00, 0x06, 0x00, 0x00, 0x08, 0x03 पूर्ण,
+पूर्ण;
 
-static int end_opal_session_error(struct opal_dev *dev);
-static int opal_discovery0_step(struct opal_dev *dev);
+अटल पूर्णांक end_opal_session_error(काष्ठा opal_dev *dev);
+अटल पूर्णांक opal_discovery0_step(काष्ठा opal_dev *dev);
 
-struct opal_suspend_data {
-	struct opal_lock_unlock unlk;
+काष्ठा opal_suspend_data अणु
+	काष्ठा opal_lock_unlock unlk;
 	u8 lr;
-	struct list_head node;
-};
+	काष्ठा list_head node;
+पूर्ण;
 
 /*
  * Derived from:
  * TCG_Storage_Architecture_Core_Spec_v2.01_r1.00
  * Section: 5.1.5 Method Status Codes
  */
-static const char * const opal_errors[] = {
+अटल स्थिर अक्षर * स्थिर opal_errors[] = अणु
 	"Success",
 	"Not Authorized",
 	"Unknown Error",
@@ -245,322 +246,322 @@ static const char * const opal_errors[] = {
 	"Transaction Failure",
 	"Response Overflow",
 	"Authority Locked Out",
-};
+पूर्ण;
 
-static const char *opal_error_to_human(int error)
-{
-	if (error == 0x3f)
-		return "Failed";
+अटल स्थिर अक्षर *opal_error_to_human(पूर्णांक error)
+अणु
+	अगर (error == 0x3f)
+		वापस "Failed";
 
-	if (error >= ARRAY_SIZE(opal_errors) || error < 0)
-		return "Unknown Error";
+	अगर (error >= ARRAY_SIZE(opal_errors) || error < 0)
+		वापस "Unknown Error";
 
-	return opal_errors[error];
-}
+	वापस opal_errors[error];
+पूर्ण
 
-static void print_buffer(const u8 *ptr, u32 length)
-{
-#ifdef DEBUG
-	print_hex_dump_bytes("OPAL: ", DUMP_PREFIX_OFFSET, ptr, length);
+अटल व्योम prपूर्णांक_buffer(स्थिर u8 *ptr, u32 length)
+अणु
+#अगर_घोषित DEBUG
+	prपूर्णांक_hex_dump_bytes("OPAL: ", DUMP_PREFIX_OFFSET, ptr, length);
 	pr_debug("\n");
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static bool check_tper(const void *data)
-{
-	const struct d0_tper_features *tper = data;
+अटल bool check_tper(स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा d0_tper_features *tper = data;
 	u8 flags = tper->supported_features;
 
-	if (!(flags & TPER_SYNC_SUPPORTED)) {
+	अगर (!(flags & TPER_SYNC_SUPPORTED)) अणु
 		pr_debug("TPer sync not supported. flags = %d\n",
 			 tper->supported_features);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool check_mbrenabled(const void *data)
-{
-	const struct d0_locking_features *lfeat = data;
+अटल bool check_mbrenabled(स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा d0_locking_features *lfeat = data;
 	u8 sup_feat = lfeat->supported_features;
 
-	return !!(sup_feat & MBR_ENABLED_MASK);
-}
+	वापस !!(sup_feat & MBR_ENABLED_MASK);
+पूर्ण
 
-static bool check_sum(const void *data)
-{
-	const struct d0_single_user_mode *sum = data;
+अटल bool check_sum(स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा d0_single_user_mode *sum = data;
 	u32 nlo = be32_to_cpu(sum->num_locking_objects);
 
-	if (nlo == 0) {
+	अगर (nlo == 0) अणु
 		pr_debug("Need at least one locking object.\n");
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	pr_debug("Number of locking objects: %d\n", nlo);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static u16 get_comid_v100(const void *data)
-{
-	const struct d0_opal_v100 *v100 = data;
+अटल u16 get_comid_v100(स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा d0_opal_v100 *v100 = data;
 
-	return be16_to_cpu(v100->baseComID);
-}
+	वापस be16_to_cpu(v100->baseComID);
+पूर्ण
 
-static u16 get_comid_v200(const void *data)
-{
-	const struct d0_opal_v200 *v200 = data;
+अटल u16 get_comid_v200(स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा d0_opal_v200 *v200 = data;
 
-	return be16_to_cpu(v200->baseComID);
-}
+	वापस be16_to_cpu(v200->baseComID);
+पूर्ण
 
-static int opal_send_cmd(struct opal_dev *dev)
-{
-	return dev->send_recv(dev->data, dev->comid, TCG_SECP_01,
+अटल पूर्णांक opal_send_cmd(काष्ठा opal_dev *dev)
+अणु
+	वापस dev->send_recv(dev->data, dev->comid, TCG_SECP_01,
 			      dev->cmd, IO_BUFFER_LENGTH,
 			      true);
-}
+पूर्ण
 
-static int opal_recv_cmd(struct opal_dev *dev)
-{
-	return dev->send_recv(dev->data, dev->comid, TCG_SECP_01,
+अटल पूर्णांक opal_recv_cmd(काष्ठा opal_dev *dev)
+अणु
+	वापस dev->send_recv(dev->data, dev->comid, TCG_SECP_01,
 			      dev->resp, IO_BUFFER_LENGTH,
 			      false);
-}
+पूर्ण
 
-static int opal_recv_check(struct opal_dev *dev)
-{
-	size_t buflen = IO_BUFFER_LENGTH;
-	void *buffer = dev->resp;
-	struct opal_header *hdr = buffer;
-	int ret;
+अटल पूर्णांक opal_recv_check(काष्ठा opal_dev *dev)
+अणु
+	माप_प्रकार buflen = IO_BUFFER_LENGTH;
+	व्योम *buffer = dev->resp;
+	काष्ठा opal_header *hdr = buffer;
+	पूर्णांक ret;
 
-	do {
+	करो अणु
 		pr_debug("Sent OPAL command: outstanding=%d, minTransfer=%d\n",
 			 hdr->cp.outstandingData,
 			 hdr->cp.minTransfer);
 
-		if (hdr->cp.outstandingData == 0 ||
+		अगर (hdr->cp.outstandingData == 0 ||
 		    hdr->cp.minTransfer != 0)
-			return 0;
+			वापस 0;
 
-		memset(buffer, 0, buflen);
+		स_रखो(buffer, 0, buflen);
 		ret = opal_recv_cmd(dev);
-	} while (!ret);
+	पूर्ण जबतक (!ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_send_recv(struct opal_dev *dev, cont_fn *cont)
-{
-	int ret;
+अटल पूर्णांक opal_send_recv(काष्ठा opal_dev *dev, cont_fn *cont)
+अणु
+	पूर्णांक ret;
 
 	ret = opal_send_cmd(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = opal_recv_cmd(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	ret = opal_recv_check(dev);
-	if (ret)
-		return ret;
-	return cont(dev);
-}
+	अगर (ret)
+		वापस ret;
+	वापस cont(dev);
+पूर्ण
 
-static void check_geometry(struct opal_dev *dev, const void *data)
-{
-	const struct d0_geometry_features *geo = data;
+अटल व्योम check_geometry(काष्ठा opal_dev *dev, स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा d0_geometry_features *geo = data;
 
 	dev->align = be64_to_cpu(geo->alignment_granularity);
 	dev->lowest_lba = be64_to_cpu(geo->lowest_aligned_lba);
-}
+पूर्ण
 
-static int execute_step(struct opal_dev *dev,
-			const struct opal_step *step, size_t stepIndex)
-{
-	int error = step->fn(dev, step->data);
+अटल पूर्णांक execute_step(काष्ठा opal_dev *dev,
+			स्थिर काष्ठा opal_step *step, माप_प्रकार stepIndex)
+अणु
+	पूर्णांक error = step->fn(dev, step->data);
 
-	if (error) {
+	अगर (error) अणु
 		pr_debug("Step %zu (%pS) failed with error %d: %s\n",
 			 stepIndex, step->fn, error,
 			 opal_error_to_human(error));
-	}
+	पूर्ण
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int execute_steps(struct opal_dev *dev,
-			 const struct opal_step *steps, size_t n_steps)
-{
-	size_t state = 0;
-	int error;
+अटल पूर्णांक execute_steps(काष्ठा opal_dev *dev,
+			 स्थिर काष्ठा opal_step *steps, माप_प्रकार n_steps)
+अणु
+	माप_प्रकार state = 0;
+	पूर्णांक error;
 
-	/* first do a discovery0 */
+	/* first करो a discovery0 */
 	error = opal_discovery0_step(dev);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
-	for (state = 0; state < n_steps; state++) {
+	क्रम (state = 0; state < n_steps; state++) अणु
 		error = execute_step(dev, &steps[state], state);
-		if (error)
-			goto out_error;
-	}
+		अगर (error)
+			जाओ out_error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out_error:
 	/*
 	 * For each OPAL command the first step in steps starts some sort of
-	 * session. If an error occurred in the initial discovery0 or if an
+	 * session. If an error occurred in the initial discovery0 or अगर an
 	 * error occurred in the first step (and thus stopping the loop with
-	 * state == 0) then there was an error before or during the attempt to
-	 * start a session. Therefore we shouldn't attempt to terminate a
+	 * state == 0) then there was an error beक्रमe or during the attempt to
+	 * start a session. Thereक्रमe we shouldn't attempt to terminate a
 	 * session, as one has not yet been created.
 	 */
-	if (state > 0)
+	अगर (state > 0)
 		end_opal_session_error(dev);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int opal_discovery0_end(struct opal_dev *dev)
-{
+अटल पूर्णांक opal_discovery0_end(काष्ठा opal_dev *dev)
+अणु
 	bool found_com_id = false, supported = true, single_user = false;
-	const struct d0_header *hdr = (struct d0_header *)dev->resp;
-	const u8 *epos = dev->resp, *cpos = dev->resp;
+	स्थिर काष्ठा d0_header *hdr = (काष्ठा d0_header *)dev->resp;
+	स्थिर u8 *epos = dev->resp, *cpos = dev->resp;
 	u16 comid = 0;
 	u32 hlen = be32_to_cpu(hdr->length);
 
-	print_buffer(dev->resp, hlen);
+	prपूर्णांक_buffer(dev->resp, hlen);
 	dev->mbr_enabled = false;
 
-	if (hlen > IO_BUFFER_LENGTH - sizeof(*hdr)) {
+	अगर (hlen > IO_BUFFER_LENGTH - माप(*hdr)) अणु
 		pr_debug("Discovery length overflows buffer (%zu+%u)/%u\n",
-			 sizeof(*hdr), hlen, IO_BUFFER_LENGTH);
-		return -EFAULT;
-	}
+			 माप(*hdr), hlen, IO_BUFFER_LENGTH);
+		वापस -EFAULT;
+	पूर्ण
 
 	epos += hlen; /* end of buffer */
-	cpos += sizeof(*hdr); /* current position on buffer */
+	cpos += माप(*hdr); /* current position on buffer */
 
-	while (cpos < epos && supported) {
-		const struct d0_features *body =
-			(const struct d0_features *)cpos;
+	जबतक (cpos < epos && supported) अणु
+		स्थिर काष्ठा d0_features *body =
+			(स्थिर काष्ठा d0_features *)cpos;
 
-		switch (be16_to_cpu(body->code)) {
-		case FC_TPER:
+		चयन (be16_to_cpu(body->code)) अणु
+		हाल FC_TPER:
 			supported = check_tper(body->features);
-			break;
-		case FC_SINGLEUSER:
+			अवरोध;
+		हाल FC_SINGLEUSER:
 			single_user = check_sum(body->features);
-			break;
-		case FC_GEOMETRY:
+			अवरोध;
+		हाल FC_GEOMETRY:
 			check_geometry(dev, body);
-			break;
-		case FC_LOCKING:
+			अवरोध;
+		हाल FC_LOCKING:
 			dev->mbr_enabled = check_mbrenabled(body->features);
-			break;
-		case FC_ENTERPRISE:
-		case FC_DATASTORE:
+			अवरोध;
+		हाल FC_ENTERPRISE:
+		हाल FC_DATASTORE:
 			/* some ignored properties */
 			pr_debug("Found OPAL feature description: %d\n",
 				 be16_to_cpu(body->code));
-			break;
-		case FC_OPALV100:
+			अवरोध;
+		हाल FC_OPALV100:
 			comid = get_comid_v100(body->features);
 			found_com_id = true;
-			break;
-		case FC_OPALV200:
+			अवरोध;
+		हाल FC_OPALV200:
 			comid = get_comid_v200(body->features);
 			found_com_id = true;
-			break;
-		case 0xbfff ... 0xffff:
-			/* vendor specific, just ignore */
-			break;
-		default:
+			अवरोध;
+		हाल 0xbfff ... 0xffff:
+			/* venकरोr specअगरic, just ignore */
+			अवरोध;
+		शेष:
 			pr_debug("OPAL Unknown feature: %d\n",
 				 be16_to_cpu(body->code));
 
-		}
+		पूर्ण
 		cpos += body->length + 4;
-	}
+	पूर्ण
 
-	if (!supported) {
+	अगर (!supported) अणु
 		pr_debug("This device is not Opal enabled. Not Supported!\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!single_user)
+	अगर (!single_user)
 		pr_debug("Device doesn't support single user mode\n");
 
 
-	if (!found_com_id) {
+	अगर (!found_com_id) अणु
 		pr_debug("Could not find OPAL comid for device. Returning early\n");
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	dev->comid = comid;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int opal_discovery0(struct opal_dev *dev, void *data)
-{
-	int ret;
+अटल पूर्णांक opal_discovery0(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	पूर्णांक ret;
 
-	memset(dev->resp, 0, IO_BUFFER_LENGTH);
+	स_रखो(dev->resp, 0, IO_BUFFER_LENGTH);
 	dev->comid = OPAL_DISCOVERY_COMID;
 	ret = opal_recv_cmd(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return opal_discovery0_end(dev);
-}
+	वापस opal_discovery0_end(dev);
+पूर्ण
 
-static int opal_discovery0_step(struct opal_dev *dev)
-{
-	const struct opal_step discovery0_step = {
+अटल पूर्णांक opal_discovery0_step(काष्ठा opal_dev *dev)
+अणु
+	स्थिर काष्ठा opal_step discovery0_step = अणु
 		opal_discovery0,
-	};
+	पूर्ण;
 
-	return execute_step(dev, &discovery0_step, 0);
-}
+	वापस execute_step(dev, &discovery0_step, 0);
+पूर्ण
 
-static size_t remaining_size(struct opal_dev *cmd)
-{
-	return IO_BUFFER_LENGTH - cmd->pos;
-}
+अटल माप_प्रकार reमुख्यing_size(काष्ठा opal_dev *cmd)
+अणु
+	वापस IO_BUFFER_LENGTH - cmd->pos;
+पूर्ण
 
-static bool can_add(int *err, struct opal_dev *cmd, size_t len)
-{
-	if (*err)
-		return false;
+अटल bool can_add(पूर्णांक *err, काष्ठा opal_dev *cmd, माप_प्रकार len)
+अणु
+	अगर (*err)
+		वापस false;
 
-	if (remaining_size(cmd) < len) {
+	अगर (reमुख्यing_size(cmd) < len) अणु
 		pr_debug("Error adding %zu bytes: end of buffer.\n", len);
-		*err = -ERANGE;
-		return false;
-	}
+		*err = -दुस्फल;
+		वापस false;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void add_token_u8(int *err, struct opal_dev *cmd, u8 tok)
-{
-	if (!can_add(err, cmd, 1))
-		return;
+अटल व्योम add_token_u8(पूर्णांक *err, काष्ठा opal_dev *cmd, u8 tok)
+अणु
+	अगर (!can_add(err, cmd, 1))
+		वापस;
 
 	cmd->cmd[cmd->pos++] = tok;
-}
+पूर्ण
 
-static void add_short_atom_header(struct opal_dev *cmd, bool bytestring,
-				  bool has_sign, int len)
-{
+अटल व्योम add_लघु_atom_header(काष्ठा opal_dev *cmd, bool bytestring,
+				  bool has_sign, पूर्णांक len)
+अणु
 	u8 atom;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	atom = SHORT_ATOM_ID;
 	atom |= bytestring ? SHORT_ATOM_BYTESTRING : 0;
@@ -568,11 +569,11 @@ static void add_short_atom_header(struct opal_dev *cmd, bool bytestring,
 	atom |= len & SHORT_ATOM_LEN_MASK;
 
 	add_token_u8(&err, cmd, atom);
-}
+पूर्ण
 
-static void add_medium_atom_header(struct opal_dev *cmd, bool bytestring,
-				   bool has_sign, int len)
-{
+अटल व्योम add_medium_atom_header(काष्ठा opal_dev *cmd, bool bytestring,
+				   bool has_sign, पूर्णांक len)
+अणु
 	u8 header0;
 
 	header0 = MEDIUM_ATOM_ID;
@@ -582,114 +583,114 @@ static void add_medium_atom_header(struct opal_dev *cmd, bool bytestring,
 
 	cmd->cmd[cmd->pos++] = header0;
 	cmd->cmd[cmd->pos++] = len;
-}
+पूर्ण
 
-static void add_token_u64(int *err, struct opal_dev *cmd, u64 number)
-{
-	size_t len;
-	int msb;
+अटल व्योम add_token_u64(पूर्णांक *err, काष्ठा opal_dev *cmd, u64 number)
+अणु
+	माप_प्रकार len;
+	पूर्णांक msb;
 
-	if (!(number & ~TINY_ATOM_DATA_MASK)) {
+	अगर (!(number & ~TINY_ATOM_DATA_MASK)) अणु
 		add_token_u8(err, cmd, number);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	msb = fls64(number);
 	len = DIV_ROUND_UP(msb, 8);
 
-	if (!can_add(err, cmd, len + 1)) {
+	अगर (!can_add(err, cmd, len + 1)) अणु
 		pr_debug("Error adding u64: end of buffer.\n");
-		return;
-	}
-	add_short_atom_header(cmd, false, false, len);
-	while (len--)
+		वापस;
+	पूर्ण
+	add_लघु_atom_header(cmd, false, false, len);
+	जबतक (len--)
 		add_token_u8(err, cmd, number >> (len * 8));
-}
+पूर्ण
 
-static u8 *add_bytestring_header(int *err, struct opal_dev *cmd, size_t len)
-{
-	size_t header_len = 1;
-	bool is_short_atom = true;
+अटल u8 *add_bytestring_header(पूर्णांक *err, काष्ठा opal_dev *cmd, माप_प्रकार len)
+अणु
+	माप_प्रकार header_len = 1;
+	bool is_लघु_atom = true;
 
-	if (len & ~SHORT_ATOM_LEN_MASK) {
+	अगर (len & ~SHORT_ATOM_LEN_MASK) अणु
 		header_len = 2;
-		is_short_atom = false;
-	}
+		is_लघु_atom = false;
+	पूर्ण
 
-	if (!can_add(err, cmd, header_len + len)) {
+	अगर (!can_add(err, cmd, header_len + len)) अणु
 		pr_debug("Error adding bytestring: end of buffer.\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (is_short_atom)
-		add_short_atom_header(cmd, true, false, len);
-	else
+	अगर (is_लघु_atom)
+		add_लघु_atom_header(cmd, true, false, len);
+	अन्यथा
 		add_medium_atom_header(cmd, true, false, len);
 
-	return &cmd->cmd[cmd->pos];
-}
+	वापस &cmd->cmd[cmd->pos];
+पूर्ण
 
-static void add_token_bytestring(int *err, struct opal_dev *cmd,
-				 const u8 *bytestring, size_t len)
-{
+अटल व्योम add_token_bytestring(पूर्णांक *err, काष्ठा opal_dev *cmd,
+				 स्थिर u8 *bytestring, माप_प्रकार len)
+अणु
 	u8 *start;
 
 	start = add_bytestring_header(err, cmd, len);
-	if (!start)
-		return;
-	memcpy(start, bytestring, len);
+	अगर (!start)
+		वापस;
+	स_नकल(start, bytestring, len);
 	cmd->pos += len;
-}
+पूर्ण
 
-static int build_locking_range(u8 *buffer, size_t length, u8 lr)
-{
-	if (length > OPAL_UID_LENGTH) {
+अटल पूर्णांक build_locking_range(u8 *buffer, माप_प्रकार length, u8 lr)
+अणु
+	अगर (length > OPAL_UID_LENGTH) अणु
 		pr_debug("Can't build locking range. Length OOB\n");
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
-	memcpy(buffer, opaluid[OPAL_LOCKINGRANGE_GLOBAL], OPAL_UID_LENGTH);
+	स_नकल(buffer, opaluid[OPAL_LOCKINGRANGE_GLOBAL], OPAL_UID_LENGTH);
 
-	if (lr == 0)
-		return 0;
+	अगर (lr == 0)
+		वापस 0;
 
 	buffer[5] = LOCKING_RANGE_NON_GLOBAL;
 	buffer[7] = lr;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int build_locking_user(u8 *buffer, size_t length, u8 lr)
-{
-	if (length > OPAL_UID_LENGTH) {
+अटल पूर्णांक build_locking_user(u8 *buffer, माप_प्रकार length, u8 lr)
+अणु
+	अगर (length > OPAL_UID_LENGTH) अणु
 		pr_debug("Can't build locking range user. Length OOB\n");
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
-	memcpy(buffer, opaluid[OPAL_USER1_UID], OPAL_UID_LENGTH);
+	स_नकल(buffer, opaluid[OPAL_USER1_UID], OPAL_UID_LENGTH);
 
 	buffer[7] = lr + 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void set_comid(struct opal_dev *cmd, u16 comid)
-{
-	struct opal_header *hdr = (struct opal_header *)cmd->cmd;
+अटल व्योम set_comid(काष्ठा opal_dev *cmd, u16 comid)
+अणु
+	काष्ठा opal_header *hdr = (काष्ठा opal_header *)cmd->cmd;
 
 	hdr->cp.extendedComID[0] = comid >> 8;
 	hdr->cp.extendedComID[1] = comid;
 	hdr->cp.extendedComID[2] = 0;
 	hdr->cp.extendedComID[3] = 0;
-}
+पूर्ण
 
-static int cmd_finalize(struct opal_dev *cmd, u32 hsn, u32 tsn)
-{
-	struct opal_header *hdr;
-	int err = 0;
+अटल पूर्णांक cmd_finalize(काष्ठा opal_dev *cmd, u32 hsn, u32 tsn)
+अणु
+	काष्ठा opal_header *hdr;
+	पूर्णांक err = 0;
 
 	/*
-	 * Close the parameter list opened from cmd_start.
+	 * Close the parameter list खोलोed from cmd_start.
 	 * The number of bytes added must be equal to
 	 * CMD_FINALIZE_BYTES_NEEDED.
 	 */
@@ -702,169 +703,169 @@ static int cmd_finalize(struct opal_dev *cmd, u32 hsn, u32 tsn)
 	add_token_u8(&err, cmd, 0);
 	add_token_u8(&err, cmd, OPAL_ENDLIST);
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error finalizing command.\n");
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
-	hdr = (struct opal_header *) cmd->cmd;
+	hdr = (काष्ठा opal_header *) cmd->cmd;
 
 	hdr->pkt.tsn = cpu_to_be32(tsn);
 	hdr->pkt.hsn = cpu_to_be32(hsn);
 
-	hdr->subpkt.length = cpu_to_be32(cmd->pos - sizeof(*hdr));
-	while (cmd->pos % 4) {
-		if (cmd->pos >= IO_BUFFER_LENGTH) {
+	hdr->subpkt.length = cpu_to_be32(cmd->pos - माप(*hdr));
+	जबतक (cmd->pos % 4) अणु
+		अगर (cmd->pos >= IO_BUFFER_LENGTH) अणु
 			pr_debug("Error: Buffer overrun\n");
-			return -ERANGE;
-		}
+			वापस -दुस्फल;
+		पूर्ण
 		cmd->cmd[cmd->pos++] = 0;
-	}
-	hdr->pkt.length = cpu_to_be32(cmd->pos - sizeof(hdr->cp) -
-				      sizeof(hdr->pkt));
-	hdr->cp.length = cpu_to_be32(cmd->pos - sizeof(hdr->cp));
+	पूर्ण
+	hdr->pkt.length = cpu_to_be32(cmd->pos - माप(hdr->cp) -
+				      माप(hdr->pkt));
+	hdr->cp.length = cpu_to_be32(cmd->pos - माप(hdr->cp));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct opal_resp_tok *response_get_token(
-				const struct parsed_resp *resp,
-				int n)
-{
-	const struct opal_resp_tok *tok;
+अटल स्थिर काष्ठा opal_resp_tok *response_get_token(
+				स्थिर काष्ठा parsed_resp *resp,
+				पूर्णांक n)
+अणु
+	स्थिर काष्ठा opal_resp_tok *tok;
 
-	if (!resp) {
+	अगर (!resp) अणु
 		pr_debug("Response is NULL\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	if (n >= resp->num) {
+	अगर (n >= resp->num) अणु
 		pr_debug("Token number doesn't exist: %d, resp: %d\n",
 			 n, resp->num);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	tok = &resp->toks[n];
-	if (tok->len == 0) {
+	अगर (tok->len == 0) अणु
 		pr_debug("Token length must be non-zero\n");
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	return tok;
-}
+	वापस tok;
+पूर्ण
 
-static ssize_t response_parse_tiny(struct opal_resp_tok *tok,
-				   const u8 *pos)
-{
+अटल sमाप_प्रकार response_parse_tiny(काष्ठा opal_resp_tok *tok,
+				   स्थिर u8 *pos)
+अणु
 	tok->pos = pos;
 	tok->len = 1;
 	tok->width = OPAL_WIDTH_TINY;
 
-	if (pos[0] & TINY_ATOM_SIGNED) {
+	अगर (pos[0] & TINY_ATOM_SIGNED) अणु
 		tok->type = OPAL_DTA_TOKENID_SINT;
-	} else {
+	पूर्ण अन्यथा अणु
 		tok->type = OPAL_DTA_TOKENID_UINT;
 		tok->stored.u = pos[0] & 0x3f;
-	}
+	पूर्ण
 
-	return tok->len;
-}
+	वापस tok->len;
+पूर्ण
 
-static ssize_t response_parse_short(struct opal_resp_tok *tok,
-				    const u8 *pos)
-{
+अटल sमाप_प्रकार response_parse_लघु(काष्ठा opal_resp_tok *tok,
+				    स्थिर u8 *pos)
+अणु
 	tok->pos = pos;
 	tok->len = (pos[0] & SHORT_ATOM_LEN_MASK) + 1;
 	tok->width = OPAL_WIDTH_SHORT;
 
-	if (pos[0] & SHORT_ATOM_BYTESTRING) {
+	अगर (pos[0] & SHORT_ATOM_BYTESTRING) अणु
 		tok->type = OPAL_DTA_TOKENID_BYTESTRING;
-	} else if (pos[0] & SHORT_ATOM_SIGNED) {
+	पूर्ण अन्यथा अगर (pos[0] & SHORT_ATOM_SIGNED) अणु
 		tok->type = OPAL_DTA_TOKENID_SINT;
-	} else {
-		u64 u_integer = 0;
-		ssize_t i, b = 0;
+	पूर्ण अन्यथा अणु
+		u64 u_पूर्णांकeger = 0;
+		sमाप_प्रकार i, b = 0;
 
 		tok->type = OPAL_DTA_TOKENID_UINT;
-		if (tok->len > 9) {
+		अगर (tok->len > 9) अणु
 			pr_debug("uint64 with more than 8 bytes\n");
-			return -EINVAL;
-		}
-		for (i = tok->len - 1; i > 0; i--) {
-			u_integer |= ((u64)pos[i] << (8 * b));
+			वापस -EINVAL;
+		पूर्ण
+		क्रम (i = tok->len - 1; i > 0; i--) अणु
+			u_पूर्णांकeger |= ((u64)pos[i] << (8 * b));
 			b++;
-		}
-		tok->stored.u = u_integer;
-	}
+		पूर्ण
+		tok->stored.u = u_पूर्णांकeger;
+	पूर्ण
 
-	return tok->len;
-}
+	वापस tok->len;
+पूर्ण
 
-static ssize_t response_parse_medium(struct opal_resp_tok *tok,
-				     const u8 *pos)
-{
+अटल sमाप_प्रकार response_parse_medium(काष्ठा opal_resp_tok *tok,
+				     स्थिर u8 *pos)
+अणु
 	tok->pos = pos;
 	tok->len = (((pos[0] & MEDIUM_ATOM_LEN_MASK) << 8) | pos[1]) + 2;
 	tok->width = OPAL_WIDTH_MEDIUM;
 
-	if (pos[0] & MEDIUM_ATOM_BYTESTRING)
+	अगर (pos[0] & MEDIUM_ATOM_BYTESTRING)
 		tok->type = OPAL_DTA_TOKENID_BYTESTRING;
-	else if (pos[0] & MEDIUM_ATOM_SIGNED)
+	अन्यथा अगर (pos[0] & MEDIUM_ATOM_SIGNED)
 		tok->type = OPAL_DTA_TOKENID_SINT;
-	else
+	अन्यथा
 		tok->type = OPAL_DTA_TOKENID_UINT;
 
-	return tok->len;
-}
+	वापस tok->len;
+पूर्ण
 
-static ssize_t response_parse_long(struct opal_resp_tok *tok,
-				   const u8 *pos)
-{
+अटल sमाप_प्रकार response_parse_दीर्घ(काष्ठा opal_resp_tok *tok,
+				   स्थिर u8 *pos)
+अणु
 	tok->pos = pos;
 	tok->len = ((pos[1] << 16) | (pos[2] << 8) | pos[3]) + 4;
 	tok->width = OPAL_WIDTH_LONG;
 
-	if (pos[0] & LONG_ATOM_BYTESTRING)
+	अगर (pos[0] & LONG_ATOM_BYTESTRING)
 		tok->type = OPAL_DTA_TOKENID_BYTESTRING;
-	else if (pos[0] & LONG_ATOM_SIGNED)
+	अन्यथा अगर (pos[0] & LONG_ATOM_SIGNED)
 		tok->type = OPAL_DTA_TOKENID_SINT;
-	else
+	अन्यथा
 		tok->type = OPAL_DTA_TOKENID_UINT;
 
-	return tok->len;
-}
+	वापस tok->len;
+पूर्ण
 
-static ssize_t response_parse_token(struct opal_resp_tok *tok,
-				    const u8 *pos)
-{
+अटल sमाप_प्रकार response_parse_token(काष्ठा opal_resp_tok *tok,
+				    स्थिर u8 *pos)
+अणु
 	tok->pos = pos;
 	tok->len = 1;
 	tok->type = OPAL_DTA_TOKENID_TOKEN;
 	tok->width = OPAL_WIDTH_TOKEN;
 
-	return tok->len;
-}
+	वापस tok->len;
+पूर्ण
 
-static int response_parse(const u8 *buf, size_t length,
-			  struct parsed_resp *resp)
-{
-	const struct opal_header *hdr;
-	struct opal_resp_tok *iter;
-	int num_entries = 0;
-	int total;
-	ssize_t token_length;
-	const u8 *pos;
+अटल पूर्णांक response_parse(स्थिर u8 *buf, माप_प्रकार length,
+			  काष्ठा parsed_resp *resp)
+अणु
+	स्थिर काष्ठा opal_header *hdr;
+	काष्ठा opal_resp_tok *iter;
+	पूर्णांक num_entries = 0;
+	पूर्णांक total;
+	sमाप_प्रकार token_length;
+	स्थिर u8 *pos;
 	u32 clen, plen, slen;
 
-	if (!buf)
-		return -EFAULT;
+	अगर (!buf)
+		वापस -EFAULT;
 
-	if (!resp)
-		return -EFAULT;
+	अगर (!resp)
+		वापस -EFAULT;
 
-	hdr = (struct opal_header *)buf;
+	hdr = (काष्ठा opal_header *)buf;
 	pos = buf;
-	pos += sizeof(*hdr);
+	pos += माप(*hdr);
 
 	clen = be32_to_cpu(hdr->cp.length);
 	plen = be32_to_cpu(hdr->pkt.length);
@@ -872,160 +873,160 @@ static int response_parse(const u8 *buf, size_t length,
 	pr_debug("Response size: cp: %u, pkt: %u, subpkt: %u\n",
 		 clen, plen, slen);
 
-	if (clen == 0 || plen == 0 || slen == 0 ||
-	    slen > IO_BUFFER_LENGTH - sizeof(*hdr)) {
+	अगर (clen == 0 || plen == 0 || slen == 0 ||
+	    slen > IO_BUFFER_LENGTH - माप(*hdr)) अणु
 		pr_debug("Bad header length. cp: %u, pkt: %u, subpkt: %u\n",
 			 clen, plen, slen);
-		print_buffer(pos, sizeof(*hdr));
-		return -EINVAL;
-	}
+		prपूर्णांक_buffer(pos, माप(*hdr));
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pos > buf + length)
-		return -EFAULT;
+	अगर (pos > buf + length)
+		वापस -EFAULT;
 
 	iter = resp->toks;
 	total = slen;
-	print_buffer(pos, total);
-	while (total > 0) {
-		if (pos[0] <= TINY_ATOM_BYTE) /* tiny atom */
+	prपूर्णांक_buffer(pos, total);
+	जबतक (total > 0) अणु
+		अगर (pos[0] <= TINY_ATOM_BYTE) /* tiny atom */
 			token_length = response_parse_tiny(iter, pos);
-		else if (pos[0] <= SHORT_ATOM_BYTE) /* short atom */
-			token_length = response_parse_short(iter, pos);
-		else if (pos[0] <= MEDIUM_ATOM_BYTE) /* medium atom */
+		अन्यथा अगर (pos[0] <= SHORT_ATOM_BYTE) /* लघु atom */
+			token_length = response_parse_लघु(iter, pos);
+		अन्यथा अगर (pos[0] <= MEDIUM_ATOM_BYTE) /* medium atom */
 			token_length = response_parse_medium(iter, pos);
-		else if (pos[0] <= LONG_ATOM_BYTE) /* long atom */
-			token_length = response_parse_long(iter, pos);
-		else /* TOKEN */
+		अन्यथा अगर (pos[0] <= LONG_ATOM_BYTE) /* दीर्घ atom */
+			token_length = response_parse_दीर्घ(iter, pos);
+		अन्यथा /* TOKEN */
 			token_length = response_parse_token(iter, pos);
 
-		if (token_length < 0)
-			return token_length;
+		अगर (token_length < 0)
+			वापस token_length;
 
 		pos += token_length;
 		total -= token_length;
 		iter++;
 		num_entries++;
-	}
+	पूर्ण
 
 	resp->num = num_entries;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static size_t response_get_string(const struct parsed_resp *resp, int n,
-				  const char **store)
-{
+अटल माप_प्रकार response_get_string(स्थिर काष्ठा parsed_resp *resp, पूर्णांक n,
+				  स्थिर अक्षर **store)
+अणु
 	u8 skip;
-	const struct opal_resp_tok *tok;
+	स्थिर काष्ठा opal_resp_tok *tok;
 
-	*store = NULL;
+	*store = शून्य;
 	tok = response_get_token(resp, n);
-	if (IS_ERR(tok))
-		return 0;
+	अगर (IS_ERR(tok))
+		वापस 0;
 
-	if (tok->type != OPAL_DTA_TOKENID_BYTESTRING) {
+	अगर (tok->type != OPAL_DTA_TOKENID_BYTESTRING) अणु
 		pr_debug("Token is not a byte string!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (tok->width) {
-	case OPAL_WIDTH_TINY:
-	case OPAL_WIDTH_SHORT:
+	चयन (tok->width) अणु
+	हाल OPAL_WIDTH_TINY:
+	हाल OPAL_WIDTH_SHORT:
 		skip = 1;
-		break;
-	case OPAL_WIDTH_MEDIUM:
+		अवरोध;
+	हाल OPAL_WIDTH_MEDIUM:
 		skip = 2;
-		break;
-	case OPAL_WIDTH_LONG:
+		अवरोध;
+	हाल OPAL_WIDTH_LONG:
 		skip = 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_debug("Token has invalid width!\n");
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	*store = tok->pos + skip;
 
-	return tok->len - skip;
-}
+	वापस tok->len - skip;
+पूर्ण
 
-static u64 response_get_u64(const struct parsed_resp *resp, int n)
-{
-	const struct opal_resp_tok *tok;
+अटल u64 response_get_u64(स्थिर काष्ठा parsed_resp *resp, पूर्णांक n)
+अणु
+	स्थिर काष्ठा opal_resp_tok *tok;
 
 	tok = response_get_token(resp, n);
-	if (IS_ERR(tok))
-		return 0;
+	अगर (IS_ERR(tok))
+		वापस 0;
 
-	if (tok->type != OPAL_DTA_TOKENID_UINT) {
+	अगर (tok->type != OPAL_DTA_TOKENID_UINT) अणु
 		pr_debug("Token is not unsigned int: %d\n", tok->type);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (tok->width != OPAL_WIDTH_TINY && tok->width != OPAL_WIDTH_SHORT) {
+	अगर (tok->width != OPAL_WIDTH_TINY && tok->width != OPAL_WIDTH_SHORT) अणु
 		pr_debug("Atom is not short or tiny: %d\n", tok->width);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return tok->stored.u;
-}
+	वापस tok->stored.u;
+पूर्ण
 
-static bool response_token_matches(const struct opal_resp_tok *token, u8 match)
-{
-	if (IS_ERR(token) ||
+अटल bool response_token_matches(स्थिर काष्ठा opal_resp_tok *token, u8 match)
+अणु
+	अगर (IS_ERR(token) ||
 	    token->type != OPAL_DTA_TOKENID_TOKEN ||
 	    token->pos[0] != match)
-		return false;
-	return true;
-}
+		वापस false;
+	वापस true;
+पूर्ण
 
-static u8 response_status(const struct parsed_resp *resp)
-{
-	const struct opal_resp_tok *tok;
+अटल u8 response_status(स्थिर काष्ठा parsed_resp *resp)
+अणु
+	स्थिर काष्ठा opal_resp_tok *tok;
 
 	tok = response_get_token(resp, 0);
-	if (response_token_matches(tok, OPAL_ENDOFSESSION))
-		return 0;
+	अगर (response_token_matches(tok, OPAL_ENDOFSESSION))
+		वापस 0;
 
-	if (resp->num < 5)
-		return DTAERROR_NO_METHOD_STATUS;
+	अगर (resp->num < 5)
+		वापस DTAERROR_NO_METHOD_STATUS;
 
 	tok = response_get_token(resp, resp->num - 5);
-	if (!response_token_matches(tok, OPAL_STARTLIST))
-		return DTAERROR_NO_METHOD_STATUS;
+	अगर (!response_token_matches(tok, OPAL_STARTLIST))
+		वापस DTAERROR_NO_METHOD_STATUS;
 
 	tok = response_get_token(resp, resp->num - 1);
-	if (!response_token_matches(tok, OPAL_ENDLIST))
-		return DTAERROR_NO_METHOD_STATUS;
+	अगर (!response_token_matches(tok, OPAL_ENDLIST))
+		वापस DTAERROR_NO_METHOD_STATUS;
 
-	return response_get_u64(resp, resp->num - 4);
-}
+	वापस response_get_u64(resp, resp->num - 4);
+पूर्ण
 
-/* Parses and checks for errors */
-static int parse_and_check_status(struct opal_dev *dev)
-{
-	int error;
+/* Parses and checks क्रम errors */
+अटल पूर्णांक parse_and_check_status(काष्ठा opal_dev *dev)
+अणु
+	पूर्णांक error;
 
-	print_buffer(dev->cmd, dev->pos);
+	prपूर्णांक_buffer(dev->cmd, dev->pos);
 
 	error = response_parse(dev->resp, IO_BUFFER_LENGTH, &dev->parsed);
-	if (error) {
+	अगर (error) अणु
 		pr_debug("Couldn't parse response.\n");
-		return error;
-	}
+		वापस error;
+	पूर्ण
 
-	return response_status(&dev->parsed);
-}
+	वापस response_status(&dev->parsed);
+पूर्ण
 
-static void clear_opal_cmd(struct opal_dev *dev)
-{
-	dev->pos = sizeof(struct opal_header);
-	memset(dev->cmd, 0, IO_BUFFER_LENGTH);
-}
+अटल व्योम clear_opal_cmd(काष्ठा opal_dev *dev)
+अणु
+	dev->pos = माप(काष्ठा opal_header);
+	स_रखो(dev->cmd, 0, IO_BUFFER_LENGTH);
+पूर्ण
 
-static int cmd_start(struct opal_dev *dev, const u8 *uid, const u8 *method)
-{
-	int err = 0;
+अटल पूर्णांक cmd_start(काष्ठा opal_dev *dev, स्थिर u8 *uid, स्थिर u8 *method)
+अणु
+	पूर्णांक err = 0;
 
 	clear_opal_cmd(dev);
 	set_comid(dev, dev->comid);
@@ -1035,84 +1036,84 @@ static int cmd_start(struct opal_dev *dev, const u8 *uid, const u8 *method)
 	add_token_bytestring(&err, dev, method, OPAL_METHOD_LENGTH);
 
 	/*
-	 * Every method call is followed by its parameters enclosed within
-	 * OPAL_STARTLIST and OPAL_ENDLIST tokens. We automatically open the
-	 * parameter list here and close it later in cmd_finalize.
+	 * Every method call is followed by its parameters enबंदd within
+	 * OPAL_STARTLIST and OPAL_ENDLIST tokens. We स्वतःmatically खोलो the
+	 * parameter list here and बंद it later in cmd_finalize.
 	 */
 	add_token_u8(&err, dev, OPAL_STARTLIST);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int start_opal_session_cont(struct opal_dev *dev)
-{
+अटल पूर्णांक start_opal_session_cont(काष्ठा opal_dev *dev)
+अणु
 	u32 hsn, tsn;
-	int error = 0;
+	पूर्णांक error = 0;
 
 	error = parse_and_check_status(dev);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	hsn = response_get_u64(&dev->parsed, 4);
 	tsn = response_get_u64(&dev->parsed, 5);
 
-	if (hsn != GENERIC_HOST_SESSION_NUM || tsn < FIRST_TPER_SESSION_NUM) {
+	अगर (hsn != GENERIC_HOST_SESSION_NUM || tsn < FIRST_TPER_SESSION_NUM) अणु
 		pr_debug("Couldn't authenticate session\n");
-		return -EPERM;
-	}
+		वापस -EPERM;
+	पूर्ण
 
 	dev->hsn = hsn;
 	dev->tsn = tsn;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void add_suspend_info(struct opal_dev *dev,
-			     struct opal_suspend_data *sus)
-{
-	struct opal_suspend_data *iter;
+अटल व्योम add_suspend_info(काष्ठा opal_dev *dev,
+			     काष्ठा opal_suspend_data *sus)
+अणु
+	काष्ठा opal_suspend_data *iter;
 
-	list_for_each_entry(iter, &dev->unlk_lst, node) {
-		if (iter->lr == sus->lr) {
+	list_क्रम_each_entry(iter, &dev->unlk_lst, node) अणु
+		अगर (iter->lr == sus->lr) अणु
 			list_del(&iter->node);
-			kfree(iter);
-			break;
-		}
-	}
+			kमुक्त(iter);
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	list_add_tail(&sus->node, &dev->unlk_lst);
-}
+पूर्ण
 
-static int end_session_cont(struct opal_dev *dev)
-{
+अटल पूर्णांक end_session_cont(काष्ठा opal_dev *dev)
+अणु
 	dev->hsn = 0;
 	dev->tsn = 0;
 
-	return parse_and_check_status(dev);
-}
+	वापस parse_and_check_status(dev);
+पूर्ण
 
-static int finalize_and_send(struct opal_dev *dev, cont_fn cont)
-{
-	int ret;
+अटल पूर्णांक finalize_and_send(काष्ठा opal_dev *dev, cont_fn cont)
+अणु
+	पूर्णांक ret;
 
 	ret = cmd_finalize(dev, dev->hsn, dev->tsn);
-	if (ret) {
+	अगर (ret) अणु
 		pr_debug("Error finalizing command buffer: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	print_buffer(dev->cmd, dev->pos);
+	prपूर्णांक_buffer(dev->cmd, dev->pos);
 
-	return opal_send_recv(dev, cont);
-}
+	वापस opal_send_recv(dev, cont);
+पूर्ण
 
 /*
  * request @column from table @table on device @dev. On success, the column
  * data will be available in dev->resp->tok[4]
  */
-static int generic_get_column(struct opal_dev *dev, const u8 *table,
+अटल पूर्णांक generic_get_column(काष्ठा opal_dev *dev, स्थिर u8 *table,
 			      u64 column)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
 	err = cmd_start(dev, table, opalmethod[OPAL_GET]);
 
@@ -1130,124 +1131,124 @@ static int generic_get_column(struct opal_dev *dev, const u8 *table,
 
 	add_token_u8(&err, dev, OPAL_ENDLIST);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
 /*
- * see TCG SAS 5.3.2.3 for a description of the available columns
+ * see TCG SAS 5.3.2.3 क्रम a description of the available columns
  *
  * the result is provided in dev->resp->tok[4]
  */
-static int generic_get_table_info(struct opal_dev *dev, const u8 *table_uid,
+अटल पूर्णांक generic_get_table_info(काष्ठा opal_dev *dev, स्थिर u8 *table_uid,
 				  u64 column)
-{
+अणु
 	u8 uid[OPAL_UID_LENGTH];
-	const unsigned int half = OPAL_UID_LENGTH_HALF;
+	स्थिर अचिन्हित पूर्णांक half = OPAL_UID_LENGTH_HALF;
 
 	/* sed-opal UIDs can be split in two halves:
 	 *  first:  actual table index
 	 *  second: relative index in the table
 	 * so we have to get the first half of the OPAL_TABLE_TABLE and use the
-	 * first part of the target table as relative index into that table
+	 * first part of the target table as relative index पूर्णांकo that table
 	 */
-	memcpy(uid, opaluid[OPAL_TABLE_TABLE], half);
-	memcpy(uid + half, table_uid, half);
+	स_नकल(uid, opaluid[OPAL_TABLE_TABLE], half);
+	स_नकल(uid + half, table_uid, half);
 
-	return generic_get_column(dev, uid, column);
-}
+	वापस generic_get_column(dev, uid, column);
+पूर्ण
 
-static int gen_key(struct opal_dev *dev, void *data)
-{
+अटल पूर्णांक gen_key(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 uid[OPAL_UID_LENGTH];
-	int err;
+	पूर्णांक err;
 
-	memcpy(uid, dev->prev_data, min(sizeof(uid), dev->prev_d_len));
-	kfree(dev->prev_data);
-	dev->prev_data = NULL;
+	स_नकल(uid, dev->prev_data, min(माप(uid), dev->prev_d_len));
+	kमुक्त(dev->prev_data);
+	dev->prev_data = शून्य;
 
 	err = cmd_start(dev, uid, opalmethod[OPAL_GENKEY]);
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error building gen key command\n");
-		return err;
+		वापस err;
 
-	}
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int get_active_key_cont(struct opal_dev *dev)
-{
-	const char *activekey;
-	size_t keylen;
-	int error = 0;
+अटल पूर्णांक get_active_key_cont(काष्ठा opal_dev *dev)
+अणु
+	स्थिर अक्षर *activekey;
+	माप_प्रकार keylen;
+	पूर्णांक error = 0;
 
 	error = parse_and_check_status(dev);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	keylen = response_get_string(&dev->parsed, 4, &activekey);
-	if (!activekey) {
+	अगर (!activekey) अणु
 		pr_debug("%s: Couldn't extract the Activekey from the response\n",
 			 __func__);
-		return OPAL_INVAL_PARAM;
-	}
+		वापस OPAL_INVAL_PARAM;
+	पूर्ण
 
 	dev->prev_data = kmemdup(activekey, keylen, GFP_KERNEL);
 
-	if (!dev->prev_data)
-		return -ENOMEM;
+	अगर (!dev->prev_data)
+		वापस -ENOMEM;
 
 	dev->prev_d_len = keylen;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_active_key(struct opal_dev *dev, void *data)
-{
+अटल पूर्णांक get_active_key(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 uid[OPAL_UID_LENGTH];
-	int err;
+	पूर्णांक err;
 	u8 *lr = data;
 
-	err = build_locking_range(uid, sizeof(uid), *lr);
-	if (err)
-		return err;
+	err = build_locking_range(uid, माप(uid), *lr);
+	अगर (err)
+		वापस err;
 
 	err = generic_get_column(dev, uid, OPAL_ACTIVEKEY);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	return get_active_key_cont(dev);
-}
+	वापस get_active_key_cont(dev);
+पूर्ण
 
-static int generic_table_write_data(struct opal_dev *dev, const u64 data,
-				    u64 offset, u64 size, const u8 *uid)
-{
-	const u8 __user *src = (u8 __user *)(uintptr_t)data;
+अटल पूर्णांक generic_table_ग_लिखो_data(काष्ठा opal_dev *dev, स्थिर u64 data,
+				    u64 offset, u64 size, स्थिर u8 *uid)
+अणु
+	स्थिर u8 __user *src = (u8 __user *)(uपूर्णांकptr_t)data;
 	u8 *dst;
 	u64 len;
-	size_t off = 0;
-	int err;
+	माप_प्रकार off = 0;
+	पूर्णांक err;
 
-	/* do we fit in the available space? */
+	/* करो we fit in the available space? */
 	err = generic_get_table_info(dev, uid, OPAL_TABLE_ROWS);
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Couldn't get the table size\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	len = response_get_u64(&dev->parsed, 4);
-	if (size > len || offset > len - size) {
+	अगर (size > len || offset > len - size) अणु
 		pr_debug("Does not fit in the table (%llu vs. %llu)\n",
 			  offset + size, len);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	/* do the actual transmission(s) */
-	while (off < size) {
+	/* करो the actual transmission(s) */
+	जबतक (off < size) अणु
 		err = cmd_start(dev, uid, opalmethod[OPAL_SET]);
 		add_token_u8(&err, dev, OPAL_STARTNAME);
 		add_token_u8(&err, dev, OPAL_WHERE);
@@ -1263,40 +1264,40 @@ static int generic_table_write_data(struct opal_dev *dev, const u64 data,
 		 * trailing OPAL_ENDNAME (1 byte) and tokens added by
 		 * cmd_finalize.
 		 */
-		len = min(remaining_size(dev) - (2+1+CMD_FINALIZE_BYTES_NEEDED),
-			  (size_t)(size - off));
+		len = min(reमुख्यing_size(dev) - (2+1+CMD_FINALIZE_BYTES_NEEDED),
+			  (माप_प्रकार)(size - off));
 		pr_debug("Write bytes %zu+%llu/%llu\n", off, len, size);
 
 		dst = add_bytestring_header(&err, dev, len);
-		if (!dst)
-			break;
+		अगर (!dst)
+			अवरोध;
 
-		if (copy_from_user(dst, src + off, len)) {
+		अगर (copy_from_user(dst, src + off, len)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		dev->pos += len;
 
 		add_token_u8(&err, dev, OPAL_ENDNAME);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		err = finalize_and_send(dev, parse_and_check_status);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		off += len;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int generic_lr_enable_disable(struct opal_dev *dev,
+अटल पूर्णांक generic_lr_enable_disable(काष्ठा opal_dev *dev,
 				     u8 *uid, bool rle, bool wle,
 				     bool rl, bool wl)
-{
-	int err;
+अणु
+	पूर्णांक err;
 
 	err = cmd_start(dev, uid, opalmethod[OPAL_SET]);
 
@@ -1327,37 +1328,37 @@ static int generic_lr_enable_disable(struct opal_dev *dev,
 	add_token_u8(&err, dev, OPAL_ENDLIST);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static inline int enable_global_lr(struct opal_dev *dev, u8 *uid,
-				   struct opal_user_lr_setup *setup)
-{
-	int err;
+अटल अंतरभूत पूर्णांक enable_global_lr(काष्ठा opal_dev *dev, u8 *uid,
+				   काष्ठा opal_user_lr_setup *setup)
+अणु
+	पूर्णांक err;
 
 	err = generic_lr_enable_disable(dev, uid, !!setup->RLE, !!setup->WLE,
 					0, 0);
-	if (err)
+	अगर (err)
 		pr_debug("Failed to create enable global lr command\n");
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int setup_locking_range(struct opal_dev *dev, void *data)
-{
+अटल पूर्णांक setup_locking_range(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 uid[OPAL_UID_LENGTH];
-	struct opal_user_lr_setup *setup = data;
+	काष्ठा opal_user_lr_setup *setup = data;
 	u8 lr;
-	int err;
+	पूर्णांक err;
 
 	lr = setup->session.opal_key.lr;
-	err = build_locking_range(uid, sizeof(uid), lr);
-	if (err)
-		return err;
+	err = build_locking_range(uid, माप(uid), lr);
+	अगर (err)
+		वापस err;
 
-	if (lr == 0)
+	अगर (lr == 0)
 		err = enable_global_lr(dev, uid, setup);
-	else {
+	अन्यथा अणु
 		err = cmd_start(dev, uid, opalmethod[OPAL_SET]);
 
 		add_token_u8(&err, dev, OPAL_STARTNAME);
@@ -1386,26 +1387,26 @@ static int setup_locking_range(struct opal_dev *dev, void *data)
 
 		add_token_u8(&err, dev, OPAL_ENDLIST);
 		add_token_u8(&err, dev, OPAL_ENDNAME);
-	}
-	if (err) {
+	पूर्ण
+	अगर (err) अणु
 		pr_debug("Error building Setup Locking range command.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int start_generic_opal_session(struct opal_dev *dev,
-				      enum opal_uid auth,
-				      enum opal_uid sp_type,
-				      const char *key,
+अटल पूर्णांक start_generic_opal_session(काष्ठा opal_dev *dev,
+				      क्रमागत opal_uid auth,
+				      क्रमागत opal_uid sp_type,
+				      स्थिर अक्षर *key,
 				      u8 key_len)
-{
+अणु
 	u32 hsn;
-	int err;
+	पूर्णांक err;
 
-	if (key == NULL && auth != OPAL_ANYBODY_UID)
-		return OPAL_INVAL_PARAM;
+	अगर (key == शून्य && auth != OPAL_ANYBODY_UID)
+		वापस OPAL_INVAL_PARAM;
 
 	hsn = GENERIC_HOST_SESSION_NUM;
 	err = cmd_start(dev, opaluid[OPAL_SMUID_UID],
@@ -1415,12 +1416,12 @@ static int start_generic_opal_session(struct opal_dev *dev,
 	add_token_bytestring(&err, dev, opaluid[sp_type], OPAL_UID_LENGTH);
 	add_token_u8(&err, dev, 1);
 
-	switch (auth) {
-	case OPAL_ANYBODY_UID:
-		break;
-	case OPAL_ADMIN1_UID:
-	case OPAL_SID_UID:
-	case OPAL_PSID_UID:
+	चयन (auth) अणु
+	हाल OPAL_ANYBODY_UID:
+		अवरोध;
+	हाल OPAL_ADMIN1_UID:
+	हाल OPAL_SID_UID:
+	हाल OPAL_PSID_UID:
 		add_token_u8(&err, dev, OPAL_STARTNAME);
 		add_token_u8(&err, dev, 0); /* HostChallenge */
 		add_token_bytestring(&err, dev, key, key_len);
@@ -1430,89 +1431,89 @@ static int start_generic_opal_session(struct opal_dev *dev,
 		add_token_bytestring(&err, dev, opaluid[auth],
 				     OPAL_UID_LENGTH);
 		add_token_u8(&err, dev, OPAL_ENDNAME);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_debug("Cannot start Admin SP session with auth %d\n", auth);
-		return OPAL_INVAL_PARAM;
-	}
+		वापस OPAL_INVAL_PARAM;
+	पूर्ण
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error building start adminsp session command.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, start_opal_session_cont);
-}
+	वापस finalize_and_send(dev, start_opal_session_cont);
+पूर्ण
 
-static int start_anybodyASP_opal_session(struct opal_dev *dev, void *data)
-{
-	return start_generic_opal_session(dev, OPAL_ANYBODY_UID,
-					  OPAL_ADMINSP_UID, NULL, 0);
-}
+अटल पूर्णांक start_anybodyASP_opal_session(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	वापस start_generic_opal_session(dev, OPAL_ANYBODY_UID,
+					  OPAL_ADMINSP_UID, शून्य, 0);
+पूर्ण
 
-static int start_SIDASP_opal_session(struct opal_dev *dev, void *data)
-{
-	int ret;
-	const u8 *key = dev->prev_data;
+अटल पूर्णांक start_SIDASP_opal_session(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	पूर्णांक ret;
+	स्थिर u8 *key = dev->prev_data;
 
-	if (!key) {
-		const struct opal_key *okey = data;
+	अगर (!key) अणु
+		स्थिर काष्ठा opal_key *okey = data;
 
 		ret = start_generic_opal_session(dev, OPAL_SID_UID,
 						 OPAL_ADMINSP_UID,
 						 okey->key,
 						 okey->key_len);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = start_generic_opal_session(dev, OPAL_SID_UID,
 						 OPAL_ADMINSP_UID,
 						 key, dev->prev_d_len);
-		kfree(key);
-		dev->prev_data = NULL;
-	}
+		kमुक्त(key);
+		dev->prev_data = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int start_admin1LSP_opal_session(struct opal_dev *dev, void *data)
-{
-	struct opal_key *key = data;
+अटल पूर्णांक start_admin1LSP_opal_session(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	काष्ठा opal_key *key = data;
 
-	return start_generic_opal_session(dev, OPAL_ADMIN1_UID,
+	वापस start_generic_opal_session(dev, OPAL_ADMIN1_UID,
 					  OPAL_LOCKINGSP_UID,
 					  key->key, key->key_len);
-}
+पूर्ण
 
-static int start_PSID_opal_session(struct opal_dev *dev, void *data)
-{
-	const struct opal_key *okey = data;
+अटल पूर्णांक start_PSID_opal_session(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	स्थिर काष्ठा opal_key *okey = data;
 
-	return start_generic_opal_session(dev, OPAL_PSID_UID,
+	वापस start_generic_opal_session(dev, OPAL_PSID_UID,
 					  OPAL_ADMINSP_UID,
 					  okey->key,
 					  okey->key_len);
-}
+पूर्ण
 
-static int start_auth_opal_session(struct opal_dev *dev, void *data)
-{
-	struct opal_session_info *session = data;
+अटल पूर्णांक start_auth_opal_session(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	काष्ठा opal_session_info *session = data;
 	u8 lk_ul_user[OPAL_UID_LENGTH];
-	size_t keylen = session->opal_key.key_len;
-	int err = 0;
+	माप_प्रकार keylen = session->opal_key.key_len;
+	पूर्णांक err = 0;
 
 	u8 *key = session->opal_key.key;
 	u32 hsn = GENERIC_HOST_SESSION_NUM;
 
-	if (session->sum)
-		err = build_locking_user(lk_ul_user, sizeof(lk_ul_user),
+	अगर (session->sum)
+		err = build_locking_user(lk_ul_user, माप(lk_ul_user),
 					 session->opal_key.lr);
-	else if (session->who != OPAL_ADMIN1 && !session->sum)
-		err = build_locking_user(lk_ul_user, sizeof(lk_ul_user),
+	अन्यथा अगर (session->who != OPAL_ADMIN1 && !session->sum)
+		err = build_locking_user(lk_ul_user, माप(lk_ul_user),
 					 session->who - 1);
-	else
-		memcpy(lk_ul_user, opaluid[OPAL_ADMIN1_UID], OPAL_UID_LENGTH);
+	अन्यथा
+		स_नकल(lk_ul_user, opaluid[OPAL_ADMIN1_UID], OPAL_UID_LENGTH);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = cmd_start(dev, opaluid[OPAL_SMUID_UID],
 			opalmethod[OPAL_STARTSESSION]);
@@ -1530,35 +1531,35 @@ static int start_auth_opal_session(struct opal_dev *dev, void *data)
 	add_token_bytestring(&err, dev, lk_ul_user, OPAL_UID_LENGTH);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error building STARTSESSION command.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, start_opal_session_cont);
-}
+	वापस finalize_and_send(dev, start_opal_session_cont);
+पूर्ण
 
-static int revert_tper(struct opal_dev *dev, void *data)
-{
-	int err;
+अटल पूर्णांक revert_tper(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	पूर्णांक err;
 
 	err = cmd_start(dev, opaluid[OPAL_ADMINSP_UID],
 			opalmethod[OPAL_REVERT]);
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error building REVERT TPER command.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int internal_activate_user(struct opal_dev *dev, void *data)
-{
-	struct opal_session_info *session = data;
+अटल पूर्णांक पूर्णांकernal_activate_user(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	काष्ठा opal_session_info *session = data;
 	u8 uid[OPAL_UID_LENGTH];
-	int err;
+	पूर्णांक err;
 
-	memcpy(uid, opaluid[OPAL_USER1_UID], OPAL_UID_LENGTH);
+	स_नकल(uid, opaluid[OPAL_USER1_UID], OPAL_UID_LENGTH);
 	uid[7] = session->who;
 
 	err = cmd_start(dev, uid, opalmethod[OPAL_SET]);
@@ -1572,37 +1573,37 @@ static int internal_activate_user(struct opal_dev *dev, void *data)
 	add_token_u8(&err, dev, OPAL_ENDLIST);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error building Activate UserN command.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int erase_locking_range(struct opal_dev *dev, void *data)
-{
-	struct opal_session_info *session = data;
+अटल पूर्णांक erase_locking_range(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	काष्ठा opal_session_info *session = data;
 	u8 uid[OPAL_UID_LENGTH];
-	int err;
+	पूर्णांक err;
 
-	if (build_locking_range(uid, sizeof(uid), session->opal_key.lr) < 0)
-		return -ERANGE;
+	अगर (build_locking_range(uid, माप(uid), session->opal_key.lr) < 0)
+		वापस -दुस्फल;
 
 	err = cmd_start(dev, uid, opalmethod[OPAL_ERASE]);
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error building Erase Locking Range Command.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int set_mbr_done(struct opal_dev *dev, void *data)
-{
-	u8 *mbr_done_tf = data;
-	int err;
+अटल पूर्णांक set_mbr_करोne(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	u8 *mbr_करोne_tf = data;
+	पूर्णांक err;
 
 	err = cmd_start(dev, opaluid[OPAL_MBRCONTROL],
 			opalmethod[OPAL_SET]);
@@ -1612,23 +1613,23 @@ static int set_mbr_done(struct opal_dev *dev, void *data)
 	add_token_u8(&err, dev, OPAL_STARTLIST);
 	add_token_u8(&err, dev, OPAL_STARTNAME);
 	add_token_u8(&err, dev, OPAL_MBRDONE);
-	add_token_u8(&err, dev, *mbr_done_tf); /* Done T or F */
+	add_token_u8(&err, dev, *mbr_करोne_tf); /* Done T or F */
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 	add_token_u8(&err, dev, OPAL_ENDLIST);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error Building set MBR Done command\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int set_mbr_enable_disable(struct opal_dev *dev, void *data)
-{
+अटल पूर्णांक set_mbr_enable_disable(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 *mbr_en_dis = data;
-	int err;
+	पूर्णांक err;
 
 	err = cmd_start(dev, opaluid[OPAL_MBRCONTROL],
 			opalmethod[OPAL_SET]);
@@ -1643,26 +1644,26 @@ static int set_mbr_enable_disable(struct opal_dev *dev, void *data)
 	add_token_u8(&err, dev, OPAL_ENDLIST);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error Building set MBR done command\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int write_shadow_mbr(struct opal_dev *dev, void *data)
-{
-	struct opal_shadow_mbr *shadow = data;
+अटल पूर्णांक ग_लिखो_shaकरोw_mbr(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	काष्ठा opal_shaकरोw_mbr *shaकरोw = data;
 
-	return generic_table_write_data(dev, shadow->data, shadow->offset,
-					shadow->size, opaluid[OPAL_MBR]);
-}
+	वापस generic_table_ग_लिखो_data(dev, shaकरोw->data, shaकरोw->offset,
+					shaकरोw->size, opaluid[OPAL_MBR]);
+पूर्ण
 
-static int generic_pw_cmd(u8 *key, size_t key_len, u8 *cpin_uid,
-			  struct opal_dev *dev)
-{
-	int err;
+अटल पूर्णांक generic_pw_cmd(u8 *key, माप_प्रकार key_len, u8 *cpin_uid,
+			  काष्ठा opal_dev *dev)
+अणु
+	पूर्णांक err;
 
 	err = cmd_start(dev, cpin_uid, opalmethod[OPAL_SET]);
 
@@ -1676,64 +1677,64 @@ static int generic_pw_cmd(u8 *key, size_t key_len, u8 *cpin_uid,
 	add_token_u8(&err, dev, OPAL_ENDLIST);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int set_new_pw(struct opal_dev *dev, void *data)
-{
+अटल पूर्णांक set_new_pw(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 cpin_uid[OPAL_UID_LENGTH];
-	struct opal_session_info *usr = data;
+	काष्ठा opal_session_info *usr = data;
 
-	memcpy(cpin_uid, opaluid[OPAL_C_PIN_ADMIN1], OPAL_UID_LENGTH);
+	स_नकल(cpin_uid, opaluid[OPAL_C_PIN_ADMIN1], OPAL_UID_LENGTH);
 
-	if (usr->who != OPAL_ADMIN1) {
+	अगर (usr->who != OPAL_ADMIN1) अणु
 		cpin_uid[5] = 0x03;
-		if (usr->sum)
+		अगर (usr->sum)
 			cpin_uid[7] = usr->opal_key.lr + 1;
-		else
+		अन्यथा
 			cpin_uid[7] = usr->who;
-	}
+	पूर्ण
 
-	if (generic_pw_cmd(usr->opal_key.key, usr->opal_key.key_len,
-			   cpin_uid, dev)) {
+	अगर (generic_pw_cmd(usr->opal_key.key, usr->opal_key.key_len,
+			   cpin_uid, dev)) अणु
 		pr_debug("Error building set password command.\n");
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int set_sid_cpin_pin(struct opal_dev *dev, void *data)
-{
+अटल पूर्णांक set_sid_cpin_pin(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 cpin_uid[OPAL_UID_LENGTH];
-	struct opal_key *key = data;
+	काष्ठा opal_key *key = data;
 
-	memcpy(cpin_uid, opaluid[OPAL_C_PIN_SID], OPAL_UID_LENGTH);
+	स_नकल(cpin_uid, opaluid[OPAL_C_PIN_SID], OPAL_UID_LENGTH);
 
-	if (generic_pw_cmd(key->key, key->key_len, cpin_uid, dev)) {
+	अगर (generic_pw_cmd(key->key, key->key_len, cpin_uid, dev)) अणु
 		pr_debug("Error building Set SID cpin\n");
-		return -ERANGE;
-	}
-	return finalize_and_send(dev, parse_and_check_status);
-}
+		वापस -दुस्फल;
+	पूर्ण
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int add_user_to_lr(struct opal_dev *dev, void *data)
-{
+अटल पूर्णांक add_user_to_lr(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 lr_buffer[OPAL_UID_LENGTH];
 	u8 user_uid[OPAL_UID_LENGTH];
-	struct opal_lock_unlock *lkul = data;
-	int err;
+	काष्ठा opal_lock_unlock *lkul = data;
+	पूर्णांक err;
 
-	memcpy(lr_buffer, opaluid[OPAL_LOCKINGRANGE_ACE_RDLOCKED],
+	स_नकल(lr_buffer, opaluid[OPAL_LOCKINGRANGE_ACE_RDLOCKED],
 	       OPAL_UID_LENGTH);
 
-	if (lkul->l_state == OPAL_RW)
-		memcpy(lr_buffer, opaluid[OPAL_LOCKINGRANGE_ACE_WRLOCKED],
+	अगर (lkul->l_state == OPAL_RW)
+		स_नकल(lr_buffer, opaluid[OPAL_LOCKINGRANGE_ACE_WRLOCKED],
 		       OPAL_UID_LENGTH);
 
 	lr_buffer[7] = lkul->session.opal_key.lr;
 
-	memcpy(user_uid, opaluid[OPAL_USER1_UID], OPAL_UID_LENGTH);
+	स_नकल(user_uid, opaluid[OPAL_USER1_UID], OPAL_UID_LENGTH);
 
 	user_uid[7] = lkul->session.who;
 
@@ -1777,41 +1778,41 @@ static int add_user_to_lr(struct opal_dev *dev, void *data)
 	add_token_u8(&err, dev, OPAL_ENDLIST);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error building add user to locking range command.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int lock_unlock_locking_range(struct opal_dev *dev, void *data)
-{
+अटल पूर्णांक lock_unlock_locking_range(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 lr_buffer[OPAL_UID_LENGTH];
-	struct opal_lock_unlock *lkul = data;
-	u8 read_locked = 1, write_locked = 1;
-	int err = 0;
+	काष्ठा opal_lock_unlock *lkul = data;
+	u8 पढ़ो_locked = 1, ग_लिखो_locked = 1;
+	पूर्णांक err = 0;
 
-	if (build_locking_range(lr_buffer, sizeof(lr_buffer),
+	अगर (build_locking_range(lr_buffer, माप(lr_buffer),
 				lkul->session.opal_key.lr) < 0)
-		return -ERANGE;
+		वापस -दुस्फल;
 
-	switch (lkul->l_state) {
-	case OPAL_RO:
-		read_locked = 0;
-		write_locked = 1;
-		break;
-	case OPAL_RW:
-		read_locked = 0;
-		write_locked = 0;
-		break;
-	case OPAL_LK:
+	चयन (lkul->l_state) अणु
+	हाल OPAL_RO:
+		पढ़ो_locked = 0;
+		ग_लिखो_locked = 1;
+		अवरोध;
+	हाल OPAL_RW:
+		पढ़ो_locked = 0;
+		ग_लिखो_locked = 0;
+		अवरोध;
+	हाल OPAL_LK:
 		/* vars are initialized to locked */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_debug("Tried to set an invalid locking state... returning to uland\n");
-		return OPAL_INVAL_PARAM;
-	}
+		वापस OPAL_INVAL_PARAM;
+	पूर्ण
 
 	err = cmd_start(dev, lr_buffer, opalmethod[OPAL_SET]);
 
@@ -1821,212 +1822,212 @@ static int lock_unlock_locking_range(struct opal_dev *dev, void *data)
 
 	add_token_u8(&err, dev, OPAL_STARTNAME);
 	add_token_u8(&err, dev, OPAL_READLOCKED);
-	add_token_u8(&err, dev, read_locked);
+	add_token_u8(&err, dev, पढ़ो_locked);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
 	add_token_u8(&err, dev, OPAL_STARTNAME);
 	add_token_u8(&err, dev, OPAL_WRITELOCKED);
-	add_token_u8(&err, dev, write_locked);
+	add_token_u8(&err, dev, ग_लिखो_locked);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
 	add_token_u8(&err, dev, OPAL_ENDLIST);
 	add_token_u8(&err, dev, OPAL_ENDNAME);
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error building SET command.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
 
-static int lock_unlock_locking_range_sum(struct opal_dev *dev, void *data)
-{
+अटल पूर्णांक lock_unlock_locking_range_sum(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 lr_buffer[OPAL_UID_LENGTH];
-	u8 read_locked = 1, write_locked = 1;
-	struct opal_lock_unlock *lkul = data;
-	int ret;
+	u8 पढ़ो_locked = 1, ग_लिखो_locked = 1;
+	काष्ठा opal_lock_unlock *lkul = data;
+	पूर्णांक ret;
 
 	clear_opal_cmd(dev);
 	set_comid(dev, dev->comid);
 
-	if (build_locking_range(lr_buffer, sizeof(lr_buffer),
+	अगर (build_locking_range(lr_buffer, माप(lr_buffer),
 				lkul->session.opal_key.lr) < 0)
-		return -ERANGE;
+		वापस -दुस्फल;
 
-	switch (lkul->l_state) {
-	case OPAL_RO:
-		read_locked = 0;
-		write_locked = 1;
-		break;
-	case OPAL_RW:
-		read_locked = 0;
-		write_locked = 0;
-		break;
-	case OPAL_LK:
+	चयन (lkul->l_state) अणु
+	हाल OPAL_RO:
+		पढ़ो_locked = 0;
+		ग_लिखो_locked = 1;
+		अवरोध;
+	हाल OPAL_RW:
+		पढ़ो_locked = 0;
+		ग_लिखो_locked = 0;
+		अवरोध;
+	हाल OPAL_LK:
 		/* vars are initialized to locked */
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_debug("Tried to set an invalid locking state.\n");
-		return OPAL_INVAL_PARAM;
-	}
+		वापस OPAL_INVAL_PARAM;
+	पूर्ण
 	ret = generic_lr_enable_disable(dev, lr_buffer, 1, 1,
-					read_locked, write_locked);
+					पढ़ो_locked, ग_लिखो_locked);
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_debug("Error building SET command.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-static int activate_lsp(struct opal_dev *dev, void *data)
-{
-	struct opal_lr_act *opal_act = data;
+अटल पूर्णांक activate_lsp(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	काष्ठा opal_lr_act *opal_act = data;
 	u8 user_lr[OPAL_UID_LENGTH];
-	int err, i;
+	पूर्णांक err, i;
 
 	err = cmd_start(dev, opaluid[OPAL_LOCKINGSP_UID],
 			opalmethod[OPAL_ACTIVATE]);
 
-	if (opal_act->sum) {
-		err = build_locking_range(user_lr, sizeof(user_lr),
+	अगर (opal_act->sum) अणु
+		err = build_locking_range(user_lr, माप(user_lr),
 					  opal_act->lr[0]);
-		if (err)
-			return err;
+		अगर (err)
+			वापस err;
 
 		add_token_u8(&err, dev, OPAL_STARTNAME);
 		add_token_u64(&err, dev, OPAL_SUM_SET_LIST);
 
 		add_token_u8(&err, dev, OPAL_STARTLIST);
 		add_token_bytestring(&err, dev, user_lr, OPAL_UID_LENGTH);
-		for (i = 1; i < opal_act->num_lrs; i++) {
+		क्रम (i = 1; i < opal_act->num_lrs; i++) अणु
 			user_lr[7] = opal_act->lr[i];
 			add_token_bytestring(&err, dev, user_lr, OPAL_UID_LENGTH);
-		}
+		पूर्ण
 		add_token_u8(&err, dev, OPAL_ENDLIST);
 		add_token_u8(&err, dev, OPAL_ENDNAME);
-	}
+	पूर्ण
 
-	if (err) {
+	अगर (err) अणु
 		pr_debug("Error building Activate LockingSP command.\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	return finalize_and_send(dev, parse_and_check_status);
-}
+	वापस finalize_and_send(dev, parse_and_check_status);
+पूर्ण
 
-/* Determine if we're in the Manufactured Inactive or Active state */
-static int get_lsp_lifecycle(struct opal_dev *dev, void *data)
-{
+/* Determine अगर we're in the Manufactured Inactive or Active state */
+अटल पूर्णांक get_lsp_lअगरecycle(काष्ठा opal_dev *dev, व्योम *data)
+अणु
 	u8 lc_status;
-	int err;
+	पूर्णांक err;
 
 	err = generic_get_column(dev, opaluid[OPAL_LOCKINGSP_UID],
 				 OPAL_LIFECYCLE);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	lc_status = response_get_u64(&dev->parsed, 4);
 	/* 0x08 is Manufactured Inactive */
 	/* 0x09 is Manufactured */
-	if (lc_status != OPAL_MANUFACTURED_INACTIVE) {
+	अगर (lc_status != OPAL_MANUFACTURED_INACTIVE) अणु
 		pr_debug("Couldn't determine the status of the Lifecycle state\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int get_msid_cpin_pin(struct opal_dev *dev, void *data)
-{
-	const char *msid_pin;
-	size_t strlen;
-	int err;
+अटल पूर्णांक get_msid_cpin_pin(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	स्थिर अक्षर *msid_pin;
+	माप_प्रकार म_माप;
+	पूर्णांक err;
 
 	err = generic_get_column(dev, opaluid[OPAL_C_PIN_MSID], OPAL_PIN);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	strlen = response_get_string(&dev->parsed, 4, &msid_pin);
-	if (!msid_pin) {
+	म_माप = response_get_string(&dev->parsed, 4, &msid_pin);
+	अगर (!msid_pin) अणु
 		pr_debug("Couldn't extract MSID_CPIN from response\n");
-		return OPAL_INVAL_PARAM;
-	}
+		वापस OPAL_INVAL_PARAM;
+	पूर्ण
 
-	dev->prev_data = kmemdup(msid_pin, strlen, GFP_KERNEL);
-	if (!dev->prev_data)
-		return -ENOMEM;
+	dev->prev_data = kmemdup(msid_pin, म_माप, GFP_KERNEL);
+	अगर (!dev->prev_data)
+		वापस -ENOMEM;
 
-	dev->prev_d_len = strlen;
+	dev->prev_d_len = म_माप;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int write_table_data(struct opal_dev *dev, void *data)
-{
-	struct opal_read_write_table *write_tbl = data;
+अटल पूर्णांक ग_लिखो_table_data(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	काष्ठा opal_पढ़ो_ग_लिखो_table *ग_लिखो_tbl = data;
 
-	return generic_table_write_data(dev, write_tbl->data, write_tbl->offset,
-					write_tbl->size, write_tbl->table_uid);
-}
+	वापस generic_table_ग_लिखो_data(dev, ग_लिखो_tbl->data, ग_लिखो_tbl->offset,
+					ग_लिखो_tbl->size, ग_लिखो_tbl->table_uid);
+पूर्ण
 
-static int read_table_data_cont(struct opal_dev *dev)
-{
-	int err;
-	const char *data_read;
+अटल पूर्णांक पढ़ो_table_data_cont(काष्ठा opal_dev *dev)
+अणु
+	पूर्णांक err;
+	स्थिर अक्षर *data_पढ़ो;
 
 	err = parse_and_check_status(dev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	dev->prev_d_len = response_get_string(&dev->parsed, 1, &data_read);
-	dev->prev_data = (void *)data_read;
-	if (!dev->prev_data) {
+	dev->prev_d_len = response_get_string(&dev->parsed, 1, &data_पढ़ो);
+	dev->prev_data = (व्योम *)data_पढ़ो;
+	अगर (!dev->prev_data) अणु
 		pr_debug("%s: Couldn't read data from the table.\n", __func__);
-		return OPAL_INVAL_PARAM;
-	}
+		वापस OPAL_INVAL_PARAM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * IO_BUFFER_LENGTH = 2048
- * sizeof(header) = 56
+ * माप(header) = 56
  * No. of Token Bytes in the Response = 11
  * MAX size of data that can be carried in response buffer
- * at a time is : 2048 - (56 + 11) = 1981 = 0x7BD.
+ * at a समय is : 2048 - (56 + 11) = 1981 = 0x7BD.
  */
-#define OPAL_MAX_READ_TABLE (0x7BD)
+#घोषणा OPAL_MAX_READ_TABLE (0x7BD)
 
-static int read_table_data(struct opal_dev *dev, void *data)
-{
-	struct opal_read_write_table *read_tbl = data;
-	int err;
-	size_t off = 0, max_read_size = OPAL_MAX_READ_TABLE;
+अटल पूर्णांक पढ़ो_table_data(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	काष्ठा opal_पढ़ो_ग_लिखो_table *पढ़ो_tbl = data;
+	पूर्णांक err;
+	माप_प्रकार off = 0, max_पढ़ो_size = OPAL_MAX_READ_TABLE;
 	u64 table_len, len;
-	u64 offset = read_tbl->offset, read_size = read_tbl->size - 1;
+	u64 offset = पढ़ो_tbl->offset, पढ़ो_size = पढ़ो_tbl->size - 1;
 	u8 __user *dst;
 
-	err = generic_get_table_info(dev, read_tbl->table_uid, OPAL_TABLE_ROWS);
-	if (err) {
+	err = generic_get_table_info(dev, पढ़ो_tbl->table_uid, OPAL_TABLE_ROWS);
+	अगर (err) अणु
 		pr_debug("Couldn't get the table size\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	table_len = response_get_u64(&dev->parsed, 4);
 
-	/* Check if the user is trying to read from the table limits */
-	if (read_size > table_len || offset > table_len - read_size) {
+	/* Check अगर the user is trying to पढ़ो from the table limits */
+	अगर (पढ़ो_size > table_len || offset > table_len - पढ़ो_size) अणु
 		pr_debug("Read size exceeds the Table size limits (%llu vs. %llu)\n",
-			  offset + read_size, table_len);
-		return -EINVAL;
-	}
+			  offset + पढ़ो_size, table_len);
+		वापस -EINVAL;
+	पूर्ण
 
-	while (off < read_size) {
-		err = cmd_start(dev, read_tbl->table_uid, opalmethod[OPAL_GET]);
+	जबतक (off < पढ़ो_size) अणु
+		err = cmd_start(dev, पढ़ो_tbl->table_uid, opalmethod[OPAL_GET]);
 
 		add_token_u8(&err, dev, OPAL_STARTLIST);
 		add_token_u8(&err, dev, OPAL_STARTNAME);
@@ -2037,74 +2038,74 @@ static int read_table_data(struct opal_dev *dev, void *data)
 		add_token_u8(&err, dev, OPAL_STARTNAME);
 		add_token_u8(&err, dev, OPAL_ENDROW);
 
-		len = min(max_read_size, (size_t)(read_size - off));
+		len = min(max_पढ़ो_size, (माप_प्रकार)(पढ़ो_size - off));
 		add_token_u64(&err, dev, offset + off + len); /* end row value
 							       */
 		add_token_u8(&err, dev, OPAL_ENDNAME);
 		add_token_u8(&err, dev, OPAL_ENDLIST);
 
-		if (err) {
+		अगर (err) अणु
 			pr_debug("Error building read table data command.\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		err = finalize_and_send(dev, read_table_data_cont);
-		if (err)
-			break;
+		err = finalize_and_send(dev, पढ़ो_table_data_cont);
+		अगर (err)
+			अवरोध;
 
-		/* len+1: This includes the NULL terminator at the end*/
-		if (dev->prev_d_len > len + 1) {
+		/* len+1: This includes the शून्य terminator at the end*/
+		अगर (dev->prev_d_len > len + 1) अणु
 			err = -EOVERFLOW;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		dst = (u8 __user *)(uintptr_t)read_tbl->data;
-		if (copy_to_user(dst + off, dev->prev_data, dev->prev_d_len)) {
+		dst = (u8 __user *)(uपूर्णांकptr_t)पढ़ो_tbl->data;
+		अगर (copy_to_user(dst + off, dev->prev_data, dev->prev_d_len)) अणु
 			pr_debug("Error copying data to userspace\n");
 			err = -EFAULT;
-			break;
-		}
-		dev->prev_data = NULL;
+			अवरोध;
+		पूर्ण
+		dev->prev_data = शून्य;
 
 		off += len;
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int end_opal_session(struct opal_dev *dev, void *data)
-{
-	int err = 0;
+अटल पूर्णांक end_opal_session(काष्ठा opal_dev *dev, व्योम *data)
+अणु
+	पूर्णांक err = 0;
 
 	clear_opal_cmd(dev);
 	set_comid(dev, dev->comid);
 	add_token_u8(&err, dev, OPAL_ENDOFSESSION);
 
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
-	return finalize_and_send(dev, end_session_cont);
-}
+	वापस finalize_and_send(dev, end_session_cont);
+पूर्ण
 
-static int end_opal_session_error(struct opal_dev *dev)
-{
-	const struct opal_step error_end_session = {
+अटल पूर्णांक end_opal_session_error(काष्ठा opal_dev *dev)
+अणु
+	स्थिर काष्ठा opal_step error_end_session = अणु
 		end_opal_session,
-	};
+	पूर्ण;
 
-	return execute_step(dev, &error_end_session, 0);
-}
+	वापस execute_step(dev, &error_end_session, 0);
+पूर्ण
 
-static inline void setup_opal_dev(struct opal_dev *dev)
-{
+अटल अंतरभूत व्योम setup_opal_dev(काष्ठा opal_dev *dev)
+अणु
 	dev->tsn = 0;
 	dev->hsn = 0;
-	dev->prev_data = NULL;
-}
+	dev->prev_data = शून्य;
+पूर्ण
 
-static int check_opal_support(struct opal_dev *dev)
-{
-	int ret;
+अटल पूर्णांक check_opal_support(काष्ठा opal_dev *dev)
+अणु
+	पूर्णांक ret;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
@@ -2112,172 +2113,172 @@ static int check_opal_support(struct opal_dev *dev)
 	dev->supported = !ret;
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void clean_opal_dev(struct opal_dev *dev)
-{
+अटल व्योम clean_opal_dev(काष्ठा opal_dev *dev)
+अणु
 
-	struct opal_suspend_data *suspend, *next;
+	काष्ठा opal_suspend_data *suspend, *next;
 
 	mutex_lock(&dev->dev_lock);
-	list_for_each_entry_safe(suspend, next, &dev->unlk_lst, node) {
+	list_क्रम_each_entry_safe(suspend, next, &dev->unlk_lst, node) अणु
 		list_del(&suspend->node);
-		kfree(suspend);
-	}
+		kमुक्त(suspend);
+	पूर्ण
 	mutex_unlock(&dev->dev_lock);
-}
+पूर्ण
 
-void free_opal_dev(struct opal_dev *dev)
-{
-	if (!dev)
-		return;
+व्योम मुक्त_opal_dev(काष्ठा opal_dev *dev)
+अणु
+	अगर (!dev)
+		वापस;
 
 	clean_opal_dev(dev);
-	kfree(dev);
-}
-EXPORT_SYMBOL(free_opal_dev);
+	kमुक्त(dev);
+पूर्ण
+EXPORT_SYMBOL(मुक्त_opal_dev);
 
-struct opal_dev *init_opal_dev(void *data, sec_send_recv *send_recv)
-{
-	struct opal_dev *dev;
+काष्ठा opal_dev *init_opal_dev(व्योम *data, sec_send_recv *send_recv)
+अणु
+	काष्ठा opal_dev *dev;
 
-	dev = kmalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return NULL;
+	dev = kदो_स्मृति(माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस शून्य;
 
 	INIT_LIST_HEAD(&dev->unlk_lst);
 	mutex_init(&dev->dev_lock);
 	dev->data = data;
 	dev->send_recv = send_recv;
-	if (check_opal_support(dev) != 0) {
+	अगर (check_opal_support(dev) != 0) अणु
 		pr_debug("Opal is not supported on this device\n");
-		kfree(dev);
-		return NULL;
-	}
+		kमुक्त(dev);
+		वापस शून्य;
+	पूर्ण
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 EXPORT_SYMBOL(init_opal_dev);
 
-static int opal_secure_erase_locking_range(struct opal_dev *dev,
-					   struct opal_session_info *opal_session)
-{
-	const struct opal_step erase_steps[] = {
-		{ start_auth_opal_session, opal_session },
-		{ get_active_key, &opal_session->opal_key.lr },
-		{ gen_key, },
-		{ end_opal_session, }
-	};
-	int ret;
+अटल पूर्णांक opal_secure_erase_locking_range(काष्ठा opal_dev *dev,
+					   काष्ठा opal_session_info *opal_session)
+अणु
+	स्थिर काष्ठा opal_step erase_steps[] = अणु
+		अणु start_auth_opal_session, opal_session पूर्ण,
+		अणु get_active_key, &opal_session->opal_key.lr पूर्ण,
+		अणु gen_key, पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, erase_steps, ARRAY_SIZE(erase_steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_erase_locking_range(struct opal_dev *dev,
-				    struct opal_session_info *opal_session)
-{
-	const struct opal_step erase_steps[] = {
-		{ start_auth_opal_session, opal_session },
-		{ erase_locking_range, opal_session },
-		{ end_opal_session, }
-	};
-	int ret;
+अटल पूर्णांक opal_erase_locking_range(काष्ठा opal_dev *dev,
+				    काष्ठा opal_session_info *opal_session)
+अणु
+	स्थिर काष्ठा opal_step erase_steps[] = अणु
+		अणु start_auth_opal_session, opal_session पूर्ण,
+		अणु erase_locking_range, opal_session पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, erase_steps, ARRAY_SIZE(erase_steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_enable_disable_shadow_mbr(struct opal_dev *dev,
-					  struct opal_mbr_data *opal_mbr)
-{
+अटल पूर्णांक opal_enable_disable_shaकरोw_mbr(काष्ठा opal_dev *dev,
+					  काष्ठा opal_mbr_data *opal_mbr)
+अणु
 	u8 enable_disable = opal_mbr->enable_disable == OPAL_MBR_ENABLE ?
 		OPAL_TRUE : OPAL_FALSE;
 
-	const struct opal_step mbr_steps[] = {
-		{ start_admin1LSP_opal_session, &opal_mbr->key },
-		{ set_mbr_done, &enable_disable },
-		{ end_opal_session, },
-		{ start_admin1LSP_opal_session, &opal_mbr->key },
-		{ set_mbr_enable_disable, &enable_disable },
-		{ end_opal_session, }
-	};
-	int ret;
+	स्थिर काष्ठा opal_step mbr_steps[] = अणु
+		अणु start_admin1LSP_opal_session, &opal_mbr->key पूर्ण,
+		अणु set_mbr_करोne, &enable_disable पूर्ण,
+		अणु end_opal_session, पूर्ण,
+		अणु start_admin1LSP_opal_session, &opal_mbr->key पूर्ण,
+		अणु set_mbr_enable_disable, &enable_disable पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (opal_mbr->enable_disable != OPAL_MBR_ENABLE &&
+	अगर (opal_mbr->enable_disable != OPAL_MBR_ENABLE &&
 	    opal_mbr->enable_disable != OPAL_MBR_DISABLE)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, mbr_steps, ARRAY_SIZE(mbr_steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_set_mbr_done(struct opal_dev *dev,
-			     struct opal_mbr_done *mbr_done)
-{
-	u8 mbr_done_tf = mbr_done->done_flag == OPAL_MBR_DONE ?
+अटल पूर्णांक opal_set_mbr_करोne(काष्ठा opal_dev *dev,
+			     काष्ठा opal_mbr_करोne *mbr_करोne)
+अणु
+	u8 mbr_करोne_tf = mbr_करोne->करोne_flag == OPAL_MBR_DONE ?
 		OPAL_TRUE : OPAL_FALSE;
 
-	const struct opal_step mbr_steps[] = {
-		{ start_admin1LSP_opal_session, &mbr_done->key },
-		{ set_mbr_done, &mbr_done_tf },
-		{ end_opal_session, }
-	};
-	int ret;
+	स्थिर काष्ठा opal_step mbr_steps[] = अणु
+		अणु start_admin1LSP_opal_session, &mbr_करोne->key पूर्ण,
+		अणु set_mbr_करोne, &mbr_करोne_tf पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (mbr_done->done_flag != OPAL_MBR_DONE &&
-	    mbr_done->done_flag != OPAL_MBR_NOT_DONE)
-		return -EINVAL;
-
-	mutex_lock(&dev->dev_lock);
-	setup_opal_dev(dev);
-	ret = execute_steps(dev, mbr_steps, ARRAY_SIZE(mbr_steps));
-	mutex_unlock(&dev->dev_lock);
-
-	return ret;
-}
-
-static int opal_write_shadow_mbr(struct opal_dev *dev,
-				 struct opal_shadow_mbr *info)
-{
-	const struct opal_step mbr_steps[] = {
-		{ start_admin1LSP_opal_session, &info->key },
-		{ write_shadow_mbr, info },
-		{ end_opal_session, }
-	};
-	int ret;
-
-	if (info->size == 0)
-		return 0;
+	अगर (mbr_करोne->करोne_flag != OPAL_MBR_DONE &&
+	    mbr_करोne->करोne_flag != OPAL_MBR_NOT_DONE)
+		वापस -EINVAL;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, mbr_steps, ARRAY_SIZE(mbr_steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_save(struct opal_dev *dev, struct opal_lock_unlock *lk_unlk)
-{
-	struct opal_suspend_data *suspend;
+अटल पूर्णांक opal_ग_लिखो_shaकरोw_mbr(काष्ठा opal_dev *dev,
+				 काष्ठा opal_shaकरोw_mbr *info)
+अणु
+	स्थिर काष्ठा opal_step mbr_steps[] = अणु
+		अणु start_admin1LSP_opal_session, &info->key पूर्ण,
+		अणु ग_लिखो_shaकरोw_mbr, info पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
-	suspend = kzalloc(sizeof(*suspend), GFP_KERNEL);
-	if (!suspend)
-		return -ENOMEM;
+	अगर (info->size == 0)
+		वापस 0;
+
+	mutex_lock(&dev->dev_lock);
+	setup_opal_dev(dev);
+	ret = execute_steps(dev, mbr_steps, ARRAY_SIZE(mbr_steps));
+	mutex_unlock(&dev->dev_lock);
+
+	वापस ret;
+पूर्ण
+
+अटल पूर्णांक opal_save(काष्ठा opal_dev *dev, काष्ठा opal_lock_unlock *lk_unlk)
+अणु
+	काष्ठा opal_suspend_data *suspend;
+
+	suspend = kzalloc(माप(*suspend), GFP_KERNEL);
+	अगर (!suspend)
+		वापस -ENOMEM;
 
 	suspend->unlk = *lk_unlk;
 	suspend->lr = lk_unlk->session.opal_key.lr;
@@ -2287,66 +2288,66 @@ static int opal_save(struct opal_dev *dev, struct opal_lock_unlock *lk_unlk)
 	add_suspend_info(dev, suspend);
 	mutex_unlock(&dev->dev_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int opal_add_user_to_lr(struct opal_dev *dev,
-			       struct opal_lock_unlock *lk_unlk)
-{
-	const struct opal_step steps[] = {
-		{ start_admin1LSP_opal_session, &lk_unlk->session.opal_key },
-		{ add_user_to_lr, lk_unlk },
-		{ end_opal_session, }
-	};
-	int ret;
+अटल पूर्णांक opal_add_user_to_lr(काष्ठा opal_dev *dev,
+			       काष्ठा opal_lock_unlock *lk_unlk)
+अणु
+	स्थिर काष्ठा opal_step steps[] = अणु
+		अणु start_admin1LSP_opal_session, &lk_unlk->session.opal_key पूर्ण,
+		अणु add_user_to_lr, lk_unlk पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (lk_unlk->l_state != OPAL_RO &&
-	    lk_unlk->l_state != OPAL_RW) {
+	अगर (lk_unlk->l_state != OPAL_RO &&
+	    lk_unlk->l_state != OPAL_RW) अणु
 		pr_debug("Locking state was not RO or RW\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (lk_unlk->session.who < OPAL_USER1 ||
-	    lk_unlk->session.who > OPAL_USER9) {
+	अगर (lk_unlk->session.who < OPAL_USER1 ||
+	    lk_unlk->session.who > OPAL_USER9) अणु
 		pr_debug("Authority was not within the range of users: %d\n",
 			 lk_unlk->session.who);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (lk_unlk->session.sum) {
+	अगर (lk_unlk->session.sum) अणु
 		pr_debug("%s not supported in sum. Use setup locking range\n",
 			 __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, steps, ARRAY_SIZE(steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_reverttper(struct opal_dev *dev, struct opal_key *opal, bool psid)
-{
+अटल पूर्णांक opal_reverttper(काष्ठा opal_dev *dev, काष्ठा opal_key *opal, bool psid)
+अणु
 	/* controller will terminate session */
-	const struct opal_step revert_steps[] = {
-		{ start_SIDASP_opal_session, opal },
-		{ revert_tper, }
-	};
-	const struct opal_step psid_revert_steps[] = {
-		{ start_PSID_opal_session, opal },
-		{ revert_tper, }
-	};
+	स्थिर काष्ठा opal_step revert_steps[] = अणु
+		अणु start_SIDASP_opal_session, opal पूर्ण,
+		अणु revert_tper, पूर्ण
+	पूर्ण;
+	स्थिर काष्ठा opal_step psid_revert_steps[] = अणु
+		अणु start_PSID_opal_session, opal पूर्ण,
+		अणु revert_tper, पूर्ण
+	पूर्ण;
 
-	int ret;
+	पूर्णांक ret;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
-	if (psid)
+	अगर (psid)
 		ret = execute_steps(dev, psid_revert_steps,
 				    ARRAY_SIZE(psid_revert_steps));
-	else
+	अन्यथा
 		ret = execute_steps(dev, revert_steps,
 				    ARRAY_SIZE(revert_steps));
 	mutex_unlock(&dev->dev_lock);
@@ -2355,341 +2356,341 @@ static int opal_reverttper(struct opal_dev *dev, struct opal_key *opal, bool psi
 	 * If we successfully reverted lets clean
 	 * any saved locking ranges.
 	 */
-	if (!ret)
+	अगर (!ret)
 		clean_opal_dev(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __opal_lock_unlock(struct opal_dev *dev,
-			      struct opal_lock_unlock *lk_unlk)
-{
-	const struct opal_step unlock_steps[] = {
-		{ start_auth_opal_session, &lk_unlk->session },
-		{ lock_unlock_locking_range, lk_unlk },
-		{ end_opal_session, }
-	};
-	const struct opal_step unlock_sum_steps[] = {
-		{ start_auth_opal_session, &lk_unlk->session },
-		{ lock_unlock_locking_range_sum, lk_unlk },
-		{ end_opal_session, }
-	};
+अटल पूर्णांक __opal_lock_unlock(काष्ठा opal_dev *dev,
+			      काष्ठा opal_lock_unlock *lk_unlk)
+अणु
+	स्थिर काष्ठा opal_step unlock_steps[] = अणु
+		अणु start_auth_opal_session, &lk_unlk->session पूर्ण,
+		अणु lock_unlock_locking_range, lk_unlk पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	स्थिर काष्ठा opal_step unlock_sum_steps[] = अणु
+		अणु start_auth_opal_session, &lk_unlk->session पूर्ण,
+		अणु lock_unlock_locking_range_sum, lk_unlk पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
 
-	if (lk_unlk->session.sum)
-		return execute_steps(dev, unlock_sum_steps,
+	अगर (lk_unlk->session.sum)
+		वापस execute_steps(dev, unlock_sum_steps,
 				     ARRAY_SIZE(unlock_sum_steps));
-	else
-		return execute_steps(dev, unlock_steps,
+	अन्यथा
+		वापस execute_steps(dev, unlock_steps,
 				     ARRAY_SIZE(unlock_steps));
-}
+पूर्ण
 
-static int __opal_set_mbr_done(struct opal_dev *dev, struct opal_key *key)
-{
-	u8 mbr_done_tf = OPAL_TRUE;
-	const struct opal_step mbrdone_step[] = {
-		{ start_admin1LSP_opal_session, key },
-		{ set_mbr_done, &mbr_done_tf },
-		{ end_opal_session, }
-	};
+अटल पूर्णांक __opal_set_mbr_करोne(काष्ठा opal_dev *dev, काष्ठा opal_key *key)
+अणु
+	u8 mbr_करोne_tf = OPAL_TRUE;
+	स्थिर काष्ठा opal_step mbrकरोne_step[] = अणु
+		अणु start_admin1LSP_opal_session, key पूर्ण,
+		अणु set_mbr_करोne, &mbr_करोne_tf पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
 
-	return execute_steps(dev, mbrdone_step, ARRAY_SIZE(mbrdone_step));
-}
+	वापस execute_steps(dev, mbrकरोne_step, ARRAY_SIZE(mbrकरोne_step));
+पूर्ण
 
-static int opal_lock_unlock(struct opal_dev *dev,
-			    struct opal_lock_unlock *lk_unlk)
-{
-	int ret;
+अटल पूर्णांक opal_lock_unlock(काष्ठा opal_dev *dev,
+			    काष्ठा opal_lock_unlock *lk_unlk)
+अणु
+	पूर्णांक ret;
 
-	if (lk_unlk->session.who > OPAL_USER9)
-		return -EINVAL;
+	अगर (lk_unlk->session.who > OPAL_USER9)
+		वापस -EINVAL;
 
 	mutex_lock(&dev->dev_lock);
 	ret = __opal_lock_unlock(dev, lk_unlk);
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_take_ownership(struct opal_dev *dev, struct opal_key *opal)
-{
-	const struct opal_step owner_steps[] = {
-		{ start_anybodyASP_opal_session, },
-		{ get_msid_cpin_pin, },
-		{ end_opal_session, },
-		{ start_SIDASP_opal_session, opal },
-		{ set_sid_cpin_pin, opal },
-		{ end_opal_session, }
-	};
-	int ret;
+अटल पूर्णांक opal_take_ownership(काष्ठा opal_dev *dev, काष्ठा opal_key *opal)
+अणु
+	स्थिर काष्ठा opal_step owner_steps[] = अणु
+		अणु start_anybodyASP_opal_session, पूर्ण,
+		अणु get_msid_cpin_pin, पूर्ण,
+		अणु end_opal_session, पूर्ण,
+		अणु start_SIDASP_opal_session, opal पूर्ण,
+		अणु set_sid_cpin_pin, opal पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, owner_steps, ARRAY_SIZE(owner_steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_activate_lsp(struct opal_dev *dev,
-			     struct opal_lr_act *opal_lr_act)
-{
-	const struct opal_step active_steps[] = {
-		{ start_SIDASP_opal_session, &opal_lr_act->key },
-		{ get_lsp_lifecycle, },
-		{ activate_lsp, opal_lr_act },
-		{ end_opal_session, }
-	};
-	int ret;
+अटल पूर्णांक opal_activate_lsp(काष्ठा opal_dev *dev,
+			     काष्ठा opal_lr_act *opal_lr_act)
+अणु
+	स्थिर काष्ठा opal_step active_steps[] = अणु
+		अणु start_SIDASP_opal_session, &opal_lr_act->key पूर्ण,
+		अणु get_lsp_lअगरecycle, पूर्ण,
+		अणु activate_lsp, opal_lr_act पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (!opal_lr_act->num_lrs || opal_lr_act->num_lrs > OPAL_MAX_LRS)
-		return -EINVAL;
+	अगर (!opal_lr_act->num_lrs || opal_lr_act->num_lrs > OPAL_MAX_LRS)
+		वापस -EINVAL;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, active_steps, ARRAY_SIZE(active_steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_setup_locking_range(struct opal_dev *dev,
-				    struct opal_user_lr_setup *opal_lrs)
-{
-	const struct opal_step lr_steps[] = {
-		{ start_auth_opal_session, &opal_lrs->session },
-		{ setup_locking_range, opal_lrs },
-		{ end_opal_session, }
-	};
-	int ret;
+अटल पूर्णांक opal_setup_locking_range(काष्ठा opal_dev *dev,
+				    काष्ठा opal_user_lr_setup *opal_lrs)
+अणु
+	स्थिर काष्ठा opal_step lr_steps[] = अणु
+		अणु start_auth_opal_session, &opal_lrs->session पूर्ण,
+		अणु setup_locking_range, opal_lrs पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, lr_steps, ARRAY_SIZE(lr_steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_set_new_pw(struct opal_dev *dev, struct opal_new_pw *opal_pw)
-{
-	const struct opal_step pw_steps[] = {
-		{ start_auth_opal_session, &opal_pw->session },
-		{ set_new_pw, &opal_pw->new_user_pw },
-		{ end_opal_session, }
-	};
-	int ret;
+अटल पूर्णांक opal_set_new_pw(काष्ठा opal_dev *dev, काष्ठा opal_new_pw *opal_pw)
+अणु
+	स्थिर काष्ठा opal_step pw_steps[] = अणु
+		अणु start_auth_opal_session, &opal_pw->session पूर्ण,
+		अणु set_new_pw, &opal_pw->new_user_pw पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
-	if (opal_pw->session.who > OPAL_USER9  ||
+	अगर (opal_pw->session.who > OPAL_USER9  ||
 	    opal_pw->new_user_pw.who > OPAL_USER9)
-		return -EINVAL;
+		वापस -EINVAL;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, pw_steps, ARRAY_SIZE(pw_steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int opal_activate_user(struct opal_dev *dev,
-			      struct opal_session_info *opal_session)
-{
-	const struct opal_step act_steps[] = {
-		{ start_admin1LSP_opal_session, &opal_session->opal_key },
-		{ internal_activate_user, opal_session },
-		{ end_opal_session, }
-	};
-	int ret;
+अटल पूर्णांक opal_activate_user(काष्ठा opal_dev *dev,
+			      काष्ठा opal_session_info *opal_session)
+अणु
+	स्थिर काष्ठा opal_step act_steps[] = अणु
+		अणु start_admin1LSP_opal_session, &opal_session->opal_key पूर्ण,
+		अणु पूर्णांकernal_activate_user, opal_session पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
 	/* We can't activate Admin1 it's active as manufactured */
-	if (opal_session->who < OPAL_USER1 ||
-	    opal_session->who > OPAL_USER9) {
+	अगर (opal_session->who < OPAL_USER1 ||
+	    opal_session->who > OPAL_USER9) अणु
 		pr_debug("Who was not a valid user: %d\n", opal_session->who);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 	ret = execute_steps(dev, act_steps, ARRAY_SIZE(act_steps));
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-bool opal_unlock_from_suspend(struct opal_dev *dev)
-{
-	struct opal_suspend_data *suspend;
+bool opal_unlock_from_suspend(काष्ठा opal_dev *dev)
+अणु
+	काष्ठा opal_suspend_data *suspend;
 	bool was_failure = false;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (!dev)
-		return false;
+	अगर (!dev)
+		वापस false;
 
-	if (!dev->supported)
-		return false;
+	अगर (!dev->supported)
+		वापस false;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 
-	list_for_each_entry(suspend, &dev->unlk_lst, node) {
+	list_क्रम_each_entry(suspend, &dev->unlk_lst, node) अणु
 		dev->tsn = 0;
 		dev->hsn = 0;
 
 		ret = __opal_lock_unlock(dev, &suspend->unlk);
-		if (ret) {
+		अगर (ret) अणु
 			pr_debug("Failed to unlock LR %hhu with sum %d\n",
 				 suspend->unlk.session.opal_key.lr,
 				 suspend->unlk.session.sum);
 			was_failure = true;
-		}
+		पूर्ण
 
-		if (dev->mbr_enabled) {
-			ret = __opal_set_mbr_done(dev, &suspend->unlk.session.opal_key);
-			if (ret)
+		अगर (dev->mbr_enabled) अणु
+			ret = __opal_set_mbr_करोne(dev, &suspend->unlk.session.opal_key);
+			अगर (ret)
 				pr_debug("Failed to set MBR Done in S3 resume\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&dev->dev_lock);
 
-	return was_failure;
-}
+	वापस was_failure;
+पूर्ण
 EXPORT_SYMBOL(opal_unlock_from_suspend);
 
-static int opal_read_table(struct opal_dev *dev,
-			   struct opal_read_write_table *rw_tbl)
-{
-	const struct opal_step read_table_steps[] = {
-		{ start_admin1LSP_opal_session, &rw_tbl->key },
-		{ read_table_data, rw_tbl },
-		{ end_opal_session, }
-	};
-	int ret = 0;
+अटल पूर्णांक opal_पढ़ो_table(काष्ठा opal_dev *dev,
+			   काष्ठा opal_पढ़ो_ग_लिखो_table *rw_tbl)
+अणु
+	स्थिर काष्ठा opal_step पढ़ो_table_steps[] = अणु
+		अणु start_admin1LSP_opal_session, &rw_tbl->key पूर्ण,
+		अणु पढ़ो_table_data, rw_tbl पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret = 0;
 
-	if (!rw_tbl->size)
-		return ret;
+	अगर (!rw_tbl->size)
+		वापस ret;
 
-	return execute_steps(dev, read_table_steps,
-			     ARRAY_SIZE(read_table_steps));
-}
+	वापस execute_steps(dev, पढ़ो_table_steps,
+			     ARRAY_SIZE(पढ़ो_table_steps));
+पूर्ण
 
-static int opal_write_table(struct opal_dev *dev,
-			    struct opal_read_write_table *rw_tbl)
-{
-	const struct opal_step write_table_steps[] = {
-		{ start_admin1LSP_opal_session, &rw_tbl->key },
-		{ write_table_data, rw_tbl },
-		{ end_opal_session, }
-	};
-	int ret = 0;
+अटल पूर्णांक opal_ग_लिखो_table(काष्ठा opal_dev *dev,
+			    काष्ठा opal_पढ़ो_ग_लिखो_table *rw_tbl)
+अणु
+	स्थिर काष्ठा opal_step ग_लिखो_table_steps[] = अणु
+		अणु start_admin1LSP_opal_session, &rw_tbl->key पूर्ण,
+		अणु ग_लिखो_table_data, rw_tbl पूर्ण,
+		अणु end_opal_session, पूर्ण
+	पूर्ण;
+	पूर्णांक ret = 0;
 
-	if (!rw_tbl->size)
-		return ret;
+	अगर (!rw_tbl->size)
+		वापस ret;
 
-	return execute_steps(dev, write_table_steps,
-			     ARRAY_SIZE(write_table_steps));
-}
+	वापस execute_steps(dev, ग_लिखो_table_steps,
+			     ARRAY_SIZE(ग_लिखो_table_steps));
+पूर्ण
 
-static int opal_generic_read_write_table(struct opal_dev *dev,
-					 struct opal_read_write_table *rw_tbl)
-{
-	int ret, bit_set;
+अटल पूर्णांक opal_generic_पढ़ो_ग_लिखो_table(काष्ठा opal_dev *dev,
+					 काष्ठा opal_पढ़ो_ग_लिखो_table *rw_tbl)
+अणु
+	पूर्णांक ret, bit_set;
 
 	mutex_lock(&dev->dev_lock);
 	setup_opal_dev(dev);
 
 	bit_set = fls64(rw_tbl->flags) - 1;
-	switch (bit_set) {
-	case OPAL_READ_TABLE:
-		ret = opal_read_table(dev, rw_tbl);
-		break;
-	case OPAL_WRITE_TABLE:
-		ret = opal_write_table(dev, rw_tbl);
-		break;
-	default:
+	चयन (bit_set) अणु
+	हाल OPAL_READ_TABLE:
+		ret = opal_पढ़ो_table(dev, rw_tbl);
+		अवरोध;
+	हाल OPAL_WRITE_TABLE:
+		ret = opal_ग_लिखो_table(dev, rw_tbl);
+		अवरोध;
+	शेष:
 		pr_debug("Invalid bit set in the flag (%016llx).\n",
 			 rw_tbl->flags);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	mutex_unlock(&dev->dev_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int sed_ioctl(struct opal_dev *dev, unsigned int cmd, void __user *arg)
-{
-	void *p;
-	int ret = -ENOTTY;
+पूर्णांक sed_ioctl(काष्ठा opal_dev *dev, अचिन्हित पूर्णांक cmd, व्योम __user *arg)
+अणु
+	व्योम *p;
+	पूर्णांक ret = -ENOTTY;
 
-	if (!capable(CAP_SYS_ADMIN))
-		return -EACCES;
-	if (!dev)
-		return -ENOTSUPP;
-	if (!dev->supported)
-		return -ENOTSUPP;
+	अगर (!capable(CAP_SYS_ADMIN))
+		वापस -EACCES;
+	अगर (!dev)
+		वापस -ENOTSUPP;
+	अगर (!dev->supported)
+		वापस -ENOTSUPP;
 
 	p = memdup_user(arg, _IOC_SIZE(cmd));
-	if (IS_ERR(p))
-		return PTR_ERR(p);
+	अगर (IS_ERR(p))
+		वापस PTR_ERR(p);
 
-	switch (cmd) {
-	case IOC_OPAL_SAVE:
+	चयन (cmd) अणु
+	हाल IOC_OPAL_SAVE:
 		ret = opal_save(dev, p);
-		break;
-	case IOC_OPAL_LOCK_UNLOCK:
+		अवरोध;
+	हाल IOC_OPAL_LOCK_UNLOCK:
 		ret = opal_lock_unlock(dev, p);
-		break;
-	case IOC_OPAL_TAKE_OWNERSHIP:
+		अवरोध;
+	हाल IOC_OPAL_TAKE_OWNERSHIP:
 		ret = opal_take_ownership(dev, p);
-		break;
-	case IOC_OPAL_ACTIVATE_LSP:
+		अवरोध;
+	हाल IOC_OPAL_ACTIVATE_LSP:
 		ret = opal_activate_lsp(dev, p);
-		break;
-	case IOC_OPAL_SET_PW:
+		अवरोध;
+	हाल IOC_OPAL_SET_PW:
 		ret = opal_set_new_pw(dev, p);
-		break;
-	case IOC_OPAL_ACTIVATE_USR:
+		अवरोध;
+	हाल IOC_OPAL_ACTIVATE_USR:
 		ret = opal_activate_user(dev, p);
-		break;
-	case IOC_OPAL_REVERT_TPR:
+		अवरोध;
+	हाल IOC_OPAL_REVERT_TPR:
 		ret = opal_reverttper(dev, p, false);
-		break;
-	case IOC_OPAL_LR_SETUP:
+		अवरोध;
+	हाल IOC_OPAL_LR_SETUP:
 		ret = opal_setup_locking_range(dev, p);
-		break;
-	case IOC_OPAL_ADD_USR_TO_LR:
+		अवरोध;
+	हाल IOC_OPAL_ADD_USR_TO_LR:
 		ret = opal_add_user_to_lr(dev, p);
-		break;
-	case IOC_OPAL_ENABLE_DISABLE_MBR:
-		ret = opal_enable_disable_shadow_mbr(dev, p);
-		break;
-	case IOC_OPAL_MBR_DONE:
-		ret = opal_set_mbr_done(dev, p);
-		break;
-	case IOC_OPAL_WRITE_SHADOW_MBR:
-		ret = opal_write_shadow_mbr(dev, p);
-		break;
-	case IOC_OPAL_ERASE_LR:
+		अवरोध;
+	हाल IOC_OPAL_ENABLE_DISABLE_MBR:
+		ret = opal_enable_disable_shaकरोw_mbr(dev, p);
+		अवरोध;
+	हाल IOC_OPAL_MBR_DONE:
+		ret = opal_set_mbr_करोne(dev, p);
+		अवरोध;
+	हाल IOC_OPAL_WRITE_SHADOW_MBR:
+		ret = opal_ग_लिखो_shaकरोw_mbr(dev, p);
+		अवरोध;
+	हाल IOC_OPAL_ERASE_LR:
 		ret = opal_erase_locking_range(dev, p);
-		break;
-	case IOC_OPAL_SECURE_ERASE_LR:
+		अवरोध;
+	हाल IOC_OPAL_SECURE_ERASE_LR:
 		ret = opal_secure_erase_locking_range(dev, p);
-		break;
-	case IOC_OPAL_PSID_REVERT_TPR:
+		अवरोध;
+	हाल IOC_OPAL_PSID_REVERT_TPR:
 		ret = opal_reverttper(dev, p, true);
-		break;
-	case IOC_OPAL_GENERIC_TABLE_RW:
-		ret = opal_generic_read_write_table(dev, p);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	हाल IOC_OPAL_GENERIC_TABLE_RW:
+		ret = opal_generic_पढ़ो_ग_लिखो_table(dev, p);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	kfree(p);
-	return ret;
-}
+	kमुक्त(p);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(sed_ioctl);

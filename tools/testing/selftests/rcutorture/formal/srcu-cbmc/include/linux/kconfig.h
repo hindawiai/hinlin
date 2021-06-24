@@ -1,1 +1,2 @@
-#include <LINUX_SOURCE/linux/kconfig.h>
+<शैली गुरु>
+#समावेश <LINUX_SOURCE/linux/kconfig.h>

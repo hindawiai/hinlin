@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * net/sched/ematch.c		Extended Match API
  *
@@ -6,18 +7,18 @@
  *
  * ==========================================================================
  *
- * An extended match (ematch) is a small classification tool not worth
- * writing a full classifier for. Ematches can be interconnected to form
- * a logic expression and get attached to classifiers to extend their
+ * An extended match (ematch) is a small classअगरication tool not worth
+ * writing a full classअगरier क्रम. Ematches can be पूर्णांकerconnected to क्रमm
+ * a logic expression and get attached to classअगरiers to extend their
  * functionatlity.
  *
- * The userspace part transforms the logic expressions into an array
- * consisting of multiple sequences of interconnected ematches separated
+ * The userspace part transक्रमms the logic expressions पूर्णांकo an array
+ * consisting of multiple sequences of पूर्णांकerconnected ematches separated
  * by markers. Precedence is implemented by a special ematch kind
  * referencing a sequence beyond the marker of the current sequence
  * causing the current position in the sequence to be pushed onto a stack
  * to allow the current position to be overwritten by the position referenced
- * in the special ematch. Matching continues in the new sequence until a
+ * in the special ematch. Matching जारीs in the new sequence until a
  * marker is reached causing the position to be restored from the stack.
  *
  * Example:
@@ -32,243 +33,243 @@
  *                    \                      /
  *                     --------<-POP---------
  *
- * where B is a virtual ematch referencing to sequence starting with B1.
+ * where B is a भव ematch referencing to sequence starting with B1.
  *
  * ==========================================================================
  *
- * How to write an ematch in 60 seconds
+ * How to ग_लिखो an ematch in 60 seconds
  * ------------------------------------
  *
  *   1) Provide a matcher function:
- *      static int my_match(struct sk_buff *skb, struct tcf_ematch *m,
- *                          struct tcf_pkt_info *info)
- *      {
- *      	struct mydata *d = (struct mydata *) m->data;
+ *      अटल पूर्णांक my_match(काष्ठा sk_buff *skb, काष्ठा tcf_ematch *m,
+ *                          काष्ठा tcf_pkt_info *info)
+ *      अणु
+ *      	काष्ठा mydata *d = (काष्ठा mydata *) m->data;
  *
- *      	if (...matching goes here...)
- *      		return 1;
- *      	else
- *      		return 0;
- *      }
+ *      	अगर (...matching goes here...)
+ *      		वापस 1;
+ *      	अन्यथा
+ *      		वापस 0;
+ *      पूर्ण
  *
- *   2) Fill out a struct tcf_ematch_ops:
- *      static struct tcf_ematch_ops my_ops = {
+ *   2) Fill out a काष्ठा tcf_ematch_ops:
+ *      अटल काष्ठा tcf_ematch_ops my_ops = अणु
  *      	.kind = unique id,
- *      	.datalen = sizeof(struct mydata),
+ *      	.datalen = माप(काष्ठा mydata),
  *      	.match = my_match,
  *      	.owner = THIS_MODULE,
- *      };
+ *      पूर्ण;
  *
- *   3) Register/Unregister your ematch:
- *      static int __init init_my_ematch(void)
- *      {
- *      	return tcf_em_register(&my_ops);
- *      }
+ *   3) Register/Unरेजिस्टर your ematch:
+ *      अटल पूर्णांक __init init_my_ematch(व्योम)
+ *      अणु
+ *      	वापस tcf_em_रेजिस्टर(&my_ops);
+ *      पूर्ण
  *
- *      static void __exit exit_my_ematch(void)
- *      {
- *      	tcf_em_unregister(&my_ops);
- *      }
+ *      अटल व्योम __निकास निकास_my_ematch(व्योम)
+ *      अणु
+ *      	tcf_em_unरेजिस्टर(&my_ops);
+ *      पूर्ण
  *
  *      module_init(init_my_ematch);
- *      module_exit(exit_my_ematch);
+ *      module_निकास(निकास_my_ematch);
  *
  *   4) By now you should have two more seconds left, barely enough to
- *      open up a beer to watch the compilation going.
+ *      खोलो up a beer to watch the compilation going.
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/rtnetlink.h>
-#include <linux/skbuff.h>
-#include <net/pkt_cls.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/pkt_cls.h>
 
-static LIST_HEAD(ematch_ops);
-static DEFINE_RWLOCK(ematch_mod_lock);
+अटल LIST_HEAD(ematch_ops);
+अटल DEFINE_RWLOCK(ematch_mod_lock);
 
-static struct tcf_ematch_ops *tcf_em_lookup(u16 kind)
-{
-	struct tcf_ematch_ops *e = NULL;
+अटल काष्ठा tcf_ematch_ops *tcf_em_lookup(u16 kind)
+अणु
+	काष्ठा tcf_ematch_ops *e = शून्य;
 
-	read_lock(&ematch_mod_lock);
-	list_for_each_entry(e, &ematch_ops, link) {
-		if (kind == e->kind) {
-			if (!try_module_get(e->owner))
-				e = NULL;
-			read_unlock(&ematch_mod_lock);
-			return e;
-		}
-	}
-	read_unlock(&ematch_mod_lock);
+	पढ़ो_lock(&ematch_mod_lock);
+	list_क्रम_each_entry(e, &ematch_ops, link) अणु
+		अगर (kind == e->kind) अणु
+			अगर (!try_module_get(e->owner))
+				e = शून्य;
+			पढ़ो_unlock(&ematch_mod_lock);
+			वापस e;
+		पूर्ण
+	पूर्ण
+	पढ़ो_unlock(&ematch_mod_lock);
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * tcf_em_register - register an extended match
+ * tcf_em_रेजिस्टर - रेजिस्टर an extended match
  *
  * @ops: ematch operations lookup table
  *
  * This function must be called by ematches to announce their presence.
- * The given @ops must have kind set to a unique identifier and the
+ * The given @ops must have kind set to a unique identअगरier and the
  * callback match() must be implemented. All other callbacks are optional
  * and a fallback implementation is used instead.
  *
- * Returns -EEXISTS if an ematch of the same kind has already registered.
+ * Returns -EEXISTS अगर an ematch of the same kind has alपढ़ोy रेजिस्टरed.
  */
-int tcf_em_register(struct tcf_ematch_ops *ops)
-{
-	int err = -EEXIST;
-	struct tcf_ematch_ops *e;
+पूर्णांक tcf_em_रेजिस्टर(काष्ठा tcf_ematch_ops *ops)
+अणु
+	पूर्णांक err = -EEXIST;
+	काष्ठा tcf_ematch_ops *e;
 
-	if (ops->match == NULL)
-		return -EINVAL;
+	अगर (ops->match == शून्य)
+		वापस -EINVAL;
 
-	write_lock(&ematch_mod_lock);
-	list_for_each_entry(e, &ematch_ops, link)
-		if (ops->kind == e->kind)
-			goto errout;
+	ग_लिखो_lock(&ematch_mod_lock);
+	list_क्रम_each_entry(e, &ematch_ops, link)
+		अगर (ops->kind == e->kind)
+			जाओ errout;
 
 	list_add_tail(&ops->link, &ematch_ops);
 	err = 0;
 errout:
-	write_unlock(&ematch_mod_lock);
-	return err;
-}
-EXPORT_SYMBOL(tcf_em_register);
+	ग_लिखो_unlock(&ematch_mod_lock);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(tcf_em_रेजिस्टर);
 
 /**
- * tcf_em_unregister - unregster and extended match
+ * tcf_em_unरेजिस्टर - unregster and extended match
  *
  * @ops: ematch operations lookup table
  *
  * This function must be called by ematches to announce their disappearance
- * for examples when the module gets unloaded. The @ops parameter must be
- * the same as the one used for registration.
+ * क्रम examples when the module माला_लो unloaded. The @ops parameter must be
+ * the same as the one used क्रम registration.
  *
- * Returns -ENOENT if no matching ematch was found.
+ * Returns -ENOENT अगर no matching ematch was found.
  */
-void tcf_em_unregister(struct tcf_ematch_ops *ops)
-{
-	write_lock(&ematch_mod_lock);
+व्योम tcf_em_unरेजिस्टर(काष्ठा tcf_ematch_ops *ops)
+अणु
+	ग_लिखो_lock(&ematch_mod_lock);
 	list_del(&ops->link);
-	write_unlock(&ematch_mod_lock);
-}
-EXPORT_SYMBOL(tcf_em_unregister);
+	ग_लिखो_unlock(&ematch_mod_lock);
+पूर्ण
+EXPORT_SYMBOL(tcf_em_unरेजिस्टर);
 
-static inline struct tcf_ematch *tcf_em_get_match(struct tcf_ematch_tree *tree,
-						  int index)
-{
-	return &tree->matches[index];
-}
+अटल अंतरभूत काष्ठा tcf_ematch *tcf_em_get_match(काष्ठा tcf_ematch_tree *tree,
+						  पूर्णांक index)
+अणु
+	वापस &tree->matches[index];
+पूर्ण
 
 
-static int tcf_em_validate(struct tcf_proto *tp,
-			   struct tcf_ematch_tree_hdr *tree_hdr,
-			   struct tcf_ematch *em, struct nlattr *nla, int idx)
-{
-	int err = -EINVAL;
-	struct tcf_ematch_hdr *em_hdr = nla_data(nla);
-	int data_len = nla_len(nla) - sizeof(*em_hdr);
-	void *data = (void *) em_hdr + sizeof(*em_hdr);
-	struct net *net = tp->chain->block->net;
+अटल पूर्णांक tcf_em_validate(काष्ठा tcf_proto *tp,
+			   काष्ठा tcf_ematch_tree_hdr *tree_hdr,
+			   काष्ठा tcf_ematch *em, काष्ठा nlattr *nla, पूर्णांक idx)
+अणु
+	पूर्णांक err = -EINVAL;
+	काष्ठा tcf_ematch_hdr *em_hdr = nla_data(nla);
+	पूर्णांक data_len = nla_len(nla) - माप(*em_hdr);
+	व्योम *data = (व्योम *) em_hdr + माप(*em_hdr);
+	काष्ठा net *net = tp->chain->block->net;
 
-	if (!TCF_EM_REL_VALID(em_hdr->flags))
-		goto errout;
+	अगर (!TCF_EM_REL_VALID(em_hdr->flags))
+		जाओ errout;
 
-	if (em_hdr->kind == TCF_EM_CONTAINER) {
+	अगर (em_hdr->kind == TCF_EM_CONTAINER) अणु
 		/* Special ematch called "container", carries an index
-		 * referencing an external ematch sequence.
+		 * referencing an बाह्यal ematch sequence.
 		 */
 		u32 ref;
 
-		if (data_len < sizeof(ref))
-			goto errout;
+		अगर (data_len < माप(ref))
+			जाओ errout;
 		ref = *(u32 *) data;
 
-		if (ref >= tree_hdr->nmatches)
-			goto errout;
+		अगर (ref >= tree_hdr->nmatches)
+			जाओ errout;
 
-		/* We do not allow backward jumps to avoid loops and jumps
+		/* We करो not allow backward jumps to aव्योम loops and jumps
 		 * to our own position are of course illegal.
 		 */
-		if (ref <= idx)
-			goto errout;
+		अगर (ref <= idx)
+			जाओ errout;
 
 
 		em->data = ref;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Note: This lookup will increase the module refcnt
-		 * of the ematch module referenced. In case of a failure,
+		 * of the ematch module referenced. In हाल of a failure,
 		 * a destroy function is called by the underlying layer
-		 * which automatically releases the reference again, therefore
+		 * which स्वतःmatically releases the reference again, thereक्रमe
 		 * the module MUST not be given back under any circumstances
 		 * here. Be aware, the destroy function assumes that the
-		 * module is held if the ops field is non zero.
+		 * module is held अगर the ops field is non zero.
 		 */
 		em->ops = tcf_em_lookup(em_hdr->kind);
 
-		if (em->ops == NULL) {
+		अगर (em->ops == शून्य) अणु
 			err = -ENOENT;
-#ifdef CONFIG_MODULES
+#अगर_घोषित CONFIG_MODULES
 			__rtnl_unlock();
 			request_module("ematch-kind-%u", em_hdr->kind);
 			rtnl_lock();
 			em->ops = tcf_em_lookup(em_hdr->kind);
-			if (em->ops) {
+			अगर (em->ops) अणु
 				/* We dropped the RTNL mutex in order to
-				 * perform the module load. Tell the caller
+				 * perक्रमm the module load. Tell the caller
 				 * to replay the request.
 				 */
 				module_put(em->ops->owner);
-				em->ops = NULL;
+				em->ops = शून्य;
 				err = -EAGAIN;
-			}
-#endif
-			goto errout;
-		}
+			पूर्ण
+#पूर्ण_अगर
+			जाओ errout;
+		पूर्ण
 
 		/* ematch module provides expected length of data, so we
-		 * can do a basic sanity check.
+		 * can करो a basic sanity check.
 		 */
-		if (em->ops->datalen && data_len < em->ops->datalen)
-			goto errout;
+		अगर (em->ops->datalen && data_len < em->ops->datalen)
+			जाओ errout;
 
-		if (em->ops->change) {
+		अगर (em->ops->change) अणु
 			err = -EINVAL;
-			if (em_hdr->flags & TCF_EM_SIMPLE)
-				goto errout;
+			अगर (em_hdr->flags & TCF_EM_SIMPLE)
+				जाओ errout;
 			err = em->ops->change(net, data, data_len, em);
-			if (err < 0)
-				goto errout;
-		} else if (data_len > 0) {
-			/* ematch module doesn't provide an own change
+			अगर (err < 0)
+				जाओ errout;
+		पूर्ण अन्यथा अगर (data_len > 0) अणु
+			/* ematch module करोesn't provide an own change
 			 * procedure and expects us to allocate and copy
 			 * the ematch data.
 			 *
-			 * TCF_EM_SIMPLE may be specified stating that the
-			 * data only consists of a u32 integer and the module
-			 * does not expected a memory reference but rather
+			 * TCF_EM_SIMPLE may be specअगरied stating that the
+			 * data only consists of a u32 पूर्णांकeger and the module
+			 * करोes not expected a memory reference but rather
 			 * the value carried.
 			 */
-			if (em_hdr->flags & TCF_EM_SIMPLE) {
-				if (data_len < sizeof(u32))
-					goto errout;
+			अगर (em_hdr->flags & TCF_EM_SIMPLE) अणु
+				अगर (data_len < माप(u32))
+					जाओ errout;
 				em->data = *(u32 *) data;
-			} else {
-				void *v = kmemdup(data, data_len, GFP_KERNEL);
-				if (v == NULL) {
+			पूर्ण अन्यथा अणु
+				व्योम *v = kmemdup(data, data_len, GFP_KERNEL);
+				अगर (v == शून्य) अणु
 					err = -ENOBUFS;
-					goto errout;
-				}
-				em->data = (unsigned long) v;
-			}
+					जाओ errout;
+				पूर्ण
+				em->data = (अचिन्हित दीर्घ) v;
+			पूर्ण
 			em->datalen = data_len;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	em->matchid = em_hdr->matchid;
 	em->flags = em_hdr->flags;
@@ -276,114 +277,114 @@ static int tcf_em_validate(struct tcf_proto *tp,
 
 	err = 0;
 errout:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static const struct nla_policy em_policy[TCA_EMATCH_TREE_MAX + 1] = {
-	[TCA_EMATCH_TREE_HDR]	= { .len = sizeof(struct tcf_ematch_tree_hdr) },
-	[TCA_EMATCH_TREE_LIST]	= { .type = NLA_NESTED },
-};
+अटल स्थिर काष्ठा nla_policy em_policy[TCA_EMATCH_TREE_MAX + 1] = अणु
+	[TCA_EMATCH_TREE_HDR]	= अणु .len = माप(काष्ठा tcf_ematch_tree_hdr) पूर्ण,
+	[TCA_EMATCH_TREE_LIST]	= अणु .type = NLA_NESTED पूर्ण,
+पूर्ण;
 
 /**
  * tcf_em_tree_validate - validate ematch config TLV and build ematch tree
  *
- * @tp: classifier kind handle
+ * @tp: classअगरier kind handle
  * @nla: ematch tree configuration TLV
  * @tree: destination ematch tree variable to store the resulting
  *        ematch tree.
  *
  * This function validates the given configuration TLV @nla and builds an
- * ematch tree in @tree. The resulting tree must later be copied into
- * the private classifier data using tcf_em_tree_change(). You MUST NOT
- * provide the ematch tree variable of the private classifier data directly,
+ * ematch tree in @tree. The resulting tree must later be copied पूर्णांकo
+ * the निजी classअगरier data using tcf_em_tree_change(). You MUST NOT
+ * provide the ematch tree variable of the निजी classअगरier data directly,
  * the changes would not be locked properly.
  *
- * Returns a negative error code if the configuration TLV contains errors.
+ * Returns a negative error code अगर the configuration TLV contains errors.
  */
-int tcf_em_tree_validate(struct tcf_proto *tp, struct nlattr *nla,
-			 struct tcf_ematch_tree *tree)
-{
-	int idx, list_len, matches_len, err;
-	struct nlattr *tb[TCA_EMATCH_TREE_MAX + 1];
-	struct nlattr *rt_match, *rt_hdr, *rt_list;
-	struct tcf_ematch_tree_hdr *tree_hdr;
-	struct tcf_ematch *em;
+पूर्णांक tcf_em_tree_validate(काष्ठा tcf_proto *tp, काष्ठा nlattr *nla,
+			 काष्ठा tcf_ematch_tree *tree)
+अणु
+	पूर्णांक idx, list_len, matches_len, err;
+	काष्ठा nlattr *tb[TCA_EMATCH_TREE_MAX + 1];
+	काष्ठा nlattr *rt_match, *rt_hdr, *rt_list;
+	काष्ठा tcf_ematch_tree_hdr *tree_hdr;
+	काष्ठा tcf_ematch *em;
 
-	memset(tree, 0, sizeof(*tree));
-	if (!nla)
-		return 0;
+	स_रखो(tree, 0, माप(*tree));
+	अगर (!nla)
+		वापस 0;
 
 	err = nla_parse_nested_deprecated(tb, TCA_EMATCH_TREE_MAX, nla,
-					  em_policy, NULL);
-	if (err < 0)
-		goto errout;
+					  em_policy, शून्य);
+	अगर (err < 0)
+		जाओ errout;
 
 	err = -EINVAL;
 	rt_hdr = tb[TCA_EMATCH_TREE_HDR];
 	rt_list = tb[TCA_EMATCH_TREE_LIST];
 
-	if (rt_hdr == NULL || rt_list == NULL)
-		goto errout;
+	अगर (rt_hdr == शून्य || rt_list == शून्य)
+		जाओ errout;
 
 	tree_hdr = nla_data(rt_hdr);
-	memcpy(&tree->hdr, tree_hdr, sizeof(*tree_hdr));
+	स_नकल(&tree->hdr, tree_hdr, माप(*tree_hdr));
 
 	rt_match = nla_data(rt_list);
 	list_len = nla_len(rt_list);
-	matches_len = tree_hdr->nmatches * sizeof(*em);
+	matches_len = tree_hdr->nmatches * माप(*em);
 
 	tree->matches = kzalloc(matches_len, GFP_KERNEL);
-	if (tree->matches == NULL)
-		goto errout;
+	अगर (tree->matches == शून्य)
+		जाओ errout;
 
-	/* We do not use nla_parse_nested here because the maximum
+	/* We करो not use nla_parse_nested here because the maximum
 	 * number of attributes is unknown. This saves us the allocation
-	 * for a tb buffer which would serve no purpose at all.
+	 * क्रम a tb buffer which would serve no purpose at all.
 	 *
 	 * The array of rt attributes is parsed in the order as they are
 	 * provided, their type must be incremental from 1 to n. Even
-	 * if it does not serve any real purpose, a failure of sticking
+	 * अगर it करोes not serve any real purpose, a failure of sticking
 	 * to this policy will result in parsing failure.
 	 */
-	for (idx = 0; nla_ok(rt_match, list_len); idx++) {
+	क्रम (idx = 0; nla_ok(rt_match, list_len); idx++) अणु
 		err = -EINVAL;
 
-		if (rt_match->nla_type != (idx + 1))
-			goto errout_abort;
+		अगर (rt_match->nla_type != (idx + 1))
+			जाओ errout_पात;
 
-		if (idx >= tree_hdr->nmatches)
-			goto errout_abort;
+		अगर (idx >= tree_hdr->nmatches)
+			जाओ errout_पात;
 
-		if (nla_len(rt_match) < sizeof(struct tcf_ematch_hdr))
-			goto errout_abort;
+		अगर (nla_len(rt_match) < माप(काष्ठा tcf_ematch_hdr))
+			जाओ errout_पात;
 
 		em = tcf_em_get_match(tree, idx);
 
 		err = tcf_em_validate(tp, tree_hdr, em, rt_match, idx);
-		if (err < 0)
-			goto errout_abort;
+		अगर (err < 0)
+			जाओ errout_पात;
 
 		rt_match = nla_next(rt_match, &list_len);
-	}
+	पूर्ण
 
-	/* Check if the number of matches provided by userspace actually
-	 * complies with the array of matches. The number was used for
+	/* Check अगर the number of matches provided by userspace actually
+	 * complies with the array of matches. The number was used क्रम
 	 * the validation of references and a mismatch could lead to
 	 * undefined references during the matching process.
 	 */
-	if (idx != tree_hdr->nmatches) {
+	अगर (idx != tree_hdr->nmatches) अणु
 		err = -EINVAL;
-		goto errout_abort;
-	}
+		जाओ errout_पात;
+	पूर्ण
 
 	err = 0;
 errout:
-	return err;
+	वापस err;
 
-errout_abort:
+errout_पात:
 	tcf_em_tree_destroy(tree);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(tcf_em_tree_validate);
 
 /**
@@ -393,156 +394,156 @@ EXPORT_SYMBOL(tcf_em_tree_validate);
  *
  * This functions destroys an ematch tree previously created by
  * tcf_em_tree_validate()/tcf_em_tree_change(). You must ensure that
- * the ematch tree is not in use before calling this function.
+ * the ematch tree is not in use beक्रमe calling this function.
  */
-void tcf_em_tree_destroy(struct tcf_ematch_tree *tree)
-{
-	int i;
+व्योम tcf_em_tree_destroy(काष्ठा tcf_ematch_tree *tree)
+अणु
+	पूर्णांक i;
 
-	if (tree->matches == NULL)
-		return;
+	अगर (tree->matches == शून्य)
+		वापस;
 
-	for (i = 0; i < tree->hdr.nmatches; i++) {
-		struct tcf_ematch *em = tcf_em_get_match(tree, i);
+	क्रम (i = 0; i < tree->hdr.nmatches; i++) अणु
+		काष्ठा tcf_ematch *em = tcf_em_get_match(tree, i);
 
-		if (em->ops) {
-			if (em->ops->destroy)
+		अगर (em->ops) अणु
+			अगर (em->ops->destroy)
 				em->ops->destroy(em);
-			else if (!tcf_em_is_simple(em))
-				kfree((void *) em->data);
+			अन्यथा अगर (!tcf_em_is_simple(em))
+				kमुक्त((व्योम *) em->data);
 			module_put(em->ops->owner);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	tree->hdr.nmatches = 0;
-	kfree(tree->matches);
-	tree->matches = NULL;
-}
+	kमुक्त(tree->matches);
+	tree->matches = शून्य;
+पूर्ण
 EXPORT_SYMBOL(tcf_em_tree_destroy);
 
 /**
- * tcf_em_tree_dump - dump ematch tree into a rtnl message
+ * tcf_em_tree_dump - dump ematch tree पूर्णांकo a rtnl message
  *
  * @skb: skb holding the rtnl message
  * @tree: ematch tree to be dumped
  * @tlv: TLV type to be used to encapsulate the tree
  *
- * This function dumps a ematch tree into a rtnl message. It is valid to
- * call this function while the ematch tree is in use.
+ * This function dumps a ematch tree पूर्णांकo a rtnl message. It is valid to
+ * call this function जबतक the ematch tree is in use.
  *
- * Returns -1 if the skb tailroom is insufficient.
+ * Returns -1 अगर the skb tailroom is insufficient.
  */
-int tcf_em_tree_dump(struct sk_buff *skb, struct tcf_ematch_tree *tree, int tlv)
-{
-	int i;
+पूर्णांक tcf_em_tree_dump(काष्ठा sk_buff *skb, काष्ठा tcf_ematch_tree *tree, पूर्णांक tlv)
+अणु
+	पूर्णांक i;
 	u8 *tail;
-	struct nlattr *top_start;
-	struct nlattr *list_start;
+	काष्ठा nlattr *top_start;
+	काष्ठा nlattr *list_start;
 
 	top_start = nla_nest_start_noflag(skb, tlv);
-	if (top_start == NULL)
-		goto nla_put_failure;
+	अगर (top_start == शून्य)
+		जाओ nla_put_failure;
 
-	if (nla_put(skb, TCA_EMATCH_TREE_HDR, sizeof(tree->hdr), &tree->hdr))
-		goto nla_put_failure;
+	अगर (nla_put(skb, TCA_EMATCH_TREE_HDR, माप(tree->hdr), &tree->hdr))
+		जाओ nla_put_failure;
 
 	list_start = nla_nest_start_noflag(skb, TCA_EMATCH_TREE_LIST);
-	if (list_start == NULL)
-		goto nla_put_failure;
+	अगर (list_start == शून्य)
+		जाओ nla_put_failure;
 
-	tail = skb_tail_pointer(skb);
-	for (i = 0; i < tree->hdr.nmatches; i++) {
-		struct nlattr *match_start = (struct nlattr *)tail;
-		struct tcf_ematch *em = tcf_em_get_match(tree, i);
-		struct tcf_ematch_hdr em_hdr = {
+	tail = skb_tail_poपूर्णांकer(skb);
+	क्रम (i = 0; i < tree->hdr.nmatches; i++) अणु
+		काष्ठा nlattr *match_start = (काष्ठा nlattr *)tail;
+		काष्ठा tcf_ematch *em = tcf_em_get_match(tree, i);
+		काष्ठा tcf_ematch_hdr em_hdr = अणु
 			.kind = em->ops ? em->ops->kind : TCF_EM_CONTAINER,
 			.matchid = em->matchid,
 			.flags = em->flags
-		};
+		पूर्ण;
 
-		if (nla_put(skb, i + 1, sizeof(em_hdr), &em_hdr))
-			goto nla_put_failure;
+		अगर (nla_put(skb, i + 1, माप(em_hdr), &em_hdr))
+			जाओ nla_put_failure;
 
-		if (em->ops && em->ops->dump) {
-			if (em->ops->dump(skb, em) < 0)
-				goto nla_put_failure;
-		} else if (tcf_em_is_container(em) || tcf_em_is_simple(em)) {
+		अगर (em->ops && em->ops->dump) अणु
+			अगर (em->ops->dump(skb, em) < 0)
+				जाओ nla_put_failure;
+		पूर्ण अन्यथा अगर (tcf_em_is_container(em) || tcf_em_is_simple(em)) अणु
 			u32 u = em->data;
-			nla_put_nohdr(skb, sizeof(u), &u);
-		} else if (em->datalen > 0)
-			nla_put_nohdr(skb, em->datalen, (void *) em->data);
+			nla_put_nohdr(skb, माप(u), &u);
+		पूर्ण अन्यथा अगर (em->datalen > 0)
+			nla_put_nohdr(skb, em->datalen, (व्योम *) em->data);
 
-		tail = skb_tail_pointer(skb);
+		tail = skb_tail_poपूर्णांकer(skb);
 		match_start->nla_len = tail - (u8 *)match_start;
-	}
+	पूर्ण
 
 	nla_nest_end(skb, list_start);
 	nla_nest_end(skb, top_start);
 
-	return 0;
+	वापस 0;
 
 nla_put_failure:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(tcf_em_tree_dump);
 
-static inline int tcf_em_match(struct sk_buff *skb, struct tcf_ematch *em,
-			       struct tcf_pkt_info *info)
-{
-	int r = em->ops->match(skb, em, info);
+अटल अंतरभूत पूर्णांक tcf_em_match(काष्ठा sk_buff *skb, काष्ठा tcf_ematch *em,
+			       काष्ठा tcf_pkt_info *info)
+अणु
+	पूर्णांक r = em->ops->match(skb, em, info);
 
-	return tcf_em_is_inverted(em) ? !r : r;
-}
+	वापस tcf_em_is_inverted(em) ? !r : r;
+पूर्ण
 
 /* Do not use this function directly, use tcf_em_tree_match instead */
-int __tcf_em_tree_match(struct sk_buff *skb, struct tcf_ematch_tree *tree,
-			struct tcf_pkt_info *info)
-{
-	int stackp = 0, match_idx = 0, res = 0;
-	struct tcf_ematch *cur_match;
-	int stack[CONFIG_NET_EMATCH_STACK];
+पूर्णांक __tcf_em_tree_match(काष्ठा sk_buff *skb, काष्ठा tcf_ematch_tree *tree,
+			काष्ठा tcf_pkt_info *info)
+अणु
+	पूर्णांक stackp = 0, match_idx = 0, res = 0;
+	काष्ठा tcf_ematch *cur_match;
+	पूर्णांक stack[CONFIG_NET_EMATCH_STACK];
 
 proceed:
-	while (match_idx < tree->hdr.nmatches) {
+	जबतक (match_idx < tree->hdr.nmatches) अणु
 		cur_match = tcf_em_get_match(tree, match_idx);
 
-		if (tcf_em_is_container(cur_match)) {
-			if (unlikely(stackp >= CONFIG_NET_EMATCH_STACK))
-				goto stack_overflow;
+		अगर (tcf_em_is_container(cur_match)) अणु
+			अगर (unlikely(stackp >= CONFIG_NET_EMATCH_STACK))
+				जाओ stack_overflow;
 
 			stack[stackp++] = match_idx;
 			match_idx = cur_match->data;
-			goto proceed;
-		}
+			जाओ proceed;
+		पूर्ण
 
 		res = tcf_em_match(skb, cur_match, info);
 
-		if (tcf_em_early_end(cur_match, res))
-			break;
+		अगर (tcf_em_early_end(cur_match, res))
+			अवरोध;
 
 		match_idx++;
-	}
+	पूर्ण
 
 pop_stack:
-	if (stackp > 0) {
+	अगर (stackp > 0) अणु
 		match_idx = stack[--stackp];
 		cur_match = tcf_em_get_match(tree, match_idx);
 
-		if (tcf_em_is_inverted(cur_match))
+		अगर (tcf_em_is_inverted(cur_match))
 			res = !res;
 
-		if (tcf_em_early_end(cur_match, res)) {
-			goto pop_stack;
-		} else {
+		अगर (tcf_em_early_end(cur_match, res)) अणु
+			जाओ pop_stack;
+		पूर्ण अन्यथा अणु
 			match_idx++;
-			goto proceed;
-		}
-	}
+			जाओ proceed;
+		पूर्ण
+	पूर्ण
 
-	return res;
+	वापस res;
 
 stack_overflow:
 	net_warn_ratelimited("tc ematch: local stack overflow, increase NET_EMATCH_STACK\n");
-	return -1;
-}
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL(__tcf_em_tree_match);

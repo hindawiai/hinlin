@@ -1,114 +1,115 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * IBM/3270 Driver - console view.
  *
  * Author(s):
- *   Original 3270 Code for 2.4 written by Richard Hitt (UTS Global)
- *   Rewritten for 2.5 by Martin Schwidefsky <schwidefsky@de.ibm.com>
+ *   Original 3270 Code क्रम 2.4 written by Riअक्षरd Hitt (UTS Global)
+ *   Rewritten क्रम 2.5 by Martin Schwidefsky <schwidefsky@de.ibm.com>
  *     Copyright IBM Corp. 2003, 2009
  */
 
-#include <linux/module.h>
-#include <linux/console.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/err.h>
-#include <linux/reboot.h>
+#समावेश <linux/module.h>
+#समावेश <linux/console.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/err.h>
+#समावेश <linux/reboot.h>
 
-#include <asm/ccwdev.h>
-#include <asm/cio.h>
-#include <asm/cpcmd.h>
-#include <asm/ebcdic.h>
+#समावेश <यंत्र/ccwdev.h>
+#समावेश <यंत्र/cपन.स>
+#समावेश <यंत्र/cpcmd.h>
+#समावेश <यंत्र/ebcdic.h>
 
-#include "raw3270.h"
-#include "tty3270.h"
-#include "ctrlchar.h"
+#समावेश "raw3270.h"
+#समावेश "tty3270.h"
+#समावेश "ctrlchar.h"
 
-#define CON3270_OUTPUT_BUFFER_SIZE 1024
-#define CON3270_STRING_PAGES 4
+#घोषणा CON3270_OUTPUT_BUFFER_SIZE 1024
+#घोषणा CON3270_STRING_PAGES 4
 
-static struct raw3270_fn con3270_fn;
+अटल काष्ठा raw3270_fn con3270_fn;
 
-static bool auto_update = true;
-module_param(auto_update, bool, 0);
+अटल bool स्वतः_update = true;
+module_param(स्वतः_update, bool, 0);
 
 /*
- * Main 3270 console view data structure.
+ * Main 3270 console view data काष्ठाure.
  */
-struct con3270 {
-	struct raw3270_view view;
-	struct list_head freemem;	/* list of free memory for strings. */
+काष्ठा con3270 अणु
+	काष्ठा raw3270_view view;
+	काष्ठा list_head मुक्तmem;	/* list of मुक्त memory क्रम strings. */
 
 	/* Output stuff. */
-	struct list_head lines;		/* list of lines. */
-	struct list_head update;	/* list of lines to update. */
-	int line_nr;			/* line number for next update. */
-	int nr_lines;			/* # lines in list. */
-	int nr_up;			/* # lines up in history. */
-	unsigned long update_flags;	/* Update indication bits. */
-	struct string *cline;		/* current output line. */
-	struct string *status;		/* last line of display. */
-	struct raw3270_request *write;	/* single write request. */
-	struct timer_list timer;
+	काष्ठा list_head lines;		/* list of lines. */
+	काष्ठा list_head update;	/* list of lines to update. */
+	पूर्णांक line_nr;			/* line number क्रम next update. */
+	पूर्णांक nr_lines;			/* # lines in list. */
+	पूर्णांक nr_up;			/* # lines up in history. */
+	अचिन्हित दीर्घ update_flags;	/* Update indication bits. */
+	काष्ठा string *cline;		/* current output line. */
+	काष्ठा string *status;		/* last line of display. */
+	काष्ठा raw3270_request *ग_लिखो;	/* single ग_लिखो request. */
+	काष्ठा समयr_list समयr;
 
 	/* Input stuff. */
-	struct string *input;		/* input string for read request. */
-	struct raw3270_request *read;	/* single read request. */
-	struct raw3270_request *kreset;	/* single keyboard reset request. */
-	struct tasklet_struct readlet;	/* tasklet to issue read request. */
-};
+	काष्ठा string *input;		/* input string क्रम पढ़ो request. */
+	काष्ठा raw3270_request *पढ़ो;	/* single पढ़ो request. */
+	काष्ठा raw3270_request *kreset;	/* single keyboard reset request. */
+	काष्ठा tasklet_काष्ठा पढ़ोlet;	/* tasklet to issue पढ़ो request. */
+पूर्ण;
 
-static struct con3270 *condev;
+अटल काष्ठा con3270 *condev;
 
-/* con3270->update_flags. See con3270_update for details. */
-#define CON_UPDATE_ERASE	1	/* Use EWRITEA instead of WRITE. */
-#define CON_UPDATE_LIST		2	/* Update lines in tty3270->update. */
-#define CON_UPDATE_STATUS	4	/* Update status line. */
-#define CON_UPDATE_ALL		8	/* Recreate screen. */
+/* con3270->update_flags. See con3270_update क्रम details. */
+#घोषणा CON_UPDATE_ERASE	1	/* Use EWRITEA instead of WRITE. */
+#घोषणा CON_UPDATE_LIST		2	/* Update lines in tty3270->update. */
+#घोषणा CON_UPDATE_STATUS	4	/* Update status line. */
+#घोषणा CON_UPDATE_ALL		8	/* Recreate screen. */
 
-static void con3270_update(struct timer_list *);
+अटल व्योम con3270_update(काष्ठा समयr_list *);
 
 /*
- * Setup timeout for a device. On timeout trigger an update.
+ * Setup समयout क्रम a device. On समयout trigger an update.
  */
-static void con3270_set_timer(struct con3270 *cp, int expires)
-{
-	if (expires == 0)
-		del_timer(&cp->timer);
-	else
-		mod_timer(&cp->timer, jiffies + expires);
-}
+अटल व्योम con3270_set_समयr(काष्ठा con3270 *cp, पूर्णांक expires)
+अणु
+	अगर (expires == 0)
+		del_समयr(&cp->समयr);
+	अन्यथा
+		mod_समयr(&cp->समयr, jअगरfies + expires);
+पूर्ण
 
 /*
  * The status line is the last line of the screen. It shows the string
  * "console view" in the lower left corner and "Running"/"More..."/"Holding"
  * in the lower right corner of the screen.
  */
-static void
-con3270_update_status(struct con3270 *cp)
-{
-	char *str;
+अटल व्योम
+con3270_update_status(काष्ठा con3270 *cp)
+अणु
+	अक्षर *str;
 
 	str = (cp->nr_up != 0) ? "History" : "Running";
-	memcpy(cp->status->string + 24, str, 7);
+	स_नकल(cp->status->string + 24, str, 7);
 	codepage_convert(cp->view.ascebc, cp->status->string + 24, 7);
 	cp->update_flags |= CON_UPDATE_STATUS;
-}
+पूर्ण
 
-static void
-con3270_create_status(struct con3270 *cp)
-{
-	static const unsigned char blueprint[] =
-		{ TO_SBA, 0, 0, TO_SF,TF_LOG,TO_SA,TAT_COLOR, TAC_GREEN,
+अटल व्योम
+con3270_create_status(काष्ठा con3270 *cp)
+अणु
+	अटल स्थिर अचिन्हित अक्षर blueprपूर्णांक[] =
+		अणु TO_SBA, 0, 0, TO_SF,TF_LOG,TO_SA,TAT_COLOR, TAC_GREEN,
 		  'c','o','n','s','o','l','e',' ','v','i','e','w',
-		  TO_RA,0,0,0,'R','u','n','n','i','n','g',TO_SF,TF_LOG };
+		  TO_RA,0,0,0,'R','u','n','n','i','n','g',TO_SF,TF_LOG पूर्ण;
 
-	cp->status = alloc_string(&cp->freemem, sizeof(blueprint));
-	/* Copy blueprint to status line */
-	memcpy(cp->status->string, blueprint, sizeof(blueprint));
+	cp->status = alloc_string(&cp->मुक्तmem, माप(blueprपूर्णांक));
+	/* Copy blueprपूर्णांक to status line */
+	स_नकल(cp->status->string, blueprपूर्णांक, माप(blueprपूर्णांक));
 	/* Set TO_RA addresses. */
 	raw3270_buffer_address(cp->view.dev, cp->status->string + 1,
 			       cp->view.cols * (cp->view.rows - 1));
@@ -117,128 +118,128 @@ con3270_create_status(struct con3270 *cp)
 	/* Convert strings to ebcdic. */
 	codepage_convert(cp->view.ascebc, cp->status->string + 8, 12);
 	codepage_convert(cp->view.ascebc, cp->status->string + 24, 7);
-}
+पूर्ण
 
 /*
  * Set output offsets to 3270 datastream fragment of a console string.
  */
-static void
-con3270_update_string(struct con3270 *cp, struct string *s, int nr)
-{
-	if (s->len < 4) {
-		/* This indicates a bug, but printing a warning would
+अटल व्योम
+con3270_update_string(काष्ठा con3270 *cp, काष्ठा string *s, पूर्णांक nr)
+अणु
+	अगर (s->len < 4) अणु
+		/* This indicates a bug, but prपूर्णांकing a warning would
 		 * cause a deadlock. */
-		return;
-	}
-	if (s->string[s->len - 4] != TO_RA)
-		return;
+		वापस;
+	पूर्ण
+	अगर (s->string[s->len - 4] != TO_RA)
+		वापस;
 	raw3270_buffer_address(cp->view.dev, s->string + s->len - 3,
 			       cp->view.cols * (nr + 1));
-}
+पूर्ण
 
 /*
- * Rebuild update list to print all lines.
+ * Rebuild update list to prपूर्णांक all lines.
  */
-static void
-con3270_rebuild_update(struct con3270 *cp)
-{
-	struct string *s, *n;
-	int nr;
+अटल व्योम
+con3270_rebuild_update(काष्ठा con3270 *cp)
+अणु
+	काष्ठा string *s, *n;
+	पूर्णांक nr;
 
 	/* 
 	 * Throw away update list and create a new one,
 	 * containing all lines that will fit on the screen.
 	 */
-	list_for_each_entry_safe(s, n, &cp->update, update)
+	list_क्रम_each_entry_safe(s, n, &cp->update, update)
 		list_del_init(&s->update);
 	nr = cp->view.rows - 2 + cp->nr_up;
-	list_for_each_entry_reverse(s, &cp->lines, list) {
-		if (nr < cp->view.rows - 1)
+	list_क्रम_each_entry_reverse(s, &cp->lines, list) अणु
+		अगर (nr < cp->view.rows - 1)
 			list_add(&s->update, &cp->update);
-		if (--nr < 0)
-			break;
-	}
+		अगर (--nr < 0)
+			अवरोध;
+	पूर्ण
 	cp->line_nr = 0;
 	cp->update_flags |= CON_UPDATE_LIST;
-}
+पूर्ण
 
 /*
- * Alloc string for size bytes. Free strings from history if necessary.
+ * Alloc string क्रम size bytes. Free strings from history अगर necessary.
  */
-static struct string *
-con3270_alloc_string(struct con3270 *cp, size_t size)
-{
-	struct string *s, *n;
+अटल काष्ठा string *
+con3270_alloc_string(काष्ठा con3270 *cp, माप_प्रकार size)
+अणु
+	काष्ठा string *s, *n;
 
-	s = alloc_string(&cp->freemem, size);
-	if (s)
-		return s;
-	list_for_each_entry_safe(s, n, &cp->lines, list) {
+	s = alloc_string(&cp->मुक्तmem, size);
+	अगर (s)
+		वापस s;
+	list_क्रम_each_entry_safe(s, n, &cp->lines, list) अणु
 		list_del(&s->list);
-		if (!list_empty(&s->update))
+		अगर (!list_empty(&s->update))
 			list_del(&s->update);
 		cp->nr_lines--;
-		if (free_string(&cp->freemem, s) >= size)
-			break;
-	}
-	s = alloc_string(&cp->freemem, size);
+		अगर (मुक्त_string(&cp->मुक्तmem, s) >= size)
+			अवरोध;
+	पूर्ण
+	s = alloc_string(&cp->मुक्तmem, size);
 	BUG_ON(!s);
-	if (cp->nr_up != 0 && cp->nr_up + cp->view.rows > cp->nr_lines) {
+	अगर (cp->nr_up != 0 && cp->nr_up + cp->view.rows > cp->nr_lines) अणु
 		cp->nr_up = cp->nr_lines - cp->view.rows + 1;
 		con3270_rebuild_update(cp);
 		con3270_update_status(cp);
-	}
-	return s;
-}
+	पूर्ण
+	वापस s;
+पूर्ण
 
 /*
  * Write completion callback.
  */
-static void
-con3270_write_callback(struct raw3270_request *rq, void *data)
-{
+अटल व्योम
+con3270_ग_लिखो_callback(काष्ठा raw3270_request *rq, व्योम *data)
+अणु
 	raw3270_request_reset(rq);
-	xchg(&((struct con3270 *) rq->view)->write, rq);
-}
+	xchg(&((काष्ठा con3270 *) rq->view)->ग_लिखो, rq);
+पूर्ण
 
 /*
  * Update console display.
  */
-static void
-con3270_update(struct timer_list *t)
-{
-	struct con3270 *cp = from_timer(cp, t, timer);
-	struct raw3270_request *wrq;
-	char wcc, prolog[6];
-	unsigned long flags;
-	unsigned long updated;
-	struct string *s, *n;
-	int rc;
+अटल व्योम
+con3270_update(काष्ठा समयr_list *t)
+अणु
+	काष्ठा con3270 *cp = from_समयr(cp, t, समयr);
+	काष्ठा raw3270_request *wrq;
+	अक्षर wcc, prolog[6];
+	अचिन्हित दीर्घ flags;
+	अचिन्हित दीर्घ updated;
+	काष्ठा string *s, *n;
+	पूर्णांक rc;
 
-	if (!auto_update && !raw3270_view_active(&cp->view))
-		return;
-	if (cp->view.dev)
+	अगर (!स्वतः_update && !raw3270_view_active(&cp->view))
+		वापस;
+	अगर (cp->view.dev)
 		raw3270_activate_view(&cp->view);
 
-	wrq = xchg(&cp->write, 0);
-	if (!wrq) {
-		con3270_set_timer(cp, 1);
-		return;
-	}
+	wrq = xchg(&cp->ग_लिखो, 0);
+	अगर (!wrq) अणु
+		con3270_set_समयr(cp, 1);
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&cp->view.lock, flags);
 	updated = 0;
-	if (cp->update_flags & CON_UPDATE_ALL) {
+	अगर (cp->update_flags & CON_UPDATE_ALL) अणु
 		con3270_rebuild_update(cp);
 		con3270_update_status(cp);
 		cp->update_flags = CON_UPDATE_ERASE | CON_UPDATE_LIST |
 			CON_UPDATE_STATUS;
-	}
-	if (cp->update_flags & CON_UPDATE_ERASE) {
-		/* Use erase write alternate to initialize display. */
+	पूर्ण
+	अगर (cp->update_flags & CON_UPDATE_ERASE) अणु
+		/* Use erase ग_लिखो alternate to initialize display. */
 		raw3270_request_set_cmd(wrq, TC_EWRITEA);
 		updated |= CON_UPDATE_ERASE;
-	} else
+	पूर्ण अन्यथा
 		raw3270_request_set_cmd(wrq, TC_WRITE);
 
 	wcc = TW_NONE;
@@ -247,12 +248,12 @@ con3270_update(struct timer_list *t)
 	/*
 	 * Update status line.
 	 */
-	if (cp->update_flags & CON_UPDATE_STATUS)
-		if (raw3270_request_add_data(wrq, cp->status->string,
+	अगर (cp->update_flags & CON_UPDATE_STATUS)
+		अगर (raw3270_request_add_data(wrq, cp->status->string,
 					     cp->status->len) == 0)
 			updated |= CON_UPDATE_STATUS;
 
-	if (cp->update_flags & CON_UPDATE_LIST) {
+	अगर (cp->update_flags & CON_UPDATE_LIST) अणु
 		prolog[0] = TO_SBA;
 		prolog[3] = TO_SA;
 		prolog[4] = TAT_COLOR;
@@ -261,79 +262,79 @@ con3270_update(struct timer_list *t)
 				       cp->view.cols * cp->line_nr);
 		raw3270_request_add_data(wrq, prolog, 6);
 		/* Write strings in the update list to the screen. */
-		list_for_each_entry_safe(s, n, &cp->update, update) {
-			if (s != cp->cline)
+		list_क्रम_each_entry_safe(s, n, &cp->update, update) अणु
+			अगर (s != cp->cline)
 				con3270_update_string(cp, s, cp->line_nr);
-			if (raw3270_request_add_data(wrq, s->string,
+			अगर (raw3270_request_add_data(wrq, s->string,
 						     s->len) != 0)
-				break;
+				अवरोध;
 			list_del_init(&s->update);
-			if (s != cp->cline)
+			अगर (s != cp->cline)
 				cp->line_nr++;
-		}
-		if (list_empty(&cp->update))
+		पूर्ण
+		अगर (list_empty(&cp->update))
 			updated |= CON_UPDATE_LIST;
-	}
-	wrq->callback = con3270_write_callback;
+	पूर्ण
+	wrq->callback = con3270_ग_लिखो_callback;
 	rc = raw3270_start(&cp->view, wrq);
-	if (rc == 0) {
+	अगर (rc == 0) अणु
 		cp->update_flags &= ~updated;
-		if (cp->update_flags)
-			con3270_set_timer(cp, 1);
-	} else {
+		अगर (cp->update_flags)
+			con3270_set_समयr(cp, 1);
+	पूर्ण अन्यथा अणु
 		raw3270_request_reset(wrq);
-		xchg(&cp->write, wrq);
-	}
+		xchg(&cp->ग_लिखो, wrq);
+	पूर्ण
 	spin_unlock_irqrestore(&cp->view.lock, flags);
-}
+पूर्ण
 
 /*
  * Read tasklet.
  */
-static void
-con3270_read_tasklet(struct raw3270_request *rrq)
-{
-	static char kreset_data = TW_KR;
-	struct con3270 *cp;
-	unsigned long flags;
-	int nr_up, deactivate;
+अटल व्योम
+con3270_पढ़ो_tasklet(काष्ठा raw3270_request *rrq)
+अणु
+	अटल अक्षर kreset_data = TW_KR;
+	काष्ठा con3270 *cp;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक nr_up, deactivate;
 
-	cp = (struct con3270 *) rrq->view;
+	cp = (काष्ठा con3270 *) rrq->view;
 	spin_lock_irqsave(&cp->view.lock, flags);
 	nr_up = cp->nr_up;
 	deactivate = 0;
 	/* Check aid byte. */
-	switch (cp->input->string[0]) {
-	case 0x7d:	/* enter: jump to bottom. */
+	चयन (cp->input->string[0]) अणु
+	हाल 0x7d:	/* enter: jump to bottom. */
 		nr_up = 0;
-		break;
-	case 0xf3:	/* PF3: deactivate the console view. */
+		अवरोध;
+	हाल 0xf3:	/* PF3: deactivate the console view. */
 		deactivate = 1;
-		break;
-	case 0x6d:	/* clear: start from scratch. */
+		अवरोध;
+	हाल 0x6d:	/* clear: start from scratch. */
 		cp->update_flags = CON_UPDATE_ALL;
-		con3270_set_timer(cp, 1);
-		break;
-	case 0xf7:	/* PF7: do a page up in the console log. */
+		con3270_set_समयr(cp, 1);
+		अवरोध;
+	हाल 0xf7:	/* PF7: करो a page up in the console log. */
 		nr_up += cp->view.rows - 2;
-		if (nr_up + cp->view.rows - 1 > cp->nr_lines) {
+		अगर (nr_up + cp->view.rows - 1 > cp->nr_lines) अणु
 			nr_up = cp->nr_lines - cp->view.rows + 1;
-			if (nr_up < 0)
+			अगर (nr_up < 0)
 				nr_up = 0;
-		}
-		break;
-	case 0xf8:	/* PF8: do a page down in the console log. */
+		पूर्ण
+		अवरोध;
+	हाल 0xf8:	/* PF8: करो a page करोwn in the console log. */
 		nr_up -= cp->view.rows - 2;
-		if (nr_up < 0)
+		अगर (nr_up < 0)
 			nr_up = 0;
-		break;
-	}
-	if (nr_up != cp->nr_up) {
+		अवरोध;
+	पूर्ण
+	अगर (nr_up != cp->nr_up) अणु
 		cp->nr_up = nr_up;
 		con3270_rebuild_update(cp);
 		con3270_update_status(cp);
-		con3270_set_timer(cp, 1);
-	}
+		con3270_set_समयr(cp, 1);
+	पूर्ण
 	spin_unlock_irqrestore(&cp->view.lock, flags);
 
 	/* Start keyboard reset command. */
@@ -342,307 +343,307 @@ con3270_read_tasklet(struct raw3270_request *rrq)
 	raw3270_request_add_data(cp->kreset, &kreset_data, 1);
 	raw3270_start(&cp->view, cp->kreset);
 
-	if (deactivate)
+	अगर (deactivate)
 		raw3270_deactivate_view(&cp->view);
 
 	raw3270_request_reset(rrq);
-	xchg(&cp->read, rrq);
+	xchg(&cp->पढ़ो, rrq);
 	raw3270_put_view(&cp->view);
-}
+पूर्ण
 
 /*
  * Read request completion callback.
  */
-static void
-con3270_read_callback(struct raw3270_request *rq, void *data)
-{
+अटल व्योम
+con3270_पढ़ो_callback(काष्ठा raw3270_request *rq, व्योम *data)
+अणु
 	raw3270_get_view(rq->view);
 	/* Schedule tasklet to pass input to tty. */
-	tasklet_schedule(&((struct con3270 *) rq->view)->readlet);
-}
+	tasklet_schedule(&((काष्ठा con3270 *) rq->view)->पढ़ोlet);
+पूर्ण
 
 /*
- * Issue a read request. Called only from interrupt function.
+ * Issue a पढ़ो request. Called only from पूर्णांकerrupt function.
  */
-static void
-con3270_issue_read(struct con3270 *cp)
-{
-	struct raw3270_request *rrq;
-	int rc;
+अटल व्योम
+con3270_issue_पढ़ो(काष्ठा con3270 *cp)
+अणु
+	काष्ठा raw3270_request *rrq;
+	पूर्णांक rc;
 
-	rrq = xchg(&cp->read, 0);
-	if (!rrq)
-		/* Read already scheduled. */
-		return;
-	rrq->callback = con3270_read_callback;
+	rrq = xchg(&cp->पढ़ो, 0);
+	अगर (!rrq)
+		/* Read alपढ़ोy scheduled. */
+		वापस;
+	rrq->callback = con3270_पढ़ो_callback;
 	rrq->callback_data = cp;
 	raw3270_request_set_cmd(rrq, TC_READMOD);
 	raw3270_request_set_data(rrq, cp->input->string, cp->input->len);
-	/* Issue the read modified request. */
+	/* Issue the पढ़ो modअगरied request. */
 	rc = raw3270_start_irq(&cp->view, rrq);
-	if (rc)
+	अगर (rc)
 		raw3270_request_reset(rrq);
-}
+पूर्ण
 
 /*
  * Switch to the console view.
  */
-static int
-con3270_activate(struct raw3270_view *view)
-{
-	struct con3270 *cp;
+अटल पूर्णांक
+con3270_activate(काष्ठा raw3270_view *view)
+अणु
+	काष्ठा con3270 *cp;
 
-	cp = (struct con3270 *) view;
+	cp = (काष्ठा con3270 *) view;
 	cp->update_flags = CON_UPDATE_ALL;
-	con3270_set_timer(cp, 1);
-	return 0;
-}
+	con3270_set_समयr(cp, 1);
+	वापस 0;
+पूर्ण
 
-static void
-con3270_deactivate(struct raw3270_view *view)
-{
-	struct con3270 *cp;
+अटल व्योम
+con3270_deactivate(काष्ठा raw3270_view *view)
+अणु
+	काष्ठा con3270 *cp;
 
-	cp = (struct con3270 *) view;
-	del_timer(&cp->timer);
-}
+	cp = (काष्ठा con3270 *) view;
+	del_समयr(&cp->समयr);
+पूर्ण
 
-static void
-con3270_irq(struct con3270 *cp, struct raw3270_request *rq, struct irb *irb)
-{
-	/* Handle ATTN. Schedule tasklet to read aid. */
-	if (irb->scsw.cmd.dstat & DEV_STAT_ATTENTION)
-		con3270_issue_read(cp);
+अटल व्योम
+con3270_irq(काष्ठा con3270 *cp, काष्ठा raw3270_request *rq, काष्ठा irb *irb)
+अणु
+	/* Handle ATTN. Schedule tasklet to पढ़ो aid. */
+	अगर (irb->scsw.cmd.dstat & DEV_STAT_ATTENTION)
+		con3270_issue_पढ़ो(cp);
 
-	if (rq) {
-		if (irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK)
+	अगर (rq) अणु
+		अगर (irb->scsw.cmd.dstat & DEV_STAT_UNIT_CHECK)
 			rq->rc = -EIO;
-		else
+		अन्यथा
 			/* Normal end. Copy residual count. */
 			rq->rescnt = irb->scsw.cmd.count;
-	} else if (irb->scsw.cmd.dstat & DEV_STAT_DEV_END) {
+	पूर्ण अन्यथा अगर (irb->scsw.cmd.dstat & DEV_STAT_DEV_END) अणु
 		/* Interrupt without an outstanding request -> update all */
 		cp->update_flags = CON_UPDATE_ALL;
-		con3270_set_timer(cp, 1);
-	}
-}
+		con3270_set_समयr(cp, 1);
+	पूर्ण
+पूर्ण
 
 /* Console view to a 3270 device. */
-static struct raw3270_fn con3270_fn = {
+अटल काष्ठा raw3270_fn con3270_fn = अणु
 	.activate = con3270_activate,
 	.deactivate = con3270_deactivate,
-	.intv = (void *) con3270_irq
-};
+	.पूर्णांकv = (व्योम *) con3270_irq
+पूर्ण;
 
-static inline void
-con3270_cline_add(struct con3270 *cp)
-{
-	if (!list_empty(&cp->cline->list))
-		/* Already added. */
-		return;
+अटल अंतरभूत व्योम
+con3270_cline_add(काष्ठा con3270 *cp)
+अणु
+	अगर (!list_empty(&cp->cline->list))
+		/* Alपढ़ोy added. */
+		वापस;
 	list_add_tail(&cp->cline->list, &cp->lines);
 	cp->nr_lines++;
 	con3270_rebuild_update(cp);
-}
+पूर्ण
 
-static inline void
-con3270_cline_insert(struct con3270 *cp, unsigned char c)
-{
+अटल अंतरभूत व्योम
+con3270_cline_insert(काष्ठा con3270 *cp, अचिन्हित अक्षर c)
+अणु
 	cp->cline->string[cp->cline->len++] = 
 		cp->view.ascebc[(c < ' ') ? ' ' : c];
-	if (list_empty(&cp->cline->update)) {
+	अगर (list_empty(&cp->cline->update)) अणु
 		list_add_tail(&cp->cline->update, &cp->update);
 		cp->update_flags |= CON_UPDATE_LIST;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void
-con3270_cline_end(struct con3270 *cp)
-{
-	struct string *s;
-	unsigned int size;
+अटल अंतरभूत व्योम
+con3270_cline_end(काष्ठा con3270 *cp)
+अणु
+	काष्ठा string *s;
+	अचिन्हित पूर्णांक size;
 
 	/* Copy cline. */
 	size = (cp->cline->len < cp->view.cols - 5) ?
 		cp->cline->len + 4 : cp->view.cols;
 	s = con3270_alloc_string(cp, size);
-	memcpy(s->string, cp->cline->string, cp->cline->len);
-	if (cp->cline->len < cp->view.cols - 5) {
+	स_नकल(s->string, cp->cline->string, cp->cline->len);
+	अगर (cp->cline->len < cp->view.cols - 5) अणु
 		s->string[s->len - 4] = TO_RA;
 		s->string[s->len - 1] = 0;
-	} else {
-		while (--size >= cp->cline->len)
+	पूर्ण अन्यथा अणु
+		जबतक (--size >= cp->cline->len)
 			s->string[size] = cp->view.ascebc[' '];
-	}
+	पूर्ण
 	/* Replace cline with allocated line s and reset cline. */
 	list_add(&s->list, &cp->cline->list);
 	list_del_init(&cp->cline->list);
-	if (!list_empty(&cp->cline->update)) {
+	अगर (!list_empty(&cp->cline->update)) अणु
 		list_add(&s->update, &cp->cline->update);
 		list_del_init(&cp->cline->update);
-	}
+	पूर्ण
 	cp->cline->len = 0;
-}
+पूर्ण
 
 /*
  * Write a string to the 3270 console
  */
-static void
-con3270_write(struct console *co, const char *str, unsigned int count)
-{
-	struct con3270 *cp;
-	unsigned long flags;
-	unsigned char c;
+अटल व्योम
+con3270_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *str, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा con3270 *cp;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित अक्षर c;
 
 	cp = condev;
 	spin_lock_irqsave(&cp->view.lock, flags);
-	while (count-- > 0) {
+	जबतक (count-- > 0) अणु
 		c = *str++;
-		if (cp->cline->len == 0)
+		अगर (cp->cline->len == 0)
 			con3270_cline_add(cp);
-		if (c != '\n')
+		अगर (c != '\n')
 			con3270_cline_insert(cp, c);
-		if (c == '\n' || cp->cline->len >= cp->view.cols)
+		अगर (c == '\n' || cp->cline->len >= cp->view.cols)
 			con3270_cline_end(cp);
-	}
-	/* Setup timer to output current console buffer after 1/10 second */
+	पूर्ण
+	/* Setup समयr to output current console buffer after 1/10 second */
 	cp->nr_up = 0;
-	if (cp->view.dev && !timer_pending(&cp->timer))
-		con3270_set_timer(cp, HZ/10);
+	अगर (cp->view.dev && !समयr_pending(&cp->समयr))
+		con3270_set_समयr(cp, HZ/10);
 	spin_unlock_irqrestore(&cp->view.lock,flags);
-}
+पूर्ण
 
-static struct tty_driver *
-con3270_device(struct console *c, int *index)
-{
+अटल काष्ठा tty_driver *
+con3270_device(काष्ठा console *c, पूर्णांक *index)
+अणु
 	*index = c->index;
-	return tty3270_driver;
-}
+	वापस tty3270_driver;
+पूर्ण
 
 /*
- * Wait for end of write request.
+ * Wait क्रम end of ग_लिखो request.
  */
-static void
-con3270_wait_write(struct con3270 *cp)
-{
-	while (!cp->write) {
-		raw3270_wait_cons_dev(cp->view.dev);
+अटल व्योम
+con3270_रुको_ग_लिखो(काष्ठा con3270 *cp)
+अणु
+	जबतक (!cp->ग_लिखो) अणु
+		raw3270_रुको_cons_dev(cp->view.dev);
 		barrier();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * panic() calls con3270_flush through a panic_notifier
- * before the system enters a disabled, endless loop.
+ * panic() calls con3270_flush through a panic_notअगरier
+ * beक्रमe the प्रणाली enters a disabled, endless loop.
  */
-static void
-con3270_flush(void)
-{
-	struct con3270 *cp;
-	unsigned long flags;
+अटल व्योम
+con3270_flush(व्योम)
+अणु
+	काष्ठा con3270 *cp;
+	अचिन्हित दीर्घ flags;
 
 	cp = condev;
-	if (!cp->view.dev)
-		return;
+	अगर (!cp->view.dev)
+		वापस;
 	raw3270_activate_view(&cp->view);
 	spin_lock_irqsave(&cp->view.lock, flags);
-	con3270_wait_write(cp);
+	con3270_रुको_ग_लिखो(cp);
 	cp->nr_up = 0;
 	con3270_rebuild_update(cp);
 	con3270_update_status(cp);
-	while (cp->update_flags != 0) {
+	जबतक (cp->update_flags != 0) अणु
 		spin_unlock_irqrestore(&cp->view.lock, flags);
-		con3270_update(&cp->timer);
+		con3270_update(&cp->समयr);
 		spin_lock_irqsave(&cp->view.lock, flags);
-		con3270_wait_write(cp);
-	}
+		con3270_रुको_ग_लिखो(cp);
+	पूर्ण
 	spin_unlock_irqrestore(&cp->view.lock, flags);
-}
+पूर्ण
 
-static int con3270_notify(struct notifier_block *self,
-			  unsigned long event, void *data)
-{
+अटल पूर्णांक con3270_notअगरy(काष्ठा notअगरier_block *self,
+			  अचिन्हित दीर्घ event, व्योम *data)
+अणु
 	con3270_flush();
-	return NOTIFY_OK;
-}
+	वापस NOTIFY_OK;
+पूर्ण
 
-static struct notifier_block on_panic_nb = {
-	.notifier_call = con3270_notify,
+अटल काष्ठा notअगरier_block on_panic_nb = अणु
+	.notअगरier_call = con3270_notअगरy,
 	.priority = 0,
-};
+पूर्ण;
 
-static struct notifier_block on_reboot_nb = {
-	.notifier_call = con3270_notify,
+अटल काष्ठा notअगरier_block on_reboot_nb = अणु
+	.notअगरier_call = con3270_notअगरy,
 	.priority = 0,
-};
+पूर्ण;
 
 /*
- *  The console structure for the 3270 console
+ *  The console काष्ठाure क्रम the 3270 console
  */
-static struct console con3270 = {
+अटल काष्ठा console con3270 = अणु
 	.name	 = "tty3270",
-	.write	 = con3270_write,
+	.ग_लिखो	 = con3270_ग_लिखो,
 	.device	 = con3270_device,
 	.flags	 = CON_PRINTBUFFER,
-};
+पूर्ण;
 
 /*
  * 3270 console initialization code called from console_init().
  */
-static int __init
-con3270_init(void)
-{
-	struct raw3270 *rp;
-	void *cbuf;
-	int i;
+अटल पूर्णांक __init
+con3270_init(व्योम)
+अणु
+	काष्ठा raw3270 *rp;
+	व्योम *cbuf;
+	पूर्णांक i;
 
-	/* Check if 3270 is to be the console */
-	if (!CONSOLE_IS_3270)
-		return -ENODEV;
+	/* Check अगर 3270 is to be the console */
+	अगर (!CONSOLE_IS_3270)
+		वापस -ENODEV;
 
-	/* Set the console mode for VM */
-	if (MACHINE_IS_VM) {
-		cpcmd("TERM CONMODE 3270", NULL, 0, NULL);
-		cpcmd("TERM AUTOCR OFF", NULL, 0, NULL);
-	}
+	/* Set the console mode क्रम VM */
+	अगर (MACHINE_IS_VM) अणु
+		cpcmd("TERM CONMODE 3270", शून्य, 0, शून्य);
+		cpcmd("TERM AUTOCR OFF", शून्य, 0, शून्य);
+	पूर्ण
 
 	rp = raw3270_setup_console();
-	if (IS_ERR(rp))
-		return PTR_ERR(rp);
+	अगर (IS_ERR(rp))
+		वापस PTR_ERR(rp);
 
-	condev = kzalloc(sizeof(struct con3270), GFP_KERNEL | GFP_DMA);
-	if (!condev)
-		return -ENOMEM;
+	condev = kzalloc(माप(काष्ठा con3270), GFP_KERNEL | GFP_DMA);
+	अगर (!condev)
+		वापस -ENOMEM;
 	condev->view.dev = rp;
 
-	condev->read = raw3270_request_alloc(0);
-	condev->read->callback = con3270_read_callback;
-	condev->read->callback_data = condev;
-	condev->write = raw3270_request_alloc(CON3270_OUTPUT_BUFFER_SIZE);
+	condev->पढ़ो = raw3270_request_alloc(0);
+	condev->पढ़ो->callback = con3270_पढ़ो_callback;
+	condev->पढ़ो->callback_data = condev;
+	condev->ग_लिखो = raw3270_request_alloc(CON3270_OUTPUT_BUFFER_SIZE);
 	condev->kreset = raw3270_request_alloc(1);
 
 	INIT_LIST_HEAD(&condev->lines);
 	INIT_LIST_HEAD(&condev->update);
-	timer_setup(&condev->timer, con3270_update, 0);
-	tasklet_init(&condev->readlet, 
-		     (void (*)(unsigned long)) con3270_read_tasklet,
-		     (unsigned long) condev->read);
+	समयr_setup(&condev->समयr, con3270_update, 0);
+	tasklet_init(&condev->पढ़ोlet, 
+		     (व्योम (*)(अचिन्हित दीर्घ)) con3270_पढ़ो_tasklet,
+		     (अचिन्हित दीर्घ) condev->पढ़ो);
 
 	raw3270_add_view(&condev->view, &con3270_fn, 1, RAW3270_VIEW_LOCK_IRQ);
 
-	INIT_LIST_HEAD(&condev->freemem);
-	for (i = 0; i < CON3270_STRING_PAGES; i++) {
-		cbuf = (void *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
-		add_string_memory(&condev->freemem, cbuf, PAGE_SIZE);
-	}
-	condev->cline = alloc_string(&condev->freemem, condev->view.cols);
+	INIT_LIST_HEAD(&condev->मुक्तmem);
+	क्रम (i = 0; i < CON3270_STRING_PAGES; i++) अणु
+		cbuf = (व्योम *) get_zeroed_page(GFP_KERNEL | GFP_DMA);
+		add_string_memory(&condev->मुक्तmem, cbuf, PAGE_SIZE);
+	पूर्ण
+	condev->cline = alloc_string(&condev->मुक्तmem, condev->view.cols);
 	condev->cline->len = 0;
 	con3270_create_status(condev);
-	condev->input = alloc_string(&condev->freemem, 80);
-	atomic_notifier_chain_register(&panic_notifier_list, &on_panic_nb);
-	register_reboot_notifier(&on_reboot_nb);
-	register_console(&con3270);
-	return 0;
-}
+	condev->input = alloc_string(&condev->मुक्तmem, 80);
+	atomic_notअगरier_chain_रेजिस्टर(&panic_notअगरier_list, &on_panic_nb);
+	रेजिस्टर_reboot_notअगरier(&on_reboot_nb);
+	रेजिस्टर_console(&con3270);
+	वापस 0;
+पूर्ण
 
 console_initcall(con3270_init);

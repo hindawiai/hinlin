@@ -1,72 +1,73 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  *  Copyright (C) 1991, 1992, 1993, 1994  Linus Torvalds
  *
  *  Swap reorganised 29.12.95, Stephen Tweedie.
  *  kswapd added: 7.1.96  sct
  *  Removed kswapd_ctl limits, and swap out as many pages as needed
- *  to bring the system back to freepages.high: 2.4.97, Rik van Riel.
+ *  to bring the प्रणाली back to मुक्तpages.high: 2.4.97, Rik van Riel.
  *  Zone aware kswapd started 02/00, Kanoj Sarcar (kanoj@sgi.com).
  *  Multiqueue VM started 5.8.00, Rik van Riel.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/mm.h>
-#include <linux/sched/mm.h>
-#include <linux/module.h>
-#include <linux/gfp.h>
-#include <linux/kernel_stat.h>
-#include <linux/swap.h>
-#include <linux/pagemap.h>
-#include <linux/init.h>
-#include <linux/highmem.h>
-#include <linux/vmpressure.h>
-#include <linux/vmstat.h>
-#include <linux/file.h>
-#include <linux/writeback.h>
-#include <linux/blkdev.h>
-#include <linux/buffer_head.h>	/* for try_to_release_page(),
+#समावेश <linux/mm.h>
+#समावेश <linux/sched/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/gfp.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/swap.h>
+#समावेश <linux/pagemap.h>
+#समावेश <linux/init.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/vmpressure.h>
+#समावेश <linux/vmस्थिति.स>
+#समावेश <linux/file.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/buffer_head.h>	/* क्रम try_to_release_page(),
 					buffer_heads_over_limit */
-#include <linux/mm_inline.h>
-#include <linux/backing-dev.h>
-#include <linux/rmap.h>
-#include <linux/topology.h>
-#include <linux/cpu.h>
-#include <linux/cpuset.h>
-#include <linux/compaction.h>
-#include <linux/notifier.h>
-#include <linux/rwsem.h>
-#include <linux/delay.h>
-#include <linux/kthread.h>
-#include <linux/freezer.h>
-#include <linux/memcontrol.h>
-#include <linux/delayacct.h>
-#include <linux/sysctl.h>
-#include <linux/oom.h>
-#include <linux/pagevec.h>
-#include <linux/prefetch.h>
-#include <linux/printk.h>
-#include <linux/dax.h>
-#include <linux/psi.h>
+#समावेश <linux/mm_अंतरभूत.h>
+#समावेश <linux/backing-dev.h>
+#समावेश <linux/rmap.h>
+#समावेश <linux/topology.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpuset.h>
+#समावेश <linux/compaction.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/rwsem.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/मुक्तzer.h>
+#समावेश <linux/memcontrol.h>
+#समावेश <linux/delayacct.h>
+#समावेश <linux/sysctl.h>
+#समावेश <linux/oom.h>
+#समावेश <linux/pagevec.h>
+#समावेश <linux/prefetch.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/dax.h>
+#समावेश <linux/psi.h>
 
-#include <asm/tlbflush.h>
-#include <asm/div64.h>
+#समावेश <यंत्र/tlbflush.h>
+#समावेश <यंत्र/भाग64.h>
 
-#include <linux/swapops.h>
-#include <linux/balloon_compaction.h>
+#समावेश <linux/swapops.h>
+#समावेश <linux/balloon_compaction.h>
 
-#include "internal.h"
+#समावेश "internal.h"
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/vmscan.h>
+#घोषणा CREATE_TRACE_POINTS
+#समावेश <trace/events/vmscan.h>
 
-struct scan_control {
+काष्ठा scan_control अणु
 	/* How many pages shrink_list() should reclaim */
-	unsigned long nr_to_reclaim;
+	अचिन्हित दीर्घ nr_to_reclaim;
 
 	/*
-	 * Nodemask of nodes allowed by the caller. If NULL, all nodes
+	 * Nodemask of nodes allowed by the caller. If शून्य, all nodes
 	 * are scanned.
 	 */
 	nodemask_t	*nodemask;
@@ -75,48 +76,48 @@ struct scan_control {
 	 * The memory cgroup that hit its limit and as a result is the
 	 * primary target of this reclaim invocation.
 	 */
-	struct mem_cgroup *target_mem_cgroup;
+	काष्ठा mem_cgroup *target_mem_cgroup;
 
 	/*
 	 * Scan pressure balancing between anon and file LRUs
 	 */
-	unsigned long	anon_cost;
-	unsigned long	file_cost;
+	अचिन्हित दीर्घ	anon_cost;
+	अचिन्हित दीर्घ	file_cost;
 
 	/* Can active pages be deactivated as part of reclaim? */
-#define DEACTIVATE_ANON 1
-#define DEACTIVATE_FILE 2
-	unsigned int may_deactivate:2;
-	unsigned int force_deactivate:1;
-	unsigned int skipped_deactivate:1;
+#घोषणा DEACTIVATE_ANON 1
+#घोषणा DEACTIVATE_खाता 2
+	अचिन्हित पूर्णांक may_deactivate:2;
+	अचिन्हित पूर्णांक क्रमce_deactivate:1;
+	अचिन्हित पूर्णांक skipped_deactivate:1;
 
 	/* Writepage batching in laptop mode; RECLAIM_WRITE */
-	unsigned int may_writepage:1;
+	अचिन्हित पूर्णांक may_ग_लिखोpage:1;
 
 	/* Can mapped pages be reclaimed? */
-	unsigned int may_unmap:1;
+	अचिन्हित पूर्णांक may_unmap:1;
 
 	/* Can pages be swapped as part of reclaim? */
-	unsigned int may_swap:1;
+	अचिन्हित पूर्णांक may_swap:1;
 
 	/*
 	 * Cgroups are not reclaimed below their configured memory.low,
 	 * unless we threaten to OOM. If any cgroups are skipped due to
-	 * memory.low and nothing was reclaimed, go back for memory.low.
+	 * memory.low and nothing was reclaimed, go back क्रम memory.low.
 	 */
-	unsigned int memcg_low_reclaim:1;
-	unsigned int memcg_low_skipped:1;
+	अचिन्हित पूर्णांक memcg_low_reclaim:1;
+	अचिन्हित पूर्णांक memcg_low_skipped:1;
 
-	unsigned int hibernation_mode:1;
+	अचिन्हित पूर्णांक hibernation_mode:1;
 
-	/* One of the zones is ready for compaction */
-	unsigned int compaction_ready:1;
+	/* One of the zones is पढ़ोy क्रम compaction */
+	अचिन्हित पूर्णांक compaction_पढ़ोy:1;
 
 	/* There is easily reclaimable cold cache in the current node */
-	unsigned int cache_trim_mode:1;
+	अचिन्हित पूर्णांक cache_trim_mode:1;
 
 	/* The file pages on the current node are dangerously low */
-	unsigned int file_is_tiny:1;
+	अचिन्हित पूर्णांक file_is_tiny:1;
 
 	/* Allocation order */
 	s8 order;
@@ -124,700 +125,700 @@ struct scan_control {
 	/* Scan (total_size >> priority) pages at once */
 	s8 priority;
 
-	/* The highest zone to isolate pages for reclaim from */
+	/* The highest zone to isolate pages क्रम reclaim from */
 	s8 reclaim_idx;
 
 	/* This context's GFP mask */
 	gfp_t gfp_mask;
 
 	/* Incremented by the number of inactive pages that were scanned */
-	unsigned long nr_scanned;
+	अचिन्हित दीर्घ nr_scanned;
 
-	/* Number of pages freed so far during a call to shrink_zones() */
-	unsigned long nr_reclaimed;
+	/* Number of pages मुक्तd so far during a call to shrink_zones() */
+	अचिन्हित दीर्घ nr_reclaimed;
 
-	struct {
-		unsigned int dirty;
-		unsigned int unqueued_dirty;
-		unsigned int congested;
-		unsigned int writeback;
-		unsigned int immediate;
-		unsigned int file_taken;
-		unsigned int taken;
-	} nr;
+	काष्ठा अणु
+		अचिन्हित पूर्णांक dirty;
+		अचिन्हित पूर्णांक unqueued_dirty;
+		अचिन्हित पूर्णांक congested;
+		अचिन्हित पूर्णांक ग_लिखोback;
+		अचिन्हित पूर्णांक immediate;
+		अचिन्हित पूर्णांक file_taken;
+		अचिन्हित पूर्णांक taken;
+	पूर्ण nr;
 
-	/* for recording the reclaimed slab by now */
-	struct reclaim_state reclaim_state;
-};
+	/* क्रम recording the reclaimed slab by now */
+	काष्ठा reclaim_state reclaim_state;
+पूर्ण;
 
-#ifdef ARCH_HAS_PREFETCHW
-#define prefetchw_prev_lru_page(_page, _base, _field)			\
-	do {								\
-		if ((_page)->lru.prev != _base) {			\
-			struct page *prev;				\
+#अगर_घोषित ARCH_HAS_PREFETCHW
+#घोषणा prefetchw_prev_lru_page(_page, _base, _field)			\
+	करो अणु								\
+		अगर ((_page)->lru.prev != _base) अणु			\
+			काष्ठा page *prev;				\
 									\
 			prev = lru_to_page(&(_page->lru));		\
 			prefetchw(&prev->_field);			\
-		}							\
-	} while (0)
-#else
-#define prefetchw_prev_lru_page(_page, _base, _field) do { } while (0)
-#endif
+		पूर्ण							\
+	पूर्ण जबतक (0)
+#अन्यथा
+#घोषणा prefetchw_prev_lru_page(_page, _base, _field) करो अणु पूर्ण जबतक (0)
+#पूर्ण_अगर
 
 /*
  * From 0 .. 200.  Higher means more swappy.
  */
-int vm_swappiness = 60;
+पूर्णांक vm_swappiness = 60;
 
-static void set_task_reclaim_state(struct task_struct *task,
-				   struct reclaim_state *rs)
-{
-	/* Check for an overwrite */
+अटल व्योम set_task_reclaim_state(काष्ठा task_काष्ठा *task,
+				   काष्ठा reclaim_state *rs)
+अणु
+	/* Check क्रम an overग_लिखो */
 	WARN_ON_ONCE(rs && task->reclaim_state);
 
-	/* Check for the nulling of an already-nulled member */
+	/* Check क्रम the nulling of an alपढ़ोy-nulled member */
 	WARN_ON_ONCE(!rs && !task->reclaim_state);
 
 	task->reclaim_state = rs;
-}
+पूर्ण
 
-static LIST_HEAD(shrinker_list);
-static DECLARE_RWSEM(shrinker_rwsem);
+अटल LIST_HEAD(shrinker_list);
+अटल DECLARE_RWSEM(shrinker_rwsem);
 
-#ifdef CONFIG_MEMCG
-static int shrinker_nr_max;
+#अगर_घोषित CONFIG_MEMCG
+अटल पूर्णांक shrinker_nr_max;
 
 /* The shrinker_info is expanded in a batch of BITS_PER_LONG */
-static inline int shrinker_map_size(int nr_items)
-{
-	return (DIV_ROUND_UP(nr_items, BITS_PER_LONG) * sizeof(unsigned long));
-}
+अटल अंतरभूत पूर्णांक shrinker_map_size(पूर्णांक nr_items)
+अणु
+	वापस (DIV_ROUND_UP(nr_items, BITS_PER_LONG) * माप(अचिन्हित दीर्घ));
+पूर्ण
 
-static inline int shrinker_defer_size(int nr_items)
-{
-	return (round_up(nr_items, BITS_PER_LONG) * sizeof(atomic_long_t));
-}
+अटल अंतरभूत पूर्णांक shrinker_defer_size(पूर्णांक nr_items)
+अणु
+	वापस (round_up(nr_items, BITS_PER_LONG) * माप(atomic_दीर्घ_t));
+पूर्ण
 
-static struct shrinker_info *shrinker_info_protected(struct mem_cgroup *memcg,
-						     int nid)
-{
-	return rcu_dereference_protected(memcg->nodeinfo[nid]->shrinker_info,
+अटल काष्ठा shrinker_info *shrinker_info_रक्षित(काष्ठा mem_cgroup *memcg,
+						     पूर्णांक nid)
+अणु
+	वापस rcu_dereference_रक्षित(memcg->nodeinfo[nid]->shrinker_info,
 					 lockdep_is_held(&shrinker_rwsem));
-}
+पूर्ण
 
-static int expand_one_shrinker_info(struct mem_cgroup *memcg,
-				    int map_size, int defer_size,
-				    int old_map_size, int old_defer_size)
-{
-	struct shrinker_info *new, *old;
-	struct mem_cgroup_per_node *pn;
-	int nid;
-	int size = map_size + defer_size;
+अटल पूर्णांक expand_one_shrinker_info(काष्ठा mem_cgroup *memcg,
+				    पूर्णांक map_size, पूर्णांक defer_size,
+				    पूर्णांक old_map_size, पूर्णांक old_defer_size)
+अणु
+	काष्ठा shrinker_info *new, *old;
+	काष्ठा mem_cgroup_per_node *pn;
+	पूर्णांक nid;
+	पूर्णांक size = map_size + defer_size;
 
-	for_each_node(nid) {
+	क्रम_each_node(nid) अणु
 		pn = memcg->nodeinfo[nid];
-		old = shrinker_info_protected(memcg, nid);
+		old = shrinker_info_रक्षित(memcg, nid);
 		/* Not yet online memcg */
-		if (!old)
-			return 0;
+		अगर (!old)
+			वापस 0;
 
-		new = kvmalloc_node(sizeof(*new) + size, GFP_KERNEL, nid);
-		if (!new)
-			return -ENOMEM;
+		new = kvदो_स्मृति_node(माप(*new) + size, GFP_KERNEL, nid);
+		अगर (!new)
+			वापस -ENOMEM;
 
-		new->nr_deferred = (atomic_long_t *)(new + 1);
-		new->map = (void *)new->nr_deferred + defer_size;
+		new->nr_deferred = (atomic_दीर्घ_t *)(new + 1);
+		new->map = (व्योम *)new->nr_deferred + defer_size;
 
 		/* map: set all old bits, clear all new bits */
-		memset(new->map, (int)0xff, old_map_size);
-		memset((void *)new->map + old_map_size, 0, map_size - old_map_size);
+		स_रखो(new->map, (पूर्णांक)0xff, old_map_size);
+		स_रखो((व्योम *)new->map + old_map_size, 0, map_size - old_map_size);
 		/* nr_deferred: copy old values, clear all new values */
-		memcpy(new->nr_deferred, old->nr_deferred, old_defer_size);
-		memset((void *)new->nr_deferred + old_defer_size, 0,
+		स_नकल(new->nr_deferred, old->nr_deferred, old_defer_size);
+		स_रखो((व्योम *)new->nr_deferred + old_defer_size, 0,
 		       defer_size - old_defer_size);
 
-		rcu_assign_pointer(pn->shrinker_info, new);
-		kvfree_rcu(old, rcu);
-	}
+		rcu_assign_poपूर्णांकer(pn->shrinker_info, new);
+		kvमुक्त_rcu(old, rcu);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void free_shrinker_info(struct mem_cgroup *memcg)
-{
-	struct mem_cgroup_per_node *pn;
-	struct shrinker_info *info;
-	int nid;
+व्योम मुक्त_shrinker_info(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा mem_cgroup_per_node *pn;
+	काष्ठा shrinker_info *info;
+	पूर्णांक nid;
 
-	for_each_node(nid) {
+	क्रम_each_node(nid) अणु
 		pn = memcg->nodeinfo[nid];
-		info = rcu_dereference_protected(pn->shrinker_info, true);
-		kvfree(info);
-		rcu_assign_pointer(pn->shrinker_info, NULL);
-	}
-}
+		info = rcu_dereference_रक्षित(pn->shrinker_info, true);
+		kvमुक्त(info);
+		rcu_assign_poपूर्णांकer(pn->shrinker_info, शून्य);
+	पूर्ण
+पूर्ण
 
-int alloc_shrinker_info(struct mem_cgroup *memcg)
-{
-	struct shrinker_info *info;
-	int nid, size, ret = 0;
-	int map_size, defer_size = 0;
+पूर्णांक alloc_shrinker_info(काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा shrinker_info *info;
+	पूर्णांक nid, size, ret = 0;
+	पूर्णांक map_size, defer_size = 0;
 
-	down_write(&shrinker_rwsem);
+	करोwn_ग_लिखो(&shrinker_rwsem);
 	map_size = shrinker_map_size(shrinker_nr_max);
 	defer_size = shrinker_defer_size(shrinker_nr_max);
 	size = map_size + defer_size;
-	for_each_node(nid) {
-		info = kvzalloc_node(sizeof(*info) + size, GFP_KERNEL, nid);
-		if (!info) {
-			free_shrinker_info(memcg);
+	क्रम_each_node(nid) अणु
+		info = kvzalloc_node(माप(*info) + size, GFP_KERNEL, nid);
+		अगर (!info) अणु
+			मुक्त_shrinker_info(memcg);
 			ret = -ENOMEM;
-			break;
-		}
-		info->nr_deferred = (atomic_long_t *)(info + 1);
-		info->map = (void *)info->nr_deferred + defer_size;
-		rcu_assign_pointer(memcg->nodeinfo[nid]->shrinker_info, info);
-	}
-	up_write(&shrinker_rwsem);
+			अवरोध;
+		पूर्ण
+		info->nr_deferred = (atomic_दीर्घ_t *)(info + 1);
+		info->map = (व्योम *)info->nr_deferred + defer_size;
+		rcu_assign_poपूर्णांकer(memcg->nodeinfo[nid]->shrinker_info, info);
+	पूर्ण
+	up_ग_लिखो(&shrinker_rwsem);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline bool need_expand(int nr_max)
-{
-	return round_up(nr_max, BITS_PER_LONG) >
+अटल अंतरभूत bool need_expand(पूर्णांक nr_max)
+अणु
+	वापस round_up(nr_max, BITS_PER_LONG) >
 	       round_up(shrinker_nr_max, BITS_PER_LONG);
-}
+पूर्ण
 
-static int expand_shrinker_info(int new_id)
-{
-	int ret = 0;
-	int new_nr_max = new_id + 1;
-	int map_size, defer_size = 0;
-	int old_map_size, old_defer_size = 0;
-	struct mem_cgroup *memcg;
+अटल पूर्णांक expand_shrinker_info(पूर्णांक new_id)
+अणु
+	पूर्णांक ret = 0;
+	पूर्णांक new_nr_max = new_id + 1;
+	पूर्णांक map_size, defer_size = 0;
+	पूर्णांक old_map_size, old_defer_size = 0;
+	काष्ठा mem_cgroup *memcg;
 
-	if (!need_expand(new_nr_max))
-		goto out;
+	अगर (!need_expand(new_nr_max))
+		जाओ out;
 
-	if (!root_mem_cgroup)
-		goto out;
+	अगर (!root_mem_cgroup)
+		जाओ out;
 
-	lockdep_assert_held(&shrinker_rwsem);
+	lockdep_निश्चित_held(&shrinker_rwsem);
 
 	map_size = shrinker_map_size(new_nr_max);
 	defer_size = shrinker_defer_size(new_nr_max);
 	old_map_size = shrinker_map_size(shrinker_nr_max);
 	old_defer_size = shrinker_defer_size(shrinker_nr_max);
 
-	memcg = mem_cgroup_iter(NULL, NULL, NULL);
-	do {
+	memcg = mem_cgroup_iter(शून्य, शून्य, शून्य);
+	करो अणु
 		ret = expand_one_shrinker_info(memcg, map_size, defer_size,
 					       old_map_size, old_defer_size);
-		if (ret) {
-			mem_cgroup_iter_break(NULL, memcg);
-			goto out;
-		}
-	} while ((memcg = mem_cgroup_iter(NULL, memcg, NULL)) != NULL);
+		अगर (ret) अणु
+			mem_cgroup_iter_अवरोध(शून्य, memcg);
+			जाओ out;
+		पूर्ण
+	पूर्ण जबतक ((memcg = mem_cgroup_iter(शून्य, memcg, शून्य)) != शून्य);
 out:
-	if (!ret)
+	अगर (!ret)
 		shrinker_nr_max = new_nr_max;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void set_shrinker_bit(struct mem_cgroup *memcg, int nid, int shrinker_id)
-{
-	if (shrinker_id >= 0 && memcg && !mem_cgroup_is_root(memcg)) {
-		struct shrinker_info *info;
+व्योम set_shrinker_bit(काष्ठा mem_cgroup *memcg, पूर्णांक nid, पूर्णांक shrinker_id)
+अणु
+	अगर (shrinker_id >= 0 && memcg && !mem_cgroup_is_root(memcg)) अणु
+		काष्ठा shrinker_info *info;
 
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		info = rcu_dereference(memcg->nodeinfo[nid]->shrinker_info);
 		/* Pairs with smp mb in shrink_slab() */
-		smp_mb__before_atomic();
+		smp_mb__beक्रमe_atomic();
 		set_bit(shrinker_id, info->map);
-		rcu_read_unlock();
-	}
-}
+		rcu_पढ़ो_unlock();
+	पूर्ण
+पूर्ण
 
-static DEFINE_IDR(shrinker_idr);
+अटल DEFINE_IDR(shrinker_idr);
 
-static int prealloc_memcg_shrinker(struct shrinker *shrinker)
-{
-	int id, ret = -ENOMEM;
+अटल पूर्णांक pपुनः_स्मृति_memcg_shrinker(काष्ठा shrinker *shrinker)
+अणु
+	पूर्णांक id, ret = -ENOMEM;
 
-	if (mem_cgroup_disabled())
-		return -ENOSYS;
+	अगर (mem_cgroup_disabled())
+		वापस -ENOSYS;
 
-	down_write(&shrinker_rwsem);
-	/* This may call shrinker, so it must use down_read_trylock() */
+	करोwn_ग_लिखो(&shrinker_rwsem);
+	/* This may call shrinker, so it must use करोwn_पढ़ो_trylock() */
 	id = idr_alloc(&shrinker_idr, shrinker, 0, 0, GFP_KERNEL);
-	if (id < 0)
-		goto unlock;
+	अगर (id < 0)
+		जाओ unlock;
 
-	if (id >= shrinker_nr_max) {
-		if (expand_shrinker_info(id)) {
-			idr_remove(&shrinker_idr, id);
-			goto unlock;
-		}
-	}
+	अगर (id >= shrinker_nr_max) अणु
+		अगर (expand_shrinker_info(id)) अणु
+			idr_हटाओ(&shrinker_idr, id);
+			जाओ unlock;
+		पूर्ण
+	पूर्ण
 	shrinker->id = id;
 	ret = 0;
 unlock:
-	up_write(&shrinker_rwsem);
-	return ret;
-}
+	up_ग_लिखो(&shrinker_rwsem);
+	वापस ret;
+पूर्ण
 
-static void unregister_memcg_shrinker(struct shrinker *shrinker)
-{
-	int id = shrinker->id;
+अटल व्योम unरेजिस्टर_memcg_shrinker(काष्ठा shrinker *shrinker)
+अणु
+	पूर्णांक id = shrinker->id;
 
 	BUG_ON(id < 0);
 
-	lockdep_assert_held(&shrinker_rwsem);
+	lockdep_निश्चित_held(&shrinker_rwsem);
 
-	idr_remove(&shrinker_idr, id);
-}
+	idr_हटाओ(&shrinker_idr, id);
+पूर्ण
 
-static long xchg_nr_deferred_memcg(int nid, struct shrinker *shrinker,
-				   struct mem_cgroup *memcg)
-{
-	struct shrinker_info *info;
+अटल दीर्घ xchg_nr_deferred_memcg(पूर्णांक nid, काष्ठा shrinker *shrinker,
+				   काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा shrinker_info *info;
 
-	info = shrinker_info_protected(memcg, nid);
-	return atomic_long_xchg(&info->nr_deferred[shrinker->id], 0);
-}
+	info = shrinker_info_रक्षित(memcg, nid);
+	वापस atomic_दीर्घ_xchg(&info->nr_deferred[shrinker->id], 0);
+पूर्ण
 
-static long add_nr_deferred_memcg(long nr, int nid, struct shrinker *shrinker,
-				  struct mem_cgroup *memcg)
-{
-	struct shrinker_info *info;
+अटल दीर्घ add_nr_deferred_memcg(दीर्घ nr, पूर्णांक nid, काष्ठा shrinker *shrinker,
+				  काष्ठा mem_cgroup *memcg)
+अणु
+	काष्ठा shrinker_info *info;
 
-	info = shrinker_info_protected(memcg, nid);
-	return atomic_long_add_return(nr, &info->nr_deferred[shrinker->id]);
-}
+	info = shrinker_info_रक्षित(memcg, nid);
+	वापस atomic_दीर्घ_add_वापस(nr, &info->nr_deferred[shrinker->id]);
+पूर्ण
 
-void reparent_shrinker_deferred(struct mem_cgroup *memcg)
-{
-	int i, nid;
-	long nr;
-	struct mem_cgroup *parent;
-	struct shrinker_info *child_info, *parent_info;
+व्योम reparent_shrinker_deferred(काष्ठा mem_cgroup *memcg)
+अणु
+	पूर्णांक i, nid;
+	दीर्घ nr;
+	काष्ठा mem_cgroup *parent;
+	काष्ठा shrinker_info *child_info, *parent_info;
 
 	parent = parent_mem_cgroup(memcg);
-	if (!parent)
+	अगर (!parent)
 		parent = root_mem_cgroup;
 
 	/* Prevent from concurrent shrinker_info expand */
-	down_read(&shrinker_rwsem);
-	for_each_node(nid) {
-		child_info = shrinker_info_protected(memcg, nid);
-		parent_info = shrinker_info_protected(parent, nid);
-		for (i = 0; i < shrinker_nr_max; i++) {
-			nr = atomic_long_read(&child_info->nr_deferred[i]);
-			atomic_long_add(nr, &parent_info->nr_deferred[i]);
-		}
-	}
-	up_read(&shrinker_rwsem);
-}
+	करोwn_पढ़ो(&shrinker_rwsem);
+	क्रम_each_node(nid) अणु
+		child_info = shrinker_info_रक्षित(memcg, nid);
+		parent_info = shrinker_info_रक्षित(parent, nid);
+		क्रम (i = 0; i < shrinker_nr_max; i++) अणु
+			nr = atomic_दीर्घ_पढ़ो(&child_info->nr_deferred[i]);
+			atomic_दीर्घ_add(nr, &parent_info->nr_deferred[i]);
+		पूर्ण
+	पूर्ण
+	up_पढ़ो(&shrinker_rwsem);
+पूर्ण
 
-static bool cgroup_reclaim(struct scan_control *sc)
-{
-	return sc->target_mem_cgroup;
-}
+अटल bool cgroup_reclaim(काष्ठा scan_control *sc)
+अणु
+	वापस sc->target_mem_cgroup;
+पूर्ण
 
 /**
- * writeback_throttling_sane - is the usual dirty throttling mechanism available?
+ * ग_लिखोback_throttling_sane - is the usual dirty throttling mechanism available?
  * @sc: scan_control in question
  *
  * The normal page dirty throttling mechanism in balance_dirty_pages() is
  * completely broken with the legacy memcg and direct stalling in
- * shrink_page_list() is used for throttling instead, which lacks all the
+ * shrink_page_list() is used क्रम throttling instead, which lacks all the
  * niceties such as fairness, adaptive pausing, bandwidth proportional
  * allocation and configurability.
  *
  * This function tests whether the vmscan currently in progress can assume
  * that the normal dirty throttling mechanism is operational.
  */
-static bool writeback_throttling_sane(struct scan_control *sc)
-{
-	if (!cgroup_reclaim(sc))
-		return true;
-#ifdef CONFIG_CGROUP_WRITEBACK
-	if (cgroup_subsys_on_dfl(memory_cgrp_subsys))
-		return true;
-#endif
-	return false;
-}
-#else
-static int prealloc_memcg_shrinker(struct shrinker *shrinker)
-{
-	return -ENOSYS;
-}
+अटल bool ग_लिखोback_throttling_sane(काष्ठा scan_control *sc)
+अणु
+	अगर (!cgroup_reclaim(sc))
+		वापस true;
+#अगर_घोषित CONFIG_CGROUP_WRITEBACK
+	अगर (cgroup_subsys_on_dfl(memory_cgrp_subsys))
+		वापस true;
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक pपुनः_स्मृति_memcg_shrinker(काष्ठा shrinker *shrinker)
+अणु
+	वापस -ENOSYS;
+पूर्ण
 
-static void unregister_memcg_shrinker(struct shrinker *shrinker)
-{
-}
+अटल व्योम unरेजिस्टर_memcg_shrinker(काष्ठा shrinker *shrinker)
+अणु
+पूर्ण
 
-static long xchg_nr_deferred_memcg(int nid, struct shrinker *shrinker,
-				   struct mem_cgroup *memcg)
-{
-	return 0;
-}
+अटल दीर्घ xchg_nr_deferred_memcg(पूर्णांक nid, काष्ठा shrinker *shrinker,
+				   काष्ठा mem_cgroup *memcg)
+अणु
+	वापस 0;
+पूर्ण
 
-static long add_nr_deferred_memcg(long nr, int nid, struct shrinker *shrinker,
-				  struct mem_cgroup *memcg)
-{
-	return 0;
-}
+अटल दीर्घ add_nr_deferred_memcg(दीर्घ nr, पूर्णांक nid, काष्ठा shrinker *shrinker,
+				  काष्ठा mem_cgroup *memcg)
+अणु
+	वापस 0;
+पूर्ण
 
-static bool cgroup_reclaim(struct scan_control *sc)
-{
-	return false;
-}
+अटल bool cgroup_reclaim(काष्ठा scan_control *sc)
+अणु
+	वापस false;
+पूर्ण
 
-static bool writeback_throttling_sane(struct scan_control *sc)
-{
-	return true;
-}
-#endif
+अटल bool ग_लिखोback_throttling_sane(काष्ठा scan_control *sc)
+अणु
+	वापस true;
+पूर्ण
+#पूर्ण_अगर
 
-static long xchg_nr_deferred(struct shrinker *shrinker,
-			     struct shrink_control *sc)
-{
-	int nid = sc->nid;
+अटल दीर्घ xchg_nr_deferred(काष्ठा shrinker *shrinker,
+			     काष्ठा shrink_control *sc)
+अणु
+	पूर्णांक nid = sc->nid;
 
-	if (!(shrinker->flags & SHRINKER_NUMA_AWARE))
+	अगर (!(shrinker->flags & SHRINKER_NUMA_AWARE))
 		nid = 0;
 
-	if (sc->memcg &&
+	अगर (sc->memcg &&
 	    (shrinker->flags & SHRINKER_MEMCG_AWARE))
-		return xchg_nr_deferred_memcg(nid, shrinker,
+		वापस xchg_nr_deferred_memcg(nid, shrinker,
 					      sc->memcg);
 
-	return atomic_long_xchg(&shrinker->nr_deferred[nid], 0);
-}
+	वापस atomic_दीर्घ_xchg(&shrinker->nr_deferred[nid], 0);
+पूर्ण
 
 
-static long add_nr_deferred(long nr, struct shrinker *shrinker,
-			    struct shrink_control *sc)
-{
-	int nid = sc->nid;
+अटल दीर्घ add_nr_deferred(दीर्घ nr, काष्ठा shrinker *shrinker,
+			    काष्ठा shrink_control *sc)
+अणु
+	पूर्णांक nid = sc->nid;
 
-	if (!(shrinker->flags & SHRINKER_NUMA_AWARE))
+	अगर (!(shrinker->flags & SHRINKER_NUMA_AWARE))
 		nid = 0;
 
-	if (sc->memcg &&
+	अगर (sc->memcg &&
 	    (shrinker->flags & SHRINKER_MEMCG_AWARE))
-		return add_nr_deferred_memcg(nr, nid, shrinker,
+		वापस add_nr_deferred_memcg(nr, nid, shrinker,
 					     sc->memcg);
 
-	return atomic_long_add_return(nr, &shrinker->nr_deferred[nid]);
-}
+	वापस atomic_दीर्घ_add_वापस(nr, &shrinker->nr_deferred[nid]);
+पूर्ण
 
 /*
- * This misses isolated pages which are not accounted for to save counters.
- * As the data only determines if reclaim or compaction continues, it is
- * not expected that isolated pages will be a dominating factor.
+ * This misses isolated pages which are not accounted क्रम to save counters.
+ * As the data only determines अगर reclaim or compaction जारीs, it is
+ * not expected that isolated pages will be a करोminating factor.
  */
-unsigned long zone_reclaimable_pages(struct zone *zone)
-{
-	unsigned long nr;
+अचिन्हित दीर्घ zone_reclaimable_pages(काष्ठा zone *zone)
+अणु
+	अचिन्हित दीर्घ nr;
 
-	nr = zone_page_state_snapshot(zone, NR_ZONE_INACTIVE_FILE) +
-		zone_page_state_snapshot(zone, NR_ZONE_ACTIVE_FILE);
-	if (get_nr_swap_pages() > 0)
+	nr = zone_page_state_snapshot(zone, NR_ZONE_INACTIVE_खाता) +
+		zone_page_state_snapshot(zone, NR_ZONE_ACTIVE_खाता);
+	अगर (get_nr_swap_pages() > 0)
 		nr += zone_page_state_snapshot(zone, NR_ZONE_INACTIVE_ANON) +
 			zone_page_state_snapshot(zone, NR_ZONE_ACTIVE_ANON);
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
 /**
  * lruvec_lru_size -  Returns the number of pages on the given LRU list.
  * @lruvec: lru vector
  * @lru: lru to use
- * @zone_idx: zones to consider (use MAX_NR_ZONES for the whole LRU list)
+ * @zone_idx: zones to consider (use MAX_NR_ZONES क्रम the whole LRU list)
  */
-static unsigned long lruvec_lru_size(struct lruvec *lruvec, enum lru_list lru,
-				     int zone_idx)
-{
-	unsigned long size = 0;
-	int zid;
+अटल अचिन्हित दीर्घ lruvec_lru_size(काष्ठा lruvec *lruvec, क्रमागत lru_list lru,
+				     पूर्णांक zone_idx)
+अणु
+	अचिन्हित दीर्घ size = 0;
+	पूर्णांक zid;
 
-	for (zid = 0; zid <= zone_idx && zid < MAX_NR_ZONES; zid++) {
-		struct zone *zone = &lruvec_pgdat(lruvec)->node_zones[zid];
+	क्रम (zid = 0; zid <= zone_idx && zid < MAX_NR_ZONES; zid++) अणु
+		काष्ठा zone *zone = &lruvec_pgdat(lruvec)->node_zones[zid];
 
-		if (!managed_zone(zone))
-			continue;
+		अगर (!managed_zone(zone))
+			जारी;
 
-		if (!mem_cgroup_disabled())
+		अगर (!mem_cgroup_disabled())
 			size += mem_cgroup_get_zone_lru_size(lruvec, lru, zid);
-		else
+		अन्यथा
 			size += zone_page_state(zone, NR_ZONE_LRU_BASE + lru);
-	}
-	return size;
-}
+	पूर्ण
+	वापस size;
+पूर्ण
 
 /*
  * Add a shrinker callback to be called from the vm.
  */
-int prealloc_shrinker(struct shrinker *shrinker)
-{
-	unsigned int size;
-	int err;
+पूर्णांक pपुनः_स्मृति_shrinker(काष्ठा shrinker *shrinker)
+अणु
+	अचिन्हित पूर्णांक size;
+	पूर्णांक err;
 
-	if (shrinker->flags & SHRINKER_MEMCG_AWARE) {
-		err = prealloc_memcg_shrinker(shrinker);
-		if (err != -ENOSYS)
-			return err;
+	अगर (shrinker->flags & SHRINKER_MEMCG_AWARE) अणु
+		err = pपुनः_स्मृति_memcg_shrinker(shrinker);
+		अगर (err != -ENOSYS)
+			वापस err;
 
 		shrinker->flags &= ~SHRINKER_MEMCG_AWARE;
-	}
+	पूर्ण
 
-	size = sizeof(*shrinker->nr_deferred);
-	if (shrinker->flags & SHRINKER_NUMA_AWARE)
+	size = माप(*shrinker->nr_deferred);
+	अगर (shrinker->flags & SHRINKER_NUMA_AWARE)
 		size *= nr_node_ids;
 
 	shrinker->nr_deferred = kzalloc(size, GFP_KERNEL);
-	if (!shrinker->nr_deferred)
-		return -ENOMEM;
+	अगर (!shrinker->nr_deferred)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void free_prealloced_shrinker(struct shrinker *shrinker)
-{
-	if (shrinker->flags & SHRINKER_MEMCG_AWARE) {
-		down_write(&shrinker_rwsem);
-		unregister_memcg_shrinker(shrinker);
-		up_write(&shrinker_rwsem);
-		return;
-	}
+व्योम मुक्त_pपुनः_स्मृतिed_shrinker(काष्ठा shrinker *shrinker)
+अणु
+	अगर (shrinker->flags & SHRINKER_MEMCG_AWARE) अणु
+		करोwn_ग_लिखो(&shrinker_rwsem);
+		unरेजिस्टर_memcg_shrinker(shrinker);
+		up_ग_लिखो(&shrinker_rwsem);
+		वापस;
+	पूर्ण
 
-	kfree(shrinker->nr_deferred);
-	shrinker->nr_deferred = NULL;
-}
+	kमुक्त(shrinker->nr_deferred);
+	shrinker->nr_deferred = शून्य;
+पूर्ण
 
-void register_shrinker_prepared(struct shrinker *shrinker)
-{
-	down_write(&shrinker_rwsem);
+व्योम रेजिस्टर_shrinker_prepared(काष्ठा shrinker *shrinker)
+अणु
+	करोwn_ग_लिखो(&shrinker_rwsem);
 	list_add_tail(&shrinker->list, &shrinker_list);
 	shrinker->flags |= SHRINKER_REGISTERED;
-	up_write(&shrinker_rwsem);
-}
+	up_ग_लिखो(&shrinker_rwsem);
+पूर्ण
 
-int register_shrinker(struct shrinker *shrinker)
-{
-	int err = prealloc_shrinker(shrinker);
+पूर्णांक रेजिस्टर_shrinker(काष्ठा shrinker *shrinker)
+अणु
+	पूर्णांक err = pपुनः_स्मृति_shrinker(shrinker);
 
-	if (err)
-		return err;
-	register_shrinker_prepared(shrinker);
-	return 0;
-}
-EXPORT_SYMBOL(register_shrinker);
+	अगर (err)
+		वापस err;
+	रेजिस्टर_shrinker_prepared(shrinker);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(रेजिस्टर_shrinker);
 
 /*
  * Remove one
  */
-void unregister_shrinker(struct shrinker *shrinker)
-{
-	if (!(shrinker->flags & SHRINKER_REGISTERED))
-		return;
+व्योम unरेजिस्टर_shrinker(काष्ठा shrinker *shrinker)
+अणु
+	अगर (!(shrinker->flags & SHRINKER_REGISTERED))
+		वापस;
 
-	down_write(&shrinker_rwsem);
+	करोwn_ग_लिखो(&shrinker_rwsem);
 	list_del(&shrinker->list);
 	shrinker->flags &= ~SHRINKER_REGISTERED;
-	if (shrinker->flags & SHRINKER_MEMCG_AWARE)
-		unregister_memcg_shrinker(shrinker);
-	up_write(&shrinker_rwsem);
+	अगर (shrinker->flags & SHRINKER_MEMCG_AWARE)
+		unरेजिस्टर_memcg_shrinker(shrinker);
+	up_ग_लिखो(&shrinker_rwsem);
 
-	kfree(shrinker->nr_deferred);
-	shrinker->nr_deferred = NULL;
-}
-EXPORT_SYMBOL(unregister_shrinker);
+	kमुक्त(shrinker->nr_deferred);
+	shrinker->nr_deferred = शून्य;
+पूर्ण
+EXPORT_SYMBOL(unरेजिस्टर_shrinker);
 
-#define SHRINK_BATCH 128
+#घोषणा SHRINK_BATCH 128
 
-static unsigned long do_shrink_slab(struct shrink_control *shrinkctl,
-				    struct shrinker *shrinker, int priority)
-{
-	unsigned long freed = 0;
-	unsigned long long delta;
-	long total_scan;
-	long freeable;
-	long nr;
-	long new_nr;
-	long batch_size = shrinker->batch ? shrinker->batch
+अटल अचिन्हित दीर्घ करो_shrink_slab(काष्ठा shrink_control *shrinkctl,
+				    काष्ठा shrinker *shrinker, पूर्णांक priority)
+अणु
+	अचिन्हित दीर्घ मुक्तd = 0;
+	अचिन्हित दीर्घ दीर्घ delta;
+	दीर्घ total_scan;
+	दीर्घ मुक्तable;
+	दीर्घ nr;
+	दीर्घ new_nr;
+	दीर्घ batch_size = shrinker->batch ? shrinker->batch
 					  : SHRINK_BATCH;
-	long scanned = 0, next_deferred;
+	दीर्घ scanned = 0, next_deferred;
 
-	freeable = shrinker->count_objects(shrinker, shrinkctl);
-	if (freeable == 0 || freeable == SHRINK_EMPTY)
-		return freeable;
+	मुक्तable = shrinker->count_objects(shrinker, shrinkctl);
+	अगर (मुक्तable == 0 || मुक्तable == SHRINK_EMPTY)
+		वापस मुक्तable;
 
 	/*
-	 * copy the current shrinker scan count into a local variable
+	 * copy the current shrinker scan count पूर्णांकo a local variable
 	 * and zero it so that other concurrent shrinker invocations
-	 * don't also do this scanning work.
+	 * करोn't also करो this scanning work.
 	 */
 	nr = xchg_nr_deferred(shrinker, shrinkctl);
 
-	if (shrinker->seeks) {
-		delta = freeable >> priority;
+	अगर (shrinker->seeks) अणु
+		delta = मुक्तable >> priority;
 		delta *= 4;
-		do_div(delta, shrinker->seeks);
-	} else {
+		करो_भाग(delta, shrinker->seeks);
+	पूर्ण अन्यथा अणु
 		/*
-		 * These objects don't require any IO to create. Trim
+		 * These objects करोn't require any IO to create. Trim
 		 * them aggressively under memory pressure to keep
 		 * them from causing refetches in the IO caches.
 		 */
-		delta = freeable / 2;
-	}
+		delta = मुक्तable / 2;
+	पूर्ण
 
 	total_scan = nr >> priority;
 	total_scan += delta;
-	total_scan = min(total_scan, (2 * freeable));
+	total_scan = min(total_scan, (2 * मुक्तable));
 
 	trace_mm_shrink_slab_start(shrinker, shrinkctl, nr,
-				   freeable, delta, total_scan, priority);
+				   मुक्तable, delta, total_scan, priority);
 
 	/*
 	 * Normally, we should not scan less than batch_size objects in one
-	 * pass to avoid too frequent shrinker calls, but if the slab has less
+	 * pass to aव्योम too frequent shrinker calls, but अगर the slab has less
 	 * than batch_size objects in total and we are really tight on memory,
 	 * we will try to reclaim all available objects, otherwise we can end
 	 * up failing allocations although there are plenty of reclaimable
-	 * objects spread over several slabs with usage less than the
+	 * objects spपढ़ो over several sद_असल with usage less than the
 	 * batch_size.
 	 *
 	 * We detect the "tight on memory" situations by looking at the total
 	 * number of objects we want to scan (total_scan). If it is greater
-	 * than the total number of objects on slab (freeable), we must be
-	 * scanning at high prio and therefore should try to reclaim as much as
+	 * than the total number of objects on slab (मुक्तable), we must be
+	 * scanning at high prio and thereक्रमe should try to reclaim as much as
 	 * possible.
 	 */
-	while (total_scan >= batch_size ||
-	       total_scan >= freeable) {
-		unsigned long ret;
-		unsigned long nr_to_scan = min(batch_size, total_scan);
+	जबतक (total_scan >= batch_size ||
+	       total_scan >= मुक्तable) अणु
+		अचिन्हित दीर्घ ret;
+		अचिन्हित दीर्घ nr_to_scan = min(batch_size, total_scan);
 
 		shrinkctl->nr_to_scan = nr_to_scan;
 		shrinkctl->nr_scanned = nr_to_scan;
 		ret = shrinker->scan_objects(shrinker, shrinkctl);
-		if (ret == SHRINK_STOP)
-			break;
-		freed += ret;
+		अगर (ret == SHRINK_STOP)
+			अवरोध;
+		मुक्तd += ret;
 
 		count_vm_events(SLABS_SCANNED, shrinkctl->nr_scanned);
 		total_scan -= shrinkctl->nr_scanned;
 		scanned += shrinkctl->nr_scanned;
 
 		cond_resched();
-	}
+	पूर्ण
 
 	/*
 	 * The deferred work is increased by any new work (delta) that wasn't
-	 * done, decreased by old deferred work that was done now.
+	 * करोne, decreased by old deferred work that was करोne now.
 	 *
-	 * And it is capped to two times of the freeable items.
+	 * And it is capped to two बार of the मुक्तable items.
 	 */
-	next_deferred = max_t(long, (nr + delta - scanned), 0);
-	next_deferred = min(next_deferred, (2 * freeable));
+	next_deferred = max_t(दीर्घ, (nr + delta - scanned), 0);
+	next_deferred = min(next_deferred, (2 * मुक्तable));
 
 	/*
-	 * move the unused scan count back into the shrinker in a
+	 * move the unused scan count back पूर्णांकo the shrinker in a
 	 * manner that handles concurrent updates.
 	 */
 	new_nr = add_nr_deferred(next_deferred, shrinker, shrinkctl);
 
-	trace_mm_shrink_slab_end(shrinker, shrinkctl->nid, freed, nr, new_nr, total_scan);
-	return freed;
-}
+	trace_mm_shrink_slab_end(shrinker, shrinkctl->nid, मुक्तd, nr, new_nr, total_scan);
+	वापस मुक्तd;
+पूर्ण
 
-#ifdef CONFIG_MEMCG
-static unsigned long shrink_slab_memcg(gfp_t gfp_mask, int nid,
-			struct mem_cgroup *memcg, int priority)
-{
-	struct shrinker_info *info;
-	unsigned long ret, freed = 0;
-	int i;
+#अगर_घोषित CONFIG_MEMCG
+अटल अचिन्हित दीर्घ shrink_slab_memcg(gfp_t gfp_mask, पूर्णांक nid,
+			काष्ठा mem_cgroup *memcg, पूर्णांक priority)
+अणु
+	काष्ठा shrinker_info *info;
+	अचिन्हित दीर्घ ret, मुक्तd = 0;
+	पूर्णांक i;
 
-	if (!mem_cgroup_online(memcg))
-		return 0;
+	अगर (!mem_cgroup_online(memcg))
+		वापस 0;
 
-	if (!down_read_trylock(&shrinker_rwsem))
-		return 0;
+	अगर (!करोwn_पढ़ो_trylock(&shrinker_rwsem))
+		वापस 0;
 
-	info = shrinker_info_protected(memcg, nid);
-	if (unlikely(!info))
-		goto unlock;
+	info = shrinker_info_रक्षित(memcg, nid);
+	अगर (unlikely(!info))
+		जाओ unlock;
 
-	for_each_set_bit(i, info->map, shrinker_nr_max) {
-		struct shrink_control sc = {
+	क्रम_each_set_bit(i, info->map, shrinker_nr_max) अणु
+		काष्ठा shrink_control sc = अणु
 			.gfp_mask = gfp_mask,
 			.nid = nid,
 			.memcg = memcg,
-		};
-		struct shrinker *shrinker;
+		पूर्ण;
+		काष्ठा shrinker *shrinker;
 
 		shrinker = idr_find(&shrinker_idr, i);
-		if (unlikely(!shrinker || !(shrinker->flags & SHRINKER_REGISTERED))) {
-			if (!shrinker)
+		अगर (unlikely(!shrinker || !(shrinker->flags & SHRINKER_REGISTERED))) अणु
+			अगर (!shrinker)
 				clear_bit(i, info->map);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Call non-slab shrinkers even though kmem is disabled */
-		if (!memcg_kmem_enabled() &&
+		अगर (!memcg_kmem_enabled() &&
 		    !(shrinker->flags & SHRINKER_NONSLAB))
-			continue;
+			जारी;
 
-		ret = do_shrink_slab(&sc, shrinker, priority);
-		if (ret == SHRINK_EMPTY) {
+		ret = करो_shrink_slab(&sc, shrinker, priority);
+		अगर (ret == SHRINK_EMPTY) अणु
 			clear_bit(i, info->map);
 			/*
 			 * After the shrinker reported that it had no objects to
-			 * free, but before we cleared the corresponding bit in
+			 * मुक्त, but beक्रमe we cleared the corresponding bit in
 			 * the memcg shrinker map, a new object might have been
 			 * added. To make sure, we have the bit set in this
-			 * case, we invoke the shrinker one more time and reset
-			 * the bit if it reports that it is not empty anymore.
+			 * हाल, we invoke the shrinker one more समय and reset
+			 * the bit अगर it reports that it is not empty anymore.
 			 * The memory barrier here pairs with the barrier in
 			 * set_shrinker_bit():
 			 *
 			 * list_lru_add()     shrink_slab_memcg()
 			 *   list_add_tail()    clear_bit()
 			 *   <MB>               <MB>
-			 *   set_bit()          do_shrink_slab()
+			 *   set_bit()          करो_shrink_slab()
 			 */
 			smp_mb__after_atomic();
-			ret = do_shrink_slab(&sc, shrinker, priority);
-			if (ret == SHRINK_EMPTY)
+			ret = करो_shrink_slab(&sc, shrinker, priority);
+			अगर (ret == SHRINK_EMPTY)
 				ret = 0;
-			else
+			अन्यथा
 				set_shrinker_bit(memcg, nid, i);
-		}
-		freed += ret;
+		पूर्ण
+		मुक्तd += ret;
 
-		if (rwsem_is_contended(&shrinker_rwsem)) {
-			freed = freed ? : 1;
-			break;
-		}
-	}
+		अगर (rwsem_is_contended(&shrinker_rwsem)) अणु
+			मुक्तd = मुक्तd ? : 1;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 unlock:
-	up_read(&shrinker_rwsem);
-	return freed;
-}
-#else /* CONFIG_MEMCG */
-static unsigned long shrink_slab_memcg(gfp_t gfp_mask, int nid,
-			struct mem_cgroup *memcg, int priority)
-{
-	return 0;
-}
-#endif /* CONFIG_MEMCG */
+	up_पढ़ो(&shrinker_rwsem);
+	वापस मुक्तd;
+पूर्ण
+#अन्यथा /* CONFIG_MEMCG */
+अटल अचिन्हित दीर्घ shrink_slab_memcg(gfp_t gfp_mask, पूर्णांक nid,
+			काष्ठा mem_cgroup *memcg, पूर्णांक priority)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEMCG */
 
 /**
  * shrink_slab - shrink slab caches
@@ -828,137 +829,137 @@ static unsigned long shrink_slab_memcg(gfp_t gfp_mask, int nid,
  *
  * Call the shrink functions to age shrinkable caches.
  *
- * @nid is passed along to shrinkers with SHRINKER_NUMA_AWARE set,
+ * @nid is passed aदीर्घ to shrinkers with SHRINKER_NUMA_AWARE set,
  * unaware shrinkers will receive a node id of 0 instead.
  *
- * @memcg specifies the memory cgroup to target. Unaware shrinkers
- * are called only if it is the root cgroup.
+ * @memcg specअगरies the memory cgroup to target. Unaware shrinkers
+ * are called only अगर it is the root cgroup.
  *
  * @priority is sc->priority, we take the number of objects and >> by priority
  * in order to get the scan target.
  *
  * Returns the number of reclaimed slab objects.
  */
-static unsigned long shrink_slab(gfp_t gfp_mask, int nid,
-				 struct mem_cgroup *memcg,
-				 int priority)
-{
-	unsigned long ret, freed = 0;
-	struct shrinker *shrinker;
+अटल अचिन्हित दीर्घ shrink_slab(gfp_t gfp_mask, पूर्णांक nid,
+				 काष्ठा mem_cgroup *memcg,
+				 पूर्णांक priority)
+अणु
+	अचिन्हित दीर्घ ret, मुक्तd = 0;
+	काष्ठा shrinker *shrinker;
 
 	/*
 	 * The root memcg might be allocated even though memcg is disabled
 	 * via "cgroup_disable=memory" boot parameter.  This could make
-	 * mem_cgroup_is_root() return false, then just run memcg slab
+	 * mem_cgroup_is_root() वापस false, then just run memcg slab
 	 * shrink, but skip global shrink.  This may result in premature
 	 * oom.
 	 */
-	if (!mem_cgroup_disabled() && !mem_cgroup_is_root(memcg))
-		return shrink_slab_memcg(gfp_mask, nid, memcg, priority);
+	अगर (!mem_cgroup_disabled() && !mem_cgroup_is_root(memcg))
+		वापस shrink_slab_memcg(gfp_mask, nid, memcg, priority);
 
-	if (!down_read_trylock(&shrinker_rwsem))
-		goto out;
+	अगर (!करोwn_पढ़ो_trylock(&shrinker_rwsem))
+		जाओ out;
 
-	list_for_each_entry(shrinker, &shrinker_list, list) {
-		struct shrink_control sc = {
+	list_क्रम_each_entry(shrinker, &shrinker_list, list) अणु
+		काष्ठा shrink_control sc = अणु
 			.gfp_mask = gfp_mask,
 			.nid = nid,
 			.memcg = memcg,
-		};
+		पूर्ण;
 
-		ret = do_shrink_slab(&sc, shrinker, priority);
-		if (ret == SHRINK_EMPTY)
+		ret = करो_shrink_slab(&sc, shrinker, priority);
+		अगर (ret == SHRINK_EMPTY)
 			ret = 0;
-		freed += ret;
+		मुक्तd += ret;
 		/*
-		 * Bail out if someone want to register a new shrinker to
-		 * prevent the registration from being stalled for long periods
+		 * Bail out अगर someone want to रेजिस्टर a new shrinker to
+		 * prevent the registration from being stalled क्रम दीर्घ periods
 		 * by parallel ongoing shrinking.
 		 */
-		if (rwsem_is_contended(&shrinker_rwsem)) {
-			freed = freed ? : 1;
-			break;
-		}
-	}
+		अगर (rwsem_is_contended(&shrinker_rwsem)) अणु
+			मुक्तd = मुक्तd ? : 1;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	up_read(&shrinker_rwsem);
+	up_पढ़ो(&shrinker_rwsem);
 out:
 	cond_resched();
-	return freed;
-}
+	वापस मुक्तd;
+पूर्ण
 
-void drop_slab_node(int nid)
-{
-	unsigned long freed;
+व्योम drop_slab_node(पूर्णांक nid)
+अणु
+	अचिन्हित दीर्घ मुक्तd;
 
-	do {
-		struct mem_cgroup *memcg = NULL;
+	करो अणु
+		काष्ठा mem_cgroup *memcg = शून्य;
 
-		if (fatal_signal_pending(current))
-			return;
+		अगर (fatal_संकेत_pending(current))
+			वापस;
 
-		freed = 0;
-		memcg = mem_cgroup_iter(NULL, NULL, NULL);
-		do {
-			freed += shrink_slab(GFP_KERNEL, nid, memcg, 0);
-		} while ((memcg = mem_cgroup_iter(NULL, memcg, NULL)) != NULL);
-	} while (freed > 10);
-}
+		मुक्तd = 0;
+		memcg = mem_cgroup_iter(शून्य, शून्य, शून्य);
+		करो अणु
+			मुक्तd += shrink_slab(GFP_KERNEL, nid, memcg, 0);
+		पूर्ण जबतक ((memcg = mem_cgroup_iter(शून्य, memcg, शून्य)) != शून्य);
+	पूर्ण जबतक (मुक्तd > 10);
+पूर्ण
 
-void drop_slab(void)
-{
-	int nid;
+व्योम drop_slab(व्योम)
+अणु
+	पूर्णांक nid;
 
-	for_each_online_node(nid)
+	क्रम_each_online_node(nid)
 		drop_slab_node(nid);
-}
+पूर्ण
 
-static inline int is_page_cache_freeable(struct page *page)
-{
+अटल अंतरभूत पूर्णांक is_page_cache_मुक्तable(काष्ठा page *page)
+अणु
 	/*
-	 * A freeable page cache page is referenced only by the caller
+	 * A मुक्तable page cache page is referenced only by the caller
 	 * that isolated the page, the page cache and optional buffer
-	 * heads at page->private.
+	 * heads at page->निजी.
 	 */
-	int page_cache_pins = thp_nr_pages(page);
-	return page_count(page) - page_has_private(page) == 1 + page_cache_pins;
-}
+	पूर्णांक page_cache_pins = thp_nr_pages(page);
+	वापस page_count(page) - page_has_निजी(page) == 1 + page_cache_pins;
+पूर्ण
 
-static int may_write_to_inode(struct inode *inode)
-{
-	if (current->flags & PF_SWAPWRITE)
-		return 1;
-	if (!inode_write_congested(inode))
-		return 1;
-	if (inode_to_bdi(inode) == current->backing_dev_info)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक may_ग_लिखो_to_inode(काष्ठा inode *inode)
+अणु
+	अगर (current->flags & PF_SWAPWRITE)
+		वापस 1;
+	अगर (!inode_ग_लिखो_congested(inode))
+		वापस 1;
+	अगर (inode_to_bdi(inode) == current->backing_dev_info)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /*
- * We detected a synchronous write error writing a page out.  Probably
- * -ENOSPC.  We need to propagate that into the address_space for a subsequent
- * fsync(), msync() or close().
+ * We detected a synchronous ग_लिखो error writing a page out.  Probably
+ * -ENOSPC.  We need to propagate that पूर्णांकo the address_space क्रम a subsequent
+ * fsync(), msync() or बंद().
  *
- * The tricky part is that after writepage we cannot touch the mapping: nothing
- * prevents it from being freed up.  But we have a ref on the page and once
+ * The tricky part is that after ग_लिखोpage we cannot touch the mapping: nothing
+ * prevents it from being मुक्तd up.  But we have a ref on the page and once
  * that page is locked, the mapping is pinned.
  *
  * We're allowed to run sleeping lock_page() here because we know the caller has
  * __GFP_FS.
  */
-static void handle_write_error(struct address_space *mapping,
-				struct page *page, int error)
-{
+अटल व्योम handle_ग_लिखो_error(काष्ठा address_space *mapping,
+				काष्ठा page *page, पूर्णांक error)
+अणु
 	lock_page(page);
-	if (page_mapping(page) == mapping)
+	अगर (page_mapping(page) == mapping)
 		mapping_set_error(mapping, error);
 	unlock_page(page);
-}
+पूर्ण
 
 /* possible outcome of pageout() */
-typedef enum {
-	/* failed to write page out, page is locked */
+प्रकार क्रमागत अणु
+	/* failed to ग_लिखो page out, page is locked */
 	PAGE_KEEP,
 	/* move page to the active list, page is locked */
 	PAGE_ACTIVATE,
@@ -966,223 +967,223 @@ typedef enum {
 	PAGE_SUCCESS,
 	/* page is clean and locked */
 	PAGE_CLEAN,
-} pageout_t;
+पूर्ण pageout_t;
 
 /*
- * pageout is called by shrink_page_list() for each dirty page.
- * Calls ->writepage().
+ * pageout is called by shrink_page_list() क्रम each dirty page.
+ * Calls ->ग_लिखोpage().
  */
-static pageout_t pageout(struct page *page, struct address_space *mapping)
-{
+अटल pageout_t pageout(काष्ठा page *page, काष्ठा address_space *mapping)
+अणु
 	/*
-	 * If the page is dirty, only perform writeback if that write
+	 * If the page is dirty, only perक्रमm ग_लिखोback अगर that ग_लिखो
 	 * will be non-blocking.  To prevent this allocation from being
 	 * stalled by pagecache activity.  But note that there may be
-	 * stalls if we need to run get_block().  We could test
-	 * PagePrivate for that.
+	 * stalls अगर we need to run get_block().  We could test
+	 * PagePrivate क्रम that.
 	 *
-	 * If this process is currently in __generic_file_write_iter() against
-	 * this page's queue, we can perform writeback even if that
+	 * If this process is currently in __generic_file_ग_लिखो_iter() against
+	 * this page's queue, we can perक्रमm ग_लिखोback even अगर that
 	 * will block.
 	 *
-	 * If the page is swapcache, write it back even if that would
-	 * block, for some throttling. This happens by accident, because
-	 * swap_backing_dev_info is bust: it doesn't reflect the
-	 * congestion state of the swapdevs.  Easy to fix, if needed.
+	 * If the page is swapcache, ग_लिखो it back even अगर that would
+	 * block, क्रम some throttling. This happens by accident, because
+	 * swap_backing_dev_info is bust: it करोesn't reflect the
+	 * congestion state of the swapdevs.  Easy to fix, अगर needed.
 	 */
-	if (!is_page_cache_freeable(page))
-		return PAGE_KEEP;
-	if (!mapping) {
+	अगर (!is_page_cache_मुक्तable(page))
+		वापस PAGE_KEEP;
+	अगर (!mapping) अणु
 		/*
 		 * Some data journaling orphaned pages can have
-		 * page->mapping == NULL while being dirty with clean buffers.
+		 * page->mapping == शून्य जबतक being dirty with clean buffers.
 		 */
-		if (page_has_private(page)) {
-			if (try_to_free_buffers(page)) {
+		अगर (page_has_निजी(page)) अणु
+			अगर (try_to_मुक्त_buffers(page)) अणु
 				ClearPageDirty(page);
 				pr_info("%s: orphaned page\n", __func__);
-				return PAGE_CLEAN;
-			}
-		}
-		return PAGE_KEEP;
-	}
-	if (mapping->a_ops->writepage == NULL)
-		return PAGE_ACTIVATE;
-	if (!may_write_to_inode(mapping->host))
-		return PAGE_KEEP;
+				वापस PAGE_CLEAN;
+			पूर्ण
+		पूर्ण
+		वापस PAGE_KEEP;
+	पूर्ण
+	अगर (mapping->a_ops->ग_लिखोpage == शून्य)
+		वापस PAGE_ACTIVATE;
+	अगर (!may_ग_लिखो_to_inode(mapping->host))
+		वापस PAGE_KEEP;
 
-	if (clear_page_dirty_for_io(page)) {
-		int res;
-		struct writeback_control wbc = {
+	अगर (clear_page_dirty_क्रम_io(page)) अणु
+		पूर्णांक res;
+		काष्ठा ग_लिखोback_control wbc = अणु
 			.sync_mode = WB_SYNC_NONE,
-			.nr_to_write = SWAP_CLUSTER_MAX,
+			.nr_to_ग_लिखो = SWAP_CLUSTER_MAX,
 			.range_start = 0,
-			.range_end = LLONG_MAX,
-			.for_reclaim = 1,
-		};
+			.range_end = Lदीर्घ_उच्च,
+			.क्रम_reclaim = 1,
+		पूर्ण;
 
 		SetPageReclaim(page);
-		res = mapping->a_ops->writepage(page, &wbc);
-		if (res < 0)
-			handle_write_error(mapping, page, res);
-		if (res == AOP_WRITEPAGE_ACTIVATE) {
+		res = mapping->a_ops->ग_लिखोpage(page, &wbc);
+		अगर (res < 0)
+			handle_ग_लिखो_error(mapping, page, res);
+		अगर (res == AOP_WRITEPAGE_ACTIVATE) अणु
 			ClearPageReclaim(page);
-			return PAGE_ACTIVATE;
-		}
+			वापस PAGE_ACTIVATE;
+		पूर्ण
 
-		if (!PageWriteback(page)) {
-			/* synchronous write or broken a_ops? */
+		अगर (!PageWriteback(page)) अणु
+			/* synchronous ग_लिखो or broken a_ops? */
 			ClearPageReclaim(page);
-		}
-		trace_mm_vmscan_writepage(page);
+		पूर्ण
+		trace_mm_vmscan_ग_लिखोpage(page);
 		inc_node_page_state(page, NR_VMSCAN_WRITE);
-		return PAGE_SUCCESS;
-	}
+		वापस PAGE_SUCCESS;
+	पूर्ण
 
-	return PAGE_CLEAN;
-}
+	वापस PAGE_CLEAN;
+पूर्ण
 
 /*
- * Same as remove_mapping, but if the page is removed from the mapping, it
- * gets returned with a refcount of 0.
+ * Same as हटाओ_mapping, but अगर the page is हटाओd from the mapping, it
+ * माला_लो वापसed with a refcount of 0.
  */
-static int __remove_mapping(struct address_space *mapping, struct page *page,
-			    bool reclaimed, struct mem_cgroup *target_memcg)
-{
-	unsigned long flags;
-	int refcount;
-	void *shadow = NULL;
+अटल पूर्णांक __हटाओ_mapping(काष्ठा address_space *mapping, काष्ठा page *page,
+			    bool reclaimed, काष्ठा mem_cgroup *target_memcg)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक refcount;
+	व्योम *shaकरोw = शून्य;
 
 	BUG_ON(!PageLocked(page));
 	BUG_ON(mapping != page_mapping(page));
 
 	xa_lock_irqsave(&mapping->i_pages, flags);
 	/*
-	 * The non racy check for a busy page.
+	 * The non racy check क्रम a busy page.
 	 *
 	 * Must be careful with the order of the tests. When someone has
 	 * a ref to the page, it may be possible that they dirty it then
-	 * drop the reference. So if PageDirty is tested before page_count
+	 * drop the reference. So अगर PageDirty is tested beक्रमe page_count
 	 * here, then the following race may occur:
 	 *
 	 * get_user_pages(&page);
 	 * [user mapping goes away]
-	 * write_to(page);
+	 * ग_लिखो_to(page);
 	 *				!PageDirty(page)    [good]
 	 * SetPageDirty(page);
 	 * put_page(page);
 	 *				!page_count(page)   [good, discard it]
 	 *
-	 * [oops, our write_to data is lost]
+	 * [oops, our ग_लिखो_to data is lost]
 	 *
 	 * Reversing the order of the tests ensures such a situation cannot
 	 * escape unnoticed. The smp_rmb is needed to ensure the page->flags
-	 * load is not satisfied before that of page->_refcount.
+	 * load is not satisfied beक्रमe that of page->_refcount.
 	 *
-	 * Note that if SetPageDirty is always performed via set_page_dirty,
+	 * Note that अगर SetPageDirty is always perक्रमmed via set_page_dirty,
 	 * and thus under the i_pages lock, then this ordering is not required.
 	 */
 	refcount = 1 + compound_nr(page);
-	if (!page_ref_freeze(page, refcount))
-		goto cannot_free;
-	/* note: atomic_cmpxchg in page_ref_freeze provides the smp_rmb */
-	if (unlikely(PageDirty(page))) {
-		page_ref_unfreeze(page, refcount);
-		goto cannot_free;
-	}
+	अगर (!page_ref_मुक्तze(page, refcount))
+		जाओ cannot_मुक्त;
+	/* note: atomic_cmpxchg in page_ref_मुक्तze provides the smp_rmb */
+	अगर (unlikely(PageDirty(page))) अणु
+		page_ref_unमुक्तze(page, refcount);
+		जाओ cannot_मुक्त;
+	पूर्ण
 
-	if (PageSwapCache(page)) {
-		swp_entry_t swap = { .val = page_private(page) };
+	अगर (PageSwapCache(page)) अणु
+		swp_entry_t swap = अणु .val = page_निजी(page) पूर्ण;
 		mem_cgroup_swapout(page, swap);
-		if (reclaimed && !mapping_exiting(mapping))
-			shadow = workingset_eviction(page, target_memcg);
-		__delete_from_swap_cache(page, swap, shadow);
+		अगर (reclaimed && !mapping_निकासing(mapping))
+			shaकरोw = workingset_eviction(page, target_memcg);
+		__delete_from_swap_cache(page, swap, shaकरोw);
 		xa_unlock_irqrestore(&mapping->i_pages, flags);
 		put_swap_page(page, swap);
-	} else {
-		void (*freepage)(struct page *);
+	पूर्ण अन्यथा अणु
+		व्योम (*मुक्तpage)(काष्ठा page *);
 
-		freepage = mapping->a_ops->freepage;
+		मुक्तpage = mapping->a_ops->मुक्तpage;
 		/*
-		 * Remember a shadow entry for reclaimed file cache in
+		 * Remember a shaकरोw entry क्रम reclaimed file cache in
 		 * order to detect refaults, thus thrashing, later on.
 		 *
-		 * But don't store shadows in an address space that is
-		 * already exiting.  This is not just an optimization,
+		 * But करोn't store shaकरोws in an address space that is
+		 * alपढ़ोy निकासing.  This is not just an optimization,
 		 * inode reclaim needs to empty out the radix tree or
-		 * the nodes are lost.  Don't plant shadows behind its
+		 * the nodes are lost.  Don't plant shaकरोws behind its
 		 * back.
 		 *
-		 * We also don't store shadows for DAX mappings because the
+		 * We also करोn't store shaकरोws क्रम DAX mappings because the
 		 * only page cache pages found in these are zero pages
-		 * covering holes, and because we don't want to mix DAX
-		 * exceptional entries and shadow exceptional entries in the
+		 * covering holes, and because we करोn't want to mix DAX
+		 * exceptional entries and shaकरोw exceptional entries in the
 		 * same address_space.
 		 */
-		if (reclaimed && page_is_file_lru(page) &&
-		    !mapping_exiting(mapping) && !dax_mapping(mapping))
-			shadow = workingset_eviction(page, target_memcg);
-		__delete_from_page_cache(page, shadow);
+		अगर (reclaimed && page_is_file_lru(page) &&
+		    !mapping_निकासing(mapping) && !dax_mapping(mapping))
+			shaकरोw = workingset_eviction(page, target_memcg);
+		__delete_from_page_cache(page, shaकरोw);
 		xa_unlock_irqrestore(&mapping->i_pages, flags);
 
-		if (freepage != NULL)
-			freepage(page);
-	}
+		अगर (मुक्तpage != शून्य)
+			मुक्तpage(page);
+	पूर्ण
 
-	return 1;
+	वापस 1;
 
-cannot_free:
+cannot_मुक्त:
 	xa_unlock_irqrestore(&mapping->i_pages, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Attempt to detach a locked page from its ->mapping.  If it is dirty or if
- * someone else has a ref on the page, abort and return 0.  If it was
- * successfully detached, return 1.  Assumes the caller has a single ref on
+ * Attempt to detach a locked page from its ->mapping.  If it is dirty or अगर
+ * someone अन्यथा has a ref on the page, पात and वापस 0.  If it was
+ * successfully detached, वापस 1.  Assumes the caller has a single ref on
  * this page.
  */
-int remove_mapping(struct address_space *mapping, struct page *page)
-{
-	if (__remove_mapping(mapping, page, false, NULL)) {
+पूर्णांक हटाओ_mapping(काष्ठा address_space *mapping, काष्ठा page *page)
+अणु
+	अगर (__हटाओ_mapping(mapping, page, false, शून्य)) अणु
 		/*
-		 * Unfreezing the refcount with 1 rather than 2 effectively
-		 * drops the pagecache ref for us without requiring another
+		 * Unमुक्तzing the refcount with 1 rather than 2 effectively
+		 * drops the pagecache ref क्रम us without requiring another
 		 * atomic operation.
 		 */
-		page_ref_unfreeze(page, 1);
-		return 1;
-	}
-	return 0;
-}
+		page_ref_unमुक्तze(page, 1);
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * putback_lru_page - put previously isolated page onto appropriate LRU list
  * @page: page to be put back to appropriate lru list
  *
  * Add previously isolated @page to appropriate LRU list.
- * Page may still be unevictable for other reasons.
+ * Page may still be unevictable क्रम other reasons.
  *
- * lru_lock must not be held, interrupts must be enabled.
+ * lru_lock must not be held, पूर्णांकerrupts must be enabled.
  */
-void putback_lru_page(struct page *page)
-{
+व्योम putback_lru_page(काष्ठा page *page)
+अणु
 	lru_cache_add(page);
 	put_page(page);		/* drop ref from isolate */
-}
+पूर्ण
 
-enum page_references {
+क्रमागत page_references अणु
 	PAGEREF_RECLAIM,
 	PAGEREF_RECLAIM_CLEAN,
 	PAGEREF_KEEP,
 	PAGEREF_ACTIVATE,
-};
+पूर्ण;
 
-static enum page_references page_check_references(struct page *page,
-						  struct scan_control *sc)
-{
-	int referenced_ptes, referenced_page;
-	unsigned long vm_flags;
+अटल क्रमागत page_references page_check_references(काष्ठा page *page,
+						  काष्ठा scan_control *sc)
+अणु
+	पूर्णांक referenced_ptes, referenced_page;
+	अचिन्हित दीर्घ vm_flags;
 
 	referenced_ptes = page_referenced(page, 1, sc->target_mem_cgroup,
 					  &vm_flags);
@@ -1192,106 +1193,106 @@ static enum page_references page_check_references(struct page *page,
 	 * Mlock lost the isolation race with us.  Let try_to_unmap()
 	 * move the page to the unevictable list.
 	 */
-	if (vm_flags & VM_LOCKED)
-		return PAGEREF_RECLAIM;
+	अगर (vm_flags & VM_LOCKED)
+		वापस PAGEREF_RECLAIM;
 
-	if (referenced_ptes) {
+	अगर (referenced_ptes) अणु
 		/*
 		 * All mapped pages start out with page table
 		 * references from the instantiating fault, so we need
-		 * to look twice if a mapped file page is used more
+		 * to look twice अगर a mapped file page is used more
 		 * than once.
 		 *
-		 * Mark it and spare it for another trip around the
+		 * Mark it and spare it क्रम another trip around the
 		 * inactive list.  Another page table reference will
 		 * lead to its activation.
 		 *
-		 * Note: the mark is set for activated pages as well
+		 * Note: the mark is set क्रम activated pages as well
 		 * so that recently deactivated but used pages are
 		 * quickly recovered.
 		 */
 		SetPageReferenced(page);
 
-		if (referenced_page || referenced_ptes > 1)
-			return PAGEREF_ACTIVATE;
+		अगर (referenced_page || referenced_ptes > 1)
+			वापस PAGEREF_ACTIVATE;
 
 		/*
 		 * Activate file-backed executable pages after first usage.
 		 */
-		if ((vm_flags & VM_EXEC) && !PageSwapBacked(page))
-			return PAGEREF_ACTIVATE;
+		अगर ((vm_flags & VM_EXEC) && !PageSwapBacked(page))
+			वापस PAGEREF_ACTIVATE;
 
-		return PAGEREF_KEEP;
-	}
+		वापस PAGEREF_KEEP;
+	पूर्ण
 
-	/* Reclaim if clean, defer dirty pages to writeback */
-	if (referenced_page && !PageSwapBacked(page))
-		return PAGEREF_RECLAIM_CLEAN;
+	/* Reclaim अगर clean, defer dirty pages to ग_लिखोback */
+	अगर (referenced_page && !PageSwapBacked(page))
+		वापस PAGEREF_RECLAIM_CLEAN;
 
-	return PAGEREF_RECLAIM;
-}
+	वापस PAGEREF_RECLAIM;
+पूर्ण
 
-/* Check if a page is dirty or under writeback */
-static void page_check_dirty_writeback(struct page *page,
-				       bool *dirty, bool *writeback)
-{
-	struct address_space *mapping;
+/* Check अगर a page is dirty or under ग_लिखोback */
+अटल व्योम page_check_dirty_ग_लिखोback(काष्ठा page *page,
+				       bool *dirty, bool *ग_लिखोback)
+अणु
+	काष्ठा address_space *mapping;
 
 	/*
 	 * Anonymous pages are not handled by flushers and must be written
 	 * from reclaim context. Do not stall reclaim based on them
 	 */
-	if (!page_is_file_lru(page) ||
-	    (PageAnon(page) && !PageSwapBacked(page))) {
+	अगर (!page_is_file_lru(page) ||
+	    (PageAnon(page) && !PageSwapBacked(page))) अणु
 		*dirty = false;
-		*writeback = false;
-		return;
-	}
+		*ग_लिखोback = false;
+		वापस;
+	पूर्ण
 
-	/* By default assume that the page flags are accurate */
+	/* By शेष assume that the page flags are accurate */
 	*dirty = PageDirty(page);
-	*writeback = PageWriteback(page);
+	*ग_लिखोback = PageWriteback(page);
 
-	/* Verify dirty/writeback state if the filesystem supports it */
-	if (!page_has_private(page))
-		return;
+	/* Verअगरy dirty/ग_लिखोback state अगर the fileप्रणाली supports it */
+	अगर (!page_has_निजी(page))
+		वापस;
 
 	mapping = page_mapping(page);
-	if (mapping && mapping->a_ops->is_dirty_writeback)
-		mapping->a_ops->is_dirty_writeback(page, dirty, writeback);
-}
+	अगर (mapping && mapping->a_ops->is_dirty_ग_लिखोback)
+		mapping->a_ops->is_dirty_ग_लिखोback(page, dirty, ग_लिखोback);
+पूर्ण
 
 /*
- * shrink_page_list() returns the number of reclaimed pages
+ * shrink_page_list() वापसs the number of reclaimed pages
  */
-static unsigned int shrink_page_list(struct list_head *page_list,
-				     struct pglist_data *pgdat,
-				     struct scan_control *sc,
-				     struct reclaim_stat *stat,
+अटल अचिन्हित पूर्णांक shrink_page_list(काष्ठा list_head *page_list,
+				     काष्ठा pglist_data *pgdat,
+				     काष्ठा scan_control *sc,
+				     काष्ठा reclaim_stat *stat,
 				     bool ignore_references)
-{
+अणु
 	LIST_HEAD(ret_pages);
-	LIST_HEAD(free_pages);
-	unsigned int nr_reclaimed = 0;
-	unsigned int pgactivate = 0;
+	LIST_HEAD(मुक्त_pages);
+	अचिन्हित पूर्णांक nr_reclaimed = 0;
+	अचिन्हित पूर्णांक pgactivate = 0;
 
-	memset(stat, 0, sizeof(*stat));
+	स_रखो(stat, 0, माप(*stat));
 	cond_resched();
 
-	while (!list_empty(page_list)) {
-		struct address_space *mapping;
-		struct page *page;
-		enum page_references references = PAGEREF_RECLAIM;
-		bool dirty, writeback, may_enter_fs;
-		unsigned int nr_pages;
+	जबतक (!list_empty(page_list)) अणु
+		काष्ठा address_space *mapping;
+		काष्ठा page *page;
+		क्रमागत page_references references = PAGEREF_RECLAIM;
+		bool dirty, ग_लिखोback, may_enter_fs;
+		अचिन्हित पूर्णांक nr_pages;
 
 		cond_resched();
 
 		page = lru_to_page(page_list);
 		list_del(&page->lru);
 
-		if (!trylock_page(page))
-			goto keep;
+		अगर (!trylock_page(page))
+			जाओ keep;
 
 		VM_BUG_ON_PAGE(PageActive(page), page);
 
@@ -1300,339 +1301,339 @@ static unsigned int shrink_page_list(struct list_head *page_list,
 		/* Account the number of base pages even though THP */
 		sc->nr_scanned += nr_pages;
 
-		if (unlikely(!page_evictable(page)))
-			goto activate_locked;
+		अगर (unlikely(!page_evictable(page)))
+			जाओ activate_locked;
 
-		if (!sc->may_unmap && page_mapped(page))
-			goto keep_locked;
+		अगर (!sc->may_unmap && page_mapped(page))
+			जाओ keep_locked;
 
 		may_enter_fs = (sc->gfp_mask & __GFP_FS) ||
 			(PageSwapCache(page) && (sc->gfp_mask & __GFP_IO));
 
 		/*
-		 * The number of dirty pages determines if a node is marked
-		 * reclaim_congested which affects wait_iff_congested. kswapd
-		 * will stall and start writing pages if the tail of the LRU
+		 * The number of dirty pages determines अगर a node is marked
+		 * reclaim_congested which affects रुको_अगरf_congested. kswapd
+		 * will stall and start writing pages अगर the tail of the LRU
 		 * is all dirty unqueued pages.
 		 */
-		page_check_dirty_writeback(page, &dirty, &writeback);
-		if (dirty || writeback)
+		page_check_dirty_ग_लिखोback(page, &dirty, &ग_लिखोback);
+		अगर (dirty || ग_लिखोback)
 			stat->nr_dirty++;
 
-		if (dirty && !writeback)
+		अगर (dirty && !ग_लिखोback)
 			stat->nr_unqueued_dirty++;
 
 		/*
-		 * Treat this page as congested if the underlying BDI is or if
+		 * Treat this page as congested अगर the underlying BDI is or अगर
 		 * pages are cycling through the LRU so quickly that the
-		 * pages marked for immediate reclaim are making it to the
-		 * end of the LRU a second time.
+		 * pages marked क्रम immediate reclaim are making it to the
+		 * end of the LRU a second समय.
 		 */
 		mapping = page_mapping(page);
-		if (((dirty || writeback) && mapping &&
-		     inode_write_congested(mapping->host)) ||
-		    (writeback && PageReclaim(page)))
+		अगर (((dirty || ग_लिखोback) && mapping &&
+		     inode_ग_लिखो_congested(mapping->host)) ||
+		    (ग_लिखोback && PageReclaim(page)))
 			stat->nr_congested++;
 
 		/*
-		 * If a page at the tail of the LRU is under writeback, there
-		 * are three cases to consider.
+		 * If a page at the tail of the LRU is under ग_लिखोback, there
+		 * are three हालs to consider.
 		 *
 		 * 1) If reclaim is encountering an excessive number of pages
-		 *    under writeback and this page is both under writeback and
+		 *    under ग_लिखोback and this page is both under ग_लिखोback and
 		 *    PageReclaim then it indicates that pages are being queued
-		 *    for IO but are being recycled through the LRU before the
+		 *    क्रम IO but are being recycled through the LRU beक्रमe the
 		 *    IO can complete. Waiting on the page itself risks an
-		 *    indefinite stall if it is impossible to writeback the
+		 *    indefinite stall अगर it is impossible to ग_लिखोback the
 		 *    page due to IO error or disconnected storage so instead
 		 *    note that the LRU is being scanned too quickly and the
 		 *    caller can stall after page list has been processed.
 		 *
 		 * 2) Global or new memcg reclaim encounters a page that is
-		 *    not marked for immediate reclaim, or the caller does not
-		 *    have __GFP_FS (or __GFP_IO if it's simply going to swap,
-		 *    not to fs). In this case mark the page for immediate
-		 *    reclaim and continue scanning.
+		 *    not marked क्रम immediate reclaim, or the caller करोes not
+		 *    have __GFP_FS (or __GFP_IO अगर it's simply going to swap,
+		 *    not to fs). In this हाल mark the page क्रम immediate
+		 *    reclaim and जारी scanning.
 		 *
-		 *    Require may_enter_fs because we would wait on fs, which
+		 *    Require may_enter_fs because we would रुको on fs, which
 		 *    may not have submitted IO yet. And the loop driver might
-		 *    enter reclaim, and deadlock if it waits on a page for
-		 *    which it is needed to do the write (loop masks off
-		 *    __GFP_IO|__GFP_FS for this reason); but more thought
+		 *    enter reclaim, and deadlock अगर it रुकोs on a page क्रम
+		 *    which it is needed to करो the ग_लिखो (loop masks off
+		 *    __GFP_IO|__GFP_FS क्रम this reason); but more thought
 		 *    would probably show more reasons.
 		 *
-		 * 3) Legacy memcg encounters a page that is already marked
-		 *    PageReclaim. memcg does not have any dirty pages
+		 * 3) Legacy memcg encounters a page that is alपढ़ोy marked
+		 *    PageReclaim. memcg करोes not have any dirty pages
 		 *    throttling so we could easily OOM just because too many
-		 *    pages are in writeback and there is nothing else to
-		 *    reclaim. Wait for the writeback to complete.
+		 *    pages are in ग_लिखोback and there is nothing अन्यथा to
+		 *    reclaim. Wait क्रम the ग_लिखोback to complete.
 		 *
-		 * In cases 1) and 2) we activate the pages to get them out of
-		 * the way while we continue scanning for clean pages on the
+		 * In हालs 1) and 2) we activate the pages to get them out of
+		 * the way जबतक we जारी scanning क्रम clean pages on the
 		 * inactive list and refilling from the active list. The
-		 * observation here is that waiting for disk writes is more
-		 * expensive than potentially causing reloads down the line.
+		 * observation here is that रुकोing क्रम disk ग_लिखोs is more
+		 * expensive than potentially causing reloads करोwn the line.
 		 * Since they're marked for immediate reclaim, they won't put
-		 * memory pressure on the cache working set any longer than it
-		 * takes to write them to disk.
+		 * memory pressure on the cache working set any दीर्घer than it
+		 * takes to ग_लिखो them to disk.
 		 */
-		if (PageWriteback(page)) {
+		अगर (PageWriteback(page)) अणु
 			/* Case 1 above */
-			if (current_is_kswapd() &&
+			अगर (current_is_kswapd() &&
 			    PageReclaim(page) &&
-			    test_bit(PGDAT_WRITEBACK, &pgdat->flags)) {
+			    test_bit(PGDAT_WRITEBACK, &pgdat->flags)) अणु
 				stat->nr_immediate++;
-				goto activate_locked;
+				जाओ activate_locked;
 
 			/* Case 2 above */
-			} else if (writeback_throttling_sane(sc) ||
-			    !PageReclaim(page) || !may_enter_fs) {
+			पूर्ण अन्यथा अगर (ग_लिखोback_throttling_sane(sc) ||
+			    !PageReclaim(page) || !may_enter_fs) अणु
 				/*
-				 * This is slightly racy - end_page_writeback()
+				 * This is slightly racy - end_page_ग_लिखोback()
 				 * might have just cleared PageReclaim, then
-				 * setting PageReclaim here end up interpreted
-				 * as PageReadahead - but that does not matter
-				 * enough to care.  What we do want is for this
-				 * page to have PageReclaim set next time memcg
+				 * setting PageReclaim here end up पूर्णांकerpreted
+				 * as PageReadahead - but that करोes not matter
+				 * enough to care.  What we करो want is क्रम this
+				 * page to have PageReclaim set next समय memcg
 				 * reclaim reaches the tests above, so it will
-				 * then wait_on_page_writeback() to avoid OOM;
+				 * then रुको_on_page_ग_लिखोback() to aव्योम OOM;
 				 * and it's also appropriate in global reclaim.
 				 */
 				SetPageReclaim(page);
-				stat->nr_writeback++;
-				goto activate_locked;
+				stat->nr_ग_लिखोback++;
+				जाओ activate_locked;
 
 			/* Case 3 above */
-			} else {
+			पूर्ण अन्यथा अणु
 				unlock_page(page);
-				wait_on_page_writeback(page);
+				रुको_on_page_ग_लिखोback(page);
 				/* then go back and try same page again */
 				list_add_tail(&page->lru, page_list);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
-		if (!ignore_references)
+		अगर (!ignore_references)
 			references = page_check_references(page, sc);
 
-		switch (references) {
-		case PAGEREF_ACTIVATE:
-			goto activate_locked;
-		case PAGEREF_KEEP:
+		चयन (references) अणु
+		हाल PAGEREF_ACTIVATE:
+			जाओ activate_locked;
+		हाल PAGEREF_KEEP:
 			stat->nr_ref_keep += nr_pages;
-			goto keep_locked;
-		case PAGEREF_RECLAIM:
-		case PAGEREF_RECLAIM_CLEAN:
+			जाओ keep_locked;
+		हाल PAGEREF_RECLAIM:
+		हाल PAGEREF_RECLAIM_CLEAN:
 			; /* try to reclaim the page below */
-		}
+		पूर्ण
 
 		/*
 		 * Anonymous process memory has backing store?
 		 * Try to allocate it some swap space here.
-		 * Lazyfree page could be freed directly
+		 * Lazyमुक्त page could be मुक्तd directly
 		 */
-		if (PageAnon(page) && PageSwapBacked(page)) {
-			if (!PageSwapCache(page)) {
-				if (!(sc->gfp_mask & __GFP_IO))
-					goto keep_locked;
-				if (page_maybe_dma_pinned(page))
-					goto keep_locked;
-				if (PageTransHuge(page)) {
+		अगर (PageAnon(page) && PageSwapBacked(page)) अणु
+			अगर (!PageSwapCache(page)) अणु
+				अगर (!(sc->gfp_mask & __GFP_IO))
+					जाओ keep_locked;
+				अगर (page_maybe_dma_pinned(page))
+					जाओ keep_locked;
+				अगर (PageTransHuge(page)) अणु
 					/* cannot split THP, skip it */
-					if (!can_split_huge_page(page, NULL))
-						goto activate_locked;
+					अगर (!can_split_huge_page(page, शून्य))
+						जाओ activate_locked;
 					/*
 					 * Split pages without a PMD map right
 					 * away. Chances are some or all of the
-					 * tail pages can be freed without IO.
+					 * tail pages can be मुक्तd without IO.
 					 */
-					if (!compound_mapcount(page) &&
+					अगर (!compound_mapcount(page) &&
 					    split_huge_page_to_list(page,
 								    page_list))
-						goto activate_locked;
-				}
-				if (!add_to_swap(page)) {
-					if (!PageTransHuge(page))
-						goto activate_locked_split;
+						जाओ activate_locked;
+				पूर्ण
+				अगर (!add_to_swap(page)) अणु
+					अगर (!PageTransHuge(page))
+						जाओ activate_locked_split;
 					/* Fallback to swap normal pages */
-					if (split_huge_page_to_list(page,
+					अगर (split_huge_page_to_list(page,
 								    page_list))
-						goto activate_locked;
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
+						जाओ activate_locked;
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
 					count_vm_event(THP_SWPOUT_FALLBACK);
-#endif
-					if (!add_to_swap(page))
-						goto activate_locked_split;
-				}
+#पूर्ण_अगर
+					अगर (!add_to_swap(page))
+						जाओ activate_locked_split;
+				पूर्ण
 
 				may_enter_fs = true;
 
 				/* Adding to swap updated mapping */
 				mapping = page_mapping(page);
-			}
-		} else if (unlikely(PageTransHuge(page))) {
+			पूर्ण
+		पूर्ण अन्यथा अगर (unlikely(PageTransHuge(page))) अणु
 			/* Split file THP */
-			if (split_huge_page_to_list(page, page_list))
-				goto keep_locked;
-		}
+			अगर (split_huge_page_to_list(page, page_list))
+				जाओ keep_locked;
+		पूर्ण
 
 		/*
 		 * THP may get split above, need minus tail pages and update
-		 * nr_pages to avoid accounting tail pages twice.
+		 * nr_pages to aव्योम accounting tail pages twice.
 		 *
-		 * The tail pages that are added into swap cache successfully
+		 * The tail pages that are added पूर्णांकo swap cache successfully
 		 * reach here.
 		 */
-		if ((nr_pages > 1) && !PageTransHuge(page)) {
+		अगर ((nr_pages > 1) && !PageTransHuge(page)) अणु
 			sc->nr_scanned -= (nr_pages - 1);
 			nr_pages = 1;
-		}
+		पूर्ण
 
 		/*
-		 * The page is mapped into the page tables of one or more
+		 * The page is mapped पूर्णांकo the page tables of one or more
 		 * processes. Try to unmap it here.
 		 */
-		if (page_mapped(page)) {
-			enum ttu_flags flags = TTU_BATCH_FLUSH;
+		अगर (page_mapped(page)) अणु
+			क्रमागत ttu_flags flags = TTU_BATCH_FLUSH;
 			bool was_swapbacked = PageSwapBacked(page);
 
-			if (unlikely(PageTransHuge(page)))
+			अगर (unlikely(PageTransHuge(page)))
 				flags |= TTU_SPLIT_HUGE_PMD;
 
-			if (!try_to_unmap(page, flags)) {
+			अगर (!try_to_unmap(page, flags)) अणु
 				stat->nr_unmap_fail += nr_pages;
-				if (!was_swapbacked && PageSwapBacked(page))
-					stat->nr_lazyfree_fail += nr_pages;
-				goto activate_locked;
-			}
-		}
+				अगर (!was_swapbacked && PageSwapBacked(page))
+					stat->nr_lazyमुक्त_fail += nr_pages;
+				जाओ activate_locked;
+			पूर्ण
+		पूर्ण
 
-		if (PageDirty(page)) {
+		अगर (PageDirty(page)) अणु
 			/*
-			 * Only kswapd can writeback filesystem pages
-			 * to avoid risk of stack overflow. But avoid
-			 * injecting inefficient single-page IO into
-			 * flusher writeback as much as possible: only
-			 * write pages when we've encountered many
-			 * dirty pages, and when we've already scanned
-			 * the rest of the LRU for clean pages and see
+			 * Only kswapd can ग_लिखोback fileप्रणाली pages
+			 * to aव्योम risk of stack overflow. But aव्योम
+			 * injecting inefficient single-page IO पूर्णांकo
+			 * flusher ग_लिखोback as much as possible: only
+			 * ग_लिखो pages when we've encountered many
+			 * dirty pages, and when we've alपढ़ोy scanned
+			 * the rest of the LRU क्रम clean pages and see
 			 * the same dirty pages again (PageReclaim).
 			 */
-			if (page_is_file_lru(page) &&
+			अगर (page_is_file_lru(page) &&
 			    (!current_is_kswapd() || !PageReclaim(page) ||
-			     !test_bit(PGDAT_DIRTY, &pgdat->flags))) {
+			     !test_bit(PGDAT_सूचीTY, &pgdat->flags))) अणु
 				/*
 				 * Immediately reclaim when written back.
 				 * Similar in principal to deactivate_page()
-				 * except we already have the page isolated
+				 * except we alपढ़ोy have the page isolated
 				 * and know it's dirty
 				 */
 				inc_node_page_state(page, NR_VMSCAN_IMMEDIATE);
 				SetPageReclaim(page);
 
-				goto activate_locked;
-			}
+				जाओ activate_locked;
+			पूर्ण
 
-			if (references == PAGEREF_RECLAIM_CLEAN)
-				goto keep_locked;
-			if (!may_enter_fs)
-				goto keep_locked;
-			if (!sc->may_writepage)
-				goto keep_locked;
+			अगर (references == PAGEREF_RECLAIM_CLEAN)
+				जाओ keep_locked;
+			अगर (!may_enter_fs)
+				जाओ keep_locked;
+			अगर (!sc->may_ग_लिखोpage)
+				जाओ keep_locked;
 
 			/*
-			 * Page is dirty. Flush the TLB if a writable entry
-			 * potentially exists to avoid CPU writes after IO
-			 * starts and then write it out here.
+			 * Page is dirty. Flush the TLB अगर a writable entry
+			 * potentially exists to aव्योम CPU ग_लिखोs after IO
+			 * starts and then ग_लिखो it out here.
 			 */
 			try_to_unmap_flush_dirty();
-			switch (pageout(page, mapping)) {
-			case PAGE_KEEP:
-				goto keep_locked;
-			case PAGE_ACTIVATE:
-				goto activate_locked;
-			case PAGE_SUCCESS:
+			चयन (pageout(page, mapping)) अणु
+			हाल PAGE_KEEP:
+				जाओ keep_locked;
+			हाल PAGE_ACTIVATE:
+				जाओ activate_locked;
+			हाल PAGE_SUCCESS:
 				stat->nr_pageout += thp_nr_pages(page);
 
-				if (PageWriteback(page))
-					goto keep;
-				if (PageDirty(page))
-					goto keep;
+				अगर (PageWriteback(page))
+					जाओ keep;
+				अगर (PageDirty(page))
+					जाओ keep;
 
 				/*
-				 * A synchronous write - probably a ramdisk.  Go
+				 * A synchronous ग_लिखो - probably a ramdisk.  Go
 				 * ahead and try to reclaim the page.
 				 */
-				if (!trylock_page(page))
-					goto keep;
-				if (PageDirty(page) || PageWriteback(page))
-					goto keep_locked;
+				अगर (!trylock_page(page))
+					जाओ keep;
+				अगर (PageDirty(page) || PageWriteback(page))
+					जाओ keep_locked;
 				mapping = page_mapping(page);
 				fallthrough;
-			case PAGE_CLEAN:
-				; /* try to free the page below */
-			}
-		}
+			हाल PAGE_CLEAN:
+				; /* try to मुक्त the page below */
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * If the page has buffers, try to free the buffer mappings
-		 * associated with this page. If we succeed we try to free
+		 * If the page has buffers, try to मुक्त the buffer mappings
+		 * associated with this page. If we succeed we try to मुक्त
 		 * the page as well.
 		 *
-		 * We do this even if the page is PageDirty().
-		 * try_to_release_page() does not perform I/O, but it is
-		 * possible for a page to have PageDirty set, but it is actually
-		 * clean (all its buffers are clean).  This happens if the
+		 * We करो this even अगर the page is PageDirty().
+		 * try_to_release_page() करोes not perक्रमm I/O, but it is
+		 * possible क्रम a page to have PageDirty set, but it is actually
+		 * clean (all its buffers are clean).  This happens अगर the
 		 * buffers were written out directly, with submit_bh(). ext3
-		 * will do this, as well as the blockdev mapping.
+		 * will करो this, as well as the blockdev mapping.
 		 * try_to_release_page() will discover that cleanness and will
-		 * drop the buffers and mark the page clean - it can be freed.
+		 * drop the buffers and mark the page clean - it can be मुक्तd.
 		 *
 		 * Rarely, pages can have buffers and no ->mapping.  These are
 		 * the pages which were not successfully invalidated in
 		 * truncate_cleanup_page().  We try to drop those buffers here
-		 * and if that worked, and the page is no longer mapped into
-		 * process address space (page_count == 1) it can be freed.
+		 * and अगर that worked, and the page is no दीर्घer mapped पूर्णांकo
+		 * process address space (page_count == 1) it can be मुक्तd.
 		 * Otherwise, leave the page on the LRU so it is swappable.
 		 */
-		if (page_has_private(page)) {
-			if (!try_to_release_page(page, sc->gfp_mask))
-				goto activate_locked;
-			if (!mapping && page_count(page) == 1) {
+		अगर (page_has_निजी(page)) अणु
+			अगर (!try_to_release_page(page, sc->gfp_mask))
+				जाओ activate_locked;
+			अगर (!mapping && page_count(page) == 1) अणु
 				unlock_page(page);
-				if (put_page_testzero(page))
-					goto free_it;
-				else {
+				अगर (put_page_testzero(page))
+					जाओ मुक्त_it;
+				अन्यथा अणु
 					/*
 					 * rare race with speculative reference.
-					 * the speculative reference will free
-					 * this page shortly, so we may
+					 * the speculative reference will मुक्त
+					 * this page लघुly, so we may
 					 * increment nr_reclaimed here (and
 					 * leave it off the LRU).
 					 */
 					nr_reclaimed++;
-					continue;
-				}
-			}
-		}
+					जारी;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		if (PageAnon(page) && !PageSwapBacked(page)) {
-			/* follow __remove_mapping for reference */
-			if (!page_ref_freeze(page, 1))
-				goto keep_locked;
-			if (PageDirty(page)) {
-				page_ref_unfreeze(page, 1);
-				goto keep_locked;
-			}
+		अगर (PageAnon(page) && !PageSwapBacked(page)) अणु
+			/* follow __हटाओ_mapping क्रम reference */
+			अगर (!page_ref_मुक्तze(page, 1))
+				जाओ keep_locked;
+			अगर (PageDirty(page)) अणु
+				page_ref_unमुक्तze(page, 1);
+				जाओ keep_locked;
+			पूर्ण
 
 			count_vm_event(PGLAZYFREED);
 			count_memcg_page_event(page, PGLAZYFREED);
-		} else if (!mapping || !__remove_mapping(mapping, page, true,
+		पूर्ण अन्यथा अगर (!mapping || !__हटाओ_mapping(mapping, page, true,
 							 sc->target_mem_cgroup))
-			goto keep_locked;
+			जाओ keep_locked;
 
 		unlock_page(page);
-free_it:
+मुक्त_it:
 		/*
 		 * THP may get swapped out in a whole, need account
 		 * all base pages.
@@ -1640,130 +1641,130 @@ free_it:
 		nr_reclaimed += nr_pages;
 
 		/*
-		 * Is there need to periodically free_page_list? It would
+		 * Is there need to periodically मुक्त_page_list? It would
 		 * appear not as the counts should be low
 		 */
-		if (unlikely(PageTransHuge(page)))
+		अगर (unlikely(PageTransHuge(page)))
 			destroy_compound_page(page);
-		else
-			list_add(&page->lru, &free_pages);
-		continue;
+		अन्यथा
+			list_add(&page->lru, &मुक्त_pages);
+		जारी;
 
 activate_locked_split:
 		/*
-		 * The tail pages that are failed to add into swap cache
+		 * The tail pages that are failed to add पूर्णांकo swap cache
 		 * reach here.  Fixup nr_scanned and nr_pages.
 		 */
-		if (nr_pages > 1) {
+		अगर (nr_pages > 1) अणु
 			sc->nr_scanned -= (nr_pages - 1);
 			nr_pages = 1;
-		}
+		पूर्ण
 activate_locked:
-		/* Not a candidate for swapping, so reclaim swap space. */
-		if (PageSwapCache(page) && (mem_cgroup_swap_full(page) ||
+		/* Not a candidate क्रम swapping, so reclaim swap space. */
+		अगर (PageSwapCache(page) && (mem_cgroup_swap_full(page) ||
 						PageMlocked(page)))
-			try_to_free_swap(page);
+			try_to_मुक्त_swap(page);
 		VM_BUG_ON_PAGE(PageActive(page), page);
-		if (!PageMlocked(page)) {
-			int type = page_is_file_lru(page);
+		अगर (!PageMlocked(page)) अणु
+			पूर्णांक type = page_is_file_lru(page);
 			SetPageActive(page);
 			stat->nr_activate[type] += nr_pages;
 			count_memcg_page_event(page, PGACTIVATE);
-		}
+		पूर्ण
 keep_locked:
 		unlock_page(page);
 keep:
 		list_add(&page->lru, &ret_pages);
 		VM_BUG_ON_PAGE(PageLRU(page) || PageUnevictable(page), page);
-	}
+	पूर्ण
 
 	pgactivate = stat->nr_activate[0] + stat->nr_activate[1];
 
-	mem_cgroup_uncharge_list(&free_pages);
+	mem_cgroup_unअक्षरge_list(&मुक्त_pages);
 	try_to_unmap_flush();
-	free_unref_page_list(&free_pages);
+	मुक्त_unref_page_list(&मुक्त_pages);
 
 	list_splice(&ret_pages, page_list);
 	count_vm_events(PGACTIVATE, pgactivate);
 
-	return nr_reclaimed;
-}
+	वापस nr_reclaimed;
+पूर्ण
 
-unsigned int reclaim_clean_pages_from_list(struct zone *zone,
-					    struct list_head *page_list)
-{
-	struct scan_control sc = {
+अचिन्हित पूर्णांक reclaim_clean_pages_from_list(काष्ठा zone *zone,
+					    काष्ठा list_head *page_list)
+अणु
+	काष्ठा scan_control sc = अणु
 		.gfp_mask = GFP_KERNEL,
 		.priority = DEF_PRIORITY,
 		.may_unmap = 1,
-	};
-	struct reclaim_stat stat;
-	unsigned int nr_reclaimed;
-	struct page *page, *next;
+	पूर्ण;
+	काष्ठा reclaim_stat stat;
+	अचिन्हित पूर्णांक nr_reclaimed;
+	काष्ठा page *page, *next;
 	LIST_HEAD(clean_pages);
 
-	list_for_each_entry_safe(page, next, page_list, lru) {
-		if (!PageHuge(page) && page_is_file_lru(page) &&
+	list_क्रम_each_entry_safe(page, next, page_list, lru) अणु
+		अगर (!PageHuge(page) && page_is_file_lru(page) &&
 		    !PageDirty(page) && !__PageMovable(page) &&
-		    !PageUnevictable(page)) {
+		    !PageUnevictable(page)) अणु
 			ClearPageActive(page);
 			list_move(&page->lru, &clean_pages);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	nr_reclaimed = shrink_page_list(&clean_pages, zone->zone_pgdat, &sc,
 					&stat, true);
 	list_splice(&clean_pages, page_list);
-	mod_node_page_state(zone->zone_pgdat, NR_ISOLATED_FILE,
-			    -(long)nr_reclaimed);
+	mod_node_page_state(zone->zone_pgdat, NR_ISOLATED_खाता,
+			    -(दीर्घ)nr_reclaimed);
 	/*
-	 * Since lazyfree pages are isolated from file LRU from the beginning,
-	 * they will rotate back to anonymous LRU in the end if it failed to
+	 * Since lazyमुक्त pages are isolated from file LRU from the beginning,
+	 * they will rotate back to anonymous LRU in the end अगर it failed to
 	 * discard so isolated count will be mismatched.
-	 * Compensate the isolated count for both LRU lists.
+	 * Compensate the isolated count क्रम both LRU lists.
 	 */
 	mod_node_page_state(zone->zone_pgdat, NR_ISOLATED_ANON,
-			    stat.nr_lazyfree_fail);
-	mod_node_page_state(zone->zone_pgdat, NR_ISOLATED_FILE,
-			    -(long)stat.nr_lazyfree_fail);
-	return nr_reclaimed;
-}
+			    stat.nr_lazyमुक्त_fail);
+	mod_node_page_state(zone->zone_pgdat, NR_ISOLATED_खाता,
+			    -(दीर्घ)stat.nr_lazyमुक्त_fail);
+	वापस nr_reclaimed;
+पूर्ण
 
 /*
- * Attempt to remove the specified page from its LRU.  Only take this page
- * if it is of the appropriate PageActive status.  Pages which are being
- * freed elsewhere are also ignored.
+ * Attempt to हटाओ the specअगरied page from its LRU.  Only take this page
+ * अगर it is of the appropriate PageActive status.  Pages which are being
+ * मुक्तd अन्यथाwhere are also ignored.
  *
  * page:	page to consider
  * mode:	one of the LRU isolation modes defined above
  *
- * returns true on success, false on failure.
+ * वापसs true on success, false on failure.
  */
-bool __isolate_lru_page_prepare(struct page *page, isolate_mode_t mode)
-{
+bool __isolate_lru_page_prepare(काष्ठा page *page, isolate_mode_t mode)
+अणु
 	/* Only take pages on the LRU. */
-	if (!PageLRU(page))
-		return false;
+	अगर (!PageLRU(page))
+		वापस false;
 
-	/* Compaction should not handle unevictable pages but CMA can do so */
-	if (PageUnevictable(page) && !(mode & ISOLATE_UNEVICTABLE))
-		return false;
+	/* Compaction should not handle unevictable pages but CMA can करो so */
+	अगर (PageUnevictable(page) && !(mode & ISOLATE_UNEVICTABLE))
+		वापस false;
 
 	/*
 	 * To minimise LRU disruption, the caller can indicate that it only
 	 * wants to isolate pages it will be able to operate on without
-	 * blocking - clean pages for the most part.
+	 * blocking - clean pages क्रम the most part.
 	 *
 	 * ISOLATE_ASYNC_MIGRATE is used to indicate that it only wants to pages
 	 * that it is possible to migrate without blocking
 	 */
-	if (mode & ISOLATE_ASYNC_MIGRATE) {
-		/* All the caller can do on PageWriteback is block */
-		if (PageWriteback(page))
-			return false;
+	अगर (mode & ISOLATE_ASYNC_MIGRATE) अणु
+		/* All the caller can करो on PageWriteback is block */
+		अगर (PageWriteback(page))
+			वापस false;
 
-		if (PageDirty(page)) {
-			struct address_space *mapping;
+		अगर (PageDirty(page)) अणु
+			काष्ठा address_space *mapping;
 			bool migrate_dirty;
 
 			/*
@@ -1772,83 +1773,83 @@ bool __isolate_lru_page_prepare(struct page *page, isolate_mode_t mode)
 			 * without blocking. However, we can be racing with
 			 * truncation so it's necessary to lock the page
 			 * to stabilise the mapping as truncation holds
-			 * the page lock until after the page is removed
+			 * the page lock until after the page is हटाओd
 			 * from the page cache.
 			 */
-			if (!trylock_page(page))
-				return false;
+			अगर (!trylock_page(page))
+				वापस false;
 
 			mapping = page_mapping(page);
 			migrate_dirty = !mapping || mapping->a_ops->migratepage;
 			unlock_page(page);
-			if (!migrate_dirty)
-				return false;
-		}
-	}
+			अगर (!migrate_dirty)
+				वापस false;
+		पूर्ण
+	पूर्ण
 
-	if ((mode & ISOLATE_UNMAPPED) && page_mapped(page))
-		return false;
+	अगर ((mode & ISOLATE_UNMAPPED) && page_mapped(page))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
  * Update LRU sizes after isolating pages. The LRU size updates must
- * be complete before mem_cgroup_update_lru_size due to a sanity check.
+ * be complete beक्रमe mem_cgroup_update_lru_size due to a sanity check.
  */
-static __always_inline void update_lru_sizes(struct lruvec *lruvec,
-			enum lru_list lru, unsigned long *nr_zone_taken)
-{
-	int zid;
+अटल __always_अंतरभूत व्योम update_lru_sizes(काष्ठा lruvec *lruvec,
+			क्रमागत lru_list lru, अचिन्हित दीर्घ *nr_zone_taken)
+अणु
+	पूर्णांक zid;
 
-	for (zid = 0; zid < MAX_NR_ZONES; zid++) {
-		if (!nr_zone_taken[zid])
-			continue;
+	क्रम (zid = 0; zid < MAX_NR_ZONES; zid++) अणु
+		अगर (!nr_zone_taken[zid])
+			जारी;
 
 		update_lru_size(lruvec, lru, zid, -nr_zone_taken[zid]);
-	}
+	पूर्ण
 
-}
+पूर्ण
 
 /**
- * Isolating page from the lruvec to fill in @dst list by nr_to_scan times.
+ * Isolating page from the lruvec to fill in @dst list by nr_to_scan बार.
  *
  * lruvec->lru_lock is heavily contended.  Some of the functions that
- * shrink the lists perform better by taking out a batch of pages
+ * shrink the lists perक्रमm better by taking out a batch of pages
  * and working on them outside the LRU lock.
  *
- * For pagecache intensive workloads, this function is the hottest
+ * For pagecache पूर्णांकensive workloads, this function is the hottest
  * spot in the kernel (apart from copy_*_user functions).
  *
- * Lru_lock must be held before calling this function.
+ * Lru_lock must be held beक्रमe calling this function.
  *
  * @nr_to_scan:	The number of eligible pages to look through on the list.
  * @lruvec:	The LRU vector to pull pages from.
  * @dst:	The temp list to put pages on to.
  * @nr_scanned:	The number of pages that were scanned.
- * @sc:		The scan_control struct for this reclaim session
- * @lru:	LRU list id for isolating
+ * @sc:		The scan_control काष्ठा क्रम this reclaim session
+ * @lru:	LRU list id क्रम isolating
  *
- * returns how many pages were moved onto *@dst.
+ * वापसs how many pages were moved onto *@dst.
  */
-static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
-		struct lruvec *lruvec, struct list_head *dst,
-		unsigned long *nr_scanned, struct scan_control *sc,
-		enum lru_list lru)
-{
-	struct list_head *src = &lruvec->lists[lru];
-	unsigned long nr_taken = 0;
-	unsigned long nr_zone_taken[MAX_NR_ZONES] = { 0 };
-	unsigned long nr_skipped[MAX_NR_ZONES] = { 0, };
-	unsigned long skipped = 0;
-	unsigned long scan, total_scan, nr_pages;
+अटल अचिन्हित दीर्घ isolate_lru_pages(अचिन्हित दीर्घ nr_to_scan,
+		काष्ठा lruvec *lruvec, काष्ठा list_head *dst,
+		अचिन्हित दीर्घ *nr_scanned, काष्ठा scan_control *sc,
+		क्रमागत lru_list lru)
+अणु
+	काष्ठा list_head *src = &lruvec->lists[lru];
+	अचिन्हित दीर्घ nr_taken = 0;
+	अचिन्हित दीर्घ nr_zone_taken[MAX_NR_ZONES] = अणु 0 पूर्ण;
+	अचिन्हित दीर्घ nr_skipped[MAX_NR_ZONES] = अणु 0, पूर्ण;
+	अचिन्हित दीर्घ skipped = 0;
+	अचिन्हित दीर्घ scan, total_scan, nr_pages;
 	LIST_HEAD(pages_skipped);
 	isolate_mode_t mode = (sc->may_unmap ? 0 : ISOLATE_UNMAPPED);
 
 	total_scan = 0;
 	scan = 0;
-	while (scan < nr_to_scan && !list_empty(src)) {
-		struct page *page;
+	जबतक (scan < nr_to_scan && !list_empty(src)) अणु
+		काष्ठा page *page;
 
 		page = lru_to_page(src);
 		prefetchw_prev_lru_page(page, src, flags);
@@ -1856,75 +1857,75 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
 		nr_pages = compound_nr(page);
 		total_scan += nr_pages;
 
-		if (page_zonenum(page) > sc->reclaim_idx) {
+		अगर (page_zonक्रमागत(page) > sc->reclaim_idx) अणु
 			list_move(&page->lru, &pages_skipped);
-			nr_skipped[page_zonenum(page)] += nr_pages;
-			continue;
-		}
+			nr_skipped[page_zonक्रमागत(page)] += nr_pages;
+			जारी;
+		पूर्ण
 
 		/*
 		 * Do not count skipped pages because that makes the function
-		 * return with no isolated pages if the LRU mostly contains
+		 * वापस with no isolated pages अगर the LRU mostly contains
 		 * ineligible pages.  This causes the VM to not reclaim any
 		 * pages, triggering a premature OOM.
 		 *
 		 * Account all tail pages of THP.  This would not cause
-		 * premature OOM since __isolate_lru_page() returns -EBUSY
-		 * only when the page is being freed somewhere else.
+		 * premature OOM since __isolate_lru_page() वापसs -EBUSY
+		 * only when the page is being मुक्तd somewhere अन्यथा.
 		 */
 		scan += nr_pages;
-		if (!__isolate_lru_page_prepare(page, mode)) {
-			/* It is being freed elsewhere */
+		अगर (!__isolate_lru_page_prepare(page, mode)) अणु
+			/* It is being मुक्तd अन्यथाwhere */
 			list_move(&page->lru, src);
-			continue;
-		}
+			जारी;
+		पूर्ण
 		/*
 		 * Be careful not to clear PageLRU until after we're
-		 * sure the page is not being freed elsewhere -- the
+		 * sure the page is not being मुक्तd अन्यथाwhere -- the
 		 * page release code relies on it.
 		 */
-		if (unlikely(!get_page_unless_zero(page))) {
+		अगर (unlikely(!get_page_unless_zero(page))) अणु
 			list_move(&page->lru, src);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!TestClearPageLRU(page)) {
-			/* Another thread is already isolating this page */
+		अगर (!TestClearPageLRU(page)) अणु
+			/* Another thपढ़ो is alपढ़ोy isolating this page */
 			put_page(page);
 			list_move(&page->lru, src);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		nr_taken += nr_pages;
-		nr_zone_taken[page_zonenum(page)] += nr_pages;
+		nr_zone_taken[page_zonक्रमागत(page)] += nr_pages;
 		list_move(&page->lru, dst);
-	}
+	पूर्ण
 
 	/*
 	 * Splice any skipped pages to the start of the LRU list. Note that
-	 * this disrupts the LRU order when reclaiming for lower zones but
+	 * this disrupts the LRU order when reclaiming क्रम lower zones but
 	 * we cannot splice to the tail. If we did then the SWAP_CLUSTER_MAX
 	 * scanning would soon rescan the same pages to skip and put the
-	 * system at risk of premature OOM.
+	 * प्रणाली at risk of premature OOM.
 	 */
-	if (!list_empty(&pages_skipped)) {
-		int zid;
+	अगर (!list_empty(&pages_skipped)) अणु
+		पूर्णांक zid;
 
 		list_splice(&pages_skipped, src);
-		for (zid = 0; zid < MAX_NR_ZONES; zid++) {
-			if (!nr_skipped[zid])
-				continue;
+		क्रम (zid = 0; zid < MAX_NR_ZONES; zid++) अणु
+			अगर (!nr_skipped[zid])
+				जारी;
 
 			__count_zid_vm_events(PGSCAN_SKIP, zid, nr_skipped[zid]);
 			skipped += nr_skipped[zid];
-		}
-	}
+		पूर्ण
+	पूर्ण
 	*nr_scanned = total_scan;
 	trace_mm_vmscan_lru_isolate(sc->reclaim_idx, sc->order, nr_to_scan,
 				    total_scan, skipped, nr_taken, mode, lru);
 	update_lru_sizes(lruvec, lru, nr_zone_taken);
-	return nr_taken;
-}
+	वापस nr_taken;
+पूर्ण
 
 /**
  * isolate_lru_page - tries to isolate a page from its LRU list
@@ -1933,13 +1934,13 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
  * Isolates a @page from an LRU list, clears PageLRU and adjusts the
  * vmstat statistic corresponding to whatever LRU list the page was on.
  *
- * Returns 0 if the page was removed from an LRU list.
- * Returns -EBUSY if the page was not on an LRU list.
+ * Returns 0 अगर the page was हटाओd from an LRU list.
+ * Returns -EBUSY अगर the page was not on an LRU list.
  *
- * The returned page will have PageLRU() cleared.  If it was found on
+ * The वापसed page will have PageLRU() cleared.  If it was found on
  * the active list, it will have PageActive set.  If it was found on
  * the unevictable list, it will have the PageUnevictable bit set. That flag
- * may need to be cleared by the caller before letting the page go.
+ * may need to be cleared by the caller beक्रमe letting the page go.
  *
  * The vmstat statistic corresponding to the list on which the page was
  * found will be decremented.
@@ -1947,98 +1948,98 @@ static unsigned long isolate_lru_pages(unsigned long nr_to_scan,
  * Restrictions:
  *
  * (1) Must be called with an elevated refcount on the page. This is a
- *     fundamental difference from isolate_lru_pages (which is called
+ *     fundamental dअगरference from isolate_lru_pages (which is called
  *     without a stable reference).
  * (2) the lru_lock must not be held.
- * (3) interrupts must be enabled.
+ * (3) पूर्णांकerrupts must be enabled.
  */
-int isolate_lru_page(struct page *page)
-{
-	int ret = -EBUSY;
+पूर्णांक isolate_lru_page(काष्ठा page *page)
+अणु
+	पूर्णांक ret = -EBUSY;
 
 	VM_BUG_ON_PAGE(!page_count(page), page);
 	WARN_RATELIMIT(PageTail(page), "trying to isolate tail page");
 
-	if (TestClearPageLRU(page)) {
-		struct lruvec *lruvec;
+	अगर (TestClearPageLRU(page)) अणु
+		काष्ठा lruvec *lruvec;
 
 		get_page(page);
 		lruvec = lock_page_lruvec_irq(page);
 		del_page_from_lru_list(page, lruvec);
 		unlock_page_lruvec_irq(lruvec);
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
  * A direct reclaimer may isolate SWAP_CLUSTER_MAX pages from the LRU list and
- * then get rescheduled. When there are massive number of tasks doing page
+ * then get rescheduled. When there are massive number of tasks करोing page
  * allocation, such sleeping direct reclaimers may keep piling up on each CPU,
  * the LRU list will go small and be scanned faster than necessary, leading to
  * unnecessary swapping, thrashing and OOM.
  */
-static int too_many_isolated(struct pglist_data *pgdat, int file,
-		struct scan_control *sc)
-{
-	unsigned long inactive, isolated;
+अटल पूर्णांक too_many_isolated(काष्ठा pglist_data *pgdat, पूर्णांक file,
+		काष्ठा scan_control *sc)
+अणु
+	अचिन्हित दीर्घ inactive, isolated;
 
-	if (current_is_kswapd())
-		return 0;
+	अगर (current_is_kswapd())
+		वापस 0;
 
-	if (!writeback_throttling_sane(sc))
-		return 0;
+	अगर (!ग_लिखोback_throttling_sane(sc))
+		वापस 0;
 
-	if (file) {
-		inactive = node_page_state(pgdat, NR_INACTIVE_FILE);
-		isolated = node_page_state(pgdat, NR_ISOLATED_FILE);
-	} else {
+	अगर (file) अणु
+		inactive = node_page_state(pgdat, NR_INACTIVE_खाता);
+		isolated = node_page_state(pgdat, NR_ISOLATED_खाता);
+	पूर्ण अन्यथा अणु
 		inactive = node_page_state(pgdat, NR_INACTIVE_ANON);
 		isolated = node_page_state(pgdat, NR_ISOLATED_ANON);
-	}
+	पूर्ण
 
 	/*
 	 * GFP_NOIO/GFP_NOFS callers are allowed to isolate more pages, so they
-	 * won't get blocked by normal direct-reclaimers, forming a circular
+	 * won't get blocked by normal direct-reclaimers, क्रमming a circular
 	 * deadlock.
 	 */
-	if ((sc->gfp_mask & (__GFP_IO | __GFP_FS)) == (__GFP_IO | __GFP_FS))
+	अगर ((sc->gfp_mask & (__GFP_IO | __GFP_FS)) == (__GFP_IO | __GFP_FS))
 		inactive >>= 3;
 
-	return isolated > inactive;
-}
+	वापस isolated > inactive;
+पूर्ण
 
 /*
- * move_pages_to_lru() moves pages from private @list to appropriate LRU list.
- * On return, @list is reused as a list of pages to be freed by the caller.
+ * move_pages_to_lru() moves pages from निजी @list to appropriate LRU list.
+ * On वापस, @list is reused as a list of pages to be मुक्तd by the caller.
  *
  * Returns the number of pages moved to the given lruvec.
  */
-static unsigned noinline_for_stack move_pages_to_lru(struct lruvec *lruvec,
-						     struct list_head *list)
-{
-	int nr_pages, nr_moved = 0;
-	LIST_HEAD(pages_to_free);
-	struct page *page;
+अटल अचिन्हित noअंतरभूत_क्रम_stack move_pages_to_lru(काष्ठा lruvec *lruvec,
+						     काष्ठा list_head *list)
+अणु
+	पूर्णांक nr_pages, nr_moved = 0;
+	LIST_HEAD(pages_to_मुक्त);
+	काष्ठा page *page;
 
-	while (!list_empty(list)) {
+	जबतक (!list_empty(list)) अणु
 		page = lru_to_page(list);
 		VM_BUG_ON_PAGE(PageLRU(page), page);
 		list_del(&page->lru);
-		if (unlikely(!page_evictable(page))) {
+		अगर (unlikely(!page_evictable(page))) अणु
 			spin_unlock_irq(&lruvec->lru_lock);
 			putback_lru_page(page);
 			spin_lock_irq(&lruvec->lru_lock);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
-		 * The SetPageLRU needs to be kept here for list integrity.
+		 * The SetPageLRU needs to be kept here क्रम list पूर्णांकegrity.
 		 * Otherwise:
 		 *   #0 move_pages_to_lru             #1 release_pages
-		 *   if !put_page_testzero
-		 *				      if (put_page_testzero())
+		 *   अगर !put_page_testzero
+		 *				      अगर (put_page_testzero())
 		 *				        !PageLRU //skip lru_lock
 		 *     SetPageLRU()
 		 *     list_add(&page->lru,)
@@ -2046,18 +2047,18 @@ static unsigned noinline_for_stack move_pages_to_lru(struct lruvec *lruvec,
 		 */
 		SetPageLRU(page);
 
-		if (unlikely(put_page_testzero(page))) {
+		अगर (unlikely(put_page_testzero(page))) अणु
 			__clear_page_lru_flags(page);
 
-			if (unlikely(PageCompound(page))) {
+			अगर (unlikely(PageCompound(page))) अणु
 				spin_unlock_irq(&lruvec->lru_lock);
 				destroy_compound_page(page);
 				spin_lock_irq(&lruvec->lru_lock);
-			} else
-				list_add(&page->lru, &pages_to_free);
+			पूर्ण अन्यथा
+				list_add(&page->lru, &pages_to_मुक्त);
 
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/*
 		 * All pages were isolated from the same lruvec (and isolation
@@ -2067,61 +2068,61 @@ static unsigned noinline_for_stack move_pages_to_lru(struct lruvec *lruvec,
 		add_page_to_lru_list(page, lruvec);
 		nr_pages = thp_nr_pages(page);
 		nr_moved += nr_pages;
-		if (PageActive(page))
+		अगर (PageActive(page))
 			workingset_age_nonresident(lruvec, nr_pages);
-	}
+	पूर्ण
 
 	/*
-	 * To save our caller's stack, now use input list for pages to free.
+	 * To save our caller's stack, now use input list क्रम pages to मुक्त.
 	 */
-	list_splice(&pages_to_free, list);
+	list_splice(&pages_to_मुक्त, list);
 
-	return nr_moved;
-}
+	वापस nr_moved;
+पूर्ण
 
 /*
- * If a kernel thread (such as nfsd for loop-back mounts) services
+ * If a kernel thपढ़ो (such as nfsd क्रम loop-back mounts) services
  * a backing device by writing to the page cache it sets PF_LOCAL_THROTTLE.
- * In that case we should only throttle if the backing device it is
- * writing to is congested.  In other cases it is safe to throttle.
+ * In that हाल we should only throttle अगर the backing device it is
+ * writing to is congested.  In other हालs it is safe to throttle.
  */
-static int current_may_throttle(void)
-{
-	return !(current->flags & PF_LOCAL_THROTTLE) ||
-		current->backing_dev_info == NULL ||
-		bdi_write_congested(current->backing_dev_info);
-}
+अटल पूर्णांक current_may_throttle(व्योम)
+अणु
+	वापस !(current->flags & PF_LOCAL_THROTTLE) ||
+		current->backing_dev_info == शून्य ||
+		bdi_ग_लिखो_congested(current->backing_dev_info);
+पूर्ण
 
 /*
- * shrink_inactive_list() is a helper for shrink_node().  It returns the number
+ * shrink_inactive_list() is a helper क्रम shrink_node().  It वापसs the number
  * of reclaimed pages
  */
-static noinline_for_stack unsigned long
-shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
-		     struct scan_control *sc, enum lru_list lru)
-{
+अटल noअंतरभूत_क्रम_stack अचिन्हित दीर्घ
+shrink_inactive_list(अचिन्हित दीर्घ nr_to_scan, काष्ठा lruvec *lruvec,
+		     काष्ठा scan_control *sc, क्रमागत lru_list lru)
+अणु
 	LIST_HEAD(page_list);
-	unsigned long nr_scanned;
-	unsigned int nr_reclaimed = 0;
-	unsigned long nr_taken;
-	struct reclaim_stat stat;
+	अचिन्हित दीर्घ nr_scanned;
+	अचिन्हित पूर्णांक nr_reclaimed = 0;
+	अचिन्हित दीर्घ nr_taken;
+	काष्ठा reclaim_stat stat;
 	bool file = is_file_lru(lru);
-	enum vm_event_item item;
-	struct pglist_data *pgdat = lruvec_pgdat(lruvec);
+	क्रमागत vm_event_item item;
+	काष्ठा pglist_data *pgdat = lruvec_pgdat(lruvec);
 	bool stalled = false;
 
-	while (unlikely(too_many_isolated(pgdat, file, sc))) {
-		if (stalled)
-			return 0;
+	जबतक (unlikely(too_many_isolated(pgdat, file, sc))) अणु
+		अगर (stalled)
+			वापस 0;
 
-		/* wait a bit for the reclaimer. */
+		/* रुको a bit क्रम the reclaimer. */
 		msleep(100);
 		stalled = true;
 
-		/* We are about to die and free our memory. Return now. */
-		if (fatal_signal_pending(current))
-			return SWAP_CLUSTER_MAX;
-	}
+		/* We are about to die and मुक्त our memory. Return now. */
+		अगर (fatal_संकेत_pending(current))
+			वापस SWAP_CLUSTER_MAX;
+	पूर्ण
 
 	lru_add_drain();
 
@@ -2131,16 +2132,16 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
 				     &nr_scanned, sc, lru);
 
 	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, nr_taken);
-	item = current_is_kswapd() ? PGSCAN_KSWAPD : PGSCAN_DIRECT;
-	if (!cgroup_reclaim(sc))
+	item = current_is_kswapd() ? PGSCAN_KSWAPD : PGSCAN_सूचीECT;
+	अगर (!cgroup_reclaim(sc))
 		__count_vm_events(item, nr_scanned);
 	__count_memcg_events(lruvec_memcg(lruvec), item, nr_scanned);
 	__count_vm_events(PGSCAN_ANON + file, nr_scanned);
 
 	spin_unlock_irq(&lruvec->lru_lock);
 
-	if (nr_taken == 0)
-		return 0;
+	अगर (nr_taken == 0)
+		वापस 0;
 
 	nr_reclaimed = shrink_page_list(&page_list, pgdat, sc, &stat, false);
 
@@ -2148,78 +2149,78 @@ shrink_inactive_list(unsigned long nr_to_scan, struct lruvec *lruvec,
 	move_pages_to_lru(lruvec, &page_list);
 
 	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, -nr_taken);
-	item = current_is_kswapd() ? PGSTEAL_KSWAPD : PGSTEAL_DIRECT;
-	if (!cgroup_reclaim(sc))
+	item = current_is_kswapd() ? PGSTEAL_KSWAPD : PGSTEAL_सूचीECT;
+	अगर (!cgroup_reclaim(sc))
 		__count_vm_events(item, nr_reclaimed);
 	__count_memcg_events(lruvec_memcg(lruvec), item, nr_reclaimed);
 	__count_vm_events(PGSTEAL_ANON + file, nr_reclaimed);
 	spin_unlock_irq(&lruvec->lru_lock);
 
 	lru_note_cost(lruvec, file, stat.nr_pageout);
-	mem_cgroup_uncharge_list(&page_list);
-	free_unref_page_list(&page_list);
+	mem_cgroup_unअक्षरge_list(&page_list);
+	मुक्त_unref_page_list(&page_list);
 
 	/*
-	 * If dirty pages are scanned that are not queued for IO, it
-	 * implies that flushers are not doing their job. This can
+	 * If dirty pages are scanned that are not queued क्रम IO, it
+	 * implies that flushers are not करोing their job. This can
 	 * happen when memory pressure pushes dirty pages to the end of
-	 * the LRU before the dirty limits are breached and the dirty
+	 * the LRU beक्रमe the dirty limits are breached and the dirty
 	 * data has expired. It can also happen when the proportion of
-	 * dirty pages grows not through writes but through memory
-	 * pressure reclaiming all the clean cache. And in some cases,
+	 * dirty pages grows not through ग_लिखोs but through memory
+	 * pressure reclaiming all the clean cache. And in some हालs,
 	 * the flushers simply cannot keep up with the allocation
-	 * rate. Nudge the flusher threads in case they are asleep.
+	 * rate. Nudge the flusher thपढ़ोs in हाल they are asleep.
 	 */
-	if (stat.nr_unqueued_dirty == nr_taken)
-		wakeup_flusher_threads(WB_REASON_VMSCAN);
+	अगर (stat.nr_unqueued_dirty == nr_taken)
+		wakeup_flusher_thपढ़ोs(WB_REASON_VMSCAN);
 
 	sc->nr.dirty += stat.nr_dirty;
 	sc->nr.congested += stat.nr_congested;
 	sc->nr.unqueued_dirty += stat.nr_unqueued_dirty;
-	sc->nr.writeback += stat.nr_writeback;
+	sc->nr.ग_लिखोback += stat.nr_ग_लिखोback;
 	sc->nr.immediate += stat.nr_immediate;
 	sc->nr.taken += nr_taken;
-	if (file)
+	अगर (file)
 		sc->nr.file_taken += nr_taken;
 
 	trace_mm_vmscan_lru_shrink_inactive(pgdat->node_id,
 			nr_scanned, nr_reclaimed, &stat, sc->priority, file);
-	return nr_reclaimed;
-}
+	वापस nr_reclaimed;
+पूर्ण
 
 /*
  * shrink_active_list() moves pages from the active LRU to the inactive LRU.
  *
- * We move them the other way if the page is referenced by one or more
+ * We move them the other way अगर the page is referenced by one or more
  * processes.
  *
  * If the pages are mostly unmapped, the processing is fast and it is
- * appropriate to hold lru_lock across the whole operation.  But if
+ * appropriate to hold lru_lock across the whole operation.  But अगर
  * the pages are mapped, the processing is slow (page_referenced()), so
  * we should drop lru_lock around each page.  It's impossible to balance
- * this, so instead we remove the pages from the LRU while processing them.
+ * this, so instead we हटाओ the pages from the LRU जबतक processing them.
  * It is safe to rely on PG_active against the non-LRU pages in here because
  * nobody will play with that bit on a non-LRU page.
  *
- * The downside is that we have to touch page->_refcount against each page.
+ * The करोwnside is that we have to touch page->_refcount against each page.
  * But we had to alter page->flags anyway.
  */
-static void shrink_active_list(unsigned long nr_to_scan,
-			       struct lruvec *lruvec,
-			       struct scan_control *sc,
-			       enum lru_list lru)
-{
-	unsigned long nr_taken;
-	unsigned long nr_scanned;
-	unsigned long vm_flags;
+अटल व्योम shrink_active_list(अचिन्हित दीर्घ nr_to_scan,
+			       काष्ठा lruvec *lruvec,
+			       काष्ठा scan_control *sc,
+			       क्रमागत lru_list lru)
+अणु
+	अचिन्हित दीर्घ nr_taken;
+	अचिन्हित दीर्घ nr_scanned;
+	अचिन्हित दीर्घ vm_flags;
 	LIST_HEAD(l_hold);	/* The pages which were snipped off */
 	LIST_HEAD(l_active);
 	LIST_HEAD(l_inactive);
-	struct page *page;
-	unsigned nr_deactivate, nr_activate;
-	unsigned nr_rotated = 0;
-	int file = is_file_lru(lru);
-	struct pglist_data *pgdat = lruvec_pgdat(lruvec);
+	काष्ठा page *page;
+	अचिन्हित nr_deactivate, nr_activate;
+	अचिन्हित nr_rotated = 0;
+	पूर्णांक file = is_file_lru(lru);
+	काष्ठा pglist_data *pgdat = lruvec_pgdat(lruvec);
 
 	lru_add_drain();
 
@@ -2230,34 +2231,34 @@ static void shrink_active_list(unsigned long nr_to_scan,
 
 	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, nr_taken);
 
-	if (!cgroup_reclaim(sc))
+	अगर (!cgroup_reclaim(sc))
 		__count_vm_events(PGREFILL, nr_scanned);
 	__count_memcg_events(lruvec_memcg(lruvec), PGREFILL, nr_scanned);
 
 	spin_unlock_irq(&lruvec->lru_lock);
 
-	while (!list_empty(&l_hold)) {
+	जबतक (!list_empty(&l_hold)) अणु
 		cond_resched();
 		page = lru_to_page(&l_hold);
 		list_del(&page->lru);
 
-		if (unlikely(!page_evictable(page))) {
+		अगर (unlikely(!page_evictable(page))) अणु
 			putback_lru_page(page);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (unlikely(buffer_heads_over_limit)) {
-			if (page_has_private(page) && trylock_page(page)) {
-				if (page_has_private(page))
+		अगर (unlikely(buffer_heads_over_limit)) अणु
+			अगर (page_has_निजी(page) && trylock_page(page)) अणु
+				अगर (page_has_निजी(page))
 					try_to_release_page(page, 0);
 				unlock_page(page);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		if (page_referenced(page, 0, sc->target_mem_cgroup,
-				    &vm_flags)) {
+		अगर (page_referenced(page, 0, sc->target_mem_cgroup,
+				    &vm_flags)) अणु
 			/*
-			 * Identify referenced, file-backed active pages and
+			 * Identअगरy referenced, file-backed active pages and
 			 * give them one more trip around the active list. So
 			 * that executable code get better chances to stay in
 			 * memory under moderate memory pressure.  Anon pages
@@ -2265,17 +2266,17 @@ static void shrink_active_list(unsigned long nr_to_scan,
 			 * IO, plus JVM can create lots of anon VM_EXEC pages,
 			 * so we ignore them here.
 			 */
-			if ((vm_flags & VM_EXEC) && page_is_file_lru(page)) {
+			अगर ((vm_flags & VM_EXEC) && page_is_file_lru(page)) अणु
 				nr_rotated += thp_nr_pages(page);
 				list_add(&page->lru, &l_active);
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		ClearPageActive(page);	/* we are de-activating */
 		SetPageWorkingset(page);
 		list_add(&page->lru, &l_inactive);
-	}
+	पूर्ण
 
 	/*
 	 * Move pages back to the lru list.
@@ -2284,7 +2285,7 @@ static void shrink_active_list(unsigned long nr_to_scan,
 
 	nr_activate = move_pages_to_lru(lruvec, &l_active);
 	nr_deactivate = move_pages_to_lru(lruvec, &l_inactive);
-	/* Keep all free pages in l_active list */
+	/* Keep all मुक्त pages in l_active list */
 	list_splice(&l_inactive, &l_active);
 
 	__count_vm_events(PGDEACTIVATE, nr_deactivate);
@@ -2293,95 +2294,95 @@ static void shrink_active_list(unsigned long nr_to_scan,
 	__mod_node_page_state(pgdat, NR_ISOLATED_ANON + file, -nr_taken);
 	spin_unlock_irq(&lruvec->lru_lock);
 
-	mem_cgroup_uncharge_list(&l_active);
-	free_unref_page_list(&l_active);
+	mem_cgroup_unअक्षरge_list(&l_active);
+	मुक्त_unref_page_list(&l_active);
 	trace_mm_vmscan_lru_shrink_active(pgdat->node_id, nr_taken, nr_activate,
 			nr_deactivate, nr_rotated, sc->priority, file);
-}
+पूर्ण
 
-unsigned long reclaim_pages(struct list_head *page_list)
-{
-	int nid = NUMA_NO_NODE;
-	unsigned int nr_reclaimed = 0;
+अचिन्हित दीर्घ reclaim_pages(काष्ठा list_head *page_list)
+अणु
+	पूर्णांक nid = NUMA_NO_NODE;
+	अचिन्हित पूर्णांक nr_reclaimed = 0;
 	LIST_HEAD(node_page_list);
-	struct reclaim_stat dummy_stat;
-	struct page *page;
-	struct scan_control sc = {
+	काष्ठा reclaim_stat dummy_stat;
+	काष्ठा page *page;
+	काष्ठा scan_control sc = अणु
 		.gfp_mask = GFP_KERNEL,
 		.priority = DEF_PRIORITY,
-		.may_writepage = 1,
+		.may_ग_लिखोpage = 1,
 		.may_unmap = 1,
 		.may_swap = 1,
-	};
+	पूर्ण;
 
-	while (!list_empty(page_list)) {
+	जबतक (!list_empty(page_list)) अणु
 		page = lru_to_page(page_list);
-		if (nid == NUMA_NO_NODE) {
+		अगर (nid == NUMA_NO_NODE) अणु
 			nid = page_to_nid(page);
 			INIT_LIST_HEAD(&node_page_list);
-		}
+		पूर्ण
 
-		if (nid == page_to_nid(page)) {
+		अगर (nid == page_to_nid(page)) अणु
 			ClearPageActive(page);
 			list_move(&page->lru, &node_page_list);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		nr_reclaimed += shrink_page_list(&node_page_list,
 						NODE_DATA(nid),
 						&sc, &dummy_stat, false);
-		while (!list_empty(&node_page_list)) {
+		जबतक (!list_empty(&node_page_list)) अणु
 			page = lru_to_page(&node_page_list);
 			list_del(&page->lru);
 			putback_lru_page(page);
-		}
+		पूर्ण
 
 		nid = NUMA_NO_NODE;
-	}
+	पूर्ण
 
-	if (!list_empty(&node_page_list)) {
+	अगर (!list_empty(&node_page_list)) अणु
 		nr_reclaimed += shrink_page_list(&node_page_list,
 						NODE_DATA(nid),
 						&sc, &dummy_stat, false);
-		while (!list_empty(&node_page_list)) {
+		जबतक (!list_empty(&node_page_list)) अणु
 			page = lru_to_page(&node_page_list);
 			list_del(&page->lru);
 			putback_lru_page(page);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return nr_reclaimed;
-}
+	वापस nr_reclaimed;
+पूर्ण
 
-static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
-				 struct lruvec *lruvec, struct scan_control *sc)
-{
-	if (is_active_lru(lru)) {
-		if (sc->may_deactivate & (1 << is_file_lru(lru)))
+अटल अचिन्हित दीर्घ shrink_list(क्रमागत lru_list lru, अचिन्हित दीर्घ nr_to_scan,
+				 काष्ठा lruvec *lruvec, काष्ठा scan_control *sc)
+अणु
+	अगर (is_active_lru(lru)) अणु
+		अगर (sc->may_deactivate & (1 << is_file_lru(lru)))
 			shrink_active_list(nr_to_scan, lruvec, sc, lru);
-		else
+		अन्यथा
 			sc->skipped_deactivate = 1;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return shrink_inactive_list(nr_to_scan, lruvec, sc, lru);
-}
+	वापस shrink_inactive_list(nr_to_scan, lruvec, sc, lru);
+पूर्ण
 
 /*
  * The inactive anon list should be small enough that the VM never has
- * to do too much work.
+ * to करो too much work.
  *
  * The inactive file list should be small enough to leave most memory
  * to the established workingset on the scan-resistant active list,
- * but large enough to avoid thrashing the aggregate readahead window.
+ * but large enough to aव्योम thrashing the aggregate पढ़ोahead winकरोw.
  *
  * Both inactive lists should also be large enough that each inactive
- * page has a chance to be referenced again before it is reclaimed.
+ * page has a chance to be referenced again beक्रमe it is reclaimed.
  *
  * If that fails and refaulting is observed, the inactive list grows.
  *
  * The inactive_ratio is the target ratio of ACTIVE to INACTIVE pages
- * on this LRU, maintained by the pageout code. An inactive_ratio
+ * on this LRU, मुख्यtained by the pageout code. An inactive_ratio
  * of 3 means 3:1 or 25% of the pages are kept on the inactive list.
  *
  * total     target    max
@@ -2395,31 +2396,31 @@ static unsigned long shrink_list(enum lru_list lru, unsigned long nr_to_scan,
  *    1TB     101        10GB
  *   10TB     320        32GB
  */
-static bool inactive_is_low(struct lruvec *lruvec, enum lru_list inactive_lru)
-{
-	enum lru_list active_lru = inactive_lru + LRU_ACTIVE;
-	unsigned long inactive, active;
-	unsigned long inactive_ratio;
-	unsigned long gb;
+अटल bool inactive_is_low(काष्ठा lruvec *lruvec, क्रमागत lru_list inactive_lru)
+अणु
+	क्रमागत lru_list active_lru = inactive_lru + LRU_ACTIVE;
+	अचिन्हित दीर्घ inactive, active;
+	अचिन्हित दीर्घ inactive_ratio;
+	अचिन्हित दीर्घ gb;
 
 	inactive = lruvec_page_state(lruvec, NR_LRU_BASE + inactive_lru);
 	active = lruvec_page_state(lruvec, NR_LRU_BASE + active_lru);
 
 	gb = (inactive + active) >> (30 - PAGE_SHIFT);
-	if (gb)
-		inactive_ratio = int_sqrt(10 * gb);
-	else
+	अगर (gb)
+		inactive_ratio = पूर्णांक_वर्ग_मूल(10 * gb);
+	अन्यथा
 		inactive_ratio = 1;
 
-	return inactive * inactive_ratio < active;
-}
+	वापस inactive * inactive_ratio < active;
+पूर्ण
 
-enum scan_balance {
+क्रमागत scan_balance अणु
 	SCAN_EQUAL,
 	SCAN_FRACT,
 	SCAN_ANON,
-	SCAN_FILE,
-};
+	SCAN_खाता,
+पूर्ण;
 
 /*
  * Determine how aggressively the anon and file LRU lists should be
@@ -2430,62 +2431,62 @@ enum scan_balance {
  * nr[0] = anon inactive pages to scan; nr[1] = anon active pages to scan
  * nr[2] = file inactive pages to scan; nr[3] = file active pages to scan
  */
-static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
-			   unsigned long *nr)
-{
-	struct mem_cgroup *memcg = lruvec_memcg(lruvec);
-	unsigned long anon_cost, file_cost, total_cost;
-	int swappiness = mem_cgroup_swappiness(memcg);
-	u64 fraction[ANON_AND_FILE];
+अटल व्योम get_scan_count(काष्ठा lruvec *lruvec, काष्ठा scan_control *sc,
+			   अचिन्हित दीर्घ *nr)
+अणु
+	काष्ठा mem_cgroup *memcg = lruvec_memcg(lruvec);
+	अचिन्हित दीर्घ anon_cost, file_cost, total_cost;
+	पूर्णांक swappiness = mem_cgroup_swappiness(memcg);
+	u64 fraction[ANON_AND_खाता];
 	u64 denominator = 0;	/* gcc */
-	enum scan_balance scan_balance;
-	unsigned long ap, fp;
-	enum lru_list lru;
+	क्रमागत scan_balance scan_balance;
+	अचिन्हित दीर्घ ap, fp;
+	क्रमागत lru_list lru;
 
-	/* If we have no swap space, do not bother scanning anon pages. */
-	if (!sc->may_swap || mem_cgroup_get_nr_swap_pages(memcg) <= 0) {
-		scan_balance = SCAN_FILE;
-		goto out;
-	}
+	/* If we have no swap space, करो not bother scanning anon pages. */
+	अगर (!sc->may_swap || mem_cgroup_get_nr_swap_pages(memcg) <= 0) अणु
+		scan_balance = SCAN_खाता;
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Global reclaim will swap to prevent OOM even with no
 	 * swappiness, but memcg users want to use this knob to
-	 * disable swapping for individual groups completely when
+	 * disable swapping क्रम inभागidual groups completely when
 	 * using the memory controller's swap limit feature would be
 	 * too expensive.
 	 */
-	if (cgroup_reclaim(sc) && !swappiness) {
-		scan_balance = SCAN_FILE;
-		goto out;
-	}
+	अगर (cgroup_reclaim(sc) && !swappiness) अणु
+		scan_balance = SCAN_खाता;
+		जाओ out;
+	पूर्ण
 
 	/*
 	 * Do not apply any pressure balancing cleverness when the
-	 * system is close to OOM, scan both anon and file equally
+	 * प्रणाली is बंद to OOM, scan both anon and file equally
 	 * (unless the swappiness setting disagrees with swapping).
 	 */
-	if (!sc->priority && swappiness) {
+	अगर (!sc->priority && swappiness) अणु
 		scan_balance = SCAN_EQUAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * If the system is almost out of file pages, force-scan anon.
+	 * If the प्रणाली is almost out of file pages, क्रमce-scan anon.
 	 */
-	if (sc->file_is_tiny) {
+	अगर (sc->file_is_tiny) अणु
 		scan_balance = SCAN_ANON;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * If there is enough inactive page cache, we do not reclaim
+	 * If there is enough inactive page cache, we करो not reclaim
 	 * anything from the anonymous working right now.
 	 */
-	if (sc->cache_trim_mode) {
-		scan_balance = SCAN_FILE;
-		goto out;
-	}
+	अगर (sc->cache_trim_mode) अणु
+		scan_balance = SCAN_खाता;
+		जाओ out;
+	पूर्ण
 
 	scan_balance = SCAN_FRACT;
 	/*
@@ -2493,13 +2494,13 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
 	 *
 	 * The amount of pressure we put on each LRU is inversely
 	 * proportional to the cost of reclaiming each list, as
-	 * determined by the share of pages that are refaulting, times
+	 * determined by the share of pages that are refaulting, बार
 	 * the relative IO cost of bringing back a swapped out
-	 * anonymous page vs reloading a filesystem page (swappiness).
+	 * anonymous page vs reloading a fileप्रणाली page (swappiness).
 	 *
-	 * Although we limit that influence to ensure no list gets
+	 * Although we limit that influence to ensure no list माला_लो
 	 * left behind completely: at least a third of the pressure is
-	 * applied, before swappiness.
+	 * applied, beक्रमe swappiness.
 	 *
 	 * With swappiness at 100, anon and file have equal IO cost.
 	 */
@@ -2518,18 +2519,18 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
 	fraction[1] = fp;
 	denominator = ap + fp;
 out:
-	for_each_evictable_lru(lru) {
-		int file = is_file_lru(lru);
-		unsigned long lruvec_size;
-		unsigned long scan;
-		unsigned long protection;
+	क्रम_each_evictable_lru(lru) अणु
+		पूर्णांक file = is_file_lru(lru);
+		अचिन्हित दीर्घ lruvec_size;
+		अचिन्हित दीर्घ scan;
+		अचिन्हित दीर्घ protection;
 
 		lruvec_size = lruvec_lru_size(lruvec, lru, sc->reclaim_idx);
 		protection = mem_cgroup_protection(sc->target_mem_cgroup,
 						   memcg,
 						   sc->memcg_low_reclaim);
 
-		if (protection) {
+		अगर (protection) अणु
 			/*
 			 * Scale a cgroup's reclaim pressure by proportioning
 			 * its current usage to its memory.low or memory.min
@@ -2540,28 +2541,28 @@ out:
 			 * approach the memory protection threshold, to totally
 			 * nominal as we exceed it.  This results in requiring
 			 * setting extremely liberal protection thresholds. It
-			 * also means we simply get no protection at all if we
+			 * also means we simply get no protection at all अगर we
 			 * set it too low, which is not ideal.
 			 *
 			 * If there is any protection in place, we reduce scan
 			 * pressure by how much of the total memory used is
 			 * within protection thresholds.
 			 *
-			 * There is one special case: in the first reclaim pass,
+			 * There is one special हाल: in the first reclaim pass,
 			 * we skip over all groups that are within their low
 			 * protection. If that fails to reclaim enough pages to
 			 * satisfy the reclaim goal, we come back and override
-			 * the best-effort low protection. However, we still
+			 * the best-efक्रमt low protection. However, we still
 			 * ideally want to honor how well-behaved groups are in
-			 * that case instead of simply punishing them all
+			 * that हाल instead of simply punishing them all
 			 * equally. As such, we reclaim them based on how much
 			 * memory they are using, reducing the scan pressure
 			 * again by how much of the total memory used is under
 			 * hard protection.
 			 */
-			unsigned long cgroup_size = mem_cgroup_size(memcg);
+			अचिन्हित दीर्घ cgroup_size = mem_cgroup_size(memcg);
 
-			/* Avoid TOCTOU with earlier protection check */
+			/* Aव्योम TOCTOU with earlier protection check */
 			cgroup_size = max(cgroup_size, protection);
 
 			scan = lruvec_size - lruvec_size * protection /
@@ -2569,105 +2570,105 @@ out:
 
 			/*
 			 * Minimally target SWAP_CLUSTER_MAX pages to keep
-			 * reclaim moving forwards, avoiding decrementing
+			 * reclaim moving क्रमwards, aव्योमing decrementing
 			 * sc->priority further than desirable.
 			 */
 			scan = max(scan, SWAP_CLUSTER_MAX);
-		} else {
+		पूर्ण अन्यथा अणु
 			scan = lruvec_size;
-		}
+		पूर्ण
 
 		scan >>= sc->priority;
 
 		/*
-		 * If the cgroup's already been deleted, make sure to
-		 * scrape out the remaining cache.
+		 * If the cgroup's alपढ़ोy been deleted, make sure to
+		 * scrape out the reमुख्यing cache.
 		 */
-		if (!scan && !mem_cgroup_online(memcg))
+		अगर (!scan && !mem_cgroup_online(memcg))
 			scan = min(lruvec_size, SWAP_CLUSTER_MAX);
 
-		switch (scan_balance) {
-		case SCAN_EQUAL:
+		चयन (scan_balance) अणु
+		हाल SCAN_EQUAL:
 			/* Scan lists relative to size */
-			break;
-		case SCAN_FRACT:
+			अवरोध;
+		हाल SCAN_FRACT:
 			/*
 			 * Scan types proportional to swappiness and
 			 * their relative recent reclaim efficiency.
-			 * Make sure we don't miss the last page on
+			 * Make sure we करोn't miss the last page on
 			 * the offlined memory cgroups because of a
 			 * round-off error.
 			 */
 			scan = mem_cgroup_online(memcg) ?
-			       div64_u64(scan * fraction[file], denominator) :
+			       भाग64_u64(scan * fraction[file], denominator) :
 			       DIV64_U64_ROUND_UP(scan * fraction[file],
 						  denominator);
-			break;
-		case SCAN_FILE:
-		case SCAN_ANON:
+			अवरोध;
+		हाल SCAN_खाता:
+		हाल SCAN_ANON:
 			/* Scan one type exclusively */
-			if ((scan_balance == SCAN_FILE) != file)
+			अगर ((scan_balance == SCAN_खाता) != file)
 				scan = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			/* Look ma, no brain */
 			BUG();
-		}
+		पूर्ण
 
 		nr[lru] = scan;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void shrink_lruvec(struct lruvec *lruvec, struct scan_control *sc)
-{
-	unsigned long nr[NR_LRU_LISTS];
-	unsigned long targets[NR_LRU_LISTS];
-	unsigned long nr_to_scan;
-	enum lru_list lru;
-	unsigned long nr_reclaimed = 0;
-	unsigned long nr_to_reclaim = sc->nr_to_reclaim;
-	struct blk_plug plug;
+अटल व्योम shrink_lruvec(काष्ठा lruvec *lruvec, काष्ठा scan_control *sc)
+अणु
+	अचिन्हित दीर्घ nr[NR_LRU_LISTS];
+	अचिन्हित दीर्घ tarमाला_लो[NR_LRU_LISTS];
+	अचिन्हित दीर्घ nr_to_scan;
+	क्रमागत lru_list lru;
+	अचिन्हित दीर्घ nr_reclaimed = 0;
+	अचिन्हित दीर्घ nr_to_reclaim = sc->nr_to_reclaim;
+	काष्ठा blk_plug plug;
 	bool scan_adjusted;
 
 	get_scan_count(lruvec, sc, nr);
 
-	/* Record the original scan target for proportional adjustments later */
-	memcpy(targets, nr, sizeof(nr));
+	/* Record the original scan target क्रम proportional adjusपंचांगents later */
+	स_नकल(tarमाला_लो, nr, माप(nr));
 
 	/*
 	 * Global reclaiming within direct reclaim at DEF_PRIORITY is a normal
 	 * event that can occur when there is little memory pressure e.g.
-	 * multiple streaming readers/writers. Hence, we do not abort scanning
+	 * multiple streaming पढ़ोers/ग_लिखोrs. Hence, we करो not पात scanning
 	 * when the requested number of pages are reclaimed when scanning at
 	 * DEF_PRIORITY on the assumption that the fact we are direct
 	 * reclaiming implies that kswapd is not keeping up and it is best to
-	 * do a batch of work at once. For memcg reclaim one check is made to
-	 * abort proportional reclaim if either the file or anon lru has already
+	 * करो a batch of work at once. For memcg reclaim one check is made to
+	 * पात proportional reclaim अगर either the file or anon lru has alपढ़ोy
 	 * dropped to zero at the first pass.
 	 */
 	scan_adjusted = (!cgroup_reclaim(sc) && !current_is_kswapd() &&
 			 sc->priority == DEF_PRIORITY);
 
 	blk_start_plug(&plug);
-	while (nr[LRU_INACTIVE_ANON] || nr[LRU_ACTIVE_FILE] ||
-					nr[LRU_INACTIVE_FILE]) {
-		unsigned long nr_anon, nr_file, percentage;
-		unsigned long nr_scanned;
+	जबतक (nr[LRU_INACTIVE_ANON] || nr[LRU_ACTIVE_खाता] ||
+					nr[LRU_INACTIVE_खाता]) अणु
+		अचिन्हित दीर्घ nr_anon, nr_file, percentage;
+		अचिन्हित दीर्घ nr_scanned;
 
-		for_each_evictable_lru(lru) {
-			if (nr[lru]) {
+		क्रम_each_evictable_lru(lru) अणु
+			अगर (nr[lru]) अणु
 				nr_to_scan = min(nr[lru], SWAP_CLUSTER_MAX);
 				nr[lru] -= nr_to_scan;
 
 				nr_reclaimed += shrink_list(lru, nr_to_scan,
 							    lruvec, sc);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		cond_resched();
 
-		if (nr_reclaimed < nr_to_reclaim || scan_adjusted)
-			continue;
+		अगर (nr_reclaimed < nr_to_reclaim || scan_adjusted)
+			जारी;
 
 		/*
 		 * For kswapd and memcg, reclaim at least the number of pages
@@ -2676,7 +2677,7 @@ static void shrink_lruvec(struct lruvec *lruvec, struct scan_control *sc)
 		 * stop reclaiming one LRU and reduce the amount scanning
 		 * proportional to the original scan target.
 		 */
-		nr_file = nr[LRU_INACTIVE_FILE] + nr[LRU_ACTIVE_FILE];
+		nr_file = nr[LRU_INACTIVE_खाता] + nr[LRU_ACTIVE_खाता];
 		nr_anon = nr[LRU_INACTIVE_ANON] + nr[LRU_ACTIVE_ANON];
 
 		/*
@@ -2685,20 +2686,20 @@ static void shrink_lruvec(struct lruvec *lruvec, struct scan_control *sc)
 		 * smaller below, this makes sure that we only make one nudge
 		 * towards proportionality once we've got nr_to_reclaim.
 		 */
-		if (!nr_file || !nr_anon)
-			break;
+		अगर (!nr_file || !nr_anon)
+			अवरोध;
 
-		if (nr_file > nr_anon) {
-			unsigned long scan_target = targets[LRU_INACTIVE_ANON] +
-						targets[LRU_ACTIVE_ANON] + 1;
+		अगर (nr_file > nr_anon) अणु
+			अचिन्हित दीर्घ scan_target = tarमाला_लो[LRU_INACTIVE_ANON] +
+						tarमाला_लो[LRU_ACTIVE_ANON] + 1;
 			lru = LRU_BASE;
 			percentage = nr_anon * 100 / scan_target;
-		} else {
-			unsigned long scan_target = targets[LRU_INACTIVE_FILE] +
-						targets[LRU_ACTIVE_FILE] + 1;
-			lru = LRU_FILE;
+		पूर्ण अन्यथा अणु
+			अचिन्हित दीर्घ scan_target = tarमाला_लो[LRU_INACTIVE_खाता] +
+						tarमाला_लो[LRU_ACTIVE_खाता] + 1;
+			lru = LRU_खाता;
 			percentage = nr_file * 100 / scan_target;
-		}
+		पूर्ण
 
 		/* Stop scanning the smaller of the LRU */
 		nr[lru] = 0;
@@ -2706,143 +2707,143 @@ static void shrink_lruvec(struct lruvec *lruvec, struct scan_control *sc)
 
 		/*
 		 * Recalculate the other LRU scan count based on its original
-		 * scan target and the percentage scanning already complete
+		 * scan target and the percentage scanning alपढ़ोy complete
 		 */
-		lru = (lru == LRU_FILE) ? LRU_BASE : LRU_FILE;
-		nr_scanned = targets[lru] - nr[lru];
-		nr[lru] = targets[lru] * (100 - percentage) / 100;
+		lru = (lru == LRU_खाता) ? LRU_BASE : LRU_खाता;
+		nr_scanned = tarमाला_लो[lru] - nr[lru];
+		nr[lru] = tarमाला_लो[lru] * (100 - percentage) / 100;
 		nr[lru] -= min(nr[lru], nr_scanned);
 
 		lru += LRU_ACTIVE;
-		nr_scanned = targets[lru] - nr[lru];
-		nr[lru] = targets[lru] * (100 - percentage) / 100;
+		nr_scanned = tarमाला_लो[lru] - nr[lru];
+		nr[lru] = tarमाला_लो[lru] * (100 - percentage) / 100;
 		nr[lru] -= min(nr[lru], nr_scanned);
 
 		scan_adjusted = true;
-	}
+	पूर्ण
 	blk_finish_plug(&plug);
 	sc->nr_reclaimed += nr_reclaimed;
 
 	/*
-	 * Even if we did not try to evict anon pages at all, we want to
+	 * Even अगर we did not try to evict anon pages at all, we want to
 	 * rebalance the anon lru active/inactive ratio.
 	 */
-	if (total_swap_pages && inactive_is_low(lruvec, LRU_INACTIVE_ANON))
+	अगर (total_swap_pages && inactive_is_low(lruvec, LRU_INACTIVE_ANON))
 		shrink_active_list(SWAP_CLUSTER_MAX, lruvec,
 				   sc, LRU_ACTIVE_ANON);
-}
+पूर्ण
 
-/* Use reclaim/compaction for costly allocs or under memory pressure */
-static bool in_reclaim_compaction(struct scan_control *sc)
-{
-	if (IS_ENABLED(CONFIG_COMPACTION) && sc->order &&
+/* Use reclaim/compaction क्रम costly allocs or under memory pressure */
+अटल bool in_reclaim_compaction(काष्ठा scan_control *sc)
+अणु
+	अगर (IS_ENABLED(CONFIG_COMPACTION) && sc->order &&
 			(sc->order > PAGE_ALLOC_COSTLY_ORDER ||
 			 sc->priority < DEF_PRIORITY - 2))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Reclaim/compaction is used for high-order allocation requests. It reclaims
- * order-0 pages before compacting the zone. should_continue_reclaim() returns
- * true if more pages should be reclaimed such that when the page allocator
- * calls try_to_compact_pages() that it will have enough free pages to succeed.
- * It will give up earlier than that if there is difficulty reclaiming pages.
+ * Reclaim/compaction is used क्रम high-order allocation requests. It reclaims
+ * order-0 pages beक्रमe compacting the zone. should_जारी_reclaim() वापसs
+ * true अगर more pages should be reclaimed such that when the page allocator
+ * calls try_to_compact_pages() that it will have enough मुक्त pages to succeed.
+ * It will give up earlier than that अगर there is dअगरficulty reclaiming pages.
  */
-static inline bool should_continue_reclaim(struct pglist_data *pgdat,
-					unsigned long nr_reclaimed,
-					struct scan_control *sc)
-{
-	unsigned long pages_for_compaction;
-	unsigned long inactive_lru_pages;
-	int z;
+अटल अंतरभूत bool should_जारी_reclaim(काष्ठा pglist_data *pgdat,
+					अचिन्हित दीर्घ nr_reclaimed,
+					काष्ठा scan_control *sc)
+अणु
+	अचिन्हित दीर्घ pages_क्रम_compaction;
+	अचिन्हित दीर्घ inactive_lru_pages;
+	पूर्णांक z;
 
 	/* If not in reclaim/compaction mode, stop */
-	if (!in_reclaim_compaction(sc))
-		return false;
+	अगर (!in_reclaim_compaction(sc))
+		वापस false;
 
 	/*
-	 * Stop if we failed to reclaim any pages from the last SWAP_CLUSTER_MAX
-	 * number of pages that were scanned. This will return to the caller
+	 * Stop अगर we failed to reclaim any pages from the last SWAP_CLUSTER_MAX
+	 * number of pages that were scanned. This will वापस to the caller
 	 * with the risk reclaim/compaction and the resulting allocation attempt
-	 * fails. In the past we have tried harder for __GFP_RETRY_MAYFAIL
+	 * fails. In the past we have tried harder क्रम __GFP_RETRY_MAYFAIL
 	 * allocations through requiring that the full LRU list has been scanned
 	 * first, by assuming that zero delta of sc->nr_scanned means full LRU
-	 * scan, but that approximation was wrong, and there were corner cases
+	 * scan, but that approximation was wrong, and there were corner हालs
 	 * where always a non-zero amount of pages were scanned.
 	 */
-	if (!nr_reclaimed)
-		return false;
+	अगर (!nr_reclaimed)
+		वापस false;
 
 	/* If compaction would go ahead or the allocation would succeed, stop */
-	for (z = 0; z <= sc->reclaim_idx; z++) {
-		struct zone *zone = &pgdat->node_zones[z];
-		if (!managed_zone(zone))
-			continue;
+	क्रम (z = 0; z <= sc->reclaim_idx; z++) अणु
+		काष्ठा zone *zone = &pgdat->node_zones[z];
+		अगर (!managed_zone(zone))
+			जारी;
 
-		switch (compaction_suitable(zone, sc->order, 0, sc->reclaim_idx)) {
-		case COMPACT_SUCCESS:
-		case COMPACT_CONTINUE:
-			return false;
-		default:
+		चयन (compaction_suitable(zone, sc->order, 0, sc->reclaim_idx)) अणु
+		हाल COMPACT_SUCCESS:
+		हाल COMPACT_CONTINUE:
+			वापस false;
+		शेष:
 			/* check next zone */
 			;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * If we have not reclaimed enough pages for compaction and the
-	 * inactive lists are large enough, continue reclaiming
+	 * If we have not reclaimed enough pages क्रम compaction and the
+	 * inactive lists are large enough, जारी reclaiming
 	 */
-	pages_for_compaction = compact_gap(sc->order);
-	inactive_lru_pages = node_page_state(pgdat, NR_INACTIVE_FILE);
-	if (get_nr_swap_pages() > 0)
+	pages_क्रम_compaction = compact_gap(sc->order);
+	inactive_lru_pages = node_page_state(pgdat, NR_INACTIVE_खाता);
+	अगर (get_nr_swap_pages() > 0)
 		inactive_lru_pages += node_page_state(pgdat, NR_INACTIVE_ANON);
 
-	return inactive_lru_pages > pages_for_compaction;
-}
+	वापस inactive_lru_pages > pages_क्रम_compaction;
+पूर्ण
 
-static void shrink_node_memcgs(pg_data_t *pgdat, struct scan_control *sc)
-{
-	struct mem_cgroup *target_memcg = sc->target_mem_cgroup;
-	struct mem_cgroup *memcg;
+अटल व्योम shrink_node_memcgs(pg_data_t *pgdat, काष्ठा scan_control *sc)
+अणु
+	काष्ठा mem_cgroup *target_memcg = sc->target_mem_cgroup;
+	काष्ठा mem_cgroup *memcg;
 
-	memcg = mem_cgroup_iter(target_memcg, NULL, NULL);
-	do {
-		struct lruvec *lruvec = mem_cgroup_lruvec(memcg, pgdat);
-		unsigned long reclaimed;
-		unsigned long scanned;
+	memcg = mem_cgroup_iter(target_memcg, शून्य, शून्य);
+	करो अणु
+		काष्ठा lruvec *lruvec = mem_cgroup_lruvec(memcg, pgdat);
+		अचिन्हित दीर्घ reclaimed;
+		अचिन्हित दीर्घ scanned;
 
 		/*
 		 * This loop can become CPU-bound when target memcgs
-		 * aren't eligible for reclaim - either because they
-		 * don't have any reclaimable pages, or because their
-		 * memory is explicitly protected. Avoid soft lockups.
+		 * aren't eligible क्रम reclaim - either because they
+		 * करोn't have any reclaimable pages, or because their
+		 * memory is explicitly रक्षित. Aव्योम soft lockups.
 		 */
 		cond_resched();
 
 		mem_cgroup_calculate_protection(target_memcg, memcg);
 
-		if (mem_cgroup_below_min(memcg)) {
+		अगर (mem_cgroup_below_min(memcg)) अणु
 			/*
 			 * Hard protection.
 			 * If there is no reclaimable memory, OOM.
 			 */
-			continue;
-		} else if (mem_cgroup_below_low(memcg)) {
+			जारी;
+		पूर्ण अन्यथा अगर (mem_cgroup_below_low(memcg)) अणु
 			/*
 			 * Soft protection.
-			 * Respect the protection only as long as
-			 * there is an unprotected supply
+			 * Respect the protection only as दीर्घ as
+			 * there is an unरक्षित supply
 			 * of reclaimable memory from other cgroups.
 			 */
-			if (!sc->memcg_low_reclaim) {
+			अगर (!sc->memcg_low_reclaim) अणु
 				sc->memcg_low_skipped = 1;
-				continue;
-			}
+				जारी;
+			पूर्ण
 			memcg_memory_event(memcg, MEMCG_LOW);
-		}
+		पूर्ण
 
 		reclaimed = sc->nr_reclaimed;
 		scanned = sc->nr_scanned;
@@ -2857,21 +2858,21 @@ static void shrink_node_memcgs(pg_data_t *pgdat, struct scan_control *sc)
 			   sc->nr_scanned - scanned,
 			   sc->nr_reclaimed - reclaimed);
 
-	} while ((memcg = mem_cgroup_iter(target_memcg, memcg, NULL)));
-}
+	पूर्ण जबतक ((memcg = mem_cgroup_iter(target_memcg, memcg, शून्य)));
+पूर्ण
 
-static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
-{
-	struct reclaim_state *reclaim_state = current->reclaim_state;
-	unsigned long nr_reclaimed, nr_scanned;
-	struct lruvec *target_lruvec;
+अटल व्योम shrink_node(pg_data_t *pgdat, काष्ठा scan_control *sc)
+अणु
+	काष्ठा reclaim_state *reclaim_state = current->reclaim_state;
+	अचिन्हित दीर्घ nr_reclaimed, nr_scanned;
+	काष्ठा lruvec *target_lruvec;
 	bool reclaimable = false;
-	unsigned long file;
+	अचिन्हित दीर्घ file;
 
 	target_lruvec = mem_cgroup_lruvec(sc->target_mem_cgroup, pgdat);
 
 again:
-	memset(&sc->nr, 0, sizeof(sc->nr));
+	स_रखो(&sc->nr, 0, माप(sc->nr));
 
 	nr_reclaimed = sc->nr_reclaimed;
 	nr_scanned = sc->nr_scanned;
@@ -2885,18 +2886,18 @@ again:
 	spin_unlock_irq(&target_lruvec->lru_lock);
 
 	/*
-	 * Target desirable inactive:active list ratios for the anon
+	 * Target desirable inactive:active list ratios क्रम the anon
 	 * and file LRU lists.
 	 */
-	if (!sc->force_deactivate) {
-		unsigned long refaults;
+	अगर (!sc->क्रमce_deactivate) अणु
+		अचिन्हित दीर्घ refaults;
 
 		refaults = lruvec_page_state(target_lruvec,
 				WORKINGSET_ACTIVATE_ANON);
-		if (refaults != target_lruvec->refaults[0] ||
+		अगर (refaults != target_lruvec->refaults[0] ||
 			inactive_is_low(target_lruvec, LRU_INACTIVE_ANON))
 			sc->may_deactivate |= DEACTIVATE_ANON;
-		else
+		अन्यथा
 			sc->may_deactivate &= ~DEACTIVATE_ANON;
 
 		/*
@@ -2905,84 +2906,84 @@ again:
 		 * rid of any stale active pages quickly.
 		 */
 		refaults = lruvec_page_state(target_lruvec,
-				WORKINGSET_ACTIVATE_FILE);
-		if (refaults != target_lruvec->refaults[1] ||
-		    inactive_is_low(target_lruvec, LRU_INACTIVE_FILE))
-			sc->may_deactivate |= DEACTIVATE_FILE;
-		else
-			sc->may_deactivate &= ~DEACTIVATE_FILE;
-	} else
-		sc->may_deactivate = DEACTIVATE_ANON | DEACTIVATE_FILE;
+				WORKINGSET_ACTIVATE_खाता);
+		अगर (refaults != target_lruvec->refaults[1] ||
+		    inactive_is_low(target_lruvec, LRU_INACTIVE_खाता))
+			sc->may_deactivate |= DEACTIVATE_खाता;
+		अन्यथा
+			sc->may_deactivate &= ~DEACTIVATE_खाता;
+	पूर्ण अन्यथा
+		sc->may_deactivate = DEACTIVATE_ANON | DEACTIVATE_खाता;
 
 	/*
 	 * If we have plenty of inactive file pages that aren't
-	 * thrashing, try to reclaim those first before touching
+	 * thrashing, try to reclaim those first beक्रमe touching
 	 * anonymous pages.
 	 */
-	file = lruvec_page_state(target_lruvec, NR_INACTIVE_FILE);
-	if (file >> sc->priority && !(sc->may_deactivate & DEACTIVATE_FILE))
+	file = lruvec_page_state(target_lruvec, NR_INACTIVE_खाता);
+	अगर (file >> sc->priority && !(sc->may_deactivate & DEACTIVATE_खाता))
 		sc->cache_trim_mode = 1;
-	else
+	अन्यथा
 		sc->cache_trim_mode = 0;
 
 	/*
-	 * Prevent the reclaimer from falling into the cache trap: as
+	 * Prevent the reclaimer from falling पूर्णांकo the cache trap: as
 	 * cache pages start out inactive, every cache fault will tip
 	 * the scan balance towards the file LRU.  And as the file LRU
-	 * shrinks, so does the window for rotation from references.
+	 * shrinks, so करोes the winकरोw क्रम rotation from references.
 	 * This means we have a runaway feedback loop where a tiny
 	 * thrashing file LRU becomes infinitely more attractive than
 	 * anon pages.  Try to detect this based on file LRU size.
 	 */
-	if (!cgroup_reclaim(sc)) {
-		unsigned long total_high_wmark = 0;
-		unsigned long free, anon;
-		int z;
+	अगर (!cgroup_reclaim(sc)) अणु
+		अचिन्हित दीर्घ total_high_wmark = 0;
+		अचिन्हित दीर्घ मुक्त, anon;
+		पूर्णांक z;
 
-		free = sum_zone_node_page_state(pgdat->node_id, NR_FREE_PAGES);
-		file = node_page_state(pgdat, NR_ACTIVE_FILE) +
-			   node_page_state(pgdat, NR_INACTIVE_FILE);
+		मुक्त = sum_zone_node_page_state(pgdat->node_id, NR_FREE_PAGES);
+		file = node_page_state(pgdat, NR_ACTIVE_खाता) +
+			   node_page_state(pgdat, NR_INACTIVE_खाता);
 
-		for (z = 0; z < MAX_NR_ZONES; z++) {
-			struct zone *zone = &pgdat->node_zones[z];
-			if (!managed_zone(zone))
-				continue;
+		क्रम (z = 0; z < MAX_NR_ZONES; z++) अणु
+			काष्ठा zone *zone = &pgdat->node_zones[z];
+			अगर (!managed_zone(zone))
+				जारी;
 
 			total_high_wmark += high_wmark_pages(zone);
-		}
+		पूर्ण
 
 		/*
-		 * Consider anon: if that's low too, this isn't a
+		 * Consider anon: अगर that's low too, this isn't a
 		 * runaway file reclaim problem, but rather just
 		 * extreme pressure. Reclaim as per usual then.
 		 */
 		anon = node_page_state(pgdat, NR_INACTIVE_ANON);
 
 		sc->file_is_tiny =
-			file + free <= total_high_wmark &&
+			file + मुक्त <= total_high_wmark &&
 			!(sc->may_deactivate & DEACTIVATE_ANON) &&
 			anon >> sc->priority;
-	}
+	पूर्ण
 
 	shrink_node_memcgs(pgdat, sc);
 
-	if (reclaim_state) {
+	अगर (reclaim_state) अणु
 		sc->nr_reclaimed += reclaim_state->reclaimed_slab;
 		reclaim_state->reclaimed_slab = 0;
-	}
+	पूर्ण
 
 	/* Record the subtree's reclaim efficiency */
 	vmpressure(sc->gfp_mask, sc->target_mem_cgroup, true,
 		   sc->nr_scanned - nr_scanned,
 		   sc->nr_reclaimed - nr_reclaimed);
 
-	if (sc->nr_reclaimed - nr_reclaimed)
+	अगर (sc->nr_reclaimed - nr_reclaimed)
 		reclaimable = true;
 
-	if (current_is_kswapd()) {
+	अगर (current_is_kswapd()) अणु
 		/*
-		 * If reclaim is isolating dirty pages under writeback,
-		 * it implies that the long-lived page allocation rate
+		 * If reclaim is isolating dirty pages under ग_लिखोback,
+		 * it implies that the दीर्घ-lived page allocation rate
 		 * is exceeding the page laundering rate. Either the
 		 * global limits are not being effective at throttling
 		 * processes due to the page distribution throughout
@@ -2993,166 +2994,166 @@ again:
 		 * balance_dirty_pages() manages.
 		 *
 		 * Once a node is flagged PGDAT_WRITEBACK, kswapd will
-		 * count the number of pages under pages flagged for
-		 * immediate reclaim and stall if any are encountered
+		 * count the number of pages under pages flagged क्रम
+		 * immediate reclaim and stall अगर any are encountered
 		 * in the nr_immediate check below.
 		 */
-		if (sc->nr.writeback && sc->nr.writeback == sc->nr.taken)
+		अगर (sc->nr.ग_लिखोback && sc->nr.ग_लिखोback == sc->nr.taken)
 			set_bit(PGDAT_WRITEBACK, &pgdat->flags);
 
 		/* Allow kswapd to start writing pages during reclaim.*/
-		if (sc->nr.unqueued_dirty == sc->nr.file_taken)
-			set_bit(PGDAT_DIRTY, &pgdat->flags);
+		अगर (sc->nr.unqueued_dirty == sc->nr.file_taken)
+			set_bit(PGDAT_सूचीTY, &pgdat->flags);
 
 		/*
-		 * If kswapd scans pages marked for immediate
-		 * reclaim and under writeback (nr_immediate), it
+		 * If kswapd scans pages marked क्रम immediate
+		 * reclaim and under ग_लिखोback (nr_immediate), it
 		 * implies that pages are cycling through the LRU
-		 * faster than they are written so also forcibly stall.
+		 * faster than they are written so also क्रमcibly stall.
 		 */
-		if (sc->nr.immediate)
-			congestion_wait(BLK_RW_ASYNC, HZ/10);
-	}
+		अगर (sc->nr.immediate)
+			congestion_रुको(BLK_RW_ASYNC, HZ/10);
+	पूर्ण
 
 	/*
-	 * Tag a node/memcg as congested if all the dirty pages
+	 * Tag a node/memcg as congested अगर all the dirty pages
 	 * scanned were backed by a congested BDI and
-	 * wait_iff_congested will stall.
+	 * रुको_अगरf_congested will stall.
 	 *
-	 * Legacy memcg will stall in page writeback so avoid forcibly
-	 * stalling in wait_iff_congested().
+	 * Legacy memcg will stall in page ग_लिखोback so aव्योम क्रमcibly
+	 * stalling in रुको_अगरf_congested().
 	 */
-	if ((current_is_kswapd() ||
-	     (cgroup_reclaim(sc) && writeback_throttling_sane(sc))) &&
+	अगर ((current_is_kswapd() ||
+	     (cgroup_reclaim(sc) && ग_लिखोback_throttling_sane(sc))) &&
 	    sc->nr.dirty && sc->nr.dirty == sc->nr.congested)
 		set_bit(LRUVEC_CONGESTED, &target_lruvec->flags);
 
 	/*
-	 * Stall direct reclaim for IO completions if underlying BDIs
-	 * and node is congested. Allow kswapd to continue until it
+	 * Stall direct reclaim क्रम IO completions अगर underlying BDIs
+	 * and node is congested. Allow kswapd to जारी until it
 	 * starts encountering unqueued dirty pages or cycling through
 	 * the LRU too quickly.
 	 */
-	if (!current_is_kswapd() && current_may_throttle() &&
+	अगर (!current_is_kswapd() && current_may_throttle() &&
 	    !sc->hibernation_mode &&
 	    test_bit(LRUVEC_CONGESTED, &target_lruvec->flags))
-		wait_iff_congested(BLK_RW_ASYNC, HZ/10);
+		रुको_अगरf_congested(BLK_RW_ASYNC, HZ/10);
 
-	if (should_continue_reclaim(pgdat, sc->nr_reclaimed - nr_reclaimed,
+	अगर (should_जारी_reclaim(pgdat, sc->nr_reclaimed - nr_reclaimed,
 				    sc))
-		goto again;
+		जाओ again;
 
 	/*
 	 * Kswapd gives up on balancing particular nodes after too
 	 * many failures to reclaim anything from them and goes to
 	 * sleep. On reclaim progress, reset the failure counter. A
-	 * successful direct reclaim run will revive a dormant kswapd.
+	 * successful direct reclaim run will revive a करोrmant kswapd.
 	 */
-	if (reclaimable)
+	अगर (reclaimable)
 		pgdat->kswapd_failures = 0;
-}
+पूर्ण
 
 /*
- * Returns true if compaction should go ahead for a costly-order request, or
- * the allocation would already succeed without compaction. Return false if we
+ * Returns true अगर compaction should go ahead क्रम a costly-order request, or
+ * the allocation would alपढ़ोy succeed without compaction. Return false अगर we
  * should reclaim first.
  */
-static inline bool compaction_ready(struct zone *zone, struct scan_control *sc)
-{
-	unsigned long watermark;
-	enum compact_result suitable;
+अटल अंतरभूत bool compaction_पढ़ोy(काष्ठा zone *zone, काष्ठा scan_control *sc)
+अणु
+	अचिन्हित दीर्घ watermark;
+	क्रमागत compact_result suitable;
 
 	suitable = compaction_suitable(zone, sc->order, 0, sc->reclaim_idx);
-	if (suitable == COMPACT_SUCCESS)
-		/* Allocation should succeed already. Don't reclaim. */
-		return true;
-	if (suitable == COMPACT_SKIPPED)
+	अगर (suitable == COMPACT_SUCCESS)
+		/* Allocation should succeed alपढ़ोy. Don't reclaim. */
+		वापस true;
+	अगर (suitable == COMPACT_SKIPPED)
 		/* Compaction cannot yet proceed. Do reclaim. */
-		return false;
+		वापस false;
 
 	/*
-	 * Compaction is already possible, but it takes time to run and there
-	 * are potentially other callers using the pages just freed. So proceed
-	 * with reclaim to make a buffer of free pages available to give
+	 * Compaction is alपढ़ोy possible, but it takes समय to run and there
+	 * are potentially other callers using the pages just मुक्तd. So proceed
+	 * with reclaim to make a buffer of मुक्त pages available to give
 	 * compaction a reasonable chance of completing and allocating the page.
 	 * Note that we won't actually reclaim the whole buffer in one attempt
-	 * as the target watermark in should_continue_reclaim() is lower. But if
-	 * we are already above the high+gap watermark, don't reclaim at all.
+	 * as the target watermark in should_जारी_reclaim() is lower. But अगर
+	 * we are alपढ़ोy above the high+gap watermark, करोn't reclaim at all.
 	 */
 	watermark = high_wmark_pages(zone) + compact_gap(sc->order);
 
-	return zone_watermark_ok_safe(zone, 0, watermark, sc->reclaim_idx);
-}
+	वापस zone_watermark_ok_safe(zone, 0, watermark, sc->reclaim_idx);
+पूर्ण
 
 /*
- * This is the direct reclaim path, for page-allocating processes.  We only
+ * This is the direct reclaim path, क्रम page-allocating processes.  We only
  * try to reclaim pages from zones which will satisfy the caller's allocation
  * request.
  *
  * If a zone is deemed to be full of pinned pages then just give it a light
  * scan then give up on it.
  */
-static void shrink_zones(struct zonelist *zonelist, struct scan_control *sc)
-{
-	struct zoneref *z;
-	struct zone *zone;
-	unsigned long nr_soft_reclaimed;
-	unsigned long nr_soft_scanned;
+अटल व्योम shrink_zones(काष्ठा zonelist *zonelist, काष्ठा scan_control *sc)
+अणु
+	काष्ठा zoneref *z;
+	काष्ठा zone *zone;
+	अचिन्हित दीर्घ nr_soft_reclaimed;
+	अचिन्हित दीर्घ nr_soft_scanned;
 	gfp_t orig_mask;
-	pg_data_t *last_pgdat = NULL;
+	pg_data_t *last_pgdat = शून्य;
 
 	/*
 	 * If the number of buffer_heads in the machine exceeds the maximum
-	 * allowed level, force direct reclaim to scan the highmem zone as
+	 * allowed level, क्रमce direct reclaim to scan the highmem zone as
 	 * highmem pages could be pinning lowmem pages storing buffer_heads
 	 */
 	orig_mask = sc->gfp_mask;
-	if (buffer_heads_over_limit) {
+	अगर (buffer_heads_over_limit) अणु
 		sc->gfp_mask |= __GFP_HIGHMEM;
 		sc->reclaim_idx = gfp_zone(sc->gfp_mask);
-	}
+	पूर्ण
 
-	for_each_zone_zonelist_nodemask(zone, z, zonelist,
-					sc->reclaim_idx, sc->nodemask) {
+	क्रम_each_zone_zonelist_nodemask(zone, z, zonelist,
+					sc->reclaim_idx, sc->nodemask) अणु
 		/*
 		 * Take care memory controller reclaiming has small influence
 		 * to global LRU.
 		 */
-		if (!cgroup_reclaim(sc)) {
-			if (!cpuset_zone_allowed(zone,
+		अगर (!cgroup_reclaim(sc)) अणु
+			अगर (!cpuset_zone_allowed(zone,
 						 GFP_KERNEL | __GFP_HARDWALL))
-				continue;
+				जारी;
 
 			/*
-			 * If we already have plenty of memory free for
-			 * compaction in this zone, don't free any more.
-			 * Even though compaction is invoked for any
+			 * If we alपढ़ोy have plenty of memory मुक्त क्रम
+			 * compaction in this zone, करोn't मुक्त any more.
+			 * Even though compaction is invoked क्रम any
 			 * non-zero order, only frequent costly order
 			 * reclamation is disruptive enough to become a
 			 * noticeable problem, like transparent huge
 			 * page allocations.
 			 */
-			if (IS_ENABLED(CONFIG_COMPACTION) &&
+			अगर (IS_ENABLED(CONFIG_COMPACTION) &&
 			    sc->order > PAGE_ALLOC_COSTLY_ORDER &&
-			    compaction_ready(zone, sc)) {
-				sc->compaction_ready = true;
-				continue;
-			}
+			    compaction_पढ़ोy(zone, sc)) अणु
+				sc->compaction_पढ़ोy = true;
+				जारी;
+			पूर्ण
 
 			/*
 			 * Shrink each node in the zonelist once. If the
-			 * zonelist is ordered by zone (not the default) then a
-			 * node may be shrunk multiple times but in that case
+			 * zonelist is ordered by zone (not the शेष) then a
+			 * node may be shrunk multiple बार but in that हाल
 			 * the user prefers lower zones being preserved.
 			 */
-			if (zone->zone_pgdat == last_pgdat)
-				continue;
+			अगर (zone->zone_pgdat == last_pgdat)
+				जारी;
 
 			/*
 			 * This steals pages from memory cgroups over softlimit
-			 * and returns the number of reclaimed pages and
-			 * scanned pages. This works for global memory pressure
-			 * and balancing, not for a memcg's limit.
+			 * and वापसs the number of reclaimed pages and
+			 * scanned pages. This works क्रम global memory pressure
+			 * and balancing, not क्रम a memcg's limit.
 			 */
 			nr_soft_scanned = 0;
 			nr_soft_reclaimed = mem_cgroup_soft_limit_reclaim(zone->zone_pgdat,
@@ -3160,332 +3161,332 @@ static void shrink_zones(struct zonelist *zonelist, struct scan_control *sc)
 						&nr_soft_scanned);
 			sc->nr_reclaimed += nr_soft_reclaimed;
 			sc->nr_scanned += nr_soft_scanned;
-			/* need some check for avoid more shrink_zone() */
-		}
+			/* need some check क्रम aव्योम more shrink_zone() */
+		पूर्ण
 
-		/* See comment about same check for global reclaim above */
-		if (zone->zone_pgdat == last_pgdat)
-			continue;
+		/* See comment about same check क्रम global reclaim above */
+		अगर (zone->zone_pgdat == last_pgdat)
+			जारी;
 		last_pgdat = zone->zone_pgdat;
 		shrink_node(zone->zone_pgdat, sc);
-	}
+	पूर्ण
 
 	/*
-	 * Restore to original mask to avoid the impact on the caller if we
+	 * Restore to original mask to aव्योम the impact on the caller अगर we
 	 * promoted it to __GFP_HIGHMEM.
 	 */
 	sc->gfp_mask = orig_mask;
-}
+पूर्ण
 
-static void snapshot_refaults(struct mem_cgroup *target_memcg, pg_data_t *pgdat)
-{
-	struct lruvec *target_lruvec;
-	unsigned long refaults;
+अटल व्योम snapshot_refaults(काष्ठा mem_cgroup *target_memcg, pg_data_t *pgdat)
+अणु
+	काष्ठा lruvec *target_lruvec;
+	अचिन्हित दीर्घ refaults;
 
 	target_lruvec = mem_cgroup_lruvec(target_memcg, pgdat);
 	refaults = lruvec_page_state(target_lruvec, WORKINGSET_ACTIVATE_ANON);
 	target_lruvec->refaults[0] = refaults;
-	refaults = lruvec_page_state(target_lruvec, WORKINGSET_ACTIVATE_FILE);
+	refaults = lruvec_page_state(target_lruvec, WORKINGSET_ACTIVATE_खाता);
 	target_lruvec->refaults[1] = refaults;
-}
+पूर्ण
 
 /*
- * This is the main entry point to direct page reclaim.
+ * This is the मुख्य entry poपूर्णांक to direct page reclaim.
  *
- * If a full scan of the inactive list fails to free enough memory then we
- * are "out of memory" and something needs to be killed.
+ * If a full scan of the inactive list fails to मुक्त enough memory then we
+ * are "out of memory" and something needs to be समाप्तed.
  *
  * If the caller is !__GFP_FS then the probability of a failure is reasonably
- * high - the zone may be full of dirty or under-writeback pages, which this
- * caller can't do much about.  We kick the writeback threads and take explicit
- * naps in the hope that some of these pages can be written.  But if the
- * allocating task holds filesystem locks which prevent writeout this might not
+ * high - the zone may be full of dirty or under-ग_लिखोback pages, which this
+ * caller can't करो much about.  We kick the ग_लिखोback thपढ़ोs and take explicit
+ * naps in the hope that some of these pages can be written.  But अगर the
+ * allocating task holds fileप्रणाली locks which prevent ग_लिखोout this might not
  * work, and the allocation attempt will fail.
  *
- * returns:	0, if no pages reclaimed
- * 		else, the number of pages reclaimed
+ * वापसs:	0, अगर no pages reclaimed
+ * 		अन्यथा, the number of pages reclaimed
  */
-static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
-					  struct scan_control *sc)
-{
-	int initial_priority = sc->priority;
+अटल अचिन्हित दीर्घ करो_try_to_मुक्त_pages(काष्ठा zonelist *zonelist,
+					  काष्ठा scan_control *sc)
+अणु
+	पूर्णांक initial_priority = sc->priority;
 	pg_data_t *last_pgdat;
-	struct zoneref *z;
-	struct zone *zone;
+	काष्ठा zoneref *z;
+	काष्ठा zone *zone;
 retry:
-	delayacct_freepages_start();
+	delayacct_मुक्तpages_start();
 
-	if (!cgroup_reclaim(sc))
+	अगर (!cgroup_reclaim(sc))
 		__count_zid_vm_events(ALLOCSTALL, sc->reclaim_idx, 1);
 
-	do {
+	करो अणु
 		vmpressure_prio(sc->gfp_mask, sc->target_mem_cgroup,
 				sc->priority);
 		sc->nr_scanned = 0;
 		shrink_zones(zonelist, sc);
 
-		if (sc->nr_reclaimed >= sc->nr_to_reclaim)
-			break;
+		अगर (sc->nr_reclaimed >= sc->nr_to_reclaim)
+			अवरोध;
 
-		if (sc->compaction_ready)
-			break;
+		अगर (sc->compaction_पढ़ोy)
+			अवरोध;
 
 		/*
-		 * If we're getting trouble reclaiming, start doing
-		 * writepage even in laptop mode.
+		 * If we're getting trouble reclaiming, start करोing
+		 * ग_लिखोpage even in laptop mode.
 		 */
-		if (sc->priority < DEF_PRIORITY - 2)
-			sc->may_writepage = 1;
-	} while (--sc->priority >= 0);
+		अगर (sc->priority < DEF_PRIORITY - 2)
+			sc->may_ग_लिखोpage = 1;
+	पूर्ण जबतक (--sc->priority >= 0);
 
-	last_pgdat = NULL;
-	for_each_zone_zonelist_nodemask(zone, z, zonelist, sc->reclaim_idx,
-					sc->nodemask) {
-		if (zone->zone_pgdat == last_pgdat)
-			continue;
+	last_pgdat = शून्य;
+	क्रम_each_zone_zonelist_nodemask(zone, z, zonelist, sc->reclaim_idx,
+					sc->nodemask) अणु
+		अगर (zone->zone_pgdat == last_pgdat)
+			जारी;
 		last_pgdat = zone->zone_pgdat;
 
 		snapshot_refaults(sc->target_mem_cgroup, zone->zone_pgdat);
 
-		if (cgroup_reclaim(sc)) {
-			struct lruvec *lruvec;
+		अगर (cgroup_reclaim(sc)) अणु
+			काष्ठा lruvec *lruvec;
 
 			lruvec = mem_cgroup_lruvec(sc->target_mem_cgroup,
 						   zone->zone_pgdat);
 			clear_bit(LRUVEC_CONGESTED, &lruvec->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	delayacct_freepages_end();
+	delayacct_मुक्तpages_end();
 
-	if (sc->nr_reclaimed)
-		return sc->nr_reclaimed;
+	अगर (sc->nr_reclaimed)
+		वापस sc->nr_reclaimed;
 
-	/* Aborted reclaim to try compaction? don't OOM, then */
-	if (sc->compaction_ready)
-		return 1;
+	/* Aborted reclaim to try compaction? करोn't OOM, then */
+	अगर (sc->compaction_पढ़ोy)
+		वापस 1;
 
 	/*
 	 * We make inactive:active ratio decisions based on the node's
 	 * composition of memory, but a restrictive reclaim_idx or a
 	 * memory.low cgroup setting can exempt large amounts of
 	 * memory from reclaim. Neither of which are very common, so
-	 * instead of doing costly eligibility calculations of the
+	 * instead of करोing costly eligibility calculations of the
 	 * entire cgroup subtree up front, we assume the estimates are
-	 * good, and retry with forcible deactivation if that fails.
+	 * good, and retry with क्रमcible deactivation अगर that fails.
 	 */
-	if (sc->skipped_deactivate) {
+	अगर (sc->skipped_deactivate) अणु
 		sc->priority = initial_priority;
-		sc->force_deactivate = 1;
+		sc->क्रमce_deactivate = 1;
 		sc->skipped_deactivate = 0;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
 	/* Untapped cgroup reserves?  Don't OOM, retry. */
-	if (sc->memcg_low_skipped) {
+	अगर (sc->memcg_low_skipped) अणु
 		sc->priority = initial_priority;
-		sc->force_deactivate = 0;
+		sc->क्रमce_deactivate = 0;
 		sc->memcg_low_reclaim = 1;
 		sc->memcg_low_skipped = 0;
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool allow_direct_reclaim(pg_data_t *pgdat)
-{
-	struct zone *zone;
-	unsigned long pfmemalloc_reserve = 0;
-	unsigned long free_pages = 0;
-	int i;
+अटल bool allow_direct_reclaim(pg_data_t *pgdat)
+अणु
+	काष्ठा zone *zone;
+	अचिन्हित दीर्घ pfmeदो_स्मृति_reserve = 0;
+	अचिन्हित दीर्घ मुक्त_pages = 0;
+	पूर्णांक i;
 	bool wmark_ok;
 
-	if (pgdat->kswapd_failures >= MAX_RECLAIM_RETRIES)
-		return true;
+	अगर (pgdat->kswapd_failures >= MAX_RECLAIM_RETRIES)
+		वापस true;
 
-	for (i = 0; i <= ZONE_NORMAL; i++) {
+	क्रम (i = 0; i <= ZONE_NORMAL; i++) अणु
 		zone = &pgdat->node_zones[i];
-		if (!managed_zone(zone))
-			continue;
+		अगर (!managed_zone(zone))
+			जारी;
 
-		if (!zone_reclaimable_pages(zone))
-			continue;
+		अगर (!zone_reclaimable_pages(zone))
+			जारी;
 
-		pfmemalloc_reserve += min_wmark_pages(zone);
-		free_pages += zone_page_state(zone, NR_FREE_PAGES);
-	}
+		pfmeदो_स्मृति_reserve += min_wmark_pages(zone);
+		मुक्त_pages += zone_page_state(zone, NR_FREE_PAGES);
+	पूर्ण
 
-	/* If there are no reserves (unexpected config) then do not throttle */
-	if (!pfmemalloc_reserve)
-		return true;
+	/* If there are no reserves (unexpected config) then करो not throttle */
+	अगर (!pfmeदो_स्मृति_reserve)
+		वापस true;
 
-	wmark_ok = free_pages > pfmemalloc_reserve / 2;
+	wmark_ok = मुक्त_pages > pfmeदो_स्मृति_reserve / 2;
 
-	/* kswapd must be awake if processes are being throttled */
-	if (!wmark_ok && waitqueue_active(&pgdat->kswapd_wait)) {
-		if (READ_ONCE(pgdat->kswapd_highest_zoneidx) > ZONE_NORMAL)
+	/* kswapd must be awake अगर processes are being throttled */
+	अगर (!wmark_ok && रुकोqueue_active(&pgdat->kswapd_रुको)) अणु
+		अगर (READ_ONCE(pgdat->kswapd_highest_zoneidx) > ZONE_NORMAL)
 			WRITE_ONCE(pgdat->kswapd_highest_zoneidx, ZONE_NORMAL);
 
-		wake_up_interruptible(&pgdat->kswapd_wait);
-	}
+		wake_up_पूर्णांकerruptible(&pgdat->kswapd_रुको);
+	पूर्ण
 
-	return wmark_ok;
-}
+	वापस wmark_ok;
+पूर्ण
 
 /*
- * Throttle direct reclaimers if backing storage is backed by the network
- * and the PFMEMALLOC reserve for the preferred node is getting dangerously
- * depleted. kswapd will continue to make progress and wake the processes
+ * Throttle direct reclaimers अगर backing storage is backed by the network
+ * and the PFMEMALLOC reserve क्रम the preferred node is getting dangerously
+ * depleted. kswapd will जारी to make progress and wake the processes
  * when the low watermark is reached.
  *
- * Returns true if a fatal signal was delivered during throttling. If this
- * happens, the page allocator should not consider triggering the OOM killer.
+ * Returns true अगर a fatal संकेत was delivered during throttling. If this
+ * happens, the page allocator should not consider triggering the OOM समाप्तer.
  */
-static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
+अटल bool throttle_direct_reclaim(gfp_t gfp_mask, काष्ठा zonelist *zonelist,
 					nodemask_t *nodemask)
-{
-	struct zoneref *z;
-	struct zone *zone;
-	pg_data_t *pgdat = NULL;
+अणु
+	काष्ठा zoneref *z;
+	काष्ठा zone *zone;
+	pg_data_t *pgdat = शून्य;
 
 	/*
-	 * Kernel threads should not be throttled as they may be indirectly
-	 * responsible for cleaning pages necessary for reclaim to make forward
-	 * progress. kjournald for example may enter direct reclaim while
-	 * committing a transaction where throttling it could forcing other
-	 * processes to block on log_wait_commit().
+	 * Kernel thपढ़ोs should not be throttled as they may be indirectly
+	 * responsible क्रम cleaning pages necessary क्रम reclaim to make क्रमward
+	 * progress. kjournald क्रम example may enter direct reclaim जबतक
+	 * committing a transaction where throttling it could क्रमcing other
+	 * processes to block on log_रुको_commit().
 	 */
-	if (current->flags & PF_KTHREAD)
-		goto out;
+	अगर (current->flags & PF_KTHREAD)
+		जाओ out;
 
 	/*
-	 * If a fatal signal is pending, this process should not throttle.
-	 * It should return quickly so it can exit and free its memory
+	 * If a fatal संकेत is pending, this process should not throttle.
+	 * It should वापस quickly so it can निकास and मुक्त its memory
 	 */
-	if (fatal_signal_pending(current))
-		goto out;
+	अगर (fatal_संकेत_pending(current))
+		जाओ out;
 
 	/*
-	 * Check if the pfmemalloc reserves are ok by finding the first node
+	 * Check अगर the pfmeदो_स्मृति reserves are ok by finding the first node
 	 * with a usable ZONE_NORMAL or lower zone. The expectation is that
-	 * GFP_KERNEL will be required for allocating network buffers when
+	 * GFP_KERNEL will be required क्रम allocating network buffers when
 	 * swapping over the network so ZONE_HIGHMEM is unusable.
 	 *
 	 * Throttling is based on the first usable node and throttled processes
-	 * wait on a queue until kswapd makes progress and wakes them. There
+	 * रुको on a queue until kswapd makes progress and wakes them. There
 	 * is an affinity then between processes waking up and where reclaim
 	 * progress has been made assuming the process wakes on the same node.
 	 * More importantly, processes running on remote nodes will not compete
-	 * for remote pfmemalloc reserves and processes on different nodes
+	 * क्रम remote pfmeदो_स्मृति reserves and processes on dअगरferent nodes
 	 * should make reasonable progress.
 	 */
-	for_each_zone_zonelist_nodemask(zone, z, zonelist,
-					gfp_zone(gfp_mask), nodemask) {
-		if (zone_idx(zone) > ZONE_NORMAL)
-			continue;
+	क्रम_each_zone_zonelist_nodemask(zone, z, zonelist,
+					gfp_zone(gfp_mask), nodemask) अणु
+		अगर (zone_idx(zone) > ZONE_NORMAL)
+			जारी;
 
 		/* Throttle based on the first usable node */
 		pgdat = zone->zone_pgdat;
-		if (allow_direct_reclaim(pgdat))
-			goto out;
-		break;
-	}
+		अगर (allow_direct_reclaim(pgdat))
+			जाओ out;
+		अवरोध;
+	पूर्ण
 
-	/* If no zone was usable by the allocation flags then do not throttle */
-	if (!pgdat)
-		goto out;
+	/* If no zone was usable by the allocation flags then करो not throttle */
+	अगर (!pgdat)
+		जाओ out;
 
-	/* Account for the throttling */
-	count_vm_event(PGSCAN_DIRECT_THROTTLE);
+	/* Account क्रम the throttling */
+	count_vm_event(PGSCAN_सूचीECT_THROTTLE);
 
 	/*
-	 * If the caller cannot enter the filesystem, it's possible that it
-	 * is due to the caller holding an FS lock or performing a journal
-	 * transaction in the case of a filesystem like ext[3|4]. In this case,
-	 * it is not safe to block on pfmemalloc_wait as kswapd could be
-	 * blocked waiting on the same lock. Instead, throttle for up to a
-	 * second before continuing.
+	 * If the caller cannot enter the fileप्रणाली, it's possible that it
+	 * is due to the caller holding an FS lock or perक्रमming a journal
+	 * transaction in the हाल of a fileप्रणाली like ext[3|4]. In this हाल,
+	 * it is not safe to block on pfmeदो_स्मृति_रुको as kswapd could be
+	 * blocked रुकोing on the same lock. Instead, throttle क्रम up to a
+	 * second beक्रमe continuing.
 	 */
-	if (!(gfp_mask & __GFP_FS)) {
-		wait_event_interruptible_timeout(pgdat->pfmemalloc_wait,
+	अगर (!(gfp_mask & __GFP_FS)) अणु
+		रुको_event_पूर्णांकerruptible_समयout(pgdat->pfmeदो_स्मृति_रुको,
 			allow_direct_reclaim(pgdat), HZ);
 
-		goto check_pending;
-	}
+		जाओ check_pending;
+	पूर्ण
 
 	/* Throttle until kswapd wakes the process */
-	wait_event_killable(zone->zone_pgdat->pfmemalloc_wait,
+	रुको_event_समाप्तable(zone->zone_pgdat->pfmeदो_स्मृति_रुको,
 		allow_direct_reclaim(pgdat));
 
 check_pending:
-	if (fatal_signal_pending(current))
-		return true;
+	अगर (fatal_संकेत_pending(current))
+		वापस true;
 
 out:
-	return false;
-}
+	वापस false;
+पूर्ण
 
-unsigned long try_to_free_pages(struct zonelist *zonelist, int order,
+अचिन्हित दीर्घ try_to_मुक्त_pages(काष्ठा zonelist *zonelist, पूर्णांक order,
 				gfp_t gfp_mask, nodemask_t *nodemask)
-{
-	unsigned long nr_reclaimed;
-	struct scan_control sc = {
+अणु
+	अचिन्हित दीर्घ nr_reclaimed;
+	काष्ठा scan_control sc = अणु
 		.nr_to_reclaim = SWAP_CLUSTER_MAX,
 		.gfp_mask = current_gfp_context(gfp_mask),
 		.reclaim_idx = gfp_zone(gfp_mask),
 		.order = order,
 		.nodemask = nodemask,
 		.priority = DEF_PRIORITY,
-		.may_writepage = !laptop_mode,
+		.may_ग_लिखोpage = !laptop_mode,
 		.may_unmap = 1,
 		.may_swap = 1,
-	};
+	पूर्ण;
 
 	/*
-	 * scan_control uses s8 fields for order, priority, and reclaim_idx.
-	 * Confirm they are large enough for max values.
+	 * scan_control uses s8 fields क्रम order, priority, and reclaim_idx.
+	 * Confirm they are large enough क्रम max values.
 	 */
 	BUILD_BUG_ON(MAX_ORDER > S8_MAX);
 	BUILD_BUG_ON(DEF_PRIORITY > S8_MAX);
 	BUILD_BUG_ON(MAX_NR_ZONES > S8_MAX);
 
 	/*
-	 * Do not enter reclaim if fatal signal was delivered while throttled.
-	 * 1 is returned so that the page allocator does not OOM kill at this
-	 * point.
+	 * Do not enter reclaim अगर fatal संकेत was delivered जबतक throttled.
+	 * 1 is वापसed so that the page allocator करोes not OOM समाप्त at this
+	 * poपूर्णांक.
 	 */
-	if (throttle_direct_reclaim(sc.gfp_mask, zonelist, nodemask))
-		return 1;
+	अगर (throttle_direct_reclaim(sc.gfp_mask, zonelist, nodemask))
+		वापस 1;
 
 	set_task_reclaim_state(current, &sc.reclaim_state);
 	trace_mm_vmscan_direct_reclaim_begin(order, sc.gfp_mask);
 
-	nr_reclaimed = do_try_to_free_pages(zonelist, &sc);
+	nr_reclaimed = करो_try_to_मुक्त_pages(zonelist, &sc);
 
 	trace_mm_vmscan_direct_reclaim_end(nr_reclaimed);
-	set_task_reclaim_state(current, NULL);
+	set_task_reclaim_state(current, शून्य);
 
-	return nr_reclaimed;
-}
+	वापस nr_reclaimed;
+पूर्ण
 
-#ifdef CONFIG_MEMCG
+#अगर_घोषित CONFIG_MEMCG
 
-/* Only used by soft limit reclaim. Do not reuse for anything else. */
-unsigned long mem_cgroup_shrink_node(struct mem_cgroup *memcg,
+/* Only used by soft limit reclaim. Do not reuse क्रम anything अन्यथा. */
+अचिन्हित दीर्घ mem_cgroup_shrink_node(काष्ठा mem_cgroup *memcg,
 						gfp_t gfp_mask, bool noswap,
 						pg_data_t *pgdat,
-						unsigned long *nr_scanned)
-{
-	struct lruvec *lruvec = mem_cgroup_lruvec(memcg, pgdat);
-	struct scan_control sc = {
+						अचिन्हित दीर्घ *nr_scanned)
+अणु
+	काष्ठा lruvec *lruvec = mem_cgroup_lruvec(memcg, pgdat);
+	काष्ठा scan_control sc = अणु
 		.nr_to_reclaim = SWAP_CLUSTER_MAX,
 		.target_mem_cgroup = memcg,
-		.may_writepage = !laptop_mode,
+		.may_ग_लिखोpage = !laptop_mode,
 		.may_unmap = 1,
 		.reclaim_idx = MAX_NR_ZONES - 1,
 		.may_swap = !noswap,
-	};
+	पूर्ण;
 
 	WARN_ON_ONCE(!current->reclaim_state);
 
@@ -3498,7 +3499,7 @@ unsigned long mem_cgroup_shrink_node(struct mem_cgroup *memcg,
 	/*
 	 * NOTE: Although we can get the priority field, using it
 	 * here is not a good idea, since it limits the pages we can scan.
-	 * if we don't reclaim here, the shrink_node from balance_pgdat
+	 * अगर we करोn't reclaim here, the shrink_node from balance_pgdat
 	 * will pick up pages from other mem cgroup's as well. We hack
 	 * the priority and make it zero.
 	 */
@@ -3508,200 +3509,200 @@ unsigned long mem_cgroup_shrink_node(struct mem_cgroup *memcg,
 
 	*nr_scanned = sc.nr_scanned;
 
-	return sc.nr_reclaimed;
-}
+	वापस sc.nr_reclaimed;
+पूर्ण
 
-unsigned long try_to_free_mem_cgroup_pages(struct mem_cgroup *memcg,
-					   unsigned long nr_pages,
+अचिन्हित दीर्घ try_to_मुक्त_mem_cgroup_pages(काष्ठा mem_cgroup *memcg,
+					   अचिन्हित दीर्घ nr_pages,
 					   gfp_t gfp_mask,
 					   bool may_swap)
-{
-	unsigned long nr_reclaimed;
-	unsigned int noreclaim_flag;
-	struct scan_control sc = {
+अणु
+	अचिन्हित दीर्घ nr_reclaimed;
+	अचिन्हित पूर्णांक noreclaim_flag;
+	काष्ठा scan_control sc = अणु
 		.nr_to_reclaim = max(nr_pages, SWAP_CLUSTER_MAX),
 		.gfp_mask = (current_gfp_context(gfp_mask) & GFP_RECLAIM_MASK) |
 				(GFP_HIGHUSER_MOVABLE & ~GFP_RECLAIM_MASK),
 		.reclaim_idx = MAX_NR_ZONES - 1,
 		.target_mem_cgroup = memcg,
 		.priority = DEF_PRIORITY,
-		.may_writepage = !laptop_mode,
+		.may_ग_लिखोpage = !laptop_mode,
 		.may_unmap = 1,
 		.may_swap = may_swap,
-	};
+	पूर्ण;
 	/*
 	 * Traverse the ZONELIST_FALLBACK zonelist of the current node to put
 	 * equal pressure on all the nodes. This is based on the assumption that
-	 * the reclaim does not bail out early.
+	 * the reclaim करोes not bail out early.
 	 */
-	struct zonelist *zonelist = node_zonelist(numa_node_id(), sc.gfp_mask);
+	काष्ठा zonelist *zonelist = node_zonelist(numa_node_id(), sc.gfp_mask);
 
 	set_task_reclaim_state(current, &sc.reclaim_state);
 	trace_mm_vmscan_memcg_reclaim_begin(0, sc.gfp_mask);
-	noreclaim_flag = memalloc_noreclaim_save();
+	noreclaim_flag = meदो_स्मृति_noreclaim_save();
 
-	nr_reclaimed = do_try_to_free_pages(zonelist, &sc);
+	nr_reclaimed = करो_try_to_मुक्त_pages(zonelist, &sc);
 
-	memalloc_noreclaim_restore(noreclaim_flag);
+	meदो_स्मृति_noreclaim_restore(noreclaim_flag);
 	trace_mm_vmscan_memcg_reclaim_end(nr_reclaimed);
-	set_task_reclaim_state(current, NULL);
+	set_task_reclaim_state(current, शून्य);
 
-	return nr_reclaimed;
-}
-#endif
+	वापस nr_reclaimed;
+पूर्ण
+#पूर्ण_अगर
 
-static void age_active_anon(struct pglist_data *pgdat,
-				struct scan_control *sc)
-{
-	struct mem_cgroup *memcg;
-	struct lruvec *lruvec;
+अटल व्योम age_active_anon(काष्ठा pglist_data *pgdat,
+				काष्ठा scan_control *sc)
+अणु
+	काष्ठा mem_cgroup *memcg;
+	काष्ठा lruvec *lruvec;
 
-	if (!total_swap_pages)
-		return;
+	अगर (!total_swap_pages)
+		वापस;
 
-	lruvec = mem_cgroup_lruvec(NULL, pgdat);
-	if (!inactive_is_low(lruvec, LRU_INACTIVE_ANON))
-		return;
+	lruvec = mem_cgroup_lruvec(शून्य, pgdat);
+	अगर (!inactive_is_low(lruvec, LRU_INACTIVE_ANON))
+		वापस;
 
-	memcg = mem_cgroup_iter(NULL, NULL, NULL);
-	do {
+	memcg = mem_cgroup_iter(शून्य, शून्य, शून्य);
+	करो अणु
 		lruvec = mem_cgroup_lruvec(memcg, pgdat);
 		shrink_active_list(SWAP_CLUSTER_MAX, lruvec,
 				   sc, LRU_ACTIVE_ANON);
-		memcg = mem_cgroup_iter(NULL, memcg, NULL);
-	} while (memcg);
-}
+		memcg = mem_cgroup_iter(शून्य, memcg, शून्य);
+	पूर्ण जबतक (memcg);
+पूर्ण
 
-static bool pgdat_watermark_boosted(pg_data_t *pgdat, int highest_zoneidx)
-{
-	int i;
-	struct zone *zone;
+अटल bool pgdat_watermark_boosted(pg_data_t *pgdat, पूर्णांक highest_zoneidx)
+अणु
+	पूर्णांक i;
+	काष्ठा zone *zone;
 
 	/*
-	 * Check for watermark boosts top-down as the higher zones
+	 * Check क्रम watermark boosts top-करोwn as the higher zones
 	 * are more likely to be boosted. Both watermarks and boosts
-	 * should not be checked at the same time as reclaim would
+	 * should not be checked at the same समय as reclaim would
 	 * start prematurely when there is no boosting and a lower
 	 * zone is balanced.
 	 */
-	for (i = highest_zoneidx; i >= 0; i--) {
+	क्रम (i = highest_zoneidx; i >= 0; i--) अणु
 		zone = pgdat->node_zones + i;
-		if (!managed_zone(zone))
-			continue;
+		अगर (!managed_zone(zone))
+			जारी;
 
-		if (zone->watermark_boost)
-			return true;
-	}
+		अगर (zone->watermark_boost)
+			वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
- * Returns true if there is an eligible zone balanced for the request order
+ * Returns true अगर there is an eligible zone balanced क्रम the request order
  * and highest_zoneidx
  */
-static bool pgdat_balanced(pg_data_t *pgdat, int order, int highest_zoneidx)
-{
-	int i;
-	unsigned long mark = -1;
-	struct zone *zone;
+अटल bool pgdat_balanced(pg_data_t *pgdat, पूर्णांक order, पूर्णांक highest_zoneidx)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ mark = -1;
+	काष्ठा zone *zone;
 
 	/*
 	 * Check watermarks bottom-up as lower zones are more likely to
 	 * meet watermarks.
 	 */
-	for (i = 0; i <= highest_zoneidx; i++) {
+	क्रम (i = 0; i <= highest_zoneidx; i++) अणु
 		zone = pgdat->node_zones + i;
 
-		if (!managed_zone(zone))
-			continue;
+		अगर (!managed_zone(zone))
+			जारी;
 
 		mark = high_wmark_pages(zone);
-		if (zone_watermark_ok_safe(zone, order, mark, highest_zoneidx))
-			return true;
-	}
+		अगर (zone_watermark_ok_safe(zone, order, mark, highest_zoneidx))
+			वापस true;
+	पूर्ण
 
 	/*
-	 * If a node has no populated zone within highest_zoneidx, it does not
-	 * need balancing by definition. This can happen if a zone-restricted
+	 * If a node has no populated zone within highest_zoneidx, it करोes not
+	 * need balancing by definition. This can happen अगर a zone-restricted
 	 * allocation tries to wake a remote kswapd.
 	 */
-	if (mark == -1)
-		return true;
+	अगर (mark == -1)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-/* Clear pgdat state for congested, dirty or under writeback. */
-static void clear_pgdat_congested(pg_data_t *pgdat)
-{
-	struct lruvec *lruvec = mem_cgroup_lruvec(NULL, pgdat);
+/* Clear pgdat state क्रम congested, dirty or under ग_लिखोback. */
+अटल व्योम clear_pgdat_congested(pg_data_t *pgdat)
+अणु
+	काष्ठा lruvec *lruvec = mem_cgroup_lruvec(शून्य, pgdat);
 
 	clear_bit(LRUVEC_CONGESTED, &lruvec->flags);
-	clear_bit(PGDAT_DIRTY, &pgdat->flags);
+	clear_bit(PGDAT_सूचीTY, &pgdat->flags);
 	clear_bit(PGDAT_WRITEBACK, &pgdat->flags);
-}
+पूर्ण
 
 /*
- * Prepare kswapd for sleeping. This verifies that there are no processes
- * waiting in throttle_direct_reclaim() and that watermarks have been met.
+ * Prepare kswapd क्रम sleeping. This verअगरies that there are no processes
+ * रुकोing in throttle_direct_reclaim() and that watermarks have been met.
  *
- * Returns true if kswapd is ready to sleep
+ * Returns true अगर kswapd is पढ़ोy to sleep
  */
-static bool prepare_kswapd_sleep(pg_data_t *pgdat, int order,
-				int highest_zoneidx)
-{
+अटल bool prepare_kswapd_sleep(pg_data_t *pgdat, पूर्णांक order,
+				पूर्णांक highest_zoneidx)
+अणु
 	/*
 	 * The throttled processes are normally woken up in balance_pgdat() as
 	 * soon as allow_direct_reclaim() is true. But there is a potential
-	 * race between when kswapd checks the watermarks and a process gets
-	 * throttled. There is also a potential race if processes get
-	 * throttled, kswapd wakes, a large process exits thereby balancing the
-	 * zones, which causes kswapd to exit balance_pgdat() before reaching
+	 * race between when kswapd checks the watermarks and a process माला_लो
+	 * throttled. There is also a potential race अगर processes get
+	 * throttled, kswapd wakes, a large process निकासs thereby balancing the
+	 * zones, which causes kswapd to निकास balance_pgdat() beक्रमe reaching
 	 * the wake up checks. If kswapd is going to sleep, no process should
-	 * be sleeping on pfmemalloc_wait, so wake them now if necessary. If
+	 * be sleeping on pfmeदो_स्मृति_रुको, so wake them now अगर necessary. If
 	 * the wake up is premature, processes will wake kswapd and get
-	 * throttled again. The difference from wake ups in balance_pgdat() is
-	 * that here we are under prepare_to_wait().
+	 * throttled again. The dअगरference from wake ups in balance_pgdat() is
+	 * that here we are under prepare_to_रुको().
 	 */
-	if (waitqueue_active(&pgdat->pfmemalloc_wait))
-		wake_up_all(&pgdat->pfmemalloc_wait);
+	अगर (रुकोqueue_active(&pgdat->pfmeदो_स्मृति_रुको))
+		wake_up_all(&pgdat->pfmeदो_स्मृति_रुको);
 
 	/* Hopeless node, leave it to direct reclaim */
-	if (pgdat->kswapd_failures >= MAX_RECLAIM_RETRIES)
-		return true;
+	अगर (pgdat->kswapd_failures >= MAX_RECLAIM_RETRIES)
+		वापस true;
 
-	if (pgdat_balanced(pgdat, order, highest_zoneidx)) {
+	अगर (pgdat_balanced(pgdat, order, highest_zoneidx)) अणु
 		clear_pgdat_congested(pgdat);
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
 /*
  * kswapd shrinks a node of pages that are at or below the highest usable
  * zone that is currently unbalanced.
  *
- * Returns true if kswapd scanned at least the requested number of pages to
- * reclaim or if the lack of progress was due to pages under writeback.
- * This is used to determine if the scanning priority needs to be raised.
+ * Returns true अगर kswapd scanned at least the requested number of pages to
+ * reclaim or अगर the lack of progress was due to pages under ग_लिखोback.
+ * This is used to determine अगर the scanning priority needs to be उठाओd.
  */
-static bool kswapd_shrink_node(pg_data_t *pgdat,
-			       struct scan_control *sc)
-{
-	struct zone *zone;
-	int z;
+अटल bool kswapd_shrink_node(pg_data_t *pgdat,
+			       काष्ठा scan_control *sc)
+अणु
+	काष्ठा zone *zone;
+	पूर्णांक z;
 
 	/* Reclaim a number of pages proportional to the number of zones */
 	sc->nr_to_reclaim = 0;
-	for (z = 0; z <= sc->reclaim_idx; z++) {
+	क्रम (z = 0; z <= sc->reclaim_idx; z++) अणु
 		zone = pgdat->node_zones + z;
-		if (!managed_zone(zone))
-			continue;
+		अगर (!managed_zone(zone))
+			जारी;
 
 		sc->nr_to_reclaim += max(high_wmark_pages(zone), SWAP_CLUSTER_MAX);
-	}
+	पूर्ण
 
 	/*
 	 * Historically care was taken to put equal pressure on all zones but
@@ -3710,46 +3711,46 @@ static bool kswapd_shrink_node(pg_data_t *pgdat,
 	shrink_node(pgdat, sc);
 
 	/*
-	 * Fragmentation may mean that the system cannot be rebalanced for
+	 * Fragmentation may mean that the प्रणाली cannot be rebalanced क्रम
 	 * high-order allocations. If twice the allocation size has been
 	 * reclaimed then recheck watermarks only at order-0 to prevent
 	 * excessive reclaim. Assume that a process requested a high-order
 	 * can direct reclaim/compact.
 	 */
-	if (sc->order && sc->nr_reclaimed >= compact_gap(sc->order))
+	अगर (sc->order && sc->nr_reclaimed >= compact_gap(sc->order))
 		sc->order = 0;
 
-	return sc->nr_scanned >= sc->nr_to_reclaim;
-}
+	वापस sc->nr_scanned >= sc->nr_to_reclaim;
+पूर्ण
 
 /*
  * For kswapd, balance_pgdat() will reclaim pages across a node from zones
- * that are eligible for use by the caller until at least one zone is
+ * that are eligible क्रम use by the caller until at least one zone is
  * balanced.
  *
  * Returns the order kswapd finished reclaiming at.
  *
  * kswapd scans the zones in the highmem->normal->dma direction.  It skips
- * zones which have free_pages > high_wmark_pages(zone), but once a zone is
- * found to have free_pages <= high_wmark_pages(zone), any page in that zone
- * or lower is eligible for reclaim until at least one usable zone is
+ * zones which have मुक्त_pages > high_wmark_pages(zone), but once a zone is
+ * found to have मुक्त_pages <= high_wmark_pages(zone), any page in that zone
+ * or lower is eligible क्रम reclaim until at least one usable zone is
  * balanced.
  */
-static int balance_pgdat(pg_data_t *pgdat, int order, int highest_zoneidx)
-{
-	int i;
-	unsigned long nr_soft_reclaimed;
-	unsigned long nr_soft_scanned;
-	unsigned long pflags;
-	unsigned long nr_boost_reclaim;
-	unsigned long zone_boosts[MAX_NR_ZONES] = { 0, };
+अटल पूर्णांक balance_pgdat(pg_data_t *pgdat, पूर्णांक order, पूर्णांक highest_zoneidx)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ nr_soft_reclaimed;
+	अचिन्हित दीर्घ nr_soft_scanned;
+	अचिन्हित दीर्घ pflags;
+	अचिन्हित दीर्घ nr_boost_reclaim;
+	अचिन्हित दीर्घ zone_boosts[MAX_NR_ZONES] = अणु 0, पूर्ण;
 	bool boosted;
-	struct zone *zone;
-	struct scan_control sc = {
+	काष्ठा zone *zone;
+	काष्ठा scan_control sc = अणु
 		.gfp_mask = GFP_KERNEL,
 		.order = order,
 		.may_unmap = 1,
-	};
+	पूर्ण;
 
 	set_task_reclaim_state(current, &sc.reclaim_state);
 	psi_memstall_enter(&pflags);
@@ -3758,26 +3759,26 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int highest_zoneidx)
 	count_vm_event(PAGEOUTRUN);
 
 	/*
-	 * Account for the reclaim boost. Note that the zone boost is left in
+	 * Account क्रम the reclaim boost. Note that the zone boost is left in
 	 * place so that parallel allocations that are near the watermark will
 	 * stall or direct reclaim until kswapd is finished.
 	 */
 	nr_boost_reclaim = 0;
-	for (i = 0; i <= highest_zoneidx; i++) {
+	क्रम (i = 0; i <= highest_zoneidx; i++) अणु
 		zone = pgdat->node_zones + i;
-		if (!managed_zone(zone))
-			continue;
+		अगर (!managed_zone(zone))
+			जारी;
 
 		nr_boost_reclaim += zone->watermark_boost;
 		zone_boosts[i] = zone->watermark_boost;
-	}
+	पूर्ण
 	boosted = nr_boost_reclaim;
 
 restart:
 	sc.priority = DEF_PRIORITY;
-	do {
-		unsigned long nr_reclaimed = sc.nr_reclaimed;
-		bool raise_priority = true;
+	करो अणु
+		अचिन्हित दीर्घ nr_reclaimed = sc.nr_reclaimed;
+		bool उठाओ_priority = true;
 		bool balanced;
 		bool ret;
 
@@ -3786,74 +3787,74 @@ restart:
 		/*
 		 * If the number of buffer_heads exceeds the maximum allowed
 		 * then consider reclaiming from all zones. This has a dual
-		 * purpose -- on 64-bit systems it is expected that
+		 * purpose -- on 64-bit प्रणालीs it is expected that
 		 * buffer_heads are stripped during active rotation. On 32-bit
-		 * systems, highmem pages can pin lowmem memory and shrinking
+		 * प्रणालीs, highmem pages can pin lowmem memory and shrinking
 		 * buffers can relieve lowmem pressure. Reclaim may still not
-		 * go ahead if all eligible zones for the original allocation
-		 * request are balanced to avoid excessive reclaim from kswapd.
+		 * go ahead अगर all eligible zones क्रम the original allocation
+		 * request are balanced to aव्योम excessive reclaim from kswapd.
 		 */
-		if (buffer_heads_over_limit) {
-			for (i = MAX_NR_ZONES - 1; i >= 0; i--) {
+		अगर (buffer_heads_over_limit) अणु
+			क्रम (i = MAX_NR_ZONES - 1; i >= 0; i--) अणु
 				zone = pgdat->node_zones + i;
-				if (!managed_zone(zone))
-					continue;
+				अगर (!managed_zone(zone))
+					जारी;
 
 				sc.reclaim_idx = i;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		/*
 		 * If the pgdat is imbalanced then ignore boosting and preserve
-		 * the watermarks for a later time and restart. Note that the
+		 * the watermarks क्रम a later समय and restart. Note that the
 		 * zone watermarks will be still reset at the end of balancing
 		 * on the grounds that the normal reclaim should be enough to
-		 * re-evaluate if boosting is required when kswapd next wakes.
+		 * re-evaluate अगर boosting is required when kswapd next wakes.
 		 */
 		balanced = pgdat_balanced(pgdat, sc.order, highest_zoneidx);
-		if (!balanced && nr_boost_reclaim) {
+		अगर (!balanced && nr_boost_reclaim) अणु
 			nr_boost_reclaim = 0;
-			goto restart;
-		}
+			जाओ restart;
+		पूर्ण
 
 		/*
-		 * If boosting is not active then only reclaim if there are no
+		 * If boosting is not active then only reclaim अगर there are no
 		 * eligible zones. Note that sc.reclaim_idx is not used as
 		 * buffer_heads_over_limit may have adjusted it.
 		 */
-		if (!nr_boost_reclaim && balanced)
-			goto out;
+		अगर (!nr_boost_reclaim && balanced)
+			जाओ out;
 
-		/* Limit the priority of boosting to avoid reclaim writeback */
-		if (nr_boost_reclaim && sc.priority == DEF_PRIORITY - 2)
-			raise_priority = false;
+		/* Limit the priority of boosting to aव्योम reclaim ग_लिखोback */
+		अगर (nr_boost_reclaim && sc.priority == DEF_PRIORITY - 2)
+			उठाओ_priority = false;
 
 		/*
-		 * Do not writeback or swap pages for boosted reclaim. The
-		 * intent is to relieve pressure not issue sub-optimal IO
+		 * Do not ग_लिखोback or swap pages क्रम boosted reclaim. The
+		 * पूर्णांकent is to relieve pressure not issue sub-optimal IO
 		 * from reclaim context. If no pages are reclaimed, the
-		 * reclaim will be aborted.
+		 * reclaim will be पातed.
 		 */
-		sc.may_writepage = !laptop_mode && !nr_boost_reclaim;
+		sc.may_ग_लिखोpage = !laptop_mode && !nr_boost_reclaim;
 		sc.may_swap = !nr_boost_reclaim;
 
 		/*
 		 * Do some background aging of the anon list, to give
-		 * pages a chance to be referenced before reclaiming. All
+		 * pages a chance to be referenced beक्रमe reclaiming. All
 		 * pages are rotated regardless of classzone as this is
 		 * about consistent aging.
 		 */
 		age_active_anon(pgdat, &sc);
 
 		/*
-		 * If we're getting trouble reclaiming, start doing writepage
+		 * If we're getting trouble reclaiming, start करोing ग_लिखोpage
 		 * even in laptop mode.
 		 */
-		if (sc.priority < DEF_PRIORITY - 2)
-			sc.may_writepage = 1;
+		अगर (sc.priority < DEF_PRIORITY - 2)
+			sc.may_ग_लिखोpage = 1;
 
-		/* Call soft limit reclaim before calling shrink_node. */
+		/* Call soft limit reclaim beक्रमe calling shrink_node. */
 		sc.nr_scanned = 0;
 		nr_soft_scanned = 0;
 		nr_soft_reclaimed = mem_cgroup_soft_limit_reclaim(pgdat, sc.order,
@@ -3861,122 +3862,122 @@ restart:
 		sc.nr_reclaimed += nr_soft_reclaimed;
 
 		/*
-		 * There should be no need to raise the scanning priority if
-		 * enough pages are already being scanned that that high
+		 * There should be no need to उठाओ the scanning priority अगर
+		 * enough pages are alपढ़ोy being scanned that that high
 		 * watermark would be met at 100% efficiency.
 		 */
-		if (kswapd_shrink_node(pgdat, &sc))
-			raise_priority = false;
+		अगर (kswapd_shrink_node(pgdat, &sc))
+			उठाओ_priority = false;
 
 		/*
-		 * If the low watermark is met there is no need for processes
-		 * to be throttled on pfmemalloc_wait as they should not be
-		 * able to safely make forward progress. Wake them
+		 * If the low watermark is met there is no need क्रम processes
+		 * to be throttled on pfmeदो_स्मृति_रुको as they should not be
+		 * able to safely make क्रमward progress. Wake them
 		 */
-		if (waitqueue_active(&pgdat->pfmemalloc_wait) &&
+		अगर (रुकोqueue_active(&pgdat->pfmeदो_स्मृति_रुको) &&
 				allow_direct_reclaim(pgdat))
-			wake_up_all(&pgdat->pfmemalloc_wait);
+			wake_up_all(&pgdat->pfmeदो_स्मृति_रुको);
 
-		/* Check if kswapd should be suspending */
+		/* Check अगर kswapd should be suspending */
 		__fs_reclaim_release();
-		ret = try_to_freeze();
+		ret = try_to_मुक्तze();
 		__fs_reclaim_acquire();
-		if (ret || kthread_should_stop())
-			break;
+		अगर (ret || kthपढ़ो_should_stop())
+			अवरोध;
 
 		/*
-		 * Raise priority if scanning rate is too low or there was no
+		 * Raise priority अगर scanning rate is too low or there was no
 		 * progress in reclaiming pages
 		 */
 		nr_reclaimed = sc.nr_reclaimed - nr_reclaimed;
 		nr_boost_reclaim -= min(nr_boost_reclaim, nr_reclaimed);
 
 		/*
-		 * If reclaim made no progress for a boost, stop reclaim as
+		 * If reclaim made no progress क्रम a boost, stop reclaim as
 		 * IO cannot be queued and it could be an infinite loop in
 		 * extreme circumstances.
 		 */
-		if (nr_boost_reclaim && !nr_reclaimed)
-			break;
+		अगर (nr_boost_reclaim && !nr_reclaimed)
+			अवरोध;
 
-		if (raise_priority || !nr_reclaimed)
+		अगर (उठाओ_priority || !nr_reclaimed)
 			sc.priority--;
-	} while (sc.priority >= 1);
+	पूर्ण जबतक (sc.priority >= 1);
 
-	if (!sc.nr_reclaimed)
+	अगर (!sc.nr_reclaimed)
 		pgdat->kswapd_failures++;
 
 out:
-	/* If reclaim was boosted, account for the reclaim done in this pass */
-	if (boosted) {
-		unsigned long flags;
+	/* If reclaim was boosted, account क्रम the reclaim करोne in this pass */
+	अगर (boosted) अणु
+		अचिन्हित दीर्घ flags;
 
-		for (i = 0; i <= highest_zoneidx; i++) {
-			if (!zone_boosts[i])
-				continue;
+		क्रम (i = 0; i <= highest_zoneidx; i++) अणु
+			अगर (!zone_boosts[i])
+				जारी;
 
 			/* Increments are under the zone lock */
 			zone = pgdat->node_zones + i;
 			spin_lock_irqsave(&zone->lock, flags);
 			zone->watermark_boost -= min(zone->watermark_boost, zone_boosts[i]);
 			spin_unlock_irqrestore(&zone->lock, flags);
-		}
+		पूर्ण
 
 		/*
 		 * As there is now likely space, wakeup kcompact to defragment
 		 * pageblocks.
 		 */
 		wakeup_kcompactd(pgdat, pageblock_order, highest_zoneidx);
-	}
+	पूर्ण
 
-	snapshot_refaults(NULL, pgdat);
+	snapshot_refaults(शून्य, pgdat);
 	__fs_reclaim_release();
 	psi_memstall_leave(&pflags);
-	set_task_reclaim_state(current, NULL);
+	set_task_reclaim_state(current, शून्य);
 
 	/*
 	 * Return the order kswapd stopped reclaiming at as
-	 * prepare_kswapd_sleep() takes it into account. If another caller
-	 * entered the allocator slow path while kswapd was awake, order will
-	 * remain at the higher level.
+	 * prepare_kswapd_sleep() takes it पूर्णांकo account. If another caller
+	 * entered the allocator slow path जबतक kswapd was awake, order will
+	 * reमुख्य at the higher level.
 	 */
-	return sc.order;
-}
+	वापस sc.order;
+पूर्ण
 
 /*
  * The pgdat->kswapd_highest_zoneidx is used to pass the highest zone index to
  * be reclaimed by kswapd from the waker. If the value is MAX_NR_ZONES which is
- * not a valid index then either kswapd runs for first time or kswapd couldn't
+ * not a valid index then either kswapd runs क्रम first समय or kswapd couldn't
  * sleep after previous reclaim attempt (node is still unbalanced). In that
- * case return the zone index of the previous kswapd reclaim cycle.
+ * हाल वापस the zone index of the previous kswapd reclaim cycle.
  */
-static enum zone_type kswapd_highest_zoneidx(pg_data_t *pgdat,
-					   enum zone_type prev_highest_zoneidx)
-{
-	enum zone_type curr_idx = READ_ONCE(pgdat->kswapd_highest_zoneidx);
+अटल क्रमागत zone_type kswapd_highest_zoneidx(pg_data_t *pgdat,
+					   क्रमागत zone_type prev_highest_zoneidx)
+अणु
+	क्रमागत zone_type curr_idx = READ_ONCE(pgdat->kswapd_highest_zoneidx);
 
-	return curr_idx == MAX_NR_ZONES ? prev_highest_zoneidx : curr_idx;
-}
+	वापस curr_idx == MAX_NR_ZONES ? prev_highest_zoneidx : curr_idx;
+पूर्ण
 
-static void kswapd_try_to_sleep(pg_data_t *pgdat, int alloc_order, int reclaim_order,
-				unsigned int highest_zoneidx)
-{
-	long remaining = 0;
-	DEFINE_WAIT(wait);
+अटल व्योम kswapd_try_to_sleep(pg_data_t *pgdat, पूर्णांक alloc_order, पूर्णांक reclaim_order,
+				अचिन्हित पूर्णांक highest_zoneidx)
+अणु
+	दीर्घ reमुख्यing = 0;
+	DEFINE_WAIT(रुको);
 
-	if (freezing(current) || kthread_should_stop())
-		return;
+	अगर (मुक्तzing(current) || kthपढ़ो_should_stop())
+		वापस;
 
-	prepare_to_wait(&pgdat->kswapd_wait, &wait, TASK_INTERRUPTIBLE);
+	prepare_to_रुको(&pgdat->kswapd_रुको, &रुको, TASK_INTERRUPTIBLE);
 
 	/*
-	 * Try to sleep for a short interval. Note that kcompactd will only be
-	 * woken if it is possible to sleep for a short interval. This is
-	 * deliberate on the assumption that if reclaim cannot keep an
+	 * Try to sleep क्रम a लघु पूर्णांकerval. Note that kcompactd will only be
+	 * woken अगर it is possible to sleep क्रम a लघु पूर्णांकerval. This is
+	 * deliberate on the assumption that अगर reclaim cannot keep an
 	 * eligible zone balanced that it's also unlikely that compaction will
 	 * succeed.
 	 */
-	if (prepare_kswapd_sleep(pgdat, reclaim_order, highest_zoneidx)) {
+	अगर (prepare_kswapd_sleep(pgdat, reclaim_order, highest_zoneidx)) अणु
 		/*
 		 * Compaction records what page blocks it recently failed to
 		 * isolate pages from and skips them in the future scanning.
@@ -3986,104 +3987,104 @@ static void kswapd_try_to_sleep(pg_data_t *pgdat, int alloc_order, int reclaim_o
 		reset_isolation_suitable(pgdat);
 
 		/*
-		 * We have freed the memory, now we should compact it to make
+		 * We have मुक्तd the memory, now we should compact it to make
 		 * allocation of the requested order possible.
 		 */
 		wakeup_kcompactd(pgdat, alloc_order, highest_zoneidx);
 
-		remaining = schedule_timeout(HZ/10);
+		reमुख्यing = schedule_समयout(HZ/10);
 
 		/*
 		 * If woken prematurely then reset kswapd_highest_zoneidx and
 		 * order. The values will either be from a wakeup request or
 		 * the previous request that slept prematurely.
 		 */
-		if (remaining) {
+		अगर (reमुख्यing) अणु
 			WRITE_ONCE(pgdat->kswapd_highest_zoneidx,
 					kswapd_highest_zoneidx(pgdat,
 							highest_zoneidx));
 
-			if (READ_ONCE(pgdat->kswapd_order) < reclaim_order)
+			अगर (READ_ONCE(pgdat->kswapd_order) < reclaim_order)
 				WRITE_ONCE(pgdat->kswapd_order, reclaim_order);
-		}
+		पूर्ण
 
-		finish_wait(&pgdat->kswapd_wait, &wait);
-		prepare_to_wait(&pgdat->kswapd_wait, &wait, TASK_INTERRUPTIBLE);
-	}
+		finish_रुको(&pgdat->kswapd_रुको, &रुको);
+		prepare_to_रुको(&pgdat->kswapd_रुको, &रुको, TASK_INTERRUPTIBLE);
+	पूर्ण
 
 	/*
-	 * After a short sleep, check if it was a premature sleep. If not, then
+	 * After a लघु sleep, check अगर it was a premature sleep. If not, then
 	 * go fully to sleep until explicitly woken up.
 	 */
-	if (!remaining &&
-	    prepare_kswapd_sleep(pgdat, reclaim_order, highest_zoneidx)) {
+	अगर (!reमुख्यing &&
+	    prepare_kswapd_sleep(pgdat, reclaim_order, highest_zoneidx)) अणु
 		trace_mm_vmscan_kswapd_sleep(pgdat->node_id);
 
 		/*
 		 * vmstat counters are not perfectly accurate and the estimated
-		 * value for counters such as NR_FREE_PAGES can deviate from the
-		 * true value by nr_online_cpus * threshold. To avoid the zone
-		 * watermarks being breached while under pressure, we reduce the
-		 * per-cpu vmstat threshold while kswapd is awake and restore
-		 * them before going back to sleep.
+		 * value क्रम counters such as NR_FREE_PAGES can deviate from the
+		 * true value by nr_online_cpus * threshold. To aव्योम the zone
+		 * watermarks being breached जबतक under pressure, we reduce the
+		 * per-cpu vmstat threshold जबतक kswapd is awake and restore
+		 * them beक्रमe going back to sleep.
 		 */
 		set_pgdat_percpu_threshold(pgdat, calculate_normal_threshold);
 
-		if (!kthread_should_stop())
+		अगर (!kthपढ़ो_should_stop())
 			schedule();
 
 		set_pgdat_percpu_threshold(pgdat, calculate_pressure_threshold);
-	} else {
-		if (remaining)
+	पूर्ण अन्यथा अणु
+		अगर (reमुख्यing)
 			count_vm_event(KSWAPD_LOW_WMARK_HIT_QUICKLY);
-		else
+		अन्यथा
 			count_vm_event(KSWAPD_HIGH_WMARK_HIT_QUICKLY);
-	}
-	finish_wait(&pgdat->kswapd_wait, &wait);
-}
+	पूर्ण
+	finish_रुको(&pgdat->kswapd_रुको, &रुको);
+पूर्ण
 
 /*
- * The background pageout daemon, started as a kernel thread
+ * The background pageout daemon, started as a kernel thपढ़ो
  * from the init process.
  *
  * This basically trickles out pages so that we have _some_
- * free memory available even if there is no other activity
- * that frees anything up. This is needed for things like routing
+ * मुक्त memory available even अगर there is no other activity
+ * that मुक्तs anything up. This is needed क्रम things like routing
  * etc, where we otherwise might have all activity going on in
  * asynchronous contexts that cannot page things out.
  *
  * If there are applications that are active memory-allocators
  * (most normal use), this basically shouldn't matter.
  */
-static int kswapd(void *p)
-{
-	unsigned int alloc_order, reclaim_order;
-	unsigned int highest_zoneidx = MAX_NR_ZONES - 1;
+अटल पूर्णांक kswapd(व्योम *p)
+अणु
+	अचिन्हित पूर्णांक alloc_order, reclaim_order;
+	अचिन्हित पूर्णांक highest_zoneidx = MAX_NR_ZONES - 1;
 	pg_data_t *pgdat = (pg_data_t *)p;
-	struct task_struct *tsk = current;
-	const struct cpumask *cpumask = cpumask_of_node(pgdat->node_id);
+	काष्ठा task_काष्ठा *tsk = current;
+	स्थिर काष्ठा cpumask *cpumask = cpumask_of_node(pgdat->node_id);
 
-	if (!cpumask_empty(cpumask))
+	अगर (!cpumask_empty(cpumask))
 		set_cpus_allowed_ptr(tsk, cpumask);
 
 	/*
 	 * Tell the memory management that we're a "memory allocator",
-	 * and that if we need more memory we should get access to it
+	 * and that अगर we need more memory we should get access to it
 	 * regardless (see "__alloc_pages()"). "kswapd" should
-	 * never get caught in the normal page freeing logic.
+	 * never get caught in the normal page मुक्तing logic.
 	 *
-	 * (Kswapd normally doesn't need memory anyway, but sometimes
+	 * (Kswapd normally करोesn't need memory anyway, but someबार
 	 * you need a small amount of memory in order to be able to
-	 * page out something else, and this flag essentially protects
-	 * us from recursively trying to free more memory as we're
-	 * trying to free the first piece of memory in the first place).
+	 * page out something अन्यथा, and this flag essentially protects
+	 * us from recursively trying to मुक्त more memory as we're
+	 * trying to मुक्त the first piece of memory in the first place).
 	 */
 	tsk->flags |= PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD;
-	set_freezable();
+	set_मुक्तzable();
 
 	WRITE_ONCE(pgdat->kswapd_order, 0);
 	WRITE_ONCE(pgdat->kswapd_highest_zoneidx, MAX_NR_ZONES);
-	for ( ; ; ) {
+	क्रम ( ; ; ) अणु
 		bool ret;
 
 		alloc_order = reclaim_order = READ_ONCE(pgdat->kswapd_order);
@@ -4101,225 +4102,225 @@ kswapd_try_sleep:
 		WRITE_ONCE(pgdat->kswapd_order, 0);
 		WRITE_ONCE(pgdat->kswapd_highest_zoneidx, MAX_NR_ZONES);
 
-		ret = try_to_freeze();
-		if (kthread_should_stop())
-			break;
+		ret = try_to_मुक्तze();
+		अगर (kthपढ़ो_should_stop())
+			अवरोध;
 
 		/*
-		 * We can speed up thawing tasks if we don't call balance_pgdat
-		 * after returning from the refrigerator
+		 * We can speed up thawing tasks अगर we करोn't call balance_pgdat
+		 * after वापसing from the refrigerator
 		 */
-		if (ret)
-			continue;
+		अगर (ret)
+			जारी;
 
 		/*
-		 * Reclaim begins at the requested order but if a high-order
-		 * reclaim fails then kswapd falls back to reclaiming for
+		 * Reclaim begins at the requested order but अगर a high-order
+		 * reclaim fails then kswapd falls back to reclaiming क्रम
 		 * order-0. If that happens, kswapd will consider sleeping
-		 * for the order it finished reclaiming at (reclaim_order)
-		 * but kcompactd is woken to compact for the original
+		 * क्रम the order it finished reclaiming at (reclaim_order)
+		 * but kcompactd is woken to compact क्रम the original
 		 * request (alloc_order).
 		 */
 		trace_mm_vmscan_kswapd_wake(pgdat->node_id, highest_zoneidx,
 						alloc_order);
 		reclaim_order = balance_pgdat(pgdat, alloc_order,
 						highest_zoneidx);
-		if (reclaim_order < alloc_order)
-			goto kswapd_try_sleep;
-	}
+		अगर (reclaim_order < alloc_order)
+			जाओ kswapd_try_sleep;
+	पूर्ण
 
 	tsk->flags &= ~(PF_MEMALLOC | PF_SWAPWRITE | PF_KSWAPD);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * A zone is low on free memory or too fragmented for high-order memory.  If
- * kswapd should reclaim (direct reclaim is deferred), wake it up for the zone's
+ * A zone is low on मुक्त memory or too fragmented क्रम high-order memory.  If
+ * kswapd should reclaim (direct reclaim is deferred), wake it up क्रम the zone's
  * pgdat.  It will wake up kcompactd after reclaiming memory.  If kswapd reclaim
- * has failed or is not needed, still wake up kcompactd if only compaction is
+ * has failed or is not needed, still wake up kcompactd अगर only compaction is
  * needed.
  */
-void wakeup_kswapd(struct zone *zone, gfp_t gfp_flags, int order,
-		   enum zone_type highest_zoneidx)
-{
+व्योम wakeup_kswapd(काष्ठा zone *zone, gfp_t gfp_flags, पूर्णांक order,
+		   क्रमागत zone_type highest_zoneidx)
+अणु
 	pg_data_t *pgdat;
-	enum zone_type curr_idx;
+	क्रमागत zone_type curr_idx;
 
-	if (!managed_zone(zone))
-		return;
+	अगर (!managed_zone(zone))
+		वापस;
 
-	if (!cpuset_zone_allowed(zone, gfp_flags))
-		return;
+	अगर (!cpuset_zone_allowed(zone, gfp_flags))
+		वापस;
 
 	pgdat = zone->zone_pgdat;
 	curr_idx = READ_ONCE(pgdat->kswapd_highest_zoneidx);
 
-	if (curr_idx == MAX_NR_ZONES || curr_idx < highest_zoneidx)
+	अगर (curr_idx == MAX_NR_ZONES || curr_idx < highest_zoneidx)
 		WRITE_ONCE(pgdat->kswapd_highest_zoneidx, highest_zoneidx);
 
-	if (READ_ONCE(pgdat->kswapd_order) < order)
+	अगर (READ_ONCE(pgdat->kswapd_order) < order)
 		WRITE_ONCE(pgdat->kswapd_order, order);
 
-	if (!waitqueue_active(&pgdat->kswapd_wait))
-		return;
+	अगर (!रुकोqueue_active(&pgdat->kswapd_रुको))
+		वापस;
 
-	/* Hopeless node, leave it to direct reclaim if possible */
-	if (pgdat->kswapd_failures >= MAX_RECLAIM_RETRIES ||
+	/* Hopeless node, leave it to direct reclaim अगर possible */
+	अगर (pgdat->kswapd_failures >= MAX_RECLAIM_RETRIES ||
 	    (pgdat_balanced(pgdat, order, highest_zoneidx) &&
-	     !pgdat_watermark_boosted(pgdat, highest_zoneidx))) {
+	     !pgdat_watermark_boosted(pgdat, highest_zoneidx))) अणु
 		/*
-		 * There may be plenty of free memory available, but it's too
-		 * fragmented for high-order allocations.  Wake up kcompactd
-		 * and rely on compaction_suitable() to determine if it's
+		 * There may be plenty of मुक्त memory available, but it's too
+		 * fragmented क्रम high-order allocations.  Wake up kcompactd
+		 * and rely on compaction_suitable() to determine अगर it's
 		 * needed.  If it fails, it will defer subsequent attempts to
 		 * ratelimit its work.
 		 */
-		if (!(gfp_flags & __GFP_DIRECT_RECLAIM))
+		अगर (!(gfp_flags & __GFP_सूचीECT_RECLAIM))
 			wakeup_kcompactd(pgdat, order, highest_zoneidx);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	trace_mm_vmscan_wakeup_kswapd(pgdat->node_id, highest_zoneidx, order,
 				      gfp_flags);
-	wake_up_interruptible(&pgdat->kswapd_wait);
-}
+	wake_up_पूर्णांकerruptible(&pgdat->kswapd_रुको);
+पूर्ण
 
-#ifdef CONFIG_HIBERNATION
+#अगर_घोषित CONFIG_HIBERNATION
 /*
- * Try to free `nr_to_reclaim' of memory, system-wide, and return the number of
- * freed pages.
+ * Try to मुक्त `nr_to_reclaim' of memory, प्रणाली-wide, and वापस the number of
+ * मुक्तd pages.
  *
  * Rather than trying to age LRUs the aim is to preserve the overall
  * LRU order by reclaiming preferentially
  * inactive > active > active referenced > active mapped
  */
-unsigned long shrink_all_memory(unsigned long nr_to_reclaim)
-{
-	struct scan_control sc = {
+अचिन्हित दीर्घ shrink_all_memory(अचिन्हित दीर्घ nr_to_reclaim)
+अणु
+	काष्ठा scan_control sc = अणु
 		.nr_to_reclaim = nr_to_reclaim,
 		.gfp_mask = GFP_HIGHUSER_MOVABLE,
 		.reclaim_idx = MAX_NR_ZONES - 1,
 		.priority = DEF_PRIORITY,
-		.may_writepage = 1,
+		.may_ग_लिखोpage = 1,
 		.may_unmap = 1,
 		.may_swap = 1,
 		.hibernation_mode = 1,
-	};
-	struct zonelist *zonelist = node_zonelist(numa_node_id(), sc.gfp_mask);
-	unsigned long nr_reclaimed;
-	unsigned int noreclaim_flag;
+	पूर्ण;
+	काष्ठा zonelist *zonelist = node_zonelist(numa_node_id(), sc.gfp_mask);
+	अचिन्हित दीर्घ nr_reclaimed;
+	अचिन्हित पूर्णांक noreclaim_flag;
 
 	fs_reclaim_acquire(sc.gfp_mask);
-	noreclaim_flag = memalloc_noreclaim_save();
+	noreclaim_flag = meदो_स्मृति_noreclaim_save();
 	set_task_reclaim_state(current, &sc.reclaim_state);
 
-	nr_reclaimed = do_try_to_free_pages(zonelist, &sc);
+	nr_reclaimed = करो_try_to_मुक्त_pages(zonelist, &sc);
 
-	set_task_reclaim_state(current, NULL);
-	memalloc_noreclaim_restore(noreclaim_flag);
+	set_task_reclaim_state(current, शून्य);
+	meदो_स्मृति_noreclaim_restore(noreclaim_flag);
 	fs_reclaim_release(sc.gfp_mask);
 
-	return nr_reclaimed;
-}
-#endif /* CONFIG_HIBERNATION */
+	वापस nr_reclaimed;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_HIBERNATION */
 
 /*
  * This kswapd start function will be called by init and node-hot-add.
- * On node-hot-add, kswapd will moved to proper cpus if cpus are hot-added.
+ * On node-hot-add, kswapd will moved to proper cpus अगर cpus are hot-added.
  */
-int kswapd_run(int nid)
-{
+पूर्णांक kswapd_run(पूर्णांक nid)
+अणु
 	pg_data_t *pgdat = NODE_DATA(nid);
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	if (pgdat->kswapd)
-		return 0;
+	अगर (pgdat->kswapd)
+		वापस 0;
 
-	pgdat->kswapd = kthread_run(kswapd, pgdat, "kswapd%d", nid);
-	if (IS_ERR(pgdat->kswapd)) {
+	pgdat->kswapd = kthपढ़ो_run(kswapd, pgdat, "kswapd%d", nid);
+	अगर (IS_ERR(pgdat->kswapd)) अणु
 		/* failure at boot is fatal */
-		BUG_ON(system_state < SYSTEM_RUNNING);
+		BUG_ON(प्रणाली_state < SYSTEM_RUNNING);
 		pr_err("Failed to start kswapd on node %d\n", nid);
 		ret = PTR_ERR(pgdat->kswapd);
-		pgdat->kswapd = NULL;
-	}
-	return ret;
-}
+		pgdat->kswapd = शून्य;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
  * Called by memory hotplug when all memory in a node is offlined.  Caller must
  * hold mem_hotplug_begin/end().
  */
-void kswapd_stop(int nid)
-{
-	struct task_struct *kswapd = NODE_DATA(nid)->kswapd;
+व्योम kswapd_stop(पूर्णांक nid)
+अणु
+	काष्ठा task_काष्ठा *kswapd = NODE_DATA(nid)->kswapd;
 
-	if (kswapd) {
-		kthread_stop(kswapd);
-		NODE_DATA(nid)->kswapd = NULL;
-	}
-}
+	अगर (kswapd) अणु
+		kthपढ़ो_stop(kswapd);
+		NODE_DATA(nid)->kswapd = शून्य;
+	पूर्ण
+पूर्ण
 
-static int __init kswapd_init(void)
-{
-	int nid;
+अटल पूर्णांक __init kswapd_init(व्योम)
+अणु
+	पूर्णांक nid;
 
 	swap_setup();
-	for_each_node_state(nid, N_MEMORY)
+	क्रम_each_node_state(nid, N_MEMORY)
  		kswapd_run(nid);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 module_init(kswapd_init)
 
-#ifdef CONFIG_NUMA
+#अगर_घोषित CONFIG_NUMA
 /*
  * Node reclaim mode
  *
- * If non-zero call node_reclaim when the number of free pages falls below
+ * If non-zero call node_reclaim when the number of मुक्त pages falls below
  * the watermarks.
  */
-int node_reclaim_mode __read_mostly;
+पूर्णांक node_reclaim_mode __पढ़ो_mostly;
 
 /*
- * Priority for NODE_RECLAIM. This determines the fraction of pages
- * of a node considered for each zone_reclaim. 4 scans 1/16th of
+ * Priority क्रम NODE_RECLAIM. This determines the fraction of pages
+ * of a node considered क्रम each zone_reclaim. 4 scans 1/16th of
  * a zone.
  */
-#define NODE_RECLAIM_PRIORITY 4
+#घोषणा NODE_RECLAIM_PRIORITY 4
 
 /*
- * Percentage of pages in a zone that must be unmapped for node_reclaim to
+ * Percentage of pages in a zone that must be unmapped क्रम node_reclaim to
  * occur.
  */
-int sysctl_min_unmapped_ratio = 1;
+पूर्णांक sysctl_min_unmapped_ratio = 1;
 
 /*
  * If the number of slab pages in a zone grows beyond this percentage then
  * slab reclaim needs to occur.
  */
-int sysctl_min_slab_ratio = 5;
+पूर्णांक sysctl_min_slab_ratio = 5;
 
-static inline unsigned long node_unmapped_file_pages(struct pglist_data *pgdat)
-{
-	unsigned long file_mapped = node_page_state(pgdat, NR_FILE_MAPPED);
-	unsigned long file_lru = node_page_state(pgdat, NR_INACTIVE_FILE) +
-		node_page_state(pgdat, NR_ACTIVE_FILE);
+अटल अंतरभूत अचिन्हित दीर्घ node_unmapped_file_pages(काष्ठा pglist_data *pgdat)
+अणु
+	अचिन्हित दीर्घ file_mapped = node_page_state(pgdat, NR_खाता_MAPPED);
+	अचिन्हित दीर्घ file_lru = node_page_state(pgdat, NR_INACTIVE_खाता) +
+		node_page_state(pgdat, NR_ACTIVE_खाता);
 
 	/*
-	 * It's possible for there to be more file mapped pages than
-	 * accounted for by the pages on the file LRU lists because
-	 * tmpfs pages accounted for as ANON can also be FILE_MAPPED
+	 * It's possible क्रम there to be more file mapped pages than
+	 * accounted क्रम by the pages on the file LRU lists because
+	 * पंचांगpfs pages accounted क्रम as ANON can also be खाता_MAPPED
 	 */
-	return (file_lru > file_mapped) ? (file_lru - file_mapped) : 0;
-}
+	वापस (file_lru > file_mapped) ? (file_lru - file_mapped) : 0;
+पूर्ण
 
 /* Work out how many page cache pages we can reclaim in this reclaim_mode */
-static unsigned long node_pagecache_reclaimable(struct pglist_data *pgdat)
-{
-	unsigned long nr_pagecache_reclaimable;
-	unsigned long delta = 0;
+अटल अचिन्हित दीर्घ node_pagecache_reclaimable(काष्ठा pglist_data *pgdat)
+अणु
+	अचिन्हित दीर्घ nr_pagecache_reclaimable;
+	अचिन्हित दीर्घ delta = 0;
 
 	/*
 	 * If RECLAIM_UNMAP is set, then all file pages are considered
@@ -4327,41 +4328,41 @@ static unsigned long node_pagecache_reclaimable(struct pglist_data *pgdat)
 	 * pages like swapcache and node_unmapped_file_pages() provides
 	 * a better estimate
 	 */
-	if (node_reclaim_mode & RECLAIM_UNMAP)
-		nr_pagecache_reclaimable = node_page_state(pgdat, NR_FILE_PAGES);
-	else
+	अगर (node_reclaim_mode & RECLAIM_UNMAP)
+		nr_pagecache_reclaimable = node_page_state(pgdat, NR_खाता_PAGES);
+	अन्यथा
 		nr_pagecache_reclaimable = node_unmapped_file_pages(pgdat);
 
-	/* If we can't clean pages, remove dirty pages from consideration */
-	if (!(node_reclaim_mode & RECLAIM_WRITE))
-		delta += node_page_state(pgdat, NR_FILE_DIRTY);
+	/* If we can't clean pages, हटाओ dirty pages from consideration */
+	अगर (!(node_reclaim_mode & RECLAIM_WRITE))
+		delta += node_page_state(pgdat, NR_खाता_सूचीTY);
 
-	/* Watch for any possible underflows due to delta */
-	if (unlikely(delta > nr_pagecache_reclaimable))
+	/* Watch क्रम any possible underflows due to delta */
+	अगर (unlikely(delta > nr_pagecache_reclaimable))
 		delta = nr_pagecache_reclaimable;
 
-	return nr_pagecache_reclaimable - delta;
-}
+	वापस nr_pagecache_reclaimable - delta;
+पूर्ण
 
 /*
- * Try to free up some pages from this node through reclaim.
+ * Try to मुक्त up some pages from this node through reclaim.
  */
-static int __node_reclaim(struct pglist_data *pgdat, gfp_t gfp_mask, unsigned int order)
-{
+अटल पूर्णांक __node_reclaim(काष्ठा pglist_data *pgdat, gfp_t gfp_mask, अचिन्हित पूर्णांक order)
+अणु
 	/* Minimum pages needed in order to stay on node */
-	const unsigned long nr_pages = 1 << order;
-	struct task_struct *p = current;
-	unsigned int noreclaim_flag;
-	struct scan_control sc = {
+	स्थिर अचिन्हित दीर्घ nr_pages = 1 << order;
+	काष्ठा task_काष्ठा *p = current;
+	अचिन्हित पूर्णांक noreclaim_flag;
+	काष्ठा scan_control sc = अणु
 		.nr_to_reclaim = max(nr_pages, SWAP_CLUSTER_MAX),
 		.gfp_mask = current_gfp_context(gfp_mask),
 		.order = order,
 		.priority = NODE_RECLAIM_PRIORITY,
-		.may_writepage = !!(node_reclaim_mode & RECLAIM_WRITE),
+		.may_ग_लिखोpage = !!(node_reclaim_mode & RECLAIM_WRITE),
 		.may_unmap = !!(node_reclaim_mode & RECLAIM_UNMAP),
 		.may_swap = 1,
 		.reclaim_idx = gfp_zone(gfp_mask),
-	};
+	पूर्ण;
 
 	trace_mm_vmscan_node_reclaim_begin(pgdat->node_id, order,
 					   sc.gfp_mask);
@@ -4369,127 +4370,127 @@ static int __node_reclaim(struct pglist_data *pgdat, gfp_t gfp_mask, unsigned in
 	cond_resched();
 	fs_reclaim_acquire(sc.gfp_mask);
 	/*
-	 * We need to be able to allocate from the reserves for RECLAIM_UNMAP
-	 * and we also need to be able to write out pages for RECLAIM_WRITE
+	 * We need to be able to allocate from the reserves क्रम RECLAIM_UNMAP
+	 * and we also need to be able to ग_लिखो out pages क्रम RECLAIM_WRITE
 	 * and RECLAIM_UNMAP.
 	 */
-	noreclaim_flag = memalloc_noreclaim_save();
+	noreclaim_flag = meदो_स्मृति_noreclaim_save();
 	p->flags |= PF_SWAPWRITE;
 	set_task_reclaim_state(p, &sc.reclaim_state);
 
-	if (node_pagecache_reclaimable(pgdat) > pgdat->min_unmapped_pages) {
+	अगर (node_pagecache_reclaimable(pgdat) > pgdat->min_unmapped_pages) अणु
 		/*
 		 * Free memory by calling shrink node with increasing
-		 * priorities until we have enough memory freed.
+		 * priorities until we have enough memory मुक्तd.
 		 */
-		do {
+		करो अणु
 			shrink_node(pgdat, &sc);
-		} while (sc.nr_reclaimed < nr_pages && --sc.priority >= 0);
-	}
+		पूर्ण जबतक (sc.nr_reclaimed < nr_pages && --sc.priority >= 0);
+	पूर्ण
 
-	set_task_reclaim_state(p, NULL);
+	set_task_reclaim_state(p, शून्य);
 	current->flags &= ~PF_SWAPWRITE;
-	memalloc_noreclaim_restore(noreclaim_flag);
+	meदो_स्मृति_noreclaim_restore(noreclaim_flag);
 	fs_reclaim_release(sc.gfp_mask);
 
 	trace_mm_vmscan_node_reclaim_end(sc.nr_reclaimed);
 
-	return sc.nr_reclaimed >= nr_pages;
-}
+	वापस sc.nr_reclaimed >= nr_pages;
+पूर्ण
 
-int node_reclaim(struct pglist_data *pgdat, gfp_t gfp_mask, unsigned int order)
-{
-	int ret;
+पूर्णांक node_reclaim(काष्ठा pglist_data *pgdat, gfp_t gfp_mask, अचिन्हित पूर्णांक order)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * Node reclaim reclaims unmapped file backed pages and
-	 * slab pages if we are over the defined limits.
+	 * slab pages अगर we are over the defined limits.
 	 *
-	 * A small portion of unmapped file backed pages is needed for
-	 * file I/O otherwise pages read by file I/O will be immediately
-	 * thrown out if the node is overallocated. So we do not reclaim
-	 * if less than a specified percentage of the node is used by
+	 * A small portion of unmapped file backed pages is needed क्रम
+	 * file I/O otherwise pages पढ़ो by file I/O will be immediately
+	 * thrown out अगर the node is overallocated. So we करो not reclaim
+	 * अगर less than a specअगरied percentage of the node is used by
 	 * unmapped file backed pages.
 	 */
-	if (node_pagecache_reclaimable(pgdat) <= pgdat->min_unmapped_pages &&
+	अगर (node_pagecache_reclaimable(pgdat) <= pgdat->min_unmapped_pages &&
 	    node_page_state_pages(pgdat, NR_SLAB_RECLAIMABLE_B) <=
 	    pgdat->min_slab_pages)
-		return NODE_RECLAIM_FULL;
+		वापस NODE_RECLAIM_FULL;
 
 	/*
-	 * Do not scan if the allocation should not be delayed.
+	 * Do not scan अगर the allocation should not be delayed.
 	 */
-	if (!gfpflags_allow_blocking(gfp_mask) || (current->flags & PF_MEMALLOC))
-		return NODE_RECLAIM_NOSCAN;
+	अगर (!gfpflags_allow_blocking(gfp_mask) || (current->flags & PF_MEMALLOC))
+		वापस NODE_RECLAIM_NOSCAN;
 
 	/*
-	 * Only run node reclaim on the local node or on nodes that do not
+	 * Only run node reclaim on the local node or on nodes that करो not
 	 * have associated processors. This will favor the local processor
-	 * over remote processors and spread off node memory allocations
+	 * over remote processors and spपढ़ो off node memory allocations
 	 * as wide as possible.
 	 */
-	if (node_state(pgdat->node_id, N_CPU) && pgdat->node_id != numa_node_id())
-		return NODE_RECLAIM_NOSCAN;
+	अगर (node_state(pgdat->node_id, N_CPU) && pgdat->node_id != numa_node_id())
+		वापस NODE_RECLAIM_NOSCAN;
 
-	if (test_and_set_bit(PGDAT_RECLAIM_LOCKED, &pgdat->flags))
-		return NODE_RECLAIM_NOSCAN;
+	अगर (test_and_set_bit(PGDAT_RECLAIM_LOCKED, &pgdat->flags))
+		वापस NODE_RECLAIM_NOSCAN;
 
 	ret = __node_reclaim(pgdat, gfp_mask, order);
 	clear_bit(PGDAT_RECLAIM_LOCKED, &pgdat->flags);
 
-	if (!ret)
+	अगर (!ret)
 		count_vm_event(PGSCAN_ZONE_RECLAIM_FAILED);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * check_move_unevictable_pages - check pages for evictability and move to
+ * check_move_unevictable_pages - check pages क्रम evictability and move to
  * appropriate zone lru list
  * @pvec: pagevec with lru pages to check
  *
- * Checks pages for evictability, if an evictable page is in the unevictable
+ * Checks pages क्रम evictability, अगर an evictable page is in the unevictable
  * lru list, moves it to the appropriate evictable lru list. This function
- * should be only used for lru pages.
+ * should be only used क्रम lru pages.
  */
-void check_move_unevictable_pages(struct pagevec *pvec)
-{
-	struct lruvec *lruvec = NULL;
-	int pgscanned = 0;
-	int pgrescued = 0;
-	int i;
+व्योम check_move_unevictable_pages(काष्ठा pagevec *pvec)
+अणु
+	काष्ठा lruvec *lruvec = शून्य;
+	पूर्णांक pgscanned = 0;
+	पूर्णांक pgrescued = 0;
+	पूर्णांक i;
 
-	for (i = 0; i < pvec->nr; i++) {
-		struct page *page = pvec->pages[i];
-		int nr_pages;
+	क्रम (i = 0; i < pvec->nr; i++) अणु
+		काष्ठा page *page = pvec->pages[i];
+		पूर्णांक nr_pages;
 
-		if (PageTransTail(page))
-			continue;
+		अगर (PageTransTail(page))
+			जारी;
 
 		nr_pages = thp_nr_pages(page);
 		pgscanned += nr_pages;
 
 		/* block memcg migration during page moving between lru */
-		if (!TestClearPageLRU(page))
-			continue;
+		अगर (!TestClearPageLRU(page))
+			जारी;
 
 		lruvec = relock_page_lruvec_irq(page, lruvec);
-		if (page_evictable(page) && PageUnevictable(page)) {
+		अगर (page_evictable(page) && PageUnevictable(page)) अणु
 			del_page_from_lru_list(page, lruvec);
 			ClearPageUnevictable(page);
 			add_page_to_lru_list(page, lruvec);
 			pgrescued += nr_pages;
-		}
+		पूर्ण
 		SetPageLRU(page);
-	}
+	पूर्ण
 
-	if (lruvec) {
+	अगर (lruvec) अणु
 		__count_vm_events(UNEVICTABLE_PGRESCUED, pgrescued);
 		__count_vm_events(UNEVICTABLE_PGSCANNED, pgscanned);
 		unlock_page_lruvec_irq(lruvec);
-	} else if (pgscanned) {
+	पूर्ण अन्यथा अगर (pgscanned) अणु
 		count_vm_events(UNEVICTABLE_PGSCANNED, pgscanned);
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(check_move_unevictable_pages);

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*******************************************************************************
  * IBM Virtual SCSI Target Driver
  * Copyright (C) 2003-2005 Dave Boutcher (boutcher@us.ibm.com) IBM Corp.
@@ -14,349 +15,349 @@
  *
  ****************************************************************************/
 
-#ifndef __H_IBMVSCSI_TGT
-#define __H_IBMVSCSI_TGT
+#अगर_अघोषित __H_IBMVSCSI_TGT
+#घोषणा __H_IBMVSCSI_TGT
 
-#include <linux/interrupt.h>
-#include "libsrp.h"
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश "libsrp.h"
 
-#define SYS_ID_NAME_LEN		64
-#define PARTITION_NAMELEN	96
-#define IBMVSCSIS_NAMELEN       32
+#घोषणा SYS_ID_NAME_LEN		64
+#घोषणा PARTITION_NAMELEN	96
+#घोषणा IBMVSCSIS_NAMELEN       32
 
-#define MSG_HI  0
-#define MSG_LOW 1
+#घोषणा MSG_HI  0
+#घोषणा MSG_LOW 1
 
-#define MAX_CMD_Q_PAGES       4
-#define CRQ_PER_PAGE          (PAGE_SIZE / sizeof(struct viosrp_crq))
+#घोषणा MAX_CMD_Q_PAGES       4
+#घोषणा CRQ_PER_PAGE          (PAGE_SIZE / माप(काष्ठा viosrp_crq))
 /* in terms of number of elements */
-#define DEFAULT_CMD_Q_SIZE    CRQ_PER_PAGE
-#define MAX_CMD_Q_SIZE        (DEFAULT_CMD_Q_SIZE * MAX_CMD_Q_PAGES)
+#घोषणा DEFAULT_CMD_Q_SIZE    CRQ_PER_PAGE
+#घोषणा MAX_CMD_Q_SIZE        (DEFAULT_CMD_Q_SIZE * MAX_CMD_Q_PAGES)
 
-#define SRP_VIOLATION           0x102  /* general error code */
+#घोषणा SRP_VIOLATION           0x102  /* general error code */
 
 /*
- * SRP buffer formats defined as of 16.a supported by this driver.
+ * SRP buffer क्रमmats defined as of 16.a supported by this driver.
  */
-#define SUPPORTED_FORMATS  ((SRP_DATA_DESC_DIRECT << 1) | \
-			    (SRP_DATA_DESC_INDIRECT << 1))
+#घोषणा SUPPORTED_FORMATS  ((SRP_DATA_DESC_सूचीECT << 1) | \
+			    (SRP_DATA_DESC_INसूचीECT << 1))
 
-#define SCSI_LUN_ADDR_METHOD_FLAT	1
+#घोषणा SCSI_LUN_ADDR_METHOD_FLAT	1
 
-struct dma_window {
+काष्ठा dma_winकरोw अणु
 	u32 liobn;	/* Unique per vdevice */
 	u64 tce_base;	/* Physical location of the TCE table */
 	u64 tce_size;	/* Size of the TCE table in bytes */
-};
+पूर्ण;
 
-struct target_dds {
-	u64 unit_id;                /* 64 bit will force alignment */
-#define NUM_DMA_WINDOWS 2
-#define LOCAL  0
-#define REMOTE 1
-	struct dma_window  window[NUM_DMA_WINDOWS];
+काष्ठा target_dds अणु
+	u64 unit_id;                /* 64 bit will क्रमce alignment */
+#घोषणा NUM_DMA_WINDOWS 2
+#घोषणा LOCAL  0
+#घोषणा REMOTE 1
+	काष्ठा dma_winकरोw  winकरोw[NUM_DMA_WINDOWS];
 
 	/* root node property "ibm,partition-no" */
-	uint partition_num;
-	char partition_name[PARTITION_NAMELEN];
-};
+	uपूर्णांक partition_num;
+	अक्षर partition_name[PARTITION_NAMELEN];
+पूर्ण;
 
-#define MAX_NUM_PORTS        1
-#define MAX_H_COPY_RDMA      (128 * 1024)
+#घोषणा MAX_NUM_PORTS        1
+#घोषणा MAX_H_COPY_RDMA      (128 * 1024)
 
-#define MAX_EYE   64
+#घोषणा MAX_EYE   64
 
 /* Return codes */
-#define ADAPT_SUCCESS            0L
-/* choose error codes that do not conflict with PHYP */
-#define ERROR                   -40L
+#घोषणा ADAPT_SUCCESS            0L
+/* choose error codes that करो not conflict with PHYP */
+#घोषणा ERROR                   -40L
 
-struct format_code {
+काष्ठा क्रमmat_code अणु
 	u8 reserved;
 	u8 buffers;
-};
+पूर्ण;
 
-struct client_info {
-#define SRP_VERSION "16.a"
-	char srp_version[8];
+काष्ठा client_info अणु
+#घोषणा SRP_VERSION "16.a"
+	अक्षर srp_version[8];
 	/* root node property ibm,partition-name */
-	char partition_name[PARTITION_NAMELEN];
+	अक्षर partition_name[PARTITION_NAMELEN];
 	/* root node property ibm,partition-no */
 	u32 partition_number;
 	/* initially 1 */
 	u32 mad_version;
 	u32 os_type;
-};
+पूर्ण;
 
 /*
- * Changing this constant changes the number of seconds to wait before
+ * Changing this स्थिरant changes the number of seconds to रुको beक्रमe
  * considering the client will never service its queue again.
  */
-#define SECONDS_TO_CONSIDER_FAILED 30
+#घोषणा SECONDS_TO_CONSIDER_FAILED 30
 /*
- * These constants set the polling period used to determine if the client
- * has freed at least one element in the response queue.
+ * These स्थिरants set the polling period used to determine अगर the client
+ * has मुक्तd at least one element in the response queue.
  */
-#define WAIT_SECONDS 1
-#define WAIT_NANO_SECONDS 5000
-#define MAX_TIMER_POPS ((1000000 / WAIT_NANO_SECONDS) * \
+#घोषणा WAIT_SECONDS 1
+#घोषणा WAIT_न_अंकO_SECONDS 5000
+#घोषणा MAX_TIMER_POPS ((1000000 / WAIT_न_अंकO_SECONDS) * \
 			SECONDS_TO_CONSIDER_FAILED)
 /*
- * general purpose timer control block
- * which can be used for multiple functions
+ * general purpose समयr control block
+ * which can be used क्रम multiple functions
  */
-struct timer_cb {
-	struct hrtimer timer;
+काष्ठा समयr_cb अणु
+	काष्ठा hrसमयr समयr;
 	/*
-	 * how long has it been since the client
+	 * how दीर्घ has it been since the client
 	 * serviced the queue. The variable is incrmented
-	 * in the service_wait_q routine and cleared
+	 * in the service_रुको_q routine and cleared
 	 * in send messages
 	 */
-	int timer_pops;
-	/* the timer is started */
+	पूर्णांक समयr_pops;
+	/* the समयr is started */
 	bool started;
-};
+पूर्ण;
 
-struct cmd_queue {
+काष्ठा cmd_queue अणु
 	/* kva */
-	struct viosrp_crq *base_addr;
+	काष्ठा viosrp_crq *base_addr;
 	dma_addr_t crq_token;
-	/* used to maintain index */
-	uint mask;
+	/* used to मुख्यtain index */
+	uपूर्णांक mask;
 	/* current element */
-	uint index;
-	int size;
-};
+	uपूर्णांक index;
+	पूर्णांक size;
+पूर्ण;
 
-#define SCSOLNT_RESP_SHIFT	1
-#define UCSOLNT_RESP_SHIFT	2
+#घोषणा SCSOLNT_RESP_SHIFT	1
+#घोषणा UCSOLNT_RESP_SHIFT	2
 
-#define SCSOLNT         BIT(SCSOLNT_RESP_SHIFT)
-#define UCSOLNT         BIT(UCSOLNT_RESP_SHIFT)
+#घोषणा SCSOLNT         BIT(SCSOLNT_RESP_SHIFT)
+#घोषणा UCSOLNT         BIT(UCSOLNT_RESP_SHIFT)
 
-enum cmd_type {
+क्रमागत cmd_type अणु
 	SCSI_CDB	= 0x01,
 	TASK_MANAGEMENT	= 0x02,
 	/* MAD or addressed to port 0 */
 	ADAPTER_MAD	= 0x04,
 	UNSET_TYPE	= 0x08,
-};
+पूर्ण;
 
-struct iu_rsp {
-	u8 format;
+काष्ठा iu_rsp अणु
+	u8 क्रमmat;
 	u8 sol_not;
 	u16 len;
-	/* tag is just to help client identify cmd, so don't translate be/le */
+	/* tag is just to help client identअगरy cmd, so करोn't translate be/le */
 	u64 tag;
-};
+पूर्ण;
 
-struct ibmvscsis_cmd {
-	struct list_head list;
-	/* Used for TCM Core operations */
-	struct se_cmd se_cmd;
-	struct iu_entry *iue;
-	struct iu_rsp rsp;
-	struct work_struct work;
-	struct scsi_info *adapter;
-	struct ibmvscsis_cmd *abort_cmd;
-	/* Sense buffer that will be mapped into outgoing status */
-	unsigned char sense_buf[TRANSPORT_SENSE_BUFFER];
-	u64 init_time;
-#define CMD_FAST_FAIL	BIT(0)
-#define DELAY_SEND	BIT(1)
+काष्ठा ibmvscsis_cmd अणु
+	काष्ठा list_head list;
+	/* Used क्रम TCM Core operations */
+	काष्ठा se_cmd se_cmd;
+	काष्ठा iu_entry *iue;
+	काष्ठा iu_rsp rsp;
+	काष्ठा work_काष्ठा work;
+	काष्ठा scsi_info *adapter;
+	काष्ठा ibmvscsis_cmd *पात_cmd;
+	/* Sense buffer that will be mapped पूर्णांकo outgoing status */
+	अचिन्हित अक्षर sense_buf[TRANSPORT_SENSE_BUFFER];
+	u64 init_समय;
+#घोषणा CMD_FAST_FAIL	BIT(0)
+#घोषणा DELAY_SEND	BIT(1)
 	u32 flags;
-	char type;
-};
+	अक्षर type;
+पूर्ण;
 
-struct ibmvscsis_nexus {
-	struct se_session *se_sess;
-};
+काष्ठा ibmvscsis_nexus अणु
+	काष्ठा se_session *se_sess;
+पूर्ण;
 
-struct ibmvscsis_tport {
+काष्ठा ibmvscsis_tport अणु
 	/* SCSI protocol the tport is providing */
 	u8 tport_proto_id;
-	/* ASCII formatted WWPN for SRP Target port */
-	char tport_name[IBMVSCSIS_NAMELEN];
+	/* ASCII क्रमmatted WWPN क्रम SRP Target port */
+	अक्षर tport_name[IBMVSCSIS_NAMELEN];
 	/* Returned by ibmvscsis_make_tport() */
-	struct se_wwn tport_wwn;
+	काष्ठा se_wwn tport_wwn;
 	/* Returned by ibmvscsis_make_tpg() */
-	struct se_portal_group se_tpg;
-	/* ibmvscsis port target portal group tag for TCM */
+	काष्ठा se_portal_group se_tpg;
+	/* ibmvscsis port target portal group tag क्रम TCM */
 	u16 tport_tpgt;
-	/* Pointer to TCM session for I_T Nexus */
-	struct ibmvscsis_nexus *ibmv_nexus;
+	/* Poपूर्णांकer to TCM session क्रम I_T Nexus */
+	काष्ठा ibmvscsis_nexus *ibmv_nexus;
 	bool enabled;
 	bool releasing;
-};
+पूर्ण;
 
-struct scsi_info {
-	struct list_head list;
-	char eye[MAX_EYE];
+काष्ठा scsi_info अणु
+	काष्ठा list_head list;
+	अक्षर eye[MAX_EYE];
 
-	/* commands waiting for space on repsonse queue */
-	struct list_head waiting_rsp;
-#define NO_QUEUE                    0x00
-#define WAIT_ENABLED                0X01
-#define WAIT_CONNECTION             0x04
+	/* commands रुकोing क्रम space on repsonse queue */
+	काष्ठा list_head रुकोing_rsp;
+#घोषणा NO_QUEUE                    0x00
+#घोषणा WAIT_ENABLED                0X01
+#घोषणा WAIT_CONNECTION             0x04
 	/* have established a connection */
-#define CONNECTED                   0x08
+#घोषणा CONNECTED                   0x08
 	/* at least one port is processing SRP IU */
-#define SRP_PROCESSING              0x10
-	/* remove request received */
-#define UNCONFIGURING               0x20
+#घोषणा SRP_PROCESSING              0x10
+	/* हटाओ request received */
+#घोषणा UNCONFIGURING               0x20
 	/* disconnect by letting adapter go idle, no error */
-#define WAIT_IDLE                   0x40
+#घोषणा WAIT_IDLE                   0x40
 	/* disconnecting to clear an error */
-#define ERR_DISCONNECT              0x80
+#घोषणा ERR_DISCONNECT              0x80
 	/* disconnect to clear error state, then come back up */
-#define ERR_DISCONNECT_RECONNECT    0x100
+#घोषणा ERR_DISCONNECT_RECONNECT    0x100
 	/* disconnected after clearing an error */
-#define ERR_DISCONNECTED            0x200
+#घोषणा ERR_DISCONNECTED            0x200
 	/* A series of errors caused unexpected errors */
-#define UNDEFINED                   0x400
+#घोषणा UNDEFINED                   0x400
 	u16  state;
-	int fast_fail;
-	struct target_dds dds;
-	char *cmd_pool;
-	/* list of free commands */
-	struct list_head free_cmd;
-	/* command elements ready for scheduler */
-	struct list_head schedule_q;
+	पूर्णांक fast_fail;
+	काष्ठा target_dds dds;
+	अक्षर *cmd_pool;
+	/* list of मुक्त commands */
+	काष्ठा list_head मुक्त_cmd;
+	/* command elements पढ़ोy क्रम scheduler */
+	काष्ठा list_head schedule_q;
 	/* commands sent to TCM */
-	struct list_head active_q;
+	काष्ठा list_head active_q;
 	caddr_t *map_buf;
 	/* ioba of map buffer */
 	dma_addr_t map_ioba;
 	/* allowable number of outstanding SRP requests */
-	int request_limit;
+	पूर्णांक request_limit;
 	/* extra credit */
-	int credit;
+	पूर्णांक credit;
 	/* outstanding transactions against credit limit */
-	int debit;
+	पूर्णांक debit;
 
 	/* allow only one outstanding mad request */
-#define PROCESSING_MAD                0x00002
+#घोषणा PROCESSING_MAD                0x00002
 	/* Waiting to go idle */
-#define WAIT_FOR_IDLE		      0x00004
+#घोषणा WAIT_FOR_IDLE		      0x00004
 	/* H_REG_CRQ called */
-#define CRQ_CLOSED                    0x00010
+#घोषणा CRQ_CLOSED                    0x00010
 	/* detected that client has failed */
-#define CLIENT_FAILED                 0x00040
+#घोषणा CLIENT_FAILED                 0x00040
 	/* detected that transport event occurred */
-#define TRANS_EVENT                   0x00080
-	/* don't attempt to send anything to the client */
-#define RESPONSE_Q_DOWN               0x00100
+#घोषणा TRANS_EVENT                   0x00080
+	/* करोn't attempt to send anything to the client */
+#घोषणा RESPONSE_Q_DOWN               0x00100
 	/* request made to schedule disconnect handler */
-#define SCHEDULE_DISCONNECT           0x00400
+#घोषणा SCHEDULE_DISCONNECT           0x00400
 	/* disconnect handler is scheduled */
-#define DISCONNECT_SCHEDULED          0x00800
-	/* remove function is sleeping */
-#define CFG_SLEEPING                  0x01000
-	/* Register for Prepare for Suspend Transport Events */
-#define PREP_FOR_SUSPEND_ENABLED      0x02000
-	/* Prepare for Suspend event sent */
-#define PREP_FOR_SUSPEND_PENDING      0x04000
+#घोषणा DISCONNECT_SCHEDULED          0x00800
+	/* हटाओ function is sleeping */
+#घोषणा CFG_SLEEPING                  0x01000
+	/* Register क्रम Prepare क्रम Suspend Transport Events */
+#घोषणा PREP_FOR_SUSPEND_ENABLED      0x02000
+	/* Prepare क्रम Suspend event sent */
+#घोषणा PREP_FOR_SUSPEND_PENDING      0x04000
 	/* Resume from Suspend event sent */
-#define PREP_FOR_SUSPEND_ABORTED      0x08000
-	/* Prepare for Suspend event overwrote another CRQ entry */
-#define PREP_FOR_SUSPEND_OVERWRITE    0x10000
+#घोषणा PREP_FOR_SUSPEND_ABORTED      0x08000
+	/* Prepare क्रम Suspend event overwrote another CRQ entry */
+#घोषणा PREP_FOR_SUSPEND_OVERWRITE    0x10000
 	u32 flags;
 	/* adapter lock */
-	spinlock_t intr_lock;
-	/* information needed to manage command queue */
-	struct cmd_queue cmd_q;
-	/* used in hcall to copy response back into srp buffer */
+	spinlock_t पूर्णांकr_lock;
+	/* inक्रमmation needed to manage command queue */
+	काष्ठा cmd_queue cmd_q;
+	/* used in hcall to copy response back पूर्णांकo srp buffer */
 	u64  empty_iu_id;
-	/* used in crq, to tag what iu the response is for */
+	/* used in crq, to tag what iu the response is क्रम */
 	u64  empty_iu_tag;
-	uint new_state;
-	uint resume_state;
-	/* control block for the response queue timer */
-	struct timer_cb rsp_q_timer;
+	uपूर्णांक new_state;
+	uपूर्णांक resume_state;
+	/* control block क्रम the response queue समयr */
+	काष्ठा समयr_cb rsp_q_समयr;
 	/* keep last client to enable proper accounting */
-	struct client_info client_data;
-	/* what can this client do */
+	काष्ठा client_info client_data;
+	/* what can this client करो */
 	u32 client_cap;
 	/*
 	 * The following two fields capture state and flag changes that
 	 * can occur when the lock is given up.  In the orginal design,
-	 * the lock was held during calls into phyp;
+	 * the lock was held during calls पूर्णांकo phyp;
 	 * however, phyp did not meet PAPR architecture.  This is
 	 * a work around.
 	 */
 	u16  phyp_acr_state;
 	u32 phyp_acr_flags;
 
-	struct workqueue_struct *work_q;
-	struct completion wait_idle;
-	struct completion unconfig;
-	struct device dev;
-	struct vio_dev *dma_dev;
-	struct srp_target target;
-	struct ibmvscsis_tport tport;
-	struct tasklet_struct work_task;
-	struct work_struct proc_work;
-};
+	काष्ठा workqueue_काष्ठा *work_q;
+	काष्ठा completion रुको_idle;
+	काष्ठा completion unconfig;
+	काष्ठा device dev;
+	काष्ठा vio_dev *dma_dev;
+	काष्ठा srp_target target;
+	काष्ठा ibmvscsis_tport tport;
+	काष्ठा tasklet_काष्ठा work_task;
+	काष्ठा work_काष्ठा proc_work;
+पूर्ण;
 
 /*
- * Provide a constant that allows software to detect the adapter is
+ * Provide a स्थिरant that allows software to detect the adapter is
  * disconnecting from the client from one of several states.
  */
-#define IS_DISCONNECTING (UNCONFIGURING | ERR_DISCONNECT_RECONNECT | \
+#घोषणा IS_DISCONNECTING (UNCONFIGURING | ERR_DISCONNECT_RECONNECT | \
 			  ERR_DISCONNECT)
 
 /*
- * Provide a constant that can be used with interrupt handling that
- * essentially lets the interrupt handler know that all requests should
+ * Provide a स्थिरant that can be used with पूर्णांकerrupt handling that
+ * essentially lets the पूर्णांकerrupt handler know that all requests should
  * be thrown out,
  */
-#define DONT_PROCESS_STATE (IS_DISCONNECTING | UNDEFINED | \
+#घोषणा DONT_PROCESS_STATE (IS_DISCONNECTING | UNDEFINED | \
 			    ERR_DISCONNECTED  | WAIT_IDLE)
 
 /*
- * If any of these flag bits are set then do not allow the interrupt
+ * If any of these flag bits are set then करो not allow the पूर्णांकerrupt
  * handler to schedule the off level handler.
  */
-#define BLOCK (DISCONNECT_SCHEDULED)
+#घोषणा BLOCK (DISCONNECT_SCHEDULED)
 
-/* State and transition events that stop the interrupt handler */
-#define TARGET_STOP(VSCSI) (long)(((VSCSI)->state & DONT_PROCESS_STATE) | \
+/* State and transition events that stop the पूर्णांकerrupt handler */
+#घोषणा TARGET_STOP(VSCSI) (दीर्घ)(((VSCSI)->state & DONT_PROCESS_STATE) | \
 				  ((VSCSI)->flags & BLOCK))
 
-#define PREP_FOR_SUSPEND_FLAGS  (PREP_FOR_SUSPEND_ENABLED | \
+#घोषणा PREP_FOR_SUSPEND_FLAGS  (PREP_FOR_SUSPEND_ENABLED | \
 				 PREP_FOR_SUSPEND_PENDING | \
 				 PREP_FOR_SUSPEND_ABORTED | \
 				 PREP_FOR_SUSPEND_OVERWRITE)
 
 /* flag bit that are not reset during disconnect */
-#define PRESERVE_FLAG_FIELDS (PREP_FOR_SUSPEND_FLAGS)
+#घोषणा PRESERVE_FLAG_FIELDS (PREP_FOR_SUSPEND_FLAGS)
 
-#define vio_iu(IUE) ((union viosrp_iu *)((IUE)->sbuf->buf))
+#घोषणा vio_iu(IUE) ((जोड़ viosrp_iu *)((IUE)->sbuf->buf))
 
-#define READ_CMD(cdb)	(((cdb)[0] & 0x1F) == 8)
-#define WRITE_CMD(cdb)	(((cdb)[0] & 0x1F) == 0xA)
+#घोषणा READ_CMD(cdb)	(((cdb)[0] & 0x1F) == 8)
+#घोषणा WRITE_CMD(cdb)	(((cdb)[0] & 0x1F) == 0xA)
 
-#ifndef H_GET_PARTNER_INFO
-#define H_GET_PARTNER_INFO              0x0000000000000008LL
-#endif
-#ifndef H_ENABLE_PREPARE_FOR_SUSPEND
-#define H_ENABLE_PREPARE_FOR_SUSPEND    0x000000000000001DLL
-#endif
-#ifndef H_READY_FOR_SUSPEND
-#define H_READY_FOR_SUSPEND             0x000000000000001ELL
-#endif
+#अगर_अघोषित H_GET_PARTNER_INFO
+#घोषणा H_GET_PARTNER_INFO              0x0000000000000008LL
+#पूर्ण_अगर
+#अगर_अघोषित H_ENABLE_PREPARE_FOR_SUSPEND
+#घोषणा H_ENABLE_PREPARE_FOR_SUSPEND    0x000000000000001DLL
+#पूर्ण_अगर
+#अगर_अघोषित H_READY_FOR_SUSPEND
+#घोषणा H_READY_FOR_SUSPEND             0x000000000000001ELL
+#पूर्ण_अगर
 
 
-#define h_copy_rdma(l, sa, sb, da, db) \
+#घोषणा h_copy_rdma(l, sa, sb, da, db) \
 		plpar_hcall_norets(H_COPY_RDMA, l, sa, sb, da, db)
-#define h_vioctl(u, o, a, u1, u2, u3, u4) \
+#घोषणा h_vioctl(u, o, a, u1, u2, u3, u4) \
 		plpar_hcall_norets(H_VIOCTL, u, o, a, u1, u2)
-#define h_reg_crq(ua, tok, sz) \
+#घोषणा h_reg_crq(ua, tok, sz) \
 		plpar_hcall_norets(H_REG_CRQ, ua, tok, sz)
-#define h_free_crq(ua) \
+#घोषणा h_मुक्त_crq(ua) \
 		plpar_hcall_norets(H_FREE_CRQ, ua)
-#define h_send_crq(ua, d1, d2) \
+#घोषणा h_send_crq(ua, d1, d2) \
 		plpar_hcall_norets(H_SEND_CRQ, ua, d1, d2)
 
-#endif
+#पूर्ण_अगर

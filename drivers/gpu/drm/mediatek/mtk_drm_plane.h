@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2015 MediaTek Inc.
  * Author: CK Hu <ck.hu@mediatek.com>
  */
 
-#ifndef _MTK_DRM_PLANE_H_
-#define _MTK_DRM_PLANE_H_
+#अगर_अघोषित _MTK_DRM_PLANE_H_
+#घोषणा _MTK_DRM_PLANE_H_
 
-#include <drm/drm_crtc.h>
-#include <linux/types.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <linux/types.h>
 
-struct mtk_plane_pending_state {
+काष्ठा mtk_plane_pending_state अणु
 	bool				config;
 	bool				enable;
 	dma_addr_t			addr;
-	unsigned int			pitch;
-	unsigned int			format;
-	unsigned int			x;
-	unsigned int			y;
-	unsigned int			width;
-	unsigned int			height;
-	unsigned int			rotation;
+	अचिन्हित पूर्णांक			pitch;
+	अचिन्हित पूर्णांक			क्रमmat;
+	अचिन्हित पूर्णांक			x;
+	अचिन्हित पूर्णांक			y;
+	अचिन्हित पूर्णांक			width;
+	अचिन्हित पूर्णांक			height;
+	अचिन्हित पूर्णांक			rotation;
 	bool				dirty;
 	bool				async_dirty;
 	bool				async_config;
-};
+पूर्ण;
 
-struct mtk_plane_state {
-	struct drm_plane_state		base;
-	struct mtk_plane_pending_state	pending;
-};
+काष्ठा mtk_plane_state अणु
+	काष्ठा drm_plane_state		base;
+	काष्ठा mtk_plane_pending_state	pending;
+पूर्ण;
 
-static inline struct mtk_plane_state *
-to_mtk_plane_state(struct drm_plane_state *state)
-{
-	return container_of(state, struct mtk_plane_state, base);
-}
+अटल अंतरभूत काष्ठा mtk_plane_state *
+to_mtk_plane_state(काष्ठा drm_plane_state *state)
+अणु
+	वापस container_of(state, काष्ठा mtk_plane_state, base);
+पूर्ण
 
-int mtk_plane_init(struct drm_device *dev, struct drm_plane *plane,
-		   unsigned long possible_crtcs, enum drm_plane_type type,
-		   unsigned int supported_rotations);
+पूर्णांक mtk_plane_init(काष्ठा drm_device *dev, काष्ठा drm_plane *plane,
+		   अचिन्हित दीर्घ possible_crtcs, क्रमागत drm_plane_type type,
+		   अचिन्हित पूर्णांक supported_rotations);
 
-#endif
+#पूर्ण_अगर

@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  * Copyright (C) 2017 SiFive
  */
 
-#ifndef _ASM_RISCV_MMU_CONTEXT_H
-#define _ASM_RISCV_MMU_CONTEXT_H
+#अगर_अघोषित _ASM_RISCV_MMU_CONTEXT_H
+#घोषणा _ASM_RISCV_MMU_CONTEXT_H
 
-#include <linux/mm_types.h>
-#include <asm-generic/mm_hooks.h>
+#समावेश <linux/mm_types.h>
+#समावेश <यंत्र-generic/mm_hooks.h>
 
-#include <linux/mm.h>
-#include <linux/sched.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/sched.h>
 
-void switch_mm(struct mm_struct *prev, struct mm_struct *next,
-	struct task_struct *task);
+व्योम चयन_mm(काष्ठा mm_काष्ठा *prev, काष्ठा mm_काष्ठा *next,
+	काष्ठा task_काष्ठा *task);
 
-#define activate_mm activate_mm
-static inline void activate_mm(struct mm_struct *prev,
-			       struct mm_struct *next)
-{
-	switch_mm(prev, next, NULL);
-}
+#घोषणा activate_mm activate_mm
+अटल अंतरभूत व्योम activate_mm(काष्ठा mm_काष्ठा *prev,
+			       काष्ठा mm_काष्ठा *next)
+अणु
+	चयन_mm(prev, next, शून्य);
+पूर्ण
 
-#define init_new_context init_new_context
-static inline int init_new_context(struct task_struct *tsk,
-			struct mm_struct *mm)
-{
-#ifdef CONFIG_MMU
-	atomic_long_set(&mm->context.id, 0);
-#endif
-	return 0;
-}
+#घोषणा init_new_context init_new_context
+अटल अंतरभूत पूर्णांक init_new_context(काष्ठा task_काष्ठा *tsk,
+			काष्ठा mm_काष्ठा *mm)
+अणु
+#अगर_घोषित CONFIG_MMU
+	atomic_दीर्घ_set(&mm->context.id, 0);
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-#include <asm-generic/mmu_context.h>
+#समावेश <यंत्र-generic/mmu_context.h>
 
-#endif /* _ASM_RISCV_MMU_CONTEXT_H */
+#पूर्ण_अगर /* _ASM_RISCV_MMU_CONTEXT_H */

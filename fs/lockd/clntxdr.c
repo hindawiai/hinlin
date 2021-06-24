@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * linux/fs/lockd/clntxdr.c
  *
@@ -10,270 +11,270 @@
  * Copyright (C) 2010, Oracle.  All rights reserved.
  */
 
-#include <linux/types.h>
-#include <linux/sunrpc/xdr.h>
-#include <linux/sunrpc/clnt.h>
-#include <linux/sunrpc/stats.h>
-#include <linux/lockd/lockd.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sunrpc/xdr.h>
+#समावेश <linux/sunrpc/clnt.h>
+#समावेश <linux/sunrpc/stats.h>
+#समावेश <linux/lockd/lockd.h>
 
-#include <uapi/linux/nfs2.h>
+#समावेश <uapi/linux/nfs2.h>
 
-#define NLMDBG_FACILITY		NLMDBG_XDR
+#घोषणा NLMDBG_FACILITY		NLMDBG_XDR
 
-#if (NLMCLNT_OHSIZE > XDR_MAX_NETOBJ)
+#अगर (NLMCLNT_OHSIZE > XDR_MAX_NETOBJ)
 #  error "NLM host name cannot be larger than XDR_MAX_NETOBJ!"
-#endif
+#पूर्ण_अगर
 
 /*
- * Declare the space requirements for NLM arguments and replies as
+ * Declare the space requirements क्रम NLM arguments and replies as
  * number of 32bit-words
  */
-#define NLM_cookie_sz		(1+(NLM_MAXCOOKIELEN>>2))
-#define NLM_caller_sz		(1+(NLMCLNT_OHSIZE>>2))
-#define NLM_owner_sz		(1+(NLMCLNT_OHSIZE>>2))
-#define NLM_fhandle_sz		(1+(NFS2_FHSIZE>>2))
-#define NLM_lock_sz		(3+NLM_caller_sz+NLM_owner_sz+NLM_fhandle_sz)
-#define NLM_holder_sz		(4+NLM_owner_sz)
+#घोषणा NLM_cookie_sz		(1+(NLM_MAXCOOKIELEN>>2))
+#घोषणा NLM_caller_sz		(1+(NLMCLNT_OHSIZE>>2))
+#घोषणा NLM_owner_sz		(1+(NLMCLNT_OHSIZE>>2))
+#घोषणा NLM_fhandle_sz		(1+(NFS2_FHSIZE>>2))
+#घोषणा NLM_lock_sz		(3+NLM_caller_sz+NLM_owner_sz+NLM_fhandle_sz)
+#घोषणा NLM_holder_sz		(4+NLM_owner_sz)
 
-#define NLM_testargs_sz		(NLM_cookie_sz+1+NLM_lock_sz)
-#define NLM_lockargs_sz		(NLM_cookie_sz+4+NLM_lock_sz)
-#define NLM_cancargs_sz		(NLM_cookie_sz+2+NLM_lock_sz)
-#define NLM_unlockargs_sz	(NLM_cookie_sz+NLM_lock_sz)
+#घोषणा NLM_testargs_sz		(NLM_cookie_sz+1+NLM_lock_sz)
+#घोषणा NLM_lockargs_sz		(NLM_cookie_sz+4+NLM_lock_sz)
+#घोषणा NLM_cancargs_sz		(NLM_cookie_sz+2+NLM_lock_sz)
+#घोषणा NLM_unlockargs_sz	(NLM_cookie_sz+NLM_lock_sz)
 
-#define NLM_testres_sz		(NLM_cookie_sz+1+NLM_holder_sz)
-#define NLM_res_sz		(NLM_cookie_sz+1)
-#define NLM_norep_sz		(0)
+#घोषणा NLM_testres_sz		(NLM_cookie_sz+1+NLM_holder_sz)
+#घोषणा NLM_res_sz		(NLM_cookie_sz+1)
+#घोषणा NLM_norep_sz		(0)
 
 
-static s32 loff_t_to_s32(loff_t offset)
-{
+अटल s32 loff_t_to_s32(loff_t offset)
+अणु
 	s32 res;
 
-	if (offset >= NLM_OFFSET_MAX)
+	अगर (offset >= NLM_OFFSET_MAX)
 		res = NLM_OFFSET_MAX;
-	else if (offset <= -NLM_OFFSET_MAX)
+	अन्यथा अगर (offset <= -NLM_OFFSET_MAX)
 		res = -NLM_OFFSET_MAX;
-	else
+	अन्यथा
 		res = offset;
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static void nlm_compute_offsets(const struct nlm_lock *lock,
+अटल व्योम nlm_compute_offsets(स्थिर काष्ठा nlm_lock *lock,
 				u32 *l_offset, u32 *l_len)
-{
-	const struct file_lock *fl = &lock->fl;
+अणु
+	स्थिर काष्ठा file_lock *fl = &lock->fl;
 
 	*l_offset = loff_t_to_s32(fl->fl_start);
-	if (fl->fl_end == OFFSET_MAX)
+	अगर (fl->fl_end == OFFSET_MAX)
 		*l_len = 0;
-	else
+	अन्यथा
 		*l_len = loff_t_to_s32(fl->fl_end - fl->fl_start + 1);
-}
+पूर्ण
 
 /*
  * Encode/decode NLMv3 basic data types
  *
  * Basic NLMv3 data types are not defined in an IETF standards
- * document.  X/Open has a description of these data types that
- * is useful.  See Chapter 10 of "Protocols for Interworking:
+ * करोcument.  X/Open has a description of these data types that
+ * is useful.  See Chapter 10 of "Protocols क्रम Interworking:
  * XNFS, Version 3W".
  *
  * Not all basic data types have their own encoding and decoding
- * functions.  For run-time efficiency, some data types are encoded
- * or decoded inline.
+ * functions.  For run-समय efficiency, some data types are encoded
+ * or decoded अंतरभूत.
  */
 
-static void encode_bool(struct xdr_stream *xdr, const int value)
-{
+अटल व्योम encode_bool(काष्ठा xdr_stream *xdr, स्थिर पूर्णांक value)
+अणु
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4);
 	*p = value ? xdr_one : xdr_zero;
-}
+पूर्ण
 
-static void encode_int32(struct xdr_stream *xdr, const s32 value)
-{
+अटल व्योम encode_पूर्णांक32(काष्ठा xdr_stream *xdr, स्थिर s32 value)
+अणु
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4);
 	*p = cpu_to_be32(value);
-}
+पूर्ण
 
 /*
- *	typedef opaque netobj<MAXNETOBJ_SZ>
+ *	प्रकार opaque netobj<MAXNETOBJ_SZ>
  */
-static void encode_netobj(struct xdr_stream *xdr,
-			  const u8 *data, const unsigned int length)
-{
+अटल व्योम encode_netobj(काष्ठा xdr_stream *xdr,
+			  स्थिर u8 *data, स्थिर अचिन्हित पूर्णांक length)
+अणु
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4 + length);
 	xdr_encode_opaque(p, data, length);
-}
+पूर्ण
 
-static int decode_netobj(struct xdr_stream *xdr,
-			 struct xdr_netobj *obj)
-{
-	ssize_t ret;
+अटल पूर्णांक decode_netobj(काष्ठा xdr_stream *xdr,
+			 काष्ठा xdr_netobj *obj)
+अणु
+	sमाप_प्रकार ret;
 
-	ret = xdr_stream_decode_opaque_inline(xdr, (void *)&obj->data,
+	ret = xdr_stream_decode_opaque_अंतरभूत(xdr, (व्योम *)&obj->data,
 			XDR_MAX_NETOBJ);
-	if (unlikely(ret < 0))
-		return -EIO;
+	अगर (unlikely(ret < 0))
+		वापस -EIO;
 	obj->len = ret;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	netobj cookie;
  */
-static void encode_cookie(struct xdr_stream *xdr,
-			  const struct nlm_cookie *cookie)
-{
+अटल व्योम encode_cookie(काष्ठा xdr_stream *xdr,
+			  स्थिर काष्ठा nlm_cookie *cookie)
+अणु
 	encode_netobj(xdr, (u8 *)&cookie->data, cookie->len);
-}
+पूर्ण
 
-static int decode_cookie(struct xdr_stream *xdr,
-			 struct nlm_cookie *cookie)
-{
+अटल पूर्णांक decode_cookie(काष्ठा xdr_stream *xdr,
+			 काष्ठा nlm_cookie *cookie)
+अणु
 	u32 length;
 	__be32 *p;
 
-	p = xdr_inline_decode(xdr, 4);
-	if (unlikely(p == NULL))
-		goto out_overflow;
+	p = xdr_अंतरभूत_decode(xdr, 4);
+	अगर (unlikely(p == शून्य))
+		जाओ out_overflow;
 	length = be32_to_cpup(p++);
-	/* apparently HPUX can return empty cookies */
-	if (length == 0)
-		goto out_hpux;
-	if (length > NLM_MAXCOOKIELEN)
-		goto out_size;
-	p = xdr_inline_decode(xdr, length);
-	if (unlikely(p == NULL))
-		goto out_overflow;
+	/* apparently HPUX can वापस empty cookies */
+	अगर (length == 0)
+		जाओ out_hpux;
+	अगर (length > NLM_MAXCOOKIELEN)
+		जाओ out_size;
+	p = xdr_अंतरभूत_decode(xdr, length);
+	अगर (unlikely(p == शून्य))
+		जाओ out_overflow;
 	cookie->len = length;
-	memcpy(cookie->data, p, length);
-	return 0;
+	स_नकल(cookie->data, p, length);
+	वापस 0;
 out_hpux:
 	cookie->len = 4;
-	memset(cookie->data, 0, 4);
-	return 0;
+	स_रखो(cookie->data, 0, 4);
+	वापस 0;
 out_size:
-	dprintk("NFS: returned cookie was too long: %u\n", length);
-	return -EIO;
+	dprपूर्णांकk("NFS: returned cookie was too long: %u\n", length);
+	वापस -EIO;
 out_overflow:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
  *	netobj fh;
  */
-static void encode_fh(struct xdr_stream *xdr, const struct nfs_fh *fh)
-{
+अटल व्योम encode_fh(काष्ठा xdr_stream *xdr, स्थिर काष्ठा nfs_fh *fh)
+अणु
 	encode_netobj(xdr, (u8 *)&fh->data, NFS2_FHSIZE);
-}
+पूर्ण
 
 /*
- *	enum nlm_stats {
+ *	क्रमागत nlm_stats अणु
  *		LCK_GRANTED = 0,
  *		LCK_DENIED = 1,
  *		LCK_DENIED_NOLOCKS = 2,
  *		LCK_BLOCKED = 3,
  *		LCK_DENIED_GRACE_PERIOD = 4
- *	};
+ *	पूर्ण;
  *
  *
- *	struct nlm_stat {
+ *	काष्ठा nlm_stat अणु
  *		nlm_stats stat;
- *	};
+ *	पूर्ण;
  *
- * NB: we don't swap bytes for the NLM status values.  The upper
+ * NB: we करोn't swap bytes क्रम the NLM status values.  The upper
  * layers deal directly with the status value in network byte
  * order.
  */
 
-static void encode_nlm_stat(struct xdr_stream *xdr,
-			    const __be32 stat)
-{
+अटल व्योम encode_nlm_stat(काष्ठा xdr_stream *xdr,
+			    स्थिर __be32 stat)
+अणु
 	__be32 *p;
 
 	WARN_ON_ONCE(be32_to_cpu(stat) > NLM_LCK_DENIED_GRACE_PERIOD);
 	p = xdr_reserve_space(xdr, 4);
 	*p = stat;
-}
+पूर्ण
 
-static int decode_nlm_stat(struct xdr_stream *xdr,
+अटल पूर्णांक decode_nlm_stat(काष्ठा xdr_stream *xdr,
 			   __be32 *stat)
-{
+अणु
 	__be32 *p;
 
-	p = xdr_inline_decode(xdr, 4);
-	if (unlikely(p == NULL))
-		goto out_overflow;
-	if (unlikely(ntohl(*p) > ntohl(nlm_lck_denied_grace_period)))
-		goto out_enum;
+	p = xdr_अंतरभूत_decode(xdr, 4);
+	अगर (unlikely(p == शून्य))
+		जाओ out_overflow;
+	अगर (unlikely(ntohl(*p) > ntohl(nlm_lck_denied_grace_period)))
+		जाओ out_क्रमागत;
 	*stat = *p;
-	return 0;
-out_enum:
-	dprintk("%s: server returned invalid nlm_stats value: %u\n",
+	वापस 0;
+out_क्रमागत:
+	dprपूर्णांकk("%s: server returned invalid nlm_stats value: %u\n",
 		__func__, be32_to_cpup(p));
-	return -EIO;
+	वापस -EIO;
 out_overflow:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
- *	struct nlm_holder {
+ *	काष्ठा nlm_holder अणु
  *		bool exclusive;
- *		int uppid;
+ *		पूर्णांक uppid;
  *		netobj oh;
- *		unsigned l_offset;
- *		unsigned l_len;
- *	};
+ *		अचिन्हित l_offset;
+ *		अचिन्हित l_len;
+ *	पूर्ण;
  */
-static void encode_nlm_holder(struct xdr_stream *xdr,
-			      const struct nlm_res *result)
-{
-	const struct nlm_lock *lock = &result->lock;
+अटल व्योम encode_nlm_holder(काष्ठा xdr_stream *xdr,
+			      स्थिर काष्ठा nlm_res *result)
+अणु
+	स्थिर काष्ठा nlm_lock *lock = &result->lock;
 	u32 l_offset, l_len;
 	__be32 *p;
 
 	encode_bool(xdr, lock->fl.fl_type == F_RDLCK);
-	encode_int32(xdr, lock->svid);
+	encode_पूर्णांक32(xdr, lock->svid);
 	encode_netobj(xdr, lock->oh.data, lock->oh.len);
 
 	p = xdr_reserve_space(xdr, 4 + 4);
 	nlm_compute_offsets(lock, &l_offset, &l_len);
 	*p++ = cpu_to_be32(l_offset);
 	*p   = cpu_to_be32(l_len);
-}
+पूर्ण
 
-static int decode_nlm_holder(struct xdr_stream *xdr, struct nlm_res *result)
-{
-	struct nlm_lock *lock = &result->lock;
-	struct file_lock *fl = &lock->fl;
+अटल पूर्णांक decode_nlm_holder(काष्ठा xdr_stream *xdr, काष्ठा nlm_res *result)
+अणु
+	काष्ठा nlm_lock *lock = &result->lock;
+	काष्ठा file_lock *fl = &lock->fl;
 	u32 exclusive, l_offset, l_len;
-	int error;
+	पूर्णांक error;
 	__be32 *p;
 	s32 end;
 
-	memset(lock, 0, sizeof(*lock));
+	स_रखो(lock, 0, माप(*lock));
 	locks_init_lock(fl);
 
-	p = xdr_inline_decode(xdr, 4 + 4);
-	if (unlikely(p == NULL))
-		goto out_overflow;
+	p = xdr_अंतरभूत_decode(xdr, 4 + 4);
+	अगर (unlikely(p == शून्य))
+		जाओ out_overflow;
 	exclusive = be32_to_cpup(p++);
 	lock->svid = be32_to_cpup(p);
 	fl->fl_pid = (pid_t)lock->svid;
 
 	error = decode_netobj(xdr, &lock->oh);
-	if (unlikely(error))
-		goto out;
+	अगर (unlikely(error))
+		जाओ out;
 
-	p = xdr_inline_decode(xdr, 4 + 4);
-	if (unlikely(p == NULL))
-		goto out_overflow;
+	p = xdr_अंतरभूत_decode(xdr, 4 + 4);
+	अगर (unlikely(p == शून्य))
+		जाओ out_overflow;
 
 	fl->fl_flags = FL_POSIX;
 	fl->fl_type  = exclusive != 0 ? F_WRLCK : F_RDLCK;
@@ -282,43 +283,43 @@ static int decode_nlm_holder(struct xdr_stream *xdr, struct nlm_res *result)
 	end = l_offset + l_len - 1;
 
 	fl->fl_start = (loff_t)l_offset;
-	if (l_len == 0 || end < 0)
+	अगर (l_len == 0 || end < 0)
 		fl->fl_end = OFFSET_MAX;
-	else
+	अन्यथा
 		fl->fl_end = (loff_t)end;
 	error = 0;
 out:
-	return error;
+	वापस error;
 out_overflow:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
 /*
  *	string caller_name<LM_MAXSTRLEN>;
  */
-static void encode_caller_name(struct xdr_stream *xdr, const char *name)
-{
-	/* NB: client-side does not set lock->len */
-	u32 length = strlen(name);
+अटल व्योम encode_caller_name(काष्ठा xdr_stream *xdr, स्थिर अक्षर *name)
+अणु
+	/* NB: client-side करोes not set lock->len */
+	u32 length = म_माप(name);
 	__be32 *p;
 
 	p = xdr_reserve_space(xdr, 4 + length);
 	xdr_encode_opaque(p, name, length);
-}
+पूर्ण
 
 /*
- *	struct nlm_lock {
+ *	काष्ठा nlm_lock अणु
  *		string caller_name<LM_MAXSTRLEN>;
  *		netobj fh;
  *		netobj oh;
- *		int uppid;
- *		unsigned l_offset;
- *		unsigned l_len;
- *	};
+ *		पूर्णांक uppid;
+ *		अचिन्हित l_offset;
+ *		अचिन्हित l_len;
+ *	पूर्ण;
  */
-static void encode_nlm_lock(struct xdr_stream *xdr,
-			    const struct nlm_lock *lock)
-{
+अटल व्योम encode_nlm_lock(काष्ठा xdr_stream *xdr,
+			    स्थिर काष्ठा nlm_lock *lock)
+अणु
 	u32 l_offset, l_len;
 	__be32 *p;
 
@@ -332,7 +333,7 @@ static void encode_nlm_lock(struct xdr_stream *xdr,
 	nlm_compute_offsets(lock, &l_offset, &l_len);
 	*p++ = cpu_to_be32(l_offset);
 	*p   = cpu_to_be32(l_len);
-}
+पूर्ण
 
 
 /*
@@ -343,133 +344,133 @@ static void encode_nlm_lock(struct xdr_stream *xdr,
  */
 
 /*
- *	struct nlm_testargs {
+ *	काष्ठा nlm_testargs अणु
  *		netobj cookie;
  *		bool exclusive;
- *		struct nlm_lock alock;
- *	};
+ *		काष्ठा nlm_lock alock;
+ *	पूर्ण;
  */
-static void nlm_xdr_enc_testargs(struct rpc_rqst *req,
-				 struct xdr_stream *xdr,
-				 const void *data)
-{
-	const struct nlm_args *args = data;
-	const struct nlm_lock *lock = &args->lock;
+अटल व्योम nlm_xdr_enc_testargs(काष्ठा rpc_rqst *req,
+				 काष्ठा xdr_stream *xdr,
+				 स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा nlm_args *args = data;
+	स्थिर काष्ठा nlm_lock *lock = &args->lock;
 
 	encode_cookie(xdr, &args->cookie);
 	encode_bool(xdr, lock->fl.fl_type == F_WRLCK);
 	encode_nlm_lock(xdr, lock);
-}
+पूर्ण
 
 /*
- *	struct nlm_lockargs {
+ *	काष्ठा nlm_lockargs अणु
  *		netobj cookie;
  *		bool block;
  *		bool exclusive;
- *		struct nlm_lock alock;
+ *		काष्ठा nlm_lock alock;
  *		bool reclaim;
- *		int state;
- *	};
+ *		पूर्णांक state;
+ *	पूर्ण;
  */
-static void nlm_xdr_enc_lockargs(struct rpc_rqst *req,
-				 struct xdr_stream *xdr,
-				 const void *data)
-{
-	const struct nlm_args *args = data;
-	const struct nlm_lock *lock = &args->lock;
+अटल व्योम nlm_xdr_enc_lockargs(काष्ठा rpc_rqst *req,
+				 काष्ठा xdr_stream *xdr,
+				 स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा nlm_args *args = data;
+	स्थिर काष्ठा nlm_lock *lock = &args->lock;
 
 	encode_cookie(xdr, &args->cookie);
 	encode_bool(xdr, args->block);
 	encode_bool(xdr, lock->fl.fl_type == F_WRLCK);
 	encode_nlm_lock(xdr, lock);
 	encode_bool(xdr, args->reclaim);
-	encode_int32(xdr, args->state);
-}
+	encode_पूर्णांक32(xdr, args->state);
+पूर्ण
 
 /*
- *	struct nlm_cancargs {
+ *	काष्ठा nlm_cancargs अणु
  *		netobj cookie;
  *		bool block;
  *		bool exclusive;
- *		struct nlm_lock alock;
- *	};
+ *		काष्ठा nlm_lock alock;
+ *	पूर्ण;
  */
-static void nlm_xdr_enc_cancargs(struct rpc_rqst *req,
-				 struct xdr_stream *xdr,
-				 const void *data)
-{
-	const struct nlm_args *args = data;
-	const struct nlm_lock *lock = &args->lock;
+अटल व्योम nlm_xdr_enc_cancargs(काष्ठा rpc_rqst *req,
+				 काष्ठा xdr_stream *xdr,
+				 स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा nlm_args *args = data;
+	स्थिर काष्ठा nlm_lock *lock = &args->lock;
 
 	encode_cookie(xdr, &args->cookie);
 	encode_bool(xdr, args->block);
 	encode_bool(xdr, lock->fl.fl_type == F_WRLCK);
 	encode_nlm_lock(xdr, lock);
-}
+पूर्ण
 
 /*
- *	struct nlm_unlockargs {
+ *	काष्ठा nlm_unlockargs अणु
  *		netobj cookie;
- *		struct nlm_lock alock;
- *	};
+ *		काष्ठा nlm_lock alock;
+ *	पूर्ण;
  */
-static void nlm_xdr_enc_unlockargs(struct rpc_rqst *req,
-				   struct xdr_stream *xdr,
-				   const void *data)
-{
-	const struct nlm_args *args = data;
-	const struct nlm_lock *lock = &args->lock;
+अटल व्योम nlm_xdr_enc_unlockargs(काष्ठा rpc_rqst *req,
+				   काष्ठा xdr_stream *xdr,
+				   स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा nlm_args *args = data;
+	स्थिर काष्ठा nlm_lock *lock = &args->lock;
 
 	encode_cookie(xdr, &args->cookie);
 	encode_nlm_lock(xdr, lock);
-}
+पूर्ण
 
 /*
- *	struct nlm_res {
+ *	काष्ठा nlm_res अणु
  *		netobj cookie;
  *		nlm_stat stat;
- *	};
+ *	पूर्ण;
  */
-static void nlm_xdr_enc_res(struct rpc_rqst *req,
-			    struct xdr_stream *xdr,
-			    const void *data)
-{
-	const struct nlm_res *result = data;
+अटल व्योम nlm_xdr_enc_res(काष्ठा rpc_rqst *req,
+			    काष्ठा xdr_stream *xdr,
+			    स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा nlm_res *result = data;
 
 	encode_cookie(xdr, &result->cookie);
 	encode_nlm_stat(xdr, result->status);
-}
+पूर्ण
 
 /*
- *	union nlm_testrply switch (nlm_stats stat) {
- *	case LCK_DENIED:
- *		struct nlm_holder holder;
- *	default:
- *		void;
- *	};
+ *	जोड़ nlm_testrply चयन (nlm_stats stat) अणु
+ *	हाल LCK_DENIED:
+ *		काष्ठा nlm_holder holder;
+ *	शेष:
+ *		व्योम;
+ *	पूर्ण;
  *
- *	struct nlm_testres {
+ *	काष्ठा nlm_testres अणु
  *		netobj cookie;
  *		nlm_testrply test_stat;
- *	};
+ *	पूर्ण;
  */
-static void encode_nlm_testrply(struct xdr_stream *xdr,
-				const struct nlm_res *result)
-{
-	if (result->status == nlm_lck_denied)
+अटल व्योम encode_nlm_testrply(काष्ठा xdr_stream *xdr,
+				स्थिर काष्ठा nlm_res *result)
+अणु
+	अगर (result->status == nlm_lck_denied)
 		encode_nlm_holder(xdr, result);
-}
+पूर्ण
 
-static void nlm_xdr_enc_testres(struct rpc_rqst *req,
-				struct xdr_stream *xdr,
-				const void *data)
-{
-	const struct nlm_res *result = data;
+अटल व्योम nlm_xdr_enc_testres(काष्ठा rpc_rqst *req,
+				काष्ठा xdr_stream *xdr,
+				स्थिर व्योम *data)
+अणु
+	स्थिर काष्ठा nlm_res *result = data;
 
 	encode_cookie(xdr, &result->cookie);
 	encode_nlm_stat(xdr, result->status);
 	encode_nlm_testrply(xdr, result);
-}
+पूर्ण
 
 
 /*
@@ -480,76 +481,76 @@ static void nlm_xdr_enc_testres(struct rpc_rqst *req,
  */
 
 /*
- *	union nlm_testrply switch (nlm_stats stat) {
- *	case LCK_DENIED:
- *		struct nlm_holder holder;
- *	default:
- *		void;
- *	};
+ *	जोड़ nlm_testrply चयन (nlm_stats stat) अणु
+ *	हाल LCK_DENIED:
+ *		काष्ठा nlm_holder holder;
+ *	शेष:
+ *		व्योम;
+ *	पूर्ण;
  *
- *	struct nlm_testres {
+ *	काष्ठा nlm_testres अणु
  *		netobj cookie;
  *		nlm_testrply test_stat;
- *	};
+ *	पूर्ण;
  */
-static int decode_nlm_testrply(struct xdr_stream *xdr,
-			       struct nlm_res *result)
-{
-	int error;
+अटल पूर्णांक decode_nlm_testrply(काष्ठा xdr_stream *xdr,
+			       काष्ठा nlm_res *result)
+अणु
+	पूर्णांक error;
 
 	error = decode_nlm_stat(xdr, &result->status);
-	if (unlikely(error))
-		goto out;
-	if (result->status == nlm_lck_denied)
+	अगर (unlikely(error))
+		जाओ out;
+	अगर (result->status == nlm_lck_denied)
 		error = decode_nlm_holder(xdr, result);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int nlm_xdr_dec_testres(struct rpc_rqst *req,
-			       struct xdr_stream *xdr,
-			       void *data)
-{
-	struct nlm_res *result = data;
-	int error;
+अटल पूर्णांक nlm_xdr_dec_testres(काष्ठा rpc_rqst *req,
+			       काष्ठा xdr_stream *xdr,
+			       व्योम *data)
+अणु
+	काष्ठा nlm_res *result = data;
+	पूर्णांक error;
 
 	error = decode_cookie(xdr, &result->cookie);
-	if (unlikely(error))
-		goto out;
+	अगर (unlikely(error))
+		जाओ out;
 	error = decode_nlm_testrply(xdr, result);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 /*
- *	struct nlm_res {
+ *	काष्ठा nlm_res अणु
  *		netobj cookie;
  *		nlm_stat stat;
- *	};
+ *	पूर्ण;
  */
-static int nlm_xdr_dec_res(struct rpc_rqst *req,
-			   struct xdr_stream *xdr,
-			   void *data)
-{
-	struct nlm_res *result = data;
-	int error;
+अटल पूर्णांक nlm_xdr_dec_res(काष्ठा rpc_rqst *req,
+			   काष्ठा xdr_stream *xdr,
+			   व्योम *data)
+अणु
+	काष्ठा nlm_res *result = data;
+	पूर्णांक error;
 
 	error = decode_cookie(xdr, &result->cookie);
-	if (unlikely(error))
-		goto out;
+	अगर (unlikely(error))
+		जाओ out;
 	error = decode_nlm_stat(xdr, &result->status);
 out:
-	return error;
-}
+	वापस error;
+पूर्ण
 
 
 /*
- * For NLM, a void procedure really returns nothing
+ * For NLM, a व्योम procedure really वापसs nothing
  */
-#define nlm_xdr_dec_norep	NULL
+#घोषणा nlm_xdr_dec_norep	शून्य
 
-#define PROC(proc, argtype, restype)	\
-[NLMPROC_##proc] = {							\
+#घोषणा PROC(proc, argtype, restype)	\
+[NLMPROC_##proc] = अणु							\
 	.p_proc      = NLMPROC_##proc,					\
 	.p_encode    = nlm_xdr_enc_##argtype,		\
 	.p_decode    = nlm_xdr_dec_##restype,				\
@@ -557,9 +558,9 @@ out:
 	.p_replen    = NLM_##restype##_sz,				\
 	.p_statidx   = NLMPROC_##proc,					\
 	.p_name      = #proc,						\
-	}
+	पूर्ण
 
-static const struct rpc_procinfo nlm_procedures[] = {
+अटल स्थिर काष्ठा rpc_procinfo nlm_procedures[] = अणु
 	PROC(TEST,		testargs,	testres),
 	PROC(LOCK,		lockargs,	res),
 	PROC(CANCEL,		cancargs,	res),
@@ -575,38 +576,38 @@ static const struct rpc_procinfo nlm_procedures[] = {
 	PROC(CANCEL_RES,	res,		norep),
 	PROC(UNLOCK_RES,	res,		norep),
 	PROC(GRANTED_RES,	res,		norep),
-};
+पूर्ण;
 
-static unsigned int nlm_version1_counts[ARRAY_SIZE(nlm_procedures)];
-static const struct rpc_version	nlm_version1 = {
+अटल अचिन्हित पूर्णांक nlm_version1_counts[ARRAY_SIZE(nlm_procedures)];
+अटल स्थिर काष्ठा rpc_version	nlm_version1 = अणु
 	.number		= 1,
 	.nrprocs	= ARRAY_SIZE(nlm_procedures),
 	.procs		= nlm_procedures,
 	.counts		= nlm_version1_counts,
-};
+पूर्ण;
 
-static unsigned int nlm_version3_counts[ARRAY_SIZE(nlm_procedures)];
-static const struct rpc_version	nlm_version3 = {
+अटल अचिन्हित पूर्णांक nlm_version3_counts[ARRAY_SIZE(nlm_procedures)];
+अटल स्थिर काष्ठा rpc_version	nlm_version3 = अणु
 	.number		= 3,
 	.nrprocs	= ARRAY_SIZE(nlm_procedures),
 	.procs		= nlm_procedures,
 	.counts		= nlm_version3_counts,
-};
+पूर्ण;
 
-static const struct rpc_version	*nlm_versions[] = {
+अटल स्थिर काष्ठा rpc_version	*nlm_versions[] = अणु
 	[1] = &nlm_version1,
 	[3] = &nlm_version3,
-#ifdef CONFIG_LOCKD_V4
+#अगर_घोषित CONFIG_LOCKD_V4
 	[4] = &nlm_version4,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static struct rpc_stat		nlm_rpc_stats;
+अटल काष्ठा rpc_stat		nlm_rpc_stats;
 
-const struct rpc_program	nlm_program = {
+स्थिर काष्ठा rpc_program	nlm_program = अणु
 	.name		= "lockd",
 	.number		= NLM_PROGRAM,
 	.nrvers		= ARRAY_SIZE(nlm_versions),
 	.version	= nlm_versions,
 	.stats		= &nlm_rpc_stats,
-};
+पूर्ण;

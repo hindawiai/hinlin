@@ -1,19 +1,20 @@
-#ifndef _PERF_RWSEM_H
-#define _PERF_RWSEM_H
+<शैली गुरु>
+#अगर_अघोषित _PERF_RWSEM_H
+#घोषणा _PERF_RWSEM_H
 
-#include <pthread.h>
+#समावेश <pthपढ़ो.h>
 
-struct rw_semaphore {
-	pthread_rwlock_t lock;
-};
+काष्ठा rw_semaphore अणु
+	pthपढ़ो_rwlock_t lock;
+पूर्ण;
 
-int init_rwsem(struct rw_semaphore *sem);
-int exit_rwsem(struct rw_semaphore *sem);
+पूर्णांक init_rwsem(काष्ठा rw_semaphore *sem);
+पूर्णांक निकास_rwsem(काष्ठा rw_semaphore *sem);
 
-int down_read(struct rw_semaphore *sem);
-int up_read(struct rw_semaphore *sem);
+पूर्णांक करोwn_पढ़ो(काष्ठा rw_semaphore *sem);
+पूर्णांक up_पढ़ो(काष्ठा rw_semaphore *sem);
 
-int down_write(struct rw_semaphore *sem);
-int up_write(struct rw_semaphore *sem);
+पूर्णांक करोwn_ग_लिखो(काष्ठा rw_semaphore *sem);
+पूर्णांक up_ग_लिखो(काष्ठा rw_semaphore *sem);
 
-#endif /* _PERF_RWSEM_H */
+#पूर्ण_अगर /* _PERF_RWSEM_H */

@@ -1,172 +1,173 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2004
  *   Portions Copyright (C) Christoph Hellwig, 2001-2002
  */
 
-#include <linux/fs.h>
-#include <linux/module.h>
-#include <linux/parser.h>
-#include <linux/completion.h>
-#include <linux/vfs.h>
-#include <linux/quotaops.h>
-#include <linux/mount.h>
-#include <linux/moduleparam.h>
-#include <linux/kthread.h>
-#include <linux/posix_acl.h>
-#include <linux/buffer_head.h>
-#include <linux/exportfs.h>
-#include <linux/crc32.h>
-#include <linux/slab.h>
-#include <linux/uaccess.h>
-#include <linux/seq_file.h>
-#include <linux/blkdev.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/module.h>
+#समावेश <linux/parser.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/vfs.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/posix_acl.h>
+#समावेश <linux/buffer_head.h>
+#समावेश <linux/exportfs.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/blkdev.h>
 
-#include "jfs_incore.h"
-#include "jfs_filsys.h"
-#include "jfs_inode.h"
-#include "jfs_metapage.h"
-#include "jfs_superblock.h"
-#include "jfs_dmap.h"
-#include "jfs_imap.h"
-#include "jfs_acl.h"
-#include "jfs_debug.h"
-#include "jfs_xattr.h"
-#include "jfs_dinode.h"
+#समावेश "jfs_incore.h"
+#समावेश "jfs_filsys.h"
+#समावेश "jfs_inode.h"
+#समावेश "jfs_metapage.h"
+#समावेश "jfs_superblock.h"
+#समावेश "jfs_dmap.h"
+#समावेश "jfs_imap.h"
+#समावेश "jfs_acl.h"
+#समावेश "jfs_debug.h"
+#समावेश "jfs_xattr.h"
+#समावेश "jfs_dinode.h"
 
 MODULE_DESCRIPTION("The Journaled Filesystem (JFS)");
 MODULE_AUTHOR("Steve Best/Dave Kleikamp/Barry Arndt, IBM");
 MODULE_LICENSE("GPL");
 
-static struct kmem_cache *jfs_inode_cachep;
+अटल काष्ठा kmem_cache *jfs_inode_cachep;
 
-static const struct super_operations jfs_super_operations;
-static const struct export_operations jfs_export_operations;
-static struct file_system_type jfs_fs_type;
+अटल स्थिर काष्ठा super_operations jfs_super_operations;
+अटल स्थिर काष्ठा export_operations jfs_export_operations;
+अटल काष्ठा file_प्रणाली_type jfs_fs_type;
 
-#define MAX_COMMIT_THREADS 64
-static int commit_threads;
-module_param(commit_threads, int, 0);
-MODULE_PARM_DESC(commit_threads, "Number of commit threads");
+#घोषणा MAX_COMMIT_THREADS 64
+अटल पूर्णांक commit_thपढ़ोs;
+module_param(commit_thपढ़ोs, पूर्णांक, 0);
+MODULE_PARM_DESC(commit_thपढ़ोs, "Number of commit threads");
 
-static struct task_struct *jfsCommitThread[MAX_COMMIT_THREADS];
-struct task_struct *jfsIOthread;
-struct task_struct *jfsSyncThread;
+अटल काष्ठा task_काष्ठा *jfsCommitThपढ़ो[MAX_COMMIT_THREADS];
+काष्ठा task_काष्ठा *jfsIOthपढ़ो;
+काष्ठा task_काष्ठा *jfsSyncThपढ़ो;
 
-#ifdef CONFIG_JFS_DEBUG
-int jfsloglevel = JFS_LOGLEVEL_WARN;
-module_param(jfsloglevel, int, 0644);
+#अगर_घोषित CONFIG_JFS_DEBUG
+पूर्णांक jfsloglevel = JFS_LOGLEVEL_WARN;
+module_param(jfsloglevel, पूर्णांक, 0644);
 MODULE_PARM_DESC(jfsloglevel, "Specify JFS loglevel (0, 1 or 2)");
-#endif
+#पूर्ण_अगर
 
-static void jfs_handle_error(struct super_block *sb)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(sb);
+अटल व्योम jfs_handle_error(काष्ठा super_block *sb)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
 
-	if (sb_rdonly(sb))
-		return;
+	अगर (sb_rकरोnly(sb))
+		वापस;
 
-	updateSuper(sb, FM_DIRTY);
+	updateSuper(sb, FM_सूचीTY);
 
-	if (sbi->flag & JFS_ERR_PANIC)
+	अगर (sbi->flag & JFS_ERR_PANIC)
 		panic("JFS (device %s): panic forced after error\n",
 			sb->s_id);
-	else if (sbi->flag & JFS_ERR_REMOUNT_RO) {
+	अन्यथा अगर (sbi->flag & JFS_ERR_REMOUNT_RO) अणु
 		jfs_err("ERROR: (device %s): remounting filesystem as read-only",
 			sb->s_id);
 		sb->s_flags |= SB_RDONLY;
-	}
+	पूर्ण
 
-	/* nothing is done for continue beyond marking the superblock dirty */
-}
+	/* nothing is करोne क्रम जारी beyond marking the superblock dirty */
+पूर्ण
 
-void jfs_error(struct super_block *sb, const char *fmt, ...)
-{
-	struct va_format vaf;
-	va_list args;
+व्योम jfs_error(काष्ठा super_block *sb, स्थिर अक्षर *fmt, ...)
+अणु
+	काष्ठा va_क्रमmat vaf;
+	बहु_सूची args;
 
-	va_start(args, fmt);
+	बहु_शुरू(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
 	pr_err("ERROR: (device %s): %ps: %pV\n",
-	       sb->s_id, __builtin_return_address(0), &vaf);
+	       sb->s_id, __builtin_वापस_address(0), &vaf);
 
-	va_end(args);
+	बहु_पूर्ण(args);
 
 	jfs_handle_error(sb);
-}
+पूर्ण
 
-static struct inode *jfs_alloc_inode(struct super_block *sb)
-{
-	struct jfs_inode_info *jfs_inode;
+अटल काष्ठा inode *jfs_alloc_inode(काष्ठा super_block *sb)
+अणु
+	काष्ठा jfs_inode_info *jfs_inode;
 
 	jfs_inode = kmem_cache_alloc(jfs_inode_cachep, GFP_NOFS);
-	if (!jfs_inode)
-		return NULL;
-#ifdef CONFIG_QUOTA
-	memset(&jfs_inode->i_dquot, 0, sizeof(jfs_inode->i_dquot));
-#endif
-	return &jfs_inode->vfs_inode;
-}
+	अगर (!jfs_inode)
+		वापस शून्य;
+#अगर_घोषित CONFIG_QUOTA
+	स_रखो(&jfs_inode->i_dquot, 0, माप(jfs_inode->i_dquot));
+#पूर्ण_अगर
+	वापस &jfs_inode->vfs_inode;
+पूर्ण
 
-static void jfs_free_inode(struct inode *inode)
-{
-	kmem_cache_free(jfs_inode_cachep, JFS_IP(inode));
-}
+अटल व्योम jfs_मुक्त_inode(काष्ठा inode *inode)
+अणु
+	kmem_cache_मुक्त(jfs_inode_cachep, JFS_IP(inode));
+पूर्ण
 
-static int jfs_statfs(struct dentry *dentry, struct kstatfs *buf)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(dentry->d_sb);
+अटल पूर्णांक jfs_statfs(काष्ठा dentry *dentry, काष्ठा kstatfs *buf)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(dentry->d_sb);
 	s64 maxinodes;
-	struct inomap *imap = JFS_IP(sbi->ipimap)->i_imap;
+	काष्ठा inomap *imap = JFS_IP(sbi->ipimap)->i_imap;
 
 	jfs_info("In jfs_statfs");
 	buf->f_type = JFS_SUPER_MAGIC;
 	buf->f_bsize = sbi->bsize;
 	buf->f_blocks = sbi->bmap->db_mapsize;
-	buf->f_bfree = sbi->bmap->db_nfree;
-	buf->f_bavail = sbi->bmap->db_nfree;
+	buf->f_bमुक्त = sbi->bmap->db_nमुक्त;
+	buf->f_bavail = sbi->bmap->db_nमुक्त;
 	/*
-	 * If we really return the number of allocated & free inodes, some
-	 * applications will fail because they won't see enough free inodes.
+	 * If we really वापस the number of allocated & मुक्त inodes, some
+	 * applications will fail because they won't see enough मुक्त inodes.
 	 * We'll try to calculate some guess as to how many inodes we can
 	 * really allocate
 	 *
-	 * buf->f_files = atomic_read(&imap->im_numinos);
-	 * buf->f_ffree = atomic_read(&imap->im_numfree);
+	 * buf->f_files = atomic_पढ़ो(&imap->im_numinos);
+	 * buf->f_fमुक्त = atomic_पढ़ो(&imap->im_numमुक्त);
 	 */
-	maxinodes = min((s64) atomic_read(&imap->im_numinos) +
-			((sbi->bmap->db_nfree >> imap->im_l2nbperiext)
+	maxinodes = min((s64) atomic_पढ़ो(&imap->im_numinos) +
+			((sbi->bmap->db_nमुक्त >> imap->im_l2nbperiext)
 			 << L2INOSPEREXT), (s64) 0xffffffffLL);
 	buf->f_files = maxinodes;
-	buf->f_ffree = maxinodes - (atomic_read(&imap->im_numinos) -
-				    atomic_read(&imap->im_numfree));
-	buf->f_fsid.val[0] = crc32_le(0, (char *)&sbi->uuid,
-				      sizeof(sbi->uuid)/2);
+	buf->f_fमुक्त = maxinodes - (atomic_पढ़ो(&imap->im_numinos) -
+				    atomic_पढ़ो(&imap->im_numमुक्त));
+	buf->f_fsid.val[0] = crc32_le(0, (अक्षर *)&sbi->uuid,
+				      माप(sbi->uuid)/2);
 	buf->f_fsid.val[1] = crc32_le(0,
-				      (char *)&sbi->uuid + sizeof(sbi->uuid)/2,
-				      sizeof(sbi->uuid)/2);
+				      (अक्षर *)&sbi->uuid + माप(sbi->uuid)/2,
+				      माप(sbi->uuid)/2);
 
 	buf->f_namelen = JFS_NAME_MAX;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_QUOTA
-static int jfs_quota_off(struct super_block *sb, int type);
-static int jfs_quota_on(struct super_block *sb, int type, int format_id,
-			const struct path *path);
+#अगर_घोषित CONFIG_QUOTA
+अटल पूर्णांक jfs_quota_off(काष्ठा super_block *sb, पूर्णांक type);
+अटल पूर्णांक jfs_quota_on(काष्ठा super_block *sb, पूर्णांक type, पूर्णांक क्रमmat_id,
+			स्थिर काष्ठा path *path);
 
-static void jfs_quota_off_umount(struct super_block *sb)
-{
-	int type;
+अटल व्योम jfs_quota_off_umount(काष्ठा super_block *sb)
+अणु
+	पूर्णांक type;
 
-	for (type = 0; type < MAXQUOTAS; type++)
+	क्रम (type = 0; type < MAXQUOTAS; type++)
 		jfs_quota_off(sb, type);
-}
+पूर्ण
 
-static const struct quotactl_ops jfs_quotactl_ops = {
+अटल स्थिर काष्ठा quotactl_ops jfs_quotactl_ops = अणु
 	.quota_on	= jfs_quota_on,
 	.quota_off	= jfs_quota_off,
 	.quota_sync	= dquot_quota_sync,
@@ -175,24 +176,24 @@ static const struct quotactl_ops jfs_quotactl_ops = {
 	.get_dqblk	= dquot_get_dqblk,
 	.set_dqblk	= dquot_set_dqblk,
 	.get_nextdqblk	= dquot_get_next_dqblk,
-};
-#else
-static inline void jfs_quota_off_umount(struct super_block *sb)
-{
-}
-#endif
+पूर्ण;
+#अन्यथा
+अटल अंतरभूत व्योम jfs_quota_off_umount(काष्ठा super_block *sb)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static void jfs_put_super(struct super_block *sb)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(sb);
-	int rc;
+अटल व्योम jfs_put_super(काष्ठा super_block *sb)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
+	पूर्णांक rc;
 
 	jfs_info("In jfs_put_super");
 
 	jfs_quota_off_umount(sb);
 
 	rc = jfs_umount(sb);
-	if (rc)
+	अगर (rc)
 		jfs_err("jfs_umount failed with return code %d", rc);
 
 	unload_nls(sbi->nls_tab);
@@ -200,257 +201,257 @@ static void jfs_put_super(struct super_block *sb)
 	truncate_inode_pages(sbi->direct_inode->i_mapping, 0);
 	iput(sbi->direct_inode);
 
-	kfree(sbi);
-}
+	kमुक्त(sbi);
+पूर्ण
 
-enum {
-	Opt_integrity, Opt_nointegrity, Opt_iocharset, Opt_resize,
+क्रमागत अणु
+	Opt_पूर्णांकegrity, Opt_noपूर्णांकegrity, Opt_ioअक्षरset, Opt_resize,
 	Opt_resize_nosize, Opt_errors, Opt_ignore, Opt_err, Opt_quota,
 	Opt_usrquota, Opt_grpquota, Opt_uid, Opt_gid, Opt_umask,
 	Opt_discard, Opt_nodiscard, Opt_discard_minblk
-};
+पूर्ण;
 
-static const match_table_t tokens = {
-	{Opt_integrity, "integrity"},
-	{Opt_nointegrity, "nointegrity"},
-	{Opt_iocharset, "iocharset=%s"},
-	{Opt_resize, "resize=%u"},
-	{Opt_resize_nosize, "resize"},
-	{Opt_errors, "errors=%s"},
-	{Opt_ignore, "noquota"},
-	{Opt_quota, "quota"},
-	{Opt_usrquota, "usrquota"},
-	{Opt_grpquota, "grpquota"},
-	{Opt_uid, "uid=%u"},
-	{Opt_gid, "gid=%u"},
-	{Opt_umask, "umask=%u"},
-	{Opt_discard, "discard"},
-	{Opt_nodiscard, "nodiscard"},
-	{Opt_discard_minblk, "discard=%u"},
-	{Opt_err, NULL}
-};
+अटल स्थिर match_table_t tokens = अणु
+	अणुOpt_पूर्णांकegrity, "integrity"पूर्ण,
+	अणुOpt_noपूर्णांकegrity, "nointegrity"पूर्ण,
+	अणुOpt_ioअक्षरset, "iocharset=%s"पूर्ण,
+	अणुOpt_resize, "resize=%u"पूर्ण,
+	अणुOpt_resize_nosize, "resize"पूर्ण,
+	अणुOpt_errors, "errors=%s"पूर्ण,
+	अणुOpt_ignore, "noquota"पूर्ण,
+	अणुOpt_quota, "quota"पूर्ण,
+	अणुOpt_usrquota, "usrquota"पूर्ण,
+	अणुOpt_grpquota, "grpquota"पूर्ण,
+	अणुOpt_uid, "uid=%u"पूर्ण,
+	अणुOpt_gid, "gid=%u"पूर्ण,
+	अणुOpt_umask, "umask=%u"पूर्ण,
+	अणुOpt_discard, "discard"पूर्ण,
+	अणुOpt_nodiscard, "nodiscard"पूर्ण,
+	अणुOpt_discard_minblk, "discard=%u"पूर्ण,
+	अणुOpt_err, शून्यपूर्ण
+पूर्ण;
 
-static int parse_options(char *options, struct super_block *sb, s64 *newLVSize,
-			 int *flag)
-{
-	void *nls_map = (void *)-1;	/* -1: no change;  NULL: none */
-	char *p;
-	struct jfs_sb_info *sbi = JFS_SBI(sb);
+अटल पूर्णांक parse_options(अक्षर *options, काष्ठा super_block *sb, s64 *newLVSize,
+			 पूर्णांक *flag)
+अणु
+	व्योम *nls_map = (व्योम *)-1;	/* -1: no change;  शून्य: none */
+	अक्षर *p;
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
 
 	*newLVSize = 0;
 
-	if (!options)
-		return 1;
+	अगर (!options)
+		वापस 1;
 
-	while ((p = strsep(&options, ",")) != NULL) {
+	जबतक ((p = strsep(&options, ",")) != शून्य) अणु
 		substring_t args[MAX_OPT_ARGS];
-		int token;
-		if (!*p)
-			continue;
+		पूर्णांक token;
+		अगर (!*p)
+			जारी;
 
 		token = match_token(p, tokens, args);
-		switch (token) {
-		case Opt_integrity:
+		चयन (token) अणु
+		हाल Opt_पूर्णांकegrity:
 			*flag &= ~JFS_NOINTEGRITY;
-			break;
-		case Opt_nointegrity:
+			अवरोध;
+		हाल Opt_noपूर्णांकegrity:
 			*flag |= JFS_NOINTEGRITY;
-			break;
-		case Opt_ignore:
+			अवरोध;
+		हाल Opt_ignore:
 			/* Silently ignore the quota options */
-			/* Don't do anything ;-) */
-			break;
-		case Opt_iocharset:
-			if (nls_map && nls_map != (void *) -1)
+			/* Don't करो anything ;-) */
+			अवरोध;
+		हाल Opt_ioअक्षरset:
+			अगर (nls_map && nls_map != (व्योम *) -1)
 				unload_nls(nls_map);
-			if (!strcmp(args[0].from, "none"))
-				nls_map = NULL;
-			else {
+			अगर (!म_भेद(args[0].from, "none"))
+				nls_map = शून्य;
+			अन्यथा अणु
 				nls_map = load_nls(args[0].from);
-				if (!nls_map) {
+				अगर (!nls_map) अणु
 					pr_err("JFS: charset not found\n");
-					goto cleanup;
-				}
-			}
-			break;
-		case Opt_resize:
-		{
-			char *resize = args[0].from;
-			int rc = kstrtoll(resize, 0, newLVSize);
+					जाओ cleanup;
+				पूर्ण
+			पूर्ण
+			अवरोध;
+		हाल Opt_resize:
+		अणु
+			अक्षर *resize = args[0].from;
+			पूर्णांक rc = kम_से_दीर्घl(resize, 0, newLVSize);
 
-			if (rc)
-				goto cleanup;
-			break;
-		}
-		case Opt_resize_nosize:
-		{
-			*newLVSize = i_size_read(sb->s_bdev->bd_inode) >>
+			अगर (rc)
+				जाओ cleanup;
+			अवरोध;
+		पूर्ण
+		हाल Opt_resize_nosize:
+		अणु
+			*newLVSize = i_size_पढ़ो(sb->s_bdev->bd_inode) >>
 				sb->s_blocksize_bits;
-			if (*newLVSize == 0)
+			अगर (*newLVSize == 0)
 				pr_err("JFS: Cannot determine volume size\n");
-			break;
-		}
-		case Opt_errors:
-		{
-			char *errors = args[0].from;
-			if (!errors || !*errors)
-				goto cleanup;
-			if (!strcmp(errors, "continue")) {
+			अवरोध;
+		पूर्ण
+		हाल Opt_errors:
+		अणु
+			अक्षर *errors = args[0].from;
+			अगर (!errors || !*errors)
+				जाओ cleanup;
+			अगर (!म_भेद(errors, "continue")) अणु
 				*flag &= ~JFS_ERR_REMOUNT_RO;
 				*flag &= ~JFS_ERR_PANIC;
 				*flag |= JFS_ERR_CONTINUE;
-			} else if (!strcmp(errors, "remount-ro")) {
+			पूर्ण अन्यथा अगर (!म_भेद(errors, "remount-ro")) अणु
 				*flag &= ~JFS_ERR_CONTINUE;
 				*flag &= ~JFS_ERR_PANIC;
 				*flag |= JFS_ERR_REMOUNT_RO;
-			} else if (!strcmp(errors, "panic")) {
+			पूर्ण अन्यथा अगर (!म_भेद(errors, "panic")) अणु
 				*flag &= ~JFS_ERR_CONTINUE;
 				*flag &= ~JFS_ERR_REMOUNT_RO;
 				*flag |= JFS_ERR_PANIC;
-			} else {
+			पूर्ण अन्यथा अणु
 				pr_err("JFS: %s is an invalid error handler\n",
 				       errors);
-				goto cleanup;
-			}
-			break;
-		}
+				जाओ cleanup;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-#ifdef CONFIG_QUOTA
-		case Opt_quota:
-		case Opt_usrquota:
+#अगर_घोषित CONFIG_QUOTA
+		हाल Opt_quota:
+		हाल Opt_usrquota:
 			*flag |= JFS_USRQUOTA;
-			break;
-		case Opt_grpquota:
+			अवरोध;
+		हाल Opt_grpquota:
 			*flag |= JFS_GRPQUOTA;
-			break;
-#else
-		case Opt_usrquota:
-		case Opt_grpquota:
-		case Opt_quota:
+			अवरोध;
+#अन्यथा
+		हाल Opt_usrquota:
+		हाल Opt_grpquota:
+		हाल Opt_quota:
 			pr_err("JFS: quota operations not supported\n");
-			break;
-#endif
-		case Opt_uid:
-		{
-			char *uid = args[0].from;
+			अवरोध;
+#पूर्ण_अगर
+		हाल Opt_uid:
+		अणु
+			अक्षर *uid = args[0].from;
 			uid_t val;
-			int rc = kstrtouint(uid, 0, &val);
+			पूर्णांक rc = kstrtouपूर्णांक(uid, 0, &val);
 
-			if (rc)
-				goto cleanup;
+			अगर (rc)
+				जाओ cleanup;
 			sbi->uid = make_kuid(current_user_ns(), val);
-			if (!uid_valid(sbi->uid))
-				goto cleanup;
-			break;
-		}
+			अगर (!uid_valid(sbi->uid))
+				जाओ cleanup;
+			अवरोध;
+		पूर्ण
 
-		case Opt_gid:
-		{
-			char *gid = args[0].from;
+		हाल Opt_gid:
+		अणु
+			अक्षर *gid = args[0].from;
 			gid_t val;
-			int rc = kstrtouint(gid, 0, &val);
+			पूर्णांक rc = kstrtouपूर्णांक(gid, 0, &val);
 
-			if (rc)
-				goto cleanup;
+			अगर (rc)
+				जाओ cleanup;
 			sbi->gid = make_kgid(current_user_ns(), val);
-			if (!gid_valid(sbi->gid))
-				goto cleanup;
-			break;
-		}
+			अगर (!gid_valid(sbi->gid))
+				जाओ cleanup;
+			अवरोध;
+		पूर्ण
 
-		case Opt_umask:
-		{
-			char *umask = args[0].from;
-			int rc = kstrtouint(umask, 8, &sbi->umask);
+		हाल Opt_umask:
+		अणु
+			अक्षर *umask = args[0].from;
+			पूर्णांक rc = kstrtouपूर्णांक(umask, 8, &sbi->umask);
 
-			if (rc)
-				goto cleanup;
-			if (sbi->umask & ~0777) {
+			अगर (rc)
+				जाओ cleanup;
+			अगर (sbi->umask & ~0777) अणु
 				pr_err("JFS: Invalid value of umask\n");
-				goto cleanup;
-			}
-			break;
-		}
+				जाओ cleanup;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		case Opt_discard:
-		{
-			struct request_queue *q = bdev_get_queue(sb->s_bdev);
-			/* if set to 1, even copying files will cause
+		हाल Opt_discard:
+		अणु
+			काष्ठा request_queue *q = bdev_get_queue(sb->s_bdev);
+			/* अगर set to 1, even copying files will cause
 			 * trimming :O
 			 * -> user has more control over the online trimming
 			 */
 			sbi->minblks_trim = 64;
-			if (blk_queue_discard(q))
+			अगर (blk_queue_discard(q))
 				*flag |= JFS_DISCARD;
-			else
+			अन्यथा
 				pr_err("JFS: discard option not supported on device\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		case Opt_nodiscard:
+		हाल Opt_nodiscard:
 			*flag &= ~JFS_DISCARD;
-			break;
+			अवरोध;
 
-		case Opt_discard_minblk:
-		{
-			struct request_queue *q = bdev_get_queue(sb->s_bdev);
-			char *minblks_trim = args[0].from;
-			int rc;
-			if (blk_queue_discard(q)) {
+		हाल Opt_discard_minblk:
+		अणु
+			काष्ठा request_queue *q = bdev_get_queue(sb->s_bdev);
+			अक्षर *minblks_trim = args[0].from;
+			पूर्णांक rc;
+			अगर (blk_queue_discard(q)) अणु
 				*flag |= JFS_DISCARD;
-				rc = kstrtouint(minblks_trim, 0,
+				rc = kstrtouपूर्णांक(minblks_trim, 0,
 						&sbi->minblks_trim);
-				if (rc)
-					goto cleanup;
-			} else
+				अगर (rc)
+					जाओ cleanup;
+			पूर्ण अन्यथा
 				pr_err("JFS: discard option not supported on device\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		default:
-			printk("jfs: Unrecognized mount option \"%s\" or missing value\n",
+		शेष:
+			prपूर्णांकk("jfs: Unrecognized mount option \"%s\" or missing value\n",
 			       p);
-			goto cleanup;
-		}
-	}
+			जाओ cleanup;
+		पूर्ण
+	पूर्ण
 
-	if (nls_map != (void *) -1) {
-		/* Discard old (if remount) */
+	अगर (nls_map != (व्योम *) -1) अणु
+		/* Discard old (अगर remount) */
 		unload_nls(sbi->nls_tab);
 		sbi->nls_tab = nls_map;
-	}
-	return 1;
+	पूर्ण
+	वापस 1;
 
 cleanup:
-	if (nls_map && nls_map != (void *) -1)
+	अगर (nls_map && nls_map != (व्योम *) -1)
 		unload_nls(nls_map);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jfs_remount(struct super_block *sb, int *flags, char *data)
-{
+अटल पूर्णांक jfs_remount(काष्ठा super_block *sb, पूर्णांक *flags, अक्षर *data)
+अणु
 	s64 newLVSize = 0;
-	int rc = 0;
-	int flag = JFS_SBI(sb)->flag;
-	int ret;
+	पूर्णांक rc = 0;
+	पूर्णांक flag = JFS_SBI(sb)->flag;
+	पूर्णांक ret;
 
-	sync_filesystem(sb);
-	if (!parse_options(data, sb, &newLVSize, &flag))
-		return -EINVAL;
+	sync_fileप्रणाली(sb);
+	अगर (!parse_options(data, sb, &newLVSize, &flag))
+		वापस -EINVAL;
 
-	if (newLVSize) {
-		if (sb_rdonly(sb)) {
+	अगर (newLVSize) अणु
+		अगर (sb_rकरोnly(sb)) अणु
 			pr_err("JFS: resize requires volume to be mounted read-write\n");
-			return -EROFS;
-		}
+			वापस -EROFS;
+		पूर्ण
 		rc = jfs_extendfs(sb, newLVSize, 0);
-		if (rc)
-			return rc;
-	}
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
-	if (sb_rdonly(sb) && !(*flags & SB_RDONLY)) {
+	अगर (sb_rकरोnly(sb) && !(*flags & SB_RDONLY)) अणु
 		/*
-		 * Invalidate any previously read metadata.  fsck may have
+		 * Invalidate any previously पढ़ो metadata.  fsck may have
 		 * changed the on-disk data since we mounted r/o
 		 */
 		truncate_inode_pages(JFS_SBI(sb)->direct_inode->i_mapping, 0);
@@ -458,73 +459,73 @@ static int jfs_remount(struct super_block *sb, int *flags, char *data)
 		JFS_SBI(sb)->flag = flag;
 		ret = jfs_mount_rw(sb, 1);
 
-		/* mark the fs r/w for quota activity */
+		/* mark the fs r/w क्रम quota activity */
 		sb->s_flags &= ~SB_RDONLY;
 
 		dquot_resume(sb, -1);
-		return ret;
-	}
-	if (!sb_rdonly(sb) && (*flags & SB_RDONLY)) {
+		वापस ret;
+	पूर्ण
+	अगर (!sb_rकरोnly(sb) && (*flags & SB_RDONLY)) अणु
 		rc = dquot_suspend(sb, -1);
-		if (rc < 0)
-			return rc;
+		अगर (rc < 0)
+			वापस rc;
 		rc = jfs_umount_rw(sb);
 		JFS_SBI(sb)->flag = flag;
-		return rc;
-	}
-	if ((JFS_SBI(sb)->flag & JFS_NOINTEGRITY) != (flag & JFS_NOINTEGRITY))
-		if (!sb_rdonly(sb)) {
+		वापस rc;
+	पूर्ण
+	अगर ((JFS_SBI(sb)->flag & JFS_NOINTEGRITY) != (flag & JFS_NOINTEGRITY))
+		अगर (!sb_rकरोnly(sb)) अणु
 			rc = jfs_umount_rw(sb);
-			if (rc)
-				return rc;
+			अगर (rc)
+				वापस rc;
 
 			JFS_SBI(sb)->flag = flag;
 			ret = jfs_mount_rw(sb, 1);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 	JFS_SBI(sb)->flag = flag;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jfs_fill_super(struct super_block *sb, void *data, int silent)
-{
-	struct jfs_sb_info *sbi;
-	struct inode *inode;
-	int rc;
+अटल पूर्णांक jfs_fill_super(काष्ठा super_block *sb, व्योम *data, पूर्णांक silent)
+अणु
+	काष्ठा jfs_sb_info *sbi;
+	काष्ठा inode *inode;
+	पूर्णांक rc;
 	s64 newLVSize = 0;
-	int flag, ret = -EINVAL;
+	पूर्णांक flag, ret = -EINVAL;
 
 	jfs_info("In jfs_read_super: s_flags=0x%lx", sb->s_flags);
 
-	sbi = kzalloc(sizeof(struct jfs_sb_info), GFP_KERNEL);
-	if (!sbi)
-		return -ENOMEM;
+	sbi = kzalloc(माप(काष्ठा jfs_sb_info), GFP_KERNEL);
+	अगर (!sbi)
+		वापस -ENOMEM;
 
 	sb->s_fs_info = sbi;
 	sb->s_max_links = JFS_LINK_MAX;
-	sb->s_time_min = 0;
-	sb->s_time_max = U32_MAX;
+	sb->s_समय_min = 0;
+	sb->s_समय_max = U32_MAX;
 	sbi->sb = sb;
 	sbi->uid = INVALID_UID;
 	sbi->gid = INVALID_GID;
 	sbi->umask = -1;
 
-	/* initialize the mount flag and determine the default error handler */
+	/* initialize the mount flag and determine the शेष error handler */
 	flag = JFS_ERR_REMOUNT_RO;
 
-	if (!parse_options((char *) data, sb, &newLVSize, &flag))
-		goto out_kfree;
+	अगर (!parse_options((अक्षर *) data, sb, &newLVSize, &flag))
+		जाओ out_kमुक्त;
 	sbi->flag = flag;
 
-#ifdef CONFIG_JFS_POSIX_ACL
+#अगर_घोषित CONFIG_JFS_POSIX_ACL
 	sb->s_flags |= SB_POSIXACL;
-#endif
+#पूर्ण_अगर
 
-	if (newLVSize) {
+	अगर (newLVSize) अणु
 		pr_err("resize option for remount only\n");
-		goto out_kfree;
-	}
+		जाओ out_kमुक्त;
+	पूर्ण
 
 	/*
 	 * Initialize blocksize to 4K.
@@ -537,21 +538,21 @@ static int jfs_fill_super(struct super_block *sb, void *data, int silent)
 	sb->s_op = &jfs_super_operations;
 	sb->s_export_op = &jfs_export_operations;
 	sb->s_xattr = jfs_xattr_handlers;
-#ifdef CONFIG_QUOTA
+#अगर_घोषित CONFIG_QUOTA
 	sb->dq_op = &dquot_operations;
 	sb->s_qcop = &jfs_quotactl_ops;
 	sb->s_quota_types = QTYPE_MASK_USR | QTYPE_MASK_GRP;
-#endif
+#पूर्ण_अगर
 
 	/*
 	 * Initialize direct-mapping inode/address-space
 	 */
 	inode = new_inode(sb);
-	if (inode == NULL) {
+	अगर (inode == शून्य) अणु
 		ret = -ENOMEM;
-		goto out_unload;
-	}
-	inode->i_size = i_size_read(sb->s_bdev->bd_inode);
+		जाओ out_unload;
+	पूर्ण
+	inode->i_size = i_size_पढ़ो(sb->s_bdev->bd_inode);
 	inode->i_mapping->a_ops = &jfs_metapage_aops;
 	inode_fake_hash(inode);
 	mapping_set_gfp_mask(inode->i_mapping, GFP_NOFS);
@@ -559,292 +560,292 @@ static int jfs_fill_super(struct super_block *sb, void *data, int silent)
 	sbi->direct_inode = inode;
 
 	rc = jfs_mount(sb);
-	if (rc) {
-		if (!silent)
+	अगर (rc) अणु
+		अगर (!silent)
 			jfs_err("jfs_mount failed w/return code = %d", rc);
-		goto out_mount_failed;
-	}
-	if (sb_rdonly(sb))
-		sbi->log = NULL;
-	else {
+		जाओ out_mount_failed;
+	पूर्ण
+	अगर (sb_rकरोnly(sb))
+		sbi->log = शून्य;
+	अन्यथा अणु
 		rc = jfs_mount_rw(sb, 0);
-		if (rc) {
-			if (!silent) {
+		अगर (rc) अणु
+			अगर (!silent) अणु
 				jfs_err("jfs_mount_rw failed, return code = %d",
 					rc);
-			}
-			goto out_no_rw;
-		}
-	}
+			पूर्ण
+			जाओ out_no_rw;
+		पूर्ण
+	पूर्ण
 
 	sb->s_magic = JFS_SUPER_MAGIC;
 
-	if (sbi->mntflag & JFS_OS2)
+	अगर (sbi->mntflag & JFS_OS2)
 		sb->s_d_op = &jfs_ci_dentry_operations;
 
 	inode = jfs_iget(sb, ROOT_I);
-	if (IS_ERR(inode)) {
+	अगर (IS_ERR(inode)) अणु
 		ret = PTR_ERR(inode);
-		goto out_no_rw;
-	}
+		जाओ out_no_rw;
+	पूर्ण
 	sb->s_root = d_make_root(inode);
-	if (!sb->s_root)
-		goto out_no_root;
+	अगर (!sb->s_root)
+		जाओ out_no_root;
 
 	/* logical blocks are represented by 40 bits in pxd_t, etc.
-	 * and page cache is indexed by long
+	 * and page cache is indexed by दीर्घ
 	 */
-	sb->s_maxbytes = min(((loff_t)sb->s_blocksize) << 40, MAX_LFS_FILESIZE);
-	sb->s_time_gran = 1;
-	return 0;
+	sb->s_maxbytes = min(((loff_t)sb->s_blocksize) << 40, MAX_LFS_खाताSIZE);
+	sb->s_समय_gran = 1;
+	वापस 0;
 
 out_no_root:
 	jfs_err("jfs_read_super: get root dentry failed");
 
 out_no_rw:
 	rc = jfs_umount(sb);
-	if (rc)
+	अगर (rc)
 		jfs_err("jfs_umount failed with return code %d", rc);
 out_mount_failed:
-	filemap_write_and_wait(sbi->direct_inode->i_mapping);
+	filemap_ग_लिखो_and_रुको(sbi->direct_inode->i_mapping);
 	truncate_inode_pages(sbi->direct_inode->i_mapping, 0);
 	make_bad_inode(sbi->direct_inode);
 	iput(sbi->direct_inode);
-	sbi->direct_inode = NULL;
+	sbi->direct_inode = शून्य;
 out_unload:
 	unload_nls(sbi->nls_tab);
-out_kfree:
-	kfree(sbi);
-	return ret;
-}
+out_kमुक्त:
+	kमुक्त(sbi);
+	वापस ret;
+पूर्ण
 
-static int jfs_freeze(struct super_block *sb)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(sb);
-	struct jfs_log *log = sbi->log;
-	int rc = 0;
+अटल पूर्णांक jfs_मुक्तze(काष्ठा super_block *sb)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
+	काष्ठा jfs_log *log = sbi->log;
+	पूर्णांक rc = 0;
 
-	if (!sb_rdonly(sb)) {
+	अगर (!sb_rकरोnly(sb)) अणु
 		txQuiesce(sb);
-		rc = lmLogShutdown(log);
-		if (rc) {
+		rc = lmLogShutकरोwn(log);
+		अगर (rc) अणु
 			jfs_error(sb, "lmLogShutdown failed\n");
 
 			/* let operations fail rather than hang */
 			txResume(sb);
 
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 		rc = updateSuper(sb, FM_CLEAN);
-		if (rc) {
+		अगर (rc) अणु
 			jfs_err("jfs_freeze: updateSuper failed");
 			/*
 			 * Don't fail here. Everything succeeded except
 			 * marking the superblock clean, so there's really
-			 * no harm in leaving it frozen for now.
+			 * no harm in leaving it frozen क्रम now.
 			 */
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int jfs_unfreeze(struct super_block *sb)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(sb);
-	struct jfs_log *log = sbi->log;
-	int rc = 0;
+अटल पूर्णांक jfs_unमुक्तze(काष्ठा super_block *sb)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
+	काष्ठा jfs_log *log = sbi->log;
+	पूर्णांक rc = 0;
 
-	if (!sb_rdonly(sb)) {
+	अगर (!sb_rकरोnly(sb)) अणु
 		rc = updateSuper(sb, FM_MOUNT);
-		if (rc) {
+		अगर (rc) अणु
 			jfs_error(sb, "updateSuper failed\n");
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		rc = lmLogInit(log);
-		if (rc)
+		अगर (rc)
 			jfs_error(sb, "lmLogInit failed\n");
 out:
 		txResume(sb);
-	}
-	return rc;
-}
+	पूर्ण
+	वापस rc;
+पूर्ण
 
-static struct dentry *jfs_do_mount(struct file_system_type *fs_type,
-	int flags, const char *dev_name, void *data)
-{
-	return mount_bdev(fs_type, flags, dev_name, data, jfs_fill_super);
-}
+अटल काष्ठा dentry *jfs_करो_mount(काष्ठा file_प्रणाली_type *fs_type,
+	पूर्णांक flags, स्थिर अक्षर *dev_name, व्योम *data)
+अणु
+	वापस mount_bdev(fs_type, flags, dev_name, data, jfs_fill_super);
+पूर्ण
 
-static int jfs_sync_fs(struct super_block *sb, int wait)
-{
-	struct jfs_log *log = JFS_SBI(sb)->log;
+अटल पूर्णांक jfs_sync_fs(काष्ठा super_block *sb, पूर्णांक रुको)
+अणु
+	काष्ठा jfs_log *log = JFS_SBI(sb)->log;
 
-	/* log == NULL indicates read-only mount */
-	if (log) {
+	/* log == शून्य indicates पढ़ो-only mount */
+	अगर (log) अणु
 		/*
-		 * Write quota structures to quota file, sync_blockdev() will
-		 * write them to disk later
+		 * Write quota काष्ठाures to quota file, sync_blockdev() will
+		 * ग_लिखो them to disk later
 		 */
-		dquot_writeback_dquots(sb, -1);
-		jfs_flush_journal(log, wait);
+		dquot_ग_लिखोback_dquots(sb, -1);
+		jfs_flush_journal(log, रुको);
 		jfs_syncpt(log, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jfs_show_options(struct seq_file *seq, struct dentry *root)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(root->d_sb);
+अटल पूर्णांक jfs_show_options(काष्ठा seq_file *seq, काष्ठा dentry *root)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(root->d_sb);
 
-	if (uid_valid(sbi->uid))
-		seq_printf(seq, ",uid=%d", from_kuid(&init_user_ns, sbi->uid));
-	if (gid_valid(sbi->gid))
-		seq_printf(seq, ",gid=%d", from_kgid(&init_user_ns, sbi->gid));
-	if (sbi->umask != -1)
-		seq_printf(seq, ",umask=%03o", sbi->umask);
-	if (sbi->flag & JFS_NOINTEGRITY)
-		seq_puts(seq, ",nointegrity");
-	if (sbi->flag & JFS_DISCARD)
-		seq_printf(seq, ",discard=%u", sbi->minblks_trim);
-	if (sbi->nls_tab)
-		seq_printf(seq, ",iocharset=%s", sbi->nls_tab->charset);
-	if (sbi->flag & JFS_ERR_CONTINUE)
-		seq_printf(seq, ",errors=continue");
-	if (sbi->flag & JFS_ERR_PANIC)
-		seq_printf(seq, ",errors=panic");
+	अगर (uid_valid(sbi->uid))
+		seq_म_लिखो(seq, ",uid=%d", from_kuid(&init_user_ns, sbi->uid));
+	अगर (gid_valid(sbi->gid))
+		seq_म_लिखो(seq, ",gid=%d", from_kgid(&init_user_ns, sbi->gid));
+	अगर (sbi->umask != -1)
+		seq_म_लिखो(seq, ",umask=%03o", sbi->umask);
+	अगर (sbi->flag & JFS_NOINTEGRITY)
+		seq_माला_दो(seq, ",nointegrity");
+	अगर (sbi->flag & JFS_DISCARD)
+		seq_म_लिखो(seq, ",discard=%u", sbi->minblks_trim);
+	अगर (sbi->nls_tab)
+		seq_म_लिखो(seq, ",iocharset=%s", sbi->nls_tab->अक्षरset);
+	अगर (sbi->flag & JFS_ERR_CONTINUE)
+		seq_म_लिखो(seq, ",errors=continue");
+	अगर (sbi->flag & JFS_ERR_PANIC)
+		seq_म_लिखो(seq, ",errors=panic");
 
-#ifdef CONFIG_QUOTA
-	if (sbi->flag & JFS_USRQUOTA)
-		seq_puts(seq, ",usrquota");
+#अगर_घोषित CONFIG_QUOTA
+	अगर (sbi->flag & JFS_USRQUOTA)
+		seq_माला_दो(seq, ",usrquota");
 
-	if (sbi->flag & JFS_GRPQUOTA)
-		seq_puts(seq, ",grpquota");
-#endif
+	अगर (sbi->flag & JFS_GRPQUOTA)
+		seq_माला_दो(seq, ",grpquota");
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_QUOTA
+#अगर_घोषित CONFIG_QUOTA
 
-/* Read data from quotafile - avoid pagecache and such because we cannot afford
+/* Read data from quotafile - aव्योम pagecache and such because we cannot afक्रमd
  * acquiring the locks... As quota files are never truncated and quota code
- * itself serializes the operations (and no one else should touch the files)
- * we don't have to be afraid of races */
-static ssize_t jfs_quota_read(struct super_block *sb, int type, char *data,
-			      size_t len, loff_t off)
-{
-	struct inode *inode = sb_dqopt(sb)->files[type];
+ * itself serializes the operations (and no one अन्यथा should touch the files)
+ * we करोn't have to be afraid of races */
+अटल sमाप_प्रकार jfs_quota_पढ़ो(काष्ठा super_block *sb, पूर्णांक type, अक्षर *data,
+			      माप_प्रकार len, loff_t off)
+अणु
+	काष्ठा inode *inode = sb_dqopt(sb)->files[type];
 	sector_t blk = off >> sb->s_blocksize_bits;
-	int err = 0;
-	int offset = off & (sb->s_blocksize - 1);
-	int tocopy;
-	size_t toread;
-	struct buffer_head tmp_bh;
-	struct buffer_head *bh;
-	loff_t i_size = i_size_read(inode);
+	पूर्णांक err = 0;
+	पूर्णांक offset = off & (sb->s_blocksize - 1);
+	पूर्णांक tocopy;
+	माप_प्रकार toपढ़ो;
+	काष्ठा buffer_head पंचांगp_bh;
+	काष्ठा buffer_head *bh;
+	loff_t i_size = i_size_पढ़ो(inode);
 
-	if (off > i_size)
-		return 0;
-	if (off+len > i_size)
+	अगर (off > i_size)
+		वापस 0;
+	अगर (off+len > i_size)
 		len = i_size-off;
-	toread = len;
-	while (toread > 0) {
-		tocopy = sb->s_blocksize - offset < toread ?
-				sb->s_blocksize - offset : toread;
+	toपढ़ो = len;
+	जबतक (toपढ़ो > 0) अणु
+		tocopy = sb->s_blocksize - offset < toपढ़ो ?
+				sb->s_blocksize - offset : toपढ़ो;
 
-		tmp_bh.b_state = 0;
-		tmp_bh.b_size = i_blocksize(inode);
-		err = jfs_get_block(inode, blk, &tmp_bh, 0);
-		if (err)
-			return err;
-		if (!buffer_mapped(&tmp_bh))	/* A hole? */
-			memset(data, 0, tocopy);
-		else {
-			bh = sb_bread(sb, tmp_bh.b_blocknr);
-			if (!bh)
-				return -EIO;
-			memcpy(data, bh->b_data+offset, tocopy);
-			brelse(bh);
-		}
+		पंचांगp_bh.b_state = 0;
+		पंचांगp_bh.b_size = i_blocksize(inode);
+		err = jfs_get_block(inode, blk, &पंचांगp_bh, 0);
+		अगर (err)
+			वापस err;
+		अगर (!buffer_mapped(&पंचांगp_bh))	/* A hole? */
+			स_रखो(data, 0, tocopy);
+		अन्यथा अणु
+			bh = sb_bपढ़ो(sb, पंचांगp_bh.b_blocknr);
+			अगर (!bh)
+				वापस -EIO;
+			स_नकल(data, bh->b_data+offset, tocopy);
+			brअन्यथा(bh);
+		पूर्ण
 		offset = 0;
-		toread -= tocopy;
+		toपढ़ो -= tocopy;
 		data += tocopy;
 		blk++;
-	}
-	return len;
-}
+	पूर्ण
+	वापस len;
+पूर्ण
 
 /* Write to quotafile */
-static ssize_t jfs_quota_write(struct super_block *sb, int type,
-			       const char *data, size_t len, loff_t off)
-{
-	struct inode *inode = sb_dqopt(sb)->files[type];
+अटल sमाप_प्रकार jfs_quota_ग_लिखो(काष्ठा super_block *sb, पूर्णांक type,
+			       स्थिर अक्षर *data, माप_प्रकार len, loff_t off)
+अणु
+	काष्ठा inode *inode = sb_dqopt(sb)->files[type];
 	sector_t blk = off >> sb->s_blocksize_bits;
-	int err = 0;
-	int offset = off & (sb->s_blocksize - 1);
-	int tocopy;
-	size_t towrite = len;
-	struct buffer_head tmp_bh;
-	struct buffer_head *bh;
+	पूर्णांक err = 0;
+	पूर्णांक offset = off & (sb->s_blocksize - 1);
+	पूर्णांक tocopy;
+	माप_प्रकार toग_लिखो = len;
+	काष्ठा buffer_head पंचांगp_bh;
+	काष्ठा buffer_head *bh;
 
 	inode_lock(inode);
-	while (towrite > 0) {
-		tocopy = sb->s_blocksize - offset < towrite ?
-				sb->s_blocksize - offset : towrite;
+	जबतक (toग_लिखो > 0) अणु
+		tocopy = sb->s_blocksize - offset < toग_लिखो ?
+				sb->s_blocksize - offset : toग_लिखो;
 
-		tmp_bh.b_state = 0;
-		tmp_bh.b_size = i_blocksize(inode);
-		err = jfs_get_block(inode, blk, &tmp_bh, 1);
-		if (err)
-			goto out;
-		if (offset || tocopy != sb->s_blocksize)
-			bh = sb_bread(sb, tmp_bh.b_blocknr);
-		else
-			bh = sb_getblk(sb, tmp_bh.b_blocknr);
-		if (!bh) {
+		पंचांगp_bh.b_state = 0;
+		पंचांगp_bh.b_size = i_blocksize(inode);
+		err = jfs_get_block(inode, blk, &पंचांगp_bh, 1);
+		अगर (err)
+			जाओ out;
+		अगर (offset || tocopy != sb->s_blocksize)
+			bh = sb_bपढ़ो(sb, पंचांगp_bh.b_blocknr);
+		अन्यथा
+			bh = sb_getblk(sb, पंचांगp_bh.b_blocknr);
+		अगर (!bh) अणु
 			err = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		lock_buffer(bh);
-		memcpy(bh->b_data+offset, data, tocopy);
+		स_नकल(bh->b_data+offset, data, tocopy);
 		flush_dcache_page(bh->b_page);
 		set_buffer_uptodate(bh);
 		mark_buffer_dirty(bh);
 		unlock_buffer(bh);
-		brelse(bh);
+		brअन्यथा(bh);
 		offset = 0;
-		towrite -= tocopy;
+		toग_लिखो -= tocopy;
 		data += tocopy;
 		blk++;
-	}
+	पूर्ण
 out:
-	if (len == towrite) {
+	अगर (len == toग_लिखो) अणु
 		inode_unlock(inode);
-		return err;
-	}
-	if (inode->i_size < off+len-towrite)
-		i_size_write(inode, off+len-towrite);
-	inode->i_mtime = inode->i_ctime = current_time(inode);
+		वापस err;
+	पूर्ण
+	अगर (inode->i_size < off+len-toग_लिखो)
+		i_size_ग_लिखो(inode, off+len-toग_लिखो);
+	inode->i_mसमय = inode->i_स_समय = current_समय(inode);
 	mark_inode_dirty(inode);
 	inode_unlock(inode);
-	return len - towrite;
-}
+	वापस len - toग_लिखो;
+पूर्ण
 
-static struct dquot **jfs_get_dquots(struct inode *inode)
-{
-	return JFS_IP(inode)->i_dquot;
-}
+अटल काष्ठा dquot **jfs_get_dquots(काष्ठा inode *inode)
+अणु
+	वापस JFS_IP(inode)->i_dquot;
+पूर्ण
 
-static int jfs_quota_on(struct super_block *sb, int type, int format_id,
-			const struct path *path)
-{
-	int err;
-	struct inode *inode;
+अटल पूर्णांक jfs_quota_on(काष्ठा super_block *sb, पूर्णांक type, पूर्णांक क्रमmat_id,
+			स्थिर काष्ठा path *path)
+अणु
+	पूर्णांक err;
+	काष्ठा inode *inode;
 
-	err = dquot_quota_on(sb, type, format_id, path);
-	if (err)
-		return err;
+	err = dquot_quota_on(sb, type, क्रमmat_id, path);
+	अगर (err)
+		वापस err;
 
 	inode = d_inode(path->dentry);
 	inode_lock(inode);
@@ -854,20 +855,20 @@ static int jfs_quota_on(struct super_block *sb, int type, int format_id,
 	inode_unlock(inode);
 	mark_inode_dirty(inode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int jfs_quota_off(struct super_block *sb, int type)
-{
-	struct inode *inode = sb_dqopt(sb)->files[type];
-	int err;
+अटल पूर्णांक jfs_quota_off(काष्ठा super_block *sb, पूर्णांक type)
+अणु
+	काष्ठा inode *inode = sb_dqopt(sb)->files[type];
+	पूर्णांक err;
 
-	if (!inode || !igrab(inode))
-		goto out;
+	अगर (!inode || !igrab(inode))
+		जाओ out;
 
 	err = dquot_quota_off(sb, type);
-	if (err)
-		goto out_put;
+	अगर (err)
+		जाओ out_put;
 
 	inode_lock(inode);
 	JFS_IP(inode)->mode2 &= ~(JFS_NOATIME_FL | JFS_IMMUTABLE_FL);
@@ -876,52 +877,52 @@ static int jfs_quota_off(struct super_block *sb, int type)
 	mark_inode_dirty(inode);
 out_put:
 	iput(inode);
-	return err;
+	वापस err;
 out:
-	return dquot_quota_off(sb, type);
-}
-#endif
+	वापस dquot_quota_off(sb, type);
+पूर्ण
+#पूर्ण_अगर
 
-static const struct super_operations jfs_super_operations = {
+अटल स्थिर काष्ठा super_operations jfs_super_operations = अणु
 	.alloc_inode	= jfs_alloc_inode,
-	.free_inode	= jfs_free_inode,
+	.मुक्त_inode	= jfs_मुक्त_inode,
 	.dirty_inode	= jfs_dirty_inode,
-	.write_inode	= jfs_write_inode,
+	.ग_लिखो_inode	= jfs_ग_लिखो_inode,
 	.evict_inode	= jfs_evict_inode,
 	.put_super	= jfs_put_super,
 	.sync_fs	= jfs_sync_fs,
-	.freeze_fs	= jfs_freeze,
-	.unfreeze_fs	= jfs_unfreeze,
+	.मुक्तze_fs	= jfs_मुक्तze,
+	.unमुक्तze_fs	= jfs_unमुक्तze,
 	.statfs		= jfs_statfs,
 	.remount_fs	= jfs_remount,
 	.show_options	= jfs_show_options,
-#ifdef CONFIG_QUOTA
-	.quota_read	= jfs_quota_read,
-	.quota_write	= jfs_quota_write,
+#अगर_घोषित CONFIG_QUOTA
+	.quota_पढ़ो	= jfs_quota_पढ़ो,
+	.quota_ग_लिखो	= jfs_quota_ग_लिखो,
 	.get_dquots	= jfs_get_dquots,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static const struct export_operations jfs_export_operations = {
+अटल स्थिर काष्ठा export_operations jfs_export_operations = अणु
 	.fh_to_dentry	= jfs_fh_to_dentry,
 	.fh_to_parent	= jfs_fh_to_parent,
 	.get_parent	= jfs_get_parent,
-};
+पूर्ण;
 
-static struct file_system_type jfs_fs_type = {
+अटल काष्ठा file_प्रणाली_type jfs_fs_type = अणु
 	.owner		= THIS_MODULE,
 	.name		= "jfs",
-	.mount		= jfs_do_mount,
-	.kill_sb	= kill_block_super,
+	.mount		= jfs_करो_mount,
+	.समाप्त_sb	= समाप्त_block_super,
 	.fs_flags	= FS_REQUIRES_DEV,
-};
+पूर्ण;
 MODULE_ALIAS_FS("jfs");
 
-static void init_once(void *foo)
-{
-	struct jfs_inode_info *jfs_ip = (struct jfs_inode_info *) foo;
+अटल व्योम init_once(व्योम *foo)
+अणु
+	काष्ठा jfs_inode_info *jfs_ip = (काष्ठा jfs_inode_info *) foo;
 
-	memset(jfs_ip, 0, sizeof(struct jfs_inode_info));
+	स_रखो(jfs_ip, 0, माप(काष्ठा jfs_inode_info));
 	INIT_LIST_HEAD(&jfs_ip->anon_inode_list);
 	init_rwsem(&jfs_ip->rdwrlock);
 	mutex_init(&jfs_ip->commit_mutex);
@@ -929,122 +930,122 @@ static void init_once(void *foo)
 	spin_lock_init(&jfs_ip->ag_lock);
 	jfs_ip->active_ag = -1;
 	inode_init_once(&jfs_ip->vfs_inode);
-}
+पूर्ण
 
-static int __init init_jfs_fs(void)
-{
-	int i;
-	int rc;
+अटल पूर्णांक __init init_jfs_fs(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक rc;
 
 	jfs_inode_cachep =
-	    kmem_cache_create_usercopy("jfs_ip", sizeof(struct jfs_inode_info),
+	    kmem_cache_create_usercopy("jfs_ip", माप(काष्ठा jfs_inode_info),
 			0, SLAB_RECLAIM_ACCOUNT|SLAB_MEM_SPREAD|SLAB_ACCOUNT,
-			offsetof(struct jfs_inode_info, i_inline), IDATASIZE,
+			दुरत्व(काष्ठा jfs_inode_info, i_अंतरभूत), IDATASIZE,
 			init_once);
-	if (jfs_inode_cachep == NULL)
-		return -ENOMEM;
+	अगर (jfs_inode_cachep == शून्य)
+		वापस -ENOMEM;
 
 	/*
 	 * Metapage initialization
 	 */
 	rc = metapage_init();
-	if (rc) {
+	अगर (rc) अणु
 		jfs_err("metapage_init failed w/rc = %d", rc);
-		goto free_slab;
-	}
+		जाओ मुक्त_slab;
+	पूर्ण
 
 	/*
 	 * Transaction Manager initialization
 	 */
 	rc = txInit();
-	if (rc) {
+	अगर (rc) अणु
 		jfs_err("txInit failed w/rc = %d", rc);
-		goto free_metapage;
-	}
+		जाओ मुक्त_metapage;
+	पूर्ण
 
 	/*
-	 * I/O completion thread (endio)
+	 * I/O completion thपढ़ो (endio)
 	 */
-	jfsIOthread = kthread_run(jfsIOWait, NULL, "jfsIO");
-	if (IS_ERR(jfsIOthread)) {
-		rc = PTR_ERR(jfsIOthread);
+	jfsIOthपढ़ो = kthपढ़ो_run(jfsIOWait, शून्य, "jfsIO");
+	अगर (IS_ERR(jfsIOthपढ़ो)) अणु
+		rc = PTR_ERR(jfsIOthपढ़ो);
 		jfs_err("init_jfs_fs: fork failed w/rc = %d", rc);
-		goto end_txmngr;
-	}
+		जाओ end_txmngr;
+	पूर्ण
 
-	if (commit_threads < 1)
-		commit_threads = num_online_cpus();
-	if (commit_threads > MAX_COMMIT_THREADS)
-		commit_threads = MAX_COMMIT_THREADS;
+	अगर (commit_thपढ़ोs < 1)
+		commit_thपढ़ोs = num_online_cpus();
+	अगर (commit_thपढ़ोs > MAX_COMMIT_THREADS)
+		commit_thपढ़ोs = MAX_COMMIT_THREADS;
 
-	for (i = 0; i < commit_threads; i++) {
-		jfsCommitThread[i] = kthread_run(jfs_lazycommit, NULL,
+	क्रम (i = 0; i < commit_thपढ़ोs; i++) अणु
+		jfsCommitThपढ़ो[i] = kthपढ़ो_run(jfs_lazycommit, शून्य,
 						 "jfsCommit");
-		if (IS_ERR(jfsCommitThread[i])) {
-			rc = PTR_ERR(jfsCommitThread[i]);
+		अगर (IS_ERR(jfsCommitThपढ़ो[i])) अणु
+			rc = PTR_ERR(jfsCommitThपढ़ो[i]);
 			jfs_err("init_jfs_fs: fork failed w/rc = %d", rc);
-			commit_threads = i;
-			goto kill_committask;
-		}
-	}
+			commit_thपढ़ोs = i;
+			जाओ समाप्त_committask;
+		पूर्ण
+	पूर्ण
 
-	jfsSyncThread = kthread_run(jfs_sync, NULL, "jfsSync");
-	if (IS_ERR(jfsSyncThread)) {
-		rc = PTR_ERR(jfsSyncThread);
+	jfsSyncThपढ़ो = kthपढ़ो_run(jfs_sync, शून्य, "jfsSync");
+	अगर (IS_ERR(jfsSyncThपढ़ो)) अणु
+		rc = PTR_ERR(jfsSyncThपढ़ो);
 		jfs_err("init_jfs_fs: fork failed w/rc = %d", rc);
-		goto kill_committask;
-	}
+		जाओ समाप्त_committask;
+	पूर्ण
 
-#ifdef PROC_FS_JFS
+#अगर_घोषित PROC_FS_JFS
 	jfs_proc_init();
-#endif
+#पूर्ण_अगर
 
-	rc = register_filesystem(&jfs_fs_type);
-	if (!rc)
-		return 0;
+	rc = रेजिस्टर_fileप्रणाली(&jfs_fs_type);
+	अगर (!rc)
+		वापस 0;
 
-#ifdef PROC_FS_JFS
+#अगर_घोषित PROC_FS_JFS
 	jfs_proc_clean();
-#endif
-	kthread_stop(jfsSyncThread);
-kill_committask:
-	for (i = 0; i < commit_threads; i++)
-		kthread_stop(jfsCommitThread[i]);
-	kthread_stop(jfsIOthread);
+#पूर्ण_अगर
+	kthपढ़ो_stop(jfsSyncThपढ़ो);
+समाप्त_committask:
+	क्रम (i = 0; i < commit_thपढ़ोs; i++)
+		kthपढ़ो_stop(jfsCommitThपढ़ो[i]);
+	kthपढ़ो_stop(jfsIOthपढ़ो);
 end_txmngr:
 	txExit();
-free_metapage:
-	metapage_exit();
-free_slab:
+मुक्त_metapage:
+	metapage_निकास();
+मुक्त_slab:
 	kmem_cache_destroy(jfs_inode_cachep);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit exit_jfs_fs(void)
-{
-	int i;
+अटल व्योम __निकास निकास_jfs_fs(व्योम)
+अणु
+	पूर्णांक i;
 
 	jfs_info("exit_jfs_fs called");
 
 	txExit();
-	metapage_exit();
+	metapage_निकास();
 
-	kthread_stop(jfsIOthread);
-	for (i = 0; i < commit_threads; i++)
-		kthread_stop(jfsCommitThread[i]);
-	kthread_stop(jfsSyncThread);
-#ifdef PROC_FS_JFS
+	kthपढ़ो_stop(jfsIOthपढ़ो);
+	क्रम (i = 0; i < commit_thपढ़ोs; i++)
+		kthपढ़ो_stop(jfsCommitThपढ़ो[i]);
+	kthपढ़ो_stop(jfsSyncThपढ़ो);
+#अगर_घोषित PROC_FS_JFS
 	jfs_proc_clean();
-#endif
-	unregister_filesystem(&jfs_fs_type);
+#पूर्ण_अगर
+	unरेजिस्टर_fileप्रणाली(&jfs_fs_type);
 
 	/*
-	 * Make sure all delayed rcu free inodes are flushed before we
+	 * Make sure all delayed rcu मुक्त inodes are flushed beक्रमe we
 	 * destroy cache.
 	 */
 	rcu_barrier();
 	kmem_cache_destroy(jfs_inode_cachep);
-}
+पूर्ण
 
 module_init(init_jfs_fs)
-module_exit(exit_jfs_fs)
+module_निकास(निकास_jfs_fs)

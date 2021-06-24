@@ -1,353 +1,354 @@
-// SPDX-License-Identifier: (GPL-2.0 OR MIT)
-/* Microsemi Ocelot PTP clock driver
+<शैली गुरु>
+// SPDX-License-Identअगरier: (GPL-2.0 OR MIT)
+/* Microsemi Ocelot PTP घड़ी driver
  *
  * Copyright (c) 2017 Microsemi Corporation
  * Copyright 2020 NXP
  */
-#include <linux/time64.h>
+#समावेश <linux/समय64.h>
 
-#include <soc/mscc/ocelot_ptp.h>
-#include <soc/mscc/ocelot_sys.h>
-#include <soc/mscc/ocelot.h>
+#समावेश <soc/mscc/ocelot_ptp.h>
+#समावेश <soc/mscc/ocelot_sys.h>
+#समावेश <soc/mscc/ocelot.h>
 
-int ocelot_ptp_gettime64(struct ptp_clock_info *ptp, struct timespec64 *ts)
-{
-	struct ocelot *ocelot = container_of(ptp, struct ocelot, ptp_info);
-	unsigned long flags;
-	time64_t s;
+पूर्णांक ocelot_ptp_समय_लो64(काष्ठा ptp_घड़ी_info *ptp, काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा ocelot *ocelot = container_of(ptp, काष्ठा ocelot, ptp_info);
+	अचिन्हित दीर्घ flags;
+	समय64_t s;
 	u32 val;
 	s64 ns;
 
-	spin_lock_irqsave(&ocelot->ptp_clock_lock, flags);
+	spin_lock_irqsave(&ocelot->ptp_घड़ी_lock, flags);
 
-	val = ocelot_read_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
+	val = ocelot_पढ़ो_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
 	val &= ~(PTP_PIN_CFG_SYNC | PTP_PIN_CFG_ACTION_MASK | PTP_PIN_CFG_DOM);
 	val |= PTP_PIN_CFG_ACTION(PTP_PIN_ACTION_SAVE);
-	ocelot_write_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
+	ocelot_ग_लिखो_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
 
-	s = ocelot_read_rix(ocelot, PTP_PIN_TOD_SEC_MSB, TOD_ACC_PIN) & 0xffff;
+	s = ocelot_पढ़ो_rix(ocelot, PTP_PIN_TOD_SEC_MSB, TOD_ACC_PIN) & 0xffff;
 	s <<= 32;
-	s += ocelot_read_rix(ocelot, PTP_PIN_TOD_SEC_LSB, TOD_ACC_PIN);
-	ns = ocelot_read_rix(ocelot, PTP_PIN_TOD_NSEC, TOD_ACC_PIN);
+	s += ocelot_पढ़ो_rix(ocelot, PTP_PIN_TOD_SEC_LSB, TOD_ACC_PIN);
+	ns = ocelot_पढ़ो_rix(ocelot, PTP_PIN_TOD_NSEC, TOD_ACC_PIN);
 
-	spin_unlock_irqrestore(&ocelot->ptp_clock_lock, flags);
+	spin_unlock_irqrestore(&ocelot->ptp_घड़ी_lock, flags);
 
 	/* Deal with negative values */
-	if (ns >= 0x3ffffff0 && ns <= 0x3fffffff) {
+	अगर (ns >= 0x3ffffff0 && ns <= 0x3fffffff) अणु
 		s--;
 		ns &= 0xf;
 		ns += 999999984;
-	}
+	पूर्ण
 
-	set_normalized_timespec64(ts, s, ns);
-	return 0;
-}
-EXPORT_SYMBOL(ocelot_ptp_gettime64);
+	set_normalized_बारpec64(ts, s, ns);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ocelot_ptp_समय_लो64);
 
-int ocelot_ptp_settime64(struct ptp_clock_info *ptp,
-			 const struct timespec64 *ts)
-{
-	struct ocelot *ocelot = container_of(ptp, struct ocelot, ptp_info);
-	unsigned long flags;
+पूर्णांक ocelot_ptp_समय_रखो64(काष्ठा ptp_घड़ी_info *ptp,
+			 स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा ocelot *ocelot = container_of(ptp, काष्ठा ocelot, ptp_info);
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
-	spin_lock_irqsave(&ocelot->ptp_clock_lock, flags);
+	spin_lock_irqsave(&ocelot->ptp_घड़ी_lock, flags);
 
-	val = ocelot_read_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
+	val = ocelot_पढ़ो_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
 	val &= ~(PTP_PIN_CFG_SYNC | PTP_PIN_CFG_ACTION_MASK | PTP_PIN_CFG_DOM);
 	val |= PTP_PIN_CFG_ACTION(PTP_PIN_ACTION_IDLE);
 
-	ocelot_write_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
+	ocelot_ग_लिखो_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
 
-	ocelot_write_rix(ocelot, lower_32_bits(ts->tv_sec), PTP_PIN_TOD_SEC_LSB,
+	ocelot_ग_लिखो_rix(ocelot, lower_32_bits(ts->tv_sec), PTP_PIN_TOD_SEC_LSB,
 			 TOD_ACC_PIN);
-	ocelot_write_rix(ocelot, upper_32_bits(ts->tv_sec), PTP_PIN_TOD_SEC_MSB,
+	ocelot_ग_लिखो_rix(ocelot, upper_32_bits(ts->tv_sec), PTP_PIN_TOD_SEC_MSB,
 			 TOD_ACC_PIN);
-	ocelot_write_rix(ocelot, ts->tv_nsec, PTP_PIN_TOD_NSEC, TOD_ACC_PIN);
+	ocelot_ग_लिखो_rix(ocelot, ts->tv_nsec, PTP_PIN_TOD_NSEC, TOD_ACC_PIN);
 
-	val = ocelot_read_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
+	val = ocelot_पढ़ो_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
 	val &= ~(PTP_PIN_CFG_SYNC | PTP_PIN_CFG_ACTION_MASK | PTP_PIN_CFG_DOM);
 	val |= PTP_PIN_CFG_ACTION(PTP_PIN_ACTION_LOAD);
 
-	ocelot_write_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
+	ocelot_ग_लिखो_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
 
-	spin_unlock_irqrestore(&ocelot->ptp_clock_lock, flags);
-	return 0;
-}
-EXPORT_SYMBOL(ocelot_ptp_settime64);
+	spin_unlock_irqrestore(&ocelot->ptp_घड़ी_lock, flags);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ocelot_ptp_समय_रखो64);
 
-int ocelot_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
-{
-	if (delta > -(NSEC_PER_SEC / 2) && delta < (NSEC_PER_SEC / 2)) {
-		struct ocelot *ocelot = container_of(ptp, struct ocelot,
+पूर्णांक ocelot_ptp_adjसमय(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
+अणु
+	अगर (delta > -(NSEC_PER_SEC / 2) && delta < (NSEC_PER_SEC / 2)) अणु
+		काष्ठा ocelot *ocelot = container_of(ptp, काष्ठा ocelot,
 						     ptp_info);
-		unsigned long flags;
+		अचिन्हित दीर्घ flags;
 		u32 val;
 
-		spin_lock_irqsave(&ocelot->ptp_clock_lock, flags);
+		spin_lock_irqsave(&ocelot->ptp_घड़ी_lock, flags);
 
-		val = ocelot_read_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
+		val = ocelot_पढ़ो_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
 		val &= ~(PTP_PIN_CFG_SYNC | PTP_PIN_CFG_ACTION_MASK |
 			 PTP_PIN_CFG_DOM);
 		val |= PTP_PIN_CFG_ACTION(PTP_PIN_ACTION_IDLE);
 
-		ocelot_write_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
+		ocelot_ग_लिखो_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
 
-		ocelot_write_rix(ocelot, 0, PTP_PIN_TOD_SEC_LSB, TOD_ACC_PIN);
-		ocelot_write_rix(ocelot, 0, PTP_PIN_TOD_SEC_MSB, TOD_ACC_PIN);
-		ocelot_write_rix(ocelot, delta, PTP_PIN_TOD_NSEC, TOD_ACC_PIN);
+		ocelot_ग_लिखो_rix(ocelot, 0, PTP_PIN_TOD_SEC_LSB, TOD_ACC_PIN);
+		ocelot_ग_लिखो_rix(ocelot, 0, PTP_PIN_TOD_SEC_MSB, TOD_ACC_PIN);
+		ocelot_ग_लिखो_rix(ocelot, delta, PTP_PIN_TOD_NSEC, TOD_ACC_PIN);
 
-		val = ocelot_read_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
+		val = ocelot_पढ़ो_rix(ocelot, PTP_PIN_CFG, TOD_ACC_PIN);
 		val &= ~(PTP_PIN_CFG_SYNC | PTP_PIN_CFG_ACTION_MASK |
 			 PTP_PIN_CFG_DOM);
 		val |= PTP_PIN_CFG_ACTION(PTP_PIN_ACTION_DELTA);
 
-		ocelot_write_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
+		ocelot_ग_लिखो_rix(ocelot, val, PTP_PIN_CFG, TOD_ACC_PIN);
 
-		spin_unlock_irqrestore(&ocelot->ptp_clock_lock, flags);
-	} else {
-		/* Fall back using ocelot_ptp_settime64 which is not exact. */
-		struct timespec64 ts;
+		spin_unlock_irqrestore(&ocelot->ptp_घड़ी_lock, flags);
+	पूर्ण अन्यथा अणु
+		/* Fall back using ocelot_ptp_समय_रखो64 which is not exact. */
+		काष्ठा बारpec64 ts;
 		u64 now;
 
-		ocelot_ptp_gettime64(ptp, &ts);
+		ocelot_ptp_समय_लो64(ptp, &ts);
 
-		now = ktime_to_ns(timespec64_to_ktime(ts));
-		ts = ns_to_timespec64(now + delta);
+		now = kसमय_प्रकारo_ns(बारpec64_to_kसमय(ts));
+		ts = ns_to_बारpec64(now + delta);
 
-		ocelot_ptp_settime64(ptp, &ts);
-	}
-	return 0;
-}
-EXPORT_SYMBOL(ocelot_ptp_adjtime);
+		ocelot_ptp_समय_रखो64(ptp, &ts);
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ocelot_ptp_adjसमय);
 
-int ocelot_ptp_adjfine(struct ptp_clock_info *ptp, long scaled_ppm)
-{
-	struct ocelot *ocelot = container_of(ptp, struct ocelot, ptp_info);
+पूर्णांक ocelot_ptp_adjfine(काष्ठा ptp_घड़ी_info *ptp, दीर्घ scaled_ppm)
+अणु
+	काष्ठा ocelot *ocelot = container_of(ptp, काष्ठा ocelot, ptp_info);
 	u32 unit = 0, direction = 0;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u64 adj = 0;
 
-	spin_lock_irqsave(&ocelot->ptp_clock_lock, flags);
+	spin_lock_irqsave(&ocelot->ptp_घड़ी_lock, flags);
 
-	if (!scaled_ppm)
-		goto disable_adj;
+	अगर (!scaled_ppm)
+		जाओ disable_adj;
 
-	if (scaled_ppm < 0) {
-		direction = PTP_CFG_CLK_ADJ_CFG_DIR;
+	अगर (scaled_ppm < 0) अणु
+		direction = PTP_CFG_CLK_ADJ_CFG_सूची;
 		scaled_ppm = -scaled_ppm;
-	}
+	पूर्ण
 
 	adj = PSEC_PER_SEC << 16;
-	do_div(adj, scaled_ppm);
-	do_div(adj, 1000);
+	करो_भाग(adj, scaled_ppm);
+	करो_भाग(adj, 1000);
 
-	/* If the adjustment value is too large, use ns instead */
-	if (adj >= (1L << 30)) {
+	/* If the adjusपंचांगent value is too large, use ns instead */
+	अगर (adj >= (1L << 30)) अणु
 		unit = PTP_CFG_CLK_ADJ_FREQ_NS;
-		do_div(adj, 1000);
-	}
+		करो_भाग(adj, 1000);
+	पूर्ण
 
 	/* Still too big */
-	if (adj >= (1L << 30))
-		goto disable_adj;
+	अगर (adj >= (1L << 30))
+		जाओ disable_adj;
 
-	ocelot_write(ocelot, unit | adj, PTP_CLK_CFG_ADJ_FREQ);
-	ocelot_write(ocelot, PTP_CFG_CLK_ADJ_CFG_ENA | direction,
+	ocelot_ग_लिखो(ocelot, unit | adj, PTP_CLK_CFG_ADJ_FREQ);
+	ocelot_ग_लिखो(ocelot, PTP_CFG_CLK_ADJ_CFG_ENA | direction,
 		     PTP_CLK_CFG_ADJ_CFG);
 
-	spin_unlock_irqrestore(&ocelot->ptp_clock_lock, flags);
-	return 0;
+	spin_unlock_irqrestore(&ocelot->ptp_घड़ी_lock, flags);
+	वापस 0;
 
 disable_adj:
-	ocelot_write(ocelot, 0, PTP_CLK_CFG_ADJ_CFG);
+	ocelot_ग_लिखो(ocelot, 0, PTP_CLK_CFG_ADJ_CFG);
 
-	spin_unlock_irqrestore(&ocelot->ptp_clock_lock, flags);
-	return 0;
-}
+	spin_unlock_irqrestore(&ocelot->ptp_घड़ी_lock, flags);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ocelot_ptp_adjfine);
 
-int ocelot_ptp_verify(struct ptp_clock_info *ptp, unsigned int pin,
-		      enum ptp_pin_function func, unsigned int chan)
-{
-	switch (func) {
-	case PTP_PF_NONE:
-	case PTP_PF_PEROUT:
-		break;
-	case PTP_PF_EXTTS:
-	case PTP_PF_PHYSYNC:
-		return -1;
-	}
-	return 0;
-}
-EXPORT_SYMBOL(ocelot_ptp_verify);
+पूर्णांक ocelot_ptp_verअगरy(काष्ठा ptp_घड़ी_info *ptp, अचिन्हित पूर्णांक pin,
+		      क्रमागत ptp_pin_function func, अचिन्हित पूर्णांक chan)
+अणु
+	चयन (func) अणु
+	हाल PTP_PF_NONE:
+	हाल PTP_PF_PEROUT:
+		अवरोध;
+	हाल PTP_PF_EXTTS:
+	हाल PTP_PF_PHYSYNC:
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ocelot_ptp_verअगरy);
 
-int ocelot_ptp_enable(struct ptp_clock_info *ptp,
-		      struct ptp_clock_request *rq, int on)
-{
-	struct ocelot *ocelot = container_of(ptp, struct ocelot, ptp_info);
-	struct timespec64 ts_phase, ts_period;
-	enum ocelot_ptp_pins ptp_pin;
-	unsigned long flags;
+पूर्णांक ocelot_ptp_enable(काष्ठा ptp_घड़ी_info *ptp,
+		      काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
+अणु
+	काष्ठा ocelot *ocelot = container_of(ptp, काष्ठा ocelot, ptp_info);
+	काष्ठा बारpec64 ts_phase, ts_period;
+	क्रमागत ocelot_ptp_pins ptp_pin;
+	अचिन्हित दीर्घ flags;
 	bool pps = false;
-	int pin = -1;
+	पूर्णांक pin = -1;
 	s64 wf_high;
 	s64 wf_low;
 	u32 val;
 
-	switch (rq->type) {
-	case PTP_CLK_REQ_PEROUT:
+	चयन (rq->type) अणु
+	हाल PTP_CLK_REQ_PEROUT:
 		/* Reject requests with unsupported flags */
-		if (rq->perout.flags & ~(PTP_PEROUT_DUTY_CYCLE |
+		अगर (rq->perout.flags & ~(PTP_PEROUT_DUTY_CYCLE |
 					 PTP_PEROUT_PHASE))
-			return -EOPNOTSUPP;
+			वापस -EOPNOTSUPP;
 
-		pin = ptp_find_pin(ocelot->ptp_clock, PTP_PF_PEROUT,
+		pin = ptp_find_pin(ocelot->ptp_घड़ी, PTP_PF_PEROUT,
 				   rq->perout.index);
-		if (pin == 0)
+		अगर (pin == 0)
 			ptp_pin = PTP_PIN_0;
-		else if (pin == 1)
+		अन्यथा अगर (pin == 1)
 			ptp_pin = PTP_PIN_1;
-		else if (pin == 2)
+		अन्यथा अगर (pin == 2)
 			ptp_pin = PTP_PIN_2;
-		else if (pin == 3)
+		अन्यथा अगर (pin == 3)
 			ptp_pin = PTP_PIN_3;
-		else
-			return -EBUSY;
+		अन्यथा
+			वापस -EBUSY;
 
 		ts_period.tv_sec = rq->perout.period.sec;
 		ts_period.tv_nsec = rq->perout.period.nsec;
 
-		if (ts_period.tv_sec == 1 && ts_period.tv_nsec == 0)
+		अगर (ts_period.tv_sec == 1 && ts_period.tv_nsec == 0)
 			pps = true;
 
 		/* Handle turning off */
-		if (!on) {
-			spin_lock_irqsave(&ocelot->ptp_clock_lock, flags);
+		अगर (!on) अणु
+			spin_lock_irqsave(&ocelot->ptp_घड़ी_lock, flags);
 			val = PTP_PIN_CFG_ACTION(PTP_PIN_ACTION_IDLE);
-			ocelot_write_rix(ocelot, val, PTP_PIN_CFG, ptp_pin);
-			spin_unlock_irqrestore(&ocelot->ptp_clock_lock, flags);
-			break;
-		}
+			ocelot_ग_लिखो_rix(ocelot, val, PTP_PIN_CFG, ptp_pin);
+			spin_unlock_irqrestore(&ocelot->ptp_घड़ी_lock, flags);
+			अवरोध;
+		पूर्ण
 
-		if (rq->perout.flags & PTP_PEROUT_PHASE) {
+		अगर (rq->perout.flags & PTP_PEROUT_PHASE) अणु
 			ts_phase.tv_sec = rq->perout.phase.sec;
 			ts_phase.tv_nsec = rq->perout.phase.nsec;
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Compatibility */
 			ts_phase.tv_sec = rq->perout.start.sec;
 			ts_phase.tv_nsec = rq->perout.start.nsec;
-		}
-		if (ts_phase.tv_sec || (ts_phase.tv_nsec && !pps)) {
+		पूर्ण
+		अगर (ts_phase.tv_sec || (ts_phase.tv_nsec && !pps)) अणु
 			dev_warn(ocelot->dev,
 				 "Absolute start time not supported!\n");
 			dev_warn(ocelot->dev,
 				 "Accept nsec for PPS phase adjustment, otherwise start time should be 0 0.\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* Calculate waveform high and low times */
-		if (rq->perout.flags & PTP_PEROUT_DUTY_CYCLE) {
-			struct timespec64 ts_on;
+		/* Calculate waveक्रमm high and low बार */
+		अगर (rq->perout.flags & PTP_PEROUT_DUTY_CYCLE) अणु
+			काष्ठा बारpec64 ts_on;
 
 			ts_on.tv_sec = rq->perout.on.sec;
 			ts_on.tv_nsec = rq->perout.on.nsec;
 
-			wf_high = timespec64_to_ns(&ts_on);
-		} else {
-			if (pps) {
+			wf_high = बारpec64_to_ns(&ts_on);
+		पूर्ण अन्यथा अणु
+			अगर (pps) अणु
 				wf_high = 1000;
-			} else {
-				wf_high = timespec64_to_ns(&ts_period);
-				wf_high = div_s64(wf_high, 2);
-			}
-		}
+			पूर्ण अन्यथा अणु
+				wf_high = बारpec64_to_ns(&ts_period);
+				wf_high = भाग_s64(wf_high, 2);
+			पूर्ण
+		पूर्ण
 
-		wf_low = timespec64_to_ns(&ts_period);
+		wf_low = बारpec64_to_ns(&ts_period);
 		wf_low -= wf_high;
 
 		/* Handle PPS request */
-		if (pps) {
-			spin_lock_irqsave(&ocelot->ptp_clock_lock, flags);
-			ocelot_write_rix(ocelot, ts_phase.tv_nsec,
+		अगर (pps) अणु
+			spin_lock_irqsave(&ocelot->ptp_घड़ी_lock, flags);
+			ocelot_ग_लिखो_rix(ocelot, ts_phase.tv_nsec,
 					 PTP_PIN_WF_LOW_PERIOD, ptp_pin);
-			ocelot_write_rix(ocelot, wf_high,
+			ocelot_ग_लिखो_rix(ocelot, wf_high,
 					 PTP_PIN_WF_HIGH_PERIOD, ptp_pin);
 			val = PTP_PIN_CFG_ACTION(PTP_PIN_ACTION_CLOCK);
 			val |= PTP_PIN_CFG_SYNC;
-			ocelot_write_rix(ocelot, val, PTP_PIN_CFG, ptp_pin);
-			spin_unlock_irqrestore(&ocelot->ptp_clock_lock, flags);
-			break;
-		}
+			ocelot_ग_लिखो_rix(ocelot, val, PTP_PIN_CFG, ptp_pin);
+			spin_unlock_irqrestore(&ocelot->ptp_घड़ी_lock, flags);
+			अवरोध;
+		पूर्ण
 
-		/* Handle periodic clock */
-		if (wf_high > 0x3fffffff || wf_high <= 0x6)
-			return -EINVAL;
-		if (wf_low > 0x3fffffff || wf_low <= 0x6)
-			return -EINVAL;
+		/* Handle periodic घड़ी */
+		अगर (wf_high > 0x3fffffff || wf_high <= 0x6)
+			वापस -EINVAL;
+		अगर (wf_low > 0x3fffffff || wf_low <= 0x6)
+			वापस -EINVAL;
 
-		spin_lock_irqsave(&ocelot->ptp_clock_lock, flags);
-		ocelot_write_rix(ocelot, wf_low, PTP_PIN_WF_LOW_PERIOD,
+		spin_lock_irqsave(&ocelot->ptp_घड़ी_lock, flags);
+		ocelot_ग_लिखो_rix(ocelot, wf_low, PTP_PIN_WF_LOW_PERIOD,
 				 ptp_pin);
-		ocelot_write_rix(ocelot, wf_high, PTP_PIN_WF_HIGH_PERIOD,
+		ocelot_ग_लिखो_rix(ocelot, wf_high, PTP_PIN_WF_HIGH_PERIOD,
 				 ptp_pin);
 		val = PTP_PIN_CFG_ACTION(PTP_PIN_ACTION_CLOCK);
-		ocelot_write_rix(ocelot, val, PTP_PIN_CFG, ptp_pin);
-		spin_unlock_irqrestore(&ocelot->ptp_clock_lock, flags);
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
-	return 0;
-}
+		ocelot_ग_लिखो_rix(ocelot, val, PTP_PIN_CFG, ptp_pin);
+		spin_unlock_irqrestore(&ocelot->ptp_घड़ी_lock, flags);
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(ocelot_ptp_enable);
 
-int ocelot_init_timestamp(struct ocelot *ocelot,
-			  const struct ptp_clock_info *info)
-{
-	struct ptp_clock *ptp_clock;
-	int i;
+पूर्णांक ocelot_init_बारtamp(काष्ठा ocelot *ocelot,
+			  स्थिर काष्ठा ptp_घड़ी_info *info)
+अणु
+	काष्ठा ptp_घड़ी *ptp_घड़ी;
+	पूर्णांक i;
 
 	ocelot->ptp_info = *info;
 
-	for (i = 0; i < OCELOT_PTP_PINS_NUM; i++) {
-		struct ptp_pin_desc *p = &ocelot->ptp_pins[i];
+	क्रम (i = 0; i < OCELOT_PTP_PINS_NUM; i++) अणु
+		काष्ठा ptp_pin_desc *p = &ocelot->ptp_pins[i];
 
-		snprintf(p->name, sizeof(p->name), "switch_1588_dat%d", i);
+		snम_लिखो(p->name, माप(p->name), "switch_1588_dat%d", i);
 		p->index = i;
 		p->func = PTP_PF_NONE;
-	}
+	पूर्ण
 
 	ocelot->ptp_info.pin_config = &ocelot->ptp_pins[0];
 
-	ptp_clock = ptp_clock_register(&ocelot->ptp_info, ocelot->dev);
-	if (IS_ERR(ptp_clock))
-		return PTR_ERR(ptp_clock);
-	/* Check if PHC support is missing at the configuration level */
-	if (!ptp_clock)
-		return 0;
+	ptp_घड़ी = ptp_घड़ी_रेजिस्टर(&ocelot->ptp_info, ocelot->dev);
+	अगर (IS_ERR(ptp_घड़ी))
+		वापस PTR_ERR(ptp_घड़ी);
+	/* Check अगर PHC support is missing at the configuration level */
+	अगर (!ptp_घड़ी)
+		वापस 0;
 
-	ocelot->ptp_clock = ptp_clock;
+	ocelot->ptp_घड़ी = ptp_घड़ी;
 
-	ocelot_write(ocelot, SYS_PTP_CFG_PTP_STAMP_WID(30), SYS_PTP_CFG);
-	ocelot_write(ocelot, 0xffffffff, ANA_TABLES_PTP_ID_LOW);
-	ocelot_write(ocelot, 0xffffffff, ANA_TABLES_PTP_ID_HIGH);
+	ocelot_ग_लिखो(ocelot, SYS_PTP_CFG_PTP_STAMP_WID(30), SYS_PTP_CFG);
+	ocelot_ग_लिखो(ocelot, 0xffffffff, ANA_TABLES_PTP_ID_LOW);
+	ocelot_ग_लिखो(ocelot, 0xffffffff, ANA_TABLES_PTP_ID_HIGH);
 
-	ocelot_write(ocelot, PTP_CFG_MISC_PTP_EN, PTP_CFG_MISC);
+	ocelot_ग_लिखो(ocelot, PTP_CFG_MISC_PTP_EN, PTP_CFG_MISC);
 
 	/* There is no device reconfiguration, PTP Rx stamping is always
 	 * enabled.
 	 */
 	ocelot->hwtstamp_config.rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
 
-	return 0;
-}
-EXPORT_SYMBOL(ocelot_init_timestamp);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ocelot_init_बारtamp);
 
-int ocelot_deinit_timestamp(struct ocelot *ocelot)
-{
-	if (ocelot->ptp_clock)
-		ptp_clock_unregister(ocelot->ptp_clock);
-	return 0;
-}
-EXPORT_SYMBOL(ocelot_deinit_timestamp);
+पूर्णांक ocelot_deinit_बारtamp(काष्ठा ocelot *ocelot)
+अणु
+	अगर (ocelot->ptp_घड़ी)
+		ptp_घड़ी_unरेजिस्टर(ocelot->ptp_घड़ी);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(ocelot_deinit_बारtamp);

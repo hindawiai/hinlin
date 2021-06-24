@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * platform_sst_audio.h:  sst audio platform data header file
+ * platक्रमm_sst_audपन.स:  sst audio platक्रमm data header file
  *
  * Copyright (C) 2012-14 Intel Corporation
- * Author: Jeeja KP <jeeja.kp@intel.com>
- * 	Omair Mohammed Abdullah <omair.m.abdullah@intel.com>
- *	Vinod Koul ,vinod.koul@intel.com>
+ * Author: Jeeja KP <jeeja.kp@पूर्णांकel.com>
+ * 	Omair Mohammed Abdullah <omair.m.abdullah@पूर्णांकel.com>
+ *	Vinod Koul ,vinod.koul@पूर्णांकel.com>
  */
-#ifndef _PLATFORM_SST_AUDIO_H_
-#define _PLATFORM_SST_AUDIO_H_
+#अगर_अघोषित _PLATFORM_SST_AUDIO_H_
+#घोषणा _PLATFORM_SST_AUDIO_H_
 
-#define MAX_NUM_STREAMS_MRFLD	25
-#define MAX_NUM_STREAMS	MAX_NUM_STREAMS_MRFLD
+#घोषणा MAX_NUM_STREAMS_MRFLD	25
+#घोषणा MAX_NUM_STREAMS	MAX_NUM_STREAMS_MRFLD
 
-enum sst_audio_task_id_mrfld {
+क्रमागत sst_audio_task_id_mrfld अणु
 	SST_TASK_ID_NONE = 0,
 	SST_TASK_ID_SBA = 1,
 	SST_TASK_ID_MEDIA = 3,
 	SST_TASK_ID_MAX = SST_TASK_ID_MEDIA,
-};
+पूर्ण;
 
-/* Device IDs for Merrifield are Pipe IDs,
+/* Device IDs क्रम Merrअगरield are Pipe IDs,
  * ref: DSP spec v0.75 */
-enum sst_audio_device_id_mrfld {
+क्रमागत sst_audio_device_id_mrfld अणु
 	/* Output pipeline IDs */
 	PIPE_ID_OUT_START = 0x0,
 	PIPE_CODEC_OUT0 = 0x2,
@@ -51,27 +52,27 @@ enum sst_audio_device_id_mrfld {
 	PIPE_MEDIA2_IN = 0x91,
 	PIPE_MEDIA3_IN = 0x9C,
 	PIPE_RSVD = 0xFF,
-};
+पूर्ण;
 
-/* The stream map for each platform consists of an array of the below
- * stream map structure.
+/* The stream map क्रम each platक्रमm consists of an array of the below
+ * stream map काष्ठाure.
  */
-struct sst_dev_stream_map {
+काष्ठा sst_dev_stream_map अणु
 	u8 dev_num;		/* device id */
 	u8 subdev_num;		/* substream */
 	u8 direction;
 	u8 device_id;		/* fw id */
 	u8 task_id;		/* fw task */
 	u8 status;
-};
+पूर्ण;
 
-struct sst_platform_data {
-	/* Intel software platform id*/
-	struct sst_dev_stream_map *pdev_strm_map;
-	unsigned int strm_map_size;
-};
+काष्ठा sst_platक्रमm_data अणु
+	/* Intel software platक्रमm id*/
+	काष्ठा sst_dev_stream_map *pdev_strm_map;
+	अचिन्हित पूर्णांक strm_map_size;
+पूर्ण;
 
-struct sst_info {
+काष्ठा sst_info अणु
 	u32 iram_start;
 	u32 iram_end;
 	bool iram_use;
@@ -84,53 +85,53 @@ struct sst_info {
 	u32 mailbox_start;
 	bool use_elf;
 	bool lpe_viewpt_rqd;
-	unsigned int max_streams;
+	अचिन्हित पूर्णांक max_streams;
 	u32 dma_max_len;
 	u8 num_probes;
-};
+पूर्ण;
 
-struct sst_lib_dnld_info {
-	unsigned int mod_base;
-	unsigned int mod_end;
-	unsigned int mod_table_offset;
-	unsigned int mod_table_size;
+काष्ठा sst_lib_dnld_info अणु
+	अचिन्हित पूर्णांक mod_base;
+	अचिन्हित पूर्णांक mod_end;
+	अचिन्हित पूर्णांक mod_table_offset;
+	अचिन्हित पूर्णांक mod_table_size;
 	bool mod_ddr_dnld;
-};
+पूर्ण;
 
-struct sst_res_info {
-	unsigned int shim_offset;
-	unsigned int shim_size;
-	unsigned int shim_phy_addr;
-	unsigned int ssp0_offset;
-	unsigned int ssp0_size;
-	unsigned int dma0_offset;
-	unsigned int dma0_size;
-	unsigned int dma1_offset;
-	unsigned int dma1_size;
-	unsigned int iram_offset;
-	unsigned int iram_size;
-	unsigned int dram_offset;
-	unsigned int dram_size;
-	unsigned int mbox_offset;
-	unsigned int mbox_size;
-	unsigned int acpi_lpe_res_index;
-	unsigned int acpi_ddr_index;
-	unsigned int acpi_ipc_irq_index;
-};
+काष्ठा sst_res_info अणु
+	अचिन्हित पूर्णांक shim_offset;
+	अचिन्हित पूर्णांक shim_size;
+	अचिन्हित पूर्णांक shim_phy_addr;
+	अचिन्हित पूर्णांक ssp0_offset;
+	अचिन्हित पूर्णांक ssp0_size;
+	अचिन्हित पूर्णांक dma0_offset;
+	अचिन्हित पूर्णांक dma0_size;
+	अचिन्हित पूर्णांक dma1_offset;
+	अचिन्हित पूर्णांक dma1_size;
+	अचिन्हित पूर्णांक iram_offset;
+	अचिन्हित पूर्णांक iram_size;
+	अचिन्हित पूर्णांक dram_offset;
+	अचिन्हित पूर्णांक dram_size;
+	अचिन्हित पूर्णांक mbox_offset;
+	अचिन्हित पूर्णांक mbox_size;
+	अचिन्हित पूर्णांक acpi_lpe_res_index;
+	अचिन्हित पूर्णांक acpi_ddr_index;
+	अचिन्हित पूर्णांक acpi_ipc_irq_index;
+पूर्ण;
 
-struct sst_ipc_info {
-	int ipc_offset;
-	unsigned int mbox_recv_off;
-};
+काष्ठा sst_ipc_info अणु
+	पूर्णांक ipc_offset;
+	अचिन्हित पूर्णांक mbox_recv_off;
+पूर्ण;
 
-struct sst_platform_info {
-	const struct sst_info *probe_data;
-	const struct sst_ipc_info *ipc_info;
-	const struct sst_res_info *res_info;
-	const struct sst_lib_dnld_info *lib_info;
-	const char *platform;
+काष्ठा sst_platक्रमm_info अणु
+	स्थिर काष्ठा sst_info *probe_data;
+	स्थिर काष्ठा sst_ipc_info *ipc_info;
+	स्थिर काष्ठा sst_res_info *res_info;
+	स्थिर काष्ठा sst_lib_dnld_info *lib_info;
+	स्थिर अक्षर *platक्रमm;
 	bool streams_lost_on_suspend;
-};
-int add_sst_platform_device(void);
-#endif
+पूर्ण;
+पूर्णांक add_sst_platक्रमm_device(व्योम);
+#पूर्ण_अगर
 

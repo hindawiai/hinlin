@@ -1,4 +1,5 @@
-#include "../../../include/linux/kern_levels.h"
+<शैली गुरु>
+#समावेश "../../../include/linux/kern_levels.h"
 
-#define printk printf
-#define vprintk vprintf
+#घोषणा prपूर्णांकk म_लिखो
+#घोषणा vprपूर्णांकk भ_लिखो

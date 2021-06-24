@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Cadence USBSS and USBSSP DRD Driver - host side
  *
@@ -9,134 +10,134 @@
  *          Pawel Laszczak <pawell@cadence.com>
  */
 
-#include <linux/platform_device.h>
-#include "core.h"
-#include "drd.h"
-#include "host-export.h"
-#include <linux/usb/hcd.h>
-#include "../host/xhci.h"
-#include "../host/xhci-plat.h"
+#समावेश <linux/platक्रमm_device.h>
+#समावेश "core.h"
+#समावेश "drd.h"
+#समावेश "host-export.h"
+#समावेश <linux/usb/hcd.h>
+#समावेश "../host/xhci.h"
+#समावेश "../host/xhci-plat.h"
 
-#define XECP_PORT_CAP_REG	0x8000
-#define XECP_AUX_CTRL_REG1	0x8120
+#घोषणा XECP_PORT_CAP_REG	0x8000
+#घोषणा XECP_AUX_CTRL_REG1	0x8120
 
-#define CFG_RXDET_P3_EN		BIT(15)
-#define LPM_2_STB_SWITCH_EN	BIT(25)
+#घोषणा CFG_RXDET_P3_EN		BIT(15)
+#घोषणा LPM_2_STB_SWITCH_EN	BIT(25)
 
-static int xhci_cdns3_suspend_quirk(struct usb_hcd *hcd);
+अटल पूर्णांक xhci_cdns3_suspend_quirk(काष्ठा usb_hcd *hcd);
 
-static const struct xhci_plat_priv xhci_plat_cdns3_xhci = {
+अटल स्थिर काष्ठा xhci_plat_priv xhci_plat_cdns3_xhci = अणु
 	.quirks = XHCI_SKIP_PHY_INIT | XHCI_AVOID_BEI,
 	.suspend_quirk = xhci_cdns3_suspend_quirk,
-};
+पूर्ण;
 
-static int __cdns_host_init(struct cdns *cdns)
-{
-	struct platform_device *xhci;
-	int ret;
-	struct usb_hcd *hcd;
+अटल पूर्णांक __cdns_host_init(काष्ठा cdns *cdns)
+अणु
+	काष्ठा platक्रमm_device *xhci;
+	पूर्णांक ret;
+	काष्ठा usb_hcd *hcd;
 
 	cdns_drd_host_on(cdns);
 
-	xhci = platform_device_alloc("xhci-hcd", PLATFORM_DEVID_AUTO);
-	if (!xhci) {
+	xhci = platक्रमm_device_alloc("xhci-hcd", PLATFORM_DEVID_AUTO);
+	अगर (!xhci) अणु
 		dev_err(cdns->dev, "couldn't allocate xHCI device\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	xhci->dev.parent = cdns->dev;
 	cdns->host_dev = xhci;
 
-	ret = platform_device_add_resources(xhci, cdns->xhci_res,
+	ret = platक्रमm_device_add_resources(xhci, cdns->xhci_res,
 					    CDNS_XHCI_RESOURCES_NUM);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(cdns->dev, "couldn't add resources to xHCI device\n");
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
 	cdns->xhci_plat_data = kmemdup(&xhci_plat_cdns3_xhci,
-			sizeof(struct xhci_plat_priv), GFP_KERNEL);
-	if (!cdns->xhci_plat_data) {
+			माप(काष्ठा xhci_plat_priv), GFP_KERNEL);
+	अगर (!cdns->xhci_plat_data) अणु
 		ret = -ENOMEM;
-		goto err1;
-	}
+		जाओ err1;
+	पूर्ण
 
-	if (cdns->pdata && (cdns->pdata->quirks & CDNS3_DEFAULT_PM_RUNTIME_ALLOW))
+	अगर (cdns->pdata && (cdns->pdata->quirks & CDNS3_DEFAULT_PM_RUNTIME_ALLOW))
 		cdns->xhci_plat_data->quirks |= XHCI_DEFAULT_PM_RUNTIME_ALLOW;
 
-	ret = platform_device_add_data(xhci, cdns->xhci_plat_data,
-			sizeof(struct xhci_plat_priv));
-	if (ret)
-		goto free_memory;
+	ret = platक्रमm_device_add_data(xhci, cdns->xhci_plat_data,
+			माप(काष्ठा xhci_plat_priv));
+	अगर (ret)
+		जाओ मुक्त_memory;
 
-	ret = platform_device_add(xhci);
-	if (ret) {
+	ret = platक्रमm_device_add(xhci);
+	अगर (ret) अणु
 		dev_err(cdns->dev, "failed to register xHCI device\n");
-		goto free_memory;
-	}
+		जाओ मुक्त_memory;
+	पूर्ण
 
-	/* Glue needs to access xHCI region register for Power management */
-	hcd = platform_get_drvdata(xhci);
-	if (hcd)
+	/* Glue needs to access xHCI region रेजिस्टर क्रम Power management */
+	hcd = platक्रमm_get_drvdata(xhci);
+	अगर (hcd)
 		cdns->xhci_regs = hcd->regs;
 
-	return 0;
+	वापस 0;
 
-free_memory:
-	kfree(cdns->xhci_plat_data);
+मुक्त_memory:
+	kमुक्त(cdns->xhci_plat_data);
 err1:
-	platform_device_put(xhci);
-	return ret;
-}
+	platक्रमm_device_put(xhci);
+	वापस ret;
+पूर्ण
 
-static int xhci_cdns3_suspend_quirk(struct usb_hcd *hcd)
-{
-	struct xhci_hcd	*xhci = hcd_to_xhci(hcd);
+अटल पूर्णांक xhci_cdns3_suspend_quirk(काष्ठा usb_hcd *hcd)
+अणु
+	काष्ठा xhci_hcd	*xhci = hcd_to_xhci(hcd);
 	u32 value;
 
-	if (pm_runtime_status_suspended(hcd->self.controller))
-		return 0;
+	अगर (pm_runसमय_status_suspended(hcd->self.controller))
+		वापस 0;
 
 	/* set usbcmd.EU3S */
-	value = readl(&xhci->op_regs->command);
+	value = पढ़ोl(&xhci->op_regs->command);
 	value |= CMD_PM_INDEX;
-	writel(value, &xhci->op_regs->command);
+	ग_लिखोl(value, &xhci->op_regs->command);
 
-	if (hcd->regs) {
-		value = readl(hcd->regs + XECP_AUX_CTRL_REG1);
+	अगर (hcd->regs) अणु
+		value = पढ़ोl(hcd->regs + XECP_AUX_CTRL_REG1);
 		value |= CFG_RXDET_P3_EN;
-		writel(value, hcd->regs + XECP_AUX_CTRL_REG1);
+		ग_लिखोl(value, hcd->regs + XECP_AUX_CTRL_REG1);
 
-		value = readl(hcd->regs + XECP_PORT_CAP_REG);
+		value = पढ़ोl(hcd->regs + XECP_PORT_CAP_REG);
 		value |= LPM_2_STB_SWITCH_EN;
-		writel(value, hcd->regs + XECP_PORT_CAP_REG);
-	}
+		ग_लिखोl(value, hcd->regs + XECP_PORT_CAP_REG);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void cdns_host_exit(struct cdns *cdns)
-{
-	kfree(cdns->xhci_plat_data);
-	platform_device_unregister(cdns->host_dev);
-	cdns->host_dev = NULL;
+अटल व्योम cdns_host_निकास(काष्ठा cdns *cdns)
+अणु
+	kमुक्त(cdns->xhci_plat_data);
+	platक्रमm_device_unरेजिस्टर(cdns->host_dev);
+	cdns->host_dev = शून्य;
 	cdns_drd_host_off(cdns);
-}
+पूर्ण
 
-int cdns_host_init(struct cdns *cdns)
-{
-	struct cdns_role_driver *rdrv;
+पूर्णांक cdns_host_init(काष्ठा cdns *cdns)
+अणु
+	काष्ठा cdns_role_driver *rdrv;
 
-	rdrv = devm_kzalloc(cdns->dev, sizeof(*rdrv), GFP_KERNEL);
-	if (!rdrv)
-		return -ENOMEM;
+	rdrv = devm_kzalloc(cdns->dev, माप(*rdrv), GFP_KERNEL);
+	अगर (!rdrv)
+		वापस -ENOMEM;
 
 	rdrv->start	= __cdns_host_init;
-	rdrv->stop	= cdns_host_exit;
+	rdrv->stop	= cdns_host_निकास;
 	rdrv->state	= CDNS_ROLE_STATE_INACTIVE;
 	rdrv->name	= "host";
 
 	cdns->roles[USB_ROLE_HOST] = rdrv;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

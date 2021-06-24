@@ -1,21 +1,22 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM power
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM घातer
 
-#if !defined(_TRACE_POWER_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_POWER_H
+#अगर !defined(_TRACE_POWER_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_POWER_H
 
-#include <linux/cpufreq.h>
-#include <linux/ktime.h>
-#include <linux/pm_qos.h>
-#include <linux/tracepoint.h>
-#include <linux/trace_events.h>
+#समावेश <linux/cpufreq.h>
+#समावेश <linux/kसमय.स>
+#समावेश <linux/pm_qos.h>
+#समावेश <linux/tracepoपूर्णांक.h>
+#समावेश <linux/trace_events.h>
 
-#define TPS(x)  tracepoint_string(x)
+#घोषणा TPS(x)  tracepoपूर्णांक_string(x)
 
 DECLARE_EVENT_CLASS(cpu,
 
-	TP_PROTO(unsigned int state, unsigned int cpu_id),
+	TP_PROTO(अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक cpu_id),
 
 	TP_ARGS(state, cpu_id),
 
@@ -29,27 +30,27 @@ DECLARE_EVENT_CLASS(cpu,
 		__entry->cpu_id = cpu_id;
 	),
 
-	TP_printk("state=%lu cpu_id=%lu", (unsigned long)__entry->state,
-		  (unsigned long)__entry->cpu_id)
+	TP_prपूर्णांकk("state=%lu cpu_id=%lu", (अचिन्हित दीर्घ)__entry->state,
+		  (अचिन्हित दीर्घ)__entry->cpu_id)
 );
 
 DEFINE_EVENT(cpu, cpu_idle,
 
-	TP_PROTO(unsigned int state, unsigned int cpu_id),
+	TP_PROTO(अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक cpu_id),
 
 	TP_ARGS(state, cpu_id)
 );
 
-TRACE_EVENT(powernv_throttle,
+TRACE_EVENT(घातernv_throttle,
 
-	TP_PROTO(int chip_id, const char *reason, int pmax),
+	TP_PROTO(पूर्णांक chip_id, स्थिर अक्षर *reason, पूर्णांक pmax),
 
 	TP_ARGS(chip_id, reason, pmax),
 
 	TP_STRUCT__entry(
-		__field(int, chip_id)
+		__field(पूर्णांक, chip_id)
 		__string(reason, reason)
-		__field(int, pmax)
+		__field(पूर्णांक, pmax)
 	),
 
 	TP_fast_assign(
@@ -58,7 +59,7 @@ TRACE_EVENT(powernv_throttle,
 		__entry->pmax = pmax;
 	),
 
-	TP_printk("Chip %d Pmax %d %s", __entry->chip_id,
+	TP_prपूर्णांकk("Chip %d Pmax %d %s", __entry->chip_id,
 		  __entry->pmax, __get_str(reason))
 );
 
@@ -110,48 +111,48 @@ TRACE_EVENT(pstate_sample,
 		__entry->io_boost = io_boost;
 		),
 
-	TP_printk("core_busy=%lu scaled=%lu from=%lu to=%lu mperf=%llu aperf=%llu tsc=%llu freq=%lu io_boost=%lu",
-		(unsigned long)__entry->core_busy,
-		(unsigned long)__entry->scaled_busy,
-		(unsigned long)__entry->from,
-		(unsigned long)__entry->to,
-		(unsigned long long)__entry->mperf,
-		(unsigned long long)__entry->aperf,
-		(unsigned long long)__entry->tsc,
-		(unsigned long)__entry->freq,
-		(unsigned long)__entry->io_boost
+	TP_prपूर्णांकk("core_busy=%lu scaled=%lu from=%lu to=%lu mperf=%llu aperf=%llu tsc=%llu freq=%lu io_boost=%lu",
+		(अचिन्हित दीर्घ)__entry->core_busy,
+		(अचिन्हित दीर्घ)__entry->scaled_busy,
+		(अचिन्हित दीर्घ)__entry->from,
+		(अचिन्हित दीर्घ)__entry->to,
+		(अचिन्हित दीर्घ दीर्घ)__entry->mperf,
+		(अचिन्हित दीर्घ दीर्घ)__entry->aperf,
+		(अचिन्हित दीर्घ दीर्घ)__entry->tsc,
+		(अचिन्हित दीर्घ)__entry->freq,
+		(अचिन्हित दीर्घ)__entry->io_boost
 		)
 
 );
 
-/* This file can get included multiple times, TRACE_HEADER_MULTI_READ at top */
-#ifndef _PWR_EVENT_AVOID_DOUBLE_DEFINING
-#define _PWR_EVENT_AVOID_DOUBLE_DEFINING
+/* This file can get included multiple बार, TRACE_HEADER_MULTI_READ at top */
+#अगर_अघोषित _PWR_EVENT_AVOID_DOUBLE_DEFINING
+#घोषणा _PWR_EVENT_AVOID_DOUBLE_DEFINING
 
-#define PWR_EVENT_EXIT -1
-#endif
+#घोषणा PWR_EVENT_EXIT -1
+#पूर्ण_अगर
 
-#define pm_verb_symbolic(event) \
-	__print_symbolic(event, \
-		{ PM_EVENT_SUSPEND, "suspend" }, \
-		{ PM_EVENT_RESUME, "resume" }, \
-		{ PM_EVENT_FREEZE, "freeze" }, \
-		{ PM_EVENT_QUIESCE, "quiesce" }, \
-		{ PM_EVENT_HIBERNATE, "hibernate" }, \
-		{ PM_EVENT_THAW, "thaw" }, \
-		{ PM_EVENT_RESTORE, "restore" }, \
-		{ PM_EVENT_RECOVER, "recover" })
+#घोषणा pm_verb_symbolic(event) \
+	__prपूर्णांक_symbolic(event, \
+		अणु PM_EVENT_SUSPEND, "suspend" पूर्ण, \
+		अणु PM_EVENT_RESUME, "resume" पूर्ण, \
+		अणु PM_EVENT_FREEZE, "freeze" पूर्ण, \
+		अणु PM_EVENT_QUIESCE, "quiesce" पूर्ण, \
+		अणु PM_EVENT_HIBERNATE, "hibernate" पूर्ण, \
+		अणु PM_EVENT_THAW, "thaw" पूर्ण, \
+		अणु PM_EVENT_RESTORE, "restore" पूर्ण, \
+		अणु PM_EVENT_RECOVER, "recover" पूर्ण)
 
 DEFINE_EVENT(cpu, cpu_frequency,
 
-	TP_PROTO(unsigned int frequency, unsigned int cpu_id),
+	TP_PROTO(अचिन्हित पूर्णांक frequency, अचिन्हित पूर्णांक cpu_id),
 
 	TP_ARGS(frequency, cpu_id)
 );
 
 TRACE_EVENT(cpu_frequency_limits,
 
-	TP_PROTO(struct cpufreq_policy *policy),
+	TP_PROTO(काष्ठा cpufreq_policy *policy),
 
 	TP_ARGS(policy),
 
@@ -167,15 +168,15 @@ TRACE_EVENT(cpu_frequency_limits,
 		__entry->cpu_id = policy->cpu;
 	),
 
-	TP_printk("min=%lu max=%lu cpu_id=%lu",
-		  (unsigned long)__entry->min_freq,
-		  (unsigned long)__entry->max_freq,
-		  (unsigned long)__entry->cpu_id)
+	TP_prपूर्णांकk("min=%lu max=%lu cpu_id=%lu",
+		  (अचिन्हित दीर्घ)__entry->min_freq,
+		  (अचिन्हित दीर्घ)__entry->max_freq,
+		  (अचिन्हित दीर्घ)__entry->cpu_id)
 );
 
 TRACE_EVENT(device_pm_callback_start,
 
-	TP_PROTO(struct device *dev, const char *pm_ops, int event),
+	TP_PROTO(काष्ठा device *dev, स्थिर अक्षर *pm_ops, पूर्णांक event),
 
 	TP_ARGS(dev, pm_ops, event),
 
@@ -184,7 +185,7 @@ TRACE_EVENT(device_pm_callback_start,
 		__string(driver, dev_driver_string(dev))
 		__string(parent, dev->parent ? dev_name(dev->parent) : "none")
 		__string(pm_ops, pm_ops ? pm_ops : "none ")
-		__field(int, event)
+		__field(पूर्णांक, event)
 	),
 
 	TP_fast_assign(
@@ -196,21 +197,21 @@ TRACE_EVENT(device_pm_callback_start,
 		__entry->event = event;
 	),
 
-	TP_printk("%s %s, parent: %s, %s[%s]", __get_str(driver),
+	TP_prपूर्णांकk("%s %s, parent: %s, %s[%s]", __get_str(driver),
 		__get_str(device), __get_str(parent), __get_str(pm_ops),
 		pm_verb_symbolic(__entry->event))
 );
 
 TRACE_EVENT(device_pm_callback_end,
 
-	TP_PROTO(struct device *dev, int error),
+	TP_PROTO(काष्ठा device *dev, पूर्णांक error),
 
 	TP_ARGS(dev, error),
 
 	TP_STRUCT__entry(
 		__string(device, dev_name(dev))
 		__string(driver, dev_driver_string(dev))
-		__field(int, error)
+		__field(पूर्णांक, error)
 	),
 
 	TP_fast_assign(
@@ -219,19 +220,19 @@ TRACE_EVENT(device_pm_callback_end,
 		__entry->error = error;
 	),
 
-	TP_printk("%s %s, err=%d",
+	TP_prपूर्णांकk("%s %s, err=%d",
 		__get_str(driver), __get_str(device), __entry->error)
 );
 
 TRACE_EVENT(suspend_resume,
 
-	TP_PROTO(const char *action, int val, bool start),
+	TP_PROTO(स्थिर अक्षर *action, पूर्णांक val, bool start),
 
 	TP_ARGS(action, val, start),
 
 	TP_STRUCT__entry(
-		__field(const char *, action)
-		__field(int, val)
+		__field(स्थिर अक्षर *, action)
+		__field(पूर्णांक, val)
 		__field(bool, start)
 	),
 
@@ -241,13 +242,13 @@ TRACE_EVENT(suspend_resume,
 		__entry->start = start;
 	),
 
-	TP_printk("%s[%u] %s", __entry->action, (unsigned int)__entry->val,
+	TP_prपूर्णांकk("%s[%u] %s", __entry->action, (अचिन्हित पूर्णांक)__entry->val,
 		(__entry->start)?"begin":"end")
 );
 
 DECLARE_EVENT_CLASS(wakeup_source,
 
-	TP_PROTO(const char *name, unsigned int state),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक state),
 
 	TP_ARGS(name, state),
 
@@ -261,31 +262,31 @@ DECLARE_EVENT_CLASS(wakeup_source,
 		__entry->state = state;
 	),
 
-	TP_printk("%s state=0x%lx", __get_str(name),
-		(unsigned long)__entry->state)
+	TP_prपूर्णांकk("%s state=0x%lx", __get_str(name),
+		(अचिन्हित दीर्घ)__entry->state)
 );
 
 DEFINE_EVENT(wakeup_source, wakeup_source_activate,
 
-	TP_PROTO(const char *name, unsigned int state),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक state),
 
 	TP_ARGS(name, state)
 );
 
 DEFINE_EVENT(wakeup_source, wakeup_source_deactivate,
 
-	TP_PROTO(const char *name, unsigned int state),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक state),
 
 	TP_ARGS(name, state)
 );
 
 /*
- * The clock events are used for clock enable/disable and for
- *  clock rate change
+ * The घड़ी events are used क्रम घड़ी enable/disable and क्रम
+ *  घड़ी rate change
  */
-DECLARE_EVENT_CLASS(clock,
+DECLARE_EVENT_CLASS(घड़ी,
 
-	TP_PROTO(const char *name, unsigned int state, unsigned int cpu_id),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक cpu_id),
 
 	TP_ARGS(name, state, cpu_id),
 
@@ -301,37 +302,37 @@ DECLARE_EVENT_CLASS(clock,
 		__entry->cpu_id = cpu_id;
 	),
 
-	TP_printk("%s state=%lu cpu_id=%lu", __get_str(name),
-		(unsigned long)__entry->state, (unsigned long)__entry->cpu_id)
+	TP_prपूर्णांकk("%s state=%lu cpu_id=%lu", __get_str(name),
+		(अचिन्हित दीर्घ)__entry->state, (अचिन्हित दीर्घ)__entry->cpu_id)
 );
 
-DEFINE_EVENT(clock, clock_enable,
+DEFINE_EVENT(घड़ी, घड़ी_enable,
 
-	TP_PROTO(const char *name, unsigned int state, unsigned int cpu_id),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक cpu_id),
 
 	TP_ARGS(name, state, cpu_id)
 );
 
-DEFINE_EVENT(clock, clock_disable,
+DEFINE_EVENT(घड़ी, घड़ी_disable,
 
-	TP_PROTO(const char *name, unsigned int state, unsigned int cpu_id),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक cpu_id),
 
 	TP_ARGS(name, state, cpu_id)
 );
 
-DEFINE_EVENT(clock, clock_set_rate,
+DEFINE_EVENT(घड़ी, घड़ी_set_rate,
 
-	TP_PROTO(const char *name, unsigned int state, unsigned int cpu_id),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक cpu_id),
 
 	TP_ARGS(name, state, cpu_id)
 );
 
 /*
- * The power domain events are used for power domains transitions
+ * The घातer करोमुख्य events are used क्रम घातer करोमुख्यs transitions
  */
-DECLARE_EVENT_CLASS(power_domain,
+DECLARE_EVENT_CLASS(घातer_करोमुख्य,
 
-	TP_PROTO(const char *name, unsigned int state, unsigned int cpu_id),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक cpu_id),
 
 	TP_ARGS(name, state, cpu_id),
 
@@ -347,19 +348,19 @@ DECLARE_EVENT_CLASS(power_domain,
 		__entry->cpu_id = cpu_id;
 ),
 
-	TP_printk("%s state=%lu cpu_id=%lu", __get_str(name),
-		(unsigned long)__entry->state, (unsigned long)__entry->cpu_id)
+	TP_prपूर्णांकk("%s state=%lu cpu_id=%lu", __get_str(name),
+		(अचिन्हित दीर्घ)__entry->state, (अचिन्हित दीर्घ)__entry->cpu_id)
 );
 
-DEFINE_EVENT(power_domain, power_domain_target,
+DEFINE_EVENT(घातer_करोमुख्य, घातer_करोमुख्य_target,
 
-	TP_PROTO(const char *name, unsigned int state, unsigned int cpu_id),
+	TP_PROTO(स्थिर अक्षर *name, अचिन्हित पूर्णांक state, अचिन्हित पूर्णांक cpu_id),
 
 	TP_ARGS(name, state, cpu_id)
 );
 
 /*
- * CPU latency QoS events used for global CPU latency QoS list updates
+ * CPU latency QoS events used क्रम global CPU latency QoS list updates
  */
 DECLARE_EVENT_CLASS(cpu_latency_qos_request,
 
@@ -375,7 +376,7 @@ DECLARE_EVENT_CLASS(cpu_latency_qos_request,
 		__entry->value = value;
 	),
 
-	TP_printk("CPU_DMA_LATENCY value=%d",
+	TP_prपूर्णांकk("CPU_DMA_LATENCY value=%d",
 		  __entry->value)
 );
 
@@ -393,7 +394,7 @@ DEFINE_EVENT(cpu_latency_qos_request, pm_qos_update_request,
 	TP_ARGS(value)
 );
 
-DEFINE_EVENT(cpu_latency_qos_request, pm_qos_remove_request,
+DEFINE_EVENT(cpu_latency_qos_request, pm_qos_हटाओ_request,
 
 	TP_PROTO(s32 value),
 
@@ -401,18 +402,18 @@ DEFINE_EVENT(cpu_latency_qos_request, pm_qos_remove_request,
 );
 
 /*
- * General PM QoS events used for updates of PM QoS request lists
+ * General PM QoS events used क्रम updates of PM QoS request lists
  */
 DECLARE_EVENT_CLASS(pm_qos_update,
 
-	TP_PROTO(enum pm_qos_req_action action, int prev_value, int curr_value),
+	TP_PROTO(क्रमागत pm_qos_req_action action, पूर्णांक prev_value, पूर्णांक curr_value),
 
 	TP_ARGS(action, prev_value, curr_value),
 
 	TP_STRUCT__entry(
-		__field( enum pm_qos_req_action, action         )
-		__field( int,                    prev_value     )
-		__field( int,                    curr_value     )
+		__field( क्रमागत pm_qos_req_action, action         )
+		__field( पूर्णांक,                    prev_value     )
+		__field( पूर्णांक,                    curr_value     )
 	),
 
 	TP_fast_assign(
@@ -421,45 +422,45 @@ DECLARE_EVENT_CLASS(pm_qos_update,
 		__entry->curr_value = curr_value;
 	),
 
-	TP_printk("action=%s prev_value=%d curr_value=%d",
-		  __print_symbolic(__entry->action,
-			{ PM_QOS_ADD_REQ,	"ADD_REQ" },
-			{ PM_QOS_UPDATE_REQ,	"UPDATE_REQ" },
-			{ PM_QOS_REMOVE_REQ,	"REMOVE_REQ" }),
+	TP_prपूर्णांकk("action=%s prev_value=%d curr_value=%d",
+		  __prपूर्णांक_symbolic(__entry->action,
+			अणु PM_QOS_ADD_REQ,	"ADD_REQ" पूर्ण,
+			अणु PM_QOS_UPDATE_REQ,	"UPDATE_REQ" पूर्ण,
+			अणु PM_QOS_REMOVE_REQ,	"REMOVE_REQ" पूर्ण),
 		  __entry->prev_value, __entry->curr_value)
 );
 
 DEFINE_EVENT(pm_qos_update, pm_qos_update_target,
 
-	TP_PROTO(enum pm_qos_req_action action, int prev_value, int curr_value),
+	TP_PROTO(क्रमागत pm_qos_req_action action, पूर्णांक prev_value, पूर्णांक curr_value),
 
 	TP_ARGS(action, prev_value, curr_value)
 );
 
 DEFINE_EVENT_PRINT(pm_qos_update, pm_qos_update_flags,
 
-	TP_PROTO(enum pm_qos_req_action action, int prev_value, int curr_value),
+	TP_PROTO(क्रमागत pm_qos_req_action action, पूर्णांक prev_value, पूर्णांक curr_value),
 
 	TP_ARGS(action, prev_value, curr_value),
 
-	TP_printk("action=%s prev_value=0x%x curr_value=0x%x",
-		  __print_symbolic(__entry->action,
-			{ PM_QOS_ADD_REQ,	"ADD_REQ" },
-			{ PM_QOS_UPDATE_REQ,	"UPDATE_REQ" },
-			{ PM_QOS_REMOVE_REQ,	"REMOVE_REQ" }),
+	TP_prपूर्णांकk("action=%s prev_value=0x%x curr_value=0x%x",
+		  __prपूर्णांक_symbolic(__entry->action,
+			अणु PM_QOS_ADD_REQ,	"ADD_REQ" पूर्ण,
+			अणु PM_QOS_UPDATE_REQ,	"UPDATE_REQ" पूर्ण,
+			अणु PM_QOS_REMOVE_REQ,	"REMOVE_REQ" पूर्ण),
 		  __entry->prev_value, __entry->curr_value)
 );
 
 DECLARE_EVENT_CLASS(dev_pm_qos_request,
 
-	TP_PROTO(const char *name, enum dev_pm_qos_req_type type,
+	TP_PROTO(स्थिर अक्षर *name, क्रमागत dev_pm_qos_req_type type,
 		 s32 new_value),
 
 	TP_ARGS(name, type, new_value),
 
 	TP_STRUCT__entry(
 		__string( name,                    name         )
-		__field( enum dev_pm_qos_req_type, type         )
+		__field( क्रमागत dev_pm_qos_req_type, type         )
 		__field( s32,                      new_value    )
 	),
 
@@ -469,17 +470,17 @@ DECLARE_EVENT_CLASS(dev_pm_qos_request,
 		__entry->new_value = new_value;
 	),
 
-	TP_printk("device=%s type=%s new_value=%d",
+	TP_prपूर्णांकk("device=%s type=%s new_value=%d",
 		  __get_str(name),
-		  __print_symbolic(__entry->type,
-			{ DEV_PM_QOS_RESUME_LATENCY, "DEV_PM_QOS_RESUME_LATENCY" },
-			{ DEV_PM_QOS_FLAGS, "DEV_PM_QOS_FLAGS" }),
+		  __prपूर्णांक_symbolic(__entry->type,
+			अणु DEV_PM_QOS_RESUME_LATENCY, "DEV_PM_QOS_RESUME_LATENCY" पूर्ण,
+			अणु DEV_PM_QOS_FLAGS, "DEV_PM_QOS_FLAGS" पूर्ण),
 		  __entry->new_value)
 );
 
 DEFINE_EVENT(dev_pm_qos_request, dev_pm_qos_add_request,
 
-	TP_PROTO(const char *name, enum dev_pm_qos_req_type type,
+	TP_PROTO(स्थिर अक्षर *name, क्रमागत dev_pm_qos_req_type type,
 		 s32 new_value),
 
 	TP_ARGS(name, type, new_value)
@@ -487,20 +488,20 @@ DEFINE_EVENT(dev_pm_qos_request, dev_pm_qos_add_request,
 
 DEFINE_EVENT(dev_pm_qos_request, dev_pm_qos_update_request,
 
-	TP_PROTO(const char *name, enum dev_pm_qos_req_type type,
+	TP_PROTO(स्थिर अक्षर *name, क्रमागत dev_pm_qos_req_type type,
 		 s32 new_value),
 
 	TP_ARGS(name, type, new_value)
 );
 
-DEFINE_EVENT(dev_pm_qos_request, dev_pm_qos_remove_request,
+DEFINE_EVENT(dev_pm_qos_request, dev_pm_qos_हटाओ_request,
 
-	TP_PROTO(const char *name, enum dev_pm_qos_req_type type,
+	TP_PROTO(स्थिर अक्षर *name, क्रमागत dev_pm_qos_req_type type,
 		 s32 new_value),
 
 	TP_ARGS(name, type, new_value)
 );
-#endif /* _TRACE_POWER_H */
+#पूर्ण_अगर /* _TRACE_POWER_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

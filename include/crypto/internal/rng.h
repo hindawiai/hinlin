@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * RNG: Random Number Generator  algorithms under the crypto API
+ * RNG: Ranकरोm Number Generator  algorithms under the crypto API
  *
  * Copyright (c) 2008 Neil Horman <nhorman@tuxdriver.com>
- * Copyright (c) 2015 Herbert Xu <herbert@gondor.apana.org.au>
+ * Copyright (c) 2015 Herbert Xu <herbert@gonकरोr.apana.org.au>
  */
 
-#ifndef _CRYPTO_INTERNAL_RNG_H
-#define _CRYPTO_INTERNAL_RNG_H
+#अगर_अघोषित _CRYPTO_INTERNAL_RNG_H
+#घोषणा _CRYPTO_INTERNAL_RNG_H
 
-#include <crypto/algapi.h>
-#include <crypto/rng.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/rng.h>
 
-int crypto_register_rng(struct rng_alg *alg);
-void crypto_unregister_rng(struct rng_alg *alg);
-int crypto_register_rngs(struct rng_alg *algs, int count);
-void crypto_unregister_rngs(struct rng_alg *algs, int count);
+पूर्णांक crypto_रेजिस्टर_rng(काष्ठा rng_alg *alg);
+व्योम crypto_unरेजिस्टर_rng(काष्ठा rng_alg *alg);
+पूर्णांक crypto_रेजिस्टर_rngs(काष्ठा rng_alg *algs, पूर्णांक count);
+व्योम crypto_unरेजिस्टर_rngs(काष्ठा rng_alg *algs, पूर्णांक count);
 
-#if defined(CONFIG_CRYPTO_RNG) || defined(CONFIG_CRYPTO_RNG_MODULE)
-int crypto_del_default_rng(void);
-#else
-static inline int crypto_del_default_rng(void)
-{
-	return 0;
-}
-#endif
+#अगर defined(CONFIG_CRYPTO_RNG) || defined(CONFIG_CRYPTO_RNG_MODULE)
+पूर्णांक crypto_del_शेष_rng(व्योम);
+#अन्यथा
+अटल अंतरभूत पूर्णांक crypto_del_शेष_rng(व्योम)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static inline void *crypto_rng_ctx(struct crypto_rng *tfm)
-{
-	return crypto_tfm_ctx(&tfm->base);
-}
+अटल अंतरभूत व्योम *crypto_rng_ctx(काष्ठा crypto_rng *tfm)
+अणु
+	वापस crypto_tfm_ctx(&tfm->base);
+पूर्ण
 
-static inline void crypto_rng_set_entropy(struct crypto_rng *tfm,
-					  const u8 *data, unsigned int len)
-{
+अटल अंतरभूत व्योम crypto_rng_set_entropy(काष्ठा crypto_rng *tfm,
+					  स्थिर u8 *data, अचिन्हित पूर्णांक len)
+अणु
 	crypto_rng_alg(tfm)->set_ent(tfm, data, len);
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

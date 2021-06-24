@@ -1,14 +1,15 @@
-// SPDX-License-Identifier: GPL-2.0 OR MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR MIT
 /**************************************************************************
  *
  * Copyright 2019 VMware, Inc., Palo Alto, CA., USA
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
+ * without limitation the rights to use, copy, modअगरy, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
+ * permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -24,156 +25,156 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
-#include "vmwgfx_drv.h"
+#समावेश "vmwgfx_drv.h"
 
 /*
- * Different methods for tracking dirty:
- * VMW_BO_DIRTY_PAGETABLE - Scan the pagetable for hardware dirty bits
- * VMW_BO_DIRTY_MKWRITE - Write-protect page table entries and record write-
- * accesses in the VM mkwrite() callback
+ * Dअगरferent methods क्रम tracking dirty:
+ * VMW_BO_सूचीTY_PAGETABLE - Scan the pagetable क्रम hardware dirty bits
+ * VMW_BO_सूचीTY_MKWRITE - Write-protect page table entries and record ग_लिखो-
+ * accesses in the VM mkग_लिखो() callback
  */
-enum vmw_bo_dirty_method {
-	VMW_BO_DIRTY_PAGETABLE,
-	VMW_BO_DIRTY_MKWRITE,
-};
+क्रमागत vmw_bo_dirty_method अणु
+	VMW_BO_सूचीTY_PAGETABLE,
+	VMW_BO_सूचीTY_MKWRITE,
+पूर्ण;
 
 /*
  * No dirtied pages at scan trigger a transition to the _MKWRITE method,
  * similarly a certain percentage of dirty pages trigger a transition to
- * the _PAGETABLE method. How many triggers should we wait for before
+ * the _PAGETABLE method. How many triggers should we रुको क्रम beक्रमe
  * changing method?
  */
-#define VMW_DIRTY_NUM_CHANGE_TRIGGERS 2
+#घोषणा VMW_सूचीTY_NUM_CHANGE_TRIGGERS 2
 
 /* Percentage to trigger a transition to the _PAGETABLE method */
-#define VMW_DIRTY_PERCENTAGE 10
+#घोषणा VMW_सूचीTY_PERCENTAGE 10
 
 /**
- * struct vmw_bo_dirty - Dirty information for buffer objects
+ * काष्ठा vmw_bo_dirty - Dirty inक्रमmation क्रम buffer objects
  * @start: First currently dirty bit
  * @end: Last currently dirty bit + 1
  * @method: The currently used dirty method
  * @change_count: Number of consecutive method change triggers
- * @ref_count: Reference count for this structure
- * @bitmap_size: The size of the bitmap in bits. Typically equal to the
+ * @ref_count: Reference count क्रम this काष्ठाure
+ * @biपंचांगap_size: The size of the biपंचांगap in bits. Typically equal to the
  * nuber of pages in the bo.
- * @size: The accounting size for this struct.
- * @bitmap: A bitmap where each bit represents a page. A set bit means a
+ * @size: The accounting size क्रम this काष्ठा.
+ * @biपंचांगap: A biपंचांगap where each bit represents a page. A set bit means a
  * dirty page.
  */
-struct vmw_bo_dirty {
-	unsigned long start;
-	unsigned long end;
-	enum vmw_bo_dirty_method method;
-	unsigned int change_count;
-	unsigned int ref_count;
-	unsigned long bitmap_size;
-	size_t size;
-	unsigned long bitmap[];
-};
+काष्ठा vmw_bo_dirty अणु
+	अचिन्हित दीर्घ start;
+	अचिन्हित दीर्घ end;
+	क्रमागत vmw_bo_dirty_method method;
+	अचिन्हित पूर्णांक change_count;
+	अचिन्हित पूर्णांक ref_count;
+	अचिन्हित दीर्घ biपंचांगap_size;
+	माप_प्रकार size;
+	अचिन्हित दीर्घ biपंचांगap[];
+पूर्ण;
 
 /**
- * vmw_bo_dirty_scan_pagetable - Perform a pagetable scan for dirty bits
+ * vmw_bo_dirty_scan_pagetable - Perक्रमm a pagetable scan क्रम dirty bits
  * @vbo: The buffer object to scan
  *
- * Scans the pagetable for dirty bits. Clear those bits and modify the
- * dirty structure with the results. This function may change the
+ * Scans the pagetable क्रम dirty bits. Clear those bits and modअगरy the
+ * dirty काष्ठाure with the results. This function may change the
  * dirty-tracking method.
  */
-static void vmw_bo_dirty_scan_pagetable(struct vmw_buffer_object *vbo)
-{
-	struct vmw_bo_dirty *dirty = vbo->dirty;
+अटल व्योम vmw_bo_dirty_scan_pagetable(काष्ठा vmw_buffer_object *vbo)
+अणु
+	काष्ठा vmw_bo_dirty *dirty = vbo->dirty;
 	pgoff_t offset = drm_vma_node_start(&vbo->base.base.vma_node);
-	struct address_space *mapping = vbo->base.bdev->dev_mapping;
+	काष्ठा address_space *mapping = vbo->base.bdev->dev_mapping;
 	pgoff_t num_marked;
 
 	num_marked = clean_record_shared_mapping_range
 		(mapping,
-		 offset, dirty->bitmap_size,
-		 offset, &dirty->bitmap[0],
+		 offset, dirty->biपंचांगap_size,
+		 offset, &dirty->biपंचांगap[0],
 		 &dirty->start, &dirty->end);
-	if (num_marked == 0)
+	अगर (num_marked == 0)
 		dirty->change_count++;
-	else
+	अन्यथा
 		dirty->change_count = 0;
 
-	if (dirty->change_count > VMW_DIRTY_NUM_CHANGE_TRIGGERS) {
+	अगर (dirty->change_count > VMW_सूचीTY_NUM_CHANGE_TRIGGERS) अणु
 		dirty->change_count = 0;
-		dirty->method = VMW_BO_DIRTY_MKWRITE;
+		dirty->method = VMW_BO_सूचीTY_MKWRITE;
 		wp_shared_mapping_range(mapping,
-					offset, dirty->bitmap_size);
+					offset, dirty->biपंचांगap_size);
 		clean_record_shared_mapping_range(mapping,
-						  offset, dirty->bitmap_size,
-						  offset, &dirty->bitmap[0],
+						  offset, dirty->biपंचांगap_size,
+						  offset, &dirty->biपंचांगap[0],
 						  &dirty->start, &dirty->end);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * vmw_bo_dirty_scan_mkwrite - Reset the mkwrite dirty-tracking method
+ * vmw_bo_dirty_scan_mkग_लिखो - Reset the mkग_लिखो dirty-tracking method
  * @vbo: The buffer object to scan
  *
- * Write-protect pages written to so that consecutive write accesses will
- * trigger a call to mkwrite.
+ * Write-protect pages written to so that consecutive ग_लिखो accesses will
+ * trigger a call to mkग_लिखो.
  *
  * This function may change the dirty-tracking method.
  */
-static void vmw_bo_dirty_scan_mkwrite(struct vmw_buffer_object *vbo)
-{
-	struct vmw_bo_dirty *dirty = vbo->dirty;
-	unsigned long offset = drm_vma_node_start(&vbo->base.base.vma_node);
-	struct address_space *mapping = vbo->base.bdev->dev_mapping;
+अटल व्योम vmw_bo_dirty_scan_mkग_लिखो(काष्ठा vmw_buffer_object *vbo)
+अणु
+	काष्ठा vmw_bo_dirty *dirty = vbo->dirty;
+	अचिन्हित दीर्घ offset = drm_vma_node_start(&vbo->base.base.vma_node);
+	काष्ठा address_space *mapping = vbo->base.bdev->dev_mapping;
 	pgoff_t num_marked;
 
-	if (dirty->end <= dirty->start)
-		return;
+	अगर (dirty->end <= dirty->start)
+		वापस;
 
 	num_marked = wp_shared_mapping_range(vbo->base.bdev->dev_mapping,
 					dirty->start + offset,
 					dirty->end - dirty->start);
 
-	if (100UL * num_marked / dirty->bitmap_size >
-	    VMW_DIRTY_PERCENTAGE) {
+	अगर (100UL * num_marked / dirty->biपंचांगap_size >
+	    VMW_सूचीTY_PERCENTAGE) अणु
 		dirty->change_count++;
-	} else {
+	पूर्ण अन्यथा अणु
 		dirty->change_count = 0;
-	}
+	पूर्ण
 
-	if (dirty->change_count > VMW_DIRTY_NUM_CHANGE_TRIGGERS) {
+	अगर (dirty->change_count > VMW_सूचीTY_NUM_CHANGE_TRIGGERS) अणु
 		pgoff_t start = 0;
-		pgoff_t end = dirty->bitmap_size;
+		pgoff_t end = dirty->biपंचांगap_size;
 
-		dirty->method = VMW_BO_DIRTY_PAGETABLE;
+		dirty->method = VMW_BO_सूचीTY_PAGETABLE;
 		clean_record_shared_mapping_range(mapping, offset, end, offset,
-						  &dirty->bitmap[0],
+						  &dirty->biपंचांगap[0],
 						  &start, &end);
-		bitmap_clear(&dirty->bitmap[0], 0, dirty->bitmap_size);
-		if (dirty->start < dirty->end)
-			bitmap_set(&dirty->bitmap[0], dirty->start,
+		biपंचांगap_clear(&dirty->biपंचांगap[0], 0, dirty->biपंचांगap_size);
+		अगर (dirty->start < dirty->end)
+			biपंचांगap_set(&dirty->biपंचांगap[0], dirty->start,
 				   dirty->end - dirty->start);
 		dirty->change_count = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * vmw_bo_dirty_scan - Scan for dirty pages and add them to the dirty
- * tracking structure
+ * vmw_bo_dirty_scan - Scan क्रम dirty pages and add them to the dirty
+ * tracking काष्ठाure
  * @vbo: The buffer object to scan
  *
  * This function may change the dirty tracking method.
  */
-void vmw_bo_dirty_scan(struct vmw_buffer_object *vbo)
-{
-	struct vmw_bo_dirty *dirty = vbo->dirty;
+व्योम vmw_bo_dirty_scan(काष्ठा vmw_buffer_object *vbo)
+अणु
+	काष्ठा vmw_bo_dirty *dirty = vbo->dirty;
 
-	if (dirty->method == VMW_BO_DIRTY_PAGETABLE)
+	अगर (dirty->method == VMW_BO_सूचीTY_PAGETABLE)
 		vmw_bo_dirty_scan_pagetable(vbo);
-	else
-		vmw_bo_dirty_scan_mkwrite(vbo);
-}
+	अन्यथा
+		vmw_bo_dirty_scan_mkग_लिखो(vbo);
+पूर्ण
 
 /**
- * vmw_bo_dirty_pre_unmap - write-protect and pick up dirty pages before
+ * vmw_bo_dirty_pre_unmap - ग_लिखो-protect and pick up dirty pages beक्रमe
  * an unmap_mapping_range operation.
  * @vbo: The buffer object,
  * @start: First page of the range within the buffer object.
@@ -183,111 +184,111 @@ void vmw_bo_dirty_scan(struct vmw_buffer_object *vbo)
  * when calling unmap_mapping_range(). This function makes sure we pick
  * up all dirty pages.
  */
-static void vmw_bo_dirty_pre_unmap(struct vmw_buffer_object *vbo,
+अटल व्योम vmw_bo_dirty_pre_unmap(काष्ठा vmw_buffer_object *vbo,
 				   pgoff_t start, pgoff_t end)
-{
-	struct vmw_bo_dirty *dirty = vbo->dirty;
-	unsigned long offset = drm_vma_node_start(&vbo->base.base.vma_node);
-	struct address_space *mapping = vbo->base.bdev->dev_mapping;
+अणु
+	काष्ठा vmw_bo_dirty *dirty = vbo->dirty;
+	अचिन्हित दीर्घ offset = drm_vma_node_start(&vbo->base.base.vma_node);
+	काष्ठा address_space *mapping = vbo->base.bdev->dev_mapping;
 
-	if (dirty->method != VMW_BO_DIRTY_PAGETABLE || start >= end)
-		return;
+	अगर (dirty->method != VMW_BO_सूचीTY_PAGETABLE || start >= end)
+		वापस;
 
 	wp_shared_mapping_range(mapping, start + offset, end - start);
 	clean_record_shared_mapping_range(mapping, start + offset,
 					  end - start, offset,
-					  &dirty->bitmap[0], &dirty->start,
+					  &dirty->biपंचांगap[0], &dirty->start,
 					  &dirty->end);
-}
+पूर्ण
 
 /**
- * vmw_bo_dirty_unmap - Clear all ptes pointing to a range within a bo
+ * vmw_bo_dirty_unmap - Clear all ptes poपूर्णांकing to a range within a bo
  * @vbo: The buffer object,
  * @start: First page of the range within the buffer object.
  * @end: Last page of the range within the buffer object + 1.
  *
- * This is similar to ttm_bo_unmap_virtual() except it takes a subrange.
+ * This is similar to tपंचांग_bo_unmap_भव() except it takes a subrange.
  */
-void vmw_bo_dirty_unmap(struct vmw_buffer_object *vbo,
+व्योम vmw_bo_dirty_unmap(काष्ठा vmw_buffer_object *vbo,
 			pgoff_t start, pgoff_t end)
-{
-	unsigned long offset = drm_vma_node_start(&vbo->base.base.vma_node);
-	struct address_space *mapping = vbo->base.bdev->dev_mapping;
+अणु
+	अचिन्हित दीर्घ offset = drm_vma_node_start(&vbo->base.base.vma_node);
+	काष्ठा address_space *mapping = vbo->base.bdev->dev_mapping;
 
 	vmw_bo_dirty_pre_unmap(vbo, start, end);
 	unmap_shared_mapping_range(mapping, (offset + start) << PAGE_SHIFT,
 				   (loff_t) (end - start) << PAGE_SHIFT);
-}
+पूर्ण
 
 /**
  * vmw_bo_dirty_add - Add a dirty-tracking user to a buffer object
  * @vbo: The buffer object
  *
- * This function registers a dirty-tracking user to a buffer object.
- * A user can be for example a resource or a vma in a special user-space
+ * This function रेजिस्टरs a dirty-tracking user to a buffer object.
+ * A user can be क्रम example a resource or a vma in a special user-space
  * mapping.
  *
  * Return: Zero on success, -ENOMEM on memory allocation failure.
  */
-int vmw_bo_dirty_add(struct vmw_buffer_object *vbo)
-{
-	struct vmw_bo_dirty *dirty = vbo->dirty;
+पूर्णांक vmw_bo_dirty_add(काष्ठा vmw_buffer_object *vbo)
+अणु
+	काष्ठा vmw_bo_dirty *dirty = vbo->dirty;
 	pgoff_t num_pages = vbo->base.mem.num_pages;
-	size_t size, acc_size;
-	int ret;
-	static struct ttm_operation_ctx ctx = {
-		.interruptible = false,
-		.no_wait_gpu = false
-	};
+	माप_प्रकार size, acc_size;
+	पूर्णांक ret;
+	अटल काष्ठा tपंचांग_operation_ctx ctx = अणु
+		.पूर्णांकerruptible = false,
+		.no_रुको_gpu = false
+	पूर्ण;
 
-	if (dirty) {
+	अगर (dirty) अणु
 		dirty->ref_count++;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	size = sizeof(*dirty) + BITS_TO_LONGS(num_pages) * sizeof(long);
-	acc_size = ttm_round_pot(size);
-	ret = ttm_mem_global_alloc(&ttm_mem_glob, acc_size, &ctx);
-	if (ret) {
+	size = माप(*dirty) + BITS_TO_LONGS(num_pages) * माप(दीर्घ);
+	acc_size = tपंचांग_round_pot(size);
+	ret = tपंचांग_mem_global_alloc(&tपंचांग_mem_glob, acc_size, &ctx);
+	अगर (ret) अणु
 		VMW_DEBUG_USER("Out of graphics memory for buffer object "
 			       "dirty tracker.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	dirty = kvzalloc(size, GFP_KERNEL);
-	if (!dirty) {
+	अगर (!dirty) अणु
 		ret = -ENOMEM;
-		goto out_no_dirty;
-	}
+		जाओ out_no_dirty;
+	पूर्ण
 
 	dirty->size = acc_size;
-	dirty->bitmap_size = num_pages;
-	dirty->start = dirty->bitmap_size;
+	dirty->biपंचांगap_size = num_pages;
+	dirty->start = dirty->biपंचांगap_size;
 	dirty->end = 0;
 	dirty->ref_count = 1;
-	if (num_pages < PAGE_SIZE / sizeof(pte_t)) {
-		dirty->method = VMW_BO_DIRTY_PAGETABLE;
-	} else {
-		struct address_space *mapping = vbo->base.bdev->dev_mapping;
+	अगर (num_pages < PAGE_SIZE / माप(pte_t)) अणु
+		dirty->method = VMW_BO_सूचीTY_PAGETABLE;
+	पूर्ण अन्यथा अणु
+		काष्ठा address_space *mapping = vbo->base.bdev->dev_mapping;
 		pgoff_t offset = drm_vma_node_start(&vbo->base.base.vma_node);
 
-		dirty->method = VMW_BO_DIRTY_MKWRITE;
+		dirty->method = VMW_BO_सूचीTY_MKWRITE;
 
-		/* Write-protect and then pick up already dirty bits */
+		/* Write-protect and then pick up alपढ़ोy dirty bits */
 		wp_shared_mapping_range(mapping, offset, num_pages);
 		clean_record_shared_mapping_range(mapping, offset, num_pages,
 						  offset,
-						  &dirty->bitmap[0],
+						  &dirty->biपंचांगap[0],
 						  &dirty->start, &dirty->end);
-	}
+	पूर्ण
 
 	vbo->dirty = dirty;
 
-	return 0;
+	वापस 0;
 
 out_no_dirty:
-	ttm_mem_global_free(&ttm_mem_glob, acc_size);
-	return ret;
-}
+	tपंचांग_mem_global_मुक्त(&tपंचांग_mem_glob, acc_size);
+	वापस ret;
+पूर्ण
 
 /**
  * vmw_bo_dirty_release - Release a dirty-tracking user from a buffer object
@@ -295,22 +296,22 @@ out_no_dirty:
  *
  * This function releases a dirty-tracking user from a buffer object.
  * If the reference count reaches zero, then the dirty-tracking object is
- * freed and the pointer to it cleared.
+ * मुक्तd and the poपूर्णांकer to it cleared.
  *
  * Return: Zero on success, -ENOMEM on memory allocation failure.
  */
-void vmw_bo_dirty_release(struct vmw_buffer_object *vbo)
-{
-	struct vmw_bo_dirty *dirty = vbo->dirty;
+व्योम vmw_bo_dirty_release(काष्ठा vmw_buffer_object *vbo)
+अणु
+	काष्ठा vmw_bo_dirty *dirty = vbo->dirty;
 
-	if (dirty && --dirty->ref_count == 0) {
-		size_t acc_size = dirty->size;
+	अगर (dirty && --dirty->ref_count == 0) अणु
+		माप_प्रकार acc_size = dirty->size;
 
-		kvfree(dirty);
-		ttm_mem_global_free(&ttm_mem_glob, acc_size);
-		vbo->dirty = NULL;
-	}
-}
+		kvमुक्त(dirty);
+		tपंचांग_mem_global_मुक्त(&tपंचांग_mem_glob, acc_size);
+		vbo->dirty = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * vmw_bo_dirty_transfer_to_res - Pick up a resource's dirty region from
@@ -318,46 +319,46 @@ void vmw_bo_dirty_release(struct vmw_buffer_object *vbo)
  * @res: The resource
  *
  * This function will pick up all dirty ranges affecting the resource from
- * it's backup mob, and call vmw_resource_dirty_update() once for each
+ * it's backup mob, and call vmw_resource_dirty_update() once क्रम each
  * range. The transferred ranges will be cleared from the backing mob's
  * dirty tracking.
  */
-void vmw_bo_dirty_transfer_to_res(struct vmw_resource *res)
-{
-	struct vmw_buffer_object *vbo = res->backup;
-	struct vmw_bo_dirty *dirty = vbo->dirty;
+व्योम vmw_bo_dirty_transfer_to_res(काष्ठा vmw_resource *res)
+अणु
+	काष्ठा vmw_buffer_object *vbo = res->backup;
+	काष्ठा vmw_bo_dirty *dirty = vbo->dirty;
 	pgoff_t start, cur, end;
-	unsigned long res_start = res->backup_offset;
-	unsigned long res_end = res->backup_offset + res->backup_size;
+	अचिन्हित दीर्घ res_start = res->backup_offset;
+	अचिन्हित दीर्घ res_end = res->backup_offset + res->backup_size;
 
 	WARN_ON_ONCE(res_start & ~PAGE_MASK);
 	res_start >>= PAGE_SHIFT;
 	res_end = DIV_ROUND_UP(res_end, PAGE_SIZE);
 
-	if (res_start >= dirty->end || res_end <= dirty->start)
-		return;
+	अगर (res_start >= dirty->end || res_end <= dirty->start)
+		वापस;
 
 	cur = max(res_start, dirty->start);
 	res_end = max(res_end, dirty->end);
-	while (cur < res_end) {
-		unsigned long num;
+	जबतक (cur < res_end) अणु
+		अचिन्हित दीर्घ num;
 
-		start = find_next_bit(&dirty->bitmap[0], res_end, cur);
-		if (start >= res_end)
-			break;
+		start = find_next_bit(&dirty->biपंचांगap[0], res_end, cur);
+		अगर (start >= res_end)
+			अवरोध;
 
-		end = find_next_zero_bit(&dirty->bitmap[0], res_end, start + 1);
+		end = find_next_zero_bit(&dirty->biपंचांगap[0], res_end, start + 1);
 		cur = end + 1;
 		num = end - start;
-		bitmap_clear(&dirty->bitmap[0], start, num);
+		biपंचांगap_clear(&dirty->biपंचांगap[0], start, num);
 		vmw_resource_dirty_update(res, start, end);
-	}
+	पूर्ण
 
-	if (res_start <= dirty->start && res_end > dirty->start)
+	अगर (res_start <= dirty->start && res_end > dirty->start)
 		dirty->start = res_end;
-	if (res_start < dirty->end && res_end >= dirty->end)
+	अगर (res_start < dirty->end && res_end >= dirty->end)
 		dirty->end = res_start;
-}
+पूर्ण
 
 /**
  * vmw_bo_dirty_clear_res - Clear a resource's dirty region from
@@ -367,192 +368,192 @@ void vmw_bo_dirty_transfer_to_res(struct vmw_resource *res)
  * This function will clear all dirty ranges affecting the resource from
  * it's backup mob's dirty tracking.
  */
-void vmw_bo_dirty_clear_res(struct vmw_resource *res)
-{
-	unsigned long res_start = res->backup_offset;
-	unsigned long res_end = res->backup_offset + res->backup_size;
-	struct vmw_buffer_object *vbo = res->backup;
-	struct vmw_bo_dirty *dirty = vbo->dirty;
+व्योम vmw_bo_dirty_clear_res(काष्ठा vmw_resource *res)
+अणु
+	अचिन्हित दीर्घ res_start = res->backup_offset;
+	अचिन्हित दीर्घ res_end = res->backup_offset + res->backup_size;
+	काष्ठा vmw_buffer_object *vbo = res->backup;
+	काष्ठा vmw_bo_dirty *dirty = vbo->dirty;
 
 	res_start >>= PAGE_SHIFT;
 	res_end = DIV_ROUND_UP(res_end, PAGE_SIZE);
 
-	if (res_start >= dirty->end || res_end <= dirty->start)
-		return;
+	अगर (res_start >= dirty->end || res_end <= dirty->start)
+		वापस;
 
 	res_start = max(res_start, dirty->start);
 	res_end = min(res_end, dirty->end);
-	bitmap_clear(&dirty->bitmap[0], res_start, res_end - res_start);
+	biपंचांगap_clear(&dirty->biपंचांगap[0], res_start, res_end - res_start);
 
-	if (res_start <= dirty->start && res_end > dirty->start)
+	अगर (res_start <= dirty->start && res_end > dirty->start)
 		dirty->start = res_end;
-	if (res_start < dirty->end && res_end >= dirty->end)
+	अगर (res_start < dirty->end && res_end >= dirty->end)
 		dirty->end = res_start;
-}
+पूर्ण
 
-vm_fault_t vmw_bo_vm_mkwrite(struct vm_fault *vmf)
-{
-	struct vm_area_struct *vma = vmf->vma;
-	struct ttm_buffer_object *bo = (struct ttm_buffer_object *)
-	    vma->vm_private_data;
+vm_fault_t vmw_bo_vm_mkग_लिखो(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+	काष्ठा tपंचांग_buffer_object *bo = (काष्ठा tपंचांग_buffer_object *)
+	    vma->vm_निजी_data;
 	vm_fault_t ret;
-	unsigned long page_offset;
-	unsigned int save_flags;
-	struct vmw_buffer_object *vbo =
+	अचिन्हित दीर्घ page_offset;
+	अचिन्हित पूर्णांक save_flags;
+	काष्ठा vmw_buffer_object *vbo =
 		container_of(bo, typeof(*vbo), base);
 
 	/*
-	 * mkwrite() doesn't handle the VM_FAULT_RETRY return value correctly.
+	 * mkग_लिखो() करोesn't handle the VM_FAULT_RETRY वापस value correctly.
 	 * So make sure the TTM helpers are aware.
 	 */
 	save_flags = vmf->flags;
 	vmf->flags &= ~FAULT_FLAG_ALLOW_RETRY;
-	ret = ttm_bo_vm_reserve(bo, vmf);
+	ret = tपंचांग_bo_vm_reserve(bo, vmf);
 	vmf->flags = save_flags;
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	page_offset = vmf->pgoff - drm_vma_node_start(&bo->base.vma_node);
-	if (unlikely(page_offset >= bo->mem.num_pages)) {
+	अगर (unlikely(page_offset >= bo->mem.num_pages)) अणु
 		ret = VM_FAULT_SIGBUS;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (vbo->dirty && vbo->dirty->method == VMW_BO_DIRTY_MKWRITE &&
-	    !test_bit(page_offset, &vbo->dirty->bitmap[0])) {
-		struct vmw_bo_dirty *dirty = vbo->dirty;
+	अगर (vbo->dirty && vbo->dirty->method == VMW_BO_सूचीTY_MKWRITE &&
+	    !test_bit(page_offset, &vbo->dirty->biपंचांगap[0])) अणु
+		काष्ठा vmw_bo_dirty *dirty = vbo->dirty;
 
-		__set_bit(page_offset, &dirty->bitmap[0]);
+		__set_bit(page_offset, &dirty->biपंचांगap[0]);
 		dirty->start = min(dirty->start, page_offset);
 		dirty->end = max(dirty->end, page_offset + 1);
-	}
+	पूर्ण
 
 out_unlock:
 	dma_resv_unlock(bo->base.resv);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-vm_fault_t vmw_bo_vm_fault(struct vm_fault *vmf)
-{
-	struct vm_area_struct *vma = vmf->vma;
-	struct ttm_buffer_object *bo = (struct ttm_buffer_object *)
-	    vma->vm_private_data;
-	struct vmw_buffer_object *vbo =
-		container_of(bo, struct vmw_buffer_object, base);
+vm_fault_t vmw_bo_vm_fault(काष्ठा vm_fault *vmf)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+	काष्ठा tपंचांग_buffer_object *bo = (काष्ठा tपंचांग_buffer_object *)
+	    vma->vm_निजी_data;
+	काष्ठा vmw_buffer_object *vbo =
+		container_of(bo, काष्ठा vmw_buffer_object, base);
 	pgoff_t num_prefault;
 	pgprot_t prot;
 	vm_fault_t ret;
 
-	ret = ttm_bo_vm_reserve(bo, vmf);
-	if (ret)
-		return ret;
+	ret = tपंचांग_bo_vm_reserve(bo, vmf);
+	अगर (ret)
+		वापस ret;
 
 	num_prefault = (vma->vm_flags & VM_RAND_READ) ? 1 :
 		TTM_BO_VM_NUM_PREFAULT;
 
-	if (vbo->dirty) {
+	अगर (vbo->dirty) अणु
 		pgoff_t allowed_prefault;
-		unsigned long page_offset;
+		अचिन्हित दीर्घ page_offset;
 
 		page_offset = vmf->pgoff -
 			drm_vma_node_start(&bo->base.vma_node);
-		if (page_offset >= bo->mem.num_pages ||
+		अगर (page_offset >= bo->mem.num_pages ||
 		    vmw_resources_clean(vbo, page_offset,
 					page_offset + PAGE_SIZE,
-					&allowed_prefault)) {
+					&allowed_prefault)) अणु
 			ret = VM_FAULT_SIGBUS;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		num_prefault = min(num_prefault, allowed_prefault);
-	}
+	पूर्ण
 
 	/*
-	 * If we don't track dirty using the MKWRITE method, make sure
-	 * sure the page protection is write-enabled so we don't get
-	 * a lot of unnecessary write faults.
+	 * If we करोn't track dirty using the MKWRITE method, make sure
+	 * sure the page protection is ग_लिखो-enabled so we करोn't get
+	 * a lot of unnecessary ग_लिखो faults.
 	 */
-	if (vbo->dirty && vbo->dirty->method == VMW_BO_DIRTY_MKWRITE)
+	अगर (vbo->dirty && vbo->dirty->method == VMW_BO_सूचीTY_MKWRITE)
 		prot = vm_get_page_prot(vma->vm_flags & ~VM_SHARED);
-	else
+	अन्यथा
 		prot = vm_get_page_prot(vma->vm_flags);
 
-	ret = ttm_bo_vm_fault_reserved(vmf, prot, num_prefault, 1);
-	if (ret == VM_FAULT_RETRY && !(vmf->flags & FAULT_FLAG_RETRY_NOWAIT))
-		return ret;
+	ret = tपंचांग_bo_vm_fault_reserved(vmf, prot, num_prefault, 1);
+	अगर (ret == VM_FAULT_RETRY && !(vmf->flags & FAULT_FLAG_RETRY_NOWAIT))
+		वापस ret;
 
 out_unlock:
 	dma_resv_unlock(bo->base.resv);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#ifdef CONFIG_TRANSPARENT_HUGEPAGE
-vm_fault_t vmw_bo_vm_huge_fault(struct vm_fault *vmf,
-				enum page_entry_size pe_size)
-{
-	struct vm_area_struct *vma = vmf->vma;
-	struct ttm_buffer_object *bo = (struct ttm_buffer_object *)
-	    vma->vm_private_data;
-	struct vmw_buffer_object *vbo =
-		container_of(bo, struct vmw_buffer_object, base);
+#अगर_घोषित CONFIG_TRANSPARENT_HUGEPAGE
+vm_fault_t vmw_bo_vm_huge_fault(काष्ठा vm_fault *vmf,
+				क्रमागत page_entry_size pe_size)
+अणु
+	काष्ठा vm_area_काष्ठा *vma = vmf->vma;
+	काष्ठा tपंचांग_buffer_object *bo = (काष्ठा tपंचांग_buffer_object *)
+	    vma->vm_निजी_data;
+	काष्ठा vmw_buffer_object *vbo =
+		container_of(bo, काष्ठा vmw_buffer_object, base);
 	pgprot_t prot;
 	vm_fault_t ret;
 	pgoff_t fault_page_size;
-	bool write = vmf->flags & FAULT_FLAG_WRITE;
+	bool ग_लिखो = vmf->flags & FAULT_FLAG_WRITE;
 
-	switch (pe_size) {
-	case PE_SIZE_PMD:
+	चयन (pe_size) अणु
+	हाल PE_SIZE_PMD:
 		fault_page_size = HPAGE_PMD_SIZE >> PAGE_SHIFT;
-		break;
-#ifdef CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD
-	case PE_SIZE_PUD:
+		अवरोध;
+#अगर_घोषित CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD
+	हाल PE_SIZE_PUD:
 		fault_page_size = HPAGE_PUD_SIZE >> PAGE_SHIFT;
-		break;
-#endif
-	default:
+		अवरोध;
+#पूर्ण_अगर
+	शेष:
 		WARN_ON_ONCE(1);
-		return VM_FAULT_FALLBACK;
-	}
+		वापस VM_FAULT_FALLBACK;
+	पूर्ण
 
-	/* Always do write dirty-tracking and COW on PTE level. */
-	if (write && (READ_ONCE(vbo->dirty) || is_cow_mapping(vma->vm_flags)))
-		return VM_FAULT_FALLBACK;
+	/* Always करो ग_लिखो dirty-tracking and COW on PTE level. */
+	अगर (ग_लिखो && (READ_ONCE(vbo->dirty) || is_cow_mapping(vma->vm_flags)))
+		वापस VM_FAULT_FALLBACK;
 
-	ret = ttm_bo_vm_reserve(bo, vmf);
-	if (ret)
-		return ret;
+	ret = tपंचांग_bo_vm_reserve(bo, vmf);
+	अगर (ret)
+		वापस ret;
 
-	if (vbo->dirty) {
+	अगर (vbo->dirty) अणु
 		pgoff_t allowed_prefault;
-		unsigned long page_offset;
+		अचिन्हित दीर्घ page_offset;
 
 		page_offset = vmf->pgoff -
 			drm_vma_node_start(&bo->base.vma_node);
-		if (page_offset >= bo->mem.num_pages ||
+		अगर (page_offset >= bo->mem.num_pages ||
 		    vmw_resources_clean(vbo, page_offset,
 					page_offset + PAGE_SIZE,
-					&allowed_prefault)) {
+					&allowed_prefault)) अणु
 			ret = VM_FAULT_SIGBUS;
-			goto out_unlock;
-		}
+			जाओ out_unlock;
+		पूर्ण
 
 		/*
-		 * Write protect, so we get a new fault on write, and can
+		 * Write protect, so we get a new fault on ग_लिखो, and can
 		 * split.
 		 */
 		prot = vm_get_page_prot(vma->vm_flags & ~VM_SHARED);
-	} else {
+	पूर्ण अन्यथा अणु
 		prot = vm_get_page_prot(vma->vm_flags);
-	}
+	पूर्ण
 
-	ret = ttm_bo_vm_fault_reserved(vmf, prot, 1, fault_page_size);
-	if (ret == VM_FAULT_RETRY && !(vmf->flags & FAULT_FLAG_RETRY_NOWAIT))
-		return ret;
+	ret = tपंचांग_bo_vm_fault_reserved(vmf, prot, 1, fault_page_size);
+	अगर (ret == VM_FAULT_RETRY && !(vmf->flags & FAULT_FLAG_RETRY_NOWAIT))
+		वापस ret;
 
 out_unlock:
 	dma_resv_unlock(bo->base.resv);
 
-	return ret;
-}
-#endif
+	वापस ret;
+पूर्ण
+#पूर्ण_अगर

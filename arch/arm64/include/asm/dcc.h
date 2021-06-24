@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /* Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
  *
- * A call to __dcc_getchar() or __dcc_putchar() is typically followed by
- * a call to __dcc_getstatus().  We want to make sure that the CPU does
- * not speculative read the DCC status before executing the read or write
- * instruction.  That's what the ISBs are for.
+ * A call to __dcc_अक्षर_लो() or __dcc_अक्षर_दो() is typically followed by
+ * a call to __dcc_माला_लोtatus().  We want to make sure that the CPU करोes
+ * not speculative पढ़ो the DCC status beक्रमe executing the पढ़ो or ग_लिखो
+ * inकाष्ठाion.  That's what the ISBs are क्रम.
  *
- * The 'volatile' ensures that the compiler does not cache the status bits,
- * and instead reads the DCC register every time.
+ * The 'volatile' ensures that the compiler करोes not cache the status bits,
+ * and instead पढ़ोs the DCC रेजिस्टर every समय.
  */
-#ifndef __ASM_DCC_H
-#define __ASM_DCC_H
+#अगर_अघोषित __ASM_DCC_H
+#घोषणा __ASM_DCC_H
 
-#include <asm/barrier.h>
-#include <asm/sysreg.h>
+#समावेश <यंत्र/barrier.h>
+#समावेश <यंत्र/sysreg.h>
 
-static inline u32 __dcc_getstatus(void)
-{
-	return read_sysreg(mdccsr_el0);
-}
+अटल अंतरभूत u32 __dcc_माला_लोtatus(व्योम)
+अणु
+	वापस पढ़ो_sysreg(mdccsr_el0);
+पूर्ण
 
-static inline char __dcc_getchar(void)
-{
-	char c = read_sysreg(dbgdtrrx_el0);
+अटल अंतरभूत अक्षर __dcc_अक्षर_लो(व्योम)
+अणु
+	अक्षर c = पढ़ो_sysreg(dbgdtrrx_el0);
 	isb();
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-static inline void __dcc_putchar(char c)
-{
+अटल अंतरभूत व्योम __dcc_अक्षर_दो(अक्षर c)
+अणु
 	/*
-	 * The typecast is to make absolutely certain that 'c' is
+	 * The typecast is to make असलolutely certain that 'c' is
 	 * zero-extended.
 	 */
-	write_sysreg((unsigned char)c, dbgdtrtx_el0);
+	ग_लिखो_sysreg((अचिन्हित अक्षर)c, dbgdtrtx_el0);
 	isb();
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

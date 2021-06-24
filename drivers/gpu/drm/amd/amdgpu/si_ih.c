@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,19 +22,19 @@
  *
  */
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#include "amdgpu.h"
-#include "amdgpu_ih.h"
-#include "sid.h"
-#include "si_ih.h"
-#include "oss/oss_1_0_d.h"
-#include "oss/oss_1_0_sh_mask.h"
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_ih.h"
+#समावेश "sid.h"
+#समावेश "si_ih.h"
+#समावेश "oss/oss_1_0_d.h"
+#समावेश "oss/oss_1_0_sh_mask.h"
 
-static void si_ih_set_interrupt_funcs(struct amdgpu_device *adev);
+अटल व्योम si_ih_set_पूर्णांकerrupt_funcs(काष्ठा amdgpu_device *adev);
 
-static void si_ih_enable_interrupts(struct amdgpu_device *adev)
-{
+अटल व्योम si_ih_enable_पूर्णांकerrupts(काष्ठा amdgpu_device *adev)
+अणु
 	u32 ih_cntl = RREG32(IH_CNTL);
 	u32 ih_rb_cntl = RREG32(IH_RB_CNTL);
 
@@ -42,10 +43,10 @@ static void si_ih_enable_interrupts(struct amdgpu_device *adev)
 	WREG32(IH_CNTL, ih_cntl);
 	WREG32(IH_RB_CNTL, ih_rb_cntl);
 	adev->irq.ih.enabled = true;
-}
+पूर्ण
 
-static void si_ih_disable_interrupts(struct amdgpu_device *adev)
-{
+अटल व्योम si_ih_disable_पूर्णांकerrupts(काष्ठा amdgpu_device *adev)
+अणु
 	u32 ih_rb_cntl = RREG32(IH_RB_CNTL);
 	u32 ih_cntl = RREG32(IH_CNTL);
 
@@ -57,21 +58,21 @@ static void si_ih_disable_interrupts(struct amdgpu_device *adev)
 	WREG32(IH_RB_WPTR, 0);
 	adev->irq.ih.enabled = false;
 	adev->irq.ih.rptr = 0;
-}
+पूर्ण
 
-static int si_ih_irq_init(struct amdgpu_device *adev)
-{
-	struct amdgpu_ih_ring *ih = &adev->irq.ih;
-	int rb_bufsz;
-	u32 interrupt_cntl, ih_cntl, ih_rb_cntl;
+अटल पूर्णांक si_ih_irq_init(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_ih_ring *ih = &adev->irq.ih;
+	पूर्णांक rb_bufsz;
+	u32 पूर्णांकerrupt_cntl, ih_cntl, ih_rb_cntl;
 
-	si_ih_disable_interrupts(adev);
-	/* set dummy read address to dummy page address */
+	si_ih_disable_पूर्णांकerrupts(adev);
+	/* set dummy पढ़ो address to dummy page address */
 	WREG32(INTERRUPT_CNTL2, adev->dummy_page_addr >> 8);
-	interrupt_cntl = RREG32(INTERRUPT_CNTL);
-	interrupt_cntl &= ~IH_DUMMY_RD_OVERRIDE;
-	interrupt_cntl &= ~IH_REQ_NONSNOOP_EN;
-	WREG32(INTERRUPT_CNTL, interrupt_cntl);
+	पूर्णांकerrupt_cntl = RREG32(INTERRUPT_CNTL);
+	पूर्णांकerrupt_cntl &= ~IH_DUMMY_RD_OVERRIDE;
+	पूर्णांकerrupt_cntl &= ~IH_REQ_NONSNOOP_EN;
+	WREG32(INTERRUPT_CNTL, पूर्णांकerrupt_cntl);
 
 	WREG32(IH_RB_BASE, adev->irq.ih.gpu_addr >> 8);
 	rb_bufsz = order_base_2(adev->irq.ih.ring_size / 4);
@@ -88,47 +89,47 @@ static int si_ih_irq_init(struct amdgpu_device *adev)
 	WREG32(IH_RB_WPTR, 0);
 
 	ih_cntl = MC_WRREQ_CREDIT(0x10) | MC_WR_CLEAN_CNT(0x10) | MC_VMID(0);
-	if (adev->irq.msi_enabled)
+	अगर (adev->irq.msi_enabled)
 		ih_cntl |= RPTR_REARM;
 	WREG32(IH_CNTL, ih_cntl);
 
 	pci_set_master(adev->pdev);
-	si_ih_enable_interrupts(adev);
+	si_ih_enable_पूर्णांकerrupts(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void si_ih_irq_disable(struct amdgpu_device *adev)
-{
-	si_ih_disable_interrupts(adev);
+अटल व्योम si_ih_irq_disable(काष्ठा amdgpu_device *adev)
+अणु
+	si_ih_disable_पूर्णांकerrupts(adev);
 	mdelay(1);
-}
+पूर्ण
 
-static u32 si_ih_get_wptr(struct amdgpu_device *adev,
-			  struct amdgpu_ih_ring *ih)
-{
-	u32 wptr, tmp;
+अटल u32 si_ih_get_wptr(काष्ठा amdgpu_device *adev,
+			  काष्ठा amdgpu_ih_ring *ih)
+अणु
+	u32 wptr, पंचांगp;
 
 	wptr = le32_to_cpu(*ih->wptr_cpu);
 
-	if (wptr & IH_RB_WPTR__RB_OVERFLOW_MASK) {
+	अगर (wptr & IH_RB_WPTR__RB_OVERFLOW_MASK) अणु
 		wptr &= ~IH_RB_WPTR__RB_OVERFLOW_MASK;
 		dev_warn(adev->dev, "IH ring buffer overflow (0x%08X, 0x%08X, 0x%08X)\n",
 			wptr, ih->rptr, (wptr + 16) & ih->ptr_mask);
 		ih->rptr = (wptr + 16) & ih->ptr_mask;
-		tmp = RREG32(IH_RB_CNTL);
-		tmp |= IH_RB_CNTL__WPTR_OVERFLOW_CLEAR_MASK;
-		WREG32(IH_RB_CNTL, tmp);
-	}
-	return (wptr & ih->ptr_mask);
-}
+		पंचांगp = RREG32(IH_RB_CNTL);
+		पंचांगp |= IH_RB_CNTL__WPTR_OVERFLOW_CLEAR_MASK;
+		WREG32(IH_RB_CNTL, पंचांगp);
+	पूर्ण
+	वापस (wptr & ih->ptr_mask);
+पूर्ण
 
-static void si_ih_decode_iv(struct amdgpu_device *adev,
-			    struct amdgpu_ih_ring *ih,
-			    struct amdgpu_iv_entry *entry)
-{
+अटल व्योम si_ih_decode_iv(काष्ठा amdgpu_device *adev,
+			    काष्ठा amdgpu_ih_ring *ih,
+			    काष्ठा amdgpu_iv_entry *entry)
+अणु
 	u32 ring_index = ih->rptr >> 2;
-	uint32_t dw[4];
+	uपूर्णांक32_t dw[4];
 
 	dw[0] = le32_to_cpu(ih->ring[ring_index + 0]);
 	dw[1] = le32_to_cpu(ih->ring[ring_index + 1]);
@@ -142,144 +143,144 @@ static void si_ih_decode_iv(struct amdgpu_device *adev,
 	entry->vmid = (dw[2] >> 8) & 0xff;
 
 	ih->rptr += 16;
-}
+पूर्ण
 
-static void si_ih_set_rptr(struct amdgpu_device *adev,
-			   struct amdgpu_ih_ring *ih)
-{
+अटल व्योम si_ih_set_rptr(काष्ठा amdgpu_device *adev,
+			   काष्ठा amdgpu_ih_ring *ih)
+अणु
 	WREG32(IH_RB_RPTR, ih->rptr);
-}
+पूर्ण
 
-static int si_ih_early_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक si_ih_early_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	si_ih_set_interrupt_funcs(adev);
+	si_ih_set_पूर्णांकerrupt_funcs(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int si_ih_sw_init(void *handle)
-{
-	int r;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक si_ih_sw_init(व्योम *handle)
+अणु
+	पूर्णांक r;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	r = amdgpu_ih_ring_init(adev, &adev->irq.ih, 64 * 1024, false);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return amdgpu_irq_init(adev);
-}
+	वापस amdgpu_irq_init(adev);
+पूर्ण
 
-static int si_ih_sw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक si_ih_sw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	amdgpu_irq_fini(adev);
 	amdgpu_ih_ring_fini(adev, &adev->irq.ih);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int si_ih_hw_init(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक si_ih_hw_init(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return si_ih_irq_init(adev);
-}
+	वापस si_ih_irq_init(adev);
+पूर्ण
 
-static int si_ih_hw_fini(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक si_ih_hw_fini(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	si_ih_irq_disable(adev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int si_ih_suspend(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक si_ih_suspend(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return si_ih_hw_fini(adev);
-}
+	वापस si_ih_hw_fini(adev);
+पूर्ण
 
-static int si_ih_resume(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक si_ih_resume(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	return si_ih_hw_init(adev);
-}
+	वापस si_ih_hw_init(adev);
+पूर्ण
 
-static bool si_ih_is_idle(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-	u32 tmp = RREG32(SRBM_STATUS);
+अटल bool si_ih_is_idle(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
+	u32 पंचांगp = RREG32(SRBM_STATUS);
 
-	if (tmp & SRBM_STATUS__IH_BUSY_MASK)
-		return false;
+	अगर (पंचांगp & SRBM_STATUS__IH_BUSY_MASK)
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int si_ih_wait_for_idle(void *handle)
-{
-	unsigned i;
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक si_ih_रुको_क्रम_idle(व्योम *handle)
+अणु
+	अचिन्हित i;
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
-	for (i = 0; i < adev->usec_timeout; i++) {
-		if (si_ih_is_idle(handle))
-			return 0;
+	क्रम (i = 0; i < adev->usec_समयout; i++) अणु
+		अगर (si_ih_is_idle(handle))
+			वापस 0;
 		udelay(1);
-	}
-	return -ETIMEDOUT;
-}
+	पूर्ण
+	वापस -ETIMEDOUT;
+पूर्ण
 
-static int si_ih_soft_reset(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+अटल पूर्णांक si_ih_soft_reset(व्योम *handle)
+अणु
+	काष्ठा amdgpu_device *adev = (काष्ठा amdgpu_device *)handle;
 
 	u32 srbm_soft_reset = 0;
-	u32 tmp = RREG32(SRBM_STATUS);
+	u32 पंचांगp = RREG32(SRBM_STATUS);
 
-	if (tmp & SRBM_STATUS__IH_BUSY_MASK)
+	अगर (पंचांगp & SRBM_STATUS__IH_BUSY_MASK)
 		srbm_soft_reset |= SRBM_SOFT_RESET__SOFT_RESET_IH_MASK;
 
-	if (srbm_soft_reset) {
-		tmp = RREG32(SRBM_SOFT_RESET);
-		tmp |= srbm_soft_reset;
-		dev_info(adev->dev, "SRBM_SOFT_RESET=0x%08X\n", tmp);
-		WREG32(SRBM_SOFT_RESET, tmp);
-		tmp = RREG32(SRBM_SOFT_RESET);
+	अगर (srbm_soft_reset) अणु
+		पंचांगp = RREG32(SRBM_SOFT_RESET);
+		पंचांगp |= srbm_soft_reset;
+		dev_info(adev->dev, "SRBM_SOFT_RESET=0x%08X\n", पंचांगp);
+		WREG32(SRBM_SOFT_RESET, पंचांगp);
+		पंचांगp = RREG32(SRBM_SOFT_RESET);
 
 		udelay(50);
 
-		tmp &= ~srbm_soft_reset;
-		WREG32(SRBM_SOFT_RESET, tmp);
-		tmp = RREG32(SRBM_SOFT_RESET);
+		पंचांगp &= ~srbm_soft_reset;
+		WREG32(SRBM_SOFT_RESET, पंचांगp);
+		पंचांगp = RREG32(SRBM_SOFT_RESET);
 
 		udelay(50);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int si_ih_set_clockgating_state(void *handle,
-					  enum amd_clockgating_state state)
-{
-	return 0;
-}
+अटल पूर्णांक si_ih_set_घड़ीgating_state(व्योम *handle,
+					  क्रमागत amd_घड़ीgating_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-static int si_ih_set_powergating_state(void *handle,
-					  enum amd_powergating_state state)
-{
-	return 0;
-}
+अटल पूर्णांक si_ih_set_घातergating_state(व्योम *handle,
+					  क्रमागत amd_घातergating_state state)
+अणु
+	वापस 0;
+पूर्ण
 
-static const struct amd_ip_funcs si_ih_ip_funcs = {
+अटल स्थिर काष्ठा amd_ip_funcs si_ih_ip_funcs = अणु
 	.name = "si_ih",
 	.early_init = si_ih_early_init,
-	.late_init = NULL,
+	.late_init = शून्य,
 	.sw_init = si_ih_sw_init,
 	.sw_fini = si_ih_sw_fini,
 	.hw_init = si_ih_hw_init,
@@ -287,28 +288,28 @@ static const struct amd_ip_funcs si_ih_ip_funcs = {
 	.suspend = si_ih_suspend,
 	.resume = si_ih_resume,
 	.is_idle = si_ih_is_idle,
-	.wait_for_idle = si_ih_wait_for_idle,
+	.रुको_क्रम_idle = si_ih_रुको_क्रम_idle,
 	.soft_reset = si_ih_soft_reset,
-	.set_clockgating_state = si_ih_set_clockgating_state,
-	.set_powergating_state = si_ih_set_powergating_state,
-};
+	.set_घड़ीgating_state = si_ih_set_घड़ीgating_state,
+	.set_घातergating_state = si_ih_set_घातergating_state,
+पूर्ण;
 
-static const struct amdgpu_ih_funcs si_ih_funcs = {
+अटल स्थिर काष्ठा amdgpu_ih_funcs si_ih_funcs = अणु
 	.get_wptr = si_ih_get_wptr,
 	.decode_iv = si_ih_decode_iv,
 	.set_rptr = si_ih_set_rptr
-};
+पूर्ण;
 
-static void si_ih_set_interrupt_funcs(struct amdgpu_device *adev)
-{
+अटल व्योम si_ih_set_पूर्णांकerrupt_funcs(काष्ठा amdgpu_device *adev)
+अणु
 	adev->irq.ih_funcs = &si_ih_funcs;
-}
+पूर्ण
 
-const struct amdgpu_ip_block_version si_ih_ip_block =
-{
+स्थिर काष्ठा amdgpu_ip_block_version si_ih_ip_block =
+अणु
 	.type = AMD_IP_BLOCK_TYPE_IH,
 	.major = 1,
 	.minor = 0,
 	.rev = 0,
 	.funcs = &si_ih_ip_funcs,
-};
+पूर्ण;

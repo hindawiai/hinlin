@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM swiotlb
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM swiotlb
 
-#if !defined(_TRACE_SWIOTLB_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_SWIOTLB_H
+#अगर !defined(_TRACE_SWIOTLB_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_SWIOTLB_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_EVENT(swiotlb_bounced,
 
-	TP_PROTO(struct device *dev,
+	TP_PROTO(काष्ठा device *dev,
 		 dma_addr_t dev_addr,
-		 size_t size,
-		 enum swiotlb_force swiotlb_force),
+		 माप_प्रकार size,
+		 क्रमागत swiotlb_क्रमce swiotlb_क्रमce),
 
-	TP_ARGS(dev, dev_addr, size, swiotlb_force),
+	TP_ARGS(dev, dev_addr, size, swiotlb_क्रमce),
 
 	TP_STRUCT__entry(
 		__string(	dev_name,	dev_name(dev)		)
 		__field(	u64,	dma_mask			)
 		__field(	dma_addr_t,	dev_addr		)
-		__field(	size_t,	size				)
-		__field(	enum swiotlb_force,	swiotlb_force	)
+		__field(	माप_प्रकार,	size				)
+		__field(	क्रमागत swiotlb_क्रमce,	swiotlb_क्रमce	)
 	),
 
 	TP_fast_assign(
@@ -29,22 +30,22 @@ TRACE_EVENT(swiotlb_bounced,
 		__entry->dma_mask = (dev->dma_mask ? *dev->dma_mask : 0);
 		__entry->dev_addr = dev_addr;
 		__entry->size = size;
-		__entry->swiotlb_force = swiotlb_force;
+		__entry->swiotlb_क्रमce = swiotlb_क्रमce;
 	),
 
-	TP_printk("dev_name: %s dma_mask=%llx dev_addr=%llx "
+	TP_prपूर्णांकk("dev_name: %s dma_mask=%llx dev_addr=%llx "
 		"size=%zu %s",
 		__get_str(dev_name),
 		__entry->dma_mask,
-		(unsigned long long)__entry->dev_addr,
+		(अचिन्हित दीर्घ दीर्घ)__entry->dev_addr,
 		__entry->size,
-		__print_symbolic(__entry->swiotlb_force,
-			{ SWIOTLB_NORMAL,	"NORMAL" },
-			{ SWIOTLB_FORCE,	"FORCE" },
-			{ SWIOTLB_NO_FORCE,	"NO_FORCE" }))
+		__prपूर्णांक_symbolic(__entry->swiotlb_क्रमce,
+			अणु SWIOTLB_NORMAL,	"NORMAL" पूर्ण,
+			अणु SWIOTLB_FORCE,	"FORCE" पूर्ण,
+			अणु SWIOTLB_NO_FORCE,	"NO_FORCE" पूर्ण))
 );
 
-#endif /*  _TRACE_SWIOTLB_H */
+#पूर्ण_अगर /*  _TRACE_SWIOTLB_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

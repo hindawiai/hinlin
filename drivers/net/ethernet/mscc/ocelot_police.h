@@ -1,15 +1,16 @@
-/* SPDX-License-Identifier: (GPL-2.0 OR MIT) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0 OR MIT) */
 /* Microsemi Ocelot Switch driver
  *
  * Copyright (c) 2019 Microsemi Corporation
  */
 
-#ifndef _MSCC_OCELOT_POLICE_H_
-#define _MSCC_OCELOT_POLICE_H_
+#अगर_अघोषित _MSCC_OCELOT_POLICE_H_
+#घोषणा _MSCC_OCELOT_POLICE_H_
 
-#include "ocelot.h"
+#समावेश "ocelot.h"
 
-enum mscc_qos_rate_mode {
+क्रमागत mscc_qos_rate_mode अणु
 	MSCC_QOS_RATE_MODE_DISABLED, /* Policer/shaper disabled */
 	MSCC_QOS_RATE_MODE_LINE, /* Measure line rate in kbps incl. IPG */
 	MSCC_QOS_RATE_MODE_DATA, /* Measures data rate in kbps excl. IPG */
@@ -17,10 +18,10 @@ enum mscc_qos_rate_mode {
 	__MSCC_QOS_RATE_MODE_END,
 	NUM_MSCC_QOS_RATE_MODE = __MSCC_QOS_RATE_MODE_END,
 	MSCC_QOS_RATE_MODE_MAX = __MSCC_QOS_RATE_MODE_END - 1,
-};
+पूर्ण;
 
-struct qos_policer_conf {
-	enum mscc_qos_rate_mode mode;
+काष्ठा qos_policer_conf अणु
+	क्रमागत mscc_qos_rate_mode mode;
 	bool dlb; /* Enable DLB (dual leaky bucket mode */
 	bool cf;  /* Coupling flag (ignored in SLB mode) */
 	u32  cir; /* CIR in kbps/fps (ignored in SLB mode) */
@@ -28,9 +29,9 @@ struct qos_policer_conf {
 	u32  pir; /* PIR in kbps/fps */
 	u32  pbs; /* PBS in bytes/frames */
 	u8   ipg; /* Size of IPG when MSCC_QOS_RATE_MODE_LINE is chosen */
-};
+पूर्ण;
 
-int qos_policer_conf_set(struct ocelot *ocelot, int port, u32 pol_ix,
-			 struct qos_policer_conf *conf);
+पूर्णांक qos_policer_conf_set(काष्ठा ocelot *ocelot, पूर्णांक port, u32 pol_ix,
+			 काष्ठा qos_policer_conf *conf);
 
-#endif /* _MSCC_OCELOT_POLICE_H_ */
+#पूर्ण_अगर /* _MSCC_OCELOT_POLICE_H_ */

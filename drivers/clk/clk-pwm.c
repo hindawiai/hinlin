@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2014 Philipp Zabel, Pengutronix
  *
- * PWM (mis)used as clock output
+ * PWM (mis)used as घड़ी output
  */
-#include <linux/clk-provider.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pwm.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pwm.h>
 
-struct clk_pwm {
-	struct clk_hw hw;
-	struct pwm_device *pwm;
+काष्ठा clk_pwm अणु
+	काष्ठा clk_hw hw;
+	काष्ठा pwm_device *pwm;
 	u32 fixed_rate;
-};
+पूर्ण;
 
-static inline struct clk_pwm *to_clk_pwm(struct clk_hw *hw)
-{
-	return container_of(hw, struct clk_pwm, hw);
-}
+अटल अंतरभूत काष्ठा clk_pwm *to_clk_pwm(काष्ठा clk_hw *hw)
+अणु
+	वापस container_of(hw, काष्ठा clk_pwm, hw);
+पूर्ण
 
-static int clk_pwm_prepare(struct clk_hw *hw)
-{
-	struct clk_pwm *clk_pwm = to_clk_pwm(hw);
+अटल पूर्णांक clk_pwm_prepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_pwm *clk_pwm = to_clk_pwm(hw);
 
-	return pwm_enable(clk_pwm->pwm);
-}
+	वापस pwm_enable(clk_pwm->pwm);
+पूर्ण
 
-static void clk_pwm_unprepare(struct clk_hw *hw)
-{
-	struct clk_pwm *clk_pwm = to_clk_pwm(hw);
+अटल व्योम clk_pwm_unprepare(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_pwm *clk_pwm = to_clk_pwm(hw);
 
 	pwm_disable(clk_pwm->pwm);
-}
+पूर्ण
 
-static unsigned long clk_pwm_recalc_rate(struct clk_hw *hw,
-					 unsigned long parent_rate)
-{
-	struct clk_pwm *clk_pwm = to_clk_pwm(hw);
+अटल अचिन्हित दीर्घ clk_pwm_recalc_rate(काष्ठा clk_hw *hw,
+					 अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा clk_pwm *clk_pwm = to_clk_pwm(hw);
 
-	return clk_pwm->fixed_rate;
-}
+	वापस clk_pwm->fixed_rate;
+पूर्ण
 
-static int clk_pwm_get_duty_cycle(struct clk_hw *hw, struct clk_duty *duty)
-{
-	struct clk_pwm *clk_pwm = to_clk_pwm(hw);
-	struct pwm_state state;
+अटल पूर्णांक clk_pwm_get_duty_cycle(काष्ठा clk_hw *hw, काष्ठा clk_duty *duty)
+अणु
+	काष्ठा clk_pwm *clk_pwm = to_clk_pwm(hw);
+	काष्ठा pwm_state state;
 
 	pwm_get_state(clk_pwm->pwm, &state);
 
 	duty->num = state.duty_cycle;
 	duty->den = state.period;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_pwm_ops = {
+अटल स्थिर काष्ठा clk_ops clk_pwm_ops = अणु
 	.prepare = clk_pwm_prepare,
 	.unprepare = clk_pwm_unprepare,
 	.recalc_rate = clk_pwm_recalc_rate,
 	.get_duty_cycle = clk_pwm_get_duty_cycle,
-};
+पूर्ण;
 
-static int clk_pwm_probe(struct platform_device *pdev)
-{
-	struct device_node *node = pdev->dev.of_node;
-	struct clk_init_data init;
-	struct clk_pwm *clk_pwm;
-	struct pwm_device *pwm;
-	struct pwm_args pargs;
-	const char *clk_name;
-	int ret;
+अटल पूर्णांक clk_pwm_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा clk_init_data init;
+	काष्ठा clk_pwm *clk_pwm;
+	काष्ठा pwm_device *pwm;
+	काष्ठा pwm_args pargs;
+	स्थिर अक्षर *clk_name;
+	पूर्णांक ret;
 
-	clk_pwm = devm_kzalloc(&pdev->dev, sizeof(*clk_pwm), GFP_KERNEL);
-	if (!clk_pwm)
-		return -ENOMEM;
+	clk_pwm = devm_kzalloc(&pdev->dev, माप(*clk_pwm), GFP_KERNEL);
+	अगर (!clk_pwm)
+		वापस -ENOMEM;
 
-	pwm = devm_pwm_get(&pdev->dev, NULL);
-	if (IS_ERR(pwm))
-		return PTR_ERR(pwm);
+	pwm = devm_pwm_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(pwm))
+		वापस PTR_ERR(pwm);
 
 	pwm_get_args(pwm, &pargs);
-	if (!pargs.period) {
+	अगर (!pargs.period) अणु
 		dev_err(&pdev->dev, "invalid PWM period\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (of_property_read_u32(node, "clock-frequency", &clk_pwm->fixed_rate))
-		clk_pwm->fixed_rate = div64_u64(NSEC_PER_SEC, pargs.period);
+	अगर (of_property_पढ़ो_u32(node, "clock-frequency", &clk_pwm->fixed_rate))
+		clk_pwm->fixed_rate = भाग64_u64(NSEC_PER_SEC, pargs.period);
 
-	if (!clk_pwm->fixed_rate) {
+	अगर (!clk_pwm->fixed_rate) अणु
 		dev_err(&pdev->dev, "fixed_rate cannot be zero\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pargs.period != NSEC_PER_SEC / clk_pwm->fixed_rate &&
-	    pargs.period != DIV_ROUND_UP(NSEC_PER_SEC, clk_pwm->fixed_rate)) {
+	अगर (pargs.period != NSEC_PER_SEC / clk_pwm->fixed_rate &&
+	    pargs.period != DIV_ROUND_UP(NSEC_PER_SEC, clk_pwm->fixed_rate)) अणु
 		dev_err(&pdev->dev,
 			"clock-frequency does not match PWM period\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * FIXME: pwm_apply_args() should be removed when switching to the
+	 * FIXME: pwm_apply_args() should be हटाओd when चयनing to the
 	 * atomic PWM API.
 	 */
 	pwm_apply_args(pwm);
 	ret = pwm_config(pwm, (pargs.period + 1) >> 1, pargs.period);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	clk_name = node->name;
-	of_property_read_string(node, "clock-output-names", &clk_name);
+	of_property_पढ़ो_string(node, "clock-output-names", &clk_name);
 
 	init.name = clk_name;
 	init.ops = &clk_pwm_ops;
@@ -122,36 +123,36 @@ static int clk_pwm_probe(struct platform_device *pdev)
 
 	clk_pwm->pwm = pwm;
 	clk_pwm->hw.init = &init;
-	ret = devm_clk_hw_register(&pdev->dev, &clk_pwm->hw);
-	if (ret)
-		return ret;
+	ret = devm_clk_hw_रेजिस्टर(&pdev->dev, &clk_pwm->hw);
+	अगर (ret)
+		वापस ret;
 
-	return of_clk_add_hw_provider(node, of_clk_hw_simple_get, &clk_pwm->hw);
-}
+	वापस of_clk_add_hw_provider(node, of_clk_hw_simple_get, &clk_pwm->hw);
+पूर्ण
 
-static int clk_pwm_remove(struct platform_device *pdev)
-{
+अटल पूर्णांक clk_pwm_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
 	of_clk_del_provider(pdev->dev.of_node);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id clk_pwm_dt_ids[] = {
-	{ .compatible = "pwm-clock" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id clk_pwm_dt_ids[] = अणु
+	अणु .compatible = "pwm-clock" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, clk_pwm_dt_ids);
 
-static struct platform_driver clk_pwm_driver = {
+अटल काष्ठा platक्रमm_driver clk_pwm_driver = अणु
 	.probe = clk_pwm_probe,
-	.remove = clk_pwm_remove,
-	.driver = {
+	.हटाओ = clk_pwm_हटाओ,
+	.driver = अणु
 		.name = "pwm-clock",
 		.of_match_table = clk_pwm_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(clk_pwm_driver);
+module_platक्रमm_driver(clk_pwm_driver);
 
 MODULE_AUTHOR("Philipp Zabel <p.zabel@pengutronix.de>");
 MODULE_DESCRIPTION("PWM clock driver");

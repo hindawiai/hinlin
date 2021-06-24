@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __HEAD_32_H__
-#define __HEAD_32_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __HEAD_32_H__
+#घोषणा __HEAD_32_H__
 
-#include <asm/ptrace.h>	/* for STACK_FRAME_REGS_MARKER */
+#समावेश <यंत्र/ptrace.h>	/* क्रम STACK_FRAME_REGS_MARKER */
 
 /*
  * Exception entry code.  This code runs with address translation
  * turned off, i.e. using physical addresses.
  * We assume sprg3 has the physical address of the current
- * task's thread_struct.
+ * task's thपढ़ो_काष्ठा.
  */
 .macro EXCEPTION_PROLOG		trapno name handle_dar_dsisr=0
 	EXCEPTION_PROLOG_0	handle_dar_dsisr=\handle_dar_dsisr
 	EXCEPTION_PROLOG_1
-	EXCEPTION_PROLOG_2	\trapno \name handle_dar_dsisr=\handle_dar_dsisr
+	EXCEPTION_PROLOG_2	\टrapno \नame handle_dar_dsisr=\handle_dar_dsisr
 .endm
 
 .macro EXCEPTION_PROLOG_0 handle_dar_dsisr=0
 	mtspr	SPRN_SPRG_SCRATCH0,r10
 	mtspr	SPRN_SPRG_SCRATCH1,r11
 	mfspr	r10, SPRN_SPRG_THREAD
-	.if	\handle_dar_dsisr
-#ifdef CONFIG_40x
+	.अगर	\handle_dar_dsisr
+#अगर_घोषित CONFIG_40x
 	mfspr	r11, SPRN_DEAR
-#else
+#अन्यथा
 	mfspr	r11, SPRN_DAR
-#endif
+#पूर्ण_अगर
 	stw	r11, DAR(r10)
-#ifdef CONFIG_40x
+#अगर_घोषित CONFIG_40x
 	mfspr	r11, SPRN_ESR
-#else
+#अन्यथा
 	mfspr	r11, SPRN_DSISR
-#endif
+#पूर्ण_अगर
 	stw	r11, DSISR(r10)
-	.endif
+	.endअगर
 	mfspr	r11, SPRN_SRR0
 	stw	r11, SRR0(r10)
 	mfspr	r11, SPRN_SRR1		/* check whether user or kernel */
@@ -44,25 +45,25 @@
 
 .macro EXCEPTION_PROLOG_1
 	mtspr	SPRN_SPRG_SCRATCH2,r1
-	subi	r1, r1, INT_FRAME_SIZE		/* use r1 if kernel */
+	subi	r1, r1, INT_FRAME_SIZE		/* use r1 अगर kernel */
 	beq	1f
 	mfspr	r1,SPRN_SPRG_THREAD
 	lwz	r1,TASK_STACK-THREAD(r1)
 	addi	r1, r1, THREAD_SIZE - INT_FRAME_SIZE
 1:
-#ifdef CONFIG_VMAP_STACK
+#अगर_घोषित CONFIG_VMAP_STACK
 	mtcrf	0x3f, r1
 	bt	32 - THREAD_ALIGN_SHIFT, vmap_stack_overflow
-#endif
+#पूर्ण_अगर
 .endm
 
 .macro EXCEPTION_PROLOG_2 trapno name handle_dar_dsisr=0
-#ifdef CONFIG_PPC_8xx
-	.if	\handle_dar_dsisr
+#अगर_घोषित CONFIG_PPC_8xx
+	.अगर	\handle_dar_dsisr
 	li	r11, RPN_PATTERN
 	mtspr	SPRN_DAR, r11	/* Tag DAR, to be used in DTLB Error */
-	.endif
-#endif
+	.endअगर
+#पूर्ण_अगर
 	LOAD_REG_IMMEDIATE(r11, MSR_KERNEL & ~MSR_RI) /* re-enable MMU */
 	mtspr	SPRN_SRR1, r11
 	lis	r11, 1f@h
@@ -72,12 +73,12 @@
 	rfi
 
 	.text
-\name\()_virt:
+\नame\()_virt:
 1:
 	stw	r11,GPR1(r1)
 	stw	r11,0(r1)
 	mr	r11, r1
-	stw	r10,_CCR(r11)		/* save registers */
+	stw	r10,_CCR(r11)		/* save रेजिस्टरs */
 	stw	r12,GPR12(r11)
 	stw	r9,GPR9(r11)
 	mfspr	r10,SPRN_SPRG_SCRATCH0
@@ -88,24 +89,24 @@
 	stw	r10,_LINK(r11)
 	mfspr	r12, SPRN_SPRG_THREAD
 	tovirt(r12, r12)
-	.if	\handle_dar_dsisr
+	.अगर	\handle_dar_dsisr
 	lwz	r10, DAR(r12)
 	stw	r10, _DAR(r11)
 	lwz	r10, DSISR(r12)
 	stw	r10, _DSISR(r11)
-	.endif
+	.endअगर
 	lwz	r9, SRR1(r12)
 	lwz	r12, SRR0(r12)
-#ifdef CONFIG_40x
+#अगर_घोषित CONFIG_40x
 	rlwinm	r9,r9,0,14,12		/* clear MSR_WE (necessary?) */
-#elif defined(CONFIG_PPC_8xx)
+#या_अगर defined(CONFIG_PPC_8xx)
 	mtspr	SPRN_EID, r2		/* Set MSR_RI */
-#else
+#अन्यथा
 	li	r10, MSR_KERNEL		/* can take exceptions */
-	mtmsr	r10			/* (except for mach check in rtas) */
-#endif
-	COMMON_EXCEPTION_PROLOG_END \trapno
-_ASM_NOKPROBE_SYMBOL(\name\()_virt)
+	mपंचांगsr	r10			/* (except क्रम mach check in rtas) */
+#पूर्ण_अगर
+	COMMON_EXCEPTION_PROLOG_END \टrapno
+_ASM_NOKPROBE_SYMBOL(\नame\()_virt)
 .endm
 
 .macro COMMON_EXCEPTION_PROLOG_END trapno
@@ -113,7 +114,7 @@ _ASM_NOKPROBE_SYMBOL(\name\()_virt)
 	lis	r10,STACK_FRAME_REGS_MARKER@ha /* exception frame marker */
 	addi	r10,r10,STACK_FRAME_REGS_MARKER@l
 	stw	r10,8(r1)
-	li	r10, \trapno
+	li	r10, \टrapno
 	stw	r10,_TRAP(r1)
 	SAVE_4GPRS(3, r1)
 	SAVE_2GPRS(7, r1)
@@ -132,12 +133,12 @@ _ASM_NOKPROBE_SYMBOL(\name\()_virt)
 .endm
 
 .macro prepare_transfer_to_handler
-#ifdef CONFIG_PPC_BOOK3S_32
+#अगर_घोषित CONFIG_PPC_BOOK3S_32
 	andi.	r12,r9,MSR_PR
 	bne	777f
 	bl	prepare_transfer_to_handler
 777:
-#endif
+#पूर्ण_अगर
 .endm
 
 .macro SYSCALL_ENTRY trapno
@@ -163,15 +164,15 @@ _ASM_NOKPROBE_SYMBOL(\name\()_virt)
 	stw	r10, _LINK(r11)
 	mfcr	r10
 	rlwinm	r10,r10,0,4,2	/* Clear SO bit in CR */
-	stw	r10,_CCR(r11)		/* save registers */
-#ifdef CONFIG_40x
+	stw	r10,_CCR(r11)		/* save रेजिस्टरs */
+#अगर_घोषित CONFIG_40x
 	rlwinm	r9,r9,0,14,12		/* clear MSR_WE (necessary?) */
-#endif
+#पूर्ण_अगर
 	lis	r10,STACK_FRAME_REGS_MARKER@ha /* exception frame marker */
 	stw	r2,GPR2(r11)
 	addi	r10,r10,STACK_FRAME_REGS_MARKER@l
 	stw	r9,_MSR(r11)
-	li	r2, \trapno
+	li	r2, \टrapno
 	stw	r10,8(r11)
 	stw	r2,_TRAP(r11)
 	SAVE_GPR(0, r11)
@@ -182,55 +183,55 @@ _ASM_NOKPROBE_SYMBOL(\name\()_virt)
 .endm
 
 /*
- * Note: code which follows this uses cr0.eq (set if from kernel),
+ * Note: code which follows this uses cr0.eq (set अगर from kernel),
  * r11, r12 (SRR0), and r9 (SRR1).
  *
  * Note2: once we have set r1 we are in a position to take exceptions
- * again, and we could thus set MSR:RI at that point.
+ * again, and we could thus set MSR:RI at that poपूर्णांक.
  */
 
 /*
  * Exception vectors.
  */
-#ifdef CONFIG_PPC_BOOK3S
-#define	START_EXCEPTION(n, label)		\
+#अगर_घोषित CONFIG_PPC_BOOK3S
+#घोषणा	START_EXCEPTION(n, label)		\
 	__HEAD;					\
 	. = n;					\
 	DO_KVM n;				\
 label:
 
-#else
-#define	START_EXCEPTION(n, label)		\
+#अन्यथा
+#घोषणा	START_EXCEPTION(n, label)		\
 	__HEAD;					\
 	. = n;					\
 label:
 
-#endif
+#पूर्ण_अगर
 
-#define EXCEPTION(n, label, hdlr)		\
+#घोषणा EXCEPTION(n, label, hdlr)		\
 	START_EXCEPTION(n, label)		\
 	EXCEPTION_PROLOG n label;		\
 	prepare_transfer_to_handler;		\
 	bl	hdlr;				\
-	b	interrupt_return
+	b	पूर्णांकerrupt_वापस
 
 .macro vmap_stack_overflow_exception
 	__HEAD
 vmap_stack_overflow:
-#ifdef CONFIG_SMP
+#अगर_घोषित CONFIG_SMP
 	mfspr	r1, SPRN_SPRG_THREAD
 	lwz	r1, TASK_CPU - THREAD(r1)
 	slwi	r1, r1, 3
 	addis	r1, r1, emergency_ctx@ha
-#else
+#अन्यथा
 	lis	r1, emergency_ctx@ha
-#endif
+#पूर्ण_अगर
 	lwz	r1, emergency_ctx@l(r1)
 	addi	r1, r1, THREAD_SIZE - INT_FRAME_SIZE
 	EXCEPTION_PROLOG_2 0 vmap_stack_overflow
 	prepare_transfer_to_handler
 	bl	stack_overflow_exception
-	b	interrupt_return
+	b	पूर्णांकerrupt_वापस
 .endm
 
-#endif /* __HEAD_32_H__ */
+#पूर्ण_अगर /* __HEAD_32_H__ */

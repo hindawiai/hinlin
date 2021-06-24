@@ -1,108 +1,109 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2020 Intel Corporation.
- * Zhu YiXin <yixin.zhu@intel.com>
- * Rahul Tanwar <rahul.tanwar@intel.com>
+ * Zhu YiXin <yixin.zhu@पूर्णांकel.com>
+ * Rahul Tanwar <rahul.tanwar@पूर्णांकel.com>
  */
-#include <linux/clk-provider.h>
-#include <linux/device.h>
-#include <linux/of.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/device.h>
+#समावेश <linux/of.h>
 
-#include "clk-cgu.h"
+#समावेश "clk-cgu.h"
 
-#define GATE_HW_REG_STAT(reg)	((reg) + 0x0)
-#define GATE_HW_REG_EN(reg)	((reg) + 0x4)
-#define GATE_HW_REG_DIS(reg)	((reg) + 0x8)
-#define MAX_DDIV_REG	8
-#define MAX_DIVIDER_VAL 64
+#घोषणा GATE_HW_REG_STAT(reg)	((reg) + 0x0)
+#घोषणा GATE_HW_REG_EN(reg)	((reg) + 0x4)
+#घोषणा GATE_HW_REG_DIS(reg)	((reg) + 0x8)
+#घोषणा MAX_DDIV_REG	8
+#घोषणा MAX_DIVIDER_VAL 64
 
-#define to_lgm_clk_mux(_hw) container_of(_hw, struct lgm_clk_mux, hw)
-#define to_lgm_clk_divider(_hw) container_of(_hw, struct lgm_clk_divider, hw)
-#define to_lgm_clk_gate(_hw) container_of(_hw, struct lgm_clk_gate, hw)
-#define to_lgm_clk_ddiv(_hw) container_of(_hw, struct lgm_clk_ddiv, hw)
+#घोषणा to_lgm_clk_mux(_hw) container_of(_hw, काष्ठा lgm_clk_mux, hw)
+#घोषणा to_lgm_clk_भागider(_hw) container_of(_hw, काष्ठा lgm_clk_भागider, hw)
+#घोषणा to_lgm_clk_gate(_hw) container_of(_hw, काष्ठा lgm_clk_gate, hw)
+#घोषणा to_lgm_clk_dभाग(_hw) container_of(_hw, काष्ठा lgm_clk_dभाग, hw)
 
-static struct clk_hw *lgm_clk_register_fixed(struct lgm_clk_provider *ctx,
-					     const struct lgm_clk_branch *list)
-{
-	unsigned long flags;
+अटल काष्ठा clk_hw *lgm_clk_रेजिस्टर_fixed(काष्ठा lgm_clk_provider *ctx,
+					     स्थिर काष्ठा lgm_clk_branch *list)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	if (list->div_flags & CLOCK_FLAG_VAL_INIT) {
+	अगर (list->भाग_flags & CLOCK_FLAG_VAL_INIT) अणु
 		spin_lock_irqsave(&ctx->lock, flags);
-		lgm_set_clk_val(ctx->membase, list->div_off, list->div_shift,
-				list->div_width, list->div_val);
+		lgm_set_clk_val(ctx->membase, list->भाग_off, list->भाग_shअगरt,
+				list->भाग_width, list->भाग_val);
 		spin_unlock_irqrestore(&ctx->lock, flags);
-	}
+	पूर्ण
 
-	return clk_hw_register_fixed_rate(NULL, list->name,
+	वापस clk_hw_रेजिस्टर_fixed_rate(शून्य, list->name,
 					  list->parent_data[0].name,
 					  list->flags, list->mux_flags);
-}
+पूर्ण
 
-static u8 lgm_clk_mux_get_parent(struct clk_hw *hw)
-{
-	struct lgm_clk_mux *mux = to_lgm_clk_mux(hw);
-	unsigned long flags;
+अटल u8 lgm_clk_mux_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा lgm_clk_mux *mux = to_lgm_clk_mux(hw);
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
 	spin_lock_irqsave(&mux->lock, flags);
-	if (mux->flags & MUX_CLK_SW)
+	अगर (mux->flags & MUX_CLK_SW)
 		val = mux->reg;
-	else
-		val = lgm_get_clk_val(mux->membase, mux->reg, mux->shift,
+	अन्यथा
+		val = lgm_get_clk_val(mux->membase, mux->reg, mux->shअगरt,
 				      mux->width);
 	spin_unlock_irqrestore(&mux->lock, flags);
-	return clk_mux_val_to_index(hw, NULL, mux->flags, val);
-}
+	वापस clk_mux_val_to_index(hw, शून्य, mux->flags, val);
+पूर्ण
 
-static int lgm_clk_mux_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct lgm_clk_mux *mux = to_lgm_clk_mux(hw);
-	unsigned long flags;
+अटल पूर्णांक lgm_clk_mux_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा lgm_clk_mux *mux = to_lgm_clk_mux(hw);
+	अचिन्हित दीर्घ flags;
 	u32 val;
 
-	val = clk_mux_index_to_val(NULL, mux->flags, index);
+	val = clk_mux_index_to_val(शून्य, mux->flags, index);
 	spin_lock_irqsave(&mux->lock, flags);
-	if (mux->flags & MUX_CLK_SW)
+	अगर (mux->flags & MUX_CLK_SW)
 		mux->reg = val;
-	else
-		lgm_set_clk_val(mux->membase, mux->reg, mux->shift,
+	अन्यथा
+		lgm_set_clk_val(mux->membase, mux->reg, mux->shअगरt,
 				mux->width, val);
 	spin_unlock_irqrestore(&mux->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lgm_clk_mux_determine_rate(struct clk_hw *hw,
-				      struct clk_rate_request *req)
-{
-	struct lgm_clk_mux *mux = to_lgm_clk_mux(hw);
+अटल पूर्णांक lgm_clk_mux_determine_rate(काष्ठा clk_hw *hw,
+				      काष्ठा clk_rate_request *req)
+अणु
+	काष्ठा lgm_clk_mux *mux = to_lgm_clk_mux(hw);
 
-	return clk_mux_determine_rate_flags(hw, req, mux->flags);
-}
+	वापस clk_mux_determine_rate_flags(hw, req, mux->flags);
+पूर्ण
 
-static const struct clk_ops lgm_clk_mux_ops = {
+अटल स्थिर काष्ठा clk_ops lgm_clk_mux_ops = अणु
 	.get_parent = lgm_clk_mux_get_parent,
 	.set_parent = lgm_clk_mux_set_parent,
 	.determine_rate = lgm_clk_mux_determine_rate,
-};
+पूर्ण;
 
-static struct clk_hw *
-lgm_clk_register_mux(struct lgm_clk_provider *ctx,
-		     const struct lgm_clk_branch *list)
-{
-	unsigned long flags, cflags = list->mux_flags;
-	struct device *dev = ctx->dev;
-	u8 shift = list->mux_shift;
+अटल काष्ठा clk_hw *
+lgm_clk_रेजिस्टर_mux(काष्ठा lgm_clk_provider *ctx,
+		     स्थिर काष्ठा lgm_clk_branch *list)
+अणु
+	अचिन्हित दीर्घ flags, cflags = list->mux_flags;
+	काष्ठा device *dev = ctx->dev;
+	u8 shअगरt = list->mux_shअगरt;
 	u8 width = list->mux_width;
-	struct clk_init_data init = {};
-	struct lgm_clk_mux *mux;
+	काष्ठा clk_init_data init = अणुपूर्ण;
+	काष्ठा lgm_clk_mux *mux;
 	u32 reg = list->mux_off;
-	struct clk_hw *hw;
-	int ret;
+	काष्ठा clk_hw *hw;
+	पूर्णांक ret;
 
-	mux = devm_kzalloc(dev, sizeof(*mux), GFP_KERNEL);
-	if (!mux)
-		return ERR_PTR(-ENOMEM);
+	mux = devm_kzalloc(dev, माप(*mux), GFP_KERNEL);
+	अगर (!mux)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = list->name;
 	init.ops = &lgm_clk_mux_ops;
@@ -113,516 +114,516 @@ lgm_clk_register_mux(struct lgm_clk_provider *ctx,
 	mux->membase = ctx->membase;
 	mux->lock = ctx->lock;
 	mux->reg = reg;
-	mux->shift = shift;
+	mux->shअगरt = shअगरt;
 	mux->width = width;
 	mux->flags = cflags;
 	mux->hw.init = &init;
 
 	hw = &mux->hw;
-	ret = devm_clk_hw_register(dev, hw);
-	if (ret)
-		return ERR_PTR(ret);
+	ret = devm_clk_hw_रेजिस्टर(dev, hw);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	if (cflags & CLOCK_FLAG_VAL_INIT) {
+	अगर (cflags & CLOCK_FLAG_VAL_INIT) अणु
 		spin_lock_irqsave(&mux->lock, flags);
-		lgm_set_clk_val(mux->membase, reg, shift, width, list->mux_val);
+		lgm_set_clk_val(mux->membase, reg, shअगरt, width, list->mux_val);
 		spin_unlock_irqrestore(&mux->lock, flags);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static unsigned long
-lgm_clk_divider_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
-{
-	struct lgm_clk_divider *divider = to_lgm_clk_divider(hw);
-	unsigned long flags;
-	unsigned int val;
+अटल अचिन्हित दीर्घ
+lgm_clk_भागider_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा lgm_clk_भागider *भागider = to_lgm_clk_भागider(hw);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक val;
 
-	spin_lock_irqsave(&divider->lock, flags);
-	val = lgm_get_clk_val(divider->membase, divider->reg,
-			      divider->shift, divider->width);
-	spin_unlock_irqrestore(&divider->lock, flags);
+	spin_lock_irqsave(&भागider->lock, flags);
+	val = lgm_get_clk_val(भागider->membase, भागider->reg,
+			      भागider->shअगरt, भागider->width);
+	spin_unlock_irqrestore(&भागider->lock, flags);
 
-	return divider_recalc_rate(hw, parent_rate, val, divider->table,
-				   divider->flags, divider->width);
-}
+	वापस भागider_recalc_rate(hw, parent_rate, val, भागider->table,
+				   भागider->flags, भागider->width);
+पूर्ण
 
-static long
-lgm_clk_divider_round_rate(struct clk_hw *hw, unsigned long rate,
-			   unsigned long *prate)
-{
-	struct lgm_clk_divider *divider = to_lgm_clk_divider(hw);
+अटल दीर्घ
+lgm_clk_भागider_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			   अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा lgm_clk_भागider *भागider = to_lgm_clk_भागider(hw);
 
-	return divider_round_rate(hw, rate, prate, divider->table,
-				  divider->width, divider->flags);
-}
+	वापस भागider_round_rate(hw, rate, prate, भागider->table,
+				  भागider->width, भागider->flags);
+पूर्ण
 
-static int
-lgm_clk_divider_set_rate(struct clk_hw *hw, unsigned long rate,
-			 unsigned long prate)
-{
-	struct lgm_clk_divider *divider = to_lgm_clk_divider(hw);
-	unsigned long flags;
-	int value;
+अटल पूर्णांक
+lgm_clk_भागider_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			 अचिन्हित दीर्घ prate)
+अणु
+	काष्ठा lgm_clk_भागider *भागider = to_lgm_clk_भागider(hw);
+	अचिन्हित दीर्घ flags;
+	पूर्णांक value;
 
-	value = divider_get_val(rate, prate, divider->table,
-				divider->width, divider->flags);
-	if (value < 0)
-		return value;
+	value = भागider_get_val(rate, prate, भागider->table,
+				भागider->width, भागider->flags);
+	अगर (value < 0)
+		वापस value;
 
-	spin_lock_irqsave(&divider->lock, flags);
-	lgm_set_clk_val(divider->membase, divider->reg,
-			divider->shift, divider->width, value);
-	spin_unlock_irqrestore(&divider->lock, flags);
+	spin_lock_irqsave(&भागider->lock, flags);
+	lgm_set_clk_val(भागider->membase, भागider->reg,
+			भागider->shअगरt, भागider->width, value);
+	spin_unlock_irqrestore(&भागider->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lgm_clk_divider_enable_disable(struct clk_hw *hw, int enable)
-{
-	struct lgm_clk_divider *div = to_lgm_clk_divider(hw);
-	unsigned long flags;
+अटल पूर्णांक lgm_clk_भागider_enable_disable(काष्ठा clk_hw *hw, पूर्णांक enable)
+अणु
+	काष्ठा lgm_clk_भागider *भाग = to_lgm_clk_भागider(hw);
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&div->lock, flags);
-	lgm_set_clk_val(div->membase, div->reg, div->shift_gate,
-			div->width_gate, enable);
-	spin_unlock_irqrestore(&div->lock, flags);
-	return 0;
-}
+	spin_lock_irqsave(&भाग->lock, flags);
+	lgm_set_clk_val(भाग->membase, भाग->reg, भाग->shअगरt_gate,
+			भाग->width_gate, enable);
+	spin_unlock_irqrestore(&भाग->lock, flags);
+	वापस 0;
+पूर्ण
 
-static int lgm_clk_divider_enable(struct clk_hw *hw)
-{
-	return lgm_clk_divider_enable_disable(hw, 1);
-}
+अटल पूर्णांक lgm_clk_भागider_enable(काष्ठा clk_hw *hw)
+अणु
+	वापस lgm_clk_भागider_enable_disable(hw, 1);
+पूर्ण
 
-static void lgm_clk_divider_disable(struct clk_hw *hw)
-{
-	lgm_clk_divider_enable_disable(hw, 0);
-}
+अटल व्योम lgm_clk_भागider_disable(काष्ठा clk_hw *hw)
+अणु
+	lgm_clk_भागider_enable_disable(hw, 0);
+पूर्ण
 
-static const struct clk_ops lgm_clk_divider_ops = {
-	.recalc_rate = lgm_clk_divider_recalc_rate,
-	.round_rate = lgm_clk_divider_round_rate,
-	.set_rate = lgm_clk_divider_set_rate,
-	.enable = lgm_clk_divider_enable,
-	.disable = lgm_clk_divider_disable,
-};
+अटल स्थिर काष्ठा clk_ops lgm_clk_भागider_ops = अणु
+	.recalc_rate = lgm_clk_भागider_recalc_rate,
+	.round_rate = lgm_clk_भागider_round_rate,
+	.set_rate = lgm_clk_भागider_set_rate,
+	.enable = lgm_clk_भागider_enable,
+	.disable = lgm_clk_भागider_disable,
+पूर्ण;
 
-static struct clk_hw *
-lgm_clk_register_divider(struct lgm_clk_provider *ctx,
-			 const struct lgm_clk_branch *list)
-{
-	unsigned long flags, cflags = list->div_flags;
-	struct device *dev = ctx->dev;
-	struct lgm_clk_divider *div;
-	struct clk_init_data init = {};
-	u8 shift = list->div_shift;
-	u8 width = list->div_width;
-	u8 shift_gate = list->div_shift_gate;
-	u8 width_gate = list->div_width_gate;
-	u32 reg = list->div_off;
-	struct clk_hw *hw;
-	int ret;
+अटल काष्ठा clk_hw *
+lgm_clk_रेजिस्टर_भागider(काष्ठा lgm_clk_provider *ctx,
+			 स्थिर काष्ठा lgm_clk_branch *list)
+अणु
+	अचिन्हित दीर्घ flags, cflags = list->भाग_flags;
+	काष्ठा device *dev = ctx->dev;
+	काष्ठा lgm_clk_भागider *भाग;
+	काष्ठा clk_init_data init = अणुपूर्ण;
+	u8 shअगरt = list->भाग_shअगरt;
+	u8 width = list->भाग_width;
+	u8 shअगरt_gate = list->भाग_shअगरt_gate;
+	u8 width_gate = list->भाग_width_gate;
+	u32 reg = list->भाग_off;
+	काष्ठा clk_hw *hw;
+	पूर्णांक ret;
 
-	div = devm_kzalloc(dev, sizeof(*div), GFP_KERNEL);
-	if (!div)
-		return ERR_PTR(-ENOMEM);
+	भाग = devm_kzalloc(dev, माप(*भाग), GFP_KERNEL);
+	अगर (!भाग)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = list->name;
-	init.ops = &lgm_clk_divider_ops;
+	init.ops = &lgm_clk_भागider_ops;
 	init.flags = list->flags;
 	init.parent_data = list->parent_data;
 	init.num_parents = 1;
 
-	div->membase = ctx->membase;
-	div->lock = ctx->lock;
-	div->reg = reg;
-	div->shift = shift;
-	div->width = width;
-	div->shift_gate	= shift_gate;
-	div->width_gate	= width_gate;
-	div->flags = cflags;
-	div->table = list->div_table;
-	div->hw.init = &init;
+	भाग->membase = ctx->membase;
+	भाग->lock = ctx->lock;
+	भाग->reg = reg;
+	भाग->shअगरt = shअगरt;
+	भाग->width = width;
+	भाग->shअगरt_gate	= shअगरt_gate;
+	भाग->width_gate	= width_gate;
+	भाग->flags = cflags;
+	भाग->table = list->भाग_प्रकारable;
+	भाग->hw.init = &init;
 
-	hw = &div->hw;
-	ret = devm_clk_hw_register(dev, hw);
-	if (ret)
-		return ERR_PTR(ret);
+	hw = &भाग->hw;
+	ret = devm_clk_hw_रेजिस्टर(dev, hw);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	if (cflags & CLOCK_FLAG_VAL_INIT) {
-		spin_lock_irqsave(&div->lock, flags);
-		lgm_set_clk_val(div->membase, reg, shift, width, list->div_val);
-		spin_unlock_irqrestore(&div->lock, flags);
-	}
+	अगर (cflags & CLOCK_FLAG_VAL_INIT) अणु
+		spin_lock_irqsave(&भाग->lock, flags);
+		lgm_set_clk_val(भाग->membase, reg, shअगरt, width, list->भाग_val);
+		spin_unlock_irqrestore(&भाग->lock, flags);
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static struct clk_hw *
-lgm_clk_register_fixed_factor(struct lgm_clk_provider *ctx,
-			      const struct lgm_clk_branch *list)
-{
-	unsigned long flags;
-	struct clk_hw *hw;
+अटल काष्ठा clk_hw *
+lgm_clk_रेजिस्टर_fixed_factor(काष्ठा lgm_clk_provider *ctx,
+			      स्थिर काष्ठा lgm_clk_branch *list)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा clk_hw *hw;
 
-	hw = clk_hw_register_fixed_factor(ctx->dev, list->name,
+	hw = clk_hw_रेजिस्टर_fixed_factor(ctx->dev, list->name,
 					  list->parent_data[0].name, list->flags,
-					  list->mult, list->div);
-	if (IS_ERR(hw))
-		return ERR_CAST(hw);
+					  list->mult, list->भाग);
+	अगर (IS_ERR(hw))
+		वापस ERR_CAST(hw);
 
-	if (list->div_flags & CLOCK_FLAG_VAL_INIT) {
+	अगर (list->भाग_flags & CLOCK_FLAG_VAL_INIT) अणु
 		spin_lock_irqsave(&ctx->lock, flags);
-		lgm_set_clk_val(ctx->membase, list->div_off, list->div_shift,
-				list->div_width, list->div_val);
+		lgm_set_clk_val(ctx->membase, list->भाग_off, list->भाग_shअगरt,
+				list->भाग_width, list->भाग_val);
 		spin_unlock_irqrestore(&ctx->lock, flags);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-static int lgm_clk_gate_enable(struct clk_hw *hw)
-{
-	struct lgm_clk_gate *gate = to_lgm_clk_gate(hw);
-	unsigned long flags;
-	unsigned int reg;
+अटल पूर्णांक lgm_clk_gate_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा lgm_clk_gate *gate = to_lgm_clk_gate(hw);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक reg;
 
 	spin_lock_irqsave(&gate->lock, flags);
 	reg = GATE_HW_REG_EN(gate->reg);
-	lgm_set_clk_val(gate->membase, reg, gate->shift, 1, 1);
+	lgm_set_clk_val(gate->membase, reg, gate->shअगरt, 1, 1);
 	spin_unlock_irqrestore(&gate->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void lgm_clk_gate_disable(struct clk_hw *hw)
-{
-	struct lgm_clk_gate *gate = to_lgm_clk_gate(hw);
-	unsigned long flags;
-	unsigned int reg;
+अटल व्योम lgm_clk_gate_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा lgm_clk_gate *gate = to_lgm_clk_gate(hw);
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक reg;
 
 	spin_lock_irqsave(&gate->lock, flags);
 	reg = GATE_HW_REG_DIS(gate->reg);
-	lgm_set_clk_val(gate->membase, reg, gate->shift, 1, 1);
+	lgm_set_clk_val(gate->membase, reg, gate->shअगरt, 1, 1);
 	spin_unlock_irqrestore(&gate->lock, flags);
-}
+पूर्ण
 
-static int lgm_clk_gate_is_enabled(struct clk_hw *hw)
-{
-	struct lgm_clk_gate *gate = to_lgm_clk_gate(hw);
-	unsigned int reg, ret;
-	unsigned long flags;
+अटल पूर्णांक lgm_clk_gate_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा lgm_clk_gate *gate = to_lgm_clk_gate(hw);
+	अचिन्हित पूर्णांक reg, ret;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&gate->lock, flags);
 	reg = GATE_HW_REG_STAT(gate->reg);
-	ret = lgm_get_clk_val(gate->membase, reg, gate->shift, 1);
+	ret = lgm_get_clk_val(gate->membase, reg, gate->shअगरt, 1);
 	spin_unlock_irqrestore(&gate->lock, flags);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct clk_ops lgm_clk_gate_ops = {
+अटल स्थिर काष्ठा clk_ops lgm_clk_gate_ops = अणु
 	.enable = lgm_clk_gate_enable,
 	.disable = lgm_clk_gate_disable,
 	.is_enabled = lgm_clk_gate_is_enabled,
-};
+पूर्ण;
 
-static struct clk_hw *
-lgm_clk_register_gate(struct lgm_clk_provider *ctx,
-		      const struct lgm_clk_branch *list)
-{
-	unsigned long flags, cflags = list->gate_flags;
-	const char *pname = list->parent_data[0].name;
-	struct device *dev = ctx->dev;
-	u8 shift = list->gate_shift;
-	struct clk_init_data init = {};
-	struct lgm_clk_gate *gate;
+अटल काष्ठा clk_hw *
+lgm_clk_रेजिस्टर_gate(काष्ठा lgm_clk_provider *ctx,
+		      स्थिर काष्ठा lgm_clk_branch *list)
+अणु
+	अचिन्हित दीर्घ flags, cflags = list->gate_flags;
+	स्थिर अक्षर *pname = list->parent_data[0].name;
+	काष्ठा device *dev = ctx->dev;
+	u8 shअगरt = list->gate_shअगरt;
+	काष्ठा clk_init_data init = अणुपूर्ण;
+	काष्ठा lgm_clk_gate *gate;
 	u32 reg = list->gate_off;
-	struct clk_hw *hw;
-	int ret;
+	काष्ठा clk_hw *hw;
+	पूर्णांक ret;
 
-	gate = devm_kzalloc(dev, sizeof(*gate), GFP_KERNEL);
-	if (!gate)
-		return ERR_PTR(-ENOMEM);
+	gate = devm_kzalloc(dev, माप(*gate), GFP_KERNEL);
+	अगर (!gate)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = list->name;
 	init.ops = &lgm_clk_gate_ops;
 	init.flags = list->flags;
-	init.parent_names = pname ? &pname : NULL;
+	init.parent_names = pname ? &pname : शून्य;
 	init.num_parents = pname ? 1 : 0;
 
 	gate->membase = ctx->membase;
 	gate->lock = ctx->lock;
 	gate->reg = reg;
-	gate->shift = shift;
+	gate->shअगरt = shअगरt;
 	gate->flags = cflags;
 	gate->hw.init = &init;
 
 	hw = &gate->hw;
-	ret = devm_clk_hw_register(dev, hw);
-	if (ret)
-		return ERR_PTR(ret);
+	ret = devm_clk_hw_रेजिस्टर(dev, hw);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	if (cflags & CLOCK_FLAG_VAL_INIT) {
+	अगर (cflags & CLOCK_FLAG_VAL_INIT) अणु
 		spin_lock_irqsave(&gate->lock, flags);
-		lgm_set_clk_val(gate->membase, reg, shift, 1, list->gate_val);
+		lgm_set_clk_val(gate->membase, reg, shअगरt, 1, list->gate_val);
 		spin_unlock_irqrestore(&gate->lock, flags);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण
 
-int lgm_clk_register_branches(struct lgm_clk_provider *ctx,
-			      const struct lgm_clk_branch *list,
-			      unsigned int nr_clk)
-{
-	struct clk_hw *hw;
-	unsigned int idx;
+पूर्णांक lgm_clk_रेजिस्टर_branches(काष्ठा lgm_clk_provider *ctx,
+			      स्थिर काष्ठा lgm_clk_branch *list,
+			      अचिन्हित पूर्णांक nr_clk)
+अणु
+	काष्ठा clk_hw *hw;
+	अचिन्हित पूर्णांक idx;
 
-	for (idx = 0; idx < nr_clk; idx++, list++) {
-		switch (list->type) {
-		case CLK_TYPE_FIXED:
-			hw = lgm_clk_register_fixed(ctx, list);
-			break;
-		case CLK_TYPE_MUX:
-			hw = lgm_clk_register_mux(ctx, list);
-			break;
-		case CLK_TYPE_DIVIDER:
-			hw = lgm_clk_register_divider(ctx, list);
-			break;
-		case CLK_TYPE_FIXED_FACTOR:
-			hw = lgm_clk_register_fixed_factor(ctx, list);
-			break;
-		case CLK_TYPE_GATE:
-			hw = lgm_clk_register_gate(ctx, list);
-			break;
-		default:
+	क्रम (idx = 0; idx < nr_clk; idx++, list++) अणु
+		चयन (list->type) अणु
+		हाल CLK_TYPE_FIXED:
+			hw = lgm_clk_रेजिस्टर_fixed(ctx, list);
+			अवरोध;
+		हाल CLK_TYPE_MUX:
+			hw = lgm_clk_रेजिस्टर_mux(ctx, list);
+			अवरोध;
+		हाल CLK_TYPE_DIVIDER:
+			hw = lgm_clk_रेजिस्टर_भागider(ctx, list);
+			अवरोध;
+		हाल CLK_TYPE_FIXED_FACTOR:
+			hw = lgm_clk_रेजिस्टर_fixed_factor(ctx, list);
+			अवरोध;
+		हाल CLK_TYPE_GATE:
+			hw = lgm_clk_रेजिस्टर_gate(ctx, list);
+			अवरोध;
+		शेष:
 			dev_err(ctx->dev, "invalid clk type\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		if (IS_ERR(hw)) {
+		अगर (IS_ERR(hw)) अणु
 			dev_err(ctx->dev,
 				"register clk: %s, type: %u failed!\n",
 				list->name, list->type);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		ctx->clk_data.hws[list->id] = hw;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned long
-lgm_clk_ddiv_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
-{
-	struct lgm_clk_ddiv *ddiv = to_lgm_clk_ddiv(hw);
-	unsigned int div0, div1, exdiv;
+अटल अचिन्हित दीर्घ
+lgm_clk_dभाग_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा lgm_clk_dभाग *dभाग = to_lgm_clk_dभाग(hw);
+	अचिन्हित पूर्णांक भाग0, भाग1, exभाग;
 	u64 prate;
 
-	div0 = lgm_get_clk_val(ddiv->membase, ddiv->reg,
-			       ddiv->shift0, ddiv->width0) + 1;
-	div1 = lgm_get_clk_val(ddiv->membase, ddiv->reg,
-			       ddiv->shift1, ddiv->width1) + 1;
-	exdiv = lgm_get_clk_val(ddiv->membase, ddiv->reg,
-				ddiv->shift2, ddiv->width2);
+	भाग0 = lgm_get_clk_val(dभाग->membase, dभाग->reg,
+			       dभाग->shअगरt0, dभाग->width0) + 1;
+	भाग1 = lgm_get_clk_val(dभाग->membase, dभाग->reg,
+			       dभाग->shअगरt1, dभाग->width1) + 1;
+	exभाग = lgm_get_clk_val(dभाग->membase, dभाग->reg,
+				dभाग->shअगरt2, dभाग->width2);
 	prate = (u64)parent_rate;
-	do_div(prate, div0);
-	do_div(prate, div1);
+	करो_भाग(prate, भाग0);
+	करो_भाग(prate, भाग1);
 
-	if (exdiv) {
-		do_div(prate, ddiv->div);
-		prate *= ddiv->mult;
-	}
+	अगर (exभाग) अणु
+		करो_भाग(prate, dभाग->भाग);
+		prate *= dभाग->mult;
+	पूर्ण
 
-	return prate;
-}
+	वापस prate;
+पूर्ण
 
-static int lgm_clk_ddiv_enable(struct clk_hw *hw)
-{
-	struct lgm_clk_ddiv *ddiv = to_lgm_clk_ddiv(hw);
-	unsigned long flags;
+अटल पूर्णांक lgm_clk_dभाग_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा lgm_clk_dभाग *dभाग = to_lgm_clk_dभाग(hw);
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&ddiv->lock, flags);
-	lgm_set_clk_val(ddiv->membase, ddiv->reg, ddiv->shift_gate,
-			ddiv->width_gate, 1);
-	spin_unlock_irqrestore(&ddiv->lock, flags);
-	return 0;
-}
+	spin_lock_irqsave(&dभाग->lock, flags);
+	lgm_set_clk_val(dभाग->membase, dभाग->reg, dभाग->shअगरt_gate,
+			dभाग->width_gate, 1);
+	spin_unlock_irqrestore(&dभाग->lock, flags);
+	वापस 0;
+पूर्ण
 
-static void lgm_clk_ddiv_disable(struct clk_hw *hw)
-{
-	struct lgm_clk_ddiv *ddiv = to_lgm_clk_ddiv(hw);
-	unsigned long flags;
+अटल व्योम lgm_clk_dभाग_disable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा lgm_clk_dभाग *dभाग = to_lgm_clk_dभाग(hw);
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&ddiv->lock, flags);
-	lgm_set_clk_val(ddiv->membase, ddiv->reg, ddiv->shift_gate,
-			ddiv->width_gate, 0);
-	spin_unlock_irqrestore(&ddiv->lock, flags);
-}
+	spin_lock_irqsave(&dभाग->lock, flags);
+	lgm_set_clk_val(dभाग->membase, dभाग->reg, dभाग->shअगरt_gate,
+			dभाग->width_gate, 0);
+	spin_unlock_irqrestore(&dभाग->lock, flags);
+पूर्ण
 
-static int
-lgm_clk_get_ddiv_val(u32 div, u32 *ddiv1, u32 *ddiv2)
-{
+अटल पूर्णांक
+lgm_clk_get_dभाग_val(u32 भाग, u32 *dभाग1, u32 *dभाग2)
+अणु
 	u32 idx, temp;
 
-	*ddiv1 = 1;
-	*ddiv2 = 1;
+	*dभाग1 = 1;
+	*dभाग2 = 1;
 
-	if (div > MAX_DIVIDER_VAL)
-		div = MAX_DIVIDER_VAL;
+	अगर (भाग > MAX_DIVIDER_VAL)
+		भाग = MAX_DIVIDER_VAL;
 
-	if (div > 1) {
-		for (idx = 2; idx <= MAX_DDIV_REG; idx++) {
-			temp = DIV_ROUND_UP_ULL((u64)div, idx);
-			if (div % idx == 0 && temp <= MAX_DDIV_REG)
-				break;
-		}
+	अगर (भाग > 1) अणु
+		क्रम (idx = 2; idx <= MAX_DDIV_REG; idx++) अणु
+			temp = DIV_ROUND_UP_ULL((u64)भाग, idx);
+			अगर (भाग % idx == 0 && temp <= MAX_DDIV_REG)
+				अवरोध;
+		पूर्ण
 
-		if (idx > MAX_DDIV_REG)
-			return -EINVAL;
+		अगर (idx > MAX_DDIV_REG)
+			वापस -EINVAL;
 
-		*ddiv1 = temp;
-		*ddiv2 = idx;
-	}
+		*dभाग1 = temp;
+		*dभाग2 = idx;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-lgm_clk_ddiv_set_rate(struct clk_hw *hw, unsigned long rate,
-		      unsigned long prate)
-{
-	struct lgm_clk_ddiv *ddiv = to_lgm_clk_ddiv(hw);
-	u32 div, ddiv1, ddiv2;
-	unsigned long flags;
+अटल पूर्णांक
+lgm_clk_dभाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+		      अचिन्हित दीर्घ prate)
+अणु
+	काष्ठा lgm_clk_dभाग *dभाग = to_lgm_clk_dभाग(hw);
+	u32 भाग, dभाग1, dभाग2;
+	अचिन्हित दीर्घ flags;
 
-	div = DIV_ROUND_CLOSEST_ULL((u64)prate, rate);
+	भाग = DIV_ROUND_CLOSEST_ULL((u64)prate, rate);
 
-	spin_lock_irqsave(&ddiv->lock, flags);
-	if (lgm_get_clk_val(ddiv->membase, ddiv->reg, ddiv->shift2, 1)) {
-		div = DIV_ROUND_CLOSEST_ULL((u64)div, 5);
-		div = div * 2;
-	}
+	spin_lock_irqsave(&dभाग->lock, flags);
+	अगर (lgm_get_clk_val(dभाग->membase, dभाग->reg, dभाग->shअगरt2, 1)) अणु
+		भाग = DIV_ROUND_CLOSEST_ULL((u64)भाग, 5);
+		भाग = भाग * 2;
+	पूर्ण
 
-	if (div <= 0) {
-		spin_unlock_irqrestore(&ddiv->lock, flags);
-		return -EINVAL;
-	}
+	अगर (भाग <= 0) अणु
+		spin_unlock_irqrestore(&dभाग->lock, flags);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (lgm_clk_get_ddiv_val(div, &ddiv1, &ddiv2)) {
-		spin_unlock_irqrestore(&ddiv->lock, flags);
-		return -EINVAL;
-	}
+	अगर (lgm_clk_get_dभाग_val(भाग, &dभाग1, &dभाग2)) अणु
+		spin_unlock_irqrestore(&dभाग->lock, flags);
+		वापस -EINVAL;
+	पूर्ण
 
-	lgm_set_clk_val(ddiv->membase, ddiv->reg, ddiv->shift0, ddiv->width0,
-			ddiv1 - 1);
+	lgm_set_clk_val(dभाग->membase, dभाग->reg, dभाग->shअगरt0, dभाग->width0,
+			dभाग1 - 1);
 
-	lgm_set_clk_val(ddiv->membase, ddiv->reg,  ddiv->shift1, ddiv->width1,
-			ddiv2 - 1);
-	spin_unlock_irqrestore(&ddiv->lock, flags);
+	lgm_set_clk_val(dभाग->membase, dभाग->reg,  dभाग->shअगरt1, dभाग->width1,
+			dभाग2 - 1);
+	spin_unlock_irqrestore(&dभाग->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long
-lgm_clk_ddiv_round_rate(struct clk_hw *hw, unsigned long rate,
-			unsigned long *prate)
-{
-	struct lgm_clk_ddiv *ddiv = to_lgm_clk_ddiv(hw);
-	u32 div, ddiv1, ddiv2;
-	unsigned long flags;
+अटल दीर्घ
+lgm_clk_dभाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा lgm_clk_dभाग *dभाग = to_lgm_clk_dभाग(hw);
+	u32 भाग, dभाग1, dभाग2;
+	अचिन्हित दीर्घ flags;
 	u64 rate64;
 
-	div = DIV_ROUND_CLOSEST_ULL((u64)*prate, rate);
+	भाग = DIV_ROUND_CLOSEST_ULL((u64)*prate, rate);
 
-	/* if predivide bit is enabled, modify div by factor of 2.5 */
-	spin_lock_irqsave(&ddiv->lock, flags);
-	if (lgm_get_clk_val(ddiv->membase, ddiv->reg, ddiv->shift2, 1)) {
-		div = div * 2;
-		div = DIV_ROUND_CLOSEST_ULL((u64)div, 5);
-	}
-	spin_unlock_irqrestore(&ddiv->lock, flags);
+	/* अगर preभागide bit is enabled, modअगरy भाग by factor of 2.5 */
+	spin_lock_irqsave(&dभाग->lock, flags);
+	अगर (lgm_get_clk_val(dभाग->membase, dभाग->reg, dभाग->shअगरt2, 1)) अणु
+		भाग = भाग * 2;
+		भाग = DIV_ROUND_CLOSEST_ULL((u64)भाग, 5);
+	पूर्ण
+	spin_unlock_irqrestore(&dभाग->lock, flags);
 
-	if (div <= 0)
-		return *prate;
+	अगर (भाग <= 0)
+		वापस *prate;
 
-	if (lgm_clk_get_ddiv_val(div, &ddiv1, &ddiv2) != 0)
-		if (lgm_clk_get_ddiv_val(div + 1, &ddiv1, &ddiv2) != 0)
-			return -EINVAL;
+	अगर (lgm_clk_get_dभाग_val(भाग, &dभाग1, &dभाग2) != 0)
+		अगर (lgm_clk_get_dभाग_val(भाग + 1, &dभाग1, &dभाग2) != 0)
+			वापस -EINVAL;
 
 	rate64 = *prate;
-	do_div(rate64, ddiv1);
-	do_div(rate64, ddiv2);
+	करो_भाग(rate64, dभाग1);
+	करो_भाग(rate64, dभाग2);
 
-	/* if predivide bit is enabled, modify rounded rate by factor of 2.5 */
-	spin_lock_irqsave(&ddiv->lock, flags);
-	if (lgm_get_clk_val(ddiv->membase, ddiv->reg, ddiv->shift2, 1)) {
+	/* अगर preभागide bit is enabled, modअगरy rounded rate by factor of 2.5 */
+	spin_lock_irqsave(&dभाग->lock, flags);
+	अगर (lgm_get_clk_val(dभाग->membase, dभाग->reg, dभाग->shअगरt2, 1)) अणु
 		rate64 = rate64 * 2;
 		rate64 = DIV_ROUND_CLOSEST_ULL(rate64, 5);
-	}
-	spin_unlock_irqrestore(&ddiv->lock, flags);
+	पूर्ण
+	spin_unlock_irqrestore(&dभाग->lock, flags);
 
-	return rate64;
-}
+	वापस rate64;
+पूर्ण
 
-static const struct clk_ops lgm_clk_ddiv_ops = {
-	.recalc_rate = lgm_clk_ddiv_recalc_rate,
-	.enable	= lgm_clk_ddiv_enable,
-	.disable = lgm_clk_ddiv_disable,
-	.set_rate = lgm_clk_ddiv_set_rate,
-	.round_rate = lgm_clk_ddiv_round_rate,
-};
+अटल स्थिर काष्ठा clk_ops lgm_clk_dभाग_ops = अणु
+	.recalc_rate = lgm_clk_dभाग_recalc_rate,
+	.enable	= lgm_clk_dभाग_enable,
+	.disable = lgm_clk_dभाग_disable,
+	.set_rate = lgm_clk_dभाग_set_rate,
+	.round_rate = lgm_clk_dभाग_round_rate,
+पूर्ण;
 
-int lgm_clk_register_ddiv(struct lgm_clk_provider *ctx,
-			  const struct lgm_clk_ddiv_data *list,
-			  unsigned int nr_clk)
-{
-	struct device *dev = ctx->dev;
-	struct clk_hw *hw;
-	unsigned int idx;
-	int ret;
+पूर्णांक lgm_clk_रेजिस्टर_dभाग(काष्ठा lgm_clk_provider *ctx,
+			  स्थिर काष्ठा lgm_clk_dभाग_data *list,
+			  अचिन्हित पूर्णांक nr_clk)
+अणु
+	काष्ठा device *dev = ctx->dev;
+	काष्ठा clk_hw *hw;
+	अचिन्हित पूर्णांक idx;
+	पूर्णांक ret;
 
-	for (idx = 0; idx < nr_clk; idx++, list++) {
-		struct clk_init_data init = {};
-		struct lgm_clk_ddiv *ddiv;
+	क्रम (idx = 0; idx < nr_clk; idx++, list++) अणु
+		काष्ठा clk_init_data init = अणुपूर्ण;
+		काष्ठा lgm_clk_dभाग *dभाग;
 
-		ddiv = devm_kzalloc(dev, sizeof(*ddiv), GFP_KERNEL);
-		if (!ddiv)
-			return -ENOMEM;
+		dभाग = devm_kzalloc(dev, माप(*dभाग), GFP_KERNEL);
+		अगर (!dभाग)
+			वापस -ENOMEM;
 
 		init.name = list->name;
-		init.ops = &lgm_clk_ddiv_ops;
+		init.ops = &lgm_clk_dभाग_ops;
 		init.flags = list->flags;
 		init.parent_data = list->parent_data;
 		init.num_parents = 1;
 
-		ddiv->membase = ctx->membase;
-		ddiv->lock = ctx->lock;
-		ddiv->reg = list->reg;
-		ddiv->shift0 = list->shift0;
-		ddiv->width0 = list->width0;
-		ddiv->shift1 = list->shift1;
-		ddiv->width1 = list->width1;
-		ddiv->shift_gate = list->shift_gate;
-		ddiv->width_gate = list->width_gate;
-		ddiv->shift2 = list->ex_shift;
-		ddiv->width2 = list->ex_width;
-		ddiv->flags = list->div_flags;
-		ddiv->mult = 2;
-		ddiv->div = 5;
-		ddiv->hw.init = &init;
+		dभाग->membase = ctx->membase;
+		dभाग->lock = ctx->lock;
+		dभाग->reg = list->reg;
+		dभाग->shअगरt0 = list->shअगरt0;
+		dभाग->width0 = list->width0;
+		dभाग->shअगरt1 = list->shअगरt1;
+		dभाग->width1 = list->width1;
+		dभाग->shअगरt_gate = list->shअगरt_gate;
+		dभाग->width_gate = list->width_gate;
+		dभाग->shअगरt2 = list->ex_shअगरt;
+		dभाग->width2 = list->ex_width;
+		dभाग->flags = list->भाग_flags;
+		dभाग->mult = 2;
+		dभाग->भाग = 5;
+		dभाग->hw.init = &init;
 
-		hw = &ddiv->hw;
-		ret = devm_clk_hw_register(dev, hw);
-		if (ret) {
+		hw = &dभाग->hw;
+		ret = devm_clk_hw_रेजिस्टर(dev, hw);
+		अगर (ret) अणु
 			dev_err(dev, "register clk: %s failed!\n", list->name);
-			return ret;
-		}
+			वापस ret;
+		पूर्ण
 		ctx->clk_data.hws[list->id] = hw;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

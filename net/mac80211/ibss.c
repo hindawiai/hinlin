@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * IBSS mode implementation
  * Copyright 2003-2008, Jouni Malinen <j@w1.fi>
@@ -12,134 +13,134 @@
  * Copyright(c) 2018-2020 Intel Corporation
  */
 
-#include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/if_ether.h>
-#include <linux/skbuff.h>
-#include <linux/if_arp.h>
-#include <linux/etherdevice.h>
-#include <linux/rtnetlink.h>
-#include <net/mac80211.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <net/mac80211.h>
 
-#include "ieee80211_i.h"
-#include "driver-ops.h"
-#include "rate.h"
+#समावेश "ieee80211_i.h"
+#समावेश "driver-ops.h"
+#समावेश "rate.h"
 
-#define IEEE80211_SCAN_INTERVAL (2 * HZ)
-#define IEEE80211_IBSS_JOIN_TIMEOUT (7 * HZ)
+#घोषणा IEEE80211_SCAN_INTERVAL (2 * HZ)
+#घोषणा IEEE80211_IBSS_JOIN_TIMEOUT (7 * HZ)
 
-#define IEEE80211_IBSS_MERGE_INTERVAL (30 * HZ)
-#define IEEE80211_IBSS_INACTIVITY_LIMIT (60 * HZ)
-#define IEEE80211_IBSS_RSN_INACTIVITY_LIMIT (10 * HZ)
+#घोषणा IEEE80211_IBSS_MERGE_INTERVAL (30 * HZ)
+#घोषणा IEEE80211_IBSS_INACTIVITY_LIMIT (60 * HZ)
+#घोषणा IEEE80211_IBSS_RSN_INACTIVITY_LIMIT (10 * HZ)
 
-#define IEEE80211_IBSS_MAX_STA_ENTRIES 128
+#घोषणा IEEE80211_IBSS_MAX_STA_ENTRIES 128
 
-static struct beacon_data *
-ieee80211_ibss_build_presp(struct ieee80211_sub_if_data *sdata,
-			   const int beacon_int, const u32 basic_rates,
-			   const u16 capability, u64 tsf,
-			   struct cfg80211_chan_def *chandef,
+अटल काष्ठा beacon_data *
+ieee80211_ibss_build_presp(काष्ठा ieee80211_sub_अगर_data *sdata,
+			   स्थिर पूर्णांक beacon_पूर्णांक, स्थिर u32 basic_rates,
+			   स्थिर u16 capability, u64 tsf,
+			   काष्ठा cfg80211_chan_def *chandef,
 			   bool *have_higher_than_11mbit,
-			   struct cfg80211_csa_settings *csa_settings)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct ieee80211_local *local = sdata->local;
-	int rates_n = 0, i, ri;
-	struct ieee80211_mgmt *mgmt;
+			   काष्ठा cfg80211_csa_settings *csa_settings)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा ieee80211_local *local = sdata->local;
+	पूर्णांक rates_n = 0, i, ri;
+	काष्ठा ieee80211_mgmt *mgmt;
 	u8 *pos;
-	struct ieee80211_supported_band *sband;
+	काष्ठा ieee80211_supported_band *sband;
 	u32 rate_flags, rates = 0, rates_added = 0;
-	struct beacon_data *presp;
-	int frame_len;
-	int shift;
+	काष्ठा beacon_data *presp;
+	पूर्णांक frame_len;
+	पूर्णांक shअगरt;
 
 	/* Build IBSS probe response */
-	frame_len = sizeof(struct ieee80211_hdr_3addr) +
-		    12 /* struct ieee80211_mgmt.u.beacon */ +
+	frame_len = माप(काष्ठा ieee80211_hdr_3addr) +
+		    12 /* काष्ठा ieee80211_mgmt.u.beacon */ +
 		    2 + IEEE80211_MAX_SSID_LEN /* max SSID */ +
 		    2 + 8 /* max Supported Rates */ +
 		    3 /* max DS params */ +
 		    4 /* IBSS params */ +
 		    5 /* Channel Switch Announcement */ +
 		    2 + (IEEE80211_MAX_SUPP_RATES - 8) +
-		    2 + sizeof(struct ieee80211_ht_cap) +
-		    2 + sizeof(struct ieee80211_ht_operation) +
-		    2 + sizeof(struct ieee80211_vht_cap) +
-		    2 + sizeof(struct ieee80211_vht_operation) +
-		    ifibss->ie_len;
-	presp = kzalloc(sizeof(*presp) + frame_len, GFP_KERNEL);
-	if (!presp)
-		return NULL;
+		    2 + माप(काष्ठा ieee80211_ht_cap) +
+		    2 + माप(काष्ठा ieee80211_ht_operation) +
+		    2 + माप(काष्ठा ieee80211_vht_cap) +
+		    2 + माप(काष्ठा ieee80211_vht_operation) +
+		    अगरibss->ie_len;
+	presp = kzalloc(माप(*presp) + frame_len, GFP_KERNEL);
+	अगर (!presp)
+		वापस शून्य;
 
-	presp->head = (void *)(presp + 1);
+	presp->head = (व्योम *)(presp + 1);
 
-	mgmt = (void *) presp->head;
+	mgmt = (व्योम *) presp->head;
 	mgmt->frame_control = cpu_to_le16(IEEE80211_FTYPE_MGMT |
 					  IEEE80211_STYPE_PROBE_RESP);
 	eth_broadcast_addr(mgmt->da);
-	memcpy(mgmt->sa, sdata->vif.addr, ETH_ALEN);
-	memcpy(mgmt->bssid, ifibss->bssid, ETH_ALEN);
-	mgmt->u.beacon.beacon_int = cpu_to_le16(beacon_int);
-	mgmt->u.beacon.timestamp = cpu_to_le64(tsf);
+	स_नकल(mgmt->sa, sdata->vअगर.addr, ETH_ALEN);
+	स_नकल(mgmt->bssid, अगरibss->bssid, ETH_ALEN);
+	mgmt->u.beacon.beacon_पूर्णांक = cpu_to_le16(beacon_पूर्णांक);
+	mgmt->u.beacon.बारtamp = cpu_to_le64(tsf);
 	mgmt->u.beacon.capab_info = cpu_to_le16(capability);
 
-	pos = (u8 *)mgmt + offsetof(struct ieee80211_mgmt, u.beacon.variable);
+	pos = (u8 *)mgmt + दुरत्व(काष्ठा ieee80211_mgmt, u.beacon.variable);
 
 	*pos++ = WLAN_EID_SSID;
-	*pos++ = ifibss->ssid_len;
-	memcpy(pos, ifibss->ssid, ifibss->ssid_len);
-	pos += ifibss->ssid_len;
+	*pos++ = अगरibss->ssid_len;
+	स_नकल(pos, अगरibss->ssid, अगरibss->ssid_len);
+	pos += अगरibss->ssid_len;
 
 	sband = local->hw.wiphy->bands[chandef->chan->band];
 	rate_flags = ieee80211_chandef_rate_flags(chandef);
-	shift = ieee80211_chandef_get_shift(chandef);
+	shअगरt = ieee80211_chandef_get_shअगरt(chandef);
 	rates_n = 0;
-	if (have_higher_than_11mbit)
+	अगर (have_higher_than_11mbit)
 		*have_higher_than_11mbit = false;
 
-	for (i = 0; i < sband->n_bitrates; i++) {
-		if ((rate_flags & sband->bitrates[i].flags) != rate_flags)
-			continue;
-		if (sband->bitrates[i].bitrate > 110 &&
+	क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+		अगर ((rate_flags & sband->bitrates[i].flags) != rate_flags)
+			जारी;
+		अगर (sband->bitrates[i].bitrate > 110 &&
 		    have_higher_than_11mbit)
 			*have_higher_than_11mbit = true;
 
 		rates |= BIT(i);
 		rates_n++;
-	}
+	पूर्ण
 
 	*pos++ = WLAN_EID_SUPP_RATES;
-	*pos++ = min_t(int, 8, rates_n);
-	for (ri = 0; ri < sband->n_bitrates; ri++) {
-		int rate = DIV_ROUND_UP(sband->bitrates[ri].bitrate,
-					5 * (1 << shift));
+	*pos++ = min_t(पूर्णांक, 8, rates_n);
+	क्रम (ri = 0; ri < sband->n_bitrates; ri++) अणु
+		पूर्णांक rate = DIV_ROUND_UP(sband->bitrates[ri].bitrate,
+					5 * (1 << shअगरt));
 		u8 basic = 0;
-		if (!(rates & BIT(ri)))
-			continue;
+		अगर (!(rates & BIT(ri)))
+			जारी;
 
-		if (basic_rates & BIT(ri))
+		अगर (basic_rates & BIT(ri))
 			basic = 0x80;
 		*pos++ = basic | (u8) rate;
-		if (++rates_added == 8) {
-			ri++; /* continue at next rate for EXT_SUPP_RATES */
-			break;
-		}
-	}
+		अगर (++rates_added == 8) अणु
+			ri++; /* जारी at next rate क्रम EXT_SUPP_RATES */
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (sband->band == NL80211_BAND_2GHZ) {
+	अगर (sband->band == NL80211_BAND_2GHZ) अणु
 		*pos++ = WLAN_EID_DS_PARAMS;
 		*pos++ = 1;
 		*pos++ = ieee80211_frequency_to_channel(
 				chandef->chan->center_freq);
-	}
+	पूर्ण
 
 	*pos++ = WLAN_EID_IBSS_PARAMS;
 	*pos++ = 2;
-	/* FIX: set ATIM window based on scan results */
+	/* FIX: set ATIM winकरोw based on scan results */
 	*pos++ = 0;
 	*pos++ = 0;
 
-	if (csa_settings) {
+	अगर (csa_settings) अणु
 		*pos++ = WLAN_EID_CHANNEL_SWITCH;
 		*pos++ = 3;
 		*pos++ = csa_settings->block_tx ? 1 : 0;
@@ -148,186 +149,186 @@ ieee80211_ibss_build_presp(struct ieee80211_sub_if_data *sdata,
 		presp->cntdwn_counter_offsets[0] = (pos - presp->head);
 		*pos++ = csa_settings->count;
 		presp->cntdwn_current_counter = csa_settings->count;
-	}
+	पूर्ण
 
-	/* put the remaining rates in WLAN_EID_EXT_SUPP_RATES */
-	if (rates_n > 8) {
+	/* put the reमुख्यing rates in WLAN_EID_EXT_SUPP_RATES */
+	अगर (rates_n > 8) अणु
 		*pos++ = WLAN_EID_EXT_SUPP_RATES;
 		*pos++ = rates_n - 8;
-		for (; ri < sband->n_bitrates; ri++) {
-			int rate = DIV_ROUND_UP(sband->bitrates[ri].bitrate,
-						5 * (1 << shift));
+		क्रम (; ri < sband->n_bitrates; ri++) अणु
+			पूर्णांक rate = DIV_ROUND_UP(sband->bitrates[ri].bitrate,
+						5 * (1 << shअगरt));
 			u8 basic = 0;
-			if (!(rates & BIT(ri)))
-				continue;
+			अगर (!(rates & BIT(ri)))
+				जारी;
 
-			if (basic_rates & BIT(ri))
+			अगर (basic_rates & BIT(ri))
 				basic = 0x80;
 			*pos++ = basic | (u8) rate;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (ifibss->ie_len) {
-		memcpy(pos, ifibss->ie, ifibss->ie_len);
-		pos += ifibss->ie_len;
-	}
+	अगर (अगरibss->ie_len) अणु
+		स_नकल(pos, अगरibss->ie, अगरibss->ie_len);
+		pos += अगरibss->ie_len;
+	पूर्ण
 
-	/* add HT capability and information IEs */
-	if (chandef->width != NL80211_CHAN_WIDTH_20_NOHT &&
+	/* add HT capability and inक्रमmation IEs */
+	अगर (chandef->width != NL80211_CHAN_WIDTH_20_NOHT &&
 	    chandef->width != NL80211_CHAN_WIDTH_5 &&
 	    chandef->width != NL80211_CHAN_WIDTH_10 &&
-	    sband->ht_cap.ht_supported) {
-		struct ieee80211_sta_ht_cap ht_cap;
+	    sband->ht_cap.ht_supported) अणु
+		काष्ठा ieee80211_sta_ht_cap ht_cap;
 
-		memcpy(&ht_cap, &sband->ht_cap, sizeof(ht_cap));
+		स_नकल(&ht_cap, &sband->ht_cap, माप(ht_cap));
 		ieee80211_apply_htcap_overrides(sdata, &ht_cap);
 
 		pos = ieee80211_ie_build_ht_cap(pos, &ht_cap, ht_cap.cap);
 		/*
 		 * Note: According to 802.11n-2009 9.13.3.1, HT Protection
-		 * field and RIFS Mode are reserved in IBSS mode, therefore
+		 * field and RIFS Mode are reserved in IBSS mode, thereक्रमe
 		 * keep them at 0
 		 */
 		pos = ieee80211_ie_build_ht_oper(pos, &sband->ht_cap,
 						 chandef, 0, false);
 
-		/* add VHT capability and information IEs */
-		if (chandef->width != NL80211_CHAN_WIDTH_20 &&
+		/* add VHT capability and inक्रमmation IEs */
+		अगर (chandef->width != NL80211_CHAN_WIDTH_20 &&
 		    chandef->width != NL80211_CHAN_WIDTH_40 &&
-		    sband->vht_cap.vht_supported) {
+		    sband->vht_cap.vht_supported) अणु
 			pos = ieee80211_ie_build_vht_cap(pos, &sband->vht_cap,
 							 sband->vht_cap.cap);
 			pos = ieee80211_ie_build_vht_oper(pos, &sband->vht_cap,
 							  chandef);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (local->hw.queues >= IEEE80211_NUM_ACS)
+	अगर (local->hw.queues >= IEEE80211_NUM_ACS)
 		pos = ieee80211_add_wmm_info_ie(pos, 0); /* U-APSD not in use */
 
 	presp->head_len = pos - presp->head;
-	if (WARN_ON(presp->head_len > frame_len))
-		goto error;
+	अगर (WARN_ON(presp->head_len > frame_len))
+		जाओ error;
 
-	return presp;
+	वापस presp;
 error:
-	kfree(presp);
-	return NULL;
-}
+	kमुक्त(presp);
+	वापस शून्य;
+पूर्ण
 
-static void __ieee80211_sta_join_ibss(struct ieee80211_sub_if_data *sdata,
-				      const u8 *bssid, const int beacon_int,
-				      struct cfg80211_chan_def *req_chandef,
-				      const u32 basic_rates,
-				      const u16 capability, u64 tsf,
+अटल व्योम __ieee80211_sta_join_ibss(काष्ठा ieee80211_sub_अगर_data *sdata,
+				      स्थिर u8 *bssid, स्थिर पूर्णांक beacon_पूर्णांक,
+				      काष्ठा cfg80211_chan_def *req_chandef,
+				      स्थिर u32 basic_rates,
+				      स्थिर u16 capability, u64 tsf,
 				      bool creator)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_mgmt *mgmt;
-	struct cfg80211_bss *bss;
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा ieee80211_mgmt *mgmt;
+	काष्ठा cfg80211_bss *bss;
 	u32 bss_change;
-	struct cfg80211_chan_def chandef;
-	struct ieee80211_channel *chan;
-	struct beacon_data *presp;
-	struct cfg80211_inform_bss bss_meta = {};
+	काष्ठा cfg80211_chan_def chandef;
+	काष्ठा ieee80211_channel *chan;
+	काष्ठा beacon_data *presp;
+	काष्ठा cfg80211_inक्रमm_bss bss_meta = अणुपूर्ण;
 	bool have_higher_than_11mbit;
 	bool radar_required;
-	int err;
+	पूर्णांक err;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
-	/* Reset own TSF to allow time synchronization work. */
+	/* Reset own TSF to allow समय synchronization work. */
 	drv_reset_tsf(local, sdata);
 
-	if (!ether_addr_equal(ifibss->bssid, bssid))
+	अगर (!ether_addr_equal(अगरibss->bssid, bssid))
 		sta_info_flush(sdata);
 
-	/* if merging, indicate to driver that we leave the old IBSS */
-	if (sdata->vif.bss_conf.ibss_joined) {
-		sdata->vif.bss_conf.ibss_joined = false;
-		sdata->vif.bss_conf.ibss_creator = false;
-		sdata->vif.bss_conf.enable_beacon = false;
-		netif_carrier_off(sdata->dev);
-		ieee80211_bss_info_change_notify(sdata,
+	/* अगर merging, indicate to driver that we leave the old IBSS */
+	अगर (sdata->vअगर.bss_conf.ibss_joined) अणु
+		sdata->vअगर.bss_conf.ibss_joined = false;
+		sdata->vअगर.bss_conf.ibss_creator = false;
+		sdata->vअगर.bss_conf.enable_beacon = false;
+		netअगर_carrier_off(sdata->dev);
+		ieee80211_bss_info_change_notअगरy(sdata,
 						 BSS_CHANGED_IBSS |
 						 BSS_CHANGED_BEACON_ENABLED);
 		drv_leave_ibss(local, sdata);
-	}
+	पूर्ण
 
-	presp = rcu_dereference_protected(ifibss->presp,
+	presp = rcu_dereference_रक्षित(अगरibss->presp,
 					  lockdep_is_held(&sdata->wdev.mtx));
-	RCU_INIT_POINTER(ifibss->presp, NULL);
-	if (presp)
-		kfree_rcu(presp, rcu_head);
+	RCU_INIT_POINTER(अगरibss->presp, शून्य);
+	अगर (presp)
+		kमुक्त_rcu(presp, rcu_head);
 
-	/* make a copy of the chandef, it could be modified below. */
+	/* make a copy of the chandef, it could be modअगरied below. */
 	chandef = *req_chandef;
 	chan = chandef.chan;
-	if (!cfg80211_reg_can_beacon(local->hw.wiphy, &chandef,
-				     NL80211_IFTYPE_ADHOC)) {
-		if (chandef.width == NL80211_CHAN_WIDTH_5 ||
+	अगर (!cfg80211_reg_can_beacon(local->hw.wiphy, &chandef,
+				     NL80211_IFTYPE_ADHOC)) अणु
+		अगर (chandef.width == NL80211_CHAN_WIDTH_5 ||
 		    chandef.width == NL80211_CHAN_WIDTH_10 ||
 		    chandef.width == NL80211_CHAN_WIDTH_20_NOHT ||
-		    chandef.width == NL80211_CHAN_WIDTH_20) {
+		    chandef.width == NL80211_CHAN_WIDTH_20) अणु
 			sdata_info(sdata,
 				   "Failed to join IBSS, beacons forbidden\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		chandef.width = NL80211_CHAN_WIDTH_20;
 		chandef.center_freq1 = chan->center_freq;
-		/* check again for downgraded chandef */
-		if (!cfg80211_reg_can_beacon(local->hw.wiphy, &chandef,
-					     NL80211_IFTYPE_ADHOC)) {
+		/* check again क्रम करोwngraded chandef */
+		अगर (!cfg80211_reg_can_beacon(local->hw.wiphy, &chandef,
+					     NL80211_IFTYPE_ADHOC)) अणु
 			sdata_info(sdata,
 				   "Failed to join IBSS, beacons forbidden\n");
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	err = cfg80211_chandef_dfs_required(sdata->local->hw.wiphy,
 					    &chandef, NL80211_IFTYPE_ADHOC);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		sdata_info(sdata,
 			   "Failed to join IBSS, invalid chandef\n");
-		return;
-	}
-	if (err > 0 && !ifibss->userspace_handles_dfs) {
+		वापस;
+	पूर्ण
+	अगर (err > 0 && !अगरibss->userspace_handles_dfs) अणु
 		sdata_info(sdata,
 			   "Failed to join IBSS, DFS channel without control program\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	radar_required = err;
 
 	mutex_lock(&local->mtx);
-	if (ieee80211_vif_use_channel(sdata, &chandef,
-				      ifibss->fixed_channel ?
+	अगर (ieee80211_vअगर_use_channel(sdata, &chandef,
+				      अगरibss->fixed_channel ?
 					IEEE80211_CHANCTX_SHARED :
-					IEEE80211_CHANCTX_EXCLUSIVE)) {
+					IEEE80211_CHANCTX_EXCLUSIVE)) अणु
 		sdata_info(sdata, "Failed to join IBSS, no channel context\n");
 		mutex_unlock(&local->mtx);
-		return;
-	}
+		वापस;
+	पूर्ण
 	sdata->radar_required = radar_required;
 	mutex_unlock(&local->mtx);
 
-	memcpy(ifibss->bssid, bssid, ETH_ALEN);
+	स_नकल(अगरibss->bssid, bssid, ETH_ALEN);
 
-	presp = ieee80211_ibss_build_presp(sdata, beacon_int, basic_rates,
+	presp = ieee80211_ibss_build_presp(sdata, beacon_पूर्णांक, basic_rates,
 					   capability, tsf, &chandef,
-					   &have_higher_than_11mbit, NULL);
-	if (!presp)
-		return;
+					   &have_higher_than_11mbit, शून्य);
+	अगर (!presp)
+		वापस;
 
-	rcu_assign_pointer(ifibss->presp, presp);
-	mgmt = (void *)presp->head;
+	rcu_assign_poपूर्णांकer(अगरibss->presp, presp);
+	mgmt = (व्योम *)presp->head;
 
-	sdata->vif.bss_conf.enable_beacon = true;
-	sdata->vif.bss_conf.beacon_int = beacon_int;
-	sdata->vif.bss_conf.basic_rates = basic_rates;
-	sdata->vif.bss_conf.ssid_len = ifibss->ssid_len;
-	memcpy(sdata->vif.bss_conf.ssid, ifibss->ssid, ifibss->ssid_len);
+	sdata->vअगर.bss_conf.enable_beacon = true;
+	sdata->vअगर.bss_conf.beacon_पूर्णांक = beacon_पूर्णांक;
+	sdata->vअगर.bss_conf.basic_rates = basic_rates;
+	sdata->vअगर.bss_conf.ssid_len = अगरibss->ssid_len;
+	स_नकल(sdata->vअगर.bss_conf.ssid, अगरibss->ssid, अगरibss->ssid_len);
 	bss_change = BSS_CHANGED_BEACON_INT;
 	bss_change |= ieee80211_reset_erp_info(sdata);
 	bss_change |= BSS_CHANGED_BSSID;
@@ -339,407 +340,407 @@ static void __ieee80211_sta_join_ibss(struct ieee80211_sub_if_data *sdata,
 	bss_change |= BSS_CHANGED_SSID;
 
 	/*
-	 * In 5 GHz/802.11a, we can always use short slot time.
+	 * In 5 GHz/802.11a, we can always use लघु slot समय.
 	 * (IEEE 802.11-2012 18.3.8.7)
 	 *
-	 * In 2.4GHz, we must always use long slots in IBSS for compatibility
+	 * In 2.4GHz, we must always use दीर्घ slots in IBSS क्रम compatibility
 	 * reasons.
 	 * (IEEE 802.11-2012 19.4.5)
 	 *
-	 * HT follows these specifications (IEEE 802.11-2012 20.3.18)
+	 * HT follows these specअगरications (IEEE 802.11-2012 20.3.18)
 	 */
-	sdata->vif.bss_conf.use_short_slot = chan->band == NL80211_BAND_5GHZ;
+	sdata->vअगर.bss_conf.use_लघु_slot = chan->band == NL80211_BAND_5GHZ;
 	bss_change |= BSS_CHANGED_ERP_SLOT;
 
 	/* cf. IEEE 802.11 9.2.12 */
-	if (chan->band == NL80211_BAND_2GHZ && have_higher_than_11mbit)
+	अगर (chan->band == NL80211_BAND_2GHZ && have_higher_than_11mbit)
 		sdata->flags |= IEEE80211_SDATA_OPERATING_GMODE;
-	else
+	अन्यथा
 		sdata->flags &= ~IEEE80211_SDATA_OPERATING_GMODE;
 
-	ieee80211_set_wmm_default(sdata, true, false);
+	ieee80211_set_wmm_शेष(sdata, true, false);
 
-	sdata->vif.bss_conf.ibss_joined = true;
-	sdata->vif.bss_conf.ibss_creator = creator;
+	sdata->vअगर.bss_conf.ibss_joined = true;
+	sdata->vअगर.bss_conf.ibss_creator = creator;
 
 	err = drv_join_ibss(local, sdata);
-	if (err) {
-		sdata->vif.bss_conf.ibss_joined = false;
-		sdata->vif.bss_conf.ibss_creator = false;
-		sdata->vif.bss_conf.enable_beacon = false;
-		sdata->vif.bss_conf.ssid_len = 0;
-		RCU_INIT_POINTER(ifibss->presp, NULL);
-		kfree_rcu(presp, rcu_head);
+	अगर (err) अणु
+		sdata->vअगर.bss_conf.ibss_joined = false;
+		sdata->vअगर.bss_conf.ibss_creator = false;
+		sdata->vअगर.bss_conf.enable_beacon = false;
+		sdata->vअगर.bss_conf.ssid_len = 0;
+		RCU_INIT_POINTER(अगरibss->presp, शून्य);
+		kमुक्त_rcu(presp, rcu_head);
 		mutex_lock(&local->mtx);
-		ieee80211_vif_release_channel(sdata);
+		ieee80211_vअगर_release_channel(sdata);
 		mutex_unlock(&local->mtx);
 		sdata_info(sdata, "Failed to join IBSS, driver failure: %d\n",
 			   err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ieee80211_bss_info_change_notify(sdata, bss_change);
+	ieee80211_bss_info_change_notअगरy(sdata, bss_change);
 
-	ifibss->state = IEEE80211_IBSS_MLME_JOINED;
-	mod_timer(&ifibss->timer,
-		  round_jiffies(jiffies + IEEE80211_IBSS_MERGE_INTERVAL));
+	अगरibss->state = IEEE80211_IBSS_MLME_JOINED;
+	mod_समयr(&अगरibss->समयr,
+		  round_jअगरfies(jअगरfies + IEEE80211_IBSS_MERGE_INTERVAL));
 
 	bss_meta.chan = chan;
 	bss_meta.scan_width = cfg80211_chandef_to_scan_width(&chandef);
-	bss = cfg80211_inform_bss_frame_data(local->hw.wiphy, &bss_meta, mgmt,
+	bss = cfg80211_inक्रमm_bss_frame_data(local->hw.wiphy, &bss_meta, mgmt,
 					     presp->head_len, GFP_KERNEL);
 
 	cfg80211_put_bss(local->hw.wiphy, bss);
-	netif_carrier_on(sdata->dev);
-	cfg80211_ibss_joined(sdata->dev, ifibss->bssid, chan, GFP_KERNEL);
-}
+	netअगर_carrier_on(sdata->dev);
+	cfg80211_ibss_joined(sdata->dev, अगरibss->bssid, chan, GFP_KERNEL);
+पूर्ण
 
-static void ieee80211_sta_join_ibss(struct ieee80211_sub_if_data *sdata,
-				    struct ieee80211_bss *bss)
-{
-	struct cfg80211_bss *cbss =
-		container_of((void *)bss, struct cfg80211_bss, priv);
-	struct ieee80211_supported_band *sband;
-	struct cfg80211_chan_def chandef;
+अटल व्योम ieee80211_sta_join_ibss(काष्ठा ieee80211_sub_अगर_data *sdata,
+				    काष्ठा ieee80211_bss *bss)
+अणु
+	काष्ठा cfg80211_bss *cbss =
+		container_of((व्योम *)bss, काष्ठा cfg80211_bss, priv);
+	काष्ठा ieee80211_supported_band *sband;
+	काष्ठा cfg80211_chan_def chandef;
 	u32 basic_rates;
-	int i, j;
-	u16 beacon_int = cbss->beacon_interval;
-	const struct cfg80211_bss_ies *ies;
-	enum nl80211_channel_type chan_type;
+	पूर्णांक i, j;
+	u16 beacon_पूर्णांक = cbss->beacon_पूर्णांकerval;
+	स्थिर काष्ठा cfg80211_bss_ies *ies;
+	क्रमागत nl80211_channel_type chan_type;
 	u64 tsf;
 	u32 rate_flags;
-	int shift;
+	पूर्णांक shअगरt;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
-	if (beacon_int < 10)
-		beacon_int = 10;
+	अगर (beacon_पूर्णांक < 10)
+		beacon_पूर्णांक = 10;
 
-	switch (sdata->u.ibss.chandef.width) {
-	case NL80211_CHAN_WIDTH_20_NOHT:
-	case NL80211_CHAN_WIDTH_20:
-	case NL80211_CHAN_WIDTH_40:
+	चयन (sdata->u.ibss.chandef.width) अणु
+	हाल NL80211_CHAN_WIDTH_20_NOHT:
+	हाल NL80211_CHAN_WIDTH_20:
+	हाल NL80211_CHAN_WIDTH_40:
 		chan_type = cfg80211_get_chandef_type(&sdata->u.ibss.chandef);
 		cfg80211_chandef_create(&chandef, cbss->channel, chan_type);
-		break;
-	case NL80211_CHAN_WIDTH_5:
-	case NL80211_CHAN_WIDTH_10:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_5:
+	हाल NL80211_CHAN_WIDTH_10:
 		cfg80211_chandef_create(&chandef, cbss->channel,
 					NL80211_CHAN_NO_HT);
 		chandef.width = sdata->u.ibss.chandef.width;
-		break;
-	case NL80211_CHAN_WIDTH_80:
-	case NL80211_CHAN_WIDTH_80P80:
-	case NL80211_CHAN_WIDTH_160:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_80:
+	हाल NL80211_CHAN_WIDTH_80P80:
+	हाल NL80211_CHAN_WIDTH_160:
 		chandef = sdata->u.ibss.chandef;
 		chandef.chan = cbss->channel;
-		break;
-	default:
-		/* fall back to 20 MHz for unsupported modes */
+		अवरोध;
+	शेष:
+		/* fall back to 20 MHz क्रम unsupported modes */
 		cfg80211_chandef_create(&chandef, cbss->channel,
 					NL80211_CHAN_NO_HT);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	sband = sdata->local->hw.wiphy->bands[cbss->channel->band];
 	rate_flags = ieee80211_chandef_rate_flags(&sdata->u.ibss.chandef);
-	shift = ieee80211_vif_get_shift(&sdata->vif);
+	shअगरt = ieee80211_vअगर_get_shअगरt(&sdata->vअगर);
 
 	basic_rates = 0;
 
-	for (i = 0; i < bss->supp_rates_len; i++) {
-		int rate = bss->supp_rates[i] & 0x7f;
+	क्रम (i = 0; i < bss->supp_rates_len; i++) अणु
+		पूर्णांक rate = bss->supp_rates[i] & 0x7f;
 		bool is_basic = !!(bss->supp_rates[i] & 0x80);
 
-		for (j = 0; j < sband->n_bitrates; j++) {
-			int brate;
-			if ((rate_flags & sband->bitrates[j].flags)
+		क्रम (j = 0; j < sband->n_bitrates; j++) अणु
+			पूर्णांक brate;
+			अगर ((rate_flags & sband->bitrates[j].flags)
 			    != rate_flags)
-				continue;
+				जारी;
 
 			brate = DIV_ROUND_UP(sband->bitrates[j].bitrate,
-					     5 * (1 << shift));
-			if (brate == rate) {
-				if (is_basic)
+					     5 * (1 << shअगरt));
+			अगर (brate == rate) अणु
+				अगर (is_basic)
 					basic_rates |= BIT(j);
-				break;
-			}
-		}
-	}
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ies = rcu_dereference(cbss->ies);
 	tsf = ies->tsf;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	__ieee80211_sta_join_ibss(sdata, cbss->bssid,
-				  beacon_int,
+				  beacon_पूर्णांक,
 				  &chandef,
 				  basic_rates,
 				  cbss->capability,
 				  tsf, false);
-}
+पूर्ण
 
-int ieee80211_ibss_csa_beacon(struct ieee80211_sub_if_data *sdata,
-			      struct cfg80211_csa_settings *csa_settings)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct beacon_data *presp, *old_presp;
-	struct cfg80211_bss *cbss;
-	const struct cfg80211_bss_ies *ies;
+पूर्णांक ieee80211_ibss_csa_beacon(काष्ठा ieee80211_sub_अगर_data *sdata,
+			      काष्ठा cfg80211_csa_settings *csa_settings)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा beacon_data *presp, *old_presp;
+	काष्ठा cfg80211_bss *cbss;
+	स्थिर काष्ठा cfg80211_bss_ies *ies;
 	u16 capability = WLAN_CAPABILITY_IBSS;
 	u64 tsf;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
-	if (ifibss->privacy)
+	अगर (अगरibss->privacy)
 		capability |= WLAN_CAPABILITY_PRIVACY;
 
-	cbss = cfg80211_get_bss(sdata->local->hw.wiphy, ifibss->chandef.chan,
-				ifibss->bssid, ifibss->ssid,
-				ifibss->ssid_len, IEEE80211_BSS_TYPE_IBSS,
-				IEEE80211_PRIVACY(ifibss->privacy));
+	cbss = cfg80211_get_bss(sdata->local->hw.wiphy, अगरibss->chandef.chan,
+				अगरibss->bssid, अगरibss->ssid,
+				अगरibss->ssid_len, IEEE80211_BSS_TYPE_IBSS,
+				IEEE80211_PRIVACY(अगरibss->privacy));
 
-	if (WARN_ON(!cbss)) {
+	अगर (WARN_ON(!cbss)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	ies = rcu_dereference(cbss->ies);
 	tsf = ies->tsf;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 	cfg80211_put_bss(sdata->local->hw.wiphy, cbss);
 
-	old_presp = rcu_dereference_protected(ifibss->presp,
+	old_presp = rcu_dereference_रक्षित(अगरibss->presp,
 					  lockdep_is_held(&sdata->wdev.mtx));
 
 	presp = ieee80211_ibss_build_presp(sdata,
-					   sdata->vif.bss_conf.beacon_int,
-					   sdata->vif.bss_conf.basic_rates,
-					   capability, tsf, &ifibss->chandef,
-					   NULL, csa_settings);
-	if (!presp) {
+					   sdata->vअगर.bss_conf.beacon_पूर्णांक,
+					   sdata->vअगर.bss_conf.basic_rates,
+					   capability, tsf, &अगरibss->chandef,
+					   शून्य, csa_settings);
+	अगर (!presp) अणु
 		ret = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rcu_assign_pointer(ifibss->presp, presp);
-	if (old_presp)
-		kfree_rcu(old_presp, rcu_head);
+	rcu_assign_poपूर्णांकer(अगरibss->presp, presp);
+	अगर (old_presp)
+		kमुक्त_rcu(old_presp, rcu_head);
 
-	return BSS_CHANGED_BEACON;
+	वापस BSS_CHANGED_BEACON;
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int ieee80211_ibss_finish_csa(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct cfg80211_bss *cbss;
+पूर्णांक ieee80211_ibss_finish_csa(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा cfg80211_bss *cbss;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
-	/* update cfg80211 bss information with the new channel */
-	if (!is_zero_ether_addr(ifibss->bssid)) {
+	/* update cfg80211 bss inक्रमmation with the new channel */
+	अगर (!is_zero_ether_addr(अगरibss->bssid)) अणु
 		cbss = cfg80211_get_bss(sdata->local->hw.wiphy,
-					ifibss->chandef.chan,
-					ifibss->bssid, ifibss->ssid,
-					ifibss->ssid_len,
+					अगरibss->chandef.chan,
+					अगरibss->bssid, अगरibss->ssid,
+					अगरibss->ssid_len,
 					IEEE80211_BSS_TYPE_IBSS,
-					IEEE80211_PRIVACY(ifibss->privacy));
-		/* XXX: should not really modify cfg80211 data */
-		if (cbss) {
+					IEEE80211_PRIVACY(अगरibss->privacy));
+		/* XXX: should not really modअगरy cfg80211 data */
+		अगर (cbss) अणु
 			cbss->channel = sdata->csa_chandef.chan;
 			cfg80211_put_bss(sdata->local->hw.wiphy, cbss);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ifibss->chandef = sdata->csa_chandef;
+	अगरibss->chandef = sdata->csa_chandef;
 
 	/* generate the beacon */
-	return ieee80211_ibss_csa_beacon(sdata, NULL);
-}
+	वापस ieee80211_ibss_csa_beacon(sdata, शून्य);
+पूर्ण
 
-void ieee80211_ibss_stop(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
+व्योम ieee80211_ibss_stop(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
 
-	cancel_work_sync(&ifibss->csa_connection_drop_work);
-}
+	cancel_work_sync(&अगरibss->csa_connection_drop_work);
+पूर्ण
 
-static struct sta_info *ieee80211_ibss_finish_sta(struct sta_info *sta)
+अटल काष्ठा sta_info *ieee80211_ibss_finish_sta(काष्ठा sta_info *sta)
 	__acquires(RCU)
-{
-	struct ieee80211_sub_if_data *sdata = sta->sdata;
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata = sta->sdata;
 	u8 addr[ETH_ALEN];
 
-	memcpy(addr, sta->sta.addr, ETH_ALEN);
+	स_नकल(addr, sta->sta.addr, ETH_ALEN);
 
 	ibss_dbg(sdata, "Adding new IBSS station %pM\n", addr);
 
 	sta_info_pre_move_state(sta, IEEE80211_STA_AUTH);
 	sta_info_pre_move_state(sta, IEEE80211_STA_ASSOC);
-	/* authorize the station only if the network is not RSN protected. If
-	 * not wait for the userspace to authorize it */
-	if (!sta->sdata->u.ibss.control_port)
+	/* authorize the station only अगर the network is not RSN रक्षित. If
+	 * not रुको क्रम the userspace to authorize it */
+	अगर (!sta->sdata->u.ibss.control_port)
 		sta_info_pre_move_state(sta, IEEE80211_STA_AUTHORIZED);
 
 	rate_control_rate_init(sta);
 
 	/* If it fails, maybe we raced another insertion? */
-	if (sta_info_insert_rcu(sta))
-		return sta_info_get(sdata, addr);
-	return sta;
-}
+	अगर (sta_info_insert_rcu(sta))
+		वापस sta_info_get(sdata, addr);
+	वापस sta;
+पूर्ण
 
-static struct sta_info *
-ieee80211_ibss_add_sta(struct ieee80211_sub_if_data *sdata, const u8 *bssid,
-		       const u8 *addr, u32 supp_rates)
+अटल काष्ठा sta_info *
+ieee80211_ibss_add_sta(काष्ठा ieee80211_sub_अगर_data *sdata, स्थिर u8 *bssid,
+		       स्थिर u8 *addr, u32 supp_rates)
 	__acquires(RCU)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta;
-	struct ieee80211_chanctx_conf *chanctx_conf;
-	struct ieee80211_supported_band *sband;
-	enum nl80211_bss_scan_width scan_width;
-	int band;
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sta_info *sta;
+	काष्ठा ieee80211_chanctx_conf *chanctx_conf;
+	काष्ठा ieee80211_supported_band *sband;
+	क्रमागत nl80211_bss_scan_width scan_width;
+	पूर्णांक band;
 
 	/*
 	 * XXX: Consider removing the least recently used entry and
 	 * 	allow new one to be added.
 	 */
-	if (local->num_sta >= IEEE80211_IBSS_MAX_STA_ENTRIES) {
+	अगर (local->num_sta >= IEEE80211_IBSS_MAX_STA_ENTRIES) अणु
 		net_info_ratelimited("%s: No room for a new IBSS STA entry %pM\n",
 				    sdata->name, addr);
-		rcu_read_lock();
-		return NULL;
-	}
+		rcu_पढ़ो_lock();
+		वापस शून्य;
+	पूर्ण
 
-	if (ifibss->state == IEEE80211_IBSS_MLME_SEARCH) {
-		rcu_read_lock();
-		return NULL;
-	}
+	अगर (अगरibss->state == IEEE80211_IBSS_MLME_SEARCH) अणु
+		rcu_पढ़ो_lock();
+		वापस शून्य;
+	पूर्ण
 
-	if (!ether_addr_equal(bssid, sdata->u.ibss.bssid)) {
-		rcu_read_lock();
-		return NULL;
-	}
+	अगर (!ether_addr_equal(bssid, sdata->u.ibss.bssid)) अणु
+		rcu_पढ़ो_lock();
+		वापस शून्य;
+	पूर्ण
 
-	rcu_read_lock();
-	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
-	if (WARN_ON_ONCE(!chanctx_conf))
-		return NULL;
+	rcu_पढ़ो_lock();
+	chanctx_conf = rcu_dereference(sdata->vअगर.chanctx_conf);
+	अगर (WARN_ON_ONCE(!chanctx_conf))
+		वापस शून्य;
 	band = chanctx_conf->def.chan->band;
 	scan_width = cfg80211_chandef_to_scan_width(&chanctx_conf->def);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	sta = sta_info_alloc(sdata, addr, GFP_KERNEL);
-	if (!sta) {
-		rcu_read_lock();
-		return NULL;
-	}
+	अगर (!sta) अणु
+		rcu_पढ़ो_lock();
+		वापस शून्य;
+	पूर्ण
 
 	/* make sure mandatory rates are always added */
 	sband = local->hw.wiphy->bands[band];
 	sta->sta.supp_rates[band] = supp_rates |
 			ieee80211_mandatory_rates(sband, scan_width);
 
-	return ieee80211_ibss_finish_sta(sta);
-}
+	वापस ieee80211_ibss_finish_sta(sta);
+पूर्ण
 
-static int ieee80211_sta_active_ibss(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_local *local = sdata->local;
-	int active = 0;
-	struct sta_info *sta;
+अटल पूर्णांक ieee80211_sta_active_ibss(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	पूर्णांक active = 0;
+	काष्ठा sta_info *sta;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
-	list_for_each_entry_rcu(sta, &local->sta_list, list) {
-		unsigned long last_active = ieee80211_sta_last_active(sta);
+	list_क्रम_each_entry_rcu(sta, &local->sta_list, list) अणु
+		अचिन्हित दीर्घ last_active = ieee80211_sta_last_active(sta);
 
-		if (sta->sdata == sdata &&
-		    time_is_after_jiffies(last_active +
-					  IEEE80211_IBSS_MERGE_INTERVAL)) {
+		अगर (sta->sdata == sdata &&
+		    समय_is_after_jअगरfies(last_active +
+					  IEEE80211_IBSS_MERGE_INTERVAL)) अणु
 			active++;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return active;
-}
+	वापस active;
+पूर्ण
 
-static void ieee80211_ibss_disconnect(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct ieee80211_local *local = sdata->local;
-	struct cfg80211_bss *cbss;
-	struct beacon_data *presp;
-	struct sta_info *sta;
+अटल व्योम ieee80211_ibss_disconnect(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा cfg80211_bss *cbss;
+	काष्ठा beacon_data *presp;
+	काष्ठा sta_info *sta;
 
-	if (!is_zero_ether_addr(ifibss->bssid)) {
-		cbss = cfg80211_get_bss(local->hw.wiphy, ifibss->chandef.chan,
-					ifibss->bssid, ifibss->ssid,
-					ifibss->ssid_len,
+	अगर (!is_zero_ether_addr(अगरibss->bssid)) अणु
+		cbss = cfg80211_get_bss(local->hw.wiphy, अगरibss->chandef.chan,
+					अगरibss->bssid, अगरibss->ssid,
+					अगरibss->ssid_len,
 					IEEE80211_BSS_TYPE_IBSS,
-					IEEE80211_PRIVACY(ifibss->privacy));
+					IEEE80211_PRIVACY(अगरibss->privacy));
 
-		if (cbss) {
+		अगर (cbss) अणु
 			cfg80211_unlink_bss(local->hw.wiphy, cbss);
 			cfg80211_put_bss(sdata->local->hw.wiphy, cbss);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	ifibss->state = IEEE80211_IBSS_MLME_SEARCH;
+	अगरibss->state = IEEE80211_IBSS_MLME_SEARCH;
 
 	sta_info_flush(sdata);
 
-	spin_lock_bh(&ifibss->incomplete_lock);
-	while (!list_empty(&ifibss->incomplete_stations)) {
-		sta = list_first_entry(&ifibss->incomplete_stations,
-				       struct sta_info, list);
+	spin_lock_bh(&अगरibss->incomplete_lock);
+	जबतक (!list_empty(&अगरibss->incomplete_stations)) अणु
+		sta = list_first_entry(&अगरibss->incomplete_stations,
+				       काष्ठा sta_info, list);
 		list_del(&sta->list);
-		spin_unlock_bh(&ifibss->incomplete_lock);
+		spin_unlock_bh(&अगरibss->incomplete_lock);
 
-		sta_info_free(local, sta);
-		spin_lock_bh(&ifibss->incomplete_lock);
-	}
-	spin_unlock_bh(&ifibss->incomplete_lock);
+		sta_info_मुक्त(local, sta);
+		spin_lock_bh(&अगरibss->incomplete_lock);
+	पूर्ण
+	spin_unlock_bh(&अगरibss->incomplete_lock);
 
-	netif_carrier_off(sdata->dev);
+	netअगर_carrier_off(sdata->dev);
 
-	sdata->vif.bss_conf.ibss_joined = false;
-	sdata->vif.bss_conf.ibss_creator = false;
-	sdata->vif.bss_conf.enable_beacon = false;
-	sdata->vif.bss_conf.ssid_len = 0;
+	sdata->vअगर.bss_conf.ibss_joined = false;
+	sdata->vअगर.bss_conf.ibss_creator = false;
+	sdata->vअगर.bss_conf.enable_beacon = false;
+	sdata->vअगर.bss_conf.ssid_len = 0;
 
-	/* remove beacon */
-	presp = rcu_dereference_protected(ifibss->presp,
+	/* हटाओ beacon */
+	presp = rcu_dereference_रक्षित(अगरibss->presp,
 					  lockdep_is_held(&sdata->wdev.mtx));
-	RCU_INIT_POINTER(sdata->u.ibss.presp, NULL);
-	if (presp)
-		kfree_rcu(presp, rcu_head);
+	RCU_INIT_POINTER(sdata->u.ibss.presp, शून्य);
+	अगर (presp)
+		kमुक्त_rcu(presp, rcu_head);
 
 	clear_bit(SDATA_STATE_OFFCHANNEL_BEACON_STOPPED, &sdata->state);
-	ieee80211_bss_info_change_notify(sdata, BSS_CHANGED_BEACON_ENABLED |
+	ieee80211_bss_info_change_notअगरy(sdata, BSS_CHANGED_BEACON_ENABLED |
 						BSS_CHANGED_IBSS);
 	drv_leave_ibss(local, sdata);
 	mutex_lock(&local->mtx);
-	ieee80211_vif_release_channel(sdata);
+	ieee80211_vअगर_release_channel(sdata);
 	mutex_unlock(&local->mtx);
-}
+पूर्ण
 
-static void ieee80211_csa_connection_drop_work(struct work_struct *work)
-{
-	struct ieee80211_sub_if_data *sdata =
-		container_of(work, struct ieee80211_sub_if_data,
+अटल व्योम ieee80211_csa_connection_drop_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata =
+		container_of(work, काष्ठा ieee80211_sub_अगर_data,
 			     u.ibss.csa_connection_drop_work);
 
 	sdata_lock(sdata);
@@ -752,212 +753,212 @@ static void ieee80211_csa_connection_drop_work(struct work_struct *work)
 	ieee80211_queue_work(&sdata->local->hw, &sdata->work);
 
 	sdata_unlock(sdata);
-}
+पूर्ण
 
-static void ieee80211_ibss_csa_mark_radar(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	int err;
+अटल व्योम ieee80211_ibss_csa_mark_radar(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	पूर्णांक err;
 
-	/* if the current channel is a DFS channel, mark the channel as
+	/* अगर the current channel is a DFS channel, mark the channel as
 	 * unavailable.
 	 */
 	err = cfg80211_chandef_dfs_required(sdata->local->hw.wiphy,
-					    &ifibss->chandef,
+					    &अगरibss->chandef,
 					    NL80211_IFTYPE_ADHOC);
-	if (err > 0)
-		cfg80211_radar_event(sdata->local->hw.wiphy, &ifibss->chandef,
+	अगर (err > 0)
+		cfg80211_radar_event(sdata->local->hw.wiphy, &अगरibss->chandef,
 				     GFP_ATOMIC);
-}
+पूर्ण
 
-static bool
-ieee80211_ibss_process_chanswitch(struct ieee80211_sub_if_data *sdata,
-				  struct ieee802_11_elems *elems,
+अटल bool
+ieee80211_ibss_process_chanचयन(काष्ठा ieee80211_sub_अगर_data *sdata,
+				  काष्ठा ieee802_11_elems *elems,
 				  bool beacon)
-{
-	struct cfg80211_csa_settings params;
-	struct ieee80211_csa_ie csa_ie;
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	enum nl80211_channel_type ch_type;
-	int err;
+अणु
+	काष्ठा cfg80211_csa_settings params;
+	काष्ठा ieee80211_csa_ie csa_ie;
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	क्रमागत nl80211_channel_type ch_type;
+	पूर्णांक err;
 	u32 sta_flags;
 	u32 vht_cap_info = 0;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
 	sta_flags = IEEE80211_STA_DISABLE_VHT;
-	switch (ifibss->chandef.width) {
-	case NL80211_CHAN_WIDTH_5:
-	case NL80211_CHAN_WIDTH_10:
-	case NL80211_CHAN_WIDTH_20_NOHT:
+	चयन (अगरibss->chandef.width) अणु
+	हाल NL80211_CHAN_WIDTH_5:
+	हाल NL80211_CHAN_WIDTH_10:
+	हाल NL80211_CHAN_WIDTH_20_NOHT:
 		sta_flags |= IEEE80211_STA_DISABLE_HT;
 		fallthrough;
-	case NL80211_CHAN_WIDTH_20:
+	हाल NL80211_CHAN_WIDTH_20:
 		sta_flags |= IEEE80211_STA_DISABLE_40MHZ;
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	if (elems->vht_cap_elem)
+	अगर (elems->vht_cap_elem)
 		vht_cap_info = le32_to_cpu(elems->vht_cap_elem->vht_cap_info);
 
-	memset(&params, 0, sizeof(params));
-	err = ieee80211_parse_ch_switch_ie(sdata, elems,
-					   ifibss->chandef.chan->band,
+	स_रखो(&params, 0, माप(params));
+	err = ieee80211_parse_ch_चयन_ie(sdata, elems,
+					   अगरibss->chandef.chan->band,
 					   vht_cap_info,
-					   sta_flags, ifibss->bssid, &csa_ie);
-	/* can't switch to destination channel, fail */
-	if (err < 0)
-		goto disconnect;
+					   sta_flags, अगरibss->bssid, &csa_ie);
+	/* can't चयन to destination channel, fail */
+	अगर (err < 0)
+		जाओ disconnect;
 
 	/* did not contain a CSA */
-	if (err)
-		return false;
+	अगर (err)
+		वापस false;
 
-	/* channel switch is not supported, disconnect */
-	if (!(sdata->local->hw.wiphy->flags & WIPHY_FLAG_HAS_CHANNEL_SWITCH))
-		goto disconnect;
+	/* channel चयन is not supported, disconnect */
+	अगर (!(sdata->local->hw.wiphy->flags & WIPHY_FLAG_HAS_CHANNEL_SWITCH))
+		जाओ disconnect;
 
 	params.count = csa_ie.count;
 	params.chandef = csa_ie.chandef;
 
-	switch (ifibss->chandef.width) {
-	case NL80211_CHAN_WIDTH_20_NOHT:
-	case NL80211_CHAN_WIDTH_20:
-	case NL80211_CHAN_WIDTH_40:
-		/* keep our current HT mode (HT20/HT40+/HT40-), even if
-		 * another mode  has been announced. The mode is not adopted
-		 * within the beacon while doing CSA and we should therefore
+	चयन (अगरibss->chandef.width) अणु
+	हाल NL80211_CHAN_WIDTH_20_NOHT:
+	हाल NL80211_CHAN_WIDTH_20:
+	हाल NL80211_CHAN_WIDTH_40:
+		/* keep our current HT mode (HT20/HT40+/HT40-), even अगर
+		 * another mode  has been announced. The mode is not aकरोpted
+		 * within the beacon जबतक करोing CSA and we should thereक्रमe
 		 * keep the mode which we announce.
 		 */
-		ch_type = cfg80211_get_chandef_type(&ifibss->chandef);
+		ch_type = cfg80211_get_chandef_type(&अगरibss->chandef);
 		cfg80211_chandef_create(&params.chandef, params.chandef.chan,
 					ch_type);
-		break;
-	case NL80211_CHAN_WIDTH_5:
-	case NL80211_CHAN_WIDTH_10:
-		if (params.chandef.width != ifibss->chandef.width) {
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_5:
+	हाल NL80211_CHAN_WIDTH_10:
+		अगर (params.chandef.width != अगरibss->chandef.width) अणु
 			sdata_info(sdata,
 				   "IBSS %pM received channel switch from incompatible channel width (%d MHz, width:%d, CF1/2: %d/%d MHz), disconnecting\n",
-				   ifibss->bssid,
+				   अगरibss->bssid,
 				   params.chandef.chan->center_freq,
 				   params.chandef.width,
 				   params.chandef.center_freq1,
 				   params.chandef.center_freq2);
-			goto disconnect;
-		}
-		break;
-	default:
+			जाओ disconnect;
+		पूर्ण
+		अवरोध;
+	शेष:
 		/* should not happen, sta_flags should prevent VHT modes. */
 		WARN_ON(1);
-		goto disconnect;
-	}
+		जाओ disconnect;
+	पूर्ण
 
-	if (!cfg80211_reg_can_beacon(sdata->local->hw.wiphy, &params.chandef,
-				     NL80211_IFTYPE_ADHOC)) {
+	अगर (!cfg80211_reg_can_beacon(sdata->local->hw.wiphy, &params.chandef,
+				     NL80211_IFTYPE_ADHOC)) अणु
 		sdata_info(sdata,
 			   "IBSS %pM switches to unsupported channel (%d MHz, width:%d, CF1/2: %d/%d MHz), disconnecting\n",
-			   ifibss->bssid,
+			   अगरibss->bssid,
 			   params.chandef.chan->center_freq,
 			   params.chandef.width,
 			   params.chandef.center_freq1,
 			   params.chandef.center_freq2);
-		goto disconnect;
-	}
+		जाओ disconnect;
+	पूर्ण
 
 	err = cfg80211_chandef_dfs_required(sdata->local->hw.wiphy,
 					    &params.chandef,
 					    NL80211_IFTYPE_ADHOC);
-	if (err < 0)
-		goto disconnect;
-	if (err > 0 && !ifibss->userspace_handles_dfs) {
+	अगर (err < 0)
+		जाओ disconnect;
+	अगर (err > 0 && !अगरibss->userspace_handles_dfs) अणु
 		/* IBSS-DFS only allowed with a control program */
-		goto disconnect;
-	}
+		जाओ disconnect;
+	पूर्ण
 
 	params.radar_required = err;
 
-	if (cfg80211_chandef_identical(&params.chandef,
-				       &sdata->vif.bss_conf.chandef)) {
+	अगर (cfg80211_chandef_identical(&params.chandef,
+				       &sdata->vअगर.bss_conf.chandef)) अणु
 		ibss_dbg(sdata,
 			 "received csa with an identical chandef, ignoring\n");
-		return true;
-	}
+		वापस true;
+	पूर्ण
 
-	/* all checks done, now perform the channel switch. */
+	/* all checks करोne, now perक्रमm the channel चयन. */
 	ibss_dbg(sdata,
 		 "received channel switch announcement to go to channel %d MHz\n",
 		 params.chandef.chan->center_freq);
 
 	params.block_tx = !!csa_ie.mode;
 
-	if (ieee80211_channel_switch(sdata->local->hw.wiphy, sdata->dev,
+	अगर (ieee80211_channel_चयन(sdata->local->hw.wiphy, sdata->dev,
 				     &params))
-		goto disconnect;
+		जाओ disconnect;
 
 	ieee80211_ibss_csa_mark_radar(sdata);
 
-	return true;
+	वापस true;
 disconnect:
 	ibss_dbg(sdata, "Can't handle channel switch, disconnect\n");
 	ieee80211_queue_work(&sdata->local->hw,
-			     &ifibss->csa_connection_drop_work);
+			     &अगरibss->csa_connection_drop_work);
 
 	ieee80211_ibss_csa_mark_radar(sdata);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void
-ieee80211_rx_mgmt_spectrum_mgmt(struct ieee80211_sub_if_data *sdata,
-				struct ieee80211_mgmt *mgmt, size_t len,
-				struct ieee80211_rx_status *rx_status,
-				struct ieee802_11_elems *elems)
-{
-	int required_len;
+अटल व्योम
+ieee80211_rx_mgmt_spectrum_mgmt(काष्ठा ieee80211_sub_अगर_data *sdata,
+				काष्ठा ieee80211_mgmt *mgmt, माप_प्रकार len,
+				काष्ठा ieee80211_rx_status *rx_status,
+				काष्ठा ieee802_11_elems *elems)
+अणु
+	पूर्णांक required_len;
 
-	if (len < IEEE80211_MIN_ACTION_SIZE + 1)
-		return;
+	अगर (len < IEEE80211_MIN_ACTION_SIZE + 1)
+		वापस;
 
-	/* CSA is the only action we handle for now */
-	if (mgmt->u.action.u.measurement.action_code !=
+	/* CSA is the only action we handle क्रम now */
+	अगर (mgmt->u.action.u.measurement.action_code !=
 	    WLAN_ACTION_SPCT_CHL_SWITCH)
-		return;
+		वापस;
 
 	required_len = IEEE80211_MIN_ACTION_SIZE +
-		       sizeof(mgmt->u.action.u.chan_switch);
-	if (len < required_len)
-		return;
+		       माप(mgmt->u.action.u.chan_चयन);
+	अगर (len < required_len)
+		वापस;
 
-	if (!sdata->vif.csa_active)
-		ieee80211_ibss_process_chanswitch(sdata, elems, false);
-}
+	अगर (!sdata->vअगर.csa_active)
+		ieee80211_ibss_process_chanचयन(sdata, elems, false);
+पूर्ण
 
-static void ieee80211_rx_mgmt_deauth_ibss(struct ieee80211_sub_if_data *sdata,
-					  struct ieee80211_mgmt *mgmt,
-					  size_t len)
-{
+अटल व्योम ieee80211_rx_mgmt_deauth_ibss(काष्ठा ieee80211_sub_अगर_data *sdata,
+					  काष्ठा ieee80211_mgmt *mgmt,
+					  माप_प्रकार len)
+अणु
 	u16 reason = le16_to_cpu(mgmt->u.deauth.reason_code);
 
-	if (len < IEEE80211_DEAUTH_FRAME_LEN)
-		return;
+	अगर (len < IEEE80211_DEAUTH_FRAME_LEN)
+		वापस;
 
 	ibss_dbg(sdata, "RX DeAuth SA=%pM DA=%pM\n", mgmt->sa, mgmt->da);
 	ibss_dbg(sdata, "\tBSSID=%pM (reason: %d)\n", mgmt->bssid, reason);
 	sta_info_destroy_addr(sdata, mgmt->sa);
-}
+पूर्ण
 
-static void ieee80211_rx_mgmt_auth_ibss(struct ieee80211_sub_if_data *sdata,
-					struct ieee80211_mgmt *mgmt,
-					size_t len)
-{
+अटल व्योम ieee80211_rx_mgmt_auth_ibss(काष्ठा ieee80211_sub_अगर_data *sdata,
+					काष्ठा ieee80211_mgmt *mgmt,
+					माप_प्रकार len)
+अणु
 	u16 auth_alg, auth_transaction;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
-	if (len < 24 + 6)
-		return;
+	अगर (len < 24 + 6)
+		वापस;
 
 	auth_alg = le16_to_cpu(mgmt->u.auth.auth_alg);
 	auth_transaction = le16_to_cpu(mgmt->u.auth.auth_transaction);
@@ -966,106 +967,106 @@ static void ieee80211_rx_mgmt_auth_ibss(struct ieee80211_sub_if_data *sdata,
 	ibss_dbg(sdata, "\tBSSID=%pM (auth_transaction=%d)\n",
 		 mgmt->bssid, auth_transaction);
 
-	if (auth_alg != WLAN_AUTH_OPEN || auth_transaction != 1)
-		return;
+	अगर (auth_alg != WLAN_AUTH_OPEN || auth_transaction != 1)
+		वापस;
 
 	/*
-	 * IEEE 802.11 standard does not require authentication in IBSS
-	 * networks and most implementations do not seem to use it.
-	 * However, try to reply to authentication attempts if someone
+	 * IEEE 802.11 standard करोes not require authentication in IBSS
+	 * networks and most implementations करो not seem to use it.
+	 * However, try to reply to authentication attempts अगर someone
 	 * has actually implemented this.
 	 */
-	ieee80211_send_auth(sdata, 2, WLAN_AUTH_OPEN, 0, NULL, 0,
-			    mgmt->sa, sdata->u.ibss.bssid, NULL, 0, 0, 0);
-}
+	ieee80211_send_auth(sdata, 2, WLAN_AUTH_OPEN, 0, शून्य, 0,
+			    mgmt->sa, sdata->u.ibss.bssid, शून्य, 0, 0, 0);
+पूर्ण
 
-static void ieee80211_update_sta_info(struct ieee80211_sub_if_data *sdata,
-				      struct ieee80211_mgmt *mgmt, size_t len,
-				      struct ieee80211_rx_status *rx_status,
-				      struct ieee802_11_elems *elems,
-				      struct ieee80211_channel *channel)
-{
-	struct sta_info *sta;
-	enum nl80211_band band = rx_status->band;
-	enum nl80211_bss_scan_width scan_width;
-	struct ieee80211_local *local = sdata->local;
-	struct ieee80211_supported_band *sband;
+अटल व्योम ieee80211_update_sta_info(काष्ठा ieee80211_sub_अगर_data *sdata,
+				      काष्ठा ieee80211_mgmt *mgmt, माप_प्रकार len,
+				      काष्ठा ieee80211_rx_status *rx_status,
+				      काष्ठा ieee802_11_elems *elems,
+				      काष्ठा ieee80211_channel *channel)
+अणु
+	काष्ठा sta_info *sta;
+	क्रमागत nl80211_band band = rx_status->band;
+	क्रमागत nl80211_bss_scan_width scan_width;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा ieee80211_supported_band *sband;
 	bool rates_updated = false;
 	u32 supp_rates = 0;
 
-	if (sdata->vif.type != NL80211_IFTYPE_ADHOC)
-		return;
+	अगर (sdata->vअगर.type != NL80211_IFTYPE_ADHOC)
+		वापस;
 
-	if (!ether_addr_equal(mgmt->bssid, sdata->u.ibss.bssid))
-		return;
+	अगर (!ether_addr_equal(mgmt->bssid, sdata->u.ibss.bssid))
+		वापस;
 
 	sband = local->hw.wiphy->bands[band];
-	if (WARN_ON(!sband))
-		return;
+	अगर (WARN_ON(!sband))
+		वापस;
 
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	sta = sta_info_get(sdata, mgmt->sa);
 
-	if (elems->supp_rates) {
+	अगर (elems->supp_rates) अणु
 		supp_rates = ieee80211_sta_get_rates(sdata, elems,
-						     band, NULL);
-		if (sta) {
+						     band, शून्य);
+		अगर (sta) अणु
 			u32 prev_rates;
 
 			prev_rates = sta->sta.supp_rates[band];
 			/* make sure mandatory rates are always added */
 			scan_width = NL80211_BSS_CHAN_WIDTH_20;
-			if (rx_status->bw == RATE_INFO_BW_5)
+			अगर (rx_status->bw == RATE_INFO_BW_5)
 				scan_width = NL80211_BSS_CHAN_WIDTH_5;
-			else if (rx_status->bw == RATE_INFO_BW_10)
+			अन्यथा अगर (rx_status->bw == RATE_INFO_BW_10)
 				scan_width = NL80211_BSS_CHAN_WIDTH_10;
 
 			sta->sta.supp_rates[band] = supp_rates |
 				ieee80211_mandatory_rates(sband, scan_width);
-			if (sta->sta.supp_rates[band] != prev_rates) {
+			अगर (sta->sta.supp_rates[band] != prev_rates) अणु
 				ibss_dbg(sdata,
 					 "updated supp_rates set for %pM based on beacon/probe_resp (0x%x -> 0x%x)\n",
 					 sta->sta.addr, prev_rates,
 					 sta->sta.supp_rates[band]);
 				rates_updated = true;
-			}
-		} else {
-			rcu_read_unlock();
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			rcu_पढ़ो_unlock();
 			sta = ieee80211_ibss_add_sta(sdata, mgmt->bssid,
 						     mgmt->sa, supp_rates);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (sta && !sta->sta.wme &&
+	अगर (sta && !sta->sta.wme &&
 	    (elems->wmm_info || elems->s1g_capab) &&
-	    local->hw.queues >= IEEE80211_NUM_ACS) {
+	    local->hw.queues >= IEEE80211_NUM_ACS) अणु
 		sta->sta.wme = true;
 		ieee80211_check_fast_xmit(sta);
-	}
+	पूर्ण
 
-	if (sta && elems->ht_operation && elems->ht_cap_elem &&
+	अगर (sta && elems->ht_operation && elems->ht_cap_elem &&
 	    sdata->u.ibss.chandef.width != NL80211_CHAN_WIDTH_20_NOHT &&
 	    sdata->u.ibss.chandef.width != NL80211_CHAN_WIDTH_5 &&
-	    sdata->u.ibss.chandef.width != NL80211_CHAN_WIDTH_10) {
+	    sdata->u.ibss.chandef.width != NL80211_CHAN_WIDTH_10) अणु
 		/* we both use HT */
-		struct ieee80211_ht_cap htcap_ie;
-		struct cfg80211_chan_def chandef;
-		enum ieee80211_sta_rx_bandwidth bw = sta->sta.bandwidth;
+		काष्ठा ieee80211_ht_cap htcap_ie;
+		काष्ठा cfg80211_chan_def chandef;
+		क्रमागत ieee80211_sta_rx_bandwidth bw = sta->sta.bandwidth;
 
 		cfg80211_chandef_create(&chandef, channel, NL80211_CHAN_NO_HT);
 		ieee80211_chandef_ht_oper(elems->ht_operation, &chandef);
 
-		memcpy(&htcap_ie, elems->ht_cap_elem, sizeof(htcap_ie));
+		स_नकल(&htcap_ie, elems->ht_cap_elem, माप(htcap_ie));
 		rates_updated |= ieee80211_ht_cap_ie_to_sta_ht_cap(sdata, sband,
 								   &htcap_ie,
 								   sta);
 
-		if (elems->vht_operation && elems->vht_cap_elem &&
+		अगर (elems->vht_operation && elems->vht_cap_elem &&
 		    sdata->u.ibss.chandef.width != NL80211_CHAN_WIDTH_20 &&
-		    sdata->u.ibss.chandef.width != NL80211_CHAN_WIDTH_40) {
+		    sdata->u.ibss.chandef.width != NL80211_CHAN_WIDTH_40) अणु
 			/* we both use VHT */
-			struct ieee80211_vht_cap cap_ie;
-			struct ieee80211_sta_vht_cap cap = sta->sta.vht_cap;
+			काष्ठा ieee80211_vht_cap cap_ie;
+			काष्ठा ieee80211_sta_vht_cap cap = sta->sta.vht_cap;
 			u32 vht_cap_info =
 				le32_to_cpu(elems->vht_cap_elem->vht_cap_info);
 
@@ -1073,203 +1074,203 @@ static void ieee80211_update_sta_info(struct ieee80211_sub_if_data *sdata,
 						   elems->vht_operation,
 						   elems->ht_operation,
 						   &chandef);
-			memcpy(&cap_ie, elems->vht_cap_elem, sizeof(cap_ie));
+			स_नकल(&cap_ie, elems->vht_cap_elem, माप(cap_ie));
 			ieee80211_vht_cap_ie_to_sta_vht_cap(sdata, sband,
 							    &cap_ie, sta);
-			if (memcmp(&cap, &sta->sta.vht_cap, sizeof(cap)))
+			अगर (स_भेद(&cap, &sta->sta.vht_cap, माप(cap)))
 				rates_updated |= true;
-		}
+		पूर्ण
 
-		if (bw != sta->sta.bandwidth)
+		अगर (bw != sta->sta.bandwidth)
 			rates_updated |= true;
 
-		if (!cfg80211_chandef_compatible(&sdata->u.ibss.chandef,
+		अगर (!cfg80211_chandef_compatible(&sdata->u.ibss.chandef,
 						 &chandef))
 			WARN_ON_ONCE(1);
-	}
+	पूर्ण
 
-	if (sta && rates_updated) {
+	अगर (sta && rates_updated) अणु
 		u32 changed = IEEE80211_RC_SUPP_RATES_CHANGED;
 		u8 rx_nss = sta->sta.rx_nss;
 
 		/* Force rx_nss recalculation */
 		sta->sta.rx_nss = 0;
 		rate_control_rate_init(sta);
-		if (sta->sta.rx_nss != rx_nss)
+		अगर (sta->sta.rx_nss != rx_nss)
 			changed |= IEEE80211_RC_NSS_CHANGED;
 
 		drv_sta_rc_update(local, sdata, &sta->sta, changed);
-	}
+	पूर्ण
 
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static void ieee80211_rx_bss_info(struct ieee80211_sub_if_data *sdata,
-				  struct ieee80211_mgmt *mgmt, size_t len,
-				  struct ieee80211_rx_status *rx_status,
-				  struct ieee802_11_elems *elems)
-{
-	struct ieee80211_local *local = sdata->local;
-	struct cfg80211_bss *cbss;
-	struct ieee80211_bss *bss;
-	struct ieee80211_channel *channel;
-	u64 beacon_timestamp, rx_timestamp;
+अटल व्योम ieee80211_rx_bss_info(काष्ठा ieee80211_sub_अगर_data *sdata,
+				  काष्ठा ieee80211_mgmt *mgmt, माप_प्रकार len,
+				  काष्ठा ieee80211_rx_status *rx_status,
+				  काष्ठा ieee802_11_elems *elems)
+अणु
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा cfg80211_bss *cbss;
+	काष्ठा ieee80211_bss *bss;
+	काष्ठा ieee80211_channel *channel;
+	u64 beacon_बारtamp, rx_बारtamp;
 	u32 supp_rates = 0;
-	enum nl80211_band band = rx_status->band;
+	क्रमागत nl80211_band band = rx_status->band;
 
 	channel = ieee80211_get_channel(local->hw.wiphy, rx_status->freq);
-	if (!channel)
-		return;
+	अगर (!channel)
+		वापस;
 
 	ieee80211_update_sta_info(sdata, mgmt, len, rx_status, elems, channel);
 
 	bss = ieee80211_bss_info_update(local, rx_status, mgmt, len, channel);
-	if (!bss)
-		return;
+	अगर (!bss)
+		वापस;
 
-	cbss = container_of((void *)bss, struct cfg80211_bss, priv);
+	cbss = container_of((व्योम *)bss, काष्ठा cfg80211_bss, priv);
 
-	/* same for beacon and probe response */
-	beacon_timestamp = le64_to_cpu(mgmt->u.beacon.timestamp);
+	/* same क्रम beacon and probe response */
+	beacon_बारtamp = le64_to_cpu(mgmt->u.beacon.बारtamp);
 
-	/* check if we need to merge IBSS */
+	/* check अगर we need to merge IBSS */
 
 	/* not an IBSS */
-	if (!(cbss->capability & WLAN_CAPABILITY_IBSS))
-		goto put_bss;
+	अगर (!(cbss->capability & WLAN_CAPABILITY_IBSS))
+		जाओ put_bss;
 
-	/* different channel */
-	if (sdata->u.ibss.fixed_channel &&
+	/* dअगरferent channel */
+	अगर (sdata->u.ibss.fixed_channel &&
 	    sdata->u.ibss.chandef.chan != cbss->channel)
-		goto put_bss;
+		जाओ put_bss;
 
-	/* different SSID */
-	if (elems->ssid_len != sdata->u.ibss.ssid_len ||
-	    memcmp(elems->ssid, sdata->u.ibss.ssid,
+	/* dअगरferent SSID */
+	अगर (elems->ssid_len != sdata->u.ibss.ssid_len ||
+	    स_भेद(elems->ssid, sdata->u.ibss.ssid,
 				sdata->u.ibss.ssid_len))
-		goto put_bss;
+		जाओ put_bss;
 
-	/* process channel switch */
-	if (sdata->vif.csa_active ||
-	    ieee80211_ibss_process_chanswitch(sdata, elems, true))
-		goto put_bss;
+	/* process channel चयन */
+	अगर (sdata->vअगर.csa_active ||
+	    ieee80211_ibss_process_chanचयन(sdata, elems, true))
+		जाओ put_bss;
 
 	/* same BSSID */
-	if (ether_addr_equal(cbss->bssid, sdata->u.ibss.bssid))
-		goto put_bss;
+	अगर (ether_addr_equal(cbss->bssid, sdata->u.ibss.bssid))
+		जाओ put_bss;
 
 	/* we use a fixed BSSID */
-	if (sdata->u.ibss.fixed_bssid)
-		goto put_bss;
+	अगर (sdata->u.ibss.fixed_bssid)
+		जाओ put_bss;
 
-	if (ieee80211_have_rx_timestamp(rx_status)) {
-		/* time when timestamp field was received */
-		rx_timestamp =
-			ieee80211_calculate_rx_timestamp(local, rx_status,
+	अगर (ieee80211_have_rx_बारtamp(rx_status)) अणु
+		/* समय when बारtamp field was received */
+		rx_बारtamp =
+			ieee80211_calculate_rx_बारtamp(local, rx_status,
 							 len + FCS_LEN, 24);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * second best option: get current TSF
-		 * (will return -1 if not supported)
+		 * (will वापस -1 अगर not supported)
 		 */
-		rx_timestamp = drv_get_tsf(local, sdata);
-	}
+		rx_बारtamp = drv_get_tsf(local, sdata);
+	पूर्ण
 
 	ibss_dbg(sdata, "RX beacon SA=%pM BSSID=%pM TSF=0x%llx\n",
 		 mgmt->sa, mgmt->bssid,
-		 (unsigned long long)rx_timestamp);
+		 (अचिन्हित दीर्घ दीर्घ)rx_बारtamp);
 	ibss_dbg(sdata, "\tBCN=0x%llx diff=%lld @%lu\n",
-		 (unsigned long long)beacon_timestamp,
-		 (unsigned long long)(rx_timestamp - beacon_timestamp),
-		 jiffies);
+		 (अचिन्हित दीर्घ दीर्घ)beacon_बारtamp,
+		 (अचिन्हित दीर्घ दीर्घ)(rx_बारtamp - beacon_बारtamp),
+		 jअगरfies);
 
-	if (beacon_timestamp > rx_timestamp) {
+	अगर (beacon_बारtamp > rx_बारtamp) अणु
 		ibss_dbg(sdata,
 			 "beacon TSF higher than local TSF - IBSS merge with BSSID %pM\n",
 			 mgmt->bssid);
 		ieee80211_sta_join_ibss(sdata, bss);
-		supp_rates = ieee80211_sta_get_rates(sdata, elems, band, NULL);
+		supp_rates = ieee80211_sta_get_rates(sdata, elems, band, शून्य);
 		ieee80211_ibss_add_sta(sdata, mgmt->bssid, mgmt->sa,
 				       supp_rates);
-		rcu_read_unlock();
-	}
+		rcu_पढ़ो_unlock();
+	पूर्ण
 
  put_bss:
 	ieee80211_rx_bss_put(local, bss);
-}
+पूर्ण
 
-void ieee80211_ibss_rx_no_sta(struct ieee80211_sub_if_data *sdata,
-			      const u8 *bssid, const u8 *addr,
+व्योम ieee80211_ibss_rx_no_sta(काष्ठा ieee80211_sub_अगर_data *sdata,
+			      स्थिर u8 *bssid, स्थिर u8 *addr,
 			      u32 supp_rates)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta;
-	struct ieee80211_chanctx_conf *chanctx_conf;
-	struct ieee80211_supported_band *sband;
-	enum nl80211_bss_scan_width scan_width;
-	int band;
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sta_info *sta;
+	काष्ठा ieee80211_chanctx_conf *chanctx_conf;
+	काष्ठा ieee80211_supported_band *sband;
+	क्रमागत nl80211_bss_scan_width scan_width;
+	पूर्णांक band;
 
 	/*
 	 * XXX: Consider removing the least recently used entry and
 	 * 	allow new one to be added.
 	 */
-	if (local->num_sta >= IEEE80211_IBSS_MAX_STA_ENTRIES) {
+	अगर (local->num_sta >= IEEE80211_IBSS_MAX_STA_ENTRIES) अणु
 		net_info_ratelimited("%s: No room for a new IBSS STA entry %pM\n",
 				    sdata->name, addr);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (ifibss->state == IEEE80211_IBSS_MLME_SEARCH)
-		return;
+	अगर (अगरibss->state == IEEE80211_IBSS_MLME_SEARCH)
+		वापस;
 
-	if (!ether_addr_equal(bssid, sdata->u.ibss.bssid))
-		return;
+	अगर (!ether_addr_equal(bssid, sdata->u.ibss.bssid))
+		वापस;
 
-	rcu_read_lock();
-	chanctx_conf = rcu_dereference(sdata->vif.chanctx_conf);
-	if (WARN_ON_ONCE(!chanctx_conf)) {
-		rcu_read_unlock();
-		return;
-	}
+	rcu_पढ़ो_lock();
+	chanctx_conf = rcu_dereference(sdata->vअगर.chanctx_conf);
+	अगर (WARN_ON_ONCE(!chanctx_conf)) अणु
+		rcu_पढ़ो_unlock();
+		वापस;
+	पूर्ण
 	band = chanctx_conf->def.chan->band;
 	scan_width = cfg80211_chandef_to_scan_width(&chanctx_conf->def);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	sta = sta_info_alloc(sdata, addr, GFP_ATOMIC);
-	if (!sta)
-		return;
+	अगर (!sta)
+		वापस;
 
 	/* make sure mandatory rates are always added */
 	sband = local->hw.wiphy->bands[band];
 	sta->sta.supp_rates[band] = supp_rates |
 			ieee80211_mandatory_rates(sband, scan_width);
 
-	spin_lock(&ifibss->incomplete_lock);
-	list_add(&sta->list, &ifibss->incomplete_stations);
-	spin_unlock(&ifibss->incomplete_lock);
+	spin_lock(&अगरibss->incomplete_lock);
+	list_add(&sta->list, &अगरibss->incomplete_stations);
+	spin_unlock(&अगरibss->incomplete_lock);
 	ieee80211_queue_work(&local->hw, &sdata->work);
-}
+पूर्ण
 
-static void ieee80211_ibss_sta_expire(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct ieee80211_local *local = sdata->local;
-	struct sta_info *sta, *tmp;
-	unsigned long exp_time = IEEE80211_IBSS_INACTIVITY_LIMIT;
-	unsigned long exp_rsn = IEEE80211_IBSS_RSN_INACTIVITY_LIMIT;
+अटल व्योम ieee80211_ibss_sta_expire(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा sta_info *sta, *पंचांगp;
+	अचिन्हित दीर्घ exp_समय = IEEE80211_IBSS_INACTIVITY_LIMIT;
+	अचिन्हित दीर्घ exp_rsn = IEEE80211_IBSS_RSN_INACTIVITY_LIMIT;
 
 	mutex_lock(&local->sta_mtx);
 
-	list_for_each_entry_safe(sta, tmp, &local->sta_list, list) {
-		unsigned long last_active = ieee80211_sta_last_active(sta);
+	list_क्रम_each_entry_safe(sta, पंचांगp, &local->sta_list, list) अणु
+		अचिन्हित दीर्घ last_active = ieee80211_sta_last_active(sta);
 
-		if (sdata != sta->sdata)
-			continue;
+		अगर (sdata != sta->sdata)
+			जारी;
 
-		if (time_is_before_jiffies(last_active + exp_time) ||
-		    (time_is_before_jiffies(last_active + exp_rsn) &&
-		     sta->sta_state != IEEE80211_STA_AUTHORIZED)) {
+		अगर (समय_is_beक्रमe_jअगरfies(last_active + exp_समय) ||
+		    (समय_is_beक्रमe_jअगरfies(last_active + exp_rsn) &&
+		     sta->sta_state != IEEE80211_STA_AUTHORIZED)) अणु
 			u8 frame_buf[IEEE80211_DEAUTH_FRAME_LEN];
 
 			sta_dbg(sta->sdata, "expiring inactive %sSTA %pM\n",
@@ -1277,271 +1278,271 @@ static void ieee80211_ibss_sta_expire(struct ieee80211_sub_if_data *sdata)
 				"not authorized " : "", sta->sta.addr);
 
 			ieee80211_send_deauth_disassoc(sdata, sta->sta.addr,
-						       ifibss->bssid,
+						       अगरibss->bssid,
 						       IEEE80211_STYPE_DEAUTH,
 						       WLAN_REASON_DEAUTH_LEAVING,
 						       true, frame_buf);
 			WARN_ON(__sta_info_destroy(sta));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&local->sta_mtx);
-}
+पूर्ण
 
 /*
  * This function is called with state == IEEE80211_IBSS_MLME_JOINED
  */
 
-static void ieee80211_sta_merge_ibss(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	enum nl80211_bss_scan_width scan_width;
+अटल व्योम ieee80211_sta_merge_ibss(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	क्रमागत nl80211_bss_scan_width scan_width;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
-	mod_timer(&ifibss->timer,
-		  round_jiffies(jiffies + IEEE80211_IBSS_MERGE_INTERVAL));
+	mod_समयr(&अगरibss->समयr,
+		  round_jअगरfies(jअगरfies + IEEE80211_IBSS_MERGE_INTERVAL));
 
 	ieee80211_ibss_sta_expire(sdata);
 
-	if (time_before(jiffies, ifibss->last_scan_completed +
+	अगर (समय_beक्रमe(jअगरfies, अगरibss->last_scan_completed +
 		       IEEE80211_IBSS_MERGE_INTERVAL))
-		return;
+		वापस;
 
-	if (ieee80211_sta_active_ibss(sdata))
-		return;
+	अगर (ieee80211_sta_active_ibss(sdata))
+		वापस;
 
-	if (ifibss->fixed_channel)
-		return;
+	अगर (अगरibss->fixed_channel)
+		वापस;
 
 	sdata_info(sdata,
 		   "No active IBSS STAs - trying to scan for other IBSS networks with same SSID (merge)\n");
 
-	scan_width = cfg80211_chandef_to_scan_width(&ifibss->chandef);
-	ieee80211_request_ibss_scan(sdata, ifibss->ssid, ifibss->ssid_len,
-				    NULL, 0, scan_width);
-}
+	scan_width = cfg80211_chandef_to_scan_width(&अगरibss->chandef);
+	ieee80211_request_ibss_scan(sdata, अगरibss->ssid, अगरibss->ssid_len,
+				    शून्य, 0, scan_width);
+पूर्ण
 
-static void ieee80211_sta_create_ibss(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
+अटल व्योम ieee80211_sta_create_ibss(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
 	u8 bssid[ETH_ALEN];
 	u16 capability;
-	int i;
+	पूर्णांक i;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
-	if (ifibss->fixed_bssid) {
-		memcpy(bssid, ifibss->bssid, ETH_ALEN);
-	} else {
-		/* Generate random, not broadcast, locally administered BSSID. Mix in
-		 * own MAC address to make sure that devices that do not have proper
-		 * random number generator get different BSSID. */
-		get_random_bytes(bssid, ETH_ALEN);
-		for (i = 0; i < ETH_ALEN; i++)
-			bssid[i] ^= sdata->vif.addr[i];
+	अगर (अगरibss->fixed_bssid) अणु
+		स_नकल(bssid, अगरibss->bssid, ETH_ALEN);
+	पूर्ण अन्यथा अणु
+		/* Generate अक्रमom, not broadcast, locally administered BSSID. Mix in
+		 * own MAC address to make sure that devices that करो not have proper
+		 * अक्रमom number generator get dअगरferent BSSID. */
+		get_अक्रमom_bytes(bssid, ETH_ALEN);
+		क्रम (i = 0; i < ETH_ALEN; i++)
+			bssid[i] ^= sdata->vअगर.addr[i];
 		bssid[0] &= ~0x01;
 		bssid[0] |= 0x02;
-	}
+	पूर्ण
 
 	sdata_info(sdata, "Creating new IBSS network, BSSID %pM\n", bssid);
 
 	capability = WLAN_CAPABILITY_IBSS;
 
-	if (ifibss->privacy)
+	अगर (अगरibss->privacy)
 		capability |= WLAN_CAPABILITY_PRIVACY;
 
-	__ieee80211_sta_join_ibss(sdata, bssid, sdata->vif.bss_conf.beacon_int,
-				  &ifibss->chandef, ifibss->basic_rates,
+	__ieee80211_sta_join_ibss(sdata, bssid, sdata->vअगर.bss_conf.beacon_पूर्णांक,
+				  &अगरibss->chandef, अगरibss->basic_rates,
 				  capability, 0, true);
-}
+पूर्ण
 
-static unsigned ibss_setup_channels(struct wiphy *wiphy,
-				    struct ieee80211_channel **channels,
-				    unsigned int channels_max,
+अटल अचिन्हित ibss_setup_channels(काष्ठा wiphy *wiphy,
+				    काष्ठा ieee80211_channel **channels,
+				    अचिन्हित पूर्णांक channels_max,
 				    u32 center_freq, u32 width)
-{
-	struct ieee80211_channel *chan = NULL;
-	unsigned int n_chan = 0;
+अणु
+	काष्ठा ieee80211_channel *chan = शून्य;
+	अचिन्हित पूर्णांक n_chan = 0;
 	u32 start_freq, end_freq, freq;
 
-	if (width <= 20) {
+	अगर (width <= 20) अणु
 		start_freq = center_freq;
 		end_freq = center_freq;
-	} else {
+	पूर्ण अन्यथा अणु
 		start_freq = center_freq - width / 2 + 10;
 		end_freq = center_freq + width / 2 - 10;
-	}
+	पूर्ण
 
-	for (freq = start_freq; freq <= end_freq; freq += 20) {
+	क्रम (freq = start_freq; freq <= end_freq; freq += 20) अणु
 		chan = ieee80211_get_channel(wiphy, freq);
-		if (!chan)
-			continue;
-		if (n_chan >= channels_max)
-			return n_chan;
+		अगर (!chan)
+			जारी;
+		अगर (n_chan >= channels_max)
+			वापस n_chan;
 
 		channels[n_chan] = chan;
 		n_chan++;
-	}
+	पूर्ण
 
-	return n_chan;
-}
+	वापस n_chan;
+पूर्ण
 
-static unsigned int
-ieee80211_ibss_setup_scan_channels(struct wiphy *wiphy,
-				   const struct cfg80211_chan_def *chandef,
-				   struct ieee80211_channel **channels,
-				   unsigned int channels_max)
-{
-	unsigned int n_chan = 0;
+अटल अचिन्हित पूर्णांक
+ieee80211_ibss_setup_scan_channels(काष्ठा wiphy *wiphy,
+				   स्थिर काष्ठा cfg80211_chan_def *chandef,
+				   काष्ठा ieee80211_channel **channels,
+				   अचिन्हित पूर्णांक channels_max)
+अणु
+	अचिन्हित पूर्णांक n_chan = 0;
 	u32 width, cf1, cf2 = 0;
 
-	switch (chandef->width) {
-	case NL80211_CHAN_WIDTH_40:
+	चयन (chandef->width) अणु
+	हाल NL80211_CHAN_WIDTH_40:
 		width = 40;
-		break;
-	case NL80211_CHAN_WIDTH_80P80:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_80P80:
 		cf2 = chandef->center_freq2;
 		fallthrough;
-	case NL80211_CHAN_WIDTH_80:
+	हाल NL80211_CHAN_WIDTH_80:
 		width = 80;
-		break;
-	case NL80211_CHAN_WIDTH_160:
+		अवरोध;
+	हाल NL80211_CHAN_WIDTH_160:
 		width = 160;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		width = 20;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	cf1 = chandef->center_freq1;
 
 	n_chan = ibss_setup_channels(wiphy, channels, channels_max, cf1, width);
 
-	if (cf2)
+	अगर (cf2)
 		n_chan += ibss_setup_channels(wiphy, &channels[n_chan],
 					      channels_max - n_chan, cf2,
 					      width);
 
-	return n_chan;
-}
+	वापस n_chan;
+पूर्ण
 
 /*
  * This function is called with state == IEEE80211_IBSS_MLME_SEARCH
  */
 
-static void ieee80211_sta_find_ibss(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct ieee80211_local *local = sdata->local;
-	struct cfg80211_bss *cbss;
-	struct ieee80211_channel *chan = NULL;
-	const u8 *bssid = NULL;
-	enum nl80211_bss_scan_width scan_width;
-	int active_ibss;
+अटल व्योम ieee80211_sta_find_ibss(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा ieee80211_local *local = sdata->local;
+	काष्ठा cfg80211_bss *cbss;
+	काष्ठा ieee80211_channel *chan = शून्य;
+	स्थिर u8 *bssid = शून्य;
+	क्रमागत nl80211_bss_scan_width scan_width;
+	पूर्णांक active_ibss;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
 	active_ibss = ieee80211_sta_active_ibss(sdata);
 	ibss_dbg(sdata, "sta_find_ibss (active_ibss=%d)\n", active_ibss);
 
-	if (active_ibss)
-		return;
+	अगर (active_ibss)
+		वापस;
 
-	if (ifibss->fixed_bssid)
-		bssid = ifibss->bssid;
-	if (ifibss->fixed_channel)
-		chan = ifibss->chandef.chan;
-	if (!is_zero_ether_addr(ifibss->bssid))
-		bssid = ifibss->bssid;
+	अगर (अगरibss->fixed_bssid)
+		bssid = अगरibss->bssid;
+	अगर (अगरibss->fixed_channel)
+		chan = अगरibss->chandef.chan;
+	अगर (!is_zero_ether_addr(अगरibss->bssid))
+		bssid = अगरibss->bssid;
 	cbss = cfg80211_get_bss(local->hw.wiphy, chan, bssid,
-				ifibss->ssid, ifibss->ssid_len,
+				अगरibss->ssid, अगरibss->ssid_len,
 				IEEE80211_BSS_TYPE_IBSS,
-				IEEE80211_PRIVACY(ifibss->privacy));
+				IEEE80211_PRIVACY(अगरibss->privacy));
 
-	if (cbss) {
-		struct ieee80211_bss *bss;
+	अगर (cbss) अणु
+		काष्ठा ieee80211_bss *bss;
 
-		bss = (void *)cbss->priv;
+		bss = (व्योम *)cbss->priv;
 		ibss_dbg(sdata,
 			 "sta_find_ibss: selected %pM current %pM\n",
-			 cbss->bssid, ifibss->bssid);
+			 cbss->bssid, अगरibss->bssid);
 		sdata_info(sdata,
 			   "Selected IBSS BSSID %pM based on configured SSID\n",
 			   cbss->bssid);
 
 		ieee80211_sta_join_ibss(sdata, bss);
 		ieee80211_rx_bss_put(local, bss);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* if a fixed bssid and a fixed freq have been provided create the IBSS
-	 * directly and do not waste time scanning
+	/* अगर a fixed bssid and a fixed freq have been provided create the IBSS
+	 * directly and करो not waste समय scanning
 	 */
-	if (ifibss->fixed_bssid && ifibss->fixed_channel) {
+	अगर (अगरibss->fixed_bssid && अगरibss->fixed_channel) अणु
 		sdata_info(sdata, "Created IBSS using preconfigured BSSID %pM\n",
 			   bssid);
 		ieee80211_sta_create_ibss(sdata);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 
 	ibss_dbg(sdata, "sta_find_ibss: did not try to join ibss\n");
 
 	/* Selected IBSS not found in current scan results - try to scan */
-	if (time_after(jiffies, ifibss->last_scan_completed +
-					IEEE80211_SCAN_INTERVAL)) {
-		struct ieee80211_channel *channels[8];
-		unsigned int num;
+	अगर (समय_after(jअगरfies, अगरibss->last_scan_completed +
+					IEEE80211_SCAN_INTERVAL)) अणु
+		काष्ठा ieee80211_channel *channels[8];
+		अचिन्हित पूर्णांक num;
 
 		sdata_info(sdata, "Trigger new scan to find an IBSS to join\n");
 
-		scan_width = cfg80211_chandef_to_scan_width(&ifibss->chandef);
+		scan_width = cfg80211_chandef_to_scan_width(&अगरibss->chandef);
 
-		if (ifibss->fixed_channel) {
+		अगर (अगरibss->fixed_channel) अणु
 			num = ieee80211_ibss_setup_scan_channels(local->hw.wiphy,
-								 &ifibss->chandef,
+								 &अगरibss->chandef,
 								 channels,
 								 ARRAY_SIZE(channels));
-			ieee80211_request_ibss_scan(sdata, ifibss->ssid,
-						    ifibss->ssid_len, channels,
+			ieee80211_request_ibss_scan(sdata, अगरibss->ssid,
+						    अगरibss->ssid_len, channels,
 						    num, scan_width);
-		} else {
-			ieee80211_request_ibss_scan(sdata, ifibss->ssid,
-						    ifibss->ssid_len, NULL,
+		पूर्ण अन्यथा अणु
+			ieee80211_request_ibss_scan(sdata, अगरibss->ssid,
+						    अगरibss->ssid_len, शून्य,
 						    0, scan_width);
-		}
-	} else {
-		int interval = IEEE80211_SCAN_INTERVAL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		पूर्णांक पूर्णांकerval = IEEE80211_SCAN_INTERVAL;
 
-		if (time_after(jiffies, ifibss->ibss_join_req +
+		अगर (समय_after(jअगरfies, अगरibss->ibss_join_req +
 			       IEEE80211_IBSS_JOIN_TIMEOUT))
 			ieee80211_sta_create_ibss(sdata);
 
-		mod_timer(&ifibss->timer,
-			  round_jiffies(jiffies + interval));
-	}
-}
+		mod_समयr(&अगरibss->समयr,
+			  round_jअगरfies(jअगरfies + पूर्णांकerval));
+	पूर्ण
+पूर्ण
 
-static void ieee80211_rx_mgmt_probe_req(struct ieee80211_sub_if_data *sdata,
-					struct sk_buff *req)
-{
-	struct ieee80211_mgmt *mgmt = (void *)req->data;
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct ieee80211_local *local = sdata->local;
-	int tx_last_beacon, len = req->len;
-	struct sk_buff *skb;
-	struct beacon_data *presp;
+अटल व्योम ieee80211_rx_mgmt_probe_req(काष्ठा ieee80211_sub_अगर_data *sdata,
+					काष्ठा sk_buff *req)
+अणु
+	काष्ठा ieee80211_mgmt *mgmt = (व्योम *)req->data;
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा ieee80211_local *local = sdata->local;
+	पूर्णांक tx_last_beacon, len = req->len;
+	काष्ठा sk_buff *skb;
+	काष्ठा beacon_data *presp;
 	u8 *pos, *end;
 
-	sdata_assert_lock(sdata);
+	sdata_निश्चित_lock(sdata);
 
-	presp = rcu_dereference_protected(ifibss->presp,
+	presp = rcu_dereference_रक्षित(अगरibss->presp,
 					  lockdep_is_held(&sdata->wdev.mtx));
 
-	if (ifibss->state != IEEE80211_IBSS_MLME_JOINED ||
+	अगर (अगरibss->state != IEEE80211_IBSS_MLME_JOINED ||
 	    len < 24 + 2 || !presp)
-		return;
+		वापस;
 
 	tx_last_beacon = drv_tx_last_beacon(local);
 
@@ -1549,136 +1550,136 @@ static void ieee80211_rx_mgmt_probe_req(struct ieee80211_sub_if_data *sdata,
 	ibss_dbg(sdata, "\tBSSID=%pM (tx_last_beacon=%d)\n",
 		 mgmt->bssid, tx_last_beacon);
 
-	if (!tx_last_beacon && is_multicast_ether_addr(mgmt->da))
-		return;
+	अगर (!tx_last_beacon && is_multicast_ether_addr(mgmt->da))
+		वापस;
 
-	if (!ether_addr_equal(mgmt->bssid, ifibss->bssid) &&
+	अगर (!ether_addr_equal(mgmt->bssid, अगरibss->bssid) &&
 	    !is_broadcast_ether_addr(mgmt->bssid))
-		return;
+		वापस;
 
 	end = ((u8 *) mgmt) + len;
 	pos = mgmt->u.probe_req.variable;
-	if (pos[0] != WLAN_EID_SSID ||
-	    pos + 2 + pos[1] > end) {
+	अगर (pos[0] != WLAN_EID_SSID ||
+	    pos + 2 + pos[1] > end) अणु
 		ibss_dbg(sdata, "Invalid SSID IE in ProbeReq from %pM\n",
 			 mgmt->sa);
-		return;
-	}
-	if (pos[1] != 0 &&
-	    (pos[1] != ifibss->ssid_len ||
-	     memcmp(pos + 2, ifibss->ssid, ifibss->ssid_len))) {
-		/* Ignore ProbeReq for foreign SSID */
-		return;
-	}
+		वापस;
+	पूर्ण
+	अगर (pos[1] != 0 &&
+	    (pos[1] != अगरibss->ssid_len ||
+	     स_भेद(pos + 2, अगरibss->ssid, अगरibss->ssid_len))) अणु
+		/* Ignore ProbeReq क्रम क्रमeign SSID */
+		वापस;
+	पूर्ण
 
 	/* Reply with ProbeResp */
 	skb = dev_alloc_skb(local->tx_headroom + presp->head_len);
-	if (!skb)
-		return;
+	अगर (!skb)
+		वापस;
 
 	skb_reserve(skb, local->tx_headroom);
 	skb_put_data(skb, presp->head, presp->head_len);
 
-	memcpy(((struct ieee80211_mgmt *) skb->data)->da, mgmt->sa, ETH_ALEN);
+	स_नकल(((काष्ठा ieee80211_mgmt *) skb->data)->da, mgmt->sa, ETH_ALEN);
 	ibss_dbg(sdata, "Sending ProbeResp to %pM\n", mgmt->sa);
 	IEEE80211_SKB_CB(skb)->flags |= IEEE80211_TX_INTFL_DONT_ENCRYPT;
 
-	/* avoid excessive retries for probe request to wildcard SSIDs */
-	if (pos[1] == 0)
+	/* aव्योम excessive retries क्रम probe request to wildcard SSIDs */
+	अगर (pos[1] == 0)
 		IEEE80211_SKB_CB(skb)->flags |= IEEE80211_TX_CTL_NO_ACK;
 
 	ieee80211_tx_skb(sdata, skb);
-}
+पूर्ण
 
-static
-void ieee80211_rx_mgmt_probe_beacon(struct ieee80211_sub_if_data *sdata,
-				    struct ieee80211_mgmt *mgmt, size_t len,
-				    struct ieee80211_rx_status *rx_status)
-{
-	size_t baselen;
-	struct ieee802_11_elems elems;
+अटल
+व्योम ieee80211_rx_mgmt_probe_beacon(काष्ठा ieee80211_sub_अगर_data *sdata,
+				    काष्ठा ieee80211_mgmt *mgmt, माप_प्रकार len,
+				    काष्ठा ieee80211_rx_status *rx_status)
+अणु
+	माप_प्रकार baselen;
+	काष्ठा ieee802_11_elems elems;
 
-	BUILD_BUG_ON(offsetof(typeof(mgmt->u.probe_resp), variable) !=
-		     offsetof(typeof(mgmt->u.beacon), variable));
+	BUILD_BUG_ON(दुरत्व(typeof(mgmt->u.probe_resp), variable) !=
+		     दुरत्व(typeof(mgmt->u.beacon), variable));
 
 	/*
 	 * either beacon or probe_resp but the variable field is at the
 	 * same offset
 	 */
 	baselen = (u8 *) mgmt->u.probe_resp.variable - (u8 *) mgmt;
-	if (baselen > len)
-		return;
+	अगर (baselen > len)
+		वापस;
 
 	ieee802_11_parse_elems(mgmt->u.probe_resp.variable, len - baselen,
-			       false, &elems, mgmt->bssid, NULL);
+			       false, &elems, mgmt->bssid, शून्य);
 
 	ieee80211_rx_bss_info(sdata, mgmt, len, rx_status, &elems);
-}
+पूर्ण
 
-void ieee80211_ibss_rx_queued_mgmt(struct ieee80211_sub_if_data *sdata,
-				   struct sk_buff *skb)
-{
-	struct ieee80211_rx_status *rx_status;
-	struct ieee80211_mgmt *mgmt;
+व्योम ieee80211_ibss_rx_queued_mgmt(काष्ठा ieee80211_sub_अगर_data *sdata,
+				   काष्ठा sk_buff *skb)
+अणु
+	काष्ठा ieee80211_rx_status *rx_status;
+	काष्ठा ieee80211_mgmt *mgmt;
 	u16 fc;
-	struct ieee802_11_elems elems;
-	int ies_len;
+	काष्ठा ieee802_11_elems elems;
+	पूर्णांक ies_len;
 
 	rx_status = IEEE80211_SKB_RXCB(skb);
-	mgmt = (struct ieee80211_mgmt *) skb->data;
+	mgmt = (काष्ठा ieee80211_mgmt *) skb->data;
 	fc = le16_to_cpu(mgmt->frame_control);
 
 	sdata_lock(sdata);
 
-	if (!sdata->u.ibss.ssid_len)
-		goto mgmt_out; /* not ready to merge yet */
+	अगर (!sdata->u.ibss.ssid_len)
+		जाओ mgmt_out; /* not पढ़ोy to merge yet */
 
-	switch (fc & IEEE80211_FCTL_STYPE) {
-	case IEEE80211_STYPE_PROBE_REQ:
+	चयन (fc & IEEE80211_FCTL_STYPE) अणु
+	हाल IEEE80211_STYPE_PROBE_REQ:
 		ieee80211_rx_mgmt_probe_req(sdata, skb);
-		break;
-	case IEEE80211_STYPE_PROBE_RESP:
-	case IEEE80211_STYPE_BEACON:
+		अवरोध;
+	हाल IEEE80211_STYPE_PROBE_RESP:
+	हाल IEEE80211_STYPE_BEACON:
 		ieee80211_rx_mgmt_probe_beacon(sdata, mgmt, skb->len,
 					       rx_status);
-		break;
-	case IEEE80211_STYPE_AUTH:
+		अवरोध;
+	हाल IEEE80211_STYPE_AUTH:
 		ieee80211_rx_mgmt_auth_ibss(sdata, mgmt, skb->len);
-		break;
-	case IEEE80211_STYPE_DEAUTH:
+		अवरोध;
+	हाल IEEE80211_STYPE_DEAUTH:
 		ieee80211_rx_mgmt_deauth_ibss(sdata, mgmt, skb->len);
-		break;
-	case IEEE80211_STYPE_ACTION:
-		switch (mgmt->u.action.category) {
-		case WLAN_CATEGORY_SPECTRUM_MGMT:
+		अवरोध;
+	हाल IEEE80211_STYPE_ACTION:
+		चयन (mgmt->u.action.category) अणु
+		हाल WLAN_CATEGORY_SPECTRUM_MGMT:
 			ies_len = skb->len -
-				  offsetof(struct ieee80211_mgmt,
-					   u.action.u.chan_switch.variable);
+				  दुरत्व(काष्ठा ieee80211_mgmt,
+					   u.action.u.chan_चयन.variable);
 
-			if (ies_len < 0)
-				break;
+			अगर (ies_len < 0)
+				अवरोध;
 
 			ieee802_11_parse_elems(
-				mgmt->u.action.u.chan_switch.variable,
-				ies_len, true, &elems, mgmt->bssid, NULL);
+				mgmt->u.action.u.chan_चयन.variable,
+				ies_len, true, &elems, mgmt->bssid, शून्य);
 
-			if (elems.parse_error)
-				break;
+			अगर (elems.parse_error)
+				अवरोध;
 
 			ieee80211_rx_mgmt_spectrum_mgmt(sdata, mgmt, skb->len,
 							rx_status, &elems);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
  mgmt_out:
 	sdata_unlock(sdata);
-}
+पूर्ण
 
-void ieee80211_ibss_work(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
-	struct sta_info *sta;
+व्योम ieee80211_ibss_work(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
+	काष्ठा sta_info *sta;
 
 	sdata_lock(sdata);
 
@@ -1687,101 +1688,101 @@ void ieee80211_ibss_work(struct ieee80211_sub_if_data *sdata)
 	 * when we aren't even joined (or trying) with a
 	 * network.
 	 */
-	if (!ifibss->ssid_len)
-		goto out;
+	अगर (!अगरibss->ssid_len)
+		जाओ out;
 
-	spin_lock_bh(&ifibss->incomplete_lock);
-	while (!list_empty(&ifibss->incomplete_stations)) {
-		sta = list_first_entry(&ifibss->incomplete_stations,
-				       struct sta_info, list);
+	spin_lock_bh(&अगरibss->incomplete_lock);
+	जबतक (!list_empty(&अगरibss->incomplete_stations)) अणु
+		sta = list_first_entry(&अगरibss->incomplete_stations,
+				       काष्ठा sta_info, list);
 		list_del(&sta->list);
-		spin_unlock_bh(&ifibss->incomplete_lock);
+		spin_unlock_bh(&अगरibss->incomplete_lock);
 
 		ieee80211_ibss_finish_sta(sta);
-		rcu_read_unlock();
-		spin_lock_bh(&ifibss->incomplete_lock);
-	}
-	spin_unlock_bh(&ifibss->incomplete_lock);
+		rcu_पढ़ो_unlock();
+		spin_lock_bh(&अगरibss->incomplete_lock);
+	पूर्ण
+	spin_unlock_bh(&अगरibss->incomplete_lock);
 
-	switch (ifibss->state) {
-	case IEEE80211_IBSS_MLME_SEARCH:
+	चयन (अगरibss->state) अणु
+	हाल IEEE80211_IBSS_MLME_SEARCH:
 		ieee80211_sta_find_ibss(sdata);
-		break;
-	case IEEE80211_IBSS_MLME_JOINED:
+		अवरोध;
+	हाल IEEE80211_IBSS_MLME_JOINED:
 		ieee80211_sta_merge_ibss(sdata);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		WARN_ON(1);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
  out:
 	sdata_unlock(sdata);
-}
+पूर्ण
 
-static void ieee80211_ibss_timer(struct timer_list *t)
-{
-	struct ieee80211_sub_if_data *sdata =
-		from_timer(sdata, t, u.ibss.timer);
+अटल व्योम ieee80211_ibss_समयr(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata =
+		from_समयr(sdata, t, u.ibss.समयr);
 
 	ieee80211_queue_work(&sdata->local->hw, &sdata->work);
-}
+पूर्ण
 
-void ieee80211_ibss_setup_sdata(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
+व्योम ieee80211_ibss_setup_sdata(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
 
-	timer_setup(&ifibss->timer, ieee80211_ibss_timer, 0);
-	INIT_LIST_HEAD(&ifibss->incomplete_stations);
-	spin_lock_init(&ifibss->incomplete_lock);
-	INIT_WORK(&ifibss->csa_connection_drop_work,
+	समयr_setup(&अगरibss->समयr, ieee80211_ibss_समयr, 0);
+	INIT_LIST_HEAD(&अगरibss->incomplete_stations);
+	spin_lock_init(&अगरibss->incomplete_lock);
+	INIT_WORK(&अगरibss->csa_connection_drop_work,
 		  ieee80211_csa_connection_drop_work);
-}
+पूर्ण
 
-/* scan finished notification */
-void ieee80211_ibss_notify_scan_completed(struct ieee80211_local *local)
-{
-	struct ieee80211_sub_if_data *sdata;
+/* scan finished notअगरication */
+व्योम ieee80211_ibss_notअगरy_scan_completed(काष्ठा ieee80211_local *local)
+अणु
+	काष्ठा ieee80211_sub_अगर_data *sdata;
 
-	mutex_lock(&local->iflist_mtx);
-	list_for_each_entry(sdata, &local->interfaces, list) {
-		if (!ieee80211_sdata_running(sdata))
-			continue;
-		if (sdata->vif.type != NL80211_IFTYPE_ADHOC)
-			continue;
-		sdata->u.ibss.last_scan_completed = jiffies;
-	}
-	mutex_unlock(&local->iflist_mtx);
-}
+	mutex_lock(&local->अगरlist_mtx);
+	list_क्रम_each_entry(sdata, &local->पूर्णांकerfaces, list) अणु
+		अगर (!ieee80211_sdata_running(sdata))
+			जारी;
+		अगर (sdata->vअगर.type != NL80211_IFTYPE_ADHOC)
+			जारी;
+		sdata->u.ibss.last_scan_completed = jअगरfies;
+	पूर्ण
+	mutex_unlock(&local->अगरlist_mtx);
+पूर्ण
 
-int ieee80211_ibss_join(struct ieee80211_sub_if_data *sdata,
-			struct cfg80211_ibss_params *params)
-{
+पूर्णांक ieee80211_ibss_join(काष्ठा ieee80211_sub_अगर_data *sdata,
+			काष्ठा cfg80211_ibss_params *params)
+अणु
 	u32 changed = 0;
 	u32 rate_flags;
-	struct ieee80211_supported_band *sband;
-	enum ieee80211_chanctx_mode chanmode;
-	struct ieee80211_local *local = sdata->local;
-	int radar_detect_width = 0;
-	int i;
-	int ret;
+	काष्ठा ieee80211_supported_band *sband;
+	क्रमागत ieee80211_chanctx_mode chanmode;
+	काष्ठा ieee80211_local *local = sdata->local;
+	पूर्णांक radar_detect_width = 0;
+	पूर्णांक i;
+	पूर्णांक ret;
 
-	if (params->chandef.chan->freq_offset) {
+	अगर (params->chandef.chan->freq_offset) अणु
 		/* this may work, but is untested */
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	ret = cfg80211_chandef_dfs_required(local->hw.wiphy,
 					    &params->chandef,
-					    sdata->wdev.iftype);
-	if (ret < 0)
-		return ret;
+					    sdata->wdev.अगरtype);
+	अगर (ret < 0)
+		वापस ret;
 
-	if (ret > 0) {
-		if (!params->userspace_handles_dfs)
-			return -EINVAL;
+	अगर (ret > 0) अणु
+		अगर (!params->userspace_handles_dfs)
+			वापस -EINVAL;
 		radar_detect_width = BIT(params->chandef.width);
-	}
+	पूर्ण
 
 	chanmode = (params->channel_fixed && !ret) ?
 		IEEE80211_CHANCTX_SHARED : IEEE80211_CHANCTX_EXCLUSIVE;
@@ -1790,53 +1791,53 @@ int ieee80211_ibss_join(struct ieee80211_sub_if_data *sdata,
 	ret = ieee80211_check_combinations(sdata, &params->chandef, chanmode,
 					   radar_detect_width);
 	mutex_unlock(&local->chanctx_mtx);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	if (params->bssid) {
-		memcpy(sdata->u.ibss.bssid, params->bssid, ETH_ALEN);
+	अगर (params->bssid) अणु
+		स_नकल(sdata->u.ibss.bssid, params->bssid, ETH_ALEN);
 		sdata->u.ibss.fixed_bssid = true;
-	} else
+	पूर्ण अन्यथा
 		sdata->u.ibss.fixed_bssid = false;
 
 	sdata->u.ibss.privacy = params->privacy;
 	sdata->u.ibss.control_port = params->control_port;
 	sdata->u.ibss.userspace_handles_dfs = params->userspace_handles_dfs;
 	sdata->u.ibss.basic_rates = params->basic_rates;
-	sdata->u.ibss.last_scan_completed = jiffies;
+	sdata->u.ibss.last_scan_completed = jअगरfies;
 
-	/* fix basic_rates if channel does not support these rates */
+	/* fix basic_rates अगर channel करोes not support these rates */
 	rate_flags = ieee80211_chandef_rate_flags(&params->chandef);
 	sband = local->hw.wiphy->bands[params->chandef.chan->band];
-	for (i = 0; i < sband->n_bitrates; i++) {
-		if ((rate_flags & sband->bitrates[i].flags) != rate_flags)
+	क्रम (i = 0; i < sband->n_bitrates; i++) अणु
+		अगर ((rate_flags & sband->bitrates[i].flags) != rate_flags)
 			sdata->u.ibss.basic_rates &= ~BIT(i);
-	}
-	memcpy(sdata->vif.bss_conf.mcast_rate, params->mcast_rate,
-	       sizeof(params->mcast_rate));
+	पूर्ण
+	स_नकल(sdata->vअगर.bss_conf.mcast_rate, params->mcast_rate,
+	       माप(params->mcast_rate));
 
-	sdata->vif.bss_conf.beacon_int = params->beacon_interval;
+	sdata->vअगर.bss_conf.beacon_पूर्णांक = params->beacon_पूर्णांकerval;
 
 	sdata->u.ibss.chandef = params->chandef;
 	sdata->u.ibss.fixed_channel = params->channel_fixed;
 
-	if (params->ie) {
+	अगर (params->ie) अणु
 		sdata->u.ibss.ie = kmemdup(params->ie, params->ie_len,
 					   GFP_KERNEL);
-		if (sdata->u.ibss.ie)
+		अगर (sdata->u.ibss.ie)
 			sdata->u.ibss.ie_len = params->ie_len;
-	}
+	पूर्ण
 
 	sdata->u.ibss.state = IEEE80211_IBSS_MLME_SEARCH;
-	sdata->u.ibss.ibss_join_req = jiffies;
+	sdata->u.ibss.ibss_join_req = jअगरfies;
 
-	memcpy(sdata->u.ibss.ssid, params->ssid, params->ssid_len);
+	स_नकल(sdata->u.ibss.ssid, params->ssid, params->ssid_len);
 	sdata->u.ibss.ssid_len = params->ssid_len;
 
-	memcpy(&sdata->u.ibss.ht_capa, &params->ht_capa,
-	       sizeof(sdata->u.ibss.ht_capa));
-	memcpy(&sdata->u.ibss.ht_capa_mask, &params->ht_capa_mask,
-	       sizeof(sdata->u.ibss.ht_capa_mask));
+	स_नकल(&sdata->u.ibss.ht_capa, &params->ht_capa,
+	       माप(sdata->u.ibss.ht_capa));
+	स_नकल(&sdata->u.ibss.ht_capa_mask, &params->ht_capa_mask,
+	       माप(sdata->u.ibss.ht_capa_mask));
 
 	/*
 	 * 802.11n-2009 9.13.3.1: In an IBSS, the HT Protection field is
@@ -1848,12 +1849,12 @@ int ieee80211_ibss_join(struct ieee80211_sub_if_data *sdata,
 	 * were set to 1.
 	 */
 
-	sdata->vif.bss_conf.ht_operation_mode |=
+	sdata->vअगर.bss_conf.ht_operation_mode |=
 		  IEEE80211_HT_OP_MODE_PROTECTION_NONHT_MIXED
 		| IEEE80211_HT_PARAM_RIFS_MODE;
 
 	changed |= BSS_CHANGED_HT | BSS_CHANGED_MCAST_RATE;
-	ieee80211_bss_info_change_notify(sdata, changed);
+	ieee80211_bss_info_change_notअगरy(sdata, changed);
 
 	sdata->smps_mode = IEEE80211_SMPS_OFF;
 	sdata->needed_rx_chains = local->rx_chains;
@@ -1861,31 +1862,31 @@ int ieee80211_ibss_join(struct ieee80211_sub_if_data *sdata,
 
 	ieee80211_queue_work(&local->hw, &sdata->work);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ieee80211_ibss_leave(struct ieee80211_sub_if_data *sdata)
-{
-	struct ieee80211_if_ibss *ifibss = &sdata->u.ibss;
+पूर्णांक ieee80211_ibss_leave(काष्ठा ieee80211_sub_अगर_data *sdata)
+अणु
+	काष्ठा ieee80211_अगर_ibss *अगरibss = &sdata->u.ibss;
 
 	ieee80211_ibss_disconnect(sdata);
-	ifibss->ssid_len = 0;
-	eth_zero_addr(ifibss->bssid);
+	अगरibss->ssid_len = 0;
+	eth_zero_addr(अगरibss->bssid);
 
-	/* remove beacon */
-	kfree(sdata->u.ibss.ie);
-	sdata->u.ibss.ie = NULL;
+	/* हटाओ beacon */
+	kमुक्त(sdata->u.ibss.ie);
+	sdata->u.ibss.ie = शून्य;
 	sdata->u.ibss.ie_len = 0;
 
 	/* on the next join, re-program HT parameters */
-	memset(&ifibss->ht_capa, 0, sizeof(ifibss->ht_capa));
-	memset(&ifibss->ht_capa_mask, 0, sizeof(ifibss->ht_capa_mask));
+	स_रखो(&अगरibss->ht_capa, 0, माप(अगरibss->ht_capa));
+	स_रखो(&अगरibss->ht_capa_mask, 0, माप(अगरibss->ht_capa_mask));
 
 	synchronize_rcu();
 
 	skb_queue_purge(&sdata->skb_queue);
 
-	del_timer_sync(&sdata->u.ibss.timer);
+	del_समयr_sync(&sdata->u.ibss.समयr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

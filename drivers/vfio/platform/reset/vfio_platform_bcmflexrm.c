@@ -1,112 +1,113 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2017 Broadcom
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License as
  * published by the Free Software Foundation version 2.
  *
  * This program is distributed "as is" WITHOUT ANY WARRANTY of any
  * kind, whether express or implied; without even the implied warranty
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  */
 
 /*
- * This driver provides reset support for Broadcom FlexRM ring manager
- * to VFIO platform.
+ * This driver provides reset support क्रम Broadcom FlexRM ring manager
+ * to VFIO platक्रमm.
  */
 
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "../vfio_platform_private.h"
+#समावेश "../vfio_platform_private.h"
 
 /* FlexRM configuration */
-#define RING_REGS_SIZE					0x10000
-#define RING_VER_MAGIC					0x76303031
+#घोषणा RING_REGS_SIZE					0x10000
+#घोषणा RING_VER_MAGIC					0x76303031
 
-/* Per-Ring register offsets */
-#define RING_VER					0x000
-#define RING_CONTROL					0x034
-#define RING_FLUSH_DONE					0x038
+/* Per-Ring रेजिस्टर offsets */
+#घोषणा RING_VER					0x000
+#घोषणा RING_CONTROL					0x034
+#घोषणा RING_FLUSH_DONE					0x038
 
 /* Register RING_CONTROL fields */
-#define CONTROL_FLUSH_SHIFT				5
+#घोषणा CONTROL_FLUSH_SHIFT				5
 
 /* Register RING_FLUSH_DONE fields */
-#define FLUSH_DONE_MASK					0x1
+#घोषणा FLUSH_DONE_MASK					0x1
 
-static int vfio_platform_bcmflexrm_shutdown(void __iomem *ring)
-{
-	unsigned int timeout;
+अटल पूर्णांक vfio_platक्रमm_bcmflexrm_shutकरोwn(व्योम __iomem *ring)
+अणु
+	अचिन्हित पूर्णांक समयout;
 
 	/* Disable/inactivate ring */
-	writel_relaxed(0x0, ring + RING_CONTROL);
+	ग_लिखोl_relaxed(0x0, ring + RING_CONTROL);
 
 	/* Set ring flush state */
-	timeout = 1000; /* timeout of 1s */
-	writel_relaxed(BIT(CONTROL_FLUSH_SHIFT), ring + RING_CONTROL);
-	do {
-		if (readl_relaxed(ring + RING_FLUSH_DONE) &
+	समयout = 1000; /* समयout of 1s */
+	ग_लिखोl_relaxed(BIT(CONTROL_FLUSH_SHIFT), ring + RING_CONTROL);
+	करो अणु
+		अगर (पढ़ोl_relaxed(ring + RING_FLUSH_DONE) &
 		    FLUSH_DONE_MASK)
-			break;
+			अवरोध;
 		mdelay(1);
-	} while (--timeout);
-	if (!timeout)
-		return -ETIMEDOUT;
+	पूर्ण जबतक (--समयout);
+	अगर (!समयout)
+		वापस -ETIMEDOUT;
 
 	/* Clear ring flush state */
-	timeout = 1000; /* timeout of 1s */
-	writel_relaxed(0x0, ring + RING_CONTROL);
-	do {
-		if (!(readl_relaxed(ring + RING_FLUSH_DONE) &
+	समयout = 1000; /* समयout of 1s */
+	ग_लिखोl_relaxed(0x0, ring + RING_CONTROL);
+	करो अणु
+		अगर (!(पढ़ोl_relaxed(ring + RING_FLUSH_DONE) &
 		      FLUSH_DONE_MASK))
-			break;
+			अवरोध;
 		mdelay(1);
-	} while (--timeout);
-	if (!timeout)
-		return -ETIMEDOUT;
+	पूर्ण जबतक (--समयout);
+	अगर (!समयout)
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vfio_platform_bcmflexrm_reset(struct vfio_platform_device *vdev)
-{
-	void __iomem *ring;
-	int rc = 0, ret = 0, ring_num = 0;
-	struct vfio_platform_region *reg = &vdev->regions[0];
+अटल पूर्णांक vfio_platक्रमm_bcmflexrm_reset(काष्ठा vfio_platक्रमm_device *vdev)
+अणु
+	व्योम __iomem *ring;
+	पूर्णांक rc = 0, ret = 0, ring_num = 0;
+	काष्ठा vfio_platक्रमm_region *reg = &vdev->regions[0];
 
-	/* Map FlexRM ring registers if not mapped */
-	if (!reg->ioaddr) {
+	/* Map FlexRM ring रेजिस्टरs अगर not mapped */
+	अगर (!reg->ioaddr) अणु
 		reg->ioaddr = ioremap(reg->addr, reg->size);
-		if (!reg->ioaddr)
-			return -ENOMEM;
-	}
+		अगर (!reg->ioaddr)
+			वापस -ENOMEM;
+	पूर्ण
 
-	/* Discover and shutdown each FlexRM ring */
-	for (ring = reg->ioaddr;
-	     ring < (reg->ioaddr + reg->size); ring += RING_REGS_SIZE) {
-		if (readl_relaxed(ring + RING_VER) == RING_VER_MAGIC) {
-			rc = vfio_platform_bcmflexrm_shutdown(ring);
-			if (rc) {
+	/* Discover and shutकरोwn each FlexRM ring */
+	क्रम (ring = reg->ioaddr;
+	     ring < (reg->ioaddr + reg->size); ring += RING_REGS_SIZE) अणु
+		अगर (पढ़ोl_relaxed(ring + RING_VER) == RING_VER_MAGIC) अणु
+			rc = vfio_platक्रमm_bcmflexrm_shutकरोwn(ring);
+			अगर (rc) अणु
 				dev_warn(vdev->device,
 					 "FlexRM ring%d shutdown error %d\n",
 					 ring_num, rc);
 				ret |= rc;
-			}
+			पूर्ण
 			ring_num++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 module_vfio_reset_handler("brcm,iproc-flexrm-mbox",
-			  vfio_platform_bcmflexrm_reset);
+			  vfio_platक्रमm_bcmflexrm_reset);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Anup Patel <anup.patel@broadcom.com>");

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
     VES1820  - Single Chip Cable Channel Receiver driver module
 
@@ -6,35 +7,35 @@
 
 */
 
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include <linux/slab.h>
-#include <asm/div64.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/भाग64.h>
 
-#include <media/dvb_frontend.h>
-#include "ves1820.h"
+#समावेश <media/dvb_frontend.h>
+#समावेश "ves1820.h"
 
 
 
-struct ves1820_state {
-	struct i2c_adapter* i2c;
+काष्ठा ves1820_state अणु
+	काष्ठा i2c_adapter* i2c;
 	/* configuration settings */
-	const struct ves1820_config* config;
-	struct dvb_frontend frontend;
+	स्थिर काष्ठा ves1820_config* config;
+	काष्ठा dvb_frontend frontend;
 
-	/* private demodulator data */
+	/* निजी demodulator data */
 	u8 reg0;
 	u8 pwm;
-};
+पूर्ण;
 
 
-static int verbose;
+अटल पूर्णांक verbose;
 
-static u8 ves1820_inittab[] = {
+अटल u8 ves1820_inittab[] = अणु
 	0x69, 0x6A, 0x93, 0x1A, 0x12, 0x46, 0x26, 0x1A,
 	0x43, 0x6A, 0xAA, 0xAA, 0x1E, 0x85, 0x43, 0x20,
 	0xE0, 0x00, 0xA1, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -42,333 +43,333 @@ static u8 ves1820_inittab[] = {
 	0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x40
-};
+पूर्ण;
 
-static int ves1820_writereg(struct ves1820_state *state, u8 reg, u8 data)
-{
-	u8 buf[] = { 0x00, reg, data };
-	struct i2c_msg msg = {.addr = state->config->demod_address,.flags = 0,.buf = buf,.len = 3 };
-	int ret;
+अटल पूर्णांक ves1820_ग_लिखोreg(काष्ठा ves1820_state *state, u8 reg, u8 data)
+अणु
+	u8 buf[] = अणु 0x00, reg, data पूर्ण;
+	काष्ठा i2c_msg msg = अणु.addr = state->config->demod_address,.flags = 0,.buf = buf,.len = 3 पूर्ण;
+	पूर्णांक ret;
 
 	ret = i2c_transfer(state->i2c, &msg, 1);
 
-	if (ret != 1)
-		printk("ves1820: %s(): writereg error (reg == 0x%02x, val == 0x%02x, ret == %i)\n",
+	अगर (ret != 1)
+		prपूर्णांकk("ves1820: %s(): writereg error (reg == 0x%02x, val == 0x%02x, ret == %i)\n",
 		       __func__, reg, data, ret);
 
-	return (ret != 1) ? -EREMOTEIO : 0;
-}
+	वापस (ret != 1) ? -EREMOTEIO : 0;
+पूर्ण
 
-static u8 ves1820_readreg(struct ves1820_state *state, u8 reg)
-{
-	u8 b0[] = { 0x00, reg };
-	u8 b1[] = { 0 };
-	struct i2c_msg msg[] = {
-		{.addr = state->config->demod_address,.flags = 0,.buf = b0,.len = 2},
-		{.addr = state->config->demod_address,.flags = I2C_M_RD,.buf = b1,.len = 1}
-	};
-	int ret;
+अटल u8 ves1820_पढ़ोreg(काष्ठा ves1820_state *state, u8 reg)
+अणु
+	u8 b0[] = अणु 0x00, reg पूर्ण;
+	u8 b1[] = अणु 0 पूर्ण;
+	काष्ठा i2c_msg msg[] = अणु
+		अणु.addr = state->config->demod_address,.flags = 0,.buf = b0,.len = 2पूर्ण,
+		अणु.addr = state->config->demod_address,.flags = I2C_M_RD,.buf = b1,.len = 1पूर्ण
+	पूर्ण;
+	पूर्णांक ret;
 
 	ret = i2c_transfer(state->i2c, msg, 2);
 
-	if (ret != 2)
-		printk("ves1820: %s(): readreg error (reg == 0x%02x, ret == %i)\n",
+	अगर (ret != 2)
+		prपूर्णांकk("ves1820: %s(): readreg error (reg == 0x%02x, ret == %i)\n",
 		       __func__, reg, ret);
 
-	return b1[0];
-}
+	वापस b1[0];
+पूर्ण
 
-static int ves1820_setup_reg0(struct ves1820_state *state,
-			      u8 reg0, enum fe_spectral_inversion inversion)
-{
+अटल पूर्णांक ves1820_setup_reg0(काष्ठा ves1820_state *state,
+			      u8 reg0, क्रमागत fe_spectral_inversion inversion)
+अणु
 	reg0 |= state->reg0 & 0x62;
 
-	if (INVERSION_ON == inversion) {
-		if (!state->config->invert) reg0 |= 0x20;
-		else reg0 &= ~0x20;
-	} else if (INVERSION_OFF == inversion) {
-		if (!state->config->invert) reg0 &= ~0x20;
-		else reg0 |= 0x20;
-	}
+	अगर (INVERSION_ON == inversion) अणु
+		अगर (!state->config->invert) reg0 |= 0x20;
+		अन्यथा reg0 &= ~0x20;
+	पूर्ण अन्यथा अगर (INVERSION_OFF == inversion) अणु
+		अगर (!state->config->invert) reg0 &= ~0x20;
+		अन्यथा reg0 |= 0x20;
+	पूर्ण
 
-	ves1820_writereg(state, 0x00, reg0 & 0xfe);
-	ves1820_writereg(state, 0x00, reg0 | 0x01);
+	ves1820_ग_लिखोreg(state, 0x00, reg0 & 0xfe);
+	ves1820_ग_लिखोreg(state, 0x00, reg0 | 0x01);
 
 	state->reg0 = reg0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_set_symbolrate(struct ves1820_state *state, u32 symbolrate)
-{
+अटल पूर्णांक ves1820_set_symbolrate(काष्ठा ves1820_state *state, u32 symbolrate)
+अणु
 	s32 BDR;
 	s32 BDRI;
 	s16 SFIL = 0;
 	u16 NDEC = 0;
 	u32 ratio;
 	u32 fin;
-	u32 tmp;
-	u64 fptmp;
+	u32 पंचांगp;
+	u64 fpपंचांगp;
 	u64 fpxin;
 
-	if (symbolrate > state->config->xin / 2)
+	अगर (symbolrate > state->config->xin / 2)
 		symbolrate = state->config->xin / 2;
 
-	if (symbolrate < 500000)
+	अगर (symbolrate < 500000)
 		symbolrate = 500000;
 
-	if (symbolrate < state->config->xin / 16)
+	अगर (symbolrate < state->config->xin / 16)
 		NDEC = 1;
-	if (symbolrate < state->config->xin / 32)
+	अगर (symbolrate < state->config->xin / 32)
 		NDEC = 2;
-	if (symbolrate < state->config->xin / 64)
+	अगर (symbolrate < state->config->xin / 64)
 		NDEC = 3;
 
 	/* yeuch! */
 	fpxin = state->config->xin * 10ULL;
-	fptmp = fpxin; do_div(fptmp, 123);
-	if (symbolrate < fptmp)
+	fpपंचांगp = fpxin; करो_भाग(fpपंचांगp, 123);
+	अगर (symbolrate < fpपंचांगp)
 		SFIL = 1;
-	fptmp = fpxin; do_div(fptmp, 160);
-	if (symbolrate < fptmp)
+	fpपंचांगp = fpxin; करो_भाग(fpपंचांगp, 160);
+	अगर (symbolrate < fpपंचांगp)
 		SFIL = 0;
-	fptmp = fpxin; do_div(fptmp, 246);
-	if (symbolrate < fptmp)
+	fpपंचांगp = fpxin; करो_भाग(fpपंचांगp, 246);
+	अगर (symbolrate < fpपंचांगp)
 		SFIL = 1;
-	fptmp = fpxin; do_div(fptmp, 320);
-	if (symbolrate < fptmp)
+	fpपंचांगp = fpxin; करो_भाग(fpपंचांगp, 320);
+	अगर (symbolrate < fpपंचांगp)
 		SFIL = 0;
-	fptmp = fpxin; do_div(fptmp, 492);
-	if (symbolrate < fptmp)
+	fpपंचांगp = fpxin; करो_भाग(fpपंचांगp, 492);
+	अगर (symbolrate < fpपंचांगp)
 		SFIL = 1;
-	fptmp = fpxin; do_div(fptmp, 640);
-	if (symbolrate < fptmp)
+	fpपंचांगp = fpxin; करो_भाग(fpपंचांगp, 640);
+	अगर (symbolrate < fpपंचांगp)
 		SFIL = 0;
-	fptmp = fpxin; do_div(fptmp, 984);
-	if (symbolrate < fptmp)
+	fpपंचांगp = fpxin; करो_भाग(fpपंचांगp, 984);
+	अगर (symbolrate < fpपंचांगp)
 		SFIL = 1;
 
 	fin = state->config->xin >> 4;
 	symbolrate <<= NDEC;
 	ratio = (symbolrate << 4) / fin;
-	tmp = ((symbolrate << 4) % fin) << 8;
-	ratio = (ratio << 8) + tmp / fin;
-	tmp = (tmp % fin) << 8;
-	ratio = (ratio << 8) + DIV_ROUND_CLOSEST(tmp, fin);
+	पंचांगp = ((symbolrate << 4) % fin) << 8;
+	ratio = (ratio << 8) + पंचांगp / fin;
+	पंचांगp = (पंचांगp % fin) << 8;
+	ratio = (ratio << 8) + DIV_ROUND_CLOSEST(पंचांगp, fin);
 
 	BDR = ratio;
 	BDRI = (((state->config->xin << 5) / symbolrate) + 1) / 2;
 
-	if (BDRI > 0xFF)
+	अगर (BDRI > 0xFF)
 		BDRI = 0xFF;
 
 	SFIL = (SFIL << 4) | ves1820_inittab[0x0E];
 
 	NDEC = (NDEC << 6) | ves1820_inittab[0x03];
 
-	ves1820_writereg(state, 0x03, NDEC);
-	ves1820_writereg(state, 0x0a, BDR & 0xff);
-	ves1820_writereg(state, 0x0b, (BDR >> 8) & 0xff);
-	ves1820_writereg(state, 0x0c, (BDR >> 16) & 0x3f);
+	ves1820_ग_लिखोreg(state, 0x03, NDEC);
+	ves1820_ग_लिखोreg(state, 0x0a, BDR & 0xff);
+	ves1820_ग_लिखोreg(state, 0x0b, (BDR >> 8) & 0xff);
+	ves1820_ग_लिखोreg(state, 0x0c, (BDR >> 16) & 0x3f);
 
-	ves1820_writereg(state, 0x0d, BDRI);
-	ves1820_writereg(state, 0x0e, SFIL);
+	ves1820_ग_लिखोreg(state, 0x0d, BDRI);
+	ves1820_ग_लिखोreg(state, 0x0e, SFIL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_init(struct dvb_frontend* fe)
-{
-	struct ves1820_state* state = fe->demodulator_priv;
-	int i;
+अटल पूर्णांक ves1820_init(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
+	पूर्णांक i;
 
-	ves1820_writereg(state, 0, 0);
+	ves1820_ग_लिखोreg(state, 0, 0);
 
-	for (i = 0; i < sizeof(ves1820_inittab); i++)
-		ves1820_writereg(state, i, ves1820_inittab[i]);
-	if (state->config->selagc)
-		ves1820_writereg(state, 2, ves1820_inittab[2] | 0x08);
+	क्रम (i = 0; i < माप(ves1820_inittab); i++)
+		ves1820_ग_लिखोreg(state, i, ves1820_inittab[i]);
+	अगर (state->config->selagc)
+		ves1820_ग_लिखोreg(state, 2, ves1820_inittab[2] | 0x08);
 
-	ves1820_writereg(state, 0x34, state->pwm);
+	ves1820_ग_लिखोreg(state, 0x34, state->pwm);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_set_parameters(struct dvb_frontend *fe)
-{
-	struct dtv_frontend_properties *p = &fe->dtv_property_cache;
-	struct ves1820_state* state = fe->demodulator_priv;
-	static const u8 reg0x00[] = { 0x00, 0x04, 0x08, 0x0c, 0x10 };
-	static const u8 reg0x01[] = { 140, 140, 106, 100, 92 };
-	static const u8 reg0x05[] = { 135, 100, 70, 54, 38 };
-	static const u8 reg0x08[] = { 162, 116, 67, 52, 35 };
-	static const u8 reg0x09[] = { 145, 150, 106, 126, 107 };
-	int real_qam = p->modulation - QAM_16;
+अटल पूर्णांक ves1820_set_parameters(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा dtv_frontend_properties *p = &fe->dtv_property_cache;
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
+	अटल स्थिर u8 reg0x00[] = अणु 0x00, 0x04, 0x08, 0x0c, 0x10 पूर्ण;
+	अटल स्थिर u8 reg0x01[] = अणु 140, 140, 106, 100, 92 पूर्ण;
+	अटल स्थिर u8 reg0x05[] = अणु 135, 100, 70, 54, 38 पूर्ण;
+	अटल स्थिर u8 reg0x08[] = अणु 162, 116, 67, 52, 35 पूर्ण;
+	अटल स्थिर u8 reg0x09[] = अणु 145, 150, 106, 126, 107 पूर्ण;
+	पूर्णांक real_qam = p->modulation - QAM_16;
 
-	if (real_qam < 0 || real_qam > 4)
-		return -EINVAL;
+	अगर (real_qam < 0 || real_qam > 4)
+		वापस -EINVAL;
 
-	if (fe->ops.tuner_ops.set_params) {
+	अगर (fe->ops.tuner_ops.set_params) अणु
 		fe->ops.tuner_ops.set_params(fe);
-		if (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
-	}
+		अगर (fe->ops.i2c_gate_ctrl) fe->ops.i2c_gate_ctrl(fe, 0);
+	पूर्ण
 
 	ves1820_set_symbolrate(state, p->symbol_rate);
-	ves1820_writereg(state, 0x34, state->pwm);
+	ves1820_ग_लिखोreg(state, 0x34, state->pwm);
 
-	ves1820_writereg(state, 0x01, reg0x01[real_qam]);
-	ves1820_writereg(state, 0x05, reg0x05[real_qam]);
-	ves1820_writereg(state, 0x08, reg0x08[real_qam]);
-	ves1820_writereg(state, 0x09, reg0x09[real_qam]);
+	ves1820_ग_लिखोreg(state, 0x01, reg0x01[real_qam]);
+	ves1820_ग_लिखोreg(state, 0x05, reg0x05[real_qam]);
+	ves1820_ग_लिखोreg(state, 0x08, reg0x08[real_qam]);
+	ves1820_ग_लिखोreg(state, 0x09, reg0x09[real_qam]);
 
 	ves1820_setup_reg0(state, reg0x00[real_qam], p->inversion);
-	ves1820_writereg(state, 2, ves1820_inittab[2] | (state->config->selagc ? 0x08 : 0));
-	return 0;
-}
+	ves1820_ग_लिखोreg(state, 2, ves1820_inittab[2] | (state->config->selagc ? 0x08 : 0));
+	वापस 0;
+पूर्ण
 
-static int ves1820_read_status(struct dvb_frontend *fe,
-			       enum fe_status *status)
-{
-	struct ves1820_state* state = fe->demodulator_priv;
-	int sync;
+अटल पूर्णांक ves1820_पढ़ो_status(काष्ठा dvb_frontend *fe,
+			       क्रमागत fe_status *status)
+अणु
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
+	पूर्णांक sync;
 
 	*status = 0;
-	sync = ves1820_readreg(state, 0x11);
+	sync = ves1820_पढ़ोreg(state, 0x11);
 
-	if (sync & 1)
+	अगर (sync & 1)
 		*status |= FE_HAS_SIGNAL;
 
-	if (sync & 2)
+	अगर (sync & 2)
 		*status |= FE_HAS_CARRIER;
 
-	if (sync & 2)	/* XXX FIXME! */
+	अगर (sync & 2)	/* XXX FIXME! */
 		*status |= FE_HAS_VITERBI;
 
-	if (sync & 4)
+	अगर (sync & 4)
 		*status |= FE_HAS_SYNC;
 
-	if (sync & 8)
+	अगर (sync & 8)
 		*status |= FE_HAS_LOCK;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_read_ber(struct dvb_frontend* fe, u32* ber)
-{
-	struct ves1820_state* state = fe->demodulator_priv;
+अटल पूर्णांक ves1820_पढ़ो_ber(काष्ठा dvb_frontend* fe, u32* ber)
+अणु
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
 
-	u32 _ber = ves1820_readreg(state, 0x14) |
-			(ves1820_readreg(state, 0x15) << 8) |
-			((ves1820_readreg(state, 0x16) & 0x0f) << 16);
+	u32 _ber = ves1820_पढ़ोreg(state, 0x14) |
+			(ves1820_पढ़ोreg(state, 0x15) << 8) |
+			((ves1820_पढ़ोreg(state, 0x16) & 0x0f) << 16);
 	*ber = 10 * _ber;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_read_signal_strength(struct dvb_frontend* fe, u16* strength)
-{
-	struct ves1820_state* state = fe->demodulator_priv;
+अटल पूर्णांक ves1820_पढ़ो_संकेत_strength(काष्ठा dvb_frontend* fe, u16* strength)
+अणु
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
 
-	u8 gain = ves1820_readreg(state, 0x17);
+	u8 gain = ves1820_पढ़ोreg(state, 0x17);
 	*strength = (gain << 8) | gain;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_read_snr(struct dvb_frontend* fe, u16* snr)
-{
-	struct ves1820_state* state = fe->demodulator_priv;
+अटल पूर्णांक ves1820_पढ़ो_snr(काष्ठा dvb_frontend* fe, u16* snr)
+अणु
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
 
-	u8 quality = ~ves1820_readreg(state, 0x18);
+	u8 quality = ~ves1820_पढ़ोreg(state, 0x18);
 	*snr = (quality << 8) | quality;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_read_ucblocks(struct dvb_frontend* fe, u32* ucblocks)
-{
-	struct ves1820_state* state = fe->demodulator_priv;
+अटल पूर्णांक ves1820_पढ़ो_ucblocks(काष्ठा dvb_frontend* fe, u32* ucblocks)
+अणु
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
 
-	*ucblocks = ves1820_readreg(state, 0x13) & 0x7f;
-	if (*ucblocks == 0x7f)
+	*ucblocks = ves1820_पढ़ोreg(state, 0x13) & 0x7f;
+	अगर (*ucblocks == 0x7f)
 		*ucblocks = 0xffffffff;
 
 	/* reset uncorrected block counter */
-	ves1820_writereg(state, 0x10, ves1820_inittab[0x10] & 0xdf);
-	ves1820_writereg(state, 0x10, ves1820_inittab[0x10]);
+	ves1820_ग_लिखोreg(state, 0x10, ves1820_inittab[0x10] & 0xdf);
+	ves1820_ग_लिखोreg(state, 0x10, ves1820_inittab[0x10]);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_get_frontend(struct dvb_frontend *fe,
-				struct dtv_frontend_properties *p)
-{
-	struct ves1820_state* state = fe->demodulator_priv;
-	int sync;
+अटल पूर्णांक ves1820_get_frontend(काष्ठा dvb_frontend *fe,
+				काष्ठा dtv_frontend_properties *p)
+अणु
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
+	पूर्णांक sync;
 	s8 afc = 0;
 
-	sync = ves1820_readreg(state, 0x11);
-	afc = ves1820_readreg(state, 0x19);
-	if (verbose) {
+	sync = ves1820_पढ़ोreg(state, 0x11);
+	afc = ves1820_पढ़ोreg(state, 0x19);
+	अगर (verbose) अणु
 		/* AFC only valid when carrier has been recovered */
-		printk(sync & 2 ? "ves1820: AFC (%d) %dHz\n" :
+		prपूर्णांकk(sync & 2 ? "ves1820: AFC (%d) %dHz\n" :
 			"ves1820: [AFC (%d) %dHz]\n", afc, -((s32) p->symbol_rate * afc) >> 10);
-	}
+	पूर्ण
 
-	if (!state->config->invert) {
+	अगर (!state->config->invert) अणु
 		p->inversion = (state->reg0 & 0x20) ? INVERSION_ON : INVERSION_OFF;
-	} else {
+	पूर्ण अन्यथा अणु
 		p->inversion = (!(state->reg0 & 0x20)) ? INVERSION_ON : INVERSION_OFF;
-	}
+	पूर्ण
 
 	p->modulation = ((state->reg0 >> 2) & 7) + QAM_16;
 
 	p->fec_inner = FEC_NONE;
 
 	p->frequency = ((p->frequency + 31250) / 62500) * 62500;
-	if (sync & 2)
+	अगर (sync & 2)
 		p->frequency -= ((s32) p->symbol_rate * afc) >> 10;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_sleep(struct dvb_frontend* fe)
-{
-	struct ves1820_state* state = fe->demodulator_priv;
+अटल पूर्णांक ves1820_sleep(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
 
-	ves1820_writereg(state, 0x1b, 0x02);	/* pdown ADC */
-	ves1820_writereg(state, 0x00, 0x80);	/* standby */
+	ves1820_ग_लिखोreg(state, 0x1b, 0x02);	/* pकरोwn ADC */
+	ves1820_ग_लिखोreg(state, 0x00, 0x80);	/* standby */
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ves1820_get_tune_settings(struct dvb_frontend* fe, struct dvb_frontend_tune_settings* fesettings)
-{
+अटल पूर्णांक ves1820_get_tune_settings(काष्ठा dvb_frontend* fe, काष्ठा dvb_frontend_tune_settings* fesettings)
+अणु
 
 	fesettings->min_delay_ms = 200;
 	fesettings->step_size = 0;
-	fesettings->max_drift = 0;
-	return 0;
-}
+	fesettings->max_drअगरt = 0;
+	वापस 0;
+पूर्ण
 
-static void ves1820_release(struct dvb_frontend* fe)
-{
-	struct ves1820_state* state = fe->demodulator_priv;
-	kfree(state);
-}
+अटल व्योम ves1820_release(काष्ठा dvb_frontend* fe)
+अणु
+	काष्ठा ves1820_state* state = fe->demodulator_priv;
+	kमुक्त(state);
+पूर्ण
 
-static const struct dvb_frontend_ops ves1820_ops;
+अटल स्थिर काष्ठा dvb_frontend_ops ves1820_ops;
 
-struct dvb_frontend* ves1820_attach(const struct ves1820_config* config,
-				    struct i2c_adapter* i2c,
+काष्ठा dvb_frontend* ves1820_attach(स्थिर काष्ठा ves1820_config* config,
+				    काष्ठा i2c_adapter* i2c,
 				    u8 pwm)
-{
-	struct ves1820_state* state = NULL;
+अणु
+	काष्ठा ves1820_state* state = शून्य;
 
-	/* allocate memory for the internal state */
-	state = kzalloc(sizeof(struct ves1820_state), GFP_KERNEL);
-	if (state == NULL)
-		goto error;
+	/* allocate memory क्रम the पूर्णांकernal state */
+	state = kzalloc(माप(काष्ठा ves1820_state), GFP_KERNEL);
+	अगर (state == शून्य)
+		जाओ error;
 
 	/* setup the state */
 	state->reg0 = ves1820_inittab[0];
@@ -376,29 +377,29 @@ struct dvb_frontend* ves1820_attach(const struct ves1820_config* config,
 	state->i2c = i2c;
 	state->pwm = pwm;
 
-	/* check if the demod is there */
-	if ((ves1820_readreg(state, 0x1a) & 0xf0) != 0x70)
-		goto error;
+	/* check अगर the demod is there */
+	अगर ((ves1820_पढ़ोreg(state, 0x1a) & 0xf0) != 0x70)
+		जाओ error;
 
-	if (verbose)
-		printk("ves1820: pwm=0x%02x\n", state->pwm);
+	अगर (verbose)
+		prपूर्णांकk("ves1820: pwm=0x%02x\n", state->pwm);
 
 	/* create dvb_frontend */
-	memcpy(&state->frontend.ops, &ves1820_ops, sizeof(struct dvb_frontend_ops));
+	स_नकल(&state->frontend.ops, &ves1820_ops, माप(काष्ठा dvb_frontend_ops));
 	state->frontend.ops.info.symbol_rate_min = (state->config->xin / 2) / 64;      /* SACLK/64 == (XIN/2)/64 */
 	state->frontend.ops.info.symbol_rate_max = (state->config->xin / 2) / 4;       /* SACLK/4 */
 	state->frontend.demodulator_priv = state;
 
-	return &state->frontend;
+	वापस &state->frontend;
 
 error:
-	kfree(state);
-	return NULL;
-}
+	kमुक्त(state);
+	वापस शून्य;
+पूर्ण
 
-static const struct dvb_frontend_ops ves1820_ops = {
-	.delsys = { SYS_DVBC_ANNEX_A },
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops ves1820_ops = अणु
+	.delsys = अणु SYS_DVBC_ANNEX_A पूर्ण,
+	.info = अणु
 		.name = "VLSI VES1820 DVB-C",
 		.frequency_min_hz =  47 * MHz,
 		.frequency_max_hz = 862 * MHz,
@@ -409,7 +410,7 @@ static const struct dvb_frontend_ops ves1820_ops = {
 			FE_CAN_QAM_128 |
 			FE_CAN_QAM_256 |
 			FE_CAN_FEC_AUTO
-	},
+	पूर्ण,
 
 	.release = ves1820_release,
 
@@ -420,14 +421,14 @@ static const struct dvb_frontend_ops ves1820_ops = {
 	.get_frontend = ves1820_get_frontend,
 	.get_tune_settings = ves1820_get_tune_settings,
 
-	.read_status = ves1820_read_status,
-	.read_ber = ves1820_read_ber,
-	.read_signal_strength = ves1820_read_signal_strength,
-	.read_snr = ves1820_read_snr,
-	.read_ucblocks = ves1820_read_ucblocks,
-};
+	.पढ़ो_status = ves1820_पढ़ो_status,
+	.पढ़ो_ber = ves1820_पढ़ो_ber,
+	.पढ़ो_संकेत_strength = ves1820_पढ़ो_संकेत_strength,
+	.पढ़ो_snr = ves1820_पढ़ो_snr,
+	.पढ़ो_ucblocks = ves1820_पढ़ो_ucblocks,
+पूर्ण;
 
-module_param(verbose, int, 0644);
+module_param(verbose, पूर्णांक, 0644);
 MODULE_PARM_DESC(verbose, "print AFC offset after tuning for debugging the PWM setting");
 
 MODULE_DESCRIPTION("VLSI VES1820 DVB-C Demodulator driver");

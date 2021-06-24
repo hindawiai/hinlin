@@ -1,112 +1,113 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2000,2002-2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __XFS_BMAP_BTREE_H__
-#define __XFS_BMAP_BTREE_H__
+#अगर_अघोषित __XFS_BMAP_BTREE_H__
+#घोषणा __XFS_BMAP_BTREE_H__
 
-struct xfs_btree_cur;
-struct xfs_btree_block;
-struct xfs_mount;
-struct xfs_inode;
-struct xfs_trans;
+काष्ठा xfs_btree_cur;
+काष्ठा xfs_btree_block;
+काष्ठा xfs_mount;
+काष्ठा xfs_inode;
+काष्ठा xfs_trans;
 
 /*
  * Btree block header size depends on a superblock flag.
  */
-#define XFS_BMBT_BLOCK_LEN(mp) \
+#घोषणा XFS_BMBT_BLOCK_LEN(mp) \
 	(xfs_sb_version_hascrc(&((mp)->m_sb)) ? \
 		XFS_BTREE_LBLOCK_CRC_LEN : XFS_BTREE_LBLOCK_LEN)
 
-#define XFS_BMBT_REC_ADDR(mp, block, index) \
+#घोषणा XFS_BMBT_REC_ADDR(mp, block, index) \
 	((xfs_bmbt_rec_t *) \
-		((char *)(block) + \
+		((अक्षर *)(block) + \
 		 XFS_BMBT_BLOCK_LEN(mp) + \
-		 ((index) - 1) * sizeof(xfs_bmbt_rec_t)))
+		 ((index) - 1) * माप(xfs_bmbt_rec_t)))
 
-#define XFS_BMBT_KEY_ADDR(mp, block, index) \
+#घोषणा XFS_BMBT_KEY_ADDR(mp, block, index) \
 	((xfs_bmbt_key_t *) \
-		((char *)(block) + \
+		((अक्षर *)(block) + \
 		 XFS_BMBT_BLOCK_LEN(mp) + \
-		 ((index) - 1) * sizeof(xfs_bmbt_key_t)))
+		 ((index) - 1) * माप(xfs_bmbt_key_t)))
 
-#define XFS_BMBT_PTR_ADDR(mp, block, index, maxrecs) \
+#घोषणा XFS_BMBT_PTR_ADDR(mp, block, index, maxrecs) \
 	((xfs_bmbt_ptr_t *) \
-		((char *)(block) + \
+		((अक्षर *)(block) + \
 		 XFS_BMBT_BLOCK_LEN(mp) + \
-		 (maxrecs) * sizeof(xfs_bmbt_key_t) + \
-		 ((index) - 1) * sizeof(xfs_bmbt_ptr_t)))
+		 (maxrecs) * माप(xfs_bmbt_key_t) + \
+		 ((index) - 1) * माप(xfs_bmbt_ptr_t)))
 
-#define XFS_BMDR_REC_ADDR(block, index) \
+#घोषणा XFS_BMDR_REC_ADDR(block, index) \
 	((xfs_bmdr_rec_t *) \
-		((char *)(block) + \
-		 sizeof(struct xfs_bmdr_block) + \
-	         ((index) - 1) * sizeof(xfs_bmdr_rec_t)))
+		((अक्षर *)(block) + \
+		 माप(काष्ठा xfs_bmdr_block) + \
+	         ((index) - 1) * माप(xfs_bmdr_rec_t)))
 
-#define XFS_BMDR_KEY_ADDR(block, index) \
+#घोषणा XFS_BMDR_KEY_ADDR(block, index) \
 	((xfs_bmdr_key_t *) \
-		((char *)(block) + \
-		 sizeof(struct xfs_bmdr_block) + \
-		 ((index) - 1) * sizeof(xfs_bmdr_key_t)))
+		((अक्षर *)(block) + \
+		 माप(काष्ठा xfs_bmdr_block) + \
+		 ((index) - 1) * माप(xfs_bmdr_key_t)))
 
-#define XFS_BMDR_PTR_ADDR(block, index, maxrecs) \
+#घोषणा XFS_BMDR_PTR_ADDR(block, index, maxrecs) \
 	((xfs_bmdr_ptr_t *) \
-		((char *)(block) + \
-		 sizeof(struct xfs_bmdr_block) + \
-		 (maxrecs) * sizeof(xfs_bmdr_key_t) + \
-		 ((index) - 1) * sizeof(xfs_bmdr_ptr_t)))
+		((अक्षर *)(block) + \
+		 माप(काष्ठा xfs_bmdr_block) + \
+		 (maxrecs) * माप(xfs_bmdr_key_t) + \
+		 ((index) - 1) * माप(xfs_bmdr_ptr_t)))
 
 /*
  * These are to be used when we know the size of the block and
- * we don't have a cursor.
+ * we करोn't have a cursor.
  */
-#define XFS_BMAP_BROOT_PTR_ADDR(mp, bb, i, sz) \
+#घोषणा XFS_BMAP_BROOT_PTR_ADDR(mp, bb, i, sz) \
 	XFS_BMBT_PTR_ADDR(mp, bb, i, xfs_bmbt_maxrecs(mp, sz, 0))
 
-#define XFS_BMAP_BROOT_SPACE_CALC(mp, nrecs) \
-	(int)(XFS_BMBT_BLOCK_LEN(mp) + \
-	       ((nrecs) * (sizeof(xfs_bmbt_key_t) + sizeof(xfs_bmbt_ptr_t))))
+#घोषणा XFS_BMAP_BROOT_SPACE_CALC(mp, nrecs) \
+	(पूर्णांक)(XFS_BMBT_BLOCK_LEN(mp) + \
+	       ((nrecs) * (माप(xfs_bmbt_key_t) + माप(xfs_bmbt_ptr_t))))
 
-#define XFS_BMAP_BROOT_SPACE(mp, bb) \
+#घोषणा XFS_BMAP_BROOT_SPACE(mp, bb) \
 	(XFS_BMAP_BROOT_SPACE_CALC(mp, be16_to_cpu((bb)->bb_numrecs)))
-#define XFS_BMDR_SPACE_CALC(nrecs) \
-	(int)(sizeof(xfs_bmdr_block_t) + \
-	       ((nrecs) * (sizeof(xfs_bmbt_key_t) + sizeof(xfs_bmbt_ptr_t))))
-#define XFS_BMAP_BMDR_SPACE(bb) \
+#घोषणा XFS_BMDR_SPACE_CALC(nrecs) \
+	(पूर्णांक)(माप(xfs_bmdr_block_t) + \
+	       ((nrecs) * (माप(xfs_bmbt_key_t) + माप(xfs_bmbt_ptr_t))))
+#घोषणा XFS_BMAP_BMDR_SPACE(bb) \
 	(XFS_BMDR_SPACE_CALC(be16_to_cpu((bb)->bb_numrecs)))
 
 /*
  * Maximum number of bmap btree levels.
  */
-#define XFS_BM_MAXLEVELS(mp,w)		((mp)->m_bm_maxlevels[(w)])
+#घोषणा XFS_BM_MAXLEVELS(mp,w)		((mp)->m_bm_maxlevels[(w)])
 
 /*
- * Prototypes for xfs_bmap.c to call.
+ * Prototypes क्रम xfs_bmap.c to call.
  */
-extern void xfs_bmdr_to_bmbt(struct xfs_inode *, xfs_bmdr_block_t *, int,
-			struct xfs_btree_block *, int);
+बाह्य व्योम xfs_bmdr_to_bmbt(काष्ठा xfs_inode *, xfs_bmdr_block_t *, पूर्णांक,
+			काष्ठा xfs_btree_block *, पूर्णांक);
 
-void xfs_bmbt_disk_set_all(struct xfs_bmbt_rec *r, struct xfs_bmbt_irec *s);
-extern xfs_filblks_t xfs_bmbt_disk_get_blockcount(xfs_bmbt_rec_t *r);
-extern xfs_fileoff_t xfs_bmbt_disk_get_startoff(xfs_bmbt_rec_t *r);
-extern void xfs_bmbt_disk_get_all(xfs_bmbt_rec_t *r, xfs_bmbt_irec_t *s);
+व्योम xfs_bmbt_disk_set_all(काष्ठा xfs_bmbt_rec *r, काष्ठा xfs_bmbt_irec *s);
+बाह्य xfs_filblks_t xfs_bmbt_disk_get_blockcount(xfs_bmbt_rec_t *r);
+बाह्य xfs_fileoff_t xfs_bmbt_disk_get_startoff(xfs_bmbt_rec_t *r);
+बाह्य व्योम xfs_bmbt_disk_get_all(xfs_bmbt_rec_t *r, xfs_bmbt_irec_t *s);
 
-extern void xfs_bmbt_to_bmdr(struct xfs_mount *, struct xfs_btree_block *, int,
-			xfs_bmdr_block_t *, int);
+बाह्य व्योम xfs_bmbt_to_bmdr(काष्ठा xfs_mount *, काष्ठा xfs_btree_block *, पूर्णांक,
+			xfs_bmdr_block_t *, पूर्णांक);
 
-extern int xfs_bmbt_get_maxrecs(struct xfs_btree_cur *, int level);
-extern int xfs_bmdr_maxrecs(int blocklen, int leaf);
-extern int xfs_bmbt_maxrecs(struct xfs_mount *, int blocklen, int leaf);
+बाह्य पूर्णांक xfs_bmbt_get_maxrecs(काष्ठा xfs_btree_cur *, पूर्णांक level);
+बाह्य पूर्णांक xfs_bmdr_maxrecs(पूर्णांक blocklen, पूर्णांक leaf);
+बाह्य पूर्णांक xfs_bmbt_maxrecs(काष्ठा xfs_mount *, पूर्णांक blocklen, पूर्णांक leaf);
 
-extern int xfs_bmbt_change_owner(struct xfs_trans *tp, struct xfs_inode *ip,
-				 int whichfork, xfs_ino_t new_owner,
-				 struct list_head *buffer_list);
+बाह्य पूर्णांक xfs_bmbt_change_owner(काष्ठा xfs_trans *tp, काष्ठा xfs_inode *ip,
+				 पूर्णांक whichविभाजन, xfs_ino_t new_owner,
+				 काष्ठा list_head *buffer_list);
 
-extern struct xfs_btree_cur *xfs_bmbt_init_cursor(struct xfs_mount *,
-		struct xfs_trans *, struct xfs_inode *, int);
+बाह्य काष्ठा xfs_btree_cur *xfs_bmbt_init_cursor(काष्ठा xfs_mount *,
+		काष्ठा xfs_trans *, काष्ठा xfs_inode *, पूर्णांक);
 
-extern unsigned long long xfs_bmbt_calc_size(struct xfs_mount *mp,
-		unsigned long long len);
+बाह्य अचिन्हित दीर्घ दीर्घ xfs_bmbt_calc_size(काष्ठा xfs_mount *mp,
+		अचिन्हित दीर्घ दीर्घ len);
 
-#endif	/* __XFS_BMAP_BTREE_H__ */
+#पूर्ण_अगर	/* __XFS_BMAP_BTREE_H__ */

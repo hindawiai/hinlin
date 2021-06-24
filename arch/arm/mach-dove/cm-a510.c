@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * arch/arm/mach-dove/cm-a510.c
+ * arch/arm/mach-करोve/cm-a510.c
  *
  * Copyright (C) 2010 CompuLab, Ltd.
  * Konstantin Sinyuk <kostyas@compulab.co.il>
@@ -11,87 +12,87 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/ata_platform.h>
-#include <linux/mv643xx_eth.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/flash.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/ata_platक्रमm.h>
+#समावेश <linux/mv643xx_eth.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/flash.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
 
-#include "dove.h"
-#include "common.h"
+#समावेश "dove.h"
+#समावेश "common.h"
 
-static struct mv643xx_eth_platform_data cm_a510_ge00_data = {
+अटल काष्ठा mv643xx_eth_platक्रमm_data cm_a510_ge00_data = अणु
 	.phy_addr	= MV643XX_ETH_PHY_ADDR_DEFAULT,
-};
+पूर्ण;
 
-static struct mv_sata_platform_data cm_a510_sata_data = {
+अटल काष्ठा mv_sata_platक्रमm_data cm_a510_sata_data = अणु
 	.n_ports        = 1,
-};
+पूर्ण;
 
 /*
  * SPI Devices:
  * SPI0: 1M Flash Winbond w25q32bv
  */
-static const struct flash_platform_data cm_a510_spi_flash_data = {
+अटल स्थिर काष्ठा flash_platक्रमm_data cm_a510_spi_flash_data = अणु
 	.type		= "w25q32bv",
-};
+पूर्ण;
 
-static struct spi_board_info __initdata cm_a510_spi_flash_info[] = {
-	{
+अटल काष्ठा spi_board_info __initdata cm_a510_spi_flash_info[] = अणु
+	अणु
 		.modalias       = "m25p80",
-		.platform_data  = &cm_a510_spi_flash_data,
+		.platक्रमm_data  = &cm_a510_spi_flash_data,
 		.irq            = -1,
 		.max_speed_hz   = 20000000,
 		.bus_num        = 0,
 		.chip_select    = 0,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init cm_a510_pci_init(void)
-{
-	if (machine_is_cm_a510())
-		dove_pcie_init(1, 1);
+अटल पूर्णांक __init cm_a510_pci_init(व्योम)
+अणु
+	अगर (machine_is_cm_a510())
+		करोve_pcie_init(1, 1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 subsys_initcall(cm_a510_pci_init);
 
 /* Board Init */
-static void __init cm_a510_init(void)
-{
+अटल व्योम __init cm_a510_init(व्योम)
+अणु
 	/*
 	 * Basic Dove setup. Needs to be called early.
 	 */
-	dove_init();
+	करोve_init();
 
-	dove_ge00_init(&cm_a510_ge00_data);
-	dove_ehci0_init();
-	dove_ehci1_init();
-	dove_sata_init(&cm_a510_sata_data);
-	dove_sdio0_init();
-	dove_sdio1_init();
-	dove_spi0_init();
-	dove_spi1_init();
-	dove_uart0_init();
-	dove_uart1_init();
-	dove_i2c_init();
-	spi_register_board_info(cm_a510_spi_flash_info,
+	करोve_ge00_init(&cm_a510_ge00_data);
+	करोve_ehci0_init();
+	करोve_ehci1_init();
+	करोve_sata_init(&cm_a510_sata_data);
+	करोve_sdio0_init();
+	करोve_sdio1_init();
+	करोve_spi0_init();
+	करोve_spi1_init();
+	करोve_uart0_init();
+	करोve_uart1_init();
+	करोve_i2c_init();
+	spi_रेजिस्टर_board_info(cm_a510_spi_flash_info,
 				ARRAY_SIZE(cm_a510_spi_flash_info));
-}
+पूर्ण
 
 MACHINE_START(CM_A510, "Compulab CM-A510 Board")
 	.atag_offset	= 0x100,
 	.nr_irqs	= DOVE_NR_IRQS,
 	.init_machine	= cm_a510_init,
-	.map_io		= dove_map_io,
-	.init_early	= dove_init_early,
-	.init_irq	= dove_init_irq,
-	.init_time	= dove_timer_init,
-	.restart	= dove_restart,
+	.map_io		= करोve_map_io,
+	.init_early	= करोve_init_early,
+	.init_irq	= करोve_init_irq,
+	.init_समय	= करोve_समयr_init,
+	.restart	= करोve_restart,
 MACHINE_END

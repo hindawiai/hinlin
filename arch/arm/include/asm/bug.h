@@ -1,40 +1,41 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASMARM_BUG_H
-#define _ASMARM_BUG_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASMARM_BUG_H
+#घोषणा _ASMARM_BUG_H
 
-#include <linux/linkage.h>
-#include <linux/types.h>
-#include <asm/opcodes.h>
+#समावेश <linux/linkage.h>
+#समावेश <linux/types.h>
+#समावेश <यंत्र/opcodes.h>
 
 /*
- * Use a suitable undefined instruction to use for ARM/Thumb2 bug handling.
+ * Use a suitable undefined inकाष्ठाion to use क्रम ARM/Thumb2 bug handling.
  * We need to be careful not to conflict with those used by other modules and
- * the register_undef_hook() system.
+ * the रेजिस्टर_undef_hook() प्रणाली.
  */
-#ifdef CONFIG_THUMB2_KERNEL
-#define BUG_INSTR_VALUE 0xde02
-#define BUG_INSTR(__value) __inst_thumb16(__value)
-#else
-#define BUG_INSTR_VALUE 0xe7f001f2
-#define BUG_INSTR(__value) __inst_arm(__value)
-#endif
+#अगर_घोषित CONFIG_THUMB2_KERNEL
+#घोषणा BUG_INSTR_VALUE 0xde02
+#घोषणा BUG_INSTR(__value) __inst_thumb16(__value)
+#अन्यथा
+#घोषणा BUG_INSTR_VALUE 0xe7f001f2
+#घोषणा BUG_INSTR(__value) __inst_arm(__value)
+#पूर्ण_अगर
 
 
-#define BUG() _BUG(__FILE__, __LINE__, BUG_INSTR_VALUE)
-#define _BUG(file, line, value) __BUG(file, line, value)
+#घोषणा BUG() _BUG(__खाता__, __LINE__, BUG_INSTR_VALUE)
+#घोषणा _BUG(file, line, value) __BUG(file, line, value)
 
-#ifdef CONFIG_DEBUG_BUGVERBOSE
+#अगर_घोषित CONFIG_DEBUG_BUGVERBOSE
 
 /*
- * The extra indirection is to ensure that the __FILE__ string comes through
- * OK. Many version of gcc do not support the asm %c parameter which would be
+ * The extra indirection is to ensure that the __खाता__ string comes through
+ * OK. Many version of gcc करो not support the यंत्र %c parameter which would be
  * preferable to this unpleasantness. We use mergeable string sections to
- * avoid multiple copies of the string appearing in the kernel image.
+ * aव्योम multiple copies of the string appearing in the kernel image.
  */
 
-#define __BUG(__file, __line, __value)				\
-do {								\
-	asm volatile("1:\t" BUG_INSTR(__value) "\n"  \
+#घोषणा __BUG(__file, __line, __value)				\
+करो अणु								\
+	यंत्र अस्थिर("1:\t" BUG_INSTR(__value) "\n"  \
 		".pushsection .rodata.str, \"aMS\", %progbits, 1\n" \
 		"2:\t.asciz " #__file "\n" 			\
 		".popsection\n" 				\
@@ -44,50 +45,50 @@ do {								\
 		"\t.hword " #__line ", 0\n"			\
 		".popsection");					\
 	unreachable();						\
-} while (0)
+पूर्ण जबतक (0)
 
-#else
+#अन्यथा
 
-#define __BUG(__file, __line, __value)				\
-do {								\
-	asm volatile(BUG_INSTR(__value) "\n");			\
+#घोषणा __BUG(__file, __line, __value)				\
+करो अणु								\
+	यंत्र अस्थिर(BUG_INSTR(__value) "\n");			\
 	unreachable();						\
-} while (0)
-#endif  /* CONFIG_DEBUG_BUGVERBOSE */
+पूर्ण जबतक (0)
+#पूर्ण_अगर  /* CONFIG_DEBUG_BUGVERBOSE */
 
-#define HAVE_ARCH_BUG
+#घोषणा HAVE_ARCH_BUG
 
-#include <asm-generic/bug.h>
+#समावेश <यंत्र-generic/bug.h>
 
-struct pt_regs;
-void die(const char *msg, struct pt_regs *regs, int err);
+काष्ठा pt_regs;
+व्योम die(स्थिर अक्षर *msg, काष्ठा pt_regs *regs, पूर्णांक err);
 
-void arm_notify_die(const char *str, struct pt_regs *regs,
-		int signo, int si_code, void __user *addr,
-		unsigned long err, unsigned long trap);
+व्योम arm_notअगरy_die(स्थिर अक्षर *str, काष्ठा pt_regs *regs,
+		पूर्णांक signo, पूर्णांक si_code, व्योम __user *addr,
+		अचिन्हित दीर्घ err, अचिन्हित दीर्घ trap);
 
-#ifdef CONFIG_ARM_LPAE
-#define FAULT_CODE_ALIGNMENT	33
-#define FAULT_CODE_DEBUG	34
-#else
-#define FAULT_CODE_ALIGNMENT	1
-#define FAULT_CODE_DEBUG	2
-#endif
+#अगर_घोषित CONFIG_ARM_LPAE
+#घोषणा FAULT_CODE_ALIGNMENT	33
+#घोषणा FAULT_CODE_DEBUG	34
+#अन्यथा
+#घोषणा FAULT_CODE_ALIGNMENT	1
+#घोषणा FAULT_CODE_DEBUG	2
+#पूर्ण_अगर
 
-void hook_fault_code(int nr, int (*fn)(unsigned long, unsigned int,
-				       struct pt_regs *),
-		     int sig, int code, const char *name);
+व्योम hook_fault_code(पूर्णांक nr, पूर्णांक (*fn)(अचिन्हित दीर्घ, अचिन्हित पूर्णांक,
+				       काष्ठा pt_regs *),
+		     पूर्णांक sig, पूर्णांक code, स्थिर अक्षर *name);
 
-void hook_ifault_code(int nr, int (*fn)(unsigned long, unsigned int,
-				       struct pt_regs *),
-		     int sig, int code, const char *name);
+व्योम hook_अगरault_code(पूर्णांक nr, पूर्णांक (*fn)(अचिन्हित दीर्घ, अचिन्हित पूर्णांक,
+				       काष्ठा pt_regs *),
+		     पूर्णांक sig, पूर्णांक code, स्थिर अक्षर *name);
 
-extern asmlinkage void c_backtrace(unsigned long fp, int pmode,
-				   const char *loglvl);
+बाह्य यंत्रlinkage व्योम c_backtrace(अचिन्हित दीर्घ fp, पूर्णांक pmode,
+				   स्थिर अक्षर *loglvl);
 
-struct mm_struct;
-void show_pte(const char *lvl, struct mm_struct *mm, unsigned long addr);
-extern void __show_regs(struct pt_regs *);
-extern void __show_regs_alloc_free(struct pt_regs *regs);
+काष्ठा mm_काष्ठा;
+व्योम show_pte(स्थिर अक्षर *lvl, काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr);
+बाह्य व्योम __show_regs(काष्ठा pt_regs *);
+बाह्य व्योम __show_regs_alloc_मुक्त(काष्ठा pt_regs *regs);
 
-#endif
+#पूर्ण_अगर

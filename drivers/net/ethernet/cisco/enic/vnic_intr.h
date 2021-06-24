@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008-2010 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -17,95 +18,95 @@
  *
  */
 
-#ifndef _VNIC_INTR_H_
-#define _VNIC_INTR_H_
+#अगर_अघोषित _VNIC_INTR_H_
+#घोषणा _VNIC_INTR_H_
 
-#include <linux/pci.h>
+#समावेश <linux/pci.h>
 
-#include "vnic_dev.h"
+#समावेश "vnic_dev.h"
 
-#define VNIC_INTR_TIMER_TYPE_ABS	0
-#define VNIC_INTR_TIMER_TYPE_QUIET	1
+#घोषणा VNIC_INTR_TIMER_TYPE_ABS	0
+#घोषणा VNIC_INTR_TIMER_TYPE_QUIET	1
 
 /* Interrupt control */
-struct vnic_intr_ctrl {
-	u32 coalescing_timer;		/* 0x00 */
+काष्ठा vnic_पूर्णांकr_ctrl अणु
+	u32 coalescing_समयr;		/* 0x00 */
 	u32 pad0;
 	u32 coalescing_value;		/* 0x08 */
 	u32 pad1;
 	u32 coalescing_type;		/* 0x10 */
 	u32 pad2;
-	u32 mask_on_assertion;		/* 0x18 */
+	u32 mask_on_निश्चितion;		/* 0x18 */
 	u32 pad3;
 	u32 mask;			/* 0x20 */
 	u32 pad4;
-	u32 int_credits;		/* 0x28 */
+	u32 पूर्णांक_credits;		/* 0x28 */
 	u32 pad5;
-	u32 int_credit_return;		/* 0x30 */
+	u32 पूर्णांक_credit_वापस;		/* 0x30 */
 	u32 pad6;
-};
+पूर्ण;
 
-struct vnic_intr {
-	unsigned int index;
-	struct vnic_dev *vdev;
-	struct vnic_intr_ctrl __iomem *ctrl;		/* memory-mapped */
-};
+काष्ठा vnic_पूर्णांकr अणु
+	अचिन्हित पूर्णांक index;
+	काष्ठा vnic_dev *vdev;
+	काष्ठा vnic_पूर्णांकr_ctrl __iomem *ctrl;		/* memory-mapped */
+पूर्ण;
 
-static inline void vnic_intr_unmask(struct vnic_intr *intr)
-{
-	iowrite32(0, &intr->ctrl->mask);
-}
+अटल अंतरभूत व्योम vnic_पूर्णांकr_unmask(काष्ठा vnic_पूर्णांकr *पूर्णांकr)
+अणु
+	ioग_लिखो32(0, &पूर्णांकr->ctrl->mask);
+पूर्ण
 
-static inline void vnic_intr_mask(struct vnic_intr *intr)
-{
-	iowrite32(1, &intr->ctrl->mask);
-}
+अटल अंतरभूत व्योम vnic_पूर्णांकr_mask(काष्ठा vnic_पूर्णांकr *पूर्णांकr)
+अणु
+	ioग_लिखो32(1, &पूर्णांकr->ctrl->mask);
+पूर्ण
 
-static inline int vnic_intr_masked(struct vnic_intr *intr)
-{
-	return ioread32(&intr->ctrl->mask);
-}
+अटल अंतरभूत पूर्णांक vnic_पूर्णांकr_masked(काष्ठा vnic_पूर्णांकr *पूर्णांकr)
+अणु
+	वापस ioपढ़ो32(&पूर्णांकr->ctrl->mask);
+पूर्ण
 
-static inline void vnic_intr_return_credits(struct vnic_intr *intr,
-	unsigned int credits, int unmask, int reset_timer)
-{
-#define VNIC_INTR_UNMASK_SHIFT		16
-#define VNIC_INTR_RESET_TIMER_SHIFT	17
+अटल अंतरभूत व्योम vnic_पूर्णांकr_वापस_credits(काष्ठा vnic_पूर्णांकr *पूर्णांकr,
+	अचिन्हित पूर्णांक credits, पूर्णांक unmask, पूर्णांक reset_समयr)
+अणु
+#घोषणा VNIC_INTR_UNMASK_SHIFT		16
+#घोषणा VNIC_INTR_RESET_TIMER_SHIFT	17
 
-	u32 int_credit_return = (credits & 0xffff) |
+	u32 पूर्णांक_credit_वापस = (credits & 0xffff) |
 		(unmask ? (1 << VNIC_INTR_UNMASK_SHIFT) : 0) |
-		(reset_timer ? (1 << VNIC_INTR_RESET_TIMER_SHIFT) : 0);
+		(reset_समयr ? (1 << VNIC_INTR_RESET_TIMER_SHIFT) : 0);
 
-	iowrite32(int_credit_return, &intr->ctrl->int_credit_return);
-}
+	ioग_लिखो32(पूर्णांक_credit_वापस, &पूर्णांकr->ctrl->पूर्णांक_credit_वापस);
+पूर्ण
 
-static inline unsigned int vnic_intr_credits(struct vnic_intr *intr)
-{
-	return ioread32(&intr->ctrl->int_credits);
-}
+अटल अंतरभूत अचिन्हित पूर्णांक vnic_पूर्णांकr_credits(काष्ठा vnic_पूर्णांकr *पूर्णांकr)
+अणु
+	वापस ioपढ़ो32(&पूर्णांकr->ctrl->पूर्णांक_credits);
+पूर्ण
 
-static inline void vnic_intr_return_all_credits(struct vnic_intr *intr)
-{
-	unsigned int credits = vnic_intr_credits(intr);
-	int unmask = 1;
-	int reset_timer = 1;
+अटल अंतरभूत व्योम vnic_पूर्णांकr_वापस_all_credits(काष्ठा vnic_पूर्णांकr *पूर्णांकr)
+अणु
+	अचिन्हित पूर्णांक credits = vnic_पूर्णांकr_credits(पूर्णांकr);
+	पूर्णांक unmask = 1;
+	पूर्णांक reset_समयr = 1;
 
-	vnic_intr_return_credits(intr, credits, unmask, reset_timer);
-}
+	vnic_पूर्णांकr_वापस_credits(पूर्णांकr, credits, unmask, reset_समयr);
+पूर्ण
 
-static inline u32 vnic_intr_legacy_pba(u32 __iomem *legacy_pba)
-{
-	/* read PBA without clearing */
-	return ioread32(legacy_pba);
-}
+अटल अंतरभूत u32 vnic_पूर्णांकr_legacy_pba(u32 __iomem *legacy_pba)
+अणु
+	/* पढ़ो PBA without clearing */
+	वापस ioपढ़ो32(legacy_pba);
+पूर्ण
 
-void vnic_intr_free(struct vnic_intr *intr);
-int vnic_intr_alloc(struct vnic_dev *vdev, struct vnic_intr *intr,
-	unsigned int index);
-void vnic_intr_init(struct vnic_intr *intr, u32 coalescing_timer,
-	unsigned int coalescing_type, unsigned int mask_on_assertion);
-void vnic_intr_coalescing_timer_set(struct vnic_intr *intr,
-	u32 coalescing_timer);
-void vnic_intr_clean(struct vnic_intr *intr);
+व्योम vnic_पूर्णांकr_मुक्त(काष्ठा vnic_पूर्णांकr *पूर्णांकr);
+पूर्णांक vnic_पूर्णांकr_alloc(काष्ठा vnic_dev *vdev, काष्ठा vnic_पूर्णांकr *पूर्णांकr,
+	अचिन्हित पूर्णांक index);
+व्योम vnic_पूर्णांकr_init(काष्ठा vnic_पूर्णांकr *पूर्णांकr, u32 coalescing_समयr,
+	अचिन्हित पूर्णांक coalescing_type, अचिन्हित पूर्णांक mask_on_निश्चितion);
+व्योम vnic_पूर्णांकr_coalescing_समयr_set(काष्ठा vnic_पूर्णांकr *पूर्णांकr,
+	u32 coalescing_समयr);
+व्योम vnic_पूर्णांकr_clean(काष्ठा vnic_पूर्णांकr *पूर्णांकr);
 
-#endif /* _VNIC_INTR_H_ */
+#पूर्ण_अगर /* _VNIC_INTR_H_ */

@@ -1,231 +1,232 @@
+<शैली गुरु>
 /*
- * Driver for the Octeon bootbus compact flash.
+ * Driver क्रम the Octeon bootbus compact flash.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 2005 - 2012 Cavium Inc.
  * Copyright (C) 2008 Wind River Systems
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/libata.h>
-#include <linux/hrtimer.h>
-#include <linux/slab.h>
-#include <linux/irq.h>
-#include <linux/of.h>
-#include <linux/of_platform.h>
-#include <linux/platform_device.h>
-#include <scsi/scsi_host.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/libata.h>
+#समावेश <linux/hrसमयr.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/irq.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <scsi/scsi_host.h>
 
-#include <asm/byteorder.h>
-#include <asm/octeon/octeon.h>
+#समावेश <यंत्र/byteorder.h>
+#समावेश <यंत्र/octeon/octeon.h>
 
 /*
- * The Octeon bootbus compact flash interface is connected in at least
- * 3 different configurations on various evaluation boards:
+ * The Octeon bootbus compact flash पूर्णांकerface is connected in at least
+ * 3 dअगरferent configurations on various evaluation boards:
  *
  * -- 8  bits no irq, no DMA
  * -- 16 bits no irq, no DMA
  * -- 16 bits True IDE mode with DMA, but no irq.
  *
- * In the last case the DMA engine can generate an interrupt when the
- * transfer is complete.  For the first two cases only PIO is supported.
+ * In the last हाल the DMA engine can generate an पूर्णांकerrupt when the
+ * transfer is complete.  For the first two हालs only PIO is supported.
  *
  */
 
-#define DRV_NAME	"pata_octeon_cf"
-#define DRV_VERSION	"2.2"
+#घोषणा DRV_NAME	"pata_octeon_cf"
+#घोषणा DRV_VERSION	"2.2"
 
-/* Poll interval in nS. */
-#define OCTEON_CF_BUSY_POLL_INTERVAL 500000
+/* Poll पूर्णांकerval in nS. */
+#घोषणा OCTEON_CF_BUSY_POLL_INTERVAL 500000
 
-#define DMA_CFG 0
-#define DMA_TIM 0x20
-#define DMA_INT 0x38
-#define DMA_INT_EN 0x50
+#घोषणा DMA_CFG 0
+#घोषणा DMA_TIM 0x20
+#घोषणा DMA_INT 0x38
+#घोषणा DMA_INT_EN 0x50
 
-struct octeon_cf_port {
-	struct hrtimer delayed_finish;
-	struct ata_port *ap;
-	int dma_finished;
-	void		*c0;
-	unsigned int cs0;
-	unsigned int cs1;
+काष्ठा octeon_cf_port अणु
+	काष्ठा hrसमयr delayed_finish;
+	काष्ठा ata_port *ap;
+	पूर्णांक dma_finished;
+	व्योम		*c0;
+	अचिन्हित पूर्णांक cs0;
+	अचिन्हित पूर्णांक cs1;
 	bool is_true_ide;
 	u64 dma_base;
-};
+पूर्ण;
 
-static struct scsi_host_template octeon_cf_sht = {
+अटल काष्ठा scsi_host_ढाँचा octeon_cf_sht = अणु
 	ATA_PIO_SHT(DRV_NAME),
-};
+पूर्ण;
 
-static int enable_dma;
-module_param(enable_dma, int, 0444);
+अटल पूर्णांक enable_dma;
+module_param(enable_dma, पूर्णांक, 0444);
 MODULE_PARM_DESC(enable_dma,
 		 "Enable use of DMA on interfaces that support it (0=no dma [default], 1=use dma)");
 
 /**
- * Convert nanosecond based time to setting used in the
- * boot bus timing register, based on timing multiple
+ * Convert nanosecond based समय to setting used in the
+ * boot bus timing रेजिस्टर, based on timing multiple
  */
-static unsigned int ns_to_tim_reg(unsigned int tim_mult, unsigned int nsecs)
-{
-	unsigned int val;
+अटल अचिन्हित पूर्णांक ns_to_tim_reg(अचिन्हित पूर्णांक tim_mult, अचिन्हित पूर्णांक nsecs)
+अणु
+	अचिन्हित पूर्णांक val;
 
 	/*
-	 * Compute # of eclock periods to get desired duration in
+	 * Compute # of eघड़ी periods to get desired duration in
 	 * nanoseconds.
 	 */
-	val = DIV_ROUND_UP(nsecs * (octeon_get_io_clock_rate() / 1000000),
+	val = DIV_ROUND_UP(nsecs * (octeon_get_io_घड़ी_rate() / 1000000),
 			  1000 * tim_mult);
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-static void octeon_cf_set_boot_reg_cfg(int cs, unsigned int multiplier)
-{
-	union cvmx_mio_boot_reg_cfgx reg_cfg;
-	unsigned int tim_mult;
+अटल व्योम octeon_cf_set_boot_reg_cfg(पूर्णांक cs, अचिन्हित पूर्णांक multiplier)
+अणु
+	जोड़ cvmx_mio_boot_reg_cfgx reg_cfg;
+	अचिन्हित पूर्णांक tim_mult;
 
-	switch (multiplier) {
-	case 8:
+	चयन (multiplier) अणु
+	हाल 8:
 		tim_mult = 3;
-		break;
-	case 4:
+		अवरोध;
+	हाल 4:
 		tim_mult = 0;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		tim_mult = 2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		tim_mult = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	reg_cfg.u64 = cvmx_read_csr(CVMX_MIO_BOOT_REG_CFGX(cs));
-	reg_cfg.s.dmack = 0;	/* Don't assert DMACK on access */
+	reg_cfg.u64 = cvmx_पढ़ो_csr(CVMX_MIO_BOOT_REG_CFGX(cs));
+	reg_cfg.s.dmack = 0;	/* Don't निश्चित DMACK on access */
 	reg_cfg.s.tim_mult = tim_mult;	/* Timing mutiplier */
 	reg_cfg.s.rd_dly = 0;	/* Sample on falling edge of BOOT_OE */
-	reg_cfg.s.sam = 0;	/* Don't combine write and output enable */
-	reg_cfg.s.we_ext = 0;	/* No write enable extension */
-	reg_cfg.s.oe_ext = 0;	/* No read enable extension */
+	reg_cfg.s.sam = 0;	/* Don't combine ग_लिखो and output enable */
+	reg_cfg.s.we_ext = 0;	/* No ग_लिखो enable extension */
+	reg_cfg.s.oe_ext = 0;	/* No पढ़ो enable extension */
 	reg_cfg.s.en = 1;	/* Enable this region */
 	reg_cfg.s.orbit = 0;	/* Don't combine with previous region */
-	reg_cfg.s.ale = 0;	/* Don't do address multiplexing */
-	cvmx_write_csr(CVMX_MIO_BOOT_REG_CFGX(cs), reg_cfg.u64);
-}
+	reg_cfg.s.ale = 0;	/* Don't करो address multiplexing */
+	cvmx_ग_लिखो_csr(CVMX_MIO_BOOT_REG_CFGX(cs), reg_cfg.u64);
+पूर्ण
 
 /**
  * Called after libata determines the needed PIO mode. This
  * function programs the Octeon bootbus regions to support the
  * timing requirements of the PIO mode.
  *
- * @ap:     ATA port information
+ * @ap:     ATA port inक्रमmation
  * @dev:    ATA device
  */
-static void octeon_cf_set_piomode(struct ata_port *ap, struct ata_device *dev)
-{
-	struct octeon_cf_port *cf_port = ap->private_data;
-	union cvmx_mio_boot_reg_timx reg_tim;
-	int T;
-	struct ata_timing timing;
+अटल व्योम octeon_cf_set_piomode(काष्ठा ata_port *ap, काष्ठा ata_device *dev)
+अणु
+	काष्ठा octeon_cf_port *cf_port = ap->निजी_data;
+	जोड़ cvmx_mio_boot_reg_timx reg_tim;
+	पूर्णांक T;
+	काष्ठा ata_timing timing;
 
-	unsigned int div;
-	int use_iordy;
-	int trh;
-	int pause;
+	अचिन्हित पूर्णांक भाग;
+	पूर्णांक use_iordy;
+	पूर्णांक trh;
+	पूर्णांक छोड़ो;
 	/* These names are timing parameters from the ATA spec */
-	int t2;
+	पूर्णांक t2;
 
 	/*
-	 * A divisor value of four will overflow the timing fields at
-	 * clock rates greater than 800MHz
+	 * A भागisor value of four will overflow the timing fields at
+	 * घड़ी rates greater than 800MHz
 	 */
-	if (octeon_get_io_clock_rate() <= 800000000)
-		div = 4;
-	else
-		div = 8;
-	T = (int)((1000000000000LL * div) / octeon_get_io_clock_rate());
+	अगर (octeon_get_io_घड़ी_rate() <= 800000000)
+		भाग = 4;
+	अन्यथा
+		भाग = 8;
+	T = (पूर्णांक)((1000000000000LL * भाग) / octeon_get_io_घड़ी_rate());
 
 	BUG_ON(ata_timing_compute(dev, dev->pio_mode, &timing, T, T));
 
 	t2 = timing.active;
-	if (t2)
+	अगर (t2)
 		t2--;
 
-	trh = ns_to_tim_reg(div, 20);
-	if (trh)
+	trh = ns_to_tim_reg(भाग, 20);
+	अगर (trh)
 		trh--;
 
-	pause = (int)timing.cycle - (int)timing.active -
-		(int)timing.setup - trh;
-	if (pause < 0)
-		pause = 0;
-	if (pause)
-		pause--;
+	छोड़ो = (पूर्णांक)timing.cycle - (पूर्णांक)timing.active -
+		(पूर्णांक)timing.setup - trh;
+	अगर (छोड़ो < 0)
+		छोड़ो = 0;
+	अगर (छोड़ो)
+		छोड़ो--;
 
-	octeon_cf_set_boot_reg_cfg(cf_port->cs0, div);
-	if (cf_port->is_true_ide)
+	octeon_cf_set_boot_reg_cfg(cf_port->cs0, भाग);
+	अगर (cf_port->is_true_ide)
 		/* True IDE mode, program both chip selects.  */
-		octeon_cf_set_boot_reg_cfg(cf_port->cs1, div);
+		octeon_cf_set_boot_reg_cfg(cf_port->cs1, भाग);
 
 
 	use_iordy = ata_pio_need_iordy(dev);
 
-	reg_tim.u64 = cvmx_read_csr(CVMX_MIO_BOOT_REG_TIMX(cf_port->cs0));
+	reg_tim.u64 = cvmx_पढ़ो_csr(CVMX_MIO_BOOT_REG_TIMX(cf_port->cs0));
 	/* Disable page mode */
 	reg_tim.s.pagem = 0;
 	/* Enable dynamic timing */
-	reg_tim.s.waitm = use_iordy;
+	reg_tim.s.रुकोm = use_iordy;
 	/* Pages are disabled */
 	reg_tim.s.pages = 0;
-	/* We don't use multiplexed address mode */
+	/* We करोn't use multiplexed address mode */
 	reg_tim.s.ale = 0;
 	/* Not used */
 	reg_tim.s.page = 0;
-	/* Time after IORDY to coninue to assert the data */
-	reg_tim.s.wait = 0;
-	/* Time to wait to complete the cycle. */
-	reg_tim.s.pause = pause;
-	/* How long to hold after a write to de-assert CE. */
+	/* Time after IORDY to coninue to निश्चित the data */
+	reg_tim.s.रुको = 0;
+	/* Time to रुको to complete the cycle. */
+	reg_tim.s.छोड़ो = छोड़ो;
+	/* How दीर्घ to hold after a ग_लिखो to de-निश्चित CE. */
 	reg_tim.s.wr_hld = trh;
-	/* How long to wait after a read to de-assert CE. */
+	/* How दीर्घ to रुको after a पढ़ो to de-निश्चित CE. */
 	reg_tim.s.rd_hld = trh;
-	/* How long write enable is asserted */
+	/* How दीर्घ ग_लिखो enable is निश्चितed */
 	reg_tim.s.we = t2;
-	/* How long read enable is asserted */
+	/* How दीर्घ पढ़ो enable is निश्चितed */
 	reg_tim.s.oe = t2;
-	/* Time after CE that read/write starts */
-	reg_tim.s.ce = ns_to_tim_reg(div, 5);
-	/* Time before CE that address is valid */
+	/* Time after CE that पढ़ो/ग_लिखो starts */
+	reg_tim.s.ce = ns_to_tim_reg(भाग, 5);
+	/* Time beक्रमe CE that address is valid */
 	reg_tim.s.adr = 0;
 
-	/* Program the bootbus region timing for the data port chip select. */
-	cvmx_write_csr(CVMX_MIO_BOOT_REG_TIMX(cf_port->cs0), reg_tim.u64);
-	if (cf_port->is_true_ide)
+	/* Program the bootbus region timing क्रम the data port chip select. */
+	cvmx_ग_लिखो_csr(CVMX_MIO_BOOT_REG_TIMX(cf_port->cs0), reg_tim.u64);
+	अगर (cf_port->is_true_ide)
 		/* True IDE mode, program both chip selects.  */
-		cvmx_write_csr(CVMX_MIO_BOOT_REG_TIMX(cf_port->cs1),
+		cvmx_ग_लिखो_csr(CVMX_MIO_BOOT_REG_TIMX(cf_port->cs1),
 			       reg_tim.u64);
-}
+पूर्ण
 
-static void octeon_cf_set_dmamode(struct ata_port *ap, struct ata_device *dev)
-{
-	struct octeon_cf_port *cf_port = ap->private_data;
-	union cvmx_mio_boot_pin_defs pin_defs;
-	union cvmx_mio_boot_dma_timx dma_tim;
-	unsigned int oe_a;
-	unsigned int oe_n;
-	unsigned int dma_ackh;
-	unsigned int dma_arq;
-	unsigned int pause;
-	unsigned int T0, Tkr, Td;
-	unsigned int tim_mult;
-	int c;
+अटल व्योम octeon_cf_set_dmamode(काष्ठा ata_port *ap, काष्ठा ata_device *dev)
+अणु
+	काष्ठा octeon_cf_port *cf_port = ap->निजी_data;
+	जोड़ cvmx_mio_boot_pin_defs pin_defs;
+	जोड़ cvmx_mio_boot_dma_timx dma_tim;
+	अचिन्हित पूर्णांक oe_a;
+	अचिन्हित पूर्णांक oe_n;
+	अचिन्हित पूर्णांक dma_ackh;
+	अचिन्हित पूर्णांक dma_arq;
+	अचिन्हित पूर्णांक छोड़ो;
+	अचिन्हित पूर्णांक T0, Tkr, Td;
+	अचिन्हित पूर्णांक tim_mult;
+	पूर्णांक c;
 
-	const struct ata_timing *timing;
+	स्थिर काष्ठा ata_timing *timing;
 
 	timing = ata_timing_find_mode(dev->dma_mode);
 	T0	= timing->cycle;
@@ -237,21 +238,21 @@ static void octeon_cf_set_dmamode(struct ata_port *ap, struct ata_device *dev)
 	/* dma_tim.s.tim_mult = 0 --> 4x */
 	tim_mult = 4;
 
-	/* not spec'ed, value in eclocks, not affected by tim_mult */
+	/* not spec'ed, value in eघड़ीs, not affected by tim_mult */
 	dma_arq = 8;
-	pause = 25 - dma_arq * 1000 /
-		(octeon_get_io_clock_rate() / 1000000); /* Tz */
+	छोड़ो = 25 - dma_arq * 1000 /
+		(octeon_get_io_घड़ी_rate() / 1000000); /* Tz */
 
 	oe_a = Td;
 	/* Tkr from cf spec, lengthened to meet T0 */
 	oe_n = max(T0 - oe_a, Tkr);
 
-	pin_defs.u64 = cvmx_read_csr(CVMX_MIO_BOOT_PIN_DEFS);
+	pin_defs.u64 = cvmx_पढ़ो_csr(CVMX_MIO_BOOT_PIN_DEFS);
 
 	/* DMA channel number. */
 	c = (cf_port->dma_base & 8) >> 3;
 
-	/* Invert the polarity if the default is 0*/
+	/* Invert the polarity अगर the शेष is 0*/
 	dma_tim.s.dmack_pi = (pin_defs.u64 & (1ull << (11 + c))) ? 0 : 1;
 
 	dma_tim.s.oe_n = ns_to_tim_reg(tim_mult, oe_n);
@@ -265,11 +266,11 @@ static void octeon_cf_set_dmamode(struct ata_port *ap, struct ata_device *dev)
 	dma_tim.s.dmack_h = ns_to_tim_reg(tim_mult, dma_ackh);
 
 	dma_tim.s.dmarq = dma_arq;
-	dma_tim.s.pause = ns_to_tim_reg(tim_mult, pause);
+	dma_tim.s.छोड़ो = ns_to_tim_reg(tim_mult, छोड़ो);
 
 	dma_tim.s.rd_dly = 0;	/* Sample right on edge */
 
-	/*  writes only */
+	/*  ग_लिखोs only */
 	dma_tim.s.we_n = ns_to_tim_reg(tim_mult, oe_n);
 	dma_tim.s.we_a = ns_to_tim_reg(tim_mult, oe_a);
 
@@ -277,10 +278,10 @@ static void octeon_cf_set_dmamode(struct ata_port *ap, struct ata_device *dev)
 		 ns_to_tim_reg(tim_mult, 60));
 	pr_debug("oe_n: %d, oe_a: %d, dmack_s: %d, dmack_h: %d, dmarq: %d, pause: %d\n",
 		 dma_tim.s.oe_n, dma_tim.s.oe_a, dma_tim.s.dmack_s,
-		 dma_tim.s.dmack_h, dma_tim.s.dmarq, dma_tim.s.pause);
+		 dma_tim.s.dmack_h, dma_tim.s.dmarq, dma_tim.s.छोड़ो);
 
-	cvmx_write_csr(cf_port->dma_base + DMA_TIM, dma_tim.u64);
-}
+	cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_TIM, dma_tim.u64);
+पूर्ण
 
 /**
  * Handle an 8 bit I/O request.
@@ -288,38 +289,38 @@ static void octeon_cf_set_dmamode(struct ata_port *ap, struct ata_device *dev)
  * @qc:         Queued command
  * @buffer:     Data buffer
  * @buflen:     Length of the buffer.
- * @rw:         True to write.
+ * @rw:         True to ग_लिखो.
  */
-static unsigned int octeon_cf_data_xfer8(struct ata_queued_cmd *qc,
-					 unsigned char *buffer,
-					 unsigned int buflen,
-					 int rw)
-{
-	struct ata_port *ap		= qc->dev->link->ap;
-	void __iomem *data_addr		= ap->ioaddr.data_addr;
-	unsigned long words;
-	int count;
+अटल अचिन्हित पूर्णांक octeon_cf_data_xfer8(काष्ठा ata_queued_cmd *qc,
+					 अचिन्हित अक्षर *buffer,
+					 अचिन्हित पूर्णांक buflen,
+					 पूर्णांक rw)
+अणु
+	काष्ठा ata_port *ap		= qc->dev->link->ap;
+	व्योम __iomem *data_addr		= ap->ioaddr.data_addr;
+	अचिन्हित दीर्घ words;
+	पूर्णांक count;
 
 	words = buflen;
-	if (rw) {
+	अगर (rw) अणु
 		count = 16;
-		while (words--) {
-			iowrite8(*buffer, data_addr);
+		जबतक (words--) अणु
+			ioग_लिखो8(*buffer, data_addr);
 			buffer++;
 			/*
-			 * Every 16 writes do a read so the bootbus
-			 * FIFO doesn't fill up.
+			 * Every 16 ग_लिखोs करो a पढ़ो so the bootbus
+			 * FIFO करोesn't fill up.
 			 */
-			if (--count == 0) {
-				ioread8(ap->ioaddr.altstatus_addr);
+			अगर (--count == 0) अणु
+				ioपढ़ो8(ap->ioaddr.altstatus_addr);
 				count = 16;
-			}
-		}
-	} else {
-		ioread8_rep(data_addr, buffer, words);
-	}
-	return buflen;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ioपढ़ो8_rep(data_addr, buffer, words);
+	पूर्ण
+	वापस buflen;
+पूर्ण
 
 /**
  * Handle a 16 bit I/O request.
@@ -327,277 +328,277 @@ static unsigned int octeon_cf_data_xfer8(struct ata_queued_cmd *qc,
  * @qc:         Queued command
  * @buffer:     Data buffer
  * @buflen:     Length of the buffer.
- * @rw:         True to write.
+ * @rw:         True to ग_लिखो.
  */
-static unsigned int octeon_cf_data_xfer16(struct ata_queued_cmd *qc,
-					  unsigned char *buffer,
-					  unsigned int buflen,
-					  int rw)
-{
-	struct ata_port *ap		= qc->dev->link->ap;
-	void __iomem *data_addr		= ap->ioaddr.data_addr;
-	unsigned long words;
-	int count;
+अटल अचिन्हित पूर्णांक octeon_cf_data_xfer16(काष्ठा ata_queued_cmd *qc,
+					  अचिन्हित अक्षर *buffer,
+					  अचिन्हित पूर्णांक buflen,
+					  पूर्णांक rw)
+अणु
+	काष्ठा ata_port *ap		= qc->dev->link->ap;
+	व्योम __iomem *data_addr		= ap->ioaddr.data_addr;
+	अचिन्हित दीर्घ words;
+	पूर्णांक count;
 
 	words = buflen / 2;
-	if (rw) {
+	अगर (rw) अणु
 		count = 16;
-		while (words--) {
-			iowrite16(*(uint16_t *)buffer, data_addr);
-			buffer += sizeof(uint16_t);
+		जबतक (words--) अणु
+			ioग_लिखो16(*(uपूर्णांक16_t *)buffer, data_addr);
+			buffer += माप(uपूर्णांक16_t);
 			/*
-			 * Every 16 writes do a read so the bootbus
-			 * FIFO doesn't fill up.
+			 * Every 16 ग_लिखोs करो a पढ़ो so the bootbus
+			 * FIFO करोesn't fill up.
 			 */
-			if (--count == 0) {
-				ioread8(ap->ioaddr.altstatus_addr);
+			अगर (--count == 0) अणु
+				ioपढ़ो8(ap->ioaddr.altstatus_addr);
 				count = 16;
-			}
-		}
-	} else {
-		while (words--) {
-			*(uint16_t *)buffer = ioread16(data_addr);
-			buffer += sizeof(uint16_t);
-		}
-	}
-	/* Transfer trailing 1 byte, if any. */
-	if (unlikely(buflen & 0x01)) {
-		__le16 align_buf[1] = { 0 };
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		जबतक (words--) अणु
+			*(uपूर्णांक16_t *)buffer = ioपढ़ो16(data_addr);
+			buffer += माप(uपूर्णांक16_t);
+		पूर्ण
+	पूर्ण
+	/* Transfer trailing 1 byte, अगर any. */
+	अगर (unlikely(buflen & 0x01)) अणु
+		__le16 align_buf[1] = अणु 0 पूर्ण;
 
-		if (rw == READ) {
-			align_buf[0] = cpu_to_le16(ioread16(data_addr));
-			memcpy(buffer, align_buf, 1);
-		} else {
-			memcpy(align_buf, buffer, 1);
-			iowrite16(le16_to_cpu(align_buf[0]), data_addr);
-		}
+		अगर (rw == READ) अणु
+			align_buf[0] = cpu_to_le16(ioपढ़ो16(data_addr));
+			स_नकल(buffer, align_buf, 1);
+		पूर्ण अन्यथा अणु
+			स_नकल(align_buf, buffer, 1);
+			ioग_लिखो16(le16_to_cpu(align_buf[0]), data_addr);
+		पूर्ण
 		words++;
-	}
-	return buflen;
-}
+	पूर्ण
+	वापस buflen;
+पूर्ण
 
 /**
- * Read the taskfile for 16bit non-True IDE only.
+ * Read the taskfile क्रम 16bit non-True IDE only.
  */
-static void octeon_cf_tf_read16(struct ata_port *ap, struct ata_taskfile *tf)
-{
+अटल व्योम octeon_cf_tf_पढ़ो16(काष्ठा ata_port *ap, काष्ठा ata_taskfile *tf)
+अणु
 	u16 blob;
-	/* The base of the registers is at ioaddr.data_addr. */
-	void __iomem *base = ap->ioaddr.data_addr;
+	/* The base of the रेजिस्टरs is at ioaddr.data_addr. */
+	व्योम __iomem *base = ap->ioaddr.data_addr;
 
-	blob = __raw_readw(base + 0xc);
+	blob = __raw_पढ़ोw(base + 0xc);
 	tf->feature = blob >> 8;
 
-	blob = __raw_readw(base + 2);
+	blob = __raw_पढ़ोw(base + 2);
 	tf->nsect = blob & 0xff;
 	tf->lbal = blob >> 8;
 
-	blob = __raw_readw(base + 4);
+	blob = __raw_पढ़ोw(base + 4);
 	tf->lbam = blob & 0xff;
 	tf->lbah = blob >> 8;
 
-	blob = __raw_readw(base + 6);
+	blob = __raw_पढ़ोw(base + 6);
 	tf->device = blob & 0xff;
 	tf->command = blob >> 8;
 
-	if (tf->flags & ATA_TFLAG_LBA48) {
-		if (likely(ap->ioaddr.ctl_addr)) {
-			iowrite8(tf->ctl | ATA_HOB, ap->ioaddr.ctl_addr);
+	अगर (tf->flags & ATA_TFLAG_LBA48) अणु
+		अगर (likely(ap->ioaddr.ctl_addr)) अणु
+			ioग_लिखो8(tf->ctl | ATA_HOB, ap->ioaddr.ctl_addr);
 
-			blob = __raw_readw(base + 0xc);
+			blob = __raw_पढ़ोw(base + 0xc);
 			tf->hob_feature = blob >> 8;
 
-			blob = __raw_readw(base + 2);
+			blob = __raw_पढ़ोw(base + 2);
 			tf->hob_nsect = blob & 0xff;
 			tf->hob_lbal = blob >> 8;
 
-			blob = __raw_readw(base + 4);
+			blob = __raw_पढ़ोw(base + 4);
 			tf->hob_lbam = blob & 0xff;
 			tf->hob_lbah = blob >> 8;
 
-			iowrite8(tf->ctl, ap->ioaddr.ctl_addr);
+			ioग_लिखो8(tf->ctl, ap->ioaddr.ctl_addr);
 			ap->last_ctl = tf->ctl;
-		} else {
+		पूर्ण अन्यथा अणु
 			WARN_ON(1);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static u8 octeon_cf_check_status16(struct ata_port *ap)
-{
+अटल u8 octeon_cf_check_status16(काष्ठा ata_port *ap)
+अणु
 	u16 blob;
-	void __iomem *base = ap->ioaddr.data_addr;
+	व्योम __iomem *base = ap->ioaddr.data_addr;
 
-	blob = __raw_readw(base + 6);
-	return blob >> 8;
-}
+	blob = __raw_पढ़ोw(base + 6);
+	वापस blob >> 8;
+पूर्ण
 
-static int octeon_cf_softreset16(struct ata_link *link, unsigned int *classes,
-				 unsigned long deadline)
-{
-	struct ata_port *ap = link->ap;
-	void __iomem *base = ap->ioaddr.data_addr;
-	int rc;
+अटल पूर्णांक octeon_cf_softreset16(काष्ठा ata_link *link, अचिन्हित पूर्णांक *classes,
+				 अचिन्हित दीर्घ deadline)
+अणु
+	काष्ठा ata_port *ap = link->ap;
+	व्योम __iomem *base = ap->ioaddr.data_addr;
+	पूर्णांक rc;
 	u8 err;
 
 	DPRINTK("about to softreset\n");
-	__raw_writew(ap->ctl, base + 0xe);
+	__raw_ग_लिखोw(ap->ctl, base + 0xe);
 	udelay(20);
-	__raw_writew(ap->ctl | ATA_SRST, base + 0xe);
+	__raw_ग_लिखोw(ap->ctl | ATA_SRST, base + 0xe);
 	udelay(20);
-	__raw_writew(ap->ctl, base + 0xe);
+	__raw_ग_लिखोw(ap->ctl, base + 0xe);
 
-	rc = ata_sff_wait_after_reset(link, 1, deadline);
-	if (rc) {
+	rc = ata_sff_रुको_after_reset(link, 1, deadline);
+	अगर (rc) अणु
 		ata_link_err(link, "SRST failed (errno=%d)\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* determine by signature whether we have ATA or ATAPI devices */
-	classes[0] = ata_sff_dev_classify(&link->device[0], 1, &err);
+	classes[0] = ata_sff_dev_classअगरy(&link->device[0], 1, &err);
 	DPRINTK("EXIT, classes[0]=%u [1]=%u\n", classes[0], classes[1]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * Load the taskfile for 16bit non-True IDE only.  The device_addr is
- * not loaded, we do this as part of octeon_cf_exec_command16.
+ * Load the taskfile क्रम 16bit non-True IDE only.  The device_addr is
+ * not loaded, we करो this as part of octeon_cf_exec_command16.
  */
-static void octeon_cf_tf_load16(struct ata_port *ap,
-				const struct ata_taskfile *tf)
-{
-	unsigned int is_addr = tf->flags & ATA_TFLAG_ISADDR;
-	/* The base of the registers is at ioaddr.data_addr. */
-	void __iomem *base = ap->ioaddr.data_addr;
+अटल व्योम octeon_cf_tf_load16(काष्ठा ata_port *ap,
+				स्थिर काष्ठा ata_taskfile *tf)
+अणु
+	अचिन्हित पूर्णांक is_addr = tf->flags & ATA_TFLAG_ISADDR;
+	/* The base of the रेजिस्टरs is at ioaddr.data_addr. */
+	व्योम __iomem *base = ap->ioaddr.data_addr;
 
-	if (tf->ctl != ap->last_ctl) {
-		iowrite8(tf->ctl, ap->ioaddr.ctl_addr);
+	अगर (tf->ctl != ap->last_ctl) अणु
+		ioग_लिखो8(tf->ctl, ap->ioaddr.ctl_addr);
 		ap->last_ctl = tf->ctl;
-		ata_wait_idle(ap);
-	}
-	if (is_addr && (tf->flags & ATA_TFLAG_LBA48)) {
-		__raw_writew(tf->hob_feature << 8, base + 0xc);
-		__raw_writew(tf->hob_nsect | tf->hob_lbal << 8, base + 2);
-		__raw_writew(tf->hob_lbam | tf->hob_lbah << 8, base + 4);
+		ata_रुको_idle(ap);
+	पूर्ण
+	अगर (is_addr && (tf->flags & ATA_TFLAG_LBA48)) अणु
+		__raw_ग_लिखोw(tf->hob_feature << 8, base + 0xc);
+		__raw_ग_लिखोw(tf->hob_nsect | tf->hob_lbal << 8, base + 2);
+		__raw_ग_लिखोw(tf->hob_lbam | tf->hob_lbah << 8, base + 4);
 		VPRINTK("hob: feat 0x%X nsect 0x%X, lba 0x%X 0x%X 0x%X\n",
 			tf->hob_feature,
 			tf->hob_nsect,
 			tf->hob_lbal,
 			tf->hob_lbam,
 			tf->hob_lbah);
-	}
-	if (is_addr) {
-		__raw_writew(tf->feature << 8, base + 0xc);
-		__raw_writew(tf->nsect | tf->lbal << 8, base + 2);
-		__raw_writew(tf->lbam | tf->lbah << 8, base + 4);
+	पूर्ण
+	अगर (is_addr) अणु
+		__raw_ग_लिखोw(tf->feature << 8, base + 0xc);
+		__raw_ग_लिखोw(tf->nsect | tf->lbal << 8, base + 2);
+		__raw_ग_लिखोw(tf->lbam | tf->lbah << 8, base + 4);
 		VPRINTK("feat 0x%X nsect 0x%X, lba 0x%X 0x%X 0x%X\n",
 			tf->feature,
 			tf->nsect,
 			tf->lbal,
 			tf->lbam,
 			tf->lbah);
-	}
-	ata_wait_idle(ap);
-}
+	पूर्ण
+	ata_रुको_idle(ap);
+पूर्ण
 
 
-static void octeon_cf_dev_select(struct ata_port *ap, unsigned int device)
-{
-/*  There is only one device, do nothing. */
-	return;
-}
+अटल व्योम octeon_cf_dev_select(काष्ठा ata_port *ap, अचिन्हित पूर्णांक device)
+अणु
+/*  There is only one device, करो nothing. */
+	वापस;
+पूर्ण
 
 /*
  * Issue ATA command to host controller.  The device_addr is also sent
- * as it must be written in a combined write with the command.
+ * as it must be written in a combined ग_लिखो with the command.
  */
-static void octeon_cf_exec_command16(struct ata_port *ap,
-				const struct ata_taskfile *tf)
-{
-	/* The base of the registers is at ioaddr.data_addr. */
-	void __iomem *base = ap->ioaddr.data_addr;
+अटल व्योम octeon_cf_exec_command16(काष्ठा ata_port *ap,
+				स्थिर काष्ठा ata_taskfile *tf)
+अणु
+	/* The base of the रेजिस्टरs is at ioaddr.data_addr. */
+	व्योम __iomem *base = ap->ioaddr.data_addr;
 	u16 blob;
 
-	if (tf->flags & ATA_TFLAG_DEVICE) {
+	अगर (tf->flags & ATA_TFLAG_DEVICE) अणु
 		VPRINTK("device 0x%X\n", tf->device);
 		blob = tf->device;
-	} else {
+	पूर्ण अन्यथा अणु
 		blob = 0;
-	}
+	पूर्ण
 
-	DPRINTK("ata%u: cmd 0x%X\n", ap->print_id, tf->command);
+	DPRINTK("ata%u: cmd 0x%X\n", ap->prपूर्णांक_id, tf->command);
 	blob |= (tf->command << 8);
-	__raw_writew(blob, base + 6);
+	__raw_ग_लिखोw(blob, base + 6);
 
 
-	ata_wait_idle(ap);
-}
+	ata_रुको_idle(ap);
+पूर्ण
 
-static void octeon_cf_ata_port_noaction(struct ata_port *ap)
-{
-}
+अटल व्योम octeon_cf_ata_port_noaction(काष्ठा ata_port *ap)
+अणु
+पूर्ण
 
-static void octeon_cf_dma_setup(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
-	struct octeon_cf_port *cf_port;
+अटल व्योम octeon_cf_dma_setup(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
+	काष्ठा octeon_cf_port *cf_port;
 
-	cf_port = ap->private_data;
+	cf_port = ap->निजी_data;
 	DPRINTK("ENTER\n");
 	/* issue r/w command */
 	qc->cursg = qc->sg;
 	cf_port->dma_finished = 0;
 	ap->ops->sff_exec_command(ap, &qc->tf);
 	DPRINTK("EXIT\n");
-}
+पूर्ण
 
 /**
- * Start a DMA transfer that was already setup
+ * Start a DMA transfer that was alपढ़ोy setup
  *
- * @qc:     Information about the DMA
+ * @qc:     Inक्रमmation about the DMA
  */
-static void octeon_cf_dma_start(struct ata_queued_cmd *qc)
-{
-	struct octeon_cf_port *cf_port = qc->ap->private_data;
-	union cvmx_mio_boot_dma_cfgx mio_boot_dma_cfg;
-	union cvmx_mio_boot_dma_intx mio_boot_dma_int;
-	struct scatterlist *sg;
+अटल व्योम octeon_cf_dma_start(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा octeon_cf_port *cf_port = qc->ap->निजी_data;
+	जोड़ cvmx_mio_boot_dma_cfgx mio_boot_dma_cfg;
+	जोड़ cvmx_mio_boot_dma_पूर्णांकx mio_boot_dma_पूर्णांक;
+	काष्ठा scatterlist *sg;
 
 	VPRINTK("%d scatterlists\n", qc->n_elem);
 
-	/* Get the scatter list entry we need to DMA into */
+	/* Get the scatter list entry we need to DMA पूर्णांकo */
 	sg = qc->cursg;
 	BUG_ON(!sg);
 
 	/*
 	 * Clear the DMA complete status.
 	 */
-	mio_boot_dma_int.u64 = 0;
-	mio_boot_dma_int.s.done = 1;
-	cvmx_write_csr(cf_port->dma_base + DMA_INT, mio_boot_dma_int.u64);
+	mio_boot_dma_पूर्णांक.u64 = 0;
+	mio_boot_dma_पूर्णांक.s.करोne = 1;
+	cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_INT, mio_boot_dma_पूर्णांक.u64);
 
-	/* Enable the interrupt.  */
-	cvmx_write_csr(cf_port->dma_base + DMA_INT_EN, mio_boot_dma_int.u64);
+	/* Enable the पूर्णांकerrupt.  */
+	cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_INT_EN, mio_boot_dma_पूर्णांक.u64);
 
 	/* Set the direction of the DMA */
 	mio_boot_dma_cfg.u64 = 0;
-#ifdef __LITTLE_ENDIAN
+#अगर_घोषित __LITTLE_ENDIAN
 	mio_boot_dma_cfg.s.endian = 1;
-#endif
+#पूर्ण_अगर
 	mio_boot_dma_cfg.s.en = 1;
 	mio_boot_dma_cfg.s.rw = ((qc->tf.flags & ATA_TFLAG_WRITE) != 0);
 
 	/*
-	 * Don't stop the DMA if the device deasserts DMARQ. Many
-	 * compact flashes deassert DMARQ for a short time between
+	 * Don't stop the DMA अगर the device deनिश्चितs DMARQ. Many
+	 * compact flashes deनिश्चित DMARQ क्रम a लघु समय between
 	 * sectors. Instead of stopping and restarting the DMA, we'll
-	 * let the hardware do it. If the DMA is really stopped early
-	 * due to an error condition, a later timeout will force us to
+	 * let the hardware करो it. If the DMA is really stopped early
+	 * due to an error condition, a later समयout will क्रमce us to
 	 * stop.
 	 */
 	mio_boot_dma_cfg.s.clr = 0;
 
-	/* Size is specified in 16bit words and minus one notation */
+	/* Size is specअगरied in 16bit words and minus one notation */
 	mio_boot_dma_cfg.s.size = sg_dma_len(sg) / 2 - 1;
 
 	/* We need to swap the high and low bytes of every 16 bits */
@@ -607,10 +608,10 @@ static void octeon_cf_dma_start(struct ata_queued_cmd *qc)
 
 	VPRINTK("%s %d bytes address=%p\n",
 		(mio_boot_dma_cfg.s.rw) ? "write" : "read", sg->length,
-		(void *)(unsigned long)mio_boot_dma_cfg.s.adr);
+		(व्योम *)(अचिन्हित दीर्घ)mio_boot_dma_cfg.s.adr);
 
-	cvmx_write_csr(cf_port->dma_base + DMA_CFG, mio_boot_dma_cfg.u64);
-}
+	cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_CFG, mio_boot_dma_cfg.u64);
+पूर्ण
 
 /**
  *
@@ -618,206 +619,206 @@ static void octeon_cf_dma_start(struct ata_queued_cmd *qc)
  *	spin_lock_irqsave(host lock)
  *
  */
-static unsigned int octeon_cf_dma_finished(struct ata_port *ap,
-					struct ata_queued_cmd *qc)
-{
-	struct ata_eh_info *ehi = &ap->link.eh_info;
-	struct octeon_cf_port *cf_port = ap->private_data;
-	union cvmx_mio_boot_dma_cfgx dma_cfg;
-	union cvmx_mio_boot_dma_intx dma_int;
+अटल अचिन्हित पूर्णांक octeon_cf_dma_finished(काष्ठा ata_port *ap,
+					काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_eh_info *ehi = &ap->link.eh_info;
+	काष्ठा octeon_cf_port *cf_port = ap->निजी_data;
+	जोड़ cvmx_mio_boot_dma_cfgx dma_cfg;
+	जोड़ cvmx_mio_boot_dma_पूर्णांकx dma_पूर्णांक;
 	u8 status;
 
 	VPRINTK("ata%u: protocol %d task_state %d\n",
-		ap->print_id, qc->tf.protocol, ap->hsm_task_state);
+		ap->prपूर्णांक_id, qc->tf.protocol, ap->hsm_task_state);
 
 
-	if (ap->hsm_task_state != HSM_ST_LAST)
-		return 0;
+	अगर (ap->hsm_task_state != HSM_ST_LAST)
+		वापस 0;
 
-	dma_cfg.u64 = cvmx_read_csr(cf_port->dma_base + DMA_CFG);
-	if (dma_cfg.s.size != 0xfffff) {
+	dma_cfg.u64 = cvmx_पढ़ो_csr(cf_port->dma_base + DMA_CFG);
+	अगर (dma_cfg.s.size != 0xfffff) अणु
 		/* Error, the transfer was not complete.  */
 		qc->err_mask |= AC_ERR_HOST_BUS;
 		ap->hsm_task_state = HSM_ST_ERR;
-	}
+	पूर्ण
 
 	/* Stop and clear the dma engine.  */
 	dma_cfg.u64 = 0;
 	dma_cfg.s.size = -1;
-	cvmx_write_csr(cf_port->dma_base + DMA_CFG, dma_cfg.u64);
+	cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_CFG, dma_cfg.u64);
 
-	/* Disable the interrupt.  */
-	dma_int.u64 = 0;
-	cvmx_write_csr(cf_port->dma_base + DMA_INT_EN, dma_int.u64);
+	/* Disable the पूर्णांकerrupt.  */
+	dma_पूर्णांक.u64 = 0;
+	cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_INT_EN, dma_पूर्णांक.u64);
 
 	/* Clear the DMA complete status */
-	dma_int.s.done = 1;
-	cvmx_write_csr(cf_port->dma_base + DMA_INT, dma_int.u64);
+	dma_पूर्णांक.s.करोne = 1;
+	cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_INT, dma_पूर्णांक.u64);
 
 	status = ap->ops->sff_check_status(ap);
 
 	ata_sff_hsm_move(ap, qc, status, 0);
 
-	if (unlikely(qc->err_mask) && (qc->tf.protocol == ATA_PROT_DMA))
+	अगर (unlikely(qc->err_mask) && (qc->tf.protocol == ATA_PROT_DMA))
 		ata_ehi_push_desc(ehi, "DMA stat 0x%x", status);
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /*
- * Check if any queued commands have more DMAs, if so start the next
- * transfer, else do end of transfer handling.
+ * Check अगर any queued commands have more DMAs, अगर so start the next
+ * transfer, अन्यथा करो end of transfer handling.
  */
-static irqreturn_t octeon_cf_interrupt(int irq, void *dev_instance)
-{
-	struct ata_host *host = dev_instance;
-	struct octeon_cf_port *cf_port;
-	int i;
-	unsigned int handled = 0;
-	unsigned long flags;
+अटल irqवापस_t octeon_cf_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	काष्ठा ata_host *host = dev_instance;
+	काष्ठा octeon_cf_port *cf_port;
+	पूर्णांक i;
+	अचिन्हित पूर्णांक handled = 0;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&host->lock, flags);
 
 	DPRINTK("ENTER\n");
-	for (i = 0; i < host->n_ports; i++) {
+	क्रम (i = 0; i < host->n_ports; i++) अणु
 		u8 status;
-		struct ata_port *ap;
-		struct ata_queued_cmd *qc;
-		union cvmx_mio_boot_dma_intx dma_int;
-		union cvmx_mio_boot_dma_cfgx dma_cfg;
+		काष्ठा ata_port *ap;
+		काष्ठा ata_queued_cmd *qc;
+		जोड़ cvmx_mio_boot_dma_पूर्णांकx dma_पूर्णांक;
+		जोड़ cvmx_mio_boot_dma_cfgx dma_cfg;
 
 		ap = host->ports[i];
-		cf_port = ap->private_data;
+		cf_port = ap->निजी_data;
 
-		dma_int.u64 = cvmx_read_csr(cf_port->dma_base + DMA_INT);
-		dma_cfg.u64 = cvmx_read_csr(cf_port->dma_base + DMA_CFG);
+		dma_पूर्णांक.u64 = cvmx_पढ़ो_csr(cf_port->dma_base + DMA_INT);
+		dma_cfg.u64 = cvmx_पढ़ो_csr(cf_port->dma_base + DMA_CFG);
 
 		qc = ata_qc_from_tag(ap, ap->link.active_tag);
 
-		if (!qc || (qc->tf.flags & ATA_TFLAG_POLLING))
-			continue;
+		अगर (!qc || (qc->tf.flags & ATA_TFLAG_POLLING))
+			जारी;
 
-		if (dma_int.s.done && !dma_cfg.s.en) {
-			if (!sg_is_last(qc->cursg)) {
+		अगर (dma_पूर्णांक.s.करोne && !dma_cfg.s.en) अणु
+			अगर (!sg_is_last(qc->cursg)) अणु
 				qc->cursg = sg_next(qc->cursg);
 				handled = 1;
 				octeon_cf_dma_start(qc);
-				continue;
-			} else {
+				जारी;
+			पूर्ण अन्यथा अणु
 				cf_port->dma_finished = 1;
-			}
-		}
-		if (!cf_port->dma_finished)
-			continue;
-		status = ioread8(ap->ioaddr.altstatus_addr);
-		if (status & (ATA_BUSY | ATA_DRQ)) {
+			पूर्ण
+		पूर्ण
+		अगर (!cf_port->dma_finished)
+			जारी;
+		status = ioपढ़ो8(ap->ioaddr.altstatus_addr);
+		अगर (status & (ATA_BUSY | ATA_DRQ)) अणु
 			/*
 			 * We are busy, try to handle it later.  This
-			 * is the DMA finished interrupt, and it could
-			 * take a little while for the card to be
-			 * ready for more commands.
+			 * is the DMA finished पूर्णांकerrupt, and it could
+			 * take a little जबतक क्रम the card to be
+			 * पढ़ोy क्रम more commands.
 			 */
 			/* Clear DMA irq. */
-			dma_int.u64 = 0;
-			dma_int.s.done = 1;
-			cvmx_write_csr(cf_port->dma_base + DMA_INT,
-				       dma_int.u64);
-			hrtimer_start_range_ns(&cf_port->delayed_finish,
-					       ns_to_ktime(OCTEON_CF_BUSY_POLL_INTERVAL),
+			dma_पूर्णांक.u64 = 0;
+			dma_पूर्णांक.s.करोne = 1;
+			cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_INT,
+				       dma_पूर्णांक.u64);
+			hrसमयr_start_range_ns(&cf_port->delayed_finish,
+					       ns_to_kसमय(OCTEON_CF_BUSY_POLL_INTERVAL),
 					       OCTEON_CF_BUSY_POLL_INTERVAL / 5,
 					       HRTIMER_MODE_REL);
 			handled = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			handled |= octeon_cf_dma_finished(ap, qc);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&host->lock, flags);
 	DPRINTK("EXIT\n");
-	return IRQ_RETVAL(handled);
-}
+	वापस IRQ_RETVAL(handled);
+पूर्ण
 
-static enum hrtimer_restart octeon_cf_delayed_finish(struct hrtimer *hrt)
-{
-	struct octeon_cf_port *cf_port = container_of(hrt,
-						      struct octeon_cf_port,
+अटल क्रमागत hrसमयr_restart octeon_cf_delayed_finish(काष्ठा hrसमयr *hrt)
+अणु
+	काष्ठा octeon_cf_port *cf_port = container_of(hrt,
+						      काष्ठा octeon_cf_port,
 						      delayed_finish);
-	struct ata_port *ap = cf_port->ap;
-	struct ata_host *host = ap->host;
-	struct ata_queued_cmd *qc;
-	unsigned long flags;
+	काष्ठा ata_port *ap = cf_port->ap;
+	काष्ठा ata_host *host = ap->host;
+	काष्ठा ata_queued_cmd *qc;
+	अचिन्हित दीर्घ flags;
 	u8 status;
-	enum hrtimer_restart rv = HRTIMER_NORESTART;
+	क्रमागत hrसमयr_restart rv = HRTIMER_NORESTART;
 
 	spin_lock_irqsave(&host->lock, flags);
 
 	/*
-	 * If the port is not waiting for completion, it must have
+	 * If the port is not रुकोing क्रम completion, it must have
 	 * handled it previously.  The hsm_task_state is
-	 * protected by host->lock.
+	 * रक्षित by host->lock.
 	 */
-	if (ap->hsm_task_state != HSM_ST_LAST || !cf_port->dma_finished)
-		goto out;
+	अगर (ap->hsm_task_state != HSM_ST_LAST || !cf_port->dma_finished)
+		जाओ out;
 
-	status = ioread8(ap->ioaddr.altstatus_addr);
-	if (status & (ATA_BUSY | ATA_DRQ)) {
+	status = ioपढ़ो8(ap->ioaddr.altstatus_addr);
+	अगर (status & (ATA_BUSY | ATA_DRQ)) अणु
 		/* Still busy, try again. */
-		hrtimer_forward_now(hrt,
-				    ns_to_ktime(OCTEON_CF_BUSY_POLL_INTERVAL));
+		hrसमयr_क्रमward_now(hrt,
+				    ns_to_kसमय(OCTEON_CF_BUSY_POLL_INTERVAL));
 		rv = HRTIMER_RESTART;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	qc = ata_qc_from_tag(ap, ap->link.active_tag);
-	if (qc && (!(qc->tf.flags & ATA_TFLAG_POLLING)))
+	अगर (qc && (!(qc->tf.flags & ATA_TFLAG_POLLING)))
 		octeon_cf_dma_finished(ap, qc);
 out:
 	spin_unlock_irqrestore(&host->lock, flags);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-static void octeon_cf_dev_config(struct ata_device *dev)
-{
+अटल व्योम octeon_cf_dev_config(काष्ठा ata_device *dev)
+अणु
 	/*
 	 * A maximum of 2^20 - 1 16 bit transfers are possible with
 	 * the bootbus DMA.  So we need to throttle max_sectors to
 	 * (2^12 - 1 == 4095) to assure that this can never happen.
 	 */
 	dev->max_sectors = min(dev->max_sectors, 4095U);
-}
+पूर्ण
 
 /*
- * We don't do ATAPI DMA so return 0.
+ * We करोn't करो ATAPI DMA so वापस 0.
  */
-static int octeon_cf_check_atapi_dma(struct ata_queued_cmd *qc)
-{
-	return 0;
-}
+अटल पूर्णांक octeon_cf_check_atapi_dma(काष्ठा ata_queued_cmd *qc)
+अणु
+	वापस 0;
+पूर्ण
 
-static unsigned int octeon_cf_qc_issue(struct ata_queued_cmd *qc)
-{
-	struct ata_port *ap = qc->ap;
+अटल अचिन्हित पूर्णांक octeon_cf_qc_issue(काष्ठा ata_queued_cmd *qc)
+अणु
+	काष्ठा ata_port *ap = qc->ap;
 
-	switch (qc->tf.protocol) {
-	case ATA_PROT_DMA:
+	चयन (qc->tf.protocol) अणु
+	हाल ATA_PROT_DMA:
 		WARN_ON(qc->tf.flags & ATA_TFLAG_POLLING);
 
-		ap->ops->sff_tf_load(ap, &qc->tf);  /* load tf registers */
+		ap->ops->sff_tf_load(ap, &qc->tf);  /* load tf रेजिस्टरs */
 		octeon_cf_dma_setup(qc);	    /* set up dma */
 		octeon_cf_dma_start(qc);	    /* initiate dma */
 		ap->hsm_task_state = HSM_ST_LAST;
-		break;
+		अवरोध;
 
-	case ATAPI_PROT_DMA:
+	हाल ATAPI_PROT_DMA:
 		dev_err(ap->dev, "Error, ATAPI not supported\n");
 		BUG();
 
-	default:
-		return ata_sff_qc_issue(qc);
-	}
+	शेष:
+		वापस ata_sff_qc_issue(qc);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct ata_port_operations octeon_cf_ops = {
+अटल काष्ठा ata_port_operations octeon_cf_ops = अणु
 	.inherits		= &ata_sff_port_ops,
 	.check_atapi_dma	= octeon_cf_check_atapi_dma,
 	.qc_prep		= ata_noop_qc_prep,
@@ -829,121 +830,121 @@ static struct ata_port_operations octeon_cf_ops = {
 	.set_piomode		= octeon_cf_set_piomode,
 	.set_dmamode		= octeon_cf_set_dmamode,
 	.dev_config		= octeon_cf_dev_config,
-};
+पूर्ण;
 
-static int octeon_cf_probe(struct platform_device *pdev)
-{
-	struct resource *res_cs0, *res_cs1;
+अटल पूर्णांक octeon_cf_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा resource *res_cs0, *res_cs1;
 
 	bool is_16bit;
-	const __be32 *cs_num;
-	struct property *reg_prop;
-	int n_addr, n_size, reg_len;
-	struct device_node *node;
-	void __iomem *cs0;
-	void __iomem *cs1 = NULL;
-	struct ata_host *host;
-	struct ata_port *ap;
-	int irq = 0;
-	irq_handler_t irq_handler = NULL;
-	void __iomem *base;
-	struct octeon_cf_port *cf_port;
-	int rv = -ENOMEM;
+	स्थिर __be32 *cs_num;
+	काष्ठा property *reg_prop;
+	पूर्णांक n_addr, n_size, reg_len;
+	काष्ठा device_node *node;
+	व्योम __iomem *cs0;
+	व्योम __iomem *cs1 = शून्य;
+	काष्ठा ata_host *host;
+	काष्ठा ata_port *ap;
+	पूर्णांक irq = 0;
+	irq_handler_t irq_handler = शून्य;
+	व्योम __iomem *base;
+	काष्ठा octeon_cf_port *cf_port;
+	पूर्णांक rv = -ENOMEM;
 	u32 bus_width;
 
 	node = pdev->dev.of_node;
-	if (node == NULL)
-		return -EINVAL;
+	अगर (node == शून्य)
+		वापस -EINVAL;
 
-	cf_port = devm_kzalloc(&pdev->dev, sizeof(*cf_port), GFP_KERNEL);
-	if (!cf_port)
-		return -ENOMEM;
+	cf_port = devm_kzalloc(&pdev->dev, माप(*cf_port), GFP_KERNEL);
+	अगर (!cf_port)
+		वापस -ENOMEM;
 
-	cf_port->is_true_ide = of_property_read_bool(node, "cavium,true-ide");
+	cf_port->is_true_ide = of_property_पढ़ो_bool(node, "cavium,true-ide");
 
-	if (of_property_read_u32(node, "cavium,bus-width", &bus_width) == 0)
+	अगर (of_property_पढ़ो_u32(node, "cavium,bus-width", &bus_width) == 0)
 		is_16bit = (bus_width == 16);
-	else
+	अन्यथा
 		is_16bit = false;
 
 	n_addr = of_n_addr_cells(node);
 	n_size = of_n_size_cells(node);
 
 	reg_prop = of_find_property(node, "reg", &reg_len);
-	if (!reg_prop || reg_len < sizeof(__be32))
-		return -EINVAL;
+	अगर (!reg_prop || reg_len < माप(__be32))
+		वापस -EINVAL;
 
 	cs_num = reg_prop->value;
 	cf_port->cs0 = be32_to_cpup(cs_num);
 
-	if (cf_port->is_true_ide) {
-		struct device_node *dma_node;
+	अगर (cf_port->is_true_ide) अणु
+		काष्ठा device_node *dma_node;
 		dma_node = of_parse_phandle(node,
 					    "cavium,dma-engine-handle", 0);
-		if (dma_node) {
-			struct platform_device *dma_dev;
+		अगर (dma_node) अणु
+			काष्ठा platक्रमm_device *dma_dev;
 			dma_dev = of_find_device_by_node(dma_node);
-			if (dma_dev) {
-				struct resource *res_dma;
-				int i;
-				res_dma = platform_get_resource(dma_dev, IORESOURCE_MEM, 0);
-				if (!res_dma) {
+			अगर (dma_dev) अणु
+				काष्ठा resource *res_dma;
+				पूर्णांक i;
+				res_dma = platक्रमm_get_resource(dma_dev, IORESOURCE_MEM, 0);
+				अगर (!res_dma) अणु
 					of_node_put(dma_node);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 				cf_port->dma_base = (u64)devm_ioremap(&pdev->dev, res_dma->start,
 									 resource_size(res_dma));
-				if (!cf_port->dma_base) {
+				अगर (!cf_port->dma_base) अणु
 					of_node_put(dma_node);
-					return -EINVAL;
-				}
+					वापस -EINVAL;
+				पूर्ण
 
-				irq_handler = octeon_cf_interrupt;
-				i = platform_get_irq(dma_dev, 0);
-				if (i > 0)
+				irq_handler = octeon_cf_पूर्णांकerrupt;
+				i = platक्रमm_get_irq(dma_dev, 0);
+				अगर (i > 0)
 					irq = i;
-			}
+			पूर्ण
 			of_node_put(dma_node);
-		}
-		res_cs1 = platform_get_resource(pdev, IORESOURCE_MEM, 1);
-		if (!res_cs1)
-			return -EINVAL;
+		पूर्ण
+		res_cs1 = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 1);
+		अगर (!res_cs1)
+			वापस -EINVAL;
 
 		cs1 = devm_ioremap(&pdev->dev, res_cs1->start,
 					   resource_size(res_cs1));
-		if (!cs1)
-			return rv;
+		अगर (!cs1)
+			वापस rv;
 
-		if (reg_len < (n_addr + n_size + 1) * sizeof(__be32))
-			return -EINVAL;
+		अगर (reg_len < (n_addr + n_size + 1) * माप(__be32))
+			वापस -EINVAL;
 
 		cs_num += n_addr + n_size;
 		cf_port->cs1 = be32_to_cpup(cs_num);
-	}
+	पूर्ण
 
-	res_cs0 = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res_cs0)
-		return -EINVAL;
+	res_cs0 = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res_cs0)
+		वापस -EINVAL;
 
 	cs0 = devm_ioremap(&pdev->dev, res_cs0->start,
 				   resource_size(res_cs0));
-	if (!cs0)
-		return rv;
+	अगर (!cs0)
+		वापस rv;
 
 	/* allocate host */
 	host = ata_host_alloc(&pdev->dev, 1);
-	if (!host)
-		return rv;
+	अगर (!host)
+		वापस rv;
 
 	ap = host->ports[0];
-	ap->private_data = cf_port;
-	pdev->dev.platform_data = cf_port;
+	ap->निजी_data = cf_port;
+	pdev->dev.platक्रमm_data = cf_port;
 	cf_port->ap = ap;
 	ap->ops = &octeon_cf_ops;
 	ap->pio_mask = ATA_PIO6;
 	ap->flags |= ATA_FLAG_NO_ATAPI | ATA_FLAG_PIO_POLLING;
 
-	if (!is_16bit) {
+	अगर (!is_16bit) अणु
 		base = cs0 + 0x800;
 		ap->ioaddr.cmd_addr	= base;
 		ata_sff_std_ports(&ap->ioaddr);
@@ -951,7 +952,7 @@ static int octeon_cf_probe(struct platform_device *pdev)
 		ap->ioaddr.altstatus_addr = base + 0xe;
 		ap->ioaddr.ctl_addr	= base + 0xe;
 		octeon_cf_ops.sff_data_xfer = octeon_cf_data_xfer8;
-	} else if (cf_port->is_true_ide) {
+	पूर्ण अन्यथा अगर (cf_port->is_true_ide) अणु
 		base = cs0;
 		ap->ioaddr.cmd_addr	= base + (ATA_REG_CMD << 1) + 1;
 		ap->ioaddr.data_addr	= base + (ATA_REG_DATA << 1);
@@ -970,17 +971,17 @@ static int octeon_cf_probe(struct platform_device *pdev)
 
 		ap->mwdma_mask	= enable_dma ? ATA_MWDMA4 : 0;
 
-		/* True IDE mode needs a timer to poll for not-busy.  */
-		hrtimer_init(&cf_port->delayed_finish, CLOCK_MONOTONIC,
+		/* True IDE mode needs a समयr to poll क्रम not-busy.  */
+		hrसमयr_init(&cf_port->delayed_finish, CLOCK_MONOTONIC,
 			     HRTIMER_MODE_REL);
 		cf_port->delayed_finish.function = octeon_cf_delayed_finish;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* 16 bit but not True IDE */
 		base = cs0 + 0x800;
 		octeon_cf_ops.sff_data_xfer	= octeon_cf_data_xfer16;
 		octeon_cf_ops.softreset		= octeon_cf_softreset16;
 		octeon_cf_ops.sff_check_status	= octeon_cf_check_status16;
-		octeon_cf_ops.sff_tf_read	= octeon_cf_tf_read16;
+		octeon_cf_ops.sff_tf_पढ़ो	= octeon_cf_tf_पढ़ो16;
 		octeon_cf_ops.sff_tf_load	= octeon_cf_tf_load16;
 		octeon_cf_ops.sff_exec_command	= octeon_cf_exec_command16;
 
@@ -989,12 +990,12 @@ static int octeon_cf_probe(struct platform_device *pdev)
 		ap->ioaddr.lbal_addr	= base + ATA_REG_LBAL;
 		ap->ioaddr.ctl_addr	= base + 0xe;
 		ap->ioaddr.altstatus_addr = base + 0xe;
-	}
+	पूर्ण
 	cf_port->c0 = ap->ioaddr.ctl_addr;
 
 	rv = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(64));
-	if (rv)
-		return rv;
+	अगर (rv)
+		वापस rv;
 
 	ata_port_desc(ap, "cmd %p ctl %p", base, ap->ioaddr.ctl_addr);
 
@@ -1002,61 +1003,61 @@ static int octeon_cf_probe(struct platform_device *pdev)
 		 is_16bit ? 16 : 8,
 		 cf_port->is_true_ide ? ", True IDE" : "");
 
-	return ata_host_activate(host, irq, irq_handler,
+	वापस ata_host_activate(host, irq, irq_handler,
 				 IRQF_SHARED, &octeon_cf_sht);
-}
+पूर्ण
 
-static void octeon_cf_shutdown(struct device *dev)
-{
-	union cvmx_mio_boot_dma_cfgx dma_cfg;
-	union cvmx_mio_boot_dma_intx dma_int;
+अटल व्योम octeon_cf_shutकरोwn(काष्ठा device *dev)
+अणु
+	जोड़ cvmx_mio_boot_dma_cfgx dma_cfg;
+	जोड़ cvmx_mio_boot_dma_पूर्णांकx dma_पूर्णांक;
 
-	struct octeon_cf_port *cf_port = dev_get_platdata(dev);
+	काष्ठा octeon_cf_port *cf_port = dev_get_platdata(dev);
 
-	if (cf_port->dma_base) {
+	अगर (cf_port->dma_base) अणु
 		/* Stop and clear the dma engine.  */
 		dma_cfg.u64 = 0;
 		dma_cfg.s.size = -1;
-		cvmx_write_csr(cf_port->dma_base + DMA_CFG, dma_cfg.u64);
+		cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_CFG, dma_cfg.u64);
 
-		/* Disable the interrupt.  */
-		dma_int.u64 = 0;
-		cvmx_write_csr(cf_port->dma_base + DMA_INT_EN, dma_int.u64);
+		/* Disable the पूर्णांकerrupt.  */
+		dma_पूर्णांक.u64 = 0;
+		cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_INT_EN, dma_पूर्णांक.u64);
 
 		/* Clear the DMA complete status */
-		dma_int.s.done = 1;
-		cvmx_write_csr(cf_port->dma_base + DMA_INT, dma_int.u64);
+		dma_पूर्णांक.s.करोne = 1;
+		cvmx_ग_लिखो_csr(cf_port->dma_base + DMA_INT, dma_पूर्णांक.u64);
 
-		__raw_writeb(0, cf_port->c0);
+		__raw_ग_लिखोb(0, cf_port->c0);
 		udelay(20);
-		__raw_writeb(ATA_SRST, cf_port->c0);
+		__raw_ग_लिखोb(ATA_SRST, cf_port->c0);
 		udelay(20);
-		__raw_writeb(0, cf_port->c0);
+		__raw_ग_लिखोb(0, cf_port->c0);
 		mdelay(100);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static const struct of_device_id octeon_cf_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id octeon_cf_match[] = अणु
+	अणु
 		.compatible = "cavium,ebt3000-compact-flash",
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, octeon_cf_match);
 
-static struct platform_driver octeon_cf_driver = {
+अटल काष्ठा platक्रमm_driver octeon_cf_driver = अणु
 	.probe		= octeon_cf_probe,
-	.driver		= {
+	.driver		= अणु
 		.name	= DRV_NAME,
 		.of_match_table = octeon_cf_match,
-		.shutdown = octeon_cf_shutdown
-	},
-};
+		.shutकरोwn = octeon_cf_shutकरोwn
+	पूर्ण,
+पूर्ण;
 
-static int __init octeon_cf_init(void)
-{
-	return platform_driver_register(&octeon_cf_driver);
-}
+अटल पूर्णांक __init octeon_cf_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&octeon_cf_driver);
+पूर्ण
 
 
 MODULE_AUTHOR("David Daney <ddaney@caviumnetworks.com>");

@@ -1,222 +1,223 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Randomized tests for eBPF longest-prefix-match maps
+ * Ranकरोmized tests क्रम eBPF दीर्घest-prefix-match maps
  *
- * This program runs randomized tests against the lpm-bpf-map. It implements a
+ * This program runs अक्रमomized tests against the lpm-bpf-map. It implements a
  * "Trivial Longest Prefix Match" (tlpm) based on simple, linear, singly linked
- * lists. The implementation should be pretty straightforward.
+ * lists. The implementation should be pretty straightक्रमward.
  *
- * Based on tlpm, this inserts randomized data into bpf-lpm-maps and verifies
+ * Based on tlpm, this inserts अक्रमomized data पूर्णांकo bpf-lpm-maps and verअगरies
  * the trie-based bpf-map implementation behaves the same way as tlpm.
  */
 
-#include <assert.h>
-#include <errno.h>
-#include <inttypes.h>
-#include <linux/bpf.h>
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/time.h>
+#समावेश <निश्चित.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <linux/bpf.h>
+#समावेश <pthपढ़ो.h>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <समय.स>
+#समावेश <unistd.h>
+#समावेश <arpa/inet.h>
+#समावेश <sys/समय.स>
 
-#include <bpf/bpf.h>
+#समावेश <bpf/bpf.h>
 
-#include "bpf_util.h"
-#include "bpf_rlimit.h"
+#समावेश "bpf_util.h"
+#समावेश "bpf_rlimit.h"
 
-struct tlpm_node {
-	struct tlpm_node *next;
-	size_t n_bits;
-	uint8_t key[];
-};
+काष्ठा tlpm_node अणु
+	काष्ठा tlpm_node *next;
+	माप_प्रकार n_bits;
+	uपूर्णांक8_t key[];
+पूर्ण;
 
-static struct tlpm_node *tlpm_match(struct tlpm_node *list,
-				    const uint8_t *key,
-				    size_t n_bits);
+अटल काष्ठा tlpm_node *tlpm_match(काष्ठा tlpm_node *list,
+				    स्थिर uपूर्णांक8_t *key,
+				    माप_प्रकार n_bits);
 
-static struct tlpm_node *tlpm_add(struct tlpm_node *list,
-				  const uint8_t *key,
-				  size_t n_bits)
-{
-	struct tlpm_node *node;
-	size_t n;
+अटल काष्ठा tlpm_node *tlpm_add(काष्ठा tlpm_node *list,
+				  स्थिर uपूर्णांक8_t *key,
+				  माप_प्रकार n_bits)
+अणु
+	काष्ठा tlpm_node *node;
+	माप_प्रकार n;
 
 	n = (n_bits + 7) / 8;
 
-	/* 'overwrite' an equivalent entry if one already exists */
+	/* 'overwrite' an equivalent entry अगर one alपढ़ोy exists */
 	node = tlpm_match(list, key, n_bits);
-	if (node && node->n_bits == n_bits) {
-		memcpy(node->key, key, n);
-		return list;
-	}
+	अगर (node && node->n_bits == n_bits) अणु
+		स_नकल(node->key, key, n);
+		वापस list;
+	पूर्ण
 
-	/* add new entry with @key/@n_bits to @list and return new head */
+	/* add new entry with @key/@n_bits to @list and वापस new head */
 
-	node = malloc(sizeof(*node) + n);
-	assert(node);
+	node = दो_स्मृति(माप(*node) + n);
+	निश्चित(node);
 
 	node->next = list;
 	node->n_bits = n_bits;
-	memcpy(node->key, key, n);
+	स_नकल(node->key, key, n);
 
-	return node;
-}
+	वापस node;
+पूर्ण
 
-static void tlpm_clear(struct tlpm_node *list)
-{
-	struct tlpm_node *node;
+अटल व्योम tlpm_clear(काष्ठा tlpm_node *list)
+अणु
+	काष्ठा tlpm_node *node;
 
-	/* free all entries in @list */
+	/* मुक्त all entries in @list */
 
-	while ((node = list)) {
+	जबतक ((node = list)) अणु
 		list = list->next;
-		free(node);
-	}
-}
+		मुक्त(node);
+	पूर्ण
+पूर्ण
 
-static struct tlpm_node *tlpm_match(struct tlpm_node *list,
-				    const uint8_t *key,
-				    size_t n_bits)
-{
-	struct tlpm_node *best = NULL;
-	size_t i;
+अटल काष्ठा tlpm_node *tlpm_match(काष्ठा tlpm_node *list,
+				    स्थिर uपूर्णांक8_t *key,
+				    माप_प्रकार n_bits)
+अणु
+	काष्ठा tlpm_node *best = शून्य;
+	माप_प्रकार i;
 
-	/* Perform longest prefix-match on @key/@n_bits. That is, iterate all
+	/* Perक्रमm दीर्घest prefix-match on @key/@n_bits. That is, iterate all
 	 * entries and match each prefix against @key. Remember the "best"
-	 * entry we find (i.e., the longest prefix that matches) and return it
-	 * to the caller when done.
+	 * entry we find (i.e., the दीर्घest prefix that matches) and वापस it
+	 * to the caller when करोne.
 	 */
 
-	for ( ; list; list = list->next) {
-		for (i = 0; i < n_bits && i < list->n_bits; ++i) {
-			if ((key[i / 8] & (1 << (7 - i % 8))) !=
+	क्रम ( ; list; list = list->next) अणु
+		क्रम (i = 0; i < n_bits && i < list->n_bits; ++i) अणु
+			अगर ((key[i / 8] & (1 << (7 - i % 8))) !=
 			    (list->key[i / 8] & (1 << (7 - i % 8))))
-				break;
-		}
+				अवरोध;
+		पूर्ण
 
-		if (i >= list->n_bits) {
-			if (!best || i > best->n_bits)
+		अगर (i >= list->n_bits) अणु
+			अगर (!best || i > best->n_bits)
 				best = list;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return best;
-}
+	वापस best;
+पूर्ण
 
-static struct tlpm_node *tlpm_delete(struct tlpm_node *list,
-				     const uint8_t *key,
-				     size_t n_bits)
-{
-	struct tlpm_node *best = tlpm_match(list, key, n_bits);
-	struct tlpm_node *node;
+अटल काष्ठा tlpm_node *tlpm_delete(काष्ठा tlpm_node *list,
+				     स्थिर uपूर्णांक8_t *key,
+				     माप_प्रकार n_bits)
+अणु
+	काष्ठा tlpm_node *best = tlpm_match(list, key, n_bits);
+	काष्ठा tlpm_node *node;
 
-	if (!best || best->n_bits != n_bits)
-		return list;
+	अगर (!best || best->n_bits != n_bits)
+		वापस list;
 
-	if (best == list) {
+	अगर (best == list) अणु
 		node = best->next;
-		free(best);
-		return node;
-	}
+		मुक्त(best);
+		वापस node;
+	पूर्ण
 
-	for (node = list; node; node = node->next) {
-		if (node->next == best) {
+	क्रम (node = list; node; node = node->next) अणु
+		अगर (node->next == best) अणु
 			node->next = best->next;
-			free(best);
-			return list;
-		}
-	}
+			मुक्त(best);
+			वापस list;
+		पूर्ण
+	पूर्ण
 	/* should never get here */
-	assert(0);
-	return list;
-}
+	निश्चित(0);
+	वापस list;
+पूर्ण
 
-static void test_lpm_basic(void)
-{
-	struct tlpm_node *list = NULL, *t1, *t2;
+अटल व्योम test_lpm_basic(व्योम)
+अणु
+	काष्ठा tlpm_node *list = शून्य, *t1, *t2;
 
-	/* very basic, static tests to verify tlpm works as expected */
+	/* very basic, अटल tests to verअगरy tlpm works as expected */
 
-	assert(!tlpm_match(list, (uint8_t[]){ 0xff }, 8));
+	निश्चित(!tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff पूर्ण, 8));
 
-	t1 = list = tlpm_add(list, (uint8_t[]){ 0xff }, 8);
-	assert(t1 == tlpm_match(list, (uint8_t[]){ 0xff }, 8));
-	assert(t1 == tlpm_match(list, (uint8_t[]){ 0xff, 0xff }, 16));
-	assert(t1 == tlpm_match(list, (uint8_t[]){ 0xff, 0x00 }, 16));
-	assert(!tlpm_match(list, (uint8_t[]){ 0x7f }, 8));
-	assert(!tlpm_match(list, (uint8_t[]){ 0xfe }, 8));
-	assert(!tlpm_match(list, (uint8_t[]){ 0xff }, 7));
+	t1 = list = tlpm_add(list, (uपूर्णांक8_t[])अणु 0xff पूर्ण, 8);
+	निश्चित(t1 == tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff पूर्ण, 8));
+	निश्चित(t1 == tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff, 0xff पूर्ण, 16));
+	निश्चित(t1 == tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff, 0x00 पूर्ण, 16));
+	निश्चित(!tlpm_match(list, (uपूर्णांक8_t[])अणु 0x7f पूर्ण, 8));
+	निश्चित(!tlpm_match(list, (uपूर्णांक8_t[])अणु 0xfe पूर्ण, 8));
+	निश्चित(!tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff पूर्ण, 7));
 
-	t2 = list = tlpm_add(list, (uint8_t[]){ 0xff, 0xff }, 16);
-	assert(t1 == tlpm_match(list, (uint8_t[]){ 0xff }, 8));
-	assert(t2 == tlpm_match(list, (uint8_t[]){ 0xff, 0xff }, 16));
-	assert(t1 == tlpm_match(list, (uint8_t[]){ 0xff, 0xff }, 15));
-	assert(!tlpm_match(list, (uint8_t[]){ 0x7f, 0xff }, 16));
+	t2 = list = tlpm_add(list, (uपूर्णांक8_t[])अणु 0xff, 0xff पूर्ण, 16);
+	निश्चित(t1 == tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff पूर्ण, 8));
+	निश्चित(t2 == tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff, 0xff पूर्ण, 16));
+	निश्चित(t1 == tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff, 0xff पूर्ण, 15));
+	निश्चित(!tlpm_match(list, (uपूर्णांक8_t[])अणु 0x7f, 0xff पूर्ण, 16));
 
-	list = tlpm_delete(list, (uint8_t[]){ 0xff, 0xff }, 16);
-	assert(t1 == tlpm_match(list, (uint8_t[]){ 0xff }, 8));
-	assert(t1 == tlpm_match(list, (uint8_t[]){ 0xff, 0xff }, 16));
+	list = tlpm_delete(list, (uपूर्णांक8_t[])अणु 0xff, 0xff पूर्ण, 16);
+	निश्चित(t1 == tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff पूर्ण, 8));
+	निश्चित(t1 == tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff, 0xff पूर्ण, 16));
 
-	list = tlpm_delete(list, (uint8_t[]){ 0xff }, 8);
-	assert(!tlpm_match(list, (uint8_t[]){ 0xff }, 8));
+	list = tlpm_delete(list, (uपूर्णांक8_t[])अणु 0xff पूर्ण, 8);
+	निश्चित(!tlpm_match(list, (uपूर्णांक8_t[])अणु 0xff पूर्ण, 8));
 
 	tlpm_clear(list);
-}
+पूर्ण
 
-static void test_lpm_order(void)
-{
-	struct tlpm_node *t1, *t2, *l1 = NULL, *l2 = NULL;
-	size_t i, j;
+अटल व्योम test_lpm_order(व्योम)
+अणु
+	काष्ठा tlpm_node *t1, *t2, *l1 = शून्य, *l2 = शून्य;
+	माप_प्रकार i, j;
 
-	/* Verify the tlpm implementation works correctly regardless of the
-	 * order of entries. Insert a random set of entries into @l1, and copy
-	 * the same data in reverse order into @l2. Then verify a lookup of
-	 * random keys will yield the same result in both sets.
+	/* Verअगरy the tlpm implementation works correctly regardless of the
+	 * order of entries. Insert a अक्रमom set of entries पूर्णांकo @l1, and copy
+	 * the same data in reverse order पूर्णांकo @l2. Then verअगरy a lookup of
+	 * अक्रमom keys will yield the same result in both sets.
 	 */
 
-	for (i = 0; i < (1 << 12); ++i)
-		l1 = tlpm_add(l1, (uint8_t[]){
-					rand() % 0xff,
-					rand() % 0xff,
-				}, rand() % 16 + 1);
+	क्रम (i = 0; i < (1 << 12); ++i)
+		l1 = tlpm_add(l1, (uपूर्णांक8_t[])अणु
+					अक्रम() % 0xff,
+					अक्रम() % 0xff,
+				पूर्ण, अक्रम() % 16 + 1);
 
-	for (t1 = l1; t1; t1 = t1->next)
+	क्रम (t1 = l1; t1; t1 = t1->next)
 		l2 = tlpm_add(l2, t1->key, t1->n_bits);
 
-	for (i = 0; i < (1 << 8); ++i) {
-		uint8_t key[] = { rand() % 0xff, rand() % 0xff };
+	क्रम (i = 0; i < (1 << 8); ++i) अणु
+		uपूर्णांक8_t key[] = अणु अक्रम() % 0xff, अक्रम() % 0xff पूर्ण;
 
 		t1 = tlpm_match(l1, key, 16);
 		t2 = tlpm_match(l2, key, 16);
 
-		assert(!t1 == !t2);
-		if (t1) {
-			assert(t1->n_bits == t2->n_bits);
-			for (j = 0; j < t1->n_bits; ++j)
-				assert((t1->key[j / 8] & (1 << (7 - j % 8))) ==
+		निश्चित(!t1 == !t2);
+		अगर (t1) अणु
+			निश्चित(t1->n_bits == t2->n_bits);
+			क्रम (j = 0; j < t1->n_bits; ++j)
+				निश्चित((t1->key[j / 8] & (1 << (7 - j % 8))) ==
 				       (t2->key[j / 8] & (1 << (7 - j % 8))));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	tlpm_clear(l1);
 	tlpm_clear(l2);
-}
+पूर्ण
 
-static void test_lpm_map(int keysize)
-{
-	size_t i, j, n_matches, n_matches_after_delete, n_nodes, n_lookups;
-	struct tlpm_node *t, *list = NULL;
-	struct bpf_lpm_trie_key *key;
-	uint8_t *data, *value;
-	int r, map;
+अटल व्योम test_lpm_map(पूर्णांक keysize)
+अणु
+	माप_प्रकार i, j, n_matches, n_matches_after_delete, n_nodes, n_lookups;
+	काष्ठा tlpm_node *t, *list = शून्य;
+	काष्ठा bpf_lpm_trie_key *key;
+	uपूर्णांक8_t *data, *value;
+	पूर्णांक r, map;
 
-	/* Compare behavior of tlpm vs. bpf-lpm. Create a randomized set of
-	 * prefixes and insert it into both tlpm and bpf-lpm. Then run some
-	 * randomized lookups and verify both maps return the same result.
+	/* Compare behavior of tlpm vs. bpf-lpm. Create a अक्रमomized set of
+	 * prefixes and insert it पूर्णांकo both tlpm and bpf-lpm. Then run some
+	 * अक्रमomized lookups and verअगरy both maps वापस the same result.
 	 */
 
 	n_matches = 0;
@@ -225,216 +226,216 @@ static void test_lpm_map(int keysize)
 	n_lookups = 1 << 16;
 
 	data = alloca(keysize);
-	memset(data, 0, keysize);
+	स_रखो(data, 0, keysize);
 
 	value = alloca(keysize + 1);
-	memset(value, 0, keysize + 1);
+	स_रखो(value, 0, keysize + 1);
 
-	key = alloca(sizeof(*key) + keysize);
-	memset(key, 0, sizeof(*key) + keysize);
+	key = alloca(माप(*key) + keysize);
+	स_रखो(key, 0, माप(*key) + keysize);
 
 	map = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE,
-			     sizeof(*key) + keysize,
+			     माप(*key) + keysize,
 			     keysize + 1,
 			     4096,
 			     BPF_F_NO_PREALLOC);
-	assert(map >= 0);
+	निश्चित(map >= 0);
 
-	for (i = 0; i < n_nodes; ++i) {
-		for (j = 0; j < keysize; ++j)
-			value[j] = rand() & 0xff;
-		value[keysize] = rand() % (8 * keysize + 1);
+	क्रम (i = 0; i < n_nodes; ++i) अणु
+		क्रम (j = 0; j < keysize; ++j)
+			value[j] = अक्रम() & 0xff;
+		value[keysize] = अक्रम() % (8 * keysize + 1);
 
 		list = tlpm_add(list, value, value[keysize]);
 
 		key->prefixlen = value[keysize];
-		memcpy(key->data, value, keysize);
+		स_नकल(key->data, value, keysize);
 		r = bpf_map_update_elem(map, key, value, 0);
-		assert(!r);
-	}
+		निश्चित(!r);
+	पूर्ण
 
-	for (i = 0; i < n_lookups; ++i) {
-		for (j = 0; j < keysize; ++j)
-			data[j] = rand() & 0xff;
+	क्रम (i = 0; i < n_lookups; ++i) अणु
+		क्रम (j = 0; j < keysize; ++j)
+			data[j] = अक्रम() & 0xff;
 
 		t = tlpm_match(list, data, 8 * keysize);
 
 		key->prefixlen = 8 * keysize;
-		memcpy(key->data, data, keysize);
+		स_नकल(key->data, data, keysize);
 		r = bpf_map_lookup_elem(map, key, value);
-		assert(!r || errno == ENOENT);
-		assert(!t == !!r);
+		निश्चित(!r || त्रुटि_सं == ENOENT);
+		निश्चित(!t == !!r);
 
-		if (t) {
+		अगर (t) अणु
 			++n_matches;
-			assert(t->n_bits == value[keysize]);
-			for (j = 0; j < t->n_bits; ++j)
-				assert((t->key[j / 8] & (1 << (7 - j % 8))) ==
+			निश्चित(t->n_bits == value[keysize]);
+			क्रम (j = 0; j < t->n_bits; ++j)
+				निश्चित((t->key[j / 8] & (1 << (7 - j % 8))) ==
 				       (value[j / 8] & (1 << (7 - j % 8))));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Remove the first half of the elements in the tlpm and the
 	 * corresponding nodes from the bpf-lpm.  Then run the same
-	 * large number of random lookups in both and make sure they match.
+	 * large number of अक्रमom lookups in both and make sure they match.
 	 * Note: we need to count the number of nodes actually inserted
 	 * since there may have been duplicates.
 	 */
-	for (i = 0, t = list; t; i++, t = t->next)
+	क्रम (i = 0, t = list; t; i++, t = t->next)
 		;
-	for (j = 0; j < i / 2; ++j) {
+	क्रम (j = 0; j < i / 2; ++j) अणु
 		key->prefixlen = list->n_bits;
-		memcpy(key->data, list->key, keysize);
+		स_नकल(key->data, list->key, keysize);
 		r = bpf_map_delete_elem(map, key);
-		assert(!r);
+		निश्चित(!r);
 		list = tlpm_delete(list, list->key, list->n_bits);
-		assert(list);
-	}
-	for (i = 0; i < n_lookups; ++i) {
-		for (j = 0; j < keysize; ++j)
-			data[j] = rand() & 0xff;
+		निश्चित(list);
+	पूर्ण
+	क्रम (i = 0; i < n_lookups; ++i) अणु
+		क्रम (j = 0; j < keysize; ++j)
+			data[j] = अक्रम() & 0xff;
 
 		t = tlpm_match(list, data, 8 * keysize);
 
 		key->prefixlen = 8 * keysize;
-		memcpy(key->data, data, keysize);
+		स_नकल(key->data, data, keysize);
 		r = bpf_map_lookup_elem(map, key, value);
-		assert(!r || errno == ENOENT);
-		assert(!t == !!r);
+		निश्चित(!r || त्रुटि_सं == ENOENT);
+		निश्चित(!t == !!r);
 
-		if (t) {
+		अगर (t) अणु
 			++n_matches_after_delete;
-			assert(t->n_bits == value[keysize]);
-			for (j = 0; j < t->n_bits; ++j)
-				assert((t->key[j / 8] & (1 << (7 - j % 8))) ==
+			निश्चित(t->n_bits == value[keysize]);
+			क्रम (j = 0; j < t->n_bits; ++j)
+				निश्चित((t->key[j / 8] & (1 << (7 - j % 8))) ==
 				       (value[j / 8] & (1 << (7 - j % 8))));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	close(map);
+	बंद(map);
 	tlpm_clear(list);
 
-	/* With 255 random nodes in the map, we are pretty likely to match
+	/* With 255 अक्रमom nodes in the map, we are pretty likely to match
 	 * something on every lookup. For statistics, use this:
 	 *
-	 *     printf("          nodes: %zu\n"
+	 *     म_लिखो("          nodes: %zu\n"
 	 *            "        lookups: %zu\n"
 	 *            "        matches: %zu\n"
 	 *            "matches(delete): %zu\n",
 	 *            n_nodes, n_lookups, n_matches, n_matches_after_delete);
 	 */
-}
+पूर्ण
 
 /* Test the implementation with some 'real world' examples */
 
-static void test_lpm_ipaddr(void)
-{
-	struct bpf_lpm_trie_key *key_ipv4;
-	struct bpf_lpm_trie_key *key_ipv6;
-	size_t key_size_ipv4;
-	size_t key_size_ipv6;
-	int map_fd_ipv4;
-	int map_fd_ipv6;
+अटल व्योम test_lpm_ipaddr(व्योम)
+अणु
+	काष्ठा bpf_lpm_trie_key *key_ipv4;
+	काष्ठा bpf_lpm_trie_key *key_ipv6;
+	माप_प्रकार key_size_ipv4;
+	माप_प्रकार key_size_ipv6;
+	पूर्णांक map_fd_ipv4;
+	पूर्णांक map_fd_ipv6;
 	__u64 value;
 
-	key_size_ipv4 = sizeof(*key_ipv4) + sizeof(__u32);
-	key_size_ipv6 = sizeof(*key_ipv6) + sizeof(__u32) * 4;
+	key_size_ipv4 = माप(*key_ipv4) + माप(__u32);
+	key_size_ipv6 = माप(*key_ipv6) + माप(__u32) * 4;
 	key_ipv4 = alloca(key_size_ipv4);
 	key_ipv6 = alloca(key_size_ipv6);
 
 	map_fd_ipv4 = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE,
-				     key_size_ipv4, sizeof(value),
+				     key_size_ipv4, माप(value),
 				     100, BPF_F_NO_PREALLOC);
-	assert(map_fd_ipv4 >= 0);
+	निश्चित(map_fd_ipv4 >= 0);
 
 	map_fd_ipv6 = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE,
-				     key_size_ipv6, sizeof(value),
+				     key_size_ipv6, माप(value),
 				     100, BPF_F_NO_PREALLOC);
-	assert(map_fd_ipv6 >= 0);
+	निश्चित(map_fd_ipv6 >= 0);
 
 	/* Fill data some IPv4 and IPv6 address ranges */
 	value = 1;
 	key_ipv4->prefixlen = 16;
 	inet_pton(AF_INET, "192.168.0.0", key_ipv4->data);
-	assert(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
 
 	value = 2;
 	key_ipv4->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.0.0", key_ipv4->data);
-	assert(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
 
 	value = 3;
 	key_ipv4->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.128.0", key_ipv4->data);
-	assert(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
 
 	value = 5;
 	key_ipv4->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.1.0", key_ipv4->data);
-	assert(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
 
 	value = 4;
 	key_ipv4->prefixlen = 23;
 	inet_pton(AF_INET, "192.168.0.0", key_ipv4->data);
-	assert(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd_ipv4, key_ipv4, &value, 0) == 0);
 
 	value = 0xdeadbeef;
 	key_ipv6->prefixlen = 64;
 	inet_pton(AF_INET6, "2a00:1450:4001:814::200e", key_ipv6->data);
-	assert(bpf_map_update_elem(map_fd_ipv6, key_ipv6, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd_ipv6, key_ipv6, &value, 0) == 0);
 
-	/* Set tprefixlen to maximum for lookups */
+	/* Set tprefixlen to maximum क्रम lookups */
 	key_ipv4->prefixlen = 32;
 	key_ipv6->prefixlen = 128;
 
 	/* Test some lookups that should come back with a value */
 	inet_pton(AF_INET, "192.168.128.23", key_ipv4->data);
-	assert(bpf_map_lookup_elem(map_fd_ipv4, key_ipv4, &value) == 0);
-	assert(value == 3);
+	निश्चित(bpf_map_lookup_elem(map_fd_ipv4, key_ipv4, &value) == 0);
+	निश्चित(value == 3);
 
 	inet_pton(AF_INET, "192.168.0.1", key_ipv4->data);
-	assert(bpf_map_lookup_elem(map_fd_ipv4, key_ipv4, &value) == 0);
-	assert(value == 2);
+	निश्चित(bpf_map_lookup_elem(map_fd_ipv4, key_ipv4, &value) == 0);
+	निश्चित(value == 2);
 
 	inet_pton(AF_INET6, "2a00:1450:4001:814::", key_ipv6->data);
-	assert(bpf_map_lookup_elem(map_fd_ipv6, key_ipv6, &value) == 0);
-	assert(value == 0xdeadbeef);
+	निश्चित(bpf_map_lookup_elem(map_fd_ipv6, key_ipv6, &value) == 0);
+	निश्चित(value == 0xdeadbeef);
 
 	inet_pton(AF_INET6, "2a00:1450:4001:814::1", key_ipv6->data);
-	assert(bpf_map_lookup_elem(map_fd_ipv6, key_ipv6, &value) == 0);
-	assert(value == 0xdeadbeef);
+	निश्चित(bpf_map_lookup_elem(map_fd_ipv6, key_ipv6, &value) == 0);
+	निश्चित(value == 0xdeadbeef);
 
 	/* Test some lookups that should not match any entry */
 	inet_pton(AF_INET, "10.0.0.1", key_ipv4->data);
-	assert(bpf_map_lookup_elem(map_fd_ipv4, key_ipv4, &value) == -1 &&
-	       errno == ENOENT);
+	निश्चित(bpf_map_lookup_elem(map_fd_ipv4, key_ipv4, &value) == -1 &&
+	       त्रुटि_सं == ENOENT);
 
 	inet_pton(AF_INET, "11.11.11.11", key_ipv4->data);
-	assert(bpf_map_lookup_elem(map_fd_ipv4, key_ipv4, &value) == -1 &&
-	       errno == ENOENT);
+	निश्चित(bpf_map_lookup_elem(map_fd_ipv4, key_ipv4, &value) == -1 &&
+	       त्रुटि_सं == ENOENT);
 
 	inet_pton(AF_INET6, "2a00:ffff::", key_ipv6->data);
-	assert(bpf_map_lookup_elem(map_fd_ipv6, key_ipv6, &value) == -1 &&
-	       errno == ENOENT);
+	निश्चित(bpf_map_lookup_elem(map_fd_ipv6, key_ipv6, &value) == -1 &&
+	       त्रुटि_सं == ENOENT);
 
-	close(map_fd_ipv4);
-	close(map_fd_ipv6);
-}
+	बंद(map_fd_ipv4);
+	बंद(map_fd_ipv6);
+पूर्ण
 
-static void test_lpm_delete(void)
-{
-	struct bpf_lpm_trie_key *key;
-	size_t key_size;
-	int map_fd;
+अटल व्योम test_lpm_delete(व्योम)
+अणु
+	काष्ठा bpf_lpm_trie_key *key;
+	माप_प्रकार key_size;
+	पूर्णांक map_fd;
 	__u64 value;
 
-	key_size = sizeof(*key) + sizeof(__u32);
+	key_size = माप(*key) + माप(__u32);
 	key = alloca(key_size);
 
 	map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE,
-				key_size, sizeof(value),
+				key_size, माप(value),
 				100, BPF_F_NO_PREALLOC);
-	assert(map_fd >= 0);
+	निश्चित(map_fd >= 0);
 
 	/* Add nodes:
 	 * 192.168.0.0/16   (1)
@@ -451,294 +452,294 @@ static void test_lpm_delete(void)
 	value = 1;
 	key->prefixlen = 16;
 	inet_pton(AF_INET, "192.168.0.0", key->data);
-	assert(bpf_map_update_elem(map_fd, key, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd, key, &value, 0) == 0);
 
 	value = 2;
 	key->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.0.0", key->data);
-	assert(bpf_map_update_elem(map_fd, key, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd, key, &value, 0) == 0);
 
 	value = 3;
 	key->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.128.0", key->data);
-	assert(bpf_map_update_elem(map_fd, key, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd, key, &value, 0) == 0);
 
 	value = 4;
 	key->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.1.0", key->data);
-	assert(bpf_map_update_elem(map_fd, key, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd, key, &value, 0) == 0);
 
-	/* remove non-existent node */
+	/* हटाओ non-existent node */
 	key->prefixlen = 32;
 	inet_pton(AF_INET, "10.0.0.1", key->data);
-	assert(bpf_map_lookup_elem(map_fd, key, &value) == -1 &&
-		errno == ENOENT);
+	निश्चित(bpf_map_lookup_elem(map_fd, key, &value) == -1 &&
+		त्रुटि_सं == ENOENT);
 
 	key->prefixlen = 30; // unused prefix so far
 	inet_pton(AF_INET, "192.255.0.0", key->data);
-	assert(bpf_map_delete_elem(map_fd, key) == -1 &&
-		errno == ENOENT);
+	निश्चित(bpf_map_delete_elem(map_fd, key) == -1 &&
+		त्रुटि_सं == ENOENT);
 
 	key->prefixlen = 16; // same prefix as the root node
 	inet_pton(AF_INET, "192.255.0.0", key->data);
-	assert(bpf_map_delete_elem(map_fd, key) == -1 &&
-		errno == ENOENT);
+	निश्चित(bpf_map_delete_elem(map_fd, key) == -1 &&
+		त्रुटि_सं == ENOENT);
 
-	/* assert initial lookup */
+	/* निश्चित initial lookup */
 	key->prefixlen = 32;
 	inet_pton(AF_INET, "192.168.0.1", key->data);
-	assert(bpf_map_lookup_elem(map_fd, key, &value) == 0);
-	assert(value == 2);
+	निश्चित(bpf_map_lookup_elem(map_fd, key, &value) == 0);
+	निश्चित(value == 2);
 
-	/* remove leaf node */
+	/* हटाओ leaf node */
 	key->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.0.0", key->data);
-	assert(bpf_map_delete_elem(map_fd, key) == 0);
+	निश्चित(bpf_map_delete_elem(map_fd, key) == 0);
 
 	key->prefixlen = 32;
 	inet_pton(AF_INET, "192.168.0.1", key->data);
-	assert(bpf_map_lookup_elem(map_fd, key, &value) == 0);
-	assert(value == 1);
+	निश्चित(bpf_map_lookup_elem(map_fd, key, &value) == 0);
+	निश्चित(value == 1);
 
-	/* remove leaf (and intermediary) node */
+	/* हटाओ leaf (and पूर्णांकermediary) node */
 	key->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.1.0", key->data);
-	assert(bpf_map_delete_elem(map_fd, key) == 0);
+	निश्चित(bpf_map_delete_elem(map_fd, key) == 0);
 
 	key->prefixlen = 32;
 	inet_pton(AF_INET, "192.168.1.1", key->data);
-	assert(bpf_map_lookup_elem(map_fd, key, &value) == 0);
-	assert(value == 1);
+	निश्चित(bpf_map_lookup_elem(map_fd, key, &value) == 0);
+	निश्चित(value == 1);
 
-	/* remove root node */
+	/* हटाओ root node */
 	key->prefixlen = 16;
 	inet_pton(AF_INET, "192.168.0.0", key->data);
-	assert(bpf_map_delete_elem(map_fd, key) == 0);
+	निश्चित(bpf_map_delete_elem(map_fd, key) == 0);
 
 	key->prefixlen = 32;
 	inet_pton(AF_INET, "192.168.128.1", key->data);
-	assert(bpf_map_lookup_elem(map_fd, key, &value) == 0);
-	assert(value == 3);
+	निश्चित(bpf_map_lookup_elem(map_fd, key, &value) == 0);
+	निश्चित(value == 3);
 
-	/* remove last node */
+	/* हटाओ last node */
 	key->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.128.0", key->data);
-	assert(bpf_map_delete_elem(map_fd, key) == 0);
+	निश्चित(bpf_map_delete_elem(map_fd, key) == 0);
 
 	key->prefixlen = 32;
 	inet_pton(AF_INET, "192.168.128.1", key->data);
-	assert(bpf_map_lookup_elem(map_fd, key, &value) == -1 &&
-		errno == ENOENT);
+	निश्चित(bpf_map_lookup_elem(map_fd, key, &value) == -1 &&
+		त्रुटि_सं == ENOENT);
 
-	close(map_fd);
-}
+	बंद(map_fd);
+पूर्ण
 
-static void test_lpm_get_next_key(void)
-{
-	struct bpf_lpm_trie_key *key_p, *next_key_p;
-	size_t key_size;
+अटल व्योम test_lpm_get_next_key(व्योम)
+अणु
+	काष्ठा bpf_lpm_trie_key *key_p, *next_key_p;
+	माप_प्रकार key_size;
 	__u32 value = 0;
-	int map_fd;
+	पूर्णांक map_fd;
 
-	key_size = sizeof(*key_p) + sizeof(__u32);
+	key_size = माप(*key_p) + माप(__u32);
 	key_p = alloca(key_size);
 	next_key_p = alloca(key_size);
 
-	map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, key_size, sizeof(value),
+	map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, key_size, माप(value),
 				100, BPF_F_NO_PREALLOC);
-	assert(map_fd >= 0);
+	निश्चित(map_fd >= 0);
 
-	/* empty tree. get_next_key should return ENOENT */
-	assert(bpf_map_get_next_key(map_fd, NULL, key_p) == -1 &&
-	       errno == ENOENT);
+	/* empty tree. get_next_key should वापस ENOENT */
+	निश्चित(bpf_map_get_next_key(map_fd, शून्य, key_p) == -1 &&
+	       त्रुटि_सं == ENOENT);
 
-	/* get and verify the first key, get the second one should fail. */
+	/* get and verअगरy the first key, get the second one should fail. */
 	key_p->prefixlen = 16;
 	inet_pton(AF_INET, "192.168.0.0", key_p->data);
-	assert(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
 
-	memset(key_p, 0, key_size);
-	assert(bpf_map_get_next_key(map_fd, NULL, key_p) == 0);
-	assert(key_p->prefixlen == 16 && key_p->data[0] == 192 &&
+	स_रखो(key_p, 0, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, शून्य, key_p) == 0);
+	निश्चित(key_p->prefixlen == 16 && key_p->data[0] == 192 &&
 	       key_p->data[1] == 168);
 
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
-	       errno == ENOENT);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
+	       त्रुटि_सं == ENOENT);
 
 	/* no exact matching key should get the first one in post order. */
 	key_p->prefixlen = 8;
-	assert(bpf_map_get_next_key(map_fd, NULL, key_p) == 0);
-	assert(key_p->prefixlen == 16 && key_p->data[0] == 192 &&
+	निश्चित(bpf_map_get_next_key(map_fd, शून्य, key_p) == 0);
+	निश्चित(key_p->prefixlen == 16 && key_p->data[0] == 192 &&
 	       key_p->data[1] == 168);
 
 	/* add one more element (total two) */
 	key_p->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.128.0", key_p->data);
-	assert(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
 
-	memset(key_p, 0, key_size);
-	assert(bpf_map_get_next_key(map_fd, NULL, key_p) == 0);
-	assert(key_p->prefixlen == 24 && key_p->data[0] == 192 &&
+	स_रखो(key_p, 0, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, शून्य, key_p) == 0);
+	निश्चित(key_p->prefixlen == 24 && key_p->data[0] == 192 &&
 	       key_p->data[1] == 168 && key_p->data[2] == 128);
 
-	memset(next_key_p, 0, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 16 && next_key_p->data[0] == 192 &&
+	स_रखो(next_key_p, 0, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 16 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
-	       errno == ENOENT);
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
+	       त्रुटि_सं == ENOENT);
 
 	/* Add one more element (total three) */
 	key_p->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.0.0", key_p->data);
-	assert(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
 
-	memset(key_p, 0, key_size);
-	assert(bpf_map_get_next_key(map_fd, NULL, key_p) == 0);
-	assert(key_p->prefixlen == 24 && key_p->data[0] == 192 &&
+	स_रखो(key_p, 0, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, शून्य, key_p) == 0);
+	निश्चित(key_p->prefixlen == 24 && key_p->data[0] == 192 &&
 	       key_p->data[1] == 168 && key_p->data[2] == 0);
 
-	memset(next_key_p, 0, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
+	स_रखो(next_key_p, 0, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168 && next_key_p->data[2] == 128);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 16 && next_key_p->data[0] == 192 &&
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 16 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
-	       errno == ENOENT);
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
+	       त्रुटि_सं == ENOENT);
 
 	/* Add one more element (total four) */
 	key_p->prefixlen = 24;
 	inet_pton(AF_INET, "192.168.1.0", key_p->data);
-	assert(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
 
-	memset(key_p, 0, key_size);
-	assert(bpf_map_get_next_key(map_fd, NULL, key_p) == 0);
-	assert(key_p->prefixlen == 24 && key_p->data[0] == 192 &&
+	स_रखो(key_p, 0, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, शून्य, key_p) == 0);
+	निश्चित(key_p->prefixlen == 24 && key_p->data[0] == 192 &&
 	       key_p->data[1] == 168 && key_p->data[2] == 0);
 
-	memset(next_key_p, 0, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
+	स_रखो(next_key_p, 0, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168 && next_key_p->data[2] == 1);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168 && next_key_p->data[2] == 128);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 16 && next_key_p->data[0] == 192 &&
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 16 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
-	       errno == ENOENT);
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
+	       त्रुटि_सं == ENOENT);
 
 	/* Add one more element (total five) */
 	key_p->prefixlen = 28;
 	inet_pton(AF_INET, "192.168.1.128", key_p->data);
-	assert(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
+	निश्चित(bpf_map_update_elem(map_fd, key_p, &value, 0) == 0);
 
-	memset(key_p, 0, key_size);
-	assert(bpf_map_get_next_key(map_fd, NULL, key_p) == 0);
-	assert(key_p->prefixlen == 24 && key_p->data[0] == 192 &&
+	स_रखो(key_p, 0, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, शून्य, key_p) == 0);
+	निश्चित(key_p->prefixlen == 24 && key_p->data[0] == 192 &&
 	       key_p->data[1] == 168 && key_p->data[2] == 0);
 
-	memset(next_key_p, 0, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 28 && next_key_p->data[0] == 192 &&
+	स_रखो(next_key_p, 0, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 28 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168 && next_key_p->data[2] == 1 &&
 	       next_key_p->data[3] == 128);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168 && next_key_p->data[2] == 1);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168 && next_key_p->data[2] == 128);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 16 && next_key_p->data[0] == 192 &&
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 16 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168);
 
-	memcpy(key_p, next_key_p, key_size);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
-	       errno == ENOENT);
+	स_नकल(key_p, next_key_p, key_size);
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == -1 &&
+	       त्रुटि_सं == ENOENT);
 
-	/* no exact matching key should return the first one in post order */
+	/* no exact matching key should वापस the first one in post order */
 	key_p->prefixlen = 22;
 	inet_pton(AF_INET, "192.168.1.0", key_p->data);
-	assert(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
-	assert(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
+	निश्चित(bpf_map_get_next_key(map_fd, key_p, next_key_p) == 0);
+	निश्चित(next_key_p->prefixlen == 24 && next_key_p->data[0] == 192 &&
 	       next_key_p->data[1] == 168 && next_key_p->data[2] == 0);
 
-	close(map_fd);
-}
+	बंद(map_fd);
+पूर्ण
 
-#define MAX_TEST_KEYS	4
-struct lpm_mt_test_info {
-	int cmd; /* 0: update, 1: delete, 2: lookup, 3: get_next_key */
-	int iter;
-	int map_fd;
-	struct {
+#घोषणा MAX_TEST_KEYS	4
+काष्ठा lpm_mt_test_info अणु
+	पूर्णांक cmd; /* 0: update, 1: delete, 2: lookup, 3: get_next_key */
+	पूर्णांक iter;
+	पूर्णांक map_fd;
+	काष्ठा अणु
 		__u32 prefixlen;
 		__u32 data;
-	} key[MAX_TEST_KEYS];
-};
+	पूर्ण key[MAX_TEST_KEYS];
+पूर्ण;
 
-static void *lpm_test_command(void *arg)
-{
-	int i, j, ret, iter, key_size;
-	struct lpm_mt_test_info *info = arg;
-	struct bpf_lpm_trie_key *key_p;
+अटल व्योम *lpm_test_command(व्योम *arg)
+अणु
+	पूर्णांक i, j, ret, iter, key_size;
+	काष्ठा lpm_mt_test_info *info = arg;
+	काष्ठा bpf_lpm_trie_key *key_p;
 
-	key_size = sizeof(struct bpf_lpm_trie_key) + sizeof(__u32);
+	key_size = माप(काष्ठा bpf_lpm_trie_key) + माप(__u32);
 	key_p = alloca(key_size);
-	for (iter = 0; iter < info->iter; iter++)
-		for (i = 0; i < MAX_TEST_KEYS; i++) {
-			/* first half of iterations in forward order,
+	क्रम (iter = 0; iter < info->iter; iter++)
+		क्रम (i = 0; i < MAX_TEST_KEYS; i++) अणु
+			/* first half of iterations in क्रमward order,
 			 * and second half in backward order.
 			 */
 			j = (iter < (info->iter / 2)) ? i : MAX_TEST_KEYS - i - 1;
 			key_p->prefixlen = info->key[j].prefixlen;
-			memcpy(key_p->data, &info->key[j].data, sizeof(__u32));
-			if (info->cmd == 0) {
+			स_नकल(key_p->data, &info->key[j].data, माप(__u32));
+			अगर (info->cmd == 0) अणु
 				__u32 value = j;
 				/* update must succeed */
-				assert(bpf_map_update_elem(info->map_fd, key_p, &value, 0) == 0);
-			} else if (info->cmd == 1) {
+				निश्चित(bpf_map_update_elem(info->map_fd, key_p, &value, 0) == 0);
+			पूर्ण अन्यथा अगर (info->cmd == 1) अणु
 				ret = bpf_map_delete_elem(info->map_fd, key_p);
-				assert(ret == 0 || errno == ENOENT);
-			} else if (info->cmd == 2) {
+				निश्चित(ret == 0 || त्रुटि_सं == ENOENT);
+			पूर्ण अन्यथा अगर (info->cmd == 2) अणु
 				__u32 value;
 				ret = bpf_map_lookup_elem(info->map_fd, key_p, &value);
-				assert(ret == 0 || errno == ENOENT);
-			} else {
-				struct bpf_lpm_trie_key *next_key_p = alloca(key_size);
+				निश्चित(ret == 0 || त्रुटि_सं == ENOENT);
+			पूर्ण अन्यथा अणु
+				काष्ठा bpf_lpm_trie_key *next_key_p = alloca(key_size);
 				ret = bpf_map_get_next_key(info->map_fd, key_p, next_key_p);
-				assert(ret == 0 || errno == ENOENT || errno == ENOMEM);
-			}
-		}
+				निश्चित(ret == 0 || त्रुटि_सं == ENOENT || त्रुटि_सं == ENOMEM);
+			पूर्ण
+		पूर्ण
 
-	// Pass successful exit info back to the main thread
-	pthread_exit((void *)info);
-}
+	// Pass successful निकास info back to the मुख्य thपढ़ो
+	pthपढ़ो_निकास((व्योम *)info);
+पूर्ण
 
-static void setup_lpm_mt_test_info(struct lpm_mt_test_info *info, int map_fd)
-{
+अटल व्योम setup_lpm_mt_test_info(काष्ठा lpm_mt_test_info *info, पूर्णांक map_fd)
+अणु
 	info->iter = 2000;
 	info->map_fd = map_fd;
 	info->key[0].prefixlen = 16;
@@ -749,56 +750,56 @@ static void setup_lpm_mt_test_info(struct lpm_mt_test_info *info, int map_fd)
 	inet_pton(AF_INET, "192.168.128.0", &info->key[2].data);
 	info->key[3].prefixlen = 24;
 	inet_pton(AF_INET, "192.168.1.0", &info->key[3].data);
-}
+पूर्ण
 
-static void test_lpm_multi_thread(void)
-{
-	struct lpm_mt_test_info info[4];
-	size_t key_size, value_size;
-	pthread_t thread_id[4];
-	int i, map_fd;
-	void *ret;
+अटल व्योम test_lpm_multi_thपढ़ो(व्योम)
+अणु
+	काष्ठा lpm_mt_test_info info[4];
+	माप_प्रकार key_size, value_size;
+	pthपढ़ो_t thपढ़ो_id[4];
+	पूर्णांक i, map_fd;
+	व्योम *ret;
 
 	/* create a trie */
-	value_size = sizeof(__u32);
-	key_size = sizeof(struct bpf_lpm_trie_key) + value_size;
+	value_size = माप(__u32);
+	key_size = माप(काष्ठा bpf_lpm_trie_key) + value_size;
 	map_fd = bpf_create_map(BPF_MAP_TYPE_LPM_TRIE, key_size, value_size,
 				100, BPF_F_NO_PREALLOC);
 
-	/* create 4 threads to test update, delete, lookup and get_next_key */
+	/* create 4 thपढ़ोs to test update, delete, lookup and get_next_key */
 	setup_lpm_mt_test_info(&info[0], map_fd);
-	for (i = 0; i < 4; i++) {
-		if (i != 0)
-			memcpy(&info[i], &info[0], sizeof(info[i]));
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (i != 0)
+			स_नकल(&info[i], &info[0], माप(info[i]));
 		info[i].cmd = i;
-		assert(pthread_create(&thread_id[i], NULL, &lpm_test_command, &info[i]) == 0);
-	}
+		निश्चित(pthपढ़ो_create(&thपढ़ो_id[i], शून्य, &lpm_test_command, &info[i]) == 0);
+	पूर्ण
 
-	for (i = 0; i < 4; i++)
-		assert(pthread_join(thread_id[i], &ret) == 0 && ret == (void *)&info[i]);
+	क्रम (i = 0; i < 4; i++)
+		निश्चित(pthपढ़ो_join(thपढ़ो_id[i], &ret) == 0 && ret == (व्योम *)&info[i]);
 
-	close(map_fd);
-}
+	बंद(map_fd);
+पूर्ण
 
-int main(void)
-{
-	int i;
+पूर्णांक मुख्य(व्योम)
+अणु
+	पूर्णांक i;
 
-	/* we want predictable, pseudo random tests */
-	srand(0xf00ba1);
+	/* we want predictable, pseuकरो अक्रमom tests */
+	बेक्रम(0xf00ba1);
 
 	test_lpm_basic();
 	test_lpm_order();
 
 	/* Test with 8, 16, 24, 32, ... 128 bit prefix length */
-	for (i = 1; i <= 16; ++i)
+	क्रम (i = 1; i <= 16; ++i)
 		test_lpm_map(i);
 
 	test_lpm_ipaddr();
 	test_lpm_delete();
 	test_lpm_get_next_key();
-	test_lpm_multi_thread();
+	test_lpm_multi_thपढ़ो();
 
-	printf("test_lpm: OK\n");
-	return 0;
-}
+	म_लिखो("test_lpm: OK\n");
+	वापस 0;
+पूर्ण

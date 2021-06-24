@@ -1,52 +1,53 @@
+<शैली गुरु>
 /*
  *  linux/arch/m68k/kernel/ptrace.c
  *
- *  Copyright (C) 1994 by Hamish Macdonald
- *  Taken from linux/kernel/ptrace.c and modified for M680x0.
+ *  Copyright (C) 1994 by Hamish Macकरोnald
+ *  Taken from linux/kernel/ptrace.c and modअगरied क्रम M680x0.
  *  linux/kernel/ptrace.c is by Ross Biro 1/23/92, edited by Linus Torvalds
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License.  See the file COPYING in the main directory of
- * this archive for more details.
+ * Public License.  See the file COPYING in the मुख्य directory of
+ * this archive क्रम more details.
  */
 
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/mm.h>
-#include <linux/smp.h>
-#include <linux/errno.h>
-#include <linux/ptrace.h>
-#include <linux/user.h>
-#include <linux/signal.h>
-#include <linux/tracehook.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ptrace.h>
+#समावेश <linux/user.h>
+#समावेश <linux/संकेत.स>
+#समावेश <linux/tracehook.h>
 
-#include <linux/uaccess.h>
-#include <asm/page.h>
-#include <asm/processor.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/processor.h>
 
 /*
- * does not yet catch signals sent when the child dies.
- * in exit.c or in signal.c.
+ * करोes not yet catch संकेतs sent when the child dies.
+ * in निकास.c or in संकेत.c.
  */
 
 /* determines which bits in the SR the user has access to. */
 /* 1 = access 0 = no access */
-#define SR_MASK 0x001f
+#घोषणा SR_MASK 0x001f
 
 /* sets the trace bits. */
-#define TRACE_BITS 0xC000
-#define T1_BIT 0x8000
-#define T0_BIT 0x4000
+#घोषणा TRACE_BITS 0xC000
+#घोषणा T1_BIT 0x8000
+#घोषणा T0_BIT 0x4000
 
-/* Find the stack offset for a register, relative to thread.esp0. */
-#define PT_REG(reg)	((long)&((struct pt_regs *)0)->reg)
-#define SW_REG(reg)	((long)&((struct switch_stack *)0)->reg \
-			 - sizeof(struct switch_stack))
-/* Mapping from PT_xxx to the stack offset at which the register is
+/* Find the stack offset क्रम a रेजिस्टर, relative to thपढ़ो.esp0. */
+#घोषणा PT_REG(reg)	((दीर्घ)&((काष्ठा pt_regs *)0)->reg)
+#घोषणा SW_REG(reg)	((दीर्घ)&((काष्ठा चयन_stack *)0)->reg \
+			 - माप(काष्ठा चयन_stack))
+/* Mapping from PT_xxx to the stack offset at which the रेजिस्टर is
    saved.  Notice that usp has no stack-slot and needs to be treated
    specially (see get_reg/put_reg below). */
-static const int regoff[] = {
+अटल स्थिर पूर्णांक regoff[] = अणु
 	[0]	= PT_REG(d1),
 	[1]	= PT_REG(d2),
 	[2]	= PT_REG(d3),
@@ -66,239 +67,239 @@ static const int regoff[] = {
 	[16]	= PT_REG(orig_d0),
 	[17]	= PT_REG(sr),
 	[18]	= PT_REG(pc),
-};
+पूर्ण;
 
 /*
- * Get contents of register REGNO in task TASK.
+ * Get contents of रेजिस्टर REGNO in task TASK.
  */
-static inline long get_reg(struct task_struct *task, int regno)
-{
-	unsigned long *addr;
+अटल अंतरभूत दीर्घ get_reg(काष्ठा task_काष्ठा *task, पूर्णांक regno)
+अणु
+	अचिन्हित दीर्घ *addr;
 
-	if (regno == PT_USP)
-		addr = &task->thread.usp;
-	else if (regno < ARRAY_SIZE(regoff))
-		addr = (unsigned long *)(task->thread.esp0 + regoff[regno]);
-	else
-		return 0;
-	/* Need to take stkadj into account. */
-	if (regno == PT_SR || regno == PT_PC) {
-		long stkadj = *(long *)(task->thread.esp0 + PT_REG(stkadj));
-		addr = (unsigned long *) ((unsigned long)addr + stkadj);
-		/* The sr is actually a 16 bit register.  */
-		if (regno == PT_SR)
-			return *(unsigned short *)addr;
-	}
-	return *addr;
-}
+	अगर (regno == PT_USP)
+		addr = &task->thपढ़ो.usp;
+	अन्यथा अगर (regno < ARRAY_SIZE(regoff))
+		addr = (अचिन्हित दीर्घ *)(task->thपढ़ो.esp0 + regoff[regno]);
+	अन्यथा
+		वापस 0;
+	/* Need to take stkadj पूर्णांकo account. */
+	अगर (regno == PT_SR || regno == PT_PC) अणु
+		दीर्घ stkadj = *(दीर्घ *)(task->thपढ़ो.esp0 + PT_REG(stkadj));
+		addr = (अचिन्हित दीर्घ *) ((अचिन्हित दीर्घ)addr + stkadj);
+		/* The sr is actually a 16 bit रेजिस्टर.  */
+		अगर (regno == PT_SR)
+			वापस *(अचिन्हित लघु *)addr;
+	पूर्ण
+	वापस *addr;
+पूर्ण
 
 /*
- * Write contents of register REGNO in task TASK.
+ * Write contents of रेजिस्टर REGNO in task TASK.
  */
-static inline int put_reg(struct task_struct *task, int regno,
-			  unsigned long data)
-{
-	unsigned long *addr;
+अटल अंतरभूत पूर्णांक put_reg(काष्ठा task_काष्ठा *task, पूर्णांक regno,
+			  अचिन्हित दीर्घ data)
+अणु
+	अचिन्हित दीर्घ *addr;
 
-	if (regno == PT_USP)
-		addr = &task->thread.usp;
-	else if (regno < ARRAY_SIZE(regoff))
-		addr = (unsigned long *)(task->thread.esp0 + regoff[regno]);
-	else
-		return -1;
-	/* Need to take stkadj into account. */
-	if (regno == PT_SR || regno == PT_PC) {
-		long stkadj = *(long *)(task->thread.esp0 + PT_REG(stkadj));
-		addr = (unsigned long *) ((unsigned long)addr + stkadj);
-		/* The sr is actually a 16 bit register.  */
-		if (regno == PT_SR) {
-			*(unsigned short *)addr = data;
-			return 0;
-		}
-	}
+	अगर (regno == PT_USP)
+		addr = &task->thपढ़ो.usp;
+	अन्यथा अगर (regno < ARRAY_SIZE(regoff))
+		addr = (अचिन्हित दीर्घ *)(task->thपढ़ो.esp0 + regoff[regno]);
+	अन्यथा
+		वापस -1;
+	/* Need to take stkadj पूर्णांकo account. */
+	अगर (regno == PT_SR || regno == PT_PC) अणु
+		दीर्घ stkadj = *(दीर्घ *)(task->thपढ़ो.esp0 + PT_REG(stkadj));
+		addr = (अचिन्हित दीर्घ *) ((अचिन्हित दीर्घ)addr + stkadj);
+		/* The sr is actually a 16 bit रेजिस्टर.  */
+		अगर (regno == PT_SR) अणु
+			*(अचिन्हित लघु *)addr = data;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	*addr = data;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Make sure the single step bit is not set.
  */
-static inline void singlestep_disable(struct task_struct *child)
-{
-	unsigned long tmp = get_reg(child, PT_SR) & ~TRACE_BITS;
-	put_reg(child, PT_SR, tmp);
-	clear_tsk_thread_flag(child, TIF_DELAYED_TRACE);
-}
+अटल अंतरभूत व्योम singlestep_disable(काष्ठा task_काष्ठा *child)
+अणु
+	अचिन्हित दीर्घ पंचांगp = get_reg(child, PT_SR) & ~TRACE_BITS;
+	put_reg(child, PT_SR, पंचांगp);
+	clear_tsk_thपढ़ो_flag(child, TIF_DELAYED_TRACE);
+पूर्ण
 
 /*
  * Called by kernel/ptrace.c when detaching..
  */
-void ptrace_disable(struct task_struct *child)
-{
+व्योम ptrace_disable(काष्ठा task_काष्ठा *child)
+अणु
 	singlestep_disable(child);
-}
+पूर्ण
 
-void user_enable_single_step(struct task_struct *child)
-{
-	unsigned long tmp = get_reg(child, PT_SR) & ~TRACE_BITS;
-	put_reg(child, PT_SR, tmp | T1_BIT);
-	set_tsk_thread_flag(child, TIF_DELAYED_TRACE);
-}
+व्योम user_enable_single_step(काष्ठा task_काष्ठा *child)
+अणु
+	अचिन्हित दीर्घ पंचांगp = get_reg(child, PT_SR) & ~TRACE_BITS;
+	put_reg(child, PT_SR, पंचांगp | T1_BIT);
+	set_tsk_thपढ़ो_flag(child, TIF_DELAYED_TRACE);
+पूर्ण
 
-#ifdef CONFIG_MMU
-void user_enable_block_step(struct task_struct *child)
-{
-	unsigned long tmp = get_reg(child, PT_SR) & ~TRACE_BITS;
-	put_reg(child, PT_SR, tmp | T0_BIT);
-}
-#endif
+#अगर_घोषित CONFIG_MMU
+व्योम user_enable_block_step(काष्ठा task_काष्ठा *child)
+अणु
+	अचिन्हित दीर्घ पंचांगp = get_reg(child, PT_SR) & ~TRACE_BITS;
+	put_reg(child, PT_SR, पंचांगp | T0_BIT);
+पूर्ण
+#पूर्ण_अगर
 
-void user_disable_single_step(struct task_struct *child)
-{
+व्योम user_disable_single_step(काष्ठा task_काष्ठा *child)
+अणु
 	singlestep_disable(child);
-}
+पूर्ण
 
-long arch_ptrace(struct task_struct *child, long request,
-		 unsigned long addr, unsigned long data)
-{
-	unsigned long tmp;
-	int i, ret = 0;
-	int regno = addr >> 2; /* temporary hack. */
-	unsigned long __user *datap = (unsigned long __user *) data;
+दीर्घ arch_ptrace(काष्ठा task_काष्ठा *child, दीर्घ request,
+		 अचिन्हित दीर्घ addr, अचिन्हित दीर्घ data)
+अणु
+	अचिन्हित दीर्घ पंचांगp;
+	पूर्णांक i, ret = 0;
+	पूर्णांक regno = addr >> 2; /* temporary hack. */
+	अचिन्हित दीर्घ __user *datap = (अचिन्हित दीर्घ __user *) data;
 
-	switch (request) {
-	/* read the word at location addr in the USER area. */
-	case PTRACE_PEEKUSR:
-		if (addr & 3)
-			goto out_eio;
+	चयन (request) अणु
+	/* पढ़ो the word at location addr in the USER area. */
+	हाल PTRACE_PEEKUSR:
+		अगर (addr & 3)
+			जाओ out_eio;
 
-		if (regno >= 0 && regno < 19) {
-			tmp = get_reg(child, regno);
-		} else if (regno >= 21 && regno < 49) {
-			tmp = child->thread.fp[regno - 21];
-			/* Convert internal fpu reg representation
-			 * into long double format
+		अगर (regno >= 0 && regno < 19) अणु
+			पंचांगp = get_reg(child, regno);
+		पूर्ण अन्यथा अगर (regno >= 21 && regno < 49) अणु
+			पंचांगp = child->thपढ़ो.fp[regno - 21];
+			/* Convert पूर्णांकernal fpu reg representation
+			 * पूर्णांकo दीर्घ द्विगुन क्रमmat
 			 */
-			if (FPU_IS_EMU && (regno < 45) && !(regno % 3))
-				tmp = ((tmp & 0xffff0000) << 15) |
-				      ((tmp & 0x0000ffff) << 16);
-#ifndef CONFIG_MMU
-		} else if (regno == 49) {
-			tmp = child->mm->start_code;
-		} else if (regno == 50) {
-			tmp = child->mm->start_data;
-		} else if (regno == 51) {
-			tmp = child->mm->end_code;
-#endif
-		} else
-			goto out_eio;
-		ret = put_user(tmp, datap);
-		break;
+			अगर (FPU_IS_EMU && (regno < 45) && !(regno % 3))
+				पंचांगp = ((पंचांगp & 0xffff0000) << 15) |
+				      ((पंचांगp & 0x0000ffff) << 16);
+#अगर_अघोषित CONFIG_MMU
+		पूर्ण अन्यथा अगर (regno == 49) अणु
+			पंचांगp = child->mm->start_code;
+		पूर्ण अन्यथा अगर (regno == 50) अणु
+			पंचांगp = child->mm->start_data;
+		पूर्ण अन्यथा अगर (regno == 51) अणु
+			पंचांगp = child->mm->end_code;
+#पूर्ण_अगर
+		पूर्ण अन्यथा
+			जाओ out_eio;
+		ret = put_user(पंचांगp, datap);
+		अवरोध;
 
-	case PTRACE_POKEUSR:
-	/* write the word at location addr in the USER area */
-		if (addr & 3)
-			goto out_eio;
+	हाल PTRACE_POKEUSR:
+	/* ग_लिखो the word at location addr in the USER area */
+		अगर (addr & 3)
+			जाओ out_eio;
 
-		if (regno == PT_SR) {
+		अगर (regno == PT_SR) अणु
 			data &= SR_MASK;
 			data |= get_reg(child, PT_SR) & ~SR_MASK;
-		}
-		if (regno >= 0 && regno < 19) {
-			if (put_reg(child, regno, data))
-				goto out_eio;
-		} else if (regno >= 21 && regno < 48) {
-			/* Convert long double format
-			 * into internal fpu reg representation
+		पूर्ण
+		अगर (regno >= 0 && regno < 19) अणु
+			अगर (put_reg(child, regno, data))
+				जाओ out_eio;
+		पूर्ण अन्यथा अगर (regno >= 21 && regno < 48) अणु
+			/* Convert दीर्घ द्विगुन क्रमmat
+			 * पूर्णांकo पूर्णांकernal fpu reg representation
 			 */
-			if (FPU_IS_EMU && (regno < 45) && !(regno % 3)) {
+			अगर (FPU_IS_EMU && (regno < 45) && !(regno % 3)) अणु
 				data <<= 15;
 				data = (data & 0xffff0000) |
 				       ((data & 0x0000ffff) >> 1);
-			}
-			child->thread.fp[regno - 21] = data;
-		} else
-			goto out_eio;
-		break;
+			पूर्ण
+			child->thपढ़ो.fp[regno - 21] = data;
+		पूर्ण अन्यथा
+			जाओ out_eio;
+		अवरोध;
 
-	case PTRACE_GETREGS:	/* Get all gp regs from the child. */
-		for (i = 0; i < 19; i++) {
-			tmp = get_reg(child, i);
-			ret = put_user(tmp, datap);
-			if (ret)
-				break;
+	हाल PTRACE_GETREGS:	/* Get all gp regs from the child. */
+		क्रम (i = 0; i < 19; i++) अणु
+			पंचांगp = get_reg(child, i);
+			ret = put_user(पंचांगp, datap);
+			अगर (ret)
+				अवरोध;
 			datap++;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case PTRACE_SETREGS:	/* Set all gp regs in the child. */
-		for (i = 0; i < 19; i++) {
-			ret = get_user(tmp, datap);
-			if (ret)
-				break;
-			if (i == PT_SR) {
-				tmp &= SR_MASK;
-				tmp |= get_reg(child, PT_SR) & ~SR_MASK;
-			}
-			put_reg(child, i, tmp);
+	हाल PTRACE_SETREGS:	/* Set all gp regs in the child. */
+		क्रम (i = 0; i < 19; i++) अणु
+			ret = get_user(पंचांगp, datap);
+			अगर (ret)
+				अवरोध;
+			अगर (i == PT_SR) अणु
+				पंचांगp &= SR_MASK;
+				पंचांगp |= get_reg(child, PT_SR) & ~SR_MASK;
+			पूर्ण
+			put_reg(child, i, पंचांगp);
 			datap++;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case PTRACE_GETFPREGS:	/* Get the child FPU state. */
-		if (copy_to_user(datap, &child->thread.fp,
-				 sizeof(struct user_m68kfp_struct)))
+	हाल PTRACE_GETFPREGS:	/* Get the child FPU state. */
+		अगर (copy_to_user(datap, &child->thपढ़ो.fp,
+				 माप(काष्ठा user_m68kfp_काष्ठा)))
 			ret = -EFAULT;
-		break;
+		अवरोध;
 
-	case PTRACE_SETFPREGS:	/* Set the child FPU state. */
-		if (copy_from_user(&child->thread.fp, datap,
-				   sizeof(struct user_m68kfp_struct)))
+	हाल PTRACE_SETFPREGS:	/* Set the child FPU state. */
+		अगर (copy_from_user(&child->thपढ़ो.fp, datap,
+				   माप(काष्ठा user_m68kfp_काष्ठा)))
 			ret = -EFAULT;
-		break;
+		अवरोध;
 
-	case PTRACE_GET_THREAD_AREA:
-		ret = put_user(task_thread_info(child)->tp_value, datap);
-		break;
+	हाल PTRACE_GET_THREAD_AREA:
+		ret = put_user(task_thपढ़ो_info(child)->tp_value, datap);
+		अवरोध;
 
-	default:
+	शेष:
 		ret = ptrace_request(child, request, addr, data);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
+	वापस ret;
 out_eio:
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-asmlinkage void syscall_trace(void)
-{
-	ptrace_notify(SIGTRAP | ((current->ptrace & PT_TRACESYSGOOD)
+यंत्रlinkage व्योम syscall_trace(व्योम)
+अणु
+	ptrace_notअगरy(SIGTRAP | ((current->ptrace & PT_TRACESYSGOOD)
 				 ? 0x80 : 0));
 	/*
-	 * this isn't the same as continuing with a signal, but it will do
-	 * for normal use.  strace only continues with a signal if the
-	 * stopping signal is not SIGTRAP.  -brl
+	 * this isn't the same as continuing with a संकेत, but it will करो
+	 * क्रम normal use.  strace only जारीs with a संकेत अगर the
+	 * stopping संकेत is not SIGTRAP.  -brl
 	 */
-	if (current->exit_code) {
-		send_sig(current->exit_code, current, 1);
-		current->exit_code = 0;
-	}
-}
+	अगर (current->निकास_code) अणु
+		send_sig(current->निकास_code, current, 1);
+		current->निकास_code = 0;
+	पूर्ण
+पूर्ण
 
-#if defined(CONFIG_COLDFIRE) || !defined(CONFIG_MMU)
-asmlinkage int syscall_trace_enter(void)
-{
-	int ret = 0;
+#अगर defined(CONFIG_COLDFIRE) || !defined(CONFIG_MMU)
+यंत्रlinkage पूर्णांक syscall_trace_enter(व्योम)
+अणु
+	पूर्णांक ret = 0;
 
-	if (test_thread_flag(TIF_SYSCALL_TRACE))
+	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
 		ret = tracehook_report_syscall_entry(task_pt_regs(current));
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-asmlinkage void syscall_trace_leave(void)
-{
-	if (test_thread_flag(TIF_SYSCALL_TRACE))
-		tracehook_report_syscall_exit(task_pt_regs(current), 0);
-}
-#endif /* CONFIG_COLDFIRE */
+यंत्रlinkage व्योम syscall_trace_leave(व्योम)
+अणु
+	अगर (test_thपढ़ो_flag(TIF_SYSCALL_TRACE))
+		tracehook_report_syscall_निकास(task_pt_regs(current), 0);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_COLDFIRE */

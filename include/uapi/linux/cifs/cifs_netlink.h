@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: LGPL-2.1+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: LGPL-2.1+ WITH Linux-syscall-note */
 /*
- * Netlink routines for CIFS
+ * Netlink routines क्रम CIFS
  *
  * Copyright (c) 2020 Samuel Cabrero <scabrero@suse.de>
  */
 
 
-#ifndef _UAPILINUX_CIFS_NETLINK_H
-#define _UAPILINUX_CIFS_NETLINK_H
+#अगर_अघोषित _UAPILINUX_CIFS_NETLINK_H
+#घोषणा _UAPILINUX_CIFS_NETLINK_H
 
-#define CIFS_GENL_NAME			"cifs"
-#define CIFS_GENL_VERSION		0x1
+#घोषणा CIFS_GENL_NAME			"cifs"
+#घोषणा CIFS_GENL_VERSION		0x1
 
-#define CIFS_GENL_MCGRP_SWN_NAME	"cifs_mcgrp_swn"
+#घोषणा CIFS_GENL_MCGRP_SWN_NAME	"cifs_mcgrp_swn"
 
-enum cifs_genl_multicast_groups {
+क्रमागत cअगरs_genl_multicast_groups अणु
 	CIFS_GENL_MCGRP_SWN,
-};
+पूर्ण;
 
-enum cifs_genl_attributes {
+क्रमागत cअगरs_genl_attributes अणु
 	CIFS_GENL_ATTR_UNSPEC,
 	CIFS_GENL_ATTR_SWN_REGISTRATION_ID,
 	CIFS_GENL_ATTR_SWN_NET_NAME,
@@ -35,29 +36,29 @@ enum cifs_genl_attributes {
 	CIFS_GENL_ATTR_SWN_RESOURCE_STATE,
 	CIFS_GENL_ATTR_SWN_RESOURCE_NAME,
 	__CIFS_GENL_ATTR_MAX,
-};
-#define CIFS_GENL_ATTR_MAX (__CIFS_GENL_ATTR_MAX - 1)
+पूर्ण;
+#घोषणा CIFS_GENL_ATTR_MAX (__CIFS_GENL_ATTR_MAX - 1)
 
-enum cifs_genl_commands {
+क्रमागत cअगरs_genl_commands अणु
 	CIFS_GENL_CMD_UNSPEC,
 	CIFS_GENL_CMD_SWN_REGISTER,
 	CIFS_GENL_CMD_SWN_UNREGISTER,
 	CIFS_GENL_CMD_SWN_NOTIFY,
 	__CIFS_GENL_CMD_MAX
-};
-#define CIFS_GENL_CMD_MAX (__CIFS_GENL_CMD_MAX - 1)
+पूर्ण;
+#घोषणा CIFS_GENL_CMD_MAX (__CIFS_GENL_CMD_MAX - 1)
 
-enum cifs_swn_notification_type {
+क्रमागत cअगरs_swn_notअगरication_type अणु
 	CIFS_SWN_NOTIFICATION_RESOURCE_CHANGE = 0x01,
 	CIFS_SWN_NOTIFICATION_CLIENT_MOVE	 = 0x02,
 	CIFS_SWN_NOTIFICATION_SHARE_MOVE	 = 0x03,
 	CIFS_SWN_NOTIFICATION_IP_CHANGE	 = 0x04,
-};
+पूर्ण;
 
-enum cifs_swn_resource_state {
+क्रमागत cअगरs_swn_resource_state अणु
 	CIFS_SWN_RESOURCE_STATE_UNKNOWN     = 0x00,
 	CIFS_SWN_RESOURCE_STATE_AVAILABLE   = 0x01,
 	CIFS_SWN_RESOURCE_STATE_UNAVAILABLE = 0xFF
-};
+पूर्ण;
 
-#endif /* _UAPILINUX_CIFS_NETLINK_H */
+#पूर्ण_अगर /* _UAPILINUX_CIFS_NETLINK_H */

@@ -1,44 +1,45 @@
+<शैली गुरु>
 /*
- * Broadcom specific AMBA
- * ChipCommon NAND flash interface
+ * Broadcom specअगरic AMBA
+ * ChipCommon न_अंकD flash पूर्णांकerface
  *
- * Licensed under the GNU/GPL. See COPYING for details.
+ * Licensed under the GNU/GPL. See COPYING क्रम details.
  */
 
-#include "bcma_private.h"
+#समावेश "bcma_private.h"
 
-#include <linux/platform_device.h>
-#include <linux/bcma/bcma.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/bcma/bcma.h>
 
-struct platform_device bcma_nflash_dev = {
+काष्ठा platक्रमm_device bcma_nflash_dev = अणु
 	.name		= "bcma_nflash",
 	.num_resources	= 0,
-};
+पूर्ण;
 
-/* Initialize NAND flash access */
-int bcma_nflash_init(struct bcma_drv_cc *cc)
-{
-	struct bcma_bus *bus = cc->core->bus;
+/* Initialize न_अंकD flash access */
+पूर्णांक bcma_nflash_init(काष्ठा bcma_drv_cc *cc)
+अणु
+	काष्ठा bcma_bus *bus = cc->core->bus;
 
-	if (bus->chipinfo.id != BCMA_CHIP_ID_BCM4706 &&
-	    cc->core->id.rev != 38) {
+	अगर (bus->chipinfo.id != BCMA_CHIP_ID_BCM4706 &&
+	    cc->core->id.rev != 38) अणु
 		bcma_err(bus, "NAND flash on unsupported board!\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	if (!(cc->capabilities & BCMA_CC_CAP_NFLASH)) {
+	अगर (!(cc->capabilities & BCMA_CC_CAP_NFLASH)) अणु
 		bcma_err(bus, "NAND flash not present according to ChipCommon\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	cc->nflash.present = true;
-	if (cc->core->id.rev == 38 &&
-	    (cc->status & BCMA_CC_CHIPST_5357_NAND_BOOT))
+	अगर (cc->core->id.rev == 38 &&
+	    (cc->status & BCMA_CC_CHIPST_5357_न_अंकD_BOOT))
 		cc->nflash.boot = true;
 
-	/* Prepare platform device, but don't register it yet. It's too early,
-	 * malloc (required by device_private_init) is not available yet. */
-	bcma_nflash_dev.dev.platform_data = &cc->nflash;
+	/* Prepare platक्रमm device, but करोn't register it yet. It's too early,
+	 * दो_स्मृति (required by device_निजी_init) is not available yet. */
+	bcma_nflash_dev.dev.platक्रमm_data = &cc->nflash;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

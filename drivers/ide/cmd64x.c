@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * cmd64x.c: Enable interrupts at initialization time on Ultra/PCI machines.
+ * cmd64x.c: Enable पूर्णांकerrupts at initialization समय on Ultra/PCI machines.
  *           Due to massive hardware bugs, UltraDMA is only supported
  *           on the 646U2 and not on the 646U.
  *
@@ -12,330 +13,330 @@
  * Copyright (C) 2007,2009	MontaVista Software, Inc. <source@mvista.com>
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/pci.h>
-#include <linux/ide.h>
-#include <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/init.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#define DRV_NAME "cmd64x"
+#घोषणा DRV_NAME "cmd64x"
 
 /*
- * CMD64x specific registers definition.
+ * CMD64x specअगरic रेजिस्टरs definition.
  */
-#define CFR		0x50
-#define   CFR_INTR_CH0		0x04
+#घोषणा CFR		0x50
+#घोषणा   CFR_INTR_CH0		0x04
 
-#define	CMDTIM		0x52
-#define	ARTTIM0		0x53
-#define	DRWTIM0		0x54
-#define ARTTIM1 	0x55
-#define DRWTIM1		0x56
-#define ARTTIM23	0x57
-#define   ARTTIM23_DIS_RA2	0x04
-#define   ARTTIM23_DIS_RA3	0x08
-#define   ARTTIM23_INTR_CH1	0x10
-#define DRWTIM2		0x58
-#define BRST		0x59
-#define DRWTIM3		0x5b
+#घोषणा	CMDTIM		0x52
+#घोषणा	ARTTIM0		0x53
+#घोषणा	DRWTIM0		0x54
+#घोषणा ARTTIM1 	0x55
+#घोषणा DRWTIM1		0x56
+#घोषणा ARTTIM23	0x57
+#घोषणा   ARTTIM23_DIS_RA2	0x04
+#घोषणा   ARTTIM23_DIS_RA3	0x08
+#घोषणा   ARTTIM23_INTR_CH1	0x10
+#घोषणा DRWTIM2		0x58
+#घोषणा BRST		0x59
+#घोषणा DRWTIM3		0x5b
 
-#define BMIDECR0	0x70
-#define MRDMODE		0x71
-#define   MRDMODE_INTR_CH0	0x04
-#define   MRDMODE_INTR_CH1	0x08
-#define UDIDETCR0	0x73
-#define DTPR0		0x74
-#define BMIDECR1	0x78
-#define BMIDECSR	0x79
-#define UDIDETCR1	0x7B
-#define DTPR1		0x7C
+#घोषणा BMIDECR0	0x70
+#घोषणा MRDMODE		0x71
+#घोषणा   MRDMODE_INTR_CH0	0x04
+#घोषणा   MRDMODE_INTR_CH1	0x08
+#घोषणा UDIDETCR0	0x73
+#घोषणा DTPR0		0x74
+#घोषणा BMIDECR1	0x78
+#घोषणा BMIDECSR	0x79
+#घोषणा UDIDETCR1	0x7B
+#घोषणा DTPR1		0x7C
 
-static void cmd64x_program_timings(ide_drive_t *drive, u8 mode)
-{
-	ide_hwif_t *hwif = drive->hwif;
-	struct pci_dev *dev = to_pci_dev(drive->hwif->dev);
-	int bus_speed = ide_pci_clk ? ide_pci_clk : 33;
-	const unsigned long T = 1000000 / bus_speed;
-	static const u8 recovery_values[] =
-		{15, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0};
-	static const u8 setup_values[] = {0x40, 0x40, 0x40, 0x80, 0, 0xc0};
-	static const u8 arttim_regs[4] = {ARTTIM0, ARTTIM1, ARTTIM23, ARTTIM23};
-	static const u8 drwtim_regs[4] = {DRWTIM0, DRWTIM1, DRWTIM2, DRWTIM3};
-	struct ide_timing t;
+अटल व्योम cmd64x_program_timings(ide_drive_t *drive, u8 mode)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
+	काष्ठा pci_dev *dev = to_pci_dev(drive->hwअगर->dev);
+	पूर्णांक bus_speed = ide_pci_clk ? ide_pci_clk : 33;
+	स्थिर अचिन्हित दीर्घ T = 1000000 / bus_speed;
+	अटल स्थिर u8 recovery_values[] =
+		अणु15, 15, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 0पूर्ण;
+	अटल स्थिर u8 setup_values[] = अणु0x40, 0x40, 0x40, 0x80, 0, 0xc0पूर्ण;
+	अटल स्थिर u8 arttim_regs[4] = अणुARTTIM0, ARTTIM1, ARTTIM23, ARTTIM23पूर्ण;
+	अटल स्थिर u8 drwtim_regs[4] = अणुDRWTIM0, DRWTIM1, DRWTIM2, DRWTIM3पूर्ण;
+	काष्ठा ide_timing t;
 	u8 arttim = 0;
 
-	if (drive->dn >= ARRAY_SIZE(drwtim_regs))
-		return;
+	अगर (drive->dn >= ARRAY_SIZE(drwtim_regs))
+		वापस;
 
 	ide_timing_compute(drive, mode, &t, T, 0);
 
 	/*
-	 * In case we've got too long recovery phase, try to lengthen
+	 * In हाल we've got too दीर्घ recovery phase, try to lengthen
 	 * the active phase
 	 */
-	if (t.recover > 16) {
+	अगर (t.recover > 16) अणु
 		t.active += t.recover - 16;
 		t.recover = 16;
-	}
-	if (t.active > 16)		/* shouldn't actually happen... */
+	पूर्ण
+	अगर (t.active > 16)		/* shouldn't actually happen... */
 		t.active = 16;
 
 	/*
-	 * Convert values to internal chipset representation
+	 * Convert values to पूर्णांकernal chipset representation
 	 */
 	t.recover = recovery_values[t.recover];
 	t.active &= 0x0f;
 
-	/* Program the active/recovery counts into the DRWTIM register */
-	pci_write_config_byte(dev, drwtim_regs[drive->dn],
+	/* Program the active/recovery counts पूर्णांकo the DRWTIM रेजिस्टर */
+	pci_ग_लिखो_config_byte(dev, drwtim_regs[drive->dn],
 			      (t.active << 4) | t.recover);
 
 	/*
-	 * The primary channel has individual address setup timing registers
-	 * for each drive and the hardware selects the slowest timing itself.
-	 * The secondary channel has one common register and we have to select
+	 * The primary channel has inभागidual address setup timing रेजिस्टरs
+	 * क्रम each drive and the hardware selects the slowest timing itself.
+	 * The secondary channel has one common रेजिस्टर and we have to select
 	 * the slowest address setup timing ourselves.
 	 */
-	if (hwif->channel) {
+	अगर (hwअगर->channel) अणु
 		ide_drive_t *pair = ide_get_pair_dev(drive);
 
-		if (pair) {
-			struct ide_timing tp;
+		अगर (pair) अणु
+			काष्ठा ide_timing tp;
 
 			ide_timing_compute(pair, pair->pio_mode, &tp, T, 0);
 			ide_timing_merge(&t, &tp, &t, IDE_TIMING_SETUP);
-			if (pair->dma_mode) {
+			अगर (pair->dma_mode) अणु
 				ide_timing_compute(pair, pair->dma_mode,
 						&tp, T, 0);
 				ide_timing_merge(&tp, &t, &t, IDE_TIMING_SETUP);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (t.setup > 5)		/* shouldn't actually happen... */
+	अगर (t.setup > 5)		/* shouldn't actually happen... */
 		t.setup = 5;
 
 	/*
-	 * Program the address setup clocks into the ARTTIM registers.
-	 * Avoid clearing the secondary channel's interrupt bit.
+	 * Program the address setup घड़ीs पूर्णांकo the ARTTIM रेजिस्टरs.
+	 * Aव्योम clearing the secondary channel's पूर्णांकerrupt bit.
 	 */
-	(void) pci_read_config_byte (dev, arttim_regs[drive->dn], &arttim);
-	if (hwif->channel)
+	(व्योम) pci_पढ़ो_config_byte (dev, arttim_regs[drive->dn], &arttim);
+	अगर (hwअगर->channel)
 		arttim &= ~ARTTIM23_INTR_CH1;
 	arttim &= ~0xc0;
 	arttim |= setup_values[t.setup];
-	(void) pci_write_config_byte(dev, arttim_regs[drive->dn], arttim);
-}
+	(व्योम) pci_ग_लिखो_config_byte(dev, arttim_regs[drive->dn], arttim);
+पूर्ण
 
 /*
  * Attempts to set drive's PIO mode.
- * Special cases are 8: prefetch off, 9: prefetch on (both never worked)
+ * Special हालs are 8: prefetch off, 9: prefetch on (both never worked)
  */
 
-static void cmd64x_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	const u8 pio = drive->pio_mode - XFER_PIO_0;
+अटल व्योम cmd64x_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	स्थिर u8 pio = drive->pio_mode - XFER_PIO_0;
 
 	/*
 	 * Filter out the prefetch control values
 	 * to prevent PIO5 from being programmed
 	 */
-	if (pio == 8 || pio == 9)
-		return;
+	अगर (pio == 8 || pio == 9)
+		वापस;
 
 	cmd64x_program_timings(drive, XFER_PIO_0 + pio);
-}
+पूर्ण
 
-static void cmd64x_set_dma_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	struct pci_dev *dev	= to_pci_dev(hwif->dev);
+अटल व्योम cmd64x_set_dma_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	काष्ठा pci_dev *dev	= to_pci_dev(hwअगर->dev);
 	u8 unit			= drive->dn & 0x01;
-	u8 regU = 0, pciU	= hwif->channel ? UDIDETCR1 : UDIDETCR0;
-	const u8 speed		= drive->dma_mode;
+	u8 regU = 0, pciU	= hwअगर->channel ? UDIDETCR1 : UDIDETCR0;
+	स्थिर u8 speed		= drive->dma_mode;
 
-	pci_read_config_byte(dev, pciU, &regU);
+	pci_पढ़ो_config_byte(dev, pciU, &regU);
 	regU &= ~(unit ? 0xCA : 0x35);
 
-	switch(speed) {
-	case XFER_UDMA_5:
+	चयन(speed) अणु
+	हाल XFER_UDMA_5:
 		regU |= unit ? 0x0A : 0x05;
-		break;
-	case XFER_UDMA_4:
+		अवरोध;
+	हाल XFER_UDMA_4:
 		regU |= unit ? 0x4A : 0x15;
-		break;
-	case XFER_UDMA_3:
+		अवरोध;
+	हाल XFER_UDMA_3:
 		regU |= unit ? 0x8A : 0x25;
-		break;
-	case XFER_UDMA_2:
+		अवरोध;
+	हाल XFER_UDMA_2:
 		regU |= unit ? 0x42 : 0x11;
-		break;
-	case XFER_UDMA_1:
+		अवरोध;
+	हाल XFER_UDMA_1:
 		regU |= unit ? 0x82 : 0x21;
-		break;
-	case XFER_UDMA_0:
+		अवरोध;
+	हाल XFER_UDMA_0:
 		regU |= unit ? 0xC2 : 0x31;
-		break;
-	case XFER_MW_DMA_2:
-	case XFER_MW_DMA_1:
-	case XFER_MW_DMA_0:
+		अवरोध;
+	हाल XFER_MW_DMA_2:
+	हाल XFER_MW_DMA_1:
+	हाल XFER_MW_DMA_0:
 		cmd64x_program_timings(drive, speed);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	pci_write_config_byte(dev, pciU, regU);
-}
+	pci_ग_लिखो_config_byte(dev, pciU, regU);
+पूर्ण
 
-static void cmd648_clear_irq(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif	= drive->hwif;
-	struct pci_dev *dev	= to_pci_dev(hwif->dev);
-	unsigned long base	= pci_resource_start(dev, 4);
-	u8  irq_mask		= hwif->channel ? MRDMODE_INTR_CH1 :
+अटल व्योम cmd648_clear_irq(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर	= drive->hwअगर;
+	काष्ठा pci_dev *dev	= to_pci_dev(hwअगर->dev);
+	अचिन्हित दीर्घ base	= pci_resource_start(dev, 4);
+	u8  irq_mask		= hwअगर->channel ? MRDMODE_INTR_CH1 :
 						  MRDMODE_INTR_CH0;
 	u8  mrdmode		= inb(base + 1);
 
-	/* clear the interrupt bit */
+	/* clear the पूर्णांकerrupt bit */
 	outb((mrdmode & ~(MRDMODE_INTR_CH0 | MRDMODE_INTR_CH1)) | irq_mask,
 	     base + 1);
-}
+पूर्ण
 
-static void cmd64x_clear_irq(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif	= drive->hwif;
-	struct pci_dev *dev	= to_pci_dev(hwif->dev);
-	int irq_reg		= hwif->channel ? ARTTIM23 : CFR;
-	u8  irq_mask		= hwif->channel ? ARTTIM23_INTR_CH1 :
+अटल व्योम cmd64x_clear_irq(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर	= drive->hwअगर;
+	काष्ठा pci_dev *dev	= to_pci_dev(hwअगर->dev);
+	पूर्णांक irq_reg		= hwअगर->channel ? ARTTIM23 : CFR;
+	u8  irq_mask		= hwअगर->channel ? ARTTIM23_INTR_CH1 :
 						  CFR_INTR_CH0;
 	u8  irq_stat		= 0;
 
-	(void) pci_read_config_byte(dev, irq_reg, &irq_stat);
-	/* clear the interrupt bit */
-	(void) pci_write_config_byte(dev, irq_reg, irq_stat | irq_mask);
-}
+	(व्योम) pci_पढ़ो_config_byte(dev, irq_reg, &irq_stat);
+	/* clear the पूर्णांकerrupt bit */
+	(व्योम) pci_ग_लिखो_config_byte(dev, irq_reg, irq_stat | irq_mask);
+पूर्ण
 
-static int cmd648_test_irq(ide_hwif_t *hwif)
-{
-	struct pci_dev *dev	= to_pci_dev(hwif->dev);
-	unsigned long base	= pci_resource_start(dev, 4);
-	u8 irq_mask		= hwif->channel ? MRDMODE_INTR_CH1 :
+अटल पूर्णांक cmd648_test_irq(ide_hwअगर_t *hwअगर)
+अणु
+	काष्ठा pci_dev *dev	= to_pci_dev(hwअगर->dev);
+	अचिन्हित दीर्घ base	= pci_resource_start(dev, 4);
+	u8 irq_mask		= hwअगर->channel ? MRDMODE_INTR_CH1 :
 						  MRDMODE_INTR_CH0;
 	u8 mrdmode		= inb(base + 1);
 
 	pr_debug("%s: mrdmode: 0x%02x irq_mask: 0x%02x\n",
-		 hwif->name, mrdmode, irq_mask);
+		 hwअगर->name, mrdmode, irq_mask);
 
-	return (mrdmode & irq_mask) ? 1 : 0;
-}
+	वापस (mrdmode & irq_mask) ? 1 : 0;
+पूर्ण
 
-static int cmd64x_test_irq(ide_hwif_t *hwif)
-{
-	struct pci_dev *dev	= to_pci_dev(hwif->dev);
-	int irq_reg		= hwif->channel ? ARTTIM23 : CFR;
-	u8  irq_mask		= hwif->channel ? ARTTIM23_INTR_CH1 :
+अटल पूर्णांक cmd64x_test_irq(ide_hwअगर_t *hwअगर)
+अणु
+	काष्ठा pci_dev *dev	= to_pci_dev(hwअगर->dev);
+	पूर्णांक irq_reg		= hwअगर->channel ? ARTTIM23 : CFR;
+	u8  irq_mask		= hwअगर->channel ? ARTTIM23_INTR_CH1 :
 						  CFR_INTR_CH0;
 	u8  irq_stat		= 0;
 
-	(void) pci_read_config_byte(dev, irq_reg, &irq_stat);
+	(व्योम) pci_पढ़ो_config_byte(dev, irq_reg, &irq_stat);
 
 	pr_debug("%s: irq_stat: 0x%02x irq_mask: 0x%02x\n",
-		 hwif->name, irq_stat, irq_mask);
+		 hwअगर->name, irq_stat, irq_mask);
 
-	return (irq_stat & irq_mask) ? 1 : 0;
-}
+	वापस (irq_stat & irq_mask) ? 1 : 0;
+पूर्ण
 
 /*
  * ASUS P55T2P4D with CMD646 chipset revision 0x01 requires the old
- * event order for DMA transfers.
+ * event order क्रम DMA transfers.
  */
 
-static int cmd646_1_dma_end(ide_drive_t *drive)
-{
-	ide_hwif_t *hwif = drive->hwif;
+अटल पूर्णांक cmd646_1_dma_end(ide_drive_t *drive)
+अणु
+	ide_hwअगर_t *hwअगर = drive->hwअगर;
 	u8 dma_stat = 0, dma_cmd = 0;
 
 	/* get DMA status */
-	dma_stat = inb(hwif->dma_base + ATA_DMA_STATUS);
-	/* read DMA command state */
-	dma_cmd = inb(hwif->dma_base + ATA_DMA_CMD);
+	dma_stat = inb(hwअगर->dma_base + ATA_DMA_STATUS);
+	/* पढ़ो DMA command state */
+	dma_cmd = inb(hwअगर->dma_base + ATA_DMA_CMD);
 	/* stop DMA */
-	outb(dma_cmd & ~1, hwif->dma_base + ATA_DMA_CMD);
+	outb(dma_cmd & ~1, hwअगर->dma_base + ATA_DMA_CMD);
 	/* clear the INTR & ERROR bits */
-	outb(dma_stat | 6, hwif->dma_base + ATA_DMA_STATUS);
-	/* verify good DMA status */
-	return (dma_stat & 7) != 4;
-}
+	outb(dma_stat | 6, hwअगर->dma_base + ATA_DMA_STATUS);
+	/* verअगरy good DMA status */
+	वापस (dma_stat & 7) != 4;
+पूर्ण
 
-static int init_chipset_cmd64x(struct pci_dev *dev)
-{
+अटल पूर्णांक init_chipset_cmd64x(काष्ठा pci_dev *dev)
+अणु
 	u8 mrdmode = 0;
 
-	/* Set a good latency timer and cache line size value. */
-	(void) pci_write_config_byte(dev, PCI_LATENCY_TIMER, 64);
-	/* FIXME: pci_set_master() to ensure a good latency timer value */
+	/* Set a good latency समयr and cache line size value. */
+	(व्योम) pci_ग_लिखो_config_byte(dev, PCI_LATENCY_TIMER, 64);
+	/* FIXME: pci_set_master() to ensure a good latency समयr value */
 
 	/*
-	 * Enable interrupts, select MEMORY READ LINE for reads.
+	 * Enable पूर्णांकerrupts, select MEMORY READ LINE क्रम पढ़ोs.
 	 *
 	 * NOTE: although not mentioned in the PCI0646U specs,
-	 * bits 0-1 are write only and won't be read back as
-	 * set or not -- PCI0646U2 specs clarify this point.
+	 * bits 0-1 are ग_लिखो only and won't be पढ़ो back as
+	 * set or not -- PCI0646U2 specs clarअगरy this poपूर्णांक.
 	 */
-	(void) pci_read_config_byte (dev, MRDMODE, &mrdmode);
+	(व्योम) pci_पढ़ो_config_byte (dev, MRDMODE, &mrdmode);
 	mrdmode &= ~0x30;
-	(void) pci_write_config_byte(dev, MRDMODE, (mrdmode | 0x02));
+	(व्योम) pci_ग_लिखो_config_byte(dev, MRDMODE, (mrdmode | 0x02));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static u8 cmd64x_cable_detect(ide_hwif_t *hwif)
-{
-	struct pci_dev  *dev	= to_pci_dev(hwif->dev);
-	u8 bmidecsr = 0, mask	= hwif->channel ? 0x02 : 0x01;
+अटल u8 cmd64x_cable_detect(ide_hwअगर_t *hwअगर)
+अणु
+	काष्ठा pci_dev  *dev	= to_pci_dev(hwअगर->dev);
+	u8 bmidecsr = 0, mask	= hwअगर->channel ? 0x02 : 0x01;
 
-	switch (dev->device) {
-	case PCI_DEVICE_ID_CMD_648:
-	case PCI_DEVICE_ID_CMD_649:
- 		pci_read_config_byte(dev, BMIDECSR, &bmidecsr);
-		return (bmidecsr & mask) ? ATA_CBL_PATA80 : ATA_CBL_PATA40;
-	default:
-		return ATA_CBL_PATA40;
-	}
-}
+	चयन (dev->device) अणु
+	हाल PCI_DEVICE_ID_CMD_648:
+	हाल PCI_DEVICE_ID_CMD_649:
+ 		pci_पढ़ो_config_byte(dev, BMIDECSR, &bmidecsr);
+		वापस (bmidecsr & mask) ? ATA_CBL_PATA80 : ATA_CBL_PATA40;
+	शेष:
+		वापस ATA_CBL_PATA40;
+	पूर्ण
+पूर्ण
 
-static const struct ide_port_ops cmd64x_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops cmd64x_port_ops = अणु
 	.set_pio_mode		= cmd64x_set_pio_mode,
 	.set_dma_mode		= cmd64x_set_dma_mode,
 	.clear_irq		= cmd64x_clear_irq,
 	.test_irq		= cmd64x_test_irq,
 	.cable_detect		= cmd64x_cable_detect,
-};
+पूर्ण;
 
-static const struct ide_port_ops cmd648_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops cmd648_port_ops = अणु
 	.set_pio_mode		= cmd64x_set_pio_mode,
 	.set_dma_mode		= cmd64x_set_dma_mode,
 	.clear_irq		= cmd648_clear_irq,
 	.test_irq		= cmd648_test_irq,
 	.cable_detect		= cmd64x_cable_detect,
-};
+पूर्ण;
 
-static const struct ide_dma_ops cmd646_rev1_dma_ops = {
+अटल स्थिर काष्ठा ide_dma_ops cmd646_rev1_dma_ops = अणु
 	.dma_host_set		= ide_dma_host_set,
 	.dma_setup		= ide_dma_setup,
 	.dma_start		= ide_dma_start,
 	.dma_end		= cmd646_1_dma_end,
 	.dma_test_irq		= ide_dma_test_irq,
 	.dma_lost_irq		= ide_dma_lost_irq,
-	.dma_timer_expiry	= ide_dma_sff_timer_expiry,
-	.dma_sff_read_status	= ide_dma_sff_read_status,
-};
+	.dma_समयr_expiry	= ide_dma_sff_समयr_expiry,
+	.dma_sff_पढ़ो_status	= ide_dma_sff_पढ़ो_status,
+पूर्ण;
 
-static const struct ide_port_info cmd64x_chipsets[] = {
-	{	/* 0: CMD643 */
+अटल स्थिर काष्ठा ide_port_info cmd64x_chipsets[] = अणु
+	अणु	/* 0: CMD643 */
 		.name		= DRV_NAME,
 		.init_chipset	= init_chipset_cmd64x,
-		.enablebits	= {{0x00,0x00,0x00}, {0x51,0x08,0x08}},
+		.enablebits	= अणुअणु0x00,0x00,0x00पूर्ण, अणु0x51,0x08,0x08पूर्णपूर्ण,
 		.port_ops	= &cmd64x_port_ops,
 		.host_flags	= IDE_HFLAG_CLEAR_SIMPLEX |
 				  IDE_HFLAG_ABUSE_PREFETCH |
@@ -343,109 +344,109 @@ static const struct ide_port_info cmd64x_chipsets[] = {
 		.pio_mask	= ATA_PIO5,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= 0x00, /* no udma */
-	},
-	{	/* 1: CMD646 */
+	पूर्ण,
+	अणु	/* 1: CMD646 */
 		.name		= DRV_NAME,
 		.init_chipset	= init_chipset_cmd64x,
-		.enablebits	= {{0x51,0x04,0x04}, {0x51,0x08,0x08}},
+		.enablebits	= अणुअणु0x51,0x04,0x04पूर्ण, अणु0x51,0x08,0x08पूर्णपूर्ण,
 		.port_ops	= &cmd648_port_ops,
 		.host_flags	= IDE_HFLAG_ABUSE_PREFETCH |
 				  IDE_HFLAG_SERIALIZE,
 		.pio_mask	= ATA_PIO5,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= ATA_UDMA2,
-	},
-	{	/* 2: CMD648 */
+	पूर्ण,
+	अणु	/* 2: CMD648 */
 		.name		= DRV_NAME,
 		.init_chipset	= init_chipset_cmd64x,
-		.enablebits	= {{0x51,0x04,0x04}, {0x51,0x08,0x08}},
+		.enablebits	= अणुअणु0x51,0x04,0x04पूर्ण, अणु0x51,0x08,0x08पूर्णपूर्ण,
 		.port_ops	= &cmd648_port_ops,
 		.host_flags	= IDE_HFLAG_ABUSE_PREFETCH,
 		.pio_mask	= ATA_PIO5,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= ATA_UDMA4,
-	},
-	{	/* 3: CMD649 */
+	पूर्ण,
+	अणु	/* 3: CMD649 */
 		.name		= DRV_NAME,
 		.init_chipset	= init_chipset_cmd64x,
-		.enablebits	= {{0x51,0x04,0x04}, {0x51,0x08,0x08}},
+		.enablebits	= अणुअणु0x51,0x04,0x04पूर्ण, अणु0x51,0x08,0x08पूर्णपूर्ण,
 		.port_ops	= &cmd648_port_ops,
 		.host_flags	= IDE_HFLAG_ABUSE_PREFETCH,
 		.pio_mask	= ATA_PIO5,
 		.mwdma_mask	= ATA_MWDMA2,
 		.udma_mask	= ATA_UDMA5,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static int cmd64x_init_one(struct pci_dev *dev, const struct pci_device_id *id)
-{
-	struct ide_port_info d;
+अटल पूर्णांक cmd64x_init_one(काष्ठा pci_dev *dev, स्थिर काष्ठा pci_device_id *id)
+अणु
+	काष्ठा ide_port_info d;
 	u8 idx = id->driver_data;
 
 	d = cmd64x_chipsets[idx];
 
-	if (idx == 1) {
+	अगर (idx == 1) अणु
 		/*
 		 * UltraDMA only supported on PCI646U and PCI646U2, which
 		 * correspond to revisions 0x03, 0x05 and 0x07 respectively.
 		 * Actually, although the CMD tech support people won't
 		 * tell me the details, the 0x03 revision cannot support
-		 * UDMA correctly without hardware modifications, and even
+		 * UDMA correctly without hardware modअगरications, and even
 		 * then it only works with Quantum disks due to some
-		 * hold time assumptions in the 646U part which are fixed
+		 * hold समय assumptions in the 646U part which are fixed
 		 * in the 646U2.
 		 *
-		 * So we only do UltraDMA on revision 0x05 and 0x07 chipsets.
+		 * So we only करो UltraDMA on revision 0x05 and 0x07 chipsets.
 		 */
-		if (dev->revision < 5) {
+		अगर (dev->revision < 5) अणु
 			d.udma_mask = 0x00;
 			/*
 			 * The original PCI0646 didn't have the primary
 			 * channel enable bit, it appeared starting with
 			 * PCI0646U (i.e. revision ID 3).
 			 */
-			if (dev->revision < 3) {
+			अगर (dev->revision < 3) अणु
 				d.enablebits[0].reg = 0;
 				d.port_ops = &cmd64x_port_ops;
-				if (dev->revision == 1)
+				अगर (dev->revision == 1)
 					d.dma_ops = &cmd646_rev1_dma_ops;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return ide_pci_init_one(dev, &d, NULL);
-}
+	वापस ide_pci_init_one(dev, &d, शून्य);
+पूर्ण
 
-static const struct pci_device_id cmd64x_pci_tbl[] = {
-	{ PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_643), 0 },
-	{ PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_646), 1 },
-	{ PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_648), 2 },
-	{ PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_649), 3 },
-	{ 0, },
-};
+अटल स्थिर काष्ठा pci_device_id cmd64x_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_643), 0 पूर्ण,
+	अणु PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_646), 1 पूर्ण,
+	अणु PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_648), 2 पूर्ण,
+	अणु PCI_VDEVICE(CMD, PCI_DEVICE_ID_CMD_649), 3 पूर्ण,
+	अणु 0, पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(pci, cmd64x_pci_tbl);
 
-static struct pci_driver cmd64x_pci_driver = {
+अटल काष्ठा pci_driver cmd64x_pci_driver = अणु
 	.name		= "CMD64x_IDE",
 	.id_table	= cmd64x_pci_tbl,
 	.probe		= cmd64x_init_one,
-	.remove		= ide_pci_remove,
+	.हटाओ		= ide_pci_हटाओ,
 	.suspend	= ide_pci_suspend,
 	.resume		= ide_pci_resume,
-};
+पूर्ण;
 
-static int __init cmd64x_ide_init(void)
-{
-	return ide_pci_register_driver(&cmd64x_pci_driver);
-}
+अटल पूर्णांक __init cmd64x_ide_init(व्योम)
+अणु
+	वापस ide_pci_रेजिस्टर_driver(&cmd64x_pci_driver);
+पूर्ण
 
-static void __exit cmd64x_ide_exit(void)
-{
-	pci_unregister_driver(&cmd64x_pci_driver);
-}
+अटल व्योम __निकास cmd64x_ide_निकास(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&cmd64x_pci_driver);
+पूर्ण
 
 module_init(cmd64x_ide_init);
-module_exit(cmd64x_ide_exit);
+module_निकास(cmd64x_ide_निकास);
 
 MODULE_AUTHOR("Eddie Dost, David Miller, Andre Hedrick, Bartlomiej Zolnierkiewicz");
 MODULE_DESCRIPTION("PCI driver module for CMD64x IDE");

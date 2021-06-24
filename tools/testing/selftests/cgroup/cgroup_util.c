@@ -1,578 +1,579 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#define _GNU_SOURCE
+#घोषणा _GNU_SOURCE
 
-#include <errno.h>
-#include <fcntl.h>
-#include <linux/limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <linux/सीमा.स>
+#समावेश <संकेत.स>
+#समावेश <मानकपन.स>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <sys/स्थिति.स>
+#समावेश <sys/types.h>
+#समावेश <sys/रुको.h>
+#समावेश <unistd.h>
 
-#include "cgroup_util.h"
-#include "../clone3/clone3_selftests.h"
+#समावेश "cgroup_util.h"
+#समावेश "../clone3/clone3_selftests.h"
 
-static ssize_t read_text(const char *path, char *buf, size_t max_len)
-{
-	ssize_t len;
-	int fd;
+अटल sमाप_प्रकार पढ़ो_text(स्थिर अक्षर *path, अक्षर *buf, माप_प्रकार max_len)
+अणु
+	sमाप_प्रकार len;
+	पूर्णांक fd;
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		return fd;
+	fd = खोलो(path, O_RDONLY);
+	अगर (fd < 0)
+		वापस fd;
 
-	len = read(fd, buf, max_len - 1);
-	if (len < 0)
-		goto out;
+	len = पढ़ो(fd, buf, max_len - 1);
+	अगर (len < 0)
+		जाओ out;
 
 	buf[len] = 0;
 out:
-	close(fd);
-	return len;
-}
+	बंद(fd);
+	वापस len;
+पूर्ण
 
-static ssize_t write_text(const char *path, char *buf, ssize_t len)
-{
-	int fd;
+अटल sमाप_प्रकार ग_लिखो_text(स्थिर अक्षर *path, अक्षर *buf, sमाप_प्रकार len)
+अणु
+	पूर्णांक fd;
 
-	fd = open(path, O_WRONLY | O_APPEND);
-	if (fd < 0)
-		return fd;
+	fd = खोलो(path, O_WRONLY | O_APPEND);
+	अगर (fd < 0)
+		वापस fd;
 
-	len = write(fd, buf, len);
-	if (len < 0) {
-		close(fd);
-		return len;
-	}
+	len = ग_लिखो(fd, buf, len);
+	अगर (len < 0) अणु
+		बंद(fd);
+		वापस len;
+	पूर्ण
 
-	close(fd);
+	बंद(fd);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-char *cg_name(const char *root, const char *name)
-{
-	size_t len = strlen(root) + strlen(name) + 2;
-	char *ret = malloc(len);
+अक्षर *cg_name(स्थिर अक्षर *root, स्थिर अक्षर *name)
+अणु
+	माप_प्रकार len = म_माप(root) + म_माप(name) + 2;
+	अक्षर *ret = दो_स्मृति(len);
 
-	snprintf(ret, len, "%s/%s", root, name);
+	snम_लिखो(ret, len, "%s/%s", root, name);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-char *cg_name_indexed(const char *root, const char *name, int index)
-{
-	size_t len = strlen(root) + strlen(name) + 10;
-	char *ret = malloc(len);
+अक्षर *cg_name_indexed(स्थिर अक्षर *root, स्थिर अक्षर *name, पूर्णांक index)
+अणु
+	माप_प्रकार len = म_माप(root) + म_माप(name) + 10;
+	अक्षर *ret = दो_स्मृति(len);
 
-	snprintf(ret, len, "%s/%s_%d", root, name, index);
+	snम_लिखो(ret, len, "%s/%s_%d", root, name, index);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-char *cg_control(const char *cgroup, const char *control)
-{
-	size_t len = strlen(cgroup) + strlen(control) + 2;
-	char *ret = malloc(len);
+अक्षर *cg_control(स्थिर अक्षर *cgroup, स्थिर अक्षर *control)
+अणु
+	माप_प्रकार len = म_माप(cgroup) + म_माप(control) + 2;
+	अक्षर *ret = दो_स्मृति(len);
 
-	snprintf(ret, len, "%s/%s", cgroup, control);
+	snम_लिखो(ret, len, "%s/%s", cgroup, control);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cg_read(const char *cgroup, const char *control, char *buf, size_t len)
-{
-	char path[PATH_MAX];
+पूर्णांक cg_पढ़ो(स्थिर अक्षर *cgroup, स्थिर अक्षर *control, अक्षर *buf, माप_प्रकार len)
+अणु
+	अक्षर path[PATH_MAX];
 
-	snprintf(path, sizeof(path), "%s/%s", cgroup, control);
+	snम_लिखो(path, माप(path), "%s/%s", cgroup, control);
 
-	if (read_text(path, buf, len) >= 0)
-		return 0;
+	अगर (पढ़ो_text(path, buf, len) >= 0)
+		वापस 0;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int cg_read_strcmp(const char *cgroup, const char *control,
-		   const char *expected)
-{
-	size_t size;
-	char *buf;
-	int ret;
+पूर्णांक cg_पढ़ो_म_भेद(स्थिर अक्षर *cgroup, स्थिर अक्षर *control,
+		   स्थिर अक्षर *expected)
+अणु
+	माप_प्रकार size;
+	अक्षर *buf;
+	पूर्णांक ret;
 
-	/* Handle the case of comparing against empty string */
-	if (!expected)
-		return -1;
-	else
-		size = strlen(expected) + 1;
+	/* Handle the हाल of comparing against empty string */
+	अगर (!expected)
+		वापस -1;
+	अन्यथा
+		size = म_माप(expected) + 1;
 
-	buf = malloc(size);
-	if (!buf)
-		return -1;
+	buf = दो_स्मृति(size);
+	अगर (!buf)
+		वापस -1;
 
-	if (cg_read(cgroup, control, buf, size)) {
-		free(buf);
-		return -1;
-	}
+	अगर (cg_पढ़ो(cgroup, control, buf, size)) अणु
+		मुक्त(buf);
+		वापस -1;
+	पूर्ण
 
-	ret = strcmp(expected, buf);
-	free(buf);
-	return ret;
-}
+	ret = म_भेद(expected, buf);
+	मुक्त(buf);
+	वापस ret;
+पूर्ण
 
-int cg_read_strstr(const char *cgroup, const char *control, const char *needle)
-{
-	char buf[PAGE_SIZE];
+पूर्णांक cg_पढ़ो_म_माला(स्थिर अक्षर *cgroup, स्थिर अक्षर *control, स्थिर अक्षर *needle)
+अणु
+	अक्षर buf[PAGE_SIZE];
 
-	if (cg_read(cgroup, control, buf, sizeof(buf)))
-		return -1;
+	अगर (cg_पढ़ो(cgroup, control, buf, माप(buf)))
+		वापस -1;
 
-	return strstr(buf, needle) ? 0 : -1;
-}
+	वापस म_माला(buf, needle) ? 0 : -1;
+पूर्ण
 
-long cg_read_long(const char *cgroup, const char *control)
-{
-	char buf[128];
+दीर्घ cg_पढ़ो_दीर्घ(स्थिर अक्षर *cgroup, स्थिर अक्षर *control)
+अणु
+	अक्षर buf[128];
 
-	if (cg_read(cgroup, control, buf, sizeof(buf)))
-		return -1;
+	अगर (cg_पढ़ो(cgroup, control, buf, माप(buf)))
+		वापस -1;
 
-	return atol(buf);
-}
+	वापस म_से_द(buf);
+पूर्ण
 
-long cg_read_key_long(const char *cgroup, const char *control, const char *key)
-{
-	char buf[PAGE_SIZE];
-	char *ptr;
+दीर्घ cg_पढ़ो_key_दीर्घ(स्थिर अक्षर *cgroup, स्थिर अक्षर *control, स्थिर अक्षर *key)
+अणु
+	अक्षर buf[PAGE_SIZE];
+	अक्षर *ptr;
 
-	if (cg_read(cgroup, control, buf, sizeof(buf)))
-		return -1;
+	अगर (cg_पढ़ो(cgroup, control, buf, माप(buf)))
+		वापस -1;
 
-	ptr = strstr(buf, key);
-	if (!ptr)
-		return -1;
+	ptr = म_माला(buf, key);
+	अगर (!ptr)
+		वापस -1;
 
-	return atol(ptr + strlen(key));
-}
+	वापस म_से_द(ptr + म_माप(key));
+पूर्ण
 
-long cg_read_lc(const char *cgroup, const char *control)
-{
-	char buf[PAGE_SIZE];
-	const char delim[] = "\n";
-	char *line;
-	long cnt = 0;
+दीर्घ cg_पढ़ो_lc(स्थिर अक्षर *cgroup, स्थिर अक्षर *control)
+अणु
+	अक्षर buf[PAGE_SIZE];
+	स्थिर अक्षर delim[] = "\n";
+	अक्षर *line;
+	दीर्घ cnt = 0;
 
-	if (cg_read(cgroup, control, buf, sizeof(buf)))
-		return -1;
+	अगर (cg_पढ़ो(cgroup, control, buf, माप(buf)))
+		वापस -1;
 
-	for (line = strtok(buf, delim); line; line = strtok(NULL, delim))
+	क्रम (line = म_मोहर(buf, delim); line; line = म_मोहर(शून्य, delim))
 		cnt++;
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 
-int cg_write(const char *cgroup, const char *control, char *buf)
-{
-	char path[PATH_MAX];
-	ssize_t len = strlen(buf);
+पूर्णांक cg_ग_लिखो(स्थिर अक्षर *cgroup, स्थिर अक्षर *control, अक्षर *buf)
+अणु
+	अक्षर path[PATH_MAX];
+	sमाप_प्रकार len = म_माप(buf);
 
-	snprintf(path, sizeof(path), "%s/%s", cgroup, control);
+	snम_लिखो(path, माप(path), "%s/%s", cgroup, control);
 
-	if (write_text(path, buf, len) == len)
-		return 0;
+	अगर (ग_लिखो_text(path, buf, len) == len)
+		वापस 0;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int cg_find_unified_root(char *root, size_t len)
-{
-	char buf[10 * PAGE_SIZE];
-	char *fs, *mount, *type;
-	const char delim[] = "\n\t ";
+पूर्णांक cg_find_unअगरied_root(अक्षर *root, माप_प्रकार len)
+अणु
+	अक्षर buf[10 * PAGE_SIZE];
+	अक्षर *fs, *mount, *type;
+	स्थिर अक्षर delim[] = "\n\t ";
 
-	if (read_text("/proc/self/mounts", buf, sizeof(buf)) <= 0)
-		return -1;
+	अगर (पढ़ो_text("/proc/self/mounts", buf, माप(buf)) <= 0)
+		वापस -1;
 
 	/*
 	 * Example:
-	 * cgroup /sys/fs/cgroup cgroup2 rw,seclabel,noexec,relatime 0 0
+	 * cgroup /sys/fs/cgroup cgroup2 rw,seclabel,noexec,relaसमय 0 0
 	 */
-	for (fs = strtok(buf, delim); fs; fs = strtok(NULL, delim)) {
-		mount = strtok(NULL, delim);
-		type = strtok(NULL, delim);
-		strtok(NULL, delim);
-		strtok(NULL, delim);
-		strtok(NULL, delim);
+	क्रम (fs = म_मोहर(buf, delim); fs; fs = म_मोहर(शून्य, delim)) अणु
+		mount = म_मोहर(शून्य, delim);
+		type = म_मोहर(शून्य, delim);
+		म_मोहर(शून्य, delim);
+		म_मोहर(शून्य, delim);
+		म_मोहर(शून्य, delim);
 
-		if (strcmp(type, "cgroup2") == 0) {
-			strncpy(root, mount, len);
-			return 0;
-		}
-	}
+		अगर (म_भेद(type, "cgroup2") == 0) अणु
+			म_नकलन(root, mount, len);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int cg_create(const char *cgroup)
-{
-	return mkdir(cgroup, 0644);
-}
+पूर्णांक cg_create(स्थिर अक्षर *cgroup)
+अणु
+	वापस सूची_गढ़ो(cgroup, 0644);
+पूर्ण
 
-int cg_wait_for_proc_count(const char *cgroup, int count)
-{
-	char buf[10 * PAGE_SIZE] = {0};
-	int attempts;
-	char *ptr;
+पूर्णांक cg_रुको_क्रम_proc_count(स्थिर अक्षर *cgroup, पूर्णांक count)
+अणु
+	अक्षर buf[10 * PAGE_SIZE] = अणु0पूर्ण;
+	पूर्णांक attempts;
+	अक्षर *ptr;
 
-	for (attempts = 10; attempts >= 0; attempts--) {
-		int nr = 0;
+	क्रम (attempts = 10; attempts >= 0; attempts--) अणु
+		पूर्णांक nr = 0;
 
-		if (cg_read(cgroup, "cgroup.procs", buf, sizeof(buf)))
-			break;
+		अगर (cg_पढ़ो(cgroup, "cgroup.procs", buf, माप(buf)))
+			अवरोध;
 
-		for (ptr = buf; *ptr; ptr++)
-			if (*ptr == '\n')
+		क्रम (ptr = buf; *ptr; ptr++)
+			अगर (*ptr == '\n')
 				nr++;
 
-		if (nr >= count)
-			return 0;
+		अगर (nr >= count)
+			वापस 0;
 
 		usleep(100000);
-	}
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int cg_killall(const char *cgroup)
-{
-	char buf[PAGE_SIZE];
-	char *ptr = buf;
+पूर्णांक cg_समाप्तall(स्थिर अक्षर *cgroup)
+अणु
+	अक्षर buf[PAGE_SIZE];
+	अक्षर *ptr = buf;
 
-	if (cg_read(cgroup, "cgroup.procs", buf, sizeof(buf)))
-		return -1;
+	अगर (cg_पढ़ो(cgroup, "cgroup.procs", buf, माप(buf)))
+		वापस -1;
 
-	while (ptr < buf + sizeof(buf)) {
-		int pid = strtol(ptr, &ptr, 10);
+	जबतक (ptr < buf + माप(buf)) अणु
+		पूर्णांक pid = म_से_दीर्घ(ptr, &ptr, 10);
 
-		if (pid == 0)
-			break;
-		if (*ptr)
+		अगर (pid == 0)
+			अवरोध;
+		अगर (*ptr)
 			ptr++;
-		else
-			break;
-		if (kill(pid, SIGKILL))
-			return -1;
-	}
+		अन्यथा
+			अवरोध;
+		अगर (समाप्त(pid, SIGKILL))
+			वापस -1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int cg_destroy(const char *cgroup)
-{
-	int ret;
+पूर्णांक cg_destroy(स्थिर अक्षर *cgroup)
+अणु
+	पूर्णांक ret;
 
 retry:
-	ret = rmdir(cgroup);
-	if (ret && errno == EBUSY) {
-		cg_killall(cgroup);
+	ret = सूची_हटाओ(cgroup);
+	अगर (ret && त्रुटि_सं == EBUSY) अणु
+		cg_समाप्तall(cgroup);
 		usleep(100);
-		goto retry;
-	}
+		जाओ retry;
+	पूर्ण
 
-	if (ret && errno == ENOENT)
+	अगर (ret && त्रुटि_सं == ENOENT)
 		ret = 0;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cg_enter(const char *cgroup, int pid)
-{
-	char pidbuf[64];
+पूर्णांक cg_enter(स्थिर अक्षर *cgroup, पूर्णांक pid)
+अणु
+	अक्षर pidbuf[64];
 
-	snprintf(pidbuf, sizeof(pidbuf), "%d", pid);
-	return cg_write(cgroup, "cgroup.procs", pidbuf);
-}
+	snम_लिखो(pidbuf, माप(pidbuf), "%d", pid);
+	वापस cg_ग_लिखो(cgroup, "cgroup.procs", pidbuf);
+पूर्ण
 
-int cg_enter_current(const char *cgroup)
-{
-	return cg_write(cgroup, "cgroup.procs", "0");
-}
+पूर्णांक cg_enter_current(स्थिर अक्षर *cgroup)
+अणु
+	वापस cg_ग_लिखो(cgroup, "cgroup.procs", "0");
+पूर्ण
 
-int cg_enter_current_thread(const char *cgroup)
-{
-	return cg_write(cgroup, "cgroup.threads", "0");
-}
+पूर्णांक cg_enter_current_thपढ़ो(स्थिर अक्षर *cgroup)
+अणु
+	वापस cg_ग_लिखो(cgroup, "cgroup.threads", "0");
+पूर्ण
 
-int cg_run(const char *cgroup,
-	   int (*fn)(const char *cgroup, void *arg),
-	   void *arg)
-{
-	int pid, retcode;
+पूर्णांक cg_run(स्थिर अक्षर *cgroup,
+	   पूर्णांक (*fn)(स्थिर अक्षर *cgroup, व्योम *arg),
+	   व्योम *arg)
+अणु
+	पूर्णांक pid, retcode;
 
-	pid = fork();
-	if (pid < 0) {
-		return pid;
-	} else if (pid == 0) {
-		char buf[64];
+	pid = विभाजन();
+	अगर (pid < 0) अणु
+		वापस pid;
+	पूर्ण अन्यथा अगर (pid == 0) अणु
+		अक्षर buf[64];
 
-		snprintf(buf, sizeof(buf), "%d", getpid());
-		if (cg_write(cgroup, "cgroup.procs", buf))
-			exit(EXIT_FAILURE);
-		exit(fn(cgroup, arg));
-	} else {
-		waitpid(pid, &retcode, 0);
-		if (WIFEXITED(retcode))
-			return WEXITSTATUS(retcode);
-		else
-			return -1;
-	}
-}
+		snम_लिखो(buf, माप(buf), "%d", getpid());
+		अगर (cg_ग_लिखो(cgroup, "cgroup.procs", buf))
+			निकास(निकास_त्रुटि);
+		निकास(fn(cgroup, arg));
+	पूर्ण अन्यथा अणु
+		रुकोpid(pid, &retcode, 0);
+		अगर (WIFEXITED(retcode))
+			वापस WEXITSTATUS(retcode);
+		अन्यथा
+			वापस -1;
+	पूर्ण
+पूर्ण
 
-pid_t clone_into_cgroup(int cgroup_fd)
-{
-#ifdef CLONE_ARGS_SIZE_VER2
+pid_t clone_पूर्णांकo_cgroup(पूर्णांक cgroup_fd)
+अणु
+#अगर_घोषित CLONE_ARGS_SIZE_VER2
 	pid_t pid;
 
-	struct __clone_args args = {
+	काष्ठा __clone_args args = अणु
 		.flags = CLONE_INTO_CGROUP,
-		.exit_signal = SIGCHLD,
+		.निकास_संकेत = SIGCHLD,
 		.cgroup = cgroup_fd,
-	};
+	पूर्ण;
 
-	pid = sys_clone3(&args, sizeof(struct __clone_args));
+	pid = sys_clone3(&args, माप(काष्ठा __clone_args));
 	/*
-	 * Verify that this is a genuine test failure:
+	 * Verअगरy that this is a genuine test failure:
 	 * ENOSYS -> clone3() not available
 	 * E2BIG  -> CLONE_INTO_CGROUP not available
 	 */
-	if (pid < 0 && (errno == ENOSYS || errno == E2BIG))
-		goto pretend_enosys;
+	अगर (pid < 0 && (त्रुटि_सं == ENOSYS || त्रुटि_सं == E2BIG))
+		जाओ pretend_enosys;
 
-	return pid;
+	वापस pid;
 
 pretend_enosys:
-#endif
-	errno = ENOSYS;
-	return -ENOSYS;
-}
+#पूर्ण_अगर
+	त्रुटि_सं = ENOSYS;
+	वापस -ENOSYS;
+पूर्ण
 
-int clone_reap(pid_t pid, int options)
-{
-	int ret;
-	siginfo_t info = {
+पूर्णांक clone_reap(pid_t pid, पूर्णांक options)
+अणु
+	पूर्णांक ret;
+	siginfo_t info = अणु
 		.si_signo = 0,
-	};
+	पूर्ण;
 
 again:
-	ret = waitid(P_PID, pid, &info, options | __WALL | __WNOTHREAD);
-	if (ret < 0) {
-		if (errno == EINTR)
-			goto again;
-		return -1;
-	}
+	ret = रुकोid(P_PID, pid, &info, options | __WALL | __WNOTHREAD);
+	अगर (ret < 0) अणु
+		अगर (त्रुटि_सं == EINTR)
+			जाओ again;
+		वापस -1;
+	पूर्ण
 
-	if (options & WEXITED) {
-		if (WIFEXITED(info.si_status))
-			return WEXITSTATUS(info.si_status);
-	}
+	अगर (options & WEXITED) अणु
+		अगर (WIFEXITED(info.si_status))
+			वापस WEXITSTATUS(info.si_status);
+	पूर्ण
 
-	if (options & WSTOPPED) {
-		if (WIFSTOPPED(info.si_status))
-			return WSTOPSIG(info.si_status);
-	}
+	अगर (options & WSTOPPED) अणु
+		अगर (WIFSTOPPED(info.si_status))
+			वापस WSTOPSIG(info.si_status);
+	पूर्ण
 
-	if (options & WCONTINUED) {
-		if (WIFCONTINUED(info.si_status))
-			return 0;
-	}
+	अगर (options & WCONTINUED) अणु
+		अगर (WIFCONTINUED(info.si_status))
+			वापस 0;
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int dirfd_open_opath(const char *dir)
-{
-	return open(dir, O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW | O_PATH);
-}
+पूर्णांक dirfd_खोलो_opath(स्थिर अक्षर *dir)
+अणु
+	वापस खोलो(dir, O_सूचीECTORY | O_CLOEXEC | O_NOFOLLOW | O_PATH);
+पूर्ण
 
-#define close_prot_errno(fd)                                                   \
-	if (fd >= 0) {                                                         \
-		int _e_ = errno;                                               \
-		close(fd);                                                     \
-		errno = _e_;                                                   \
-	}
+#घोषणा बंद_prot_त्रुटि_सं(fd)                                                   \
+	अगर (fd >= 0) अणु                                                         \
+		पूर्णांक _e_ = त्रुटि_सं;                                               \
+		बंद(fd);                                                     \
+		त्रुटि_सं = _e_;                                                   \
+	पूर्ण
 
-static int clone_into_cgroup_run_nowait(const char *cgroup,
-					int (*fn)(const char *cgroup, void *arg),
-					void *arg)
-{
-	int cgroup_fd;
+अटल पूर्णांक clone_पूर्णांकo_cgroup_run_noरुको(स्थिर अक्षर *cgroup,
+					पूर्णांक (*fn)(स्थिर अक्षर *cgroup, व्योम *arg),
+					व्योम *arg)
+अणु
+	पूर्णांक cgroup_fd;
 	pid_t pid;
 
-	cgroup_fd =  dirfd_open_opath(cgroup);
-	if (cgroup_fd < 0)
-		return -1;
+	cgroup_fd =  dirfd_खोलो_opath(cgroup);
+	अगर (cgroup_fd < 0)
+		वापस -1;
 
-	pid = clone_into_cgroup(cgroup_fd);
-	close_prot_errno(cgroup_fd);
-	if (pid == 0)
-		exit(fn(cgroup, arg));
+	pid = clone_पूर्णांकo_cgroup(cgroup_fd);
+	बंद_prot_त्रुटि_सं(cgroup_fd);
+	अगर (pid == 0)
+		निकास(fn(cgroup, arg));
 
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
-int cg_run_nowait(const char *cgroup,
-		  int (*fn)(const char *cgroup, void *arg),
-		  void *arg)
-{
-	int pid;
+पूर्णांक cg_run_noरुको(स्थिर अक्षर *cgroup,
+		  पूर्णांक (*fn)(स्थिर अक्षर *cgroup, व्योम *arg),
+		  व्योम *arg)
+अणु
+	पूर्णांक pid;
 
-	pid = clone_into_cgroup_run_nowait(cgroup, fn, arg);
-	if (pid > 0)
-		return pid;
+	pid = clone_पूर्णांकo_cgroup_run_noरुको(cgroup, fn, arg);
+	अगर (pid > 0)
+		वापस pid;
 
 	/* Genuine test failure. */
-	if (pid < 0 && errno != ENOSYS)
-		return -1;
+	अगर (pid < 0 && त्रुटि_सं != ENOSYS)
+		वापस -1;
 
-	pid = fork();
-	if (pid == 0) {
-		char buf[64];
+	pid = विभाजन();
+	अगर (pid == 0) अणु
+		अक्षर buf[64];
 
-		snprintf(buf, sizeof(buf), "%d", getpid());
-		if (cg_write(cgroup, "cgroup.procs", buf))
-			exit(EXIT_FAILURE);
-		exit(fn(cgroup, arg));
-	}
+		snम_लिखो(buf, माप(buf), "%d", getpid());
+		अगर (cg_ग_लिखो(cgroup, "cgroup.procs", buf))
+			निकास(निकास_त्रुटि);
+		निकास(fn(cgroup, arg));
+	पूर्ण
 
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
-int get_temp_fd(void)
-{
-	return open(".", O_TMPFILE | O_RDWR | O_EXCL);
-}
+पूर्णांक get_temp_fd(व्योम)
+अणु
+	वापस खोलो(".", O_TMPखाता | O_RDWR | O_EXCL);
+पूर्ण
 
-int alloc_pagecache(int fd, size_t size)
-{
-	char buf[PAGE_SIZE];
-	struct stat st;
-	int i;
+पूर्णांक alloc_pagecache(पूर्णांक fd, माप_प्रकार size)
+अणु
+	अक्षर buf[PAGE_SIZE];
+	काष्ठा stat st;
+	पूर्णांक i;
 
-	if (fstat(fd, &st))
-		goto cleanup;
+	अगर (ख_स्थिति(fd, &st))
+		जाओ cleanup;
 
 	size += st.st_size;
 
-	if (ftruncate(fd, size))
-		goto cleanup;
+	अगर (ftruncate(fd, size))
+		जाओ cleanup;
 
-	for (i = 0; i < size; i += sizeof(buf))
-		read(fd, buf, sizeof(buf));
+	क्रम (i = 0; i < size; i += माप(buf))
+		पढ़ो(fd, buf, माप(buf));
 
-	return 0;
+	वापस 0;
 
 cleanup:
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-int alloc_anon(const char *cgroup, void *arg)
-{
-	size_t size = (unsigned long)arg;
-	char *buf, *ptr;
+पूर्णांक alloc_anon(स्थिर अक्षर *cgroup, व्योम *arg)
+अणु
+	माप_प्रकार size = (अचिन्हित दीर्घ)arg;
+	अक्षर *buf, *ptr;
 
-	buf = malloc(size);
-	for (ptr = buf; ptr < buf + size; ptr += PAGE_SIZE)
+	buf = दो_स्मृति(size);
+	क्रम (ptr = buf; ptr < buf + size; ptr += PAGE_SIZE)
 		*ptr = 0;
 
-	free(buf);
-	return 0;
-}
+	मुक्त(buf);
+	वापस 0;
+पूर्ण
 
-int is_swap_enabled(void)
-{
-	char buf[PAGE_SIZE];
-	const char delim[] = "\n";
-	int cnt = 0;
-	char *line;
+पूर्णांक is_swap_enabled(व्योम)
+अणु
+	अक्षर buf[PAGE_SIZE];
+	स्थिर अक्षर delim[] = "\n";
+	पूर्णांक cnt = 0;
+	अक्षर *line;
 
-	if (read_text("/proc/swaps", buf, sizeof(buf)) <= 0)
-		return -1;
+	अगर (पढ़ो_text("/proc/swaps", buf, माप(buf)) <= 0)
+		वापस -1;
 
-	for (line = strtok(buf, delim); line; line = strtok(NULL, delim))
+	क्रम (line = म_मोहर(buf, delim); line; line = म_मोहर(शून्य, delim))
 		cnt++;
 
-	return cnt > 1;
-}
+	वापस cnt > 1;
+पूर्ण
 
-int set_oom_adj_score(int pid, int score)
-{
-	char path[PATH_MAX];
-	int fd, len;
+पूर्णांक set_oom_adj_score(पूर्णांक pid, पूर्णांक score)
+अणु
+	अक्षर path[PATH_MAX];
+	पूर्णांक fd, len;
 
-	sprintf(path, "/proc/%d/oom_score_adj", pid);
+	प्र_लिखो(path, "/proc/%d/oom_score_adj", pid);
 
-	fd = open(path, O_WRONLY | O_APPEND);
-	if (fd < 0)
-		return fd;
+	fd = खोलो(path, O_WRONLY | O_APPEND);
+	अगर (fd < 0)
+		वापस fd;
 
-	len = dprintf(fd, "%d", score);
-	if (len < 0) {
-		close(fd);
-		return len;
-	}
+	len = dम_लिखो(fd, "%d", score);
+	अगर (len < 0) अणु
+		बंद(fd);
+		वापस len;
+	पूर्ण
 
-	close(fd);
-	return 0;
-}
+	बंद(fd);
+	वापस 0;
+पूर्ण
 
-ssize_t proc_read_text(int pid, bool thread, const char *item, char *buf, size_t size)
-{
-	char path[PATH_MAX];
+sमाप_प्रकार proc_पढ़ो_text(पूर्णांक pid, bool thपढ़ो, स्थिर अक्षर *item, अक्षर *buf, माप_प्रकार size)
+अणु
+	अक्षर path[PATH_MAX];
 
-	if (!pid)
-		snprintf(path, sizeof(path), "/proc/%s/%s",
-			 thread ? "thread-self" : "self", item);
-	else
-		snprintf(path, sizeof(path), "/proc/%d/%s", pid, item);
+	अगर (!pid)
+		snम_लिखो(path, माप(path), "/proc/%s/%s",
+			 thपढ़ो ? "thread-self" : "self", item);
+	अन्यथा
+		snम_लिखो(path, माप(path), "/proc/%d/%s", pid, item);
 
-	return read_text(path, buf, size);
-}
+	वापस पढ़ो_text(path, buf, size);
+पूर्ण
 
-int proc_read_strstr(int pid, bool thread, const char *item, const char *needle)
-{
-	char buf[PAGE_SIZE];
+पूर्णांक proc_पढ़ो_म_माला(पूर्णांक pid, bool thपढ़ो, स्थिर अक्षर *item, स्थिर अक्षर *needle)
+अणु
+	अक्षर buf[PAGE_SIZE];
 
-	if (proc_read_text(pid, thread, item, buf, sizeof(buf)) < 0)
-		return -1;
+	अगर (proc_पढ़ो_text(pid, thपढ़ो, item, buf, माप(buf)) < 0)
+		वापस -1;
 
-	return strstr(buf, needle) ? 0 : -1;
-}
+	वापस म_माला(buf, needle) ? 0 : -1;
+पूर्ण
 
-int clone_into_cgroup_run_wait(const char *cgroup)
-{
-	int cgroup_fd;
+पूर्णांक clone_पूर्णांकo_cgroup_run_रुको(स्थिर अक्षर *cgroup)
+अणु
+	पूर्णांक cgroup_fd;
 	pid_t pid;
 
-	cgroup_fd =  dirfd_open_opath(cgroup);
-	if (cgroup_fd < 0)
-		return -1;
+	cgroup_fd =  dirfd_खोलो_opath(cgroup);
+	अगर (cgroup_fd < 0)
+		वापस -1;
 
-	pid = clone_into_cgroup(cgroup_fd);
-	close_prot_errno(cgroup_fd);
-	if (pid < 0)
-		return -1;
+	pid = clone_पूर्णांकo_cgroup(cgroup_fd);
+	बंद_prot_त्रुटि_सं(cgroup_fd);
+	अगर (pid < 0)
+		वापस -1;
 
-	if (pid == 0)
-		exit(EXIT_SUCCESS);
+	अगर (pid == 0)
+		निकास(निकास_सफल);
 
 	/*
-	 * We don't care whether this fails. We only care whether the initial
+	 * We करोn't care whether this fails. We only care whether the initial
 	 * clone succeeded.
 	 */
-	(void)clone_reap(pid, WEXITED);
-	return 0;
-}
+	(व्योम)clone_reap(pid, WEXITED);
+	वापस 0;
+पूर्ण

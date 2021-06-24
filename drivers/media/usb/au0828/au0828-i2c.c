@@ -1,400 +1,401 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Driver for the Auvitek AU0828 USB bridge
+ *  Driver क्रम the Auvitek AU0828 USB bridge
  *
  *  Copyright (c) 2008 Steven Toth <stoth@linuxtv.org>
  */
 
-#include "au0828.h"
+#समावेश "au0828.h"
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/delay.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
 
-#include "media/tuner.h"
-#include <media/v4l2-common.h>
+#समावेश "media/tuner.h"
+#समावेश <media/v4l2-common.h>
 
-static int i2c_scan;
-module_param(i2c_scan, int, 0444);
+अटल पूर्णांक i2c_scan;
+module_param(i2c_scan, पूर्णांक, 0444);
 MODULE_PARM_DESC(i2c_scan, "scan i2c bus at insmod time");
 
-#define I2C_WAIT_DELAY 25
-#define I2C_WAIT_RETRY 1000
+#घोषणा I2C_WAIT_DELAY 25
+#घोषणा I2C_WAIT_RETRY 1000
 
-static inline int i2c_slave_did_write_ack(struct i2c_adapter *i2c_adap)
-{
-	struct au0828_dev *dev = i2c_adap->algo_data;
-	return au0828_read(dev, AU0828_I2C_STATUS_201) &
+अटल अंतरभूत पूर्णांक i2c_slave_did_ग_लिखो_ack(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	काष्ठा au0828_dev *dev = i2c_adap->algo_data;
+	वापस au0828_पढ़ो(dev, AU0828_I2C_STATUS_201) &
 		AU0828_I2C_STATUS_NO_WRITE_ACK ? 0 : 1;
-}
+पूर्ण
 
-static inline int i2c_slave_did_read_ack(struct i2c_adapter *i2c_adap)
-{
-	struct au0828_dev *dev = i2c_adap->algo_data;
-	return au0828_read(dev, AU0828_I2C_STATUS_201) &
+अटल अंतरभूत पूर्णांक i2c_slave_did_पढ़ो_ack(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	काष्ठा au0828_dev *dev = i2c_adap->algo_data;
+	वापस au0828_पढ़ो(dev, AU0828_I2C_STATUS_201) &
 		AU0828_I2C_STATUS_NO_READ_ACK ? 0 : 1;
-}
+पूर्ण
 
-static int i2c_wait_read_ack(struct i2c_adapter *i2c_adap)
-{
-	int count;
+अटल पूर्णांक i2c_रुको_पढ़ो_ack(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	पूर्णांक count;
 
-	for (count = 0; count < I2C_WAIT_RETRY; count++) {
-		if (!i2c_slave_did_read_ack(i2c_adap))
-			break;
+	क्रम (count = 0; count < I2C_WAIT_RETRY; count++) अणु
+		अगर (!i2c_slave_did_पढ़ो_ack(i2c_adap))
+			अवरोध;
 		udelay(I2C_WAIT_DELAY);
-	}
+	पूर्ण
 
-	if (I2C_WAIT_RETRY == count)
-		return 0;
+	अगर (I2C_WAIT_RETRY == count)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int i2c_is_read_busy(struct i2c_adapter *i2c_adap)
-{
-	struct au0828_dev *dev = i2c_adap->algo_data;
-	return au0828_read(dev, AU0828_I2C_STATUS_201) &
+अटल अंतरभूत पूर्णांक i2c_is_पढ़ो_busy(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	काष्ठा au0828_dev *dev = i2c_adap->algo_data;
+	वापस au0828_पढ़ो(dev, AU0828_I2C_STATUS_201) &
 		AU0828_I2C_STATUS_READ_DONE ? 0 : 1;
-}
+पूर्ण
 
-static int i2c_wait_read_done(struct i2c_adapter *i2c_adap)
-{
-	int count;
+अटल पूर्णांक i2c_रुको_पढ़ो_करोne(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	पूर्णांक count;
 
-	for (count = 0; count < I2C_WAIT_RETRY; count++) {
-		if (!i2c_is_read_busy(i2c_adap))
-			break;
+	क्रम (count = 0; count < I2C_WAIT_RETRY; count++) अणु
+		अगर (!i2c_is_पढ़ो_busy(i2c_adap))
+			अवरोध;
 		udelay(I2C_WAIT_DELAY);
-	}
+	पूर्ण
 
-	if (I2C_WAIT_RETRY == count)
-		return 0;
+	अगर (I2C_WAIT_RETRY == count)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int i2c_is_write_done(struct i2c_adapter *i2c_adap)
-{
-	struct au0828_dev *dev = i2c_adap->algo_data;
-	return au0828_read(dev, AU0828_I2C_STATUS_201) &
+अटल अंतरभूत पूर्णांक i2c_is_ग_लिखो_करोne(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	काष्ठा au0828_dev *dev = i2c_adap->algo_data;
+	वापस au0828_पढ़ो(dev, AU0828_I2C_STATUS_201) &
 		AU0828_I2C_STATUS_WRITE_DONE ? 1 : 0;
-}
+पूर्ण
 
-static int i2c_wait_write_done(struct i2c_adapter *i2c_adap)
-{
-	int count;
+अटल पूर्णांक i2c_रुको_ग_लिखो_करोne(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	पूर्णांक count;
 
-	for (count = 0; count < I2C_WAIT_RETRY; count++) {
-		if (i2c_is_write_done(i2c_adap))
-			break;
+	क्रम (count = 0; count < I2C_WAIT_RETRY; count++) अणु
+		अगर (i2c_is_ग_लिखो_करोne(i2c_adap))
+			अवरोध;
 		udelay(I2C_WAIT_DELAY);
-	}
+	पूर्ण
 
-	if (I2C_WAIT_RETRY == count)
-		return 0;
+	अगर (I2C_WAIT_RETRY == count)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static inline int i2c_is_busy(struct i2c_adapter *i2c_adap)
-{
-	struct au0828_dev *dev = i2c_adap->algo_data;
-	return au0828_read(dev, AU0828_I2C_STATUS_201) &
+अटल अंतरभूत पूर्णांक i2c_is_busy(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	काष्ठा au0828_dev *dev = i2c_adap->algo_data;
+	वापस au0828_पढ़ो(dev, AU0828_I2C_STATUS_201) &
 		AU0828_I2C_STATUS_BUSY ? 1 : 0;
-}
+पूर्ण
 
-static int i2c_wait_done(struct i2c_adapter *i2c_adap)
-{
-	int count;
+अटल पूर्णांक i2c_रुको_करोne(काष्ठा i2c_adapter *i2c_adap)
+अणु
+	पूर्णांक count;
 
-	for (count = 0; count < I2C_WAIT_RETRY; count++) {
-		if (!i2c_is_busy(i2c_adap))
-			break;
+	क्रम (count = 0; count < I2C_WAIT_RETRY; count++) अणु
+		अगर (!i2c_is_busy(i2c_adap))
+			अवरोध;
 		udelay(I2C_WAIT_DELAY);
-	}
+	पूर्ण
 
-	if (I2C_WAIT_RETRY == count)
-		return 0;
+	अगर (I2C_WAIT_RETRY == count)
+		वापस 0;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
 /* FIXME: Implement join handling correctly */
-static int i2c_sendbytes(struct i2c_adapter *i2c_adap,
-	const struct i2c_msg *msg, int joined_rlen)
-{
-	int i, strobe = 0;
-	struct au0828_dev *dev = i2c_adap->algo_data;
-	u8 i2c_speed = dev->board.i2c_clk_divider;
+अटल पूर्णांक i2c_sendbytes(काष्ठा i2c_adapter *i2c_adap,
+	स्थिर काष्ठा i2c_msg *msg, पूर्णांक joined_rlen)
+अणु
+	पूर्णांक i, strobe = 0;
+	काष्ठा au0828_dev *dev = i2c_adap->algo_data;
+	u8 i2c_speed = dev->board.i2c_clk_भागider;
 
-	dprintk(4, "%s()\n", __func__);
+	dprपूर्णांकk(4, "%s()\n", __func__);
 
-	au0828_write(dev, AU0828_I2C_MULTIBYTE_MODE_2FF, 0x01);
+	au0828_ग_लिखो(dev, AU0828_I2C_MULTIBYTE_MODE_2FF, 0x01);
 
-	if (((dev->board.tuner_type == TUNER_XC5000) ||
+	अगर (((dev->board.tuner_type == TUNER_XC5000) ||
 	     (dev->board.tuner_type == TUNER_XC5000C)) &&
-	    (dev->board.tuner_addr == msg->addr)) {
+	    (dev->board.tuner_addr == msg->addr)) अणु
 		/*
-		 * Due to I2C clock stretch, we need to use a lower speed
-		 * on xc5000 for commands. However, firmware transfer can
+		 * Due to I2C घड़ी stretch, we need to use a lower speed
+		 * on xc5000 क्रम commands. However, firmware transfer can
 		 * speed up to 400 KHz.
 		 */
-		if (msg->len == 64)
+		अगर (msg->len == 64)
 			i2c_speed = AU0828_I2C_CLK_250KHZ;
-		else
+		अन्यथा
 			i2c_speed = AU0828_I2C_CLK_20KHZ;
-	}
-	/* Set the I2C clock */
-	au0828_write(dev, AU0828_I2C_CLK_DIVIDER_202, i2c_speed);
+	पूर्ण
+	/* Set the I2C घड़ी */
+	au0828_ग_लिखो(dev, AU0828_I2C_CLK_DIVIDER_202, i2c_speed);
 
 	/* Hardware needs 8 bit addresses */
-	au0828_write(dev, AU0828_I2C_DEST_ADDR_203, msg->addr << 1);
+	au0828_ग_लिखो(dev, AU0828_I2C_DEST_ADDR_203, msg->addr << 1);
 
-	dprintk(4, "SEND: %02x\n", msg->addr);
+	dprपूर्णांकk(4, "SEND: %02x\n", msg->addr);
 
 	/* Deal with i2c_scan */
-	if (msg->len == 0) {
+	अगर (msg->len == 0) अणु
 		/* The analog tuner detection code makes use of the SMBUS_QUICK
-		   message (which involves a zero length i2c write).  To avoid
-		   checking the status register when we didn't strobe out any
-		   actual bytes to the bus, just do a read check.  This is
-		   consistent with how I saw i2c device checking done in the
-		   USB trace of the Windows driver */
-		au0828_write(dev, AU0828_I2C_TRIGGER_200,
+		   message (which involves a zero length i2c ग_लिखो).  To aव्योम
+		   checking the status रेजिस्टर when we didn't strobe out any
+		   actual bytes to the bus, just करो a पढ़ो check.  This is
+		   consistent with how I saw i2c device checking करोne in the
+		   USB trace of the Winकरोws driver */
+		au0828_ग_लिखो(dev, AU0828_I2C_TRIGGER_200,
 			     AU0828_I2C_TRIGGER_READ);
 
-		if (!i2c_wait_done(i2c_adap))
-			return -EIO;
+		अगर (!i2c_रुको_करोne(i2c_adap))
+			वापस -EIO;
 
-		if (i2c_wait_read_ack(i2c_adap))
-			return -EIO;
+		अगर (i2c_रुको_पढ़ो_ack(i2c_adap))
+			वापस -EIO;
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < msg->len;) {
+	क्रम (i = 0; i < msg->len;) अणु
 
-		dprintk(4, " %02x\n", msg->buf[i]);
+		dprपूर्णांकk(4, " %02x\n", msg->buf[i]);
 
-		au0828_write(dev, AU0828_I2C_WRITE_FIFO_205, msg->buf[i]);
+		au0828_ग_लिखो(dev, AU0828_I2C_WRITE_FIFO_205, msg->buf[i]);
 
 		strobe++;
 		i++;
 
-		if ((strobe >= 4) || (i >= msg->len)) {
+		अगर ((strobe >= 4) || (i >= msg->len)) अणु
 
-			/* Strobe the byte into the bus */
-			if (i < msg->len)
-				au0828_write(dev, AU0828_I2C_TRIGGER_200,
+			/* Strobe the byte पूर्णांकo the bus */
+			अगर (i < msg->len)
+				au0828_ग_लिखो(dev, AU0828_I2C_TRIGGER_200,
 					     AU0828_I2C_TRIGGER_WRITE |
 					     AU0828_I2C_TRIGGER_HOLD);
-			else
-				au0828_write(dev, AU0828_I2C_TRIGGER_200,
+			अन्यथा
+				au0828_ग_लिखो(dev, AU0828_I2C_TRIGGER_200,
 					     AU0828_I2C_TRIGGER_WRITE);
 
 			/* Reset strobe trigger */
 			strobe = 0;
 
-			if (!i2c_wait_write_done(i2c_adap))
-				return -EIO;
+			अगर (!i2c_रुको_ग_लिखो_करोne(i2c_adap))
+				वापस -EIO;
 
-		}
+		पूर्ण
 
-	}
-	if (!i2c_wait_done(i2c_adap))
-		return -EIO;
+	पूर्ण
+	अगर (!i2c_रुको_करोne(i2c_adap))
+		वापस -EIO;
 
-	dprintk(4, "\n");
+	dprपूर्णांकk(4, "\n");
 
-	return msg->len;
-}
+	वापस msg->len;
+पूर्ण
 
 /* FIXME: Implement join handling correctly */
-static int i2c_readbytes(struct i2c_adapter *i2c_adap,
-	const struct i2c_msg *msg, int joined)
-{
-	struct au0828_dev *dev = i2c_adap->algo_data;
-	u8 i2c_speed = dev->board.i2c_clk_divider;
-	int i;
+अटल पूर्णांक i2c_पढ़ोbytes(काष्ठा i2c_adapter *i2c_adap,
+	स्थिर काष्ठा i2c_msg *msg, पूर्णांक joined)
+अणु
+	काष्ठा au0828_dev *dev = i2c_adap->algo_data;
+	u8 i2c_speed = dev->board.i2c_clk_भागider;
+	पूर्णांक i;
 
-	dprintk(4, "%s()\n", __func__);
+	dprपूर्णांकk(4, "%s()\n", __func__);
 
-	au0828_write(dev, AU0828_I2C_MULTIBYTE_MODE_2FF, 0x01);
+	au0828_ग_लिखो(dev, AU0828_I2C_MULTIBYTE_MODE_2FF, 0x01);
 
 	/*
-	 * Due to xc5000c clock stretch, we cannot use full speed at
-	 * readings from xc5000, as otherwise they'll fail.
+	 * Due to xc5000c घड़ी stretch, we cannot use full speed at
+	 * पढ़ोings from xc5000, as otherwise they'll fail.
 	 */
-	if (((dev->board.tuner_type == TUNER_XC5000) ||
+	अगर (((dev->board.tuner_type == TUNER_XC5000) ||
 	     (dev->board.tuner_type == TUNER_XC5000C)) &&
 	    (dev->board.tuner_addr == msg->addr))
 		i2c_speed = AU0828_I2C_CLK_20KHZ;
 
-	/* Set the I2C clock */
-	au0828_write(dev, AU0828_I2C_CLK_DIVIDER_202, i2c_speed);
+	/* Set the I2C घड़ी */
+	au0828_ग_लिखो(dev, AU0828_I2C_CLK_DIVIDER_202, i2c_speed);
 
 	/* Hardware needs 8 bit addresses */
-	au0828_write(dev, AU0828_I2C_DEST_ADDR_203, msg->addr << 1);
+	au0828_ग_लिखो(dev, AU0828_I2C_DEST_ADDR_203, msg->addr << 1);
 
-	dprintk(4, " RECV:\n");
+	dprपूर्णांकk(4, " RECV:\n");
 
 	/* Deal with i2c_scan */
-	if (msg->len == 0) {
-		au0828_write(dev, AU0828_I2C_TRIGGER_200,
+	अगर (msg->len == 0) अणु
+		au0828_ग_लिखो(dev, AU0828_I2C_TRIGGER_200,
 			     AU0828_I2C_TRIGGER_READ);
 
-		if (i2c_wait_read_ack(i2c_adap))
-			return -EIO;
-		return 0;
-	}
+		अगर (i2c_रुको_पढ़ो_ack(i2c_adap))
+			वापस -EIO;
+		वापस 0;
+	पूर्ण
 
-	for (i = 0; i < msg->len;) {
+	क्रम (i = 0; i < msg->len;) अणु
 
 		i++;
 
-		if (i < msg->len)
-			au0828_write(dev, AU0828_I2C_TRIGGER_200,
+		अगर (i < msg->len)
+			au0828_ग_लिखो(dev, AU0828_I2C_TRIGGER_200,
 				     AU0828_I2C_TRIGGER_READ |
 				     AU0828_I2C_TRIGGER_HOLD);
-		else
-			au0828_write(dev, AU0828_I2C_TRIGGER_200,
+		अन्यथा
+			au0828_ग_लिखो(dev, AU0828_I2C_TRIGGER_200,
 				     AU0828_I2C_TRIGGER_READ);
 
-		if (!i2c_wait_read_done(i2c_adap))
-			return -EIO;
+		अगर (!i2c_रुको_पढ़ो_करोne(i2c_adap))
+			वापस -EIO;
 
-		msg->buf[i-1] = au0828_read(dev, AU0828_I2C_READ_FIFO_209) &
+		msg->buf[i-1] = au0828_पढ़ो(dev, AU0828_I2C_READ_FIFO_209) &
 			0xff;
 
-		dprintk(4, " %02x\n", msg->buf[i-1]);
-	}
-	if (!i2c_wait_done(i2c_adap))
-		return -EIO;
+		dprपूर्णांकk(4, " %02x\n", msg->buf[i-1]);
+	पूर्ण
+	अगर (!i2c_रुको_करोne(i2c_adap))
+		वापस -EIO;
 
-	dprintk(4, "\n");
+	dprपूर्णांकk(4, "\n");
 
-	return msg->len;
-}
+	वापस msg->len;
+पूर्ण
 
-static int i2c_xfer(struct i2c_adapter *i2c_adap,
-		    struct i2c_msg *msgs, int num)
-{
-	int i, retval = 0;
+अटल पूर्णांक i2c_xfer(काष्ठा i2c_adapter *i2c_adap,
+		    काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	पूर्णांक i, retval = 0;
 
-	dprintk(4, "%s(num = %d)\n", __func__, num);
+	dprपूर्णांकk(4, "%s(num = %d)\n", __func__, num);
 
-	for (i = 0; i < num; i++) {
-		dprintk(4, "%s(num = %d) addr = 0x%02x  len = 0x%x\n",
+	क्रम (i = 0; i < num; i++) अणु
+		dprपूर्णांकk(4, "%s(num = %d) addr = 0x%02x  len = 0x%x\n",
 			__func__, num, msgs[i].addr, msgs[i].len);
-		if (msgs[i].flags & I2C_M_RD) {
-			/* read */
-			retval = i2c_readbytes(i2c_adap, &msgs[i], 0);
-		} else if (i + 1 < num && (msgs[i + 1].flags & I2C_M_RD) &&
-			   msgs[i].addr == msgs[i + 1].addr) {
-			/* write then read from same address */
+		अगर (msgs[i].flags & I2C_M_RD) अणु
+			/* पढ़ो */
+			retval = i2c_पढ़ोbytes(i2c_adap, &msgs[i], 0);
+		पूर्ण अन्यथा अगर (i + 1 < num && (msgs[i + 1].flags & I2C_M_RD) &&
+			   msgs[i].addr == msgs[i + 1].addr) अणु
+			/* ग_लिखो then पढ़ो from same address */
 			retval = i2c_sendbytes(i2c_adap, &msgs[i],
 					       msgs[i + 1].len);
-			if (retval < 0)
-				goto err;
+			अगर (retval < 0)
+				जाओ err;
 			i++;
-			retval = i2c_readbytes(i2c_adap, &msgs[i], 1);
-		} else {
-			/* write */
+			retval = i2c_पढ़ोbytes(i2c_adap, &msgs[i], 1);
+		पूर्ण अन्यथा अणु
+			/* ग_लिखो */
 			retval = i2c_sendbytes(i2c_adap, &msgs[i], 0);
-		}
-		if (retval < 0)
-			goto err;
-	}
-	return num;
+		पूर्ण
+		अगर (retval < 0)
+			जाओ err;
+	पूर्ण
+	वापस num;
 
 err:
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static u32 au0828_functionality(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_SMBUS_EMUL | I2C_FUNC_I2C;
-}
+अटल u32 au0828_functionality(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_SMBUS_EMUL | I2C_FUNC_I2C;
+पूर्ण
 
-static const struct i2c_algorithm au0828_i2c_algo_template = {
+अटल स्थिर काष्ठा i2c_algorithm au0828_i2c_algo_ढाँचा = अणु
 	.master_xfer	= i2c_xfer,
 	.functionality	= au0828_functionality,
-};
+पूर्ण;
 
 /* ----------------------------------------------------------------------- */
 
-static const struct i2c_adapter au0828_i2c_adap_template = {
+अटल स्थिर काष्ठा i2c_adapter au0828_i2c_adap_ढाँचा = अणु
 	.name              = KBUILD_MODNAME,
 	.owner             = THIS_MODULE,
-	.algo              = &au0828_i2c_algo_template,
-};
+	.algo              = &au0828_i2c_algo_ढाँचा,
+पूर्ण;
 
-static const struct i2c_client au0828_i2c_client_template = {
+अटल स्थिर काष्ठा i2c_client au0828_i2c_client_ढाँचा = अणु
 	.name	= "au0828 internal",
-};
+पूर्ण;
 
-static char *i2c_devs[128] = {
+अटल अक्षर *i2c_devs[128] = अणु
 	[0x8e >> 1] = "au8522",
 	[0xa0 >> 1] = "eeprom",
 	[0xc2 >> 1] = "tuner/xc5000",
-};
+पूर्ण;
 
-static void do_i2c_scan(char *name, struct i2c_client *c)
-{
-	unsigned char buf;
-	int i, rc;
+अटल व्योम करो_i2c_scan(अक्षर *name, काष्ठा i2c_client *c)
+अणु
+	अचिन्हित अक्षर buf;
+	पूर्णांक i, rc;
 
-	for (i = 0; i < 128; i++) {
+	क्रम (i = 0; i < 128; i++) अणु
 		c->addr = i;
 		rc = i2c_master_recv(c, &buf, 0);
-		if (rc < 0)
-			continue;
+		अगर (rc < 0)
+			जारी;
 		pr_info("%s: i2c scan: found device @ 0x%x  [%s]\n",
 		       name, i << 1, i2c_devs[i] ? i2c_devs[i] : "???");
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* init + register i2c adapter */
-int au0828_i2c_register(struct au0828_dev *dev)
-{
-	dprintk(1, "%s()\n", __func__);
+/* init + रेजिस्टर i2c adapter */
+पूर्णांक au0828_i2c_रेजिस्टर(काष्ठा au0828_dev *dev)
+अणु
+	dprपूर्णांकk(1, "%s()\n", __func__);
 
-	dev->i2c_adap = au0828_i2c_adap_template;
-	dev->i2c_algo = au0828_i2c_algo_template;
-	dev->i2c_client = au0828_i2c_client_template;
+	dev->i2c_adap = au0828_i2c_adap_ढाँचा;
+	dev->i2c_algo = au0828_i2c_algo_ढाँचा;
+	dev->i2c_client = au0828_i2c_client_ढाँचा;
 
 	dev->i2c_adap.dev.parent = &dev->usbdev->dev;
 
 	strscpy(dev->i2c_adap.name, KBUILD_MODNAME,
-		sizeof(dev->i2c_adap.name));
+		माप(dev->i2c_adap.name));
 
 	dev->i2c_adap.algo = &dev->i2c_algo;
 	dev->i2c_adap.algo_data = dev;
-#ifdef CONFIG_VIDEO_AU0828_V4L2
+#अगर_घोषित CONFIG_VIDEO_AU0828_V4L2
 	i2c_set_adapdata(&dev->i2c_adap, &dev->v4l2_dev);
-#else
+#अन्यथा
 	i2c_set_adapdata(&dev->i2c_adap, dev);
-#endif
+#पूर्ण_अगर
 	i2c_add_adapter(&dev->i2c_adap);
 
 	dev->i2c_client.adapter = &dev->i2c_adap;
 
-	if (0 == dev->i2c_rc) {
+	अगर (0 == dev->i2c_rc) अणु
 		pr_info("i2c bus registered\n");
-		if (i2c_scan)
-			do_i2c_scan(KBUILD_MODNAME, &dev->i2c_client);
-	} else
+		अगर (i2c_scan)
+			करो_i2c_scan(KBUILD_MODNAME, &dev->i2c_client);
+	पूर्ण अन्यथा
 		pr_info("i2c bus register FAILED\n");
 
-	return dev->i2c_rc;
-}
+	वापस dev->i2c_rc;
+पूर्ण
 
-int au0828_i2c_unregister(struct au0828_dev *dev)
-{
+पूर्णांक au0828_i2c_unरेजिस्टर(काष्ठा au0828_dev *dev)
+अणु
 	i2c_del_adapter(&dev->i2c_adap);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

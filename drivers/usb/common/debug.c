@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Common USB debugging functions
  *
@@ -8,208 +9,208 @@
  *	    Sebastian Andrzej Siewior <bigeasy@linutronix.de>
  */
 
-#include <linux/usb/ch9.h>
+#समावेश <linux/usb/ch9.h>
 
-static void usb_decode_get_status(__u8 bRequestType, __u16 wIndex,
-				  __u16 wLength, char *str, size_t size)
-{
-	switch (bRequestType & USB_RECIP_MASK) {
-	case USB_RECIP_DEVICE:
-		snprintf(str, size, "Get Device Status(Length = %d)", wLength);
-		break;
-	case USB_RECIP_INTERFACE:
-		snprintf(str, size,
+अटल व्योम usb_decode_get_status(__u8 bRequestType, __u16 wIndex,
+				  __u16 wLength, अक्षर *str, माप_प्रकार size)
+अणु
+	चयन (bRequestType & USB_RECIP_MASK) अणु
+	हाल USB_RECIP_DEVICE:
+		snम_लिखो(str, size, "Get Device Status(Length = %d)", wLength);
+		अवरोध;
+	हाल USB_RECIP_INTERFACE:
+		snम_लिखो(str, size,
 			 "Get Interface Status(Intf = %d, Length = %d)",
 			 wIndex, wLength);
-		break;
-	case USB_RECIP_ENDPOINT:
-		snprintf(str, size, "Get Endpoint Status(ep%d%s)",
-			 wIndex & ~USB_DIR_IN,
-			 wIndex & USB_DIR_IN ? "in" : "out");
-		break;
-	}
-}
+		अवरोध;
+	हाल USB_RECIP_ENDPOINT:
+		snम_लिखो(str, size, "Get Endpoint Status(ep%d%s)",
+			 wIndex & ~USB_सूची_IN,
+			 wIndex & USB_सूची_IN ? "in" : "out");
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static const char *usb_decode_device_feature(u16 wValue)
-{
-	switch (wValue) {
-	case USB_DEVICE_SELF_POWERED:
-		return "Self Powered";
-	case USB_DEVICE_REMOTE_WAKEUP:
-		return "Remote Wakeup";
-	case USB_DEVICE_TEST_MODE:
-		return "Test Mode";
-	case USB_DEVICE_U1_ENABLE:
-		return "U1 Enable";
-	case USB_DEVICE_U2_ENABLE:
-		return "U2 Enable";
-	case USB_DEVICE_LTM_ENABLE:
-		return "LTM Enable";
-	default:
-		return "UNKNOWN";
-	}
-}
+अटल स्थिर अक्षर *usb_decode_device_feature(u16 wValue)
+अणु
+	चयन (wValue) अणु
+	हाल USB_DEVICE_SELF_POWERED:
+		वापस "Self Powered";
+	हाल USB_DEVICE_REMOTE_WAKEUP:
+		वापस "Remote Wakeup";
+	हाल USB_DEVICE_TEST_MODE:
+		वापस "Test Mode";
+	हाल USB_DEVICE_U1_ENABLE:
+		वापस "U1 Enable";
+	हाल USB_DEVICE_U2_ENABLE:
+		वापस "U2 Enable";
+	हाल USB_DEVICE_LTM_ENABLE:
+		वापस "LTM Enable";
+	शेष:
+		वापस "UNKNOWN";
+	पूर्ण
+पूर्ण
 
-static const char *usb_decode_test_mode(u16 wIndex)
-{
-	switch (wIndex) {
-	case USB_TEST_J:
-		return ": TEST_J";
-	case USB_TEST_K:
-		return ": TEST_K";
-	case USB_TEST_SE0_NAK:
-		return ": TEST_SE0_NAK";
-	case USB_TEST_PACKET:
-		return ": TEST_PACKET";
-	case USB_TEST_FORCE_ENABLE:
-		return ": TEST_FORCE_EN";
-	default:
-		return ": UNKNOWN";
-	}
-}
+अटल स्थिर अक्षर *usb_decode_test_mode(u16 wIndex)
+अणु
+	चयन (wIndex) अणु
+	हाल USB_TEST_J:
+		वापस ": TEST_J";
+	हाल USB_TEST_K:
+		वापस ": TEST_K";
+	हाल USB_TEST_SE0_NAK:
+		वापस ": TEST_SE0_NAK";
+	हाल USB_TEST_PACKET:
+		वापस ": TEST_PACKET";
+	हाल USB_TEST_FORCE_ENABLE:
+		वापस ": TEST_FORCE_EN";
+	शेष:
+		वापस ": UNKNOWN";
+	पूर्ण
+पूर्ण
 
-static void usb_decode_set_clear_feature(__u8 bRequestType,
+अटल व्योम usb_decode_set_clear_feature(__u8 bRequestType,
 					 __u8 bRequest, __u16 wValue,
-					 __u16 wIndex, char *str, size_t size)
-{
-	switch (bRequestType & USB_RECIP_MASK) {
-	case USB_RECIP_DEVICE:
-		snprintf(str, size, "%s Device Feature(%s%s)",
+					 __u16 wIndex, अक्षर *str, माप_प्रकार size)
+अणु
+	चयन (bRequestType & USB_RECIP_MASK) अणु
+	हाल USB_RECIP_DEVICE:
+		snम_लिखो(str, size, "%s Device Feature(%s%s)",
 			 bRequest == USB_REQ_CLEAR_FEATURE ? "Clear" : "Set",
 			 usb_decode_device_feature(wValue),
 			 wValue == USB_DEVICE_TEST_MODE ?
 			 usb_decode_test_mode(wIndex) : "");
-		break;
-	case USB_RECIP_INTERFACE:
-		snprintf(str, size, "%s Interface Feature(%s)",
+		अवरोध;
+	हाल USB_RECIP_INTERFACE:
+		snम_लिखो(str, size, "%s Interface Feature(%s)",
 			 bRequest == USB_REQ_CLEAR_FEATURE ? "Clear" : "Set",
 			 wValue == USB_INTRF_FUNC_SUSPEND ?
 			 "Function Suspend" : "UNKNOWN");
-		break;
-	case USB_RECIP_ENDPOINT:
-		snprintf(str, size, "%s Endpoint Feature(%s ep%d%s)",
+		अवरोध;
+	हाल USB_RECIP_ENDPOINT:
+		snम_लिखो(str, size, "%s Endpoint Feature(%s ep%d%s)",
 			 bRequest == USB_REQ_CLEAR_FEATURE ? "Clear" : "Set",
 			 wValue == USB_ENDPOINT_HALT ? "Halt" : "UNKNOWN",
-			 wIndex & ~USB_DIR_IN,
-			 wIndex & USB_DIR_IN ? "in" : "out");
-		break;
-	}
-}
+			 wIndex & ~USB_सूची_IN,
+			 wIndex & USB_सूची_IN ? "in" : "out");
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void usb_decode_set_address(__u16 wValue, char *str, size_t size)
-{
-	snprintf(str, size, "Set Address(Addr = %02x)", wValue);
-}
+अटल व्योम usb_decode_set_address(__u16 wValue, अक्षर *str, माप_प्रकार size)
+अणु
+	snम_लिखो(str, size, "Set Address(Addr = %02x)", wValue);
+पूर्ण
 
-static void usb_decode_get_set_descriptor(__u8 bRequestType, __u8 bRequest,
+अटल व्योम usb_decode_get_set_descriptor(__u8 bRequestType, __u8 bRequest,
 					  __u16 wValue, __u16 wIndex,
-					  __u16 wLength, char *str, size_t size)
-{
-	char *s;
+					  __u16 wLength, अक्षर *str, माप_प्रकार size)
+अणु
+	अक्षर *s;
 
-	switch (wValue >> 8) {
-	case USB_DT_DEVICE:
+	चयन (wValue >> 8) अणु
+	हाल USB_DT_DEVICE:
 		s = "Device";
-		break;
-	case USB_DT_CONFIG:
+		अवरोध;
+	हाल USB_DT_CONFIG:
 		s = "Configuration";
-		break;
-	case USB_DT_STRING:
+		अवरोध;
+	हाल USB_DT_STRING:
 		s = "String";
-		break;
-	case USB_DT_INTERFACE:
+		अवरोध;
+	हाल USB_DT_INTERFACE:
 		s = "Interface";
-		break;
-	case USB_DT_ENDPOINT:
+		अवरोध;
+	हाल USB_DT_ENDPOINT:
 		s = "Endpoint";
-		break;
-	case USB_DT_DEVICE_QUALIFIER:
+		अवरोध;
+	हाल USB_DT_DEVICE_QUALIFIER:
 		s = "Device Qualifier";
-		break;
-	case USB_DT_OTHER_SPEED_CONFIG:
+		अवरोध;
+	हाल USB_DT_OTHER_SPEED_CONFIG:
 		s = "Other Speed Config";
-		break;
-	case USB_DT_INTERFACE_POWER:
+		अवरोध;
+	हाल USB_DT_INTERFACE_POWER:
 		s = "Interface Power";
-		break;
-	case USB_DT_OTG:
+		अवरोध;
+	हाल USB_DT_OTG:
 		s = "OTG";
-		break;
-	case USB_DT_DEBUG:
+		अवरोध;
+	हाल USB_DT_DEBUG:
 		s = "Debug";
-		break;
-	case USB_DT_INTERFACE_ASSOCIATION:
+		अवरोध;
+	हाल USB_DT_INTERFACE_ASSOCIATION:
 		s = "Interface Association";
-		break;
-	case USB_DT_BOS:
+		अवरोध;
+	हाल USB_DT_BOS:
 		s = "BOS";
-		break;
-	case USB_DT_DEVICE_CAPABILITY:
+		अवरोध;
+	हाल USB_DT_DEVICE_CAPABILITY:
 		s = "Device Capability";
-		break;
-	case USB_DT_PIPE_USAGE:
+		अवरोध;
+	हाल USB_DT_PIPE_USAGE:
 		s = "Pipe Usage";
-		break;
-	case USB_DT_SS_ENDPOINT_COMP:
+		अवरोध;
+	हाल USB_DT_SS_ENDPOINT_COMP:
 		s = "SS Endpoint Companion";
-		break;
-	case USB_DT_SSP_ISOC_ENDPOINT_COMP:
+		अवरोध;
+	हाल USB_DT_SSP_ISOC_ENDPOINT_COMP:
 		s = "SSP Isochronous Endpoint Companion";
-		break;
-	default:
+		अवरोध;
+	शेष:
 		s = "UNKNOWN";
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	snprintf(str, size, "%s %s Descriptor(Index = %d, Length = %d)",
+	snम_लिखो(str, size, "%s %s Descriptor(Index = %d, Length = %d)",
 		bRequest == USB_REQ_GET_DESCRIPTOR ? "Get" : "Set",
 		s, wValue & 0xff, wLength);
-}
+पूर्ण
 
-static void usb_decode_get_configuration(__u16 wLength, char *str, size_t size)
-{
-	snprintf(str, size, "Get Configuration(Length = %d)", wLength);
-}
+अटल व्योम usb_decode_get_configuration(__u16 wLength, अक्षर *str, माप_प्रकार size)
+अणु
+	snम_लिखो(str, size, "Get Configuration(Length = %d)", wLength);
+पूर्ण
 
-static void usb_decode_set_configuration(__u8 wValue, char *str, size_t size)
-{
-	snprintf(str, size, "Set Configuration(Config = %d)", wValue);
-}
+अटल व्योम usb_decode_set_configuration(__u8 wValue, अक्षर *str, माप_प्रकार size)
+अणु
+	snम_लिखो(str, size, "Set Configuration(Config = %d)", wValue);
+पूर्ण
 
-static void usb_decode_get_intf(__u16 wIndex, __u16 wLength, char *str,
-				size_t size)
-{
-	snprintf(str, size, "Get Interface(Intf = %d, Length = %d)",
+अटल व्योम usb_decode_get_पूर्णांकf(__u16 wIndex, __u16 wLength, अक्षर *str,
+				माप_प्रकार size)
+अणु
+	snम_लिखो(str, size, "Get Interface(Intf = %d, Length = %d)",
 		 wIndex, wLength);
-}
+पूर्ण
 
-static void usb_decode_set_intf(__u8 wValue, __u16 wIndex, char *str,
-				size_t size)
-{
-	snprintf(str, size, "Set Interface(Intf = %d, Alt.Setting = %d)",
+अटल व्योम usb_decode_set_पूर्णांकf(__u8 wValue, __u16 wIndex, अक्षर *str,
+				माप_प्रकार size)
+अणु
+	snम_लिखो(str, size, "Set Interface(Intf = %d, Alt.Setting = %d)",
 		 wIndex, wValue);
-}
+पूर्ण
 
-static void usb_decode_synch_frame(__u16 wIndex, __u16 wLength,
-				   char *str, size_t size)
-{
-	snprintf(str, size, "Synch Frame(Endpoint = %d, Length = %d)",
+अटल व्योम usb_decode_synch_frame(__u16 wIndex, __u16 wLength,
+				   अक्षर *str, माप_प्रकार size)
+अणु
+	snम_लिखो(str, size, "Synch Frame(Endpoint = %d, Length = %d)",
 		 wIndex, wLength);
-}
+पूर्ण
 
-static void usb_decode_set_sel(__u16 wLength, char *str, size_t size)
-{
-	snprintf(str, size, "Set SEL(Length = %d)", wLength);
-}
+अटल व्योम usb_decode_set_sel(__u16 wLength, अक्षर *str, माप_प्रकार size)
+अणु
+	snम_लिखो(str, size, "Set SEL(Length = %d)", wLength);
+पूर्ण
 
-static void usb_decode_set_isoch_delay(__u8 wValue, char *str, size_t size)
-{
-	snprintf(str, size, "Set Isochronous Delay(Delay = %d ns)", wValue);
-}
+अटल व्योम usb_decode_set_isoch_delay(__u8 wValue, अक्षर *str, माप_प्रकार size)
+अणु
+	snम_लिखो(str, size, "Set Isochronous Delay(Delay = %d ns)", wValue);
+पूर्ण
 
 /**
- * usb_decode_ctrl - Returns human readable representation of control request.
- * @str: buffer to return a human-readable representation of control request.
+ * usb_decode_ctrl - Returns human पढ़ोable representation of control request.
+ * @str: buffer to वापस a human-पढ़ोable representation of control request.
  *       This buffer should have about 200 bytes.
  * @size: size of str buffer.
  * @bRequestType: matches the USB bmRequestType field
@@ -218,60 +219,60 @@ static void usb_decode_set_isoch_delay(__u8 wValue, char *str, size_t size)
  * @wIndex: matches the USB wIndex field (CPU byte order)
  * @wLength: matches the USB wLength field (CPU byte order)
  *
- * Function returns decoded, formatted and human-readable description of
+ * Function वापसs decoded, क्रमmatted and human-पढ़ोable description of
  * control request packet.
  *
- * The usage scenario for this is for tracepoints, so function as a return
+ * The usage scenario क्रम this is क्रम tracepoपूर्णांकs, so function as a वापस
  * use the same value as in parameters. This approach allows to use this
- * function in TP_printk
+ * function in TP_prपूर्णांकk
  *
- * Important: wValue, wIndex, wLength parameters before invoking this function
+ * Important: wValue, wIndex, wLength parameters beक्रमe invoking this function
  * should be processed by le16_to_cpu macro.
  */
-const char *usb_decode_ctrl(char *str, size_t size, __u8 bRequestType,
+स्थिर अक्षर *usb_decode_ctrl(अक्षर *str, माप_प्रकार size, __u8 bRequestType,
 			    __u8 bRequest, __u16 wValue, __u16 wIndex,
 			    __u16 wLength)
-{
-	switch (bRequest) {
-	case USB_REQ_GET_STATUS:
+अणु
+	चयन (bRequest) अणु
+	हाल USB_REQ_GET_STATUS:
 		usb_decode_get_status(bRequestType, wIndex, wLength, str, size);
-		break;
-	case USB_REQ_CLEAR_FEATURE:
-	case USB_REQ_SET_FEATURE:
+		अवरोध;
+	हाल USB_REQ_CLEAR_FEATURE:
+	हाल USB_REQ_SET_FEATURE:
 		usb_decode_set_clear_feature(bRequestType, bRequest, wValue,
 					     wIndex, str, size);
-		break;
-	case USB_REQ_SET_ADDRESS:
+		अवरोध;
+	हाल USB_REQ_SET_ADDRESS:
 		usb_decode_set_address(wValue, str, size);
-		break;
-	case USB_REQ_GET_DESCRIPTOR:
-	case USB_REQ_SET_DESCRIPTOR:
+		अवरोध;
+	हाल USB_REQ_GET_DESCRIPTOR:
+	हाल USB_REQ_SET_DESCRIPTOR:
 		usb_decode_get_set_descriptor(bRequestType, bRequest, wValue,
 					      wIndex, wLength, str, size);
-		break;
-	case USB_REQ_GET_CONFIGURATION:
+		अवरोध;
+	हाल USB_REQ_GET_CONFIGURATION:
 		usb_decode_get_configuration(wLength, str, size);
-		break;
-	case USB_REQ_SET_CONFIGURATION:
+		अवरोध;
+	हाल USB_REQ_SET_CONFIGURATION:
 		usb_decode_set_configuration(wValue, str, size);
-		break;
-	case USB_REQ_GET_INTERFACE:
-		usb_decode_get_intf(wIndex, wLength, str, size);
-		break;
-	case USB_REQ_SET_INTERFACE:
-		usb_decode_set_intf(wValue, wIndex, str, size);
-		break;
-	case USB_REQ_SYNCH_FRAME:
+		अवरोध;
+	हाल USB_REQ_GET_INTERFACE:
+		usb_decode_get_पूर्णांकf(wIndex, wLength, str, size);
+		अवरोध;
+	हाल USB_REQ_SET_INTERFACE:
+		usb_decode_set_पूर्णांकf(wValue, wIndex, str, size);
+		अवरोध;
+	हाल USB_REQ_SYNCH_FRAME:
 		usb_decode_synch_frame(wIndex, wLength, str, size);
-		break;
-	case USB_REQ_SET_SEL:
+		अवरोध;
+	हाल USB_REQ_SET_SEL:
 		usb_decode_set_sel(wLength, str, size);
-		break;
-	case USB_REQ_SET_ISOCH_DELAY:
+		अवरोध;
+	हाल USB_REQ_SET_ISOCH_DELAY:
 		usb_decode_set_isoch_delay(wValue, str, size);
-		break;
-	default:
-		snprintf(str, size, "%02x %02x %02x %02x %02x %02x %02x %02x",
+		अवरोध;
+	शेष:
+		snम_लिखो(str, size, "%02x %02x %02x %02x %02x %02x %02x %02x",
 			 bRequestType, bRequest,
 			 (u8)(cpu_to_le16(wValue) & 0xff),
 			 (u8)(cpu_to_le16(wValue) >> 8),
@@ -279,8 +280,8 @@ const char *usb_decode_ctrl(char *str, size_t size, __u8 bRequestType,
 			 (u8)(cpu_to_le16(wIndex) >> 8),
 			 (u8)(cpu_to_le16(wLength) & 0xff),
 			 (u8)(cpu_to_le16(wLength) >> 8));
-	}
+	पूर्ण
 
-	return str;
-}
+	वापस str;
+पूर्ण
 EXPORT_SYMBOL_GPL(usb_decode_ctrl);

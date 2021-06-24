@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AppArmor security module
  *
@@ -8,29 +9,29 @@
  * Copyright 2009-2010 Canonical Ltd.
  */
 
-#ifndef __AA_AUDIT_H
-#define __AA_AUDIT_H
+#अगर_अघोषित __AA_AUDIT_H
+#घोषणा __AA_AUDIT_H
 
-#include <linux/audit.h>
-#include <linux/fs.h>
-#include <linux/lsm_audit.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/audit.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/lsm_audit.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
-#include "file.h"
-#include "label.h"
+#समावेश "file.h"
+#समावेश "label.h"
 
-extern const char *const audit_mode_names[];
-#define AUDIT_MAX_INDEX 5
-enum audit_mode {
+बाह्य स्थिर अक्षर *स्थिर audit_mode_names[];
+#घोषणा AUDIT_MAX_INDEX 5
+क्रमागत audit_mode अणु
 	AUDIT_NORMAL,		/* follow normal auditing of accesses */
 	AUDIT_QUIET_DENIED,	/* quiet all denied access messages */
 	AUDIT_QUIET,		/* quiet all messages */
-	AUDIT_NOQUIET,		/* do not quiet audit messages */
+	AUDIT_NOQUIET,		/* करो not quiet audit messages */
 	AUDIT_ALL		/* audit all accesses */
-};
+पूर्ण;
 
-enum audit_type {
+क्रमागत audit_type अणु
 	AUDIT_APPARMOR_AUDIT,
 	AUDIT_APPARMOR_ALLOWED,
 	AUDIT_APPARMOR_DENIED,
@@ -39,155 +40,155 @@ enum audit_type {
 	AUDIT_APPARMOR_ERROR,
 	AUDIT_APPARMOR_KILL,
 	AUDIT_APPARMOR_AUTO
-};
+पूर्ण;
 
-#define OP_NULL NULL
+#घोषणा OP_शून्य शून्य
 
-#define OP_SYSCTL "sysctl"
-#define OP_CAPABLE "capable"
+#घोषणा OP_SYSCTL "sysctl"
+#घोषणा OP_CAPABLE "capable"
 
-#define OP_UNLINK "unlink"
-#define OP_MKDIR "mkdir"
-#define OP_RMDIR "rmdir"
-#define OP_MKNOD "mknod"
-#define OP_TRUNC "truncate"
-#define OP_LINK "link"
-#define OP_SYMLINK "symlink"
-#define OP_RENAME_SRC "rename_src"
-#define OP_RENAME_DEST "rename_dest"
-#define OP_CHMOD "chmod"
-#define OP_CHOWN "chown"
-#define OP_GETATTR "getattr"
-#define OP_OPEN "open"
+#घोषणा OP_UNLINK "unlink"
+#घोषणा OP_MKसूची "mkdir"
+#घोषणा OP_RMसूची "rmdir"
+#घोषणा OP_MKNOD "mknod"
+#घोषणा OP_TRUNC "truncate"
+#घोषणा OP_LINK "link"
+#घोषणा OP_SYMLINK "symlink"
+#घोषणा OP_RENAME_SRC "rename_src"
+#घोषणा OP_RENAME_DEST "rename_dest"
+#घोषणा OP_CHMOD "chmod"
+#घोषणा OP_CHOWN "chown"
+#घोषणा OP_GETATTR "getattr"
+#घोषणा OP_OPEN "open"
 
-#define OP_FRECEIVE "file_receive"
-#define OP_FPERM "file_perm"
-#define OP_FLOCK "file_lock"
-#define OP_FMMAP "file_mmap"
-#define OP_FMPROT "file_mprotect"
-#define OP_INHERIT "file_inherit"
+#घोषणा OP_FRECEIVE "file_receive"
+#घोषणा OP_FPERM "file_perm"
+#घोषणा OP_FLOCK "file_lock"
+#घोषणा OP_FMMAP "file_mmap"
+#घोषणा OP_FMPROT "file_mprotect"
+#घोषणा OP_INHERIT "file_inherit"
 
-#define OP_PIVOTROOT "pivotroot"
-#define OP_MOUNT "mount"
-#define OP_UMOUNT "umount"
+#घोषणा OP_PIVOTROOT "pivotroot"
+#घोषणा OP_MOUNT "mount"
+#घोषणा OP_UMOUNT "umount"
 
-#define OP_CREATE "create"
-#define OP_POST_CREATE "post_create"
-#define OP_BIND "bind"
-#define OP_CONNECT "connect"
-#define OP_LISTEN "listen"
-#define OP_ACCEPT "accept"
-#define OP_SENDMSG "sendmsg"
-#define OP_RECVMSG "recvmsg"
-#define OP_GETSOCKNAME "getsockname"
-#define OP_GETPEERNAME "getpeername"
-#define OP_GETSOCKOPT "getsockopt"
-#define OP_SETSOCKOPT "setsockopt"
-#define OP_SHUTDOWN "socket_shutdown"
+#घोषणा OP_CREATE "create"
+#घोषणा OP_POST_CREATE "post_create"
+#घोषणा OP_BIND "bind"
+#घोषणा OP_CONNECT "connect"
+#घोषणा OP_LISTEN "listen"
+#घोषणा OP_ACCEPT "accept"
+#घोषणा OP_SENDMSG "sendmsg"
+#घोषणा OP_RECVMSG "recvmsg"
+#घोषणा OP_GETSOCKNAME "getsockname"
+#घोषणा OP_GETPEERNAME "getpeername"
+#घोषणा OP_GETSOCKOPT "getsockopt"
+#घोषणा OP_SETSOCKOPT "setsockopt"
+#घोषणा OP_SHUTDOWN "socket_shutdown"
 
-#define OP_PTRACE "ptrace"
-#define OP_SIGNAL "signal"
+#घोषणा OP_PTRACE "ptrace"
+#घोषणा OP_SIGNAL "signal"
 
-#define OP_EXEC "exec"
+#घोषणा OP_EXEC "exec"
 
-#define OP_CHANGE_HAT "change_hat"
-#define OP_CHANGE_PROFILE "change_profile"
-#define OP_CHANGE_ONEXEC "change_onexec"
-#define OP_STACK "stack"
-#define OP_STACK_ONEXEC "stack_onexec"
+#घोषणा OP_CHANGE_HAT "change_hat"
+#घोषणा OP_CHANGE_PROखाता "change_profile"
+#घोषणा OP_CHANGE_ONEXEC "change_onexec"
+#घोषणा OP_STACK "stack"
+#घोषणा OP_STACK_ONEXEC "stack_onexec"
 
-#define OP_SETPROCATTR "setprocattr"
-#define OP_SETRLIMIT "setrlimit"
+#घोषणा OP_SETPROCATTR "setprocattr"
+#घोषणा OP_SETRLIMIT "setrlimit"
 
-#define OP_PROF_REPL "profile_replace"
-#define OP_PROF_LOAD "profile_load"
-#define OP_PROF_RM "profile_remove"
+#घोषणा OP_PROF_REPL "profile_replace"
+#घोषणा OP_PROF_LOAD "profile_load"
+#घोषणा OP_PROF_RM "profile_remove"
 
 
-struct apparmor_audit_data {
-	int error;
-	int type;
-	const char *op;
-	struct aa_label *label;
-	const char *name;
-	const char *info;
+काष्ठा apparmor_audit_data अणु
+	पूर्णांक error;
+	पूर्णांक type;
+	स्थिर अक्षर *op;
+	काष्ठा aa_label *label;
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *info;
 	u32 request;
 	u32 denied;
-	union {
+	जोड़ अणु
 		/* these entries require a custom callback fn */
-		struct {
-			struct aa_label *peer;
-			union {
-				struct {
-					const char *target;
+		काष्ठा अणु
+			काष्ठा aa_label *peer;
+			जोड़ अणु
+				काष्ठा अणु
+					स्थिर अक्षर *target;
 					kuid_t ouid;
-				} fs;
-				struct {
-					int rlim;
-					unsigned long max;
-				} rlim;
-				struct {
-					int signal;
-					int unmappedsig;
-				};
-				struct {
-					int type, protocol;
-					struct sock *peer_sk;
-					void *addr;
-					int addrlen;
-				} net;
-			};
-		};
-		struct {
-			struct aa_profile *profile;
-			const char *ns;
-			long pos;
-		} iface;
-		struct {
-			const char *src_name;
-			const char *type;
-			const char *trans;
-			const char *data;
-			unsigned long flags;
-		} mnt;
-	};
-};
+				पूर्ण fs;
+				काष्ठा अणु
+					पूर्णांक rlim;
+					अचिन्हित दीर्घ max;
+				पूर्ण rlim;
+				काष्ठा अणु
+					पूर्णांक संकेत;
+					पूर्णांक unmappedsig;
+				पूर्ण;
+				काष्ठा अणु
+					पूर्णांक type, protocol;
+					काष्ठा sock *peer_sk;
+					व्योम *addr;
+					पूर्णांक addrlen;
+				पूर्ण net;
+			पूर्ण;
+		पूर्ण;
+		काष्ठा अणु
+			काष्ठा aa_profile *profile;
+			स्थिर अक्षर *ns;
+			दीर्घ pos;
+		पूर्ण अगरace;
+		काष्ठा अणु
+			स्थिर अक्षर *src_name;
+			स्थिर अक्षर *type;
+			स्थिर अक्षर *trans;
+			स्थिर अक्षर *data;
+			अचिन्हित दीर्घ flags;
+		पूर्ण mnt;
+	पूर्ण;
+पूर्ण;
 
-/* macros for dealing with  apparmor_audit_data structure */
-#define aad(SA) ((SA)->apparmor_audit_data)
-#define DEFINE_AUDIT_DATA(NAME, T, X)					\
-	/* TODO: cleanup audit init so we don't need _aad = {0,} */	\
-	struct apparmor_audit_data NAME ## _aad = { .op = (X), };	\
-	struct common_audit_data NAME =					\
-	{								\
+/* macros क्रम dealing with  apparmor_audit_data काष्ठाure */
+#घोषणा aad(SA) ((SA)->apparmor_audit_data)
+#घोषणा DEFINE_AUDIT_DATA(NAME, T, X)					\
+	/* TODO: cleanup audit init so we करोn't need _aad = अणु0,पूर्ण */	\
+	काष्ठा apparmor_audit_data NAME ## _aad = अणु .op = (X), पूर्ण;	\
+	काष्ठा common_audit_data NAME =					\
+	अणु								\
 	.type = (T),							\
-	.u.tsk = NULL,							\
-	};								\
+	.u.tsk = शून्य,							\
+	पूर्ण;								\
 	NAME.apparmor_audit_data = &(NAME ## _aad)
 
-void aa_audit_msg(int type, struct common_audit_data *sa,
-		  void (*cb) (struct audit_buffer *, void *));
-int aa_audit(int type, struct aa_profile *profile, struct common_audit_data *sa,
-	     void (*cb) (struct audit_buffer *, void *));
+व्योम aa_audit_msg(पूर्णांक type, काष्ठा common_audit_data *sa,
+		  व्योम (*cb) (काष्ठा audit_buffer *, व्योम *));
+पूर्णांक aa_audit(पूर्णांक type, काष्ठा aa_profile *profile, काष्ठा common_audit_data *sa,
+	     व्योम (*cb) (काष्ठा audit_buffer *, व्योम *));
 
-#define aa_audit_error(ERROR, SA, CB)				\
-({								\
+#घोषणा aa_audit_error(ERROR, SA, CB)				\
+(अणु								\
 	aad((SA))->error = (ERROR);				\
 	aa_audit_msg(AUDIT_APPARMOR_ERROR, (SA), (CB));		\
 	aad((SA))->error;					\
-})
+पूर्ण)
 
 
-static inline int complain_error(int error)
-{
-	if (error == -EPERM || error == -EACCES)
-		return 0;
-	return error;
-}
+अटल अंतरभूत पूर्णांक complain_error(पूर्णांक error)
+अणु
+	अगर (error == -EPERM || error == -EACCES)
+		वापस 0;
+	वापस error;
+पूर्ण
 
-void aa_audit_rule_free(void *vrule);
-int aa_audit_rule_init(u32 field, u32 op, char *rulestr, void **vrule);
-int aa_audit_rule_known(struct audit_krule *rule);
-int aa_audit_rule_match(u32 sid, u32 field, u32 op, void *vrule);
+व्योम aa_audit_rule_मुक्त(व्योम *vrule);
+पूर्णांक aa_audit_rule_init(u32 field, u32 op, अक्षर *rulestr, व्योम **vrule);
+पूर्णांक aa_audit_rule_known(काष्ठा audit_krule *rule);
+पूर्णांक aa_audit_rule_match(u32 sid, u32 field, u32 op, व्योम *vrule);
 
-#endif /* __AA_AUDIT_H */
+#पूर्ण_अगर /* __AA_AUDIT_H */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * OSS compatible sequencer driver
  *
@@ -7,172 +8,172 @@
  * Copyright (C) 1998,99 Takashi Iwai <tiwai@suse.de>
  */
 
-#include "seq_oss_device.h"
-#include "seq_oss_readq.h"
-#include "seq_oss_writeq.h"
-#include "seq_oss_timer.h"
-#include "seq_oss_synth.h"
-#include "seq_oss_midi.h"
-#include "seq_oss_event.h"
+#समावेश "seq_oss_device.h"
+#समावेश "seq_oss_readq.h"
+#समावेश "seq_oss_writeq.h"
+#समावेश "seq_oss_timer.h"
+#समावेश "seq_oss_synth.h"
+#समावेश "seq_oss_midi.h"
+#समावेश "seq_oss_event.h"
 
-static int snd_seq_oss_synth_info_user(struct seq_oss_devinfo *dp, void __user *arg)
-{
-	struct synth_info info;
+अटल पूर्णांक snd_seq_oss_synth_info_user(काष्ठा seq_oss_devinfo *dp, व्योम __user *arg)
+अणु
+	काष्ठा synth_info info;
 
-	if (copy_from_user(&info, arg, sizeof(info)))
-		return -EFAULT;
-	if (snd_seq_oss_synth_make_info(dp, info.device, &info) < 0)
-		return -EINVAL;
-	if (copy_to_user(arg, &info, sizeof(info)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_from_user(&info, arg, माप(info)))
+		वापस -EFAULT;
+	अगर (snd_seq_oss_synth_make_info(dp, info.device, &info) < 0)
+		वापस -EINVAL;
+	अगर (copy_to_user(arg, &info, माप(info)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int snd_seq_oss_midi_info_user(struct seq_oss_devinfo *dp, void __user *arg)
-{
-	struct midi_info info;
+अटल पूर्णांक snd_seq_oss_midi_info_user(काष्ठा seq_oss_devinfo *dp, व्योम __user *arg)
+अणु
+	काष्ठा midi_info info;
 
-	if (copy_from_user(&info, arg, sizeof(info)))
-		return -EFAULT;
-	if (snd_seq_oss_midi_make_info(dp, info.device, &info) < 0)
-		return -EINVAL;
-	if (copy_to_user(arg, &info, sizeof(info)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_from_user(&info, arg, माप(info)))
+		वापस -EFAULT;
+	अगर (snd_seq_oss_midi_make_info(dp, info.device, &info) < 0)
+		वापस -EINVAL;
+	अगर (copy_to_user(arg, &info, माप(info)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int snd_seq_oss_oob_user(struct seq_oss_devinfo *dp, void __user *arg)
-{
-	unsigned char ev[8];
-	struct snd_seq_event tmpev;
+अटल पूर्णांक snd_seq_oss_oob_user(काष्ठा seq_oss_devinfo *dp, व्योम __user *arg)
+अणु
+	अचिन्हित अक्षर ev[8];
+	काष्ठा snd_seq_event पंचांगpev;
 
-	if (copy_from_user(ev, arg, 8))
-		return -EFAULT;
-	memset(&tmpev, 0, sizeof(tmpev));
-	snd_seq_oss_fill_addr(dp, &tmpev, dp->addr.client, dp->addr.port);
-	tmpev.time.tick = 0;
-	if (! snd_seq_oss_process_event(dp, (union evrec *)ev, &tmpev)) {
-		snd_seq_oss_dispatch(dp, &tmpev, 0, 0);
-	}
-	return 0;
-}
+	अगर (copy_from_user(ev, arg, 8))
+		वापस -EFAULT;
+	स_रखो(&पंचांगpev, 0, माप(पंचांगpev));
+	snd_seq_oss_fill_addr(dp, &पंचांगpev, dp->addr.client, dp->addr.port);
+	पंचांगpev.समय.tick = 0;
+	अगर (! snd_seq_oss_process_event(dp, (जोड़ evrec *)ev, &पंचांगpev)) अणु
+		snd_seq_oss_dispatch(dp, &पंचांगpev, 0, 0);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int
-snd_seq_oss_ioctl(struct seq_oss_devinfo *dp, unsigned int cmd, unsigned long carg)
-{
-	int dev, val;
-	void __user *arg = (void __user *)carg;
-	int __user *p = arg;
+पूर्णांक
+snd_seq_oss_ioctl(काष्ठा seq_oss_devinfo *dp, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ carg)
+अणु
+	पूर्णांक dev, val;
+	व्योम __user *arg = (व्योम __user *)carg;
+	पूर्णांक __user *p = arg;
 
-	switch (cmd) {
-	case SNDCTL_TMR_TIMEBASE:
-	case SNDCTL_TMR_TEMPO:
-	case SNDCTL_TMR_START:
-	case SNDCTL_TMR_STOP:
-	case SNDCTL_TMR_CONTINUE:
-	case SNDCTL_TMR_METRONOME:
-	case SNDCTL_TMR_SOURCE:
-	case SNDCTL_TMR_SELECT:
-	case SNDCTL_SEQ_CTRLRATE:
-		return snd_seq_oss_timer_ioctl(dp->timer, cmd, arg);
+	चयन (cmd) अणु
+	हाल SNDCTL_TMR_TIMEBASE:
+	हाल SNDCTL_TMR_TEMPO:
+	हाल SNDCTL_TMR_START:
+	हाल SNDCTL_TMR_STOP:
+	हाल SNDCTL_TMR_CONTINUE:
+	हाल SNDCTL_TMR_METRONOME:
+	हाल SNDCTL_TMR_SOURCE:
+	हाल SNDCTL_TMR_SELECT:
+	हाल SNDCTL_SEQ_CTRLRATE:
+		वापस snd_seq_oss_समयr_ioctl(dp->समयr, cmd, arg);
 
-	case SNDCTL_SEQ_PANIC:
+	हाल SNDCTL_SEQ_PANIC:
 		snd_seq_oss_reset(dp);
-		return -EINVAL;
+		वापस -EINVAL;
 
-	case SNDCTL_SEQ_SYNC:
-		if (! is_write_mode(dp->file_mode) || dp->writeq == NULL)
-			return 0;
-		while (snd_seq_oss_writeq_sync(dp->writeq))
+	हाल SNDCTL_SEQ_SYNC:
+		अगर (! is_ग_लिखो_mode(dp->file_mode) || dp->ग_लिखोq == शून्य)
+			वापस 0;
+		जबतक (snd_seq_oss_ग_लिखोq_sync(dp->ग_लिखोq))
 			;
-		if (signal_pending(current))
-			return -ERESTARTSYS;
-		return 0;
+		अगर (संकेत_pending(current))
+			वापस -ERESTARTSYS;
+		वापस 0;
 
-	case SNDCTL_SEQ_RESET:
+	हाल SNDCTL_SEQ_RESET:
 		snd_seq_oss_reset(dp);
-		return 0;
+		वापस 0;
 
-	case SNDCTL_SEQ_TESTMIDI:
-		if (get_user(dev, p))
-			return -EFAULT;
-		return snd_seq_oss_midi_open(dp, dev, dp->file_mode);
+	हाल SNDCTL_SEQ_TESTMIDI:
+		अगर (get_user(dev, p))
+			वापस -EFAULT;
+		वापस snd_seq_oss_midi_खोलो(dp, dev, dp->file_mode);
 
-	case SNDCTL_SEQ_GETINCOUNT:
-		if (dp->readq == NULL || ! is_read_mode(dp->file_mode))
-			return 0;
-		return put_user(dp->readq->qlen, p) ? -EFAULT : 0;
+	हाल SNDCTL_SEQ_GETINCOUNT:
+		अगर (dp->पढ़ोq == शून्य || ! is_पढ़ो_mode(dp->file_mode))
+			वापस 0;
+		वापस put_user(dp->पढ़ोq->qlen, p) ? -EFAULT : 0;
 
-	case SNDCTL_SEQ_GETOUTCOUNT:
-		if (! is_write_mode(dp->file_mode) || dp->writeq == NULL)
-			return 0;
-		return put_user(snd_seq_oss_writeq_get_free_size(dp->writeq), p) ? -EFAULT : 0;
+	हाल SNDCTL_SEQ_GETOUTCOUNT:
+		अगर (! is_ग_लिखो_mode(dp->file_mode) || dp->ग_लिखोq == शून्य)
+			वापस 0;
+		वापस put_user(snd_seq_oss_ग_लिखोq_get_मुक्त_size(dp->ग_लिखोq), p) ? -EFAULT : 0;
 
-	case SNDCTL_SEQ_GETTIME:
-		return put_user(snd_seq_oss_timer_cur_tick(dp->timer), p) ? -EFAULT : 0;
+	हाल SNDCTL_SEQ_GETTIME:
+		वापस put_user(snd_seq_oss_समयr_cur_tick(dp->समयr), p) ? -EFAULT : 0;
 
-	case SNDCTL_SEQ_RESETSAMPLES:
-		if (get_user(dev, p))
-			return -EFAULT;
-		return snd_seq_oss_synth_ioctl(dp, dev, cmd, carg);
+	हाल SNDCTL_SEQ_RESETSAMPLES:
+		अगर (get_user(dev, p))
+			वापस -EFAULT;
+		वापस snd_seq_oss_synth_ioctl(dp, dev, cmd, carg);
 
-	case SNDCTL_SEQ_NRSYNTHS:
-		return put_user(dp->max_synthdev, p) ? -EFAULT : 0;
+	हाल SNDCTL_SEQ_NRSYNTHS:
+		वापस put_user(dp->max_synthdev, p) ? -EFAULT : 0;
 
-	case SNDCTL_SEQ_NRMIDIS:
-		return put_user(dp->max_mididev, p) ? -EFAULT : 0;
+	हाल SNDCTL_SEQ_NRMIDIS:
+		वापस put_user(dp->max_mididev, p) ? -EFAULT : 0;
 
-	case SNDCTL_SYNTH_MEMAVL:
-		if (get_user(dev, p))
-			return -EFAULT;
+	हाल SNDCTL_SYNTH_MEMAVL:
+		अगर (get_user(dev, p))
+			वापस -EFAULT;
 		val = snd_seq_oss_synth_ioctl(dp, dev, cmd, carg);
-		return put_user(val, p) ? -EFAULT : 0;
+		वापस put_user(val, p) ? -EFAULT : 0;
 
-	case SNDCTL_FM_4OP_ENABLE:
-		if (get_user(dev, p))
-			return -EFAULT;
+	हाल SNDCTL_FM_4OP_ENABLE:
+		अगर (get_user(dev, p))
+			वापस -EFAULT;
 		snd_seq_oss_synth_ioctl(dp, dev, cmd, carg);
-		return 0;
+		वापस 0;
 
-	case SNDCTL_SYNTH_INFO:
-	case SNDCTL_SYNTH_ID:
-		return snd_seq_oss_synth_info_user(dp, arg);
+	हाल SNDCTL_SYNTH_INFO:
+	हाल SNDCTL_SYNTH_ID:
+		वापस snd_seq_oss_synth_info_user(dp, arg);
 
-	case SNDCTL_SEQ_OUTOFBAND:
-		return snd_seq_oss_oob_user(dp, arg);
+	हाल SNDCTL_SEQ_OUTOFBAND:
+		वापस snd_seq_oss_oob_user(dp, arg);
 
-	case SNDCTL_MIDI_INFO:
-		return snd_seq_oss_midi_info_user(dp, arg);
+	हाल SNDCTL_MIDI_INFO:
+		वापस snd_seq_oss_midi_info_user(dp, arg);
 
-	case SNDCTL_SEQ_THRESHOLD:
-		if (! is_write_mode(dp->file_mode))
-			return 0;
-		if (get_user(val, p))
-			return -EFAULT;
-		if (val < 1)
+	हाल SNDCTL_SEQ_THRESHOLD:
+		अगर (! is_ग_लिखो_mode(dp->file_mode))
+			वापस 0;
+		अगर (get_user(val, p))
+			वापस -EFAULT;
+		अगर (val < 1)
 			val = 1;
-		if (val >= dp->writeq->maxlen)
-			val = dp->writeq->maxlen - 1;
-		snd_seq_oss_writeq_set_output(dp->writeq, val);
-		return 0;
+		अगर (val >= dp->ग_लिखोq->maxlen)
+			val = dp->ग_लिखोq->maxlen - 1;
+		snd_seq_oss_ग_लिखोq_set_output(dp->ग_लिखोq, val);
+		वापस 0;
 
-	case SNDCTL_MIDI_PRETIME:
-		if (dp->readq == NULL || !is_read_mode(dp->file_mode))
-			return 0;
-		if (get_user(val, p))
-			return -EFAULT;
-		if (val <= 0)
+	हाल SNDCTL_MIDI_PRETIME:
+		अगर (dp->पढ़ोq == शून्य || !is_पढ़ो_mode(dp->file_mode))
+			वापस 0;
+		अगर (get_user(val, p))
+			वापस -EFAULT;
+		अगर (val <= 0)
 			val = -1;
-		else
+		अन्यथा
 			val = (HZ * val) / 10;
-		dp->readq->pre_event_timeout = val;
-		return put_user(val, p) ? -EFAULT : 0;
+		dp->पढ़ोq->pre_event_समयout = val;
+		वापस put_user(val, p) ? -EFAULT : 0;
 
-	default:
-		if (! is_write_mode(dp->file_mode))
-			return -EIO;
-		return snd_seq_oss_synth_ioctl(dp, 0, cmd, carg);
-	}
-	return 0;
-}
+	शेष:
+		अगर (! is_ग_लिखो_mode(dp->file_mode))
+			वापस -EIO;
+		वापस snd_seq_oss_synth_ioctl(dp, 0, cmd, carg);
+	पूर्ण
+	वापस 0;
+पूर्ण
 

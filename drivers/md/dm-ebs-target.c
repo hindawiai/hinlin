@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2020 Red Hat GmbH
  *
@@ -9,137 +10,137 @@
  * E.g. 512 byte sector emulation on 4K native disks.
  */
 
-#include "dm.h"
-#include <linux/module.h>
-#include <linux/workqueue.h>
-#include <linux/dm-bufio.h>
+#समावेश "dm.h"
+#समावेश <linux/module.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/dm-bufपन.स>
 
-#define DM_MSG_PREFIX "ebs"
+#घोषणा DM_MSG_PREFIX "ebs"
 
-static void ebs_dtr(struct dm_target *ti);
+अटल व्योम ebs_dtr(काष्ठा dm_target *ti);
 
 /* Emulated block size context. */
-struct ebs_c {
-	struct dm_dev *dev;		/* Underlying device to emulate block size on. */
-	struct dm_bufio_client *bufio;	/* Use dm-bufio for read and read-modify-write processing. */
-	struct workqueue_struct *wq;	/* Workqueue for ^ processing of bios. */
-	struct work_struct ws;		/* Work item used for ^. */
-	struct bio_list bios_in;	/* Worker bios input list. */
+काष्ठा ebs_c अणु
+	काष्ठा dm_dev *dev;		/* Underlying device to emulate block size on. */
+	काष्ठा dm_bufio_client *bufio;	/* Use dm-bufio क्रम पढ़ो and पढ़ो-modअगरy-ग_लिखो processing. */
+	काष्ठा workqueue_काष्ठा *wq;	/* Workqueue क्रम ^ processing of bios. */
+	काष्ठा work_काष्ठा ws;		/* Work item used क्रम ^. */
+	काष्ठा bio_list bios_in;	/* Worker bios input list. */
 	spinlock_t lock;		/* Guard bios input list above. */
 	sector_t start;			/* <start> table line argument, see ebs_ctr below. */
-	unsigned int e_bs;		/* Emulated block size in sectors exposed to upper layer. */
-	unsigned int u_bs;		/* Underlying block size in sectors retrieved from/set on lower layer device. */
-	unsigned char block_shift;	/* bitshift sectors -> blocks used in dm-bufio API. */
+	अचिन्हित पूर्णांक e_bs;		/* Emulated block size in sectors exposed to upper layer. */
+	अचिन्हित पूर्णांक u_bs;		/* Underlying block size in sectors retrieved from/set on lower layer device. */
+	अचिन्हित अक्षर block_shअगरt;	/* bitshअगरt sectors -> blocks used in dm-bufio API. */
 	bool u_bs_set:1;		/* Flag to indicate underlying block size is set on table line. */
-};
+पूर्ण;
 
-static inline sector_t __sector_to_block(struct ebs_c *ec, sector_t sector)
-{
-	return sector >> ec->block_shift;
-}
+अटल अंतरभूत sector_t __sector_to_block(काष्ठा ebs_c *ec, sector_t sector)
+अणु
+	वापस sector >> ec->block_shअगरt;
+पूर्ण
 
-static inline sector_t __block_mod(sector_t sector, unsigned int bs)
-{
-	return sector & (bs - 1);
-}
+अटल अंतरभूत sector_t __block_mod(sector_t sector, अचिन्हित पूर्णांक bs)
+अणु
+	वापस sector & (bs - 1);
+पूर्ण
 
-/* Return number of blocks for a bio, accounting for misalignment of start and end sectors. */
-static inline unsigned int __nr_blocks(struct ebs_c *ec, struct bio *bio)
-{
+/* Return number of blocks क्रम a bio, accounting क्रम misalignment of start and end sectors. */
+अटल अंतरभूत अचिन्हित पूर्णांक __nr_blocks(काष्ठा ebs_c *ec, काष्ठा bio *bio)
+अणु
 	sector_t end_sector = __block_mod(bio->bi_iter.bi_sector, ec->u_bs) + bio_sectors(bio);
 
-	return __sector_to_block(ec, end_sector) + (__block_mod(end_sector, ec->u_bs) ? 1 : 0);
-}
+	वापस __sector_to_block(ec, end_sector) + (__block_mod(end_sector, ec->u_bs) ? 1 : 0);
+पूर्ण
 
-static inline bool __ebs_check_bs(unsigned int bs)
-{
-	return bs && is_power_of_2(bs);
-}
+अटल अंतरभूत bool __ebs_check_bs(अचिन्हित पूर्णांक bs)
+अणु
+	वापस bs && is_घातer_of_2(bs);
+पूर्ण
 
 /*
  * READ/WRITE:
  *
  * copy blocks between bufio blocks and bio vector's (partial/overlapping) pages.
  */
-static int __ebs_rw_bvec(struct ebs_c *ec, int rw, struct bio_vec *bv, struct bvec_iter *iter)
-{
-	int r = 0;
-	unsigned char *ba, *pa;
-	unsigned int cur_len;
-	unsigned int bv_len = bv->bv_len;
-	unsigned int buf_off = to_bytes(__block_mod(iter->bi_sector, ec->u_bs));
+अटल पूर्णांक __ebs_rw_bvec(काष्ठा ebs_c *ec, पूर्णांक rw, काष्ठा bio_vec *bv, काष्ठा bvec_iter *iter)
+अणु
+	पूर्णांक r = 0;
+	अचिन्हित अक्षर *ba, *pa;
+	अचिन्हित पूर्णांक cur_len;
+	अचिन्हित पूर्णांक bv_len = bv->bv_len;
+	अचिन्हित पूर्णांक buf_off = to_bytes(__block_mod(iter->bi_sector, ec->u_bs));
 	sector_t block = __sector_to_block(ec, iter->bi_sector);
-	struct dm_buffer *b;
+	काष्ठा dm_buffer *b;
 
-	if (unlikely(!bv->bv_page || !bv_len))
-		return -EIO;
+	अगर (unlikely(!bv->bv_page || !bv_len))
+		वापस -EIO;
 
 	pa = page_address(bv->bv_page) + bv->bv_offset;
 
 	/* Handle overlapping page <-> blocks */
-	while (bv_len) {
+	जबतक (bv_len) अणु
 		cur_len = min(dm_bufio_get_block_size(ec->bufio) - buf_off, bv_len);
 
-		/* Avoid reading for writes in case bio vector's page overwrites block completely. */
-		if (rw == READ || buf_off || bv_len < dm_bufio_get_block_size(ec->bufio))
-			ba = dm_bufio_read(ec->bufio, block, &b);
-		else
+		/* Aव्योम पढ़ोing क्रम ग_लिखोs in हाल bio vector's page overग_लिखोs block completely. */
+		अगर (rw == READ || buf_off || bv_len < dm_bufio_get_block_size(ec->bufio))
+			ba = dm_bufio_पढ़ो(ec->bufio, block, &b);
+		अन्यथा
 			ba = dm_bufio_new(ec->bufio, block, &b);
 
-		if (IS_ERR(ba)) {
+		अगर (IS_ERR(ba)) अणु
 			/*
-			 * Carry on with next buffer, if any, to issue all possible
-			 * data but return error.
+			 * Carry on with next buffer, अगर any, to issue all possible
+			 * data but वापस error.
 			 */
 			r = PTR_ERR(ba);
-		} else {
-			/* Copy data to/from bio to buffer if read/new was successful above. */
+		पूर्ण अन्यथा अणु
+			/* Copy data to/from bio to buffer अगर पढ़ो/new was successful above. */
 			ba += buf_off;
-			if (rw == READ) {
-				memcpy(pa, ba, cur_len);
+			अगर (rw == READ) अणु
+				स_नकल(pa, ba, cur_len);
 				flush_dcache_page(bv->bv_page);
-			} else {
+			पूर्ण अन्यथा अणु
 				flush_dcache_page(bv->bv_page);
-				memcpy(ba, pa, cur_len);
+				स_नकल(ba, pa, cur_len);
 				dm_bufio_mark_partial_buffer_dirty(b, buf_off, buf_off + cur_len);
-			}
+			पूर्ण
 
 			dm_bufio_release(b);
-		}
+		पूर्ण
 
 		pa += cur_len;
 		bv_len -= cur_len;
 		buf_off = 0;
 		block++;
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /* READ/WRITE: iterate bio vector's copying between (partial) pages and bufio blocks. */
-static int __ebs_rw_bio(struct ebs_c *ec, int rw, struct bio *bio)
-{
-	int r = 0, rr;
-	struct bio_vec bv;
-	struct bvec_iter iter;
+अटल पूर्णांक __ebs_rw_bio(काष्ठा ebs_c *ec, पूर्णांक rw, काष्ठा bio *bio)
+अणु
+	पूर्णांक r = 0, rr;
+	काष्ठा bio_vec bv;
+	काष्ठा bvec_iter iter;
 
-	bio_for_each_bvec(bv, bio, iter) {
+	bio_क्रम_each_bvec(bv, bio, iter) अणु
 		rr = __ebs_rw_bvec(ec, rw, &bv, &iter);
-		if (rr)
+		अगर (rr)
 			r = rr;
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
 /*
- * Discard bio's blocks, i.e. pass discards down.
+ * Discard bio's blocks, i.e. pass discards करोwn.
  *
- * Avoid discarding partial blocks at beginning and end;
- * return 0 in case no blocks can be discarded as a result.
+ * Aव्योम discarding partial blocks at beginning and end;
+ * वापस 0 in हाल no blocks can be discarded as a result.
  */
-static int __ebs_discard_bio(struct ebs_c *ec, struct bio *bio)
-{
+अटल पूर्णांक __ebs_discard_bio(काष्ठा ebs_c *ec, काष्ठा bio *bio)
+अणु
 	sector_t block, blocks, sector = bio->bi_iter.bi_sector;
 
 	block = __sector_to_block(ec, sector);
@@ -149,37 +150,37 @@ static int __ebs_discard_bio(struct ebs_c *ec, struct bio *bio)
 	 * Partial first underlying block (__nr_blocks() may have
 	 * resulted in one block).
 	 */
-	if (__block_mod(sector, ec->u_bs)) {
+	अगर (__block_mod(sector, ec->u_bs)) अणु
 		block++;
 		blocks--;
-	}
+	पूर्ण
 
-	/* Partial last underlying block if any. */
-	if (blocks && __block_mod(bio_end_sector(bio), ec->u_bs))
+	/* Partial last underlying block अगर any. */
+	अगर (blocks && __block_mod(bio_end_sector(bio), ec->u_bs))
 		blocks--;
 
-	return blocks ? dm_bufio_issue_discard(ec->bufio, block, blocks) : 0;
-}
+	वापस blocks ? dm_bufio_issue_discard(ec->bufio, block, blocks) : 0;
+पूर्ण
 
 /* Release blocks them from the bufio cache. */
-static void __ebs_forget_bio(struct ebs_c *ec, struct bio *bio)
-{
+अटल व्योम __ebs_क्रमget_bio(काष्ठा ebs_c *ec, काष्ठा bio *bio)
+अणु
 	sector_t blocks, sector = bio->bi_iter.bi_sector;
 
 	blocks = __nr_blocks(ec, bio);
 
-	dm_bufio_forget_buffers(ec->bufio, __sector_to_block(ec, sector), blocks);
-}
+	dm_bufio_क्रमget_buffers(ec->bufio, __sector_to_block(ec, sector), blocks);
+पूर्ण
 
 /* Worker function to process incoming bios. */
-static void __ebs_process_bios(struct work_struct *ws)
-{
-	int r;
-	bool write = false;
+अटल व्योम __ebs_process_bios(काष्ठा work_काष्ठा *ws)
+अणु
+	पूर्णांक r;
+	bool ग_लिखो = false;
 	sector_t block1, block2;
-	struct ebs_c *ec = container_of(ws, struct ebs_c, ws);
-	struct bio *bio;
-	struct bio_list bios;
+	काष्ठा ebs_c *ec = container_of(ws, काष्ठा ebs_c, ws);
+	काष्ठा bio *bio;
+	काष्ठा bio_list bios;
 
 	bio_list_init(&bios);
 
@@ -188,146 +189,146 @@ static void __ebs_process_bios(struct work_struct *ws)
 	bio_list_init(&ec->bios_in);
 	spin_unlock_irq(&ec->lock);
 
-	/* Prefetch all read and any mis-aligned write buffers */
-	bio_list_for_each(bio, &bios) {
+	/* Prefetch all पढ़ो and any mis-aligned ग_लिखो buffers */
+	bio_list_क्रम_each(bio, &bios) अणु
 		block1 = __sector_to_block(ec, bio->bi_iter.bi_sector);
-		if (bio_op(bio) == REQ_OP_READ)
+		अगर (bio_op(bio) == REQ_OP_READ)
 			dm_bufio_prefetch(ec->bufio, block1, __nr_blocks(ec, bio));
-		else if (bio_op(bio) == REQ_OP_WRITE && !(bio->bi_opf & REQ_PREFLUSH)) {
+		अन्यथा अगर (bio_op(bio) == REQ_OP_WRITE && !(bio->bi_opf & REQ_PREFLUSH)) अणु
 			block2 = __sector_to_block(ec, bio_end_sector(bio));
-			if (__block_mod(bio->bi_iter.bi_sector, ec->u_bs))
+			अगर (__block_mod(bio->bi_iter.bi_sector, ec->u_bs))
 				dm_bufio_prefetch(ec->bufio, block1, 1);
-			if (__block_mod(bio_end_sector(bio), ec->u_bs) && block2 != block1)
+			अगर (__block_mod(bio_end_sector(bio), ec->u_bs) && block2 != block1)
 				dm_bufio_prefetch(ec->bufio, block2, 1);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	bio_list_for_each(bio, &bios) {
+	bio_list_क्रम_each(bio, &bios) अणु
 		r = -EIO;
-		if (bio_op(bio) == REQ_OP_READ)
+		अगर (bio_op(bio) == REQ_OP_READ)
 			r = __ebs_rw_bio(ec, READ, bio);
-		else if (bio_op(bio) == REQ_OP_WRITE) {
-			write = true;
+		अन्यथा अगर (bio_op(bio) == REQ_OP_WRITE) अणु
+			ग_लिखो = true;
 			r = __ebs_rw_bio(ec, WRITE, bio);
-		} else if (bio_op(bio) == REQ_OP_DISCARD) {
-			__ebs_forget_bio(ec, bio);
+		पूर्ण अन्यथा अगर (bio_op(bio) == REQ_OP_DISCARD) अणु
+			__ebs_क्रमget_bio(ec, bio);
 			r = __ebs_discard_bio(ec, bio);
-		}
+		पूर्ण
 
-		if (r < 0)
-			bio->bi_status = errno_to_blk_status(r);
-	}
+		अगर (r < 0)
+			bio->bi_status = त्रुटि_सं_to_blk_status(r);
+	पूर्ण
 
 	/*
-	 * We write dirty buffers after processing I/O on them
-	 * but before we endio thus addressing REQ_FUA/REQ_SYNC.
+	 * We ग_लिखो dirty buffers after processing I/O on them
+	 * but beक्रमe we endio thus addressing REQ_FUA/REQ_SYNC.
 	 */
-	r = write ? dm_bufio_write_dirty_buffers(ec->bufio) : 0;
+	r = ग_लिखो ? dm_bufio_ग_लिखो_dirty_buffers(ec->bufio) : 0;
 
-	while ((bio = bio_list_pop(&bios))) {
+	जबतक ((bio = bio_list_pop(&bios))) अणु
 		/* Any other request is endioed. */
-		if (unlikely(r && bio_op(bio) == REQ_OP_WRITE))
+		अगर (unlikely(r && bio_op(bio) == REQ_OP_WRITE))
 			bio_io_error(bio);
-		else
+		अन्यथा
 			bio_endio(bio);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Construct an emulated block size mapping: <dev_path> <offset> <ebs> [<ubs>]
+ * Conकाष्ठा an emulated block size mapping: <dev_path> <offset> <ebs> [<ubs>]
  *
  * <dev_path>: path of the underlying device
- * <offset>: offset in 512 bytes sectors into <dev_path>
+ * <offset>: offset in 512 bytes sectors पूर्णांकo <dev_path>
  * <ebs>: emulated block size in units of 512 bytes exposed to the upper layer
  * [<ubs>]: underlying block size in units of 512 bytes imposed on the lower layer;
- * 	    optional, if not supplied, retrieve logical block size from underlying device
+ * 	    optional, अगर not supplied, retrieve logical block size from underlying device
  */
-static int ebs_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-{
-	int r;
-	unsigned short tmp1;
-	unsigned long long tmp;
-	char dummy;
-	struct ebs_c *ec;
+अटल पूर्णांक ebs_ctr(काष्ठा dm_target *ti, अचिन्हित पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक r;
+	अचिन्हित लघु पंचांगp1;
+	अचिन्हित दीर्घ दीर्घ पंचांगp;
+	अक्षर dummy;
+	काष्ठा ebs_c *ec;
 
-	if (argc < 3 || argc > 4) {
+	अगर (argc < 3 || argc > 4) अणु
 		ti->error = "Invalid argument count";
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	ec = ti->private = kzalloc(sizeof(*ec), GFP_KERNEL);
-	if (!ec) {
+	ec = ti->निजी = kzalloc(माप(*ec), GFP_KERNEL);
+	अगर (!ec) अणु
 		ti->error = "Cannot allocate ebs context";
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	r = -EINVAL;
-	if (sscanf(argv[1], "%llu%c", &tmp, &dummy) != 1 ||
-	    tmp != (sector_t)tmp ||
-	    (sector_t)tmp >= ti->len) {
+	अगर (माला_पूछो(argv[1], "%llu%c", &पंचांगp, &dummy) != 1 ||
+	    पंचांगp != (sector_t)पंचांगp ||
+	    (sector_t)पंचांगp >= ti->len) अणु
 		ti->error = "Invalid device offset sector";
-		goto bad;
-	}
-	ec->start = tmp;
+		जाओ bad;
+	पूर्ण
+	ec->start = पंचांगp;
 
-	if (sscanf(argv[2], "%hu%c", &tmp1, &dummy) != 1 ||
-	    !__ebs_check_bs(tmp1) ||
-	    to_bytes(tmp1) > PAGE_SIZE) {
+	अगर (माला_पूछो(argv[2], "%hu%c", &पंचांगp1, &dummy) != 1 ||
+	    !__ebs_check_bs(पंचांगp1) ||
+	    to_bytes(पंचांगp1) > PAGE_SIZE) अणु
 		ti->error = "Invalid emulated block size";
-		goto bad;
-	}
-	ec->e_bs = tmp1;
+		जाओ bad;
+	पूर्ण
+	ec->e_bs = पंचांगp1;
 
-	if (argc > 3) {
-		if (sscanf(argv[3], "%hu%c", &tmp1, &dummy) != 1 || !__ebs_check_bs(tmp1)) {
+	अगर (argc > 3) अणु
+		अगर (माला_पूछो(argv[3], "%hu%c", &पंचांगp1, &dummy) != 1 || !__ebs_check_bs(पंचांगp1)) अणु
 			ti->error = "Invalid underlying block size";
-			goto bad;
-		}
-		ec->u_bs = tmp1;
+			जाओ bad;
+		पूर्ण
+		ec->u_bs = पंचांगp1;
 		ec->u_bs_set = true;
-	} else
+	पूर्ण अन्यथा
 		ec->u_bs_set = false;
 
 	r = dm_get_device(ti, argv[0], dm_table_get_mode(ti->table), &ec->dev);
-	if (r) {
+	अगर (r) अणु
 		ti->error = "Device lookup failed";
-		ec->dev = NULL;
-		goto bad;
-	}
+		ec->dev = शून्य;
+		जाओ bad;
+	पूर्ण
 
 	r = -EINVAL;
-	if (!ec->u_bs_set) {
+	अगर (!ec->u_bs_set) अणु
 		ec->u_bs = to_sector(bdev_logical_block_size(ec->dev->bdev));
-		if (!__ebs_check_bs(ec->u_bs)) {
+		अगर (!__ebs_check_bs(ec->u_bs)) अणु
 			ti->error = "Invalid retrieved underlying block size";
-			goto bad;
-		}
-	}
+			जाओ bad;
+		पूर्ण
+	पूर्ण
 
-	if (!ec->u_bs_set && ec->e_bs == ec->u_bs)
+	अगर (!ec->u_bs_set && ec->e_bs == ec->u_bs)
 		DMINFO("Emulation superfluous: emulated equal to underlying block size");
 
-	if (__block_mod(ec->start, ec->u_bs)) {
+	अगर (__block_mod(ec->start, ec->u_bs)) अणु
 		ti->error = "Device offset must be multiple of underlying block size";
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	ec->bufio = dm_bufio_client_create(ec->dev->bdev, to_bytes(ec->u_bs), 1, 0, NULL, NULL);
-	if (IS_ERR(ec->bufio)) {
+	ec->bufio = dm_bufio_client_create(ec->dev->bdev, to_bytes(ec->u_bs), 1, 0, शून्य, शून्य);
+	अगर (IS_ERR(ec->bufio)) अणु
 		ti->error = "Cannot create dm bufio client";
 		r = PTR_ERR(ec->bufio);
-		ec->bufio = NULL;
-		goto bad;
-	}
+		ec->bufio = शून्य;
+		जाओ bad;
+	पूर्ण
 
 	ec->wq = alloc_ordered_workqueue("dm-" DM_MSG_PREFIX, WQ_MEM_RECLAIM);
-	if (!ec->wq) {
+	अगर (!ec->wq) अणु
 		ti->error = "Cannot create dm-" DM_MSG_PREFIX " workqueue";
 		r = -ENOMEM;
-		goto bad;
-	}
+		जाओ bad;
+	पूर्ण
 
-	ec->block_shift = __ffs(ec->u_bs);
+	ec->block_shअगरt = __ffs(ec->u_bs);
 	INIT_WORK(&ec->ws, &__ebs_process_bios);
 	bio_list_init(&ec->bios_in);
 	spin_lock_init(&ec->lock);
@@ -335,136 +336,136 @@ static int ebs_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 	ti->num_flush_bios = 1;
 	ti->num_discard_bios = 1;
 	ti->num_secure_erase_bios = 0;
-	ti->num_write_same_bios = 0;
-	ti->num_write_zeroes_bios = 0;
-	return 0;
+	ti->num_ग_लिखो_same_bios = 0;
+	ti->num_ग_लिखो_zeroes_bios = 0;
+	वापस 0;
 bad:
 	ebs_dtr(ti);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void ebs_dtr(struct dm_target *ti)
-{
-	struct ebs_c *ec = ti->private;
+अटल व्योम ebs_dtr(काष्ठा dm_target *ti)
+अणु
+	काष्ठा ebs_c *ec = ti->निजी;
 
-	if (ec->wq)
+	अगर (ec->wq)
 		destroy_workqueue(ec->wq);
-	if (ec->bufio)
+	अगर (ec->bufio)
 		dm_bufio_client_destroy(ec->bufio);
-	if (ec->dev)
+	अगर (ec->dev)
 		dm_put_device(ti, ec->dev);
-	kfree(ec);
-}
+	kमुक्त(ec);
+पूर्ण
 
-static int ebs_map(struct dm_target *ti, struct bio *bio)
-{
-	struct ebs_c *ec = ti->private;
+अटल पूर्णांक ebs_map(काष्ठा dm_target *ti, काष्ठा bio *bio)
+अणु
+	काष्ठा ebs_c *ec = ti->निजी;
 
 	bio_set_dev(bio, ec->dev->bdev);
 	bio->bi_iter.bi_sector = ec->start + dm_target_offset(ti, bio->bi_iter.bi_sector);
 
-	if (unlikely(bio_op(bio) == REQ_OP_FLUSH))
-		return DM_MAPIO_REMAPPED;
+	अगर (unlikely(bio_op(bio) == REQ_OP_FLUSH))
+		वापस DM_MAPIO_REMAPPED;
 	/*
-	 * Only queue for bufio processing in case of partial or overlapping buffers
+	 * Only queue क्रम bufio processing in हाल of partial or overlapping buffers
 	 * -or-
-	 * emulation with ebs == ubs aiming for tests of dm-bufio overhead.
+	 * emulation with ebs == ubs aiming क्रम tests of dm-bufio overhead.
 	 */
-	if (likely(__block_mod(bio->bi_iter.bi_sector, ec->u_bs) ||
+	अगर (likely(__block_mod(bio->bi_iter.bi_sector, ec->u_bs) ||
 		   __block_mod(bio_end_sector(bio), ec->u_bs) ||
-		   ec->e_bs == ec->u_bs)) {
+		   ec->e_bs == ec->u_bs)) अणु
 		spin_lock_irq(&ec->lock);
 		bio_list_add(&ec->bios_in, bio);
 		spin_unlock_irq(&ec->lock);
 
 		queue_work(ec->wq, &ec->ws);
 
-		return DM_MAPIO_SUBMITTED;
-	}
+		वापस DM_MAPIO_SUBMITTED;
+	पूर्ण
 
 	/* Forget any buffer content relative to this direct backing device I/O. */
-	__ebs_forget_bio(ec, bio);
+	__ebs_क्रमget_bio(ec, bio);
 
-	return DM_MAPIO_REMAPPED;
-}
+	वापस DM_MAPIO_REMAPPED;
+पूर्ण
 
-static void ebs_status(struct dm_target *ti, status_type_t type,
-		       unsigned status_flags, char *result, unsigned maxlen)
-{
-	struct ebs_c *ec = ti->private;
+अटल व्योम ebs_status(काष्ठा dm_target *ti, status_type_t type,
+		       अचिन्हित status_flags, अक्षर *result, अचिन्हित maxlen)
+अणु
+	काष्ठा ebs_c *ec = ti->निजी;
 
-	switch (type) {
-	case STATUSTYPE_INFO:
+	चयन (type) अणु
+	हाल STATUSTYPE_INFO:
 		*result = '\0';
-		break;
-	case STATUSTYPE_TABLE:
-		snprintf(result, maxlen, ec->u_bs_set ? "%s %llu %u %u" : "%s %llu %u",
-			 ec->dev->name, (unsigned long long) ec->start, ec->e_bs, ec->u_bs);
-		break;
-	}
-}
+		अवरोध;
+	हाल STATUSTYPE_TABLE:
+		snम_लिखो(result, maxlen, ec->u_bs_set ? "%s %llu %u %u" : "%s %llu %u",
+			 ec->dev->name, (अचिन्हित दीर्घ दीर्घ) ec->start, ec->e_bs, ec->u_bs);
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int ebs_prepare_ioctl(struct dm_target *ti, struct block_device **bdev)
-{
-	struct ebs_c *ec = ti->private;
-	struct dm_dev *dev = ec->dev;
+अटल पूर्णांक ebs_prepare_ioctl(काष्ठा dm_target *ti, काष्ठा block_device **bdev)
+अणु
+	काष्ठा ebs_c *ec = ti->निजी;
+	काष्ठा dm_dev *dev = ec->dev;
 
 	/*
-	 * Only pass ioctls through if the device sizes match exactly.
+	 * Only pass ioctls through अगर the device sizes match exactly.
 	 */
 	*bdev = dev->bdev;
-	return !!(ec->start || ti->len != i_size_read(dev->bdev->bd_inode) >> SECTOR_SHIFT);
-}
+	वापस !!(ec->start || ti->len != i_size_पढ़ो(dev->bdev->bd_inode) >> SECTOR_SHIFT);
+पूर्ण
 
-static void ebs_io_hints(struct dm_target *ti, struct queue_limits *limits)
-{
-	struct ebs_c *ec = ti->private;
+अटल व्योम ebs_io_hपूर्णांकs(काष्ठा dm_target *ti, काष्ठा queue_limits *limits)
+अणु
+	काष्ठा ebs_c *ec = ti->निजी;
 
 	limits->logical_block_size = to_bytes(ec->e_bs);
 	limits->physical_block_size = to_bytes(ec->u_bs);
 	limits->alignment_offset = limits->physical_block_size;
 	blk_limits_io_min(limits, limits->logical_block_size);
-}
+पूर्ण
 
-static int ebs_iterate_devices(struct dm_target *ti,
-				  iterate_devices_callout_fn fn, void *data)
-{
-	struct ebs_c *ec = ti->private;
+अटल पूर्णांक ebs_iterate_devices(काष्ठा dm_target *ti,
+				  iterate_devices_callout_fn fn, व्योम *data)
+अणु
+	काष्ठा ebs_c *ec = ti->निजी;
 
-	return fn(ti, ec->dev, ec->start, ti->len, data);
-}
+	वापस fn(ti, ec->dev, ec->start, ti->len, data);
+पूर्ण
 
-static struct target_type ebs_target = {
+अटल काष्ठा target_type ebs_target = अणु
 	.name		 = "ebs",
-	.version	 = {1, 0, 1},
+	.version	 = अणु1, 0, 1पूर्ण,
 	.features	 = DM_TARGET_PASSES_INTEGRITY,
 	.module		 = THIS_MODULE,
 	.ctr		 = ebs_ctr,
 	.dtr		 = ebs_dtr,
 	.map		 = ebs_map,
 	.status		 = ebs_status,
-	.io_hints	 = ebs_io_hints,
+	.io_hपूर्णांकs	 = ebs_io_hपूर्णांकs,
 	.prepare_ioctl	 = ebs_prepare_ioctl,
 	.iterate_devices = ebs_iterate_devices,
-};
+पूर्ण;
 
-static int __init dm_ebs_init(void)
-{
-	int r = dm_register_target(&ebs_target);
+अटल पूर्णांक __init dm_ebs_init(व्योम)
+अणु
+	पूर्णांक r = dm_रेजिस्टर_target(&ebs_target);
 
-	if (r < 0)
+	अगर (r < 0)
 		DMERR("register failed %d", r);
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static void dm_ebs_exit(void)
-{
-	dm_unregister_target(&ebs_target);
-}
+अटल व्योम dm_ebs_निकास(व्योम)
+अणु
+	dm_unरेजिस्टर_target(&ebs_target);
+पूर्ण
 
 module_init(dm_ebs_init);
-module_exit(dm_ebs_exit);
+module_निकास(dm_ebs_निकास);
 
 MODULE_AUTHOR("Heinz Mauelshagen <dm-devel@redhat.com>");
 MODULE_DESCRIPTION(DM_NAME " emulated block size target");

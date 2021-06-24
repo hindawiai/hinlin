@@ -1,232 +1,233 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Driver for the Texas Instruments DP83822, DP83825 and DP83826 PHYs.
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Driver क्रम the Texas Instruments DP83822, DP83825 and DP83826 PHYs.
  *
  * Copyright (C) 2017 Texas Instruments Inc.
  */
 
-#include <linux/ethtool.h>
-#include <linux/etherdevice.h>
-#include <linux/kernel.h>
-#include <linux/mii.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/phy.h>
-#include <linux/netdevice.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mii.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/netdevice.h>
 
-#define DP83822_PHY_ID	        0x2000a240
-#define DP83825S_PHY_ID		0x2000a140
-#define DP83825I_PHY_ID		0x2000a150
-#define DP83825CM_PHY_ID	0x2000a160
-#define DP83825CS_PHY_ID	0x2000a170
-#define DP83826C_PHY_ID		0x2000a130
-#define DP83826NC_PHY_ID	0x2000a110
+#घोषणा DP83822_PHY_ID	        0x2000a240
+#घोषणा DP83825S_PHY_ID		0x2000a140
+#घोषणा DP83825I_PHY_ID		0x2000a150
+#घोषणा DP83825CM_PHY_ID	0x2000a160
+#घोषणा DP83825CS_PHY_ID	0x2000a170
+#घोषणा DP83826C_PHY_ID		0x2000a130
+#घोषणा DP83826NC_PHY_ID	0x2000a110
 
-#define DP83822_DEVADDR		0x1f
+#घोषणा DP83822_DEVADDR		0x1f
 
-#define MII_DP83822_CTRL_2	0x0a
-#define MII_DP83822_PHYSTS	0x10
-#define MII_DP83822_PHYSCR	0x11
-#define MII_DP83822_MISR1	0x12
-#define MII_DP83822_MISR2	0x13
-#define MII_DP83822_FCSCR	0x14
-#define MII_DP83822_RCSR	0x17
-#define MII_DP83822_RESET_CTRL	0x1f
-#define MII_DP83822_GENCFG	0x465
-#define MII_DP83822_SOR1	0x467
+#घोषणा MII_DP83822_CTRL_2	0x0a
+#घोषणा MII_DP83822_PHYSTS	0x10
+#घोषणा MII_DP83822_PHYSCR	0x11
+#घोषणा MII_DP83822_MISR1	0x12
+#घोषणा MII_DP83822_MISR2	0x13
+#घोषणा MII_DP83822_FCSCR	0x14
+#घोषणा MII_DP83822_RCSR	0x17
+#घोषणा MII_DP83822_RESET_CTRL	0x1f
+#घोषणा MII_DP83822_GENCFG	0x465
+#घोषणा MII_DP83822_SOR1	0x467
 
 /* GENCFG */
-#define DP83822_SIG_DET_LOW	BIT(0)
+#घोषणा DP83822_SIG_DET_LOW	BIT(0)
 
 /* Control Register 2 bits */
-#define DP83822_FX_ENABLE	BIT(14)
+#घोषणा DP83822_FX_ENABLE	BIT(14)
 
-#define DP83822_HW_RESET	BIT(15)
-#define DP83822_SW_RESET	BIT(14)
+#घोषणा DP83822_HW_RESET	BIT(15)
+#घोषणा DP83822_SW_RESET	BIT(14)
 
 /* PHY STS bits */
-#define DP83822_PHYSTS_DUPLEX			BIT(2)
-#define DP83822_PHYSTS_10			BIT(1)
-#define DP83822_PHYSTS_LINK			BIT(0)
+#घोषणा DP83822_PHYSTS_DUPLEX			BIT(2)
+#घोषणा DP83822_PHYSTS_10			BIT(1)
+#घोषणा DP83822_PHYSTS_LINK			BIT(0)
 
 /* PHYSCR Register Fields */
-#define DP83822_PHYSCR_INT_OE		BIT(0) /* Interrupt Output Enable */
-#define DP83822_PHYSCR_INTEN		BIT(1) /* Interrupt Enable */
+#घोषणा DP83822_PHYSCR_INT_OE		BIT(0) /* Interrupt Output Enable */
+#घोषणा DP83822_PHYSCR_INTEN		BIT(1) /* Interrupt Enable */
 
 /* MISR1 bits */
-#define DP83822_RX_ERR_HF_INT_EN	BIT(0)
-#define DP83822_FALSE_CARRIER_HF_INT_EN	BIT(1)
-#define DP83822_ANEG_COMPLETE_INT_EN	BIT(2)
-#define DP83822_DUP_MODE_CHANGE_INT_EN	BIT(3)
-#define DP83822_SPEED_CHANGED_INT_EN	BIT(4)
-#define DP83822_LINK_STAT_INT_EN	BIT(5)
-#define DP83822_ENERGY_DET_INT_EN	BIT(6)
-#define DP83822_LINK_QUAL_INT_EN	BIT(7)
+#घोषणा DP83822_RX_ERR_HF_INT_EN	BIT(0)
+#घोषणा DP83822_FALSE_CARRIER_HF_INT_EN	BIT(1)
+#घोषणा DP83822_ANEG_COMPLETE_INT_EN	BIT(2)
+#घोषणा DP83822_DUP_MODE_CHANGE_INT_EN	BIT(3)
+#घोषणा DP83822_SPEED_CHANGED_INT_EN	BIT(4)
+#घोषणा DP83822_LINK_STAT_INT_EN	BIT(5)
+#घोषणा DP83822_ENERGY_DET_INT_EN	BIT(6)
+#घोषणा DP83822_LINK_QUAL_INT_EN	BIT(7)
 
 /* MISR2 bits */
-#define DP83822_JABBER_DET_INT_EN	BIT(0)
-#define DP83822_WOL_PKT_INT_EN		BIT(1)
-#define DP83822_SLEEP_MODE_INT_EN	BIT(2)
-#define DP83822_MDI_XOVER_INT_EN	BIT(3)
-#define DP83822_LB_FIFO_INT_EN		BIT(4)
-#define DP83822_PAGE_RX_INT_EN		BIT(5)
-#define DP83822_ANEG_ERR_INT_EN		BIT(6)
-#define DP83822_EEE_ERROR_CHANGE_INT_EN	BIT(7)
+#घोषणा DP83822_JABBER_DET_INT_EN	BIT(0)
+#घोषणा DP83822_WOL_PKT_INT_EN		BIT(1)
+#घोषणा DP83822_SLEEP_MODE_INT_EN	BIT(2)
+#घोषणा DP83822_MDI_XOVER_INT_EN	BIT(3)
+#घोषणा DP83822_LB_FIFO_INT_EN		BIT(4)
+#घोषणा DP83822_PAGE_RX_INT_EN		BIT(5)
+#घोषणा DP83822_ANEG_ERR_INT_EN		BIT(6)
+#घोषणा DP83822_EEE_ERROR_CHANGE_INT_EN	BIT(7)
 
 /* INT_STAT1 bits */
-#define DP83822_WOL_INT_EN	BIT(4)
-#define DP83822_WOL_INT_STAT	BIT(12)
+#घोषणा DP83822_WOL_INT_EN	BIT(4)
+#घोषणा DP83822_WOL_INT_STAT	BIT(12)
 
-#define MII_DP83822_RXSOP1	0x04a5
-#define	MII_DP83822_RXSOP2	0x04a6
-#define	MII_DP83822_RXSOP3	0x04a7
+#घोषणा MII_DP83822_RXSOP1	0x04a5
+#घोषणा	MII_DP83822_RXSOP2	0x04a6
+#घोषणा	MII_DP83822_RXSOP3	0x04a7
 
 /* WoL Registers */
-#define	MII_DP83822_WOL_CFG	0x04a0
-#define	MII_DP83822_WOL_STAT	0x04a1
-#define	MII_DP83822_WOL_DA1	0x04a2
-#define	MII_DP83822_WOL_DA2	0x04a3
-#define	MII_DP83822_WOL_DA3	0x04a4
+#घोषणा	MII_DP83822_WOL_CFG	0x04a0
+#घोषणा	MII_DP83822_WOL_STAT	0x04a1
+#घोषणा	MII_DP83822_WOL_DA1	0x04a2
+#घोषणा	MII_DP83822_WOL_DA2	0x04a3
+#घोषणा	MII_DP83822_WOL_DA3	0x04a4
 
 /* WoL bits */
-#define DP83822_WOL_MAGIC_EN	BIT(0)
-#define DP83822_WOL_SECURE_ON	BIT(5)
-#define DP83822_WOL_EN		BIT(7)
-#define DP83822_WOL_INDICATION_SEL BIT(8)
-#define DP83822_WOL_CLR_INDICATION BIT(11)
+#घोषणा DP83822_WOL_MAGIC_EN	BIT(0)
+#घोषणा DP83822_WOL_SECURE_ON	BIT(5)
+#घोषणा DP83822_WOL_EN		BIT(7)
+#घोषणा DP83822_WOL_INDICATION_SEL BIT(8)
+#घोषणा DP83822_WOL_CLR_INDICATION BIT(11)
 
 /* RSCR bits */
-#define DP83822_RX_CLK_SHIFT	BIT(12)
-#define DP83822_TX_CLK_SHIFT	BIT(11)
+#घोषणा DP83822_RX_CLK_SHIFT	BIT(12)
+#घोषणा DP83822_TX_CLK_SHIFT	BIT(11)
 
 /* SOR1 mode */
-#define DP83822_STRAP_MODE1	0
-#define DP83822_STRAP_MODE2	BIT(0)
-#define DP83822_STRAP_MODE3	BIT(1)
-#define DP83822_STRAP_MODE4	GENMASK(1, 0)
+#घोषणा DP83822_STRAP_MODE1	0
+#घोषणा DP83822_STRAP_MODE2	BIT(0)
+#घोषणा DP83822_STRAP_MODE3	BIT(1)
+#घोषणा DP83822_STRAP_MODE4	GENMASK(1, 0)
 
-#define DP83822_COL_STRAP_MASK	GENMASK(11, 10)
-#define DP83822_COL_SHIFT	10
-#define DP83822_RX_ER_STR_MASK	GENMASK(9, 8)
-#define DP83822_RX_ER_SHIFT	8
+#घोषणा DP83822_COL_STRAP_MASK	GENMASK(11, 10)
+#घोषणा DP83822_COL_SHIFT	10
+#घोषणा DP83822_RX_ER_STR_MASK	GENMASK(9, 8)
+#घोषणा DP83822_RX_ER_SHIFT	8
 
-#define MII_DP83822_FIBER_ADVERTISE    (ADVERTISED_TP | ADVERTISED_MII | \
+#घोषणा MII_DP83822_FIBER_ADVERTISE    (ADVERTISED_TP | ADVERTISED_MII | \
 					ADVERTISED_FIBRE | \
 					ADVERTISED_Pause | ADVERTISED_Asym_Pause)
 
-struct dp83822_private {
-	bool fx_signal_det_low;
-	int fx_enabled;
+काष्ठा dp83822_निजी अणु
+	bool fx_संकेत_det_low;
+	पूर्णांक fx_enabled;
 	u16 fx_sd_enable;
-};
+पूर्ण;
 
-static int dp83822_set_wol(struct phy_device *phydev,
-			   struct ethtool_wolinfo *wol)
-{
-	struct net_device *ndev = phydev->attached_dev;
+अटल पूर्णांक dp83822_set_wol(काष्ठा phy_device *phydev,
+			   काष्ठा ethtool_wolinfo *wol)
+अणु
+	काष्ठा net_device *ndev = phydev->attached_dev;
 	u16 value;
-	const u8 *mac;
+	स्थिर u8 *mac;
 
-	if (wol->wolopts & (WAKE_MAGIC | WAKE_MAGICSECURE)) {
-		mac = (const u8 *)ndev->dev_addr;
+	अगर (wol->wolopts & (WAKE_MAGIC | WAKE_MAGICSECURE)) अणु
+		mac = (स्थिर u8 *)ndev->dev_addr;
 
-		if (!is_valid_ether_addr(mac))
-			return -EINVAL;
+		अगर (!is_valid_ether_addr(mac))
+			वापस -EINVAL;
 
 		/* MAC addresses start with byte 5, but stored in mac[0].
 		 * 822 PHYs store bytes 4|5, 2|3, 0|1
 		 */
-		phy_write_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_DA1,
+		phy_ग_लिखो_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_DA1,
 			      (mac[1] << 8) | mac[0]);
-		phy_write_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_DA2,
+		phy_ग_लिखो_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_DA2,
 			      (mac[3] << 8) | mac[2]);
-		phy_write_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_DA3,
+		phy_ग_लिखो_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_DA3,
 			      (mac[5] << 8) | mac[4]);
 
-		value = phy_read_mmd(phydev, DP83822_DEVADDR,
+		value = phy_पढ़ो_mmd(phydev, DP83822_DEVADDR,
 				     MII_DP83822_WOL_CFG);
-		if (wol->wolopts & WAKE_MAGIC)
+		अगर (wol->wolopts & WAKE_MAGIC)
 			value |= DP83822_WOL_MAGIC_EN;
-		else
+		अन्यथा
 			value &= ~DP83822_WOL_MAGIC_EN;
 
-		if (wol->wolopts & WAKE_MAGICSECURE) {
-			phy_write_mmd(phydev, DP83822_DEVADDR,
+		अगर (wol->wolopts & WAKE_MAGICSECURE) अणु
+			phy_ग_लिखो_mmd(phydev, DP83822_DEVADDR,
 				      MII_DP83822_RXSOP1,
 				      (wol->sopass[1] << 8) | wol->sopass[0]);
-			phy_write_mmd(phydev, DP83822_DEVADDR,
+			phy_ग_लिखो_mmd(phydev, DP83822_DEVADDR,
 				      MII_DP83822_RXSOP2,
 				      (wol->sopass[3] << 8) | wol->sopass[2]);
-			phy_write_mmd(phydev, DP83822_DEVADDR,
+			phy_ग_लिखो_mmd(phydev, DP83822_DEVADDR,
 				      MII_DP83822_RXSOP3,
 				      (wol->sopass[5] << 8) | wol->sopass[4]);
 			value |= DP83822_WOL_SECURE_ON;
-		} else {
+		पूर्ण अन्यथा अणु
 			value &= ~DP83822_WOL_SECURE_ON;
-		}
+		पूर्ण
 
-		/* Clear any pending WoL interrupt */
-		phy_read(phydev, MII_DP83822_MISR2);
+		/* Clear any pending WoL पूर्णांकerrupt */
+		phy_पढ़ो(phydev, MII_DP83822_MISR2);
 
 		value |= DP83822_WOL_EN | DP83822_WOL_INDICATION_SEL |
 			 DP83822_WOL_CLR_INDICATION;
 
-		return phy_write_mmd(phydev, DP83822_DEVADDR,
+		वापस phy_ग_लिखो_mmd(phydev, DP83822_DEVADDR,
 				     MII_DP83822_WOL_CFG, value);
-	} else {
-		return phy_clear_bits_mmd(phydev, DP83822_DEVADDR,
+	पूर्ण अन्यथा अणु
+		वापस phy_clear_bits_mmd(phydev, DP83822_DEVADDR,
 					  MII_DP83822_WOL_CFG, DP83822_WOL_EN);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void dp83822_get_wol(struct phy_device *phydev,
-			    struct ethtool_wolinfo *wol)
-{
-	int value;
+अटल व्योम dp83822_get_wol(काष्ठा phy_device *phydev,
+			    काष्ठा ethtool_wolinfo *wol)
+अणु
+	पूर्णांक value;
 	u16 sopass_val;
 
 	wol->supported = (WAKE_MAGIC | WAKE_MAGICSECURE);
 	wol->wolopts = 0;
 
-	value = phy_read_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_CFG);
+	value = phy_पढ़ो_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_CFG);
 
-	if (value & DP83822_WOL_MAGIC_EN)
+	अगर (value & DP83822_WOL_MAGIC_EN)
 		wol->wolopts |= WAKE_MAGIC;
 
-	if (value & DP83822_WOL_SECURE_ON) {
-		sopass_val = phy_read_mmd(phydev, DP83822_DEVADDR,
+	अगर (value & DP83822_WOL_SECURE_ON) अणु
+		sopass_val = phy_पढ़ो_mmd(phydev, DP83822_DEVADDR,
 					  MII_DP83822_RXSOP1);
 		wol->sopass[0] = (sopass_val & 0xff);
 		wol->sopass[1] = (sopass_val >> 8);
 
-		sopass_val = phy_read_mmd(phydev, DP83822_DEVADDR,
+		sopass_val = phy_पढ़ो_mmd(phydev, DP83822_DEVADDR,
 					  MII_DP83822_RXSOP2);
 		wol->sopass[2] = (sopass_val & 0xff);
 		wol->sopass[3] = (sopass_val >> 8);
 
-		sopass_val = phy_read_mmd(phydev, DP83822_DEVADDR,
+		sopass_val = phy_पढ़ो_mmd(phydev, DP83822_DEVADDR,
 					  MII_DP83822_RXSOP3);
 		wol->sopass[4] = (sopass_val & 0xff);
 		wol->sopass[5] = (sopass_val >> 8);
 
 		wol->wolopts |= WAKE_MAGICSECURE;
-	}
+	पूर्ण
 
 	/* WoL is not enabled so set wolopts to 0 */
-	if (!(value & DP83822_WOL_EN))
+	अगर (!(value & DP83822_WOL_EN))
 		wol->wolopts = 0;
-}
+पूर्ण
 
-static int dp83822_config_intr(struct phy_device *phydev)
-{
-	struct dp83822_private *dp83822 = phydev->priv;
-	int misr_status;
-	int physcr_status;
-	int err;
+अटल पूर्णांक dp83822_config_पूर्णांकr(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा dp83822_निजी *dp83822 = phydev->priv;
+	पूर्णांक misr_status;
+	पूर्णांक physcr_status;
+	पूर्णांक err;
 
-	if (phydev->interrupts == PHY_INTERRUPT_ENABLED) {
-		misr_status = phy_read(phydev, MII_DP83822_MISR1);
-		if (misr_status < 0)
-			return misr_status;
+	अगर (phydev->पूर्णांकerrupts == PHY_INTERRUPT_ENABLED) अणु
+		misr_status = phy_पढ़ो(phydev, MII_DP83822_MISR1);
+		अगर (misr_status < 0)
+			वापस misr_status;
 
 		misr_status |= (DP83822_RX_ERR_HF_INT_EN |
 				DP83822_FALSE_CARRIER_HF_INT_EN |
@@ -234,19 +235,19 @@ static int dp83822_config_intr(struct phy_device *phydev)
 				DP83822_ENERGY_DET_INT_EN |
 				DP83822_LINK_QUAL_INT_EN);
 
-		if (!dp83822->fx_enabled)
+		अगर (!dp83822->fx_enabled)
 			misr_status |= DP83822_ANEG_COMPLETE_INT_EN |
 				       DP83822_DUP_MODE_CHANGE_INT_EN |
 				       DP83822_SPEED_CHANGED_INT_EN;
 
 
-		err = phy_write(phydev, MII_DP83822_MISR1, misr_status);
-		if (err < 0)
-			return err;
+		err = phy_ग_लिखो(phydev, MII_DP83822_MISR1, misr_status);
+		अगर (err < 0)
+			वापस err;
 
-		misr_status = phy_read(phydev, MII_DP83822_MISR2);
-		if (misr_status < 0)
-			return misr_status;
+		misr_status = phy_पढ़ो(phydev, MII_DP83822_MISR2);
+		अगर (misr_status < 0)
+			वापस misr_status;
 
 		misr_status |= (DP83822_JABBER_DET_INT_EN |
 				DP83822_SLEEP_MODE_INT_EN |
@@ -254,169 +255,169 @@ static int dp83822_config_intr(struct phy_device *phydev)
 				DP83822_PAGE_RX_INT_EN |
 				DP83822_EEE_ERROR_CHANGE_INT_EN);
 
-		if (!dp83822->fx_enabled)
+		अगर (!dp83822->fx_enabled)
 			misr_status |= DP83822_MDI_XOVER_INT_EN |
 				       DP83822_ANEG_ERR_INT_EN |
 				       DP83822_WOL_PKT_INT_EN;
 
-		err = phy_write(phydev, MII_DP83822_MISR2, misr_status);
-		if (err < 0)
-			return err;
+		err = phy_ग_लिखो(phydev, MII_DP83822_MISR2, misr_status);
+		अगर (err < 0)
+			वापस err;
 
-		physcr_status = phy_read(phydev, MII_DP83822_PHYSCR);
-		if (physcr_status < 0)
-			return physcr_status;
+		physcr_status = phy_पढ़ो(phydev, MII_DP83822_PHYSCR);
+		अगर (physcr_status < 0)
+			वापस physcr_status;
 
 		physcr_status |= DP83822_PHYSCR_INT_OE | DP83822_PHYSCR_INTEN;
 
-	} else {
-		err = phy_write(phydev, MII_DP83822_MISR1, 0);
-		if (err < 0)
-			return err;
+	पूर्ण अन्यथा अणु
+		err = phy_ग_लिखो(phydev, MII_DP83822_MISR1, 0);
+		अगर (err < 0)
+			वापस err;
 
-		err = phy_write(phydev, MII_DP83822_MISR1, 0);
-		if (err < 0)
-			return err;
+		err = phy_ग_लिखो(phydev, MII_DP83822_MISR1, 0);
+		अगर (err < 0)
+			वापस err;
 
-		physcr_status = phy_read(phydev, MII_DP83822_PHYSCR);
-		if (physcr_status < 0)
-			return physcr_status;
+		physcr_status = phy_पढ़ो(phydev, MII_DP83822_PHYSCR);
+		अगर (physcr_status < 0)
+			वापस physcr_status;
 
 		physcr_status &= ~DP83822_PHYSCR_INTEN;
-	}
+	पूर्ण
 
-	return phy_write(phydev, MII_DP83822_PHYSCR, physcr_status);
-}
+	वापस phy_ग_लिखो(phydev, MII_DP83822_PHYSCR, physcr_status);
+पूर्ण
 
-static irqreturn_t dp83822_handle_interrupt(struct phy_device *phydev)
-{
+अटल irqवापस_t dp83822_handle_पूर्णांकerrupt(काष्ठा phy_device *phydev)
+अणु
 	bool trigger_machine = false;
-	int irq_status;
+	पूर्णांक irq_status;
 
-	/* The MISR1 and MISR2 registers are holding the interrupt status in
-	 * the upper half (15:8), while the lower half (7:0) is used for
-	 * controlling the interrupt enable state of those individual interrupt
-	 * sources. To determine the possible interrupt sources, just read the
-	 * MISR* register and use it directly to know which interrupts have
+	/* The MISR1 and MISR2 रेजिस्टरs are holding the पूर्णांकerrupt status in
+	 * the upper half (15:8), जबतक the lower half (7:0) is used क्रम
+	 * controlling the पूर्णांकerrupt enable state of those inभागidual पूर्णांकerrupt
+	 * sources. To determine the possible पूर्णांकerrupt sources, just पढ़ो the
+	 * MISR* रेजिस्टर and use it directly to know which पूर्णांकerrupts have
 	 * been enabled previously or not.
 	 */
-	irq_status = phy_read(phydev, MII_DP83822_MISR1);
-	if (irq_status < 0) {
+	irq_status = phy_पढ़ो(phydev, MII_DP83822_MISR1);
+	अगर (irq_status < 0) अणु
 		phy_error(phydev);
-		return IRQ_NONE;
-	}
-	if (irq_status & ((irq_status & GENMASK(7, 0)) << 8))
+		वापस IRQ_NONE;
+	पूर्ण
+	अगर (irq_status & ((irq_status & GENMASK(7, 0)) << 8))
 		trigger_machine = true;
 
-	irq_status = phy_read(phydev, MII_DP83822_MISR2);
-	if (irq_status < 0) {
+	irq_status = phy_पढ़ो(phydev, MII_DP83822_MISR2);
+	अगर (irq_status < 0) अणु
 		phy_error(phydev);
-		return IRQ_NONE;
-	}
-	if (irq_status & ((irq_status & GENMASK(7, 0)) << 8))
+		वापस IRQ_NONE;
+	पूर्ण
+	अगर (irq_status & ((irq_status & GENMASK(7, 0)) << 8))
 		trigger_machine = true;
 
-	if (!trigger_machine)
-		return IRQ_NONE;
+	अगर (!trigger_machine)
+		वापस IRQ_NONE;
 
 	phy_trigger_machine(phydev);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int dp8382x_disable_wol(struct phy_device *phydev)
-{
-	int value = DP83822_WOL_EN | DP83822_WOL_MAGIC_EN |
+अटल पूर्णांक dp8382x_disable_wol(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक value = DP83822_WOL_EN | DP83822_WOL_MAGIC_EN |
 		    DP83822_WOL_SECURE_ON;
 
-	return phy_clear_bits_mmd(phydev, DP83822_DEVADDR,
+	वापस phy_clear_bits_mmd(phydev, DP83822_DEVADDR,
 				  MII_DP83822_WOL_CFG, value);
-}
+पूर्ण
 
-static int dp83822_read_status(struct phy_device *phydev)
-{
-	struct dp83822_private *dp83822 = phydev->priv;
-	int status = phy_read(phydev, MII_DP83822_PHYSTS);
-	int ctrl2;
-	int ret;
+अटल पूर्णांक dp83822_पढ़ो_status(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा dp83822_निजी *dp83822 = phydev->priv;
+	पूर्णांक status = phy_पढ़ो(phydev, MII_DP83822_PHYSTS);
+	पूर्णांक ctrl2;
+	पूर्णांक ret;
 
-	if (dp83822->fx_enabled) {
-		if (status & DP83822_PHYSTS_LINK) {
+	अगर (dp83822->fx_enabled) अणु
+		अगर (status & DP83822_PHYSTS_LINK) अणु
 			phydev->speed = SPEED_UNKNOWN;
 			phydev->duplex = DUPLEX_UNKNOWN;
-		} else {
-			ctrl2 = phy_read(phydev, MII_DP83822_CTRL_2);
-			if (ctrl2 < 0)
-				return ctrl2;
+		पूर्ण अन्यथा अणु
+			ctrl2 = phy_पढ़ो(phydev, MII_DP83822_CTRL_2);
+			अगर (ctrl2 < 0)
+				वापस ctrl2;
 
-			if (!(ctrl2 & DP83822_FX_ENABLE)) {
-				ret = phy_write(phydev, MII_DP83822_CTRL_2,
+			अगर (!(ctrl2 & DP83822_FX_ENABLE)) अणु
+				ret = phy_ग_लिखो(phydev, MII_DP83822_CTRL_2,
 						DP83822_FX_ENABLE | ctrl2);
-				if (ret < 0)
-					return ret;
-			}
-		}
-	}
+				अगर (ret < 0)
+					वापस ret;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	ret = genphy_read_status(phydev);
-	if (ret)
-		return ret;
+	ret = genphy_पढ़ो_status(phydev);
+	अगर (ret)
+		वापस ret;
 
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	if (status & DP83822_PHYSTS_DUPLEX)
+	अगर (status & DP83822_PHYSTS_DUPLEX)
 		phydev->duplex = DUPLEX_FULL;
-	else
+	अन्यथा
 		phydev->duplex = DUPLEX_HALF;
 
-	if (status & DP83822_PHYSTS_10)
+	अगर (status & DP83822_PHYSTS_10)
 		phydev->speed = SPEED_10;
-	else
+	अन्यथा
 		phydev->speed = SPEED_100;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dp83822_config_init(struct phy_device *phydev)
-{
-	struct dp83822_private *dp83822 = phydev->priv;
-	struct device *dev = &phydev->mdio.dev;
-	int rgmii_delay;
-	s32 rx_int_delay;
-	s32 tx_int_delay;
-	int err = 0;
-	int bmcr;
+अटल पूर्णांक dp83822_config_init(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा dp83822_निजी *dp83822 = phydev->priv;
+	काष्ठा device *dev = &phydev->mdio.dev;
+	पूर्णांक rgmii_delay;
+	s32 rx_पूर्णांक_delay;
+	s32 tx_पूर्णांक_delay;
+	पूर्णांक err = 0;
+	पूर्णांक bmcr;
 
-	if (phy_interface_is_rgmii(phydev)) {
-		rx_int_delay = phy_get_internal_delay(phydev, dev, NULL, 0,
+	अगर (phy_पूर्णांकerface_is_rgmii(phydev)) अणु
+		rx_पूर्णांक_delay = phy_get_पूर्णांकernal_delay(phydev, dev, शून्य, 0,
 						      true);
 
-		if (rx_int_delay <= 0)
+		अगर (rx_पूर्णांक_delay <= 0)
 			rgmii_delay = 0;
-		else
+		अन्यथा
 			rgmii_delay = DP83822_RX_CLK_SHIFT;
 
-		tx_int_delay = phy_get_internal_delay(phydev, dev, NULL, 0,
+		tx_पूर्णांक_delay = phy_get_पूर्णांकernal_delay(phydev, dev, शून्य, 0,
 						      false);
-		if (tx_int_delay <= 0)
+		अगर (tx_पूर्णांक_delay <= 0)
 			rgmii_delay &= ~DP83822_TX_CLK_SHIFT;
-		else
+		अन्यथा
 			rgmii_delay |= DP83822_TX_CLK_SHIFT;
 
-		if (rgmii_delay) {
+		अगर (rgmii_delay) अणु
 			err = phy_set_bits_mmd(phydev, DP83822_DEVADDR,
 					       MII_DP83822_RCSR, rgmii_delay);
-			if (err)
-				return err;
-		}
-	}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
 
-	if (dp83822->fx_enabled) {
-		err = phy_modify(phydev, MII_DP83822_CTRL_2,
+	अगर (dp83822->fx_enabled) अणु
+		err = phy_modअगरy(phydev, MII_DP83822_CTRL_2,
 				 DP83822_FX_ENABLE, 1);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
 		/* Only allow advertising what this PHY supports */
 		linkmode_and(phydev->advertising, phydev->advertising,
@@ -436,176 +437,176 @@ static int dp83822_config_init(struct phy_device *phydev)
 				 phydev->advertising);
 
 		/* Auto neg is not supported in fiber mode */
-		bmcr = phy_read(phydev, MII_BMCR);
-		if (bmcr < 0)
-			return bmcr;
+		bmcr = phy_पढ़ो(phydev, MII_BMCR);
+		अगर (bmcr < 0)
+			वापस bmcr;
 
-		if (bmcr & BMCR_ANENABLE) {
-			err =  phy_modify(phydev, MII_BMCR, BMCR_ANENABLE, 0);
-			if (err < 0)
-				return err;
-		}
-		phydev->autoneg = AUTONEG_DISABLE;
+		अगर (bmcr & BMCR_ANENABLE) अणु
+			err =  phy_modअगरy(phydev, MII_BMCR, BMCR_ANENABLE, 0);
+			अगर (err < 0)
+				वापस err;
+		पूर्ण
+		phydev->स्वतःneg = AUTONEG_DISABLE;
 		linkmode_clear_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 				   phydev->supported);
 		linkmode_clear_bit(ETHTOOL_LINK_MODE_Autoneg_BIT,
 				   phydev->advertising);
 
 		/* Setup fiber advertisement */
-		err = phy_modify_changed(phydev, MII_ADVERTISE,
+		err = phy_modअगरy_changed(phydev, MII_ADVERTISE,
 					 MII_DP83822_FIBER_ADVERTISE,
 					 MII_DP83822_FIBER_ADVERTISE);
 
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 
-		if (dp83822->fx_signal_det_low) {
+		अगर (dp83822->fx_संकेत_det_low) अणु
 			err = phy_set_bits_mmd(phydev, DP83822_DEVADDR,
 					       MII_DP83822_GENCFG,
 					       DP83822_SIG_DET_LOW);
-			if (err)
-				return err;
-		}
-	}
-	return dp8382x_disable_wol(phydev);
-}
+			अगर (err)
+				वापस err;
+		पूर्ण
+	पूर्ण
+	वापस dp8382x_disable_wol(phydev);
+पूर्ण
 
-static int dp8382x_config_init(struct phy_device *phydev)
-{
-	return dp8382x_disable_wol(phydev);
-}
+अटल पूर्णांक dp8382x_config_init(काष्ठा phy_device *phydev)
+अणु
+	वापस dp8382x_disable_wol(phydev);
+पूर्ण
 
-static int dp83822_phy_reset(struct phy_device *phydev)
-{
-	int err;
+अटल पूर्णांक dp83822_phy_reset(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक err;
 
-	err = phy_write(phydev, MII_DP83822_RESET_CTRL, DP83822_SW_RESET);
-	if (err < 0)
-		return err;
+	err = phy_ग_लिखो(phydev, MII_DP83822_RESET_CTRL, DP83822_SW_RESET);
+	अगर (err < 0)
+		वापस err;
 
-	return phydev->drv->config_init(phydev);
-}
+	वापस phydev->drv->config_init(phydev);
+पूर्ण
 
-#ifdef CONFIG_OF_MDIO
-static int dp83822_of_init(struct phy_device *phydev)
-{
-	struct dp83822_private *dp83822 = phydev->priv;
-	struct device *dev = &phydev->mdio.dev;
+#अगर_घोषित CONFIG_OF_MDIO
+अटल पूर्णांक dp83822_of_init(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा dp83822_निजी *dp83822 = phydev->priv;
+	काष्ठा device *dev = &phydev->mdio.dev;
 
-	/* Signal detection for the PHY is only enabled if the FX_EN and the
-	 * SD_EN pins are strapped. Signal detection can only enabled if FX_EN
-	 * is strapped otherwise signal detection is disabled for the PHY.
+	/* Signal detection क्रम the PHY is only enabled अगर the FX_EN and the
+	 * SD_EN pins are strapped. Signal detection can only enabled अगर FX_EN
+	 * is strapped otherwise संकेत detection is disabled क्रम the PHY.
 	 */
-	if (dp83822->fx_enabled && dp83822->fx_sd_enable)
-		dp83822->fx_signal_det_low = device_property_present(dev,
+	अगर (dp83822->fx_enabled && dp83822->fx_sd_enable)
+		dp83822->fx_संकेत_det_low = device_property_present(dev,
 								     "ti,link-loss-low");
-	if (!dp83822->fx_enabled)
+	अगर (!dp83822->fx_enabled)
 		dp83822->fx_enabled = device_property_present(dev,
 							      "ti,fiber-mode");
 
-	return 0;
-}
-#else
-static int dp83822_of_init(struct phy_device *phydev)
-{
-	return 0;
-}
-#endif /* CONFIG_OF_MDIO */
+	वापस 0;
+पूर्ण
+#अन्यथा
+अटल पूर्णांक dp83822_of_init(काष्ठा phy_device *phydev)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_OF_MDIO */
 
-static int dp83822_read_straps(struct phy_device *phydev)
-{
-	struct dp83822_private *dp83822 = phydev->priv;
-	int fx_enabled, fx_sd_enable;
-	int val;
+अटल पूर्णांक dp83822_पढ़ो_straps(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा dp83822_निजी *dp83822 = phydev->priv;
+	पूर्णांक fx_enabled, fx_sd_enable;
+	पूर्णांक val;
 
-	val = phy_read_mmd(phydev, DP83822_DEVADDR, MII_DP83822_SOR1);
-	if (val < 0)
-		return val;
+	val = phy_पढ़ो_mmd(phydev, DP83822_DEVADDR, MII_DP83822_SOR1);
+	अगर (val < 0)
+		वापस val;
 
 	fx_enabled = (val & DP83822_COL_STRAP_MASK) >> DP83822_COL_SHIFT;
-	if (fx_enabled == DP83822_STRAP_MODE2 ||
+	अगर (fx_enabled == DP83822_STRAP_MODE2 ||
 	    fx_enabled == DP83822_STRAP_MODE3)
 		dp83822->fx_enabled = 1;
 
-	if (dp83822->fx_enabled) {
+	अगर (dp83822->fx_enabled) अणु
 		fx_sd_enable = (val & DP83822_RX_ER_STR_MASK) >> DP83822_RX_ER_SHIFT;
-		if (fx_sd_enable == DP83822_STRAP_MODE3 ||
+		अगर (fx_sd_enable == DP83822_STRAP_MODE3 ||
 		    fx_sd_enable == DP83822_STRAP_MODE4)
 			dp83822->fx_sd_enable = 1;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dp83822_probe(struct phy_device *phydev)
-{
-	struct dp83822_private *dp83822;
-	int ret;
+अटल पूर्णांक dp83822_probe(काष्ठा phy_device *phydev)
+अणु
+	काष्ठा dp83822_निजी *dp83822;
+	पूर्णांक ret;
 
-	dp83822 = devm_kzalloc(&phydev->mdio.dev, sizeof(*dp83822),
+	dp83822 = devm_kzalloc(&phydev->mdio.dev, माप(*dp83822),
 			       GFP_KERNEL);
-	if (!dp83822)
-		return -ENOMEM;
+	अगर (!dp83822)
+		वापस -ENOMEM;
 
 	phydev->priv = dp83822;
 
-	ret = dp83822_read_straps(phydev);
-	if (ret)
-		return ret;
+	ret = dp83822_पढ़ो_straps(phydev);
+	अगर (ret)
+		वापस ret;
 
 	dp83822_of_init(phydev);
 
-	if (dp83822->fx_enabled)
+	अगर (dp83822->fx_enabled)
 		phydev->port = PORT_FIBRE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dp83822_suspend(struct phy_device *phydev)
-{
-	int value;
+अटल पूर्णांक dp83822_suspend(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक value;
 
-	value = phy_read_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_CFG);
+	value = phy_पढ़ो_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_CFG);
 
-	if (!(value & DP83822_WOL_EN))
+	अगर (!(value & DP83822_WOL_EN))
 		genphy_suspend(phydev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dp83822_resume(struct phy_device *phydev)
-{
-	int value;
+अटल पूर्णांक dp83822_resume(काष्ठा phy_device *phydev)
+अणु
+	पूर्णांक value;
 
 	genphy_resume(phydev);
 
-	value = phy_read_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_CFG);
+	value = phy_पढ़ो_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_CFG);
 
-	phy_write_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_CFG, value |
+	phy_ग_लिखो_mmd(phydev, DP83822_DEVADDR, MII_DP83822_WOL_CFG, value |
 		      DP83822_WOL_CLR_INDICATION);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define DP83822_PHY_DRIVER(_id, _name)				\
-	{							\
+#घोषणा DP83822_PHY_DRIVER(_id, _name)				\
+	अणु							\
 		PHY_ID_MATCH_MODEL(_id),			\
 		.name		= (_name),			\
 		/* PHY_BASIC_FEATURES */			\
 		.probe          = dp83822_probe,		\
 		.soft_reset	= dp83822_phy_reset,		\
 		.config_init	= dp83822_config_init,		\
-		.read_status	= dp83822_read_status,		\
+		.पढ़ो_status	= dp83822_पढ़ो_status,		\
 		.get_wol = dp83822_get_wol,			\
 		.set_wol = dp83822_set_wol,			\
-		.config_intr = dp83822_config_intr,		\
-		.handle_interrupt = dp83822_handle_interrupt,	\
+		.config_पूर्णांकr = dp83822_config_पूर्णांकr,		\
+		.handle_पूर्णांकerrupt = dp83822_handle_पूर्णांकerrupt,	\
 		.suspend = dp83822_suspend,			\
 		.resume = dp83822_resume,			\
-	}
+	पूर्ण
 
-#define DP8382X_PHY_DRIVER(_id, _name)				\
-	{							\
+#घोषणा DP8382X_PHY_DRIVER(_id, _name)				\
+	अणु							\
 		PHY_ID_MATCH_MODEL(_id),			\
 		.name		= (_name),			\
 		/* PHY_BASIC_FEATURES */			\
@@ -613,13 +614,13 @@ static int dp83822_resume(struct phy_device *phydev)
 		.config_init	= dp8382x_config_init,		\
 		.get_wol = dp83822_get_wol,			\
 		.set_wol = dp83822_set_wol,			\
-		.config_intr = dp83822_config_intr,		\
-		.handle_interrupt = dp83822_handle_interrupt,	\
+		.config_पूर्णांकr = dp83822_config_पूर्णांकr,		\
+		.handle_पूर्णांकerrupt = dp83822_handle_पूर्णांकerrupt,	\
 		.suspend = dp83822_suspend,			\
 		.resume = dp83822_resume,			\
-	}
+	पूर्ण
 
-static struct phy_driver dp83822_driver[] = {
+अटल काष्ठा phy_driver dp83822_driver[] = अणु
 	DP83822_PHY_DRIVER(DP83822_PHY_ID, "TI DP83822"),
 	DP8382X_PHY_DRIVER(DP83825I_PHY_ID, "TI DP83825I"),
 	DP8382X_PHY_DRIVER(DP83826C_PHY_ID, "TI DP83826C"),
@@ -627,19 +628,19 @@ static struct phy_driver dp83822_driver[] = {
 	DP8382X_PHY_DRIVER(DP83825S_PHY_ID, "TI DP83825S"),
 	DP8382X_PHY_DRIVER(DP83825CM_PHY_ID, "TI DP83825M"),
 	DP8382X_PHY_DRIVER(DP83825CS_PHY_ID, "TI DP83825CS"),
-};
+पूर्ण;
 module_phy_driver(dp83822_driver);
 
-static struct mdio_device_id __maybe_unused dp83822_tbl[] = {
-	{ DP83822_PHY_ID, 0xfffffff0 },
-	{ DP83825I_PHY_ID, 0xfffffff0 },
-	{ DP83826C_PHY_ID, 0xfffffff0 },
-	{ DP83826NC_PHY_ID, 0xfffffff0 },
-	{ DP83825S_PHY_ID, 0xfffffff0 },
-	{ DP83825CM_PHY_ID, 0xfffffff0 },
-	{ DP83825CS_PHY_ID, 0xfffffff0 },
-	{ },
-};
+अटल काष्ठा mdio_device_id __maybe_unused dp83822_tbl[] = अणु
+	अणु DP83822_PHY_ID, 0xfffffff0 पूर्ण,
+	अणु DP83825I_PHY_ID, 0xfffffff0 पूर्ण,
+	अणु DP83826C_PHY_ID, 0xfffffff0 पूर्ण,
+	अणु DP83826NC_PHY_ID, 0xfffffff0 पूर्ण,
+	अणु DP83825S_PHY_ID, 0xfffffff0 पूर्ण,
+	अणु DP83825CM_PHY_ID, 0xfffffff0 पूर्ण,
+	अणु DP83825CS_PHY_ID, 0xfffffff0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(mdio, dp83822_tbl);
 
 MODULE_DESCRIPTION("Texas Instruments DP83822 PHY driver");

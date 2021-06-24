@@ -1,117 +1,118 @@
-/* SPDX-License-Identifier: GPL-1.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-1.0+ */
 /*
  * Renesas USB driver
  *
  * Copyright (C) 2011 Renesas Solutions Corp.
  * Kuninori Morimoto <kuninori.morimoto.gx@renesas.com>
  */
-#ifndef RENESAS_USB_PIPE_H
-#define RENESAS_USB_PIPE_H
+#अगर_अघोषित RENESAS_USB_PIPE_H
+#घोषणा RENESAS_USB_PIPE_H
 
-#include "common.h"
-#include "fifo.h"
+#समावेश "common.h"
+#समावेश "fifo.h"
 
 /*
- *	struct
+ *	काष्ठा
  */
-struct usbhs_pipe {
+काष्ठा usbhs_pipe अणु
 	u32 pipe_type;	/* USB_ENDPOINT_XFER_xxx */
 
-	struct usbhs_priv *priv;
-	struct usbhs_fifo *fifo;
-	struct list_head list;
+	काष्ठा usbhs_priv *priv;
+	काष्ठा usbhs_fअगरo *fअगरo;
+	काष्ठा list_head list;
 
-	int maxp;
+	पूर्णांक maxp;
 
 	u32 flags;
-#define USBHS_PIPE_FLAGS_IS_USED		(1 << 0)
-#define USBHS_PIPE_FLAGS_IS_DIR_IN		(1 << 1)
-#define USBHS_PIPE_FLAGS_IS_DIR_HOST		(1 << 2)
-#define USBHS_PIPE_FLAGS_IS_RUNNING		(1 << 3)
+#घोषणा USBHS_PIPE_FLAGS_IS_USED		(1 << 0)
+#घोषणा USBHS_PIPE_FLAGS_IS_सूची_IN		(1 << 1)
+#घोषणा USBHS_PIPE_FLAGS_IS_सूची_HOST		(1 << 2)
+#घोषणा USBHS_PIPE_FLAGS_IS_RUNNING		(1 << 3)
 
-	const struct usbhs_pkt_handle *handler;
+	स्थिर काष्ठा usbhs_pkt_handle *handler;
 
-	void *mod_private;
-};
+	व्योम *mod_निजी;
+पूर्ण;
 
-struct usbhs_pipe_info {
-	struct usbhs_pipe *pipe;
-	int size;	/* array size of "pipe" */
+काष्ठा usbhs_pipe_info अणु
+	काष्ठा usbhs_pipe *pipe;
+	पूर्णांक size;	/* array size of "pipe" */
 
-	int (*dma_map_ctrl)(struct device *dma_dev, struct usbhs_pkt *pkt,
-			    int map);
-};
+	पूर्णांक (*dma_map_ctrl)(काष्ठा device *dma_dev, काष्ठा usbhs_pkt *pkt,
+			    पूर्णांक map);
+पूर्ण;
 
 /*
  * pipe list
  */
-#define __usbhs_for_each_pipe(start, pos, info, i)	\
-	for ((i) = start;						\
+#घोषणा __usbhs_क्रम_each_pipe(start, pos, info, i)	\
+	क्रम ((i) = start;						\
 	     ((i) < (info)->size) && ((pos) = (info)->pipe + (i));	\
 	     (i)++)
 
-#define usbhs_for_each_pipe(pos, priv, i)			\
-	__usbhs_for_each_pipe(1, pos, &((priv)->pipe_info), i)
+#घोषणा usbhs_क्रम_each_pipe(pos, priv, i)			\
+	__usbhs_क्रम_each_pipe(1, pos, &((priv)->pipe_info), i)
 
-#define usbhs_for_each_pipe_with_dcp(pos, priv, i)		\
-	__usbhs_for_each_pipe(0, pos, &((priv)->pipe_info), i)
+#घोषणा usbhs_क्रम_each_pipe_with_dcp(pos, priv, i)		\
+	__usbhs_क्रम_each_pipe(0, pos, &((priv)->pipe_info), i)
 
 /*
  * data
  */
-#define usbhs_priv_to_pipeinfo(pr)	(&(pr)->pipe_info)
+#घोषणा usbhs_priv_to_pipeinfo(pr)	(&(pr)->pipe_info)
 
 /*
  * pipe control
  */
-char *usbhs_pipe_name(struct usbhs_pipe *pipe);
-struct usbhs_pipe
-*usbhs_pipe_malloc(struct usbhs_priv *priv, int endpoint_type, int dir_in);
-void usbhs_pipe_free(struct usbhs_pipe *pipe);
-int usbhs_pipe_probe(struct usbhs_priv *priv);
-void usbhs_pipe_remove(struct usbhs_priv *priv);
-int usbhs_pipe_is_dir_in(struct usbhs_pipe *pipe);
-int usbhs_pipe_is_dir_host(struct usbhs_pipe *pipe);
-int usbhs_pipe_is_running(struct usbhs_pipe *pipe);
-void usbhs_pipe_running(struct usbhs_pipe *pipe, int running);
+अक्षर *usbhs_pipe_name(काष्ठा usbhs_pipe *pipe);
+काष्ठा usbhs_pipe
+*usbhs_pipe_दो_स्मृति(काष्ठा usbhs_priv *priv, पूर्णांक endpoपूर्णांक_type, पूर्णांक dir_in);
+व्योम usbhs_pipe_मुक्त(काष्ठा usbhs_pipe *pipe);
+पूर्णांक usbhs_pipe_probe(काष्ठा usbhs_priv *priv);
+व्योम usbhs_pipe_हटाओ(काष्ठा usbhs_priv *priv);
+पूर्णांक usbhs_pipe_is_dir_in(काष्ठा usbhs_pipe *pipe);
+पूर्णांक usbhs_pipe_is_dir_host(काष्ठा usbhs_pipe *pipe);
+पूर्णांक usbhs_pipe_is_running(काष्ठा usbhs_pipe *pipe);
+व्योम usbhs_pipe_running(काष्ठा usbhs_pipe *pipe, पूर्णांक running);
 
-void usbhs_pipe_init(struct usbhs_priv *priv,
-		     int (*dma_map_ctrl)(struct device *dma_dev,
-					 struct usbhs_pkt *pkt, int map));
-int usbhs_pipe_get_maxpacket(struct usbhs_pipe *pipe);
-void usbhs_pipe_clear(struct usbhs_pipe *pipe);
-void usbhs_pipe_clear_without_sequence(struct usbhs_pipe *pipe,
-				       int needs_bfre, int bfre_enable);
-int usbhs_pipe_is_accessible(struct usbhs_pipe *pipe);
-bool usbhs_pipe_contains_transmittable_data(struct usbhs_pipe *pipe);
-void usbhs_pipe_enable(struct usbhs_pipe *pipe);
-void usbhs_pipe_disable(struct usbhs_pipe *pipe);
-void usbhs_pipe_stall(struct usbhs_pipe *pipe);
-int usbhs_pipe_is_stall(struct usbhs_pipe *pipe);
-void usbhs_pipe_set_trans_count_if_bulk(struct usbhs_pipe *pipe, int len);
-void usbhs_pipe_select_fifo(struct usbhs_pipe *pipe, struct usbhs_fifo *fifo);
-void usbhs_pipe_config_update(struct usbhs_pipe *pipe, u16 devsel,
+व्योम usbhs_pipe_init(काष्ठा usbhs_priv *priv,
+		     पूर्णांक (*dma_map_ctrl)(काष्ठा device *dma_dev,
+					 काष्ठा usbhs_pkt *pkt, पूर्णांक map));
+पूर्णांक usbhs_pipe_get_maxpacket(काष्ठा usbhs_pipe *pipe);
+व्योम usbhs_pipe_clear(काष्ठा usbhs_pipe *pipe);
+व्योम usbhs_pipe_clear_without_sequence(काष्ठा usbhs_pipe *pipe,
+				       पूर्णांक needs_bfre, पूर्णांक bfre_enable);
+पूर्णांक usbhs_pipe_is_accessible(काष्ठा usbhs_pipe *pipe);
+bool usbhs_pipe_contains_transmittable_data(काष्ठा usbhs_pipe *pipe);
+व्योम usbhs_pipe_enable(काष्ठा usbhs_pipe *pipe);
+व्योम usbhs_pipe_disable(काष्ठा usbhs_pipe *pipe);
+व्योम usbhs_pipe_stall(काष्ठा usbhs_pipe *pipe);
+पूर्णांक usbhs_pipe_is_stall(काष्ठा usbhs_pipe *pipe);
+व्योम usbhs_pipe_set_trans_count_अगर_bulk(काष्ठा usbhs_pipe *pipe, पूर्णांक len);
+व्योम usbhs_pipe_select_fअगरo(काष्ठा usbhs_pipe *pipe, काष्ठा usbhs_fअगरo *fअगरo);
+व्योम usbhs_pipe_config_update(काष्ठा usbhs_pipe *pipe, u16 devsel,
 			      u16 epnum, u16 maxp);
-void usbhs_pipe_config_change_bfre(struct usbhs_pipe *pipe, int enable);
+व्योम usbhs_pipe_config_change_bfre(काष्ठा usbhs_pipe *pipe, पूर्णांक enable);
 
-#define usbhs_pipe_sequence_data0(pipe)	usbhs_pipe_data_sequence(pipe, 0)
-#define usbhs_pipe_sequence_data1(pipe)	usbhs_pipe_data_sequence(pipe, 1)
-void usbhs_pipe_data_sequence(struct usbhs_pipe *pipe, int data);
+#घोषणा usbhs_pipe_sequence_data0(pipe)	usbhs_pipe_data_sequence(pipe, 0)
+#घोषणा usbhs_pipe_sequence_data1(pipe)	usbhs_pipe_data_sequence(pipe, 1)
+व्योम usbhs_pipe_data_sequence(काष्ठा usbhs_pipe *pipe, पूर्णांक data);
 
-#define usbhs_pipe_to_priv(p)	((p)->priv)
-#define usbhs_pipe_number(p)	(int)((p) - (p)->priv->pipe_info.pipe)
-#define usbhs_pipe_is_dcp(p)	((p)->priv->pipe_info.pipe == (p))
-#define usbhs_pipe_to_fifo(p)	((p)->fifo)
-#define usbhs_pipe_is_busy(p)	usbhs_pipe_to_fifo(p)
+#घोषणा usbhs_pipe_to_priv(p)	((p)->priv)
+#घोषणा usbhs_pipe_number(p)	(पूर्णांक)((p) - (p)->priv->pipe_info.pipe)
+#घोषणा usbhs_pipe_is_dcp(p)	((p)->priv->pipe_info.pipe == (p))
+#घोषणा usbhs_pipe_to_fअगरo(p)	((p)->fअगरo)
+#घोषणा usbhs_pipe_is_busy(p)	usbhs_pipe_to_fअगरo(p)
 
-#define usbhs_pipe_type(p)		((p)->pipe_type)
-#define usbhs_pipe_type_is(p, t)	((p)->pipe_type == t)
+#घोषणा usbhs_pipe_type(p)		((p)->pipe_type)
+#घोषणा usbhs_pipe_type_is(p, t)	((p)->pipe_type == t)
 
 /*
  * dcp control
  */
-struct usbhs_pipe *usbhs_dcp_malloc(struct usbhs_priv *priv);
-void usbhs_dcp_control_transfer_done(struct usbhs_pipe *pipe);
-void usbhs_dcp_dir_for_host(struct usbhs_pipe *pipe, int dir_out);
+काष्ठा usbhs_pipe *usbhs_dcp_दो_स्मृति(काष्ठा usbhs_priv *priv);
+व्योम usbhs_dcp_control_transfer_करोne(काष्ठा usbhs_pipe *pipe);
+व्योम usbhs_dcp_dir_क्रम_host(काष्ठा usbhs_pipe *pipe, पूर्णांक dir_out);
 
-#endif /* RENESAS_USB_PIPE_H */
+#पूर्ण_अगर /* RENESAS_USB_PIPE_H */

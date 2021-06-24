@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM thp
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM thp
 
-#if !defined(_TRACE_THP_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _TRACE_THP_H
+#अगर !defined(_TRACE_THP_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _TRACE_THP_H
 
-#include <linux/types.h>
-#include <linux/tracepoint.h>
+#समावेश <linux/types.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
 TRACE_EVENT(hugepage_invalidate,
 
-	    TP_PROTO(unsigned long addr, unsigned long pte),
+	    TP_PROTO(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pte),
 	    TP_ARGS(addr, pte),
 	    TP_STRUCT__entry(
-		    __field(unsigned long, addr)
-		    __field(unsigned long, pte)
+		    __field(अचिन्हित दीर्घ, addr)
+		    __field(अचिन्हित दीर्घ, pte)
 		    ),
 
 	    TP_fast_assign(
@@ -22,17 +23,17 @@ TRACE_EVENT(hugepage_invalidate,
 		    __entry->pte = pte;
 		    ),
 
-	    TP_printk("hugepage invalidate at addr 0x%lx and pte = 0x%lx",
+	    TP_prपूर्णांकk("hugepage invalidate at addr 0x%lx and pte = 0x%lx",
 		      __entry->addr, __entry->pte)
 );
 
 TRACE_EVENT(hugepage_set_pmd,
 
-	    TP_PROTO(unsigned long addr, unsigned long pmd),
+	    TP_PROTO(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pmd),
 	    TP_ARGS(addr, pmd),
 	    TP_STRUCT__entry(
-		    __field(unsigned long, addr)
-		    __field(unsigned long, pmd)
+		    __field(अचिन्हित दीर्घ, addr)
+		    __field(अचिन्हित दीर्घ, pmd)
 		    ),
 
 	    TP_fast_assign(
@@ -40,19 +41,19 @@ TRACE_EVENT(hugepage_set_pmd,
 		    __entry->pmd = pmd;
 		    ),
 
-	    TP_printk("Set pmd with 0x%lx with 0x%lx", __entry->addr, __entry->pmd)
+	    TP_prपूर्णांकk("Set pmd with 0x%lx with 0x%lx", __entry->addr, __entry->pmd)
 );
 
 
 TRACE_EVENT(hugepage_update,
 
-	    TP_PROTO(unsigned long addr, unsigned long pte, unsigned long clr, unsigned long set),
+	    TP_PROTO(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pte, अचिन्हित दीर्घ clr, अचिन्हित दीर्घ set),
 	    TP_ARGS(addr, pte, clr, set),
 	    TP_STRUCT__entry(
-		    __field(unsigned long, addr)
-		    __field(unsigned long, pte)
-		    __field(unsigned long, clr)
-		    __field(unsigned long, set)
+		    __field(अचिन्हित दीर्घ, addr)
+		    __field(अचिन्हित दीर्घ, pte)
+		    __field(अचिन्हित दीर्घ, clr)
+		    __field(अचिन्हित दीर्घ, set)
 		    ),
 
 	    TP_fast_assign(
@@ -63,15 +64,15 @@ TRACE_EVENT(hugepage_update,
 
 		    ),
 
-	    TP_printk("hugepage update at addr 0x%lx and pte = 0x%lx clr = 0x%lx, set = 0x%lx", __entry->addr, __entry->pte, __entry->clr, __entry->set)
+	    TP_prपूर्णांकk("hugepage update at addr 0x%lx and pte = 0x%lx clr = 0x%lx, set = 0x%lx", __entry->addr, __entry->pte, __entry->clr, __entry->set)
 );
 TRACE_EVENT(hugepage_splitting,
 
-	    TP_PROTO(unsigned long addr, unsigned long pte),
+	    TP_PROTO(अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pte),
 	    TP_ARGS(addr, pte),
 	    TP_STRUCT__entry(
-		    __field(unsigned long, addr)
-		    __field(unsigned long, pte)
+		    __field(अचिन्हित दीर्घ, addr)
+		    __field(अचिन्हित दीर्घ, pte)
 		    ),
 
 	    TP_fast_assign(
@@ -79,11 +80,11 @@ TRACE_EVENT(hugepage_splitting,
 		    __entry->pte = pte;
 		    ),
 
-	    TP_printk("hugepage splitting at addr 0x%lx and pte = 0x%lx",
+	    TP_prपूर्णांकk("hugepage splitting at addr 0x%lx and pte = 0x%lx",
 		      __entry->addr, __entry->pte)
 );
 
-#endif /* _TRACE_THP_H */
+#पूर्ण_अगर /* _TRACE_THP_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * SDL Inc. RISCom/N2 synchronous serial card driver for Linux
+ * SDL Inc. RISCom/N2 synchronous serial card driver क्रम Linux
  *
  * Copyright (C) 1998-2003 Krzysztof Halasa <khc@pm.waw.pl>
  *
- * For information see <https://www.kernel.org/pub/linux/utils/net/hdlc/>
+ * For inक्रमmation see <https://www.kernel.org/pub/linux/utils/net/hdlc/>
  *
- * Note: integrated CSU/DSU/DDS are not supported by this driver
+ * Note: पूर्णांकegrated CSU/DSU/DDS are not supported by this driver
  *
- * Sources of information:
+ * Sources of inक्रमmation:
  *    Hitachi HD64570 SCA User's Manual
  *    SDL Inc. PPP/HDLC/CISCO driver
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/capability.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/fcntl.h>
-#include <linux/in.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/ioport.h>
-#include <linux/moduleparam.h>
-#include <linux/netdevice.h>
-#include <linux/hdlc.h>
-#include <asm/io.h>
-#include "hd64570.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/in.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/hdlc.h>
+#समावेश <यंत्र/पन.स>
+#समावेश "hd64570.h"
 
 
-static const char* version = "SDL RISCom/N2 driver version: 1.15";
-static const char* devname = "RISCom/N2";
+अटल स्थिर अक्षर* version = "SDL RISCom/N2 driver version: 1.15";
+अटल स्थिर अक्षर* devname = "RISCom/N2";
 
-#undef DEBUG_PKT
-#define DEBUG_RINGS
+#अघोषित DEBUG_PKT
+#घोषणा DEBUG_RINGS
 
-#define USE_WINDOWSIZE 16384
-#define USE_BUS16BITS 1
-#define CLOCK_BASE 9830400	/* 9.8304 MHz */
-#define MAX_PAGES      16	/* 16 RAM pages at max */
-#define MAX_RAM_SIZE 0x80000	/* 512 KB */
-#if MAX_RAM_SIZE > MAX_PAGES * USE_WINDOWSIZE
-#undef MAX_RAM_SIZE
-#define MAX_RAM_SIZE (MAX_PAGES * USE_WINDOWSIZE)
-#endif
-#define N2_IOPORTS 0x10
-#define NEED_DETECT_RAM
-#define NEED_SCA_MSCI_INTR
-#define MAX_TX_BUFFERS 10
+#घोषणा USE_WINDOWSIZE 16384
+#घोषणा USE_BUS16BITS 1
+#घोषणा CLOCK_BASE 9830400	/* 9.8304 MHz */
+#घोषणा MAX_PAGES      16	/* 16 RAM pages at max */
+#घोषणा MAX_RAM_SIZE 0x80000	/* 512 KB */
+#अगर MAX_RAM_SIZE > MAX_PAGES * USE_WINDOWSIZE
+#अघोषित MAX_RAM_SIZE
+#घोषणा MAX_RAM_SIZE (MAX_PAGES * USE_WINDOWSIZE)
+#पूर्ण_अगर
+#घोषणा N2_IOPORTS 0x10
+#घोषणा NEED_DETECT_RAM
+#घोषणा NEED_SCA_MSCI_INTR
+#घोषणा MAX_TX_BUFFERS 10
 
-static char *hw;	/* pointer to hw=xxx command line string */
+अटल अक्षर *hw;	/* poपूर्णांकer to hw=xxx command line string */
 
 /* RISCom/N2 Board Registers */
 
 /* PC Control Register */
-#define N2_PCR 0
-#define PCR_RUNSCA 1     /* Run 64570 */
-#define PCR_VPM    2     /* Enable VPM - needed if using RAM above 1 MB */
-#define PCR_ENWIN  4     /* Open window */
-#define PCR_BUS16  8     /* 16-bit bus */
+#घोषणा N2_PCR 0
+#घोषणा PCR_RUNSCA 1     /* Run 64570 */
+#घोषणा PCR_VPM    2     /* Enable VPM - needed अगर using RAM above 1 MB */
+#घोषणा PCR_ENWIN  4     /* Open winकरोw */
+#घोषणा PCR_BUS16  8     /* 16-bit bus */
 
 
 /* Memory Base Address Register */
-#define N2_BAR 2
+#घोषणा N2_BAR 2
 
 
 /* Page Scan Register  */
-#define N2_PSR 4
-#define WIN16K       0x00
-#define WIN32K       0x20
-#define WIN64K       0x40
-#define PSR_WINBITS  0x60
-#define PSR_DMAEN    0x80
-#define PSR_PAGEBITS 0x0F
+#घोषणा N2_PSR 4
+#घोषणा WIN16K       0x00
+#घोषणा WIN32K       0x20
+#घोषणा WIN64K       0x40
+#घोषणा PSR_WINBITS  0x60
+#घोषणा PSR_DMAEN    0x80
+#घोषणा PSR_PAGEBITS 0x0F
 
 
 /* Modem Control Reg */
-#define N2_MCR 6
-#define CLOCK_OUT_PORT1 0x80
-#define CLOCK_OUT_PORT0 0x40
-#define TX422_PORT1     0x20
-#define TX422_PORT0     0x10
-#define DSR_PORT1       0x08
-#define DSR_PORT0       0x04
-#define DTR_PORT1       0x02
-#define DTR_PORT0       0x01
+#घोषणा N2_MCR 6
+#घोषणा CLOCK_OUT_PORT1 0x80
+#घोषणा CLOCK_OUT_PORT0 0x40
+#घोषणा TX422_PORT1     0x20
+#घोषणा TX422_PORT0     0x10
+#घोषणा DSR_PORT1       0x08
+#घोषणा DSR_PORT0       0x04
+#घोषणा DTR_PORT1       0x02
+#घोषणा DTR_PORT0       0x01
 
 
-typedef struct port_s {
-	struct net_device *dev;
-	struct card_s *card;
+प्रकार काष्ठा port_s अणु
+	काष्ठा net_device *dev;
+	काष्ठा card_s *card;
 	spinlock_t lock;	/* TX lock */
 	sync_serial_settings settings;
-	int valid;		/* port enabled */
-	int rxpart;		/* partial frame received, next frame invalid*/
-	unsigned short encoding;
-	unsigned short parity;
-	u16 rxin;		/* rx ring buffer 'in' pointer */
-	u16 txin;		/* tx ring buffer 'in' and 'last' pointers */
+	पूर्णांक valid;		/* port enabled */
+	पूर्णांक rxpart;		/* partial frame received, next frame invalid*/
+	अचिन्हित लघु encoding;
+	अचिन्हित लघु parity;
+	u16 rxin;		/* rx ring buffer 'in' poपूर्णांकer */
+	u16 txin;		/* tx ring buffer 'in' and 'last' poपूर्णांकers */
 	u16 txlast;
-	u8 rxs, txs, tmc;	/* SCA registers */
+	u8 rxs, txs, पंचांगc;	/* SCA रेजिस्टरs */
 	u8 phy_node;		/* physical port # - 0 or 1 */
 	u8 log_node;		/* logical port # */
-}port_t;
+पूर्णport_t;
 
 
 
-typedef struct card_s {
-	u8 __iomem *winbase;		/* ISA window base address */
+प्रकार काष्ठा card_s अणु
+	u8 __iomem *winbase;		/* ISA winकरोw base address */
 	u32 phy_winbase;	/* ISA physical base address */
 	u32 ram_size;		/* number of bytes */
 	u16 io;			/* IO Base address */
@@ -121,79 +122,79 @@ typedef struct card_s {
 	u8 irq;			/* IRQ (3-15) */
 
 	port_t ports[2];
-	struct card_s *next_card;
-}card_t;
+	काष्ठा card_s *next_card;
+पूर्णcard_t;
 
 
-static card_t *first_card;
-static card_t **new_card = &first_card;
+अटल card_t *first_card;
+अटल card_t **new_card = &first_card;
 
 
-#define sca_reg(reg, card) (0x8000 | (card)->io | \
+#घोषणा sca_reg(reg, card) (0x8000 | (card)->io | \
 			    ((reg) & 0x0F) | (((reg) & 0xF0) << 6))
-#define sca_in(reg, card)		inb(sca_reg(reg, card))
-#define sca_out(value, reg, card)	outb(value, sca_reg(reg, card))
-#define sca_inw(reg, card)		inw(sca_reg(reg, card))
-#define sca_outw(value, reg, card)	outw(value, sca_reg(reg, card))
+#घोषणा sca_in(reg, card)		inb(sca_reg(reg, card))
+#घोषणा sca_out(value, reg, card)	outb(value, sca_reg(reg, card))
+#घोषणा sca_inw(reg, card)		inw(sca_reg(reg, card))
+#घोषणा sca_outw(value, reg, card)	outw(value, sca_reg(reg, card))
 
-#define port_to_card(port)		((port)->card)
-#define log_node(port)			((port)->log_node)
-#define phy_node(port)			((port)->phy_node)
-#define winsize(card)			(USE_WINDOWSIZE)
-#define winbase(card)      	     	((card)->winbase)
-#define get_port(card, port)		((card)->ports[port].valid ? \
-					 &(card)->ports[port] : NULL)
-
-
-static __inline__ u8 sca_get_page(card_t *card)
-{
-	return inb(card->io + N2_PSR) & PSR_PAGEBITS;
-}
+#घोषणा port_to_card(port)		((port)->card)
+#घोषणा log_node(port)			((port)->log_node)
+#घोषणा phy_node(port)			((port)->phy_node)
+#घोषणा winsize(card)			(USE_WINDOWSIZE)
+#घोषणा winbase(card)      	     	((card)->winbase)
+#घोषणा get_port(card, port)		((card)->ports[port].valid ? \
+					 &(card)->ports[port] : शून्य)
 
 
-static __inline__ void openwin(card_t *card, u8 page)
-{
+अटल __अंतरभूत__ u8 sca_get_page(card_t *card)
+अणु
+	वापस inb(card->io + N2_PSR) & PSR_PAGEBITS;
+पूर्ण
+
+
+अटल __अंतरभूत__ व्योम खोलोwin(card_t *card, u8 page)
+अणु
 	u8 psr = inb(card->io + N2_PSR);
 	outb((psr & ~PSR_PAGEBITS) | page, card->io + N2_PSR);
-}
+पूर्ण
 
 
-#include "hd64570.c"
+#समावेश "hd64570.c"
 
 
-static void n2_set_iface(port_t *port)
-{
+अटल व्योम n2_set_अगरace(port_t *port)
+अणु
 	card_t *card = port->card;
-	int io = card->io;
+	पूर्णांक io = card->io;
 	u8 mcr = inb(io + N2_MCR);
 	u8 msci = get_msci(port);
 	u8 rxs = port->rxs & CLK_BRG_MASK;
 	u8 txs = port->txs & CLK_BRG_MASK;
 
-	switch(port->settings.clock_type) {
-	case CLOCK_INT:
+	चयन(port->settings.घड़ी_प्रकारype) अणु
+	हाल CLOCK_INT:
 		mcr |= port->phy_node ? CLOCK_OUT_PORT1 : CLOCK_OUT_PORT0;
 		rxs |= CLK_BRG_RX; /* BRG output */
-		txs |= CLK_RXCLK_TX; /* RX clock */
-		break;
+		txs |= CLK_RXCLK_TX; /* RX घड़ी */
+		अवरोध;
 
-	case CLOCK_TXINT:
+	हाल CLOCK_TXINT:
 		mcr |= port->phy_node ? CLOCK_OUT_PORT1 : CLOCK_OUT_PORT0;
 		rxs |= CLK_LINE_RX; /* RXC input */
 		txs |= CLK_BRG_TX; /* BRG output */
-		break;
+		अवरोध;
 
-	case CLOCK_TXFROMRX:
+	हाल CLOCK_TXFROMRX:
 		mcr |= port->phy_node ? CLOCK_OUT_PORT1 : CLOCK_OUT_PORT0;
 		rxs |= CLK_LINE_RX; /* RXC input */
-		txs |= CLK_RXCLK_TX; /* RX clock */
-		break;
+		txs |= CLK_RXCLK_TX; /* RX घड़ी */
+		अवरोध;
 
-	default:		/* Clock EXTernal */
+	शेष:		/* Clock EXTernal */
 		mcr &= port->phy_node ? ~CLOCK_OUT_PORT1 : ~CLOCK_OUT_PORT0;
 		rxs |= CLK_LINE_RX; /* RXC input */
 		txs |= CLK_LINE_TX; /* TXC input */
-	}
+	पूर्ण
 
 	outb(mcr, io + N2_MCR);
 	port->rxs = rxs;
@@ -201,261 +202,261 @@ static void n2_set_iface(port_t *port)
 	sca_out(rxs, msci + RXS, card);
 	sca_out(txs, msci + TXS, card);
 	sca_set_port(port);
-}
+पूर्ण
 
 
 
-static int n2_open(struct net_device *dev)
-{
+अटल पूर्णांक n2_खोलो(काष्ठा net_device *dev)
+अणु
 	port_t *port = dev_to_port(dev);
-	int io = port->card->io;
+	पूर्णांक io = port->card->io;
 	u8 mcr = inb(io + N2_MCR) | (port->phy_node ? TX422_PORT1:TX422_PORT0);
-	int result;
+	पूर्णांक result;
 
-	result = hdlc_open(dev);
-	if (result)
-		return result;
+	result = hdlc_खोलो(dev);
+	अगर (result)
+		वापस result;
 
 	mcr &= port->phy_node ? ~DTR_PORT1 : ~DTR_PORT0; /* set DTR ON */
 	outb(mcr, io + N2_MCR);
 
-	outb(inb(io + N2_PCR) | PCR_ENWIN, io + N2_PCR); /* open window */
+	outb(inb(io + N2_PCR) | PCR_ENWIN, io + N2_PCR); /* खोलो winकरोw */
 	outb(inb(io + N2_PSR) | PSR_DMAEN, io + N2_PSR); /* enable dma */
-	sca_open(dev);
-	n2_set_iface(port);
-	return 0;
-}
+	sca_खोलो(dev);
+	n2_set_अगरace(port);
+	वापस 0;
+पूर्ण
 
 
 
-static int n2_close(struct net_device *dev)
-{
+अटल पूर्णांक n2_बंद(काष्ठा net_device *dev)
+अणु
 	port_t *port = dev_to_port(dev);
-	int io = port->card->io;
+	पूर्णांक io = port->card->io;
 	u8 mcr = inb(io+N2_MCR) | (port->phy_node ? TX422_PORT1 : TX422_PORT0);
 
-	sca_close(dev);
+	sca_बंद(dev);
 	mcr |= port->phy_node ? DTR_PORT1 : DTR_PORT0; /* set DTR OFF */
 	outb(mcr, io + N2_MCR);
-	hdlc_close(dev);
-	return 0;
-}
+	hdlc_बंद(dev);
+	वापस 0;
+पूर्ण
 
 
 
-static int n2_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
-{
-	const size_t size = sizeof(sync_serial_settings);
+अटल पूर्णांक n2_ioctl(काष्ठा net_device *dev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	स्थिर माप_प्रकार size = माप(sync_serial_settings);
 	sync_serial_settings new_line;
-	sync_serial_settings __user *line = ifr->ifr_settings.ifs_ifsu.sync;
+	sync_serial_settings __user *line = अगरr->अगरr_settings.अगरs_अगरsu.sync;
 	port_t *port = dev_to_port(dev);
 
-#ifdef DEBUG_RINGS
-	if (cmd == SIOCDEVPRIVATE) {
+#अगर_घोषित DEBUG_RINGS
+	अगर (cmd == SIOCDEVPRIVATE) अणु
 		sca_dump_rings(dev);
-		return 0;
-	}
-#endif
-	if (cmd != SIOCWANDEV)
-		return hdlc_ioctl(dev, ifr, cmd);
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर
+	अगर (cmd != SIOCWANDEV)
+		वापस hdlc_ioctl(dev, अगरr, cmd);
 
-	switch(ifr->ifr_settings.type) {
-	case IF_GET_IFACE:
-		ifr->ifr_settings.type = IF_IFACE_SYNC_SERIAL;
-		if (ifr->ifr_settings.size < size) {
-			ifr->ifr_settings.size = size; /* data size wanted */
-			return -ENOBUFS;
-		}
-		if (copy_to_user(line, &port->settings, size))
-			return -EFAULT;
-		return 0;
+	चयन(अगरr->अगरr_settings.type) अणु
+	हाल IF_GET_IFACE:
+		अगरr->अगरr_settings.type = IF_IFACE_SYNC_SERIAL;
+		अगर (अगरr->अगरr_settings.size < size) अणु
+			अगरr->अगरr_settings.size = size; /* data size wanted */
+			वापस -ENOBUFS;
+		पूर्ण
+		अगर (copy_to_user(line, &port->settings, size))
+			वापस -EFAULT;
+		वापस 0;
 
-	case IF_IFACE_SYNC_SERIAL:
-		if(!capable(CAP_NET_ADMIN))
-			return -EPERM;
+	हाल IF_IFACE_SYNC_SERIAL:
+		अगर(!capable(CAP_NET_ADMIN))
+			वापस -EPERM;
 
-		if (copy_from_user(&new_line, line, size))
-			return -EFAULT;
+		अगर (copy_from_user(&new_line, line, size))
+			वापस -EFAULT;
 
-		if (new_line.clock_type != CLOCK_EXT &&
-		    new_line.clock_type != CLOCK_TXFROMRX &&
-		    new_line.clock_type != CLOCK_INT &&
-		    new_line.clock_type != CLOCK_TXINT)
-			return -EINVAL;	/* No such clock setting */
+		अगर (new_line.घड़ी_प्रकारype != CLOCK_EXT &&
+		    new_line.घड़ी_प्रकारype != CLOCK_TXFROMRX &&
+		    new_line.घड़ी_प्रकारype != CLOCK_INT &&
+		    new_line.घड़ी_प्रकारype != CLOCK_TXINT)
+			वापस -EINVAL;	/* No such घड़ी setting */
 
-		if (new_line.loopback != 0 && new_line.loopback != 1)
-			return -EINVAL;
+		अगर (new_line.loopback != 0 && new_line.loopback != 1)
+			वापस -EINVAL;
 
-		memcpy(&port->settings, &new_line, size); /* Update settings */
-		n2_set_iface(port);
-		return 0;
+		स_नकल(&port->settings, &new_line, size); /* Update settings */
+		n2_set_अगरace(port);
+		वापस 0;
 
-	default:
-		return hdlc_ioctl(dev, ifr, cmd);
-	}
-}
+	शेष:
+		वापस hdlc_ioctl(dev, अगरr, cmd);
+	पूर्ण
+पूर्ण
 
 
 
-static void n2_destroy_card(card_t *card)
-{
-	int cnt;
+अटल व्योम n2_destroy_card(card_t *card)
+अणु
+	पूर्णांक cnt;
 
-	for (cnt = 0; cnt < 2; cnt++)
-		if (card->ports[cnt].card) {
-			struct net_device *dev = port_to_dev(&card->ports[cnt]);
-			unregister_hdlc_device(dev);
-		}
+	क्रम (cnt = 0; cnt < 2; cnt++)
+		अगर (card->ports[cnt].card) अणु
+			काष्ठा net_device *dev = port_to_dev(&card->ports[cnt]);
+			unरेजिस्टर_hdlc_device(dev);
+		पूर्ण
 
-	if (card->irq)
-		free_irq(card->irq, card);
+	अगर (card->irq)
+		मुक्त_irq(card->irq, card);
 
-	if (card->winbase) {
+	अगर (card->winbase) अणु
 		iounmap(card->winbase);
 		release_mem_region(card->phy_winbase, USE_WINDOWSIZE);
-	}
+	पूर्ण
 
-	if (card->io)
+	अगर (card->io)
 		release_region(card->io, N2_IOPORTS);
-	if (card->ports[0].dev)
-		free_netdev(card->ports[0].dev);
-	if (card->ports[1].dev)
-		free_netdev(card->ports[1].dev);
-	kfree(card);
-}
+	अगर (card->ports[0].dev)
+		मुक्त_netdev(card->ports[0].dev);
+	अगर (card->ports[1].dev)
+		मुक्त_netdev(card->ports[1].dev);
+	kमुक्त(card);
+पूर्ण
 
-static const struct net_device_ops n2_ops = {
-	.ndo_open       = n2_open,
-	.ndo_stop       = n2_close,
-	.ndo_start_xmit = hdlc_start_xmit,
-	.ndo_do_ioctl   = n2_ioctl,
-};
+अटल स्थिर काष्ठा net_device_ops n2_ops = अणु
+	.nकरो_खोलो       = n2_खोलो,
+	.nकरो_stop       = n2_बंद,
+	.nकरो_start_xmit = hdlc_start_xmit,
+	.nकरो_करो_ioctl   = n2_ioctl,
+पूर्ण;
 
-static int __init n2_run(unsigned long io, unsigned long irq,
-			 unsigned long winbase, long valid0, long valid1)
-{
+अटल पूर्णांक __init n2_run(अचिन्हित दीर्घ io, अचिन्हित दीर्घ irq,
+			 अचिन्हित दीर्घ winbase, दीर्घ valid0, दीर्घ valid1)
+अणु
 	card_t *card;
 	u8 cnt, pcr;
-	int i;
+	पूर्णांक i;
 
-	if (io < 0x200 || io > 0x3FF || (io % N2_IOPORTS) != 0) {
+	अगर (io < 0x200 || io > 0x3FF || (io % N2_IOPORTS) != 0) अणु
 		pr_err("invalid I/O port value\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (irq < 3 || irq > 15 || irq == 6) /* FIXME */ {
+	अगर (irq < 3 || irq > 15 || irq == 6) /* FIXME */ अणु
 		pr_err("invalid IRQ value\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (winbase < 0xA0000 || winbase > 0xFFFFF || (winbase & 0xFFF) != 0) {
+	अगर (winbase < 0xA0000 || winbase > 0xFFFFF || (winbase & 0xFFF) != 0) अणु
 		pr_err("invalid RAM value\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	card = kzalloc(sizeof(card_t), GFP_KERNEL);
-	if (card == NULL)
-		return -ENOBUFS;
+	card = kzalloc(माप(card_t), GFP_KERNEL);
+	अगर (card == शून्य)
+		वापस -ENOBUFS;
 
 	card->ports[0].dev = alloc_hdlcdev(&card->ports[0]);
 	card->ports[1].dev = alloc_hdlcdev(&card->ports[1]);
-	if (!card->ports[0].dev || !card->ports[1].dev) {
+	अगर (!card->ports[0].dev || !card->ports[1].dev) अणु
 		pr_err("unable to allocate memory\n");
 		n2_destroy_card(card);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (!request_region(io, N2_IOPORTS, devname)) {
+	अगर (!request_region(io, N2_IOPORTS, devname)) अणु
 		pr_err("I/O port region in use\n");
 		n2_destroy_card(card);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	card->io = io;
 
-	if (request_irq(irq, sca_intr, 0, devname, card)) {
+	अगर (request_irq(irq, sca_पूर्णांकr, 0, devname, card)) अणु
 		pr_err("could not allocate IRQ\n");
 		n2_destroy_card(card);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	card->irq = irq;
 
-	if (!request_mem_region(winbase, USE_WINDOWSIZE, devname)) {
+	अगर (!request_mem_region(winbase, USE_WINDOWSIZE, devname)) अणु
 		pr_err("could not request RAM window\n");
 		n2_destroy_card(card);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 	card->phy_winbase = winbase;
 	card->winbase = ioremap(winbase, USE_WINDOWSIZE);
-	if (!card->winbase) {
+	अगर (!card->winbase) अणु
 		pr_err("ioremap() failed\n");
 		n2_destroy_card(card);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	outb(0, io + N2_PCR);
 	outb(winbase >> 12, io + N2_BAR);
 
-	switch (USE_WINDOWSIZE) {
-	case 16384:
+	चयन (USE_WINDOWSIZE) अणु
+	हाल 16384:
 		outb(WIN16K, io + N2_PSR);
-		break;
+		अवरोध;
 
-	case 32768:
+	हाल 32768:
 		outb(WIN32K, io + N2_PSR);
-		break;
+		अवरोध;
 
-	case 65536:
+	हाल 65536:
 		outb(WIN64K, io + N2_PSR);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		pr_err("invalid window size\n");
 		n2_destroy_card(card);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	pcr = PCR_ENWIN | PCR_VPM | (USE_BUS16BITS ? PCR_BUS16 : 0);
 	outb(pcr, io + N2_PCR);
 
 	card->ram_size = sca_detect_ram(card, card->winbase, MAX_RAM_SIZE);
 
-	/* number of TX + RX buffers for one port */
-	i = card->ram_size / ((valid0 + valid1) * (sizeof(pkt_desc) +
+	/* number of TX + RX buffers क्रम one port */
+	i = card->ram_size / ((valid0 + valid1) * (माप(pkt_desc) +
 						   HDLC_MAX_MRU));
 
 	card->tx_ring_buffers = min(i / 2, MAX_TX_BUFFERS);
 	card->rx_ring_buffers = i - card->tx_ring_buffers;
 
-	card->buff_offset = (valid0 + valid1) * sizeof(pkt_desc) *
+	card->buff_offset = (valid0 + valid1) * माप(pkt_desc) *
 		(card->tx_ring_buffers + card->rx_ring_buffers);
 
 	pr_info("RISCom/N2 %u KB RAM, IRQ%u, using %u TX + %u RX packets rings\n",
 		card->ram_size / 1024, card->irq,
 		card->tx_ring_buffers, card->rx_ring_buffers);
 
-	if (card->tx_ring_buffers < 1) {
+	अगर (card->tx_ring_buffers < 1) अणु
 		pr_err("RAM test failed\n");
 		n2_destroy_card(card);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
 	pcr |= PCR_RUNSCA;		/* run SCA */
 	outb(pcr, io + N2_PCR);
 	outb(0, io + N2_MCR);
 
 	sca_init(card, 0);
-	for (cnt = 0; cnt < 2; cnt++) {
+	क्रम (cnt = 0; cnt < 2; cnt++) अणु
 		port_t *port = &card->ports[cnt];
-		struct net_device *dev = port_to_dev(port);
+		काष्ठा net_device *dev = port_to_dev(port);
 		hdlc_device *hdlc = dev_to_hdlc(dev);
 
-		if ((cnt == 0 && !valid0) || (cnt == 1 && !valid1))
-			continue;
+		अगर ((cnt == 0 && !valid0) || (cnt == 1 && !valid1))
+			जारी;
 
 		port->phy_node = cnt;
 		port->valid = 1;
 
-		if ((cnt == 1) && valid0)
+		अगर ((cnt == 1) && valid0)
 			port->log_node = 1;
 
 		spin_lock_init(&port->lock);
@@ -466,97 +467,97 @@ static int __init n2_run(unsigned long io, unsigned long irq,
 		dev->netdev_ops = &n2_ops;
 		hdlc->attach = sca_attach;
 		hdlc->xmit = sca_xmit;
-		port->settings.clock_type = CLOCK_EXT;
+		port->settings.घड़ी_प्रकारype = CLOCK_EXT;
 		port->card = card;
 
-		if (register_hdlc_device(dev)) {
+		अगर (रेजिस्टर_hdlc_device(dev)) अणु
 			pr_warn("unable to register hdlc device\n");
-			port->card = NULL;
+			port->card = शून्य;
 			n2_destroy_card(card);
-			return -ENOBUFS;
-		}
+			वापस -ENOBUFS;
+		पूर्ण
 		sca_init_port(port); /* Set up SCA memory */
 
 		netdev_info(dev, "RISCom/N2 node %d\n", port->phy_node);
-	}
+	पूर्ण
 
 	*new_card = card;
 	new_card = &card->next_card;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 
-static int __init n2_init(void)
-{
-	if (hw==NULL) {
-#ifdef MODULE
+अटल पूर्णांक __init n2_init(व्योम)
+अणु
+	अगर (hw==शून्य) अणु
+#अगर_घोषित MODULE
 		pr_info("no card initialized\n");
-#endif
-		return -EINVAL;	/* no parameters specified, abort */
-	}
+#पूर्ण_अगर
+		वापस -EINVAL;	/* no parameters specअगरied, पात */
+	पूर्ण
 
 	pr_info("%s\n", version);
 
-	do {
-		unsigned long io, irq, ram;
-		long valid[2] = { 0, 0 }; /* Default = both ports disabled */
+	करो अणु
+		अचिन्हित दीर्घ io, irq, ram;
+		दीर्घ valid[2] = अणु 0, 0 पूर्ण; /* Default = both ports disabled */
 
-		io = simple_strtoul(hw, &hw, 0);
+		io = simple_म_से_अदीर्घ(hw, &hw, 0);
 
-		if (*hw++ != ',')
-			break;
-		irq = simple_strtoul(hw, &hw, 0);
+		अगर (*hw++ != ',')
+			अवरोध;
+		irq = simple_म_से_अदीर्घ(hw, &hw, 0);
 
-		if (*hw++ != ',')
-			break;
-		ram = simple_strtoul(hw, &hw, 0);
+		अगर (*hw++ != ',')
+			अवरोध;
+		ram = simple_म_से_अदीर्घ(hw, &hw, 0);
 
-		if (*hw++ != ',')
-			break;
-		while(1) {
-			if (*hw == '0' && !valid[0])
+		अगर (*hw++ != ',')
+			अवरोध;
+		जबतक(1) अणु
+			अगर (*hw == '0' && !valid[0])
 				valid[0] = 1; /* Port 0 enabled */
-			else if (*hw == '1' && !valid[1])
+			अन्यथा अगर (*hw == '1' && !valid[1])
 				valid[1] = 1; /* Port 1 enabled */
-			else
-				break;
+			अन्यथा
+				अवरोध;
 			hw++;
-		}
+		पूर्ण
 
-		if (!valid[0] && !valid[1])
-			break;	/* at least one port must be used */
+		अगर (!valid[0] && !valid[1])
+			अवरोध;	/* at least one port must be used */
 
-		if (*hw == ':' || *hw == '\x0')
+		अगर (*hw == ':' || *hw == '\x0')
 			n2_run(io, irq, ram, valid[0], valid[1]);
 
-		if (*hw == '\x0')
-			return first_card ? 0 : -EINVAL;
-	}while(*hw++ == ':');
+		अगर (*hw == '\x0')
+			वापस first_card ? 0 : -EINVAL;
+	पूर्णजबतक(*hw++ == ':');
 
 	pr_err("invalid hardware parameters\n");
-	return first_card ? 0 : -EINVAL;
-}
+	वापस first_card ? 0 : -EINVAL;
+पूर्ण
 
 
-static void __exit n2_cleanup(void)
-{
+अटल व्योम __निकास n2_cleanup(व्योम)
+अणु
 	card_t *card = first_card;
 
-	while (card) {
+	जबतक (card) अणु
 		card_t *ptr = card;
 		card = card->next_card;
 		n2_destroy_card(ptr);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 module_init(n2_init);
-module_exit(n2_cleanup);
+module_निकास(n2_cleanup);
 
 MODULE_AUTHOR("Krzysztof Halasa <khc@pm.waw.pl>");
 MODULE_DESCRIPTION("RISCom/N2 serial port driver");
 MODULE_LICENSE("GPL v2");
-module_param(hw, charp, 0444);
+module_param(hw, अक्षरp, 0444);
 MODULE_PARM_DESC(hw, "io,irq,ram,ports:io,irq,...");

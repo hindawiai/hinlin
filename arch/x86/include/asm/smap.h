@@ -1,94 +1,95 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Supervisor Mode Access Prevention support
  *
  * Copyright (C) 2012 Intel Corporation
- * Author: H. Peter Anvin <hpa@linux.intel.com>
+ * Author: H. Peter Anvin <hpa@linux.पूर्णांकel.com>
  */
 
-#ifndef _ASM_X86_SMAP_H
-#define _ASM_X86_SMAP_H
+#अगर_अघोषित _ASM_X86_SMAP_H
+#घोषणा _ASM_X86_SMAP_H
 
-#include <asm/nops.h>
-#include <asm/cpufeatures.h>
-#include <asm/alternative.h>
+#समावेश <यंत्र/nops.h>
+#समावेश <यंत्र/cpufeatures.h>
+#समावेश <यंत्र/alternative.h>
 
-/* "Raw" instruction opcodes */
-#define __ASM_CLAC	".byte 0x0f,0x01,0xca"
-#define __ASM_STAC	".byte 0x0f,0x01,0xcb"
+/* "Raw" inकाष्ठाion opcodes */
+#घोषणा __ASM_CLAC	".byte 0x0f,0x01,0xca"
+#घोषणा __ASM_STAC	".byte 0x0f,0x01,0xcb"
 
-#ifdef __ASSEMBLY__
+#अगर_घोषित __ASSEMBLY__
 
-#ifdef CONFIG_X86_SMAP
+#अगर_घोषित CONFIG_X86_SMAP
 
-#define ASM_CLAC \
+#घोषणा ASM_CLAC \
 	ALTERNATIVE "", __ASM_CLAC, X86_FEATURE_SMAP
 
-#define ASM_STAC \
+#घोषणा ASM_STAC \
 	ALTERNATIVE "", __ASM_STAC, X86_FEATURE_SMAP
 
-#else /* CONFIG_X86_SMAP */
+#अन्यथा /* CONFIG_X86_SMAP */
 
-#define ASM_CLAC
-#define ASM_STAC
+#घोषणा ASM_CLAC
+#घोषणा ASM_STAC
 
-#endif /* CONFIG_X86_SMAP */
+#पूर्ण_अगर /* CONFIG_X86_SMAP */
 
-#else /* __ASSEMBLY__ */
+#अन्यथा /* __ASSEMBLY__ */
 
-#ifdef CONFIG_X86_SMAP
+#अगर_घोषित CONFIG_X86_SMAP
 
-static __always_inline void clac(void)
-{
+अटल __always_अंतरभूत व्योम clac(व्योम)
+अणु
 	/* Note: a barrier is implicit in alternative() */
 	alternative("", __ASM_CLAC, X86_FEATURE_SMAP);
-}
+पूर्ण
 
-static __always_inline void stac(void)
-{
+अटल __always_अंतरभूत व्योम stac(व्योम)
+अणु
 	/* Note: a barrier is implicit in alternative() */
 	alternative("", __ASM_STAC, X86_FEATURE_SMAP);
-}
+पूर्ण
 
-static __always_inline unsigned long smap_save(void)
-{
-	unsigned long flags;
+अटल __always_अंतरभूत अचिन्हित दीर्घ smap_save(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	asm volatile ("# smap_save\n\t"
+	यंत्र अस्थिर ("# smap_save\n\t"
 		      ALTERNATIVE("", "pushf; pop %0; " __ASM_CLAC "\n\t",
 				  X86_FEATURE_SMAP)
 		      : "=rm" (flags) : : "memory", "cc");
 
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static __always_inline void smap_restore(unsigned long flags)
-{
-	asm volatile ("# smap_restore\n\t"
+अटल __always_अंतरभूत व्योम smap_restore(अचिन्हित दीर्घ flags)
+अणु
+	यंत्र अस्थिर ("# smap_restore\n\t"
 		      ALTERNATIVE("", "push %0; popf\n\t",
 				  X86_FEATURE_SMAP)
 		      : : "g" (flags) : "memory", "cc");
-}
+पूर्ण
 
-/* These macros can be used in asm() statements */
-#define ASM_CLAC \
+/* These macros can be used in यंत्र() statements */
+#घोषणा ASM_CLAC \
 	ALTERNATIVE("", __ASM_CLAC, X86_FEATURE_SMAP)
-#define ASM_STAC \
+#घोषणा ASM_STAC \
 	ALTERNATIVE("", __ASM_STAC, X86_FEATURE_SMAP)
 
-#else /* CONFIG_X86_SMAP */
+#अन्यथा /* CONFIG_X86_SMAP */
 
-static inline void clac(void) { }
-static inline void stac(void) { }
+अटल अंतरभूत व्योम clac(व्योम) अणु पूर्ण
+अटल अंतरभूत व्योम stac(व्योम) अणु पूर्ण
 
-static inline unsigned long smap_save(void) { return 0; }
-static inline void smap_restore(unsigned long flags) { }
+अटल अंतरभूत अचिन्हित दीर्घ smap_save(व्योम) अणु वापस 0; पूर्ण
+अटल अंतरभूत व्योम smap_restore(अचिन्हित दीर्घ flags) अणु पूर्ण
 
-#define ASM_CLAC
-#define ASM_STAC
+#घोषणा ASM_CLAC
+#घोषणा ASM_STAC
 
-#endif /* CONFIG_X86_SMAP */
+#पूर्ण_अगर /* CONFIG_X86_SMAP */
 
-#endif /* __ASSEMBLY__ */
+#पूर्ण_अगर /* __ASSEMBLY__ */
 
-#endif /* _ASM_X86_SMAP_H */
+#पूर्ण_अगर /* _ASM_X86_SMAP_H */

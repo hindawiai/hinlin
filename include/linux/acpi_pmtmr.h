@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ACPI_PMTMR_H_
-#define _ACPI_PMTMR_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ACPI_PMTMR_H_
+#घोषणा _ACPI_PMTMR_H_
 
-#include <linux/clocksource.h>
+#समावेश <linux/घड़ीsource.h>
 
 /* Number of PMTMR ticks expected during calibration run */
-#define PMTMR_TICKS_PER_SEC 3579545
+#घोषणा PMTMR_TICKS_PER_SEC 3579545
 
 /* limit it to 24 bits */
-#define ACPI_PM_MASK CLOCKSOURCE_MASK(24)
+#घोषणा ACPI_PM_MASK CLOCKSOURCE_MASK(24)
 
 /* Overrun value */
-#define ACPI_PM_OVRRUN	(1<<24)
+#घोषणा ACPI_PM_OVRRUN	(1<<24)
 
-#ifdef CONFIG_X86_PM_TIMER
+#अगर_घोषित CONFIG_X86_PM_TIMER
 
-extern u32 acpi_pm_read_verified(void);
-extern u32 pmtmr_ioport;
+बाह्य u32 acpi_pm_पढ़ो_verअगरied(व्योम);
+बाह्य u32 pmपंचांगr_ioport;
 
-static inline u32 acpi_pm_read_early(void)
-{
-	if (!pmtmr_ioport)
-		return 0;
+अटल अंतरभूत u32 acpi_pm_पढ़ो_early(व्योम)
+अणु
+	अगर (!pmपंचांगr_ioport)
+		वापस 0;
 	/* mask the output to 24 bits */
-	return acpi_pm_read_verified() & ACPI_PM_MASK;
-}
+	वापस acpi_pm_पढ़ो_verअगरied() & ACPI_PM_MASK;
+पूर्ण
 
-#else
+#अन्यथा
 
-static inline u32 acpi_pm_read_early(void)
-{
-	return 0;
-}
+अटल अंतरभूत u32 acpi_pm_पढ़ो_early(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर
 

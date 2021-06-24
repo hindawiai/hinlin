@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASMAXP_PTRACE_H
-#define _ASMAXP_PTRACE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASMAXP_PTRACE_H
+#घोषणा _ASMAXP_PTRACE_H
 
-#include <uapi/asm/ptrace.h>
+#समावेश <uapi/यंत्र/ptrace.h>
 
 
-#define arch_has_single_step()		(1)
-#define user_mode(regs) (((regs)->ps & 8) != 0)
-#define instruction_pointer(regs) ((regs)->pc)
-#define profile_pc(regs) instruction_pointer(regs)
-#define current_user_stack_pointer() rdusp()
+#घोषणा arch_has_single_step()		(1)
+#घोषणा user_mode(regs) (((regs)->ps & 8) != 0)
+#घोषणा inकाष्ठाion_poपूर्णांकer(regs) ((regs)->pc)
+#घोषणा profile_pc(regs) inकाष्ठाion_poपूर्णांकer(regs)
+#घोषणा current_user_stack_poपूर्णांकer() rdusp()
 
-#define task_pt_regs(task) \
-  ((struct pt_regs *) (task_stack_page(task) + 2*PAGE_SIZE) - 1)
+#घोषणा task_pt_regs(task) \
+  ((काष्ठा pt_regs *) (task_stack_page(task) + 2*PAGE_SIZE) - 1)
 
-#define current_pt_regs() \
-  ((struct pt_regs *) ((char *)current_thread_info() + 2*PAGE_SIZE) - 1)
-#define signal_pt_regs current_pt_regs
+#घोषणा current_pt_regs() \
+  ((काष्ठा pt_regs *) ((अक्षर *)current_thपढ़ो_info() + 2*PAGE_SIZE) - 1)
+#घोषणा संकेत_pt_regs current_pt_regs
 
-#define force_successful_syscall_return() (current_pt_regs()->r0 = 0)
+#घोषणा क्रमce_successful_syscall_वापस() (current_pt_regs()->r0 = 0)
 
-static inline unsigned long regs_return_value(struct pt_regs *regs)
-{
-	return regs->r0;
-}
+अटल अंतरभूत अचिन्हित दीर्घ regs_वापस_value(काष्ठा pt_regs *regs)
+अणु
+	वापस regs->r0;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

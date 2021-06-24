@@ -1,92 +1,93 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * tdo24m - SPI-based drivers for Toppoly TDO24M series LCD panels
+ * tकरो24m - SPI-based drivers क्रम Toppoly TDO24M series LCD panels
  *
  * Copyright (C) 2008 Marvell International Ltd.
  *	Eric Miao <eric.miao@marvell.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/spi/spi.h>
-#include <linux/spi/tdo24m.h>
-#include <linux/fb.h>
-#include <linux/lcd.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/spi/tकरो24m.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/lcd.h>
+#समावेश <linux/slab.h>
 
-#define POWER_IS_ON(pwr)	((pwr) <= FB_BLANK_NORMAL)
+#घोषणा POWER_IS_ON(pwr)	((pwr) <= FB_BLANK_NORMAL)
 
-#define TDO24M_SPI_BUFF_SIZE	(4)
-#define MODE_QVGA	0
-#define MODE_VGA	1
+#घोषणा TDO24M_SPI_BUFF_SIZE	(4)
+#घोषणा MODE_QVGA	0
+#घोषणा MODE_VGA	1
 
-struct tdo24m {
-	struct spi_device	*spi_dev;
-	struct lcd_device	*lcd_dev;
+काष्ठा tकरो24m अणु
+	काष्ठा spi_device	*spi_dev;
+	काष्ठा lcd_device	*lcd_dev;
 
-	struct spi_message	msg;
-	struct spi_transfer	xfer;
-	uint8_t			*buf;
+	काष्ठा spi_message	msg;
+	काष्ठा spi_transfer	xfer;
+	uपूर्णांक8_t			*buf;
 
-	int (*adj_mode)(struct tdo24m *lcd, int mode);
-	int color_invert;
+	पूर्णांक (*adj_mode)(काष्ठा tकरो24m *lcd, पूर्णांक mode);
+	पूर्णांक color_invert;
 
-	int			power;
-	int			mode;
-};
+	पूर्णांक			घातer;
+	पूर्णांक			mode;
+पूर्ण;
 
 /* use bit 30, 31 as the indicator of command parameter number */
-#define CMD0(x)		((0 << 30) | (x))
-#define CMD1(x, x1)	((1 << 30) | ((x) << 9) | 0x100 | (x1))
-#define CMD2(x, x1, x2)	((2 << 30) | ((x) << 18) | 0x20000 |\
+#घोषणा CMD0(x)		((0 << 30) | (x))
+#घोषणा CMD1(x, x1)	((1 << 30) | ((x) << 9) | 0x100 | (x1))
+#घोषणा CMD2(x, x1, x2)	((2 << 30) | ((x) << 18) | 0x20000 |\
 			((x1) << 9) | 0x100 | (x2))
-#define CMD_NULL	(-1)
+#घोषणा CMD_शून्य	(-1)
 
-static const uint32_t lcd_panel_reset[] = {
+अटल स्थिर uपूर्णांक32_t lcd_panel_reset[] = अणु
 	CMD0(0x1), /* reset */
 	CMD0(0x0), /* nop */
 	CMD0(0x0), /* nop */
 	CMD0(0x0), /* nop */
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_panel_on[] = {
+अटल स्थिर uपूर्णांक32_t lcd_panel_on[] = अणु
 	CMD0(0x29),		/* Display ON */
 	CMD2(0xB8, 0xFF, 0xF9),	/* Output Control */
 	CMD0(0x11),		/* Sleep out */
 	CMD1(0xB0, 0x16),	/* Wake */
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_panel_off[] = {
+अटल स्थिर uपूर्णांक32_t lcd_panel_off[] = अणु
 	CMD0(0x28),		/* Display OFF */
 	CMD2(0xB8, 0x80, 0x02),	/* Output Control */
 	CMD0(0x10),		/* Sleep in */
 	CMD1(0xB0, 0x00),	/* Deep stand by in */
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_vga_pass_through_tdo24m[] = {
+अटल स्थिर uपूर्णांक32_t lcd_vga_pass_through_tकरो24m[] = अणु
 	CMD1(0xB0, 0x16),
 	CMD1(0xBC, 0x80),
 	CMD1(0xE1, 0x00),
 	CMD1(0x36, 0x50),
 	CMD1(0x3B, 0x00),
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_qvga_pass_through_tdo24m[] = {
+अटल स्थिर uपूर्णांक32_t lcd_qvga_pass_through_tकरो24m[] = अणु
 	CMD1(0xB0, 0x16),
 	CMD1(0xBC, 0x81),
 	CMD1(0xE1, 0x00),
 	CMD1(0x36, 0x50),
 	CMD1(0x3B, 0x22),
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_vga_transfer_tdo24m[] = {
+अटल स्थिर uपूर्णांक32_t lcd_vga_transfer_tकरो24m[] = अणु
 	CMD1(0xcf, 0x02),	/* Blanking period control (1) */
 	CMD2(0xd0, 0x08, 0x04),	/* Blanking period control (2) */
 	CMD1(0xd1, 0x01),	/* CKV timing control on/off */
@@ -94,12 +95,12 @@ static const uint32_t lcd_vga_transfer_tdo24m[] = {
 	CMD2(0xd3, 0x1a, 0x0f),	/* OEV timing control */
 	CMD2(0xd4, 0x1f, 0xaf),	/* ASW timing control (1) */
 	CMD1(0xd5, 0x14),	/* ASW timing control (2) */
-	CMD0(0x21),		/* Invert for normally black display */
+	CMD0(0x21),		/* Invert क्रम normally black display */
 	CMD0(0x29),		/* Display on */
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_qvga_transfer[] = {
+अटल स्थिर uपूर्णांक32_t lcd_qvga_transfer[] = अणु
 	CMD1(0xd6, 0x02),	/* Blanking period control (1) */
 	CMD2(0xd7, 0x08, 0x04),	/* Blanking period control (2) */
 	CMD1(0xd8, 0x01),	/* CKV timing control on/off */
@@ -107,28 +108,28 @@ static const uint32_t lcd_qvga_transfer[] = {
 	CMD2(0xde, 0x05, 0x0a),	/* OEV timing control */
 	CMD2(0xdf, 0x0a, 0x19),	/* ASW timing control (1) */
 	CMD1(0xe0, 0x0a),	/* ASW timing control (2) */
-	CMD0(0x21),		/* Invert for normally black display */
+	CMD0(0x21),		/* Invert क्रम normally black display */
 	CMD0(0x29),		/* Display on */
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_vga_pass_through_tdo35s[] = {
+अटल स्थिर uपूर्णांक32_t lcd_vga_pass_through_tकरो35s[] = अणु
 	CMD1(0xB0, 0x16),
 	CMD1(0xBC, 0x80),
 	CMD1(0xE1, 0x00),
 	CMD1(0x3B, 0x00),
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_qvga_pass_through_tdo35s[] = {
+अटल स्थिर uपूर्णांक32_t lcd_qvga_pass_through_tकरो35s[] = अणु
 	CMD1(0xB0, 0x16),
 	CMD1(0xBC, 0x81),
 	CMD1(0xE1, 0x00),
 	CMD1(0x3B, 0x22),
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_vga_transfer_tdo35s[] = {
+अटल स्थिर uपूर्णांक32_t lcd_vga_transfer_tकरो35s[] = अणु
 	CMD1(0xcf, 0x02),	/* Blanking period control (1) */
 	CMD2(0xd0, 0x08, 0x04),	/* Blanking period control (2) */
 	CMD1(0xd1, 0x01),	/* CKV timing control on/off */
@@ -136,27 +137,27 @@ static const uint32_t lcd_vga_transfer_tdo35s[] = {
 	CMD2(0xd3, 0x14, 0x28),	/* OEV timing control */
 	CMD2(0xd4, 0x28, 0x64),	/* ASW timing control (1) */
 	CMD1(0xd5, 0x28),	/* ASW timing control (2) */
-	CMD0(0x21),		/* Invert for normally black display */
+	CMD0(0x21),		/* Invert क्रम normally black display */
 	CMD0(0x29),		/* Display on */
-	CMD_NULL,
-};
+	CMD_शून्य,
+पूर्ण;
 
-static const uint32_t lcd_panel_config[] = {
+अटल स्थिर uपूर्णांक32_t lcd_panel_config[] = अणु
 	CMD2(0xb8, 0xff, 0xf9),	/* Output control */
 	CMD0(0x11),		/* sleep out */
 	CMD1(0xba, 0x01),	/* Display mode (1) */
 	CMD1(0xbb, 0x00),	/* Display mode (2) */
 	CMD1(0x3a, 0x60),	/* Display mode 18-bit RGB */
-	CMD1(0xbf, 0x10),	/* Drive system change control */
+	CMD1(0xbf, 0x10),	/* Drive प्रणाली change control */
 	CMD1(0xb1, 0x56),	/* Booster operation setup */
 	CMD1(0xb2, 0x33),	/* Booster mode setup */
 	CMD1(0xb3, 0x11),	/* Booster frequency setup */
-	CMD1(0xb4, 0x02),	/* Op amp/system clock */
+	CMD1(0xb4, 0x02),	/* Op amp/प्रणाली घड़ी */
 	CMD1(0xb5, 0x35),	/* VCS voltage */
 	CMD1(0xb6, 0x40),	/* VCOM voltage */
-	CMD1(0xb7, 0x03),	/* External display signal */
+	CMD1(0xb7, 0x03),	/* External display संकेत */
 	CMD1(0xbd, 0x00),	/* ASW slew rate */
-	CMD1(0xbe, 0x00),	/* Dummy data for QuadData operation */
+	CMD1(0xbe, 0x00),	/* Dummy data क्रम QuadData operation */
 	CMD1(0xc0, 0x11),	/* Sleep out FR count (A) */
 	CMD1(0xc1, 0x11),	/* Sleep out FR count (B) */
 	CMD1(0xc2, 0x11),	/* Sleep out FR count (C) */
@@ -166,200 +167,200 @@ static const uint32_t lcd_panel_config[] = {
 	CMD1(0xc6, 0xc0),	/* Sleep out FR count (G) */
 	CMD2(0xc7, 0x33, 0x43),	/* Gamma 1 fine tuning (1) */
 	CMD1(0xc8, 0x44),	/* Gamma 1 fine tuning (2) */
-	CMD1(0xc9, 0x33),	/* Gamma 1 inclination adjustment */
-	CMD1(0xca, 0x00),	/* Gamma 1 blue offset adjustment */
-	CMD2(0xec, 0x01, 0xf0),	/* Horizontal clock cycles */
-	CMD_NULL,
-};
+	CMD1(0xc9, 0x33),	/* Gamma 1 inclination adjusपंचांगent */
+	CMD1(0xca, 0x00),	/* Gamma 1 blue offset adjusपंचांगent */
+	CMD2(0xec, 0x01, 0xf0),	/* Horizontal घड़ी cycles */
+	CMD_शून्य,
+पूर्ण;
 
-static int tdo24m_writes(struct tdo24m *lcd, const uint32_t *array)
-{
-	struct spi_transfer *x = &lcd->xfer;
-	const uint32_t *p = array;
-	uint32_t data;
-	int nparams, err = 0;
+अटल पूर्णांक tकरो24m_ग_लिखोs(काष्ठा tकरो24m *lcd, स्थिर uपूर्णांक32_t *array)
+अणु
+	काष्ठा spi_transfer *x = &lcd->xfer;
+	स्थिर uपूर्णांक32_t *p = array;
+	uपूर्णांक32_t data;
+	पूर्णांक nparams, err = 0;
 
-	for (; *p != CMD_NULL; p++) {
-		if (!lcd->color_invert && *p == CMD0(0x21))
-			continue;
+	क्रम (; *p != CMD_शून्य; p++) अणु
+		अगर (!lcd->color_invert && *p == CMD0(0x21))
+			जारी;
 
 		nparams = (*p >> 30) & 0x3;
 
 		data = *p << (7 - nparams);
-		switch (nparams) {
-		case 0:
+		चयन (nparams) अणु
+		हाल 0:
 			lcd->buf[0] = (data >> 8) & 0xff;
 			lcd->buf[1] = data & 0xff;
-			break;
-		case 1:
+			अवरोध;
+		हाल 1:
 			lcd->buf[0] = (data >> 16) & 0xff;
 			lcd->buf[1] = (data >> 8) & 0xff;
 			lcd->buf[2] = data & 0xff;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			lcd->buf[0] = (data >> 24) & 0xff;
 			lcd->buf[1] = (data >> 16) & 0xff;
 			lcd->buf[2] = (data >> 8) & 0xff;
 			lcd->buf[3] = data & 0xff;
-			break;
-		default:
-			continue;
-		}
+			अवरोध;
+		शेष:
+			जारी;
+		पूर्ण
 		x->len = nparams + 2;
 		err = spi_sync(lcd->spi_dev, &lcd->msg);
-		if (err)
-			break;
-	}
+		अगर (err)
+			अवरोध;
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tdo24m_adj_mode(struct tdo24m *lcd, int mode)
-{
-	switch (mode) {
-	case MODE_VGA:
-		tdo24m_writes(lcd, lcd_vga_pass_through_tdo24m);
-		tdo24m_writes(lcd, lcd_panel_config);
-		tdo24m_writes(lcd, lcd_vga_transfer_tdo24m);
-		break;
-	case MODE_QVGA:
-		tdo24m_writes(lcd, lcd_qvga_pass_through_tdo24m);
-		tdo24m_writes(lcd, lcd_panel_config);
-		tdo24m_writes(lcd, lcd_qvga_transfer);
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	lcd->mode = mode;
-	return 0;
-}
-
-static int tdo35s_adj_mode(struct tdo24m *lcd, int mode)
-{
-	switch (mode) {
-	case MODE_VGA:
-		tdo24m_writes(lcd, lcd_vga_pass_through_tdo35s);
-		tdo24m_writes(lcd, lcd_panel_config);
-		tdo24m_writes(lcd, lcd_vga_transfer_tdo35s);
-		break;
-	case MODE_QVGA:
-		tdo24m_writes(lcd, lcd_qvga_pass_through_tdo35s);
-		tdo24m_writes(lcd, lcd_panel_config);
-		tdo24m_writes(lcd, lcd_qvga_transfer);
-		break;
-	default:
-		return -EINVAL;
-	}
+अटल पूर्णांक tकरो24m_adj_mode(काष्ठा tकरो24m *lcd, पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल MODE_VGA:
+		tकरो24m_ग_लिखोs(lcd, lcd_vga_pass_through_tकरो24m);
+		tकरो24m_ग_लिखोs(lcd, lcd_panel_config);
+		tकरो24m_ग_लिखोs(lcd, lcd_vga_transfer_tकरो24m);
+		अवरोध;
+	हाल MODE_QVGA:
+		tकरो24m_ग_लिखोs(lcd, lcd_qvga_pass_through_tकरो24m);
+		tकरो24m_ग_लिखोs(lcd, lcd_panel_config);
+		tकरो24m_ग_लिखोs(lcd, lcd_qvga_transfer);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	lcd->mode = mode;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tdo24m_power_on(struct tdo24m *lcd)
-{
-	int err;
+अटल पूर्णांक tकरो35s_adj_mode(काष्ठा tकरो24m *lcd, पूर्णांक mode)
+अणु
+	चयन (mode) अणु
+	हाल MODE_VGA:
+		tकरो24m_ग_लिखोs(lcd, lcd_vga_pass_through_tकरो35s);
+		tकरो24m_ग_लिखोs(lcd, lcd_panel_config);
+		tकरो24m_ग_लिखोs(lcd, lcd_vga_transfer_tकरो35s);
+		अवरोध;
+	हाल MODE_QVGA:
+		tकरो24m_ग_लिखोs(lcd, lcd_qvga_pass_through_tकरो35s);
+		tकरो24m_ग_लिखोs(lcd, lcd_panel_config);
+		tकरो24m_ग_लिखोs(lcd, lcd_qvga_transfer);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	err = tdo24m_writes(lcd, lcd_panel_on);
-	if (err)
-		goto out;
+	lcd->mode = mode;
+	वापस 0;
+पूर्ण
 
-	err = tdo24m_writes(lcd, lcd_panel_reset);
-	if (err)
-		goto out;
+अटल पूर्णांक tकरो24m_घातer_on(काष्ठा tकरो24m *lcd)
+अणु
+	पूर्णांक err;
+
+	err = tकरो24m_ग_लिखोs(lcd, lcd_panel_on);
+	अगर (err)
+		जाओ out;
+
+	err = tकरो24m_ग_लिखोs(lcd, lcd_panel_reset);
+	अगर (err)
+		जाओ out;
 
 	err = lcd->adj_mode(lcd, lcd->mode);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int tdo24m_power_off(struct tdo24m *lcd)
-{
-	return tdo24m_writes(lcd, lcd_panel_off);
-}
+अटल पूर्णांक tकरो24m_घातer_off(काष्ठा tकरो24m *lcd)
+अणु
+	वापस tकरो24m_ग_लिखोs(lcd, lcd_panel_off);
+पूर्ण
 
-static int tdo24m_power(struct tdo24m *lcd, int power)
-{
-	int ret = 0;
+अटल पूर्णांक tकरो24m_घातer(काष्ठा tकरो24m *lcd, पूर्णांक घातer)
+अणु
+	पूर्णांक ret = 0;
 
-	if (POWER_IS_ON(power) && !POWER_IS_ON(lcd->power))
-		ret = tdo24m_power_on(lcd);
-	else if (!POWER_IS_ON(power) && POWER_IS_ON(lcd->power))
-		ret = tdo24m_power_off(lcd);
+	अगर (POWER_IS_ON(घातer) && !POWER_IS_ON(lcd->घातer))
+		ret = tकरो24m_घातer_on(lcd);
+	अन्यथा अगर (!POWER_IS_ON(घातer) && POWER_IS_ON(lcd->घातer))
+		ret = tकरो24m_घातer_off(lcd);
 
-	if (!ret)
-		lcd->power = power;
+	अगर (!ret)
+		lcd->घातer = घातer;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int tdo24m_set_power(struct lcd_device *ld, int power)
-{
-	struct tdo24m *lcd = lcd_get_data(ld);
+अटल पूर्णांक tकरो24m_set_घातer(काष्ठा lcd_device *ld, पूर्णांक घातer)
+अणु
+	काष्ठा tकरो24m *lcd = lcd_get_data(ld);
 
-	return tdo24m_power(lcd, power);
-}
+	वापस tकरो24m_घातer(lcd, घातer);
+पूर्ण
 
-static int tdo24m_get_power(struct lcd_device *ld)
-{
-	struct tdo24m *lcd = lcd_get_data(ld);
+अटल पूर्णांक tकरो24m_get_घातer(काष्ठा lcd_device *ld)
+अणु
+	काष्ठा tकरो24m *lcd = lcd_get_data(ld);
 
-	return lcd->power;
-}
+	वापस lcd->घातer;
+पूर्ण
 
-static int tdo24m_set_mode(struct lcd_device *ld, struct fb_videomode *m)
-{
-	struct tdo24m *lcd = lcd_get_data(ld);
-	int mode = MODE_QVGA;
+अटल पूर्णांक tकरो24m_set_mode(काष्ठा lcd_device *ld, काष्ठा fb_videomode *m)
+अणु
+	काष्ठा tकरो24m *lcd = lcd_get_data(ld);
+	पूर्णांक mode = MODE_QVGA;
 
-	if (m->xres == 640 || m->xres == 480)
+	अगर (m->xres == 640 || m->xres == 480)
 		mode = MODE_VGA;
 
-	if (lcd->mode == mode)
-		return 0;
+	अगर (lcd->mode == mode)
+		वापस 0;
 
-	return lcd->adj_mode(lcd, mode);
-}
+	वापस lcd->adj_mode(lcd, mode);
+पूर्ण
 
-static struct lcd_ops tdo24m_ops = {
-	.get_power	= tdo24m_get_power,
-	.set_power	= tdo24m_set_power,
-	.set_mode	= tdo24m_set_mode,
-};
+अटल काष्ठा lcd_ops tकरो24m_ops = अणु
+	.get_घातer	= tकरो24m_get_घातer,
+	.set_घातer	= tकरो24m_set_घातer,
+	.set_mode	= tकरो24m_set_mode,
+पूर्ण;
 
-static int tdo24m_probe(struct spi_device *spi)
-{
-	struct tdo24m *lcd;
-	struct spi_message *m;
-	struct spi_transfer *x;
-	struct tdo24m_platform_data *pdata;
-	enum tdo24m_model model;
-	int err;
+अटल पूर्णांक tकरो24m_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा tकरो24m *lcd;
+	काष्ठा spi_message *m;
+	काष्ठा spi_transfer *x;
+	काष्ठा tकरो24m_platक्रमm_data *pdata;
+	क्रमागत tकरो24m_model model;
+	पूर्णांक err;
 
 	pdata = dev_get_platdata(&spi->dev);
-	if (pdata)
+	अगर (pdata)
 		model = pdata->model;
-	else
+	अन्यथा
 		model = TDO24M;
 
 	spi->bits_per_word = 8;
 	spi->mode = SPI_MODE_3;
 	err = spi_setup(spi);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	lcd = devm_kzalloc(&spi->dev, sizeof(struct tdo24m), GFP_KERNEL);
-	if (!lcd)
-		return -ENOMEM;
+	lcd = devm_kzalloc(&spi->dev, माप(काष्ठा tकरो24m), GFP_KERNEL);
+	अगर (!lcd)
+		वापस -ENOMEM;
 
 	lcd->spi_dev = spi;
-	lcd->power = FB_BLANK_POWERDOWN;
-	lcd->mode = MODE_VGA;	/* default to VGA */
+	lcd->घातer = FB_BLANK_POWERDOWN;
+	lcd->mode = MODE_VGA;	/* शेष to VGA */
 
 	lcd->buf = devm_kzalloc(&spi->dev, TDO24M_SPI_BUFF_SIZE, GFP_KERNEL);
-	if (lcd->buf == NULL)
-		return -ENOMEM;
+	अगर (lcd->buf == शून्य)
+		वापस -ENOMEM;
 
 	m = &lcd->msg;
 	x = &lcd->xfer;
@@ -370,78 +371,78 @@ static int tdo24m_probe(struct spi_device *spi)
 	x->tx_buf = &lcd->buf[0];
 	spi_message_add_tail(x, m);
 
-	switch (model) {
-	case TDO24M:
+	चयन (model) अणु
+	हाल TDO24M:
 		lcd->color_invert = 1;
-		lcd->adj_mode = tdo24m_adj_mode;
-		break;
-	case TDO35S:
-		lcd->adj_mode = tdo35s_adj_mode;
+		lcd->adj_mode = tकरो24m_adj_mode;
+		अवरोध;
+	हाल TDO35S:
+		lcd->adj_mode = tकरो35s_adj_mode;
 		lcd->color_invert = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&spi->dev, "Unsupported model");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	lcd->lcd_dev = devm_lcd_device_register(&spi->dev, "tdo24m", &spi->dev,
-						lcd, &tdo24m_ops);
-	if (IS_ERR(lcd->lcd_dev))
-		return PTR_ERR(lcd->lcd_dev);
+	lcd->lcd_dev = devm_lcd_device_रेजिस्टर(&spi->dev, "tdo24m", &spi->dev,
+						lcd, &tकरो24m_ops);
+	अगर (IS_ERR(lcd->lcd_dev))
+		वापस PTR_ERR(lcd->lcd_dev);
 
 	spi_set_drvdata(spi, lcd);
-	err = tdo24m_power(lcd, FB_BLANK_UNBLANK);
-	if (err)
-		return err;
+	err = tकरो24m_घातer(lcd, FB_BLANK_UNBLANK);
+	अगर (err)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int tdo24m_remove(struct spi_device *spi)
-{
-	struct tdo24m *lcd = spi_get_drvdata(spi);
+अटल पूर्णांक tकरो24m_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा tकरो24m *lcd = spi_get_drvdata(spi);
 
-	tdo24m_power(lcd, FB_BLANK_POWERDOWN);
-	return 0;
-}
+	tकरो24m_घातer(lcd, FB_BLANK_POWERDOWN);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int tdo24m_suspend(struct device *dev)
-{
-	struct tdo24m *lcd = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक tकरो24m_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा tकरो24m *lcd = dev_get_drvdata(dev);
 
-	return tdo24m_power(lcd, FB_BLANK_POWERDOWN);
-}
+	वापस tकरो24m_घातer(lcd, FB_BLANK_POWERDOWN);
+पूर्ण
 
-static int tdo24m_resume(struct device *dev)
-{
-	struct tdo24m *lcd = dev_get_drvdata(dev);
+अटल पूर्णांक tकरो24m_resume(काष्ठा device *dev)
+अणु
+	काष्ठा tकरो24m *lcd = dev_get_drvdata(dev);
 
-	return tdo24m_power(lcd, FB_BLANK_UNBLANK);
-}
-#endif
+	वापस tकरो24m_घातer(lcd, FB_BLANK_UNBLANK);
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(tdo24m_pm_ops, tdo24m_suspend, tdo24m_resume);
+अटल SIMPLE_DEV_PM_OPS(tकरो24m_pm_ops, tकरो24m_suspend, tकरो24m_resume);
 
-/* Power down all displays on reboot, poweroff or halt */
-static void tdo24m_shutdown(struct spi_device *spi)
-{
-	struct tdo24m *lcd = spi_get_drvdata(spi);
+/* Power करोwn all displays on reboot, घातeroff or halt */
+अटल व्योम tकरो24m_shutकरोwn(काष्ठा spi_device *spi)
+अणु
+	काष्ठा tकरो24m *lcd = spi_get_drvdata(spi);
 
-	tdo24m_power(lcd, FB_BLANK_POWERDOWN);
-}
+	tकरो24m_घातer(lcd, FB_BLANK_POWERDOWN);
+पूर्ण
 
-static struct spi_driver tdo24m_driver = {
-	.driver = {
+अटल काष्ठा spi_driver tकरो24m_driver = अणु
+	.driver = अणु
 		.name		= "tdo24m",
-		.pm		= &tdo24m_pm_ops,
-	},
-	.probe		= tdo24m_probe,
-	.remove		= tdo24m_remove,
-	.shutdown	= tdo24m_shutdown,
-};
+		.pm		= &tकरो24m_pm_ops,
+	पूर्ण,
+	.probe		= tकरो24m_probe,
+	.हटाओ		= tकरो24m_हटाओ,
+	.shutकरोwn	= tकरो24m_shutकरोwn,
+पूर्ण;
 
-module_spi_driver(tdo24m_driver);
+module_spi_driver(tकरो24m_driver);
 
 MODULE_AUTHOR("Eric Miao <eric.miao@marvell.com>");
 MODULE_DESCRIPTION("Driver for Toppoly TDO24M LCD Panel");

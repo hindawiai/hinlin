@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Support for Intel Camera Imaging ISP subsystem.
+ * Support क्रम Intel Camera Imaging ISP subप्रणाली.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is free software; you can redistribute it and/or modify it
+ * This program is मुक्त software; you can redistribute it and/or modअगरy it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
  * more details.
  */
 
-#ifndef __IA_CSS_DPC2_PARAM_H
-#define __IA_CSS_DPC2_PARAM_H
+#अगर_अघोषित __IA_CSS_DPC2_PARAM_H
+#घोषणा __IA_CSS_DPC2_PARAM_H
 
-#include "type_support.h"
-#include "vmem.h" /* for VMEM_ARRAY*/
+#समावेश "type_support.h"
+#समावेश "vmem.h" /* क्रम VMEM_ARRAY*/
 
 /* 4 planes : GR, R, B, GB */
-#define NUM_PLANES		4
+#घोषणा NUM_PLANES		4
 
 /* ToDo: Move this to testsetup */
-#define MAX_FRAME_SIMDWIDTH	30
+#घोषणा MAX_FRAME_SIMDWIDTH	30
 
 /* 3 lines state per color plane input_line_state */
-#define DPC2_STATE_INPUT_BUFFER_HEIGHT	(3 * NUM_PLANES)
+#घोषणा DPC2_STATE_INPUT_BUFFER_HEIGHT	(3 * NUM_PLANES)
 /* Each plane has width equal to half frame line */
-#define DPC2_STATE_INPUT_BUFFER_WIDTH	CEIL_DIV(MAX_FRAME_SIMDWIDTH, 2)
+#घोषणा DPC2_STATE_INPUT_BUFFER_WIDTH	CEIL_DIV(MAX_FRAME_SIMDWIDTH, 2)
 
-/* 1 line state per color plane for local deviation state*/
-#define DPC2_STATE_LOCAL_DEVIATION_BUFFER_HEIGHT	(1 * NUM_PLANES)
+/* 1 line state per color plane क्रम local deviation state*/
+#घोषणा DPC2_STATE_LOCAL_DEVIATION_BUFFER_HEIGHT	(1 * NUM_PLANES)
 /* Each plane has width equal to half frame line */
-#define DPC2_STATE_LOCAL_DEVIATION_BUFFER_WIDTH		CEIL_DIV(MAX_FRAME_SIMDWIDTH, 2)
+#घोषणा DPC2_STATE_LOCAL_DEVIATION_BUFFER_WIDTH		CEIL_DIV(MAX_FRAME_SIMDWIDTH, 2)
 
 /* MINMAX state buffer stores 1 full input line (GR-R color line) */
-#define DPC2_STATE_SECOND_MINMAX_BUFFER_HEIGHT	1
-#define DPC2_STATE_SECOND_MINMAX_BUFFER_WIDTH	MAX_FRAME_SIMDWIDTH
+#घोषणा DPC2_STATE_SECOND_MINMAX_BUFFER_HEIGHT	1
+#घोषणा DPC2_STATE_SECOND_MINMAX_BUFFER_WIDTH	MAX_FRAME_SIMDWIDTH
 
-struct ia_css_isp_dpc2_params {
+काष्ठा ia_css_isp_dpc2_params अणु
 	s32 metric1;
 	s32 metric2;
 	s32 metric3;
@@ -47,6 +48,6 @@ struct ia_css_isp_dpc2_params {
 	s32 wb_gain_r;
 	s32 wb_gain_b;
 	s32 wb_gain_gb;
-};
+पूर्ण;
 
-#endif /* __IA_CSS_DPC2_PARAM_H */
+#पूर्ण_अगर /* __IA_CSS_DPC2_PARAM_H */

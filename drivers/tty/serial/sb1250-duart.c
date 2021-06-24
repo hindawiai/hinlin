@@ -1,11 +1,12 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- *	Support for the asynchronous serial interface (DUART) included
+ *	Support क्रम the asynchronous serial पूर्णांकerface (DUART) included
  *	in the BCM1250 and derived System-On-a-Chip (SOC) devices.
  *
  *	Copyright (c) 2007  Maciej W. Rozycki
  *
- *	Derived from drivers/char/sb1250_duart.c for which the following
+ *	Derived from drivers/अक्षर/sb1250_duart.c क्रम which the following
  *	copyright applies:
  *
  *	Copyright (c) 2000, 2001, 2002, 2003, 2004  Broadcom Corporation
@@ -15,58 +16,58 @@
  *	"BCM1250/BCM1125/BCM1125H User Manual", Broadcom Corporation
  */
 
-#include <linux/compiler.h>
-#include <linux/console.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/major.h>
-#include <linux/serial.h>
-#include <linux/serial_core.h>
-#include <linux/spinlock.h>
-#include <linux/sysrq.h>
-#include <linux/tty.h>
-#include <linux/tty_flip.h>
-#include <linux/types.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/console.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/major.h>
+#समावेश <linux/serial.h>
+#समावेश <linux/serial_core.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/sysrq.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/tty_flip.h>
+#समावेश <linux/types.h>
 
-#include <linux/refcount.h>
-#include <asm/io.h>
+#समावेश <linux/refcount.h>
+#समावेश <यंत्र/पन.स>
 
-#include <asm/sibyte/sb1250.h>
-#include <asm/sibyte/sb1250_uart.h>
-#include <asm/sibyte/swarm.h>
+#समावेश <यंत्र/sibyte/sb1250.h>
+#समावेश <यंत्र/sibyte/sb1250_uart.h>
+#समावेश <यंत्र/sibyte/swarm.h>
 
 
-#if defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
-#include <asm/sibyte/bcm1480_regs.h>
-#include <asm/sibyte/bcm1480_int.h>
+#अगर defined(CONFIG_SIBYTE_BCM1x55) || defined(CONFIG_SIBYTE_BCM1x80)
+#समावेश <यंत्र/sibyte/bcm1480_regs.h>
+#समावेश <यंत्र/sibyte/bcm1480_पूर्णांक.h>
 
-#define SBD_CHANREGS(line)	A_BCM1480_DUART_CHANREG((line), 0)
-#define SBD_CTRLREGS(line)	A_BCM1480_DUART_CTRLREG((line), 0)
-#define SBD_INT(line)		(K_BCM1480_INT_UART_0 + (line))
+#घोषणा SBD_CHANREGS(line)	A_BCM1480_DUART_CHANREG((line), 0)
+#घोषणा SBD_CTRLREGS(line)	A_BCM1480_DUART_CTRLREG((line), 0)
+#घोषणा SBD_INT(line)		(K_BCM1480_INT_UART_0 + (line))
 
-#define DUART_CHANREG_SPACING	BCM1480_DUART_CHANREG_SPACING
+#घोषणा DUART_CHANREG_SPACING	BCM1480_DUART_CHANREG_SPACING
 
-#define R_DUART_IMRREG(line)	R_BCM1480_DUART_IMRREG(line)
-#define R_DUART_INCHREG(line)	R_BCM1480_DUART_INCHREG(line)
-#define R_DUART_ISRREG(line)	R_BCM1480_DUART_ISRREG(line)
+#घोषणा R_DUART_IMRREG(line)	R_BCM1480_DUART_IMRREG(line)
+#घोषणा R_DUART_INCHREG(line)	R_BCM1480_DUART_INCHREG(line)
+#घोषणा R_DUART_ISRREG(line)	R_BCM1480_DUART_ISRREG(line)
 
-#elif defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
-#include <asm/sibyte/sb1250_regs.h>
-#include <asm/sibyte/sb1250_int.h>
+#या_अगर defined(CONFIG_SIBYTE_SB1250) || defined(CONFIG_SIBYTE_BCM112X)
+#समावेश <यंत्र/sibyte/sb1250_regs.h>
+#समावेश <यंत्र/sibyte/sb1250_पूर्णांक.h>
 
-#define SBD_CHANREGS(line)	A_DUART_CHANREG((line), 0)
-#define SBD_CTRLREGS(line)	A_DUART_CTRLREG(0)
-#define SBD_INT(line)		(K_INT_UART_0 + (line))
+#घोषणा SBD_CHANREGS(line)	A_DUART_CHANREG((line), 0)
+#घोषणा SBD_CTRLREGS(line)	A_DUART_CTRLREG(0)
+#घोषणा SBD_INT(line)		(K_INT_UART_0 + (line))
 
-#else
-#error invalid SB1250 UART configuration
+#अन्यथा
+#त्रुटि invalid SB1250 UART configuration
 
-#endif
+#पूर्ण_अगर
 
 
 MODULE_AUTHOR("Maciej W. Rozycki <macro@linux-mips.org>");
@@ -74,471 +75,471 @@ MODULE_DESCRIPTION("BCM1xxx on-chip DUART serial driver");
 MODULE_LICENSE("GPL");
 
 
-#define DUART_MAX_CHIP 2
-#define DUART_MAX_SIDE 2
+#घोषणा DUART_MAX_CHIP 2
+#घोषणा DUART_MAX_SIDE 2
 
 /*
  * Per-port state.
  */
-struct sbd_port {
-	struct sbd_duart	*duart;
-	struct uart_port	port;
-	unsigned char __iomem	*memctrl;
-	int			tx_stopped;
-	int			initialised;
-};
+काष्ठा sbd_port अणु
+	काष्ठा sbd_duart	*duart;
+	काष्ठा uart_port	port;
+	अचिन्हित अक्षर __iomem	*memctrl;
+	पूर्णांक			tx_stopped;
+	पूर्णांक			initialised;
+पूर्ण;
 
 /*
- * Per-DUART state for the shared register space.
+ * Per-DUART state क्रम the shared रेजिस्टर space.
  */
-struct sbd_duart {
-	struct sbd_port		sport[2];
-	unsigned long		mapctrl;
+काष्ठा sbd_duart अणु
+	काष्ठा sbd_port		sport[2];
+	अचिन्हित दीर्घ		mapctrl;
 	refcount_t		map_guard;
-};
+पूर्ण;
 
-#define to_sport(uport) container_of(uport, struct sbd_port, port)
+#घोषणा to_sport(uport) container_of(uport, काष्ठा sbd_port, port)
 
-static struct sbd_duart sbd_duarts[DUART_MAX_CHIP];
+अटल काष्ठा sbd_duart sbd_duarts[DUART_MAX_CHIP];
 
 
 /*
- * Reading and writing SB1250 DUART registers.
+ * Reading and writing SB1250 DUART रेजिस्टरs.
  *
- * There are three register spaces: two per-channel ones and
+ * There are three रेजिस्टर spaces: two per-channel ones and
  * a shared one.  We have to define accessors appropriately.
- * All registers are 64-bit and all but the Baud Rate Clock
- * registers only define 8 least significant bits.  There is
- * also a workaround to take into account.  Raw accessors use
- * the full register width, but cooked ones truncate it
- * intentionally so that the rest of the driver does not care.
+ * All रेजिस्टरs are 64-bit and all but the Baud Rate Clock
+ * रेजिस्टरs only define 8 least signअगरicant bits.  There is
+ * also a workaround to take पूर्णांकo account.  Raw accessors use
+ * the full रेजिस्टर width, but cooked ones truncate it
+ * पूर्णांकentionally so that the rest of the driver करोes not care.
  */
-static u64 __read_sbdchn(struct sbd_port *sport, int reg)
-{
-	void __iomem *csr = sport->port.membase + reg;
+अटल u64 __पढ़ो_sbdchn(काष्ठा sbd_port *sport, पूर्णांक reg)
+अणु
+	व्योम __iomem *csr = sport->port.membase + reg;
 
-	return __raw_readq(csr);
-}
+	वापस __raw_पढ़ोq(csr);
+पूर्ण
 
-static u64 __read_sbdshr(struct sbd_port *sport, int reg)
-{
-	void __iomem *csr = sport->memctrl + reg;
+अटल u64 __पढ़ो_sbdshr(काष्ठा sbd_port *sport, पूर्णांक reg)
+अणु
+	व्योम __iomem *csr = sport->memctrl + reg;
 
-	return __raw_readq(csr);
-}
+	वापस __raw_पढ़ोq(csr);
+पूर्ण
 
-static void __write_sbdchn(struct sbd_port *sport, int reg, u64 value)
-{
-	void __iomem *csr = sport->port.membase + reg;
+अटल व्योम __ग_लिखो_sbdchn(काष्ठा sbd_port *sport, पूर्णांक reg, u64 value)
+अणु
+	व्योम __iomem *csr = sport->port.membase + reg;
 
-	__raw_writeq(value, csr);
-}
+	__raw_ग_लिखोq(value, csr);
+पूर्ण
 
-static void __write_sbdshr(struct sbd_port *sport, int reg, u64 value)
-{
-	void __iomem *csr = sport->memctrl + reg;
+अटल व्योम __ग_लिखो_sbdshr(काष्ठा sbd_port *sport, पूर्णांक reg, u64 value)
+अणु
+	व्योम __iomem *csr = sport->memctrl + reg;
 
-	__raw_writeq(value, csr);
-}
+	__raw_ग_लिखोq(value, csr);
+पूर्ण
 
 /*
- * In bug 1956, we get glitches that can mess up uart registers.  This
+ * In bug 1956, we get glitches that can mess up uart रेजिस्टरs.  This
  * "read-mode-reg after any register access" is an accepted workaround.
  */
-static void __war_sbd1956(struct sbd_port *sport)
-{
-	__read_sbdchn(sport, R_DUART_MODE_REG_1);
-	__read_sbdchn(sport, R_DUART_MODE_REG_2);
-}
+अटल व्योम __war_sbd1956(काष्ठा sbd_port *sport)
+अणु
+	__पढ़ो_sbdchn(sport, R_DUART_MODE_REG_1);
+	__पढ़ो_sbdchn(sport, R_DUART_MODE_REG_2);
+पूर्ण
 
-static unsigned char read_sbdchn(struct sbd_port *sport, int reg)
-{
-	unsigned char retval;
+अटल अचिन्हित अक्षर पढ़ो_sbdchn(काष्ठा sbd_port *sport, पूर्णांक reg)
+अणु
+	अचिन्हित अक्षर retval;
 
-	retval = __read_sbdchn(sport, reg);
-	if (IS_ENABLED(CONFIG_SB1_PASS_2_WORKAROUNDS))
+	retval = __पढ़ो_sbdchn(sport, reg);
+	अगर (IS_ENABLED(CONFIG_SB1_PASS_2_WORKAROUNDS))
 		__war_sbd1956(sport);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static unsigned char read_sbdshr(struct sbd_port *sport, int reg)
-{
-	unsigned char retval;
+अटल अचिन्हित अक्षर पढ़ो_sbdshr(काष्ठा sbd_port *sport, पूर्णांक reg)
+अणु
+	अचिन्हित अक्षर retval;
 
-	retval = __read_sbdshr(sport, reg);
-	if (IS_ENABLED(CONFIG_SB1_PASS_2_WORKAROUNDS))
+	retval = __पढ़ो_sbdshr(sport, reg);
+	अगर (IS_ENABLED(CONFIG_SB1_PASS_2_WORKAROUNDS))
 		__war_sbd1956(sport);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static void write_sbdchn(struct sbd_port *sport, int reg, unsigned int value)
-{
-	__write_sbdchn(sport, reg, value);
-	if (IS_ENABLED(CONFIG_SB1_PASS_2_WORKAROUNDS))
+अटल व्योम ग_लिखो_sbdchn(काष्ठा sbd_port *sport, पूर्णांक reg, अचिन्हित पूर्णांक value)
+अणु
+	__ग_लिखो_sbdchn(sport, reg, value);
+	अगर (IS_ENABLED(CONFIG_SB1_PASS_2_WORKAROUNDS))
 		__war_sbd1956(sport);
-}
+पूर्ण
 
-static void write_sbdshr(struct sbd_port *sport, int reg, unsigned int value)
-{
-	__write_sbdshr(sport, reg, value);
-	if (IS_ENABLED(CONFIG_SB1_PASS_2_WORKAROUNDS))
+अटल व्योम ग_लिखो_sbdshr(काष्ठा sbd_port *sport, पूर्णांक reg, अचिन्हित पूर्णांक value)
+अणु
+	__ग_लिखो_sbdshr(sport, reg, value);
+	अगर (IS_ENABLED(CONFIG_SB1_PASS_2_WORKAROUNDS))
 		__war_sbd1956(sport);
-}
+पूर्ण
 
 
-static int sbd_receive_ready(struct sbd_port *sport)
-{
-	return read_sbdchn(sport, R_DUART_STATUS) & M_DUART_RX_RDY;
-}
+अटल पूर्णांक sbd_receive_पढ़ोy(काष्ठा sbd_port *sport)
+अणु
+	वापस पढ़ो_sbdchn(sport, R_DUART_STATUS) & M_DUART_RX_RDY;
+पूर्ण
 
-static int sbd_receive_drain(struct sbd_port *sport)
-{
-	int loops = 10000;
+अटल पूर्णांक sbd_receive_drain(काष्ठा sbd_port *sport)
+अणु
+	पूर्णांक loops = 10000;
 
-	while (sbd_receive_ready(sport) && --loops)
-		read_sbdchn(sport, R_DUART_RX_HOLD);
-	return loops;
-}
+	जबतक (sbd_receive_पढ़ोy(sport) && --loops)
+		पढ़ो_sbdchn(sport, R_DUART_RX_HOLD);
+	वापस loops;
+पूर्ण
 
-static int __maybe_unused sbd_transmit_ready(struct sbd_port *sport)
-{
-	return read_sbdchn(sport, R_DUART_STATUS) & M_DUART_TX_RDY;
-}
+अटल पूर्णांक __maybe_unused sbd_transmit_पढ़ोy(काष्ठा sbd_port *sport)
+अणु
+	वापस पढ़ो_sbdchn(sport, R_DUART_STATUS) & M_DUART_TX_RDY;
+पूर्ण
 
-static int __maybe_unused sbd_transmit_drain(struct sbd_port *sport)
-{
-	int loops = 10000;
+अटल पूर्णांक __maybe_unused sbd_transmit_drain(काष्ठा sbd_port *sport)
+अणु
+	पूर्णांक loops = 10000;
 
-	while (!sbd_transmit_ready(sport) && --loops)
+	जबतक (!sbd_transmit_पढ़ोy(sport) && --loops)
 		udelay(2);
-	return loops;
-}
+	वापस loops;
+पूर्ण
 
-static int sbd_transmit_empty(struct sbd_port *sport)
-{
-	return read_sbdchn(sport, R_DUART_STATUS) & M_DUART_TX_EMT;
-}
+अटल पूर्णांक sbd_transmit_empty(काष्ठा sbd_port *sport)
+अणु
+	वापस पढ़ो_sbdchn(sport, R_DUART_STATUS) & M_DUART_TX_EMT;
+पूर्ण
 
-static int sbd_line_drain(struct sbd_port *sport)
-{
-	int loops = 10000;
+अटल पूर्णांक sbd_line_drain(काष्ठा sbd_port *sport)
+अणु
+	पूर्णांक loops = 10000;
 
-	while (!sbd_transmit_empty(sport) && --loops)
+	जबतक (!sbd_transmit_empty(sport) && --loops)
 		udelay(2);
-	return loops;
-}
+	वापस loops;
+पूर्ण
 
 
-static unsigned int sbd_tx_empty(struct uart_port *uport)
-{
-	struct sbd_port *sport = to_sport(uport);
+अटल अचिन्हित पूर्णांक sbd_tx_empty(काष्ठा uart_port *uport)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
 
-	return sbd_transmit_empty(sport) ? TIOCSER_TEMT : 0;
-}
+	वापस sbd_transmit_empty(sport) ? TIOCSER_TEMT : 0;
+पूर्ण
 
-static unsigned int sbd_get_mctrl(struct uart_port *uport)
-{
-	struct sbd_port *sport = to_sport(uport);
-	unsigned int mctrl, status;
+अटल अचिन्हित पूर्णांक sbd_get_mctrl(काष्ठा uart_port *uport)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
+	अचिन्हित पूर्णांक mctrl, status;
 
-	status = read_sbdshr(sport, R_DUART_IN_PORT);
+	status = पढ़ो_sbdshr(sport, R_DUART_IN_PORT);
 	status >>= (uport->line) % 2;
 	mctrl = (!(status & M_DUART_IN_PIN0_VAL) ? TIOCM_CTS : 0) |
 		(!(status & M_DUART_IN_PIN4_VAL) ? TIOCM_CAR : 0) |
 		(!(status & M_DUART_RIN0_PIN) ? TIOCM_RNG : 0) |
 		(!(status & M_DUART_IN_PIN2_VAL) ? TIOCM_DSR : 0);
-	return mctrl;
-}
+	वापस mctrl;
+पूर्ण
 
-static void sbd_set_mctrl(struct uart_port *uport, unsigned int mctrl)
-{
-	struct sbd_port *sport = to_sport(uport);
-	unsigned int clr = 0, set = 0, mode2;
+अटल व्योम sbd_set_mctrl(काष्ठा uart_port *uport, अचिन्हित पूर्णांक mctrl)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
+	अचिन्हित पूर्णांक clr = 0, set = 0, mode2;
 
-	if (mctrl & TIOCM_DTR)
+	अगर (mctrl & TIOCM_DTR)
 		set |= M_DUART_SET_OPR2;
-	else
+	अन्यथा
 		clr |= M_DUART_CLR_OPR2;
-	if (mctrl & TIOCM_RTS)
+	अगर (mctrl & TIOCM_RTS)
 		set |= M_DUART_SET_OPR0;
-	else
+	अन्यथा
 		clr |= M_DUART_CLR_OPR0;
 	clr <<= (uport->line) % 2;
 	set <<= (uport->line) % 2;
 
-	mode2 = read_sbdchn(sport, R_DUART_MODE_REG_2);
+	mode2 = पढ़ो_sbdchn(sport, R_DUART_MODE_REG_2);
 	mode2 &= ~M_DUART_CHAN_MODE;
-	if (mctrl & TIOCM_LOOP)
+	अगर (mctrl & TIOCM_LOOP)
 		mode2 |= V_DUART_CHAN_MODE_LCL_LOOP;
-	else
+	अन्यथा
 		mode2 |= V_DUART_CHAN_MODE_NORMAL;
 
-	write_sbdshr(sport, R_DUART_CLEAR_OPR, clr);
-	write_sbdshr(sport, R_DUART_SET_OPR, set);
-	write_sbdchn(sport, R_DUART_MODE_REG_2, mode2);
-}
+	ग_लिखो_sbdshr(sport, R_DUART_CLEAR_OPR, clr);
+	ग_लिखो_sbdshr(sport, R_DUART_SET_OPR, set);
+	ग_लिखो_sbdchn(sport, R_DUART_MODE_REG_2, mode2);
+पूर्ण
 
-static void sbd_stop_tx(struct uart_port *uport)
-{
-	struct sbd_port *sport = to_sport(uport);
+अटल व्योम sbd_stop_tx(काष्ठा uart_port *uport)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
 
-	write_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS);
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS);
 	sport->tx_stopped = 1;
-};
+पूर्ण;
 
-static void sbd_start_tx(struct uart_port *uport)
-{
-	struct sbd_port *sport = to_sport(uport);
-	unsigned int mask;
+अटल व्योम sbd_start_tx(काष्ठा uart_port *uport)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
+	अचिन्हित पूर्णांक mask;
 
-	/* Enable tx interrupts.  */
-	mask = read_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2));
+	/* Enable tx पूर्णांकerrupts.  */
+	mask = पढ़ो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2));
 	mask |= M_DUART_IMR_TX;
-	write_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), mask);
+	ग_लिखो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), mask);
 
 	/* Go!, go!, go!...  */
-	write_sbdchn(sport, R_DUART_CMD, M_DUART_TX_EN);
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, M_DUART_TX_EN);
 	sport->tx_stopped = 0;
-};
+पूर्ण;
 
-static void sbd_stop_rx(struct uart_port *uport)
-{
-	struct sbd_port *sport = to_sport(uport);
+अटल व्योम sbd_stop_rx(काष्ठा uart_port *uport)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
 
-	write_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), 0);
-};
+	ग_लिखो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), 0);
+पूर्ण;
 
-static void sbd_enable_ms(struct uart_port *uport)
-{
-	struct sbd_port *sport = to_sport(uport);
+अटल व्योम sbd_enable_ms(काष्ठा uart_port *uport)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
 
-	write_sbdchn(sport, R_DUART_AUXCTL_X,
+	ग_लिखो_sbdchn(sport, R_DUART_AUXCTL_X,
 		     M_DUART_CIN_CHNG_ENA | M_DUART_CTS_CHNG_ENA);
-}
+पूर्ण
 
-static void sbd_break_ctl(struct uart_port *uport, int break_state)
-{
-	struct sbd_port *sport = to_sport(uport);
+अटल व्योम sbd_अवरोध_ctl(काष्ठा uart_port *uport, पूर्णांक अवरोध_state)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
 
-	if (break_state == -1)
-		write_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_START_BREAK);
-	else
-		write_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_STOP_BREAK);
-}
+	अगर (अवरोध_state == -1)
+		ग_लिखो_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_START_BREAK);
+	अन्यथा
+		ग_लिखो_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_STOP_BREAK);
+पूर्ण
 
 
-static void sbd_receive_chars(struct sbd_port *sport)
-{
-	struct uart_port *uport = &sport->port;
-	struct uart_icount *icount;
-	unsigned int status, ch, flag;
-	int count;
+अटल व्योम sbd_receive_अक्षरs(काष्ठा sbd_port *sport)
+अणु
+	काष्ठा uart_port *uport = &sport->port;
+	काष्ठा uart_icount *icount;
+	अचिन्हित पूर्णांक status, ch, flag;
+	पूर्णांक count;
 
-	for (count = 16; count; count--) {
-		status = read_sbdchn(sport, R_DUART_STATUS);
-		if (!(status & M_DUART_RX_RDY))
-			break;
+	क्रम (count = 16; count; count--) अणु
+		status = पढ़ो_sbdchn(sport, R_DUART_STATUS);
+		अगर (!(status & M_DUART_RX_RDY))
+			अवरोध;
 
-		ch = read_sbdchn(sport, R_DUART_RX_HOLD);
+		ch = पढ़ो_sbdchn(sport, R_DUART_RX_HOLD);
 
 		flag = TTY_NORMAL;
 
 		icount = &uport->icount;
 		icount->rx++;
 
-		if (unlikely(status &
+		अगर (unlikely(status &
 			     (M_DUART_RCVD_BRK | M_DUART_FRM_ERR |
-			      M_DUART_PARITY_ERR | M_DUART_OVRUN_ERR))) {
-			if (status & M_DUART_RCVD_BRK) {
+			      M_DUART_PARITY_ERR | M_DUART_OVRUN_ERR))) अणु
+			अगर (status & M_DUART_RCVD_BRK) अणु
 				icount->brk++;
-				if (uart_handle_break(uport))
-					continue;
-			} else if (status & M_DUART_FRM_ERR)
+				अगर (uart_handle_अवरोध(uport))
+					जारी;
+			पूर्ण अन्यथा अगर (status & M_DUART_FRM_ERR)
 				icount->frame++;
-			else if (status & M_DUART_PARITY_ERR)
+			अन्यथा अगर (status & M_DUART_PARITY_ERR)
 				icount->parity++;
-			if (status & M_DUART_OVRUN_ERR)
+			अगर (status & M_DUART_OVRUN_ERR)
 				icount->overrun++;
 
-			status &= uport->read_status_mask;
-			if (status & M_DUART_RCVD_BRK)
+			status &= uport->पढ़ो_status_mask;
+			अगर (status & M_DUART_RCVD_BRK)
 				flag = TTY_BREAK;
-			else if (status & M_DUART_FRM_ERR)
+			अन्यथा अगर (status & M_DUART_FRM_ERR)
 				flag = TTY_FRAME;
-			else if (status & M_DUART_PARITY_ERR)
+			अन्यथा अगर (status & M_DUART_PARITY_ERR)
 				flag = TTY_PARITY;
-		}
+		पूर्ण
 
-		if (uart_handle_sysrq_char(uport, ch))
-			continue;
+		अगर (uart_handle_sysrq_अक्षर(uport, ch))
+			जारी;
 
-		uart_insert_char(uport, status, M_DUART_OVRUN_ERR, ch, flag);
-	}
+		uart_insert_अक्षर(uport, status, M_DUART_OVRUN_ERR, ch, flag);
+	पूर्ण
 
 	tty_flip_buffer_push(&uport->state->port);
-}
+पूर्ण
 
-static void sbd_transmit_chars(struct sbd_port *sport)
-{
-	struct uart_port *uport = &sport->port;
-	struct circ_buf *xmit = &sport->port.state->xmit;
-	unsigned int mask;
-	int stop_tx;
+अटल व्योम sbd_transmit_अक्षरs(काष्ठा sbd_port *sport)
+अणु
+	काष्ठा uart_port *uport = &sport->port;
+	काष्ठा circ_buf *xmit = &sport->port.state->xmit;
+	अचिन्हित पूर्णांक mask;
+	पूर्णांक stop_tx;
 
-	/* XON/XOFF chars.  */
-	if (sport->port.x_char) {
-		write_sbdchn(sport, R_DUART_TX_HOLD, sport->port.x_char);
+	/* XON/XOFF अक्षरs.  */
+	अगर (sport->port.x_अक्षर) अणु
+		ग_लिखो_sbdchn(sport, R_DUART_TX_HOLD, sport->port.x_अक्षर);
 		sport->port.icount.tx++;
-		sport->port.x_char = 0;
-		return;
-	}
+		sport->port.x_अक्षर = 0;
+		वापस;
+	पूर्ण
 
-	/* If nothing to do or stopped or hardware stopped.  */
+	/* If nothing to करो or stopped or hardware stopped.  */
 	stop_tx = (uart_circ_empty(xmit) || uart_tx_stopped(&sport->port));
 
-	/* Send char.  */
-	if (!stop_tx) {
-		write_sbdchn(sport, R_DUART_TX_HOLD, xmit->buf[xmit->tail]);
+	/* Send अक्षर.  */
+	अगर (!stop_tx) अणु
+		ग_लिखो_sbdchn(sport, R_DUART_TX_HOLD, xmit->buf[xmit->tail]);
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
 		sport->port.icount.tx++;
 
-		if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
-			uart_write_wakeup(&sport->port);
-	}
+		अगर (uart_circ_अक्षरs_pending(xmit) < WAKEUP_CHARS)
+			uart_ग_लिखो_wakeup(&sport->port);
+	पूर्ण
 
-	/* Are we are done?  */
-	if (stop_tx || uart_circ_empty(xmit)) {
-		/* Disable tx interrupts.  */
-		mask = read_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2));
+	/* Are we are करोne?  */
+	अगर (stop_tx || uart_circ_empty(xmit)) अणु
+		/* Disable tx पूर्णांकerrupts.  */
+		mask = पढ़ो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2));
 		mask &= ~M_DUART_IMR_TX;
-		write_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), mask);
-	}
-}
+		ग_लिखो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), mask);
+	पूर्ण
+पूर्ण
 
-static void sbd_status_handle(struct sbd_port *sport)
-{
-	struct uart_port *uport = &sport->port;
-	unsigned int delta;
+अटल व्योम sbd_status_handle(काष्ठा sbd_port *sport)
+अणु
+	काष्ठा uart_port *uport = &sport->port;
+	अचिन्हित पूर्णांक delta;
 
-	delta = read_sbdshr(sport, R_DUART_INCHREG((uport->line) % 2));
+	delta = पढ़ो_sbdshr(sport, R_DUART_INCHREG((uport->line) % 2));
 	delta >>= (uport->line) % 2;
 
-	if (delta & (M_DUART_IN_PIN0_VAL << S_DUART_IN_PIN_CHNG))
+	अगर (delta & (M_DUART_IN_PIN0_VAL << S_DUART_IN_PIN_CHNG))
 		uart_handle_cts_change(uport, !(delta & M_DUART_IN_PIN0_VAL));
 
-	if (delta & (M_DUART_IN_PIN2_VAL << S_DUART_IN_PIN_CHNG))
+	अगर (delta & (M_DUART_IN_PIN2_VAL << S_DUART_IN_PIN_CHNG))
 		uport->icount.dsr++;
 
-	if (delta & ((M_DUART_IN_PIN2_VAL | M_DUART_IN_PIN0_VAL) <<
+	अगर (delta & ((M_DUART_IN_PIN2_VAL | M_DUART_IN_PIN0_VAL) <<
 		     S_DUART_IN_PIN_CHNG))
-		wake_up_interruptible(&uport->state->port.delta_msr_wait);
-}
+		wake_up_पूर्णांकerruptible(&uport->state->port.delta_msr_रुको);
+पूर्ण
 
-static irqreturn_t sbd_interrupt(int irq, void *dev_id)
-{
-	struct sbd_port *sport = dev_id;
-	struct uart_port *uport = &sport->port;
-	irqreturn_t status = IRQ_NONE;
-	unsigned int intstat;
-	int count;
+अटल irqवापस_t sbd_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sbd_port *sport = dev_id;
+	काष्ठा uart_port *uport = &sport->port;
+	irqवापस_t status = IRQ_NONE;
+	अचिन्हित पूर्णांक पूर्णांकstat;
+	पूर्णांक count;
 
-	for (count = 16; count; count--) {
-		intstat = read_sbdshr(sport,
+	क्रम (count = 16; count; count--) अणु
+		पूर्णांकstat = पढ़ो_sbdshr(sport,
 				      R_DUART_ISRREG((uport->line) % 2));
-		intstat &= read_sbdshr(sport,
+		पूर्णांकstat &= पढ़ो_sbdshr(sport,
 				       R_DUART_IMRREG((uport->line) % 2));
-		intstat &= M_DUART_ISR_ALL;
-		if (!intstat)
-			break;
+		पूर्णांकstat &= M_DUART_ISR_ALL;
+		अगर (!पूर्णांकstat)
+			अवरोध;
 
-		if (intstat & M_DUART_ISR_RX)
-			sbd_receive_chars(sport);
-		if (intstat & M_DUART_ISR_IN)
+		अगर (पूर्णांकstat & M_DUART_ISR_RX)
+			sbd_receive_अक्षरs(sport);
+		अगर (पूर्णांकstat & M_DUART_ISR_IN)
 			sbd_status_handle(sport);
-		if (intstat & M_DUART_ISR_TX)
-			sbd_transmit_chars(sport);
+		अगर (पूर्णांकstat & M_DUART_ISR_TX)
+			sbd_transmit_अक्षरs(sport);
 
 		status = IRQ_HANDLED;
-	}
+	पूर्ण
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
 
-static int sbd_startup(struct uart_port *uport)
-{
-	struct sbd_port *sport = to_sport(uport);
-	unsigned int mode1;
-	int ret;
+अटल पूर्णांक sbd_startup(काष्ठा uart_port *uport)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
+	अचिन्हित पूर्णांक mode1;
+	पूर्णांक ret;
 
-	ret = request_irq(sport->port.irq, sbd_interrupt,
+	ret = request_irq(sport->port.irq, sbd_पूर्णांकerrupt,
 			  IRQF_SHARED, "sb1250-duart", sport);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Clear the receive FIFO.  */
 	sbd_receive_drain(sport);
 
-	/* Clear the interrupt registers.  */
-	write_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_RESET_BREAK_INT);
-	read_sbdshr(sport, R_DUART_INCHREG((uport->line) % 2));
+	/* Clear the पूर्णांकerrupt रेजिस्टरs.  */
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_RESET_BREAK_INT);
+	पढ़ो_sbdshr(sport, R_DUART_INCHREG((uport->line) % 2));
 
-	/* Set rx/tx interrupt to FIFO available.  */
-	mode1 = read_sbdchn(sport, R_DUART_MODE_REG_1);
+	/* Set rx/tx पूर्णांकerrupt to FIFO available.  */
+	mode1 = पढ़ो_sbdchn(sport, R_DUART_MODE_REG_1);
 	mode1 &= ~(M_DUART_RX_IRQ_SEL_RXFULL | M_DUART_TX_IRQ_SEL_TXEMPT);
-	write_sbdchn(sport, R_DUART_MODE_REG_1, mode1);
+	ग_लिखो_sbdchn(sport, R_DUART_MODE_REG_1, mode1);
 
 	/* Disable tx, enable rx.  */
-	write_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS | M_DUART_RX_EN);
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS | M_DUART_RX_EN);
 	sport->tx_stopped = 1;
 
-	/* Enable interrupts.  */
-	write_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2),
+	/* Enable पूर्णांकerrupts.  */
+	ग_लिखो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2),
 		     M_DUART_IMR_IN | M_DUART_IMR_RX);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void sbd_shutdown(struct uart_port *uport)
-{
-	struct sbd_port *sport = to_sport(uport);
+अटल व्योम sbd_shutकरोwn(काष्ठा uart_port *uport)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
 
-	write_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS | M_DUART_RX_DIS);
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS | M_DUART_RX_DIS);
 	sport->tx_stopped = 1;
-	free_irq(sport->port.irq, sport);
-}
+	मुक्त_irq(sport->port.irq, sport);
+पूर्ण
 
 
-static void sbd_init_port(struct sbd_port *sport)
-{
-	struct uart_port *uport = &sport->port;
+अटल व्योम sbd_init_port(काष्ठा sbd_port *sport)
+अणु
+	काष्ठा uart_port *uport = &sport->port;
 
-	if (sport->initialised)
-		return;
+	अगर (sport->initialised)
+		वापस;
 
-	/* There is no DUART reset feature, so just set some sane defaults.  */
-	write_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_RESET_TX);
-	write_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_RESET_RX);
-	write_sbdchn(sport, R_DUART_MODE_REG_1, V_DUART_BITS_PER_CHAR_8);
-	write_sbdchn(sport, R_DUART_MODE_REG_2, 0);
-	write_sbdchn(sport, R_DUART_FULL_CTL,
+	/* There is no DUART reset feature, so just set some sane शेषs.  */
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_RESET_TX);
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, V_DUART_MISC_CMD_RESET_RX);
+	ग_लिखो_sbdchn(sport, R_DUART_MODE_REG_1, V_DUART_BITS_PER_CHAR_8);
+	ग_लिखो_sbdchn(sport, R_DUART_MODE_REG_2, 0);
+	ग_लिखो_sbdchn(sport, R_DUART_FULL_CTL,
 		     V_DUART_INT_TIME(0) | V_DUART_SIG_FULL(15));
-	write_sbdchn(sport, R_DUART_OPCR_X, 0);
-	write_sbdchn(sport, R_DUART_AUXCTL_X, 0);
-	write_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), 0);
+	ग_लिखो_sbdchn(sport, R_DUART_OPCR_X, 0);
+	ग_लिखो_sbdchn(sport, R_DUART_AUXCTL_X, 0);
+	ग_लिखो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), 0);
 
 	sport->initialised = 1;
-}
+पूर्ण
 
-static void sbd_set_termios(struct uart_port *uport, struct ktermios *termios,
-			    struct ktermios *old_termios)
-{
-	struct sbd_port *sport = to_sport(uport);
-	unsigned int mode1 = 0, mode2 = 0, aux = 0;
-	unsigned int mode1mask = 0, mode2mask = 0, auxmask = 0;
-	unsigned int oldmode1, oldmode2, oldaux;
-	unsigned int baud, brg;
-	unsigned int command;
+अटल व्योम sbd_set_termios(काष्ठा uart_port *uport, काष्ठा ktermios *termios,
+			    काष्ठा ktermios *old_termios)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
+	अचिन्हित पूर्णांक mode1 = 0, mode2 = 0, aux = 0;
+	अचिन्हित पूर्णांक mode1mask = 0, mode2mask = 0, auxmask = 0;
+	अचिन्हित पूर्णांक oldmode1, oldmode2, oldaux;
+	अचिन्हित पूर्णांक baud, brg;
+	अचिन्हित पूर्णांक command;
 
 	mode1mask |= ~(M_DUART_PARITY_MODE | M_DUART_PARITY_TYPE_ODD |
 		       M_DUART_BITS_PER_CHAR);
@@ -546,207 +547,207 @@ static void sbd_set_termios(struct uart_port *uport, struct ktermios *termios,
 	auxmask |= ~M_DUART_CTS_CHNG_ENA;
 
 	/* Byte size.  */
-	switch (termios->c_cflag & CSIZE) {
-	case CS5:
-	case CS6:
+	चयन (termios->c_cflag & CSIZE) अणु
+	हाल CS5:
+	हाल CS6:
 		/* Unsupported, leave unchanged.  */
 		mode1mask |= M_DUART_PARITY_MODE;
-		break;
-	case CS7:
+		अवरोध;
+	हाल CS7:
 		mode1 |= V_DUART_BITS_PER_CHAR_7;
-		break;
-	case CS8:
-	default:
+		अवरोध;
+	हाल CS8:
+	शेष:
 		mode1 |= V_DUART_BITS_PER_CHAR_8;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/* Parity and stop bits.  */
-	if (termios->c_cflag & CSTOPB)
+	अगर (termios->c_cflag & CSTOPB)
 		mode2 |= M_DUART_STOP_BIT_LEN_2;
-	else
+	अन्यथा
 		mode2 |= M_DUART_STOP_BIT_LEN_1;
-	if (termios->c_cflag & PARENB)
+	अगर (termios->c_cflag & PARENB)
 		mode1 |= V_DUART_PARITY_MODE_ADD;
-	else
+	अन्यथा
 		mode1 |= V_DUART_PARITY_MODE_NONE;
-	if (termios->c_cflag & PARODD)
+	अगर (termios->c_cflag & PARODD)
 		mode1 |= M_DUART_PARITY_TYPE_ODD;
-	else
+	अन्यथा
 		mode1 |= M_DUART_PARITY_TYPE_EVEN;
 
 	baud = uart_get_baud_rate(uport, termios, old_termios, 1200, 5000000);
 	brg = V_DUART_BAUD_RATE(baud);
 	/* The actual lower bound is 1221bps, so compensate.  */
-	if (brg > M_DUART_CLK_COUNTER)
+	अगर (brg > M_DUART_CLK_COUNTER)
 		brg = M_DUART_CLK_COUNTER;
 
-	uart_update_timeout(uport, termios->c_cflag, baud);
+	uart_update_समयout(uport, termios->c_cflag, baud);
 
-	uport->read_status_mask = M_DUART_OVRUN_ERR;
-	if (termios->c_iflag & INPCK)
-		uport->read_status_mask |= M_DUART_FRM_ERR |
+	uport->पढ़ो_status_mask = M_DUART_OVRUN_ERR;
+	अगर (termios->c_अगरlag & INPCK)
+		uport->पढ़ो_status_mask |= M_DUART_FRM_ERR |
 					   M_DUART_PARITY_ERR;
-	if (termios->c_iflag & (IGNBRK | BRKINT | PARMRK))
-		uport->read_status_mask |= M_DUART_RCVD_BRK;
+	अगर (termios->c_अगरlag & (IGNBRK | BRKINT | PARMRK))
+		uport->पढ़ो_status_mask |= M_DUART_RCVD_BRK;
 
 	uport->ignore_status_mask = 0;
-	if (termios->c_iflag & IGNPAR)
+	अगर (termios->c_अगरlag & IGNPAR)
 		uport->ignore_status_mask |= M_DUART_FRM_ERR |
 					     M_DUART_PARITY_ERR;
-	if (termios->c_iflag & IGNBRK) {
+	अगर (termios->c_अगरlag & IGNBRK) अणु
 		uport->ignore_status_mask |= M_DUART_RCVD_BRK;
-		if (termios->c_iflag & IGNPAR)
+		अगर (termios->c_अगरlag & IGNPAR)
 			uport->ignore_status_mask |= M_DUART_OVRUN_ERR;
-	}
+	पूर्ण
 
-	if (termios->c_cflag & CREAD)
+	अगर (termios->c_cflag & CREAD)
 		command = M_DUART_RX_EN;
-	else
+	अन्यथा
 		command = M_DUART_RX_DIS;
 
-	if (termios->c_cflag & CRTSCTS)
+	अगर (termios->c_cflag & CRTSCTS)
 		aux |= M_DUART_CTS_CHNG_ENA;
-	else
+	अन्यथा
 		aux &= ~M_DUART_CTS_CHNG_ENA;
 
 	spin_lock(&uport->lock);
 
-	if (sport->tx_stopped)
+	अगर (sport->tx_stopped)
 		command |= M_DUART_TX_DIS;
-	else
+	अन्यथा
 		command |= M_DUART_TX_EN;
 
-	oldmode1 = read_sbdchn(sport, R_DUART_MODE_REG_1) & mode1mask;
-	oldmode2 = read_sbdchn(sport, R_DUART_MODE_REG_2) & mode2mask;
-	oldaux = read_sbdchn(sport, R_DUART_AUXCTL_X) & auxmask;
+	oldmode1 = पढ़ो_sbdchn(sport, R_DUART_MODE_REG_1) & mode1mask;
+	oldmode2 = पढ़ो_sbdchn(sport, R_DUART_MODE_REG_2) & mode2mask;
+	oldaux = पढ़ो_sbdchn(sport, R_DUART_AUXCTL_X) & auxmask;
 
-	if (!sport->tx_stopped)
+	अगर (!sport->tx_stopped)
 		sbd_line_drain(sport);
-	write_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS | M_DUART_RX_DIS);
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS | M_DUART_RX_DIS);
 
-	write_sbdchn(sport, R_DUART_MODE_REG_1, mode1 | oldmode1);
-	write_sbdchn(sport, R_DUART_MODE_REG_2, mode2 | oldmode2);
-	write_sbdchn(sport, R_DUART_CLK_SEL, brg);
-	write_sbdchn(sport, R_DUART_AUXCTL_X, aux | oldaux);
+	ग_लिखो_sbdchn(sport, R_DUART_MODE_REG_1, mode1 | oldmode1);
+	ग_लिखो_sbdchn(sport, R_DUART_MODE_REG_2, mode2 | oldmode2);
+	ग_लिखो_sbdchn(sport, R_DUART_CLK_SEL, brg);
+	ग_लिखो_sbdchn(sport, R_DUART_AUXCTL_X, aux | oldaux);
 
-	write_sbdchn(sport, R_DUART_CMD, command);
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, command);
 
 	spin_unlock(&uport->lock);
-}
+पूर्ण
 
 
-static const char *sbd_type(struct uart_port *uport)
-{
-	return "SB1250 DUART";
-}
+अटल स्थिर अक्षर *sbd_type(काष्ठा uart_port *uport)
+अणु
+	वापस "SB1250 DUART";
+पूर्ण
 
-static void sbd_release_port(struct uart_port *uport)
-{
-	struct sbd_port *sport = to_sport(uport);
-	struct sbd_duart *duart = sport->duart;
+अटल व्योम sbd_release_port(काष्ठा uart_port *uport)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
+	काष्ठा sbd_duart *duart = sport->duart;
 
 	iounmap(sport->memctrl);
-	sport->memctrl = NULL;
+	sport->memctrl = शून्य;
 	iounmap(uport->membase);
-	uport->membase = NULL;
+	uport->membase = शून्य;
 
-	if(refcount_dec_and_test(&duart->map_guard))
+	अगर(refcount_dec_and_test(&duart->map_guard))
 		release_mem_region(duart->mapctrl, DUART_CHANREG_SPACING);
 	release_mem_region(uport->mapbase, DUART_CHANREG_SPACING);
-}
+पूर्ण
 
-static int sbd_map_port(struct uart_port *uport)
-{
-	const char *err = KERN_ERR "sbd: Cannot map MMIO\n";
-	struct sbd_port *sport = to_sport(uport);
-	struct sbd_duart *duart = sport->duart;
+अटल पूर्णांक sbd_map_port(काष्ठा uart_port *uport)
+अणु
+	स्थिर अक्षर *err = KERN_ERR "sbd: Cannot map MMIO\n";
+	काष्ठा sbd_port *sport = to_sport(uport);
+	काष्ठा sbd_duart *duart = sport->duart;
 
-	if (!uport->membase)
+	अगर (!uport->membase)
 		uport->membase = ioremap(uport->mapbase,
 						 DUART_CHANREG_SPACING);
-	if (!uport->membase) {
-		printk(err);
-		return -ENOMEM;
-	}
+	अगर (!uport->membase) अणु
+		prपूर्णांकk(err);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (!sport->memctrl)
+	अगर (!sport->memctrl)
 		sport->memctrl = ioremap(duart->mapctrl,
 						 DUART_CHANREG_SPACING);
-	if (!sport->memctrl) {
-		printk(err);
+	अगर (!sport->memctrl) अणु
+		prपूर्णांकk(err);
 		iounmap(uport->membase);
-		uport->membase = NULL;
-		return -ENOMEM;
-	}
+		uport->membase = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sbd_request_port(struct uart_port *uport)
-{
-	const char *err = KERN_ERR "sbd: Unable to reserve MMIO resource\n";
-	struct sbd_duart *duart = to_sport(uport)->duart;
-	int ret = 0;
+अटल पूर्णांक sbd_request_port(काष्ठा uart_port *uport)
+अणु
+	स्थिर अक्षर *err = KERN_ERR "sbd: Unable to reserve MMIO resource\n";
+	काष्ठा sbd_duart *duart = to_sport(uport)->duart;
+	पूर्णांक ret = 0;
 
-	if (!request_mem_region(uport->mapbase, DUART_CHANREG_SPACING,
-				"sb1250-duart")) {
-		printk(err);
-		return -EBUSY;
-	}
+	अगर (!request_mem_region(uport->mapbase, DUART_CHANREG_SPACING,
+				"sb1250-duart")) अणु
+		prपूर्णांकk(err);
+		वापस -EBUSY;
+	पूर्ण
 	refcount_inc(&duart->map_guard);
-	if (refcount_read(&duart->map_guard) == 1) {
-		if (!request_mem_region(duart->mapctrl, DUART_CHANREG_SPACING,
-					"sb1250-duart")) {
+	अगर (refcount_पढ़ो(&duart->map_guard) == 1) अणु
+		अगर (!request_mem_region(duart->mapctrl, DUART_CHANREG_SPACING,
+					"sb1250-duart")) अणु
 			refcount_dec(&duart->map_guard);
-			printk(err);
+			prपूर्णांकk(err);
 			ret = -EBUSY;
-		}
-	}
-	if (!ret) {
+		पूर्ण
+	पूर्ण
+	अगर (!ret) अणु
 		ret = sbd_map_port(uport);
-		if (ret) {
-			if (refcount_dec_and_test(&duart->map_guard))
+		अगर (ret) अणु
+			अगर (refcount_dec_and_test(&duart->map_guard))
 				release_mem_region(duart->mapctrl,
 						   DUART_CHANREG_SPACING);
-		}
-	}
-	if (ret) {
+		पूर्ण
+	पूर्ण
+	अगर (ret) अणु
 		release_mem_region(uport->mapbase, DUART_CHANREG_SPACING);
-		return ret;
-	}
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void sbd_config_port(struct uart_port *uport, int flags)
-{
-	struct sbd_port *sport = to_sport(uport);
+अटल व्योम sbd_config_port(काष्ठा uart_port *uport, पूर्णांक flags)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
 
-	if (flags & UART_CONFIG_TYPE) {
-		if (sbd_request_port(uport))
-			return;
+	अगर (flags & UART_CONFIG_TYPE) अणु
+		अगर (sbd_request_port(uport))
+			वापस;
 
 		uport->type = PORT_SB1250_DUART;
 
 		sbd_init_port(sport);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int sbd_verify_port(struct uart_port *uport, struct serial_struct *ser)
-{
-	int ret = 0;
+अटल पूर्णांक sbd_verअगरy_port(काष्ठा uart_port *uport, काष्ठा serial_काष्ठा *ser)
+अणु
+	पूर्णांक ret = 0;
 
-	if (ser->type != PORT_UNKNOWN && ser->type != PORT_SB1250_DUART)
+	अगर (ser->type != PORT_UNKNOWN && ser->type != PORT_SB1250_DUART)
 		ret = -EINVAL;
-	if (ser->irq != uport->irq)
+	अगर (ser->irq != uport->irq)
 		ret = -EINVAL;
-	if (ser->baud_base != uport->uartclk / 16)
+	अगर (ser->baud_base != uport->uartclk / 16)
 		ret = -EINVAL;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static const struct uart_ops sbd_ops = {
+अटल स्थिर काष्ठा uart_ops sbd_ops = अणु
 	.tx_empty	= sbd_tx_empty,
 	.set_mctrl	= sbd_set_mctrl,
 	.get_mctrl	= sbd_get_mctrl,
@@ -754,163 +755,163 @@ static const struct uart_ops sbd_ops = {
 	.start_tx	= sbd_start_tx,
 	.stop_rx	= sbd_stop_rx,
 	.enable_ms	= sbd_enable_ms,
-	.break_ctl	= sbd_break_ctl,
+	.अवरोध_ctl	= sbd_अवरोध_ctl,
 	.startup	= sbd_startup,
-	.shutdown	= sbd_shutdown,
+	.shutकरोwn	= sbd_shutकरोwn,
 	.set_termios	= sbd_set_termios,
 	.type		= sbd_type,
 	.release_port	= sbd_release_port,
 	.request_port	= sbd_request_port,
 	.config_port	= sbd_config_port,
-	.verify_port	= sbd_verify_port,
-};
+	.verअगरy_port	= sbd_verअगरy_port,
+पूर्ण;
 
-/* Initialize SB1250 DUART port structures.  */
-static void __init sbd_probe_duarts(void)
-{
-	static int probed;
-	int chip, side;
-	int max_lines, line;
+/* Initialize SB1250 DUART port काष्ठाures.  */
+अटल व्योम __init sbd_probe_duarts(व्योम)
+अणु
+	अटल पूर्णांक probed;
+	पूर्णांक chip, side;
+	पूर्णांक max_lines, line;
 
-	if (probed)
-		return;
+	अगर (probed)
+		वापस;
 
 	/* Set the number of available units based on the SOC type.  */
-	switch (soc_type) {
-	case K_SYS_SOC_TYPE_BCM1x55:
-	case K_SYS_SOC_TYPE_BCM1x80:
+	चयन (soc_type) अणु
+	हाल K_SYS_SOC_TYPE_BCM1x55:
+	हाल K_SYS_SOC_TYPE_BCM1x80:
 		max_lines = 4;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Assume at least two serial ports at the normal address.  */
 		max_lines = 2;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	probed = 1;
 
-	for (chip = 0, line = 0; chip < DUART_MAX_CHIP && line < max_lines;
-	     chip++) {
+	क्रम (chip = 0, line = 0; chip < DUART_MAX_CHIP && line < max_lines;
+	     chip++) अणु
 		sbd_duarts[chip].mapctrl = SBD_CTRLREGS(line);
 
-		for (side = 0; side < DUART_MAX_SIDE && line < max_lines;
-		     side++, line++) {
-			struct sbd_port *sport = &sbd_duarts[chip].sport[side];
-			struct uart_port *uport = &sport->port;
+		क्रम (side = 0; side < DUART_MAX_SIDE && line < max_lines;
+		     side++, line++) अणु
+			काष्ठा sbd_port *sport = &sbd_duarts[chip].sport[side];
+			काष्ठा uart_port *uport = &sport->port;
 
 			sport->duart	= &sbd_duarts[chip];
 
 			uport->irq	= SBD_INT(line);
 			uport->uartclk	= 100000000 / 20 * 16;
-			uport->fifosize	= 16;
+			uport->fअगरosize	= 16;
 			uport->iotype	= UPIO_MEM;
 			uport->flags	= UPF_BOOT_AUTOCONF;
 			uport->ops	= &sbd_ops;
 			uport->line	= line;
 			uport->mapbase	= SBD_CHANREGS(line);
 			uport->has_sysrq = IS_ENABLED(CONFIG_SERIAL_SB1250_DUART_CONSOLE);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 
-#ifdef CONFIG_SERIAL_SB1250_DUART_CONSOLE
+#अगर_घोषित CONFIG_SERIAL_SB1250_DUART_CONSOLE
 /*
- * Serial console stuff.  Very basic, polling driver for doing serial
+ * Serial console stuff.  Very basic, polling driver क्रम करोing serial
  * console output.  The console_lock is held by the caller, so we
- * shouldn't be interrupted for more console activity.
+ * shouldn't be पूर्णांकerrupted क्रम more console activity.
  */
-static void sbd_console_putchar(struct uart_port *uport, int ch)
-{
-	struct sbd_port *sport = to_sport(uport);
+अटल व्योम sbd_console_अक्षर_दो(काष्ठा uart_port *uport, पूर्णांक ch)
+अणु
+	काष्ठा sbd_port *sport = to_sport(uport);
 
 	sbd_transmit_drain(sport);
-	write_sbdchn(sport, R_DUART_TX_HOLD, ch);
-}
+	ग_लिखो_sbdchn(sport, R_DUART_TX_HOLD, ch);
+पूर्ण
 
-static void sbd_console_write(struct console *co, const char *s,
-			      unsigned int count)
-{
-	int chip = co->index / DUART_MAX_SIDE;
-	int side = co->index % DUART_MAX_SIDE;
-	struct sbd_port *sport = &sbd_duarts[chip].sport[side];
-	struct uart_port *uport = &sport->port;
-	unsigned long flags;
-	unsigned int mask;
+अटल व्योम sbd_console_ग_लिखो(काष्ठा console *co, स्थिर अक्षर *s,
+			      अचिन्हित पूर्णांक count)
+अणु
+	पूर्णांक chip = co->index / DUART_MAX_SIDE;
+	पूर्णांक side = co->index % DUART_MAX_SIDE;
+	काष्ठा sbd_port *sport = &sbd_duarts[chip].sport[side];
+	काष्ठा uart_port *uport = &sport->port;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक mask;
 
-	/* Disable transmit interrupts and enable the transmitter. */
+	/* Disable transmit पूर्णांकerrupts and enable the transmitter. */
 	spin_lock_irqsave(&uport->lock, flags);
-	mask = read_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2));
-	write_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2),
+	mask = पढ़ो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2));
+	ग_लिखो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2),
 		     mask & ~M_DUART_IMR_TX);
-	write_sbdchn(sport, R_DUART_CMD, M_DUART_TX_EN);
+	ग_लिखो_sbdchn(sport, R_DUART_CMD, M_DUART_TX_EN);
 	spin_unlock_irqrestore(&uport->lock, flags);
 
-	uart_console_write(&sport->port, s, count, sbd_console_putchar);
+	uart_console_ग_लिखो(&sport->port, s, count, sbd_console_अक्षर_दो);
 
-	/* Restore transmit interrupts and the transmitter enable. */
+	/* Restore transmit पूर्णांकerrupts and the transmitter enable. */
 	spin_lock_irqsave(&uport->lock, flags);
 	sbd_line_drain(sport);
-	if (sport->tx_stopped)
-		write_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS);
-	write_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), mask);
+	अगर (sport->tx_stopped)
+		ग_लिखो_sbdchn(sport, R_DUART_CMD, M_DUART_TX_DIS);
+	ग_लिखो_sbdshr(sport, R_DUART_IMRREG((uport->line) % 2), mask);
 	spin_unlock_irqrestore(&uport->lock, flags);
-}
+पूर्ण
 
-static int __init sbd_console_setup(struct console *co, char *options)
-{
-	int chip = co->index / DUART_MAX_SIDE;
-	int side = co->index % DUART_MAX_SIDE;
-	struct sbd_port *sport = &sbd_duarts[chip].sport[side];
-	struct uart_port *uport = &sport->port;
-	int baud = 115200;
-	int bits = 8;
-	int parity = 'n';
-	int flow = 'n';
-	int ret;
+अटल पूर्णांक __init sbd_console_setup(काष्ठा console *co, अक्षर *options)
+अणु
+	पूर्णांक chip = co->index / DUART_MAX_SIDE;
+	पूर्णांक side = co->index % DUART_MAX_SIDE;
+	काष्ठा sbd_port *sport = &sbd_duarts[chip].sport[side];
+	काष्ठा uart_port *uport = &sport->port;
+	पूर्णांक baud = 115200;
+	पूर्णांक bits = 8;
+	पूर्णांक parity = 'n';
+	पूर्णांक flow = 'n';
+	पूर्णांक ret;
 
-	if (!sport->duart)
-		return -ENXIO;
+	अगर (!sport->duart)
+		वापस -ENXIO;
 
 	ret = sbd_map_port(uport);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	sbd_init_port(sport);
 
-	if (options)
+	अगर (options)
 		uart_parse_options(options, &baud, &parity, &bits, &flow);
-	return uart_set_options(uport, co, baud, parity, bits, flow);
-}
+	वापस uart_set_options(uport, co, baud, parity, bits, flow);
+पूर्ण
 
-static struct uart_driver sbd_reg;
-static struct console sbd_console = {
+अटल काष्ठा uart_driver sbd_reg;
+अटल काष्ठा console sbd_console = अणु
 	.name	= "duart",
-	.write	= sbd_console_write,
+	.ग_लिखो	= sbd_console_ग_लिखो,
 	.device	= uart_console_device,
 	.setup	= sbd_console_setup,
 	.flags	= CON_PRINTBUFFER,
 	.index	= -1,
 	.data	= &sbd_reg
-};
+पूर्ण;
 
-static int __init sbd_serial_console_init(void)
-{
+अटल पूर्णांक __init sbd_serial_console_init(व्योम)
+अणु
 	sbd_probe_duarts();
-	register_console(&sbd_console);
+	रेजिस्टर_console(&sbd_console);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 console_initcall(sbd_serial_console_init);
 
-#define SERIAL_SB1250_DUART_CONSOLE	&sbd_console
-#else
-#define SERIAL_SB1250_DUART_CONSOLE	NULL
-#endif /* CONFIG_SERIAL_SB1250_DUART_CONSOLE */
+#घोषणा SERIAL_SB1250_DUART_CONSOLE	&sbd_console
+#अन्यथा
+#घोषणा SERIAL_SB1250_DUART_CONSOLE	शून्य
+#पूर्ण_अगर /* CONFIG_SERIAL_SB1250_DUART_CONSOLE */
 
 
-static struct uart_driver sbd_reg = {
+अटल काष्ठा uart_driver sbd_reg = अणु
 	.owner		= THIS_MODULE,
 	.driver_name	= "sb1250_duart",
 	.dev_name	= "duart",
@@ -918,47 +919,47 @@ static struct uart_driver sbd_reg = {
 	.minor		= SB1250_DUART_MINOR_BASE,
 	.nr		= DUART_MAX_CHIP * DUART_MAX_SIDE,
 	.cons		= SERIAL_SB1250_DUART_CONSOLE,
-};
+पूर्ण;
 
-/* Set up the driver and register it.  */
-static int __init sbd_init(void)
-{
-	int i, ret;
+/* Set up the driver and रेजिस्टर it.  */
+अटल पूर्णांक __init sbd_init(व्योम)
+अणु
+	पूर्णांक i, ret;
 
 	sbd_probe_duarts();
 
-	ret = uart_register_driver(&sbd_reg);
-	if (ret)
-		return ret;
+	ret = uart_रेजिस्टर_driver(&sbd_reg);
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < DUART_MAX_CHIP * DUART_MAX_SIDE; i++) {
-		struct sbd_duart *duart = &sbd_duarts[i / DUART_MAX_SIDE];
-		struct sbd_port *sport = &duart->sport[i % DUART_MAX_SIDE];
-		struct uart_port *uport = &sport->port;
+	क्रम (i = 0; i < DUART_MAX_CHIP * DUART_MAX_SIDE; i++) अणु
+		काष्ठा sbd_duart *duart = &sbd_duarts[i / DUART_MAX_SIDE];
+		काष्ठा sbd_port *sport = &duart->sport[i % DUART_MAX_SIDE];
+		काष्ठा uart_port *uport = &sport->port;
 
-		if (sport->duart)
+		अगर (sport->duart)
 			uart_add_one_port(&sbd_reg, uport);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Unload the driver.  Unregister stuff, get ready to go away.  */
-static void __exit sbd_exit(void)
-{
-	int i;
+/* Unload the driver.  Unरेजिस्टर stuff, get पढ़ोy to go away.  */
+अटल व्योम __निकास sbd_निकास(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = DUART_MAX_CHIP * DUART_MAX_SIDE - 1; i >= 0; i--) {
-		struct sbd_duart *duart = &sbd_duarts[i / DUART_MAX_SIDE];
-		struct sbd_port *sport = &duart->sport[i % DUART_MAX_SIDE];
-		struct uart_port *uport = &sport->port;
+	क्रम (i = DUART_MAX_CHIP * DUART_MAX_SIDE - 1; i >= 0; i--) अणु
+		काष्ठा sbd_duart *duart = &sbd_duarts[i / DUART_MAX_SIDE];
+		काष्ठा sbd_port *sport = &duart->sport[i % DUART_MAX_SIDE];
+		काष्ठा uart_port *uport = &sport->port;
 
-		if (sport->duart)
-			uart_remove_one_port(&sbd_reg, uport);
-	}
+		अगर (sport->duart)
+			uart_हटाओ_one_port(&sbd_reg, uport);
+	पूर्ण
 
-	uart_unregister_driver(&sbd_reg);
-}
+	uart_unरेजिस्टर_driver(&sbd_reg);
+पूर्ण
 
 module_init(sbd_init);
-module_exit(sbd_exit);
+module_निकास(sbd_निकास);

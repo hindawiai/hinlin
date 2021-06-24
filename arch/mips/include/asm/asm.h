@@ -1,45 +1,46 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1995, 1996, 1997, 1999, 2001 by Ralf Baechle
  * Copyright (C) 1999 by Silicon Graphics, Inc.
  * Copyright (C) 2001 MIPS Technologies, Inc.
  * Copyright (C) 2002  Maciej W. Rozycki
  *
- * Some useful macros for MIPS assembler code
+ * Some useful macros क्रम MIPS assembler code
  *
  * Some of the routines below contain useless nops that will be optimized
  * away by gas in -O mode. These nops are however required to fill delay
  * slots in noreorder mode.
  */
-#ifndef __ASM_ASM_H
-#define __ASM_ASM_H
+#अगर_अघोषित __ASM_ASM_H
+#घोषणा __ASM_ASM_H
 
-#include <asm/sgidefs.h>
-#include <asm/asm-eva.h>
+#समावेश <यंत्र/sgidefs.h>
+#समावेश <यंत्र/यंत्र-eva.h>
 
-#ifndef __VDSO__
+#अगर_अघोषित __VDSO__
 /*
  * Emit CFI data in .debug_frame sections, not .eh_frame sections.
- * We don't do DWARF unwinding at runtime, so only the offline DWARF
- * information is useful to anyone. Note we should change this if we
- * ever decide to enable DWARF unwinding at runtime.
+ * We करोn't करो DWARF unwinding at runसमय, so only the offline DWARF
+ * inक्रमmation is useful to anyone. Note we should change this अगर we
+ * ever decide to enable DWARF unwinding at runसमय.
  */
-#define CFI_SECTIONS	.cfi_sections .debug_frame
-#else
+#घोषणा CFI_SECTIONS	.cfi_sections .debug_frame
+#अन्यथा
  /*
-  * For the vDSO, emit both runtime unwind information and debug
-  * symbols for the .dbg file.
+  * For the vDSO, emit both runसमय unwind inक्रमmation and debug
+  * symbols क्रम the .dbg file.
   */
-#define CFI_SECTIONS
-#endif
+#घोषणा CFI_SECTIONS
+#पूर्ण_अगर
 
 /*
  * LEAF - declare leaf routine
  */
-#define LEAF(symbol)					\
+#घोषणा LEAF(symbol)					\
 		CFI_SECTIONS;				\
 		.globl	symbol;				\
 		.align	2;				\
@@ -50,9 +51,9 @@ symbol:		.frame	sp, 0, ra;			\
 		.insn
 
 /*
- * NESTED - declare nested routine entry point
+ * NESTED - declare nested routine entry poपूर्णांक
  */
-#define NESTED(symbol, framesize, rpc)			\
+#घोषणा NESTED(symbol, framesize, rpc)			\
 		CFI_SECTIONS;				\
 		.globl	symbol;				\
 		.align	2;				\
@@ -65,7 +66,7 @@ symbol:		.frame	sp, framesize, rpc;		\
 /*
  * END - mark end of function
  */
-#define END(function)					\
+#घोषणा END(function)					\
 		.cfi_endproc;				\
 		.end	function;			\
 		.size	function, .-function
@@ -73,31 +74,31 @@ symbol:		.frame	sp, framesize, rpc;		\
 /*
  * EXPORT - export definition of symbol
  */
-#define EXPORT(symbol)					\
+#घोषणा EXPORT(symbol)					\
 		.globl	symbol;				\
 symbol:
 
 /*
  * FEXPORT - export definition of a function symbol
  */
-#define FEXPORT(symbol)					\
+#घोषणा FEXPORT(symbol)					\
 		.globl	symbol;				\
 		.type	symbol, @function;		\
 symbol:		.insn
 
 /*
- * ABS - export absolute symbol
+ * ABS - export असलolute symbol
  */
-#define ABS(symbol,value)				\
+#घोषणा ABS(symbol,value)				\
 		.globl	symbol;				\
 symbol		=	value
 
-#define TEXT(msg)					\
+#घोषणा TEXT(msg)					\
 		.pushsection .data;			\
 8:		.asciiz msg;				\
 		.popsection;
 
-#define ASM_PANIC(msg)					\
+#घोषणा ASM_PANIC(msg)					\
 		.set	push;				\
 		.set	reorder;			\
 		PTR_LA	a0, 8f;				\
@@ -107,225 +108,225 @@ symbol		=	value
 		TEXT(msg)
 
 /*
- * Print formatted string
+ * Prपूर्णांक क्रमmatted string
  */
-#ifdef CONFIG_PRINTK
-#define ASM_PRINT(string)				\
+#अगर_घोषित CONFIG_PRINTK
+#घोषणा ASM_PRINT(string)				\
 		.set	push;				\
 		.set	reorder;			\
 		PTR_LA	a0, 8f;				\
-		jal	printk;				\
+		jal	prपूर्णांकk;				\
 		.set	pop;				\
 		TEXT(string)
-#else
-#define ASM_PRINT(string)
-#endif
+#अन्यथा
+#घोषणा ASM_PRINT(string)
+#पूर्ण_अगर
 
 /*
  * Stack alignment
  */
-#if (_MIPS_SIM == _MIPS_SIM_ABI32)
-#define ALSZ	7
-#define ALMASK	~7
-#endif
-#if (_MIPS_SIM == _MIPS_SIM_NABI32) || (_MIPS_SIM == _MIPS_SIM_ABI64)
-#define ALSZ	15
-#define ALMASK	~15
-#endif
+#अगर (_MIPS_SIM == _MIPS_SIM_ABI32)
+#घोषणा ALSZ	7
+#घोषणा ALMASK	~7
+#पूर्ण_अगर
+#अगर (_MIPS_SIM == _MIPS_SIM_NABI32) || (_MIPS_SIM == _MIPS_SIM_ABI64)
+#घोषणा ALSZ	15
+#घोषणा ALMASK	~15
+#पूर्ण_अगर
 
 /*
- * Macros to handle different pointer/register sizes for 32/64-bit code
+ * Macros to handle dअगरferent poपूर्णांकer/रेजिस्टर sizes क्रम 32/64-bit code
  */
 
 /*
- * Size of a register
+ * Size of a रेजिस्टर
  */
-#ifdef __mips64
-#define SZREG	8
-#else
-#define SZREG	4
-#endif
+#अगर_घोषित __mips64
+#घोषणा SZREG	8
+#अन्यथा
+#घोषणा SZREG	4
+#पूर्ण_अगर
 
 /*
- * Use the following macros in assemblercode to load/store registers,
- * pointers etc.
+ * Use the following macros in assemblercode to load/store रेजिस्टरs,
+ * poपूर्णांकers etc.
  */
-#if (_MIPS_SIM == _MIPS_SIM_ABI32)
-#define REG_S		sw
-#define REG_L		lw
-#define REG_SUBU	subu
-#define REG_ADDU	addu
-#endif
-#if (_MIPS_SIM == _MIPS_SIM_NABI32) || (_MIPS_SIM == _MIPS_SIM_ABI64)
-#define REG_S		sd
-#define REG_L		ld
-#define REG_SUBU	dsubu
-#define REG_ADDU	daddu
-#endif
+#अगर (_MIPS_SIM == _MIPS_SIM_ABI32)
+#घोषणा REG_S		sw
+#घोषणा REG_L		lw
+#घोषणा REG_SUBU	subu
+#घोषणा REG_ADDU	addu
+#पूर्ण_अगर
+#अगर (_MIPS_SIM == _MIPS_SIM_NABI32) || (_MIPS_SIM == _MIPS_SIM_ABI64)
+#घोषणा REG_S		sd
+#घोषणा REG_L		ld
+#घोषणा REG_SUBU	dsubu
+#घोषणा REG_ADDU	daddu
+#पूर्ण_अगर
 
 /*
- * How to add/sub/load/store/shift C int variables.
+ * How to add/sub/load/store/shअगरt C पूर्णांक variables.
  */
-#if (_MIPS_SZINT == 32)
-#define INT_ADD		add
-#define INT_ADDU	addu
-#define INT_ADDI	addi
-#define INT_ADDIU	addiu
-#define INT_SUB		sub
-#define INT_SUBU	subu
-#define INT_L		lw
-#define INT_S		sw
-#define INT_SLL		sll
-#define INT_SLLV	sllv
-#define INT_SRL		srl
-#define INT_SRLV	srlv
-#define INT_SRA		sra
-#define INT_SRAV	srav
-#endif
+#अगर (_MIPS_SZINT == 32)
+#घोषणा INT_ADD		add
+#घोषणा INT_ADDU	addu
+#घोषणा INT_ADDI	addi
+#घोषणा INT_ADDIU	addiu
+#घोषणा INT_SUB		sub
+#घोषणा INT_SUBU	subu
+#घोषणा INT_L		lw
+#घोषणा INT_S		sw
+#घोषणा INT_SLL		sll
+#घोषणा INT_SLLV	sllv
+#घोषणा INT_SRL		srl
+#घोषणा INT_SRLV	srlv
+#घोषणा INT_SRA		sra
+#घोषणा INT_SRAV	srav
+#पूर्ण_अगर
 
-#if (_MIPS_SZINT == 64)
-#define INT_ADD		dadd
-#define INT_ADDU	daddu
-#define INT_ADDI	daddi
-#define INT_ADDIU	daddiu
-#define INT_SUB		dsub
-#define INT_SUBU	dsubu
-#define INT_L		ld
-#define INT_S		sd
-#define INT_SLL		dsll
-#define INT_SLLV	dsllv
-#define INT_SRL		dsrl
-#define INT_SRLV	dsrlv
-#define INT_SRA		dsra
-#define INT_SRAV	dsrav
-#endif
+#अगर (_MIPS_SZINT == 64)
+#घोषणा INT_ADD		dadd
+#घोषणा INT_ADDU	daddu
+#घोषणा INT_ADDI	daddi
+#घोषणा INT_ADDIU	daddiu
+#घोषणा INT_SUB		dsub
+#घोषणा INT_SUBU	dsubu
+#घोषणा INT_L		ld
+#घोषणा INT_S		sd
+#घोषणा INT_SLL		dsll
+#घोषणा INT_SLLV	dsllv
+#घोषणा INT_SRL		dsrl
+#घोषणा INT_SRLV	dsrlv
+#घोषणा INT_SRA		dsra
+#घोषणा INT_SRAV	dsrav
+#पूर्ण_अगर
 
 /*
- * How to add/sub/load/store/shift C long variables.
+ * How to add/sub/load/store/shअगरt C दीर्घ variables.
  */
-#if (_MIPS_SZLONG == 32)
-#define LONG_ADD	add
-#define LONG_ADDU	addu
-#define LONG_ADDI	addi
-#define LONG_ADDIU	addiu
-#define LONG_SUB	sub
-#define LONG_SUBU	subu
-#define LONG_L		lw
-#define LONG_S		sw
-#define LONG_SP		swp
-#define LONG_SLL	sll
-#define LONG_SLLV	sllv
-#define LONG_SRL	srl
-#define LONG_SRLV	srlv
-#define LONG_SRA	sra
-#define LONG_SRAV	srav
+#अगर (_MIPS_SZLONG == 32)
+#घोषणा LONG_ADD	add
+#घोषणा LONG_ADDU	addu
+#घोषणा LONG_ADDI	addi
+#घोषणा LONG_ADDIU	addiu
+#घोषणा LONG_SUB	sub
+#घोषणा LONG_SUBU	subu
+#घोषणा LONG_L		lw
+#घोषणा LONG_S		sw
+#घोषणा LONG_SP		swp
+#घोषणा LONG_SLL	sll
+#घोषणा LONG_SLLV	sllv
+#घोषणा LONG_SRL	srl
+#घोषणा LONG_SRLV	srlv
+#घोषणा LONG_SRA	sra
+#घोषणा LONG_SRAV	srav
 
-#ifdef __ASSEMBLY__
-#define LONG		.word
-#endif
-#define LONGSIZE	4
-#define LONGMASK	3
-#define LONGLOG		2
-#endif
+#अगर_घोषित __ASSEMBLY__
+#घोषणा LONG		.word
+#पूर्ण_अगर
+#घोषणा LONGSIZE	4
+#घोषणा LONGMASK	3
+#घोषणा LONGLOG		2
+#पूर्ण_अगर
 
-#if (_MIPS_SZLONG == 64)
-#define LONG_ADD	dadd
-#define LONG_ADDU	daddu
-#define LONG_ADDI	daddi
-#define LONG_ADDIU	daddiu
-#define LONG_SUB	dsub
-#define LONG_SUBU	dsubu
-#define LONG_L		ld
-#define LONG_S		sd
-#define LONG_SP		sdp
-#define LONG_SLL	dsll
-#define LONG_SLLV	dsllv
-#define LONG_SRL	dsrl
-#define LONG_SRLV	dsrlv
-#define LONG_SRA	dsra
-#define LONG_SRAV	dsrav
+#अगर (_MIPS_SZLONG == 64)
+#घोषणा LONG_ADD	dadd
+#घोषणा LONG_ADDU	daddu
+#घोषणा LONG_ADDI	daddi
+#घोषणा LONG_ADDIU	daddiu
+#घोषणा LONG_SUB	dsub
+#घोषणा LONG_SUBU	dsubu
+#घोषणा LONG_L		ld
+#घोषणा LONG_S		sd
+#घोषणा LONG_SP		sdp
+#घोषणा LONG_SLL	dsll
+#घोषणा LONG_SLLV	dsllv
+#घोषणा LONG_SRL	dsrl
+#घोषणा LONG_SRLV	dsrlv
+#घोषणा LONG_SRA	dsra
+#घोषणा LONG_SRAV	dsrav
 
-#ifdef __ASSEMBLY__
-#define LONG		.dword
-#endif
-#define LONGSIZE	8
-#define LONGMASK	7
-#define LONGLOG		3
-#endif
+#अगर_घोषित __ASSEMBLY__
+#घोषणा LONG		.dword
+#पूर्ण_अगर
+#घोषणा LONGSIZE	8
+#घोषणा LONGMASK	7
+#घोषणा LONGLOG		3
+#पूर्ण_अगर
 
 /*
- * How to add/sub/load/store/shift pointers.
+ * How to add/sub/load/store/shअगरt poपूर्णांकers.
  */
-#if (_MIPS_SZPTR == 32)
-#define PTR_ADD		add
-#define PTR_ADDU	addu
-#define PTR_ADDI	addi
-#define PTR_ADDIU	addiu
-#define PTR_SUB		sub
-#define PTR_SUBU	subu
-#define PTR_L		lw
-#define PTR_S		sw
-#define PTR_LA		la
-#define PTR_LI		li
-#define PTR_SLL		sll
-#define PTR_SLLV	sllv
-#define PTR_SRL		srl
-#define PTR_SRLV	srlv
-#define PTR_SRA		sra
-#define PTR_SRAV	srav
+#अगर (_MIPS_SZPTR == 32)
+#घोषणा PTR_ADD		add
+#घोषणा PTR_ADDU	addu
+#घोषणा PTR_ADDI	addi
+#घोषणा PTR_ADDIU	addiu
+#घोषणा PTR_SUB		sub
+#घोषणा PTR_SUBU	subu
+#घोषणा PTR_L		lw
+#घोषणा PTR_S		sw
+#घोषणा PTR_LA		la
+#घोषणा PTR_LI		li
+#घोषणा PTR_SLL		sll
+#घोषणा PTR_SLLV	sllv
+#घोषणा PTR_SRL		srl
+#घोषणा PTR_SRLV	srlv
+#घोषणा PTR_SRA		sra
+#घोषणा PTR_SRAV	srav
 
-#define PTR_SCALESHIFT	2
+#घोषणा PTR_SCALESHIFT	2
 
-#define PTR		.word
-#define PTRSIZE		4
-#define PTRLOG		2
-#endif
+#घोषणा PTR		.word
+#घोषणा PTRSIZE		4
+#घोषणा PTRLOG		2
+#पूर्ण_अगर
 
-#if (_MIPS_SZPTR == 64)
-#define PTR_ADD		dadd
-#define PTR_ADDU	daddu
-#define PTR_ADDI	daddi
-#define PTR_ADDIU	daddiu
-#define PTR_SUB		dsub
-#define PTR_SUBU	dsubu
-#define PTR_L		ld
-#define PTR_S		sd
-#define PTR_LA		dla
-#define PTR_LI		dli
-#define PTR_SLL		dsll
-#define PTR_SLLV	dsllv
-#define PTR_SRL		dsrl
-#define PTR_SRLV	dsrlv
-#define PTR_SRA		dsra
-#define PTR_SRAV	dsrav
+#अगर (_MIPS_SZPTR == 64)
+#घोषणा PTR_ADD		dadd
+#घोषणा PTR_ADDU	daddu
+#घोषणा PTR_ADDI	daddi
+#घोषणा PTR_ADDIU	daddiu
+#घोषणा PTR_SUB		dsub
+#घोषणा PTR_SUBU	dsubu
+#घोषणा PTR_L		ld
+#घोषणा PTR_S		sd
+#घोषणा PTR_LA		dla
+#घोषणा PTR_LI		dli
+#घोषणा PTR_SLL		dsll
+#घोषणा PTR_SLLV	dsllv
+#घोषणा PTR_SRL		dsrl
+#घोषणा PTR_SRLV	dsrlv
+#घोषणा PTR_SRA		dsra
+#घोषणा PTR_SRAV	dsrav
 
-#define PTR_SCALESHIFT	3
+#घोषणा PTR_SCALESHIFT	3
 
-#define PTR		.dword
-#define PTRSIZE		8
-#define PTRLOG		3
-#endif
+#घोषणा PTR		.dword
+#घोषणा PTRSIZE		8
+#घोषणा PTRLOG		3
+#पूर्ण_अगर
 
 /*
- * Some cp0 registers were extended to 64bit for MIPS III.
+ * Some cp0 रेजिस्टरs were extended to 64bit क्रम MIPS III.
  */
-#if (_MIPS_SIM == _MIPS_SIM_ABI32)
-#define MFC0		mfc0
-#define MTC0		mtc0
-#endif
-#if (_MIPS_SIM == _MIPS_SIM_NABI32) || (_MIPS_SIM == _MIPS_SIM_ABI64)
-#define MFC0		dmfc0
-#define MTC0		dmtc0
-#endif
+#अगर (_MIPS_SIM == _MIPS_SIM_ABI32)
+#घोषणा MFC0		mfc0
+#घोषणा MTC0		mtc0
+#पूर्ण_अगर
+#अगर (_MIPS_SIM == _MIPS_SIM_NABI32) || (_MIPS_SIM == _MIPS_SIM_ABI64)
+#घोषणा MFC0		dmfc0
+#घोषणा MTC0		dmtc0
+#पूर्ण_अगर
 
-#define SSNOP		sll zero, zero, 1
+#घोषणा SSNOP		sll zero, zero, 1
 
-#ifdef CONFIG_SGI_IP28
-/* Inhibit speculative stores to volatile (e.g.DMA) or invalid addresses. */
-#include <asm/cacheops.h>
-#define R10KCBARRIER(addr)  cache   Cache_Barrier, addr;
-#else
-#define R10KCBARRIER(addr)
-#endif
+#अगर_घोषित CONFIG_SGI_IP28
+/* Inhibit speculative stores to अस्थिर (e.g.DMA) or invalid addresses. */
+#समावेश <यंत्र/cacheops.h>
+#घोषणा R10KCBARRIER(addr)  cache   Cache_Barrier, addr;
+#अन्यथा
+#घोषणा R10KCBARRIER(addr)
+#पूर्ण_अगर
 
-#endif /* __ASM_ASM_H */
+#पूर्ण_अगर /* __ASM_ASM_H */

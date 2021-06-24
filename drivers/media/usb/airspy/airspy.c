@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * AirSpy SDR driver
  *
  * Copyright (C) 2014 Antti Palosaari <crope@iki.fi>
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/usb.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-ctrls.h>
-#include <media/v4l2-event.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-vmalloc.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/usb.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-ctrls.h>
+#समावेश <media/v4l2-event.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-vदो_स्मृति.h>
 
 /* AirSpy USB API commands (from AirSpy Library) */
-enum {
+क्रमागत अणु
 	CMD_INVALID                       = 0x00,
 	CMD_RECEIVER_MODE                 = 0x01,
 	CMD_SI5351C_WRITE                 = 0x02,
@@ -37,388 +38,388 @@ enum {
 	CMD_SET_LNA_AGC                   = 0x11,
 	CMD_SET_MIXER_AGC                 = 0x12,
 	CMD_SET_PACKING                   = 0x13,
-};
+पूर्ण;
 
 /*
- *       bEndpointAddress     0x81  EP 1 IN
+ *       bEndpoपूर्णांकAddress     0x81  EP 1 IN
  *         Transfer Type            Bulk
  *       wMaxPacketSize     0x0200  1x 512 bytes
  */
-#define MAX_BULK_BUFS            (6)
-#define BULK_BUFFER_SIZE         (128 * 512)
+#घोषणा MAX_BULK_BUFS            (6)
+#घोषणा BULK_BUFFER_SIZE         (128 * 512)
 
-static const struct v4l2_frequency_band bands[] = {
-	{
+अटल स्थिर काष्ठा v4l2_frequency_band bands[] = अणु
+	अणु
 		.tuner = 0,
 		.type = V4L2_TUNER_ADC,
 		.index = 0,
 		.capability = V4L2_TUNER_CAP_1HZ | V4L2_TUNER_CAP_FREQ_BANDS,
 		.rangelow   = 20000000,
 		.rangehigh  = 20000000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct v4l2_frequency_band bands_rf[] = {
-	{
+अटल स्थिर काष्ठा v4l2_frequency_band bands_rf[] = अणु
+	अणु
 		.tuner = 1,
 		.type = V4L2_TUNER_RF,
 		.index = 0,
 		.capability = V4L2_TUNER_CAP_1HZ | V4L2_TUNER_CAP_FREQ_BANDS,
 		.rangelow   =   24000000,
 		.rangehigh  = 1750000000,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-/* stream formats */
-struct airspy_format {
-	u32	pixelformat;
+/* stream क्रमmats */
+काष्ठा airspy_क्रमmat अणु
+	u32	pixelक्रमmat;
 	u32	buffersize;
-};
+पूर्ण;
 
-/* format descriptions for capture and preview */
-static struct airspy_format formats[] = {
-	{
-		.pixelformat	= V4L2_SDR_FMT_RU12LE,
+/* क्रमmat descriptions क्रम capture and preview */
+अटल काष्ठा airspy_क्रमmat क्रमmats[] = अणु
+	अणु
+		.pixelक्रमmat	= V4L2_SDR_FMT_RU12LE,
 		.buffersize	= BULK_BUFFER_SIZE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const unsigned int NUM_FORMATS = ARRAY_SIZE(formats);
+अटल स्थिर अचिन्हित पूर्णांक NUM_FORMATS = ARRAY_SIZE(क्रमmats);
 
-/* intermediate buffers with raw data from the USB device */
-struct airspy_frame_buf {
+/* पूर्णांकermediate buffers with raw data from the USB device */
+काष्ठा airspy_frame_buf अणु
 	/* common v4l buffer stuff -- must be first */
-	struct vb2_v4l2_buffer vb;
-	struct list_head list;
-};
+	काष्ठा vb2_v4l2_buffer vb;
+	काष्ठा list_head list;
+पूर्ण;
 
-struct airspy {
-#define POWER_ON	   1
-#define USB_STATE_URB_BUF  2
-	unsigned long flags;
+काष्ठा airspy अणु
+#घोषणा POWER_ON	   1
+#घोषणा USB_STATE_URB_BUF  2
+	अचिन्हित दीर्घ flags;
 
-	struct device *dev;
-	struct usb_device *udev;
-	struct video_device vdev;
-	struct v4l2_device v4l2_dev;
+	काष्ठा device *dev;
+	काष्ठा usb_device *udev;
+	काष्ठा video_device vdev;
+	काष्ठा v4l2_device v4l2_dev;
 
 	/* videobuf2 queue and queued buffers list */
-	struct vb2_queue vb_queue;
-	struct list_head queued_bufs;
+	काष्ठा vb2_queue vb_queue;
+	काष्ठा list_head queued_bufs;
 	spinlock_t queued_bufs_lock; /* Protects queued_bufs */
-	unsigned sequence;	     /* Buffer sequence counter */
-	unsigned int vb_full;        /* vb is full and packets dropped */
+	अचिन्हित sequence;	     /* Buffer sequence counter */
+	अचिन्हित पूर्णांक vb_full;        /* vb is full and packets dropped */
 
-	/* Note if taking both locks v4l2_lock must always be locked first! */
-	struct mutex v4l2_lock;      /* Protects everything else */
-	struct mutex vb_queue_lock;  /* Protects vb_queue and capt_file */
+	/* Note अगर taking both locks v4l2_lock must always be locked first! */
+	काष्ठा mutex v4l2_lock;      /* Protects everything अन्यथा */
+	काष्ठा mutex vb_queue_lock;  /* Protects vb_queue and capt_file */
 
-	struct urb     *urb_list[MAX_BULK_BUFS];
-	int            buf_num;
-	unsigned long  buf_size;
+	काष्ठा urb     *urb_list[MAX_BULK_BUFS];
+	पूर्णांक            buf_num;
+	अचिन्हित दीर्घ  buf_size;
 	u8             *buf_list[MAX_BULK_BUFS];
 	dma_addr_t     dma_addr[MAX_BULK_BUFS];
-	int            urbs_initialized;
-	int            urbs_submitted;
+	पूर्णांक            urbs_initialized;
+	पूर्णांक            urbs_submitted;
 
 	/* USB control message buffer */
-	#define BUF_SIZE 128
+	#घोषणा BUF_SIZE 128
 	u8 buf[BUF_SIZE];
 
 	/* Current configuration */
-	unsigned int f_adc;
-	unsigned int f_rf;
-	u32 pixelformat;
+	अचिन्हित पूर्णांक f_adc;
+	अचिन्हित पूर्णांक f_rf;
+	u32 pixelक्रमmat;
 	u32 buffersize;
 
 	/* Controls */
-	struct v4l2_ctrl_handler hdl;
-	struct v4l2_ctrl *lna_gain_auto;
-	struct v4l2_ctrl *lna_gain;
-	struct v4l2_ctrl *mixer_gain_auto;
-	struct v4l2_ctrl *mixer_gain;
-	struct v4l2_ctrl *if_gain;
+	काष्ठा v4l2_ctrl_handler hdl;
+	काष्ठा v4l2_ctrl *lna_gain_स्वतः;
+	काष्ठा v4l2_ctrl *lna_gain;
+	काष्ठा v4l2_ctrl *mixer_gain_स्वतः;
+	काष्ठा v4l2_ctrl *mixer_gain;
+	काष्ठा v4l2_ctrl *अगर_gain;
 
 	/* Sample rate calc */
-	unsigned long jiffies_next;
-	unsigned int sample;
-	unsigned int sample_measured;
-};
+	अचिन्हित दीर्घ jअगरfies_next;
+	अचिन्हित पूर्णांक sample;
+	अचिन्हित पूर्णांक sample_measured;
+पूर्ण;
 
-#define airspy_dbg_usb_control_msg(_dev, _r, _t, _v, _i, _b, _l) { \
-	char *_direction; \
-	if (_t & USB_DIR_IN) \
+#घोषणा airspy_dbg_usb_control_msg(_dev, _r, _t, _v, _i, _b, _l) अणु \
+	अक्षर *_direction; \
+	अगर (_t & USB_सूची_IN) \
 		_direction = "<<<"; \
-	else \
+	अन्यथा \
 		_direction = ">>>"; \
 	dev_dbg(_dev, "%02x %02x %02x %02x %02x %02x %02x %02x %s %*ph\n", \
 			_t, _r, _v & 0xff, _v >> 8, _i & 0xff, _i >> 8, \
 			_l & 0xff, _l >> 8, _direction, _l, _b); \
-}
+पूर्ण
 
 /* execute firmware command */
-static int airspy_ctrl_msg(struct airspy *s, u8 request, u16 value, u16 index,
+अटल पूर्णांक airspy_ctrl_msg(काष्ठा airspy *s, u8 request, u16 value, u16 index,
 		u8 *data, u16 size)
-{
-	int ret;
-	unsigned int pipe;
+अणु
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक pipe;
 	u8 requesttype;
 
-	switch (request) {
-	case CMD_RECEIVER_MODE:
-	case CMD_SET_FREQ:
+	चयन (request) अणु
+	हाल CMD_RECEIVER_MODE:
+	हाल CMD_SET_FREQ:
 		pipe = usb_sndctrlpipe(s->udev, 0);
-		requesttype = (USB_TYPE_VENDOR | USB_DIR_OUT);
-		break;
-	case CMD_BOARD_ID_READ:
-	case CMD_VERSION_STRING_READ:
-	case CMD_BOARD_PARTID_SERIALNO_READ:
-	case CMD_SET_LNA_GAIN:
-	case CMD_SET_MIXER_GAIN:
-	case CMD_SET_VGA_GAIN:
-	case CMD_SET_LNA_AGC:
-	case CMD_SET_MIXER_AGC:
+		requesttype = (USB_TYPE_VENDOR | USB_सूची_OUT);
+		अवरोध;
+	हाल CMD_BOARD_ID_READ:
+	हाल CMD_VERSION_STRING_READ:
+	हाल CMD_BOARD_PARTID_SERIALNO_READ:
+	हाल CMD_SET_LNA_GAIN:
+	हाल CMD_SET_MIXER_GAIN:
+	हाल CMD_SET_VGA_GAIN:
+	हाल CMD_SET_LNA_AGC:
+	हाल CMD_SET_MIXER_AGC:
 		pipe = usb_rcvctrlpipe(s->udev, 0);
-		requesttype = (USB_TYPE_VENDOR | USB_DIR_IN);
-		break;
-	default:
+		requesttype = (USB_TYPE_VENDOR | USB_सूची_IN);
+		अवरोध;
+	शेष:
 		dev_err(s->dev, "Unknown command %02x\n", request);
 		ret = -EINVAL;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* write request */
-	if (!(requesttype & USB_DIR_IN))
-		memcpy(s->buf, data, size);
+	/* ग_लिखो request */
+	अगर (!(requesttype & USB_सूची_IN))
+		स_नकल(s->buf, data, size);
 
 	ret = usb_control_msg(s->udev, pipe, request, requesttype, value,
 			index, s->buf, size, 1000);
 	airspy_dbg_usb_control_msg(s->dev, request, requesttype, value,
 			index, s->buf, size);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(s->dev, "usb_control_msg() failed %d request %02x\n",
 				ret, request);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* read request */
-	if (requesttype & USB_DIR_IN)
-		memcpy(data, s->buf, size);
+	/* पढ़ो request */
+	अगर (requesttype & USB_सूची_IN)
+		स_नकल(data, s->buf, size);
 
-	return 0;
+	वापस 0;
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Private functions */
-static struct airspy_frame_buf *airspy_get_next_fill_buf(struct airspy *s)
-{
-	unsigned long flags;
-	struct airspy_frame_buf *buf = NULL;
+अटल काष्ठा airspy_frame_buf *airspy_get_next_fill_buf(काष्ठा airspy *s)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा airspy_frame_buf *buf = शून्य;
 
 	spin_lock_irqsave(&s->queued_bufs_lock, flags);
-	if (list_empty(&s->queued_bufs))
-		goto leave;
+	अगर (list_empty(&s->queued_bufs))
+		जाओ leave;
 
 	buf = list_entry(s->queued_bufs.next,
-			struct airspy_frame_buf, list);
+			काष्ठा airspy_frame_buf, list);
 	list_del(&buf->list);
 leave:
 	spin_unlock_irqrestore(&s->queued_bufs_lock, flags);
-	return buf;
-}
+	वापस buf;
+पूर्ण
 
-static unsigned int airspy_convert_stream(struct airspy *s,
-		void *dst, void *src, unsigned int src_len)
-{
-	unsigned int dst_len;
+अटल अचिन्हित पूर्णांक airspy_convert_stream(काष्ठा airspy *s,
+		व्योम *dst, व्योम *src, अचिन्हित पूर्णांक src_len)
+अणु
+	अचिन्हित पूर्णांक dst_len;
 
-	if (s->pixelformat == V4L2_SDR_FMT_RU12LE) {
-		memcpy(dst, src, src_len);
+	अगर (s->pixelक्रमmat == V4L2_SDR_FMT_RU12LE) अणु
+		स_नकल(dst, src, src_len);
 		dst_len = src_len;
-	} else {
+	पूर्ण अन्यथा अणु
 		dst_len = 0;
-	}
+	पूर्ण
 
-	/* calculate sample rate and output it in 10 seconds intervals */
-	if (unlikely(time_is_before_jiffies(s->jiffies_next))) {
-		#define MSECS 10000UL
-		unsigned int msecs = jiffies_to_msecs(jiffies -
-				s->jiffies_next + msecs_to_jiffies(MSECS));
-		unsigned int samples = s->sample - s->sample_measured;
+	/* calculate sample rate and output it in 10 seconds पूर्णांकervals */
+	अगर (unlikely(समय_is_beक्रमe_jअगरfies(s->jअगरfies_next))) अणु
+		#घोषणा MSECS 10000UL
+		अचिन्हित पूर्णांक msecs = jअगरfies_to_msecs(jअगरfies -
+				s->jअगरfies_next + msecs_to_jअगरfies(MSECS));
+		अचिन्हित पूर्णांक samples = s->sample - s->sample_measured;
 
-		s->jiffies_next = jiffies + msecs_to_jiffies(MSECS);
+		s->jअगरfies_next = jअगरfies + msecs_to_jअगरfies(MSECS);
 		s->sample_measured = s->sample;
 		dev_dbg(s->dev, "slen=%u samples=%u msecs=%u sample rate=%lu\n",
 				src_len, samples, msecs,
 				samples * 1000UL / msecs);
-	}
+	पूर्ण
 
 	/* total number of samples */
 	s->sample += src_len / 2;
 
-	return dst_len;
-}
+	वापस dst_len;
+पूर्ण
 
 /*
- * This gets called for the bulk stream pipe. This is done in interrupt
- * time, so it has to be fast, not crash, and not stall. Neat.
+ * This माला_लो called क्रम the bulk stream pipe. This is करोne in पूर्णांकerrupt
+ * समय, so it has to be fast, not crash, and not stall. Neat.
  */
-static void airspy_urb_complete(struct urb *urb)
-{
-	struct airspy *s = urb->context;
-	struct airspy_frame_buf *fbuf;
+अटल व्योम airspy_urb_complete(काष्ठा urb *urb)
+अणु
+	काष्ठा airspy *s = urb->context;
+	काष्ठा airspy_frame_buf *fbuf;
 
 	dev_dbg_ratelimited(s->dev, "status=%d length=%d/%d errors=%d\n",
 			urb->status, urb->actual_length,
 			urb->transfer_buffer_length, urb->error_count);
 
-	switch (urb->status) {
-	case 0:             /* success */
-	case -ETIMEDOUT:    /* NAK */
-		break;
-	case -ECONNRESET:   /* kill */
-	case -ENOENT:
-	case -ESHUTDOWN:
-		return;
-	default:            /* error */
+	चयन (urb->status) अणु
+	हाल 0:             /* success */
+	हाल -ETIMEDOUT:    /* NAK */
+		अवरोध;
+	हाल -ECONNRESET:   /* समाप्त */
+	हाल -ENOENT:
+	हाल -ESHUTDOWN:
+		वापस;
+	शेष:            /* error */
 		dev_err_ratelimited(s->dev, "URB failed %d\n", urb->status);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (likely(urb->actual_length > 0)) {
-		void *ptr;
-		unsigned int len;
-		/* get free framebuffer */
+	अगर (likely(urb->actual_length > 0)) अणु
+		व्योम *ptr;
+		अचिन्हित पूर्णांक len;
+		/* get मुक्त framebuffer */
 		fbuf = airspy_get_next_fill_buf(s);
-		if (unlikely(fbuf == NULL)) {
+		अगर (unlikely(fbuf == शून्य)) अणु
 			s->vb_full++;
 			dev_notice_ratelimited(s->dev,
 					"videobuf is full, %d packets dropped\n",
 					s->vb_full);
-			goto skip;
-		}
+			जाओ skip;
+		पूर्ण
 
 		/* fill framebuffer */
 		ptr = vb2_plane_vaddr(&fbuf->vb.vb2_buf, 0);
 		len = airspy_convert_stream(s, ptr, urb->transfer_buffer,
 				urb->actual_length);
 		vb2_set_plane_payload(&fbuf->vb.vb2_buf, 0, len);
-		fbuf->vb.vb2_buf.timestamp = ktime_get_ns();
+		fbuf->vb.vb2_buf.बारtamp = kसमय_get_ns();
 		fbuf->vb.sequence = s->sequence++;
-		vb2_buffer_done(&fbuf->vb.vb2_buf, VB2_BUF_STATE_DONE);
-	}
+		vb2_buffer_करोne(&fbuf->vb.vb2_buf, VB2_BUF_STATE_DONE);
+	पूर्ण
 skip:
 	usb_submit_urb(urb, GFP_ATOMIC);
-}
+पूर्ण
 
-static int airspy_kill_urbs(struct airspy *s)
-{
-	int i;
+अटल पूर्णांक airspy_समाप्त_urbs(काष्ठा airspy *s)
+अणु
+	पूर्णांक i;
 
-	for (i = s->urbs_submitted - 1; i >= 0; i--) {
+	क्रम (i = s->urbs_submitted - 1; i >= 0; i--) अणु
 		dev_dbg(s->dev, "kill urb=%d\n", i);
 		/* stop the URB */
-		usb_kill_urb(s->urb_list[i]);
-	}
+		usb_समाप्त_urb(s->urb_list[i]);
+	पूर्ण
 	s->urbs_submitted = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int airspy_submit_urbs(struct airspy *s)
-{
-	int i, ret;
+अटल पूर्णांक airspy_submit_urbs(काष्ठा airspy *s)
+अणु
+	पूर्णांक i, ret;
 
-	for (i = 0; i < s->urbs_initialized; i++) {
+	क्रम (i = 0; i < s->urbs_initialized; i++) अणु
 		dev_dbg(s->dev, "submit urb=%d\n", i);
 		ret = usb_submit_urb(s->urb_list[i], GFP_ATOMIC);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(s->dev, "Could not submit URB no. %d - get them all back\n",
 					i);
-			airspy_kill_urbs(s);
-			return ret;
-		}
+			airspy_समाप्त_urbs(s);
+			वापस ret;
+		पूर्ण
 		s->urbs_submitted++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int airspy_free_stream_bufs(struct airspy *s)
-{
-	if (test_bit(USB_STATE_URB_BUF, &s->flags)) {
-		while (s->buf_num) {
+अटल पूर्णांक airspy_मुक्त_stream_bufs(काष्ठा airspy *s)
+अणु
+	अगर (test_bit(USB_STATE_URB_BUF, &s->flags)) अणु
+		जबतक (s->buf_num) अणु
 			s->buf_num--;
 			dev_dbg(s->dev, "free buf=%d\n", s->buf_num);
-			usb_free_coherent(s->udev, s->buf_size,
+			usb_मुक्त_coherent(s->udev, s->buf_size,
 					  s->buf_list[s->buf_num],
 					  s->dma_addr[s->buf_num]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	clear_bit(USB_STATE_URB_BUF, &s->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int airspy_alloc_stream_bufs(struct airspy *s)
-{
+अटल पूर्णांक airspy_alloc_stream_bufs(काष्ठा airspy *s)
+अणु
 	s->buf_num = 0;
 	s->buf_size = BULK_BUFFER_SIZE;
 
 	dev_dbg(s->dev, "all in all I will use %u bytes for streaming\n",
 			MAX_BULK_BUFS * BULK_BUFFER_SIZE);
 
-	for (s->buf_num = 0; s->buf_num < MAX_BULK_BUFS; s->buf_num++) {
+	क्रम (s->buf_num = 0; s->buf_num < MAX_BULK_BUFS; s->buf_num++) अणु
 		s->buf_list[s->buf_num] = usb_alloc_coherent(s->udev,
 				BULK_BUFFER_SIZE, GFP_ATOMIC,
 				&s->dma_addr[s->buf_num]);
-		if (!s->buf_list[s->buf_num]) {
+		अगर (!s->buf_list[s->buf_num]) अणु
 			dev_dbg(s->dev, "alloc buf=%d failed\n", s->buf_num);
-			airspy_free_stream_bufs(s);
-			return -ENOMEM;
-		}
+			airspy_मुक्त_stream_bufs(s);
+			वापस -ENOMEM;
+		पूर्ण
 
 		dev_dbg(s->dev, "alloc buf=%d %p (dma %llu)\n", s->buf_num,
 				s->buf_list[s->buf_num],
-				(long long)s->dma_addr[s->buf_num]);
+				(दीर्घ दीर्घ)s->dma_addr[s->buf_num]);
 		set_bit(USB_STATE_URB_BUF, &s->flags);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int airspy_free_urbs(struct airspy *s)
-{
-	int i;
+अटल पूर्णांक airspy_मुक्त_urbs(काष्ठा airspy *s)
+अणु
+	पूर्णांक i;
 
-	airspy_kill_urbs(s);
+	airspy_समाप्त_urbs(s);
 
-	for (i = s->urbs_initialized - 1; i >= 0; i--) {
-		if (s->urb_list[i]) {
+	क्रम (i = s->urbs_initialized - 1; i >= 0; i--) अणु
+		अगर (s->urb_list[i]) अणु
 			dev_dbg(s->dev, "free urb=%d\n", i);
-			/* free the URBs */
-			usb_free_urb(s->urb_list[i]);
-		}
-	}
+			/* मुक्त the URBs */
+			usb_मुक्त_urb(s->urb_list[i]);
+		पूर्ण
+	पूर्ण
 	s->urbs_initialized = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int airspy_alloc_urbs(struct airspy *s)
-{
-	int i, j;
+अटल पूर्णांक airspy_alloc_urbs(काष्ठा airspy *s)
+अणु
+	पूर्णांक i, j;
 
 	/* allocate the URBs */
-	for (i = 0; i < MAX_BULK_BUFS; i++) {
+	क्रम (i = 0; i < MAX_BULK_BUFS; i++) अणु
 		dev_dbg(s->dev, "alloc urb=%d\n", i);
 		s->urb_list[i] = usb_alloc_urb(0, GFP_ATOMIC);
-		if (!s->urb_list[i]) {
-			for (j = 0; j < i; j++)
-				usb_free_urb(s->urb_list[j]);
-			return -ENOMEM;
-		}
+		अगर (!s->urb_list[i]) अणु
+			क्रम (j = 0; j < i; j++)
+				usb_मुक्त_urb(s->urb_list[j]);
+			वापस -ENOMEM;
+		पूर्ण
 		usb_fill_bulk_urb(s->urb_list[i],
 				s->udev,
 				usb_rcvbulkpipe(s->udev, 0x81),
@@ -429,97 +430,97 @@ static int airspy_alloc_urbs(struct airspy *s)
 		s->urb_list[i]->transfer_flags = URB_NO_TRANSFER_DMA_MAP;
 		s->urb_list[i]->transfer_dma = s->dma_addr[i];
 		s->urbs_initialized++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Must be called with vb_queue_lock hold */
-static void airspy_cleanup_queued_bufs(struct airspy *s)
-{
-	unsigned long flags;
+अटल व्योम airspy_cleanup_queued_bufs(काष्ठा airspy *s)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(s->dev, "\n");
 
 	spin_lock_irqsave(&s->queued_bufs_lock, flags);
-	while (!list_empty(&s->queued_bufs)) {
-		struct airspy_frame_buf *buf;
+	जबतक (!list_empty(&s->queued_bufs)) अणु
+		काष्ठा airspy_frame_buf *buf;
 
 		buf = list_entry(s->queued_bufs.next,
-				struct airspy_frame_buf, list);
+				काष्ठा airspy_frame_buf, list);
 		list_del(&buf->list);
-		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-	}
+		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	पूर्ण
 	spin_unlock_irqrestore(&s->queued_bufs_lock, flags);
-}
+पूर्ण
 
 /* The user yanked out the cable... */
-static void airspy_disconnect(struct usb_interface *intf)
-{
-	struct v4l2_device *v = usb_get_intfdata(intf);
-	struct airspy *s = container_of(v, struct airspy, v4l2_dev);
+अटल व्योम airspy_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
+अणु
+	काष्ठा v4l2_device *v = usb_get_पूर्णांकfdata(पूर्णांकf);
+	काष्ठा airspy *s = container_of(v, काष्ठा airspy, v4l2_dev);
 
 	dev_dbg(s->dev, "\n");
 
 	mutex_lock(&s->vb_queue_lock);
 	mutex_lock(&s->v4l2_lock);
 	/* No need to keep the urbs around after disconnection */
-	s->udev = NULL;
+	s->udev = शून्य;
 	v4l2_device_disconnect(&s->v4l2_dev);
-	video_unregister_device(&s->vdev);
+	video_unरेजिस्टर_device(&s->vdev);
 	mutex_unlock(&s->v4l2_lock);
 	mutex_unlock(&s->vb_queue_lock);
 
 	v4l2_device_put(&s->v4l2_dev);
-}
+पूर्ण
 
 /* Videobuf2 operations */
-static int airspy_queue_setup(struct vb2_queue *vq,
-		unsigned int *nbuffers,
-		unsigned int *nplanes, unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct airspy *s = vb2_get_drv_priv(vq);
+अटल पूर्णांक airspy_queue_setup(काष्ठा vb2_queue *vq,
+		अचिन्हित पूर्णांक *nbuffers,
+		अचिन्हित पूर्णांक *nplanes, अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा airspy *s = vb2_get_drv_priv(vq);
 
 	dev_dbg(s->dev, "nbuffers=%d\n", *nbuffers);
 
 	/* Need at least 8 buffers */
-	if (vq->num_buffers + *nbuffers < 8)
+	अगर (vq->num_buffers + *nbuffers < 8)
 		*nbuffers = 8 - vq->num_buffers;
 	*nplanes = 1;
 	sizes[0] = PAGE_ALIGN(s->buffersize);
 
 	dev_dbg(s->dev, "nbuffers=%d sizes[0]=%d\n", *nbuffers, sizes[0]);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void airspy_buf_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct airspy *s = vb2_get_drv_priv(vb->vb2_queue);
-	struct airspy_frame_buf *buf =
-			container_of(vbuf, struct airspy_frame_buf, vb);
-	unsigned long flags;
+अटल व्योम airspy_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा airspy *s = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा airspy_frame_buf *buf =
+			container_of(vbuf, काष्ठा airspy_frame_buf, vb);
+	अचिन्हित दीर्घ flags;
 
 	/* Check the device has not disconnected between prep and queuing */
-	if (unlikely(!s->udev)) {
-		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
-		return;
-	}
+	अगर (unlikely(!s->udev)) अणु
+		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+		वापस;
+	पूर्ण
 
 	spin_lock_irqsave(&s->queued_bufs_lock, flags);
 	list_add_tail(&buf->list, &s->queued_bufs);
 	spin_unlock_irqrestore(&s->queued_bufs_lock, flags);
-}
+पूर्ण
 
-static int airspy_start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct airspy *s = vb2_get_drv_priv(vq);
-	int ret;
+अटल पूर्णांक airspy_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा airspy *s = vb2_get_drv_priv(vq);
+	पूर्णांक ret;
 
 	dev_dbg(s->dev, "\n");
 
-	if (!s->udev)
-		return -ENODEV;
+	अगर (!s->udev)
+		वापस -ENODEV;
 
 	mutex_lock(&s->v4l2_lock);
 
@@ -528,240 +529,240 @@ static int airspy_start_streaming(struct vb2_queue *vq, unsigned int count)
 	set_bit(POWER_ON, &s->flags);
 
 	ret = airspy_alloc_stream_bufs(s);
-	if (ret)
-		goto err_clear_bit;
+	अगर (ret)
+		जाओ err_clear_bit;
 
 	ret = airspy_alloc_urbs(s);
-	if (ret)
-		goto err_free_stream_bufs;
+	अगर (ret)
+		जाओ err_मुक्त_stream_bufs;
 
 	ret = airspy_submit_urbs(s);
-	if (ret)
-		goto err_free_urbs;
+	अगर (ret)
+		जाओ err_मुक्त_urbs;
 
 	/* start hardware streaming */
-	ret = airspy_ctrl_msg(s, CMD_RECEIVER_MODE, 1, 0, NULL, 0);
-	if (ret)
-		goto err_kill_urbs;
+	ret = airspy_ctrl_msg(s, CMD_RECEIVER_MODE, 1, 0, शून्य, 0);
+	अगर (ret)
+		जाओ err_समाप्त_urbs;
 
-	goto exit_mutex_unlock;
+	जाओ निकास_mutex_unlock;
 
-err_kill_urbs:
-	airspy_kill_urbs(s);
-err_free_urbs:
-	airspy_free_urbs(s);
-err_free_stream_bufs:
-	airspy_free_stream_bufs(s);
+err_समाप्त_urbs:
+	airspy_समाप्त_urbs(s);
+err_मुक्त_urbs:
+	airspy_मुक्त_urbs(s);
+err_मुक्त_stream_bufs:
+	airspy_मुक्त_stream_bufs(s);
 err_clear_bit:
 	clear_bit(POWER_ON, &s->flags);
 
-	/* return all queued buffers to vb2 */
-	{
-		struct airspy_frame_buf *buf, *tmp;
+	/* वापस all queued buffers to vb2 */
+	अणु
+		काष्ठा airspy_frame_buf *buf, *पंचांगp;
 
-		list_for_each_entry_safe(buf, tmp, &s->queued_bufs, list) {
+		list_क्रम_each_entry_safe(buf, पंचांगp, &s->queued_bufs, list) अणु
 			list_del(&buf->list);
-			vb2_buffer_done(&buf->vb.vb2_buf,
+			vb2_buffer_करोne(&buf->vb.vb2_buf,
 					VB2_BUF_STATE_QUEUED);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-exit_mutex_unlock:
+निकास_mutex_unlock:
 	mutex_unlock(&s->v4l2_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void airspy_stop_streaming(struct vb2_queue *vq)
-{
-	struct airspy *s = vb2_get_drv_priv(vq);
+अटल व्योम airspy_stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा airspy *s = vb2_get_drv_priv(vq);
 
 	dev_dbg(s->dev, "\n");
 
 	mutex_lock(&s->v4l2_lock);
 
 	/* stop hardware streaming */
-	airspy_ctrl_msg(s, CMD_RECEIVER_MODE, 0, 0, NULL, 0);
+	airspy_ctrl_msg(s, CMD_RECEIVER_MODE, 0, 0, शून्य, 0);
 
-	airspy_kill_urbs(s);
-	airspy_free_urbs(s);
-	airspy_free_stream_bufs(s);
+	airspy_समाप्त_urbs(s);
+	airspy_मुक्त_urbs(s);
+	airspy_मुक्त_stream_bufs(s);
 
 	airspy_cleanup_queued_bufs(s);
 
 	clear_bit(POWER_ON, &s->flags);
 
 	mutex_unlock(&s->v4l2_lock);
-}
+पूर्ण
 
-static const struct vb2_ops airspy_vb2_ops = {
+अटल स्थिर काष्ठा vb2_ops airspy_vb2_ops = अणु
 	.queue_setup            = airspy_queue_setup,
 	.buf_queue              = airspy_buf_queue,
 	.start_streaming        = airspy_start_streaming,
 	.stop_streaming         = airspy_stop_streaming,
-	.wait_prepare           = vb2_ops_wait_prepare,
-	.wait_finish            = vb2_ops_wait_finish,
-};
+	.रुको_prepare           = vb2_ops_रुको_prepare,
+	.रुको_finish            = vb2_ops_रुको_finish,
+पूर्ण;
 
-static int airspy_querycap(struct file *file, void *fh,
-		struct v4l2_capability *cap)
-{
-	struct airspy *s = video_drvdata(file);
+अटल पूर्णांक airspy_querycap(काष्ठा file *file, व्योम *fh,
+		काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा airspy *s = video_drvdata(file);
 
-	strscpy(cap->driver, KBUILD_MODNAME, sizeof(cap->driver));
-	strscpy(cap->card, s->vdev.name, sizeof(cap->card));
-	usb_make_path(s->udev, cap->bus_info, sizeof(cap->bus_info));
-	return 0;
-}
+	strscpy(cap->driver, KBUILD_MODNAME, माप(cap->driver));
+	strscpy(cap->card, s->vdev.name, माप(cap->card));
+	usb_make_path(s->udev, cap->bus_info, माप(cap->bus_info));
+	वापस 0;
+पूर्ण
 
-static int airspy_enum_fmt_sdr_cap(struct file *file, void *priv,
-		struct v4l2_fmtdesc *f)
-{
-	if (f->index >= NUM_FORMATS)
-		return -EINVAL;
+अटल पूर्णांक airspy_क्रमागत_fmt_sdr_cap(काष्ठा file *file, व्योम *priv,
+		काष्ठा v4l2_fmtdesc *f)
+अणु
+	अगर (f->index >= NUM_FORMATS)
+		वापस -EINVAL;
 
-	f->pixelformat = formats[f->index].pixelformat;
+	f->pixelक्रमmat = क्रमmats[f->index].pixelक्रमmat;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int airspy_g_fmt_sdr_cap(struct file *file, void *priv,
-		struct v4l2_format *f)
-{
-	struct airspy *s = video_drvdata(file);
+अटल पूर्णांक airspy_g_fmt_sdr_cap(काष्ठा file *file, व्योम *priv,
+		काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा airspy *s = video_drvdata(file);
 
-	f->fmt.sdr.pixelformat = s->pixelformat;
+	f->fmt.sdr.pixelक्रमmat = s->pixelक्रमmat;
 	f->fmt.sdr.buffersize = s->buffersize;
-	memset(f->fmt.sdr.reserved, 0, sizeof(f->fmt.sdr.reserved));
+	स_रखो(f->fmt.sdr.reserved, 0, माप(f->fmt.sdr.reserved));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int airspy_s_fmt_sdr_cap(struct file *file, void *priv,
-		struct v4l2_format *f)
-{
-	struct airspy *s = video_drvdata(file);
-	struct vb2_queue *q = &s->vb_queue;
-	int i;
+अटल पूर्णांक airspy_s_fmt_sdr_cap(काष्ठा file *file, व्योम *priv,
+		काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा airspy *s = video_drvdata(file);
+	काष्ठा vb2_queue *q = &s->vb_queue;
+	पूर्णांक i;
 
-	if (vb2_is_busy(q))
-		return -EBUSY;
+	अगर (vb2_is_busy(q))
+		वापस -EBUSY;
 
-	memset(f->fmt.sdr.reserved, 0, sizeof(f->fmt.sdr.reserved));
-	for (i = 0; i < NUM_FORMATS; i++) {
-		if (formats[i].pixelformat == f->fmt.sdr.pixelformat) {
-			s->pixelformat = formats[i].pixelformat;
-			s->buffersize = formats[i].buffersize;
-			f->fmt.sdr.buffersize = formats[i].buffersize;
-			return 0;
-		}
-	}
+	स_रखो(f->fmt.sdr.reserved, 0, माप(f->fmt.sdr.reserved));
+	क्रम (i = 0; i < NUM_FORMATS; i++) अणु
+		अगर (क्रमmats[i].pixelक्रमmat == f->fmt.sdr.pixelक्रमmat) अणु
+			s->pixelक्रमmat = क्रमmats[i].pixelक्रमmat;
+			s->buffersize = क्रमmats[i].buffersize;
+			f->fmt.sdr.buffersize = क्रमmats[i].buffersize;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	s->pixelformat = formats[0].pixelformat;
-	s->buffersize = formats[0].buffersize;
-	f->fmt.sdr.pixelformat = formats[0].pixelformat;
-	f->fmt.sdr.buffersize = formats[0].buffersize;
+	s->pixelक्रमmat = क्रमmats[0].pixelक्रमmat;
+	s->buffersize = क्रमmats[0].buffersize;
+	f->fmt.sdr.pixelक्रमmat = क्रमmats[0].pixelक्रमmat;
+	f->fmt.sdr.buffersize = क्रमmats[0].buffersize;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int airspy_try_fmt_sdr_cap(struct file *file, void *priv,
-		struct v4l2_format *f)
-{
-	int i;
+अटल पूर्णांक airspy_try_fmt_sdr_cap(काष्ठा file *file, व्योम *priv,
+		काष्ठा v4l2_क्रमmat *f)
+अणु
+	पूर्णांक i;
 
-	memset(f->fmt.sdr.reserved, 0, sizeof(f->fmt.sdr.reserved));
-	for (i = 0; i < NUM_FORMATS; i++) {
-		if (formats[i].pixelformat == f->fmt.sdr.pixelformat) {
-			f->fmt.sdr.buffersize = formats[i].buffersize;
-			return 0;
-		}
-	}
+	स_रखो(f->fmt.sdr.reserved, 0, माप(f->fmt.sdr.reserved));
+	क्रम (i = 0; i < NUM_FORMATS; i++) अणु
+		अगर (क्रमmats[i].pixelक्रमmat == f->fmt.sdr.pixelक्रमmat) अणु
+			f->fmt.sdr.buffersize = क्रमmats[i].buffersize;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	f->fmt.sdr.pixelformat = formats[0].pixelformat;
-	f->fmt.sdr.buffersize = formats[0].buffersize;
+	f->fmt.sdr.pixelक्रमmat = क्रमmats[0].pixelक्रमmat;
+	f->fmt.sdr.buffersize = क्रमmats[0].buffersize;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int airspy_s_tuner(struct file *file, void *priv,
-		const struct v4l2_tuner *v)
-{
-	int ret;
+अटल पूर्णांक airspy_s_tuner(काष्ठा file *file, व्योम *priv,
+		स्थिर काष्ठा v4l2_tuner *v)
+अणु
+	पूर्णांक ret;
 
-	if (v->index == 0)
+	अगर (v->index == 0)
 		ret = 0;
-	else if (v->index == 1)
+	अन्यथा अगर (v->index == 1)
 		ret = 0;
-	else
+	अन्यथा
 		ret = -EINVAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int airspy_g_tuner(struct file *file, void *priv, struct v4l2_tuner *v)
-{
-	int ret;
+अटल पूर्णांक airspy_g_tuner(काष्ठा file *file, व्योम *priv, काष्ठा v4l2_tuner *v)
+अणु
+	पूर्णांक ret;
 
-	if (v->index == 0) {
-		strscpy(v->name, "AirSpy ADC", sizeof(v->name));
+	अगर (v->index == 0) अणु
+		strscpy(v->name, "AirSpy ADC", माप(v->name));
 		v->type = V4L2_TUNER_ADC;
 		v->capability = V4L2_TUNER_CAP_1HZ | V4L2_TUNER_CAP_FREQ_BANDS;
 		v->rangelow  = bands[0].rangelow;
 		v->rangehigh = bands[0].rangehigh;
 		ret = 0;
-	} else if (v->index == 1) {
-		strscpy(v->name, "AirSpy RF", sizeof(v->name));
+	पूर्ण अन्यथा अगर (v->index == 1) अणु
+		strscpy(v->name, "AirSpy RF", माप(v->name));
 		v->type = V4L2_TUNER_RF;
 		v->capability = V4L2_TUNER_CAP_1HZ | V4L2_TUNER_CAP_FREQ_BANDS;
 		v->rangelow  = bands_rf[0].rangelow;
 		v->rangehigh = bands_rf[0].rangehigh;
 		ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int airspy_g_frequency(struct file *file, void *priv,
-		struct v4l2_frequency *f)
-{
-	struct airspy *s = video_drvdata(file);
-	int ret;
+अटल पूर्णांक airspy_g_frequency(काष्ठा file *file, व्योम *priv,
+		काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा airspy *s = video_drvdata(file);
+	पूर्णांक ret;
 
-	if (f->tuner == 0) {
+	अगर (f->tuner == 0) अणु
 		f->type = V4L2_TUNER_ADC;
 		f->frequency = s->f_adc;
 		dev_dbg(s->dev, "ADC frequency=%u Hz\n", s->f_adc);
 		ret = 0;
-	} else if (f->tuner == 1) {
+	पूर्ण अन्यथा अगर (f->tuner == 1) अणु
 		f->type = V4L2_TUNER_RF;
 		f->frequency = s->f_rf;
 		dev_dbg(s->dev, "RF frequency=%u Hz\n", s->f_rf);
 		ret = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int airspy_s_frequency(struct file *file, void *priv,
-		const struct v4l2_frequency *f)
-{
-	struct airspy *s = video_drvdata(file);
-	int ret;
+अटल पूर्णांक airspy_s_frequency(काष्ठा file *file, व्योम *priv,
+		स्थिर काष्ठा v4l2_frequency *f)
+अणु
+	काष्ठा airspy *s = video_drvdata(file);
+	पूर्णांक ret;
 	u8 buf[4];
 
-	if (f->tuner == 0) {
-		s->f_adc = clamp_t(unsigned int, f->frequency,
+	अगर (f->tuner == 0) अणु
+		s->f_adc = clamp_t(अचिन्हित पूर्णांक, f->frequency,
 				bands[0].rangelow,
 				bands[0].rangehigh);
 		dev_dbg(s->dev, "ADC frequency=%u Hz\n", s->f_adc);
 		ret = 0;
-	} else if (f->tuner == 1) {
-		s->f_rf = clamp_t(unsigned int, f->frequency,
+	पूर्ण अन्यथा अगर (f->tuner == 1) अणु
+		s->f_rf = clamp_t(अचिन्हित पूर्णांक, f->frequency,
 				bands_rf[0].rangelow,
 				bands_rf[0].rangehigh);
 		dev_dbg(s->dev, "RF frequency=%u Hz\n", s->f_rf);
@@ -770,43 +771,43 @@ static int airspy_s_frequency(struct file *file, void *priv,
 		buf[2] = (s->f_rf >> 16) & 0xff;
 		buf[3] = (s->f_rf >> 24) & 0xff;
 		ret = airspy_ctrl_msg(s, CMD_SET_FREQ, 0, 0, buf, 4);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int airspy_enum_freq_bands(struct file *file, void *priv,
-		struct v4l2_frequency_band *band)
-{
-	int ret;
+अटल पूर्णांक airspy_क्रमागत_freq_bands(काष्ठा file *file, व्योम *priv,
+		काष्ठा v4l2_frequency_band *band)
+अणु
+	पूर्णांक ret;
 
-	if (band->tuner == 0) {
-		if (band->index >= ARRAY_SIZE(bands)) {
+	अगर (band->tuner == 0) अणु
+		अगर (band->index >= ARRAY_SIZE(bands)) अणु
 			ret = -EINVAL;
-		} else {
+		पूर्ण अन्यथा अणु
 			*band = bands[band->index];
 			ret = 0;
-		}
-	} else if (band->tuner == 1) {
-		if (band->index >= ARRAY_SIZE(bands_rf)) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (band->tuner == 1) अणु
+		अगर (band->index >= ARRAY_SIZE(bands_rf)) अणु
 			ret = -EINVAL;
-		} else {
+		पूर्ण अन्यथा अणु
 			*band = bands_rf[band->index];
 			ret = 0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_ioctl_ops airspy_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops airspy_ioctl_ops = अणु
 	.vidioc_querycap          = airspy_querycap,
 
-	.vidioc_enum_fmt_sdr_cap  = airspy_enum_fmt_sdr_cap,
+	.vidioc_क्रमागत_fmt_sdr_cap  = airspy_क्रमागत_fmt_sdr_cap,
 	.vidioc_g_fmt_sdr_cap     = airspy_g_fmt_sdr_cap,
 	.vidioc_s_fmt_sdr_cap     = airspy_s_fmt_sdr_cap,
 	.vidioc_try_fmt_sdr_cap   = airspy_try_fmt_sdr_cap,
@@ -826,224 +827,224 @@ static const struct v4l2_ioctl_ops airspy_ioctl_ops = {
 
 	.vidioc_g_frequency       = airspy_g_frequency,
 	.vidioc_s_frequency       = airspy_s_frequency,
-	.vidioc_enum_freq_bands   = airspy_enum_freq_bands,
+	.vidioc_क्रमागत_freq_bands   = airspy_क्रमागत_freq_bands,
 
 	.vidioc_subscribe_event   = v4l2_ctrl_subscribe_event,
 	.vidioc_unsubscribe_event = v4l2_event_unsubscribe,
 	.vidioc_log_status        = v4l2_ctrl_log_status,
-};
+पूर्ण;
 
-static const struct v4l2_file_operations airspy_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations airspy_fops = अणु
 	.owner                    = THIS_MODULE,
-	.open                     = v4l2_fh_open,
+	.खोलो                     = v4l2_fh_खोलो,
 	.release                  = vb2_fop_release,
-	.read                     = vb2_fop_read,
+	.पढ़ो                     = vb2_fop_पढ़ो,
 	.poll                     = vb2_fop_poll,
 	.mmap                     = vb2_fop_mmap,
 	.unlocked_ioctl           = video_ioctl2,
-};
+पूर्ण;
 
-static const struct video_device airspy_template = {
+अटल स्थिर काष्ठा video_device airspy_ढाँचा = अणु
 	.name                     = "AirSpy SDR",
 	.release                  = video_device_release_empty,
 	.fops                     = &airspy_fops,
 	.ioctl_ops                = &airspy_ioctl_ops,
-};
+पूर्ण;
 
-static void airspy_video_release(struct v4l2_device *v)
-{
-	struct airspy *s = container_of(v, struct airspy, v4l2_dev);
+अटल व्योम airspy_video_release(काष्ठा v4l2_device *v)
+अणु
+	काष्ठा airspy *s = container_of(v, काष्ठा airspy, v4l2_dev);
 
-	v4l2_ctrl_handler_free(&s->hdl);
-	v4l2_device_unregister(&s->v4l2_dev);
-	kfree(s);
-}
+	v4l2_ctrl_handler_मुक्त(&s->hdl);
+	v4l2_device_unरेजिस्टर(&s->v4l2_dev);
+	kमुक्त(s);
+पूर्ण
 
-static int airspy_set_lna_gain(struct airspy *s)
-{
-	int ret;
-	u8 u8tmp;
+अटल पूर्णांक airspy_set_lna_gain(काष्ठा airspy *s)
+अणु
+	पूर्णांक ret;
+	u8 u8पंचांगp;
 
 	dev_dbg(s->dev, "lna auto=%d->%d val=%d->%d\n",
-			s->lna_gain_auto->cur.val, s->lna_gain_auto->val,
+			s->lna_gain_स्वतः->cur.val, s->lna_gain_स्वतः->val,
 			s->lna_gain->cur.val, s->lna_gain->val);
 
-	ret = airspy_ctrl_msg(s, CMD_SET_LNA_AGC, 0, s->lna_gain_auto->val,
-			&u8tmp, 1);
-	if (ret)
-		goto err;
+	ret = airspy_ctrl_msg(s, CMD_SET_LNA_AGC, 0, s->lna_gain_स्वतः->val,
+			&u8पंचांगp, 1);
+	अगर (ret)
+		जाओ err;
 
-	if (s->lna_gain_auto->val == false) {
+	अगर (s->lna_gain_स्वतः->val == false) अणु
 		ret = airspy_ctrl_msg(s, CMD_SET_LNA_GAIN, 0, s->lna_gain->val,
-				&u8tmp, 1);
-		if (ret)
-			goto err;
-	}
+				&u8पंचांगp, 1);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 err:
-	if (ret)
+	अगर (ret)
 		dev_dbg(s->dev, "failed=%d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int airspy_set_mixer_gain(struct airspy *s)
-{
-	int ret;
-	u8 u8tmp;
+अटल पूर्णांक airspy_set_mixer_gain(काष्ठा airspy *s)
+अणु
+	पूर्णांक ret;
+	u8 u8पंचांगp;
 
 	dev_dbg(s->dev, "mixer auto=%d->%d val=%d->%d\n",
-			s->mixer_gain_auto->cur.val, s->mixer_gain_auto->val,
+			s->mixer_gain_स्वतः->cur.val, s->mixer_gain_स्वतः->val,
 			s->mixer_gain->cur.val, s->mixer_gain->val);
 
-	ret = airspy_ctrl_msg(s, CMD_SET_MIXER_AGC, 0, s->mixer_gain_auto->val,
-			&u8tmp, 1);
-	if (ret)
-		goto err;
+	ret = airspy_ctrl_msg(s, CMD_SET_MIXER_AGC, 0, s->mixer_gain_स्वतः->val,
+			&u8पंचांगp, 1);
+	अगर (ret)
+		जाओ err;
 
-	if (s->mixer_gain_auto->val == false) {
+	अगर (s->mixer_gain_स्वतः->val == false) अणु
 		ret = airspy_ctrl_msg(s, CMD_SET_MIXER_GAIN, 0,
-				s->mixer_gain->val, &u8tmp, 1);
-		if (ret)
-			goto err;
-	}
+				s->mixer_gain->val, &u8पंचांगp, 1);
+		अगर (ret)
+			जाओ err;
+	पूर्ण
 err:
-	if (ret)
+	अगर (ret)
 		dev_dbg(s->dev, "failed=%d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int airspy_set_if_gain(struct airspy *s)
-{
-	int ret;
-	u8 u8tmp;
+अटल पूर्णांक airspy_set_अगर_gain(काष्ठा airspy *s)
+अणु
+	पूर्णांक ret;
+	u8 u8पंचांगp;
 
-	dev_dbg(s->dev, "val=%d->%d\n", s->if_gain->cur.val, s->if_gain->val);
+	dev_dbg(s->dev, "val=%d->%d\n", s->अगर_gain->cur.val, s->अगर_gain->val);
 
-	ret = airspy_ctrl_msg(s, CMD_SET_VGA_GAIN, 0, s->if_gain->val,
-			&u8tmp, 1);
-	if (ret)
+	ret = airspy_ctrl_msg(s, CMD_SET_VGA_GAIN, 0, s->अगर_gain->val,
+			&u8पंचांगp, 1);
+	अगर (ret)
 		dev_dbg(s->dev, "failed=%d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int airspy_s_ctrl(struct v4l2_ctrl *ctrl)
-{
-	struct airspy *s = container_of(ctrl->handler, struct airspy, hdl);
-	int ret;
+अटल पूर्णांक airspy_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
+अणु
+	काष्ठा airspy *s = container_of(ctrl->handler, काष्ठा airspy, hdl);
+	पूर्णांक ret;
 
-	switch (ctrl->id) {
-	case  V4L2_CID_RF_TUNER_LNA_GAIN_AUTO:
-	case  V4L2_CID_RF_TUNER_LNA_GAIN:
+	चयन (ctrl->id) अणु
+	हाल  V4L2_CID_RF_TUNER_LNA_GAIN_AUTO:
+	हाल  V4L2_CID_RF_TUNER_LNA_GAIN:
 		ret = airspy_set_lna_gain(s);
-		break;
-	case  V4L2_CID_RF_TUNER_MIXER_GAIN_AUTO:
-	case  V4L2_CID_RF_TUNER_MIXER_GAIN:
+		अवरोध;
+	हाल  V4L2_CID_RF_TUNER_MIXER_GAIN_AUTO:
+	हाल  V4L2_CID_RF_TUNER_MIXER_GAIN:
 		ret = airspy_set_mixer_gain(s);
-		break;
-	case  V4L2_CID_RF_TUNER_IF_GAIN:
-		ret = airspy_set_if_gain(s);
-		break;
-	default:
+		अवरोध;
+	हाल  V4L2_CID_RF_TUNER_IF_GAIN:
+		ret = airspy_set_अगर_gain(s);
+		अवरोध;
+	शेष:
 		dev_dbg(s->dev, "unknown ctrl: id=%d name=%s\n",
 				ctrl->id, ctrl->name);
 		ret = -EINVAL;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_ctrl_ops airspy_ctrl_ops = {
+अटल स्थिर काष्ठा v4l2_ctrl_ops airspy_ctrl_ops = अणु
 	.s_ctrl = airspy_s_ctrl,
-};
+पूर्ण;
 
-static int airspy_probe(struct usb_interface *intf,
-		const struct usb_device_id *id)
-{
-	struct airspy *s;
-	int ret;
-	u8 u8tmp, buf[BUF_SIZE];
+अटल पूर्णांक airspy_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+		स्थिर काष्ठा usb_device_id *id)
+अणु
+	काष्ठा airspy *s;
+	पूर्णांक ret;
+	u8 u8पंचांगp, buf[BUF_SIZE];
 
-	s = kzalloc(sizeof(struct airspy), GFP_KERNEL);
-	if (s == NULL) {
-		dev_err(&intf->dev, "Could not allocate memory for state\n");
-		return -ENOMEM;
-	}
+	s = kzalloc(माप(काष्ठा airspy), GFP_KERNEL);
+	अगर (s == शून्य) अणु
+		dev_err(&पूर्णांकf->dev, "Could not allocate memory for state\n");
+		वापस -ENOMEM;
+	पूर्ण
 
 	mutex_init(&s->v4l2_lock);
 	mutex_init(&s->vb_queue_lock);
 	spin_lock_init(&s->queued_bufs_lock);
 	INIT_LIST_HEAD(&s->queued_bufs);
-	s->dev = &intf->dev;
-	s->udev = interface_to_usbdev(intf);
+	s->dev = &पूर्णांकf->dev;
+	s->udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
 	s->f_adc = bands[0].rangelow;
 	s->f_rf = bands_rf[0].rangelow;
-	s->pixelformat = formats[0].pixelformat;
-	s->buffersize = formats[0].buffersize;
+	s->pixelक्रमmat = क्रमmats[0].pixelक्रमmat;
+	s->buffersize = क्रमmats[0].buffersize;
 
 	/* Detect device */
-	ret = airspy_ctrl_msg(s, CMD_BOARD_ID_READ, 0, 0, &u8tmp, 1);
-	if (ret == 0)
+	ret = airspy_ctrl_msg(s, CMD_BOARD_ID_READ, 0, 0, &u8पंचांगp, 1);
+	अगर (ret == 0)
 		ret = airspy_ctrl_msg(s, CMD_VERSION_STRING_READ, 0, 0,
 				buf, BUF_SIZE);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(s->dev, "Could not detect board\n");
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
 	buf[BUF_SIZE - 1] = '\0';
 
-	dev_info(s->dev, "Board ID: %02x\n", u8tmp);
+	dev_info(s->dev, "Board ID: %02x\n", u8पंचांगp);
 	dev_info(s->dev, "Firmware version: %s\n", buf);
 
-	/* Init videobuf2 queue structure */
+	/* Init videobuf2 queue काष्ठाure */
 	s->vb_queue.type = V4L2_BUF_TYPE_SDR_CAPTURE;
 	s->vb_queue.io_modes = VB2_MMAP | VB2_USERPTR | VB2_READ;
 	s->vb_queue.drv_priv = s;
-	s->vb_queue.buf_struct_size = sizeof(struct airspy_frame_buf);
+	s->vb_queue.buf_काष्ठा_size = माप(काष्ठा airspy_frame_buf);
 	s->vb_queue.ops = &airspy_vb2_ops;
-	s->vb_queue.mem_ops = &vb2_vmalloc_memops;
-	s->vb_queue.timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	s->vb_queue.mem_ops = &vb2_vदो_स्मृति_memops;
+	s->vb_queue.बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	ret = vb2_queue_init(&s->vb_queue);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(s->dev, "Could not initialize vb2 queue\n");
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
-	/* Init video_device structure */
-	s->vdev = airspy_template;
+	/* Init video_device काष्ठाure */
+	s->vdev = airspy_ढाँचा;
 	s->vdev.queue = &s->vb_queue;
 	s->vdev.queue->lock = &s->vb_queue_lock;
 	video_set_drvdata(&s->vdev, s);
 
-	/* Register the v4l2_device structure */
+	/* Register the v4l2_device काष्ठाure */
 	s->v4l2_dev.release = airspy_video_release;
-	ret = v4l2_device_register(&intf->dev, &s->v4l2_dev);
-	if (ret) {
+	ret = v4l2_device_रेजिस्टर(&पूर्णांकf->dev, &s->v4l2_dev);
+	अगर (ret) अणु
 		dev_err(s->dev, "Failed to register v4l2-device (%d)\n", ret);
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
 	/* Register controls */
 	v4l2_ctrl_handler_init(&s->hdl, 5);
-	s->lna_gain_auto = v4l2_ctrl_new_std(&s->hdl, &airspy_ctrl_ops,
+	s->lna_gain_स्वतः = v4l2_ctrl_new_std(&s->hdl, &airspy_ctrl_ops,
 			V4L2_CID_RF_TUNER_LNA_GAIN_AUTO, 0, 1, 1, 0);
 	s->lna_gain = v4l2_ctrl_new_std(&s->hdl, &airspy_ctrl_ops,
 			V4L2_CID_RF_TUNER_LNA_GAIN, 0, 14, 1, 8);
-	v4l2_ctrl_auto_cluster(2, &s->lna_gain_auto, 0, false);
-	s->mixer_gain_auto = v4l2_ctrl_new_std(&s->hdl, &airspy_ctrl_ops,
+	v4l2_ctrl_स्वतः_cluster(2, &s->lna_gain_स्वतः, 0, false);
+	s->mixer_gain_स्वतः = v4l2_ctrl_new_std(&s->hdl, &airspy_ctrl_ops,
 			V4L2_CID_RF_TUNER_MIXER_GAIN_AUTO, 0, 1, 1, 0);
 	s->mixer_gain = v4l2_ctrl_new_std(&s->hdl, &airspy_ctrl_ops,
 			V4L2_CID_RF_TUNER_MIXER_GAIN, 0, 15, 1, 8);
-	v4l2_ctrl_auto_cluster(2, &s->mixer_gain_auto, 0, false);
-	s->if_gain = v4l2_ctrl_new_std(&s->hdl, &airspy_ctrl_ops,
+	v4l2_ctrl_स्वतः_cluster(2, &s->mixer_gain_स्वतः, 0, false);
+	s->अगर_gain = v4l2_ctrl_new_std(&s->hdl, &airspy_ctrl_ops,
 			V4L2_CID_RF_TUNER_IF_GAIN, 0, 15, 1, 0);
-	if (s->hdl.error) {
+	अगर (s->hdl.error) अणु
 		ret = s->hdl.error;
 		dev_err(s->dev, "Could not initialize controls\n");
-		goto err_free_controls;
-	}
+		जाओ err_मुक्त_controls;
+	पूर्ण
 
 	v4l2_ctrl_handler_setup(&s->hdl);
 
@@ -1053,39 +1054,39 @@ static int airspy_probe(struct usb_interface *intf,
 	s->vdev.device_caps = V4L2_CAP_SDR_CAPTURE | V4L2_CAP_STREAMING |
 			      V4L2_CAP_READWRITE | V4L2_CAP_TUNER;
 
-	ret = video_register_device(&s->vdev, VFL_TYPE_SDR, -1);
-	if (ret) {
+	ret = video_रेजिस्टर_device(&s->vdev, VFL_TYPE_SDR, -1);
+	अगर (ret) अणु
 		dev_err(s->dev, "Failed to register as video device (%d)\n",
 				ret);
-		goto err_free_controls;
-	}
+		जाओ err_मुक्त_controls;
+	पूर्ण
 	dev_info(s->dev, "Registered as %s\n",
 			video_device_node_name(&s->vdev));
 	dev_notice(s->dev, "SDR API is still slightly experimental and functionality changes may follow\n");
-	return 0;
+	वापस 0;
 
-err_free_controls:
-	v4l2_ctrl_handler_free(&s->hdl);
-	v4l2_device_unregister(&s->v4l2_dev);
-err_free_mem:
-	kfree(s);
-	return ret;
-}
+err_मुक्त_controls:
+	v4l2_ctrl_handler_मुक्त(&s->hdl);
+	v4l2_device_unरेजिस्टर(&s->v4l2_dev);
+err_मुक्त_mem:
+	kमुक्त(s);
+	वापस ret;
+पूर्ण
 
 /* USB device ID list */
-static const struct usb_device_id airspy_id_table[] = {
-	{ USB_DEVICE(0x1d50, 0x60a1) }, /* AirSpy */
-	{ }
-};
+अटल स्थिर काष्ठा usb_device_id airspy_id_table[] = अणु
+	अणु USB_DEVICE(0x1d50, 0x60a1) पूर्ण, /* AirSpy */
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, airspy_id_table);
 
-/* USB subsystem interface */
-static struct usb_driver airspy_driver = {
+/* USB subप्रणाली पूर्णांकerface */
+अटल काष्ठा usb_driver airspy_driver = अणु
 	.name                     = KBUILD_MODNAME,
 	.probe                    = airspy_probe,
 	.disconnect               = airspy_disconnect,
 	.id_table                 = airspy_id_table,
-};
+पूर्ण;
 
 module_usb_driver(airspy_driver);
 

@@ -1,207 +1,208 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright(c) 2010 Intel Corporation. All rights reserved.
  *
- *  Contact Information:
+ *  Contact Inक्रमmation:
  *    Intel Corporation
  *    2200 Mission College Blvd.
  *    Santa Clara, CA  97052
  *
- * This provides access methods for PCI registers that mis-behave on
- * the CE4100. Each register can be assigned a private init, read and
- * write routine. The exception to this is the bridge device.  The
+ * This provides access methods क्रम PCI रेजिस्टरs that mis-behave on
+ * the CE4100. Each रेजिस्टर can be asचिन्हित a निजी init, पढ़ो and
+ * ग_लिखो routine. The exception to this is the bridge device.  The
  * bridge device is the only device on bus zero (0) that requires any
- * fixup so it is a special case ATM
+ * fixup so it is a special हाल ATM
  */
 
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/init.h>
 
-#include <asm/ce4100.h>
-#include <asm/pci_x86.h>
+#समावेश <यंत्र/ce4100.h>
+#समावेश <यंत्र/pci_x86.h>
 
-struct sim_reg {
+काष्ठा sim_reg अणु
 	u32 value;
 	u32 mask;
-};
+पूर्ण;
 
-struct sim_dev_reg {
-	int dev_func;
-	int reg;
-	void (*init)(struct sim_dev_reg *reg);
-	void (*read)(struct sim_dev_reg *reg, u32 *value);
-	void (*write)(struct sim_dev_reg *reg, u32 value);
-	struct sim_reg sim_reg;
-};
+काष्ठा sim_dev_reg अणु
+	पूर्णांक dev_func;
+	पूर्णांक reg;
+	व्योम (*init)(काष्ठा sim_dev_reg *reg);
+	व्योम (*पढ़ो)(काष्ठा sim_dev_reg *reg, u32 *value);
+	व्योम (*ग_लिखो)(काष्ठा sim_dev_reg *reg, u32 value);
+	काष्ठा sim_reg sim_reg;
+पूर्ण;
 
-struct sim_reg_op {
-	void (*init)(struct sim_dev_reg *reg);
-	void (*read)(struct sim_dev_reg *reg, u32 value);
-	void (*write)(struct sim_dev_reg *reg, u32 value);
-};
+काष्ठा sim_reg_op अणु
+	व्योम (*init)(काष्ठा sim_dev_reg *reg);
+	व्योम (*पढ़ो)(काष्ठा sim_dev_reg *reg, u32 value);
+	व्योम (*ग_लिखो)(काष्ठा sim_dev_reg *reg, u32 value);
+पूर्ण;
 
-#define MB (1024 * 1024)
-#define KB (1024)
-#define SIZE_TO_MASK(size) (~(size - 1))
+#घोषणा MB (1024 * 1024)
+#घोषणा KB (1024)
+#घोषणा SIZE_TO_MASK(size) (~(size - 1))
 
-#define DEFINE_REG(device, func, offset, size, init_op, read_op, write_op)\
-{ PCI_DEVFN(device, func), offset, init_op, read_op, write_op,\
-	{0, SIZE_TO_MASK(size)} },
+#घोषणा DEFINE_REG(device, func, offset, size, init_op, पढ़ो_op, ग_लिखो_op)\
+अणु PCI_DEVFN(device, func), offset, init_op, पढ़ो_op, ग_लिखो_op,\
+	अणु0, SIZE_TO_MASK(size)पूर्ण पूर्ण,
 
 /*
- * All read/write functions are called with pci_config_lock held.
+ * All पढ़ो/ग_लिखो functions are called with pci_config_lock held.
  */
-static void reg_init(struct sim_dev_reg *reg)
-{
-	pci_direct_conf1.read(0, 1, reg->dev_func, reg->reg, 4,
+अटल व्योम reg_init(काष्ठा sim_dev_reg *reg)
+अणु
+	pci_direct_conf1.पढ़ो(0, 1, reg->dev_func, reg->reg, 4,
 			      &reg->sim_reg.value);
-}
+पूर्ण
 
-static void reg_read(struct sim_dev_reg *reg, u32 *value)
-{
+अटल व्योम reg_पढ़ो(काष्ठा sim_dev_reg *reg, u32 *value)
+अणु
 	*value = reg->sim_reg.value;
-}
+पूर्ण
 
-static void reg_write(struct sim_dev_reg *reg, u32 value)
-{
+अटल व्योम reg_ग_लिखो(काष्ठा sim_dev_reg *reg, u32 value)
+अणु
 	reg->sim_reg.value = (value & reg->sim_reg.mask) |
 		(reg->sim_reg.value & ~reg->sim_reg.mask);
-}
+पूर्ण
 
-static void sata_reg_init(struct sim_dev_reg *reg)
-{
-	pci_direct_conf1.read(0, 1, PCI_DEVFN(14, 0), 0x10, 4,
+अटल व्योम sata_reg_init(काष्ठा sim_dev_reg *reg)
+अणु
+	pci_direct_conf1.पढ़ो(0, 1, PCI_DEVFN(14, 0), 0x10, 4,
 			      &reg->sim_reg.value);
 	reg->sim_reg.value += 0x400;
-}
+पूर्ण
 
-static void ehci_reg_read(struct sim_dev_reg *reg, u32 *value)
-{
-	reg_read(reg, value);
-	if (*value != reg->sim_reg.mask)
+अटल व्योम ehci_reg_पढ़ो(काष्ठा sim_dev_reg *reg, u32 *value)
+अणु
+	reg_पढ़ो(reg, value);
+	अगर (*value != reg->sim_reg.mask)
 		*value |= 0x100;
-}
+पूर्ण
 
-void sata_revid_init(struct sim_dev_reg *reg)
-{
+व्योम sata_revid_init(काष्ठा sim_dev_reg *reg)
+अणु
 	reg->sim_reg.value = 0x01060100;
 	reg->sim_reg.mask = 0;
-}
+पूर्ण
 
-static void sata_revid_read(struct sim_dev_reg *reg, u32 *value)
-{
-	reg_read(reg, value);
-}
+अटल व्योम sata_revid_पढ़ो(काष्ठा sim_dev_reg *reg, u32 *value)
+अणु
+	reg_पढ़ो(reg, value);
+पूर्ण
 
-static void reg_noirq_read(struct sim_dev_reg *reg, u32 *value)
-{
-	/* force interrupt pin value to 0 */
+अटल व्योम reg_noirq_पढ़ो(काष्ठा sim_dev_reg *reg, u32 *value)
+अणु
+	/* क्रमce पूर्णांकerrupt pin value to 0 */
 	*value = reg->sim_reg.value & 0xfff00ff;
-}
+पूर्ण
 
-static struct sim_dev_reg bus1_fixups[] = {
-	DEFINE_REG(2, 0, 0x10, (16*MB), reg_init, reg_read, reg_write)
-	DEFINE_REG(2, 0, 0x14, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(2, 1, 0x10, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(3, 0, 0x10, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(4, 0, 0x10, (128*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(4, 1, 0x10, (128*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(6, 0, 0x10, (512*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(6, 1, 0x10, (512*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(6, 2, 0x10, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(8, 0, 0x10, (1*MB), reg_init, reg_read, reg_write)
-	DEFINE_REG(8, 1, 0x10, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(8, 2, 0x10, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(9, 0, 0x10 , (1*MB), reg_init, reg_read, reg_write)
-	DEFINE_REG(9, 0, 0x14, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(10, 0, 0x10, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(10, 0, 0x14, (256*MB), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 0, 0x10, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 0, 0x14, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 1, 0x10, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 2, 0x10, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 2, 0x14, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 2, 0x18, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 3, 0x10, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 3, 0x14, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 4, 0x10, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 5, 0x10, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 6, 0x10, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 7, 0x10, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(11, 7, 0x3c, 256, reg_init, reg_noirq_read, reg_write)
-	DEFINE_REG(12, 0, 0x10, (128*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(12, 0, 0x14, (256), reg_init, reg_read, reg_write)
-	DEFINE_REG(12, 1, 0x10, (1024), reg_init, reg_read, reg_write)
-	DEFINE_REG(13, 0, 0x10, (32*KB), reg_init, ehci_reg_read, reg_write)
-	DEFINE_REG(13, 1, 0x10, (32*KB), reg_init, ehci_reg_read, reg_write)
-	DEFINE_REG(14, 0, 0x8,  0, sata_revid_init, sata_revid_read, 0)
-	DEFINE_REG(14, 0, 0x10, 0, reg_init, reg_read, reg_write)
-	DEFINE_REG(14, 0, 0x14, 0, reg_init, reg_read, reg_write)
-	DEFINE_REG(14, 0, 0x18, 0, reg_init, reg_read, reg_write)
-	DEFINE_REG(14, 0, 0x1C, 0, reg_init, reg_read, reg_write)
-	DEFINE_REG(14, 0, 0x20, 0, reg_init, reg_read, reg_write)
-	DEFINE_REG(14, 0, 0x24, (0x200), sata_reg_init, reg_read, reg_write)
-	DEFINE_REG(15, 0, 0x10, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(15, 0, 0x14, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(16, 0, 0x10, (64*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(16, 0, 0x14, (64*MB), reg_init, reg_read, reg_write)
-	DEFINE_REG(16, 0, 0x18, (64*MB), reg_init, reg_read, reg_write)
-	DEFINE_REG(16, 0, 0x3c, 256, reg_init, reg_noirq_read, reg_write)
-	DEFINE_REG(17, 0, 0x10, (128*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(18, 0, 0x10, (1*KB), reg_init, reg_read, reg_write)
-	DEFINE_REG(18, 0, 0x3c, 256, reg_init, reg_noirq_read, reg_write)
-};
+अटल काष्ठा sim_dev_reg bus1_fixups[] = अणु
+	DEFINE_REG(2, 0, 0x10, (16*MB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(2, 0, 0x14, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(2, 1, 0x10, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(3, 0, 0x10, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(4, 0, 0x10, (128*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(4, 1, 0x10, (128*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(6, 0, 0x10, (512*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(6, 1, 0x10, (512*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(6, 2, 0x10, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(8, 0, 0x10, (1*MB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(8, 1, 0x10, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(8, 2, 0x10, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(9, 0, 0x10 , (1*MB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(9, 0, 0x14, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(10, 0, 0x10, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(10, 0, 0x14, (256*MB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 0, 0x10, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 0, 0x14, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 1, 0x10, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 2, 0x10, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 2, 0x14, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 2, 0x18, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 3, 0x10, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 3, 0x14, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 4, 0x10, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 5, 0x10, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 6, 0x10, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 7, 0x10, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(11, 7, 0x3c, 256, reg_init, reg_noirq_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(12, 0, 0x10, (128*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(12, 0, 0x14, (256), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(12, 1, 0x10, (1024), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(13, 0, 0x10, (32*KB), reg_init, ehci_reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(13, 1, 0x10, (32*KB), reg_init, ehci_reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(14, 0, 0x8,  0, sata_revid_init, sata_revid_पढ़ो, 0)
+	DEFINE_REG(14, 0, 0x10, 0, reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(14, 0, 0x14, 0, reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(14, 0, 0x18, 0, reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(14, 0, 0x1C, 0, reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(14, 0, 0x20, 0, reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(14, 0, 0x24, (0x200), sata_reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(15, 0, 0x10, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(15, 0, 0x14, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(16, 0, 0x10, (64*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(16, 0, 0x14, (64*MB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(16, 0, 0x18, (64*MB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(16, 0, 0x3c, 256, reg_init, reg_noirq_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(17, 0, 0x10, (128*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(18, 0, 0x10, (1*KB), reg_init, reg_पढ़ो, reg_ग_लिखो)
+	DEFINE_REG(18, 0, 0x3c, 256, reg_init, reg_noirq_पढ़ो, reg_ग_लिखो)
+पूर्ण;
 
-static void __init init_sim_regs(void)
-{
-	int i;
+अटल व्योम __init init_sim_regs(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(bus1_fixups); i++) {
-		if (bus1_fixups[i].init)
+	क्रम (i = 0; i < ARRAY_SIZE(bus1_fixups); i++) अणु
+		अगर (bus1_fixups[i].init)
 			bus1_fixups[i].init(&bus1_fixups[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void extract_bytes(u32 *value, int reg, int len)
-{
-	uint32_t mask;
+अटल अंतरभूत व्योम extract_bytes(u32 *value, पूर्णांक reg, पूर्णांक len)
+अणु
+	uपूर्णांक32_t mask;
 
 	*value >>= ((reg & 3) * 8);
 	mask = 0xFFFFFFFF >> ((4 - len) * 8);
 	*value &= mask;
-}
+पूर्ण
 
-int bridge_read(unsigned int devfn, int reg, int len, u32 *value)
-{
+पूर्णांक bridge_पढ़ो(अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 *value)
+अणु
 	u32 av_bridge_base, av_bridge_limit;
-	int retval = 0;
+	पूर्णांक retval = 0;
 
-	switch (reg) {
+	चयन (reg) अणु
 	/* Make BARs appear to not request any memory. */
-	case PCI_BASE_ADDRESS_0:
-	case PCI_BASE_ADDRESS_0 + 1:
-	case PCI_BASE_ADDRESS_0 + 2:
-	case PCI_BASE_ADDRESS_0 + 3:
+	हाल PCI_BASE_ADDRESS_0:
+	हाल PCI_BASE_ADDRESS_0 + 1:
+	हाल PCI_BASE_ADDRESS_0 + 2:
+	हाल PCI_BASE_ADDRESS_0 + 3:
 		*value = 0;
-		break;
+		अवरोध;
 
-		/* Since subordinate bus number register is hardwired
-		 * to zero and read only, so do the simulation.
+		/* Since subordinate bus number रेजिस्टर is hardwired
+		 * to zero and पढ़ो only, so करो the simulation.
 		 */
-	case PCI_PRIMARY_BUS:
-		if (len == 4)
+	हाल PCI_PRIMARY_BUS:
+		अगर (len == 4)
 			*value = 0x00010100;
-		break;
+		अवरोध;
 
-	case PCI_SUBORDINATE_BUS:
+	हाल PCI_SUBORDINATE_BUS:
 		*value = 1;
-		break;
+		अवरोध;
 
-	case PCI_MEMORY_BASE:
-	case PCI_MEMORY_LIMIT:
+	हाल PCI_MEMORY_BASE:
+	हाल PCI_MEMORY_LIMIT:
 		/* Get the A/V bridge base address. */
-		pci_direct_conf1.read(0, 0, devfn,
+		pci_direct_conf1.पढ़ो(0, 0, devfn,
 				PCI_BASE_ADDRESS_0, 4, &av_bridge_base);
 
 		av_bridge_limit = av_bridge_base + (512*MB - 1);
@@ -211,114 +212,114 @@ int bridge_read(unsigned int devfn, int reg, int len, u32 *value)
 		av_bridge_base >>= 16;
 		av_bridge_base &= 0xFFF0;
 
-		if (reg == PCI_MEMORY_LIMIT)
+		अगर (reg == PCI_MEMORY_LIMIT)
 			*value = av_bridge_limit;
-		else if (len == 2)
+		अन्यथा अगर (len == 2)
 			*value = av_bridge_base;
-		else
+		अन्यथा
 			*value = (av_bridge_limit << 16) | av_bridge_base;
-		break;
+		अवरोध;
 		/* Make prefetchable memory limit smaller than prefetchable
 		 * memory base, so not claim prefetchable memory space.
 		 */
-	case PCI_PREF_MEMORY_BASE:
+	हाल PCI_PREF_MEMORY_BASE:
 		*value = 0xFFF0;
-		break;
-	case PCI_PREF_MEMORY_LIMIT:
+		अवरोध;
+	हाल PCI_PREF_MEMORY_LIMIT:
 		*value = 0x0;
-		break;
+		अवरोध;
 		/* Make IO limit smaller than IO base, so not claim IO space. */
-	case PCI_IO_BASE:
+	हाल PCI_IO_BASE:
 		*value = 0xF0;
-		break;
-	case PCI_IO_LIMIT:
+		अवरोध;
+	हाल PCI_IO_LIMIT:
 		*value = 0;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		retval = 1;
-	}
-	return retval;
-}
+	पूर्ण
+	वापस retval;
+पूर्ण
 
-static int ce4100_bus1_read(unsigned int devfn, int reg, int len, u32 *value)
-{
-	unsigned long flags;
-	int i;
+अटल पूर्णांक ce4100_bus1_पढ़ो(अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 *value)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(bus1_fixups); i++) {
-		if (bus1_fixups[i].dev_func == devfn &&
+	क्रम (i = 0; i < ARRAY_SIZE(bus1_fixups); i++) अणु
+		अगर (bus1_fixups[i].dev_func == devfn &&
 		    bus1_fixups[i].reg == (reg & ~3) &&
-		    bus1_fixups[i].read) {
+		    bus1_fixups[i].पढ़ो) अणु
 
 			raw_spin_lock_irqsave(&pci_config_lock, flags);
-			bus1_fixups[i].read(&(bus1_fixups[i]), value);
+			bus1_fixups[i].पढ़ो(&(bus1_fixups[i]), value);
 			raw_spin_unlock_irqrestore(&pci_config_lock, flags);
 			extract_bytes(value, reg, len);
-			return 0;
-		}
-	}
-	return -1;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int ce4100_conf_read(unsigned int seg, unsigned int bus,
-			    unsigned int devfn, int reg, int len, u32 *value)
-{
+अटल पूर्णांक ce4100_conf_पढ़ो(अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक bus,
+			    अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 *value)
+अणु
 	WARN_ON(seg);
 
-	if (bus == 1 && !ce4100_bus1_read(devfn, reg, len, value))
-		return 0;
+	अगर (bus == 1 && !ce4100_bus1_पढ़ो(devfn, reg, len, value))
+		वापस 0;
 
-	if (bus == 0 && (PCI_DEVFN(1, 0) == devfn) &&
-	    !bridge_read(devfn, reg, len, value))
-		return 0;
+	अगर (bus == 0 && (PCI_DEVFN(1, 0) == devfn) &&
+	    !bridge_पढ़ो(devfn, reg, len, value))
+		वापस 0;
 
-	return pci_direct_conf1.read(seg, bus, devfn, reg, len, value);
-}
+	वापस pci_direct_conf1.पढ़ो(seg, bus, devfn, reg, len, value);
+पूर्ण
 
-static int ce4100_bus1_write(unsigned int devfn, int reg, int len, u32 value)
-{
-	unsigned long flags;
-	int i;
+अटल पूर्णांक ce4100_bus1_ग_लिखो(अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 value)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(bus1_fixups); i++) {
-		if (bus1_fixups[i].dev_func == devfn &&
+	क्रम (i = 0; i < ARRAY_SIZE(bus1_fixups); i++) अणु
+		अगर (bus1_fixups[i].dev_func == devfn &&
 		    bus1_fixups[i].reg == (reg & ~3) &&
-		    bus1_fixups[i].write) {
+		    bus1_fixups[i].ग_लिखो) अणु
 
 			raw_spin_lock_irqsave(&pci_config_lock, flags);
-			bus1_fixups[i].write(&(bus1_fixups[i]), value);
+			bus1_fixups[i].ग_लिखो(&(bus1_fixups[i]), value);
 			raw_spin_unlock_irqrestore(&pci_config_lock, flags);
-			return 0;
-		}
-	}
-	return -1;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -1;
+पूर्ण
 
-static int ce4100_conf_write(unsigned int seg, unsigned int bus,
-			     unsigned int devfn, int reg, int len, u32 value)
-{
+अटल पूर्णांक ce4100_conf_ग_लिखो(अचिन्हित पूर्णांक seg, अचिन्हित पूर्णांक bus,
+			     अचिन्हित पूर्णांक devfn, पूर्णांक reg, पूर्णांक len, u32 value)
+अणु
 	WARN_ON(seg);
 
-	if (bus == 1 && !ce4100_bus1_write(devfn, reg, len, value))
-		return 0;
+	अगर (bus == 1 && !ce4100_bus1_ग_लिखो(devfn, reg, len, value))
+		वापस 0;
 
-	/* Discard writes to A/V bridge BAR. */
-	if (bus == 0 && PCI_DEVFN(1, 0) == devfn &&
+	/* Discard ग_लिखोs to A/V bridge BAR. */
+	अगर (bus == 0 && PCI_DEVFN(1, 0) == devfn &&
 	    ((reg & ~3) == PCI_BASE_ADDRESS_0))
-		return 0;
+		वापस 0;
 
-	return pci_direct_conf1.write(seg, bus, devfn, reg, len, value);
-}
+	वापस pci_direct_conf1.ग_लिखो(seg, bus, devfn, reg, len, value);
+पूर्ण
 
-static const struct pci_raw_ops ce4100_pci_conf = {
-	.read	= ce4100_conf_read,
-	.write	= ce4100_conf_write,
-};
+अटल स्थिर काष्ठा pci_raw_ops ce4100_pci_conf = अणु
+	.पढ़ो	= ce4100_conf_पढ़ो,
+	.ग_लिखो	= ce4100_conf_ग_लिखो,
+पूर्ण;
 
-int __init ce4100_pci_init(void)
-{
+पूर्णांक __init ce4100_pci_init(व्योम)
+अणु
 	init_sim_regs();
 	raw_pci_ops = &ce4100_pci_conf;
 	/* Indicate caller that it should invoke pci_legacy_init() */
-	return 1;
-}
+	वापस 1;
+पूर्ण

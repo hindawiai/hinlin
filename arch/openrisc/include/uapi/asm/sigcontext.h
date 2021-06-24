@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ WITH Linux-syscall-note */
 /*
  * OpenRISC Linux
  *
@@ -11,24 +12,24 @@
  * Copyright (C) 2010-2011 Jonas Bonn <jonas@southpole.se>
  * et al.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
  */
 
-#ifndef __ASM_OPENRISC_SIGCONTEXT_H
-#define __ASM_OPENRISC_SIGCONTEXT_H
+#अगर_अघोषित __ASM_OPENRISC_SIGCONTEXT_H
+#घोषणा __ASM_OPENRISC_SIGCONTEXT_H
 
-#include <asm/ptrace.h>
+#समावेश <यंत्र/ptrace.h>
 
-/* This struct is saved by setup_frame in signal.c, to keep the current
-   context while a signal handler is executed. It's restored by sys_sigreturn.
+/* This काष्ठा is saved by setup_frame in संकेत.c, to keep the current
+   context जबतक a संकेत handler is executed. It's restored by sys_sigवापस.
 */
 
-struct sigcontext {
-	struct user_regs_struct regs;  /* needs to be first */
-	unsigned long oldmask;
-};
+काष्ठा sigcontext अणु
+	काष्ठा user_regs_काष्ठा regs;  /* needs to be first */
+	अचिन्हित दीर्घ oldmask;
+पूर्ण;
 
-#endif /* __ASM_OPENRISC_SIGCONTEXT_H */
+#पूर्ण_अगर /* __ASM_OPENRISC_SIGCONTEXT_H */

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2006-2008 Intel Corporation
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -5,19 +6,19 @@
  *
  * DRM core CRTC related functions
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
+ * Permission to use, copy, modअगरy, distribute, and sell this software and its
+ * करोcumentation क्रम any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that copyright
- * notice and this permission notice appear in supporting documentation, and
+ * notice and this permission notice appear in supporting करोcumentation, and
  * that the name of the copyright holders not be used in advertising or
- * publicity pertaining to distribution of the software without specific,
+ * खुलाity pertaining to distribution of the software without specअगरic,
  * written prior permission.  The copyright holders make no representations
- * about the suitability of this software for any purpose.  It is provided "as
+ * about the suitability of this software क्रम any purpose.  It is provided "as
  * is" without express or implied warranty.
  *
  * THE COPYRIGHT HOLDERS DISCLAIM ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
- * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY SPECIAL, INसूचीECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE,
  * DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
@@ -27,43 +28,43 @@
  *      Keith Packard
  *	Eric Anholt <eric@anholt.net>
  *      Dave Airlie <airlied@linux.ie>
- *      Jesse Barnes <jesse.barnes@intel.com>
+ *      Jesse Barnes <jesse.barnes@पूर्णांकel.com>
  */
-#include <linux/ctype.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/dma-fence.h>
-#include <linux/uaccess.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_edid.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_managed.h>
-#include <drm/drm_modeset_lock.h>
-#include <drm/drm_atomic.h>
-#include <drm/drm_auth.h>
-#include <drm/drm_debugfs_crc.h>
-#include <drm/drm_drv.h>
-#include <drm/drm_print.h>
-#include <drm/drm_file.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/dma-fence.h>
+#समावेश <linux/uaccess.h>
+#समावेश <drm/drm_crtc.h>
+#समावेश <drm/drm_edid.h>
+#समावेश <drm/drm_fourcc.h>
+#समावेश <drm/drm_managed.h>
+#समावेश <drm/drm_modeset_lock.h>
+#समावेश <drm/drm_atomic.h>
+#समावेश <drm/drm_auth.h>
+#समावेश <drm/drm_debugfs_crc.h>
+#समावेश <drm/drm_drv.h>
+#समावेश <drm/drm_prपूर्णांक.h>
+#समावेश <drm/drm_file.h>
 
-#include "drm_crtc_internal.h"
-#include "drm_internal.h"
+#समावेश "drm_crtc_internal.h"
+#समावेश "drm_internal.h"
 
 /**
  * DOC: overview
  *
  * A CRTC represents the overall display pipeline. It receives pixel data from
  * &drm_plane and blends them together. The &drm_display_mode is also attached
- * to the CRTC, specifying display timings. On the output side the data is fed
+ * to the CRTC, specअगरying display timings. On the output side the data is fed
  * to one or more &drm_encoder, which are then each connected to one
  * &drm_connector.
  *
  * To create a CRTC, a KMS drivers allocates and zeroes an instances of
- * &struct drm_crtc (possibly as part of a larger structure) and registers it
+ * &काष्ठा drm_crtc (possibly as part of a larger काष्ठाure) and रेजिस्टरs it
  * with a call to drm_crtc_init_with_planes().
  *
- * The CRTC is also the entry point for legacy modeset operations, see
+ * The CRTC is also the entry poपूर्णांक क्रम legacy modeset operations, see
  * &drm_crtc_funcs.set_config, legacy plane operations, see
  * &drm_crtc_funcs.page_flip and &drm_crtc_funcs.cursor_set2, and other legacy
  * operations like &drm_crtc_funcs.gamma_set. For atomic drivers all these
@@ -72,138 +73,138 @@
  */
 
 /**
- * drm_crtc_from_index - find the registered CRTC at an index
+ * drm_crtc_from_index - find the रेजिस्टरed CRTC at an index
  * @dev: DRM device
- * @idx: index of registered CRTC to find for
+ * @idx: index of रेजिस्टरed CRTC to find क्रम
  *
- * Given a CRTC index, return the registered CRTC from DRM device's
+ * Given a CRTC index, वापस the रेजिस्टरed CRTC from DRM device's
  * list of CRTCs with matching index. This is the inverse of drm_crtc_index().
  * It's useful in the vblank callbacks (like &drm_driver.enable_vblank or
  * &drm_driver.disable_vblank), since that still deals with indices instead
- * of pointers to &struct drm_crtc."
+ * of poपूर्णांकers to &काष्ठा drm_crtc."
  */
-struct drm_crtc *drm_crtc_from_index(struct drm_device *dev, int idx)
-{
-	struct drm_crtc *crtc;
+काष्ठा drm_crtc *drm_crtc_from_index(काष्ठा drm_device *dev, पूर्णांक idx)
+अणु
+	काष्ठा drm_crtc *crtc;
 
-	drm_for_each_crtc(crtc, dev)
-		if (idx == crtc->index)
-			return crtc;
+	drm_क्रम_each_crtc(crtc, dev)
+		अगर (idx == crtc->index)
+			वापस crtc;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(drm_crtc_from_index);
 
-int drm_crtc_force_disable(struct drm_crtc *crtc)
-{
-	struct drm_mode_set set = {
+पूर्णांक drm_crtc_क्रमce_disable(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_mode_set set = अणु
 		.crtc = crtc,
-	};
+	पूर्ण;
 
 	WARN_ON(drm_drv_uses_atomic_modeset(crtc->dev));
 
-	return drm_mode_set_config_internal(&set);
-}
+	वापस drm_mode_set_config_पूर्णांकernal(&set);
+पूर्ण
 
-static unsigned int drm_num_crtcs(struct drm_device *dev)
-{
-	unsigned int num = 0;
-	struct drm_crtc *tmp;
+अटल अचिन्हित पूर्णांक drm_num_crtcs(काष्ठा drm_device *dev)
+अणु
+	अचिन्हित पूर्णांक num = 0;
+	काष्ठा drm_crtc *पंचांगp;
 
-	drm_for_each_crtc(tmp, dev) {
+	drm_क्रम_each_crtc(पंचांगp, dev) अणु
 		num++;
-	}
+	पूर्ण
 
-	return num;
-}
+	वापस num;
+पूर्ण
 
-int drm_crtc_register_all(struct drm_device *dev)
-{
-	struct drm_crtc *crtc;
-	int ret = 0;
+पूर्णांक drm_crtc_रेजिस्टर_all(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_crtc *crtc;
+	पूर्णांक ret = 0;
 
-	drm_for_each_crtc(crtc, dev) {
+	drm_क्रम_each_crtc(crtc, dev) अणु
 		drm_debugfs_crtc_add(crtc);
 
-		if (crtc->funcs->late_register)
-			ret = crtc->funcs->late_register(crtc);
-		if (ret)
-			return ret;
-	}
+		अगर (crtc->funcs->late_रेजिस्टर)
+			ret = crtc->funcs->late_रेजिस्टर(crtc);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void drm_crtc_unregister_all(struct drm_device *dev)
-{
-	struct drm_crtc *crtc;
+व्योम drm_crtc_unरेजिस्टर_all(काष्ठा drm_device *dev)
+अणु
+	काष्ठा drm_crtc *crtc;
 
-	drm_for_each_crtc(crtc, dev) {
-		if (crtc->funcs->early_unregister)
-			crtc->funcs->early_unregister(crtc);
-		drm_debugfs_crtc_remove(crtc);
-	}
-}
+	drm_क्रम_each_crtc(crtc, dev) अणु
+		अगर (crtc->funcs->early_unरेजिस्टर)
+			crtc->funcs->early_unरेजिस्टर(crtc);
+		drm_debugfs_crtc_हटाओ(crtc);
+	पूर्ण
+पूर्ण
 
-static int drm_crtc_crc_init(struct drm_crtc *crtc)
-{
-#ifdef CONFIG_DEBUG_FS
+अटल पूर्णांक drm_crtc_crc_init(काष्ठा drm_crtc *crtc)
+अणु
+#अगर_घोषित CONFIG_DEBUG_FS
 	spin_lock_init(&crtc->crc.lock);
-	init_waitqueue_head(&crtc->crc.wq);
+	init_रुकोqueue_head(&crtc->crc.wq);
 	crtc->crc.source = kstrdup("auto", GFP_KERNEL);
-	if (!crtc->crc.source)
-		return -ENOMEM;
-#endif
-	return 0;
-}
+	अगर (!crtc->crc.source)
+		वापस -ENOMEM;
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static void drm_crtc_crc_fini(struct drm_crtc *crtc)
-{
-#ifdef CONFIG_DEBUG_FS
-	kfree(crtc->crc.source);
-#endif
-}
+अटल व्योम drm_crtc_crc_fini(काष्ठा drm_crtc *crtc)
+अणु
+#अगर_घोषित CONFIG_DEBUG_FS
+	kमुक्त(crtc->crc.source);
+#पूर्ण_अगर
+पूर्ण
 
-static const struct dma_fence_ops drm_crtc_fence_ops;
+अटल स्थिर काष्ठा dma_fence_ops drm_crtc_fence_ops;
 
-static struct drm_crtc *fence_to_crtc(struct dma_fence *fence)
-{
+अटल काष्ठा drm_crtc *fence_to_crtc(काष्ठा dma_fence *fence)
+अणु
 	BUG_ON(fence->ops != &drm_crtc_fence_ops);
-	return container_of(fence->lock, struct drm_crtc, fence_lock);
-}
+	वापस container_of(fence->lock, काष्ठा drm_crtc, fence_lock);
+पूर्ण
 
-static const char *drm_crtc_fence_get_driver_name(struct dma_fence *fence)
-{
-	struct drm_crtc *crtc = fence_to_crtc(fence);
+अटल स्थिर अक्षर *drm_crtc_fence_get_driver_name(काष्ठा dma_fence *fence)
+अणु
+	काष्ठा drm_crtc *crtc = fence_to_crtc(fence);
 
-	return crtc->dev->driver->name;
-}
+	वापस crtc->dev->driver->name;
+पूर्ण
 
-static const char *drm_crtc_fence_get_timeline_name(struct dma_fence *fence)
-{
-	struct drm_crtc *crtc = fence_to_crtc(fence);
+अटल स्थिर अक्षर *drm_crtc_fence_get_समयline_name(काष्ठा dma_fence *fence)
+अणु
+	काष्ठा drm_crtc *crtc = fence_to_crtc(fence);
 
-	return crtc->timeline_name;
-}
+	वापस crtc->समयline_name;
+पूर्ण
 
-static const struct dma_fence_ops drm_crtc_fence_ops = {
+अटल स्थिर काष्ठा dma_fence_ops drm_crtc_fence_ops = अणु
 	.get_driver_name = drm_crtc_fence_get_driver_name,
-	.get_timeline_name = drm_crtc_fence_get_timeline_name,
-};
+	.get_समयline_name = drm_crtc_fence_get_समयline_name,
+पूर्ण;
 
-struct dma_fence *drm_crtc_create_fence(struct drm_crtc *crtc)
-{
-	struct dma_fence *fence;
+काष्ठा dma_fence *drm_crtc_create_fence(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा dma_fence *fence;
 
-	fence = kzalloc(sizeof(*fence), GFP_KERNEL);
-	if (!fence)
-		return NULL;
+	fence = kzalloc(माप(*fence), GFP_KERNEL);
+	अगर (!fence)
+		वापस शून्य;
 
 	dma_fence_init(fence, &drm_crtc_fence_ops, &crtc->fence_lock,
 		       crtc->fence_context, ++crtc->fence_seqno);
 
-	return fence;
-}
+	वापस fence;
+पूर्ण
 
 /**
  * DOC: standard CRTC properties
@@ -211,52 +212,52 @@ struct dma_fence *drm_crtc_create_fence(struct drm_crtc *crtc)
  * DRM CRTCs have a few standardized properties:
  *
  * ACTIVE:
- * 	Atomic property for setting the power state of the CRTC. When set to 1
+ * 	Atomic property क्रम setting the घातer state of the CRTC. When set to 1
  * 	the CRTC will actively display content. When set to 0 the CRTC will be
- * 	powered off. There is no expectation that user-space will reset CRTC
+ * 	घातered off. There is no expectation that user-space will reset CRTC
  * 	resources like the mode and planes when setting ACTIVE to 0.
  *
  * 	User-space can rely on an ACTIVE change to 1 to never fail an atomic
- * 	test as long as no other property has changed. If a change to ACTIVE
+ * 	test as दीर्घ as no other property has changed. If a change to ACTIVE
  * 	fails an atomic test, this is a driver bug. For this reason setting
- * 	ACTIVE to 0 must not release internal resources (like reserved memory
- * 	bandwidth or clock generators).
+ * 	ACTIVE to 0 must not release पूर्णांकernal resources (like reserved memory
+ * 	bandwidth or घड़ी generators).
  *
- * 	Note that the legacy DPMS property on connectors is internally routed
- * 	to control this property for atomic drivers.
+ * 	Note that the legacy DPMS property on connectors is पूर्णांकernally routed
+ * 	to control this property क्रम atomic drivers.
  * MODE_ID:
- * 	Atomic property for setting the CRTC display timings. The value is the
+ * 	Atomic property क्रम setting the CRTC display timings. The value is the
  * 	ID of a blob containing the DRM mode info. To disable the CRTC,
  * 	user-space must set this property to 0.
  *
- * 	Setting MODE_ID to 0 will release reserved resources for the CRTC.
+ * 	Setting MODE_ID to 0 will release reserved resources क्रम the CRTC.
  * SCALING_FILTER:
- * 	Atomic property for setting the scaling filter for CRTC scaler
+ * 	Atomic property क्रम setting the scaling filter क्रम CRTC scaler
  *
  * 	The value of this property can be one of the following:
  *
  * 	Default:
- * 		Driver's default scaling filter
+ * 		Driver's शेष scaling filter
  * 	Nearest Neighbor:
  * 		Nearest Neighbor scaling filter
  */
 
-__printf(6, 0)
-static int __drm_crtc_init_with_planes(struct drm_device *dev, struct drm_crtc *crtc,
-				       struct drm_plane *primary,
-				       struct drm_plane *cursor,
-				       const struct drm_crtc_funcs *funcs,
-				       const char *name, va_list ap)
-{
-	struct drm_mode_config *config = &dev->mode_config;
-	int ret;
+__म_लिखो(6, 0)
+अटल पूर्णांक __drm_crtc_init_with_planes(काष्ठा drm_device *dev, काष्ठा drm_crtc *crtc,
+				       काष्ठा drm_plane *primary,
+				       काष्ठा drm_plane *cursor,
+				       स्थिर काष्ठा drm_crtc_funcs *funcs,
+				       स्थिर अक्षर *name, बहु_सूची ap)
+अणु
+	काष्ठा drm_mode_config *config = &dev->mode_config;
+	पूर्णांक ret;
 
 	WARN_ON(primary && primary->type != DRM_PLANE_TYPE_PRIMARY);
 	WARN_ON(cursor && cursor->type != DRM_PLANE_TYPE_CURSOR);
 
-	/* crtc index is used with 32bit bitmasks */
-	if (WARN_ON(config->num_crtc >= 32))
-		return -EINVAL;
+	/* crtc index is used with 32bit biपंचांगasks */
+	अगर (WARN_ON(config->num_crtc >= 32))
+		वापस -EINVAL;
 
 	WARN_ON(drm_drv_uses_atomic_modeset(dev) &&
 		(!funcs->atomic_destroy_state ||
@@ -270,23 +271,23 @@ static int __drm_crtc_init_with_planes(struct drm_device *dev, struct drm_crtc *
 
 	drm_modeset_lock_init(&crtc->mutex);
 	ret = drm_mode_object_add(dev, &crtc->base, DRM_MODE_OBJECT_CRTC);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (name) {
-		crtc->name = kvasprintf(GFP_KERNEL, name, ap);
-	} else {
-		crtc->name = kasprintf(GFP_KERNEL, "crtc-%d",
+	अगर (name) अणु
+		crtc->name = kvaप्र_लिखो(GFP_KERNEL, name, ap);
+	पूर्ण अन्यथा अणु
+		crtc->name = kaप्र_लिखो(GFP_KERNEL, "crtc-%d",
 				       drm_num_crtcs(dev));
-	}
-	if (!crtc->name) {
-		drm_mode_object_unregister(dev, &crtc->base);
-		return -ENOMEM;
-	}
+	पूर्ण
+	अगर (!crtc->name) अणु
+		drm_mode_object_unरेजिस्टर(dev, &crtc->base);
+		वापस -ENOMEM;
+	पूर्ण
 
 	crtc->fence_context = dma_fence_context_alloc(1);
 	spin_lock_init(&crtc->fence_lock);
-	snprintf(crtc->timeline_name, sizeof(crtc->timeline_name),
+	snम_लिखो(crtc->समयline_name, माप(crtc->समयline_name),
 		 "CRTC:%d-%s", crtc->base.id, crtc->name);
 
 	crtc->base.properties = &crtc->properties;
@@ -296,300 +297,300 @@ static int __drm_crtc_init_with_planes(struct drm_device *dev, struct drm_crtc *
 
 	crtc->primary = primary;
 	crtc->cursor = cursor;
-	if (primary && !primary->possible_crtcs)
+	अगर (primary && !primary->possible_crtcs)
 		primary->possible_crtcs = drm_crtc_mask(crtc);
-	if (cursor && !cursor->possible_crtcs)
+	अगर (cursor && !cursor->possible_crtcs)
 		cursor->possible_crtcs = drm_crtc_mask(crtc);
 
 	ret = drm_crtc_crc_init(crtc);
-	if (ret) {
-		drm_mode_object_unregister(dev, &crtc->base);
-		return ret;
-	}
+	अगर (ret) अणु
+		drm_mode_object_unरेजिस्टर(dev, &crtc->base);
+		वापस ret;
+	पूर्ण
 
-	if (drm_core_check_feature(dev, DRIVER_ATOMIC)) {
+	अगर (drm_core_check_feature(dev, DRIVER_ATOMIC)) अणु
 		drm_object_attach_property(&crtc->base, config->prop_active, 0);
 		drm_object_attach_property(&crtc->base, config->prop_mode_id, 0);
 		drm_object_attach_property(&crtc->base,
 					   config->prop_out_fence_ptr, 0);
 		drm_object_attach_property(&crtc->base,
 					   config->prop_vrr_enabled, 0);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * drm_crtc_init_with_planes - Initialise a new CRTC object with
- *    specified primary and cursor planes.
+ *    specअगरied primary and cursor planes.
  * @dev: DRM device
  * @crtc: CRTC object to init
- * @primary: Primary plane for CRTC
- * @cursor: Cursor plane for CRTC
- * @funcs: callbacks for the new CRTC
- * @name: printf style format string for the CRTC name, or NULL for default name
+ * @primary: Primary plane क्रम CRTC
+ * @cursor: Cursor plane क्रम CRTC
+ * @funcs: callbacks क्रम the new CRTC
+ * @name: म_लिखो style क्रमmat string क्रम the CRTC name, or शून्य क्रम शेष name
  *
  * Inits a new object created as base part of a driver crtc object. Drivers
  * should use this function instead of drm_crtc_init(), which is only provided
- * for backwards compatibility with drivers which do not yet support universal
+ * क्रम backwards compatibility with drivers which करो not yet support universal
  * planes). For really simple hardware which has only 1 plane look at
  * drm_simple_display_pipe_init() instead.
- * The &drm_crtc_funcs.destroy hook should call drm_crtc_cleanup() and kfree()
- * the crtc structure. The crtc structure should not be allocated with
+ * The &drm_crtc_funcs.destroy hook should call drm_crtc_cleanup() and kमुक्त()
+ * the crtc काष्ठाure. The crtc काष्ठाure should not be allocated with
  * devm_kzalloc().
  *
- * The @primary and @cursor planes are only relevant for legacy uAPI, see
+ * The @primary and @cursor planes are only relevant क्रम legacy uAPI, see
  * &drm_crtc.primary and &drm_crtc.cursor.
  *
  * Note: consider using drmm_crtc_alloc_with_planes() instead of
- * drm_crtc_init_with_planes() to let the DRM managed resource infrastructure
+ * drm_crtc_init_with_planes() to let the DRM managed resource infraकाष्ठाure
  * take care of cleanup and deallocation.
  *
  * Returns:
  * Zero on success, error code on failure.
  */
-int drm_crtc_init_with_planes(struct drm_device *dev, struct drm_crtc *crtc,
-			      struct drm_plane *primary,
-			      struct drm_plane *cursor,
-			      const struct drm_crtc_funcs *funcs,
-			      const char *name, ...)
-{
-	va_list ap;
-	int ret;
+पूर्णांक drm_crtc_init_with_planes(काष्ठा drm_device *dev, काष्ठा drm_crtc *crtc,
+			      काष्ठा drm_plane *primary,
+			      काष्ठा drm_plane *cursor,
+			      स्थिर काष्ठा drm_crtc_funcs *funcs,
+			      स्थिर अक्षर *name, ...)
+अणु
+	बहु_सूची ap;
+	पूर्णांक ret;
 
 	WARN_ON(!funcs->destroy);
 
-	va_start(ap, name);
+	बहु_शुरू(ap, name);
 	ret = __drm_crtc_init_with_planes(dev, crtc, primary, cursor, funcs,
 					  name, ap);
-	va_end(ap);
+	बहु_पूर्ण(ap);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(drm_crtc_init_with_planes);
 
-static void drmm_crtc_alloc_with_planes_cleanup(struct drm_device *dev,
-						void *ptr)
-{
-	struct drm_crtc *crtc = ptr;
+अटल व्योम drmm_crtc_alloc_with_planes_cleanup(काष्ठा drm_device *dev,
+						व्योम *ptr)
+अणु
+	काष्ठा drm_crtc *crtc = ptr;
 
 	drm_crtc_cleanup(crtc);
-}
+पूर्ण
 
-void *__drmm_crtc_alloc_with_planes(struct drm_device *dev,
-				    size_t size, size_t offset,
-				    struct drm_plane *primary,
-				    struct drm_plane *cursor,
-				    const struct drm_crtc_funcs *funcs,
-				    const char *name, ...)
-{
-	void *container;
-	struct drm_crtc *crtc;
-	va_list ap;
-	int ret;
+व्योम *__drmm_crtc_alloc_with_planes(काष्ठा drm_device *dev,
+				    माप_प्रकार size, माप_प्रकार offset,
+				    काष्ठा drm_plane *primary,
+				    काष्ठा drm_plane *cursor,
+				    स्थिर काष्ठा drm_crtc_funcs *funcs,
+				    स्थिर अक्षर *name, ...)
+अणु
+	व्योम *container;
+	काष्ठा drm_crtc *crtc;
+	बहु_सूची ap;
+	पूर्णांक ret;
 
-	if (WARN_ON(!funcs || funcs->destroy))
-		return ERR_PTR(-EINVAL);
+	अगर (WARN_ON(!funcs || funcs->destroy))
+		वापस ERR_PTR(-EINVAL);
 
 	container = drmm_kzalloc(dev, size, GFP_KERNEL);
-	if (!container)
-		return ERR_PTR(-ENOMEM);
+	अगर (!container)
+		वापस ERR_PTR(-ENOMEM);
 
 	crtc = container + offset;
 
-	va_start(ap, name);
+	बहु_शुरू(ap, name);
 	ret = __drm_crtc_init_with_planes(dev, crtc, primary, cursor, funcs,
 					  name, ap);
-	va_end(ap);
-	if (ret)
-		return ERR_PTR(ret);
+	बहु_पूर्ण(ap);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
 	ret = drmm_add_action_or_reset(dev, drmm_crtc_alloc_with_planes_cleanup,
 				       crtc);
-	if (ret)
-		return ERR_PTR(ret);
+	अगर (ret)
+		वापस ERR_PTR(ret);
 
-	return container;
-}
+	वापस container;
+पूर्ण
 EXPORT_SYMBOL(__drmm_crtc_alloc_with_planes);
 
 /**
  * drm_crtc_cleanup - Clean up the core crtc usage
  * @crtc: CRTC to cleanup
  *
- * This function cleans up @crtc and removes it from the DRM mode setting
- * core. Note that the function does *not* free the crtc structure itself,
+ * This function cleans up @crtc and हटाओs it from the DRM mode setting
+ * core. Note that the function करोes *not* मुक्त the crtc काष्ठाure itself,
  * this is the responsibility of the caller.
  */
-void drm_crtc_cleanup(struct drm_crtc *crtc)
-{
-	struct drm_device *dev = crtc->dev;
+व्योम drm_crtc_cleanup(काष्ठा drm_crtc *crtc)
+अणु
+	काष्ठा drm_device *dev = crtc->dev;
 
-	/* Note that the crtc_list is considered to be static; should we
-	 * remove the drm_crtc at runtime we would have to decrement all
+	/* Note that the crtc_list is considered to be अटल; should we
+	 * हटाओ the drm_crtc at runसमय we would have to decrement all
 	 * the indices on the drm_crtc after us in the crtc_list.
 	 */
 
 	drm_crtc_crc_fini(crtc);
 
-	kfree(crtc->gamma_store);
-	crtc->gamma_store = NULL;
+	kमुक्त(crtc->gamma_store);
+	crtc->gamma_store = शून्य;
 
 	drm_modeset_lock_fini(&crtc->mutex);
 
-	drm_mode_object_unregister(dev, &crtc->base);
+	drm_mode_object_unरेजिस्टर(dev, &crtc->base);
 	list_del(&crtc->head);
 	dev->mode_config.num_crtc--;
 
 	WARN_ON(crtc->state && !crtc->funcs->atomic_destroy_state);
-	if (crtc->state && crtc->funcs->atomic_destroy_state)
+	अगर (crtc->state && crtc->funcs->atomic_destroy_state)
 		crtc->funcs->atomic_destroy_state(crtc, crtc->state);
 
-	kfree(crtc->name);
+	kमुक्त(crtc->name);
 
-	memset(crtc, 0, sizeof(*crtc));
-}
+	स_रखो(crtc, 0, माप(*crtc));
+पूर्ण
 EXPORT_SYMBOL(drm_crtc_cleanup);
 
 /**
- * drm_mode_getcrtc - get CRTC configuration
- * @dev: drm device for the ioctl
- * @data: data pointer for the ioctl
- * @file_priv: drm file for the ioctl call
+ * drm_mode_अ_लोrtc - get CRTC configuration
+ * @dev: drm device क्रम the ioctl
+ * @data: data poपूर्णांकer क्रम the ioctl
+ * @file_priv: drm file क्रम the ioctl call
  *
- * Construct a CRTC configuration structure to return to the user.
+ * Conकाष्ठा a CRTC configuration काष्ठाure to वापस to the user.
  *
  * Called by the user via ioctl.
  *
  * Returns:
- * Zero on success, negative errno on failure.
+ * Zero on success, negative त्रुटि_सं on failure.
  */
-int drm_mode_getcrtc(struct drm_device *dev,
-		     void *data, struct drm_file *file_priv)
-{
-	struct drm_mode_crtc *crtc_resp = data;
-	struct drm_crtc *crtc;
-	struct drm_plane *plane;
+पूर्णांक drm_mode_अ_लोrtc(काष्ठा drm_device *dev,
+		     व्योम *data, काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_mode_crtc *crtc_resp = data;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_plane *plane;
 
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
 	crtc = drm_crtc_find(dev, file_priv, crtc_resp->crtc_id);
-	if (!crtc)
-		return -ENOENT;
+	अगर (!crtc)
+		वापस -ENOENT;
 
 	plane = crtc->primary;
 
 	crtc_resp->gamma_size = crtc->gamma_size;
 
-	drm_modeset_lock(&plane->mutex, NULL);
-	if (plane->state && plane->state->fb)
+	drm_modeset_lock(&plane->mutex, शून्य);
+	अगर (plane->state && plane->state->fb)
 		crtc_resp->fb_id = plane->state->fb->base.id;
-	else if (!plane->state && plane->fb)
+	अन्यथा अगर (!plane->state && plane->fb)
 		crtc_resp->fb_id = plane->fb->base.id;
-	else
+	अन्यथा
 		crtc_resp->fb_id = 0;
 
-	if (plane->state) {
+	अगर (plane->state) अणु
 		crtc_resp->x = plane->state->src_x >> 16;
 		crtc_resp->y = plane->state->src_y >> 16;
-	}
+	पूर्ण
 	drm_modeset_unlock(&plane->mutex);
 
-	drm_modeset_lock(&crtc->mutex, NULL);
-	if (crtc->state) {
-		if (crtc->state->enable) {
+	drm_modeset_lock(&crtc->mutex, शून्य);
+	अगर (crtc->state) अणु
+		अगर (crtc->state->enable) अणु
 			drm_mode_convert_to_umode(&crtc_resp->mode, &crtc->state->mode);
 			crtc_resp->mode_valid = 1;
-		} else {
+		पूर्ण अन्यथा अणु
 			crtc_resp->mode_valid = 0;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		crtc_resp->x = crtc->x;
 		crtc_resp->y = crtc->y;
 
-		if (crtc->enabled) {
+		अगर (crtc->enabled) अणु
 			drm_mode_convert_to_umode(&crtc_resp->mode, &crtc->mode);
 			crtc_resp->mode_valid = 1;
 
-		} else {
+		पूर्ण अन्यथा अणु
 			crtc_resp->mode_valid = 0;
-		}
-	}
-	if (!file_priv->aspect_ratio_allowed)
+		पूर्ण
+	पूर्ण
+	अगर (!file_priv->aspect_ratio_allowed)
 		crtc_resp->mode.flags &= ~DRM_MODE_FLAG_PIC_AR_MASK;
 	drm_modeset_unlock(&crtc->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __drm_mode_set_config_internal(struct drm_mode_set *set,
-					  struct drm_modeset_acquire_ctx *ctx)
-{
-	struct drm_crtc *crtc = set->crtc;
-	struct drm_framebuffer *fb;
-	struct drm_crtc *tmp;
-	int ret;
+अटल पूर्णांक __drm_mode_set_config_पूर्णांकernal(काष्ठा drm_mode_set *set,
+					  काष्ठा drm_modeset_acquire_ctx *ctx)
+अणु
+	काष्ठा drm_crtc *crtc = set->crtc;
+	काष्ठा drm_framebuffer *fb;
+	काष्ठा drm_crtc *पंचांगp;
+	पूर्णांक ret;
 
 	WARN_ON(drm_drv_uses_atomic_modeset(crtc->dev));
 
 	/*
-	 * NOTE: ->set_config can also disable other crtcs (if we steal all
+	 * NOTE: ->set_config can also disable other crtcs (अगर we steal all
 	 * connectors from it), hence we need to refcount the fbs across all
 	 * crtcs. Atomic modeset will have saner semantics ...
 	 */
-	drm_for_each_crtc(tmp, crtc->dev) {
-		struct drm_plane *plane = tmp->primary;
+	drm_क्रम_each_crtc(पंचांगp, crtc->dev) अणु
+		काष्ठा drm_plane *plane = पंचांगp->primary;
 
 		plane->old_fb = plane->fb;
-	}
+	पूर्ण
 
 	fb = set->fb;
 
 	ret = crtc->funcs->set_config(set, ctx);
-	if (ret == 0) {
-		struct drm_plane *plane = crtc->primary;
+	अगर (ret == 0) अणु
+		काष्ठा drm_plane *plane = crtc->primary;
 
-		plane->crtc = fb ? crtc : NULL;
+		plane->crtc = fb ? crtc : शून्य;
 		plane->fb = fb;
-	}
+	पूर्ण
 
-	drm_for_each_crtc(tmp, crtc->dev) {
-		struct drm_plane *plane = tmp->primary;
+	drm_क्रम_each_crtc(पंचांगp, crtc->dev) अणु
+		काष्ठा drm_plane *plane = पंचांगp->primary;
 
-		if (plane->fb)
+		अगर (plane->fb)
 			drm_framebuffer_get(plane->fb);
-		if (plane->old_fb)
+		अगर (plane->old_fb)
 			drm_framebuffer_put(plane->old_fb);
-		plane->old_fb = NULL;
-	}
+		plane->old_fb = शून्य;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * drm_mode_set_config_internal - helper to call &drm_mode_config_funcs.set_config
+ * drm_mode_set_config_पूर्णांकernal - helper to call &drm_mode_config_funcs.set_config
  * @set: modeset config to set
  *
- * This is a little helper to wrap internal calls to the
- * &drm_mode_config_funcs.set_config driver interface. The only thing it adds is
+ * This is a little helper to wrap पूर्णांकernal calls to the
+ * &drm_mode_config_funcs.set_config driver पूर्णांकerface. The only thing it adds is
  * correct refcounting dance.
  *
  * This should only be used by non-atomic legacy drivers.
  *
  * Returns:
- * Zero on success, negative errno on failure.
+ * Zero on success, negative त्रुटि_सं on failure.
  */
-int drm_mode_set_config_internal(struct drm_mode_set *set)
-{
+पूर्णांक drm_mode_set_config_पूर्णांकernal(काष्ठा drm_mode_set *set)
+अणु
 	WARN_ON(drm_drv_uses_atomic_modeset(set->crtc->dev));
 
-	return __drm_mode_set_config_internal(set, NULL);
-}
-EXPORT_SYMBOL(drm_mode_set_config_internal);
+	वापस __drm_mode_set_config_पूर्णांकernal(set, शून्य);
+पूर्ण
+EXPORT_SYMBOL(drm_mode_set_config_पूर्णांकernal);
 
 /**
- * drm_crtc_check_viewport - Checks that a framebuffer is big enough for the
+ * drm_crtc_check_viewport - Checks that a framebuffer is big enough क्रम the
  *     CRTC viewport
  * @crtc: CRTC that framebuffer will be displayed on
  * @x: x panning
@@ -597,210 +598,210 @@ EXPORT_SYMBOL(drm_mode_set_config_internal);
  * @mode: mode that framebuffer will be displayed under
  * @fb: framebuffer to check size of
  */
-int drm_crtc_check_viewport(const struct drm_crtc *crtc,
-			    int x, int y,
-			    const struct drm_display_mode *mode,
-			    const struct drm_framebuffer *fb)
+पूर्णांक drm_crtc_check_viewport(स्थिर काष्ठा drm_crtc *crtc,
+			    पूर्णांक x, पूर्णांक y,
+			    स्थिर काष्ठा drm_display_mode *mode,
+			    स्थिर काष्ठा drm_framebuffer *fb)
 
-{
-	int hdisplay, vdisplay;
+अणु
+	पूर्णांक hdisplay, vdisplay;
 
 	drm_mode_get_hv_timing(mode, &hdisplay, &vdisplay);
 
-	if (crtc->state &&
+	अगर (crtc->state &&
 	    drm_rotation_90_or_270(crtc->primary->state->rotation))
 		swap(hdisplay, vdisplay);
 
-	return drm_framebuffer_check_src_coords(x << 16, y << 16,
+	वापस drm_framebuffer_check_src_coords(x << 16, y << 16,
 						hdisplay << 16, vdisplay << 16,
 						fb);
-}
+पूर्ण
 EXPORT_SYMBOL(drm_crtc_check_viewport);
 
 /**
  * drm_mode_setcrtc - set CRTC configuration
- * @dev: drm device for the ioctl
- * @data: data pointer for the ioctl
- * @file_priv: drm file for the ioctl call
+ * @dev: drm device क्रम the ioctl
+ * @data: data poपूर्णांकer क्रम the ioctl
+ * @file_priv: drm file क्रम the ioctl call
  *
  * Build a new CRTC configuration based on user request.
  *
  * Called by the user via ioctl.
  *
  * Returns:
- * Zero on success, negative errno on failure.
+ * Zero on success, negative त्रुटि_सं on failure.
  */
-int drm_mode_setcrtc(struct drm_device *dev, void *data,
-		     struct drm_file *file_priv)
-{
-	struct drm_mode_config *config = &dev->mode_config;
-	struct drm_mode_crtc *crtc_req = data;
-	struct drm_crtc *crtc;
-	struct drm_plane *plane;
-	struct drm_connector **connector_set = NULL, *connector;
-	struct drm_framebuffer *fb = NULL;
-	struct drm_display_mode *mode = NULL;
-	struct drm_mode_set set;
-	uint32_t __user *set_connectors_ptr;
-	struct drm_modeset_acquire_ctx ctx;
-	int ret;
-	int i;
+पूर्णांक drm_mode_setcrtc(काष्ठा drm_device *dev, व्योम *data,
+		     काष्ठा drm_file *file_priv)
+अणु
+	काष्ठा drm_mode_config *config = &dev->mode_config;
+	काष्ठा drm_mode_crtc *crtc_req = data;
+	काष्ठा drm_crtc *crtc;
+	काष्ठा drm_plane *plane;
+	काष्ठा drm_connector **connector_set = शून्य, *connector;
+	काष्ठा drm_framebuffer *fb = शून्य;
+	काष्ठा drm_display_mode *mode = शून्य;
+	काष्ठा drm_mode_set set;
+	uपूर्णांक32_t __user *set_connectors_ptr;
+	काष्ठा drm_modeset_acquire_ctx ctx;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	if (!drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EOPNOTSUPP;
+	अगर (!drm_core_check_feature(dev, DRIVER_MODESET))
+		वापस -EOPNOTSUPP;
 
 	/*
-	 * Universal plane src offsets are only 16.16, prevent havoc for
-	 * drivers using universal plane code internally.
+	 * Universal plane src offsets are only 16.16, prevent havoc क्रम
+	 * drivers using universal plane code पूर्णांकernally.
 	 */
-	if (crtc_req->x & 0xffff0000 || crtc_req->y & 0xffff0000)
-		return -ERANGE;
+	अगर (crtc_req->x & 0xffff0000 || crtc_req->y & 0xffff0000)
+		वापस -दुस्फल;
 
 	crtc = drm_crtc_find(dev, file_priv, crtc_req->crtc_id);
-	if (!crtc) {
+	अगर (!crtc) अणु
 		DRM_DEBUG_KMS("Unknown CRTC ID %d\n", crtc_req->crtc_id);
-		return -ENOENT;
-	}
+		वापस -ENOENT;
+	पूर्ण
 	DRM_DEBUG_KMS("[CRTC:%d:%s]\n", crtc->base.id, crtc->name);
 
 	plane = crtc->primary;
 
 	/* allow disabling with the primary plane leased */
-	if (crtc_req->mode_valid && !drm_lease_held(file_priv, plane->base.id))
-		return -EACCES;
+	अगर (crtc_req->mode_valid && !drm_lease_held(file_priv, plane->base.id))
+		वापस -EACCES;
 
 	DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx,
 				   DRM_MODESET_ACQUIRE_INTERRUPTIBLE, ret);
 
-	if (crtc_req->mode_valid) {
+	अगर (crtc_req->mode_valid) अणु
 		/* If we have a mode we need a framebuffer. */
 		/* If we pass -1, set the mode with the currently bound fb */
-		if (crtc_req->fb_id == -1) {
-			struct drm_framebuffer *old_fb;
+		अगर (crtc_req->fb_id == -1) अणु
+			काष्ठा drm_framebuffer *old_fb;
 
-			if (plane->state)
+			अगर (plane->state)
 				old_fb = plane->state->fb;
-			else
+			अन्यथा
 				old_fb = plane->fb;
 
-			if (!old_fb) {
+			अगर (!old_fb) अणु
 				DRM_DEBUG_KMS("CRTC doesn't have current FB\n");
 				ret = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			fb = old_fb;
 			/* Make refcounting symmetric with the lookup path. */
 			drm_framebuffer_get(fb);
-		} else {
+		पूर्ण अन्यथा अणु
 			fb = drm_framebuffer_lookup(dev, file_priv, crtc_req->fb_id);
-			if (!fb) {
+			अगर (!fb) अणु
 				DRM_DEBUG_KMS("Unknown FB ID%d\n",
 						crtc_req->fb_id);
 				ret = -ENOENT;
-				goto out;
-			}
-		}
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		mode = drm_mode_create(dev);
-		if (!mode) {
+		अगर (!mode) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
-		if (!file_priv->aspect_ratio_allowed &&
-		    (crtc_req->mode.flags & DRM_MODE_FLAG_PIC_AR_MASK) != DRM_MODE_FLAG_PIC_AR_NONE) {
+			जाओ out;
+		पूर्ण
+		अगर (!file_priv->aspect_ratio_allowed &&
+		    (crtc_req->mode.flags & DRM_MODE_FLAG_PIC_AR_MASK) != DRM_MODE_FLAG_PIC_AR_NONE) अणु
 			DRM_DEBUG_KMS("Unexpected aspect-ratio flag bits\n");
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 
 		ret = drm_mode_convert_umode(dev, mode, &crtc_req->mode);
-		if (ret) {
+		अगर (ret) अणु
 			DRM_DEBUG_KMS("Invalid mode (ret=%d, status=%s)\n",
 				      ret, drm_get_mode_status_name(mode->status));
-			drm_mode_debug_printmodeline(mode);
-			goto out;
-		}
+			drm_mode_debug_prपूर्णांकmodeline(mode);
+			जाओ out;
+		पूर्ण
 
 		/*
-		 * Check whether the primary plane supports the fb pixel format.
+		 * Check whether the primary plane supports the fb pixel क्रमmat.
 		 * Drivers not implementing the universal planes API use a
-		 * default formats list provided by the DRM core which doesn't
+		 * शेष क्रमmats list provided by the DRM core which करोesn't
 		 * match real hardware capabilities. Skip the check in that
-		 * case.
+		 * हाल.
 		 */
-		if (!plane->format_default) {
-			ret = drm_plane_check_pixel_format(plane,
-							   fb->format->format,
-							   fb->modifier);
-			if (ret) {
+		अगर (!plane->क्रमmat_शेष) अणु
+			ret = drm_plane_check_pixel_क्रमmat(plane,
+							   fb->क्रमmat->क्रमmat,
+							   fb->modअगरier);
+			अगर (ret) अणु
 				DRM_DEBUG_KMS("Invalid pixel format %p4cc, modifier 0x%llx\n",
-					      &fb->format->format,
-					      fb->modifier);
-				goto out;
-			}
-		}
+					      &fb->क्रमmat->क्रमmat,
+					      fb->modअगरier);
+				जाओ out;
+			पूर्ण
+		पूर्ण
 
 		ret = drm_crtc_check_viewport(crtc, crtc_req->x, crtc_req->y,
 					      mode, fb);
-		if (ret)
-			goto out;
+		अगर (ret)
+			जाओ out;
 
-	}
+	पूर्ण
 
-	if (crtc_req->count_connectors == 0 && mode) {
+	अगर (crtc_req->count_connectors == 0 && mode) अणु
 		DRM_DEBUG_KMS("Count connectors is 0 but mode set\n");
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (crtc_req->count_connectors > 0 && (!mode || !fb)) {
+	अगर (crtc_req->count_connectors > 0 && (!mode || !fb)) अणु
 		DRM_DEBUG_KMS("Count connectors is %d but no mode or fb set\n",
 			  crtc_req->count_connectors);
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (crtc_req->count_connectors > 0) {
+	अगर (crtc_req->count_connectors > 0) अणु
 		u32 out_id;
 
-		/* Avoid unbounded kernel memory allocation */
-		if (crtc_req->count_connectors > config->num_connector) {
+		/* Aव्योम unbounded kernel memory allocation */
+		अगर (crtc_req->count_connectors > config->num_connector) अणु
 			ret = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		connector_set = kmalloc_array(crtc_req->count_connectors,
-					      sizeof(struct drm_connector *),
+		connector_set = kदो_स्मृति_array(crtc_req->count_connectors,
+					      माप(काष्ठा drm_connector *),
 					      GFP_KERNEL);
-		if (!connector_set) {
+		अगर (!connector_set) अणु
 			ret = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		for (i = 0; i < crtc_req->count_connectors; i++) {
-			connector_set[i] = NULL;
-			set_connectors_ptr = (uint32_t __user *)(unsigned long)crtc_req->set_connectors_ptr;
-			if (get_user(out_id, &set_connectors_ptr[i])) {
+		क्रम (i = 0; i < crtc_req->count_connectors; i++) अणु
+			connector_set[i] = शून्य;
+			set_connectors_ptr = (uपूर्णांक32_t __user *)(अचिन्हित दीर्घ)crtc_req->set_connectors_ptr;
+			अगर (get_user(out_id, &set_connectors_ptr[i])) अणु
 				ret = -EFAULT;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			connector = drm_connector_lookup(dev, file_priv, out_id);
-			if (!connector) {
+			अगर (!connector) अणु
 				DRM_DEBUG_KMS("Connector id %d unknown\n",
 						out_id);
 				ret = -ENOENT;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			DRM_DEBUG_KMS("[CONNECTOR:%d:%s]\n",
 					connector->base.id,
 					connector->name);
 
 			connector_set[i] = connector;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	set.crtc = crtc;
 	set.x = crtc_req->x;
@@ -810,76 +811,76 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 	set.num_connectors = crtc_req->count_connectors;
 	set.fb = fb;
 
-	if (drm_drv_uses_atomic_modeset(dev))
+	अगर (drm_drv_uses_atomic_modeset(dev))
 		ret = crtc->funcs->set_config(&set, &ctx);
-	else
-		ret = __drm_mode_set_config_internal(&set, &ctx);
+	अन्यथा
+		ret = __drm_mode_set_config_पूर्णांकernal(&set, &ctx);
 
 out:
-	if (fb)
+	अगर (fb)
 		drm_framebuffer_put(fb);
 
-	if (connector_set) {
-		for (i = 0; i < crtc_req->count_connectors; i++) {
-			if (connector_set[i])
+	अगर (connector_set) अणु
+		क्रम (i = 0; i < crtc_req->count_connectors; i++) अणु
+			अगर (connector_set[i])
 				drm_connector_put(connector_set[i]);
-		}
-	}
-	kfree(connector_set);
+		पूर्ण
+	पूर्ण
+	kमुक्त(connector_set);
 	drm_mode_destroy(dev, mode);
 
-	/* In case we need to retry... */
-	connector_set = NULL;
-	fb = NULL;
-	mode = NULL;
+	/* In हाल we need to retry... */
+	connector_set = शून्य;
+	fb = शून्य;
+	mode = शून्य;
 
 	DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int drm_mode_crtc_set_obj_prop(struct drm_mode_object *obj,
-			       struct drm_property *property,
-			       uint64_t value)
-{
-	int ret = -EINVAL;
-	struct drm_crtc *crtc = obj_to_crtc(obj);
+पूर्णांक drm_mode_crtc_set_obj_prop(काष्ठा drm_mode_object *obj,
+			       काष्ठा drm_property *property,
+			       uपूर्णांक64_t value)
+अणु
+	पूर्णांक ret = -EINVAL;
+	काष्ठा drm_crtc *crtc = obj_to_crtc(obj);
 
-	if (crtc->funcs->set_property)
+	अगर (crtc->funcs->set_property)
 		ret = crtc->funcs->set_property(crtc, property, value);
-	if (!ret)
+	अगर (!ret)
 		drm_object_property_set_value(obj, property, value);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * drm_crtc_create_scaling_filter_property - create a new scaling filter
  * property
  *
  * @crtc: drm CRTC
- * @supported_filters: bitmask of supported scaling filters, must include
+ * @supported_filters: biपंचांगask of supported scaling filters, must include
  *		       BIT(DRM_SCALING_FILTER_DEFAULT).
  *
  * This function lets driver to enable the scaling filter property on a given
  * CRTC.
  *
  * RETURNS:
- * Zero for success or -errno
+ * Zero क्रम success or -त्रुटि_सं
  */
-int drm_crtc_create_scaling_filter_property(struct drm_crtc *crtc,
-					    unsigned int supported_filters)
-{
-	struct drm_property *prop =
+पूर्णांक drm_crtc_create_scaling_filter_property(काष्ठा drm_crtc *crtc,
+					    अचिन्हित पूर्णांक supported_filters)
+अणु
+	काष्ठा drm_property *prop =
 		drm_create_scaling_filter_prop(crtc->dev, supported_filters);
 
-	if (IS_ERR(prop))
-		return PTR_ERR(prop);
+	अगर (IS_ERR(prop))
+		वापस PTR_ERR(prop);
 
 	drm_object_attach_property(&crtc->base, prop,
 				   DRM_SCALING_FILTER_DEFAULT);
 	crtc->scaling_filter_property = prop;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(drm_crtc_create_scaling_filter_property);

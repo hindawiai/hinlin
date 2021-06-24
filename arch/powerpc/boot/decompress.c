@@ -1,99 +1,100 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Wrapper around the kernel's pre-boot decompression library.
  *
  * Copyright (C) IBM Corporation 2016.
  */
 
-#include "elf.h"
-#include "page.h"
-#include "string.h"
-#include "stdio.h"
-#include "ops.h"
-#include "reg.h"
-#include "types.h"
+#समावेश "elf.h"
+#समावेश "page.h"
+#समावेश "string.h"
+#समावेश "stdio.h"
+#समावेश "ops.h"
+#समावेश "reg.h"
+#समावेश "types.h"
 
 /*
- * The decompressor_*.c files play #ifdef games so they can be used in both
+ * The decompressor_*.c files play #अगर_घोषित games so they can be used in both
  * pre-boot and regular kernel code. We need these definitions to make the
  * includes work.
  */
 
-#define STATIC static
-#define INIT
+#घोषणा STATIC अटल
+#घोषणा INIT
 
 /*
  * The build process will copy the required zlib source files and headers
- * out of lib/ and "fix" the includes so they do not pull in other kernel
+ * out of lib/ and "fix" the includes so they करो not pull in other kernel
  * headers.
  */
 
-#ifdef CONFIG_KERNEL_GZIP
+#अगर_घोषित CONFIG_KERNEL_GZIP
 #	include "decompress_inflate.c"
-#endif
+#पूर्ण_अगर
 
-#ifdef CONFIG_KERNEL_XZ
+#अगर_घोषित CONFIG_KERNEL_XZ
 #	include "xz_config.h"
 #	include "../../../lib/decompress_unxz.c"
-#endif
+#पूर्ण_अगर
 
-/* globals for tracking the state of the decompression */
-static unsigned long decompressed_bytes;
-static unsigned long limit;
-static unsigned long skip;
-static char *output_buffer;
+/* globals क्रम tracking the state of the decompression */
+अटल अचिन्हित दीर्घ decompressed_bytes;
+अटल अचिन्हित दीर्घ limit;
+अटल अचिन्हित दीर्घ skip;
+अटल अक्षर *output_buffer;
 
 /*
  * flush() is called by __decompress() when the decompressor's scratch buffer is
  * full.
  */
-static long flush(void *v, unsigned long buffer_size)
-{
-	unsigned long end = decompressed_bytes + buffer_size;
-	unsigned long size = buffer_size;
-	unsigned long offset = 0;
-	char *in = v;
-	char *out;
+अटल दीर्घ flush(व्योम *v, अचिन्हित दीर्घ buffer_size)
+अणु
+	अचिन्हित दीर्घ end = decompressed_bytes + buffer_size;
+	अचिन्हित दीर्घ size = buffer_size;
+	अचिन्हित दीर्घ offset = 0;
+	अक्षर *in = v;
+	अक्षर *out;
 
 	/*
-	 * if we hit our decompression limit, we need to fake an error to abort
+	 * अगर we hit our decompression limit, we need to fake an error to पात
 	 * the in-progress decompression.
 	 */
-	if (decompressed_bytes >= limit)
-		return -1;
+	अगर (decompressed_bytes >= limit)
+		वापस -1;
 
 	/* skip this entire block */
-	if (end <= skip) {
+	अगर (end <= skip) अणु
 		decompressed_bytes += buffer_size;
-		return buffer_size;
-	}
+		वापस buffer_size;
+	पूर्ण
 
 	/* skip some data at the start, but keep the rest of the block */
-	if (decompressed_bytes < skip && end > skip) {
+	अगर (decompressed_bytes < skip && end > skip) अणु
 		offset = skip - decompressed_bytes;
 
 		in += offset;
 		size -= offset;
 		decompressed_bytes += offset;
-	}
+	पूर्ण
 
 	out = &output_buffer[decompressed_bytes - skip];
 	size = min(decompressed_bytes + size, limit) - decompressed_bytes;
 
-	memcpy(out, in, size);
+	स_नकल(out, in, size);
 	decompressed_bytes += size;
 
-	return buffer_size;
-}
+	वापस buffer_size;
+पूर्ण
 
-static void print_err(char *s)
-{
+अटल व्योम prपूर्णांक_err(अक्षर *s)
+अणु
 	/* suppress the "error" when we terminate the decompressor */
-	if (decompressed_bytes >= limit)
-		return;
+	अगर (decompressed_bytes >= limit)
+		वापस;
 
-	printf("Decompression error: '%s'\n\r", s);
-}
+	म_लिखो("Decompression error: '%s'\n\r", s);
+पूर्ण
 
 /**
  * partial_decompress - decompresses part or all of a compressed buffer
@@ -103,20 +104,20 @@ static void print_err(char *s)
  * @output_size: length of the input buffer
  * @skip         number of output bytes to ignore
  *
- * This function takes compressed data from inbuf, decompresses and write it to
+ * This function takes compressed data from inbuf, decompresses and ग_लिखो it to
  * outbuf. Once output_size bytes are written to the output buffer, or the
- * stream is exhausted the function will return the number of bytes that were
- * decompressed. Otherwise it will return whatever error code the decompressor
- * reported (NB: This is specific to each decompressor type).
+ * stream is exhausted the function will वापस the number of bytes that were
+ * decompressed. Otherwise it will वापस whatever error code the decompressor
+ * reported (NB: This is specअगरic to each decompressor type).
  *
- * The skip functionality is mainly there so the program and discover
- * the size of the compressed image so that it can ask firmware (if present)
- * for an appropriately sized buffer.
+ * The skip functionality is मुख्यly there so the program and discover
+ * the size of the compressed image so that it can ask firmware (अगर present)
+ * क्रम an appropriately sized buffer.
  */
-long partial_decompress(void *inbuf, unsigned long input_size,
-	void *outbuf, unsigned long output_size, unsigned long _skip)
-{
-	int ret;
+दीर्घ partial_decompress(व्योम *inbuf, अचिन्हित दीर्घ input_size,
+	व्योम *outbuf, अचिन्हित दीर्घ output_size, अचिन्हित दीर्घ _skip)
+अणु
+	पूर्णांक ret;
 
 	/*
 	 * The skipped bytes needs to be included in the size of data we want
@@ -129,15 +130,15 @@ long partial_decompress(void *inbuf, unsigned long input_size,
 	limit = output_size;
 	skip = _skip;
 
-	ret = __decompress(inbuf, input_size, NULL, flush, outbuf,
-		output_size, NULL, print_err);
+	ret = __decompress(inbuf, input_size, शून्य, flush, outbuf,
+		output_size, शून्य, prपूर्णांक_err);
 
 	/*
-	 * If decompression was aborted due to an actual error rather than
-	 * a fake error that we used to abort, then we should report it.
+	 * If decompression was पातed due to an actual error rather than
+	 * a fake error that we used to पात, then we should report it.
 	 */
-	if (decompressed_bytes < limit)
-		return ret;
+	अगर (decompressed_bytes < limit)
+		वापस ret;
 
-	return decompressed_bytes - skip;
-}
+	वापस decompressed_bytes - skip;
+पूर्ण

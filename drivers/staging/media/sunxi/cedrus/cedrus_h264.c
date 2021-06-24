@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cedrus VPU driver
  *
@@ -6,16 +7,16 @@
  * Copyright (c) 2018 Bootlin
  */
 
-#include <linux/delay.h>
-#include <linux/types.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/types.h>
 
-#include <media/videobuf2-dma-contig.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-#include "cedrus.h"
-#include "cedrus_hw.h"
-#include "cedrus_regs.h"
+#समावेश "cedrus.h"
+#समावेश "cedrus_hw.h"
+#समावेश "cedrus_regs.h"
 
-enum cedrus_h264_sram_off {
+क्रमागत cedrus_h264_sram_off अणु
 	CEDRUS_SRAM_H264_PRED_WEIGHT_TABLE	= 0x000,
 	CEDRUS_SRAM_H264_FRAMEBUFFER_LIST	= 0x100,
 	CEDRUS_SRAM_H264_REF_LIST_0		= 0x190,
@@ -23,9 +24,9 @@ enum cedrus_h264_sram_off {
 	CEDRUS_SRAM_H264_SCALING_LIST_8x8_0	= 0x200,
 	CEDRUS_SRAM_H264_SCALING_LIST_8x8_1	= 0x210,
 	CEDRUS_SRAM_H264_SCALING_LIST_4x4	= 0x220,
-};
+पूर्ण;
 
-struct cedrus_h264_sram_ref_pic {
+काष्ठा cedrus_h264_sram_ref_pic अणु
 	__le32	top_field_order_cnt;
 	__le32	bottom_field_order_cnt;
 	__le32	frame_info;
@@ -34,49 +35,49 @@ struct cedrus_h264_sram_ref_pic {
 	__le32	mv_col_top_ptr;
 	__le32	mv_col_bot_ptr;
 	__le32	reserved;
-} __packed;
+पूर्ण __packed;
 
-#define CEDRUS_H264_FRAME_NUM		18
+#घोषणा CEDRUS_H264_FRAME_NUM		18
 
-#define CEDRUS_NEIGHBOR_INFO_BUF_SIZE	(16 * SZ_1K)
-#define CEDRUS_MIN_PIC_INFO_BUF_SIZE       (130 * SZ_1K)
+#घोषणा CEDRUS_NEIGHBOR_INFO_BUF_SIZE	(16 * SZ_1K)
+#घोषणा CEDRUS_MIN_PIC_INFO_BUF_SIZE       (130 * SZ_1K)
 
-static void cedrus_h264_write_sram(struct cedrus_dev *dev,
-				   enum cedrus_h264_sram_off off,
-				   const void *data, size_t len)
-{
-	const u32 *buffer = data;
-	size_t count = DIV_ROUND_UP(len, 4);
+अटल व्योम cedrus_h264_ग_लिखो_sram(काष्ठा cedrus_dev *dev,
+				   क्रमागत cedrus_h264_sram_off off,
+				   स्थिर व्योम *data, माप_प्रकार len)
+अणु
+	स्थिर u32 *buffer = data;
+	माप_प्रकार count = DIV_ROUND_UP(len, 4);
 
-	cedrus_write(dev, VE_AVC_SRAM_PORT_OFFSET, off << 2);
+	cedrus_ग_लिखो(dev, VE_AVC_SRAM_PORT_OFFSET, off << 2);
 
-	while (count--)
-		cedrus_write(dev, VE_AVC_SRAM_PORT_DATA, *buffer++);
-}
+	जबतक (count--)
+		cedrus_ग_लिखो(dev, VE_AVC_SRAM_PORT_DATA, *buffer++);
+पूर्ण
 
-static dma_addr_t cedrus_h264_mv_col_buf_addr(struct cedrus_ctx *ctx,
-					      unsigned int position,
-					      unsigned int field)
-{
+अटल dma_addr_t cedrus_h264_mv_col_buf_addr(काष्ठा cedrus_ctx *ctx,
+					      अचिन्हित पूर्णांक position,
+					      अचिन्हित पूर्णांक field)
+अणु
 	dma_addr_t addr = ctx->codec.h264.mv_col_buf_dma;
 
-	/* Adjust for the position */
+	/* Adjust क्रम the position */
 	addr += position * ctx->codec.h264.mv_col_buf_field_size * 2;
 
-	/* Adjust for the field */
+	/* Adjust क्रम the field */
 	addr += field * ctx->codec.h264.mv_col_buf_field_size;
 
-	return addr;
-}
+	वापस addr;
+पूर्ण
 
-static void cedrus_fill_ref_pic(struct cedrus_ctx *ctx,
-				struct cedrus_buffer *buf,
-				unsigned int top_field_order_cnt,
-				unsigned int bottom_field_order_cnt,
-				struct cedrus_h264_sram_ref_pic *pic)
-{
-	struct vb2_buffer *vbuf = &buf->m2m_buf.vb.vb2_buf;
-	unsigned int position = buf->codec.h264.position;
+अटल व्योम cedrus_fill_ref_pic(काष्ठा cedrus_ctx *ctx,
+				काष्ठा cedrus_buffer *buf,
+				अचिन्हित पूर्णांक top_field_order_cnt,
+				अचिन्हित पूर्णांक bottom_field_order_cnt,
+				काष्ठा cedrus_h264_sram_ref_pic *pic)
+अणु
+	काष्ठा vb2_buffer *vbuf = &buf->m2m_buf.vb.vb2_buf;
+	अचिन्हित पूर्णांक position = buf->codec.h264.position;
 
 	pic->top_field_order_cnt = cpu_to_le32(top_field_order_cnt);
 	pic->bottom_field_order_cnt = cpu_to_le32(bottom_field_order_cnt);
@@ -88,69 +89,69 @@ static void cedrus_fill_ref_pic(struct cedrus_ctx *ctx,
 		cpu_to_le32(cedrus_h264_mv_col_buf_addr(ctx, position, 0));
 	pic->mv_col_bot_ptr =
 		cpu_to_le32(cedrus_h264_mv_col_buf_addr(ctx, position, 1));
-}
+पूर्ण
 
-static void cedrus_write_frame_list(struct cedrus_ctx *ctx,
-				    struct cedrus_run *run)
-{
-	struct cedrus_h264_sram_ref_pic pic_list[CEDRUS_H264_FRAME_NUM];
-	const struct v4l2_ctrl_h264_decode_params *decode = run->h264.decode_params;
-	const struct v4l2_ctrl_h264_sps *sps = run->h264.sps;
-	struct vb2_queue *cap_q;
-	struct cedrus_buffer *output_buf;
-	struct cedrus_dev *dev = ctx->dev;
-	unsigned long used_dpbs = 0;
-	unsigned int position;
-	int output = -1;
-	unsigned int i;
+अटल व्योम cedrus_ग_लिखो_frame_list(काष्ठा cedrus_ctx *ctx,
+				    काष्ठा cedrus_run *run)
+अणु
+	काष्ठा cedrus_h264_sram_ref_pic pic_list[CEDRUS_H264_FRAME_NUM];
+	स्थिर काष्ठा v4l2_ctrl_h264_decode_params *decode = run->h264.decode_params;
+	स्थिर काष्ठा v4l2_ctrl_h264_sps *sps = run->h264.sps;
+	काष्ठा vb2_queue *cap_q;
+	काष्ठा cedrus_buffer *output_buf;
+	काष्ठा cedrus_dev *dev = ctx->dev;
+	अचिन्हित दीर्घ used_dpbs = 0;
+	अचिन्हित पूर्णांक position;
+	पूर्णांक output = -1;
+	अचिन्हित पूर्णांक i;
 
 	cap_q = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, V4L2_BUF_TYPE_VIDEO_CAPTURE);
 
-	memset(pic_list, 0, sizeof(pic_list));
+	स_रखो(pic_list, 0, माप(pic_list));
 
-	for (i = 0; i < ARRAY_SIZE(decode->dpb); i++) {
-		const struct v4l2_h264_dpb_entry *dpb = &decode->dpb[i];
-		struct cedrus_buffer *cedrus_buf;
-		int buf_idx;
+	क्रम (i = 0; i < ARRAY_SIZE(decode->dpb); i++) अणु
+		स्थिर काष्ठा v4l2_h264_dpb_entry *dpb = &decode->dpb[i];
+		काष्ठा cedrus_buffer *cedrus_buf;
+		पूर्णांक buf_idx;
 
-		if (!(dpb->flags & V4L2_H264_DPB_ENTRY_FLAG_VALID))
-			continue;
+		अगर (!(dpb->flags & V4L2_H264_DPB_ENTRY_FLAG_VALID))
+			जारी;
 
-		buf_idx = vb2_find_timestamp(cap_q, dpb->reference_ts, 0);
-		if (buf_idx < 0)
-			continue;
+		buf_idx = vb2_find_बारtamp(cap_q, dpb->reference_ts, 0);
+		अगर (buf_idx < 0)
+			जारी;
 
 		cedrus_buf = vb2_to_cedrus_buffer(cap_q->bufs[buf_idx]);
 		position = cedrus_buf->codec.h264.position;
 		used_dpbs |= BIT(position);
 
-		if (run->dst->vb2_buf.timestamp == dpb->reference_ts) {
+		अगर (run->dst->vb2_buf.बारtamp == dpb->reference_ts) अणु
 			output = position;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (!(dpb->flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE))
-			continue;
+		अगर (!(dpb->flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE))
+			जारी;
 
 		cedrus_fill_ref_pic(ctx, cedrus_buf,
 				    dpb->top_field_order_cnt,
 				    dpb->bottom_field_order_cnt,
 				    &pic_list[position]);
-	}
+	पूर्ण
 
-	if (output >= 0)
+	अगर (output >= 0)
 		position = output;
-	else
+	अन्यथा
 		position = find_first_zero_bit(&used_dpbs, CEDRUS_H264_FRAME_NUM);
 
 	output_buf = vb2_to_cedrus_buffer(&run->dst->vb2_buf);
 	output_buf->codec.h264.position = position;
 
-	if (decode->flags & V4L2_H264_DECODE_PARAM_FLAG_FIELD_PIC)
+	अगर (decode->flags & V4L2_H264_DECODE_PARAM_FLAG_FIELD_PIC)
 		output_buf->codec.h264.pic_type = CEDRUS_H264_PIC_TYPE_FIELD;
-	else if (sps->flags & V4L2_H264_SPS_FLAG_MB_ADAPTIVE_FRAME_FIELD)
+	अन्यथा अगर (sps->flags & V4L2_H264_SPS_FLAG_MB_ADAPTIVE_FRAME_FIELD)
 		output_buf->codec.h264.pic_type = CEDRUS_H264_PIC_TYPE_MBAFF;
-	else
+	अन्यथा
 		output_buf->codec.h264.pic_type = CEDRUS_H264_PIC_TYPE_FRAME;
 
 	cedrus_fill_ref_pic(ctx, output_buf,
@@ -158,258 +159,258 @@ static void cedrus_write_frame_list(struct cedrus_ctx *ctx,
 			    decode->bottom_field_order_cnt,
 			    &pic_list[position]);
 
-	cedrus_h264_write_sram(dev, CEDRUS_SRAM_H264_FRAMEBUFFER_LIST,
-			       pic_list, sizeof(pic_list));
+	cedrus_h264_ग_लिखो_sram(dev, CEDRUS_SRAM_H264_FRAMEBUFFER_LIST,
+			       pic_list, माप(pic_list));
 
-	cedrus_write(dev, VE_H264_OUTPUT_FRAME_IDX, position);
-}
+	cedrus_ग_लिखो(dev, VE_H264_OUTPUT_FRAME_IDX, position);
+पूर्ण
 
-#define CEDRUS_MAX_REF_IDX	32
+#घोषणा CEDRUS_MAX_REF_IDX	32
 
-static void _cedrus_write_ref_list(struct cedrus_ctx *ctx,
-				   struct cedrus_run *run,
-				   const struct v4l2_h264_reference *ref_list,
-				   u8 num_ref, enum cedrus_h264_sram_off sram)
-{
-	const struct v4l2_ctrl_h264_decode_params *decode = run->h264.decode_params;
-	struct vb2_queue *cap_q;
-	struct cedrus_dev *dev = ctx->dev;
+अटल व्योम _cedrus_ग_लिखो_ref_list(काष्ठा cedrus_ctx *ctx,
+				   काष्ठा cedrus_run *run,
+				   स्थिर काष्ठा v4l2_h264_reference *ref_list,
+				   u8 num_ref, क्रमागत cedrus_h264_sram_off sram)
+अणु
+	स्थिर काष्ठा v4l2_ctrl_h264_decode_params *decode = run->h264.decode_params;
+	काष्ठा vb2_queue *cap_q;
+	काष्ठा cedrus_dev *dev = ctx->dev;
 	u8 sram_array[CEDRUS_MAX_REF_IDX];
-	unsigned int i;
-	size_t size;
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार size;
 
 	cap_q = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, V4L2_BUF_TYPE_VIDEO_CAPTURE);
 
-	memset(sram_array, 0, sizeof(sram_array));
+	स_रखो(sram_array, 0, माप(sram_array));
 
-	for (i = 0; i < num_ref; i++) {
-		const struct v4l2_h264_dpb_entry *dpb;
-		const struct cedrus_buffer *cedrus_buf;
-		unsigned int position;
-		int buf_idx;
+	क्रम (i = 0; i < num_ref; i++) अणु
+		स्थिर काष्ठा v4l2_h264_dpb_entry *dpb;
+		स्थिर काष्ठा cedrus_buffer *cedrus_buf;
+		अचिन्हित पूर्णांक position;
+		पूर्णांक buf_idx;
 		u8 dpb_idx;
 
 		dpb_idx = ref_list[i].index;
 		dpb = &decode->dpb[dpb_idx];
 
-		if (!(dpb->flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE))
-			continue;
+		अगर (!(dpb->flags & V4L2_H264_DPB_ENTRY_FLAG_ACTIVE))
+			जारी;
 
-		buf_idx = vb2_find_timestamp(cap_q, dpb->reference_ts, 0);
-		if (buf_idx < 0)
-			continue;
+		buf_idx = vb2_find_बारtamp(cap_q, dpb->reference_ts, 0);
+		अगर (buf_idx < 0)
+			जारी;
 
 		cedrus_buf = vb2_to_cedrus_buffer(cap_q->bufs[buf_idx]);
 		position = cedrus_buf->codec.h264.position;
 
 		sram_array[i] |= position << 1;
-		if (ref_list[i].fields == V4L2_H264_BOTTOM_FIELD_REF)
+		अगर (ref_list[i].fields == V4L2_H264_BOTTOM_FIELD_REF)
 			sram_array[i] |= BIT(0);
-	}
+	पूर्ण
 
-	size = min_t(size_t, ALIGN(num_ref, 4), sizeof(sram_array));
-	cedrus_h264_write_sram(dev, sram, &sram_array, size);
-}
+	size = min_t(माप_प्रकार, ALIGN(num_ref, 4), माप(sram_array));
+	cedrus_h264_ग_लिखो_sram(dev, sram, &sram_array, size);
+पूर्ण
 
-static void cedrus_write_ref_list0(struct cedrus_ctx *ctx,
-				   struct cedrus_run *run)
-{
-	const struct v4l2_ctrl_h264_slice_params *slice = run->h264.slice_params;
+अटल व्योम cedrus_ग_लिखो_ref_list0(काष्ठा cedrus_ctx *ctx,
+				   काष्ठा cedrus_run *run)
+अणु
+	स्थिर काष्ठा v4l2_ctrl_h264_slice_params *slice = run->h264.slice_params;
 
-	_cedrus_write_ref_list(ctx, run,
+	_cedrus_ग_लिखो_ref_list(ctx, run,
 			       slice->ref_pic_list0,
 			       slice->num_ref_idx_l0_active_minus1 + 1,
 			       CEDRUS_SRAM_H264_REF_LIST_0);
-}
+पूर्ण
 
-static void cedrus_write_ref_list1(struct cedrus_ctx *ctx,
-				   struct cedrus_run *run)
-{
-	const struct v4l2_ctrl_h264_slice_params *slice = run->h264.slice_params;
+अटल व्योम cedrus_ग_लिखो_ref_list1(काष्ठा cedrus_ctx *ctx,
+				   काष्ठा cedrus_run *run)
+अणु
+	स्थिर काष्ठा v4l2_ctrl_h264_slice_params *slice = run->h264.slice_params;
 
-	_cedrus_write_ref_list(ctx, run,
+	_cedrus_ग_लिखो_ref_list(ctx, run,
 			       slice->ref_pic_list1,
 			       slice->num_ref_idx_l1_active_minus1 + 1,
 			       CEDRUS_SRAM_H264_REF_LIST_1);
-}
+पूर्ण
 
-static void cedrus_write_scaling_lists(struct cedrus_ctx *ctx,
-				       struct cedrus_run *run)
-{
-	const struct v4l2_ctrl_h264_scaling_matrix *scaling =
+अटल व्योम cedrus_ग_लिखो_scaling_lists(काष्ठा cedrus_ctx *ctx,
+				       काष्ठा cedrus_run *run)
+अणु
+	स्थिर काष्ठा v4l2_ctrl_h264_scaling_matrix *scaling =
 		run->h264.scaling_matrix;
-	const struct v4l2_ctrl_h264_pps *pps = run->h264.pps;
-	struct cedrus_dev *dev = ctx->dev;
+	स्थिर काष्ठा v4l2_ctrl_h264_pps *pps = run->h264.pps;
+	काष्ठा cedrus_dev *dev = ctx->dev;
 
-	if (!(pps->flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT))
-		return;
+	अगर (!(pps->flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT))
+		वापस;
 
-	cedrus_h264_write_sram(dev, CEDRUS_SRAM_H264_SCALING_LIST_8x8_0,
+	cedrus_h264_ग_लिखो_sram(dev, CEDRUS_SRAM_H264_SCALING_LIST_8x8_0,
 			       scaling->scaling_list_8x8[0],
-			       sizeof(scaling->scaling_list_8x8[0]));
+			       माप(scaling->scaling_list_8x8[0]));
 
-	cedrus_h264_write_sram(dev, CEDRUS_SRAM_H264_SCALING_LIST_8x8_1,
+	cedrus_h264_ग_लिखो_sram(dev, CEDRUS_SRAM_H264_SCALING_LIST_8x8_1,
 			       scaling->scaling_list_8x8[1],
-			       sizeof(scaling->scaling_list_8x8[1]));
+			       माप(scaling->scaling_list_8x8[1]));
 
-	cedrus_h264_write_sram(dev, CEDRUS_SRAM_H264_SCALING_LIST_4x4,
+	cedrus_h264_ग_लिखो_sram(dev, CEDRUS_SRAM_H264_SCALING_LIST_4x4,
 			       scaling->scaling_list_4x4,
-			       sizeof(scaling->scaling_list_4x4));
-}
+			       माप(scaling->scaling_list_4x4));
+पूर्ण
 
-static void cedrus_write_pred_weight_table(struct cedrus_ctx *ctx,
-					   struct cedrus_run *run)
-{
-	const struct v4l2_ctrl_h264_pred_weights *pred_weight =
+अटल व्योम cedrus_ग_लिखो_pred_weight_table(काष्ठा cedrus_ctx *ctx,
+					   काष्ठा cedrus_run *run)
+अणु
+	स्थिर काष्ठा v4l2_ctrl_h264_pred_weights *pred_weight =
 		run->h264.pred_weights;
-	struct cedrus_dev *dev = ctx->dev;
-	int i, j, k;
+	काष्ठा cedrus_dev *dev = ctx->dev;
+	पूर्णांक i, j, k;
 
-	cedrus_write(dev, VE_H264_SHS_WP,
+	cedrus_ग_लिखो(dev, VE_H264_SHS_WP,
 		     ((pred_weight->chroma_log2_weight_denom & 0x7) << 4) |
 		     ((pred_weight->luma_log2_weight_denom & 0x7) << 0));
 
-	cedrus_write(dev, VE_AVC_SRAM_PORT_OFFSET,
+	cedrus_ग_लिखो(dev, VE_AVC_SRAM_PORT_OFFSET,
 		     CEDRUS_SRAM_H264_PRED_WEIGHT_TABLE << 2);
 
-	for (i = 0; i < ARRAY_SIZE(pred_weight->weight_factors); i++) {
-		const struct v4l2_h264_weight_factors *factors =
+	क्रम (i = 0; i < ARRAY_SIZE(pred_weight->weight_factors); i++) अणु
+		स्थिर काष्ठा v4l2_h264_weight_factors *factors =
 			&pred_weight->weight_factors[i];
 
-		for (j = 0; j < ARRAY_SIZE(factors->luma_weight); j++) {
+		क्रम (j = 0; j < ARRAY_SIZE(factors->luma_weight); j++) अणु
 			u32 val;
 
 			val = (((u32)factors->luma_offset[j] & 0x1ff) << 16) |
 				(factors->luma_weight[j] & 0x1ff);
-			cedrus_write(dev, VE_AVC_SRAM_PORT_DATA, val);
-		}
+			cedrus_ग_लिखो(dev, VE_AVC_SRAM_PORT_DATA, val);
+		पूर्ण
 
-		for (j = 0; j < ARRAY_SIZE(factors->chroma_weight); j++) {
-			for (k = 0; k < ARRAY_SIZE(factors->chroma_weight[0]); k++) {
+		क्रम (j = 0; j < ARRAY_SIZE(factors->chroma_weight); j++) अणु
+			क्रम (k = 0; k < ARRAY_SIZE(factors->chroma_weight[0]); k++) अणु
 				u32 val;
 
 				val = (((u32)factors->chroma_offset[j][k] & 0x1ff) << 16) |
 					(factors->chroma_weight[j][k] & 0x1ff);
-				cedrus_write(dev, VE_AVC_SRAM_PORT_DATA, val);
-			}
-		}
-	}
-}
+				cedrus_ग_लिखो(dev, VE_AVC_SRAM_PORT_DATA, val);
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /*
  * It turns out that using VE_H264_VLD_OFFSET to skip bits is not reliable. In
- * rare cases frame is not decoded correctly. However, setting offset to 0 and
+ * rare हालs frame is not decoded correctly. However, setting offset to 0 and
  * skipping appropriate amount of bits with flush bits trigger always works.
  */
-static void cedrus_skip_bits(struct cedrus_dev *dev, int num)
-{
-	int count = 0;
+अटल व्योम cedrus_skip_bits(काष्ठा cedrus_dev *dev, पूर्णांक num)
+अणु
+	पूर्णांक count = 0;
 
-	while (count < num) {
-		int tmp = min(num - count, 32);
+	जबतक (count < num) अणु
+		पूर्णांक पंचांगp = min(num - count, 32);
 
-		cedrus_write(dev, VE_H264_TRIGGER_TYPE,
+		cedrus_ग_लिखो(dev, VE_H264_TRIGGER_TYPE,
 			     VE_H264_TRIGGER_TYPE_FLUSH_BITS |
-			     VE_H264_TRIGGER_TYPE_N_BITS(tmp));
-		while (cedrus_read(dev, VE_H264_STATUS) & VE_H264_STATUS_VLD_BUSY)
+			     VE_H264_TRIGGER_TYPE_N_BITS(पंचांगp));
+		जबतक (cedrus_पढ़ो(dev, VE_H264_STATUS) & VE_H264_STATUS_VLD_BUSY)
 			udelay(1);
 
-		count += tmp;
-	}
-}
+		count += पंचांगp;
+	पूर्ण
+पूर्ण
 
-static void cedrus_set_params(struct cedrus_ctx *ctx,
-			      struct cedrus_run *run)
-{
-	const struct v4l2_ctrl_h264_decode_params *decode = run->h264.decode_params;
-	const struct v4l2_ctrl_h264_slice_params *slice = run->h264.slice_params;
-	const struct v4l2_ctrl_h264_pps *pps = run->h264.pps;
-	const struct v4l2_ctrl_h264_sps *sps = run->h264.sps;
-	struct vb2_buffer *src_buf = &run->src->vb2_buf;
-	struct cedrus_dev *dev = ctx->dev;
+अटल व्योम cedrus_set_params(काष्ठा cedrus_ctx *ctx,
+			      काष्ठा cedrus_run *run)
+अणु
+	स्थिर काष्ठा v4l2_ctrl_h264_decode_params *decode = run->h264.decode_params;
+	स्थिर काष्ठा v4l2_ctrl_h264_slice_params *slice = run->h264.slice_params;
+	स्थिर काष्ठा v4l2_ctrl_h264_pps *pps = run->h264.pps;
+	स्थिर काष्ठा v4l2_ctrl_h264_sps *sps = run->h264.sps;
+	काष्ठा vb2_buffer *src_buf = &run->src->vb2_buf;
+	काष्ठा cedrus_dev *dev = ctx->dev;
 	dma_addr_t src_buf_addr;
-	size_t slice_bytes = vb2_get_plane_payload(src_buf, 0);
-	unsigned int pic_width_in_mbs;
+	माप_प्रकार slice_bytes = vb2_get_plane_payload(src_buf, 0);
+	अचिन्हित पूर्णांक pic_width_in_mbs;
 	bool mbaff_pic;
 	u32 reg;
 
-	cedrus_write(dev, VE_H264_VLD_LEN, slice_bytes * 8);
-	cedrus_write(dev, VE_H264_VLD_OFFSET, 0);
+	cedrus_ग_लिखो(dev, VE_H264_VLD_LEN, slice_bytes * 8);
+	cedrus_ग_लिखो(dev, VE_H264_VLD_OFFSET, 0);
 
 	src_buf_addr = vb2_dma_contig_plane_dma_addr(src_buf, 0);
-	cedrus_write(dev, VE_H264_VLD_END, src_buf_addr + slice_bytes);
-	cedrus_write(dev, VE_H264_VLD_ADDR,
+	cedrus_ग_लिखो(dev, VE_H264_VLD_END, src_buf_addr + slice_bytes);
+	cedrus_ग_लिखो(dev, VE_H264_VLD_ADDR,
 		     VE_H264_VLD_ADDR_VAL(src_buf_addr) |
 		     VE_H264_VLD_ADDR_FIRST | VE_H264_VLD_ADDR_VALID |
 		     VE_H264_VLD_ADDR_LAST);
 
-	if (ctx->src_fmt.width > 2048) {
-		cedrus_write(dev, VE_BUF_CTRL,
+	अगर (ctx->src_fmt.width > 2048) अणु
+		cedrus_ग_लिखो(dev, VE_BUF_CTRL,
 			     VE_BUF_CTRL_INTRAPRED_MIXED_RAM |
 			     VE_BUF_CTRL_DBLK_MIXED_RAM);
-		cedrus_write(dev, VE_DBLK_DRAM_BUF_ADDR,
+		cedrus_ग_लिखो(dev, VE_DBLK_DRAM_BUF_ADDR,
 			     ctx->codec.h264.deblk_buf_dma);
-		cedrus_write(dev, VE_INTRAPRED_DRAM_BUF_ADDR,
-			     ctx->codec.h264.intra_pred_buf_dma);
-	} else {
-		cedrus_write(dev, VE_BUF_CTRL,
+		cedrus_ग_लिखो(dev, VE_INTRAPRED_DRAM_BUF_ADDR,
+			     ctx->codec.h264.पूर्णांकra_pred_buf_dma);
+	पूर्ण अन्यथा अणु
+		cedrus_ग_लिखो(dev, VE_BUF_CTRL,
 			     VE_BUF_CTRL_INTRAPRED_INT_SRAM |
 			     VE_BUF_CTRL_DBLK_INT_SRAM);
-	}
+	पूर्ण
 
 	/*
-	 * FIXME: Since the bitstream parsing is done in software, and
+	 * FIXME: Since the bitstream parsing is करोne in software, and
 	 * in userspace, this shouldn't be needed anymore. But it
-	 * turns out that removing it breaks the decoding process,
+	 * turns out that removing it अवरोधs the decoding process,
 	 * without any clear indication why.
 	 */
-	cedrus_write(dev, VE_H264_TRIGGER_TYPE,
+	cedrus_ग_लिखो(dev, VE_H264_TRIGGER_TYPE,
 		     VE_H264_TRIGGER_TYPE_INIT_SWDEC);
 
 	cedrus_skip_bits(dev, slice->header_bit_size);
 
-	if (V4L2_H264_CTRL_PRED_WEIGHTS_REQUIRED(pps, slice))
-		cedrus_write_pred_weight_table(ctx, run);
+	अगर (V4L2_H264_CTRL_PRED_WEIGHTS_REQUIRED(pps, slice))
+		cedrus_ग_लिखो_pred_weight_table(ctx, run);
 
-	if ((slice->slice_type == V4L2_H264_SLICE_TYPE_P) ||
+	अगर ((slice->slice_type == V4L2_H264_SLICE_TYPE_P) ||
 	    (slice->slice_type == V4L2_H264_SLICE_TYPE_SP) ||
 	    (slice->slice_type == V4L2_H264_SLICE_TYPE_B))
-		cedrus_write_ref_list0(ctx, run);
+		cedrus_ग_लिखो_ref_list0(ctx, run);
 
-	if (slice->slice_type == V4L2_H264_SLICE_TYPE_B)
-		cedrus_write_ref_list1(ctx, run);
+	अगर (slice->slice_type == V4L2_H264_SLICE_TYPE_B)
+		cedrus_ग_लिखो_ref_list1(ctx, run);
 
 	// picture parameters
 	reg = 0;
 	/*
-	 * FIXME: the kernel headers are allowing the default value to
-	 * be passed, but the libva doesn't give us that.
+	 * FIXME: the kernel headers are allowing the शेष value to
+	 * be passed, but the libva करोesn't give us that.
 	 */
 	reg |= (slice->num_ref_idx_l0_active_minus1 & 0x1f) << 10;
 	reg |= (slice->num_ref_idx_l1_active_minus1 & 0x1f) << 5;
 	reg |= (pps->weighted_bipred_idc & 0x3) << 2;
-	if (pps->flags & V4L2_H264_PPS_FLAG_ENTROPY_CODING_MODE)
+	अगर (pps->flags & V4L2_H264_PPS_FLAG_ENTROPY_CODING_MODE)
 		reg |= VE_H264_PPS_ENTROPY_CODING_MODE;
-	if (pps->flags & V4L2_H264_PPS_FLAG_WEIGHTED_PRED)
+	अगर (pps->flags & V4L2_H264_PPS_FLAG_WEIGHTED_PRED)
 		reg |= VE_H264_PPS_WEIGHTED_PRED;
-	if (pps->flags & V4L2_H264_PPS_FLAG_CONSTRAINED_INTRA_PRED)
+	अगर (pps->flags & V4L2_H264_PPS_FLAG_CONSTRAINED_INTRA_PRED)
 		reg |= VE_H264_PPS_CONSTRAINED_INTRA_PRED;
-	if (pps->flags & V4L2_H264_PPS_FLAG_TRANSFORM_8X8_MODE)
+	अगर (pps->flags & V4L2_H264_PPS_FLAG_TRANSFORM_8X8_MODE)
 		reg |= VE_H264_PPS_TRANSFORM_8X8_MODE;
-	cedrus_write(dev, VE_H264_PPS, reg);
+	cedrus_ग_लिखो(dev, VE_H264_PPS, reg);
 
 	// sequence parameters
 	reg = 0;
-	reg |= (sps->chroma_format_idc & 0x7) << 19;
+	reg |= (sps->chroma_क्रमmat_idc & 0x7) << 19;
 	reg |= (sps->pic_width_in_mbs_minus1 & 0xff) << 8;
 	reg |= sps->pic_height_in_map_units_minus1 & 0xff;
-	if (sps->flags & V4L2_H264_SPS_FLAG_FRAME_MBS_ONLY)
+	अगर (sps->flags & V4L2_H264_SPS_FLAG_FRAME_MBS_ONLY)
 		reg |= VE_H264_SPS_MBS_ONLY;
-	if (sps->flags & V4L2_H264_SPS_FLAG_MB_ADAPTIVE_FRAME_FIELD)
+	अगर (sps->flags & V4L2_H264_SPS_FLAG_MB_ADAPTIVE_FRAME_FIELD)
 		reg |= VE_H264_SPS_MB_ADAPTIVE_FRAME_FIELD;
-	if (sps->flags & V4L2_H264_SPS_FLAG_DIRECT_8X8_INFERENCE)
-		reg |= VE_H264_SPS_DIRECT_8X8_INFERENCE;
-	cedrus_write(dev, VE_H264_SPS, reg);
+	अगर (sps->flags & V4L2_H264_SPS_FLAG_सूचीECT_8X8_INFERENCE)
+		reg |= VE_H264_SPS_सूचीECT_8X8_INFERENCE;
+	cedrus_ग_लिखो(dev, VE_H264_SPS, reg);
 
 	mbaff_pic = !(decode->flags & V4L2_H264_DECODE_PARAM_FLAG_FIELD_PIC) &&
 		    (sps->flags & V4L2_H264_SPS_FLAG_MB_ADAPTIVE_FRAME_FIELD);
@@ -423,108 +424,108 @@ static void cedrus_set_params(struct cedrus_ctx *ctx,
 	reg |= decode->nal_ref_idc ? BIT(12) : 0;
 	reg |= (slice->slice_type & 0xf) << 8;
 	reg |= slice->cabac_init_idc & 0x3;
-	if (ctx->fh.m2m_ctx->new_frame)
+	अगर (ctx->fh.m2m_ctx->new_frame)
 		reg |= VE_H264_SHS_FIRST_SLICE_IN_PIC;
-	if (decode->flags & V4L2_H264_DECODE_PARAM_FLAG_FIELD_PIC)
+	अगर (decode->flags & V4L2_H264_DECODE_PARAM_FLAG_FIELD_PIC)
 		reg |= VE_H264_SHS_FIELD_PIC;
-	if (decode->flags & V4L2_H264_DECODE_PARAM_FLAG_BOTTOM_FIELD)
+	अगर (decode->flags & V4L2_H264_DECODE_PARAM_FLAG_BOTTOM_FIELD)
 		reg |= VE_H264_SHS_BOTTOM_FIELD;
-	if (slice->flags & V4L2_H264_SLICE_FLAG_DIRECT_SPATIAL_MV_PRED)
-		reg |= VE_H264_SHS_DIRECT_SPATIAL_MV_PRED;
-	cedrus_write(dev, VE_H264_SHS, reg);
+	अगर (slice->flags & V4L2_H264_SLICE_FLAG_सूचीECT_SPATIAL_MV_PRED)
+		reg |= VE_H264_SHS_सूचीECT_SPATIAL_MV_PRED;
+	cedrus_ग_लिखो(dev, VE_H264_SHS, reg);
 
 	reg = 0;
 	reg |= VE_H264_SHS2_NUM_REF_IDX_ACTIVE_OVRD;
 	reg |= (slice->num_ref_idx_l0_active_minus1 & 0x1f) << 24;
 	reg |= (slice->num_ref_idx_l1_active_minus1 & 0x1f) << 16;
 	reg |= (slice->disable_deblocking_filter_idc & 0x3) << 8;
-	reg |= (slice->slice_alpha_c0_offset_div2 & 0xf) << 4;
-	reg |= slice->slice_beta_offset_div2 & 0xf;
-	cedrus_write(dev, VE_H264_SHS2, reg);
+	reg |= (slice->slice_alpha_c0_offset_भाग2 & 0xf) << 4;
+	reg |= slice->slice_beta_offset_भाग2 & 0xf;
+	cedrus_ग_लिखो(dev, VE_H264_SHS2, reg);
 
 	reg = 0;
 	reg |= (pps->second_chroma_qp_index_offset & 0x3f) << 16;
 	reg |= (pps->chroma_qp_index_offset & 0x3f) << 8;
 	reg |= (pps->pic_init_qp_minus26 + 26 + slice->slice_qp_delta) & 0x3f;
-	if (!(pps->flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT))
+	अगर (!(pps->flags & V4L2_H264_PPS_FLAG_SCALING_MATRIX_PRESENT))
 		reg |= VE_H264_SHS_QP_SCALING_MATRIX_DEFAULT;
-	cedrus_write(dev, VE_H264_SHS_QP, reg);
+	cedrus_ग_लिखो(dev, VE_H264_SHS_QP, reg);
 
 	// clear status flags
-	cedrus_write(dev, VE_H264_STATUS, cedrus_read(dev, VE_H264_STATUS));
+	cedrus_ग_लिखो(dev, VE_H264_STATUS, cedrus_पढ़ो(dev, VE_H264_STATUS));
 
-	// enable int
-	cedrus_write(dev, VE_H264_CTRL,
+	// enable पूर्णांक
+	cedrus_ग_लिखो(dev, VE_H264_CTRL,
 		     VE_H264_CTRL_SLICE_DECODE_INT |
 		     VE_H264_CTRL_DECODE_ERR_INT |
 		     VE_H264_CTRL_VLD_DATA_REQ_INT);
-}
+पूर्ण
 
-static enum cedrus_irq_status
-cedrus_h264_irq_status(struct cedrus_ctx *ctx)
-{
-	struct cedrus_dev *dev = ctx->dev;
-	u32 reg = cedrus_read(dev, VE_H264_STATUS);
+अटल क्रमागत cedrus_irq_status
+cedrus_h264_irq_status(काष्ठा cedrus_ctx *ctx)
+अणु
+	काष्ठा cedrus_dev *dev = ctx->dev;
+	u32 reg = cedrus_पढ़ो(dev, VE_H264_STATUS);
 
-	if (reg & (VE_H264_STATUS_DECODE_ERR_INT |
+	अगर (reg & (VE_H264_STATUS_DECODE_ERR_INT |
 		   VE_H264_STATUS_VLD_DATA_REQ_INT))
-		return CEDRUS_IRQ_ERROR;
+		वापस CEDRUS_IRQ_ERROR;
 
-	if (reg & VE_H264_CTRL_SLICE_DECODE_INT)
-		return CEDRUS_IRQ_OK;
+	अगर (reg & VE_H264_CTRL_SLICE_DECODE_INT)
+		वापस CEDRUS_IRQ_OK;
 
-	return CEDRUS_IRQ_NONE;
-}
+	वापस CEDRUS_IRQ_NONE;
+पूर्ण
 
-static void cedrus_h264_irq_clear(struct cedrus_ctx *ctx)
-{
-	struct cedrus_dev *dev = ctx->dev;
+अटल व्योम cedrus_h264_irq_clear(काष्ठा cedrus_ctx *ctx)
+अणु
+	काष्ठा cedrus_dev *dev = ctx->dev;
 
-	cedrus_write(dev, VE_H264_STATUS,
+	cedrus_ग_लिखो(dev, VE_H264_STATUS,
 		     VE_H264_STATUS_INT_MASK);
-}
+पूर्ण
 
-static void cedrus_h264_irq_disable(struct cedrus_ctx *ctx)
-{
-	struct cedrus_dev *dev = ctx->dev;
-	u32 reg = cedrus_read(dev, VE_H264_CTRL);
+अटल व्योम cedrus_h264_irq_disable(काष्ठा cedrus_ctx *ctx)
+अणु
+	काष्ठा cedrus_dev *dev = ctx->dev;
+	u32 reg = cedrus_पढ़ो(dev, VE_H264_CTRL);
 
-	cedrus_write(dev, VE_H264_CTRL,
+	cedrus_ग_लिखो(dev, VE_H264_CTRL,
 		     reg & ~VE_H264_CTRL_INT_MASK);
-}
+पूर्ण
 
-static void cedrus_h264_setup(struct cedrus_ctx *ctx,
-			      struct cedrus_run *run)
-{
-	struct cedrus_dev *dev = ctx->dev;
+अटल व्योम cedrus_h264_setup(काष्ठा cedrus_ctx *ctx,
+			      काष्ठा cedrus_run *run)
+अणु
+	काष्ठा cedrus_dev *dev = ctx->dev;
 
 	cedrus_engine_enable(ctx, CEDRUS_CODEC_H264);
 
-	cedrus_write(dev, VE_H264_SDROT_CTRL, 0);
-	cedrus_write(dev, VE_H264_EXTRA_BUFFER1,
+	cedrus_ग_लिखो(dev, VE_H264_SDROT_CTRL, 0);
+	cedrus_ग_लिखो(dev, VE_H264_EXTRA_BUFFER1,
 		     ctx->codec.h264.pic_info_buf_dma);
-	cedrus_write(dev, VE_H264_EXTRA_BUFFER2,
+	cedrus_ग_लिखो(dev, VE_H264_EXTRA_BUFFER2,
 		     ctx->codec.h264.neighbor_info_buf_dma);
 
-	cedrus_write_scaling_lists(ctx, run);
-	cedrus_write_frame_list(ctx, run);
+	cedrus_ग_लिखो_scaling_lists(ctx, run);
+	cedrus_ग_लिखो_frame_list(ctx, run);
 
 	cedrus_set_params(ctx, run);
-}
+पूर्ण
 
-static int cedrus_h264_start(struct cedrus_ctx *ctx)
-{
-	struct cedrus_dev *dev = ctx->dev;
-	unsigned int pic_info_size;
-	unsigned int field_size;
-	unsigned int mv_col_size;
-	int ret;
+अटल पूर्णांक cedrus_h264_start(काष्ठा cedrus_ctx *ctx)
+अणु
+	काष्ठा cedrus_dev *dev = ctx->dev;
+	अचिन्हित पूर्णांक pic_info_size;
+	अचिन्हित पूर्णांक field_size;
+	अचिन्हित पूर्णांक mv_col_size;
+	पूर्णांक ret;
 
-	/* Formula for picture buffer size is taken from CedarX source. */
+	/* Formula क्रम picture buffer size is taken from CedarX source. */
 
-	if (ctx->src_fmt.width > 2048)
+	अगर (ctx->src_fmt.width > 2048)
 		pic_info_size = CEDRUS_H264_FRAME_NUM * 0x4000;
-	else
+	अन्यथा
 		pic_info_size = CEDRUS_H264_FRAME_NUM * 0x1000;
 
 	/*
@@ -533,7 +534,7 @@ static int cedrus_h264_start(struct cedrus_ctx *ctx)
 	 */
 	pic_info_size += ctx->src_fmt.height * 2 * 64;
 
-	if (pic_info_size < CEDRUS_MIN_PIC_INFO_BUF_SIZE)
+	अगर (pic_info_size < CEDRUS_MIN_PIC_INFO_BUF_SIZE)
 		pic_info_size = CEDRUS_MIN_PIC_INFO_BUF_SIZE;
 
 	ctx->codec.h264.pic_info_buf_size = pic_info_size;
@@ -541,32 +542,32 @@ static int cedrus_h264_start(struct cedrus_ctx *ctx)
 		dma_alloc_coherent(dev->dev, ctx->codec.h264.pic_info_buf_size,
 				   &ctx->codec.h264.pic_info_buf_dma,
 				   GFP_KERNEL);
-	if (!ctx->codec.h264.pic_info_buf)
-		return -ENOMEM;
+	अगर (!ctx->codec.h264.pic_info_buf)
+		वापस -ENOMEM;
 
 	/*
 	 * That buffer is supposed to be 16kiB in size, and be aligned
 	 * on 16kiB as well. However, dma_alloc_coherent provides the
 	 * guarantee that we'll have a CPU and DMA address aligned on
 	 * the smallest page order that is greater to the requested
-	 * size, so we don't have to overallocate.
+	 * size, so we करोn't have to overallocate.
 	 */
 	ctx->codec.h264.neighbor_info_buf =
 		dma_alloc_coherent(dev->dev, CEDRUS_NEIGHBOR_INFO_BUF_SIZE,
 				   &ctx->codec.h264.neighbor_info_buf_dma,
 				   GFP_KERNEL);
-	if (!ctx->codec.h264.neighbor_info_buf) {
+	अगर (!ctx->codec.h264.neighbor_info_buf) अणु
 		ret = -ENOMEM;
-		goto err_pic_buf;
-	}
+		जाओ err_pic_buf;
+	पूर्ण
 
 	field_size = DIV_ROUND_UP(ctx->src_fmt.width, 16) *
 		DIV_ROUND_UP(ctx->src_fmt.height, 16) * 16;
 
 	/*
 	 * FIXME: This is actually conditional to
-	 * V4L2_H264_SPS_FLAG_DIRECT_8X8_INFERENCE not being set, we
-	 * might have to rework this if memory efficiency ever is
+	 * V4L2_H264_SPS_FLAG_सूचीECT_8X8_INFERENCE not being set, we
+	 * might have to rework this अगर memory efficiency ever is
 	 * something we need to work on.
 	 */
 	field_size = field_size * 2;
@@ -574,7 +575,7 @@ static int cedrus_h264_start(struct cedrus_ctx *ctx)
 	/*
 	 * FIXME: This is actually conditional to
 	 * V4L2_H264_SPS_FLAG_FRAME_MBS_ONLY not being set, we might
-	 * have to rework this if memory efficiency ever is something
+	 * have to rework this अगर memory efficiency ever is something
 	 * we need to work on.
 	 */
 	field_size = field_size * 2;
@@ -586,14 +587,14 @@ static int cedrus_h264_start(struct cedrus_ctx *ctx)
 							ctx->codec.h264.mv_col_buf_size,
 							&ctx->codec.h264.mv_col_buf_dma,
 							GFP_KERNEL);
-	if (!ctx->codec.h264.mv_col_buf) {
+	अगर (!ctx->codec.h264.mv_col_buf) अणु
 		ret = -ENOMEM;
-		goto err_neighbor_buf;
-	}
+		जाओ err_neighbor_buf;
+	पूर्ण
 
-	if (ctx->src_fmt.width > 2048) {
+	अगर (ctx->src_fmt.width > 2048) अणु
 		/*
-		 * Formulas for deblock and intra prediction buffer sizes
+		 * Formulas क्रम deblock and पूर्णांकra prediction buffer sizes
 		 * are taken from CedarX source.
 		 */
 
@@ -604,84 +605,84 @@ static int cedrus_h264_start(struct cedrus_ctx *ctx)
 					   ctx->codec.h264.deblk_buf_size,
 					   &ctx->codec.h264.deblk_buf_dma,
 					   GFP_KERNEL);
-		if (!ctx->codec.h264.deblk_buf) {
+		अगर (!ctx->codec.h264.deblk_buf) अणु
 			ret = -ENOMEM;
-			goto err_mv_col_buf;
-		}
+			जाओ err_mv_col_buf;
+		पूर्ण
 
 		/*
 		 * NOTE: Multiplying by two deviates from CedarX logic, but it
-		 * is for some unknown reason needed for H264 4K decoding on H6.
+		 * is क्रम some unknown reason needed क्रम H264 4K decoding on H6.
 		 */
-		ctx->codec.h264.intra_pred_buf_size =
+		ctx->codec.h264.पूर्णांकra_pred_buf_size =
 			ALIGN(ctx->src_fmt.width, 64) * 5 * 2;
-		ctx->codec.h264.intra_pred_buf =
+		ctx->codec.h264.पूर्णांकra_pred_buf =
 			dma_alloc_coherent(dev->dev,
-					   ctx->codec.h264.intra_pred_buf_size,
-					   &ctx->codec.h264.intra_pred_buf_dma,
+					   ctx->codec.h264.पूर्णांकra_pred_buf_size,
+					   &ctx->codec.h264.पूर्णांकra_pred_buf_dma,
 					   GFP_KERNEL);
-		if (!ctx->codec.h264.intra_pred_buf) {
+		अगर (!ctx->codec.h264.पूर्णांकra_pred_buf) अणु
 			ret = -ENOMEM;
-			goto err_deblk_buf;
-		}
-	}
+			जाओ err_deblk_buf;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_deblk_buf:
-	dma_free_coherent(dev->dev, ctx->codec.h264.deblk_buf_size,
+	dma_मुक्त_coherent(dev->dev, ctx->codec.h264.deblk_buf_size,
 			  ctx->codec.h264.deblk_buf,
 			  ctx->codec.h264.deblk_buf_dma);
 
 err_mv_col_buf:
-	dma_free_coherent(dev->dev, ctx->codec.h264.mv_col_buf_size,
+	dma_मुक्त_coherent(dev->dev, ctx->codec.h264.mv_col_buf_size,
 			  ctx->codec.h264.mv_col_buf,
 			  ctx->codec.h264.mv_col_buf_dma);
 
 err_neighbor_buf:
-	dma_free_coherent(dev->dev, CEDRUS_NEIGHBOR_INFO_BUF_SIZE,
+	dma_मुक्त_coherent(dev->dev, CEDRUS_NEIGHBOR_INFO_BUF_SIZE,
 			  ctx->codec.h264.neighbor_info_buf,
 			  ctx->codec.h264.neighbor_info_buf_dma);
 
 err_pic_buf:
-	dma_free_coherent(dev->dev, ctx->codec.h264.pic_info_buf_size,
+	dma_मुक्त_coherent(dev->dev, ctx->codec.h264.pic_info_buf_size,
 			  ctx->codec.h264.pic_info_buf,
 			  ctx->codec.h264.pic_info_buf_dma);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void cedrus_h264_stop(struct cedrus_ctx *ctx)
-{
-	struct cedrus_dev *dev = ctx->dev;
+अटल व्योम cedrus_h264_stop(काष्ठा cedrus_ctx *ctx)
+अणु
+	काष्ठा cedrus_dev *dev = ctx->dev;
 
-	dma_free_coherent(dev->dev, ctx->codec.h264.mv_col_buf_size,
+	dma_मुक्त_coherent(dev->dev, ctx->codec.h264.mv_col_buf_size,
 			  ctx->codec.h264.mv_col_buf,
 			  ctx->codec.h264.mv_col_buf_dma);
-	dma_free_coherent(dev->dev, CEDRUS_NEIGHBOR_INFO_BUF_SIZE,
+	dma_मुक्त_coherent(dev->dev, CEDRUS_NEIGHBOR_INFO_BUF_SIZE,
 			  ctx->codec.h264.neighbor_info_buf,
 			  ctx->codec.h264.neighbor_info_buf_dma);
-	dma_free_coherent(dev->dev, ctx->codec.h264.pic_info_buf_size,
+	dma_मुक्त_coherent(dev->dev, ctx->codec.h264.pic_info_buf_size,
 			  ctx->codec.h264.pic_info_buf,
 			  ctx->codec.h264.pic_info_buf_dma);
-	if (ctx->codec.h264.deblk_buf_size)
-		dma_free_coherent(dev->dev, ctx->codec.h264.deblk_buf_size,
+	अगर (ctx->codec.h264.deblk_buf_size)
+		dma_मुक्त_coherent(dev->dev, ctx->codec.h264.deblk_buf_size,
 				  ctx->codec.h264.deblk_buf,
 				  ctx->codec.h264.deblk_buf_dma);
-	if (ctx->codec.h264.intra_pred_buf_size)
-		dma_free_coherent(dev->dev, ctx->codec.h264.intra_pred_buf_size,
-				  ctx->codec.h264.intra_pred_buf,
-				  ctx->codec.h264.intra_pred_buf_dma);
-}
+	अगर (ctx->codec.h264.पूर्णांकra_pred_buf_size)
+		dma_मुक्त_coherent(dev->dev, ctx->codec.h264.पूर्णांकra_pred_buf_size,
+				  ctx->codec.h264.पूर्णांकra_pred_buf,
+				  ctx->codec.h264.पूर्णांकra_pred_buf_dma);
+पूर्ण
 
-static void cedrus_h264_trigger(struct cedrus_ctx *ctx)
-{
-	struct cedrus_dev *dev = ctx->dev;
+अटल व्योम cedrus_h264_trigger(काष्ठा cedrus_ctx *ctx)
+अणु
+	काष्ठा cedrus_dev *dev = ctx->dev;
 
-	cedrus_write(dev, VE_H264_TRIGGER_TYPE,
+	cedrus_ग_लिखो(dev, VE_H264_TRIGGER_TYPE,
 		     VE_H264_TRIGGER_TYPE_AVC_SLICE_DECODE);
-}
+पूर्ण
 
-struct cedrus_dec_ops cedrus_dec_ops_h264 = {
+काष्ठा cedrus_dec_ops cedrus_dec_ops_h264 = अणु
 	.irq_clear	= cedrus_h264_irq_clear,
 	.irq_disable	= cedrus_h264_irq_disable,
 	.irq_status	= cedrus_h264_irq_status,
@@ -689,4 +690,4 @@ struct cedrus_dec_ops cedrus_dec_ops_h264 = {
 	.start		= cedrus_h264_start,
 	.stop		= cedrus_h264_stop,
 	.trigger	= cedrus_h264_trigger,
-};
+पूर्ण;

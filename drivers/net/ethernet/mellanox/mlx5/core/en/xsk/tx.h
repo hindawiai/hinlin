@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB */
 /* Copyright (c) 2019 Mellanox Technologies. */
 
-#ifndef __MLX5_EN_XSK_TX_H__
-#define __MLX5_EN_XSK_TX_H__
+#अगर_अघोषित __MLX5_EN_XSK_TX_H__
+#घोषणा __MLX5_EN_XSK_TX_H__
 
-#include "en.h"
-#include <net/xdp_sock_drv.h>
+#समावेश "en.h"
+#समावेश <net/xdp_sock_drv.h>
 
 /* TX data path */
 
-int mlx5e_xsk_wakeup(struct net_device *dev, u32 qid, u32 flags);
+पूर्णांक mlx5e_xsk_wakeup(काष्ठा net_device *dev, u32 qid, u32 flags);
 
-bool mlx5e_xsk_tx(struct mlx5e_xdpsq *sq, unsigned int budget);
+bool mlx5e_xsk_tx(काष्ठा mlx5e_xdpsq *sq, अचिन्हित पूर्णांक budget);
 
-static inline void mlx5e_xsk_update_tx_wakeup(struct mlx5e_xdpsq *sq)
-{
-	if (!xsk_uses_need_wakeup(sq->xsk_pool))
-		return;
+अटल अंतरभूत व्योम mlx5e_xsk_update_tx_wakeup(काष्ठा mlx5e_xdpsq *sq)
+अणु
+	अगर (!xsk_uses_need_wakeup(sq->xsk_pool))
+		वापस;
 
-	if (sq->pc != sq->cc)
+	अगर (sq->pc != sq->cc)
 		xsk_clear_tx_need_wakeup(sq->xsk_pool);
-	else
+	अन्यथा
 		xsk_set_tx_need_wakeup(sq->xsk_pool);
-}
+पूर्ण
 
-#endif /* __MLX5_EN_XSK_TX_H__ */
+#पूर्ण_अगर /* __MLX5_EN_XSK_TX_H__ */

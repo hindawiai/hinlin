@@ -1,459 +1,460 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __SPARC64_IO_H
-#define __SPARC64_IO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __SPARC64_IO_H
+#घोषणा __SPARC64_IO_H
 
-#include <linux/kernel.h>
-#include <linux/compiler.h>
-#include <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/compiler.h>
+#समावेश <linux/types.h>
 
-#include <asm/page.h>      /* IO address mapping routines need this */
-#include <asm/asi.h>
-#include <asm-generic/pci_iomap.h>
+#समावेश <यंत्र/page.h>      /* IO address mapping routines need this */
+#समावेश <यंत्र/asi.h>
+#समावेश <यंत्र-generic/pci_iomap.h>
 
 /* BIO layer definitions. */
-extern unsigned long kern_base, kern_size;
+बाह्य अचिन्हित दीर्घ kern_base, kern_size;
 
-/* __raw_{read,write}{b,w,l,q} uses direct access.
+/* __raw_अणुपढ़ो,ग_लिखोपूर्णअणुb,w,l,qपूर्ण uses direct access.
  * Access the memory as big endian bypassing the cache
  * by using ASI_PHYS_BYPASS_EC_E
  */
-#define __raw_readb __raw_readb
-static inline u8 __raw_readb(const volatile void __iomem *addr)
-{
+#घोषणा __raw_पढ़ोb __raw_पढ़ोb
+अटल अंतरभूत u8 __raw_पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u8 ret;
 
-	__asm__ __volatile__("lduba\t[%1] %2, %0\t/* pci_raw_readb */"
+	__यंत्र__ __अस्थिर__("lduba\t[%1] %2, %0\t/* pci_raw_readb */"
 			     : "=r" (ret)
 			     : "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define __raw_readw __raw_readw
-static inline u16 __raw_readw(const volatile void __iomem *addr)
-{
+#घोषणा __raw_पढ़ोw __raw_पढ़ोw
+अटल अंतरभूत u16 __raw_पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u16 ret;
 
-	__asm__ __volatile__("lduha\t[%1] %2, %0\t/* pci_raw_readw */"
+	__यंत्र__ __अस्थिर__("lduha\t[%1] %2, %0\t/* pci_raw_readw */"
 			     : "=r" (ret)
 			     : "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define __raw_readl __raw_readl
-static inline u32 __raw_readl(const volatile void __iomem *addr)
-{
+#घोषणा __raw_पढ़ोl __raw_पढ़ोl
+अटल अंतरभूत u32 __raw_पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u32 ret;
 
-	__asm__ __volatile__("lduwa\t[%1] %2, %0\t/* pci_raw_readl */"
+	__यंत्र__ __अस्थिर__("lduwa\t[%1] %2, %0\t/* pci_raw_readl */"
 			     : "=r" (ret)
 			     : "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define __raw_readq __raw_readq
-static inline u64 __raw_readq(const volatile void __iomem *addr)
-{
+#घोषणा __raw_पढ़ोq __raw_पढ़ोq
+अटल अंतरभूत u64 __raw_पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
 	u64 ret;
 
-	__asm__ __volatile__("ldxa\t[%1] %2, %0\t/* pci_raw_readq */"
+	__यंत्र__ __अस्थिर__("ldxa\t[%1] %2, %0\t/* pci_raw_readq */"
 			     : "=r" (ret)
 			     : "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E));
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define __raw_writeb __raw_writeb
-static inline void __raw_writeb(u8 b, const volatile void __iomem *addr)
-{
-	__asm__ __volatile__("stba\t%r0, [%1] %2\t/* pci_raw_writeb */"
-			     : /* no outputs */
+#घोषणा __raw_ग_लिखोb __raw_ग_लिखोb
+अटल अंतरभूत व्योम __raw_ग_लिखोb(u8 b, स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	__यंत्र__ __अस्थिर__("stba\t%r0, [%1] %2\t/* pci_raw_writeb */"
+			     : /* no outमाला_दो */
 			     : "Jr" (b), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E));
-}
+पूर्ण
 
-#define __raw_writew __raw_writew
-static inline void __raw_writew(u16 w, const volatile void __iomem *addr)
-{
-	__asm__ __volatile__("stha\t%r0, [%1] %2\t/* pci_raw_writew */"
-			     : /* no outputs */
+#घोषणा __raw_ग_लिखोw __raw_ग_लिखोw
+अटल अंतरभूत व्योम __raw_ग_लिखोw(u16 w, स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	__यंत्र__ __अस्थिर__("stha\t%r0, [%1] %2\t/* pci_raw_writew */"
+			     : /* no outमाला_दो */
 			     : "Jr" (w), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E));
-}
+पूर्ण
 
-#define __raw_writel __raw_writel
-static inline void __raw_writel(u32 l, const volatile void __iomem *addr)
-{
-	__asm__ __volatile__("stwa\t%r0, [%1] %2\t/* pci_raw_writel */"
-			     : /* no outputs */
+#घोषणा __raw_ग_लिखोl __raw_ग_लिखोl
+अटल अंतरभूत व्योम __raw_ग_लिखोl(u32 l, स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	__यंत्र__ __अस्थिर__("stwa\t%r0, [%1] %2\t/* pci_raw_writel */"
+			     : /* no outमाला_दो */
 			     : "Jr" (l), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E));
-}
+पूर्ण
 
-#define __raw_writeq __raw_writeq
-static inline void __raw_writeq(u64 q, const volatile void __iomem *addr)
-{
-	__asm__ __volatile__("stxa\t%r0, [%1] %2\t/* pci_raw_writeq */"
-			     : /* no outputs */
+#घोषणा __raw_ग_लिखोq __raw_ग_लिखोq
+अटल अंतरभूत व्योम __raw_ग_लिखोq(u64 q, स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	__यंत्र__ __अस्थिर__("stxa\t%r0, [%1] %2\t/* pci_raw_writeq */"
+			     : /* no outमाला_दो */
 			     : "Jr" (q), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E));
-}
+पूर्ण
 
 /* Memory functions, same as I/O accesses on Ultra.
  * Access memory as little endian bypassing
  * the cache by using ASI_PHYS_BYPASS_EC_E_L
  */
-#define readb readb
-#define readb_relaxed readb
-static inline u8 readb(const volatile void __iomem *addr)
-{	u8 ret;
+#घोषणा पढ़ोb पढ़ोb
+#घोषणा पढ़ोb_relaxed पढ़ोb
+अटल अंतरभूत u8 पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
+अणु	u8 ret;
 
-	__asm__ __volatile__("lduba\t[%1] %2, %0\t/* pci_readb */"
+	__यंत्र__ __अस्थिर__("lduba\t[%1] %2, %0\t/* pci_readb */"
 			     : "=r" (ret)
 			     : "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define readw readw
-#define readw_relaxed readw
-static inline u16 readw(const volatile void __iomem *addr)
-{	u16 ret;
+#घोषणा पढ़ोw पढ़ोw
+#घोषणा पढ़ोw_relaxed पढ़ोw
+अटल अंतरभूत u16 पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
+अणु	u16 ret;
 
-	__asm__ __volatile__("lduha\t[%1] %2, %0\t/* pci_readw */"
-			     : "=r" (ret)
-			     : "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
-			     : "memory");
-
-	return ret;
-}
-
-#define readl readl
-#define readl_relaxed readl
-static inline u32 readl(const volatile void __iomem *addr)
-{	u32 ret;
-
-	__asm__ __volatile__("lduwa\t[%1] %2, %0\t/* pci_readl */"
+	__यंत्र__ __अस्थिर__("lduha\t[%1] %2, %0\t/* pci_readw */"
 			     : "=r" (ret)
 			     : "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define readq readq
-#define readq_relaxed readq
-static inline u64 readq(const volatile void __iomem *addr)
-{	u64 ret;
+#घोषणा पढ़ोl पढ़ोl
+#घोषणा पढ़ोl_relaxed पढ़ोl
+अटल अंतरभूत u32 पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
+अणु	u32 ret;
 
-	__asm__ __volatile__("ldxa\t[%1] %2, %0\t/* pci_readq */"
+	__यंत्र__ __अस्थिर__("lduwa\t[%1] %2, %0\t/* pci_readl */"
 			     : "=r" (ret)
 			     : "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define writeb writeb
-#define writeb_relaxed writeb
-static inline void writeb(u8 b, volatile void __iomem *addr)
-{
-	__asm__ __volatile__("stba\t%r0, [%1] %2\t/* pci_writeb */"
-			     : /* no outputs */
+#घोषणा पढ़ोq पढ़ोq
+#घोषणा पढ़ोq_relaxed पढ़ोq
+अटल अंतरभूत u64 पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
+अणु	u64 ret;
+
+	__यंत्र__ __अस्थिर__("ldxa\t[%1] %2, %0\t/* pci_readq */"
+			     : "=r" (ret)
+			     : "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
+			     : "memory");
+
+	वापस ret;
+पूर्ण
+
+#घोषणा ग_लिखोb ग_लिखोb
+#घोषणा ग_लिखोb_relaxed ग_लिखोb
+अटल अंतरभूत व्योम ग_लिखोb(u8 b, अस्थिर व्योम __iomem *addr)
+अणु
+	__यंत्र__ __अस्थिर__("stba\t%r0, [%1] %2\t/* pci_writeb */"
+			     : /* no outमाला_दो */
 			     : "Jr" (b), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
-}
+पूर्ण
 
-#define writew writew
-#define writew_relaxed writew
-static inline void writew(u16 w, volatile void __iomem *addr)
-{
-	__asm__ __volatile__("stha\t%r0, [%1] %2\t/* pci_writew */"
-			     : /* no outputs */
+#घोषणा ग_लिखोw ग_लिखोw
+#घोषणा ग_लिखोw_relaxed ग_लिखोw
+अटल अंतरभूत व्योम ग_लिखोw(u16 w, अस्थिर व्योम __iomem *addr)
+अणु
+	__यंत्र__ __अस्थिर__("stha\t%r0, [%1] %2\t/* pci_writew */"
+			     : /* no outमाला_दो */
 			     : "Jr" (w), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
-}
+पूर्ण
 
-#define writel writel
-#define writel_relaxed writel
-static inline void writel(u32 l, volatile void __iomem *addr)
-{
-	__asm__ __volatile__("stwa\t%r0, [%1] %2\t/* pci_writel */"
-			     : /* no outputs */
+#घोषणा ग_लिखोl ग_लिखोl
+#घोषणा ग_लिखोl_relaxed ग_लिखोl
+अटल अंतरभूत व्योम ग_लिखोl(u32 l, अस्थिर व्योम __iomem *addr)
+अणु
+	__यंत्र__ __अस्थिर__("stwa\t%r0, [%1] %2\t/* pci_writel */"
+			     : /* no outमाला_दो */
 			     : "Jr" (l), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
-}
+पूर्ण
 
-#define writeq writeq
-#define writeq_relaxed writeq
-static inline void writeq(u64 q, volatile void __iomem *addr)
-{
-	__asm__ __volatile__("stxa\t%r0, [%1] %2\t/* pci_writeq */"
-			     : /* no outputs */
+#घोषणा ग_लिखोq ग_लिखोq
+#घोषणा ग_लिखोq_relaxed ग_लिखोq
+अटल अंतरभूत व्योम ग_लिखोq(u64 q, अस्थिर व्योम __iomem *addr)
+अणु
+	__यंत्र__ __अस्थिर__("stxa\t%r0, [%1] %2\t/* pci_writeq */"
+			     : /* no outमाला_दो */
 			     : "Jr" (q), "r" (addr), "i" (ASI_PHYS_BYPASS_EC_E_L)
 			     : "memory");
-}
+पूर्ण
 
-#define inb inb
-static inline u8 inb(unsigned long addr)
-{
-	return readb((volatile void __iomem *)addr);
-}
+#घोषणा inb inb
+अटल अंतरभूत u8 inb(अचिन्हित दीर्घ addr)
+अणु
+	वापस पढ़ोb((अस्थिर व्योम __iomem *)addr);
+पूर्ण
 
-#define inw inw
-static inline u16 inw(unsigned long addr)
-{
-	return readw((volatile void __iomem *)addr);
-}
+#घोषणा inw inw
+अटल अंतरभूत u16 inw(अचिन्हित दीर्घ addr)
+अणु
+	वापस पढ़ोw((अस्थिर व्योम __iomem *)addr);
+पूर्ण
 
-#define inl inl
-static inline u32 inl(unsigned long addr)
-{
-	return readl((volatile void __iomem *)addr);
-}
+#घोषणा inl inl
+अटल अंतरभूत u32 inl(अचिन्हित दीर्घ addr)
+अणु
+	वापस पढ़ोl((अस्थिर व्योम __iomem *)addr);
+पूर्ण
 
-#define outb outb
-static inline void outb(u8 b, unsigned long addr)
-{
-	writeb(b, (volatile void __iomem *)addr);
-}
+#घोषणा outb outb
+अटल अंतरभूत व्योम outb(u8 b, अचिन्हित दीर्घ addr)
+अणु
+	ग_लिखोb(b, (अस्थिर व्योम __iomem *)addr);
+पूर्ण
 
-#define outw outw
-static inline void outw(u16 w, unsigned long addr)
-{
-	writew(w, (volatile void __iomem *)addr);
-}
+#घोषणा outw outw
+अटल अंतरभूत व्योम outw(u16 w, अचिन्हित दीर्घ addr)
+अणु
+	ग_लिखोw(w, (अस्थिर व्योम __iomem *)addr);
+पूर्ण
 
-#define outl outl
-static inline void outl(u32 l, unsigned long addr)
-{
-	writel(l, (volatile void __iomem *)addr);
-}
+#घोषणा outl outl
+अटल अंतरभूत व्योम outl(u32 l, अचिन्हित दीर्घ addr)
+अणु
+	ग_लिखोl(l, (अस्थिर व्योम __iomem *)addr);
+पूर्ण
 
 
-#define inb_p(__addr) 		inb(__addr)
-#define outb_p(__b, __addr)	outb(__b, __addr)
-#define inw_p(__addr)		inw(__addr)
-#define outw_p(__w, __addr)	outw(__w, __addr)
-#define inl_p(__addr)		inl(__addr)
-#define outl_p(__l, __addr)	outl(__l, __addr)
+#घोषणा inb_p(__addr) 		inb(__addr)
+#घोषणा outb_p(__b, __addr)	outb(__b, __addr)
+#घोषणा inw_p(__addr)		inw(__addr)
+#घोषणा outw_p(__w, __addr)	outw(__w, __addr)
+#घोषणा inl_p(__addr)		inl(__addr)
+#घोषणा outl_p(__l, __addr)	outl(__l, __addr)
 
-void outsb(unsigned long, const void *, unsigned long);
-void outsw(unsigned long, const void *, unsigned long);
-void outsl(unsigned long, const void *, unsigned long);
-void insb(unsigned long, void *, unsigned long);
-void insw(unsigned long, void *, unsigned long);
-void insl(unsigned long, void *, unsigned long);
+व्योम outsb(अचिन्हित दीर्घ, स्थिर व्योम *, अचिन्हित दीर्घ);
+व्योम outsw(अचिन्हित दीर्घ, स्थिर व्योम *, अचिन्हित दीर्घ);
+व्योम outsl(अचिन्हित दीर्घ, स्थिर व्योम *, अचिन्हित दीर्घ);
+व्योम insb(अचिन्हित दीर्घ, व्योम *, अचिन्हित दीर्घ);
+व्योम insw(अचिन्हित दीर्घ, व्योम *, अचिन्हित दीर्घ);
+व्योम insl(अचिन्हित दीर्घ, व्योम *, अचिन्हित दीर्घ);
 
-static inline void readsb(void __iomem *port, void *buf, unsigned long count)
-{
-	insb((unsigned long __force)port, buf, count);
-}
-static inline void readsw(void __iomem *port, void *buf, unsigned long count)
-{
-	insw((unsigned long __force)port, buf, count);
-}
+अटल अंतरभूत व्योम पढ़ोsb(व्योम __iomem *port, व्योम *buf, अचिन्हित दीर्घ count)
+अणु
+	insb((अचिन्हित दीर्घ __क्रमce)port, buf, count);
+पूर्ण
+अटल अंतरभूत व्योम पढ़ोsw(व्योम __iomem *port, व्योम *buf, अचिन्हित दीर्घ count)
+अणु
+	insw((अचिन्हित दीर्घ __क्रमce)port, buf, count);
+पूर्ण
 
-static inline void readsl(void __iomem *port, void *buf, unsigned long count)
-{
-	insl((unsigned long __force)port, buf, count);
-}
+अटल अंतरभूत व्योम पढ़ोsl(व्योम __iomem *port, व्योम *buf, अचिन्हित दीर्घ count)
+अणु
+	insl((अचिन्हित दीर्घ __क्रमce)port, buf, count);
+पूर्ण
 
-static inline void writesb(void __iomem *port, const void *buf, unsigned long count)
-{
-	outsb((unsigned long __force)port, buf, count);
-}
+अटल अंतरभूत व्योम ग_लिखोsb(व्योम __iomem *port, स्थिर व्योम *buf, अचिन्हित दीर्घ count)
+अणु
+	outsb((अचिन्हित दीर्घ __क्रमce)port, buf, count);
+पूर्ण
 
-static inline void writesw(void __iomem *port, const void *buf, unsigned long count)
-{
-	outsw((unsigned long __force)port, buf, count);
-}
+अटल अंतरभूत व्योम ग_लिखोsw(व्योम __iomem *port, स्थिर व्योम *buf, अचिन्हित दीर्घ count)
+अणु
+	outsw((अचिन्हित दीर्घ __क्रमce)port, buf, count);
+पूर्ण
 
-static inline void writesl(void __iomem *port, const void *buf, unsigned long count)
-{
-	outsl((unsigned long __force)port, buf, count);
-}
+अटल अंतरभूत व्योम ग_लिखोsl(व्योम __iomem *port, स्थिर व्योम *buf, अचिन्हित दीर्घ count)
+अणु
+	outsl((अचिन्हित दीर्घ __क्रमce)port, buf, count);
+पूर्ण
 
-#define ioread8_rep(p,d,l)	readsb(p,d,l)
-#define ioread16_rep(p,d,l)	readsw(p,d,l)
-#define ioread32_rep(p,d,l)	readsl(p,d,l)
-#define iowrite8_rep(p,d,l)	writesb(p,d,l)
-#define iowrite16_rep(p,d,l)	writesw(p,d,l)
-#define iowrite32_rep(p,d,l)	writesl(p,d,l)
+#घोषणा ioपढ़ो8_rep(p,d,l)	पढ़ोsb(p,d,l)
+#घोषणा ioपढ़ो16_rep(p,d,l)	पढ़ोsw(p,d,l)
+#घोषणा ioपढ़ो32_rep(p,d,l)	पढ़ोsl(p,d,l)
+#घोषणा ioग_लिखो8_rep(p,d,l)	ग_लिखोsb(p,d,l)
+#घोषणा ioग_लिखो16_rep(p,d,l)	ग_लिखोsw(p,d,l)
+#घोषणा ioग_लिखो32_rep(p,d,l)	ग_लिखोsl(p,d,l)
 
 /* Valid I/O Space regions are anywhere, because each PCI bus supported
  * can live in an arbitrary area of the physical address range.
  */
-#define IO_SPACE_LIMIT 0xffffffffffffffffUL
+#घोषणा IO_SPACE_LIMIT 0xffffffffffffffffUL
 
-/* Now, SBUS variants, only difference from PCI is that we do
+/* Now, SBUS variants, only dअगरference from PCI is that we करो
  * not use little-endian ASIs.
  */
-static inline u8 sbus_readb(const volatile void __iomem *addr)
-{
-	return __raw_readb(addr);
-}
+अटल अंतरभूत u8 sbus_पढ़ोb(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस __raw_पढ़ोb(addr);
+पूर्ण
 
-static inline u16 sbus_readw(const volatile void __iomem *addr)
-{
-	return __raw_readw(addr);
-}
+अटल अंतरभूत u16 sbus_पढ़ोw(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस __raw_पढ़ोw(addr);
+पूर्ण
 
-static inline u32 sbus_readl(const volatile void __iomem *addr)
-{
-	return __raw_readl(addr);
-}
+अटल अंतरभूत u32 sbus_पढ़ोl(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस __raw_पढ़ोl(addr);
+पूर्ण
 
-static inline u64 sbus_readq(const volatile void __iomem *addr)
-{
-	return __raw_readq(addr);
-}
+अटल अंतरभूत u64 sbus_पढ़ोq(स्थिर अस्थिर व्योम __iomem *addr)
+अणु
+	वापस __raw_पढ़ोq(addr);
+पूर्ण
 
-static inline void sbus_writeb(u8 b, volatile void __iomem *addr)
-{
-	__raw_writeb(b, addr);
-}
+अटल अंतरभूत व्योम sbus_ग_लिखोb(u8 b, अस्थिर व्योम __iomem *addr)
+अणु
+	__raw_ग_लिखोb(b, addr);
+पूर्ण
 
-static inline void sbus_writew(u16 w, volatile void __iomem *addr)
-{
-	__raw_writew(w, addr);
-}
+अटल अंतरभूत व्योम sbus_ग_लिखोw(u16 w, अस्थिर व्योम __iomem *addr)
+अणु
+	__raw_ग_लिखोw(w, addr);
+पूर्ण
 
-static inline void sbus_writel(u32 l, volatile void __iomem *addr)
-{
-	__raw_writel(l, addr);
-}
+अटल अंतरभूत व्योम sbus_ग_लिखोl(u32 l, अस्थिर व्योम __iomem *addr)
+अणु
+	__raw_ग_लिखोl(l, addr);
+पूर्ण
 
-static inline void sbus_writeq(u64 q, volatile void __iomem *addr)
-{
-	__raw_writeq(q, addr);
-}
+अटल अंतरभूत व्योम sbus_ग_लिखोq(u64 q, अस्थिर व्योम __iomem *addr)
+अणु
+	__raw_ग_लिखोq(q, addr);
+पूर्ण
 
-static inline void sbus_memset_io(volatile void __iomem *dst, int c, __kernel_size_t n)
-{
-	while(n--) {
-		sbus_writeb(c, dst);
+अटल अंतरभूत व्योम sbus_स_रखो_io(अस्थिर व्योम __iomem *dst, पूर्णांक c, __kernel_माप_प्रकार n)
+अणु
+	जबतक(n--) अणु
+		sbus_ग_लिखोb(c, dst);
 		dst++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void memset_io(volatile void __iomem *dst, int c, __kernel_size_t n)
-{
-	volatile void __iomem *d = dst;
+अटल अंतरभूत व्योम स_रखो_io(अस्थिर व्योम __iomem *dst, पूर्णांक c, __kernel_माप_प्रकार n)
+अणु
+	अस्थिर व्योम __iomem *d = dst;
 
-	while (n--) {
-		writeb(c, d);
+	जबतक (n--) अणु
+		ग_लिखोb(c, d);
 		d++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void sbus_memcpy_fromio(void *dst, const volatile void __iomem *src,
-				      __kernel_size_t n)
-{
-	char *d = dst;
+अटल अंतरभूत व्योम sbus_स_नकल_fromio(व्योम *dst, स्थिर अस्थिर व्योम __iomem *src,
+				      __kernel_माप_प्रकार n)
+अणु
+	अक्षर *d = dst;
 
-	while (n--) {
-		char tmp = sbus_readb(src);
-		*d++ = tmp;
+	जबतक (n--) अणु
+		अक्षर पंचांगp = sbus_पढ़ोb(src);
+		*d++ = पंचांगp;
 		src++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
-static inline void memcpy_fromio(void *dst, const volatile void __iomem *src,
-				 __kernel_size_t n)
-{
-	char *d = dst;
+अटल अंतरभूत व्योम स_नकल_fromio(व्योम *dst, स्थिर अस्थिर व्योम __iomem *src,
+				 __kernel_माप_प्रकार n)
+अणु
+	अक्षर *d = dst;
 
-	while (n--) {
-		char tmp = readb(src);
-		*d++ = tmp;
+	जबतक (n--) अणु
+		अक्षर पंचांगp = पढ़ोb(src);
+		*d++ = पंचांगp;
 		src++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void sbus_memcpy_toio(volatile void __iomem *dst, const void *src,
-				    __kernel_size_t n)
-{
-	const char *s = src;
-	volatile void __iomem *d = dst;
+अटल अंतरभूत व्योम sbus_स_नकल_toio(अस्थिर व्योम __iomem *dst, स्थिर व्योम *src,
+				    __kernel_माप_प्रकार n)
+अणु
+	स्थिर अक्षर *s = src;
+	अस्थिर व्योम __iomem *d = dst;
 
-	while (n--) {
-		char tmp = *s++;
-		sbus_writeb(tmp, d);
+	जबतक (n--) अणु
+		अक्षर पंचांगp = *s++;
+		sbus_ग_लिखोb(पंचांगp, d);
 		d++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void memcpy_toio(volatile void __iomem *dst, const void *src,
-			       __kernel_size_t n)
-{
-	const char *s = src;
-	volatile void __iomem *d = dst;
+अटल अंतरभूत व्योम स_नकल_toio(अस्थिर व्योम __iomem *dst, स्थिर व्योम *src,
+			       __kernel_माप_प्रकार n)
+अणु
+	स्थिर अक्षर *s = src;
+	अस्थिर व्योम __iomem *d = dst;
 
-	while (n--) {
-		char tmp = *s++;
-		writeb(tmp, d);
+	जबतक (n--) अणु
+		अक्षर पंचांगp = *s++;
+		ग_लिखोb(पंचांगp, d);
 		d++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
 /* On sparc64 we have the whole physical IO address space accessible
- * using physically addressed loads and stores, so this does nothing.
+ * using physically addressed loads and stores, so this करोes nothing.
  */
-static inline void __iomem *ioremap(unsigned long offset, unsigned long size)
-{
-	return (void __iomem *)offset;
-}
+अटल अंतरभूत व्योम __iomem *ioremap(अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size)
+अणु
+	वापस (व्योम __iomem *)offset;
+पूर्ण
 
-#define ioremap_uc(X,Y)			ioremap((X),(Y))
-#define ioremap_wc(X,Y)			ioremap((X),(Y))
-#define ioremap_wt(X,Y)			ioremap((X),(Y))
-static inline void __iomem *ioremap_np(unsigned long offset, unsigned long size)
-{
-	return NULL;
-}
+#घोषणा ioremap_uc(X,Y)			ioremap((X),(Y))
+#घोषणा ioremap_wc(X,Y)			ioremap((X),(Y))
+#घोषणा ioremap_wt(X,Y)			ioremap((X),(Y))
+अटल अंतरभूत व्योम __iomem *ioremap_np(अचिन्हित दीर्घ offset, अचिन्हित दीर्घ size)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline void iounmap(volatile void __iomem *addr)
-{
-}
+अटल अंतरभूत व्योम iounmap(अस्थिर व्योम __iomem *addr)
+अणु
+पूर्ण
 
-#define ioread8			readb
-#define ioread16		readw
-#define ioread16be		__raw_readw
-#define ioread32		readl
-#define ioread32be		__raw_readl
-#define iowrite8		writeb
-#define iowrite16		writew
-#define iowrite16be		__raw_writew
-#define iowrite32		writel
-#define iowrite32be		__raw_writel
+#घोषणा ioपढ़ो8			पढ़ोb
+#घोषणा ioपढ़ो16		पढ़ोw
+#घोषणा ioपढ़ो16be		__raw_पढ़ोw
+#घोषणा ioपढ़ो32		पढ़ोl
+#घोषणा ioपढ़ो32be		__raw_पढ़ोl
+#घोषणा ioग_लिखो8		ग_लिखोb
+#घोषणा ioग_लिखो16		ग_लिखोw
+#घोषणा ioग_लिखो16be		__raw_ग_लिखोw
+#घोषणा ioग_लिखो32		ग_लिखोl
+#घोषणा ioग_लिखो32be		__raw_ग_लिखोl
 
-/* Create a virtual mapping cookie for an IO port range */
-void __iomem *ioport_map(unsigned long port, unsigned int nr);
-void ioport_unmap(void __iomem *);
+/* Create a भव mapping cookie क्रम an IO port range */
+व्योम __iomem *ioport_map(अचिन्हित दीर्घ port, अचिन्हित पूर्णांक nr);
+व्योम ioport_unmap(व्योम __iomem *);
 
-/* Create a virtual mapping cookie for a PCI BAR (memory or IO) */
-struct pci_dev;
-void pci_iounmap(struct pci_dev *dev, void __iomem *);
+/* Create a भव mapping cookie क्रम a PCI BAR (memory or IO) */
+काष्ठा pci_dev;
+व्योम pci_iounmap(काष्ठा pci_dev *dev, व्योम __iomem *);
 
-static inline int sbus_can_dma_64bit(void)
-{
-	return 1;
-}
-static inline int sbus_can_burst64(void)
-{
-	return 1;
-}
-struct device;
-void sbus_set_sbus64(struct device *, int);
+अटल अंतरभूत पूर्णांक sbus_can_dma_64bit(व्योम)
+अणु
+	वापस 1;
+पूर्ण
+अटल अंतरभूत पूर्णांक sbus_can_burst64(व्योम)
+अणु
+	वापस 1;
+पूर्ण
+काष्ठा device;
+व्योम sbus_set_sbus64(काष्ठा device *, पूर्णांक);
 
 /*
- * Convert a physical pointer to a virtual kernel pointer for /dev/mem
+ * Convert a physical poपूर्णांकer to a भव kernel poपूर्णांकer क्रम /dev/mem
  * access
  */
-#define xlate_dev_mem_ptr(p)	__va(p)
+#घोषणा xlate_dev_mem_ptr(p)	__va(p)
 
-#endif
+#पूर्ण_अगर
 
-#endif /* !(__SPARC64_IO_H) */
+#पूर्ण_अगर /* !(__SPARC64_IO_H) */

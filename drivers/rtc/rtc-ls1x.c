@@ -1,192 +1,193 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (c) 2011 Zhao Zhang <zhzhl555@gmail.com>
  *
  * Derived from driver/rtc/rtc-au1xxx.c
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/rtc.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
-#include <linux/delay.h>
-#include <linux/types.h>
-#include <linux/io.h>
-#include <loongson1.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/init.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/types.h>
+#समावेश <linux/पन.स>
+#समावेश <loongson1.h>
 
-#define LS1X_RTC_REG_OFFSET	(LS1X_RTC_BASE + 0x20)
-#define LS1X_RTC_REGS(x) \
-		((void __iomem *)KSEG1ADDR(LS1X_RTC_REG_OFFSET + (x)))
+#घोषणा LS1X_RTC_REG_OFFSET	(LS1X_RTC_BASE + 0x20)
+#घोषणा LS1X_RTC_REGS(x) \
+		((व्योम __iomem *)KSEG1ADDR(LS1X_RTC_REG_OFFSET + (x)))
 
 /*RTC programmable counters 0 and 1*/
-#define SYS_COUNTER_CNTRL		(LS1X_RTC_REGS(0x20))
-#define SYS_CNTRL_ERS			(1 << 23)
-#define SYS_CNTRL_RTS			(1 << 20)
-#define SYS_CNTRL_RM2			(1 << 19)
-#define SYS_CNTRL_RM1			(1 << 18)
-#define SYS_CNTRL_RM0			(1 << 17)
-#define SYS_CNTRL_RS			(1 << 16)
-#define SYS_CNTRL_BP			(1 << 14)
-#define SYS_CNTRL_REN			(1 << 13)
-#define SYS_CNTRL_BRT			(1 << 12)
-#define SYS_CNTRL_TEN			(1 << 11)
-#define SYS_CNTRL_BTT			(1 << 10)
-#define SYS_CNTRL_E0			(1 << 8)
-#define SYS_CNTRL_ETS			(1 << 7)
-#define SYS_CNTRL_32S			(1 << 5)
-#define SYS_CNTRL_TTS			(1 << 4)
-#define SYS_CNTRL_TM2			(1 << 3)
-#define SYS_CNTRL_TM1			(1 << 2)
-#define SYS_CNTRL_TM0			(1 << 1)
-#define SYS_CNTRL_TS			(1 << 0)
+#घोषणा SYS_COUNTER_CNTRL		(LS1X_RTC_REGS(0x20))
+#घोषणा SYS_CNTRL_ERS			(1 << 23)
+#घोषणा SYS_CNTRL_RTS			(1 << 20)
+#घोषणा SYS_CNTRL_RM2			(1 << 19)
+#घोषणा SYS_CNTRL_RM1			(1 << 18)
+#घोषणा SYS_CNTRL_RM0			(1 << 17)
+#घोषणा SYS_CNTRL_RS			(1 << 16)
+#घोषणा SYS_CNTRL_BP			(1 << 14)
+#घोषणा SYS_CNTRL_REN			(1 << 13)
+#घोषणा SYS_CNTRL_BRT			(1 << 12)
+#घोषणा SYS_CNTRL_TEN			(1 << 11)
+#घोषणा SYS_CNTRL_BTT			(1 << 10)
+#घोषणा SYS_CNTRL_E0			(1 << 8)
+#घोषणा SYS_CNTRL_ETS			(1 << 7)
+#घोषणा SYS_CNTRL_32S			(1 << 5)
+#घोषणा SYS_CNTRL_TTS			(1 << 4)
+#घोषणा SYS_CNTRL_TM2			(1 << 3)
+#घोषणा SYS_CNTRL_TM1			(1 << 2)
+#घोषणा SYS_CNTRL_TM0			(1 << 1)
+#घोषणा SYS_CNTRL_TS			(1 << 0)
 
 /* Programmable Counter 0 Registers */
-#define SYS_TOYTRIM		(LS1X_RTC_REGS(0))
-#define SYS_TOYWRITE0		(LS1X_RTC_REGS(4))
-#define SYS_TOYWRITE1		(LS1X_RTC_REGS(8))
-#define SYS_TOYREAD0		(LS1X_RTC_REGS(0xC))
-#define SYS_TOYREAD1		(LS1X_RTC_REGS(0x10))
-#define SYS_TOYMATCH0		(LS1X_RTC_REGS(0x14))
-#define SYS_TOYMATCH1		(LS1X_RTC_REGS(0x18))
-#define SYS_TOYMATCH2		(LS1X_RTC_REGS(0x1C))
+#घोषणा SYS_TOYTRIM		(LS1X_RTC_REGS(0))
+#घोषणा SYS_TOYWRITE0		(LS1X_RTC_REGS(4))
+#घोषणा SYS_TOYWRITE1		(LS1X_RTC_REGS(8))
+#घोषणा SYS_TOYREAD0		(LS1X_RTC_REGS(0xC))
+#घोषणा SYS_TOYREAD1		(LS1X_RTC_REGS(0x10))
+#घोषणा SYS_TOYMATCH0		(LS1X_RTC_REGS(0x14))
+#घोषणा SYS_TOYMATCH1		(LS1X_RTC_REGS(0x18))
+#घोषणा SYS_TOYMATCH2		(LS1X_RTC_REGS(0x1C))
 
 /* Programmable Counter 1 Registers */
-#define SYS_RTCTRIM		(LS1X_RTC_REGS(0x40))
-#define SYS_RTCWRITE0		(LS1X_RTC_REGS(0x44))
-#define SYS_RTCREAD0		(LS1X_RTC_REGS(0x48))
-#define SYS_RTCMATCH0		(LS1X_RTC_REGS(0x4C))
-#define SYS_RTCMATCH1		(LS1X_RTC_REGS(0x50))
-#define SYS_RTCMATCH2		(LS1X_RTC_REGS(0x54))
+#घोषणा SYS_RTCTRIM		(LS1X_RTC_REGS(0x40))
+#घोषणा SYS_RTCWRITE0		(LS1X_RTC_REGS(0x44))
+#घोषणा SYS_RTCREAD0		(LS1X_RTC_REGS(0x48))
+#घोषणा SYS_RTCMATCH0		(LS1X_RTC_REGS(0x4C))
+#घोषणा SYS_RTCMATCH1		(LS1X_RTC_REGS(0x50))
+#घोषणा SYS_RTCMATCH2		(LS1X_RTC_REGS(0x54))
 
-#define LS1X_SEC_OFFSET		(4)
-#define LS1X_MIN_OFFSET		(10)
-#define LS1X_HOUR_OFFSET	(16)
-#define LS1X_DAY_OFFSET		(21)
-#define LS1X_MONTH_OFFSET	(26)
+#घोषणा LS1X_SEC_OFFSET		(4)
+#घोषणा LS1X_MIN_OFFSET		(10)
+#घोषणा LS1X_HOUR_OFFSET	(16)
+#घोषणा LS1X_DAY_OFFSET		(21)
+#घोषणा LS1X_MONTH_OFFSET	(26)
 
 
-#define LS1X_SEC_MASK		(0x3f)
-#define LS1X_MIN_MASK		(0x3f)
-#define LS1X_HOUR_MASK		(0x1f)
-#define LS1X_DAY_MASK		(0x1f)
-#define LS1X_MONTH_MASK		(0x3f)
-#define LS1X_YEAR_MASK		(0xffffffff)
+#घोषणा LS1X_SEC_MASK		(0x3f)
+#घोषणा LS1X_MIN_MASK		(0x3f)
+#घोषणा LS1X_HOUR_MASK		(0x1f)
+#घोषणा LS1X_DAY_MASK		(0x1f)
+#घोषणा LS1X_MONTH_MASK		(0x3f)
+#घोषणा LS1X_YEAR_MASK		(0xffffffff)
 
-#define ls1x_get_sec(t)		(((t) >> LS1X_SEC_OFFSET) & LS1X_SEC_MASK)
-#define ls1x_get_min(t)		(((t) >> LS1X_MIN_OFFSET) & LS1X_MIN_MASK)
-#define ls1x_get_hour(t)	(((t) >> LS1X_HOUR_OFFSET) & LS1X_HOUR_MASK)
-#define ls1x_get_day(t)		(((t) >> LS1X_DAY_OFFSET) & LS1X_DAY_MASK)
-#define ls1x_get_month(t)	(((t) >> LS1X_MONTH_OFFSET) & LS1X_MONTH_MASK)
+#घोषणा ls1x_get_sec(t)		(((t) >> LS1X_SEC_OFFSET) & LS1X_SEC_MASK)
+#घोषणा ls1x_get_min(t)		(((t) >> LS1X_MIN_OFFSET) & LS1X_MIN_MASK)
+#घोषणा ls1x_get_hour(t)	(((t) >> LS1X_HOUR_OFFSET) & LS1X_HOUR_MASK)
+#घोषणा ls1x_get_day(t)		(((t) >> LS1X_DAY_OFFSET) & LS1X_DAY_MASK)
+#घोषणा ls1x_get_month(t)	(((t) >> LS1X_MONTH_OFFSET) & LS1X_MONTH_MASK)
 
-#define RTC_CNTR_OK (SYS_CNTRL_E0 | SYS_CNTRL_32S)
+#घोषणा RTC_CNTR_OK (SYS_CNTRL_E0 | SYS_CNTRL_32S)
 
-static int ls1x_rtc_read_time(struct device *dev, struct rtc_time *rtm)
-{
-	unsigned long v;
-	time64_t t;
+अटल पूर्णांक ls1x_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *rपंचांग)
+अणु
+	अचिन्हित दीर्घ v;
+	समय64_t t;
 
-	v = readl(SYS_TOYREAD0);
-	t = readl(SYS_TOYREAD1);
+	v = पढ़ोl(SYS_TOYREAD0);
+	t = पढ़ोl(SYS_TOYREAD1);
 
-	memset(rtm, 0, sizeof(struct rtc_time));
-	t  = mktime64((t & LS1X_YEAR_MASK), ls1x_get_month(v),
+	स_रखो(rपंचांग, 0, माप(काष्ठा rtc_समय));
+	t  = स_गढ़ो64((t & LS1X_YEAR_MASK), ls1x_get_month(v),
 			ls1x_get_day(v), ls1x_get_hour(v),
 			ls1x_get_min(v), ls1x_get_sec(v));
-	rtc_time64_to_tm(t, rtm);
+	rtc_समय64_to_पंचांग(t, rपंचांग);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ls1x_rtc_set_time(struct device *dev, struct  rtc_time *rtm)
-{
-	unsigned long v, t, c;
-	int ret = -ETIMEDOUT;
+अटल पूर्णांक ls1x_rtc_set_समय(काष्ठा device *dev, काष्ठा  rtc_समय *rपंचांग)
+अणु
+	अचिन्हित दीर्घ v, t, c;
+	पूर्णांक ret = -ETIMEDOUT;
 
-	v = ((rtm->tm_mon + 1)  << LS1X_MONTH_OFFSET)
-		| (rtm->tm_mday << LS1X_DAY_OFFSET)
-		| (rtm->tm_hour << LS1X_HOUR_OFFSET)
-		| (rtm->tm_min  << LS1X_MIN_OFFSET)
-		| (rtm->tm_sec  << LS1X_SEC_OFFSET);
+	v = ((rपंचांग->पंचांग_mon + 1)  << LS1X_MONTH_OFFSET)
+		| (rपंचांग->पंचांग_mday << LS1X_DAY_OFFSET)
+		| (rपंचांग->पंचांग_hour << LS1X_HOUR_OFFSET)
+		| (rपंचांग->पंचांग_min  << LS1X_MIN_OFFSET)
+		| (rपंचांग->पंचांग_sec  << LS1X_SEC_OFFSET);
 
-	writel(v, SYS_TOYWRITE0);
+	ग_लिखोl(v, SYS_TOYWRITE0);
 	c = 0x10000;
-	/* add timeout check counter, for more safe */
-	while ((readl(SYS_COUNTER_CNTRL) & SYS_CNTRL_TS) && --c)
+	/* add समयout check counter, क्रम more safe */
+	जबतक ((पढ़ोl(SYS_COUNTER_CNTRL) & SYS_CNTRL_TS) && --c)
 		usleep_range(1000, 3000);
 
-	if (!c) {
+	अगर (!c) अणु
 		dev_err(dev, "set time timeout!\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	t = rtm->tm_year + 1900;
-	writel(t, SYS_TOYWRITE1);
+	t = rपंचांग->पंचांग_year + 1900;
+	ग_लिखोl(t, SYS_TOYWRITE1);
 	c = 0x10000;
-	while ((readl(SYS_COUNTER_CNTRL) & SYS_CNTRL_TS) && --c)
+	जबतक ((पढ़ोl(SYS_COUNTER_CNTRL) & SYS_CNTRL_TS) && --c)
 		usleep_range(1000, 3000);
 
-	if (!c) {
+	अगर (!c) अणु
 		dev_err(dev, "set time timeout!\n");
-		goto err;
-	}
-	return 0;
+		जाओ err;
+	पूर्ण
+	वापस 0;
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct rtc_class_ops  ls1x_rtc_ops = {
-	.read_time	= ls1x_rtc_read_time,
-	.set_time	= ls1x_rtc_set_time,
-};
+अटल स्थिर काष्ठा rtc_class_ops  ls1x_rtc_ops = अणु
+	.पढ़ो_समय	= ls1x_rtc_पढ़ो_समय,
+	.set_समय	= ls1x_rtc_set_समय,
+पूर्ण;
 
-static int ls1x_rtc_probe(struct platform_device *pdev)
-{
-	struct rtc_device *rtcdev;
-	unsigned long v;
+अटल पूर्णांक ls1x_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा rtc_device *rtcdev;
+	अचिन्हित दीर्घ v;
 
-	v = readl(SYS_COUNTER_CNTRL);
-	if (!(v & RTC_CNTR_OK)) {
+	v = पढ़ोl(SYS_COUNTER_CNTRL);
+	अगर (!(v & RTC_CNTR_OK)) अणु
 		dev_err(&pdev->dev, "rtc counters not working\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* set to 1 HZ if needed */
-	if (readl(SYS_TOYTRIM) != 32767) {
+	/* set to 1 HZ अगर needed */
+	अगर (पढ़ोl(SYS_TOYTRIM) != 32767) अणु
 		v = 0x100000;
-		while ((readl(SYS_COUNTER_CNTRL) & SYS_CNTRL_TTS) && --v)
+		जबतक ((पढ़ोl(SYS_COUNTER_CNTRL) & SYS_CNTRL_TTS) && --v)
 			usleep_range(1000, 3000);
 
-		if (!v) {
+		अगर (!v) अणु
 			dev_err(&pdev->dev, "time out\n");
-			return -ETIMEDOUT;
-		}
-		writel(32767, SYS_TOYTRIM);
-	}
+			वापस -ETIMEDOUT;
+		पूर्ण
+		ग_लिखोl(32767, SYS_TOYTRIM);
+	पूर्ण
 	/* this loop coundn't be endless */
-	while (readl(SYS_COUNTER_CNTRL) & SYS_CNTRL_TTS)
+	जबतक (पढ़ोl(SYS_COUNTER_CNTRL) & SYS_CNTRL_TTS)
 		usleep_range(1000, 3000);
 
 	rtcdev = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(rtcdev))
-		return PTR_ERR(rtcdev);
+	अगर (IS_ERR(rtcdev))
+		वापस PTR_ERR(rtcdev);
 
-	platform_set_drvdata(pdev, rtcdev);
+	platक्रमm_set_drvdata(pdev, rtcdev);
 	rtcdev->ops = &ls1x_rtc_ops;
 	rtcdev->range_min = RTC_TIMESTAMP_BEGIN_1900;
 	rtcdev->range_max = RTC_TIMESTAMP_END_2099;
 
-	return devm_rtc_register_device(rtcdev);
-}
+	वापस devm_rtc_रेजिस्टर_device(rtcdev);
+पूर्ण
 
-static struct platform_driver  ls1x_rtc_driver = {
-	.driver		= {
+अटल काष्ठा platक्रमm_driver  ls1x_rtc_driver = अणु
+	.driver		= अणु
 		.name	= "ls1x-rtc",
-	},
+	पूर्ण,
 	.probe		= ls1x_rtc_probe,
-};
+पूर्ण;
 
-module_platform_driver(ls1x_rtc_driver);
+module_platक्रमm_driver(ls1x_rtc_driver);
 
 MODULE_AUTHOR("zhao zhang <zhzhl555@gmail.com>");
 MODULE_LICENSE("GPL");

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Cedrus VPU driver
  *
- * Copyright (C) 2016 Florent Revest <florent.revest@free-electrons.com>
+ * Copyright (C) 2016 Florent Revest <florent.revest@मुक्त-electrons.com>
  * Copyright (C) 2018 Paul Kocialkowski <paul.kocialkowski@bootlin.com>
  * Copyright (C) 2018 Bootlin
  *
@@ -13,19 +14,19 @@
  * Marek Szyprowski, <m.szyprowski@samsung.com>
  */
 
-#ifndef _CEDRUS_VIDEO_H_
-#define _CEDRUS_VIDEO_H_
+#अगर_अघोषित _CEDRUS_VIDEO_H_
+#घोषणा _CEDRUS_VIDEO_H_
 
-struct cedrus_format {
-	u32		pixelformat;
+काष्ठा cedrus_क्रमmat अणु
+	u32		pixelक्रमmat;
 	u32		directions;
-	unsigned int	capabilities;
-};
+	अचिन्हित पूर्णांक	capabilities;
+पूर्ण;
 
-extern const struct v4l2_ioctl_ops cedrus_ioctl_ops;
+बाह्य स्थिर काष्ठा v4l2_ioctl_ops cedrus_ioctl_ops;
 
-int cedrus_queue_init(void *priv, struct vb2_queue *src_vq,
-		      struct vb2_queue *dst_vq);
-void cedrus_prepare_format(struct v4l2_pix_format *pix_fmt);
+पूर्णांक cedrus_queue_init(व्योम *priv, काष्ठा vb2_queue *src_vq,
+		      काष्ठा vb2_queue *dst_vq);
+व्योम cedrus_prepare_क्रमmat(काष्ठा v4l2_pix_क्रमmat *pix_fmt);
 
-#endif
+#पूर्ण_अगर

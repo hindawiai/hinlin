@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * u_ether_configfs.h
  *
- * Utility definitions for configfs support in USB Ethernet functions
+ * Utility definitions क्रम configfs support in USB Ethernet functions
  *
  * Copyright (c) 2013 Samsung Electronics Co., Ltd.
  *		http://www.samsung.com
@@ -10,191 +11,191 @@
  * Author: Andrzej Pietrasiewicz <andrzejtp2010@gmail.com>
  */
 
-#ifndef __U_ETHER_CONFIGFS_H
-#define __U_ETHER_CONFIGFS_H
+#अगर_अघोषित __U_ETHER_CONFIGFS_H
+#घोषणा __U_ETHER_CONFIGFS_H
 
-#define USB_ETHERNET_CONFIGFS_ITEM(_f_)					\
-	static void _f_##_attr_release(struct config_item *item)	\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+#घोषणा USB_ETHERNET_CONFIGFS_ITEM(_f_)					\
+	अटल व्योम _f_##_attr_release(काष्ठा config_item *item)	\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
 									\
 		usb_put_function_instance(&opts->func_inst);		\
-	}								\
+	पूर्ण								\
 									\
-	static struct configfs_item_operations _f_##_item_ops = {	\
+	अटल काष्ठा configfs_item_operations _f_##_item_ops = अणु	\
 		.release	= _f_##_attr_release,			\
-	}
+	पूर्ण
 
-#define USB_ETHERNET_CONFIGFS_ITEM_ATTR_DEV_ADDR(_f_)			\
-	static ssize_t _f_##_opts_dev_addr_show(struct config_item *item, \
-						char *page)		\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
-		int result;						\
+#घोषणा USB_ETHERNET_CONFIGFS_ITEM_ATTR_DEV_ADDR(_f_)			\
+	अटल sमाप_प्रकार _f_##_opts_dev_addr_show(काष्ठा config_item *item, \
+						अक्षर *page)		\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+		पूर्णांक result;						\
 									\
 		mutex_lock(&opts->lock);				\
 		result = gether_get_dev_addr(opts->net, page, PAGE_SIZE); \
 		mutex_unlock(&opts->lock);				\
 									\
-		return result;						\
-	}								\
+		वापस result;						\
+	पूर्ण								\
 									\
-	static ssize_t _f_##_opts_dev_addr_store(struct config_item *item, \
-						 const char *page, size_t len)\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
-		int ret;						\
+	अटल sमाप_प्रकार _f_##_opts_dev_addr_store(काष्ठा config_item *item, \
+						 स्थिर अक्षर *page, माप_प्रकार len)\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+		पूर्णांक ret;						\
 									\
 		mutex_lock(&opts->lock);				\
-		if (opts->refcnt) {					\
+		अगर (opts->refcnt) अणु					\
 			mutex_unlock(&opts->lock);			\
-			return -EBUSY;					\
-		}							\
+			वापस -EBUSY;					\
+		पूर्ण							\
 									\
 		ret = gether_set_dev_addr(opts->net, page);		\
 		mutex_unlock(&opts->lock);				\
-		if (!ret)						\
+		अगर (!ret)						\
 			ret = len;					\
-		return ret;						\
-	}								\
+		वापस ret;						\
+	पूर्ण								\
 									\
 	CONFIGFS_ATTR(_f_##_opts_, dev_addr)
 
-#define USB_ETHERNET_CONFIGFS_ITEM_ATTR_HOST_ADDR(_f_)			\
-	static ssize_t _f_##_opts_host_addr_show(struct config_item *item, \
-						 char *page)		\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
-		int result;						\
+#घोषणा USB_ETHERNET_CONFIGFS_ITEM_ATTR_HOST_ADDR(_f_)			\
+	अटल sमाप_प्रकार _f_##_opts_host_addr_show(काष्ठा config_item *item, \
+						 अक्षर *page)		\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+		पूर्णांक result;						\
 									\
 		mutex_lock(&opts->lock);				\
 		result = gether_get_host_addr(opts->net, page, PAGE_SIZE); \
 		mutex_unlock(&opts->lock);				\
 									\
-		return result;						\
-	}								\
+		वापस result;						\
+	पूर्ण								\
 									\
-	static ssize_t _f_##_opts_host_addr_store(struct config_item *item, \
-						  const char *page, size_t len)\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
-		int ret;						\
+	अटल sमाप_प्रकार _f_##_opts_host_addr_store(काष्ठा config_item *item, \
+						  स्थिर अक्षर *page, माप_प्रकार len)\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+		पूर्णांक ret;						\
 									\
 		mutex_lock(&opts->lock);				\
-		if (opts->refcnt) {					\
+		अगर (opts->refcnt) अणु					\
 			mutex_unlock(&opts->lock);			\
-			return -EBUSY;					\
-		}							\
+			वापस -EBUSY;					\
+		पूर्ण							\
 									\
 		ret = gether_set_host_addr(opts->net, page);		\
 		mutex_unlock(&opts->lock);				\
-		if (!ret)						\
+		अगर (!ret)						\
 			ret = len;					\
-		return ret;						\
-	}								\
+		वापस ret;						\
+	पूर्ण								\
 									\
 	CONFIGFS_ATTR(_f_##_opts_, host_addr)
 
-#define USB_ETHERNET_CONFIGFS_ITEM_ATTR_QMULT(_f_)			\
-	static ssize_t _f_##_opts_qmult_show(struct config_item *item,	\
-					     char *page)		\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
-		unsigned qmult;						\
+#घोषणा USB_ETHERNET_CONFIGFS_ITEM_ATTR_QMULT(_f_)			\
+	अटल sमाप_प्रकार _f_##_opts_qmult_show(काष्ठा config_item *item,	\
+					     अक्षर *page)		\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+		अचिन्हित qmult;						\
 									\
 		mutex_lock(&opts->lock);				\
 		qmult = gether_get_qmult(opts->net);			\
 		mutex_unlock(&opts->lock);				\
-		return sprintf(page, "%d\n", qmult);			\
-	}								\
+		वापस प्र_लिखो(page, "%d\n", qmult);			\
+	पूर्ण								\
 									\
-	static ssize_t _f_##_opts_qmult_store(struct config_item *item, \
-					      const char *page, size_t len)\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+	अटल sमाप_प्रकार _f_##_opts_qmult_store(काष्ठा config_item *item, \
+					      स्थिर अक्षर *page, माप_प्रकार len)\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
 		u8 val;							\
-		int ret;						\
+		पूर्णांक ret;						\
 									\
 		mutex_lock(&opts->lock);				\
-		if (opts->refcnt) {					\
+		अगर (opts->refcnt) अणु					\
 			ret = -EBUSY;					\
-			goto out;					\
-		}							\
+			जाओ out;					\
+		पूर्ण							\
 									\
 		ret = kstrtou8(page, 0, &val);				\
-		if (ret)						\
-			goto out;					\
+		अगर (ret)						\
+			जाओ out;					\
 									\
 		gether_set_qmult(opts->net, val);			\
 		ret = len;						\
 out:									\
 		mutex_unlock(&opts->lock);				\
-		return ret;						\
-	}								\
+		वापस ret;						\
+	पूर्ण								\
 									\
 	CONFIGFS_ATTR(_f_##_opts_, qmult)
 
-#define USB_ETHERNET_CONFIGFS_ITEM_ATTR_IFNAME(_f_)			\
-	static ssize_t _f_##_opts_ifname_show(struct config_item *item, \
-					      char *page)		\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
-		int ret;						\
+#घोषणा USB_ETHERNET_CONFIGFS_ITEM_ATTR_IFNAME(_f_)			\
+	अटल sमाप_प्रकार _f_##_opts_अगरname_show(काष्ठा config_item *item, \
+					      अक्षर *page)		\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+		पूर्णांक ret;						\
 									\
 		mutex_lock(&opts->lock);				\
-		ret = gether_get_ifname(opts->net, page, PAGE_SIZE);	\
+		ret = gether_get_अगरname(opts->net, page, PAGE_SIZE);	\
 		mutex_unlock(&opts->lock);				\
 									\
-		return ret;						\
-	}								\
+		वापस ret;						\
+	पूर्ण								\
 									\
-	static ssize_t _f_##_opts_ifname_store(struct config_item *item, \
-					       const char *page, size_t len)\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
-		int ret = -EBUSY;					\
+	अटल sमाप_प्रकार _f_##_opts_अगरname_store(काष्ठा config_item *item, \
+					       स्थिर अक्षर *page, माप_प्रकार len)\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+		पूर्णांक ret = -EBUSY;					\
 									\
 		mutex_lock(&opts->lock);				\
-		if (!opts->refcnt)					\
-			ret = gether_set_ifname(opts->net, page, len);	\
+		अगर (!opts->refcnt)					\
+			ret = gether_set_अगरname(opts->net, page, len);	\
 		mutex_unlock(&opts->lock);				\
-		return ret ?: len;					\
-	}								\
+		वापस ret ?: len;					\
+	पूर्ण								\
 									\
-	CONFIGFS_ATTR(_f_##_opts_, ifname)
+	CONFIGFS_ATTR(_f_##_opts_, अगरname)
 
-#define USB_ETHER_CONFIGFS_ITEM_ATTR_U8_RW(_f_, _n_)			\
-	static ssize_t _f_##_opts_##_n_##_show(struct config_item *item,\
-					       char *page)		\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
-		int ret;						\
+#घोषणा USB_ETHER_CONFIGFS_ITEM_ATTR_U8_RW(_f_, _n_)			\
+	अटल sमाप_प्रकार _f_##_opts_##_n_##_show(काष्ठा config_item *item,\
+					       अक्षर *page)		\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+		पूर्णांक ret;						\
 									\
 		mutex_lock(&opts->lock);				\
-		ret = sprintf(page, "%02x\n", opts->_n_);		\
+		ret = प्र_लिखो(page, "%02x\n", opts->_n_);		\
 		mutex_unlock(&opts->lock);				\
 									\
-		return ret;						\
-	}								\
+		वापस ret;						\
+	पूर्ण								\
 									\
-	static ssize_t _f_##_opts_##_n_##_store(struct config_item *item,\
-						const char *page,	\
-						size_t len)		\
-	{								\
-		struct f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
-		int ret = -EINVAL;					\
+	अटल sमाप_प्रकार _f_##_opts_##_n_##_store(काष्ठा config_item *item,\
+						स्थिर अक्षर *page,	\
+						माप_प्रकार len)		\
+	अणु								\
+		काष्ठा f_##_f_##_opts *opts = to_f_##_f_##_opts(item);	\
+		पूर्णांक ret = -EINVAL;					\
 		u8 val;							\
 									\
 		mutex_lock(&opts->lock);				\
-		if (sscanf(page, "%02hhx", &val) > 0) {			\
+		अगर (माला_पूछो(page, "%02hhx", &val) > 0) अणु			\
 			opts->_n_ = val;				\
 			ret = len;					\
-		}							\
+		पूर्ण							\
 		mutex_unlock(&opts->lock);				\
 									\
-		return ret;						\
-	}								\
+		वापस ret;						\
+	पूर्ण								\
 									\
 	CONFIGFS_ATTR(_f_##_opts_, _n_)
 
-#endif /* __U_ETHER_CONFIGFS_H */
+#पूर्ण_अगर /* __U_ETHER_CONFIGFS_H */

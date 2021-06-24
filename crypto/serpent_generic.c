@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Cryptographic API.
  *
@@ -7,38 +8,38 @@
  * Copyright (C) 2002 Dag Arne Osvik <osvik@ii.uib.no>
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <asm/unaligned.h>
-#include <linux/crypto.h>
-#include <linux/types.h>
-#include <crypto/serpent.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/types.h>
+#समावेश <crypto/serpent.h>
 
-/* Key is padded to the maximum of 256 bits before round key generation.
+/* Key is padded to the maximum of 256 bits beक्रमe round key generation.
  * Any key length <= 256 bits (32 bytes) is allowed by the algorithm.
  */
 
-#define PHI 0x9e3779b9UL
+#घोषणा PHI 0x9e3779b9UL
 
-#define keyiter(a, b, c, d, i, j) \
-	({ b ^= d; b ^= c; b ^= a; b ^= PHI ^ i; b = rol32(b, 11); k[j] = b; })
+#घोषणा keyiter(a, b, c, d, i, j) \
+	(अणु b ^= d; b ^= c; b ^= a; b ^= PHI ^ i; b = rol32(b, 11); k[j] = b; पूर्ण)
 
-#define loadkeys(x0, x1, x2, x3, i) \
-	({ x0 = k[i]; x1 = k[i+1]; x2 = k[i+2]; x3 = k[i+3]; })
+#घोषणा loadkeys(x0, x1, x2, x3, i) \
+	(अणु x0 = k[i]; x1 = k[i+1]; x2 = k[i+2]; x3 = k[i+3]; पूर्ण)
 
-#define storekeys(x0, x1, x2, x3, i) \
-	({ k[i] = x0; k[i+1] = x1; k[i+2] = x2; k[i+3] = x3; })
+#घोषणा storekeys(x0, x1, x2, x3, i) \
+	(अणु k[i] = x0; k[i+1] = x1; k[i+2] = x2; k[i+3] = x3; पूर्ण)
 
-#define store_and_load_keys(x0, x1, x2, x3, s, l) \
-	({ storekeys(x0, x1, x2, x3, s); loadkeys(x0, x1, x2, x3, l); })
+#घोषणा store_and_load_keys(x0, x1, x2, x3, s, l) \
+	(अणु storekeys(x0, x1, x2, x3, s); loadkeys(x0, x1, x2, x3, l); पूर्ण)
 
-#define K(x0, x1, x2, x3, i) ({				\
+#घोषणा K(x0, x1, x2, x3, i) (अणु				\
 	x3 ^= k[4*(i)+3];        x2 ^= k[4*(i)+2];	\
 	x1 ^= k[4*(i)+1];        x0 ^= k[4*(i)+0];	\
-	})
+	पूर्ण)
 
-#define LK(x0, x1, x2, x3, x4, i) ({					   \
+#घोषणा LK(x0, x1, x2, x3, x4, i) (अणु					   \
 							x0 = rol32(x0, 13);\
 	x2 = rol32(x2, 3);	x1 ^= x0;		x4  = x0 << 3;	   \
 	x3 ^= x2;		x1 ^= x2;				   \
@@ -48,9 +49,9 @@
 	x0 ^= x3;		x2 ^= x4;		x3 ^= k[4*i+3];	   \
 	x1 ^= k[4*i+1];		x0 = rol32(x0, 5);	x2 = rol32(x2, 22);\
 	x0 ^= k[4*i+0];		x2 ^= k[4*i+2];				   \
-	})
+	पूर्ण)
 
-#define KL(x0, x1, x2, x3, x4, i) ({					   \
+#घोषणा KL(x0, x1, x2, x3, x4, i) (अणु					   \
 	x0 ^= k[4*i+0];		x1 ^= k[4*i+1];		x2 ^= k[4*i+2];	   \
 	x3 ^= k[4*i+3];		x0 = ror32(x0, 5);	x2 = ror32(x2, 22);\
 	x4 =  x1;		x2 ^= x3;		x0 ^= x3;	   \
@@ -58,9 +59,9 @@
 	x2 ^= x4;		x3 = ror32(x3, 7);	x4 = x0 << 3;	   \
 	x1 ^= x0;		x3 ^= x4;		x0 = ror32(x0, 13);\
 	x1 ^= x2;		x3 ^= x2;		x2 = ror32(x2, 3); \
-	})
+	पूर्ण)
 
-#define S0(x0, x1, x2, x3, x4) ({			\
+#घोषणा S0(x0, x1, x2, x3, x4) (अणु			\
 					x4  = x3;	\
 	x3 |= x0;	x0 ^= x4;	x4 ^= x2;	\
 	x4 = ~x4;	x3 ^= x1;	x1 &= x0;	\
@@ -68,9 +69,9 @@
 	x4 |= x0;	x0 ^= x2;	x2 &= x1;	\
 	x3 ^= x2;	x1 = ~x1;	x2 ^= x4;	\
 	x1 ^= x2;					\
-	})
+	पूर्ण)
 
-#define S1(x0, x1, x2, x3, x4) ({			\
+#घोषणा S1(x0, x1, x2, x3, x4) (अणु			\
 					x4  = x1;	\
 	x1 ^= x0;	x0 ^= x3;	x3 = ~x3;	\
 	x4 &= x1;	x0 |= x1;	x3 ^= x2;	\
@@ -78,9 +79,9 @@
 	x1 |= x4;	x4 ^= x2;	x2 &= x0;	\
 	x2 ^= x1;	x1 |= x0;	x0 = ~x0;	\
 	x0 ^= x2;	x4 ^= x1;			\
-	})
+	पूर्ण)
 
-#define S2(x0, x1, x2, x3, x4) ({			\
+#घोषणा S2(x0, x1, x2, x3, x4) (अणु			\
 					x3 = ~x3;	\
 	x1 ^= x0;	x4  = x0;	x0 &= x2;	\
 	x0 ^= x3;	x3 |= x4;	x2 ^= x1;	\
@@ -88,9 +89,9 @@
 	x2 &= x3;	x3 |= x1;	x0 = ~x0;	\
 	x3 ^= x0;	x4 ^= x0;	x0 ^= x2;	\
 	x1 |= x2;					\
-	})
+	पूर्ण)
 
-#define S3(x0, x1, x2, x3, x4) ({			\
+#घोषणा S3(x0, x1, x2, x3, x4) (अणु			\
 					x4  = x1;	\
 	x1 ^= x3;	x3 |= x0;	x4 &= x0;	\
 	x0 ^= x2;	x2 ^= x1;	x1 &= x3;	\
@@ -98,9 +99,9 @@
 	x1 ^= x0;	x0 &= x3;	x3 &= x4;	\
 	x3 ^= x2;	x4 |= x1;	x2 &= x1;	\
 	x4 ^= x3;	x0 ^= x3;	x3 ^= x2;	\
-	})
+	पूर्ण)
 
-#define S4(x0, x1, x2, x3, x4) ({			\
+#घोषणा S4(x0, x1, x2, x3, x4) (अणु			\
 					x4  = x3;	\
 	x3 &= x0;	x0 ^= x4;			\
 	x3 ^= x2;	x2 |= x4;	x0 ^= x1;	\
@@ -109,9 +110,9 @@
 	x1 ^= x4;	x4 &= x2;	x2 ^= x3;	\
 	x4 ^= x0;	x3 |= x1;	x1 = ~x1;	\
 	x3 ^= x0;					\
-	})
+	पूर्ण)
 
-#define S5(x0, x1, x2, x3, x4) ({			\
+#घोषणा S5(x0, x1, x2, x3, x4) (अणु			\
 	x4  = x1;	x1 |= x0;			\
 	x2 ^= x1;	x3 = ~x3;	x4 ^= x0;	\
 	x0 ^= x2;	x1 &= x4;	x4 |= x3;	\
@@ -119,9 +120,9 @@
 	x3 ^= x2;	x0 ^= x1;	x2 &= x4;	\
 	x1 ^= x2;	x2 &= x0;			\
 	x3 ^= x2;					\
-	})
+	पूर्ण)
 
-#define S6(x0, x1, x2, x3, x4) ({			\
+#घोषणा S6(x0, x1, x2, x3, x4) (अणु			\
 					x4  = x1;	\
 	x3 ^= x0;	x1 ^= x2;	x2 ^= x0;	\
 	x0 &= x3;	x1 |= x3;	x4 = ~x4;	\
@@ -129,9 +130,9 @@
 	x3 ^= x4;	x4 ^= x0;	x2 &= x0;	\
 	x4 ^= x1;	x2 ^= x3;	x3 &= x1;	\
 	x3 ^= x0;	x1 ^= x2;			\
-	})
+	पूर्ण)
 
-#define S7(x0, x1, x2, x3, x4) ({			\
+#घोषणा S7(x0, x1, x2, x3, x4) (अणु			\
 					x1 = ~x1;	\
 	x4  = x1;	x0 = ~x0;	x1 &= x2;	\
 	x1 ^= x3;	x3 |= x4;	x4 ^= x2;	\
@@ -140,18 +141,18 @@
 	x3 &= x0;	x4 ^= x1;			\
 	x2 ^= x4;	x3 ^= x1;	x4 |= x0;	\
 	x4 ^= x1;					\
-	})
+	पूर्ण)
 
-#define SI0(x0, x1, x2, x3, x4) ({			\
+#घोषणा SI0(x0, x1, x2, x3, x4) (अणु			\
 			x4  = x3;	x1 ^= x0;	\
 	x3 |= x1;	x4 ^= x1;	x0 = ~x0;	\
 	x2 ^= x3;	x3 ^= x0;	x0 &= x1;	\
 	x0 ^= x2;	x2 &= x3;	x3 ^= x4;	\
 	x2 ^= x3;	x1 ^= x3;	x3 &= x0;	\
 	x1 ^= x0;	x0 ^= x2;	x4 ^= x3;	\
-	})
+	पूर्ण)
 
-#define SI1(x0, x1, x2, x3, x4) ({			\
+#घोषणा SI1(x0, x1, x2, x3, x4) (अणु			\
 	x1 ^= x3;	x4  = x0;			\
 	x0 ^= x2;	x2 = ~x2;	x4 |= x1;	\
 	x4 ^= x3;	x3 &= x1;	x1 ^= x2;	\
@@ -159,18 +160,18 @@
 	x3 ^= x0;	x2 ^= x0;	x0 |= x4;	\
 	x2 ^= x4;	x1 ^= x0;			\
 	x4 ^= x1;					\
-	})
+	पूर्ण)
 
-#define SI2(x0, x1, x2, x3, x4) ({			\
+#घोषणा SI2(x0, x1, x2, x3, x4) (अणु			\
 	x2 ^= x1;	x4  = x3;	x3 = ~x3;	\
 	x3 |= x2;	x2 ^= x4;	x4 ^= x0;	\
 	x3 ^= x1;	x1 |= x2;	x2 ^= x0;	\
 	x1 ^= x4;	x4 |= x3;	x2 ^= x3;	\
 	x4 ^= x2;	x2 &= x1;			\
 	x2 ^= x3;	x3 ^= x4;	x4 ^= x0;	\
-	})
+	पूर्ण)
 
-#define SI3(x0, x1, x2, x3, x4) ({			\
+#घोषणा SI3(x0, x1, x2, x3, x4) (अणु			\
 					x2 ^= x1;	\
 	x4  = x1;	x1 &= x2;			\
 	x1 ^= x0;	x0 |= x4;	x4 ^= x3;	\
@@ -178,9 +179,9 @@
 	x1 ^= x3;	x0 ^= x2;	x2 ^= x3;	\
 	x3 &= x1;	x1 ^= x0;	x0 &= x2;	\
 	x4 ^= x3;	x3 ^= x0;	x0 ^= x1;	\
-	})
+	पूर्ण)
 
-#define SI4(x0, x1, x2, x3, x4) ({			\
+#घोषणा SI4(x0, x1, x2, x3, x4) (अणु			\
 	x2 ^= x3;	x4  = x0;	x0 &= x1;	\
 	x0 ^= x2;	x2 |= x3;	x4 = ~x4;	\
 	x1 ^= x0;	x0 ^= x2;	x2 &= x4;	\
@@ -188,9 +189,9 @@
 	x0 ^= x3;	x3 &= x2;			\
 	x4 ^= x3;	x3 ^= x1;	x1 &= x0;	\
 	x4 ^= x1;	x0 ^= x3;			\
-	})
+	पूर्ण)
 
-#define SI5(x0, x1, x2, x3, x4) ({			\
+#घोषणा SI5(x0, x1, x2, x3, x4) (अणु			\
 			x4  = x1;	x1 |= x2;	\
 	x2 ^= x4;	x1 ^= x3;	x3 &= x4;	\
 	x2 ^= x3;	x3 |= x0;	x0 = ~x0;	\
@@ -198,9 +199,9 @@
 	x2 ^= x4;	x4 &= x0;	x0 ^= x1;	\
 	x1 ^= x3;	x0 &= x2;	x2 ^= x3;	\
 	x0 ^= x2;	x2 ^= x4;	x4 ^= x3;	\
-	})
+	पूर्ण)
 
-#define SI6(x0, x1, x2, x3, x4) ({			\
+#घोषणा SI6(x0, x1, x2, x3, x4) (अणु			\
 			x0 ^= x2;			\
 	x4  = x0;	x0 &= x3;	x2 ^= x3;	\
 	x0 ^= x2;	x3 ^= x1;	x2 |= x4;	\
@@ -208,9 +209,9 @@
 	x3 ^= x1;	x1 &= x2;	x4 ^= x0;	\
 	x3 ^= x4;	x4 ^= x2;	x0 ^= x1;	\
 	x2 ^= x0;					\
-	})
+	पूर्ण)
 
-#define SI7(x0, x1, x2, x3, x4) ({			\
+#घोषणा SI7(x0, x1, x2, x3, x4) (अणु			\
 	x4  = x3;	x3 &= x0;	x0 ^= x2;	\
 	x2 |= x4;	x4 ^= x1;	x0 = ~x0;	\
 	x1 |= x3;	x4 ^= x0;	x0 &= x2;	\
@@ -218,16 +219,16 @@
 	x4 ^= x3;	x2 &= x3;	x3 |= x0;	\
 	x1 ^= x4;	x3 ^= x4;	x4 &= x0;	\
 	x4 ^= x2;					\
-	})
+	पूर्ण)
 
 /*
  * both gcc and clang have misoptimized this function in the past,
  * producing horrible object code from spilling temporary variables
- * on the stack. Forcing this part out of line avoids that.
+ * on the stack. Forcing this part out of line aव्योमs that.
  */
-static noinline void __serpent_setkey_sbox(u32 r0, u32 r1, u32 r2,
+अटल noअंतरभूत व्योम __serpent_setkey_sbox(u32 r0, u32 r1, u32 r2,
 					   u32 r3, u32 r4, u32 *k)
-{
+अणु
 	k += 100;
 	S3(r3, r4, r0, r1, r2); store_and_load_keys(r1, r2, r4, r3, 28, 24);
 	S4(r1, r2, r4, r3, r0); store_and_load_keys(r2, r4, r3, r0, 24, 20);
@@ -264,24 +265,24 @@ static noinline void __serpent_setkey_sbox(u32 r0, u32 r1, u32 r2,
 	S1(r1, r3, r4, r2, r0); store_and_load_keys(r0, r4, r2, r1, 8, 4);
 	S2(r0, r4, r2, r1, r3); store_and_load_keys(r3, r4, r0, r1, 4, 0);
 	S3(r3, r4, r0, r1, r2); storekeys(r1, r2, r4, r3, 0);
-}
+पूर्ण
 
-int __serpent_setkey(struct serpent_ctx *ctx, const u8 *key,
-		     unsigned int keylen)
-{
+पूर्णांक __serpent_setkey(काष्ठा serpent_ctx *ctx, स्थिर u8 *key,
+		     अचिन्हित पूर्णांक keylen)
+अणु
 	u32 *k = ctx->expkey;
 	u8  *k8 = (u8 *)k;
 	u32 r0, r1, r2, r3, r4;
 	__le32 *lk;
-	int i;
+	पूर्णांक i;
 
 	/* Copy key, add padding */
 
-	for (i = 0; i < keylen; ++i)
+	क्रम (i = 0; i < keylen; ++i)
 		k8[i] = key[i];
-	if (i < SERPENT_MAX_KEY_SIZE)
+	अगर (i < SERPENT_MAX_KEY_SIZE)
 		k8[i++] = 1;
-	while (i < SERPENT_MAX_KEY_SIZE)
+	जबतक (i < SERPENT_MAX_KEY_SIZE)
 		k8[i++] = 0;
 
 	lk = (__le32 *)k;
@@ -445,20 +446,20 @@ int __serpent_setkey(struct serpent_ctx *ctx, const u8 *key,
 	/* Apply S-boxes */
 	__serpent_setkey_sbox(r0, r1, r2, r3, r4, ctx->expkey);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(__serpent_setkey);
 
-int serpent_setkey(struct crypto_tfm *tfm, const u8 *key, unsigned int keylen)
-{
-	return __serpent_setkey(crypto_tfm_ctx(tfm), key, keylen);
-}
+पूर्णांक serpent_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
+अणु
+	वापस __serpent_setkey(crypto_tfm_ctx(tfm), key, keylen);
+पूर्ण
 EXPORT_SYMBOL_GPL(serpent_setkey);
 
-void __serpent_encrypt(const void *c, u8 *dst, const u8 *src)
-{
-	const struct serpent_ctx *ctx = c;
-	const u32 *k = ctx->expkey;
+व्योम __serpent_encrypt(स्थिर व्योम *c, u8 *dst, स्थिर u8 *src)
+अणु
+	स्थिर काष्ठा serpent_ctx *ctx = c;
+	स्थिर u32 *k = ctx->expkey;
 	u32	r0, r1, r2, r3, r4;
 
 	r0 = get_unaligned_le32(src);
@@ -504,20 +505,20 @@ void __serpent_encrypt(const void *c, u8 *dst, const u8 *src)
 	put_unaligned_le32(r1, dst + 4);
 	put_unaligned_le32(r2, dst + 8);
 	put_unaligned_le32(r3, dst + 12);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__serpent_encrypt);
 
-static void serpent_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct serpent_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम serpent_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा serpent_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	__serpent_encrypt(ctx, dst, src);
-}
+पूर्ण
 
-void __serpent_decrypt(const void *c, u8 *dst, const u8 *src)
-{
-	const struct serpent_ctx *ctx = c;
-	const u32 *k = ctx->expkey;
+व्योम __serpent_decrypt(स्थिर व्योम *c, u8 *dst, स्थिर u8 *src)
+अणु
+	स्थिर काष्ठा serpent_ctx *ctx = c;
+	स्थिर u32 *k = ctx->expkey;
 	u32	r0, r1, r2, r3, r4;
 
 	r0 = get_unaligned_le32(src);
@@ -563,44 +564,44 @@ void __serpent_decrypt(const void *c, u8 *dst, const u8 *src)
 	put_unaligned_le32(r3, dst + 4);
 	put_unaligned_le32(r1, dst + 8);
 	put_unaligned_le32(r4, dst + 12);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(__serpent_decrypt);
 
-static void serpent_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct serpent_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम serpent_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा serpent_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	__serpent_decrypt(ctx, dst, src);
-}
+पूर्ण
 
-static struct crypto_alg srp_alg = {
+अटल काष्ठा crypto_alg srp_alg = अणु
 	.cra_name		=	"serpent",
 	.cra_driver_name	=	"serpent-generic",
 	.cra_priority		=	100,
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	SERPENT_BLOCK_SIZE,
-	.cra_ctxsize		=	sizeof(struct serpent_ctx),
+	.cra_ctxsize		=	माप(काष्ठा serpent_ctx),
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	{ .cipher = {
+	.cra_u			=	अणु .cipher = अणु
 	.cia_min_keysize	=	SERPENT_MIN_KEY_SIZE,
 	.cia_max_keysize	=	SERPENT_MAX_KEY_SIZE,
 	.cia_setkey		=	serpent_setkey,
 	.cia_encrypt		=	serpent_encrypt,
-	.cia_decrypt		=	serpent_decrypt } }
-};
+	.cia_decrypt		=	serpent_decrypt पूर्ण पूर्ण
+पूर्ण;
 
-static int __init serpent_mod_init(void)
-{
-	return crypto_register_alg(&srp_alg);
-}
+अटल पूर्णांक __init serpent_mod_init(व्योम)
+अणु
+	वापस crypto_रेजिस्टर_alg(&srp_alg);
+पूर्ण
 
-static void __exit serpent_mod_fini(void)
-{
-	crypto_unregister_alg(&srp_alg);
-}
+अटल व्योम __निकास serpent_mod_fini(व्योम)
+अणु
+	crypto_unरेजिस्टर_alg(&srp_alg);
+पूर्ण
 
 subsys_initcall(serpent_mod_init);
-module_exit(serpent_mod_fini);
+module_निकास(serpent_mod_fini);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Serpent Cipher Algorithm");

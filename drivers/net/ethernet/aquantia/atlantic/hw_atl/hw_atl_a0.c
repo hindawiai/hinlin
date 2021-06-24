@@ -1,22 +1,23 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Atlantic Network Driver
  *
  * Copyright (C) 2014-2019 aQuantia Corporation
  * Copyright (C) 2019-2020 Marvell International Ltd.
  */
 
-/* File hw_atl_a0.c: Definition of Atlantic hardware specific functions. */
+/* File hw_atl_a0.c: Definition of Atlantic hardware specअगरic functions. */
 
-#include "../aq_hw.h"
-#include "../aq_hw_utils.h"
-#include "../aq_ring.h"
-#include "../aq_nic.h"
-#include "hw_atl_a0.h"
-#include "hw_atl_utils.h"
-#include "hw_atl_llh.h"
-#include "hw_atl_a0_internal.h"
+#समावेश "../aq_hw.h"
+#समावेश "../aq_hw_utils.h"
+#समावेश "../aq_ring.h"
+#समावेश "../aq_nic.h"
+#समावेश "hw_atl_a0.h"
+#समावेश "hw_atl_utils.h"
+#समावेश "hw_atl_llh.h"
+#समावेश "hw_atl_a0_internal.h"
 
-#define DEFAULT_A0_BOARD_BASIC_CAPABILITIES	     \
+#घोषणा DEFAULT_A0_BOARD_BASIC_CAPABILITIES	     \
 	.is_64_dma = true,			     \
 	.op64bit = false,			     \
 	.msix_irqs = 4U,			     \
@@ -47,16 +48,16 @@
 	.mac_regs_count = 88,			     \
 	.hw_alive_check_addr = 0x10U
 
-const struct aq_hw_caps_s hw_atl_a0_caps_aqc100 = {
+स्थिर काष्ठा aq_hw_caps_s hw_atl_a0_caps_aqc100 = अणु
 	DEFAULT_A0_BOARD_BASIC_CAPABILITIES,
 	.media_type = AQ_HW_MEDIA_TYPE_FIBRE,
 	.link_speed_msk = AQ_NIC_RATE_5G |
 			  AQ_NIC_RATE_2G5 |
 			  AQ_NIC_RATE_1G |
 			  AQ_NIC_RATE_100M,
-};
+पूर्ण;
 
-const struct aq_hw_caps_s hw_atl_a0_caps_aqc107 = {
+स्थिर काष्ठा aq_hw_caps_s hw_atl_a0_caps_aqc107 = अणु
 	DEFAULT_A0_BOARD_BASIC_CAPABILITIES,
 	.media_type = AQ_HW_MEDIA_TYPE_TP,
 	.link_speed_msk = AQ_NIC_RATE_10G |
@@ -64,28 +65,28 @@ const struct aq_hw_caps_s hw_atl_a0_caps_aqc107 = {
 			  AQ_NIC_RATE_2G5 |
 			  AQ_NIC_RATE_1G |
 			  AQ_NIC_RATE_100M,
-};
+पूर्ण;
 
-const struct aq_hw_caps_s hw_atl_a0_caps_aqc108 = {
+स्थिर काष्ठा aq_hw_caps_s hw_atl_a0_caps_aqc108 = अणु
 	DEFAULT_A0_BOARD_BASIC_CAPABILITIES,
 	.media_type = AQ_HW_MEDIA_TYPE_TP,
 	.link_speed_msk = AQ_NIC_RATE_5G |
 			  AQ_NIC_RATE_2G5 |
 			  AQ_NIC_RATE_1G |
 			  AQ_NIC_RATE_100M,
-};
+पूर्ण;
 
-const struct aq_hw_caps_s hw_atl_a0_caps_aqc109 = {
+स्थिर काष्ठा aq_hw_caps_s hw_atl_a0_caps_aqc109 = अणु
 	DEFAULT_A0_BOARD_BASIC_CAPABILITIES,
 	.media_type = AQ_HW_MEDIA_TYPE_TP,
 	.link_speed_msk = AQ_NIC_RATE_2G5 |
 			  AQ_NIC_RATE_1G |
 			  AQ_NIC_RATE_100M,
-};
+पूर्ण;
 
-static int hw_atl_a0_hw_reset(struct aq_hw_s *self)
-{
-	int err = 0;
+अटल पूर्णांक hw_atl_a0_hw_reset(काष्ठा aq_hw_s *self)
+अणु
+	पूर्णांक err = 0;
 	u32 val;
 
 	hw_atl_glb_glb_reg_res_dis_set(self, 1U);
@@ -96,40 +97,40 @@ static int hw_atl_a0_hw_reset(struct aq_hw_s *self)
 	HW_ATL_FLUSH();
 	hw_atl_glb_soft_res_set(self, 1);
 
-	/* check 10 times by 1ms */
-	err = readx_poll_timeout_atomic(hw_atl_glb_soft_res_get,
+	/* check 10 बार by 1ms */
+	err = पढ़ोx_poll_समयout_atomic(hw_atl_glb_soft_res_get,
 					self, val, val == 0,
 					1000U, 10000U);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
 	hw_atl_itr_irq_reg_res_dis_set(self, 0U);
 	hw_atl_itr_res_irq_set(self, 1U);
 
-	/* check 10 times by 1ms */
-	err = readx_poll_timeout_atomic(hw_atl_itr_res_irq_get,
+	/* check 10 बार by 1ms */
+	err = पढ़ोx_poll_समयout_atomic(hw_atl_itr_res_irq_get,
 					self, val, val == 0,
 					1000U, 10000U);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
 	self->aq_fw_ops->set_state(self, MPI_RESET);
 
 	err = aq_hw_err_from_flags(self);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-static int hw_atl_a0_hw_qos_set(struct aq_hw_s *self)
-{
+अटल पूर्णांक hw_atl_a0_hw_qos_set(काष्ठा aq_hw_s *self)
+अणु
 	bool is_rx_flow_control = false;
-	unsigned int i_priority = 0U;
+	अचिन्हित पूर्णांक i_priority = 0U;
 	u32 buff_size = 0U;
 	u32 tc = 0U;
 
 	/* TPS Descriptor rate init */
-	hw_atl_tps_tx_pkt_shed_desc_rate_curr_time_res_set(self, 0x0U);
+	hw_atl_tps_tx_pkt_shed_desc_rate_curr_समय_res_set(self, 0x0U);
 	hw_atl_tps_tx_pkt_shed_desc_rate_lim_set(self, 0xA);
 
 	/* TPS VM init */
@@ -174,79 +175,79 @@ static int hw_atl_a0_hw_qos_set(struct aq_hw_s *self)
 	hw_atl_rpb_rx_xoff_en_per_tc_set(self, is_rx_flow_control ? 1U : 0U, tc);
 
 	/* QoS 802.1p priority -> TC mapping */
-	for (i_priority = 8U; i_priority--;)
+	क्रम (i_priority = 8U; i_priority--;)
 		hw_atl_rpf_rpb_user_priority_tc_map_set(self, i_priority, 0U);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_rss_hash_set(struct aq_hw_s *self,
-				     struct aq_rss_parameters *rss_params)
-{
-	struct aq_nic_cfg_s *cfg = self->aq_nic_cfg;
-	unsigned int addr = 0U;
-	unsigned int i = 0U;
-	int err = 0;
+अटल पूर्णांक hw_atl_a0_hw_rss_hash_set(काष्ठा aq_hw_s *self,
+				     काष्ठा aq_rss_parameters *rss_params)
+अणु
+	काष्ठा aq_nic_cfg_s *cfg = self->aq_nic_cfg;
+	अचिन्हित पूर्णांक addr = 0U;
+	अचिन्हित पूर्णांक i = 0U;
+	पूर्णांक err = 0;
 	u32 val;
 
-	for (i = 10, addr = 0U; i--; ++addr) {
+	क्रम (i = 10, addr = 0U; i--; ++addr) अणु
 		u32 key_data = cfg->is_rss ?
 			__swab32(rss_params->hash_secret_key[i]) : 0U;
 		hw_atl_rpf_rss_key_wr_data_set(self, key_data);
 		hw_atl_rpf_rss_key_addr_set(self, addr);
 		hw_atl_rpf_rss_key_wr_en_set(self, 1U);
-		err = readx_poll_timeout_atomic(hw_atl_rpf_rss_key_wr_en_get,
+		err = पढ़ोx_poll_समयout_atomic(hw_atl_rpf_rss_key_wr_en_get,
 						self, val, val == 0,
 						1000U, 10000U);
-		if (err < 0)
-			goto err_exit;
-	}
+		अगर (err < 0)
+			जाओ err_निकास;
+	पूर्ण
 
 	err = aq_hw_err_from_flags(self);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-static int hw_atl_a0_hw_rss_set(struct aq_hw_s *self,
-				struct aq_rss_parameters *rss_params)
-{
+अटल पूर्णांक hw_atl_a0_hw_rss_set(काष्ठा aq_hw_s *self,
+				काष्ठा aq_rss_parameters *rss_params)
+अणु
 	u32 num_rss_queues = max(1U, self->aq_nic_cfg->num_rss_queues);
 	u8 *indirection_table =	rss_params->indirection_table;
-	u16 bitary[1 + (HW_ATL_A0_RSS_REDIRECTION_MAX *
-		   HW_ATL_A0_RSS_REDIRECTION_BITS / 16U)];
-	int err = 0;
+	u16 bitary[1 + (HW_ATL_A0_RSS_REसूचीECTION_MAX *
+		   HW_ATL_A0_RSS_REसूचीECTION_BITS / 16U)];
+	पूर्णांक err = 0;
 	u32 i = 0U;
 	u32 val;
 
-	memset(bitary, 0, sizeof(bitary));
+	स_रखो(bitary, 0, माप(bitary));
 
-	for (i = HW_ATL_A0_RSS_REDIRECTION_MAX; i--; ) {
+	क्रम (i = HW_ATL_A0_RSS_REसूचीECTION_MAX; i--; ) अणु
 		(*(u32 *)(bitary + ((i * 3U) / 16U))) |=
 			((indirection_table[i] % num_rss_queues) <<
 			((i * 3U) & 0xFU));
-	}
+	पूर्ण
 
-	for (i = ARRAY_SIZE(bitary); i--;) {
+	क्रम (i = ARRAY_SIZE(bitary); i--;) अणु
 		hw_atl_rpf_rss_redir_tbl_wr_data_set(self, bitary[i]);
 		hw_atl_rpf_rss_redir_tbl_addr_set(self, i);
 		hw_atl_rpf_rss_redir_wr_en_set(self, 1U);
-		err = readx_poll_timeout_atomic(hw_atl_rpf_rss_redir_wr_en_get,
+		err = पढ़ोx_poll_समयout_atomic(hw_atl_rpf_rss_redir_wr_en_get,
 						self, val, val == 0,
 						1000U, 10000U);
-		if (err < 0)
-			goto err_exit;
-	}
+		अगर (err < 0)
+			जाओ err_निकास;
+	पूर्ण
 
 	err = aq_hw_err_from_flags(self);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-static int hw_atl_a0_hw_offload_set(struct aq_hw_s *self,
-				    struct aq_nic_cfg_s *aq_nic_cfg)
-{
+अटल पूर्णांक hw_atl_a0_hw_offload_set(काष्ठा aq_hw_s *self,
+				    काष्ठा aq_nic_cfg_s *aq_nic_cfg)
+अणु
 	/* TX checksums offloads*/
 	hw_atl_tpo_ipv4header_crc_offload_en_set(self, 1);
 	hw_atl_tpo_tcp_udp_crc_offload_en_set(self, 1);
@@ -258,32 +259,32 @@ static int hw_atl_a0_hw_offload_set(struct aq_hw_s *self,
 	/* LSO offloads*/
 	hw_atl_tdm_large_send_offload_en_set(self, 0xFFFFFFFFU);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_init_tx_path(struct aq_hw_s *self)
-{
+अटल पूर्णांक hw_atl_a0_hw_init_tx_path(काष्ठा aq_hw_s *self)
+अणु
 	hw_atl_thm_lso_tcp_flag_of_first_pkt_set(self, 0x0FF6U);
 	hw_atl_thm_lso_tcp_flag_of_middle_pkt_set(self, 0x0FF6U);
 	hw_atl_thm_lso_tcp_flag_of_last_pkt_set(self, 0x0F7FU);
 
-	/* Tx interrupts */
+	/* Tx पूर्णांकerrupts */
 	hw_atl_tdm_tx_desc_wr_wb_irq_en_set(self, 1U);
 
 	/* misc */
-	aq_hw_write_reg(self, 0x00007040U, 0x00000000U);
+	aq_hw_ग_लिखो_reg(self, 0x00007040U, 0x00000000U);
 	hw_atl_tdm_tx_dca_en_set(self, 0U);
 	hw_atl_tdm_tx_dca_mode_set(self, 0U);
 
 	hw_atl_tpb_tx_path_scp_ins_en_set(self, 1U);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_init_rx_path(struct aq_hw_s *self)
-{
-	struct aq_nic_cfg_s *cfg = self->aq_nic_cfg;
-	int i;
+अटल पूर्णांक hw_atl_a0_hw_init_rx_path(काष्ठा aq_hw_s *self)
+अणु
+	काष्ठा aq_nic_cfg_s *cfg = self->aq_nic_cfg;
+	पूर्णांक i;
 
 	/* Rx TC/RSS number config */
 	hw_atl_rpb_rpf_rx_traf_class_mode_set(self, 1U);
@@ -296,10 +297,10 @@ static int hw_atl_a0_hw_init_rx_path(struct aq_hw_s *self)
 					  0xB3333333U : 0x00000000U);
 
 	/* Multicast filters */
-	for (i = HW_ATL_A0_MAC_MAX; i--;) {
+	क्रम (i = HW_ATL_A0_MAC_MAX; i--;) अणु
 		hw_atl_rpfl2_uc_flr_en_set(self, (i == 0U) ? 1U : 0U, i);
 		hw_atl_rpfl2unicast_flr_act_set(self, 1U, i);
-	}
+	पूर्ण
 
 	hw_atl_reg_rx_flr_mcst_flr_msk_set(self, 0x00000000U);
 	hw_atl_reg_rx_flr_mcst_flr_set(self, 0x00010FFFU, 0U);
@@ -319,19 +320,19 @@ static int hw_atl_a0_hw_init_rx_path(struct aq_hw_s *self)
 	hw_atl_rdm_rx_dca_en_set(self, 0U);
 	hw_atl_rdm_rx_dca_mode_set(self, 0U);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_mac_addr_set(struct aq_hw_s *self, u8 *mac_addr)
-{
-	unsigned int h = 0U;
-	unsigned int l = 0U;
-	int err = 0;
+अटल पूर्णांक hw_atl_a0_hw_mac_addr_set(काष्ठा aq_hw_s *self, u8 *mac_addr)
+अणु
+	अचिन्हित पूर्णांक h = 0U;
+	अचिन्हित पूर्णांक l = 0U;
+	पूर्णांक err = 0;
 
-	if (!mac_addr) {
+	अगर (!mac_addr) अणु
 		err = -EINVAL;
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 
 	h = (mac_addr[0] << 8) | (mac_addr[1]);
 	l = (mac_addr[2] << 24) | (mac_addr[3] << 16) |
@@ -344,20 +345,20 @@ static int hw_atl_a0_hw_mac_addr_set(struct aq_hw_s *self, u8 *mac_addr)
 
 	err = aq_hw_err_from_flags(self);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-static int hw_atl_a0_hw_init(struct aq_hw_s *self, u8 *mac_addr)
-{
-	static u32 aq_hw_atl_igcr_table_[4][2] = {
-		[AQ_HW_IRQ_INVALID] = { 0x20000000U, 0x20000000U },
-		[AQ_HW_IRQ_LEGACY]  = { 0x20000080U, 0x20000080U },
-		[AQ_HW_IRQ_MSI]     = { 0x20000021U, 0x20000025U },
-		[AQ_HW_IRQ_MSIX]    = { 0x20000022U, 0x20000026U },
-	};
-	struct aq_nic_cfg_s *aq_nic_cfg = self->aq_nic_cfg;
-	int err = 0;
+अटल पूर्णांक hw_atl_a0_hw_init(काष्ठा aq_hw_s *self, u8 *mac_addr)
+अणु
+	अटल u32 aq_hw_atl_igcr_table_[4][2] = अणु
+		[AQ_HW_IRQ_INVALID] = अणु 0x20000000U, 0x20000000U पूर्ण,
+		[AQ_HW_IRQ_LEGACY]  = अणु 0x20000080U, 0x20000080U पूर्ण,
+		[AQ_HW_IRQ_MSI]     = अणु 0x20000021U, 0x20000025U पूर्ण,
+		[AQ_HW_IRQ_MSIX]    = अणु 0x20000022U, 0x20000026U पूर्ण,
+	पूर्ण;
+	काष्ठा aq_nic_cfg_s *aq_nic_cfg = self->aq_nic_cfg;
+	पूर्णांक err = 0;
 
 	hw_atl_a0_hw_init_tx_path(self);
 	hw_atl_a0_hw_init_rx_path(self);
@@ -374,20 +375,20 @@ static int hw_atl_a0_hw_init(struct aq_hw_s *self, u8 *mac_addr)
 	hw_atl_a0_hw_rss_set(self, &aq_nic_cfg->aq_rss);
 	hw_atl_a0_hw_rss_hash_set(self, &aq_nic_cfg->aq_rss);
 
-	/* Reset link status and read out initial hardware counters */
+	/* Reset link status and पढ़ो out initial hardware counters */
 	self->aq_link_status.mbps = 0;
 	self->aq_fw_ops->update_stats(self);
 
 	err = aq_hw_err_from_flags(self);
-	if (err < 0)
-		goto err_exit;
+	अगर (err < 0)
+		जाओ err_निकास;
 
 	/* Interrupts */
 	hw_atl_reg_irq_glb_ctl_set(self,
 				   aq_hw_atl_igcr_table_[aq_nic_cfg->irq_type]
 					[(aq_nic_cfg->vecs > 1U) ? 1 : 0]);
 
-	hw_atl_itr_irq_auto_masklsw_set(self, aq_nic_cfg->aq_hw_caps->irq_mask);
+	hw_atl_itr_irq_स्वतः_masklsw_set(self, aq_nic_cfg->aq_hw_caps->irq_mask);
 
 	/* Interrupts */
 	hw_atl_reg_gen_irq_map_set(self,
@@ -398,58 +399,58 @@ static int hw_atl_a0_hw_init(struct aq_hw_s *self, u8 *mac_addr)
 
 	hw_atl_a0_hw_offload_set(self, aq_nic_cfg);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-static int hw_atl_a0_hw_ring_tx_start(struct aq_hw_s *self,
-				      struct aq_ring_s *ring)
-{
+अटल पूर्णांक hw_atl_a0_hw_ring_tx_start(काष्ठा aq_hw_s *self,
+				      काष्ठा aq_ring_s *ring)
+अणु
 	hw_atl_tdm_tx_desc_en_set(self, 1, ring->idx);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_ring_rx_start(struct aq_hw_s *self,
-				      struct aq_ring_s *ring)
-{
+अटल पूर्णांक hw_atl_a0_hw_ring_rx_start(काष्ठा aq_hw_s *self,
+				      काष्ठा aq_ring_s *ring)
+अणु
 	hw_atl_rdm_rx_desc_en_set(self, 1, ring->idx);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_start(struct aq_hw_s *self)
-{
+अटल पूर्णांक hw_atl_a0_hw_start(काष्ठा aq_hw_s *self)
+अणु
 	hw_atl_tpb_tx_buff_en_set(self, 1);
 	hw_atl_rpb_rx_buff_en_set(self, 1);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_tx_ring_tail_update(struct aq_hw_s *self,
-					    struct aq_ring_s *ring)
-{
+अटल पूर्णांक hw_atl_a0_hw_tx_ring_tail_update(काष्ठा aq_hw_s *self,
+					    काष्ठा aq_ring_s *ring)
+अणु
 	hw_atl_reg_tx_dma_desc_tail_ptr_set(self, ring->sw_tail, ring->idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hw_atl_a0_hw_ring_tx_xmit(struct aq_hw_s *self,
-				     struct aq_ring_s *ring,
-				     unsigned int frags)
-{
-	struct aq_ring_buff_s *buff = NULL;
-	struct hw_atl_txd_s *txd = NULL;
-	unsigned int buff_pa_len = 0U;
-	unsigned int frag_count = 0U;
-	unsigned int pkt_len = 0U;
+अटल पूर्णांक hw_atl_a0_hw_ring_tx_xmit(काष्ठा aq_hw_s *self,
+				     काष्ठा aq_ring_s *ring,
+				     अचिन्हित पूर्णांक frags)
+अणु
+	काष्ठा aq_ring_buff_s *buff = शून्य;
+	काष्ठा hw_atl_txd_s *txd = शून्य;
+	अचिन्हित पूर्णांक buff_pa_len = 0U;
+	अचिन्हित पूर्णांक frag_count = 0U;
+	अचिन्हित पूर्णांक pkt_len = 0U;
 	bool is_gso = false;
 
 	buff = &ring->buff_ring[ring->sw_tail];
 	pkt_len = (buff->is_eop && buff->is_sop) ? buff->len : buff->len_pkt;
 
-	for (frag_count = 0; frag_count < frags; frag_count++) {
-		txd = (struct hw_atl_txd_s *)&ring->dx_ring[ring->sw_tail *
+	क्रम (frag_count = 0; frag_count < frags; frag_count++) अणु
+		txd = (काष्ठा hw_atl_txd_s *)&ring->dx_ring[ring->sw_tail *
 						HW_ATL_A0_TXD_SIZE];
 		txd->ctl = 0;
 		txd->ctl2 = 0;
@@ -457,7 +458,7 @@ static int hw_atl_a0_hw_ring_tx_xmit(struct aq_hw_s *self,
 
 		buff = &ring->buff_ring[ring->sw_tail];
 
-		if (buff->is_gso_tcp) {
+		अगर (buff->is_gso_tcp) अणु
 			txd->ctl |= (buff->len_l3 << 31) |
 				(buff->len_l2 << 24) |
 				HW_ATL_A0_TXD_CTL_CMD_TCP |
@@ -471,9 +472,9 @@ static int hw_atl_a0_hw_ring_tx_xmit(struct aq_hw_s *self,
 				    buff->len_l2);
 			is_gso = true;
 
-			if (buff->is_ipv6)
+			अगर (buff->is_ipv6)
 				txd->ctl |= HW_ATL_A0_TXD_CTL_CMD_IPV6;
-		} else {
+		पूर्ण अन्यथा अणु
 			buff_pa_len = buff->len;
 
 			txd->buf_addr = buff->pa;
@@ -483,37 +484,37 @@ static int hw_atl_a0_hw_ring_tx_xmit(struct aq_hw_s *self,
 			/* PAY_LEN */
 			txd->ctl2 |= HW_ATL_A0_TXD_CTL2_LEN & (pkt_len << 14);
 
-			if (is_gso) {
+			अगर (is_gso) अणु
 				txd->ctl |= HW_ATL_A0_TXD_CTL_CMD_LSO;
 				txd->ctl2 |= HW_ATL_A0_TXD_CTL2_CTX_EN;
-			}
+			पूर्ण
 
 			/* Tx checksum offloads */
-			if (buff->is_ip_cso)
+			अगर (buff->is_ip_cso)
 				txd->ctl |= HW_ATL_A0_TXD_CTL_CMD_IPCSO;
 
-			if (buff->is_udp_cso || buff->is_tcp_cso)
+			अगर (buff->is_udp_cso || buff->is_tcp_cso)
 				txd->ctl |= HW_ATL_A0_TXD_CTL_CMD_TUCSO;
 
-			if (unlikely(buff->is_eop)) {
+			अगर (unlikely(buff->is_eop)) अणु
 				txd->ctl |= HW_ATL_A0_TXD_CTL_EOP;
 				txd->ctl |= HW_ATL_A0_TXD_CTL_CMD_WB;
 				is_gso = false;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		ring->sw_tail = aq_ring_next_dx(ring, ring->sw_tail);
-	}
+	पूर्ण
 
 	hw_atl_a0_hw_tx_ring_tail_update(self, ring);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_ring_rx_init(struct aq_hw_s *self,
-				     struct aq_ring_s *aq_ring,
-				     struct aq_ring_param_s *aq_ring_param)
-{
+अटल पूर्णांक hw_atl_a0_hw_ring_rx_init(काष्ठा aq_hw_s *self,
+				     काष्ठा aq_ring_s *aq_ring,
+				     काष्ठा aq_ring_param_s *aq_ring_param)
+अणु
 	u32 dma_desc_addr_msw = (u32)(((u64)aq_ring->dx_ring_pa) >> 32);
 	u32 dma_desc_addr_lsw = (u32)aq_ring->dx_ring_pa;
 
@@ -540,7 +541,7 @@ static int hw_atl_a0_hw_ring_rx_init(struct aq_hw_s *self,
 
 	/* Rx ring set mode */
 
-	/* Mapping interrupt vector */
+	/* Mapping पूर्णांकerrupt vector */
 	hw_atl_itr_irq_map_rx_set(self, aq_ring_param->vec_idx, aq_ring->idx);
 	hw_atl_itr_irq_map_en_rx_set(self, true, aq_ring->idx);
 
@@ -549,13 +550,13 @@ static int hw_atl_a0_hw_ring_rx_init(struct aq_hw_s *self,
 	hw_atl_rdm_rx_head_dca_en_set(self, 0U, aq_ring->idx);
 	hw_atl_rdm_rx_pld_dca_en_set(self, 0U, aq_ring->idx);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_ring_tx_init(struct aq_hw_s *self,
-				     struct aq_ring_s *aq_ring,
-				     struct aq_ring_param_s *aq_ring_param)
-{
+अटल पूर्णांक hw_atl_a0_hw_ring_tx_init(काष्ठा aq_hw_s *self,
+				     काष्ठा aq_ring_s *aq_ring,
+				     काष्ठा aq_ring_param_s *aq_ring_param)
+अणु
 	u32 dma_desc_msw_addr = (u32)(((u64)aq_ring->dx_ring_pa) >> 32);
 	u32 dma_desc_lsw_addr = (u32)aq_ring->dx_ring_pa;
 
@@ -572,190 +573,190 @@ static int hw_atl_a0_hw_ring_tx_init(struct aq_hw_s *self,
 	/* Set Tx threshold */
 	hw_atl_tdm_tx_desc_wr_wb_threshold_set(self, 0U, aq_ring->idx);
 
-	/* Mapping interrupt vector */
+	/* Mapping पूर्णांकerrupt vector */
 	hw_atl_itr_irq_map_tx_set(self, aq_ring_param->vec_idx, aq_ring->idx);
 	hw_atl_itr_irq_map_en_tx_set(self, true, aq_ring->idx);
 
 	hw_atl_tdm_cpu_id_set(self, aq_ring_param->cpu, aq_ring->idx);
 	hw_atl_tdm_tx_desc_dca_en_set(self, 0U, aq_ring->idx);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_ring_rx_fill(struct aq_hw_s *self,
-				     struct aq_ring_s *ring,
-				     unsigned int sw_tail_old)
-{
-	for (; sw_tail_old != ring->sw_tail;
-		sw_tail_old = aq_ring_next_dx(ring, sw_tail_old)) {
-		struct hw_atl_rxd_s *rxd =
-			(struct hw_atl_rxd_s *)&ring->dx_ring[sw_tail_old *
+अटल पूर्णांक hw_atl_a0_hw_ring_rx_fill(काष्ठा aq_hw_s *self,
+				     काष्ठा aq_ring_s *ring,
+				     अचिन्हित पूर्णांक sw_tail_old)
+अणु
+	क्रम (; sw_tail_old != ring->sw_tail;
+		sw_tail_old = aq_ring_next_dx(ring, sw_tail_old)) अणु
+		काष्ठा hw_atl_rxd_s *rxd =
+			(काष्ठा hw_atl_rxd_s *)&ring->dx_ring[sw_tail_old *
 							HW_ATL_A0_RXD_SIZE];
 
-		struct aq_ring_buff_s *buff = &ring->buff_ring[sw_tail_old];
+		काष्ठा aq_ring_buff_s *buff = &ring->buff_ring[sw_tail_old];
 
 		rxd->buf_addr = buff->pa;
 		rxd->hdr_addr = 0U;
-	}
+	पूर्ण
 
 	hw_atl_reg_rx_dma_desc_tail_ptr_set(self, sw_tail_old, ring->idx);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_ring_tx_head_update(struct aq_hw_s *self,
-					    struct aq_ring_s *ring)
-{
-	unsigned int hw_head = hw_atl_tdm_tx_desc_head_ptr_get(self, ring->idx);
-	int err = 0;
+अटल पूर्णांक hw_atl_a0_hw_ring_tx_head_update(काष्ठा aq_hw_s *self,
+					    काष्ठा aq_ring_s *ring)
+अणु
+	अचिन्हित पूर्णांक hw_head = hw_atl_tdm_tx_desc_head_ptr_get(self, ring->idx);
+	पूर्णांक err = 0;
 
-	if (aq_utils_obj_test(&self->flags, AQ_HW_FLAG_ERR_UNPLUG)) {
+	अगर (aq_utils_obj_test(&self->flags, AQ_HW_FLAG_ERR_UNPLUG)) अणु
 		err = -ENXIO;
-		goto err_exit;
-	}
+		जाओ err_निकास;
+	पूर्ण
 	ring->hw_head = hw_head;
 	err = aq_hw_err_from_flags(self);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-static int hw_atl_a0_hw_ring_rx_receive(struct aq_hw_s *self,
-					struct aq_ring_s *ring)
-{
-	for (; ring->hw_head != ring->sw_tail;
-		ring->hw_head = aq_ring_next_dx(ring, ring->hw_head)) {
-		struct aq_ring_buff_s *buff = NULL;
-		struct hw_atl_rxd_wb_s *rxd_wb = (struct hw_atl_rxd_wb_s *)
+अटल पूर्णांक hw_atl_a0_hw_ring_rx_receive(काष्ठा aq_hw_s *self,
+					काष्ठा aq_ring_s *ring)
+अणु
+	क्रम (; ring->hw_head != ring->sw_tail;
+		ring->hw_head = aq_ring_next_dx(ring, ring->hw_head)) अणु
+		काष्ठा aq_ring_buff_s *buff = शून्य;
+		काष्ठा hw_atl_rxd_wb_s *rxd_wb = (काष्ठा hw_atl_rxd_wb_s *)
 			&ring->dx_ring[ring->hw_head * HW_ATL_A0_RXD_SIZE];
 
-		unsigned int is_err = 1U;
-		unsigned int is_rx_check_sum_enabled = 0U;
-		unsigned int pkt_type = 0U;
+		अचिन्हित पूर्णांक is_err = 1U;
+		अचिन्हित पूर्णांक is_rx_check_sum_enabled = 0U;
+		अचिन्हित पूर्णांक pkt_type = 0U;
 
-		if (!(rxd_wb->status & 0x5U)) { /* RxD is not done */
-			if ((1U << 4) &
-			hw_atl_reg_rx_dma_desc_status_get(self, ring->idx)) {
+		अगर (!(rxd_wb->status & 0x5U)) अणु /* RxD is not करोne */
+			अगर ((1U << 4) &
+			hw_atl_reg_rx_dma_desc_status_get(self, ring->idx)) अणु
 				hw_atl_rdm_rx_desc_en_set(self, false, ring->idx);
 				hw_atl_rdm_rx_desc_res_set(self, true, ring->idx);
 				hw_atl_rdm_rx_desc_res_set(self, false, ring->idx);
 				hw_atl_rdm_rx_desc_en_set(self, true, ring->idx);
-			}
+			पूर्ण
 
-			if (ring->hw_head ||
+			अगर (ring->hw_head ||
 			    (hw_atl_rdm_rx_desc_head_ptr_get(self,
-							     ring->idx) < 2U)) {
-				break;
-			} else if (!(rxd_wb->status & 0x1U)) {
-				struct hw_atl_rxd_wb_s *rxd_wb1 =
-					(struct hw_atl_rxd_wb_s *)
+							     ring->idx) < 2U)) अणु
+				अवरोध;
+			पूर्ण अन्यथा अगर (!(rxd_wb->status & 0x1U)) अणु
+				काष्ठा hw_atl_rxd_wb_s *rxd_wb1 =
+					(काष्ठा hw_atl_rxd_wb_s *)
 					(&ring->dx_ring[(1U) *
 						HW_ATL_A0_RXD_SIZE]);
 
-				if ((rxd_wb1->status & 0x1U)) {
+				अगर ((rxd_wb1->status & 0x1U)) अणु
 					rxd_wb->pkt_len = 1514U;
 					rxd_wb->status = 3U;
-				} else {
-					break;
-				}
-			}
-		}
+				पूर्ण अन्यथा अणु
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
 		buff = &ring->buff_ring[ring->hw_head];
 
-		if (0x3U != (rxd_wb->status & 0x3U))
+		अगर (0x3U != (rxd_wb->status & 0x3U))
 			rxd_wb->status |= 4;
 
 		is_err = (0x0000001CU & rxd_wb->status);
 		is_rx_check_sum_enabled = (rxd_wb->type) & (0x3U << 19);
 		pkt_type = 0xFFU & (rxd_wb->type >> 4);
 
-		if (is_rx_check_sum_enabled) {
-			if (0x0U == (pkt_type & 0x3U))
+		अगर (is_rx_check_sum_enabled) अणु
+			अगर (0x0U == (pkt_type & 0x3U))
 				buff->is_ip_cso = (is_err & 0x08U) ? 0 : 1;
 
-			if (0x4U == (pkt_type & 0x1CU))
+			अगर (0x4U == (pkt_type & 0x1CU))
 				buff->is_udp_cso = (is_err & 0x10U) ? 0 : 1;
-			else if (0x0U == (pkt_type & 0x1CU))
+			अन्यथा अगर (0x0U == (pkt_type & 0x1CU))
 				buff->is_tcp_cso = (is_err & 0x10U) ? 0 : 1;
 
-			/* Checksum offload workaround for small packets */
-			if (rxd_wb->pkt_len <= 60) {
+			/* Checksum offload workaround क्रम small packets */
+			अगर (rxd_wb->pkt_len <= 60) अणु
 				buff->is_ip_cso = 0U;
 				buff->is_cso_err = 0U;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		is_err &= ~0x18U;
 		is_err &= ~0x04U;
 
-		if (is_err || rxd_wb->type & 0x1000U) {
+		अगर (is_err || rxd_wb->type & 0x1000U) अणु
 			/* status error or DMA error */
 			buff->is_error = 1U;
-		} else {
-			if (self->aq_nic_cfg->is_rss) {
+		पूर्ण अन्यथा अणु
+			अगर (self->aq_nic_cfg->is_rss) अणु
 				/* last 4 byte */
 				u16 rss_type = rxd_wb->type & 0xFU;
 
-				if (rss_type && rss_type < 0x8U) {
+				अगर (rss_type && rss_type < 0x8U) अणु
 					buff->is_hash_l4 = (rss_type == 0x4 ||
 							rss_type == 0x5);
 					buff->rss_hash = rxd_wb->rss_hash;
-				}
-			}
+				पूर्ण
+			पूर्ण
 
-			if (HW_ATL_A0_RXD_WB_STAT2_EOP & rxd_wb->status) {
+			अगर (HW_ATL_A0_RXD_WB_STAT2_EOP & rxd_wb->status) अणु
 				buff->len = rxd_wb->pkt_len %
 					AQ_CFG_RX_FRAME_MAX;
 				buff->len = buff->len ?
 					buff->len : AQ_CFG_RX_FRAME_MAX;
 				buff->next = 0U;
 				buff->is_eop = 1U;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* jumbo */
 				buff->next = aq_ring_next_dx(ring,
 							     ring->hw_head);
 				++ring->stats.rx.jumbo_packets;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_irq_enable(struct aq_hw_s *self, u64 mask)
-{
+अटल पूर्णांक hw_atl_a0_hw_irq_enable(काष्ठा aq_hw_s *self, u64 mask)
+अणु
 	hw_atl_itr_irq_msk_setlsw_set(self, LODWORD(mask) |
 			       (1U << HW_ATL_A0_ERR_INT));
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_irq_disable(struct aq_hw_s *self, u64 mask)
-{
+अटल पूर्णांक hw_atl_a0_hw_irq_disable(काष्ठा aq_hw_s *self, u64 mask)
+अणु
 	hw_atl_itr_irq_msk_clearlsw_set(self, LODWORD(mask));
 	hw_atl_itr_irq_status_clearlsw_set(self, LODWORD(mask));
 
-	if ((1U << 16) & hw_atl_reg_gen_irq_status_get(self))
+	अगर ((1U << 16) & hw_atl_reg_gen_irq_status_get(self))
 		atomic_inc(&self->dpc);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_irq_read(struct aq_hw_s *self, u64 *mask)
-{
+अटल पूर्णांक hw_atl_a0_hw_irq_पढ़ो(काष्ठा aq_hw_s *self, u64 *mask)
+अणु
 	*mask = hw_atl_itr_irq_statuslsw_get(self);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-#define IS_FILTER_ENABLED(_F_) ((packet_filter & (_F_)) ? 1U : 0U)
+#घोषणा IS_FILTER_ENABLED(_F_) ((packet_filter & (_F_)) ? 1U : 0U)
 
-static int hw_atl_a0_hw_packet_filter_set(struct aq_hw_s *self,
-					  unsigned int packet_filter)
-{
-	struct aq_nic_cfg_s *cfg = self->aq_nic_cfg;
-	unsigned int i = 0U;
+अटल पूर्णांक hw_atl_a0_hw_packet_filter_set(काष्ठा aq_hw_s *self,
+					  अचिन्हित पूर्णांक packet_filter)
+अणु
+	काष्ठा aq_nic_cfg_s *cfg = self->aq_nic_cfg;
+	अचिन्हित पूर्णांक i = 0U;
 
 	hw_atl_rpfl2promiscuous_mode_en_set(self,
 					    IS_FILTER_ENABLED(IFF_PROMISC));
@@ -765,31 +766,31 @@ static int hw_atl_a0_hw_packet_filter_set(struct aq_hw_s *self,
 
 	cfg->is_mc_list_enabled = IS_FILTER_ENABLED(IFF_MULTICAST);
 
-	for (i = HW_ATL_A0_MAC_MIN; i < HW_ATL_A0_MAC_MAX; ++i)
+	क्रम (i = HW_ATL_A0_MAC_MIN; i < HW_ATL_A0_MAC_MAX; ++i)
 		hw_atl_rpfl2_uc_flr_en_set(self,
 					   (cfg->is_mc_list_enabled &&
 					    (i <= cfg->mc_list_count)) ? 1U : 0U,
 					   i);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-#undef IS_FILTER_ENABLED
+#अघोषित IS_FILTER_ENABLED
 
-static int hw_atl_a0_hw_multicast_list_set(struct aq_hw_s *self,
+अटल पूर्णांक hw_atl_a0_hw_multicast_list_set(काष्ठा aq_hw_s *self,
 					   u8 ar_mac
 					   [AQ_HW_MULTICAST_ADDRESS_MAX]
 					   [ETH_ALEN],
 					   u32 count)
-{
-	struct aq_nic_cfg_s *cfg = self->aq_nic_cfg;
-	int err = 0;
+अणु
+	काष्ठा aq_nic_cfg_s *cfg = self->aq_nic_cfg;
+	पूर्णांक err = 0;
 
-	if (count > (HW_ATL_A0_MAC_MAX - HW_ATL_A0_MAC_MIN)) {
+	अगर (count > (HW_ATL_A0_MAC_MAX - HW_ATL_A0_MAC_MIN)) अणु
 		err = -EBADRQC;
-		goto err_exit;
-	}
-	for (cfg->mc_list_count = 0U; cfg->mc_list_count < count; ++cfg->mc_list_count) {
+		जाओ err_निकास;
+	पूर्ण
+	क्रम (cfg->mc_list_count = 0U; cfg->mc_list_count < count; ++cfg->mc_list_count) अणु
 		u32 i = cfg->mc_list_count;
 		u32 h = (ar_mac[i][0] << 8) | (ar_mac[i][1]);
 		u32 l = (ar_mac[i][2] << 24) | (ar_mac[i][3] << 16) |
@@ -808,143 +809,143 @@ static int hw_atl_a0_hw_multicast_list_set(struct aq_hw_s *self,
 		hw_atl_rpfl2_uc_flr_en_set(self,
 					   (cfg->is_mc_list_enabled),
 					   HW_ATL_A0_MAC_MIN + i);
-	}
+	पूर्ण
 
 	err = aq_hw_err_from_flags(self);
 
-err_exit:
-	return err;
-}
+err_निकास:
+	वापस err;
+पूर्ण
 
-static int hw_atl_a0_hw_interrupt_moderation_set(struct aq_hw_s *self)
-{
-	unsigned int i = 0U;
+अटल पूर्णांक hw_atl_a0_hw_पूर्णांकerrupt_moderation_set(काष्ठा aq_hw_s *self)
+अणु
+	अचिन्हित पूर्णांक i = 0U;
 	u32 itr_rx;
 
-	if (self->aq_nic_cfg->itr) {
-		if (self->aq_nic_cfg->itr != AQ_CFG_INTERRUPT_MODERATION_AUTO) {
+	अगर (self->aq_nic_cfg->itr) अणु
+		अगर (self->aq_nic_cfg->itr != AQ_CFG_INTERRUPT_MODERATION_AUTO) अणु
 			u32 itr_ = (self->aq_nic_cfg->itr >> 1);
 
 			itr_ = min(AQ_CFG_IRQ_MASK, itr_);
 
 			itr_rx = 0x80000000U | (itr_ << 0x10);
-		} else  {
-			u32 n = 0xFFFFU & aq_hw_read_reg(self, 0x00002A00U);
+		पूर्ण अन्यथा  अणु
+			u32 n = 0xFFFFU & aq_hw_पढ़ो_reg(self, 0x00002A00U);
 
-			if (n < self->aq_link_status.mbps) {
+			अगर (n < self->aq_link_status.mbps) अणु
 				itr_rx = 0U;
-			} else {
-				static unsigned int hw_timers_tbl_[] = {
+			पूर्ण अन्यथा अणु
+				अटल अचिन्हित पूर्णांक hw_समयrs_tbl_[] = अणु
 					0x01CU, /* 10Gbit */
 					0x039U, /* 5Gbit */
 					0x039U, /* 5Gbit 5GS */
 					0x073U, /* 2.5Gbit */
 					0x120U, /* 1Gbit */
 					0x1FFU, /* 100Mbit */
-				};
+				पूर्ण;
 
-				unsigned int speed_index =
+				अचिन्हित पूर्णांक speed_index =
 					hw_atl_utils_mbps_2_speed_index(
 						self->aq_link_status.mbps);
 
 				itr_rx = 0x80000000U |
-					(hw_timers_tbl_[speed_index] << 0x10U);
-			}
+					(hw_समयrs_tbl_[speed_index] << 0x10U);
+			पूर्ण
 
-			aq_hw_write_reg(self, 0x00002A00U, 0x40000000U);
-			aq_hw_write_reg(self, 0x00002A00U, 0x8D000000U);
-		}
-	} else {
+			aq_hw_ग_लिखो_reg(self, 0x00002A00U, 0x40000000U);
+			aq_hw_ग_लिखो_reg(self, 0x00002A00U, 0x8D000000U);
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		itr_rx = 0U;
-	}
+	पूर्ण
 
-	for (i = HW_ATL_A0_RINGS_MAX; i--;)
+	क्रम (i = HW_ATL_A0_RINGS_MAX; i--;)
 		hw_atl_reg_irq_thr_set(self, itr_rx, i);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_stop(struct aq_hw_s *self)
-{
+अटल पूर्णांक hw_atl_a0_hw_stop(काष्ठा aq_hw_s *self)
+अणु
 	hw_atl_a0_hw_irq_disable(self, HW_ATL_A0_INT_MASK);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_ring_tx_stop(struct aq_hw_s *self,
-				     struct aq_ring_s *ring)
-{
+अटल पूर्णांक hw_atl_a0_hw_ring_tx_stop(काष्ठा aq_hw_s *self,
+				     काष्ठा aq_ring_s *ring)
+अणु
 	hw_atl_tdm_tx_desc_en_set(self, 0U, ring->idx);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_ring_rx_stop(struct aq_hw_s *self,
-				     struct aq_ring_s *ring)
-{
+अटल पूर्णांक hw_atl_a0_hw_ring_rx_stop(काष्ठा aq_hw_s *self,
+				     काष्ठा aq_ring_s *ring)
+अणु
 	hw_atl_rdm_rx_desc_en_set(self, 0U, ring->idx);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_fl3l4_clear(struct aq_hw_s *self,
-				    struct aq_rx_filter_l3l4 *data)
-{
+अटल पूर्णांक hw_atl_a0_hw_fl3l4_clear(काष्ठा aq_hw_s *self,
+				    काष्ठा aq_rx_filter_l3l4 *data)
+अणु
 	u8 location = data->location;
 
-	if (!data->is_ipv6) {
+	अगर (!data->is_ipv6) अणु
 		hw_atl_rpfl3l4_cmd_clear(self, location);
 		hw_atl_rpf_l4_spd_set(self, 0U, location);
 		hw_atl_rpf_l4_dpd_set(self, 0U, location);
 		hw_atl_rpfl3l4_ipv4_src_addr_clear(self, location);
 		hw_atl_rpfl3l4_ipv4_dest_addr_clear(self, location);
-	} else {
-		int i;
+	पूर्ण अन्यथा अणु
+		पूर्णांक i;
 
-		for (i = 0; i < HW_ATL_RX_CNT_REG_ADDR_IPV6; ++i) {
+		क्रम (i = 0; i < HW_ATL_RX_CNT_REG_ADDR_IPV6; ++i) अणु
 			hw_atl_rpfl3l4_cmd_clear(self, location + i);
 			hw_atl_rpf_l4_spd_set(self, 0U, location + i);
 			hw_atl_rpf_l4_dpd_set(self, 0U, location + i);
-		}
+		पूर्ण
 		hw_atl_rpfl3l4_ipv6_src_addr_clear(self, location);
 		hw_atl_rpfl3l4_ipv6_dest_addr_clear(self, location);
-	}
+	पूर्ण
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-static int hw_atl_a0_hw_fl3l4_set(struct aq_hw_s *self,
-				  struct aq_rx_filter_l3l4 *data)
-{
+अटल पूर्णांक hw_atl_a0_hw_fl3l4_set(काष्ठा aq_hw_s *self,
+				  काष्ठा aq_rx_filter_l3l4 *data)
+अणु
 	u8 location = data->location;
 
 	hw_atl_a0_hw_fl3l4_clear(self, data);
 
-	if (data->cmd) {
-		if (!data->is_ipv6) {
+	अगर (data->cmd) अणु
+		अगर (!data->is_ipv6) अणु
 			hw_atl_rpfl3l4_ipv4_dest_addr_set(self,
 							  location,
 							  data->ip_dst[0]);
 			hw_atl_rpfl3l4_ipv4_src_addr_set(self,
 							 location,
 							 data->ip_src[0]);
-		} else {
+		पूर्ण अन्यथा अणु
 			hw_atl_rpfl3l4_ipv6_dest_addr_set(self,
 							  location,
 							  data->ip_dst);
 			hw_atl_rpfl3l4_ipv6_src_addr_set(self,
 							 location,
 							 data->ip_src);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	hw_atl_rpf_l4_dpd_set(self, data->p_dst, location);
 	hw_atl_rpf_l4_spd_set(self, data->p_src, location);
 	hw_atl_rpfl3l4_cmd_set(self, location, data->cmd);
 
-	return aq_hw_err_from_flags(self);
-}
+	वापस aq_hw_err_from_flags(self);
+पूर्ण
 
-const struct aq_hw_ops hw_atl_ops_a0 = {
+स्थिर काष्ठा aq_hw_ops hw_atl_ops_a0 = अणु
 	.hw_soft_reset        = hw_atl_utils_soft_reset,
 	.hw_prepare           = hw_atl_utils_initfw,
 	.hw_set_mac_address   = hw_atl_a0_hw_mac_addr_set,
@@ -965,17 +966,17 @@ const struct aq_hw_ops hw_atl_ops_a0 = {
 
 	.hw_irq_enable           = hw_atl_a0_hw_irq_enable,
 	.hw_irq_disable          = hw_atl_a0_hw_irq_disable,
-	.hw_irq_read             = hw_atl_a0_hw_irq_read,
+	.hw_irq_पढ़ो             = hw_atl_a0_hw_irq_पढ़ो,
 
 	.hw_ring_rx_init             = hw_atl_a0_hw_ring_rx_init,
 	.hw_ring_tx_init             = hw_atl_a0_hw_ring_tx_init,
 	.hw_packet_filter_set        = hw_atl_a0_hw_packet_filter_set,
 	.hw_filter_l3l4_set          = hw_atl_a0_hw_fl3l4_set,
 	.hw_multicast_list_set       = hw_atl_a0_hw_multicast_list_set,
-	.hw_interrupt_moderation_set = hw_atl_a0_hw_interrupt_moderation_set,
+	.hw_पूर्णांकerrupt_moderation_set = hw_atl_a0_hw_पूर्णांकerrupt_moderation_set,
 	.hw_rss_set                  = hw_atl_a0_hw_rss_set,
 	.hw_rss_hash_set             = hw_atl_a0_hw_rss_hash_set,
 	.hw_get_regs                 = hw_atl_utils_hw_get_regs,
 	.hw_get_hw_stats             = hw_atl_utils_get_hw_stats,
 	.hw_get_fw_version           = hw_atl_utils_get_fw_version,
-};
+पूर्ण;

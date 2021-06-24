@@ -1,196 +1,197 @@
-// SPDX-License-Identifier: GPL-2.0
-/* apc - Driver implementation for power management functions
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* apc - Driver implementation क्रम घातer management functions
  * of Aurora Personality Chip (APC) on SPARCstation-4/5 and
  * derivatives.
  *
  * Copyright (c) 2002 Eric Brower (ebrower@usa.net)
  */
 
-#include <linux/kernel.h>
-#include <linux/fs.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/miscdevice.h>
-#include <linux/pm.h>
-#include <linux/of.h>
-#include <linux/of_device.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/pm.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/module.h>
 
-#include <asm/io.h>
-#include <asm/oplib.h>
-#include <linux/uaccess.h>
-#include <asm/auxio.h>
-#include <asm/apc.h>
-#include <asm/processor.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/oplib.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/auxपन.स>
+#समावेश <यंत्र/apc.h>
+#समावेश <यंत्र/processor.h>
 
 /* Debugging
  * 
- * #define APC_DEBUG_LED
+ * #घोषणा APC_DEBUG_LED
  */
 
-#define APC_MINOR	MISC_DYNAMIC_MINOR
-#define APC_OBPNAME	"power-management"
-#define APC_DEVNAME "apc"
+#घोषणा APC_MINOR	MISC_DYNAMIC_MINOR
+#घोषणा APC_OBPNAME	"power-management"
+#घोषणा APC_DEVNAME "apc"
 
-static u8 __iomem *regs;
-static int apc_no_idle = 0;
+अटल u8 __iomem *regs;
+अटल पूर्णांक apc_no_idle = 0;
 
-#define apc_readb(offs)		(sbus_readb(regs+offs))
-#define apc_writeb(val, offs) 	(sbus_writeb(val, regs+offs))
+#घोषणा apc_पढ़ोb(offs)		(sbus_पढ़ोb(regs+offs))
+#घोषणा apc_ग_लिखोb(val, offs) 	(sbus_ग_लिखोb(val, regs+offs))
 
-/* Specify "apc=noidle" on the kernel command line to 
+/* Specअगरy "apc=noidle" on the kernel command line to 
  * disable APC CPU standby support.  Certain prototype
- * systems (SPARCstation-Fox) do not play well with APC
- * CPU idle, so disable this if your system has APC and 
- * crashes randomly.
+ * प्रणालीs (SPARCstation-Fox) करो not play well with APC
+ * CPU idle, so disable this अगर your प्रणाली has APC and 
+ * crashes अक्रमomly.
  */
-static int __init apc_setup(char *str) 
-{
-	if(!strncmp(str, "noidle", strlen("noidle"))) {
+अटल पूर्णांक __init apc_setup(अक्षर *str) 
+अणु
+	अगर(!म_भेदन(str, "noidle", म_माप("noidle"))) अणु
 		apc_no_idle = 1;
-		return 1;
-	}
-	return 0;
-}
+		वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 __setup("apc=", apc_setup);
 
 /* 
  * CPU idle callback function
  * See .../arch/sparc/kernel/process.c
  */
-static void apc_swift_idle(void)
-{
-#ifdef APC_DEBUG_LED
+अटल व्योम apc_swअगरt_idle(व्योम)
+अणु
+#अगर_घोषित APC_DEBUG_LED
 	set_auxio(0x00, AUXIO_LED); 
-#endif
+#पूर्ण_अगर
 
-	apc_writeb(apc_readb(APC_IDLE_REG) | APC_IDLE_ON, APC_IDLE_REG);
+	apc_ग_लिखोb(apc_पढ़ोb(APC_IDLE_REG) | APC_IDLE_ON, APC_IDLE_REG);
 
-#ifdef APC_DEBUG_LED
+#अगर_घोषित APC_DEBUG_LED
 	set_auxio(AUXIO_LED, 0x00); 
-#endif
-} 
+#पूर्ण_अगर
+पूर्ण 
 
-static inline void apc_free(struct platform_device *op)
-{
+अटल अंतरभूत व्योम apc_मुक्त(काष्ठा platक्रमm_device *op)
+अणु
 	of_iounmap(&op->resource[0], regs, resource_size(&op->resource[0]));
-}
+पूर्ण
 
-static int apc_open(struct inode *inode, struct file *f)
-{
-	return 0;
-}
+अटल पूर्णांक apc_खोलो(काष्ठा inode *inode, काष्ठा file *f)
+अणु
+	वापस 0;
+पूर्ण
 
-static int apc_release(struct inode *inode, struct file *f)
-{
-	return 0;
-}
+अटल पूर्णांक apc_release(काष्ठा inode *inode, काष्ठा file *f)
+अणु
+	वापस 0;
+पूर्ण
 
-static long apc_ioctl(struct file *f, unsigned int cmd, unsigned long __arg)
-{
+अटल दीर्घ apc_ioctl(काष्ठा file *f, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ __arg)
+अणु
 	__u8 inarg, __user *arg = (__u8 __user *) __arg;
 
-	switch (cmd) {
-	case APCIOCGFANCTL:
-		if (put_user(apc_readb(APC_FANCTL_REG) & APC_REGMASK, arg))
-			return -EFAULT;
-		break;
+	चयन (cmd) अणु
+	हाल APCIOCGFANCTL:
+		अगर (put_user(apc_पढ़ोb(APC_FANCTL_REG) & APC_REGMASK, arg))
+			वापस -EFAULT;
+		अवरोध;
 
-	case APCIOCGCPWR:
-		if (put_user(apc_readb(APC_CPOWER_REG) & APC_REGMASK, arg))
-			return -EFAULT;
-		break;
+	हाल APCIOCGCPWR:
+		अगर (put_user(apc_पढ़ोb(APC_CPOWER_REG) & APC_REGMASK, arg))
+			वापस -EFAULT;
+		अवरोध;
 
-	case APCIOCGBPORT:
-		if (put_user(apc_readb(APC_BPORT_REG) & APC_BPMASK, arg))
-			return -EFAULT;
-		break;
+	हाल APCIOCGBPORT:
+		अगर (put_user(apc_पढ़ोb(APC_BPORT_REG) & APC_BPMASK, arg))
+			वापस -EFAULT;
+		अवरोध;
 
-	case APCIOCSFANCTL:
-		if (get_user(inarg, arg))
-			return -EFAULT;
-		apc_writeb(inarg & APC_REGMASK, APC_FANCTL_REG);
-		break;
+	हाल APCIOCSFANCTL:
+		अगर (get_user(inarg, arg))
+			वापस -EFAULT;
+		apc_ग_लिखोb(inarg & APC_REGMASK, APC_FANCTL_REG);
+		अवरोध;
 
-	case APCIOCSCPWR:
-		if (get_user(inarg, arg))
-			return -EFAULT;
-		apc_writeb(inarg & APC_REGMASK, APC_CPOWER_REG);
-		break;
+	हाल APCIOCSCPWR:
+		अगर (get_user(inarg, arg))
+			वापस -EFAULT;
+		apc_ग_लिखोb(inarg & APC_REGMASK, APC_CPOWER_REG);
+		अवरोध;
 
-	case APCIOCSBPORT:
-		if (get_user(inarg, arg))
-			return -EFAULT;
-		apc_writeb(inarg & APC_BPMASK, APC_BPORT_REG);
-		break;
+	हाल APCIOCSBPORT:
+		अगर (get_user(inarg, arg))
+			वापस -EFAULT;
+		apc_ग_लिखोb(inarg & APC_BPMASK, APC_BPORT_REG);
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations apc_fops = {
+अटल स्थिर काष्ठा file_operations apc_fops = अणु
 	.unlocked_ioctl =	apc_ioctl,
-	.open =			apc_open,
+	.खोलो =			apc_खोलो,
 	.release =		apc_release,
 	.llseek =		noop_llseek,
-};
+पूर्ण;
 
-static struct miscdevice apc_miscdev = { APC_MINOR, APC_DEVNAME, &apc_fops };
+अटल काष्ठा miscdevice apc_miscdev = अणु APC_MINOR, APC_DEVNAME, &apc_fops पूर्ण;
 
-static int apc_probe(struct platform_device *op)
-{
-	int err;
+अटल पूर्णांक apc_probe(काष्ठा platक्रमm_device *op)
+अणु
+	पूर्णांक err;
 
 	regs = of_ioremap(&op->resource[0], 0,
 			  resource_size(&op->resource[0]), APC_OBPNAME);
-	if (!regs) {
-		printk(KERN_ERR "%s: unable to map registers\n", APC_DEVNAME);
-		return -ENODEV;
-	}
+	अगर (!regs) अणु
+		prपूर्णांकk(KERN_ERR "%s: unable to map registers\n", APC_DEVNAME);
+		वापस -ENODEV;
+	पूर्ण
 
-	err = misc_register(&apc_miscdev);
-	if (err) {
-		printk(KERN_ERR "%s: unable to register device\n", APC_DEVNAME);
-		apc_free(op);
-		return -ENODEV;
-	}
+	err = misc_रेजिस्टर(&apc_miscdev);
+	अगर (err) अणु
+		prपूर्णांकk(KERN_ERR "%s: unable to register device\n", APC_DEVNAME);
+		apc_मुक्त(op);
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Assign power management IDLE handler */
-	if (!apc_no_idle)
-		sparc_idle = apc_swift_idle;
+	/* Assign घातer management IDLE handler */
+	अगर (!apc_no_idle)
+		sparc_idle = apc_swअगरt_idle;
 
-	printk(KERN_INFO "%s: power management initialized%s\n", 
+	prपूर्णांकk(KERN_INFO "%s: power management initialized%s\n", 
 	       APC_DEVNAME, apc_no_idle ? " (CPU idle disabled)" : "");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id apc_match[] = {
-	{
+अटल स्थिर काष्ठा of_device_id apc_match[] = अणु
+	अणु
 		.name = APC_OBPNAME,
-	},
-	{},
-};
+	पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, apc_match);
 
-static struct platform_driver apc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver apc_driver = अणु
+	.driver = अणु
 		.name = "apc",
 		.of_match_table = apc_match,
-	},
+	पूर्ण,
 	.probe		= apc_probe,
-};
+पूर्ण;
 
-static int __init apc_init(void)
-{
-	return platform_driver_register(&apc_driver);
-}
+अटल पूर्णांक __init apc_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&apc_driver);
+पूर्ण
 
 /* This driver is not critical to the boot process
- * and is easiest to ioremap when SBus is already
+ * and is easiest to ioremap when SBus is alपढ़ोy
  * initialized, so we install ourselves thusly:
  */
 __initcall(apc_init);

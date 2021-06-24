@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_X86_PAGE_H
-#define _ASM_X86_PAGE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_X86_PAGE_H
+#घोषणा _ASM_X86_PAGE_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-#ifdef __KERNEL__
+#अगर_घोषित __KERNEL__
 
-#include <asm/page_types.h>
+#समावेश <यंत्र/page_types.h>
 
-#ifdef CONFIG_X86_64
-#include <asm/page_64.h>
-#else
-#include <asm/page_32.h>
-#endif	/* CONFIG_X86_64 */
+#अगर_घोषित CONFIG_X86_64
+#समावेश <यंत्र/page_64.h>
+#अन्यथा
+#समावेश <यंत्र/page_32.h>
+#पूर्ण_अगर	/* CONFIG_X86_64 */
 
-#ifndef __ASSEMBLY__
+#अगर_अघोषित __ASSEMBLY__
 
-struct page;
+काष्ठा page;
 
-#include <linux/range.h>
-extern struct range pfn_mapped[];
-extern int nr_pfn_mapped;
+#समावेश <linux/range.h>
+बाह्य काष्ठा range pfn_mapped[];
+बाह्य पूर्णांक nr_pfn_mapped;
 
-static inline void clear_user_page(void *page, unsigned long vaddr,
-				   struct page *pg)
-{
+अटल अंतरभूत व्योम clear_user_page(व्योम *page, अचिन्हित दीर्घ vaddr,
+				   काष्ठा page *pg)
+अणु
 	clear_page(page);
-}
+पूर्ण
 
-static inline void copy_user_page(void *to, void *from, unsigned long vaddr,
-				  struct page *topage)
-{
+अटल अंतरभूत व्योम copy_user_page(व्योम *to, व्योम *from, अचिन्हित दीर्घ vaddr,
+				  काष्ठा page *topage)
+अणु
 	copy_page(to, from);
-}
+पूर्ण
 
-#define __alloc_zeroed_user_highpage(movableflags, vma, vaddr) \
+#घोषणा __alloc_zeroed_user_highpage(movableflags, vma, vaddr) \
 	alloc_page_vma(GFP_HIGHUSER | __GFP_ZERO | movableflags, vma, vaddr)
-#define __HAVE_ARCH_ALLOC_ZEROED_USER_HIGHPAGE
+#घोषणा __HAVE_ARCH_ALLOC_ZEROED_USER_HIGHPAGE
 
-#ifndef __pa
-#define __pa(x)		__phys_addr((unsigned long)(x))
-#endif
+#अगर_अघोषित __pa
+#घोषणा __pa(x)		__phys_addr((अचिन्हित दीर्घ)(x))
+#पूर्ण_अगर
 
-#define __pa_nodebug(x)	__phys_addr_nodebug((unsigned long)(x))
-/* __pa_symbol should be used for C visible symbols.
-   This seems to be the official gcc blessed way to do such arithmetic. */
+#घोषणा __pa_nodebug(x)	__phys_addr_nodebug((अचिन्हित दीर्घ)(x))
+/* __pa_symbol should be used क्रम C visible symbols.
+   This seems to be the official gcc blessed way to करो such arithmetic. */
 /*
  * We need __phys_reloc_hide() here because gcc may assume that there is no
  * overflow during __pa() calculation and can optimize it unexpectedly.
- * Newer versions of gcc provide -fno-strict-overflow switch to handle this
- * case properly. Once all supported versions of gcc understand it, we can
- * remove this Voodoo magic stuff. (i.e. once gcc3.x is deprecated)
+ * Newer versions of gcc provide -fno-strict-overflow चयन to handle this
+ * हाल properly. Once all supported versions of gcc understand it, we can
+ * हटाओ this Vooकरोo magic stuff. (i.e. once gcc3.x is deprecated)
  */
-#define __pa_symbol(x) \
-	__phys_addr_symbol(__phys_reloc_hide((unsigned long)(x)))
+#घोषणा __pa_symbol(x) \
+	__phys_addr_symbol(__phys_reloc_hide((अचिन्हित दीर्घ)(x)))
 
-#ifndef __va
-#define __va(x)			((void *)((unsigned long)(x)+PAGE_OFFSET))
-#endif
+#अगर_अघोषित __va
+#घोषणा __va(x)			((व्योम *)((अचिन्हित दीर्घ)(x)+PAGE_OFFSET))
+#पूर्ण_अगर
 
-#define __boot_va(x)		__va(x)
-#define __boot_pa(x)		__pa(x)
+#घोषणा __boot_va(x)		__va(x)
+#घोषणा __boot_pa(x)		__pa(x)
 
 /*
- * virt_to_page(kaddr) returns a valid pointer if and only if
- * virt_addr_valid(kaddr) returns true.
+ * virt_to_page(kaddr) वापसs a valid poपूर्णांकer अगर and only अगर
+ * virt_addr_valid(kaddr) वापसs true.
  */
-#define virt_to_page(kaddr)	pfn_to_page(__pa(kaddr) >> PAGE_SHIFT)
-#define pfn_to_kaddr(pfn)      __va((pfn) << PAGE_SHIFT)
-extern bool __virt_addr_valid(unsigned long kaddr);
-#define virt_addr_valid(kaddr)	__virt_addr_valid((unsigned long) (kaddr))
+#घोषणा virt_to_page(kaddr)	pfn_to_page(__pa(kaddr) >> PAGE_SHIFT)
+#घोषणा pfn_to_kaddr(pfn)      __va((pfn) << PAGE_SHIFT)
+बाह्य bool __virt_addr_valid(अचिन्हित दीर्घ kaddr);
+#घोषणा virt_addr_valid(kaddr)	__virt_addr_valid((अचिन्हित दीर्घ) (kaddr))
 
-#endif	/* __ASSEMBLY__ */
+#पूर्ण_अगर	/* __ASSEMBLY__ */
 
-#include <asm-generic/memory_model.h>
-#include <asm-generic/getorder.h>
+#समावेश <यंत्र-generic/memory_model.h>
+#समावेश <यंत्र-generic/getorder.h>
 
-#define HAVE_ARCH_HUGETLB_UNMAPPED_AREA
+#घोषणा HAVE_ARCH_HUGETLB_UNMAPPED_AREA
 
-#endif	/* __KERNEL__ */
-#endif /* _ASM_X86_PAGE_H */
+#पूर्ण_अगर	/* __KERNEL__ */
+#पूर्ण_अगर /* _ASM_X86_PAGE_H */

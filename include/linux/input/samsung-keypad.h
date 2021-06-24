@@ -1,39 +1,40 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Samsung Keypad platform data definitions
+ * Samsung Keypad platक्रमm data definitions
  *
  * Copyright (C) 2010 Samsung Electronics Co.Ltd
  * Author: Joonyoung Shim <jy0922.shim@samsung.com>
  */
 
-#ifndef __SAMSUNG_KEYPAD_H
-#define __SAMSUNG_KEYPAD_H
+#अगर_अघोषित __SAMSUNG_KEYPAD_H
+#घोषणा __SAMSUNG_KEYPAD_H
 
-#include <linux/input/matrix_keypad.h>
+#समावेश <linux/input/matrix_keypad.h>
 
-#define SAMSUNG_MAX_ROWS	8
-#define SAMSUNG_MAX_COLS	8
+#घोषणा SAMSUNG_MAX_ROWS	8
+#घोषणा SAMSUNG_MAX_COLS	8
 
 /**
- * struct samsung_keypad_platdata - Platform device data for Samsung Keypad.
- * @keymap_data: pointer to &matrix_keymap_data.
+ * काष्ठा samsung_keypad_platdata - Platक्रमm device data क्रम Samsung Keypad.
+ * @keymap_data: poपूर्णांकer to &matrix_keymap_data.
  * @rows: number of keypad row supported.
  * @cols: number of keypad col supported.
- * @no_autorepeat: disable key autorepeat.
+ * @no_स्वतःrepeat: disable key स्वतःrepeat.
  * @wakeup: controls whether the device should be set up as wakeup source.
  * @cfg_gpio: configure the GPIO.
  *
- * Initialisation data specific to either the machine or the platform
- * for the device driver to use or call-back when configuring gpio.
+ * Initialisation data specअगरic to either the machine or the platक्रमm
+ * क्रम the device driver to use or call-back when configuring gpio.
  */
-struct samsung_keypad_platdata {
-	const struct matrix_keymap_data	*keymap_data;
-	unsigned int rows;
-	unsigned int cols;
-	bool no_autorepeat;
+काष्ठा samsung_keypad_platdata अणु
+	स्थिर काष्ठा matrix_keymap_data	*keymap_data;
+	अचिन्हित पूर्णांक rows;
+	अचिन्हित पूर्णांक cols;
+	bool no_स्वतःrepeat;
 	bool wakeup;
 
-	void (*cfg_gpio)(unsigned int rows, unsigned int cols);
-};
+	व्योम (*cfg_gpio)(अचिन्हित पूर्णांक rows, अचिन्हित पूर्णांक cols);
+पूर्ण;
 
-#endif /* __SAMSUNG_KEYPAD_H */
+#पूर्ण_अगर /* __SAMSUNG_KEYPAD_H */

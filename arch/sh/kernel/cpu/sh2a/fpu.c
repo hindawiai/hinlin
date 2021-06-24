@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Save/restore floating point context for signal handlers.
+ * Save/restore भग्नing poपूर्णांक context क्रम संकेत handlers.
  *
  * Copyright (C) 1999, 2000  Kaz Kojima & Niibe Yutaka
  *
- * FIXME! These routines can be optimized in big endian case.
+ * FIXME! These routines can be optimized in big endian हाल.
  */
-#include <linux/sched/signal.h>
-#include <linux/signal.h>
-#include <asm/processor.h>
-#include <asm/io.h>
-#include <asm/fpu.h>
-#include <asm/traps.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/संकेत.स>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/fpu.h>
+#समावेश <यंत्र/traps.h>
 
 /* The PR (precision) bit in the FP Status Register must be clear when
- * an frchg instruction is executed, otherwise the instruction is undefined.
+ * an frchg inकाष्ठाion is executed, otherwise the inकाष्ठाion is undefined.
  * Executing frchg with PR set causes a trap on some SH4 implementations.
  */
 
-#define FPSCR_RCHG 0x00000000
+#घोषणा FPSCR_RCHG 0x00000000
 
 
 /*
- * Save FPU registers onto task structure.
+ * Save FPU रेजिस्टरs onto task काष्ठाure.
  */
-void save_fpu(struct task_struct *tsk)
-{
-	unsigned long dummy;
+व्योम save_fpu(काष्ठा task_काष्ठा *tsk)
+अणु
+	अचिन्हित दीर्घ dummy;
 
 	enable_fpu();
-	asm volatile("sts.l	fpul, @-%0\n\t"
+	यंत्र अस्थिर("sts.l	fpul, @-%0\n\t"
 		     "sts.l	fpscr, @-%0\n\t"
 		     "fmov.s	fr15, @-%0\n\t"
 		     "fmov.s	fr14, @-%0\n\t"
@@ -49,20 +50,20 @@ void save_fpu(struct task_struct *tsk)
 		     "fmov.s	fr0, @-%0\n\t"
 		     "lds	%3, fpscr\n\t"
 		     : "=r" (dummy)
-		     : "0" ((char *)(&tsk->thread.xstate->hardfpu.status)),
+		     : "0" ((अक्षर *)(&tsk->thपढ़ो.xstate->hardfpu.status)),
 		       "r" (FPSCR_RCHG),
 		       "r" (FPSCR_INIT)
 		     : "memory");
 
 	disable_fpu();
-}
+पूर्ण
 
-void restore_fpu(struct task_struct *tsk)
-{
-	unsigned long dummy;
+व्योम restore_fpu(काष्ठा task_काष्ठा *tsk)
+अणु
+	अचिन्हित दीर्घ dummy;
 
 	enable_fpu();
-	asm volatile("fmov.s	@%0+, fr0\n\t"
+	यंत्र अस्थिर("fmov.s	@%0+, fr0\n\t"
 		     "fmov.s	@%0+, fr1\n\t"
 		     "fmov.s	@%0+, fr2\n\t"
 		     "fmov.s	@%0+, fr3\n\t"
@@ -81,93 +82,93 @@ void restore_fpu(struct task_struct *tsk)
 		     "lds.l	@%0+, fpscr\n\t"
 		     "lds.l	@%0+, fpul\n\t"
 		     : "=r" (dummy)
-		     : "0" (tsk->thread.xstate), "r" (FPSCR_RCHG)
+		     : "0" (tsk->thपढ़ो.xstate), "r" (FPSCR_RCHG)
 		     : "memory");
 	disable_fpu();
-}
+पूर्ण
 
 /*
- *	Emulate arithmetic ops on denormalized number for some FPU insns.
+ *	Emulate arithmetic ops on denormalized number क्रम some FPU insns.
  */
 
-/* denormalized float * float */
-static int denormal_mulf(int hx, int hy)
-{
-	unsigned int ix, iy;
-	unsigned long long m, n;
-	int exp, w;
+/* denormalized भग्न * भग्न */
+अटल पूर्णांक denormal_mulf(पूर्णांक hx, पूर्णांक hy)
+अणु
+	अचिन्हित पूर्णांक ix, iy;
+	अचिन्हित दीर्घ दीर्घ m, n;
+	पूर्णांक exp, w;
 
 	ix = hx & 0x7fffffff;
 	iy = hy & 0x7fffffff;
-	if (iy < 0x00800000 || ix == 0)
-		return ((hx ^ hy) & 0x80000000);
+	अगर (iy < 0x00800000 || ix == 0)
+		वापस ((hx ^ hy) & 0x80000000);
 
 	exp = (iy & 0x7f800000) >> 23;
 	ix &= 0x007fffff;
 	iy = (iy & 0x007fffff) | 0x00800000;
-	m = (unsigned long long)ix * iy;
+	m = (अचिन्हित दीर्घ दीर्घ)ix * iy;
 	n = m;
 	w = -1;
-	while (n) { n >>= 1; w++; }
+	जबतक (n) अणु n >>= 1; w++; पूर्ण
 
 	/* FIXME: use guard bits */
 	exp += w - 126 - 46;
-	if (exp > 0)
-		ix = ((int) (m >> (w - 23)) & 0x007fffff) | (exp << 23);
-	else if (exp + 22 >= 0)
-		ix = (int) (m >> (w - 22 - exp)) & 0x007fffff;
-	else
+	अगर (exp > 0)
+		ix = ((पूर्णांक) (m >> (w - 23)) & 0x007fffff) | (exp << 23);
+	अन्यथा अगर (exp + 22 >= 0)
+		ix = (पूर्णांक) (m >> (w - 22 - exp)) & 0x007fffff;
+	अन्यथा
 		ix = 0;
 
 	ix |= (hx ^ hy) & 0x80000000;
-	return ix;
-}
+	वापस ix;
+पूर्ण
 
-/* denormalized double * double */
-static void mult64(unsigned long long x, unsigned long long y,
-		unsigned long long *highp, unsigned long long *lowp)
-{
-	unsigned long long sub0, sub1, sub2, sub3;
-	unsigned long long high, low;
+/* denormalized द्विगुन * द्विगुन */
+अटल व्योम mult64(अचिन्हित दीर्घ दीर्घ x, अचिन्हित दीर्घ दीर्घ y,
+		अचिन्हित दीर्घ दीर्घ *highp, अचिन्हित दीर्घ दीर्घ *lowp)
+अणु
+	अचिन्हित दीर्घ दीर्घ sub0, sub1, sub2, sub3;
+	अचिन्हित दीर्घ दीर्घ high, low;
 
-	sub0 = (x >> 32) * (unsigned long) (y >> 32);
-	sub1 = (x & 0xffffffffLL) * (unsigned long) (y >> 32);
-	sub2 = (x >> 32) * (unsigned long) (y & 0xffffffffLL);
-	sub3 = (x & 0xffffffffLL) * (unsigned long) (y & 0xffffffffLL);
+	sub0 = (x >> 32) * (अचिन्हित दीर्घ) (y >> 32);
+	sub1 = (x & 0xffffffffLL) * (अचिन्हित दीर्घ) (y >> 32);
+	sub2 = (x >> 32) * (अचिन्हित दीर्घ) (y & 0xffffffffLL);
+	sub3 = (x & 0xffffffffLL) * (अचिन्हित दीर्घ) (y & 0xffffffffLL);
 	low = sub3;
 	high = 0LL;
 	sub3 += (sub1 << 32);
-	if (low > sub3)
+	अगर (low > sub3)
 		high++;
 	low = sub3;
 	sub3 += (sub2 << 32);
-	if (low > sub3)
+	अगर (low > sub3)
 		high++;
 	low = sub3;
 	high += (sub1 >> 32) + (sub2 >> 32);
 	high += sub0;
 	*lowp = low;
 	*highp = high;
-}
+पूर्ण
 
-static inline long long rshift64(unsigned long long mh,
-		unsigned long long ml, int n)
-{
-	if (n >= 64)
-		return mh >> (n - 64);
-	return (mh << (64 - n)) | (ml >> n);
-}
+अटल अंतरभूत दीर्घ दीर्घ rshअगरt64(अचिन्हित दीर्घ दीर्घ mh,
+		अचिन्हित दीर्घ दीर्घ ml, पूर्णांक n)
+अणु
+	अगर (n >= 64)
+		वापस mh >> (n - 64);
+	वापस (mh << (64 - n)) | (ml >> n);
+पूर्ण
 
-static long long denormal_muld(long long hx, long long hy)
-{
-	unsigned long long ix, iy;
-	unsigned long long mh, ml, nh, nl;
-	int exp, w;
+अटल दीर्घ दीर्घ denormal_muld(दीर्घ दीर्घ hx, दीर्घ दीर्घ hy)
+अणु
+	अचिन्हित दीर्घ दीर्घ ix, iy;
+	अचिन्हित दीर्घ दीर्घ mh, ml, nh, nl;
+	पूर्णांक exp, w;
 
 	ix = hx & 0x7fffffffffffffffLL;
 	iy = hy & 0x7fffffffffffffffLL;
-	if (iy < 0x0010000000000000LL || ix == 0)
-		return ((hx ^ hy) & 0x8000000000000000LL);
+	अगर (iy < 0x0010000000000000LL || ix == 0)
+		वापस ((hx ^ hy) & 0x8000000000000000LL);
 
 	exp = (iy & 0x7ff0000000000000LL) >> 52;
 	ix &= 0x000fffffffffffffLL;
@@ -176,397 +177,397 @@ static long long denormal_muld(long long hx, long long hy)
 	nh = mh;
 	nl = ml;
 	w = -1;
-	if (nh) {
-		while (nh) { nh >>= 1; w++;}
+	अगर (nh) अणु
+		जबतक (nh) अणु nh >>= 1; w++;पूर्ण
 		w += 64;
-	} else
-		while (nl) { nl >>= 1; w++;}
+	पूर्ण अन्यथा
+		जबतक (nl) अणु nl >>= 1; w++;पूर्ण
 
 	/* FIXME: use guard bits */
 	exp += w - 1022 - 52 * 2;
-	if (exp > 0)
-		ix = (rshift64(mh, ml, w - 52) & 0x000fffffffffffffLL)
-			| ((long long)exp << 52);
-	else if (exp + 51 >= 0)
-		ix = rshift64(mh, ml, w - 51 - exp) & 0x000fffffffffffffLL;
-	else
+	अगर (exp > 0)
+		ix = (rshअगरt64(mh, ml, w - 52) & 0x000fffffffffffffLL)
+			| ((दीर्घ दीर्घ)exp << 52);
+	अन्यथा अगर (exp + 51 >= 0)
+		ix = rshअगरt64(mh, ml, w - 51 - exp) & 0x000fffffffffffffLL;
+	अन्यथा
 		ix = 0;
 
 	ix |= (hx ^ hy) & 0x8000000000000000LL;
-	return ix;
-}
+	वापस ix;
+पूर्ण
 
 /* ix - iy where iy: denormal and ix, iy >= 0 */
-static int denormal_subf1(unsigned int ix, unsigned int iy)
-{
-	int frac;
-	int exp;
+अटल पूर्णांक denormal_subf1(अचिन्हित पूर्णांक ix, अचिन्हित पूर्णांक iy)
+अणु
+	पूर्णांक frac;
+	पूर्णांक exp;
 
-	if (ix < 0x00800000)
-		return ix - iy;
+	अगर (ix < 0x00800000)
+		वापस ix - iy;
 
 	exp = (ix & 0x7f800000) >> 23;
-	if (exp - 1 > 31)
-		return ix;
+	अगर (exp - 1 > 31)
+		वापस ix;
 	iy >>= exp - 1;
-	if (iy == 0)
-		return ix;
+	अगर (iy == 0)
+		वापस ix;
 
 	frac = (ix & 0x007fffff) | 0x00800000;
 	frac -= iy;
-	while (frac < 0x00800000) {
-		if (--exp == 0)
-			return frac;
+	जबतक (frac < 0x00800000) अणु
+		अगर (--exp == 0)
+			वापस frac;
 		frac <<= 1;
-	}
+	पूर्ण
 
-	return (exp << 23) | (frac & 0x007fffff);
-}
+	वापस (exp << 23) | (frac & 0x007fffff);
+पूर्ण
 
 /* ix + iy where iy: denormal and ix, iy >= 0 */
-static int denormal_addf1(unsigned int ix, unsigned int iy)
-{
-	int frac;
-	int exp;
+अटल पूर्णांक denormal_addf1(अचिन्हित पूर्णांक ix, अचिन्हित पूर्णांक iy)
+अणु
+	पूर्णांक frac;
+	पूर्णांक exp;
 
-	if (ix < 0x00800000)
-		return ix + iy;
+	अगर (ix < 0x00800000)
+		वापस ix + iy;
 
 	exp = (ix & 0x7f800000) >> 23;
-	if (exp - 1 > 31)
-		return ix;
+	अगर (exp - 1 > 31)
+		वापस ix;
 	iy >>= exp - 1;
-	if (iy == 0)
-	  return ix;
+	अगर (iy == 0)
+	  वापस ix;
 
 	frac = (ix & 0x007fffff) | 0x00800000;
 	frac += iy;
-	if (frac >= 0x01000000) {
+	अगर (frac >= 0x01000000) अणु
 		frac >>= 1;
 		++exp;
-	}
+	पूर्ण
 
-	return (exp << 23) | (frac & 0x007fffff);
-}
+	वापस (exp << 23) | (frac & 0x007fffff);
+पूर्ण
 
-static int denormal_addf(int hx, int hy)
-{
-	unsigned int ix, iy;
-	int sign;
+अटल पूर्णांक denormal_addf(पूर्णांक hx, पूर्णांक hy)
+अणु
+	अचिन्हित पूर्णांक ix, iy;
+	पूर्णांक sign;
 
-	if ((hx ^ hy) & 0x80000000) {
+	अगर ((hx ^ hy) & 0x80000000) अणु
 		sign = hx & 0x80000000;
 		ix = hx & 0x7fffffff;
 		iy = hy & 0x7fffffff;
-		if (iy < 0x00800000) {
+		अगर (iy < 0x00800000) अणु
 			ix = denormal_subf1(ix, iy);
-			if ((int) ix < 0) {
+			अगर ((पूर्णांक) ix < 0) अणु
 				ix = -ix;
 				sign ^= 0x80000000;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ix = denormal_subf1(iy, ix);
 			sign ^= 0x80000000;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sign = hx & 0x80000000;
 		ix = hx & 0x7fffffff;
 		iy = hy & 0x7fffffff;
-		if (iy < 0x00800000)
+		अगर (iy < 0x00800000)
 			ix = denormal_addf1(ix, iy);
-		else
+		अन्यथा
 			ix = denormal_addf1(iy, ix);
-	}
+	पूर्ण
 
-	return sign | ix;
-}
+	वापस sign | ix;
+पूर्ण
 
 /* ix - iy where iy: denormal and ix, iy >= 0 */
-static long long denormal_subd1(unsigned long long ix, unsigned long long iy)
-{
-	long long frac;
-	int exp;
+अटल दीर्घ दीर्घ denormal_subd1(अचिन्हित दीर्घ दीर्घ ix, अचिन्हित दीर्घ दीर्घ iy)
+अणु
+	दीर्घ दीर्घ frac;
+	पूर्णांक exp;
 
-	if (ix < 0x0010000000000000LL)
-		return ix - iy;
+	अगर (ix < 0x0010000000000000LL)
+		वापस ix - iy;
 
 	exp = (ix & 0x7ff0000000000000LL) >> 52;
-	if (exp - 1 > 63)
-		return ix;
+	अगर (exp - 1 > 63)
+		वापस ix;
 	iy >>= exp - 1;
-	if (iy == 0)
-		return ix;
+	अगर (iy == 0)
+		वापस ix;
 
 	frac = (ix & 0x000fffffffffffffLL) | 0x0010000000000000LL;
 	frac -= iy;
-	while (frac < 0x0010000000000000LL) {
-		if (--exp == 0)
-			return frac;
+	जबतक (frac < 0x0010000000000000LL) अणु
+		अगर (--exp == 0)
+			वापस frac;
 		frac <<= 1;
-	}
+	पूर्ण
 
-	return ((long long)exp << 52) | (frac & 0x000fffffffffffffLL);
-}
+	वापस ((दीर्घ दीर्घ)exp << 52) | (frac & 0x000fffffffffffffLL);
+पूर्ण
 
 /* ix + iy where iy: denormal and ix, iy >= 0 */
-static long long denormal_addd1(unsigned long long ix, unsigned long long iy)
-{
-	long long frac;
-	long long exp;
+अटल दीर्घ दीर्घ denormal_addd1(अचिन्हित दीर्घ दीर्घ ix, अचिन्हित दीर्घ दीर्घ iy)
+अणु
+	दीर्घ दीर्घ frac;
+	दीर्घ दीर्घ exp;
 
-	if (ix < 0x0010000000000000LL)
-		return ix + iy;
+	अगर (ix < 0x0010000000000000LL)
+		वापस ix + iy;
 
 	exp = (ix & 0x7ff0000000000000LL) >> 52;
-	if (exp - 1 > 63)
-		return ix;
+	अगर (exp - 1 > 63)
+		वापस ix;
 	iy >>= exp - 1;
-	if (iy == 0)
-	  return ix;
+	अगर (iy == 0)
+	  वापस ix;
 
 	frac = (ix & 0x000fffffffffffffLL) | 0x0010000000000000LL;
 	frac += iy;
-	if (frac >= 0x0020000000000000LL) {
+	अगर (frac >= 0x0020000000000000LL) अणु
 		frac >>= 1;
 		++exp;
-	}
+	पूर्ण
 
-	return (exp << 52) | (frac & 0x000fffffffffffffLL);
-}
+	वापस (exp << 52) | (frac & 0x000fffffffffffffLL);
+पूर्ण
 
-static long long denormal_addd(long long hx, long long hy)
-{
-	unsigned long long ix, iy;
-	long long sign;
+अटल दीर्घ दीर्घ denormal_addd(दीर्घ दीर्घ hx, दीर्घ दीर्घ hy)
+अणु
+	अचिन्हित दीर्घ दीर्घ ix, iy;
+	दीर्घ दीर्घ sign;
 
-	if ((hx ^ hy) & 0x8000000000000000LL) {
+	अगर ((hx ^ hy) & 0x8000000000000000LL) अणु
 		sign = hx & 0x8000000000000000LL;
 		ix = hx & 0x7fffffffffffffffLL;
 		iy = hy & 0x7fffffffffffffffLL;
-		if (iy < 0x0010000000000000LL) {
+		अगर (iy < 0x0010000000000000LL) अणु
 			ix = denormal_subd1(ix, iy);
-			if ((int) ix < 0) {
+			अगर ((पूर्णांक) ix < 0) अणु
 				ix = -ix;
 				sign ^= 0x8000000000000000LL;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ix = denormal_subd1(iy, ix);
 			sign ^= 0x8000000000000000LL;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		sign = hx & 0x8000000000000000LL;
 		ix = hx & 0x7fffffffffffffffLL;
 		iy = hy & 0x7fffffffffffffffLL;
-		if (iy < 0x0010000000000000LL)
+		अगर (iy < 0x0010000000000000LL)
 			ix = denormal_addd1(ix, iy);
-		else
+		अन्यथा
 			ix = denormal_addd1(iy, ix);
-	}
+	पूर्ण
 
-	return sign | ix;
-}
+	वापस sign | ix;
+पूर्ण
 
 /**
- *	denormal_to_double - Given denormalized float number,
- *	                     store double float
+ *	denormal_to_द्विगुन - Given denormalized भग्न number,
+ *	                     store द्विगुन भग्न
  *
- *	@fpu: Pointer to sh_fpu_hard structure
- *	@n: Index to FP register
+ *	@fpu: Poपूर्णांकer to sh_fpu_hard काष्ठाure
+ *	@n: Index to FP रेजिस्टर
  */
-static void
-denormal_to_double (struct sh_fpu_hard_struct *fpu, int n)
-{
-	unsigned long du, dl;
-	unsigned long x = fpu->fpul;
-	int exp = 1023 - 126;
+अटल व्योम
+denormal_to_द्विगुन (काष्ठा sh_fpu_hard_काष्ठा *fpu, पूर्णांक n)
+अणु
+	अचिन्हित दीर्घ du, dl;
+	अचिन्हित दीर्घ x = fpu->fpul;
+	पूर्णांक exp = 1023 - 126;
 
-	if (x != 0 && (x & 0x7f800000) == 0) {
+	अगर (x != 0 && (x & 0x7f800000) == 0) अणु
 		du = (x & 0x80000000);
-		while ((x & 0x00800000) == 0) {
+		जबतक ((x & 0x00800000) == 0) अणु
 			x <<= 1;
 			exp--;
-		}
+		पूर्ण
 		x &= 0x007fffff;
 		du |= (exp << 20) | (x >> 3);
 		dl = x << 29;
 
 		fpu->fp_regs[n] = du;
 		fpu->fp_regs[n+1] = dl;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  *	ieee_fpe_handler - Handle denormalized number exception
  *
- *	@regs: Pointer to register structure
+ *	@regs: Poपूर्णांकer to रेजिस्टर काष्ठाure
  *
  *	Returns 1 when it's handled (should not cause exception).
  */
-static int
-ieee_fpe_handler (struct pt_regs *regs)
-{
-	unsigned short insn = *(unsigned short *) regs->pc;
-	unsigned short finsn;
-	unsigned long nextpc;
-	int nib[4] = {
+अटल पूर्णांक
+ieee_fpe_handler (काष्ठा pt_regs *regs)
+अणु
+	अचिन्हित लघु insn = *(अचिन्हित लघु *) regs->pc;
+	अचिन्हित लघु finsn;
+	अचिन्हित दीर्घ nextpc;
+	पूर्णांक nib[4] = अणु
 		(insn >> 12) & 0xf,
 		(insn >> 8) & 0xf,
 		(insn >> 4) & 0xf,
-		insn & 0xf};
+		insn & 0xfपूर्ण;
 
-	if (nib[0] == 0xb ||
+	अगर (nib[0] == 0xb ||
 	    (nib[0] == 0x4 && nib[2] == 0x0 && nib[3] == 0xb)) /* bsr & jsr */
 		regs->pr = regs->pc + 4;
-	if (nib[0] == 0xa || nib[0] == 0xb) { /* bra & bsr */
-		nextpc = regs->pc + 4 + ((short) ((insn & 0xfff) << 4) >> 3);
-		finsn = *(unsigned short *) (regs->pc + 2);
-	} else if (nib[0] == 0x8 && nib[1] == 0xd) { /* bt/s */
-		if (regs->sr & 1)
-			nextpc = regs->pc + 4 + ((char) (insn & 0xff) << 1);
-		else
+	अगर (nib[0] == 0xa || nib[0] == 0xb) अणु /* bra & bsr */
+		nextpc = regs->pc + 4 + ((लघु) ((insn & 0xfff) << 4) >> 3);
+		finsn = *(अचिन्हित लघु *) (regs->pc + 2);
+	पूर्ण अन्यथा अगर (nib[0] == 0x8 && nib[1] == 0xd) अणु /* bt/s */
+		अगर (regs->sr & 1)
+			nextpc = regs->pc + 4 + ((अक्षर) (insn & 0xff) << 1);
+		अन्यथा
 			nextpc = regs->pc + 4;
-		finsn = *(unsigned short *) (regs->pc + 2);
-	} else if (nib[0] == 0x8 && nib[1] == 0xf) { /* bf/s */
-		if (regs->sr & 1)
+		finsn = *(अचिन्हित लघु *) (regs->pc + 2);
+	पूर्ण अन्यथा अगर (nib[0] == 0x8 && nib[1] == 0xf) अणु /* bf/s */
+		अगर (regs->sr & 1)
 			nextpc = regs->pc + 4;
-		else
-			nextpc = regs->pc + 4 + ((char) (insn & 0xff) << 1);
-		finsn = *(unsigned short *) (regs->pc + 2);
-	} else if (nib[0] == 0x4 && nib[3] == 0xb &&
-		 (nib[2] == 0x0 || nib[2] == 0x2)) { /* jmp & jsr */
+		अन्यथा
+			nextpc = regs->pc + 4 + ((अक्षर) (insn & 0xff) << 1);
+		finsn = *(अचिन्हित लघु *) (regs->pc + 2);
+	पूर्ण अन्यथा अगर (nib[0] == 0x4 && nib[3] == 0xb &&
+		 (nib[2] == 0x0 || nib[2] == 0x2)) अणु /* jmp & jsr */
 		nextpc = regs->regs[nib[1]];
-		finsn = *(unsigned short *) (regs->pc + 2);
-	} else if (nib[0] == 0x0 && nib[3] == 0x3 &&
-		 (nib[2] == 0x0 || nib[2] == 0x2)) { /* braf & bsrf */
+		finsn = *(अचिन्हित लघु *) (regs->pc + 2);
+	पूर्ण अन्यथा अगर (nib[0] == 0x0 && nib[3] == 0x3 &&
+		 (nib[2] == 0x0 || nib[2] == 0x2)) अणु /* braf & bsrf */
 		nextpc = regs->pc + 4 + regs->regs[nib[1]];
-		finsn = *(unsigned short *) (regs->pc + 2);
-	} else if (insn == 0x000b) { /* rts */
+		finsn = *(अचिन्हित लघु *) (regs->pc + 2);
+	पूर्ण अन्यथा अगर (insn == 0x000b) अणु /* rts */
 		nextpc = regs->pr;
-		finsn = *(unsigned short *) (regs->pc + 2);
-	} else {
+		finsn = *(अचिन्हित लघु *) (regs->pc + 2);
+	पूर्ण अन्यथा अणु
 		nextpc = regs->pc + 2;
 		finsn = insn;
-	}
+	पूर्ण
 
-#define FPSCR_FPU_ERROR (1 << 17)
+#घोषणा FPSCR_FPU_ERROR (1 << 17)
 
-	if ((finsn & 0xf1ff) == 0xf0ad) { /* fcnvsd */
-		struct task_struct *tsk = current;
+	अगर ((finsn & 0xf1ff) == 0xf0ad) अणु /* fcnvsd */
+		काष्ठा task_काष्ठा *tsk = current;
 
-		if ((tsk->thread.xstate->hardfpu.fpscr & FPSCR_FPU_ERROR)) {
+		अगर ((tsk->thपढ़ो.xstate->hardfpu.fpscr & FPSCR_FPU_ERROR)) अणु
 			/* FPU error */
-			denormal_to_double (&tsk->thread.xstate->hardfpu,
+			denormal_to_द्विगुन (&tsk->thपढ़ो.xstate->hardfpu,
 					    (finsn >> 8) & 0xf);
-		} else
-			return 0;
+		पूर्ण अन्यथा
+			वापस 0;
 
 		regs->pc = nextpc;
-		return 1;
-	} else if ((finsn & 0xf00f) == 0xf002) { /* fmul */
-		struct task_struct *tsk = current;
-		int fpscr;
-		int n, m, prec;
-		unsigned int hx, hy;
+		वापस 1;
+	पूर्ण अन्यथा अगर ((finsn & 0xf00f) == 0xf002) अणु /* fmul */
+		काष्ठा task_काष्ठा *tsk = current;
+		पूर्णांक fpscr;
+		पूर्णांक n, m, prec;
+		अचिन्हित पूर्णांक hx, hy;
 
 		n = (finsn >> 8) & 0xf;
 		m = (finsn >> 4) & 0xf;
-		hx = tsk->thread.xstate->hardfpu.fp_regs[n];
-		hy = tsk->thread.xstate->hardfpu.fp_regs[m];
-		fpscr = tsk->thread.xstate->hardfpu.fpscr;
+		hx = tsk->thपढ़ो.xstate->hardfpu.fp_regs[n];
+		hy = tsk->thपढ़ो.xstate->hardfpu.fp_regs[m];
+		fpscr = tsk->thपढ़ो.xstate->hardfpu.fpscr;
 		prec = fpscr & (1 << 19);
 
-		if ((fpscr & FPSCR_FPU_ERROR)
+		अगर ((fpscr & FPSCR_FPU_ERROR)
 		     && (prec && ((hx & 0x7fffffff) < 0x00100000
-				   || (hy & 0x7fffffff) < 0x00100000))) {
-			long long llx, lly;
+				   || (hy & 0x7fffffff) < 0x00100000))) अणु
+			दीर्घ दीर्घ llx, lly;
 
 			/* FPU error because of denormal */
-			llx = ((long long) hx << 32)
-			       | tsk->thread.xstate->hardfpu.fp_regs[n+1];
-			lly = ((long long) hy << 32)
-			       | tsk->thread.xstate->hardfpu.fp_regs[m+1];
-			if ((hx & 0x7fffffff) >= 0x00100000)
+			llx = ((दीर्घ दीर्घ) hx << 32)
+			       | tsk->thपढ़ो.xstate->hardfpu.fp_regs[n+1];
+			lly = ((दीर्घ दीर्घ) hy << 32)
+			       | tsk->thपढ़ो.xstate->hardfpu.fp_regs[m+1];
+			अगर ((hx & 0x7fffffff) >= 0x00100000)
 				llx = denormal_muld(lly, llx);
-			else
+			अन्यथा
 				llx = denormal_muld(llx, lly);
-			tsk->thread.xstate->hardfpu.fp_regs[n] = llx >> 32;
-			tsk->thread.xstate->hardfpu.fp_regs[n+1] = llx & 0xffffffff;
-		} else if ((fpscr & FPSCR_FPU_ERROR)
+			tsk->thपढ़ो.xstate->hardfpu.fp_regs[n] = llx >> 32;
+			tsk->thपढ़ो.xstate->hardfpu.fp_regs[n+1] = llx & 0xffffffff;
+		पूर्ण अन्यथा अगर ((fpscr & FPSCR_FPU_ERROR)
 		     && (!prec && ((hx & 0x7fffffff) < 0x00800000
-				   || (hy & 0x7fffffff) < 0x00800000))) {
+				   || (hy & 0x7fffffff) < 0x00800000))) अणु
 			/* FPU error because of denormal */
-			if ((hx & 0x7fffffff) >= 0x00800000)
+			अगर ((hx & 0x7fffffff) >= 0x00800000)
 				hx = denormal_mulf(hy, hx);
-			else
+			अन्यथा
 				hx = denormal_mulf(hx, hy);
-			tsk->thread.xstate->hardfpu.fp_regs[n] = hx;
-		} else
-			return 0;
+			tsk->thपढ़ो.xstate->hardfpu.fp_regs[n] = hx;
+		पूर्ण अन्यथा
+			वापस 0;
 
 		regs->pc = nextpc;
-		return 1;
-	} else if ((finsn & 0xf00e) == 0xf000) { /* fadd, fsub */
-		struct task_struct *tsk = current;
-		int fpscr;
-		int n, m, prec;
-		unsigned int hx, hy;
+		वापस 1;
+	पूर्ण अन्यथा अगर ((finsn & 0xf00e) == 0xf000) अणु /* fadd, fsub */
+		काष्ठा task_काष्ठा *tsk = current;
+		पूर्णांक fpscr;
+		पूर्णांक n, m, prec;
+		अचिन्हित पूर्णांक hx, hy;
 
 		n = (finsn >> 8) & 0xf;
 		m = (finsn >> 4) & 0xf;
-		hx = tsk->thread.xstate->hardfpu.fp_regs[n];
-		hy = tsk->thread.xstate->hardfpu.fp_regs[m];
-		fpscr = tsk->thread.xstate->hardfpu.fpscr;
+		hx = tsk->thपढ़ो.xstate->hardfpu.fp_regs[n];
+		hy = tsk->thपढ़ो.xstate->hardfpu.fp_regs[m];
+		fpscr = tsk->thपढ़ो.xstate->hardfpu.fpscr;
 		prec = fpscr & (1 << 19);
 
-		if ((fpscr & FPSCR_FPU_ERROR)
+		अगर ((fpscr & FPSCR_FPU_ERROR)
 		     && (prec && ((hx & 0x7fffffff) < 0x00100000
-				   || (hy & 0x7fffffff) < 0x00100000))) {
-			long long llx, lly;
+				   || (hy & 0x7fffffff) < 0x00100000))) अणु
+			दीर्घ दीर्घ llx, lly;
 
 			/* FPU error because of denormal */
-			llx = ((long long) hx << 32)
-			       | tsk->thread.xstate->hardfpu.fp_regs[n+1];
-			lly = ((long long) hy << 32)
-			       | tsk->thread.xstate->hardfpu.fp_regs[m+1];
-			if ((finsn & 0xf00f) == 0xf000)
+			llx = ((दीर्घ दीर्घ) hx << 32)
+			       | tsk->thपढ़ो.xstate->hardfpu.fp_regs[n+1];
+			lly = ((दीर्घ दीर्घ) hy << 32)
+			       | tsk->thपढ़ो.xstate->hardfpu.fp_regs[m+1];
+			अगर ((finsn & 0xf00f) == 0xf000)
 				llx = denormal_addd(llx, lly);
-			else
+			अन्यथा
 				llx = denormal_addd(llx, lly ^ (1LL << 63));
-			tsk->thread.xstate->hardfpu.fp_regs[n] = llx >> 32;
-			tsk->thread.xstate->hardfpu.fp_regs[n+1] = llx & 0xffffffff;
-		} else if ((fpscr & FPSCR_FPU_ERROR)
+			tsk->thपढ़ो.xstate->hardfpu.fp_regs[n] = llx >> 32;
+			tsk->thपढ़ो.xstate->hardfpu.fp_regs[n+1] = llx & 0xffffffff;
+		पूर्ण अन्यथा अगर ((fpscr & FPSCR_FPU_ERROR)
 		     && (!prec && ((hx & 0x7fffffff) < 0x00800000
-				   || (hy & 0x7fffffff) < 0x00800000))) {
+				   || (hy & 0x7fffffff) < 0x00800000))) अणु
 			/* FPU error because of denormal */
-			if ((finsn & 0xf00f) == 0xf000)
+			अगर ((finsn & 0xf00f) == 0xf000)
 				hx = denormal_addf(hx, hy);
-			else
+			अन्यथा
 				hx = denormal_addf(hx, hy ^ 0x80000000);
-			tsk->thread.xstate->hardfpu.fp_regs[n] = hx;
-		} else
-			return 0;
+			tsk->thपढ़ो.xstate->hardfpu.fp_regs[n] = hx;
+		पूर्ण अन्यथा
+			वापस 0;
 
 		regs->pc = nextpc;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 BUILD_TRAP_HANDLER(fpu_error)
-{
-	struct task_struct *tsk = current;
+अणु
+	काष्ठा task_काष्ठा *tsk = current;
 	TRAP_HANDLER_DECL;
 
 	__unlazy_fpu(tsk, regs);
-	if (ieee_fpe_handler(regs)) {
-		tsk->thread.xstate->hardfpu.fpscr &=
+	अगर (ieee_fpe_handler(regs)) अणु
+		tsk->thपढ़ो.xstate->hardfpu.fpscr &=
 			~(FPSCR_CAUSE_MASK | FPSCR_FLAG_MASK);
 		grab_fpu(regs);
 		restore_fpu(tsk);
-		task_thread_info(tsk)->status |= TS_USEDFPU;
-		return;
-	}
+		task_thपढ़ो_info(tsk)->status |= TS_USEDFPU;
+		वापस;
+	पूर्ण
 
-	force_sig(SIGFPE);
-}
+	क्रमce_sig(संक_भ_त्रुटि);
+पूर्ण

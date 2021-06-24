@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * apple_bl exported symbols
  */
 
-#ifndef _LINUX_APPLE_BL_H
-#define _LINUX_APPLE_BL_H
+#अगर_अघोषित _LINUX_APPLE_BL_H
+#घोषणा _LINUX_APPLE_BL_H
 
-#if defined(CONFIG_BACKLIGHT_APPLE) || defined(CONFIG_BACKLIGHT_APPLE_MODULE)
+#अगर defined(CONFIG_BACKLIGHT_APPLE) || defined(CONFIG_BACKLIGHT_APPLE_MODULE)
 
-extern int apple_bl_register(void);
-extern void apple_bl_unregister(void);
+बाह्य पूर्णांक apple_bl_रेजिस्टर(व्योम);
+बाह्य व्योम apple_bl_unरेजिस्टर(व्योम);
 
-#else /* !CONFIG_BACKLIGHT_APPLE */
+#अन्यथा /* !CONFIG_BACKLIGHT_APPLE */
 
-static inline int apple_bl_register(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक apple_bl_रेजिस्टर(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void apple_bl_unregister(void)
-{
-}
+अटल अंतरभूत व्योम apple_bl_unरेजिस्टर(व्योम)
+अणु
+पूर्ण
 
-#endif /* !CONFIG_BACKLIGHT_APPLE */
+#पूर्ण_अगर /* !CONFIG_BACKLIGHT_APPLE */
 
-#endif /* _LINUX_APPLE_BL_H */
+#पूर्ण_अगर /* _LINUX_APPLE_BL_H */

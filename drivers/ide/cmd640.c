@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  Copyright (C) 1995-1996  Linus Torvalds & authors (see below)
  */
@@ -7,16 +8,16 @@
  *  Original authors:	abramov@cecmow.enet.dec.com (Igor Abramov)
  *			mlord@pobox.com (Mark Lord)
  *
- *  See linux/MAINTAINERS for address of current maintainer.
+ *  See linux/MAINTAINERS क्रम address of current मुख्यtainer.
  *
- *  This file provides support for the advanced features and bugs
- *  of IDE interfaces using the CMD Technologies 0640 IDE interface chip.
+ *  This file provides support क्रम the advanced features and bugs
+ *  of IDE पूर्णांकerfaces using the CMD Technologies 0640 IDE पूर्णांकerface chip.
  *
  *  These chips are basically fucked by design, and getting this driver
  *  to work on every motherboard design that uses this screwed chip seems
  *  bloody well impossible.  However, we're still trying.
  *
- *  Version 0.97 worked for everybody.
+ *  Version 0.97 worked क्रम everybody.
  *
  *  User feedback is essential.  Many thanks to the beta test team:
  *
@@ -26,537 +27,537 @@
  *  derekn@vw.ece.cmu.edu, florian@btp2x3.phy.uni-bayreuth.de,
  *  flynn@dei.unipd.it, gadio@netvision.net.il, godzilla@futuris.net,
  *  j@pobox.com, jkemp1@mises.uni-paderborn.de, jtoppe@hiwaay.net,
- *  kerouac@ssnet.com, meskes@informatik.rwth-aachen.de, hzoli@cs.elte.hu,
+ *  kerouac@ssnet.com, meskes@inक्रमmatik.rwth-aachen.de, hzoli@cs.elte.hu,
  *  peter@udgaard.isgtec.com, phil@tazenda.demon.co.uk, roadcapw@cfw.com,
  *  s0033las@sun10.vsz.bme.hu, schaffer@tam.cornell.edu, sjd@slip.net,
  *  steve@ei.org, ulrpeg@bigcomm.gun.de, ism@tardis.ed.ac.uk, mack@cray.com
  *  liug@mama.indstate.edu, and others.
  *
  *  Version 0.01	Initial version, hacked out of ide.c,
- *			and #include'd rather than compiled separately.
+ *			and #समावेश'd rather than compiled separately.
  *			This will get cleaned up in a subsequent release.
  *
- *  Version 0.02	Fixes for vlb initialization code, enable prefetch
- *			for versions 'B' and 'C' of chip by default,
+ *  Version 0.02	Fixes क्रम vlb initialization code, enable prefetch
+ *			क्रम versions 'B' and 'C' of chip by शेष,
  *			some code cleanup.
  *
- *  Version 0.03	Added reset of secondary interface,
- *			and black list for devices which are not compatible
- *			with prefetch mode. Separate function for setting
+ *  Version 0.03	Added reset of secondary पूर्णांकerface,
+ *			and black list क्रम devices which are not compatible
+ *			with prefetch mode. Separate function क्रम setting
  *			prefetch is added, possibly it will be called some
  *			day from ioctl processing code.
  *
  *  Version 0.04	Now configs/compiles separate from ide.c
  *
- *  Version 0.05	Major rewrite of interface timing code.
+ *  Version 0.05	Major reग_लिखो of पूर्णांकerface timing code.
  *			Added new function cmd640_set_mode to set PIO mode
  *			from ioctl call. New drives added to black list.
  *
- *  Version 0.06	More code cleanup. Prefetch is enabled only for
+ *  Version 0.06	More code cleanup. Prefetch is enabled only क्रम
  *			detected hard drives, not included in prefetch
  *			black list.
  *
  *  Version 0.07	Changed to more conservative drive tuning policy.
  *			Unknown drives, which report PIO < 4 are set to
- *			(reported_PIO - 1) if it is supported, or to PIO0.
+ *			(reported_PIO - 1) अगर it is supported, or to PIO0.
  *			List of known drives extended by info provided by
  *			CMD at their ftp site.
  *
- *  Version 0.08	Added autotune/noautotune support.
+ *  Version 0.08	Added स्वतःtune/noस्वतःtune support.
  *
  *  Version 0.09	Try to be smarter about 2nd port enabling.
- *  Version 0.10	Be nice and don't reset 2nd port.
+ *  Version 0.10	Be nice and करोn't reset 2nd port.
  *  Version 0.11	Try to handle more weird situations.
  *
  *  Version 0.12	Lots of bug fixes from Laszlo Peter
- *			irq unmasking disabled for reliability.
+ *			irq unmasking disabled क्रम reliability.
  *			try to be even smarter about the second port.
- *			tidy up source code formatting.
+ *			tidy up source code क्रमmatting.
  *  Version 0.13	permit irq unmasking again.
  *  Version 0.90	massive code cleanup, some bugs fixed.
- *			defaults all drives to PIO mode0, prefetch off.
- *			autotune is OFF by default, with compile time flag.
+ *			शेषs all drives to PIO mode0, prefetch off.
+ *			स्वतःtune is OFF by शेष, with compile समय flag.
  *			prefetch can be turned OFF/ON using "hdparm -p8/-p9"
  *			 (requires hdparm-3.1 or newer)
  *  Version 0.91	first release to linux-kernel list.
  *  Version 0.92	move initial reg dump to separate callable function
- *			change "readahead" to "prefetch" to avoid confusion
- *  Version 0.95	respect original BIOS timings unless autotuning.
+ *			change "readahead" to "prefetch" to aव्योम confusion
+ *  Version 0.95	respect original BIOS timings unless स्वतःtuning.
  *			tons of code cleanup and rearrangement.
  *			added CONFIG_BLK_DEV_CMD640_ENHANCED option
  *			prevent use of unmask when prefetch is on
  *  Version 0.96	prevent use of io_32bit when prefetch is off
- *  Version 0.97	fix VLB secondary interface for sjd@slip.net
+ *  Version 0.97	fix VLB secondary पूर्णांकerface क्रम sjd@slip.net
  *			other minor tune-ups:  0.96 was very good.
  *  Version 0.98	ignore PCI version when disabled by BIOS
- *  Version 0.99	display setup/active/recovery clocks with PIO mode
- *  Version 1.00	Mmm.. cannot depend on PCMD_ENA in all systems
+ *  Version 0.99	display setup/active/recovery घड़ीs with PIO mode
+ *  Version 1.00	Mmm.. cannot depend on PCMD_ENA in all प्रणालीs
  *  Version 1.01	slow/fast devsel can be selected with "hdparm -p6/-p7"
- *			 ("fast" is necessary for 32bit I/O in some systems)
+ *			 ("fast" is necessary क्रम 32bit I/O in some प्रणालीs)
  *  Version 1.02	fix bug that resulted in slow "setup times"
  *			 (patch courtesy of Zoltan Hidvegi)
  */
 
-#define CMD640_PREFETCH_MASKS 1
+#घोषणा CMD640_PREFETCH_MASKS 1
 
-/*#define CMD640_DUMP_REGS */
+/*#घोषणा CMD640_DUMP_REGS */
 
-#include <linux/types.h>
-#include <linux/kernel.h>
-#include <linux/delay.h>
-#include <linux/ide.h>
-#include <linux/init.h>
-#include <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/ide.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
 
-#include <asm/io.h>
+#समावेश <यंत्र/पन.स>
 
-#define DRV_NAME "cmd640"
+#घोषणा DRV_NAME "cmd640"
 
-static bool cmd640_vlb;
+अटल bool cmd640_vlb;
 
 /*
- * CMD640 specific registers definition.
+ * CMD640 specअगरic रेजिस्टरs definition.
  */
 
-#define VID		0x00
-#define DID		0x02
-#define PCMD		0x04
-#define   PCMD_ENA	0x01
-#define PSTTS		0x06
-#define REVID		0x08
-#define PROGIF		0x09
-#define SUBCL		0x0a
-#define BASCL		0x0b
-#define BaseA0		0x10
-#define BaseA1		0x14
-#define BaseA2		0x18
-#define BaseA3		0x1c
-#define INTLINE		0x3c
-#define INPINE		0x3d
+#घोषणा VID		0x00
+#घोषणा DID		0x02
+#घोषणा PCMD		0x04
+#घोषणा   PCMD_ENA	0x01
+#घोषणा PSTTS		0x06
+#घोषणा REVID		0x08
+#घोषणा PROGIF		0x09
+#घोषणा SUBCL		0x0a
+#घोषणा BASCL		0x0b
+#घोषणा BaseA0		0x10
+#घोषणा BaseA1		0x14
+#घोषणा BaseA2		0x18
+#घोषणा BaseA3		0x1c
+#घोषणा INTLINE		0x3c
+#घोषणा INPINE		0x3d
 
-#define	CFR		0x50
-#define   CFR_DEVREV		0x03
-#define   CFR_IDE01INTR		0x04
-#define	  CFR_DEVID		0x18
-#define	  CFR_AT_VESA_078h	0x20
-#define	  CFR_DSA1		0x40
-#define	  CFR_DSA0		0x80
+#घोषणा	CFR		0x50
+#घोषणा   CFR_DEVREV		0x03
+#घोषणा   CFR_IDE01INTR		0x04
+#घोषणा	  CFR_DEVID		0x18
+#घोषणा	  CFR_AT_VESA_078h	0x20
+#घोषणा	  CFR_DSA1		0x40
+#घोषणा	  CFR_DSA0		0x80
 
-#define CNTRL		0x51
-#define	  CNTRL_DIS_RA0		0x40
-#define   CNTRL_DIS_RA1		0x80
-#define	  CNTRL_ENA_2ND		0x08
+#घोषणा CNTRL		0x51
+#घोषणा	  CNTRL_DIS_RA0		0x40
+#घोषणा   CNTRL_DIS_RA1		0x80
+#घोषणा	  CNTRL_ENA_2ND		0x08
 
-#define	CMDTIM		0x52
-#define	ARTTIM0		0x53
-#define	DRWTIM0		0x54
-#define ARTTIM1 	0x55
-#define DRWTIM1		0x56
-#define ARTTIM23	0x57
-#define   ARTTIM23_DIS_RA2	0x04
-#define   ARTTIM23_DIS_RA3	0x08
-#define   ARTTIM23_IDE23INTR	0x10
-#define DRWTIM23	0x58
-#define BRST		0x59
+#घोषणा	CMDTIM		0x52
+#घोषणा	ARTTIM0		0x53
+#घोषणा	DRWTIM0		0x54
+#घोषणा ARTTIM1 	0x55
+#घोषणा DRWTIM1		0x56
+#घोषणा ARTTIM23	0x57
+#घोषणा   ARTTIM23_DIS_RA2	0x04
+#घोषणा   ARTTIM23_DIS_RA3	0x08
+#घोषणा   ARTTIM23_IDE23INTR	0x10
+#घोषणा DRWTIM23	0x58
+#घोषणा BRST		0x59
 
 /*
- * Registers and masks for easy access by drive index:
+ * Registers and masks क्रम easy access by drive index:
  */
-static u8 prefetch_regs[4]  = {CNTRL, CNTRL, ARTTIM23, ARTTIM23};
-static u8 prefetch_masks[4] = {CNTRL_DIS_RA0, CNTRL_DIS_RA1, ARTTIM23_DIS_RA2, ARTTIM23_DIS_RA3};
+अटल u8 prefetch_regs[4]  = अणुCNTRL, CNTRL, ARTTIM23, ARTTIM23पूर्ण;
+अटल u8 prefetch_masks[4] = अणुCNTRL_DIS_RA0, CNTRL_DIS_RA1, ARTTIM23_DIS_RA2, ARTTIM23_DIS_RA3पूर्ण;
 
-#ifdef CONFIG_BLK_DEV_CMD640_ENHANCED
+#अगर_घोषित CONFIG_BLK_DEV_CMD640_ENHANCED
 
-static u8 arttim_regs[4] = {ARTTIM0, ARTTIM1, ARTTIM23, ARTTIM23};
-static u8 drwtim_regs[4] = {DRWTIM0, DRWTIM1, DRWTIM23, DRWTIM23};
+अटल u8 arttim_regs[4] = अणुARTTIM0, ARTTIM1, ARTTIM23, ARTTIM23पूर्ण;
+अटल u8 drwtim_regs[4] = अणुDRWTIM0, DRWTIM1, DRWTIM23, DRWTIM23पूर्ण;
 
 /*
- * Current cmd640 timing values for each drive.
- * The defaults for each are the slowest possible timings.
+ * Current cmd640 timing values क्रम each drive.
+ * The शेषs क्रम each are the slowest possible timings.
  */
-static u8 setup_counts[4]    = {4, 4, 4, 4};     /* Address setup count (in clocks) */
-static u8 active_counts[4]   = {16, 16, 16, 16}; /* Active count   (encoded) */
-static u8 recovery_counts[4] = {16, 16, 16, 16}; /* Recovery count (encoded) */
+अटल u8 setup_counts[4]    = अणु4, 4, 4, 4पूर्ण;     /* Address setup count (in घड़ीs) */
+अटल u8 active_counts[4]   = अणु16, 16, 16, 16पूर्ण; /* Active count   (encoded) */
+अटल u8 recovery_counts[4] = अणु16, 16, 16, 16पूर्ण; /* Recovery count (encoded) */
 
-#endif /* CONFIG_BLK_DEV_CMD640_ENHANCED */
+#पूर्ण_अगर /* CONFIG_BLK_DEV_CMD640_ENHANCED */
 
-static DEFINE_SPINLOCK(cmd640_lock);
+अटल DEFINE_SPINLOCK(cmd640_lock);
 
 /*
- * Interface to access cmd640x registers
+ * Interface to access cmd640x रेजिस्टरs
  */
-static unsigned int cmd640_key;
-static void (*__put_cmd640_reg)(u16 reg, u8 val);
-static u8 (*__get_cmd640_reg)(u16 reg);
+अटल अचिन्हित पूर्णांक cmd640_key;
+अटल व्योम (*__put_cmd640_reg)(u16 reg, u8 val);
+अटल u8 (*__get_cmd640_reg)(u16 reg);
 
 /*
- * This is read from the CFR reg, and is used in several places.
+ * This is पढ़ो from the CFR reg, and is used in several places.
  */
-static unsigned int cmd640_chip_version;
+अटल अचिन्हित पूर्णांक cmd640_chip_version;
 
 /*
- * The CMD640x chip does not support DWORD config write cycles, but some
+ * The CMD640x chip करोes not support DWORD config ग_लिखो cycles, but some
  * of the BIOSes use them to implement the config services.
- * Therefore, we must use direct IO instead.
+ * Thereक्रमe, we must use direct IO instead.
  */
 
 /* PCI method 1 access */
 
-static void put_cmd640_reg_pci1(u16 reg, u8 val)
-{
+अटल व्योम put_cmd640_reg_pci1(u16 reg, u8 val)
+अणु
 	outl_p((reg & 0xfc) | cmd640_key, 0xcf8);
 	outb_p(val, (reg & 3) | 0xcfc);
-}
+पूर्ण
 
-static u8 get_cmd640_reg_pci1(u16 reg)
-{
+अटल u8 get_cmd640_reg_pci1(u16 reg)
+अणु
 	outl_p((reg & 0xfc) | cmd640_key, 0xcf8);
-	return inb_p((reg & 3) | 0xcfc);
-}
+	वापस inb_p((reg & 3) | 0xcfc);
+पूर्ण
 
 /* PCI method 2 access (from CMD datasheet) */
 
-static void put_cmd640_reg_pci2(u16 reg, u8 val)
-{
+अटल व्योम put_cmd640_reg_pci2(u16 reg, u8 val)
+अणु
 	outb_p(0x10, 0xcf8);
 	outb_p(val, cmd640_key + reg);
 	outb_p(0, 0xcf8);
-}
+पूर्ण
 
-static u8 get_cmd640_reg_pci2(u16 reg)
-{
+अटल u8 get_cmd640_reg_pci2(u16 reg)
+अणु
 	u8 b;
 
 	outb_p(0x10, 0xcf8);
 	b = inb_p(cmd640_key + reg);
 	outb_p(0, 0xcf8);
-	return b;
-}
+	वापस b;
+पूर्ण
 
 /* VLB access */
 
-static void put_cmd640_reg_vlb(u16 reg, u8 val)
-{
+अटल व्योम put_cmd640_reg_vlb(u16 reg, u8 val)
+अणु
 	outb_p(reg, cmd640_key);
 	outb_p(val, cmd640_key + 4);
-}
+पूर्ण
 
-static u8 get_cmd640_reg_vlb(u16 reg)
-{
+अटल u8 get_cmd640_reg_vlb(u16 reg)
+अणु
 	outb_p(reg, cmd640_key);
-	return inb_p(cmd640_key + 4);
-}
+	वापस inb_p(cmd640_key + 4);
+पूर्ण
 
-static u8 get_cmd640_reg(u16 reg)
-{
-	unsigned long flags;
+अटल u8 get_cmd640_reg(u16 reg)
+अणु
+	अचिन्हित दीर्घ flags;
 	u8 b;
 
 	spin_lock_irqsave(&cmd640_lock, flags);
 	b = __get_cmd640_reg(reg);
 	spin_unlock_irqrestore(&cmd640_lock, flags);
-	return b;
-}
+	वापस b;
+पूर्ण
 
-static void put_cmd640_reg(u16 reg, u8 val)
-{
-	unsigned long flags;
+अटल व्योम put_cmd640_reg(u16 reg, u8 val)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cmd640_lock, flags);
 	__put_cmd640_reg(reg, val);
 	spin_unlock_irqrestore(&cmd640_lock, flags);
-}
+पूर्ण
 
-static int __init match_pci_cmd640_device(void)
-{
-	const u8 ven_dev[4] = {0x95, 0x10, 0x40, 0x06};
-	unsigned int i;
-	for (i = 0; i < 4; i++) {
-		if (get_cmd640_reg(i) != ven_dev[i])
-			return 0;
-	}
-#ifdef STUPIDLY_TRUST_BROKEN_PCMD_ENA_BIT
-	if ((get_cmd640_reg(PCMD) & PCMD_ENA) == 0) {
-		printk("ide: cmd640 on PCI disabled by BIOS\n");
-		return 0;
-	}
-#endif /* STUPIDLY_TRUST_BROKEN_PCMD_ENA_BIT */
-	return 1; /* success */
-}
+अटल पूर्णांक __init match_pci_cmd640_device(व्योम)
+अणु
+	स्थिर u8 ven_dev[4] = अणु0x95, 0x10, 0x40, 0x06पूर्ण;
+	अचिन्हित पूर्णांक i;
+	क्रम (i = 0; i < 4; i++) अणु
+		अगर (get_cmd640_reg(i) != ven_dev[i])
+			वापस 0;
+	पूर्ण
+#अगर_घोषित STUPIDLY_TRUST_BROKEN_PCMD_ENA_BIT
+	अगर ((get_cmd640_reg(PCMD) & PCMD_ENA) == 0) अणु
+		prपूर्णांकk("ide: cmd640 on PCI disabled by BIOS\n");
+		वापस 0;
+	पूर्ण
+#पूर्ण_अगर /* STUPIDLY_TRUST_BROKEN_PCMD_ENA_BIT */
+	वापस 1; /* success */
+पूर्ण
 
 /*
- * Probe for CMD640x -- pci method 1
+ * Probe क्रम CMD640x -- pci method 1
  */
-static int __init probe_for_cmd640_pci1(void)
-{
+अटल पूर्णांक __init probe_क्रम_cmd640_pci1(व्योम)
+अणु
 	__get_cmd640_reg = get_cmd640_reg_pci1;
 	__put_cmd640_reg = put_cmd640_reg_pci1;
-	for (cmd640_key = 0x80000000;
+	क्रम (cmd640_key = 0x80000000;
 	     cmd640_key <= 0x8000f800;
-	     cmd640_key += 0x800) {
-		if (match_pci_cmd640_device())
-			return 1; /* success */
-	}
-	return 0;
-}
+	     cmd640_key += 0x800) अणु
+		अगर (match_pci_cmd640_device())
+			वापस 1; /* success */
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Probe for CMD640x -- pci method 2
+ * Probe क्रम CMD640x -- pci method 2
  */
-static int __init probe_for_cmd640_pci2(void)
-{
+अटल पूर्णांक __init probe_क्रम_cmd640_pci2(व्योम)
+अणु
 	__get_cmd640_reg = get_cmd640_reg_pci2;
 	__put_cmd640_reg = put_cmd640_reg_pci2;
-	for (cmd640_key = 0xc000; cmd640_key <= 0xcf00; cmd640_key += 0x100) {
-		if (match_pci_cmd640_device())
-			return 1; /* success */
-	}
-	return 0;
-}
+	क्रम (cmd640_key = 0xc000; cmd640_key <= 0xcf00; cmd640_key += 0x100) अणु
+		अगर (match_pci_cmd640_device())
+			वापस 1; /* success */
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Probe for CMD640x -- vlb
+ * Probe क्रम CMD640x -- vlb
  */
-static int __init probe_for_cmd640_vlb(void)
-{
+अटल पूर्णांक __init probe_क्रम_cmd640_vlb(व्योम)
+अणु
 	u8 b;
 
 	__get_cmd640_reg = get_cmd640_reg_vlb;
 	__put_cmd640_reg = put_cmd640_reg_vlb;
 	cmd640_key = 0x178;
 	b = get_cmd640_reg(CFR);
-	if (b == 0xff || b == 0x00 || (b & CFR_AT_VESA_078h)) {
+	अगर (b == 0xff || b == 0x00 || (b & CFR_AT_VESA_078h)) अणु
 		cmd640_key = 0x78;
 		b = get_cmd640_reg(CFR);
-		if (b == 0xff || b == 0x00 || !(b & CFR_AT_VESA_078h))
-			return 0;
-	}
-	return 1; /* success */
-}
+		अगर (b == 0xff || b == 0x00 || !(b & CFR_AT_VESA_078h))
+			वापस 0;
+	पूर्ण
+	वापस 1; /* success */
+पूर्ण
 
 /*
- *  Returns 1 if an IDE interface/drive exists at 0x170,
+ *  Returns 1 अगर an IDE पूर्णांकerface/drive exists at 0x170,
  *  Returns 0 otherwise.
  */
-static int __init secondary_port_responding(void)
-{
-	unsigned long flags;
+अटल पूर्णांक __init secondary_port_responding(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cmd640_lock, flags);
 
 	outb_p(0x0a, 0x176);	/* select drive0 */
 	udelay(100);
-	if ((inb_p(0x176) & 0x1f) != 0x0a) {
+	अगर ((inb_p(0x176) & 0x1f) != 0x0a) अणु
 		outb_p(0x1a, 0x176); /* select drive1 */
 		udelay(100);
-		if ((inb_p(0x176) & 0x1f) != 0x1a) {
+		अगर ((inb_p(0x176) & 0x1f) != 0x1a) अणु
 			spin_unlock_irqrestore(&cmd640_lock, flags);
-			return 0; /* nothing responded */
-		}
-	}
+			वापस 0; /* nothing responded */
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&cmd640_lock, flags);
-	return 1; /* success */
-}
+	वापस 1; /* success */
+पूर्ण
 
-#ifdef CMD640_DUMP_REGS
+#अगर_घोषित CMD640_DUMP_REGS
 /*
- * Dump out all cmd640 registers.  May be called from ide.c
+ * Dump out all cmd640 रेजिस्टरs.  May be called from ide.c
  */
-static void cmd640_dump_regs(void)
-{
-	unsigned int reg = cmd640_vlb ? 0x50 : 0x00;
+अटल व्योम cmd640_dump_regs(व्योम)
+अणु
+	अचिन्हित पूर्णांक reg = cmd640_vlb ? 0x50 : 0x00;
 
-	/* Dump current state of chip registers */
-	printk("ide: cmd640 internal register dump:");
-	for (; reg <= 0x59; reg++) {
-		if (!(reg & 0x0f))
-			printk("\n%04x:", reg);
-		printk(" %02x", get_cmd640_reg(reg));
-	}
-	printk("\n");
-}
-#endif
+	/* Dump current state of chip रेजिस्टरs */
+	prपूर्णांकk("ide: cmd640 internal register dump:");
+	क्रम (; reg <= 0x59; reg++) अणु
+		अगर (!(reg & 0x0f))
+			prपूर्णांकk("\n%04x:", reg);
+		prपूर्णांकk(" %02x", get_cmd640_reg(reg));
+	पूर्ण
+	prपूर्णांकk("\n");
+पूर्ण
+#पूर्ण_अगर
 
-static void __set_prefetch_mode(ide_drive_t *drive, int mode)
-{
-	if (mode) {	/* want prefetch on? */
-#if CMD640_PREFETCH_MASKS
+अटल व्योम __set_prefetch_mode(ide_drive_t *drive, पूर्णांक mode)
+अणु
+	अगर (mode) अणु	/* want prefetch on? */
+#अगर CMD640_PREFETCH_MASKS
 		drive->dev_flags |= IDE_DFLAG_NO_UNMASK;
 		drive->dev_flags &= ~IDE_DFLAG_UNMASK;
-#endif
+#पूर्ण_अगर
 		drive->dev_flags &= ~IDE_DFLAG_NO_IO_32BIT;
-	} else {
+	पूर्ण अन्यथा अणु
 		drive->dev_flags &= ~IDE_DFLAG_NO_UNMASK;
 		drive->dev_flags |= IDE_DFLAG_NO_IO_32BIT;
 		drive->io_32bit = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#ifndef CONFIG_BLK_DEV_CMD640_ENHANCED
+#अगर_अघोषित CONFIG_BLK_DEV_CMD640_ENHANCED
 /*
- * Check whether prefetch is on for a drive,
- * and initialize the unmask flags for safe operation.
+ * Check whether prefetch is on क्रम a drive,
+ * and initialize the unmask flags क्रम safe operation.
  */
-static void __init check_prefetch(ide_drive_t *drive, unsigned int index)
-{
+अटल व्योम __init check_prefetch(ide_drive_t *drive, अचिन्हित पूर्णांक index)
+अणु
 	u8 b = get_cmd640_reg(prefetch_regs[index]);
 
 	__set_prefetch_mode(drive, (b & prefetch_masks[index]) ? 0 : 1);
-}
-#else
+पूर्ण
+#अन्यथा
 
 /*
- * Sets prefetch mode for a drive.
+ * Sets prefetch mode क्रम a drive.
  */
-static void set_prefetch_mode(ide_drive_t *drive, unsigned int index, int mode)
-{
-	unsigned long flags;
-	int reg = prefetch_regs[index];
+अटल व्योम set_prefetch_mode(ide_drive_t *drive, अचिन्हित पूर्णांक index, पूर्णांक mode)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक reg = prefetch_regs[index];
 	u8 b;
 
 	spin_lock_irqsave(&cmd640_lock, flags);
 	b = __get_cmd640_reg(reg);
 	__set_prefetch_mode(drive, mode);
-	if (mode)
+	अगर (mode)
 		b &= ~prefetch_masks[index];	/* enable prefetch */
-	else
+	अन्यथा
 		b |= prefetch_masks[index];	/* disable prefetch */
 	__put_cmd640_reg(reg, b);
 	spin_unlock_irqrestore(&cmd640_lock, flags);
-}
+पूर्ण
 
 /*
- * Dump out current drive clocks settings
+ * Dump out current drive घड़ीs settings
  */
-static void display_clocks(unsigned int index)
-{
+अटल व्योम display_घड़ीs(अचिन्हित पूर्णांक index)
+अणु
 	u8 active_count, recovery_count;
 
 	active_count = active_counts[index];
-	if (active_count == 1)
+	अगर (active_count == 1)
 		++active_count;
 	recovery_count = recovery_counts[index];
-	if (active_count > 3 && recovery_count == 1)
+	अगर (active_count > 3 && recovery_count == 1)
 		++recovery_count;
-	if (cmd640_chip_version > 1)
+	अगर (cmd640_chip_version > 1)
 		recovery_count += 1;  /* cmd640b uses (count + 1)*/
-	printk(", clocks=%d/%d/%d\n", setup_counts[index], active_count, recovery_count);
-}
+	prपूर्णांकk(", clocks=%d/%d/%d\n", setup_counts[index], active_count, recovery_count);
+पूर्ण
 
 /*
- * Pack active and recovery counts into single byte representation
+ * Pack active and recovery counts पूर्णांकo single byte representation
  * used by controller
  */
-static inline u8 pack_nibbles(u8 upper, u8 lower)
-{
-	return ((upper & 0x0f) << 4) | (lower & 0x0f);
-}
+अटल अंतरभूत u8 pack_nibbles(u8 upper, u8 lower)
+अणु
+	वापस ((upper & 0x0f) << 4) | (lower & 0x0f);
+पूर्ण
 
 /*
- * This routine writes the prepared setup/active/recovery counts
- * for a drive into the cmd640 chipset registers to active them.
+ * This routine ग_लिखोs the prepared setup/active/recovery counts
+ * क्रम a drive पूर्णांकo the cmd640 chipset रेजिस्टरs to active them.
  */
-static void program_drive_counts(ide_drive_t *drive, unsigned int index)
-{
-	unsigned long flags;
+अटल व्योम program_drive_counts(ide_drive_t *drive, अचिन्हित पूर्णांक index)
+अणु
+	अचिन्हित दीर्घ flags;
 	u8 setup_count    = setup_counts[index];
 	u8 active_count   = active_counts[index];
 	u8 recovery_count = recovery_counts[index];
 
 	/*
-	 * Set up address setup count and drive read/write timing registers.
-	 * Primary interface has individual count/timing registers for
-	 * each drive.  Secondary interface has one common set of registers,
-	 * so we merge the timings, using the slowest value for each timing.
+	 * Set up address setup count and drive पढ़ो/ग_लिखो timing रेजिस्टरs.
+	 * Primary पूर्णांकerface has inभागidual count/timing रेजिस्टरs क्रम
+	 * each drive.  Secondary पूर्णांकerface has one common set of रेजिस्टरs,
+	 * so we merge the timings, using the slowest value क्रम each timing.
 	 */
-	if (index > 1) {
+	अगर (index > 1) अणु
 		ide_drive_t *peer = ide_get_pair_dev(drive);
-		unsigned int mate = index ^ 1;
+		अचिन्हित पूर्णांक mate = index ^ 1;
 
-		if (peer) {
-			if (setup_count < setup_counts[mate])
+		अगर (peer) अणु
+			अगर (setup_count < setup_counts[mate])
 				setup_count = setup_counts[mate];
-			if (active_count < active_counts[mate])
+			अगर (active_count < active_counts[mate])
 				active_count = active_counts[mate];
-			if (recovery_count < recovery_counts[mate])
+			अगर (recovery_count < recovery_counts[mate])
 				recovery_count = recovery_counts[mate];
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Convert setup_count to internal chipset representation
+	 * Convert setup_count to पूर्णांकernal chipset representation
 	 */
-	switch (setup_count) {
-	case 4:	 setup_count = 0x00; break;
-	case 3:	 setup_count = 0x80; break;
-	case 1:
-	case 2:	 setup_count = 0x40; break;
-	default: setup_count = 0xc0; /* case 5 */
-	}
+	चयन (setup_count) अणु
+	हाल 4:	 setup_count = 0x00; अवरोध;
+	हाल 3:	 setup_count = 0x80; अवरोध;
+	हाल 1:
+	हाल 2:	 setup_count = 0x40; अवरोध;
+	शेष: setup_count = 0xc0; /* हाल 5 */
+	पूर्ण
 
 	/*
-	 * Now that everything is ready, program the new timings
+	 * Now that everything is पढ़ोy, program the new timings
 	 */
 	spin_lock_irqsave(&cmd640_lock, flags);
 	/*
-	 * Program the address_setup clocks into ARTTIM reg,
-	 * and then the active/recovery counts into the DRWTIM reg
-	 * (this converts counts of 16 into counts of zero -- okay).
+	 * Program the address_setup घड़ीs पूर्णांकo ARTTIM reg,
+	 * and then the active/recovery counts पूर्णांकo the DRWTIM reg
+	 * (this converts counts of 16 पूर्णांकo counts of zero -- okay).
 	 */
 	setup_count |= __get_cmd640_reg(arttim_regs[index]) & 0x3f;
 	__put_cmd640_reg(arttim_regs[index], setup_count);
 	__put_cmd640_reg(drwtim_regs[index], pack_nibbles(active_count, recovery_count));
 	spin_unlock_irqrestore(&cmd640_lock, flags);
-}
+पूर्ण
 
 /*
- * Set a specific pio_mode for a drive
+ * Set a specअगरic pio_mode क्रम a drive
  */
-static void cmd640_set_mode(ide_drive_t *drive, unsigned int index,
-			    u8 pio_mode, unsigned int cycle_time)
-{
-	struct ide_timing *t;
-	int setup_time, active_time, recovery_time, clock_time;
+अटल व्योम cmd640_set_mode(ide_drive_t *drive, अचिन्हित पूर्णांक index,
+			    u8 pio_mode, अचिन्हित पूर्णांक cycle_समय)
+अणु
+	काष्ठा ide_timing *t;
+	पूर्णांक setup_समय, active_समय, recovery_समय, घड़ी_प्रकारime;
 	u8 setup_count, active_count, recovery_count, recovery_count2, cycle_count;
-	int bus_speed;
+	पूर्णांक bus_speed;
 
-	if (cmd640_vlb)
+	अगर (cmd640_vlb)
 		bus_speed = ide_vlb_clk ? ide_vlb_clk : 50;
-	else
+	अन्यथा
 		bus_speed = ide_pci_clk ? ide_pci_clk : 33;
 
-	if (pio_mode > 5)
+	अगर (pio_mode > 5)
 		pio_mode = 5;
 
 	t = ide_timing_find_mode(XFER_PIO_0 + pio_mode);
-	setup_time  = t->setup;
-	active_time = t->active;
+	setup_समय  = t->setup;
+	active_समय = t->active;
 
-	recovery_time = cycle_time - (setup_time + active_time);
-	clock_time = 1000 / bus_speed;
-	cycle_count = DIV_ROUND_UP(cycle_time, clock_time);
+	recovery_समय = cycle_समय - (setup_समय + active_समय);
+	घड़ी_प्रकारime = 1000 / bus_speed;
+	cycle_count = DIV_ROUND_UP(cycle_समय, घड़ी_प्रकारime);
 
-	setup_count = DIV_ROUND_UP(setup_time, clock_time);
+	setup_count = DIV_ROUND_UP(setup_समय, घड़ी_प्रकारime);
 
-	active_count = DIV_ROUND_UP(active_time, clock_time);
-	if (active_count < 2)
+	active_count = DIV_ROUND_UP(active_समय, घड़ी_प्रकारime);
+	अगर (active_count < 2)
 		active_count = 2; /* minimum allowed by cmd640 */
 
-	recovery_count = DIV_ROUND_UP(recovery_time, clock_time);
+	recovery_count = DIV_ROUND_UP(recovery_समय, घड़ी_प्रकारime);
 	recovery_count2 = cycle_count - (setup_count + active_count);
-	if (recovery_count2 > recovery_count)
+	अगर (recovery_count2 > recovery_count)
 		recovery_count = recovery_count2;
-	if (recovery_count < 2)
+	अगर (recovery_count < 2)
 		recovery_count = 2; /* minimum allowed by cmd640 */
-	if (recovery_count > 17) {
+	अगर (recovery_count > 17) अणु
 		active_count += recovery_count - 17;
 		recovery_count = 17;
-	}
-	if (active_count > 16)
+	पूर्ण
+	अगर (active_count > 16)
 		active_count = 16; /* maximum allowed by cmd640 */
-	if (cmd640_chip_version > 1)
+	अगर (cmd640_chip_version > 1)
 		recovery_count -= 1;  /* cmd640b uses (count + 1)*/
-	if (recovery_count > 16)
+	अगर (recovery_count > 16)
 		recovery_count = 16; /* maximum allowed by cmd640 */
 
 	setup_counts[index]    = setup_count;
@@ -565,128 +566,128 @@ static void cmd640_set_mode(ide_drive_t *drive, unsigned int index,
 
 	/*
 	 * In a perfect world, we might set the drive pio mode here
-	 * (using WIN_SETFEATURE) before continuing.
+	 * (using WIN_SETFEATURE) beक्रमe continuing.
 	 *
-	 * But we do not, because:
-	 *	1) this is the wrong place to do it (proper is do_special() in ide.c)
-	 * 	2) in practice this is rarely, if ever, necessary
+	 * But we करो not, because:
+	 *	1) this is the wrong place to करो it (proper is करो_special() in ide.c)
+	 * 	2) in practice this is rarely, अगर ever, necessary
 	 */
 	program_drive_counts(drive, index);
-}
+पूर्ण
 
-static void cmd640_set_pio_mode(ide_hwif_t *hwif, ide_drive_t *drive)
-{
-	unsigned int index = 0, cycle_time;
-	const u8 pio = drive->pio_mode - XFER_PIO_0;
+अटल व्योम cmd640_set_pio_mode(ide_hwअगर_t *hwअगर, ide_drive_t *drive)
+अणु
+	अचिन्हित पूर्णांक index = 0, cycle_समय;
+	स्थिर u8 pio = drive->pio_mode - XFER_PIO_0;
 	u8 b;
 
-	switch (pio) {
-	case 6: /* set fast-devsel off */
-	case 7: /* set fast-devsel on */
+	चयन (pio) अणु
+	हाल 6: /* set fast-devsel off */
+	हाल 7: /* set fast-devsel on */
 		b = get_cmd640_reg(CNTRL) & ~0x27;
-		if (pio & 1)
+		अगर (pio & 1)
 			b |= 0x27;
 		put_cmd640_reg(CNTRL, b);
-		printk("%s: %sabled cmd640 fast host timing (devsel)\n",
+		prपूर्णांकk("%s: %sabled cmd640 fast host timing (devsel)\n",
 			drive->name, (pio & 1) ? "en" : "dis");
-		return;
-	case 8: /* set prefetch off */
-	case 9: /* set prefetch on */
+		वापस;
+	हाल 8: /* set prefetch off */
+	हाल 9: /* set prefetch on */
 		set_prefetch_mode(drive, index, pio & 1);
-		printk("%s: %sabled cmd640 prefetch\n",
+		prपूर्णांकk("%s: %sabled cmd640 prefetch\n",
 			drive->name, (pio & 1) ? "en" : "dis");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	cycle_time = ide_pio_cycle_time(drive, pio);
-	cmd640_set_mode(drive, index, pio, cycle_time);
+	cycle_समय = ide_pio_cycle_समय(drive, pio);
+	cmd640_set_mode(drive, index, pio, cycle_समय);
 
-	printk("%s: selected cmd640 PIO mode%d (%dns)",
-		drive->name, pio, cycle_time);
+	prपूर्णांकk("%s: selected cmd640 PIO mode%d (%dns)",
+		drive->name, pio, cycle_समय);
 
-	display_clocks(index);
-}
-#endif /* CONFIG_BLK_DEV_CMD640_ENHANCED */
+	display_घड़ीs(index);
+पूर्ण
+#पूर्ण_अगर /* CONFIG_BLK_DEV_CMD640_ENHANCED */
 
-static void __init cmd640_init_dev(ide_drive_t *drive)
-{
-	unsigned int i = drive->hwif->channel * 2 + (drive->dn & 1);
+अटल व्योम __init cmd640_init_dev(ide_drive_t *drive)
+अणु
+	अचिन्हित पूर्णांक i = drive->hwअगर->channel * 2 + (drive->dn & 1);
 
-#ifdef CONFIG_BLK_DEV_CMD640_ENHANCED
+#अगर_घोषित CONFIG_BLK_DEV_CMD640_ENHANCED
 	/*
 	 * Reset timing to the slowest speed and turn off prefetch.
-	 * This way, the drive identify code has a better chance.
+	 * This way, the drive identअगरy code has a better chance.
 	 */
 	setup_counts[i]    =  4;	/* max possible */
 	active_counts[i]   = 16;	/* max possible */
 	recovery_counts[i] = 16;	/* max possible */
 	program_drive_counts(drive, i);
 	set_prefetch_mode(drive, i, 0);
-	printk(KERN_INFO DRV_NAME ": drive%d timings/prefetch cleared\n", i);
-#else
+	prपूर्णांकk(KERN_INFO DRV_NAME ": drive%d timings/prefetch cleared\n", i);
+#अन्यथा
 	/*
 	 * Set the drive unmask flags to match the prefetch setting.
 	 */
 	check_prefetch(drive, i);
-	printk(KERN_INFO DRV_NAME ": drive%d timings/prefetch(%s) preserved\n",
+	prपूर्णांकk(KERN_INFO DRV_NAME ": drive%d timings/prefetch(%s) preserved\n",
 		i, (drive->dev_flags & IDE_DFLAG_NO_IO_32BIT) ? "off" : "on");
-#endif /* CONFIG_BLK_DEV_CMD640_ENHANCED */
-}
+#पूर्ण_अगर /* CONFIG_BLK_DEV_CMD640_ENHANCED */
+पूर्ण
 
-static int cmd640_test_irq(ide_hwif_t *hwif)
-{
-	int irq_reg		= hwif->channel ? ARTTIM23 : CFR;
-	u8  irq_mask		= hwif->channel ? ARTTIM23_IDE23INTR :
+अटल पूर्णांक cmd640_test_irq(ide_hwअगर_t *hwअगर)
+अणु
+	पूर्णांक irq_reg		= hwअगर->channel ? ARTTIM23 : CFR;
+	u8  irq_mask		= hwअगर->channel ? ARTTIM23_IDE23INTR :
 						  CFR_IDE01INTR;
 	u8  irq_stat		= get_cmd640_reg(irq_reg);
 
-	return (irq_stat & irq_mask) ? 1 : 0;
-}
+	वापस (irq_stat & irq_mask) ? 1 : 0;
+पूर्ण
 
-static const struct ide_port_ops cmd640_port_ops = {
+अटल स्थिर काष्ठा ide_port_ops cmd640_port_ops = अणु
 	.init_dev		= cmd640_init_dev,
-#ifdef CONFIG_BLK_DEV_CMD640_ENHANCED
+#अगर_घोषित CONFIG_BLK_DEV_CMD640_ENHANCED
 	.set_pio_mode		= cmd640_set_pio_mode,
-#endif
+#पूर्ण_अगर
 	.test_irq		= cmd640_test_irq,
-};
+पूर्ण;
 
-static int pci_conf1(void)
-{
-	unsigned long flags;
-	u32 tmp;
+अटल पूर्णांक pci_conf1(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
+	u32 पंचांगp;
 
 	spin_lock_irqsave(&cmd640_lock, flags);
 	outb(0x01, 0xCFB);
-	tmp = inl(0xCF8);
+	पंचांगp = inl(0xCF8);
 	outl(0x80000000, 0xCF8);
-	if (inl(0xCF8) == 0x80000000) {
-		outl(tmp, 0xCF8);
+	अगर (inl(0xCF8) == 0x80000000) अणु
+		outl(पंचांगp, 0xCF8);
 		spin_unlock_irqrestore(&cmd640_lock, flags);
-		return 1;
-	}
-	outl(tmp, 0xCF8);
+		वापस 1;
+	पूर्ण
+	outl(पंचांगp, 0xCF8);
 	spin_unlock_irqrestore(&cmd640_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pci_conf2(void)
-{
-	unsigned long flags;
+अटल पूर्णांक pci_conf2(व्योम)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&cmd640_lock, flags);
 	outb(0x00, 0xCFB);
 	outb(0x00, 0xCF8);
 	outb(0x00, 0xCFA);
-	if (inb(0xCF8) == 0x00 && inb(0xCF8) == 0x00) {
+	अगर (inb(0xCF8) == 0x00 && inb(0xCF8) == 0x00) अणु
 		spin_unlock_irqrestore(&cmd640_lock, flags);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 	spin_unlock_irqrestore(&cmd640_lock, flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct ide_port_info cmd640_port_info __initconst = {
+अटल स्थिर काष्ठा ide_port_info cmd640_port_info __initस्थिर = अणु
 	.chipset		= ide_cmd640,
 	.host_flags		= IDE_HFLAG_SERIALIZE |
 				  IDE_HFLAG_NO_DMA |
@@ -694,85 +695,85 @@ static const struct ide_port_info cmd640_port_info __initconst = {
 				  IDE_HFLAG_ABUSE_FAST_DEVSEL,
 	.port_ops		= &cmd640_port_ops,
 	.pio_mask		= ATA_PIO5,
-};
+पूर्ण;
 
-static int __init cmd640x_init_one(unsigned long base, unsigned long ctl)
-{
-	if (!request_region(base, 8, DRV_NAME)) {
-		printk(KERN_ERR "%s: I/O resource 0x%lX-0x%lX not free.\n",
+अटल पूर्णांक __init cmd640x_init_one(अचिन्हित दीर्घ base, अचिन्हित दीर्घ ctl)
+अणु
+	अगर (!request_region(base, 8, DRV_NAME)) अणु
+		prपूर्णांकk(KERN_ERR "%s: I/O resource 0x%lX-0x%lX not free.\n",
 				DRV_NAME, base, base + 7);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	if (!request_region(ctl, 1, DRV_NAME)) {
-		printk(KERN_ERR "%s: I/O resource 0x%lX not free.\n",
+	अगर (!request_region(ctl, 1, DRV_NAME)) अणु
+		prपूर्णांकk(KERN_ERR "%s: I/O resource 0x%lX not free.\n",
 				DRV_NAME, ctl);
 		release_region(base, 8);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Probe for a cmd640 chipset, and initialize it if found.
+ * Probe क्रम a cmd640 chipset, and initialize it अगर found.
  */
-static int __init cmd640x_init(void)
-{
-	int second_port_cmd640 = 0, rc;
-	const char *bus_type, *port2;
+अटल पूर्णांक __init cmd640x_init(व्योम)
+अणु
+	पूर्णांक second_port_cmd640 = 0, rc;
+	स्थिर अक्षर *bus_type, *port2;
 	u8 b, cfr;
-	struct ide_hw hw[2], *hws[2];
+	काष्ठा ide_hw hw[2], *hws[2];
 
-	if (cmd640_vlb && probe_for_cmd640_vlb()) {
+	अगर (cmd640_vlb && probe_क्रम_cmd640_vlb()) अणु
 		bus_type = "VLB";
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd640_vlb = 0;
 		/* Find out what kind of PCI probing is supported otherwise
 		   Justin Gibbs will sulk.. */
-		if (pci_conf1() && probe_for_cmd640_pci1())
+		अगर (pci_conf1() && probe_क्रम_cmd640_pci1())
 			bus_type = "PCI (type1)";
-		else if (pci_conf2() && probe_for_cmd640_pci2())
+		अन्यथा अगर (pci_conf2() && probe_क्रम_cmd640_pci2())
 			bus_type = "PCI (type2)";
-		else
-			return 0;
-	}
+		अन्यथा
+			वापस 0;
+	पूर्ण
 	/*
-	 * Undocumented magic (there is no 0x5b reg in specs)
+	 * Unकरोcumented magic (there is no 0x5b reg in specs)
 	 */
 	put_cmd640_reg(0x5b, 0xbd);
-	if (get_cmd640_reg(0x5b) != 0xbd) {
-		printk(KERN_ERR "ide: cmd640 init failed: wrong value in reg 0x5b\n");
-		return 0;
-	}
+	अगर (get_cmd640_reg(0x5b) != 0xbd) अणु
+		prपूर्णांकk(KERN_ERR "ide: cmd640 init failed: wrong value in reg 0x5b\n");
+		वापस 0;
+	पूर्ण
 	put_cmd640_reg(0x5b, 0);
 
-#ifdef CMD640_DUMP_REGS
+#अगर_घोषित CMD640_DUMP_REGS
 	cmd640_dump_regs();
-#endif
+#पूर्ण_अगर
 
 	/*
 	 * Documented magic begins here
 	 */
 	cfr = get_cmd640_reg(CFR);
 	cmd640_chip_version = cfr & CFR_DEVREV;
-	if (cmd640_chip_version == 0) {
-		printk("ide: bad cmd640 revision: %d\n", cmd640_chip_version);
-		return 0;
-	}
+	अगर (cmd640_chip_version == 0) अणु
+		prपूर्णांकk("ide: bad cmd640 revision: %d\n", cmd640_chip_version);
+		वापस 0;
+	पूर्ण
 
 	rc = cmd640x_init_one(0x1f0, 0x3f6);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = cmd640x_init_one(0x170, 0x376);
-	if (rc) {
+	अगर (rc) अणु
 		release_region(0x3f6, 1);
 		release_region(0x1f0, 8);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	memset(&hw, 0, sizeof(hw));
+	स_रखो(&hw, 0, माप(hw));
 
 	ide_std_init_ports(&hw[0], 0x1f0, 0x3f6);
 	hw[0].irq = 14;
@@ -780,20 +781,20 @@ static int __init cmd640x_init(void)
 	ide_std_init_ports(&hw[1], 0x170, 0x376);
 	hw[1].irq = 15;
 
-	printk(KERN_INFO "cmd640: buggy cmd640%c interface on %s, config=0x%02x"
+	prपूर्णांकk(KERN_INFO "cmd640: buggy cmd640%c interface on %s, config=0x%02x"
 			 "\n", 'a' + cmd640_chip_version - 1, bus_type, cfr);
 
 	/*
-	 * Initialize data for primary port
+	 * Initialize data क्रम primary port
 	 */
 	hws[0] = &hw[0];
 
 	/*
 	 * Ensure compatibility by always using the slowest timings
-	 * for access to the drive's command register block,
-	 * and reset the prefetch burstsize to default (512 bytes).
+	 * क्रम access to the drive's command रेजिस्टर block,
+	 * and reset the prefetch burstsize to शेष (512 bytes).
 	 *
-	 * Maybe we need a way to NOT do these on *some* systems?
+	 * Maybe we need a way to NOT करो these on *some* प्रणालीs?
 	 */
 	put_cmd640_reg(CMDTIM, 0);
 	put_cmd640_reg(BRST, 0x40);
@@ -801,44 +802,44 @@ static int __init cmd640x_init(void)
 	b = get_cmd640_reg(CNTRL);
 
 	/*
-	 * Try to enable the secondary interface, if not already enabled
+	 * Try to enable the secondary पूर्णांकerface, अगर not alपढ़ोy enabled
 	 */
-	if (secondary_port_responding()) {
-		if ((b & CNTRL_ENA_2ND)) {
+	अगर (secondary_port_responding()) अणु
+		अगर ((b & CNTRL_ENA_2ND)) अणु
 			second_port_cmd640 = 1;
 			port2 = "okay";
-		} else if (cmd640_vlb) {
+		पूर्ण अन्यथा अगर (cmd640_vlb) अणु
 			second_port_cmd640 = 1;
 			port2 = "alive";
-		} else
+		पूर्ण अन्यथा
 			port2 = "not cmd640";
-	} else {
+	पूर्ण अन्यथा अणु
 		put_cmd640_reg(CNTRL, b ^ CNTRL_ENA_2ND); /* toggle the bit */
-		if (secondary_port_responding()) {
+		अगर (secondary_port_responding()) अणु
 			second_port_cmd640 = 1;
 			port2 = "enabled";
-		} else {
+		पूर्ण अन्यथा अणु
 			put_cmd640_reg(CNTRL, b); /* restore original setting */
 			port2 = "not responding";
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Initialize data for secondary cmd640 port, if enabled
+	 * Initialize data क्रम secondary cmd640 port, अगर enabled
 	 */
-	if (second_port_cmd640)
+	अगर (second_port_cmd640)
 		hws[1] = &hw[1];
 
-	printk(KERN_INFO "cmd640: %sserialized, secondary interface %s\n",
+	prपूर्णांकk(KERN_INFO "cmd640: %sserialized, secondary interface %s\n",
 			 second_port_cmd640 ? "" : "not ", port2);
 
-#ifdef CMD640_DUMP_REGS
+#अगर_घोषित CMD640_DUMP_REGS
 	cmd640_dump_regs();
-#endif
+#पूर्ण_अगर
 
-	return ide_host_add(&cmd640_port_info, hws, second_port_cmd640 ? 2 : 1,
-			    NULL);
-}
+	वापस ide_host_add(&cmd640_port_info, hws, second_port_cmd640 ? 2 : 1,
+			    शून्य);
+पूर्ण
 
 module_param_named(probe_vlb, cmd640_vlb, bool, 0);
 MODULE_PARM_DESC(probe_vlb, "probe for VLB version of CMD640 chipset");

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*******************************************************************************
- * This file contains iSCSI extentions for RDMA (iSER) Verbs
+ * This file contains iSCSI extentions क्रम RDMA (iSER) Verbs
  *
  * (c) Copyright 2013 Datera, Inc.
  *
@@ -8,115 +9,115 @@
  *
  ****************************************************************************/
 
-#include <linux/string.h>
-#include <linux/module.h>
-#include <linux/scatterlist.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/in6.h>
-#include <rdma/ib_verbs.h>
-#include <rdma/ib_cm.h>
-#include <rdma/rdma_cm.h>
-#include <target/target_core_base.h>
-#include <target/target_core_fabric.h>
-#include <target/iscsi/iscsi_transport.h>
-#include <linux/semaphore.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/module.h>
+#समावेश <linux/scatterlist.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/in6.h>
+#समावेश <rdma/ib_verbs.h>
+#समावेश <rdma/ib_cm.h>
+#समावेश <rdma/rdma_cm.h>
+#समावेश <target/target_core_base.h>
+#समावेश <target/target_core_fabric.h>
+#समावेश <target/iscsi/iscsi_transport.h>
+#समावेश <linux/semaphore.h>
 
-#include "ib_isert.h"
+#समावेश "ib_isert.h"
 
-static int isert_debug_level;
-module_param_named(debug_level, isert_debug_level, int, 0644);
+अटल पूर्णांक isert_debug_level;
+module_param_named(debug_level, isert_debug_level, पूर्णांक, 0644);
 MODULE_PARM_DESC(debug_level, "Enable debug tracing if > 0 (default:0)");
 
-static int isert_sg_tablesize_set(const char *val,
-				  const struct kernel_param *kp);
-static const struct kernel_param_ops sg_tablesize_ops = {
+अटल पूर्णांक isert_sg_tablesize_set(स्थिर अक्षर *val,
+				  स्थिर काष्ठा kernel_param *kp);
+अटल स्थिर काष्ठा kernel_param_ops sg_tablesize_ops = अणु
 	.set = isert_sg_tablesize_set,
-	.get = param_get_int,
-};
+	.get = param_get_पूर्णांक,
+पूर्ण;
 
-static int isert_sg_tablesize = ISCSI_ISER_DEF_SG_TABLESIZE;
+अटल पूर्णांक isert_sg_tablesize = ISCSI_ISER_DEF_SG_TABLESIZE;
 module_param_cb(sg_tablesize, &sg_tablesize_ops, &isert_sg_tablesize, 0644);
 MODULE_PARM_DESC(sg_tablesize,
 		 "Number of gather/scatter entries in a single scsi command, should >= 128 (default: 256, max: 4096)");
 
-static DEFINE_MUTEX(device_list_mutex);
-static LIST_HEAD(device_list);
-static struct workqueue_struct *isert_comp_wq;
-static struct workqueue_struct *isert_release_wq;
+अटल DEFINE_MUTEX(device_list_mutex);
+अटल LIST_HEAD(device_list);
+अटल काष्ठा workqueue_काष्ठा *isert_comp_wq;
+अटल काष्ठा workqueue_काष्ठा *isert_release_wq;
 
-static int
-isert_put_response(struct iscsi_conn *conn, struct iscsi_cmd *cmd);
-static int
-isert_login_post_recv(struct isert_conn *isert_conn);
-static int
-isert_rdma_accept(struct isert_conn *isert_conn);
-struct rdma_cm_id *isert_setup_id(struct isert_np *isert_np);
+अटल पूर्णांक
+isert_put_response(काष्ठा iscsi_conn *conn, काष्ठा iscsi_cmd *cmd);
+अटल पूर्णांक
+isert_login_post_recv(काष्ठा isert_conn *isert_conn);
+अटल पूर्णांक
+isert_rdma_accept(काष्ठा isert_conn *isert_conn);
+काष्ठा rdma_cm_id *isert_setup_id(काष्ठा isert_np *isert_np);
 
-static void isert_release_work(struct work_struct *work);
-static void isert_recv_done(struct ib_cq *cq, struct ib_wc *wc);
-static void isert_send_done(struct ib_cq *cq, struct ib_wc *wc);
-static void isert_login_recv_done(struct ib_cq *cq, struct ib_wc *wc);
-static void isert_login_send_done(struct ib_cq *cq, struct ib_wc *wc);
+अटल व्योम isert_release_work(काष्ठा work_काष्ठा *work);
+अटल व्योम isert_recv_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc);
+अटल व्योम isert_send_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc);
+अटल व्योम isert_login_recv_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc);
+अटल व्योम isert_login_send_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc);
 
-static int isert_sg_tablesize_set(const char *val, const struct kernel_param *kp)
-{
-	int n = 0, ret;
+अटल पूर्णांक isert_sg_tablesize_set(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक n = 0, ret;
 
-	ret = kstrtoint(val, 10, &n);
-	if (ret != 0 || n < ISCSI_ISER_MIN_SG_TABLESIZE ||
+	ret = kstrtoपूर्णांक(val, 10, &n);
+	अगर (ret != 0 || n < ISCSI_ISER_MIN_SG_TABLESIZE ||
 	    n > ISCSI_ISER_MAX_SG_TABLESIZE)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	return param_set_int(val, kp);
-}
+	वापस param_set_पूर्णांक(val, kp);
+पूर्ण
 
-static inline bool
-isert_prot_cmd(struct isert_conn *conn, struct se_cmd *cmd)
-{
-	return (conn->pi_support &&
+अटल अंतरभूत bool
+isert_prot_cmd(काष्ठा isert_conn *conn, काष्ठा se_cmd *cmd)
+अणु
+	वापस (conn->pi_support &&
 		cmd->prot_op != TARGET_PROT_NORMAL);
-}
+पूर्ण
 
-static void
-isert_qp_event_callback(struct ib_event *e, void *context)
-{
-	struct isert_conn *isert_conn = context;
+अटल व्योम
+isert_qp_event_callback(काष्ठा ib_event *e, व्योम *context)
+अणु
+	काष्ठा isert_conn *isert_conn = context;
 
 	isert_err("%s (%d): conn %p\n",
 		  ib_event_msg(e->event), e->event, isert_conn);
 
-	switch (e->event) {
-	case IB_EVENT_COMM_EST:
-		rdma_notify(isert_conn->cm_id, IB_EVENT_COMM_EST);
-		break;
-	case IB_EVENT_QP_LAST_WQE_REACHED:
+	चयन (e->event) अणु
+	हाल IB_EVENT_COMM_EST:
+		rdma_notअगरy(isert_conn->cm_id, IB_EVENT_COMM_EST);
+		अवरोध;
+	हाल IB_EVENT_QP_LAST_WQE_REACHED:
 		isert_warn("Reached TX IB_EVENT_QP_LAST_WQE_REACHED\n");
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static struct ib_qp *
-isert_create_qp(struct isert_conn *isert_conn,
-		struct rdma_cm_id *cma_id)
-{
+अटल काष्ठा ib_qp *
+isert_create_qp(काष्ठा isert_conn *isert_conn,
+		काष्ठा rdma_cm_id *cma_id)
+अणु
 	u32 cq_size = ISERT_QP_MAX_REQ_DTOS + ISERT_QP_MAX_RECV_DTOS + 2;
-	struct isert_device *device = isert_conn->device;
-	struct ib_device *ib_dev = device->ib_device;
-	struct ib_qp_init_attr attr;
-	int ret, factor;
+	काष्ठा isert_device *device = isert_conn->device;
+	काष्ठा ib_device *ib_dev = device->ib_device;
+	काष्ठा ib_qp_init_attr attr;
+	पूर्णांक ret, factor;
 
 	isert_conn->cq = ib_cq_pool_get(ib_dev, cq_size, -1, IB_POLL_WORKQUEUE);
-	if (IS_ERR(isert_conn->cq)) {
+	अगर (IS_ERR(isert_conn->cq)) अणु
 		isert_err("Unable to allocate cq\n");
 		ret = PTR_ERR(isert_conn->cq);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 	isert_conn->cq_size = cq_size;
 
-	memset(&attr, 0, sizeof(struct ib_qp_init_attr));
+	स_रखो(&attr, 0, माप(काष्ठा ib_qp_init_attr));
 	attr.event_handler = isert_qp_event_callback;
 	attr.qp_context = isert_conn;
 	attr.send_cq = isert_conn->cq;
@@ -130,43 +131,43 @@ isert_create_qp(struct isert_conn *isert_conn,
 	attr.cap.max_recv_sge = 1;
 	attr.sq_sig_type = IB_SIGNAL_REQ_WR;
 	attr.qp_type = IB_QPT_RC;
-	if (device->pi_capable)
+	अगर (device->pi_capable)
 		attr.create_flags |= IB_QP_CREATE_INTEGRITY_EN;
 
 	ret = rdma_create_qp(cma_id, device->pd, &attr);
-	if (ret) {
+	अगर (ret) अणु
 		isert_err("rdma_create_qp failed for cma_id %d\n", ret);
 		ib_cq_pool_put(isert_conn->cq, isert_conn->cq_size);
 
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return cma_id->qp;
-}
+	वापस cma_id->qp;
+पूर्ण
 
-static int
-isert_alloc_rx_descriptors(struct isert_conn *isert_conn)
-{
-	struct isert_device *device = isert_conn->device;
-	struct ib_device *ib_dev = device->ib_device;
-	struct iser_rx_desc *rx_desc;
-	struct ib_sge *rx_sg;
+अटल पूर्णांक
+isert_alloc_rx_descriptors(काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा isert_device *device = isert_conn->device;
+	काष्ठा ib_device *ib_dev = device->ib_device;
+	काष्ठा iser_rx_desc *rx_desc;
+	काष्ठा ib_sge *rx_sg;
 	u64 dma_addr;
-	int i, j;
+	पूर्णांक i, j;
 
-	isert_conn->rx_descs = kcalloc(ISERT_QP_MAX_RECV_DTOS,
-				       sizeof(struct iser_rx_desc),
+	isert_conn->rx_descs = kसुस्मृति(ISERT_QP_MAX_RECV_DTOS,
+				       माप(काष्ठा iser_rx_desc),
 				       GFP_KERNEL);
-	if (!isert_conn->rx_descs)
-		return -ENOMEM;
+	अगर (!isert_conn->rx_descs)
+		वापस -ENOMEM;
 
 	rx_desc = isert_conn->rx_descs;
 
-	for (i = 0; i < ISERT_QP_MAX_RECV_DTOS; i++, rx_desc++)  {
+	क्रम (i = 0; i < ISERT_QP_MAX_RECV_DTOS; i++, rx_desc++)  अणु
 		dma_addr = ib_dma_map_single(ib_dev, rx_desc->buf,
 					ISER_RX_SIZE, DMA_FROM_DEVICE);
-		if (ib_dma_mapping_error(ib_dev, dma_addr))
-			goto dma_map_fail;
+		अगर (ib_dma_mapping_error(ib_dev, dma_addr))
+			जाओ dma_map_fail;
 
 		rx_desc->dma_addr = dma_addr;
 
@@ -174,124 +175,124 @@ isert_alloc_rx_descriptors(struct isert_conn *isert_conn)
 		rx_sg->addr = rx_desc->dma_addr + isert_get_hdr_offset(rx_desc);
 		rx_sg->length = ISER_RX_PAYLOAD_SIZE;
 		rx_sg->lkey = device->pd->local_dma_lkey;
-		rx_desc->rx_cqe.done = isert_recv_done;
-	}
+		rx_desc->rx_cqe.करोne = isert_recv_करोne;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 dma_map_fail:
 	rx_desc = isert_conn->rx_descs;
-	for (j = 0; j < i; j++, rx_desc++) {
+	क्रम (j = 0; j < i; j++, rx_desc++) अणु
 		ib_dma_unmap_single(ib_dev, rx_desc->dma_addr,
 				    ISER_RX_SIZE, DMA_FROM_DEVICE);
-	}
-	kfree(isert_conn->rx_descs);
-	isert_conn->rx_descs = NULL;
+	पूर्ण
+	kमुक्त(isert_conn->rx_descs);
+	isert_conn->rx_descs = शून्य;
 	isert_err("conn %p failed to allocate rx descriptors\n", isert_conn);
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void
-isert_free_rx_descriptors(struct isert_conn *isert_conn)
-{
-	struct ib_device *ib_dev = isert_conn->device->ib_device;
-	struct iser_rx_desc *rx_desc;
-	int i;
+अटल व्योम
+isert_मुक्त_rx_descriptors(काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा ib_device *ib_dev = isert_conn->device->ib_device;
+	काष्ठा iser_rx_desc *rx_desc;
+	पूर्णांक i;
 
-	if (!isert_conn->rx_descs)
-		return;
+	अगर (!isert_conn->rx_descs)
+		वापस;
 
 	rx_desc = isert_conn->rx_descs;
-	for (i = 0; i < ISERT_QP_MAX_RECV_DTOS; i++, rx_desc++)  {
+	क्रम (i = 0; i < ISERT_QP_MAX_RECV_DTOS; i++, rx_desc++)  अणु
 		ib_dma_unmap_single(ib_dev, rx_desc->dma_addr,
 				    ISER_RX_SIZE, DMA_FROM_DEVICE);
-	}
+	पूर्ण
 
-	kfree(isert_conn->rx_descs);
-	isert_conn->rx_descs = NULL;
-}
+	kमुक्त(isert_conn->rx_descs);
+	isert_conn->rx_descs = शून्य;
+पूर्ण
 
-static int
-isert_create_device_ib_res(struct isert_device *device)
-{
-	struct ib_device *ib_dev = device->ib_device;
-	int ret;
+अटल पूर्णांक
+isert_create_device_ib_res(काष्ठा isert_device *device)
+अणु
+	काष्ठा ib_device *ib_dev = device->ib_device;
+	पूर्णांक ret;
 
 	isert_dbg("devattr->max_send_sge: %d devattr->max_recv_sge %d\n",
 		  ib_dev->attrs.max_send_sge, ib_dev->attrs.max_recv_sge);
 	isert_dbg("devattr->max_sge_rd: %d\n", ib_dev->attrs.max_sge_rd);
 
 	device->pd = ib_alloc_pd(ib_dev, 0);
-	if (IS_ERR(device->pd)) {
+	अगर (IS_ERR(device->pd)) अणु
 		ret = PTR_ERR(device->pd);
 		isert_err("failed to allocate pd, device %p, ret=%d\n",
 			  device, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* Check signature cap */
-	if (ib_dev->attrs.device_cap_flags & IB_DEVICE_INTEGRITY_HANDOVER)
+	अगर (ib_dev->attrs.device_cap_flags & IB_DEVICE_INTEGRITY_HANDOVER)
 		device->pi_capable = true;
-	else
+	अन्यथा
 		device->pi_capable = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-isert_free_device_ib_res(struct isert_device *device)
-{
+अटल व्योम
+isert_मुक्त_device_ib_res(काष्ठा isert_device *device)
+अणु
 	isert_info("device %p\n", device);
 
 	ib_dealloc_pd(device->pd);
-}
+पूर्ण
 
-static void
-isert_device_put(struct isert_device *device)
-{
+अटल व्योम
+isert_device_put(काष्ठा isert_device *device)
+अणु
 	mutex_lock(&device_list_mutex);
 	device->refcount--;
 	isert_info("device %p refcount %d\n", device, device->refcount);
-	if (!device->refcount) {
-		isert_free_device_ib_res(device);
+	अगर (!device->refcount) अणु
+		isert_मुक्त_device_ib_res(device);
 		list_del(&device->dev_node);
-		kfree(device);
-	}
+		kमुक्त(device);
+	पूर्ण
 	mutex_unlock(&device_list_mutex);
-}
+पूर्ण
 
-static struct isert_device *
-isert_device_get(struct rdma_cm_id *cma_id)
-{
-	struct isert_device *device;
-	int ret;
+अटल काष्ठा isert_device *
+isert_device_get(काष्ठा rdma_cm_id *cma_id)
+अणु
+	काष्ठा isert_device *device;
+	पूर्णांक ret;
 
 	mutex_lock(&device_list_mutex);
-	list_for_each_entry(device, &device_list, dev_node) {
-		if (device->ib_device->node_guid == cma_id->device->node_guid) {
+	list_क्रम_each_entry(device, &device_list, dev_node) अणु
+		अगर (device->ib_device->node_guid == cma_id->device->node_guid) अणु
 			device->refcount++;
 			isert_info("Found iser device %p refcount %d\n",
 				   device, device->refcount);
 			mutex_unlock(&device_list_mutex);
-			return device;
-		}
-	}
+			वापस device;
+		पूर्ण
+	पूर्ण
 
-	device = kzalloc(sizeof(struct isert_device), GFP_KERNEL);
-	if (!device) {
+	device = kzalloc(माप(काष्ठा isert_device), GFP_KERNEL);
+	अगर (!device) अणु
 		mutex_unlock(&device_list_mutex);
-		return ERR_PTR(-ENOMEM);
-	}
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	INIT_LIST_HEAD(&device->dev_node);
 
 	device->ib_device = cma_id->device;
 	ret = isert_create_device_ib_res(device);
-	if (ret) {
-		kfree(device);
+	अगर (ret) अणु
+		kमुक्त(device);
 		mutex_unlock(&device_list_mutex);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 
 	device->refcount++;
 	list_add_tail(&device->dev_node, &device_list);
@@ -299,223 +300,223 @@ isert_device_get(struct rdma_cm_id *cma_id)
 		   device, device->refcount);
 	mutex_unlock(&device_list_mutex);
 
-	return device;
-}
+	वापस device;
+पूर्ण
 
-static void
-isert_init_conn(struct isert_conn *isert_conn)
-{
+अटल व्योम
+isert_init_conn(काष्ठा isert_conn *isert_conn)
+अणु
 	isert_conn->state = ISER_CONN_INIT;
 	INIT_LIST_HEAD(&isert_conn->node);
 	init_completion(&isert_conn->login_comp);
 	init_completion(&isert_conn->login_req_comp);
-	init_waitqueue_head(&isert_conn->rem_wait);
+	init_रुकोqueue_head(&isert_conn->rem_रुको);
 	kref_init(&isert_conn->kref);
 	mutex_init(&isert_conn->mutex);
 	INIT_WORK(&isert_conn->release_work, isert_release_work);
-}
+पूर्ण
 
-static void
-isert_free_login_buf(struct isert_conn *isert_conn)
-{
-	struct ib_device *ib_dev = isert_conn->device->ib_device;
+अटल व्योम
+isert_मुक्त_login_buf(काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा ib_device *ib_dev = isert_conn->device->ib_device;
 
 	ib_dma_unmap_single(ib_dev, isert_conn->login_rsp_dma,
 			    ISER_RX_PAYLOAD_SIZE, DMA_TO_DEVICE);
-	kfree(isert_conn->login_rsp_buf);
+	kमुक्त(isert_conn->login_rsp_buf);
 
 	ib_dma_unmap_single(ib_dev, isert_conn->login_desc->dma_addr,
 			    ISER_RX_SIZE, DMA_FROM_DEVICE);
-	kfree(isert_conn->login_desc);
-}
+	kमुक्त(isert_conn->login_desc);
+पूर्ण
 
-static int
-isert_alloc_login_buf(struct isert_conn *isert_conn,
-		      struct ib_device *ib_dev)
-{
-	int ret;
+अटल पूर्णांक
+isert_alloc_login_buf(काष्ठा isert_conn *isert_conn,
+		      काष्ठा ib_device *ib_dev)
+अणु
+	पूर्णांक ret;
 
-	isert_conn->login_desc = kzalloc(sizeof(*isert_conn->login_desc),
+	isert_conn->login_desc = kzalloc(माप(*isert_conn->login_desc),
 			GFP_KERNEL);
-	if (!isert_conn->login_desc)
-		return -ENOMEM;
+	अगर (!isert_conn->login_desc)
+		वापस -ENOMEM;
 
 	isert_conn->login_desc->dma_addr = ib_dma_map_single(ib_dev,
 				isert_conn->login_desc->buf,
 				ISER_RX_SIZE, DMA_FROM_DEVICE);
 	ret = ib_dma_mapping_error(ib_dev, isert_conn->login_desc->dma_addr);
-	if (ret) {
+	अगर (ret) अणु
 		isert_err("login_desc dma mapping error: %d\n", ret);
 		isert_conn->login_desc->dma_addr = 0;
-		goto out_free_login_desc;
-	}
+		जाओ out_मुक्त_login_desc;
+	पूर्ण
 
 	isert_conn->login_rsp_buf = kzalloc(ISER_RX_PAYLOAD_SIZE, GFP_KERNEL);
-	if (!isert_conn->login_rsp_buf) {
+	अगर (!isert_conn->login_rsp_buf) अणु
 		ret = -ENOMEM;
-		goto out_unmap_login_desc;
-	}
+		जाओ out_unmap_login_desc;
+	पूर्ण
 
 	isert_conn->login_rsp_dma = ib_dma_map_single(ib_dev,
 					isert_conn->login_rsp_buf,
 					ISER_RX_PAYLOAD_SIZE, DMA_TO_DEVICE);
 	ret = ib_dma_mapping_error(ib_dev, isert_conn->login_rsp_dma);
-	if (ret) {
+	अगर (ret) अणु
 		isert_err("login_rsp_dma mapping error: %d\n", ret);
 		isert_conn->login_rsp_dma = 0;
-		goto out_free_login_rsp_buf;
-	}
+		जाओ out_मुक्त_login_rsp_buf;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
-out_free_login_rsp_buf:
-	kfree(isert_conn->login_rsp_buf);
+out_मुक्त_login_rsp_buf:
+	kमुक्त(isert_conn->login_rsp_buf);
 out_unmap_login_desc:
 	ib_dma_unmap_single(ib_dev, isert_conn->login_desc->dma_addr,
 			    ISER_RX_SIZE, DMA_FROM_DEVICE);
-out_free_login_desc:
-	kfree(isert_conn->login_desc);
-	return ret;
-}
+out_मुक्त_login_desc:
+	kमुक्त(isert_conn->login_desc);
+	वापस ret;
+पूर्ण
 
-static void
-isert_set_nego_params(struct isert_conn *isert_conn,
-		      struct rdma_conn_param *param)
-{
-	struct ib_device_attr *attr = &isert_conn->device->ib_device->attrs;
+अटल व्योम
+isert_set_nego_params(काष्ठा isert_conn *isert_conn,
+		      काष्ठा rdma_conn_param *param)
+अणु
+	काष्ठा ib_device_attr *attr = &isert_conn->device->ib_device->attrs;
 
 	/* Set max inflight RDMA READ requests */
 	isert_conn->initiator_depth = min_t(u8, param->initiator_depth,
 				attr->max_qp_init_rd_atom);
 	isert_dbg("Using initiator_depth: %u\n", isert_conn->initiator_depth);
 
-	if (param->private_data) {
-		u8 flags = *(u8 *)param->private_data;
+	अगर (param->निजी_data) अणु
+		u8 flags = *(u8 *)param->निजी_data;
 
 		/*
-		 * use remote invalidation if the both initiator
+		 * use remote invalidation अगर the both initiator
 		 * and the HCA support it
 		 */
 		isert_conn->snd_w_inv = !(flags & ISER_SEND_W_INV_NOT_SUP) &&
 					  (attr->device_cap_flags &
 					   IB_DEVICE_MEM_MGT_EXTENSIONS);
-		if (isert_conn->snd_w_inv)
+		अगर (isert_conn->snd_w_inv)
 			isert_info("Using remote invalidation\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-isert_destroy_qp(struct isert_conn *isert_conn)
-{
+अटल व्योम
+isert_destroy_qp(काष्ठा isert_conn *isert_conn)
+अणु
 	ib_destroy_qp(isert_conn->qp);
 	ib_cq_pool_put(isert_conn->cq, isert_conn->cq_size);
-}
+पूर्ण
 
-static int
-isert_connect_request(struct rdma_cm_id *cma_id, struct rdma_cm_event *event)
-{
-	struct isert_np *isert_np = cma_id->context;
-	struct iscsi_np *np = isert_np->np;
-	struct isert_conn *isert_conn;
-	struct isert_device *device;
-	int ret = 0;
+अटल पूर्णांक
+isert_connect_request(काष्ठा rdma_cm_id *cma_id, काष्ठा rdma_cm_event *event)
+अणु
+	काष्ठा isert_np *isert_np = cma_id->context;
+	काष्ठा iscsi_np *np = isert_np->np;
+	काष्ठा isert_conn *isert_conn;
+	काष्ठा isert_device *device;
+	पूर्णांक ret = 0;
 
-	spin_lock_bh(&np->np_thread_lock);
-	if (!np->enabled) {
-		spin_unlock_bh(&np->np_thread_lock);
+	spin_lock_bh(&np->np_thपढ़ो_lock);
+	अगर (!np->enabled) अणु
+		spin_unlock_bh(&np->np_thपढ़ो_lock);
 		isert_dbg("iscsi_np is not enabled, reject connect request\n");
-		return rdma_reject(cma_id, NULL, 0, IB_CM_REJ_CONSUMER_DEFINED);
-	}
-	spin_unlock_bh(&np->np_thread_lock);
+		वापस rdma_reject(cma_id, शून्य, 0, IB_CM_REJ_CONSUMER_DEFINED);
+	पूर्ण
+	spin_unlock_bh(&np->np_thपढ़ो_lock);
 
 	isert_dbg("cma_id: %p, portal: %p\n",
 		 cma_id, cma_id->context);
 
-	isert_conn = kzalloc(sizeof(struct isert_conn), GFP_KERNEL);
-	if (!isert_conn)
-		return -ENOMEM;
+	isert_conn = kzalloc(माप(काष्ठा isert_conn), GFP_KERNEL);
+	अगर (!isert_conn)
+		वापस -ENOMEM;
 
 	isert_init_conn(isert_conn);
 	isert_conn->cm_id = cma_id;
 
 	device = isert_device_get(cma_id);
-	if (IS_ERR(device)) {
+	अगर (IS_ERR(device)) अणु
 		ret = PTR_ERR(device);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	isert_conn->device = device;
 
 	ret = isert_alloc_login_buf(isert_conn, cma_id->device);
-	if (ret)
-		goto out_conn_dev;
+	अगर (ret)
+		जाओ out_conn_dev;
 
 	isert_set_nego_params(isert_conn, &event->param.conn);
 
 	isert_conn->qp = isert_create_qp(isert_conn, cma_id);
-	if (IS_ERR(isert_conn->qp)) {
+	अगर (IS_ERR(isert_conn->qp)) अणु
 		ret = PTR_ERR(isert_conn->qp);
-		goto out_rsp_dma_map;
-	}
+		जाओ out_rsp_dma_map;
+	पूर्ण
 
 	ret = isert_login_post_recv(isert_conn);
-	if (ret)
-		goto out_destroy_qp;
+	अगर (ret)
+		जाओ out_destroy_qp;
 
 	ret = isert_rdma_accept(isert_conn);
-	if (ret)
-		goto out_destroy_qp;
+	अगर (ret)
+		जाओ out_destroy_qp;
 
 	mutex_lock(&isert_np->mutex);
 	list_add_tail(&isert_conn->node, &isert_np->accepted);
 	mutex_unlock(&isert_np->mutex);
 
-	return 0;
+	वापस 0;
 
 out_destroy_qp:
 	isert_destroy_qp(isert_conn);
 out_rsp_dma_map:
-	isert_free_login_buf(isert_conn);
+	isert_मुक्त_login_buf(isert_conn);
 out_conn_dev:
 	isert_device_put(device);
 out:
-	kfree(isert_conn);
-	rdma_reject(cma_id, NULL, 0, IB_CM_REJ_CONSUMER_DEFINED);
-	return ret;
-}
+	kमुक्त(isert_conn);
+	rdma_reject(cma_id, शून्य, 0, IB_CM_REJ_CONSUMER_DEFINED);
+	वापस ret;
+पूर्ण
 
-static void
-isert_connect_release(struct isert_conn *isert_conn)
-{
-	struct isert_device *device = isert_conn->device;
+अटल व्योम
+isert_connect_release(काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा isert_device *device = isert_conn->device;
 
 	isert_dbg("conn %p\n", isert_conn);
 
 	BUG_ON(!device);
 
-	isert_free_rx_descriptors(isert_conn);
-	if (isert_conn->cm_id &&
-	    !isert_conn->dev_removed)
+	isert_मुक्त_rx_descriptors(isert_conn);
+	अगर (isert_conn->cm_id &&
+	    !isert_conn->dev_हटाओd)
 		rdma_destroy_id(isert_conn->cm_id);
 
-	if (isert_conn->qp)
+	अगर (isert_conn->qp)
 		isert_destroy_qp(isert_conn);
 
-	if (isert_conn->login_desc)
-		isert_free_login_buf(isert_conn);
+	अगर (isert_conn->login_desc)
+		isert_मुक्त_login_buf(isert_conn);
 
 	isert_device_put(device);
 
-	if (isert_conn->dev_removed)
-		wake_up_interruptible(&isert_conn->rem_wait);
-	else
-		kfree(isert_conn);
-}
+	अगर (isert_conn->dev_हटाओd)
+		wake_up_पूर्णांकerruptible(&isert_conn->rem_रुको);
+	अन्यथा
+		kमुक्त(isert_conn);
+पूर्ण
 
-static void
-isert_connected_handler(struct rdma_cm_id *cma_id)
-{
-	struct isert_conn *isert_conn = cma_id->qp->qp_context;
-	struct isert_np *isert_np = cma_id->context;
+अटल व्योम
+isert_connected_handler(काष्ठा rdma_cm_id *cma_id)
+अणु
+	काष्ठा isert_conn *isert_conn = cma_id->qp->qp_context;
+	काष्ठा isert_np *isert_np = cma_id->context;
 
 	isert_info("conn %p\n", isert_conn);
 
@@ -530,205 +531,205 @@ isert_connected_handler(struct rdma_cm_id *cma_id)
 
 	isert_info("np %p: Allow accept_np to continue\n", isert_np);
 	up(&isert_np->sem);
-}
+पूर्ण
 
-static void
-isert_release_kref(struct kref *kref)
-{
-	struct isert_conn *isert_conn = container_of(kref,
-				struct isert_conn, kref);
+अटल व्योम
+isert_release_kref(काष्ठा kref *kref)
+अणु
+	काष्ठा isert_conn *isert_conn = container_of(kref,
+				काष्ठा isert_conn, kref);
 
 	isert_info("conn %p final kref %s/%d\n", isert_conn, current->comm,
 		   current->pid);
 
 	isert_connect_release(isert_conn);
-}
+पूर्ण
 
-static void
-isert_put_conn(struct isert_conn *isert_conn)
-{
+अटल व्योम
+isert_put_conn(काष्ठा isert_conn *isert_conn)
+अणु
 	kref_put(&isert_conn->kref, isert_release_kref);
-}
+पूर्ण
 
-static void
-isert_handle_unbound_conn(struct isert_conn *isert_conn)
-{
-	struct isert_np *isert_np = isert_conn->cm_id->context;
+अटल व्योम
+isert_handle_unbound_conn(काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा isert_np *isert_np = isert_conn->cm_id->context;
 
 	mutex_lock(&isert_np->mutex);
-	if (!list_empty(&isert_conn->node)) {
+	अगर (!list_empty(&isert_conn->node)) अणु
 		/*
-		 * This means iscsi doesn't know this connection
+		 * This means iscsi करोesn't know this connection
 		 * so schedule a cleanup ourselves
 		 */
 		list_del_init(&isert_conn->node);
 		isert_put_conn(isert_conn);
 		queue_work(isert_release_wq, &isert_conn->release_work);
-	}
+	पूर्ण
 	mutex_unlock(&isert_np->mutex);
-}
+पूर्ण
 
 /**
  * isert_conn_terminate() - Initiate connection termination
- * @isert_conn: isert connection struct
+ * @isert_conn: isert connection काष्ठा
  *
  * Notes:
- * In case the connection state is BOUND, move state
- * to TEMINATING and start teardown sequence (rdma_disconnect).
- * In case the connection state is UP, complete flush as well.
+ * In हाल the connection state is BOUND, move state
+ * to TEMINATING and start tearकरोwn sequence (rdma_disconnect).
+ * In हाल the connection state is UP, complete flush as well.
  *
  * This routine must be called with mutex held. Thus it is
- * safe to call multiple times.
+ * safe to call multiple बार.
  */
-static void
-isert_conn_terminate(struct isert_conn *isert_conn)
-{
-	int err;
+अटल व्योम
+isert_conn_terminate(काष्ठा isert_conn *isert_conn)
+अणु
+	पूर्णांक err;
 
-	if (isert_conn->state >= ISER_CONN_TERMINATING)
-		return;
+	अगर (isert_conn->state >= ISER_CONN_TERMINATING)
+		वापस;
 
 	isert_info("Terminating conn %p state %d\n",
 		   isert_conn, isert_conn->state);
 	isert_conn->state = ISER_CONN_TERMINATING;
 	err = rdma_disconnect(isert_conn->cm_id);
-	if (err)
+	अगर (err)
 		isert_warn("Failed rdma_disconnect isert_conn %p\n",
 			   isert_conn);
-}
+पूर्ण
 
-static int
-isert_np_cma_handler(struct isert_np *isert_np,
-		     enum rdma_cm_event_type event)
-{
+अटल पूर्णांक
+isert_np_cma_handler(काष्ठा isert_np *isert_np,
+		     क्रमागत rdma_cm_event_type event)
+अणु
 	isert_dbg("%s (%d): isert np %p\n",
 		  rdma_event_msg(event), event, isert_np);
 
-	switch (event) {
-	case RDMA_CM_EVENT_DEVICE_REMOVAL:
-		isert_np->cm_id = NULL;
-		break;
-	case RDMA_CM_EVENT_ADDR_CHANGE:
+	चयन (event) अणु
+	हाल RDMA_CM_EVENT_DEVICE_REMOVAL:
+		isert_np->cm_id = शून्य;
+		अवरोध;
+	हाल RDMA_CM_EVENT_ADDR_CHANGE:
 		isert_np->cm_id = isert_setup_id(isert_np);
-		if (IS_ERR(isert_np->cm_id)) {
+		अगर (IS_ERR(isert_np->cm_id)) अणु
 			isert_err("isert np %p setup id failed: %ld\n",
 				  isert_np, PTR_ERR(isert_np->cm_id));
-			isert_np->cm_id = NULL;
-		}
-		break;
-	default:
+			isert_np->cm_id = शून्य;
+		पूर्ण
+		अवरोध;
+	शेष:
 		isert_err("isert np %p Unexpected event %d\n",
 			  isert_np, event);
-	}
+	पूर्ण
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int
-isert_disconnected_handler(struct rdma_cm_id *cma_id,
-			   enum rdma_cm_event_type event)
-{
-	struct isert_conn *isert_conn = cma_id->qp->qp_context;
+अटल पूर्णांक
+isert_disconnected_handler(काष्ठा rdma_cm_id *cma_id,
+			   क्रमागत rdma_cm_event_type event)
+अणु
+	काष्ठा isert_conn *isert_conn = cma_id->qp->qp_context;
 
 	mutex_lock(&isert_conn->mutex);
-	switch (isert_conn->state) {
-	case ISER_CONN_TERMINATING:
-		break;
-	case ISER_CONN_UP:
+	चयन (isert_conn->state) अणु
+	हाल ISER_CONN_TERMINATING:
+		अवरोध;
+	हाल ISER_CONN_UP:
 		isert_conn_terminate(isert_conn);
 		ib_drain_qp(isert_conn->qp);
 		isert_handle_unbound_conn(isert_conn);
-		break;
-	case ISER_CONN_BOUND:
-	case ISER_CONN_FULL_FEATURE: /* FALLTHRU */
+		अवरोध;
+	हाल ISER_CONN_BOUND:
+	हाल ISER_CONN_FULL_FEATURE: /* FALLTHRU */
 		iscsit_cause_connection_reinstatement(isert_conn->conn, 0);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		isert_warn("conn %p terminating in state %d\n",
 			   isert_conn, isert_conn->state);
-	}
+	पूर्ण
 	mutex_unlock(&isert_conn->mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-isert_connect_error(struct rdma_cm_id *cma_id)
-{
-	struct isert_conn *isert_conn = cma_id->qp->qp_context;
+अटल पूर्णांक
+isert_connect_error(काष्ठा rdma_cm_id *cma_id)
+अणु
+	काष्ठा isert_conn *isert_conn = cma_id->qp->qp_context;
 
 	ib_drain_qp(isert_conn->qp);
 	list_del_init(&isert_conn->node);
-	isert_conn->cm_id = NULL;
+	isert_conn->cm_id = शून्य;
 	isert_put_conn(isert_conn);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static int
-isert_cma_handler(struct rdma_cm_id *cma_id, struct rdma_cm_event *event)
-{
-	struct isert_np *isert_np = cma_id->context;
-	struct isert_conn *isert_conn;
-	int ret = 0;
+अटल पूर्णांक
+isert_cma_handler(काष्ठा rdma_cm_id *cma_id, काष्ठा rdma_cm_event *event)
+अणु
+	काष्ठा isert_np *isert_np = cma_id->context;
+	काष्ठा isert_conn *isert_conn;
+	पूर्णांक ret = 0;
 
 	isert_info("%s (%d): status %d id %p np %p\n",
 		   rdma_event_msg(event->event), event->event,
 		   event->status, cma_id, cma_id->context);
 
-	if (isert_np->cm_id == cma_id)
-		return isert_np_cma_handler(cma_id->context, event->event);
+	अगर (isert_np->cm_id == cma_id)
+		वापस isert_np_cma_handler(cma_id->context, event->event);
 
-	switch (event->event) {
-	case RDMA_CM_EVENT_CONNECT_REQUEST:
+	चयन (event->event) अणु
+	हाल RDMA_CM_EVENT_CONNECT_REQUEST:
 		ret = isert_connect_request(cma_id, event);
-		if (ret)
+		अगर (ret)
 			isert_err("failed handle connect request %d\n", ret);
-		break;
-	case RDMA_CM_EVENT_ESTABLISHED:
+		अवरोध;
+	हाल RDMA_CM_EVENT_ESTABLISHED:
 		isert_connected_handler(cma_id);
-		break;
-	case RDMA_CM_EVENT_ADDR_CHANGE:
-	case RDMA_CM_EVENT_DISCONNECTED:
-	case RDMA_CM_EVENT_TIMEWAIT_EXIT:  /* FALLTHRU */
+		अवरोध;
+	हाल RDMA_CM_EVENT_ADDR_CHANGE:
+	हाल RDMA_CM_EVENT_DISCONNECTED:
+	हाल RDMA_CM_EVENT_TIMEWAIT_EXIT:  /* FALLTHRU */
 		ret = isert_disconnected_handler(cma_id, event->event);
-		break;
-	case RDMA_CM_EVENT_DEVICE_REMOVAL:
+		अवरोध;
+	हाल RDMA_CM_EVENT_DEVICE_REMOVAL:
 		isert_conn = cma_id->qp->qp_context;
-		isert_conn->dev_removed = true;
+		isert_conn->dev_हटाओd = true;
 		isert_disconnected_handler(cma_id, event->event);
-		wait_event_interruptible(isert_conn->rem_wait,
+		रुको_event_पूर्णांकerruptible(isert_conn->rem_रुको,
 					 isert_conn->state == ISER_CONN_DOWN);
-		kfree(isert_conn);
+		kमुक्त(isert_conn);
 		/*
-		 * return non-zero from the callback to destroy
+		 * वापस non-zero from the callback to destroy
 		 * the rdma cm id
 		 */
-		return 1;
-	case RDMA_CM_EVENT_REJECTED:
+		वापस 1;
+	हाल RDMA_CM_EVENT_REJECTED:
 		isert_info("Connection rejected: %s\n",
 			   rdma_reject_msg(cma_id, event->status));
 		fallthrough;
-	case RDMA_CM_EVENT_UNREACHABLE:
-	case RDMA_CM_EVENT_CONNECT_ERROR:
+	हाल RDMA_CM_EVENT_UNREACHABLE:
+	हाल RDMA_CM_EVENT_CONNECT_ERROR:
 		ret = isert_connect_error(cma_id);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		isert_err("Unhandled RDMA CMA event: %d\n", event->event);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-isert_post_recvm(struct isert_conn *isert_conn, u32 count)
-{
-	struct ib_recv_wr *rx_wr;
-	int i, ret;
-	struct iser_rx_desc *rx_desc;
+अटल पूर्णांक
+isert_post_recvm(काष्ठा isert_conn *isert_conn, u32 count)
+अणु
+	काष्ठा ib_recv_wr *rx_wr;
+	पूर्णांक i, ret;
+	काष्ठा iser_rx_desc *rx_desc;
 
-	for (rx_wr = isert_conn->rx_wr, i = 0; i < count; i++, rx_wr++) {
+	क्रम (rx_wr = isert_conn->rx_wr, i = 0; i < count; i++, rx_wr++) अणु
 		rx_desc = &isert_conn->rx_descs[i];
 
 		rx_wr->wr_cqe = &rx_desc->rx_cqe;
@@ -736,114 +737,114 @@ isert_post_recvm(struct isert_conn *isert_conn, u32 count)
 		rx_wr->num_sge = 1;
 		rx_wr->next = rx_wr + 1;
 		rx_desc->in_use = false;
-	}
+	पूर्ण
 	rx_wr--;
-	rx_wr->next = NULL; /* mark end of work requests list */
+	rx_wr->next = शून्य; /* mark end of work requests list */
 
-	ret = ib_post_recv(isert_conn->qp, isert_conn->rx_wr, NULL);
-	if (ret)
+	ret = ib_post_recv(isert_conn->qp, isert_conn->rx_wr, शून्य);
+	अगर (ret)
 		isert_err("ib_post_recv() failed with ret: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-isert_post_recv(struct isert_conn *isert_conn, struct iser_rx_desc *rx_desc)
-{
-	struct ib_recv_wr rx_wr;
-	int ret;
+अटल पूर्णांक
+isert_post_recv(काष्ठा isert_conn *isert_conn, काष्ठा iser_rx_desc *rx_desc)
+अणु
+	काष्ठा ib_recv_wr rx_wr;
+	पूर्णांक ret;
 
-	if (!rx_desc->in_use) {
+	अगर (!rx_desc->in_use) अणु
 		/*
-		 * if the descriptor is not in-use we already reposted it
-		 * for recv, so just silently return
+		 * अगर the descriptor is not in-use we alपढ़ोy reposted it
+		 * क्रम recv, so just silently वापस
 		 */
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	rx_desc->in_use = false;
 	rx_wr.wr_cqe = &rx_desc->rx_cqe;
 	rx_wr.sg_list = &rx_desc->rx_sg;
 	rx_wr.num_sge = 1;
-	rx_wr.next = NULL;
+	rx_wr.next = शून्य;
 
-	ret = ib_post_recv(isert_conn->qp, &rx_wr, NULL);
-	if (ret)
+	ret = ib_post_recv(isert_conn->qp, &rx_wr, शून्य);
+	अगर (ret)
 		isert_err("ib_post_recv() failed with ret: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-isert_login_post_send(struct isert_conn *isert_conn, struct iser_tx_desc *tx_desc)
-{
-	struct ib_device *ib_dev = isert_conn->cm_id->device;
-	struct ib_send_wr send_wr;
-	int ret;
+अटल पूर्णांक
+isert_login_post_send(काष्ठा isert_conn *isert_conn, काष्ठा iser_tx_desc *tx_desc)
+अणु
+	काष्ठा ib_device *ib_dev = isert_conn->cm_id->device;
+	काष्ठा ib_send_wr send_wr;
+	पूर्णांक ret;
 
-	ib_dma_sync_single_for_device(ib_dev, tx_desc->dma_addr,
+	ib_dma_sync_single_क्रम_device(ib_dev, tx_desc->dma_addr,
 				      ISER_HEADERS_LEN, DMA_TO_DEVICE);
 
-	tx_desc->tx_cqe.done = isert_login_send_done;
+	tx_desc->tx_cqe.करोne = isert_login_send_करोne;
 
-	send_wr.next	= NULL;
+	send_wr.next	= शून्य;
 	send_wr.wr_cqe	= &tx_desc->tx_cqe;
 	send_wr.sg_list	= tx_desc->tx_sg;
 	send_wr.num_sge	= tx_desc->num_sge;
 	send_wr.opcode	= IB_WR_SEND;
 	send_wr.send_flags = IB_SEND_SIGNALED;
 
-	ret = ib_post_send(isert_conn->qp, &send_wr, NULL);
-	if (ret)
+	ret = ib_post_send(isert_conn->qp, &send_wr, शून्य);
+	अगर (ret)
 		isert_err("ib_post_send() failed, ret: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-__isert_create_send_desc(struct isert_device *device,
-			 struct iser_tx_desc *tx_desc)
-{
+अटल व्योम
+__isert_create_send_desc(काष्ठा isert_device *device,
+			 काष्ठा iser_tx_desc *tx_desc)
+अणु
 
-	memset(&tx_desc->iser_header, 0, sizeof(struct iser_ctrl));
+	स_रखो(&tx_desc->iser_header, 0, माप(काष्ठा iser_ctrl));
 	tx_desc->iser_header.flags = ISCSI_CTRL;
 
 	tx_desc->num_sge = 1;
 
-	if (tx_desc->tx_sg[0].lkey != device->pd->local_dma_lkey) {
+	अगर (tx_desc->tx_sg[0].lkey != device->pd->local_dma_lkey) अणु
 		tx_desc->tx_sg[0].lkey = device->pd->local_dma_lkey;
 		isert_dbg("tx_desc %p lkey mismatch, fixing\n", tx_desc);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-isert_create_send_desc(struct isert_conn *isert_conn,
-		       struct isert_cmd *isert_cmd,
-		       struct iser_tx_desc *tx_desc)
-{
-	struct isert_device *device = isert_conn->device;
-	struct ib_device *ib_dev = device->ib_device;
+अटल व्योम
+isert_create_send_desc(काष्ठा isert_conn *isert_conn,
+		       काष्ठा isert_cmd *isert_cmd,
+		       काष्ठा iser_tx_desc *tx_desc)
+अणु
+	काष्ठा isert_device *device = isert_conn->device;
+	काष्ठा ib_device *ib_dev = device->ib_device;
 
-	ib_dma_sync_single_for_cpu(ib_dev, tx_desc->dma_addr,
+	ib_dma_sync_single_क्रम_cpu(ib_dev, tx_desc->dma_addr,
 				   ISER_HEADERS_LEN, DMA_TO_DEVICE);
 
 	__isert_create_send_desc(device, tx_desc);
-}
+पूर्ण
 
-static int
-isert_init_tx_hdrs(struct isert_conn *isert_conn,
-		   struct iser_tx_desc *tx_desc)
-{
-	struct isert_device *device = isert_conn->device;
-	struct ib_device *ib_dev = device->ib_device;
+अटल पूर्णांक
+isert_init_tx_hdrs(काष्ठा isert_conn *isert_conn,
+		   काष्ठा iser_tx_desc *tx_desc)
+अणु
+	काष्ठा isert_device *device = isert_conn->device;
+	काष्ठा ib_device *ib_dev = device->ib_device;
 	u64 dma_addr;
 
-	dma_addr = ib_dma_map_single(ib_dev, (void *)tx_desc,
+	dma_addr = ib_dma_map_single(ib_dev, (व्योम *)tx_desc,
 			ISER_HEADERS_LEN, DMA_TO_DEVICE);
-	if (ib_dma_mapping_error(ib_dev, dma_addr)) {
+	अगर (ib_dma_mapping_error(ib_dev, dma_addr)) अणु
 		isert_err("ib_dma_mapping_error() failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	tx_desc->dma_addr = dma_addr;
 	tx_desc->tx_sg[0].addr	= tx_desc->dma_addr;
@@ -854,38 +855,38 @@ isert_init_tx_hdrs(struct isert_conn *isert_conn,
 		  tx_desc->tx_sg[0].addr, tx_desc->tx_sg[0].length,
 		  tx_desc->tx_sg[0].lkey);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-isert_init_send_wr(struct isert_conn *isert_conn, struct isert_cmd *isert_cmd,
-		   struct ib_send_wr *send_wr)
-{
-	struct iser_tx_desc *tx_desc = &isert_cmd->tx_desc;
+अटल व्योम
+isert_init_send_wr(काष्ठा isert_conn *isert_conn, काष्ठा isert_cmd *isert_cmd,
+		   काष्ठा ib_send_wr *send_wr)
+अणु
+	काष्ठा iser_tx_desc *tx_desc = &isert_cmd->tx_desc;
 
-	tx_desc->tx_cqe.done = isert_send_done;
+	tx_desc->tx_cqe.करोne = isert_send_करोne;
 	send_wr->wr_cqe = &tx_desc->tx_cqe;
 
-	if (isert_conn->snd_w_inv && isert_cmd->inv_rkey) {
+	अगर (isert_conn->snd_w_inv && isert_cmd->inv_rkey) अणु
 		send_wr->opcode  = IB_WR_SEND_WITH_INV;
 		send_wr->ex.invalidate_rkey = isert_cmd->inv_rkey;
-	} else {
+	पूर्ण अन्यथा अणु
 		send_wr->opcode = IB_WR_SEND;
-	}
+	पूर्ण
 
 	send_wr->sg_list = &tx_desc->tx_sg[0];
 	send_wr->num_sge = isert_cmd->tx_desc.num_sge;
 	send_wr->send_flags = IB_SEND_SIGNALED;
-}
+पूर्ण
 
-static int
-isert_login_post_recv(struct isert_conn *isert_conn)
-{
-	struct ib_recv_wr rx_wr;
-	struct ib_sge sge;
-	int ret;
+अटल पूर्णांक
+isert_login_post_recv(काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा ib_recv_wr rx_wr;
+	काष्ठा ib_sge sge;
+	पूर्णांक ret;
 
-	memset(&sge, 0, sizeof(struct ib_sge));
+	स_रखो(&sge, 0, माप(काष्ठा ib_sge));
 	sge.addr = isert_conn->login_desc->dma_addr +
 		isert_get_hdr_offset(isert_conn->login_desc);
 	sge.length = ISER_RX_PAYLOAD_SIZE;
@@ -894,99 +895,99 @@ isert_login_post_recv(struct isert_conn *isert_conn)
 	isert_dbg("Setup sge: addr: %llx length: %d 0x%08x\n",
 		sge.addr, sge.length, sge.lkey);
 
-	isert_conn->login_desc->rx_cqe.done = isert_login_recv_done;
+	isert_conn->login_desc->rx_cqe.करोne = isert_login_recv_करोne;
 
-	memset(&rx_wr, 0, sizeof(struct ib_recv_wr));
+	स_रखो(&rx_wr, 0, माप(काष्ठा ib_recv_wr));
 	rx_wr.wr_cqe = &isert_conn->login_desc->rx_cqe;
 	rx_wr.sg_list = &sge;
 	rx_wr.num_sge = 1;
 
-	ret = ib_post_recv(isert_conn->qp, &rx_wr, NULL);
-	if (ret)
+	ret = ib_post_recv(isert_conn->qp, &rx_wr, शून्य);
+	अगर (ret)
 		isert_err("ib_post_recv() failed: %d\n", ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-isert_put_login_tx(struct iscsi_conn *conn, struct iscsi_login *login,
+अटल पूर्णांक
+isert_put_login_tx(काष्ठा iscsi_conn *conn, काष्ठा iscsi_login *login,
 		   u32 length)
-{
-	struct isert_conn *isert_conn = conn->context;
-	struct isert_device *device = isert_conn->device;
-	struct ib_device *ib_dev = device->ib_device;
-	struct iser_tx_desc *tx_desc = &isert_conn->login_tx_desc;
-	int ret;
+अणु
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा isert_device *device = isert_conn->device;
+	काष्ठा ib_device *ib_dev = device->ib_device;
+	काष्ठा iser_tx_desc *tx_desc = &isert_conn->login_tx_desc;
+	पूर्णांक ret;
 
 	__isert_create_send_desc(device, tx_desc);
 
-	memcpy(&tx_desc->iscsi_header, &login->rsp[0],
-	       sizeof(struct iscsi_hdr));
+	स_नकल(&tx_desc->iscsi_header, &login->rsp[0],
+	       माप(काष्ठा iscsi_hdr));
 
 	isert_init_tx_hdrs(isert_conn, tx_desc);
 
-	if (length > 0) {
-		struct ib_sge *tx_dsg = &tx_desc->tx_sg[1];
+	अगर (length > 0) अणु
+		काष्ठा ib_sge *tx_dsg = &tx_desc->tx_sg[1];
 
-		ib_dma_sync_single_for_cpu(ib_dev, isert_conn->login_rsp_dma,
+		ib_dma_sync_single_क्रम_cpu(ib_dev, isert_conn->login_rsp_dma,
 					   length, DMA_TO_DEVICE);
 
-		memcpy(isert_conn->login_rsp_buf, login->rsp_buf, length);
+		स_नकल(isert_conn->login_rsp_buf, login->rsp_buf, length);
 
-		ib_dma_sync_single_for_device(ib_dev, isert_conn->login_rsp_dma,
+		ib_dma_sync_single_क्रम_device(ib_dev, isert_conn->login_rsp_dma,
 					      length, DMA_TO_DEVICE);
 
 		tx_dsg->addr	= isert_conn->login_rsp_dma;
 		tx_dsg->length	= length;
 		tx_dsg->lkey	= isert_conn->device->pd->local_dma_lkey;
 		tx_desc->num_sge = 2;
-	}
-	if (!login->login_failed) {
-		if (login->login_complete) {
+	पूर्ण
+	अगर (!login->login_failed) अणु
+		अगर (login->login_complete) अणु
 			ret = isert_alloc_rx_descriptors(isert_conn);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			ret = isert_post_recvm(isert_conn,
 					       ISERT_QP_MAX_RECV_DTOS);
-			if (ret)
-				return ret;
+			अगर (ret)
+				वापस ret;
 
 			/* Now we are in FULL_FEATURE phase */
 			mutex_lock(&isert_conn->mutex);
 			isert_conn->state = ISER_CONN_FULL_FEATURE;
 			mutex_unlock(&isert_conn->mutex);
-			goto post_send;
-		}
+			जाओ post_send;
+		पूर्ण
 
 		ret = isert_login_post_recv(isert_conn);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 post_send:
 	ret = isert_login_post_send(isert_conn, tx_desc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-isert_rx_login_req(struct isert_conn *isert_conn)
-{
-	struct iser_rx_desc *rx_desc = isert_conn->login_desc;
-	int rx_buflen = isert_conn->login_req_len;
-	struct iscsi_conn *conn = isert_conn->conn;
-	struct iscsi_login *login = conn->conn_login;
-	int size;
+अटल व्योम
+isert_rx_login_req(काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा iser_rx_desc *rx_desc = isert_conn->login_desc;
+	पूर्णांक rx_buflen = isert_conn->login_req_len;
+	काष्ठा iscsi_conn *conn = isert_conn->conn;
+	काष्ठा iscsi_login *login = conn->conn_login;
+	पूर्णांक size;
 
 	isert_info("conn %p\n", isert_conn);
 
 	WARN_ON_ONCE(!login);
 
-	if (login->first_request) {
-		struct iscsi_login_req *login_req =
-			(struct iscsi_login_req *)isert_get_iscsi_hdr(rx_desc);
+	अगर (login->first_request) अणु
+		काष्ठा iscsi_login_req *login_req =
+			(काष्ठा iscsi_login_req *)isert_get_iscsi_hdr(rx_desc);
 		/*
 		 * Setup the initial iscsi_login values from the leading
 		 * login request PDU.
@@ -997,89 +998,89 @@ isert_rx_login_req(struct isert_conn *isert_conn)
 			 >> 2;
 		login->version_min	= login_req->min_version;
 		login->version_max	= login_req->max_version;
-		memcpy(login->isid, login_req->isid, 6);
+		स_नकल(login->isid, login_req->isid, 6);
 		login->cmd_sn		= be32_to_cpu(login_req->cmdsn);
 		login->init_task_tag	= login_req->itt;
 		login->initial_exp_statsn = be32_to_cpu(login_req->exp_statsn);
 		login->cid		= be16_to_cpu(login_req->cid);
 		login->tsih		= be16_to_cpu(login_req->tsih);
-	}
+	पूर्ण
 
-	memcpy(&login->req[0], isert_get_iscsi_hdr(rx_desc), ISCSI_HDR_LEN);
+	स_नकल(&login->req[0], isert_get_iscsi_hdr(rx_desc), ISCSI_HDR_LEN);
 
 	size = min(rx_buflen, MAX_KEY_VALUE_PAIRS);
 	isert_dbg("Using login payload size: %d, rx_buflen: %d "
 		  "MAX_KEY_VALUE_PAIRS: %d\n", size, rx_buflen,
 		  MAX_KEY_VALUE_PAIRS);
-	memcpy(login->req_buf, isert_get_data(rx_desc), size);
+	स_नकल(login->req_buf, isert_get_data(rx_desc), size);
 
-	if (login->first_request) {
+	अगर (login->first_request) अणु
 		complete(&isert_conn->login_comp);
-		return;
-	}
+		वापस;
+	पूर्ण
 	schedule_delayed_work(&conn->login_work, 0);
-}
+पूर्ण
 
-static struct iscsi_cmd
-*isert_allocate_cmd(struct iscsi_conn *conn, struct iser_rx_desc *rx_desc)
-{
-	struct isert_conn *isert_conn = conn->context;
-	struct isert_cmd *isert_cmd;
-	struct iscsi_cmd *cmd;
+अटल काष्ठा iscsi_cmd
+*isert_allocate_cmd(काष्ठा iscsi_conn *conn, काष्ठा iser_rx_desc *rx_desc)
+अणु
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा isert_cmd *isert_cmd;
+	काष्ठा iscsi_cmd *cmd;
 
 	cmd = iscsit_allocate_cmd(conn, TASK_INTERRUPTIBLE);
-	if (!cmd) {
+	अगर (!cmd) अणु
 		isert_err("Unable to allocate iscsi_cmd + isert_cmd\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	isert_cmd = iscsit_priv_cmd(cmd);
 	isert_cmd->conn = isert_conn;
 	isert_cmd->iscsi_cmd = cmd;
 	isert_cmd->rx_desc = rx_desc;
 
-	return cmd;
-}
+	वापस cmd;
+पूर्ण
 
-static int
-isert_handle_scsi_cmd(struct isert_conn *isert_conn,
-		      struct isert_cmd *isert_cmd, struct iscsi_cmd *cmd,
-		      struct iser_rx_desc *rx_desc, unsigned char *buf)
-{
-	struct iscsi_conn *conn = isert_conn->conn;
-	struct iscsi_scsi_req *hdr = (struct iscsi_scsi_req *)buf;
-	int imm_data, imm_data_len, unsol_data, sg_nents, rc;
+अटल पूर्णांक
+isert_handle_scsi_cmd(काष्ठा isert_conn *isert_conn,
+		      काष्ठा isert_cmd *isert_cmd, काष्ठा iscsi_cmd *cmd,
+		      काष्ठा iser_rx_desc *rx_desc, अचिन्हित अक्षर *buf)
+अणु
+	काष्ठा iscsi_conn *conn = isert_conn->conn;
+	काष्ठा iscsi_scsi_req *hdr = (काष्ठा iscsi_scsi_req *)buf;
+	पूर्णांक imm_data, imm_data_len, unsol_data, sg_nents, rc;
 	bool dump_payload = false;
-	unsigned int data_len;
+	अचिन्हित पूर्णांक data_len;
 
 	rc = iscsit_setup_scsi_cmd(conn, cmd, buf);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	imm_data = cmd->immediate_data;
 	imm_data_len = cmd->first_burst_len;
 	unsol_data = cmd->unsolicited_data;
 	data_len = cmd->se_cmd.data_length;
 
-	if (imm_data && imm_data_len == data_len)
+	अगर (imm_data && imm_data_len == data_len)
 		cmd->se_cmd.se_cmd_flags |= SCF_PASSTHROUGH_SG_TO_MEM_NOALLOC;
 	rc = iscsit_process_scsi_cmd(conn, cmd, hdr);
-	if (rc < 0) {
-		return 0;
-	} else if (rc > 0) {
+	अगर (rc < 0) अणु
+		वापस 0;
+	पूर्ण अन्यथा अगर (rc > 0) अणु
 		dump_payload = true;
-		goto sequence_cmd;
-	}
+		जाओ sequence_cmd;
+	पूर्ण
 
-	if (!imm_data)
-		return 0;
+	अगर (!imm_data)
+		वापस 0;
 
-	if (imm_data_len != data_len) {
+	अगर (imm_data_len != data_len) अणु
 		sg_nents = max(1UL, DIV_ROUND_UP(imm_data_len, PAGE_SIZE));
 		sg_copy_from_buffer(cmd->se_cmd.t_data_sg, sg_nents,
 				    isert_get_data(rx_desc), imm_data_len);
 		isert_dbg("Copy Immediate sg_nents: %u imm_data_len: %d\n",
 			  sg_nents, imm_data_len);
-	} else {
+	पूर्ण अन्यथा अणु
 		sg_init_table(&isert_cmd->sg, 1);
 		cmd->se_cmd.t_data_sg = &isert_cmd->sg;
 		cmd->se_cmd.t_data_nents = 1;
@@ -1087,70 +1088,70 @@ isert_handle_scsi_cmd(struct isert_conn *isert_conn,
 				imm_data_len);
 		isert_dbg("Transfer Immediate imm_data_len: %d\n",
 			  imm_data_len);
-	}
+	पूर्ण
 
-	cmd->write_data_done += imm_data_len;
+	cmd->ग_लिखो_data_करोne += imm_data_len;
 
-	if (cmd->write_data_done == cmd->se_cmd.data_length) {
+	अगर (cmd->ग_लिखो_data_करोne == cmd->se_cmd.data_length) अणु
 		spin_lock_bh(&cmd->istate_lock);
 		cmd->cmd_flags |= ICF_GOT_LAST_DATAOUT;
 		cmd->i_state = ISTATE_RECEIVED_LAST_DATAOUT;
 		spin_unlock_bh(&cmd->istate_lock);
-	}
+	पूर्ण
 
 sequence_cmd:
 	rc = iscsit_sequence_cmd(conn, cmd, buf, hdr->cmdsn);
 
-	if (!rc && !dump_payload && unsol_data)
+	अगर (!rc && !dump_payload && unsol_data)
 		iscsit_set_unsolicited_dataout(cmd);
-	else if (dump_payload && imm_data)
+	अन्यथा अगर (dump_payload && imm_data)
 		target_put_sess_cmd(&cmd->se_cmd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-isert_handle_iscsi_dataout(struct isert_conn *isert_conn,
-			   struct iser_rx_desc *rx_desc, unsigned char *buf)
-{
-	struct scatterlist *sg_start;
-	struct iscsi_conn *conn = isert_conn->conn;
-	struct iscsi_cmd *cmd = NULL;
-	struct iscsi_data *hdr = (struct iscsi_data *)buf;
+अटल पूर्णांक
+isert_handle_iscsi_dataout(काष्ठा isert_conn *isert_conn,
+			   काष्ठा iser_rx_desc *rx_desc, अचिन्हित अक्षर *buf)
+अणु
+	काष्ठा scatterlist *sg_start;
+	काष्ठा iscsi_conn *conn = isert_conn->conn;
+	काष्ठा iscsi_cmd *cmd = शून्य;
+	काष्ठा iscsi_data *hdr = (काष्ठा iscsi_data *)buf;
 	u32 unsol_data_len = ntoh24(hdr->dlength);
-	int rc, sg_nents, sg_off, page_off;
+	पूर्णांक rc, sg_nents, sg_off, page_off;
 
 	rc = iscsit_check_dataout_hdr(conn, buf, &cmd);
-	if (rc < 0)
-		return rc;
-	else if (!cmd)
-		return 0;
+	अगर (rc < 0)
+		वापस rc;
+	अन्यथा अगर (!cmd)
+		वापस 0;
 	/*
 	 * FIXME: Unexpected unsolicited_data out
 	 */
-	if (!cmd->unsolicited_data) {
+	अगर (!cmd->unsolicited_data) अणु
 		isert_err("Received unexpected solicited data payload\n");
 		dump_stack();
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	isert_dbg("Unsolicited DataOut unsol_data_len: %u, "
 		  "write_data_done: %u, data_length: %u\n",
-		  unsol_data_len,  cmd->write_data_done,
+		  unsol_data_len,  cmd->ग_लिखो_data_करोne,
 		  cmd->se_cmd.data_length);
 
-	sg_off = cmd->write_data_done / PAGE_SIZE;
+	sg_off = cmd->ग_लिखो_data_करोne / PAGE_SIZE;
 	sg_start = &cmd->se_cmd.t_data_sg[sg_off];
 	sg_nents = max(1UL, DIV_ROUND_UP(unsol_data_len, PAGE_SIZE));
-	page_off = cmd->write_data_done % PAGE_SIZE;
+	page_off = cmd->ग_लिखो_data_करोne % PAGE_SIZE;
 	/*
 	 * FIXME: Non page-aligned unsolicited_data out
 	 */
-	if (page_off) {
+	अगर (page_off) अणु
 		isert_err("unexpected non-page aligned data payload\n");
 		dump_stack();
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	isert_dbg("Copying DataOut: sg_start: %p, sg_off: %u "
 		  "sg_nents: %u from %p %u\n", sg_start, sg_off,
 		  sg_nents, isert_get_data(rx_desc), unsol_data_len);
@@ -1159,484 +1160,484 @@ isert_handle_iscsi_dataout(struct isert_conn *isert_conn,
 			    unsol_data_len);
 
 	rc = iscsit_check_dataout_payload(cmd, hdr, false);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	/*
 	 * multiple data-outs on the same command can arrive -
-	 * so post the buffer before hand
+	 * so post the buffer beक्रमe hand
 	 */
-	return isert_post_recv(isert_conn, rx_desc);
-}
+	वापस isert_post_recv(isert_conn, rx_desc);
+पूर्ण
 
-static int
-isert_handle_nop_out(struct isert_conn *isert_conn, struct isert_cmd *isert_cmd,
-		     struct iscsi_cmd *cmd, struct iser_rx_desc *rx_desc,
-		     unsigned char *buf)
-{
-	struct iscsi_conn *conn = isert_conn->conn;
-	struct iscsi_nopout *hdr = (struct iscsi_nopout *)buf;
-	int rc;
+अटल पूर्णांक
+isert_handle_nop_out(काष्ठा isert_conn *isert_conn, काष्ठा isert_cmd *isert_cmd,
+		     काष्ठा iscsi_cmd *cmd, काष्ठा iser_rx_desc *rx_desc,
+		     अचिन्हित अक्षर *buf)
+अणु
+	काष्ठा iscsi_conn *conn = isert_conn->conn;
+	काष्ठा iscsi_nopout *hdr = (काष्ठा iscsi_nopout *)buf;
+	पूर्णांक rc;
 
 	rc = iscsit_setup_nop_out(conn, cmd, hdr);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 	/*
-	 * FIXME: Add support for NOPOUT payload using unsolicited RDMA payload
+	 * FIXME: Add support क्रम NOPOUT payload using unsolicited RDMA payload
 	 */
 
-	return iscsit_process_nop_out(conn, cmd, hdr);
-}
+	वापस iscsit_process_nop_out(conn, cmd, hdr);
+पूर्ण
 
-static int
-isert_handle_text_cmd(struct isert_conn *isert_conn, struct isert_cmd *isert_cmd,
-		      struct iscsi_cmd *cmd, struct iser_rx_desc *rx_desc,
-		      struct iscsi_text *hdr)
-{
-	struct iscsi_conn *conn = isert_conn->conn;
+अटल पूर्णांक
+isert_handle_text_cmd(काष्ठा isert_conn *isert_conn, काष्ठा isert_cmd *isert_cmd,
+		      काष्ठा iscsi_cmd *cmd, काष्ठा iser_rx_desc *rx_desc,
+		      काष्ठा iscsi_text *hdr)
+अणु
+	काष्ठा iscsi_conn *conn = isert_conn->conn;
 	u32 payload_length = ntoh24(hdr->dlength);
-	int rc;
-	unsigned char *text_in = NULL;
+	पूर्णांक rc;
+	अचिन्हित अक्षर *text_in = शून्य;
 
 	rc = iscsit_setup_text_cmd(conn, cmd, hdr);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
-	if (payload_length) {
+	अगर (payload_length) अणु
 		text_in = kzalloc(payload_length, GFP_KERNEL);
-		if (!text_in)
-			return -ENOMEM;
-	}
+		अगर (!text_in)
+			वापस -ENOMEM;
+	पूर्ण
 	cmd->text_in_ptr = text_in;
 
-	memcpy(cmd->text_in_ptr, isert_get_data(rx_desc), payload_length);
+	स_नकल(cmd->text_in_ptr, isert_get_data(rx_desc), payload_length);
 
-	return iscsit_process_text_cmd(conn, cmd, hdr);
-}
+	वापस iscsit_process_text_cmd(conn, cmd, hdr);
+पूर्ण
 
-static int
-isert_rx_opcode(struct isert_conn *isert_conn, struct iser_rx_desc *rx_desc,
-		uint32_t read_stag, uint64_t read_va,
-		uint32_t write_stag, uint64_t write_va)
-{
-	struct iscsi_hdr *hdr = isert_get_iscsi_hdr(rx_desc);
-	struct iscsi_conn *conn = isert_conn->conn;
-	struct iscsi_cmd *cmd;
-	struct isert_cmd *isert_cmd;
-	int ret = -EINVAL;
+अटल पूर्णांक
+isert_rx_opcode(काष्ठा isert_conn *isert_conn, काष्ठा iser_rx_desc *rx_desc,
+		uपूर्णांक32_t पढ़ो_stag, uपूर्णांक64_t पढ़ो_va,
+		uपूर्णांक32_t ग_लिखो_stag, uपूर्णांक64_t ग_लिखो_va)
+अणु
+	काष्ठा iscsi_hdr *hdr = isert_get_iscsi_hdr(rx_desc);
+	काष्ठा iscsi_conn *conn = isert_conn->conn;
+	काष्ठा iscsi_cmd *cmd;
+	काष्ठा isert_cmd *isert_cmd;
+	पूर्णांक ret = -EINVAL;
 	u8 opcode = (hdr->opcode & ISCSI_OPCODE_MASK);
 
-	if (conn->sess->sess_ops->SessionType &&
-	   (!(opcode & ISCSI_OP_TEXT) || !(opcode & ISCSI_OP_LOGOUT))) {
+	अगर (conn->sess->sess_ops->SessionType &&
+	   (!(opcode & ISCSI_OP_TEXT) || !(opcode & ISCSI_OP_LOGOUT))) अणु
 		isert_err("Got illegal opcode: 0x%02x in SessionType=Discovery,"
 			  " ignoring\n", opcode);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	switch (opcode) {
-	case ISCSI_OP_SCSI_CMD:
+	चयन (opcode) अणु
+	हाल ISCSI_OP_SCSI_CMD:
 		cmd = isert_allocate_cmd(conn, rx_desc);
-		if (!cmd)
-			break;
+		अगर (!cmd)
+			अवरोध;
 
 		isert_cmd = iscsit_priv_cmd(cmd);
-		isert_cmd->read_stag = read_stag;
-		isert_cmd->read_va = read_va;
-		isert_cmd->write_stag = write_stag;
-		isert_cmd->write_va = write_va;
-		isert_cmd->inv_rkey = read_stag ? read_stag : write_stag;
+		isert_cmd->पढ़ो_stag = पढ़ो_stag;
+		isert_cmd->पढ़ो_va = पढ़ो_va;
+		isert_cmd->ग_लिखो_stag = ग_लिखो_stag;
+		isert_cmd->ग_लिखो_va = ग_लिखो_va;
+		isert_cmd->inv_rkey = पढ़ो_stag ? पढ़ो_stag : ग_लिखो_stag;
 
 		ret = isert_handle_scsi_cmd(isert_conn, isert_cmd, cmd,
-					rx_desc, (unsigned char *)hdr);
-		break;
-	case ISCSI_OP_NOOP_OUT:
+					rx_desc, (अचिन्हित अक्षर *)hdr);
+		अवरोध;
+	हाल ISCSI_OP_NOOP_OUT:
 		cmd = isert_allocate_cmd(conn, rx_desc);
-		if (!cmd)
-			break;
+		अगर (!cmd)
+			अवरोध;
 
 		isert_cmd = iscsit_priv_cmd(cmd);
 		ret = isert_handle_nop_out(isert_conn, isert_cmd, cmd,
-					   rx_desc, (unsigned char *)hdr);
-		break;
-	case ISCSI_OP_SCSI_DATA_OUT:
+					   rx_desc, (अचिन्हित अक्षर *)hdr);
+		अवरोध;
+	हाल ISCSI_OP_SCSI_DATA_OUT:
 		ret = isert_handle_iscsi_dataout(isert_conn, rx_desc,
-						(unsigned char *)hdr);
-		break;
-	case ISCSI_OP_SCSI_TMFUNC:
+						(अचिन्हित अक्षर *)hdr);
+		अवरोध;
+	हाल ISCSI_OP_SCSI_TMFUNC:
 		cmd = isert_allocate_cmd(conn, rx_desc);
-		if (!cmd)
-			break;
+		अगर (!cmd)
+			अवरोध;
 
 		ret = iscsit_handle_task_mgt_cmd(conn, cmd,
-						(unsigned char *)hdr);
-		break;
-	case ISCSI_OP_LOGOUT:
+						(अचिन्हित अक्षर *)hdr);
+		अवरोध;
+	हाल ISCSI_OP_LOGOUT:
 		cmd = isert_allocate_cmd(conn, rx_desc);
-		if (!cmd)
-			break;
+		अगर (!cmd)
+			अवरोध;
 
-		ret = iscsit_handle_logout_cmd(conn, cmd, (unsigned char *)hdr);
-		break;
-	case ISCSI_OP_TEXT:
-		if (be32_to_cpu(hdr->ttt) != 0xFFFFFFFF)
+		ret = iscsit_handle_logout_cmd(conn, cmd, (अचिन्हित अक्षर *)hdr);
+		अवरोध;
+	हाल ISCSI_OP_TEXT:
+		अगर (be32_to_cpu(hdr->ttt) != 0xFFFFFFFF)
 			cmd = iscsit_find_cmd_from_itt(conn, hdr->itt);
-		else
+		अन्यथा
 			cmd = isert_allocate_cmd(conn, rx_desc);
 
-		if (!cmd)
-			break;
+		अगर (!cmd)
+			अवरोध;
 
 		isert_cmd = iscsit_priv_cmd(cmd);
 		ret = isert_handle_text_cmd(isert_conn, isert_cmd, cmd,
-					    rx_desc, (struct iscsi_text *)hdr);
-		break;
-	default:
+					    rx_desc, (काष्ठा iscsi_text *)hdr);
+		अवरोध;
+	शेष:
 		isert_err("Got unknown iSCSI OpCode: 0x%02x\n", opcode);
 		dump_stack();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-isert_print_wc(struct ib_wc *wc, const char *type)
-{
-	if (wc->status != IB_WC_WR_FLUSH_ERR)
+अटल व्योम
+isert_prपूर्णांक_wc(काष्ठा ib_wc *wc, स्थिर अक्षर *type)
+अणु
+	अगर (wc->status != IB_WC_WR_FLUSH_ERR)
 		isert_err("%s failure: %s (%d) vend_err %x\n", type,
 			  ib_wc_status_msg(wc->status), wc->status,
-			  wc->vendor_err);
-	else
+			  wc->venकरोr_err);
+	अन्यथा
 		isert_dbg("%s failure: %s (%d)\n", type,
 			  ib_wc_status_msg(wc->status), wc->status);
-}
+पूर्ण
 
-static void
-isert_recv_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct isert_conn *isert_conn = wc->qp->qp_context;
-	struct ib_device *ib_dev = isert_conn->cm_id->device;
-	struct iser_rx_desc *rx_desc = cqe_to_rx_desc(wc->wr_cqe);
-	struct iscsi_hdr *hdr = isert_get_iscsi_hdr(rx_desc);
-	struct iser_ctrl *iser_ctrl = isert_get_iser_hdr(rx_desc);
-	uint64_t read_va = 0, write_va = 0;
-	uint32_t read_stag = 0, write_stag = 0;
+अटल व्योम
+isert_recv_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा isert_conn *isert_conn = wc->qp->qp_context;
+	काष्ठा ib_device *ib_dev = isert_conn->cm_id->device;
+	काष्ठा iser_rx_desc *rx_desc = cqe_to_rx_desc(wc->wr_cqe);
+	काष्ठा iscsi_hdr *hdr = isert_get_iscsi_hdr(rx_desc);
+	काष्ठा iser_ctrl *iser_ctrl = isert_get_iser_hdr(rx_desc);
+	uपूर्णांक64_t पढ़ो_va = 0, ग_लिखो_va = 0;
+	uपूर्णांक32_t पढ़ो_stag = 0, ग_लिखो_stag = 0;
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
-		isert_print_wc(wc, "recv");
-		if (wc->status != IB_WC_WR_FLUSH_ERR)
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
+		isert_prपूर्णांक_wc(wc, "recv");
+		अगर (wc->status != IB_WC_WR_FLUSH_ERR)
 			iscsit_cause_connection_reinstatement(isert_conn->conn, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	rx_desc->in_use = true;
 
-	ib_dma_sync_single_for_cpu(ib_dev, rx_desc->dma_addr,
+	ib_dma_sync_single_क्रम_cpu(ib_dev, rx_desc->dma_addr,
 			ISER_RX_SIZE, DMA_FROM_DEVICE);
 
 	isert_dbg("DMA: 0x%llx, iSCSI opcode: 0x%02x, ITT: 0x%08x, flags: 0x%02x dlen: %d\n",
 		 rx_desc->dma_addr, hdr->opcode, hdr->itt, hdr->flags,
-		 (int)(wc->byte_len - ISER_HEADERS_LEN));
+		 (पूर्णांक)(wc->byte_len - ISER_HEADERS_LEN));
 
-	switch (iser_ctrl->flags & 0xF0) {
-	case ISCSI_CTRL:
-		if (iser_ctrl->flags & ISER_RSV) {
-			read_stag = be32_to_cpu(iser_ctrl->read_stag);
-			read_va = be64_to_cpu(iser_ctrl->read_va);
+	चयन (iser_ctrl->flags & 0xF0) अणु
+	हाल ISCSI_CTRL:
+		अगर (iser_ctrl->flags & ISER_RSV) अणु
+			पढ़ो_stag = be32_to_cpu(iser_ctrl->पढ़ो_stag);
+			पढ़ो_va = be64_to_cpu(iser_ctrl->पढ़ो_va);
 			isert_dbg("ISER_RSV: read_stag: 0x%x read_va: 0x%llx\n",
-				  read_stag, (unsigned long long)read_va);
-		}
-		if (iser_ctrl->flags & ISER_WSV) {
-			write_stag = be32_to_cpu(iser_ctrl->write_stag);
-			write_va = be64_to_cpu(iser_ctrl->write_va);
+				  पढ़ो_stag, (अचिन्हित दीर्घ दीर्घ)पढ़ो_va);
+		पूर्ण
+		अगर (iser_ctrl->flags & ISER_WSV) अणु
+			ग_लिखो_stag = be32_to_cpu(iser_ctrl->ग_लिखो_stag);
+			ग_लिखो_va = be64_to_cpu(iser_ctrl->ग_लिखो_va);
 			isert_dbg("ISER_WSV: write_stag: 0x%x write_va: 0x%llx\n",
-				  write_stag, (unsigned long long)write_va);
-		}
+				  ग_लिखो_stag, (अचिन्हित दीर्घ दीर्घ)ग_लिखो_va);
+		पूर्ण
 
 		isert_dbg("ISER ISCSI_CTRL PDU\n");
-		break;
-	case ISER_HELLO:
+		अवरोध;
+	हाल ISER_HELLO:
 		isert_err("iSER Hello message\n");
-		break;
-	default:
+		अवरोध;
+	शेष:
 		isert_warn("Unknown iSER hdr flags: 0x%02x\n", iser_ctrl->flags);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	isert_rx_opcode(isert_conn, rx_desc,
-			read_stag, read_va, write_stag, write_va);
+			पढ़ो_stag, पढ़ो_va, ग_लिखो_stag, ग_लिखो_va);
 
-	ib_dma_sync_single_for_device(ib_dev, rx_desc->dma_addr,
+	ib_dma_sync_single_क्रम_device(ib_dev, rx_desc->dma_addr,
 			ISER_RX_SIZE, DMA_FROM_DEVICE);
-}
+पूर्ण
 
-static void
-isert_login_recv_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct isert_conn *isert_conn = wc->qp->qp_context;
-	struct ib_device *ib_dev = isert_conn->device->ib_device;
+अटल व्योम
+isert_login_recv_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा isert_conn *isert_conn = wc->qp->qp_context;
+	काष्ठा ib_device *ib_dev = isert_conn->device->ib_device;
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
-		isert_print_wc(wc, "login recv");
-		return;
-	}
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
+		isert_prपूर्णांक_wc(wc, "login recv");
+		वापस;
+	पूर्ण
 
-	ib_dma_sync_single_for_cpu(ib_dev, isert_conn->login_desc->dma_addr,
+	ib_dma_sync_single_क्रम_cpu(ib_dev, isert_conn->login_desc->dma_addr,
 			ISER_RX_SIZE, DMA_FROM_DEVICE);
 
 	isert_conn->login_req_len = wc->byte_len - ISER_HEADERS_LEN;
 
-	if (isert_conn->conn) {
-		struct iscsi_login *login = isert_conn->conn->conn_login;
+	अगर (isert_conn->conn) अणु
+		काष्ठा iscsi_login *login = isert_conn->conn->conn_login;
 
-		if (login && !login->first_request)
+		अगर (login && !login->first_request)
 			isert_rx_login_req(isert_conn);
-	}
+	पूर्ण
 
 	mutex_lock(&isert_conn->mutex);
 	complete(&isert_conn->login_req_comp);
 	mutex_unlock(&isert_conn->mutex);
 
-	ib_dma_sync_single_for_device(ib_dev, isert_conn->login_desc->dma_addr,
+	ib_dma_sync_single_क्रम_device(ib_dev, isert_conn->login_desc->dma_addr,
 				ISER_RX_SIZE, DMA_FROM_DEVICE);
-}
+पूर्ण
 
-static void
-isert_rdma_rw_ctx_destroy(struct isert_cmd *cmd, struct isert_conn *conn)
-{
-	struct se_cmd *se_cmd = &cmd->iscsi_cmd->se_cmd;
-	enum dma_data_direction dir = target_reverse_dma_direction(se_cmd);
+अटल व्योम
+isert_rdma_rw_ctx_destroy(काष्ठा isert_cmd *cmd, काष्ठा isert_conn *conn)
+अणु
+	काष्ठा se_cmd *se_cmd = &cmd->iscsi_cmd->se_cmd;
+	क्रमागत dma_data_direction dir = target_reverse_dma_direction(se_cmd);
 
-	if (!cmd->rw.nr_ops)
-		return;
+	अगर (!cmd->rw.nr_ops)
+		वापस;
 
-	if (isert_prot_cmd(conn, se_cmd)) {
+	अगर (isert_prot_cmd(conn, se_cmd)) अणु
 		rdma_rw_ctx_destroy_signature(&cmd->rw, conn->qp,
 				conn->cm_id->port_num, se_cmd->t_data_sg,
 				se_cmd->t_data_nents, se_cmd->t_prot_sg,
 				se_cmd->t_prot_nents, dir);
-	} else {
+	पूर्ण अन्यथा अणु
 		rdma_rw_ctx_destroy(&cmd->rw, conn->qp, conn->cm_id->port_num,
 				se_cmd->t_data_sg, se_cmd->t_data_nents, dir);
-	}
+	पूर्ण
 
 	cmd->rw.nr_ops = 0;
-}
+पूर्ण
 
-static void
-isert_put_cmd(struct isert_cmd *isert_cmd, bool comp_err)
-{
-	struct iscsi_cmd *cmd = isert_cmd->iscsi_cmd;
-	struct isert_conn *isert_conn = isert_cmd->conn;
-	struct iscsi_conn *conn = isert_conn->conn;
-	struct iscsi_text_rsp *hdr;
+अटल व्योम
+isert_put_cmd(काष्ठा isert_cmd *isert_cmd, bool comp_err)
+अणु
+	काष्ठा iscsi_cmd *cmd = isert_cmd->iscsi_cmd;
+	काष्ठा isert_conn *isert_conn = isert_cmd->conn;
+	काष्ठा iscsi_conn *conn = isert_conn->conn;
+	काष्ठा iscsi_text_rsp *hdr;
 
 	isert_dbg("Cmd %p\n", isert_cmd);
 
-	switch (cmd->iscsi_opcode) {
-	case ISCSI_OP_SCSI_CMD:
+	चयन (cmd->iscsi_opcode) अणु
+	हाल ISCSI_OP_SCSI_CMD:
 		spin_lock_bh(&conn->cmd_lock);
-		if (!list_empty(&cmd->i_conn_node))
+		अगर (!list_empty(&cmd->i_conn_node))
 			list_del_init(&cmd->i_conn_node);
 		spin_unlock_bh(&conn->cmd_lock);
 
-		if (cmd->data_direction == DMA_TO_DEVICE) {
-			iscsit_stop_dataout_timer(cmd);
+		अगर (cmd->data_direction == DMA_TO_DEVICE) अणु
+			iscsit_stop_dataout_समयr(cmd);
 			/*
-			 * Check for special case during comp_err where
+			 * Check क्रम special हाल during comp_err where
 			 * WRITE_PENDING has been handed off from core,
 			 * but requires an extra target_put_sess_cmd()
-			 * before transport_generic_free_cmd() below.
+			 * beक्रमe transport_generic_मुक्त_cmd() below.
 			 */
-			if (comp_err &&
-			    cmd->se_cmd.t_state == TRANSPORT_WRITE_PENDING) {
-				struct se_cmd *se_cmd = &cmd->se_cmd;
+			अगर (comp_err &&
+			    cmd->se_cmd.t_state == TRANSPORT_WRITE_PENDING) अणु
+				काष्ठा se_cmd *se_cmd = &cmd->se_cmd;
 
 				target_put_sess_cmd(se_cmd);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		isert_rdma_rw_ctx_destroy(isert_cmd, isert_conn);
-		transport_generic_free_cmd(&cmd->se_cmd, 0);
-		break;
-	case ISCSI_OP_SCSI_TMFUNC:
+		transport_generic_मुक्त_cmd(&cmd->se_cmd, 0);
+		अवरोध;
+	हाल ISCSI_OP_SCSI_TMFUNC:
 		spin_lock_bh(&conn->cmd_lock);
-		if (!list_empty(&cmd->i_conn_node))
+		अगर (!list_empty(&cmd->i_conn_node))
 			list_del_init(&cmd->i_conn_node);
 		spin_unlock_bh(&conn->cmd_lock);
 
-		transport_generic_free_cmd(&cmd->se_cmd, 0);
-		break;
-	case ISCSI_OP_REJECT:
-	case ISCSI_OP_NOOP_OUT:
-	case ISCSI_OP_TEXT:
-		hdr = (struct iscsi_text_rsp *)&isert_cmd->tx_desc.iscsi_header;
-		/* If the continue bit is on, keep the command alive */
-		if (hdr->flags & ISCSI_FLAG_TEXT_CONTINUE)
-			break;
+		transport_generic_मुक्त_cmd(&cmd->se_cmd, 0);
+		अवरोध;
+	हाल ISCSI_OP_REJECT:
+	हाल ISCSI_OP_NOOP_OUT:
+	हाल ISCSI_OP_TEXT:
+		hdr = (काष्ठा iscsi_text_rsp *)&isert_cmd->tx_desc.iscsi_header;
+		/* If the जारी bit is on, keep the command alive */
+		अगर (hdr->flags & ISCSI_FLAG_TEXT_CONTINUE)
+			अवरोध;
 
 		spin_lock_bh(&conn->cmd_lock);
-		if (!list_empty(&cmd->i_conn_node))
+		अगर (!list_empty(&cmd->i_conn_node))
 			list_del_init(&cmd->i_conn_node);
 		spin_unlock_bh(&conn->cmd_lock);
 
 		/*
-		 * Handle special case for REJECT when iscsi_add_reject*() has
+		 * Handle special हाल क्रम REJECT when iscsi_add_reject*() has
 		 * overwritten the original iscsi_opcode assignment, and the
 		 * associated cmd->se_cmd needs to be released.
 		 */
-		if (cmd->se_cmd.se_tfo != NULL) {
+		अगर (cmd->se_cmd.se_tfo != शून्य) अणु
 			isert_dbg("Calling transport_generic_free_cmd for 0x%02x\n",
 				 cmd->iscsi_opcode);
-			transport_generic_free_cmd(&cmd->se_cmd, 0);
-			break;
-		}
+			transport_generic_मुक्त_cmd(&cmd->se_cmd, 0);
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		iscsit_release_cmd(cmd);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-isert_unmap_tx_desc(struct iser_tx_desc *tx_desc, struct ib_device *ib_dev)
-{
-	if (tx_desc->dma_addr != 0) {
+अटल व्योम
+isert_unmap_tx_desc(काष्ठा iser_tx_desc *tx_desc, काष्ठा ib_device *ib_dev)
+अणु
+	अगर (tx_desc->dma_addr != 0) अणु
 		isert_dbg("unmap single for tx_desc->dma_addr\n");
 		ib_dma_unmap_single(ib_dev, tx_desc->dma_addr,
 				    ISER_HEADERS_LEN, DMA_TO_DEVICE);
 		tx_desc->dma_addr = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-isert_completion_put(struct iser_tx_desc *tx_desc, struct isert_cmd *isert_cmd,
-		     struct ib_device *ib_dev, bool comp_err)
-{
-	if (isert_cmd->pdu_buf_dma != 0) {
+अटल व्योम
+isert_completion_put(काष्ठा iser_tx_desc *tx_desc, काष्ठा isert_cmd *isert_cmd,
+		     काष्ठा ib_device *ib_dev, bool comp_err)
+अणु
+	अगर (isert_cmd->pdu_buf_dma != 0) अणु
 		isert_dbg("unmap single for isert_cmd->pdu_buf_dma\n");
 		ib_dma_unmap_single(ib_dev, isert_cmd->pdu_buf_dma,
 				    isert_cmd->pdu_buf_len, DMA_TO_DEVICE);
 		isert_cmd->pdu_buf_dma = 0;
-	}
+	पूर्ण
 
 	isert_unmap_tx_desc(tx_desc, ib_dev);
 	isert_put_cmd(isert_cmd, comp_err);
-}
+पूर्ण
 
-static int
-isert_check_pi_status(struct se_cmd *se_cmd, struct ib_mr *sig_mr)
-{
-	struct ib_mr_status mr_status;
-	int ret;
+अटल पूर्णांक
+isert_check_pi_status(काष्ठा se_cmd *se_cmd, काष्ठा ib_mr *sig_mr)
+अणु
+	काष्ठा ib_mr_status mr_status;
+	पूर्णांक ret;
 
 	ret = ib_check_mr_status(sig_mr, IB_MR_CHECK_SIG_STATUS, &mr_status);
-	if (ret) {
+	अगर (ret) अणु
 		isert_err("ib_check_mr_status failed, ret %d\n", ret);
-		goto fail_mr_status;
-	}
+		जाओ fail_mr_status;
+	पूर्ण
 
-	if (mr_status.fail_status & IB_MR_CHECK_SIG_STATUS) {
+	अगर (mr_status.fail_status & IB_MR_CHECK_SIG_STATUS) अणु
 		u64 sec_offset_err;
 		u32 block_size = se_cmd->se_dev->dev_attrib.block_size + 8;
 
-		switch (mr_status.sig_err.err_type) {
-		case IB_SIG_BAD_GUARD:
+		चयन (mr_status.sig_err.err_type) अणु
+		हाल IB_SIG_BAD_GUARD:
 			se_cmd->pi_err = TCM_LOGICAL_BLOCK_GUARD_CHECK_FAILED;
-			break;
-		case IB_SIG_BAD_REFTAG:
+			अवरोध;
+		हाल IB_SIG_BAD_REFTAG:
 			se_cmd->pi_err = TCM_LOGICAL_BLOCK_REF_TAG_CHECK_FAILED;
-			break;
-		case IB_SIG_BAD_APPTAG:
+			अवरोध;
+		हाल IB_SIG_BAD_APPTAG:
 			se_cmd->pi_err = TCM_LOGICAL_BLOCK_APP_TAG_CHECK_FAILED;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		sec_offset_err = mr_status.sig_err.sig_err_offset;
-		do_div(sec_offset_err, block_size);
+		करो_भाग(sec_offset_err, block_size);
 		se_cmd->sense_info = sec_offset_err + se_cmd->t_task_lba;
 
 		isert_err("PI error found type %d at sector 0x%llx "
 			  "expected 0x%x vs actual 0x%x\n",
 			  mr_status.sig_err.err_type,
-			  (unsigned long long)se_cmd->sense_info,
+			  (अचिन्हित दीर्घ दीर्घ)se_cmd->sense_info,
 			  mr_status.sig_err.expected,
 			  mr_status.sig_err.actual);
 		ret = 1;
-	}
+	पूर्ण
 
 fail_mr_status:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-isert_rdma_write_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct isert_conn *isert_conn = wc->qp->qp_context;
-	struct isert_device *device = isert_conn->device;
-	struct iser_tx_desc *desc = cqe_to_tx_desc(wc->wr_cqe);
-	struct isert_cmd *isert_cmd = tx_desc_to_cmd(desc);
-	struct se_cmd *cmd = &isert_cmd->iscsi_cmd->se_cmd;
-	int ret = 0;
+अटल व्योम
+isert_rdma_ग_लिखो_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा isert_conn *isert_conn = wc->qp->qp_context;
+	काष्ठा isert_device *device = isert_conn->device;
+	काष्ठा iser_tx_desc *desc = cqe_to_tx_desc(wc->wr_cqe);
+	काष्ठा isert_cmd *isert_cmd = tx_desc_to_cmd(desc);
+	काष्ठा se_cmd *cmd = &isert_cmd->iscsi_cmd->se_cmd;
+	पूर्णांक ret = 0;
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
-		isert_print_wc(wc, "rdma write");
-		if (wc->status != IB_WC_WR_FLUSH_ERR)
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
+		isert_prपूर्णांक_wc(wc, "rdma write");
+		अगर (wc->status != IB_WC_WR_FLUSH_ERR)
 			iscsit_cause_connection_reinstatement(isert_conn->conn, 0);
 		isert_completion_put(desc, isert_cmd, device->ib_device, true);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	isert_dbg("Cmd %p\n", isert_cmd);
 
 	ret = isert_check_pi_status(cmd, isert_cmd->rw.reg->mr);
 	isert_rdma_rw_ctx_destroy(isert_cmd, isert_conn);
 
-	if (ret) {
+	अगर (ret) अणु
 		/*
 		 * transport_generic_request_failure() expects to have
 		 * plus two references to handle queue-full, so re-add
-		 * one here as target-core will have already dropped
+		 * one here as target-core will have alपढ़ोy dropped
 		 * it after the first isert_put_datain() callback.
 		 */
 		kref_get(&cmd->cmd_kref);
 		transport_generic_request_failure(cmd, cmd->pi_err);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * XXX: isert_put_response() failure is not retried.
 		 */
 		ret = isert_put_response(isert_conn->conn, isert_cmd->iscsi_cmd);
-		if (ret)
+		अगर (ret)
 			pr_warn_ratelimited("isert_put_response() ret: %d\n", ret);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-isert_rdma_read_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct isert_conn *isert_conn = wc->qp->qp_context;
-	struct isert_device *device = isert_conn->device;
-	struct iser_tx_desc *desc = cqe_to_tx_desc(wc->wr_cqe);
-	struct isert_cmd *isert_cmd = tx_desc_to_cmd(desc);
-	struct iscsi_cmd *cmd = isert_cmd->iscsi_cmd;
-	struct se_cmd *se_cmd = &cmd->se_cmd;
-	int ret = 0;
+अटल व्योम
+isert_rdma_पढ़ो_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा isert_conn *isert_conn = wc->qp->qp_context;
+	काष्ठा isert_device *device = isert_conn->device;
+	काष्ठा iser_tx_desc *desc = cqe_to_tx_desc(wc->wr_cqe);
+	काष्ठा isert_cmd *isert_cmd = tx_desc_to_cmd(desc);
+	काष्ठा iscsi_cmd *cmd = isert_cmd->iscsi_cmd;
+	काष्ठा se_cmd *se_cmd = &cmd->se_cmd;
+	पूर्णांक ret = 0;
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
-		isert_print_wc(wc, "rdma read");
-		if (wc->status != IB_WC_WR_FLUSH_ERR)
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
+		isert_prपूर्णांक_wc(wc, "rdma read");
+		अगर (wc->status != IB_WC_WR_FLUSH_ERR)
 			iscsit_cause_connection_reinstatement(isert_conn->conn, 0);
 		isert_completion_put(desc, isert_cmd, device->ib_device, true);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	isert_dbg("Cmd %p\n", isert_cmd);
 
-	iscsit_stop_dataout_timer(cmd);
+	iscsit_stop_dataout_समयr(cmd);
 
-	if (isert_prot_cmd(isert_conn, se_cmd))
+	अगर (isert_prot_cmd(isert_conn, se_cmd))
 		ret = isert_check_pi_status(se_cmd, isert_cmd->rw.reg->mr);
 	isert_rdma_rw_ctx_destroy(isert_cmd, isert_conn);
-	cmd->write_data_done = 0;
+	cmd->ग_लिखो_data_करोne = 0;
 
 	isert_dbg("Cmd: %p RDMA_READ comp calling execute_cmd\n", isert_cmd);
 	spin_lock_bh(&cmd->istate_lock);
@@ -1649,118 +1650,118 @@ isert_rdma_read_done(struct ib_cq *cq, struct ib_wc *wc)
 	 * se_cmd->cmd_kref reference after T10-PI error, and handle
 	 * any non-zero ->queue_status() callback error retries.
 	 */
-	if (ret)
+	अगर (ret)
 		transport_generic_request_failure(se_cmd, se_cmd->pi_err);
-	else
+	अन्यथा
 		target_execute_cmd(se_cmd);
-}
+पूर्ण
 
-static void
-isert_do_control_comp(struct work_struct *work)
-{
-	struct isert_cmd *isert_cmd = container_of(work,
-			struct isert_cmd, comp_work);
-	struct isert_conn *isert_conn = isert_cmd->conn;
-	struct ib_device *ib_dev = isert_conn->cm_id->device;
-	struct iscsi_cmd *cmd = isert_cmd->iscsi_cmd;
+अटल व्योम
+isert_करो_control_comp(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा isert_cmd *isert_cmd = container_of(work,
+			काष्ठा isert_cmd, comp_work);
+	काष्ठा isert_conn *isert_conn = isert_cmd->conn;
+	काष्ठा ib_device *ib_dev = isert_conn->cm_id->device;
+	काष्ठा iscsi_cmd *cmd = isert_cmd->iscsi_cmd;
 
 	isert_dbg("Cmd %p i_state %d\n", isert_cmd, cmd->i_state);
 
-	switch (cmd->i_state) {
-	case ISTATE_SEND_TASKMGTRSP:
-		iscsit_tmr_post_handler(cmd, cmd->conn);
+	चयन (cmd->i_state) अणु
+	हाल ISTATE_SEND_TASKMGTRSP:
+		iscsit_पंचांगr_post_handler(cmd, cmd->conn);
 		fallthrough;
-	case ISTATE_SEND_REJECT:
-	case ISTATE_SEND_TEXTRSP:
+	हाल ISTATE_SEND_REJECT:
+	हाल ISTATE_SEND_TEXTRSP:
 		cmd->i_state = ISTATE_SENT_STATUS;
 		isert_completion_put(&isert_cmd->tx_desc, isert_cmd,
 				     ib_dev, false);
-		break;
-	case ISTATE_SEND_LOGOUTRSP:
+		अवरोध;
+	हाल ISTATE_SEND_LOGOUTRSP:
 		iscsit_logout_post_handler(cmd, cmd->conn);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		isert_err("Unknown i_state %d\n", cmd->i_state);
 		dump_stack();
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void
-isert_login_send_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct isert_conn *isert_conn = wc->qp->qp_context;
-	struct ib_device *ib_dev = isert_conn->cm_id->device;
-	struct iser_tx_desc *tx_desc = cqe_to_tx_desc(wc->wr_cqe);
+अटल व्योम
+isert_login_send_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा isert_conn *isert_conn = wc->qp->qp_context;
+	काष्ठा ib_device *ib_dev = isert_conn->cm_id->device;
+	काष्ठा iser_tx_desc *tx_desc = cqe_to_tx_desc(wc->wr_cqe);
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
-		isert_print_wc(wc, "login send");
-		if (wc->status != IB_WC_WR_FLUSH_ERR)
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
+		isert_prपूर्णांक_wc(wc, "login send");
+		अगर (wc->status != IB_WC_WR_FLUSH_ERR)
 			iscsit_cause_connection_reinstatement(isert_conn->conn, 0);
-	}
+	पूर्ण
 
 	isert_unmap_tx_desc(tx_desc, ib_dev);
-}
+पूर्ण
 
-static void
-isert_send_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct isert_conn *isert_conn = wc->qp->qp_context;
-	struct ib_device *ib_dev = isert_conn->cm_id->device;
-	struct iser_tx_desc *tx_desc = cqe_to_tx_desc(wc->wr_cqe);
-	struct isert_cmd *isert_cmd = tx_desc_to_cmd(tx_desc);
+अटल व्योम
+isert_send_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा isert_conn *isert_conn = wc->qp->qp_context;
+	काष्ठा ib_device *ib_dev = isert_conn->cm_id->device;
+	काष्ठा iser_tx_desc *tx_desc = cqe_to_tx_desc(wc->wr_cqe);
+	काष्ठा isert_cmd *isert_cmd = tx_desc_to_cmd(tx_desc);
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
-		isert_print_wc(wc, "send");
-		if (wc->status != IB_WC_WR_FLUSH_ERR)
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
+		isert_prपूर्णांक_wc(wc, "send");
+		अगर (wc->status != IB_WC_WR_FLUSH_ERR)
 			iscsit_cause_connection_reinstatement(isert_conn->conn, 0);
 		isert_completion_put(tx_desc, isert_cmd, ib_dev, true);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	isert_dbg("Cmd %p\n", isert_cmd);
 
-	switch (isert_cmd->iscsi_cmd->i_state) {
-	case ISTATE_SEND_TASKMGTRSP:
-	case ISTATE_SEND_LOGOUTRSP:
-	case ISTATE_SEND_REJECT:
-	case ISTATE_SEND_TEXTRSP:
+	चयन (isert_cmd->iscsi_cmd->i_state) अणु
+	हाल ISTATE_SEND_TASKMGTRSP:
+	हाल ISTATE_SEND_LOGOUTRSP:
+	हाल ISTATE_SEND_REJECT:
+	हाल ISTATE_SEND_TEXTRSP:
 		isert_unmap_tx_desc(tx_desc, ib_dev);
 
-		INIT_WORK(&isert_cmd->comp_work, isert_do_control_comp);
+		INIT_WORK(&isert_cmd->comp_work, isert_करो_control_comp);
 		queue_work(isert_comp_wq, &isert_cmd->comp_work);
-		return;
-	default:
+		वापस;
+	शेष:
 		isert_cmd->iscsi_cmd->i_state = ISTATE_SENT_STATUS;
 		isert_completion_put(tx_desc, isert_cmd, ib_dev, false);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int
-isert_post_response(struct isert_conn *isert_conn, struct isert_cmd *isert_cmd)
-{
-	int ret;
+अटल पूर्णांक
+isert_post_response(काष्ठा isert_conn *isert_conn, काष्ठा isert_cmd *isert_cmd)
+अणु
+	पूर्णांक ret;
 
 	ret = isert_post_recv(isert_conn, isert_cmd->rx_desc);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = ib_post_send(isert_conn->qp, &isert_cmd->tx_desc.send_wr, NULL);
-	if (ret) {
+	ret = ib_post_send(isert_conn->qp, &isert_cmd->tx_desc.send_wr, शून्य);
+	अगर (ret) अणु
 		isert_err("ib_post_send failed with %d\n", ret);
-		return ret;
-	}
-	return ret;
-}
+		वापस ret;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int
-isert_put_response(struct iscsi_conn *conn, struct iscsi_cmd *cmd)
-{
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	struct isert_conn *isert_conn = conn->context;
-	struct ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
-	struct iscsi_scsi_rsp *hdr = (struct iscsi_scsi_rsp *)
+अटल पूर्णांक
+isert_put_response(काष्ठा iscsi_conn *conn, काष्ठा iscsi_cmd *cmd)
+अणु
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
+	काष्ठा iscsi_scsi_rsp *hdr = (काष्ठा iscsi_scsi_rsp *)
 				&isert_cmd->tx_desc.iscsi_header;
 
 	isert_create_send_desc(isert_conn, isert_cmd, &isert_cmd->tx_desc);
@@ -1769,88 +1770,88 @@ isert_put_response(struct iscsi_conn *conn, struct iscsi_cmd *cmd)
 	/*
 	 * Attach SENSE DATA payload to iSCSI Response PDU
 	 */
-	if (cmd->se_cmd.sense_buffer &&
+	अगर (cmd->se_cmd.sense_buffer &&
 	    ((cmd->se_cmd.se_cmd_flags & SCF_TRANSPORT_TASK_SENSE) ||
-	    (cmd->se_cmd.se_cmd_flags & SCF_EMULATED_TASK_SENSE))) {
-		struct isert_device *device = isert_conn->device;
-		struct ib_device *ib_dev = device->ib_device;
-		struct ib_sge *tx_dsg = &isert_cmd->tx_desc.tx_sg[1];
+	    (cmd->se_cmd.se_cmd_flags & SCF_EMULATED_TASK_SENSE))) अणु
+		काष्ठा isert_device *device = isert_conn->device;
+		काष्ठा ib_device *ib_dev = device->ib_device;
+		काष्ठा ib_sge *tx_dsg = &isert_cmd->tx_desc.tx_sg[1];
 		u32 padding, pdu_len;
 
 		put_unaligned_be16(cmd->se_cmd.scsi_sense_length,
 				   cmd->sense_buffer);
-		cmd->se_cmd.scsi_sense_length += sizeof(__be16);
+		cmd->se_cmd.scsi_sense_length += माप(__be16);
 
 		padding = -(cmd->se_cmd.scsi_sense_length) & 3;
 		hton24(hdr->dlength, (u32)cmd->se_cmd.scsi_sense_length);
 		pdu_len = cmd->se_cmd.scsi_sense_length + padding;
 
 		isert_cmd->pdu_buf_dma = ib_dma_map_single(ib_dev,
-				(void *)cmd->sense_buffer, pdu_len,
+				(व्योम *)cmd->sense_buffer, pdu_len,
 				DMA_TO_DEVICE);
-		if (ib_dma_mapping_error(ib_dev, isert_cmd->pdu_buf_dma))
-			return -ENOMEM;
+		अगर (ib_dma_mapping_error(ib_dev, isert_cmd->pdu_buf_dma))
+			वापस -ENOMEM;
 
 		isert_cmd->pdu_buf_len = pdu_len;
 		tx_dsg->addr	= isert_cmd->pdu_buf_dma;
 		tx_dsg->length	= pdu_len;
 		tx_dsg->lkey	= device->pd->local_dma_lkey;
 		isert_cmd->tx_desc.num_sge = 2;
-	}
+	पूर्ण
 
 	isert_init_send_wr(isert_conn, isert_cmd, send_wr);
 
 	isert_dbg("Posting SCSI Response\n");
 
-	return isert_post_response(isert_conn, isert_cmd);
-}
+	वापस isert_post_response(isert_conn, isert_cmd);
+पूर्ण
 
-static void
-isert_aborted_task(struct iscsi_conn *conn, struct iscsi_cmd *cmd)
-{
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	struct isert_conn *isert_conn = conn->context;
+अटल व्योम
+isert_पातed_task(काष्ठा iscsi_conn *conn, काष्ठा iscsi_cmd *cmd)
+अणु
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	काष्ठा isert_conn *isert_conn = conn->context;
 
 	spin_lock_bh(&conn->cmd_lock);
-	if (!list_empty(&cmd->i_conn_node))
+	अगर (!list_empty(&cmd->i_conn_node))
 		list_del_init(&cmd->i_conn_node);
 	spin_unlock_bh(&conn->cmd_lock);
 
-	if (cmd->data_direction == DMA_TO_DEVICE)
-		iscsit_stop_dataout_timer(cmd);
+	अगर (cmd->data_direction == DMA_TO_DEVICE)
+		iscsit_stop_dataout_समयr(cmd);
 	isert_rdma_rw_ctx_destroy(isert_cmd, isert_conn);
-}
+पूर्ण
 
-static enum target_prot_op
-isert_get_sup_prot_ops(struct iscsi_conn *conn)
-{
-	struct isert_conn *isert_conn = conn->context;
-	struct isert_device *device = isert_conn->device;
+अटल क्रमागत target_prot_op
+isert_get_sup_prot_ops(काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा isert_device *device = isert_conn->device;
 
-	if (conn->tpg->tpg_attrib.t10_pi) {
-		if (device->pi_capable) {
+	अगर (conn->tpg->tpg_attrib.t10_pi) अणु
+		अगर (device->pi_capable) अणु
 			isert_info("conn %p PI offload enabled\n", isert_conn);
 			isert_conn->pi_support = true;
-			return TARGET_PROT_ALL;
-		}
-	}
+			वापस TARGET_PROT_ALL;
+		पूर्ण
+	पूर्ण
 
 	isert_info("conn %p PI offload disabled\n", isert_conn);
 	isert_conn->pi_support = false;
 
-	return TARGET_PROT_NORMAL;
-}
+	वापस TARGET_PROT_NORMAL;
+पूर्ण
 
-static int
-isert_put_nopin(struct iscsi_cmd *cmd, struct iscsi_conn *conn,
+अटल पूर्णांक
+isert_put_nopin(काष्ठा iscsi_cmd *cmd, काष्ठा iscsi_conn *conn,
 		bool nopout_response)
-{
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	struct isert_conn *isert_conn = conn->context;
-	struct ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
+अणु
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
 
 	isert_create_send_desc(isert_conn, isert_cmd, &isert_cmd->tx_desc);
-	iscsit_build_nopin_rsp(cmd, conn, (struct iscsi_nopin *)
+	iscsit_build_nopin_rsp(cmd, conn, (काष्ठा iscsi_nopin *)
 			       &isert_cmd->tx_desc.iscsi_header,
 			       nopout_response);
 	isert_init_tx_hdrs(isert_conn, &isert_cmd->tx_desc);
@@ -1858,56 +1859,56 @@ isert_put_nopin(struct iscsi_cmd *cmd, struct iscsi_conn *conn,
 
 	isert_dbg("conn %p Posting NOPIN Response\n", isert_conn);
 
-	return isert_post_response(isert_conn, isert_cmd);
-}
+	वापस isert_post_response(isert_conn, isert_cmd);
+पूर्ण
 
-static int
-isert_put_logout_rsp(struct iscsi_cmd *cmd, struct iscsi_conn *conn)
-{
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	struct isert_conn *isert_conn = conn->context;
-	struct ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
+अटल पूर्णांक
+isert_put_logout_rsp(काष्ठा iscsi_cmd *cmd, काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
 
 	isert_create_send_desc(isert_conn, isert_cmd, &isert_cmd->tx_desc);
-	iscsit_build_logout_rsp(cmd, conn, (struct iscsi_logout_rsp *)
+	iscsit_build_logout_rsp(cmd, conn, (काष्ठा iscsi_logout_rsp *)
 				&isert_cmd->tx_desc.iscsi_header);
 	isert_init_tx_hdrs(isert_conn, &isert_cmd->tx_desc);
 	isert_init_send_wr(isert_conn, isert_cmd, send_wr);
 
 	isert_dbg("conn %p Posting Logout Response\n", isert_conn);
 
-	return isert_post_response(isert_conn, isert_cmd);
-}
+	वापस isert_post_response(isert_conn, isert_cmd);
+पूर्ण
 
-static int
-isert_put_tm_rsp(struct iscsi_cmd *cmd, struct iscsi_conn *conn)
-{
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	struct isert_conn *isert_conn = conn->context;
-	struct ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
+अटल पूर्णांक
+isert_put_पंचांग_rsp(काष्ठा iscsi_cmd *cmd, काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
 
 	isert_create_send_desc(isert_conn, isert_cmd, &isert_cmd->tx_desc);
-	iscsit_build_task_mgt_rsp(cmd, conn, (struct iscsi_tm_rsp *)
+	iscsit_build_task_mgt_rsp(cmd, conn, (काष्ठा iscsi_पंचांग_rsp *)
 				  &isert_cmd->tx_desc.iscsi_header);
 	isert_init_tx_hdrs(isert_conn, &isert_cmd->tx_desc);
 	isert_init_send_wr(isert_conn, isert_cmd, send_wr);
 
 	isert_dbg("conn %p Posting Task Management Response\n", isert_conn);
 
-	return isert_post_response(isert_conn, isert_cmd);
-}
+	वापस isert_post_response(isert_conn, isert_cmd);
+पूर्ण
 
-static int
-isert_put_reject(struct iscsi_cmd *cmd, struct iscsi_conn *conn)
-{
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	struct isert_conn *isert_conn = conn->context;
-	struct ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
-	struct isert_device *device = isert_conn->device;
-	struct ib_device *ib_dev = device->ib_device;
-	struct ib_sge *tx_dsg = &isert_cmd->tx_desc.tx_sg[1];
-	struct iscsi_reject *hdr =
-		(struct iscsi_reject *)&isert_cmd->tx_desc.iscsi_header;
+अटल पूर्णांक
+isert_put_reject(काष्ठा iscsi_cmd *cmd, काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
+	काष्ठा isert_device *device = isert_conn->device;
+	काष्ठा ib_device *ib_dev = device->ib_device;
+	काष्ठा ib_sge *tx_dsg = &isert_cmd->tx_desc.tx_sg[1];
+	काष्ठा iscsi_reject *hdr =
+		(काष्ठा iscsi_reject *)&isert_cmd->tx_desc.iscsi_header;
 
 	isert_create_send_desc(isert_conn, isert_cmd, &isert_cmd->tx_desc);
 	iscsit_build_reject(cmd, conn, hdr);
@@ -1915,10 +1916,10 @@ isert_put_reject(struct iscsi_cmd *cmd, struct iscsi_conn *conn)
 
 	hton24(hdr->dlength, ISCSI_HDR_LEN);
 	isert_cmd->pdu_buf_dma = ib_dma_map_single(ib_dev,
-			(void *)cmd->buf_ptr, ISCSI_HDR_LEN,
+			(व्योम *)cmd->buf_ptr, ISCSI_HDR_LEN,
 			DMA_TO_DEVICE);
-	if (ib_dma_mapping_error(ib_dev, isert_cmd->pdu_buf_dma))
-		return -ENOMEM;
+	अगर (ib_dma_mapping_error(ib_dev, isert_cmd->pdu_buf_dma))
+		वापस -ENOMEM;
 	isert_cmd->pdu_buf_len = ISCSI_HDR_LEN;
 	tx_dsg->addr	= isert_cmd->pdu_buf_dma;
 	tx_dsg->length	= ISCSI_HDR_LEN;
@@ -1929,338 +1930,338 @@ isert_put_reject(struct iscsi_cmd *cmd, struct iscsi_conn *conn)
 
 	isert_dbg("conn %p Posting Reject\n", isert_conn);
 
-	return isert_post_response(isert_conn, isert_cmd);
-}
+	वापस isert_post_response(isert_conn, isert_cmd);
+पूर्ण
 
-static int
-isert_put_text_rsp(struct iscsi_cmd *cmd, struct iscsi_conn *conn)
-{
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	struct isert_conn *isert_conn = conn->context;
-	struct ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
-	struct iscsi_text_rsp *hdr =
-		(struct iscsi_text_rsp *)&isert_cmd->tx_desc.iscsi_header;
+अटल पूर्णांक
+isert_put_text_rsp(काष्ठा iscsi_cmd *cmd, काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा ib_send_wr *send_wr = &isert_cmd->tx_desc.send_wr;
+	काष्ठा iscsi_text_rsp *hdr =
+		(काष्ठा iscsi_text_rsp *)&isert_cmd->tx_desc.iscsi_header;
 	u32 txt_rsp_len;
-	int rc;
+	पूर्णांक rc;
 
 	isert_create_send_desc(isert_conn, isert_cmd, &isert_cmd->tx_desc);
 	rc = iscsit_build_text_rsp(cmd, conn, hdr, ISCSI_INFINIBAND);
-	if (rc < 0)
-		return rc;
+	अगर (rc < 0)
+		वापस rc;
 
 	txt_rsp_len = rc;
 	isert_init_tx_hdrs(isert_conn, &isert_cmd->tx_desc);
 
-	if (txt_rsp_len) {
-		struct isert_device *device = isert_conn->device;
-		struct ib_device *ib_dev = device->ib_device;
-		struct ib_sge *tx_dsg = &isert_cmd->tx_desc.tx_sg[1];
-		void *txt_rsp_buf = cmd->buf_ptr;
+	अगर (txt_rsp_len) अणु
+		काष्ठा isert_device *device = isert_conn->device;
+		काष्ठा ib_device *ib_dev = device->ib_device;
+		काष्ठा ib_sge *tx_dsg = &isert_cmd->tx_desc.tx_sg[1];
+		व्योम *txt_rsp_buf = cmd->buf_ptr;
 
 		isert_cmd->pdu_buf_dma = ib_dma_map_single(ib_dev,
 				txt_rsp_buf, txt_rsp_len, DMA_TO_DEVICE);
-		if (ib_dma_mapping_error(ib_dev, isert_cmd->pdu_buf_dma))
-			return -ENOMEM;
+		अगर (ib_dma_mapping_error(ib_dev, isert_cmd->pdu_buf_dma))
+			वापस -ENOMEM;
 
 		isert_cmd->pdu_buf_len = txt_rsp_len;
 		tx_dsg->addr	= isert_cmd->pdu_buf_dma;
 		tx_dsg->length	= txt_rsp_len;
 		tx_dsg->lkey	= device->pd->local_dma_lkey;
 		isert_cmd->tx_desc.num_sge = 2;
-	}
+	पूर्ण
 	isert_init_send_wr(isert_conn, isert_cmd, send_wr);
 
 	isert_dbg("conn %p Text Response\n", isert_conn);
 
-	return isert_post_response(isert_conn, isert_cmd);
-}
+	वापस isert_post_response(isert_conn, isert_cmd);
+पूर्ण
 
-static inline void
-isert_set_dif_domain(struct se_cmd *se_cmd, struct ib_sig_domain *domain)
-{
-	domain->sig_type = IB_SIG_TYPE_T10_DIF;
-	domain->sig.dif.bg_type = IB_T10DIF_CRC;
-	domain->sig.dif.pi_interval = se_cmd->se_dev->dev_attrib.block_size;
-	domain->sig.dif.ref_tag = se_cmd->reftag_seed;
+अटल अंतरभूत व्योम
+isert_set_dअगर_करोमुख्य(काष्ठा se_cmd *se_cmd, काष्ठा ib_sig_करोमुख्य *करोमुख्य)
+अणु
+	करोमुख्य->sig_type = IB_SIG_TYPE_T10_DIF;
+	करोमुख्य->sig.dअगर.bg_type = IB_T10DIF_CRC;
+	करोमुख्य->sig.dअगर.pi_पूर्णांकerval = se_cmd->se_dev->dev_attrib.block_size;
+	करोमुख्य->sig.dअगर.ref_tag = se_cmd->reftag_seed;
 	/*
-	 * At the moment we hard code those, but if in the future
+	 * At the moment we hard code those, but अगर in the future
 	 * the target core would like to use it, we will take it
 	 * from se_cmd.
 	 */
-	domain->sig.dif.apptag_check_mask = 0xffff;
-	domain->sig.dif.app_escape = true;
-	domain->sig.dif.ref_escape = true;
-	if (se_cmd->prot_type == TARGET_DIF_TYPE1_PROT ||
+	करोमुख्य->sig.dअगर.apptag_check_mask = 0xffff;
+	करोमुख्य->sig.dअगर.app_escape = true;
+	करोमुख्य->sig.dअगर.ref_escape = true;
+	अगर (se_cmd->prot_type == TARGET_DIF_TYPE1_PROT ||
 	    se_cmd->prot_type == TARGET_DIF_TYPE2_PROT)
-		domain->sig.dif.ref_remap = true;
-}
+		करोमुख्य->sig.dअगर.ref_remap = true;
+पूर्ण
 
-static int
-isert_set_sig_attrs(struct se_cmd *se_cmd, struct ib_sig_attrs *sig_attrs)
-{
-	memset(sig_attrs, 0, sizeof(*sig_attrs));
+अटल पूर्णांक
+isert_set_sig_attrs(काष्ठा se_cmd *se_cmd, काष्ठा ib_sig_attrs *sig_attrs)
+अणु
+	स_रखो(sig_attrs, 0, माप(*sig_attrs));
 
-	switch (se_cmd->prot_op) {
-	case TARGET_PROT_DIN_INSERT:
-	case TARGET_PROT_DOUT_STRIP:
+	चयन (se_cmd->prot_op) अणु
+	हाल TARGET_PROT_DIN_INSERT:
+	हाल TARGET_PROT_DOUT_STRIP:
 		sig_attrs->mem.sig_type = IB_SIG_TYPE_NONE;
-		isert_set_dif_domain(se_cmd, &sig_attrs->wire);
-		break;
-	case TARGET_PROT_DOUT_INSERT:
-	case TARGET_PROT_DIN_STRIP:
+		isert_set_dअगर_करोमुख्य(se_cmd, &sig_attrs->wire);
+		अवरोध;
+	हाल TARGET_PROT_DOUT_INSERT:
+	हाल TARGET_PROT_DIN_STRIP:
 		sig_attrs->wire.sig_type = IB_SIG_TYPE_NONE;
-		isert_set_dif_domain(se_cmd, &sig_attrs->mem);
-		break;
-	case TARGET_PROT_DIN_PASS:
-	case TARGET_PROT_DOUT_PASS:
-		isert_set_dif_domain(se_cmd, &sig_attrs->wire);
-		isert_set_dif_domain(se_cmd, &sig_attrs->mem);
-		break;
-	default:
+		isert_set_dअगर_करोमुख्य(se_cmd, &sig_attrs->mem);
+		अवरोध;
+	हाल TARGET_PROT_DIN_PASS:
+	हाल TARGET_PROT_DOUT_PASS:
+		isert_set_dअगर_करोमुख्य(se_cmd, &sig_attrs->wire);
+		isert_set_dअगर_करोमुख्य(se_cmd, &sig_attrs->mem);
+		अवरोध;
+	शेष:
 		isert_err("Unsupported PI operation %d\n", se_cmd->prot_op);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (se_cmd->prot_checks & TARGET_DIF_CHECK_GUARD)
+	अगर (se_cmd->prot_checks & TARGET_DIF_CHECK_GUARD)
 		sig_attrs->check_mask |= IB_SIG_CHECK_GUARD;
-	if (se_cmd->prot_checks & TARGET_DIF_CHECK_APPTAG)
+	अगर (se_cmd->prot_checks & TARGET_DIF_CHECK_APPTAG)
 		sig_attrs->check_mask |= IB_SIG_CHECK_APPTAG;
-	if (se_cmd->prot_checks & TARGET_DIF_CHECK_REFTAG)
+	अगर (se_cmd->prot_checks & TARGET_DIF_CHECK_REFTAG)
 		sig_attrs->check_mask |= IB_SIG_CHECK_REFTAG;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-isert_rdma_rw_ctx_post(struct isert_cmd *cmd, struct isert_conn *conn,
-		struct ib_cqe *cqe, struct ib_send_wr *chain_wr)
-{
-	struct se_cmd *se_cmd = &cmd->iscsi_cmd->se_cmd;
-	enum dma_data_direction dir = target_reverse_dma_direction(se_cmd);
+अटल पूर्णांक
+isert_rdma_rw_ctx_post(काष्ठा isert_cmd *cmd, काष्ठा isert_conn *conn,
+		काष्ठा ib_cqe *cqe, काष्ठा ib_send_wr *chain_wr)
+अणु
+	काष्ठा se_cmd *se_cmd = &cmd->iscsi_cmd->se_cmd;
+	क्रमागत dma_data_direction dir = target_reverse_dma_direction(se_cmd);
 	u8 port_num = conn->cm_id->port_num;
 	u64 addr;
 	u32 rkey, offset;
-	int ret;
+	पूर्णांक ret;
 
-	if (cmd->ctx_init_done)
-		goto rdma_ctx_post;
+	अगर (cmd->ctx_init_करोne)
+		जाओ rdma_ctx_post;
 
-	if (dir == DMA_FROM_DEVICE) {
-		addr = cmd->write_va;
-		rkey = cmd->write_stag;
-		offset = cmd->iscsi_cmd->write_data_done;
-	} else {
-		addr = cmd->read_va;
-		rkey = cmd->read_stag;
+	अगर (dir == DMA_FROM_DEVICE) अणु
+		addr = cmd->ग_लिखो_va;
+		rkey = cmd->ग_लिखो_stag;
+		offset = cmd->iscsi_cmd->ग_लिखो_data_करोne;
+	पूर्ण अन्यथा अणु
+		addr = cmd->पढ़ो_va;
+		rkey = cmd->पढ़ो_stag;
 		offset = 0;
-	}
+	पूर्ण
 
-	if (isert_prot_cmd(conn, se_cmd)) {
-		struct ib_sig_attrs sig_attrs;
+	अगर (isert_prot_cmd(conn, se_cmd)) अणु
+		काष्ठा ib_sig_attrs sig_attrs;
 
 		ret = isert_set_sig_attrs(se_cmd, &sig_attrs);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		WARN_ON_ONCE(offset);
 		ret = rdma_rw_ctx_signature_init(&cmd->rw, conn->qp, port_num,
 				se_cmd->t_data_sg, se_cmd->t_data_nents,
 				se_cmd->t_prot_sg, se_cmd->t_prot_nents,
 				&sig_attrs, addr, rkey, dir);
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = rdma_rw_ctx_init(&cmd->rw, conn->qp, port_num,
 				se_cmd->t_data_sg, se_cmd->t_data_nents,
 				offset, addr, rkey, dir);
-	}
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		isert_err("Cmd: %p failed to prepare RDMA res\n", cmd);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	cmd->ctx_init_done = true;
+	cmd->ctx_init_करोne = true;
 
 rdma_ctx_post:
 	ret = rdma_rw_ctx_post(&cmd->rw, conn->qp, port_num, cqe, chain_wr);
-	if (ret < 0)
+	अगर (ret < 0)
 		isert_err("Cmd: %p failed to post RDMA res\n", cmd);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-isert_put_datain(struct iscsi_conn *conn, struct iscsi_cmd *cmd)
-{
-	struct se_cmd *se_cmd = &cmd->se_cmd;
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	struct isert_conn *isert_conn = conn->context;
-	struct ib_cqe *cqe = NULL;
-	struct ib_send_wr *chain_wr = NULL;
-	int rc;
+अटल पूर्णांक
+isert_put_datain(काष्ठा iscsi_conn *conn, काष्ठा iscsi_cmd *cmd)
+अणु
+	काष्ठा se_cmd *se_cmd = &cmd->se_cmd;
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	काष्ठा isert_conn *isert_conn = conn->context;
+	काष्ठा ib_cqe *cqe = शून्य;
+	काष्ठा ib_send_wr *chain_wr = शून्य;
+	पूर्णांक rc;
 
 	isert_dbg("Cmd: %p RDMA_WRITE data_length: %u\n",
 		 isert_cmd, se_cmd->data_length);
 
-	if (isert_prot_cmd(isert_conn, se_cmd)) {
-		isert_cmd->tx_desc.tx_cqe.done = isert_rdma_write_done;
+	अगर (isert_prot_cmd(isert_conn, se_cmd)) अणु
+		isert_cmd->tx_desc.tx_cqe.करोne = isert_rdma_ग_लिखो_करोne;
 		cqe = &isert_cmd->tx_desc.tx_cqe;
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * Build isert_conn->tx_desc for iSCSI response PDU and attach
+		 * Build isert_conn->tx_desc क्रम iSCSI response PDU and attach
 		 */
 		isert_create_send_desc(isert_conn, isert_cmd,
 				       &isert_cmd->tx_desc);
-		iscsit_build_rsp_pdu(cmd, conn, true, (struct iscsi_scsi_rsp *)
+		iscsit_build_rsp_pdu(cmd, conn, true, (काष्ठा iscsi_scsi_rsp *)
 				     &isert_cmd->tx_desc.iscsi_header);
 		isert_init_tx_hdrs(isert_conn, &isert_cmd->tx_desc);
 		isert_init_send_wr(isert_conn, isert_cmd,
 				   &isert_cmd->tx_desc.send_wr);
 
 		rc = isert_post_recv(isert_conn, isert_cmd->rx_desc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		chain_wr = &isert_cmd->tx_desc.send_wr;
-	}
+	पूर्ण
 
 	rc = isert_rdma_rw_ctx_post(isert_cmd, isert_conn, cqe, chain_wr);
 	isert_dbg("Cmd: %p posted RDMA_WRITE for iSER Data READ rc: %d\n",
 		  isert_cmd, rc);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int
-isert_get_dataout(struct iscsi_conn *conn, struct iscsi_cmd *cmd, bool recovery)
-{
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	int ret;
+अटल पूर्णांक
+isert_get_dataout(काष्ठा iscsi_conn *conn, काष्ठा iscsi_cmd *cmd, bool recovery)
+अणु
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	पूर्णांक ret;
 
 	isert_dbg("Cmd: %p RDMA_READ data_length: %u write_data_done: %u\n",
-		 isert_cmd, cmd->se_cmd.data_length, cmd->write_data_done);
+		 isert_cmd, cmd->se_cmd.data_length, cmd->ग_लिखो_data_करोne);
 
-	isert_cmd->tx_desc.tx_cqe.done = isert_rdma_read_done;
+	isert_cmd->tx_desc.tx_cqe.करोne = isert_rdma_पढ़ो_करोne;
 	ret = isert_rdma_rw_ctx_post(isert_cmd, conn->context,
-				     &isert_cmd->tx_desc.tx_cqe, NULL);
+				     &isert_cmd->tx_desc.tx_cqe, शून्य);
 
 	isert_dbg("Cmd: %p posted RDMA_READ memory for ISER Data WRITE rc: %d\n",
 		 isert_cmd, ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-isert_immediate_queue(struct iscsi_conn *conn, struct iscsi_cmd *cmd, int state)
-{
-	struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
-	int ret = 0;
+अटल पूर्णांक
+isert_immediate_queue(काष्ठा iscsi_conn *conn, काष्ठा iscsi_cmd *cmd, पूर्णांक state)
+अणु
+	काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+	पूर्णांक ret = 0;
 
-	switch (state) {
-	case ISTATE_REMOVE:
+	चयन (state) अणु
+	हाल ISTATE_REMOVE:
 		spin_lock_bh(&conn->cmd_lock);
 		list_del_init(&cmd->i_conn_node);
 		spin_unlock_bh(&conn->cmd_lock);
 		isert_put_cmd(isert_cmd, true);
-		break;
-	case ISTATE_SEND_NOPIN_WANT_RESPONSE:
+		अवरोध;
+	हाल ISTATE_SEND_NOPIN_WANT_RESPONSE:
 		ret = isert_put_nopin(cmd, conn, false);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		isert_err("Unknown immediate state: 0x%02x\n", state);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-isert_response_queue(struct iscsi_conn *conn, struct iscsi_cmd *cmd, int state)
-{
-	struct isert_conn *isert_conn = conn->context;
-	int ret;
+अटल पूर्णांक
+isert_response_queue(काष्ठा iscsi_conn *conn, काष्ठा iscsi_cmd *cmd, पूर्णांक state)
+अणु
+	काष्ठा isert_conn *isert_conn = conn->context;
+	पूर्णांक ret;
 
-	switch (state) {
-	case ISTATE_SEND_LOGOUTRSP:
+	चयन (state) अणु
+	हाल ISTATE_SEND_LOGOUTRSP:
 		ret = isert_put_logout_rsp(cmd, conn);
-		if (!ret)
+		अगर (!ret)
 			isert_conn->logout_posted = true;
-		break;
-	case ISTATE_SEND_NOPIN:
+		अवरोध;
+	हाल ISTATE_SEND_NOPIN:
 		ret = isert_put_nopin(cmd, conn, true);
-		break;
-	case ISTATE_SEND_TASKMGTRSP:
-		ret = isert_put_tm_rsp(cmd, conn);
-		break;
-	case ISTATE_SEND_REJECT:
+		अवरोध;
+	हाल ISTATE_SEND_TASKMGTRSP:
+		ret = isert_put_पंचांग_rsp(cmd, conn);
+		अवरोध;
+	हाल ISTATE_SEND_REJECT:
 		ret = isert_put_reject(cmd, conn);
-		break;
-	case ISTATE_SEND_TEXTRSP:
+		अवरोध;
+	हाल ISTATE_SEND_TEXTRSP:
 		ret = isert_put_text_rsp(cmd, conn);
-		break;
-	case ISTATE_SEND_STATUS:
+		अवरोध;
+	हाल ISTATE_SEND_STATUS:
 		/*
-		 * Special case for sending non GOOD SCSI status from TX thread
+		 * Special हाल क्रम sending non GOOD SCSI status from TX thपढ़ो
 		 * context during pre se_cmd excecution failure.
 		 */
 		ret = isert_put_response(conn, cmd);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		isert_err("Unknown response state: 0x%02x\n", state);
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-struct rdma_cm_id *
-isert_setup_id(struct isert_np *isert_np)
-{
-	struct iscsi_np *np = isert_np->np;
-	struct rdma_cm_id *id;
-	struct sockaddr *sa;
-	int ret;
+काष्ठा rdma_cm_id *
+isert_setup_id(काष्ठा isert_np *isert_np)
+अणु
+	काष्ठा iscsi_np *np = isert_np->np;
+	काष्ठा rdma_cm_id *id;
+	काष्ठा sockaddr *sa;
+	पूर्णांक ret;
 
-	sa = (struct sockaddr *)&np->np_sockaddr;
+	sa = (काष्ठा sockaddr *)&np->np_sockaddr;
 	isert_dbg("ksockaddr: %p, sa: %p\n", &np->np_sockaddr, sa);
 
 	id = rdma_create_id(&init_net, isert_cma_handler, isert_np,
 			    RDMA_PS_TCP, IB_QPT_RC);
-	if (IS_ERR(id)) {
+	अगर (IS_ERR(id)) अणु
 		isert_err("rdma_create_id() failed: %ld\n", PTR_ERR(id));
 		ret = PTR_ERR(id);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	isert_dbg("id %p context %p\n", id, id->context);
 
 	ret = rdma_bind_addr(id, sa);
-	if (ret) {
+	अगर (ret) अणु
 		isert_err("rdma_bind_addr() failed: %d\n", ret);
-		goto out_id;
-	}
+		जाओ out_id;
+	पूर्ण
 
 	ret = rdma_listen(id, 0);
-	if (ret) {
+	अगर (ret) अणु
 		isert_err("rdma_listen() failed: %d\n", ret);
-		goto out_id;
-	}
+		जाओ out_id;
+	पूर्ण
 
-	return id;
+	वापस id;
 out_id:
 	rdma_destroy_id(id);
 out:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static int
-isert_setup_np(struct iscsi_np *np,
-	       struct sockaddr_storage *ksockaddr)
-{
-	struct isert_np *isert_np;
-	struct rdma_cm_id *isert_lid;
-	int ret;
+अटल पूर्णांक
+isert_setup_np(काष्ठा iscsi_np *np,
+	       काष्ठा sockaddr_storage *ksockaddr)
+अणु
+	काष्ठा isert_np *isert_np;
+	काष्ठा rdma_cm_id *isert_lid;
+	पूर्णांक ret;
 
-	isert_np = kzalloc(sizeof(struct isert_np), GFP_KERNEL);
-	if (!isert_np)
-		return -ENOMEM;
+	isert_np = kzalloc(माप(काष्ठा isert_np), GFP_KERNEL);
+	अगर (!isert_np)
+		वापस -ENOMEM;
 
 	sema_init(&isert_np->sem, 0);
 	mutex_init(&isert_np->mutex);
@@ -2272,136 +2273,136 @@ isert_setup_np(struct iscsi_np *np,
 	 * Setup the np->np_sockaddr from the passed sockaddr setup
 	 * in iscsi_target_configfs.c code..
 	 */
-	memcpy(&np->np_sockaddr, ksockaddr,
-	       sizeof(struct sockaddr_storage));
+	स_नकल(&np->np_sockaddr, ksockaddr,
+	       माप(काष्ठा sockaddr_storage));
 
 	isert_lid = isert_setup_id(isert_np);
-	if (IS_ERR(isert_lid)) {
+	अगर (IS_ERR(isert_lid)) अणु
 		ret = PTR_ERR(isert_lid);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	isert_np->cm_id = isert_lid;
 	np->np_context = isert_np;
 
-	return 0;
+	वापस 0;
 
 out:
-	kfree(isert_np);
+	kमुक्त(isert_np);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-isert_rdma_accept(struct isert_conn *isert_conn)
-{
-	struct rdma_cm_id *cm_id = isert_conn->cm_id;
-	struct rdma_conn_param cp;
-	int ret;
-	struct iser_cm_hdr rsp_hdr;
+अटल पूर्णांक
+isert_rdma_accept(काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा rdma_cm_id *cm_id = isert_conn->cm_id;
+	काष्ठा rdma_conn_param cp;
+	पूर्णांक ret;
+	काष्ठा iser_cm_hdr rsp_hdr;
 
-	memset(&cp, 0, sizeof(struct rdma_conn_param));
+	स_रखो(&cp, 0, माप(काष्ठा rdma_conn_param));
 	cp.initiator_depth = isert_conn->initiator_depth;
 	cp.retry_count = 7;
 	cp.rnr_retry_count = 7;
 
-	memset(&rsp_hdr, 0, sizeof(rsp_hdr));
+	स_रखो(&rsp_hdr, 0, माप(rsp_hdr));
 	rsp_hdr.flags = ISERT_ZBVA_NOT_USED;
-	if (!isert_conn->snd_w_inv)
+	अगर (!isert_conn->snd_w_inv)
 		rsp_hdr.flags = rsp_hdr.flags | ISERT_SEND_W_INV_NOT_USED;
-	cp.private_data = (void *)&rsp_hdr;
-	cp.private_data_len = sizeof(rsp_hdr);
+	cp.निजी_data = (व्योम *)&rsp_hdr;
+	cp.निजी_data_len = माप(rsp_hdr);
 
 	ret = rdma_accept(cm_id, &cp);
-	if (ret) {
+	अगर (ret) अणु
 		isert_err("rdma_accept() failed with: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-isert_get_login_rx(struct iscsi_conn *conn, struct iscsi_login *login)
-{
-	struct isert_conn *isert_conn = conn->context;
-	int ret;
+अटल पूर्णांक
+isert_get_login_rx(काष्ठा iscsi_conn *conn, काष्ठा iscsi_login *login)
+अणु
+	काष्ठा isert_conn *isert_conn = conn->context;
+	पूर्णांक ret;
 
 	isert_info("before login_req comp conn: %p\n", isert_conn);
-	ret = wait_for_completion_interruptible(&isert_conn->login_req_comp);
-	if (ret) {
+	ret = रुको_क्रम_completion_पूर्णांकerruptible(&isert_conn->login_req_comp);
+	अगर (ret) अणु
 		isert_err("isert_conn %p interrupted before got login req\n",
 			  isert_conn);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 	reinit_completion(&isert_conn->login_req_comp);
 
 	/*
 	 * For login requests after the first PDU, isert_rx_login_req() will
 	 * kick schedule_delayed_work(&conn->login_work) as the packet is
-	 * received, which turns this callback from iscsi_target_do_login_rx()
-	 * into a NOP.
+	 * received, which turns this callback from iscsi_target_करो_login_rx()
+	 * पूर्णांकo a NOP.
 	 */
-	if (!login->first_request)
-		return 0;
+	अगर (!login->first_request)
+		वापस 0;
 
 	isert_rx_login_req(isert_conn);
 
 	isert_info("before login_comp conn: %p\n", conn);
-	ret = wait_for_completion_interruptible(&isert_conn->login_comp);
-	if (ret)
-		return ret;
+	ret = रुको_क्रम_completion_पूर्णांकerruptible(&isert_conn->login_comp);
+	अगर (ret)
+		वापस ret;
 
 	isert_info("processing login->req: %p\n", login->req);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-isert_set_conn_info(struct iscsi_np *np, struct iscsi_conn *conn,
-		    struct isert_conn *isert_conn)
-{
-	struct rdma_cm_id *cm_id = isert_conn->cm_id;
-	struct rdma_route *cm_route = &cm_id->route;
+अटल व्योम
+isert_set_conn_info(काष्ठा iscsi_np *np, काष्ठा iscsi_conn *conn,
+		    काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा rdma_cm_id *cm_id = isert_conn->cm_id;
+	काष्ठा rdma_route *cm_route = &cm_id->route;
 
 	conn->login_family = np->np_sockaddr.ss_family;
 
 	conn->login_sockaddr = cm_route->addr.dst_addr;
 	conn->local_sockaddr = cm_route->addr.src_addr;
-}
+पूर्ण
 
-static int
-isert_accept_np(struct iscsi_np *np, struct iscsi_conn *conn)
-{
-	struct isert_np *isert_np = np->np_context;
-	struct isert_conn *isert_conn;
-	int ret;
+अटल पूर्णांक
+isert_accept_np(काष्ठा iscsi_np *np, काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा isert_np *isert_np = np->np_context;
+	काष्ठा isert_conn *isert_conn;
+	पूर्णांक ret;
 
-accept_wait:
-	ret = down_interruptible(&isert_np->sem);
-	if (ret)
-		return -ENODEV;
+accept_रुको:
+	ret = करोwn_पूर्णांकerruptible(&isert_np->sem);
+	अगर (ret)
+		वापस -ENODEV;
 
-	spin_lock_bh(&np->np_thread_lock);
-	if (np->np_thread_state >= ISCSI_NP_THREAD_RESET) {
-		spin_unlock_bh(&np->np_thread_lock);
+	spin_lock_bh(&np->np_thपढ़ो_lock);
+	अगर (np->np_thपढ़ो_state >= ISCSI_NP_THREAD_RESET) अणु
+		spin_unlock_bh(&np->np_thपढ़ो_lock);
 		isert_dbg("np_thread_state %d\n",
-			 np->np_thread_state);
+			 np->np_thपढ़ो_state);
 		/**
-		 * No point in stalling here when np_thread
+		 * No poपूर्णांक in stalling here when np_thपढ़ो
 		 * is in state RESET/SHUTDOWN/EXIT - bail
 		 **/
-		return -ENODEV;
-	}
-	spin_unlock_bh(&np->np_thread_lock);
+		वापस -ENODEV;
+	पूर्ण
+	spin_unlock_bh(&np->np_thपढ़ो_lock);
 
 	mutex_lock(&isert_np->mutex);
-	if (list_empty(&isert_np->pending)) {
+	अगर (list_empty(&isert_np->pending)) अणु
 		mutex_unlock(&isert_np->mutex);
-		goto accept_wait;
-	}
+		जाओ accept_रुको;
+	पूर्ण
 	isert_conn = list_first_entry(&isert_np->pending,
-			struct isert_conn, node);
+			काष्ठा isert_conn, node);
 	list_del_init(&isert_conn->node);
 	mutex_unlock(&isert_np->mutex);
 
@@ -2413,57 +2414,57 @@ accept_wait:
 
 	isert_dbg("Processing isert_conn: %p\n", isert_conn);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-isert_free_np(struct iscsi_np *np)
-{
-	struct isert_np *isert_np = np->np_context;
-	struct isert_conn *isert_conn, *n;
+अटल व्योम
+isert_मुक्त_np(काष्ठा iscsi_np *np)
+अणु
+	काष्ठा isert_np *isert_np = np->np_context;
+	काष्ठा isert_conn *isert_conn, *n;
 
-	if (isert_np->cm_id)
+	अगर (isert_np->cm_id)
 		rdma_destroy_id(isert_np->cm_id);
 
 	/*
-	 * FIXME: At this point we don't have a good way to insure
-	 * that at this point we don't have hanging connections that
+	 * FIXME: At this poपूर्णांक we करोn't have a good way to insure
+	 * that at this poपूर्णांक we करोn't have hanging connections that
 	 * completed RDMA establishment but didn't start iscsi login
 	 * process. So work-around this by cleaning up what ever piled
 	 * up in accepted and pending lists.
 	 */
 	mutex_lock(&isert_np->mutex);
-	if (!list_empty(&isert_np->pending)) {
+	अगर (!list_empty(&isert_np->pending)) अणु
 		isert_info("Still have isert pending connections\n");
-		list_for_each_entry_safe(isert_conn, n,
+		list_क्रम_each_entry_safe(isert_conn, n,
 					 &isert_np->pending,
-					 node) {
+					 node) अणु
 			isert_info("cleaning isert_conn %p state (%d)\n",
 				   isert_conn, isert_conn->state);
 			isert_connect_release(isert_conn);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!list_empty(&isert_np->accepted)) {
+	अगर (!list_empty(&isert_np->accepted)) अणु
 		isert_info("Still have isert accepted connections\n");
-		list_for_each_entry_safe(isert_conn, n,
+		list_क्रम_each_entry_safe(isert_conn, n,
 					 &isert_np->accepted,
-					 node) {
+					 node) अणु
 			isert_info("cleaning isert_conn %p state (%d)\n",
 				   isert_conn, isert_conn->state);
 			isert_connect_release(isert_conn);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&isert_np->mutex);
 
-	np->np_context = NULL;
-	kfree(isert_np);
-}
+	np->np_context = शून्य;
+	kमुक्त(isert_np);
+पूर्ण
 
-static void isert_release_work(struct work_struct *work)
-{
-	struct isert_conn *isert_conn = container_of(work,
-						     struct isert_conn,
+अटल व्योम isert_release_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा isert_conn *isert_conn = container_of(work,
+						     काष्ठा isert_conn,
 						     release_work);
 
 	isert_info("Starting release conn %p\n", isert_conn);
@@ -2474,71 +2475,71 @@ static void isert_release_work(struct work_struct *work)
 
 	isert_info("Destroying conn %p\n", isert_conn);
 	isert_put_conn(isert_conn);
-}
+पूर्ण
 
-static void
-isert_wait4logout(struct isert_conn *isert_conn)
-{
-	struct iscsi_conn *conn = isert_conn->conn;
+अटल व्योम
+isert_रुको4logout(काष्ठा isert_conn *isert_conn)
+अणु
+	काष्ठा iscsi_conn *conn = isert_conn->conn;
 
 	isert_info("conn %p\n", isert_conn);
 
-	if (isert_conn->logout_posted) {
+	अगर (isert_conn->logout_posted) अणु
 		isert_info("conn %p wait for conn_logout_comp\n", isert_conn);
-		wait_for_completion_timeout(&conn->conn_logout_comp,
+		रुको_क्रम_completion_समयout(&conn->conn_logout_comp,
 					    SECONDS_FOR_LOGOUT_COMP * HZ);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-isert_wait4cmds(struct iscsi_conn *conn)
-{
+अटल व्योम
+isert_रुको4cmds(काष्ठा iscsi_conn *conn)
+अणु
 	isert_info("iscsi_conn %p\n", conn);
 
-	if (conn->sess) {
+	अगर (conn->sess) अणु
 		target_stop_session(conn->sess->se_sess);
-		target_wait_for_sess_cmds(conn->sess->se_sess);
-	}
-}
+		target_रुको_क्रम_sess_cmds(conn->sess->se_sess);
+	पूर्ण
+पूर्ण
 
 /**
- * isert_put_unsol_pending_cmds() - Drop commands waiting for
+ * isert_put_unsol_pending_cmds() - Drop commands रुकोing क्रम
  *     unsolicitate dataout
  * @conn:    iscsi connection
  *
- * We might still have commands that are waiting for unsolicited
+ * We might still have commands that are रुकोing क्रम unsolicited
  * dataouts messages. We must put the extra reference on those
- * before blocking on the target_wait_for_session_cmds
+ * beक्रमe blocking on the target_रुको_क्रम_session_cmds
  */
-static void
-isert_put_unsol_pending_cmds(struct iscsi_conn *conn)
-{
-	struct iscsi_cmd *cmd, *tmp;
-	static LIST_HEAD(drop_cmd_list);
+अटल व्योम
+isert_put_unsol_pending_cmds(काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा iscsi_cmd *cmd, *पंचांगp;
+	अटल LIST_HEAD(drop_cmd_list);
 
 	spin_lock_bh(&conn->cmd_lock);
-	list_for_each_entry_safe(cmd, tmp, &conn->conn_cmd_list, i_conn_node) {
-		if ((cmd->cmd_flags & ICF_NON_IMMEDIATE_UNSOLICITED_DATA) &&
-		    (cmd->write_data_done < conn->sess->sess_ops->FirstBurstLength) &&
-		    (cmd->write_data_done < cmd->se_cmd.data_length))
+	list_क्रम_each_entry_safe(cmd, पंचांगp, &conn->conn_cmd_list, i_conn_node) अणु
+		अगर ((cmd->cmd_flags & ICF_NON_IMMEDIATE_UNSOLICITED_DATA) &&
+		    (cmd->ग_लिखो_data_करोne < conn->sess->sess_ops->FirstBurstLength) &&
+		    (cmd->ग_लिखो_data_करोne < cmd->se_cmd.data_length))
 			list_move_tail(&cmd->i_conn_node, &drop_cmd_list);
-	}
+	पूर्ण
 	spin_unlock_bh(&conn->cmd_lock);
 
-	list_for_each_entry_safe(cmd, tmp, &drop_cmd_list, i_conn_node) {
+	list_क्रम_each_entry_safe(cmd, पंचांगp, &drop_cmd_list, i_conn_node) अणु
 		list_del_init(&cmd->i_conn_node);
-		if (cmd->i_state != ISTATE_REMOVE) {
-			struct isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
+		अगर (cmd->i_state != ISTATE_REMOVE) अणु
+			काष्ठा isert_cmd *isert_cmd = iscsit_priv_cmd(cmd);
 
 			isert_info("conn %p dropping cmd %p\n", conn, cmd);
 			isert_put_cmd(isert_cmd, true);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void isert_wait_conn(struct iscsi_conn *conn)
-{
-	struct isert_conn *isert_conn = conn->context;
+अटल व्योम isert_रुको_conn(काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा isert_conn *isert_conn = conn->context;
 
 	isert_info("Starting conn %p\n", isert_conn);
 
@@ -2548,40 +2549,40 @@ static void isert_wait_conn(struct iscsi_conn *conn)
 
 	ib_drain_qp(isert_conn->qp);
 	isert_put_unsol_pending_cmds(conn);
-	isert_wait4cmds(conn);
-	isert_wait4logout(isert_conn);
+	isert_रुको4cmds(conn);
+	isert_रुको4logout(isert_conn);
 
 	queue_work(isert_release_wq, &isert_conn->release_work);
-}
+पूर्ण
 
-static void isert_free_conn(struct iscsi_conn *conn)
-{
-	struct isert_conn *isert_conn = conn->context;
+अटल व्योम isert_मुक्त_conn(काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा isert_conn *isert_conn = conn->context;
 
 	ib_drain_qp(isert_conn->qp);
 	isert_put_conn(isert_conn);
-}
+पूर्ण
 
-static void isert_get_rx_pdu(struct iscsi_conn *conn)
-{
-	struct completion comp;
+अटल व्योम isert_get_rx_pdu(काष्ठा iscsi_conn *conn)
+अणु
+	काष्ठा completion comp;
 
 	init_completion(&comp);
 
-	wait_for_completion_interruptible(&comp);
-}
+	रुको_क्रम_completion_पूर्णांकerruptible(&comp);
+पूर्ण
 
-static struct iscsit_transport iser_target_transport = {
+अटल काष्ठा iscsit_transport iser_target_transport = अणु
 	.name			= "IB/iSER",
 	.transport_type		= ISCSI_INFINIBAND,
-	.rdma_shutdown		= true,
-	.priv_size		= sizeof(struct isert_cmd),
+	.rdma_shutकरोwn		= true,
+	.priv_size		= माप(काष्ठा isert_cmd),
 	.owner			= THIS_MODULE,
 	.iscsit_setup_np	= isert_setup_np,
 	.iscsit_accept_np	= isert_accept_np,
-	.iscsit_free_np		= isert_free_np,
-	.iscsit_wait_conn	= isert_wait_conn,
-	.iscsit_free_conn	= isert_free_conn,
+	.iscsit_मुक्त_np		= isert_मुक्त_np,
+	.iscsit_रुको_conn	= isert_रुको_conn,
+	.iscsit_मुक्त_conn	= isert_मुक्त_conn,
 	.iscsit_get_login_rx	= isert_get_login_rx,
 	.iscsit_put_login_tx	= isert_put_login_tx,
 	.iscsit_immediate_queue	= isert_immediate_queue,
@@ -2589,53 +2590,53 @@ static struct iscsit_transport iser_target_transport = {
 	.iscsit_get_dataout	= isert_get_dataout,
 	.iscsit_queue_data_in	= isert_put_datain,
 	.iscsit_queue_status	= isert_put_response,
-	.iscsit_aborted_task	= isert_aborted_task,
+	.iscsit_पातed_task	= isert_पातed_task,
 	.iscsit_get_rx_pdu	= isert_get_rx_pdu,
 	.iscsit_get_sup_prot_ops = isert_get_sup_prot_ops,
-};
+पूर्ण;
 
-static int __init isert_init(void)
-{
-	int ret;
+अटल पूर्णांक __init isert_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	isert_comp_wq = alloc_workqueue("isert_comp_wq",
 					WQ_UNBOUND | WQ_HIGHPRI, 0);
-	if (!isert_comp_wq) {
+	अगर (!isert_comp_wq) अणु
 		isert_err("Unable to allocate isert_comp_wq\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	isert_release_wq = alloc_workqueue("isert_release_wq", WQ_UNBOUND,
 					WQ_UNBOUND_MAX_ACTIVE);
-	if (!isert_release_wq) {
+	अगर (!isert_release_wq) अणु
 		isert_err("Unable to allocate isert_release_wq\n");
 		ret = -ENOMEM;
-		goto destroy_comp_wq;
-	}
+		जाओ destroy_comp_wq;
+	पूर्ण
 
-	iscsit_register_transport(&iser_target_transport);
+	iscsit_रेजिस्टर_transport(&iser_target_transport);
 	isert_info("iSER_TARGET[0] - Loaded iser_target_transport\n");
 
-	return 0;
+	वापस 0;
 
 destroy_comp_wq:
 	destroy_workqueue(isert_comp_wq);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit isert_exit(void)
-{
+अटल व्योम __निकास isert_निकास(व्योम)
+अणु
 	flush_scheduled_work();
 	destroy_workqueue(isert_release_wq);
 	destroy_workqueue(isert_comp_wq);
-	iscsit_unregister_transport(&iser_target_transport);
+	iscsit_unरेजिस्टर_transport(&iser_target_transport);
 	isert_info("iSER_TARGET[0] - Released iser_target_transport\n");
-}
+पूर्ण
 
 MODULE_DESCRIPTION("iSER-Target for mainline target infrastructure");
 MODULE_AUTHOR("nab@Linux-iSCSI.org");
 MODULE_LICENSE("GPL");
 
 module_init(isert_init);
-module_exit(isert_exit);
+module_निकास(isert_निकास);

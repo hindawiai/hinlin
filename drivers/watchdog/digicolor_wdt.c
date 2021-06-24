@@ -1,162 +1,163 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Watchdog driver for Conexant Digicolor
+ * Watchकरोg driver क्रम Conexant Digicolor
  *
- * Copyright (C) 2015 Paradox Innovation Ltd.
+ * Copyright (C) 2015 Paraकरोx Innovation Ltd.
  *
  */
 
-#include <linux/types.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/delay.h>
-#include <linux/clk.h>
-#include <linux/watchdog.h>
-#include <linux/platform_device.h>
-#include <linux/of_address.h>
+#समावेश <linux/types.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/delay.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/watchकरोg.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/of_address.h>
 
-#define TIMER_A_CONTROL		0
-#define TIMER_A_COUNT		4
+#घोषणा TIMER_A_CONTROL		0
+#घोषणा TIMER_A_COUNT		4
 
-#define TIMER_A_ENABLE_COUNT	BIT(0)
-#define TIMER_A_ENABLE_WATCHDOG	BIT(1)
+#घोषणा TIMER_A_ENABLE_COUNT	BIT(0)
+#घोषणा TIMER_A_ENABLE_WATCHDOG	BIT(1)
 
-struct dc_wdt {
-	void __iomem		*base;
-	struct clk		*clk;
+काष्ठा dc_wdt अणु
+	व्योम __iomem		*base;
+	काष्ठा clk		*clk;
 	spinlock_t		lock;
-};
+पूर्ण;
 
-static unsigned timeout;
-module_param(timeout, uint, 0);
-MODULE_PARM_DESC(timeout, "Watchdog timeout in seconds");
+अटल अचिन्हित समयout;
+module_param(समयout, uपूर्णांक, 0);
+MODULE_PARM_DESC(समयout, "Watchdog timeout in seconds");
 
-static void dc_wdt_set(struct dc_wdt *wdt, u32 ticks)
-{
-	unsigned long flags;
+अटल व्योम dc_wdt_set(काष्ठा dc_wdt *wdt, u32 ticks)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&wdt->lock, flags);
 
-	writel_relaxed(0, wdt->base + TIMER_A_CONTROL);
-	writel_relaxed(ticks, wdt->base + TIMER_A_COUNT);
-	writel_relaxed(TIMER_A_ENABLE_COUNT | TIMER_A_ENABLE_WATCHDOG,
+	ग_लिखोl_relaxed(0, wdt->base + TIMER_A_CONTROL);
+	ग_लिखोl_relaxed(ticks, wdt->base + TIMER_A_COUNT);
+	ग_लिखोl_relaxed(TIMER_A_ENABLE_COUNT | TIMER_A_ENABLE_WATCHDOG,
 		       wdt->base + TIMER_A_CONTROL);
 
 	spin_unlock_irqrestore(&wdt->lock, flags);
-}
+पूर्ण
 
-static int dc_wdt_restart(struct watchdog_device *wdog, unsigned long action,
-			  void *data)
-{
-	struct dc_wdt *wdt = watchdog_get_drvdata(wdog);
+अटल पूर्णांक dc_wdt_restart(काष्ठा watchकरोg_device *wकरोg, अचिन्हित दीर्घ action,
+			  व्योम *data)
+अणु
+	काष्ठा dc_wdt *wdt = watchकरोg_get_drvdata(wकरोg);
 
 	dc_wdt_set(wdt, 1);
-	/* wait for reset to assert... */
+	/* रुको क्रम reset to निश्चित... */
 	mdelay(500);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dc_wdt_start(struct watchdog_device *wdog)
-{
-	struct dc_wdt *wdt = watchdog_get_drvdata(wdog);
+अटल पूर्णांक dc_wdt_start(काष्ठा watchकरोg_device *wकरोg)
+अणु
+	काष्ठा dc_wdt *wdt = watchकरोg_get_drvdata(wकरोg);
 
-	dc_wdt_set(wdt, wdog->timeout * clk_get_rate(wdt->clk));
+	dc_wdt_set(wdt, wकरोg->समयout * clk_get_rate(wdt->clk));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dc_wdt_stop(struct watchdog_device *wdog)
-{
-	struct dc_wdt *wdt = watchdog_get_drvdata(wdog);
+अटल पूर्णांक dc_wdt_stop(काष्ठा watchकरोg_device *wकरोg)
+अणु
+	काष्ठा dc_wdt *wdt = watchकरोg_get_drvdata(wकरोg);
 
-	writel_relaxed(0, wdt->base + TIMER_A_CONTROL);
+	ग_लिखोl_relaxed(0, wdt->base + TIMER_A_CONTROL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dc_wdt_set_timeout(struct watchdog_device *wdog, unsigned int t)
-{
-	struct dc_wdt *wdt = watchdog_get_drvdata(wdog);
+अटल पूर्णांक dc_wdt_set_समयout(काष्ठा watchकरोg_device *wकरोg, अचिन्हित पूर्णांक t)
+अणु
+	काष्ठा dc_wdt *wdt = watchकरोg_get_drvdata(wकरोg);
 
 	dc_wdt_set(wdt, t * clk_get_rate(wdt->clk));
-	wdog->timeout = t;
+	wकरोg->समयout = t;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static unsigned int dc_wdt_get_timeleft(struct watchdog_device *wdog)
-{
-	struct dc_wdt *wdt = watchdog_get_drvdata(wdog);
-	uint32_t count = readl_relaxed(wdt->base + TIMER_A_COUNT);
+अटल अचिन्हित पूर्णांक dc_wdt_get_समयleft(काष्ठा watchकरोg_device *wकरोg)
+अणु
+	काष्ठा dc_wdt *wdt = watchकरोg_get_drvdata(wकरोg);
+	uपूर्णांक32_t count = पढ़ोl_relaxed(wdt->base + TIMER_A_COUNT);
 
-	return count / clk_get_rate(wdt->clk);
-}
+	वापस count / clk_get_rate(wdt->clk);
+पूर्ण
 
-static const struct watchdog_ops dc_wdt_ops = {
+अटल स्थिर काष्ठा watchकरोg_ops dc_wdt_ops = अणु
 	.owner		= THIS_MODULE,
 	.start		= dc_wdt_start,
 	.stop		= dc_wdt_stop,
-	.set_timeout	= dc_wdt_set_timeout,
-	.get_timeleft	= dc_wdt_get_timeleft,
+	.set_समयout	= dc_wdt_set_समयout,
+	.get_समयleft	= dc_wdt_get_समयleft,
 	.restart        = dc_wdt_restart,
-};
+पूर्ण;
 
-static const struct watchdog_info dc_wdt_info = {
+अटल स्थिर काष्ठा watchकरोg_info dc_wdt_info = अणु
 	.options	= WDIOF_SETTIMEOUT | WDIOF_MAGICCLOSE
 			| WDIOF_KEEPALIVEPING,
 	.identity	= "Conexant Digicolor Watchdog",
-};
+पूर्ण;
 
-static struct watchdog_device dc_wdt_wdd = {
+अटल काष्ठा watchकरोg_device dc_wdt_wdd = अणु
 	.info		= &dc_wdt_info,
 	.ops		= &dc_wdt_ops,
-	.min_timeout	= 1,
-};
+	.min_समयout	= 1,
+पूर्ण;
 
-static int dc_wdt_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct dc_wdt *wdt;
+अटल पूर्णांक dc_wdt_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा dc_wdt *wdt;
 
-	wdt = devm_kzalloc(dev, sizeof(struct dc_wdt), GFP_KERNEL);
-	if (!wdt)
-		return -ENOMEM;
+	wdt = devm_kzalloc(dev, माप(काष्ठा dc_wdt), GFP_KERNEL);
+	अगर (!wdt)
+		वापस -ENOMEM;
 
-	wdt->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(wdt->base))
-		return PTR_ERR(wdt->base);
+	wdt->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(wdt->base))
+		वापस PTR_ERR(wdt->base);
 
-	wdt->clk = devm_clk_get(dev, NULL);
-	if (IS_ERR(wdt->clk))
-		return PTR_ERR(wdt->clk);
-	dc_wdt_wdd.max_timeout = U32_MAX / clk_get_rate(wdt->clk);
-	dc_wdt_wdd.timeout = dc_wdt_wdd.max_timeout;
+	wdt->clk = devm_clk_get(dev, शून्य);
+	अगर (IS_ERR(wdt->clk))
+		वापस PTR_ERR(wdt->clk);
+	dc_wdt_wdd.max_समयout = U32_MAX / clk_get_rate(wdt->clk);
+	dc_wdt_wdd.समयout = dc_wdt_wdd.max_समयout;
 	dc_wdt_wdd.parent = dev;
 
 	spin_lock_init(&wdt->lock);
 
-	watchdog_set_drvdata(&dc_wdt_wdd, wdt);
-	watchdog_set_restart_priority(&dc_wdt_wdd, 128);
-	watchdog_init_timeout(&dc_wdt_wdd, timeout, dev);
-	watchdog_stop_on_reboot(&dc_wdt_wdd);
-	return devm_watchdog_register_device(dev, &dc_wdt_wdd);
-}
+	watchकरोg_set_drvdata(&dc_wdt_wdd, wdt);
+	watchकरोg_set_restart_priority(&dc_wdt_wdd, 128);
+	watchकरोg_init_समयout(&dc_wdt_wdd, समयout, dev);
+	watchकरोg_stop_on_reboot(&dc_wdt_wdd);
+	वापस devm_watchकरोg_रेजिस्टर_device(dev, &dc_wdt_wdd);
+पूर्ण
 
-static const struct of_device_id dc_wdt_of_match[] = {
-	{ .compatible = "cnxt,cx92755-wdt", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id dc_wdt_of_match[] = अणु
+	अणु .compatible = "cnxt,cx92755-wdt", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, dc_wdt_of_match);
 
-static struct platform_driver dc_wdt_driver = {
+अटल काष्ठा platक्रमm_driver dc_wdt_driver = अणु
 	.probe		= dc_wdt_probe,
-	.driver = {
+	.driver = अणु
 		.name =		"digicolor-wdt",
 		.of_match_table = dc_wdt_of_match,
-	},
-};
-module_platform_driver(dc_wdt_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(dc_wdt_driver);
 
 MODULE_AUTHOR("Baruch Siach <baruch@tkos.co.il>");
 MODULE_DESCRIPTION("Driver for Conexant Digicolor watchdog timer");

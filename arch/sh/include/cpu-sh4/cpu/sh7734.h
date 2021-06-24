@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH7734_H__
-#define __ASM_SH7734_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH7734_H__
+#घोषणा __ASM_SH7734_H__
 
 /* Pin Function Controller:
  * GPIO_FN_xx - GPIO used to select pin function
  * GPIO_GP_x_x - GPIO mapped to real I/O pin on CPU
  */
-enum {
+क्रमागत अणु
 	GPIO_GP_0_0, GPIO_GP_0_1, GPIO_GP_0_2, GPIO_GP_0_3,
 	GPIO_GP_0_4, GPIO_GP_0_5, GPIO_GP_0_6, GPIO_GP_0_7,
 	GPIO_GP_0_8, GPIO_GP_0_9, GPIO_GP_0_10, GPIO_GP_0_11,
@@ -135,7 +136,7 @@ enum {
 		GPIO_FN_ET0_LINK_C, GPIO_FN_ET0_ETXD5_A,
 	GPIO_FN_EX_WAIT0, GPIO_FN_TCLK1_B,
 	GPIO_FN_RD_WR, GPIO_FN_TCLK0, GPIO_FN_CAN_CLK_B, GPIO_FN_ET0_ETXD4,
-	GPIO_FN_EX_CS5, GPIO_FN_SD1_CMD_A, GPIO_FN_ATADIR, GPIO_FN_QSSL_B,
+	GPIO_FN_EX_CS5, GPIO_FN_SD1_CMD_A, GPIO_FN_ATAसूची, GPIO_FN_QSSL_B,
 		GPIO_FN_ET0_ETXD3_A,
 	GPIO_FN_EX_CS4, GPIO_FN_SD1_WP_A, GPIO_FN_ATAWR, GPIO_FN_QMI_QIO1_B,
 		GPIO_FN_ET0_ETXD2_A,
@@ -302,6 +303,6 @@ enum {
 	GPIO_FN_DACK1, GPIO_FN_HSPI_CS_B, GPIO_FN_TX4_B, GPIO_FN_ET0_RX_CLK_A,
 	GPIO_FN_PRESETOUT, GPIO_FN_ST_CLKOUT,
 
-};
+पूर्ण;
 
-#endif /* __ASM_SH7734_H__ */
+#पूर्ण_अगर /* __ASM_SH7734_H__ */

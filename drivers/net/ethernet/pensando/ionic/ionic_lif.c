@@ -1,572 +1,573 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Copyright(c) 2017 - 2019 Pensando Systems, Inc */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Copyright(c) 2017 - 2019 Pensanकरो Systems, Inc */
 
-#include <linux/ethtool.h>
-#include <linux/printk.h>
-#include <linux/dynamic_debug.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/if_vlan.h>
-#include <linux/rtnetlink.h>
-#include <linux/interrupt.h>
-#include <linux/pci.h>
-#include <linux/cpumask.h>
+#समावेश <linux/ethtool.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/dynamic_debug.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/cpumask.h>
 
-#include "ionic.h"
-#include "ionic_bus.h"
-#include "ionic_lif.h"
-#include "ionic_txrx.h"
-#include "ionic_ethtool.h"
-#include "ionic_debugfs.h"
+#समावेश "ionic.h"
+#समावेश "ionic_bus.h"
+#समावेश "ionic_lif.h"
+#समावेश "ionic_txrx.h"
+#समावेश "ionic_ethtool.h"
+#समावेश "ionic_debugfs.h"
 
 /* queuetype support level */
-static const u8 ionic_qtype_versions[IONIC_QTYPE_MAX] = {
+अटल स्थिर u8 ionic_qtype_versions[IONIC_QTYPE_MAX] = अणु
 	[IONIC_QTYPE_ADMINQ]  = 0,   /* 0 = Base version with CQ support */
 	[IONIC_QTYPE_NOTIFYQ] = 0,   /* 0 = Base version */
 	[IONIC_QTYPE_RXQ]     = 0,   /* 0 = Base version with CQ+SG support */
 	[IONIC_QTYPE_TXQ]     = 1,   /* 0 = Base version with CQ+SG support
 				      * 1 =   ... with Tx SG version 1
 				      */
-};
+पूर्ण;
 
-static void ionic_lif_rx_mode(struct ionic_lif *lif, unsigned int rx_mode);
-static int ionic_lif_addr_add(struct ionic_lif *lif, const u8 *addr);
-static int ionic_lif_addr_del(struct ionic_lif *lif, const u8 *addr);
-static void ionic_link_status_check(struct ionic_lif *lif);
-static void ionic_lif_handle_fw_down(struct ionic_lif *lif);
-static void ionic_lif_handle_fw_up(struct ionic_lif *lif);
-static void ionic_lif_set_netdev_info(struct ionic_lif *lif);
+अटल व्योम ionic_lअगर_rx_mode(काष्ठा ionic_lअगर *lअगर, अचिन्हित पूर्णांक rx_mode);
+अटल पूर्णांक ionic_lअगर_addr_add(काष्ठा ionic_lअगर *lअगर, स्थिर u8 *addr);
+अटल पूर्णांक ionic_lअगर_addr_del(काष्ठा ionic_lअगर *lअगर, स्थिर u8 *addr);
+अटल व्योम ionic_link_status_check(काष्ठा ionic_lअगर *lअगर);
+अटल व्योम ionic_lअगर_handle_fw_करोwn(काष्ठा ionic_lअगर *lअगर);
+अटल व्योम ionic_lअगर_handle_fw_up(काष्ठा ionic_lअगर *lअगर);
+अटल व्योम ionic_lअगर_set_netdev_info(काष्ठा ionic_lअगर *lअगर);
 
-static void ionic_txrx_deinit(struct ionic_lif *lif);
-static int ionic_txrx_init(struct ionic_lif *lif);
-static int ionic_start_queues(struct ionic_lif *lif);
-static void ionic_stop_queues(struct ionic_lif *lif);
-static void ionic_lif_queue_identify(struct ionic_lif *lif);
+अटल व्योम ionic_txrx_deinit(काष्ठा ionic_lअगर *lअगर);
+अटल पूर्णांक ionic_txrx_init(काष्ठा ionic_lअगर *lअगर);
+अटल पूर्णांक ionic_start_queues(काष्ठा ionic_lअगर *lअगर);
+अटल व्योम ionic_stop_queues(काष्ठा ionic_lअगर *lअगर);
+अटल व्योम ionic_lअगर_queue_identअगरy(काष्ठा ionic_lअगर *lअगर);
 
-static void ionic_dim_work(struct work_struct *work)
-{
-	struct dim *dim = container_of(work, struct dim, work);
-	struct dim_cq_moder cur_moder;
-	struct ionic_qcq *qcq;
+अटल व्योम ionic_dim_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा dim *dim = container_of(work, काष्ठा dim, work);
+	काष्ठा dim_cq_moder cur_moder;
+	काष्ठा ionic_qcq *qcq;
 	u32 new_coal;
 
 	cur_moder = net_dim_get_rx_moderation(dim->mode, dim->profile_ix);
-	qcq = container_of(dim, struct ionic_qcq, dim);
-	new_coal = ionic_coal_usec_to_hw(qcq->q.lif->ionic, cur_moder.usec);
-	qcq->intr.dim_coal_hw = new_coal ? new_coal : 1;
+	qcq = container_of(dim, काष्ठा ionic_qcq, dim);
+	new_coal = ionic_coal_usec_to_hw(qcq->q.lअगर->ionic, cur_moder.usec);
+	qcq->पूर्णांकr.dim_coal_hw = new_coal ? new_coal : 1;
 	dim->state = DIM_START_MEASURE;
-}
+पूर्ण
 
-static void ionic_lif_deferred_work(struct work_struct *work)
-{
-	struct ionic_lif *lif = container_of(work, struct ionic_lif, deferred.work);
-	struct ionic_deferred *def = &lif->deferred;
-	struct ionic_deferred_work *w = NULL;
+अटल व्योम ionic_lअगर_deferred_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा ionic_lअगर *lअगर = container_of(work, काष्ठा ionic_lअगर, deferred.work);
+	काष्ठा ionic_deferred *def = &lअगर->deferred;
+	काष्ठा ionic_deferred_work *w = शून्य;
 
-	do {
+	करो अणु
 		spin_lock_bh(&def->lock);
-		if (!list_empty(&def->list)) {
+		अगर (!list_empty(&def->list)) अणु
 			w = list_first_entry(&def->list,
-					     struct ionic_deferred_work, list);
+					     काष्ठा ionic_deferred_work, list);
 			list_del(&w->list);
-		}
+		पूर्ण
 		spin_unlock_bh(&def->lock);
 
-		if (!w)
-			break;
+		अगर (!w)
+			अवरोध;
 
-		switch (w->type) {
-		case IONIC_DW_TYPE_RX_MODE:
-			ionic_lif_rx_mode(lif, w->rx_mode);
-			break;
-		case IONIC_DW_TYPE_RX_ADDR_ADD:
-			ionic_lif_addr_add(lif, w->addr);
-			break;
-		case IONIC_DW_TYPE_RX_ADDR_DEL:
-			ionic_lif_addr_del(lif, w->addr);
-			break;
-		case IONIC_DW_TYPE_LINK_STATUS:
-			ionic_link_status_check(lif);
-			break;
-		case IONIC_DW_TYPE_LIF_RESET:
-			if (w->fw_status)
-				ionic_lif_handle_fw_up(lif);
-			else
-				ionic_lif_handle_fw_down(lif);
-			break;
-		default:
-			break;
-		}
-		kfree(w);
-		w = NULL;
-	} while (true);
-}
+		चयन (w->type) अणु
+		हाल IONIC_DW_TYPE_RX_MODE:
+			ionic_lअगर_rx_mode(lअगर, w->rx_mode);
+			अवरोध;
+		हाल IONIC_DW_TYPE_RX_ADDR_ADD:
+			ionic_lअगर_addr_add(lअगर, w->addr);
+			अवरोध;
+		हाल IONIC_DW_TYPE_RX_ADDR_DEL:
+			ionic_lअगर_addr_del(lअगर, w->addr);
+			अवरोध;
+		हाल IONIC_DW_TYPE_LINK_STATUS:
+			ionic_link_status_check(lअगर);
+			अवरोध;
+		हाल IONIC_DW_TYPE_LIF_RESET:
+			अगर (w->fw_status)
+				ionic_lअगर_handle_fw_up(lअगर);
+			अन्यथा
+				ionic_lअगर_handle_fw_करोwn(lअगर);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+		kमुक्त(w);
+		w = शून्य;
+	पूर्ण जबतक (true);
+पूर्ण
 
-void ionic_lif_deferred_enqueue(struct ionic_deferred *def,
-				struct ionic_deferred_work *work)
-{
+व्योम ionic_lअगर_deferred_enqueue(काष्ठा ionic_deferred *def,
+				काष्ठा ionic_deferred_work *work)
+अणु
 	spin_lock_bh(&def->lock);
 	list_add_tail(&work->list, &def->list);
 	spin_unlock_bh(&def->lock);
 	schedule_work(&def->work);
-}
+पूर्ण
 
-static void ionic_link_status_check(struct ionic_lif *lif)
-{
-	struct net_device *netdev = lif->netdev;
+अटल व्योम ionic_link_status_check(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा net_device *netdev = lअगर->netdev;
 	u16 link_status;
 	bool link_up;
 
-	if (!test_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lif->state))
-		return;
+	अगर (!test_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lअगर->state))
+		वापस;
 
 	/* Don't put carrier back up if we're in a broken state */
-	if (test_bit(IONIC_LIF_F_BROKEN, lif->state)) {
-		clear_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lif->state);
-		return;
-	}
+	अगर (test_bit(IONIC_LIF_F_BROKEN, lअगर->state)) अणु
+		clear_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lअगर->state);
+		वापस;
+	पूर्ण
 
-	link_status = le16_to_cpu(lif->info->status.link_status);
+	link_status = le16_to_cpu(lअगर->info->status.link_status);
 	link_up = link_status == IONIC_PORT_OPER_STATUS_UP;
 
-	if (link_up) {
-		int err = 0;
+	अगर (link_up) अणु
+		पूर्णांक err = 0;
 
-		if (netdev->flags & IFF_UP && netif_running(netdev)) {
-			mutex_lock(&lif->queue_lock);
-			err = ionic_start_queues(lif);
-			if (err && err != -EBUSY) {
-				netdev_err(lif->netdev,
+		अगर (netdev->flags & IFF_UP && netअगर_running(netdev)) अणु
+			mutex_lock(&lअगर->queue_lock);
+			err = ionic_start_queues(lअगर);
+			अगर (err && err != -EBUSY) अणु
+				netdev_err(lअगर->netdev,
 					   "Failed to start queues: %d\n", err);
-				set_bit(IONIC_LIF_F_BROKEN, lif->state);
-				netif_carrier_off(lif->netdev);
-			}
-			mutex_unlock(&lif->queue_lock);
-		}
+				set_bit(IONIC_LIF_F_BROKEN, lअगर->state);
+				netअगर_carrier_off(lअगर->netdev);
+			पूर्ण
+			mutex_unlock(&lअगर->queue_lock);
+		पूर्ण
 
-		if (!err && !netif_carrier_ok(netdev)) {
-			ionic_port_identify(lif->ionic);
+		अगर (!err && !netअगर_carrier_ok(netdev)) अणु
+			ionic_port_identअगरy(lअगर->ionic);
 			netdev_info(netdev, "Link up - %d Gbps\n",
-				    le32_to_cpu(lif->info->status.link_speed) / 1000);
-			netif_carrier_on(netdev);
-		}
-	} else {
-		if (netif_carrier_ok(netdev)) {
+				    le32_to_cpu(lअगर->info->status.link_speed) / 1000);
+			netअगर_carrier_on(netdev);
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (netअगर_carrier_ok(netdev)) अणु
 			netdev_info(netdev, "Link down\n");
-			netif_carrier_off(netdev);
-		}
+			netअगर_carrier_off(netdev);
+		पूर्ण
 
-		if (netdev->flags & IFF_UP && netif_running(netdev)) {
-			mutex_lock(&lif->queue_lock);
-			ionic_stop_queues(lif);
-			mutex_unlock(&lif->queue_lock);
-		}
-	}
+		अगर (netdev->flags & IFF_UP && netअगर_running(netdev)) अणु
+			mutex_lock(&lअगर->queue_lock);
+			ionic_stop_queues(lअगर);
+			mutex_unlock(&lअगर->queue_lock);
+		पूर्ण
+	पूर्ण
 
-	clear_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lif->state);
-}
+	clear_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lअगर->state);
+पूर्ण
 
-void ionic_link_status_check_request(struct ionic_lif *lif, bool can_sleep)
-{
-	struct ionic_deferred_work *work;
+व्योम ionic_link_status_check_request(काष्ठा ionic_lअगर *lअगर, bool can_sleep)
+अणु
+	काष्ठा ionic_deferred_work *work;
 
-	/* we only need one request outstanding at a time */
-	if (test_and_set_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lif->state))
-		return;
+	/* we only need one request outstanding at a समय */
+	अगर (test_and_set_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lअगर->state))
+		वापस;
 
-	if (!can_sleep) {
-		work = kzalloc(sizeof(*work), GFP_ATOMIC);
-		if (!work) {
-			clear_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lif->state);
-			return;
-		}
+	अगर (!can_sleep) अणु
+		work = kzalloc(माप(*work), GFP_ATOMIC);
+		अगर (!work) अणु
+			clear_bit(IONIC_LIF_F_LINK_CHECK_REQUESTED, lअगर->state);
+			वापस;
+		पूर्ण
 
 		work->type = IONIC_DW_TYPE_LINK_STATUS;
-		ionic_lif_deferred_enqueue(&lif->deferred, work);
-	} else {
-		ionic_link_status_check(lif);
-	}
-}
+		ionic_lअगर_deferred_enqueue(&lअगर->deferred, work);
+	पूर्ण अन्यथा अणु
+		ionic_link_status_check(lअगर);
+	पूर्ण
+पूर्ण
 
-static irqreturn_t ionic_isr(int irq, void *data)
-{
-	struct napi_struct *napi = data;
+अटल irqवापस_t ionic_isr(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा napi_काष्ठा *napi = data;
 
 	napi_schedule_irqoff(napi);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int ionic_request_irq(struct ionic_lif *lif, struct ionic_qcq *qcq)
-{
-	struct ionic_intr_info *intr = &qcq->intr;
-	struct device *dev = lif->ionic->dev;
-	struct ionic_queue *q = &qcq->q;
-	const char *name;
+अटल पूर्णांक ionic_request_irq(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq)
+अणु
+	काष्ठा ionic_पूर्णांकr_info *पूर्णांकr = &qcq->पूर्णांकr;
+	काष्ठा device *dev = lअगर->ionic->dev;
+	काष्ठा ionic_queue *q = &qcq->q;
+	स्थिर अक्षर *name;
 
-	if (lif->registered)
-		name = lif->netdev->name;
-	else
+	अगर (lअगर->रेजिस्टरed)
+		name = lअगर->netdev->name;
+	अन्यथा
 		name = dev_name(dev);
 
-	snprintf(intr->name, sizeof(intr->name),
+	snम_लिखो(पूर्णांकr->name, माप(पूर्णांकr->name),
 		 "%s-%s-%s", IONIC_DRV_NAME, name, q->name);
 
-	return devm_request_irq(dev, intr->vector, ionic_isr,
-				0, intr->name, &qcq->napi);
-}
+	वापस devm_request_irq(dev, पूर्णांकr->vector, ionic_isr,
+				0, पूर्णांकr->name, &qcq->napi);
+पूर्ण
 
-static int ionic_intr_alloc(struct ionic_lif *lif, struct ionic_intr_info *intr)
-{
-	struct ionic *ionic = lif->ionic;
-	int index;
+अटल पूर्णांक ionic_पूर्णांकr_alloc(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_पूर्णांकr_info *पूर्णांकr)
+अणु
+	काष्ठा ionic *ionic = lअगर->ionic;
+	पूर्णांक index;
 
-	index = find_first_zero_bit(ionic->intrs, ionic->nintrs);
-	if (index == ionic->nintrs) {
-		netdev_warn(lif->netdev, "%s: no intr, index=%d nintrs=%d\n",
-			    __func__, index, ionic->nintrs);
-		return -ENOSPC;
-	}
+	index = find_first_zero_bit(ionic->पूर्णांकrs, ionic->nपूर्णांकrs);
+	अगर (index == ionic->nपूर्णांकrs) अणु
+		netdev_warn(lअगर->netdev, "%s: no intr, index=%d nintrs=%d\n",
+			    __func__, index, ionic->nपूर्णांकrs);
+		वापस -ENOSPC;
+	पूर्ण
 
-	set_bit(index, ionic->intrs);
-	ionic_intr_init(&ionic->idev, intr, index);
+	set_bit(index, ionic->पूर्णांकrs);
+	ionic_पूर्णांकr_init(&ionic->idev, पूर्णांकr, index);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ionic_intr_free(struct ionic *ionic, int index)
-{
-	if (index != IONIC_INTR_INDEX_NOT_ASSIGNED && index < ionic->nintrs)
-		clear_bit(index, ionic->intrs);
-}
+अटल व्योम ionic_पूर्णांकr_मुक्त(काष्ठा ionic *ionic, पूर्णांक index)
+अणु
+	अगर (index != IONIC_INTR_INDEX_NOT_ASSIGNED && index < ionic->nपूर्णांकrs)
+		clear_bit(index, ionic->पूर्णांकrs);
+पूर्ण
 
-static int ionic_qcq_enable(struct ionic_qcq *qcq)
-{
-	struct ionic_queue *q = &qcq->q;
-	struct ionic_lif *lif = q->lif;
-	struct ionic_dev *idev;
-	struct device *dev;
+अटल पूर्णांक ionic_qcq_enable(काष्ठा ionic_qcq *qcq)
+अणु
+	काष्ठा ionic_queue *q = &qcq->q;
+	काष्ठा ionic_lअगर *lअगर = q->lअगर;
+	काष्ठा ionic_dev *idev;
+	काष्ठा device *dev;
 
-	struct ionic_admin_ctx ctx = {
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.q_control = {
+		.cmd.q_control = अणु
 			.opcode = IONIC_CMD_Q_CONTROL,
-			.lif_index = cpu_to_le16(lif->index),
+			.lअगर_index = cpu_to_le16(lअगर->index),
 			.type = q->type,
 			.index = cpu_to_le32(q->index),
 			.oper = IONIC_Q_ENABLE,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	idev = &lif->ionic->idev;
-	dev = lif->ionic->dev;
+	idev = &lअगर->ionic->idev;
+	dev = lअगर->ionic->dev;
 
 	dev_dbg(dev, "q_enable.index %d q_enable.qtype %d\n",
 		ctx.cmd.q_control.index, ctx.cmd.q_control.type);
 
-	if (qcq->flags & IONIC_QCQ_F_INTR) {
-		irq_set_affinity_hint(qcq->intr.vector,
-				      &qcq->intr.affinity_mask);
+	अगर (qcq->flags & IONIC_QCQ_F_INTR) अणु
+		irq_set_affinity_hपूर्णांक(qcq->पूर्णांकr.vector,
+				      &qcq->पूर्णांकr.affinity_mask);
 		napi_enable(&qcq->napi);
-		ionic_intr_clean(idev->intr_ctrl, qcq->intr.index);
-		ionic_intr_mask(idev->intr_ctrl, qcq->intr.index,
+		ionic_पूर्णांकr_clean(idev->पूर्णांकr_ctrl, qcq->पूर्णांकr.index);
+		ionic_पूर्णांकr_mask(idev->पूर्णांकr_ctrl, qcq->पूर्णांकr.index,
 				IONIC_INTR_MASK_CLEAR);
-	}
+	पूर्ण
 
-	return ionic_adminq_post_wait(lif, &ctx);
-}
+	वापस ionic_adminq_post_रुको(lअगर, &ctx);
+पूर्ण
 
-static int ionic_qcq_disable(struct ionic_qcq *qcq, bool send_to_hw)
-{
-	struct ionic_queue *q;
-	struct ionic_lif *lif;
-	int err = 0;
+अटल पूर्णांक ionic_qcq_disable(काष्ठा ionic_qcq *qcq, bool send_to_hw)
+अणु
+	काष्ठा ionic_queue *q;
+	काष्ठा ionic_lअगर *lअगर;
+	पूर्णांक err = 0;
 
-	struct ionic_admin_ctx ctx = {
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.q_control = {
+		.cmd.q_control = अणु
 			.opcode = IONIC_CMD_Q_CONTROL,
 			.oper = IONIC_Q_DISABLE,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	if (!qcq)
-		return -ENXIO;
+	अगर (!qcq)
+		वापस -ENXIO;
 
 	q = &qcq->q;
-	lif = q->lif;
+	lअगर = q->lअगर;
 
-	if (qcq->flags & IONIC_QCQ_F_INTR) {
-		struct ionic_dev *idev = &lif->ionic->idev;
+	अगर (qcq->flags & IONIC_QCQ_F_INTR) अणु
+		काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
 
 		cancel_work_sync(&qcq->dim.work);
-		ionic_intr_mask(idev->intr_ctrl, qcq->intr.index,
+		ionic_पूर्णांकr_mask(idev->पूर्णांकr_ctrl, qcq->पूर्णांकr.index,
 				IONIC_INTR_MASK_SET);
-		synchronize_irq(qcq->intr.vector);
-		irq_set_affinity_hint(qcq->intr.vector, NULL);
+		synchronize_irq(qcq->पूर्णांकr.vector);
+		irq_set_affinity_hपूर्णांक(qcq->पूर्णांकr.vector, शून्य);
 		napi_disable(&qcq->napi);
-	}
+	पूर्ण
 
-	if (send_to_hw) {
-		ctx.cmd.q_control.lif_index = cpu_to_le16(lif->index);
+	अगर (send_to_hw) अणु
+		ctx.cmd.q_control.lअगर_index = cpu_to_le16(lअगर->index);
 		ctx.cmd.q_control.type = q->type;
 		ctx.cmd.q_control.index = cpu_to_le32(q->index);
-		dev_dbg(lif->ionic->dev, "q_disable.index %d q_disable.qtype %d\n",
+		dev_dbg(lअगर->ionic->dev, "q_disable.index %d q_disable.qtype %d\n",
 			ctx.cmd.q_control.index, ctx.cmd.q_control.type);
 
-		err = ionic_adminq_post_wait(lif, &ctx);
-	}
+		err = ionic_adminq_post_रुको(lअगर, &ctx);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ionic_lif_qcq_deinit(struct ionic_lif *lif, struct ionic_qcq *qcq)
-{
-	struct ionic_dev *idev = &lif->ionic->idev;
+अटल व्योम ionic_lअगर_qcq_deinit(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq)
+अणु
+	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
 
-	if (!qcq)
-		return;
+	अगर (!qcq)
+		वापस;
 
-	if (!(qcq->flags & IONIC_QCQ_F_INITED))
-		return;
+	अगर (!(qcq->flags & IONIC_QCQ_F_INITED))
+		वापस;
 
-	if (qcq->flags & IONIC_QCQ_F_INTR) {
-		ionic_intr_mask(idev->intr_ctrl, qcq->intr.index,
+	अगर (qcq->flags & IONIC_QCQ_F_INTR) अणु
+		ionic_पूर्णांकr_mask(idev->पूर्णांकr_ctrl, qcq->पूर्णांकr.index,
 				IONIC_INTR_MASK_SET);
-		netif_napi_del(&qcq->napi);
-	}
+		netअगर_napi_del(&qcq->napi);
+	पूर्ण
 
 	qcq->flags &= ~IONIC_QCQ_F_INITED;
-}
+पूर्ण
 
-static void ionic_qcq_intr_free(struct ionic_lif *lif, struct ionic_qcq *qcq)
-{
-	if (!(qcq->flags & IONIC_QCQ_F_INTR) || qcq->intr.vector == 0)
-		return;
+अटल व्योम ionic_qcq_पूर्णांकr_मुक्त(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq)
+अणु
+	अगर (!(qcq->flags & IONIC_QCQ_F_INTR) || qcq->पूर्णांकr.vector == 0)
+		वापस;
 
-	irq_set_affinity_hint(qcq->intr.vector, NULL);
-	devm_free_irq(lif->ionic->dev, qcq->intr.vector, &qcq->napi);
-	qcq->intr.vector = 0;
-	ionic_intr_free(lif->ionic, qcq->intr.index);
-	qcq->intr.index = IONIC_INTR_INDEX_NOT_ASSIGNED;
-}
+	irq_set_affinity_hपूर्णांक(qcq->पूर्णांकr.vector, शून्य);
+	devm_मुक्त_irq(lअगर->ionic->dev, qcq->पूर्णांकr.vector, &qcq->napi);
+	qcq->पूर्णांकr.vector = 0;
+	ionic_पूर्णांकr_मुक्त(lअगर->ionic, qcq->पूर्णांकr.index);
+	qcq->पूर्णांकr.index = IONIC_INTR_INDEX_NOT_ASSIGNED;
+पूर्ण
 
-static void ionic_qcq_free(struct ionic_lif *lif, struct ionic_qcq *qcq)
-{
-	struct device *dev = lif->ionic->dev;
+अटल व्योम ionic_qcq_मुक्त(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq)
+अणु
+	काष्ठा device *dev = lअगर->ionic->dev;
 
-	if (!qcq)
-		return;
+	अगर (!qcq)
+		वापस;
 
 	ionic_debugfs_del_qcq(qcq);
 
-	if (qcq->q_base) {
-		dma_free_coherent(dev, qcq->q_size, qcq->q_base, qcq->q_base_pa);
-		qcq->q_base = NULL;
+	अगर (qcq->q_base) अणु
+		dma_मुक्त_coherent(dev, qcq->q_size, qcq->q_base, qcq->q_base_pa);
+		qcq->q_base = शून्य;
 		qcq->q_base_pa = 0;
-	}
+	पूर्ण
 
-	if (qcq->cq_base) {
-		dma_free_coherent(dev, qcq->cq_size, qcq->cq_base, qcq->cq_base_pa);
-		qcq->cq_base = NULL;
+	अगर (qcq->cq_base) अणु
+		dma_मुक्त_coherent(dev, qcq->cq_size, qcq->cq_base, qcq->cq_base_pa);
+		qcq->cq_base = शून्य;
 		qcq->cq_base_pa = 0;
-	}
+	पूर्ण
 
-	if (qcq->sg_base) {
-		dma_free_coherent(dev, qcq->sg_size, qcq->sg_base, qcq->sg_base_pa);
-		qcq->sg_base = NULL;
+	अगर (qcq->sg_base) अणु
+		dma_मुक्त_coherent(dev, qcq->sg_size, qcq->sg_base, qcq->sg_base_pa);
+		qcq->sg_base = शून्य;
 		qcq->sg_base_pa = 0;
-	}
+	पूर्ण
 
-	ionic_qcq_intr_free(lif, qcq);
+	ionic_qcq_पूर्णांकr_मुक्त(lअगर, qcq);
 
-	if (qcq->cq.info) {
-		devm_kfree(dev, qcq->cq.info);
-		qcq->cq.info = NULL;
-	}
-	if (qcq->q.info) {
-		devm_kfree(dev, qcq->q.info);
-		qcq->q.info = NULL;
-	}
-}
+	अगर (qcq->cq.info) अणु
+		devm_kमुक्त(dev, qcq->cq.info);
+		qcq->cq.info = शून्य;
+	पूर्ण
+	अगर (qcq->q.info) अणु
+		devm_kमुक्त(dev, qcq->q.info);
+		qcq->q.info = शून्य;
+	पूर्ण
+पूर्ण
 
-static void ionic_qcqs_free(struct ionic_lif *lif)
-{
-	struct device *dev = lif->ionic->dev;
-	struct ionic_qcq *adminqcq;
-	unsigned long irqflags;
+अटल व्योम ionic_qcqs_मुक्त(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा device *dev = lअगर->ionic->dev;
+	काष्ठा ionic_qcq *adminqcq;
+	अचिन्हित दीर्घ irqflags;
 
-	if (lif->notifyqcq) {
-		ionic_qcq_free(lif, lif->notifyqcq);
-		devm_kfree(dev, lif->notifyqcq);
-		lif->notifyqcq = NULL;
-	}
+	अगर (lअगर->notअगरyqcq) अणु
+		ionic_qcq_मुक्त(lअगर, lअगर->notअगरyqcq);
+		devm_kमुक्त(dev, lअगर->notअगरyqcq);
+		lअगर->notअगरyqcq = शून्य;
+	पूर्ण
 
-	if (lif->adminqcq) {
-		spin_lock_irqsave(&lif->adminq_lock, irqflags);
-		adminqcq = READ_ONCE(lif->adminqcq);
-		lif->adminqcq = NULL;
-		spin_unlock_irqrestore(&lif->adminq_lock, irqflags);
-		if (adminqcq) {
-			ionic_qcq_free(lif, adminqcq);
-			devm_kfree(dev, adminqcq);
-		}
-	}
+	अगर (lअगर->adminqcq) अणु
+		spin_lock_irqsave(&lअगर->adminq_lock, irqflags);
+		adminqcq = READ_ONCE(lअगर->adminqcq);
+		lअगर->adminqcq = शून्य;
+		spin_unlock_irqrestore(&lअगर->adminq_lock, irqflags);
+		अगर (adminqcq) अणु
+			ionic_qcq_मुक्त(lअगर, adminqcq);
+			devm_kमुक्त(dev, adminqcq);
+		पूर्ण
+	पूर्ण
 
-	if (lif->rxqcqs) {
-		devm_kfree(dev, lif->rxqstats);
-		lif->rxqstats = NULL;
-		devm_kfree(dev, lif->rxqcqs);
-		lif->rxqcqs = NULL;
-	}
+	अगर (lअगर->rxqcqs) अणु
+		devm_kमुक्त(dev, lअगर->rxqstats);
+		lअगर->rxqstats = शून्य;
+		devm_kमुक्त(dev, lअगर->rxqcqs);
+		lअगर->rxqcqs = शून्य;
+	पूर्ण
 
-	if (lif->txqcqs) {
-		devm_kfree(dev, lif->txqstats);
-		lif->txqstats = NULL;
-		devm_kfree(dev, lif->txqcqs);
-		lif->txqcqs = NULL;
-	}
-}
+	अगर (lअगर->txqcqs) अणु
+		devm_kमुक्त(dev, lअगर->txqstats);
+		lअगर->txqstats = शून्य;
+		devm_kमुक्त(dev, lअगर->txqcqs);
+		lअगर->txqcqs = शून्य;
+	पूर्ण
+पूर्ण
 
-static void ionic_link_qcq_interrupts(struct ionic_qcq *src_qcq,
-				      struct ionic_qcq *n_qcq)
-{
-	if (WARN_ON(n_qcq->flags & IONIC_QCQ_F_INTR)) {
-		ionic_intr_free(n_qcq->cq.lif->ionic, n_qcq->intr.index);
+अटल व्योम ionic_link_qcq_पूर्णांकerrupts(काष्ठा ionic_qcq *src_qcq,
+				      काष्ठा ionic_qcq *n_qcq)
+अणु
+	अगर (WARN_ON(n_qcq->flags & IONIC_QCQ_F_INTR)) अणु
+		ionic_पूर्णांकr_मुक्त(n_qcq->cq.lअगर->ionic, n_qcq->पूर्णांकr.index);
 		n_qcq->flags &= ~IONIC_QCQ_F_INTR;
-	}
+	पूर्ण
 
-	n_qcq->intr.vector = src_qcq->intr.vector;
-	n_qcq->intr.index = src_qcq->intr.index;
-}
+	n_qcq->पूर्णांकr.vector = src_qcq->पूर्णांकr.vector;
+	n_qcq->पूर्णांकr.index = src_qcq->पूर्णांकr.index;
+पूर्ण
 
-static int ionic_alloc_qcq_interrupt(struct ionic_lif *lif, struct ionic_qcq *qcq)
-{
-	int err;
+अटल पूर्णांक ionic_alloc_qcq_पूर्णांकerrupt(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq)
+अणु
+	पूर्णांक err;
 
-	if (!(qcq->flags & IONIC_QCQ_F_INTR)) {
-		qcq->intr.index = IONIC_INTR_INDEX_NOT_ASSIGNED;
-		return 0;
-	}
+	अगर (!(qcq->flags & IONIC_QCQ_F_INTR)) अणु
+		qcq->पूर्णांकr.index = IONIC_INTR_INDEX_NOT_ASSIGNED;
+		वापस 0;
+	पूर्ण
 
-	err = ionic_intr_alloc(lif, &qcq->intr);
-	if (err) {
-		netdev_warn(lif->netdev, "no intr for %s: %d\n",
+	err = ionic_पूर्णांकr_alloc(lअगर, &qcq->पूर्णांकr);
+	अगर (err) अणु
+		netdev_warn(lअगर->netdev, "no intr for %s: %d\n",
 			    qcq->q.name, err);
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
-	err = ionic_bus_get_irq(lif->ionic, qcq->intr.index);
-	if (err < 0) {
-		netdev_warn(lif->netdev, "no vector for %s: %d\n",
+	err = ionic_bus_get_irq(lअगर->ionic, qcq->पूर्णांकr.index);
+	अगर (err < 0) अणु
+		netdev_warn(lअगर->netdev, "no vector for %s: %d\n",
 			    qcq->q.name, err);
-		goto err_out_free_intr;
-	}
-	qcq->intr.vector = err;
-	ionic_intr_mask_assert(lif->ionic->idev.intr_ctrl, qcq->intr.index,
+		जाओ err_out_मुक्त_पूर्णांकr;
+	पूर्ण
+	qcq->पूर्णांकr.vector = err;
+	ionic_पूर्णांकr_mask_निश्चित(lअगर->ionic->idev.पूर्णांकr_ctrl, qcq->पूर्णांकr.index,
 			       IONIC_INTR_MASK_SET);
 
-	err = ionic_request_irq(lif, qcq);
-	if (err) {
-		netdev_warn(lif->netdev, "irq request failed %d\n", err);
-		goto err_out_free_intr;
-	}
+	err = ionic_request_irq(lअगर, qcq);
+	अगर (err) अणु
+		netdev_warn(lअगर->netdev, "irq request failed %d\n", err);
+		जाओ err_out_मुक्त_पूर्णांकr;
+	पूर्ण
 
 	/* try to get the irq on the local numa node first */
-	qcq->intr.cpu = cpumask_local_spread(qcq->intr.index,
-					     dev_to_node(lif->ionic->dev));
-	if (qcq->intr.cpu != -1)
-		cpumask_set_cpu(qcq->intr.cpu, &qcq->intr.affinity_mask);
+	qcq->पूर्णांकr.cpu = cpumask_local_spपढ़ो(qcq->पूर्णांकr.index,
+					     dev_to_node(lअगर->ionic->dev));
+	अगर (qcq->पूर्णांकr.cpu != -1)
+		cpumask_set_cpu(qcq->पूर्णांकr.cpu, &qcq->पूर्णांकr.affinity_mask);
 
-	netdev_dbg(lif->netdev, "%s: Interrupt index %d\n", qcq->q.name, qcq->intr.index);
-	return 0;
+	netdev_dbg(lअगर->netdev, "%s: Interrupt index %d\n", qcq->q.name, qcq->पूर्णांकr.index);
+	वापस 0;
 
-err_out_free_intr:
-	ionic_intr_free(lif->ionic, qcq->intr.index);
+err_out_मुक्त_पूर्णांकr:
+	ionic_पूर्णांकr_मुक्त(lअगर->ionic, qcq->पूर्णांकr.index);
 err_out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ionic_qcq_alloc(struct ionic_lif *lif, unsigned int type,
-			   unsigned int index,
-			   const char *name, unsigned int flags,
-			   unsigned int num_descs, unsigned int desc_size,
-			   unsigned int cq_desc_size,
-			   unsigned int sg_desc_size,
-			   unsigned int pid, struct ionic_qcq **qcq)
-{
-	struct ionic_dev *idev = &lif->ionic->idev;
-	struct device *dev = lif->ionic->dev;
-	void *q_base, *cq_base, *sg_base;
+अटल पूर्णांक ionic_qcq_alloc(काष्ठा ionic_lअगर *lअगर, अचिन्हित पूर्णांक type,
+			   अचिन्हित पूर्णांक index,
+			   स्थिर अक्षर *name, अचिन्हित पूर्णांक flags,
+			   अचिन्हित पूर्णांक num_descs, अचिन्हित पूर्णांक desc_size,
+			   अचिन्हित पूर्णांक cq_desc_size,
+			   अचिन्हित पूर्णांक sg_desc_size,
+			   अचिन्हित पूर्णांक pid, काष्ठा ionic_qcq **qcq)
+अणु
+	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
+	काष्ठा device *dev = lअगर->ionic->dev;
+	व्योम *q_base, *cq_base, *sg_base;
 	dma_addr_t cq_base_pa = 0;
 	dma_addr_t sg_base_pa = 0;
 	dma_addr_t q_base_pa = 0;
-	struct ionic_qcq *new;
-	int err;
+	काष्ठा ionic_qcq *new;
+	पूर्णांक err;
 
-	*qcq = NULL;
+	*qcq = शून्य;
 
-	new = devm_kzalloc(dev, sizeof(*new), GFP_KERNEL);
-	if (!new) {
-		netdev_err(lif->netdev, "Cannot allocate queue structure\n");
+	new = devm_kzalloc(dev, माप(*new), GFP_KERNEL);
+	अगर (!new) अणु
+		netdev_err(lअगर->netdev, "Cannot allocate queue structure\n");
 		err = -ENOMEM;
-		goto err_out;
-	}
+		जाओ err_out;
+	पूर्ण
 
 	new->q.dev = dev;
 	new->flags = flags;
 
-	new->q.info = devm_kcalloc(dev, num_descs, sizeof(*new->q.info),
+	new->q.info = devm_kसुस्मृति(dev, num_descs, माप(*new->q.info),
 				   GFP_KERNEL);
-	if (!new->q.info) {
-		netdev_err(lif->netdev, "Cannot allocate queue info\n");
+	अगर (!new->q.info) अणु
+		netdev_err(lअगर->netdev, "Cannot allocate queue info\n");
 		err = -ENOMEM;
-		goto err_out_free_qcq;
-	}
+		जाओ err_out_मुक्त_qcq;
+	पूर्ण
 
 	new->q.type = type;
-	new->q.max_sg_elems = lif->qtype_info[type].max_sg_elems;
+	new->q.max_sg_elems = lअगर->qtype_info[type].max_sg_elems;
 
-	err = ionic_q_init(lif, idev, &new->q, index, name, num_descs,
+	err = ionic_q_init(lअगर, idev, &new->q, index, name, num_descs,
 			   desc_size, sg_desc_size, pid);
-	if (err) {
-		netdev_err(lif->netdev, "Cannot initialize queue\n");
-		goto err_out_free_q_info;
-	}
+	अगर (err) अणु
+		netdev_err(lअगर->netdev, "Cannot initialize queue\n");
+		जाओ err_out_मुक्त_q_info;
+	पूर्ण
 
-	err = ionic_alloc_qcq_interrupt(lif, new);
-	if (err)
-		goto err_out;
+	err = ionic_alloc_qcq_पूर्णांकerrupt(lअगर, new);
+	अगर (err)
+		जाओ err_out;
 
-	new->cq.info = devm_kcalloc(dev, num_descs, sizeof(*new->cq.info),
+	new->cq.info = devm_kसुस्मृति(dev, num_descs, माप(*new->cq.info),
 				    GFP_KERNEL);
-	if (!new->cq.info) {
-		netdev_err(lif->netdev, "Cannot allocate completion queue info\n");
+	अगर (!new->cq.info) अणु
+		netdev_err(lअगर->netdev, "Cannot allocate completion queue info\n");
 		err = -ENOMEM;
-		goto err_out_free_irq;
-	}
+		जाओ err_out_मुक्त_irq;
+	पूर्ण
 
-	err = ionic_cq_init(lif, &new->cq, &new->intr, num_descs, cq_desc_size);
-	if (err) {
-		netdev_err(lif->netdev, "Cannot initialize completion queue\n");
-		goto err_out_free_cq_info;
-	}
+	err = ionic_cq_init(lअगर, &new->cq, &new->पूर्णांकr, num_descs, cq_desc_size);
+	अगर (err) अणु
+		netdev_err(lअगर->netdev, "Cannot initialize completion queue\n");
+		जाओ err_out_मुक्त_cq_info;
+	पूर्ण
 
-	if (flags & IONIC_QCQ_F_NOTIFYQ) {
-		int q_size, cq_size;
+	अगर (flags & IONIC_QCQ_F_NOTIFYQ) अणु
+		पूर्णांक q_size, cq_size;
 
-		/* q & cq need to be contiguous in case of notifyq */
+		/* q & cq need to be contiguous in हाल of notअगरyq */
 		q_size = ALIGN(num_descs * desc_size, PAGE_SIZE);
 		cq_size = ALIGN(num_descs * cq_desc_size, PAGE_SIZE);
 
 		new->q_size = PAGE_SIZE + q_size + cq_size;
 		new->q_base = dma_alloc_coherent(dev, new->q_size,
 						 &new->q_base_pa, GFP_KERNEL);
-		if (!new->q_base) {
-			netdev_err(lif->netdev, "Cannot allocate qcq DMA memory\n");
+		अगर (!new->q_base) अणु
+			netdev_err(lअगर->netdev, "Cannot allocate qcq DMA memory\n");
 			err = -ENOMEM;
-			goto err_out_free_cq_info;
-		}
+			जाओ err_out_मुक्त_cq_info;
+		पूर्ण
 		q_base = PTR_ALIGN(new->q_base, PAGE_SIZE);
 		q_base_pa = ALIGN(new->q_base_pa, PAGE_SIZE);
 		ionic_q_map(&new->q, q_base, q_base_pa);
@@ -575,15 +576,15 @@ static int ionic_qcq_alloc(struct ionic_lif *lif, unsigned int type,
 		cq_base_pa = ALIGN(new->q_base_pa + q_size, PAGE_SIZE);
 		ionic_cq_map(&new->cq, cq_base, cq_base_pa);
 		ionic_cq_bind(&new->cq, &new->q);
-	} else {
+	पूर्ण अन्यथा अणु
 		new->q_size = PAGE_SIZE + (num_descs * desc_size);
 		new->q_base = dma_alloc_coherent(dev, new->q_size, &new->q_base_pa,
 						 GFP_KERNEL);
-		if (!new->q_base) {
-			netdev_err(lif->netdev, "Cannot allocate queue DMA memory\n");
+		अगर (!new->q_base) अणु
+			netdev_err(lअगर->netdev, "Cannot allocate queue DMA memory\n");
 			err = -ENOMEM;
-			goto err_out_free_cq_info;
-		}
+			जाओ err_out_मुक्त_cq_info;
+		पूर्ण
 		q_base = PTR_ALIGN(new->q_base, PAGE_SIZE);
 		q_base_pa = ALIGN(new->q_base_pa, PAGE_SIZE);
 		ionic_q_map(&new->q, q_base, q_base_pa);
@@ -591,138 +592,138 @@ static int ionic_qcq_alloc(struct ionic_lif *lif, unsigned int type,
 		new->cq_size = PAGE_SIZE + (num_descs * cq_desc_size);
 		new->cq_base = dma_alloc_coherent(dev, new->cq_size, &new->cq_base_pa,
 						  GFP_KERNEL);
-		if (!new->cq_base) {
-			netdev_err(lif->netdev, "Cannot allocate cq DMA memory\n");
+		अगर (!new->cq_base) अणु
+			netdev_err(lअगर->netdev, "Cannot allocate cq DMA memory\n");
 			err = -ENOMEM;
-			goto err_out_free_q;
-		}
+			जाओ err_out_मुक्त_q;
+		पूर्ण
 		cq_base = PTR_ALIGN(new->cq_base, PAGE_SIZE);
 		cq_base_pa = ALIGN(new->cq_base_pa, PAGE_SIZE);
 		ionic_cq_map(&new->cq, cq_base, cq_base_pa);
 		ionic_cq_bind(&new->cq, &new->q);
-	}
+	पूर्ण
 
-	if (flags & IONIC_QCQ_F_SG) {
+	अगर (flags & IONIC_QCQ_F_SG) अणु
 		new->sg_size = PAGE_SIZE + (num_descs * sg_desc_size);
 		new->sg_base = dma_alloc_coherent(dev, new->sg_size, &new->sg_base_pa,
 						  GFP_KERNEL);
-		if (!new->sg_base) {
-			netdev_err(lif->netdev, "Cannot allocate sg DMA memory\n");
+		अगर (!new->sg_base) अणु
+			netdev_err(lअगर->netdev, "Cannot allocate sg DMA memory\n");
 			err = -ENOMEM;
-			goto err_out_free_cq;
-		}
+			जाओ err_out_मुक्त_cq;
+		पूर्ण
 		sg_base = PTR_ALIGN(new->sg_base, PAGE_SIZE);
 		sg_base_pa = ALIGN(new->sg_base_pa, PAGE_SIZE);
 		ionic_q_sg_map(&new->q, sg_base, sg_base_pa);
-	}
+	पूर्ण
 
 	INIT_WORK(&new->dim.work, ionic_dim_work);
 	new->dim.mode = DIM_CQ_PERIOD_MODE_START_FROM_EQE;
 
 	*qcq = new;
 
-	return 0;
+	वापस 0;
 
-err_out_free_cq:
-	dma_free_coherent(dev, new->cq_size, new->cq_base, new->cq_base_pa);
-err_out_free_q:
-	dma_free_coherent(dev, new->q_size, new->q_base, new->q_base_pa);
-err_out_free_cq_info:
-	devm_kfree(dev, new->cq.info);
-err_out_free_irq:
-	if (flags & IONIC_QCQ_F_INTR) {
-		devm_free_irq(dev, new->intr.vector, &new->napi);
-		ionic_intr_free(lif->ionic, new->intr.index);
-	}
-err_out_free_q_info:
-	devm_kfree(dev, new->q.info);
-err_out_free_qcq:
-	devm_kfree(dev, new);
+err_out_मुक्त_cq:
+	dma_मुक्त_coherent(dev, new->cq_size, new->cq_base, new->cq_base_pa);
+err_out_मुक्त_q:
+	dma_मुक्त_coherent(dev, new->q_size, new->q_base, new->q_base_pa);
+err_out_मुक्त_cq_info:
+	devm_kमुक्त(dev, new->cq.info);
+err_out_मुक्त_irq:
+	अगर (flags & IONIC_QCQ_F_INTR) अणु
+		devm_मुक्त_irq(dev, new->पूर्णांकr.vector, &new->napi);
+		ionic_पूर्णांकr_मुक्त(lअगर->ionic, new->पूर्णांकr.index);
+	पूर्ण
+err_out_मुक्त_q_info:
+	devm_kमुक्त(dev, new->q.info);
+err_out_मुक्त_qcq:
+	devm_kमुक्त(dev, new);
 err_out:
 	dev_err(dev, "qcq alloc of %s%d failed %d\n", name, index, err);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ionic_qcqs_alloc(struct ionic_lif *lif)
-{
-	struct device *dev = lif->ionic->dev;
-	unsigned int flags;
-	int err;
+अटल पूर्णांक ionic_qcqs_alloc(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा device *dev = lअगर->ionic->dev;
+	अचिन्हित पूर्णांक flags;
+	पूर्णांक err;
 
 	flags = IONIC_QCQ_F_INTR;
-	err = ionic_qcq_alloc(lif, IONIC_QTYPE_ADMINQ, 0, "admin", flags,
+	err = ionic_qcq_alloc(lअगर, IONIC_QTYPE_ADMINQ, 0, "admin", flags,
 			      IONIC_ADMINQ_LENGTH,
-			      sizeof(struct ionic_admin_cmd),
-			      sizeof(struct ionic_admin_comp),
-			      0, lif->kern_pid, &lif->adminqcq);
-	if (err)
-		return err;
-	ionic_debugfs_add_qcq(lif, lif->adminqcq);
+			      माप(काष्ठा ionic_admin_cmd),
+			      माप(काष्ठा ionic_admin_comp),
+			      0, lअगर->kern_pid, &lअगर->adminqcq);
+	अगर (err)
+		वापस err;
+	ionic_debugfs_add_qcq(lअगर, lअगर->adminqcq);
 
-	if (lif->ionic->nnqs_per_lif) {
+	अगर (lअगर->ionic->nnqs_per_lअगर) अणु
 		flags = IONIC_QCQ_F_NOTIFYQ;
-		err = ionic_qcq_alloc(lif, IONIC_QTYPE_NOTIFYQ, 0, "notifyq",
+		err = ionic_qcq_alloc(lअगर, IONIC_QTYPE_NOTIFYQ, 0, "notifyq",
 				      flags, IONIC_NOTIFYQ_LENGTH,
-				      sizeof(struct ionic_notifyq_cmd),
-				      sizeof(union ionic_notifyq_comp),
-				      0, lif->kern_pid, &lif->notifyqcq);
-		if (err)
-			goto err_out;
-		ionic_debugfs_add_qcq(lif, lif->notifyqcq);
+				      माप(काष्ठा ionic_notअगरyq_cmd),
+				      माप(जोड़ ionic_notअगरyq_comp),
+				      0, lअगर->kern_pid, &lअगर->notअगरyqcq);
+		अगर (err)
+			जाओ err_out;
+		ionic_debugfs_add_qcq(lअगर, lअगर->notअगरyqcq);
 
-		/* Let the notifyq ride on the adminq interrupt */
-		ionic_link_qcq_interrupts(lif->adminqcq, lif->notifyqcq);
-	}
+		/* Let the notअगरyq ride on the adminq पूर्णांकerrupt */
+		ionic_link_qcq_पूर्णांकerrupts(lअगर->adminqcq, lअगर->notअगरyqcq);
+	पूर्ण
 
 	err = -ENOMEM;
-	lif->txqcqs = devm_kcalloc(dev, lif->ionic->ntxqs_per_lif,
-				   sizeof(*lif->txqcqs), GFP_KERNEL);
-	if (!lif->txqcqs)
-		goto err_out;
-	lif->rxqcqs = devm_kcalloc(dev, lif->ionic->nrxqs_per_lif,
-				   sizeof(*lif->rxqcqs), GFP_KERNEL);
-	if (!lif->rxqcqs)
-		goto err_out;
+	lअगर->txqcqs = devm_kसुस्मृति(dev, lअगर->ionic->ntxqs_per_lअगर,
+				   माप(*lअगर->txqcqs), GFP_KERNEL);
+	अगर (!lअगर->txqcqs)
+		जाओ err_out;
+	lअगर->rxqcqs = devm_kसुस्मृति(dev, lअगर->ionic->nrxqs_per_lअगर,
+				   माप(*lअगर->rxqcqs), GFP_KERNEL);
+	अगर (!lअगर->rxqcqs)
+		जाओ err_out;
 
-	lif->txqstats = devm_kcalloc(dev, lif->ionic->ntxqs_per_lif + 1,
-				     sizeof(*lif->txqstats), GFP_KERNEL);
-	if (!lif->txqstats)
-		goto err_out;
-	lif->rxqstats = devm_kcalloc(dev, lif->ionic->nrxqs_per_lif + 1,
-				     sizeof(*lif->rxqstats), GFP_KERNEL);
-	if (!lif->rxqstats)
-		goto err_out;
+	lअगर->txqstats = devm_kसुस्मृति(dev, lअगर->ionic->ntxqs_per_lअगर + 1,
+				     माप(*lअगर->txqstats), GFP_KERNEL);
+	अगर (!lअगर->txqstats)
+		जाओ err_out;
+	lअगर->rxqstats = devm_kसुस्मृति(dev, lअगर->ionic->nrxqs_per_lअगर + 1,
+				     माप(*lअगर->rxqstats), GFP_KERNEL);
+	अगर (!lअगर->rxqstats)
+		जाओ err_out;
 
-	return 0;
+	वापस 0;
 
 err_out:
-	ionic_qcqs_free(lif);
-	return err;
-}
+	ionic_qcqs_मुक्त(lअगर);
+	वापस err;
+पूर्ण
 
-static void ionic_qcq_sanitize(struct ionic_qcq *qcq)
-{
+अटल व्योम ionic_qcq_sanitize(काष्ठा ionic_qcq *qcq)
+अणु
 	qcq->q.tail_idx = 0;
 	qcq->q.head_idx = 0;
 	qcq->cq.tail_idx = 0;
-	qcq->cq.done_color = 1;
-	memset(qcq->q_base, 0, qcq->q_size);
-	memset(qcq->cq_base, 0, qcq->cq_size);
-	memset(qcq->sg_base, 0, qcq->sg_size);
-}
+	qcq->cq.करोne_color = 1;
+	स_रखो(qcq->q_base, 0, qcq->q_size);
+	स_रखो(qcq->cq_base, 0, qcq->cq_size);
+	स_रखो(qcq->sg_base, 0, qcq->sg_size);
+पूर्ण
 
-static int ionic_lif_txq_init(struct ionic_lif *lif, struct ionic_qcq *qcq)
-{
-	struct device *dev = lif->ionic->dev;
-	struct ionic_queue *q = &qcq->q;
-	struct ionic_cq *cq = &qcq->cq;
-	struct ionic_admin_ctx ctx = {
+अटल पूर्णांक ionic_lअगर_txq_init(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq)
+अणु
+	काष्ठा device *dev = lअगर->ionic->dev;
+	काष्ठा ionic_queue *q = &qcq->q;
+	काष्ठा ionic_cq *cq = &qcq->cq;
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.q_init = {
+		.cmd.q_init = अणु
 			.opcode = IONIC_CMD_Q_INIT,
-			.lif_index = cpu_to_le16(lif->index),
+			.lअगर_index = cpu_to_le16(lअगर->index),
 			.type = q->type,
-			.ver = lif->qtype_info[q->type].version,
+			.ver = lअगर->qtype_info[q->type].version,
 			.index = cpu_to_le32(q->index),
 			.flags = cpu_to_le16(IONIC_QINIT_F_IRQ |
 					     IONIC_QINIT_F_SG),
@@ -732,14 +733,14 @@ static int ionic_lif_txq_init(struct ionic_lif *lif, struct ionic_qcq *qcq)
 			.cq_ring_base = cpu_to_le64(cq->base_pa),
 			.sg_ring_base = cpu_to_le64(q->sg_base_pa),
 			.features = cpu_to_le64(q->features),
-		},
-	};
-	unsigned int intr_index;
-	int err;
+		पूर्ण,
+	पूर्ण;
+	अचिन्हित पूर्णांक पूर्णांकr_index;
+	पूर्णांक err;
 
-	intr_index = qcq->intr.index;
+	पूर्णांकr_index = qcq->पूर्णांकr.index;
 
-	ctx.cmd.q_init.intr_index = cpu_to_le16(intr_index);
+	ctx.cmd.q_init.पूर्णांकr_index = cpu_to_le16(पूर्णांकr_index);
 
 	dev_dbg(dev, "txq_init.pid %d\n", ctx.cmd.q_init.pid);
 	dev_dbg(dev, "txq_init.index %d\n", ctx.cmd.q_init.index);
@@ -747,13 +748,13 @@ static int ionic_lif_txq_init(struct ionic_lif *lif, struct ionic_qcq *qcq)
 	dev_dbg(dev, "txq_init.ring_size %d\n", ctx.cmd.q_init.ring_size);
 	dev_dbg(dev, "txq_init.flags 0x%x\n", ctx.cmd.q_init.flags);
 	dev_dbg(dev, "txq_init.ver %d\n", ctx.cmd.q_init.ver);
-	dev_dbg(dev, "txq_init.intr_index %d\n", ctx.cmd.q_init.intr_index);
+	dev_dbg(dev, "txq_init.intr_index %d\n", ctx.cmd.q_init.पूर्णांकr_index);
 
 	ionic_qcq_sanitize(qcq);
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err)
-		return err;
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err)
+		वापस err;
 
 	q->hw_type = ctx.comp.q_init.hw_type;
 	q->hw_index = le32_to_cpu(ctx.comp.q_init.hw_index);
@@ -762,40 +763,40 @@ static int ionic_lif_txq_init(struct ionic_lif *lif, struct ionic_qcq *qcq)
 	dev_dbg(dev, "txq->hw_type %d\n", q->hw_type);
 	dev_dbg(dev, "txq->hw_index %d\n", q->hw_index);
 
-	if (test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state))
-		netif_napi_add(lif->netdev, &qcq->napi, ionic_tx_napi,
+	अगर (test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state))
+		netअगर_napi_add(lअगर->netdev, &qcq->napi, ionic_tx_napi,
 			       NAPI_POLL_WEIGHT);
 
 	qcq->flags |= IONIC_QCQ_F_INITED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ionic_lif_rxq_init(struct ionic_lif *lif, struct ionic_qcq *qcq)
-{
-	struct device *dev = lif->ionic->dev;
-	struct ionic_queue *q = &qcq->q;
-	struct ionic_cq *cq = &qcq->cq;
-	struct ionic_admin_ctx ctx = {
+अटल पूर्णांक ionic_lअगर_rxq_init(काष्ठा ionic_lअगर *lअगर, काष्ठा ionic_qcq *qcq)
+अणु
+	काष्ठा device *dev = lअगर->ionic->dev;
+	काष्ठा ionic_queue *q = &qcq->q;
+	काष्ठा ionic_cq *cq = &qcq->cq;
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.q_init = {
+		.cmd.q_init = अणु
 			.opcode = IONIC_CMD_Q_INIT,
-			.lif_index = cpu_to_le16(lif->index),
+			.lअगर_index = cpu_to_le16(lअगर->index),
 			.type = q->type,
-			.ver = lif->qtype_info[q->type].version,
+			.ver = lअगर->qtype_info[q->type].version,
 			.index = cpu_to_le32(q->index),
 			.flags = cpu_to_le16(IONIC_QINIT_F_IRQ |
 					     IONIC_QINIT_F_SG),
-			.intr_index = cpu_to_le16(cq->bound_intr->index),
+			.पूर्णांकr_index = cpu_to_le16(cq->bound_पूर्णांकr->index),
 			.pid = cpu_to_le16(q->pid),
 			.ring_size = ilog2(q->num_descs),
 			.ring_base = cpu_to_le64(q->base_pa),
 			.cq_ring_base = cpu_to_le64(cq->base_pa),
 			.sg_ring_base = cpu_to_le64(q->sg_base_pa),
 			.features = cpu_to_le64(q->features),
-		},
-	};
-	int err;
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक err;
 
 	dev_dbg(dev, "rxq_init.pid %d\n", ctx.cmd.q_init.pid);
 	dev_dbg(dev, "rxq_init.index %d\n", ctx.cmd.q_init.index);
@@ -803,13 +804,13 @@ static int ionic_lif_rxq_init(struct ionic_lif *lif, struct ionic_qcq *qcq)
 	dev_dbg(dev, "rxq_init.ring_size %d\n", ctx.cmd.q_init.ring_size);
 	dev_dbg(dev, "rxq_init.flags 0x%x\n", ctx.cmd.q_init.flags);
 	dev_dbg(dev, "rxq_init.ver %d\n", ctx.cmd.q_init.ver);
-	dev_dbg(dev, "rxq_init.intr_index %d\n", ctx.cmd.q_init.intr_index);
+	dev_dbg(dev, "rxq_init.intr_index %d\n", ctx.cmd.q_init.पूर्णांकr_index);
 
 	ionic_qcq_sanitize(qcq);
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err)
-		return err;
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err)
+		वापस err;
 
 	q->hw_type = ctx.comp.q_init.hw_type;
 	q->hw_index = le32_to_cpu(ctx.comp.q_init.hw_index);
@@ -818,381 +819,381 @@ static int ionic_lif_rxq_init(struct ionic_lif *lif, struct ionic_qcq *qcq)
 	dev_dbg(dev, "rxq->hw_type %d\n", q->hw_type);
 	dev_dbg(dev, "rxq->hw_index %d\n", q->hw_index);
 
-	if (test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state))
-		netif_napi_add(lif->netdev, &qcq->napi, ionic_rx_napi,
+	अगर (test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state))
+		netअगर_napi_add(lअगर->netdev, &qcq->napi, ionic_rx_napi,
 			       NAPI_POLL_WEIGHT);
-	else
-		netif_napi_add(lif->netdev, &qcq->napi, ionic_txrx_napi,
+	अन्यथा
+		netअगर_napi_add(lअगर->netdev, &qcq->napi, ionic_txrx_napi,
 			       NAPI_POLL_WEIGHT);
 
 	qcq->flags |= IONIC_QCQ_F_INITED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ionic_lif_create_hwstamp_txq(struct ionic_lif *lif)
-{
-	unsigned int num_desc, desc_sz, comp_sz, sg_desc_sz;
-	unsigned int txq_i, flags;
-	struct ionic_qcq *txq;
+पूर्णांक ionic_lअगर_create_hwstamp_txq(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अचिन्हित पूर्णांक num_desc, desc_sz, comp_sz, sg_desc_sz;
+	अचिन्हित पूर्णांक txq_i, flags;
+	काष्ठा ionic_qcq *txq;
 	u64 features;
-	int err;
+	पूर्णांक err;
 
-	mutex_lock(&lif->queue_lock);
+	mutex_lock(&lअगर->queue_lock);
 
-	if (lif->hwstamp_txq)
-		goto out;
+	अगर (lअगर->hwstamp_txq)
+		जाओ out;
 
 	features = IONIC_Q_F_2X_CQ_DESC | IONIC_TXQ_F_HWSTAMP;
 
 	num_desc = IONIC_MIN_TXRX_DESC;
-	desc_sz = sizeof(struct ionic_txq_desc);
-	comp_sz = 2 * sizeof(struct ionic_txq_comp);
+	desc_sz = माप(काष्ठा ionic_txq_desc);
+	comp_sz = 2 * माप(काष्ठा ionic_txq_comp);
 
-	if (lif->qtype_info[IONIC_QTYPE_TXQ].version >= 1 &&
-	    lif->qtype_info[IONIC_QTYPE_TXQ].sg_desc_sz == sizeof(struct ionic_txq_sg_desc_v1))
-		sg_desc_sz = sizeof(struct ionic_txq_sg_desc_v1);
-	else
-		sg_desc_sz = sizeof(struct ionic_txq_sg_desc);
+	अगर (lअगर->qtype_info[IONIC_QTYPE_TXQ].version >= 1 &&
+	    lअगर->qtype_info[IONIC_QTYPE_TXQ].sg_desc_sz == माप(काष्ठा ionic_txq_sg_desc_v1))
+		sg_desc_sz = माप(काष्ठा ionic_txq_sg_desc_v1);
+	अन्यथा
+		sg_desc_sz = माप(काष्ठा ionic_txq_sg_desc);
 
-	txq_i = lif->ionic->ntxqs_per_lif;
+	txq_i = lअगर->ionic->ntxqs_per_lअगर;
 	flags = IONIC_QCQ_F_TX_STATS | IONIC_QCQ_F_SG;
 
-	err = ionic_qcq_alloc(lif, IONIC_QTYPE_TXQ, txq_i, "hwstamp_tx", flags,
+	err = ionic_qcq_alloc(lअगर, IONIC_QTYPE_TXQ, txq_i, "hwstamp_tx", flags,
 			      num_desc, desc_sz, comp_sz, sg_desc_sz,
-			      lif->kern_pid, &txq);
-	if (err)
-		goto err_qcq_alloc;
+			      lअगर->kern_pid, &txq);
+	अगर (err)
+		जाओ err_qcq_alloc;
 
 	txq->q.features = features;
 
-	ionic_link_qcq_interrupts(lif->adminqcq, txq);
-	ionic_debugfs_add_qcq(lif, txq);
+	ionic_link_qcq_पूर्णांकerrupts(lअगर->adminqcq, txq);
+	ionic_debugfs_add_qcq(lअगर, txq);
 
-	lif->hwstamp_txq = txq;
+	lअगर->hwstamp_txq = txq;
 
-	if (netif_running(lif->netdev)) {
-		err = ionic_lif_txq_init(lif, txq);
-		if (err)
-			goto err_qcq_init;
+	अगर (netअगर_running(lअगर->netdev)) अणु
+		err = ionic_lअगर_txq_init(lअगर, txq);
+		अगर (err)
+			जाओ err_qcq_init;
 
-		if (test_bit(IONIC_LIF_F_UP, lif->state)) {
+		अगर (test_bit(IONIC_LIF_F_UP, lअगर->state)) अणु
 			err = ionic_qcq_enable(txq);
-			if (err)
-				goto err_qcq_enable;
-		}
-	}
+			अगर (err)
+				जाओ err_qcq_enable;
+		पूर्ण
+	पूर्ण
 
 out:
-	mutex_unlock(&lif->queue_lock);
+	mutex_unlock(&lअगर->queue_lock);
 
-	return 0;
+	वापस 0;
 
 err_qcq_enable:
-	ionic_lif_qcq_deinit(lif, txq);
+	ionic_lअगर_qcq_deinit(lअगर, txq);
 err_qcq_init:
-	lif->hwstamp_txq = NULL;
+	lअगर->hwstamp_txq = शून्य;
 	ionic_debugfs_del_qcq(txq);
-	ionic_qcq_free(lif, txq);
-	devm_kfree(lif->ionic->dev, txq);
+	ionic_qcq_मुक्त(lअगर, txq);
+	devm_kमुक्त(lअगर->ionic->dev, txq);
 err_qcq_alloc:
-	mutex_unlock(&lif->queue_lock);
-	return err;
-}
+	mutex_unlock(&lअगर->queue_lock);
+	वापस err;
+पूर्ण
 
-int ionic_lif_create_hwstamp_rxq(struct ionic_lif *lif)
-{
-	unsigned int num_desc, desc_sz, comp_sz, sg_desc_sz;
-	unsigned int rxq_i, flags;
-	struct ionic_qcq *rxq;
+पूर्णांक ionic_lअगर_create_hwstamp_rxq(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अचिन्हित पूर्णांक num_desc, desc_sz, comp_sz, sg_desc_sz;
+	अचिन्हित पूर्णांक rxq_i, flags;
+	काष्ठा ionic_qcq *rxq;
 	u64 features;
-	int err;
+	पूर्णांक err;
 
-	mutex_lock(&lif->queue_lock);
+	mutex_lock(&lअगर->queue_lock);
 
-	if (lif->hwstamp_rxq)
-		goto out;
+	अगर (lअगर->hwstamp_rxq)
+		जाओ out;
 
 	features = IONIC_Q_F_2X_CQ_DESC | IONIC_RXQ_F_HWSTAMP;
 
 	num_desc = IONIC_MIN_TXRX_DESC;
-	desc_sz = sizeof(struct ionic_rxq_desc);
-	comp_sz = 2 * sizeof(struct ionic_rxq_comp);
-	sg_desc_sz = sizeof(struct ionic_rxq_sg_desc);
+	desc_sz = माप(काष्ठा ionic_rxq_desc);
+	comp_sz = 2 * माप(काष्ठा ionic_rxq_comp);
+	sg_desc_sz = माप(काष्ठा ionic_rxq_sg_desc);
 
-	rxq_i = lif->ionic->nrxqs_per_lif;
+	rxq_i = lअगर->ionic->nrxqs_per_lअगर;
 	flags = IONIC_QCQ_F_RX_STATS | IONIC_QCQ_F_SG;
 
-	err = ionic_qcq_alloc(lif, IONIC_QTYPE_RXQ, rxq_i, "hwstamp_rx", flags,
+	err = ionic_qcq_alloc(lअगर, IONIC_QTYPE_RXQ, rxq_i, "hwstamp_rx", flags,
 			      num_desc, desc_sz, comp_sz, sg_desc_sz,
-			      lif->kern_pid, &rxq);
-	if (err)
-		goto err_qcq_alloc;
+			      lअगर->kern_pid, &rxq);
+	अगर (err)
+		जाओ err_qcq_alloc;
 
 	rxq->q.features = features;
 
-	ionic_link_qcq_interrupts(lif->adminqcq, rxq);
-	ionic_debugfs_add_qcq(lif, rxq);
+	ionic_link_qcq_पूर्णांकerrupts(lअगर->adminqcq, rxq);
+	ionic_debugfs_add_qcq(lअगर, rxq);
 
-	lif->hwstamp_rxq = rxq;
+	lअगर->hwstamp_rxq = rxq;
 
-	if (netif_running(lif->netdev)) {
-		err = ionic_lif_rxq_init(lif, rxq);
-		if (err)
-			goto err_qcq_init;
+	अगर (netअगर_running(lअगर->netdev)) अणु
+		err = ionic_lअगर_rxq_init(lअगर, rxq);
+		अगर (err)
+			जाओ err_qcq_init;
 
-		if (test_bit(IONIC_LIF_F_UP, lif->state)) {
+		अगर (test_bit(IONIC_LIF_F_UP, lअगर->state)) अणु
 			ionic_rx_fill(&rxq->q);
 			err = ionic_qcq_enable(rxq);
-			if (err)
-				goto err_qcq_enable;
-		}
-	}
+			अगर (err)
+				जाओ err_qcq_enable;
+		पूर्ण
+	पूर्ण
 
 out:
-	mutex_unlock(&lif->queue_lock);
+	mutex_unlock(&lअगर->queue_lock);
 
-	return 0;
+	वापस 0;
 
 err_qcq_enable:
-	ionic_lif_qcq_deinit(lif, rxq);
+	ionic_lअगर_qcq_deinit(lअगर, rxq);
 err_qcq_init:
-	lif->hwstamp_rxq = NULL;
+	lअगर->hwstamp_rxq = शून्य;
 	ionic_debugfs_del_qcq(rxq);
-	ionic_qcq_free(lif, rxq);
-	devm_kfree(lif->ionic->dev, rxq);
+	ionic_qcq_मुक्त(lअगर, rxq);
+	devm_kमुक्त(lअगर->ionic->dev, rxq);
 err_qcq_alloc:
-	mutex_unlock(&lif->queue_lock);
-	return err;
-}
+	mutex_unlock(&lअगर->queue_lock);
+	वापस err;
+पूर्ण
 
-int ionic_lif_config_hwstamp_rxq_all(struct ionic_lif *lif, bool rx_all)
-{
-	struct ionic_queue_params qparam;
+पूर्णांक ionic_lअगर_config_hwstamp_rxq_all(काष्ठा ionic_lअगर *lअगर, bool rx_all)
+अणु
+	काष्ठा ionic_queue_params qparam;
 
-	ionic_init_queue_params(lif, &qparam);
+	ionic_init_queue_params(lअगर, &qparam);
 
-	if (rx_all)
+	अगर (rx_all)
 		qparam.rxq_features = IONIC_Q_F_2X_CQ_DESC | IONIC_RXQ_F_HWSTAMP;
-	else
+	अन्यथा
 		qparam.rxq_features = 0;
 
-	/* if we're not running, just set the values and return */
-	if (!netif_running(lif->netdev)) {
-		lif->rxq_features = qparam.rxq_features;
-		return 0;
-	}
+	/* अगर we're not running, just set the values and वापस */
+	अगर (!netअगर_running(lअगर->netdev)) अणु
+		lअगर->rxq_features = qparam.rxq_features;
+		वापस 0;
+	पूर्ण
 
-	return ionic_reconfigure_queues(lif, &qparam);
-}
+	वापस ionic_reconfigure_queues(lअगर, &qparam);
+पूर्ण
 
-int ionic_lif_set_hwstamp_txmode(struct ionic_lif *lif, u16 txstamp_mode)
-{
-	struct ionic_admin_ctx ctx = {
+पूर्णांक ionic_lअगर_set_hwstamp_txmode(काष्ठा ionic_lअगर *lअगर, u16 txstamp_mode)
+अणु
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.lif_setattr = {
+		.cmd.lअगर_setattr = अणु
 			.opcode = IONIC_CMD_LIF_SETATTR,
-			.index = cpu_to_le16(lif->index),
+			.index = cpu_to_le16(lअगर->index),
 			.attr = IONIC_LIF_ATTR_TXSTAMP,
 			.txstamp_mode = cpu_to_le16(txstamp_mode),
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	return ionic_adminq_post_wait(lif, &ctx);
-}
+	वापस ionic_adminq_post_रुको(lअगर, &ctx);
+पूर्ण
 
-static void ionic_lif_del_hwstamp_rxfilt(struct ionic_lif *lif)
-{
-	struct ionic_admin_ctx ctx = {
+अटल व्योम ionic_lअगर_del_hwstamp_rxfilt(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.rx_filter_del = {
+		.cmd.rx_filter_del = अणु
 			.opcode = IONIC_CMD_RX_FILTER_DEL,
-			.lif_index = cpu_to_le16(lif->index),
-		},
-	};
-	struct ionic_rx_filter *f;
+			.lअगर_index = cpu_to_le16(lअगर->index),
+		पूर्ण,
+	पूर्ण;
+	काष्ठा ionic_rx_filter *f;
 	u32 filter_id;
-	int err;
+	पूर्णांक err;
 
-	spin_lock_bh(&lif->rx_filters.lock);
+	spin_lock_bh(&lअगर->rx_filters.lock);
 
-	f = ionic_rx_filter_rxsteer(lif);
-	if (!f) {
-		spin_unlock_bh(&lif->rx_filters.lock);
-		return;
-	}
+	f = ionic_rx_filter_rxsteer(lअगर);
+	अगर (!f) अणु
+		spin_unlock_bh(&lअगर->rx_filters.lock);
+		वापस;
+	पूर्ण
 
 	filter_id = f->filter_id;
-	ionic_rx_filter_free(lif, f);
+	ionic_rx_filter_मुक्त(lअगर, f);
 
-	spin_unlock_bh(&lif->rx_filters.lock);
+	spin_unlock_bh(&lअगर->rx_filters.lock);
 
-	netdev_dbg(lif->netdev, "rx_filter del RXSTEER (id %d)\n", filter_id);
+	netdev_dbg(lअगर->netdev, "rx_filter del RXSTEER (id %d)\n", filter_id);
 
 	ctx.cmd.rx_filter_del.filter_id = cpu_to_le32(filter_id);
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err && err != -EEXIST)
-		netdev_dbg(lif->netdev, "failed to delete rx_filter RXSTEER (id %d)\n", filter_id);
-}
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err && err != -EEXIST)
+		netdev_dbg(lअगर->netdev, "failed to delete rx_filter RXSTEER (id %d)\n", filter_id);
+पूर्ण
 
-static int ionic_lif_add_hwstamp_rxfilt(struct ionic_lif *lif, u64 pkt_class)
-{
-	struct ionic_admin_ctx ctx = {
+अटल पूर्णांक ionic_lअगर_add_hwstamp_rxfilt(काष्ठा ionic_lअगर *lअगर, u64 pkt_class)
+अणु
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.rx_filter_add = {
+		.cmd.rx_filter_add = अणु
 			.opcode = IONIC_CMD_RX_FILTER_ADD,
-			.lif_index = cpu_to_le16(lif->index),
+			.lअगर_index = cpu_to_le16(lअगर->index),
 			.match = cpu_to_le16(IONIC_RX_FILTER_STEER_PKTCLASS),
 			.pkt_class = cpu_to_le64(pkt_class),
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 	u8 qtype;
 	u32 qid;
-	int err;
+	पूर्णांक err;
 
-	if (!lif->hwstamp_rxq)
-		return -EINVAL;
+	अगर (!lअगर->hwstamp_rxq)
+		वापस -EINVAL;
 
-	qtype = lif->hwstamp_rxq->q.type;
+	qtype = lअगर->hwstamp_rxq->q.type;
 	ctx.cmd.rx_filter_add.qtype = qtype;
 
-	qid = lif->hwstamp_rxq->q.index;
+	qid = lअगर->hwstamp_rxq->q.index;
 	ctx.cmd.rx_filter_add.qid = cpu_to_le32(qid);
 
-	netdev_dbg(lif->netdev, "rx_filter add RXSTEER\n");
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err && err != -EEXIST)
-		return err;
+	netdev_dbg(lअगर->netdev, "rx_filter add RXSTEER\n");
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err && err != -EEXIST)
+		वापस err;
 
-	return ionic_rx_filter_save(lif, 0, qid, 0, &ctx);
-}
+	वापस ionic_rx_filter_save(lअगर, 0, qid, 0, &ctx);
+पूर्ण
 
-int ionic_lif_set_hwstamp_rxfilt(struct ionic_lif *lif, u64 pkt_class)
-{
-	ionic_lif_del_hwstamp_rxfilt(lif);
+पूर्णांक ionic_lअगर_set_hwstamp_rxfilt(काष्ठा ionic_lअगर *lअगर, u64 pkt_class)
+अणु
+	ionic_lअगर_del_hwstamp_rxfilt(lअगर);
 
-	if (!pkt_class)
-		return 0;
+	अगर (!pkt_class)
+		वापस 0;
 
-	return ionic_lif_add_hwstamp_rxfilt(lif, pkt_class);
-}
+	वापस ionic_lअगर_add_hwstamp_rxfilt(lअगर, pkt_class);
+पूर्ण
 
-static bool ionic_notifyq_service(struct ionic_cq *cq,
-				  struct ionic_cq_info *cq_info)
-{
-	union ionic_notifyq_comp *comp = cq_info->cq_desc;
-	struct ionic_deferred_work *work;
-	struct net_device *netdev;
-	struct ionic_queue *q;
-	struct ionic_lif *lif;
+अटल bool ionic_notअगरyq_service(काष्ठा ionic_cq *cq,
+				  काष्ठा ionic_cq_info *cq_info)
+अणु
+	जोड़ ionic_notअगरyq_comp *comp = cq_info->cq_desc;
+	काष्ठा ionic_deferred_work *work;
+	काष्ठा net_device *netdev;
+	काष्ठा ionic_queue *q;
+	काष्ठा ionic_lअगर *lअगर;
 	u64 eid;
 
 	q = cq->bound_q;
-	lif = q->info[0].cb_arg;
-	netdev = lif->netdev;
+	lअगर = q->info[0].cb_arg;
+	netdev = lअगर->netdev;
 	eid = le64_to_cpu(comp->event.eid);
 
 	/* Have we run out of new completions to process? */
-	if ((s64)(eid - lif->last_eid) <= 0)
-		return false;
+	अगर ((s64)(eid - lअगर->last_eid) <= 0)
+		वापस false;
 
-	lif->last_eid = eid;
+	lअगर->last_eid = eid;
 
-	dev_dbg(lif->ionic->dev, "notifyq event:\n");
+	dev_dbg(lअगर->ionic->dev, "notifyq event:\n");
 	dynamic_hex_dump("event ", DUMP_PREFIX_OFFSET, 16, 1,
-			 comp, sizeof(*comp), true);
+			 comp, माप(*comp), true);
 
-	switch (le16_to_cpu(comp->event.ecode)) {
-	case IONIC_EVENT_LINK_CHANGE:
-		ionic_link_status_check_request(lif, CAN_NOT_SLEEP);
-		break;
-	case IONIC_EVENT_RESET:
-		work = kzalloc(sizeof(*work), GFP_ATOMIC);
-		if (!work) {
-			netdev_err(lif->netdev, "Reset event dropped\n");
-		} else {
+	चयन (le16_to_cpu(comp->event.ecode)) अणु
+	हाल IONIC_EVENT_LINK_CHANGE:
+		ionic_link_status_check_request(lअगर, CAN_NOT_SLEEP);
+		अवरोध;
+	हाल IONIC_EVENT_RESET:
+		work = kzalloc(माप(*work), GFP_ATOMIC);
+		अगर (!work) अणु
+			netdev_err(lअगर->netdev, "Reset event dropped\n");
+		पूर्ण अन्यथा अणु
 			work->type = IONIC_DW_TYPE_LIF_RESET;
-			ionic_lif_deferred_enqueue(&lif->deferred, work);
-		}
-		break;
-	default:
+			ionic_lअगर_deferred_enqueue(&lअगर->deferred, work);
+		पूर्ण
+		अवरोध;
+	शेष:
 		netdev_warn(netdev, "Notifyq event ecode=%d eid=%lld\n",
 			    comp->event.ecode, eid);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool ionic_adminq_service(struct ionic_cq *cq,
-				 struct ionic_cq_info *cq_info)
-{
-	struct ionic_admin_comp *comp = cq_info->cq_desc;
+अटल bool ionic_adminq_service(काष्ठा ionic_cq *cq,
+				 काष्ठा ionic_cq_info *cq_info)
+अणु
+	काष्ठा ionic_admin_comp *comp = cq_info->cq_desc;
 
-	if (!color_match(comp->color, cq->done_color))
-		return false;
+	अगर (!color_match(comp->color, cq->करोne_color))
+		वापस false;
 
 	ionic_q_service(cq->bound_q, cq_info, le16_to_cpu(comp->comp_index));
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int ionic_adminq_napi(struct napi_struct *napi, int budget)
-{
-	struct ionic_intr_info *intr = napi_to_cq(napi)->bound_intr;
-	struct ionic_lif *lif = napi_to_cq(napi)->lif;
-	struct ionic_dev *idev = &lif->ionic->idev;
-	unsigned long irqflags;
-	unsigned int flags = 0;
-	int rx_work = 0;
-	int tx_work = 0;
-	int n_work = 0;
-	int a_work = 0;
-	int work_done;
-	int credits;
+अटल पूर्णांक ionic_adminq_napi(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा ionic_पूर्णांकr_info *पूर्णांकr = napi_to_cq(napi)->bound_पूर्णांकr;
+	काष्ठा ionic_lअगर *lअगर = napi_to_cq(napi)->lअगर;
+	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
+	अचिन्हित दीर्घ irqflags;
+	अचिन्हित पूर्णांक flags = 0;
+	पूर्णांक rx_work = 0;
+	पूर्णांक tx_work = 0;
+	पूर्णांक n_work = 0;
+	पूर्णांक a_work = 0;
+	पूर्णांक work_करोne;
+	पूर्णांक credits;
 
-	if (lif->notifyqcq && lif->notifyqcq->flags & IONIC_QCQ_F_INITED)
-		n_work = ionic_cq_service(&lif->notifyqcq->cq, budget,
-					  ionic_notifyq_service, NULL, NULL);
+	अगर (lअगर->notअगरyqcq && lअगर->notअगरyqcq->flags & IONIC_QCQ_F_INITED)
+		n_work = ionic_cq_service(&lअगर->notअगरyqcq->cq, budget,
+					  ionic_notअगरyq_service, शून्य, शून्य);
 
-	spin_lock_irqsave(&lif->adminq_lock, irqflags);
-	if (lif->adminqcq && lif->adminqcq->flags & IONIC_QCQ_F_INITED)
-		a_work = ionic_cq_service(&lif->adminqcq->cq, budget,
-					  ionic_adminq_service, NULL, NULL);
-	spin_unlock_irqrestore(&lif->adminq_lock, irqflags);
+	spin_lock_irqsave(&lअगर->adminq_lock, irqflags);
+	अगर (lअगर->adminqcq && lअगर->adminqcq->flags & IONIC_QCQ_F_INITED)
+		a_work = ionic_cq_service(&lअगर->adminqcq->cq, budget,
+					  ionic_adminq_service, शून्य, शून्य);
+	spin_unlock_irqrestore(&lअगर->adminq_lock, irqflags);
 
-	if (lif->hwstamp_rxq)
-		rx_work = ionic_cq_service(&lif->hwstamp_rxq->cq, budget,
-					   ionic_rx_service, NULL, NULL);
+	अगर (lअगर->hwstamp_rxq)
+		rx_work = ionic_cq_service(&lअगर->hwstamp_rxq->cq, budget,
+					   ionic_rx_service, शून्य, शून्य);
 
-	if (lif->hwstamp_txq)
-		tx_work = ionic_cq_service(&lif->hwstamp_txq->cq, budget,
-					   ionic_tx_service, NULL, NULL);
+	अगर (lअगर->hwstamp_txq)
+		tx_work = ionic_cq_service(&lअगर->hwstamp_txq->cq, budget,
+					   ionic_tx_service, शून्य, शून्य);
 
-	work_done = max(max(n_work, a_work), max(rx_work, tx_work));
-	if (work_done < budget && napi_complete_done(napi, work_done)) {
+	work_करोne = max(max(n_work, a_work), max(rx_work, tx_work));
+	अगर (work_करोne < budget && napi_complete_करोne(napi, work_करोne)) अणु
 		flags |= IONIC_INTR_CRED_UNMASK;
-		intr->rearm_count++;
-	}
+		पूर्णांकr->rearm_count++;
+	पूर्ण
 
-	if (work_done || flags) {
+	अगर (work_करोne || flags) अणु
 		flags |= IONIC_INTR_CRED_RESET_COALESCE;
 		credits = n_work + a_work + rx_work + tx_work;
-		ionic_intr_credits(idev->intr_ctrl, intr->index, credits, flags);
-	}
+		ionic_पूर्णांकr_credits(idev->पूर्णांकr_ctrl, पूर्णांकr->index, credits, flags);
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
-void ionic_get_stats64(struct net_device *netdev,
-		       struct rtnl_link_stats64 *ns)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic_lif_stats *ls;
+व्योम ionic_get_stats64(काष्ठा net_device *netdev,
+		       काष्ठा rtnl_link_stats64 *ns)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic_lअगर_stats *ls;
 
-	memset(ns, 0, sizeof(*ns));
-	ls = &lif->info->stats;
+	स_रखो(ns, 0, माप(*ns));
+	ls = &lअगर->info->stats;
 
 	ns->rx_packets = le64_to_cpu(ls->rx_ucast_packets) +
 			 le64_to_cpu(ls->rx_mcast_packets) +
@@ -1227,7 +1228,7 @@ void ionic_get_stats64(struct net_device *netdev,
 			       le64_to_cpu(ls->rx_desc_fetch_error) +
 			       le64_to_cpu(ls->rx_desc_data_error);
 
-	ns->tx_aborted_errors = le64_to_cpu(ls->tx_dma_error) +
+	ns->tx_पातed_errors = le64_to_cpu(ls->tx_dma_error) +
 				le64_to_cpu(ls->tx_queue_disabled) +
 				le64_to_cpu(ls->tx_desc_fetch_error) +
 				le64_to_cpu(ls->tx_desc_data_error);
@@ -1235,186 +1236,186 @@ void ionic_get_stats64(struct net_device *netdev,
 	ns->rx_errors = ns->rx_over_errors +
 			ns->rx_missed_errors;
 
-	ns->tx_errors = ns->tx_aborted_errors;
-}
+	ns->tx_errors = ns->tx_पातed_errors;
+पूर्ण
 
-static int ionic_lif_addr_add(struct ionic_lif *lif, const u8 *addr)
-{
-	struct ionic_admin_ctx ctx = {
+अटल पूर्णांक ionic_lअगर_addr_add(काष्ठा ionic_lअगर *lअगर, स्थिर u8 *addr)
+अणु
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.rx_filter_add = {
+		.cmd.rx_filter_add = अणु
 			.opcode = IONIC_CMD_RX_FILTER_ADD,
-			.lif_index = cpu_to_le16(lif->index),
+			.lअगर_index = cpu_to_le16(lअगर->index),
 			.match = cpu_to_le16(IONIC_RX_FILTER_MATCH_MAC),
-		},
-	};
-	struct ionic_rx_filter *f;
-	int err;
+		पूर्ण,
+	पूर्ण;
+	काष्ठा ionic_rx_filter *f;
+	पूर्णांक err;
 
-	/* don't bother if we already have it */
-	spin_lock_bh(&lif->rx_filters.lock);
-	f = ionic_rx_filter_by_addr(lif, addr);
-	spin_unlock_bh(&lif->rx_filters.lock);
-	if (f)
-		return 0;
+	/* करोn't bother अगर we alपढ़ोy have it */
+	spin_lock_bh(&lअगर->rx_filters.lock);
+	f = ionic_rx_filter_by_addr(lअगर, addr);
+	spin_unlock_bh(&lअगर->rx_filters.lock);
+	अगर (f)
+		वापस 0;
 
-	netdev_dbg(lif->netdev, "rx_filter add ADDR %pM\n", addr);
+	netdev_dbg(lअगर->netdev, "rx_filter add ADDR %pM\n", addr);
 
-	memcpy(ctx.cmd.rx_filter_add.mac.addr, addr, ETH_ALEN);
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err && err != -EEXIST)
-		return err;
+	स_नकल(ctx.cmd.rx_filter_add.mac.addr, addr, ETH_ALEN);
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err && err != -EEXIST)
+		वापस err;
 
-	return ionic_rx_filter_save(lif, 0, IONIC_RXQ_INDEX_ANY, 0, &ctx);
-}
+	वापस ionic_rx_filter_save(lअगर, 0, IONIC_RXQ_INDEX_ANY, 0, &ctx);
+पूर्ण
 
-static int ionic_lif_addr_del(struct ionic_lif *lif, const u8 *addr)
-{
-	struct ionic_admin_ctx ctx = {
+अटल पूर्णांक ionic_lअगर_addr_del(काष्ठा ionic_lअगर *lअगर, स्थिर u8 *addr)
+अणु
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.rx_filter_del = {
+		.cmd.rx_filter_del = अणु
 			.opcode = IONIC_CMD_RX_FILTER_DEL,
-			.lif_index = cpu_to_le16(lif->index),
-		},
-	};
-	struct ionic_rx_filter *f;
-	int err;
+			.lअगर_index = cpu_to_le16(lअगर->index),
+		पूर्ण,
+	पूर्ण;
+	काष्ठा ionic_rx_filter *f;
+	पूर्णांक err;
 
-	spin_lock_bh(&lif->rx_filters.lock);
-	f = ionic_rx_filter_by_addr(lif, addr);
-	if (!f) {
-		spin_unlock_bh(&lif->rx_filters.lock);
-		return -ENOENT;
-	}
+	spin_lock_bh(&lअगर->rx_filters.lock);
+	f = ionic_rx_filter_by_addr(lअगर, addr);
+	अगर (!f) अणु
+		spin_unlock_bh(&lअगर->rx_filters.lock);
+		वापस -ENOENT;
+	पूर्ण
 
-	netdev_dbg(lif->netdev, "rx_filter del ADDR %pM (id %d)\n",
+	netdev_dbg(lअगर->netdev, "rx_filter del ADDR %pM (id %d)\n",
 		   addr, f->filter_id);
 
 	ctx.cmd.rx_filter_del.filter_id = cpu_to_le32(f->filter_id);
-	ionic_rx_filter_free(lif, f);
-	spin_unlock_bh(&lif->rx_filters.lock);
+	ionic_rx_filter_मुक्त(lअगर, f);
+	spin_unlock_bh(&lअगर->rx_filters.lock);
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err && err != -EEXIST)
-		return err;
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err && err != -EEXIST)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ionic_lif_addr(struct ionic_lif *lif, const u8 *addr, bool add,
+अटल पूर्णांक ionic_lअगर_addr(काष्ठा ionic_lअगर *lअगर, स्थिर u8 *addr, bool add,
 			  bool can_sleep)
-{
-	struct ionic_deferred_work *work;
-	unsigned int nmfilters;
-	unsigned int nufilters;
+अणु
+	काष्ठा ionic_deferred_work *work;
+	अचिन्हित पूर्णांक nmfilters;
+	अचिन्हित पूर्णांक nufilters;
 
-	if (add) {
-		/* Do we have space for this filter?  We test the counters
-		 * here before checking the need for deferral so that we
-		 * can return an overflow error to the stack.
+	अगर (add) अणु
+		/* Do we have space क्रम this filter?  We test the counters
+		 * here beक्रमe checking the need क्रम deferral so that we
+		 * can वापस an overflow error to the stack.
 		 */
-		nmfilters = le32_to_cpu(lif->identity->eth.max_mcast_filters);
-		nufilters = le32_to_cpu(lif->identity->eth.max_ucast_filters);
+		nmfilters = le32_to_cpu(lअगर->identity->eth.max_mcast_filters);
+		nufilters = le32_to_cpu(lअगर->identity->eth.max_ucast_filters);
 
-		if ((is_multicast_ether_addr(addr) && lif->nmcast < nmfilters))
-			lif->nmcast++;
-		else if (!is_multicast_ether_addr(addr) &&
-			 lif->nucast < nufilters)
-			lif->nucast++;
-		else
-			return -ENOSPC;
-	} else {
-		if (is_multicast_ether_addr(addr) && lif->nmcast)
-			lif->nmcast--;
-		else if (!is_multicast_ether_addr(addr) && lif->nucast)
-			lif->nucast--;
-	}
+		अगर ((is_multicast_ether_addr(addr) && lअगर->nmcast < nmfilters))
+			lअगर->nmcast++;
+		अन्यथा अगर (!is_multicast_ether_addr(addr) &&
+			 lअगर->nucast < nufilters)
+			lअगर->nucast++;
+		अन्यथा
+			वापस -ENOSPC;
+	पूर्ण अन्यथा अणु
+		अगर (is_multicast_ether_addr(addr) && lअगर->nmcast)
+			lअगर->nmcast--;
+		अन्यथा अगर (!is_multicast_ether_addr(addr) && lअगर->nucast)
+			lअगर->nucast--;
+	पूर्ण
 
-	if (!can_sleep) {
-		work = kzalloc(sizeof(*work), GFP_ATOMIC);
-		if (!work)
-			return -ENOMEM;
+	अगर (!can_sleep) अणु
+		work = kzalloc(माप(*work), GFP_ATOMIC);
+		अगर (!work)
+			वापस -ENOMEM;
 		work->type = add ? IONIC_DW_TYPE_RX_ADDR_ADD :
 				   IONIC_DW_TYPE_RX_ADDR_DEL;
-		memcpy(work->addr, addr, ETH_ALEN);
-		netdev_dbg(lif->netdev, "deferred: rx_filter %s %pM\n",
+		स_नकल(work->addr, addr, ETH_ALEN);
+		netdev_dbg(lअगर->netdev, "deferred: rx_filter %s %pM\n",
 			   add ? "add" : "del", addr);
-		ionic_lif_deferred_enqueue(&lif->deferred, work);
-	} else {
-		netdev_dbg(lif->netdev, "rx_filter %s %pM\n",
+		ionic_lअगर_deferred_enqueue(&lअगर->deferred, work);
+	पूर्ण अन्यथा अणु
+		netdev_dbg(lअगर->netdev, "rx_filter %s %pM\n",
 			   add ? "add" : "del", addr);
-		if (add)
-			return ionic_lif_addr_add(lif, addr);
-		else
-			return ionic_lif_addr_del(lif, addr);
-	}
+		अगर (add)
+			वापस ionic_lअगर_addr_add(lअगर, addr);
+		अन्यथा
+			वापस ionic_lअगर_addr_del(lअगर, addr);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ionic_addr_add(struct net_device *netdev, const u8 *addr)
-{
-	return ionic_lif_addr(netdev_priv(netdev), addr, ADD_ADDR, CAN_SLEEP);
-}
+अटल पूर्णांक ionic_addr_add(काष्ठा net_device *netdev, स्थिर u8 *addr)
+अणु
+	वापस ionic_lअगर_addr(netdev_priv(netdev), addr, ADD_ADDR, CAN_SLEEP);
+पूर्ण
 
-static int ionic_ndo_addr_add(struct net_device *netdev, const u8 *addr)
-{
-	return ionic_lif_addr(netdev_priv(netdev), addr, ADD_ADDR, CAN_NOT_SLEEP);
-}
+अटल पूर्णांक ionic_nकरो_addr_add(काष्ठा net_device *netdev, स्थिर u8 *addr)
+अणु
+	वापस ionic_lअगर_addr(netdev_priv(netdev), addr, ADD_ADDR, CAN_NOT_SLEEP);
+पूर्ण
 
-static int ionic_addr_del(struct net_device *netdev, const u8 *addr)
-{
-	return ionic_lif_addr(netdev_priv(netdev), addr, DEL_ADDR, CAN_SLEEP);
-}
+अटल पूर्णांक ionic_addr_del(काष्ठा net_device *netdev, स्थिर u8 *addr)
+अणु
+	वापस ionic_lअगर_addr(netdev_priv(netdev), addr, DEL_ADDR, CAN_SLEEP);
+पूर्ण
 
-static int ionic_ndo_addr_del(struct net_device *netdev, const u8 *addr)
-{
-	return ionic_lif_addr(netdev_priv(netdev), addr, DEL_ADDR, CAN_NOT_SLEEP);
-}
+अटल पूर्णांक ionic_nकरो_addr_del(काष्ठा net_device *netdev, स्थिर u8 *addr)
+अणु
+	वापस ionic_lअगर_addr(netdev_priv(netdev), addr, DEL_ADDR, CAN_NOT_SLEEP);
+पूर्ण
 
-static void ionic_lif_rx_mode(struct ionic_lif *lif, unsigned int rx_mode)
-{
-	struct ionic_admin_ctx ctx = {
+अटल व्योम ionic_lअगर_rx_mode(काष्ठा ionic_lअगर *lअगर, अचिन्हित पूर्णांक rx_mode)
+अणु
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.rx_mode_set = {
+		.cmd.rx_mode_set = अणु
 			.opcode = IONIC_CMD_RX_MODE_SET,
-			.lif_index = cpu_to_le16(lif->index),
+			.lअगर_index = cpu_to_le16(lअगर->index),
 			.rx_mode = cpu_to_le16(rx_mode),
-		},
-	};
-	char buf[128];
-	int err;
-	int i;
-#define REMAIN(__x) (sizeof(buf) - (__x))
+		पूर्ण,
+	पूर्ण;
+	अक्षर buf[128];
+	पूर्णांक err;
+	पूर्णांक i;
+#घोषणा REMAIN(__x) (माप(buf) - (__x))
 
-	i = scnprintf(buf, sizeof(buf), "rx_mode 0x%04x -> 0x%04x:",
-		      lif->rx_mode, rx_mode);
-	if (rx_mode & IONIC_RX_MODE_F_UNICAST)
-		i += scnprintf(&buf[i], REMAIN(i), " RX_MODE_F_UNICAST");
-	if (rx_mode & IONIC_RX_MODE_F_MULTICAST)
-		i += scnprintf(&buf[i], REMAIN(i), " RX_MODE_F_MULTICAST");
-	if (rx_mode & IONIC_RX_MODE_F_BROADCAST)
-		i += scnprintf(&buf[i], REMAIN(i), " RX_MODE_F_BROADCAST");
-	if (rx_mode & IONIC_RX_MODE_F_PROMISC)
-		i += scnprintf(&buf[i], REMAIN(i), " RX_MODE_F_PROMISC");
-	if (rx_mode & IONIC_RX_MODE_F_ALLMULTI)
-		i += scnprintf(&buf[i], REMAIN(i), " RX_MODE_F_ALLMULTI");
-	netdev_dbg(lif->netdev, "lif%d %s\n", lif->index, buf);
+	i = scnम_लिखो(buf, माप(buf), "rx_mode 0x%04x -> 0x%04x:",
+		      lअगर->rx_mode, rx_mode);
+	अगर (rx_mode & IONIC_RX_MODE_F_UNICAST)
+		i += scnम_लिखो(&buf[i], REMAIN(i), " RX_MODE_F_UNICAST");
+	अगर (rx_mode & IONIC_RX_MODE_F_MULTICAST)
+		i += scnम_लिखो(&buf[i], REMAIN(i), " RX_MODE_F_MULTICAST");
+	अगर (rx_mode & IONIC_RX_MODE_F_BROADCAST)
+		i += scnम_लिखो(&buf[i], REMAIN(i), " RX_MODE_F_BROADCAST");
+	अगर (rx_mode & IONIC_RX_MODE_F_PROMISC)
+		i += scnम_लिखो(&buf[i], REMAIN(i), " RX_MODE_F_PROMISC");
+	अगर (rx_mode & IONIC_RX_MODE_F_ALLMULTI)
+		i += scnम_लिखो(&buf[i], REMAIN(i), " RX_MODE_F_ALLMULTI");
+	netdev_dbg(lअगर->netdev, "lif%d %s\n", lअगर->index, buf);
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err)
-		netdev_warn(lif->netdev, "set rx_mode 0x%04x failed: %d\n",
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err)
+		netdev_warn(lअगर->netdev, "set rx_mode 0x%04x failed: %d\n",
 			    rx_mode, err);
-	else
-		lif->rx_mode = rx_mode;
-}
+	अन्यथा
+		lअगर->rx_mode = rx_mode;
+पूर्ण
 
-static void ionic_set_rx_mode(struct net_device *netdev, bool can_sleep)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic_deferred_work *work;
-	unsigned int nfilters;
-	unsigned int rx_mode;
+अटल व्योम ionic_set_rx_mode(काष्ठा net_device *netdev, bool can_sleep)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic_deferred_work *work;
+	अचिन्हित पूर्णांक nfilters;
+	अचिन्हित पूर्णांक rx_mode;
 
 	rx_mode = IONIC_RX_MODE_F_UNICAST;
 	rx_mode |= (netdev->flags & IFF_MULTICAST) ? IONIC_RX_MODE_F_MULTICAST : 0;
@@ -1423,186 +1424,186 @@ static void ionic_set_rx_mode(struct net_device *netdev, bool can_sleep)
 	rx_mode |= (netdev->flags & IFF_ALLMULTI) ? IONIC_RX_MODE_F_ALLMULTI : 0;
 
 	/* sync unicast addresses
-	 * next check to see if we're in an overflow state
-	 *    if so, we track that we overflowed and enable NIC PROMISC
-	 *    else if the overflow is set and not needed
-	 *       we remove our overflow flag and check the netdev flags
-	 *       to see if we can disable NIC PROMISC
+	 * next check to see अगर we're in an overflow state
+	 *    अगर so, we track that we overflowed and enable NIC PROMISC
+	 *    अन्यथा अगर the overflow is set and not needed
+	 *       we हटाओ our overflow flag and check the netdev flags
+	 *       to see अगर we can disable NIC PROMISC
 	 */
-	if (can_sleep)
+	अगर (can_sleep)
 		__dev_uc_sync(netdev, ionic_addr_add, ionic_addr_del);
-	else
-		__dev_uc_sync(netdev, ionic_ndo_addr_add, ionic_ndo_addr_del);
-	nfilters = le32_to_cpu(lif->identity->eth.max_ucast_filters);
-	if (netdev_uc_count(netdev) + 1 > nfilters) {
+	अन्यथा
+		__dev_uc_sync(netdev, ionic_nकरो_addr_add, ionic_nकरो_addr_del);
+	nfilters = le32_to_cpu(lअगर->identity->eth.max_ucast_filters);
+	अगर (netdev_uc_count(netdev) + 1 > nfilters) अणु
 		rx_mode |= IONIC_RX_MODE_F_PROMISC;
-		lif->uc_overflow = true;
-	} else if (lif->uc_overflow) {
-		lif->uc_overflow = false;
-		if (!(netdev->flags & IFF_PROMISC))
+		lअगर->uc_overflow = true;
+	पूर्ण अन्यथा अगर (lअगर->uc_overflow) अणु
+		lअगर->uc_overflow = false;
+		अगर (!(netdev->flags & IFF_PROMISC))
 			rx_mode &= ~IONIC_RX_MODE_F_PROMISC;
-	}
+	पूर्ण
 
-	/* same for multicast */
-	if (can_sleep)
+	/* same क्रम multicast */
+	अगर (can_sleep)
 		__dev_mc_sync(netdev, ionic_addr_add, ionic_addr_del);
-	else
-		__dev_mc_sync(netdev, ionic_ndo_addr_add, ionic_ndo_addr_del);
-	nfilters = le32_to_cpu(lif->identity->eth.max_mcast_filters);
-	if (netdev_mc_count(netdev) > nfilters) {
+	अन्यथा
+		__dev_mc_sync(netdev, ionic_nकरो_addr_add, ionic_nकरो_addr_del);
+	nfilters = le32_to_cpu(lअगर->identity->eth.max_mcast_filters);
+	अगर (netdev_mc_count(netdev) > nfilters) अणु
 		rx_mode |= IONIC_RX_MODE_F_ALLMULTI;
-		lif->mc_overflow = true;
-	} else if (lif->mc_overflow) {
-		lif->mc_overflow = false;
-		if (!(netdev->flags & IFF_ALLMULTI))
+		lअगर->mc_overflow = true;
+	पूर्ण अन्यथा अगर (lअगर->mc_overflow) अणु
+		lअगर->mc_overflow = false;
+		अगर (!(netdev->flags & IFF_ALLMULTI))
 			rx_mode &= ~IONIC_RX_MODE_F_ALLMULTI;
-	}
+	पूर्ण
 
-	if (lif->rx_mode != rx_mode) {
-		if (!can_sleep) {
-			work = kzalloc(sizeof(*work), GFP_ATOMIC);
-			if (!work) {
-				netdev_err(lif->netdev, "rxmode change dropped\n");
-				return;
-			}
+	अगर (lअगर->rx_mode != rx_mode) अणु
+		अगर (!can_sleep) अणु
+			work = kzalloc(माप(*work), GFP_ATOMIC);
+			अगर (!work) अणु
+				netdev_err(lअगर->netdev, "rxmode change dropped\n");
+				वापस;
+			पूर्ण
 			work->type = IONIC_DW_TYPE_RX_MODE;
 			work->rx_mode = rx_mode;
-			netdev_dbg(lif->netdev, "deferred: rx_mode\n");
-			ionic_lif_deferred_enqueue(&lif->deferred, work);
-		} else {
-			ionic_lif_rx_mode(lif, rx_mode);
-		}
-	}
-}
+			netdev_dbg(lअगर->netdev, "deferred: rx_mode\n");
+			ionic_lअगर_deferred_enqueue(&lअगर->deferred, work);
+		पूर्ण अन्यथा अणु
+			ionic_lअगर_rx_mode(lअगर, rx_mode);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void ionic_ndo_set_rx_mode(struct net_device *netdev)
-{
+अटल व्योम ionic_nकरो_set_rx_mode(काष्ठा net_device *netdev)
+अणु
 	ionic_set_rx_mode(netdev, CAN_NOT_SLEEP);
-}
+पूर्ण
 
-static __le64 ionic_netdev_features_to_nic(netdev_features_t features)
-{
+अटल __le64 ionic_netdev_features_to_nic(netdev_features_t features)
+अणु
 	u64 wanted = 0;
 
-	if (features & NETIF_F_HW_VLAN_CTAG_TX)
+	अगर (features & NETIF_F_HW_VLAN_CTAG_TX)
 		wanted |= IONIC_ETH_HW_VLAN_TX_TAG;
-	if (features & NETIF_F_HW_VLAN_CTAG_RX)
+	अगर (features & NETIF_F_HW_VLAN_CTAG_RX)
 		wanted |= IONIC_ETH_HW_VLAN_RX_STRIP;
-	if (features & NETIF_F_HW_VLAN_CTAG_FILTER)
+	अगर (features & NETIF_F_HW_VLAN_CTAG_FILTER)
 		wanted |= IONIC_ETH_HW_VLAN_RX_FILTER;
-	if (features & NETIF_F_RXHASH)
+	अगर (features & NETIF_F_RXHASH)
 		wanted |= IONIC_ETH_HW_RX_HASH;
-	if (features & NETIF_F_RXCSUM)
+	अगर (features & NETIF_F_RXCSUM)
 		wanted |= IONIC_ETH_HW_RX_CSUM;
-	if (features & NETIF_F_SG)
+	अगर (features & NETIF_F_SG)
 		wanted |= IONIC_ETH_HW_TX_SG;
-	if (features & NETIF_F_HW_CSUM)
+	अगर (features & NETIF_F_HW_CSUM)
 		wanted |= IONIC_ETH_HW_TX_CSUM;
-	if (features & NETIF_F_TSO)
+	अगर (features & NETIF_F_TSO)
 		wanted |= IONIC_ETH_HW_TSO;
-	if (features & NETIF_F_TSO6)
+	अगर (features & NETIF_F_TSO6)
 		wanted |= IONIC_ETH_HW_TSO_IPV6;
-	if (features & NETIF_F_TSO_ECN)
+	अगर (features & NETIF_F_TSO_ECN)
 		wanted |= IONIC_ETH_HW_TSO_ECN;
-	if (features & NETIF_F_GSO_GRE)
+	अगर (features & NETIF_F_GSO_GRE)
 		wanted |= IONIC_ETH_HW_TSO_GRE;
-	if (features & NETIF_F_GSO_GRE_CSUM)
+	अगर (features & NETIF_F_GSO_GRE_CSUM)
 		wanted |= IONIC_ETH_HW_TSO_GRE_CSUM;
-	if (features & NETIF_F_GSO_IPXIP4)
+	अगर (features & NETIF_F_GSO_IPXIP4)
 		wanted |= IONIC_ETH_HW_TSO_IPXIP4;
-	if (features & NETIF_F_GSO_IPXIP6)
+	अगर (features & NETIF_F_GSO_IPXIP6)
 		wanted |= IONIC_ETH_HW_TSO_IPXIP6;
-	if (features & NETIF_F_GSO_UDP_TUNNEL)
+	अगर (features & NETIF_F_GSO_UDP_TUNNEL)
 		wanted |= IONIC_ETH_HW_TSO_UDP;
-	if (features & NETIF_F_GSO_UDP_TUNNEL_CSUM)
+	अगर (features & NETIF_F_GSO_UDP_TUNNEL_CSUM)
 		wanted |= IONIC_ETH_HW_TSO_UDP_CSUM;
 
-	return cpu_to_le64(wanted);
-}
+	वापस cpu_to_le64(wanted);
+पूर्ण
 
-static int ionic_set_nic_features(struct ionic_lif *lif,
+अटल पूर्णांक ionic_set_nic_features(काष्ठा ionic_lअगर *lअगर,
 				  netdev_features_t features)
-{
-	struct device *dev = lif->ionic->dev;
-	struct ionic_admin_ctx ctx = {
+अणु
+	काष्ठा device *dev = lअगर->ionic->dev;
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.lif_setattr = {
+		.cmd.lअगर_setattr = अणु
 			.opcode = IONIC_CMD_LIF_SETATTR,
-			.index = cpu_to_le16(lif->index),
+			.index = cpu_to_le16(lअगर->index),
 			.attr = IONIC_LIF_ATTR_FEATURES,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 	u64 vlan_flags = IONIC_ETH_HW_VLAN_TX_TAG |
 			 IONIC_ETH_HW_VLAN_RX_STRIP |
 			 IONIC_ETH_HW_VLAN_RX_FILTER;
 	u64 old_hw_features;
-	int err;
+	पूर्णांक err;
 
-	ctx.cmd.lif_setattr.features = ionic_netdev_features_to_nic(features);
+	ctx.cmd.lअगर_setattr.features = ionic_netdev_features_to_nic(features);
 
-	if (lif->phc)
-		ctx.cmd.lif_setattr.features |= cpu_to_le64(IONIC_ETH_HW_TIMESTAMP);
+	अगर (lअगर->phc)
+		ctx.cmd.lअगर_setattr.features |= cpu_to_le64(IONIC_ETH_HW_TIMESTAMP);
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err)
-		return err;
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err)
+		वापस err;
 
-	old_hw_features = lif->hw_features;
-	lif->hw_features = le64_to_cpu(ctx.cmd.lif_setattr.features &
-				       ctx.comp.lif_setattr.features);
+	old_hw_features = lअगर->hw_features;
+	lअगर->hw_features = le64_to_cpu(ctx.cmd.lअगर_setattr.features &
+				       ctx.comp.lअगर_setattr.features);
 
-	if ((old_hw_features ^ lif->hw_features) & IONIC_ETH_HW_RX_HASH)
-		ionic_lif_rss_config(lif, lif->rss_types, NULL, NULL);
+	अगर ((old_hw_features ^ lअगर->hw_features) & IONIC_ETH_HW_RX_HASH)
+		ionic_lअगर_rss_config(lअगर, lअगर->rss_types, शून्य, शून्य);
 
-	if ((vlan_flags & features) &&
-	    !(vlan_flags & le64_to_cpu(ctx.comp.lif_setattr.features)))
-		dev_info_once(lif->ionic->dev, "NIC is not supporting vlan offload, likely in SmartNIC mode\n");
+	अगर ((vlan_flags & features) &&
+	    !(vlan_flags & le64_to_cpu(ctx.comp.lअगर_setattr.features)))
+		dev_info_once(lअगर->ionic->dev, "NIC is not supporting vlan offload, likely in SmartNIC mode\n");
 
-	if (lif->hw_features & IONIC_ETH_HW_VLAN_TX_TAG)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_VLAN_TX_TAG)
 		dev_dbg(dev, "feature ETH_HW_VLAN_TX_TAG\n");
-	if (lif->hw_features & IONIC_ETH_HW_VLAN_RX_STRIP)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_VLAN_RX_STRIP)
 		dev_dbg(dev, "feature ETH_HW_VLAN_RX_STRIP\n");
-	if (lif->hw_features & IONIC_ETH_HW_VLAN_RX_FILTER)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_VLAN_RX_FILTER)
 		dev_dbg(dev, "feature ETH_HW_VLAN_RX_FILTER\n");
-	if (lif->hw_features & IONIC_ETH_HW_RX_HASH)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_RX_HASH)
 		dev_dbg(dev, "feature ETH_HW_RX_HASH\n");
-	if (lif->hw_features & IONIC_ETH_HW_TX_SG)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TX_SG)
 		dev_dbg(dev, "feature ETH_HW_TX_SG\n");
-	if (lif->hw_features & IONIC_ETH_HW_TX_CSUM)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TX_CSUM)
 		dev_dbg(dev, "feature ETH_HW_TX_CSUM\n");
-	if (lif->hw_features & IONIC_ETH_HW_RX_CSUM)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_RX_CSUM)
 		dev_dbg(dev, "feature ETH_HW_RX_CSUM\n");
-	if (lif->hw_features & IONIC_ETH_HW_TSO)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO)
 		dev_dbg(dev, "feature ETH_HW_TSO\n");
-	if (lif->hw_features & IONIC_ETH_HW_TSO_IPV6)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_IPV6)
 		dev_dbg(dev, "feature ETH_HW_TSO_IPV6\n");
-	if (lif->hw_features & IONIC_ETH_HW_TSO_ECN)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_ECN)
 		dev_dbg(dev, "feature ETH_HW_TSO_ECN\n");
-	if (lif->hw_features & IONIC_ETH_HW_TSO_GRE)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_GRE)
 		dev_dbg(dev, "feature ETH_HW_TSO_GRE\n");
-	if (lif->hw_features & IONIC_ETH_HW_TSO_GRE_CSUM)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_GRE_CSUM)
 		dev_dbg(dev, "feature ETH_HW_TSO_GRE_CSUM\n");
-	if (lif->hw_features & IONIC_ETH_HW_TSO_IPXIP4)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_IPXIP4)
 		dev_dbg(dev, "feature ETH_HW_TSO_IPXIP4\n");
-	if (lif->hw_features & IONIC_ETH_HW_TSO_IPXIP6)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_IPXIP6)
 		dev_dbg(dev, "feature ETH_HW_TSO_IPXIP6\n");
-	if (lif->hw_features & IONIC_ETH_HW_TSO_UDP)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_UDP)
 		dev_dbg(dev, "feature ETH_HW_TSO_UDP\n");
-	if (lif->hw_features & IONIC_ETH_HW_TSO_UDP_CSUM)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_UDP_CSUM)
 		dev_dbg(dev, "feature ETH_HW_TSO_UDP_CSUM\n");
-	if (lif->hw_features & IONIC_ETH_HW_TIMESTAMP)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TIMESTAMP)
 		dev_dbg(dev, "feature ETH_HW_TIMESTAMP\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ionic_init_nic_features(struct ionic_lif *lif)
-{
-	struct net_device *netdev = lif->netdev;
+अटल पूर्णांक ionic_init_nic_features(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा net_device *netdev = lअगर->netdev;
 	netdev_features_t features;
-	int err;
+	पूर्णांक err;
 
-	/* set up what we expect to support by default */
+	/* set up what we expect to support by शेष */
 	features = NETIF_F_HW_VLAN_CTAG_TX |
 		   NETIF_F_HW_VLAN_CTAG_RX |
 		   NETIF_F_HW_VLAN_CTAG_FILTER |
@@ -1614,45 +1615,45 @@ static int ionic_init_nic_features(struct ionic_lif *lif)
 		   NETIF_F_TSO6 |
 		   NETIF_F_TSO_ECN;
 
-	err = ionic_set_nic_features(lif, features);
-	if (err)
-		return err;
+	err = ionic_set_nic_features(lअगर, features);
+	अगर (err)
+		वापस err;
 
 	/* tell the netdev what we actually can support */
 	netdev->features |= NETIF_F_HIGHDMA;
 
-	if (lif->hw_features & IONIC_ETH_HW_VLAN_TX_TAG)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_VLAN_TX_TAG)
 		netdev->hw_features |= NETIF_F_HW_VLAN_CTAG_TX;
-	if (lif->hw_features & IONIC_ETH_HW_VLAN_RX_STRIP)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_VLAN_RX_STRIP)
 		netdev->hw_features |= NETIF_F_HW_VLAN_CTAG_RX;
-	if (lif->hw_features & IONIC_ETH_HW_VLAN_RX_FILTER)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_VLAN_RX_FILTER)
 		netdev->hw_features |= NETIF_F_HW_VLAN_CTAG_FILTER;
-	if (lif->hw_features & IONIC_ETH_HW_RX_HASH)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_RX_HASH)
 		netdev->hw_features |= NETIF_F_RXHASH;
-	if (lif->hw_features & IONIC_ETH_HW_TX_SG)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TX_SG)
 		netdev->hw_features |= NETIF_F_SG;
 
-	if (lif->hw_features & IONIC_ETH_HW_TX_CSUM)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TX_CSUM)
 		netdev->hw_enc_features |= NETIF_F_HW_CSUM;
-	if (lif->hw_features & IONIC_ETH_HW_RX_CSUM)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_RX_CSUM)
 		netdev->hw_enc_features |= NETIF_F_RXCSUM;
-	if (lif->hw_features & IONIC_ETH_HW_TSO)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO)
 		netdev->hw_enc_features |= NETIF_F_TSO;
-	if (lif->hw_features & IONIC_ETH_HW_TSO_IPV6)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_IPV6)
 		netdev->hw_enc_features |= NETIF_F_TSO6;
-	if (lif->hw_features & IONIC_ETH_HW_TSO_ECN)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_ECN)
 		netdev->hw_enc_features |= NETIF_F_TSO_ECN;
-	if (lif->hw_features & IONIC_ETH_HW_TSO_GRE)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_GRE)
 		netdev->hw_enc_features |= NETIF_F_GSO_GRE;
-	if (lif->hw_features & IONIC_ETH_HW_TSO_GRE_CSUM)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_GRE_CSUM)
 		netdev->hw_enc_features |= NETIF_F_GSO_GRE_CSUM;
-	if (lif->hw_features & IONIC_ETH_HW_TSO_IPXIP4)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_IPXIP4)
 		netdev->hw_enc_features |= NETIF_F_GSO_IPXIP4;
-	if (lif->hw_features & IONIC_ETH_HW_TSO_IPXIP6)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_IPXIP6)
 		netdev->hw_enc_features |= NETIF_F_GSO_IPXIP6;
-	if (lif->hw_features & IONIC_ETH_HW_TSO_UDP)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_UDP)
 		netdev->hw_enc_features |= NETIF_F_GSO_UDP_TUNNEL;
-	if (lif->hw_features & IONIC_ETH_HW_TSO_UDP_CSUM)
+	अगर (lअगर->hw_features & IONIC_ETH_HW_TSO_UDP_CSUM)
 		netdev->hw_enc_features |= NETIF_F_GSO_UDP_TUNNEL_CSUM;
 
 	netdev->hw_features |= netdev->hw_enc_features;
@@ -1662,225 +1663,225 @@ static int ionic_init_nic_features(struct ionic_lif *lif)
 	netdev->priv_flags |= IFF_UNICAST_FLT |
 			      IFF_LIVE_ADDR_CHANGE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ionic_set_features(struct net_device *netdev,
+अटल पूर्णांक ionic_set_features(काष्ठा net_device *netdev,
 			      netdev_features_t features)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	int err;
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	पूर्णांक err;
 
 	netdev_dbg(netdev, "%s: lif->features=0x%08llx new_features=0x%08llx\n",
-		   __func__, (u64)lif->netdev->features, (u64)features);
+		   __func__, (u64)lअगर->netdev->features, (u64)features);
 
-	err = ionic_set_nic_features(lif, features);
+	err = ionic_set_nic_features(lअगर, features);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ionic_set_mac_address(struct net_device *netdev, void *sa)
-{
-	struct sockaddr *addr = sa;
+अटल पूर्णांक ionic_set_mac_address(काष्ठा net_device *netdev, व्योम *sa)
+अणु
+	काष्ठा sockaddr *addr = sa;
 	u8 *mac;
-	int err;
+	पूर्णांक err;
 
 	mac = (u8 *)addr->sa_data;
-	if (ether_addr_equal(netdev->dev_addr, mac))
-		return 0;
+	अगर (ether_addr_equal(netdev->dev_addr, mac))
+		वापस 0;
 
 	err = eth_prepare_mac_addr_change(netdev, addr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (!is_zero_ether_addr(netdev->dev_addr)) {
+	अगर (!is_zero_ether_addr(netdev->dev_addr)) अणु
 		netdev_info(netdev, "deleting mac addr %pM\n",
 			    netdev->dev_addr);
 		ionic_addr_del(netdev, netdev->dev_addr);
-	}
+	पूर्ण
 
 	eth_commit_mac_addr_change(netdev, addr);
 	netdev_info(netdev, "updating mac addr %pM\n", mac);
 
-	return ionic_addr_add(netdev, mac);
-}
+	वापस ionic_addr_add(netdev, mac);
+पूर्ण
 
-static void ionic_stop_queues_reconfig(struct ionic_lif *lif)
-{
-	/* Stop and clean the queues before reconfiguration */
-	mutex_lock(&lif->queue_lock);
-	netif_device_detach(lif->netdev);
-	ionic_stop_queues(lif);
-	ionic_txrx_deinit(lif);
-}
+अटल व्योम ionic_stop_queues_reconfig(काष्ठा ionic_lअगर *lअगर)
+अणु
+	/* Stop and clean the queues beक्रमe reconfiguration */
+	mutex_lock(&lअगर->queue_lock);
+	netअगर_device_detach(lअगर->netdev);
+	ionic_stop_queues(lअगर);
+	ionic_txrx_deinit(lअगर);
+पूर्ण
 
-static int ionic_start_queues_reconfig(struct ionic_lif *lif)
-{
-	int err;
+अटल पूर्णांक ionic_start_queues_reconfig(काष्ठा ionic_lअगर *lअगर)
+अणु
+	पूर्णांक err;
 
 	/* Re-init the queues after reconfiguration */
 
-	/* The only way txrx_init can fail here is if communication
-	 * with FW is suddenly broken.  There's not much we can do
-	 * at this point - error messages have already been printed,
-	 * so we can continue on and the user can eventually do a
+	/* The only way txrx_init can fail here is अगर communication
+	 * with FW is suddenly broken.  There's not much we can करो
+	 * at this poपूर्णांक - error messages have alपढ़ोy been prपूर्णांकed,
+	 * so we can जारी on and the user can eventually करो a
 	 * DOWN and UP to try to reset and clear the issue.
 	 */
-	err = ionic_txrx_init(lif);
-	mutex_unlock(&lif->queue_lock);
-	ionic_link_status_check_request(lif, CAN_SLEEP);
-	netif_device_attach(lif->netdev);
+	err = ionic_txrx_init(lअगर);
+	mutex_unlock(&lअगर->queue_lock);
+	ionic_link_status_check_request(lअगर, CAN_SLEEP);
+	netअगर_device_attach(lअगर->netdev);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ionic_change_mtu(struct net_device *netdev, int new_mtu)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic_admin_ctx ctx = {
+अटल पूर्णांक ionic_change_mtu(काष्ठा net_device *netdev, पूर्णांक new_mtu)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.lif_setattr = {
+		.cmd.lअगर_setattr = अणु
 			.opcode = IONIC_CMD_LIF_SETATTR,
-			.index = cpu_to_le16(lif->index),
+			.index = cpu_to_le16(lअगर->index),
 			.attr = IONIC_LIF_ATTR_MTU,
 			.mtu = cpu_to_le32(new_mtu),
-		},
-	};
-	int err;
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक err;
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err)
-		return err;
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err)
+		वापस err;
 
-	/* if we're not running, nothing more to do */
-	if (!netif_running(netdev)) {
+	/* अगर we're not running, nothing more to करो */
+	अगर (!netअगर_running(netdev)) अणु
 		netdev->mtu = new_mtu;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	ionic_stop_queues_reconfig(lif);
+	ionic_stop_queues_reconfig(lअगर);
 	netdev->mtu = new_mtu;
-	return ionic_start_queues_reconfig(lif);
-}
+	वापस ionic_start_queues_reconfig(lअगर);
+पूर्ण
 
-static void ionic_tx_timeout_work(struct work_struct *ws)
-{
-	struct ionic_lif *lif = container_of(ws, struct ionic_lif, tx_timeout_work);
+अटल व्योम ionic_tx_समयout_work(काष्ठा work_काष्ठा *ws)
+अणु
+	काष्ठा ionic_lअगर *lअगर = container_of(ws, काष्ठा ionic_lअगर, tx_समयout_work);
 
-	if (test_bit(IONIC_LIF_F_FW_RESET, lif->state))
-		return;
+	अगर (test_bit(IONIC_LIF_F_FW_RESET, lअगर->state))
+		वापस;
 
-	/* if we were stopped before this scheduled job was launched,
-	 * don't bother the queues as they are already stopped.
+	/* अगर we were stopped beक्रमe this scheduled job was launched,
+	 * करोn't bother the queues as they are alपढ़ोy stopped.
 	 */
-	if (!netif_running(lif->netdev))
-		return;
+	अगर (!netअगर_running(lअगर->netdev))
+		वापस;
 
-	ionic_stop_queues_reconfig(lif);
-	ionic_start_queues_reconfig(lif);
-}
+	ionic_stop_queues_reconfig(lअगर);
+	ionic_start_queues_reconfig(lअगर);
+पूर्ण
 
-static void ionic_tx_timeout(struct net_device *netdev, unsigned int txqueue)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
+अटल व्योम ionic_tx_समयout(काष्ठा net_device *netdev, अचिन्हित पूर्णांक txqueue)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
 
-	netdev_info(lif->netdev, "Tx Timeout triggered - txq %d\n", txqueue);
-	schedule_work(&lif->tx_timeout_work);
-}
+	netdev_info(lअगर->netdev, "Tx Timeout triggered - txq %d\n", txqueue);
+	schedule_work(&lअगर->tx_समयout_work);
+पूर्ण
 
-static int ionic_vlan_rx_add_vid(struct net_device *netdev, __be16 proto,
+अटल पूर्णांक ionic_vlan_rx_add_vid(काष्ठा net_device *netdev, __be16 proto,
 				 u16 vid)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic_admin_ctx ctx = {
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.rx_filter_add = {
+		.cmd.rx_filter_add = अणु
 			.opcode = IONIC_CMD_RX_FILTER_ADD,
-			.lif_index = cpu_to_le16(lif->index),
+			.lअगर_index = cpu_to_le16(lअगर->index),
 			.match = cpu_to_le16(IONIC_RX_FILTER_MATCH_VLAN),
 			.vlan.vlan = cpu_to_le16(vid),
-		},
-	};
-	int err;
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक err;
 
 	netdev_dbg(netdev, "rx_filter add VLAN %d\n", vid);
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err)
-		return err;
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err)
+		वापस err;
 
-	return ionic_rx_filter_save(lif, 0, IONIC_RXQ_INDEX_ANY, 0, &ctx);
-}
+	वापस ionic_rx_filter_save(lअगर, 0, IONIC_RXQ_INDEX_ANY, 0, &ctx);
+पूर्ण
 
-static int ionic_vlan_rx_kill_vid(struct net_device *netdev, __be16 proto,
+अटल पूर्णांक ionic_vlan_rx_समाप्त_vid(काष्ठा net_device *netdev, __be16 proto,
 				  u16 vid)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic_admin_ctx ctx = {
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.rx_filter_del = {
+		.cmd.rx_filter_del = अणु
 			.opcode = IONIC_CMD_RX_FILTER_DEL,
-			.lif_index = cpu_to_le16(lif->index),
-		},
-	};
-	struct ionic_rx_filter *f;
+			.lअगर_index = cpu_to_le16(lअगर->index),
+		पूर्ण,
+	पूर्ण;
+	काष्ठा ionic_rx_filter *f;
 
-	spin_lock_bh(&lif->rx_filters.lock);
+	spin_lock_bh(&lअगर->rx_filters.lock);
 
-	f = ionic_rx_filter_by_vlan(lif, vid);
-	if (!f) {
-		spin_unlock_bh(&lif->rx_filters.lock);
-		return -ENOENT;
-	}
+	f = ionic_rx_filter_by_vlan(lअगर, vid);
+	अगर (!f) अणु
+		spin_unlock_bh(&lअगर->rx_filters.lock);
+		वापस -ENOENT;
+	पूर्ण
 
 	netdev_dbg(netdev, "rx_filter del VLAN %d (id %d)\n",
 		   vid, f->filter_id);
 
 	ctx.cmd.rx_filter_del.filter_id = cpu_to_le32(f->filter_id);
-	ionic_rx_filter_free(lif, f);
-	spin_unlock_bh(&lif->rx_filters.lock);
+	ionic_rx_filter_मुक्त(lअगर, f);
+	spin_unlock_bh(&lअगर->rx_filters.lock);
 
-	return ionic_adminq_post_wait(lif, &ctx);
-}
+	वापस ionic_adminq_post_रुको(lअगर, &ctx);
+पूर्ण
 
-int ionic_lif_rss_config(struct ionic_lif *lif, const u16 types,
-			 const u8 *key, const u32 *indir)
-{
-	struct ionic_admin_ctx ctx = {
+पूर्णांक ionic_lअगर_rss_config(काष्ठा ionic_lअगर *lअगर, स्थिर u16 types,
+			 स्थिर u8 *key, स्थिर u32 *indir)
+अणु
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.lif_setattr = {
+		.cmd.lअगर_setattr = अणु
 			.opcode = IONIC_CMD_LIF_SETATTR,
 			.attr = IONIC_LIF_ATTR_RSS,
-			.rss.addr = cpu_to_le64(lif->rss_ind_tbl_pa),
-		},
-	};
-	unsigned int i, tbl_sz;
+			.rss.addr = cpu_to_le64(lअगर->rss_ind_tbl_pa),
+		पूर्ण,
+	पूर्ण;
+	अचिन्हित पूर्णांक i, tbl_sz;
 
-	if (lif->hw_features & IONIC_ETH_HW_RX_HASH) {
-		lif->rss_types = types;
-		ctx.cmd.lif_setattr.rss.types = cpu_to_le16(types);
-	}
+	अगर (lअगर->hw_features & IONIC_ETH_HW_RX_HASH) अणु
+		lअगर->rss_types = types;
+		ctx.cmd.lअगर_setattr.rss.types = cpu_to_le16(types);
+	पूर्ण
 
-	if (key)
-		memcpy(lif->rss_hash_key, key, IONIC_RSS_HASH_KEY_SIZE);
+	अगर (key)
+		स_नकल(lअगर->rss_hash_key, key, IONIC_RSS_HASH_KEY_SIZE);
 
-	if (indir) {
-		tbl_sz = le16_to_cpu(lif->ionic->ident.lif.eth.rss_ind_tbl_sz);
-		for (i = 0; i < tbl_sz; i++)
-			lif->rss_ind_tbl[i] = indir[i];
-	}
+	अगर (indir) अणु
+		tbl_sz = le16_to_cpu(lअगर->ionic->ident.lअगर.eth.rss_ind_tbl_sz);
+		क्रम (i = 0; i < tbl_sz; i++)
+			lअगर->rss_ind_tbl[i] = indir[i];
+	पूर्ण
 
-	memcpy(ctx.cmd.lif_setattr.rss.key, lif->rss_hash_key,
+	स_नकल(ctx.cmd.lअगर_setattr.rss.key, lअगर->rss_hash_key,
 	       IONIC_RSS_HASH_KEY_SIZE);
 
-	return ionic_adminq_post_wait(lif, &ctx);
-}
+	वापस ionic_adminq_post_रुको(lअगर, &ctx);
+पूर्ण
 
-static int ionic_lif_rss_init(struct ionic_lif *lif)
-{
-	unsigned int tbl_sz;
-	unsigned int i;
+अटल पूर्णांक ionic_lअगर_rss_init(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अचिन्हित पूर्णांक tbl_sz;
+	अचिन्हित पूर्णांक i;
 
-	lif->rss_types = IONIC_RSS_TYPE_IPV4     |
+	lअगर->rss_types = IONIC_RSS_TYPE_IPV4     |
 			 IONIC_RSS_TYPE_IPV4_TCP |
 			 IONIC_RSS_TYPE_IPV4_UDP |
 			 IONIC_RSS_TYPE_IPV6     |
@@ -1888,411 +1889,411 @@ static int ionic_lif_rss_init(struct ionic_lif *lif)
 			 IONIC_RSS_TYPE_IPV6_UDP;
 
 	/* Fill indirection table with 'default' values */
-	tbl_sz = le16_to_cpu(lif->ionic->ident.lif.eth.rss_ind_tbl_sz);
-	for (i = 0; i < tbl_sz; i++)
-		lif->rss_ind_tbl[i] = ethtool_rxfh_indir_default(i, lif->nxqs);
+	tbl_sz = le16_to_cpu(lअगर->ionic->ident.lअगर.eth.rss_ind_tbl_sz);
+	क्रम (i = 0; i < tbl_sz; i++)
+		lअगर->rss_ind_tbl[i] = ethtool_rxfh_indir_शेष(i, lअगर->nxqs);
 
-	return ionic_lif_rss_config(lif, lif->rss_types, NULL, NULL);
-}
+	वापस ionic_lअगर_rss_config(lअगर, lअगर->rss_types, शून्य, शून्य);
+पूर्ण
 
-static void ionic_lif_rss_deinit(struct ionic_lif *lif)
-{
-	int tbl_sz;
+अटल व्योम ionic_lअगर_rss_deinit(काष्ठा ionic_lअगर *lअगर)
+अणु
+	पूर्णांक tbl_sz;
 
-	tbl_sz = le16_to_cpu(lif->ionic->ident.lif.eth.rss_ind_tbl_sz);
-	memset(lif->rss_ind_tbl, 0, tbl_sz);
-	memset(lif->rss_hash_key, 0, IONIC_RSS_HASH_KEY_SIZE);
+	tbl_sz = le16_to_cpu(lअगर->ionic->ident.lअगर.eth.rss_ind_tbl_sz);
+	स_रखो(lअगर->rss_ind_tbl, 0, tbl_sz);
+	स_रखो(lअगर->rss_hash_key, 0, IONIC_RSS_HASH_KEY_SIZE);
 
-	ionic_lif_rss_config(lif, 0x0, NULL, NULL);
-}
+	ionic_lअगर_rss_config(lअगर, 0x0, शून्य, शून्य);
+पूर्ण
 
-static void ionic_lif_quiesce(struct ionic_lif *lif)
-{
-	struct ionic_admin_ctx ctx = {
+अटल व्योम ionic_lअगर_quiesce(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.lif_setattr = {
+		.cmd.lअगर_setattr = अणु
 			.opcode = IONIC_CMD_LIF_SETATTR,
-			.index = cpu_to_le16(lif->index),
+			.index = cpu_to_le16(lअगर->index),
 			.attr = IONIC_LIF_ATTR_STATE,
 			.state = IONIC_LIF_QUIESCE,
-		},
-	};
-	int err;
+		पूर्ण,
+	पूर्ण;
+	पूर्णांक err;
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err)
-		netdev_err(lif->netdev, "lif quiesce failed %d\n", err);
-}
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err)
+		netdev_err(lअगर->netdev, "lif quiesce failed %d\n", err);
+पूर्ण
 
-static void ionic_txrx_disable(struct ionic_lif *lif)
-{
-	unsigned int i;
-	int err = 0;
+अटल व्योम ionic_txrx_disable(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err = 0;
 
-	if (lif->txqcqs) {
-		for (i = 0; i < lif->nxqs; i++)
-			err = ionic_qcq_disable(lif->txqcqs[i], (err != -ETIMEDOUT));
-	}
+	अगर (lअगर->txqcqs) अणु
+		क्रम (i = 0; i < lअगर->nxqs; i++)
+			err = ionic_qcq_disable(lअगर->txqcqs[i], (err != -ETIMEDOUT));
+	पूर्ण
 
-	if (lif->hwstamp_txq)
-		err = ionic_qcq_disable(lif->hwstamp_txq, (err != -ETIMEDOUT));
+	अगर (lअगर->hwstamp_txq)
+		err = ionic_qcq_disable(lअगर->hwstamp_txq, (err != -ETIMEDOUT));
 
-	if (lif->rxqcqs) {
-		for (i = 0; i < lif->nxqs; i++)
-			err = ionic_qcq_disable(lif->rxqcqs[i], (err != -ETIMEDOUT));
-	}
+	अगर (lअगर->rxqcqs) अणु
+		क्रम (i = 0; i < lअगर->nxqs; i++)
+			err = ionic_qcq_disable(lअगर->rxqcqs[i], (err != -ETIMEDOUT));
+	पूर्ण
 
-	if (lif->hwstamp_rxq)
-		err = ionic_qcq_disable(lif->hwstamp_rxq, (err != -ETIMEDOUT));
+	अगर (lअगर->hwstamp_rxq)
+		err = ionic_qcq_disable(lअगर->hwstamp_rxq, (err != -ETIMEDOUT));
 
-	ionic_lif_quiesce(lif);
-}
+	ionic_lअगर_quiesce(lअगर);
+पूर्ण
 
-static void ionic_txrx_deinit(struct ionic_lif *lif)
-{
-	unsigned int i;
+अटल व्योम ionic_txrx_deinit(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (lif->txqcqs) {
-		for (i = 0; i < lif->nxqs && lif->txqcqs[i]; i++) {
-			ionic_lif_qcq_deinit(lif, lif->txqcqs[i]);
-			ionic_tx_flush(&lif->txqcqs[i]->cq);
-			ionic_tx_empty(&lif->txqcqs[i]->q);
-		}
-	}
+	अगर (lअगर->txqcqs) अणु
+		क्रम (i = 0; i < lअगर->nxqs && lअगर->txqcqs[i]; i++) अणु
+			ionic_lअगर_qcq_deinit(lअगर, lअगर->txqcqs[i]);
+			ionic_tx_flush(&lअगर->txqcqs[i]->cq);
+			ionic_tx_empty(&lअगर->txqcqs[i]->q);
+		पूर्ण
+	पूर्ण
 
-	if (lif->rxqcqs) {
-		for (i = 0; i < lif->nxqs && lif->rxqcqs[i]; i++) {
-			ionic_lif_qcq_deinit(lif, lif->rxqcqs[i]);
-			ionic_rx_empty(&lif->rxqcqs[i]->q);
-		}
-	}
-	lif->rx_mode = 0;
+	अगर (lअगर->rxqcqs) अणु
+		क्रम (i = 0; i < lअगर->nxqs && lअगर->rxqcqs[i]; i++) अणु
+			ionic_lअगर_qcq_deinit(lअगर, lअगर->rxqcqs[i]);
+			ionic_rx_empty(&lअगर->rxqcqs[i]->q);
+		पूर्ण
+	पूर्ण
+	lअगर->rx_mode = 0;
 
-	if (lif->hwstamp_txq) {
-		ionic_lif_qcq_deinit(lif, lif->hwstamp_txq);
-		ionic_tx_flush(&lif->hwstamp_txq->cq);
-		ionic_tx_empty(&lif->hwstamp_txq->q);
-	}
+	अगर (lअगर->hwstamp_txq) अणु
+		ionic_lअगर_qcq_deinit(lअगर, lअगर->hwstamp_txq);
+		ionic_tx_flush(&lअगर->hwstamp_txq->cq);
+		ionic_tx_empty(&lअगर->hwstamp_txq->q);
+	पूर्ण
 
-	if (lif->hwstamp_rxq) {
-		ionic_lif_qcq_deinit(lif, lif->hwstamp_rxq);
-		ionic_rx_empty(&lif->hwstamp_rxq->q);
-	}
-}
+	अगर (lअगर->hwstamp_rxq) अणु
+		ionic_lअगर_qcq_deinit(lअगर, lअगर->hwstamp_rxq);
+		ionic_rx_empty(&lअगर->hwstamp_rxq->q);
+	पूर्ण
+पूर्ण
 
-static void ionic_txrx_free(struct ionic_lif *lif)
-{
-	unsigned int i;
+अटल व्योम ionic_txrx_मुक्त(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (lif->txqcqs) {
-		for (i = 0; i < lif->ionic->ntxqs_per_lif && lif->txqcqs[i]; i++) {
-			ionic_qcq_free(lif, lif->txqcqs[i]);
-			devm_kfree(lif->ionic->dev, lif->txqcqs[i]);
-			lif->txqcqs[i] = NULL;
-		}
-	}
+	अगर (lअगर->txqcqs) अणु
+		क्रम (i = 0; i < lअगर->ionic->ntxqs_per_lअगर && lअगर->txqcqs[i]; i++) अणु
+			ionic_qcq_मुक्त(lअगर, lअगर->txqcqs[i]);
+			devm_kमुक्त(lअगर->ionic->dev, lअगर->txqcqs[i]);
+			lअगर->txqcqs[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (lif->rxqcqs) {
-		for (i = 0; i < lif->ionic->nrxqs_per_lif && lif->rxqcqs[i]; i++) {
-			ionic_qcq_free(lif, lif->rxqcqs[i]);
-			devm_kfree(lif->ionic->dev, lif->rxqcqs[i]);
-			lif->rxqcqs[i] = NULL;
-		}
-	}
+	अगर (lअगर->rxqcqs) अणु
+		क्रम (i = 0; i < lअगर->ionic->nrxqs_per_lअगर && lअगर->rxqcqs[i]; i++) अणु
+			ionic_qcq_मुक्त(lअगर, lअगर->rxqcqs[i]);
+			devm_kमुक्त(lअगर->ionic->dev, lअगर->rxqcqs[i]);
+			lअगर->rxqcqs[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	if (lif->hwstamp_txq) {
-		ionic_qcq_free(lif, lif->hwstamp_txq);
-		devm_kfree(lif->ionic->dev, lif->hwstamp_txq);
-		lif->hwstamp_txq = NULL;
-	}
+	अगर (lअगर->hwstamp_txq) अणु
+		ionic_qcq_मुक्त(lअगर, lअगर->hwstamp_txq);
+		devm_kमुक्त(lअगर->ionic->dev, lअगर->hwstamp_txq);
+		lअगर->hwstamp_txq = शून्य;
+	पूर्ण
 
-	if (lif->hwstamp_rxq) {
-		ionic_qcq_free(lif, lif->hwstamp_rxq);
-		devm_kfree(lif->ionic->dev, lif->hwstamp_rxq);
-		lif->hwstamp_rxq = NULL;
-	}
-}
+	अगर (lअगर->hwstamp_rxq) अणु
+		ionic_qcq_मुक्त(lअगर, lअगर->hwstamp_rxq);
+		devm_kमुक्त(lअगर->ionic->dev, lअगर->hwstamp_rxq);
+		lअगर->hwstamp_rxq = शून्य;
+	पूर्ण
+पूर्ण
 
-static int ionic_txrx_alloc(struct ionic_lif *lif)
-{
-	unsigned int comp_sz, desc_sz, num_desc, sg_desc_sz;
-	unsigned int flags, i;
-	int err = 0;
+अटल पूर्णांक ionic_txrx_alloc(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अचिन्हित पूर्णांक comp_sz, desc_sz, num_desc, sg_desc_sz;
+	अचिन्हित पूर्णांक flags, i;
+	पूर्णांक err = 0;
 
-	num_desc = lif->ntxq_descs;
-	desc_sz = sizeof(struct ionic_txq_desc);
-	comp_sz = sizeof(struct ionic_txq_comp);
+	num_desc = lअगर->ntxq_descs;
+	desc_sz = माप(काष्ठा ionic_txq_desc);
+	comp_sz = माप(काष्ठा ionic_txq_comp);
 
-	if (lif->qtype_info[IONIC_QTYPE_TXQ].version >= 1 &&
-	    lif->qtype_info[IONIC_QTYPE_TXQ].sg_desc_sz ==
-					  sizeof(struct ionic_txq_sg_desc_v1))
-		sg_desc_sz = sizeof(struct ionic_txq_sg_desc_v1);
-	else
-		sg_desc_sz = sizeof(struct ionic_txq_sg_desc);
+	अगर (lअगर->qtype_info[IONIC_QTYPE_TXQ].version >= 1 &&
+	    lअगर->qtype_info[IONIC_QTYPE_TXQ].sg_desc_sz ==
+					  माप(काष्ठा ionic_txq_sg_desc_v1))
+		sg_desc_sz = माप(काष्ठा ionic_txq_sg_desc_v1);
+	अन्यथा
+		sg_desc_sz = माप(काष्ठा ionic_txq_sg_desc);
 
 	flags = IONIC_QCQ_F_TX_STATS | IONIC_QCQ_F_SG;
-	if (test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state))
+	अगर (test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state))
 		flags |= IONIC_QCQ_F_INTR;
-	for (i = 0; i < lif->nxqs; i++) {
-		err = ionic_qcq_alloc(lif, IONIC_QTYPE_TXQ, i, "tx", flags,
+	क्रम (i = 0; i < lअगर->nxqs; i++) अणु
+		err = ionic_qcq_alloc(lअगर, IONIC_QTYPE_TXQ, i, "tx", flags,
 				      num_desc, desc_sz, comp_sz, sg_desc_sz,
-				      lif->kern_pid, &lif->txqcqs[i]);
-		if (err)
-			goto err_out;
+				      lअगर->kern_pid, &lअगर->txqcqs[i]);
+		अगर (err)
+			जाओ err_out;
 
-		if (flags & IONIC_QCQ_F_INTR) {
-			ionic_intr_coal_init(lif->ionic->idev.intr_ctrl,
-					     lif->txqcqs[i]->intr.index,
-					     lif->tx_coalesce_hw);
-			if (test_bit(IONIC_LIF_F_TX_DIM_INTR, lif->state))
-				lif->txqcqs[i]->intr.dim_coal_hw = lif->tx_coalesce_hw;
-		}
+		अगर (flags & IONIC_QCQ_F_INTR) अणु
+			ionic_पूर्णांकr_coal_init(lअगर->ionic->idev.पूर्णांकr_ctrl,
+					     lअगर->txqcqs[i]->पूर्णांकr.index,
+					     lअगर->tx_coalesce_hw);
+			अगर (test_bit(IONIC_LIF_F_TX_DIM_INTR, lअगर->state))
+				lअगर->txqcqs[i]->पूर्णांकr.dim_coal_hw = lअगर->tx_coalesce_hw;
+		पूर्ण
 
-		ionic_debugfs_add_qcq(lif, lif->txqcqs[i]);
-	}
+		ionic_debugfs_add_qcq(lअगर, lअगर->txqcqs[i]);
+	पूर्ण
 
 	flags = IONIC_QCQ_F_RX_STATS | IONIC_QCQ_F_SG | IONIC_QCQ_F_INTR;
 
-	num_desc = lif->nrxq_descs;
-	desc_sz = sizeof(struct ionic_rxq_desc);
-	comp_sz = sizeof(struct ionic_rxq_comp);
-	sg_desc_sz = sizeof(struct ionic_rxq_sg_desc);
+	num_desc = lअगर->nrxq_descs;
+	desc_sz = माप(काष्ठा ionic_rxq_desc);
+	comp_sz = माप(काष्ठा ionic_rxq_comp);
+	sg_desc_sz = माप(काष्ठा ionic_rxq_sg_desc);
 
-	if (lif->rxq_features & IONIC_Q_F_2X_CQ_DESC)
+	अगर (lअगर->rxq_features & IONIC_Q_F_2X_CQ_DESC)
 		comp_sz *= 2;
 
-	for (i = 0; i < lif->nxqs; i++) {
-		err = ionic_qcq_alloc(lif, IONIC_QTYPE_RXQ, i, "rx", flags,
+	क्रम (i = 0; i < lअगर->nxqs; i++) अणु
+		err = ionic_qcq_alloc(lअगर, IONIC_QTYPE_RXQ, i, "rx", flags,
 				      num_desc, desc_sz, comp_sz, sg_desc_sz,
-				      lif->kern_pid, &lif->rxqcqs[i]);
-		if (err)
-			goto err_out;
+				      lअगर->kern_pid, &lअगर->rxqcqs[i]);
+		अगर (err)
+			जाओ err_out;
 
-		lif->rxqcqs[i]->q.features = lif->rxq_features;
+		lअगर->rxqcqs[i]->q.features = lअगर->rxq_features;
 
-		ionic_intr_coal_init(lif->ionic->idev.intr_ctrl,
-				     lif->rxqcqs[i]->intr.index,
-				     lif->rx_coalesce_hw);
-		if (test_bit(IONIC_LIF_F_RX_DIM_INTR, lif->state))
-			lif->rxqcqs[i]->intr.dim_coal_hw = lif->rx_coalesce_hw;
+		ionic_पूर्णांकr_coal_init(lअगर->ionic->idev.पूर्णांकr_ctrl,
+				     lअगर->rxqcqs[i]->पूर्णांकr.index,
+				     lअगर->rx_coalesce_hw);
+		अगर (test_bit(IONIC_LIF_F_RX_DIM_INTR, lअगर->state))
+			lअगर->rxqcqs[i]->पूर्णांकr.dim_coal_hw = lअगर->rx_coalesce_hw;
 
-		if (!test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state))
-			ionic_link_qcq_interrupts(lif->rxqcqs[i],
-						  lif->txqcqs[i]);
+		अगर (!test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state))
+			ionic_link_qcq_पूर्णांकerrupts(lअगर->rxqcqs[i],
+						  lअगर->txqcqs[i]);
 
-		ionic_debugfs_add_qcq(lif, lif->rxqcqs[i]);
-	}
+		ionic_debugfs_add_qcq(lअगर, lअगर->rxqcqs[i]);
+	पूर्ण
 
-	return 0;
-
-err_out:
-	ionic_txrx_free(lif);
-
-	return err;
-}
-
-static int ionic_txrx_init(struct ionic_lif *lif)
-{
-	unsigned int i;
-	int err;
-
-	for (i = 0; i < lif->nxqs; i++) {
-		err = ionic_lif_txq_init(lif, lif->txqcqs[i]);
-		if (err)
-			goto err_out;
-
-		err = ionic_lif_rxq_init(lif, lif->rxqcqs[i]);
-		if (err) {
-			ionic_lif_qcq_deinit(lif, lif->txqcqs[i]);
-			goto err_out;
-		}
-	}
-
-	if (lif->netdev->features & NETIF_F_RXHASH)
-		ionic_lif_rss_init(lif);
-
-	ionic_set_rx_mode(lif->netdev, CAN_SLEEP);
-
-	return 0;
+	वापस 0;
 
 err_out:
-	while (i--) {
-		ionic_lif_qcq_deinit(lif, lif->txqcqs[i]);
-		ionic_lif_qcq_deinit(lif, lif->rxqcqs[i]);
-	}
+	ionic_txrx_मुक्त(lअगर);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ionic_txrx_enable(struct ionic_lif *lif)
-{
-	int derr = 0;
-	int i, err;
+अटल पूर्णांक ionic_txrx_init(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अचिन्हित पूर्णांक i;
+	पूर्णांक err;
 
-	for (i = 0; i < lif->nxqs; i++) {
-		if (!(lif->rxqcqs[i] && lif->txqcqs[i])) {
-			dev_err(lif->ionic->dev, "%s: bad qcq %d\n", __func__, i);
+	क्रम (i = 0; i < lअगर->nxqs; i++) अणु
+		err = ionic_lअगर_txq_init(lअगर, lअगर->txqcqs[i]);
+		अगर (err)
+			जाओ err_out;
+
+		err = ionic_lअगर_rxq_init(lअगर, lअगर->rxqcqs[i]);
+		अगर (err) अणु
+			ionic_lअगर_qcq_deinit(lअगर, lअगर->txqcqs[i]);
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
+
+	अगर (lअगर->netdev->features & NETIF_F_RXHASH)
+		ionic_lअगर_rss_init(lअगर);
+
+	ionic_set_rx_mode(lअगर->netdev, CAN_SLEEP);
+
+	वापस 0;
+
+err_out:
+	जबतक (i--) अणु
+		ionic_lअगर_qcq_deinit(lअगर, lअगर->txqcqs[i]);
+		ionic_lअगर_qcq_deinit(lअगर, lअगर->rxqcqs[i]);
+	पूर्ण
+
+	वापस err;
+पूर्ण
+
+अटल पूर्णांक ionic_txrx_enable(काष्ठा ionic_lअगर *lअगर)
+अणु
+	पूर्णांक derr = 0;
+	पूर्णांक i, err;
+
+	क्रम (i = 0; i < lअगर->nxqs; i++) अणु
+		अगर (!(lअगर->rxqcqs[i] && lअगर->txqcqs[i])) अणु
+			dev_err(lअगर->ionic->dev, "%s: bad qcq %d\n", __func__, i);
 			err = -ENXIO;
-			goto err_out;
-		}
+			जाओ err_out;
+		पूर्ण
 
-		ionic_rx_fill(&lif->rxqcqs[i]->q);
-		err = ionic_qcq_enable(lif->rxqcqs[i]);
-		if (err)
-			goto err_out;
+		ionic_rx_fill(&lअगर->rxqcqs[i]->q);
+		err = ionic_qcq_enable(lअगर->rxqcqs[i]);
+		अगर (err)
+			जाओ err_out;
 
-		err = ionic_qcq_enable(lif->txqcqs[i]);
-		if (err) {
-			derr = ionic_qcq_disable(lif->rxqcqs[i], (err != -ETIMEDOUT));
-			goto err_out;
-		}
-	}
+		err = ionic_qcq_enable(lअगर->txqcqs[i]);
+		अगर (err) अणु
+			derr = ionic_qcq_disable(lअगर->rxqcqs[i], (err != -ETIMEDOUT));
+			जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	if (lif->hwstamp_rxq) {
-		ionic_rx_fill(&lif->hwstamp_rxq->q);
-		err = ionic_qcq_enable(lif->hwstamp_rxq);
-		if (err)
-			goto err_out_hwstamp_rx;
-	}
+	अगर (lअगर->hwstamp_rxq) अणु
+		ionic_rx_fill(&lअगर->hwstamp_rxq->q);
+		err = ionic_qcq_enable(lअगर->hwstamp_rxq);
+		अगर (err)
+			जाओ err_out_hwstamp_rx;
+	पूर्ण
 
-	if (lif->hwstamp_txq) {
-		err = ionic_qcq_enable(lif->hwstamp_txq);
-		if (err)
-			goto err_out_hwstamp_tx;
-	}
+	अगर (lअगर->hwstamp_txq) अणु
+		err = ionic_qcq_enable(lअगर->hwstamp_txq);
+		अगर (err)
+			जाओ err_out_hwstamp_tx;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_out_hwstamp_tx:
-	if (lif->hwstamp_rxq)
-		derr = ionic_qcq_disable(lif->hwstamp_rxq, (derr != -ETIMEDOUT));
+	अगर (lअगर->hwstamp_rxq)
+		derr = ionic_qcq_disable(lअगर->hwstamp_rxq, (derr != -ETIMEDOUT));
 err_out_hwstamp_rx:
-	i = lif->nxqs;
+	i = lअगर->nxqs;
 err_out:
-	while (i--) {
-		derr = ionic_qcq_disable(lif->txqcqs[i], (derr != -ETIMEDOUT));
-		derr = ionic_qcq_disable(lif->rxqcqs[i], (derr != -ETIMEDOUT));
-	}
+	जबतक (i--) अणु
+		derr = ionic_qcq_disable(lअगर->txqcqs[i], (derr != -ETIMEDOUT));
+		derr = ionic_qcq_disable(lअगर->rxqcqs[i], (derr != -ETIMEDOUT));
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int ionic_start_queues(struct ionic_lif *lif)
-{
-	int err;
+अटल पूर्णांक ionic_start_queues(काष्ठा ionic_lअगर *lअगर)
+अणु
+	पूर्णांक err;
 
-	if (test_bit(IONIC_LIF_F_BROKEN, lif->state))
-		return -EIO;
+	अगर (test_bit(IONIC_LIF_F_BROKEN, lअगर->state))
+		वापस -EIO;
 
-	if (test_bit(IONIC_LIF_F_FW_RESET, lif->state))
-		return -EBUSY;
+	अगर (test_bit(IONIC_LIF_F_FW_RESET, lअगर->state))
+		वापस -EBUSY;
 
-	if (test_and_set_bit(IONIC_LIF_F_UP, lif->state))
-		return 0;
+	अगर (test_and_set_bit(IONIC_LIF_F_UP, lअगर->state))
+		वापस 0;
 
-	err = ionic_txrx_enable(lif);
-	if (err) {
-		clear_bit(IONIC_LIF_F_UP, lif->state);
-		return err;
-	}
-	netif_tx_wake_all_queues(lif->netdev);
+	err = ionic_txrx_enable(lअगर);
+	अगर (err) अणु
+		clear_bit(IONIC_LIF_F_UP, lअगर->state);
+		वापस err;
+	पूर्ण
+	netअगर_tx_wake_all_queues(lअगर->netdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ionic_open(struct net_device *netdev)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	int err;
+अटल पूर्णांक ionic_खोलो(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	पूर्णांक err;
 
 	/* If recovering from a broken state, clear the bit and we'll try again */
-	if (test_and_clear_bit(IONIC_LIF_F_BROKEN, lif->state))
+	अगर (test_and_clear_bit(IONIC_LIF_F_BROKEN, lअगर->state))
 		netdev_info(netdev, "clearing broken state\n");
 
-	err = ionic_txrx_alloc(lif);
-	if (err)
-		return err;
+	err = ionic_txrx_alloc(lअगर);
+	अगर (err)
+		वापस err;
 
-	err = ionic_txrx_init(lif);
-	if (err)
-		goto err_txrx_free;
+	err = ionic_txrx_init(lअगर);
+	अगर (err)
+		जाओ err_txrx_मुक्त;
 
-	err = netif_set_real_num_tx_queues(netdev, lif->nxqs);
-	if (err)
-		goto err_txrx_deinit;
+	err = netअगर_set_real_num_tx_queues(netdev, lअगर->nxqs);
+	अगर (err)
+		जाओ err_txrx_deinit;
 
-	err = netif_set_real_num_rx_queues(netdev, lif->nxqs);
-	if (err)
-		goto err_txrx_deinit;
+	err = netअगर_set_real_num_rx_queues(netdev, lअगर->nxqs);
+	अगर (err)
+		जाओ err_txrx_deinit;
 
-	/* don't start the queues until we have link */
-	if (netif_carrier_ok(netdev)) {
-		err = ionic_start_queues(lif);
-		if (err)
-			goto err_txrx_deinit;
-	}
+	/* करोn't start the queues until we have link */
+	अगर (netअगर_carrier_ok(netdev)) अणु
+		err = ionic_start_queues(lअगर);
+		अगर (err)
+			जाओ err_txrx_deinit;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_txrx_deinit:
-	ionic_txrx_deinit(lif);
-err_txrx_free:
-	ionic_txrx_free(lif);
-	return err;
-}
+	ionic_txrx_deinit(lअगर);
+err_txrx_मुक्त:
+	ionic_txrx_मुक्त(lअगर);
+	वापस err;
+पूर्ण
 
-static void ionic_stop_queues(struct ionic_lif *lif)
-{
-	if (!test_and_clear_bit(IONIC_LIF_F_UP, lif->state))
-		return;
+अटल व्योम ionic_stop_queues(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अगर (!test_and_clear_bit(IONIC_LIF_F_UP, lअगर->state))
+		वापस;
 
-	netif_tx_disable(lif->netdev);
-	ionic_txrx_disable(lif);
-}
+	netअगर_tx_disable(lअगर->netdev);
+	ionic_txrx_disable(lअगर);
+पूर्ण
 
-static int ionic_stop(struct net_device *netdev)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
+अटल पूर्णांक ionic_stop(काष्ठा net_device *netdev)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
 
-	if (test_bit(IONIC_LIF_F_FW_RESET, lif->state))
-		return 0;
+	अगर (test_bit(IONIC_LIF_F_FW_RESET, lअगर->state))
+		वापस 0;
 
-	ionic_stop_queues(lif);
-	ionic_txrx_deinit(lif);
-	ionic_txrx_free(lif);
+	ionic_stop_queues(lअगर);
+	ionic_txrx_deinit(lअगर);
+	ionic_txrx_मुक्त(lअगर);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ionic_do_ioctl(struct net_device *netdev, struct ifreq *ifr, int cmd)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
+अटल पूर्णांक ionic_करो_ioctl(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr, पूर्णांक cmd)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
 
-	switch (cmd) {
-	case SIOCSHWTSTAMP:
-		return ionic_lif_hwstamp_set(lif, ifr);
-	case SIOCGHWTSTAMP:
-		return ionic_lif_hwstamp_get(lif, ifr);
-	default:
-		return -EOPNOTSUPP;
-	}
-}
+	चयन (cmd) अणु
+	हाल SIOCSHWTSTAMP:
+		वापस ionic_lअगर_hwstamp_set(lअगर, अगरr);
+	हाल SIOCGHWTSTAMP:
+		वापस ionic_lअगर_hwstamp_get(lअगर, अगरr);
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int ionic_get_vf_config(struct net_device *netdev,
-			       int vf, struct ifla_vf_info *ivf)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic *ionic = lif->ionic;
-	int ret = 0;
+अटल पूर्णांक ionic_get_vf_config(काष्ठा net_device *netdev,
+			       पूर्णांक vf, काष्ठा अगरla_vf_info *ivf)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic *ionic = lअगर->ionic;
+	पूर्णांक ret = 0;
 
-	if (!netif_device_present(netdev))
-		return -EBUSY;
+	अगर (!netअगर_device_present(netdev))
+		वापस -EBUSY;
 
-	down_read(&ionic->vf_op_lock);
+	करोwn_पढ़ो(&ionic->vf_op_lock);
 
-	if (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) {
+	अगर (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) अणु
 		ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ivf->vf           = vf;
 		ivf->vlan         = le16_to_cpu(ionic->vfs[vf].vlanid);
 		ivf->qos	  = 0;
@@ -2301,29 +2302,29 @@ static int ionic_get_vf_config(struct net_device *netdev,
 		ivf->max_tx_rate  = le32_to_cpu(ionic->vfs[vf].maxrate);
 		ivf->trusted      = ionic->vfs[vf].trusted;
 		ether_addr_copy(ivf->mac, ionic->vfs[vf].macaddr);
-	}
+	पूर्ण
 
-	up_read(&ionic->vf_op_lock);
-	return ret;
-}
+	up_पढ़ो(&ionic->vf_op_lock);
+	वापस ret;
+पूर्ण
 
-static int ionic_get_vf_stats(struct net_device *netdev, int vf,
-			      struct ifla_vf_stats *vf_stats)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic *ionic = lif->ionic;
-	struct ionic_lif_stats *vs;
-	int ret = 0;
+अटल पूर्णांक ionic_get_vf_stats(काष्ठा net_device *netdev, पूर्णांक vf,
+			      काष्ठा अगरla_vf_stats *vf_stats)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic *ionic = lअगर->ionic;
+	काष्ठा ionic_lअगर_stats *vs;
+	पूर्णांक ret = 0;
 
-	if (!netif_device_present(netdev))
-		return -EBUSY;
+	अगर (!netअगर_device_present(netdev))
+		वापस -EBUSY;
 
-	down_read(&ionic->vf_op_lock);
+	करोwn_पढ़ो(&ionic->vf_op_lock);
 
-	if (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) {
+	अगर (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) अणु
 		ret = -EINVAL;
-	} else {
-		memset(vf_stats, 0, sizeof(*vf_stats));
+	पूर्ण अन्यथा अणु
+		स_रखो(vf_stats, 0, माप(*vf_stats));
 		vs = &ionic->vfs[vf].stats;
 
 		vf_stats->rx_packets = le64_to_cpu(vs->rx_ucast_packets);
@@ -2338,217 +2339,217 @@ static int ionic_get_vf_stats(struct net_device *netdev, int vf,
 		vf_stats->tx_dropped = le64_to_cpu(vs->tx_ucast_drop_packets) +
 				       le64_to_cpu(vs->tx_mcast_drop_packets) +
 				       le64_to_cpu(vs->tx_bcast_drop_packets);
-	}
+	पूर्ण
 
-	up_read(&ionic->vf_op_lock);
-	return ret;
-}
+	up_पढ़ो(&ionic->vf_op_lock);
+	वापस ret;
+पूर्ण
 
-static int ionic_set_vf_mac(struct net_device *netdev, int vf, u8 *mac)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic *ionic = lif->ionic;
-	int ret;
+अटल पूर्णांक ionic_set_vf_mac(काष्ठा net_device *netdev, पूर्णांक vf, u8 *mac)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic *ionic = lअगर->ionic;
+	पूर्णांक ret;
 
-	if (!(is_zero_ether_addr(mac) || is_valid_ether_addr(mac)))
-		return -EINVAL;
+	अगर (!(is_zero_ether_addr(mac) || is_valid_ether_addr(mac)))
+		वापस -EINVAL;
 
-	if (!netif_device_present(netdev))
-		return -EBUSY;
+	अगर (!netअगर_device_present(netdev))
+		वापस -EBUSY;
 
-	down_write(&ionic->vf_op_lock);
+	करोwn_ग_लिखो(&ionic->vf_op_lock);
 
-	if (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) {
+	अगर (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) अणु
 		ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = ionic_set_vf_config(ionic, vf, IONIC_VF_ATTR_MAC, mac);
-		if (!ret)
+		अगर (!ret)
 			ether_addr_copy(ionic->vfs[vf].macaddr, mac);
-	}
+	पूर्ण
 
-	up_write(&ionic->vf_op_lock);
-	return ret;
-}
+	up_ग_लिखो(&ionic->vf_op_lock);
+	वापस ret;
+पूर्ण
 
-static int ionic_set_vf_vlan(struct net_device *netdev, int vf, u16 vlan,
+अटल पूर्णांक ionic_set_vf_vlan(काष्ठा net_device *netdev, पूर्णांक vf, u16 vlan,
 			     u8 qos, __be16 proto)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic *ionic = lif->ionic;
-	int ret;
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic *ionic = lअगर->ionic;
+	पूर्णांक ret;
 
 	/* until someday when we support qos */
-	if (qos)
-		return -EINVAL;
+	अगर (qos)
+		वापस -EINVAL;
 
-	if (vlan > 4095)
-		return -EINVAL;
+	अगर (vlan > 4095)
+		वापस -EINVAL;
 
-	if (proto != htons(ETH_P_8021Q))
-		return -EPROTONOSUPPORT;
+	अगर (proto != htons(ETH_P_8021Q))
+		वापस -EPROTONOSUPPORT;
 
-	if (!netif_device_present(netdev))
-		return -EBUSY;
+	अगर (!netअगर_device_present(netdev))
+		वापस -EBUSY;
 
-	down_write(&ionic->vf_op_lock);
+	करोwn_ग_लिखो(&ionic->vf_op_lock);
 
-	if (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) {
+	अगर (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) अणु
 		ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = ionic_set_vf_config(ionic, vf,
 					  IONIC_VF_ATTR_VLAN, (u8 *)&vlan);
-		if (!ret)
+		अगर (!ret)
 			ionic->vfs[vf].vlanid = cpu_to_le16(vlan);
-	}
+	पूर्ण
 
-	up_write(&ionic->vf_op_lock);
-	return ret;
-}
+	up_ग_लिखो(&ionic->vf_op_lock);
+	वापस ret;
+पूर्ण
 
-static int ionic_set_vf_rate(struct net_device *netdev, int vf,
-			     int tx_min, int tx_max)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic *ionic = lif->ionic;
-	int ret;
+अटल पूर्णांक ionic_set_vf_rate(काष्ठा net_device *netdev, पूर्णांक vf,
+			     पूर्णांक tx_min, पूर्णांक tx_max)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic *ionic = lअगर->ionic;
+	पूर्णांक ret;
 
 	/* setting the min just seems silly */
-	if (tx_min)
-		return -EINVAL;
+	अगर (tx_min)
+		वापस -EINVAL;
 
-	if (!netif_device_present(netdev))
-		return -EBUSY;
+	अगर (!netअगर_device_present(netdev))
+		वापस -EBUSY;
 
-	down_write(&ionic->vf_op_lock);
+	करोwn_ग_लिखो(&ionic->vf_op_lock);
 
-	if (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) {
+	अगर (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) अणु
 		ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = ionic_set_vf_config(ionic, vf,
 					  IONIC_VF_ATTR_RATE, (u8 *)&tx_max);
-		if (!ret)
-			lif->ionic->vfs[vf].maxrate = cpu_to_le32(tx_max);
-	}
+		अगर (!ret)
+			lअगर->ionic->vfs[vf].maxrate = cpu_to_le32(tx_max);
+	पूर्ण
 
-	up_write(&ionic->vf_op_lock);
-	return ret;
-}
+	up_ग_लिखो(&ionic->vf_op_lock);
+	वापस ret;
+पूर्ण
 
-static int ionic_set_vf_spoofchk(struct net_device *netdev, int vf, bool set)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic *ionic = lif->ionic;
-	u8 data = set;  /* convert to u8 for config */
-	int ret;
+अटल पूर्णांक ionic_set_vf_spoofchk(काष्ठा net_device *netdev, पूर्णांक vf, bool set)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic *ionic = lअगर->ionic;
+	u8 data = set;  /* convert to u8 क्रम config */
+	पूर्णांक ret;
 
-	if (!netif_device_present(netdev))
-		return -EBUSY;
+	अगर (!netअगर_device_present(netdev))
+		वापस -EBUSY;
 
-	down_write(&ionic->vf_op_lock);
+	करोwn_ग_लिखो(&ionic->vf_op_lock);
 
-	if (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) {
+	अगर (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) अणु
 		ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = ionic_set_vf_config(ionic, vf,
 					  IONIC_VF_ATTR_SPOOFCHK, &data);
-		if (!ret)
+		अगर (!ret)
 			ionic->vfs[vf].spoofchk = data;
-	}
+	पूर्ण
 
-	up_write(&ionic->vf_op_lock);
-	return ret;
-}
+	up_ग_लिखो(&ionic->vf_op_lock);
+	वापस ret;
+पूर्ण
 
-static int ionic_set_vf_trust(struct net_device *netdev, int vf, bool set)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic *ionic = lif->ionic;
-	u8 data = set;  /* convert to u8 for config */
-	int ret;
+अटल पूर्णांक ionic_set_vf_trust(काष्ठा net_device *netdev, पूर्णांक vf, bool set)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic *ionic = lअगर->ionic;
+	u8 data = set;  /* convert to u8 क्रम config */
+	पूर्णांक ret;
 
-	if (!netif_device_present(netdev))
-		return -EBUSY;
+	अगर (!netअगर_device_present(netdev))
+		वापस -EBUSY;
 
-	down_write(&ionic->vf_op_lock);
+	करोwn_ग_लिखो(&ionic->vf_op_lock);
 
-	if (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) {
+	अगर (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) अणु
 		ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = ionic_set_vf_config(ionic, vf,
 					  IONIC_VF_ATTR_TRUST, &data);
-		if (!ret)
+		अगर (!ret)
 			ionic->vfs[vf].trusted = data;
-	}
+	पूर्ण
 
-	up_write(&ionic->vf_op_lock);
-	return ret;
-}
+	up_ग_लिखो(&ionic->vf_op_lock);
+	वापस ret;
+पूर्ण
 
-static int ionic_set_vf_link_state(struct net_device *netdev, int vf, int set)
-{
-	struct ionic_lif *lif = netdev_priv(netdev);
-	struct ionic *ionic = lif->ionic;
+अटल पूर्णांक ionic_set_vf_link_state(काष्ठा net_device *netdev, पूर्णांक vf, पूर्णांक set)
+अणु
+	काष्ठा ionic_lअगर *lअगर = netdev_priv(netdev);
+	काष्ठा ionic *ionic = lअगर->ionic;
 	u8 data;
-	int ret;
+	पूर्णांक ret;
 
-	switch (set) {
-	case IFLA_VF_LINK_STATE_ENABLE:
+	चयन (set) अणु
+	हाल IFLA_VF_LINK_STATE_ENABLE:
 		data = IONIC_VF_LINK_STATUS_UP;
-		break;
-	case IFLA_VF_LINK_STATE_DISABLE:
+		अवरोध;
+	हाल IFLA_VF_LINK_STATE_DISABLE:
 		data = IONIC_VF_LINK_STATUS_DOWN;
-		break;
-	case IFLA_VF_LINK_STATE_AUTO:
+		अवरोध;
+	हाल IFLA_VF_LINK_STATE_AUTO:
 		data = IONIC_VF_LINK_STATUS_AUTO;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!netif_device_present(netdev))
-		return -EBUSY;
+	अगर (!netअगर_device_present(netdev))
+		वापस -EBUSY;
 
-	down_write(&ionic->vf_op_lock);
+	करोwn_ग_लिखो(&ionic->vf_op_lock);
 
-	if (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) {
+	अगर (vf >= pci_num_vf(ionic->pdev) || !ionic->vfs) अणु
 		ret = -EINVAL;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = ionic_set_vf_config(ionic, vf,
 					  IONIC_VF_ATTR_LINKSTATE, &data);
-		if (!ret)
+		अगर (!ret)
 			ionic->vfs[vf].linkstate = set;
-	}
+	पूर्ण
 
-	up_write(&ionic->vf_op_lock);
-	return ret;
-}
+	up_ग_लिखो(&ionic->vf_op_lock);
+	वापस ret;
+पूर्ण
 
-static const struct net_device_ops ionic_netdev_ops = {
-	.ndo_open               = ionic_open,
-	.ndo_stop               = ionic_stop,
-	.ndo_do_ioctl		= ionic_do_ioctl,
-	.ndo_start_xmit		= ionic_start_xmit,
-	.ndo_get_stats64	= ionic_get_stats64,
-	.ndo_set_rx_mode	= ionic_ndo_set_rx_mode,
-	.ndo_set_features	= ionic_set_features,
-	.ndo_set_mac_address	= ionic_set_mac_address,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_tx_timeout         = ionic_tx_timeout,
-	.ndo_change_mtu         = ionic_change_mtu,
-	.ndo_vlan_rx_add_vid    = ionic_vlan_rx_add_vid,
-	.ndo_vlan_rx_kill_vid   = ionic_vlan_rx_kill_vid,
-	.ndo_set_vf_vlan	= ionic_set_vf_vlan,
-	.ndo_set_vf_trust	= ionic_set_vf_trust,
-	.ndo_set_vf_mac		= ionic_set_vf_mac,
-	.ndo_set_vf_rate	= ionic_set_vf_rate,
-	.ndo_set_vf_spoofchk	= ionic_set_vf_spoofchk,
-	.ndo_get_vf_config	= ionic_get_vf_config,
-	.ndo_set_vf_link_state	= ionic_set_vf_link_state,
-	.ndo_get_vf_stats       = ionic_get_vf_stats,
-};
+अटल स्थिर काष्ठा net_device_ops ionic_netdev_ops = अणु
+	.nकरो_खोलो               = ionic_खोलो,
+	.nकरो_stop               = ionic_stop,
+	.nकरो_करो_ioctl		= ionic_करो_ioctl,
+	.nकरो_start_xmit		= ionic_start_xmit,
+	.nकरो_get_stats64	= ionic_get_stats64,
+	.nकरो_set_rx_mode	= ionic_nकरो_set_rx_mode,
+	.nकरो_set_features	= ionic_set_features,
+	.nकरो_set_mac_address	= ionic_set_mac_address,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_tx_समयout         = ionic_tx_समयout,
+	.nकरो_change_mtu         = ionic_change_mtu,
+	.nकरो_vlan_rx_add_vid    = ionic_vlan_rx_add_vid,
+	.nकरो_vlan_rx_समाप्त_vid   = ionic_vlan_rx_समाप्त_vid,
+	.nकरो_set_vf_vlan	= ionic_set_vf_vlan,
+	.nकरो_set_vf_trust	= ionic_set_vf_trust,
+	.nकरो_set_vf_mac		= ionic_set_vf_mac,
+	.nकरो_set_vf_rate	= ionic_set_vf_rate,
+	.nकरो_set_vf_spoofchk	= ionic_set_vf_spoofchk,
+	.nकरो_get_vf_config	= ionic_get_vf_config,
+	.nकरो_set_vf_link_state	= ionic_set_vf_link_state,
+	.nकरो_get_vf_stats       = ionic_get_vf_stats,
+पूर्ण;
 
-static void ionic_swap_queues(struct ionic_qcq *a, struct ionic_qcq *b)
-{
+अटल व्योम ionic_swap_queues(काष्ठा ionic_qcq *a, काष्ठा ionic_qcq *b)
+अणु
 	/* only swapping the queues, not the napi, flags, or other stuff */
 	swap(a->q.features,   b->q.features);
 	swap(a->q.num_descs,  b->q.num_descs);
@@ -2577,513 +2578,513 @@ static void ionic_swap_queues(struct ionic_qcq *a, struct ionic_qcq *b)
 	swap(a->cq_size,      b->cq_size);
 
 	ionic_debugfs_del_qcq(a);
-	ionic_debugfs_add_qcq(a->q.lif, a);
-}
+	ionic_debugfs_add_qcq(a->q.lअगर, a);
+पूर्ण
 
-int ionic_reconfigure_queues(struct ionic_lif *lif,
-			     struct ionic_queue_params *qparam)
-{
-	unsigned int comp_sz, desc_sz, num_desc, sg_desc_sz;
-	struct ionic_qcq **tx_qcqs = NULL;
-	struct ionic_qcq **rx_qcqs = NULL;
-	unsigned int flags, i;
-	int err = -ENOMEM;
+पूर्णांक ionic_reconfigure_queues(काष्ठा ionic_lअगर *lअगर,
+			     काष्ठा ionic_queue_params *qparam)
+अणु
+	अचिन्हित पूर्णांक comp_sz, desc_sz, num_desc, sg_desc_sz;
+	काष्ठा ionic_qcq **tx_qcqs = शून्य;
+	काष्ठा ionic_qcq **rx_qcqs = शून्य;
+	अचिन्हित पूर्णांक flags, i;
+	पूर्णांक err = -ENOMEM;
 
-	/* allocate temporary qcq arrays to hold new queue structs */
-	if (qparam->nxqs != lif->nxqs || qparam->ntxq_descs != lif->ntxq_descs) {
-		tx_qcqs = devm_kcalloc(lif->ionic->dev, lif->ionic->ntxqs_per_lif,
-				       sizeof(struct ionic_qcq *), GFP_KERNEL);
-		if (!tx_qcqs)
-			goto err_out;
-	}
-	if (qparam->nxqs != lif->nxqs ||
-	    qparam->nrxq_descs != lif->nrxq_descs ||
-	    qparam->rxq_features != lif->rxq_features) {
-		rx_qcqs = devm_kcalloc(lif->ionic->dev, lif->ionic->nrxqs_per_lif,
-				       sizeof(struct ionic_qcq *), GFP_KERNEL);
-		if (!rx_qcqs)
-			goto err_out;
-	}
+	/* allocate temporary qcq arrays to hold new queue काष्ठाs */
+	अगर (qparam->nxqs != lअगर->nxqs || qparam->ntxq_descs != lअगर->ntxq_descs) अणु
+		tx_qcqs = devm_kसुस्मृति(lअगर->ionic->dev, lअगर->ionic->ntxqs_per_lअगर,
+				       माप(काष्ठा ionic_qcq *), GFP_KERNEL);
+		अगर (!tx_qcqs)
+			जाओ err_out;
+	पूर्ण
+	अगर (qparam->nxqs != lअगर->nxqs ||
+	    qparam->nrxq_descs != lअगर->nrxq_descs ||
+	    qparam->rxq_features != lअगर->rxq_features) अणु
+		rx_qcqs = devm_kसुस्मृति(lअगर->ionic->dev, lअगर->ionic->nrxqs_per_lअगर,
+				       माप(काष्ठा ionic_qcq *), GFP_KERNEL);
+		अगर (!rx_qcqs)
+			जाओ err_out;
+	पूर्ण
 
-	/* allocate new desc_info and rings, but leave the interrupt setup
+	/* allocate new desc_info and rings, but leave the पूर्णांकerrupt setup
 	 * until later so as to not mess with the still-running queues
 	 */
-	if (tx_qcqs) {
+	अगर (tx_qcqs) अणु
 		num_desc = qparam->ntxq_descs;
-		desc_sz = sizeof(struct ionic_txq_desc);
-		comp_sz = sizeof(struct ionic_txq_comp);
+		desc_sz = माप(काष्ठा ionic_txq_desc);
+		comp_sz = माप(काष्ठा ionic_txq_comp);
 
-		if (lif->qtype_info[IONIC_QTYPE_TXQ].version >= 1 &&
-		    lif->qtype_info[IONIC_QTYPE_TXQ].sg_desc_sz ==
-		    sizeof(struct ionic_txq_sg_desc_v1))
-			sg_desc_sz = sizeof(struct ionic_txq_sg_desc_v1);
-		else
-			sg_desc_sz = sizeof(struct ionic_txq_sg_desc);
+		अगर (lअगर->qtype_info[IONIC_QTYPE_TXQ].version >= 1 &&
+		    lअगर->qtype_info[IONIC_QTYPE_TXQ].sg_desc_sz ==
+		    माप(काष्ठा ionic_txq_sg_desc_v1))
+			sg_desc_sz = माप(काष्ठा ionic_txq_sg_desc_v1);
+		अन्यथा
+			sg_desc_sz = माप(काष्ठा ionic_txq_sg_desc);
 
-		for (i = 0; i < qparam->nxqs; i++) {
-			flags = lif->txqcqs[i]->flags & ~IONIC_QCQ_F_INTR;
-			err = ionic_qcq_alloc(lif, IONIC_QTYPE_TXQ, i, "tx", flags,
+		क्रम (i = 0; i < qparam->nxqs; i++) अणु
+			flags = lअगर->txqcqs[i]->flags & ~IONIC_QCQ_F_INTR;
+			err = ionic_qcq_alloc(lअगर, IONIC_QTYPE_TXQ, i, "tx", flags,
 					      num_desc, desc_sz, comp_sz, sg_desc_sz,
-					      lif->kern_pid, &tx_qcqs[i]);
-			if (err)
-				goto err_out;
-		}
-	}
+					      lअगर->kern_pid, &tx_qcqs[i]);
+			अगर (err)
+				जाओ err_out;
+		पूर्ण
+	पूर्ण
 
-	if (rx_qcqs) {
+	अगर (rx_qcqs) अणु
 		num_desc = qparam->nrxq_descs;
-		desc_sz = sizeof(struct ionic_rxq_desc);
-		comp_sz = sizeof(struct ionic_rxq_comp);
-		sg_desc_sz = sizeof(struct ionic_rxq_sg_desc);
+		desc_sz = माप(काष्ठा ionic_rxq_desc);
+		comp_sz = माप(काष्ठा ionic_rxq_comp);
+		sg_desc_sz = माप(काष्ठा ionic_rxq_sg_desc);
 
-		if (qparam->rxq_features & IONIC_Q_F_2X_CQ_DESC)
+		अगर (qparam->rxq_features & IONIC_Q_F_2X_CQ_DESC)
 			comp_sz *= 2;
 
-		for (i = 0; i < qparam->nxqs; i++) {
-			flags = lif->rxqcqs[i]->flags & ~IONIC_QCQ_F_INTR;
-			err = ionic_qcq_alloc(lif, IONIC_QTYPE_RXQ, i, "rx", flags,
+		क्रम (i = 0; i < qparam->nxqs; i++) अणु
+			flags = lअगर->rxqcqs[i]->flags & ~IONIC_QCQ_F_INTR;
+			err = ionic_qcq_alloc(lअगर, IONIC_QTYPE_RXQ, i, "rx", flags,
 					      num_desc, desc_sz, comp_sz, sg_desc_sz,
-					      lif->kern_pid, &rx_qcqs[i]);
-			if (err)
-				goto err_out;
+					      lअगर->kern_pid, &rx_qcqs[i]);
+			अगर (err)
+				जाओ err_out;
 
 			rx_qcqs[i]->q.features = qparam->rxq_features;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* stop and clean the queues */
-	ionic_stop_queues_reconfig(lif);
+	ionic_stop_queues_reconfig(lअगर);
 
-	if (qparam->nxqs != lif->nxqs) {
-		err = netif_set_real_num_tx_queues(lif->netdev, qparam->nxqs);
-		if (err)
-			goto err_out_reinit_unlock;
-		err = netif_set_real_num_rx_queues(lif->netdev, qparam->nxqs);
-		if (err) {
-			netif_set_real_num_tx_queues(lif->netdev, lif->nxqs);
-			goto err_out_reinit_unlock;
-		}
-	}
+	अगर (qparam->nxqs != lअगर->nxqs) अणु
+		err = netअगर_set_real_num_tx_queues(lअगर->netdev, qparam->nxqs);
+		अगर (err)
+			जाओ err_out_reinit_unlock;
+		err = netअगर_set_real_num_rx_queues(lअगर->netdev, qparam->nxqs);
+		अगर (err) अणु
+			netअगर_set_real_num_tx_queues(lअगर->netdev, lअगर->nxqs);
+			जाओ err_out_reinit_unlock;
+		पूर्ण
+	पूर्ण
 
-	/* swap new desc_info and rings, keeping existing interrupt config */
-	if (tx_qcqs) {
-		lif->ntxq_descs = qparam->ntxq_descs;
-		for (i = 0; i < qparam->nxqs; i++)
-			ionic_swap_queues(lif->txqcqs[i], tx_qcqs[i]);
-	}
+	/* swap new desc_info and rings, keeping existing पूर्णांकerrupt config */
+	अगर (tx_qcqs) अणु
+		lअगर->ntxq_descs = qparam->ntxq_descs;
+		क्रम (i = 0; i < qparam->nxqs; i++)
+			ionic_swap_queues(lअगर->txqcqs[i], tx_qcqs[i]);
+	पूर्ण
 
-	if (rx_qcqs) {
-		lif->nrxq_descs = qparam->nrxq_descs;
-		for (i = 0; i < qparam->nxqs; i++)
-			ionic_swap_queues(lif->rxqcqs[i], rx_qcqs[i]);
-	}
+	अगर (rx_qcqs) अणु
+		lअगर->nrxq_descs = qparam->nrxq_descs;
+		क्रम (i = 0; i < qparam->nxqs; i++)
+			ionic_swap_queues(lअगर->rxqcqs[i], rx_qcqs[i]);
+	पूर्ण
 
-	/* if we need to change the interrupt layout, this is the time */
-	if (qparam->intr_split != test_bit(IONIC_LIF_F_SPLIT_INTR, lif->state) ||
-	    qparam->nxqs != lif->nxqs) {
-		if (qparam->intr_split) {
-			set_bit(IONIC_LIF_F_SPLIT_INTR, lif->state);
-		} else {
-			clear_bit(IONIC_LIF_F_SPLIT_INTR, lif->state);
-			lif->tx_coalesce_usecs = lif->rx_coalesce_usecs;
-			lif->tx_coalesce_hw = lif->rx_coalesce_hw;
-		}
+	/* अगर we need to change the पूर्णांकerrupt layout, this is the समय */
+	अगर (qparam->पूर्णांकr_split != test_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state) ||
+	    qparam->nxqs != lअगर->nxqs) अणु
+		अगर (qparam->पूर्णांकr_split) अणु
+			set_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state);
+		पूर्ण अन्यथा अणु
+			clear_bit(IONIC_LIF_F_SPLIT_INTR, lअगर->state);
+			lअगर->tx_coalesce_usecs = lअगर->rx_coalesce_usecs;
+			lअगर->tx_coalesce_hw = lअगर->rx_coalesce_hw;
+		पूर्ण
 
-		/* clear existing interrupt assignments */
-		for (i = 0; i < lif->ionic->ntxqs_per_lif; i++) {
-			ionic_qcq_intr_free(lif, lif->txqcqs[i]);
-			ionic_qcq_intr_free(lif, lif->rxqcqs[i]);
-		}
+		/* clear existing पूर्णांकerrupt assignments */
+		क्रम (i = 0; i < lअगर->ionic->ntxqs_per_lअगर; i++) अणु
+			ionic_qcq_पूर्णांकr_मुक्त(lअगर, lअगर->txqcqs[i]);
+			ionic_qcq_पूर्णांकr_मुक्त(lअगर, lअगर->rxqcqs[i]);
+		पूर्ण
 
-		/* re-assign the interrupts */
-		for (i = 0; i < qparam->nxqs; i++) {
-			lif->rxqcqs[i]->flags |= IONIC_QCQ_F_INTR;
-			err = ionic_alloc_qcq_interrupt(lif, lif->rxqcqs[i]);
-			ionic_intr_coal_init(lif->ionic->idev.intr_ctrl,
-					     lif->rxqcqs[i]->intr.index,
-					     lif->rx_coalesce_hw);
+		/* re-assign the पूर्णांकerrupts */
+		क्रम (i = 0; i < qparam->nxqs; i++) अणु
+			lअगर->rxqcqs[i]->flags |= IONIC_QCQ_F_INTR;
+			err = ionic_alloc_qcq_पूर्णांकerrupt(lअगर, lअगर->rxqcqs[i]);
+			ionic_पूर्णांकr_coal_init(lअगर->ionic->idev.पूर्णांकr_ctrl,
+					     lअगर->rxqcqs[i]->पूर्णांकr.index,
+					     lअगर->rx_coalesce_hw);
 
-			if (qparam->intr_split) {
-				lif->txqcqs[i]->flags |= IONIC_QCQ_F_INTR;
-				err = ionic_alloc_qcq_interrupt(lif, lif->txqcqs[i]);
-				ionic_intr_coal_init(lif->ionic->idev.intr_ctrl,
-						     lif->txqcqs[i]->intr.index,
-						     lif->tx_coalesce_hw);
-				if (test_bit(IONIC_LIF_F_TX_DIM_INTR, lif->state))
-					lif->txqcqs[i]->intr.dim_coal_hw = lif->tx_coalesce_hw;
-			} else {
-				lif->txqcqs[i]->flags &= ~IONIC_QCQ_F_INTR;
-				ionic_link_qcq_interrupts(lif->rxqcqs[i], lif->txqcqs[i]);
-			}
-		}
-	}
+			अगर (qparam->पूर्णांकr_split) अणु
+				lअगर->txqcqs[i]->flags |= IONIC_QCQ_F_INTR;
+				err = ionic_alloc_qcq_पूर्णांकerrupt(lअगर, lअगर->txqcqs[i]);
+				ionic_पूर्णांकr_coal_init(lअगर->ionic->idev.पूर्णांकr_ctrl,
+						     lअगर->txqcqs[i]->पूर्णांकr.index,
+						     lअगर->tx_coalesce_hw);
+				अगर (test_bit(IONIC_LIF_F_TX_DIM_INTR, lअगर->state))
+					lअगर->txqcqs[i]->पूर्णांकr.dim_coal_hw = lअगर->tx_coalesce_hw;
+			पूर्ण अन्यथा अणु
+				lअगर->txqcqs[i]->flags &= ~IONIC_QCQ_F_INTR;
+				ionic_link_qcq_पूर्णांकerrupts(lअगर->rxqcqs[i], lअगर->txqcqs[i]);
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* now we can rework the debugfs mappings */
-	if (tx_qcqs) {
-		for (i = 0; i < qparam->nxqs; i++) {
-			ionic_debugfs_del_qcq(lif->txqcqs[i]);
-			ionic_debugfs_add_qcq(lif, lif->txqcqs[i]);
-		}
-	}
+	अगर (tx_qcqs) अणु
+		क्रम (i = 0; i < qparam->nxqs; i++) अणु
+			ionic_debugfs_del_qcq(lअगर->txqcqs[i]);
+			ionic_debugfs_add_qcq(lअगर, lअगर->txqcqs[i]);
+		पूर्ण
+	पूर्ण
 
-	if (rx_qcqs) {
-		for (i = 0; i < qparam->nxqs; i++) {
-			ionic_debugfs_del_qcq(lif->rxqcqs[i]);
-			ionic_debugfs_add_qcq(lif, lif->rxqcqs[i]);
-		}
-	}
+	अगर (rx_qcqs) अणु
+		क्रम (i = 0; i < qparam->nxqs; i++) अणु
+			ionic_debugfs_del_qcq(lअगर->rxqcqs[i]);
+			ionic_debugfs_add_qcq(lअगर, lअगर->rxqcqs[i]);
+		पूर्ण
+	पूर्ण
 
-	swap(lif->nxqs, qparam->nxqs);
-	swap(lif->rxq_features, qparam->rxq_features);
+	swap(lअगर->nxqs, qparam->nxqs);
+	swap(lअगर->rxq_features, qparam->rxq_features);
 
 err_out_reinit_unlock:
-	/* re-init the queues, but don't lose an error code */
-	if (err)
-		ionic_start_queues_reconfig(lif);
-	else
-		err = ionic_start_queues_reconfig(lif);
+	/* re-init the queues, but करोn't lose an error code */
+	अगर (err)
+		ionic_start_queues_reconfig(lअगर);
+	अन्यथा
+		err = ionic_start_queues_reconfig(lअगर);
 
 err_out:
-	/* free old allocs without cleaning intr */
-	for (i = 0; i < qparam->nxqs; i++) {
-		if (tx_qcqs && tx_qcqs[i]) {
+	/* मुक्त old allocs without cleaning पूर्णांकr */
+	क्रम (i = 0; i < qparam->nxqs; i++) अणु
+		अगर (tx_qcqs && tx_qcqs[i]) अणु
 			tx_qcqs[i]->flags &= ~IONIC_QCQ_F_INTR;
-			ionic_qcq_free(lif, tx_qcqs[i]);
-			devm_kfree(lif->ionic->dev, tx_qcqs[i]);
-			tx_qcqs[i] = NULL;
-		}
-		if (rx_qcqs && rx_qcqs[i]) {
+			ionic_qcq_मुक्त(lअगर, tx_qcqs[i]);
+			devm_kमुक्त(lअगर->ionic->dev, tx_qcqs[i]);
+			tx_qcqs[i] = शून्य;
+		पूर्ण
+		अगर (rx_qcqs && rx_qcqs[i]) अणु
 			rx_qcqs[i]->flags &= ~IONIC_QCQ_F_INTR;
-			ionic_qcq_free(lif, rx_qcqs[i]);
-			devm_kfree(lif->ionic->dev, rx_qcqs[i]);
-			rx_qcqs[i] = NULL;
-		}
-	}
+			ionic_qcq_मुक्त(lअगर, rx_qcqs[i]);
+			devm_kमुक्त(lअगर->ionic->dev, rx_qcqs[i]);
+			rx_qcqs[i] = शून्य;
+		पूर्ण
+	पूर्ण
 
-	/* free q array */
-	if (rx_qcqs) {
-		devm_kfree(lif->ionic->dev, rx_qcqs);
-		rx_qcqs = NULL;
-	}
-	if (tx_qcqs) {
-		devm_kfree(lif->ionic->dev, tx_qcqs);
-		tx_qcqs = NULL;
-	}
+	/* मुक्त q array */
+	अगर (rx_qcqs) अणु
+		devm_kमुक्त(lअगर->ionic->dev, rx_qcqs);
+		rx_qcqs = शून्य;
+	पूर्ण
+	अगर (tx_qcqs) अणु
+		devm_kमुक्त(lअगर->ionic->dev, tx_qcqs);
+		tx_qcqs = शून्य;
+	पूर्ण
 
 	/* clean the unused dma and info allocations when new set is smaller
 	 * than the full array, but leave the qcq shells in place
 	 */
-	for (i = lif->nxqs; i < lif->ionic->ntxqs_per_lif; i++) {
-		lif->txqcqs[i]->flags &= ~IONIC_QCQ_F_INTR;
-		ionic_qcq_free(lif, lif->txqcqs[i]);
+	क्रम (i = lअगर->nxqs; i < lअगर->ionic->ntxqs_per_lअगर; i++) अणु
+		lअगर->txqcqs[i]->flags &= ~IONIC_QCQ_F_INTR;
+		ionic_qcq_मुक्त(lअगर, lअगर->txqcqs[i]);
 
-		lif->rxqcqs[i]->flags &= ~IONIC_QCQ_F_INTR;
-		ionic_qcq_free(lif, lif->rxqcqs[i]);
-	}
+		lअगर->rxqcqs[i]->flags &= ~IONIC_QCQ_F_INTR;
+		ionic_qcq_मुक्त(lअगर, lअगर->rxqcqs[i]);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int ionic_lif_alloc(struct ionic *ionic)
-{
-	struct device *dev = ionic->dev;
-	union ionic_lif_identity *lid;
-	struct net_device *netdev;
-	struct ionic_lif *lif;
-	int tbl_sz;
-	int err;
+पूर्णांक ionic_lअगर_alloc(काष्ठा ionic *ionic)
+अणु
+	काष्ठा device *dev = ionic->dev;
+	जोड़ ionic_lअगर_identity *lid;
+	काष्ठा net_device *netdev;
+	काष्ठा ionic_lअगर *lअगर;
+	पूर्णांक tbl_sz;
+	पूर्णांक err;
 
-	lid = kzalloc(sizeof(*lid), GFP_KERNEL);
-	if (!lid)
-		return -ENOMEM;
+	lid = kzalloc(माप(*lid), GFP_KERNEL);
+	अगर (!lid)
+		वापस -ENOMEM;
 
-	netdev = alloc_etherdev_mqs(sizeof(*lif),
-				    ionic->ntxqs_per_lif, ionic->ntxqs_per_lif);
-	if (!netdev) {
+	netdev = alloc_etherdev_mqs(माप(*lअगर),
+				    ionic->ntxqs_per_lअगर, ionic->ntxqs_per_lअगर);
+	अगर (!netdev) अणु
 		dev_err(dev, "Cannot allocate netdev, aborting\n");
 		err = -ENOMEM;
-		goto err_out_free_lid;
-	}
+		जाओ err_out_मुक्त_lid;
+	पूर्ण
 
 	SET_NETDEV_DEV(netdev, dev);
 
-	lif = netdev_priv(netdev);
-	lif->netdev = netdev;
-	ionic->lif = lif;
+	lअगर = netdev_priv(netdev);
+	lअगर->netdev = netdev;
+	ionic->lअगर = lअगर;
 	netdev->netdev_ops = &ionic_netdev_ops;
 	ionic_ethtool_set_ops(netdev);
 
-	netdev->watchdog_timeo = 2 * HZ;
-	netif_carrier_off(netdev);
+	netdev->watchकरोg_समयo = 2 * HZ;
+	netअगर_carrier_off(netdev);
 
-	lif->identity = lid;
-	lif->lif_type = IONIC_LIF_TYPE_CLASSIC;
-	err = ionic_lif_identify(ionic, lif->lif_type, lif->identity);
-	if (err) {
+	lअगर->identity = lid;
+	lअगर->lअगर_type = IONIC_LIF_TYPE_CLASSIC;
+	err = ionic_lअगर_identअगरy(ionic, lअगर->lअगर_type, lअगर->identity);
+	अगर (err) अणु
 		dev_err(ionic->dev, "Cannot identify type %d: %d\n",
-			lif->lif_type, err);
-		goto err_out_free_netdev;
-	}
-	lif->netdev->min_mtu = max_t(unsigned int, ETH_MIN_MTU,
-				     le32_to_cpu(lif->identity->eth.min_frame_size));
-	lif->netdev->max_mtu =
-		le32_to_cpu(lif->identity->eth.max_frame_size) - ETH_HLEN - VLAN_HLEN;
+			lअगर->lअगर_type, err);
+		जाओ err_out_मुक्त_netdev;
+	पूर्ण
+	lअगर->netdev->min_mtu = max_t(अचिन्हित पूर्णांक, ETH_MIN_MTU,
+				     le32_to_cpu(lअगर->identity->eth.min_frame_size));
+	lअगर->netdev->max_mtu =
+		le32_to_cpu(lअगर->identity->eth.max_frame_size) - ETH_HLEN - VLAN_HLEN;
 
-	lif->neqs = ionic->neqs_per_lif;
-	lif->nxqs = ionic->ntxqs_per_lif;
+	lअगर->neqs = ionic->neqs_per_lअगर;
+	lअगर->nxqs = ionic->ntxqs_per_lअगर;
 
-	lif->ionic = ionic;
-	lif->index = 0;
-	lif->ntxq_descs = IONIC_DEF_TXRX_DESC;
-	lif->nrxq_descs = IONIC_DEF_TXRX_DESC;
+	lअगर->ionic = ionic;
+	lअगर->index = 0;
+	lअगर->ntxq_descs = IONIC_DEF_TXRX_DESC;
+	lअगर->nrxq_descs = IONIC_DEF_TXRX_DESC;
 
-	/* Convert the default coalesce value to actual hw resolution */
-	lif->rx_coalesce_usecs = IONIC_ITR_COAL_USEC_DEFAULT;
-	lif->rx_coalesce_hw = ionic_coal_usec_to_hw(lif->ionic,
-						    lif->rx_coalesce_usecs);
-	lif->tx_coalesce_usecs = lif->rx_coalesce_usecs;
-	lif->tx_coalesce_hw = lif->rx_coalesce_hw;
-	set_bit(IONIC_LIF_F_RX_DIM_INTR, lif->state);
-	set_bit(IONIC_LIF_F_TX_DIM_INTR, lif->state);
+	/* Convert the शेष coalesce value to actual hw resolution */
+	lअगर->rx_coalesce_usecs = IONIC_ITR_COAL_USEC_DEFAULT;
+	lअगर->rx_coalesce_hw = ionic_coal_usec_to_hw(lअगर->ionic,
+						    lअगर->rx_coalesce_usecs);
+	lअगर->tx_coalesce_usecs = lअगर->rx_coalesce_usecs;
+	lअगर->tx_coalesce_hw = lअगर->rx_coalesce_hw;
+	set_bit(IONIC_LIF_F_RX_DIM_INTR, lअगर->state);
+	set_bit(IONIC_LIF_F_TX_DIM_INTR, lअगर->state);
 
-	snprintf(lif->name, sizeof(lif->name), "lif%u", lif->index);
+	snम_लिखो(lअगर->name, माप(lअगर->name), "lif%u", lअगर->index);
 
-	spin_lock_init(&lif->adminq_lock);
+	spin_lock_init(&lअगर->adminq_lock);
 
-	spin_lock_init(&lif->deferred.lock);
-	INIT_LIST_HEAD(&lif->deferred.list);
-	INIT_WORK(&lif->deferred.work, ionic_lif_deferred_work);
+	spin_lock_init(&lअगर->deferred.lock);
+	INIT_LIST_HEAD(&lअगर->deferred.list);
+	INIT_WORK(&lअगर->deferred.work, ionic_lअगर_deferred_work);
 
-	/* allocate lif info */
-	lif->info_sz = ALIGN(sizeof(*lif->info), PAGE_SIZE);
-	lif->info = dma_alloc_coherent(dev, lif->info_sz,
-				       &lif->info_pa, GFP_KERNEL);
-	if (!lif->info) {
+	/* allocate lअगर info */
+	lअगर->info_sz = ALIGN(माप(*lअगर->info), PAGE_SIZE);
+	lअगर->info = dma_alloc_coherent(dev, lअगर->info_sz,
+				       &lअगर->info_pa, GFP_KERNEL);
+	अगर (!lअगर->info) अणु
 		dev_err(dev, "Failed to allocate lif info, aborting\n");
 		err = -ENOMEM;
-		goto err_out_free_netdev;
-	}
+		जाओ err_out_मुक्त_netdev;
+	पूर्ण
 
-	ionic_debugfs_add_lif(lif);
+	ionic_debugfs_add_lअगर(lअगर);
 
 	/* allocate control queues and txrx queue arrays */
-	ionic_lif_queue_identify(lif);
-	err = ionic_qcqs_alloc(lif);
-	if (err)
-		goto err_out_free_lif_info;
+	ionic_lअगर_queue_identअगरy(lअगर);
+	err = ionic_qcqs_alloc(lअगर);
+	अगर (err)
+		जाओ err_out_मुक्त_lअगर_info;
 
 	/* allocate rss indirection table */
-	tbl_sz = le16_to_cpu(lif->ionic->ident.lif.eth.rss_ind_tbl_sz);
-	lif->rss_ind_tbl_sz = sizeof(*lif->rss_ind_tbl) * tbl_sz;
-	lif->rss_ind_tbl = dma_alloc_coherent(dev, lif->rss_ind_tbl_sz,
-					      &lif->rss_ind_tbl_pa,
+	tbl_sz = le16_to_cpu(lअगर->ionic->ident.lअगर.eth.rss_ind_tbl_sz);
+	lअगर->rss_ind_tbl_sz = माप(*lअगर->rss_ind_tbl) * tbl_sz;
+	lअगर->rss_ind_tbl = dma_alloc_coherent(dev, lअगर->rss_ind_tbl_sz,
+					      &lअगर->rss_ind_tbl_pa,
 					      GFP_KERNEL);
 
-	if (!lif->rss_ind_tbl) {
+	अगर (!lअगर->rss_ind_tbl) अणु
 		err = -ENOMEM;
 		dev_err(dev, "Failed to allocate rss indirection table, aborting\n");
-		goto err_out_free_qcqs;
-	}
-	netdev_rss_key_fill(lif->rss_hash_key, IONIC_RSS_HASH_KEY_SIZE);
+		जाओ err_out_मुक्त_qcqs;
+	पूर्ण
+	netdev_rss_key_fill(lअगर->rss_hash_key, IONIC_RSS_HASH_KEY_SIZE);
 
-	ionic_lif_alloc_phc(lif);
+	ionic_lअगर_alloc_phc(lअगर);
 
-	return 0;
+	वापस 0;
 
-err_out_free_qcqs:
-	ionic_qcqs_free(lif);
-err_out_free_lif_info:
-	dma_free_coherent(dev, lif->info_sz, lif->info, lif->info_pa);
-	lif->info = NULL;
-	lif->info_pa = 0;
-err_out_free_netdev:
-	free_netdev(lif->netdev);
-	lif = NULL;
-err_out_free_lid:
-	kfree(lid);
+err_out_मुक्त_qcqs:
+	ionic_qcqs_मुक्त(lअगर);
+err_out_मुक्त_lअगर_info:
+	dma_मुक्त_coherent(dev, lअगर->info_sz, lअगर->info, lअगर->info_pa);
+	lअगर->info = शून्य;
+	lअगर->info_pa = 0;
+err_out_मुक्त_netdev:
+	मुक्त_netdev(lअगर->netdev);
+	lअगर = शून्य;
+err_out_मुक्त_lid:
+	kमुक्त(lid);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ionic_lif_reset(struct ionic_lif *lif)
-{
-	struct ionic_dev *idev = &lif->ionic->idev;
+अटल व्योम ionic_lअगर_reset(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
 
-	mutex_lock(&lif->ionic->dev_cmd_lock);
-	ionic_dev_cmd_lif_reset(idev, lif->index);
-	ionic_dev_cmd_wait(lif->ionic, DEVCMD_TIMEOUT);
-	mutex_unlock(&lif->ionic->dev_cmd_lock);
-}
+	mutex_lock(&lअगर->ionic->dev_cmd_lock);
+	ionic_dev_cmd_lअगर_reset(idev, lअगर->index);
+	ionic_dev_cmd_रुको(lअगर->ionic, DEVCMD_TIMEOUT);
+	mutex_unlock(&lअगर->ionic->dev_cmd_lock);
+पूर्ण
 
-static void ionic_lif_handle_fw_down(struct ionic_lif *lif)
-{
-	struct ionic *ionic = lif->ionic;
+अटल व्योम ionic_lअगर_handle_fw_करोwn(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा ionic *ionic = lअगर->ionic;
 
-	if (test_and_set_bit(IONIC_LIF_F_FW_RESET, lif->state))
-		return;
+	अगर (test_and_set_bit(IONIC_LIF_F_FW_RESET, lअगर->state))
+		वापस;
 
 	dev_info(ionic->dev, "FW Down: Stopping LIFs\n");
 
-	netif_device_detach(lif->netdev);
+	netअगर_device_detach(lअगर->netdev);
 
-	if (test_bit(IONIC_LIF_F_UP, lif->state)) {
+	अगर (test_bit(IONIC_LIF_F_UP, lअगर->state)) अणु
 		dev_info(ionic->dev, "Surprise FW stop, stopping queues\n");
-		mutex_lock(&lif->queue_lock);
-		ionic_stop_queues(lif);
-		mutex_unlock(&lif->queue_lock);
-	}
+		mutex_lock(&lअगर->queue_lock);
+		ionic_stop_queues(lअगर);
+		mutex_unlock(&lअगर->queue_lock);
+	पूर्ण
 
-	if (netif_running(lif->netdev)) {
-		ionic_txrx_deinit(lif);
-		ionic_txrx_free(lif);
-	}
-	ionic_lif_deinit(lif);
+	अगर (netअगर_running(lअगर->netdev)) अणु
+		ionic_txrx_deinit(lअगर);
+		ionic_txrx_मुक्त(lअगर);
+	पूर्ण
+	ionic_lअगर_deinit(lअगर);
 	ionic_reset(ionic);
-	ionic_qcqs_free(lif);
+	ionic_qcqs_मुक्त(lअगर);
 
 	dev_info(ionic->dev, "FW Down: LIFs stopped\n");
-}
+पूर्ण
 
-static void ionic_lif_handle_fw_up(struct ionic_lif *lif)
-{
-	struct ionic *ionic = lif->ionic;
-	int err;
+अटल व्योम ionic_lअगर_handle_fw_up(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा ionic *ionic = lअगर->ionic;
+	पूर्णांक err;
 
-	if (!test_bit(IONIC_LIF_F_FW_RESET, lif->state))
-		return;
+	अगर (!test_bit(IONIC_LIF_F_FW_RESET, lअगर->state))
+		वापस;
 
 	dev_info(ionic->dev, "FW Up: restarting LIFs\n");
 
 	ionic_init_devinfo(ionic);
-	err = ionic_identify(ionic);
-	if (err)
-		goto err_out;
-	err = ionic_port_identify(ionic);
-	if (err)
-		goto err_out;
+	err = ionic_identअगरy(ionic);
+	अगर (err)
+		जाओ err_out;
+	err = ionic_port_identअगरy(ionic);
+	अगर (err)
+		जाओ err_out;
 	err = ionic_port_init(ionic);
-	if (err)
-		goto err_out;
-	err = ionic_qcqs_alloc(lif);
-	if (err)
-		goto err_out;
+	अगर (err)
+		जाओ err_out;
+	err = ionic_qcqs_alloc(lअगर);
+	अगर (err)
+		जाओ err_out;
 
-	err = ionic_lif_init(lif);
-	if (err)
-		goto err_qcqs_free;
+	err = ionic_lअगर_init(lअगर);
+	अगर (err)
+		जाओ err_qcqs_मुक्त;
 
-	if (lif->registered)
-		ionic_lif_set_netdev_info(lif);
+	अगर (lअगर->रेजिस्टरed)
+		ionic_lअगर_set_netdev_info(lअगर);
 
-	ionic_rx_filter_replay(lif);
+	ionic_rx_filter_replay(lअगर);
 
-	if (netif_running(lif->netdev)) {
-		err = ionic_txrx_alloc(lif);
-		if (err)
-			goto err_lifs_deinit;
+	अगर (netअगर_running(lअगर->netdev)) अणु
+		err = ionic_txrx_alloc(lअगर);
+		अगर (err)
+			जाओ err_lअगरs_deinit;
 
-		err = ionic_txrx_init(lif);
-		if (err)
-			goto err_txrx_free;
-	}
+		err = ionic_txrx_init(lअगर);
+		अगर (err)
+			जाओ err_txrx_मुक्त;
+	पूर्ण
 
-	clear_bit(IONIC_LIF_F_FW_RESET, lif->state);
-	ionic_link_status_check_request(lif, CAN_SLEEP);
-	netif_device_attach(lif->netdev);
+	clear_bit(IONIC_LIF_F_FW_RESET, lअगर->state);
+	ionic_link_status_check_request(lअगर, CAN_SLEEP);
+	netअगर_device_attach(lअगर->netdev);
 	dev_info(ionic->dev, "FW Up: LIFs restarted\n");
 
-	/* restore the hardware timestamping queues */
-	ionic_lif_hwstamp_replay(lif);
+	/* restore the hardware बारtamping queues */
+	ionic_lअगर_hwstamp_replay(lअगर);
 
-	return;
+	वापस;
 
-err_txrx_free:
-	ionic_txrx_free(lif);
-err_lifs_deinit:
-	ionic_lif_deinit(lif);
-err_qcqs_free:
-	ionic_qcqs_free(lif);
+err_txrx_मुक्त:
+	ionic_txrx_मुक्त(lअगर);
+err_lअगरs_deinit:
+	ionic_lअगर_deinit(lअगर);
+err_qcqs_मुक्त:
+	ionic_qcqs_मुक्त(lअगर);
 err_out:
 	dev_err(ionic->dev, "FW Up: LIFs restart failed - err %d\n", err);
-}
+पूर्ण
 
-void ionic_lif_free(struct ionic_lif *lif)
-{
-	struct device *dev = lif->ionic->dev;
+व्योम ionic_lअगर_मुक्त(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा device *dev = lअगर->ionic->dev;
 
-	ionic_lif_free_phc(lif);
+	ionic_lअगर_मुक्त_phc(lअगर);
 
-	/* free rss indirection table */
-	dma_free_coherent(dev, lif->rss_ind_tbl_sz, lif->rss_ind_tbl,
-			  lif->rss_ind_tbl_pa);
-	lif->rss_ind_tbl = NULL;
-	lif->rss_ind_tbl_pa = 0;
+	/* मुक्त rss indirection table */
+	dma_मुक्त_coherent(dev, lअगर->rss_ind_tbl_sz, lअगर->rss_ind_tbl,
+			  lअगर->rss_ind_tbl_pa);
+	lअगर->rss_ind_tbl = शून्य;
+	lअगर->rss_ind_tbl_pa = 0;
 
-	/* free queues */
-	ionic_qcqs_free(lif);
-	if (!test_bit(IONIC_LIF_F_FW_RESET, lif->state))
-		ionic_lif_reset(lif);
+	/* मुक्त queues */
+	ionic_qcqs_मुक्त(lअगर);
+	अगर (!test_bit(IONIC_LIF_F_FW_RESET, lअगर->state))
+		ionic_lअगर_reset(lअगर);
 
-	/* free lif info */
-	kfree(lif->identity);
-	dma_free_coherent(dev, lif->info_sz, lif->info, lif->info_pa);
-	lif->info = NULL;
-	lif->info_pa = 0;
+	/* मुक्त lअगर info */
+	kमुक्त(lअगर->identity);
+	dma_मुक्त_coherent(dev, lअगर->info_sz, lअगर->info, lअगर->info_pa);
+	lअगर->info = शून्य;
+	lअगर->info_pa = 0;
 
-	/* unmap doorbell page */
-	ionic_bus_unmap_dbpage(lif->ionic, lif->kern_dbpage);
-	lif->kern_dbpage = NULL;
-	kfree(lif->dbid_inuse);
-	lif->dbid_inuse = NULL;
+	/* unmap करोorbell page */
+	ionic_bus_unmap_dbpage(lअगर->ionic, lअगर->kern_dbpage);
+	lअगर->kern_dbpage = शून्य;
+	kमुक्त(lअगर->dbid_inuse);
+	lअगर->dbid_inuse = शून्य;
 
-	/* free netdev & lif */
-	ionic_debugfs_del_lif(lif);
-	free_netdev(lif->netdev);
-}
+	/* मुक्त netdev & lअगर */
+	ionic_debugfs_del_lअगर(lअगर);
+	मुक्त_netdev(lअगर->netdev);
+पूर्ण
 
-void ionic_lif_deinit(struct ionic_lif *lif)
-{
-	if (!test_and_clear_bit(IONIC_LIF_F_INITED, lif->state))
-		return;
+व्योम ionic_lअगर_deinit(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अगर (!test_and_clear_bit(IONIC_LIF_F_INITED, lअगर->state))
+		वापस;
 
-	if (!test_bit(IONIC_LIF_F_FW_RESET, lif->state)) {
-		cancel_work_sync(&lif->deferred.work);
-		cancel_work_sync(&lif->tx_timeout_work);
-		ionic_rx_filters_deinit(lif);
-		if (lif->netdev->features & NETIF_F_RXHASH)
-			ionic_lif_rss_deinit(lif);
-	}
+	अगर (!test_bit(IONIC_LIF_F_FW_RESET, lअगर->state)) अणु
+		cancel_work_sync(&lअगर->deferred.work);
+		cancel_work_sync(&lअगर->tx_समयout_work);
+		ionic_rx_filters_deinit(lअगर);
+		अगर (lअगर->netdev->features & NETIF_F_RXHASH)
+			ionic_lअगर_rss_deinit(lअगर);
+	पूर्ण
 
-	napi_disable(&lif->adminqcq->napi);
-	ionic_lif_qcq_deinit(lif, lif->notifyqcq);
-	ionic_lif_qcq_deinit(lif, lif->adminqcq);
+	napi_disable(&lअगर->adminqcq->napi);
+	ionic_lअगर_qcq_deinit(lअगर, lअगर->notअगरyqcq);
+	ionic_lअगर_qcq_deinit(lअगर, lअगर->adminqcq);
 
-	mutex_destroy(&lif->queue_lock);
-	ionic_lif_reset(lif);
-}
+	mutex_destroy(&lअगर->queue_lock);
+	ionic_lअगर_reset(lअगर);
+पूर्ण
 
-static int ionic_lif_adminq_init(struct ionic_lif *lif)
-{
-	struct device *dev = lif->ionic->dev;
-	struct ionic_q_init_comp comp;
-	struct ionic_dev *idev;
-	struct ionic_qcq *qcq;
-	struct ionic_queue *q;
-	int err;
+अटल पूर्णांक ionic_lअगर_adminq_init(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा device *dev = lअगर->ionic->dev;
+	काष्ठा ionic_q_init_comp comp;
+	काष्ठा ionic_dev *idev;
+	काष्ठा ionic_qcq *qcq;
+	काष्ठा ionic_queue *q;
+	पूर्णांक err;
 
-	idev = &lif->ionic->idev;
-	qcq = lif->adminqcq;
+	idev = &lअगर->ionic->idev;
+	qcq = lअगर->adminqcq;
 	q = &qcq->q;
 
-	mutex_lock(&lif->ionic->dev_cmd_lock);
-	ionic_dev_cmd_adminq_init(idev, qcq, lif->index, qcq->intr.index);
-	err = ionic_dev_cmd_wait(lif->ionic, DEVCMD_TIMEOUT);
-	ionic_dev_cmd_comp(idev, (union ionic_dev_cmd_comp *)&comp);
-	mutex_unlock(&lif->ionic->dev_cmd_lock);
-	if (err) {
-		netdev_err(lif->netdev, "adminq init failed %d\n", err);
-		return err;
-	}
+	mutex_lock(&lअगर->ionic->dev_cmd_lock);
+	ionic_dev_cmd_adminq_init(idev, qcq, lअगर->index, qcq->पूर्णांकr.index);
+	err = ionic_dev_cmd_रुको(lअगर->ionic, DEVCMD_TIMEOUT);
+	ionic_dev_cmd_comp(idev, (जोड़ ionic_dev_cmd_comp *)&comp);
+	mutex_unlock(&lअगर->ionic->dev_cmd_lock);
+	अगर (err) अणु
+		netdev_err(lअगर->netdev, "adminq init failed %d\n", err);
+		वापस err;
+	पूर्ण
 
 	q->hw_type = comp.hw_type;
 	q->hw_index = le32_to_cpu(comp.hw_index);
@@ -3092,54 +3093,54 @@ static int ionic_lif_adminq_init(struct ionic_lif *lif)
 	dev_dbg(dev, "adminq->hw_type %d\n", q->hw_type);
 	dev_dbg(dev, "adminq->hw_index %d\n", q->hw_index);
 
-	netif_napi_add(lif->netdev, &qcq->napi, ionic_adminq_napi,
+	netअगर_napi_add(lअगर->netdev, &qcq->napi, ionic_adminq_napi,
 		       NAPI_POLL_WEIGHT);
 
 	napi_enable(&qcq->napi);
 
-	if (qcq->flags & IONIC_QCQ_F_INTR)
-		ionic_intr_mask(idev->intr_ctrl, qcq->intr.index,
+	अगर (qcq->flags & IONIC_QCQ_F_INTR)
+		ionic_पूर्णांकr_mask(idev->पूर्णांकr_ctrl, qcq->पूर्णांकr.index,
 				IONIC_INTR_MASK_CLEAR);
 
 	qcq->flags |= IONIC_QCQ_F_INITED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ionic_lif_notifyq_init(struct ionic_lif *lif)
-{
-	struct ionic_qcq *qcq = lif->notifyqcq;
-	struct device *dev = lif->ionic->dev;
-	struct ionic_queue *q = &qcq->q;
-	int err;
+अटल पूर्णांक ionic_lअगर_notअगरyq_init(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा ionic_qcq *qcq = lअगर->notअगरyqcq;
+	काष्ठा device *dev = lअगर->ionic->dev;
+	काष्ठा ionic_queue *q = &qcq->q;
+	पूर्णांक err;
 
-	struct ionic_admin_ctx ctx = {
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.q_init = {
+		.cmd.q_init = अणु
 			.opcode = IONIC_CMD_Q_INIT,
-			.lif_index = cpu_to_le16(lif->index),
+			.lअगर_index = cpu_to_le16(lअगर->index),
 			.type = q->type,
-			.ver = lif->qtype_info[q->type].version,
+			.ver = lअगर->qtype_info[q->type].version,
 			.index = cpu_to_le32(q->index),
 			.flags = cpu_to_le16(IONIC_QINIT_F_IRQ |
 					     IONIC_QINIT_F_ENA),
-			.intr_index = cpu_to_le16(lif->adminqcq->intr.index),
+			.पूर्णांकr_index = cpu_to_le16(lअगर->adminqcq->पूर्णांकr.index),
 			.pid = cpu_to_le16(q->pid),
 			.ring_size = ilog2(q->num_descs),
 			.ring_base = cpu_to_le64(q->base_pa),
-		}
-	};
+		पूर्ण
+	पूर्ण;
 
 	dev_dbg(dev, "notifyq_init.pid %d\n", ctx.cmd.q_init.pid);
 	dev_dbg(dev, "notifyq_init.index %d\n", ctx.cmd.q_init.index);
 	dev_dbg(dev, "notifyq_init.ring_base 0x%llx\n", ctx.cmd.q_init.ring_base);
 	dev_dbg(dev, "notifyq_init.ring_size %d\n", ctx.cmd.q_init.ring_size);
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err)
-		return err;
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err)
+		वापस err;
 
-	lif->last_eid = 0;
+	lअगर->last_eid = 0;
 	q->hw_type = ctx.comp.q_init.hw_type;
 	q->hw_index = le32_to_cpu(ctx.comp.q_init.hw_index);
 	q->dbval = IONIC_DBELL_QID(q->hw_index);
@@ -3148,302 +3149,302 @@ static int ionic_lif_notifyq_init(struct ionic_lif *lif)
 	dev_dbg(dev, "notifyq->hw_index %d\n", q->hw_index);
 
 	/* preset the callback info */
-	q->info[0].cb_arg = lif;
+	q->info[0].cb_arg = lअगर;
 
 	qcq->flags |= IONIC_QCQ_F_INITED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ionic_station_set(struct ionic_lif *lif)
-{
-	struct net_device *netdev = lif->netdev;
-	struct ionic_admin_ctx ctx = {
+अटल पूर्णांक ionic_station_set(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा net_device *netdev = lअगर->netdev;
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.lif_getattr = {
+		.cmd.lअगर_getattr = अणु
 			.opcode = IONIC_CMD_LIF_GETATTR,
-			.index = cpu_to_le16(lif->index),
+			.index = cpu_to_le16(lअगर->index),
 			.attr = IONIC_LIF_ATTR_MAC,
-		},
-	};
-	struct sockaddr addr;
-	int err;
+		पूर्ण,
+	पूर्ण;
+	काष्ठा sockaddr addr;
+	पूर्णांक err;
 
-	err = ionic_adminq_post_wait(lif, &ctx);
-	if (err)
-		return err;
-	netdev_dbg(lif->netdev, "found initial MAC addr %pM\n",
-		   ctx.comp.lif_getattr.mac);
-	if (is_zero_ether_addr(ctx.comp.lif_getattr.mac))
-		return 0;
+	err = ionic_adminq_post_रुको(lअगर, &ctx);
+	अगर (err)
+		वापस err;
+	netdev_dbg(lअगर->netdev, "found initial MAC addr %pM\n",
+		   ctx.comp.lअगर_getattr.mac);
+	अगर (is_zero_ether_addr(ctx.comp.lअगर_getattr.mac))
+		वापस 0;
 
-	if (!is_zero_ether_addr(netdev->dev_addr)) {
-		/* If the netdev mac is non-zero and doesn't match the default
+	अगर (!is_zero_ether_addr(netdev->dev_addr)) अणु
+		/* If the netdev mac is non-zero and करोesn't match the शेष
 		 * device address, it was set by something earlier and we're
 		 * likely here again after a fw-upgrade reset.  We need to be
 		 * sure the netdev mac is in our filter list.
 		 */
-		if (!ether_addr_equal(ctx.comp.lif_getattr.mac,
+		अगर (!ether_addr_equal(ctx.comp.lअगर_getattr.mac,
 				      netdev->dev_addr))
-			ionic_lif_addr(lif, netdev->dev_addr, ADD_ADDR, CAN_SLEEP);
-	} else {
+			ionic_lअगर_addr(lअगर, netdev->dev_addr, ADD_ADDR, CAN_SLEEP);
+	पूर्ण अन्यथा अणु
 		/* Update the netdev mac with the device's mac */
-		memcpy(addr.sa_data, ctx.comp.lif_getattr.mac, netdev->addr_len);
+		स_नकल(addr.sa_data, ctx.comp.lअगर_getattr.mac, netdev->addr_len);
 		addr.sa_family = AF_INET;
 		err = eth_prepare_mac_addr_change(netdev, &addr);
-		if (err) {
-			netdev_warn(lif->netdev, "ignoring bad MAC addr from NIC %pM - err %d\n",
+		अगर (err) अणु
+			netdev_warn(lअगर->netdev, "ignoring bad MAC addr from NIC %pM - err %d\n",
 				    addr.sa_data, err);
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		eth_commit_mac_addr_change(netdev, &addr);
-	}
+	पूर्ण
 
-	netdev_dbg(lif->netdev, "adding station MAC addr %pM\n",
+	netdev_dbg(lअगर->netdev, "adding station MAC addr %pM\n",
 		   netdev->dev_addr);
-	ionic_lif_addr(lif, netdev->dev_addr, ADD_ADDR, CAN_SLEEP);
+	ionic_lअगर_addr(lअगर, netdev->dev_addr, ADD_ADDR, CAN_SLEEP);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ionic_lif_init(struct ionic_lif *lif)
-{
-	struct ionic_dev *idev = &lif->ionic->idev;
-	struct device *dev = lif->ionic->dev;
-	struct ionic_lif_init_comp comp;
-	int dbpage_num;
-	int err;
+पूर्णांक ionic_lअगर_init(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा ionic_dev *idev = &lअगर->ionic->idev;
+	काष्ठा device *dev = lअगर->ionic->dev;
+	काष्ठा ionic_lअगर_init_comp comp;
+	पूर्णांक dbpage_num;
+	पूर्णांक err;
 
-	mutex_lock(&lif->ionic->dev_cmd_lock);
-	ionic_dev_cmd_lif_init(idev, lif->index, lif->info_pa);
-	err = ionic_dev_cmd_wait(lif->ionic, DEVCMD_TIMEOUT);
-	ionic_dev_cmd_comp(idev, (union ionic_dev_cmd_comp *)&comp);
-	mutex_unlock(&lif->ionic->dev_cmd_lock);
-	if (err)
-		return err;
+	mutex_lock(&lअगर->ionic->dev_cmd_lock);
+	ionic_dev_cmd_lअगर_init(idev, lअगर->index, lअगर->info_pa);
+	err = ionic_dev_cmd_रुको(lअगर->ionic, DEVCMD_TIMEOUT);
+	ionic_dev_cmd_comp(idev, (जोड़ ionic_dev_cmd_comp *)&comp);
+	mutex_unlock(&lअगर->ionic->dev_cmd_lock);
+	अगर (err)
+		वापस err;
 
-	lif->hw_index = le16_to_cpu(comp.hw_index);
-	mutex_init(&lif->queue_lock);
+	lअगर->hw_index = le16_to_cpu(comp.hw_index);
+	mutex_init(&lअगर->queue_lock);
 
-	/* now that we have the hw_index we can figure out our doorbell page */
-	lif->dbid_count = le32_to_cpu(lif->ionic->ident.dev.ndbpgs_per_lif);
-	if (!lif->dbid_count) {
+	/* now that we have the hw_index we can figure out our करोorbell page */
+	lअगर->dbid_count = le32_to_cpu(lअगर->ionic->ident.dev.ndbpgs_per_lअगर);
+	अगर (!lअगर->dbid_count) अणु
 		dev_err(dev, "No doorbell pages, aborting\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	lif->dbid_inuse = bitmap_alloc(lif->dbid_count, GFP_KERNEL);
-	if (!lif->dbid_inuse) {
+	lअगर->dbid_inuse = biपंचांगap_alloc(lअगर->dbid_count, GFP_KERNEL);
+	अगर (!lअगर->dbid_inuse) अणु
 		dev_err(dev, "Failed alloc doorbell id bitmap, aborting\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	/* first doorbell id reserved for kernel (dbid aka pid == zero) */
-	set_bit(0, lif->dbid_inuse);
-	lif->kern_pid = 0;
+	/* first करोorbell id reserved क्रम kernel (dbid aka pid == zero) */
+	set_bit(0, lअगर->dbid_inuse);
+	lअगर->kern_pid = 0;
 
-	dbpage_num = ionic_db_page_num(lif, lif->kern_pid);
-	lif->kern_dbpage = ionic_bus_map_dbpage(lif->ionic, dbpage_num);
-	if (!lif->kern_dbpage) {
+	dbpage_num = ionic_db_page_num(lअगर, lअगर->kern_pid);
+	lअगर->kern_dbpage = ionic_bus_map_dbpage(lअगर->ionic, dbpage_num);
+	अगर (!lअगर->kern_dbpage) अणु
 		dev_err(dev, "Cannot map dbpage, aborting\n");
 		err = -ENOMEM;
-		goto err_out_free_dbid;
-	}
+		जाओ err_out_मुक्त_dbid;
+	पूर्ण
 
-	err = ionic_lif_adminq_init(lif);
-	if (err)
-		goto err_out_adminq_deinit;
+	err = ionic_lअगर_adminq_init(lअगर);
+	अगर (err)
+		जाओ err_out_adminq_deinit;
 
-	if (lif->ionic->nnqs_per_lif) {
-		err = ionic_lif_notifyq_init(lif);
-		if (err)
-			goto err_out_notifyq_deinit;
-	}
+	अगर (lअगर->ionic->nnqs_per_lअगर) अणु
+		err = ionic_lअगर_notअगरyq_init(lअगर);
+		अगर (err)
+			जाओ err_out_notअगरyq_deinit;
+	पूर्ण
 
-	err = ionic_init_nic_features(lif);
-	if (err)
-		goto err_out_notifyq_deinit;
+	err = ionic_init_nic_features(lअगर);
+	अगर (err)
+		जाओ err_out_notअगरyq_deinit;
 
-	if (!test_bit(IONIC_LIF_F_FW_RESET, lif->state)) {
-		err = ionic_rx_filters_init(lif);
-		if (err)
-			goto err_out_notifyq_deinit;
-	}
+	अगर (!test_bit(IONIC_LIF_F_FW_RESET, lअगर->state)) अणु
+		err = ionic_rx_filters_init(lअगर);
+		अगर (err)
+			जाओ err_out_notअगरyq_deinit;
+	पूर्ण
 
-	err = ionic_station_set(lif);
-	if (err)
-		goto err_out_notifyq_deinit;
+	err = ionic_station_set(lअगर);
+	अगर (err)
+		जाओ err_out_notअगरyq_deinit;
 
-	lif->rx_copybreak = IONIC_RX_COPYBREAK_DEFAULT;
+	lअगर->rx_copyअवरोध = IONIC_RX_COPYBREAK_DEFAULT;
 
-	set_bit(IONIC_LIF_F_INITED, lif->state);
+	set_bit(IONIC_LIF_F_INITED, lअगर->state);
 
-	INIT_WORK(&lif->tx_timeout_work, ionic_tx_timeout_work);
+	INIT_WORK(&lअगर->tx_समयout_work, ionic_tx_समयout_work);
 
-	return 0;
+	वापस 0;
 
-err_out_notifyq_deinit:
-	ionic_lif_qcq_deinit(lif, lif->notifyqcq);
+err_out_notअगरyq_deinit:
+	ionic_lअगर_qcq_deinit(lअगर, lअगर->notअगरyqcq);
 err_out_adminq_deinit:
-	ionic_lif_qcq_deinit(lif, lif->adminqcq);
-	ionic_lif_reset(lif);
-	ionic_bus_unmap_dbpage(lif->ionic, lif->kern_dbpage);
-	lif->kern_dbpage = NULL;
-err_out_free_dbid:
-	kfree(lif->dbid_inuse);
-	lif->dbid_inuse = NULL;
+	ionic_lअगर_qcq_deinit(lअगर, lअगर->adminqcq);
+	ionic_lअगर_reset(lअगर);
+	ionic_bus_unmap_dbpage(lअगर->ionic, lअगर->kern_dbpage);
+	lअगर->kern_dbpage = शून्य;
+err_out_मुक्त_dbid:
+	kमुक्त(lअगर->dbid_inuse);
+	lअगर->dbid_inuse = शून्य;
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void ionic_lif_notify_work(struct work_struct *ws)
-{
-}
+अटल व्योम ionic_lअगर_notअगरy_work(काष्ठा work_काष्ठा *ws)
+अणु
+पूर्ण
 
-static void ionic_lif_set_netdev_info(struct ionic_lif *lif)
-{
-	struct ionic_admin_ctx ctx = {
+अटल व्योम ionic_lअगर_set_netdev_info(काष्ठा ionic_lअगर *lअगर)
+अणु
+	काष्ठा ionic_admin_ctx ctx = अणु
 		.work = COMPLETION_INITIALIZER_ONSTACK(ctx.work),
-		.cmd.lif_setattr = {
+		.cmd.lअगर_setattr = अणु
 			.opcode = IONIC_CMD_LIF_SETATTR,
-			.index = cpu_to_le16(lif->index),
+			.index = cpu_to_le16(lअगर->index),
 			.attr = IONIC_LIF_ATTR_NAME,
-		},
-	};
+		पूर्ण,
+	पूर्ण;
 
-	strlcpy(ctx.cmd.lif_setattr.name, lif->netdev->name,
-		sizeof(ctx.cmd.lif_setattr.name));
+	strlcpy(ctx.cmd.lअगर_setattr.name, lअगर->netdev->name,
+		माप(ctx.cmd.lअगर_setattr.name));
 
-	ionic_adminq_post_wait(lif, &ctx);
-}
+	ionic_adminq_post_रुको(lअगर, &ctx);
+पूर्ण
 
-static struct ionic_lif *ionic_netdev_lif(struct net_device *netdev)
-{
-	if (!netdev || netdev->netdev_ops->ndo_start_xmit != ionic_start_xmit)
-		return NULL;
+अटल काष्ठा ionic_lअगर *ionic_netdev_lअगर(काष्ठा net_device *netdev)
+अणु
+	अगर (!netdev || netdev->netdev_ops->nकरो_start_xmit != ionic_start_xmit)
+		वापस शून्य;
 
-	return netdev_priv(netdev);
-}
+	वापस netdev_priv(netdev);
+पूर्ण
 
-static int ionic_lif_notify(struct notifier_block *nb,
-			    unsigned long event, void *info)
-{
-	struct net_device *ndev = netdev_notifier_info_to_dev(info);
-	struct ionic *ionic = container_of(nb, struct ionic, nb);
-	struct ionic_lif *lif = ionic_netdev_lif(ndev);
+अटल पूर्णांक ionic_lअगर_notअगरy(काष्ठा notअगरier_block *nb,
+			    अचिन्हित दीर्घ event, व्योम *info)
+अणु
+	काष्ठा net_device *ndev = netdev_notअगरier_info_to_dev(info);
+	काष्ठा ionic *ionic = container_of(nb, काष्ठा ionic, nb);
+	काष्ठा ionic_lअगर *lअगर = ionic_netdev_lअगर(ndev);
 
-	if (!lif || lif->ionic != ionic)
-		return NOTIFY_DONE;
+	अगर (!lअगर || lअगर->ionic != ionic)
+		वापस NOTIFY_DONE;
 
-	switch (event) {
-	case NETDEV_CHANGENAME:
-		ionic_lif_set_netdev_info(lif);
-		break;
-	}
+	चयन (event) अणु
+	हाल NETDEV_CHANGENAME:
+		ionic_lअगर_set_netdev_info(lअगर);
+		अवरोध;
+	पूर्ण
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-int ionic_lif_register(struct ionic_lif *lif)
-{
-	int err;
+पूर्णांक ionic_lअगर_रेजिस्टर(काष्ठा ionic_lअगर *lअगर)
+अणु
+	पूर्णांक err;
 
-	ionic_lif_register_phc(lif);
+	ionic_lअगर_रेजिस्टर_phc(lअगर);
 
-	INIT_WORK(&lif->ionic->nb_work, ionic_lif_notify_work);
+	INIT_WORK(&lअगर->ionic->nb_work, ionic_lअगर_notअगरy_work);
 
-	lif->ionic->nb.notifier_call = ionic_lif_notify;
+	lअगर->ionic->nb.notअगरier_call = ionic_lअगर_notअगरy;
 
-	err = register_netdevice_notifier(&lif->ionic->nb);
-	if (err)
-		lif->ionic->nb.notifier_call = NULL;
+	err = रेजिस्टर_netdevice_notअगरier(&lअगर->ionic->nb);
+	अगर (err)
+		lअगर->ionic->nb.notअगरier_call = शून्य;
 
-	/* only register LIF0 for now */
-	err = register_netdev(lif->netdev);
-	if (err) {
-		dev_err(lif->ionic->dev, "Cannot register net device, aborting\n");
-		ionic_lif_unregister_phc(lif);
-		return err;
-	}
+	/* only रेजिस्टर LIF0 क्रम now */
+	err = रेजिस्टर_netdev(lअगर->netdev);
+	अगर (err) अणु
+		dev_err(lअगर->ionic->dev, "Cannot register net device, aborting\n");
+		ionic_lअगर_unरेजिस्टर_phc(lअगर);
+		वापस err;
+	पूर्ण
 
-	ionic_link_status_check_request(lif, CAN_SLEEP);
-	lif->registered = true;
-	ionic_lif_set_netdev_info(lif);
+	ionic_link_status_check_request(lअगर, CAN_SLEEP);
+	lअगर->रेजिस्टरed = true;
+	ionic_lअगर_set_netdev_info(lअगर);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void ionic_lif_unregister(struct ionic_lif *lif)
-{
-	if (lif->ionic->nb.notifier_call) {
-		unregister_netdevice_notifier(&lif->ionic->nb);
-		cancel_work_sync(&lif->ionic->nb_work);
-		lif->ionic->nb.notifier_call = NULL;
-	}
+व्योम ionic_lअगर_unरेजिस्टर(काष्ठा ionic_lअगर *lअगर)
+अणु
+	अगर (lअगर->ionic->nb.notअगरier_call) अणु
+		unरेजिस्टर_netdevice_notअगरier(&lअगर->ionic->nb);
+		cancel_work_sync(&lअगर->ionic->nb_work);
+		lअगर->ionic->nb.notअगरier_call = शून्य;
+	पूर्ण
 
-	if (lif->netdev->reg_state == NETREG_REGISTERED)
-		unregister_netdev(lif->netdev);
+	अगर (lअगर->netdev->reg_state == NETREG_REGISTERED)
+		unरेजिस्टर_netdev(lअगर->netdev);
 
-	ionic_lif_unregister_phc(lif);
+	ionic_lअगर_unरेजिस्टर_phc(lअगर);
 
-	lif->registered = false;
-}
+	lअगर->रेजिस्टरed = false;
+पूर्ण
 
-static void ionic_lif_queue_identify(struct ionic_lif *lif)
-{
-	union ionic_q_identity __iomem *q_ident;
-	struct ionic *ionic = lif->ionic;
-	struct ionic_dev *idev;
-	int qtype;
-	int err;
+अटल व्योम ionic_lअगर_queue_identअगरy(काष्ठा ionic_lअगर *lअगर)
+अणु
+	जोड़ ionic_q_identity __iomem *q_ident;
+	काष्ठा ionic *ionic = lअगर->ionic;
+	काष्ठा ionic_dev *idev;
+	पूर्णांक qtype;
+	पूर्णांक err;
 
-	idev = &lif->ionic->idev;
-	q_ident = (union ionic_q_identity __iomem *)&idev->dev_cmd_regs->data;
+	idev = &lअगर->ionic->idev;
+	q_ident = (जोड़ ionic_q_identity __iomem *)&idev->dev_cmd_regs->data;
 
-	for (qtype = 0; qtype < ARRAY_SIZE(ionic_qtype_versions); qtype++) {
-		struct ionic_qtype_info *qti = &lif->qtype_info[qtype];
+	क्रम (qtype = 0; qtype < ARRAY_SIZE(ionic_qtype_versions); qtype++) अणु
+		काष्ठा ionic_qtype_info *qti = &lअगर->qtype_info[qtype];
 
 		/* filter out the ones we know about */
-		switch (qtype) {
-		case IONIC_QTYPE_ADMINQ:
-		case IONIC_QTYPE_NOTIFYQ:
-		case IONIC_QTYPE_RXQ:
-		case IONIC_QTYPE_TXQ:
-			break;
-		default:
-			continue;
-		}
+		चयन (qtype) अणु
+		हाल IONIC_QTYPE_ADMINQ:
+		हाल IONIC_QTYPE_NOTIFYQ:
+		हाल IONIC_QTYPE_RXQ:
+		हाल IONIC_QTYPE_TXQ:
+			अवरोध;
+		शेष:
+			जारी;
+		पूर्ण
 
-		memset(qti, 0, sizeof(*qti));
+		स_रखो(qti, 0, माप(*qti));
 
 		mutex_lock(&ionic->dev_cmd_lock);
-		ionic_dev_cmd_queue_identify(idev, lif->lif_type, qtype,
+		ionic_dev_cmd_queue_identअगरy(idev, lअगर->lअगर_type, qtype,
 					     ionic_qtype_versions[qtype]);
-		err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
-		if (!err) {
-			qti->version   = readb(&q_ident->version);
-			qti->supported = readb(&q_ident->supported);
-			qti->features  = readq(&q_ident->features);
-			qti->desc_sz   = readw(&q_ident->desc_sz);
-			qti->comp_sz   = readw(&q_ident->comp_sz);
-			qti->sg_desc_sz   = readw(&q_ident->sg_desc_sz);
-			qti->max_sg_elems = readw(&q_ident->max_sg_elems);
-			qti->sg_desc_stride = readw(&q_ident->sg_desc_stride);
-		}
+		err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+		अगर (!err) अणु
+			qti->version   = पढ़ोb(&q_ident->version);
+			qti->supported = पढ़ोb(&q_ident->supported);
+			qti->features  = पढ़ोq(&q_ident->features);
+			qti->desc_sz   = पढ़ोw(&q_ident->desc_sz);
+			qti->comp_sz   = पढ़ोw(&q_ident->comp_sz);
+			qti->sg_desc_sz   = पढ़ोw(&q_ident->sg_desc_sz);
+			qti->max_sg_elems = पढ़ोw(&q_ident->max_sg_elems);
+			qti->sg_desc_stride = पढ़ोw(&q_ident->sg_desc_stride);
+		पूर्ण
 		mutex_unlock(&ionic->dev_cmd_lock);
 
-		if (err == -EINVAL) {
+		अगर (err == -EINVAL) अणु
 			dev_err(ionic->dev, "qtype %d not supported\n", qtype);
-			continue;
-		} else if (err == -EIO) {
+			जारी;
+		पूर्ण अन्यथा अगर (err == -EIO) अणु
 			dev_err(ionic->dev, "q_ident failed, not supported on older FW\n");
-			return;
-		} else if (err) {
+			वापस;
+		पूर्ण अन्यथा अगर (err) अणु
 			dev_err(ionic->dev, "q_ident failed, qtype %d: %d\n",
 				qtype, err);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		dev_dbg(ionic->dev, " qtype[%d].version = %d\n",
 			qtype, qti->version);
@@ -3461,25 +3462,25 @@ static void ionic_lif_queue_identify(struct ionic_lif *lif)
 			qtype, qti->max_sg_elems);
 		dev_dbg(ionic->dev, " qtype[%d].sg_desc_stride = %d\n",
 			qtype, qti->sg_desc_stride);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int ionic_lif_identify(struct ionic *ionic, u8 lif_type,
-		       union ionic_lif_identity *lid)
-{
-	struct ionic_dev *idev = &ionic->idev;
-	size_t sz;
-	int err;
+पूर्णांक ionic_lअगर_identअगरy(काष्ठा ionic *ionic, u8 lअगर_type,
+		       जोड़ ionic_lअगर_identity *lid)
+अणु
+	काष्ठा ionic_dev *idev = &ionic->idev;
+	माप_प्रकार sz;
+	पूर्णांक err;
 
-	sz = min(sizeof(*lid), sizeof(idev->dev_cmd_regs->data));
+	sz = min(माप(*lid), माप(idev->dev_cmd_regs->data));
 
 	mutex_lock(&ionic->dev_cmd_lock);
-	ionic_dev_cmd_lif_identify(idev, lif_type, IONIC_IDENTITY_VERSION_1);
-	err = ionic_dev_cmd_wait(ionic, DEVCMD_TIMEOUT);
-	memcpy_fromio(lid, &idev->dev_cmd_regs->data, sz);
+	ionic_dev_cmd_lअगर_identअगरy(idev, lअगर_type, IONIC_IDENTITY_VERSION_1);
+	err = ionic_dev_cmd_रुको(ionic, DEVCMD_TIMEOUT);
+	स_नकल_fromio(lid, &idev->dev_cmd_regs->data, sz);
 	mutex_unlock(&ionic->dev_cmd_lock);
-	if (err)
-		return (err);
+	अगर (err)
+		वापस (err);
 
 	dev_dbg(ionic->dev, "capabilities 0x%llx\n",
 		le64_to_cpu(lid->capabilities));
@@ -3503,91 +3504,91 @@ int ionic_lif_identify(struct ionic *ionic, u8 lif_type,
 	dev_dbg(ionic->dev, "eth.config.mtu %d\n",
 		le32_to_cpu(lid->eth.config.mtu));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ionic_lif_size(struct ionic *ionic)
-{
-	struct ionic_identity *ident = &ionic->ident;
-	unsigned int nintrs, dev_nintrs;
-	union ionic_lif_config *lc;
-	unsigned int ntxqs_per_lif;
-	unsigned int nrxqs_per_lif;
-	unsigned int neqs_per_lif;
-	unsigned int nnqs_per_lif;
-	unsigned int nxqs, neqs;
-	unsigned int min_intrs;
-	int err;
+पूर्णांक ionic_lअगर_size(काष्ठा ionic *ionic)
+अणु
+	काष्ठा ionic_identity *ident = &ionic->ident;
+	अचिन्हित पूर्णांक nपूर्णांकrs, dev_nपूर्णांकrs;
+	जोड़ ionic_lअगर_config *lc;
+	अचिन्हित पूर्णांक ntxqs_per_lअगर;
+	अचिन्हित पूर्णांक nrxqs_per_lअगर;
+	अचिन्हित पूर्णांक neqs_per_lअगर;
+	अचिन्हित पूर्णांक nnqs_per_lअगर;
+	अचिन्हित पूर्णांक nxqs, neqs;
+	अचिन्हित पूर्णांक min_पूर्णांकrs;
+	पूर्णांक err;
 
-	lc = &ident->lif.eth.config;
-	dev_nintrs = le32_to_cpu(ident->dev.nintrs);
-	neqs_per_lif = le32_to_cpu(ident->lif.rdma.eq_qtype.qid_count);
-	nnqs_per_lif = le32_to_cpu(lc->queue_count[IONIC_QTYPE_NOTIFYQ]);
-	ntxqs_per_lif = le32_to_cpu(lc->queue_count[IONIC_QTYPE_TXQ]);
-	nrxqs_per_lif = le32_to_cpu(lc->queue_count[IONIC_QTYPE_RXQ]);
+	lc = &ident->lअगर.eth.config;
+	dev_nपूर्णांकrs = le32_to_cpu(ident->dev.nपूर्णांकrs);
+	neqs_per_lअगर = le32_to_cpu(ident->lअगर.rdma.eq_qtype.qid_count);
+	nnqs_per_lअगर = le32_to_cpu(lc->queue_count[IONIC_QTYPE_NOTIFYQ]);
+	ntxqs_per_lअगर = le32_to_cpu(lc->queue_count[IONIC_QTYPE_TXQ]);
+	nrxqs_per_lअगर = le32_to_cpu(lc->queue_count[IONIC_QTYPE_RXQ]);
 
-	/* reserve last queue id for hardware timestamping */
-	if (lc->features & cpu_to_le64(IONIC_ETH_HW_TIMESTAMP)) {
-		if (ntxqs_per_lif <= 1 || nrxqs_per_lif <= 1) {
+	/* reserve last queue id क्रम hardware बारtamping */
+	अगर (lc->features & cpu_to_le64(IONIC_ETH_HW_TIMESTAMP)) अणु
+		अगर (ntxqs_per_lअगर <= 1 || nrxqs_per_lअगर <= 1) अणु
 			lc->features &= cpu_to_le64(~IONIC_ETH_HW_TIMESTAMP);
-		} else {
-			ntxqs_per_lif -= 1;
-			nrxqs_per_lif -= 1;
-		}
-	}
+		पूर्ण अन्यथा अणु
+			ntxqs_per_lअगर -= 1;
+			nrxqs_per_lअगर -= 1;
+		पूर्ण
+	पूर्ण
 
-	nxqs = min(ntxqs_per_lif, nrxqs_per_lif);
+	nxqs = min(ntxqs_per_lअगर, nrxqs_per_lअगर);
 	nxqs = min(nxqs, num_online_cpus());
-	neqs = min(neqs_per_lif, num_online_cpus());
+	neqs = min(neqs_per_lअगर, num_online_cpus());
 
 try_again:
-	/* interrupt usage:
-	 *    1 for master lif adminq/notifyq
-	 *    1 for each CPU for master lif TxRx queue pairs
-	 *    whatever's left is for RDMA queues
+	/* पूर्णांकerrupt usage:
+	 *    1 क्रम master lअगर adminq/notअगरyq
+	 *    1 क्रम each CPU क्रम master lअगर TxRx queue pairs
+	 *    whatever's left is क्रम RDMA queues
 	 */
-	nintrs = 1 + nxqs + neqs;
-	min_intrs = 2;  /* adminq + 1 TxRx queue pair */
+	nपूर्णांकrs = 1 + nxqs + neqs;
+	min_पूर्णांकrs = 2;  /* adminq + 1 TxRx queue pair */
 
-	if (nintrs > dev_nintrs)
-		goto try_fewer;
+	अगर (nपूर्णांकrs > dev_nपूर्णांकrs)
+		जाओ try_fewer;
 
-	err = ionic_bus_alloc_irq_vectors(ionic, nintrs);
-	if (err < 0 && err != -ENOSPC) {
+	err = ionic_bus_alloc_irq_vectors(ionic, nपूर्णांकrs);
+	अगर (err < 0 && err != -ENOSPC) अणु
 		dev_err(ionic->dev, "Can't get intrs from OS: %d\n", err);
-		return err;
-	}
-	if (err == -ENOSPC)
-		goto try_fewer;
+		वापस err;
+	पूर्ण
+	अगर (err == -ENOSPC)
+		जाओ try_fewer;
 
-	if (err != nintrs) {
-		ionic_bus_free_irq_vectors(ionic);
-		goto try_fewer;
-	}
+	अगर (err != nपूर्णांकrs) अणु
+		ionic_bus_मुक्त_irq_vectors(ionic);
+		जाओ try_fewer;
+	पूर्ण
 
-	ionic->nnqs_per_lif = nnqs_per_lif;
-	ionic->neqs_per_lif = neqs;
-	ionic->ntxqs_per_lif = nxqs;
-	ionic->nrxqs_per_lif = nxqs;
-	ionic->nintrs = nintrs;
+	ionic->nnqs_per_lअगर = nnqs_per_lअगर;
+	ionic->neqs_per_lअगर = neqs;
+	ionic->ntxqs_per_lअगर = nxqs;
+	ionic->nrxqs_per_lअगर = nxqs;
+	ionic->nपूर्णांकrs = nपूर्णांकrs;
 
 	ionic_debugfs_add_sizes(ionic);
 
-	return 0;
+	वापस 0;
 
 try_fewer:
-	if (nnqs_per_lif > 1) {
-		nnqs_per_lif >>= 1;
-		goto try_again;
-	}
-	if (neqs > 1) {
+	अगर (nnqs_per_lअगर > 1) अणु
+		nnqs_per_lअगर >>= 1;
+		जाओ try_again;
+	पूर्ण
+	अगर (neqs > 1) अणु
 		neqs >>= 1;
-		goto try_again;
-	}
-	if (nxqs > 1) {
+		जाओ try_again;
+	पूर्ण
+	अगर (nxqs > 1) अणु
 		nxqs >>= 1;
-		goto try_again;
-	}
-	dev_err(ionic->dev, "Can't get minimum %d intrs from OS\n", min_intrs);
-	return -ENOSPC;
-}
+		जाओ try_again;
+	पूर्ण
+	dev_err(ionic->dev, "Can't get minimum %d intrs from OS\n", min_पूर्णांकrs);
+	वापस -ENOSPC;
+पूर्ण

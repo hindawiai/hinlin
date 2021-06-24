@@ -1,14 +1,15 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /* Copyright (c) 2015-2016 Quantenna Communications. All rights reserved. */
 
-#ifndef _QTN_FMAC_EVENT_H_
-#define _QTN_FMAC_EVENT_H_
+#अगर_अघोषित _QTN_FMAC_EVENT_H_
+#घोषणा _QTN_FMAC_EVENT_H_
 
-#include <linux/kernel.h>
-#include <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
 
-#include "qlink.h"
+#समावेश "qlink.h"
 
-void qtnf_event_work_handler(struct work_struct *work);
+व्योम qtnf_event_work_handler(काष्ठा work_काष्ठा *work);
 
-#endif /* _QTN_FMAC_EVENT_H_ */
+#पूर्ण_अगर /* _QTN_FMAC_EVENT_H_ */

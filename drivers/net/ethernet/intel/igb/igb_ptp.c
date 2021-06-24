@@ -1,37 +1,38 @@
-// SPDX-License-Identifier: GPL-2.0+
-/* Copyright (C) 2011 Richard Cochran <richardcochran@gmail.com> */
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
+/* Copyright (C) 2011 Riअक्षरd Cochran <riअक्षरdcochran@gmail.com> */
 
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/pci.h>
-#include <linux/ptp_classify.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/ptp_classअगरy.h>
 
-#include "igb.h"
+#समावेश "igb.h"
 
-#define INCVALUE_MASK		0x7fffffff
-#define ISGN			0x80000000
+#घोषणा INCVALUE_MASK		0x7fffffff
+#घोषणा ISGN			0x80000000
 
-/* The 82580 timesync updates the system timer every 8ns by 8ns,
+/* The 82580 बारync updates the प्रणाली समयr every 8ns by 8ns,
  * and this update value cannot be reprogrammed.
  *
- * Neither the 82576 nor the 82580 offer registers wide enough to hold
- * nanoseconds time values for very long. For the 82580, SYSTIM always
+ * Neither the 82576 nor the 82580 offer रेजिस्टरs wide enough to hold
+ * nanoseconds समय values क्रम very दीर्घ. For the 82580, SYSTIM always
  * counts nanoseconds, but the upper 24 bits are not available. The
  * frequency is adjusted by changing the 32 bit fractional nanoseconds
- * register, TIMINCA.
+ * रेजिस्टर, TIMINCA.
  *
- * For the 82576, the SYSTIM register time unit is affect by the
+ * For the 82576, the SYSTIM रेजिस्टर समय unit is affect by the
  * choice of the 24 bit TININCA:IV (incvalue) field. Five bits of this
  * field are needed to provide the nominal 16 nanosecond period,
- * leaving 19 bits for fractional nanoseconds.
+ * leaving 19 bits क्रम fractional nanoseconds.
  *
- * We scale the NIC clock cycle by a large factor so that relatively
- * small clock corrections can be added or subtracted at each clock
- * tick. The drawbacks of a large factor are a) that the clock
- * register overflows more quickly (not such a big deal) and b) that
- * the increment per tick has to fit into 24 bits.  As a result we
- * need to use a shift of 19 so we can fit a value of 16 into the
- * TIMINCA register.
+ * We scale the NIC घड़ी cycle by a large factor so that relatively
+ * small घड़ी corrections can be added or subtracted at each घड़ी
+ * tick. The drawbacks of a large factor are a) that the घड़ी
+ * रेजिस्टर overflows more quickly (not such a big deal) and b) that
+ * the increment per tick has to fit पूर्णांकo 24 bits.  As a result we
+ * need to use a shअगरt of 19 so we can fit a value of 16 पूर्णांकo the
+ * TIMINCA रेजिस्टर.
  *
  *
  *             SYSTIMH            SYSTIML
@@ -52,29 +53,29 @@
  * The 40 bit 82580 SYSTIM overflows every
  *   2^40 * 10^-9 /  60  = 18.3 minutes.
  *
- * SYSTIM is converted to real time using a timecounter. As
- * timecounter_cyc2time() allows old timestamps, the timecounter needs
- * to be updated at least once per half of the SYSTIM interval.
+ * SYSTIM is converted to real समय using a समयcounter. As
+ * समयcounter_cyc2समय() allows old बारtamps, the समयcounter needs
+ * to be updated at least once per half of the SYSTIM पूर्णांकerval.
  * Scheduling of delayed work is not very accurate, and also the NIC
- * clock can be adjusted to run up to 6% faster and the system clock
- * up to 10% slower, so we aim for 6 minutes to be sure the actual
- * interval in the NIC time is shorter than 9.16 minutes.
+ * घड़ी can be adjusted to run up to 6% faster and the प्रणाली घड़ी
+ * up to 10% slower, so we aim क्रम 6 minutes to be sure the actual
+ * पूर्णांकerval in the NIC समय is लघुer than 9.16 minutes.
  */
 
-#define IGB_SYSTIM_OVERFLOW_PERIOD	(HZ * 60 * 6)
-#define IGB_PTP_TX_TIMEOUT		(HZ * 15)
-#define INCPERIOD_82576			BIT(E1000_TIMINCA_16NS_SHIFT)
-#define INCVALUE_82576_MASK		GENMASK(E1000_TIMINCA_16NS_SHIFT - 1, 0)
-#define INCVALUE_82576			(16u << IGB_82576_TSYNC_SHIFT)
-#define IGB_NBITS_82580			40
+#घोषणा IGB_SYSTIM_OVERFLOW_PERIOD	(HZ * 60 * 6)
+#घोषणा IGB_PTP_TX_TIMEOUT		(HZ * 15)
+#घोषणा INCPERIOD_82576			BIT(E1000_TIMINCA_16NS_SHIFT)
+#घोषणा INCVALUE_82576_MASK		GENMASK(E1000_TIMINCA_16NS_SHIFT - 1, 0)
+#घोषणा INCVALUE_82576			(16u << IGB_82576_TSYNC_SHIFT)
+#घोषणा IGB_NBITS_82580			40
 
-static void igb_ptp_tx_hwtstamp(struct igb_adapter *adapter);
+अटल व्योम igb_ptp_tx_hwtstamp(काष्ठा igb_adapter *adapter);
 
-/* SYSTIM read access for the 82576 */
-static u64 igb_ptp_read_82576(const struct cyclecounter *cc)
-{
-	struct igb_adapter *igb = container_of(cc, struct igb_adapter, cc);
-	struct e1000_hw *hw = &igb->hw;
+/* SYSTIM पढ़ो access क्रम the 82576 */
+अटल u64 igb_ptp_पढ़ो_82576(स्थिर काष्ठा cyclecounter *cc)
+अणु
+	काष्ठा igb_adapter *igb = container_of(cc, काष्ठा igb_adapter, cc);
+	काष्ठा e1000_hw *hw = &igb->hw;
 	u64 val;
 	u32 lo, hi;
 
@@ -84,19 +85,19 @@ static u64 igb_ptp_read_82576(const struct cyclecounter *cc)
 	val = ((u64) hi) << 32;
 	val |= lo;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-/* SYSTIM read access for the 82580 */
-static u64 igb_ptp_read_82580(const struct cyclecounter *cc)
-{
-	struct igb_adapter *igb = container_of(cc, struct igb_adapter, cc);
-	struct e1000_hw *hw = &igb->hw;
+/* SYSTIM पढ़ो access क्रम the 82580 */
+अटल u64 igb_ptp_पढ़ो_82580(स्थिर काष्ठा cyclecounter *cc)
+अणु
+	काष्ठा igb_adapter *igb = container_of(cc, काष्ठा igb_adapter, cc);
+	काष्ठा e1000_hw *hw = &igb->hw;
 	u32 lo, hi;
 	u64 val;
 
-	/* The timestamp latches on lowest register read. For the 82580
-	 * the lowest register is SYSTIMR instead of SYSTIML.  However we only
+	/* The बारtamp latches on lowest रेजिस्टर पढ़ो. For the 82580
+	 * the lowest रेजिस्टर is SYSTIMR instead of SYSTIML.  However we only
 	 * need to provide nanosecond resolution, so we just ignore it.
 	 */
 	rd32(E1000_SYSTIMR);
@@ -106,18 +107,18 @@ static u64 igb_ptp_read_82580(const struct cyclecounter *cc)
 	val = ((u64) hi) << 32;
 	val |= lo;
 
-	return val;
-}
+	वापस val;
+पूर्ण
 
-/* SYSTIM read access for I210/I211 */
-static void igb_ptp_read_i210(struct igb_adapter *adapter,
-			      struct timespec64 *ts)
-{
-	struct e1000_hw *hw = &adapter->hw;
+/* SYSTIM पढ़ो access क्रम I210/I211 */
+अटल व्योम igb_ptp_पढ़ो_i210(काष्ठा igb_adapter *adapter,
+			      काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा e1000_hw *hw = &adapter->hw;
 	u32 sec, nsec;
 
-	/* The timestamp latches on lowest register read. For I210/I211, the
-	 * lowest register is SYSTIMR. Since we only need to provide nanosecond
+	/* The बारtamp latches on lowest रेजिस्टर पढ़ो. For I210/I211, the
+	 * lowest रेजिस्टर is SYSTIMR. Since we only need to provide nanosecond
 	 * resolution, we can ignore it.
 	 */
 	rd32(E1000_SYSTIMR);
@@ -126,297 +127,297 @@ static void igb_ptp_read_i210(struct igb_adapter *adapter,
 
 	ts->tv_sec = sec;
 	ts->tv_nsec = nsec;
-}
+पूर्ण
 
-static void igb_ptp_write_i210(struct igb_adapter *adapter,
-			       const struct timespec64 *ts)
-{
-	struct e1000_hw *hw = &adapter->hw;
+अटल व्योम igb_ptp_ग_लिखो_i210(काष्ठा igb_adapter *adapter,
+			       स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा e1000_hw *hw = &adapter->hw;
 
-	/* Writing the SYSTIMR register is not necessary as it only provides
+	/* Writing the SYSTIMR रेजिस्टर is not necessary as it only provides
 	 * sub-nanosecond resolution.
 	 */
 	wr32(E1000_SYSTIML, ts->tv_nsec);
 	wr32(E1000_SYSTIMH, (u32)ts->tv_sec);
-}
+पूर्ण
 
 /**
- * igb_ptp_systim_to_hwtstamp - convert system time value to hw timestamp
- * @adapter: board private structure
- * @hwtstamps: timestamp structure to update
- * @systim: unsigned 64bit system time value.
+ * igb_ptp_systim_to_hwtstamp - convert प्रणाली समय value to hw बारtamp
+ * @adapter: board निजी काष्ठाure
+ * @hwtstamps: बारtamp काष्ठाure to update
+ * @systim: अचिन्हित 64bit प्रणाली समय value.
  *
- * We need to convert the system time value stored in the RX/TXSTMP registers
- * into a hwtstamp which can be used by the upper level timestamping functions.
+ * We need to convert the प्रणाली समय value stored in the RX/TXSTMP रेजिस्टरs
+ * पूर्णांकo a hwtstamp which can be used by the upper level बारtamping functions.
  *
  * The 'tmreg_lock' spinlock is used to protect the consistency of the
- * system time value. This is needed because reading the 64 bit time
- * value involves reading two (or three) 32 bit registers. The first
- * read latches the value. Ditto for writing.
+ * प्रणाली समय value. This is needed because पढ़ोing the 64 bit समय
+ * value involves पढ़ोing two (or three) 32 bit रेजिस्टरs. The first
+ * पढ़ो latches the value. Ditto क्रम writing.
  *
- * In addition, here have extended the system time with an overflow
+ * In addition, here have extended the प्रणाली समय with an overflow
  * counter in software.
  **/
-static void igb_ptp_systim_to_hwtstamp(struct igb_adapter *adapter,
-				       struct skb_shared_hwtstamps *hwtstamps,
+अटल व्योम igb_ptp_systim_to_hwtstamp(काष्ठा igb_adapter *adapter,
+				       काष्ठा skb_shared_hwtstamps *hwtstamps,
 				       u64 systim)
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 	u64 ns;
 
-	switch (adapter->hw.mac.type) {
-	case e1000_82576:
-	case e1000_82580:
-	case e1000_i354:
-	case e1000_i350:
-		spin_lock_irqsave(&adapter->tmreg_lock, flags);
+	चयन (adapter->hw.mac.type) अणु
+	हाल e1000_82576:
+	हाल e1000_82580:
+	हाल e1000_i354:
+	हाल e1000_i350:
+		spin_lock_irqsave(&adapter->पंचांगreg_lock, flags);
 
-		ns = timecounter_cyc2time(&adapter->tc, systim);
+		ns = समयcounter_cyc2समय(&adapter->tc, systim);
 
-		spin_unlock_irqrestore(&adapter->tmreg_lock, flags);
+		spin_unlock_irqrestore(&adapter->पंचांगreg_lock, flags);
 
-		memset(hwtstamps, 0, sizeof(*hwtstamps));
-		hwtstamps->hwtstamp = ns_to_ktime(ns);
-		break;
-	case e1000_i210:
-	case e1000_i211:
-		memset(hwtstamps, 0, sizeof(*hwtstamps));
+		स_रखो(hwtstamps, 0, माप(*hwtstamps));
+		hwtstamps->hwtstamp = ns_to_kसमय(ns);
+		अवरोध;
+	हाल e1000_i210:
+	हाल e1000_i211:
+		स_रखो(hwtstamps, 0, माप(*hwtstamps));
 		/* Upper 32 bits contain s, lower 32 bits contain ns. */
-		hwtstamps->hwtstamp = ktime_set(systim >> 32,
+		hwtstamps->hwtstamp = kसमय_set(systim >> 32,
 						systim & 0xFFFFFFFF);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-/* PTP clock operations */
-static int igb_ptp_adjfreq_82576(struct ptp_clock_info *ptp, s32 ppb)
-{
-	struct igb_adapter *igb = container_of(ptp, struct igb_adapter,
+/* PTP घड़ी operations */
+अटल पूर्णांक igb_ptp_adjfreq_82576(काष्ठा ptp_घड़ी_info *ptp, s32 ppb)
+अणु
+	काष्ठा igb_adapter *igb = container_of(ptp, काष्ठा igb_adapter,
 					       ptp_caps);
-	struct e1000_hw *hw = &igb->hw;
-	int neg_adj = 0;
+	काष्ठा e1000_hw *hw = &igb->hw;
+	पूर्णांक neg_adj = 0;
 	u64 rate;
 	u32 incvalue;
 
-	if (ppb < 0) {
+	अगर (ppb < 0) अणु
 		neg_adj = 1;
 		ppb = -ppb;
-	}
+	पूर्ण
 	rate = ppb;
 	rate <<= 14;
-	rate = div_u64(rate, 1953125);
+	rate = भाग_u64(rate, 1953125);
 
 	incvalue = 16 << IGB_82576_TSYNC_SHIFT;
 
-	if (neg_adj)
+	अगर (neg_adj)
 		incvalue -= rate;
-	else
+	अन्यथा
 		incvalue += rate;
 
 	wr32(E1000_TIMINCA, INCPERIOD_82576 | (incvalue & INCVALUE_82576_MASK));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igb_ptp_adjfine_82580(struct ptp_clock_info *ptp, long scaled_ppm)
-{
-	struct igb_adapter *igb = container_of(ptp, struct igb_adapter,
+अटल पूर्णांक igb_ptp_adjfine_82580(काष्ठा ptp_घड़ी_info *ptp, दीर्घ scaled_ppm)
+अणु
+	काष्ठा igb_adapter *igb = container_of(ptp, काष्ठा igb_adapter,
 					       ptp_caps);
-	struct e1000_hw *hw = &igb->hw;
-	int neg_adj = 0;
+	काष्ठा e1000_hw *hw = &igb->hw;
+	पूर्णांक neg_adj = 0;
 	u64 rate;
 	u32 inca;
 
-	if (scaled_ppm < 0) {
+	अगर (scaled_ppm < 0) अणु
 		neg_adj = 1;
 		scaled_ppm = -scaled_ppm;
-	}
+	पूर्ण
 	rate = scaled_ppm;
 	rate <<= 13;
-	rate = div_u64(rate, 15625);
+	rate = भाग_u64(rate, 15625);
 
 	inca = rate & INCVALUE_MASK;
-	if (neg_adj)
+	अगर (neg_adj)
 		inca |= ISGN;
 
 	wr32(E1000_TIMINCA, inca);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igb_ptp_adjtime_82576(struct ptp_clock_info *ptp, s64 delta)
-{
-	struct igb_adapter *igb = container_of(ptp, struct igb_adapter,
+अटल पूर्णांक igb_ptp_adjसमय_82576(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
+अणु
+	काष्ठा igb_adapter *igb = container_of(ptp, काष्ठा igb_adapter,
 					       ptp_caps);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&igb->tmreg_lock, flags);
-	timecounter_adjtime(&igb->tc, delta);
-	spin_unlock_irqrestore(&igb->tmreg_lock, flags);
+	spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
+	समयcounter_adjसमय(&igb->tc, delta);
+	spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igb_ptp_adjtime_i210(struct ptp_clock_info *ptp, s64 delta)
-{
-	struct igb_adapter *igb = container_of(ptp, struct igb_adapter,
+अटल पूर्णांक igb_ptp_adjसमय_i210(काष्ठा ptp_घड़ी_info *ptp, s64 delta)
+अणु
+	काष्ठा igb_adapter *igb = container_of(ptp, काष्ठा igb_adapter,
 					       ptp_caps);
-	unsigned long flags;
-	struct timespec64 now, then = ns_to_timespec64(delta);
+	अचिन्हित दीर्घ flags;
+	काष्ठा बारpec64 now, then = ns_to_बारpec64(delta);
 
-	spin_lock_irqsave(&igb->tmreg_lock, flags);
+	spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
 
-	igb_ptp_read_i210(igb, &now);
-	now = timespec64_add(now, then);
-	igb_ptp_write_i210(igb, (const struct timespec64 *)&now);
+	igb_ptp_पढ़ो_i210(igb, &now);
+	now = बारpec64_add(now, then);
+	igb_ptp_ग_लिखो_i210(igb, (स्थिर काष्ठा बारpec64 *)&now);
 
-	spin_unlock_irqrestore(&igb->tmreg_lock, flags);
+	spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igb_ptp_gettimex_82576(struct ptp_clock_info *ptp,
-				  struct timespec64 *ts,
-				  struct ptp_system_timestamp *sts)
-{
-	struct igb_adapter *igb = container_of(ptp, struct igb_adapter,
+अटल पूर्णांक igb_ptp_समय_लोx_82576(काष्ठा ptp_घड़ी_info *ptp,
+				  काष्ठा बारpec64 *ts,
+				  काष्ठा ptp_प्रणाली_बारtamp *sts)
+अणु
+	काष्ठा igb_adapter *igb = container_of(ptp, काष्ठा igb_adapter,
 					       ptp_caps);
-	struct e1000_hw *hw = &igb->hw;
-	unsigned long flags;
+	काष्ठा e1000_hw *hw = &igb->hw;
+	अचिन्हित दीर्घ flags;
 	u32 lo, hi;
 	u64 ns;
 
-	spin_lock_irqsave(&igb->tmreg_lock, flags);
+	spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
 
-	ptp_read_system_prets(sts);
+	ptp_पढ़ो_प्रणाली_prets(sts);
 	lo = rd32(E1000_SYSTIML);
-	ptp_read_system_postts(sts);
+	ptp_पढ़ो_प्रणाली_postts(sts);
 	hi = rd32(E1000_SYSTIMH);
 
-	ns = timecounter_cyc2time(&igb->tc, ((u64)hi << 32) | lo);
+	ns = समयcounter_cyc2समय(&igb->tc, ((u64)hi << 32) | lo);
 
-	spin_unlock_irqrestore(&igb->tmreg_lock, flags);
+	spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
 
-	*ts = ns_to_timespec64(ns);
+	*ts = ns_to_बारpec64(ns);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igb_ptp_gettimex_82580(struct ptp_clock_info *ptp,
-				  struct timespec64 *ts,
-				  struct ptp_system_timestamp *sts)
-{
-	struct igb_adapter *igb = container_of(ptp, struct igb_adapter,
+अटल पूर्णांक igb_ptp_समय_लोx_82580(काष्ठा ptp_घड़ी_info *ptp,
+				  काष्ठा बारpec64 *ts,
+				  काष्ठा ptp_प्रणाली_बारtamp *sts)
+अणु
+	काष्ठा igb_adapter *igb = container_of(ptp, काष्ठा igb_adapter,
 					       ptp_caps);
-	struct e1000_hw *hw = &igb->hw;
-	unsigned long flags;
+	काष्ठा e1000_hw *hw = &igb->hw;
+	अचिन्हित दीर्घ flags;
 	u32 lo, hi;
 	u64 ns;
 
-	spin_lock_irqsave(&igb->tmreg_lock, flags);
+	spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
 
-	ptp_read_system_prets(sts);
+	ptp_पढ़ो_प्रणाली_prets(sts);
 	rd32(E1000_SYSTIMR);
-	ptp_read_system_postts(sts);
+	ptp_पढ़ो_प्रणाली_postts(sts);
 	lo = rd32(E1000_SYSTIML);
 	hi = rd32(E1000_SYSTIMH);
 
-	ns = timecounter_cyc2time(&igb->tc, ((u64)hi << 32) | lo);
+	ns = समयcounter_cyc2समय(&igb->tc, ((u64)hi << 32) | lo);
 
-	spin_unlock_irqrestore(&igb->tmreg_lock, flags);
+	spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
 
-	*ts = ns_to_timespec64(ns);
+	*ts = ns_to_बारpec64(ns);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igb_ptp_gettimex_i210(struct ptp_clock_info *ptp,
-				 struct timespec64 *ts,
-				 struct ptp_system_timestamp *sts)
-{
-	struct igb_adapter *igb = container_of(ptp, struct igb_adapter,
+अटल पूर्णांक igb_ptp_समय_लोx_i210(काष्ठा ptp_घड़ी_info *ptp,
+				 काष्ठा बारpec64 *ts,
+				 काष्ठा ptp_प्रणाली_बारtamp *sts)
+अणु
+	काष्ठा igb_adapter *igb = container_of(ptp, काष्ठा igb_adapter,
 					       ptp_caps);
-	struct e1000_hw *hw = &igb->hw;
-	unsigned long flags;
+	काष्ठा e1000_hw *hw = &igb->hw;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&igb->tmreg_lock, flags);
+	spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
 
-	ptp_read_system_prets(sts);
+	ptp_पढ़ो_प्रणाली_prets(sts);
 	rd32(E1000_SYSTIMR);
-	ptp_read_system_postts(sts);
+	ptp_पढ़ो_प्रणाली_postts(sts);
 	ts->tv_nsec = rd32(E1000_SYSTIML);
 	ts->tv_sec = rd32(E1000_SYSTIMH);
 
-	spin_unlock_irqrestore(&igb->tmreg_lock, flags);
+	spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igb_ptp_settime_82576(struct ptp_clock_info *ptp,
-				 const struct timespec64 *ts)
-{
-	struct igb_adapter *igb = container_of(ptp, struct igb_adapter,
+अटल पूर्णांक igb_ptp_समय_रखो_82576(काष्ठा ptp_घड़ी_info *ptp,
+				 स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा igb_adapter *igb = container_of(ptp, काष्ठा igb_adapter,
 					       ptp_caps);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 	u64 ns;
 
-	ns = timespec64_to_ns(ts);
+	ns = बारpec64_to_ns(ts);
 
-	spin_lock_irqsave(&igb->tmreg_lock, flags);
+	spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
 
-	timecounter_init(&igb->tc, &igb->cc, ns);
+	समयcounter_init(&igb->tc, &igb->cc, ns);
 
-	spin_unlock_irqrestore(&igb->tmreg_lock, flags);
+	spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int igb_ptp_settime_i210(struct ptp_clock_info *ptp,
-				const struct timespec64 *ts)
-{
-	struct igb_adapter *igb = container_of(ptp, struct igb_adapter,
+अटल पूर्णांक igb_ptp_समय_रखो_i210(काष्ठा ptp_घड़ी_info *ptp,
+				स्थिर काष्ठा बारpec64 *ts)
+अणु
+	काष्ठा igb_adapter *igb = container_of(ptp, काष्ठा igb_adapter,
 					       ptp_caps);
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&igb->tmreg_lock, flags);
+	spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
 
-	igb_ptp_write_i210(igb, ts);
+	igb_ptp_ग_लिखो_i210(igb, ts);
 
-	spin_unlock_irqrestore(&igb->tmreg_lock, flags);
+	spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void igb_pin_direction(int pin, int input, u32 *ctrl, u32 *ctrl_ext)
-{
+अटल व्योम igb_pin_direction(पूर्णांक pin, पूर्णांक input, u32 *ctrl, u32 *ctrl_ext)
+अणु
 	u32 *ptr = pin < 2 ? ctrl : ctrl_ext;
-	static const u32 mask[IGB_N_SDP] = {
-		E1000_CTRL_SDP0_DIR,
-		E1000_CTRL_SDP1_DIR,
-		E1000_CTRL_EXT_SDP2_DIR,
-		E1000_CTRL_EXT_SDP3_DIR,
-	};
+	अटल स्थिर u32 mask[IGB_N_SDP] = अणु
+		E1000_CTRL_SDP0_सूची,
+		E1000_CTRL_SDP1_सूची,
+		E1000_CTRL_EXT_SDP2_सूची,
+		E1000_CTRL_EXT_SDP3_सूची,
+	पूर्ण;
 
-	if (input)
+	अगर (input)
 		*ptr &= ~mask[pin];
-	else
+	अन्यथा
 		*ptr |= mask[pin];
-}
+पूर्ण
 
-static void igb_pin_extts(struct igb_adapter *igb, int chan, int pin)
-{
-	static const u32 aux0_sel_sdp[IGB_N_SDP] = {
+अटल व्योम igb_pin_extts(काष्ठा igb_adapter *igb, पूर्णांक chan, पूर्णांक pin)
+अणु
+	अटल स्थिर u32 aux0_sel_sdp[IGB_N_SDP] = अणु
 		AUX0_SEL_SDP0, AUX0_SEL_SDP1, AUX0_SEL_SDP2, AUX0_SEL_SDP3,
-	};
-	static const u32 aux1_sel_sdp[IGB_N_SDP] = {
+	पूर्ण;
+	अटल स्थिर u32 aux1_sel_sdp[IGB_N_SDP] = अणु
 		AUX1_SEL_SDP0, AUX1_SEL_SDP1, AUX1_SEL_SDP2, AUX1_SEL_SDP3,
-	};
-	static const u32 ts_sdp_en[IGB_N_SDP] = {
+	पूर्ण;
+	अटल स्थिर u32 ts_sdp_en[IGB_N_SDP] = अणु
 		TS_SDP0_EN, TS_SDP1_EN, TS_SDP2_EN, TS_SDP3_EN,
-	};
-	struct e1000_hw *hw = &igb->hw;
+	पूर्ण;
+	काष्ठा e1000_hw *hw = &igb->hw;
 	u32 ctrl, ctrl_ext, tssdp = 0;
 
 	ctrl = rd32(E1000_CTRL);
@@ -428,51 +429,51 @@ static void igb_pin_extts(struct igb_adapter *igb, int chan, int pin)
 	/* Make sure this pin is not enabled as an output. */
 	tssdp &= ~ts_sdp_en[pin];
 
-	if (chan == 1) {
+	अगर (chan == 1) अणु
 		tssdp &= ~AUX1_SEL_SDP3;
 		tssdp |= aux1_sel_sdp[pin] | AUX1_TS_SDP_EN;
-	} else {
+	पूर्ण अन्यथा अणु
 		tssdp &= ~AUX0_SEL_SDP3;
 		tssdp |= aux0_sel_sdp[pin] | AUX0_TS_SDP_EN;
-	}
+	पूर्ण
 
 	wr32(E1000_TSSDP, tssdp);
 	wr32(E1000_CTRL, ctrl);
 	wr32(E1000_CTRL_EXT, ctrl_ext);
-}
+पूर्ण
 
-static void igb_pin_perout(struct igb_adapter *igb, int chan, int pin, int freq)
-{
-	static const u32 aux0_sel_sdp[IGB_N_SDP] = {
+अटल व्योम igb_pin_perout(काष्ठा igb_adapter *igb, पूर्णांक chan, पूर्णांक pin, पूर्णांक freq)
+अणु
+	अटल स्थिर u32 aux0_sel_sdp[IGB_N_SDP] = अणु
 		AUX0_SEL_SDP0, AUX0_SEL_SDP1, AUX0_SEL_SDP2, AUX0_SEL_SDP3,
-	};
-	static const u32 aux1_sel_sdp[IGB_N_SDP] = {
+	पूर्ण;
+	अटल स्थिर u32 aux1_sel_sdp[IGB_N_SDP] = अणु
 		AUX1_SEL_SDP0, AUX1_SEL_SDP1, AUX1_SEL_SDP2, AUX1_SEL_SDP3,
-	};
-	static const u32 ts_sdp_en[IGB_N_SDP] = {
+	पूर्ण;
+	अटल स्थिर u32 ts_sdp_en[IGB_N_SDP] = अणु
 		TS_SDP0_EN, TS_SDP1_EN, TS_SDP2_EN, TS_SDP3_EN,
-	};
-	static const u32 ts_sdp_sel_tt0[IGB_N_SDP] = {
+	पूर्ण;
+	अटल स्थिर u32 ts_sdp_sel_tt0[IGB_N_SDP] = अणु
 		TS_SDP0_SEL_TT0, TS_SDP1_SEL_TT0,
 		TS_SDP2_SEL_TT0, TS_SDP3_SEL_TT0,
-	};
-	static const u32 ts_sdp_sel_tt1[IGB_N_SDP] = {
+	पूर्ण;
+	अटल स्थिर u32 ts_sdp_sel_tt1[IGB_N_SDP] = अणु
 		TS_SDP0_SEL_TT1, TS_SDP1_SEL_TT1,
 		TS_SDP2_SEL_TT1, TS_SDP3_SEL_TT1,
-	};
-	static const u32 ts_sdp_sel_fc0[IGB_N_SDP] = {
+	पूर्ण;
+	अटल स्थिर u32 ts_sdp_sel_fc0[IGB_N_SDP] = अणु
 		TS_SDP0_SEL_FC0, TS_SDP1_SEL_FC0,
 		TS_SDP2_SEL_FC0, TS_SDP3_SEL_FC0,
-	};
-	static const u32 ts_sdp_sel_fc1[IGB_N_SDP] = {
+	पूर्ण;
+	अटल स्थिर u32 ts_sdp_sel_fc1[IGB_N_SDP] = अणु
 		TS_SDP0_SEL_FC1, TS_SDP1_SEL_FC1,
 		TS_SDP2_SEL_FC1, TS_SDP3_SEL_FC1,
-	};
-	static const u32 ts_sdp_sel_clr[IGB_N_SDP] = {
+	पूर्ण;
+	अटल स्थिर u32 ts_sdp_sel_clr[IGB_N_SDP] = अणु
 		TS_SDP0_SEL_FC1, TS_SDP1_SEL_FC1,
 		TS_SDP2_SEL_FC1, TS_SDP3_SEL_FC1,
-	};
-	struct e1000_hw *hw = &igb->hw;
+	पूर्ण;
+	काष्ठा e1000_hw *hw = &igb->hw;
 	u32 ctrl, ctrl_ext, tssdp = 0;
 
 	ctrl = rd32(E1000_CTRL);
@@ -482,144 +483,144 @@ static void igb_pin_perout(struct igb_adapter *igb, int chan, int pin, int freq)
 	igb_pin_direction(pin, 0, &ctrl, &ctrl_ext);
 
 	/* Make sure this pin is not enabled as an input. */
-	if ((tssdp & AUX0_SEL_SDP3) == aux0_sel_sdp[pin])
+	अगर ((tssdp & AUX0_SEL_SDP3) == aux0_sel_sdp[pin])
 		tssdp &= ~AUX0_TS_SDP_EN;
 
-	if ((tssdp & AUX1_SEL_SDP3) == aux1_sel_sdp[pin])
+	अगर ((tssdp & AUX1_SEL_SDP3) == aux1_sel_sdp[pin])
 		tssdp &= ~AUX1_TS_SDP_EN;
 
 	tssdp &= ~ts_sdp_sel_clr[pin];
-	if (freq) {
-		if (chan == 1)
+	अगर (freq) अणु
+		अगर (chan == 1)
 			tssdp |= ts_sdp_sel_fc1[pin];
-		else
+		अन्यथा
 			tssdp |= ts_sdp_sel_fc0[pin];
-	} else {
-		if (chan == 1)
+	पूर्ण अन्यथा अणु
+		अगर (chan == 1)
 			tssdp |= ts_sdp_sel_tt1[pin];
-		else
+		अन्यथा
 			tssdp |= ts_sdp_sel_tt0[pin];
-	}
+	पूर्ण
 	tssdp |= ts_sdp_en[pin];
 
 	wr32(E1000_TSSDP, tssdp);
 	wr32(E1000_CTRL, ctrl);
 	wr32(E1000_CTRL_EXT, ctrl_ext);
-}
+पूर्ण
 
-static int igb_ptp_feature_enable_i210(struct ptp_clock_info *ptp,
-				       struct ptp_clock_request *rq, int on)
-{
-	struct igb_adapter *igb =
-		container_of(ptp, struct igb_adapter, ptp_caps);
-	struct e1000_hw *hw = &igb->hw;
+अटल पूर्णांक igb_ptp_feature_enable_i210(काष्ठा ptp_घड़ी_info *ptp,
+				       काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
+अणु
+	काष्ठा igb_adapter *igb =
+		container_of(ptp, काष्ठा igb_adapter, ptp_caps);
+	काष्ठा e1000_hw *hw = &igb->hw;
 	u32 tsauxc, tsim, tsauxc_mask, tsim_mask, trgttiml, trgttimh, freqout;
-	unsigned long flags;
-	struct timespec64 ts;
-	int use_freq = 0, pin = -1;
+	अचिन्हित दीर्घ flags;
+	काष्ठा बारpec64 ts;
+	पूर्णांक use_freq = 0, pin = -1;
 	s64 ns;
 
-	switch (rq->type) {
-	case PTP_CLK_REQ_EXTTS:
+	चयन (rq->type) अणु
+	हाल PTP_CLK_REQ_EXTTS:
 		/* Reject requests with unsupported flags */
-		if (rq->extts.flags & ~(PTP_ENABLE_FEATURE |
+		अगर (rq->extts.flags & ~(PTP_ENABLE_FEATURE |
 					PTP_RISING_EDGE |
 					PTP_FALLING_EDGE |
 					PTP_STRICT_FLAGS))
-			return -EOPNOTSUPP;
+			वापस -EOPNOTSUPP;
 
 		/* Reject requests failing to enable both edges. */
-		if ((rq->extts.flags & PTP_STRICT_FLAGS) &&
+		अगर ((rq->extts.flags & PTP_STRICT_FLAGS) &&
 		    (rq->extts.flags & PTP_ENABLE_FEATURE) &&
 		    (rq->extts.flags & PTP_EXTTS_EDGES) != PTP_EXTTS_EDGES)
-			return -EOPNOTSUPP;
+			वापस -EOPNOTSUPP;
 
-		if (on) {
-			pin = ptp_find_pin(igb->ptp_clock, PTP_PF_EXTTS,
+		अगर (on) अणु
+			pin = ptp_find_pin(igb->ptp_घड़ी, PTP_PF_EXTTS,
 					   rq->extts.index);
-			if (pin < 0)
-				return -EBUSY;
-		}
-		if (rq->extts.index == 1) {
+			अगर (pin < 0)
+				वापस -EBUSY;
+		पूर्ण
+		अगर (rq->extts.index == 1) अणु
 			tsauxc_mask = TSAUXC_EN_TS1;
 			tsim_mask = TSINTR_AUTT1;
-		} else {
+		पूर्ण अन्यथा अणु
 			tsauxc_mask = TSAUXC_EN_TS0;
 			tsim_mask = TSINTR_AUTT0;
-		}
-		spin_lock_irqsave(&igb->tmreg_lock, flags);
+		पूर्ण
+		spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
 		tsauxc = rd32(E1000_TSAUXC);
 		tsim = rd32(E1000_TSIM);
-		if (on) {
+		अगर (on) अणु
 			igb_pin_extts(igb, rq->extts.index, pin);
 			tsauxc |= tsauxc_mask;
 			tsim |= tsim_mask;
-		} else {
+		पूर्ण अन्यथा अणु
 			tsauxc &= ~tsauxc_mask;
 			tsim &= ~tsim_mask;
-		}
+		पूर्ण
 		wr32(E1000_TSAUXC, tsauxc);
 		wr32(E1000_TSIM, tsim);
-		spin_unlock_irqrestore(&igb->tmreg_lock, flags);
-		return 0;
+		spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
+		वापस 0;
 
-	case PTP_CLK_REQ_PEROUT:
+	हाल PTP_CLK_REQ_PEROUT:
 		/* Reject requests with unsupported flags */
-		if (rq->perout.flags)
-			return -EOPNOTSUPP;
+		अगर (rq->perout.flags)
+			वापस -EOPNOTSUPP;
 
-		if (on) {
-			pin = ptp_find_pin(igb->ptp_clock, PTP_PF_PEROUT,
+		अगर (on) अणु
+			pin = ptp_find_pin(igb->ptp_घड़ी, PTP_PF_PEROUT,
 					   rq->perout.index);
-			if (pin < 0)
-				return -EBUSY;
-		}
+			अगर (pin < 0)
+				वापस -EBUSY;
+		पूर्ण
 		ts.tv_sec = rq->perout.period.sec;
 		ts.tv_nsec = rq->perout.period.nsec;
-		ns = timespec64_to_ns(&ts);
+		ns = बारpec64_to_ns(&ts);
 		ns = ns >> 1;
-		if (on && ((ns <= 70000000LL) || (ns == 125000000LL) ||
-			   (ns == 250000000LL) || (ns == 500000000LL))) {
-			if (ns < 8LL)
-				return -EINVAL;
+		अगर (on && ((ns <= 70000000LL) || (ns == 125000000LL) ||
+			   (ns == 250000000LL) || (ns == 500000000LL))) अणु
+			अगर (ns < 8LL)
+				वापस -EINVAL;
 			use_freq = 1;
-		}
-		ts = ns_to_timespec64(ns);
-		if (rq->perout.index == 1) {
-			if (use_freq) {
+		पूर्ण
+		ts = ns_to_बारpec64(ns);
+		अगर (rq->perout.index == 1) अणु
+			अगर (use_freq) अणु
 				tsauxc_mask = TSAUXC_EN_CLK1 | TSAUXC_ST1;
 				tsim_mask = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				tsauxc_mask = TSAUXC_EN_TT1;
 				tsim_mask = TSINTR_TT1;
-			}
+			पूर्ण
 			trgttiml = E1000_TRGTTIML1;
 			trgttimh = E1000_TRGTTIMH1;
 			freqout = E1000_FREQOUT1;
-		} else {
-			if (use_freq) {
+		पूर्ण अन्यथा अणु
+			अगर (use_freq) अणु
 				tsauxc_mask = TSAUXC_EN_CLK0 | TSAUXC_ST0;
 				tsim_mask = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				tsauxc_mask = TSAUXC_EN_TT0;
 				tsim_mask = TSINTR_TT0;
-			}
+			पूर्ण
 			trgttiml = E1000_TRGTTIML0;
 			trgttimh = E1000_TRGTTIMH0;
 			freqout = E1000_FREQOUT0;
-		}
-		spin_lock_irqsave(&igb->tmreg_lock, flags);
+		पूर्ण
+		spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
 		tsauxc = rd32(E1000_TSAUXC);
 		tsim = rd32(E1000_TSIM);
-		if (rq->perout.index == 1) {
+		अगर (rq->perout.index == 1) अणु
 			tsauxc &= ~(TSAUXC_EN_TT1 | TSAUXC_EN_CLK1 | TSAUXC_ST1);
 			tsim &= ~TSINTR_TT1;
-		} else {
+		पूर्ण अन्यथा अणु
 			tsauxc &= ~(TSAUXC_EN_TT0 | TSAUXC_EN_CLK0 | TSAUXC_ST0);
 			tsim &= ~TSINTR_TT0;
-		}
-		if (on) {
-			int i = rq->perout.index;
+		पूर्ण
+		अगर (on) अणु
+			पूर्णांक i = rq->perout.index;
 			igb_pin_perout(igb, i, pin, use_freq);
 			igb->perout[i].start.tv_sec = rq->perout.start.sec;
 			igb->perout[i].start.tv_nsec = rq->perout.start.nsec;
@@ -627,387 +628,387 @@ static int igb_ptp_feature_enable_i210(struct ptp_clock_info *ptp,
 			igb->perout[i].period.tv_nsec = ts.tv_nsec;
 			wr32(trgttimh, rq->perout.start.sec);
 			wr32(trgttiml, rq->perout.start.nsec);
-			if (use_freq)
+			अगर (use_freq)
 				wr32(freqout, ns);
 			tsauxc |= tsauxc_mask;
 			tsim |= tsim_mask;
-		}
+		पूर्ण
 		wr32(E1000_TSAUXC, tsauxc);
 		wr32(E1000_TSIM, tsim);
-		spin_unlock_irqrestore(&igb->tmreg_lock, flags);
-		return 0;
+		spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
+		वापस 0;
 
-	case PTP_CLK_REQ_PPS:
-		spin_lock_irqsave(&igb->tmreg_lock, flags);
+	हाल PTP_CLK_REQ_PPS:
+		spin_lock_irqsave(&igb->पंचांगreg_lock, flags);
 		tsim = rd32(E1000_TSIM);
-		if (on)
+		अगर (on)
 			tsim |= TSINTR_SYS_WRAP;
-		else
+		अन्यथा
 			tsim &= ~TSINTR_SYS_WRAP;
 		igb->pps_sys_wrap_on = !!on;
 		wr32(E1000_TSIM, tsim);
-		spin_unlock_irqrestore(&igb->tmreg_lock, flags);
-		return 0;
-	}
+		spin_unlock_irqrestore(&igb->पंचांगreg_lock, flags);
+		वापस 0;
+	पूर्ण
 
-	return -EOPNOTSUPP;
-}
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int igb_ptp_feature_enable(struct ptp_clock_info *ptp,
-				  struct ptp_clock_request *rq, int on)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक igb_ptp_feature_enable(काष्ठा ptp_घड़ी_info *ptp,
+				  काष्ठा ptp_घड़ी_request *rq, पूर्णांक on)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int igb_ptp_verify_pin(struct ptp_clock_info *ptp, unsigned int pin,
-			      enum ptp_pin_function func, unsigned int chan)
-{
-	switch (func) {
-	case PTP_PF_NONE:
-	case PTP_PF_EXTTS:
-	case PTP_PF_PEROUT:
-		break;
-	case PTP_PF_PHYSYNC:
-		return -1;
-	}
-	return 0;
-}
+अटल पूर्णांक igb_ptp_verअगरy_pin(काष्ठा ptp_घड़ी_info *ptp, अचिन्हित पूर्णांक pin,
+			      क्रमागत ptp_pin_function func, अचिन्हित पूर्णांक chan)
+अणु
+	चयन (func) अणु
+	हाल PTP_PF_NONE:
+	हाल PTP_PF_EXTTS:
+	हाल PTP_PF_PEROUT:
+		अवरोध;
+	हाल PTP_PF_PHYSYNC:
+		वापस -1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * igb_ptp_tx_work
- * @work: pointer to work struct
+ * @work: poपूर्णांकer to work काष्ठा
  *
  * This work function polls the TSYNCTXCTL valid bit to determine when a
- * timestamp has been taken for the current stored skb.
+ * बारtamp has been taken क्रम the current stored skb.
  **/
-static void igb_ptp_tx_work(struct work_struct *work)
-{
-	struct igb_adapter *adapter = container_of(work, struct igb_adapter,
+अटल व्योम igb_ptp_tx_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा igb_adapter *adapter = container_of(work, काष्ठा igb_adapter,
 						   ptp_tx_work);
-	struct e1000_hw *hw = &adapter->hw;
+	काष्ठा e1000_hw *hw = &adapter->hw;
 	u32 tsynctxctl;
 
-	if (!adapter->ptp_tx_skb)
-		return;
+	अगर (!adapter->ptp_tx_skb)
+		वापस;
 
-	if (time_is_before_jiffies(adapter->ptp_tx_start +
-				   IGB_PTP_TX_TIMEOUT)) {
-		dev_kfree_skb_any(adapter->ptp_tx_skb);
-		adapter->ptp_tx_skb = NULL;
+	अगर (समय_is_beक्रमe_jअगरfies(adapter->ptp_tx_start +
+				   IGB_PTP_TX_TIMEOUT)) अणु
+		dev_kमुक्त_skb_any(adapter->ptp_tx_skb);
+		adapter->ptp_tx_skb = शून्य;
 		clear_bit_unlock(__IGB_PTP_TX_IN_PROGRESS, &adapter->state);
-		adapter->tx_hwtstamp_timeouts++;
-		/* Clear the tx valid bit in TSYNCTXCTL register to enable
-		 * interrupt
+		adapter->tx_hwtstamp_समयouts++;
+		/* Clear the tx valid bit in TSYNCTXCTL रेजिस्टर to enable
+		 * पूर्णांकerrupt
 		 */
 		rd32(E1000_TXSTMPH);
 		dev_warn(&adapter->pdev->dev, "clearing Tx timestamp hang\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	tsynctxctl = rd32(E1000_TSYNCTXCTL);
-	if (tsynctxctl & E1000_TSYNCTXCTL_VALID)
+	अगर (tsynctxctl & E1000_TSYNCTXCTL_VALID)
 		igb_ptp_tx_hwtstamp(adapter);
-	else
+	अन्यथा
 		/* reschedule to check later */
 		schedule_work(&adapter->ptp_tx_work);
-}
+पूर्ण
 
-static void igb_ptp_overflow_check(struct work_struct *work)
-{
-	struct igb_adapter *igb =
-		container_of(work, struct igb_adapter, ptp_overflow_work.work);
-	struct timespec64 ts;
+अटल व्योम igb_ptp_overflow_check(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा igb_adapter *igb =
+		container_of(work, काष्ठा igb_adapter, ptp_overflow_work.work);
+	काष्ठा बारpec64 ts;
 	u64 ns;
 
-	/* Update the timecounter */
-	ns = timecounter_read(&igb->tc);
+	/* Update the समयcounter */
+	ns = समयcounter_पढ़ो(&igb->tc);
 
-	ts = ns_to_timespec64(ns);
+	ts = ns_to_बारpec64(ns);
 	pr_debug("igb overflow check at %lld.%09lu\n",
-		 (long long) ts.tv_sec, ts.tv_nsec);
+		 (दीर्घ दीर्घ) ts.tv_sec, ts.tv_nsec);
 
 	schedule_delayed_work(&igb->ptp_overflow_work,
 			      IGB_SYSTIM_OVERFLOW_PERIOD);
-}
+पूर्ण
 
 /**
- * igb_ptp_rx_hang - detect error case when Rx timestamp registers latched
- * @adapter: private network adapter structure
+ * igb_ptp_rx_hang - detect error हाल when Rx बारtamp रेजिस्टरs latched
+ * @adapter: निजी network adapter काष्ठाure
  *
- * This watchdog task is scheduled to detect error case where hardware has
- * dropped an Rx packet that was timestamped when the ring is full. The
- * particular error is rare but leaves the device in a state unable to timestamp
+ * This watchकरोg task is scheduled to detect error हाल where hardware has
+ * dropped an Rx packet that was बारtamped when the ring is full. The
+ * particular error is rare but leaves the device in a state unable to बारtamp
  * any future packets.
  **/
-void igb_ptp_rx_hang(struct igb_adapter *adapter)
-{
-	struct e1000_hw *hw = &adapter->hw;
+व्योम igb_ptp_rx_hang(काष्ठा igb_adapter *adapter)
+अणु
+	काष्ठा e1000_hw *hw = &adapter->hw;
 	u32 tsyncrxctl = rd32(E1000_TSYNCRXCTL);
-	unsigned long rx_event;
+	अचिन्हित दीर्घ rx_event;
 
-	/* Other hardware uses per-packet timestamps */
-	if (hw->mac.type != e1000_82576)
-		return;
+	/* Other hardware uses per-packet बारtamps */
+	अगर (hw->mac.type != e1000_82576)
+		वापस;
 
-	/* If we don't have a valid timestamp in the registers, just update the
-	 * timeout counter and exit
+	/* If we करोn't have a valid बारtamp in the रेजिस्टरs, just update the
+	 * समयout counter and निकास
 	 */
-	if (!(tsyncrxctl & E1000_TSYNCRXCTL_VALID)) {
-		adapter->last_rx_ptp_check = jiffies;
-		return;
-	}
+	अगर (!(tsyncrxctl & E1000_TSYNCRXCTL_VALID)) अणु
+		adapter->last_rx_ptp_check = jअगरfies;
+		वापस;
+	पूर्ण
 
-	/* Determine the most recent watchdog or rx_timestamp event */
+	/* Determine the most recent watchकरोg or rx_बारtamp event */
 	rx_event = adapter->last_rx_ptp_check;
-	if (time_after(adapter->last_rx_timestamp, rx_event))
-		rx_event = adapter->last_rx_timestamp;
+	अगर (समय_after(adapter->last_rx_बारtamp, rx_event))
+		rx_event = adapter->last_rx_बारtamp;
 
-	/* Only need to read the high RXSTMP register to clear the lock */
-	if (time_is_before_jiffies(rx_event + 5 * HZ)) {
+	/* Only need to पढ़ो the high RXSTMP रेजिस्टर to clear the lock */
+	अगर (समय_is_beक्रमe_jअगरfies(rx_event + 5 * HZ)) अणु
 		rd32(E1000_RXSTMPH);
-		adapter->last_rx_ptp_check = jiffies;
+		adapter->last_rx_ptp_check = jअगरfies;
 		adapter->rx_hwtstamp_cleared++;
 		dev_warn(&adapter->pdev->dev, "clearing Rx timestamp hang\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * igb_ptp_tx_hang - detect error case where Tx timestamp never finishes
- * @adapter: private network adapter structure
+ * igb_ptp_tx_hang - detect error हाल where Tx बारtamp never finishes
+ * @adapter: निजी network adapter काष्ठाure
  */
-void igb_ptp_tx_hang(struct igb_adapter *adapter)
-{
-	struct e1000_hw *hw = &adapter->hw;
-	bool timeout = time_is_before_jiffies(adapter->ptp_tx_start +
+व्योम igb_ptp_tx_hang(काष्ठा igb_adapter *adapter)
+अणु
+	काष्ठा e1000_hw *hw = &adapter->hw;
+	bool समयout = समय_is_beक्रमe_jअगरfies(adapter->ptp_tx_start +
 					      IGB_PTP_TX_TIMEOUT);
 
-	if (!adapter->ptp_tx_skb)
-		return;
+	अगर (!adapter->ptp_tx_skb)
+		वापस;
 
-	if (!test_bit(__IGB_PTP_TX_IN_PROGRESS, &adapter->state))
-		return;
+	अगर (!test_bit(__IGB_PTP_TX_IN_PROGRESS, &adapter->state))
+		वापस;
 
-	/* If we haven't received a timestamp within the timeout, it is
+	/* If we haven't received a बारtamp within the समयout, it is
 	 * reasonable to assume that it will never occur, so we can unlock the
-	 * timestamp bit when this occurs.
+	 * बारtamp bit when this occurs.
 	 */
-	if (timeout) {
+	अगर (समयout) अणु
 		cancel_work_sync(&adapter->ptp_tx_work);
-		dev_kfree_skb_any(adapter->ptp_tx_skb);
-		adapter->ptp_tx_skb = NULL;
+		dev_kमुक्त_skb_any(adapter->ptp_tx_skb);
+		adapter->ptp_tx_skb = शून्य;
 		clear_bit_unlock(__IGB_PTP_TX_IN_PROGRESS, &adapter->state);
-		adapter->tx_hwtstamp_timeouts++;
-		/* Clear the tx valid bit in TSYNCTXCTL register to enable
-		 * interrupt
+		adapter->tx_hwtstamp_समयouts++;
+		/* Clear the tx valid bit in TSYNCTXCTL रेजिस्टर to enable
+		 * पूर्णांकerrupt
 		 */
 		rd32(E1000_TXSTMPH);
 		dev_warn(&adapter->pdev->dev, "clearing Tx timestamp hang\n");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * igb_ptp_tx_hwtstamp - utility function which checks for TX time stamp
- * @adapter: Board private structure.
+ * igb_ptp_tx_hwtstamp - utility function which checks क्रम TX समय stamp
+ * @adapter: Board निजी काष्ठाure.
  *
- * If we were asked to do hardware stamping and such a time stamp is
- * available, then it must have been for this skb here because we only
- * allow only one such packet into the queue.
+ * If we were asked to करो hardware stamping and such a समय stamp is
+ * available, then it must have been क्रम this skb here because we only
+ * allow only one such packet पूर्णांकo the queue.
  **/
-static void igb_ptp_tx_hwtstamp(struct igb_adapter *adapter)
-{
-	struct sk_buff *skb = adapter->ptp_tx_skb;
-	struct e1000_hw *hw = &adapter->hw;
-	struct skb_shared_hwtstamps shhwtstamps;
+अटल व्योम igb_ptp_tx_hwtstamp(काष्ठा igb_adapter *adapter)
+अणु
+	काष्ठा sk_buff *skb = adapter->ptp_tx_skb;
+	काष्ठा e1000_hw *hw = &adapter->hw;
+	काष्ठा skb_shared_hwtstamps shhwtstamps;
 	u64 regval;
-	int adjust = 0;
+	पूर्णांक adjust = 0;
 
 	regval = rd32(E1000_TXSTMPL);
 	regval |= (u64)rd32(E1000_TXSTMPH) << 32;
 
 	igb_ptp_systim_to_hwtstamp(adapter, &shhwtstamps, regval);
-	/* adjust timestamp for the TX latency based on link speed */
-	if (adapter->hw.mac.type == e1000_i210) {
-		switch (adapter->link_speed) {
-		case SPEED_10:
+	/* adjust बारtamp क्रम the TX latency based on link speed */
+	अगर (adapter->hw.mac.type == e1000_i210) अणु
+		चयन (adapter->link_speed) अणु
+		हाल SPEED_10:
 			adjust = IGB_I210_TX_LATENCY_10;
-			break;
-		case SPEED_100:
+			अवरोध;
+		हाल SPEED_100:
 			adjust = IGB_I210_TX_LATENCY_100;
-			break;
-		case SPEED_1000:
+			अवरोध;
+		हाल SPEED_1000:
 			adjust = IGB_I210_TX_LATENCY_1000;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	shhwtstamps.hwtstamp =
-		ktime_add_ns(shhwtstamps.hwtstamp, adjust);
+		kसमय_add_ns(shhwtstamps.hwtstamp, adjust);
 
-	/* Clear the lock early before calling skb_tstamp_tx so that
-	 * applications are not woken up before the lock bit is clear. We use
-	 * a copy of the skb pointer to ensure other threads can't change it
-	 * while we're notifying the stack.
+	/* Clear the lock early beक्रमe calling skb_tstamp_tx so that
+	 * applications are not woken up beक्रमe the lock bit is clear. We use
+	 * a copy of the skb poपूर्णांकer to ensure other thपढ़ोs can't change it
+	 * जबतक we're notअगरying the stack.
 	 */
-	adapter->ptp_tx_skb = NULL;
+	adapter->ptp_tx_skb = शून्य;
 	clear_bit_unlock(__IGB_PTP_TX_IN_PROGRESS, &adapter->state);
 
-	/* Notify the stack and free the skb after we've unlocked */
+	/* Notअगरy the stack and मुक्त the skb after we've unlocked */
 	skb_tstamp_tx(skb, &shhwtstamps);
-	dev_kfree_skb_any(skb);
-}
+	dev_kमुक्त_skb_any(skb);
+पूर्ण
 
 /**
- * igb_ptp_rx_pktstamp - retrieve Rx per packet timestamp
- * @q_vector: Pointer to interrupt specific structure
- * @va: Pointer to address containing Rx buffer
- * @timestamp: Pointer where timestamp will be stored
+ * igb_ptp_rx_pktstamp - retrieve Rx per packet बारtamp
+ * @q_vector: Poपूर्णांकer to पूर्णांकerrupt specअगरic काष्ठाure
+ * @va: Poपूर्णांकer to address containing Rx buffer
+ * @बारtamp: Poपूर्णांकer where बारtamp will be stored
  *
- * This function is meant to retrieve a timestamp from the first buffer of an
- * incoming frame.  The value is stored in little endian format starting on
+ * This function is meant to retrieve a बारtamp from the first buffer of an
+ * incoming frame.  The value is stored in little endian क्रमmat starting on
  * byte 8
  *
- * Returns: The timestamp header length or 0 if not available
+ * Returns: The बारtamp header length or 0 अगर not available
  **/
-int igb_ptp_rx_pktstamp(struct igb_q_vector *q_vector, void *va,
-			ktime_t *timestamp)
-{
-	struct igb_adapter *adapter = q_vector->adapter;
-	struct skb_shared_hwtstamps ts;
+पूर्णांक igb_ptp_rx_pktstamp(काष्ठा igb_q_vector *q_vector, व्योम *va,
+			kसमय_प्रकार *बारtamp)
+अणु
+	काष्ठा igb_adapter *adapter = q_vector->adapter;
+	काष्ठा skb_shared_hwtstamps ts;
 	__le64 *regval = (__le64 *)va;
-	int adjust = 0;
+	पूर्णांक adjust = 0;
 
-	if (!(adapter->ptp_flags & IGB_PTP_ENABLED))
-		return 0;
+	अगर (!(adapter->ptp_flags & IGB_PTP_ENABLED))
+		वापस 0;
 
-	/* The timestamp is recorded in little endian format.
+	/* The बारtamp is recorded in little endian क्रमmat.
 	 * DWORD: 0        1        2        3
 	 * Field: Reserved Reserved SYSTIML  SYSTIMH
 	 */
 
-	/* check reserved dwords are zero, be/le doesn't matter for zero */
-	if (regval[0])
-		return 0;
+	/* check reserved dwords are zero, be/le करोesn't matter क्रम zero */
+	अगर (regval[0])
+		वापस 0;
 
 	igb_ptp_systim_to_hwtstamp(adapter, &ts, le64_to_cpu(regval[1]));
 
-	/* adjust timestamp for the RX latency based on link speed */
-	if (adapter->hw.mac.type == e1000_i210) {
-		switch (adapter->link_speed) {
-		case SPEED_10:
+	/* adjust बारtamp क्रम the RX latency based on link speed */
+	अगर (adapter->hw.mac.type == e1000_i210) अणु
+		चयन (adapter->link_speed) अणु
+		हाल SPEED_10:
 			adjust = IGB_I210_RX_LATENCY_10;
-			break;
-		case SPEED_100:
+			अवरोध;
+		हाल SPEED_100:
 			adjust = IGB_I210_RX_LATENCY_100;
-			break;
-		case SPEED_1000:
+			अवरोध;
+		हाल SPEED_1000:
 			adjust = IGB_I210_RX_LATENCY_1000;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	*timestamp = ktime_sub_ns(ts.hwtstamp, adjust);
+	*बारtamp = kसमय_sub_ns(ts.hwtstamp, adjust);
 
-	return IGB_TS_HDR_LEN;
-}
+	वापस IGB_TS_HDR_LEN;
+पूर्ण
 
 /**
- * igb_ptp_rx_rgtstamp - retrieve Rx timestamp stored in register
- * @q_vector: Pointer to interrupt specific structure
- * @skb: Buffer containing timestamp and packet
+ * igb_ptp_rx_rgtstamp - retrieve Rx बारtamp stored in रेजिस्टर
+ * @q_vector: Poपूर्णांकer to पूर्णांकerrupt specअगरic काष्ठाure
+ * @skb: Buffer containing बारtamp and packet
  *
- * This function is meant to retrieve a timestamp from the internal registers
+ * This function is meant to retrieve a बारtamp from the पूर्णांकernal रेजिस्टरs
  * of the adapter and store it in the skb.
  **/
-void igb_ptp_rx_rgtstamp(struct igb_q_vector *q_vector, struct sk_buff *skb)
-{
-	struct igb_adapter *adapter = q_vector->adapter;
-	struct e1000_hw *hw = &adapter->hw;
-	int adjust = 0;
+व्योम igb_ptp_rx_rgtstamp(काष्ठा igb_q_vector *q_vector, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा igb_adapter *adapter = q_vector->adapter;
+	काष्ठा e1000_hw *hw = &adapter->hw;
+	पूर्णांक adjust = 0;
 	u64 regval;
 
-	if (!(adapter->ptp_flags & IGB_PTP_ENABLED))
-		return;
+	अगर (!(adapter->ptp_flags & IGB_PTP_ENABLED))
+		वापस;
 
-	/* If this bit is set, then the RX registers contain the time stamp. No
-	 * other packet will be time stamped until we read these registers, so
-	 * read the registers to make them available again. Because only one
-	 * packet can be time stamped at a time, we know that the register
-	 * values must belong to this one here and therefore we don't need to
-	 * compare any of the additional attributes stored for it.
+	/* If this bit is set, then the RX रेजिस्टरs contain the समय stamp. No
+	 * other packet will be समय stamped until we पढ़ो these रेजिस्टरs, so
+	 * पढ़ो the रेजिस्टरs to make them available again. Because only one
+	 * packet can be समय stamped at a समय, we know that the रेजिस्टर
+	 * values must beदीर्घ to this one here and thereक्रमe we करोn't need to
+	 * compare any of the additional attributes stored क्रम it.
 	 *
 	 * If nothing went wrong, then it should have a shared tx_flags that we
-	 * can turn into a skb_shared_hwtstamps.
+	 * can turn पूर्णांकo a skb_shared_hwtstamps.
 	 */
-	if (!(rd32(E1000_TSYNCRXCTL) & E1000_TSYNCRXCTL_VALID))
-		return;
+	अगर (!(rd32(E1000_TSYNCRXCTL) & E1000_TSYNCRXCTL_VALID))
+		वापस;
 
 	regval = rd32(E1000_RXSTMPL);
 	regval |= (u64)rd32(E1000_RXSTMPH) << 32;
 
 	igb_ptp_systim_to_hwtstamp(adapter, skb_hwtstamps(skb), regval);
 
-	/* adjust timestamp for the RX latency based on link speed */
-	if (adapter->hw.mac.type == e1000_i210) {
-		switch (adapter->link_speed) {
-		case SPEED_10:
+	/* adjust बारtamp क्रम the RX latency based on link speed */
+	अगर (adapter->hw.mac.type == e1000_i210) अणु
+		चयन (adapter->link_speed) अणु
+		हाल SPEED_10:
 			adjust = IGB_I210_RX_LATENCY_10;
-			break;
-		case SPEED_100:
+			अवरोध;
+		हाल SPEED_100:
 			adjust = IGB_I210_RX_LATENCY_100;
-			break;
-		case SPEED_1000:
+			अवरोध;
+		हाल SPEED_1000:
 			adjust = IGB_I210_RX_LATENCY_1000;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	skb_hwtstamps(skb)->hwtstamp =
-		ktime_sub_ns(skb_hwtstamps(skb)->hwtstamp, adjust);
+		kसमय_sub_ns(skb_hwtstamps(skb)->hwtstamp, adjust);
 
-	/* Update the last_rx_timestamp timer in order to enable watchdog check
-	 * for error case of latched timestamp on a dropped packet.
+	/* Update the last_rx_बारtamp समयr in order to enable watchकरोg check
+	 * क्रम error हाल of latched बारtamp on a dropped packet.
 	 */
-	adapter->last_rx_timestamp = jiffies;
-}
+	adapter->last_rx_बारtamp = jअगरfies;
+पूर्ण
 
 /**
- * igb_ptp_get_ts_config - get hardware time stamping config
- * @netdev: netdev struct
- * @ifr: interface struct
+ * igb_ptp_get_ts_config - get hardware समय stamping config
+ * @netdev: netdev काष्ठा
+ * @अगरr: पूर्णांकerface काष्ठा
  *
- * Get the hwtstamp_config settings to return to the user. Rather than attempt
- * to deconstruct the settings from the registers, just return a shadow copy
+ * Get the hwtstamp_config settings to वापस to the user. Rather than attempt
+ * to deस्थिरruct the settings from the रेजिस्टरs, just वापस a shaकरोw copy
  * of the last known settings.
  **/
-int igb_ptp_get_ts_config(struct net_device *netdev, struct ifreq *ifr)
-{
-	struct igb_adapter *adapter = netdev_priv(netdev);
-	struct hwtstamp_config *config = &adapter->tstamp_config;
+पूर्णांक igb_ptp_get_ts_config(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr)
+अणु
+	काष्ठा igb_adapter *adapter = netdev_priv(netdev);
+	काष्ठा hwtstamp_config *config = &adapter->tstamp_config;
 
-	return copy_to_user(ifr->ifr_data, config, sizeof(*config)) ?
+	वापस copy_to_user(अगरr->अगरr_data, config, माप(*config)) ?
 		-EFAULT : 0;
-}
+पूर्ण
 
 /**
- * igb_ptp_set_timestamp_mode - setup hardware for timestamping
- * @adapter: networking device structure
+ * igb_ptp_set_बारtamp_mode - setup hardware क्रम बारtamping
+ * @adapter: networking device काष्ठाure
  * @config: hwtstamp configuration
  *
- * Outgoing time stamping can be enabled and disabled. Play nice and
- * disable it when requested, although it shouldn't case any overhead
+ * Outgoing समय stamping can be enabled and disabled. Play nice and
+ * disable it when requested, although it shouldn't हाल any overhead
  * when no packet needs it. At most one packet in the queue may be
- * marked for time stamping, otherwise it would be impossible to tell
- * for sure to which packet the hardware time stamp belongs.
+ * marked क्रम समय stamping, otherwise it would be impossible to tell
+ * क्रम sure to which packet the hardware समय stamp beदीर्घs.
  *
- * Incoming time stamping has to be configured via the hardware
+ * Incoming समय stamping has to be configured via the hardware
  * filters. Not all combinations are supported, in particular event
- * type has to be specified. Matching the kind of event packet is
+ * type has to be specअगरied. Matching the kind of event packet is
  * not supported, with the exception of "all V2 events regardless of
  * level 2 or 4".
  */
-static int igb_ptp_set_timestamp_mode(struct igb_adapter *adapter,
-				      struct hwtstamp_config *config)
-{
-	struct e1000_hw *hw = &adapter->hw;
+अटल पूर्णांक igb_ptp_set_बारtamp_mode(काष्ठा igb_adapter *adapter,
+				      काष्ठा hwtstamp_config *config)
+अणु
+	काष्ठा e1000_hw *hw = &adapter->hw;
 	u32 tsync_tx_ctl = E1000_TSYNCTXCTL_ENABLED;
 	u32 tsync_rx_ctl = E1000_TSYNCRXCTL_ENABLED;
 	u32 tsync_rx_cfg = 0;
@@ -1015,89 +1016,89 @@ static int igb_ptp_set_timestamp_mode(struct igb_adapter *adapter,
 	bool is_l2 = false;
 	u32 regval;
 
-	/* reserved for future extensions */
-	if (config->flags)
-		return -EINVAL;
+	/* reserved क्रम future extensions */
+	अगर (config->flags)
+		वापस -EINVAL;
 
-	switch (config->tx_type) {
-	case HWTSTAMP_TX_OFF:
+	चयन (config->tx_type) अणु
+	हाल HWTSTAMP_TX_OFF:
 		tsync_tx_ctl = 0;
-		break;
-	case HWTSTAMP_TX_ON:
-		break;
-	default:
-		return -ERANGE;
-	}
+		अवरोध;
+	हाल HWTSTAMP_TX_ON:
+		अवरोध;
+	शेष:
+		वापस -दुस्फल;
+	पूर्ण
 
-	switch (config->rx_filter) {
-	case HWTSTAMP_FILTER_NONE:
+	चयन (config->rx_filter) अणु
+	हाल HWTSTAMP_FILTER_NONE:
 		tsync_rx_ctl = 0;
-		break;
-	case HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
+		अवरोध;
+	हाल HWTSTAMP_FILTER_PTP_V1_L4_SYNC:
 		tsync_rx_ctl |= E1000_TSYNCRXCTL_TYPE_L4_V1;
 		tsync_rx_cfg = E1000_TSYNCRXCFG_PTP_V1_SYNC_MESSAGE;
 		is_l4 = true;
-		break;
-	case HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
+		अवरोध;
+	हाल HWTSTAMP_FILTER_PTP_V1_L4_DELAY_REQ:
 		tsync_rx_ctl |= E1000_TSYNCRXCTL_TYPE_L4_V1;
 		tsync_rx_cfg = E1000_TSYNCRXCFG_PTP_V1_DELAY_REQ_MESSAGE;
 		is_l4 = true;
-		break;
-	case HWTSTAMP_FILTER_PTP_V2_EVENT:
-	case HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
-	case HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
-	case HWTSTAMP_FILTER_PTP_V2_SYNC:
-	case HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
-	case HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
-	case HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
-	case HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
-	case HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
+		अवरोध;
+	हाल HWTSTAMP_FILTER_PTP_V2_EVENT:
+	हाल HWTSTAMP_FILTER_PTP_V2_L2_EVENT:
+	हाल HWTSTAMP_FILTER_PTP_V2_L4_EVENT:
+	हाल HWTSTAMP_FILTER_PTP_V2_SYNC:
+	हाल HWTSTAMP_FILTER_PTP_V2_L2_SYNC:
+	हाल HWTSTAMP_FILTER_PTP_V2_L4_SYNC:
+	हाल HWTSTAMP_FILTER_PTP_V2_DELAY_REQ:
+	हाल HWTSTAMP_FILTER_PTP_V2_L2_DELAY_REQ:
+	हाल HWTSTAMP_FILTER_PTP_V2_L4_DELAY_REQ:
 		tsync_rx_ctl |= E1000_TSYNCRXCTL_TYPE_EVENT_V2;
 		config->rx_filter = HWTSTAMP_FILTER_PTP_V2_EVENT;
 		is_l2 = true;
 		is_l4 = true;
-		break;
-	case HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
-	case HWTSTAMP_FILTER_NTP_ALL:
-	case HWTSTAMP_FILTER_ALL:
-		/* 82576 cannot timestamp all packets, which it needs to do to
+		अवरोध;
+	हाल HWTSTAMP_FILTER_PTP_V1_L4_EVENT:
+	हाल HWTSTAMP_FILTER_NTP_ALL:
+	हाल HWTSTAMP_FILTER_ALL:
+		/* 82576 cannot बारtamp all packets, which it needs to करो to
 		 * support both V1 Sync and Delay_Req messages
 		 */
-		if (hw->mac.type != e1000_82576) {
+		अगर (hw->mac.type != e1000_82576) अणु
 			tsync_rx_ctl |= E1000_TSYNCRXCTL_TYPE_ALL;
 			config->rx_filter = HWTSTAMP_FILTER_ALL;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		fallthrough;
-	default:
+	शेष:
 		config->rx_filter = HWTSTAMP_FILTER_NONE;
-		return -ERANGE;
-	}
+		वापस -दुस्फल;
+	पूर्ण
 
-	if (hw->mac.type == e1000_82575) {
-		if (tsync_rx_ctl | tsync_tx_ctl)
-			return -EINVAL;
-		return 0;
-	}
+	अगर (hw->mac.type == e1000_82575) अणु
+		अगर (tsync_rx_ctl | tsync_tx_ctl)
+			वापस -EINVAL;
+		वापस 0;
+	पूर्ण
 
-	/* Per-packet timestamping only works if all packets are
-	 * timestamped, so enable timestamping in all packets as
-	 * long as one Rx filter was configured.
+	/* Per-packet बारtamping only works अगर all packets are
+	 * बारtamped, so enable बारtamping in all packets as
+	 * दीर्घ as one Rx filter was configured.
 	 */
-	if ((hw->mac.type >= e1000_82580) && tsync_rx_ctl) {
+	अगर ((hw->mac.type >= e1000_82580) && tsync_rx_ctl) अणु
 		tsync_rx_ctl = E1000_TSYNCRXCTL_ENABLED;
 		tsync_rx_ctl |= E1000_TSYNCRXCTL_TYPE_ALL;
 		config->rx_filter = HWTSTAMP_FILTER_ALL;
 		is_l2 = true;
 		is_l4 = true;
 
-		if ((hw->mac.type == e1000_i210) ||
-		    (hw->mac.type == e1000_i211)) {
+		अगर ((hw->mac.type == e1000_i210) ||
+		    (hw->mac.type == e1000_i211)) अणु
 			regval = rd32(E1000_RXPBS);
 			regval |= E1000_RXPBS_CFG_TS_EN;
 			wr32(E1000_RXPBS, regval);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* enable/disable TX */
 	regval = rd32(E1000_TSYNCTXCTL);
@@ -1111,136 +1112,136 @@ static int igb_ptp_set_timestamp_mode(struct igb_adapter *adapter,
 	regval |= tsync_rx_ctl;
 	wr32(E1000_TSYNCRXCTL, regval);
 
-	/* define which PTP packets are time stamped */
+	/* define which PTP packets are समय stamped */
 	wr32(E1000_TSYNCRXCFG, tsync_rx_cfg);
 
-	/* define ethertype filter for timestamped packets */
-	if (is_l2)
+	/* define ethertype filter क्रम बारtamped packets */
+	अगर (is_l2)
 		wr32(E1000_ETQF(IGB_ETQF_FILTER_1588),
 		     (E1000_ETQF_FILTER_ENABLE | /* enable filter */
-		      E1000_ETQF_1588 | /* enable timestamping */
+		      E1000_ETQF_1588 | /* enable बारtamping */
 		      ETH_P_1588));     /* 1588 eth protocol type */
-	else
+	अन्यथा
 		wr32(E1000_ETQF(IGB_ETQF_FILTER_1588), 0);
 
 	/* L4 Queue Filter[3]: filter by destination port and protocol */
-	if (is_l4) {
+	अगर (is_l4) अणु
 		u32 ftqf = (IPPROTO_UDP /* UDP */
 			| E1000_FTQF_VF_BP /* VF not compared */
 			| E1000_FTQF_1588_TIME_STAMP /* Enable Timestamping */
-			| E1000_FTQF_MASK); /* mask all inputs */
+			| E1000_FTQF_MASK); /* mask all inमाला_दो */
 		ftqf &= ~E1000_FTQF_MASK_PROTO_BP; /* enable protocol check */
 
 		wr32(E1000_IMIR(3), htons(PTP_EV_PORT));
 		wr32(E1000_IMIREXT(3),
 		     (E1000_IMIREXT_SIZE_BP | E1000_IMIREXT_CTRL_BP));
-		if (hw->mac.type == e1000_82576) {
+		अगर (hw->mac.type == e1000_82576) अणु
 			/* enable source port check */
 			wr32(E1000_SPQF(3), htons(PTP_EV_PORT));
 			ftqf &= ~E1000_FTQF_MASK_SOURCE_PORT_BP;
-		}
+		पूर्ण
 		wr32(E1000_FTQF(3), ftqf);
-	} else {
+	पूर्ण अन्यथा अणु
 		wr32(E1000_FTQF(3), E1000_FTQF_MASK);
-	}
+	पूर्ण
 	wrfl();
 
-	/* clear TX/RX time stamp registers, just to be sure */
+	/* clear TX/RX समय stamp रेजिस्टरs, just to be sure */
 	regval = rd32(E1000_TXSTMPL);
 	regval = rd32(E1000_TXSTMPH);
 	regval = rd32(E1000_RXSTMPL);
 	regval = rd32(E1000_RXSTMPH);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * igb_ptp_set_ts_config - set hardware time stamping config
- * @netdev: netdev struct
- * @ifr: interface struct
+ * igb_ptp_set_ts_config - set hardware समय stamping config
+ * @netdev: netdev काष्ठा
+ * @अगरr: पूर्णांकerface काष्ठा
  *
  **/
-int igb_ptp_set_ts_config(struct net_device *netdev, struct ifreq *ifr)
-{
-	struct igb_adapter *adapter = netdev_priv(netdev);
-	struct hwtstamp_config config;
-	int err;
+पूर्णांक igb_ptp_set_ts_config(काष्ठा net_device *netdev, काष्ठा अगरreq *अगरr)
+अणु
+	काष्ठा igb_adapter *adapter = netdev_priv(netdev);
+	काष्ठा hwtstamp_config config;
+	पूर्णांक err;
 
-	if (copy_from_user(&config, ifr->ifr_data, sizeof(config)))
-		return -EFAULT;
+	अगर (copy_from_user(&config, अगरr->अगरr_data, माप(config)))
+		वापस -EFAULT;
 
-	err = igb_ptp_set_timestamp_mode(adapter, &config);
-	if (err)
-		return err;
+	err = igb_ptp_set_बारtamp_mode(adapter, &config);
+	अगर (err)
+		वापस err;
 
-	/* save these settings for future reference */
-	memcpy(&adapter->tstamp_config, &config,
-	       sizeof(adapter->tstamp_config));
+	/* save these settings क्रम future reference */
+	स_नकल(&adapter->tstamp_config, &config,
+	       माप(adapter->tstamp_config));
 
-	return copy_to_user(ifr->ifr_data, &config, sizeof(config)) ?
+	वापस copy_to_user(अगरr->अगरr_data, &config, माप(config)) ?
 		-EFAULT : 0;
-}
+पूर्ण
 
 /**
  * igb_ptp_init - Initialize PTP functionality
- * @adapter: Board private structure
+ * @adapter: Board निजी काष्ठाure
  *
  * This function is called at device probe to initialize the PTP
  * functionality.
  */
-void igb_ptp_init(struct igb_adapter *adapter)
-{
-	struct e1000_hw *hw = &adapter->hw;
-	struct net_device *netdev = adapter->netdev;
-	int i;
+व्योम igb_ptp_init(काष्ठा igb_adapter *adapter)
+अणु
+	काष्ठा e1000_hw *hw = &adapter->hw;
+	काष्ठा net_device *netdev = adapter->netdev;
+	पूर्णांक i;
 
-	switch (hw->mac.type) {
-	case e1000_82576:
-		snprintf(adapter->ptp_caps.name, 16, "%pm", netdev->dev_addr);
+	चयन (hw->mac.type) अणु
+	हाल e1000_82576:
+		snम_लिखो(adapter->ptp_caps.name, 16, "%pm", netdev->dev_addr);
 		adapter->ptp_caps.owner = THIS_MODULE;
 		adapter->ptp_caps.max_adj = 999999881;
 		adapter->ptp_caps.n_ext_ts = 0;
 		adapter->ptp_caps.pps = 0;
 		adapter->ptp_caps.adjfreq = igb_ptp_adjfreq_82576;
-		adapter->ptp_caps.adjtime = igb_ptp_adjtime_82576;
-		adapter->ptp_caps.gettimex64 = igb_ptp_gettimex_82576;
-		adapter->ptp_caps.settime64 = igb_ptp_settime_82576;
+		adapter->ptp_caps.adjसमय = igb_ptp_adjसमय_82576;
+		adapter->ptp_caps.समय_लोx64 = igb_ptp_समय_लोx_82576;
+		adapter->ptp_caps.समय_रखो64 = igb_ptp_समय_रखो_82576;
 		adapter->ptp_caps.enable = igb_ptp_feature_enable;
-		adapter->cc.read = igb_ptp_read_82576;
+		adapter->cc.पढ़ो = igb_ptp_पढ़ो_82576;
 		adapter->cc.mask = CYCLECOUNTER_MASK(64);
 		adapter->cc.mult = 1;
-		adapter->cc.shift = IGB_82576_TSYNC_SHIFT;
+		adapter->cc.shअगरt = IGB_82576_TSYNC_SHIFT;
 		adapter->ptp_flags |= IGB_PTP_OVERFLOW_CHECK;
-		break;
-	case e1000_82580:
-	case e1000_i354:
-	case e1000_i350:
-		snprintf(adapter->ptp_caps.name, 16, "%pm", netdev->dev_addr);
+		अवरोध;
+	हाल e1000_82580:
+	हाल e1000_i354:
+	हाल e1000_i350:
+		snम_लिखो(adapter->ptp_caps.name, 16, "%pm", netdev->dev_addr);
 		adapter->ptp_caps.owner = THIS_MODULE;
 		adapter->ptp_caps.max_adj = 62499999;
 		adapter->ptp_caps.n_ext_ts = 0;
 		adapter->ptp_caps.pps = 0;
 		adapter->ptp_caps.adjfine = igb_ptp_adjfine_82580;
-		adapter->ptp_caps.adjtime = igb_ptp_adjtime_82576;
-		adapter->ptp_caps.gettimex64 = igb_ptp_gettimex_82580;
-		adapter->ptp_caps.settime64 = igb_ptp_settime_82576;
+		adapter->ptp_caps.adjसमय = igb_ptp_adjसमय_82576;
+		adapter->ptp_caps.समय_लोx64 = igb_ptp_समय_लोx_82580;
+		adapter->ptp_caps.समय_रखो64 = igb_ptp_समय_रखो_82576;
 		adapter->ptp_caps.enable = igb_ptp_feature_enable;
-		adapter->cc.read = igb_ptp_read_82580;
+		adapter->cc.पढ़ो = igb_ptp_पढ़ो_82580;
 		adapter->cc.mask = CYCLECOUNTER_MASK(IGB_NBITS_82580);
 		adapter->cc.mult = 1;
-		adapter->cc.shift = 0;
+		adapter->cc.shअगरt = 0;
 		adapter->ptp_flags |= IGB_PTP_OVERFLOW_CHECK;
-		break;
-	case e1000_i210:
-	case e1000_i211:
-		for (i = 0; i < IGB_N_SDP; i++) {
-			struct ptp_pin_desc *ppd = &adapter->sdp_config[i];
+		अवरोध;
+	हाल e1000_i210:
+	हाल e1000_i211:
+		क्रम (i = 0; i < IGB_N_SDP; i++) अणु
+			काष्ठा ptp_pin_desc *ppd = &adapter->sdp_config[i];
 
-			snprintf(ppd->name, sizeof(ppd->name), "SDP%d", i);
+			snम_लिखो(ppd->name, माप(ppd->name), "SDP%d", i);
 			ppd->index = i;
 			ppd->func = PTP_PF_NONE;
-		}
-		snprintf(adapter->ptp_caps.name, 16, "%pm", netdev->dev_addr);
+		पूर्ण
+		snम_लिखो(adapter->ptp_caps.name, 16, "%pm", netdev->dev_addr);
 		adapter->ptp_caps.owner = THIS_MODULE;
 		adapter->ptp_caps.max_adj = 62499999;
 		adapter->ptp_caps.n_ext_ts = IGB_N_EXTTS;
@@ -1249,21 +1250,21 @@ void igb_ptp_init(struct igb_adapter *adapter)
 		adapter->ptp_caps.pps = 1;
 		adapter->ptp_caps.pin_config = adapter->sdp_config;
 		adapter->ptp_caps.adjfine = igb_ptp_adjfine_82580;
-		adapter->ptp_caps.adjtime = igb_ptp_adjtime_i210;
-		adapter->ptp_caps.gettimex64 = igb_ptp_gettimex_i210;
-		adapter->ptp_caps.settime64 = igb_ptp_settime_i210;
+		adapter->ptp_caps.adjसमय = igb_ptp_adjसमय_i210;
+		adapter->ptp_caps.समय_लोx64 = igb_ptp_समय_लोx_i210;
+		adapter->ptp_caps.समय_रखो64 = igb_ptp_समय_रखो_i210;
 		adapter->ptp_caps.enable = igb_ptp_feature_enable_i210;
-		adapter->ptp_caps.verify = igb_ptp_verify_pin;
-		break;
-	default:
-		adapter->ptp_clock = NULL;
-		return;
-	}
+		adapter->ptp_caps.verअगरy = igb_ptp_verअगरy_pin;
+		अवरोध;
+	शेष:
+		adapter->ptp_घड़ी = शून्य;
+		वापस;
+	पूर्ण
 
-	spin_lock_init(&adapter->tmreg_lock);
+	spin_lock_init(&adapter->पंचांगreg_lock);
 	INIT_WORK(&adapter->ptp_tx_work, igb_ptp_tx_work);
 
-	if (adapter->ptp_flags & IGB_PTP_OVERFLOW_CHECK)
+	अगर (adapter->ptp_flags & IGB_PTP_OVERFLOW_CHECK)
 		INIT_DELAYED_WORK(&adapter->ptp_overflow_work,
 				  igb_ptp_overflow_check);
 
@@ -1272,112 +1273,112 @@ void igb_ptp_init(struct igb_adapter *adapter)
 
 	igb_ptp_reset(adapter);
 
-	adapter->ptp_clock = ptp_clock_register(&adapter->ptp_caps,
+	adapter->ptp_घड़ी = ptp_घड़ी_रेजिस्टर(&adapter->ptp_caps,
 						&adapter->pdev->dev);
-	if (IS_ERR(adapter->ptp_clock)) {
-		adapter->ptp_clock = NULL;
+	अगर (IS_ERR(adapter->ptp_घड़ी)) अणु
+		adapter->ptp_घड़ी = शून्य;
 		dev_err(&adapter->pdev->dev, "ptp_clock_register failed\n");
-	} else if (adapter->ptp_clock) {
+	पूर्ण अन्यथा अगर (adapter->ptp_घड़ी) अणु
 		dev_info(&adapter->pdev->dev, "added PHC on %s\n",
 			 adapter->netdev->name);
 		adapter->ptp_flags |= IGB_PTP_ENABLED;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * igb_ptp_suspend - Disable PTP work items and prepare for suspend
- * @adapter: Board private structure
+ * igb_ptp_suspend - Disable PTP work items and prepare क्रम suspend
+ * @adapter: Board निजी काष्ठाure
  *
- * This function stops the overflow check work and PTP Tx timestamp work, and
- * will prepare the device for OS suspend.
+ * This function stops the overflow check work and PTP Tx बारtamp work, and
+ * will prepare the device क्रम OS suspend.
  */
-void igb_ptp_suspend(struct igb_adapter *adapter)
-{
-	if (!(adapter->ptp_flags & IGB_PTP_ENABLED))
-		return;
+व्योम igb_ptp_suspend(काष्ठा igb_adapter *adapter)
+अणु
+	अगर (!(adapter->ptp_flags & IGB_PTP_ENABLED))
+		वापस;
 
-	if (adapter->ptp_flags & IGB_PTP_OVERFLOW_CHECK)
+	अगर (adapter->ptp_flags & IGB_PTP_OVERFLOW_CHECK)
 		cancel_delayed_work_sync(&adapter->ptp_overflow_work);
 
 	cancel_work_sync(&adapter->ptp_tx_work);
-	if (adapter->ptp_tx_skb) {
-		dev_kfree_skb_any(adapter->ptp_tx_skb);
-		adapter->ptp_tx_skb = NULL;
+	अगर (adapter->ptp_tx_skb) अणु
+		dev_kमुक्त_skb_any(adapter->ptp_tx_skb);
+		adapter->ptp_tx_skb = शून्य;
 		clear_bit_unlock(__IGB_PTP_TX_IN_PROGRESS, &adapter->state);
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * igb_ptp_stop - Disable PTP device and stop the overflow check.
- * @adapter: Board private structure.
+ * @adapter: Board निजी काष्ठाure.
  *
  * This function stops the PTP support and cancels the delayed work.
  **/
-void igb_ptp_stop(struct igb_adapter *adapter)
-{
+व्योम igb_ptp_stop(काष्ठा igb_adapter *adapter)
+अणु
 	igb_ptp_suspend(adapter);
 
-	if (adapter->ptp_clock) {
-		ptp_clock_unregister(adapter->ptp_clock);
+	अगर (adapter->ptp_घड़ी) अणु
+		ptp_घड़ी_unरेजिस्टर(adapter->ptp_घड़ी);
 		dev_info(&adapter->pdev->dev, "removed PHC on %s\n",
 			 adapter->netdev->name);
 		adapter->ptp_flags &= ~IGB_PTP_ENABLED;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * igb_ptp_reset - Re-enable the adapter for PTP following a reset.
- * @adapter: Board private structure.
+ * igb_ptp_reset - Re-enable the adapter क्रम PTP following a reset.
+ * @adapter: Board निजी काष्ठाure.
  *
  * This function handles the reset work required to re-enable the PTP device.
  **/
-void igb_ptp_reset(struct igb_adapter *adapter)
-{
-	struct e1000_hw *hw = &adapter->hw;
-	unsigned long flags;
+व्योम igb_ptp_reset(काष्ठा igb_adapter *adapter)
+अणु
+	काष्ठा e1000_hw *hw = &adapter->hw;
+	अचिन्हित दीर्घ flags;
 
 	/* reset the tstamp_config */
-	igb_ptp_set_timestamp_mode(adapter, &adapter->tstamp_config);
+	igb_ptp_set_बारtamp_mode(adapter, &adapter->tstamp_config);
 
-	spin_lock_irqsave(&adapter->tmreg_lock, flags);
+	spin_lock_irqsave(&adapter->पंचांगreg_lock, flags);
 
-	switch (adapter->hw.mac.type) {
-	case e1000_82576:
+	चयन (adapter->hw.mac.type) अणु
+	हाल e1000_82576:
 		/* Dial the nominal frequency. */
 		wr32(E1000_TIMINCA, INCPERIOD_82576 | INCVALUE_82576);
-		break;
-	case e1000_82580:
-	case e1000_i354:
-	case e1000_i350:
-	case e1000_i210:
-	case e1000_i211:
+		अवरोध;
+	हाल e1000_82580:
+	हाल e1000_i354:
+	हाल e1000_i350:
+	हाल e1000_i210:
+	हाल e1000_i211:
 		wr32(E1000_TSAUXC, 0x0);
 		wr32(E1000_TSSDP, 0x0);
 		wr32(E1000_TSIM,
 		     TSYNC_INTERRUPTS |
 		     (adapter->pps_sys_wrap_on ? TSINTR_SYS_WRAP : 0));
 		wr32(E1000_IMS, E1000_IMS_TS);
-		break;
-	default:
-		/* No work to do. */
-		goto out;
-	}
+		अवरोध;
+	शेष:
+		/* No work to करो. */
+		जाओ out;
+	पूर्ण
 
-	/* Re-initialize the timer. */
-	if ((hw->mac.type == e1000_i210) || (hw->mac.type == e1000_i211)) {
-		struct timespec64 ts = ktime_to_timespec64(ktime_get_real());
+	/* Re-initialize the समयr. */
+	अगर ((hw->mac.type == e1000_i210) || (hw->mac.type == e1000_i211)) अणु
+		काष्ठा बारpec64 ts = kसमय_प्रकारo_बारpec64(kसमय_get_real());
 
-		igb_ptp_write_i210(adapter, &ts);
-	} else {
-		timecounter_init(&adapter->tc, &adapter->cc,
-				 ktime_to_ns(ktime_get_real()));
-	}
+		igb_ptp_ग_लिखो_i210(adapter, &ts);
+	पूर्ण अन्यथा अणु
+		समयcounter_init(&adapter->tc, &adapter->cc,
+				 kसमय_प्रकारo_ns(kसमय_get_real()));
+	पूर्ण
 out:
-	spin_unlock_irqrestore(&adapter->tmreg_lock, flags);
+	spin_unlock_irqrestore(&adapter->पंचांगreg_lock, flags);
 
 	wrfl();
 
-	if (adapter->ptp_flags & IGB_PTP_OVERFLOW_CHECK)
+	अगर (adapter->ptp_flags & IGB_PTP_OVERFLOW_CHECK)
 		schedule_delayed_work(&adapter->ptp_overflow_work,
 				      IGB_SYSTIM_OVERFLOW_PERIOD);
-}
+पूर्ण

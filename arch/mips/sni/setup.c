@@ -1,116 +1,117 @@
+<शैली गुरु>
 /*
- * Setup pointers to hardware-dependent routines.
+ * Setup poपूर्णांकers to hardware-dependent routines.
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1996, 97, 98, 2000, 03, 04, 06 Ralf Baechle (ralf@linux-mips.org)
- * Copyright (C) 2006,2007 Thomas Bogendoerfer (tsbogend@alpha.franken.de)
+ * Copyright (C) 2006,2007 Thomas Bogenकरोerfer (tsbogend@alpha.franken.de)
  */
-#include <linux/eisa.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/console.h>
-#include <linux/fb.h>
-#include <linux/screen_info.h>
+#समावेश <linux/eisa.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/console.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/screen_info.h>
 
-#ifdef CONFIG_FW_ARC
-#include <asm/fw/arc/types.h>
-#include <asm/sgialib.h>
-#endif
+#अगर_घोषित CONFIG_FW_ARC
+#समावेश <यंत्र/fw/arc/types.h>
+#समावेश <यंत्र/sgialib.h>
+#पूर्ण_अगर
 
-#ifdef CONFIG_FW_SNIPROM
-#include <asm/mipsprom.h>
-#endif
+#अगर_घोषित CONFIG_FW_SNIPROM
+#समावेश <यंत्र/mipsprom.h>
+#पूर्ण_अगर
 
-#include <asm/bootinfo.h>
-#include <asm/cpu.h>
-#include <asm/io.h>
-#include <asm/reboot.h>
-#include <asm/sni.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/cpu.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/reboot.h>
+#समावेश <यंत्र/sni.h>
 
-unsigned int sni_brd_type;
+अचिन्हित पूर्णांक sni_brd_type;
 EXPORT_SYMBOL(sni_brd_type);
 
-extern void sni_machine_restart(char *command);
-extern void sni_machine_power_off(void);
+बाह्य व्योम sni_machine_restart(अक्षर *command);
+बाह्य व्योम sni_machine_घातer_off(व्योम);
 
-static void __init sni_display_setup(void)
-{
-#if defined(CONFIG_VT) && defined(CONFIG_VGA_CONSOLE) && defined(CONFIG_FW_ARC)
-	struct screen_info *si = &screen_info;
+अटल व्योम __init sni_display_setup(व्योम)
+अणु
+#अगर defined(CONFIG_VT) && defined(CONFIG_VGA_CONSOLE) && defined(CONFIG_FW_ARC)
+	काष्ठा screen_info *si = &screen_info;
 	DISPLAY_STATUS *di;
 
 	di = ArcGetDisplayStatus(1);
 
-	if (di) {
+	अगर (di) अणु
 		si->orig_x		= di->CursorXPosition;
 		si->orig_y		= di->CursorYPosition;
 		si->orig_video_cols	= di->CursorMaxXPosition;
 		si->orig_video_lines	= di->CursorMaxYPosition;
 		si->orig_video_isVGA	= VIDEO_TYPE_VGAC;
-		si->orig_video_points	= 16;
-	}
-#endif
-}
+		si->orig_video_poपूर्णांकs	= 16;
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-static void __init sni_console_setup(void)
-{
-#ifndef CONFIG_FW_ARC
-	char *ctype;
-	char *cdev;
-	char *baud;
-	int port;
-	static char options[8] __initdata;
+अटल व्योम __init sni_console_setup(व्योम)
+अणु
+#अगर_अघोषित CONFIG_FW_ARC
+	अक्षर *ctype;
+	अक्षर *cdev;
+	अक्षर *baud;
+	पूर्णांक port;
+	अटल अक्षर options[8] __initdata;
 
-	cdev = prom_getenv("console_dev");
-	if (strncmp(cdev, "tty", 3) == 0) {
-		ctype = prom_getenv("console");
-		switch (*ctype) {
-		default:
-		case 'l':
+	cdev = prom_दो_पर्या("console_dev");
+	अगर (म_भेदन(cdev, "tty", 3) == 0) अणु
+		ctype = prom_दो_पर्या("console");
+		चयन (*ctype) अणु
+		शेष:
+		हाल 'l':
 			port = 0;
-			baud = prom_getenv("lbaud");
-			break;
-		case 'r':
+			baud = prom_दो_पर्या("lbaud");
+			अवरोध;
+		हाल 'r':
 			port = 1;
-			baud = prom_getenv("rbaud");
-			break;
-		}
-		if (baud)
-			strcpy(options, baud);
-		if (strncmp(cdev, "tty552", 6) == 0)
+			baud = prom_दो_पर्या("rbaud");
+			अवरोध;
+		पूर्ण
+		अगर (baud)
+			म_नकल(options, baud);
+		अगर (म_भेदन(cdev, "tty552", 6) == 0)
 			add_preferred_console("ttyS", port,
-					      baud ? options : NULL);
-		else
+					      baud ? options : शून्य);
+		अन्यथा
 			add_preferred_console("ttySC", port,
-					      baud ? options : NULL);
-	}
-#endif
-}
+					      baud ? options : शून्य);
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef DEBUG
-static void __init sni_idprom_dump(void)
-{
-	int	i;
+#अगर_घोषित DEBUG
+अटल व्योम __init sni_idprom_dump(व्योम)
+अणु
+	पूर्णांक	i;
 
 	pr_debug("SNI IDProm dump:\n");
-	for (i = 0; i < 256; i++) {
-		if (i%16 == 0)
+	क्रम (i = 0; i < 256; i++) अणु
+		अगर (i%16 == 0)
 			pr_debug("%04x ", i);
 
-		printk("%02x ", *(unsigned char *) (SNI_IDPROM_BASE + i));
+		prपूर्णांकk("%02x ", *(अचिन्हित अक्षर *) (SNI_IDPROM_BASE + i));
 
-		if (i % 16 == 15)
-			printk("\n");
-	}
-}
-#endif
+		अगर (i % 16 == 15)
+			prपूर्णांकk("\n");
+	पूर्ण
+पूर्ण
+#पूर्ण_अगर
 
-void __init plat_mem_setup(void)
-{
-	int cputype;
+व्योम __init plat_mem_setup(व्योम)
+अणु
+	पूर्णांक cputype;
 
 	set_io_port_base(SNI_PORT_BASE);
 //	ioport_resource.end = sni_io_resource.end;
@@ -118,141 +119,141 @@ void __init plat_mem_setup(void)
 	/*
 	 * Setup (E)ISA I/O memory access stuff
 	 */
-#ifdef CONFIG_EISA
+#अगर_घोषित CONFIG_EISA
 	EISA_bus = 1;
-#endif
+#पूर्ण_अगर
 
-	sni_brd_type = *(unsigned char *)SNI_IDPROM_BRDTYPE;
-	cputype = *(unsigned char *)SNI_IDPROM_CPUTYPE;
-	switch (sni_brd_type) {
-	case SNI_BRD_TOWER_OASIC:
-		switch (cputype) {
-		case SNI_CPU_M8030:
-			system_type = "RM400-330";
-			break;
-		case SNI_CPU_M8031:
-			system_type = "RM400-430";
-			break;
-		case SNI_CPU_M8037:
-			system_type = "RM400-530";
-			break;
-		case SNI_CPU_M8034:
-			system_type = "RM400-730";
-			break;
-		default:
-			system_type = "RM400-xxx";
-			break;
-		}
-		break;
-	case SNI_BRD_MINITOWER:
-		switch (cputype) {
-		case SNI_CPU_M8021:
-		case SNI_CPU_M8043:
-			system_type = "RM400-120";
-			break;
-		case SNI_CPU_M8040:
-			system_type = "RM400-220";
-			break;
-		case SNI_CPU_M8053:
-			system_type = "RM400-225";
-			break;
-		case SNI_CPU_M8050:
-			system_type = "RM400-420";
-			break;
-		default:
-			system_type = "RM400-xxx";
-			break;
-		}
-		break;
-	case SNI_BRD_PCI_TOWER:
-		system_type = "RM400-Cxx";
-		break;
-	case SNI_BRD_RM200:
-		system_type = "RM200-xxx";
-		break;
-	case SNI_BRD_PCI_MTOWER:
-		system_type = "RM300-Cxx";
-		break;
-	case SNI_BRD_PCI_DESKTOP:
-		switch (read_c0_prid() & PRID_IMP_MASK) {
-		case PRID_IMP_R4600:
-		case PRID_IMP_R4700:
-			system_type = "RM200-C20";
-			break;
-		case PRID_IMP_R5000:
-			system_type = "RM200-C40";
-			break;
-		default:
-			system_type = "RM200-Cxx";
-			break;
-		}
-		break;
-	case SNI_BRD_PCI_TOWER_CPLUS:
-		system_type = "RM400-Exx";
-		break;
-	case SNI_BRD_PCI_MTOWER_CPLUS:
-		system_type = "RM300-Exx";
-		break;
-	}
-	pr_debug("Found SNI brdtype %02x name %s\n", sni_brd_type, system_type);
+	sni_brd_type = *(अचिन्हित अक्षर *)SNI_IDPROM_BRDTYPE;
+	cputype = *(अचिन्हित अक्षर *)SNI_IDPROM_CPUTYPE;
+	चयन (sni_brd_type) अणु
+	हाल SNI_BRD_TOWER_OASIC:
+		चयन (cputype) अणु
+		हाल SNI_CPU_M8030:
+			प्रणाली_type = "RM400-330";
+			अवरोध;
+		हाल SNI_CPU_M8031:
+			प्रणाली_type = "RM400-430";
+			अवरोध;
+		हाल SNI_CPU_M8037:
+			प्रणाली_type = "RM400-530";
+			अवरोध;
+		हाल SNI_CPU_M8034:
+			प्रणाली_type = "RM400-730";
+			अवरोध;
+		शेष:
+			प्रणाली_type = "RM400-xxx";
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SNI_BRD_MINITOWER:
+		चयन (cputype) अणु
+		हाल SNI_CPU_M8021:
+		हाल SNI_CPU_M8043:
+			प्रणाली_type = "RM400-120";
+			अवरोध;
+		हाल SNI_CPU_M8040:
+			प्रणाली_type = "RM400-220";
+			अवरोध;
+		हाल SNI_CPU_M8053:
+			प्रणाली_type = "RM400-225";
+			अवरोध;
+		हाल SNI_CPU_M8050:
+			प्रणाली_type = "RM400-420";
+			अवरोध;
+		शेष:
+			प्रणाली_type = "RM400-xxx";
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SNI_BRD_PCI_TOWER:
+		प्रणाली_type = "RM400-Cxx";
+		अवरोध;
+	हाल SNI_BRD_RM200:
+		प्रणाली_type = "RM200-xxx";
+		अवरोध;
+	हाल SNI_BRD_PCI_MTOWER:
+		प्रणाली_type = "RM300-Cxx";
+		अवरोध;
+	हाल SNI_BRD_PCI_DESKTOP:
+		चयन (पढ़ो_c0_prid() & PRID_IMP_MASK) अणु
+		हाल PRID_IMP_R4600:
+		हाल PRID_IMP_R4700:
+			प्रणाली_type = "RM200-C20";
+			अवरोध;
+		हाल PRID_IMP_R5000:
+			प्रणाली_type = "RM200-C40";
+			अवरोध;
+		शेष:
+			प्रणाली_type = "RM200-Cxx";
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल SNI_BRD_PCI_TOWER_CPLUS:
+		प्रणाली_type = "RM400-Exx";
+		अवरोध;
+	हाल SNI_BRD_PCI_MTOWER_CPLUS:
+		प्रणाली_type = "RM300-Exx";
+		अवरोध;
+	पूर्ण
+	pr_debug("Found SNI brdtype %02x name %s\n", sni_brd_type, प्रणाली_type);
 
-#ifdef DEBUG
+#अगर_घोषित DEBUG
 	sni_idprom_dump();
-#endif
+#पूर्ण_अगर
 
-	switch (sni_brd_type) {
-	case SNI_BRD_10:
-	case SNI_BRD_10NEW:
-	case SNI_BRD_TOWER_OASIC:
-	case SNI_BRD_MINITOWER:
+	चयन (sni_brd_type) अणु
+	हाल SNI_BRD_10:
+	हाल SNI_BRD_10NEW:
+	हाल SNI_BRD_TOWER_OASIC:
+	हाल SNI_BRD_MINITOWER:
 		sni_a20r_init();
-		break;
+		अवरोध;
 
-	case SNI_BRD_PCI_TOWER:
-	case SNI_BRD_PCI_TOWER_CPLUS:
+	हाल SNI_BRD_PCI_TOWER:
+	हाल SNI_BRD_PCI_TOWER_CPLUS:
 		sni_pcit_init();
-		break;
+		अवरोध;
 
-	case SNI_BRD_RM200:
+	हाल SNI_BRD_RM200:
 		sni_rm200_init();
-		break;
+		अवरोध;
 
-	case SNI_BRD_PCI_MTOWER:
-	case SNI_BRD_PCI_DESKTOP:
-	case SNI_BRD_PCI_MTOWER_CPLUS:
+	हाल SNI_BRD_PCI_MTOWER:
+	हाल SNI_BRD_PCI_DESKTOP:
+	हाल SNI_BRD_PCI_MTOWER_CPLUS:
 		sni_pcimt_init();
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	_machine_restart = sni_machine_restart;
-	pm_power_off = sni_machine_power_off;
+	pm_घातer_off = sni_machine_घातer_off;
 
 	sni_display_setup();
 	sni_console_setup();
-}
+पूर्ण
 
-#ifdef CONFIG_PCI
+#अगर_घोषित CONFIG_PCI
 
-#include <linux/pci.h>
-#include <video/vga.h>
-#include <video/cirrus.h>
+#समावेश <linux/pci.h>
+#समावेश <video/vga.h>
+#समावेश <video/cirrus.h>
 
-static void quirk_cirrus_ram_size(struct pci_dev *dev)
-{
+अटल व्योम quirk_cirrus_ram_size(काष्ठा pci_dev *dev)
+अणु
 	u16 cmd;
 
 	/*
-	 * firmware doesn't set the ram size correct, so we
-	 * need to do it here, otherwise we get screen corruption
+	 * firmware करोesn't set the ram size correct, so we
+	 * need to करो it here, otherwise we get screen corruption
 	 * on older Cirrus chips
 	 */
-	pci_read_config_word(dev, PCI_COMMAND, &cmd);
-	if ((cmd & (PCI_COMMAND_IO|PCI_COMMAND_MEMORY))
-		== (PCI_COMMAND_IO|PCI_COMMAND_MEMORY)) {
-		vga_wseq(NULL, CL_SEQR6, 0x12); /* unlock all extension registers */
-		vga_wseq(NULL, CL_SEQRF, 0x18);
-	}
-}
+	pci_पढ़ो_config_word(dev, PCI_COMMAND, &cmd);
+	अगर ((cmd & (PCI_COMMAND_IO|PCI_COMMAND_MEMORY))
+		== (PCI_COMMAND_IO|PCI_COMMAND_MEMORY)) अणु
+		vga_wseq(शून्य, CL_SEQR6, 0x12); /* unlock all extension रेजिस्टरs */
+		vga_wseq(शून्य, CL_SEQRF, 0x18);
+	पूर्ण
+पूर्ण
 
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_CIRRUS, PCI_DEVICE_ID_CIRRUS_5434_8,
 			quirk_cirrus_ram_size);
@@ -260,4 +261,4 @@ DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_CIRRUS, PCI_DEVICE_ID_CIRRUS_5436,
 			quirk_cirrus_ram_size);
 DECLARE_PCI_FIXUP_FINAL(PCI_VENDOR_ID_CIRRUS, PCI_DEVICE_ID_CIRRUS_5446,
 			quirk_cirrus_ram_size);
-#endif
+#पूर्ण_अगर

@@ -1,282 +1,283 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * rtc-st-lpc.c - ST's LPC RTC, powered by the Low Power Timer
+ * rtc-st-lpc.c - ST's LPC RTC, घातered by the Low Power Timer
  *
  * Copyright (C) 2014 STMicroelectronics Limited
  *
- * Author: David Paris <david.paris@st.com> for STMicroelectronics
- *         Lee Jones <lee.jones@linaro.org> for STMicroelectronics
+ * Author: David Paris <david.paris@st.com> क्रम STMicroelectronics
+ *         Lee Jones <lee.jones@linaro.org> क्रम STMicroelectronics
  *
  * Based on the original driver written by Stuart Menefy.
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/init.h>
-#include <linux/io.h>
-#include <linux/irq.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_irq.h>
-#include <linux/platform_device.h>
-#include <linux/rtc.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/irq.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/rtc.h>
 
-#include <dt-bindings/mfd/st-lpc.h>
+#समावेश <dt-bindings/mfd/st-lpc.h>
 
 /* Low Power Timer */
-#define LPC_LPT_LSB_OFF		0x400
-#define LPC_LPT_MSB_OFF		0x404
-#define LPC_LPT_START_OFF	0x408
+#घोषणा LPC_LPT_LSB_OFF		0x400
+#घोषणा LPC_LPT_MSB_OFF		0x404
+#घोषणा LPC_LPT_START_OFF	0x408
 
 /* Low Power Alarm */
-#define LPC_LPA_LSB_OFF		0x410
-#define LPC_LPA_MSB_OFF		0x414
-#define LPC_LPA_START_OFF	0x418
+#घोषणा LPC_LPA_LSB_OFF		0x410
+#घोषणा LPC_LPA_MSB_OFF		0x414
+#घोषणा LPC_LPA_START_OFF	0x418
 
 /* LPC as WDT */
-#define LPC_WDT_OFF		0x510
-#define LPC_WDT_FLAG_OFF	0x514
+#घोषणा LPC_WDT_OFF		0x510
+#घोषणा LPC_WDT_FLAG_OFF	0x514
 
-struct st_rtc {
-	struct rtc_device *rtc_dev;
-	struct rtc_wkalrm alarm;
-	struct clk *clk;
-	unsigned long clkrate;
-	void __iomem *ioaddr;
+काष्ठा st_rtc अणु
+	काष्ठा rtc_device *rtc_dev;
+	काष्ठा rtc_wkalrm alarm;
+	काष्ठा clk *clk;
+	अचिन्हित दीर्घ clkrate;
+	व्योम __iomem *ioaddr;
 	bool irq_enabled:1;
 	spinlock_t lock;
-	short irq;
-};
+	लघु irq;
+पूर्ण;
 
-static void st_rtc_set_hw_alarm(struct st_rtc *rtc,
-				unsigned long msb, unsigned long  lsb)
-{
-	unsigned long flags;
+अटल व्योम st_rtc_set_hw_alarm(काष्ठा st_rtc *rtc,
+				अचिन्हित दीर्घ msb, अचिन्हित दीर्घ  lsb)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rtc->lock, flags);
 
-	writel_relaxed(1, rtc->ioaddr + LPC_WDT_OFF);
+	ग_लिखोl_relaxed(1, rtc->ioaddr + LPC_WDT_OFF);
 
-	writel_relaxed(msb, rtc->ioaddr + LPC_LPA_MSB_OFF);
-	writel_relaxed(lsb, rtc->ioaddr + LPC_LPA_LSB_OFF);
-	writel_relaxed(1, rtc->ioaddr + LPC_LPA_START_OFF);
+	ग_लिखोl_relaxed(msb, rtc->ioaddr + LPC_LPA_MSB_OFF);
+	ग_लिखोl_relaxed(lsb, rtc->ioaddr + LPC_LPA_LSB_OFF);
+	ग_लिखोl_relaxed(1, rtc->ioaddr + LPC_LPA_START_OFF);
 
-	writel_relaxed(0, rtc->ioaddr + LPC_WDT_OFF);
+	ग_लिखोl_relaxed(0, rtc->ioaddr + LPC_WDT_OFF);
 
 	spin_unlock_irqrestore(&rtc->lock, flags);
-}
+पूर्ण
 
-static irqreturn_t st_rtc_handler(int this_irq, void *data)
-{
-	struct st_rtc *rtc = (struct st_rtc *)data;
+अटल irqवापस_t st_rtc_handler(पूर्णांक this_irq, व्योम *data)
+अणु
+	काष्ठा st_rtc *rtc = (काष्ठा st_rtc *)data;
 
 	rtc_update_irq(rtc->rtc_dev, 1, RTC_AF);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int st_rtc_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct st_rtc *rtc = dev_get_drvdata(dev);
-	unsigned long lpt_lsb, lpt_msb;
-	unsigned long long lpt;
-	unsigned long flags;
-
-	spin_lock_irqsave(&rtc->lock, flags);
-
-	do {
-		lpt_msb = readl_relaxed(rtc->ioaddr + LPC_LPT_MSB_OFF);
-		lpt_lsb = readl_relaxed(rtc->ioaddr + LPC_LPT_LSB_OFF);
-	} while (readl_relaxed(rtc->ioaddr + LPC_LPT_MSB_OFF) != lpt_msb);
-
-	spin_unlock_irqrestore(&rtc->lock, flags);
-
-	lpt = ((unsigned long long)lpt_msb << 32) | lpt_lsb;
-	do_div(lpt, rtc->clkrate);
-	rtc_time64_to_tm(lpt, tm);
-
-	return 0;
-}
-
-static int st_rtc_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct st_rtc *rtc = dev_get_drvdata(dev);
-	unsigned long long lpt, secs;
-	unsigned long flags;
-
-	secs = rtc_tm_to_time64(tm);
-
-	lpt = (unsigned long long)secs * rtc->clkrate;
+अटल पूर्णांक st_rtc_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा st_rtc *rtc = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ lpt_lsb, lpt_msb;
+	अचिन्हित दीर्घ दीर्घ lpt;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&rtc->lock, flags);
 
-	writel_relaxed(lpt >> 32, rtc->ioaddr + LPC_LPT_MSB_OFF);
-	writel_relaxed(lpt, rtc->ioaddr + LPC_LPT_LSB_OFF);
-	writel_relaxed(1, rtc->ioaddr + LPC_LPT_START_OFF);
+	करो अणु
+		lpt_msb = पढ़ोl_relaxed(rtc->ioaddr + LPC_LPT_MSB_OFF);
+		lpt_lsb = पढ़ोl_relaxed(rtc->ioaddr + LPC_LPT_LSB_OFF);
+	पूर्ण जबतक (पढ़ोl_relaxed(rtc->ioaddr + LPC_LPT_MSB_OFF) != lpt_msb);
 
 	spin_unlock_irqrestore(&rtc->lock, flags);
 
-	return 0;
-}
+	lpt = ((अचिन्हित दीर्घ दीर्घ)lpt_msb << 32) | lpt_lsb;
+	करो_भाग(lpt, rtc->clkrate);
+	rtc_समय64_to_पंचांग(lpt, पंचांग);
 
-static int st_rtc_read_alarm(struct device *dev, struct rtc_wkalrm *wkalrm)
-{
-	struct st_rtc *rtc = dev_get_drvdata(dev);
-	unsigned long flags;
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक st_rtc_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा st_rtc *rtc = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ दीर्घ lpt, secs;
+	अचिन्हित दीर्घ flags;
+
+	secs = rtc_पंचांग_to_समय64(पंचांग);
+
+	lpt = (अचिन्हित दीर्घ दीर्घ)secs * rtc->clkrate;
 
 	spin_lock_irqsave(&rtc->lock, flags);
 
-	memcpy(wkalrm, &rtc->alarm, sizeof(struct rtc_wkalrm));
+	ग_लिखोl_relaxed(lpt >> 32, rtc->ioaddr + LPC_LPT_MSB_OFF);
+	ग_लिखोl_relaxed(lpt, rtc->ioaddr + LPC_LPT_LSB_OFF);
+	ग_लिखोl_relaxed(1, rtc->ioaddr + LPC_LPT_START_OFF);
 
 	spin_unlock_irqrestore(&rtc->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_rtc_alarm_irq_enable(struct device *dev, unsigned int enabled)
-{
-	struct st_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक st_rtc_पढ़ो_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *wkalrm)
+अणु
+	काष्ठा st_rtc *rtc = dev_get_drvdata(dev);
+	अचिन्हित दीर्घ flags;
 
-	if (enabled && !rtc->irq_enabled) {
+	spin_lock_irqsave(&rtc->lock, flags);
+
+	स_नकल(wkalrm, &rtc->alarm, माप(काष्ठा rtc_wkalrm));
+
+	spin_unlock_irqrestore(&rtc->lock, flags);
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक st_rtc_alarm_irq_enable(काष्ठा device *dev, अचिन्हित पूर्णांक enabled)
+अणु
+	काष्ठा st_rtc *rtc = dev_get_drvdata(dev);
+
+	अगर (enabled && !rtc->irq_enabled) अणु
 		enable_irq(rtc->irq);
 		rtc->irq_enabled = true;
-	} else if (!enabled && rtc->irq_enabled) {
+	पूर्ण अन्यथा अगर (!enabled && rtc->irq_enabled) अणु
 		disable_irq(rtc->irq);
 		rtc->irq_enabled = false;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_rtc_set_alarm(struct device *dev, struct rtc_wkalrm *t)
-{
-	struct st_rtc *rtc = dev_get_drvdata(dev);
-	struct rtc_time now;
-	unsigned long long now_secs;
-	unsigned long long alarm_secs;
-	unsigned long long lpa;
+अटल पूर्णांक st_rtc_set_alarm(काष्ठा device *dev, काष्ठा rtc_wkalrm *t)
+अणु
+	काष्ठा st_rtc *rtc = dev_get_drvdata(dev);
+	काष्ठा rtc_समय now;
+	अचिन्हित दीर्घ दीर्घ now_secs;
+	अचिन्हित दीर्घ दीर्घ alarm_secs;
+	अचिन्हित दीर्घ दीर्घ lpa;
 
-	st_rtc_read_time(dev, &now);
-	now_secs = rtc_tm_to_time64(&now);
-	alarm_secs = rtc_tm_to_time64(&t->time);
+	st_rtc_पढ़ो_समय(dev, &now);
+	now_secs = rtc_पंचांग_to_समय64(&now);
+	alarm_secs = rtc_पंचांग_to_समय64(&t->समय);
 
-	memcpy(&rtc->alarm, t, sizeof(struct rtc_wkalrm));
+	स_नकल(&rtc->alarm, t, माप(काष्ठा rtc_wkalrm));
 
 	/* Now many secs to fire */
 	alarm_secs -= now_secs;
-	lpa = (unsigned long long)alarm_secs * rtc->clkrate;
+	lpa = (अचिन्हित दीर्घ दीर्घ)alarm_secs * rtc->clkrate;
 
 	st_rtc_set_hw_alarm(rtc, lpa >> 32, lpa);
 	st_rtc_alarm_irq_enable(dev, t->enabled);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops st_rtc_ops = {
-	.read_time		= st_rtc_read_time,
-	.set_time		= st_rtc_set_time,
-	.read_alarm		= st_rtc_read_alarm,
+अटल स्थिर काष्ठा rtc_class_ops st_rtc_ops = अणु
+	.पढ़ो_समय		= st_rtc_पढ़ो_समय,
+	.set_समय		= st_rtc_set_समय,
+	.पढ़ो_alarm		= st_rtc_पढ़ो_alarm,
 	.set_alarm		= st_rtc_set_alarm,
 	.alarm_irq_enable	= st_rtc_alarm_irq_enable,
-};
+पूर्ण;
 
-static int st_rtc_probe(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
-	struct st_rtc *rtc;
-	uint32_t mode;
-	int ret = 0;
+अटल पूर्णांक st_rtc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	काष्ठा st_rtc *rtc;
+	uपूर्णांक32_t mode;
+	पूर्णांक ret = 0;
 
-	ret = of_property_read_u32(np, "st,lpc-mode", &mode);
-	if (ret) {
+	ret = of_property_पढ़ो_u32(np, "st,lpc-mode", &mode);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "An LPC mode must be provided\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* LPC can either run as a Clocksource or in RTC or WDT mode */
-	if (mode != ST_LPC_MODE_RTC)
-		return -ENODEV;
+	अगर (mode != ST_LPC_MODE_RTC)
+		वापस -ENODEV;
 
-	rtc = devm_kzalloc(&pdev->dev, sizeof(struct st_rtc), GFP_KERNEL);
-	if (!rtc)
-		return -ENOMEM;
+	rtc = devm_kzalloc(&pdev->dev, माप(काष्ठा st_rtc), GFP_KERNEL);
+	अगर (!rtc)
+		वापस -ENOMEM;
 
 	rtc->rtc_dev = devm_rtc_allocate_device(&pdev->dev);
-	if (IS_ERR(rtc->rtc_dev))
-		return PTR_ERR(rtc->rtc_dev);
+	अगर (IS_ERR(rtc->rtc_dev))
+		वापस PTR_ERR(rtc->rtc_dev);
 
 	spin_lock_init(&rtc->lock);
 
-	rtc->ioaddr = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(rtc->ioaddr))
-		return PTR_ERR(rtc->ioaddr);
+	rtc->ioaddr = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(rtc->ioaddr))
+		वापस PTR_ERR(rtc->ioaddr);
 
 	rtc->irq = irq_of_parse_and_map(np, 0);
-	if (!rtc->irq) {
+	अगर (!rtc->irq) अणु
 		dev_err(&pdev->dev, "IRQ missing or invalid\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev, rtc->irq, st_rtc_handler, 0,
 			       pdev->name, rtc);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Failed to request irq %i\n", rtc->irq);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	enable_irq_wake(rtc->irq);
 	disable_irq(rtc->irq);
 
-	rtc->clk = clk_get(&pdev->dev, NULL);
-	if (IS_ERR(rtc->clk)) {
+	rtc->clk = clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(rtc->clk)) अणु
 		dev_err(&pdev->dev, "Unable to request clock\n");
-		return PTR_ERR(rtc->clk);
-	}
+		वापस PTR_ERR(rtc->clk);
+	पूर्ण
 
 	clk_prepare_enable(rtc->clk);
 
 	rtc->clkrate = clk_get_rate(rtc->clk);
-	if (!rtc->clkrate) {
+	अगर (!rtc->clkrate) अणु
 		dev_err(&pdev->dev, "Unable to fetch clock rate\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	device_set_wakeup_capable(&pdev->dev, 1);
 
-	platform_set_drvdata(pdev, rtc);
+	platक्रमm_set_drvdata(pdev, rtc);
 
 	rtc->rtc_dev->ops = &st_rtc_ops;
 	rtc->rtc_dev->range_max = U64_MAX;
-	do_div(rtc->rtc_dev->range_max, rtc->clkrate);
+	करो_भाग(rtc->rtc_dev->range_max, rtc->clkrate);
 
-	ret = devm_rtc_register_device(rtc->rtc_dev);
-	if (ret) {
+	ret = devm_rtc_रेजिस्टर_device(rtc->rtc_dev);
+	अगर (ret) अणु
 		clk_disable_unprepare(rtc->clk);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int st_rtc_suspend(struct device *dev)
-{
-	struct st_rtc *rtc = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक st_rtc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा st_rtc *rtc = dev_get_drvdata(dev);
 
-	if (device_may_wakeup(dev))
-		return 0;
+	अगर (device_may_wakeup(dev))
+		वापस 0;
 
-	writel_relaxed(1, rtc->ioaddr + LPC_WDT_OFF);
-	writel_relaxed(0, rtc->ioaddr + LPC_LPA_START_OFF);
-	writel_relaxed(0, rtc->ioaddr + LPC_WDT_OFF);
+	ग_लिखोl_relaxed(1, rtc->ioaddr + LPC_WDT_OFF);
+	ग_लिखोl_relaxed(0, rtc->ioaddr + LPC_LPA_START_OFF);
+	ग_लिखोl_relaxed(0, rtc->ioaddr + LPC_WDT_OFF);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int st_rtc_resume(struct device *dev)
-{
-	struct st_rtc *rtc = dev_get_drvdata(dev);
+अटल पूर्णांक st_rtc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा st_rtc *rtc = dev_get_drvdata(dev);
 
 	rtc_alarm_irq_enable(rtc->rtc_dev, 0);
 
@@ -284,36 +285,36 @@ static int st_rtc_resume(struct device *dev)
 	 * clean 'rtc->alarm' to allow a new
 	 * .set_alarm to the upper RTC layer
 	 */
-	memset(&rtc->alarm, 0, sizeof(struct rtc_wkalrm));
+	स_रखो(&rtc->alarm, 0, माप(काष्ठा rtc_wkalrm));
 
-	writel_relaxed(0, rtc->ioaddr + LPC_LPA_MSB_OFF);
-	writel_relaxed(0, rtc->ioaddr + LPC_LPA_LSB_OFF);
-	writel_relaxed(1, rtc->ioaddr + LPC_WDT_OFF);
-	writel_relaxed(1, rtc->ioaddr + LPC_LPA_START_OFF);
-	writel_relaxed(0, rtc->ioaddr + LPC_WDT_OFF);
+	ग_लिखोl_relaxed(0, rtc->ioaddr + LPC_LPA_MSB_OFF);
+	ग_लिखोl_relaxed(0, rtc->ioaddr + LPC_LPA_LSB_OFF);
+	ग_लिखोl_relaxed(1, rtc->ioaddr + LPC_WDT_OFF);
+	ग_लिखोl_relaxed(1, rtc->ioaddr + LPC_LPA_START_OFF);
+	ग_लिखोl_relaxed(0, rtc->ioaddr + LPC_WDT_OFF);
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(st_rtc_pm_ops, st_rtc_suspend, st_rtc_resume);
+अटल SIMPLE_DEV_PM_OPS(st_rtc_pm_ops, st_rtc_suspend, st_rtc_resume);
 
-static const struct of_device_id st_rtc_match[] = {
-	{ .compatible = "st,stih407-lpc" },
-	{}
-};
+अटल स्थिर काष्ठा of_device_id st_rtc_match[] = अणु
+	अणु .compatible = "st,stih407-lpc" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, st_rtc_match);
 
-static struct platform_driver st_rtc_platform_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver st_rtc_platक्रमm_driver = अणु
+	.driver = अणु
 		.name = "st-lpc-rtc",
 		.pm = &st_rtc_pm_ops,
 		.of_match_table = st_rtc_match,
-	},
+	पूर्ण,
 	.probe = st_rtc_probe,
-};
+पूर्ण;
 
-module_platform_driver(st_rtc_platform_driver);
+module_platक्रमm_driver(st_rtc_platक्रमm_driver);
 
 MODULE_DESCRIPTION("STMicroelectronics LPC RTC driver");
 MODULE_AUTHOR("David Paris <david.paris@st.com>");

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * `Soft' font definitions
  *
@@ -8,145 +9,145 @@
  *	- Brad Douglas <brad@neruo.com>
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file COPYING in the main directory of this archive
- * for more details.
+ * License.  See the file COPYING in the मुख्य directory of this archive
+ * क्रम more details.
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/string.h>
-#if defined(__mc68000__)
-#include <asm/setup.h>
-#endif
-#include <linux/font.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/माला.स>
+#अगर defined(__mc68000__)
+#समावेश <यंत्र/setup.h>
+#पूर्ण_अगर
+#समावेश <linux/font.h>
 
-static const struct font_desc *fonts[] = {
-#ifdef CONFIG_FONT_8x8
+अटल स्थिर काष्ठा font_desc *fonts[] = अणु
+#अगर_घोषित CONFIG_FONT_8x8
 	&font_vga_8x8,
-#endif
-#ifdef CONFIG_FONT_8x16
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_8x16
 	&font_vga_8x16,
-#endif
-#ifdef CONFIG_FONT_6x11
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_6x11
 	&font_vga_6x11,
-#endif
-#ifdef CONFIG_FONT_7x14
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_7x14
 	&font_7x14,
-#endif
-#ifdef CONFIG_FONT_SUN8x16
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_SUN8x16
 	&font_sun_8x16,
-#endif
-#ifdef CONFIG_FONT_SUN12x22
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_SUN12x22
 	&font_sun_12x22,
-#endif
-#ifdef CONFIG_FONT_10x18
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_10x18
 	&font_10x18,
-#endif
-#ifdef CONFIG_FONT_ACORN_8x8
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_ACORN_8x8
 	&font_acorn_8x8,
-#endif
-#ifdef CONFIG_FONT_PEARL_8x8
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_PEARL_8x8
 	&font_pearl_8x8,
-#endif
-#ifdef CONFIG_FONT_MINI_4x6
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_MINI_4x6
 	&font_mini_4x6,
-#endif
-#ifdef CONFIG_FONT_6x10
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_6x10
 	&font_6x10,
-#endif
-#ifdef CONFIG_FONT_TER16x32
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_TER16x32
 	&font_ter_16x32,
-#endif
-#ifdef CONFIG_FONT_6x8
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_6x8
 	&font_6x8,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-#define num_fonts ARRAY_SIZE(fonts)
+#घोषणा num_fonts ARRAY_SIZE(fonts)
 
-#ifdef NO_FONTS
-#error No fonts configured.
-#endif
+#अगर_घोषित NO_FONTS
+#त्रुटि No fonts configured.
+#पूर्ण_अगर
 
 
 /**
  *	find_font - find a font
  *	@name: string name of a font
  *
- *	Find a specified font with string name @name.
+ *	Find a specअगरied font with string name @name.
  *
- *	Returns %NULL if no font found, or a pointer to the
- *	specified font.
+ *	Returns %शून्य अगर no font found, or a poपूर्णांकer to the
+ *	specअगरied font.
  *
  */
-const struct font_desc *find_font(const char *name)
-{
-	unsigned int i;
+स्थिर काष्ठा font_desc *find_font(स्थिर अक्षर *name)
+अणु
+	अचिन्हित पूर्णांक i;
 
 	BUILD_BUG_ON(!num_fonts);
-	for (i = 0; i < num_fonts; i++)
-		if (!strcmp(fonts[i]->name, name))
-			return fonts[i];
-	return NULL;
-}
+	क्रम (i = 0; i < num_fonts; i++)
+		अगर (!म_भेद(fonts[i]->name, name))
+			वापस fonts[i];
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL(find_font);
 
 
 /**
- *	get_default_font - get default font
+ *	get_शेष_font - get शेष font
  *	@xres: screen size of X
  *	@yres: screen size of Y
  *      @font_w: bit array of supported widths (1 - 32)
  *      @font_h: bit array of supported heights (1 - 32)
  *
- *	Get the default font for a specified screen size.
+ *	Get the शेष font क्रम a specअगरied screen size.
  *	Dimensions are in pixels.
  *
- *	Returns %NULL if no font is found, or a pointer to the
+ *	Returns %शून्य अगर no font is found, or a poपूर्णांकer to the
  *	chosen font.
  *
  */
-const struct font_desc *get_default_font(int xres, int yres, u32 font_w,
+स्थिर काष्ठा font_desc *get_शेष_font(पूर्णांक xres, पूर्णांक yres, u32 font_w,
 					 u32 font_h)
-{
-	int i, c, cc, res;
-	const struct font_desc *f, *g;
+अणु
+	पूर्णांक i, c, cc, res;
+	स्थिर काष्ठा font_desc *f, *g;
 
-	g = NULL;
+	g = शून्य;
 	cc = -10000;
-	for (i = 0; i < num_fonts; i++) {
+	क्रम (i = 0; i < num_fonts; i++) अणु
 		f = fonts[i];
 		c = f->pref;
-#if defined(__mc68000__)
-#ifdef CONFIG_FONT_PEARL_8x8
-		if (MACH_IS_AMIGA && f->idx == PEARL8x8_IDX)
+#अगर defined(__mc68000__)
+#अगर_घोषित CONFIG_FONT_PEARL_8x8
+		अगर (MACH_IS_AMIGA && f->idx == PEARL8x8_IDX)
 			c = 100;
-#endif
-#ifdef CONFIG_FONT_6x11
-		if (MACH_IS_MAC && xres < 640 && f->idx == VGA6x11_IDX)
+#पूर्ण_अगर
+#अगर_घोषित CONFIG_FONT_6x11
+		अगर (MACH_IS_MAC && xres < 640 && f->idx == VGA6x11_IDX)
 			c = 100;
-#endif
-#endif
-		if ((yres < 400) == (f->height <= 8))
+#पूर्ण_अगर
+#पूर्ण_अगर
+		अगर ((yres < 400) == (f->height <= 8))
 			c += 1000;
 
-		/* prefer a bigger font for high resolution */
+		/* prefer a bigger font क्रम high resolution */
 		res = (xres / f->width) * (yres / f->height) / 1000;
-		if (res > 20)
+		अगर (res > 20)
 			c += 20 - res;
 
-		if ((font_w & (1 << (f->width - 1))) &&
+		अगर ((font_w & (1 << (f->width - 1))) &&
 		    (font_h & (1 << (f->height - 1))))
 			c += 1000;
 
-		if (c > cc) {
+		अगर (c > cc) अणु
 			cc = c;
 			g = f;
-		}
-	}
-	return g;
-}
-EXPORT_SYMBOL(get_default_font);
+		पूर्ण
+	पूर्ण
+	वापस g;
+पूर्ण
+EXPORT_SYMBOL(get_शेष_font);
 
 MODULE_AUTHOR("James Simmons <jsimmons@users.sf.net>");
 MODULE_DESCRIPTION("Console Fonts");

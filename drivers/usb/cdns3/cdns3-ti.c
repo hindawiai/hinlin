@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /**
- * cdns3-ti.c - TI specific Glue layer for Cadence USB Controller
+ * cdns3-ti.c - TI specअगरic Glue layer क्रम Cadence USB Controller
  *
  * Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com
  */
 
-#include <linux/bits.h>
-#include <linux/clk.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/interrupt.h>
-#include <linux/platform_device.h>
-#include <linux/dma-mapping.h>
-#include <linux/io.h>
-#include <linux/of_platform.h>
-#include <linux/pm_runtime.h>
+#समावेश <linux/bits.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/pm_runसमय.स>
 
-/* USB Wrapper register offsets */
-#define USBSS_PID		0x0
-#define	USBSS_W1		0x4
-#define USBSS_STATIC_CONFIG	0x8
-#define USBSS_PHY_TEST		0xc
-#define	USBSS_DEBUG_CTRL	0x10
-#define	USBSS_DEBUG_INFO	0x14
-#define	USBSS_DEBUG_LINK_STATE	0x18
-#define	USBSS_DEVICE_CTRL	0x1c
+/* USB Wrapper रेजिस्टर offsets */
+#घोषणा USBSS_PID		0x0
+#घोषणा	USBSS_W1		0x4
+#घोषणा USBSS_STATIC_CONFIG	0x8
+#घोषणा USBSS_PHY_TEST		0xc
+#घोषणा	USBSS_DEBUG_CTRL	0x10
+#घोषणा	USBSS_DEBUG_INFO	0x14
+#घोषणा	USBSS_DEBUG_LINK_STATE	0x18
+#घोषणा	USBSS_DEVICE_CTRL	0x1c
 
-/* Wrapper 1 register bits */
-#define USBSS_W1_PWRUP_RST		BIT(0)
-#define USBSS_W1_OVERCURRENT_SEL	BIT(8)
-#define USBSS_W1_MODESTRAP_SEL		BIT(9)
-#define USBSS_W1_OVERCURRENT		BIT(16)
-#define USBSS_W1_MODESTRAP_MASK		GENMASK(18, 17)
-#define USBSS_W1_MODESTRAP_SHIFT	17
-#define USBSS_W1_USB2_ONLY		BIT(19)
+/* Wrapper 1 रेजिस्टर bits */
+#घोषणा USBSS_W1_PWRUP_RST		BIT(0)
+#घोषणा USBSS_W1_OVERCURRENT_SEL	BIT(8)
+#घोषणा USBSS_W1_MODESTRAP_SEL		BIT(9)
+#घोषणा USBSS_W1_OVERCURRENT		BIT(16)
+#घोषणा USBSS_W1_MODESTRAP_MASK		GENMASK(18, 17)
+#घोषणा USBSS_W1_MODESTRAP_SHIFT	17
+#घोषणा USBSS_W1_USB2_ONLY		BIT(19)
 
-/* Static config register bits */
-#define USBSS1_STATIC_PLL_REF_SEL_MASK	GENMASK(8, 5)
-#define USBSS1_STATIC_PLL_REF_SEL_SHIFT	5
-#define USBSS1_STATIC_LOOPBACK_MODE_MASK	GENMASK(4, 3)
-#define USBSS1_STATIC_LOOPBACK_MODE_SHIFT	3
-#define USBSS1_STATIC_VBUS_SEL_MASK	GENMASK(2, 1)
-#define USBSS1_STATIC_VBUS_SEL_SHIFT	1
-#define USBSS1_STATIC_LANE_REVERSE	BIT(0)
+/* Static config रेजिस्टर bits */
+#घोषणा USBSS1_STATIC_PLL_REF_SEL_MASK	GENMASK(8, 5)
+#घोषणा USBSS1_STATIC_PLL_REF_SEL_SHIFT	5
+#घोषणा USBSS1_STATIC_LOOPBACK_MODE_MASK	GENMASK(4, 3)
+#घोषणा USBSS1_STATIC_LOOPBACK_MODE_SHIFT	3
+#घोषणा USBSS1_STATIC_VBUS_SEL_MASK	GENMASK(2, 1)
+#घोषणा USBSS1_STATIC_VBUS_SEL_SHIFT	1
+#घोषणा USBSS1_STATIC_LANE_REVERSE	BIT(0)
 
 /* Modestrap modes */
-enum modestrap_mode { USBSS_MODESTRAP_MODE_NONE,
+क्रमागत modestrap_mode अणु USBSS_MODESTRAP_MODE_NONE,
 		      USBSS_MODESTRAP_MODE_HOST,
-		      USBSS_MODESTRAP_MODE_PERIPHERAL};
+		      USBSS_MODESTRAP_MODE_PERIPHERALपूर्ण;
 
-struct cdns_ti {
-	struct device *dev;
-	void __iomem *usbss;
-	unsigned usb2_only:1;
-	unsigned vbus_divider:1;
-	struct clk *usb2_refclk;
-	struct clk *lpm_clk;
-};
+काष्ठा cdns_ti अणु
+	काष्ठा device *dev;
+	व्योम __iomem *usbss;
+	अचिन्हित usb2_only:1;
+	अचिन्हित vbus_भागider:1;
+	काष्ठा clk *usb2_refclk;
+	काष्ठा clk *lpm_clk;
+पूर्ण;
 
-static const int cdns_ti_rate_table[] = {	/* in KHZ */
+अटल स्थिर पूर्णांक cdns_ti_rate_table[] = अणु	/* in KHZ */
 	9600,
 	10000,
 	12000,
@@ -72,163 +73,163 @@ static const int cdns_ti_rate_table[] = {	/* in KHZ */
 	58000,
 	50000,
 	52000,
-};
+पूर्ण;
 
-static inline u32 cdns_ti_readl(struct cdns_ti *data, u32 offset)
-{
-	return readl(data->usbss + offset);
-}
+अटल अंतरभूत u32 cdns_ti_पढ़ोl(काष्ठा cdns_ti *data, u32 offset)
+अणु
+	वापस पढ़ोl(data->usbss + offset);
+पूर्ण
 
-static inline void cdns_ti_writel(struct cdns_ti *data, u32 offset, u32 value)
-{
-	writel(value, data->usbss + offset);
-}
+अटल अंतरभूत व्योम cdns_ti_ग_लिखोl(काष्ठा cdns_ti *data, u32 offset, u32 value)
+अणु
+	ग_लिखोl(value, data->usbss + offset);
+पूर्ण
 
-static int cdns_ti_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct device_node *node = pdev->dev.of_node;
-	struct cdns_ti *data;
-	int error;
+अटल पूर्णांक cdns_ti_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा device_node *node = pdev->dev.of_node;
+	काष्ठा cdns_ti *data;
+	पूर्णांक error;
 	u32 reg;
-	int rate_code, i;
-	unsigned long rate;
+	पूर्णांक rate_code, i;
+	अचिन्हित दीर्घ rate;
 
-	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
 	data->dev = dev;
 
-	data->usbss = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(data->usbss)) {
+	data->usbss = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(data->usbss)) अणु
 		dev_err(dev, "can't map IOMEM resource\n");
-		return PTR_ERR(data->usbss);
-	}
+		वापस PTR_ERR(data->usbss);
+	पूर्ण
 
 	data->usb2_refclk = devm_clk_get(dev, "ref");
-	if (IS_ERR(data->usb2_refclk)) {
+	अगर (IS_ERR(data->usb2_refclk)) अणु
 		dev_err(dev, "can't get usb2_refclk\n");
-		return PTR_ERR(data->usb2_refclk);
-	}
+		वापस PTR_ERR(data->usb2_refclk);
+	पूर्ण
 
 	data->lpm_clk = devm_clk_get(dev, "lpm");
-	if (IS_ERR(data->lpm_clk)) {
+	अगर (IS_ERR(data->lpm_clk)) अणु
 		dev_err(dev, "can't get lpm_clk\n");
-		return PTR_ERR(data->lpm_clk);
-	}
+		वापस PTR_ERR(data->lpm_clk);
+	पूर्ण
 
 	rate = clk_get_rate(data->usb2_refclk);
 	rate /= 1000;	/* To KHz */
-	for (i = 0; i < ARRAY_SIZE(cdns_ti_rate_table); i++) {
-		if (cdns_ti_rate_table[i] == rate)
-			break;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(cdns_ti_rate_table); i++) अणु
+		अगर (cdns_ti_rate_table[i] == rate)
+			अवरोध;
+	पूर्ण
 
-	if (i == ARRAY_SIZE(cdns_ti_rate_table)) {
+	अगर (i == ARRAY_SIZE(cdns_ti_rate_table)) अणु
 		dev_err(dev, "unsupported usb2_refclk rate: %lu KHz\n", rate);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	rate_code = i;
 
-	pm_runtime_enable(dev);
-	error = pm_runtime_get_sync(dev);
-	if (error < 0) {
+	pm_runसमय_enable(dev);
+	error = pm_runसमय_get_sync(dev);
+	अगर (error < 0) अणु
 		dev_err(dev, "pm_runtime_get_sync failed: %d\n", error);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	/* assert RESET */
-	reg = cdns_ti_readl(data, USBSS_W1);
+	/* निश्चित RESET */
+	reg = cdns_ti_पढ़ोl(data, USBSS_W1);
 	reg &= ~USBSS_W1_PWRUP_RST;
-	cdns_ti_writel(data, USBSS_W1, reg);
+	cdns_ti_ग_लिखोl(data, USBSS_W1, reg);
 
-	/* set static config */
-	reg = cdns_ti_readl(data, USBSS_STATIC_CONFIG);
+	/* set अटल config */
+	reg = cdns_ti_पढ़ोl(data, USBSS_STATIC_CONFIG);
 	reg &= ~USBSS1_STATIC_PLL_REF_SEL_MASK;
 	reg |= rate_code << USBSS1_STATIC_PLL_REF_SEL_SHIFT;
 
 	reg &= ~USBSS1_STATIC_VBUS_SEL_MASK;
-	data->vbus_divider = device_property_read_bool(dev, "ti,vbus-divider");
-	if (data->vbus_divider)
+	data->vbus_भागider = device_property_पढ़ो_bool(dev, "ti,vbus-divider");
+	अगर (data->vbus_भागider)
 		reg |= 1 << USBSS1_STATIC_VBUS_SEL_SHIFT;
 
-	cdns_ti_writel(data, USBSS_STATIC_CONFIG, reg);
-	reg = cdns_ti_readl(data, USBSS_STATIC_CONFIG);
+	cdns_ti_ग_लिखोl(data, USBSS_STATIC_CONFIG, reg);
+	reg = cdns_ti_पढ़ोl(data, USBSS_STATIC_CONFIG);
 
-	/* set USB2_ONLY mode if requested */
-	reg = cdns_ti_readl(data, USBSS_W1);
-	data->usb2_only = device_property_read_bool(dev, "ti,usb2-only");
-	if (data->usb2_only)
+	/* set USB2_ONLY mode अगर requested */
+	reg = cdns_ti_पढ़ोl(data, USBSS_W1);
+	data->usb2_only = device_property_पढ़ो_bool(dev, "ti,usb2-only");
+	अगर (data->usb2_only)
 		reg |= USBSS_W1_USB2_ONLY;
 
-	/* set default modestrap */
+	/* set शेष modestrap */
 	reg |= USBSS_W1_MODESTRAP_SEL;
 	reg &= ~USBSS_W1_MODESTRAP_MASK;
 	reg |= USBSS_MODESTRAP_MODE_NONE << USBSS_W1_MODESTRAP_SHIFT;
-	cdns_ti_writel(data, USBSS_W1, reg);
+	cdns_ti_ग_लिखोl(data, USBSS_W1, reg);
 
-	/* de-assert RESET */
+	/* de-निश्चित RESET */
 	reg |= USBSS_W1_PWRUP_RST;
-	cdns_ti_writel(data, USBSS_W1, reg);
+	cdns_ti_ग_लिखोl(data, USBSS_W1, reg);
 
-	error = of_platform_populate(node, NULL, NULL, dev);
-	if (error) {
+	error = of_platक्रमm_populate(node, शून्य, शून्य, dev);
+	अगर (error) अणु
 		dev_err(dev, "failed to create children: %d\n", error);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err:
-	pm_runtime_put_sync(data->dev);
-	pm_runtime_disable(data->dev);
+	pm_runसमय_put_sync(data->dev);
+	pm_runसमय_disable(data->dev);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int cdns_ti_remove_core(struct device *dev, void *c)
-{
-	struct platform_device *pdev = to_platform_device(dev);
+अटल पूर्णांक cdns_ti_हटाओ_core(काष्ठा device *dev, व्योम *c)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
 
-	platform_device_unregister(pdev);
+	platक्रमm_device_unरेजिस्टर(pdev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cdns_ti_remove(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक cdns_ti_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
 
-	device_for_each_child(dev, NULL, cdns_ti_remove_core);
-	pm_runtime_put_sync(dev);
-	pm_runtime_disable(dev);
+	device_क्रम_each_child(dev, शून्य, cdns_ti_हटाओ_core);
+	pm_runसमय_put_sync(dev);
+	pm_runसमय_disable(dev);
 
-	platform_set_drvdata(pdev, NULL);
+	platक्रमm_set_drvdata(pdev, शून्य);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id cdns_ti_of_match[] = {
-	{ .compatible = "ti,j721e-usb", },
-	{ .compatible = "ti,am64-usb", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id cdns_ti_of_match[] = अणु
+	अणु .compatible = "ti,j721e-usb", पूर्ण,
+	अणु .compatible = "ti,am64-usb", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, cdns_ti_of_match);
 
-static struct platform_driver cdns_ti_driver = {
+अटल काष्ठा platक्रमm_driver cdns_ti_driver = अणु
 	.probe		= cdns_ti_probe,
-	.remove		= cdns_ti_remove,
-	.driver		= {
+	.हटाओ		= cdns_ti_हटाओ,
+	.driver		= अणु
 		.name	= "cdns3-ti",
 		.of_match_table	= cdns_ti_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(cdns_ti_driver);
+module_platक्रमm_driver(cdns_ti_driver);
 
 MODULE_ALIAS("platform:cdns3-ti");
 MODULE_AUTHOR("Roger Quadros <rogerq@ti.com>");

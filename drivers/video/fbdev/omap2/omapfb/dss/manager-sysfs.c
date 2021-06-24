@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2009 Nokia Corporation
  * Author: Tomi Valkeinen <tomi.valkeinen@nokia.com>
@@ -7,358 +8,358 @@
  * by Imre Deak.
  */
 
-#define DSS_SUBSYS_NAME "MANAGER"
+#घोषणा DSS_SUBSYS_NAME "MANAGER"
 
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/jiffies.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/jअगरfies.h>
 
-#include <video/omapfb_dss.h>
+#समावेश <video/omapfb_dss.h>
 
-#include "dss.h"
-#include "dss_features.h"
+#समावेश "dss.h"
+#समावेश "dss_features.h"
 
-static ssize_t manager_name_show(struct omap_overlay_manager *mgr, char *buf)
-{
-	return snprintf(buf, PAGE_SIZE, "%s\n", mgr->name);
-}
+अटल sमाप_प्रकार manager_name_show(काष्ठा omap_overlay_manager *mgr, अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", mgr->name);
+पूर्ण
 
-static ssize_t manager_display_show(struct omap_overlay_manager *mgr, char *buf)
-{
-	struct omap_dss_device *dssdev = mgr->get_device(mgr);
+अटल sमाप_प्रकार manager_display_show(काष्ठा omap_overlay_manager *mgr, अक्षर *buf)
+अणु
+	काष्ठा omap_dss_device *dssdev = mgr->get_device(mgr);
 
-	return snprintf(buf, PAGE_SIZE, "%s\n", dssdev ?
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", dssdev ?
 			dssdev->name : "<none>");
-}
+पूर्ण
 
-static int manager_display_match(struct omap_dss_device *dssdev, void *data)
-{
-	const char *str = data;
+अटल पूर्णांक manager_display_match(काष्ठा omap_dss_device *dssdev, व्योम *data)
+अणु
+	स्थिर अक्षर *str = data;
 
-	return sysfs_streq(dssdev->name, str);
-}
+	वापस sysfs_streq(dssdev->name, str);
+पूर्ण
 
-static ssize_t manager_display_store(struct omap_overlay_manager *mgr,
-		const char *buf, size_t size)
-{
-	int r = 0;
-	size_t len = size;
-	struct omap_dss_device *dssdev = NULL;
-	struct omap_dss_device *old_dssdev;
+अटल sमाप_प्रकार manager_display_store(काष्ठा omap_overlay_manager *mgr,
+		स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	पूर्णांक r = 0;
+	माप_प्रकार len = size;
+	काष्ठा omap_dss_device *dssdev = शून्य;
+	काष्ठा omap_dss_device *old_dssdev;
 
-	if (buf[size-1] == '\n')
+	अगर (buf[size-1] == '\n')
 		--len;
 
-	if (len > 0)
-		dssdev = omap_dss_find_device((void *)buf,
+	अगर (len > 0)
+		dssdev = omap_dss_find_device((व्योम *)buf,
 			manager_display_match);
 
-	if (len > 0 && dssdev == NULL)
-		return -EINVAL;
+	अगर (len > 0 && dssdev == शून्य)
+		वापस -EINVAL;
 
-	if (dssdev) {
+	अगर (dssdev) अणु
 		DSSDBG("display %s found\n", dssdev->name);
 
-		if (omapdss_device_is_connected(dssdev)) {
+		अगर (omapdss_device_is_connected(dssdev)) अणु
 			DSSERR("new display is already connected\n");
 			r = -EINVAL;
-			goto put_device;
-		}
+			जाओ put_device;
+		पूर्ण
 
-		if (omapdss_device_is_enabled(dssdev)) {
+		अगर (omapdss_device_is_enabled(dssdev)) अणु
 			DSSERR("new display is not disabled\n");
 			r = -EINVAL;
-			goto put_device;
-		}
-	}
+			जाओ put_device;
+		पूर्ण
+	पूर्ण
 
 	old_dssdev = mgr->get_device(mgr);
-	if (old_dssdev) {
-		if (omapdss_device_is_enabled(old_dssdev)) {
+	अगर (old_dssdev) अणु
+		अगर (omapdss_device_is_enabled(old_dssdev)) अणु
 			DSSERR("old display is not disabled\n");
 			r = -EINVAL;
-			goto put_device;
-		}
+			जाओ put_device;
+		पूर्ण
 
 		old_dssdev->driver->disconnect(old_dssdev);
-	}
+	पूर्ण
 
-	if (dssdev) {
+	अगर (dssdev) अणु
 		r = dssdev->driver->connect(dssdev);
-		if (r) {
+		अगर (r) अणु
 			DSSERR("failed to connect new device\n");
-			goto put_device;
-		}
+			जाओ put_device;
+		पूर्ण
 
 		old_dssdev = mgr->get_device(mgr);
-		if (old_dssdev != dssdev) {
+		अगर (old_dssdev != dssdev) अणु
 			DSSERR("failed to connect device to this manager\n");
 			dssdev->driver->disconnect(dssdev);
-			goto put_device;
-		}
+			जाओ put_device;
+		पूर्ण
 
 		r = mgr->apply(mgr);
-		if (r) {
+		अगर (r) अणु
 			DSSERR("failed to apply dispc config\n");
-			goto put_device;
-		}
-	}
+			जाओ put_device;
+		पूर्ण
+	पूर्ण
 
 put_device:
-	if (dssdev)
+	अगर (dssdev)
 		omap_dss_put_device(dssdev);
 
-	return r ? r : size;
-}
+	वापस r ? r : size;
+पूर्ण
 
-static ssize_t manager_default_color_show(struct omap_overlay_manager *mgr,
-					  char *buf)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_शेष_color_show(काष्ठा omap_overlay_manager *mgr,
+					  अक्षर *buf)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 
 	mgr->get_manager_info(mgr, &info);
 
-	return snprintf(buf, PAGE_SIZE, "%#x\n", info.default_color);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%#x\n", info.शेष_color);
+पूर्ण
 
-static ssize_t manager_default_color_store(struct omap_overlay_manager *mgr,
-					   const char *buf, size_t size)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_शेष_color_store(काष्ठा omap_overlay_manager *mgr,
+					   स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 	u32 color;
-	int r;
+	पूर्णांक r;
 
-	r = kstrtouint(buf, 0, &color);
-	if (r)
-		return r;
+	r = kstrtouपूर्णांक(buf, 0, &color);
+	अगर (r)
+		वापस r;
 
 	mgr->get_manager_info(mgr, &info);
 
-	info.default_color = color;
+	info.शेष_color = color;
 
 	r = mgr->set_manager_info(mgr, &info);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mgr->apply(mgr);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static const char *trans_key_type_str[] = {
+अटल स्थिर अक्षर *trans_key_type_str[] = अणु
 	"gfx-destination",
 	"video-source",
-};
+पूर्ण;
 
-static ssize_t manager_trans_key_type_show(struct omap_overlay_manager *mgr,
-					   char *buf)
-{
-	enum omap_dss_trans_key_type key_type;
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_trans_key_type_show(काष्ठा omap_overlay_manager *mgr,
+					   अक्षर *buf)
+अणु
+	क्रमागत omap_dss_trans_key_type key_type;
+	काष्ठा omap_overlay_manager_info info;
 
 	mgr->get_manager_info(mgr, &info);
 
 	key_type = info.trans_key_type;
 	BUG_ON(key_type >= ARRAY_SIZE(trans_key_type_str));
 
-	return snprintf(buf, PAGE_SIZE, "%s\n", trans_key_type_str[key_type]);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%s\n", trans_key_type_str[key_type]);
+पूर्ण
 
-static ssize_t manager_trans_key_type_store(struct omap_overlay_manager *mgr,
-					    const char *buf, size_t size)
-{
-	struct omap_overlay_manager_info info;
-	int r;
+अटल sमाप_प्रकार manager_trans_key_type_store(काष्ठा omap_overlay_manager *mgr,
+					    स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा omap_overlay_manager_info info;
+	पूर्णांक r;
 
 	r = sysfs_match_string(trans_key_type_str, buf);
-	if (r < 0)
-		return r;
+	अगर (r < 0)
+		वापस r;
 
 	mgr->get_manager_info(mgr, &info);
 
 	info.trans_key_type = r;
 
 	r = mgr->set_manager_info(mgr, &info);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mgr->apply(mgr);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t manager_trans_key_value_show(struct omap_overlay_manager *mgr,
-					    char *buf)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_trans_key_value_show(काष्ठा omap_overlay_manager *mgr,
+					    अक्षर *buf)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 
 	mgr->get_manager_info(mgr, &info);
 
-	return snprintf(buf, PAGE_SIZE, "%#x\n", info.trans_key);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%#x\n", info.trans_key);
+पूर्ण
 
-static ssize_t manager_trans_key_value_store(struct omap_overlay_manager *mgr,
-					     const char *buf, size_t size)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_trans_key_value_store(काष्ठा omap_overlay_manager *mgr,
+					     स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 	u32 key_value;
-	int r;
+	पूर्णांक r;
 
-	r = kstrtouint(buf, 0, &key_value);
-	if (r)
-		return r;
+	r = kstrtouपूर्णांक(buf, 0, &key_value);
+	अगर (r)
+		वापस r;
 
 	mgr->get_manager_info(mgr, &info);
 
 	info.trans_key = key_value;
 
 	r = mgr->set_manager_info(mgr, &info);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mgr->apply(mgr);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t manager_trans_key_enabled_show(struct omap_overlay_manager *mgr,
-					      char *buf)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_trans_key_enabled_show(काष्ठा omap_overlay_manager *mgr,
+					      अक्षर *buf)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 
 	mgr->get_manager_info(mgr, &info);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", info.trans_enabled);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", info.trans_enabled);
+पूर्ण
 
-static ssize_t manager_trans_key_enabled_store(struct omap_overlay_manager *mgr,
-					       const char *buf, size_t size)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_trans_key_enabled_store(काष्ठा omap_overlay_manager *mgr,
+					       स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 	bool enable;
-	int r;
+	पूर्णांक r;
 
 	r = strtobool(buf, &enable);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	mgr->get_manager_info(mgr, &info);
 
 	info.trans_enabled = enable;
 
 	r = mgr->set_manager_info(mgr, &info);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mgr->apply(mgr);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t manager_alpha_blending_enabled_show(
-		struct omap_overlay_manager *mgr, char *buf)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_alpha_blending_enabled_show(
+		काष्ठा omap_overlay_manager *mgr, अक्षर *buf)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 
-	if(!dss_has_feature(FEAT_ALPHA_FIXED_ZORDER))
-		return -ENODEV;
+	अगर(!dss_has_feature(FEAT_ALPHA_FIXED_ZORDER))
+		वापस -ENODEV;
 
 	mgr->get_manager_info(mgr, &info);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n",
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
 		info.partial_alpha_enabled);
-}
+पूर्ण
 
-static ssize_t manager_alpha_blending_enabled_store(
-		struct omap_overlay_manager *mgr,
-		const char *buf, size_t size)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_alpha_blending_enabled_store(
+		काष्ठा omap_overlay_manager *mgr,
+		स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 	bool enable;
-	int r;
+	पूर्णांक r;
 
-	if(!dss_has_feature(FEAT_ALPHA_FIXED_ZORDER))
-		return -ENODEV;
+	अगर(!dss_has_feature(FEAT_ALPHA_FIXED_ZORDER))
+		वापस -ENODEV;
 
 	r = strtobool(buf, &enable);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	mgr->get_manager_info(mgr, &info);
 
 	info.partial_alpha_enabled = enable;
 
 	r = mgr->set_manager_info(mgr, &info);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mgr->apply(mgr);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t manager_cpr_enable_show(struct omap_overlay_manager *mgr,
-		char *buf)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_cpr_enable_show(काष्ठा omap_overlay_manager *mgr,
+		अक्षर *buf)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 
 	mgr->get_manager_info(mgr, &info);
 
-	return snprintf(buf, PAGE_SIZE, "%d\n", info.cpr_enable);
-}
+	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", info.cpr_enable);
+पूर्ण
 
-static ssize_t manager_cpr_enable_store(struct omap_overlay_manager *mgr,
-		const char *buf, size_t size)
-{
-	struct omap_overlay_manager_info info;
-	int r;
+अटल sमाप_प्रकार manager_cpr_enable_store(काष्ठा omap_overlay_manager *mgr,
+		स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा omap_overlay_manager_info info;
+	पूर्णांक r;
 	bool enable;
 
-	if (!dss_has_feature(FEAT_CPR))
-		return -ENODEV;
+	अगर (!dss_has_feature(FEAT_CPR))
+		वापस -ENODEV;
 
 	r = strtobool(buf, &enable);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	mgr->get_manager_info(mgr, &info);
 
-	if (info.cpr_enable == enable)
-		return size;
+	अगर (info.cpr_enable == enable)
+		वापस size;
 
 	info.cpr_enable = enable;
 
 	r = mgr->set_manager_info(mgr, &info);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mgr->apply(mgr);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-static ssize_t manager_cpr_coef_show(struct omap_overlay_manager *mgr,
-		char *buf)
-{
-	struct omap_overlay_manager_info info;
+अटल sमाप_प्रकार manager_cpr_coef_show(काष्ठा omap_overlay_manager *mgr,
+		अक्षर *buf)
+अणु
+	काष्ठा omap_overlay_manager_info info;
 
 	mgr->get_manager_info(mgr, &info);
 
-	return snprintf(buf, PAGE_SIZE,
+	वापस snम_लिखो(buf, PAGE_SIZE,
 			"%d %d %d %d %d %d %d %d %d\n",
 			info.cpr_coefs.rr,
 			info.cpr_coefs.rg,
@@ -369,146 +370,146 @@ static ssize_t manager_cpr_coef_show(struct omap_overlay_manager *mgr,
 			info.cpr_coefs.br,
 			info.cpr_coefs.bg,
 			info.cpr_coefs.bb);
-}
+पूर्ण
 
-static ssize_t manager_cpr_coef_store(struct omap_overlay_manager *mgr,
-		const char *buf, size_t size)
-{
-	struct omap_overlay_manager_info info;
-	struct omap_dss_cpr_coefs coefs;
-	int r, i;
+अटल sमाप_प्रकार manager_cpr_coef_store(काष्ठा omap_overlay_manager *mgr,
+		स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा omap_overlay_manager_info info;
+	काष्ठा omap_dss_cpr_coefs coefs;
+	पूर्णांक r, i;
 	s16 *arr;
 
-	if (!dss_has_feature(FEAT_CPR))
-		return -ENODEV;
+	अगर (!dss_has_feature(FEAT_CPR))
+		वापस -ENODEV;
 
-	if (sscanf(buf, "%hd %hd %hd %hd %hd %hd %hd %hd %hd",
+	अगर (माला_पूछो(buf, "%hd %hd %hd %hd %hd %hd %hd %hd %hd",
 				&coefs.rr, &coefs.rg, &coefs.rb,
 				&coefs.gr, &coefs.gg, &coefs.gb,
 				&coefs.br, &coefs.bg, &coefs.bb) != 9)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	arr = (s16[]){ coefs.rr, coefs.rg, coefs.rb,
+	arr = (s16[])अणु coefs.rr, coefs.rg, coefs.rb,
 		coefs.gr, coefs.gg, coefs.gb,
-		coefs.br, coefs.bg, coefs.bb };
+		coefs.br, coefs.bg, coefs.bb पूर्ण;
 
-	for (i = 0; i < 9; ++i) {
-		if (arr[i] < -512 || arr[i] > 511)
-			return -EINVAL;
-	}
+	क्रम (i = 0; i < 9; ++i) अणु
+		अगर (arr[i] < -512 || arr[i] > 511)
+			वापस -EINVAL;
+	पूर्ण
 
 	mgr->get_manager_info(mgr, &info);
 
 	info.cpr_coefs = coefs;
 
 	r = mgr->set_manager_info(mgr, &info);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
 	r = mgr->apply(mgr);
-	if (r)
-		return r;
+	अगर (r)
+		वापस r;
 
-	return size;
-}
+	वापस size;
+पूर्ण
 
-struct manager_attribute {
-	struct attribute attr;
-	ssize_t (*show)(struct omap_overlay_manager *, char *);
-	ssize_t	(*store)(struct omap_overlay_manager *, const char *, size_t);
-};
+काष्ठा manager_attribute अणु
+	काष्ठा attribute attr;
+	sमाप_प्रकार (*show)(काष्ठा omap_overlay_manager *, अक्षर *);
+	sमाप_प्रकार	(*store)(काष्ठा omap_overlay_manager *, स्थिर अक्षर *, माप_प्रकार);
+पूर्ण;
 
-#define MANAGER_ATTR(_name, _mode, _show, _store) \
-	struct manager_attribute manager_attr_##_name = \
+#घोषणा MANAGER_ATTR(_name, _mode, _show, _store) \
+	काष्ठा manager_attribute manager_attr_##_name = \
 	__ATTR(_name, _mode, _show, _store)
 
-static MANAGER_ATTR(name, S_IRUGO, manager_name_show, NULL);
-static MANAGER_ATTR(display, S_IRUGO|S_IWUSR,
+अटल MANAGER_ATTR(name, S_IRUGO, manager_name_show, शून्य);
+अटल MANAGER_ATTR(display, S_IRUGO|S_IWUSR,
 		manager_display_show, manager_display_store);
-static MANAGER_ATTR(default_color, S_IRUGO|S_IWUSR,
-		manager_default_color_show, manager_default_color_store);
-static MANAGER_ATTR(trans_key_type, S_IRUGO|S_IWUSR,
+अटल MANAGER_ATTR(शेष_color, S_IRUGO|S_IWUSR,
+		manager_शेष_color_show, manager_शेष_color_store);
+अटल MANAGER_ATTR(trans_key_type, S_IRUGO|S_IWUSR,
 		manager_trans_key_type_show, manager_trans_key_type_store);
-static MANAGER_ATTR(trans_key_value, S_IRUGO|S_IWUSR,
+अटल MANAGER_ATTR(trans_key_value, S_IRUGO|S_IWUSR,
 		manager_trans_key_value_show, manager_trans_key_value_store);
-static MANAGER_ATTR(trans_key_enabled, S_IRUGO|S_IWUSR,
+अटल MANAGER_ATTR(trans_key_enabled, S_IRUGO|S_IWUSR,
 		manager_trans_key_enabled_show,
 		manager_trans_key_enabled_store);
-static MANAGER_ATTR(alpha_blending_enabled, S_IRUGO|S_IWUSR,
+अटल MANAGER_ATTR(alpha_blending_enabled, S_IRUGO|S_IWUSR,
 		manager_alpha_blending_enabled_show,
 		manager_alpha_blending_enabled_store);
-static MANAGER_ATTR(cpr_enable, S_IRUGO|S_IWUSR,
+अटल MANAGER_ATTR(cpr_enable, S_IRUGO|S_IWUSR,
 		manager_cpr_enable_show,
 		manager_cpr_enable_store);
-static MANAGER_ATTR(cpr_coef, S_IRUGO|S_IWUSR,
+अटल MANAGER_ATTR(cpr_coef, S_IRUGO|S_IWUSR,
 		manager_cpr_coef_show,
 		manager_cpr_coef_store);
 
 
-static struct attribute *manager_sysfs_attrs[] = {
+अटल काष्ठा attribute *manager_sysfs_attrs[] = अणु
 	&manager_attr_name.attr,
 	&manager_attr_display.attr,
-	&manager_attr_default_color.attr,
+	&manager_attr_शेष_color.attr,
 	&manager_attr_trans_key_type.attr,
 	&manager_attr_trans_key_value.attr,
 	&manager_attr_trans_key_enabled.attr,
 	&manager_attr_alpha_blending_enabled.attr,
 	&manager_attr_cpr_enable.attr,
 	&manager_attr_cpr_coef.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static ssize_t manager_attr_show(struct kobject *kobj, struct attribute *attr,
-		char *buf)
-{
-	struct omap_overlay_manager *manager;
-	struct manager_attribute *manager_attr;
+अटल sमाप_प्रकार manager_attr_show(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+		अक्षर *buf)
+अणु
+	काष्ठा omap_overlay_manager *manager;
+	काष्ठा manager_attribute *manager_attr;
 
-	manager = container_of(kobj, struct omap_overlay_manager, kobj);
-	manager_attr = container_of(attr, struct manager_attribute, attr);
+	manager = container_of(kobj, काष्ठा omap_overlay_manager, kobj);
+	manager_attr = container_of(attr, काष्ठा manager_attribute, attr);
 
-	if (!manager_attr->show)
-		return -ENOENT;
+	अगर (!manager_attr->show)
+		वापस -ENOENT;
 
-	return manager_attr->show(manager, buf);
-}
+	वापस manager_attr->show(manager, buf);
+पूर्ण
 
-static ssize_t manager_attr_store(struct kobject *kobj, struct attribute *attr,
-		const char *buf, size_t size)
-{
-	struct omap_overlay_manager *manager;
-	struct manager_attribute *manager_attr;
+अटल sमाप_प्रकार manager_attr_store(काष्ठा kobject *kobj, काष्ठा attribute *attr,
+		स्थिर अक्षर *buf, माप_प्रकार size)
+अणु
+	काष्ठा omap_overlay_manager *manager;
+	काष्ठा manager_attribute *manager_attr;
 
-	manager = container_of(kobj, struct omap_overlay_manager, kobj);
-	manager_attr = container_of(attr, struct manager_attribute, attr);
+	manager = container_of(kobj, काष्ठा omap_overlay_manager, kobj);
+	manager_attr = container_of(attr, काष्ठा manager_attribute, attr);
 
-	if (!manager_attr->store)
-		return -ENOENT;
+	अगर (!manager_attr->store)
+		वापस -ENOENT;
 
-	return manager_attr->store(manager, buf, size);
-}
+	वापस manager_attr->store(manager, buf, size);
+पूर्ण
 
-static const struct sysfs_ops manager_sysfs_ops = {
+अटल स्थिर काष्ठा sysfs_ops manager_sysfs_ops = अणु
 	.show = manager_attr_show,
 	.store = manager_attr_store,
-};
+पूर्ण;
 
-static struct kobj_type manager_ktype = {
+अटल काष्ठा kobj_type manager_ktype = अणु
 	.sysfs_ops = &manager_sysfs_ops,
-	.default_attrs = manager_sysfs_attrs,
-};
+	.शेष_attrs = manager_sysfs_attrs,
+पूर्ण;
 
-int dss_manager_kobj_init(struct omap_overlay_manager *mgr,
-		struct platform_device *pdev)
-{
-	return kobject_init_and_add(&mgr->kobj, &manager_ktype,
+पूर्णांक dss_manager_kobj_init(काष्ठा omap_overlay_manager *mgr,
+		काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस kobject_init_and_add(&mgr->kobj, &manager_ktype,
 			&pdev->dev.kobj, "manager%d", mgr->id);
-}
+पूर्ण
 
-void dss_manager_kobj_uninit(struct omap_overlay_manager *mgr)
-{
+व्योम dss_manager_kobj_uninit(काष्ठा omap_overlay_manager *mgr)
+अणु
 	kobject_del(&mgr->kobj);
 	kobject_put(&mgr->kobj);
 
-	memset(&mgr->kobj, 0, sizeof(mgr->kobj));
-}
+	स_रखो(&mgr->kobj, 0, माप(mgr->kobj));
+पूर्ण

@@ -1,55 +1,56 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2021, Intel Corporation. */
 
-#ifndef _ICE_VIRTCHNL_FDIR_H_
-#define _ICE_VIRTCHNL_FDIR_H_
+#अगर_अघोषित _ICE_VIRTCHNL_Fसूची_H_
+#घोषणा _ICE_VIRTCHNL_Fसूची_H_
 
-struct ice_vf;
-struct ice_pf;
+काष्ठा ice_vf;
+काष्ठा ice_pf;
 
-enum ice_fdir_ctx_stat {
-	ICE_FDIR_CTX_READY,
-	ICE_FDIR_CTX_IRQ,
-	ICE_FDIR_CTX_TIMEOUT,
-};
+क्रमागत ice_fdir_ctx_stat अणु
+	ICE_Fसूची_CTX_READY,
+	ICE_Fसूची_CTX_IRQ,
+	ICE_Fसूची_CTX_TIMEOUT,
+पूर्ण;
 
-struct ice_vf_fdir_ctx {
-	struct timer_list rx_tmr;
-	enum virtchnl_ops v_opcode;
-	enum ice_fdir_ctx_stat stat;
-	union ice_32b_rx_flex_desc rx_desc;
-#define ICE_VF_FDIR_CTX_VALID		BIT(0)
+काष्ठा ice_vf_fdir_ctx अणु
+	काष्ठा समयr_list rx_पंचांगr;
+	क्रमागत virtchnl_ops v_opcode;
+	क्रमागत ice_fdir_ctx_stat stat;
+	जोड़ ice_32b_rx_flex_desc rx_desc;
+#घोषणा ICE_VF_Fसूची_CTX_VALID		BIT(0)
 	u32 flags;
 
-	void *conf;
-};
+	व्योम *conf;
+पूर्ण;
 
-/* VF FDIR information structure */
-struct ice_vf_fdir {
+/* VF Fसूची inक्रमmation काष्ठाure */
+काष्ठा ice_vf_fdir अणु
 	u16 fdir_fltr_cnt[ICE_FLTR_PTYPE_MAX][ICE_FD_HW_SEG_MAX];
-	int prof_entry_cnt[ICE_FLTR_PTYPE_MAX][ICE_FD_HW_SEG_MAX];
-	struct ice_fd_hw_prof **fdir_prof;
+	पूर्णांक prof_entry_cnt[ICE_FLTR_PTYPE_MAX][ICE_FD_HW_SEG_MAX];
+	काष्ठा ice_fd_hw_prof **fdir_prof;
 
-	struct idr fdir_rule_idr;
-	struct list_head fdir_rule_list;
+	काष्ठा idr fdir_rule_idr;
+	काष्ठा list_head fdir_rule_list;
 
-	spinlock_t ctx_lock; /* protects FDIR context info */
-	struct ice_vf_fdir_ctx ctx_irq;
-	struct ice_vf_fdir_ctx ctx_done;
-};
+	spinlock_t ctx_lock; /* protects Fसूची context info */
+	काष्ठा ice_vf_fdir_ctx ctx_irq;
+	काष्ठा ice_vf_fdir_ctx ctx_करोne;
+पूर्ण;
 
-#ifdef CONFIG_PCI_IOV
-int ice_vc_add_fdir_fltr(struct ice_vf *vf, u8 *msg);
-int ice_vc_del_fdir_fltr(struct ice_vf *vf, u8 *msg);
-void ice_vf_fdir_init(struct ice_vf *vf);
-void ice_vf_fdir_exit(struct ice_vf *vf);
-void
-ice_vc_fdir_irq_handler(struct ice_vsi *ctrl_vsi,
-			union ice_32b_rx_flex_desc *rx_desc);
-void ice_flush_fdir_ctx(struct ice_pf *pf);
-#else
-static inline void
-ice_vc_fdir_irq_handler(struct ice_vsi *ctrl_vsi, union ice_32b_rx_flex_desc *rx_desc) { }
-static inline void ice_flush_fdir_ctx(struct ice_pf *pf) { }
-#endif /* CONFIG_PCI_IOV */
-#endif /* _ICE_VIRTCHNL_FDIR_H_ */
+#अगर_घोषित CONFIG_PCI_IOV
+पूर्णांक ice_vc_add_fdir_fltr(काष्ठा ice_vf *vf, u8 *msg);
+पूर्णांक ice_vc_del_fdir_fltr(काष्ठा ice_vf *vf, u8 *msg);
+व्योम ice_vf_fdir_init(काष्ठा ice_vf *vf);
+व्योम ice_vf_fdir_निकास(काष्ठा ice_vf *vf);
+व्योम
+ice_vc_fdir_irq_handler(काष्ठा ice_vsi *ctrl_vsi,
+			जोड़ ice_32b_rx_flex_desc *rx_desc);
+व्योम ice_flush_fdir_ctx(काष्ठा ice_pf *pf);
+#अन्यथा
+अटल अंतरभूत व्योम
+ice_vc_fdir_irq_handler(काष्ठा ice_vsi *ctrl_vsi, जोड़ ice_32b_rx_flex_desc *rx_desc) अणु पूर्ण
+अटल अंतरभूत व्योम ice_flush_fdir_ctx(काष्ठा ice_pf *pf) अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_PCI_IOV */
+#पूर्ण_अगर /* _ICE_VIRTCHNL_Fसूची_H_ */

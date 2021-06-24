@@ -1,16 +1,17 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Copyright (C) 2016 Maxime Ripard <maxime.ripard@free-electrons.com>
+ * Copyright (C) 2016 Maxime Ripard <maxime.ripard@मुक्त-electrons.com>
  * Copyright (C) 2017 Jonathan Liu <net147@gmail.com>
  */
 
-#include <linux/clk.h>
-#include <linux/i2c.h>
-#include <linux/iopoll.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/iopoll.h>
 
-#include "sun4i_hdmi.h"
+#समावेश "sun4i_hdmi.h"
 
-#define SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK ( \
+#घोषणा SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK ( \
 	SUN4I_HDMI_DDC_INT_STATUS_ILLEGAL_FIFO_OPERATION | \
 	SUN4I_HDMI_DDC_INT_STATUS_DDC_RX_FIFO_UNDERFLOW | \
 	SUN4I_HDMI_DDC_INT_STATUS_DDC_TX_FIFO_OVERFLOW | \
@@ -19,17 +20,17 @@
 	SUN4I_HDMI_DDC_INT_STATUS_BUS_ERROR \
 )
 
-/* FIFO request bit is set when FIFO level is above RX_THRESHOLD during read */
-#define RX_THRESHOLD SUN4I_HDMI_DDC_FIFO_CTRL_RX_THRES_MAX
+/* FIFO request bit is set when FIFO level is above RX_THRESHOLD during पढ़ो */
+#घोषणा RX_THRESHOLD SUN4I_HDMI_DDC_FIFO_CTRL_RX_THRES_MAX
 
-static int fifo_transfer(struct sun4i_hdmi *hdmi, u8 *buf, int len, bool read)
-{
+अटल पूर्णांक fअगरo_transfer(काष्ठा sun4i_hdmi *hdmi, u8 *buf, पूर्णांक len, bool पढ़ो)
+अणु
 	/*
-	 * 1 byte takes 9 clock cycles (8 bits + 1 ACK) = 90 us for 100 kHz
-	 * clock. As clock rate is fixed, just round it up to 100 us.
+	 * 1 byte takes 9 घड़ी cycles (8 bits + 1 ACK) = 90 us क्रम 100 kHz
+	 * घड़ी. As घड़ी rate is fixed, just round it up to 100 us.
 	 */
-	const unsigned long byte_time_ns = 100;
-	const u32 mask = SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK |
+	स्थिर अचिन्हित दीर्घ byte_समय_ns = 100;
+	स्थिर u32 mask = SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK |
 			 SUN4I_HDMI_DDC_INT_STATUS_FIFO_REQUEST |
 			 SUN4I_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE;
 	u32 reg;
@@ -37,56 +38,56 @@ static int fifo_transfer(struct sun4i_hdmi *hdmi, u8 *buf, int len, bool read)
 	 * If threshold is inclusive, then the FIFO may only have
 	 * RX_THRESHOLD number of bytes, instead of RX_THRESHOLD + 1.
 	 */
-	int read_len = RX_THRESHOLD +
-		(hdmi->variant->ddc_fifo_thres_incl ? 0 : 1);
+	पूर्णांक पढ़ो_len = RX_THRESHOLD +
+		(hdmi->variant->ddc_fअगरo_thres_incl ? 0 : 1);
 
 	/*
 	 * Limit transfer length by FIFO threshold or FIFO size.
-	 * For TX the threshold is for an empty FIFO.
+	 * For TX the threshold is क्रम an empty FIFO.
 	 */
-	len = min_t(int, len, read ? read_len : SUN4I_HDMI_DDC_FIFO_SIZE);
+	len = min_t(पूर्णांक, len, पढ़ो ? पढ़ो_len : SUN4I_HDMI_DDC_FIFO_SIZE);
 
 	/* Wait until error, FIFO request bit set or transfer complete */
-	if (regmap_field_read_poll_timeout(hdmi->field_ddc_int_status, reg,
-					   reg & mask, len * byte_time_ns,
+	अगर (regmap_field_पढ़ो_poll_समयout(hdmi->field_ddc_पूर्णांक_status, reg,
+					   reg & mask, len * byte_समय_ns,
 					   100000))
-		return -ETIMEDOUT;
+		वापस -ETIMEDOUT;
 
-	if (reg & SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK)
-		return -EIO;
+	अगर (reg & SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK)
+		वापस -EIO;
 
-	if (read)
-		readsb(hdmi->base + hdmi->variant->ddc_fifo_reg, buf, len);
-	else
-		writesb(hdmi->base + hdmi->variant->ddc_fifo_reg, buf, len);
+	अगर (पढ़ो)
+		पढ़ोsb(hdmi->base + hdmi->variant->ddc_fअगरo_reg, buf, len);
+	अन्यथा
+		ग_लिखोsb(hdmi->base + hdmi->variant->ddc_fअगरo_reg, buf, len);
 
-	/* Clear FIFO request bit by forcing a write to that bit */
-	regmap_field_force_write(hdmi->field_ddc_int_status,
+	/* Clear FIFO request bit by क्रमcing a ग_लिखो to that bit */
+	regmap_field_क्रमce_ग_लिखो(hdmi->field_ddc_पूर्णांक_status,
 				 SUN4I_HDMI_DDC_INT_STATUS_FIFO_REQUEST);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int xfer_msg(struct sun4i_hdmi *hdmi, struct i2c_msg *msg)
-{
-	int i, len;
+अटल पूर्णांक xfer_msg(काष्ठा sun4i_hdmi *hdmi, काष्ठा i2c_msg *msg)
+अणु
+	पूर्णांक i, len;
 	u32 reg;
 
 	/* Set FIFO direction */
-	if (hdmi->variant->ddc_fifo_has_dir) {
-		reg = readl(hdmi->base + SUN4I_HDMI_DDC_CTRL_REG);
-		reg &= ~SUN4I_HDMI_DDC_CTRL_FIFO_DIR_MASK;
+	अगर (hdmi->variant->ddc_fअगरo_has_dir) अणु
+		reg = पढ़ोl(hdmi->base + SUN4I_HDMI_DDC_CTRL_REG);
+		reg &= ~SUN4I_HDMI_DDC_CTRL_FIFO_सूची_MASK;
 		reg |= (msg->flags & I2C_M_RD) ?
-		       SUN4I_HDMI_DDC_CTRL_FIFO_DIR_READ :
-		       SUN4I_HDMI_DDC_CTRL_FIFO_DIR_WRITE;
-		writel(reg, hdmi->base + SUN4I_HDMI_DDC_CTRL_REG);
-	}
+		       SUN4I_HDMI_DDC_CTRL_FIFO_सूची_READ :
+		       SUN4I_HDMI_DDC_CTRL_FIFO_सूची_WRITE;
+		ग_लिखोl(reg, hdmi->base + SUN4I_HDMI_DDC_CTRL_REG);
+	पूर्ण
 
-	/* Clear address register (not cleared by soft reset) */
-	regmap_field_write(hdmi->field_ddc_addr_reg, 0);
+	/* Clear address रेजिस्टर (not cleared by soft reset) */
+	regmap_field_ग_लिखो(hdmi->field_ddc_addr_reg, 0);
 
 	/* Set I2C address */
-	regmap_field_write(hdmi->field_ddc_slave_addr, msg->addr);
+	regmap_field_ग_लिखो(hdmi->field_ddc_slave_addr, msg->addr);
 
 	/*
 	 * Set FIFO RX/TX thresholds and clear FIFO
@@ -94,224 +95,224 @@ static int xfer_msg(struct sun4i_hdmi *hdmi, struct i2c_msg *msg)
 	 * If threshold is inclusive, we can set the TX threshold to
 	 * 0 instead of 1.
 	 */
-	regmap_field_write(hdmi->field_ddc_fifo_tx_thres,
-			   hdmi->variant->ddc_fifo_thres_incl ? 0 : 1);
-	regmap_field_write(hdmi->field_ddc_fifo_rx_thres, RX_THRESHOLD);
-	regmap_field_write(hdmi->field_ddc_fifo_clear, 1);
-	if (regmap_field_read_poll_timeout(hdmi->field_ddc_fifo_clear,
+	regmap_field_ग_लिखो(hdmi->field_ddc_fअगरo_tx_thres,
+			   hdmi->variant->ddc_fअगरo_thres_incl ? 0 : 1);
+	regmap_field_ग_लिखो(hdmi->field_ddc_fअगरo_rx_thres, RX_THRESHOLD);
+	regmap_field_ग_लिखो(hdmi->field_ddc_fअगरo_clear, 1);
+	अगर (regmap_field_पढ़ो_poll_समयout(hdmi->field_ddc_fअगरo_clear,
 					   reg, !reg, 100, 2000))
-		return -EIO;
+		वापस -EIO;
 
 	/* Set transfer length */
-	regmap_field_write(hdmi->field_ddc_byte_count, msg->len);
+	regmap_field_ग_लिखो(hdmi->field_ddc_byte_count, msg->len);
 
 	/* Set command */
-	regmap_field_write(hdmi->field_ddc_cmd,
+	regmap_field_ग_लिखो(hdmi->field_ddc_cmd,
 			   msg->flags & I2C_M_RD ?
 			   SUN4I_HDMI_DDC_CMD_IMPLICIT_READ :
 			   SUN4I_HDMI_DDC_CMD_IMPLICIT_WRITE);
 
-	/* Clear interrupt status bits by forcing a write */
-	regmap_field_force_write(hdmi->field_ddc_int_status,
+	/* Clear पूर्णांकerrupt status bits by क्रमcing a ग_लिखो */
+	regmap_field_क्रमce_ग_लिखो(hdmi->field_ddc_पूर्णांक_status,
 				 SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK |
 				 SUN4I_HDMI_DDC_INT_STATUS_FIFO_REQUEST |
 				 SUN4I_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE);
 
 	/* Start command */
-	regmap_field_write(hdmi->field_ddc_start, 1);
+	regmap_field_ग_लिखो(hdmi->field_ddc_start, 1);
 
 	/* Transfer bytes */
-	for (i = 0; i < msg->len; i += len) {
-		len = fifo_transfer(hdmi, msg->buf + i, msg->len - i,
+	क्रम (i = 0; i < msg->len; i += len) अणु
+		len = fअगरo_transfer(hdmi, msg->buf + i, msg->len - i,
 				    msg->flags & I2C_M_RD);
-		if (len <= 0)
-			return len;
-	}
+		अगर (len <= 0)
+			वापस len;
+	पूर्ण
 
-	/* Wait for command to finish */
-	if (regmap_field_read_poll_timeout(hdmi->field_ddc_start,
+	/* Wait क्रम command to finish */
+	अगर (regmap_field_पढ़ो_poll_समयout(hdmi->field_ddc_start,
 					   reg, !reg, 100, 100000))
-		return -EIO;
+		वापस -EIO;
 
-	/* Check for errors */
-	regmap_field_read(hdmi->field_ddc_int_status, &reg);
-	if ((reg & SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK) ||
-	    !(reg & SUN4I_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE)) {
-		return -EIO;
-	}
+	/* Check क्रम errors */
+	regmap_field_पढ़ो(hdmi->field_ddc_पूर्णांक_status, &reg);
+	अगर ((reg & SUN4I_HDMI_DDC_INT_STATUS_ERROR_MASK) ||
+	    !(reg & SUN4I_HDMI_DDC_INT_STATUS_TRANSFER_COMPLETE)) अणु
+		वापस -EIO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sun4i_hdmi_i2c_xfer(struct i2c_adapter *adap,
-			       struct i2c_msg *msgs, int num)
-{
-	struct sun4i_hdmi *hdmi = i2c_get_adapdata(adap);
+अटल पूर्णांक sun4i_hdmi_i2c_xfer(काष्ठा i2c_adapter *adap,
+			       काष्ठा i2c_msg *msgs, पूर्णांक num)
+अणु
+	काष्ठा sun4i_hdmi *hdmi = i2c_get_adapdata(adap);
 	u32 reg;
-	int err, i, ret = num;
+	पूर्णांक err, i, ret = num;
 
-	for (i = 0; i < num; i++) {
-		if (!msgs[i].len)
-			return -EINVAL;
-		if (msgs[i].len > SUN4I_HDMI_DDC_BYTE_COUNT_MAX)
-			return -EINVAL;
-	}
+	क्रम (i = 0; i < num; i++) अणु
+		अगर (!msgs[i].len)
+			वापस -EINVAL;
+		अगर (msgs[i].len > SUN4I_HDMI_DDC_BYTE_COUNT_MAX)
+			वापस -EINVAL;
+	पूर्ण
 
-	/* DDC clock needs to be enabled for the module to work */
+	/* DDC घड़ी needs to be enabled क्रम the module to work */
 	clk_prepare_enable(hdmi->ddc_clk);
 	clk_set_rate(hdmi->ddc_clk, 100000);
 
 	/* Reset I2C controller */
-	regmap_field_write(hdmi->field_ddc_en, 1);
-	regmap_field_write(hdmi->field_ddc_reset, 1);
-	if (regmap_field_read_poll_timeout(hdmi->field_ddc_reset,
-					   reg, !reg, 100, 2000)) {
+	regmap_field_ग_लिखो(hdmi->field_ddc_en, 1);
+	regmap_field_ग_लिखो(hdmi->field_ddc_reset, 1);
+	अगर (regmap_field_पढ़ो_poll_समयout(hdmi->field_ddc_reset,
+					   reg, !reg, 100, 2000)) अणु
 		clk_disable_unprepare(hdmi->ddc_clk);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	regmap_field_write(hdmi->field_ddc_sck_en, 1);
-	regmap_field_write(hdmi->field_ddc_sda_en, 1);
+	regmap_field_ग_लिखो(hdmi->field_ddc_sck_en, 1);
+	regmap_field_ग_लिखो(hdmi->field_ddc_sda_en, 1);
 
-	for (i = 0; i < num; i++) {
+	क्रम (i = 0; i < num; i++) अणु
 		err = xfer_msg(hdmi, &msgs[i]);
-		if (err) {
+		अगर (err) अणु
 			ret = err;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	clk_disable_unprepare(hdmi->ddc_clk);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static u32 sun4i_hdmi_i2c_func(struct i2c_adapter *adap)
-{
-	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
-}
+अटल u32 sun4i_hdmi_i2c_func(काष्ठा i2c_adapter *adap)
+अणु
+	वापस I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
+पूर्ण
 
-static const struct i2c_algorithm sun4i_hdmi_i2c_algorithm = {
+अटल स्थिर काष्ठा i2c_algorithm sun4i_hdmi_i2c_algorithm = अणु
 	.master_xfer	= sun4i_hdmi_i2c_xfer,
 	.functionality	= sun4i_hdmi_i2c_func,
-};
+पूर्ण;
 
-static int sun4i_hdmi_init_regmap_fields(struct sun4i_hdmi *hdmi)
-{
+अटल पूर्णांक sun4i_hdmi_init_regmap_fields(काष्ठा sun4i_hdmi *hdmi)
+अणु
 	hdmi->field_ddc_en =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
 					hdmi->variant->field_ddc_en);
-	if (IS_ERR(hdmi->field_ddc_en))
-		return PTR_ERR(hdmi->field_ddc_en);
+	अगर (IS_ERR(hdmi->field_ddc_en))
+		वापस PTR_ERR(hdmi->field_ddc_en);
 
 	hdmi->field_ddc_start =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
 					hdmi->variant->field_ddc_start);
-	if (IS_ERR(hdmi->field_ddc_start))
-		return PTR_ERR(hdmi->field_ddc_start);
+	अगर (IS_ERR(hdmi->field_ddc_start))
+		वापस PTR_ERR(hdmi->field_ddc_start);
 
 	hdmi->field_ddc_reset =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
 					hdmi->variant->field_ddc_reset);
-	if (IS_ERR(hdmi->field_ddc_reset))
-		return PTR_ERR(hdmi->field_ddc_reset);
+	अगर (IS_ERR(hdmi->field_ddc_reset))
+		वापस PTR_ERR(hdmi->field_ddc_reset);
 
 	hdmi->field_ddc_addr_reg =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
 					hdmi->variant->field_ddc_addr_reg);
-	if (IS_ERR(hdmi->field_ddc_addr_reg))
-		return PTR_ERR(hdmi->field_ddc_addr_reg);
+	अगर (IS_ERR(hdmi->field_ddc_addr_reg))
+		वापस PTR_ERR(hdmi->field_ddc_addr_reg);
 
 	hdmi->field_ddc_slave_addr =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
 					hdmi->variant->field_ddc_slave_addr);
-	if (IS_ERR(hdmi->field_ddc_slave_addr))
-		return PTR_ERR(hdmi->field_ddc_slave_addr);
+	अगर (IS_ERR(hdmi->field_ddc_slave_addr))
+		वापस PTR_ERR(hdmi->field_ddc_slave_addr);
 
-	hdmi->field_ddc_int_mask =
+	hdmi->field_ddc_पूर्णांक_mask =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
-					hdmi->variant->field_ddc_int_mask);
-	if (IS_ERR(hdmi->field_ddc_int_mask))
-		return PTR_ERR(hdmi->field_ddc_int_mask);
+					hdmi->variant->field_ddc_पूर्णांक_mask);
+	अगर (IS_ERR(hdmi->field_ddc_पूर्णांक_mask))
+		वापस PTR_ERR(hdmi->field_ddc_पूर्णांक_mask);
 
-	hdmi->field_ddc_int_status =
+	hdmi->field_ddc_पूर्णांक_status =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
-					hdmi->variant->field_ddc_int_status);
-	if (IS_ERR(hdmi->field_ddc_int_status))
-		return PTR_ERR(hdmi->field_ddc_int_status);
+					hdmi->variant->field_ddc_पूर्णांक_status);
+	अगर (IS_ERR(hdmi->field_ddc_पूर्णांक_status))
+		वापस PTR_ERR(hdmi->field_ddc_पूर्णांक_status);
 
-	hdmi->field_ddc_fifo_clear =
+	hdmi->field_ddc_fअगरo_clear =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
-					hdmi->variant->field_ddc_fifo_clear);
-	if (IS_ERR(hdmi->field_ddc_fifo_clear))
-		return PTR_ERR(hdmi->field_ddc_fifo_clear);
+					hdmi->variant->field_ddc_fअगरo_clear);
+	अगर (IS_ERR(hdmi->field_ddc_fअगरo_clear))
+		वापस PTR_ERR(hdmi->field_ddc_fअगरo_clear);
 
-	hdmi->field_ddc_fifo_rx_thres =
+	hdmi->field_ddc_fअगरo_rx_thres =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
-					hdmi->variant->field_ddc_fifo_rx_thres);
-	if (IS_ERR(hdmi->field_ddc_fifo_rx_thres))
-		return PTR_ERR(hdmi->field_ddc_fifo_rx_thres);
+					hdmi->variant->field_ddc_fअगरo_rx_thres);
+	अगर (IS_ERR(hdmi->field_ddc_fअगरo_rx_thres))
+		वापस PTR_ERR(hdmi->field_ddc_fअगरo_rx_thres);
 
-	hdmi->field_ddc_fifo_tx_thres =
+	hdmi->field_ddc_fअगरo_tx_thres =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
-					hdmi->variant->field_ddc_fifo_tx_thres);
-	if (IS_ERR(hdmi->field_ddc_fifo_tx_thres))
-		return PTR_ERR(hdmi->field_ddc_fifo_tx_thres);
+					hdmi->variant->field_ddc_fअगरo_tx_thres);
+	अगर (IS_ERR(hdmi->field_ddc_fअगरo_tx_thres))
+		वापस PTR_ERR(hdmi->field_ddc_fअगरo_tx_thres);
 
 	hdmi->field_ddc_byte_count =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
 					hdmi->variant->field_ddc_byte_count);
-	if (IS_ERR(hdmi->field_ddc_byte_count))
-		return PTR_ERR(hdmi->field_ddc_byte_count);
+	अगर (IS_ERR(hdmi->field_ddc_byte_count))
+		वापस PTR_ERR(hdmi->field_ddc_byte_count);
 
 	hdmi->field_ddc_cmd =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
 					hdmi->variant->field_ddc_cmd);
-	if (IS_ERR(hdmi->field_ddc_cmd))
-		return PTR_ERR(hdmi->field_ddc_cmd);
+	अगर (IS_ERR(hdmi->field_ddc_cmd))
+		वापस PTR_ERR(hdmi->field_ddc_cmd);
 
 	hdmi->field_ddc_sda_en =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
 					hdmi->variant->field_ddc_sda_en);
-	if (IS_ERR(hdmi->field_ddc_sda_en))
-		return PTR_ERR(hdmi->field_ddc_sda_en);
+	अगर (IS_ERR(hdmi->field_ddc_sda_en))
+		वापस PTR_ERR(hdmi->field_ddc_sda_en);
 
 	hdmi->field_ddc_sck_en =
 		devm_regmap_field_alloc(hdmi->dev, hdmi->regmap,
 					hdmi->variant->field_ddc_sck_en);
-	if (IS_ERR(hdmi->field_ddc_sck_en))
-		return PTR_ERR(hdmi->field_ddc_sck_en);
+	अगर (IS_ERR(hdmi->field_ddc_sck_en))
+		वापस PTR_ERR(hdmi->field_ddc_sck_en);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int sun4i_hdmi_i2c_create(struct device *dev, struct sun4i_hdmi *hdmi)
-{
-	struct i2c_adapter *adap;
-	int ret = 0;
+पूर्णांक sun4i_hdmi_i2c_create(काष्ठा device *dev, काष्ठा sun4i_hdmi *hdmi)
+अणु
+	काष्ठा i2c_adapter *adap;
+	पूर्णांक ret = 0;
 
 	ret = sun4i_ddc_create(hdmi, hdmi->ddc_parent_clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = sun4i_hdmi_init_regmap_fields(hdmi);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	adap = devm_kzalloc(dev, sizeof(*adap), GFP_KERNEL);
-	if (!adap)
-		return -ENOMEM;
+	adap = devm_kzalloc(dev, माप(*adap), GFP_KERNEL);
+	अगर (!adap)
+		वापस -ENOMEM;
 
 	adap->owner = THIS_MODULE;
 	adap->class = I2C_CLASS_DDC;
 	adap->algo = &sun4i_hdmi_i2c_algorithm;
-	strlcpy(adap->name, "sun4i_hdmi_i2c adapter", sizeof(adap->name));
+	strlcpy(adap->name, "sun4i_hdmi_i2c adapter", माप(adap->name));
 	i2c_set_adapdata(adap, hdmi);
 
 	ret = i2c_add_adapter(adap);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	hdmi->i2c = adap;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

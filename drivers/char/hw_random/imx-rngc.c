@@ -1,368 +1,369 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * RNG driver for Freescale RNGC
+ * RNG driver क्रम Freescale RNGC
  *
  * Copyright (C) 2008-2012 Freescale Semiconductor, Inc.
  * Copyright (C) 2017 Martin Kaiser <martin@kaiser.cx>
  */
 
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/clk.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/interrupt.h>
-#include <linux/hw_random.h>
-#include <linux/completion.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/completion.h>
+#समावेश <linux/पन.स>
 
-#define RNGC_VER_ID			0x0000
-#define RNGC_COMMAND			0x0004
-#define RNGC_CONTROL			0x0008
-#define RNGC_STATUS			0x000C
-#define RNGC_ERROR			0x0010
-#define RNGC_FIFO			0x0014
+#घोषणा RNGC_VER_ID			0x0000
+#घोषणा RNGC_COMMAND			0x0004
+#घोषणा RNGC_CONTROL			0x0008
+#घोषणा RNGC_STATUS			0x000C
+#घोषणा RNGC_ERROR			0x0010
+#घोषणा RNGC_FIFO			0x0014
 
-/* the fields in the ver id register */
-#define RNGC_TYPE_SHIFT		28
-#define RNGC_VER_MAJ_SHIFT		8
+/* the fields in the ver id रेजिस्टर */
+#घोषणा RNGC_TYPE_SHIFT		28
+#घोषणा RNGC_VER_MAJ_SHIFT		8
 
 /* the rng_type field */
-#define RNGC_TYPE_RNGB			0x1
-#define RNGC_TYPE_RNGC			0x2
+#घोषणा RNGC_TYPE_RNGB			0x1
+#घोषणा RNGC_TYPE_RNGC			0x2
 
 
-#define RNGC_CMD_CLR_ERR		0x00000020
-#define RNGC_CMD_CLR_INT		0x00000010
-#define RNGC_CMD_SEED			0x00000002
-#define RNGC_CMD_SELF_TEST		0x00000001
+#घोषणा RNGC_CMD_CLR_ERR		0x00000020
+#घोषणा RNGC_CMD_CLR_INT		0x00000010
+#घोषणा RNGC_CMD_SEED			0x00000002
+#घोषणा RNGC_CMD_SELF_TEST		0x00000001
 
-#define RNGC_CTRL_MASK_ERROR		0x00000040
-#define RNGC_CTRL_MASK_DONE		0x00000020
-#define RNGC_CTRL_AUTO_SEED		0x00000010
+#घोषणा RNGC_CTRL_MASK_ERROR		0x00000040
+#घोषणा RNGC_CTRL_MASK_DONE		0x00000020
+#घोषणा RNGC_CTRL_AUTO_SEED		0x00000010
 
-#define RNGC_STATUS_ERROR		0x00010000
-#define RNGC_STATUS_FIFO_LEVEL_MASK	0x00000f00
-#define RNGC_STATUS_FIFO_LEVEL_SHIFT	8
-#define RNGC_STATUS_SEED_DONE		0x00000020
-#define RNGC_STATUS_ST_DONE		0x00000010
+#घोषणा RNGC_STATUS_ERROR		0x00010000
+#घोषणा RNGC_STATUS_FIFO_LEVEL_MASK	0x00000f00
+#घोषणा RNGC_STATUS_FIFO_LEVEL_SHIFT	8
+#घोषणा RNGC_STATUS_SEED_DONE		0x00000020
+#घोषणा RNGC_STATUS_ST_DONE		0x00000010
 
-#define RNGC_ERROR_STATUS_STAT_ERR	0x00000008
+#घोषणा RNGC_ERROR_STATUS_STAT_ERR	0x00000008
 
-#define RNGC_TIMEOUT  3000 /* 3 sec */
+#घोषणा RNGC_TIMEOUT  3000 /* 3 sec */
 
 
-static bool self_test = true;
+अटल bool self_test = true;
 module_param(self_test, bool, 0);
 
-struct imx_rngc {
-	struct device		*dev;
-	struct clk		*clk;
-	void __iomem		*base;
-	struct hwrng		rng;
-	struct completion	rng_op_done;
+काष्ठा imx_rngc अणु
+	काष्ठा device		*dev;
+	काष्ठा clk		*clk;
+	व्योम __iomem		*base;
+	काष्ठा hwrng		rng;
+	काष्ठा completion	rng_op_करोne;
 	/*
-	 * err_reg is written only by the irq handler and read only
-	 * when interrupts are masked, we need no spinlock
+	 * err_reg is written only by the irq handler and पढ़ो only
+	 * when पूर्णांकerrupts are masked, we need no spinlock
 	 */
 	u32			err_reg;
-};
+पूर्ण;
 
 
-static inline void imx_rngc_irq_mask_clear(struct imx_rngc *rngc)
-{
+अटल अंतरभूत व्योम imx_rngc_irq_mask_clear(काष्ठा imx_rngc *rngc)
+अणु
 	u32 ctrl, cmd;
 
-	/* mask interrupts */
-	ctrl = readl(rngc->base + RNGC_CONTROL);
+	/* mask पूर्णांकerrupts */
+	ctrl = पढ़ोl(rngc->base + RNGC_CONTROL);
 	ctrl |= RNGC_CTRL_MASK_DONE | RNGC_CTRL_MASK_ERROR;
-	writel(ctrl, rngc->base + RNGC_CONTROL);
+	ग_लिखोl(ctrl, rngc->base + RNGC_CONTROL);
 
 	/*
-	 * CLR_INT clears the interrupt only if there's no error
-	 * CLR_ERR clear the interrupt and the error register if there
+	 * CLR_INT clears the पूर्णांकerrupt only अगर there's no error
+	 * CLR_ERR clear the पूर्णांकerrupt and the error रेजिस्टर अगर there
 	 * is an error
 	 */
-	cmd = readl(rngc->base + RNGC_COMMAND);
+	cmd = पढ़ोl(rngc->base + RNGC_COMMAND);
 	cmd |= RNGC_CMD_CLR_INT | RNGC_CMD_CLR_ERR;
-	writel(cmd, rngc->base + RNGC_COMMAND);
-}
+	ग_लिखोl(cmd, rngc->base + RNGC_COMMAND);
+पूर्ण
 
-static inline void imx_rngc_irq_unmask(struct imx_rngc *rngc)
-{
+अटल अंतरभूत व्योम imx_rngc_irq_unmask(काष्ठा imx_rngc *rngc)
+अणु
 	u32 ctrl;
 
-	ctrl = readl(rngc->base + RNGC_CONTROL);
+	ctrl = पढ़ोl(rngc->base + RNGC_CONTROL);
 	ctrl &= ~(RNGC_CTRL_MASK_DONE | RNGC_CTRL_MASK_ERROR);
-	writel(ctrl, rngc->base + RNGC_CONTROL);
-}
+	ग_लिखोl(ctrl, rngc->base + RNGC_CONTROL);
+पूर्ण
 
-static int imx_rngc_self_test(struct imx_rngc *rngc)
-{
+अटल पूर्णांक imx_rngc_self_test(काष्ठा imx_rngc *rngc)
+अणु
 	u32 cmd;
-	int ret;
+	पूर्णांक ret;
 
 	imx_rngc_irq_unmask(rngc);
 
 	/* run self test */
-	cmd = readl(rngc->base + RNGC_COMMAND);
-	writel(cmd | RNGC_CMD_SELF_TEST, rngc->base + RNGC_COMMAND);
+	cmd = पढ़ोl(rngc->base + RNGC_COMMAND);
+	ग_लिखोl(cmd | RNGC_CMD_SELF_TEST, rngc->base + RNGC_COMMAND);
 
-	ret = wait_for_completion_timeout(&rngc->rng_op_done, RNGC_TIMEOUT);
+	ret = रुको_क्रम_completion_समयout(&rngc->rng_op_करोne, RNGC_TIMEOUT);
 	imx_rngc_irq_mask_clear(rngc);
-	if (!ret)
-		return -ETIMEDOUT;
+	अगर (!ret)
+		वापस -ETIMEDOUT;
 
-	return rngc->err_reg ? -EIO : 0;
-}
+	वापस rngc->err_reg ? -EIO : 0;
+पूर्ण
 
-static int imx_rngc_read(struct hwrng *rng, void *data, size_t max, bool wait)
-{
-	struct imx_rngc *rngc = container_of(rng, struct imx_rngc, rng);
-	unsigned int status;
-	unsigned int level;
-	int retval = 0;
+अटल पूर्णांक imx_rngc_पढ़ो(काष्ठा hwrng *rng, व्योम *data, माप_प्रकार max, bool रुको)
+अणु
+	काष्ठा imx_rngc *rngc = container_of(rng, काष्ठा imx_rngc, rng);
+	अचिन्हित पूर्णांक status;
+	अचिन्हित पूर्णांक level;
+	पूर्णांक retval = 0;
 
-	while (max >= sizeof(u32)) {
-		status = readl(rngc->base + RNGC_STATUS);
+	जबतक (max >= माप(u32)) अणु
+		status = पढ़ोl(rngc->base + RNGC_STATUS);
 
-		/* is there some error while reading this random number? */
-		if (status & RNGC_STATUS_ERROR)
-			break;
+		/* is there some error जबतक पढ़ोing this अक्रमom number? */
+		अगर (status & RNGC_STATUS_ERROR)
+			अवरोध;
 
-		/* how many random numbers are in FIFO? [0-16] */
+		/* how many अक्रमom numbers are in FIFO? [0-16] */
 		level = (status & RNGC_STATUS_FIFO_LEVEL_MASK) >>
 			RNGC_STATUS_FIFO_LEVEL_SHIFT;
 
-		if (level) {
-			/* retrieve a random number from FIFO */
-			*(u32 *)data = readl(rngc->base + RNGC_FIFO);
+		अगर (level) अणु
+			/* retrieve a अक्रमom number from FIFO */
+			*(u32 *)data = पढ़ोl(rngc->base + RNGC_FIFO);
 
-			retval += sizeof(u32);
-			data += sizeof(u32);
-			max -= sizeof(u32);
-		}
-	}
+			retval += माप(u32);
+			data += माप(u32);
+			max -= माप(u32);
+		पूर्ण
+	पूर्ण
 
-	return retval ? retval : -EIO;
-}
+	वापस retval ? retval : -EIO;
+पूर्ण
 
-static irqreturn_t imx_rngc_irq(int irq, void *priv)
-{
-	struct imx_rngc *rngc = (struct imx_rngc *)priv;
+अटल irqवापस_t imx_rngc_irq(पूर्णांक irq, व्योम *priv)
+अणु
+	काष्ठा imx_rngc *rngc = (काष्ठा imx_rngc *)priv;
 	u32 status;
 
 	/*
-	 * clearing the interrupt will also clear the error register
-	 * read error and status before clearing
+	 * clearing the पूर्णांकerrupt will also clear the error रेजिस्टर
+	 * पढ़ो error and status beक्रमe clearing
 	 */
-	status = readl(rngc->base + RNGC_STATUS);
-	rngc->err_reg = readl(rngc->base + RNGC_ERROR);
+	status = पढ़ोl(rngc->base + RNGC_STATUS);
+	rngc->err_reg = पढ़ोl(rngc->base + RNGC_ERROR);
 
 	imx_rngc_irq_mask_clear(rngc);
 
-	if (status & (RNGC_STATUS_SEED_DONE | RNGC_STATUS_ST_DONE))
-		complete(&rngc->rng_op_done);
+	अगर (status & (RNGC_STATUS_SEED_DONE | RNGC_STATUS_ST_DONE))
+		complete(&rngc->rng_op_करोne);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int imx_rngc_init(struct hwrng *rng)
-{
-	struct imx_rngc *rngc = container_of(rng, struct imx_rngc, rng);
+अटल पूर्णांक imx_rngc_init(काष्ठा hwrng *rng)
+अणु
+	काष्ठा imx_rngc *rngc = container_of(rng, काष्ठा imx_rngc, rng);
 	u32 cmd, ctrl;
-	int ret;
+	पूर्णांक ret;
 
 	/* clear error */
-	cmd = readl(rngc->base + RNGC_COMMAND);
-	writel(cmd | RNGC_CMD_CLR_ERR, rngc->base + RNGC_COMMAND);
+	cmd = पढ़ोl(rngc->base + RNGC_COMMAND);
+	ग_लिखोl(cmd | RNGC_CMD_CLR_ERR, rngc->base + RNGC_COMMAND);
 
 	imx_rngc_irq_unmask(rngc);
 
-	/* create seed, repeat while there is some statistical error */
-	do {
+	/* create seed, repeat जबतक there is some statistical error */
+	करो अणु
 		/* seed creation */
-		cmd = readl(rngc->base + RNGC_COMMAND);
-		writel(cmd | RNGC_CMD_SEED, rngc->base + RNGC_COMMAND);
+		cmd = पढ़ोl(rngc->base + RNGC_COMMAND);
+		ग_लिखोl(cmd | RNGC_CMD_SEED, rngc->base + RNGC_COMMAND);
 
-		ret = wait_for_completion_timeout(&rngc->rng_op_done,
+		ret = रुको_क्रम_completion_समयout(&rngc->rng_op_करोne,
 				RNGC_TIMEOUT);
 
-		if (!ret) {
+		अगर (!ret) अणु
 			ret = -ETIMEDOUT;
-			goto err;
-		}
+			जाओ err;
+		पूर्ण
 
-	} while (rngc->err_reg == RNGC_ERROR_STATUS_STAT_ERR);
+	पूर्ण जबतक (rngc->err_reg == RNGC_ERROR_STATUS_STAT_ERR);
 
-	if (rngc->err_reg) {
+	अगर (rngc->err_reg) अणु
 		ret = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	/*
-	 * enable automatic seeding, the rngc creates a new seed automatically
-	 * after serving 2^20 random 160-bit words
+	 * enable स्वतःmatic seeding, the rngc creates a new seed स्वतःmatically
+	 * after serving 2^20 अक्रमom 160-bit words
 	 */
-	ctrl = readl(rngc->base + RNGC_CONTROL);
+	ctrl = पढ़ोl(rngc->base + RNGC_CONTROL);
 	ctrl |= RNGC_CTRL_AUTO_SEED;
-	writel(ctrl, rngc->base + RNGC_CONTROL);
+	ग_लिखोl(ctrl, rngc->base + RNGC_CONTROL);
 
 	/*
-	 * if initialisation was successful, we keep the interrupt
+	 * अगर initialisation was successful, we keep the पूर्णांकerrupt
 	 * unmasked until imx_rngc_cleanup is called
-	 * we mask the interrupt ourselves if we return an error
+	 * we mask the पूर्णांकerrupt ourselves अगर we वापस an error
 	 */
-	return 0;
+	वापस 0;
 
 err:
 	imx_rngc_irq_mask_clear(rngc);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void imx_rngc_cleanup(struct hwrng *rng)
-{
-	struct imx_rngc *rngc = container_of(rng, struct imx_rngc, rng);
+अटल व्योम imx_rngc_cleanup(काष्ठा hwrng *rng)
+अणु
+	काष्ठा imx_rngc *rngc = container_of(rng, काष्ठा imx_rngc, rng);
 
 	imx_rngc_irq_mask_clear(rngc);
-}
+पूर्ण
 
-static int imx_rngc_probe(struct platform_device *pdev)
-{
-	struct imx_rngc *rngc;
-	int ret;
-	int irq;
+अटल पूर्णांक imx_rngc_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा imx_rngc *rngc;
+	पूर्णांक ret;
+	पूर्णांक irq;
 	u32 ver_id;
 	u8  rng_type;
 
-	rngc = devm_kzalloc(&pdev->dev, sizeof(*rngc), GFP_KERNEL);
-	if (!rngc)
-		return -ENOMEM;
+	rngc = devm_kzalloc(&pdev->dev, माप(*rngc), GFP_KERNEL);
+	अगर (!rngc)
+		वापस -ENOMEM;
 
-	rngc->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(rngc->base))
-		return PTR_ERR(rngc->base);
+	rngc->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(rngc->base))
+		वापस PTR_ERR(rngc->base);
 
-	rngc->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(rngc->clk)) {
+	rngc->clk = devm_clk_get(&pdev->dev, शून्य);
+	अगर (IS_ERR(rngc->clk)) अणु
 		dev_err(&pdev->dev, "Can not get rng_clk\n");
-		return PTR_ERR(rngc->clk);
-	}
+		वापस PTR_ERR(rngc->clk);
+	पूर्ण
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return irq;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस irq;
 
 	ret = clk_prepare_enable(rngc->clk);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ver_id = readl(rngc->base + RNGC_VER_ID);
+	ver_id = पढ़ोl(rngc->base + RNGC_VER_ID);
 	rng_type = ver_id >> RNGC_TYPE_SHIFT;
 	/*
-	 * This driver supports only RNGC and RNGB. (There's a different
-	 * driver for RNGA.)
+	 * This driver supports only RNGC and RNGB. (There's a dअगरferent
+	 * driver क्रम RNGA.)
 	 */
-	if (rng_type != RNGC_TYPE_RNGC && rng_type != RNGC_TYPE_RNGB) {
+	अगर (rng_type != RNGC_TYPE_RNGC && rng_type != RNGC_TYPE_RNGB) अणु
 		ret = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	ret = devm_request_irq(&pdev->dev,
-			irq, imx_rngc_irq, 0, pdev->name, (void *)rngc);
-	if (ret) {
+			irq, imx_rngc_irq, 0, pdev->name, (व्योम *)rngc);
+	अगर (ret) अणु
 		dev_err(rngc->dev, "Can't get interrupt working.\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	init_completion(&rngc->rng_op_done);
+	init_completion(&rngc->rng_op_करोne);
 
 	rngc->rng.name = pdev->name;
 	rngc->rng.init = imx_rngc_init;
-	rngc->rng.read = imx_rngc_read;
+	rngc->rng.पढ़ो = imx_rngc_पढ़ो;
 	rngc->rng.cleanup = imx_rngc_cleanup;
 	rngc->rng.quality = 19;
 
 	rngc->dev = &pdev->dev;
-	platform_set_drvdata(pdev, rngc);
+	platक्रमm_set_drvdata(pdev, rngc);
 
 	imx_rngc_irq_mask_clear(rngc);
 
-	if (self_test) {
+	अगर (self_test) अणु
 		ret = imx_rngc_self_test(rngc);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(rngc->dev, "self test failed\n");
-			goto err;
-		}
-	}
+			जाओ err;
+		पूर्ण
+	पूर्ण
 
-	ret = hwrng_register(&rngc->rng);
-	if (ret) {
+	ret = hwrng_रेजिस्टर(&rngc->rng);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "hwrng registration failed\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	dev_info(&pdev->dev,
 		"Freescale RNG%c registered (HW revision %d.%02d)\n",
 		rng_type == RNGC_TYPE_RNGB ? 'B' : 'C',
 		(ver_id >> RNGC_VER_MAJ_SHIFT) & 0xff, ver_id & 0xff);
-	return 0;
+	वापस 0;
 
 err:
 	clk_disable_unprepare(rngc->clk);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int __exit imx_rngc_remove(struct platform_device *pdev)
-{
-	struct imx_rngc *rngc = platform_get_drvdata(pdev);
+अटल पूर्णांक __निकास imx_rngc_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा imx_rngc *rngc = platक्रमm_get_drvdata(pdev);
 
-	hwrng_unregister(&rngc->rng);
-
-	clk_disable_unprepare(rngc->clk);
-
-	return 0;
-}
-
-static int __maybe_unused imx_rngc_suspend(struct device *dev)
-{
-	struct imx_rngc *rngc = dev_get_drvdata(dev);
+	hwrng_unरेजिस्टर(&rngc->rng);
 
 	clk_disable_unprepare(rngc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __maybe_unused imx_rngc_resume(struct device *dev)
-{
-	struct imx_rngc *rngc = dev_get_drvdata(dev);
+अटल पूर्णांक __maybe_unused imx_rngc_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा imx_rngc *rngc = dev_get_drvdata(dev);
+
+	clk_disable_unprepare(rngc->clk);
+
+	वापस 0;
+पूर्ण
+
+अटल पूर्णांक __maybe_unused imx_rngc_resume(काष्ठा device *dev)
+अणु
+	काष्ठा imx_rngc *rngc = dev_get_drvdata(dev);
 
 	clk_prepare_enable(rngc->clk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static SIMPLE_DEV_PM_OPS(imx_rngc_pm_ops, imx_rngc_suspend, imx_rngc_resume);
+अटल SIMPLE_DEV_PM_OPS(imx_rngc_pm_ops, imx_rngc_suspend, imx_rngc_resume);
 
-static const struct of_device_id imx_rngc_dt_ids[] = {
-	{ .compatible = "fsl,imx25-rngb", .data = NULL, },
-	{ /* sentinel */ }
-};
+अटल स्थिर काष्ठा of_device_id imx_rngc_dt_ids[] = अणु
+	अणु .compatible = "fsl,imx25-rngb", .data = शून्य, पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, imx_rngc_dt_ids);
 
-static struct platform_driver imx_rngc_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver imx_rngc_driver = अणु
+	.driver = अणु
 		.name = "imx_rngc",
 		.pm = &imx_rngc_pm_ops,
 		.of_match_table = imx_rngc_dt_ids,
-	},
-	.remove = __exit_p(imx_rngc_remove),
-};
+	पूर्ण,
+	.हटाओ = __निकास_p(imx_rngc_हटाओ),
+पूर्ण;
 
-module_platform_driver_probe(imx_rngc_driver, imx_rngc_probe);
+module_platक्रमm_driver_probe(imx_rngc_driver, imx_rngc_probe);
 
 MODULE_AUTHOR("Freescale Semiconductor, Inc.");
 MODULE_DESCRIPTION("H/W RNGC driver for i.MX");

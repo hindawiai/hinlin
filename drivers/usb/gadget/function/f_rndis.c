@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * f_rndis.c -- RNDIS link function driver
  *
@@ -9,169 +10,169 @@
  *                    Author: Michal Nazarewicz (mina86@mina86.com)
  */
 
-/* #define VERBOSE_DEBUG */
+/* #घोषणा VERBOSE_DEBUG */
 
-#include <linux/slab.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/device.h>
-#include <linux/etherdevice.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/device.h>
+#समावेश <linux/etherdevice.h>
 
-#include <linux/atomic.h>
+#समावेश <linux/atomic.h>
 
-#include "u_ether.h"
-#include "u_ether_configfs.h"
-#include "u_rndis.h"
-#include "rndis.h"
-#include "configfs.h"
+#समावेश "u_ether.h"
+#समावेश "u_ether_configfs.h"
+#समावेश "u_rndis.h"
+#समावेश "rndis.h"
+#समावेश "configfs.h"
 
 /*
  * This function is an RNDIS Ethernet port -- a Microsoft protocol that's
  * been promoted instead of the standard CDC Ethernet.  The published RNDIS
  * spec is ambiguous, incomplete, and needlessly complex.  Variants such as
- * ActiveSync have even worse status in terms of specification.
+ * ActiveSync have even worse status in terms of specअगरication.
  *
- * In short:  it's a protocol controlled by (and for) Microsoft, not for an
- * Open ecosystem or markets.  Linux supports it *only* because Microsoft
- * doesn't support the CDC Ethernet standard.
+ * In लघु:  it's a protocol controlled by (and क्रम) Microsoft, not क्रम an
+ * Open ecoप्रणाली or markets.  Linux supports it *only* because Microsoft
+ * करोesn't support the CDC Ethernet standard.
  *
  * The RNDIS data transfer model is complex, with multiple Ethernet packets
  * per USB message, and out of band data.  The control model is built around
  * what's essentially an "RNDIS RPC" protocol.  It's all wrapped in a CDC ACM
  * (modem, not Ethernet) veneer, with those ACM descriptors being entirely
  * useless (they're ignored).  RNDIS expects to be the only function in its
- * configuration, so it's no real help if you need composite devices; and
+ * configuration, so it's no real help अगर you need composite devices; and
  * it expects to be the first configuration too.
  *
- * There is a single technical advantage of RNDIS over CDC Ethernet, if you
- * discount the fluff that its RPC can be made to deliver: it doesn't need
- * a NOP altsetting for the data interface.  That lets it work on some of the
+ * There is a single technical advantage of RNDIS over CDC Ethernet, अगर you
+ * discount the fluff that its RPC can be made to deliver: it करोesn't need
+ * a NOP altsetting क्रम the data पूर्णांकerface.  That lets it work on some of the
  * "so smart it's stupid" hardware which takes over configuration changes
  * from the software, and adds restrictions like "no altsettings".
  *
- * Unfortunately MSFT's RNDIS drivers are buggy.  They hang or oops, and
- * have all sorts of contrary-to-specification oddities that can prevent
+ * Unक्रमtunately MSFT's RNDIS drivers are buggy.  They hang or oops, and
+ * have all sorts of contrary-to-specअगरication oddities that can prevent
  * them from working sanely.  Since bugfixes (or accurate specs, letting
  * Linux work around those bugs) are unlikely to ever come from MSFT, you
- * may want to avoid using RNDIS on purely operational grounds.
+ * may want to aव्योम using RNDIS on purely operational grounds.
  *
- * Omissions from the RNDIS 1.0 specification include:
+ * Omissions from the RNDIS 1.0 specअगरication include:
  *
  *   - Power management ... references data that's scattered around lots
- *     of other documentation, which is incorrect/incomplete there too.
+ *     of other करोcumentation, which is incorrect/incomplete there too.
  *
- *   - There are various undocumented protocol requirements, like the need
+ *   - There are various unकरोcumented protocol requirements, like the need
  *     to send garbage in some control-OUT messages.
  *
- *   - MS-Windows drivers sometimes emit undocumented requests.
+ *   - MS-Winकरोws drivers someबार emit unकरोcumented requests.
  */
 
-struct f_rndis {
-	struct gether			port;
+काष्ठा f_rndis अणु
+	काष्ठा gether			port;
 	u8				ctrl_id, data_id;
 	u8				ethaddr[ETH_ALEN];
-	u32				vendorID;
-	const char			*manufacturer;
-	struct rndis_params		*params;
+	u32				venकरोrID;
+	स्थिर अक्षर			*manufacturer;
+	काष्ठा rndis_params		*params;
 
-	struct usb_ep			*notify;
-	struct usb_request		*notify_req;
-	atomic_t			notify_count;
-};
+	काष्ठा usb_ep			*notअगरy;
+	काष्ठा usb_request		*notअगरy_req;
+	atomic_t			notअगरy_count;
+पूर्ण;
 
-static inline struct f_rndis *func_to_rndis(struct usb_function *f)
-{
-	return container_of(f, struct f_rndis, port.func);
-}
+अटल अंतरभूत काष्ठा f_rndis *func_to_rndis(काष्ठा usb_function *f)
+अणु
+	वापस container_of(f, काष्ठा f_rndis, port.func);
+पूर्ण
 
 /* peak (theoretical) bulk transfer rate in bits-per-second */
-static unsigned int bitrate(struct usb_gadget *g)
-{
-	if (gadget_is_superspeed(g) && g->speed >= USB_SPEED_SUPER_PLUS)
-		return 4250000000U;
-	if (gadget_is_superspeed(g) && g->speed == USB_SPEED_SUPER)
-		return 3750000000U;
-	else if (gadget_is_dualspeed(g) && g->speed == USB_SPEED_HIGH)
-		return 13 * 512 * 8 * 1000 * 8;
-	else
-		return 19 * 64 * 1 * 1000 * 8;
-}
+अटल अचिन्हित पूर्णांक bitrate(काष्ठा usb_gadget *g)
+अणु
+	अगर (gadget_is_superspeed(g) && g->speed >= USB_SPEED_SUPER_PLUS)
+		वापस 4250000000U;
+	अगर (gadget_is_superspeed(g) && g->speed == USB_SPEED_SUPER)
+		वापस 3750000000U;
+	अन्यथा अगर (gadget_is_dualspeed(g) && g->speed == USB_SPEED_HIGH)
+		वापस 13 * 512 * 8 * 1000 * 8;
+	अन्यथा
+		वापस 19 * 64 * 1 * 1000 * 8;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /*
  */
 
-#define RNDIS_STATUS_INTERVAL_MS	32
-#define STATUS_BYTECOUNT		8	/* 8 bytes data */
+#घोषणा RNDIS_STATUS_INTERVAL_MS	32
+#घोषणा STATUS_BYTECOUNT		8	/* 8 bytes data */
 
 
-/* interface descriptor: */
+/* पूर्णांकerface descriptor: */
 
-static struct usb_interface_descriptor rndis_control_intf = {
-	.bLength =		sizeof rndis_control_intf,
+अटल काष्ठा usb_पूर्णांकerface_descriptor rndis_control_पूर्णांकf = अणु
+	.bLength =		माप rndis_control_पूर्णांकf,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
 	/* .bInterfaceNumber = DYNAMIC */
-	/* status endpoint is optional; this could be patched later */
-	.bNumEndpoints =	1,
+	/* status endpoपूर्णांक is optional; this could be patched later */
+	.bNumEndpoपूर्णांकs =	1,
 	.bInterfaceClass =	USB_CLASS_COMM,
 	.bInterfaceSubClass =   USB_CDC_SUBCLASS_ACM,
 	.bInterfaceProtocol =   USB_CDC_ACM_PROTO_VENDOR,
 	/* .iInterface = DYNAMIC */
-};
+पूर्ण;
 
-static struct usb_cdc_header_desc header_desc = {
-	.bLength =		sizeof header_desc,
+अटल काष्ठा usb_cdc_header_desc header_desc = अणु
+	.bLength =		माप header_desc,
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_HEADER_TYPE,
 
 	.bcdCDC =		cpu_to_le16(0x0110),
-};
+पूर्ण;
 
-static struct usb_cdc_call_mgmt_descriptor call_mgmt_descriptor = {
-	.bLength =		sizeof call_mgmt_descriptor,
+अटल काष्ठा usb_cdc_call_mgmt_descriptor call_mgmt_descriptor = अणु
+	.bLength =		माप call_mgmt_descriptor,
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_CALL_MANAGEMENT_TYPE,
 
 	.bmCapabilities =	0x00,
 	.bDataInterface =	0x01,
-};
+पूर्ण;
 
-static struct usb_cdc_acm_descriptor rndis_acm_descriptor = {
-	.bLength =		sizeof rndis_acm_descriptor,
+अटल काष्ठा usb_cdc_acm_descriptor rndis_acm_descriptor = अणु
+	.bLength =		माप rndis_acm_descriptor,
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_ACM_TYPE,
 
 	.bmCapabilities =	0x00,
-};
+पूर्ण;
 
-static struct usb_cdc_union_desc rndis_union_desc = {
-	.bLength =		sizeof(rndis_union_desc),
+अटल काष्ठा usb_cdc_जोड़_desc rndis_जोड़_desc = अणु
+	.bLength =		माप(rndis_जोड़_desc),
 	.bDescriptorType =	USB_DT_CS_INTERFACE,
 	.bDescriptorSubType =	USB_CDC_UNION_TYPE,
 	/* .bMasterInterface0 =	DYNAMIC */
 	/* .bSlaveInterface0 =	DYNAMIC */
-};
+पूर्ण;
 
-/* the data interface has two bulk endpoints */
+/* the data पूर्णांकerface has two bulk endpoपूर्णांकs */
 
-static struct usb_interface_descriptor rndis_data_intf = {
-	.bLength =		sizeof rndis_data_intf,
+अटल काष्ठा usb_पूर्णांकerface_descriptor rndis_data_पूर्णांकf = अणु
+	.bLength =		माप rndis_data_पूर्णांकf,
 	.bDescriptorType =	USB_DT_INTERFACE,
 
 	/* .bInterfaceNumber = DYNAMIC */
-	.bNumEndpoints =	2,
+	.bNumEndpoपूर्णांकs =	2,
 	.bInterfaceClass =	USB_CLASS_CDC_DATA,
 	.bInterfaceSubClass =	0,
 	.bInterfaceProtocol =	0,
 	/* .iInterface = DYNAMIC */
-};
+पूर्ण;
 
 
-static struct usb_interface_assoc_descriptor
-rndis_iad_descriptor = {
-	.bLength =		sizeof rndis_iad_descriptor,
+अटल काष्ठा usb_पूर्णांकerface_assoc_descriptor
+rndis_iad_descriptor = अणु
+	.bLength =		माप rndis_iad_descriptor,
 	.bDescriptorType =	USB_DT_INTERFACE_ASSOCIATION,
 
 	.bFirstInterface =	0, /* XXX, hardcoded */
@@ -180,515 +181,515 @@ rndis_iad_descriptor = {
 	.bFunctionSubClass =	USB_CDC_SUBCLASS_ETHERNET,
 	.bFunctionProtocol =	USB_CDC_PROTO_NONE,
 	/* .iFunction = DYNAMIC */
-};
+पूर्ण;
 
 /* full speed support: */
 
-static struct usb_endpoint_descriptor fs_notify_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor fs_notअगरy_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
 	.wMaxPacketSize =	cpu_to_le16(STATUS_BYTECOUNT),
 	.bInterval =		RNDIS_STATUS_INTERVAL_MS,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor fs_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor fs_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor fs_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor fs_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
-};
+पूर्ण;
 
-static struct usb_descriptor_header *eth_fs_function[] = {
-	(struct usb_descriptor_header *) &rndis_iad_descriptor,
+अटल काष्ठा usb_descriptor_header *eth_fs_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &rndis_iad_descriptor,
 
-	/* control interface matches ACM, not Ethernet */
-	(struct usb_descriptor_header *) &rndis_control_intf,
-	(struct usb_descriptor_header *) &header_desc,
-	(struct usb_descriptor_header *) &call_mgmt_descriptor,
-	(struct usb_descriptor_header *) &rndis_acm_descriptor,
-	(struct usb_descriptor_header *) &rndis_union_desc,
-	(struct usb_descriptor_header *) &fs_notify_desc,
+	/* control पूर्णांकerface matches ACM, not Ethernet */
+	(काष्ठा usb_descriptor_header *) &rndis_control_पूर्णांकf,
+	(काष्ठा usb_descriptor_header *) &header_desc,
+	(काष्ठा usb_descriptor_header *) &call_mgmt_descriptor,
+	(काष्ठा usb_descriptor_header *) &rndis_acm_descriptor,
+	(काष्ठा usb_descriptor_header *) &rndis_जोड़_desc,
+	(काष्ठा usb_descriptor_header *) &fs_notअगरy_desc,
 
-	/* data interface has no altsetting */
-	(struct usb_descriptor_header *) &rndis_data_intf,
-	(struct usb_descriptor_header *) &fs_in_desc,
-	(struct usb_descriptor_header *) &fs_out_desc,
-	NULL,
-};
+	/* data पूर्णांकerface has no altsetting */
+	(काष्ठा usb_descriptor_header *) &rndis_data_पूर्णांकf,
+	(काष्ठा usb_descriptor_header *) &fs_in_desc,
+	(काष्ठा usb_descriptor_header *) &fs_out_desc,
+	शून्य,
+पूर्ण;
 
 /* high speed support: */
 
-static struct usb_endpoint_descriptor hs_notify_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hs_notअगरy_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
 	.wMaxPacketSize =	cpu_to_le16(STATUS_BYTECOUNT),
 	.bInterval =		USB_MS_TO_HS_INTERVAL(RNDIS_STATUS_INTERVAL_MS)
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor hs_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hs_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor hs_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor hs_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(512),
-};
+पूर्ण;
 
-static struct usb_descriptor_header *eth_hs_function[] = {
-	(struct usb_descriptor_header *) &rndis_iad_descriptor,
+अटल काष्ठा usb_descriptor_header *eth_hs_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &rndis_iad_descriptor,
 
-	/* control interface matches ACM, not Ethernet */
-	(struct usb_descriptor_header *) &rndis_control_intf,
-	(struct usb_descriptor_header *) &header_desc,
-	(struct usb_descriptor_header *) &call_mgmt_descriptor,
-	(struct usb_descriptor_header *) &rndis_acm_descriptor,
-	(struct usb_descriptor_header *) &rndis_union_desc,
-	(struct usb_descriptor_header *) &hs_notify_desc,
+	/* control पूर्णांकerface matches ACM, not Ethernet */
+	(काष्ठा usb_descriptor_header *) &rndis_control_पूर्णांकf,
+	(काष्ठा usb_descriptor_header *) &header_desc,
+	(काष्ठा usb_descriptor_header *) &call_mgmt_descriptor,
+	(काष्ठा usb_descriptor_header *) &rndis_acm_descriptor,
+	(काष्ठा usb_descriptor_header *) &rndis_जोड़_desc,
+	(काष्ठा usb_descriptor_header *) &hs_notअगरy_desc,
 
-	/* data interface has no altsetting */
-	(struct usb_descriptor_header *) &rndis_data_intf,
-	(struct usb_descriptor_header *) &hs_in_desc,
-	(struct usb_descriptor_header *) &hs_out_desc,
-	NULL,
-};
+	/* data पूर्णांकerface has no altsetting */
+	(काष्ठा usb_descriptor_header *) &rndis_data_पूर्णांकf,
+	(काष्ठा usb_descriptor_header *) &hs_in_desc,
+	(काष्ठा usb_descriptor_header *) &hs_out_desc,
+	शून्य,
+पूर्ण;
 
 /* super speed support: */
 
-static struct usb_endpoint_descriptor ss_notify_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor ss_notअगरy_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_INT,
 	.wMaxPacketSize =	cpu_to_le16(STATUS_BYTECOUNT),
 	.bInterval =		USB_MS_TO_HS_INTERVAL(RNDIS_STATUS_INTERVAL_MS)
-};
+पूर्ण;
 
-static struct usb_ss_ep_comp_descriptor ss_intr_comp_desc = {
-	.bLength =		sizeof ss_intr_comp_desc,
+अटल काष्ठा usb_ss_ep_comp_descriptor ss_पूर्णांकr_comp_desc = अणु
+	.bLength =		माप ss_पूर्णांकr_comp_desc,
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
-	/* the following 3 values can be tweaked if necessary */
+	/* the following 3 values can be tweaked अगर necessary */
 	/* .bMaxBurst =		0, */
 	/* .bmAttributes =	0, */
 	.wBytesPerInterval =	cpu_to_le16(STATUS_BYTECOUNT),
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor ss_in_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor ss_in_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_IN,
+	.bEndpoपूर्णांकAddress =	USB_सूची_IN,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-};
+पूर्ण;
 
-static struct usb_endpoint_descriptor ss_out_desc = {
+अटल काष्ठा usb_endpoपूर्णांक_descriptor ss_out_desc = अणु
 	.bLength =		USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType =	USB_DT_ENDPOINT,
 
-	.bEndpointAddress =	USB_DIR_OUT,
+	.bEndpoपूर्णांकAddress =	USB_सूची_OUT,
 	.bmAttributes =		USB_ENDPOINT_XFER_BULK,
 	.wMaxPacketSize =	cpu_to_le16(1024),
-};
+पूर्ण;
 
-static struct usb_ss_ep_comp_descriptor ss_bulk_comp_desc = {
-	.bLength =		sizeof ss_bulk_comp_desc,
+अटल काष्ठा usb_ss_ep_comp_descriptor ss_bulk_comp_desc = अणु
+	.bLength =		माप ss_bulk_comp_desc,
 	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
 
-	/* the following 2 values can be tweaked if necessary */
+	/* the following 2 values can be tweaked अगर necessary */
 	/* .bMaxBurst =		0, */
 	/* .bmAttributes =	0, */
-};
+पूर्ण;
 
-static struct usb_descriptor_header *eth_ss_function[] = {
-	(struct usb_descriptor_header *) &rndis_iad_descriptor,
+अटल काष्ठा usb_descriptor_header *eth_ss_function[] = अणु
+	(काष्ठा usb_descriptor_header *) &rndis_iad_descriptor,
 
-	/* control interface matches ACM, not Ethernet */
-	(struct usb_descriptor_header *) &rndis_control_intf,
-	(struct usb_descriptor_header *) &header_desc,
-	(struct usb_descriptor_header *) &call_mgmt_descriptor,
-	(struct usb_descriptor_header *) &rndis_acm_descriptor,
-	(struct usb_descriptor_header *) &rndis_union_desc,
-	(struct usb_descriptor_header *) &ss_notify_desc,
-	(struct usb_descriptor_header *) &ss_intr_comp_desc,
+	/* control पूर्णांकerface matches ACM, not Ethernet */
+	(काष्ठा usb_descriptor_header *) &rndis_control_पूर्णांकf,
+	(काष्ठा usb_descriptor_header *) &header_desc,
+	(काष्ठा usb_descriptor_header *) &call_mgmt_descriptor,
+	(काष्ठा usb_descriptor_header *) &rndis_acm_descriptor,
+	(काष्ठा usb_descriptor_header *) &rndis_जोड़_desc,
+	(काष्ठा usb_descriptor_header *) &ss_notअगरy_desc,
+	(काष्ठा usb_descriptor_header *) &ss_पूर्णांकr_comp_desc,
 
-	/* data interface has no altsetting */
-	(struct usb_descriptor_header *) &rndis_data_intf,
-	(struct usb_descriptor_header *) &ss_in_desc,
-	(struct usb_descriptor_header *) &ss_bulk_comp_desc,
-	(struct usb_descriptor_header *) &ss_out_desc,
-	(struct usb_descriptor_header *) &ss_bulk_comp_desc,
-	NULL,
-};
+	/* data पूर्णांकerface has no altsetting */
+	(काष्ठा usb_descriptor_header *) &rndis_data_पूर्णांकf,
+	(काष्ठा usb_descriptor_header *) &ss_in_desc,
+	(काष्ठा usb_descriptor_header *) &ss_bulk_comp_desc,
+	(काष्ठा usb_descriptor_header *) &ss_out_desc,
+	(काष्ठा usb_descriptor_header *) &ss_bulk_comp_desc,
+	शून्य,
+पूर्ण;
 
 /* string descriptors: */
 
-static struct usb_string rndis_string_defs[] = {
+अटल काष्ठा usb_string rndis_string_defs[] = अणु
 	[0].s = "RNDIS Communications Control",
 	[1].s = "RNDIS Ethernet Data",
 	[2].s = "RNDIS",
-	{  } /* end of list */
-};
+	अणु  पूर्ण /* end of list */
+पूर्ण;
 
-static struct usb_gadget_strings rndis_string_table = {
+अटल काष्ठा usb_gadget_strings rndis_string_table = अणु
 	.language =		0x0409,	/* en-us */
 	.strings =		rndis_string_defs,
-};
+पूर्ण;
 
-static struct usb_gadget_strings *rndis_strings[] = {
+अटल काष्ठा usb_gadget_strings *rndis_strings[] = अणु
 	&rndis_string_table,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
 /*-------------------------------------------------------------------------*/
 
-static struct sk_buff *rndis_add_header(struct gether *port,
-					struct sk_buff *skb)
-{
-	struct sk_buff *skb2;
+अटल काष्ठा sk_buff *rndis_add_header(काष्ठा gether *port,
+					काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *skb2;
 
-	if (!skb)
-		return NULL;
+	अगर (!skb)
+		वापस शून्य;
 
-	skb2 = skb_realloc_headroom(skb, sizeof(struct rndis_packet_msg_type));
+	skb2 = skb_पुनः_स्मृति_headroom(skb, माप(काष्ठा rndis_packet_msg_type));
 	rndis_add_hdr(skb2);
 
-	dev_kfree_skb(skb);
-	return skb2;
-}
+	dev_kमुक्त_skb(skb);
+	वापस skb2;
+पूर्ण
 
-static void rndis_response_available(void *_rndis)
-{
-	struct f_rndis			*rndis = _rndis;
-	struct usb_request		*req = rndis->notify_req;
-	struct usb_composite_dev	*cdev = rndis->port.func.config->cdev;
+अटल व्योम rndis_response_available(व्योम *_rndis)
+अणु
+	काष्ठा f_rndis			*rndis = _rndis;
+	काष्ठा usb_request		*req = rndis->notअगरy_req;
+	काष्ठा usb_composite_dev	*cdev = rndis->port.func.config->cdev;
 	__le32				*data = req->buf;
-	int				status;
+	पूर्णांक				status;
 
-	if (atomic_inc_return(&rndis->notify_count) != 1)
-		return;
+	अगर (atomic_inc_वापस(&rndis->notअगरy_count) != 1)
+		वापस;
 
-	/* Send RNDIS RESPONSE_AVAILABLE notification; a
+	/* Send RNDIS RESPONSE_AVAILABLE notअगरication; a
 	 * USB_CDC_NOTIFY_RESPONSE_AVAILABLE "should" work too
 	 *
-	 * This is the only notification defined by RNDIS.
+	 * This is the only notअगरication defined by RNDIS.
 	 */
 	data[0] = cpu_to_le32(1);
 	data[1] = cpu_to_le32(0);
 
-	status = usb_ep_queue(rndis->notify, req, GFP_ATOMIC);
-	if (status) {
-		atomic_dec(&rndis->notify_count);
+	status = usb_ep_queue(rndis->notअगरy, req, GFP_ATOMIC);
+	अगर (status) अणु
+		atomic_dec(&rndis->notअगरy_count);
 		DBG(cdev, "notify/0 --> %d\n", status);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rndis_response_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct f_rndis			*rndis = req->context;
-	struct usb_composite_dev	*cdev = rndis->port.func.config->cdev;
-	int				status = req->status;
+अटल व्योम rndis_response_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा f_rndis			*rndis = req->context;
+	काष्ठा usb_composite_dev	*cdev = rndis->port.func.config->cdev;
+	पूर्णांक				status = req->status;
 
 	/* after TX:
 	 *  - USB_CDC_GET_ENCAPSULATED_RESPONSE (ep0/control)
 	 *  - RNDIS_RESPONSE_AVAILABLE (status/irq)
 	 */
-	switch (status) {
-	case -ECONNRESET:
-	case -ESHUTDOWN:
+	चयन (status) अणु
+	हाल -ECONNRESET:
+	हाल -ESHUTDOWN:
 		/* connection gone */
-		atomic_set(&rndis->notify_count, 0);
-		break;
-	default:
+		atomic_set(&rndis->notअगरy_count, 0);
+		अवरोध;
+	शेष:
 		DBG(cdev, "RNDIS %s response error %d, %d/%d\n",
 			ep->name, status,
 			req->actual, req->length);
 		fallthrough;
-	case 0:
-		if (ep != rndis->notify)
-			break;
+	हाल 0:
+		अगर (ep != rndis->notअगरy)
+			अवरोध;
 
 		/* handle multiple pending RNDIS_RESPONSE_AVAILABLE
-		 * notifications by resending until we're done
+		 * notअगरications by resending until we're करोne
 		 */
-		if (atomic_dec_and_test(&rndis->notify_count))
-			break;
-		status = usb_ep_queue(rndis->notify, req, GFP_ATOMIC);
-		if (status) {
-			atomic_dec(&rndis->notify_count);
+		अगर (atomic_dec_and_test(&rndis->notअगरy_count))
+			अवरोध;
+		status = usb_ep_queue(rndis->notअगरy, req, GFP_ATOMIC);
+		अगर (status) अणु
+			atomic_dec(&rndis->notअगरy_count);
 			DBG(cdev, "notify/1 --> %d\n", status);
-		}
-		break;
-	}
-}
+		पूर्ण
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void rndis_command_complete(struct usb_ep *ep, struct usb_request *req)
-{
-	struct f_rndis			*rndis = req->context;
-	int				status;
+अटल व्योम rndis_command_complete(काष्ठा usb_ep *ep, काष्ठा usb_request *req)
+अणु
+	काष्ठा f_rndis			*rndis = req->context;
+	पूर्णांक				status;
 
 	/* received RNDIS command from USB_CDC_SEND_ENCAPSULATED_COMMAND */
 //	spin_lock(&dev->lock);
 	status = rndis_msg_parser(rndis->params, (u8 *) req->buf);
-	if (status < 0)
+	अगर (status < 0)
 		pr_err("RNDIS command error %d, %d/%d\n",
 			status, req->actual, req->length);
 //	spin_unlock(&dev->lock);
-}
+पूर्ण
 
-static int
-rndis_setup(struct usb_function *f, const struct usb_ctrlrequest *ctrl)
-{
-	struct f_rndis		*rndis = func_to_rndis(f);
-	struct usb_composite_dev *cdev = f->config->cdev;
-	struct usb_request	*req = cdev->req;
-	int			value = -EOPNOTSUPP;
+अटल पूर्णांक
+rndis_setup(काष्ठा usb_function *f, स्थिर काष्ठा usb_ctrlrequest *ctrl)
+अणु
+	काष्ठा f_rndis		*rndis = func_to_rndis(f);
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
+	काष्ठा usb_request	*req = cdev->req;
+	पूर्णांक			value = -EOPNOTSUPP;
 	u16			w_index = le16_to_cpu(ctrl->wIndex);
 	u16			w_value = le16_to_cpu(ctrl->wValue);
 	u16			w_length = le16_to_cpu(ctrl->wLength);
 
-	/* composite driver infrastructure handles everything except
-	 * CDC class messages; interface activation uses set_alt().
+	/* composite driver infraकाष्ठाure handles everything except
+	 * CDC class messages; पूर्णांकerface activation uses set_alt().
 	 */
-	switch ((ctrl->bRequestType << 8) | ctrl->bRequest) {
+	चयन ((ctrl->bRequestType << 8) | ctrl->bRequest) अणु
 
 	/* RNDIS uses the CDC command encapsulation mechanism to implement
 	 * an RPC scheme, with much getting/setting of attributes by OID.
 	 */
-	case ((USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
+	हाल ((USB_सूची_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
 			| USB_CDC_SEND_ENCAPSULATED_COMMAND:
-		if (w_value || w_index != rndis->ctrl_id)
-			goto invalid;
-		/* read the request; process it later */
+		अगर (w_value || w_index != rndis->ctrl_id)
+			जाओ invalid;
+		/* पढ़ो the request; process it later */
 		value = w_length;
 		req->complete = rndis_command_complete;
 		req->context = rndis;
-		/* later, rndis_response_available() sends a notification */
-		break;
+		/* later, rndis_response_available() sends a notअगरication */
+		अवरोध;
 
-	case ((USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
+	हाल ((USB_सूची_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE) << 8)
 			| USB_CDC_GET_ENCAPSULATED_RESPONSE:
-		if (w_value || w_index != rndis->ctrl_id)
-			goto invalid;
-		else {
+		अगर (w_value || w_index != rndis->ctrl_id)
+			जाओ invalid;
+		अन्यथा अणु
 			u8 *buf;
 			u32 n;
 
-			/* return the result */
+			/* वापस the result */
 			buf = rndis_get_next_response(rndis->params, &n);
-			if (buf) {
-				memcpy(req->buf, buf, n);
+			अगर (buf) अणु
+				स_नकल(req->buf, buf, n);
 				req->complete = rndis_response_complete;
 				req->context = rndis;
-				rndis_free_response(rndis->params, buf);
+				rndis_मुक्त_response(rndis->params, buf);
 				value = n;
-			}
-			/* else stalls ... spec says to avoid that */
-		}
-		break;
+			पूर्ण
+			/* अन्यथा stalls ... spec says to aव्योम that */
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 invalid:
 		VDBG(cdev, "invalid control req%02x.%02x v%04x i%04x l%d\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
-	}
+	पूर्ण
 
 	/* respond with data transfer or status phase? */
-	if (value >= 0) {
+	अगर (value >= 0) अणु
 		DBG(cdev, "rndis req%02x.%02x v%04x i%04x l%d\n",
 			ctrl->bRequestType, ctrl->bRequest,
 			w_value, w_index, w_length);
 		req->zero = (value < w_length);
 		req->length = value;
 		value = usb_ep_queue(cdev->gadget->ep0, req, GFP_ATOMIC);
-		if (value < 0)
+		अगर (value < 0)
 			ERROR(cdev, "rndis response on err %d\n", value);
-	}
+	पूर्ण
 
 	/* device either stalls (value < 0) or reports success */
-	return value;
-}
+	वापस value;
+पूर्ण
 
 
-static int rndis_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
-{
-	struct f_rndis		*rndis = func_to_rndis(f);
-	struct usb_composite_dev *cdev = f->config->cdev;
+अटल पूर्णांक rndis_set_alt(काष्ठा usb_function *f, अचिन्हित पूर्णांकf, अचिन्हित alt)
+अणु
+	काष्ठा f_rndis		*rndis = func_to_rndis(f);
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
 
 	/* we know alt == 0 */
 
-	if (intf == rndis->ctrl_id) {
-		VDBG(cdev, "reset rndis control %d\n", intf);
-		usb_ep_disable(rndis->notify);
+	अगर (पूर्णांकf == rndis->ctrl_id) अणु
+		VDBG(cdev, "reset rndis control %d\n", पूर्णांकf);
+		usb_ep_disable(rndis->notअगरy);
 
-		if (!rndis->notify->desc) {
-			VDBG(cdev, "init rndis ctrl %d\n", intf);
-			if (config_ep_by_speed(cdev->gadget, f, rndis->notify))
-				goto fail;
-		}
-		usb_ep_enable(rndis->notify);
+		अगर (!rndis->notअगरy->desc) अणु
+			VDBG(cdev, "init rndis ctrl %d\n", पूर्णांकf);
+			अगर (config_ep_by_speed(cdev->gadget, f, rndis->notअगरy))
+				जाओ fail;
+		पूर्ण
+		usb_ep_enable(rndis->notअगरy);
 
-	} else if (intf == rndis->data_id) {
-		struct net_device	*net;
+	पूर्ण अन्यथा अगर (पूर्णांकf == rndis->data_id) अणु
+		काष्ठा net_device	*net;
 
-		if (rndis->port.in_ep->enabled) {
+		अगर (rndis->port.in_ep->enabled) अणु
 			DBG(cdev, "reset rndis\n");
 			gether_disconnect(&rndis->port);
-		}
+		पूर्ण
 
-		if (!rndis->port.in_ep->desc || !rndis->port.out_ep->desc) {
+		अगर (!rndis->port.in_ep->desc || !rndis->port.out_ep->desc) अणु
 			DBG(cdev, "init rndis\n");
-			if (config_ep_by_speed(cdev->gadget, f,
+			अगर (config_ep_by_speed(cdev->gadget, f,
 					       rndis->port.in_ep) ||
 			    config_ep_by_speed(cdev->gadget, f,
-					       rndis->port.out_ep)) {
-				rndis->port.in_ep->desc = NULL;
-				rndis->port.out_ep->desc = NULL;
-				goto fail;
-			}
-		}
+					       rndis->port.out_ep)) अणु
+				rndis->port.in_ep->desc = शून्य;
+				rndis->port.out_ep->desc = शून्य;
+				जाओ fail;
+			पूर्ण
+		पूर्ण
 
-		/* Avoid ZLPs; they can be troublesome. */
+		/* Aव्योम ZLPs; they can be troublesome. */
 		rndis->port.is_zlp_ok = false;
 
 		/* RNDIS should be in the "RNDIS uninitialized" state,
 		 * either never activated or after rndis_uninit().
 		 *
-		 * We don't want data to flow here until a nonzero packet
-		 * filter is set, at which point it enters "RNDIS data
-		 * initialized" state ... but we do want the endpoints
+		 * We करोn't want data to flow here until a nonzero packet
+		 * filter is set, at which poपूर्णांक it enters "RNDIS data
+		 * initialized" state ... but we करो want the endpoपूर्णांकs
 		 * to be activated.  It's a strange little state.
 		 *
-		 * REVISIT the RNDIS gadget code has done this wrong for a
-		 * very long time.  We need another call to the link layer
-		 * code -- gether_updown(...bool) maybe -- to do it right.
+		 * REVISIT the RNDIS gadget code has करोne this wrong क्रम a
+		 * very दीर्घ समय.  We need another call to the link layer
+		 * code -- gether_upकरोwn(...bool) maybe -- to करो it right.
 		 */
 		rndis->port.cdc_filter = 0;
 
 		DBG(cdev, "RNDIS RX/TX early activation ... \n");
 		net = gether_connect(&rndis->port);
-		if (IS_ERR(net))
-			return PTR_ERR(net);
+		अगर (IS_ERR(net))
+			वापस PTR_ERR(net);
 
 		rndis_set_param_dev(rndis->params, net,
 				&rndis->port.cdc_filter);
-	} else
-		goto fail;
+	पूर्ण अन्यथा
+		जाओ fail;
 
-	return 0;
+	वापस 0;
 fail:
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static void rndis_disable(struct usb_function *f)
-{
-	struct f_rndis		*rndis = func_to_rndis(f);
-	struct usb_composite_dev *cdev = f->config->cdev;
+अटल व्योम rndis_disable(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_rndis		*rndis = func_to_rndis(f);
+	काष्ठा usb_composite_dev *cdev = f->config->cdev;
 
-	if (!rndis->notify->enabled)
-		return;
+	अगर (!rndis->notअगरy->enabled)
+		वापस;
 
 	DBG(cdev, "rndis deactivated\n");
 
 	rndis_uninit(rndis->params);
 	gether_disconnect(&rndis->port);
 
-	usb_ep_disable(rndis->notify);
-	rndis->notify->desc = NULL;
-}
+	usb_ep_disable(rndis->notअगरy);
+	rndis->notअगरy->desc = शून्य;
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /*
  * This isn't quite the same mechanism as CDC Ethernet, since the
- * notification scheme passes less data, but the same set of link
- * states must be tested.  A key difference is that altsettings are
+ * notअगरication scheme passes less data, but the same set of link
+ * states must be tested.  A key dअगरference is that altsettings are
  * not used to tell whether the link should send packets or not.
  */
 
-static void rndis_open(struct gether *geth)
-{
-	struct f_rndis		*rndis = func_to_rndis(&geth->func);
-	struct usb_composite_dev *cdev = geth->func.config->cdev;
+अटल व्योम rndis_खोलो(काष्ठा gether *geth)
+अणु
+	काष्ठा f_rndis		*rndis = func_to_rndis(&geth->func);
+	काष्ठा usb_composite_dev *cdev = geth->func.config->cdev;
 
 	DBG(cdev, "%s\n", __func__);
 
 	rndis_set_param_medium(rndis->params, RNDIS_MEDIUM_802_3,
 				bitrate(cdev->gadget) / 100);
-	rndis_signal_connect(rndis->params);
-}
+	rndis_संकेत_connect(rndis->params);
+पूर्ण
 
-static void rndis_close(struct gether *geth)
-{
-	struct f_rndis		*rndis = func_to_rndis(&geth->func);
+अटल व्योम rndis_बंद(काष्ठा gether *geth)
+अणु
+	काष्ठा f_rndis		*rndis = func_to_rndis(&geth->func);
 
 	DBG(geth->func.config->cdev, "%s\n", __func__);
 
 	rndis_set_param_medium(rndis->params, RNDIS_MEDIUM_802_3, 0);
-	rndis_signal_disconnect(rndis->params);
-}
+	rndis_संकेत_disconnect(rndis->params);
+पूर्ण
 
 /*-------------------------------------------------------------------------*/
 
 /* Some controllers can't support RNDIS ... */
-static inline bool can_support_rndis(struct usb_configuration *c)
-{
-	/* everything else is *presumably* fine */
-	return true;
-}
+अटल अंतरभूत bool can_support_rndis(काष्ठा usb_configuration *c)
+अणु
+	/* everything अन्यथा is *presumably* fine */
+	वापस true;
+पूर्ण
 
 /* ethernet function driver setup/binding */
 
-static int
-rndis_bind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct usb_composite_dev *cdev = c->cdev;
-	struct f_rndis		*rndis = func_to_rndis(f);
-	struct usb_string	*us;
-	int			status;
-	struct usb_ep		*ep;
+अटल पूर्णांक
+rndis_bind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा usb_composite_dev *cdev = c->cdev;
+	काष्ठा f_rndis		*rndis = func_to_rndis(f);
+	काष्ठा usb_string	*us;
+	पूर्णांक			status;
+	काष्ठा usb_ep		*ep;
 
-	struct f_rndis_opts *rndis_opts;
+	काष्ठा f_rndis_opts *rndis_opts;
 
-	if (!can_support_rndis(c))
-		return -EINVAL;
+	अगर (!can_support_rndis(c))
+		वापस -EINVAL;
 
-	rndis_opts = container_of(f->fi, struct f_rndis_opts, func_inst);
+	rndis_opts = container_of(f->fi, काष्ठा f_rndis_opts, func_inst);
 
-	if (cdev->use_os_string) {
-		f->os_desc_table = kzalloc(sizeof(*f->os_desc_table),
+	अगर (cdev->use_os_string) अणु
+		f->os_desc_table = kzalloc(माप(*f->os_desc_table),
 					   GFP_KERNEL);
-		if (!f->os_desc_table)
-			return -ENOMEM;
+		अगर (!f->os_desc_table)
+			वापस -ENOMEM;
 		f->os_desc_n = 1;
 		f->os_desc_table[0].os_desc = &rndis_opts->rndis_os_desc;
-	}
+	पूर्ण
 
 	rndis_iad_descriptor.bFunctionClass = rndis_opts->class;
 	rndis_iad_descriptor.bFunctionSubClass = rndis_opts->subclass;
@@ -696,117 +697,117 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 
 	/*
 	 * in drivers/usb/gadget/configfs.c:configfs_composite_bind()
-	 * configurations are bound in sequence with list_for_each_entry,
+	 * configurations are bound in sequence with list_क्रम_each_entry,
 	 * in each configuration its functions are bound in sequence
-	 * with list_for_each_entry, so we assume no race condition
+	 * with list_क्रम_each_entry, so we assume no race condition
 	 * with regard to rndis_opts->bound access
 	 */
-	if (!rndis_opts->bound) {
+	अगर (!rndis_opts->bound) अणु
 		gether_set_gadget(rndis_opts->net, cdev->gadget);
-		status = gether_register_netdev(rndis_opts->net);
-		if (status)
-			goto fail;
+		status = gether_रेजिस्टर_netdev(rndis_opts->net);
+		अगर (status)
+			जाओ fail;
 		rndis_opts->bound = true;
-	}
+	पूर्ण
 
 	us = usb_gstrings_attach(cdev, rndis_strings,
 				 ARRAY_SIZE(rndis_string_defs));
-	if (IS_ERR(us)) {
+	अगर (IS_ERR(us)) अणु
 		status = PTR_ERR(us);
-		goto fail;
-	}
-	rndis_control_intf.iInterface = us[0].id;
-	rndis_data_intf.iInterface = us[1].id;
+		जाओ fail;
+	पूर्ण
+	rndis_control_पूर्णांकf.iInterface = us[0].id;
+	rndis_data_पूर्णांकf.iInterface = us[1].id;
 	rndis_iad_descriptor.iFunction = us[2].id;
 
-	/* allocate instance-specific interface IDs */
-	status = usb_interface_id(c, f);
-	if (status < 0)
-		goto fail;
+	/* allocate instance-specअगरic पूर्णांकerface IDs */
+	status = usb_पूर्णांकerface_id(c, f);
+	अगर (status < 0)
+		जाओ fail;
 	rndis->ctrl_id = status;
 	rndis_iad_descriptor.bFirstInterface = status;
 
-	rndis_control_intf.bInterfaceNumber = status;
-	rndis_union_desc.bMasterInterface0 = status;
+	rndis_control_पूर्णांकf.bInterfaceNumber = status;
+	rndis_जोड़_desc.bMasterInterface0 = status;
 
-	if (cdev->use_os_string)
-		f->os_desc_table[0].if_id =
+	अगर (cdev->use_os_string)
+		f->os_desc_table[0].अगर_id =
 			rndis_iad_descriptor.bFirstInterface;
 
-	status = usb_interface_id(c, f);
-	if (status < 0)
-		goto fail;
+	status = usb_पूर्णांकerface_id(c, f);
+	अगर (status < 0)
+		जाओ fail;
 	rndis->data_id = status;
 
-	rndis_data_intf.bInterfaceNumber = status;
-	rndis_union_desc.bSlaveInterface0 = status;
+	rndis_data_पूर्णांकf.bInterfaceNumber = status;
+	rndis_जोड़_desc.bSlaveInterface0 = status;
 
 	status = -ENODEV;
 
-	/* allocate instance-specific endpoints */
-	ep = usb_ep_autoconfig(cdev->gadget, &fs_in_desc);
-	if (!ep)
-		goto fail;
+	/* allocate instance-specअगरic endpoपूर्णांकs */
+	ep = usb_ep_स्वतःconfig(cdev->gadget, &fs_in_desc);
+	अगर (!ep)
+		जाओ fail;
 	rndis->port.in_ep = ep;
 
-	ep = usb_ep_autoconfig(cdev->gadget, &fs_out_desc);
-	if (!ep)
-		goto fail;
+	ep = usb_ep_स्वतःconfig(cdev->gadget, &fs_out_desc);
+	अगर (!ep)
+		जाओ fail;
 	rndis->port.out_ep = ep;
 
-	/* NOTE:  a status/notification endpoint is, strictly speaking,
-	 * optional.  We don't treat it that way though!  It's simpler,
-	 * and some newer profiles don't treat it as optional.
+	/* NOTE:  a status/notअगरication endpoपूर्णांक is, strictly speaking,
+	 * optional.  We करोn't treat it that way though!  It's simpler,
+	 * and some newer profiles करोn't treat it as optional.
 	 */
-	ep = usb_ep_autoconfig(cdev->gadget, &fs_notify_desc);
-	if (!ep)
-		goto fail;
-	rndis->notify = ep;
+	ep = usb_ep_स्वतःconfig(cdev->gadget, &fs_notअगरy_desc);
+	अगर (!ep)
+		जाओ fail;
+	rndis->notअगरy = ep;
 
 	status = -ENOMEM;
 
-	/* allocate notification request and buffer */
-	rndis->notify_req = usb_ep_alloc_request(ep, GFP_KERNEL);
-	if (!rndis->notify_req)
-		goto fail;
-	rndis->notify_req->buf = kmalloc(STATUS_BYTECOUNT, GFP_KERNEL);
-	if (!rndis->notify_req->buf)
-		goto fail;
-	rndis->notify_req->length = STATUS_BYTECOUNT;
-	rndis->notify_req->context = rndis;
-	rndis->notify_req->complete = rndis_response_complete;
+	/* allocate notअगरication request and buffer */
+	rndis->notअगरy_req = usb_ep_alloc_request(ep, GFP_KERNEL);
+	अगर (!rndis->notअगरy_req)
+		जाओ fail;
+	rndis->notअगरy_req->buf = kदो_स्मृति(STATUS_BYTECOUNT, GFP_KERNEL);
+	अगर (!rndis->notअगरy_req->buf)
+		जाओ fail;
+	rndis->notअगरy_req->length = STATUS_BYTECOUNT;
+	rndis->notअगरy_req->context = rndis;
+	rndis->notअगरy_req->complete = rndis_response_complete;
 
 	/* support all relevant hardware speeds... we expect that when
-	 * hardware is dual speed, all bulk-capable endpoints work at
+	 * hardware is dual speed, all bulk-capable endpoपूर्णांकs work at
 	 * both speeds
 	 */
-	hs_in_desc.bEndpointAddress = fs_in_desc.bEndpointAddress;
-	hs_out_desc.bEndpointAddress = fs_out_desc.bEndpointAddress;
-	hs_notify_desc.bEndpointAddress = fs_notify_desc.bEndpointAddress;
+	hs_in_desc.bEndpoपूर्णांकAddress = fs_in_desc.bEndpoपूर्णांकAddress;
+	hs_out_desc.bEndpoपूर्णांकAddress = fs_out_desc.bEndpoपूर्णांकAddress;
+	hs_notअगरy_desc.bEndpoपूर्णांकAddress = fs_notअगरy_desc.bEndpoपूर्णांकAddress;
 
-	ss_in_desc.bEndpointAddress = fs_in_desc.bEndpointAddress;
-	ss_out_desc.bEndpointAddress = fs_out_desc.bEndpointAddress;
-	ss_notify_desc.bEndpointAddress = fs_notify_desc.bEndpointAddress;
+	ss_in_desc.bEndpoपूर्णांकAddress = fs_in_desc.bEndpoपूर्णांकAddress;
+	ss_out_desc.bEndpoपूर्णांकAddress = fs_out_desc.bEndpoपूर्णांकAddress;
+	ss_notअगरy_desc.bEndpoपूर्णांकAddress = fs_notअगरy_desc.bEndpoपूर्णांकAddress;
 
 	status = usb_assign_descriptors(f, eth_fs_function, eth_hs_function,
 			eth_ss_function, eth_ss_function);
-	if (status)
-		goto fail;
+	अगर (status)
+		जाओ fail;
 
-	rndis->port.open = rndis_open;
-	rndis->port.close = rndis_close;
+	rndis->port.खोलो = rndis_खोलो;
+	rndis->port.बंद = rndis_बंद;
 
 	rndis_set_param_medium(rndis->params, RNDIS_MEDIUM_802_3, 0);
 	rndis_set_host_mac(rndis->params, rndis->ethaddr);
 
-	if (rndis->manufacturer && rndis->vendorID &&
-			rndis_set_param_vendor(rndis->params, rndis->vendorID,
-					       rndis->manufacturer)) {
+	अगर (rndis->manufacturer && rndis->venकरोrID &&
+			rndis_set_param_venकरोr(rndis->params, rndis->venकरोrID,
+					       rndis->manufacturer)) अणु
 		status = -EINVAL;
-		goto fail_free_descs;
-	}
+		जाओ fail_मुक्त_descs;
+	पूर्ण
 
-	/* NOTE:  all that is done without knowing or caring about
+	/* NOTE:  all that is करोne without knowing or caring about
 	 * the network link ... which is unavailable to this code
 	 * until we're activated via set_alt().
 	 */
@@ -815,44 +816,44 @@ rndis_bind(struct usb_configuration *c, struct usb_function *f)
 			gadget_is_superspeed(c->cdev->gadget) ? "super" :
 			gadget_is_dualspeed(c->cdev->gadget) ? "dual" : "full",
 			rndis->port.in_ep->name, rndis->port.out_ep->name,
-			rndis->notify->name);
-	return 0;
+			rndis->notअगरy->name);
+	वापस 0;
 
-fail_free_descs:
-	usb_free_all_descriptors(f);
+fail_मुक्त_descs:
+	usb_मुक्त_all_descriptors(f);
 fail:
-	kfree(f->os_desc_table);
+	kमुक्त(f->os_desc_table);
 	f->os_desc_n = 0;
 
-	if (rndis->notify_req) {
-		kfree(rndis->notify_req->buf);
-		usb_ep_free_request(rndis->notify, rndis->notify_req);
-	}
+	अगर (rndis->notअगरy_req) अणु
+		kमुक्त(rndis->notअगरy_req->buf);
+		usb_ep_मुक्त_request(rndis->notअगरy, rndis->notअगरy_req);
+	पूर्ण
 
 	ERROR(cdev, "%s: can't bind, err %d\n", f->name, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void rndis_borrow_net(struct usb_function_instance *f, struct net_device *net)
-{
-	struct f_rndis_opts *opts;
+व्योम rndis_borrow_net(काष्ठा usb_function_instance *f, काष्ठा net_device *net)
+अणु
+	काष्ठा f_rndis_opts *opts;
 
-	opts = container_of(f, struct f_rndis_opts, func_inst);
-	if (opts->bound)
+	opts = container_of(f, काष्ठा f_rndis_opts, func_inst);
+	अगर (opts->bound)
 		gether_cleanup(netdev_priv(opts->net));
-	else
-		free_netdev(opts->net);
+	अन्यथा
+		मुक्त_netdev(opts->net);
 	opts->borrowed_net = opts->bound = true;
 	opts->net = net;
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(rndis_borrow_net);
 
-static inline struct f_rndis_opts *to_f_rndis_opts(struct config_item *item)
-{
-	return container_of(to_config_group(item), struct f_rndis_opts,
+अटल अंतरभूत काष्ठा f_rndis_opts *to_f_rndis_opts(काष्ठा config_item *item)
+अणु
+	वापस container_of(to_config_group(item), काष्ठा f_rndis_opts,
 			    func_inst.group);
-}
+पूर्ण
 
 /* f_rndis_item_ops */
 USB_ETHERNET_CONFIGFS_ITEM(rndis);
@@ -866,7 +867,7 @@ USB_ETHERNET_CONFIGFS_ITEM_ATTR_HOST_ADDR(rndis);
 /* f_rndis_opts_qmult */
 USB_ETHERNET_CONFIGFS_ITEM_ATTR_QMULT(rndis);
 
-/* f_rndis_opts_ifname */
+/* f_rndis_opts_अगरname */
 USB_ETHERNET_CONFIGFS_ITEM_ATTR_IFNAME(rndis);
 
 /* f_rndis_opts_class */
@@ -878,59 +879,59 @@ USB_ETHER_CONFIGFS_ITEM_ATTR_U8_RW(rndis, subclass);
 /* f_rndis_opts_protocol */
 USB_ETHER_CONFIGFS_ITEM_ATTR_U8_RW(rndis, protocol);
 
-static struct configfs_attribute *rndis_attrs[] = {
+अटल काष्ठा configfs_attribute *rndis_attrs[] = अणु
 	&rndis_opts_attr_dev_addr,
 	&rndis_opts_attr_host_addr,
 	&rndis_opts_attr_qmult,
-	&rndis_opts_attr_ifname,
+	&rndis_opts_attr_अगरname,
 	&rndis_opts_attr_class,
 	&rndis_opts_attr_subclass,
 	&rndis_opts_attr_protocol,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 
-static const struct config_item_type rndis_func_type = {
+अटल स्थिर काष्ठा config_item_type rndis_func_type = अणु
 	.ct_item_ops	= &rndis_item_ops,
 	.ct_attrs	= rndis_attrs,
 	.ct_owner	= THIS_MODULE,
-};
+पूर्ण;
 
-static void rndis_free_inst(struct usb_function_instance *f)
-{
-	struct f_rndis_opts *opts;
+अटल व्योम rndis_मुक्त_inst(काष्ठा usb_function_instance *f)
+अणु
+	काष्ठा f_rndis_opts *opts;
 
-	opts = container_of(f, struct f_rndis_opts, func_inst);
-	if (!opts->borrowed_net) {
-		if (opts->bound)
+	opts = container_of(f, काष्ठा f_rndis_opts, func_inst);
+	अगर (!opts->borrowed_net) अणु
+		अगर (opts->bound)
 			gether_cleanup(netdev_priv(opts->net));
-		else
-			free_netdev(opts->net);
-	}
+		अन्यथा
+			मुक्त_netdev(opts->net);
+	पूर्ण
 
-	kfree(opts->rndis_interf_group);	/* single VLA chunk */
-	kfree(opts);
-}
+	kमुक्त(opts->rndis_पूर्णांकerf_group);	/* single VLA chunk */
+	kमुक्त(opts);
+पूर्ण
 
-static struct usb_function_instance *rndis_alloc_inst(void)
-{
-	struct f_rndis_opts *opts;
-	struct usb_os_desc *descs[1];
-	char *names[1];
-	struct config_group *rndis_interf_group;
+अटल काष्ठा usb_function_instance *rndis_alloc_inst(व्योम)
+अणु
+	काष्ठा f_rndis_opts *opts;
+	काष्ठा usb_os_desc *descs[1];
+	अक्षर *names[1];
+	काष्ठा config_group *rndis_पूर्णांकerf_group;
 
-	opts = kzalloc(sizeof(*opts), GFP_KERNEL);
-	if (!opts)
-		return ERR_PTR(-ENOMEM);
+	opts = kzalloc(माप(*opts), GFP_KERNEL);
+	अगर (!opts)
+		वापस ERR_PTR(-ENOMEM);
 	opts->rndis_os_desc.ext_compat_id = opts->rndis_ext_compat_id;
 
 	mutex_init(&opts->lock);
-	opts->func_inst.free_func_inst = rndis_free_inst;
-	opts->net = gether_setup_default();
-	if (IS_ERR(opts->net)) {
-		struct net_device *net = opts->net;
-		kfree(opts);
-		return ERR_CAST(net);
-	}
+	opts->func_inst.मुक्त_func_inst = rndis_मुक्त_inst;
+	opts->net = gether_setup_शेष();
+	अगर (IS_ERR(opts->net)) अणु
+		काष्ठा net_device *net = opts->net;
+		kमुक्त(opts);
+		वापस ERR_CAST(net);
+	पूर्ण
 	INIT_LIST_HEAD(&opts->rndis_os_desc.ext_prop);
 
 	opts->class = rndis_iad_descriptor.bFunctionClass;
@@ -941,61 +942,61 @@ static struct usb_function_instance *rndis_alloc_inst(void)
 	names[0] = "rndis";
 	config_group_init_type_name(&opts->func_inst.group, "",
 				    &rndis_func_type);
-	rndis_interf_group =
-		usb_os_desc_prepare_interf_dir(&opts->func_inst.group, 1, descs,
+	rndis_पूर्णांकerf_group =
+		usb_os_desc_prepare_पूर्णांकerf_dir(&opts->func_inst.group, 1, descs,
 					       names, THIS_MODULE);
-	if (IS_ERR(rndis_interf_group)) {
-		rndis_free_inst(&opts->func_inst);
-		return ERR_CAST(rndis_interf_group);
-	}
-	opts->rndis_interf_group = rndis_interf_group;
+	अगर (IS_ERR(rndis_पूर्णांकerf_group)) अणु
+		rndis_मुक्त_inst(&opts->func_inst);
+		वापस ERR_CAST(rndis_पूर्णांकerf_group);
+	पूर्ण
+	opts->rndis_पूर्णांकerf_group = rndis_पूर्णांकerf_group;
 
-	return &opts->func_inst;
-}
+	वापस &opts->func_inst;
+पूर्ण
 
-static void rndis_free(struct usb_function *f)
-{
-	struct f_rndis *rndis;
-	struct f_rndis_opts *opts;
+अटल व्योम rndis_मुक्त(काष्ठा usb_function *f)
+अणु
+	काष्ठा f_rndis *rndis;
+	काष्ठा f_rndis_opts *opts;
 
 	rndis = func_to_rndis(f);
-	rndis_deregister(rndis->params);
-	opts = container_of(f->fi, struct f_rndis_opts, func_inst);
-	kfree(rndis);
+	rndis_deरेजिस्टर(rndis->params);
+	opts = container_of(f->fi, काष्ठा f_rndis_opts, func_inst);
+	kमुक्त(rndis);
 	mutex_lock(&opts->lock);
 	opts->refcnt--;
 	mutex_unlock(&opts->lock);
-}
+पूर्ण
 
-static void rndis_unbind(struct usb_configuration *c, struct usb_function *f)
-{
-	struct f_rndis		*rndis = func_to_rndis(f);
+अटल व्योम rndis_unbind(काष्ठा usb_configuration *c, काष्ठा usb_function *f)
+अणु
+	काष्ठा f_rndis		*rndis = func_to_rndis(f);
 
-	kfree(f->os_desc_table);
+	kमुक्त(f->os_desc_table);
 	f->os_desc_n = 0;
-	usb_free_all_descriptors(f);
+	usb_मुक्त_all_descriptors(f);
 
-	kfree(rndis->notify_req->buf);
-	usb_ep_free_request(rndis->notify, rndis->notify_req);
-}
+	kमुक्त(rndis->notअगरy_req->buf);
+	usb_ep_मुक्त_request(rndis->notअगरy, rndis->notअगरy_req);
+पूर्ण
 
-static struct usb_function *rndis_alloc(struct usb_function_instance *fi)
-{
-	struct f_rndis	*rndis;
-	struct f_rndis_opts *opts;
-	struct rndis_params *params;
+अटल काष्ठा usb_function *rndis_alloc(काष्ठा usb_function_instance *fi)
+अणु
+	काष्ठा f_rndis	*rndis;
+	काष्ठा f_rndis_opts *opts;
+	काष्ठा rndis_params *params;
 
 	/* allocate and initialize one new instance */
-	rndis = kzalloc(sizeof(*rndis), GFP_KERNEL);
-	if (!rndis)
-		return ERR_PTR(-ENOMEM);
+	rndis = kzalloc(माप(*rndis), GFP_KERNEL);
+	अगर (!rndis)
+		वापस ERR_PTR(-ENOMEM);
 
-	opts = container_of(fi, struct f_rndis_opts, func_inst);
+	opts = container_of(fi, काष्ठा f_rndis_opts, func_inst);
 	mutex_lock(&opts->lock);
 	opts->refcnt++;
 
 	gether_get_host_addr_u8(opts->net, rndis->ethaddr);
-	rndis->vendorID = opts->vendor_id;
+	rndis->venकरोrID = opts->venकरोr_id;
 	rndis->manufacturer = opts->manufacturer;
 
 	rndis->port.ioport = netdev_priv(opts->net);
@@ -1004,7 +1005,7 @@ static struct usb_function *rndis_alloc(struct usb_function_instance *fi)
 	rndis->port.cdc_filter = 0;
 
 	/* RNDIS has special (and complex) framing */
-	rndis->port.header_len = sizeof(struct rndis_packet_msg_type);
+	rndis->port.header_len = माप(काष्ठा rndis_packet_msg_type);
 	rndis->port.wrap = rndis_add_header;
 	rndis->port.unwrap = rndis_rm_hdr;
 
@@ -1015,17 +1016,17 @@ static struct usb_function *rndis_alloc(struct usb_function_instance *fi)
 	rndis->port.func.set_alt = rndis_set_alt;
 	rndis->port.func.setup = rndis_setup;
 	rndis->port.func.disable = rndis_disable;
-	rndis->port.func.free_func = rndis_free;
+	rndis->port.func.मुक्त_func = rndis_मुक्त;
 
-	params = rndis_register(rndis_response_available, rndis);
-	if (IS_ERR(params)) {
-		kfree(rndis);
-		return ERR_CAST(params);
-	}
+	params = rndis_रेजिस्टर(rndis_response_available, rndis);
+	अगर (IS_ERR(params)) अणु
+		kमुक्त(rndis);
+		वापस ERR_CAST(params);
+	पूर्ण
 	rndis->params = params;
 
-	return &rndis->port.func;
-}
+	वापस &rndis->port.func;
+पूर्ण
 
 DECLARE_USB_FUNCTION_INIT(rndis, rndis_alloc_inst, rndis_alloc);
 MODULE_LICENSE("GPL");

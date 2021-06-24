@@ -1,13 +1,14 @@
+<शैली गुरु>
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
  * Copyright 2008 Red Hat Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -24,30 +25,30 @@
  *          Alex Deucher
  */
 
-#include <drm/amdgpu_drm.h>
-#include "amdgpu.h"
-#include "amdgpu_atombios.h"
-#include "amdgpu_atomfirmware.h"
-#include "amdgpu_i2c.h"
-#include "amdgpu_display.h"
+#समावेश <drm/amdgpu_drm.h>
+#समावेश "amdgpu.h"
+#समावेश "amdgpu_atombios.h"
+#समावेश "amdgpu_atomfirmware.h"
+#समावेश "amdgpu_i2c.h"
+#समावेश "amdgpu_display.h"
 
-#include "atom.h"
-#include "atom-bits.h"
-#include "atombios_encoders.h"
-#include "bif/bif_4_1_d.h"
+#समावेश "atom.h"
+#समावेश "atom-bits.h"
+#समावेश "atombios_encoders.h"
+#समावेश "bif/bif_4_1_d.h"
 
-static void amdgpu_atombios_lookup_i2c_gpio_quirks(struct amdgpu_device *adev,
+अटल व्योम amdgpu_atombios_lookup_i2c_gpio_quirks(काष्ठा amdgpu_device *adev,
 					  ATOM_GPIO_I2C_ASSIGMENT *gpio,
 					  u8 index)
-{
+अणु
 
-}
+पूर्ण
 
-static struct amdgpu_i2c_bus_rec amdgpu_atombios_get_bus_rec_for_i2c_gpio(ATOM_GPIO_I2C_ASSIGMENT *gpio)
-{
-	struct amdgpu_i2c_bus_rec i2c;
+अटल काष्ठा amdgpu_i2c_bus_rec amdgpu_atombios_get_bus_rec_क्रम_i2c_gpio(ATOM_GPIO_I2C_ASSIGMENT *gpio)
+अणु
+	काष्ठा amdgpu_i2c_bus_rec i2c;
 
-	memset(&i2c, 0, sizeof(struct amdgpu_i2c_bus_rec));
+	स_रखो(&i2c, 0, माप(काष्ठा amdgpu_i2c_bus_rec));
 
 	i2c.mask_clk_reg = le16_to_cpu(gpio->usClkMaskRegisterIndex);
 	i2c.mask_data_reg = le16_to_cpu(gpio->usDataMaskRegisterIndex);
@@ -57,186 +58,186 @@ static struct amdgpu_i2c_bus_rec amdgpu_atombios_get_bus_rec_for_i2c_gpio(ATOM_G
 	i2c.y_data_reg = le16_to_cpu(gpio->usDataY_RegisterIndex);
 	i2c.a_clk_reg = le16_to_cpu(gpio->usClkA_RegisterIndex);
 	i2c.a_data_reg = le16_to_cpu(gpio->usDataA_RegisterIndex);
-	i2c.mask_clk_mask = (1 << gpio->ucClkMaskShift);
-	i2c.mask_data_mask = (1 << gpio->ucDataMaskShift);
-	i2c.en_clk_mask = (1 << gpio->ucClkEnShift);
-	i2c.en_data_mask = (1 << gpio->ucDataEnShift);
-	i2c.y_clk_mask = (1 << gpio->ucClkY_Shift);
-	i2c.y_data_mask = (1 << gpio->ucDataY_Shift);
-	i2c.a_clk_mask = (1 << gpio->ucClkA_Shift);
-	i2c.a_data_mask = (1 << gpio->ucDataA_Shift);
+	i2c.mask_clk_mask = (1 << gpio->ucClkMaskShअगरt);
+	i2c.mask_data_mask = (1 << gpio->ucDataMaskShअगरt);
+	i2c.en_clk_mask = (1 << gpio->ucClkEnShअगरt);
+	i2c.en_data_mask = (1 << gpio->ucDataEnShअगरt);
+	i2c.y_clk_mask = (1 << gpio->ucClkY_Shअगरt);
+	i2c.y_data_mask = (1 << gpio->ucDataY_Shअगरt);
+	i2c.a_clk_mask = (1 << gpio->ucClkA_Shअगरt);
+	i2c.a_data_mask = (1 << gpio->ucDataA_Shअगरt);
 
-	if (gpio->sucI2cId.sbfAccess.bfHW_Capable)
+	अगर (gpio->sucI2cId.sbfAccess.bfHW_Capable)
 		i2c.hw_capable = true;
-	else
+	अन्यथा
 		i2c.hw_capable = false;
 
-	if (gpio->sucI2cId.ucAccess == 0xa0)
+	अगर (gpio->sucI2cId.ucAccess == 0xa0)
 		i2c.mm_i2c = true;
-	else
+	अन्यथा
 		i2c.mm_i2c = false;
 
 	i2c.i2c_id = gpio->sucI2cId.ucAccess;
 
-	if (i2c.mask_clk_reg)
+	अगर (i2c.mask_clk_reg)
 		i2c.valid = true;
-	else
+	अन्यथा
 		i2c.valid = false;
 
-	return i2c;
-}
+	वापस i2c;
+पूर्ण
 
-struct amdgpu_i2c_bus_rec amdgpu_atombios_lookup_i2c_gpio(struct amdgpu_device *adev,
-							  uint8_t id)
-{
-	struct atom_context *ctx = adev->mode_info.atom_context;
+काष्ठा amdgpu_i2c_bus_rec amdgpu_atombios_lookup_i2c_gpio(काष्ठा amdgpu_device *adev,
+							  uपूर्णांक8_t id)
+अणु
+	काष्ठा atom_context *ctx = adev->mode_info.atom_context;
 	ATOM_GPIO_I2C_ASSIGMENT *gpio;
-	struct amdgpu_i2c_bus_rec i2c;
-	int index = GetIndexIntoMasterTable(DATA, GPIO_I2C_Info);
-	struct _ATOM_GPIO_I2C_INFO *i2c_info;
-	uint16_t data_offset, size;
-	int i, num_indices;
+	काष्ठा amdgpu_i2c_bus_rec i2c;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, GPIO_I2C_Info);
+	काष्ठा _ATOM_GPIO_I2C_INFO *i2c_info;
+	uपूर्णांक16_t data_offset, size;
+	पूर्णांक i, num_indices;
 
-	memset(&i2c, 0, sizeof(struct amdgpu_i2c_bus_rec));
+	स_रखो(&i2c, 0, माप(काष्ठा amdgpu_i2c_bus_rec));
 	i2c.valid = false;
 
-	if (amdgpu_atom_parse_data_header(ctx, index, &size, NULL, NULL, &data_offset)) {
-		i2c_info = (struct _ATOM_GPIO_I2C_INFO *)(ctx->bios + data_offset);
+	अगर (amdgpu_atom_parse_data_header(ctx, index, &size, शून्य, शून्य, &data_offset)) अणु
+		i2c_info = (काष्ठा _ATOM_GPIO_I2C_INFO *)(ctx->bios + data_offset);
 
-		num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
-			sizeof(ATOM_GPIO_I2C_ASSIGMENT);
+		num_indices = (size - माप(ATOM_COMMON_TABLE_HEADER)) /
+			माप(ATOM_GPIO_I2C_ASSIGMENT);
 
 		gpio = &i2c_info->asGPIO_Info[0];
-		for (i = 0; i < num_indices; i++) {
+		क्रम (i = 0; i < num_indices; i++) अणु
 
 			amdgpu_atombios_lookup_i2c_gpio_quirks(adev, gpio, i);
 
-			if (gpio->sucI2cId.ucAccess == id) {
-				i2c = amdgpu_atombios_get_bus_rec_for_i2c_gpio(gpio);
-				break;
-			}
+			अगर (gpio->sucI2cId.ucAccess == id) अणु
+				i2c = amdgpu_atombios_get_bus_rec_क्रम_i2c_gpio(gpio);
+				अवरोध;
+			पूर्ण
 			gpio = (ATOM_GPIO_I2C_ASSIGMENT *)
-				((u8 *)gpio + sizeof(ATOM_GPIO_I2C_ASSIGMENT));
-		}
-	}
+				((u8 *)gpio + माप(ATOM_GPIO_I2C_ASSIGMENT));
+		पूर्ण
+	पूर्ण
 
-	return i2c;
-}
+	वापस i2c;
+पूर्ण
 
-void amdgpu_atombios_i2c_init(struct amdgpu_device *adev)
-{
-	struct atom_context *ctx = adev->mode_info.atom_context;
+व्योम amdgpu_atombios_i2c_init(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा atom_context *ctx = adev->mode_info.atom_context;
 	ATOM_GPIO_I2C_ASSIGMENT *gpio;
-	struct amdgpu_i2c_bus_rec i2c;
-	int index = GetIndexIntoMasterTable(DATA, GPIO_I2C_Info);
-	struct _ATOM_GPIO_I2C_INFO *i2c_info;
-	uint16_t data_offset, size;
-	int i, num_indices;
-	char stmp[32];
+	काष्ठा amdgpu_i2c_bus_rec i2c;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, GPIO_I2C_Info);
+	काष्ठा _ATOM_GPIO_I2C_INFO *i2c_info;
+	uपूर्णांक16_t data_offset, size;
+	पूर्णांक i, num_indices;
+	अक्षर sपंचांगp[32];
 
-	if (amdgpu_atom_parse_data_header(ctx, index, &size, NULL, NULL, &data_offset)) {
-		i2c_info = (struct _ATOM_GPIO_I2C_INFO *)(ctx->bios + data_offset);
+	अगर (amdgpu_atom_parse_data_header(ctx, index, &size, शून्य, शून्य, &data_offset)) अणु
+		i2c_info = (काष्ठा _ATOM_GPIO_I2C_INFO *)(ctx->bios + data_offset);
 
-		num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
-			sizeof(ATOM_GPIO_I2C_ASSIGMENT);
+		num_indices = (size - माप(ATOM_COMMON_TABLE_HEADER)) /
+			माप(ATOM_GPIO_I2C_ASSIGMENT);
 
 		gpio = &i2c_info->asGPIO_Info[0];
-		for (i = 0; i < num_indices; i++) {
+		क्रम (i = 0; i < num_indices; i++) अणु
 			amdgpu_atombios_lookup_i2c_gpio_quirks(adev, gpio, i);
 
-			i2c = amdgpu_atombios_get_bus_rec_for_i2c_gpio(gpio);
+			i2c = amdgpu_atombios_get_bus_rec_क्रम_i2c_gpio(gpio);
 
-			if (i2c.valid) {
-				sprintf(stmp, "0x%x", i2c.i2c_id);
-				adev->i2c_bus[i] = amdgpu_i2c_create(adev_to_drm(adev), &i2c, stmp);
-			}
+			अगर (i2c.valid) अणु
+				प्र_लिखो(sपंचांगp, "0x%x", i2c.i2c_id);
+				adev->i2c_bus[i] = amdgpu_i2c_create(adev_to_drm(adev), &i2c, sपंचांगp);
+			पूर्ण
 			gpio = (ATOM_GPIO_I2C_ASSIGMENT *)
-				((u8 *)gpio + sizeof(ATOM_GPIO_I2C_ASSIGMENT));
-		}
-	}
-}
+				((u8 *)gpio + माप(ATOM_GPIO_I2C_ASSIGMENT));
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-struct amdgpu_gpio_rec
-amdgpu_atombios_lookup_gpio(struct amdgpu_device *adev,
+काष्ठा amdgpu_gpio_rec
+amdgpu_atombios_lookup_gpio(काष्ठा amdgpu_device *adev,
 			    u8 id)
-{
-	struct atom_context *ctx = adev->mode_info.atom_context;
-	struct amdgpu_gpio_rec gpio;
-	int index = GetIndexIntoMasterTable(DATA, GPIO_Pin_LUT);
-	struct _ATOM_GPIO_PIN_LUT *gpio_info;
+अणु
+	काष्ठा atom_context *ctx = adev->mode_info.atom_context;
+	काष्ठा amdgpu_gpio_rec gpio;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, GPIO_Pin_LUT);
+	काष्ठा _ATOM_GPIO_PIN_LUT *gpio_info;
 	ATOM_GPIO_PIN_ASSIGNMENT *pin;
 	u16 data_offset, size;
-	int i, num_indices;
+	पूर्णांक i, num_indices;
 
-	memset(&gpio, 0, sizeof(struct amdgpu_gpio_rec));
+	स_रखो(&gpio, 0, माप(काष्ठा amdgpu_gpio_rec));
 	gpio.valid = false;
 
-	if (amdgpu_atom_parse_data_header(ctx, index, &size, NULL, NULL, &data_offset)) {
-		gpio_info = (struct _ATOM_GPIO_PIN_LUT *)(ctx->bios + data_offset);
+	अगर (amdgpu_atom_parse_data_header(ctx, index, &size, शून्य, शून्य, &data_offset)) अणु
+		gpio_info = (काष्ठा _ATOM_GPIO_PIN_LUT *)(ctx->bios + data_offset);
 
-		num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
-			sizeof(ATOM_GPIO_PIN_ASSIGNMENT);
+		num_indices = (size - माप(ATOM_COMMON_TABLE_HEADER)) /
+			माप(ATOM_GPIO_PIN_ASSIGNMENT);
 
 		pin = gpio_info->asGPIO_Pin;
-		for (i = 0; i < num_indices; i++) {
-			if (id == pin->ucGPIO_ID) {
+		क्रम (i = 0; i < num_indices; i++) अणु
+			अगर (id == pin->ucGPIO_ID) अणु
 				gpio.id = pin->ucGPIO_ID;
 				gpio.reg = le16_to_cpu(pin->usGpioPin_AIndex);
-				gpio.shift = pin->ucGpioPinBitShift;
-				gpio.mask = (1 << pin->ucGpioPinBitShift);
+				gpio.shअगरt = pin->ucGpioPinBitShअगरt;
+				gpio.mask = (1 << pin->ucGpioPinBitShअगरt);
 				gpio.valid = true;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			pin = (ATOM_GPIO_PIN_ASSIGNMENT *)
-				((u8 *)pin + sizeof(ATOM_GPIO_PIN_ASSIGNMENT));
-		}
-	}
+				((u8 *)pin + माप(ATOM_GPIO_PIN_ASSIGNMENT));
+		पूर्ण
+	पूर्ण
 
-	return gpio;
-}
+	वापस gpio;
+पूर्ण
 
-static struct amdgpu_hpd
-amdgpu_atombios_get_hpd_info_from_gpio(struct amdgpu_device *adev,
-				       struct amdgpu_gpio_rec *gpio)
-{
-	struct amdgpu_hpd hpd;
+अटल काष्ठा amdgpu_hpd
+amdgpu_atombios_get_hpd_info_from_gpio(काष्ठा amdgpu_device *adev,
+				       काष्ठा amdgpu_gpio_rec *gpio)
+अणु
+	काष्ठा amdgpu_hpd hpd;
 	u32 reg;
 
-	memset(&hpd, 0, sizeof(struct amdgpu_hpd));
+	स_रखो(&hpd, 0, माप(काष्ठा amdgpu_hpd));
 
 	reg = amdgpu_display_hpd_get_gpio_reg(adev);
 
 	hpd.gpio = *gpio;
-	if (gpio->reg == reg) {
-		switch(gpio->mask) {
-		case (1 << 0):
+	अगर (gpio->reg == reg) अणु
+		चयन(gpio->mask) अणु
+		हाल (1 << 0):
 			hpd.hpd = AMDGPU_HPD_1;
-			break;
-		case (1 << 8):
+			अवरोध;
+		हाल (1 << 8):
 			hpd.hpd = AMDGPU_HPD_2;
-			break;
-		case (1 << 16):
+			अवरोध;
+		हाल (1 << 16):
 			hpd.hpd = AMDGPU_HPD_3;
-			break;
-		case (1 << 24):
+			अवरोध;
+		हाल (1 << 24):
 			hpd.hpd = AMDGPU_HPD_4;
-			break;
-		case (1 << 26):
+			अवरोध;
+		हाल (1 << 26):
 			hpd.hpd = AMDGPU_HPD_5;
-			break;
-		case (1 << 28):
+			अवरोध;
+		हाल (1 << 28):
 			hpd.hpd = AMDGPU_HPD_6;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			hpd.hpd = AMDGPU_HPD_NONE;
-			break;
-		}
-	} else
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा
 		hpd.hpd = AMDGPU_HPD_NONE;
-	return hpd;
-}
+	वापस hpd;
+पूर्ण
 
-static const int object_connector_convert[] = {
+अटल स्थिर पूर्णांक object_connector_convert[] = अणु
 	DRM_MODE_CONNECTOR_Unknown,
 	DRM_MODE_CONNECTOR_DVII,
 	DRM_MODE_CONNECTOR_DVII,
@@ -259,40 +260,40 @@ static const int object_connector_convert[] = {
 	DRM_MODE_CONNECTOR_DisplayPort,
 	DRM_MODE_CONNECTOR_eDP,
 	DRM_MODE_CONNECTOR_Unknown
-};
+पूर्ण;
 
-bool amdgpu_atombios_has_dce_engine_info(struct amdgpu_device *adev)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	struct atom_context *ctx = mode_info->atom_context;
-	int index = GetIndexIntoMasterTable(DATA, Object_Header);
+bool amdgpu_atombios_has_dce_engine_info(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	काष्ठा atom_context *ctx = mode_info->atom_context;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, Object_Header);
 	u16 size, data_offset;
 	u8 frev, crev;
 	ATOM_DISPLAY_OBJECT_PATH_TABLE *path_obj;
 	ATOM_OBJECT_HEADER *obj_header;
 
-	if (!amdgpu_atom_parse_data_header(ctx, index, &size, &frev, &crev, &data_offset))
-		return false;
+	अगर (!amdgpu_atom_parse_data_header(ctx, index, &size, &frev, &crev, &data_offset))
+		वापस false;
 
-	if (crev < 2)
-		return false;
+	अगर (crev < 2)
+		वापस false;
 
 	obj_header = (ATOM_OBJECT_HEADER *) (ctx->bios + data_offset);
 	path_obj = (ATOM_DISPLAY_OBJECT_PATH_TABLE *)
 	    (ctx->bios + data_offset +
 	     le16_to_cpu(obj_header->usDisplayPathTableOffset));
 
-	if (path_obj->ucNumOfDispPath)
-		return true;
-	else
-		return false;
-}
+	अगर (path_obj->ucNumOfDispPath)
+		वापस true;
+	अन्यथा
+		वापस false;
+पूर्ण
 
-bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *adev)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	struct atom_context *ctx = mode_info->atom_context;
-	int index = GetIndexIntoMasterTable(DATA, Object_Header);
+bool amdgpu_atombios_get_connector_info_from_object_table(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	काष्ठा atom_context *ctx = mode_info->atom_context;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, Object_Header);
 	u16 size, data_offset;
 	u8 frev, crev;
 	ATOM_CONNECTOR_OBJECT_TABLE *con_obj;
@@ -300,19 +301,19 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 	ATOM_OBJECT_TABLE *router_obj;
 	ATOM_DISPLAY_OBJECT_PATH_TABLE *path_obj;
 	ATOM_OBJECT_HEADER *obj_header;
-	int i, j, k, path_size, device_support;
-	int connector_type;
+	पूर्णांक i, j, k, path_size, device_support;
+	पूर्णांक connector_type;
 	u16 conn_id, connector_object_id;
-	struct amdgpu_i2c_bus_rec ddc_bus;
-	struct amdgpu_router router;
-	struct amdgpu_gpio_rec gpio;
-	struct amdgpu_hpd hpd;
+	काष्ठा amdgpu_i2c_bus_rec ddc_bus;
+	काष्ठा amdgpu_router router;
+	काष्ठा amdgpu_gpio_rec gpio;
+	काष्ठा amdgpu_hpd hpd;
 
-	if (!amdgpu_atom_parse_data_header(ctx, index, &size, &frev, &crev, &data_offset))
-		return false;
+	अगर (!amdgpu_atom_parse_data_header(ctx, index, &size, &frev, &crev, &data_offset))
+		वापस false;
 
-	if (crev < 2)
-		return false;
+	अगर (crev < 2)
+		वापस false;
 
 	obj_header = (ATOM_OBJECT_HEADER *) (ctx->bios + data_offset);
 	path_obj = (ATOM_DISPLAY_OBJECT_PATH_TABLE *)
@@ -330,77 +331,77 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 	device_support = le16_to_cpu(obj_header->usDeviceSupport);
 
 	path_size = 0;
-	for (i = 0; i < path_obj->ucNumOfDispPath; i++) {
-		uint8_t *addr = (uint8_t *) path_obj->asDispPath;
+	क्रम (i = 0; i < path_obj->ucNumOfDispPath; i++) अणु
+		uपूर्णांक8_t *addr = (uपूर्णांक8_t *) path_obj->asDispPath;
 		ATOM_DISPLAY_OBJECT_PATH *path;
 		addr += path_size;
 		path = (ATOM_DISPLAY_OBJECT_PATH *) addr;
 		path_size += le16_to_cpu(path->usSize);
 
-		if (device_support & le16_to_cpu(path->usDeviceTag)) {
-			uint8_t con_obj_id =
+		अगर (device_support & le16_to_cpu(path->usDeviceTag)) अणु
+			uपूर्णांक8_t con_obj_id =
 			    (le16_to_cpu(path->usConnObjectId) & OBJECT_ID_MASK)
 			    >> OBJECT_ID_SHIFT;
 
 			/* Skip TV/CV support */
-			if ((le16_to_cpu(path->usDeviceTag) ==
+			अगर ((le16_to_cpu(path->usDeviceTag) ==
 			     ATOM_DEVICE_TV1_SUPPORT) ||
 			    (le16_to_cpu(path->usDeviceTag) ==
 			     ATOM_DEVICE_CV_SUPPORT))
-				continue;
+				जारी;
 
-			if (con_obj_id >= ARRAY_SIZE(object_connector_convert)) {
+			अगर (con_obj_id >= ARRAY_SIZE(object_connector_convert)) अणु
 				DRM_ERROR("invalid con_obj_id %d for device tag 0x%04x\n",
 					  con_obj_id, le16_to_cpu(path->usDeviceTag));
-				continue;
-			}
+				जारी;
+			पूर्ण
 
 			connector_type =
 				object_connector_convert[con_obj_id];
 			connector_object_id = con_obj_id;
 
-			if (connector_type == DRM_MODE_CONNECTOR_Unknown)
-				continue;
+			अगर (connector_type == DRM_MODE_CONNECTOR_Unknown)
+				जारी;
 
 			router.ddc_valid = false;
 			router.cd_valid = false;
-			for (j = 0; j < ((le16_to_cpu(path->usSize) - 8) / 2); j++) {
-				uint8_t grph_obj_type =
+			क्रम (j = 0; j < ((le16_to_cpu(path->usSize) - 8) / 2); j++) अणु
+				uपूर्णांक8_t grph_obj_type =
 				    (le16_to_cpu(path->usGraphicObjIds[j]) &
 				     OBJECT_TYPE_MASK) >> OBJECT_TYPE_SHIFT;
 
-				if (grph_obj_type == GRAPH_OBJECT_TYPE_ENCODER) {
-					for (k = 0; k < enc_obj->ucNumberOfObjects; k++) {
+				अगर (grph_obj_type == GRAPH_OBJECT_TYPE_ENCODER) अणु
+					क्रम (k = 0; k < enc_obj->ucNumberOfObjects; k++) अणु
 						u16 encoder_obj = le16_to_cpu(enc_obj->asObjects[k].usObjectID);
-						if (le16_to_cpu(path->usGraphicObjIds[j]) == encoder_obj) {
+						अगर (le16_to_cpu(path->usGraphicObjIds[j]) == encoder_obj) अणु
 							ATOM_COMMON_RECORD_HEADER *record = (ATOM_COMMON_RECORD_HEADER *)
 								(ctx->bios + data_offset +
 								 le16_to_cpu(enc_obj->asObjects[k].usRecordOffset));
 							ATOM_ENCODER_CAP_RECORD *cap_record;
 							u16 caps = 0;
 
-							while (record->ucRecordSize > 0 &&
+							जबतक (record->ucRecordSize > 0 &&
 							       record->ucRecordType > 0 &&
-							       record->ucRecordType <= ATOM_MAX_OBJECT_RECORD_NUMBER) {
-								switch (record->ucRecordType) {
-								case ATOM_ENCODER_CAP_RECORD_TYPE:
+							       record->ucRecordType <= ATOM_MAX_OBJECT_RECORD_NUMBER) अणु
+								चयन (record->ucRecordType) अणु
+								हाल ATOM_ENCODER_CAP_RECORD_TYPE:
 									cap_record =(ATOM_ENCODER_CAP_RECORD *)
 										record;
 									caps = le16_to_cpu(cap_record->usEncoderCap);
-									break;
-								}
+									अवरोध;
+								पूर्ण
 								record = (ATOM_COMMON_RECORD_HEADER *)
-									((char *)record + record->ucRecordSize);
-							}
+									((अक्षर *)record + record->ucRecordSize);
+							पूर्ण
 							amdgpu_display_add_encoder(adev, encoder_obj,
 										    le16_to_cpu(path->usDeviceTag),
 										    caps);
-						}
-					}
-				} else if (grph_obj_type == GRAPH_OBJECT_TYPE_ROUTER) {
-					for (k = 0; k < router_obj->ucNumberOfObjects; k++) {
+						पूर्ण
+					पूर्ण
+				पूर्ण अन्यथा अगर (grph_obj_type == GRAPH_OBJECT_TYPE_ROUTER) अणु
+					क्रम (k = 0; k < router_obj->ucNumberOfObjects; k++) अणु
 						u16 router_obj_id = le16_to_cpu(router_obj->asObjects[k].usObjectID);
-						if (le16_to_cpu(path->usGraphicObjIds[j]) == router_obj_id) {
+						अगर (le16_to_cpu(path->usGraphicObjIds[j]) == router_obj_id) अणु
 							ATOM_COMMON_RECORD_HEADER *record = (ATOM_COMMON_RECORD_HEADER *)
 								(ctx->bios + data_offset +
 								 le16_to_cpu(router_obj->asObjects[k].usRecordOffset));
@@ -416,20 +417,20 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 								((u8 *)router_src_dst_table + 1 +
 								 (router_src_dst_table->ucNumberOfSrc * 2));
 							u16 *dst_objs = (u16 *)(num_dst_objs + 1);
-							int enum_id;
+							पूर्णांक क्रमागत_id;
 
 							router.router_id = router_obj_id;
-							for (enum_id = 0; enum_id < (*num_dst_objs); enum_id++) {
-								if (le16_to_cpu(path->usConnObjectId) ==
-								    le16_to_cpu(dst_objs[enum_id]))
-									break;
-							}
+							क्रम (क्रमागत_id = 0; क्रमागत_id < (*num_dst_objs); क्रमागत_id++) अणु
+								अगर (le16_to_cpu(path->usConnObjectId) ==
+								    le16_to_cpu(dst_objs[क्रमागत_id]))
+									अवरोध;
+							पूर्ण
 
-							while (record->ucRecordSize > 0 &&
+							जबतक (record->ucRecordSize > 0 &&
 							       record->ucRecordType > 0 &&
-							       record->ucRecordType <= ATOM_MAX_OBJECT_RECORD_NUMBER) {
-								switch (record->ucRecordType) {
-								case ATOM_I2C_RECORD_TYPE:
+							       record->ucRecordType <= ATOM_MAX_OBJECT_RECORD_NUMBER) अणु
+								चयन (record->ucRecordType) अणु
+								हाल ATOM_I2C_RECORD_TYPE:
 									i2c_record =
 										(ATOM_I2C_RECORD *)
 										record;
@@ -441,41 +442,41 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 												       i2c_config->
 												       ucAccess);
 									router.i2c_addr = i2c_record->ucI2CAddr >> 1;
-									break;
-								case ATOM_ROUTER_DDC_PATH_SELECT_RECORD_TYPE:
+									अवरोध;
+								हाल ATOM_ROUTER_DDC_PATH_SELECT_RECORD_TYPE:
 									ddc_path = (ATOM_ROUTER_DDC_PATH_SELECT_RECORD *)
 										record;
 									router.ddc_valid = true;
 									router.ddc_mux_type = ddc_path->ucMuxType;
 									router.ddc_mux_control_pin = ddc_path->ucMuxControlPin;
-									router.ddc_mux_state = ddc_path->ucMuxState[enum_id];
-									break;
-								case ATOM_ROUTER_DATA_CLOCK_PATH_SELECT_RECORD_TYPE:
+									router.ddc_mux_state = ddc_path->ucMuxState[क्रमागत_id];
+									अवरोध;
+								हाल ATOM_ROUTER_DATA_CLOCK_PATH_SELECT_RECORD_TYPE:
 									cd_path = (ATOM_ROUTER_DATA_CLOCK_PATH_SELECT_RECORD *)
 										record;
 									router.cd_valid = true;
 									router.cd_mux_type = cd_path->ucMuxType;
 									router.cd_mux_control_pin = cd_path->ucMuxControlPin;
-									router.cd_mux_state = cd_path->ucMuxState[enum_id];
-									break;
-								}
+									router.cd_mux_state = cd_path->ucMuxState[क्रमागत_id];
+									अवरोध;
+								पूर्ण
 								record = (ATOM_COMMON_RECORD_HEADER *)
-									((char *)record + record->ucRecordSize);
-							}
-						}
-					}
-				}
-			}
+									((अक्षर *)record + record->ucRecordSize);
+							पूर्ण
+						पूर्ण
+					पूर्ण
+				पूर्ण
+			पूर्ण
 
-			/* look up gpio for ddc, hpd */
+			/* look up gpio क्रम ddc, hpd */
 			ddc_bus.valid = false;
 			hpd.hpd = AMDGPU_HPD_NONE;
-			if ((le16_to_cpu(path->usDeviceTag) &
-			     (ATOM_DEVICE_TV_SUPPORT | ATOM_DEVICE_CV_SUPPORT)) == 0) {
-				for (j = 0; j < con_obj->ucNumberOfObjects; j++) {
-					if (le16_to_cpu(path->usConnObjectId) ==
+			अगर ((le16_to_cpu(path->usDeviceTag) &
+			     (ATOM_DEVICE_TV_SUPPORT | ATOM_DEVICE_CV_SUPPORT)) == 0) अणु
+				क्रम (j = 0; j < con_obj->ucNumberOfObjects; j++) अणु
+					अगर (le16_to_cpu(path->usConnObjectId) ==
 					    le16_to_cpu(con_obj->asObjects[j].
-							usObjectID)) {
+							usObjectID)) अणु
 						ATOM_COMMON_RECORD_HEADER
 						    *record =
 						    (ATOM_COMMON_RECORD_HEADER
@@ -488,11 +489,11 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 						ATOM_HPD_INT_RECORD *hpd_record;
 						ATOM_I2C_ID_CONFIG_ACCESS *i2c_config;
 
-						while (record->ucRecordSize > 0 &&
+						जबतक (record->ucRecordSize > 0 &&
 						       record->ucRecordType > 0 &&
-						       record->ucRecordType <= ATOM_MAX_OBJECT_RECORD_NUMBER) {
-							switch (record->ucRecordType) {
-							case ATOM_I2C_RECORD_TYPE:
+						       record->ucRecordType <= ATOM_MAX_OBJECT_RECORD_NUMBER) अणु
+							चयन (record->ucRecordType) अणु
+							हाल ATOM_I2C_RECORD_TYPE:
 								i2c_record =
 								    (ATOM_I2C_RECORD *)
 									record;
@@ -502,8 +503,8 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 								ddc_bus = amdgpu_atombios_lookup_i2c_gpio(adev,
 												 i2c_config->
 												 ucAccess);
-								break;
-							case ATOM_HPD_INT_RECORD_TYPE:
+								अवरोध;
+							हाल ATOM_HPD_INT_RECORD_TYPE:
 								hpd_record =
 									(ATOM_HPD_INT_RECORD *)
 									record;
@@ -511,21 +512,21 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 											  hpd_record->ucHPDIntGPIOID);
 								hpd = amdgpu_atombios_get_hpd_info_from_gpio(adev, &gpio);
 								hpd.plugged_state = hpd_record->ucPlugged_PinState;
-								break;
-							}
+								अवरोध;
+							पूर्ण
 							record =
 							    (ATOM_COMMON_RECORD_HEADER
-							     *) ((char *)record
+							     *) ((अक्षर *)record
 								 +
 								 record->
 								 ucRecordSize);
-						}
-						break;
-					}
-				}
-			}
+						पूर्ण
+						अवरोध;
+					पूर्ण
+				पूर्ण
+			पूर्ण
 
-			/* needed for aux chan transactions */
+			/* needed क्रम aux chan transactions */
 			ddc_bus.hpd = hpd.hpd;
 
 			conn_id = le16_to_cpu(path->usConnObjectId);
@@ -538,44 +539,44 @@ bool amdgpu_atombios_get_connector_info_from_object_table(struct amdgpu_device *
 						      &hpd,
 						      &router);
 
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	amdgpu_link_encoder_connector(adev_to_drm(adev));
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-union firmware_info {
+जोड़ firmware_info अणु
 	ATOM_FIRMWARE_INFO info;
 	ATOM_FIRMWARE_INFO_V1_2 info_12;
 	ATOM_FIRMWARE_INFO_V1_3 info_13;
 	ATOM_FIRMWARE_INFO_V1_4 info_14;
 	ATOM_FIRMWARE_INFO_V2_1 info_21;
 	ATOM_FIRMWARE_INFO_V2_2 info_22;
-};
+पूर्ण;
 
-int amdgpu_atombios_get_clock_info(struct amdgpu_device *adev)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index = GetIndexIntoMasterTable(DATA, FirmwareInfo);
-	uint8_t frev, crev;
-	uint16_t data_offset;
-	int ret = -EINVAL;
+पूर्णांक amdgpu_atombios_get_घड़ी_info(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, FirmwareInfo);
+	uपूर्णांक8_t frev, crev;
+	uपूर्णांक16_t data_offset;
+	पूर्णांक ret = -EINVAL;
 
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
-				   &frev, &crev, &data_offset)) {
-		int i;
-		struct amdgpu_pll *ppll = &adev->clock.ppll[0];
-		struct amdgpu_pll *spll = &adev->clock.spll;
-		struct amdgpu_pll *mpll = &adev->clock.mpll;
-		union firmware_info *firmware_info =
-			(union firmware_info *)(mode_info->atom_context->bios +
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, शून्य,
+				   &frev, &crev, &data_offset)) अणु
+		पूर्णांक i;
+		काष्ठा amdgpu_pll *ppll = &adev->घड़ी.ppll[0];
+		काष्ठा amdgpu_pll *spll = &adev->घड़ी.spll;
+		काष्ठा amdgpu_pll *mpll = &adev->घड़ी.mpll;
+		जोड़ firmware_info *firmware_info =
+			(जोड़ firmware_info *)(mode_info->atom_context->bios +
 						data_offset);
-		/* pixel clocks */
+		/* pixel घड़ीs */
 		ppll->reference_freq =
 		    le16_to_cpu(firmware_info->info.usReferenceClock);
-		ppll->reference_div = 0;
+		ppll->reference_भाग = 0;
 
 		ppll->pll_out_min =
 			le32_to_cpu(firmware_info->info_12.ulMinPixelClockPLL_Output);
@@ -584,14 +585,14 @@ int amdgpu_atombios_get_clock_info(struct amdgpu_device *adev)
 
 		ppll->lcd_pll_out_min =
 			le16_to_cpu(firmware_info->info_14.usLcdMinPixelClockPLL_Output) * 100;
-		if (ppll->lcd_pll_out_min == 0)
+		अगर (ppll->lcd_pll_out_min == 0)
 			ppll->lcd_pll_out_min = ppll->pll_out_min;
 		ppll->lcd_pll_out_max =
 			le16_to_cpu(firmware_info->info_14.usLcdMaxPixelClockPLL_Output) * 100;
-		if (ppll->lcd_pll_out_max == 0)
+		अगर (ppll->lcd_pll_out_max == 0)
 			ppll->lcd_pll_out_max = ppll->pll_out_max;
 
-		if (ppll->pll_out_min == 0)
+		अगर (ppll->pll_out_min == 0)
 			ppll->pll_out_min = 64800;
 
 		ppll->pll_in_min =
@@ -599,23 +600,23 @@ int amdgpu_atombios_get_clock_info(struct amdgpu_device *adev)
 		ppll->pll_in_max =
 		    le16_to_cpu(firmware_info->info.usMaxPixelClockPLL_Input);
 
-		ppll->min_post_div = 2;
-		ppll->max_post_div = 0x7f;
-		ppll->min_frac_feedback_div = 0;
-		ppll->max_frac_feedback_div = 9;
-		ppll->min_ref_div = 2;
-		ppll->max_ref_div = 0x3ff;
-		ppll->min_feedback_div = 4;
-		ppll->max_feedback_div = 0xfff;
+		ppll->min_post_भाग = 2;
+		ppll->max_post_भाग = 0x7f;
+		ppll->min_frac_feedback_भाग = 0;
+		ppll->max_frac_feedback_भाग = 9;
+		ppll->min_ref_भाग = 2;
+		ppll->max_ref_भाग = 0x3ff;
+		ppll->min_feedback_भाग = 4;
+		ppll->max_feedback_भाग = 0xfff;
 		ppll->best_vco = 0;
 
-		for (i = 1; i < AMDGPU_MAX_PPLL; i++)
-			adev->clock.ppll[i] = *ppll;
+		क्रम (i = 1; i < AMDGPU_MAX_PPLL; i++)
+			adev->घड़ी.ppll[i] = *ppll;
 
-		/* system clock */
+		/* प्रणाली घड़ी */
 		spll->reference_freq =
 			le16_to_cpu(firmware_info->info_21.usCoreReferenceClock);
-		spll->reference_div = 0;
+		spll->reference_भाग = 0;
 
 		spll->pll_out_min =
 		    le16_to_cpu(firmware_info->info.usMinEngineClockPLL_Output);
@@ -623,7 +624,7 @@ int amdgpu_atombios_get_clock_info(struct amdgpu_device *adev)
 		    le32_to_cpu(firmware_info->info.ulMaxEngineClockPLL_Output);
 
 		/* ??? */
-		if (spll->pll_out_min == 0)
+		अगर (spll->pll_out_min == 0)
 			spll->pll_out_min = 64800;
 
 		spll->pll_in_min =
@@ -631,18 +632,18 @@ int amdgpu_atombios_get_clock_info(struct amdgpu_device *adev)
 		spll->pll_in_max =
 		    le16_to_cpu(firmware_info->info.usMaxEngineClockPLL_Input);
 
-		spll->min_post_div = 1;
-		spll->max_post_div = 1;
-		spll->min_ref_div = 2;
-		spll->max_ref_div = 0xff;
-		spll->min_feedback_div = 4;
-		spll->max_feedback_div = 0xff;
+		spll->min_post_भाग = 1;
+		spll->max_post_भाग = 1;
+		spll->min_ref_भाग = 2;
+		spll->max_ref_भाग = 0xff;
+		spll->min_feedback_भाग = 4;
+		spll->max_feedback_भाग = 0xff;
 		spll->best_vco = 0;
 
-		/* memory clock */
+		/* memory घड़ी */
 		mpll->reference_freq =
 			le16_to_cpu(firmware_info->info_21.usMemoryReferenceClock);
-		mpll->reference_div = 0;
+		mpll->reference_भाग = 0;
 
 		mpll->pll_out_min =
 		    le16_to_cpu(firmware_info->info.usMinMemoryClockPLL_Output);
@@ -650,7 +651,7 @@ int amdgpu_atombios_get_clock_info(struct amdgpu_device *adev)
 		    le32_to_cpu(firmware_info->info.ulMaxMemoryClockPLL_Output);
 
 		/* ??? */
-		if (mpll->pll_out_min == 0)
+		अगर (mpll->pll_out_min == 0)
 			mpll->pll_out_min = 64800;
 
 		mpll->pll_in_min =
@@ -658,68 +659,68 @@ int amdgpu_atombios_get_clock_info(struct amdgpu_device *adev)
 		mpll->pll_in_max =
 		    le16_to_cpu(firmware_info->info.usMaxMemoryClockPLL_Input);
 
-		adev->clock.default_sclk =
+		adev->घड़ी.शेष_sclk =
 		    le32_to_cpu(firmware_info->info.ulDefaultEngineClock);
-		adev->clock.default_mclk =
+		adev->घड़ी.शेष_mclk =
 		    le32_to_cpu(firmware_info->info.ulDefaultMemoryClock);
 
-		mpll->min_post_div = 1;
-		mpll->max_post_div = 1;
-		mpll->min_ref_div = 2;
-		mpll->max_ref_div = 0xff;
-		mpll->min_feedback_div = 4;
-		mpll->max_feedback_div = 0xff;
+		mpll->min_post_भाग = 1;
+		mpll->max_post_भाग = 1;
+		mpll->min_ref_भाग = 2;
+		mpll->max_ref_भाग = 0xff;
+		mpll->min_feedback_भाग = 4;
+		mpll->max_feedback_भाग = 0xff;
 		mpll->best_vco = 0;
 
-		/* disp clock */
-		adev->clock.default_dispclk =
+		/* disp घड़ी */
+		adev->घड़ी.शेष_dispclk =
 			le32_to_cpu(firmware_info->info_21.ulDefaultDispEngineClkFreq);
-		/* set a reasonable default for DP */
-		if (adev->clock.default_dispclk < 53900) {
+		/* set a reasonable शेष क्रम DP */
+		अगर (adev->घड़ी.शेष_dispclk < 53900) अणु
 			DRM_DEBUG("Changing default dispclk from %dMhz to 600Mhz\n",
-				  adev->clock.default_dispclk / 100);
-			adev->clock.default_dispclk = 60000;
-		} else if (adev->clock.default_dispclk <= 60000) {
+				  adev->घड़ी.शेष_dispclk / 100);
+			adev->घड़ी.शेष_dispclk = 60000;
+		पूर्ण अन्यथा अगर (adev->घड़ी.शेष_dispclk <= 60000) अणु
 			DRM_DEBUG("Changing default dispclk from %dMhz to 625Mhz\n",
-				  adev->clock.default_dispclk / 100);
-			adev->clock.default_dispclk = 62500;
-		}
-		adev->clock.dp_extclk =
+				  adev->घड़ी.शेष_dispclk / 100);
+			adev->घड़ी.शेष_dispclk = 62500;
+		पूर्ण
+		adev->घड़ी.dp_extclk =
 			le16_to_cpu(firmware_info->info_21.usUniphyDPModeExtClkFreq);
-		adev->clock.current_dispclk = adev->clock.default_dispclk;
+		adev->घड़ी.current_dispclk = adev->घड़ी.शेष_dispclk;
 
-		adev->clock.max_pixel_clock = le16_to_cpu(firmware_info->info.usMaxPixelClock);
-		if (adev->clock.max_pixel_clock == 0)
-			adev->clock.max_pixel_clock = 40000;
+		adev->घड़ी.max_pixel_घड़ी = le16_to_cpu(firmware_info->info.usMaxPixelClock);
+		अगर (adev->घड़ी.max_pixel_घड़ी == 0)
+			adev->घड़ी.max_pixel_घड़ी = 40000;
 
-		/* not technically a clock, but... */
+		/* not technically a घड़ी, but... */
 		adev->mode_info.firmware_flags =
 			le16_to_cpu(firmware_info->info.usFirmwareCapability.susAccess);
 
 		ret = 0;
-	}
+	पूर्ण
 
-	adev->pm.current_sclk = adev->clock.default_sclk;
-	adev->pm.current_mclk = adev->clock.default_mclk;
+	adev->pm.current_sclk = adev->घड़ी.शेष_sclk;
+	adev->pm.current_mclk = adev->घड़ी.शेष_mclk;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-union gfx_info {
+जोड़ gfx_info अणु
 	ATOM_GFX_INFO_V2_1 info;
-};
+पूर्ण;
 
-int amdgpu_atombios_get_gfx_info(struct amdgpu_device *adev)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index = GetIndexIntoMasterTable(DATA, GFX_Info);
-	uint8_t frev, crev;
-	uint16_t data_offset;
-	int ret = -EINVAL;
+पूर्णांक amdgpu_atombios_get_gfx_info(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, GFX_Info);
+	uपूर्णांक8_t frev, crev;
+	uपूर्णांक16_t data_offset;
+	पूर्णांक ret = -EINVAL;
 
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
-				   &frev, &crev, &data_offset)) {
-		union gfx_info *gfx_info = (union gfx_info *)
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, शून्य,
+				   &frev, &crev, &data_offset)) अणु
+		जोड़ gfx_info *gfx_info = (जोड़ gfx_info *)
 			(mode_info->atom_context->bios + data_offset);
 
 		adev->gfx.config.max_shader_engines = gfx_info->info.max_shader_engines;
@@ -731,388 +732,388 @@ int amdgpu_atombios_get_gfx_info(struct amdgpu_device *adev)
 			gfx_info->info.max_texture_channel_caches;
 
 		ret = 0;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-union igp_info {
-	struct _ATOM_INTEGRATED_SYSTEM_INFO info;
-	struct _ATOM_INTEGRATED_SYSTEM_INFO_V2 info_2;
-	struct _ATOM_INTEGRATED_SYSTEM_INFO_V6 info_6;
-	struct _ATOM_INTEGRATED_SYSTEM_INFO_V1_7 info_7;
-	struct _ATOM_INTEGRATED_SYSTEM_INFO_V1_8 info_8;
-	struct _ATOM_INTEGRATED_SYSTEM_INFO_V1_9 info_9;
-};
+जोड़ igp_info अणु
+	काष्ठा _ATOM_INTEGRATED_SYSTEM_INFO info;
+	काष्ठा _ATOM_INTEGRATED_SYSTEM_INFO_V2 info_2;
+	काष्ठा _ATOM_INTEGRATED_SYSTEM_INFO_V6 info_6;
+	काष्ठा _ATOM_INTEGRATED_SYSTEM_INFO_V1_7 info_7;
+	काष्ठा _ATOM_INTEGRATED_SYSTEM_INFO_V1_8 info_8;
+	काष्ठा _ATOM_INTEGRATED_SYSTEM_INFO_V1_9 info_9;
+पूर्ण;
 
 /*
- * Return vram width from integrated system info table, if available,
- * or 0 if not.
+ * Return vram width from पूर्णांकegrated प्रणाली info table, अगर available,
+ * or 0 अगर not.
  */
-int amdgpu_atombios_get_vram_width(struct amdgpu_device *adev)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index = GetIndexIntoMasterTable(DATA, IntegratedSystemInfo);
+पूर्णांक amdgpu_atombios_get_vram_width(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, IntegratedSystemInfo);
 	u16 data_offset, size;
-	union igp_info *igp_info;
+	जोड़ igp_info *igp_info;
 	u8 frev, crev;
 
-	/* get any igp specific overrides */
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, &size,
-				   &frev, &crev, &data_offset)) {
-		igp_info = (union igp_info *)
+	/* get any igp specअगरic overrides */
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, &size,
+				   &frev, &crev, &data_offset)) अणु
+		igp_info = (जोड़ igp_info *)
 			(mode_info->atom_context->bios + data_offset);
-		switch (crev) {
-		case 8:
-		case 9:
-			return igp_info->info_8.ucUMAChannelNumber * 64;
-		default:
-			return 0;
-		}
-	}
+		चयन (crev) अणु
+		हाल 8:
+		हाल 9:
+			वापस igp_info->info_8.ucUMAChannelNumber * 64;
+		शेष:
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void amdgpu_atombios_get_igp_ss_overrides(struct amdgpu_device *adev,
-						 struct amdgpu_atom_ss *ss,
-						 int id)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index = GetIndexIntoMasterTable(DATA, IntegratedSystemInfo);
+अटल व्योम amdgpu_atombios_get_igp_ss_overrides(काष्ठा amdgpu_device *adev,
+						 काष्ठा amdgpu_atom_ss *ss,
+						 पूर्णांक id)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, IntegratedSystemInfo);
 	u16 data_offset, size;
-	union igp_info *igp_info;
+	जोड़ igp_info *igp_info;
 	u8 frev, crev;
 	u16 percentage = 0, rate = 0;
 
-	/* get any igp specific overrides */
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, &size,
-				   &frev, &crev, &data_offset)) {
-		igp_info = (union igp_info *)
+	/* get any igp specअगरic overrides */
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, &size,
+				   &frev, &crev, &data_offset)) अणु
+		igp_info = (जोड़ igp_info *)
 			(mode_info->atom_context->bios + data_offset);
-		switch (crev) {
-		case 6:
-			switch (id) {
-			case ASIC_INTERNAL_SS_ON_TMDS:
+		चयन (crev) अणु
+		हाल 6:
+			चयन (id) अणु
+			हाल ASIC_INTERNAL_SS_ON_TMDS:
 				percentage = le16_to_cpu(igp_info->info_6.usDVISSPercentage);
-				rate = le16_to_cpu(igp_info->info_6.usDVISSpreadRateIn10Hz);
-				break;
-			case ASIC_INTERNAL_SS_ON_HDMI:
+				rate = le16_to_cpu(igp_info->info_6.usDVISSpपढ़ोRateIn10Hz);
+				अवरोध;
+			हाल ASIC_INTERNAL_SS_ON_HDMI:
 				percentage = le16_to_cpu(igp_info->info_6.usHDMISSPercentage);
-				rate = le16_to_cpu(igp_info->info_6.usHDMISSpreadRateIn10Hz);
-				break;
-			case ASIC_INTERNAL_SS_ON_LVDS:
+				rate = le16_to_cpu(igp_info->info_6.usHDMISSpपढ़ोRateIn10Hz);
+				अवरोध;
+			हाल ASIC_INTERNAL_SS_ON_LVDS:
 				percentage = le16_to_cpu(igp_info->info_6.usLvdsSSPercentage);
-				rate = le16_to_cpu(igp_info->info_6.usLvdsSSpreadRateIn10Hz);
-				break;
-			}
-			break;
-		case 7:
-			switch (id) {
-			case ASIC_INTERNAL_SS_ON_TMDS:
+				rate = le16_to_cpu(igp_info->info_6.usLvdsSSpपढ़ोRateIn10Hz);
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 7:
+			चयन (id) अणु
+			हाल ASIC_INTERNAL_SS_ON_TMDS:
 				percentage = le16_to_cpu(igp_info->info_7.usDVISSPercentage);
-				rate = le16_to_cpu(igp_info->info_7.usDVISSpreadRateIn10Hz);
-				break;
-			case ASIC_INTERNAL_SS_ON_HDMI:
+				rate = le16_to_cpu(igp_info->info_7.usDVISSpपढ़ोRateIn10Hz);
+				अवरोध;
+			हाल ASIC_INTERNAL_SS_ON_HDMI:
 				percentage = le16_to_cpu(igp_info->info_7.usHDMISSPercentage);
-				rate = le16_to_cpu(igp_info->info_7.usHDMISSpreadRateIn10Hz);
-				break;
-			case ASIC_INTERNAL_SS_ON_LVDS:
+				rate = le16_to_cpu(igp_info->info_7.usHDMISSpपढ़ोRateIn10Hz);
+				अवरोध;
+			हाल ASIC_INTERNAL_SS_ON_LVDS:
 				percentage = le16_to_cpu(igp_info->info_7.usLvdsSSPercentage);
-				rate = le16_to_cpu(igp_info->info_7.usLvdsSSpreadRateIn10Hz);
-				break;
-			}
-			break;
-		case 8:
-			switch (id) {
-			case ASIC_INTERNAL_SS_ON_TMDS:
+				rate = le16_to_cpu(igp_info->info_7.usLvdsSSpपढ़ोRateIn10Hz);
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 8:
+			चयन (id) अणु
+			हाल ASIC_INTERNAL_SS_ON_TMDS:
 				percentage = le16_to_cpu(igp_info->info_8.usDVISSPercentage);
-				rate = le16_to_cpu(igp_info->info_8.usDVISSpreadRateIn10Hz);
-				break;
-			case ASIC_INTERNAL_SS_ON_HDMI:
+				rate = le16_to_cpu(igp_info->info_8.usDVISSpपढ़ोRateIn10Hz);
+				अवरोध;
+			हाल ASIC_INTERNAL_SS_ON_HDMI:
 				percentage = le16_to_cpu(igp_info->info_8.usHDMISSPercentage);
-				rate = le16_to_cpu(igp_info->info_8.usHDMISSpreadRateIn10Hz);
-				break;
-			case ASIC_INTERNAL_SS_ON_LVDS:
+				rate = le16_to_cpu(igp_info->info_8.usHDMISSpपढ़ोRateIn10Hz);
+				अवरोध;
+			हाल ASIC_INTERNAL_SS_ON_LVDS:
 				percentage = le16_to_cpu(igp_info->info_8.usLvdsSSPercentage);
-				rate = le16_to_cpu(igp_info->info_8.usLvdsSSpreadRateIn10Hz);
-				break;
-			}
-			break;
-		case 9:
-			switch (id) {
-			case ASIC_INTERNAL_SS_ON_TMDS:
+				rate = le16_to_cpu(igp_info->info_8.usLvdsSSpपढ़ोRateIn10Hz);
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		हाल 9:
+			चयन (id) अणु
+			हाल ASIC_INTERNAL_SS_ON_TMDS:
 				percentage = le16_to_cpu(igp_info->info_9.usDVISSPercentage);
-				rate = le16_to_cpu(igp_info->info_9.usDVISSpreadRateIn10Hz);
-				break;
-			case ASIC_INTERNAL_SS_ON_HDMI:
+				rate = le16_to_cpu(igp_info->info_9.usDVISSpपढ़ोRateIn10Hz);
+				अवरोध;
+			हाल ASIC_INTERNAL_SS_ON_HDMI:
 				percentage = le16_to_cpu(igp_info->info_9.usHDMISSPercentage);
-				rate = le16_to_cpu(igp_info->info_9.usHDMISSpreadRateIn10Hz);
-				break;
-			case ASIC_INTERNAL_SS_ON_LVDS:
+				rate = le16_to_cpu(igp_info->info_9.usHDMISSpपढ़ोRateIn10Hz);
+				अवरोध;
+			हाल ASIC_INTERNAL_SS_ON_LVDS:
 				percentage = le16_to_cpu(igp_info->info_9.usLvdsSSPercentage);
-				rate = le16_to_cpu(igp_info->info_9.usLvdsSSpreadRateIn10Hz);
-				break;
-			}
-			break;
-		default:
+				rate = le16_to_cpu(igp_info->info_9.usLvdsSSpपढ़ोRateIn10Hz);
+				अवरोध;
+			पूर्ण
+			अवरोध;
+		शेष:
 			DRM_ERROR("Unsupported IGP table: %d %d\n", frev, crev);
-			break;
-		}
-		if (percentage)
+			अवरोध;
+		पूर्ण
+		अगर (percentage)
 			ss->percentage = percentage;
-		if (rate)
+		अगर (rate)
 			ss->rate = rate;
-	}
-}
+	पूर्ण
+पूर्ण
 
-union asic_ss_info {
-	struct _ATOM_ASIC_INTERNAL_SS_INFO info;
-	struct _ATOM_ASIC_INTERNAL_SS_INFO_V2 info_2;
-	struct _ATOM_ASIC_INTERNAL_SS_INFO_V3 info_3;
-};
+जोड़ asic_ss_info अणु
+	काष्ठा _ATOM_ASIC_INTERNAL_SS_INFO info;
+	काष्ठा _ATOM_ASIC_INTERNAL_SS_INFO_V2 info_2;
+	काष्ठा _ATOM_ASIC_INTERNAL_SS_INFO_V3 info_3;
+पूर्ण;
 
-union asic_ss_assignment {
-	struct _ATOM_ASIC_SS_ASSIGNMENT v1;
-	struct _ATOM_ASIC_SS_ASSIGNMENT_V2 v2;
-	struct _ATOM_ASIC_SS_ASSIGNMENT_V3 v3;
-};
+जोड़ asic_ss_assignment अणु
+	काष्ठा _ATOM_ASIC_SS_ASSIGNMENT v1;
+	काष्ठा _ATOM_ASIC_SS_ASSIGNMENT_V2 v2;
+	काष्ठा _ATOM_ASIC_SS_ASSIGNMENT_V3 v3;
+पूर्ण;
 
-bool amdgpu_atombios_get_asic_ss_info(struct amdgpu_device *adev,
-				      struct amdgpu_atom_ss *ss,
-				      int id, u32 clock)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index = GetIndexIntoMasterTable(DATA, ASIC_InternalSS_Info);
-	uint16_t data_offset, size;
-	union asic_ss_info *ss_info;
-	union asic_ss_assignment *ss_assign;
-	uint8_t frev, crev;
-	int i, num_indices;
+bool amdgpu_atombios_get_asic_ss_info(काष्ठा amdgpu_device *adev,
+				      काष्ठा amdgpu_atom_ss *ss,
+				      पूर्णांक id, u32 घड़ी)
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, ASIC_InternalSS_Info);
+	uपूर्णांक16_t data_offset, size;
+	जोड़ asic_ss_info *ss_info;
+	जोड़ asic_ss_assignment *ss_assign;
+	uपूर्णांक8_t frev, crev;
+	पूर्णांक i, num_indices;
 
-	if (id == ASIC_INTERNAL_MEMORY_SS) {
-		if (!(adev->mode_info.firmware_flags & ATOM_BIOS_INFO_MEMORY_CLOCK_SS_SUPPORT))
-			return false;
-	}
-	if (id == ASIC_INTERNAL_ENGINE_SS) {
-		if (!(adev->mode_info.firmware_flags & ATOM_BIOS_INFO_ENGINE_CLOCK_SS_SUPPORT))
-			return false;
-	}
+	अगर (id == ASIC_INTERNAL_MEMORY_SS) अणु
+		अगर (!(adev->mode_info.firmware_flags & ATOM_BIOS_INFO_MEMORY_CLOCK_SS_SUPPORT))
+			वापस false;
+	पूर्ण
+	अगर (id == ASIC_INTERNAL_ENGINE_SS) अणु
+		अगर (!(adev->mode_info.firmware_flags & ATOM_BIOS_INFO_ENGINE_CLOCK_SS_SUPPORT))
+			वापस false;
+	पूर्ण
 
-	memset(ss, 0, sizeof(struct amdgpu_atom_ss));
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, &size,
-				   &frev, &crev, &data_offset)) {
+	स_रखो(ss, 0, माप(काष्ठा amdgpu_atom_ss));
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, &size,
+				   &frev, &crev, &data_offset)) अणु
 
 		ss_info =
-			(union asic_ss_info *)(mode_info->atom_context->bios + data_offset);
+			(जोड़ asic_ss_info *)(mode_info->atom_context->bios + data_offset);
 
-		switch (frev) {
-		case 1:
-			num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
-				sizeof(ATOM_ASIC_SS_ASSIGNMENT);
+		चयन (frev) अणु
+		हाल 1:
+			num_indices = (size - माप(ATOM_COMMON_TABLE_HEADER)) /
+				माप(ATOM_ASIC_SS_ASSIGNMENT);
 
-			ss_assign = (union asic_ss_assignment *)((u8 *)&ss_info->info.asSpreadSpectrum[0]);
-			for (i = 0; i < num_indices; i++) {
-				if ((ss_assign->v1.ucClockIndication == id) &&
-				    (clock <= le32_to_cpu(ss_assign->v1.ulTargetClockRange))) {
+			ss_assign = (जोड़ asic_ss_assignment *)((u8 *)&ss_info->info.asSpपढ़ोSpectrum[0]);
+			क्रम (i = 0; i < num_indices; i++) अणु
+				अगर ((ss_assign->v1.ucClockIndication == id) &&
+				    (घड़ी <= le32_to_cpu(ss_assign->v1.ulTargetClockRange))) अणु
 					ss->percentage =
-						le16_to_cpu(ss_assign->v1.usSpreadSpectrumPercentage);
-					ss->type = ss_assign->v1.ucSpreadSpectrumMode;
-					ss->rate = le16_to_cpu(ss_assign->v1.usSpreadRateInKhz);
-					ss->percentage_divider = 100;
-					return true;
-				}
-				ss_assign = (union asic_ss_assignment *)
-					((u8 *)ss_assign + sizeof(ATOM_ASIC_SS_ASSIGNMENT));
-			}
-			break;
-		case 2:
-			num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
-				sizeof(ATOM_ASIC_SS_ASSIGNMENT_V2);
-			ss_assign = (union asic_ss_assignment *)((u8 *)&ss_info->info_2.asSpreadSpectrum[0]);
-			for (i = 0; i < num_indices; i++) {
-				if ((ss_assign->v2.ucClockIndication == id) &&
-				    (clock <= le32_to_cpu(ss_assign->v2.ulTargetClockRange))) {
+						le16_to_cpu(ss_assign->v1.usSpपढ़ोSpectrumPercentage);
+					ss->type = ss_assign->v1.ucSpपढ़ोSpectrumMode;
+					ss->rate = le16_to_cpu(ss_assign->v1.usSpपढ़ोRateInKhz);
+					ss->percentage_भागider = 100;
+					वापस true;
+				पूर्ण
+				ss_assign = (जोड़ asic_ss_assignment *)
+					((u8 *)ss_assign + माप(ATOM_ASIC_SS_ASSIGNMENT));
+			पूर्ण
+			अवरोध;
+		हाल 2:
+			num_indices = (size - माप(ATOM_COMMON_TABLE_HEADER)) /
+				माप(ATOM_ASIC_SS_ASSIGNMENT_V2);
+			ss_assign = (जोड़ asic_ss_assignment *)((u8 *)&ss_info->info_2.asSpपढ़ोSpectrum[0]);
+			क्रम (i = 0; i < num_indices; i++) अणु
+				अगर ((ss_assign->v2.ucClockIndication == id) &&
+				    (घड़ी <= le32_to_cpu(ss_assign->v2.ulTargetClockRange))) अणु
 					ss->percentage =
-						le16_to_cpu(ss_assign->v2.usSpreadSpectrumPercentage);
-					ss->type = ss_assign->v2.ucSpreadSpectrumMode;
-					ss->rate = le16_to_cpu(ss_assign->v2.usSpreadRateIn10Hz);
-					ss->percentage_divider = 100;
-					if ((crev == 2) &&
+						le16_to_cpu(ss_assign->v2.usSpपढ़ोSpectrumPercentage);
+					ss->type = ss_assign->v2.ucSpपढ़ोSpectrumMode;
+					ss->rate = le16_to_cpu(ss_assign->v2.usSpपढ़ोRateIn10Hz);
+					ss->percentage_भागider = 100;
+					अगर ((crev == 2) &&
 					    ((id == ASIC_INTERNAL_ENGINE_SS) ||
 					     (id == ASIC_INTERNAL_MEMORY_SS)))
 						ss->rate /= 100;
-					return true;
-				}
-				ss_assign = (union asic_ss_assignment *)
-					((u8 *)ss_assign + sizeof(ATOM_ASIC_SS_ASSIGNMENT_V2));
-			}
-			break;
-		case 3:
-			num_indices = (size - sizeof(ATOM_COMMON_TABLE_HEADER)) /
-				sizeof(ATOM_ASIC_SS_ASSIGNMENT_V3);
-			ss_assign = (union asic_ss_assignment *)((u8 *)&ss_info->info_3.asSpreadSpectrum[0]);
-			for (i = 0; i < num_indices; i++) {
-				if ((ss_assign->v3.ucClockIndication == id) &&
-				    (clock <= le32_to_cpu(ss_assign->v3.ulTargetClockRange))) {
+					वापस true;
+				पूर्ण
+				ss_assign = (जोड़ asic_ss_assignment *)
+					((u8 *)ss_assign + माप(ATOM_ASIC_SS_ASSIGNMENT_V2));
+			पूर्ण
+			अवरोध;
+		हाल 3:
+			num_indices = (size - माप(ATOM_COMMON_TABLE_HEADER)) /
+				माप(ATOM_ASIC_SS_ASSIGNMENT_V3);
+			ss_assign = (जोड़ asic_ss_assignment *)((u8 *)&ss_info->info_3.asSpपढ़ोSpectrum[0]);
+			क्रम (i = 0; i < num_indices; i++) अणु
+				अगर ((ss_assign->v3.ucClockIndication == id) &&
+				    (घड़ी <= le32_to_cpu(ss_assign->v3.ulTargetClockRange))) अणु
 					ss->percentage =
-						le16_to_cpu(ss_assign->v3.usSpreadSpectrumPercentage);
-					ss->type = ss_assign->v3.ucSpreadSpectrumMode;
-					ss->rate = le16_to_cpu(ss_assign->v3.usSpreadRateIn10Hz);
-					if (ss_assign->v3.ucSpreadSpectrumMode &
+						le16_to_cpu(ss_assign->v3.usSpपढ़ोSpectrumPercentage);
+					ss->type = ss_assign->v3.ucSpपढ़ोSpectrumMode;
+					ss->rate = le16_to_cpu(ss_assign->v3.usSpपढ़ोRateIn10Hz);
+					अगर (ss_assign->v3.ucSpपढ़ोSpectrumMode &
 					    SS_MODE_V3_PERCENTAGE_DIV_BY_1000_MASK)
-						ss->percentage_divider = 1000;
-					else
-						ss->percentage_divider = 100;
-					if ((id == ASIC_INTERNAL_ENGINE_SS) ||
+						ss->percentage_भागider = 1000;
+					अन्यथा
+						ss->percentage_भागider = 100;
+					अगर ((id == ASIC_INTERNAL_ENGINE_SS) ||
 					    (id == ASIC_INTERNAL_MEMORY_SS))
 						ss->rate /= 100;
-					if (adev->flags & AMD_IS_APU)
+					अगर (adev->flags & AMD_IS_APU)
 						amdgpu_atombios_get_igp_ss_overrides(adev, ss, id);
-					return true;
-				}
-				ss_assign = (union asic_ss_assignment *)
-					((u8 *)ss_assign + sizeof(ATOM_ASIC_SS_ASSIGNMENT_V3));
-			}
-			break;
-		default:
+					वापस true;
+				पूर्ण
+				ss_assign = (जोड़ asic_ss_assignment *)
+					((u8 *)ss_assign + माप(ATOM_ASIC_SS_ASSIGNMENT_V3));
+			पूर्ण
+			अवरोध;
+		शेष:
 			DRM_ERROR("Unsupported ASIC_InternalSS_Info table: %d %d\n", frev, crev);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-union get_clock_dividers {
-	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS v1;
-	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V2 v2;
-	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V3 v3;
-	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V4 v4;
-	struct _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V5 v5;
-	struct _COMPUTE_GPU_CLOCK_INPUT_PARAMETERS_V1_6 v6_in;
-	struct _COMPUTE_GPU_CLOCK_OUTPUT_PARAMETERS_V1_6 v6_out;
-};
+जोड़ get_घड़ी_भागiders अणु
+	काष्ठा _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS v1;
+	काष्ठा _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V2 v2;
+	काष्ठा _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V3 v3;
+	काष्ठा _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V4 v4;
+	काष्ठा _COMPUTE_MEMORY_ENGINE_PLL_PARAMETERS_V5 v5;
+	काष्ठा _COMPUTE_GPU_CLOCK_INPUT_PARAMETERS_V1_6 v6_in;
+	काष्ठा _COMPUTE_GPU_CLOCK_OUTPUT_PARAMETERS_V1_6 v6_out;
+पूर्ण;
 
-int amdgpu_atombios_get_clock_dividers(struct amdgpu_device *adev,
-				       u8 clock_type,
-				       u32 clock,
+पूर्णांक amdgpu_atombios_get_घड़ी_भागiders(काष्ठा amdgpu_device *adev,
+				       u8 घड़ी_प्रकारype,
+				       u32 घड़ी,
 				       bool strobe_mode,
-				       struct atom_clock_dividers *dividers)
-{
-	union get_clock_dividers args;
-	int index = GetIndexIntoMasterTable(COMMAND, ComputeMemoryEnginePLL);
+				       काष्ठा atom_घड़ी_भागiders *भागiders)
+अणु
+	जोड़ get_घड़ी_भागiders args;
+	पूर्णांक index = GetIndexIntoMasterTable(COMMAND, ComputeMemoryEnginePLL);
 	u8 frev, crev;
 
-	memset(&args, 0, sizeof(args));
-	memset(dividers, 0, sizeof(struct atom_clock_dividers));
+	स_रखो(&args, 0, माप(args));
+	स_रखो(भागiders, 0, माप(काष्ठा atom_घड़ी_भागiders));
 
-	if (!amdgpu_atom_parse_cmd_header(adev->mode_info.atom_context, index, &frev, &crev))
-		return -EINVAL;
+	अगर (!amdgpu_atom_parse_cmd_header(adev->mode_info.atom_context, index, &frev, &crev))
+		वापस -EINVAL;
 
-	switch (crev) {
-	case 2:
-	case 3:
-	case 5:
+	चयन (crev) अणु
+	हाल 2:
+	हाल 3:
+	हाल 5:
 		/* r6xx, r7xx, evergreen, ni, si.
-		 * TODO: add support for asic_type <= CHIP_RV770*/
-		if (clock_type == COMPUTE_ENGINE_PLL_PARAM) {
-			args.v3.ulClockParams = cpu_to_le32((clock_type << 24) | clock);
+		 * TODO: add support क्रम asic_type <= CHIP_RV770*/
+		अगर (घड़ी_प्रकारype == COMPUTE_ENGINE_PLL_PARAM) अणु
+			args.v3.ulClockParams = cpu_to_le32((घड़ी_प्रकारype << 24) | घड़ी);
 
-			amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uint32_t *)&args);
+			amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
 
-			dividers->post_div = args.v3.ucPostDiv;
-			dividers->enable_post_div = (args.v3.ucCntlFlag &
+			भागiders->post_भाग = args.v3.ucPostDiv;
+			भागiders->enable_post_भाग = (args.v3.ucCntlFlag &
 						     ATOM_PLL_CNTL_FLAG_PLL_POST_DIV_EN) ? true : false;
-			dividers->enable_dithen = (args.v3.ucCntlFlag &
+			भागiders->enable_dithen = (args.v3.ucCntlFlag &
 						   ATOM_PLL_CNTL_FLAG_FRACTION_DISABLE) ? false : true;
-			dividers->whole_fb_div = le16_to_cpu(args.v3.ulFbDiv.usFbDiv);
-			dividers->frac_fb_div = le16_to_cpu(args.v3.ulFbDiv.usFbDivFrac);
-			dividers->ref_div = args.v3.ucRefDiv;
-			dividers->vco_mode = (args.v3.ucCntlFlag &
+			भागiders->whole_fb_भाग = le16_to_cpu(args.v3.ulFbDiv.usFbDiv);
+			भागiders->frac_fb_भाग = le16_to_cpu(args.v3.ulFbDiv.usFbDivFrac);
+			भागiders->ref_भाग = args.v3.ucRefDiv;
+			भागiders->vco_mode = (args.v3.ucCntlFlag &
 					      ATOM_PLL_CNTL_FLAG_MPLL_VCO_MODE) ? 1 : 0;
-		} else {
-			/* for SI we use ComputeMemoryClockParam for memory plls */
-			if (adev->asic_type >= CHIP_TAHITI)
-				return -EINVAL;
-			args.v5.ulClockParams = cpu_to_le32((clock_type << 24) | clock);
-			if (strobe_mode)
+		पूर्ण अन्यथा अणु
+			/* क्रम SI we use ComputeMemoryClockParam क्रम memory plls */
+			अगर (adev->asic_type >= CHIP_TAHITI)
+				वापस -EINVAL;
+			args.v5.ulClockParams = cpu_to_le32((घड़ी_प्रकारype << 24) | घड़ी);
+			अगर (strobe_mode)
 				args.v5.ucInputFlag = ATOM_PLL_INPUT_FLAG_PLL_STROBE_MODE_EN;
 
-			amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uint32_t *)&args);
+			amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
 
-			dividers->post_div = args.v5.ucPostDiv;
-			dividers->enable_post_div = (args.v5.ucCntlFlag &
+			भागiders->post_भाग = args.v5.ucPostDiv;
+			भागiders->enable_post_भाग = (args.v5.ucCntlFlag &
 						     ATOM_PLL_CNTL_FLAG_PLL_POST_DIV_EN) ? true : false;
-			dividers->enable_dithen = (args.v5.ucCntlFlag &
+			भागiders->enable_dithen = (args.v5.ucCntlFlag &
 						   ATOM_PLL_CNTL_FLAG_FRACTION_DISABLE) ? false : true;
-			dividers->whole_fb_div = le16_to_cpu(args.v5.ulFbDiv.usFbDiv);
-			dividers->frac_fb_div = le16_to_cpu(args.v5.ulFbDiv.usFbDivFrac);
-			dividers->ref_div = args.v5.ucRefDiv;
-			dividers->vco_mode = (args.v5.ucCntlFlag &
+			भागiders->whole_fb_भाग = le16_to_cpu(args.v5.ulFbDiv.usFbDiv);
+			भागiders->frac_fb_भाग = le16_to_cpu(args.v5.ulFbDiv.usFbDivFrac);
+			भागiders->ref_भाग = args.v5.ucRefDiv;
+			भागiders->vco_mode = (args.v5.ucCntlFlag &
 					      ATOM_PLL_CNTL_FLAG_MPLL_VCO_MODE) ? 1 : 0;
-		}
-		break;
-	case 4:
+		पूर्ण
+		अवरोध;
+	हाल 4:
 		/* fusion */
-		args.v4.ulClock = cpu_to_le32(clock);	/* 10 khz */
+		args.v4.ulClock = cpu_to_le32(घड़ी);	/* 10 khz */
 
-		amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uint32_t *)&args);
+		amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
 
-		dividers->post_divider = dividers->post_div = args.v4.ucPostDiv;
-		dividers->real_clock = le32_to_cpu(args.v4.ulClock);
-		break;
-	case 6:
+		भागiders->post_भागider = भागiders->post_भाग = args.v4.ucPostDiv;
+		भागiders->real_घड़ी = le32_to_cpu(args.v4.ulClock);
+		अवरोध;
+	हाल 6:
 		/* CI */
 		/* COMPUTE_GPUCLK_INPUT_FLAG_DEFAULT_GPUCLK, COMPUTE_GPUCLK_INPUT_FLAG_SCLK */
-		args.v6_in.ulClock.ulComputeClockFlag = clock_type;
-		args.v6_in.ulClock.ulClockFreq = cpu_to_le32(clock);	/* 10 khz */
+		args.v6_in.ulClock.ulComputeClockFlag = घड़ी_प्रकारype;
+		args.v6_in.ulClock.ulClockFreq = cpu_to_le32(घड़ी);	/* 10 khz */
 
-		amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uint32_t *)&args);
+		amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
 
-		dividers->whole_fb_div = le16_to_cpu(args.v6_out.ulFbDiv.usFbDiv);
-		dividers->frac_fb_div = le16_to_cpu(args.v6_out.ulFbDiv.usFbDivFrac);
-		dividers->ref_div = args.v6_out.ucPllRefDiv;
-		dividers->post_div = args.v6_out.ucPllPostDiv;
-		dividers->flags = args.v6_out.ucPllCntlFlag;
-		dividers->real_clock = le32_to_cpu(args.v6_out.ulClock.ulClock);
-		dividers->post_divider = args.v6_out.ulClock.ucPostDiv;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		भागiders->whole_fb_भाग = le16_to_cpu(args.v6_out.ulFbDiv.usFbDiv);
+		भागiders->frac_fb_भाग = le16_to_cpu(args.v6_out.ulFbDiv.usFbDivFrac);
+		भागiders->ref_भाग = args.v6_out.ucPllRefDiv;
+		भागiders->post_भाग = args.v6_out.ucPllPostDiv;
+		भागiders->flags = args.v6_out.ucPllCntlFlag;
+		भागiders->real_घड़ी = le32_to_cpu(args.v6_out.ulClock.ulClock);
+		भागiders->post_भागider = args.v6_out.ulClock.ucPostDiv;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int amdgpu_atombios_get_memory_pll_dividers(struct amdgpu_device *adev,
-					    u32 clock,
+पूर्णांक amdgpu_atombios_get_memory_pll_भागiders(काष्ठा amdgpu_device *adev,
+					    u32 घड़ी,
 					    bool strobe_mode,
-					    struct atom_mpll_param *mpll_param)
-{
+					    काष्ठा atom_mpll_param *mpll_param)
+अणु
 	COMPUTE_MEMORY_CLOCK_PARAM_PARAMETERS_V2_1 args;
-	int index = GetIndexIntoMasterTable(COMMAND, ComputeMemoryClockParam);
+	पूर्णांक index = GetIndexIntoMasterTable(COMMAND, ComputeMemoryClockParam);
 	u8 frev, crev;
 
-	memset(&args, 0, sizeof(args));
-	memset(mpll_param, 0, sizeof(struct atom_mpll_param));
+	स_रखो(&args, 0, माप(args));
+	स_रखो(mpll_param, 0, माप(काष्ठा atom_mpll_param));
 
-	if (!amdgpu_atom_parse_cmd_header(adev->mode_info.atom_context, index, &frev, &crev))
-		return -EINVAL;
+	अगर (!amdgpu_atom_parse_cmd_header(adev->mode_info.atom_context, index, &frev, &crev))
+		वापस -EINVAL;
 
-	switch (frev) {
-	case 2:
-		switch (crev) {
-		case 1:
+	चयन (frev) अणु
+	हाल 2:
+		चयन (crev) अणु
+		हाल 1:
 			/* SI */
-			args.ulClock = cpu_to_le32(clock);	/* 10 khz */
+			args.ulClock = cpu_to_le32(घड़ी);	/* 10 khz */
 			args.ucInputFlag = 0;
-			if (strobe_mode)
+			अगर (strobe_mode)
 				args.ucInputFlag |= MPLL_INPUT_FLAG_STROBE_MODE_EN;
 
-			amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uint32_t *)&args);
+			amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
 
 			mpll_param->clkfrac = le16_to_cpu(args.ulFbDiv.usFbDivFrac);
 			mpll_param->clkf = le16_to_cpu(args.ulFbDiv.usFbDiv);
-			mpll_param->post_div = args.ucPostDiv;
+			mpll_param->post_भाग = args.ucPostDiv;
 			mpll_param->dll_speed = args.ucDllSpeed;
 			mpll_param->bwcntl = args.ucBWCntl;
 			mpll_param->vco_mode =
@@ -1123,420 +1124,420 @@ int amdgpu_atombios_get_memory_pll_dividers(struct amdgpu_device *adev,
 				(args.ucPllCntlFlag & MPLL_CNTL_FLAG_QDR_ENABLE) ? 1 : 0;
 			mpll_param->half_rate =
 				(args.ucPllCntlFlag & MPLL_CNTL_FLAG_AD_HALF_RATE) ? 1 : 0;
-			break;
-		default:
-			return -EINVAL;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-void amdgpu_atombios_set_engine_dram_timings(struct amdgpu_device *adev,
-					     u32 eng_clock, u32 mem_clock)
-{
+व्योम amdgpu_atombios_set_engine_dram_timings(काष्ठा amdgpu_device *adev,
+					     u32 eng_घड़ी, u32 mem_घड़ी)
+अणु
 	SET_ENGINE_CLOCK_PS_ALLOCATION args;
-	int index = GetIndexIntoMasterTable(COMMAND, DynamicMemorySettings);
-	u32 tmp;
+	पूर्णांक index = GetIndexIntoMasterTable(COMMAND, DynamicMemorySettings);
+	u32 पंचांगp;
 
-	memset(&args, 0, sizeof(args));
+	स_रखो(&args, 0, माप(args));
 
-	tmp = eng_clock & SET_CLOCK_FREQ_MASK;
-	tmp |= (COMPUTE_ENGINE_PLL_PARAM << 24);
+	पंचांगp = eng_घड़ी & SET_CLOCK_FREQ_MASK;
+	पंचांगp |= (COMPUTE_ENGINE_PLL_PARAM << 24);
 
-	args.ulTargetEngineClock = cpu_to_le32(tmp);
-	if (mem_clock)
-		args.sReserved.ulClock = cpu_to_le32(mem_clock & SET_CLOCK_FREQ_MASK);
+	args.ulTargetEngineClock = cpu_to_le32(पंचांगp);
+	अगर (mem_घड़ी)
+		args.sReserved.ulClock = cpu_to_le32(mem_घड़ी & SET_CLOCK_FREQ_MASK);
 
-	amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uint32_t *)&args);
-}
+	amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
+पूर्ण
 
-void amdgpu_atombios_get_default_voltages(struct amdgpu_device *adev,
+व्योम amdgpu_atombios_get_शेष_voltages(काष्ठा amdgpu_device *adev,
 					  u16 *vddc, u16 *vddci, u16 *mvdd)
-{
-	struct amdgpu_mode_info *mode_info = &adev->mode_info;
-	int index = GetIndexIntoMasterTable(DATA, FirmwareInfo);
+अणु
+	काष्ठा amdgpu_mode_info *mode_info = &adev->mode_info;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, FirmwareInfo);
 	u8 frev, crev;
 	u16 data_offset;
-	union firmware_info *firmware_info;
+	जोड़ firmware_info *firmware_info;
 
 	*vddc = 0;
 	*vddci = 0;
 	*mvdd = 0;
 
-	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
-				   &frev, &crev, &data_offset)) {
+	अगर (amdgpu_atom_parse_data_header(mode_info->atom_context, index, शून्य,
+				   &frev, &crev, &data_offset)) अणु
 		firmware_info =
-			(union firmware_info *)(mode_info->atom_context->bios +
+			(जोड़ firmware_info *)(mode_info->atom_context->bios +
 						data_offset);
 		*vddc = le16_to_cpu(firmware_info->info_14.usBootUpVDDCVoltage);
-		if ((frev == 2) && (crev >= 2)) {
+		अगर ((frev == 2) && (crev >= 2)) अणु
 			*vddci = le16_to_cpu(firmware_info->info_22.usBootUpVDDCIVoltage);
 			*mvdd = le16_to_cpu(firmware_info->info_22.usBootUpMVDDCVoltage);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-union set_voltage {
-	struct _SET_VOLTAGE_PS_ALLOCATION alloc;
-	struct _SET_VOLTAGE_PARAMETERS v1;
-	struct _SET_VOLTAGE_PARAMETERS_V2 v2;
-	struct _SET_VOLTAGE_PARAMETERS_V1_3 v3;
-};
+जोड़ set_voltage अणु
+	काष्ठा _SET_VOLTAGE_PS_ALLOCATION alloc;
+	काष्ठा _SET_VOLTAGE_PARAMETERS v1;
+	काष्ठा _SET_VOLTAGE_PARAMETERS_V2 v2;
+	काष्ठा _SET_VOLTAGE_PARAMETERS_V1_3 v3;
+पूर्ण;
 
-int amdgpu_atombios_get_max_vddc(struct amdgpu_device *adev, u8 voltage_type,
+पूर्णांक amdgpu_atombios_get_max_vddc(काष्ठा amdgpu_device *adev, u8 voltage_type,
 			     u16 voltage_id, u16 *voltage)
-{
-	union set_voltage args;
-	int index = GetIndexIntoMasterTable(COMMAND, SetVoltage);
+अणु
+	जोड़ set_voltage args;
+	पूर्णांक index = GetIndexIntoMasterTable(COMMAND, SetVoltage);
 	u8 frev, crev;
 
-	if (!amdgpu_atom_parse_cmd_header(adev->mode_info.atom_context, index, &frev, &crev))
-		return -EINVAL;
+	अगर (!amdgpu_atom_parse_cmd_header(adev->mode_info.atom_context, index, &frev, &crev))
+		वापस -EINVAL;
 
-	switch (crev) {
-	case 1:
-		return -EINVAL;
-	case 2:
+	चयन (crev) अणु
+	हाल 1:
+		वापस -EINVAL;
+	हाल 2:
 		args.v2.ucVoltageType = SET_VOLTAGE_GET_MAX_VOLTAGE;
 		args.v2.ucVoltageMode = 0;
 		args.v2.usVoltageLevel = 0;
 
-		amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uint32_t *)&args);
+		amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
 
 		*voltage = le16_to_cpu(args.v2.usVoltageLevel);
-		break;
-	case 3:
+		अवरोध;
+	हाल 3:
 		args.v3.ucVoltageType = voltage_type;
 		args.v3.ucVoltageMode = ATOM_GET_VOLTAGE_LEVEL;
 		args.v3.usVoltageLevel = cpu_to_le16(voltage_id);
 
-		amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uint32_t *)&args);
+		amdgpu_atom_execute_table(adev->mode_info.atom_context, index, (uपूर्णांक32_t *)&args);
 
 		*voltage = le16_to_cpu(args.v3.usVoltageLevel);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		DRM_ERROR("Unknown table version %d, %d\n", frev, crev);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int amdgpu_atombios_get_leakage_vddc_based_on_leakage_idx(struct amdgpu_device *adev,
+पूर्णांक amdgpu_atombios_get_leakage_vddc_based_on_leakage_idx(काष्ठा amdgpu_device *adev,
 						      u16 *voltage,
 						      u16 leakage_idx)
-{
-	return amdgpu_atombios_get_max_vddc(adev, VOLTAGE_TYPE_VDDC, leakage_idx, voltage);
-}
+अणु
+	वापस amdgpu_atombios_get_max_vddc(adev, VOLTAGE_TYPE_VDDC, leakage_idx, voltage);
+पूर्ण
 
-union voltage_object_info {
-	struct _ATOM_VOLTAGE_OBJECT_INFO v1;
-	struct _ATOM_VOLTAGE_OBJECT_INFO_V2 v2;
-	struct _ATOM_VOLTAGE_OBJECT_INFO_V3_1 v3;
-};
+जोड़ voltage_object_info अणु
+	काष्ठा _ATOM_VOLTAGE_OBJECT_INFO v1;
+	काष्ठा _ATOM_VOLTAGE_OBJECT_INFO_V2 v2;
+	काष्ठा _ATOM_VOLTAGE_OBJECT_INFO_V3_1 v3;
+पूर्ण;
 
-union voltage_object {
-	struct _ATOM_VOLTAGE_OBJECT v1;
-	struct _ATOM_VOLTAGE_OBJECT_V2 v2;
-	union _ATOM_VOLTAGE_OBJECT_V3 v3;
-};
+जोड़ voltage_object अणु
+	काष्ठा _ATOM_VOLTAGE_OBJECT v1;
+	काष्ठा _ATOM_VOLTAGE_OBJECT_V2 v2;
+	जोड़ _ATOM_VOLTAGE_OBJECT_V3 v3;
+पूर्ण;
 
 
-static ATOM_VOLTAGE_OBJECT_V3 *amdgpu_atombios_lookup_voltage_object_v3(ATOM_VOLTAGE_OBJECT_INFO_V3_1 *v3,
+अटल ATOM_VOLTAGE_OBJECT_V3 *amdgpu_atombios_lookup_voltage_object_v3(ATOM_VOLTAGE_OBJECT_INFO_V3_1 *v3,
 									u8 voltage_type, u8 voltage_mode)
-{
+अणु
 	u32 size = le16_to_cpu(v3->sHeader.usStructureSize);
-	u32 offset = offsetof(ATOM_VOLTAGE_OBJECT_INFO_V3_1, asVoltageObj[0]);
+	u32 offset = दुरत्व(ATOM_VOLTAGE_OBJECT_INFO_V3_1, asVoltageObj[0]);
 	u8 *start = (u8 *)v3;
 
-	while (offset < size) {
+	जबतक (offset < size) अणु
 		ATOM_VOLTAGE_OBJECT_V3 *vo = (ATOM_VOLTAGE_OBJECT_V3 *)(start + offset);
-		if ((vo->asGpioVoltageObj.sHeader.ucVoltageType == voltage_type) &&
+		अगर ((vo->asGpioVoltageObj.sHeader.ucVoltageType == voltage_type) &&
 		    (vo->asGpioVoltageObj.sHeader.ucVoltageMode == voltage_mode))
-			return vo;
+			वापस vo;
 		offset += le16_to_cpu(vo->asGpioVoltageObj.sHeader.usSize);
-	}
-	return NULL;
-}
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-int amdgpu_atombios_get_svi2_info(struct amdgpu_device *adev,
+पूर्णांक amdgpu_atombios_get_svi2_info(काष्ठा amdgpu_device *adev,
 			      u8 voltage_type,
 			      u8 *svd_gpio_id, u8 *svc_gpio_id)
-{
-	int index = GetIndexIntoMasterTable(DATA, VoltageObjectInfo);
+अणु
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, VoltageObjectInfo);
 	u8 frev, crev;
 	u16 data_offset, size;
-	union voltage_object_info *voltage_info;
-	union voltage_object *voltage_object = NULL;
+	जोड़ voltage_object_info *voltage_info;
+	जोड़ voltage_object *voltage_object = शून्य;
 
-	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
-				   &frev, &crev, &data_offset)) {
-		voltage_info = (union voltage_object_info *)
+	अगर (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
+				   &frev, &crev, &data_offset)) अणु
+		voltage_info = (जोड़ voltage_object_info *)
 			(adev->mode_info.atom_context->bios + data_offset);
 
-		switch (frev) {
-		case 3:
-			switch (crev) {
-			case 1:
-				voltage_object = (union voltage_object *)
+		चयन (frev) अणु
+		हाल 3:
+			चयन (crev) अणु
+			हाल 1:
+				voltage_object = (जोड़ voltage_object *)
 					amdgpu_atombios_lookup_voltage_object_v3(&voltage_info->v3,
 								      voltage_type,
 								      VOLTAGE_OBJ_SVID2);
-				if (voltage_object) {
+				अगर (voltage_object) अणु
 					*svd_gpio_id = voltage_object->v3.asSVID2Obj.ucSVDGpioId;
 					*svc_gpio_id = voltage_object->v3.asSVID2Obj.ucSVCGpioId;
-				} else {
-					return -EINVAL;
-				}
-				break;
-			default:
+				पूर्ण अन्यथा अणु
+					वापस -EINVAL;
+				पूर्ण
+				अवरोध;
+			शेष:
 				DRM_ERROR("unknown voltage object table\n");
-				return -EINVAL;
-			}
-			break;
-		default:
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		शेष:
 			DRM_ERROR("unknown voltage object table\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 bool
-amdgpu_atombios_is_voltage_gpio(struct amdgpu_device *adev,
+amdgpu_atombios_is_voltage_gpio(काष्ठा amdgpu_device *adev,
 				u8 voltage_type, u8 voltage_mode)
-{
-	int index = GetIndexIntoMasterTable(DATA, VoltageObjectInfo);
+अणु
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, VoltageObjectInfo);
 	u8 frev, crev;
 	u16 data_offset, size;
-	union voltage_object_info *voltage_info;
+	जोड़ voltage_object_info *voltage_info;
 
-	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
-				   &frev, &crev, &data_offset)) {
-		voltage_info = (union voltage_object_info *)
+	अगर (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
+				   &frev, &crev, &data_offset)) अणु
+		voltage_info = (जोड़ voltage_object_info *)
 			(adev->mode_info.atom_context->bios + data_offset);
 
-		switch (frev) {
-		case 3:
-			switch (crev) {
-			case 1:
-				if (amdgpu_atombios_lookup_voltage_object_v3(&voltage_info->v3,
+		चयन (frev) अणु
+		हाल 3:
+			चयन (crev) अणु
+			हाल 1:
+				अगर (amdgpu_atombios_lookup_voltage_object_v3(&voltage_info->v3,
 								  voltage_type, voltage_mode))
-					return true;
-				break;
-			default:
+					वापस true;
+				अवरोध;
+			शेष:
 				DRM_ERROR("unknown voltage object table\n");
-				return false;
-			}
-			break;
-		default:
+				वापस false;
+			पूर्ण
+			अवरोध;
+		शेष:
 			DRM_ERROR("unknown voltage object table\n");
-			return false;
-		}
+			वापस false;
+		पूर्ण
 
-	}
-	return false;
-}
+	पूर्ण
+	वापस false;
+पूर्ण
 
-int amdgpu_atombios_get_voltage_table(struct amdgpu_device *adev,
+पूर्णांक amdgpu_atombios_get_voltage_table(काष्ठा amdgpu_device *adev,
 				      u8 voltage_type, u8 voltage_mode,
-				      struct atom_voltage_table *voltage_table)
-{
-	int index = GetIndexIntoMasterTable(DATA, VoltageObjectInfo);
+				      काष्ठा atom_voltage_table *voltage_table)
+अणु
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, VoltageObjectInfo);
 	u8 frev, crev;
 	u16 data_offset, size;
-	int i;
-	union voltage_object_info *voltage_info;
-	union voltage_object *voltage_object = NULL;
+	पूर्णांक i;
+	जोड़ voltage_object_info *voltage_info;
+	जोड़ voltage_object *voltage_object = शून्य;
 
-	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
-				   &frev, &crev, &data_offset)) {
-		voltage_info = (union voltage_object_info *)
+	अगर (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
+				   &frev, &crev, &data_offset)) अणु
+		voltage_info = (जोड़ voltage_object_info *)
 			(adev->mode_info.atom_context->bios + data_offset);
 
-		switch (frev) {
-		case 3:
-			switch (crev) {
-			case 1:
-				voltage_object = (union voltage_object *)
+		चयन (frev) अणु
+		हाल 3:
+			चयन (crev) अणु
+			हाल 1:
+				voltage_object = (जोड़ voltage_object *)
 					amdgpu_atombios_lookup_voltage_object_v3(&voltage_info->v3,
 								      voltage_type, voltage_mode);
-				if (voltage_object) {
+				अगर (voltage_object) अणु
 					ATOM_GPIO_VOLTAGE_OBJECT_V3 *gpio =
 						&voltage_object->v3.asGpioVoltageObj;
 					VOLTAGE_LUT_ENTRY_V2 *lut;
-					if (gpio->ucGpioEntryNum > MAX_VOLTAGE_ENTRIES)
-						return -EINVAL;
+					अगर (gpio->ucGpioEntryNum > MAX_VOLTAGE_ENTRIES)
+						वापस -EINVAL;
 					lut = &gpio->asVolGpioLut[0];
-					for (i = 0; i < gpio->ucGpioEntryNum; i++) {
+					क्रम (i = 0; i < gpio->ucGpioEntryNum; i++) अणु
 						voltage_table->entries[i].value =
 							le16_to_cpu(lut->usVoltageValue);
 						voltage_table->entries[i].smio_low =
 							le32_to_cpu(lut->ulVoltageId);
 						lut = (VOLTAGE_LUT_ENTRY_V2 *)
-							((u8 *)lut + sizeof(VOLTAGE_LUT_ENTRY_V2));
-					}
+							((u8 *)lut + माप(VOLTAGE_LUT_ENTRY_V2));
+					पूर्ण
 					voltage_table->mask_low = le32_to_cpu(gpio->ulGpioMaskVal);
 					voltage_table->count = gpio->ucGpioEntryNum;
 					voltage_table->phase_delay = gpio->ucPhaseDelay;
-					return 0;
-				}
-				break;
-			default:
+					वापस 0;
+				पूर्ण
+				अवरोध;
+			शेष:
 				DRM_ERROR("unknown voltage object table\n");
-				return -EINVAL;
-			}
-			break;
-		default:
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		शेष:
 			DRM_ERROR("unknown voltage object table\n");
-			return -EINVAL;
-		}
-	}
-	return -EINVAL;
-}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-union vram_info {
-	struct _ATOM_VRAM_INFO_V3 v1_3;
-	struct _ATOM_VRAM_INFO_V4 v1_4;
-	struct _ATOM_VRAM_INFO_HEADER_V2_1 v2_1;
-};
+जोड़ vram_info अणु
+	काष्ठा _ATOM_VRAM_INFO_V3 v1_3;
+	काष्ठा _ATOM_VRAM_INFO_V4 v1_4;
+	काष्ठा _ATOM_VRAM_INFO_HEADER_V2_1 v2_1;
+पूर्ण;
 
-#define MEM_ID_MASK           0xff000000
-#define MEM_ID_SHIFT          24
-#define CLOCK_RANGE_MASK      0x00ffffff
-#define CLOCK_RANGE_SHIFT     0
-#define LOW_NIBBLE_MASK       0xf
-#define DATA_EQU_PREV         0
-#define DATA_FROM_TABLE       4
+#घोषणा MEM_ID_MASK           0xff000000
+#घोषणा MEM_ID_SHIFT          24
+#घोषणा CLOCK_RANGE_MASK      0x00ffffff
+#घोषणा CLOCK_RANGE_SHIFT     0
+#घोषणा LOW_NIBBLE_MASK       0xf
+#घोषणा DATA_EQU_PREV         0
+#घोषणा DATA_FROM_TABLE       4
 
-int amdgpu_atombios_init_mc_reg_table(struct amdgpu_device *adev,
+पूर्णांक amdgpu_atombios_init_mc_reg_table(काष्ठा amdgpu_device *adev,
 				      u8 module_index,
-				      struct atom_mc_reg_table *reg_table)
-{
-	int index = GetIndexIntoMasterTable(DATA, VRAM_Info);
+				      काष्ठा atom_mc_reg_table *reg_table)
+अणु
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, VRAM_Info);
 	u8 frev, crev, num_entries, t_mem_id, num_ranges = 0;
 	u32 i = 0, j;
 	u16 data_offset, size;
-	union vram_info *vram_info;
+	जोड़ vram_info *vram_info;
 
-	memset(reg_table, 0, sizeof(struct atom_mc_reg_table));
+	स_रखो(reg_table, 0, माप(काष्ठा atom_mc_reg_table));
 
-	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
-				   &frev, &crev, &data_offset)) {
-		vram_info = (union vram_info *)
+	अगर (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
+				   &frev, &crev, &data_offset)) अणु
+		vram_info = (जोड़ vram_info *)
 			(adev->mode_info.atom_context->bios + data_offset);
-		switch (frev) {
-		case 1:
+		चयन (frev) अणु
+		हाल 1:
 			DRM_ERROR("old table version %d, %d\n", frev, crev);
-			return -EINVAL;
-		case 2:
-			switch (crev) {
-			case 1:
-				if (module_index < vram_info->v2_1.ucNumOfVRAMModule) {
+			वापस -EINVAL;
+		हाल 2:
+			चयन (crev) अणु
+			हाल 1:
+				अगर (module_index < vram_info->v2_1.ucNumOfVRAMModule) अणु
 					ATOM_INIT_REG_BLOCK *reg_block =
 						(ATOM_INIT_REG_BLOCK *)
 						((u8 *)vram_info + le16_to_cpu(vram_info->v2_1.usMemClkPatchTblOffset));
 					ATOM_MEMORY_SETTING_DATA_BLOCK *reg_data =
 						(ATOM_MEMORY_SETTING_DATA_BLOCK *)
-						((u8 *)reg_block + (2 * sizeof(u16)) +
+						((u8 *)reg_block + (2 * माप(u16)) +
 						 le16_to_cpu(reg_block->usRegIndexTblSize));
-					ATOM_INIT_REG_INDEX_FORMAT *format = &reg_block->asRegIndexBuf[0];
+					ATOM_INIT_REG_INDEX_FORMAT *क्रमmat = &reg_block->asRegIndexBuf[0];
 					num_entries = (u8)((le16_to_cpu(reg_block->usRegIndexTblSize)) /
-							   sizeof(ATOM_INIT_REG_INDEX_FORMAT)) - 1;
-					if (num_entries > VBIOS_MC_REGISTER_ARRAY_SIZE)
-						return -EINVAL;
-					while (i < num_entries) {
-						if (format->ucPreRegDataLength & ACCESS_PLACEHOLDER)
-							break;
+							   माप(ATOM_INIT_REG_INDEX_FORMAT)) - 1;
+					अगर (num_entries > VBIOS_MC_REGISTER_ARRAY_SIZE)
+						वापस -EINVAL;
+					जबतक (i < num_entries) अणु
+						अगर (क्रमmat->ucPreRegDataLength & ACCESS_PLACEHOLDER)
+							अवरोध;
 						reg_table->mc_reg_address[i].s1 =
-							(u16)(le16_to_cpu(format->usRegIndex));
+							(u16)(le16_to_cpu(क्रमmat->usRegIndex));
 						reg_table->mc_reg_address[i].pre_reg_data =
-							(u8)(format->ucPreRegDataLength);
+							(u8)(क्रमmat->ucPreRegDataLength);
 						i++;
-						format = (ATOM_INIT_REG_INDEX_FORMAT *)
-							((u8 *)format + sizeof(ATOM_INIT_REG_INDEX_FORMAT));
-					}
+						क्रमmat = (ATOM_INIT_REG_INDEX_FORMAT *)
+							((u8 *)क्रमmat + माप(ATOM_INIT_REG_INDEX_FORMAT));
+					पूर्ण
 					reg_table->last = i;
-					while ((le32_to_cpu(*(u32 *)reg_data) != END_OF_REG_DATA_BLOCK) &&
-					       (num_ranges < VBIOS_MAX_AC_TIMING_ENTRIES)) {
+					जबतक ((le32_to_cpu(*(u32 *)reg_data) != END_OF_REG_DATA_BLOCK) &&
+					       (num_ranges < VBIOS_MAX_AC_TIMING_ENTRIES)) अणु
 						t_mem_id = (u8)((le32_to_cpu(*(u32 *)reg_data) & MEM_ID_MASK)
 								>> MEM_ID_SHIFT);
-						if (module_index == t_mem_id) {
+						अगर (module_index == t_mem_id) अणु
 							reg_table->mc_reg_table_entry[num_ranges].mclk_max =
 								(u32)((le32_to_cpu(*(u32 *)reg_data) & CLOCK_RANGE_MASK)
 								      >> CLOCK_RANGE_SHIFT);
-							for (i = 0, j = 1; i < reg_table->last; i++) {
-								if ((reg_table->mc_reg_address[i].pre_reg_data & LOW_NIBBLE_MASK) == DATA_FROM_TABLE) {
+							क्रम (i = 0, j = 1; i < reg_table->last; i++) अणु
+								अगर ((reg_table->mc_reg_address[i].pre_reg_data & LOW_NIBBLE_MASK) == DATA_FROM_TABLE) अणु
 									reg_table->mc_reg_table_entry[num_ranges].mc_data[i] =
 										(u32)le32_to_cpu(*((u32 *)reg_data + j));
 									j++;
-								} else if ((reg_table->mc_reg_address[i].pre_reg_data & LOW_NIBBLE_MASK) == DATA_EQU_PREV) {
+								पूर्ण अन्यथा अगर ((reg_table->mc_reg_address[i].pre_reg_data & LOW_NIBBLE_MASK) == DATA_EQU_PREV) अणु
 									reg_table->mc_reg_table_entry[num_ranges].mc_data[i] =
 										reg_table->mc_reg_table_entry[num_ranges].mc_data[i - 1];
-								}
-							}
+								पूर्ण
+							पूर्ण
 							num_ranges++;
-						}
+						पूर्ण
 						reg_data = (ATOM_MEMORY_SETTING_DATA_BLOCK *)
 							((u8 *)reg_data + le16_to_cpu(reg_block->usRegDataBlkSize));
-					}
-					if (le32_to_cpu(*(u32 *)reg_data) != END_OF_REG_DATA_BLOCK)
-						return -EINVAL;
+					पूर्ण
+					अगर (le32_to_cpu(*(u32 *)reg_data) != END_OF_REG_DATA_BLOCK)
+						वापस -EINVAL;
 					reg_table->num_entries = num_ranges;
-				} else
-					return -EINVAL;
-				break;
-			default:
+				पूर्ण अन्यथा
+					वापस -EINVAL;
+				अवरोध;
+			शेष:
 				DRM_ERROR("Unknown table version %d, %d\n", frev, crev);
-				return -EINVAL;
-			}
-			break;
-		default:
+				वापस -EINVAL;
+			पूर्ण
+			अवरोध;
+		शेष:
 			DRM_ERROR("Unknown table version %d, %d\n", frev, crev);
-			return -EINVAL;
-		}
-		return 0;
-	}
-	return -EINVAL;
-}
+			वापस -EINVAL;
+		पूर्ण
+		वापस 0;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-bool amdgpu_atombios_has_gpu_virtualization_table(struct amdgpu_device *adev)
-{
-	int index = GetIndexIntoMasterTable(DATA, GPUVirtualizationInfo);
+bool amdgpu_atombios_has_gpu_भवization_table(काष्ठा amdgpu_device *adev)
+अणु
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, GPUVirtualizationInfo);
 	u8 frev, crev;
 	u16 data_offset, size;
 
-	if (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
+	अगर (amdgpu_atom_parse_data_header(adev->mode_info.atom_context, index, &size,
 					  &frev, &crev, &data_offset))
-		return true;
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-void amdgpu_atombios_scratch_regs_lock(struct amdgpu_device *adev, bool lock)
-{
-	uint32_t bios_6_scratch;
+व्योम amdgpu_atombios_scratch_regs_lock(काष्ठा amdgpu_device *adev, bool lock)
+अणु
+	uपूर्णांक32_t bios_6_scratch;
 
 	bios_6_scratch = RREG32(adev->bios_scratch_reg_offset + 6);
 
-	if (lock) {
+	अगर (lock) अणु
 		bios_6_scratch |= ATOM_S6_CRITICAL_STATE;
 		bios_6_scratch &= ~ATOM_S6_ACC_MODE;
-	} else {
+	पूर्ण अन्यथा अणु
 		bios_6_scratch &= ~ATOM_S6_CRITICAL_STATE;
 		bios_6_scratch |= ATOM_S6_ACC_MODE;
-	}
+	पूर्ण
 
 	WREG32(adev->bios_scratch_reg_offset + 6, bios_6_scratch);
-}
+पूर्ण
 
-static void amdgpu_atombios_scratch_regs_init(struct amdgpu_device *adev)
-{
-	uint32_t bios_2_scratch, bios_6_scratch;
+अटल व्योम amdgpu_atombios_scratch_regs_init(काष्ठा amdgpu_device *adev)
+अणु
+	uपूर्णांक32_t bios_2_scratch, bios_6_scratch;
 
 	adev->bios_scratch_reg_offset = mmBIOS_SCRATCH_0;
 
@@ -1546,7 +1547,7 @@ static void amdgpu_atombios_scratch_regs_init(struct amdgpu_device *adev)
 	/* let the bios control the backlight */
 	bios_2_scratch &= ~ATOM_S2_VRI_BRIGHT_ENABLE;
 
-	/* tell the bios not to handle mode switching */
+	/* tell the bios not to handle mode चयनing */
 	bios_6_scratch |= ATOM_S6_ACC_BLOCK_DISPLAY_SWITCH;
 
 	/* clear the vbios dpms state */
@@ -1554,32 +1555,32 @@ static void amdgpu_atombios_scratch_regs_init(struct amdgpu_device *adev)
 
 	WREG32(adev->bios_scratch_reg_offset + 2, bios_2_scratch);
 	WREG32(adev->bios_scratch_reg_offset + 6, bios_6_scratch);
-}
+पूर्ण
 
-void amdgpu_atombios_scratch_regs_engine_hung(struct amdgpu_device *adev,
+व्योम amdgpu_atombios_scratch_regs_engine_hung(काष्ठा amdgpu_device *adev,
 					      bool hung)
-{
-	u32 tmp = RREG32(adev->bios_scratch_reg_offset + 3);
+अणु
+	u32 पंचांगp = RREG32(adev->bios_scratch_reg_offset + 3);
 
-	if (hung)
-		tmp |= ATOM_S3_ASIC_GUI_ENGINE_HUNG;
-	else
-		tmp &= ~ATOM_S3_ASIC_GUI_ENGINE_HUNG;
+	अगर (hung)
+		पंचांगp |= ATOM_S3_ASIC_GUI_ENGINE_HUNG;
+	अन्यथा
+		पंचांगp &= ~ATOM_S3_ASIC_GUI_ENGINE_HUNG;
 
-	WREG32(adev->bios_scratch_reg_offset + 3, tmp);
-}
+	WREG32(adev->bios_scratch_reg_offset + 3, पंचांगp);
+पूर्ण
 
-bool amdgpu_atombios_scratch_need_asic_init(struct amdgpu_device *adev)
-{
-	u32 tmp = RREG32(adev->bios_scratch_reg_offset + 7);
+bool amdgpu_atombios_scratch_need_asic_init(काष्ठा amdgpu_device *adev)
+अणु
+	u32 पंचांगp = RREG32(adev->bios_scratch_reg_offset + 7);
 
-	if (tmp & ATOM_S7_ASIC_INIT_COMPLETE_MASK)
-		return false;
-	else
-		return true;
-}
+	अगर (पंचांगp & ATOM_S7_ASIC_INIT_COMPLETE_MASK)
+		वापस false;
+	अन्यथा
+		वापस true;
+पूर्ण
 
-/* Atom needs data in little endian format so swap as appropriate when copying
+/* Atom needs data in little endian क्रमmat so swap as appropriate when copying
  * data to or from atom. Note that atom operates on dw units.
  *
  * Use to_le=true when sending data to atom and provide at least
@@ -1588,41 +1589,41 @@ bool amdgpu_atombios_scratch_need_asic_init(struct amdgpu_device *adev)
  * Use to_le=false when receiving data from atom and provide ALIGN(num_bytes,4)
  * byes in the src buffer.
  */
-void amdgpu_atombios_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
-{
-#ifdef __BIG_ENDIAN
-	u32 src_tmp[5], dst_tmp[5];
-	int i;
+व्योम amdgpu_atombios_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
+अणु
+#अगर_घोषित __BIG_ENDIAN
+	u32 src_पंचांगp[5], dst_पंचांगp[5];
+	पूर्णांक i;
 	u8 align_num_bytes = ALIGN(num_bytes, 4);
 
-	if (to_le) {
-		memcpy(src_tmp, src, num_bytes);
-		for (i = 0; i < align_num_bytes / 4; i++)
-			dst_tmp[i] = cpu_to_le32(src_tmp[i]);
-		memcpy(dst, dst_tmp, align_num_bytes);
-	} else {
-		memcpy(src_tmp, src, align_num_bytes);
-		for (i = 0; i < align_num_bytes / 4; i++)
-			dst_tmp[i] = le32_to_cpu(src_tmp[i]);
-		memcpy(dst, dst_tmp, num_bytes);
-	}
-#else
-	memcpy(dst, src, num_bytes);
-#endif
-}
+	अगर (to_le) अणु
+		स_नकल(src_पंचांगp, src, num_bytes);
+		क्रम (i = 0; i < align_num_bytes / 4; i++)
+			dst_पंचांगp[i] = cpu_to_le32(src_पंचांगp[i]);
+		स_नकल(dst, dst_पंचांगp, align_num_bytes);
+	पूर्ण अन्यथा अणु
+		स_नकल(src_पंचांगp, src, align_num_bytes);
+		क्रम (i = 0; i < align_num_bytes / 4; i++)
+			dst_पंचांगp[i] = le32_to_cpu(src_पंचांगp[i]);
+		स_नकल(dst, dst_पंचांगp, num_bytes);
+	पूर्ण
+#अन्यथा
+	स_नकल(dst, src, num_bytes);
+#पूर्ण_अगर
+पूर्ण
 
-static int amdgpu_atombios_allocate_fb_scratch(struct amdgpu_device *adev)
-{
-	struct atom_context *ctx = adev->mode_info.atom_context;
-	int index = GetIndexIntoMasterTable(DATA, VRAM_UsageByFirmware);
-	uint16_t data_offset;
-	int usage_bytes = 0;
-	struct _ATOM_VRAM_USAGE_BY_FIRMWARE *firmware_usage;
+अटल पूर्णांक amdgpu_atombios_allocate_fb_scratch(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा atom_context *ctx = adev->mode_info.atom_context;
+	पूर्णांक index = GetIndexIntoMasterTable(DATA, VRAM_UsageByFirmware);
+	uपूर्णांक16_t data_offset;
+	पूर्णांक usage_bytes = 0;
+	काष्ठा _ATOM_VRAM_USAGE_BY_FIRMWARE *firmware_usage;
 	u64 start_addr;
 	u64 size;
 
-	if (amdgpu_atom_parse_data_header(ctx, index, NULL, NULL, NULL, &data_offset)) {
-		firmware_usage = (struct _ATOM_VRAM_USAGE_BY_FIRMWARE *)(ctx->bios + data_offset);
+	अगर (amdgpu_atom_parse_data_header(ctx, index, शून्य, शून्य, शून्य, &data_offset)) अणु
+		firmware_usage = (काष्ठा _ATOM_VRAM_USAGE_BY_FIRMWARE *)(ctx->bios + data_offset);
 
 		DRM_DEBUG("atom firmware requested %08x %dkb\n",
 			  le32_to_cpu(firmware_usage->asFirmwareVramReserveInfo[0].ulStartAddrUsedByFirmware),
@@ -1631,231 +1632,231 @@ static int amdgpu_atombios_allocate_fb_scratch(struct amdgpu_device *adev)
 		start_addr = firmware_usage->asFirmwareVramReserveInfo[0].ulStartAddrUsedByFirmware;
 		size = firmware_usage->asFirmwareVramReserveInfo[0].usFirmwareUseInKb;
 
-		if ((uint32_t)(start_addr & ATOM_VRAM_OPERATION_FLAGS_MASK) ==
-			(uint32_t)(ATOM_VRAM_BLOCK_SRIOV_MSG_SHARE_RESERVATION <<
-			ATOM_VRAM_OPERATION_FLAGS_SHIFT)) {
-			/* Firmware request VRAM reservation for SR-IOV */
+		अगर ((uपूर्णांक32_t)(start_addr & ATOM_VRAM_OPERATION_FLAGS_MASK) ==
+			(uपूर्णांक32_t)(ATOM_VRAM_BLOCK_SRIOV_MSG_SHARE_RESERVATION <<
+			ATOM_VRAM_OPERATION_FLAGS_SHIFT)) अणु
+			/* Firmware request VRAM reservation क्रम SR-IOV */
 			adev->mman.fw_vram_usage_start_offset = (start_addr &
 				(~ATOM_VRAM_OPERATION_FLAGS_MASK)) << 10;
 			adev->mman.fw_vram_usage_size = size << 10;
-			/* Use the default scratch size */
+			/* Use the शेष scratch size */
 			usage_bytes = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			usage_bytes = le16_to_cpu(firmware_usage->asFirmwareVramReserveInfo[0].usFirmwareUseInKb) * 1024;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	ctx->scratch_size_bytes = 0;
-	if (usage_bytes == 0)
+	अगर (usage_bytes == 0)
 		usage_bytes = 20 * 1024;
 	/* allocate some scratch memory */
 	ctx->scratch = kzalloc(usage_bytes, GFP_KERNEL);
-	if (!ctx->scratch)
-		return -ENOMEM;
+	अगर (!ctx->scratch)
+		वापस -ENOMEM;
 	ctx->scratch_size_bytes = usage_bytes;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* ATOM accessor methods */
 /*
- * ATOM is an interpreted byte code stored in tables in the vbios.  The
- * driver registers callbacks to access registers and the interpreter
- * in the driver parses the tables and executes then to program specific
+ * ATOM is an पूर्णांकerpreted byte code stored in tables in the vbios.  The
+ * driver रेजिस्टरs callbacks to access रेजिस्टरs and the पूर्णांकerpreter
+ * in the driver parses the tables and executes then to program specअगरic
  * actions (set display modes, asic init, etc.).  See amdgpu_atombios.c,
- * atombios.h, and atom.c
+ * atomमूलप्रण.स, and atom.c
  */
 
 /**
- * cail_pll_read - read PLL register
+ * cail_pll_पढ़ो - पढ़ो PLL रेजिस्टर
  *
- * @info: atom card_info pointer
- * @reg: PLL register offset
+ * @info: atom card_info poपूर्णांकer
+ * @reg: PLL रेजिस्टर offset
  *
- * Provides a PLL register accessor for the atom interpreter (r4xx+).
- * Returns the value of the PLL register.
+ * Provides a PLL रेजिस्टर accessor क्रम the atom पूर्णांकerpreter (r4xx+).
+ * Returns the value of the PLL रेजिस्टर.
  */
-static uint32_t cail_pll_read(struct card_info *info, uint32_t reg)
-{
-	return 0;
-}
+अटल uपूर्णांक32_t cail_pll_पढ़ो(काष्ठा card_info *info, uपूर्णांक32_t reg)
+अणु
+	वापस 0;
+पूर्ण
 
 /**
- * cail_pll_write - write PLL register
+ * cail_pll_ग_लिखो - ग_लिखो PLL रेजिस्टर
  *
- * @info: atom card_info pointer
- * @reg: PLL register offset
- * @val: value to write to the pll register
+ * @info: atom card_info poपूर्णांकer
+ * @reg: PLL रेजिस्टर offset
+ * @val: value to ग_लिखो to the pll रेजिस्टर
  *
- * Provides a PLL register accessor for the atom interpreter (r4xx+).
+ * Provides a PLL रेजिस्टर accessor क्रम the atom पूर्णांकerpreter (r4xx+).
  */
-static void cail_pll_write(struct card_info *info, uint32_t reg, uint32_t val)
-{
+अटल व्योम cail_pll_ग_लिखो(काष्ठा card_info *info, uपूर्णांक32_t reg, uपूर्णांक32_t val)
+अणु
 
-}
+पूर्ण
 
 /**
- * cail_mc_read - read MC (Memory Controller) register
+ * cail_mc_पढ़ो - पढ़ो MC (Memory Controller) रेजिस्टर
  *
- * @info: atom card_info pointer
- * @reg: MC register offset
+ * @info: atom card_info poपूर्णांकer
+ * @reg: MC रेजिस्टर offset
  *
- * Provides an MC register accessor for the atom interpreter (r4xx+).
- * Returns the value of the MC register.
+ * Provides an MC रेजिस्टर accessor क्रम the atom पूर्णांकerpreter (r4xx+).
+ * Returns the value of the MC रेजिस्टर.
  */
-static uint32_t cail_mc_read(struct card_info *info, uint32_t reg)
-{
-	return 0;
-}
+अटल uपूर्णांक32_t cail_mc_पढ़ो(काष्ठा card_info *info, uपूर्णांक32_t reg)
+अणु
+	वापस 0;
+पूर्ण
 
 /**
- * cail_mc_write - write MC (Memory Controller) register
+ * cail_mc_ग_लिखो - ग_लिखो MC (Memory Controller) रेजिस्टर
  *
- * @info: atom card_info pointer
- * @reg: MC register offset
- * @val: value to write to the pll register
+ * @info: atom card_info poपूर्णांकer
+ * @reg: MC रेजिस्टर offset
+ * @val: value to ग_लिखो to the pll रेजिस्टर
  *
- * Provides a MC register accessor for the atom interpreter (r4xx+).
+ * Provides a MC रेजिस्टर accessor क्रम the atom पूर्णांकerpreter (r4xx+).
  */
-static void cail_mc_write(struct card_info *info, uint32_t reg, uint32_t val)
-{
+अटल व्योम cail_mc_ग_लिखो(काष्ठा card_info *info, uपूर्णांक32_t reg, uपूर्णांक32_t val)
+अणु
 
-}
+पूर्ण
 
 /**
- * cail_reg_write - write MMIO register
+ * cail_reg_ग_लिखो - ग_लिखो MMIO रेजिस्टर
  *
- * @info: atom card_info pointer
- * @reg: MMIO register offset
- * @val: value to write to the pll register
+ * @info: atom card_info poपूर्णांकer
+ * @reg: MMIO रेजिस्टर offset
+ * @val: value to ग_लिखो to the pll रेजिस्टर
  *
- * Provides a MMIO register accessor for the atom interpreter (r4xx+).
+ * Provides a MMIO रेजिस्टर accessor क्रम the atom पूर्णांकerpreter (r4xx+).
  */
-static void cail_reg_write(struct card_info *info, uint32_t reg, uint32_t val)
-{
-	struct amdgpu_device *adev = drm_to_adev(info->dev);
+अटल व्योम cail_reg_ग_लिखो(काष्ठा card_info *info, uपूर्णांक32_t reg, uपूर्णांक32_t val)
+अणु
+	काष्ठा amdgpu_device *adev = drm_to_adev(info->dev);
 
 	WREG32(reg, val);
-}
+पूर्ण
 
 /**
- * cail_reg_read - read MMIO register
+ * cail_reg_पढ़ो - पढ़ो MMIO रेजिस्टर
  *
- * @info: atom card_info pointer
- * @reg: MMIO register offset
+ * @info: atom card_info poपूर्णांकer
+ * @reg: MMIO रेजिस्टर offset
  *
- * Provides an MMIO register accessor for the atom interpreter (r4xx+).
- * Returns the value of the MMIO register.
+ * Provides an MMIO रेजिस्टर accessor क्रम the atom पूर्णांकerpreter (r4xx+).
+ * Returns the value of the MMIO रेजिस्टर.
  */
-static uint32_t cail_reg_read(struct card_info *info, uint32_t reg)
-{
-	struct amdgpu_device *adev = drm_to_adev(info->dev);
-	uint32_t r;
+अटल uपूर्णांक32_t cail_reg_पढ़ो(काष्ठा card_info *info, uपूर्णांक32_t reg)
+अणु
+	काष्ठा amdgpu_device *adev = drm_to_adev(info->dev);
+	uपूर्णांक32_t r;
 
 	r = RREG32(reg);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static ssize_t amdgpu_atombios_get_vbios_version(struct device *dev,
-						 struct device_attribute *attr,
-						 char *buf)
-{
-	struct drm_device *ddev = dev_get_drvdata(dev);
-	struct amdgpu_device *adev = drm_to_adev(ddev);
-	struct atom_context *ctx = adev->mode_info.atom_context;
+अटल sमाप_प्रकार amdgpu_atombios_get_vbios_version(काष्ठा device *dev,
+						 काष्ठा device_attribute *attr,
+						 अक्षर *buf)
+अणु
+	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
+	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
+	काष्ठा atom_context *ctx = adev->mode_info.atom_context;
 
-	return sysfs_emit(buf, "%s\n", ctx->vbios_version);
-}
+	वापस sysfs_emit(buf, "%s\n", ctx->vbios_version);
+पूर्ण
 
-static DEVICE_ATTR(vbios_version, 0444, amdgpu_atombios_get_vbios_version,
-		   NULL);
+अटल DEVICE_ATTR(vbios_version, 0444, amdgpu_atombios_get_vbios_version,
+		   शून्य);
 
 /**
- * amdgpu_atombios_fini - free the driver info and callbacks for atombios
+ * amdgpu_atombios_fini - मुक्त the driver info and callbacks क्रम atombios
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Frees the driver info and register access callbacks for the ATOM
- * interpreter (r4xx+).
- * Called at driver shutdown.
+ * Frees the driver info and रेजिस्टर access callbacks क्रम the ATOM
+ * पूर्णांकerpreter (r4xx+).
+ * Called at driver shutकरोwn.
  */
-void amdgpu_atombios_fini(struct amdgpu_device *adev)
-{
-	if (adev->mode_info.atom_context) {
-		kfree(adev->mode_info.atom_context->scratch);
-		kfree(adev->mode_info.atom_context->iio);
-	}
-	kfree(adev->mode_info.atom_context);
-	adev->mode_info.atom_context = NULL;
-	kfree(adev->mode_info.atom_card_info);
-	adev->mode_info.atom_card_info = NULL;
-	device_remove_file(adev->dev, &dev_attr_vbios_version);
-}
+व्योम amdgpu_atombios_fini(काष्ठा amdgpu_device *adev)
+अणु
+	अगर (adev->mode_info.atom_context) अणु
+		kमुक्त(adev->mode_info.atom_context->scratch);
+		kमुक्त(adev->mode_info.atom_context->iio);
+	पूर्ण
+	kमुक्त(adev->mode_info.atom_context);
+	adev->mode_info.atom_context = शून्य;
+	kमुक्त(adev->mode_info.atom_card_info);
+	adev->mode_info.atom_card_info = शून्य;
+	device_हटाओ_file(adev->dev, &dev_attr_vbios_version);
+पूर्ण
 
 /**
- * amdgpu_atombios_init - init the driver info and callbacks for atombios
+ * amdgpu_atombios_init - init the driver info and callbacks क्रम atombios
  *
- * @adev: amdgpu_device pointer
+ * @adev: amdgpu_device poपूर्णांकer
  *
- * Initializes the driver info and register access callbacks for the
- * ATOM interpreter (r4xx+).
+ * Initializes the driver info and रेजिस्टर access callbacks क्रम the
+ * ATOM पूर्णांकerpreter (r4xx+).
  * Returns 0 on sucess, -ENOMEM on failure.
  * Called at driver startup.
  */
-int amdgpu_atombios_init(struct amdgpu_device *adev)
-{
-	struct card_info *atom_card_info =
-	    kzalloc(sizeof(struct card_info), GFP_KERNEL);
-	int ret;
+पूर्णांक amdgpu_atombios_init(काष्ठा amdgpu_device *adev)
+अणु
+	काष्ठा card_info *atom_card_info =
+	    kzalloc(माप(काष्ठा card_info), GFP_KERNEL);
+	पूर्णांक ret;
 
-	if (!atom_card_info)
-		return -ENOMEM;
+	अगर (!atom_card_info)
+		वापस -ENOMEM;
 
 	adev->mode_info.atom_card_info = atom_card_info;
 	atom_card_info->dev = adev_to_drm(adev);
-	atom_card_info->reg_read = cail_reg_read;
-	atom_card_info->reg_write = cail_reg_write;
-	atom_card_info->mc_read = cail_mc_read;
-	atom_card_info->mc_write = cail_mc_write;
-	atom_card_info->pll_read = cail_pll_read;
-	atom_card_info->pll_write = cail_pll_write;
+	atom_card_info->reg_पढ़ो = cail_reg_पढ़ो;
+	atom_card_info->reg_ग_लिखो = cail_reg_ग_लिखो;
+	atom_card_info->mc_पढ़ो = cail_mc_पढ़ो;
+	atom_card_info->mc_ग_लिखो = cail_mc_ग_लिखो;
+	atom_card_info->pll_पढ़ो = cail_pll_पढ़ो;
+	atom_card_info->pll_ग_लिखो = cail_pll_ग_लिखो;
 
 	adev->mode_info.atom_context = amdgpu_atom_parse(atom_card_info, adev->bios);
-	if (!adev->mode_info.atom_context) {
+	अगर (!adev->mode_info.atom_context) अणु
 		amdgpu_atombios_fini(adev);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	mutex_init(&adev->mode_info.atom_context->mutex);
-	if (adev->is_atom_fw) {
+	अगर (adev->is_atom_fw) अणु
 		amdgpu_atomfirmware_scratch_regs_init(adev);
 		amdgpu_atomfirmware_allocate_fb_scratch(adev);
-	} else {
+	पूर्ण अन्यथा अणु
 		amdgpu_atombios_scratch_regs_init(adev);
 		amdgpu_atombios_allocate_fb_scratch(adev);
-	}
+	पूर्ण
 
 	ret = device_create_file(adev->dev, &dev_attr_vbios_version);
-	if (ret) {
+	अगर (ret) अणु
 		DRM_ERROR("Failed to create device file for VBIOS version\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int amdgpu_atombios_get_data_table(struct amdgpu_device *adev,
-				   uint32_t table,
-				   uint16_t *size,
-				   uint8_t *frev,
-				   uint8_t *crev,
-				   uint8_t **addr)
-{
-	uint16_t data_start;
+पूर्णांक amdgpu_atombios_get_data_table(काष्ठा amdgpu_device *adev,
+				   uपूर्णांक32_t table,
+				   uपूर्णांक16_t *size,
+				   uपूर्णांक8_t *frev,
+				   uपूर्णांक8_t *crev,
+				   uपूर्णांक8_t **addr)
+अणु
+	uपूर्णांक16_t data_start;
 
-	if (!amdgpu_atom_parse_data_header(adev->mode_info.atom_context, table,
+	अगर (!amdgpu_atom_parse_data_header(adev->mode_info.atom_context, table,
 					   size, frev, crev, &data_start))
-		return -EINVAL;
+		वापस -EINVAL;
 
-	*addr = (uint8_t *)adev->mode_info.atom_context->bios + data_start;
+	*addr = (uपूर्णांक8_t *)adev->mode_info.atom_context->bios + data_start;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,149 +1,150 @@
+<शैली गुरु>
 /* bnx2i_sysfs.c: QLogic NetXtreme II iSCSI driver.
  *
  * Copyright (c) 2004 - 2013 Broadcom Corporation
  * Copyright (c) 2014, QLogic Corporation
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation.
  *
  * Written by: Anil Veerabhadrappa (anilgv@broadcom.com)
- * Previously Maintained by: Eddie Wai (eddie.wai@broadcom.com)
- * Maintained by: QLogic-Storage-Upstream@qlogic.com
+ * Previously Maपूर्णांकained by: Eddie Wai (eddie.wai@broadcom.com)
+ * Maपूर्णांकained by: QLogic-Storage-Upstream@qlogic.com
  */
 
-#include "bnx2i.h"
+#समावेश "bnx2i.h"
 
 /**
- * bnx2i_dev_to_hba - maps dev pointer to adapter struct
- * @dev:	device pointer
+ * bnx2i_dev_to_hba - maps dev poपूर्णांकer to adapter काष्ठा
+ * @dev:	device poपूर्णांकer
  *
- * Map device to hba structure
+ * Map device to hba काष्ठाure
  */
-static inline struct bnx2i_hba *bnx2i_dev_to_hba(struct device *dev)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	return iscsi_host_priv(shost);
-}
+अटल अंतरभूत काष्ठा bnx2i_hba *bnx2i_dev_to_hba(काष्ठा device *dev)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	वापस iscsi_host_priv(shost);
+पूर्ण
 
 
 /**
- * bnx2i_show_sq_info - return(s currently configured send queue (SQ) size
- * @dev:	device pointer
+ * bnx2i_show_sq_info - वापस(s currently configured send queue (SQ) size
+ * @dev:	device poपूर्णांकer
  * @attr:	device attribute (unused)
- * @buf:	buffer to return current SQ size parameter
+ * @buf:	buffer to वापस current SQ size parameter
  *
  * Returns current SQ size parameter, this paramater determines the number
  * outstanding iSCSI commands supported on a connection
  */
-static ssize_t bnx2i_show_sq_info(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct bnx2i_hba *hba = bnx2i_dev_to_hba(dev);
+अटल sमाप_प्रकार bnx2i_show_sq_info(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा bnx2i_hba *hba = bnx2i_dev_to_hba(dev);
 
-	return sprintf(buf, "0x%x\n", hba->max_sqes);
-}
+	वापस प्र_लिखो(buf, "0x%x\n", hba->max_sqes);
+पूर्ण
 
 
 /**
  * bnx2i_set_sq_info - update send queue (SQ) size parameter
- * @dev:	device pointer
+ * @dev:	device poपूर्णांकer
  * @attr:	device attribute (unused)
- * @buf:	buffer to return current SQ size parameter
+ * @buf:	buffer to वापस current SQ size parameter
  * @count:	parameter buffer size
  *
- * Interface for user to change shared queue size allocated for each conn
- * Must be within SQ limits and a power of 2. For the latter this is needed
- * because of how libiscsi preallocates tasks.
+ * Interface क्रम user to change shared queue size allocated क्रम each conn
+ * Must be within SQ limits and a घातer of 2. For the latter this is needed
+ * because of how libiscsi pपुनः_स्मृतिates tasks.
  */
-static ssize_t bnx2i_set_sq_info(struct device *dev,
-				 struct device_attribute *attr,
-				 const char *buf, size_t count)
-{
-	struct bnx2i_hba *hba = bnx2i_dev_to_hba(dev);
+अटल sमाप_प्रकार bnx2i_set_sq_info(काष्ठा device *dev,
+				 काष्ठा device_attribute *attr,
+				 स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	काष्ठा bnx2i_hba *hba = bnx2i_dev_to_hba(dev);
 	u32 val;
-	int max_sq_size;
+	पूर्णांक max_sq_size;
 
-	if (hba->ofld_conns_active)
-		goto skip_config;
+	अगर (hba->ofld_conns_active)
+		जाओ skip_config;
 
-	if (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type))
+	अगर (test_bit(BNX2I_NX2_DEV_57710, &hba->cnic_dev_type))
 		max_sq_size = BNX2I_5770X_SQ_WQES_MAX;
-	else
+	अन्यथा
 		max_sq_size = BNX2I_570X_SQ_WQES_MAX;
 
-	if (sscanf(buf, " 0x%x ", &val) > 0) {
-		if ((val >= BNX2I_SQ_WQES_MIN) && (val <= max_sq_size) &&
-		    (is_power_of_2(val)))
+	अगर (माला_पूछो(buf, " 0x%x ", &val) > 0) अणु
+		अगर ((val >= BNX2I_SQ_WQES_MIN) && (val <= max_sq_size) &&
+		    (is_घातer_of_2(val)))
 			hba->max_sqes = val;
-	}
+	पूर्ण
 
-	return count;
+	वापस count;
 
 skip_config:
-	printk(KERN_ERR "bnx2i: device busy, cannot change SQ size\n");
-	return 0;
-}
+	prपूर्णांकk(KERN_ERR "bnx2i: device busy, cannot change SQ size\n");
+	वापस 0;
+पूर्ण
 
 
 /**
- * bnx2i_show_ccell_info - returns command cell (HQ) size
- * @dev:	device pointer
+ * bnx2i_show_ccell_info - वापसs command cell (HQ) size
+ * @dev:	device poपूर्णांकer
  * @attr:	device attribute (unused)
- * @buf:	buffer to return current SQ size parameter
+ * @buf:	buffer to वापस current SQ size parameter
  *
- * returns per-connection TCP history queue size parameter
+ * वापसs per-connection TCP history queue size parameter
  */
-static ssize_t bnx2i_show_ccell_info(struct device *dev,
-				     struct device_attribute *attr, char *buf)
-{
-	struct bnx2i_hba *hba = bnx2i_dev_to_hba(dev);
+अटल sमाप_प्रकार bnx2i_show_ccell_info(काष्ठा device *dev,
+				     काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा bnx2i_hba *hba = bnx2i_dev_to_hba(dev);
 
-	return sprintf(buf, "0x%x\n", hba->num_ccell);
-}
+	वापस प्र_लिखो(buf, "0x%x\n", hba->num_ccell);
+पूर्ण
 
 
 /**
  * bnx2i_set_ccell_info - set command cell (HQ) size
- * @dev:	device pointer
+ * @dev:	device poपूर्णांकer
  * @attr:	device attribute (unused)
- * @buf:	buffer to return current SQ size parameter
+ * @buf:	buffer to वापस current SQ size parameter
  * @count:	parameter buffer size
  *
  * updates per-connection TCP history queue size parameter
  */
-static ssize_t bnx2i_set_ccell_info(struct device *dev,
-				    struct device_attribute *attr,
-				    const char *buf, size_t count)
-{
+अटल sमाप_प्रकार bnx2i_set_ccell_info(काष्ठा device *dev,
+				    काष्ठा device_attribute *attr,
+				    स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
 	u32 val;
-	struct bnx2i_hba *hba = bnx2i_dev_to_hba(dev);
+	काष्ठा bnx2i_hba *hba = bnx2i_dev_to_hba(dev);
 
-	if (hba->ofld_conns_active)
-		goto skip_config;
+	अगर (hba->ofld_conns_active)
+		जाओ skip_config;
 
-	if (sscanf(buf, " 0x%x ", &val) > 0) {
-		if ((val >= BNX2I_CCELLS_MIN) &&
-		    (val <= BNX2I_CCELLS_MAX)) {
+	अगर (माला_पूछो(buf, " 0x%x ", &val) > 0) अणु
+		अगर ((val >= BNX2I_CCELLS_MIN) &&
+		    (val <= BNX2I_CCELLS_MAX)) अणु
 			hba->num_ccell = val;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return count;
+	वापस count;
 
 skip_config:
-	printk(KERN_ERR "bnx2i: device busy, cannot change CCELL size\n");
-	return 0;
-}
+	prपूर्णांकk(KERN_ERR "bnx2i: device busy, cannot change CCELL size\n");
+	वापस 0;
+पूर्ण
 
 
-static DEVICE_ATTR(sq_size, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(sq_size, S_IRUGO | S_IWUSR,
 		   bnx2i_show_sq_info, bnx2i_set_sq_info);
-static DEVICE_ATTR(num_ccell, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(num_ccell, S_IRUGO | S_IWUSR,
 		   bnx2i_show_ccell_info, bnx2i_set_ccell_info);
 
-struct device_attribute *bnx2i_dev_attributes[] = {
+काष्ठा device_attribute *bnx2i_dev_attributes[] = अणु
 	&dev_attr_sq_size,
 	&dev_attr_num_ccell,
-	NULL
-};
+	शून्य
+पूर्ण;

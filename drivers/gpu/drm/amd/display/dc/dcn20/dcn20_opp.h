@@ -1,11 +1,12 @@
+<शैली गुरु>
 /* Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -22,18 +23,18 @@
  *
  */
 
-#ifndef __DC_OPP_DCN20_H__
-#define __DC_OPP_DCN20_H__
+#अगर_अघोषित __DC_OPP_DCN20_H__
+#घोषणा __DC_OPP_DCN20_H__
 
-#include "dcn10/dcn10_opp.h"
+#समावेश "dcn10/dcn10_opp.h"
 
-#define TO_DCN20_OPP(opp)\
-	container_of(opp, struct dcn20_opp, base)
+#घोषणा TO_DCN20_OPP(opp)\
+	container_of(opp, काष्ठा dcn20_opp, base)
 
-#define OPP_SF(reg_name, field_name, post_fix)\
+#घोषणा OPP_SF(reg_name, field_name, post_fix)\
 	.field_name = reg_name ## __ ## field_name ## post_fix
 
-#define OPP_DPG_REG_LIST(id) \
+#घोषणा OPP_DPG_REG_LIST(id) \
 	SRI(DPG_CONTROL, DPG, id), \
 	SRI(DPG_DIMENSIONS, DPG, id), \
 	SRI(DPG_OFFSET_SEGMENT, DPG, id), \
@@ -43,25 +44,25 @@
 	SRI(DPG_RAMP_CONTROL, DPG, id), \
 	SRI(DPG_STATUS, DPG, id)
 
-#define OPP_REG_LIST_DCN20(id) \
+#घोषणा OPP_REG_LIST_DCN20(id) \
 	OPP_REG_LIST_DCN10(id), \
 	OPP_DPG_REG_LIST(id), \
 	SRI(FMT_422_CONTROL, FMT, id), \
 	SRI(OPPBUF_CONTROL1, OPPBUF, id)
 
-#define OPP_REG_VARIABLE_LIST_DCN2_0 \
+#घोषणा OPP_REG_VARIABLE_LIST_DCN2_0 \
 	OPP_COMMON_REG_VARIABLE_LIST; \
-	uint32_t FMT_422_CONTROL; \
-	uint32_t DPG_CONTROL; \
-	uint32_t DPG_DIMENSIONS; \
-	uint32_t DPG_OFFSET_SEGMENT; \
-	uint32_t DPG_COLOUR_B_CB; \
-	uint32_t DPG_COLOUR_G_Y; \
-	uint32_t DPG_COLOUR_R_CR; \
-	uint32_t DPG_RAMP_CONTROL; \
-	uint32_t DPG_STATUS
+	uपूर्णांक32_t FMT_422_CONTROL; \
+	uपूर्णांक32_t DPG_CONTROL; \
+	uपूर्णांक32_t DPG_DIMENSIONS; \
+	uपूर्णांक32_t DPG_OFFSET_SEGMENT; \
+	uपूर्णांक32_t DPG_COLOUR_B_CB; \
+	uपूर्णांक32_t DPG_COLOUR_G_Y; \
+	uपूर्णांक32_t DPG_COLOUR_R_CR; \
+	uपूर्णांक32_t DPG_RAMP_CONTROL; \
+	uपूर्णांक32_t DPG_STATUS
 
-#define OPP_DPG_MASK_SH_LIST(mask_sh) \
+#घोषणा OPP_DPG_MASK_SH_LIST(mask_sh) \
 	OPP_SF(DPG0_DPG_CONTROL, DPG_EN, mask_sh), \
 	OPP_SF(DPG0_DPG_CONTROL, DPG_MODE, mask_sh), \
 	OPP_SF(DPG0_DPG_CONTROL, DPG_DYNAMIC_RANGE, mask_sh), \
@@ -83,14 +84,14 @@
 	OPP_SF(DPG0_DPG_RAMP_CONTROL, DPG_INC1, mask_sh), \
 	OPP_SF(DPG0_DPG_STATUS, DPG_DOUBLE_BUFFER_PENDING, mask_sh)
 
-#define OPP_MASK_SH_LIST_DCN20(mask_sh) \
+#घोषणा OPP_MASK_SH_LIST_DCN20(mask_sh) \
 	OPP_MASK_SH_LIST_DCN(mask_sh), \
 	OPP_DPG_MASK_SH_LIST(mask_sh), \
 	OPP_SF(OPPBUF0_OPPBUF_CONTROL, OPPBUF_DISPLAY_SEGMENTATION, mask_sh),\
 	OPP_SF(OPPBUF0_OPPBUF_CONTROL, OPPBUF_OVERLAP_PIXEL_NUM, mask_sh), \
 	OPP_SF(FMT0_FMT_422_CONTROL, FMT_LEFT_EDGE_EXTRA_PIXEL_COUNT, mask_sh)
 
-#define OPP_DCN20_REG_FIELD_LIST(type) \
+#घोषणा OPP_DCN20_REG_FIELD_LIST(type) \
 	OPP_DCN10_REG_FIELD_LIST(type); \
 	type FMT_LEFT_EDGE_EXTRA_PIXEL_COUNT; \
 	type DPG_EN; \
@@ -114,57 +115,57 @@
 	type DPG_INC1; \
 	type DPG_DOUBLE_BUFFER_PENDING
 
-struct dcn20_opp_registers {
+काष्ठा dcn20_opp_रेजिस्टरs अणु
 	OPP_REG_VARIABLE_LIST_DCN2_0;
-};
+पूर्ण;
 
-struct dcn20_opp_shift {
-	OPP_DCN20_REG_FIELD_LIST(uint8_t);
-};
+काष्ठा dcn20_opp_shअगरt अणु
+	OPP_DCN20_REG_FIELD_LIST(uपूर्णांक8_t);
+पूर्ण;
 
-struct dcn20_opp_mask {
-	OPP_DCN20_REG_FIELD_LIST(uint32_t);
-};
+काष्ठा dcn20_opp_mask अणु
+	OPP_DCN20_REG_FIELD_LIST(uपूर्णांक32_t);
+पूर्ण;
 
-struct dcn20_opp {
-	struct output_pixel_processor base;
+काष्ठा dcn20_opp अणु
+	काष्ठा output_pixel_processor base;
 
-	const struct dcn20_opp_registers *regs;
-	const struct dcn20_opp_shift *opp_shift;
-	const struct dcn20_opp_mask *opp_mask;
+	स्थिर काष्ठा dcn20_opp_रेजिस्टरs *regs;
+	स्थिर काष्ठा dcn20_opp_shअगरt *opp_shअगरt;
+	स्थिर काष्ठा dcn20_opp_mask *opp_mask;
 
-	bool is_write_to_ram_a_safe;
-};
+	bool is_ग_लिखो_to_ram_a_safe;
+पूर्ण;
 
-void dcn20_opp_construct(struct dcn20_opp *oppn20,
-	struct dc_context *ctx,
-	uint32_t inst,
-	const struct dcn20_opp_registers *regs,
-	const struct dcn20_opp_shift *opp_shift,
-	const struct dcn20_opp_mask *opp_mask);
+व्योम dcn20_opp_स्थिरruct(काष्ठा dcn20_opp *oppn20,
+	काष्ठा dc_context *ctx,
+	uपूर्णांक32_t inst,
+	स्थिर काष्ठा dcn20_opp_रेजिस्टरs *regs,
+	स्थिर काष्ठा dcn20_opp_shअगरt *opp_shअगरt,
+	स्थिर काष्ठा dcn20_opp_mask *opp_mask);
 
-void opp2_set_disp_pattern_generator(
-	struct output_pixel_processor *opp,
-	enum controller_dp_test_pattern test_pattern,
-	enum controller_dp_color_space color_space,
-	enum dc_color_depth color_depth,
-	const struct tg_color *solid_color,
-	int width,
-	int height,
-	int offset);
+व्योम opp2_set_disp_pattern_generator(
+	काष्ठा output_pixel_processor *opp,
+	क्रमागत controller_dp_test_pattern test_pattern,
+	क्रमागत controller_dp_color_space color_space,
+	क्रमागत dc_color_depth color_depth,
+	स्थिर काष्ठा tg_color *solid_color,
+	पूर्णांक width,
+	पूर्णांक height,
+	पूर्णांक offset);
 
-void opp2_program_dpg_dimensions(
-		struct output_pixel_processor *opp,
-		int width, int height);
+व्योम opp2_program_dpg_dimensions(
+		काष्ठा output_pixel_processor *opp,
+		पूर्णांक width, पूर्णांक height);
 
-bool opp2_dpg_is_blanked(struct output_pixel_processor *opp);
+bool opp2_dpg_is_blanked(काष्ठा output_pixel_processor *opp);
 
-void opp2_dpg_set_blank_color(
-		struct output_pixel_processor *opp,
-		const struct tg_color *color);
+व्योम opp2_dpg_set_blank_color(
+		काष्ठा output_pixel_processor *opp,
+		स्थिर काष्ठा tg_color *color);
 
-void opp2_program_left_edge_extra_pixel (
-		struct output_pixel_processor *opp,
+व्योम opp2_program_left_edge_extra_pixel (
+		काष्ठा output_pixel_processor *opp,
 		bool count);
 
-#endif
+#पूर्ण_अगर

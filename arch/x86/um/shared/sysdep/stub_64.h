@@ -1,90 +1,91 @@
+<शैली गुरु>
 /*
  * Copyright (C) 2004 Jeff Dike (jdike@addtoit.com)
  * Licensed under the GPL
  */
 
-#ifndef __SYSDEP_STUB_H
-#define __SYSDEP_STUB_H
+#अगर_अघोषित __SYSDEP_STUB_H
+#घोषणा __SYSDEP_STUB_H
 
-#include <sysdep/ptrace_user.h>
-#include <generated/asm-offsets.h>
+#समावेश <sysdep/ptrace_user.h>
+#समावेश <generated/यंत्र-offsets.h>
 
-#define STUB_MMAP_NR __NR_mmap
-#define MMAP_OFFSET(o) (o)
+#घोषणा STUB_MMAP_NR __NR_mmap
+#घोषणा MMAP_OFFSET(o) (o)
 
-#define __syscall_clobber "r11","rcx","memory"
-#define __syscall "syscall"
+#घोषणा __syscall_clobber "r11","rcx","memory"
+#घोषणा __syscall "syscall"
 
-static inline long stub_syscall0(long syscall)
-{
-	long ret;
+अटल अंतरभूत दीर्घ stub_syscall0(दीर्घ syscall)
+अणु
+	दीर्घ ret;
 
-	__asm__ volatile (__syscall
+	__यंत्र__ अस्थिर (__syscall
 		: "=a" (ret)
 		: "0" (syscall) : __syscall_clobber );
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline long stub_syscall2(long syscall, long arg1, long arg2)
-{
-	long ret;
+अटल अंतरभूत दीर्घ stub_syscall2(दीर्घ syscall, दीर्घ arg1, दीर्घ arg2)
+अणु
+	दीर्घ ret;
 
-	__asm__ volatile (__syscall
+	__यंत्र__ अस्थिर (__syscall
 		: "=a" (ret)
 		: "0" (syscall), "D" (arg1), "S" (arg2) : __syscall_clobber );
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline long stub_syscall3(long syscall, long arg1, long arg2, long arg3)
-{
-	long ret;
+अटल अंतरभूत दीर्घ stub_syscall3(दीर्घ syscall, दीर्घ arg1, दीर्घ arg2, दीर्घ arg3)
+अणु
+	दीर्घ ret;
 
-	__asm__ volatile (__syscall
+	__यंत्र__ अस्थिर (__syscall
 		: "=a" (ret)
 		: "0" (syscall), "D" (arg1), "S" (arg2), "d" (arg3)
 		: __syscall_clobber );
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline long stub_syscall4(long syscall, long arg1, long arg2, long arg3,
-				 long arg4)
-{
-	long ret;
+अटल अंतरभूत दीर्घ stub_syscall4(दीर्घ syscall, दीर्घ arg1, दीर्घ arg2, दीर्घ arg3,
+				 दीर्घ arg4)
+अणु
+	दीर्घ ret;
 
-	__asm__ volatile ("movq %5,%%r10 ; " __syscall
+	__यंत्र__ अस्थिर ("movq %5,%%r10 ; " __syscall
 		: "=a" (ret)
 		: "0" (syscall), "D" (arg1), "S" (arg2), "d" (arg3),
 		  "g" (arg4)
 		: __syscall_clobber, "r10" );
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline long stub_syscall5(long syscall, long arg1, long arg2, long arg3,
-				 long arg4, long arg5)
-{
-	long ret;
+अटल अंतरभूत दीर्घ stub_syscall5(दीर्घ syscall, दीर्घ arg1, दीर्घ arg2, दीर्घ arg3,
+				 दीर्घ arg4, दीर्घ arg5)
+अणु
+	दीर्घ ret;
 
-	__asm__ volatile ("movq %5,%%r10 ; movq %6,%%r8 ; " __syscall
+	__यंत्र__ अस्थिर ("movq %5,%%r10 ; movq %6,%%r8 ; " __syscall
 		: "=a" (ret)
 		: "0" (syscall), "D" (arg1), "S" (arg2), "d" (arg3),
 		  "g" (arg4), "g" (arg5)
 		: __syscall_clobber, "r10", "r8" );
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static inline void trap_myself(void)
-{
-	__asm("int3");
-}
+अटल अंतरभूत व्योम trap_myself(व्योम)
+अणु
+	__यंत्र("int3");
+पूर्ण
 
-static inline void remap_stack_and_trap(void)
-{
-	__asm__ volatile (
+अटल अंतरभूत व्योम remap_stack_and_trap(व्योम)
+अणु
+	__यंत्र__ अस्थिर (
 		"movq %0,%%rax ;"
 		"movq %%rsp,%%rdi ;"
 		"andq %1,%%rdi ;"
@@ -106,6 +107,6 @@ static inline void remap_stack_and_trap(void)
 		"d" (PROT_READ | PROT_WRITE)
 		:
 		__syscall_clobber, "r10", "r8", "r9");
-}
+पूर्ण
 
-#endif
+#पूर्ण_अगर

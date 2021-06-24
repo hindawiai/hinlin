@@ -1,162 +1,163 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * PPC64 Huge TLB Page Support for hash based MMUs (POWER4 and later)
+ * PPC64 Huge TLB Page Support क्रम hash based MMUs (POWER4 and later)
  *
  * Copyright (C) 2003 David Gibson, IBM Corporation.
  *
  * Based on the IA-32 version:
- * Copyright (C) 2002, Rohit Seth <rohit.seth@intel.com>
+ * Copyright (C) 2002, Rohit Seth <rohit.seth@पूर्णांकel.com>
  */
 
-#include <linux/mm.h>
-#include <linux/hugetlb.h>
-#include <asm/cacheflush.h>
-#include <asm/machdep.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/hugetlb.h>
+#समावेश <यंत्र/cacheflush.h>
+#समावेश <यंत्र/machdep.h>
 
-unsigned int hpage_shift;
-EXPORT_SYMBOL(hpage_shift);
+अचिन्हित पूर्णांक hpage_shअगरt;
+EXPORT_SYMBOL(hpage_shअगरt);
 
-int __hash_page_huge(unsigned long ea, unsigned long access, unsigned long vsid,
-		     pte_t *ptep, unsigned long trap, unsigned long flags,
-		     int ssize, unsigned int shift, unsigned int mmu_psize)
-{
+पूर्णांक __hash_page_huge(अचिन्हित दीर्घ ea, अचिन्हित दीर्घ access, अचिन्हित दीर्घ vsid,
+		     pte_t *ptep, अचिन्हित दीर्घ trap, अचिन्हित दीर्घ flags,
+		     पूर्णांक ssize, अचिन्हित पूर्णांक shअगरt, अचिन्हित पूर्णांक mmu_psize)
+अणु
 	real_pte_t rpte;
-	unsigned long vpn;
-	unsigned long old_pte, new_pte;
-	unsigned long rflags, pa;
-	long slot, offset;
+	अचिन्हित दीर्घ vpn;
+	अचिन्हित दीर्घ old_pte, new_pte;
+	अचिन्हित दीर्घ rflags, pa;
+	दीर्घ slot, offset;
 
-	BUG_ON(shift != mmu_psize_defs[mmu_psize].shift);
+	BUG_ON(shअगरt != mmu_psize_defs[mmu_psize].shअगरt);
 
-	/* Search the Linux page table for a match with va */
+	/* Search the Linux page table क्रम a match with va */
 	vpn = hpt_vpn(ea, vsid, ssize);
 
 	/*
-	 * At this point, we have a pte (old_pte) which can be used to build
-	 * or update an HPTE. There are 2 cases:
+	 * At this poपूर्णांक, we have a pte (old_pte) which can be used to build
+	 * or update an HPTE. There are 2 हालs:
 	 *
 	 * 1. There is a valid (present) pte with no associated HPTE (this is
-	 *	the most common case)
+	 *	the most common हाल)
 	 * 2. There is a valid (present) pte with an associated HPTE. The
 	 *	current values of the pp bits in the HPTE prevent access
-	 *	because we are doing software DIRTY bit management and the
-	 *	page is currently not DIRTY.
+	 *	because we are करोing software सूचीTY bit management and the
+	 *	page is currently not सूचीTY.
 	 */
 
 
-	do {
+	करो अणु
 		old_pte = pte_val(*ptep);
 		/* If PTE busy, retry the access */
-		if (unlikely(old_pte & H_PAGE_BUSY))
-			return 0;
-		/* If PTE permissions don't match, take page fault */
-		if (unlikely(!check_pte_access(access, old_pte)))
-			return 1;
+		अगर (unlikely(old_pte & H_PAGE_BUSY))
+			वापस 0;
+		/* If PTE permissions करोn't match, take page fault */
+		अगर (unlikely(!check_pte_access(access, old_pte)))
+			वापस 1;
 
 		/*
-		 * Try to lock the PTE, add ACCESSED and DIRTY if it was
-		 * a write access
+		 * Try to lock the PTE, add ACCESSED and सूचीTY अगर it was
+		 * a ग_लिखो access
 		 */
 		new_pte = old_pte | H_PAGE_BUSY | _PAGE_ACCESSED;
-		if (access & _PAGE_WRITE)
-			new_pte |= _PAGE_DIRTY;
-	} while(!pte_xchg(ptep, __pte(old_pte), __pte(new_pte)));
+		अगर (access & _PAGE_WRITE)
+			new_pte |= _PAGE_सूचीTY;
+	पूर्ण जबतक(!pte_xchg(ptep, __pte(old_pte), __pte(new_pte)));
 
 	/* Make sure this is a hugetlb entry */
-	if (old_pte & (H_PAGE_THP_HUGE | _PAGE_DEVMAP))
-		return 0;
+	अगर (old_pte & (H_PAGE_THP_HUGE | _PAGE_DEVMAP))
+		वापस 0;
 
 	rflags = htab_convert_pte_flags(new_pte, flags);
-	if (unlikely(mmu_psize == MMU_PAGE_16G))
+	अगर (unlikely(mmu_psize == MMU_PAGE_16G))
 		offset = PTRS_PER_PUD;
-	else
+	अन्यथा
 		offset = PTRS_PER_PMD;
 	rpte = __real_pte(__pte(old_pte), ptep, offset);
 
-	if (!cpu_has_feature(CPU_FTR_COHERENT_ICACHE))
+	अगर (!cpu_has_feature(CPU_FTR_COHERENT_ICACHE))
 		/*
 		 * No CPU has hugepages but lacks no execute, so we
-		 * don't need to worry about that case
+		 * करोn't need to worry about that हाल
 		 */
-		rflags = hash_page_do_lazy_icache(rflags, __pte(old_pte), trap);
+		rflags = hash_page_करो_lazy_icache(rflags, __pte(old_pte), trap);
 
-	/* Check if pte already has an hpte (case 2) */
-	if (unlikely(old_pte & H_PAGE_HASHPTE)) {
-		/* There MIGHT be an HPTE for this pte */
-		unsigned long gslot;
+	/* Check अगर pte alपढ़ोy has an hpte (हाल 2) */
+	अगर (unlikely(old_pte & H_PAGE_HASHPTE)) अणु
+		/* There MIGHT be an HPTE क्रम this pte */
+		अचिन्हित दीर्घ gslot;
 
-		gslot = pte_get_hash_gslot(vpn, shift, ssize, rpte, 0);
-		if (mmu_hash_ops.hpte_updatepp(gslot, rflags, vpn, mmu_psize,
+		gslot = pte_get_hash_gslot(vpn, shअगरt, ssize, rpte, 0);
+		अगर (mmu_hash_ops.hpte_updatepp(gslot, rflags, vpn, mmu_psize,
 					       mmu_psize, ssize, flags) == -1)
 			old_pte &= ~_PAGE_HPTEFLAGS;
-	}
+	पूर्ण
 
-	if (likely(!(old_pte & H_PAGE_HASHPTE))) {
-		unsigned long hash = hpt_hash(vpn, shift, ssize);
+	अगर (likely(!(old_pte & H_PAGE_HASHPTE))) अणु
+		अचिन्हित दीर्घ hash = hpt_hash(vpn, shअगरt, ssize);
 
 		pa = pte_pfn(__pte(old_pte)) << PAGE_SHIFT;
 
-		/* clear HPTE slot informations in new PTE */
+		/* clear HPTE slot inक्रमmations in new PTE */
 		new_pte = (new_pte & ~_PAGE_HPTEFLAGS) | H_PAGE_HASHPTE;
 
 		slot = hpte_insert_repeating(hash, vpn, pa, rflags, 0,
 					     mmu_psize, ssize);
 
 		/*
-		 * Hypervisor failure. Restore old pte and return -1
+		 * Hypervisor failure. Restore old pte and वापस -1
 		 * similar to __hash_page_*
 		 */
-		if (unlikely(slot == -2)) {
+		अगर (unlikely(slot == -2)) अणु
 			*ptep = __pte(old_pte);
 			hash_failure_debug(ea, access, vsid, trap, ssize,
 					   mmu_psize, mmu_psize, old_pte);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		new_pte |= pte_set_hidx(ptep, rpte, 0, slot, offset);
-	}
+	पूर्ण
 
 	/*
 	 * No need to use ldarx/stdcx here
 	 */
 	*ptep = __pte(new_pte & ~H_PAGE_BUSY);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-pte_t huge_ptep_modify_prot_start(struct vm_area_struct *vma,
-				  unsigned long addr, pte_t *ptep)
-{
-	unsigned long pte_val;
+pte_t huge_ptep_modअगरy_prot_start(काष्ठा vm_area_काष्ठा *vma,
+				  अचिन्हित दीर्घ addr, pte_t *ptep)
+अणु
+	अचिन्हित दीर्घ pte_val;
 	/*
 	 * Clear the _PAGE_PRESENT so that no hardware parallel update is
-	 * possible. Also keep the pte_present true so that we don't take
+	 * possible. Also keep the pte_present true so that we करोn't take
 	 * wrong fault.
 	 */
 	pte_val = pte_update(vma->vm_mm, addr, ptep,
 			     _PAGE_PRESENT, _PAGE_INVALID, 1);
 
-	return __pte(pte_val);
-}
+	वापस __pte(pte_val);
+पूर्ण
 
-void huge_ptep_modify_prot_commit(struct vm_area_struct *vma, unsigned long addr,
+व्योम huge_ptep_modअगरy_prot_commit(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ addr,
 				  pte_t *ptep, pte_t old_pte, pte_t pte)
-{
+अणु
 
-	if (radix_enabled())
-		return radix__huge_ptep_modify_prot_commit(vma, addr, ptep,
+	अगर (radix_enabled())
+		वापस radix__huge_ptep_modअगरy_prot_commit(vma, addr, ptep,
 							   old_pte, pte);
 	set_huge_pte_at(vma->vm_mm, addr, ptep, pte);
-}
+पूर्ण
 
-void hugetlbpage_init_default(void)
-{
-	/* Set default large page size. Currently, we pick 16M or 1M
+व्योम hugetlbpage_init_शेष(व्योम)
+अणु
+	/* Set शेष large page size. Currently, we pick 16M or 1M
 	 * depending on what is available
 	 */
-	if (mmu_psize_defs[MMU_PAGE_16M].shift)
-		hpage_shift = mmu_psize_defs[MMU_PAGE_16M].shift;
-	else if (mmu_psize_defs[MMU_PAGE_1M].shift)
-		hpage_shift = mmu_psize_defs[MMU_PAGE_1M].shift;
-	else if (mmu_psize_defs[MMU_PAGE_2M].shift)
-		hpage_shift = mmu_psize_defs[MMU_PAGE_2M].shift;
-}
+	अगर (mmu_psize_defs[MMU_PAGE_16M].shअगरt)
+		hpage_shअगरt = mmu_psize_defs[MMU_PAGE_16M].shअगरt;
+	अन्यथा अगर (mmu_psize_defs[MMU_PAGE_1M].shअगरt)
+		hpage_shअगरt = mmu_psize_defs[MMU_PAGE_1M].shअगरt;
+	अन्यथा अगर (mmu_psize_defs[MMU_PAGE_2M].shअगरt)
+		hpage_shअगरt = mmu_psize_defs[MMU_PAGE_2M].shअगरt;
+पूर्ण

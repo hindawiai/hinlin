@@ -1,215 +1,216 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright (C) 2017 Josh Poimboeuf <jpoimboe@redhat.com>
  */
 
-#include <unistd.h>
-#include <linux/objtool.h>
-#include <asm/orc_types.h>
-#include <objtool/objtool.h>
-#include <objtool/warn.h>
-#include <objtool/endianness.h>
+#समावेश <unistd.h>
+#समावेश <linux/objtool.h>
+#समावेश <यंत्र/orc_types.h>
+#समावेश <objtool/objtool.h>
+#समावेश <objtool/warn.h>
+#समावेश <objtool/endianness.h>
 
-static const char *reg_name(unsigned int reg)
-{
-	switch (reg) {
-	case ORC_REG_PREV_SP:
-		return "prevsp";
-	case ORC_REG_DX:
-		return "dx";
-	case ORC_REG_DI:
-		return "di";
-	case ORC_REG_BP:
-		return "bp";
-	case ORC_REG_SP:
-		return "sp";
-	case ORC_REG_R10:
-		return "r10";
-	case ORC_REG_R13:
-		return "r13";
-	case ORC_REG_BP_INDIRECT:
-		return "bp(ind)";
-	case ORC_REG_SP_INDIRECT:
-		return "sp(ind)";
-	default:
-		return "?";
-	}
-}
+अटल स्थिर अक्षर *reg_name(अचिन्हित पूर्णांक reg)
+अणु
+	चयन (reg) अणु
+	हाल ORC_REG_PREV_SP:
+		वापस "prevsp";
+	हाल ORC_REG_DX:
+		वापस "dx";
+	हाल ORC_REG_DI:
+		वापस "di";
+	हाल ORC_REG_BP:
+		वापस "bp";
+	हाल ORC_REG_SP:
+		वापस "sp";
+	हाल ORC_REG_R10:
+		वापस "r10";
+	हाल ORC_REG_R13:
+		वापस "r13";
+	हाल ORC_REG_BP_INसूचीECT:
+		वापस "bp(ind)";
+	हाल ORC_REG_SP_INसूचीECT:
+		वापस "sp(ind)";
+	शेष:
+		वापस "?";
+	पूर्ण
+पूर्ण
 
-static const char *orc_type_name(unsigned int type)
-{
-	switch (type) {
-	case UNWIND_HINT_TYPE_CALL:
-		return "call";
-	case UNWIND_HINT_TYPE_REGS:
-		return "regs";
-	case UNWIND_HINT_TYPE_REGS_PARTIAL:
-		return "regs (partial)";
-	default:
-		return "?";
-	}
-}
+अटल स्थिर अक्षर *orc_type_name(अचिन्हित पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल UNWIND_HINT_TYPE_CALL:
+		वापस "call";
+	हाल UNWIND_HINT_TYPE_REGS:
+		वापस "regs";
+	हाल UNWIND_HINT_TYPE_REGS_PARTIAL:
+		वापस "regs (partial)";
+	शेष:
+		वापस "?";
+	पूर्ण
+पूर्ण
 
-static void print_reg(unsigned int reg, int offset)
-{
-	if (reg == ORC_REG_BP_INDIRECT)
-		printf("(bp%+d)", offset);
-	else if (reg == ORC_REG_SP_INDIRECT)
-		printf("(sp)%+d", offset);
-	else if (reg == ORC_REG_UNDEFINED)
-		printf("(und)");
-	else
-		printf("%s%+d", reg_name(reg), offset);
-}
+अटल व्योम prपूर्णांक_reg(अचिन्हित पूर्णांक reg, पूर्णांक offset)
+अणु
+	अगर (reg == ORC_REG_BP_INसूचीECT)
+		म_लिखो("(bp%+d)", offset);
+	अन्यथा अगर (reg == ORC_REG_SP_INसूचीECT)
+		म_लिखो("(sp)%+d", offset);
+	अन्यथा अगर (reg == ORC_REG_UNDEFINED)
+		म_लिखो("(und)");
+	अन्यथा
+		म_लिखो("%s%+d", reg_name(reg), offset);
+पूर्ण
 
-int orc_dump(const char *_objname)
-{
-	int fd, nr_entries, i, *orc_ip = NULL, orc_size = 0;
-	struct orc_entry *orc = NULL;
-	char *name;
-	size_t nr_sections;
+पूर्णांक orc_dump(स्थिर अक्षर *_objname)
+अणु
+	पूर्णांक fd, nr_entries, i, *orc_ip = शून्य, orc_size = 0;
+	काष्ठा orc_entry *orc = शून्य;
+	अक्षर *name;
+	माप_प्रकार nr_sections;
 	Elf64_Addr orc_ip_addr = 0;
-	size_t shstrtab_idx, strtab_idx = 0;
+	माप_प्रकार shstrtab_idx, strtab_idx = 0;
 	Elf *elf;
 	Elf_Scn *scn;
 	GElf_Shdr sh;
 	GElf_Rela rela;
 	GElf_Sym sym;
-	Elf_Data *data, *symtab = NULL, *rela_orc_ip = NULL;
+	Elf_Data *data, *symtab = शून्य, *rela_orc_ip = शून्य;
 
 
 	objname = _objname;
 
 	elf_version(EV_CURRENT);
 
-	fd = open(objname, O_RDONLY);
-	if (fd == -1) {
-		perror("open");
-		return -1;
-	}
+	fd = खोलो(objname, O_RDONLY);
+	अगर (fd == -1) अणु
+		लिखो_त्रुटि("open");
+		वापस -1;
+	पूर्ण
 
-	elf = elf_begin(fd, ELF_C_READ_MMAP, NULL);
-	if (!elf) {
+	elf = elf_begin(fd, ELF_C_READ_MMAP, शून्य);
+	अगर (!elf) अणु
 		WARN_ELF("elf_begin");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (elf_getshdrnum(elf, &nr_sections)) {
+	अगर (elf_माला_लोhdrnum(elf, &nr_sections)) अणु
 		WARN_ELF("elf_getshdrnum");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	if (elf_getshdrstrndx(elf, &shstrtab_idx)) {
+	अगर (elf_माला_लोhdrstrndx(elf, &shstrtab_idx)) अणु
 		WARN_ELF("elf_getshdrstrndx");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	for (i = 0; i < nr_sections; i++) {
-		scn = elf_getscn(elf, i);
-		if (!scn) {
+	क्रम (i = 0; i < nr_sections; i++) अणु
+		scn = elf_माला_लोcn(elf, i);
+		अगर (!scn) अणु
 			WARN_ELF("elf_getscn");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		if (!gelf_getshdr(scn, &sh)) {
+		अगर (!gelf_माला_लोhdr(scn, &sh)) अणु
 			WARN_ELF("gelf_getshdr");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		name = elf_strptr(elf, shstrtab_idx, sh.sh_name);
-		if (!name) {
+		अगर (!name) अणु
 			WARN_ELF("elf_strptr");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		data = elf_getdata(scn, NULL);
-		if (!data) {
+		data = elf_getdata(scn, शून्य);
+		अगर (!data) अणु
 			WARN_ELF("elf_getdata");
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		if (!strcmp(name, ".symtab")) {
+		अगर (!म_भेद(name, ".symtab")) अणु
 			symtab = data;
-		} else if (!strcmp(name, ".strtab")) {
+		पूर्ण अन्यथा अगर (!म_भेद(name, ".strtab")) अणु
 			strtab_idx = i;
-		} else if (!strcmp(name, ".orc_unwind")) {
+		पूर्ण अन्यथा अगर (!म_भेद(name, ".orc_unwind")) अणु
 			orc = data->d_buf;
 			orc_size = sh.sh_size;
-		} else if (!strcmp(name, ".orc_unwind_ip")) {
+		पूर्ण अन्यथा अगर (!म_भेद(name, ".orc_unwind_ip")) अणु
 			orc_ip = data->d_buf;
 			orc_ip_addr = sh.sh_addr;
-		} else if (!strcmp(name, ".rela.orc_unwind_ip")) {
+		पूर्ण अन्यथा अगर (!म_भेद(name, ".rela.orc_unwind_ip")) अणु
 			rela_orc_ip = data;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!symtab || !strtab_idx || !orc || !orc_ip)
-		return 0;
+	अगर (!symtab || !strtab_idx || !orc || !orc_ip)
+		वापस 0;
 
-	if (orc_size % sizeof(*orc) != 0) {
+	अगर (orc_size % माप(*orc) != 0) अणु
 		WARN("bad .orc_unwind section size");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	nr_entries = orc_size / sizeof(*orc);
-	for (i = 0; i < nr_entries; i++) {
-		if (rela_orc_ip) {
-			if (!gelf_getrela(rela_orc_ip, i, &rela)) {
+	nr_entries = orc_size / माप(*orc);
+	क्रम (i = 0; i < nr_entries; i++) अणु
+		अगर (rela_orc_ip) अणु
+			अगर (!gelf_getrela(rela_orc_ip, i, &rela)) अणु
 				WARN_ELF("gelf_getrela");
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 
-			if (!gelf_getsym(symtab, GELF_R_SYM(rela.r_info), &sym)) {
+			अगर (!gelf_माला_लोym(symtab, GELF_R_SYM(rela.r_info), &sym)) अणु
 				WARN_ELF("gelf_getsym");
-				return -1;
-			}
+				वापस -1;
+			पूर्ण
 
-			if (GELF_ST_TYPE(sym.st_info) == STT_SECTION) {
-				scn = elf_getscn(elf, sym.st_shndx);
-				if (!scn) {
+			अगर (GELF_ST_TYPE(sym.st_info) == STT_SECTION) अणु
+				scn = elf_माला_लोcn(elf, sym.st_shndx);
+				अगर (!scn) अणु
 					WARN_ELF("elf_getscn");
-					return -1;
-				}
+					वापस -1;
+				पूर्ण
 
-				if (!gelf_getshdr(scn, &sh)) {
+				अगर (!gelf_माला_लोhdr(scn, &sh)) अणु
 					WARN_ELF("gelf_getshdr");
-					return -1;
-				}
+					वापस -1;
+				पूर्ण
 
 				name = elf_strptr(elf, shstrtab_idx, sh.sh_name);
-				if (!name) {
+				अगर (!name) अणु
 					WARN_ELF("elf_strptr");
-					return -1;
-				}
-			} else {
+					वापस -1;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				name = elf_strptr(elf, strtab_idx, sym.st_name);
-				if (!name) {
+				अगर (!name) अणु
 					WARN_ELF("elf_strptr");
-					return -1;
-				}
-			}
+					वापस -1;
+				पूर्ण
+			पूर्ण
 
-			printf("%s+%llx:", name, (unsigned long long)rela.r_addend);
+			म_लिखो("%s+%llx:", name, (अचिन्हित दीर्घ दीर्घ)rela.r_addend);
 
-		} else {
-			printf("%llx:", (unsigned long long)(orc_ip_addr + (i * sizeof(int)) + orc_ip[i]));
-		}
+		पूर्ण अन्यथा अणु
+			म_लिखो("%llx:", (अचिन्हित दीर्घ दीर्घ)(orc_ip_addr + (i * माप(पूर्णांक)) + orc_ip[i]));
+		पूर्ण
 
 
-		printf(" sp:");
+		म_लिखो(" sp:");
 
-		print_reg(orc[i].sp_reg, bswap_if_needed(orc[i].sp_offset));
+		prपूर्णांक_reg(orc[i].sp_reg, bswap_अगर_needed(orc[i].sp_offset));
 
-		printf(" bp:");
+		म_लिखो(" bp:");
 
-		print_reg(orc[i].bp_reg, bswap_if_needed(orc[i].bp_offset));
+		prपूर्णांक_reg(orc[i].bp_reg, bswap_अगर_needed(orc[i].bp_offset));
 
-		printf(" type:%s end:%d\n",
+		म_लिखो(" type:%s end:%d\n",
 		       orc_type_name(orc[i].type), orc[i].end);
-	}
+	पूर्ण
 
 	elf_end(elf);
-	close(fd);
+	बंद(fd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

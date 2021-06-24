@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /*
  * Copyright (c) 2016 BayLibre, SAS.
  * Author: Neil Armstrong <narmstrong@baylibre.com>
  * Copyright (C) 2014 Amlogic, Inc.
  */
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <linux/platform_device.h>
-#include <linux/hw_random.h>
-#include <linux/slab.h>
-#include <linux/types.h>
-#include <linux/of.h>
-#include <linux/clk.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/hw_अक्रमom.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/types.h>
+#समावेश <linux/of.h>
+#समावेश <linux/clk.h>
 
-#define RNG_DATA 0x00
+#घोषणा RNG_DATA 0x00
 
-struct meson_rng_data {
-	void __iomem *base;
-	struct platform_device *pdev;
-	struct hwrng rng;
-	struct clk *core_clk;
-};
+काष्ठा meson_rng_data अणु
+	व्योम __iomem *base;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा hwrng rng;
+	काष्ठा clk *core_clk;
+पूर्ण;
 
-static int meson_rng_read(struct hwrng *rng, void *buf, size_t max, bool wait)
-{
-	struct meson_rng_data *data =
-			container_of(rng, struct meson_rng_data, rng);
+अटल पूर्णांक meson_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *buf, माप_प्रकार max, bool रुको)
+अणु
+	काष्ठा meson_rng_data *data =
+			container_of(rng, काष्ठा meson_rng_data, rng);
 
-	*(u32 *)buf = readl_relaxed(data->base + RNG_DATA);
+	*(u32 *)buf = पढ़ोl_relaxed(data->base + RNG_DATA);
 
-	return sizeof(u32);
-}
+	वापस माप(u32);
+पूर्ण
 
-static void meson_rng_clk_disable(void *data)
-{
+अटल व्योम meson_rng_clk_disable(व्योम *data)
+अणु
 	clk_disable_unprepare(data);
-}
+पूर्ण
 
-static int meson_rng_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct meson_rng_data *data;
-	int ret;
+अटल पूर्णांक meson_rng_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा meson_rng_data *data;
+	पूर्णांक ret;
 
-	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
-	if (!data)
-		return -ENOMEM;
+	data = devm_kzalloc(dev, माप(*data), GFP_KERNEL);
+	अगर (!data)
+		वापस -ENOMEM;
 
 	data->pdev = pdev;
 
-	data->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(data->base))
-		return PTR_ERR(data->base);
+	data->base = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(data->base))
+		वापस PTR_ERR(data->base);
 
 	data->core_clk = devm_clk_get(dev, "core");
-	if (IS_ERR(data->core_clk))
-		data->core_clk = NULL;
+	अगर (IS_ERR(data->core_clk))
+		data->core_clk = शून्य;
 
-	if (data->core_clk) {
+	अगर (data->core_clk) अणु
 		ret = clk_prepare_enable(data->core_clk);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		ret = devm_add_action_or_reset(dev, meson_rng_clk_disable,
 					       data->core_clk);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
 	data->rng.name = pdev->name;
-	data->rng.read = meson_rng_read;
+	data->rng.पढ़ो = meson_rng_पढ़ो;
 
-	platform_set_drvdata(pdev, data);
+	platक्रमm_set_drvdata(pdev, data);
 
-	return devm_hwrng_register(dev, &data->rng);
-}
+	वापस devm_hwrng_रेजिस्टर(dev, &data->rng);
+पूर्ण
 
-static const struct of_device_id meson_rng_of_match[] = {
-	{ .compatible = "amlogic,meson-rng", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id meson_rng_of_match[] = अणु
+	अणु .compatible = "amlogic,meson-rng", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, meson_rng_of_match);
 
-static struct platform_driver meson_rng_driver = {
+अटल काष्ठा platक्रमm_driver meson_rng_driver = अणु
 	.probe	= meson_rng_probe,
-	.driver	= {
+	.driver	= अणु
 		.name = "meson-rng",
 		.of_match_table = meson_rng_of_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(meson_rng_driver);
+module_platक्रमm_driver(meson_rng_driver);
 
 MODULE_DESCRIPTION("Meson H/W Random Number Generator driver");
 MODULE_AUTHOR("Lawrence Mok <lawrence.mok@amlogic.com>");

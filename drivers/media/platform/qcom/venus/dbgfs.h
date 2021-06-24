@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) 2020 Linaro Ltd. */
 
-#ifndef __VENUS_DBGFS_H__
-#define __VENUS_DBGFS_H__
+#अगर_अघोषित __VENUS_DBGFS_H__
+#घोषणा __VENUS_DBGFS_H__
 
-struct venus_core;
+काष्ठा venus_core;
 
-void venus_dbgfs_init(struct venus_core *core);
-void venus_dbgfs_deinit(struct venus_core *core);
+व्योम venus_dbgfs_init(काष्ठा venus_core *core);
+व्योम venus_dbgfs_deinit(काष्ठा venus_core *core);
 
-#endif
+#पूर्ण_अगर

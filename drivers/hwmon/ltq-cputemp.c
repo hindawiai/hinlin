@@ -1,132 +1,133 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /* Lantiq cpu temperature sensor driver
  *
  * Copyright (C) 2017 Florian Eckert <fe@dev.tdt.de>
  */
 
-#include <linux/bitops.h>
-#include <linux/delay.h>
-#include <linux/hwmon.h>
-#include <linux/hwmon-sysfs.h>
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/of_device.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/hwmon.h>
+#समावेश <linux/hwmon-sysfs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_device.h>
 
-#include <lantiq_soc.h>
+#समावेश <lantiq_soc.h>
 
-/* gphy1 configuration register contains cpu temperature */
-#define CGU_GPHY1_CR   0x0040
-#define CGU_TEMP_PD    BIT(19)
+/* gphy1 configuration रेजिस्टर contains cpu temperature */
+#घोषणा CGU_GPHY1_CR   0x0040
+#घोषणा CGU_TEMP_PD    BIT(19)
 
-static void ltq_cputemp_enable(void)
-{
+अटल व्योम ltq_cputemp_enable(व्योम)
+अणु
 	ltq_cgu_w32(ltq_cgu_r32(CGU_GPHY1_CR) | CGU_TEMP_PD, CGU_GPHY1_CR);
-}
+पूर्ण
 
-static void ltq_cputemp_disable(void *data)
-{
+अटल व्योम ltq_cputemp_disable(व्योम *data)
+अणु
 	ltq_cgu_w32(ltq_cgu_r32(CGU_GPHY1_CR) & ~CGU_TEMP_PD, CGU_GPHY1_CR);
-}
+पूर्ण
 
-static int ltq_read(struct device *dev, enum hwmon_sensor_types type,
-		    u32 attr, int channel, long *temp)
-{
-	int value;
+अटल पूर्णांक ltq_पढ़ो(काष्ठा device *dev, क्रमागत hwmon_sensor_types type,
+		    u32 attr, पूर्णांक channel, दीर्घ *temp)
+अणु
+	पूर्णांक value;
 
-	switch (attr) {
-	case hwmon_temp_input:
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
 		/* get the temperature including one decimal place */
 		value = (ltq_cgu_r32(CGU_GPHY1_CR) >> 9) & 0x01FF;
 		value = value * 5;
-		/* range -38 to +154 °C, register value zero is -38.0 °C */
+		/* range -38 to +154 तओC, रेजिस्टर value zero is -38.0 तओC */
 		value -= 380;
 		/* scale temp to millidegree */
 		value = value * 100;
-		break;
-	default:
-		return -EOPNOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	*temp = value;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static umode_t ltq_is_visible(const void *_data, enum hwmon_sensor_types type,
-			      u32 attr, int channel)
-{
-	if (type != hwmon_temp)
-		return 0;
+अटल umode_t ltq_is_visible(स्थिर व्योम *_data, क्रमागत hwmon_sensor_types type,
+			      u32 attr, पूर्णांक channel)
+अणु
+	अगर (type != hwmon_temp)
+		वापस 0;
 
-	switch (attr) {
-	case hwmon_temp_input:
-		return 0444;
-	default:
-		return 0;
-	}
-}
+	चयन (attr) अणु
+	हाल hwmon_temp_input:
+		वापस 0444;
+	शेष:
+		वापस 0;
+	पूर्ण
+पूर्ण
 
-static const struct hwmon_channel_info *ltq_info[] = {
+अटल स्थिर काष्ठा hwmon_channel_info *ltq_info[] = अणु
 	HWMON_CHANNEL_INFO(chip,
 			   HWMON_C_REGISTER_TZ),
 	HWMON_CHANNEL_INFO(temp,
 			   HWMON_T_INPUT),
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct hwmon_ops ltq_hwmon_ops = {
+अटल स्थिर काष्ठा hwmon_ops ltq_hwmon_ops = अणु
 	.is_visible = ltq_is_visible,
-	.read = ltq_read,
-};
+	.पढ़ो = ltq_पढ़ो,
+पूर्ण;
 
-static const struct hwmon_chip_info ltq_chip_info = {
+अटल स्थिर काष्ठा hwmon_chip_info ltq_chip_info = अणु
 	.ops = &ltq_hwmon_ops,
 	.info = ltq_info,
-};
+पूर्ण;
 
-static int ltq_cputemp_probe(struct platform_device *pdev)
-{
-	struct device *hwmon_dev;
-	int err = 0;
+अटल पूर्णांक ltq_cputemp_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *hwmon_dev;
+	पूर्णांक err = 0;
 
 	/* available on vr9 v1.2 SoCs only */
-	if (ltq_soc_type() != SOC_TYPE_VR9_2)
-		return -ENODEV;
+	अगर (ltq_soc_type() != SOC_TYPE_VR9_2)
+		वापस -ENODEV;
 
-	err = devm_add_action(&pdev->dev, ltq_cputemp_disable, NULL);
-	if (err)
-		return err;
+	err = devm_add_action(&pdev->dev, ltq_cputemp_disable, शून्य);
+	अगर (err)
+		वापस err;
 
 	ltq_cputemp_enable();
 
-	hwmon_dev = devm_hwmon_device_register_with_info(&pdev->dev,
+	hwmon_dev = devm_hwmon_device_रेजिस्टर_with_info(&pdev->dev,
 							 "ltq_cputemp",
-							 NULL,
+							 शून्य,
 							 &ltq_chip_info,
-							 NULL);
+							 शून्य);
 
-	if (IS_ERR(hwmon_dev)) {
+	अगर (IS_ERR(hwmon_dev)) अणु
 		dev_err(&pdev->dev, "Failed to register as hwmon device");
-		return PTR_ERR(hwmon_dev);
-	}
+		वापस PTR_ERR(hwmon_dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-const struct of_device_id ltq_cputemp_match[] = {
-	{ .compatible = "lantiq,cputemp" },
-	{},
-};
+स्थिर काष्ठा of_device_id ltq_cputemp_match[] = अणु
+	अणु .compatible = "lantiq,cputemp" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ltq_cputemp_match);
 
-static struct platform_driver ltq_cputemp_driver = {
+अटल काष्ठा platक्रमm_driver ltq_cputemp_driver = अणु
 	.probe = ltq_cputemp_probe,
-	.driver = {
+	.driver = अणु
 		.name = "ltq-cputemp",
 		.of_match_table = ltq_cputemp_match,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ltq_cputemp_driver);
+module_platक्रमm_driver(ltq_cputemp_driver);
 
 MODULE_AUTHOR("Florian Eckert <fe@dev.tdt.de>");
 MODULE_DESCRIPTION("Lantiq cpu temperature sensor driver");

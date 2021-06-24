@@ -1,25 +1,26 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <byteswap.h>
-#include "memswap.h"
-#include <linux/types.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <byteswap.h>
+#समावेश "memswap.h"
+#समावेश <linux/types.h>
 
-void mem_bswap_32(void *src, int byte_size)
-{
+व्योम mem_bswap_32(व्योम *src, पूर्णांक byte_size)
+अणु
 	u32 *m = src;
-	while (byte_size > 0) {
+	जबतक (byte_size > 0) अणु
 		*m = bswap_32(*m);
-		byte_size -= sizeof(u32);
+		byte_size -= माप(u32);
 		++m;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void mem_bswap_64(void *src, int byte_size)
-{
+व्योम mem_bswap_64(व्योम *src, पूर्णांक byte_size)
+अणु
 	u64 *m = src;
 
-	while (byte_size > 0) {
+	जबतक (byte_size > 0) अणु
 		*m = bswap_64(*m);
-		byte_size -= sizeof(u64);
+		byte_size -= माप(u64);
 		++m;
-	}
-}
+	पूर्ण
+पूर्ण

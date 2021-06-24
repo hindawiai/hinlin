@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_CLOCKSOURCE_H
-#define _ASM_POWERPC_CLOCKSOURCE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_CLOCKSOURCE_H
+#घोषणा _ASM_POWERPC_CLOCKSOURCE_H
 
-#include <asm/vdso/clocksource.h>
+#समावेश <यंत्र/vdso/घड़ीsource.h>
 
-#endif /* _ASM_POWERPC_CLOCKSOURCE_H */
+#पूर्ण_अगर /* _ASM_POWERPC_CLOCKSOURCE_H */

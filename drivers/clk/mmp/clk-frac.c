@@ -1,5 +1,6 @@
+<शैली गुरु>
 /*
- * mmp factor clock operation source file
+ * mmp factor घड़ी operation source file
  *
  * Copyright (C) 2012 Marvell
  * Chao Xie <xiechao.mail@gmail.com>
@@ -9,185 +10,185 @@
  * warranty of any kind, whether express or implied.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/slab.h>
-#include <linux/io.h>
-#include <linux/err.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/err.h>
 
-#include "clk.h"
+#समावेश "clk.h"
 /*
- * It is M/N clock
+ * It is M/N घड़ी
  *
  * Fout from synthesizer can be given from two equations:
  * numerator/denominator = Fin / (Fout * factor)
  */
 
-#define to_clk_factor(hw) container_of(hw, struct mmp_clk_factor, hw)
+#घोषणा to_clk_factor(hw) container_of(hw, काष्ठा mmp_clk_factor, hw)
 
-static long clk_factor_round_rate(struct clk_hw *hw, unsigned long drate,
-		unsigned long *prate)
-{
-	struct mmp_clk_factor *factor = to_clk_factor(hw);
+अटल दीर्घ clk_factor_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
+		अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा mmp_clk_factor *factor = to_clk_factor(hw);
 	u64 rate = 0, prev_rate;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < factor->ftbl_cnt; i++) {
+	क्रम (i = 0; i < factor->ftbl_cnt; i++) अणु
 		prev_rate = rate;
 		rate = *prate;
 		rate *= factor->ftbl[i].den;
-		do_div(rate, factor->ftbl[i].num * factor->masks->factor);
+		करो_भाग(rate, factor->ftbl[i].num * factor->masks->factor);
 
-		if (rate > drate)
-			break;
-	}
-	if ((i == 0) || (i == factor->ftbl_cnt)) {
-		return rate;
-	} else {
-		if ((drate - prev_rate) > (rate - drate))
-			return rate;
-		else
-			return prev_rate;
-	}
-}
+		अगर (rate > drate)
+			अवरोध;
+	पूर्ण
+	अगर ((i == 0) || (i == factor->ftbl_cnt)) अणु
+		वापस rate;
+	पूर्ण अन्यथा अणु
+		अगर ((drate - prev_rate) > (rate - drate))
+			वापस rate;
+		अन्यथा
+			वापस prev_rate;
+	पूर्ण
+पूर्ण
 
-static unsigned long clk_factor_recalc_rate(struct clk_hw *hw,
-		unsigned long parent_rate)
-{
-	struct mmp_clk_factor *factor = to_clk_factor(hw);
-	struct mmp_clk_factor_masks *masks = factor->masks;
-	unsigned int val, num, den;
+अटल अचिन्हित दीर्घ clk_factor_recalc_rate(काष्ठा clk_hw *hw,
+		अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा mmp_clk_factor *factor = to_clk_factor(hw);
+	काष्ठा mmp_clk_factor_masks *masks = factor->masks;
+	अचिन्हित पूर्णांक val, num, den;
 	u64 rate;
 
-	val = readl_relaxed(factor->base);
+	val = पढ़ोl_relaxed(factor->base);
 
 	/* calculate numerator */
-	num = (val >> masks->num_shift) & masks->num_mask;
+	num = (val >> masks->num_shअगरt) & masks->num_mask;
 
 	/* calculate denominator */
-	den = (val >> masks->den_shift) & masks->den_mask;
+	den = (val >> masks->den_shअगरt) & masks->den_mask;
 
-	if (!den)
-		return 0;
+	अगर (!den)
+		वापस 0;
 
 	rate = parent_rate;
 	rate *= den;
-	do_div(rate, num * factor->masks->factor);
+	करो_भाग(rate, num * factor->masks->factor);
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
-/* Configures new clock rate*/
-static int clk_factor_set_rate(struct clk_hw *hw, unsigned long drate,
-				unsigned long prate)
-{
-	struct mmp_clk_factor *factor = to_clk_factor(hw);
-	struct mmp_clk_factor_masks *masks = factor->masks;
-	int i;
-	unsigned long val;
-	unsigned long flags = 0;
+/* Configures new घड़ी rate*/
+अटल पूर्णांक clk_factor_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ drate,
+				अचिन्हित दीर्घ prate)
+अणु
+	काष्ठा mmp_clk_factor *factor = to_clk_factor(hw);
+	काष्ठा mmp_clk_factor_masks *masks = factor->masks;
+	पूर्णांक i;
+	अचिन्हित दीर्घ val;
+	अचिन्हित दीर्घ flags = 0;
 	u64 rate = 0;
 
-	for (i = 0; i < factor->ftbl_cnt; i++) {
+	क्रम (i = 0; i < factor->ftbl_cnt; i++) अणु
 		rate = prate;
 		rate *= factor->ftbl[i].den;
-		do_div(rate, factor->ftbl[i].num * factor->masks->factor);
+		करो_भाग(rate, factor->ftbl[i].num * factor->masks->factor);
 
-		if (rate > drate)
-			break;
-	}
-	if (i > 0)
+		अगर (rate > drate)
+			अवरोध;
+	पूर्ण
+	अगर (i > 0)
 		i--;
 
-	if (factor->lock)
+	अगर (factor->lock)
 		spin_lock_irqsave(factor->lock, flags);
 
-	val = readl_relaxed(factor->base);
+	val = पढ़ोl_relaxed(factor->base);
 
-	val &= ~(masks->num_mask << masks->num_shift);
-	val |= (factor->ftbl[i].num & masks->num_mask) << masks->num_shift;
+	val &= ~(masks->num_mask << masks->num_shअगरt);
+	val |= (factor->ftbl[i].num & masks->num_mask) << masks->num_shअगरt;
 
-	val &= ~(masks->den_mask << masks->den_shift);
-	val |= (factor->ftbl[i].den & masks->den_mask) << masks->den_shift;
+	val &= ~(masks->den_mask << masks->den_shअगरt);
+	val |= (factor->ftbl[i].den & masks->den_mask) << masks->den_shअगरt;
 
-	writel_relaxed(val, factor->base);
+	ग_लिखोl_relaxed(val, factor->base);
 
-	if (factor->lock)
+	अगर (factor->lock)
 		spin_unlock_irqrestore(factor->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int clk_factor_init(struct clk_hw *hw)
-{
-	struct mmp_clk_factor *factor = to_clk_factor(hw);
-	struct mmp_clk_factor_masks *masks = factor->masks;
+अटल पूर्णांक clk_factor_init(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा mmp_clk_factor *factor = to_clk_factor(hw);
+	काष्ठा mmp_clk_factor_masks *masks = factor->masks;
 	u32 val, num, den;
-	int i;
-	unsigned long flags = 0;
+	पूर्णांक i;
+	अचिन्हित दीर्घ flags = 0;
 
-	if (factor->lock)
+	अगर (factor->lock)
 		spin_lock_irqsave(factor->lock, flags);
 
-	val = readl(factor->base);
+	val = पढ़ोl(factor->base);
 
 	/* calculate numerator */
-	num = (val >> masks->num_shift) & masks->num_mask;
+	num = (val >> masks->num_shअगरt) & masks->num_mask;
 
 	/* calculate denominator */
-	den = (val >> masks->den_shift) & masks->den_mask;
+	den = (val >> masks->den_shअगरt) & masks->den_mask;
 
-	for (i = 0; i < factor->ftbl_cnt; i++)
-		if (den == factor->ftbl[i].den && num == factor->ftbl[i].num)
-			break;
+	क्रम (i = 0; i < factor->ftbl_cnt; i++)
+		अगर (den == factor->ftbl[i].den && num == factor->ftbl[i].num)
+			अवरोध;
 
-	if (i >= factor->ftbl_cnt) {
-		val &= ~(masks->num_mask << masks->num_shift);
+	अगर (i >= factor->ftbl_cnt) अणु
+		val &= ~(masks->num_mask << masks->num_shअगरt);
 		val |= (factor->ftbl[0].num & masks->num_mask) <<
-			masks->num_shift;
+			masks->num_shअगरt;
 
-		val &= ~(masks->den_mask << masks->den_shift);
+		val &= ~(masks->den_mask << masks->den_shअगरt);
 		val |= (factor->ftbl[0].den & masks->den_mask) <<
-			masks->den_shift;
-	}
+			masks->den_shअगरt;
+	पूर्ण
 
-	if (!(val & masks->enable_mask) || i >= factor->ftbl_cnt) {
+	अगर (!(val & masks->enable_mask) || i >= factor->ftbl_cnt) अणु
 		val |= masks->enable_mask;
-		writel(val, factor->base);
-	}
+		ग_लिखोl(val, factor->base);
+	पूर्ण
 
-	if (factor->lock)
+	अगर (factor->lock)
 		spin_unlock_irqrestore(factor->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct clk_ops clk_factor_ops = {
+अटल स्थिर काष्ठा clk_ops clk_factor_ops = अणु
 	.recalc_rate = clk_factor_recalc_rate,
 	.round_rate = clk_factor_round_rate,
 	.set_rate = clk_factor_set_rate,
 	.init = clk_factor_init,
-};
+पूर्ण;
 
-struct clk *mmp_clk_register_factor(const char *name, const char *parent_name,
-		unsigned long flags, void __iomem *base,
-		struct mmp_clk_factor_masks *masks,
-		struct mmp_clk_factor_tbl *ftbl,
-		unsigned int ftbl_cnt, spinlock_t *lock)
-{
-	struct mmp_clk_factor *factor;
-	struct clk_init_data init;
-	struct clk *clk;
+काष्ठा clk *mmp_clk_रेजिस्टर_factor(स्थिर अक्षर *name, स्थिर अक्षर *parent_name,
+		अचिन्हित दीर्घ flags, व्योम __iomem *base,
+		काष्ठा mmp_clk_factor_masks *masks,
+		काष्ठा mmp_clk_factor_tbl *ftbl,
+		अचिन्हित पूर्णांक ftbl_cnt, spinlock_t *lock)
+अणु
+	काष्ठा mmp_clk_factor *factor;
+	काष्ठा clk_init_data init;
+	काष्ठा clk *clk;
 
-	if (!masks) {
+	अगर (!masks) अणु
 		pr_err("%s: must pass a clk_factor_mask\n", __func__);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	factor = kzalloc(sizeof(*factor), GFP_KERNEL);
-	if (!factor)
-		return ERR_PTR(-ENOMEM);
+	factor = kzalloc(माप(*factor), GFP_KERNEL);
+	अगर (!factor)
+		वापस ERR_PTR(-ENOMEM);
 
-	/* struct clk_aux assignments */
+	/* काष्ठा clk_aux assignments */
 	factor->base = base;
 	factor->masks = masks;
 	factor->ftbl = ftbl;
@@ -201,9 +202,9 @@ struct clk *mmp_clk_register_factor(const char *name, const char *parent_name,
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
-	clk = clk_register(NULL, &factor->hw);
-	if (IS_ERR_OR_NULL(clk))
-		kfree(factor);
+	clk = clk_रेजिस्टर(शून्य, &factor->hw);
+	अगर (IS_ERR_OR_शून्य(clk))
+		kमुक्त(factor);
 
-	return clk;
-}
+	वापस clk;
+पूर्ण

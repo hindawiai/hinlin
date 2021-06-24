@@ -1,234 +1,235 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
-/* Network filesystem support services.
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* Network fileप्रणाली support services.
  *
  * Copyright (C) 2021 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  *
  * See:
  *
- *	Documentation/filesystems/netfs_library.rst
+ *	Documentation/fileप्रणालीs/netfs_library.rst
  *
- * for a description of the network filesystem interface declared here.
+ * क्रम a description of the network fileप्रणाली पूर्णांकerface declared here.
  */
 
-#ifndef _LINUX_NETFS_H
-#define _LINUX_NETFS_H
+#अगर_अघोषित _LINUX_NETFS_H
+#घोषणा _LINUX_NETFS_H
 
-#include <linux/workqueue.h>
-#include <linux/fs.h>
-#include <linux/pagemap.h>
+#समावेश <linux/workqueue.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/pagemap.h>
 
 /*
- * Overload PG_private_2 to give us PG_fscache - this is used to indicate that
+ * Overload PG_निजी_2 to give us PG_fscache - this is used to indicate that
  * a page is currently backed by a local disk cache
  */
-#define PageFsCache(page)		PagePrivate2((page))
-#define SetPageFsCache(page)		SetPagePrivate2((page))
-#define ClearPageFsCache(page)		ClearPagePrivate2((page))
-#define TestSetPageFsCache(page)	TestSetPagePrivate2((page))
-#define TestClearPageFsCache(page)	TestClearPagePrivate2((page))
+#घोषणा PageFsCache(page)		PagePrivate2((page))
+#घोषणा SetPageFsCache(page)		SetPagePrivate2((page))
+#घोषणा ClearPageFsCache(page)		ClearPagePrivate2((page))
+#घोषणा TestSetPageFsCache(page)	TestSetPagePrivate2((page))
+#घोषणा TestClearPageFsCache(page)	TestClearPagePrivate2((page))
 
 /**
  * set_page_fscache - Set PG_fscache on a page and take a ref
  * @page: The page.
  *
- * Set the PG_fscache (PG_private_2) flag on a page and take the reference
- * needed for the VM to handle its lifetime correctly.  This sets the flag and
+ * Set the PG_fscache (PG_निजी_2) flag on a page and take the reference
+ * needed क्रम the VM to handle its lअगरeसमय correctly.  This sets the flag and
  * takes the reference unconditionally, so care must be taken not to set the
- * flag again if it's already set.
+ * flag again अगर it's alपढ़ोy set.
  */
-static inline void set_page_fscache(struct page *page)
-{
-	set_page_private_2(page);
-}
+अटल अंतरभूत व्योम set_page_fscache(काष्ठा page *page)
+अणु
+	set_page_निजी_2(page);
+पूर्ण
 
 /**
- * end_page_fscache - Clear PG_fscache and release any waiters
+ * end_page_fscache - Clear PG_fscache and release any रुकोers
  * @page: The page
  *
- * Clear the PG_fscache (PG_private_2) bit on a page and wake up any sleepers
- * waiting for this.  The page ref held for PG_private_2 being set is released.
+ * Clear the PG_fscache (PG_निजी_2) bit on a page and wake up any sleepers
+ * रुकोing क्रम this.  The page ref held क्रम PG_निजी_2 being set is released.
  *
- * This is, for example, used when a netfs page is being written to a local
- * disk cache, thereby allowing writes to the cache for the same page to be
+ * This is, क्रम example, used when a netfs page is being written to a local
+ * disk cache, thereby allowing ग_लिखोs to the cache क्रम the same page to be
  * serialised.
  */
-static inline void end_page_fscache(struct page *page)
-{
-	end_page_private_2(page);
-}
+अटल अंतरभूत व्योम end_page_fscache(काष्ठा page *page)
+अणु
+	end_page_निजी_2(page);
+पूर्ण
 
 /**
- * wait_on_page_fscache - Wait for PG_fscache to be cleared on a page
- * @page: The page to wait on
+ * रुको_on_page_fscache - Wait क्रम PG_fscache to be cleared on a page
+ * @page: The page to रुको on
  *
- * Wait for PG_fscache (aka PG_private_2) to be cleared on a page.
+ * Wait क्रम PG_fscache (aka PG_निजी_2) to be cleared on a page.
  */
-static inline void wait_on_page_fscache(struct page *page)
-{
-	wait_on_page_private_2(page);
-}
+अटल अंतरभूत व्योम रुको_on_page_fscache(काष्ठा page *page)
+अणु
+	रुको_on_page_निजी_2(page);
+पूर्ण
 
 /**
- * wait_on_page_fscache_killable - Wait for PG_fscache to be cleared on a page
- * @page: The page to wait on
+ * रुको_on_page_fscache_समाप्तable - Wait क्रम PG_fscache to be cleared on a page
+ * @page: The page to रुको on
  *
- * Wait for PG_fscache (aka PG_private_2) to be cleared on a page or until a
- * fatal signal is received by the calling task.
+ * Wait क्रम PG_fscache (aka PG_निजी_2) to be cleared on a page or until a
+ * fatal संकेत is received by the calling task.
  *
  * Return:
- * - 0 if successful.
- * - -EINTR if a fatal signal was encountered.
+ * - 0 अगर successful.
+ * - -EINTR अगर a fatal संकेत was encountered.
  */
-static inline int wait_on_page_fscache_killable(struct page *page)
-{
-	return wait_on_page_private_2_killable(page);
-}
+अटल अंतरभूत पूर्णांक रुको_on_page_fscache_समाप्तable(काष्ठा page *page)
+अणु
+	वापस रुको_on_page_निजी_2_समाप्तable(page);
+पूर्ण
 
-enum netfs_read_source {
+क्रमागत netfs_पढ़ो_source अणु
 	NETFS_FILL_WITH_ZEROES,
 	NETFS_DOWNLOAD_FROM_SERVER,
 	NETFS_READ_FROM_CACHE,
 	NETFS_INVALID_READ,
-} __mode(byte);
+पूर्ण __mode(byte);
 
-typedef void (*netfs_io_terminated_t)(void *priv, ssize_t transferred_or_error,
+प्रकार व्योम (*netfs_io_terminated_t)(व्योम *priv, sमाप_प्रकार transferred_or_error,
 				      bool was_async);
 
 /*
- * Resources required to do operations on a cache.
+ * Resources required to करो operations on a cache.
  */
-struct netfs_cache_resources {
-	const struct netfs_cache_ops	*ops;
-	void				*cache_priv;
-	void				*cache_priv2;
-};
+काष्ठा netfs_cache_resources अणु
+	स्थिर काष्ठा netfs_cache_ops	*ops;
+	व्योम				*cache_priv;
+	व्योम				*cache_priv2;
+पूर्ण;
 
 /*
- * Descriptor for a single component subrequest.
+ * Descriptor क्रम a single component subrequest.
  */
-struct netfs_read_subrequest {
-	struct netfs_read_request *rreq;	/* Supervising read request */
-	struct list_head	rreq_link;	/* Link in rreq->subrequests */
+काष्ठा netfs_पढ़ो_subrequest अणु
+	काष्ठा netfs_पढ़ो_request *rreq;	/* Supervising पढ़ो request */
+	काष्ठा list_head	rreq_link;	/* Link in rreq->subrequests */
 	loff_t			start;		/* Where to start the I/O */
-	size_t			len;		/* Size of the I/O */
-	size_t			transferred;	/* Amount of data transferred */
+	माप_प्रकार			len;		/* Size of the I/O */
+	माप_प्रकार			transferred;	/* Amount of data transferred */
 	refcount_t		usage;
-	short			error;		/* 0 or error that occurred */
-	unsigned short		debug_index;	/* Index in list (for debugging output) */
-	enum netfs_read_source	source;		/* Where to read from */
-	unsigned long		flags;
-#define NETFS_SREQ_WRITE_TO_CACHE	0	/* Set if should write to cache */
-#define NETFS_SREQ_CLEAR_TAIL		1	/* Set if the rest of the read should be cleared */
-#define NETFS_SREQ_SHORT_READ		2	/* Set if there was a short read from the cache */
-#define NETFS_SREQ_SEEK_DATA_READ	3	/* Set if ->read() should SEEK_DATA first */
-#define NETFS_SREQ_NO_PROGRESS		4	/* Set if we didn't manage to read any data */
-};
+	लघु			error;		/* 0 or error that occurred */
+	अचिन्हित लघु		debug_index;	/* Index in list (क्रम debugging output) */
+	क्रमागत netfs_पढ़ो_source	source;		/* Where to पढ़ो from */
+	अचिन्हित दीर्घ		flags;
+#घोषणा NETFS_SREQ_WRITE_TO_CACHE	0	/* Set अगर should ग_लिखो to cache */
+#घोषणा NETFS_SREQ_CLEAR_TAIL		1	/* Set अगर the rest of the पढ़ो should be cleared */
+#घोषणा NETFS_SREQ_SHORT_READ		2	/* Set अगर there was a लघु पढ़ो from the cache */
+#घोषणा NETFS_SREQ_SEEK_DATA_READ	3	/* Set अगर ->पढ़ो() should SEEK_DATA first */
+#घोषणा NETFS_SREQ_NO_PROGRESS		4	/* Set अगर we didn't manage to पढ़ो any data */
+पूर्ण;
 
 /*
- * Descriptor for a read helper request.  This is used to make multiple I/O
+ * Descriptor क्रम a पढ़ो helper request.  This is used to make multiple I/O
  * requests on a variety of sources and then stitch the result together.
  */
-struct netfs_read_request {
-	struct work_struct	work;
-	struct inode		*inode;		/* The file being accessed */
-	struct address_space	*mapping;	/* The mapping being accessed */
-	struct netfs_cache_resources cache_resources;
-	struct list_head	subrequests;	/* Requests to fetch I/O from disk or net */
-	void			*netfs_priv;	/* Private data for the netfs */
-	unsigned int		debug_id;
-	unsigned int		cookie_debug_id;
-	atomic_t		nr_rd_ops;	/* Number of read ops in progress */
-	atomic_t		nr_wr_ops;	/* Number of write ops in progress */
-	size_t			submitted;	/* Amount submitted for I/O so far */
-	size_t			len;		/* Length of the request */
-	short			error;		/* 0 or error that occurred */
+काष्ठा netfs_पढ़ो_request अणु
+	काष्ठा work_काष्ठा	work;
+	काष्ठा inode		*inode;		/* The file being accessed */
+	काष्ठा address_space	*mapping;	/* The mapping being accessed */
+	काष्ठा netfs_cache_resources cache_resources;
+	काष्ठा list_head	subrequests;	/* Requests to fetch I/O from disk or net */
+	व्योम			*netfs_priv;	/* Private data क्रम the netfs */
+	अचिन्हित पूर्णांक		debug_id;
+	अचिन्हित पूर्णांक		cookie_debug_id;
+	atomic_t		nr_rd_ops;	/* Number of पढ़ो ops in progress */
+	atomic_t		nr_wr_ops;	/* Number of ग_लिखो ops in progress */
+	माप_प्रकार			submitted;	/* Amount submitted क्रम I/O so far */
+	माप_प्रकार			len;		/* Length of the request */
+	लघु			error;		/* 0 or error that occurred */
 	loff_t			i_size;		/* Size of the file */
 	loff_t			start;		/* Start position */
-	pgoff_t			no_unlock_page;	/* Don't unlock this page after read */
+	pgoff_t			no_unlock_page;	/* Don't unlock this page after पढ़ो */
 	refcount_t		usage;
-	unsigned long		flags;
-#define NETFS_RREQ_INCOMPLETE_IO	0	/* Some ioreqs terminated short or with error */
-#define NETFS_RREQ_WRITE_TO_CACHE	1	/* Need to write to the cache */
-#define NETFS_RREQ_NO_UNLOCK_PAGE	2	/* Don't unlock no_unlock_page on completion */
-#define NETFS_RREQ_DONT_UNLOCK_PAGES	3	/* Don't unlock the pages on completion */
-#define NETFS_RREQ_FAILED		4	/* The request failed */
-#define NETFS_RREQ_IN_PROGRESS		5	/* Unlocked when the request completes */
-	const struct netfs_read_request_ops *netfs_ops;
-};
+	अचिन्हित दीर्घ		flags;
+#घोषणा NETFS_RREQ_INCOMPLETE_IO	0	/* Some ioreqs terminated लघु or with error */
+#घोषणा NETFS_RREQ_WRITE_TO_CACHE	1	/* Need to ग_लिखो to the cache */
+#घोषणा NETFS_RREQ_NO_UNLOCK_PAGE	2	/* Don't unlock no_unlock_page on completion */
+#घोषणा NETFS_RREQ_DONT_UNLOCK_PAGES	3	/* Don't unlock the pages on completion */
+#घोषणा NETFS_RREQ_FAILED		4	/* The request failed */
+#घोषणा NETFS_RREQ_IN_PROGRESS		5	/* Unlocked when the request completes */
+	स्थिर काष्ठा netfs_पढ़ो_request_ops *netfs_ops;
+पूर्ण;
 
 /*
- * Operations the network filesystem can/must provide to the helpers.
+ * Operations the network fileप्रणाली can/must provide to the helpers.
  */
-struct netfs_read_request_ops {
-	bool (*is_cache_enabled)(struct inode *inode);
-	void (*init_rreq)(struct netfs_read_request *rreq, struct file *file);
-	int (*begin_cache_operation)(struct netfs_read_request *rreq);
-	void (*expand_readahead)(struct netfs_read_request *rreq);
-	bool (*clamp_length)(struct netfs_read_subrequest *subreq);
-	void (*issue_op)(struct netfs_read_subrequest *subreq);
-	bool (*is_still_valid)(struct netfs_read_request *rreq);
-	int (*check_write_begin)(struct file *file, loff_t pos, unsigned len,
-				 struct page *page, void **_fsdata);
-	void (*done)(struct netfs_read_request *rreq);
-	void (*cleanup)(struct address_space *mapping, void *netfs_priv);
-};
+काष्ठा netfs_पढ़ो_request_ops अणु
+	bool (*is_cache_enabled)(काष्ठा inode *inode);
+	व्योम (*init_rreq)(काष्ठा netfs_पढ़ो_request *rreq, काष्ठा file *file);
+	पूर्णांक (*begin_cache_operation)(काष्ठा netfs_पढ़ो_request *rreq);
+	व्योम (*expand_पढ़ोahead)(काष्ठा netfs_पढ़ो_request *rreq);
+	bool (*clamp_length)(काष्ठा netfs_पढ़ो_subrequest *subreq);
+	व्योम (*issue_op)(काष्ठा netfs_पढ़ो_subrequest *subreq);
+	bool (*is_still_valid)(काष्ठा netfs_पढ़ो_request *rreq);
+	पूर्णांक (*check_ग_लिखो_begin)(काष्ठा file *file, loff_t pos, अचिन्हित len,
+				 काष्ठा page *page, व्योम **_fsdata);
+	व्योम (*करोne)(काष्ठा netfs_पढ़ो_request *rreq);
+	व्योम (*cleanup)(काष्ठा address_space *mapping, व्योम *netfs_priv);
+पूर्ण;
 
 /*
- * Table of operations for access to a cache.  This is obtained by
+ * Table of operations क्रम access to a cache.  This is obtained by
  * rreq->ops->begin_cache_operation().
  */
-struct netfs_cache_ops {
+काष्ठा netfs_cache_ops अणु
 	/* End an operation */
-	void (*end_operation)(struct netfs_cache_resources *cres);
+	व्योम (*end_operation)(काष्ठा netfs_cache_resources *cres);
 
 	/* Read data from the cache */
-	int (*read)(struct netfs_cache_resources *cres,
+	पूर्णांक (*पढ़ो)(काष्ठा netfs_cache_resources *cres,
 		    loff_t start_pos,
-		    struct iov_iter *iter,
+		    काष्ठा iov_iter *iter,
 		    bool seek_data,
 		    netfs_io_terminated_t term_func,
-		    void *term_func_priv);
+		    व्योम *term_func_priv);
 
 	/* Write data to the cache */
-	int (*write)(struct netfs_cache_resources *cres,
+	पूर्णांक (*ग_लिखो)(काष्ठा netfs_cache_resources *cres,
 		     loff_t start_pos,
-		     struct iov_iter *iter,
+		     काष्ठा iov_iter *iter,
 		     netfs_io_terminated_t term_func,
-		     void *term_func_priv);
+		     व्योम *term_func_priv);
 
-	/* Expand readahead request */
-	void (*expand_readahead)(struct netfs_cache_resources *cres,
-				 loff_t *_start, size_t *_len, loff_t i_size);
+	/* Expand पढ़ोahead request */
+	व्योम (*expand_पढ़ोahead)(काष्ठा netfs_cache_resources *cres,
+				 loff_t *_start, माप_प्रकार *_len, loff_t i_size);
 
-	/* Prepare a read operation, shortening it to a cached/uncached
+	/* Prepare a पढ़ो operation, लघुening it to a cached/uncached
 	 * boundary as appropriate.
 	 */
-	enum netfs_read_source (*prepare_read)(struct netfs_read_subrequest *subreq,
+	क्रमागत netfs_पढ़ो_source (*prepare_पढ़ो)(काष्ठा netfs_पढ़ो_subrequest *subreq,
 					       loff_t i_size);
 
-	/* Prepare a write operation, working out what part of the write we can
-	 * actually do.
+	/* Prepare a ग_लिखो operation, working out what part of the ग_लिखो we can
+	 * actually करो.
 	 */
-	int (*prepare_write)(struct netfs_cache_resources *cres,
-			     loff_t *_start, size_t *_len, loff_t i_size);
-};
+	पूर्णांक (*prepare_ग_लिखो)(काष्ठा netfs_cache_resources *cres,
+			     loff_t *_start, माप_प्रकार *_len, loff_t i_size);
+पूर्ण;
 
-struct readahead_control;
-extern void netfs_readahead(struct readahead_control *,
-			    const struct netfs_read_request_ops *,
-			    void *);
-extern int netfs_readpage(struct file *,
-			  struct page *,
-			  const struct netfs_read_request_ops *,
-			  void *);
-extern int netfs_write_begin(struct file *, struct address_space *,
-			     loff_t, unsigned int, unsigned int, struct page **,
-			     void **,
-			     const struct netfs_read_request_ops *,
-			     void *);
+काष्ठा पढ़ोahead_control;
+बाह्य व्योम netfs_पढ़ोahead(काष्ठा पढ़ोahead_control *,
+			    स्थिर काष्ठा netfs_पढ़ो_request_ops *,
+			    व्योम *);
+बाह्य पूर्णांक netfs_पढ़ोpage(काष्ठा file *,
+			  काष्ठा page *,
+			  स्थिर काष्ठा netfs_पढ़ो_request_ops *,
+			  व्योम *);
+बाह्य पूर्णांक netfs_ग_लिखो_begin(काष्ठा file *, काष्ठा address_space *,
+			     loff_t, अचिन्हित पूर्णांक, अचिन्हित पूर्णांक, काष्ठा page **,
+			     व्योम **,
+			     स्थिर काष्ठा netfs_पढ़ो_request_ops *,
+			     व्योम *);
 
-extern void netfs_subreq_terminated(struct netfs_read_subrequest *, ssize_t, bool);
-extern void netfs_stats_show(struct seq_file *);
+बाह्य व्योम netfs_subreq_terminated(काष्ठा netfs_पढ़ो_subrequest *, sमाप_प्रकार, bool);
+बाह्य व्योम netfs_stats_show(काष्ठा seq_file *);
 
-#endif /* _LINUX_NETFS_H */
+#पूर्ण_अगर /* _LINUX_NETFS_H */

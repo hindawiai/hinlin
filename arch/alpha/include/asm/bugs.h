@@ -1,20 +1,21 @@
+<शैली गुरु>
 /*
- *  include/asm-alpha/bugs.h
+ *  include/यंत्र-alpha/bugs.h
  *
  *  Copyright (C) 1994  Linus Torvalds
  */
 
 /*
- * This is included by init/main.c to check for architecture-dependent bugs.
+ * This is included by init/मुख्य.c to check क्रम architecture-dependent bugs.
  *
  * Needs:
- *	void check_bugs(void);
+ *	व्योम check_bugs(व्योम);
  */
 
 /*
- * I don't know of any alpha bugs yet.. Nice chip
+ * I करोn't know of any alpha bugs yet.. Nice chip
  */
 
-static void check_bugs(void)
-{
-}
+अटल व्योम check_bugs(व्योम)
+अणु
+पूर्ण

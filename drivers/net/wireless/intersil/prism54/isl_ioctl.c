@@ -1,143 +1,144 @@
+<शैली गुरु>
 /*
  *  Copyright (C) 2002 Intersil Americas Inc.
- *            (C) 2003,2004 Aurelien Alleaume <slts@free.fr>
+ *            (C) 2003,2004 Aurelien Alleaume <slts@मुक्त.fr>
  *            (C) 2003 Herbert Valerio Riedel <hvr@gnu.org>
  *            (C) 2003 Luis R. Rodriguez <mcgrof@ruslug.rutgers.edu>
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is मुक्त software; you can redistribute it and/or modअगरy
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  GNU General Public License क्रम more details.
  *
  *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, see <http://www.gnu.org/licenses/>.
+ *  aदीर्घ with this program; अगर not, see <http://www.gnu.org/licenses/>.
  *
  */
 
-#include <linux/capability.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/if_arp.h>
-#include <linux/slab.h>
-#include <linux/pci.h>
-#include <linux/etherdevice.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/etherdevice.h>
 
-#include <linux/uaccess.h>
+#समावेश <linux/uaccess.h>
 
-#include "prismcompat.h"
-#include "isl_ioctl.h"
-#include "islpci_mgt.h"
-#include "isl_oid.h"		/* additional types and defs for isl38xx fw */
-#include "oid_mgt.h"
+#समावेश "prismcompat.h"
+#समावेश "isl_ioctl.h"
+#समावेश "islpci_mgt.h"
+#समावेश "isl_oid.h"		/* additional types and defs क्रम isl38xx fw */
+#समावेश "oid_mgt.h"
 
-#include <net/iw_handler.h>	/* New driver API */
+#समावेश <net/iw_handler.h>	/* New driver API */
 
-#define KEY_SIZE_WEP104 13	/* 104/128-bit WEP keys */
-#define KEY_SIZE_WEP40  5	/* 40/64-bit WEP keys */
-/* KEY_SIZE_TKIP should match isl_oid.h, struct obj_key.key[] size */
-#define KEY_SIZE_TKIP   32	/* TKIP keys */
+#घोषणा KEY_SIZE_WEP104 13	/* 104/128-bit WEP keys */
+#घोषणा KEY_SIZE_WEP40  5	/* 40/64-bit WEP keys */
+/* KEY_SIZE_TKIP should match isl_oid.h, काष्ठा obj_key.key[] size */
+#घोषणा KEY_SIZE_TKIP   32	/* TKIP keys */
 
-static void prism54_wpa_bss_ie_add(islpci_private *priv, u8 *bssid,
-				u8 *wpa_ie, size_t wpa_ie_len);
-static size_t prism54_wpa_bss_ie_get(islpci_private *priv, u8 *bssid, u8 *wpa_ie);
-static int prism54_set_wpa(struct net_device *, struct iw_request_info *,
-				__u32 *, char *);
+अटल व्योम prism54_wpa_bss_ie_add(islpci_निजी *priv, u8 *bssid,
+				u8 *wpa_ie, माप_प्रकार wpa_ie_len);
+अटल माप_प्रकार prism54_wpa_bss_ie_get(islpci_निजी *priv, u8 *bssid, u8 *wpa_ie);
+अटल पूर्णांक prism54_set_wpa(काष्ठा net_device *, काष्ठा iw_request_info *,
+				__u32 *, अक्षर *);
 
 /* In 500 kbps */
-static const unsigned char scan_rate_list[] = { 2, 4, 11, 22,
+अटल स्थिर अचिन्हित अक्षर scan_rate_list[] = अणु 2, 4, 11, 22,
 						12, 18, 24, 36,
-						48, 72, 96, 108 };
+						48, 72, 96, 108 पूर्ण;
 
 /**
  * prism54_mib_mode_helper - MIB change mode helper function
- * @priv: the &struct islpci_private object to modify
+ * @priv: the &काष्ठा islpci_निजी object to modअगरy
  * @iw_mode: new mode (%IW_MODE_*)
  *
- *  This is a helper function, hence it does not lock. Make sure
- *  caller deals with locking *if* necessary. This function sets the
- *  mode-dependent mib values and does the mapping of the Linux
- *  Wireless API modes to Device firmware modes. It also checks for
+ *  This is a helper function, hence it करोes not lock. Make sure
+ *  caller deals with locking *अगर* necessary. This function sets the
+ *  mode-dependent mib values and करोes the mapping of the Linux
+ *  Wireless API modes to Device firmware modes. It also checks क्रम
  *  correct valid Linux wireless modes.
  */
-static int
-prism54_mib_mode_helper(islpci_private *priv, u32 iw_mode)
-{
+अटल पूर्णांक
+prism54_mib_mode_helper(islpci_निजी *priv, u32 iw_mode)
+अणु
 	u32 config = INL_CONFIG_MANUALRUN;
 	u32 mode, bsstype;
 
 	/* For now, just catch early the Repeater and Secondary modes here */
-	if (iw_mode == IW_MODE_REPEAT || iw_mode == IW_MODE_SECOND) {
-		printk(KERN_DEBUG
+	अगर (iw_mode == IW_MODE_REPEAT || iw_mode == IW_MODE_SECOND) अणु
+		prपूर्णांकk(KERN_DEBUG
 		       "%s(): Sorry, Repeater mode and Secondary mode "
 		       "are not yet supported by this driver.\n", __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	priv->iw_mode = iw_mode;
 
-	switch (iw_mode) {
-	case IW_MODE_AUTO:
+	चयन (iw_mode) अणु
+	हाल IW_MODE_AUTO:
 		mode = INL_MODE_CLIENT;
 		bsstype = DOT11_BSSTYPE_ANY;
-		break;
-	case IW_MODE_ADHOC:
+		अवरोध;
+	हाल IW_MODE_ADHOC:
 		mode = INL_MODE_CLIENT;
 		bsstype = DOT11_BSSTYPE_IBSS;
-		break;
-	case IW_MODE_INFRA:
+		अवरोध;
+	हाल IW_MODE_INFRA:
 		mode = INL_MODE_CLIENT;
 		bsstype = DOT11_BSSTYPE_INFRA;
-		break;
-	case IW_MODE_MASTER:
+		अवरोध;
+	हाल IW_MODE_MASTER:
 		mode = INL_MODE_AP;
 		bsstype = DOT11_BSSTYPE_INFRA;
-		break;
-	case IW_MODE_MONITOR:
+		अवरोध;
+	हाल IW_MODE_MONITOR:
 		mode = INL_MODE_PROMISCUOUS;
 		bsstype = DOT11_BSSTYPE_ANY;
 		config |= INL_CONFIG_RXANNEX;
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (init_wds)
+	अगर (init_wds)
 		config |= INL_CONFIG_WDS;
 	mgt_set(priv, DOT11_OID_BSSTYPE, &bsstype);
 	mgt_set(priv, OID_INL_CONFIG, &config);
 	mgt_set(priv, OID_INL_MODE, &mode);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * prism54_mib_init - fill MIB cache with defaults
+ * prism54_mib_init - fill MIB cache with शेषs
  *
- *  this function initializes the struct given as @mib with defaults,
+ *  this function initializes the काष्ठा given as @mib with शेषs,
  *  of which many are retrieved from the global module parameter
  *  variables.
  */
-void
-prism54_mib_init(islpci_private *priv)
-{
-	u32 channel, authen, wep, filter, dot1x, mlme, conformance, power, mode;
-	struct obj_buffer psm_buffer = {
+व्योम
+prism54_mib_init(islpci_निजी *priv)
+अणु
+	u32 channel, authen, wep, filter, करोt1x, mlme, conक्रमmance, घातer, mode;
+	काष्ठा obj_buffer psm_buffer = अणु
 		.size = PSM_BUFFER_SIZE,
 		.addr = priv->device_psm_buffer
-	};
+	पूर्ण;
 
 	channel = CARD_DEFAULT_CHANNEL;
 	authen = CARD_DEFAULT_AUTHEN;
 	wep = CARD_DEFAULT_WEP;
 	filter = CARD_DEFAULT_FILTER; /* (0) Do not filter un-encrypted data */
-	dot1x = CARD_DEFAULT_DOT1X;
+	करोt1x = CARD_DEFAULT_DOT1X;
 	mlme = CARD_DEFAULT_MLME_MODE;
-	conformance = CARD_DEFAULT_CONFORMANCE;
-	power = 127;
+	conक्रमmance = CARD_DEFAULT_CONFORMANCE;
+	घातer = 127;
 	mode = CARD_DEFAULT_IW_MODE;
 
 	mgt_set(priv, DOT11_OID_CHANNEL, &channel);
@@ -145,286 +146,286 @@ prism54_mib_init(islpci_private *priv)
 	mgt_set(priv, DOT11_OID_PRIVACYINVOKED, &wep);
 	mgt_set(priv, DOT11_OID_PSMBUFFER, &psm_buffer);
 	mgt_set(priv, DOT11_OID_EXUNENCRYPTED, &filter);
-	mgt_set(priv, DOT11_OID_DOT1XENABLE, &dot1x);
+	mgt_set(priv, DOT11_OID_DOT1XENABLE, &करोt1x);
 	mgt_set(priv, DOT11_OID_MLMEAUTOLEVEL, &mlme);
-	mgt_set(priv, OID_INL_DOT11D_CONFORMANCE, &conformance);
-	mgt_set(priv, OID_INL_OUTPUTPOWER, &power);
+	mgt_set(priv, OID_INL_DOT11D_CONFORMANCE, &conक्रमmance);
+	mgt_set(priv, OID_INL_OUTPUTPOWER, &घातer);
 
 	/* This sets all of the mode-dependent values */
 	prism54_mib_mode_helper(priv, mode);
-}
+पूर्ण
 
 /* this will be executed outside of atomic context thanks to
  * schedule_work(), thus we can as well use sleeping semaphore
  * locking */
-void
-prism54_update_stats(struct work_struct *work)
-{
-	islpci_private *priv = container_of(work, islpci_private, stats_work);
-	char *data;
-	struct obj_bss bss, *bss2;
-	union oid_res_t r;
+व्योम
+prism54_update_stats(काष्ठा work_काष्ठा *work)
+अणु
+	islpci_निजी *priv = container_of(work, islpci_निजी, stats_work);
+	अक्षर *data;
+	काष्ठा obj_bss bss, *bss2;
+	जोड़ oid_res_t r;
 
 	mutex_lock(&priv->stats_lock);
 
-/* Noise floor.
- * I'm not sure if the unit is dBm.
+/* Noise न्यूनमान.
+ * I'm not sure अगर the unit is dBm.
  * Note : If we are not connected, this value seems to be irrelevant. */
 
-	mgt_get_request(priv, DOT11_OID_NOISEFLOOR, 0, NULL, &r);
+	mgt_get_request(priv, DOT11_OID_NOISEFLOOR, 0, शून्य, &r);
 	priv->local_iwstatistics.qual.noise = r.u;
 
-/* Get the rssi of the link. To do this we need to retrieve a bss. */
+/* Get the rssi of the link. To करो this we need to retrieve a bss. */
 
 	/* First get the MAC address of the AP we are associated with. */
-	mgt_get_request(priv, DOT11_OID_BSSID, 0, NULL, &r);
+	mgt_get_request(priv, DOT11_OID_BSSID, 0, शून्य, &r);
 	data = r.ptr;
 
 	/* copy this MAC to the bss */
-	memcpy(bss.address, data, ETH_ALEN);
-	kfree(data);
+	स_नकल(bss.address, data, ETH_ALEN);
+	kमुक्त(data);
 
-	/* now ask for the corresponding bss */
-	mgt_get_request(priv, DOT11_OID_BSSFIND, 0, (void *) &bss, &r);
+	/* now ask क्रम the corresponding bss */
+	mgt_get_request(priv, DOT11_OID_BSSFIND, 0, (व्योम *) &bss, &r);
 	bss2 = r.ptr;
 	/* report the rssi and use it to calculate
-	 *  link quality through a signal-noise
+	 *  link quality through a संकेत-noise
 	 *  ratio */
 	priv->local_iwstatistics.qual.level = bss2->rssi;
 	priv->local_iwstatistics.qual.qual =
 	    bss2->rssi - priv->iwstatistics.qual.noise;
 
-	kfree(bss2);
+	kमुक्त(bss2);
 
 	/* report that the stats are new */
 	priv->local_iwstatistics.qual.updated = 0x7;
 
 /* Rx : unable to decrypt the MPDU */
-	mgt_get_request(priv, DOT11_OID_PRIVRXFAILED, 0, NULL, &r);
+	mgt_get_request(priv, DOT11_OID_PRIVRXFAILED, 0, शून्य, &r);
 	priv->local_iwstatistics.discard.code = r.u;
 
 /* Tx : Max MAC retries num reached */
-	mgt_get_request(priv, DOT11_OID_MPDUTXFAILED, 0, NULL, &r);
+	mgt_get_request(priv, DOT11_OID_MPDUTXFAILED, 0, शून्य, &r);
 	priv->local_iwstatistics.discard.retries = r.u;
 
 	mutex_unlock(&priv->stats_lock);
-}
+पूर्ण
 
-struct iw_statistics *
-prism54_get_wireless_stats(struct net_device *ndev)
-{
-	islpci_private *priv = netdev_priv(ndev);
+काष्ठा iw_statistics *
+prism54_get_wireless_stats(काष्ठा net_device *ndev)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
-	/* If the stats are being updated return old data */
-	if (mutex_trylock(&priv->stats_lock)) {
-		memcpy(&priv->iwstatistics, &priv->local_iwstatistics,
-		       sizeof (struct iw_statistics));
-		/* They won't be marked updated for the next time */
+	/* If the stats are being updated वापस old data */
+	अगर (mutex_trylock(&priv->stats_lock)) अणु
+		स_नकल(&priv->iwstatistics, &priv->local_iwstatistics,
+		       माप (काष्ठा iw_statistics));
+		/* They won't be marked updated क्रम the next समय */
 		priv->local_iwstatistics.qual.updated = 0;
 		mutex_unlock(&priv->stats_lock);
-	} else
+	पूर्ण अन्यथा
 		priv->iwstatistics.qual.updated = 0;
 
-	/* Update our wireless stats, but do not schedule to often
+	/* Update our wireless stats, but करो not schedule to often
 	 * (max 1 HZ) */
-	if ((priv->stats_timestamp == 0) ||
-	    time_after(jiffies, priv->stats_timestamp + 1 * HZ)) {
+	अगर ((priv->stats_बारtamp == 0) ||
+	    समय_after(jअगरfies, priv->stats_बारtamp + 1 * HZ)) अणु
 		schedule_work(&priv->stats_work);
-		priv->stats_timestamp = jiffies;
-	}
+		priv->stats_बारtamp = jअगरfies;
+	पूर्ण
 
-	return &priv->iwstatistics;
-}
+	वापस &priv->iwstatistics;
+पूर्ण
 
-static int
-prism54_commit(struct net_device *ndev, struct iw_request_info *info,
-	       char *cwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_commit(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+	       अक्षर *cwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
 	/* simply re-set the last set SSID, this should commit most stuff */
 
 	/* Commit in Monitor mode is not necessary, also setting essid
-	 * in Monitor mode does not make sense and isn't allowed for this
+	 * in Monitor mode करोes not make sense and isn't allowed क्रम this
 	 * device's firmware */
-	if (priv->iw_mode != IW_MODE_MONITOR)
-		return mgt_set_request(priv, DOT11_OID_SSID, 0, NULL);
-	return 0;
-}
+	अगर (priv->iw_mode != IW_MODE_MONITOR)
+		वापस mgt_set_request(priv, DOT11_OID_SSID, 0, शून्य);
+	वापस 0;
+पूर्ण
 
-static int
-prism54_get_name(struct net_device *ndev, struct iw_request_info *info,
-		 char *cwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	char *capabilities;
-	union oid_res_t r;
-	int rvalue;
+अटल पूर्णांक
+prism54_get_name(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 अक्षर *cwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	अक्षर *capabilities;
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT) {
-		strncpy(cwrq, "NOT READY!", IFNAMSIZ);
-		return 0;
-	}
-	rvalue = mgt_get_request(priv, OID_INL_PHYCAPABILITIES, 0, NULL, &r);
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT) अणु
+		म_नकलन(cwrq, "NOT READY!", IFNAMSIZ);
+		वापस 0;
+	पूर्ण
+	rvalue = mgt_get_request(priv, OID_INL_PHYCAPABILITIES, 0, शून्य, &r);
 
-	switch (r.u) {
-	case INL_PHYCAP_5000MHZ:
+	चयन (r.u) अणु
+	हाल INL_PHYCAP_5000MHZ:
 		capabilities = "IEEE 802.11a/b/g";
-		break;
-	case INL_PHYCAP_FAA:
+		अवरोध;
+	हाल INL_PHYCAP_FAA:
 		capabilities = "IEEE 802.11b/g - FAA Support";
-		break;
-	case INL_PHYCAP_2400MHZ:
-	default:
+		अवरोध;
+	हाल INL_PHYCAP_2400MHZ:
+	शेष:
 		capabilities = "IEEE 802.11b/g";	/* Default */
-		break;
-	}
-	strncpy(cwrq, capabilities, IFNAMSIZ);
-	return rvalue;
-}
+		अवरोध;
+	पूर्ण
+	म_नकलन(cwrq, capabilities, IFNAMSIZ);
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_set_freq(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_freq *fwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	int rvalue;
+अटल पूर्णांक
+prism54_set_freq(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_freq *fwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	पूर्णांक rvalue;
 	u32 c;
 
-	if (fwrq->m < 1000)
+	अगर (fwrq->m < 1000)
 		/* we have a channel number */
 		c = fwrq->m;
-	else
+	अन्यथा
 		c = (fwrq->e == 1) ? channel_of_freq(fwrq->m / 100000) : 0;
 
 	rvalue = c ? mgt_set_request(priv, DOT11_OID_CHANNEL, 0, &c) : -EINVAL;
 
 	/* Call commit handler */
-	return (rvalue ? rvalue : -EINPROGRESS);
-}
+	वापस (rvalue ? rvalue : -EINPROGRESS);
+पूर्ण
 
-static int
-prism54_get_freq(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_freq *fwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	union oid_res_t r;
-	int rvalue;
+अटल पूर्णांक
+prism54_get_freq(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_freq *fwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue;
 
-	rvalue = mgt_get_request(priv, DOT11_OID_CHANNEL, 0, NULL, &r);
+	rvalue = mgt_get_request(priv, DOT11_OID_CHANNEL, 0, शून्य, &r);
 	fwrq->i = r.u;
-	rvalue |= mgt_get_request(priv, DOT11_OID_FREQUENCY, 0, NULL, &r);
+	rvalue |= mgt_get_request(priv, DOT11_OID_FREQUENCY, 0, शून्य, &r);
 	fwrq->m = r.u;
 	fwrq->e = 3;
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_set_mode(struct net_device *ndev, struct iw_request_info *info,
-		 __u32 * uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	u32 mlmeautolevel = CARD_DEFAULT_MLME_MODE;
+अटल पूर्णांक
+prism54_set_mode(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 __u32 * uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	u32 mlmeस्वतःlevel = CARD_DEFAULT_MLME_MODE;
 
-	/* Let's see if the user passed a valid Linux Wireless mode */
-	if (*uwrq > IW_MODE_MONITOR || *uwrq < IW_MODE_AUTO) {
-		printk(KERN_DEBUG
+	/* Let's see अगर the user passed a valid Linux Wireless mode */
+	अगर (*uwrq > IW_MODE_MONITOR || *uwrq < IW_MODE_AUTO) अणु
+		prपूर्णांकk(KERN_DEBUG
 		       "%s: %s() You passed a non-valid init_mode.\n",
 		       priv->ndev->name, __func__);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	down_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
 
-	if (prism54_mib_mode_helper(priv, *uwrq)) {
-		up_write(&priv->mib_sem);
-		return -EOPNOTSUPP;
-	}
+	अगर (prism54_mib_mode_helper(priv, *uwrq)) अणु
+		up_ग_लिखो(&priv->mib_sem);
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	/* the ACL code needs an intermediate mlmeautolevel. The wpa stuff an
+	/* the ACL code needs an पूर्णांकermediate mlmeस्वतःlevel. The wpa stuff an
 	 * extended one.
 	 */
-	if ((*uwrq == IW_MODE_MASTER) && (priv->acl.policy != MAC_POLICY_OPEN))
-		mlmeautolevel = DOT11_MLME_INTERMEDIATE;
-	if (priv->wpa)
-		mlmeautolevel = DOT11_MLME_EXTENDED;
+	अगर ((*uwrq == IW_MODE_MASTER) && (priv->acl.policy != MAC_POLICY_OPEN))
+		mlmeस्वतःlevel = DOT11_MLME_INTERMEDIATE;
+	अगर (priv->wpa)
+		mlmeस्वतःlevel = DOT11_MLME_EXTENDED;
 
-	mgt_set(priv, DOT11_OID_MLMEAUTOLEVEL, &mlmeautolevel);
+	mgt_set(priv, DOT11_OID_MLMEAUTOLEVEL, &mlmeस्वतःlevel);
 
-	if (mgt_commit(priv)) {
-		up_write(&priv->mib_sem);
-		return -EIO;
-	}
+	अगर (mgt_commit(priv)) अणु
+		up_ग_लिखो(&priv->mib_sem);
+		वापस -EIO;
+	पूर्ण
 	priv->ndev->type = (priv->iw_mode == IW_MODE_MONITOR)
 	    ? priv->monitor_type : ARPHRD_ETHER;
-	up_write(&priv->mib_sem);
+	up_ग_लिखो(&priv->mib_sem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Use mib cache */
-static int
-prism54_get_mode(struct net_device *ndev, struct iw_request_info *info,
-		 __u32 * uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_get_mode(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 __u32 * uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
 	BUG_ON((priv->iw_mode < IW_MODE_AUTO) || (priv->iw_mode >
 						  IW_MODE_MONITOR));
 	*uwrq = priv->iw_mode;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* we use DOT11_OID_EDTHRESHOLD. From what I guess the card will not try to
- * emit data if (sensitivity > rssi - noise) (in dBm).
- * prism54_set_sens does not seem to work.
+ * emit data अगर (sensitivity > rssi - noise) (in dBm).
+ * prism54_set_sens करोes not seem to work.
  */
 
-static int
-prism54_set_sens(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_set_sens(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 	u32 sens;
 
-	/* by default  the card sets this to 20. */
+	/* by शेष  the card sets this to 20. */
 	sens = vwrq->disabled ? 20 : vwrq->value;
 
-	return mgt_set_request(priv, DOT11_OID_EDTHRESHOLD, 0, &sens);
-}
+	वापस mgt_set_request(priv, DOT11_OID_EDTHRESHOLD, 0, &sens);
+पूर्ण
 
-static int
-prism54_get_sens(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	union oid_res_t r;
-	int rvalue;
+अटल पूर्णांक
+prism54_get_sens(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue;
 
-	rvalue = mgt_get_request(priv, DOT11_OID_EDTHRESHOLD, 0, NULL, &r);
+	rvalue = mgt_get_request(priv, DOT11_OID_EDTHRESHOLD, 0, शून्य, &r);
 
 	vwrq->value = r.u;
 	vwrq->disabled = (vwrq->value == 0);
 	vwrq->fixed = 1;
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_get_range(struct net_device *ndev, struct iw_request_info *info,
-		  struct iw_point *dwrq, char *extra)
-{
-	struct iw_range *range = (struct iw_range *) extra;
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_get_range(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		  काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	काष्ठा iw_range *range = (काष्ठा iw_range *) extra;
+	islpci_निजी *priv = netdev_priv(ndev);
 	u8 *data;
-	int i, m, rvalue;
-	struct obj_frequencies *freq;
-	union oid_res_t r;
+	पूर्णांक i, m, rvalue;
+	काष्ठा obj_frequencies *freq;
+	जोड़ oid_res_t r;
 
-	memset(range, 0, sizeof (struct iw_range));
-	dwrq->length = sizeof (struct iw_range);
+	स_रखो(range, 0, माप (काष्ठा iw_range));
+	dwrq->length = माप (काष्ठा iw_range);
 
 	/* set the wireless extension version number */
 	range->we_version_source = SUPPORTED_WIRELESS_EXT;
@@ -436,18 +437,18 @@ prism54_get_range(struct net_device *ndev, struct iw_request_info *info,
 	range->encoding_size[0] = 5;
 	/* 128(104) bits WEP */
 	range->encoding_size[1] = 13;
-	/* 256 bits for WPA-PSK */
+	/* 256 bits क्रम WPA-PSK */
 	range->encoding_size[2] = 32;
 	/* 4 keys are allowed */
 	range->max_encoding_tokens = 4;
 
-	/* we don't know the quality range... */
+	/* we करोn't know the quality range... */
 	range->max_qual.level = 0;
 	range->max_qual.noise = 0;
 	range->max_qual.qual = 0;
 	/* these value describe an average quality. Needs more tweaking... */
 	range->avg_qual.level = -80;	/* -80 dBm */
-	range->avg_qual.noise = 0;	/* don't know what to put here */
+	range->avg_qual.noise = 0;	/* करोn't know what to put here */
 	range->avg_qual.qual = 0;
 
 	range->sensitivity = 200;
@@ -455,16 +456,16 @@ prism54_get_range(struct net_device *ndev, struct iw_request_info *info,
 	/* retry limit capabilities */
 	range->retry_capa = IW_RETRY_LIMIT | IW_RETRY_LIFETIME;
 	range->retry_flags = IW_RETRY_LIMIT;
-	range->r_time_flags = IW_RETRY_LIFETIME;
+	range->r_समय_flags = IW_RETRY_LIFETIME;
 
-	/* I don't know the range. Put stupid things here */
+	/* I करोn't know the range. Put stupid things here */
 	range->min_retry = 1;
 	range->max_retry = 65535;
-	range->min_r_time = 1024;
-	range->max_r_time = 65535 * 1024;
+	range->min_r_समय = 1024;
+	range->max_r_समय = 65535 * 1024;
 
-	/* txpower is supported in dBm's */
-	range->txpower_capa = IW_TXPOW_DBM;
+	/* txघातer is supported in dBm's */
+	range->txघातer_capa = IW_TXPOW_DBM;
 
 	/* Event capability (kernel + driver) */
 	range->event_capa[0] = (IW_EVENT_CAPA_K_0 |
@@ -476,111 +477,111 @@ prism54_get_range(struct net_device *ndev, struct iw_request_info *info,
 	range->enc_capa = IW_ENC_CAPA_WPA | IW_ENC_CAPA_WPA2 |
 		IW_ENC_CAPA_CIPHER_TKIP;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT)
-		return 0;
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT)
+		वापस 0;
 
-	/* Request the device for the supported frequencies
+	/* Request the device क्रम the supported frequencies
 	 * not really relevant since some devices will report the 5 GHz band
-	 * frequencies even if they don't support them.
+	 * frequencies even अगर they करोn't support them.
 	 */
 	rvalue =
-	    mgt_get_request(priv, DOT11_OID_SUPPORTEDFREQUENCIES, 0, NULL, &r);
+	    mgt_get_request(priv, DOT11_OID_SUPPORTEDFREQUENCIES, 0, शून्य, &r);
 	freq = r.ptr;
 
 	range->num_channels = freq->nr;
 	range->num_frequency = freq->nr;
 
-	m = min(IW_MAX_FREQUENCIES, (int) freq->nr);
-	for (i = 0; i < m; i++) {
+	m = min(IW_MAX_FREQUENCIES, (पूर्णांक) freq->nr);
+	क्रम (i = 0; i < m; i++) अणु
 		range->freq[i].m = freq->mhz[i];
 		range->freq[i].e = 6;
 		range->freq[i].i = channel_of_freq(freq->mhz[i]);
-	}
-	kfree(freq);
+	पूर्ण
+	kमुक्त(freq);
 
-	rvalue |= mgt_get_request(priv, DOT11_OID_SUPPORTEDRATES, 0, NULL, &r);
+	rvalue |= mgt_get_request(priv, DOT11_OID_SUPPORTEDRATES, 0, शून्य, &r);
 	data = r.ptr;
 
-	/* We got an array of char. It is NULL terminated. */
+	/* We got an array of अक्षर. It is शून्य terminated. */
 	i = 0;
-	while ((i < IW_MAX_BITRATES) && (*data != 0)) {
+	जबतक ((i < IW_MAX_BITRATES) && (*data != 0)) अणु
 		/*       the result must be in bps. The card gives us 500Kbps */
 		range->bitrate[i] = *data * 500000;
 		i++;
 		data++;
-	}
+	पूर्ण
 	range->num_bitrates = i;
-	kfree(r.ptr);
+	kमुक्त(r.ptr);
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
 /* Set AP address*/
 
-static int
-prism54_set_wap(struct net_device *ndev, struct iw_request_info *info,
-		struct sockaddr *awrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	char bssid[6];
-	int rvalue;
+अटल पूर्णांक
+prism54_set_wap(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		काष्ठा sockaddr *awrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	अक्षर bssid[6];
+	पूर्णांक rvalue;
 
-	if (awrq->sa_family != ARPHRD_ETHER)
-		return -EINVAL;
+	अगर (awrq->sa_family != ARPHRD_ETHER)
+		वापस -EINVAL;
 
-	/* prepare the structure for the set object */
-	memcpy(&bssid[0], awrq->sa_data, ETH_ALEN);
+	/* prepare the काष्ठाure क्रम the set object */
+	स_नकल(&bssid[0], awrq->sa_data, ETH_ALEN);
 
-	/* set the bssid -- does this make sense when in AP mode? */
+	/* set the bssid -- करोes this make sense when in AP mode? */
 	rvalue = mgt_set_request(priv, DOT11_OID_BSSID, 0, &bssid);
 
-	return (rvalue ? rvalue : -EINPROGRESS);	/* Call commit handler */
-}
+	वापस (rvalue ? rvalue : -EINPROGRESS);	/* Call commit handler */
+पूर्ण
 
 /* get AP address*/
 
-static int
-prism54_get_wap(struct net_device *ndev, struct iw_request_info *info,
-		struct sockaddr *awrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	union oid_res_t r;
-	int rvalue;
+अटल पूर्णांक
+prism54_get_wap(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		काष्ठा sockaddr *awrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue;
 
-	rvalue = mgt_get_request(priv, DOT11_OID_BSSID, 0, NULL, &r);
-	memcpy(awrq->sa_data, r.ptr, ETH_ALEN);
+	rvalue = mgt_get_request(priv, DOT11_OID_BSSID, 0, शून्य, &r);
+	स_नकल(awrq->sa_data, r.ptr, ETH_ALEN);
 	awrq->sa_family = ARPHRD_ETHER;
-	kfree(r.ptr);
+	kमुक्त(r.ptr);
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_set_scan(struct net_device *dev, struct iw_request_info *info,
-		 struct iw_param *vwrq, char *extra)
-{
-	/* hehe the device does this automagicaly */
-	return 0;
-}
+अटल पूर्णांक
+prism54_set_scan(काष्ठा net_device *dev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	/* hehe the device करोes this स्वतःmagicaly */
+	वापस 0;
+पूर्ण
 
-/* a little helper that will translate our data into a card independent
- * format that the Wireless Tools will understand. This was inspired by
+/* a little helper that will translate our data पूर्णांकo a card independent
+ * क्रमmat that the Wireless Tools will understand. This was inspired by
  * the "Aironet driver for 4500 and 4800 series cards" (GPL)
  */
 
-static char *
-prism54_translate_bss(struct net_device *ndev, struct iw_request_info *info,
-		      char *current_ev, char *end_buf, struct obj_bss *bss,
-		      char noise)
-{
-	struct iw_event iwe;	/* Temporary buffer */
-	short cap;
-	islpci_private *priv = netdev_priv(ndev);
+अटल अक्षर *
+prism54_translate_bss(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		      अक्षर *current_ev, अक्षर *end_buf, काष्ठा obj_bss *bss,
+		      अक्षर noise)
+अणु
+	काष्ठा iw_event iwe;	/* Temporary buffer */
+	लघु cap;
+	islpci_निजी *priv = netdev_priv(ndev);
 	u8 wpa_ie[MAX_WPA_IE_LEN];
-	size_t wpa_ie_len;
+	माप_प्रकार wpa_ie_len;
 
 	/* The first entry must be the MAC address */
-	memcpy(iwe.u.ap_addr.sa_data, bss->address, ETH_ALEN);
+	स_नकल(iwe.u.ap_addr.sa_data, bss->address, ETH_ALEN);
 	iwe.u.ap_addr.sa_family = ARPHRD_ETHER;
 	iwe.cmd = SIOCGIWAP;
 	current_ev = iwe_stream_add_event(info, current_ev, end_buf,
@@ -592,37 +593,37 @@ prism54_translate_bss(struct net_device *ndev, struct iw_request_info *info,
 	iwe.u.data.length = bss->ssid.length;
 	iwe.u.data.flags = 1;
 	iwe.cmd = SIOCGIWESSID;
-	current_ev = iwe_stream_add_point(info, current_ev, end_buf,
+	current_ev = iwe_stream_add_poपूर्णांक(info, current_ev, end_buf,
 					  &iwe, bss->ssid.octets);
 
 	/* Capabilities */
-#define CAP_ESS 0x01
-#define CAP_IBSS 0x02
-#define CAP_CRYPT 0x10
+#घोषणा CAP_ESS 0x01
+#घोषणा CAP_IBSS 0x02
+#घोषणा CAP_CRYPT 0x10
 
 	/* Mode */
 	cap = bss->capinfo;
 	iwe.u.mode = 0;
-	if (cap & CAP_ESS)
+	अगर (cap & CAP_ESS)
 		iwe.u.mode = IW_MODE_MASTER;
-	else if (cap & CAP_IBSS)
+	अन्यथा अगर (cap & CAP_IBSS)
 		iwe.u.mode = IW_MODE_ADHOC;
 	iwe.cmd = SIOCGIWMODE;
-	if (iwe.u.mode)
+	अगर (iwe.u.mode)
 		current_ev = iwe_stream_add_event(info, current_ev, end_buf,
 						  &iwe, IW_EV_UINT_LEN);
 
 	/* Encryption capability */
-	if (cap & CAP_CRYPT)
+	अगर (cap & CAP_CRYPT)
 		iwe.u.data.flags = IW_ENCODE_ENABLED | IW_ENCODE_NOKEY;
-	else
+	अन्यथा
 		iwe.u.data.flags = IW_ENCODE_DISABLED;
 	iwe.u.data.length = 0;
 	iwe.cmd = SIOCGIWENCODE;
-	current_ev = iwe_stream_add_point(info, current_ev, end_buf,
-					  &iwe, NULL);
+	current_ev = iwe_stream_add_poपूर्णांक(info, current_ev, end_buf,
+					  &iwe, शून्य);
 
-	/* Add frequency. (short) bss->channel is the frequency in MHz */
+	/* Add frequency. (लघु) bss->channel is the frequency in MHz */
 	iwe.u.freq.m = bss->channel;
 	iwe.u.freq.e = 6;
 	iwe.cmd = SIOCGIWFREQ;
@@ -632,467 +633,467 @@ prism54_translate_bss(struct net_device *ndev, struct iw_request_info *info,
 	/* Add quality statistics */
 	iwe.u.qual.level = bss->rssi;
 	iwe.u.qual.noise = noise;
-	/* do a simple SNR for quality */
+	/* करो a simple SNR क्रम quality */
 	iwe.u.qual.qual = bss->rssi - noise;
 	iwe.cmd = IWEVQUAL;
 	current_ev = iwe_stream_add_event(info, current_ev, end_buf,
 					  &iwe, IW_EV_QUAL_LEN);
 
-	/* Add WPA/RSN Information Element, if any */
+	/* Add WPA/RSN Inक्रमmation Element, अगर any */
 	wpa_ie_len = prism54_wpa_bss_ie_get(priv, bss->address, wpa_ie);
-	if (wpa_ie_len > 0) {
+	अगर (wpa_ie_len > 0) अणु
 		iwe.cmd = IWEVGENIE;
-		iwe.u.data.length = min_t(size_t, wpa_ie_len, MAX_WPA_IE_LEN);
-		current_ev = iwe_stream_add_point(info, current_ev, end_buf,
+		iwe.u.data.length = min_t(माप_प्रकार, wpa_ie_len, MAX_WPA_IE_LEN);
+		current_ev = iwe_stream_add_poपूर्णांक(info, current_ev, end_buf,
 						  &iwe, wpa_ie);
-	}
+	पूर्ण
 	/* Do the bitrates */
-	{
-		char *current_val = current_ev + iwe_stream_lcp_len(info);
-		int i;
-		int mask;
+	अणु
+		अक्षर *current_val = current_ev + iwe_stream_lcp_len(info);
+		पूर्णांक i;
+		पूर्णांक mask;
 
 		iwe.cmd = SIOCGIWRATE;
 		/* Those two flags are ignored... */
 		iwe.u.bitrate.fixed = iwe.u.bitrate.disabled = 0;
 
-		/* Parse the bitmask */
+		/* Parse the biपंचांगask */
 		mask = 0x1;
-		for(i = 0; i < sizeof(scan_rate_list); i++) {
-			if(bss->rates & mask) {
+		क्रम(i = 0; i < माप(scan_rate_list); i++) अणु
+			अगर(bss->rates & mask) अणु
 				iwe.u.bitrate.value = (scan_rate_list[i] * 500000);
 				current_val = iwe_stream_add_value(
 					info, current_ev, current_val,
 					end_buf, &iwe, IW_EV_PARAM_LEN);
-			}
+			पूर्ण
 			mask <<= 1;
-		}
-		/* Check if we added any event */
-		if ((current_val - current_ev) > iwe_stream_lcp_len(info))
+		पूर्ण
+		/* Check अगर we added any event */
+		अगर ((current_val - current_ev) > iwe_stream_lcp_len(info))
 			current_ev = current_val;
-	}
+	पूर्ण
 
-	return current_ev;
-}
+	वापस current_ev;
+पूर्ण
 
-static int
-prism54_get_scan(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_point *dwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	int i, rvalue;
-	struct obj_bsslist *bsslist;
+अटल पूर्णांक
+prism54_get_scan(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	पूर्णांक i, rvalue;
+	काष्ठा obj_bsslist *bsslist;
 	u32 noise = 0;
-	char *current_ev = extra;
-	union oid_res_t r;
+	अक्षर *current_ev = extra;
+	जोड़ oid_res_t r;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT) {
-		/* device is not ready, fail gently */
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT) अणु
+		/* device is not पढ़ोy, fail gently */
 		dwrq->length = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* first get the noise value. We will use it to report the link quality */
-	rvalue = mgt_get_request(priv, DOT11_OID_NOISEFLOOR, 0, NULL, &r);
+	rvalue = mgt_get_request(priv, DOT11_OID_NOISEFLOOR, 0, शून्य, &r);
 	noise = r.u;
 
-	/* Ask the device for a list of known bss.
+	/* Ask the device क्रम a list of known bss.
 	* The old API, using SIOCGIWAPLIST, had a hard limit of IW_MAX_AP=64.
 	* The new API, using SIOCGIWSCAN, is only limited by the buffer size.
 	* WE-14->WE-16, the buffer is limited to IW_SCAN_MAX_DATA bytes.
 	* Starting with WE-17, the buffer can be as big as needed.
-	* But the device won't repport anything if you change the value
+	* But the device won't repport anything अगर you change the value
 	* of IWMAX_BSS=24. */
 
-	rvalue |= mgt_get_request(priv, DOT11_OID_BSSLIST, 0, NULL, &r);
+	rvalue |= mgt_get_request(priv, DOT11_OID_BSSLIST, 0, शून्य, &r);
 	bsslist = r.ptr;
 
 	/* ok now, scan the list and translate its info */
-	for (i = 0; i < (int) bsslist->nr; i++) {
+	क्रम (i = 0; i < (पूर्णांक) bsslist->nr; i++) अणु
 		current_ev = prism54_translate_bss(ndev, info, current_ev,
 						   extra + dwrq->length,
 						   &(bsslist->bsslist[i]),
 						   noise);
 
-		/* Check if there is space for one more entry */
-		if((extra + dwrq->length - current_ev) <= IW_EV_ADDR_LEN) {
+		/* Check अगर there is space क्रम one more entry */
+		अगर((extra + dwrq->length - current_ev) <= IW_EV_ADDR_LEN) अणु
 			/* Ask user space to try again with a bigger buffer */
 			rvalue = -E2BIG;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	kfree(bsslist);
+	kमुक्त(bsslist);
 	dwrq->length = (current_ev - extra);
-	dwrq->flags = 0;	/* todo */
+	dwrq->flags = 0;	/* toकरो */
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_set_essid(struct net_device *ndev, struct iw_request_info *info,
-		  struct iw_point *dwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct obj_ssid essid;
+अटल पूर्णांक
+prism54_set_essid(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		  काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा obj_ssid essid;
 
-	memset(essid.octets, 0, 33);
+	स_रखो(essid.octets, 0, 33);
 
-	/* Check if we were asked for `any' */
-	if (dwrq->flags && dwrq->length) {
-		if (dwrq->length > 32)
-			return -E2BIG;
+	/* Check अगर we were asked क्रम `any' */
+	अगर (dwrq->flags && dwrq->length) अणु
+		अगर (dwrq->length > 32)
+			वापस -E2BIG;
 		essid.length = dwrq->length;
-		memcpy(essid.octets, extra, dwrq->length);
-	} else
+		स_नकल(essid.octets, extra, dwrq->length);
+	पूर्ण अन्यथा
 		essid.length = 0;
 
-	if (priv->iw_mode != IW_MODE_MONITOR)
-		return mgt_set_request(priv, DOT11_OID_SSID, 0, &essid);
+	अगर (priv->iw_mode != IW_MODE_MONITOR)
+		वापस mgt_set_request(priv, DOT11_OID_SSID, 0, &essid);
 
 	/* If in monitor mode, just save to mib */
 	mgt_set(priv, DOT11_OID_SSID, &essid);
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
-static int
-prism54_get_essid(struct net_device *ndev, struct iw_request_info *info,
-		  struct iw_point *dwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct obj_ssid *essid;
-	union oid_res_t r;
-	int rvalue;
+अटल पूर्णांक
+prism54_get_essid(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		  काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा obj_ssid *essid;
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue;
 
-	rvalue = mgt_get_request(priv, DOT11_OID_SSID, 0, NULL, &r);
+	rvalue = mgt_get_request(priv, DOT11_OID_SSID, 0, शून्य, &r);
 	essid = r.ptr;
 
-	if (essid->length) {
-		dwrq->flags = 1;	/* set ESSID to ON for Wireless Extensions */
-		/* if it is too big, trunk it */
+	अगर (essid->length) अणु
+		dwrq->flags = 1;	/* set ESSID to ON क्रम Wireless Extensions */
+		/* अगर it is too big, trunk it */
 		dwrq->length = min((u8)IW_ESSID_MAX_SIZE, essid->length);
-	} else {
+	पूर्ण अन्यथा अणु
 		dwrq->flags = 0;
 		dwrq->length = 0;
-	}
+	पूर्ण
 	essid->octets[dwrq->length] = '\0';
-	memcpy(extra, essid->octets, dwrq->length);
-	kfree(essid);
+	स_नकल(extra, essid->octets, dwrq->length);
+	kमुक्त(essid);
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
 /* Provides no functionality, just completes the ioctl. In essence this is a
  * just a cosmetic ioctl.
  */
-static int
-prism54_set_nick(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_point *dwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_set_nick(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
-	if (dwrq->length > IW_ESSID_MAX_SIZE)
-		return -E2BIG;
+	अगर (dwrq->length > IW_ESSID_MAX_SIZE)
+		वापस -E2BIG;
 
-	down_write(&priv->mib_sem);
-	memset(priv->nickname, 0, sizeof (priv->nickname));
-	memcpy(priv->nickname, extra, dwrq->length);
-	up_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
+	स_रखो(priv->nickname, 0, माप (priv->nickname));
+	स_नकल(priv->nickname, extra, dwrq->length);
+	up_ग_लिखो(&priv->mib_sem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_get_nick(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_point *dwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_get_nick(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
 	dwrq->length = 0;
 
-	down_read(&priv->mib_sem);
-	dwrq->length = strlen(priv->nickname);
-	memcpy(extra, priv->nickname, dwrq->length);
-	up_read(&priv->mib_sem);
+	करोwn_पढ़ो(&priv->mib_sem);
+	dwrq->length = म_माप(priv->nickname);
+	स_नकल(extra, priv->nickname, dwrq->length);
+	up_पढ़ो(&priv->mib_sem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Set the allowed Bitrates */
 
-static int
-prism54_set_rate(struct net_device *ndev,
-		 struct iw_request_info *info,
-		 struct iw_param *vwrq, char *extra)
-{
+अटल पूर्णांक
+prism54_set_rate(काष्ठा net_device *ndev,
+		 काष्ठा iw_request_info *info,
+		 काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
 
-	islpci_private *priv = netdev_priv(ndev);
+	islpci_निजी *priv = netdev_priv(ndev);
 	u32 rate, profile;
-	char *data;
-	int ret, i;
-	union oid_res_t r;
+	अक्षर *data;
+	पूर्णांक ret, i;
+	जोड़ oid_res_t r;
 
-	if (vwrq->value == -1) {
-		/* auto mode. No limit. */
+	अगर (vwrq->value == -1) अणु
+		/* स्वतः mode. No limit. */
 		profile = 1;
-		return mgt_set_request(priv, DOT11_OID_PROFILES, 0, &profile);
-	}
+		वापस mgt_set_request(priv, DOT11_OID_PROखाताS, 0, &profile);
+	पूर्ण
 
-	ret = mgt_get_request(priv, DOT11_OID_SUPPORTEDRATES, 0, NULL, &r);
-	if (ret) {
-		kfree(r.ptr);
-		return ret;
-	}
+	ret = mgt_get_request(priv, DOT11_OID_SUPPORTEDRATES, 0, शून्य, &r);
+	अगर (ret) अणु
+		kमुक्त(r.ptr);
+		वापस ret;
+	पूर्ण
 
 	rate = (u32) (vwrq->value / 500000);
 	data = r.ptr;
 	i = 0;
 
-	while (data[i]) {
-		if (rate && (data[i] == rate)) {
-			break;
-		}
-		if (vwrq->value == i) {
-			break;
-		}
+	जबतक (data[i]) अणु
+		अगर (rate && (data[i] == rate)) अणु
+			अवरोध;
+		पूर्ण
+		अगर (vwrq->value == i) अणु
+			अवरोध;
+		पूर्ण
 		data[i] |= 0x80;
 		i++;
-	}
+	पूर्ण
 
-	if (!data[i]) {
-		kfree(r.ptr);
-		return -EINVAL;
-	}
+	अगर (!data[i]) अणु
+		kमुक्त(r.ptr);
+		वापस -EINVAL;
+	पूर्ण
 
 	data[i] |= 0x80;
 	data[i + 1] = 0;
 
-	/* Now, check if we want a fixed or auto value */
-	if (vwrq->fixed) {
+	/* Now, check अगर we want a fixed or स्वतः value */
+	अगर (vwrq->fixed) अणु
 		data[0] = data[i];
 		data[1] = 0;
-	}
+	पूर्ण
 
 /*
 	i = 0;
-	printk("prism54 rate: ");
-	while(data[i]) {
-		printk("%u ", data[i]);
+	prपूर्णांकk("prism54 rate: ");
+	जबतक(data[i]) अणु
+		prपूर्णांकk("%u ", data[i]);
 		i++;
-	}
-	printk("0\n");
+	पूर्ण
+	prपूर्णांकk("0\n");
 */
 	profile = -1;
-	ret = mgt_set_request(priv, DOT11_OID_PROFILES, 0, &profile);
+	ret = mgt_set_request(priv, DOT11_OID_PROखाताS, 0, &profile);
 	ret |= mgt_set_request(priv, DOT11_OID_EXTENDEDRATES, 0, data);
 	ret |= mgt_set_request(priv, DOT11_OID_RATES, 0, data);
 
-	kfree(r.ptr);
+	kमुक्त(r.ptr);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /* Get the current bit rate */
-static int
-prism54_get_rate(struct net_device *ndev,
-		 struct iw_request_info *info,
-		 struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	int rvalue;
-	char *data;
-	union oid_res_t r;
+अटल पूर्णांक
+prism54_get_rate(काष्ठा net_device *ndev,
+		 काष्ठा iw_request_info *info,
+		 काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	पूर्णांक rvalue;
+	अक्षर *data;
+	जोड़ oid_res_t r;
 
 	/* Get the current bit rate */
-	if ((rvalue = mgt_get_request(priv, GEN_OID_LINKSTATE, 0, NULL, &r)))
-		return rvalue;
+	अगर ((rvalue = mgt_get_request(priv, GEN_OID_LINKSTATE, 0, शून्य, &r)))
+		वापस rvalue;
 	vwrq->value = r.u * 500000;
 
-	/* request the device for the enabled rates */
-	rvalue = mgt_get_request(priv, DOT11_OID_RATES, 0, NULL, &r);
-	if (rvalue) {
-		kfree(r.ptr);
-		return rvalue;
-	}
+	/* request the device क्रम the enabled rates */
+	rvalue = mgt_get_request(priv, DOT11_OID_RATES, 0, शून्य, &r);
+	अगर (rvalue) अणु
+		kमुक्त(r.ptr);
+		वापस rvalue;
+	पूर्ण
 	data = r.ptr;
 	vwrq->fixed = (data[0] != 0) && (data[1] == 0);
-	kfree(r.ptr);
+	kमुक्त(r.ptr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_set_rts(struct net_device *ndev, struct iw_request_info *info,
-		struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_set_rts(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
-	return mgt_set_request(priv, DOT11_OID_RTSTHRESH, 0, &vwrq->value);
-}
+	वापस mgt_set_request(priv, DOT11_OID_RTSTHRESH, 0, &vwrq->value);
+पूर्ण
 
-static int
-prism54_get_rts(struct net_device *ndev, struct iw_request_info *info,
-		struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	union oid_res_t r;
-	int rvalue;
+अटल पूर्णांक
+prism54_get_rts(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue;
 
 	/* get the rts threshold */
-	rvalue = mgt_get_request(priv, DOT11_OID_RTSTHRESH, 0, NULL, &r);
+	rvalue = mgt_get_request(priv, DOT11_OID_RTSTHRESH, 0, शून्य, &r);
 	vwrq->value = r.u;
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_set_frag(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_set_frag(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
-	return mgt_set_request(priv, DOT11_OID_FRAGTHRESH, 0, &vwrq->value);
-}
+	वापस mgt_set_request(priv, DOT11_OID_FRAGTHRESH, 0, &vwrq->value);
+पूर्ण
 
-static int
-prism54_get_frag(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	union oid_res_t r;
-	int rvalue;
+अटल पूर्णांक
+prism54_get_frag(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue;
 
-	rvalue = mgt_get_request(priv, DOT11_OID_FRAGTHRESH, 0, NULL, &r);
+	rvalue = mgt_get_request(priv, DOT11_OID_FRAGTHRESH, 0, शून्य, &r);
 	vwrq->value = r.u;
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-/* Here we have (min,max) = max retries for (small frames, big frames). Where
+/* Here we have (min,max) = max retries क्रम (small frames, big frames). Where
  * big frame <=>  bigger than the rts threshold
  * small frame <=>  smaller than the rts threshold
  * This is not really the behavior expected by the wireless tool but it seems
  * to be a common behavior in other drivers.
  */
 
-static int
-prism54_set_retry(struct net_device *ndev, struct iw_request_info *info,
-		  struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	u32 slimit = 0, llimit = 0;	/* short and long limit */
-	u32 lifetime = 0;
-	int rvalue = 0;
+अटल पूर्णांक
+prism54_set_retry(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		  काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	u32 slimit = 0, llimit = 0;	/* लघु and दीर्घ limit */
+	u32 lअगरeसमय = 0;
+	पूर्णांक rvalue = 0;
 
-	if (vwrq->disabled)
+	अगर (vwrq->disabled)
 		/* we cannot disable this feature */
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (vwrq->flags & IW_RETRY_LIMIT) {
-		if (vwrq->flags & IW_RETRY_SHORT)
+	अगर (vwrq->flags & IW_RETRY_LIMIT) अणु
+		अगर (vwrq->flags & IW_RETRY_SHORT)
 			slimit = vwrq->value;
-		else if (vwrq->flags & IW_RETRY_LONG)
+		अन्यथा अगर (vwrq->flags & IW_RETRY_LONG)
 			llimit = vwrq->value;
-		else {
+		अन्यथा अणु
 			/* we are asked to set both */
 			slimit = vwrq->value;
 			llimit = vwrq->value;
-		}
-	}
-	if (vwrq->flags & IW_RETRY_LIFETIME)
-		/* Wireless tools use us unit while the device uses 1024 us unit */
-		lifetime = vwrq->value / 1024;
+		पूर्ण
+	पूर्ण
+	अगर (vwrq->flags & IW_RETRY_LIFETIME)
+		/* Wireless tools use us unit जबतक the device uses 1024 us unit */
+		lअगरeसमय = vwrq->value / 1024;
 
 	/* now set what is requested */
-	if (slimit)
+	अगर (slimit)
 		rvalue =
 		    mgt_set_request(priv, DOT11_OID_SHORTRETRIES, 0, &slimit);
-	if (llimit)
+	अगर (llimit)
 		rvalue |=
 		    mgt_set_request(priv, DOT11_OID_LONGRETRIES, 0, &llimit);
-	if (lifetime)
+	अगर (lअगरeसमय)
 		rvalue |=
 		    mgt_set_request(priv, DOT11_OID_MAXTXLIFETIME, 0,
-				    &lifetime);
-	return rvalue;
-}
+				    &lअगरeसमय);
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_get_retry(struct net_device *ndev, struct iw_request_info *info,
-		  struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	union oid_res_t r;
-	int rvalue = 0;
+अटल पूर्णांक
+prism54_get_retry(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		  काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue = 0;
 	vwrq->disabled = 0;	/* It cannot be disabled */
 
-	if ((vwrq->flags & IW_RETRY_TYPE) == IW_RETRY_LIFETIME) {
-		/* we are asked for the life time */
+	अगर ((vwrq->flags & IW_RETRY_TYPE) == IW_RETRY_LIFETIME) अणु
+		/* we are asked क्रम the lअगरe समय */
 		rvalue =
-		    mgt_get_request(priv, DOT11_OID_MAXTXLIFETIME, 0, NULL, &r);
+		    mgt_get_request(priv, DOT11_OID_MAXTXLIFETIME, 0, शून्य, &r);
 		vwrq->value = r.u * 1024;
 		vwrq->flags = IW_RETRY_LIFETIME;
-	} else if ((vwrq->flags & IW_RETRY_LONG)) {
-		/* we are asked for the long retry limit */
+	पूर्ण अन्यथा अगर ((vwrq->flags & IW_RETRY_LONG)) अणु
+		/* we are asked क्रम the दीर्घ retry limit */
 		rvalue |=
-		    mgt_get_request(priv, DOT11_OID_LONGRETRIES, 0, NULL, &r);
+		    mgt_get_request(priv, DOT11_OID_LONGRETRIES, 0, शून्य, &r);
 		vwrq->value = r.u;
 		vwrq->flags = IW_RETRY_LIMIT | IW_RETRY_LONG;
-	} else {
-		/* default. get the  short retry limit */
+	पूर्ण अन्यथा अणु
+		/* शेष. get the  लघु retry limit */
 		rvalue |=
-		    mgt_get_request(priv, DOT11_OID_SHORTRETRIES, 0, NULL, &r);
+		    mgt_get_request(priv, DOT11_OID_SHORTRETRIES, 0, शून्य, &r);
 		vwrq->value = r.u;
 		vwrq->flags = IW_RETRY_LIMIT | IW_RETRY_SHORT;
-	}
+	पूर्ण
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_set_encode(struct net_device *ndev, struct iw_request_info *info,
-		   struct iw_point *dwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	int rvalue = 0, force = 0;
-	int authen = DOT11_AUTH_OS, invoke = 0, exunencrypt = 0;
-	union oid_res_t r;
+अटल पूर्णांक
+prism54_set_encode(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		   काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	पूर्णांक rvalue = 0, क्रमce = 0;
+	पूर्णांक authen = DOT11_AUTH_OS, invoke = 0, exunencrypt = 0;
+	जोड़ oid_res_t r;
 
-	/* with the new API, it's impossible to get a NULL pointer.
+	/* with the new API, it's impossible to get a शून्य poपूर्णांकer.
 	 * New version of iwconfig set the IW_ENCODE_NOKEY flag
-	 * when no key is given, but older versions don't. */
+	 * when no key is given, but older versions करोn't. */
 
-	if (dwrq->length > 0) {
+	अगर (dwrq->length > 0) अणु
 		/* we have a key to set */
-		int index = (dwrq->flags & IW_ENCODE_INDEX) - 1;
-		int current_index;
-		struct obj_key key = { DOT11_PRIV_WEP, 0, "" };
+		पूर्णांक index = (dwrq->flags & IW_ENCODE_INDEX) - 1;
+		पूर्णांक current_index;
+		काष्ठा obj_key key = अणु DOT11_PRIV_WEP, 0, "" पूर्ण;
 
 		/* get the current key index */
-		rvalue = mgt_get_request(priv, DOT11_OID_DEFKEYID, 0, NULL, &r);
+		rvalue = mgt_get_request(priv, DOT11_OID_DEFKEYID, 0, शून्य, &r);
 		current_index = r.u;
-		/* Verify that the key is not marked as invalid */
-		if (!(dwrq->flags & IW_ENCODE_NOKEY)) {
-			if (dwrq->length > KEY_SIZE_TKIP) {
+		/* Verअगरy that the key is not marked as invalid */
+		अगर (!(dwrq->flags & IW_ENCODE_NOKEY)) अणु
+			अगर (dwrq->length > KEY_SIZE_TKIP) अणु
 				/* User-provided key data too big */
-				return -EINVAL;
-			}
-			if (dwrq->length > KEY_SIZE_WEP104) {
+				वापस -EINVAL;
+			पूर्ण
+			अगर (dwrq->length > KEY_SIZE_WEP104) अणु
 				/* WPA-PSK TKIP */
 				key.type = DOT11_PRIV_TKIP;
 				key.length = KEY_SIZE_TKIP;
-			} else if (dwrq->length > KEY_SIZE_WEP40) {
+			पूर्ण अन्यथा अगर (dwrq->length > KEY_SIZE_WEP40) अणु
 				/* WEP 104/128 */
 				key.length = KEY_SIZE_WEP104;
-			} else {
+			पूर्ण अन्यथा अणु
 				/* WEP 40/64 */
 				key.length = KEY_SIZE_WEP40;
-			}
-			memset(key.key, 0, sizeof (key.key));
-			memcpy(key.key, extra, dwrq->length);
+			पूर्ण
+			स_रखो(key.key, 0, माप (key.key));
+			स_नकल(key.key, extra, dwrq->length);
 
-			if ((index < 0) || (index > 3))
+			अगर ((index < 0) || (index > 3))
 				/* no index provided use the current one */
 				index = current_index;
 
@@ -1100,46 +1101,46 @@ prism54_set_encode(struct net_device *ndev, struct iw_request_info *info,
 			rvalue |=
 			    mgt_set_request(priv, DOT11_OID_DEFKEYX, index,
 					    &key);
-		}
+		पूर्ण
 		/*
 		 * If a valid key is set, encryption should be enabled
 		 * (user may turn it off later).
 		 * This is also how "iwconfig ethX key on" works
 		 */
-		if ((index == current_index) && (key.length > 0))
-			force = 1;
-	} else {
-		int index = (dwrq->flags & IW_ENCODE_INDEX) - 1;
-		if ((index >= 0) && (index <= 3)) {
+		अगर ((index == current_index) && (key.length > 0))
+			क्रमce = 1;
+	पूर्ण अन्यथा अणु
+		पूर्णांक index = (dwrq->flags & IW_ENCODE_INDEX) - 1;
+		अगर ((index >= 0) && (index <= 3)) अणु
 			/* we want to set the key index */
 			rvalue |=
 			    mgt_set_request(priv, DOT11_OID_DEFKEYID, 0,
 					    &index);
-		} else {
-			if (!(dwrq->flags & IW_ENCODE_MODE)) {
-				/* we cannot do anything. Complain. */
-				return -EINVAL;
-			}
-		}
-	}
-	/* now read the flags */
-	if (dwrq->flags & IW_ENCODE_DISABLED) {
+		पूर्ण अन्यथा अणु
+			अगर (!(dwrq->flags & IW_ENCODE_MODE)) अणु
+				/* we cannot करो anything. Complain. */
+				वापस -EINVAL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	/* now पढ़ो the flags */
+	अगर (dwrq->flags & IW_ENCODE_DISABLED) अणु
 		/* Encoding disabled,
 		 * authen = DOT11_AUTH_OS;
 		 * invoke = 0;
 		 * exunencrypt = 0; */
-	}
-	if (dwrq->flags & IW_ENCODE_OPEN)
+	पूर्ण
+	अगर (dwrq->flags & IW_ENCODE_OPEN)
 		/* Encode but accept non-encoded packets. No auth */
 		invoke = 1;
-	if ((dwrq->flags & IW_ENCODE_RESTRICTED) || force) {
+	अगर ((dwrq->flags & IW_ENCODE_RESTRICTED) || क्रमce) अणु
 		/* Refuse non-encoded packets. Auth */
 		authen = DOT11_AUTH_BOTH;
 		invoke = 1;
 		exunencrypt = 1;
-	}
-	/* do the change if requested  */
-	if ((dwrq->flags & IW_ENCODE_MODE) || force) {
+	पूर्ण
+	/* करो the change अगर requested  */
+	अगर ((dwrq->flags & IW_ENCODE_MODE) || क्रमce) अणु
 		rvalue |=
 		    mgt_set_request(priv, DOT11_OID_AUTHENABLE, 0, &authen);
 		rvalue |=
@@ -1147,68 +1148,68 @@ prism54_set_encode(struct net_device *ndev, struct iw_request_info *info,
 		rvalue |=
 		    mgt_set_request(priv, DOT11_OID_EXUNENCRYPTED, 0,
 				    &exunencrypt);
-	}
-	return rvalue;
-}
+	पूर्ण
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_get_encode(struct net_device *ndev, struct iw_request_info *info,
-		   struct iw_point *dwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct obj_key *key;
+अटल पूर्णांक
+prism54_get_encode(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		   काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा obj_key *key;
 	u32 devindex, index = (dwrq->flags & IW_ENCODE_INDEX) - 1;
 	u32 authen = 0, invoke = 0, exunencrypt = 0;
-	int rvalue;
-	union oid_res_t r;
+	पूर्णांक rvalue;
+	जोड़ oid_res_t r;
 
 	/* first get the flags */
-	rvalue = mgt_get_request(priv, DOT11_OID_AUTHENABLE, 0, NULL, &r);
+	rvalue = mgt_get_request(priv, DOT11_OID_AUTHENABLE, 0, शून्य, &r);
 	authen = r.u;
-	rvalue |= mgt_get_request(priv, DOT11_OID_PRIVACYINVOKED, 0, NULL, &r);
+	rvalue |= mgt_get_request(priv, DOT11_OID_PRIVACYINVOKED, 0, शून्य, &r);
 	invoke = r.u;
-	rvalue |= mgt_get_request(priv, DOT11_OID_EXUNENCRYPTED, 0, NULL, &r);
+	rvalue |= mgt_get_request(priv, DOT11_OID_EXUNENCRYPTED, 0, शून्य, &r);
 	exunencrypt = r.u;
 
-	if (invoke && (authen == DOT11_AUTH_BOTH) && exunencrypt)
+	अगर (invoke && (authen == DOT11_AUTH_BOTH) && exunencrypt)
 		dwrq->flags = IW_ENCODE_RESTRICTED;
-	else if ((authen == DOT11_AUTH_OS) && !exunencrypt) {
-		if (invoke)
+	अन्यथा अगर ((authen == DOT11_AUTH_OS) && !exunencrypt) अणु
+		अगर (invoke)
 			dwrq->flags = IW_ENCODE_OPEN;
-		else
+		अन्यथा
 			dwrq->flags = IW_ENCODE_DISABLED;
-	} else
+	पूर्ण अन्यथा
 		/* The card should not work in this state */
 		dwrq->flags = 0;
 
 	/* get the current device key index */
-	rvalue |= mgt_get_request(priv, DOT11_OID_DEFKEYID, 0, NULL, &r);
+	rvalue |= mgt_get_request(priv, DOT11_OID_DEFKEYID, 0, शून्य, &r);
 	devindex = r.u;
-	/* Now get the key, return it */
-	if (index == -1 || index > 3)
+	/* Now get the key, वापस it */
+	अगर (index == -1 || index > 3)
 		/* no index provided, use the current one */
 		index = devindex;
-	rvalue |= mgt_get_request(priv, DOT11_OID_DEFKEYX, index, NULL, &r);
+	rvalue |= mgt_get_request(priv, DOT11_OID_DEFKEYX, index, शून्य, &r);
 	key = r.ptr;
 	dwrq->length = key->length;
-	memcpy(extra, key->key, dwrq->length);
-	kfree(key);
-	/* return the used key index */
+	स_नकल(extra, key->key, dwrq->length);
+	kमुक्त(key);
+	/* वापस the used key index */
 	dwrq->flags |= devindex + 1;
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_get_txpower(struct net_device *ndev, struct iw_request_info *info,
-		    struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	union oid_res_t r;
-	int rvalue;
+अटल पूर्णांक
+prism54_get_txघातer(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		    काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue;
 
-	rvalue = mgt_get_request(priv, OID_INL_OUTPUTPOWER, 0, NULL, &r);
-	/* intersil firmware operates in 0.25 dBm (1/4 dBm) */
+	rvalue = mgt_get_request(priv, OID_INL_OUTPUTPOWER, 0, शून्य, &r);
+	/* पूर्णांकersil firmware operates in 0.25 dBm (1/4 dBm) */
 	vwrq->value = (s32) r.u / 4;
 	vwrq->fixed = 1;
 	/* radio is not turned of
@@ -1216,819 +1217,819 @@ prism54_get_txpower(struct net_device *ndev, struct iw_request_info *info,
 	 */
 	vwrq->disabled = 0;
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_set_txpower(struct net_device *ndev, struct iw_request_info *info,
-		    struct iw_param *vwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_set_txघातer(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		    काष्ठा iw_param *vwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 	s32 u = vwrq->value;
 
-	/* intersil firmware operates in 0.25 dBm (1/4) */
+	/* पूर्णांकersil firmware operates in 0.25 dBm (1/4) */
 	u *= 4;
-	if (vwrq->disabled) {
-		/* don't know how to disable radio */
-		printk(KERN_DEBUG
+	अगर (vwrq->disabled) अणु
+		/* करोn't know how to disable radio */
+		prपूर्णांकk(KERN_DEBUG
 		       "%s: %s() disabling radio is not yet supported.\n",
 		       priv->ndev->name, __func__);
-		return -ENOTSUPP;
-	} else if (vwrq->fixed)
+		वापस -ENOTSUPP;
+	पूर्ण अन्यथा अगर (vwrq->fixed)
 		/* currently only fixed value is supported */
-		return mgt_set_request(priv, OID_INL_OUTPUTPOWER, 0, &u);
-	else {
-		printk(KERN_DEBUG
+		वापस mgt_set_request(priv, OID_INL_OUTPUTPOWER, 0, &u);
+	अन्यथा अणु
+		prपूर्णांकk(KERN_DEBUG
 		       "%s: %s() auto power will be implemented later.\n",
 		       priv->ndev->name, __func__);
-		return -ENOTSUPP;
-	}
-}
+		वापस -ENOTSUPP;
+	पूर्ण
+पूर्ण
 
-static int prism54_set_genie(struct net_device *ndev,
-			     struct iw_request_info *info,
-			     struct iw_point *data, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	int alen, ret = 0;
-	struct obj_attachment *attach;
+अटल पूर्णांक prism54_set_genie(काष्ठा net_device *ndev,
+			     काष्ठा iw_request_info *info,
+			     काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	पूर्णांक alen, ret = 0;
+	काष्ठा obj_attachment *attach;
 
-	if (data->length > MAX_WPA_IE_LEN ||
-	    (data->length && extra == NULL))
-		return -EINVAL;
+	अगर (data->length > MAX_WPA_IE_LEN ||
+	    (data->length && extra == शून्य))
+		वापस -EINVAL;
 
-	memcpy(priv->wpa_ie, extra, data->length);
+	स_नकल(priv->wpa_ie, extra, data->length);
 	priv->wpa_ie_len = data->length;
 
-	alen = sizeof(*attach) + priv->wpa_ie_len;
+	alen = माप(*attach) + priv->wpa_ie_len;
 	attach = kzalloc(alen, GFP_KERNEL);
-	if (attach == NULL)
-		return -ENOMEM;
+	अगर (attach == शून्य)
+		वापस -ENOMEM;
 
-#define WLAN_FC_TYPE_MGMT 0
-#define WLAN_FC_STYPE_ASSOC_REQ 0
-#define WLAN_FC_STYPE_REASSOC_REQ 2
+#घोषणा WLAN_FC_TYPE_MGMT 0
+#घोषणा WLAN_FC_STYPE_ASSOC_REQ 0
+#घोषणा WLAN_FC_STYPE_REASSOC_REQ 2
 
 	/* Note: endianness is covered by mgt_set_varlen */
 	attach->type = (WLAN_FC_TYPE_MGMT << 2) |
                (WLAN_FC_STYPE_ASSOC_REQ << 4);
 	attach->id = -1;
 	attach->size = priv->wpa_ie_len;
-	memcpy(attach->data, extra, priv->wpa_ie_len);
+	स_नकल(attach->data, extra, priv->wpa_ie_len);
 
 	ret = mgt_set_varlen(priv, DOT11_OID_ATTACHMENT, attach,
 		priv->wpa_ie_len);
-	if (ret == 0) {
+	अगर (ret == 0) अणु
 		attach->type = (WLAN_FC_TYPE_MGMT << 2) |
 			(WLAN_FC_STYPE_REASSOC_REQ << 4);
 
 		ret = mgt_set_varlen(priv, DOT11_OID_ATTACHMENT, attach,
 			priv->wpa_ie_len);
-		if (ret == 0)
-			printk(KERN_DEBUG "%s: WPA IE Attachment was set\n",
+		अगर (ret == 0)
+			prपूर्णांकk(KERN_DEBUG "%s: WPA IE Attachment was set\n",
 				ndev->name);
-	}
+	पूर्ण
 
-	kfree(attach);
-	return ret;
-}
+	kमुक्त(attach);
+	वापस ret;
+पूर्ण
 
 
-static int prism54_get_genie(struct net_device *ndev,
-			     struct iw_request_info *info,
-			     struct iw_point *data, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	int len = priv->wpa_ie_len;
+अटल पूर्णांक prism54_get_genie(काष्ठा net_device *ndev,
+			     काष्ठा iw_request_info *info,
+			     काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	पूर्णांक len = priv->wpa_ie_len;
 
-	if (len <= 0) {
+	अगर (len <= 0) अणु
 		data->length = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (data->length < len)
-		return -E2BIG;
+	अगर (data->length < len)
+		वापस -E2BIG;
 
 	data->length = len;
-	memcpy(extra, priv->wpa_ie, len);
+	स_नकल(extra, priv->wpa_ie, len);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int prism54_set_auth(struct net_device *ndev,
-			       struct iw_request_info *info,
-			       union iwreq_data *wrqu, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct iw_param *param = &wrqu->param;
-	u32 mlmelevel = 0, authen = 0, dot1x = 0;
+अटल पूर्णांक prism54_set_auth(काष्ठा net_device *ndev,
+			       काष्ठा iw_request_info *info,
+			       जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा iw_param *param = &wrqu->param;
+	u32 mlmelevel = 0, authen = 0, करोt1x = 0;
 	u32 exunencrypt = 0, privinvoked = 0, wpa = 0;
 	u32 old_wpa;
-	int ret = 0;
-	union oid_res_t r;
+	पूर्णांक ret = 0;
+	जोड़ oid_res_t r;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT)
-		return 0;
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT)
+		वापस 0;
 
 	/* first get the flags */
-	down_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
 	wpa = old_wpa = priv->wpa;
-	up_write(&priv->mib_sem);
-	ret = mgt_get_request(priv, DOT11_OID_AUTHENABLE, 0, NULL, &r);
+	up_ग_लिखो(&priv->mib_sem);
+	ret = mgt_get_request(priv, DOT11_OID_AUTHENABLE, 0, शून्य, &r);
 	authen = r.u;
-	ret = mgt_get_request(priv, DOT11_OID_PRIVACYINVOKED, 0, NULL, &r);
+	ret = mgt_get_request(priv, DOT11_OID_PRIVACYINVOKED, 0, शून्य, &r);
 	privinvoked = r.u;
-	ret = mgt_get_request(priv, DOT11_OID_EXUNENCRYPTED, 0, NULL, &r);
+	ret = mgt_get_request(priv, DOT11_OID_EXUNENCRYPTED, 0, शून्य, &r);
 	exunencrypt = r.u;
-	ret = mgt_get_request(priv, DOT11_OID_DOT1XENABLE, 0, NULL, &r);
-	dot1x = r.u;
-	ret = mgt_get_request(priv, DOT11_OID_MLMEAUTOLEVEL, 0, NULL, &r);
+	ret = mgt_get_request(priv, DOT11_OID_DOT1XENABLE, 0, शून्य, &r);
+	करोt1x = r.u;
+	ret = mgt_get_request(priv, DOT11_OID_MLMEAUTOLEVEL, 0, शून्य, &r);
 	mlmelevel = r.u;
 
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	switch (param->flags & IW_AUTH_INDEX) {
-	case IW_AUTH_CIPHER_PAIRWISE:
-	case IW_AUTH_CIPHER_GROUP:
-	case IW_AUTH_KEY_MGMT:
-		break;
+	चयन (param->flags & IW_AUTH_INDEX) अणु
+	हाल IW_AUTH_CIPHER_PAIRWISE:
+	हाल IW_AUTH_CIPHER_GROUP:
+	हाल IW_AUTH_KEY_MGMT:
+		अवरोध;
 
-	case IW_AUTH_WPA_ENABLED:
+	हाल IW_AUTH_WPA_ENABLED:
 		/* Do the same thing as IW_AUTH_WPA_VERSION */
-		if (param->value) {
+		अगर (param->value) अणु
 			wpa = 1;
 			privinvoked = 1; /* For privacy invoked */
 			exunencrypt = 1; /* Filter out all unencrypted frames */
-			dot1x = 0x01; /* To enable eap filter */
+			करोt1x = 0x01; /* To enable eap filter */
 			mlmelevel = DOT11_MLME_EXTENDED;
 			authen = DOT11_AUTH_OS; /* Only WEP uses _SK and _BOTH */
-		} else {
+		पूर्ण अन्यथा अणु
 			wpa = 0;
 			privinvoked = 0;
 			exunencrypt = 0; /* Do not filter un-encrypted data */
-			dot1x = 0;
+			करोt1x = 0;
 			mlmelevel = DOT11_MLME_AUTO;
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case IW_AUTH_WPA_VERSION:
-		if (param->value & IW_AUTH_WPA_VERSION_DISABLED) {
+	हाल IW_AUTH_WPA_VERSION:
+		अगर (param->value & IW_AUTH_WPA_VERSION_DISABLED) अणु
 			wpa = 0;
 			privinvoked = 0;
 			exunencrypt = 0; /* Do not filter un-encrypted data */
-			dot1x = 0;
+			करोt1x = 0;
 			mlmelevel = DOT11_MLME_AUTO;
-		} else {
-			if (param->value & IW_AUTH_WPA_VERSION_WPA)
+		पूर्ण अन्यथा अणु
+			अगर (param->value & IW_AUTH_WPA_VERSION_WPA)
 				wpa = 1;
-			else if (param->value & IW_AUTH_WPA_VERSION_WPA2)
+			अन्यथा अगर (param->value & IW_AUTH_WPA_VERSION_WPA2)
 				wpa = 2;
 			privinvoked = 1; /* For privacy invoked */
 			exunencrypt = 1; /* Filter out all unencrypted frames */
-			dot1x = 0x01; /* To enable eap filter */
+			करोt1x = 0x01; /* To enable eap filter */
 			mlmelevel = DOT11_MLME_EXTENDED;
 			authen = DOT11_AUTH_OS; /* Only WEP uses _SK and _BOTH */
-		}
-		break;
+		पूर्ण
+		अवरोध;
 
-	case IW_AUTH_RX_UNENCRYPTED_EAPOL:
-		/* dot1x should be the opposite of RX_UNENCRYPTED_EAPOL;
-		 * turn off dot1x when allowing receipt of unencrypted EAPOL
-		 * frames, turn on dot1x when receipt should be disallowed
+	हाल IW_AUTH_RX_UNENCRYPTED_EAPOL:
+		/* करोt1x should be the opposite of RX_UNENCRYPTED_EAPOL;
+		 * turn off करोt1x when allowing receipt of unencrypted EAPOL
+		 * frames, turn on करोt1x when receipt should be disallowed
 		 */
-		dot1x = param->value ? 0 : 0x01;
-		break;
+		करोt1x = param->value ? 0 : 0x01;
+		अवरोध;
 
-	case IW_AUTH_PRIVACY_INVOKED:
+	हाल IW_AUTH_PRIVACY_INVOKED:
 		privinvoked = param->value ? 1 : 0;
-		break;
+		अवरोध;
 
-	case IW_AUTH_DROP_UNENCRYPTED:
+	हाल IW_AUTH_DROP_UNENCRYPTED:
 		exunencrypt = param->value ? 1 : 0;
-		break;
+		अवरोध;
 
-	case IW_AUTH_80211_AUTH_ALG:
-		if (param->value & IW_AUTH_ALG_SHARED_KEY) {
+	हाल IW_AUTH_80211_AUTH_ALG:
+		अगर (param->value & IW_AUTH_ALG_SHARED_KEY) अणु
 			/* Only WEP uses _SK and _BOTH */
-			if (wpa > 0) {
+			अगर (wpa > 0) अणु
 				ret = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			authen = DOT11_AUTH_SK;
-		} else if (param->value & IW_AUTH_ALG_OPEN_SYSTEM) {
+		पूर्ण अन्यथा अगर (param->value & IW_AUTH_ALG_OPEN_SYSTEM) अणु
 			authen = DOT11_AUTH_OS;
-		} else {
+		पूर्ण अन्यथा अणु
 			ret = -EINVAL;
-			goto out;
-		}
-		break;
+			जाओ out;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return -EOPNOTSUPP;
-	}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	/* Set all the values */
-	down_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
 	priv->wpa = wpa;
-	up_write(&priv->mib_sem);
+	up_ग_लिखो(&priv->mib_sem);
 	mgt_set_request(priv, DOT11_OID_AUTHENABLE, 0, &authen);
 	mgt_set_request(priv, DOT11_OID_PRIVACYINVOKED, 0, &privinvoked);
 	mgt_set_request(priv, DOT11_OID_EXUNENCRYPTED, 0, &exunencrypt);
-	mgt_set_request(priv, DOT11_OID_DOT1XENABLE, 0, &dot1x);
+	mgt_set_request(priv, DOT11_OID_DOT1XENABLE, 0, &करोt1x);
 	mgt_set_request(priv, DOT11_OID_MLMEAUTOLEVEL, 0, &mlmelevel);
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int prism54_get_auth(struct net_device *ndev,
-			    struct iw_request_info *info,
-			    union iwreq_data *wrqu, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct iw_param *param = &wrqu->param;
+अटल पूर्णांक prism54_get_auth(काष्ठा net_device *ndev,
+			    काष्ठा iw_request_info *info,
+			    जोड़ iwreq_data *wrqu, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा iw_param *param = &wrqu->param;
 	u32 wpa = 0;
-	int ret = 0;
-	union oid_res_t r;
+	पूर्णांक ret = 0;
+	जोड़ oid_res_t r;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT)
-		return 0;
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT)
+		वापस 0;
 
 	/* first get the flags */
-	down_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
 	wpa = priv->wpa;
-	up_write(&priv->mib_sem);
+	up_ग_लिखो(&priv->mib_sem);
 
-	switch (param->flags & IW_AUTH_INDEX) {
-	case IW_AUTH_CIPHER_PAIRWISE:
-	case IW_AUTH_CIPHER_GROUP:
-	case IW_AUTH_KEY_MGMT:
+	चयन (param->flags & IW_AUTH_INDEX) अणु
+	हाल IW_AUTH_CIPHER_PAIRWISE:
+	हाल IW_AUTH_CIPHER_GROUP:
+	हाल IW_AUTH_KEY_MGMT:
 		/*
-		 * wpa_supplicant will control these internally
+		 * wpa_supplicant will control these पूर्णांकernally
 		 */
 		ret = -EOPNOTSUPP;
-		break;
+		अवरोध;
 
-	case IW_AUTH_WPA_VERSION:
-		switch (wpa) {
-		case 1:
+	हाल IW_AUTH_WPA_VERSION:
+		चयन (wpa) अणु
+		हाल 1:
 			param->value = IW_AUTH_WPA_VERSION_WPA;
-			break;
-		case 2:
+			अवरोध;
+		हाल 2:
 			param->value = IW_AUTH_WPA_VERSION_WPA2;
-			break;
-		case 0:
-		default:
+			अवरोध;
+		हाल 0:
+		शेष:
 			param->value = IW_AUTH_WPA_VERSION_DISABLED;
-			break;
-		}
-		break;
+			अवरोध;
+		पूर्ण
+		अवरोध;
 
-	case IW_AUTH_DROP_UNENCRYPTED:
-		ret = mgt_get_request(priv, DOT11_OID_EXUNENCRYPTED, 0, NULL, &r);
-		if (ret >= 0)
+	हाल IW_AUTH_DROP_UNENCRYPTED:
+		ret = mgt_get_request(priv, DOT11_OID_EXUNENCRYPTED, 0, शून्य, &r);
+		अगर (ret >= 0)
 			param->value = r.u > 0 ? 1 : 0;
-		break;
+		अवरोध;
 
-	case IW_AUTH_80211_AUTH_ALG:
-		ret = mgt_get_request(priv, DOT11_OID_AUTHENABLE, 0, NULL, &r);
-		if (ret >= 0) {
-			switch (r.u) {
-			case DOT11_AUTH_OS:
+	हाल IW_AUTH_80211_AUTH_ALG:
+		ret = mgt_get_request(priv, DOT11_OID_AUTHENABLE, 0, शून्य, &r);
+		अगर (ret >= 0) अणु
+			चयन (r.u) अणु
+			हाल DOT11_AUTH_OS:
 				param->value = IW_AUTH_ALG_OPEN_SYSTEM;
-				break;
-			case DOT11_AUTH_BOTH:
-			case DOT11_AUTH_SK:
+				अवरोध;
+			हाल DOT11_AUTH_BOTH:
+			हाल DOT11_AUTH_SK:
 				param->value = IW_AUTH_ALG_SHARED_KEY;
-				break;
-			case DOT11_AUTH_NONE:
-			default:
+				अवरोध;
+			हाल DOT11_AUTH_NONE:
+			शेष:
 				param->value = 0;
-				break;
-			}
-		}
-		break;
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अवरोध;
 
-	case IW_AUTH_WPA_ENABLED:
+	हाल IW_AUTH_WPA_ENABLED:
 		param->value = wpa > 0 ? 1 : 0;
-		break;
+		अवरोध;
 
-	case IW_AUTH_RX_UNENCRYPTED_EAPOL:
-		ret = mgt_get_request(priv, DOT11_OID_DOT1XENABLE, 0, NULL, &r);
-		if (ret >= 0)
+	हाल IW_AUTH_RX_UNENCRYPTED_EAPOL:
+		ret = mgt_get_request(priv, DOT11_OID_DOT1XENABLE, 0, शून्य, &r);
+		अगर (ret >= 0)
 			param->value = r.u > 0 ? 1 : 0;
-		break;
+		अवरोध;
 
-	case IW_AUTH_PRIVACY_INVOKED:
-		ret = mgt_get_request(priv, DOT11_OID_PRIVACYINVOKED, 0, NULL, &r);
-		if (ret >= 0)
+	हाल IW_AUTH_PRIVACY_INVOKED:
+		ret = mgt_get_request(priv, DOT11_OID_PRIVACYINVOKED, 0, शून्य, &r);
+		अगर (ret >= 0)
 			param->value = r.u > 0 ? 1 : 0;
-		break;
+		अवरोध;
 
-	default:
-		return -EOPNOTSUPP;
-	}
-	return ret;
-}
+	शेष:
+		वापस -EOPNOTSUPP;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int prism54_set_encodeext(struct net_device *ndev,
-				 struct iw_request_info *info,
-				 union iwreq_data *wrqu,
-				 char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct iw_point *encoding = &wrqu->encoding;
-	struct iw_encode_ext *ext = (struct iw_encode_ext *)extra;
-	int idx, alg = ext->alg, set_key = 1;
-	union oid_res_t r;
-	int authen = DOT11_AUTH_OS, invoke = 0, exunencrypt = 0;
-	int ret = 0;
+अटल पूर्णांक prism54_set_encodeext(काष्ठा net_device *ndev,
+				 काष्ठा iw_request_info *info,
+				 जोड़ iwreq_data *wrqu,
+				 अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा iw_poपूर्णांक *encoding = &wrqu->encoding;
+	काष्ठा iw_encode_ext *ext = (काष्ठा iw_encode_ext *)extra;
+	पूर्णांक idx, alg = ext->alg, set_key = 1;
+	जोड़ oid_res_t r;
+	पूर्णांक authen = DOT11_AUTH_OS, invoke = 0, exunencrypt = 0;
+	पूर्णांक ret = 0;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT)
-		return 0;
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT)
+		वापस 0;
 
 	/* Determine and validate the key index */
 	idx = (encoding->flags & IW_ENCODE_INDEX) - 1;
-	if (idx) {
-		if (idx < 0 || idx > 3)
-			return -EINVAL;
-	} else {
-		ret = mgt_get_request(priv, DOT11_OID_DEFKEYID, 0, NULL, &r);
-		if (ret < 0)
-			goto out;
+	अगर (idx) अणु
+		अगर (idx < 0 || idx > 3)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		ret = mgt_get_request(priv, DOT11_OID_DEFKEYID, 0, शून्य, &r);
+		अगर (ret < 0)
+			जाओ out;
 		idx = r.u;
-	}
+	पूर्ण
 
-	if (encoding->flags & IW_ENCODE_DISABLED)
+	अगर (encoding->flags & IW_ENCODE_DISABLED)
 		alg = IW_ENCODE_ALG_NONE;
 
-	if (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) {
+	अगर (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) अणु
 		/* Only set transmit key index here, actual
-		 * key is set below if needed.
+		 * key is set below अगर needed.
 		 */
 		ret = mgt_set_request(priv, DOT11_OID_DEFKEYID, 0, &idx);
 		set_key = ext->key_len > 0 ? 1 : 0;
-	}
+	पूर्ण
 
-	if (set_key) {
-		struct obj_key key = { DOT11_PRIV_WEP, 0, "" };
-		switch (alg) {
-		case IW_ENCODE_ALG_NONE:
-			break;
-		case IW_ENCODE_ALG_WEP:
-			if (ext->key_len > KEY_SIZE_WEP104) {
+	अगर (set_key) अणु
+		काष्ठा obj_key key = अणु DOT11_PRIV_WEP, 0, "" पूर्ण;
+		चयन (alg) अणु
+		हाल IW_ENCODE_ALG_NONE:
+			अवरोध;
+		हाल IW_ENCODE_ALG_WEP:
+			अगर (ext->key_len > KEY_SIZE_WEP104) अणु
 				ret = -EINVAL;
-				goto out;
-			}
-			if (ext->key_len > KEY_SIZE_WEP40)
+				जाओ out;
+			पूर्ण
+			अगर (ext->key_len > KEY_SIZE_WEP40)
 				key.length = KEY_SIZE_WEP104;
-			else
+			अन्यथा
 				key.length = KEY_SIZE_WEP40;
-			break;
-		case IW_ENCODE_ALG_TKIP:
-			if (ext->key_len > KEY_SIZE_TKIP) {
+			अवरोध;
+		हाल IW_ENCODE_ALG_TKIP:
+			अगर (ext->key_len > KEY_SIZE_TKIP) अणु
 				ret = -EINVAL;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 			key.type = DOT11_PRIV_TKIP;
 			key.length = KEY_SIZE_TKIP;
-			break;
-		default:
-			return -EINVAL;
-		}
+			अवरोध;
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
 
-		if (key.length) {
-			memset(key.key, 0, sizeof(key.key));
-			memcpy(key.key, ext->key, ext->key_len);
+		अगर (key.length) अणु
+			स_रखो(key.key, 0, माप(key.key));
+			स_नकल(key.key, ext->key, ext->key_len);
 			ret = mgt_set_request(priv, DOT11_OID_DEFKEYX, idx,
 					    &key);
-			if (ret < 0)
-				goto out;
-		}
-	}
+			अगर (ret < 0)
+				जाओ out;
+		पूर्ण
+	पूर्ण
 
 	/* Read the flags */
-	if (encoding->flags & IW_ENCODE_DISABLED) {
+	अगर (encoding->flags & IW_ENCODE_DISABLED) अणु
 		/* Encoding disabled,
 		 * authen = DOT11_AUTH_OS;
 		 * invoke = 0;
 		 * exunencrypt = 0; */
-	}
-	if (encoding->flags & IW_ENCODE_OPEN) {
+	पूर्ण
+	अगर (encoding->flags & IW_ENCODE_OPEN) अणु
 		/* Encode but accept non-encoded packets. No auth */
 		invoke = 1;
-	}
-	if (encoding->flags & IW_ENCODE_RESTRICTED) {
+	पूर्ण
+	अगर (encoding->flags & IW_ENCODE_RESTRICTED) अणु
 		/* Refuse non-encoded packets. Auth */
 		authen = DOT11_AUTH_BOTH;
 		invoke = 1;
 		exunencrypt = 1;
-	}
+	पूर्ण
 
-	/* do the change if requested  */
-	if (encoding->flags & IW_ENCODE_MODE) {
+	/* करो the change अगर requested  */
+	अगर (encoding->flags & IW_ENCODE_MODE) अणु
 		ret = mgt_set_request(priv, DOT11_OID_AUTHENABLE, 0,
 				      &authen);
 		ret = mgt_set_request(priv, DOT11_OID_PRIVACYINVOKED, 0,
 				      &invoke);
 		ret = mgt_set_request(priv, DOT11_OID_EXUNENCRYPTED, 0,
 				      &exunencrypt);
-	}
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int prism54_get_encodeext(struct net_device *ndev,
-				 struct iw_request_info *info,
-				 union iwreq_data *wrqu,
-				 char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct iw_point *encoding = &wrqu->encoding;
-	struct iw_encode_ext *ext = (struct iw_encode_ext *)extra;
-	int idx, max_key_len;
-	union oid_res_t r;
-	int authen = DOT11_AUTH_OS, invoke = 0, exunencrypt = 0, wpa = 0;
-	int ret = 0;
+अटल पूर्णांक prism54_get_encodeext(काष्ठा net_device *ndev,
+				 काष्ठा iw_request_info *info,
+				 जोड़ iwreq_data *wrqu,
+				 अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा iw_poपूर्णांक *encoding = &wrqu->encoding;
+	काष्ठा iw_encode_ext *ext = (काष्ठा iw_encode_ext *)extra;
+	पूर्णांक idx, max_key_len;
+	जोड़ oid_res_t r;
+	पूर्णांक authen = DOT11_AUTH_OS, invoke = 0, exunencrypt = 0, wpa = 0;
+	पूर्णांक ret = 0;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT)
-		return 0;
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT)
+		वापस 0;
 
 	/* first get the flags */
-	ret = mgt_get_request(priv, DOT11_OID_AUTHENABLE, 0, NULL, &r);
+	ret = mgt_get_request(priv, DOT11_OID_AUTHENABLE, 0, शून्य, &r);
 	authen = r.u;
-	ret = mgt_get_request(priv, DOT11_OID_PRIVACYINVOKED, 0, NULL, &r);
+	ret = mgt_get_request(priv, DOT11_OID_PRIVACYINVOKED, 0, शून्य, &r);
 	invoke = r.u;
-	ret = mgt_get_request(priv, DOT11_OID_EXUNENCRYPTED, 0, NULL, &r);
+	ret = mgt_get_request(priv, DOT11_OID_EXUNENCRYPTED, 0, शून्य, &r);
 	exunencrypt = r.u;
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
-	max_key_len = encoding->length - sizeof(*ext);
-	if (max_key_len < 0)
-		return -EINVAL;
+	max_key_len = encoding->length - माप(*ext);
+	अगर (max_key_len < 0)
+		वापस -EINVAL;
 
 	idx = (encoding->flags & IW_ENCODE_INDEX) - 1;
-	if (idx) {
-		if (idx < 0 || idx > 3)
-			return -EINVAL;
-	} else {
-		ret = mgt_get_request(priv, DOT11_OID_DEFKEYID, 0, NULL, &r);
-		if (ret < 0)
-			goto out;
+	अगर (idx) अणु
+		अगर (idx < 0 || idx > 3)
+			वापस -EINVAL;
+	पूर्ण अन्यथा अणु
+		ret = mgt_get_request(priv, DOT11_OID_DEFKEYID, 0, शून्य, &r);
+		अगर (ret < 0)
+			जाओ out;
 		idx = r.u;
-	}
+	पूर्ण
 
 	encoding->flags = idx + 1;
-	memset(ext, 0, sizeof(*ext));
+	स_रखो(ext, 0, माप(*ext));
 
-	switch (authen) {
-	case DOT11_AUTH_BOTH:
-	case DOT11_AUTH_SK:
+	चयन (authen) अणु
+	हाल DOT11_AUTH_BOTH:
+	हाल DOT11_AUTH_SK:
 		wrqu->encoding.flags |= IW_ENCODE_RESTRICTED;
 		fallthrough;
-	case DOT11_AUTH_OS:
-	default:
+	हाल DOT11_AUTH_OS:
+	शेष:
 		wrqu->encoding.flags |= IW_ENCODE_OPEN;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	down_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
 	wpa = priv->wpa;
-	up_write(&priv->mib_sem);
+	up_ग_लिखो(&priv->mib_sem);
 
-	if (authen == DOT11_AUTH_OS && !exunencrypt && !invoke && !wpa) {
+	अगर (authen == DOT11_AUTH_OS && !exunencrypt && !invoke && !wpa) अणु
 		/* No encryption */
 		ext->alg = IW_ENCODE_ALG_NONE;
 		ext->key_len = 0;
 		wrqu->encoding.flags |= IW_ENCODE_DISABLED;
-	} else {
-		struct obj_key *key;
+	पूर्ण अन्यथा अणु
+		काष्ठा obj_key *key;
 
-		ret = mgt_get_request(priv, DOT11_OID_DEFKEYX, idx, NULL, &r);
-		if (ret < 0)
-			goto out;
+		ret = mgt_get_request(priv, DOT11_OID_DEFKEYX, idx, शून्य, &r);
+		अगर (ret < 0)
+			जाओ out;
 		key = r.ptr;
-		if (max_key_len < key->length) {
+		अगर (max_key_len < key->length) अणु
 			ret = -E2BIG;
-			goto out;
-		}
-		memcpy(ext->key, key->key, key->length);
+			जाओ out;
+		पूर्ण
+		स_नकल(ext->key, key->key, key->length);
 		ext->key_len = key->length;
 
-		switch (key->type) {
-		case DOT11_PRIV_TKIP:
+		चयन (key->type) अणु
+		हाल DOT11_PRIV_TKIP:
 			ext->alg = IW_ENCODE_ALG_TKIP;
-			break;
-		default:
-		case DOT11_PRIV_WEP:
+			अवरोध;
+		शेष:
+		हाल DOT11_PRIV_WEP:
 			ext->alg = IW_ENCODE_ALG_WEP;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		wrqu->encoding.flags |= IW_ENCODE_ENABLED;
-	}
+	पूर्ण
 
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 
-static int
-prism54_reset(struct net_device *ndev, struct iw_request_info *info,
-	      __u32 * uwrq, char *extra)
-{
+अटल पूर्णांक
+prism54_reset(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+	      __u32 * uwrq, अक्षर *extra)
+अणु
 	islpci_reset(netdev_priv(ndev), 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_get_oid(struct net_device *ndev, struct iw_request_info *info,
-		struct iw_point *dwrq, char *extra)
-{
-	union oid_res_t r;
-	int rvalue;
-	enum oid_num_t n = dwrq->flags;
+अटल पूर्णांक
+prism54_get_oid(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	जोड़ oid_res_t r;
+	पूर्णांक rvalue;
+	क्रमागत oid_num_t n = dwrq->flags;
 
-	rvalue = mgt_get_request(netdev_priv(ndev), n, 0, NULL, &r);
+	rvalue = mgt_get_request(netdev_priv(ndev), n, 0, शून्य, &r);
 	dwrq->length = mgt_response_to_str(n, &r, extra);
-	if ((isl_oid[n].flags & OID_FLAG_TYPE) != OID_TYPE_U32)
-		kfree(r.ptr);
-	return rvalue;
-}
+	अगर ((isl_oid[n].flags & OID_FLAG_TYPE) != OID_TYPE_U32)
+		kमुक्त(r.ptr);
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_set_u32(struct net_device *ndev, struct iw_request_info *info,
-		__u32 * uwrq, char *extra)
-{
+अटल पूर्णांक
+prism54_set_u32(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		__u32 * uwrq, अक्षर *extra)
+अणु
 	u32 oid = uwrq[0], u = uwrq[1];
 
-	return mgt_set_request(netdev_priv(ndev), oid, 0, &u);
-}
+	वापस mgt_set_request(netdev_priv(ndev), oid, 0, &u);
+पूर्ण
 
-static int
-prism54_set_raw(struct net_device *ndev, struct iw_request_info *info,
-		struct iw_point *dwrq, char *extra)
-{
+अटल पूर्णांक
+prism54_set_raw(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
 	u32 oid = dwrq->flags;
 
-	return mgt_set_request(netdev_priv(ndev), oid, 0, extra);
-}
+	वापस mgt_set_request(netdev_priv(ndev), oid, 0, extra);
+पूर्ण
 
-void
-prism54_acl_init(struct islpci_acl *acl)
-{
+व्योम
+prism54_acl_init(काष्ठा islpci_acl *acl)
+अणु
 	mutex_init(&acl->lock);
 	INIT_LIST_HEAD(&acl->mac_list);
 	acl->size = 0;
 	acl->policy = MAC_POLICY_OPEN;
-}
+पूर्ण
 
-static void
-prism54_clear_mac(struct islpci_acl *acl)
-{
-	struct list_head *ptr, *next;
-	struct mac_entry *entry;
+अटल व्योम
+prism54_clear_mac(काष्ठा islpci_acl *acl)
+अणु
+	काष्ठा list_head *ptr, *next;
+	काष्ठा mac_entry *entry;
 
 	mutex_lock(&acl->lock);
 
-	if (acl->size == 0) {
+	अगर (acl->size == 0) अणु
 		mutex_unlock(&acl->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	for (ptr = acl->mac_list.next, next = ptr->next;
-	     ptr != &acl->mac_list; ptr = next, next = ptr->next) {
-		entry = list_entry(ptr, struct mac_entry, _list);
+	क्रम (ptr = acl->mac_list.next, next = ptr->next;
+	     ptr != &acl->mac_list; ptr = next, next = ptr->next) अणु
+		entry = list_entry(ptr, काष्ठा mac_entry, _list);
 		list_del(ptr);
-		kfree(entry);
-	}
+		kमुक्त(entry);
+	पूर्ण
 	acl->size = 0;
 	mutex_unlock(&acl->lock);
-}
+पूर्ण
 
-void
-prism54_acl_clean(struct islpci_acl *acl)
-{
+व्योम
+prism54_acl_clean(काष्ठा islpci_acl *acl)
+अणु
 	prism54_clear_mac(acl);
-}
+पूर्ण
 
-static int
-prism54_add_mac(struct net_device *ndev, struct iw_request_info *info,
-		struct sockaddr *awrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct islpci_acl *acl = &priv->acl;
-	struct mac_entry *entry;
-	struct sockaddr *addr = (struct sockaddr *) extra;
+अटल पूर्णांक
+prism54_add_mac(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		काष्ठा sockaddr *awrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा islpci_acl *acl = &priv->acl;
+	काष्ठा mac_entry *entry;
+	काष्ठा sockaddr *addr = (काष्ठा sockaddr *) extra;
 
-	if (addr->sa_family != ARPHRD_ETHER)
-		return -EOPNOTSUPP;
+	अगर (addr->sa_family != ARPHRD_ETHER)
+		वापस -EOPNOTSUPP;
 
-	entry = kmalloc(sizeof (struct mac_entry), GFP_KERNEL);
-	if (entry == NULL)
-		return -ENOMEM;
+	entry = kदो_स्मृति(माप (काष्ठा mac_entry), GFP_KERNEL);
+	अगर (entry == शून्य)
+		वापस -ENOMEM;
 
-	memcpy(entry->addr, addr->sa_data, ETH_ALEN);
+	स_नकल(entry->addr, addr->sa_data, ETH_ALEN);
 
-	if (mutex_lock_interruptible(&acl->lock)) {
-		kfree(entry);
-		return -ERESTARTSYS;
-	}
+	अगर (mutex_lock_पूर्णांकerruptible(&acl->lock)) अणु
+		kमुक्त(entry);
+		वापस -ERESTARTSYS;
+	पूर्ण
 	list_add_tail(&entry->_list, &acl->mac_list);
 	acl->size++;
 	mutex_unlock(&acl->lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_del_mac(struct net_device *ndev, struct iw_request_info *info,
-		struct sockaddr *awrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct islpci_acl *acl = &priv->acl;
-	struct mac_entry *entry;
-	struct sockaddr *addr = (struct sockaddr *) extra;
+अटल पूर्णांक
+prism54_del_mac(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		काष्ठा sockaddr *awrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा islpci_acl *acl = &priv->acl;
+	काष्ठा mac_entry *entry;
+	काष्ठा sockaddr *addr = (काष्ठा sockaddr *) extra;
 
-	if (addr->sa_family != ARPHRD_ETHER)
-		return -EOPNOTSUPP;
+	अगर (addr->sa_family != ARPHRD_ETHER)
+		वापस -EOPNOTSUPP;
 
-	if (mutex_lock_interruptible(&acl->lock))
-		return -ERESTARTSYS;
-	list_for_each_entry(entry, &acl->mac_list, _list) {
-		if (ether_addr_equal(entry->addr, addr->sa_data)) {
+	अगर (mutex_lock_पूर्णांकerruptible(&acl->lock))
+		वापस -ERESTARTSYS;
+	list_क्रम_each_entry(entry, &acl->mac_list, _list) अणु
+		अगर (ether_addr_equal(entry->addr, addr->sa_data)) अणु
 			list_del(&entry->_list);
 			acl->size--;
-			kfree(entry);
+			kमुक्त(entry);
 			mutex_unlock(&acl->lock);
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&acl->lock);
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int
-prism54_get_mac(struct net_device *ndev, struct iw_request_info *info,
-		struct iw_point *dwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct islpci_acl *acl = &priv->acl;
-	struct mac_entry *entry;
-	struct sockaddr *dst = (struct sockaddr *) extra;
+अटल पूर्णांक
+prism54_get_mac(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा islpci_acl *acl = &priv->acl;
+	काष्ठा mac_entry *entry;
+	काष्ठा sockaddr *dst = (काष्ठा sockaddr *) extra;
 
 	dwrq->length = 0;
 
-	if (mutex_lock_interruptible(&acl->lock))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&acl->lock))
+		वापस -ERESTARTSYS;
 
-	list_for_each_entry(entry, &acl->mac_list, _list) {
-		memcpy(dst->sa_data, entry->addr, ETH_ALEN);
+	list_क्रम_each_entry(entry, &acl->mac_list, _list) अणु
+		स_नकल(dst->sa_data, entry->addr, ETH_ALEN);
 		dst->sa_family = ARPHRD_ETHER;
 		dwrq->length++;
 		dst++;
-	}
+	पूर्ण
 	mutex_unlock(&acl->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Setting policy also clears the MAC acl, even if we don't change the default
+/* Setting policy also clears the MAC acl, even अगर we करोn't change the शेष
  * policy
  */
 
-static int
-prism54_set_policy(struct net_device *ndev, struct iw_request_info *info,
-		   __u32 * uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct islpci_acl *acl = &priv->acl;
-	u32 mlmeautolevel;
+अटल पूर्णांक
+prism54_set_policy(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		   __u32 * uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा islpci_acl *acl = &priv->acl;
+	u32 mlmeस्वतःlevel;
 
 	prism54_clear_mac(acl);
 
-	if ((*uwrq < MAC_POLICY_OPEN) || (*uwrq > MAC_POLICY_REJECT))
-		return -EINVAL;
+	अगर ((*uwrq < MAC_POLICY_OPEN) || (*uwrq > MAC_POLICY_REJECT))
+		वापस -EINVAL;
 
-	down_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
 
 	acl->policy = *uwrq;
 
-	/* the ACL code needs an intermediate mlmeautolevel */
-	if ((priv->iw_mode == IW_MODE_MASTER) &&
+	/* the ACL code needs an पूर्णांकermediate mlmeस्वतःlevel */
+	अगर ((priv->iw_mode == IW_MODE_MASTER) &&
 	    (acl->policy != MAC_POLICY_OPEN))
-		mlmeautolevel = DOT11_MLME_INTERMEDIATE;
-	else
-		mlmeautolevel = CARD_DEFAULT_MLME_MODE;
-	if (priv->wpa)
-		mlmeautolevel = DOT11_MLME_EXTENDED;
-	mgt_set(priv, DOT11_OID_MLMEAUTOLEVEL, &mlmeautolevel);
+		mlmeस्वतःlevel = DOT11_MLME_INTERMEDIATE;
+	अन्यथा
+		mlmeस्वतःlevel = CARD_DEFAULT_MLME_MODE;
+	अगर (priv->wpa)
+		mlmeस्वतःlevel = DOT11_MLME_EXTENDED;
+	mgt_set(priv, DOT11_OID_MLMEAUTOLEVEL, &mlmeस्वतःlevel);
 	/* restart the card with our new policy */
-	if (mgt_commit(priv)) {
-		up_write(&priv->mib_sem);
-		return -EIO;
-	}
-	up_write(&priv->mib_sem);
+	अगर (mgt_commit(priv)) अणु
+		up_ग_लिखो(&priv->mib_sem);
+		वापस -EIO;
+	पूर्ण
+	up_ग_लिखो(&priv->mib_sem);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_get_policy(struct net_device *ndev, struct iw_request_info *info,
-		   __u32 * uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct islpci_acl *acl = &priv->acl;
+अटल पूर्णांक
+prism54_get_policy(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		   __u32 * uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा islpci_acl *acl = &priv->acl;
 
 	*uwrq = acl->policy;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Return 1 only if client should be accepted. */
+/* Return 1 only अगर client should be accepted. */
 
-static int
-prism54_mac_accept(struct islpci_acl *acl, char *mac)
-{
-	struct mac_entry *entry;
-	int res = 0;
+अटल पूर्णांक
+prism54_mac_accept(काष्ठा islpci_acl *acl, अक्षर *mac)
+अणु
+	काष्ठा mac_entry *entry;
+	पूर्णांक res = 0;
 
-	if (mutex_lock_interruptible(&acl->lock))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&acl->lock))
+		वापस -ERESTARTSYS;
 
-	if (acl->policy == MAC_POLICY_OPEN) {
+	अगर (acl->policy == MAC_POLICY_OPEN) अणु
 		mutex_unlock(&acl->lock);
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
-	list_for_each_entry(entry, &acl->mac_list, _list) {
-		if (memcmp(entry->addr, mac, ETH_ALEN) == 0) {
+	list_क्रम_each_entry(entry, &acl->mac_list, _list) अणु
+		अगर (स_भेद(entry->addr, mac, ETH_ALEN) == 0) अणु
 			res = 1;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	res = (acl->policy == MAC_POLICY_ACCEPT) ? !res : res;
 	mutex_unlock(&acl->lock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static int
-prism54_kick_all(struct net_device *ndev, struct iw_request_info *info,
-		 struct iw_point *dwrq, char *extra)
-{
-	struct obj_mlme *mlme;
-	int rvalue;
+अटल पूर्णांक
+prism54_kick_all(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा iw_poपूर्णांक *dwrq, अक्षर *extra)
+अणु
+	काष्ठा obj_mlme *mlme;
+	पूर्णांक rvalue;
 
-	mlme = kmalloc(sizeof (struct obj_mlme), GFP_KERNEL);
-	if (mlme == NULL)
-		return -ENOMEM;
+	mlme = kदो_स्मृति(माप (काष्ठा obj_mlme), GFP_KERNEL);
+	अगर (mlme == शून्य)
+		वापस -ENOMEM;
 
 	/* Tell the card to kick every client */
 	mlme->id = 0;
 	rvalue =
 	    mgt_set_request(netdev_priv(ndev), DOT11_OID_DISASSOCIATE, 0, mlme);
-	kfree(mlme);
+	kमुक्त(mlme);
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-static int
-prism54_kick_mac(struct net_device *ndev, struct iw_request_info *info,
-		 struct sockaddr *awrq, char *extra)
-{
-	struct obj_mlme *mlme;
-	struct sockaddr *addr = (struct sockaddr *) extra;
-	int rvalue;
+अटल पूर्णांक
+prism54_kick_mac(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		 काष्ठा sockaddr *awrq, अक्षर *extra)
+अणु
+	काष्ठा obj_mlme *mlme;
+	काष्ठा sockaddr *addr = (काष्ठा sockaddr *) extra;
+	पूर्णांक rvalue;
 
-	if (addr->sa_family != ARPHRD_ETHER)
-		return -EOPNOTSUPP;
+	अगर (addr->sa_family != ARPHRD_ETHER)
+		वापस -EOPNOTSUPP;
 
-	mlme = kmalloc(sizeof (struct obj_mlme), GFP_KERNEL);
-	if (mlme == NULL)
-		return -ENOMEM;
+	mlme = kदो_स्मृति(माप (काष्ठा obj_mlme), GFP_KERNEL);
+	अगर (mlme == शून्य)
+		वापस -ENOMEM;
 
 	/* Tell the card to only kick the corresponding bastard */
-	memcpy(mlme->address, addr->sa_data, ETH_ALEN);
+	स_नकल(mlme->address, addr->sa_data, ETH_ALEN);
 	mlme->id = -1;
 	rvalue =
 	    mgt_set_request(netdev_priv(ndev), DOT11_OID_DISASSOCIATE, 0, mlme);
 
-	kfree(mlme);
+	kमुक्त(mlme);
 
-	return rvalue;
-}
+	वापस rvalue;
+पूर्ण
 
-/* Translate a TRAP oid into a wireless event. Called in islpci_mgt_receive. */
+/* Translate a TRAP oid पूर्णांकo a wireless event. Called in islpci_mgt_receive. */
 
-static void
-format_event(islpci_private *priv, char *dest, const char *str,
-	     const struct obj_mlme *mlme, u16 *length, int error)
-{
-	int n = snprintf(dest, IW_CUSTOM_MAX,
+अटल व्योम
+क्रमmat_event(islpci_निजी *priv, अक्षर *dest, स्थिर अक्षर *str,
+	     स्थिर काष्ठा obj_mlme *mlme, u16 *length, पूर्णांक error)
+अणु
+	पूर्णांक n = snम_लिखो(dest, IW_CUSTOM_MAX,
 			 "%s %s %pM %s (%2.2X)",
 			 str,
 			 ((priv->iw_mode == IW_MODE_MASTER) ? "from" : "to"),
@@ -2037,324 +2038,324 @@ format_event(islpci_private *priv, char *dest, const char *str,
 			  : ""), mlme->code);
 	WARN_ON(n >= IW_CUSTOM_MAX);
 	*length = n;
-}
+पूर्ण
 
-static void
-send_formatted_event(islpci_private *priv, const char *str,
-		     const struct obj_mlme *mlme, int error)
-{
-	union iwreq_data wrqu;
-	char *memptr;
+अटल व्योम
+send_क्रमmatted_event(islpci_निजी *priv, स्थिर अक्षर *str,
+		     स्थिर काष्ठा obj_mlme *mlme, पूर्णांक error)
+अणु
+	जोड़ iwreq_data wrqu;
+	अक्षर *memptr;
 
-	memptr = kmalloc(IW_CUSTOM_MAX, GFP_KERNEL);
-	if (!memptr)
-		return;
-	wrqu.data.pointer = memptr;
+	memptr = kदो_स्मृति(IW_CUSTOM_MAX, GFP_KERNEL);
+	अगर (!memptr)
+		वापस;
+	wrqu.data.poपूर्णांकer = memptr;
 	wrqu.data.length = 0;
-	format_event(priv, memptr, str, mlme, &wrqu.data.length,
+	क्रमmat_event(priv, memptr, str, mlme, &wrqu.data.length,
 		     error);
 	wireless_send_event(priv->ndev, IWEVCUSTOM, &wrqu, memptr);
-	kfree(memptr);
-}
+	kमुक्त(memptr);
+पूर्ण
 
-static void
-send_simple_event(islpci_private *priv, const char *str)
-{
-	union iwreq_data wrqu;
-	char *memptr;
-	int n = strlen(str);
+अटल व्योम
+send_simple_event(islpci_निजी *priv, स्थिर अक्षर *str)
+अणु
+	जोड़ iwreq_data wrqu;
+	अक्षर *memptr;
+	पूर्णांक n = म_माप(str);
 
-	memptr = kmalloc(IW_CUSTOM_MAX, GFP_KERNEL);
-	if (!memptr)
-		return;
+	memptr = kदो_स्मृति(IW_CUSTOM_MAX, GFP_KERNEL);
+	अगर (!memptr)
+		वापस;
 	BUG_ON(n >= IW_CUSTOM_MAX);
-	wrqu.data.pointer = memptr;
+	wrqu.data.poपूर्णांकer = memptr;
 	wrqu.data.length = n;
-	strcpy(memptr, str);
+	म_नकल(memptr, str);
 	wireless_send_event(priv->ndev, IWEVCUSTOM, &wrqu, memptr);
-	kfree(memptr);
-}
+	kमुक्त(memptr);
+पूर्ण
 
-static void
-link_changed(struct net_device *ndev, u32 bitrate)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल व्योम
+link_changed(काष्ठा net_device *ndev, u32 bitrate)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
-	if (bitrate) {
-		netif_carrier_on(ndev);
-		if (priv->iw_mode == IW_MODE_INFRA) {
-			union iwreq_data uwrq;
-			prism54_get_wap(ndev, NULL, (struct sockaddr *) &uwrq,
-					NULL);
-			wireless_send_event(ndev, SIOCGIWAP, &uwrq, NULL);
-		} else
+	अगर (bitrate) अणु
+		netअगर_carrier_on(ndev);
+		अगर (priv->iw_mode == IW_MODE_INFRA) अणु
+			जोड़ iwreq_data uwrq;
+			prism54_get_wap(ndev, शून्य, (काष्ठा sockaddr *) &uwrq,
+					शून्य);
+			wireless_send_event(ndev, SIOCGIWAP, &uwrq, शून्य);
+		पूर्ण अन्यथा
 			send_simple_event(netdev_priv(ndev),
 					  "Link established");
-	} else {
-		netif_carrier_off(ndev);
+	पूर्ण अन्यथा अणु
+		netअगर_carrier_off(ndev);
 		send_simple_event(netdev_priv(ndev), "Link lost");
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* Beacon/ProbeResp payload header */
-struct ieee80211_beacon_phdr {
-	u8 timestamp[8];
-	u16 beacon_int;
+काष्ठा ieee80211_beacon_phdr अणु
+	u8 बारtamp[8];
+	u16 beacon_पूर्णांक;
 	u16 capab_info;
-} __packed;
+पूर्ण __packed;
 
-#define WLAN_EID_GENERIC 0xdd
-static u8 wpa_oid[4] = { 0x00, 0x50, 0xf2, 1 };
+#घोषणा WLAN_EID_GENERIC 0xdd
+अटल u8 wpa_oid[4] = अणु 0x00, 0x50, 0xf2, 1 पूर्ण;
 
-static void
-prism54_wpa_bss_ie_add(islpci_private *priv, u8 *bssid,
-		       u8 *wpa_ie, size_t wpa_ie_len)
-{
-	struct list_head *ptr;
-	struct islpci_bss_wpa_ie *bss = NULL;
+अटल व्योम
+prism54_wpa_bss_ie_add(islpci_निजी *priv, u8 *bssid,
+		       u8 *wpa_ie, माप_प्रकार wpa_ie_len)
+अणु
+	काष्ठा list_head *ptr;
+	काष्ठा islpci_bss_wpa_ie *bss = शून्य;
 
-	if (wpa_ie_len > MAX_WPA_IE_LEN)
+	अगर (wpa_ie_len > MAX_WPA_IE_LEN)
 		wpa_ie_len = MAX_WPA_IE_LEN;
 
 	mutex_lock(&priv->wpa_lock);
 
 	/* try to use existing entry */
-	list_for_each(ptr, &priv->bss_wpa_list) {
-		bss = list_entry(ptr, struct islpci_bss_wpa_ie, list);
-		if (memcmp(bss->bssid, bssid, ETH_ALEN) == 0) {
+	list_क्रम_each(ptr, &priv->bss_wpa_list) अणु
+		bss = list_entry(ptr, काष्ठा islpci_bss_wpa_ie, list);
+		अगर (स_भेद(bss->bssid, bssid, ETH_ALEN) == 0) अणु
 			list_move(&bss->list, &priv->bss_wpa_list);
-			break;
-		}
-		bss = NULL;
-	}
+			अवरोध;
+		पूर्ण
+		bss = शून्य;
+	पूर्ण
 
-	if (bss == NULL) {
-		/* add a new BSS entry; if max number of entries is already
+	अगर (bss == शून्य) अणु
+		/* add a new BSS entry; अगर max number of entries is alपढ़ोy
 		 * reached, replace the least recently updated */
-		if (priv->num_bss_wpa >= MAX_BSS_WPA_IE_COUNT) {
+		अगर (priv->num_bss_wpa >= MAX_BSS_WPA_IE_COUNT) अणु
 			bss = list_entry(priv->bss_wpa_list.prev,
-					 struct islpci_bss_wpa_ie, list);
+					 काष्ठा islpci_bss_wpa_ie, list);
 			list_del(&bss->list);
-		} else {
-			bss = kzalloc(sizeof (*bss), GFP_ATOMIC);
-			if (bss != NULL)
+		पूर्ण अन्यथा अणु
+			bss = kzalloc(माप (*bss), GFP_ATOMIC);
+			अगर (bss != शून्य)
 				priv->num_bss_wpa++;
-		}
-		if (bss != NULL) {
-			memcpy(bss->bssid, bssid, ETH_ALEN);
+		पूर्ण
+		अगर (bss != शून्य) अणु
+			स_नकल(bss->bssid, bssid, ETH_ALEN);
 			list_add(&bss->list, &priv->bss_wpa_list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (bss != NULL) {
-		memcpy(bss->wpa_ie, wpa_ie, wpa_ie_len);
+	अगर (bss != शून्य) अणु
+		स_नकल(bss->wpa_ie, wpa_ie, wpa_ie_len);
 		bss->wpa_ie_len = wpa_ie_len;
-		bss->last_update = jiffies;
-	} else {
-		printk(KERN_DEBUG "Failed to add BSS WPA entry for "
+		bss->last_update = jअगरfies;
+	पूर्ण अन्यथा अणु
+		prपूर्णांकk(KERN_DEBUG "Failed to add BSS WPA entry for "
 		       "%pM\n", bssid);
-	}
+	पूर्ण
 
 	/* expire old entries from WPA list */
-	while (priv->num_bss_wpa > 0) {
+	जबतक (priv->num_bss_wpa > 0) अणु
 		bss = list_entry(priv->bss_wpa_list.prev,
-				 struct islpci_bss_wpa_ie, list);
-		if (!time_after(jiffies, bss->last_update + 60 * HZ))
-			break;
+				 काष्ठा islpci_bss_wpa_ie, list);
+		अगर (!समय_after(jअगरfies, bss->last_update + 60 * HZ))
+			अवरोध;
 
 		list_del(&bss->list);
 		priv->num_bss_wpa--;
-		kfree(bss);
-	}
+		kमुक्त(bss);
+	पूर्ण
 
 	mutex_unlock(&priv->wpa_lock);
-}
+पूर्ण
 
-static size_t
-prism54_wpa_bss_ie_get(islpci_private *priv, u8 *bssid, u8 *wpa_ie)
-{
-	struct list_head *ptr;
-	struct islpci_bss_wpa_ie *bss = NULL;
-	size_t len = 0;
+अटल माप_प्रकार
+prism54_wpa_bss_ie_get(islpci_निजी *priv, u8 *bssid, u8 *wpa_ie)
+अणु
+	काष्ठा list_head *ptr;
+	काष्ठा islpci_bss_wpa_ie *bss = शून्य;
+	माप_प्रकार len = 0;
 
 	mutex_lock(&priv->wpa_lock);
 
-	list_for_each(ptr, &priv->bss_wpa_list) {
-		bss = list_entry(ptr, struct islpci_bss_wpa_ie, list);
-		if (memcmp(bss->bssid, bssid, ETH_ALEN) == 0)
-			break;
-		bss = NULL;
-	}
-	if (bss) {
+	list_क्रम_each(ptr, &priv->bss_wpa_list) अणु
+		bss = list_entry(ptr, काष्ठा islpci_bss_wpa_ie, list);
+		अगर (स_भेद(bss->bssid, bssid, ETH_ALEN) == 0)
+			अवरोध;
+		bss = शून्य;
+	पूर्ण
+	अगर (bss) अणु
 		len = bss->wpa_ie_len;
-		memcpy(wpa_ie, bss->wpa_ie, len);
-	}
+		स_नकल(wpa_ie, bss->wpa_ie, len);
+	पूर्ण
 	mutex_unlock(&priv->wpa_lock);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-void
-prism54_wpa_bss_ie_init(islpci_private *priv)
-{
+व्योम
+prism54_wpa_bss_ie_init(islpci_निजी *priv)
+अणु
 	INIT_LIST_HEAD(&priv->bss_wpa_list);
 	mutex_init(&priv->wpa_lock);
-}
+पूर्ण
 
-void
-prism54_wpa_bss_ie_clean(islpci_private *priv)
-{
-	struct islpci_bss_wpa_ie *bss, *n;
+व्योम
+prism54_wpa_bss_ie_clean(islpci_निजी *priv)
+अणु
+	काष्ठा islpci_bss_wpa_ie *bss, *n;
 
-	list_for_each_entry_safe(bss, n, &priv->bss_wpa_list, list) {
-		kfree(bss);
-	}
-}
+	list_क्रम_each_entry_safe(bss, n, &priv->bss_wpa_list, list) अणु
+		kमुक्त(bss);
+	पूर्ण
+पूर्ण
 
-static void
-prism54_process_bss_data(islpci_private *priv, u32 oid, u8 *addr,
-			 u8 *payload, size_t len)
-{
-	struct ieee80211_beacon_phdr *hdr;
+अटल व्योम
+prism54_process_bss_data(islpci_निजी *priv, u32 oid, u8 *addr,
+			 u8 *payload, माप_प्रकार len)
+अणु
+	काष्ठा ieee80211_beacon_phdr *hdr;
 	u8 *pos, *end;
 
-	if (!priv->wpa)
-		return;
+	अगर (!priv->wpa)
+		वापस;
 
-	hdr = (struct ieee80211_beacon_phdr *) payload;
+	hdr = (काष्ठा ieee80211_beacon_phdr *) payload;
 	pos = (u8 *) (hdr + 1);
 	end = payload + len;
-	while (pos < end) {
-		if (pos + 2 + pos[1] > end) {
-			printk(KERN_DEBUG "Parsing Beacon/ProbeResp failed "
+	जबतक (pos < end) अणु
+		अगर (pos + 2 + pos[1] > end) अणु
+			prपूर्णांकk(KERN_DEBUG "Parsing Beacon/ProbeResp failed "
 			       "for %pM\n", addr);
-			return;
-		}
-		if (pos[0] == WLAN_EID_GENERIC && pos[1] >= 4 &&
-		    memcmp(pos + 2, wpa_oid, 4) == 0) {
+			वापस;
+		पूर्ण
+		अगर (pos[0] == WLAN_EID_GENERIC && pos[1] >= 4 &&
+		    स_भेद(pos + 2, wpa_oid, 4) == 0) अणु
 			prism54_wpa_bss_ie_add(priv, addr, pos, pos[1] + 2);
-			return;
-		}
+			वापस;
+		पूर्ण
 		pos += 2 + pos[1];
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-handle_request(islpci_private *priv, struct obj_mlme *mlme, enum oid_num_t oid)
-{
-	if (((mlme->state == DOT11_STATE_AUTHING) ||
+अटल व्योम
+handle_request(islpci_निजी *priv, काष्ठा obj_mlme *mlme, क्रमागत oid_num_t oid)
+अणु
+	अगर (((mlme->state == DOT11_STATE_AUTHING) ||
 	     (mlme->state == DOT11_STATE_ASSOCING))
-	    && mgt_mlme_answer(priv)) {
+	    && mgt_mlme_answer(priv)) अणु
 		/* Someone is requesting auth and we must respond. Just send back
 		 * the trap with error code set accordingly.
 		 */
 		mlme->code = prism54_mac_accept(&priv->acl,
 						mlme->address) ? 0 : 1;
 		mgt_set_request(priv, oid, 0, mlme);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int
-prism54_process_trap_helper(islpci_private *priv, enum oid_num_t oid,
-			    char *data)
-{
-	struct obj_mlme *mlme = (struct obj_mlme *) data;
-	struct obj_mlmeex *mlmeex = (struct obj_mlmeex *) data;
-	struct obj_mlmeex *confirm;
+अटल पूर्णांक
+prism54_process_trap_helper(islpci_निजी *priv, क्रमागत oid_num_t oid,
+			    अक्षर *data)
+अणु
+	काष्ठा obj_mlme *mlme = (काष्ठा obj_mlme *) data;
+	काष्ठा obj_mlmeex *mlmeex = (काष्ठा obj_mlmeex *) data;
+	काष्ठा obj_mlmeex *confirm;
 	u8 wpa_ie[MAX_WPA_IE_LEN];
-	int wpa_ie_len;
-	size_t len = 0; /* u16, better? */
-	u8 *payload = NULL, *pos = NULL;
-	int ret;
+	पूर्णांक wpa_ie_len;
+	माप_प्रकार len = 0; /* u16, better? */
+	u8 *payload = शून्य, *pos = शून्य;
+	पूर्णांक ret;
 
 	/* I think all trapable objects are listed here.
-	 * Some oids have a EX version. The difference is that they are emitted
+	 * Some oids have a EX version. The dअगरference is that they are emitted
 	 * in DOT11_MLME_EXTENDED mode (set with DOT11_OID_MLMEAUTOLEVEL)
 	 * with more info.
-	 * The few events already defined by the wireless tools are not really
+	 * The few events alपढ़ोy defined by the wireless tools are not really
 	 * suited. We use the more flexible custom event facility.
 	 */
 
-	if (oid >= DOT11_OID_BEACON) {
+	अगर (oid >= DOT11_OID_BEACON) अणु
 		len = mlmeex->size;
 		payload = pos = mlmeex->data;
-	}
+	पूर्ण
 
 	/* I fear prism54_process_bss_data won't work with big endian data */
-	if ((oid == DOT11_OID_BEACON) || (oid == DOT11_OID_PROBE))
+	अगर ((oid == DOT11_OID_BEACON) || (oid == DOT11_OID_PROBE))
 		prism54_process_bss_data(priv, oid, mlmeex->address,
 					 payload, len);
 
-	mgt_le_to_cpu(isl_oid[oid].flags & OID_FLAG_TYPE, (void *) mlme);
+	mgt_le_to_cpu(isl_oid[oid].flags & OID_FLAG_TYPE, (व्योम *) mlme);
 
-	switch (oid) {
+	चयन (oid) अणु
 
-	case GEN_OID_LINKSTATE:
+	हाल GEN_OID_LINKSTATE:
 		link_changed(priv->ndev, (u32) *data);
-		break;
+		अवरोध;
 
-	case DOT11_OID_MICFAILURE:
+	हाल DOT11_OID_MICFAILURE:
 		send_simple_event(priv, "Mic failure");
-		break;
+		अवरोध;
 
-	case DOT11_OID_DEAUTHENTICATE:
-		send_formatted_event(priv, "DeAuthenticate request", mlme, 0);
-		break;
+	हाल DOT11_OID_DEAUTHENTICATE:
+		send_क्रमmatted_event(priv, "DeAuthenticate request", mlme, 0);
+		अवरोध;
 
-	case DOT11_OID_AUTHENTICATE:
+	हाल DOT11_OID_AUTHENTICATE:
 		handle_request(priv, mlme, oid);
-		send_formatted_event(priv, "Authenticate request", mlme, 1);
-		break;
+		send_क्रमmatted_event(priv, "Authenticate request", mlme, 1);
+		अवरोध;
 
-	case DOT11_OID_DISASSOCIATE:
-		send_formatted_event(priv, "Disassociate request", mlme, 0);
-		break;
+	हाल DOT11_OID_DISASSOCIATE:
+		send_क्रमmatted_event(priv, "Disassociate request", mlme, 0);
+		अवरोध;
 
-	case DOT11_OID_ASSOCIATE:
+	हाल DOT11_OID_ASSOCIATE:
 		handle_request(priv, mlme, oid);
-		send_formatted_event(priv, "Associate request", mlme, 1);
-		break;
+		send_क्रमmatted_event(priv, "Associate request", mlme, 1);
+		अवरोध;
 
-	case DOT11_OID_REASSOCIATE:
+	हाल DOT11_OID_REASSOCIATE:
 		handle_request(priv, mlme, oid);
-		send_formatted_event(priv, "ReAssociate request", mlme, 1);
-		break;
+		send_क्रमmatted_event(priv, "ReAssociate request", mlme, 1);
+		अवरोध;
 
-	case DOT11_OID_BEACON:
-		send_formatted_event(priv,
+	हाल DOT11_OID_BEACON:
+		send_क्रमmatted_event(priv,
 				     "Received a beacon from an unknown AP",
 				     mlme, 0);
-		break;
+		अवरोध;
 
-	case DOT11_OID_PROBE:
+	हाल DOT11_OID_PROBE:
 		/* we received a probe from a client. */
-		send_formatted_event(priv, "Received a probe from client", mlme,
+		send_क्रमmatted_event(priv, "Received a probe from client", mlme,
 				     0);
-		break;
+		अवरोध;
 
 		/* Note : "mlme" is actually a "struct obj_mlmeex *" here, but this
 		 * is backward compatible layout-wise with "struct obj_mlme".
 		 */
 
-	case DOT11_OID_DEAUTHENTICATEEX:
-		send_formatted_event(priv, "DeAuthenticate request", mlme, 0);
-		break;
+	हाल DOT11_OID_DEAUTHENTICATEEX:
+		send_क्रमmatted_event(priv, "DeAuthenticate request", mlme, 0);
+		अवरोध;
 
-	case DOT11_OID_AUTHENTICATEEX:
+	हाल DOT11_OID_AUTHENTICATEEX:
 		handle_request(priv, mlme, oid);
-		send_formatted_event(priv, "Authenticate request (ex)", mlme, 1);
+		send_क्रमmatted_event(priv, "Authenticate request (ex)", mlme, 1);
 
-		if (priv->iw_mode != IW_MODE_MASTER
+		अगर (priv->iw_mode != IW_MODE_MASTER
 				&& mlmeex->state != DOT11_STATE_AUTHING)
-			break;
+			अवरोध;
 
-		confirm = kmalloc(sizeof(struct obj_mlmeex) + 6, GFP_ATOMIC);
+		confirm = kदो_स्मृति(माप(काष्ठा obj_mlmeex) + 6, GFP_ATOMIC);
 
-		if (!confirm)
-			break;
+		अगर (!confirm)
+			अवरोध;
 
-		memcpy(&confirm->address, mlmeex->address, ETH_ALEN);
-		printk(KERN_DEBUG "Authenticate from: address:\t%pM\n",
+		स_नकल(&confirm->address, mlmeex->address, ETH_ALEN);
+		prपूर्णांकk(KERN_DEBUG "Authenticate from: address:\t%pM\n",
 		       mlmeex->address);
 		confirm->id = -1; /* or mlmeex->id ? */
 		confirm->state = 0; /* not used */
@@ -2369,66 +2370,66 @@ prism54_process_trap_helper(islpci_private *priv, enum oid_num_t oid,
 
 		ret = mgt_set_varlen(priv, DOT11_OID_ASSOCIATEEX, confirm, 6);
 
-		kfree(confirm);
-		if (ret)
-			return ret;
-		break;
+		kमुक्त(confirm);
+		अगर (ret)
+			वापस ret;
+		अवरोध;
 
-	case DOT11_OID_DISASSOCIATEEX:
-		send_formatted_event(priv, "Disassociate request (ex)", mlme, 0);
-		break;
+	हाल DOT11_OID_DISASSOCIATEEX:
+		send_क्रमmatted_event(priv, "Disassociate request (ex)", mlme, 0);
+		अवरोध;
 
-	case DOT11_OID_ASSOCIATEEX:
+	हाल DOT11_OID_ASSOCIATEEX:
 		handle_request(priv, mlme, oid);
-		send_formatted_event(priv, "Associate request (ex)", mlme, 1);
+		send_क्रमmatted_event(priv, "Associate request (ex)", mlme, 1);
 
-		if (priv->iw_mode != IW_MODE_MASTER
+		अगर (priv->iw_mode != IW_MODE_MASTER
 				&& mlmeex->state != DOT11_STATE_ASSOCING)
-			break;
+			अवरोध;
 
-		confirm = kmalloc(sizeof(struct obj_mlmeex), GFP_ATOMIC);
+		confirm = kदो_स्मृति(माप(काष्ठा obj_mlmeex), GFP_ATOMIC);
 
-		if (!confirm)
-			break;
+		अगर (!confirm)
+			अवरोध;
 
-		memcpy(&confirm->address, mlmeex->address, ETH_ALEN);
+		स_नकल(&confirm->address, mlmeex->address, ETH_ALEN);
 
-		confirm->id = ((struct obj_mlmeex *)mlme)->id;
+		confirm->id = ((काष्ठा obj_mlmeex *)mlme)->id;
 		confirm->state = 0; /* not used */
 		confirm->code = 0;
 
 		wpa_ie_len = prism54_wpa_bss_ie_get(priv, mlmeex->address, wpa_ie);
 
-		if (!wpa_ie_len) {
-			printk(KERN_DEBUG "No WPA IE found from address:\t%pM\n",
+		अगर (!wpa_ie_len) अणु
+			prपूर्णांकk(KERN_DEBUG "No WPA IE found from address:\t%pM\n",
 			       mlmeex->address);
-			kfree(confirm);
-			break;
-		}
+			kमुक्त(confirm);
+			अवरोध;
+		पूर्ण
 
 		confirm->size = wpa_ie_len;
-		memcpy(&confirm->data, wpa_ie, wpa_ie_len);
+		स_नकल(&confirm->data, wpa_ie, wpa_ie_len);
 
 		mgt_set_varlen(priv, oid, confirm, wpa_ie_len);
 
-		kfree(confirm);
+		kमुक्त(confirm);
 
-		break;
+		अवरोध;
 
-	case DOT11_OID_REASSOCIATEEX:
+	हाल DOT11_OID_REASSOCIATEEX:
 		handle_request(priv, mlme, oid);
-		send_formatted_event(priv, "Reassociate request (ex)", mlme, 1);
+		send_क्रमmatted_event(priv, "Reassociate request (ex)", mlme, 1);
 
-		if (priv->iw_mode != IW_MODE_MASTER
+		अगर (priv->iw_mode != IW_MODE_MASTER
 				&& mlmeex->state != DOT11_STATE_ASSOCING)
-			break;
+			अवरोध;
 
-		confirm = kmalloc(sizeof(struct obj_mlmeex), GFP_ATOMIC);
+		confirm = kदो_स्मृति(माप(काष्ठा obj_mlmeex), GFP_ATOMIC);
 
-		if (!confirm)
-			break;
+		अगर (!confirm)
+			अवरोध;
 
-		memcpy(&confirm->address, mlmeex->address, ETH_ALEN);
+		स_नकल(&confirm->address, mlmeex->address, ETH_ALEN);
 
 		confirm->id = mlmeex->id;
 		confirm->state = 0; /* not used */
@@ -2436,384 +2437,384 @@ prism54_process_trap_helper(islpci_private *priv, enum oid_num_t oid,
 
 		wpa_ie_len = prism54_wpa_bss_ie_get(priv, mlmeex->address, wpa_ie);
 
-		if (!wpa_ie_len) {
-			printk(KERN_DEBUG "No WPA IE found from address:\t%pM\n",
+		अगर (!wpa_ie_len) अणु
+			prपूर्णांकk(KERN_DEBUG "No WPA IE found from address:\t%pM\n",
 			       mlmeex->address);
-			kfree(confirm);
-			break;
-		}
+			kमुक्त(confirm);
+			अवरोध;
+		पूर्ण
 
 		confirm->size = wpa_ie_len;
-		memcpy(&confirm->data, wpa_ie, wpa_ie_len);
+		स_नकल(&confirm->data, wpa_ie, wpa_ie_len);
 
 		mgt_set_varlen(priv, oid, confirm, wpa_ie_len);
 
-		kfree(confirm);
+		kमुक्त(confirm);
 
-		break;
+		अवरोध;
 
-	default:
-		return -EINVAL;
-	}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Process a device trap.  This is called via schedule_work(), outside of
- * interrupt context, no locks held.
+ * पूर्णांकerrupt context, no locks held.
  */
-void
-prism54_process_trap(struct work_struct *work)
-{
-	struct islpci_mgmtframe *frame =
-		container_of(work, struct islpci_mgmtframe, ws);
-	struct net_device *ndev = frame->ndev;
-	enum oid_num_t n = mgt_oidtonum(frame->header->oid);
+व्योम
+prism54_process_trap(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा islpci_mgmtframe *frame =
+		container_of(work, काष्ठा islpci_mgmtframe, ws);
+	काष्ठा net_device *ndev = frame->ndev;
+	क्रमागत oid_num_t n = mgt_oidtonum(frame->header->oid);
 
-	if (n != OID_NUM_LAST)
+	अगर (n != OID_NUM_LAST)
 		prism54_process_trap_helper(netdev_priv(ndev), n, frame->data);
 	islpci_mgt_release(frame);
-}
+पूर्ण
 
-int
-prism54_set_mac_address(struct net_device *ndev, void *addr)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	int ret;
+पूर्णांक
+prism54_set_mac_address(काष्ठा net_device *ndev, व्योम *addr)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	पूर्णांक ret;
 
-	if (ndev->addr_len != 6)
-		return -EINVAL;
+	अगर (ndev->addr_len != 6)
+		वापस -EINVAL;
 	ret = mgt_set_request(priv, GEN_OID_MACADDRESS, 0,
-			      &((struct sockaddr *) addr)->sa_data);
-	if (!ret)
-		memcpy(priv->ndev->dev_addr,
-		       &((struct sockaddr *) addr)->sa_data, ETH_ALEN);
+			      &((काष्ठा sockaddr *) addr)->sa_data);
+	अगर (!ret)
+		स_नकल(priv->ndev->dev_addr,
+		       &((काष्ठा sockaddr *) addr)->sa_data, ETH_ALEN);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-#define PRISM54_SET_WPA			SIOCIWFIRSTPRIV+12
+#घोषणा PRISM54_SET_WPA			SIOCIWFIRSTPRIV+12
 
-static int
-prism54_set_wpa(struct net_device *ndev, struct iw_request_info *info,
-		__u32 * uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	u32 mlme, authen, dot1x, filter, wep;
+अटल पूर्णांक
+prism54_set_wpa(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		__u32 * uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	u32 mlme, authen, करोt1x, filter, wep;
 
-	if (islpci_get_state(priv) < PRV_STATE_INIT)
-		return 0;
+	अगर (islpci_get_state(priv) < PRV_STATE_INIT)
+		वापस 0;
 
 	wep = 1; /* For privacy invoked */
 	filter = 1; /* Filter out all unencrypted frames */
-	dot1x = 0x01; /* To enable eap filter */
+	करोt1x = 0x01; /* To enable eap filter */
 	mlme = DOT11_MLME_EXTENDED;
 	authen = DOT11_AUTH_OS; /* Only WEP uses _SK and _BOTH */
 
-	down_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
 	priv->wpa = *uwrq;
 
-	switch (priv->wpa) {
-		default:
-		case 0: /* Clears/disables WPA and friends */
+	चयन (priv->wpa) अणु
+		शेष:
+		हाल 0: /* Clears/disables WPA and मित्रs */
 			wep = 0;
 			filter = 0; /* Do not filter un-encrypted data */
-			dot1x = 0;
+			करोt1x = 0;
 			mlme = DOT11_MLME_AUTO;
-			printk("%s: Disabling WPA\n", ndev->name);
-			break;
-		case 2:
-		case 1: /* WPA */
-			printk("%s: Enabling WPA\n", ndev->name);
-			break;
-	}
-	up_write(&priv->mib_sem);
+			prपूर्णांकk("%s: Disabling WPA\n", ndev->name);
+			अवरोध;
+		हाल 2:
+		हाल 1: /* WPA */
+			prपूर्णांकk("%s: Enabling WPA\n", ndev->name);
+			अवरोध;
+	पूर्ण
+	up_ग_लिखो(&priv->mib_sem);
 
 	mgt_set_request(priv, DOT11_OID_AUTHENABLE, 0, &authen);
 	mgt_set_request(priv, DOT11_OID_PRIVACYINVOKED, 0, &wep);
 	mgt_set_request(priv, DOT11_OID_EXUNENCRYPTED, 0, &filter);
-	mgt_set_request(priv, DOT11_OID_DOT1XENABLE, 0, &dot1x);
+	mgt_set_request(priv, DOT11_OID_DOT1XENABLE, 0, &करोt1x);
 	mgt_set_request(priv, DOT11_OID_MLMEAUTOLEVEL, 0, &mlme);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_get_wpa(struct net_device *ndev, struct iw_request_info *info,
-		__u32 * uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_get_wpa(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		__u32 * uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 	*uwrq = priv->wpa;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_set_prismhdr(struct net_device *ndev, struct iw_request_info *info,
-		     __u32 * uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_set_prismhdr(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		     __u32 * uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 	priv->monitor_type =
 	    (*uwrq ? ARPHRD_IEEE80211_PRISM : ARPHRD_IEEE80211);
-	if (priv->iw_mode == IW_MODE_MONITOR)
+	अगर (priv->iw_mode == IW_MODE_MONITOR)
 		priv->ndev->type = priv->monitor_type;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_get_prismhdr(struct net_device *ndev, struct iw_request_info *info,
-		     __u32 * uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_get_prismhdr(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		     __u32 * uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 	*uwrq = (priv->monitor_type == ARPHRD_IEEE80211_PRISM);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_debug_oid(struct net_device *ndev, struct iw_request_info *info,
-		  __u32 * uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_debug_oid(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		  __u32 * uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 
 	priv->priv_oid = *uwrq;
-	printk("%s: oid 0x%08X\n", ndev->name, *uwrq);
+	prपूर्णांकk("%s: oid 0x%08X\n", ndev->name, *uwrq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-prism54_debug_get_oid(struct net_device *ndev, struct iw_request_info *info,
-		      struct iw_point *data, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct islpci_mgmtframe *response;
-	int ret = -EIO;
+अटल पूर्णांक
+prism54_debug_get_oid(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		      काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा islpci_mgmtframe *response;
+	पूर्णांक ret = -EIO;
 
-	printk("%s: get_oid 0x%08X\n", ndev->name, priv->priv_oid);
+	prपूर्णांकk("%s: get_oid 0x%08X\n", ndev->name, priv->priv_oid);
 	data->length = 0;
 
-	if (islpci_get_state(priv) >= PRV_STATE_INIT) {
+	अगर (islpci_get_state(priv) >= PRV_STATE_INIT) अणु
 		ret =
 		    islpci_mgt_transaction(priv->ndev, PIMFOR_OP_GET,
 					   priv->priv_oid, extra, 256,
 					   &response);
-		printk("%s: ret: %i\n", ndev->name, ret);
-		if (ret || !response
-		    || response->header->operation == PIMFOR_OP_ERROR) {
-			if (response) {
+		prपूर्णांकk("%s: ret: %i\n", ndev->name, ret);
+		अगर (ret || !response
+		    || response->header->operation == PIMFOR_OP_ERROR) अणु
+			अगर (response) अणु
 				islpci_mgt_release(response);
-			}
-			printk("%s: EIO\n", ndev->name);
+			पूर्ण
+			prपूर्णांकk("%s: EIO\n", ndev->name);
 			ret = -EIO;
-		}
-		if (!ret) {
+		पूर्ण
+		अगर (!ret) अणु
 			data->length = response->header->length;
-			memcpy(extra, response->data, data->length);
+			स_नकल(extra, response->data, data->length);
 			islpci_mgt_release(response);
-			printk("%s: len: %i\n", ndev->name, data->length);
-		}
-	}
+			prपूर्णांकk("%s: len: %i\n", ndev->name, data->length);
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-prism54_debug_set_oid(struct net_device *ndev, struct iw_request_info *info,
-		      struct iw_point *data, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
-	struct islpci_mgmtframe *response;
-	int ret = 0, response_op = PIMFOR_OP_ERROR;
+अटल पूर्णांक
+prism54_debug_set_oid(काष्ठा net_device *ndev, काष्ठा iw_request_info *info,
+		      काष्ठा iw_poपूर्णांक *data, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
+	काष्ठा islpci_mgmtframe *response;
+	पूर्णांक ret = 0, response_op = PIMFOR_OP_ERROR;
 
-	printk("%s: set_oid 0x%08X\tlen: %d\n", ndev->name, priv->priv_oid,
+	prपूर्णांकk("%s: set_oid 0x%08X\tlen: %d\n", ndev->name, priv->priv_oid,
 	       data->length);
 
-	if (islpci_get_state(priv) >= PRV_STATE_INIT) {
+	अगर (islpci_get_state(priv) >= PRV_STATE_INIT) अणु
 		ret =
 		    islpci_mgt_transaction(priv->ndev, PIMFOR_OP_SET,
 					   priv->priv_oid, extra, data->length,
 					   &response);
-		printk("%s: ret: %i\n", ndev->name, ret);
-		if (ret || !response
-		    || response->header->operation == PIMFOR_OP_ERROR) {
-			if (response) {
+		prपूर्णांकk("%s: ret: %i\n", ndev->name, ret);
+		अगर (ret || !response
+		    || response->header->operation == PIMFOR_OP_ERROR) अणु
+			अगर (response) अणु
 				islpci_mgt_release(response);
-			}
-			printk("%s: EIO\n", ndev->name);
+			पूर्ण
+			prपूर्णांकk("%s: EIO\n", ndev->name);
 			ret = -EIO;
-		}
-		if (!ret) {
+		पूर्ण
+		अगर (!ret) अणु
 			response_op = response->header->operation;
-			printk("%s: response_op: %i\n", ndev->name,
+			prपूर्णांकk("%s: response_op: %i\n", ndev->name,
 			       response_op);
 			islpci_mgt_release(response);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return (ret ? ret : -EINPROGRESS);
-}
+	वापस (ret ? ret : -EINPROGRESS);
+पूर्ण
 
-static int
-prism54_set_spy(struct net_device *ndev,
-		struct iw_request_info *info,
-		union iwreq_data *uwrq, char *extra)
-{
-	islpci_private *priv = netdev_priv(ndev);
+अटल पूर्णांक
+prism54_set_spy(काष्ठा net_device *ndev,
+		काष्ठा iw_request_info *info,
+		जोड़ iwreq_data *uwrq, अक्षर *extra)
+अणु
+	islpci_निजी *priv = netdev_priv(ndev);
 	u32 u;
-	enum oid_num_t oid = OID_INL_CONFIG;
+	क्रमागत oid_num_t oid = OID_INL_CONFIG;
 
-	down_write(&priv->mib_sem);
+	करोwn_ग_लिखो(&priv->mib_sem);
 	mgt_get(priv, OID_INL_CONFIG, &u);
 
-	if ((uwrq->data.length == 0) && (priv->spy_data.spy_number > 0))
+	अगर ((uwrq->data.length == 0) && (priv->spy_data.spy_number > 0))
 		/* disable spy */
 		u &= ~INL_CONFIG_RXANNEX;
-	else if ((uwrq->data.length > 0) && (priv->spy_data.spy_number == 0))
+	अन्यथा अगर ((uwrq->data.length > 0) && (priv->spy_data.spy_number == 0))
 		/* enable spy */
 		u |= INL_CONFIG_RXANNEX;
 
 	mgt_set(priv, OID_INL_CONFIG, &u);
 	mgt_commit_list(priv, &oid, 1);
-	up_write(&priv->mib_sem);
+	up_ग_लिखो(&priv->mib_sem);
 
-	return iw_handler_set_spy(ndev, info, uwrq, extra);
-}
+	वापस iw_handler_set_spy(ndev, info, uwrq, extra);
+पूर्ण
 
-static const iw_handler prism54_handler[] = {
+अटल स्थिर iw_handler prism54_handler[] = अणु
 	(iw_handler) prism54_commit,	/* SIOCSIWCOMMIT */
 	(iw_handler) prism54_get_name,	/* SIOCGIWNAME */
-	(iw_handler) NULL,	/* SIOCSIWNWID */
-	(iw_handler) NULL,	/* SIOCGIWNWID */
+	(iw_handler) शून्य,	/* SIOCSIWNWID */
+	(iw_handler) शून्य,	/* SIOCGIWNWID */
 	(iw_handler) prism54_set_freq,	/* SIOCSIWFREQ */
 	(iw_handler) prism54_get_freq,	/* SIOCGIWFREQ */
 	(iw_handler) prism54_set_mode,	/* SIOCSIWMODE */
 	(iw_handler) prism54_get_mode,	/* SIOCGIWMODE */
 	(iw_handler) prism54_set_sens,	/* SIOCSIWSENS */
 	(iw_handler) prism54_get_sens,	/* SIOCGIWSENS */
-	(iw_handler) NULL,	/* SIOCSIWRANGE */
+	(iw_handler) शून्य,	/* SIOCSIWRANGE */
 	(iw_handler) prism54_get_range,	/* SIOCGIWRANGE */
-	(iw_handler) NULL,	/* SIOCSIWPRIV */
-	(iw_handler) NULL,	/* SIOCGIWPRIV */
-	(iw_handler) NULL,	/* SIOCSIWSTATS */
-	(iw_handler) NULL,	/* SIOCGIWSTATS */
+	(iw_handler) शून्य,	/* SIOCSIWPRIV */
+	(iw_handler) शून्य,	/* SIOCGIWPRIV */
+	(iw_handler) शून्य,	/* SIOCSIWSTATS */
+	(iw_handler) शून्य,	/* SIOCGIWSTATS */
 	prism54_set_spy,	/* SIOCSIWSPY */
 	iw_handler_get_spy,	/* SIOCGIWSPY */
 	iw_handler_set_thrspy,	/* SIOCSIWTHRSPY */
 	iw_handler_get_thrspy,	/* SIOCGIWTHRSPY */
 	(iw_handler) prism54_set_wap,	/* SIOCSIWAP */
 	(iw_handler) prism54_get_wap,	/* SIOCGIWAP */
-	(iw_handler) NULL,	/* -- hole -- */
-	(iw_handler) NULL,	/* SIOCGIWAPLIST deprecated */
+	(iw_handler) शून्य,	/* -- hole -- */
+	(iw_handler) शून्य,	/* SIOCGIWAPLIST deprecated */
 	(iw_handler) prism54_set_scan,	/* SIOCSIWSCAN */
 	(iw_handler) prism54_get_scan,	/* SIOCGIWSCAN */
 	(iw_handler) prism54_set_essid,	/* SIOCSIWESSID */
 	(iw_handler) prism54_get_essid,	/* SIOCGIWESSID */
 	(iw_handler) prism54_set_nick,	/* SIOCSIWNICKN */
 	(iw_handler) prism54_get_nick,	/* SIOCGIWNICKN */
-	(iw_handler) NULL,	/* -- hole -- */
-	(iw_handler) NULL,	/* -- hole -- */
+	(iw_handler) शून्य,	/* -- hole -- */
+	(iw_handler) शून्य,	/* -- hole -- */
 	(iw_handler) prism54_set_rate,	/* SIOCSIWRATE */
 	(iw_handler) prism54_get_rate,	/* SIOCGIWRATE */
 	(iw_handler) prism54_set_rts,	/* SIOCSIWRTS */
 	(iw_handler) prism54_get_rts,	/* SIOCGIWRTS */
 	(iw_handler) prism54_set_frag,	/* SIOCSIWFRAG */
 	(iw_handler) prism54_get_frag,	/* SIOCGIWFRAG */
-	(iw_handler) prism54_set_txpower,	/* SIOCSIWTXPOW */
-	(iw_handler) prism54_get_txpower,	/* SIOCGIWTXPOW */
+	(iw_handler) prism54_set_txघातer,	/* SIOCSIWTXPOW */
+	(iw_handler) prism54_get_txघातer,	/* SIOCGIWTXPOW */
 	(iw_handler) prism54_set_retry,	/* SIOCSIWRETRY */
 	(iw_handler) prism54_get_retry,	/* SIOCGIWRETRY */
 	(iw_handler) prism54_set_encode,	/* SIOCSIWENCODE */
 	(iw_handler) prism54_get_encode,	/* SIOCGIWENCODE */
-	(iw_handler) NULL,	/* SIOCSIWPOWER */
-	(iw_handler) NULL,	/* SIOCGIWPOWER */
-	NULL,			/* -- hole -- */
-	NULL,			/* -- hole -- */
+	(iw_handler) शून्य,	/* SIOCSIWPOWER */
+	(iw_handler) शून्य,	/* SIOCGIWPOWER */
+	शून्य,			/* -- hole -- */
+	शून्य,			/* -- hole -- */
 	(iw_handler) prism54_set_genie,	/* SIOCSIWGENIE */
 	(iw_handler) prism54_get_genie,	/* SIOCGIWGENIE */
 	(iw_handler) prism54_set_auth,	/* SIOCSIWAUTH */
 	(iw_handler) prism54_get_auth,	/* SIOCGIWAUTH */
 	(iw_handler) prism54_set_encodeext, /* SIOCSIWENCODEEXT */
 	(iw_handler) prism54_get_encodeext, /* SIOCGIWENCODEEXT */
-	NULL,			/* SIOCSIWPMKSA */
-};
+	शून्य,			/* SIOCSIWPMKSA */
+पूर्ण;
 
-/* The low order bit identify a SET (0) or a GET (1) ioctl.  */
+/* The low order bit identअगरy a SET (0) or a GET (1) ioctl.  */
 
-#define PRISM54_RESET		SIOCIWFIRSTPRIV
-#define PRISM54_GET_POLICY	SIOCIWFIRSTPRIV+1
-#define PRISM54_SET_POLICY	SIOCIWFIRSTPRIV+2
-#define PRISM54_GET_MAC		SIOCIWFIRSTPRIV+3
-#define PRISM54_ADD_MAC		SIOCIWFIRSTPRIV+4
+#घोषणा PRISM54_RESET		SIOCIWFIRSTPRIV
+#घोषणा PRISM54_GET_POLICY	SIOCIWFIRSTPRIV+1
+#घोषणा PRISM54_SET_POLICY	SIOCIWFIRSTPRIV+2
+#घोषणा PRISM54_GET_MAC		SIOCIWFIRSTPRIV+3
+#घोषणा PRISM54_ADD_MAC		SIOCIWFIRSTPRIV+4
 
-#define PRISM54_DEL_MAC		SIOCIWFIRSTPRIV+6
+#घोषणा PRISM54_DEL_MAC		SIOCIWFIRSTPRIV+6
 
-#define PRISM54_KICK_MAC	SIOCIWFIRSTPRIV+8
+#घोषणा PRISM54_KICK_MAC	SIOCIWFIRSTPRIV+8
 
-#define PRISM54_KICK_ALL	SIOCIWFIRSTPRIV+10
+#घोषणा PRISM54_KICK_ALL	SIOCIWFIRSTPRIV+10
 
-#define PRISM54_GET_WPA		SIOCIWFIRSTPRIV+11
-#define PRISM54_SET_WPA		SIOCIWFIRSTPRIV+12
+#घोषणा PRISM54_GET_WPA		SIOCIWFIRSTPRIV+11
+#घोषणा PRISM54_SET_WPA		SIOCIWFIRSTPRIV+12
 
-#define PRISM54_DBG_OID		SIOCIWFIRSTPRIV+14
-#define PRISM54_DBG_GET_OID	SIOCIWFIRSTPRIV+15
-#define PRISM54_DBG_SET_OID	SIOCIWFIRSTPRIV+16
+#घोषणा PRISM54_DBG_OID		SIOCIWFIRSTPRIV+14
+#घोषणा PRISM54_DBG_GET_OID	SIOCIWFIRSTPRIV+15
+#घोषणा PRISM54_DBG_SET_OID	SIOCIWFIRSTPRIV+16
 
-#define PRISM54_GET_OID		SIOCIWFIRSTPRIV+17
-#define PRISM54_SET_OID_U32	SIOCIWFIRSTPRIV+18
-#define	PRISM54_SET_OID_STR	SIOCIWFIRSTPRIV+20
-#define	PRISM54_SET_OID_ADDR	SIOCIWFIRSTPRIV+22
+#घोषणा PRISM54_GET_OID		SIOCIWFIRSTPRIV+17
+#घोषणा PRISM54_SET_OID_U32	SIOCIWFIRSTPRIV+18
+#घोषणा	PRISM54_SET_OID_STR	SIOCIWFIRSTPRIV+20
+#घोषणा	PRISM54_SET_OID_ADDR	SIOCIWFIRSTPRIV+22
 
-#define PRISM54_GET_PRISMHDR	SIOCIWFIRSTPRIV+23
-#define PRISM54_SET_PRISMHDR	SIOCIWFIRSTPRIV+24
+#घोषणा PRISM54_GET_PRISMHDR	SIOCIWFIRSTPRIV+23
+#घोषणा PRISM54_SET_PRISMHDR	SIOCIWFIRSTPRIV+24
 
-#define IWPRIV_SET_U32(n,x)	{ n, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "s_"x }
-#define IWPRIV_SET_SSID(n,x)	{ n, IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_FIXED | 1, 0, "s_"x }
-#define IWPRIV_SET_ADDR(n,x)	{ n, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "s_"x }
-#define IWPRIV_GET(n,x)	{ n, 0, IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_FIXED | PRIV_STR_SIZE, "g_"x }
+#घोषणा IWPRIV_SET_U32(n,x)	अणु n, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "s_"x पूर्ण
+#घोषणा IWPRIV_SET_SSID(n,x)	अणु n, IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_FIXED | 1, 0, "s_"x पूर्ण
+#घोषणा IWPRIV_SET_ADDR(n,x)	अणु n, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, "s_"x पूर्ण
+#घोषणा IWPRIV_GET(n,x)	अणु n, 0, IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_FIXED | PRIV_STR_SIZE, "g_"x पूर्ण
 
-#define IWPRIV_U32(n,x)		IWPRIV_SET_U32(n,x), IWPRIV_GET(n,x)
-#define IWPRIV_SSID(n,x)	IWPRIV_SET_SSID(n,x), IWPRIV_GET(n,x)
-#define IWPRIV_ADDR(n,x)	IWPRIV_SET_ADDR(n,x), IWPRIV_GET(n,x)
+#घोषणा IWPRIV_U32(n,x)		IWPRIV_SET_U32(n,x), IWPRIV_GET(n,x)
+#घोषणा IWPRIV_SSID(n,x)	IWPRIV_SET_SSID(n,x), IWPRIV_GET(n,x)
+#घोषणा IWPRIV_ADDR(n,x)	IWPRIV_SET_ADDR(n,x), IWPRIV_GET(n,x)
 
-/* Note : limited to 128 private ioctls (wireless tools 26) */
+/* Note : limited to 128 निजी ioctls (wireless tools 26) */
 
-static const struct iw_priv_args prism54_private_args[] = {
-/*{ cmd, set_args, get_args, name } */
-	{PRISM54_RESET, 0, 0, "reset"},
-	{PRISM54_GET_PRISMHDR, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 "get_prismhdr"},
-	{PRISM54_SET_PRISMHDR, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
-	 "set_prismhdr"},
-	{PRISM54_GET_POLICY, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 "getPolicy"},
-	{PRISM54_SET_POLICY, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
-	 "setPolicy"},
-	{PRISM54_GET_MAC, 0, IW_PRIV_TYPE_ADDR | 64, "getMac"},
-	{PRISM54_ADD_MAC, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0,
-	 "addMac"},
-	{PRISM54_DEL_MAC, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0,
-	 "delMac"},
-	{PRISM54_KICK_MAC, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0,
-	 "kickMac"},
-	{PRISM54_KICK_ALL, 0, 0, "kickAll"},
-	{PRISM54_GET_WPA, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 "get_wpa"},
-	{PRISM54_SET_WPA, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
-	 "set_wpa"},
-	{PRISM54_DBG_OID, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
-	 "dbg_oid"},
-	{PRISM54_DBG_GET_OID, 0, IW_PRIV_TYPE_BYTE | 256, "dbg_get_oid"},
-	{PRISM54_DBG_SET_OID, IW_PRIV_TYPE_BYTE | 256, 0, "dbg_set_oid"},
+अटल स्थिर काष्ठा iw_priv_args prism54_निजी_args[] = अणु
+/*अणु cmd, set_args, get_args, name पूर्ण */
+	अणुPRISM54_RESET, 0, 0, "reset"पूर्ण,
+	अणुPRISM54_GET_PRISMHDR, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 "get_prismhdr"पूर्ण,
+	अणुPRISM54_SET_PRISMHDR, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
+	 "set_prismhdr"पूर्ण,
+	अणुPRISM54_GET_POLICY, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 "getPolicy"पूर्ण,
+	अणुPRISM54_SET_POLICY, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
+	 "setPolicy"पूर्ण,
+	अणुPRISM54_GET_MAC, 0, IW_PRIV_TYPE_ADDR | 64, "getMac"पूर्ण,
+	अणुPRISM54_ADD_MAC, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0,
+	 "addMac"पूर्ण,
+	अणुPRISM54_DEL_MAC, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0,
+	 "delMac"पूर्ण,
+	अणुPRISM54_KICK_MAC, IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0,
+	 "kickMac"पूर्ण,
+	अणुPRISM54_KICK_ALL, 0, 0, "kickAll"पूर्ण,
+	अणुPRISM54_GET_WPA, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 "get_wpa"पूर्ण,
+	अणुPRISM54_SET_WPA, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
+	 "set_wpa"पूर्ण,
+	अणुPRISM54_DBG_OID, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0,
+	 "dbg_oid"पूर्ण,
+	अणुPRISM54_DBG_GET_OID, 0, IW_PRIV_TYPE_BYTE | 256, "dbg_get_oid"पूर्ण,
+	अणुPRISM54_DBG_SET_OID, IW_PRIV_TYPE_BYTE | 256, 0, "dbg_set_oid"पूर्ण,
 	/* --- sub-ioctls handlers --- */
-	{PRISM54_GET_OID,
-	 0, IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_FIXED | PRIV_STR_SIZE, ""},
-	{PRISM54_SET_OID_U32,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, ""},
-	{PRISM54_SET_OID_STR,
-	 IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_FIXED | 1, 0, ""},
-	{PRISM54_SET_OID_ADDR,
-	 IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, ""},
+	अणुPRISM54_GET_OID,
+	 0, IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_FIXED | PRIV_STR_SIZE, ""पूर्ण,
+	अणुPRISM54_SET_OID_U32,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, ""पूर्ण,
+	अणुPRISM54_SET_OID_STR,
+	 IW_PRIV_TYPE_CHAR | IW_PRIV_SIZE_FIXED | 1, 0, ""पूर्ण,
+	अणुPRISM54_SET_OID_ADDR,
+	 IW_PRIV_TYPE_ADDR | IW_PRIV_SIZE_FIXED | 1, 0, ""पूर्ण,
 	/* --- sub-ioctls definitions --- */
 	IWPRIV_ADDR(GEN_OID_MACADDRESS, "addr"),
 	IWPRIV_GET(GEN_OID_LINKSTATE, "linkstate"),
@@ -2857,7 +2858,7 @@ static const struct iw_priv_args prism54_private_args[] = {
 	IWPRIV_U32(DOT11_OID_NOISEFLOOR, "noisefloor"),
 	IWPRIV_GET(DOT11_OID_FREQUENCYACTIVITY, "freqactivity"),
 	IWPRIV_U32(DOT11_OID_NONERPPROTECTION, "nonerpprotec"),
-	IWPRIV_U32(DOT11_OID_PROFILES, "profile"),
+	IWPRIV_U32(DOT11_OID_PROखाताS, "profile"),
 	IWPRIV_GET(DOT11_OID_EXTENDEDRATES, "extrates"),
 	IWPRIV_U32(DOT11_OID_MLMEAUTOLEVEL, "mlmelevel"),
 
@@ -2868,42 +2869,42 @@ static const struct iw_priv_args prism54_private_args[] = {
 	IWPRIV_U32(OID_INL_DOT11D_CONFORMANCE, ".11dconform"),
 	IWPRIV_GET(OID_INL_PHYCAPABILITIES, "phycapa"),
 	IWPRIV_U32(OID_INL_OUTPUTPOWER, "outpower"),
-};
+पूर्ण;
 
-static const iw_handler prism54_private_handler[] = {
+अटल स्थिर iw_handler prism54_निजी_handler[] = अणु
 	(iw_handler) prism54_reset,
 	(iw_handler) prism54_get_policy,
 	(iw_handler) prism54_set_policy,
 	(iw_handler) prism54_get_mac,
 	(iw_handler) prism54_add_mac,
-	(iw_handler) NULL,
+	(iw_handler) शून्य,
 	(iw_handler) prism54_del_mac,
-	(iw_handler) NULL,
+	(iw_handler) शून्य,
 	(iw_handler) prism54_kick_mac,
-	(iw_handler) NULL,
+	(iw_handler) शून्य,
 	(iw_handler) prism54_kick_all,
 	(iw_handler) prism54_get_wpa,
 	(iw_handler) prism54_set_wpa,
-	(iw_handler) NULL,
+	(iw_handler) शून्य,
 	(iw_handler) prism54_debug_oid,
 	(iw_handler) prism54_debug_get_oid,
 	(iw_handler) prism54_debug_set_oid,
 	(iw_handler) prism54_get_oid,
 	(iw_handler) prism54_set_u32,
-	(iw_handler) NULL,
+	(iw_handler) शून्य,
 	(iw_handler) prism54_set_raw,
-	(iw_handler) NULL,
+	(iw_handler) शून्य,
 	(iw_handler) prism54_set_raw,
 	(iw_handler) prism54_get_prismhdr,
 	(iw_handler) prism54_set_prismhdr,
-};
+पूर्ण;
 
-const struct iw_handler_def prism54_handler_def = {
+स्थिर काष्ठा iw_handler_def prism54_handler_def = अणु
 	.num_standard = ARRAY_SIZE(prism54_handler),
-	.num_private = ARRAY_SIZE(prism54_private_handler),
-	.num_private_args = ARRAY_SIZE(prism54_private_args),
+	.num_निजी = ARRAY_SIZE(prism54_निजी_handler),
+	.num_निजी_args = ARRAY_SIZE(prism54_निजी_args),
 	.standard = (iw_handler *) prism54_handler,
-	.private = (iw_handler *) prism54_private_handler,
-	.private_args = (struct iw_priv_args *) prism54_private_args,
+	.निजी = (iw_handler *) prism54_निजी_handler,
+	.निजी_args = (काष्ठा iw_priv_args *) prism54_निजी_args,
 	.get_wireless_stats = prism54_get_wireless_stats,
-};
+पूर्ण;

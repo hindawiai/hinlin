@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * cgroup_event_listener.c - Simple listener of cgroup events
  *
  * Copyright (C) Kirill A. Shutemov <kirill@shutemov.name>
  */
 
-#include <assert.h>
-#include <err.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <libgen.h>
-#include <limits.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
+#समावेश <निश्चित.स>
+#समावेश <err.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <fcntl.h>
+#समावेश <libgen.h>
+#समावेश <सीमा.स>
+#समावेश <मानकपन.स>
+#समावेश <माला.स>
+#समावेश <unistd.h>
 
-#include <sys/eventfd.h>
+#समावेश <sys/eventfd.h>
 
-#define USAGE_STR "Usage: cgroup_event_listener <path-to-control-file> <args>"
+#घोषणा USAGE_STR "Usage: cgroup_event_listener <path-to-control-file> <args>"
 
-int main(int argc, char **argv)
-{
-	int efd = -1;
-	int cfd = -1;
-	int event_control = -1;
-	char event_control_path[PATH_MAX];
-	char line[LINE_MAX];
-	int ret;
+पूर्णांक मुख्य(पूर्णांक argc, अक्षर **argv)
+अणु
+	पूर्णांक efd = -1;
+	पूर्णांक cfd = -1;
+	पूर्णांक event_control = -1;
+	अक्षर event_control_path[PATH_MAX];
+	अक्षर line[LINE_MAX];
+	पूर्णांक ret;
 
-	if (argc != 3)
+	अगर (argc != 3)
 		errx(1, "%s", USAGE_STR);
 
-	cfd = open(argv[1], O_RDONLY);
-	if (cfd == -1)
+	cfd = खोलो(argv[1], O_RDONLY);
+	अगर (cfd == -1)
 		err(1, "Cannot open %s", argv[1]);
 
-	ret = snprintf(event_control_path, PATH_MAX, "%s/cgroup.event_control",
-			dirname(argv[1]));
-	if (ret >= PATH_MAX)
+	ret = snम_लिखो(event_control_path, PATH_MAX, "%s/cgroup.event_control",
+			स_नाम(argv[1]));
+	अगर (ret >= PATH_MAX)
 		errx(1, "Path to cgroup.event_control is too long");
 
-	event_control = open(event_control_path, O_WRONLY);
-	if (event_control == -1)
+	event_control = खोलो(event_control_path, O_WRONLY);
+	अगर (event_control == -1)
 		err(1, "Cannot open %s", event_control_path);
 
 	efd = eventfd(0, 0);
-	if (efd == -1)
+	अगर (efd == -1)
 		err(1, "eventfd() failed");
 
-	ret = snprintf(line, LINE_MAX, "%d %d %s", efd, cfd, argv[2]);
-	if (ret >= LINE_MAX)
+	ret = snम_लिखो(line, LINE_MAX, "%d %d %s", efd, cfd, argv[2]);
+	अगर (ret >= LINE_MAX)
 		errx(1, "Arguments string is too long");
 
-	ret = write(event_control, line, strlen(line) + 1);
-	if (ret == -1)
+	ret = ग_लिखो(event_control, line, म_माप(line) + 1);
+	अगर (ret == -1)
 		err(1, "Cannot write to cgroup.event_control");
 
-	while (1) {
-		uint64_t result;
+	जबतक (1) अणु
+		uपूर्णांक64_t result;
 
-		ret = read(efd, &result, sizeof(result));
-		if (ret == -1) {
-			if (errno == EINTR)
-				continue;
+		ret = पढ़ो(efd, &result, माप(result));
+		अगर (ret == -1) अणु
+			अगर (त्रुटि_सं == EINTR)
+				जारी;
 			err(1, "Cannot read from eventfd");
-		}
-		assert(ret == sizeof(result));
+		पूर्ण
+		निश्चित(ret == माप(result));
 
 		ret = access(event_control_path, W_OK);
-		if ((ret == -1) && (errno == ENOENT)) {
-			puts("The cgroup seems to have removed.");
-			break;
-		}
+		अगर ((ret == -1) && (त्रुटि_सं == ENOENT)) अणु
+			माला_दो("The cgroup seems to have removed.");
+			अवरोध;
+		पूर्ण
 
-		if (ret == -1)
+		अगर (ret == -1)
 			err(1, "cgroup.event_control is not accessible any more");
 
-		printf("%s %s: crossed\n", argv[1], argv[2]);
-	}
+		म_लिखो("%s %s: crossed\n", argv[1], argv[2]);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

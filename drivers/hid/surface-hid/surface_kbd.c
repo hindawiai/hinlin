@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Surface System Aggregator Module (SSAM) HID transport driver for the legacy
- * keyboard interface (KBD/TC=0x08 subsystem). Provides support for the
- * integrated HID keyboard on Surface Laptops 1 and 2.
+ * Surface System Aggregator Module (SSAM) HID transport driver क्रम the legacy
+ * keyboard पूर्णांकerface (KBD/TC=0x08 subप्रणाली). Provides support क्रम the
+ * पूर्णांकegrated HID keyboard on Surface Laptops 1 and 2.
  *
  * Copyright (C) 2019-2021 Maximilian Luz <luzmaximilian@gmail.com>
  */
 
-#include <asm/unaligned.h>
-#include <linux/hid.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_device.h>
-#include <linux/types.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/types.h>
 
-#include <linux/surface_aggregator/controller.h>
+#समावेश <linux/surface_aggregator/controller.h>
 
-#include "surface_hid_core.h"
+#समावेश "surface_hid_core.h"
 
 
-/* -- SAM interface (KBD). -------------------------------------------------- */
+/* -- SAM पूर्णांकerface (KBD). -------------------------------------------------- */
 
-#define KBD_FEATURE_REPORT_SIZE			7  /* 6 + report ID */
+#घोषणा KBD_FEATURE_REPORT_SIZE			7  /* 6 + report ID */
 
-enum surface_kbd_cid {
+क्रमागत surface_kbd_cid अणु
 	SURFACE_KBD_CID_GET_DESCRIPTOR		= 0x00,
 	SURFACE_KBD_CID_SET_CAPSLOCK_LED	= 0x01,
 	SURFACE_KBD_CID_EVT_INPUT_GENERIC	= 0x03,
 	SURFACE_KBD_CID_EVT_INPUT_HOTKEYS	= 0x04,
 	SURFACE_KBD_CID_GET_FEATURE_REPORT	= 0x0b,
-};
+पूर्ण;
 
-static int ssam_kbd_get_descriptor(struct surface_hid_device *shid, u8 entry, u8 *buf, size_t len)
-{
-	struct ssam_request rqst;
-	struct ssam_response rsp;
-	int status;
+अटल पूर्णांक ssam_kbd_get_descriptor(काष्ठा surface_hid_device *shid, u8 entry, u8 *buf, माप_प्रकार len)
+अणु
+	काष्ठा ssam_request rqst;
+	काष्ठा ssam_response rsp;
+	पूर्णांक status;
 
 	rqst.target_category = shid->uid.category;
 	rqst.target_id = shid->uid.target;
 	rqst.command_id = SURFACE_KBD_CID_GET_DESCRIPTOR;
 	rqst.instance_id = shid->uid.instance;
 	rqst.flags = SSAM_REQUEST_HAS_RESPONSE;
-	rqst.length = sizeof(entry);
+	rqst.length = माप(entry);
 	rqst.payload = &entry;
 
 	rsp.capacity = len;
 	rsp.length = 0;
-	rsp.pointer = buf;
+	rsp.poपूर्णांकer = buf;
 
-	status = ssam_retry(ssam_request_sync_onstack, shid->ctrl, &rqst, &rsp, sizeof(entry));
-	if (status)
-		return status;
+	status = ssam_retry(ssam_request_sync_onstack, shid->ctrl, &rqst, &rsp, माप(entry));
+	अगर (status)
+		वापस status;
 
-	if (rsp.length != len) {
+	अगर (rsp.length != len) अणु
 		dev_err(shid->dev, "invalid descriptor length: got %zu, expected, %zu\n",
 			rsp.length, len);
-		return -EPROTO;
-	}
+		वापस -EPROTO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ssam_kbd_set_caps_led(struct surface_hid_device *shid, bool value)
-{
-	struct ssam_request rqst;
+अटल पूर्णांक ssam_kbd_set_caps_led(काष्ठा surface_hid_device *shid, bool value)
+अणु
+	काष्ठा ssam_request rqst;
 	u8 value_u8 = value;
 
 	rqst.target_category = shid->uid.category;
@@ -72,228 +73,228 @@ static int ssam_kbd_set_caps_led(struct surface_hid_device *shid, bool value)
 	rqst.command_id = SURFACE_KBD_CID_SET_CAPSLOCK_LED;
 	rqst.instance_id = shid->uid.instance;
 	rqst.flags = 0;
-	rqst.length = sizeof(value_u8);
+	rqst.length = माप(value_u8);
 	rqst.payload = &value_u8;
 
-	return ssam_retry(ssam_request_sync_onstack, shid->ctrl, &rqst, NULL, sizeof(value_u8));
-}
+	वापस ssam_retry(ssam_request_sync_onstack, shid->ctrl, &rqst, शून्य, माप(value_u8));
+पूर्ण
 
-static int ssam_kbd_get_feature_report(struct surface_hid_device *shid, u8 *buf, size_t len)
-{
-	struct ssam_request rqst;
-	struct ssam_response rsp;
+अटल पूर्णांक ssam_kbd_get_feature_report(काष्ठा surface_hid_device *shid, u8 *buf, माप_प्रकार len)
+अणु
+	काष्ठा ssam_request rqst;
+	काष्ठा ssam_response rsp;
 	u8 payload = 0;
-	int status;
+	पूर्णांक status;
 
 	rqst.target_category = shid->uid.category;
 	rqst.target_id = shid->uid.target;
 	rqst.command_id = SURFACE_KBD_CID_GET_FEATURE_REPORT;
 	rqst.instance_id = shid->uid.instance;
 	rqst.flags = SSAM_REQUEST_HAS_RESPONSE;
-	rqst.length = sizeof(payload);
+	rqst.length = माप(payload);
 	rqst.payload = &payload;
 
 	rsp.capacity = len;
 	rsp.length = 0;
-	rsp.pointer = buf;
+	rsp.poपूर्णांकer = buf;
 
-	status = ssam_retry(ssam_request_sync_onstack, shid->ctrl, &rqst, &rsp, sizeof(payload));
-	if (status)
-		return status;
+	status = ssam_retry(ssam_request_sync_onstack, shid->ctrl, &rqst, &rsp, माप(payload));
+	अगर (status)
+		वापस status;
 
-	if (rsp.length != len) {
+	अगर (rsp.length != len) अणु
 		dev_err(shid->dev, "invalid feature report length: got %zu, expected, %zu\n",
 			rsp.length, len);
-		return -EPROTO;
-	}
+		वापस -EPROTO;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool ssam_kbd_is_input_event(const struct ssam_event *event)
-{
-	if (event->command_id == SURFACE_KBD_CID_EVT_INPUT_GENERIC)
-		return true;
+अटल bool ssam_kbd_is_input_event(स्थिर काष्ठा ssam_event *event)
+अणु
+	अगर (event->command_id == SURFACE_KBD_CID_EVT_INPUT_GENERIC)
+		वापस true;
 
-	if (event->command_id == SURFACE_KBD_CID_EVT_INPUT_HOTKEYS)
-		return true;
+	अगर (event->command_id == SURFACE_KBD_CID_EVT_INPUT_HOTKEYS)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static u32 ssam_kbd_event_fn(struct ssam_event_notifier *nf, const struct ssam_event *event)
-{
-	struct surface_hid_device *shid = container_of(nf, struct surface_hid_device, notif);
+अटल u32 ssam_kbd_event_fn(काष्ठा ssam_event_notअगरier *nf, स्थिर काष्ठा ssam_event *event)
+अणु
+	काष्ठा surface_hid_device *shid = container_of(nf, काष्ठा surface_hid_device, notअगर);
 
 	/*
 	 * Check against device UID manually, as registry and device target
-	 * category doesn't line up.
+	 * category करोesn't line up.
 	 */
 
-	if (shid->uid.category != event->target_category)
-		return 0;
+	अगर (shid->uid.category != event->target_category)
+		वापस 0;
 
-	if (shid->uid.target != event->target_id)
-		return 0;
+	अगर (shid->uid.target != event->target_id)
+		वापस 0;
 
-	if (shid->uid.instance != event->instance_id)
-		return 0;
+	अगर (shid->uid.instance != event->instance_id)
+		वापस 0;
 
-	if (!ssam_kbd_is_input_event(event))
-		return 0;
+	अगर (!ssam_kbd_is_input_event(event))
+		वापस 0;
 
 	hid_input_report(shid->hid, HID_INPUT_REPORT, (u8 *)&event->data[0], event->length, 0);
-	return SSAM_NOTIF_HANDLED;
-}
+	वापस SSAM_NOTIF_HANDLED;
+पूर्ण
 
 
 /* -- Transport driver (KBD). ----------------------------------------------- */
 
-static int skbd_get_caps_led_value(struct hid_device *hid, u8 rprt_id, u8 *buf, size_t len)
-{
-	struct hid_field *field;
-	unsigned int offset, size;
-	int i;
+अटल पूर्णांक skbd_get_caps_led_value(काष्ठा hid_device *hid, u8 rprt_id, u8 *buf, माप_प्रकार len)
+अणु
+	काष्ठा hid_field *field;
+	अचिन्हित पूर्णांक offset, size;
+	पूर्णांक i;
 
 	/* Get LED field. */
 	field = hidinput_get_led_field(hid);
-	if (!field)
-		return -ENOENT;
+	अगर (!field)
+		वापस -ENOENT;
 
-	/* Check if we got the correct report. */
-	if (len != hid_report_len(field->report))
-		return -ENOENT;
+	/* Check अगर we got the correct report. */
+	अगर (len != hid_report_len(field->report))
+		वापस -ENOENT;
 
-	if (rprt_id != field->report->id)
-		return -ENOENT;
+	अगर (rprt_id != field->report->id)
+		वापस -ENOENT;
 
 	/* Get caps lock LED index. */
-	for (i = 0; i < field->report_count; i++)
-		if ((field->usage[i].hid & 0xffff) == 0x02)
-			break;
+	क्रम (i = 0; i < field->report_count; i++)
+		अगर ((field->usage[i].hid & 0xffff) == 0x02)
+			अवरोध;
 
-	if (i == field->report_count)
-		return -ENOENT;
+	अगर (i == field->report_count)
+		वापस -ENOENT;
 
 	/* Extract value. */
 	size = field->report_size;
 	offset = field->report_offset + i * size;
-	return !!hid_field_extract(hid, buf + 1, size, offset);
-}
+	वापस !!hid_field_extract(hid, buf + 1, size, offset);
+पूर्ण
 
-static int skbd_output_report(struct surface_hid_device *shid, u8 rprt_id, u8 *buf, size_t len)
-{
-	int caps_led;
-	int status;
+अटल पूर्णांक skbd_output_report(काष्ठा surface_hid_device *shid, u8 rprt_id, u8 *buf, माप_प्रकार len)
+अणु
+	पूर्णांक caps_led;
+	पूर्णांक status;
 
 	caps_led = skbd_get_caps_led_value(shid->hid, rprt_id, buf, len);
-	if (caps_led < 0)
-		return -EIO;  /* Only caps LED output reports are supported. */
+	अगर (caps_led < 0)
+		वापस -EIO;  /* Only caps LED output reports are supported. */
 
 	status = ssam_kbd_set_caps_led(shid, caps_led);
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static int skbd_get_feature_report(struct surface_hid_device *shid, u8 rprt_id, u8 *buf, size_t len)
-{
+अटल पूर्णांक skbd_get_feature_report(काष्ठा surface_hid_device *shid, u8 rprt_id, u8 *buf, माप_प्रकार len)
+अणु
 	u8 report[KBD_FEATURE_REPORT_SIZE];
-	int status;
+	पूर्णांक status;
 
 	/*
-	 * The keyboard only has a single hard-coded read-only feature report
+	 * The keyboard only has a single hard-coded पढ़ो-only feature report
 	 * of size KBD_FEATURE_REPORT_SIZE. Try to load it and compare its
 	 * report ID against the requested one.
 	 */
 
-	if (len < ARRAY_SIZE(report))
-		return -ENOSPC;
+	अगर (len < ARRAY_SIZE(report))
+		वापस -ENOSPC;
 
 	status = ssam_kbd_get_feature_report(shid, report, ARRAY_SIZE(report));
-	if (status < 0)
-		return status;
+	अगर (status < 0)
+		वापस status;
 
-	if (rprt_id != report[0])
-		return -ENOENT;
+	अगर (rprt_id != report[0])
+		वापस -ENOENT;
 
-	memcpy(buf, report, ARRAY_SIZE(report));
-	return len;
-}
+	स_नकल(buf, report, ARRAY_SIZE(report));
+	वापस len;
+पूर्ण
 
-static int skbd_set_feature_report(struct surface_hid_device *shid, u8 rprt_id, u8 *buf, size_t len)
-{
-	/* Not supported. See skbd_get_feature_report() for details. */
-	return -EIO;
-}
+अटल पूर्णांक skbd_set_feature_report(काष्ठा surface_hid_device *shid, u8 rprt_id, u8 *buf, माप_प्रकार len)
+अणु
+	/* Not supported. See skbd_get_feature_report() क्रम details. */
+	वापस -EIO;
+पूर्ण
 
 
 /* -- Driver setup. --------------------------------------------------------- */
 
-static int surface_kbd_probe(struct platform_device *pdev)
-{
-	struct ssam_controller *ctrl;
-	struct surface_hid_device *shid;
+अटल पूर्णांक surface_kbd_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ssam_controller *ctrl;
+	काष्ठा surface_hid_device *shid;
 
 	/* Add device link to EC. */
 	ctrl = ssam_client_bind(&pdev->dev);
-	if (IS_ERR(ctrl))
-		return PTR_ERR(ctrl) == -ENODEV ? -EPROBE_DEFER : PTR_ERR(ctrl);
+	अगर (IS_ERR(ctrl))
+		वापस PTR_ERR(ctrl) == -ENODEV ? -EPROBE_DEFER : PTR_ERR(ctrl);
 
-	shid = devm_kzalloc(&pdev->dev, sizeof(*shid), GFP_KERNEL);
-	if (!shid)
-		return -ENOMEM;
+	shid = devm_kzalloc(&pdev->dev, माप(*shid), GFP_KERNEL);
+	अगर (!shid)
+		वापस -ENOMEM;
 
 	shid->dev = &pdev->dev;
 	shid->ctrl = ctrl;
 
-	shid->uid.domain = SSAM_DOMAIN_SERIALHUB;
+	shid->uid.करोमुख्य = SSAM_DOMAIN_SERIALHUB;
 	shid->uid.category = SSAM_SSH_TC_KBD;
 	shid->uid.target = 2;
 	shid->uid.instance = 0;
 	shid->uid.function = 0;
 
-	shid->notif.base.priority = 1;
-	shid->notif.base.fn = ssam_kbd_event_fn;
-	shid->notif.event.reg = SSAM_EVENT_REGISTRY_SAM;
-	shid->notif.event.id.target_category = shid->uid.category;
-	shid->notif.event.id.instance = shid->uid.instance;
-	shid->notif.event.mask = SSAM_EVENT_MASK_NONE;
-	shid->notif.event.flags = 0;
+	shid->notअगर.base.priority = 1;
+	shid->notअगर.base.fn = ssam_kbd_event_fn;
+	shid->notअगर.event.reg = SSAM_EVENT_REGISTRY_SAM;
+	shid->notअगर.event.id.target_category = shid->uid.category;
+	shid->notअगर.event.id.instance = shid->uid.instance;
+	shid->notअगर.event.mask = SSAM_EVENT_MASK_NONE;
+	shid->notअगर.event.flags = 0;
 
 	shid->ops.get_descriptor = ssam_kbd_get_descriptor;
 	shid->ops.output_report = skbd_output_report;
 	shid->ops.get_feature_report = skbd_get_feature_report;
 	shid->ops.set_feature_report = skbd_set_feature_report;
 
-	platform_set_drvdata(pdev, shid);
-	return surface_hid_device_add(shid);
-}
+	platक्रमm_set_drvdata(pdev, shid);
+	वापस surface_hid_device_add(shid);
+पूर्ण
 
-static int surface_kbd_remove(struct platform_device *pdev)
-{
-	surface_hid_device_destroy(platform_get_drvdata(pdev));
-	return 0;
-}
+अटल पूर्णांक surface_kbd_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	surface_hid_device_destroy(platक्रमm_get_drvdata(pdev));
+	वापस 0;
+पूर्ण
 
-static const struct acpi_device_id surface_kbd_match[] = {
-	{ "MSHW0096" },
-	{ },
-};
+अटल स्थिर काष्ठा acpi_device_id surface_kbd_match[] = अणु
+	अणु "MSHW0096" पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(acpi, surface_kbd_match);
 
-static struct platform_driver surface_kbd_driver = {
+अटल काष्ठा platक्रमm_driver surface_kbd_driver = अणु
 	.probe = surface_kbd_probe,
-	.remove = surface_kbd_remove,
-	.driver = {
+	.हटाओ = surface_kbd_हटाओ,
+	.driver = अणु
 		.name = "surface_keyboard",
 		.acpi_match_table = surface_kbd_match,
 		.pm = &surface_hid_pm_ops,
 		.probe_type = PROBE_PREFER_ASYNCHRONOUS,
-	},
-};
-module_platform_driver(surface_kbd_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(surface_kbd_driver);
 
 MODULE_AUTHOR("Maximilian Luz <luzmaximilian@gmail.com>");
 MODULE_DESCRIPTION("HID legacy transport driver for Surface System Aggregator Module");

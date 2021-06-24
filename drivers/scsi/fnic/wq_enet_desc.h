@@ -1,8 +1,9 @@
+<शैली गुरु>
 /*
  * Copyright 2008 Cisco Systems, Inc.  All rights reserved.
  * Copyright 2007 Nuova Systems, Inc.  All rights reserved.
  *
- * This program is free software; you may redistribute it and/or modify
+ * This program is मुक्त software; you may redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; version 2 of the License.
  *
@@ -15,44 +16,44 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#ifndef _WQ_ENET_DESC_H_
-#define _WQ_ENET_DESC_H_
+#अगर_अघोषित _WQ_ENET_DESC_H_
+#घोषणा _WQ_ENET_DESC_H_
 
 /* Ethernet work queue descriptor: 16B */
-struct wq_enet_desc {
+काष्ठा wq_enet_desc अणु
 	__le64 address;
 	__le16 length;
 	__le16 mss_loopback;
 	__le16 header_length_flags;
 	__le16 vlan_tag;
-};
+पूर्ण;
 
-#define WQ_ENET_ADDR_BITS		64
-#define WQ_ENET_LEN_BITS		14
-#define WQ_ENET_LEN_MASK		((1 << WQ_ENET_LEN_BITS) - 1)
-#define WQ_ENET_MSS_BITS		14
-#define WQ_ENET_MSS_MASK		((1 << WQ_ENET_MSS_BITS) - 1)
-#define WQ_ENET_MSS_SHIFT		2
-#define WQ_ENET_LOOPBACK_SHIFT		1
-#define WQ_ENET_HDRLEN_BITS		10
-#define WQ_ENET_HDRLEN_MASK		((1 << WQ_ENET_HDRLEN_BITS) - 1)
-#define WQ_ENET_FLAGS_OM_BITS		2
-#define WQ_ENET_FLAGS_OM_MASK		((1 << WQ_ENET_FLAGS_OM_BITS) - 1)
-#define WQ_ENET_FLAGS_EOP_SHIFT		12
-#define WQ_ENET_FLAGS_CQ_ENTRY_SHIFT	13
-#define WQ_ENET_FLAGS_FCOE_ENCAP_SHIFT	14
-#define WQ_ENET_FLAGS_VLAN_TAG_INSERT_SHIFT	15
+#घोषणा WQ_ENET_ADDR_BITS		64
+#घोषणा WQ_ENET_LEN_BITS		14
+#घोषणा WQ_ENET_LEN_MASK		((1 << WQ_ENET_LEN_BITS) - 1)
+#घोषणा WQ_ENET_MSS_BITS		14
+#घोषणा WQ_ENET_MSS_MASK		((1 << WQ_ENET_MSS_BITS) - 1)
+#घोषणा WQ_ENET_MSS_SHIFT		2
+#घोषणा WQ_ENET_LOOPBACK_SHIFT		1
+#घोषणा WQ_ENET_HDRLEN_BITS		10
+#घोषणा WQ_ENET_HDRLEN_MASK		((1 << WQ_ENET_HDRLEN_BITS) - 1)
+#घोषणा WQ_ENET_FLAGS_OM_BITS		2
+#घोषणा WQ_ENET_FLAGS_OM_MASK		((1 << WQ_ENET_FLAGS_OM_BITS) - 1)
+#घोषणा WQ_ENET_FLAGS_EOP_SHIFT		12
+#घोषणा WQ_ENET_FLAGS_CQ_ENTRY_SHIFT	13
+#घोषणा WQ_ENET_FLAGS_FCOE_ENCAP_SHIFT	14
+#घोषणा WQ_ENET_FLAGS_VLAN_TAG_INSERT_SHIFT	15
 
-#define WQ_ENET_OFFLOAD_MODE_CSUM	0
-#define WQ_ENET_OFFLOAD_MODE_RESERVED	1
-#define WQ_ENET_OFFLOAD_MODE_CSUM_L4	2
-#define WQ_ENET_OFFLOAD_MODE_TSO	3
+#घोषणा WQ_ENET_OFFLOAD_MODE_CSUM	0
+#घोषणा WQ_ENET_OFFLOAD_MODE_RESERVED	1
+#घोषणा WQ_ENET_OFFLOAD_MODE_CSUM_L4	2
+#घोषणा WQ_ENET_OFFLOAD_MODE_TSO	3
 
-static inline void wq_enet_desc_enc(struct wq_enet_desc *desc,
+अटल अंतरभूत व्योम wq_enet_desc_enc(काष्ठा wq_enet_desc *desc,
 	u64 address, u16 length, u16 mss, u16 header_length,
 	u8 offload_mode, u8 eop, u8 cq_entry, u8 fcoe_encap,
 	u8 vlan_tag_insert, u16 vlan_tag, u8 loopback)
-{
+अणु
 	desc->address = cpu_to_le64(address);
 	desc->length = cpu_to_le16(length & WQ_ENET_LEN_MASK);
 	desc->mss_loopback = cpu_to_le16((mss & WQ_ENET_MSS_MASK) <<
@@ -65,13 +66,13 @@ static inline void wq_enet_desc_enc(struct wq_enet_desc *desc,
 		(fcoe_encap & 1) << WQ_ENET_FLAGS_FCOE_ENCAP_SHIFT |
 		(vlan_tag_insert & 1) << WQ_ENET_FLAGS_VLAN_TAG_INSERT_SHIFT);
 	desc->vlan_tag = cpu_to_le16(vlan_tag);
-}
+पूर्ण
 
-static inline void wq_enet_desc_dec(struct wq_enet_desc *desc,
+अटल अंतरभूत व्योम wq_enet_desc_dec(काष्ठा wq_enet_desc *desc,
 	u64 *address, u16 *length, u16 *mss, u16 *header_length,
 	u8 *offload_mode, u8 *eop, u8 *cq_entry, u8 *fcoe_encap,
 	u8 *vlan_tag_insert, u16 *vlan_tag, u8 *loopback)
-{
+अणु
 	*address = le64_to_cpu(desc->address);
 	*length = le16_to_cpu(desc->length) & WQ_ENET_LEN_MASK;
 	*mss = (le16_to_cpu(desc->mss_loopback) >> WQ_ENET_MSS_SHIFT) &
@@ -91,6 +92,6 @@ static inline void wq_enet_desc_dec(struct wq_enet_desc *desc,
 	*vlan_tag_insert = (u8)((le16_to_cpu(desc->header_length_flags) >>
 		WQ_ENET_FLAGS_VLAN_TAG_INSERT_SHIFT) & 1);
 	*vlan_tag = le16_to_cpu(desc->vlan_tag);
-}
+पूर्ण
 
-#endif /* _WQ_ENET_DESC_H_ */
+#पूर्ण_अगर /* _WQ_ENET_DESC_H_ */

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * RDMA Transport Layer
  *
@@ -7,177 +8,177 @@
  * Copyright (c) 2019 - 2020 1&1 IONOS SE. All rights reserved.
  */
 
-#undef pr_fmt
-#define pr_fmt(fmt) KBUILD_MODNAME " L" __stringify(__LINE__) ": " fmt
+#अघोषित pr_fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME " L" __stringअगरy(__LINE__) ": " fmt
 
-#include <linux/module.h>
-#include <linux/rculist.h>
-#include <linux/random.h>
+#समावेश <linux/module.h>
+#समावेश <linux/rculist.h>
+#समावेश <linux/अक्रमom.h>
 
-#include "rtrs-clt.h"
-#include "rtrs-log.h"
+#समावेश "rtrs-clt.h"
+#समावेश "rtrs-log.h"
 
-#define RTRS_CONNECT_TIMEOUT_MS 30000
+#घोषणा RTRS_CONNECT_TIMEOUT_MS 30000
 /*
- * Wait a bit before trying to reconnect after a failure
- * in order to give server time to finish clean up which
+ * Wait a bit beक्रमe trying to reconnect after a failure
+ * in order to give server समय to finish clean up which
  * leads to "false positives" failed reconnect attempts
  */
-#define RTRS_RECONNECT_BACKOFF 1000
+#घोषणा RTRS_RECONNECT_BACKOFF 1000
 /*
- * Wait for additional random time between 0 and 8 seconds
- * before starting to reconnect to avoid clients reconnecting
- * all at once in case of a major network outage
+ * Wait क्रम additional अक्रमom समय between 0 and 8 seconds
+ * beक्रमe starting to reconnect to aव्योम clients reconnecting
+ * all at once in हाल of a major network outage
  */
-#define RTRS_RECONNECT_SEED 8
+#घोषणा RTRS_RECONNECT_SEED 8
 
-#define FIRST_CONN 0x01
+#घोषणा FIRST_CONN 0x01
 
 MODULE_DESCRIPTION("RDMA Transport Client");
 MODULE_LICENSE("GPL");
 
-static const struct rtrs_rdma_dev_pd_ops dev_pd_ops;
-static struct rtrs_rdma_dev_pd dev_pd = {
+अटल स्थिर काष्ठा rtrs_rdma_dev_pd_ops dev_pd_ops;
+अटल काष्ठा rtrs_rdma_dev_pd dev_pd = अणु
 	.ops = &dev_pd_ops
-};
+पूर्ण;
 
-static struct workqueue_struct *rtrs_wq;
-static struct class *rtrs_clt_dev_class;
+अटल काष्ठा workqueue_काष्ठा *rtrs_wq;
+अटल काष्ठा class *rtrs_clt_dev_class;
 
-static inline bool rtrs_clt_is_connected(const struct rtrs_clt *clt)
-{
-	struct rtrs_clt_sess *sess;
+अटल अंतरभूत bool rtrs_clt_is_connected(स्थिर काष्ठा rtrs_clt *clt)
+अणु
+	काष्ठा rtrs_clt_sess *sess;
 	bool connected = false;
 
-	rcu_read_lock();
-	list_for_each_entry_rcu(sess, &clt->paths_list, s.entry)
+	rcu_पढ़ो_lock();
+	list_क्रम_each_entry_rcu(sess, &clt->paths_list, s.entry)
 		connected |= READ_ONCE(sess->state) == RTRS_CLT_CONNECTED;
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return connected;
-}
+	वापस connected;
+पूर्ण
 
-static struct rtrs_permit *
-__rtrs_get_permit(struct rtrs_clt *clt, enum rtrs_clt_con_type con_type)
-{
-	size_t max_depth = clt->queue_depth;
-	struct rtrs_permit *permit;
-	int bit;
+अटल काष्ठा rtrs_permit *
+__rtrs_get_permit(काष्ठा rtrs_clt *clt, क्रमागत rtrs_clt_con_type con_type)
+अणु
+	माप_प्रकार max_depth = clt->queue_depth;
+	काष्ठा rtrs_permit *permit;
+	पूर्णांक bit;
 
 	/*
-	 * Adapted from null_blk get_tag(). Callers from different cpus may
+	 * Adapted from null_blk get_tag(). Callers from dअगरferent cpus may
 	 * grab the same bit, since find_first_zero_bit is not atomic.
-	 * But then the test_and_set_bit_lock will fail for all the
+	 * But then the test_and_set_bit_lock will fail क्रम all the
 	 * callers but one, so that they will loop again.
 	 * This way an explicit spinlock is not required.
 	 */
-	do {
+	करो अणु
 		bit = find_first_zero_bit(clt->permits_map, max_depth);
-		if (unlikely(bit >= max_depth))
-			return NULL;
-	} while (unlikely(test_and_set_bit_lock(bit, clt->permits_map)));
+		अगर (unlikely(bit >= max_depth))
+			वापस शून्य;
+	पूर्ण जबतक (unlikely(test_and_set_bit_lock(bit, clt->permits_map)));
 
 	permit = get_permit(clt, bit);
 	WARN_ON(permit->mem_id != bit);
 	permit->cpu_id = raw_smp_processor_id();
 	permit->con_type = con_type;
 
-	return permit;
-}
+	वापस permit;
+पूर्ण
 
-static inline void __rtrs_put_permit(struct rtrs_clt *clt,
-				      struct rtrs_permit *permit)
-{
+अटल अंतरभूत व्योम __rtrs_put_permit(काष्ठा rtrs_clt *clt,
+				      काष्ठा rtrs_permit *permit)
+अणु
 	clear_bit_unlock(permit->mem_id, clt->permits_map);
-}
+पूर्ण
 
 /**
- * rtrs_clt_get_permit() - allocates permit for future RDMA operation
+ * rtrs_clt_get_permit() - allocates permit क्रम future RDMA operation
  * @clt:	Current session
  * @con_type:	Type of connection to use with the permit
- * @can_wait:	Wait type
+ * @can_रुको:	Wait type
  *
  * Description:
- *    Allocates permit for the following RDMA operation.  Permit is used
- *    to preallocate all resources and to propagate memory pressure
+ *    Allocates permit क्रम the following RDMA operation.  Permit is used
+ *    to pपुनः_स्मृतिate all resources and to propagate memory pressure
  *    up earlier.
  *
  * Context:
- *    Can sleep if @wait == RTRS_PERMIT_WAIT
+ *    Can sleep अगर @रुको == RTRS_PERMIT_WAIT
  */
-struct rtrs_permit *rtrs_clt_get_permit(struct rtrs_clt *clt,
-					  enum rtrs_clt_con_type con_type,
-					  enum wait_type can_wait)
-{
-	struct rtrs_permit *permit;
-	DEFINE_WAIT(wait);
+काष्ठा rtrs_permit *rtrs_clt_get_permit(काष्ठा rtrs_clt *clt,
+					  क्रमागत rtrs_clt_con_type con_type,
+					  क्रमागत रुको_type can_रुको)
+अणु
+	काष्ठा rtrs_permit *permit;
+	DEFINE_WAIT(रुको);
 
 	permit = __rtrs_get_permit(clt, con_type);
-	if (likely(permit) || !can_wait)
-		return permit;
+	अगर (likely(permit) || !can_रुको)
+		वापस permit;
 
-	do {
-		prepare_to_wait(&clt->permits_wait, &wait,
+	करो अणु
+		prepare_to_रुको(&clt->permits_रुको, &रुको,
 				TASK_UNINTERRUPTIBLE);
 		permit = __rtrs_get_permit(clt, con_type);
-		if (likely(permit))
-			break;
+		अगर (likely(permit))
+			अवरोध;
 
 		io_schedule();
-	} while (1);
+	पूर्ण जबतक (1);
 
-	finish_wait(&clt->permits_wait, &wait);
+	finish_रुको(&clt->permits_रुको, &रुको);
 
-	return permit;
-}
+	वापस permit;
+पूर्ण
 EXPORT_SYMBOL(rtrs_clt_get_permit);
 
 /**
- * rtrs_clt_put_permit() - puts allocated permit
+ * rtrs_clt_put_permit() - माला_दो allocated permit
  * @clt:	Current session
- * @permit:	Permit to be freed
+ * @permit:	Permit to be मुक्तd
  *
  * Context:
  *    Does not matter
  */
-void rtrs_clt_put_permit(struct rtrs_clt *clt, struct rtrs_permit *permit)
-{
-	if (WARN_ON(!test_bit(permit->mem_id, clt->permits_map)))
-		return;
+व्योम rtrs_clt_put_permit(काष्ठा rtrs_clt *clt, काष्ठा rtrs_permit *permit)
+अणु
+	अगर (WARN_ON(!test_bit(permit->mem_id, clt->permits_map)))
+		वापस;
 
 	__rtrs_put_permit(clt, permit);
 
 	/*
-	 * rtrs_clt_get_permit() adds itself to the &clt->permits_wait list
-	 * before calling schedule(). So if rtrs_clt_get_permit() is sleeping
-	 * it must have added itself to &clt->permits_wait before
+	 * rtrs_clt_get_permit() adds itself to the &clt->permits_रुको list
+	 * beक्रमe calling schedule(). So अगर rtrs_clt_get_permit() is sleeping
+	 * it must have added itself to &clt->permits_रुको beक्रमe
 	 * __rtrs_put_permit() finished.
-	 * Hence it is safe to guard wake_up() with a waitqueue_active() test.
+	 * Hence it is safe to guard wake_up() with a रुकोqueue_active() test.
 	 */
-	if (waitqueue_active(&clt->permits_wait))
-		wake_up(&clt->permits_wait);
-}
+	अगर (रुकोqueue_active(&clt->permits_रुको))
+		wake_up(&clt->permits_रुको);
+पूर्ण
 EXPORT_SYMBOL(rtrs_clt_put_permit);
 
 /**
- * rtrs_permit_to_clt_con() - returns RDMA connection pointer by the permit
- * @sess: client session pointer
- * @permit: permit for the allocation of the RDMA buffer
+ * rtrs_permit_to_clt_con() - वापसs RDMA connection poपूर्णांकer by the permit
+ * @sess: client session poपूर्णांकer
+ * @permit: permit क्रम the allocation of the RDMA buffer
  * Note:
  *     IO connection starts from 1.
- *     0 connection is for user messages.
+ *     0 connection is क्रम user messages.
  */
-static
-struct rtrs_clt_con *rtrs_permit_to_clt_con(struct rtrs_clt_sess *sess,
-					    struct rtrs_permit *permit)
-{
-	int id = 0;
+अटल
+काष्ठा rtrs_clt_con *rtrs_permit_to_clt_con(काष्ठा rtrs_clt_sess *sess,
+					    काष्ठा rtrs_permit *permit)
+अणु
+	पूर्णांक id = 0;
 
-	if (likely(permit->con_type == RTRS_IO_CON))
+	अगर (likely(permit->con_type == RTRS_IO_CON))
 		id = (permit->cpu_id % (sess->s.irq_con_num - 1)) + 1;
 
-	return to_clt_con(sess->s.con[id]);
-}
+	वापस to_clt_con(sess->s.con[id]);
+पूर्ण
 
 /**
  * rtrs_clt_change_state() - change the session state through session state
@@ -186,282 +187,282 @@ struct rtrs_clt_con *rtrs_permit_to_clt_con(struct rtrs_clt_sess *sess,
  * @sess: client session to change the state of.
  * @new_state: state to change to.
  *
- * returns true if sess's state is changed to new state, otherwise return false.
+ * वापसs true अगर sess's state is changed to new state, otherwise वापस false.
  *
  * Locks:
  * state_wq lock must be hold.
  */
-static bool rtrs_clt_change_state(struct rtrs_clt_sess *sess,
-				     enum rtrs_clt_state new_state)
-{
-	enum rtrs_clt_state old_state;
+अटल bool rtrs_clt_change_state(काष्ठा rtrs_clt_sess *sess,
+				     क्रमागत rtrs_clt_state new_state)
+अणु
+	क्रमागत rtrs_clt_state old_state;
 	bool changed = false;
 
-	lockdep_assert_held(&sess->state_wq.lock);
+	lockdep_निश्चित_held(&sess->state_wq.lock);
 
 	old_state = sess->state;
-	switch (new_state) {
-	case RTRS_CLT_CONNECTING:
-		switch (old_state) {
-		case RTRS_CLT_RECONNECTING:
+	चयन (new_state) अणु
+	हाल RTRS_CLT_CONNECTING:
+		चयन (old_state) अणु
+		हाल RTRS_CLT_RECONNECTING:
 			changed = true;
 			fallthrough;
-		default:
-			break;
-		}
-		break;
-	case RTRS_CLT_RECONNECTING:
-		switch (old_state) {
-		case RTRS_CLT_CONNECTED:
-		case RTRS_CLT_CONNECTING_ERR:
-		case RTRS_CLT_CLOSED:
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल RTRS_CLT_RECONNECTING:
+		चयन (old_state) अणु
+		हाल RTRS_CLT_CONNECTED:
+		हाल RTRS_CLT_CONNECTING_ERR:
+		हाल RTRS_CLT_CLOSED:
 			changed = true;
 			fallthrough;
-		default:
-			break;
-		}
-		break;
-	case RTRS_CLT_CONNECTED:
-		switch (old_state) {
-		case RTRS_CLT_CONNECTING:
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल RTRS_CLT_CONNECTED:
+		चयन (old_state) अणु
+		हाल RTRS_CLT_CONNECTING:
 			changed = true;
 			fallthrough;
-		default:
-			break;
-		}
-		break;
-	case RTRS_CLT_CONNECTING_ERR:
-		switch (old_state) {
-		case RTRS_CLT_CONNECTING:
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल RTRS_CLT_CONNECTING_ERR:
+		चयन (old_state) अणु
+		हाल RTRS_CLT_CONNECTING:
 			changed = true;
 			fallthrough;
-		default:
-			break;
-		}
-		break;
-	case RTRS_CLT_CLOSING:
-		switch (old_state) {
-		case RTRS_CLT_CONNECTING:
-		case RTRS_CLT_CONNECTING_ERR:
-		case RTRS_CLT_RECONNECTING:
-		case RTRS_CLT_CONNECTED:
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल RTRS_CLT_CLOSING:
+		चयन (old_state) अणु
+		हाल RTRS_CLT_CONNECTING:
+		हाल RTRS_CLT_CONNECTING_ERR:
+		हाल RTRS_CLT_RECONNECTING:
+		हाल RTRS_CLT_CONNECTED:
 			changed = true;
 			fallthrough;
-		default:
-			break;
-		}
-		break;
-	case RTRS_CLT_CLOSED:
-		switch (old_state) {
-		case RTRS_CLT_CLOSING:
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल RTRS_CLT_CLOSED:
+		चयन (old_state) अणु
+		हाल RTRS_CLT_CLOSING:
 			changed = true;
 			fallthrough;
-		default:
-			break;
-		}
-		break;
-	case RTRS_CLT_DEAD:
-		switch (old_state) {
-		case RTRS_CLT_CLOSED:
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल RTRS_CLT_DEAD:
+		चयन (old_state) अणु
+		हाल RTRS_CLT_CLOSED:
 			changed = true;
 			fallthrough;
-		default:
-			break;
-		}
-		break;
-	default:
-		break;
-	}
-	if (changed) {
+		शेष:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+	अगर (changed) अणु
 		sess->state = new_state;
 		wake_up_locked(&sess->state_wq);
-	}
+	पूर्ण
 
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static bool rtrs_clt_change_state_from_to(struct rtrs_clt_sess *sess,
-					   enum rtrs_clt_state old_state,
-					   enum rtrs_clt_state new_state)
-{
+अटल bool rtrs_clt_change_state_from_to(काष्ठा rtrs_clt_sess *sess,
+					   क्रमागत rtrs_clt_state old_state,
+					   क्रमागत rtrs_clt_state new_state)
+अणु
 	bool changed = false;
 
 	spin_lock_irq(&sess->state_wq.lock);
-	if (sess->state == old_state)
+	अगर (sess->state == old_state)
 		changed = rtrs_clt_change_state(sess, new_state);
 	spin_unlock_irq(&sess->state_wq.lock);
 
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static void rtrs_rdma_error_recovery(struct rtrs_clt_con *con)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+अटल व्योम rtrs_rdma_error_recovery(काष्ठा rtrs_clt_con *con)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
 
-	if (rtrs_clt_change_state_from_to(sess,
+	अगर (rtrs_clt_change_state_from_to(sess,
 					   RTRS_CLT_CONNECTED,
-					   RTRS_CLT_RECONNECTING)) {
-		struct rtrs_clt *clt = sess->clt;
-		unsigned int delay_ms;
+					   RTRS_CLT_RECONNECTING)) अणु
+		काष्ठा rtrs_clt *clt = sess->clt;
+		अचिन्हित पूर्णांक delay_ms;
 
 		/*
-		 * Normal scenario, reconnect if we were successfully connected
+		 * Normal scenario, reconnect अगर we were successfully connected
 		 */
 		delay_ms = clt->reconnect_delay_sec * 1000;
 		queue_delayed_work(rtrs_wq, &sess->reconnect_dwork,
-				   msecs_to_jiffies(delay_ms +
-						    prandom_u32() % RTRS_RECONNECT_SEED));
-	} else {
+				   msecs_to_jअगरfies(delay_ms +
+						    pअक्रमom_u32() % RTRS_RECONNECT_SEED));
+	पूर्ण अन्यथा अणु
 		/*
 		 * Error can happen just on establishing new connection,
-		 * so notify waiter with error state, waiter is responsible
-		 * for cleaning the rest and reconnect if needed.
+		 * so notअगरy रुकोer with error state, रुकोer is responsible
+		 * क्रम cleaning the rest and reconnect अगर needed.
 		 */
 		rtrs_clt_change_state_from_to(sess,
 					       RTRS_CLT_CONNECTING,
 					       RTRS_CLT_CONNECTING_ERR);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtrs_clt_fast_reg_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
+अटल व्योम rtrs_clt_fast_reg_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
 		rtrs_err(con->c.sess, "Failed IB_WR_REG_MR: %s\n",
 			  ib_wc_status_msg(wc->status));
 		rtrs_rdma_error_recovery(con);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct ib_cqe fast_reg_cqe = {
-	.done = rtrs_clt_fast_reg_done
-};
+अटल काष्ठा ib_cqe fast_reg_cqe = अणु
+	.करोne = rtrs_clt_fast_reg_करोne
+पूर्ण;
 
-static void complete_rdma_req(struct rtrs_clt_io_req *req, int errno,
-			      bool notify, bool can_wait);
+अटल व्योम complete_rdma_req(काष्ठा rtrs_clt_io_req *req, पूर्णांक त्रुटि_सं,
+			      bool notअगरy, bool can_रुको);
 
-static void rtrs_clt_inv_rkey_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct rtrs_clt_io_req *req =
+अटल व्योम rtrs_clt_inv_rkey_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा rtrs_clt_io_req *req =
 		container_of(wc->wr_cqe, typeof(*req), inv_cqe);
-	struct rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
+	काष्ठा rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
 		rtrs_err(con->c.sess, "Failed IB_WR_LOCAL_INV: %s\n",
 			  ib_wc_status_msg(wc->status));
 		rtrs_rdma_error_recovery(con);
-	}
+	पूर्ण
 	req->need_inv = false;
-	if (likely(req->need_inv_comp))
+	अगर (likely(req->need_inv_comp))
 		complete(&req->inv_comp);
-	else
+	अन्यथा
 		/* Complete request from INV callback */
-		complete_rdma_req(req, req->inv_errno, true, false);
-}
+		complete_rdma_req(req, req->inv_त्रुटि_सं, true, false);
+पूर्ण
 
-static int rtrs_inv_rkey(struct rtrs_clt_io_req *req)
-{
-	struct rtrs_clt_con *con = req->con;
-	struct ib_send_wr wr = {
+अटल पूर्णांक rtrs_inv_rkey(काष्ठा rtrs_clt_io_req *req)
+अणु
+	काष्ठा rtrs_clt_con *con = req->con;
+	काष्ठा ib_send_wr wr = अणु
 		.opcode		    = IB_WR_LOCAL_INV,
 		.wr_cqe		    = &req->inv_cqe,
 		.send_flags	    = IB_SEND_SIGNALED,
 		.ex.invalidate_rkey = req->mr->rkey,
-	};
-	req->inv_cqe.done = rtrs_clt_inv_rkey_done;
+	पूर्ण;
+	req->inv_cqe.करोne = rtrs_clt_inv_rkey_करोne;
 
-	return ib_post_send(con->c.qp, &wr, NULL);
-}
+	वापस ib_post_send(con->c.qp, &wr, शून्य);
+पूर्ण
 
-static void complete_rdma_req(struct rtrs_clt_io_req *req, int errno,
-			      bool notify, bool can_wait)
-{
-	struct rtrs_clt_con *con = req->con;
-	struct rtrs_clt_sess *sess;
-	int err;
+अटल व्योम complete_rdma_req(काष्ठा rtrs_clt_io_req *req, पूर्णांक त्रुटि_सं,
+			      bool notअगरy, bool can_रुको)
+अणु
+	काष्ठा rtrs_clt_con *con = req->con;
+	काष्ठा rtrs_clt_sess *sess;
+	पूर्णांक err;
 
-	if (WARN_ON(!req->in_use))
-		return;
-	if (WARN_ON(!req->con))
-		return;
+	अगर (WARN_ON(!req->in_use))
+		वापस;
+	अगर (WARN_ON(!req->con))
+		वापस;
 	sess = to_clt_sess(con->c.sess);
 
-	if (req->sg_cnt) {
-		if (unlikely(req->dir == DMA_FROM_DEVICE && req->need_inv)) {
+	अगर (req->sg_cnt) अणु
+		अगर (unlikely(req->dir == DMA_FROM_DEVICE && req->need_inv)) अणु
 			/*
-			 * We are here to invalidate read requests
+			 * We are here to invalidate पढ़ो requests
 			 * ourselves.  In normal scenario server should
-			 * send INV for all read requests, but
+			 * send INV क्रम all पढ़ो requests, but
 			 * we are here, thus two things could happen:
 			 *
-			 *    1.  this is failover, when errno != 0
-			 *        and can_wait == 1,
+			 *    1.  this is failover, when त्रुटि_सं != 0
+			 *        and can_रुको == 1,
 			 *
 			 *    2.  something totally bad happened and
-			 *        server forgot to send INV, so we
-			 *        should do that ourselves.
+			 *        server क्रमgot to send INV, so we
+			 *        should करो that ourselves.
 			 */
 
-			if (likely(can_wait)) {
+			अगर (likely(can_रुको)) अणु
 				req->need_inv_comp = true;
-			} else {
-				/* This should be IO path, so always notify */
-				WARN_ON(!notify);
-				/* Save errno for INV callback */
-				req->inv_errno = errno;
-			}
+			पूर्ण अन्यथा अणु
+				/* This should be IO path, so always notअगरy */
+				WARN_ON(!notअगरy);
+				/* Save त्रुटि_सं क्रम INV callback */
+				req->inv_त्रुटि_सं = त्रुटि_सं;
+			पूर्ण
 
 			err = rtrs_inv_rkey(req);
-			if (unlikely(err)) {
+			अगर (unlikely(err)) अणु
 				rtrs_err(con->c.sess, "Send INV WR key=%#x: %d\n",
 					  req->mr->rkey, err);
-			} else if (likely(can_wait)) {
-				wait_for_completion(&req->inv_comp);
-			} else {
+			पूर्ण अन्यथा अगर (likely(can_रुको)) अणु
+				रुको_क्रम_completion(&req->inv_comp);
+			पूर्ण अन्यथा अणु
 				/*
 				 * Something went wrong, so request will be
 				 * completed from INV callback.
 				 */
 				WARN_ON_ONCE(1);
 
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 		ib_dma_unmap_sg(sess->s.dev->ib_dev, req->sglist,
 				req->sg_cnt, req->dir);
-	}
-	if (sess->clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
+	पूर्ण
+	अगर (sess->clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
 		atomic_dec(&sess->stats->inflight);
 
 	req->in_use = false;
-	req->con = NULL;
+	req->con = शून्य;
 
-	if (errno) {
+	अगर (त्रुटि_सं) अणु
 		rtrs_err_rl(con->c.sess,
 			    "IO request failed: error=%d path=%s [%s:%u]\n",
-			    errno, kobject_name(&sess->kobj), sess->hca_name,
+			    त्रुटि_सं, kobject_name(&sess->kobj), sess->hca_name,
 			    sess->hca_port);
-	}
+	पूर्ण
 
-	if (notify)
-		req->conf(req->priv, errno);
-}
+	अगर (notअगरy)
+		req->conf(req->priv, त्रुटि_सं);
+पूर्ण
 
-static int rtrs_post_send_rdma(struct rtrs_clt_con *con,
-				struct rtrs_clt_io_req *req,
-				struct rtrs_rbuf *rbuf, u32 off,
-				u32 imm, struct ib_send_wr *wr)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
-	enum ib_send_flags flags;
-	struct ib_sge sge;
+अटल पूर्णांक rtrs_post_send_rdma(काष्ठा rtrs_clt_con *con,
+				काष्ठा rtrs_clt_io_req *req,
+				काष्ठा rtrs_rbuf *rbuf, u32 off,
+				u32 imm, काष्ठा ib_send_wr *wr)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+	क्रमागत ib_send_flags flags;
+	काष्ठा ib_sge sge;
 
-	if (unlikely(!req->sg_size)) {
+	अगर (unlikely(!req->sg_size)) अणु
 		rtrs_wrn(con->c.sess,
 			 "Doing RDMA Write failed, no data supplied\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* user data and user message in the first list element */
 	sge.addr   = req->iu->dma_addr;
@@ -469,477 +470,477 @@ static int rtrs_post_send_rdma(struct rtrs_clt_con *con,
 	sge.lkey   = sess->s.dev->ib_pd->local_dma_lkey;
 
 	/*
-	 * From time to time we have to post signalled sends,
+	 * From समय to समय we have to post संकेतled sends,
 	 * or send queue will fill up and only QP reset can help.
 	 */
-	flags = atomic_inc_return(&con->io_cnt) % sess->queue_depth ?
+	flags = atomic_inc_वापस(&con->io_cnt) % sess->queue_depth ?
 			0 : IB_SEND_SIGNALED;
 
-	ib_dma_sync_single_for_device(sess->s.dev->ib_dev, req->iu->dma_addr,
+	ib_dma_sync_single_क्रम_device(sess->s.dev->ib_dev, req->iu->dma_addr,
 				      req->sg_size, DMA_TO_DEVICE);
 
-	return rtrs_iu_post_rdma_write_imm(&con->c, req->iu, &sge, 1,
+	वापस rtrs_iu_post_rdma_ग_लिखो_imm(&con->c, req->iu, &sge, 1,
 					    rbuf->rkey, rbuf->addr + off,
 					    imm, flags, wr);
-}
+पूर्ण
 
-static void process_io_rsp(struct rtrs_clt_sess *sess, u32 msg_id,
-			   s16 errno, bool w_inval)
-{
-	struct rtrs_clt_io_req *req;
+अटल व्योम process_io_rsp(काष्ठा rtrs_clt_sess *sess, u32 msg_id,
+			   s16 त्रुटि_सं, bool w_inval)
+अणु
+	काष्ठा rtrs_clt_io_req *req;
 
-	if (WARN_ON(msg_id >= sess->queue_depth))
-		return;
+	अगर (WARN_ON(msg_id >= sess->queue_depth))
+		वापस;
 
 	req = &sess->reqs[msg_id];
-	/* Drop need_inv if server responded with send with invalidation */
+	/* Drop need_inv अगर server responded with send with invalidation */
 	req->need_inv &= !w_inval;
-	complete_rdma_req(req, errno, true, false);
-}
+	complete_rdma_req(req, त्रुटि_सं, true, false);
+पूर्ण
 
-static void rtrs_clt_recv_done(struct rtrs_clt_con *con, struct ib_wc *wc)
-{
-	struct rtrs_iu *iu;
-	int err;
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+अटल व्योम rtrs_clt_recv_करोne(काष्ठा rtrs_clt_con *con, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा rtrs_iu *iu;
+	पूर्णांक err;
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
 
 	WARN_ON((sess->flags & RTRS_MSG_NEW_RKEY_F) == 0);
-	iu = container_of(wc->wr_cqe, struct rtrs_iu,
+	iu = container_of(wc->wr_cqe, काष्ठा rtrs_iu,
 			  cqe);
 	err = rtrs_iu_post_recv(&con->c, iu);
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		rtrs_err(con->c.sess, "post iu failed %d\n", err);
 		rtrs_rdma_error_recovery(con);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtrs_clt_rkey_rsp_done(struct rtrs_clt_con *con, struct ib_wc *wc)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
-	struct rtrs_msg_rkey_rsp *msg;
+अटल व्योम rtrs_clt_rkey_rsp_करोne(काष्ठा rtrs_clt_con *con, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+	काष्ठा rtrs_msg_rkey_rsp *msg;
 	u32 imm_type, imm_payload;
 	bool w_inval = false;
-	struct rtrs_iu *iu;
+	काष्ठा rtrs_iu *iu;
 	u32 buf_id;
-	int err;
+	पूर्णांक err;
 
 	WARN_ON((sess->flags & RTRS_MSG_NEW_RKEY_F) == 0);
 
-	iu = container_of(wc->wr_cqe, struct rtrs_iu, cqe);
+	iu = container_of(wc->wr_cqe, काष्ठा rtrs_iu, cqe);
 
-	if (unlikely(wc->byte_len < sizeof(*msg))) {
+	अगर (unlikely(wc->byte_len < माप(*msg))) अणु
 		rtrs_err(con->c.sess, "rkey response is malformed: size %d\n",
 			  wc->byte_len);
-		goto out;
-	}
-	ib_dma_sync_single_for_cpu(sess->s.dev->ib_dev, iu->dma_addr,
+		जाओ out;
+	पूर्ण
+	ib_dma_sync_single_क्रम_cpu(sess->s.dev->ib_dev, iu->dma_addr,
 				   iu->size, DMA_FROM_DEVICE);
 	msg = iu->buf;
-	if (unlikely(le16_to_cpu(msg->type) != RTRS_MSG_RKEY_RSP)) {
+	अगर (unlikely(le16_to_cpu(msg->type) != RTRS_MSG_RKEY_RSP)) अणु
 		rtrs_err(sess->clt, "rkey response is malformed: type %d\n",
 			  le16_to_cpu(msg->type));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	buf_id = le16_to_cpu(msg->buf_id);
-	if (WARN_ON(buf_id >= sess->queue_depth))
-		goto out;
+	अगर (WARN_ON(buf_id >= sess->queue_depth))
+		जाओ out;
 
 	rtrs_from_imm(be32_to_cpu(wc->ex.imm_data), &imm_type, &imm_payload);
-	if (likely(imm_type == RTRS_IO_RSP_IMM ||
-		   imm_type == RTRS_IO_RSP_W_INV_IMM)) {
+	अगर (likely(imm_type == RTRS_IO_RSP_IMM ||
+		   imm_type == RTRS_IO_RSP_W_INV_IMM)) अणु
 		u32 msg_id;
 
 		w_inval = (imm_type == RTRS_IO_RSP_W_INV_IMM);
 		rtrs_from_io_rsp_imm(imm_payload, &msg_id, &err);
 
-		if (WARN_ON(buf_id != msg_id))
-			goto out;
+		अगर (WARN_ON(buf_id != msg_id))
+			जाओ out;
 		sess->rbufs[buf_id].rkey = le32_to_cpu(msg->rkey);
 		process_io_rsp(sess, msg_id, err, w_inval);
-	}
-	ib_dma_sync_single_for_device(sess->s.dev->ib_dev, iu->dma_addr,
+	पूर्ण
+	ib_dma_sync_single_क्रम_device(sess->s.dev->ib_dev, iu->dma_addr,
 				      iu->size, DMA_FROM_DEVICE);
-	return rtrs_clt_recv_done(con, wc);
+	वापस rtrs_clt_recv_करोne(con, wc);
 out:
 	rtrs_rdma_error_recovery(con);
-}
+पूर्ण
 
-static void rtrs_clt_rdma_done(struct ib_cq *cq, struct ib_wc *wc);
+अटल व्योम rtrs_clt_rdma_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc);
 
-static struct ib_cqe io_comp_cqe = {
-	.done = rtrs_clt_rdma_done
-};
+अटल काष्ठा ib_cqe io_comp_cqe = अणु
+	.करोne = rtrs_clt_rdma_करोne
+पूर्ण;
 
 /*
- * Post x2 empty WRs: first is for this RDMA with IMM,
- * second is for RECV with INV, which happened earlier.
+ * Post x2 empty WRs: first is क्रम this RDMA with IMM,
+ * second is क्रम RECV with INV, which happened earlier.
  */
-static int rtrs_post_recv_empty_x2(struct rtrs_con *con, struct ib_cqe *cqe)
-{
-	struct ib_recv_wr wr_arr[2], *wr;
-	int i;
+अटल पूर्णांक rtrs_post_recv_empty_x2(काष्ठा rtrs_con *con, काष्ठा ib_cqe *cqe)
+अणु
+	काष्ठा ib_recv_wr wr_arr[2], *wr;
+	पूर्णांक i;
 
-	memset(wr_arr, 0, sizeof(wr_arr));
-	for (i = 0; i < ARRAY_SIZE(wr_arr); i++) {
+	स_रखो(wr_arr, 0, माप(wr_arr));
+	क्रम (i = 0; i < ARRAY_SIZE(wr_arr); i++) अणु
 		wr = &wr_arr[i];
 		wr->wr_cqe  = cqe;
-		if (i)
+		अगर (i)
 			/* Chain backwards */
 			wr->next = &wr_arr[i - 1];
-	}
+	पूर्ण
 
-	return ib_post_recv(con->qp, wr, NULL);
-}
+	वापस ib_post_recv(con->qp, wr, शून्य);
+पूर्ण
 
-static void rtrs_clt_rdma_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+अटल व्योम rtrs_clt_rdma_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
 	u32 imm_type, imm_payload;
 	bool w_inval = false;
-	int err;
+	पूर्णांक err;
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
-		if (wc->status != IB_WC_WR_FLUSH_ERR) {
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
+		अगर (wc->status != IB_WC_WR_FLUSH_ERR) अणु
 			rtrs_err(sess->clt, "RDMA failed: %s\n",
 				  ib_wc_status_msg(wc->status));
 			rtrs_rdma_error_recovery(con);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 	rtrs_clt_update_wc_stats(con);
 
-	switch (wc->opcode) {
-	case IB_WC_RECV_RDMA_WITH_IMM:
+	चयन (wc->opcode) अणु
+	हाल IB_WC_RECV_RDMA_WITH_IMM:
 		/*
-		 * post_recv() RDMA write completions of IO reqs (read/write)
+		 * post_recv() RDMA ग_लिखो completions of IO reqs (पढ़ो/ग_लिखो)
 		 * and hb
 		 */
-		if (WARN_ON(wc->wr_cqe->done != rtrs_clt_rdma_done))
-			return;
+		अगर (WARN_ON(wc->wr_cqe->करोne != rtrs_clt_rdma_करोne))
+			वापस;
 		rtrs_from_imm(be32_to_cpu(wc->ex.imm_data),
 			       &imm_type, &imm_payload);
-		if (likely(imm_type == RTRS_IO_RSP_IMM ||
-			   imm_type == RTRS_IO_RSP_W_INV_IMM)) {
+		अगर (likely(imm_type == RTRS_IO_RSP_IMM ||
+			   imm_type == RTRS_IO_RSP_W_INV_IMM)) अणु
 			u32 msg_id;
 
 			w_inval = (imm_type == RTRS_IO_RSP_W_INV_IMM);
 			rtrs_from_io_rsp_imm(imm_payload, &msg_id, &err);
 
 			process_io_rsp(sess, msg_id, err, w_inval);
-		} else if (imm_type == RTRS_HB_MSG_IMM) {
+		पूर्ण अन्यथा अगर (imm_type == RTRS_HB_MSG_IMM) अणु
 			WARN_ON(con->c.cid);
 			rtrs_send_hb_ack(&sess->s);
-			if (sess->flags & RTRS_MSG_NEW_RKEY_F)
-				return  rtrs_clt_recv_done(con, wc);
-		} else if (imm_type == RTRS_HB_ACK_IMM) {
+			अगर (sess->flags & RTRS_MSG_NEW_RKEY_F)
+				वापस  rtrs_clt_recv_करोne(con, wc);
+		पूर्ण अन्यथा अगर (imm_type == RTRS_HB_ACK_IMM) अणु
 			WARN_ON(con->c.cid);
 			sess->s.hb_missed_cnt = 0;
 			sess->s.hb_cur_latency =
-				ktime_sub(ktime_get(), sess->s.hb_last_sent);
-			if (sess->flags & RTRS_MSG_NEW_RKEY_F)
-				return  rtrs_clt_recv_done(con, wc);
-		} else {
+				kसमय_sub(kसमय_get(), sess->s.hb_last_sent);
+			अगर (sess->flags & RTRS_MSG_NEW_RKEY_F)
+				वापस  rtrs_clt_recv_करोne(con, wc);
+		पूर्ण अन्यथा अणु
 			rtrs_wrn(con->c.sess, "Unknown IMM type %u\n",
 				  imm_type);
-		}
-		if (w_inval)
+		पूर्ण
+		अगर (w_inval)
 			/*
-			 * Post x2 empty WRs: first is for this RDMA with IMM,
-			 * second is for RECV with INV, which happened earlier.
+			 * Post x2 empty WRs: first is क्रम this RDMA with IMM,
+			 * second is क्रम RECV with INV, which happened earlier.
 			 */
 			err = rtrs_post_recv_empty_x2(&con->c, &io_comp_cqe);
-		else
+		अन्यथा
 			err = rtrs_post_recv_empty(&con->c, &io_comp_cqe);
-		if (unlikely(err)) {
+		अगर (unlikely(err)) अणु
 			rtrs_err(con->c.sess, "rtrs_post_recv_empty(): %d\n",
 				  err);
 			rtrs_rdma_error_recovery(con);
-			break;
-		}
-		break;
-	case IB_WC_RECV:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल IB_WC_RECV:
 		/*
 		 * Key invalidations from server side
 		 */
 		WARN_ON(!(wc->wc_flags & IB_WC_WITH_INVALIDATE ||
 			  wc->wc_flags & IB_WC_WITH_IMM));
-		WARN_ON(wc->wr_cqe->done != rtrs_clt_rdma_done);
-		if (sess->flags & RTRS_MSG_NEW_RKEY_F) {
-			if (wc->wc_flags & IB_WC_WITH_INVALIDATE)
-				return  rtrs_clt_recv_done(con, wc);
+		WARN_ON(wc->wr_cqe->करोne != rtrs_clt_rdma_करोne);
+		अगर (sess->flags & RTRS_MSG_NEW_RKEY_F) अणु
+			अगर (wc->wc_flags & IB_WC_WITH_INVALIDATE)
+				वापस  rtrs_clt_recv_करोne(con, wc);
 
-			return  rtrs_clt_rkey_rsp_done(con, wc);
-		}
-		break;
-	case IB_WC_RDMA_WRITE:
+			वापस  rtrs_clt_rkey_rsp_करोne(con, wc);
+		पूर्ण
+		अवरोध;
+	हाल IB_WC_RDMA_WRITE:
 		/*
-		 * post_send() RDMA write completions of IO reqs (read/write)
+		 * post_send() RDMA ग_लिखो completions of IO reqs (पढ़ो/ग_लिखो)
 		 */
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		rtrs_wrn(sess->clt, "Unexpected WC type: %d\n", wc->opcode);
-		return;
-	}
-}
+		वापस;
+	पूर्ण
+पूर्ण
 
-static int post_recv_io(struct rtrs_clt_con *con, size_t q_size)
-{
-	int err, i;
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+अटल पूर्णांक post_recv_io(काष्ठा rtrs_clt_con *con, माप_प्रकार q_size)
+अणु
+	पूर्णांक err, i;
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
 
-	for (i = 0; i < q_size; i++) {
-		if (sess->flags & RTRS_MSG_NEW_RKEY_F) {
-			struct rtrs_iu *iu = &con->rsp_ius[i];
+	क्रम (i = 0; i < q_size; i++) अणु
+		अगर (sess->flags & RTRS_MSG_NEW_RKEY_F) अणु
+			काष्ठा rtrs_iu *iu = &con->rsp_ius[i];
 
 			err = rtrs_iu_post_recv(&con->c, iu);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = rtrs_post_recv_empty(&con->c, &io_comp_cqe);
-		}
-		if (unlikely(err))
-			return err;
-	}
+		पूर्ण
+		अगर (unlikely(err))
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int post_recv_sess(struct rtrs_clt_sess *sess)
-{
-	size_t q_size = 0;
-	int err, cid;
+अटल पूर्णांक post_recv_sess(काष्ठा rtrs_clt_sess *sess)
+अणु
+	माप_प्रकार q_size = 0;
+	पूर्णांक err, cid;
 
-	for (cid = 0; cid < sess->s.con_num; cid++) {
-		if (cid == 0)
+	क्रम (cid = 0; cid < sess->s.con_num; cid++) अणु
+		अगर (cid == 0)
 			q_size = SERVICE_CON_QUEUE_DEPTH;
-		else
+		अन्यथा
 			q_size = sess->queue_depth;
 
 		/*
-		 * x2 for RDMA read responses + FR key invalidations,
-		 * RDMA writes do not require any FR registrations.
+		 * x2 क्रम RDMA पढ़ो responses + FR key invalidations,
+		 * RDMA ग_लिखोs करो not require any FR registrations.
 		 */
 		q_size *= 2;
 
 		err = post_recv_io(to_clt_con(sess->s.con[cid]), q_size);
-		if (unlikely(err)) {
+		अगर (unlikely(err)) अणु
 			rtrs_err(sess->clt, "post_recv_io(), err: %d\n", err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct path_it {
-	int i;
-	struct list_head skip_list;
-	struct rtrs_clt *clt;
-	struct rtrs_clt_sess *(*next_path)(struct path_it *it);
-};
+काष्ठा path_it अणु
+	पूर्णांक i;
+	काष्ठा list_head skip_list;
+	काष्ठा rtrs_clt *clt;
+	काष्ठा rtrs_clt_sess *(*next_path)(काष्ठा path_it *it);
+पूर्ण;
 
 /**
  * list_next_or_null_rr_rcu - get next list element in round-robin fashion.
- * @head:	the head for the list.
+ * @head:	the head क्रम the list.
  * @ptr:        the list head to take the next element from.
- * @type:       the type of the struct this is embedded in.
- * @memb:       the name of the list_head within the struct.
+ * @type:       the type of the काष्ठा this is embedded in.
+ * @memb:       the name of the list_head within the काष्ठा.
  *
- * Next element returned in round-robin fashion, i.e. head will be skipped,
- * but if list is observed as empty, NULL will be returned.
+ * Next element वापसed in round-robin fashion, i.e. head will be skipped,
+ * but अगर list is observed as empty, शून्य will be वापसed.
  *
  * This primitive may safely run concurrently with the _rcu list-mutation
- * primitives such as list_add_rcu() as long as it's guarded by rcu_read_lock().
+ * primitives such as list_add_rcu() as दीर्घ as it's guarded by rcu_पढ़ो_lock().
  */
-#define list_next_or_null_rr_rcu(head, ptr, type, memb) \
-({ \
+#घोषणा list_next_or_null_rr_rcu(head, ptr, type, memb) \
+(अणु \
 	list_next_or_null_rcu(head, ptr, type, memb) ?: \
 		list_next_or_null_rcu(head, READ_ONCE((ptr)->next), \
 				      type, memb); \
-})
+पूर्ण)
 
 /**
  * get_next_path_rr() - Returns path in round-robin fashion.
- * @it:	the path pointer
+ * @it:	the path poपूर्णांकer
  *
  * Related to @MP_POLICY_RR
  *
  * Locks:
- *    rcu_read_lock() must be hold.
+ *    rcu_पढ़ो_lock() must be hold.
  */
-static struct rtrs_clt_sess *get_next_path_rr(struct path_it *it)
-{
-	struct rtrs_clt_sess __rcu **ppcpu_path;
-	struct rtrs_clt_sess *path;
-	struct rtrs_clt *clt;
+अटल काष्ठा rtrs_clt_sess *get_next_path_rr(काष्ठा path_it *it)
+अणु
+	काष्ठा rtrs_clt_sess __rcu **ppcpu_path;
+	काष्ठा rtrs_clt_sess *path;
+	काष्ठा rtrs_clt *clt;
 
 	clt = it->clt;
 
 	/*
 	 * Here we use two RCU objects: @paths_list and @pcpu_path
-	 * pointer.  See rtrs_clt_remove_path_from_arr() for details
+	 * poपूर्णांकer.  See rtrs_clt_हटाओ_path_from_arr() क्रम details
 	 * how that is handled.
 	 */
 
 	ppcpu_path = this_cpu_ptr(clt->pcpu_path);
 	path = rcu_dereference(*ppcpu_path);
-	if (unlikely(!path))
+	अगर (unlikely(!path))
 		path = list_first_or_null_rcu(&clt->paths_list,
 					      typeof(*path), s.entry);
-	else
+	अन्यथा
 		path = list_next_or_null_rr_rcu(&clt->paths_list,
 						&path->s.entry,
 						typeof(*path),
 						s.entry);
-	rcu_assign_pointer(*ppcpu_path, path);
+	rcu_assign_poपूर्णांकer(*ppcpu_path, path);
 
-	return path;
-}
+	वापस path;
+पूर्ण
 
 /**
  * get_next_path_min_inflight() - Returns path with minimal inflight count.
- * @it:	the path pointer
+ * @it:	the path poपूर्णांकer
  *
  * Related to @MP_POLICY_MIN_INFLIGHT
  *
  * Locks:
- *    rcu_read_lock() must be hold.
+ *    rcu_पढ़ो_lock() must be hold.
  */
-static struct rtrs_clt_sess *get_next_path_min_inflight(struct path_it *it)
-{
-	struct rtrs_clt_sess *min_path = NULL;
-	struct rtrs_clt *clt = it->clt;
-	struct rtrs_clt_sess *sess;
-	int min_inflight = INT_MAX;
-	int inflight;
+अटल काष्ठा rtrs_clt_sess *get_next_path_min_inflight(काष्ठा path_it *it)
+अणु
+	काष्ठा rtrs_clt_sess *min_path = शून्य;
+	काष्ठा rtrs_clt *clt = it->clt;
+	काष्ठा rtrs_clt_sess *sess;
+	पूर्णांक min_inflight = पूर्णांक_उच्च;
+	पूर्णांक inflight;
 
-	list_for_each_entry_rcu(sess, &clt->paths_list, s.entry) {
-		if (unlikely(!list_empty(raw_cpu_ptr(sess->mp_skip_entry))))
-			continue;
+	list_क्रम_each_entry_rcu(sess, &clt->paths_list, s.entry) अणु
+		अगर (unlikely(!list_empty(raw_cpu_ptr(sess->mp_skip_entry))))
+			जारी;
 
-		inflight = atomic_read(&sess->stats->inflight);
+		inflight = atomic_पढ़ो(&sess->stats->inflight);
 
-		if (inflight < min_inflight) {
+		अगर (inflight < min_inflight) अणु
 			min_inflight = inflight;
 			min_path = sess;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * add the path to the skip list, so that next time we can get
-	 * a different one
+	 * add the path to the skip list, so that next समय we can get
+	 * a dअगरferent one
 	 */
-	if (min_path)
+	अगर (min_path)
 		list_add(raw_cpu_ptr(min_path->mp_skip_entry), &it->skip_list);
 
-	return min_path;
-}
+	वापस min_path;
+पूर्ण
 
 /**
  * get_next_path_min_latency() - Returns path with minimal latency.
- * @it:	the path pointer
+ * @it:	the path poपूर्णांकer
  *
- * Return: a path with the lowest latency or NULL if all paths are tried
+ * Return: a path with the lowest latency or शून्य अगर all paths are tried
  *
  * Locks:
- *    rcu_read_lock() must be hold.
+ *    rcu_पढ़ो_lock() must be hold.
  *
  * Related to @MP_POLICY_MIN_LATENCY
  *
- * This DOES skip an already-tried path.
- * There is a skip-list to skip a path if the path has tried but failed.
+ * This DOES skip an alपढ़ोy-tried path.
+ * There is a skip-list to skip a path अगर the path has tried but failed.
  * It will try the minimum latency path and then the second minimum latency
- * path and so on. Finally it will return NULL if all paths are tried.
- * Therefore the caller MUST check the returned
- * path is NULL and trigger the IO error.
+ * path and so on. Finally it will वापस शून्य अगर all paths are tried.
+ * Thereक्रमe the caller MUST check the वापसed
+ * path is शून्य and trigger the IO error.
  */
-static struct rtrs_clt_sess *get_next_path_min_latency(struct path_it *it)
-{
-	struct rtrs_clt_sess *min_path = NULL;
-	struct rtrs_clt *clt = it->clt;
-	struct rtrs_clt_sess *sess;
-	ktime_t min_latency = INT_MAX;
-	ktime_t latency;
+अटल काष्ठा rtrs_clt_sess *get_next_path_min_latency(काष्ठा path_it *it)
+अणु
+	काष्ठा rtrs_clt_sess *min_path = शून्य;
+	काष्ठा rtrs_clt *clt = it->clt;
+	काष्ठा rtrs_clt_sess *sess;
+	kसमय_प्रकार min_latency = पूर्णांक_उच्च;
+	kसमय_प्रकार latency;
 
-	list_for_each_entry_rcu(sess, &clt->paths_list, s.entry) {
-		if (unlikely(READ_ONCE(sess->state) != RTRS_CLT_CONNECTED))
-			continue;
+	list_क्रम_each_entry_rcu(sess, &clt->paths_list, s.entry) अणु
+		अगर (unlikely(READ_ONCE(sess->state) != RTRS_CLT_CONNECTED))
+			जारी;
 
-		if (unlikely(!list_empty(raw_cpu_ptr(sess->mp_skip_entry))))
-			continue;
+		अगर (unlikely(!list_empty(raw_cpu_ptr(sess->mp_skip_entry))))
+			जारी;
 
 		latency = sess->s.hb_cur_latency;
 
-		if (latency < min_latency) {
+		अगर (latency < min_latency) अणु
 			min_latency = latency;
 			min_path = sess;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * add the path to the skip list, so that next time we can get
-	 * a different one
+	 * add the path to the skip list, so that next समय we can get
+	 * a dअगरferent one
 	 */
-	if (min_path)
+	अगर (min_path)
 		list_add(raw_cpu_ptr(min_path->mp_skip_entry), &it->skip_list);
 
-	return min_path;
-}
+	वापस min_path;
+पूर्ण
 
-static inline void path_it_init(struct path_it *it, struct rtrs_clt *clt)
-{
+अटल अंतरभूत व्योम path_it_init(काष्ठा path_it *it, काष्ठा rtrs_clt *clt)
+अणु
 	INIT_LIST_HEAD(&it->skip_list);
 	it->clt = clt;
 	it->i = 0;
 
-	if (clt->mp_policy == MP_POLICY_RR)
+	अगर (clt->mp_policy == MP_POLICY_RR)
 		it->next_path = get_next_path_rr;
-	else if (clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
+	अन्यथा अगर (clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
 		it->next_path = get_next_path_min_inflight;
-	else
+	अन्यथा
 		it->next_path = get_next_path_min_latency;
-}
+पूर्ण
 
-static inline void path_it_deinit(struct path_it *it)
-{
-	struct list_head *skip, *tmp;
+अटल अंतरभूत व्योम path_it_deinit(काष्ठा path_it *it)
+अणु
+	काष्ठा list_head *skip, *पंचांगp;
 	/*
-	 * The skip_list is used only for the MIN_INFLIGHT policy.
-	 * We need to remove paths from it, so that next IO can insert
-	 * paths (->mp_skip_entry) into a skip_list again.
+	 * The skip_list is used only क्रम the MIN_INFLIGHT policy.
+	 * We need to हटाओ paths from it, so that next IO can insert
+	 * paths (->mp_skip_entry) पूर्णांकo a skip_list again.
 	 */
-	list_for_each_safe(skip, tmp, &it->skip_list)
+	list_क्रम_each_safe(skip, पंचांगp, &it->skip_list)
 		list_del_init(skip);
-}
+पूर्ण
 
 /**
- * rtrs_clt_init_req() Initialize an rtrs_clt_io_req holding information
+ * rtrs_clt_init_req() Initialize an rtrs_clt_io_req holding inक्रमmation
  * about an inflight IO.
- * The user buffer holding user control message (not data) is copied into
+ * The user buffer holding user control message (not data) is copied पूर्णांकo
  * the corresponding buffer of rtrs_iu (req->iu->buf), which later on will
  * also hold the control message of rtrs.
- * @req: an io request holding information about IO.
+ * @req: an io request holding inक्रमmation about IO.
  * @sess: client session
- * @conf: conformation callback function to notify upper layer.
- * @permit: permit for allocation of RDMA remote buffer
- * @priv: private pointer
+ * @conf: conक्रमmation callback function to notअगरy upper layer.
+ * @permit: permit क्रम allocation of RDMA remote buffer
+ * @priv: निजी poपूर्णांकer
  * @vec: kernel vector containing control message
  * @usr_len: length of the user message
- * @sg: scater list for IO data
+ * @sg: scater list क्रम IO data
  * @sg_cnt: number of scater list entries
  * @data_len: length of the IO data
  * @dir: direction of the IO.
  */
-static void rtrs_clt_init_req(struct rtrs_clt_io_req *req,
-			      struct rtrs_clt_sess *sess,
-			      void (*conf)(void *priv, int errno),
-			      struct rtrs_permit *permit, void *priv,
-			      const struct kvec *vec, size_t usr_len,
-			      struct scatterlist *sg, size_t sg_cnt,
-			      size_t data_len, int dir)
-{
-	struct iov_iter iter;
-	size_t len;
+अटल व्योम rtrs_clt_init_req(काष्ठा rtrs_clt_io_req *req,
+			      काष्ठा rtrs_clt_sess *sess,
+			      व्योम (*conf)(व्योम *priv, पूर्णांक त्रुटि_सं),
+			      काष्ठा rtrs_permit *permit, व्योम *priv,
+			      स्थिर काष्ठा kvec *vec, माप_प्रकार usr_len,
+			      काष्ठा scatterlist *sg, माप_प्रकार sg_cnt,
+			      माप_प्रकार data_len, पूर्णांक dir)
+अणु
+	काष्ठा iov_iter iter;
+	माप_प्रकार len;
 
 	req->permit = permit;
 	req->in_use = true;
@@ -953,66 +954,66 @@ static void rtrs_clt_init_req(struct rtrs_clt_io_req *req,
 	req->conf = conf;
 	req->need_inv = false;
 	req->need_inv_comp = false;
-	req->inv_errno = 0;
+	req->inv_त्रुटि_सं = 0;
 
 	iov_iter_kvec(&iter, READ, vec, 1, usr_len);
 	len = _copy_from_iter(req->iu->buf, usr_len, &iter);
 	WARN_ON(len != usr_len);
 
 	reinit_completion(&req->inv_comp);
-}
+पूर्ण
 
-static struct rtrs_clt_io_req *
-rtrs_clt_get_req(struct rtrs_clt_sess *sess,
-		 void (*conf)(void *priv, int errno),
-		 struct rtrs_permit *permit, void *priv,
-		 const struct kvec *vec, size_t usr_len,
-		 struct scatterlist *sg, size_t sg_cnt,
-		 size_t data_len, int dir)
-{
-	struct rtrs_clt_io_req *req;
+अटल काष्ठा rtrs_clt_io_req *
+rtrs_clt_get_req(काष्ठा rtrs_clt_sess *sess,
+		 व्योम (*conf)(व्योम *priv, पूर्णांक त्रुटि_सं),
+		 काष्ठा rtrs_permit *permit, व्योम *priv,
+		 स्थिर काष्ठा kvec *vec, माप_प्रकार usr_len,
+		 काष्ठा scatterlist *sg, माप_प्रकार sg_cnt,
+		 माप_प्रकार data_len, पूर्णांक dir)
+अणु
+	काष्ठा rtrs_clt_io_req *req;
 
 	req = &sess->reqs[permit->mem_id];
 	rtrs_clt_init_req(req, sess, conf, permit, priv, vec, usr_len,
 			   sg, sg_cnt, data_len, dir);
-	return req;
-}
+	वापस req;
+पूर्ण
 
-static struct rtrs_clt_io_req *
-rtrs_clt_get_copy_req(struct rtrs_clt_sess *alive_sess,
-		       struct rtrs_clt_io_req *fail_req)
-{
-	struct rtrs_clt_io_req *req;
-	struct kvec vec = {
+अटल काष्ठा rtrs_clt_io_req *
+rtrs_clt_get_copy_req(काष्ठा rtrs_clt_sess *alive_sess,
+		       काष्ठा rtrs_clt_io_req *fail_req)
+अणु
+	काष्ठा rtrs_clt_io_req *req;
+	काष्ठा kvec vec = अणु
 		.iov_base = fail_req->iu->buf,
 		.iov_len  = fail_req->usr_len
-	};
+	पूर्ण;
 
 	req = &alive_sess->reqs[fail_req->permit->mem_id];
 	rtrs_clt_init_req(req, alive_sess, fail_req->conf, fail_req->permit,
 			   fail_req->priv, &vec, fail_req->usr_len,
 			   fail_req->sglist, fail_req->sg_cnt,
 			   fail_req->data_len, fail_req->dir);
-	return req;
-}
+	वापस req;
+पूर्ण
 
-static int rtrs_post_rdma_write_sg(struct rtrs_clt_con *con,
-				    struct rtrs_clt_io_req *req,
-				    struct rtrs_rbuf *rbuf,
+अटल पूर्णांक rtrs_post_rdma_ग_लिखो_sg(काष्ठा rtrs_clt_con *con,
+				    काष्ठा rtrs_clt_io_req *req,
+				    काष्ठा rtrs_rbuf *rbuf,
 				    u32 size, u32 imm)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
-	struct ib_sge *sge = req->sge;
-	enum ib_send_flags flags;
-	struct scatterlist *sg;
-	size_t num_sge;
-	int i;
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+	काष्ठा ib_sge *sge = req->sge;
+	क्रमागत ib_send_flags flags;
+	काष्ठा scatterlist *sg;
+	माप_प्रकार num_sge;
+	पूर्णांक i;
 
-	for_each_sg(req->sglist, sg, req->sg_cnt, i) {
+	क्रम_each_sg(req->sglist, sg, req->sg_cnt, i) अणु
 		sge[i].addr   = sg_dma_address(sg);
 		sge[i].length = sg_dma_len(sg);
 		sge[i].lkey   = sess->s.dev->ib_pd->local_dma_lkey;
-	}
+	पूर्ण
 	sge[i].addr   = req->iu->dma_addr;
 	sge[i].length = size;
 	sge[i].lkey   = sess->s.dev->ib_pd->local_dma_lkey;
@@ -1020,46 +1021,46 @@ static int rtrs_post_rdma_write_sg(struct rtrs_clt_con *con,
 	num_sge = 1 + req->sg_cnt;
 
 	/*
-	 * From time to time we have to post signalled sends,
+	 * From समय to समय we have to post संकेतled sends,
 	 * or send queue will fill up and only QP reset can help.
 	 */
-	flags = atomic_inc_return(&con->io_cnt) % sess->queue_depth ?
+	flags = atomic_inc_वापस(&con->io_cnt) % sess->queue_depth ?
 			0 : IB_SEND_SIGNALED;
 
-	ib_dma_sync_single_for_device(sess->s.dev->ib_dev, req->iu->dma_addr,
+	ib_dma_sync_single_क्रम_device(sess->s.dev->ib_dev, req->iu->dma_addr,
 				      size, DMA_TO_DEVICE);
 
-	return rtrs_iu_post_rdma_write_imm(&con->c, req->iu, sge, num_sge,
+	वापस rtrs_iu_post_rdma_ग_लिखो_imm(&con->c, req->iu, sge, num_sge,
 					    rbuf->rkey, rbuf->addr, imm,
-					    flags, NULL);
-}
+					    flags, शून्य);
+पूर्ण
 
-static int rtrs_clt_write_req(struct rtrs_clt_io_req *req)
-{
-	struct rtrs_clt_con *con = req->con;
-	struct rtrs_sess *s = con->c.sess;
-	struct rtrs_clt_sess *sess = to_clt_sess(s);
-	struct rtrs_msg_rdma_write *msg;
+अटल पूर्णांक rtrs_clt_ग_लिखो_req(काष्ठा rtrs_clt_io_req *req)
+अणु
+	काष्ठा rtrs_clt_con *con = req->con;
+	काष्ठा rtrs_sess *s = con->c.sess;
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(s);
+	काष्ठा rtrs_msg_rdma_ग_लिखो *msg;
 
-	struct rtrs_rbuf *rbuf;
-	int ret, count = 0;
+	काष्ठा rtrs_rbuf *rbuf;
+	पूर्णांक ret, count = 0;
 	u32 imm, buf_id;
 
-	const size_t tsize = sizeof(*msg) + req->data_len + req->usr_len;
+	स्थिर माप_प्रकार tsize = माप(*msg) + req->data_len + req->usr_len;
 
-	if (unlikely(tsize > sess->chunk_size)) {
+	अगर (unlikely(tsize > sess->chunk_size)) अणु
 		rtrs_wrn(s, "Write request failed, size too big %zu > %d\n",
 			  tsize, sess->chunk_size);
-		return -EMSGSIZE;
-	}
-	if (req->sg_cnt) {
+		वापस -EMSGSIZE;
+	पूर्ण
+	अगर (req->sg_cnt) अणु
 		count = ib_dma_map_sg(sess->s.dev->ib_dev, req->sglist,
 				      req->sg_cnt, req->dir);
-		if (unlikely(!count)) {
+		अगर (unlikely(!count)) अणु
 			rtrs_wrn(s, "Write request failed, map failed\n");
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 	/* put rtrs msg after sg and user message */
 	msg = req->iu->buf + req->usr_len;
 	msg->type = cpu_to_le16(RTRS_MSG_WRITE);
@@ -1078,94 +1079,94 @@ static int rtrs_clt_write_req(struct rtrs_clt_io_req *req)
 	 */
 	rtrs_clt_update_all_stats(req, WRITE);
 
-	ret = rtrs_post_rdma_write_sg(req->con, req, rbuf,
-				       req->usr_len + sizeof(*msg),
+	ret = rtrs_post_rdma_ग_लिखो_sg(req->con, req, rbuf,
+				       req->usr_len + माप(*msg),
 				       imm);
-	if (unlikely(ret)) {
+	अगर (unlikely(ret)) अणु
 		rtrs_err_rl(s,
 			    "Write request failed: error=%d path=%s [%s:%u]\n",
 			    ret, kobject_name(&sess->kobj), sess->hca_name,
 			    sess->hca_port);
-		if (sess->clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
+		अगर (sess->clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
 			atomic_dec(&sess->stats->inflight);
-		if (req->sg_cnt)
+		अगर (req->sg_cnt)
 			ib_dma_unmap_sg(sess->s.dev->ib_dev, req->sglist,
 					req->sg_cnt, req->dir);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int rtrs_map_sg_fr(struct rtrs_clt_io_req *req, size_t count)
-{
-	int nr;
+अटल पूर्णांक rtrs_map_sg_fr(काष्ठा rtrs_clt_io_req *req, माप_प्रकार count)
+अणु
+	पूर्णांक nr;
 
 	/* Align the MR to a 4K page size to match the block virt boundary */
-	nr = ib_map_mr_sg(req->mr, req->sglist, count, NULL, SZ_4K);
-	if (nr < 0)
-		return nr;
-	if (unlikely(nr < req->sg_cnt))
-		return -EINVAL;
+	nr = ib_map_mr_sg(req->mr, req->sglist, count, शून्य, SZ_4K);
+	अगर (nr < 0)
+		वापस nr;
+	अगर (unlikely(nr < req->sg_cnt))
+		वापस -EINVAL;
 	ib_update_fast_reg_key(req->mr, ib_inc_rkey(req->mr->rkey));
 
-	return nr;
-}
+	वापस nr;
+पूर्ण
 
-static int rtrs_clt_read_req(struct rtrs_clt_io_req *req)
-{
-	struct rtrs_clt_con *con = req->con;
-	struct rtrs_sess *s = con->c.sess;
-	struct rtrs_clt_sess *sess = to_clt_sess(s);
-	struct rtrs_msg_rdma_read *msg;
-	struct rtrs_ib_dev *dev = sess->s.dev;
+अटल पूर्णांक rtrs_clt_पढ़ो_req(काष्ठा rtrs_clt_io_req *req)
+अणु
+	काष्ठा rtrs_clt_con *con = req->con;
+	काष्ठा rtrs_sess *s = con->c.sess;
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(s);
+	काष्ठा rtrs_msg_rdma_पढ़ो *msg;
+	काष्ठा rtrs_ib_dev *dev = sess->s.dev;
 
-	struct ib_reg_wr rwr;
-	struct ib_send_wr *wr = NULL;
+	काष्ठा ib_reg_wr rwr;
+	काष्ठा ib_send_wr *wr = शून्य;
 
-	int ret, count = 0;
+	पूर्णांक ret, count = 0;
 	u32 imm, buf_id;
 
-	const size_t tsize = sizeof(*msg) + req->data_len + req->usr_len;
+	स्थिर माप_प्रकार tsize = माप(*msg) + req->data_len + req->usr_len;
 
-	if (unlikely(tsize > sess->chunk_size)) {
+	अगर (unlikely(tsize > sess->chunk_size)) अणु
 		rtrs_wrn(s,
 			  "Read request failed, message size is %zu, bigger than CHUNK_SIZE %d\n",
 			  tsize, sess->chunk_size);
-		return -EMSGSIZE;
-	}
+		वापस -EMSGSIZE;
+	पूर्ण
 
-	if (req->sg_cnt) {
+	अगर (req->sg_cnt) अणु
 		count = ib_dma_map_sg(dev->ib_dev, req->sglist, req->sg_cnt,
 				      req->dir);
-		if (unlikely(!count)) {
+		अगर (unlikely(!count)) अणु
 			rtrs_wrn(s,
 				  "Read request failed, dma map failed\n");
-			return -EINVAL;
-		}
-	}
-	/* put our message into req->buf after user message*/
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	/* put our message पूर्णांकo req->buf after user message*/
 	msg = req->iu->buf + req->usr_len;
 	msg->type = cpu_to_le16(RTRS_MSG_READ);
 	msg->usr_len = cpu_to_le16(req->usr_len);
 
-	if (count) {
+	अगर (count) अणु
 		ret = rtrs_map_sg_fr(req, count);
-		if (ret < 0) {
+		अगर (ret < 0) अणु
 			rtrs_err_rl(s,
 				     "Read request failed, failed to map  fast reg. data, err: %d\n",
 				     ret);
 			ib_dma_unmap_sg(dev->ib_dev, req->sglist, req->sg_cnt,
 					req->dir);
-			return ret;
-		}
-		rwr = (struct ib_reg_wr) {
+			वापस ret;
+		पूर्ण
+		rwr = (काष्ठा ib_reg_wr) अणु
 			.wr.opcode = IB_WR_REG_MR,
 			.wr.wr_cqe = &fast_reg_cqe,
 			.mr = req->mr,
 			.key = req->mr->rkey,
 			.access = (IB_ACCESS_LOCAL_WRITE |
 				   IB_ACCESS_REMOTE_WRITE),
-		};
+		पूर्ण;
 		wr = &rwr.wr;
 
 		msg->sg_cnt = cpu_to_le16(1);
@@ -1178,20 +1179,20 @@ static int rtrs_clt_read_req(struct rtrs_clt_io_req *req)
 		/* Further invalidation is required */
 		req->need_inv = !!RTRS_MSG_NEED_INVAL_F;
 
-	} else {
+	पूर्ण अन्यथा अणु
 		msg->sg_cnt = 0;
 		msg->flags = 0;
-	}
+	पूर्ण
 	/*
-	 * rtrs message will be after the space reserved for disk data and
+	 * rtrs message will be after the space reserved क्रम disk data and
 	 * user message
 	 */
 	imm = req->permit->mem_off + req->data_len + req->usr_len;
 	imm = rtrs_to_io_req_imm(imm);
 	buf_id = req->permit->mem_id;
 
-	req->sg_size  = sizeof(*msg);
-	req->sg_size += le16_to_cpu(msg->sg_cnt) * sizeof(struct rtrs_sg_desc);
+	req->sg_size  = माप(*msg);
+	req->sg_size += le16_to_cpu(msg->sg_cnt) * माप(काष्ठा rtrs_sg_desc);
 	req->sg_size += req->usr_len;
 
 	/*
@@ -1202,360 +1203,360 @@ static int rtrs_clt_read_req(struct rtrs_clt_io_req *req)
 
 	ret = rtrs_post_send_rdma(req->con, req, &sess->rbufs[buf_id],
 				   req->data_len, imm, wr);
-	if (unlikely(ret)) {
+	अगर (unlikely(ret)) अणु
 		rtrs_err_rl(s,
 			    "Read request failed: error=%d path=%s [%s:%u]\n",
 			    ret, kobject_name(&sess->kobj), sess->hca_name,
 			    sess->hca_port);
-		if (sess->clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
+		अगर (sess->clt->mp_policy == MP_POLICY_MIN_INFLIGHT)
 			atomic_dec(&sess->stats->inflight);
 		req->need_inv = false;
-		if (req->sg_cnt)
+		अगर (req->sg_cnt)
 			ib_dma_unmap_sg(dev->ib_dev, req->sglist,
 					req->sg_cnt, req->dir);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * rtrs_clt_failover_req() Try to find an active path for a failed request
+ * rtrs_clt_failover_req() Try to find an active path क्रम a failed request
  * @clt: clt context
  * @fail_req: a failed io request.
  */
-static int rtrs_clt_failover_req(struct rtrs_clt *clt,
-				 struct rtrs_clt_io_req *fail_req)
-{
-	struct rtrs_clt_sess *alive_sess;
-	struct rtrs_clt_io_req *req;
-	int err = -ECONNABORTED;
-	struct path_it it;
+अटल पूर्णांक rtrs_clt_failover_req(काष्ठा rtrs_clt *clt,
+				 काष्ठा rtrs_clt_io_req *fail_req)
+अणु
+	काष्ठा rtrs_clt_sess *alive_sess;
+	काष्ठा rtrs_clt_io_req *req;
+	पूर्णांक err = -ECONNABORTED;
+	काष्ठा path_it it;
 
-	rcu_read_lock();
-	for (path_it_init(&it, clt);
+	rcu_पढ़ो_lock();
+	क्रम (path_it_init(&it, clt);
 	     (alive_sess = it.next_path(&it)) && it.i < it.clt->paths_num;
-	     it.i++) {
-		if (unlikely(READ_ONCE(alive_sess->state) !=
+	     it.i++) अणु
+		अगर (unlikely(READ_ONCE(alive_sess->state) !=
 			     RTRS_CLT_CONNECTED))
-			continue;
+			जारी;
 		req = rtrs_clt_get_copy_req(alive_sess, fail_req);
-		if (req->dir == DMA_TO_DEVICE)
-			err = rtrs_clt_write_req(req);
-		else
-			err = rtrs_clt_read_req(req);
-		if (unlikely(err)) {
+		अगर (req->dir == DMA_TO_DEVICE)
+			err = rtrs_clt_ग_लिखो_req(req);
+		अन्यथा
+			err = rtrs_clt_पढ़ो_req(req);
+		अगर (unlikely(err)) अणु
 			req->in_use = false;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		/* Success path */
 		rtrs_clt_inc_failover_cnt(alive_sess->stats);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	path_it_deinit(&it);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void fail_all_outstanding_reqs(struct rtrs_clt_sess *sess)
-{
-	struct rtrs_clt *clt = sess->clt;
-	struct rtrs_clt_io_req *req;
-	int i, err;
+अटल व्योम fail_all_outstanding_reqs(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा rtrs_clt *clt = sess->clt;
+	काष्ठा rtrs_clt_io_req *req;
+	पूर्णांक i, err;
 
-	if (!sess->reqs)
-		return;
-	for (i = 0; i < sess->queue_depth; ++i) {
+	अगर (!sess->reqs)
+		वापस;
+	क्रम (i = 0; i < sess->queue_depth; ++i) अणु
 		req = &sess->reqs[i];
-		if (!req->in_use)
-			continue;
+		अगर (!req->in_use)
+			जारी;
 
 		/*
-		 * Safely (without notification) complete failed request.
+		 * Safely (without notअगरication) complete failed request.
 		 * After completion this request is still useble and can
 		 * be failovered to another path.
 		 */
 		complete_rdma_req(req, -ECONNABORTED, false, true);
 
 		err = rtrs_clt_failover_req(clt, req);
-		if (unlikely(err))
-			/* Failover failed, notify anyway */
+		अगर (unlikely(err))
+			/* Failover failed, notअगरy anyway */
 			req->conf(req->priv, err);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void free_sess_reqs(struct rtrs_clt_sess *sess)
-{
-	struct rtrs_clt_io_req *req;
-	int i;
+अटल व्योम मुक्त_sess_reqs(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा rtrs_clt_io_req *req;
+	पूर्णांक i;
 
-	if (!sess->reqs)
-		return;
-	for (i = 0; i < sess->queue_depth; ++i) {
+	अगर (!sess->reqs)
+		वापस;
+	क्रम (i = 0; i < sess->queue_depth; ++i) अणु
 		req = &sess->reqs[i];
-		if (req->mr)
+		अगर (req->mr)
 			ib_dereg_mr(req->mr);
-		kfree(req->sge);
-		rtrs_iu_free(req->iu, sess->s.dev->ib_dev, 1);
-	}
-	kfree(sess->reqs);
-	sess->reqs = NULL;
-}
+		kमुक्त(req->sge);
+		rtrs_iu_मुक्त(req->iu, sess->s.dev->ib_dev, 1);
+	पूर्ण
+	kमुक्त(sess->reqs);
+	sess->reqs = शून्य;
+पूर्ण
 
-static int alloc_sess_reqs(struct rtrs_clt_sess *sess)
-{
-	struct rtrs_clt_io_req *req;
-	struct rtrs_clt *clt = sess->clt;
-	int i, err = -ENOMEM;
+अटल पूर्णांक alloc_sess_reqs(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा rtrs_clt_io_req *req;
+	काष्ठा rtrs_clt *clt = sess->clt;
+	पूर्णांक i, err = -ENOMEM;
 
-	sess->reqs = kcalloc(sess->queue_depth, sizeof(*sess->reqs),
+	sess->reqs = kसुस्मृति(sess->queue_depth, माप(*sess->reqs),
 			     GFP_KERNEL);
-	if (!sess->reqs)
-		return -ENOMEM;
+	अगर (!sess->reqs)
+		वापस -ENOMEM;
 
-	for (i = 0; i < sess->queue_depth; ++i) {
+	क्रम (i = 0; i < sess->queue_depth; ++i) अणु
 		req = &sess->reqs[i];
 		req->iu = rtrs_iu_alloc(1, sess->max_hdr_size, GFP_KERNEL,
 					 sess->s.dev->ib_dev,
 					 DMA_TO_DEVICE,
-					 rtrs_clt_rdma_done);
-		if (!req->iu)
-			goto out;
+					 rtrs_clt_rdma_करोne);
+		अगर (!req->iu)
+			जाओ out;
 
-		req->sge = kmalloc_array(clt->max_segments + 1,
-					 sizeof(*req->sge), GFP_KERNEL);
-		if (!req->sge)
-			goto out;
+		req->sge = kदो_स्मृति_array(clt->max_segments + 1,
+					 माप(*req->sge), GFP_KERNEL);
+		अगर (!req->sge)
+			जाओ out;
 
 		req->mr = ib_alloc_mr(sess->s.dev->ib_pd, IB_MR_TYPE_MEM_REG,
 				      sess->max_pages_per_mr);
-		if (IS_ERR(req->mr)) {
+		अगर (IS_ERR(req->mr)) अणु
 			err = PTR_ERR(req->mr);
-			req->mr = NULL;
+			req->mr = शून्य;
 			pr_err("Failed to alloc sess->max_pages_per_mr %d\n",
 			       sess->max_pages_per_mr);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		init_completion(&req->inv_comp);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 out:
-	free_sess_reqs(sess);
+	मुक्त_sess_reqs(sess);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int alloc_permits(struct rtrs_clt *clt)
-{
-	unsigned int chunk_bits;
-	int err, i;
+अटल पूर्णांक alloc_permits(काष्ठा rtrs_clt *clt)
+अणु
+	अचिन्हित पूर्णांक chunk_bits;
+	पूर्णांक err, i;
 
-	clt->permits_map = kcalloc(BITS_TO_LONGS(clt->queue_depth),
-				   sizeof(long), GFP_KERNEL);
-	if (!clt->permits_map) {
+	clt->permits_map = kसुस्मृति(BITS_TO_LONGS(clt->queue_depth),
+				   माप(दीर्घ), GFP_KERNEL);
+	अगर (!clt->permits_map) अणु
 		err = -ENOMEM;
-		goto out_err;
-	}
-	clt->permits = kcalloc(clt->queue_depth, permit_size(clt), GFP_KERNEL);
-	if (!clt->permits) {
+		जाओ out_err;
+	पूर्ण
+	clt->permits = kसुस्मृति(clt->queue_depth, permit_size(clt), GFP_KERNEL);
+	अगर (!clt->permits) अणु
 		err = -ENOMEM;
-		goto err_map;
-	}
+		जाओ err_map;
+	पूर्ण
 	chunk_bits = ilog2(clt->queue_depth - 1) + 1;
-	for (i = 0; i < clt->queue_depth; i++) {
-		struct rtrs_permit *permit;
+	क्रम (i = 0; i < clt->queue_depth; i++) अणु
+		काष्ठा rtrs_permit *permit;
 
 		permit = get_permit(clt, i);
 		permit->mem_id = i;
 		permit->mem_off = i << (MAX_IMM_PAYL_BITS - chunk_bits);
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 err_map:
-	kfree(clt->permits_map);
-	clt->permits_map = NULL;
+	kमुक्त(clt->permits_map);
+	clt->permits_map = शून्य;
 out_err:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void free_permits(struct rtrs_clt *clt)
-{
-	if (clt->permits_map) {
-		size_t sz = clt->queue_depth;
+अटल व्योम मुक्त_permits(काष्ठा rtrs_clt *clt)
+अणु
+	अगर (clt->permits_map) अणु
+		माप_प्रकार sz = clt->queue_depth;
 
-		wait_event(clt->permits_wait,
+		रुको_event(clt->permits_रुको,
 			   find_first_bit(clt->permits_map, sz) >= sz);
-	}
-	kfree(clt->permits_map);
-	clt->permits_map = NULL;
-	kfree(clt->permits);
-	clt->permits = NULL;
-}
+	पूर्ण
+	kमुक्त(clt->permits_map);
+	clt->permits_map = शून्य;
+	kमुक्त(clt->permits);
+	clt->permits = शून्य;
+पूर्ण
 
-static void query_fast_reg_mode(struct rtrs_clt_sess *sess)
-{
-	struct ib_device *ib_dev;
+अटल व्योम query_fast_reg_mode(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा ib_device *ib_dev;
 	u64 max_pages_per_mr;
-	int mr_page_shift;
+	पूर्णांक mr_page_shअगरt;
 
 	ib_dev = sess->s.dev->ib_dev;
 
 	/*
-	 * Use the smallest page size supported by the HCA, down to a
+	 * Use the smallest page size supported by the HCA, करोwn to a
 	 * minimum of 4096 bytes. We're unlikely to build large sglists
 	 * out of smaller entries.
 	 */
-	mr_page_shift      = max(12, ffs(ib_dev->attrs.page_size_cap) - 1);
+	mr_page_shअगरt      = max(12, ffs(ib_dev->attrs.page_size_cap) - 1);
 	max_pages_per_mr   = ib_dev->attrs.max_mr_size;
-	do_div(max_pages_per_mr, (1ull << mr_page_shift));
+	करो_भाग(max_pages_per_mr, (1ull << mr_page_shअगरt));
 	sess->max_pages_per_mr =
 		min3(sess->max_pages_per_mr, (u32)max_pages_per_mr,
 		     ib_dev->attrs.max_fast_reg_page_list_len);
 	sess->max_send_sge = ib_dev->attrs.max_send_sge;
-}
+पूर्ण
 
-static bool rtrs_clt_change_state_get_old(struct rtrs_clt_sess *sess,
-					   enum rtrs_clt_state new_state,
-					   enum rtrs_clt_state *old_state)
-{
+अटल bool rtrs_clt_change_state_get_old(काष्ठा rtrs_clt_sess *sess,
+					   क्रमागत rtrs_clt_state new_state,
+					   क्रमागत rtrs_clt_state *old_state)
+अणु
 	bool changed;
 
 	spin_lock_irq(&sess->state_wq.lock);
-	if (old_state)
+	अगर (old_state)
 		*old_state = sess->state;
 	changed = rtrs_clt_change_state(sess, new_state);
 	spin_unlock_irq(&sess->state_wq.lock);
 
-	return changed;
-}
+	वापस changed;
+पूर्ण
 
-static void rtrs_clt_hb_err_handler(struct rtrs_con *c)
-{
-	struct rtrs_clt_con *con = container_of(c, typeof(*con), c);
+अटल व्योम rtrs_clt_hb_err_handler(काष्ठा rtrs_con *c)
+अणु
+	काष्ठा rtrs_clt_con *con = container_of(c, typeof(*con), c);
 
 	rtrs_rdma_error_recovery(con);
-}
+पूर्ण
 
-static void rtrs_clt_init_hb(struct rtrs_clt_sess *sess)
-{
+अटल व्योम rtrs_clt_init_hb(काष्ठा rtrs_clt_sess *sess)
+अणु
 	rtrs_init_hb(&sess->s, &io_comp_cqe,
 		      RTRS_HB_INTERVAL_MS,
 		      RTRS_HB_MISSED_MAX,
 		      rtrs_clt_hb_err_handler,
 		      rtrs_wq);
-}
+पूर्ण
 
-static void rtrs_clt_start_hb(struct rtrs_clt_sess *sess)
-{
+अटल व्योम rtrs_clt_start_hb(काष्ठा rtrs_clt_sess *sess)
+अणु
 	rtrs_start_hb(&sess->s);
-}
+पूर्ण
 
-static void rtrs_clt_stop_hb(struct rtrs_clt_sess *sess)
-{
+अटल व्योम rtrs_clt_stop_hb(काष्ठा rtrs_clt_sess *sess)
+अणु
 	rtrs_stop_hb(&sess->s);
-}
+पूर्ण
 
-static void rtrs_clt_reconnect_work(struct work_struct *work);
-static void rtrs_clt_close_work(struct work_struct *work);
+अटल व्योम rtrs_clt_reconnect_work(काष्ठा work_काष्ठा *work);
+अटल व्योम rtrs_clt_बंद_work(काष्ठा work_काष्ठा *work);
 
-static struct rtrs_clt_sess *alloc_sess(struct rtrs_clt *clt,
-					 const struct rtrs_addr *path,
-					 size_t con_num, u16 max_segments,
+अटल काष्ठा rtrs_clt_sess *alloc_sess(काष्ठा rtrs_clt *clt,
+					 स्थिर काष्ठा rtrs_addr *path,
+					 माप_प्रकार con_num, u16 max_segments,
 					 u32 nr_poll_queues)
-{
-	struct rtrs_clt_sess *sess;
-	int err = -ENOMEM;
-	int cpu;
-	size_t total_con;
+अणु
+	काष्ठा rtrs_clt_sess *sess;
+	पूर्णांक err = -ENOMEM;
+	पूर्णांक cpu;
+	माप_प्रकार total_con;
 
-	sess = kzalloc(sizeof(*sess), GFP_KERNEL);
-	if (!sess)
-		goto err;
+	sess = kzalloc(माप(*sess), GFP_KERNEL);
+	अगर (!sess)
+		जाओ err;
 
 	/*
 	 * irqmode and poll
-	 * +1: Extra connection for user messages
+	 * +1: Extra connection क्रम user messages
 	 */
 	total_con = con_num + nr_poll_queues + 1;
-	sess->s.con = kcalloc(total_con, sizeof(*sess->s.con), GFP_KERNEL);
-	if (!sess->s.con)
-		goto err_free_sess;
+	sess->s.con = kसुस्मृति(total_con, माप(*sess->s.con), GFP_KERNEL);
+	अगर (!sess->s.con)
+		जाओ err_मुक्त_sess;
 
 	sess->s.con_num = total_con;
 	sess->s.irq_con_num = con_num + 1;
 
-	sess->stats = kzalloc(sizeof(*sess->stats), GFP_KERNEL);
-	if (!sess->stats)
-		goto err_free_con;
+	sess->stats = kzalloc(माप(*sess->stats), GFP_KERNEL);
+	अगर (!sess->stats)
+		जाओ err_मुक्त_con;
 
 	mutex_init(&sess->init_mutex);
 	uuid_gen(&sess->s.uuid);
-	memcpy(&sess->s.dst_addr, path->dst,
-	       rdma_addr_size((struct sockaddr *)path->dst));
+	स_नकल(&sess->s.dst_addr, path->dst,
+	       rdma_addr_size((काष्ठा sockaddr *)path->dst));
 
 	/*
 	 * rdma_resolve_addr() passes src_addr to cma_bind_addr, which
-	 * checks the sa_family to be non-zero. If user passed src_addr=NULL
+	 * checks the sa_family to be non-zero. If user passed src_addr=शून्य
 	 * the sess->src_addr will contain only zeros, which is then fine.
 	 */
-	if (path->src)
-		memcpy(&sess->s.src_addr, path->src,
-		       rdma_addr_size((struct sockaddr *)path->src));
-	strlcpy(sess->s.sessname, clt->sessname, sizeof(sess->s.sessname));
+	अगर (path->src)
+		स_नकल(&sess->s.src_addr, path->src,
+		       rdma_addr_size((काष्ठा sockaddr *)path->src));
+	strlcpy(sess->s.sessname, clt->sessname, माप(sess->s.sessname));
 	sess->clt = clt;
 	sess->max_pages_per_mr = max_segments;
-	init_waitqueue_head(&sess->state_wq);
+	init_रुकोqueue_head(&sess->state_wq);
 	sess->state = RTRS_CLT_CONNECTING;
 	atomic_set(&sess->connected_cnt, 0);
-	INIT_WORK(&sess->close_work, rtrs_clt_close_work);
+	INIT_WORK(&sess->बंद_work, rtrs_clt_बंद_work);
 	INIT_DELAYED_WORK(&sess->reconnect_dwork, rtrs_clt_reconnect_work);
 	rtrs_clt_init_hb(sess);
 
 	sess->mp_skip_entry = alloc_percpu(typeof(*sess->mp_skip_entry));
-	if (!sess->mp_skip_entry)
-		goto err_free_stats;
+	अगर (!sess->mp_skip_entry)
+		जाओ err_मुक्त_stats;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		INIT_LIST_HEAD(per_cpu_ptr(sess->mp_skip_entry, cpu));
 
 	err = rtrs_clt_init_stats(sess->stats);
-	if (err)
-		goto err_free_percpu;
+	अगर (err)
+		जाओ err_मुक्त_percpu;
 
-	return sess;
+	वापस sess;
 
-err_free_percpu:
-	free_percpu(sess->mp_skip_entry);
-err_free_stats:
-	kfree(sess->stats);
-err_free_con:
-	kfree(sess->s.con);
-err_free_sess:
-	kfree(sess);
+err_मुक्त_percpu:
+	मुक्त_percpu(sess->mp_skip_entry);
+err_मुक्त_stats:
+	kमुक्त(sess->stats);
+err_मुक्त_con:
+	kमुक्त(sess->s.con);
+err_मुक्त_sess:
+	kमुक्त(sess);
 err:
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-void free_sess(struct rtrs_clt_sess *sess)
-{
-	free_percpu(sess->mp_skip_entry);
+व्योम मुक्त_sess(काष्ठा rtrs_clt_sess *sess)
+अणु
+	मुक्त_percpu(sess->mp_skip_entry);
 	mutex_destroy(&sess->init_mutex);
-	kfree(sess->s.con);
-	kfree(sess->rbufs);
-	kfree(sess);
-}
+	kमुक्त(sess->s.con);
+	kमुक्त(sess->rbufs);
+	kमुक्त(sess);
+पूर्ण
 
-static int create_con(struct rtrs_clt_sess *sess, unsigned int cid)
-{
-	struct rtrs_clt_con *con;
+अटल पूर्णांक create_con(काष्ठा rtrs_clt_sess *sess, अचिन्हित पूर्णांक cid)
+अणु
+	काष्ठा rtrs_clt_con *con;
 
-	con = kzalloc(sizeof(*con), GFP_KERNEL);
-	if (!con)
-		return -ENOMEM;
+	con = kzalloc(माप(*con), GFP_KERNEL);
+	अगर (!con)
+		वापस -ENOMEM;
 
 	/* Map first two connections to the first CPU */
 	con->cpu  = (cid ? cid - 1 : 0) % nr_cpu_ids;
@@ -1566,235 +1567,235 @@ static int create_con(struct rtrs_clt_sess *sess, unsigned int cid)
 
 	sess->s.con[cid] = &con->c;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void destroy_con(struct rtrs_clt_con *con)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+अटल व्योम destroy_con(काष्ठा rtrs_clt_con *con)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
 
-	sess->s.con[con->c.cid] = NULL;
+	sess->s.con[con->c.cid] = शून्य;
 	mutex_destroy(&con->con_mutex);
-	kfree(con);
-}
+	kमुक्त(con);
+पूर्ण
 
-static int create_con_cq_qp(struct rtrs_clt_con *con)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+अटल पूर्णांक create_con_cq_qp(काष्ठा rtrs_clt_con *con)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
 	u32 max_send_wr, max_recv_wr, cq_size;
-	int err, cq_vector;
-	struct rtrs_msg_rkey_rsp *rsp;
+	पूर्णांक err, cq_vector;
+	काष्ठा rtrs_msg_rkey_rsp *rsp;
 
-	lockdep_assert_held(&con->con_mutex);
-	if (con->c.cid == 0) {
+	lockdep_निश्चित_held(&con->con_mutex);
+	अगर (con->c.cid == 0) अणु
 		/*
-		 * One completion for each receive and two for each send
+		 * One completion क्रम each receive and two क्रम each send
 		 * (send request + registration)
-		 * + 2 for drain and heartbeat
-		 * in case qp gets into error state
+		 * + 2 क्रम drain and heartbeat
+		 * in हाल qp माला_लो पूर्णांकo error state
 		 */
 		max_send_wr = SERVICE_CON_QUEUE_DEPTH * 2 + 2;
 		max_recv_wr = SERVICE_CON_QUEUE_DEPTH * 2 + 2;
 		/* We must be the first here */
-		if (WARN_ON(sess->s.dev))
-			return -EINVAL;
+		अगर (WARN_ON(sess->s.dev))
+			वापस -EINVAL;
 
 		/*
 		 * The whole session uses device from user connection.
-		 * Be careful not to close user connection before ib dev
+		 * Be careful not to बंद user connection beक्रमe ib dev
 		 * is gracefully put.
 		 */
 		sess->s.dev = rtrs_ib_dev_find_or_add(con->c.cm_id->device,
 						       &dev_pd);
-		if (!sess->s.dev) {
+		अगर (!sess->s.dev) अणु
 			rtrs_wrn(sess->clt,
 				  "rtrs_ib_dev_find_get_or_add(): no memory\n");
-			return -ENOMEM;
-		}
+			वापस -ENOMEM;
+		पूर्ण
 		sess->s.dev_ref = 1;
 		query_fast_reg_mode(sess);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Here we assume that session members are correctly set.
-		 * This is always true if user connection (cid == 0) is
+		 * This is always true अगर user connection (cid == 0) is
 		 * established first.
 		 */
-		if (WARN_ON(!sess->s.dev))
-			return -EINVAL;
-		if (WARN_ON(!sess->queue_depth))
-			return -EINVAL;
+		अगर (WARN_ON(!sess->s.dev))
+			वापस -EINVAL;
+		अगर (WARN_ON(!sess->queue_depth))
+			वापस -EINVAL;
 
 		/* Shared between connections */
 		sess->s.dev_ref++;
 		max_send_wr =
-			min_t(int, sess->s.dev->ib_dev->attrs.max_qp_wr,
+			min_t(पूर्णांक, sess->s.dev->ib_dev->attrs.max_qp_wr,
 			      /* QD * (REQ + RSP + FR REGS or INVS) + drain */
 			      sess->queue_depth * 3 + 1);
 		max_recv_wr =
-			min_t(int, sess->s.dev->ib_dev->attrs.max_qp_wr,
+			min_t(पूर्णांक, sess->s.dev->ib_dev->attrs.max_qp_wr,
 			      sess->queue_depth * 3 + 1);
-	}
+	पूर्ण
 	/* alloc iu to recv new rkey reply when server reports flags set */
-	if (sess->flags & RTRS_MSG_NEW_RKEY_F || con->c.cid == 0) {
-		con->rsp_ius = rtrs_iu_alloc(max_recv_wr, sizeof(*rsp),
+	अगर (sess->flags & RTRS_MSG_NEW_RKEY_F || con->c.cid == 0) अणु
+		con->rsp_ius = rtrs_iu_alloc(max_recv_wr, माप(*rsp),
 					      GFP_KERNEL, sess->s.dev->ib_dev,
 					      DMA_FROM_DEVICE,
-					      rtrs_clt_rdma_done);
-		if (!con->rsp_ius)
-			return -ENOMEM;
+					      rtrs_clt_rdma_करोne);
+		अगर (!con->rsp_ius)
+			वापस -ENOMEM;
 		con->queue_size = max_recv_wr;
-	}
+	पूर्ण
 	cq_size = max_send_wr + max_recv_wr;
 	cq_vector = con->cpu % sess->s.dev->ib_dev->num_comp_vectors;
-	if (con->c.cid >= sess->s.irq_con_num)
+	अगर (con->c.cid >= sess->s.irq_con_num)
 		err = rtrs_cq_qp_create(&sess->s, &con->c, sess->max_send_sge,
 					cq_vector, cq_size, max_send_wr,
-					max_recv_wr, IB_POLL_DIRECT);
-	else
+					max_recv_wr, IB_POLL_सूचीECT);
+	अन्यथा
 		err = rtrs_cq_qp_create(&sess->s, &con->c, sess->max_send_sge,
 					cq_vector, cq_size, max_send_wr,
 					max_recv_wr, IB_POLL_SOFTIRQ);
 	/*
-	 * In case of error we do not bother to clean previous allocations,
+	 * In हाल of error we करो not bother to clean previous allocations,
 	 * since destroy_con_cq_qp() must be called.
 	 */
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void destroy_con_cq_qp(struct rtrs_clt_con *con)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+अटल व्योम destroy_con_cq_qp(काष्ठा rtrs_clt_con *con)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
 
 	/*
 	 * Be careful here: destroy_con_cq_qp() can be called even
 	 * create_con_cq_qp() failed, see comments there.
 	 */
-	lockdep_assert_held(&con->con_mutex);
+	lockdep_निश्चित_held(&con->con_mutex);
 	rtrs_cq_qp_destroy(&con->c);
-	if (con->rsp_ius) {
-		rtrs_iu_free(con->rsp_ius, sess->s.dev->ib_dev, con->queue_size);
-		con->rsp_ius = NULL;
+	अगर (con->rsp_ius) अणु
+		rtrs_iu_मुक्त(con->rsp_ius, sess->s.dev->ib_dev, con->queue_size);
+		con->rsp_ius = शून्य;
 		con->queue_size = 0;
-	}
-	if (sess->s.dev_ref && !--sess->s.dev_ref) {
+	पूर्ण
+	अगर (sess->s.dev_ref && !--sess->s.dev_ref) अणु
 		rtrs_ib_dev_put(sess->s.dev);
-		sess->s.dev = NULL;
-	}
-}
+		sess->s.dev = शून्य;
+	पूर्ण
+पूर्ण
 
-static void stop_cm(struct rtrs_clt_con *con)
-{
+अटल व्योम stop_cm(काष्ठा rtrs_clt_con *con)
+अणु
 	rdma_disconnect(con->c.cm_id);
-	if (con->c.qp)
+	अगर (con->c.qp)
 		ib_drain_qp(con->c.qp);
-}
+पूर्ण
 
-static void destroy_cm(struct rtrs_clt_con *con)
-{
+अटल व्योम destroy_cm(काष्ठा rtrs_clt_con *con)
+अणु
 	rdma_destroy_id(con->c.cm_id);
-	con->c.cm_id = NULL;
-}
+	con->c.cm_id = शून्य;
+पूर्ण
 
-static int rtrs_rdma_addr_resolved(struct rtrs_clt_con *con)
-{
-	struct rtrs_sess *s = con->c.sess;
-	int err;
+अटल पूर्णांक rtrs_rdma_addr_resolved(काष्ठा rtrs_clt_con *con)
+अणु
+	काष्ठा rtrs_sess *s = con->c.sess;
+	पूर्णांक err;
 
 	mutex_lock(&con->con_mutex);
 	err = create_con_cq_qp(con);
 	mutex_unlock(&con->con_mutex);
-	if (err) {
+	अगर (err) अणु
 		rtrs_err(s, "create_con_cq_qp(), err: %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	err = rdma_resolve_route(con->c.cm_id, RTRS_CONNECT_TIMEOUT_MS);
-	if (err)
+	अगर (err)
 		rtrs_err(s, "Resolving route failed, err: %d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtrs_rdma_route_resolved(struct rtrs_clt_con *con)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
-	struct rtrs_clt *clt = sess->clt;
-	struct rtrs_msg_conn_req msg;
-	struct rdma_conn_param param;
+अटल पूर्णांक rtrs_rdma_route_resolved(काष्ठा rtrs_clt_con *con)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+	काष्ठा rtrs_clt *clt = sess->clt;
+	काष्ठा rtrs_msg_conn_req msg;
+	काष्ठा rdma_conn_param param;
 
-	int err;
+	पूर्णांक err;
 
-	param = (struct rdma_conn_param) {
+	param = (काष्ठा rdma_conn_param) अणु
 		.retry_count = 7,
 		.rnr_retry_count = 7,
-		.private_data = &msg,
-		.private_data_len = sizeof(msg),
-	};
+		.निजी_data = &msg,
+		.निजी_data_len = माप(msg),
+	पूर्ण;
 
-	msg = (struct rtrs_msg_conn_req) {
+	msg = (काष्ठा rtrs_msg_conn_req) अणु
 		.magic = cpu_to_le16(RTRS_MAGIC),
 		.version = cpu_to_le16(RTRS_PROTO_VER),
 		.cid = cpu_to_le16(con->c.cid),
 		.cid_num = cpu_to_le16(sess->s.con_num),
 		.recon_cnt = cpu_to_le16(sess->s.recon_cnt),
-	};
-	msg.first_conn = sess->for_new_clt ? FIRST_CONN : 0;
+	पूर्ण;
+	msg.first_conn = sess->क्रम_new_clt ? FIRST_CONN : 0;
 	uuid_copy(&msg.sess_uuid, &sess->s.uuid);
 	uuid_copy(&msg.paths_uuid, &clt->paths_uuid);
 
 	err = rdma_connect_locked(con->c.cm_id, &param);
-	if (err)
+	अगर (err)
 		rtrs_err(clt, "rdma_connect_locked(): %d\n", err);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtrs_rdma_conn_established(struct rtrs_clt_con *con,
-				       struct rdma_cm_event *ev)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
-	struct rtrs_clt *clt = sess->clt;
-	const struct rtrs_msg_conn_rsp *msg;
+अटल पूर्णांक rtrs_rdma_conn_established(काष्ठा rtrs_clt_con *con,
+				       काष्ठा rdma_cm_event *ev)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+	काष्ठा rtrs_clt *clt = sess->clt;
+	स्थिर काष्ठा rtrs_msg_conn_rsp *msg;
 	u16 version, queue_depth;
-	int errno;
+	पूर्णांक त्रुटि_सं;
 	u8 len;
 
-	msg = ev->param.conn.private_data;
-	len = ev->param.conn.private_data_len;
-	if (len < sizeof(*msg)) {
+	msg = ev->param.conn.निजी_data;
+	len = ev->param.conn.निजी_data_len;
+	अगर (len < माप(*msg)) अणु
 		rtrs_err(clt, "Invalid RTRS connection response\n");
-		return -ECONNRESET;
-	}
-	if (le16_to_cpu(msg->magic) != RTRS_MAGIC) {
+		वापस -ECONNRESET;
+	पूर्ण
+	अगर (le16_to_cpu(msg->magic) != RTRS_MAGIC) अणु
 		rtrs_err(clt, "Invalid RTRS magic\n");
-		return -ECONNRESET;
-	}
+		वापस -ECONNRESET;
+	पूर्ण
 	version = le16_to_cpu(msg->version);
-	if (version >> 8 != RTRS_PROTO_VER_MAJOR) {
+	अगर (version >> 8 != RTRS_PROTO_VER_MAJOR) अणु
 		rtrs_err(clt, "Unsupported major RTRS version: %d, expected %d\n",
 			  version >> 8, RTRS_PROTO_VER_MAJOR);
-		return -ECONNRESET;
-	}
-	errno = le16_to_cpu(msg->errno);
-	if (errno) {
+		वापस -ECONNRESET;
+	पूर्ण
+	त्रुटि_सं = le16_to_cpu(msg->त्रुटि_सं);
+	अगर (त्रुटि_सं) अणु
 		rtrs_err(clt, "Invalid RTRS message: errno %d\n",
-			  errno);
-		return -ECONNRESET;
-	}
-	if (con->c.cid == 0) {
+			  त्रुटि_सं);
+		वापस -ECONNRESET;
+	पूर्ण
+	अगर (con->c.cid == 0) अणु
 		queue_depth = le16_to_cpu(msg->queue_depth);
 
-		if (queue_depth > MAX_SESS_QUEUE_DEPTH) {
+		अगर (queue_depth > MAX_SESS_QUEUE_DEPTH) अणु
 			rtrs_err(clt, "Invalid RTRS message: queue=%d\n",
 				  queue_depth);
-			return -ECONNRESET;
-		}
-		if (!sess->rbufs || sess->queue_depth < queue_depth) {
-			kfree(sess->rbufs);
-			sess->rbufs = kcalloc(queue_depth, sizeof(*sess->rbufs),
+			वापस -ECONNRESET;
+		पूर्ण
+		अगर (!sess->rbufs || sess->queue_depth < queue_depth) अणु
+			kमुक्त(sess->rbufs);
+			sess->rbufs = kसुस्मृति(queue_depth, माप(*sess->rbufs),
 					      GFP_KERNEL);
-			if (!sess->rbufs)
-				return -ENOMEM;
-		}
+			अगर (!sess->rbufs)
+				वापस -ENOMEM;
+		पूर्ण
 		sess->queue_depth = queue_depth;
 		sess->max_hdr_size = le32_to_cpu(msg->max_hdr_size);
 		sess->max_io_size = le32_to_cpu(msg->max_io_size);
@@ -1803,8 +1804,8 @@ static int rtrs_rdma_conn_established(struct rtrs_clt_con *con,
 
 		/*
 		 * Global queue depth and IO size is always a minimum.
-		 * If while a reconnection server sends us a value a bit
-		 * higher - client does not care and uses cached minimum.
+		 * If जबतक a reconnection server sends us a value a bit
+		 * higher - client करोes not care and uses cached minimum.
 		 *
 		 * Since we can have several sessions (paths) restablishing
 		 * connections in parallel, use lock.
@@ -1817,209 +1818,209 @@ static int rtrs_rdma_conn_established(struct rtrs_clt_con *con,
 		mutex_unlock(&clt->paths_mutex);
 
 		/*
-		 * Cache the hca_port and hca_name for sysfs
+		 * Cache the hca_port and hca_name क्रम sysfs
 		 */
 		sess->hca_port = con->c.cm_id->port_num;
-		scnprintf(sess->hca_name, sizeof(sess->hca_name),
+		scnम_लिखो(sess->hca_name, माप(sess->hca_name),
 			  sess->s.dev->ib_dev->name);
 		sess->s.src_addr = con->c.cm_id->route.addr.src_addr;
-		/* set for_new_clt, to allow future reconnect on any path */
-		sess->for_new_clt = 1;
-	}
+		/* set क्रम_new_clt, to allow future reconnect on any path */
+		sess->क्रम_new_clt = 1;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void flag_success_on_conn(struct rtrs_clt_con *con)
-{
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+अटल अंतरभूत व्योम flag_success_on_conn(काष्ठा rtrs_clt_con *con)
+अणु
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
 
 	atomic_inc(&sess->connected_cnt);
 	con->cm_err = 1;
-}
+पूर्ण
 
-static int rtrs_rdma_conn_rejected(struct rtrs_clt_con *con,
-				    struct rdma_cm_event *ev)
-{
-	struct rtrs_sess *s = con->c.sess;
-	const struct rtrs_msg_conn_rsp *msg;
-	const char *rej_msg;
-	int status, errno;
+अटल पूर्णांक rtrs_rdma_conn_rejected(काष्ठा rtrs_clt_con *con,
+				    काष्ठा rdma_cm_event *ev)
+अणु
+	काष्ठा rtrs_sess *s = con->c.sess;
+	स्थिर काष्ठा rtrs_msg_conn_rsp *msg;
+	स्थिर अक्षर *rej_msg;
+	पूर्णांक status, त्रुटि_सं;
 	u8 data_len;
 
 	status = ev->status;
 	rej_msg = rdma_reject_msg(con->c.cm_id, status);
 	msg = rdma_consumer_reject_data(con->c.cm_id, ev, &data_len);
 
-	if (msg && data_len >= sizeof(*msg)) {
-		errno = (int16_t)le16_to_cpu(msg->errno);
-		if (errno == -EBUSY)
+	अगर (msg && data_len >= माप(*msg)) अणु
+		त्रुटि_सं = (पूर्णांक16_t)le16_to_cpu(msg->त्रुटि_सं);
+		अगर (त्रुटि_सं == -EBUSY)
 			rtrs_err(s,
 				  "Previous session is still exists on the server, please reconnect later\n");
-		else
+		अन्यथा
 			rtrs_err(s,
 				  "Connect rejected: status %d (%s), rtrs errno %d\n",
-				  status, rej_msg, errno);
-	} else {
+				  status, rej_msg, त्रुटि_सं);
+	पूर्ण अन्यथा अणु
 		rtrs_err(s,
 			  "Connect rejected but with malformed message: status %d (%s)\n",
 			  status, rej_msg);
-	}
+	पूर्ण
 
-	return -ECONNRESET;
-}
+	वापस -ECONNRESET;
+पूर्ण
 
-static void rtrs_clt_close_conns(struct rtrs_clt_sess *sess, bool wait)
-{
-	if (rtrs_clt_change_state_get_old(sess, RTRS_CLT_CLOSING, NULL))
-		queue_work(rtrs_wq, &sess->close_work);
-	if (wait)
-		flush_work(&sess->close_work);
-}
+अटल व्योम rtrs_clt_बंद_conns(काष्ठा rtrs_clt_sess *sess, bool रुको)
+अणु
+	अगर (rtrs_clt_change_state_get_old(sess, RTRS_CLT_CLOSING, शून्य))
+		queue_work(rtrs_wq, &sess->बंद_work);
+	अगर (रुको)
+		flush_work(&sess->बंद_work);
+पूर्ण
 
-static inline void flag_error_on_conn(struct rtrs_clt_con *con, int cm_err)
-{
-	if (con->cm_err == 1) {
-		struct rtrs_clt_sess *sess;
+अटल अंतरभूत व्योम flag_error_on_conn(काष्ठा rtrs_clt_con *con, पूर्णांक cm_err)
+अणु
+	अगर (con->cm_err == 1) अणु
+		काष्ठा rtrs_clt_sess *sess;
 
 		sess = to_clt_sess(con->c.sess);
-		if (atomic_dec_and_test(&sess->connected_cnt))
+		अगर (atomic_dec_and_test(&sess->connected_cnt))
 
 			wake_up(&sess->state_wq);
-	}
+	पूर्ण
 	con->cm_err = cm_err;
-}
+पूर्ण
 
-static int rtrs_clt_rdma_cm_handler(struct rdma_cm_id *cm_id,
-				     struct rdma_cm_event *ev)
-{
-	struct rtrs_clt_con *con = cm_id->context;
-	struct rtrs_sess *s = con->c.sess;
-	struct rtrs_clt_sess *sess = to_clt_sess(s);
-	int cm_err = 0;
+अटल पूर्णांक rtrs_clt_rdma_cm_handler(काष्ठा rdma_cm_id *cm_id,
+				     काष्ठा rdma_cm_event *ev)
+अणु
+	काष्ठा rtrs_clt_con *con = cm_id->context;
+	काष्ठा rtrs_sess *s = con->c.sess;
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(s);
+	पूर्णांक cm_err = 0;
 
-	switch (ev->event) {
-	case RDMA_CM_EVENT_ADDR_RESOLVED:
+	चयन (ev->event) अणु
+	हाल RDMA_CM_EVENT_ADDR_RESOLVED:
 		cm_err = rtrs_rdma_addr_resolved(con);
-		break;
-	case RDMA_CM_EVENT_ROUTE_RESOLVED:
+		अवरोध;
+	हाल RDMA_CM_EVENT_ROUTE_RESOLVED:
 		cm_err = rtrs_rdma_route_resolved(con);
-		break;
-	case RDMA_CM_EVENT_ESTABLISHED:
+		अवरोध;
+	हाल RDMA_CM_EVENT_ESTABLISHED:
 		cm_err = rtrs_rdma_conn_established(con, ev);
-		if (likely(!cm_err)) {
+		अगर (likely(!cm_err)) अणु
 			/*
 			 * Report success and wake up. Here we abuse state_wq,
 			 * i.e. wake up without state change, but we set cm_err.
 			 */
 			flag_success_on_conn(con);
 			wake_up(&sess->state_wq);
-			return 0;
-		}
-		break;
-	case RDMA_CM_EVENT_REJECTED:
+			वापस 0;
+		पूर्ण
+		अवरोध;
+	हाल RDMA_CM_EVENT_REJECTED:
 		cm_err = rtrs_rdma_conn_rejected(con, ev);
-		break;
-	case RDMA_CM_EVENT_DISCONNECTED:
-		/* No message for disconnecting */
+		अवरोध;
+	हाल RDMA_CM_EVENT_DISCONNECTED:
+		/* No message क्रम disconnecting */
 		cm_err = -ECONNRESET;
-		break;
-	case RDMA_CM_EVENT_CONNECT_ERROR:
-	case RDMA_CM_EVENT_UNREACHABLE:
-	case RDMA_CM_EVENT_ADDR_CHANGE:
-	case RDMA_CM_EVENT_TIMEWAIT_EXIT:
+		अवरोध;
+	हाल RDMA_CM_EVENT_CONNECT_ERROR:
+	हाल RDMA_CM_EVENT_UNREACHABLE:
+	हाल RDMA_CM_EVENT_ADDR_CHANGE:
+	हाल RDMA_CM_EVENT_TIMEWAIT_EXIT:
 		rtrs_wrn(s, "CM error (CM event: %s, err: %d)\n",
 			 rdma_event_msg(ev->event), ev->status);
 		cm_err = -ECONNRESET;
-		break;
-	case RDMA_CM_EVENT_ADDR_ERROR:
-	case RDMA_CM_EVENT_ROUTE_ERROR:
+		अवरोध;
+	हाल RDMA_CM_EVENT_ADDR_ERROR:
+	हाल RDMA_CM_EVENT_ROUTE_ERROR:
 		rtrs_wrn(s, "CM error (CM event: %s, err: %d)\n",
 			 rdma_event_msg(ev->event), ev->status);
 		cm_err = -EHOSTUNREACH;
-		break;
-	case RDMA_CM_EVENT_DEVICE_REMOVAL:
+		अवरोध;
+	हाल RDMA_CM_EVENT_DEVICE_REMOVAL:
 		/*
-		 * Device removal is a special case.  Queue close and return 0.
+		 * Device removal is a special हाल.  Queue बंद and वापस 0.
 		 */
-		rtrs_clt_close_conns(sess, false);
-		return 0;
-	default:
+		rtrs_clt_बंद_conns(sess, false);
+		वापस 0;
+	शेष:
 		rtrs_err(s, "Unexpected RDMA CM error (CM event: %s, err: %d)\n",
 			 rdma_event_msg(ev->event), ev->status);
 		cm_err = -ECONNRESET;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (cm_err) {
+	अगर (cm_err) अणु
 		/*
 		 * cm error makes sense only on connection establishing,
-		 * in other cases we rely on normal procedure of reconnecting.
+		 * in other हालs we rely on normal procedure of reconnecting.
 		 */
 		flag_error_on_conn(con, cm_err);
 		rtrs_rdma_error_recovery(con);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int create_cm(struct rtrs_clt_con *con)
-{
-	struct rtrs_sess *s = con->c.sess;
-	struct rtrs_clt_sess *sess = to_clt_sess(s);
-	struct rdma_cm_id *cm_id;
-	int err;
+अटल पूर्णांक create_cm(काष्ठा rtrs_clt_con *con)
+अणु
+	काष्ठा rtrs_sess *s = con->c.sess;
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(s);
+	काष्ठा rdma_cm_id *cm_id;
+	पूर्णांक err;
 
 	cm_id = rdma_create_id(&init_net, rtrs_clt_rdma_cm_handler, con,
 			       sess->s.dst_addr.ss_family == AF_IB ?
 			       RDMA_PS_IB : RDMA_PS_TCP, IB_QPT_RC);
-	if (IS_ERR(cm_id)) {
+	अगर (IS_ERR(cm_id)) अणु
 		err = PTR_ERR(cm_id);
 		rtrs_err(s, "Failed to create CM ID, err: %d\n", err);
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	con->c.cm_id = cm_id;
 	con->cm_err = 0;
 	/* allow the port to be reused */
 	err = rdma_set_reuseaddr(cm_id, 1);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		rtrs_err(s, "Set address reuse failed, err: %d\n", err);
-		goto destroy_cm;
-	}
-	err = rdma_resolve_addr(cm_id, (struct sockaddr *)&sess->s.src_addr,
-				(struct sockaddr *)&sess->s.dst_addr,
+		जाओ destroy_cm;
+	पूर्ण
+	err = rdma_resolve_addr(cm_id, (काष्ठा sockaddr *)&sess->s.src_addr,
+				(काष्ठा sockaddr *)&sess->s.dst_addr,
 				RTRS_CONNECT_TIMEOUT_MS);
-	if (err) {
+	अगर (err) अणु
 		rtrs_err(s, "Failed to resolve address, err: %d\n", err);
-		goto destroy_cm;
-	}
+		जाओ destroy_cm;
+	पूर्ण
 	/*
 	 * Combine connection status and session events. This is needed
-	 * for waiting two possible cases: cm_err has something meaningful
+	 * क्रम रुकोing two possible हालs: cm_err has something meaningful
 	 * or session state was really changed to error by device removal.
 	 */
-	err = wait_event_interruptible_timeout(
+	err = रुको_event_पूर्णांकerruptible_समयout(
 			sess->state_wq,
 			con->cm_err || sess->state != RTRS_CLT_CONNECTING,
-			msecs_to_jiffies(RTRS_CONNECT_TIMEOUT_MS));
-	if (err == 0 || err == -ERESTARTSYS) {
-		if (err == 0)
+			msecs_to_jअगरfies(RTRS_CONNECT_TIMEOUT_MS));
+	अगर (err == 0 || err == -ERESTARTSYS) अणु
+		अगर (err == 0)
 			err = -ETIMEDOUT;
-		/* Timedout or interrupted */
-		goto errr;
-	}
-	if (con->cm_err < 0) {
+		/* Timeकरोut or पूर्णांकerrupted */
+		जाओ errr;
+	पूर्ण
+	अगर (con->cm_err < 0) अणु
 		err = con->cm_err;
-		goto errr;
-	}
-	if (READ_ONCE(sess->state) != RTRS_CLT_CONNECTING) {
+		जाओ errr;
+	पूर्ण
+	अगर (READ_ONCE(sess->state) != RTRS_CLT_CONNECTING) अणु
 		/* Device removal */
 		err = -ECONNABORTED;
-		goto errr;
-	}
+		जाओ errr;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 errr:
 	stop_cm(con);
@@ -2029,17 +2030,17 @@ errr:
 destroy_cm:
 	destroy_cm(con);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rtrs_clt_sess_up(struct rtrs_clt_sess *sess)
-{
-	struct rtrs_clt *clt = sess->clt;
-	int up;
+अटल व्योम rtrs_clt_sess_up(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा rtrs_clt *clt = sess->clt;
+	पूर्णांक up;
 
 	/*
 	 * We can fire RECONNECTED event only when all paths were
-	 * connected on rtrs_clt_open(), then each was disconnected
+	 * connected on rtrs_clt_खोलो(), then each was disconnected
 	 * and the first one connected again.  That's why this nasty
 	 * game with counter value.
 	 */
@@ -2048,12 +2049,12 @@ static void rtrs_clt_sess_up(struct rtrs_clt_sess *sess)
 	up = ++clt->paths_up;
 	/*
 	 * Here it is safe to access paths num directly since up counter
-	 * is greater than MAX_PATHS_NUM only while rtrs_clt_open() is
+	 * is greater than MAX_PATHS_NUM only जबतक rtrs_clt_खोलो() is
 	 * in progress, thus paths removals are impossible.
 	 */
-	if (up > MAX_PATHS_NUM && up == MAX_PATHS_NUM + clt->paths_num)
+	अगर (up > MAX_PATHS_NUM && up == MAX_PATHS_NUM + clt->paths_num)
 		clt->paths_up = clt->paths_num;
-	else if (up == 1)
+	अन्यथा अगर (up == 1)
 		clt->link_ev(clt->priv, RTRS_CLT_LINK_EV_RECONNECTED);
 	mutex_unlock(&clt->paths_ev_mutex);
 
@@ -2061,40 +2062,40 @@ static void rtrs_clt_sess_up(struct rtrs_clt_sess *sess)
 	sess->established = true;
 	sess->reconnect_attempts = 0;
 	sess->stats->reconnects.successful_cnt++;
-}
+पूर्ण
 
-static void rtrs_clt_sess_down(struct rtrs_clt_sess *sess)
-{
-	struct rtrs_clt *clt = sess->clt;
+अटल व्योम rtrs_clt_sess_करोwn(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा rtrs_clt *clt = sess->clt;
 
-	if (!sess->established)
-		return;
+	अगर (!sess->established)
+		वापस;
 
 	sess->established = false;
 	mutex_lock(&clt->paths_ev_mutex);
 	WARN_ON(!clt->paths_up);
-	if (--clt->paths_up == 0)
+	अगर (--clt->paths_up == 0)
 		clt->link_ev(clt->priv, RTRS_CLT_LINK_EV_DISCONNECTED);
 	mutex_unlock(&clt->paths_ev_mutex);
-}
+पूर्ण
 
-static void rtrs_clt_stop_and_destroy_conns(struct rtrs_clt_sess *sess)
-{
-	struct rtrs_clt_con *con;
-	unsigned int cid;
+अटल व्योम rtrs_clt_stop_and_destroy_conns(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा rtrs_clt_con *con;
+	अचिन्हित पूर्णांक cid;
 
 	WARN_ON(READ_ONCE(sess->state) == RTRS_CLT_CONNECTED);
 
 	/*
-	 * Possible race with rtrs_clt_open(), when DEVICE_REMOVAL comes
+	 * Possible race with rtrs_clt_खोलो(), when DEVICE_REMOVAL comes
 	 * exactly in between.  Start destroying after it finishes.
 	 */
 	mutex_lock(&sess->init_mutex);
 	mutex_unlock(&sess->init_mutex);
 
 	/*
-	 * All IO paths must observe !CONNECTED state before we
-	 * free everything.
+	 * All IO paths must observe !CONNECTED state beक्रमe we
+	 * मुक्त everything.
 	 */
 	synchronize_rcu();
 
@@ -2102,61 +2103,61 @@ static void rtrs_clt_stop_and_destroy_conns(struct rtrs_clt_sess *sess)
 
 	/*
 	 * The order it utterly crucial: firstly disconnect and complete all
-	 * rdma requests with error (thus set in_use=false for requests),
-	 * then fail outstanding requests checking in_use for each, and
-	 * eventually notify upper layer about session disconnection.
+	 * rdma requests with error (thus set in_use=false क्रम requests),
+	 * then fail outstanding requests checking in_use क्रम each, and
+	 * eventually notअगरy upper layer about session disconnection.
 	 */
 
-	for (cid = 0; cid < sess->s.con_num; cid++) {
-		if (!sess->s.con[cid])
-			break;
+	क्रम (cid = 0; cid < sess->s.con_num; cid++) अणु
+		अगर (!sess->s.con[cid])
+			अवरोध;
 		con = to_clt_con(sess->s.con[cid]);
 		stop_cm(con);
-	}
+	पूर्ण
 	fail_all_outstanding_reqs(sess);
-	free_sess_reqs(sess);
-	rtrs_clt_sess_down(sess);
+	मुक्त_sess_reqs(sess);
+	rtrs_clt_sess_करोwn(sess);
 
 	/*
-	 * Wait for graceful shutdown, namely when peer side invokes
+	 * Wait क्रम graceful shutकरोwn, namely when peer side invokes
 	 * rdma_disconnect(). 'connected_cnt' is decremented only on
-	 * CM events, thus if other side had crashed and hb has detected
-	 * something is wrong, here we will stuck for exactly timeout ms,
-	 * since CM does not fire anything.  That is fine, we are not in
+	 * CM events, thus अगर other side had crashed and hb has detected
+	 * something is wrong, here we will stuck क्रम exactly समयout ms,
+	 * since CM करोes not fire anything.  That is fine, we are not in
 	 * hurry.
 	 */
-	wait_event_timeout(sess->state_wq, !atomic_read(&sess->connected_cnt),
-			   msecs_to_jiffies(RTRS_CONNECT_TIMEOUT_MS));
+	रुको_event_समयout(sess->state_wq, !atomic_पढ़ो(&sess->connected_cnt),
+			   msecs_to_jअगरfies(RTRS_CONNECT_TIMEOUT_MS));
 
-	for (cid = 0; cid < sess->s.con_num; cid++) {
-		if (!sess->s.con[cid])
-			break;
+	क्रम (cid = 0; cid < sess->s.con_num; cid++) अणु
+		अगर (!sess->s.con[cid])
+			अवरोध;
 		con = to_clt_con(sess->s.con[cid]);
 		mutex_lock(&con->con_mutex);
 		destroy_con_cq_qp(con);
 		mutex_unlock(&con->con_mutex);
 		destroy_cm(con);
 		destroy_con(con);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline bool xchg_sessions(struct rtrs_clt_sess __rcu **rcu_ppcpu_path,
-				 struct rtrs_clt_sess *sess,
-				 struct rtrs_clt_sess *next)
-{
-	struct rtrs_clt_sess **ppcpu_path;
+अटल अंतरभूत bool xchg_sessions(काष्ठा rtrs_clt_sess __rcu **rcu_ppcpu_path,
+				 काष्ठा rtrs_clt_sess *sess,
+				 काष्ठा rtrs_clt_sess *next)
+अणु
+	काष्ठा rtrs_clt_sess **ppcpu_path;
 
 	/* Call cmpxchg() without sparse warnings */
 	ppcpu_path = (typeof(ppcpu_path))rcu_ppcpu_path;
-	return sess == cmpxchg(ppcpu_path, sess, next);
-}
+	वापस sess == cmpxchg(ppcpu_path, sess, next);
+पूर्ण
 
-static void rtrs_clt_remove_path_from_arr(struct rtrs_clt_sess *sess)
-{
-	struct rtrs_clt *clt = sess->clt;
-	struct rtrs_clt_sess *next;
-	bool wait_for_grace = false;
-	int cpu;
+अटल व्योम rtrs_clt_हटाओ_path_from_arr(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा rtrs_clt *clt = sess->clt;
+	काष्ठा rtrs_clt_sess *next;
+	bool रुको_क्रम_grace = false;
+	पूर्णांक cpu;
 
 	mutex_lock(&clt->paths_mutex);
 	list_del_rcu(&sess->s.entry);
@@ -2165,8 +2166,8 @@ static void rtrs_clt_remove_path_from_arr(struct rtrs_clt_sess *sess)
 	synchronize_rcu();
 
 	/*
-	 * At this point nobody sees @sess in the list, but still we have
-	 * dangling pointer @pcpu_path which _can_ point to @sess.  Since
+	 * At this poपूर्णांक nobody sees @sess in the list, but still we have
+	 * dangling poपूर्णांकer @pcpu_path which _can_ poपूर्णांक to @sess.  Since
 	 * nobody can observe @sess in the list, we guarantee that IO path
 	 * will not assign @sess to @pcpu_path, i.e. @pcpu_path can be equal
 	 * to @sess, but can never again become @sess.
@@ -2174,14 +2175,14 @@ static void rtrs_clt_remove_path_from_arr(struct rtrs_clt_sess *sess)
 
 	/*
 	 * Decrement paths number only after grace period, because
-	 * caller of do_each_path() must firstly observe list without
+	 * caller of करो_each_path() must firstly observe list without
 	 * path and only then decremented paths number.
 	 *
 	 * Otherwise there can be the following situation:
 	 *    o Two paths exist and IO is coming.
-	 *    o One path is removed:
+	 *    o One path is हटाओd:
 	 *      CPU#0                          CPU#1
-	 *      do_each_path():                rtrs_clt_remove_path_from_arr():
+	 *      करो_each_path():                rtrs_clt_हटाओ_path_from_arr():
 	 *          path = get_next_path()
 	 *          ^^^                            list_del_rcu(path)
 	 *          [!CONNECTED path]              clt->paths_num--
@@ -2190,114 +2191,114 @@ static void rtrs_clt_remove_path_from_arr(struct rtrs_clt_sess *sess)
 	 *                    ^^^^^^^^^
 	 *                    sees 1
 	 *
-	 *      path is observed as !CONNECTED, but do_each_path() loop
+	 *      path is observed as !CONNECTED, but करो_each_path() loop
 	 *      ends, because expression i < clt->paths_num is false.
 	 */
 	clt->paths_num--;
 
 	/*
 	 * Get @next connection from current @sess which is going to be
-	 * removed.  If @sess is the last element, then @next is NULL.
+	 * हटाओd.  If @sess is the last element, then @next is शून्य.
 	 */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 	next = list_next_or_null_rr_rcu(&clt->paths_list, &sess->s.entry,
 					typeof(*next), s.entry);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
 	/*
-	 * @pcpu paths can still point to the path which is going to be
-	 * removed, so change the pointer manually.
+	 * @pcpu paths can still poपूर्णांक to the path which is going to be
+	 * हटाओd, so change the poपूर्णांकer manually.
 	 */
-	for_each_possible_cpu(cpu) {
-		struct rtrs_clt_sess __rcu **ppcpu_path;
+	क्रम_each_possible_cpu(cpu) अणु
+		काष्ठा rtrs_clt_sess __rcu **ppcpu_path;
 
 		ppcpu_path = per_cpu_ptr(clt->pcpu_path, cpu);
-		if (rcu_dereference_protected(*ppcpu_path,
+		अगर (rcu_dereference_रक्षित(*ppcpu_path,
 			lockdep_is_held(&clt->paths_mutex)) != sess)
 			/*
 			 * synchronize_rcu() was called just after deleting
 			 * entry from the list, thus IO code path cannot
-			 * change pointer back to the pointer which is going
-			 * to be removed, we are safe here.
+			 * change poपूर्णांकer back to the poपूर्णांकer which is going
+			 * to be हटाओd, we are safe here.
 			 */
-			continue;
+			जारी;
 
 		/*
-		 * We race with IO code path, which also changes pointer,
-		 * thus we have to be careful not to overwrite it.
+		 * We race with IO code path, which also changes poपूर्णांकer,
+		 * thus we have to be careful not to overग_लिखो it.
 		 */
-		if (xchg_sessions(ppcpu_path, sess, next))
+		अगर (xchg_sessions(ppcpu_path, sess, next))
 			/*
 			 * @ppcpu_path was successfully replaced with @next,
 			 * that means that someone could also pick up the
-			 * @sess and dereferencing it right now, so wait for
+			 * @sess and dereferencing it right now, so रुको क्रम
 			 * a grace period is required.
 			 */
-			wait_for_grace = true;
-	}
-	if (wait_for_grace)
+			रुको_क्रम_grace = true;
+	पूर्ण
+	अगर (रुको_क्रम_grace)
 		synchronize_rcu();
 
 	mutex_unlock(&clt->paths_mutex);
-}
+पूर्ण
 
-static void rtrs_clt_add_path_to_arr(struct rtrs_clt_sess *sess)
-{
-	struct rtrs_clt *clt = sess->clt;
+अटल व्योम rtrs_clt_add_path_to_arr(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा rtrs_clt *clt = sess->clt;
 
 	mutex_lock(&clt->paths_mutex);
 	clt->paths_num++;
 
 	list_add_tail_rcu(&sess->s.entry, &clt->paths_list);
 	mutex_unlock(&clt->paths_mutex);
-}
+पूर्ण
 
-static void rtrs_clt_close_work(struct work_struct *work)
-{
-	struct rtrs_clt_sess *sess;
+अटल व्योम rtrs_clt_बंद_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtrs_clt_sess *sess;
 
-	sess = container_of(work, struct rtrs_clt_sess, close_work);
+	sess = container_of(work, काष्ठा rtrs_clt_sess, बंद_work);
 
 	cancel_delayed_work_sync(&sess->reconnect_dwork);
 	rtrs_clt_stop_and_destroy_conns(sess);
-	rtrs_clt_change_state_get_old(sess, RTRS_CLT_CLOSED, NULL);
-}
+	rtrs_clt_change_state_get_old(sess, RTRS_CLT_CLOSED, शून्य);
+पूर्ण
 
-static int init_conns(struct rtrs_clt_sess *sess)
-{
-	unsigned int cid;
-	int err;
+अटल पूर्णांक init_conns(काष्ठा rtrs_clt_sess *sess)
+अणु
+	अचिन्हित पूर्णांक cid;
+	पूर्णांक err;
 
 	/*
 	 * On every new session connections increase reconnect counter
-	 * to avoid clashes with previous sessions not yet closed
+	 * to aव्योम clashes with previous sessions not yet बंदd
 	 * sessions on a server side.
 	 */
 	sess->s.recon_cnt++;
 
 	/* Establish all RDMA connections  */
-	for (cid = 0; cid < sess->s.con_num; cid++) {
+	क्रम (cid = 0; cid < sess->s.con_num; cid++) अणु
 		err = create_con(sess, cid);
-		if (err)
-			goto destroy;
+		अगर (err)
+			जाओ destroy;
 
 		err = create_cm(to_clt_con(sess->s.con[cid]));
-		if (err) {
+		अगर (err) अणु
 			destroy_con(to_clt_con(sess->s.con[cid]));
-			goto destroy;
-		}
-	}
+			जाओ destroy;
+		पूर्ण
+	पूर्ण
 	err = alloc_sess_reqs(sess);
-	if (err)
-		goto destroy;
+	अगर (err)
+		जाओ destroy;
 
 	rtrs_clt_start_hb(sess);
 
-	return 0;
+	वापस 0;
 
 destroy:
-	while (cid--) {
-		struct rtrs_clt_con *con = to_clt_con(sess->s.con[cid]);
+	जबतक (cid--) अणु
+		काष्ठा rtrs_clt_con *con = to_clt_con(sess->s.con[cid]);
 
 		stop_cm(con);
 
@@ -2306,64 +2307,64 @@ destroy:
 		mutex_unlock(&con->con_mutex);
 		destroy_cm(con);
 		destroy_con(con);
-	}
+	पूर्ण
 	/*
 	 * If we've never taken async path and got an error, say,
-	 * doing rdma_resolve_addr(), switch to CONNECTION_ERR state
+	 * करोing rdma_resolve_addr(), चयन to CONNECTION_ERR state
 	 * manually to keep reconnecting.
 	 */
-	rtrs_clt_change_state_get_old(sess, RTRS_CLT_CONNECTING_ERR, NULL);
+	rtrs_clt_change_state_get_old(sess, RTRS_CLT_CONNECTING_ERR, शून्य);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rtrs_clt_info_req_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
-	struct rtrs_iu *iu;
+अटल व्योम rtrs_clt_info_req_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+	काष्ठा rtrs_iu *iu;
 
-	iu = container_of(wc->wr_cqe, struct rtrs_iu, cqe);
-	rtrs_iu_free(iu, sess->s.dev->ib_dev, 1);
+	iu = container_of(wc->wr_cqe, काष्ठा rtrs_iu, cqe);
+	rtrs_iu_मुक्त(iu, sess->s.dev->ib_dev, 1);
 
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
 		rtrs_err(sess->clt, "Sess info request send failed: %s\n",
 			  ib_wc_status_msg(wc->status));
-		rtrs_clt_change_state_get_old(sess, RTRS_CLT_CONNECTING_ERR, NULL);
-		return;
-	}
+		rtrs_clt_change_state_get_old(sess, RTRS_CLT_CONNECTING_ERR, शून्य);
+		वापस;
+	पूर्ण
 
 	rtrs_clt_update_wc_stats(con);
-}
+पूर्ण
 
-static int process_info_rsp(struct rtrs_clt_sess *sess,
-			    const struct rtrs_msg_info_rsp *msg)
-{
-	unsigned int sg_cnt, total_len;
-	int i, sgi;
+अटल पूर्णांक process_info_rsp(काष्ठा rtrs_clt_sess *sess,
+			    स्थिर काष्ठा rtrs_msg_info_rsp *msg)
+अणु
+	अचिन्हित पूर्णांक sg_cnt, total_len;
+	पूर्णांक i, sgi;
 
 	sg_cnt = le16_to_cpu(msg->sg_cnt);
-	if (unlikely(!sg_cnt || (sess->queue_depth % sg_cnt))) {
+	अगर (unlikely(!sg_cnt || (sess->queue_depth % sg_cnt))) अणु
 		rtrs_err(sess->clt, "Incorrect sg_cnt %d, is not multiple\n",
 			  sg_cnt);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/*
-	 * Check if IB immediate data size is enough to hold the mem_id and
+	 * Check अगर IB immediate data size is enough to hold the mem_id and
 	 * the offset inside the memory chunk.
 	 */
-	if (unlikely((ilog2(sg_cnt - 1) + 1) +
+	अगर (unlikely((ilog2(sg_cnt - 1) + 1) +
 		     (ilog2(sess->chunk_size - 1) + 1) >
-		     MAX_IMM_PAYL_BITS)) {
+		     MAX_IMM_PAYL_BITS)) अणु
 		rtrs_err(sess->clt,
 			  "RDMA immediate size (%db) not enough to encode %d buffers of size %dB\n",
 			  MAX_IMM_PAYL_BITS, sg_cnt, sess->chunk_size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	total_len = 0;
-	for (sgi = 0, i = 0; sgi < sg_cnt && i < sess->queue_depth; sgi++) {
-		const struct rtrs_sg_desc *desc = &msg->desc[sgi];
+	क्रम (sgi = 0, i = 0; sgi < sg_cnt && i < sess->queue_depth; sgi++) अणु
+		स्थिर काष्ठा rtrs_sg_desc *desc = &msg->desc[sgi];
 		u32 len, rkey;
 		u64 addr;
 
@@ -2373,272 +2374,272 @@ static int process_info_rsp(struct rtrs_clt_sess *sess,
 
 		total_len += len;
 
-		if (unlikely(!len || (len % sess->chunk_size))) {
+		अगर (unlikely(!len || (len % sess->chunk_size))) अणु
 			rtrs_err(sess->clt, "Incorrect [%d].len %d\n", sgi,
 				  len);
-			return -EINVAL;
-		}
-		for ( ; len && i < sess->queue_depth; i++) {
+			वापस -EINVAL;
+		पूर्ण
+		क्रम ( ; len && i < sess->queue_depth; i++) अणु
 			sess->rbufs[i].addr = addr;
 			sess->rbufs[i].rkey = rkey;
 
 			len  -= sess->chunk_size;
 			addr += sess->chunk_size;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* Sanity check */
-	if (unlikely(sgi != sg_cnt || i != sess->queue_depth)) {
+	अगर (unlikely(sgi != sg_cnt || i != sess->queue_depth)) अणु
 		rtrs_err(sess->clt, "Incorrect sg vector, not fully mapped\n");
-		return -EINVAL;
-	}
-	if (unlikely(total_len != sess->chunk_size * sess->queue_depth)) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (unlikely(total_len != sess->chunk_size * sess->queue_depth)) अणु
 		rtrs_err(sess->clt, "Incorrect total_len %d\n", total_len);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void rtrs_clt_info_rsp_done(struct ib_cq *cq, struct ib_wc *wc)
-{
-	struct rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
-	struct rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
-	struct rtrs_msg_info_rsp *msg;
-	enum rtrs_clt_state state;
-	struct rtrs_iu *iu;
-	size_t rx_sz;
-	int err;
+अटल व्योम rtrs_clt_info_rsp_करोne(काष्ठा ib_cq *cq, काष्ठा ib_wc *wc)
+अणु
+	काष्ठा rtrs_clt_con *con = to_clt_con(wc->qp->qp_context);
+	काष्ठा rtrs_clt_sess *sess = to_clt_sess(con->c.sess);
+	काष्ठा rtrs_msg_info_rsp *msg;
+	क्रमागत rtrs_clt_state state;
+	काष्ठा rtrs_iu *iu;
+	माप_प्रकार rx_sz;
+	पूर्णांक err;
 
 	state = RTRS_CLT_CONNECTING_ERR;
 
 	WARN_ON(con->c.cid);
-	iu = container_of(wc->wr_cqe, struct rtrs_iu, cqe);
-	if (unlikely(wc->status != IB_WC_SUCCESS)) {
+	iu = container_of(wc->wr_cqe, काष्ठा rtrs_iu, cqe);
+	अगर (unlikely(wc->status != IB_WC_SUCCESS)) अणु
 		rtrs_err(sess->clt, "Sess info response recv failed: %s\n",
 			  ib_wc_status_msg(wc->status));
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	WARN_ON(wc->opcode != IB_WC_RECV);
 
-	if (unlikely(wc->byte_len < sizeof(*msg))) {
+	अगर (unlikely(wc->byte_len < माप(*msg))) अणु
 		rtrs_err(sess->clt, "Sess info response is malformed: size %d\n",
 			  wc->byte_len);
-		goto out;
-	}
-	ib_dma_sync_single_for_cpu(sess->s.dev->ib_dev, iu->dma_addr,
+		जाओ out;
+	पूर्ण
+	ib_dma_sync_single_क्रम_cpu(sess->s.dev->ib_dev, iu->dma_addr,
 				   iu->size, DMA_FROM_DEVICE);
 	msg = iu->buf;
-	if (unlikely(le16_to_cpu(msg->type) != RTRS_MSG_INFO_RSP)) {
+	अगर (unlikely(le16_to_cpu(msg->type) != RTRS_MSG_INFO_RSP)) अणु
 		rtrs_err(sess->clt, "Sess info response is malformed: type %d\n",
 			  le16_to_cpu(msg->type));
-		goto out;
-	}
-	rx_sz  = sizeof(*msg);
-	rx_sz += sizeof(msg->desc[0]) * le16_to_cpu(msg->sg_cnt);
-	if (unlikely(wc->byte_len < rx_sz)) {
+		जाओ out;
+	पूर्ण
+	rx_sz  = माप(*msg);
+	rx_sz += माप(msg->desc[0]) * le16_to_cpu(msg->sg_cnt);
+	अगर (unlikely(wc->byte_len < rx_sz)) अणु
 		rtrs_err(sess->clt, "Sess info response is malformed: size %d\n",
 			  wc->byte_len);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	err = process_info_rsp(sess, msg);
-	if (unlikely(err))
-		goto out;
+	अगर (unlikely(err))
+		जाओ out;
 
 	err = post_recv_sess(sess);
-	if (unlikely(err))
-		goto out;
+	अगर (unlikely(err))
+		जाओ out;
 
 	state = RTRS_CLT_CONNECTED;
 
 out:
 	rtrs_clt_update_wc_stats(con);
-	rtrs_iu_free(iu, sess->s.dev->ib_dev, 1);
-	rtrs_clt_change_state_get_old(sess, state, NULL);
-}
+	rtrs_iu_मुक्त(iu, sess->s.dev->ib_dev, 1);
+	rtrs_clt_change_state_get_old(sess, state, शून्य);
+पूर्ण
 
-static int rtrs_send_sess_info(struct rtrs_clt_sess *sess)
-{
-	struct rtrs_clt_con *usr_con = to_clt_con(sess->s.con[0]);
-	struct rtrs_msg_info_req *msg;
-	struct rtrs_iu *tx_iu, *rx_iu;
-	size_t rx_sz;
-	int err;
+अटल पूर्णांक rtrs_send_sess_info(काष्ठा rtrs_clt_sess *sess)
+अणु
+	काष्ठा rtrs_clt_con *usr_con = to_clt_con(sess->s.con[0]);
+	काष्ठा rtrs_msg_info_req *msg;
+	काष्ठा rtrs_iu *tx_iu, *rx_iu;
+	माप_प्रकार rx_sz;
+	पूर्णांक err;
 
-	rx_sz  = sizeof(struct rtrs_msg_info_rsp);
-	rx_sz += sizeof(u64) * MAX_SESS_QUEUE_DEPTH;
+	rx_sz  = माप(काष्ठा rtrs_msg_info_rsp);
+	rx_sz += माप(u64) * MAX_SESS_QUEUE_DEPTH;
 
-	tx_iu = rtrs_iu_alloc(1, sizeof(struct rtrs_msg_info_req), GFP_KERNEL,
+	tx_iu = rtrs_iu_alloc(1, माप(काष्ठा rtrs_msg_info_req), GFP_KERNEL,
 			       sess->s.dev->ib_dev, DMA_TO_DEVICE,
-			       rtrs_clt_info_req_done);
+			       rtrs_clt_info_req_करोne);
 	rx_iu = rtrs_iu_alloc(1, rx_sz, GFP_KERNEL, sess->s.dev->ib_dev,
-			       DMA_FROM_DEVICE, rtrs_clt_info_rsp_done);
-	if (unlikely(!tx_iu || !rx_iu)) {
+			       DMA_FROM_DEVICE, rtrs_clt_info_rsp_करोne);
+	अगर (unlikely(!tx_iu || !rx_iu)) अणु
 		err = -ENOMEM;
-		goto out;
-	}
-	/* Prepare for getting info response */
+		जाओ out;
+	पूर्ण
+	/* Prepare क्रम getting info response */
 	err = rtrs_iu_post_recv(&usr_con->c, rx_iu);
-	if (unlikely(err)) {
+	अगर (unlikely(err)) अणु
 		rtrs_err(sess->clt, "rtrs_iu_post_recv(), err: %d\n", err);
-		goto out;
-	}
-	rx_iu = NULL;
+		जाओ out;
+	पूर्ण
+	rx_iu = शून्य;
 
 	msg = tx_iu->buf;
 	msg->type = cpu_to_le16(RTRS_MSG_INFO_REQ);
-	memcpy(msg->sessname, sess->s.sessname, sizeof(msg->sessname));
+	स_नकल(msg->sessname, sess->s.sessname, माप(msg->sessname));
 
-	ib_dma_sync_single_for_device(sess->s.dev->ib_dev, tx_iu->dma_addr,
+	ib_dma_sync_single_क्रम_device(sess->s.dev->ib_dev, tx_iu->dma_addr,
 				      tx_iu->size, DMA_TO_DEVICE);
 
 	/* Send info request */
-	err = rtrs_iu_post_send(&usr_con->c, tx_iu, sizeof(*msg), NULL);
-	if (unlikely(err)) {
+	err = rtrs_iu_post_send(&usr_con->c, tx_iu, माप(*msg), शून्य);
+	अगर (unlikely(err)) अणु
 		rtrs_err(sess->clt, "rtrs_iu_post_send(), err: %d\n", err);
-		goto out;
-	}
-	tx_iu = NULL;
+		जाओ out;
+	पूर्ण
+	tx_iu = शून्य;
 
-	/* Wait for state change */
-	wait_event_interruptible_timeout(sess->state_wq,
+	/* Wait क्रम state change */
+	रुको_event_पूर्णांकerruptible_समयout(sess->state_wq,
 					 sess->state != RTRS_CLT_CONNECTING,
-					 msecs_to_jiffies(
+					 msecs_to_jअगरfies(
 						 RTRS_CONNECT_TIMEOUT_MS));
-	if (unlikely(READ_ONCE(sess->state) != RTRS_CLT_CONNECTED)) {
-		if (READ_ONCE(sess->state) == RTRS_CLT_CONNECTING_ERR)
+	अगर (unlikely(READ_ONCE(sess->state) != RTRS_CLT_CONNECTED)) अणु
+		अगर (READ_ONCE(sess->state) == RTRS_CLT_CONNECTING_ERR)
 			err = -ECONNRESET;
-		else
+		अन्यथा
 			err = -ETIMEDOUT;
-	}
+	पूर्ण
 
 out:
-	if (tx_iu)
-		rtrs_iu_free(tx_iu, sess->s.dev->ib_dev, 1);
-	if (rx_iu)
-		rtrs_iu_free(rx_iu, sess->s.dev->ib_dev, 1);
-	if (unlikely(err))
-		/* If we've never taken async path because of malloc problems */
-		rtrs_clt_change_state_get_old(sess, RTRS_CLT_CONNECTING_ERR, NULL);
+	अगर (tx_iu)
+		rtrs_iu_मुक्त(tx_iu, sess->s.dev->ib_dev, 1);
+	अगर (rx_iu)
+		rtrs_iu_मुक्त(rx_iu, sess->s.dev->ib_dev, 1);
+	अगर (unlikely(err))
+		/* If we've never taken async path because of दो_स्मृति problems */
+		rtrs_clt_change_state_get_old(sess, RTRS_CLT_CONNECTING_ERR, शून्य);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
- * init_sess() - establishes all session connections and does handshake
+ * init_sess() - establishes all session connections and करोes handshake
  * @sess: client session.
- * In case of error full close or reconnect procedure should be taken,
- * because reconnect or close async works can be started.
+ * In हाल of error full बंद or reconnect procedure should be taken,
+ * because reconnect or बंद async works can be started.
  */
-static int init_sess(struct rtrs_clt_sess *sess)
-{
-	int err;
-	char str[NAME_MAX];
-	struct rtrs_addr path = {
+अटल पूर्णांक init_sess(काष्ठा rtrs_clt_sess *sess)
+अणु
+	पूर्णांक err;
+	अक्षर str[NAME_MAX];
+	काष्ठा rtrs_addr path = अणु
 		.src = &sess->s.src_addr,
 		.dst = &sess->s.dst_addr,
-	};
+	पूर्ण;
 
-	rtrs_addr_to_str(&path, str, sizeof(str));
+	rtrs_addr_to_str(&path, str, माप(str));
 
 	mutex_lock(&sess->init_mutex);
 	err = init_conns(sess);
-	if (err) {
+	अगर (err) अणु
 		rtrs_err(sess->clt,
 			 "init_conns() failed: err=%d path=%s [%s:%u]\n", err,
 			 str, sess->hca_name, sess->hca_port);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	err = rtrs_send_sess_info(sess);
-	if (err) {
+	अगर (err) अणु
 		rtrs_err(
 			sess->clt,
 			"rtrs_send_sess_info() failed: err=%d path=%s [%s:%u]\n",
 			err, str, sess->hca_name, sess->hca_port);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	rtrs_clt_sess_up(sess);
 out:
 	mutex_unlock(&sess->init_mutex);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void rtrs_clt_reconnect_work(struct work_struct *work)
-{
-	struct rtrs_clt_sess *sess;
-	struct rtrs_clt *clt;
-	unsigned int delay_ms;
-	int err;
+अटल व्योम rtrs_clt_reconnect_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा rtrs_clt_sess *sess;
+	काष्ठा rtrs_clt *clt;
+	अचिन्हित पूर्णांक delay_ms;
+	पूर्णांक err;
 
-	sess = container_of(to_delayed_work(work), struct rtrs_clt_sess,
+	sess = container_of(to_delayed_work(work), काष्ठा rtrs_clt_sess,
 			    reconnect_dwork);
 	clt = sess->clt;
 
-	if (READ_ONCE(sess->state) != RTRS_CLT_RECONNECTING)
-		return;
+	अगर (READ_ONCE(sess->state) != RTRS_CLT_RECONNECTING)
+		वापस;
 
-	if (sess->reconnect_attempts >= clt->max_reconnect_attempts) {
-		/* Close a session completely if max attempts is reached */
-		rtrs_clt_close_conns(sess, false);
-		return;
-	}
+	अगर (sess->reconnect_attempts >= clt->max_reconnect_attempts) अणु
+		/* Close a session completely अगर max attempts is reached */
+		rtrs_clt_बंद_conns(sess, false);
+		वापस;
+	पूर्ण
 	sess->reconnect_attempts++;
 
 	/* Stop everything */
 	rtrs_clt_stop_and_destroy_conns(sess);
 	msleep(RTRS_RECONNECT_BACKOFF);
-	if (rtrs_clt_change_state_get_old(sess, RTRS_CLT_CONNECTING, NULL)) {
+	अगर (rtrs_clt_change_state_get_old(sess, RTRS_CLT_CONNECTING, शून्य)) अणु
 		err = init_sess(sess);
-		if (err)
-			goto reconnect_again;
-	}
+		अगर (err)
+			जाओ reconnect_again;
+	पूर्ण
 
-	return;
+	वापस;
 
 reconnect_again:
-	if (rtrs_clt_change_state_get_old(sess, RTRS_CLT_RECONNECTING, NULL)) {
+	अगर (rtrs_clt_change_state_get_old(sess, RTRS_CLT_RECONNECTING, शून्य)) अणु
 		sess->stats->reconnects.fail_cnt++;
 		delay_ms = clt->reconnect_delay_sec * 1000;
 		queue_delayed_work(rtrs_wq, &sess->reconnect_dwork,
-				   msecs_to_jiffies(delay_ms +
-						    prandom_u32() %
+				   msecs_to_jअगरfies(delay_ms +
+						    pअक्रमom_u32() %
 						    RTRS_RECONNECT_SEED));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void rtrs_clt_dev_release(struct device *dev)
-{
-	struct rtrs_clt *clt = container_of(dev, struct rtrs_clt, dev);
+अटल व्योम rtrs_clt_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा rtrs_clt *clt = container_of(dev, काष्ठा rtrs_clt, dev);
 
-	kfree(clt);
-}
+	kमुक्त(clt);
+पूर्ण
 
-static struct rtrs_clt *alloc_clt(const char *sessname, size_t paths_num,
-				  u16 port, size_t pdu_sz, void *priv,
-				  void	(*link_ev)(void *priv,
-						   enum rtrs_clt_link_ev ev),
-				  unsigned int max_segments,
-				  unsigned int reconnect_delay_sec,
-				  unsigned int max_reconnect_attempts)
-{
-	struct rtrs_clt *clt;
-	int err;
+अटल काष्ठा rtrs_clt *alloc_clt(स्थिर अक्षर *sessname, माप_प्रकार paths_num,
+				  u16 port, माप_प्रकार pdu_sz, व्योम *priv,
+				  व्योम	(*link_ev)(व्योम *priv,
+						   क्रमागत rtrs_clt_link_ev ev),
+				  अचिन्हित पूर्णांक max_segments,
+				  अचिन्हित पूर्णांक reconnect_delay_sec,
+				  अचिन्हित पूर्णांक max_reconnect_attempts)
+अणु
+	काष्ठा rtrs_clt *clt;
+	पूर्णांक err;
 
-	if (!paths_num || paths_num > MAX_PATHS_NUM)
-		return ERR_PTR(-EINVAL);
+	अगर (!paths_num || paths_num > MAX_PATHS_NUM)
+		वापस ERR_PTR(-EINVAL);
 
-	if (strlen(sessname) >= sizeof(clt->sessname))
-		return ERR_PTR(-EINVAL);
+	अगर (म_माप(sessname) >= माप(clt->sessname))
+		वापस ERR_PTR(-EINVAL);
 
-	clt = kzalloc(sizeof(*clt), GFP_KERNEL);
-	if (!clt)
-		return ERR_PTR(-ENOMEM);
+	clt = kzalloc(माप(*clt), GFP_KERNEL);
+	अगर (!clt)
+		वापस ERR_PTR(-ENOMEM);
 
 	clt->pcpu_path = alloc_percpu(typeof(*clt->pcpu_path));
-	if (!clt->pcpu_path) {
-		kfree(clt);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (!clt->pcpu_path) अणु
+		kमुक्त(clt);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	uuid_gen(&clt->paths_uuid);
 	INIT_LIST_HEAD_RCU(&clt->paths_list);
@@ -2652,206 +2653,206 @@ static struct rtrs_clt *alloc_clt(const char *sessname, size_t paths_num,
 	clt->priv = priv;
 	clt->link_ev = link_ev;
 	clt->mp_policy = MP_POLICY_MIN_INFLIGHT;
-	strlcpy(clt->sessname, sessname, sizeof(clt->sessname));
-	init_waitqueue_head(&clt->permits_wait);
+	strlcpy(clt->sessname, sessname, माप(clt->sessname));
+	init_रुकोqueue_head(&clt->permits_रुको);
 	mutex_init(&clt->paths_ev_mutex);
 	mutex_init(&clt->paths_mutex);
 
 	clt->dev.class = rtrs_clt_dev_class;
 	clt->dev.release = rtrs_clt_dev_release;
 	err = dev_set_name(&clt->dev, "%s", sessname);
-	if (err)
-		goto err;
+	अगर (err)
+		जाओ err;
 	/*
-	 * Suppress user space notification until
+	 * Suppress user space notअगरication until
 	 * sysfs files are created
 	 */
 	dev_set_uevent_suppress(&clt->dev, true);
-	err = device_register(&clt->dev);
-	if (err) {
+	err = device_रेजिस्टर(&clt->dev);
+	अगर (err) अणु
 		put_device(&clt->dev);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	clt->kobj_paths = kobject_create_and_add("paths", &clt->dev.kobj);
-	if (!clt->kobj_paths) {
+	अगर (!clt->kobj_paths) अणु
 		err = -ENOMEM;
-		goto err_dev;
-	}
+		जाओ err_dev;
+	पूर्ण
 	err = rtrs_clt_create_sysfs_root_files(clt);
-	if (err) {
+	अगर (err) अणु
 		kobject_del(clt->kobj_paths);
 		kobject_put(clt->kobj_paths);
-		goto err_dev;
-	}
+		जाओ err_dev;
+	पूर्ण
 	dev_set_uevent_suppress(&clt->dev, false);
 	kobject_uevent(&clt->dev.kobj, KOBJ_ADD);
 
-	return clt;
+	वापस clt;
 err_dev:
-	device_unregister(&clt->dev);
+	device_unरेजिस्टर(&clt->dev);
 err:
-	free_percpu(clt->pcpu_path);
-	kfree(clt);
-	return ERR_PTR(err);
-}
+	मुक्त_percpu(clt->pcpu_path);
+	kमुक्त(clt);
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void free_clt(struct rtrs_clt *clt)
-{
-	free_permits(clt);
-	free_percpu(clt->pcpu_path);
+अटल व्योम मुक्त_clt(काष्ठा rtrs_clt *clt)
+अणु
+	मुक्त_permits(clt);
+	मुक्त_percpu(clt->pcpu_path);
 	mutex_destroy(&clt->paths_ev_mutex);
 	mutex_destroy(&clt->paths_mutex);
-	/* release callback will free clt in last put */
-	device_unregister(&clt->dev);
-}
+	/* release callback will मुक्त clt in last put */
+	device_unरेजिस्टर(&clt->dev);
+पूर्ण
 
 /**
- * rtrs_clt_open() - Open a session to an RTRS server
- * @ops: holds the link event callback and the private pointer.
+ * rtrs_clt_खोलो() - Open a session to an RTRS server
+ * @ops: holds the link event callback and the निजी poपूर्णांकer.
  * @sessname: name of the session
  * @paths: Paths to be established defined by their src and dst addresses
  * @paths_num: Number of elements in the @paths array
  * @port: port to be used by the RTRS session
  * @pdu_sz: Size of extra payload which can be accessed after permit allocation.
- * @reconnect_delay_sec: time between reconnect tries
+ * @reconnect_delay_sec: समय between reconnect tries
  * @max_segments: Max. number of segments per IO request
- * @max_reconnect_attempts: Number of times to reconnect on error before giving
- *			    up, 0 for * disabled, -1 for forever
- * @nr_poll_queues: number of polling mode connection using IB_POLL_DIRECT flag
+ * @max_reconnect_attempts: Number of बार to reconnect on error beक्रमe giving
+ *			    up, 0 क्रम * disabled, -1 क्रम क्रमever
+ * @nr_poll_queues: number of polling mode connection using IB_POLL_सूचीECT flag
  *
  * Starts session establishment with the rtrs_server. The function can block
- * up to ~2000ms before it returns.
+ * up to ~2000ms beक्रमe it वापसs.
  *
- * Return a valid pointer on success otherwise PTR_ERR.
+ * Return a valid poपूर्णांकer on success otherwise PTR_ERR.
  */
-struct rtrs_clt *rtrs_clt_open(struct rtrs_clt_ops *ops,
-				 const char *sessname,
-				 const struct rtrs_addr *paths,
-				 size_t paths_num, u16 port,
-				 size_t pdu_sz, u8 reconnect_delay_sec,
+काष्ठा rtrs_clt *rtrs_clt_खोलो(काष्ठा rtrs_clt_ops *ops,
+				 स्थिर अक्षर *sessname,
+				 स्थिर काष्ठा rtrs_addr *paths,
+				 माप_प्रकार paths_num, u16 port,
+				 माप_प्रकार pdu_sz, u8 reconnect_delay_sec,
 				 u16 max_segments,
 				 s16 max_reconnect_attempts, u32 nr_poll_queues)
-{
-	struct rtrs_clt_sess *sess, *tmp;
-	struct rtrs_clt *clt;
-	int err, i;
+अणु
+	काष्ठा rtrs_clt_sess *sess, *पंचांगp;
+	काष्ठा rtrs_clt *clt;
+	पूर्णांक err, i;
 
 	clt = alloc_clt(sessname, paths_num, port, pdu_sz, ops->priv,
 			ops->link_ev,
 			max_segments, reconnect_delay_sec,
 			max_reconnect_attempts);
-	if (IS_ERR(clt)) {
+	अगर (IS_ERR(clt)) अणु
 		err = PTR_ERR(clt);
-		goto out;
-	}
-	for (i = 0; i < paths_num; i++) {
-		struct rtrs_clt_sess *sess;
+		जाओ out;
+	पूर्ण
+	क्रम (i = 0; i < paths_num; i++) अणु
+		काष्ठा rtrs_clt_sess *sess;
 
 		sess = alloc_sess(clt, &paths[i], nr_cpu_ids,
 				  max_segments, nr_poll_queues);
-		if (IS_ERR(sess)) {
+		अगर (IS_ERR(sess)) अणु
 			err = PTR_ERR(sess);
-			goto close_all_sess;
-		}
-		if (!i)
-			sess->for_new_clt = 1;
+			जाओ बंद_all_sess;
+		पूर्ण
+		अगर (!i)
+			sess->क्रम_new_clt = 1;
 		list_add_tail_rcu(&sess->s.entry, &clt->paths_list);
 
 		err = init_sess(sess);
-		if (err) {
+		अगर (err) अणु
 			list_del_rcu(&sess->s.entry);
-			rtrs_clt_close_conns(sess, true);
-			free_sess(sess);
-			goto close_all_sess;
-		}
+			rtrs_clt_बंद_conns(sess, true);
+			मुक्त_sess(sess);
+			जाओ बंद_all_sess;
+		पूर्ण
 
 		err = rtrs_clt_create_sess_files(sess);
-		if (err) {
+		अगर (err) अणु
 			list_del_rcu(&sess->s.entry);
-			rtrs_clt_close_conns(sess, true);
-			free_sess(sess);
-			goto close_all_sess;
-		}
-	}
+			rtrs_clt_बंद_conns(sess, true);
+			मुक्त_sess(sess);
+			जाओ बंद_all_sess;
+		पूर्ण
+	पूर्ण
 	err = alloc_permits(clt);
-	if (err)
-		goto close_all_sess;
+	अगर (err)
+		जाओ बंद_all_sess;
 
-	return clt;
+	वापस clt;
 
-close_all_sess:
-	list_for_each_entry_safe(sess, tmp, &clt->paths_list, s.entry) {
-		rtrs_clt_destroy_sess_files(sess, NULL);
-		rtrs_clt_close_conns(sess, true);
+बंद_all_sess:
+	list_क्रम_each_entry_safe(sess, पंचांगp, &clt->paths_list, s.entry) अणु
+		rtrs_clt_destroy_sess_files(sess, शून्य);
+		rtrs_clt_बंद_conns(sess, true);
 		kobject_put(&sess->kobj);
-	}
+	पूर्ण
 	rtrs_clt_destroy_sysfs_root(clt);
-	free_clt(clt);
+	मुक्त_clt(clt);
 
 out:
-	return ERR_PTR(err);
-}
-EXPORT_SYMBOL(rtrs_clt_open);
+	वापस ERR_PTR(err);
+पूर्ण
+EXPORT_SYMBOL(rtrs_clt_खोलो);
 
 /**
- * rtrs_clt_close() - Close a session
- * @clt: Session handle. Session is freed upon return.
+ * rtrs_clt_बंद() - Close a session
+ * @clt: Session handle. Session is मुक्तd upon वापस.
  */
-void rtrs_clt_close(struct rtrs_clt *clt)
-{
-	struct rtrs_clt_sess *sess, *tmp;
+व्योम rtrs_clt_बंद(काष्ठा rtrs_clt *clt)
+अणु
+	काष्ठा rtrs_clt_sess *sess, *पंचांगp;
 
-	/* Firstly forbid sysfs access */
+	/* Firstly क्रमbid sysfs access */
 	rtrs_clt_destroy_sysfs_root(clt);
 
 	/* Now it is safe to iterate over all paths without locks */
-	list_for_each_entry_safe(sess, tmp, &clt->paths_list, s.entry) {
-		rtrs_clt_close_conns(sess, true);
-		rtrs_clt_destroy_sess_files(sess, NULL);
+	list_क्रम_each_entry_safe(sess, पंचांगp, &clt->paths_list, s.entry) अणु
+		rtrs_clt_बंद_conns(sess, true);
+		rtrs_clt_destroy_sess_files(sess, शून्य);
 		kobject_put(&sess->kobj);
-	}
-	free_clt(clt);
-}
-EXPORT_SYMBOL(rtrs_clt_close);
+	पूर्ण
+	मुक्त_clt(clt);
+पूर्ण
+EXPORT_SYMBOL(rtrs_clt_बंद);
 
-int rtrs_clt_reconnect_from_sysfs(struct rtrs_clt_sess *sess)
-{
-	enum rtrs_clt_state old_state;
-	int err = -EBUSY;
+पूर्णांक rtrs_clt_reconnect_from_sysfs(काष्ठा rtrs_clt_sess *sess)
+अणु
+	क्रमागत rtrs_clt_state old_state;
+	पूर्णांक err = -EBUSY;
 	bool changed;
 
 	changed = rtrs_clt_change_state_get_old(sess, RTRS_CLT_RECONNECTING,
 						 &old_state);
-	if (changed) {
+	अगर (changed) अणु
 		sess->reconnect_attempts = 0;
 		queue_delayed_work(rtrs_wq, &sess->reconnect_dwork, 0);
-	}
-	if (changed || old_state == RTRS_CLT_RECONNECTING) {
+	पूर्ण
+	अगर (changed || old_state == RTRS_CLT_RECONNECTING) अणु
 		/*
-		 * flush_delayed_work() queues pending work for immediate
-		 * execution, so do the flush if we have queued something
+		 * flush_delayed_work() queues pending work क्रम immediate
+		 * execution, so करो the flush अगर we have queued something
 		 * right now or work is pending.
 		 */
 		flush_delayed_work(&sess->reconnect_dwork);
 		err = (READ_ONCE(sess->state) ==
 		       RTRS_CLT_CONNECTED ? 0 : -ENOTCONN);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int rtrs_clt_disconnect_from_sysfs(struct rtrs_clt_sess *sess)
-{
-	rtrs_clt_close_conns(sess, true);
+पूर्णांक rtrs_clt_disconnect_from_sysfs(काष्ठा rtrs_clt_sess *sess)
+अणु
+	rtrs_clt_बंद_conns(sess, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int rtrs_clt_remove_path_from_sysfs(struct rtrs_clt_sess *sess,
-				     const struct attribute *sysfs_self)
-{
-	enum rtrs_clt_state old_state;
+पूर्णांक rtrs_clt_हटाओ_path_from_sysfs(काष्ठा rtrs_clt_sess *sess,
+				     स्थिर काष्ठा attribute *sysfs_self)
+अणु
+	क्रमागत rtrs_clt_state old_state;
 	bool changed;
 
 	/*
@@ -2863,42 +2864,42 @@ int rtrs_clt_remove_path_from_sysfs(struct rtrs_clt_sess *sess,
 	 * 2. State was observed as DEAD - we have someone in parallel
 	 *    removing the path.
 	 */
-	do {
-		rtrs_clt_close_conns(sess, true);
+	करो अणु
+		rtrs_clt_बंद_conns(sess, true);
 		changed = rtrs_clt_change_state_get_old(sess,
 							RTRS_CLT_DEAD,
 							&old_state);
-	} while (!changed && old_state != RTRS_CLT_DEAD);
+	पूर्ण जबतक (!changed && old_state != RTRS_CLT_DEAD);
 
-	if (likely(changed)) {
-		rtrs_clt_remove_path_from_arr(sess);
+	अगर (likely(changed)) अणु
+		rtrs_clt_हटाओ_path_from_arr(sess);
 		rtrs_clt_destroy_sess_files(sess, sysfs_self);
 		kobject_put(&sess->kobj);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void rtrs_clt_set_max_reconnect_attempts(struct rtrs_clt *clt, int value)
-{
-	clt->max_reconnect_attempts = (unsigned int)value;
-}
+व्योम rtrs_clt_set_max_reconnect_attempts(काष्ठा rtrs_clt *clt, पूर्णांक value)
+अणु
+	clt->max_reconnect_attempts = (अचिन्हित पूर्णांक)value;
+पूर्ण
 
-int rtrs_clt_get_max_reconnect_attempts(const struct rtrs_clt *clt)
-{
-	return (int)clt->max_reconnect_attempts;
-}
+पूर्णांक rtrs_clt_get_max_reconnect_attempts(स्थिर काष्ठा rtrs_clt *clt)
+अणु
+	वापस (पूर्णांक)clt->max_reconnect_attempts;
+पूर्ण
 
 /**
  * rtrs_clt_request() - Request data transfer to/from server via RDMA.
  *
  * @dir:	READ/WRITE
- * @ops:	callback function to be called as confirmation, and the pointer.
+ * @ops:	callback function to be called as confirmation, and the poपूर्णांकer.
  * @clt:	Session
- * @permit:	Preallocated permit
+ * @permit:	Pपुनः_स्मृतिated permit
  * @vec:	Message that is sent to server together with the request.
  *		Sum of len of all @vec elements limited to <= IO_MSG_SIZE.
- *		Since the msg is copied internally it can be allocated on stack.
+ *		Since the msg is copied पूर्णांकernally it can be allocated on stack.
  * @nr:		Number of elements in @vec.
  * @data_len:	length of data sent to/from server
  * @sg:		Pages to be sent/received to/from server.
@@ -2911,191 +2912,191 @@ int rtrs_clt_get_max_reconnect_attempts(const struct rtrs_clt *clt)
  * On dir=READ rtrs client will request a data transfer from Server to client.
  * The data that the server will respond with will be stored in @sg when
  * the user receives an %RTRS_CLT_RDMA_EV_RDMA_REQUEST_WRITE_COMPL event.
- * On dir=WRITE rtrs client will rdma write data in sg to server side.
+ * On dir=WRITE rtrs client will rdma ग_लिखो data in sg to server side.
  */
-int rtrs_clt_request(int dir, struct rtrs_clt_req_ops *ops,
-		     struct rtrs_clt *clt, struct rtrs_permit *permit,
-		      const struct kvec *vec, size_t nr, size_t data_len,
-		      struct scatterlist *sg, unsigned int sg_cnt)
-{
-	struct rtrs_clt_io_req *req;
-	struct rtrs_clt_sess *sess;
+पूर्णांक rtrs_clt_request(पूर्णांक dir, काष्ठा rtrs_clt_req_ops *ops,
+		     काष्ठा rtrs_clt *clt, काष्ठा rtrs_permit *permit,
+		      स्थिर काष्ठा kvec *vec, माप_प्रकार nr, माप_प्रकार data_len,
+		      काष्ठा scatterlist *sg, अचिन्हित पूर्णांक sg_cnt)
+अणु
+	काष्ठा rtrs_clt_io_req *req;
+	काष्ठा rtrs_clt_sess *sess;
 
-	enum dma_data_direction dma_dir;
-	int err = -ECONNABORTED, i;
-	size_t usr_len, hdr_len;
-	struct path_it it;
+	क्रमागत dma_data_direction dma_dir;
+	पूर्णांक err = -ECONNABORTED, i;
+	माप_प्रकार usr_len, hdr_len;
+	काष्ठा path_it it;
 
 	/* Get kvec length */
-	for (i = 0, usr_len = 0; i < nr; i++)
+	क्रम (i = 0, usr_len = 0; i < nr; i++)
 		usr_len += vec[i].iov_len;
 
-	if (dir == READ) {
-		hdr_len = sizeof(struct rtrs_msg_rdma_read) +
-			  sg_cnt * sizeof(struct rtrs_sg_desc);
+	अगर (dir == READ) अणु
+		hdr_len = माप(काष्ठा rtrs_msg_rdma_पढ़ो) +
+			  sg_cnt * माप(काष्ठा rtrs_sg_desc);
 		dma_dir = DMA_FROM_DEVICE;
-	} else {
-		hdr_len = sizeof(struct rtrs_msg_rdma_write);
+	पूर्ण अन्यथा अणु
+		hdr_len = माप(काष्ठा rtrs_msg_rdma_ग_लिखो);
 		dma_dir = DMA_TO_DEVICE;
-	}
+	पूर्ण
 
-	rcu_read_lock();
-	for (path_it_init(&it, clt);
-	     (sess = it.next_path(&it)) && it.i < it.clt->paths_num; it.i++) {
-		if (unlikely(READ_ONCE(sess->state) != RTRS_CLT_CONNECTED))
-			continue;
+	rcu_पढ़ो_lock();
+	क्रम (path_it_init(&it, clt);
+	     (sess = it.next_path(&it)) && it.i < it.clt->paths_num; it.i++) अणु
+		अगर (unlikely(READ_ONCE(sess->state) != RTRS_CLT_CONNECTED))
+			जारी;
 
-		if (unlikely(usr_len + hdr_len > sess->max_hdr_size)) {
+		अगर (unlikely(usr_len + hdr_len > sess->max_hdr_size)) अणु
 			rtrs_wrn_rl(sess->clt,
 				     "%s request failed, user message size is %zu and header length %zu, but max size is %u\n",
 				     dir == READ ? "Read" : "Write",
 				     usr_len, hdr_len, sess->max_hdr_size);
 			err = -EMSGSIZE;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		req = rtrs_clt_get_req(sess, ops->conf_fn, permit, ops->priv,
 				       vec, usr_len, sg, sg_cnt, data_len,
 				       dma_dir);
-		if (dir == READ)
-			err = rtrs_clt_read_req(req);
-		else
-			err = rtrs_clt_write_req(req);
-		if (unlikely(err)) {
+		अगर (dir == READ)
+			err = rtrs_clt_पढ़ो_req(req);
+		अन्यथा
+			err = rtrs_clt_ग_लिखो_req(req);
+		अगर (unlikely(err)) अणु
 			req->in_use = false;
-			continue;
-		}
+			जारी;
+		पूर्ण
 		/* Success path */
-		break;
-	}
+		अवरोध;
+	पूर्ण
 	path_it_deinit(&it);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(rtrs_clt_request);
 
-int rtrs_clt_rdma_cq_direct(struct rtrs_clt *clt, unsigned int index)
-{
-	/* If no path, return -1 for block layer not to try again */
-	int cnt = -1;
-	struct rtrs_con *con;
-	struct rtrs_clt_sess *sess;
-	struct path_it it;
+पूर्णांक rtrs_clt_rdma_cq_direct(काष्ठा rtrs_clt *clt, अचिन्हित पूर्णांक index)
+अणु
+	/* If no path, वापस -1 क्रम block layer not to try again */
+	पूर्णांक cnt = -1;
+	काष्ठा rtrs_con *con;
+	काष्ठा rtrs_clt_sess *sess;
+	काष्ठा path_it it;
 
-	rcu_read_lock();
-	for (path_it_init(&it, clt);
-	     (sess = it.next_path(&it)) && it.i < it.clt->paths_num; it.i++) {
-		if (READ_ONCE(sess->state) != RTRS_CLT_CONNECTED)
-			continue;
+	rcu_पढ़ो_lock();
+	क्रम (path_it_init(&it, clt);
+	     (sess = it.next_path(&it)) && it.i < it.clt->paths_num; it.i++) अणु
+		अगर (READ_ONCE(sess->state) != RTRS_CLT_CONNECTED)
+			जारी;
 
 		con = sess->s.con[index + 1];
 		cnt = ib_process_cq_direct(con->cq, -1);
-		if (cnt)
-			break;
-	}
+		अगर (cnt)
+			अवरोध;
+	पूर्ण
 	path_it_deinit(&it);
-	rcu_read_unlock();
+	rcu_पढ़ो_unlock();
 
-	return cnt;
-}
+	वापस cnt;
+पूर्ण
 EXPORT_SYMBOL(rtrs_clt_rdma_cq_direct);
 
 /**
  * rtrs_clt_query() - queries RTRS session attributes
- *@clt: session pointer
- *@attr: query results for session attributes.
+ *@clt: session poपूर्णांकer
+ *@attr: query results क्रम session attributes.
  * Returns:
  *    0 on success
  *    -ECOMM		no connection to the server
  */
-int rtrs_clt_query(struct rtrs_clt *clt, struct rtrs_attrs *attr)
-{
-	if (!rtrs_clt_is_connected(clt))
-		return -ECOMM;
+पूर्णांक rtrs_clt_query(काष्ठा rtrs_clt *clt, काष्ठा rtrs_attrs *attr)
+अणु
+	अगर (!rtrs_clt_is_connected(clt))
+		वापस -ECOMM;
 
 	attr->queue_depth      = clt->queue_depth;
 	/* Cap max_io_size to min of remote buffer size and the fr pages */
-	attr->max_io_size = min_t(int, clt->max_io_size,
+	attr->max_io_size = min_t(पूर्णांक, clt->max_io_size,
 				  clt->max_segments * SZ_4K);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(rtrs_clt_query);
 
-int rtrs_clt_create_path_from_sysfs(struct rtrs_clt *clt,
-				     struct rtrs_addr *addr)
-{
-	struct rtrs_clt_sess *sess;
-	int err;
+पूर्णांक rtrs_clt_create_path_from_sysfs(काष्ठा rtrs_clt *clt,
+				     काष्ठा rtrs_addr *addr)
+अणु
+	काष्ठा rtrs_clt_sess *sess;
+	पूर्णांक err;
 
 	sess = alloc_sess(clt, addr, nr_cpu_ids, clt->max_segments, 0);
-	if (IS_ERR(sess))
-		return PTR_ERR(sess);
+	अगर (IS_ERR(sess))
+		वापस PTR_ERR(sess);
 
 	/*
 	 * It is totally safe to add path in CONNECTING state: coming
 	 * IO will never grab it.  Also it is very important to add
-	 * path before init, since init fires LINK_CONNECTED event.
+	 * path beक्रमe init, since init fires LINK_CONNECTED event.
 	 */
 	rtrs_clt_add_path_to_arr(sess);
 
 	err = init_sess(sess);
-	if (err)
-		goto close_sess;
+	अगर (err)
+		जाओ बंद_sess;
 
 	err = rtrs_clt_create_sess_files(sess);
-	if (err)
-		goto close_sess;
+	अगर (err)
+		जाओ बंद_sess;
 
-	return 0;
+	वापस 0;
 
-close_sess:
-	rtrs_clt_remove_path_from_arr(sess);
-	rtrs_clt_close_conns(sess, true);
-	free_sess(sess);
+बंद_sess:
+	rtrs_clt_हटाओ_path_from_arr(sess);
+	rtrs_clt_बंद_conns(sess, true);
+	मुक्त_sess(sess);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int rtrs_clt_ib_dev_init(struct rtrs_ib_dev *dev)
-{
-	if (!(dev->ib_dev->attrs.device_cap_flags &
-	      IB_DEVICE_MEM_MGT_EXTENSIONS)) {
+अटल पूर्णांक rtrs_clt_ib_dev_init(काष्ठा rtrs_ib_dev *dev)
+अणु
+	अगर (!(dev->ib_dev->attrs.device_cap_flags &
+	      IB_DEVICE_MEM_MGT_EXTENSIONS)) अणु
 		pr_err("Memory registrations not supported.\n");
-		return -ENOTSUPP;
-	}
+		वापस -ENOTSUPP;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtrs_rdma_dev_pd_ops dev_pd_ops = {
+अटल स्थिर काष्ठा rtrs_rdma_dev_pd_ops dev_pd_ops = अणु
 	.init = rtrs_clt_ib_dev_init
-};
+पूर्ण;
 
-static int __init rtrs_client_init(void)
-{
+अटल पूर्णांक __init rtrs_client_init(व्योम)
+अणु
 	rtrs_rdma_dev_pd_init(0, &dev_pd);
 
 	rtrs_clt_dev_class = class_create(THIS_MODULE, "rtrs-client");
-	if (IS_ERR(rtrs_clt_dev_class)) {
+	अगर (IS_ERR(rtrs_clt_dev_class)) अणु
 		pr_err("Failed to create rtrs-client dev class\n");
-		return PTR_ERR(rtrs_clt_dev_class);
-	}
+		वापस PTR_ERR(rtrs_clt_dev_class);
+	पूर्ण
 	rtrs_wq = alloc_workqueue("rtrs_client_wq", 0, 0);
-	if (!rtrs_wq) {
+	अगर (!rtrs_wq) अणु
 		class_destroy(rtrs_clt_dev_class);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit rtrs_client_exit(void)
-{
+अटल व्योम __निकास rtrs_client_निकास(व्योम)
+अणु
 	destroy_workqueue(rtrs_wq);
 	class_destroy(rtrs_clt_dev_class);
 	rtrs_rdma_dev_pd_deinit(&dev_pd);
-}
+पूर्ण
 
 module_init(rtrs_client_init);
-module_exit(rtrs_client_exit);
+module_निकास(rtrs_client_निकास);

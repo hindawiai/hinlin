@@ -1,42 +1,43 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Routines for handling backlight control on PowerBooks
+ * Routines क्रम handling backlight control on PowerBooks
  *
  * For now, implementation resides in
- * arch/powerpc/platforms/powermac/backlight.c
+ * arch/घातerpc/platक्रमms/घातermac/backlight.c
  *
  */
-#ifndef __ASM_POWERPC_BACKLIGHT_H
-#define __ASM_POWERPC_BACKLIGHT_H
-#ifdef __KERNEL__
+#अगर_अघोषित __ASM_POWERPC_BACKLIGHT_H
+#घोषणा __ASM_POWERPC_BACKLIGHT_H
+#अगर_घोषित __KERNEL__
 
-#include <linux/fb.h>
-#include <linux/mutex.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/mutex.h>
 
-/* For locking instructions, see the implementation file */
-extern struct backlight_device *pmac_backlight;
-extern struct mutex pmac_backlight_mutex;
+/* For locking inकाष्ठाions, see the implementation file */
+बाह्य काष्ठा backlight_device *pmac_backlight;
+बाह्य काष्ठा mutex pmac_backlight_mutex;
 
-extern int pmac_backlight_curve_lookup(struct fb_info *info, int value);
+बाह्य पूर्णांक pmac_backlight_curve_lookup(काष्ठा fb_info *info, पूर्णांक value);
 
-extern int pmac_has_backlight_type(const char *type);
+बाह्य पूर्णांक pmac_has_backlight_type(स्थिर अक्षर *type);
 
-extern void pmac_backlight_key(int direction);
-static inline void pmac_backlight_key_up(void)
-{
+बाह्य व्योम pmac_backlight_key(पूर्णांक direction);
+अटल अंतरभूत व्योम pmac_backlight_key_up(व्योम)
+अणु
 	pmac_backlight_key(0);
-}
-static inline void pmac_backlight_key_down(void)
-{
+पूर्ण
+अटल अंतरभूत व्योम pmac_backlight_key_करोwn(व्योम)
+अणु
 	pmac_backlight_key(1);
-}
+पूर्ण
 
-extern void pmac_backlight_set_legacy_brightness_pmu(int brightness);
-extern int pmac_backlight_set_legacy_brightness(int brightness);
-extern int pmac_backlight_get_legacy_brightness(void);
+बाह्य व्योम pmac_backlight_set_legacy_brightness_pmu(पूर्णांक brightness);
+बाह्य पूर्णांक pmac_backlight_set_legacy_brightness(पूर्णांक brightness);
+बाह्य पूर्णांक pmac_backlight_get_legacy_brightness(व्योम);
 
-extern void pmac_backlight_enable(void);
-extern void pmac_backlight_disable(void);
+बाह्य व्योम pmac_backlight_enable(व्योम);
+बाह्य व्योम pmac_backlight_disable(व्योम);
 
-#endif /* __KERNEL__ */
-#endif
+#पूर्ण_अगर /* __KERNEL__ */
+#पूर्ण_अगर

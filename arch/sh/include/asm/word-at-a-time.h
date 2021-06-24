@@ -1,54 +1,55 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __ASM_SH_WORD_AT_A_TIME_H
-#define __ASM_SH_WORD_AT_A_TIME_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __ASM_SH_WORD_AT_A_TIME_H
+#घोषणा __ASM_SH_WORD_AT_A_TIME_H
 
-#ifdef CONFIG_CPU_BIG_ENDIAN
-# include <asm-generic/word-at-a-time.h>
-#else
+#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
+# include <यंत्र-generic/word-at-a-समय.स>
+#अन्यथा
 /*
  * Little-endian version cribbed from x86.
  */
-struct word_at_a_time {
-	const unsigned long one_bits, high_bits;
-};
+काष्ठा word_at_a_समय अणु
+	स्थिर अचिन्हित दीर्घ one_bits, high_bits;
+पूर्ण;
 
-#define WORD_AT_A_TIME_CONSTANTS { REPEAT_BYTE(0x01), REPEAT_BYTE(0x80) }
+#घोषणा WORD_AT_A_TIME_CONSTANTS अणु REPEAT_BYTE(0x01), REPEAT_BYTE(0x80) पूर्ण
 
-/* Carl Chatfield / Jan Achrenius G+ version for 32-bit */
-static inline long count_masked_bytes(long mask)
-{
+/* Carl Chatfield / Jan Achrenius G+ version क्रम 32-bit */
+अटल अंतरभूत दीर्घ count_masked_bytes(दीर्घ mask)
+अणु
 	/* (000000 0000ff 00ffff ffffff) -> ( 1 1 2 3 ) */
-	long a = (0x0ff0001+mask) >> 23;
-	/* Fix the 1 for 00 case */
-	return a & mask;
-}
+	दीर्घ a = (0x0ff0001+mask) >> 23;
+	/* Fix the 1 क्रम 00 हाल */
+	वापस a & mask;
+पूर्ण
 
-/* Return nonzero if it has a zero */
-static inline unsigned long has_zero(unsigned long a, unsigned long *bits, const struct word_at_a_time *c)
-{
-	unsigned long mask = ((a - c->one_bits) & ~a) & c->high_bits;
+/* Return nonzero अगर it has a zero */
+अटल अंतरभूत अचिन्हित दीर्घ has_zero(अचिन्हित दीर्घ a, अचिन्हित दीर्घ *bits, स्थिर काष्ठा word_at_a_समय *c)
+अणु
+	अचिन्हित दीर्घ mask = ((a - c->one_bits) & ~a) & c->high_bits;
 	*bits = mask;
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static inline unsigned long prep_zero_mask(unsigned long a, unsigned long bits, const struct word_at_a_time *c)
-{
-	return bits;
-}
+अटल अंतरभूत अचिन्हित दीर्घ prep_zero_mask(अचिन्हित दीर्घ a, अचिन्हित दीर्घ bits, स्थिर काष्ठा word_at_a_समय *c)
+अणु
+	वापस bits;
+पूर्ण
 
-static inline unsigned long create_zero_mask(unsigned long bits)
-{
+अटल अंतरभूत अचिन्हित दीर्घ create_zero_mask(अचिन्हित दीर्घ bits)
+अणु
 	bits = (bits - 1) & ~bits;
-	return bits >> 7;
-}
+	वापस bits >> 7;
+पूर्ण
 
 /* The mask we created is directly usable as a bytemask */
-#define zero_bytemask(mask) (mask)
+#घोषणा zero_bytemask(mask) (mask)
 
-static inline unsigned long find_zero(unsigned long mask)
-{
-	return count_masked_bytes(mask);
-}
-#endif
+अटल अंतरभूत अचिन्हित दीर्घ find_zero(अचिन्हित दीर्घ mask)
+अणु
+	वापस count_masked_bytes(mask);
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

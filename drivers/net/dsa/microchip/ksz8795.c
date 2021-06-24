@@ -1,28 +1,29 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Microchip KSZ8795 switch driver
+ * Microchip KSZ8795 चयन driver
  *
  * Copyright (C) 2017 Microchip Technology Inc.
  *	Tristram Ha <Tristram.Ha@microchip.com>
  */
 
-#include <linux/delay.h>
-#include <linux/export.h>
-#include <linux/gpio.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/platform_data/microchip-ksz.h>
-#include <linux/phy.h>
-#include <linux/etherdevice.h>
-#include <linux/if_bridge.h>
-#include <net/dsa.h>
-#include <net/switchdev.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/export.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/platक्रमm_data/microchip-ksz.h>
+#समावेश <linux/phy.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/अगर_bridge.h>
+#समावेश <net/dsa.h>
+#समावेश <net/चयनdev.h>
 
-#include "ksz_common.h"
-#include "ksz8795_reg.h"
-#include "ksz8.h"
+#समावेश "ksz_common.h"
+#समावेश "ksz8795_reg.h"
+#समावेश "ksz8.h"
 
-static const u8 ksz8795_regs[] = {
+अटल स्थिर u8 ksz8795_regs[] = अणु
 	[REG_IND_CTRL_0]		= 0x6E,
 	[REG_IND_DATA_8]		= 0x70,
 	[REG_IND_DATA_CHECK]		= 0x72,
@@ -36,9 +37,9 @@ static const u8 ksz8795_regs[] = {
 	[P_REMOTE_STATUS]		= 0x08,
 	[P_SPEED_STATUS]		= 0x09,
 	[S_TAIL_TAG_CTRL]		= 0x0C,
-};
+पूर्ण;
 
-static const u32 ksz8795_masks[] = {
+अटल स्थिर u32 ksz8795_masks[] = अणु
 	[PORT_802_1P_REMAPPING]		= BIT(7),
 	[SW_TAIL_TAG_ENABLE]		= BIT(1),
 	[MIB_COUNTER_OVERFLOW]		= BIT(6),
@@ -58,9 +59,9 @@ static const u32 ksz8795_masks[] = {
 	[DYNAMIC_MAC_TABLE_FID]		= GENMASK(26, 20),
 	[DYNAMIC_MAC_TABLE_SRC_PORT]	= GENMASK(26, 24),
 	[DYNAMIC_MAC_TABLE_TIMESTAMP]	= GENMASK(28, 27),
-};
+पूर्ण;
 
-static const u8 ksz8795_shifts[] = {
+अटल स्थिर u8 ksz8795_shअगरts[] = अणु
 	[VLAN_TABLE_MEMBERSHIP_S]	= 7,
 	[VLAN_TABLE]			= 16,
 	[STATIC_MAC_FWD_PORTS]		= 16,
@@ -70,9 +71,9 @@ static const u8 ksz8795_shifts[] = {
 	[DYNAMIC_MAC_FID]		= 16,
 	[DYNAMIC_MAC_TIMESTAMP]		= 27,
 	[DYNAMIC_MAC_SRC_PORT]		= 24,
-};
+पूर्ण;
 
-static const u8 ksz8863_regs[] = {
+अटल स्थिर u8 ksz8863_regs[] = अणु
 	[REG_IND_CTRL_0]		= 0x79,
 	[REG_IND_DATA_8]		= 0x7B,
 	[REG_IND_DATA_CHECK]		= 0x7B,
@@ -86,9 +87,9 @@ static const u8 ksz8863_regs[] = {
 	[P_REMOTE_STATUS]		= 0x0E,
 	[P_SPEED_STATUS]		= 0x0F,
 	[S_TAIL_TAG_CTRL]		= 0x03,
-};
+पूर्ण;
 
-static const u32 ksz8863_masks[] = {
+अटल स्थिर u32 ksz8863_masks[] = अणु
 	[PORT_802_1P_REMAPPING]		= BIT(3),
 	[SW_TAIL_TAG_ENABLE]		= BIT(6),
 	[MIB_COUNTER_OVERFLOW]		= BIT(7),
@@ -108,9 +109,9 @@ static const u32 ksz8863_masks[] = {
 	[DYNAMIC_MAC_TABLE_FID]		= GENMASK(19, 16),
 	[DYNAMIC_MAC_TABLE_SRC_PORT]	= GENMASK(21, 20),
 	[DYNAMIC_MAC_TABLE_TIMESTAMP]	= GENMASK(23, 22),
-};
+पूर्ण;
 
-static u8 ksz8863_shifts[] = {
+अटल u8 ksz8863_shअगरts[] = अणु
 	[VLAN_TABLE_MEMBERSHIP_S]	= 16,
 	[STATIC_MAC_FWD_PORTS]		= 16,
 	[STATIC_MAC_FID]		= 22,
@@ -119,165 +120,165 @@ static u8 ksz8863_shifts[] = {
 	[DYNAMIC_MAC_FID]		= 16,
 	[DYNAMIC_MAC_TIMESTAMP]		= 24,
 	[DYNAMIC_MAC_SRC_PORT]		= 20,
-};
+पूर्ण;
 
-struct mib_names {
-	char string[ETH_GSTRING_LEN];
-};
+काष्ठा mib_names अणु
+	अक्षर string[ETH_GSTRING_LEN];
+पूर्ण;
 
-static const struct mib_names ksz87xx_mib_names[] = {
-	{ "rx_hi" },
-	{ "rx_undersize" },
-	{ "rx_fragments" },
-	{ "rx_oversize" },
-	{ "rx_jabbers" },
-	{ "rx_symbol_err" },
-	{ "rx_crc_err" },
-	{ "rx_align_err" },
-	{ "rx_mac_ctrl" },
-	{ "rx_pause" },
-	{ "rx_bcast" },
-	{ "rx_mcast" },
-	{ "rx_ucast" },
-	{ "rx_64_or_less" },
-	{ "rx_65_127" },
-	{ "rx_128_255" },
-	{ "rx_256_511" },
-	{ "rx_512_1023" },
-	{ "rx_1024_1522" },
-	{ "rx_1523_2000" },
-	{ "rx_2001" },
-	{ "tx_hi" },
-	{ "tx_late_col" },
-	{ "tx_pause" },
-	{ "tx_bcast" },
-	{ "tx_mcast" },
-	{ "tx_ucast" },
-	{ "tx_deferred" },
-	{ "tx_total_col" },
-	{ "tx_exc_col" },
-	{ "tx_single_col" },
-	{ "tx_mult_col" },
-	{ "rx_total" },
-	{ "tx_total" },
-	{ "rx_discards" },
-	{ "tx_discards" },
-};
+अटल स्थिर काष्ठा mib_names ksz87xx_mib_names[] = अणु
+	अणु "rx_hi" पूर्ण,
+	अणु "rx_undersize" पूर्ण,
+	अणु "rx_fragments" पूर्ण,
+	अणु "rx_oversize" पूर्ण,
+	अणु "rx_jabbers" पूर्ण,
+	अणु "rx_symbol_err" पूर्ण,
+	अणु "rx_crc_err" पूर्ण,
+	अणु "rx_align_err" पूर्ण,
+	अणु "rx_mac_ctrl" पूर्ण,
+	अणु "rx_pause" पूर्ण,
+	अणु "rx_bcast" पूर्ण,
+	अणु "rx_mcast" पूर्ण,
+	अणु "rx_ucast" पूर्ण,
+	अणु "rx_64_or_less" पूर्ण,
+	अणु "rx_65_127" पूर्ण,
+	अणु "rx_128_255" पूर्ण,
+	अणु "rx_256_511" पूर्ण,
+	अणु "rx_512_1023" पूर्ण,
+	अणु "rx_1024_1522" पूर्ण,
+	अणु "rx_1523_2000" पूर्ण,
+	अणु "rx_2001" पूर्ण,
+	अणु "tx_hi" पूर्ण,
+	अणु "tx_late_col" पूर्ण,
+	अणु "tx_pause" पूर्ण,
+	अणु "tx_bcast" पूर्ण,
+	अणु "tx_mcast" पूर्ण,
+	अणु "tx_ucast" पूर्ण,
+	अणु "tx_deferred" पूर्ण,
+	अणु "tx_total_col" पूर्ण,
+	अणु "tx_exc_col" पूर्ण,
+	अणु "tx_single_col" पूर्ण,
+	अणु "tx_mult_col" पूर्ण,
+	अणु "rx_total" पूर्ण,
+	अणु "tx_total" पूर्ण,
+	अणु "rx_discards" पूर्ण,
+	अणु "tx_discards" पूर्ण,
+पूर्ण;
 
-static const struct mib_names ksz88xx_mib_names[] = {
-	{ "rx" },
-	{ "rx_hi" },
-	{ "rx_undersize" },
-	{ "rx_fragments" },
-	{ "rx_oversize" },
-	{ "rx_jabbers" },
-	{ "rx_symbol_err" },
-	{ "rx_crc_err" },
-	{ "rx_align_err" },
-	{ "rx_mac_ctrl" },
-	{ "rx_pause" },
-	{ "rx_bcast" },
-	{ "rx_mcast" },
-	{ "rx_ucast" },
-	{ "rx_64_or_less" },
-	{ "rx_65_127" },
-	{ "rx_128_255" },
-	{ "rx_256_511" },
-	{ "rx_512_1023" },
-	{ "rx_1024_1522" },
-	{ "tx" },
-	{ "tx_hi" },
-	{ "tx_late_col" },
-	{ "tx_pause" },
-	{ "tx_bcast" },
-	{ "tx_mcast" },
-	{ "tx_ucast" },
-	{ "tx_deferred" },
-	{ "tx_total_col" },
-	{ "tx_exc_col" },
-	{ "tx_single_col" },
-	{ "tx_mult_col" },
-	{ "rx_discards" },
-	{ "tx_discards" },
-};
+अटल स्थिर काष्ठा mib_names ksz88xx_mib_names[] = अणु
+	अणु "rx" पूर्ण,
+	अणु "rx_hi" पूर्ण,
+	अणु "rx_undersize" पूर्ण,
+	अणु "rx_fragments" पूर्ण,
+	अणु "rx_oversize" पूर्ण,
+	अणु "rx_jabbers" पूर्ण,
+	अणु "rx_symbol_err" पूर्ण,
+	अणु "rx_crc_err" पूर्ण,
+	अणु "rx_align_err" पूर्ण,
+	अणु "rx_mac_ctrl" पूर्ण,
+	अणु "rx_pause" पूर्ण,
+	अणु "rx_bcast" पूर्ण,
+	अणु "rx_mcast" पूर्ण,
+	अणु "rx_ucast" पूर्ण,
+	अणु "rx_64_or_less" पूर्ण,
+	अणु "rx_65_127" पूर्ण,
+	अणु "rx_128_255" पूर्ण,
+	अणु "rx_256_511" पूर्ण,
+	अणु "rx_512_1023" पूर्ण,
+	अणु "rx_1024_1522" पूर्ण,
+	अणु "tx" पूर्ण,
+	अणु "tx_hi" पूर्ण,
+	अणु "tx_late_col" पूर्ण,
+	अणु "tx_pause" पूर्ण,
+	अणु "tx_bcast" पूर्ण,
+	अणु "tx_mcast" पूर्ण,
+	अणु "tx_ucast" पूर्ण,
+	अणु "tx_deferred" पूर्ण,
+	अणु "tx_total_col" पूर्ण,
+	अणु "tx_exc_col" पूर्ण,
+	अणु "tx_single_col" पूर्ण,
+	अणु "tx_mult_col" पूर्ण,
+	अणु "rx_discards" पूर्ण,
+	अणु "tx_discards" पूर्ण,
+पूर्ण;
 
-static bool ksz_is_ksz88x3(struct ksz_device *dev)
-{
-	return dev->chip_id == 0x8830;
-}
+अटल bool ksz_is_ksz88x3(काष्ठा ksz_device *dev)
+अणु
+	वापस dev->chip_id == 0x8830;
+पूर्ण
 
-static void ksz_cfg(struct ksz_device *dev, u32 addr, u8 bits, bool set)
-{
+अटल व्योम ksz_cfg(काष्ठा ksz_device *dev, u32 addr, u8 bits, bool set)
+अणु
 	regmap_update_bits(dev->regmap[0], addr, bits, set ? bits : 0);
-}
+पूर्ण
 
-static void ksz_port_cfg(struct ksz_device *dev, int port, int offset, u8 bits,
+अटल व्योम ksz_port_cfg(काष्ठा ksz_device *dev, पूर्णांक port, पूर्णांक offset, u8 bits,
 			 bool set)
-{
+अणु
 	regmap_update_bits(dev->regmap[0], PORT_CTRL_ADDR(port, offset),
 			   bits, set ? bits : 0);
-}
+पूर्ण
 
-static int ksz8_reset_switch(struct ksz_device *dev)
-{
-	if (ksz_is_ksz88x3(dev)) {
-		/* reset switch */
+अटल पूर्णांक ksz8_reset_चयन(काष्ठा ksz_device *dev)
+अणु
+	अगर (ksz_is_ksz88x3(dev)) अणु
+		/* reset चयन */
 		ksz_cfg(dev, KSZ8863_REG_SW_RESET,
 			KSZ8863_GLOBAL_SOFTWARE_RESET | KSZ8863_PCS_RESET, true);
 		ksz_cfg(dev, KSZ8863_REG_SW_RESET,
 			KSZ8863_GLOBAL_SOFTWARE_RESET | KSZ8863_PCS_RESET, false);
-	} else {
-		/* reset switch */
-		ksz_write8(dev, REG_POWER_MANAGEMENT_1,
+	पूर्ण अन्यथा अणु
+		/* reset चयन */
+		ksz_ग_लिखो8(dev, REG_POWER_MANAGEMENT_1,
 			   SW_SOFTWARE_POWER_DOWN << SW_POWER_MANAGEMENT_MODE_S);
-		ksz_write8(dev, REG_POWER_MANAGEMENT_1, 0);
-	}
+		ksz_ग_लिखो8(dev, REG_POWER_MANAGEMENT_1, 0);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ksz8795_set_prio_queue(struct ksz_device *dev, int port, int queue)
-{
+अटल व्योम ksz8795_set_prio_queue(काष्ठा ksz_device *dev, पूर्णांक port, पूर्णांक queue)
+अणु
 	u8 hi, lo;
 
 	/* Number of queues can only be 1, 2, or 4. */
-	switch (queue) {
-	case 4:
-	case 3:
+	चयन (queue) अणु
+	हाल 4:
+	हाल 3:
 		queue = PORT_QUEUE_SPLIT_4;
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		queue = PORT_QUEUE_SPLIT_2;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		queue = PORT_QUEUE_SPLIT_1;
-	}
-	ksz_pread8(dev, port, REG_PORT_CTRL_0, &lo);
-	ksz_pread8(dev, port, P_DROP_TAG_CTRL, &hi);
+	पूर्ण
+	ksz_pपढ़ो8(dev, port, REG_PORT_CTRL_0, &lo);
+	ksz_pपढ़ो8(dev, port, P_DROP_TAG_CTRL, &hi);
 	lo &= ~PORT_QUEUE_SPLIT_L;
-	if (queue & PORT_QUEUE_SPLIT_2)
+	अगर (queue & PORT_QUEUE_SPLIT_2)
 		lo |= PORT_QUEUE_SPLIT_L;
 	hi &= ~PORT_QUEUE_SPLIT_H;
-	if (queue & PORT_QUEUE_SPLIT_4)
+	अगर (queue & PORT_QUEUE_SPLIT_4)
 		hi |= PORT_QUEUE_SPLIT_H;
-	ksz_pwrite8(dev, port, REG_PORT_CTRL_0, lo);
-	ksz_pwrite8(dev, port, P_DROP_TAG_CTRL, hi);
+	ksz_pग_लिखो8(dev, port, REG_PORT_CTRL_0, lo);
+	ksz_pग_लिखो8(dev, port, P_DROP_TAG_CTRL, hi);
 
-	/* Default is port based for egress rate limit. */
-	if (queue != PORT_QUEUE_SPLIT_1)
+	/* Default is port based क्रम egress rate limit. */
+	अगर (queue != PORT_QUEUE_SPLIT_1)
 		ksz_cfg(dev, REG_SW_CTRL_19, SW_OUT_RATE_LIMIT_QUEUE_BASED,
 			true);
-}
+पूर्ण
 
-static void ksz8_r_mib_cnt(struct ksz_device *dev, int port, u16 addr, u64 *cnt)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	const u32 *masks;
-	const u8 *regs;
+अटल व्योम ksz8_r_mib_cnt(काष्ठा ksz_device *dev, पूर्णांक port, u16 addr, u64 *cnt)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u32 *masks;
+	स्थिर u8 *regs;
 	u16 ctrl_addr;
 	u32 data;
 	u8 check;
-	int loop;
+	पूर्णांक loop;
 
 	masks = ksz8->masks;
 	regs = ksz8->regs;
@@ -286,35 +287,35 @@ static void ksz8_r_mib_cnt(struct ksz_device *dev, int port, u16 addr, u64 *cnt)
 	ctrl_addr |= IND_ACC_TABLE(TABLE_MIB | TABLE_READ);
 
 	mutex_lock(&dev->alu_mutex);
-	ksz_write16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
+	ksz_ग_लिखो16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
 
-	/* It is almost guaranteed to always read the valid bit because of
+	/* It is almost guaranteed to always पढ़ो the valid bit because of
 	 * slow SPI speed.
 	 */
-	for (loop = 2; loop > 0; loop--) {
-		ksz_read8(dev, regs[REG_IND_MIB_CHECK], &check);
+	क्रम (loop = 2; loop > 0; loop--) अणु
+		ksz_पढ़ो8(dev, regs[REG_IND_MIB_CHECK], &check);
 
-		if (check & masks[MIB_COUNTER_VALID]) {
-			ksz_read32(dev, regs[REG_IND_DATA_LO], &data);
-			if (check & masks[MIB_COUNTER_OVERFLOW])
+		अगर (check & masks[MIB_COUNTER_VALID]) अणु
+			ksz_पढ़ो32(dev, regs[REG_IND_DATA_LO], &data);
+			अगर (check & masks[MIB_COUNTER_OVERFLOW])
 				*cnt += MIB_COUNTER_VALUE + 1;
 			*cnt += data & MIB_COUNTER_VALUE;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&dev->alu_mutex);
-}
+पूर्ण
 
-static void ksz8795_r_mib_pkt(struct ksz_device *dev, int port, u16 addr,
+अटल व्योम ksz8795_r_mib_pkt(काष्ठा ksz_device *dev, पूर्णांक port, u16 addr,
 			      u64 *dropped, u64 *cnt)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	const u32 *masks;
-	const u8 *regs;
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u32 *masks;
+	स्थिर u8 *regs;
 	u16 ctrl_addr;
 	u32 data;
 	u8 check;
-	int loop;
+	पूर्णांक loop;
 
 	masks = ksz8->masks;
 	regs = ksz8->regs;
@@ -325,44 +326,44 @@ static void ksz8795_r_mib_pkt(struct ksz_device *dev, int port, u16 addr,
 	ctrl_addr |= IND_ACC_TABLE(TABLE_MIB | TABLE_READ);
 
 	mutex_lock(&dev->alu_mutex);
-	ksz_write16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
+	ksz_ग_लिखो16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
 
-	/* It is almost guaranteed to always read the valid bit because of
+	/* It is almost guaranteed to always पढ़ो the valid bit because of
 	 * slow SPI speed.
 	 */
-	for (loop = 2; loop > 0; loop--) {
-		ksz_read8(dev, regs[REG_IND_MIB_CHECK], &check);
+	क्रम (loop = 2; loop > 0; loop--) अणु
+		ksz_पढ़ो8(dev, regs[REG_IND_MIB_CHECK], &check);
 
-		if (check & masks[MIB_COUNTER_VALID]) {
-			ksz_read32(dev, regs[REG_IND_DATA_LO], &data);
-			if (addr < 2) {
+		अगर (check & masks[MIB_COUNTER_VALID]) अणु
+			ksz_पढ़ो32(dev, regs[REG_IND_DATA_LO], &data);
+			अगर (addr < 2) अणु
 				u64 total;
 
 				total = check & MIB_TOTAL_BYTES_H;
 				total <<= 32;
 				*cnt += total;
 				*cnt += data;
-				if (check & masks[MIB_COUNTER_OVERFLOW]) {
+				अगर (check & masks[MIB_COUNTER_OVERFLOW]) अणु
 					total = MIB_TOTAL_BYTES_H + 1;
 					total <<= 32;
 					*cnt += total;
-				}
-			} else {
-				if (check & masks[MIB_COUNTER_OVERFLOW])
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (check & masks[MIB_COUNTER_OVERFLOW])
 					*cnt += MIB_PACKET_DROPPED + 1;
 				*cnt += data & MIB_PACKET_DROPPED;
-			}
-			break;
-		}
-	}
+			पूर्ण
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&dev->alu_mutex);
-}
+पूर्ण
 
-static void ksz8863_r_mib_pkt(struct ksz_device *dev, int port, u16 addr,
+अटल व्योम ksz8863_r_mib_pkt(काष्ठा ksz_device *dev, पूर्णांक port, u16 addr,
 			      u64 *dropped, u64 *cnt)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	const u8 *regs = ksz8->regs;
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u8 *regs = ksz8->regs;
 	u32 *last = (u32 *)dropped;
 	u16 ctrl_addr;
 	u32 data;
@@ -375,186 +376,186 @@ static void ksz8863_r_mib_pkt(struct ksz_device *dev, int port, u16 addr,
 	ctrl_addr |= IND_ACC_TABLE(TABLE_MIB | TABLE_READ);
 
 	mutex_lock(&dev->alu_mutex);
-	ksz_write16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
-	ksz_read32(dev, regs[REG_IND_DATA_LO], &data);
+	ksz_ग_लिखो16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
+	ksz_पढ़ो32(dev, regs[REG_IND_DATA_LO], &data);
 	mutex_unlock(&dev->alu_mutex);
 
 	data &= MIB_PACKET_DROPPED;
 	cur = last[addr];
-	if (data != cur) {
+	अगर (data != cur) अणु
 		last[addr] = data;
-		if (data < cur)
+		अगर (data < cur)
 			data += MIB_PACKET_DROPPED + 1;
 		data -= cur;
 		*cnt += data;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ksz8_r_mib_pkt(struct ksz_device *dev, int port, u16 addr,
+अटल व्योम ksz8_r_mib_pkt(काष्ठा ksz_device *dev, पूर्णांक port, u16 addr,
 			   u64 *dropped, u64 *cnt)
-{
-	if (ksz_is_ksz88x3(dev))
+अणु
+	अगर (ksz_is_ksz88x3(dev))
 		ksz8863_r_mib_pkt(dev, port, addr, dropped, cnt);
-	else
+	अन्यथा
 		ksz8795_r_mib_pkt(dev, port, addr, dropped, cnt);
-}
+पूर्ण
 
-static void ksz8_freeze_mib(struct ksz_device *dev, int port, bool freeze)
-{
-	if (ksz_is_ksz88x3(dev))
-		return;
+अटल व्योम ksz8_मुक्तze_mib(काष्ठा ksz_device *dev, पूर्णांक port, bool मुक्तze)
+अणु
+	अगर (ksz_is_ksz88x3(dev))
+		वापस;
 
-	/* enable the port for flush/freeze function */
-	if (freeze)
+	/* enable the port क्रम flush/मुक्तze function */
+	अगर (मुक्तze)
 		ksz_cfg(dev, REG_SW_CTRL_6, BIT(port), true);
-	ksz_cfg(dev, REG_SW_CTRL_6, SW_MIB_COUNTER_FREEZE, freeze);
+	ksz_cfg(dev, REG_SW_CTRL_6, SW_MIB_COUNTER_FREEZE, मुक्तze);
 
-	/* disable the port after freeze is done */
-	if (!freeze)
+	/* disable the port after मुक्तze is करोne */
+	अगर (!मुक्तze)
 		ksz_cfg(dev, REG_SW_CTRL_6, BIT(port), false);
-}
+पूर्ण
 
-static void ksz8_port_init_cnt(struct ksz_device *dev, int port)
-{
-	struct ksz_port_mib *mib = &dev->ports[port].mib;
+अटल व्योम ksz8_port_init_cnt(काष्ठा ksz_device *dev, पूर्णांक port)
+अणु
+	काष्ठा ksz_port_mib *mib = &dev->ports[port].mib;
 	u64 *dropped;
 
-	if (!ksz_is_ksz88x3(dev)) {
+	अगर (!ksz_is_ksz88x3(dev)) अणु
 		/* flush all enabled port MIB counters */
 		ksz_cfg(dev, REG_SW_CTRL_6, BIT(port), true);
 		ksz_cfg(dev, REG_SW_CTRL_6, SW_MIB_COUNTER_FLUSH, true);
 		ksz_cfg(dev, REG_SW_CTRL_6, BIT(port), false);
-	}
+	पूर्ण
 
 	mib->cnt_ptr = 0;
 
-	/* Some ports may not have MIB counters before SWITCH_COUNTER_NUM. */
-	while (mib->cnt_ptr < dev->reg_mib_cnt) {
+	/* Some ports may not have MIB counters beक्रमe SWITCH_COUNTER_NUM. */
+	जबतक (mib->cnt_ptr < dev->reg_mib_cnt) अणु
 		dev->dev_ops->r_mib_cnt(dev, port, mib->cnt_ptr,
 					&mib->counters[mib->cnt_ptr]);
 		++mib->cnt_ptr;
-	}
+	पूर्ण
 
 	/* last one in storage */
 	dropped = &mib->counters[dev->mib_cnt];
 
 	/* Some ports may not have MIB counters after SWITCH_COUNTER_NUM. */
-	while (mib->cnt_ptr < dev->mib_cnt) {
+	जबतक (mib->cnt_ptr < dev->mib_cnt) अणु
 		dev->dev_ops->r_mib_pkt(dev, port, mib->cnt_ptr,
 					dropped, &mib->counters[mib->cnt_ptr]);
 		++mib->cnt_ptr;
-	}
+	पूर्ण
 	mib->cnt_ptr = 0;
-	memset(mib->counters, 0, dev->mib_cnt * sizeof(u64));
-}
+	स_रखो(mib->counters, 0, dev->mib_cnt * माप(u64));
+पूर्ण
 
-static void ksz8_r_table(struct ksz_device *dev, int table, u16 addr, u64 *data)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	const u8 *regs = ksz8->regs;
+अटल व्योम ksz8_r_table(काष्ठा ksz_device *dev, पूर्णांक table, u16 addr, u64 *data)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u8 *regs = ksz8->regs;
 	u16 ctrl_addr;
 
 	ctrl_addr = IND_ACC_TABLE(table | TABLE_READ) | addr;
 
 	mutex_lock(&dev->alu_mutex);
-	ksz_write16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
-	ksz_read64(dev, regs[REG_IND_DATA_HI], data);
+	ksz_ग_लिखो16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
+	ksz_पढ़ो64(dev, regs[REG_IND_DATA_HI], data);
 	mutex_unlock(&dev->alu_mutex);
-}
+पूर्ण
 
-static void ksz8_w_table(struct ksz_device *dev, int table, u16 addr, u64 data)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	const u8 *regs = ksz8->regs;
+अटल व्योम ksz8_w_table(काष्ठा ksz_device *dev, पूर्णांक table, u16 addr, u64 data)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u8 *regs = ksz8->regs;
 	u16 ctrl_addr;
 
 	ctrl_addr = IND_ACC_TABLE(table) | addr;
 
 	mutex_lock(&dev->alu_mutex);
-	ksz_write64(dev, regs[REG_IND_DATA_HI], data);
-	ksz_write16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
+	ksz_ग_लिखो64(dev, regs[REG_IND_DATA_HI], data);
+	ksz_ग_लिखो16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
 	mutex_unlock(&dev->alu_mutex);
-}
+पूर्ण
 
-static int ksz8_valid_dyn_entry(struct ksz_device *dev, u8 *data)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	int timeout = 100;
-	const u32 *masks;
-	const u8 *regs;
+अटल पूर्णांक ksz8_valid_dyn_entry(काष्ठा ksz_device *dev, u8 *data)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	पूर्णांक समयout = 100;
+	स्थिर u32 *masks;
+	स्थिर u8 *regs;
 
 	masks = ksz8->masks;
 	regs = ksz8->regs;
 
-	do {
-		ksz_read8(dev, regs[REG_IND_DATA_CHECK], data);
-		timeout--;
-	} while ((*data & masks[DYNAMIC_MAC_TABLE_NOT_READY]) && timeout);
+	करो अणु
+		ksz_पढ़ो8(dev, regs[REG_IND_DATA_CHECK], data);
+		समयout--;
+	पूर्ण जबतक ((*data & masks[DYNAMIC_MAC_TABLE_NOT_READY]) && समयout);
 
-	/* Entry is not ready for accessing. */
-	if (*data & masks[DYNAMIC_MAC_TABLE_NOT_READY]) {
-		return -EAGAIN;
-	/* Entry is ready for accessing. */
-	} else {
-		ksz_read8(dev, regs[REG_IND_DATA_8], data);
+	/* Entry is not पढ़ोy क्रम accessing. */
+	अगर (*data & masks[DYNAMIC_MAC_TABLE_NOT_READY]) अणु
+		वापस -EAGAIN;
+	/* Entry is पढ़ोy क्रम accessing. */
+	पूर्ण अन्यथा अणु
+		ksz_पढ़ो8(dev, regs[REG_IND_DATA_8], data);
 
 		/* There is no valid entry in the table. */
-		if (*data & masks[DYNAMIC_MAC_TABLE_MAC_EMPTY])
-			return -ENXIO;
-	}
-	return 0;
-}
+		अगर (*data & masks[DYNAMIC_MAC_TABLE_MAC_EMPTY])
+			वापस -ENXIO;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ksz8_r_dyn_mac_table(struct ksz_device *dev, u16 addr,
+अटल पूर्णांक ksz8_r_dyn_mac_table(काष्ठा ksz_device *dev, u16 addr,
 				u8 *mac_addr, u8 *fid, u8 *src_port,
-				u8 *timestamp, u16 *entries)
-{
-	struct ksz8 *ksz8 = dev->priv;
+				u8 *बारtamp, u16 *entries)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
 	u32 data_hi, data_lo;
-	const u8 *shifts;
-	const u32 *masks;
-	const u8 *regs;
+	स्थिर u8 *shअगरts;
+	स्थिर u32 *masks;
+	स्थिर u8 *regs;
 	u16 ctrl_addr;
 	u8 data;
-	int rc;
+	पूर्णांक rc;
 
-	shifts = ksz8->shifts;
+	shअगरts = ksz8->shअगरts;
 	masks = ksz8->masks;
 	regs = ksz8->regs;
 
 	ctrl_addr = IND_ACC_TABLE(TABLE_DYNAMIC_MAC | TABLE_READ) | addr;
 
 	mutex_lock(&dev->alu_mutex);
-	ksz_write16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
+	ksz_ग_लिखो16(dev, regs[REG_IND_CTRL_0], ctrl_addr);
 
 	rc = ksz8_valid_dyn_entry(dev, &data);
-	if (rc == -EAGAIN) {
-		if (addr == 0)
+	अगर (rc == -EAGAIN) अणु
+		अगर (addr == 0)
 			*entries = 0;
-	} else if (rc == -ENXIO) {
+	पूर्ण अन्यथा अगर (rc == -ENXIO) अणु
 		*entries = 0;
 	/* At least one valid entry in the table. */
-	} else {
+	पूर्ण अन्यथा अणु
 		u64 buf = 0;
-		int cnt;
+		पूर्णांक cnt;
 
-		ksz_read64(dev, regs[REG_IND_DATA_HI], &buf);
+		ksz_पढ़ो64(dev, regs[REG_IND_DATA_HI], &buf);
 		data_hi = (u32)(buf >> 32);
 		data_lo = (u32)buf;
 
 		/* Check out how many valid entry in the table. */
 		cnt = data & masks[DYNAMIC_MAC_TABLE_ENTRIES_H];
-		cnt <<= shifts[DYNAMIC_MAC_ENTRIES_H];
+		cnt <<= shअगरts[DYNAMIC_MAC_ENTRIES_H];
 		cnt |= (data_hi & masks[DYNAMIC_MAC_TABLE_ENTRIES]) >>
-			shifts[DYNAMIC_MAC_ENTRIES];
+			shअगरts[DYNAMIC_MAC_ENTRIES];
 		*entries = cnt + 1;
 
 		*fid = (data_hi & masks[DYNAMIC_MAC_TABLE_FID]) >>
-			shifts[DYNAMIC_MAC_FID];
+			shअगरts[DYNAMIC_MAC_FID];
 		*src_port = (data_hi & masks[DYNAMIC_MAC_TABLE_SRC_PORT]) >>
-			shifts[DYNAMIC_MAC_SRC_PORT];
-		*timestamp = (data_hi & masks[DYNAMIC_MAC_TABLE_TIMESTAMP]) >>
-			shifts[DYNAMIC_MAC_TIMESTAMP];
+			shअगरts[DYNAMIC_MAC_SRC_PORT];
+		*बारtamp = (data_hi & masks[DYNAMIC_MAC_TABLE_TIMESTAMP]) >>
+			shअगरts[DYNAMIC_MAC_TIMESTAMP];
 
 		mac_addr[5] = (u8)data_lo;
 		mac_addr[4] = (u8)(data_lo >> 8);
@@ -564,136 +565,136 @@ static int ksz8_r_dyn_mac_table(struct ksz_device *dev, u16 addr,
 		mac_addr[1] = (u8)data_hi;
 		mac_addr[0] = (u8)(data_hi >> 8);
 		rc = 0;
-	}
+	पूर्ण
 	mutex_unlock(&dev->alu_mutex);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int ksz8_r_sta_mac_table(struct ksz_device *dev, u16 addr,
-				struct alu_struct *alu)
-{
-	struct ksz8 *ksz8 = dev->priv;
+अटल पूर्णांक ksz8_r_sta_mac_table(काष्ठा ksz_device *dev, u16 addr,
+				काष्ठा alu_काष्ठा *alu)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
 	u32 data_hi, data_lo;
-	const u8 *shifts;
-	const u32 *masks;
+	स्थिर u8 *shअगरts;
+	स्थिर u32 *masks;
 	u64 data;
 
-	shifts = ksz8->shifts;
+	shअगरts = ksz8->shअगरts;
 	masks = ksz8->masks;
 
 	ksz8_r_table(dev, TABLE_STATIC_MAC, addr, &data);
 	data_hi = data >> 32;
 	data_lo = (u32)data;
-	if (data_hi & (masks[STATIC_MAC_TABLE_VALID] |
-			masks[STATIC_MAC_TABLE_OVERRIDE])) {
+	अगर (data_hi & (masks[STATIC_MAC_TABLE_VALID] |
+			masks[STATIC_MAC_TABLE_OVERRIDE])) अणु
 		alu->mac[5] = (u8)data_lo;
 		alu->mac[4] = (u8)(data_lo >> 8);
 		alu->mac[3] = (u8)(data_lo >> 16);
 		alu->mac[2] = (u8)(data_lo >> 24);
 		alu->mac[1] = (u8)data_hi;
 		alu->mac[0] = (u8)(data_hi >> 8);
-		alu->port_forward =
+		alu->port_क्रमward =
 			(data_hi & masks[STATIC_MAC_TABLE_FWD_PORTS]) >>
-				shifts[STATIC_MAC_FWD_PORTS];
+				shअगरts[STATIC_MAC_FWD_PORTS];
 		alu->is_override =
 			(data_hi & masks[STATIC_MAC_TABLE_OVERRIDE]) ? 1 : 0;
 		data_hi >>= 1;
-		alu->is_static = true;
+		alu->is_अटल = true;
 		alu->is_use_fid =
 			(data_hi & masks[STATIC_MAC_TABLE_USE_FID]) ? 1 : 0;
 		alu->fid = (data_hi & masks[STATIC_MAC_TABLE_FID]) >>
-				shifts[STATIC_MAC_FID];
-		return 0;
-	}
-	return -ENXIO;
-}
+				shअगरts[STATIC_MAC_FID];
+		वापस 0;
+	पूर्ण
+	वापस -ENXIO;
+पूर्ण
 
-static void ksz8_w_sta_mac_table(struct ksz_device *dev, u16 addr,
-				 struct alu_struct *alu)
-{
-	struct ksz8 *ksz8 = dev->priv;
+अटल व्योम ksz8_w_sta_mac_table(काष्ठा ksz_device *dev, u16 addr,
+				 काष्ठा alu_काष्ठा *alu)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
 	u32 data_hi, data_lo;
-	const u8 *shifts;
-	const u32 *masks;
+	स्थिर u8 *shअगरts;
+	स्थिर u32 *masks;
 	u64 data;
 
-	shifts = ksz8->shifts;
+	shअगरts = ksz8->shअगरts;
 	masks = ksz8->masks;
 
 	data_lo = ((u32)alu->mac[2] << 24) |
 		((u32)alu->mac[3] << 16) |
 		((u32)alu->mac[4] << 8) | alu->mac[5];
 	data_hi = ((u32)alu->mac[0] << 8) | alu->mac[1];
-	data_hi |= (u32)alu->port_forward << shifts[STATIC_MAC_FWD_PORTS];
+	data_hi |= (u32)alu->port_क्रमward << shअगरts[STATIC_MAC_FWD_PORTS];
 
-	if (alu->is_override)
+	अगर (alu->is_override)
 		data_hi |= masks[STATIC_MAC_TABLE_OVERRIDE];
-	if (alu->is_use_fid) {
+	अगर (alu->is_use_fid) अणु
 		data_hi |= masks[STATIC_MAC_TABLE_USE_FID];
-		data_hi |= (u32)alu->fid << shifts[STATIC_MAC_FID];
-	}
-	if (alu->is_static)
+		data_hi |= (u32)alu->fid << shअगरts[STATIC_MAC_FID];
+	पूर्ण
+	अगर (alu->is_अटल)
 		data_hi |= masks[STATIC_MAC_TABLE_VALID];
-	else
+	अन्यथा
 		data_hi &= ~masks[STATIC_MAC_TABLE_OVERRIDE];
 
 	data = (u64)data_hi << 32 | data_lo;
 	ksz8_w_table(dev, TABLE_STATIC_MAC, addr, data);
-}
+पूर्ण
 
-static void ksz8_from_vlan(struct ksz_device *dev, u32 vlan, u8 *fid,
+अटल व्योम ksz8_from_vlan(काष्ठा ksz_device *dev, u32 vlan, u8 *fid,
 			   u8 *member, u8 *valid)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	const u8 *shifts;
-	const u32 *masks;
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u8 *shअगरts;
+	स्थिर u32 *masks;
 
-	shifts = ksz8->shifts;
+	shअगरts = ksz8->shअगरts;
 	masks = ksz8->masks;
 
 	*fid = vlan & masks[VLAN_TABLE_FID];
 	*member = (vlan & masks[VLAN_TABLE_MEMBERSHIP]) >>
-			shifts[VLAN_TABLE_MEMBERSHIP_S];
+			shअगरts[VLAN_TABLE_MEMBERSHIP_S];
 	*valid = !!(vlan & masks[VLAN_TABLE_VALID]);
-}
+पूर्ण
 
-static void ksz8_to_vlan(struct ksz_device *dev, u8 fid, u8 member, u8 valid,
+अटल व्योम ksz8_to_vlan(काष्ठा ksz_device *dev, u8 fid, u8 member, u8 valid,
 			 u16 *vlan)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	const u8 *shifts;
-	const u32 *masks;
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u8 *shअगरts;
+	स्थिर u32 *masks;
 
-	shifts = ksz8->shifts;
+	shअगरts = ksz8->shअगरts;
 	masks = ksz8->masks;
 
 	*vlan = fid;
-	*vlan |= (u16)member << shifts[VLAN_TABLE_MEMBERSHIP_S];
-	if (valid)
+	*vlan |= (u16)member << shअगरts[VLAN_TABLE_MEMBERSHIP_S];
+	अगर (valid)
 		*vlan |= masks[VLAN_TABLE_VALID];
-}
+पूर्ण
 
-static void ksz8_r_vlan_entries(struct ksz_device *dev, u16 addr)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	const u8 *shifts;
+अटल व्योम ksz8_r_vlan_entries(काष्ठा ksz_device *dev, u16 addr)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u8 *shअगरts;
 	u64 data;
-	int i;
+	पूर्णांक i;
 
-	shifts = ksz8->shifts;
+	shअगरts = ksz8->shअगरts;
 
 	ksz8_r_table(dev, TABLE_VLAN, addr, &data);
 	addr *= dev->phy_port_cnt;
-	for (i = 0; i < dev->phy_port_cnt; i++) {
+	क्रम (i = 0; i < dev->phy_port_cnt; i++) अणु
 		dev->vlan_cache[addr + i].table[0] = (u16)data;
-		data >>= shifts[VLAN_TABLE];
-	}
-}
+		data >>= shअगरts[VLAN_TABLE];
+	पूर्ण
+पूर्ण
 
-static void ksz8_r_vlan_table(struct ksz_device *dev, u16 vid, u16 *vlan)
-{
-	int index;
+अटल व्योम ksz8_r_vlan_table(काष्ठा ksz_device *dev, u16 vid, u16 *vlan)
+अणु
+	पूर्णांक index;
 	u16 *data;
 	u16 addr;
 	u64 buf;
@@ -703,11 +704,11 @@ static void ksz8_r_vlan_table(struct ksz_device *dev, u16 vid, u16 *vlan)
 	index = vid & 3;
 	ksz8_r_table(dev, TABLE_VLAN, addr, &buf);
 	*vlan = data[index];
-}
+पूर्ण
 
-static void ksz8_w_vlan_table(struct ksz_device *dev, u16 vid, u16 vlan)
-{
-	int index;
+अटल व्योम ksz8_w_vlan_table(काष्ठा ksz_device *dev, u16 vid, u16 vlan)
+अणु
+	पूर्णांक index;
 	u16 *data;
 	u16 addr;
 	u64 buf;
@@ -719,426 +720,426 @@ static void ksz8_w_vlan_table(struct ksz_device *dev, u16 vid, u16 vlan)
 	data[index] = vlan;
 	dev->vlan_cache[vid].table[0] = vlan;
 	ksz8_w_table(dev, TABLE_VLAN, addr, buf);
-}
+पूर्ण
 
-static void ksz8_r_phy(struct ksz_device *dev, u16 phy, u16 reg, u16 *val)
-{
-	struct ksz8 *ksz8 = dev->priv;
+अटल व्योम ksz8_r_phy(काष्ठा ksz_device *dev, u16 phy, u16 reg, u16 *val)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
 	u8 restart, speed, ctrl, link;
-	const u8 *regs = ksz8->regs;
-	int processed = true;
+	स्थिर u8 *regs = ksz8->regs;
+	पूर्णांक processed = true;
 	u16 data = 0;
 	u8 p = phy;
 
-	switch (reg) {
-	case PHY_REG_CTRL:
-		ksz_pread8(dev, p, regs[P_NEG_RESTART_CTRL], &restart);
-		ksz_pread8(dev, p, regs[P_SPEED_STATUS], &speed);
-		ksz_pread8(dev, p, regs[P_FORCE_CTRL], &ctrl);
-		if (restart & PORT_PHY_LOOPBACK)
+	चयन (reg) अणु
+	हाल PHY_REG_CTRL:
+		ksz_pपढ़ो8(dev, p, regs[P_NEG_RESTART_CTRL], &restart);
+		ksz_pपढ़ो8(dev, p, regs[P_SPEED_STATUS], &speed);
+		ksz_pपढ़ो8(dev, p, regs[P_FORCE_CTRL], &ctrl);
+		अगर (restart & PORT_PHY_LOOPBACK)
 			data |= PHY_LOOPBACK;
-		if (ctrl & PORT_FORCE_100_MBIT)
+		अगर (ctrl & PORT_FORCE_100_MBIT)
 			data |= PHY_SPEED_100MBIT;
-		if (ksz_is_ksz88x3(dev)) {
-			if ((ctrl & PORT_AUTO_NEG_ENABLE))
+		अगर (ksz_is_ksz88x3(dev)) अणु
+			अगर ((ctrl & PORT_AUTO_NEG_ENABLE))
 				data |= PHY_AUTO_NEG_ENABLE;
-		} else {
-			if (!(ctrl & PORT_AUTO_NEG_DISABLE))
+		पूर्ण अन्यथा अणु
+			अगर (!(ctrl & PORT_AUTO_NEG_DISABLE))
 				data |= PHY_AUTO_NEG_ENABLE;
-		}
-		if (restart & PORT_POWER_DOWN)
+		पूर्ण
+		अगर (restart & PORT_POWER_DOWN)
 			data |= PHY_POWER_DOWN;
-		if (restart & PORT_AUTO_NEG_RESTART)
+		अगर (restart & PORT_AUTO_NEG_RESTART)
 			data |= PHY_AUTO_NEG_RESTART;
-		if (ctrl & PORT_FORCE_FULL_DUPLEX)
+		अगर (ctrl & PORT_FORCE_FULL_DUPLEX)
 			data |= PHY_FULL_DUPLEX;
-		if (speed & PORT_HP_MDIX)
+		अगर (speed & PORT_HP_MDIX)
 			data |= PHY_HP_MDIX;
-		if (restart & PORT_FORCE_MDIX)
+		अगर (restart & PORT_FORCE_MDIX)
 			data |= PHY_FORCE_MDIX;
-		if (restart & PORT_AUTO_MDIX_DISABLE)
+		अगर (restart & PORT_AUTO_MDIX_DISABLE)
 			data |= PHY_AUTO_MDIX_DISABLE;
-		if (restart & PORT_TX_DISABLE)
+		अगर (restart & PORT_TX_DISABLE)
 			data |= PHY_TRANSMIT_DISABLE;
-		if (restart & PORT_LED_OFF)
+		अगर (restart & PORT_LED_OFF)
 			data |= PHY_LED_DISABLE;
-		break;
-	case PHY_REG_STATUS:
-		ksz_pread8(dev, p, regs[P_LINK_STATUS], &link);
+		अवरोध;
+	हाल PHY_REG_STATUS:
+		ksz_pपढ़ो8(dev, p, regs[P_LINK_STATUS], &link);
 		data = PHY_100BTX_FD_CAPABLE |
 		       PHY_100BTX_CAPABLE |
 		       PHY_10BT_FD_CAPABLE |
 		       PHY_10BT_CAPABLE |
 		       PHY_AUTO_NEG_CAPABLE;
-		if (link & PORT_AUTO_NEG_COMPLETE)
+		अगर (link & PORT_AUTO_NEG_COMPLETE)
 			data |= PHY_AUTO_NEG_ACKNOWLEDGE;
-		if (link & PORT_STAT_LINK_GOOD)
+		अगर (link & PORT_STAT_LINK_GOOD)
 			data |= PHY_LINK_STATUS;
-		break;
-	case PHY_REG_ID_1:
+		अवरोध;
+	हाल PHY_REG_ID_1:
 		data = KSZ8795_ID_HI;
-		break;
-	case PHY_REG_ID_2:
-		if (ksz_is_ksz88x3(dev))
+		अवरोध;
+	हाल PHY_REG_ID_2:
+		अगर (ksz_is_ksz88x3(dev))
 			data = KSZ8863_ID_LO;
-		else
+		अन्यथा
 			data = KSZ8795_ID_LO;
-		break;
-	case PHY_REG_AUTO_NEGOTIATION:
-		ksz_pread8(dev, p, regs[P_LOCAL_CTRL], &ctrl);
+		अवरोध;
+	हाल PHY_REG_AUTO_NEGOTIATION:
+		ksz_pपढ़ो8(dev, p, regs[P_LOCAL_CTRL], &ctrl);
 		data = PHY_AUTO_NEG_802_3;
-		if (ctrl & PORT_AUTO_NEG_SYM_PAUSE)
+		अगर (ctrl & PORT_AUTO_NEG_SYM_PAUSE)
 			data |= PHY_AUTO_NEG_SYM_PAUSE;
-		if (ctrl & PORT_AUTO_NEG_100BTX_FD)
+		अगर (ctrl & PORT_AUTO_NEG_100BTX_FD)
 			data |= PHY_AUTO_NEG_100BTX_FD;
-		if (ctrl & PORT_AUTO_NEG_100BTX)
+		अगर (ctrl & PORT_AUTO_NEG_100BTX)
 			data |= PHY_AUTO_NEG_100BTX;
-		if (ctrl & PORT_AUTO_NEG_10BT_FD)
+		अगर (ctrl & PORT_AUTO_NEG_10BT_FD)
 			data |= PHY_AUTO_NEG_10BT_FD;
-		if (ctrl & PORT_AUTO_NEG_10BT)
+		अगर (ctrl & PORT_AUTO_NEG_10BT)
 			data |= PHY_AUTO_NEG_10BT;
-		break;
-	case PHY_REG_REMOTE_CAPABILITY:
-		ksz_pread8(dev, p, regs[P_REMOTE_STATUS], &link);
+		अवरोध;
+	हाल PHY_REG_REMOTE_CAPABILITY:
+		ksz_pपढ़ो8(dev, p, regs[P_REMOTE_STATUS], &link);
 		data = PHY_AUTO_NEG_802_3;
-		if (link & PORT_REMOTE_SYM_PAUSE)
+		अगर (link & PORT_REMOTE_SYM_PAUSE)
 			data |= PHY_AUTO_NEG_SYM_PAUSE;
-		if (link & PORT_REMOTE_100BTX_FD)
+		अगर (link & PORT_REMOTE_100BTX_FD)
 			data |= PHY_AUTO_NEG_100BTX_FD;
-		if (link & PORT_REMOTE_100BTX)
+		अगर (link & PORT_REMOTE_100BTX)
 			data |= PHY_AUTO_NEG_100BTX;
-		if (link & PORT_REMOTE_10BT_FD)
+		अगर (link & PORT_REMOTE_10BT_FD)
 			data |= PHY_AUTO_NEG_10BT_FD;
-		if (link & PORT_REMOTE_10BT)
+		अगर (link & PORT_REMOTE_10BT)
 			data |= PHY_AUTO_NEG_10BT;
-		if (data & ~PHY_AUTO_NEG_802_3)
+		अगर (data & ~PHY_AUTO_NEG_802_3)
 			data |= PHY_REMOTE_ACKNOWLEDGE_NOT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		processed = false;
-		break;
-	}
-	if (processed)
+		अवरोध;
+	पूर्ण
+	अगर (processed)
 		*val = data;
-}
+पूर्ण
 
-static void ksz8_w_phy(struct ksz_device *dev, u16 phy, u16 reg, u16 val)
-{
-	struct ksz8 *ksz8 = dev->priv;
+अटल व्योम ksz8_w_phy(काष्ठा ksz_device *dev, u16 phy, u16 reg, u16 val)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
 	u8 restart, speed, ctrl, data;
-	const u8 *regs = ksz8->regs;
+	स्थिर u8 *regs = ksz8->regs;
 	u8 p = phy;
 
-	switch (reg) {
-	case PHY_REG_CTRL:
+	चयन (reg) अणु
+	हाल PHY_REG_CTRL:
 
 		/* Do not support PHY reset function. */
-		if (val & PHY_RESET)
-			break;
-		ksz_pread8(dev, p, regs[P_SPEED_STATUS], &speed);
+		अगर (val & PHY_RESET)
+			अवरोध;
+		ksz_pपढ़ो8(dev, p, regs[P_SPEED_STATUS], &speed);
 		data = speed;
-		if (val & PHY_HP_MDIX)
+		अगर (val & PHY_HP_MDIX)
 			data |= PORT_HP_MDIX;
-		else
+		अन्यथा
 			data &= ~PORT_HP_MDIX;
-		if (data != speed)
-			ksz_pwrite8(dev, p, regs[P_SPEED_STATUS], data);
-		ksz_pread8(dev, p, regs[P_FORCE_CTRL], &ctrl);
+		अगर (data != speed)
+			ksz_pग_लिखो8(dev, p, regs[P_SPEED_STATUS], data);
+		ksz_pपढ़ो8(dev, p, regs[P_FORCE_CTRL], &ctrl);
 		data = ctrl;
-		if (ksz_is_ksz88x3(dev)) {
-			if ((val & PHY_AUTO_NEG_ENABLE))
+		अगर (ksz_is_ksz88x3(dev)) अणु
+			अगर ((val & PHY_AUTO_NEG_ENABLE))
 				data |= PORT_AUTO_NEG_ENABLE;
-			else
+			अन्यथा
 				data &= ~PORT_AUTO_NEG_ENABLE;
-		} else {
-			if (!(val & PHY_AUTO_NEG_ENABLE))
+		पूर्ण अन्यथा अणु
+			अगर (!(val & PHY_AUTO_NEG_ENABLE))
 				data |= PORT_AUTO_NEG_DISABLE;
-			else
+			अन्यथा
 				data &= ~PORT_AUTO_NEG_DISABLE;
 
-			/* Fiber port does not support auto-negotiation. */
-			if (dev->ports[p].fiber)
+			/* Fiber port करोes not support स्वतः-negotiation. */
+			अगर (dev->ports[p].fiber)
 				data |= PORT_AUTO_NEG_DISABLE;
-		}
+		पूर्ण
 
-		if (val & PHY_SPEED_100MBIT)
+		अगर (val & PHY_SPEED_100MBIT)
 			data |= PORT_FORCE_100_MBIT;
-		else
+		अन्यथा
 			data &= ~PORT_FORCE_100_MBIT;
-		if (val & PHY_FULL_DUPLEX)
+		अगर (val & PHY_FULL_DUPLEX)
 			data |= PORT_FORCE_FULL_DUPLEX;
-		else
+		अन्यथा
 			data &= ~PORT_FORCE_FULL_DUPLEX;
-		if (data != ctrl)
-			ksz_pwrite8(dev, p, regs[P_FORCE_CTRL], data);
-		ksz_pread8(dev, p, regs[P_NEG_RESTART_CTRL], &restart);
+		अगर (data != ctrl)
+			ksz_pग_लिखो8(dev, p, regs[P_FORCE_CTRL], data);
+		ksz_pपढ़ो8(dev, p, regs[P_NEG_RESTART_CTRL], &restart);
 		data = restart;
-		if (val & PHY_LED_DISABLE)
+		अगर (val & PHY_LED_DISABLE)
 			data |= PORT_LED_OFF;
-		else
+		अन्यथा
 			data &= ~PORT_LED_OFF;
-		if (val & PHY_TRANSMIT_DISABLE)
+		अगर (val & PHY_TRANSMIT_DISABLE)
 			data |= PORT_TX_DISABLE;
-		else
+		अन्यथा
 			data &= ~PORT_TX_DISABLE;
-		if (val & PHY_AUTO_NEG_RESTART)
+		अगर (val & PHY_AUTO_NEG_RESTART)
 			data |= PORT_AUTO_NEG_RESTART;
-		else
+		अन्यथा
 			data &= ~(PORT_AUTO_NEG_RESTART);
-		if (val & PHY_POWER_DOWN)
+		अगर (val & PHY_POWER_DOWN)
 			data |= PORT_POWER_DOWN;
-		else
+		अन्यथा
 			data &= ~PORT_POWER_DOWN;
-		if (val & PHY_AUTO_MDIX_DISABLE)
+		अगर (val & PHY_AUTO_MDIX_DISABLE)
 			data |= PORT_AUTO_MDIX_DISABLE;
-		else
+		अन्यथा
 			data &= ~PORT_AUTO_MDIX_DISABLE;
-		if (val & PHY_FORCE_MDIX)
+		अगर (val & PHY_FORCE_MDIX)
 			data |= PORT_FORCE_MDIX;
-		else
+		अन्यथा
 			data &= ~PORT_FORCE_MDIX;
-		if (val & PHY_LOOPBACK)
+		अगर (val & PHY_LOOPBACK)
 			data |= PORT_PHY_LOOPBACK;
-		else
+		अन्यथा
 			data &= ~PORT_PHY_LOOPBACK;
-		if (data != restart)
-			ksz_pwrite8(dev, p, regs[P_NEG_RESTART_CTRL], data);
-		break;
-	case PHY_REG_AUTO_NEGOTIATION:
-		ksz_pread8(dev, p, regs[P_LOCAL_CTRL], &ctrl);
+		अगर (data != restart)
+			ksz_pग_लिखो8(dev, p, regs[P_NEG_RESTART_CTRL], data);
+		अवरोध;
+	हाल PHY_REG_AUTO_NEGOTIATION:
+		ksz_pपढ़ो8(dev, p, regs[P_LOCAL_CTRL], &ctrl);
 		data = ctrl;
 		data &= ~(PORT_AUTO_NEG_SYM_PAUSE |
 			  PORT_AUTO_NEG_100BTX_FD |
 			  PORT_AUTO_NEG_100BTX |
 			  PORT_AUTO_NEG_10BT_FD |
 			  PORT_AUTO_NEG_10BT);
-		if (val & PHY_AUTO_NEG_SYM_PAUSE)
+		अगर (val & PHY_AUTO_NEG_SYM_PAUSE)
 			data |= PORT_AUTO_NEG_SYM_PAUSE;
-		if (val & PHY_AUTO_NEG_100BTX_FD)
+		अगर (val & PHY_AUTO_NEG_100BTX_FD)
 			data |= PORT_AUTO_NEG_100BTX_FD;
-		if (val & PHY_AUTO_NEG_100BTX)
+		अगर (val & PHY_AUTO_NEG_100BTX)
 			data |= PORT_AUTO_NEG_100BTX;
-		if (val & PHY_AUTO_NEG_10BT_FD)
+		अगर (val & PHY_AUTO_NEG_10BT_FD)
 			data |= PORT_AUTO_NEG_10BT_FD;
-		if (val & PHY_AUTO_NEG_10BT)
+		अगर (val & PHY_AUTO_NEG_10BT)
 			data |= PORT_AUTO_NEG_10BT;
-		if (data != ctrl)
-			ksz_pwrite8(dev, p, regs[P_LOCAL_CTRL], data);
-		break;
-	default:
-		break;
-	}
-}
+		अगर (data != ctrl)
+			ksz_pग_लिखो8(dev, p, regs[P_LOCAL_CTRL], data);
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static enum dsa_tag_protocol ksz8_get_tag_protocol(struct dsa_switch *ds,
-						   int port,
-						   enum dsa_tag_protocol mp)
-{
-	struct ksz_device *dev = ds->priv;
+अटल क्रमागत dsa_tag_protocol ksz8_get_tag_protocol(काष्ठा dsa_चयन *ds,
+						   पूर्णांक port,
+						   क्रमागत dsa_tag_protocol mp)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 
 	/* ksz88x3 uses the same tag schema as KSZ9893 */
-	return ksz_is_ksz88x3(dev) ?
+	वापस ksz_is_ksz88x3(dev) ?
 		DSA_TAG_PROTO_KSZ9893 : DSA_TAG_PROTO_KSZ8795;
-}
+पूर्ण
 
-static void ksz8_get_strings(struct dsa_switch *ds, int port,
-			     u32 stringset, uint8_t *buf)
-{
-	struct ksz_device *dev = ds->priv;
-	int i;
+अटल व्योम ksz8_get_strings(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			     u32 stringset, uपूर्णांक8_t *buf)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
+	पूर्णांक i;
 
-	for (i = 0; i < dev->mib_cnt; i++) {
-		memcpy(buf + i * ETH_GSTRING_LEN,
+	क्रम (i = 0; i < dev->mib_cnt; i++) अणु
+		स_नकल(buf + i * ETH_GSTRING_LEN,
 		       dev->mib_names[i].string, ETH_GSTRING_LEN);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void ksz8_cfg_port_member(struct ksz_device *dev, int port, u8 member)
-{
+अटल व्योम ksz8_cfg_port_member(काष्ठा ksz_device *dev, पूर्णांक port, u8 member)
+अणु
 	u8 data;
 
-	ksz_pread8(dev, port, P_MIRROR_CTRL, &data);
+	ksz_pपढ़ो8(dev, port, P_MIRROR_CTRL, &data);
 	data &= ~PORT_VLAN_MEMBERSHIP;
 	data |= (member & dev->port_mask);
-	ksz_pwrite8(dev, port, P_MIRROR_CTRL, data);
+	ksz_pग_लिखो8(dev, port, P_MIRROR_CTRL, data);
 	dev->ports[port].member = member;
-}
+पूर्ण
 
-static void ksz8_port_stp_state_set(struct dsa_switch *ds, int port, u8 state)
-{
-	struct ksz_device *dev = ds->priv;
-	int forward = dev->member;
-	struct ksz_port *p;
-	int member = -1;
+अटल व्योम ksz8_port_stp_state_set(काष्ठा dsa_चयन *ds, पूर्णांक port, u8 state)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
+	पूर्णांक क्रमward = dev->member;
+	काष्ठा ksz_port *p;
+	पूर्णांक member = -1;
 	u8 data;
 
 	p = &dev->ports[port];
 
-	ksz_pread8(dev, port, P_STP_CTRL, &data);
+	ksz_pपढ़ो8(dev, port, P_STP_CTRL, &data);
 	data &= ~(PORT_TX_ENABLE | PORT_RX_ENABLE | PORT_LEARN_DISABLE);
 
-	switch (state) {
-	case BR_STATE_DISABLED:
+	चयन (state) अणु
+	हाल BR_STATE_DISABLED:
 		data |= PORT_LEARN_DISABLE;
-		if (port < dev->phy_port_cnt)
+		अगर (port < dev->phy_port_cnt)
 			member = 0;
-		break;
-	case BR_STATE_LISTENING:
+		अवरोध;
+	हाल BR_STATE_LISTENING:
 		data |= (PORT_RX_ENABLE | PORT_LEARN_DISABLE);
-		if (port < dev->phy_port_cnt &&
+		अगर (port < dev->phy_port_cnt &&
 		    p->stp_state == BR_STATE_DISABLED)
 			member = dev->host_mask | p->vid_member;
-		break;
-	case BR_STATE_LEARNING:
+		अवरोध;
+	हाल BR_STATE_LEARNING:
 		data |= PORT_RX_ENABLE;
-		break;
-	case BR_STATE_FORWARDING:
+		अवरोध;
+	हाल BR_STATE_FORWARDING:
 		data |= (PORT_TX_ENABLE | PORT_RX_ENABLE);
 
-		/* This function is also used internally. */
-		if (port == dev->cpu_port)
-			break;
+		/* This function is also used पूर्णांकernally. */
+		अगर (port == dev->cpu_port)
+			अवरोध;
 
 		/* Port is a member of a bridge. */
-		if (dev->br_member & BIT(port)) {
+		अगर (dev->br_member & BIT(port)) अणु
 			dev->member |= BIT(port);
 			member = dev->member;
-		} else {
+		पूर्ण अन्यथा अणु
 			member = dev->host_mask | p->vid_member;
-		}
-		break;
-	case BR_STATE_BLOCKING:
+		पूर्ण
+		अवरोध;
+	हाल BR_STATE_BLOCKING:
 		data |= PORT_LEARN_DISABLE;
-		if (port < dev->phy_port_cnt &&
+		अगर (port < dev->phy_port_cnt &&
 		    p->stp_state == BR_STATE_DISABLED)
 			member = dev->host_mask | p->vid_member;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(ds->dev, "invalid STP state: %d\n", state);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	ksz_pwrite8(dev, port, P_STP_CTRL, data);
+	ksz_pग_लिखो8(dev, port, P_STP_CTRL, data);
 	p->stp_state = state;
-	/* Port membership may share register with STP state. */
-	if (member >= 0 && member != p->member)
+	/* Port membership may share रेजिस्टर with STP state. */
+	अगर (member >= 0 && member != p->member)
 		ksz8_cfg_port_member(dev, port, (u8)member);
 
-	/* Check if forwarding needs to be updated. */
-	if (state != BR_STATE_FORWARDING) {
-		if (dev->br_member & BIT(port))
+	/* Check अगर क्रमwarding needs to be updated. */
+	अगर (state != BR_STATE_FORWARDING) अणु
+		अगर (dev->br_member & BIT(port))
 			dev->member &= ~BIT(port);
-	}
+	पूर्ण
 
 	/* When topology has changed the function ksz_update_port_member
-	 * should be called to modify port forwarding behavior.
+	 * should be called to modअगरy port क्रमwarding behavior.
 	 */
-	if (forward != dev->member)
+	अगर (क्रमward != dev->member)
 		ksz_update_port_member(dev, port);
-}
+पूर्ण
 
-static void ksz8_flush_dyn_mac_table(struct ksz_device *dev, int port)
-{
+अटल व्योम ksz8_flush_dyn_mac_table(काष्ठा ksz_device *dev, पूर्णांक port)
+अणु
 	u8 learn[DSA_MAX_PORTS];
-	int first, index, cnt;
-	struct ksz_port *p;
+	पूर्णांक first, index, cnt;
+	काष्ठा ksz_port *p;
 
-	if ((uint)port < dev->port_cnt) {
+	अगर ((uपूर्णांक)port < dev->port_cnt) अणु
 		first = port;
 		cnt = port + 1;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Flush all ports. */
 		first = 0;
 		cnt = dev->port_cnt;
-	}
-	for (index = first; index < cnt; index++) {
+	पूर्ण
+	क्रम (index = first; index < cnt; index++) अणु
 		p = &dev->ports[index];
-		if (!p->on)
-			continue;
-		ksz_pread8(dev, index, P_STP_CTRL, &learn[index]);
-		if (!(learn[index] & PORT_LEARN_DISABLE))
-			ksz_pwrite8(dev, index, P_STP_CTRL,
+		अगर (!p->on)
+			जारी;
+		ksz_pपढ़ो8(dev, index, P_STP_CTRL, &learn[index]);
+		अगर (!(learn[index] & PORT_LEARN_DISABLE))
+			ksz_pग_लिखो8(dev, index, P_STP_CTRL,
 				    learn[index] | PORT_LEARN_DISABLE);
-	}
+	पूर्ण
 	ksz_cfg(dev, S_FLUSH_TABLE_CTRL, SW_FLUSH_DYN_MAC_TABLE, true);
-	for (index = first; index < cnt; index++) {
+	क्रम (index = first; index < cnt; index++) अणु
 		p = &dev->ports[index];
-		if (!p->on)
-			continue;
-		if (!(learn[index] & PORT_LEARN_DISABLE))
-			ksz_pwrite8(dev, index, P_STP_CTRL, learn[index]);
-	}
-}
+		अगर (!p->on)
+			जारी;
+		अगर (!(learn[index] & PORT_LEARN_DISABLE))
+			ksz_pग_लिखो8(dev, index, P_STP_CTRL, learn[index]);
+	पूर्ण
+पूर्ण
 
-static int ksz8_port_vlan_filtering(struct dsa_switch *ds, int port, bool flag,
-				    struct netlink_ext_ack *extack)
-{
-	struct ksz_device *dev = ds->priv;
+अटल पूर्णांक ksz8_port_vlan_filtering(काष्ठा dsa_चयन *ds, पूर्णांक port, bool flag,
+				    काष्ठा netlink_ext_ack *extack)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 
-	if (ksz_is_ksz88x3(dev))
-		return -ENOTSUPP;
+	अगर (ksz_is_ksz88x3(dev))
+		वापस -ENOTSUPP;
 
 	ksz_cfg(dev, S_MIRROR_CTRL, SW_VLAN_ENABLE, flag);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ksz8_port_vlan_add(struct dsa_switch *ds, int port,
-			      const struct switchdev_obj_port_vlan *vlan,
-			      struct netlink_ext_ack *extack)
-{
+अटल पूर्णांक ksz8_port_vlan_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      स्थिर काष्ठा चयनdev_obj_port_vlan *vlan,
+			      काष्ठा netlink_ext_ack *extack)
+अणु
 	bool untagged = vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED;
-	struct ksz_device *dev = ds->priv;
+	काष्ठा ksz_device *dev = ds->priv;
 	u16 data, new_pvid = 0;
 	u8 fid, member, valid;
 
-	if (ksz_is_ksz88x3(dev))
-		return -ENOTSUPP;
+	अगर (ksz_is_ksz88x3(dev))
+		वापस -ENOTSUPP;
 
 	ksz_port_cfg(dev, port, P_TAG_CTRL, PORT_REMOVE_TAG, untagged);
 
 	ksz8_r_vlan_table(dev, vlan->vid, &data);
 	ksz8_from_vlan(dev, data, &fid, &member, &valid);
 
-	/* First time to setup the VLAN entry. */
-	if (!valid) {
+	/* First समय to setup the VLAN entry. */
+	अगर (!valid) अणु
 		/* Need to find a way to map VID to FID. */
 		fid = 1;
 		valid = 1;
-	}
+	पूर्ण
 	member |= BIT(port);
 
 	ksz8_to_vlan(dev, fid, member, valid, &data);
 	ksz8_w_vlan_table(dev, vlan->vid, data);
 
 	/* change PVID */
-	if (vlan->flags & BRIDGE_VLAN_INFO_PVID)
+	अगर (vlan->flags & BRIDGE_VLAN_INFO_PVID)
 		new_pvid = vlan->vid;
 
-	if (new_pvid) {
+	अगर (new_pvid) अणु
 		u16 vid;
 
-		ksz_pread16(dev, port, REG_PORT_CTRL_VID, &vid);
+		ksz_pपढ़ो16(dev, port, REG_PORT_CTRL_VID, &vid);
 		vid &= 0xfff;
 		vid |= new_pvid;
-		ksz_pwrite16(dev, port, REG_PORT_CTRL_VID, vid);
-	}
+		ksz_pग_लिखो16(dev, port, REG_PORT_CTRL_VID, vid);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ksz8_port_vlan_del(struct dsa_switch *ds, int port,
-			      const struct switchdev_obj_port_vlan *vlan)
-{
+अटल पूर्णांक ksz8_port_vlan_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+			      स्थिर काष्ठा चयनdev_obj_port_vlan *vlan)
+अणु
 	bool untagged = vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED;
-	struct ksz_device *dev = ds->priv;
+	काष्ठा ksz_device *dev = ds->priv;
 	u16 data, pvid, new_pvid = 0;
 	u8 fid, member, valid;
 
-	if (ksz_is_ksz88x3(dev))
-		return -ENOTSUPP;
+	अगर (ksz_is_ksz88x3(dev))
+		वापस -ENOTSUPP;
 
-	ksz_pread16(dev, port, REG_PORT_CTRL_VID, &pvid);
+	ksz_pपढ़ो16(dev, port, REG_PORT_CTRL_VID, &pvid);
 	pvid = pvid & 0xFFF;
 
 	ksz_port_cfg(dev, port, P_TAG_CTRL, PORT_REMOVE_TAG, untagged);
@@ -1148,122 +1149,122 @@ static int ksz8_port_vlan_del(struct dsa_switch *ds, int port,
 
 	member &= ~BIT(port);
 
-	/* Invalidate the entry if no more member. */
-	if (!member) {
+	/* Invalidate the entry अगर no more member. */
+	अगर (!member) अणु
 		fid = 0;
 		valid = 0;
-	}
+	पूर्ण
 
-	if (pvid == vlan->vid)
+	अगर (pvid == vlan->vid)
 		new_pvid = 1;
 
 	ksz8_to_vlan(dev, fid, member, valid, &data);
 	ksz8_w_vlan_table(dev, vlan->vid, data);
 
-	if (new_pvid != pvid)
-		ksz_pwrite16(dev, port, REG_PORT_CTRL_VID, pvid);
+	अगर (new_pvid != pvid)
+		ksz_pग_लिखो16(dev, port, REG_PORT_CTRL_VID, pvid);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ksz8_port_mirror_add(struct dsa_switch *ds, int port,
-				struct dsa_mall_mirror_tc_entry *mirror,
+अटल पूर्णांक ksz8_port_mirror_add(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				काष्ठा dsa_mall_mirror_tc_entry *mirror,
 				bool ingress)
-{
-	struct ksz_device *dev = ds->priv;
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 
-	if (ingress) {
+	अगर (ingress) अणु
 		ksz_port_cfg(dev, port, P_MIRROR_CTRL, PORT_MIRROR_RX, true);
 		dev->mirror_rx |= BIT(port);
-	} else {
+	पूर्ण अन्यथा अणु
 		ksz_port_cfg(dev, port, P_MIRROR_CTRL, PORT_MIRROR_TX, true);
 		dev->mirror_tx |= BIT(port);
-	}
+	पूर्ण
 
 	ksz_port_cfg(dev, port, P_MIRROR_CTRL, PORT_MIRROR_SNIFFER, false);
 
 	/* configure mirror port */
-	if (dev->mirror_rx || dev->mirror_tx)
+	अगर (dev->mirror_rx || dev->mirror_tx)
 		ksz_port_cfg(dev, mirror->to_local_port, P_MIRROR_CTRL,
 			     PORT_MIRROR_SNIFFER, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ksz8_port_mirror_del(struct dsa_switch *ds, int port,
-				 struct dsa_mall_mirror_tc_entry *mirror)
-{
-	struct ksz_device *dev = ds->priv;
+अटल व्योम ksz8_port_mirror_del(काष्ठा dsa_चयन *ds, पूर्णांक port,
+				 काष्ठा dsa_mall_mirror_tc_entry *mirror)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
 	u8 data;
 
-	if (mirror->ingress) {
+	अगर (mirror->ingress) अणु
 		ksz_port_cfg(dev, port, P_MIRROR_CTRL, PORT_MIRROR_RX, false);
 		dev->mirror_rx &= ~BIT(port);
-	} else {
+	पूर्ण अन्यथा अणु
 		ksz_port_cfg(dev, port, P_MIRROR_CTRL, PORT_MIRROR_TX, false);
 		dev->mirror_tx &= ~BIT(port);
-	}
+	पूर्ण
 
-	ksz_pread8(dev, port, P_MIRROR_CTRL, &data);
+	ksz_pपढ़ो8(dev, port, P_MIRROR_CTRL, &data);
 
-	if (!dev->mirror_rx && !dev->mirror_tx)
+	अगर (!dev->mirror_rx && !dev->mirror_tx)
 		ksz_port_cfg(dev, mirror->to_local_port, P_MIRROR_CTRL,
 			     PORT_MIRROR_SNIFFER, false);
-}
+पूर्ण
 
-static void ksz8795_cpu_interface_select(struct ksz_device *dev, int port)
-{
-	struct ksz_port *p = &dev->ports[port];
+अटल व्योम ksz8795_cpu_पूर्णांकerface_select(काष्ठा ksz_device *dev, पूर्णांक port)
+अणु
+	काष्ठा ksz_port *p = &dev->ports[port];
 	u8 data8;
 
-	if (!p->interface && dev->compat_interface) {
+	अगर (!p->पूर्णांकerface && dev->compat_पूर्णांकerface) अणु
 		dev_warn(dev->dev,
 			 "Using legacy switch \"phy-mode\" property, because it is missing on port %d node. "
 			 "Please update your device tree.\n",
 			 port);
-		p->interface = dev->compat_interface;
-	}
+		p->पूर्णांकerface = dev->compat_पूर्णांकerface;
+	पूर्ण
 
-	/* Configure MII interface for proper network communication. */
-	ksz_read8(dev, REG_PORT_5_CTRL_6, &data8);
+	/* Configure MII पूर्णांकerface क्रम proper network communication. */
+	ksz_पढ़ो8(dev, REG_PORT_5_CTRL_6, &data8);
 	data8 &= ~PORT_INTERFACE_TYPE;
 	data8 &= ~PORT_GMII_1GPS_MODE;
-	switch (p->interface) {
-	case PHY_INTERFACE_MODE_MII:
+	चयन (p->पूर्णांकerface) अणु
+	हाल PHY_INTERFACE_MODE_MII:
 		p->phydev.speed = SPEED_100;
-		break;
-	case PHY_INTERFACE_MODE_RMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_RMII:
 		data8 |= PORT_INTERFACE_RMII;
 		p->phydev.speed = SPEED_100;
-		break;
-	case PHY_INTERFACE_MODE_GMII:
+		अवरोध;
+	हाल PHY_INTERFACE_MODE_GMII:
 		data8 |= PORT_GMII_1GPS_MODE;
 		data8 |= PORT_INTERFACE_GMII;
 		p->phydev.speed = SPEED_1000;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		data8 &= ~PORT_RGMII_ID_IN_ENABLE;
 		data8 &= ~PORT_RGMII_ID_OUT_ENABLE;
-		if (p->interface == PHY_INTERFACE_MODE_RGMII_ID ||
-		    p->interface == PHY_INTERFACE_MODE_RGMII_RXID)
+		अगर (p->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID ||
+		    p->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_RXID)
 			data8 |= PORT_RGMII_ID_IN_ENABLE;
-		if (p->interface == PHY_INTERFACE_MODE_RGMII_ID ||
-		    p->interface == PHY_INTERFACE_MODE_RGMII_TXID)
+		अगर (p->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_ID ||
+		    p->पूर्णांकerface == PHY_INTERFACE_MODE_RGMII_TXID)
 			data8 |= PORT_RGMII_ID_OUT_ENABLE;
 		data8 |= PORT_GMII_1GPS_MODE;
 		data8 |= PORT_INTERFACE_RGMII;
 		p->phydev.speed = SPEED_1000;
-		break;
-	}
-	ksz_write8(dev, REG_PORT_5_CTRL_6, data8);
+		अवरोध;
+	पूर्ण
+	ksz_ग_लिखो8(dev, REG_PORT_5_CTRL_6, data8);
 	p->phydev.duplex = 1;
-}
+पूर्ण
 
-static void ksz8_port_setup(struct ksz_device *dev, int port, bool cpu_port)
-{
-	struct ksz_port *p = &dev->ports[port];
-	struct ksz8 *ksz8 = dev->priv;
-	const u32 *masks;
+अटल व्योम ksz8_port_setup(काष्ठा ksz_device *dev, पूर्णांक port, bool cpu_port)
+अणु
+	काष्ठा ksz_port *p = &dev->ports[port];
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u32 *masks;
 	u8 member;
 
 	masks = ksz8->masks;
@@ -1271,10 +1272,10 @@ static void ksz8_port_setup(struct ksz_device *dev, int port, bool cpu_port)
 	/* enable broadcast storm limit */
 	ksz_port_cfg(dev, port, P_BCAST_STORM_CTRL, PORT_BROADCAST_STORM, true);
 
-	if (!ksz_is_ksz88x3(dev))
+	अगर (!ksz_is_ksz88x3(dev))
 		ksz8795_set_prio_queue(dev, port, 4);
 
-	/* disable DiffServ priority */
+	/* disable DअगरfServ priority */
 	ksz_port_cfg(dev, port, P_PRIO_CTRL, PORT_DIFFSERV_ENABLE, false);
 
 	/* replace priority */
@@ -1284,26 +1285,26 @@ static void ksz8_port_setup(struct ksz_device *dev, int port, bool cpu_port)
 	/* enable 802.1p priority */
 	ksz_port_cfg(dev, port, P_PRIO_CTRL, PORT_802_1P_ENABLE, true);
 
-	if (cpu_port) {
-		if (!ksz_is_ksz88x3(dev))
-			ksz8795_cpu_interface_select(dev, port);
+	अगर (cpu_port) अणु
+		अगर (!ksz_is_ksz88x3(dev))
+			ksz8795_cpu_पूर्णांकerface_select(dev, port);
 
 		member = dev->port_mask;
-	} else {
+	पूर्ण अन्यथा अणु
 		member = dev->host_mask | p->vid_member;
-	}
+	पूर्ण
 	ksz8_cfg_port_member(dev, port, member);
-}
+पूर्ण
 
-static void ksz8_config_cpu_port(struct dsa_switch *ds)
-{
-	struct ksz_device *dev = ds->priv;
-	struct ksz8 *ksz8 = dev->priv;
-	const u8 *regs = ksz8->regs;
-	struct ksz_port *p;
-	const u32 *masks;
+अटल व्योम ksz8_config_cpu_port(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	स्थिर u8 *regs = ksz8->regs;
+	काष्ठा ksz_port *p;
+	स्थिर u32 *masks;
 	u8 remote;
-	int i;
+	पूर्णांक i;
 
 	masks = ksz8->masks;
 
@@ -1318,7 +1319,7 @@ static void ksz8_config_cpu_port(struct dsa_switch *ds)
 	ksz8_port_setup(dev, dev->cpu_port, true);
 	dev->member = dev->host_mask;
 
-	for (i = 0; i < dev->phy_port_cnt; i++) {
+	क्रम (i = 0; i < dev->phy_port_cnt; i++) अणु
 		p = &dev->ports[i];
 
 		/* Initialize to non-zero so that ksz_cfg_port_member() will
@@ -1329,49 +1330,49 @@ static void ksz8_config_cpu_port(struct dsa_switch *ds)
 		ksz8_port_stp_state_set(ds, i, BR_STATE_DISABLED);
 
 		/* Last port may be disabled. */
-		if (i == dev->phy_port_cnt)
-			break;
+		अगर (i == dev->phy_port_cnt)
+			अवरोध;
 		p->on = 1;
 		p->phy = 1;
-	}
-	for (i = 0; i < dev->phy_port_cnt; i++) {
+	पूर्ण
+	क्रम (i = 0; i < dev->phy_port_cnt; i++) अणु
 		p = &dev->ports[i];
-		if (!p->on)
-			continue;
-		if (!ksz_is_ksz88x3(dev)) {
-			ksz_pread8(dev, i, regs[P_REMOTE_STATUS], &remote);
-			if (remote & PORT_FIBER_MODE)
+		अगर (!p->on)
+			जारी;
+		अगर (!ksz_is_ksz88x3(dev)) अणु
+			ksz_pपढ़ो8(dev, i, regs[P_REMOTE_STATUS], &remote);
+			अगर (remote & PORT_FIBER_MODE)
 				p->fiber = 1;
-		}
-		if (p->fiber)
+		पूर्ण
+		अगर (p->fiber)
 			ksz_port_cfg(dev, i, P_STP_CTRL, PORT_FORCE_FLOW_CTRL,
 				     true);
-		else
+		अन्यथा
 			ksz_port_cfg(dev, i, P_STP_CTRL, PORT_FORCE_FLOW_CTRL,
 				     false);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int ksz8_setup(struct dsa_switch *ds)
-{
-	struct ksz_device *dev = ds->priv;
-	struct alu_struct alu;
-	int i, ret = 0;
+अटल पूर्णांक ksz8_setup(काष्ठा dsa_चयन *ds)
+अणु
+	काष्ठा ksz_device *dev = ds->priv;
+	काष्ठा alu_काष्ठा alu;
+	पूर्णांक i, ret = 0;
 
-	dev->vlan_cache = devm_kcalloc(dev->dev, sizeof(struct vlan_table),
+	dev->vlan_cache = devm_kसुस्मृति(dev->dev, माप(काष्ठा vlan_table),
 				       dev->num_vlans, GFP_KERNEL);
-	if (!dev->vlan_cache)
-		return -ENOMEM;
+	अगर (!dev->vlan_cache)
+		वापस -ENOMEM;
 
-	ret = ksz8_reset_switch(dev);
-	if (ret) {
+	ret = ksz8_reset_चयन(dev);
+	अगर (ret) अणु
 		dev_err(ds->dev, "failed to reset switch\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ksz_cfg(dev, S_REPLACE_VID_CTRL, SW_FLOW_CTRL, true);
 
-	/* Enable automatic fast aging when link changed detected. */
+	/* Enable स्वतःmatic fast aging when link changed detected. */
 	ksz_cfg(dev, S_LINK_AGING_CTRL, SW_LINK_AUTO_AGING, true);
 
 	/* Enable aggressive back off algorithm in half duplex mode. */
@@ -1379,7 +1380,7 @@ static int ksz8_setup(struct dsa_switch *ds)
 			   SW_AGGR_BACKOFF, SW_AGGR_BACKOFF);
 
 	/*
-	 * Make sure unicast VLAN boundary is set as default and
+	 * Make sure unicast VLAN boundary is set as शेष and
 	 * enable no excessive collision drop.
 	 */
 	regmap_update_bits(dev->regmap[0], REG_SW_CTRL_2,
@@ -1400,31 +1401,31 @@ static int ksz8_setup(struct dsa_switch *ds)
 			   (BROADCAST_STORM_VALUE *
 			   BROADCAST_STORM_PROT_RATE) / 100);
 
-	for (i = 0; i < (dev->num_vlans / 4); i++)
+	क्रम (i = 0; i < (dev->num_vlans / 4); i++)
 		ksz8_r_vlan_entries(dev, i);
 
-	/* Setup STP address for STP operation. */
-	memset(&alu, 0, sizeof(alu));
+	/* Setup STP address क्रम STP operation. */
+	स_रखो(&alu, 0, माप(alu));
 	ether_addr_copy(alu.mac, eth_stp_addr);
-	alu.is_static = true;
+	alu.is_अटल = true;
 	alu.is_override = true;
-	alu.port_forward = dev->host_mask;
+	alu.port_क्रमward = dev->host_mask;
 
 	ksz8_w_sta_mac_table(dev, 0, &alu);
 
-	ksz_init_mib_timer(dev);
+	ksz_init_mib_समयr(dev);
 
-	ds->configure_vlan_while_not_filtering = false;
+	ds->configure_vlan_जबतक_not_filtering = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dsa_switch_ops ksz8_switch_ops = {
+अटल स्थिर काष्ठा dsa_चयन_ops ksz8_चयन_ops = अणु
 	.get_tag_protocol	= ksz8_get_tag_protocol,
 	.setup			= ksz8_setup,
-	.phy_read		= ksz_phy_read16,
-	.phy_write		= ksz_phy_write16,
-	.phylink_mac_link_down	= ksz_mac_link_down,
+	.phy_पढ़ो		= ksz_phy_पढ़ो16,
+	.phy_ग_लिखो		= ksz_phy_ग_लिखो16,
+	.phylink_mac_link_करोwn	= ksz_mac_link_करोwn,
 	.port_enable		= ksz_enable_port,
 	.get_strings		= ksz8_get_strings,
 	.get_ethtool_stats	= ksz_get_ethtool_stats,
@@ -1441,89 +1442,89 @@ static const struct dsa_switch_ops ksz8_switch_ops = {
 	.port_mdb_del           = ksz_port_mdb_del,
 	.port_mirror_add	= ksz8_port_mirror_add,
 	.port_mirror_del	= ksz8_port_mirror_del,
-};
+पूर्ण;
 
-static u32 ksz8_get_port_addr(int port, int offset)
-{
-	return PORT_CTRL_ADDR(port, offset);
-}
+अटल u32 ksz8_get_port_addr(पूर्णांक port, पूर्णांक offset)
+अणु
+	वापस PORT_CTRL_ADDR(port, offset);
+पूर्ण
 
-static int ksz8_switch_detect(struct ksz_device *dev)
-{
+अटल पूर्णांक ksz8_चयन_detect(काष्ठा ksz_device *dev)
+अणु
 	u8 id1, id2;
 	u16 id16;
-	int ret;
+	पूर्णांक ret;
 
-	/* read chip id */
-	ret = ksz_read16(dev, REG_CHIP_ID0, &id16);
-	if (ret)
-		return ret;
+	/* पढ़ो chip id */
+	ret = ksz_पढ़ो16(dev, REG_CHIP_ID0, &id16);
+	अगर (ret)
+		वापस ret;
 
 	id1 = id16 >> 8;
 	id2 = id16 & SW_CHIP_ID_M;
 
-	switch (id1) {
-	case KSZ87_FAMILY_ID:
-		if ((id2 != CHIP_ID_94 && id2 != CHIP_ID_95))
-			return -ENODEV;
+	चयन (id1) अणु
+	हाल KSZ87_FAMILY_ID:
+		अगर ((id2 != CHIP_ID_94 && id2 != CHIP_ID_95))
+			वापस -ENODEV;
 
-		if (id2 == CHIP_ID_95) {
+		अगर (id2 == CHIP_ID_95) अणु
 			u8 val;
 
 			id2 = 0x95;
-			ksz_read8(dev, REG_PORT_STATUS_0, &val);
-			if (val & PORT_FIBER_MODE)
+			ksz_पढ़ो8(dev, REG_PORT_STATUS_0, &val);
+			अगर (val & PORT_FIBER_MODE)
 				id2 = 0x65;
-		} else if (id2 == CHIP_ID_94) {
+		पूर्ण अन्यथा अगर (id2 == CHIP_ID_94) अणु
 			id2 = 0x94;
-		}
-		break;
-	case KSZ88_FAMILY_ID:
-		if (id2 != CHIP_ID_63)
-			return -ENODEV;
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	हाल KSZ88_FAMILY_ID:
+		अगर (id2 != CHIP_ID_63)
+			वापस -ENODEV;
+		अवरोध;
+	शेष:
 		dev_err(dev->dev, "invalid family id: %d\n", id1);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	id16 &= ~0xff;
 	id16 |= id2;
 	dev->chip_id = id16;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct ksz_chip_data {
+काष्ठा ksz_chip_data अणु
 	u16 chip_id;
-	const char *dev_name;
-	int num_vlans;
-	int num_alus;
-	int num_statics;
-	int cpu_ports;
-	int port_cnt;
-};
+	स्थिर अक्षर *dev_name;
+	पूर्णांक num_vlans;
+	पूर्णांक num_alus;
+	पूर्णांक num_अटलs;
+	पूर्णांक cpu_ports;
+	पूर्णांक port_cnt;
+पूर्ण;
 
-static const struct ksz_chip_data ksz8_switch_chips[] = {
-	{
+अटल स्थिर काष्ठा ksz_chip_data ksz8_चयन_chips[] = अणु
+	अणु
 		.chip_id = 0x8795,
 		.dev_name = "KSZ8795",
 		.num_vlans = 4096,
 		.num_alus = 0,
-		.num_statics = 8,
+		.num_अटलs = 8,
 		.cpu_ports = 0x10,	/* can be configured as cpu port */
 		.port_cnt = 5,		/* total cpu and user ports */
-	},
-	{
+	पूर्ण,
+	अणु
 		/*
 		 * WARNING
 		 * =======
 		 * KSZ8794 is similar to KSZ8795, except the port map
-		 * contains a gap between external and CPU ports, the
-		 * port map is NOT continuous. The per-port register
-		 * map is shifted accordingly too, i.e. registers at
+		 * contains a gap between बाह्यal and CPU ports, the
+		 * port map is NOT continuous. The per-port रेजिस्टर
+		 * map is shअगरted accordingly too, i.e. रेजिस्टरs at
 		 * offset 0x40 are NOT used on KSZ8794 and they ARE
-		 * used on KSZ8795 for external port 3.
-		 *           external  cpu
+		 * used on KSZ8795 क्रम बाह्यal port 3.
+		 *           बाह्यal  cpu
 		 * KSZ8794   0,1,2      4
 		 * KSZ8795   0,1,2,3    4
 		 * KSZ8765   0,1,2,3    4
@@ -1532,45 +1533,45 @@ static const struct ksz_chip_data ksz8_switch_chips[] = {
 		.dev_name = "KSZ8794",
 		.num_vlans = 4096,
 		.num_alus = 0,
-		.num_statics = 8,
+		.num_अटलs = 8,
 		.cpu_ports = 0x10,	/* can be configured as cpu port */
 		.port_cnt = 4,		/* total cpu and user ports */
-	},
-	{
+	पूर्ण,
+	अणु
 		.chip_id = 0x8765,
 		.dev_name = "KSZ8765",
 		.num_vlans = 4096,
 		.num_alus = 0,
-		.num_statics = 8,
+		.num_अटलs = 8,
 		.cpu_ports = 0x10,	/* can be configured as cpu port */
 		.port_cnt = 5,		/* total cpu and user ports */
-	},
-	{
+	पूर्ण,
+	अणु
 		.chip_id = 0x8830,
 		.dev_name = "KSZ8863/KSZ8873",
 		.num_vlans = 16,
 		.num_alus = 0,
-		.num_statics = 8,
+		.num_अटलs = 8,
 		.cpu_ports = 0x4,	/* can be configured as cpu port */
 		.port_cnt = 3,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int ksz8_switch_init(struct ksz_device *dev)
-{
-	struct ksz8 *ksz8 = dev->priv;
-	int i;
+अटल पूर्णांक ksz8_चयन_init(काष्ठा ksz_device *dev)
+अणु
+	काष्ठा ksz8 *ksz8 = dev->priv;
+	पूर्णांक i;
 
-	dev->ds->ops = &ksz8_switch_ops;
+	dev->ds->ops = &ksz8_चयन_ops;
 
-	for (i = 0; i < ARRAY_SIZE(ksz8_switch_chips); i++) {
-		const struct ksz_chip_data *chip = &ksz8_switch_chips[i];
+	क्रम (i = 0; i < ARRAY_SIZE(ksz8_चयन_chips); i++) अणु
+		स्थिर काष्ठा ksz_chip_data *chip = &ksz8_चयन_chips[i];
 
-		if (dev->chip_id == chip->chip_id) {
+		अगर (dev->chip_id == chip->chip_id) अणु
 			dev->name = chip->dev_name;
 			dev->num_vlans = chip->num_vlans;
 			dev->num_alus = chip->num_alus;
-			dev->num_statics = chip->num_statics;
+			dev->num_अटलs = chip->num_अटलs;
 			dev->port_cnt = fls(chip->cpu_ports);
 			dev->cpu_port = fls(chip->cpu_ports) - 1;
 			dev->phy_port_cnt = dev->port_cnt - 1;
@@ -1578,58 +1579,58 @@ static int ksz8_switch_init(struct ksz_device *dev)
 			dev->host_mask = chip->cpu_ports;
 			dev->port_mask = (BIT(dev->phy_port_cnt) - 1) |
 					 chip->cpu_ports;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* no switch found */
-	if (!dev->cpu_ports)
-		return -ENODEV;
+	/* no चयन found */
+	अगर (!dev->cpu_ports)
+		वापस -ENODEV;
 
-	if (ksz_is_ksz88x3(dev)) {
+	अगर (ksz_is_ksz88x3(dev)) अणु
 		ksz8->regs = ksz8863_regs;
 		ksz8->masks = ksz8863_masks;
-		ksz8->shifts = ksz8863_shifts;
+		ksz8->shअगरts = ksz8863_shअगरts;
 		dev->mib_cnt = ARRAY_SIZE(ksz88xx_mib_names);
 		dev->mib_names = ksz88xx_mib_names;
-	} else {
+	पूर्ण अन्यथा अणु
 		ksz8->regs = ksz8795_regs;
 		ksz8->masks = ksz8795_masks;
-		ksz8->shifts = ksz8795_shifts;
+		ksz8->shअगरts = ksz8795_shअगरts;
 		dev->mib_cnt = ARRAY_SIZE(ksz87xx_mib_names);
 		dev->mib_names = ksz87xx_mib_names;
-	}
+	पूर्ण
 
 	dev->reg_mib_cnt = MIB_COUNTER_NUM;
 
 	dev->ports = devm_kzalloc(dev->dev,
-				  dev->port_cnt * sizeof(struct ksz_port),
+				  dev->port_cnt * माप(काष्ठा ksz_port),
 				  GFP_KERNEL);
-	if (!dev->ports)
-		return -ENOMEM;
-	for (i = 0; i < dev->port_cnt; i++) {
+	अगर (!dev->ports)
+		वापस -ENOMEM;
+	क्रम (i = 0; i < dev->port_cnt; i++) अणु
 		mutex_init(&dev->ports[i].mib.cnt_mutex);
 		dev->ports[i].mib.counters =
 			devm_kzalloc(dev->dev,
-				     sizeof(u64) *
+				     माप(u64) *
 				     (dev->mib_cnt + 1),
 				     GFP_KERNEL);
-		if (!dev->ports[i].mib.counters)
-			return -ENOMEM;
-	}
+		अगर (!dev->ports[i].mib.counters)
+			वापस -ENOMEM;
+	पूर्ण
 
 	/* set the real number of ports */
 	dev->ds->num_ports = dev->port_cnt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ksz8_switch_exit(struct ksz_device *dev)
-{
-	ksz8_reset_switch(dev);
-}
+अटल व्योम ksz8_चयन_निकास(काष्ठा ksz_device *dev)
+अणु
+	ksz8_reset_चयन(dev);
+पूर्ण
 
-static const struct ksz_dev_ops ksz8_dev_ops = {
+अटल स्थिर काष्ठा ksz_dev_ops ksz8_dev_ops = अणु
 	.get_port_addr = ksz8_get_port_addr,
 	.cfg_port_member = ksz8_cfg_port_member,
 	.flush_dyn_mac_table = ksz8_flush_dyn_mac_table,
@@ -1641,19 +1642,19 @@ static const struct ksz_dev_ops ksz8_dev_ops = {
 	.w_sta_mac_table = ksz8_w_sta_mac_table,
 	.r_mib_cnt = ksz8_r_mib_cnt,
 	.r_mib_pkt = ksz8_r_mib_pkt,
-	.freeze_mib = ksz8_freeze_mib,
+	.मुक्तze_mib = ksz8_मुक्तze_mib,
 	.port_init_cnt = ksz8_port_init_cnt,
-	.shutdown = ksz8_reset_switch,
-	.detect = ksz8_switch_detect,
-	.init = ksz8_switch_init,
-	.exit = ksz8_switch_exit,
-};
+	.shutकरोwn = ksz8_reset_चयन,
+	.detect = ksz8_चयन_detect,
+	.init = ksz8_चयन_init,
+	.निकास = ksz8_चयन_निकास,
+पूर्ण;
 
-int ksz8_switch_register(struct ksz_device *dev)
-{
-	return ksz_switch_register(dev, &ksz8_dev_ops);
-}
-EXPORT_SYMBOL(ksz8_switch_register);
+पूर्णांक ksz8_चयन_रेजिस्टर(काष्ठा ksz_device *dev)
+अणु
+	वापस ksz_चयन_रेजिस्टर(dev, &ksz8_dev_ops);
+पूर्ण
+EXPORT_SYMBOL(ksz8_चयन_रेजिस्टर);
 
 MODULE_AUTHOR("Tristram Ha <Tristram.Ha@microchip.com>");
 MODULE_DESCRIPTION("Microchip KSZ8795 Series Switch DSA Driver");

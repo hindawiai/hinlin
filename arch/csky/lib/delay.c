@@ -1,39 +1,40 @@
-// SPDX-License-Identifier: GPL-2.0
-// Copyright (C) 2018 Hangzhou C-SKY Microsystems co.,ltd.
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/delay.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+// Copyright (C) 2018 Hangzhou C-SKY Microप्रणालीs co.,ltd.
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/delay.h>
 
-void __delay(unsigned long loops)
-{
-	asm volatile (
+व्योम __delay(अचिन्हित दीर्घ loops)
+अणु
+	यंत्र अस्थिर (
 		"mov r0, r0\n"
 		"1:declt %0\n"
 		"bf	1b"
 		: "=r"(loops)
 		: "0"(loops));
-}
+पूर्ण
 EXPORT_SYMBOL(__delay);
 
-void __const_udelay(unsigned long xloops)
-{
-	unsigned long long loops;
+व्योम __स्थिर_udelay(अचिन्हित दीर्घ xloops)
+अणु
+	अचिन्हित दीर्घ दीर्घ loops;
 
-	loops = (unsigned long long)xloops * loops_per_jiffy * HZ;
+	loops = (अचिन्हित दीर्घ दीर्घ)xloops * loops_per_jअगरfy * HZ;
 
 	__delay(loops >> 32);
-}
-EXPORT_SYMBOL(__const_udelay);
+पूर्ण
+EXPORT_SYMBOL(__स्थिर_udelay);
 
-void __udelay(unsigned long usecs)
-{
-	__const_udelay(usecs * 0x10C7UL); /* 2**32 / 1000000 (rounded up) */
-}
+व्योम __udelay(अचिन्हित दीर्घ usecs)
+अणु
+	__स्थिर_udelay(usecs * 0x10C7UL); /* 2**32 / 1000000 (rounded up) */
+पूर्ण
 EXPORT_SYMBOL(__udelay);
 
-void __ndelay(unsigned long nsecs)
-{
-	__const_udelay(nsecs * 0x5UL); /* 2**32 / 1000000000 (rounded up) */
-}
+व्योम __ndelay(अचिन्हित दीर्घ nsecs)
+अणु
+	__स्थिर_udelay(nsecs * 0x5UL); /* 2**32 / 1000000000 (rounded up) */
+पूर्ण
 EXPORT_SYMBOL(__ndelay);

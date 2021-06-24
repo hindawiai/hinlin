@@ -1,35 +1,36 @@
-/* This file contains sub-register zero extension checks for insns defining
- * sub-registers, meaning:
+<शैली गुरु>
+/* This file contains sub-रेजिस्टर zero extension checks क्रम insns defining
+ * sub-रेजिस्टरs, meaning:
  *   - All insns under BPF_ALU class. Their BPF_ALU32 variants or narrow width
- *     forms (BPF_END) could define sub-registers.
+ *     क्रमms (BPF_END) could define sub-रेजिस्टरs.
  *   - Narrow direct loads, BPF_B/H/W | BPF_LDX.
- *   - BPF_LD is not exposed to JIT back-ends, so no need for testing.
+ *   - BPF_LD is not exposed to JIT back-ends, so no need क्रम testing.
  *
- * "get_prandom_u32" is used to initialize low 32-bit of some registers to
- * prevent potential optimizations done by verifier or JIT back-ends which could
- * optimize register back into constant when range info shows one register is a
- * constant.
+ * "get_prandom_u32" is used to initialize low 32-bit of some रेजिस्टरs to
+ * prevent potential optimizations करोne by verअगरier or JIT back-ends which could
+ * optimize रेजिस्टर back पूर्णांकo स्थिरant when range info shows one रेजिस्टर is a
+ * स्थिरant.
  */
-{
+अणु
 	"add32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LD_IMM64(BPF_REG_0, 0x100000000ULL),
 	BPF_ALU32_REG(BPF_ADD, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"add32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
-	/* An insn could have no effect on the low 32-bit, for example:
+	/* An insn could have no effect on the low 32-bit, क्रम example:
 	 *   a = a + 0
 	 *   a = a | 0
 	 *   a = a & -1
@@ -38,496 +39,496 @@
 	BPF_ALU32_IMM(BPF_ADD, BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_ADD, BPF_REG_0, -2),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"sub32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LD_IMM64(BPF_REG_0, 0x1ffffffffULL),
 	BPF_ALU32_REG(BPF_SUB, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"sub32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_SUB, BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_SUB, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"mul32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LD_IMM64(BPF_REG_0, 0x100000001ULL),
 	BPF_ALU32_REG(BPF_MUL, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"mul32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_MUL, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_MUL, BPF_REG_0, -1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"div32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_MOV64_IMM(BPF_REG_0, -1),
 	BPF_ALU32_REG(BPF_DIV, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"div32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_DIV, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_DIV, BPF_REG_0, 2),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"or32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LD_IMM64(BPF_REG_0, 0x100000001ULL),
 	BPF_ALU32_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"or32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_OR, BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_OR, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"and32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x100000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_1, BPF_REG_0),
 	BPF_LD_IMM64(BPF_REG_0, 0x1ffffffffULL),
 	BPF_ALU32_REG(BPF_AND, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"and32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_AND, BPF_REG_0, -1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_AND, BPF_REG_0, -2),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"lsh32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x100000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_1, 1),
 	BPF_ALU32_REG(BPF_LSH, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"lsh32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_LSH, BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_LSH, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"rsh32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_1, 1),
 	BPF_ALU32_REG(BPF_RSH, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"rsh32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_RSH, BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_RSH, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"neg32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_NEG, BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"mod32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_MOV64_IMM(BPF_REG_0, -1),
 	BPF_ALU32_REG(BPF_MOD, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"mod32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_MOD, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_MOD, BPF_REG_0, 2),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"xor32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LD_IMM64(BPF_REG_0, 0x100000000ULL),
 	BPF_ALU32_REG(BPF_XOR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"xor32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_XOR, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"mov32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x100000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_1, BPF_REG_0),
 	BPF_LD_IMM64(BPF_REG_0, 0x100000000ULL),
 	BPF_MOV32_REG(BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"mov32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_MOV32_IMM(BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_MOV32_IMM(BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"arsh32 reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_MOV64_IMM(BPF_REG_1, 1),
 	BPF_ALU32_REG(BPF_ARSH, BPF_REG_0, BPF_REG_1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"arsh32 imm zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_ARSH, BPF_REG_0, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_ALU32_IMM(BPF_ARSH, BPF_REG_0, 1),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"end16 (to_le) reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_6, 32),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_ENDIAN(BPF_TO_LE, BPF_REG_0, 16),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"end32 (to_le) reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_6, 32),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_ENDIAN(BPF_TO_LE, BPF_REG_0, 32),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"end16 (to_be) reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_6, 32),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_ENDIAN(BPF_TO_BE, BPF_REG_0, 16),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"end32 (to_be) reg zero extend check",
-	.insns = {
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	.insns = अणु
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_0),
 	BPF_ALU64_IMM(BPF_LSH, BPF_REG_6, 32),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_6),
 	BPF_ENDIAN(BPF_TO_BE, BPF_REG_0, 32),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"ldx_b zero extend check",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -4),
 	BPF_ST_MEM(BPF_W, BPF_REG_6, 0, 0xfaceb00c),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_LDX_MEM(BPF_B, BPF_REG_0, BPF_REG_6, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"ldx_h zero extend check",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -4),
 	BPF_ST_MEM(BPF_W, BPF_REG_6, 0, 0xfaceb00c),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_LDX_MEM(BPF_H, BPF_REG_0, BPF_REG_6, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
-{
+पूर्ण,
+अणु
 	"ldx_w zero extend check",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_6, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_6, -4),
 	BPF_ST_MEM(BPF_W, BPF_REG_6, 0, 0xfaceb00c),
-	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_prandom_u32),
+	BPF_RAW_INSN(BPF_JMP | BPF_CALL, 0, 0, 0, BPF_FUNC_get_pअक्रमom_u32),
 	BPF_LD_IMM64(BPF_REG_1, 0x1000000000ULL),
 	BPF_ALU64_REG(BPF_OR, BPF_REG_0, BPF_REG_1),
 	BPF_LDX_MEM(BPF_W, BPF_REG_0, BPF_REG_6, 0),
 	BPF_ALU64_IMM(BPF_RSH, BPF_REG_0, 32),
 	BPF_EXIT_INSN(),
-	},
+	पूर्ण,
 	.result = ACCEPT,
 	.retval = 0,
-},
+पूर्ण,

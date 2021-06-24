@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio T4 Ethernet driver for Linux.
+ * This file is part of the Chelsio T4 Ethernet driver क्रम Linux.
  *
  * Copyright (c) 2015 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,26 +33,26 @@
  * SOFTWARE.
  */
 
-#ifndef __CXGB4_FCOE_H__
-#define __CXGB4_FCOE_H__
+#अगर_अघोषित __CXGB4_FCOE_H__
+#घोषणा __CXGB4_FCOE_H__
 
-#ifdef CONFIG_CHELSIO_T4_FCOE
+#अगर_घोषित CONFIG_CHELSIO_T4_FCOE
 
-#define CXGB_FCOE_TXPKT_CSUM_START	28
-#define CXGB_FCOE_TXPKT_CSUM_END	8
+#घोषणा CXGB_FCOE_TXPKT_CSUM_START	28
+#घोषणा CXGB_FCOE_TXPKT_CSUM_END	8
 
 /* fcoe flags */
-enum {
+क्रमागत अणु
 	CXGB_FCOE_ENABLED     = (1 << 0),
-};
+पूर्ण;
 
-struct cxgb_fcoe {
+काष्ठा cxgb_fcoe अणु
 	u8	flags;
-};
+पूर्ण;
 
-int cxgb_fcoe_enable(struct net_device *);
-int cxgb_fcoe_disable(struct net_device *);
-bool cxgb_fcoe_sof_eof_supported(struct adapter *, struct sk_buff *);
+पूर्णांक cxgb_fcoe_enable(काष्ठा net_device *);
+पूर्णांक cxgb_fcoe_disable(काष्ठा net_device *);
+bool cxgb_fcoe_sof_eof_supported(काष्ठा adapter *, काष्ठा sk_buff *);
 
-#endif /* CONFIG_CHELSIO_T4_FCOE */
-#endif /* __CXGB4_FCOE_H__ */
+#पूर्ण_अगर /* CONFIG_CHELSIO_T4_FCOE */
+#पूर्ण_अगर /* __CXGB4_FCOE_H__ */

@@ -1,202 +1,203 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 //
-// wm8994-regulator.c  --  Regulator driver for the WM8994
+// wm8994-regulator.c  --  Regulator driver क्रम the WM8994
 //
 // Copyright 2009 Wolfson Microelectronics PLC.
 //
-// Author: Mark Brown <broonie@opensource.wolfsonmicro.com>
+// Author: Mark Brown <broonie@खोलोsource.wolfsonmicro.com>
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
-#include <linux/err.h>
-#include <linux/platform_device.h>
-#include <linux/regulator/driver.h>
-#include <linux/regulator/machine.h>
-#include <linux/gpio/consumer.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/err.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/regulator/driver.h>
+#समावेश <linux/regulator/machine.h>
+#समावेश <linux/gpio/consumer.h>
+#समावेश <linux/slab.h>
 
-#include <linux/mfd/wm8994/core.h>
-#include <linux/mfd/wm8994/registers.h>
-#include <linux/mfd/wm8994/pdata.h>
+#समावेश <linux/mfd/wm8994/core.h>
+#समावेश <linux/mfd/wm8994/रेजिस्टरs.h>
+#समावेश <linux/mfd/wm8994/pdata.h>
 
-struct wm8994_ldo {
-	struct regulator_dev *regulator;
-	struct wm8994 *wm8994;
-	struct regulator_consumer_supply supply;
-	struct regulator_init_data init_data;
-};
+काष्ठा wm8994_lकरो अणु
+	काष्ठा regulator_dev *regulator;
+	काष्ठा wm8994 *wm8994;
+	काष्ठा regulator_consumer_supply supply;
+	काष्ठा regulator_init_data init_data;
+पूर्ण;
 
-#define WM8994_LDO1_MAX_SELECTOR 0x7
-#define WM8994_LDO2_MAX_SELECTOR 0x3
+#घोषणा WM8994_LDO1_MAX_SELECTOR 0x7
+#घोषणा WM8994_LDO2_MAX_SELECTOR 0x3
 
-static const struct regulator_ops wm8994_ldo1_ops = {
+अटल स्थिर काष्ठा regulator_ops wm8994_lकरो1_ops = अणु
 	.list_voltage = regulator_list_voltage_linear,
 	.map_voltage = regulator_map_voltage_linear,
 	.get_voltage_sel = regulator_get_voltage_sel_regmap,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
-};
+पूर्ण;
 
-static int wm8994_ldo2_list_voltage(struct regulator_dev *rdev,
-				    unsigned int selector)
-{
-	struct wm8994_ldo *ldo = rdev_get_drvdata(rdev);
+अटल पूर्णांक wm8994_lकरो2_list_voltage(काष्ठा regulator_dev *rdev,
+				    अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा wm8994_lकरो *lकरो = rdev_get_drvdata(rdev);
 
-	if (selector > WM8994_LDO2_MAX_SELECTOR)
-		return -EINVAL;
+	अगर (selector > WM8994_LDO2_MAX_SELECTOR)
+		वापस -EINVAL;
 
-	switch (ldo->wm8994->type) {
-	case WM8994:
-		return (selector * 100000) + 900000;
-	case WM8958:
-		return (selector * 100000) + 1000000;
-	case WM1811:
-		switch (selector) {
-		case 0:
-			return -EINVAL;
-		default:
-			return (selector * 100000) + 950000;
-		}
-		break;
-	default:
-		return -EINVAL;
-	}
-}
+	चयन (lकरो->wm8994->type) अणु
+	हाल WM8994:
+		वापस (selector * 100000) + 900000;
+	हाल WM8958:
+		वापस (selector * 100000) + 1000000;
+	हाल WM1811:
+		चयन (selector) अणु
+		हाल 0:
+			वापस -EINVAL;
+		शेष:
+			वापस (selector * 100000) + 950000;
+		पूर्ण
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static const struct regulator_ops wm8994_ldo2_ops = {
-	.list_voltage = wm8994_ldo2_list_voltage,
+अटल स्थिर काष्ठा regulator_ops wm8994_lकरो2_ops = अणु
+	.list_voltage = wm8994_lकरो2_list_voltage,
 	.get_voltage_sel = regulator_get_voltage_sel_regmap,
 	.set_voltage_sel = regulator_set_voltage_sel_regmap,
-};
+पूर्ण;
 
-static const struct regulator_desc wm8994_ldo_desc[] = {
-	{
+अटल स्थिर काष्ठा regulator_desc wm8994_lकरो_desc[] = अणु
+	अणु
 		.name = "LDO1",
 		.id = 1,
 		.type = REGULATOR_VOLTAGE,
 		.n_voltages = WM8994_LDO1_MAX_SELECTOR + 1,
 		.vsel_reg = WM8994_LDO_1,
 		.vsel_mask = WM8994_LDO1_VSEL_MASK,
-		.ops = &wm8994_ldo1_ops,
+		.ops = &wm8994_lकरो1_ops,
 		.min_uV = 2400000,
 		.uV_step = 100000,
-		.enable_time = 3000,
+		.enable_समय = 3000,
 		.owner = THIS_MODULE,
-	},
-	{
+	पूर्ण,
+	अणु
 		.name = "LDO2",
 		.id = 2,
 		.type = REGULATOR_VOLTAGE,
 		.n_voltages = WM8994_LDO2_MAX_SELECTOR + 1,
 		.vsel_reg = WM8994_LDO_2,
 		.vsel_mask = WM8994_LDO2_VSEL_MASK,
-		.ops = &wm8994_ldo2_ops,
-		.enable_time = 3000,
+		.ops = &wm8994_lकरो2_ops,
+		.enable_समय = 3000,
 		.owner = THIS_MODULE,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct regulator_consumer_supply wm8994_ldo_consumer[] = {
-	{ .supply = "AVDD1" },
-	{ .supply = "DCVDD" },
-};
+अटल स्थिर काष्ठा regulator_consumer_supply wm8994_lकरो_consumer[] = अणु
+	अणु .supply = "AVDD1" पूर्ण,
+	अणु .supply = "DCVDD" पूर्ण,
+पूर्ण;
 
-static const struct regulator_init_data wm8994_ldo_default[] = {
-	{
-		.constraints = {
+अटल स्थिर काष्ठा regulator_init_data wm8994_lकरो_शेष[] = अणु
+	अणु
+		.स्थिरraपूर्णांकs = अणु
 			.valid_ops_mask = REGULATOR_CHANGE_STATUS,
-		},
+		पूर्ण,
 		.num_consumer_supplies = 1,
-	},
-	{
-		.constraints = {
+	पूर्ण,
+	अणु
+		.स्थिरraपूर्णांकs = अणु
 			.valid_ops_mask = REGULATOR_CHANGE_STATUS,
-		},
+		पूर्ण,
 		.num_consumer_supplies = 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int wm8994_ldo_probe(struct platform_device *pdev)
-{
-	struct wm8994 *wm8994 = dev_get_drvdata(pdev->dev.parent);
-	struct wm8994_pdata *pdata = dev_get_platdata(wm8994->dev);
-	int id = pdev->id % ARRAY_SIZE(pdata->ldo);
-	struct regulator_config config = { };
-	struct wm8994_ldo *ldo;
-	struct gpio_desc *gpiod;
-	int ret;
+अटल पूर्णांक wm8994_lकरो_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा wm8994 *wm8994 = dev_get_drvdata(pdev->dev.parent);
+	काष्ठा wm8994_pdata *pdata = dev_get_platdata(wm8994->dev);
+	पूर्णांक id = pdev->id % ARRAY_SIZE(pdata->lकरो);
+	काष्ठा regulator_config config = अणु पूर्ण;
+	काष्ठा wm8994_lकरो *lकरो;
+	काष्ठा gpio_desc *gpiod;
+	पूर्णांक ret;
 
 	dev_dbg(&pdev->dev, "Probing LDO%d\n", id + 1);
 
-	ldo = devm_kzalloc(&pdev->dev, sizeof(struct wm8994_ldo), GFP_KERNEL);
-	if (!ldo)
-		return -ENOMEM;
+	lकरो = devm_kzalloc(&pdev->dev, माप(काष्ठा wm8994_lकरो), GFP_KERNEL);
+	अगर (!lकरो)
+		वापस -ENOMEM;
 
-	ldo->wm8994 = wm8994;
-	ldo->supply = wm8994_ldo_consumer[id];
-	ldo->supply.dev_name = dev_name(wm8994->dev);
+	lकरो->wm8994 = wm8994;
+	lकरो->supply = wm8994_lकरो_consumer[id];
+	lकरो->supply.dev_name = dev_name(wm8994->dev);
 
 	config.dev = wm8994->dev;
-	config.driver_data = ldo;
+	config.driver_data = lकरो;
 	config.regmap = wm8994->regmap;
-	config.init_data = &ldo->init_data;
+	config.init_data = &lकरो->init_data;
 
 	/*
-	 * Look up LDO enable GPIO from the parent device node, we don't
-	 * use devm because the regulator core will free the GPIO
+	 * Look up LDO enable GPIO from the parent device node, we करोn't
+	 * use devm because the regulator core will मुक्त the GPIO
 	 */
 	gpiod = gpiod_get_optional(pdev->dev.parent,
 				   id ? "wlf,ldo2ena" : "wlf,ldo1ena",
 				   GPIOD_OUT_LOW |
 				   GPIOD_FLAGS_BIT_NONEXCLUSIVE);
-	if (IS_ERR(gpiod))
-		return PTR_ERR(gpiod);
+	अगर (IS_ERR(gpiod))
+		वापस PTR_ERR(gpiod);
 	config.ena_gpiod = gpiod;
 
-	/* Use default constraints if none set up */
-	if (!pdata || !pdata->ldo[id].init_data || wm8994->dev->of_node) {
+	/* Use शेष स्थिरraपूर्णांकs अगर none set up */
+	अगर (!pdata || !pdata->lकरो[id].init_data || wm8994->dev->of_node) अणु
 		dev_dbg(wm8994->dev, "Using default init data, supply %s %s\n",
-			ldo->supply.dev_name, ldo->supply.supply);
+			lकरो->supply.dev_name, lकरो->supply.supply);
 
-		ldo->init_data = wm8994_ldo_default[id];
-		ldo->init_data.consumer_supplies = &ldo->supply;
-		if (!gpiod)
-			ldo->init_data.constraints.valid_ops_mask = 0;
-	} else {
-		ldo->init_data = *pdata->ldo[id].init_data;
-	}
+		lकरो->init_data = wm8994_lकरो_शेष[id];
+		lकरो->init_data.consumer_supplies = &lकरो->supply;
+		अगर (!gpiod)
+			lकरो->init_data.स्थिरraपूर्णांकs.valid_ops_mask = 0;
+	पूर्ण अन्यथा अणु
+		lकरो->init_data = *pdata->lकरो[id].init_data;
+	पूर्ण
 
 	/*
-	 * At this point the GPIO descriptor is handled over to the
+	 * At this poपूर्णांक the GPIO descriptor is handled over to the
 	 * regulator core and we need not worry about it on the
 	 * error path.
 	 */
-	ldo->regulator = devm_regulator_register(&pdev->dev,
-						 &wm8994_ldo_desc[id],
+	lकरो->regulator = devm_regulator_रेजिस्टर(&pdev->dev,
+						 &wm8994_lकरो_desc[id],
 						 &config);
-	if (IS_ERR(ldo->regulator)) {
-		ret = PTR_ERR(ldo->regulator);
+	अगर (IS_ERR(lकरो->regulator)) अणु
+		ret = PTR_ERR(lकरो->regulator);
 		dev_err(wm8994->dev, "Failed to register LDO%d: %d\n",
 			id + 1, ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, ldo);
+	platक्रमm_set_drvdata(pdev, lकरो);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct platform_driver wm8994_ldo_driver = {
-	.probe = wm8994_ldo_probe,
-	.driver		= {
+अटल काष्ठा platक्रमm_driver wm8994_lकरो_driver = अणु
+	.probe = wm8994_lकरो_probe,
+	.driver		= अणु
 		.name	= "wm8994-ldo",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(wm8994_ldo_driver);
+module_platक्रमm_driver(wm8994_lकरो_driver);
 
-/* Module information */
+/* Module inक्रमmation */
 MODULE_AUTHOR("Mark Brown <broonie@opensource.wolfsonmicro.com>");
 MODULE_DESCRIPTION("WM8994 LDO driver");
 MODULE_LICENSE("GPL");

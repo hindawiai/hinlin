@@ -1,123 +1,124 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * vivid-core.c - A Virtual Video Test Driver, core initialization
  *
  * Copyright 2014 Cisco Systems, Inc. and/or its affiliates. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/errno.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
-#include <linux/font.h>
-#include <linux/mutex.h>
-#include <linux/platform_device.h>
-#include <linux/videodev2.h>
-#include <linux/v4l2-dv-timings.h>
-#include <media/videobuf2-vmalloc.h>
-#include <media/videobuf2-dma-contig.h>
-#include <media/v4l2-dv-timings.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-fh.h>
-#include <media/v4l2-event.h>
+#समावेश <linux/module.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/font.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/v4l2-dv-timings.h>
+#समावेश <media/videobuf2-vदो_स्मृति.h>
+#समावेश <media/videobuf2-dma-contig.h>
+#समावेश <media/v4l2-dv-timings.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-fh.h>
+#समावेश <media/v4l2-event.h>
 
-#include "vivid-core.h"
-#include "vivid-vid-common.h"
-#include "vivid-vid-cap.h"
-#include "vivid-vid-out.h"
-#include "vivid-radio-common.h"
-#include "vivid-radio-rx.h"
-#include "vivid-radio-tx.h"
-#include "vivid-sdr-cap.h"
-#include "vivid-vbi-cap.h"
-#include "vivid-vbi-out.h"
-#include "vivid-osd.h"
-#include "vivid-cec.h"
-#include "vivid-ctrls.h"
-#include "vivid-meta-cap.h"
-#include "vivid-meta-out.h"
-#include "vivid-touch-cap.h"
+#समावेश "vivid-core.h"
+#समावेश "vivid-vid-common.h"
+#समावेश "vivid-vid-cap.h"
+#समावेश "vivid-vid-out.h"
+#समावेश "vivid-radio-common.h"
+#समावेश "vivid-radio-rx.h"
+#समावेश "vivid-radio-tx.h"
+#समावेश "vivid-sdr-cap.h"
+#समावेश "vivid-vbi-cap.h"
+#समावेश "vivid-vbi-out.h"
+#समावेश "vivid-osd.h"
+#समावेश "vivid-cec.h"
+#समावेश "vivid-ctrls.h"
+#समावेश "vivid-meta-cap.h"
+#समावेश "vivid-meta-out.h"
+#समावेश "vivid-touch-cap.h"
 
-#define VIVID_MODULE_NAME "vivid"
+#घोषणा VIVID_MODULE_NAME "vivid"
 
 /* The maximum number of vivid devices */
-#define VIVID_MAX_DEVS CONFIG_VIDEO_VIVID_MAX_DEVS
+#घोषणा VIVID_MAX_DEVS CONFIG_VIDEO_VIVID_MAX_DEVS
 
 MODULE_DESCRIPTION("Virtual Video Test Driver");
 MODULE_AUTHOR("Hans Verkuil");
 MODULE_LICENSE("GPL");
 
-static unsigned n_devs = 1;
-module_param(n_devs, uint, 0444);
+अटल अचिन्हित n_devs = 1;
+module_param(n_devs, uपूर्णांक, 0444);
 MODULE_PARM_DESC(n_devs, " number of driver instances to create");
 
-static int vid_cap_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(vid_cap_nr, int, NULL, 0444);
+अटल पूर्णांक vid_cap_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(vid_cap_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(vid_cap_nr, " videoX start number, -1 is autodetect");
 
-static int vid_out_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(vid_out_nr, int, NULL, 0444);
+अटल पूर्णांक vid_out_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(vid_out_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(vid_out_nr, " videoX start number, -1 is autodetect");
 
-static int vbi_cap_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(vbi_cap_nr, int, NULL, 0444);
+अटल पूर्णांक vbi_cap_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(vbi_cap_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(vbi_cap_nr, " vbiX start number, -1 is autodetect");
 
-static int vbi_out_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(vbi_out_nr, int, NULL, 0444);
+अटल पूर्णांक vbi_out_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(vbi_out_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(vbi_out_nr, " vbiX start number, -1 is autodetect");
 
-static int sdr_cap_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(sdr_cap_nr, int, NULL, 0444);
+अटल पूर्णांक sdr_cap_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(sdr_cap_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(sdr_cap_nr, " swradioX start number, -1 is autodetect");
 
-static int radio_rx_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(radio_rx_nr, int, NULL, 0444);
+अटल पूर्णांक radio_rx_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(radio_rx_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(radio_rx_nr, " radioX start number, -1 is autodetect");
 
-static int radio_tx_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(radio_tx_nr, int, NULL, 0444);
+अटल पूर्णांक radio_tx_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(radio_tx_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(radio_tx_nr, " radioX start number, -1 is autodetect");
 
-static int meta_cap_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(meta_cap_nr, int, NULL, 0444);
+अटल पूर्णांक meta_cap_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(meta_cap_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(meta_cap_nr, " videoX start number, -1 is autodetect");
 
-static int meta_out_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(meta_out_nr, int, NULL, 0444);
+अटल पूर्णांक meta_out_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(meta_out_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(meta_out_nr, " videoX start number, -1 is autodetect");
 
-static int touch_cap_nr[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(touch_cap_nr, int, NULL, 0444);
+अटल पूर्णांक touch_cap_nr[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(touch_cap_nr, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(touch_cap_nr, " v4l-touchX start number, -1 is autodetect");
 
-static int ccs_cap_mode[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(ccs_cap_mode, int, NULL, 0444);
+अटल पूर्णांक ccs_cap_mode[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(ccs_cap_mode, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(ccs_cap_mode, " capture crop/compose/scale mode:\n"
 			   "\t\t    bit 0=crop, 1=compose, 2=scale,\n"
 			   "\t\t    -1=user-controlled (default)");
 
-static int ccs_out_mode[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = -1 };
-module_param_array(ccs_out_mode, int, NULL, 0444);
+अटल पूर्णांक ccs_out_mode[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = -1 पूर्ण;
+module_param_array(ccs_out_mode, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(ccs_out_mode, " output crop/compose/scale mode:\n"
 			   "\t\t    bit 0=crop, 1=compose, 2=scale,\n"
 			   "\t\t    -1=user-controlled (default)");
 
-static unsigned multiplanar[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = 1 };
-module_param_array(multiplanar, uint, NULL, 0444);
+अटल अचिन्हित multiplanar[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = 1 पूर्ण;
+module_param_array(multiplanar, uपूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(multiplanar, " 1 (default) creates a single planar device, 2 creates a multiplanar device.");
 
 /*
  * Default: video + vbi-cap (raw and sliced) + radio rx + radio tx + sdr +
  * vbi-out + vid-out + meta-cap
  */
-static unsigned int node_types[VIVID_MAX_DEVS] = {
+अटल अचिन्हित पूर्णांक node_types[VIVID_MAX_DEVS] = अणु
 	[0 ... (VIVID_MAX_DEVS - 1)] = 0xe1d3d
-};
-module_param_array(node_types, uint, NULL, 0444);
+पूर्ण;
+module_param_array(node_types, uपूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(node_types, " node types, default is 0xe1d3d. Bitmask with the following meaning:\n"
 			     "\t\t    bit 0: Video Capture node\n"
 			     "\t\t    bit 2-3: VBI Capture node: 0 = none, 1 = raw vbi, 2 = sliced vbi, 3 = both\n"
@@ -131,63 +132,63 @@ MODULE_PARM_DESC(node_types, " node types, default is 0xe1d3d. Bitmask with the 
 			     "\t\t    bit 18: Metadata Output node\n"
 			     "\t\t    bit 19: Touch Capture node\n");
 
-/* Default: 4 inputs */
-static unsigned num_inputs[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = 4 };
-module_param_array(num_inputs, uint, NULL, 0444);
-MODULE_PARM_DESC(num_inputs, " number of inputs, default is 4");
+/* Default: 4 inमाला_दो */
+अटल अचिन्हित num_inमाला_दो[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = 4 पूर्ण;
+module_param_array(num_inमाला_दो, uपूर्णांक, शून्य, 0444);
+MODULE_PARM_DESC(num_inमाला_दो, " number of inputs, default is 4");
 
 /* Default: input 0 = WEBCAM, 1 = TV, 2 = SVID, 3 = HDMI */
-static unsigned input_types[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = 0xe4 };
-module_param_array(input_types, uint, NULL, 0444);
+अटल अचिन्हित input_types[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = 0xe4 पूर्ण;
+module_param_array(input_types, uपूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(input_types, " input types, default is 0xe4. Two bits per input,\n"
 			      "\t\t    bits 0-1 == input 0, bits 31-30 == input 15.\n"
 			      "\t\t    Type 0 == webcam, 1 == TV, 2 == S-Video, 3 == HDMI");
 
-/* Default: 2 outputs */
-static unsigned num_outputs[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = 2 };
-module_param_array(num_outputs, uint, NULL, 0444);
-MODULE_PARM_DESC(num_outputs, " number of outputs, default is 2");
+/* Default: 2 outमाला_दो */
+अटल अचिन्हित num_outमाला_दो[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = 2 पूर्ण;
+module_param_array(num_outमाला_दो, uपूर्णांक, शून्य, 0444);
+MODULE_PARM_DESC(num_outमाला_दो, " number of outputs, default is 2");
 
 /* Default: output 0 = SVID, 1 = HDMI */
-static unsigned output_types[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = 2 };
-module_param_array(output_types, uint, NULL, 0444);
+अटल अचिन्हित output_types[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = 2 पूर्ण;
+module_param_array(output_types, uपूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(output_types, " output types, default is 0x02. One bit per output,\n"
 			      "\t\t    bit 0 == output 0, bit 15 == output 15.\n"
 			      "\t\t    Type 0 == S-Video, 1 == HDMI");
 
-unsigned vivid_debug;
-module_param(vivid_debug, uint, 0644);
+अचिन्हित vivid_debug;
+module_param(vivid_debug, uपूर्णांक, 0644);
 MODULE_PARM_DESC(vivid_debug, " activates debug info");
 
-static bool no_error_inj;
+अटल bool no_error_inj;
 module_param(no_error_inj, bool, 0444);
 MODULE_PARM_DESC(no_error_inj, " if set disable the error injecting controls");
 
-static unsigned int allocators[VIVID_MAX_DEVS] = { [0 ... (VIVID_MAX_DEVS - 1)] = 0 };
-module_param_array(allocators, uint, NULL, 0444);
+अटल अचिन्हित पूर्णांक allocators[VIVID_MAX_DEVS] = अणु [0 ... (VIVID_MAX_DEVS - 1)] = 0 पूर्ण;
+module_param_array(allocators, uपूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(allocators, " memory allocator selection, default is 0.\n"
 			     "\t\t    0 == vmalloc\n"
 			     "\t\t    1 == dma-contig");
 
-static unsigned int cache_hints[VIVID_MAX_DEVS] = {
+अटल अचिन्हित पूर्णांक cache_hपूर्णांकs[VIVID_MAX_DEVS] = अणु
 	[0 ... (VIVID_MAX_DEVS - 1)] = 0
-};
-module_param_array(cache_hints, uint, NULL, 0444);
-MODULE_PARM_DESC(cache_hints, " user-space cache hints, default is 0.\n"
+पूर्ण;
+module_param_array(cache_hपूर्णांकs, uपूर्णांक, शून्य, 0444);
+MODULE_PARM_DESC(cache_hपूर्णांकs, " user-space cache hints, default is 0.\n"
 			     "\t\t    0 == forbid\n"
 			     "\t\t    1 == allow");
 
-static struct vivid_dev *vivid_devs[VIVID_MAX_DEVS];
+अटल काष्ठा vivid_dev *vivid_devs[VIVID_MAX_DEVS];
 
-const struct v4l2_rect vivid_min_rect = {
+स्थिर काष्ठा v4l2_rect vivid_min_rect = अणु
 	0, 0, MIN_WIDTH, MIN_HEIGHT
-};
+पूर्ण;
 
-const struct v4l2_rect vivid_max_rect = {
+स्थिर काष्ठा v4l2_rect vivid_max_rect = अणु
 	0, 0, MAX_WIDTH * MAX_ZOOM, MAX_HEIGHT * MAX_ZOOM
-};
+पूर्ण;
 
-static const u8 vivid_hdmi_edid[256] = {
+अटल स्थिर u8 vivid_hdmi_edid[256] = अणु
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00,
 	0x31, 0xd8, 0x34, 0x12, 0x00, 0x00, 0x00, 0x00,
 	0x22, 0x1a, 0x01, 0x03, 0x80, 0x60, 0x36, 0x78,
@@ -221,16 +222,16 @@ static const u8 vivid_hdmi_edid[256] = {
 	0xd0, 0x1c, 0x20, 0x40, 0x80, 0x35, 0x00, 0xc0,
 	0x1c, 0x32, 0x00, 0x00, 0x1c, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x82,
-};
+पूर्ण;
 
-static int vidioc_querycap(struct file *file, void  *priv,
-					struct v4l2_capability *cap)
-{
-	struct vivid_dev *dev = video_drvdata(file);
+अटल पूर्णांक vidioc_querycap(काष्ठा file *file, व्योम  *priv,
+					काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
 
-	strscpy(cap->driver, "vivid", sizeof(cap->driver));
-	strscpy(cap->card, "vivid", sizeof(cap->card));
-	snprintf(cap->bus_info, sizeof(cap->bus_info),
+	strscpy(cap->driver, "vivid", माप(cap->driver));
+	strscpy(cap->card, "vivid", माप(cap->card));
+	snम_लिखो(cap->bus_info, माप(cap->bus_info),
 			"platform:%s", dev->v4l2_dev.name);
 
 	cap->capabilities = dev->vid_cap_caps | dev->vid_out_caps |
@@ -239,330 +240,330 @@ static int vidioc_querycap(struct file *file, void  *priv,
 		dev->sdr_cap_caps | dev->meta_cap_caps |
 		dev->meta_out_caps | dev->touch_cap_caps |
 		V4L2_CAP_DEVICE_CAPS;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vidioc_s_hw_freq_seek(struct file *file, void *fh, const struct v4l2_hw_freq_seek *a)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_s_hw_freq_seek(काष्ठा file *file, व्योम *fh, स्थिर काष्ठा v4l2_hw_freq_seek *a)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_RADIO)
-		return vivid_radio_rx_s_hw_freq_seek(file, fh, a);
-	return -ENOTTY;
-}
+	अगर (vdev->vfl_type == VFL_TYPE_RADIO)
+		वापस vivid_radio_rx_s_hw_freq_seek(file, fh, a);
+	वापस -ENOTTY;
+पूर्ण
 
-static int vidioc_enum_freq_bands(struct file *file, void *fh, struct v4l2_frequency_band *band)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_क्रमागत_freq_bands(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_frequency_band *band)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_RADIO)
-		return vivid_radio_rx_enum_freq_bands(file, fh, band);
-	if (vdev->vfl_type == VFL_TYPE_SDR)
-		return vivid_sdr_enum_freq_bands(file, fh, band);
-	return -ENOTTY;
-}
+	अगर (vdev->vfl_type == VFL_TYPE_RADIO)
+		वापस vivid_radio_rx_क्रमागत_freq_bands(file, fh, band);
+	अगर (vdev->vfl_type == VFL_TYPE_SDR)
+		वापस vivid_sdr_क्रमागत_freq_bands(file, fh, band);
+	वापस -ENOTTY;
+पूर्ण
 
-static int vidioc_g_tuner(struct file *file, void *fh, struct v4l2_tuner *vt)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_g_tuner(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_tuner *vt)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_RADIO)
-		return vivid_radio_rx_g_tuner(file, fh, vt);
-	if (vdev->vfl_type == VFL_TYPE_SDR)
-		return vivid_sdr_g_tuner(file, fh, vt);
-	return vivid_video_g_tuner(file, fh, vt);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_RADIO)
+		वापस vivid_radio_rx_g_tuner(file, fh, vt);
+	अगर (vdev->vfl_type == VFL_TYPE_SDR)
+		वापस vivid_sdr_g_tuner(file, fh, vt);
+	वापस vivid_video_g_tuner(file, fh, vt);
+पूर्ण
 
-static int vidioc_s_tuner(struct file *file, void *fh, const struct v4l2_tuner *vt)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_s_tuner(काष्ठा file *file, व्योम *fh, स्थिर काष्ठा v4l2_tuner *vt)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_RADIO)
-		return vivid_radio_rx_s_tuner(file, fh, vt);
-	if (vdev->vfl_type == VFL_TYPE_SDR)
-		return vivid_sdr_s_tuner(file, fh, vt);
-	return vivid_video_s_tuner(file, fh, vt);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_RADIO)
+		वापस vivid_radio_rx_s_tuner(file, fh, vt);
+	अगर (vdev->vfl_type == VFL_TYPE_SDR)
+		वापस vivid_sdr_s_tuner(file, fh, vt);
+	वापस vivid_video_s_tuner(file, fh, vt);
+पूर्ण
 
-static int vidioc_g_frequency(struct file *file, void *fh, struct v4l2_frequency *vf)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_g_frequency(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_frequency *vf)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_RADIO)
-		return vivid_radio_g_frequency(file,
-			vdev->vfl_dir == VFL_DIR_RX ?
+	अगर (vdev->vfl_type == VFL_TYPE_RADIO)
+		वापस vivid_radio_g_frequency(file,
+			vdev->vfl_dir == VFL_सूची_RX ?
 			&dev->radio_rx_freq : &dev->radio_tx_freq, vf);
-	if (vdev->vfl_type == VFL_TYPE_SDR)
-		return vivid_sdr_g_frequency(file, fh, vf);
-	return vivid_video_g_frequency(file, fh, vf);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_SDR)
+		वापस vivid_sdr_g_frequency(file, fh, vf);
+	वापस vivid_video_g_frequency(file, fh, vf);
+पूर्ण
 
-static int vidioc_s_frequency(struct file *file, void *fh, const struct v4l2_frequency *vf)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_s_frequency(काष्ठा file *file, व्योम *fh, स्थिर काष्ठा v4l2_frequency *vf)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_RADIO)
-		return vivid_radio_s_frequency(file,
-			vdev->vfl_dir == VFL_DIR_RX ?
+	अगर (vdev->vfl_type == VFL_TYPE_RADIO)
+		वापस vivid_radio_s_frequency(file,
+			vdev->vfl_dir == VFL_सूची_RX ?
 			&dev->radio_rx_freq : &dev->radio_tx_freq, vf);
-	if (vdev->vfl_type == VFL_TYPE_SDR)
-		return vivid_sdr_s_frequency(file, fh, vf);
-	return vivid_video_s_frequency(file, fh, vf);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_SDR)
+		वापस vivid_sdr_s_frequency(file, fh, vf);
+	वापस vivid_video_s_frequency(file, fh, vf);
+पूर्ण
 
-static int vidioc_overlay(struct file *file, void *fh, unsigned i)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_overlay(काष्ठा file *file, व्योम *fh, अचिन्हित i)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_overlay(file, fh, i);
-	return vivid_vid_out_overlay(file, fh, i);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_overlay(file, fh, i);
+	वापस vivid_vid_out_overlay(file, fh, i);
+पूर्ण
 
-static int vidioc_g_fbuf(struct file *file, void *fh, struct v4l2_framebuffer *a)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_g_fbuf(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_framebuffer *a)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_g_fbuf(file, fh, a);
-	return vivid_vid_out_g_fbuf(file, fh, a);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_g_fbuf(file, fh, a);
+	वापस vivid_vid_out_g_fbuf(file, fh, a);
+पूर्ण
 
-static int vidioc_s_fbuf(struct file *file, void *fh, const struct v4l2_framebuffer *a)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_s_fbuf(काष्ठा file *file, व्योम *fh, स्थिर काष्ठा v4l2_framebuffer *a)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_s_fbuf(file, fh, a);
-	return vivid_vid_out_s_fbuf(file, fh, a);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_s_fbuf(file, fh, a);
+	वापस vivid_vid_out_s_fbuf(file, fh, a);
+पूर्ण
 
-static int vidioc_s_std(struct file *file, void *fh, v4l2_std_id id)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_s_std(काष्ठा file *file, व्योम *fh, v4l2_std_id id)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_s_std(file, fh, id);
-	return vivid_vid_out_s_std(file, fh, id);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_s_std(file, fh, id);
+	वापस vivid_vid_out_s_std(file, fh, id);
+पूर्ण
 
-static int vidioc_s_dv_timings(struct file *file, void *fh, struct v4l2_dv_timings *timings)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_s_dv_timings(काष्ठा file *file, व्योम *fh, काष्ठा v4l2_dv_timings *timings)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_s_dv_timings(file, fh, timings);
-	return vivid_vid_out_s_dv_timings(file, fh, timings);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_s_dv_timings(file, fh, timings);
+	वापस vivid_vid_out_s_dv_timings(file, fh, timings);
+पूर्ण
 
-static int vidioc_g_pixelaspect(struct file *file, void *fh,
-				int type, struct v4l2_fract *f)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_g_pixelaspect(काष्ठा file *file, व्योम *fh,
+				पूर्णांक type, काष्ठा v4l2_fract *f)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_g_pixelaspect(file, fh, type, f);
-	return vivid_vid_out_g_pixelaspect(file, fh, type, f);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_g_pixelaspect(file, fh, type, f);
+	वापस vivid_vid_out_g_pixelaspect(file, fh, type, f);
+पूर्ण
 
-static int vidioc_g_selection(struct file *file, void *fh,
-			      struct v4l2_selection *sel)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_g_selection(काष्ठा file *file, व्योम *fh,
+			      काष्ठा v4l2_selection *sel)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_g_selection(file, fh, sel);
-	return vivid_vid_out_g_selection(file, fh, sel);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_g_selection(file, fh, sel);
+	वापस vivid_vid_out_g_selection(file, fh, sel);
+पूर्ण
 
-static int vidioc_s_selection(struct file *file, void *fh,
-			      struct v4l2_selection *sel)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_s_selection(काष्ठा file *file, व्योम *fh,
+			      काष्ठा v4l2_selection *sel)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_s_selection(file, fh, sel);
-	return vivid_vid_out_s_selection(file, fh, sel);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_s_selection(file, fh, sel);
+	वापस vivid_vid_out_s_selection(file, fh, sel);
+पूर्ण
 
-static int vidioc_g_parm(struct file *file, void *fh,
-			  struct v4l2_streamparm *parm)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_g_parm(काष्ठा file *file, व्योम *fh,
+			  काष्ठा v4l2_streamparm *parm)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_g_parm_tch(file, fh, parm);
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_g_parm(file, fh, parm);
-	return vivid_vid_out_g_parm(file, fh, parm);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_g_parm_tch(file, fh, parm);
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_g_parm(file, fh, parm);
+	वापस vivid_vid_out_g_parm(file, fh, parm);
+पूर्ण
 
-static int vidioc_s_parm(struct file *file, void *fh,
-			  struct v4l2_streamparm *parm)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_s_parm(काष्ठा file *file, व्योम *fh,
+			  काष्ठा v4l2_streamparm *parm)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_vid_cap_s_parm(file, fh, parm);
-	return -ENOTTY;
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_vid_cap_s_parm(file, fh, parm);
+	वापस -ENOTTY;
+पूर्ण
 
-static int vidioc_log_status(struct file *file, void *fh)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vidioc_log_status(काष्ठा file *file, व्योम *fh)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	काष्ठा video_device *vdev = video_devdata(file);
 
 	v4l2_ctrl_log_status(file, fh);
-	if (vdev->vfl_dir == VFL_DIR_RX && vdev->vfl_type == VFL_TYPE_VIDEO)
+	अगर (vdev->vfl_dir == VFL_सूची_RX && vdev->vfl_type == VFL_TYPE_VIDEO)
 		tpg_log_status(&dev->tpg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t vivid_radio_read(struct file *file, char __user *buf,
-			 size_t size, loff_t *offset)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल sमाप_प्रकार vivid_radio_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+			 माप_प्रकार size, loff_t *offset)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_TX)
-		return -EINVAL;
-	return vivid_radio_rx_read(file, buf, size, offset);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_TX)
+		वापस -EINVAL;
+	वापस vivid_radio_rx_पढ़ो(file, buf, size, offset);
+पूर्ण
 
-static ssize_t vivid_radio_write(struct file *file, const char __user *buf,
-			  size_t size, loff_t *offset)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल sमाप_प्रकार vivid_radio_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			  माप_प्रकार size, loff_t *offset)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return -EINVAL;
-	return vivid_radio_tx_write(file, buf, size, offset);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस -EINVAL;
+	वापस vivid_radio_tx_ग_लिखो(file, buf, size, offset);
+पूर्ण
 
-static __poll_t vivid_radio_poll(struct file *file, struct poll_table_struct *wait)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल __poll_t vivid_radio_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_dir == VFL_DIR_RX)
-		return vivid_radio_rx_poll(file, wait);
-	return vivid_radio_tx_poll(file, wait);
-}
+	अगर (vdev->vfl_dir == VFL_सूची_RX)
+		वापस vivid_radio_rx_poll(file, रुको);
+	वापस vivid_radio_tx_poll(file, रुको);
+पूर्ण
 
-static int vivid_enum_input(struct file *file, void *priv,
-			    struct v4l2_input *inp)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_क्रमागत_input(काष्ठा file *file, व्योम *priv,
+			    काष्ठा v4l2_input *inp)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_enum_input_tch(file, priv, inp);
-	return vidioc_enum_input(file, priv, inp);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_क्रमागत_input_tch(file, priv, inp);
+	वापस vidioc_क्रमागत_input(file, priv, inp);
+पूर्ण
 
-static int vivid_g_input(struct file *file, void *priv, unsigned int *i)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_g_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक *i)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_g_input_tch(file, priv, i);
-	return vidioc_g_input(file, priv, i);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_g_input_tch(file, priv, i);
+	वापस vidioc_g_input(file, priv, i);
+पूर्ण
 
-static int vivid_s_input(struct file *file, void *priv, unsigned int i)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_s_input(काष्ठा file *file, व्योम *priv, अचिन्हित पूर्णांक i)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_s_input_tch(file, priv, i);
-	return vidioc_s_input(file, priv, i);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_s_input_tch(file, priv, i);
+	वापस vidioc_s_input(file, priv, i);
+पूर्ण
 
-static int vivid_enum_fmt_cap(struct file *file, void  *priv,
-			      struct v4l2_fmtdesc *f)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_क्रमागत_fmt_cap(काष्ठा file *file, व्योम  *priv,
+			      काष्ठा v4l2_fmtdesc *f)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_enum_fmt_tch(file, priv, f);
-	return vivid_enum_fmt_vid(file, priv, f);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_क्रमागत_fmt_tch(file, priv, f);
+	वापस vivid_क्रमागत_fmt_vid(file, priv, f);
+पूर्ण
 
-static int vivid_g_fmt_cap(struct file *file, void *priv,
-			   struct v4l2_format *f)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_g_fmt_cap(काष्ठा file *file, व्योम *priv,
+			   काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_g_fmt_tch(file, priv, f);
-	return vidioc_g_fmt_vid_cap(file, priv, f);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_g_fmt_tch(file, priv, f);
+	वापस vidioc_g_fmt_vid_cap(file, priv, f);
+पूर्ण
 
-static int vivid_try_fmt_cap(struct file *file, void *priv,
-			     struct v4l2_format *f)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_try_fmt_cap(काष्ठा file *file, व्योम *priv,
+			     काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_g_fmt_tch(file, priv, f);
-	return vidioc_try_fmt_vid_cap(file, priv, f);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_g_fmt_tch(file, priv, f);
+	वापस vidioc_try_fmt_vid_cap(file, priv, f);
+पूर्ण
 
-static int vivid_s_fmt_cap(struct file *file, void *priv,
-			   struct v4l2_format *f)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_s_fmt_cap(काष्ठा file *file, व्योम *priv,
+			   काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_g_fmt_tch(file, priv, f);
-	return vidioc_s_fmt_vid_cap(file, priv, f);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_g_fmt_tch(file, priv, f);
+	वापस vidioc_s_fmt_vid_cap(file, priv, f);
+पूर्ण
 
-static int vivid_g_fmt_cap_mplane(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_g_fmt_cap_mplane(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_g_fmt_tch_mplane(file, priv, f);
-	return vidioc_g_fmt_vid_cap_mplane(file, priv, f);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_g_fmt_tch_mplane(file, priv, f);
+	वापस vidioc_g_fmt_vid_cap_mplane(file, priv, f);
+पूर्ण
 
-static int vivid_try_fmt_cap_mplane(struct file *file, void *priv,
-				    struct v4l2_format *f)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_try_fmt_cap_mplane(काष्ठा file *file, व्योम *priv,
+				    काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_g_fmt_tch_mplane(file, priv, f);
-	return vidioc_try_fmt_vid_cap_mplane(file, priv, f);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_g_fmt_tch_mplane(file, priv, f);
+	वापस vidioc_try_fmt_vid_cap_mplane(file, priv, f);
+पूर्ण
 
-static int vivid_s_fmt_cap_mplane(struct file *file, void *priv,
-				  struct v4l2_format *f)
-{
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_s_fmt_cap_mplane(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *f)
+अणु
+	काष्ठा video_device *vdev = video_devdata(file);
 
-	if (vdev->vfl_type == VFL_TYPE_TOUCH)
-		return vivid_g_fmt_tch_mplane(file, priv, f);
-	return vidioc_s_fmt_vid_cap_mplane(file, priv, f);
-}
+	अगर (vdev->vfl_type == VFL_TYPE_TOUCH)
+		वापस vivid_g_fmt_tch_mplane(file, priv, f);
+	वापस vidioc_s_fmt_vid_cap_mplane(file, priv, f);
+पूर्ण
 
-static bool vivid_is_in_use(bool valid, struct video_device *vdev)
-{
-	unsigned long flags;
+अटल bool vivid_is_in_use(bool valid, काष्ठा video_device *vdev)
+अणु
+	अचिन्हित दीर्घ flags;
 	bool res;
 
-	if (!valid)
-		return false;
+	अगर (!valid)
+		वापस false;
 	spin_lock_irqsave(&vdev->fh_lock, flags);
 	res = !list_empty(&vdev->fh_list);
 	spin_unlock_irqrestore(&vdev->fh_lock, flags);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-static bool vivid_is_last_user(struct vivid_dev *dev)
-{
-	unsigned int uses =
+अटल bool vivid_is_last_user(काष्ठा vivid_dev *dev)
+अणु
+	अचिन्हित पूर्णांक uses =
 		vivid_is_in_use(dev->has_vid_cap, &dev->vid_cap_dev) +
 		vivid_is_in_use(dev->has_vid_out, &dev->vid_out_dev) +
 		vivid_is_in_use(dev->has_vbi_cap, &dev->vbi_cap_dev) +
@@ -574,92 +575,92 @@ static bool vivid_is_last_user(struct vivid_dev *dev)
 		vivid_is_in_use(dev->has_meta_out, &dev->meta_out_dev) +
 		vivid_is_in_use(dev->has_touch_cap, &dev->touch_cap_dev);
 
-	return uses == 1;
-}
+	वापस uses == 1;
+पूर्ण
 
-static void vivid_reconnect(struct vivid_dev *dev)
-{
-	if (dev->has_vid_cap)
+अटल व्योम vivid_reconnect(काष्ठा vivid_dev *dev)
+अणु
+	अगर (dev->has_vid_cap)
 		set_bit(V4L2_FL_REGISTERED, &dev->vid_cap_dev.flags);
-	if (dev->has_vid_out)
+	अगर (dev->has_vid_out)
 		set_bit(V4L2_FL_REGISTERED, &dev->vid_out_dev.flags);
-	if (dev->has_vbi_cap)
+	अगर (dev->has_vbi_cap)
 		set_bit(V4L2_FL_REGISTERED, &dev->vbi_cap_dev.flags);
-	if (dev->has_vbi_out)
+	अगर (dev->has_vbi_out)
 		set_bit(V4L2_FL_REGISTERED, &dev->vbi_out_dev.flags);
-	if (dev->has_radio_rx)
+	अगर (dev->has_radio_rx)
 		set_bit(V4L2_FL_REGISTERED, &dev->radio_rx_dev.flags);
-	if (dev->has_radio_tx)
+	अगर (dev->has_radio_tx)
 		set_bit(V4L2_FL_REGISTERED, &dev->radio_tx_dev.flags);
-	if (dev->has_sdr_cap)
+	अगर (dev->has_sdr_cap)
 		set_bit(V4L2_FL_REGISTERED, &dev->sdr_cap_dev.flags);
-	if (dev->has_meta_cap)
+	अगर (dev->has_meta_cap)
 		set_bit(V4L2_FL_REGISTERED, &dev->meta_cap_dev.flags);
-	if (dev->has_meta_out)
+	अगर (dev->has_meta_out)
 		set_bit(V4L2_FL_REGISTERED, &dev->meta_out_dev.flags);
-	if (dev->has_touch_cap)
+	अगर (dev->has_touch_cap)
 		set_bit(V4L2_FL_REGISTERED, &dev->touch_cap_dev.flags);
 	dev->disconnect_error = false;
-}
+पूर्ण
 
-static int vivid_fop_release(struct file *file)
-{
-	struct vivid_dev *dev = video_drvdata(file);
-	struct video_device *vdev = video_devdata(file);
+अटल पूर्णांक vivid_fop_release(काष्ठा file *file)
+अणु
+	काष्ठा vivid_dev *dev = video_drvdata(file);
+	काष्ठा video_device *vdev = video_devdata(file);
 
 	mutex_lock(&dev->mutex);
-	if (!no_error_inj && v4l2_fh_is_singular_file(file) &&
-	    dev->disconnect_error && !video_is_registered(vdev) &&
-	    vivid_is_last_user(dev)) {
+	अगर (!no_error_inj && v4l2_fh_is_singular_file(file) &&
+	    dev->disconnect_error && !video_is_रेजिस्टरed(vdev) &&
+	    vivid_is_last_user(dev)) अणु
 		/*
 		 * I am the last user of this driver, and a disconnect
-		 * was forced (since this video_device is unregistered),
-		 * so re-register all video_device's again.
+		 * was क्रमced (since this video_device is unरेजिस्टरed),
+		 * so re-रेजिस्टर all video_device's again.
 		 */
 		v4l2_info(&dev->v4l2_dev, "reconnect\n");
 		vivid_reconnect(dev);
-	}
+	पूर्ण
 	mutex_unlock(&dev->mutex);
-	if (file->private_data == dev->overlay_cap_owner)
-		dev->overlay_cap_owner = NULL;
-	if (file->private_data == dev->radio_rx_rds_owner) {
+	अगर (file->निजी_data == dev->overlay_cap_owner)
+		dev->overlay_cap_owner = शून्य;
+	अगर (file->निजी_data == dev->radio_rx_rds_owner) अणु
 		dev->radio_rx_rds_last_block = 0;
-		dev->radio_rx_rds_owner = NULL;
-	}
-	if (file->private_data == dev->radio_tx_rds_owner) {
+		dev->radio_rx_rds_owner = शून्य;
+	पूर्ण
+	अगर (file->निजी_data == dev->radio_tx_rds_owner) अणु
 		dev->radio_tx_rds_last_block = 0;
-		dev->radio_tx_rds_owner = NULL;
-	}
-	if (vdev->queue)
-		return vb2_fop_release(file);
-	return v4l2_fh_release(file);
-}
+		dev->radio_tx_rds_owner = शून्य;
+	पूर्ण
+	अगर (vdev->queue)
+		वापस vb2_fop_release(file);
+	वापस v4l2_fh_release(file);
+पूर्ण
 
-static const struct v4l2_file_operations vivid_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations vivid_fops = अणु
 	.owner		= THIS_MODULE,
-	.open           = v4l2_fh_open,
+	.खोलो           = v4l2_fh_खोलो,
 	.release        = vivid_fop_release,
-	.read           = vb2_fop_read,
-	.write          = vb2_fop_write,
+	.पढ़ो           = vb2_fop_पढ़ो,
+	.ग_लिखो          = vb2_fop_ग_लिखो,
 	.poll		= vb2_fop_poll,
 	.unlocked_ioctl = video_ioctl2,
 	.mmap           = vb2_fop_mmap,
-};
+पूर्ण;
 
-static const struct v4l2_file_operations vivid_radio_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations vivid_radio_fops = अणु
 	.owner		= THIS_MODULE,
-	.open           = v4l2_fh_open,
+	.खोलो           = v4l2_fh_खोलो,
 	.release        = vivid_fop_release,
-	.read           = vivid_radio_read,
-	.write          = vivid_radio_write,
+	.पढ़ो           = vivid_radio_पढ़ो,
+	.ग_लिखो          = vivid_radio_ग_लिखो,
 	.poll		= vivid_radio_poll,
 	.unlocked_ioctl = video_ioctl2,
-};
+पूर्ण;
 
-static const struct v4l2_ioctl_ops vivid_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops vivid_ioctl_ops = अणु
 	.vidioc_querycap		= vidioc_querycap,
 
-	.vidioc_enum_fmt_vid_cap	= vivid_enum_fmt_cap,
+	.vidioc_क्रमागत_fmt_vid_cap	= vivid_क्रमागत_fmt_cap,
 	.vidioc_g_fmt_vid_cap		= vivid_g_fmt_cap,
 	.vidioc_try_fmt_vid_cap		= vivid_try_fmt_cap,
 	.vidioc_s_fmt_vid_cap		= vivid_s_fmt_cap,
@@ -667,7 +668,7 @@ static const struct v4l2_ioctl_ops vivid_ioctl_ops = {
 	.vidioc_try_fmt_vid_cap_mplane	= vivid_try_fmt_cap_mplane,
 	.vidioc_s_fmt_vid_cap_mplane	= vivid_s_fmt_cap_mplane,
 
-	.vidioc_enum_fmt_vid_out	= vivid_enum_fmt_vid,
+	.vidioc_क्रमागत_fmt_vid_out	= vivid_क्रमागत_fmt_vid,
 	.vidioc_g_fmt_vid_out		= vidioc_g_fmt_vid_out,
 	.vidioc_try_fmt_vid_out		= vidioc_try_fmt_vid_out,
 	.vidioc_s_fmt_vid_out		= vidioc_s_fmt_vid_out,
@@ -696,18 +697,18 @@ static const struct v4l2_ioctl_ops vivid_ioctl_ops = {
 	.vidioc_try_fmt_sliced_vbi_out  = vidioc_try_fmt_sliced_vbi_out,
 	.vidioc_s_fmt_sliced_vbi_out    = vidioc_s_fmt_sliced_vbi_out,
 
-	.vidioc_enum_fmt_sdr_cap	= vidioc_enum_fmt_sdr_cap,
+	.vidioc_क्रमागत_fmt_sdr_cap	= vidioc_क्रमागत_fmt_sdr_cap,
 	.vidioc_g_fmt_sdr_cap		= vidioc_g_fmt_sdr_cap,
 	.vidioc_try_fmt_sdr_cap		= vidioc_try_fmt_sdr_cap,
 	.vidioc_s_fmt_sdr_cap		= vidioc_s_fmt_sdr_cap,
 
 	.vidioc_overlay			= vidioc_overlay,
-	.vidioc_enum_framesizes		= vidioc_enum_framesizes,
-	.vidioc_enum_frameintervals	= vidioc_enum_frameintervals,
+	.vidioc_क्रमागत_framesizes		= vidioc_क्रमागत_framesizes,
+	.vidioc_क्रमागत_frameपूर्णांकervals	= vidioc_क्रमागत_frameपूर्णांकervals,
 	.vidioc_g_parm			= vidioc_g_parm,
 	.vidioc_s_parm			= vidioc_s_parm,
 
-	.vidioc_enum_fmt_vid_overlay	= vidioc_enum_fmt_vid_overlay,
+	.vidioc_क्रमागत_fmt_vid_overlay	= vidioc_क्रमागत_fmt_vid_overlay,
 	.vidioc_g_fmt_vid_overlay	= vidioc_g_fmt_vid_overlay,
 	.vidioc_try_fmt_vid_overlay	= vidioc_try_fmt_vid_overlay,
 	.vidioc_s_fmt_vid_overlay	= vidioc_s_fmt_vid_overlay,
@@ -727,12 +728,12 @@ static const struct v4l2_ioctl_ops vivid_ioctl_ops = {
 	.vidioc_streamon		= vb2_ioctl_streamon,
 	.vidioc_streamoff		= vb2_ioctl_streamoff,
 
-	.vidioc_enum_input		= vivid_enum_input,
+	.vidioc_क्रमागत_input		= vivid_क्रमागत_input,
 	.vidioc_g_input			= vivid_g_input,
 	.vidioc_s_input			= vivid_s_input,
 	.vidioc_s_audio			= vidioc_s_audio,
 	.vidioc_g_audio			= vidioc_g_audio,
-	.vidioc_enumaudio		= vidioc_enumaudio,
+	.vidioc_क्रमागतaudio		= vidioc_क्रमागतaudio,
 	.vidioc_s_frequency		= vidioc_s_frequency,
 	.vidioc_g_frequency		= vidioc_g_frequency,
 	.vidioc_s_tuner			= vidioc_s_tuner,
@@ -740,14 +741,14 @@ static const struct v4l2_ioctl_ops vivid_ioctl_ops = {
 	.vidioc_s_modulator		= vidioc_s_modulator,
 	.vidioc_g_modulator		= vidioc_g_modulator,
 	.vidioc_s_hw_freq_seek		= vidioc_s_hw_freq_seek,
-	.vidioc_enum_freq_bands		= vidioc_enum_freq_bands,
+	.vidioc_क्रमागत_freq_bands		= vidioc_क्रमागत_freq_bands,
 
-	.vidioc_enum_output		= vidioc_enum_output,
+	.vidioc_क्रमागत_output		= vidioc_क्रमागत_output,
 	.vidioc_g_output		= vidioc_g_output,
 	.vidioc_s_output		= vidioc_s_output,
-	.vidioc_s_audout		= vidioc_s_audout,
-	.vidioc_g_audout		= vidioc_g_audout,
-	.vidioc_enumaudout		= vidioc_enumaudout,
+	.vidioc_s_auकरोut		= vidioc_s_auकरोut,
+	.vidioc_g_auकरोut		= vidioc_g_auकरोut,
+	.vidioc_क्रमागतauकरोut		= vidioc_क्रमागतauकरोut,
 
 	.vidioc_querystd		= vidioc_querystd,
 	.vidioc_g_std			= vidioc_g_std,
@@ -755,7 +756,7 @@ static const struct v4l2_ioctl_ops vivid_ioctl_ops = {
 	.vidioc_s_dv_timings		= vidioc_s_dv_timings,
 	.vidioc_g_dv_timings		= vidioc_g_dv_timings,
 	.vidioc_query_dv_timings	= vidioc_query_dv_timings,
-	.vidioc_enum_dv_timings		= vidioc_enum_dv_timings,
+	.vidioc_क्रमागत_dv_timings		= vidioc_क्रमागत_dv_timings,
 	.vidioc_dv_timings_cap		= vidioc_dv_timings_cap,
 	.vidioc_g_edid			= vidioc_g_edid,
 	.vidioc_s_edid			= vidioc_s_edid,
@@ -764,233 +765,233 @@ static const struct v4l2_ioctl_ops vivid_ioctl_ops = {
 	.vidioc_subscribe_event		= vidioc_subscribe_event,
 	.vidioc_unsubscribe_event	= v4l2_event_unsubscribe,
 
-	.vidioc_enum_fmt_meta_cap	= vidioc_enum_fmt_meta_cap,
+	.vidioc_क्रमागत_fmt_meta_cap	= vidioc_क्रमागत_fmt_meta_cap,
 	.vidioc_g_fmt_meta_cap		= vidioc_g_fmt_meta_cap,
 	.vidioc_s_fmt_meta_cap		= vidioc_g_fmt_meta_cap,
 	.vidioc_try_fmt_meta_cap	= vidioc_g_fmt_meta_cap,
 
-	.vidioc_enum_fmt_meta_out       = vidioc_enum_fmt_meta_out,
+	.vidioc_क्रमागत_fmt_meta_out       = vidioc_क्रमागत_fmt_meta_out,
 	.vidioc_g_fmt_meta_out          = vidioc_g_fmt_meta_out,
 	.vidioc_s_fmt_meta_out          = vidioc_g_fmt_meta_out,
 	.vidioc_try_fmt_meta_out        = vidioc_g_fmt_meta_out,
-};
+पूर्ण;
 
 /* -----------------------------------------------------------------
 	Initialization and module stuff
    ------------------------------------------------------------------*/
 
-static void vivid_dev_release(struct v4l2_device *v4l2_dev)
-{
-	struct vivid_dev *dev = container_of(v4l2_dev, struct vivid_dev, v4l2_dev);
+अटल व्योम vivid_dev_release(काष्ठा v4l2_device *v4l2_dev)
+अणु
+	काष्ठा vivid_dev *dev = container_of(v4l2_dev, काष्ठा vivid_dev, v4l2_dev);
 
-	vivid_free_controls(dev);
-	v4l2_device_unregister(&dev->v4l2_dev);
-#ifdef CONFIG_MEDIA_CONTROLLER
+	vivid_मुक्त_controls(dev);
+	v4l2_device_unरेजिस्टर(&dev->v4l2_dev);
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 	media_device_cleanup(&dev->mdev);
-#endif
-	vfree(dev->scaled_line);
-	vfree(dev->blended_line);
-	vfree(dev->edid);
-	vfree(dev->bitmap_cap);
-	vfree(dev->bitmap_out);
-	tpg_free(&dev->tpg);
-	kfree(dev->query_dv_timings_qmenu);
-	kfree(dev->query_dv_timings_qmenu_strings);
-	kfree(dev);
-}
+#पूर्ण_अगर
+	vमुक्त(dev->scaled_line);
+	vमुक्त(dev->blended_line);
+	vमुक्त(dev->edid);
+	vमुक्त(dev->biपंचांगap_cap);
+	vमुक्त(dev->biपंचांगap_out);
+	tpg_मुक्त(&dev->tpg);
+	kमुक्त(dev->query_dv_timings_qmenu);
+	kमुक्त(dev->query_dv_timings_qmenu_strings);
+	kमुक्त(dev);
+पूर्ण
 
-#ifdef CONFIG_MEDIA_CONTROLLER
-static int vivid_req_validate(struct media_request *req)
-{
-	struct vivid_dev *dev = container_of(req->mdev, struct vivid_dev, mdev);
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
+अटल पूर्णांक vivid_req_validate(काष्ठा media_request *req)
+अणु
+	काष्ठा vivid_dev *dev = container_of(req->mdev, काष्ठा vivid_dev, mdev);
 
-	if (dev->req_validate_error) {
+	अगर (dev->req_validate_error) अणु
 		dev->req_validate_error = false;
-		return -EINVAL;
-	}
-	return vb2_request_validate(req);
-}
+		वापस -EINVAL;
+	पूर्ण
+	वापस vb2_request_validate(req);
+पूर्ण
 
-static const struct media_device_ops vivid_media_ops = {
+अटल स्थिर काष्ठा media_device_ops vivid_media_ops = अणु
 	.req_validate = vivid_req_validate,
 	.req_queue = vb2_request_queue,
-};
-#endif
+पूर्ण;
+#पूर्ण_अगर
 
-static int vivid_create_queue(struct vivid_dev *dev,
-			      struct vb2_queue *q,
+अटल पूर्णांक vivid_create_queue(काष्ठा vivid_dev *dev,
+			      काष्ठा vb2_queue *q,
 			      u32 buf_type,
-			      unsigned int min_buffers_needed,
-			      const struct vb2_ops *ops)
-{
-	if (buf_type == V4L2_BUF_TYPE_VIDEO_CAPTURE && dev->multiplanar)
+			      अचिन्हित पूर्णांक min_buffers_needed,
+			      स्थिर काष्ठा vb2_ops *ops)
+अणु
+	अगर (buf_type == V4L2_BUF_TYPE_VIDEO_CAPTURE && dev->multiplanar)
 		buf_type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
-	else if (buf_type == V4L2_BUF_TYPE_VIDEO_OUTPUT && dev->multiplanar)
+	अन्यथा अगर (buf_type == V4L2_BUF_TYPE_VIDEO_OUTPUT && dev->multiplanar)
 		buf_type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
-	else if (buf_type == V4L2_BUF_TYPE_VBI_CAPTURE && !dev->has_raw_vbi_cap)
+	अन्यथा अगर (buf_type == V4L2_BUF_TYPE_VBI_CAPTURE && !dev->has_raw_vbi_cap)
 		buf_type = V4L2_BUF_TYPE_SLICED_VBI_CAPTURE;
-	else if (buf_type == V4L2_BUF_TYPE_VBI_OUTPUT && !dev->has_raw_vbi_out)
+	अन्यथा अगर (buf_type == V4L2_BUF_TYPE_VBI_OUTPUT && !dev->has_raw_vbi_out)
 		buf_type = V4L2_BUF_TYPE_SLICED_VBI_OUTPUT;
 
 	q->type = buf_type;
 	q->io_modes = VB2_MMAP | VB2_DMABUF;
 	q->io_modes |= V4L2_TYPE_IS_OUTPUT(buf_type) ?  VB2_WRITE : VB2_READ;
-	if (allocators[dev->inst] != 1)
+	अगर (allocators[dev->inst] != 1)
 		q->io_modes |= VB2_USERPTR;
 	q->drv_priv = dev;
-	q->buf_struct_size = sizeof(struct vivid_buffer);
+	q->buf_काष्ठा_size = माप(काष्ठा vivid_buffer);
 	q->ops = ops;
 	q->mem_ops = allocators[dev->inst] == 1 ? &vb2_dma_contig_memops :
-						  &vb2_vmalloc_memops;
-	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+						  &vb2_vदो_स्मृति_memops;
+	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	q->min_buffers_needed = min_buffers_needed;
 	q->lock = &dev->mutex;
 	q->dev = dev->v4l2_dev.dev;
 	q->supports_requests = true;
-	q->allow_cache_hints = (cache_hints[dev->inst] == 1);
+	q->allow_cache_hपूर्णांकs = (cache_hपूर्णांकs[dev->inst] == 1);
 
-	return vb2_queue_init(q);
-}
+	वापस vb2_queue_init(q);
+पूर्ण
 
-static int vivid_detect_feature_set(struct vivid_dev *dev, int inst,
-				    unsigned node_type,
+अटल पूर्णांक vivid_detect_feature_set(काष्ठा vivid_dev *dev, पूर्णांक inst,
+				    अचिन्हित node_type,
 				    bool *has_tuner,
 				    bool *has_modulator,
-				    int *ccs_cap,
-				    int *ccs_out,
-				    unsigned in_type_counter[4],
-				    unsigned out_type_counter[4])
-{
-	int i;
+				    पूर्णांक *ccs_cap,
+				    पूर्णांक *ccs_out,
+				    अचिन्हित in_type_counter[4],
+				    अचिन्हित out_type_counter[4])
+अणु
+	पूर्णांक i;
 
-	/* do we use single- or multi-planar? */
+	/* करो we use single- or multi-planar? */
 	dev->multiplanar = multiplanar[inst] > 1;
 	v4l2_info(&dev->v4l2_dev, "using %splanar format API\n",
 			dev->multiplanar ? "multi" : "single ");
 
-	/* how many inputs do we have and of what type? */
-	dev->num_inputs = num_inputs[inst];
-	if (dev->num_inputs < 1)
-		dev->num_inputs = 1;
-	if (dev->num_inputs >= MAX_INPUTS)
-		dev->num_inputs = MAX_INPUTS;
-	for (i = 0; i < dev->num_inputs; i++) {
+	/* how many inमाला_दो करो we have and of what type? */
+	dev->num_inमाला_दो = num_inमाला_दो[inst];
+	अगर (dev->num_inमाला_दो < 1)
+		dev->num_inमाला_दो = 1;
+	अगर (dev->num_inमाला_दो >= MAX_INPUTS)
+		dev->num_inमाला_दो = MAX_INPUTS;
+	क्रम (i = 0; i < dev->num_inमाला_दो; i++) अणु
 		dev->input_type[i] = (input_types[inst] >> (i * 2)) & 0x3;
 		dev->input_name_counter[i] = in_type_counter[dev->input_type[i]]++;
-	}
-	dev->has_audio_inputs = in_type_counter[TV] && in_type_counter[SVID];
-	if (in_type_counter[HDMI] == 16) {
-		/* The CEC physical address only allows for max 15 inputs */
+	पूर्ण
+	dev->has_audio_inमाला_दो = in_type_counter[TV] && in_type_counter[SVID];
+	अगर (in_type_counter[HDMI] == 16) अणु
+		/* The CEC physical address only allows क्रम max 15 inमाला_दो */
 		in_type_counter[HDMI]--;
-		dev->num_inputs--;
-	}
-	dev->num_hdmi_inputs = in_type_counter[HDMI];
+		dev->num_inमाला_दो--;
+	पूर्ण
+	dev->num_hdmi_inमाला_दो = in_type_counter[HDMI];
 
-	/* how many outputs do we have and of what type? */
-	dev->num_outputs = num_outputs[inst];
-	if (dev->num_outputs < 1)
-		dev->num_outputs = 1;
-	if (dev->num_outputs >= MAX_OUTPUTS)
-		dev->num_outputs = MAX_OUTPUTS;
-	for (i = 0; i < dev->num_outputs; i++) {
+	/* how many outमाला_दो करो we have and of what type? */
+	dev->num_outमाला_दो = num_outमाला_दो[inst];
+	अगर (dev->num_outमाला_दो < 1)
+		dev->num_outमाला_दो = 1;
+	अगर (dev->num_outमाला_दो >= MAX_OUTPUTS)
+		dev->num_outमाला_दो = MAX_OUTPUTS;
+	क्रम (i = 0; i < dev->num_outमाला_दो; i++) अणु
 		dev->output_type[i] = ((output_types[inst] >> i) & 1) ? HDMI : SVID;
 		dev->output_name_counter[i] = out_type_counter[dev->output_type[i]]++;
 		dev->display_present[i] = true;
-	}
-	dev->has_audio_outputs = out_type_counter[SVID];
-	if (out_type_counter[HDMI] == 16) {
+	पूर्ण
+	dev->has_audio_outमाला_दो = out_type_counter[SVID];
+	अगर (out_type_counter[HDMI] == 16) अणु
 		/*
-		 * The CEC physical address only allows for max 15 inputs,
-		 * so outputs are also limited to 15 to allow for easy
+		 * The CEC physical address only allows क्रम max 15 inमाला_दो,
+		 * so outमाला_दो are also limited to 15 to allow क्रम easy
 		 * CEC output to input mapping.
 		 */
 		out_type_counter[HDMI]--;
-		dev->num_outputs--;
-	}
-	dev->num_hdmi_outputs = out_type_counter[HDMI];
+		dev->num_outमाला_दो--;
+	पूर्ण
+	dev->num_hdmi_outमाला_दो = out_type_counter[HDMI];
 
-	/* do we create a video capture device? */
+	/* करो we create a video capture device? */
 	dev->has_vid_cap = node_type & 0x0001;
 
-	/* do we create a vbi capture device? */
-	if (in_type_counter[TV] || in_type_counter[SVID]) {
+	/* करो we create a vbi capture device? */
+	अगर (in_type_counter[TV] || in_type_counter[SVID]) अणु
 		dev->has_raw_vbi_cap = node_type & 0x0004;
 		dev->has_sliced_vbi_cap = node_type & 0x0008;
 		dev->has_vbi_cap = dev->has_raw_vbi_cap | dev->has_sliced_vbi_cap;
-	}
+	पूर्ण
 
-	/* do we create a meta capture device */
+	/* करो we create a meta capture device */
 	dev->has_meta_cap = node_type & 0x20000;
 
 	/* sanity checks */
-	if ((in_type_counter[WEBCAM] || in_type_counter[HDMI]) &&
-	    !dev->has_vid_cap && !dev->has_meta_cap) {
+	अगर ((in_type_counter[WEBCAM] || in_type_counter[HDMI]) &&
+	    !dev->has_vid_cap && !dev->has_meta_cap) अणु
 		v4l2_warn(&dev->v4l2_dev,
 			  "Webcam or HDMI input without video or metadata nodes\n");
-		return -EINVAL;
-	}
-	if ((in_type_counter[TV] || in_type_counter[SVID]) &&
-	    !dev->has_vid_cap && !dev->has_vbi_cap && !dev->has_meta_cap) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर ((in_type_counter[TV] || in_type_counter[SVID]) &&
+	    !dev->has_vid_cap && !dev->has_vbi_cap && !dev->has_meta_cap) अणु
 		v4l2_warn(&dev->v4l2_dev,
 			  "TV or S-Video input without video, VBI or metadata nodes\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* do we create a video output device? */
+	/* करो we create a video output device? */
 	dev->has_vid_out = node_type & 0x0100;
 
-	/* do we create a vbi output device? */
-	if (out_type_counter[SVID]) {
+	/* करो we create a vbi output device? */
+	अगर (out_type_counter[SVID]) अणु
 		dev->has_raw_vbi_out = node_type & 0x0400;
 		dev->has_sliced_vbi_out = node_type & 0x0800;
 		dev->has_vbi_out = dev->has_raw_vbi_out | dev->has_sliced_vbi_out;
-	}
+	पूर्ण
 
-	/* do we create a metadata output device */
+	/* करो we create a metadata output device */
 	dev->has_meta_out = node_type & 0x40000;
 
 	/* sanity checks */
-	if (out_type_counter[SVID] &&
-	    !dev->has_vid_out && !dev->has_vbi_out && !dev->has_meta_out) {
+	अगर (out_type_counter[SVID] &&
+	    !dev->has_vid_out && !dev->has_vbi_out && !dev->has_meta_out) अणु
 		v4l2_warn(&dev->v4l2_dev,
 			  "S-Video output without video, VBI or metadata nodes\n");
-		return -EINVAL;
-	}
-	if (out_type_counter[HDMI] && !dev->has_vid_out && !dev->has_meta_out) {
+		वापस -EINVAL;
+	पूर्ण
+	अगर (out_type_counter[HDMI] && !dev->has_vid_out && !dev->has_meta_out) अणु
 		v4l2_warn(&dev->v4l2_dev,
 			  "HDMI output without video or metadata nodes\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* do we create a radio receiver device? */
+	/* करो we create a radio receiver device? */
 	dev->has_radio_rx = node_type & 0x0010;
 
-	/* do we create a radio transmitter device? */
+	/* करो we create a radio transmitter device? */
 	dev->has_radio_tx = node_type & 0x1000;
 
-	/* do we create a software defined radio capture device? */
+	/* करो we create a software defined radio capture device? */
 	dev->has_sdr_cap = node_type & 0x0020;
 
-	/* do we have a TV tuner? */
+	/* करो we have a TV tuner? */
 	dev->has_tv_tuner = in_type_counter[TV];
 
-	/* do we have a tuner? */
+	/* करो we have a tuner? */
 	*has_tuner = ((dev->has_vid_cap || dev->has_vbi_cap) && in_type_counter[TV]) ||
 		      dev->has_radio_rx || dev->has_sdr_cap;
 
-	/* do we have a modulator? */
+	/* करो we have a modulator? */
 	*has_modulator = dev->has_radio_tx;
 
-	if (dev->has_vid_cap)
-		/* do we have a framebuffer for overlay testing? */
+	अगर (dev->has_vid_cap)
+		/* करो we have a framebuffer क्रम overlay testing? */
 		dev->has_fb = node_type & 0x10000;
 
-	/* can we do crop/compose/scaling while capturing? */
-	if (no_error_inj && *ccs_cap == -1)
+	/* can we करो crop/compose/scaling जबतक capturing? */
+	अगर (no_error_inj && *ccs_cap == -1)
 		*ccs_cap = 7;
 
-	/* if ccs_cap == -1, then the user can select it using controls */
-	if (*ccs_cap != -1) {
+	/* अगर ccs_cap == -1, then the user can select it using controls */
+	अगर (*ccs_cap != -1) अणु
 		dev->has_crop_cap = *ccs_cap & 1;
 		dev->has_compose_cap = *ccs_cap & 2;
 		dev->has_scaler_cap = *ccs_cap & 4;
@@ -998,14 +999,14 @@ static int vivid_detect_feature_set(struct vivid_dev *dev, int inst,
 			dev->has_crop_cap ? 'Y' : 'N',
 			dev->has_compose_cap ? 'Y' : 'N',
 			dev->has_scaler_cap ? 'Y' : 'N');
-	}
+	पूर्ण
 
-	/* can we do crop/compose/scaling with video output? */
-	if (no_error_inj && *ccs_out == -1)
+	/* can we करो crop/compose/scaling with video output? */
+	अगर (no_error_inj && *ccs_out == -1)
 		*ccs_out = 7;
 
-	/* if ccs_out == -1, then the user can select it using controls */
-	if (*ccs_out != -1) {
+	/* अगर ccs_out == -1, then the user can select it using controls */
+	अगर (*ccs_out != -1) अणु
 		dev->has_crop_out = *ccs_out & 1;
 		dev->has_compose_out = *ccs_out & 2;
 		dev->has_scaler_out = *ccs_out & 4;
@@ -1013,104 +1014,104 @@ static int vivid_detect_feature_set(struct vivid_dev *dev, int inst,
 			dev->has_crop_out ? 'Y' : 'N',
 			dev->has_compose_out ? 'Y' : 'N',
 			dev->has_scaler_out ? 'Y' : 'N');
-	}
+	पूर्ण
 
-	/* do we create a touch capture device */
+	/* करो we create a touch capture device */
 	dev->has_touch_cap = node_type & 0x80000;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void vivid_set_capabilities(struct vivid_dev *dev)
-{
-	if (dev->has_vid_cap) {
+अटल व्योम vivid_set_capabilities(काष्ठा vivid_dev *dev)
+अणु
+	अगर (dev->has_vid_cap) अणु
 		/* set up the capabilities of the video capture device */
 		dev->vid_cap_caps = dev->multiplanar ?
 			V4L2_CAP_VIDEO_CAPTURE_MPLANE :
 			V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OVERLAY;
 		dev->vid_cap_caps |= V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
-		if (dev->has_audio_inputs)
+		अगर (dev->has_audio_inमाला_दो)
 			dev->vid_cap_caps |= V4L2_CAP_AUDIO;
-		if (dev->has_tv_tuner)
+		अगर (dev->has_tv_tuner)
 			dev->vid_cap_caps |= V4L2_CAP_TUNER;
-	}
-	if (dev->has_vid_out) {
+	पूर्ण
+	अगर (dev->has_vid_out) अणु
 		/* set up the capabilities of the video output device */
 		dev->vid_out_caps = dev->multiplanar ?
 			V4L2_CAP_VIDEO_OUTPUT_MPLANE :
 			V4L2_CAP_VIDEO_OUTPUT;
-		if (dev->has_fb)
+		अगर (dev->has_fb)
 			dev->vid_out_caps |= V4L2_CAP_VIDEO_OUTPUT_OVERLAY;
 		dev->vid_out_caps |= V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
-		if (dev->has_audio_outputs)
+		अगर (dev->has_audio_outमाला_दो)
 			dev->vid_out_caps |= V4L2_CAP_AUDIO;
-	}
-	if (dev->has_vbi_cap) {
+	पूर्ण
+	अगर (dev->has_vbi_cap) अणु
 		/* set up the capabilities of the vbi capture device */
 		dev->vbi_cap_caps = (dev->has_raw_vbi_cap ? V4L2_CAP_VBI_CAPTURE : 0) |
 				    (dev->has_sliced_vbi_cap ? V4L2_CAP_SLICED_VBI_CAPTURE : 0);
 		dev->vbi_cap_caps |= V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
-		if (dev->has_audio_inputs)
+		अगर (dev->has_audio_inमाला_दो)
 			dev->vbi_cap_caps |= V4L2_CAP_AUDIO;
-		if (dev->has_tv_tuner)
+		अगर (dev->has_tv_tuner)
 			dev->vbi_cap_caps |= V4L2_CAP_TUNER;
-	}
-	if (dev->has_vbi_out) {
+	पूर्ण
+	अगर (dev->has_vbi_out) अणु
 		/* set up the capabilities of the vbi output device */
 		dev->vbi_out_caps = (dev->has_raw_vbi_out ? V4L2_CAP_VBI_OUTPUT : 0) |
 				    (dev->has_sliced_vbi_out ? V4L2_CAP_SLICED_VBI_OUTPUT : 0);
 		dev->vbi_out_caps |= V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
-		if (dev->has_audio_outputs)
+		अगर (dev->has_audio_outमाला_दो)
 			dev->vbi_out_caps |= V4L2_CAP_AUDIO;
-	}
-	if (dev->has_sdr_cap) {
+	पूर्ण
+	अगर (dev->has_sdr_cap) अणु
 		/* set up the capabilities of the sdr capture device */
 		dev->sdr_cap_caps = V4L2_CAP_SDR_CAPTURE | V4L2_CAP_TUNER;
 		dev->sdr_cap_caps |= V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
-	}
+	पूर्ण
 	/* set up the capabilities of the radio receiver device */
-	if (dev->has_radio_rx)
+	अगर (dev->has_radio_rx)
 		dev->radio_rx_caps = V4L2_CAP_RADIO | V4L2_CAP_RDS_CAPTURE |
 				     V4L2_CAP_HW_FREQ_SEEK | V4L2_CAP_TUNER |
 				     V4L2_CAP_READWRITE;
 	/* set up the capabilities of the radio transmitter device */
-	if (dev->has_radio_tx)
+	अगर (dev->has_radio_tx)
 		dev->radio_tx_caps = V4L2_CAP_RDS_OUTPUT | V4L2_CAP_MODULATOR |
 				     V4L2_CAP_READWRITE;
 
 	/* set up the capabilities of meta capture device */
-	if (dev->has_meta_cap) {
+	अगर (dev->has_meta_cap) अणु
 		dev->meta_cap_caps = V4L2_CAP_META_CAPTURE |
 				     V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
-		if (dev->has_audio_inputs)
+		अगर (dev->has_audio_inमाला_दो)
 			dev->meta_cap_caps |= V4L2_CAP_AUDIO;
-		if (dev->has_tv_tuner)
+		अगर (dev->has_tv_tuner)
 			dev->meta_cap_caps |= V4L2_CAP_TUNER;
-	}
+	पूर्ण
 	/* set up the capabilities of meta output device */
-	if (dev->has_meta_out) {
+	अगर (dev->has_meta_out) अणु
 		dev->meta_out_caps = V4L2_CAP_META_OUTPUT |
 				     V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;
-		if (dev->has_audio_outputs)
+		अगर (dev->has_audio_outमाला_दो)
 			dev->meta_out_caps |= V4L2_CAP_AUDIO;
-	}
+	पूर्ण
 	/* set up the capabilities of the touch capture device */
-	if (dev->has_touch_cap) {
+	अगर (dev->has_touch_cap) अणु
 		dev->touch_cap_caps = V4L2_CAP_TOUCH | V4L2_CAP_STREAMING |
 				      V4L2_CAP_READWRITE;
 		dev->touch_cap_caps |= dev->multiplanar ?
 			V4L2_CAP_VIDEO_CAPTURE_MPLANE : V4L2_CAP_VIDEO_CAPTURE;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void vivid_disable_unused_ioctls(struct vivid_dev *dev,
+अटल व्योम vivid_disable_unused_ioctls(काष्ठा vivid_dev *dev,
 					bool has_tuner,
 					bool has_modulator,
-					unsigned in_type_counter[4],
-					unsigned out_type_counter[4])
-{
+					अचिन्हित in_type_counter[4],
+					अचिन्हित out_type_counter[4])
+अणु
 	/* disable invalid ioctls based on the feature set */
-	if (!dev->has_audio_inputs) {
+	अगर (!dev->has_audio_inमाला_दो) अणु
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_S_AUDIO);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_G_AUDIO);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_ENUMAUDIO);
@@ -1120,8 +1121,8 @@ static void vivid_disable_unused_ioctls(struct vivid_dev *dev,
 		v4l2_disable_ioctl(&dev->meta_cap_dev, VIDIOC_S_AUDIO);
 		v4l2_disable_ioctl(&dev->meta_cap_dev, VIDIOC_G_AUDIO);
 		v4l2_disable_ioctl(&dev->meta_cap_dev, VIDIOC_ENUMAUDIO);
-	}
-	if (!dev->has_audio_outputs) {
+	पूर्ण
+	अगर (!dev->has_audio_outमाला_दो) अणु
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_S_AUDOUT);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_G_AUDOUT);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_ENUMAUDOUT);
@@ -1131,35 +1132,35 @@ static void vivid_disable_unused_ioctls(struct vivid_dev *dev,
 		v4l2_disable_ioctl(&dev->meta_out_dev, VIDIOC_S_AUDOUT);
 		v4l2_disable_ioctl(&dev->meta_out_dev, VIDIOC_G_AUDOUT);
 		v4l2_disable_ioctl(&dev->meta_out_dev, VIDIOC_ENUMAUDOUT);
-	}
-	if (!in_type_counter[TV] && !in_type_counter[SVID]) {
+	पूर्ण
+	अगर (!in_type_counter[TV] && !in_type_counter[SVID]) अणु
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_S_STD);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_G_STD);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_ENUMSTD);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_QUERYSTD);
-	}
-	if (!out_type_counter[SVID]) {
+	पूर्ण
+	अगर (!out_type_counter[SVID]) अणु
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_S_STD);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_G_STD);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_ENUMSTD);
-	}
-	if (!has_tuner && !has_modulator) {
+	पूर्ण
+	अगर (!has_tuner && !has_modulator) अणु
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_S_FREQUENCY);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_G_FREQUENCY);
 		v4l2_disable_ioctl(&dev->vbi_cap_dev, VIDIOC_S_FREQUENCY);
 		v4l2_disable_ioctl(&dev->vbi_cap_dev, VIDIOC_G_FREQUENCY);
 		v4l2_disable_ioctl(&dev->meta_cap_dev, VIDIOC_S_FREQUENCY);
 		v4l2_disable_ioctl(&dev->meta_cap_dev, VIDIOC_G_FREQUENCY);
-	}
-	if (!has_tuner) {
+	पूर्ण
+	अगर (!has_tuner) अणु
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_S_TUNER);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_G_TUNER);
 		v4l2_disable_ioctl(&dev->vbi_cap_dev, VIDIOC_S_TUNER);
 		v4l2_disable_ioctl(&dev->vbi_cap_dev, VIDIOC_G_TUNER);
 		v4l2_disable_ioctl(&dev->meta_cap_dev, VIDIOC_S_TUNER);
 		v4l2_disable_ioctl(&dev->meta_cap_dev, VIDIOC_G_TUNER);
-	}
-	if (in_type_counter[HDMI] == 0) {
+	पूर्ण
+	अगर (in_type_counter[HDMI] == 0) अणु
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_S_EDID);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_G_EDID);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_DV_TIMINGS_CAP);
@@ -1167,19 +1168,19 @@ static void vivid_disable_unused_ioctls(struct vivid_dev *dev,
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_S_DV_TIMINGS);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_ENUM_DV_TIMINGS);
 		v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_QUERY_DV_TIMINGS);
-	}
-	if (out_type_counter[HDMI] == 0) {
+	पूर्ण
+	अगर (out_type_counter[HDMI] == 0) अणु
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_G_EDID);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_DV_TIMINGS_CAP);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_G_DV_TIMINGS);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_S_DV_TIMINGS);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_ENUM_DV_TIMINGS);
-	}
-	if (!dev->has_fb) {
+	पूर्ण
+	अगर (!dev->has_fb) अणु
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_G_FBUF);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_S_FBUF);
 		v4l2_disable_ioctl(&dev->vid_out_dev, VIDIOC_OVERLAY);
-	}
+	पूर्ण
 	v4l2_disable_ioctl(&dev->vid_cap_dev, VIDIOC_S_HW_FREQ_SEEK);
 	v4l2_disable_ioctl(&dev->vbi_cap_dev, VIDIOC_S_HW_FREQ_SEEK);
 	v4l2_disable_ioctl(&dev->sdr_cap_dev, VIDIOC_S_HW_FREQ_SEEK);
@@ -1195,151 +1196,151 @@ static void vivid_disable_unused_ioctls(struct vivid_dev *dev,
 	v4l2_disable_ioctl(&dev->touch_cap_dev, VIDIOC_S_PARM);
 	v4l2_disable_ioctl(&dev->touch_cap_dev, VIDIOC_ENUM_FRAMESIZES);
 	v4l2_disable_ioctl(&dev->touch_cap_dev, VIDIOC_ENUM_FRAMEINTERVALS);
-}
+पूर्ण
 
-static int vivid_init_dv_timings(struct vivid_dev *dev)
-{
-	int i;
+अटल पूर्णांक vivid_init_dv_timings(काष्ठा vivid_dev *dev)
+अणु
+	पूर्णांक i;
 
-	while (v4l2_dv_timings_presets[dev->query_dv_timings_size].bt.width)
+	जबतक (v4l2_dv_timings_presets[dev->query_dv_timings_size].bt.width)
 		dev->query_dv_timings_size++;
 
 	/*
-	 * Create a char pointer array that points to the names of all the
+	 * Create a अक्षर poपूर्णांकer array that poपूर्णांकs to the names of all the
 	 * preset timings
 	 */
-	dev->query_dv_timings_qmenu = kmalloc_array(dev->query_dv_timings_size,
-						    sizeof(char *), GFP_KERNEL);
+	dev->query_dv_timings_qmenu = kदो_स्मृति_array(dev->query_dv_timings_size,
+						    माप(अक्षर *), GFP_KERNEL);
 	/*
 	 * Create a string array containing the names of all the preset
-	 * timings. Each name is max 31 chars long (+ terminating 0).
+	 * timings. Each name is max 31 अक्षरs दीर्घ (+ terminating 0).
 	 */
 	dev->query_dv_timings_qmenu_strings =
-		kmalloc_array(dev->query_dv_timings_size, 32, GFP_KERNEL);
+		kदो_स्मृति_array(dev->query_dv_timings_size, 32, GFP_KERNEL);
 
-	if (!dev->query_dv_timings_qmenu ||
+	अगर (!dev->query_dv_timings_qmenu ||
 	    !dev->query_dv_timings_qmenu_strings)
-		return -ENOMEM;
+		वापस -ENOMEM;
 
-	for (i = 0; i < dev->query_dv_timings_size; i++) {
-		const struct v4l2_bt_timings *bt = &v4l2_dv_timings_presets[i].bt;
-		char *p = dev->query_dv_timings_qmenu_strings + i * 32;
+	क्रम (i = 0; i < dev->query_dv_timings_size; i++) अणु
+		स्थिर काष्ठा v4l2_bt_timings *bt = &v4l2_dv_timings_presets[i].bt;
+		अक्षर *p = dev->query_dv_timings_qmenu_strings + i * 32;
 		u32 htot, vtot;
 
 		dev->query_dv_timings_qmenu[i] = p;
 
 		htot = V4L2_DV_BT_FRAME_WIDTH(bt);
 		vtot = V4L2_DV_BT_FRAME_HEIGHT(bt);
-		snprintf(p, 32, "%ux%u%s%u",
-			bt->width, bt->height, bt->interlaced ? "i" : "p",
-			(u32)bt->pixelclock / (htot * vtot));
-	}
+		snम_लिखो(p, 32, "%ux%u%s%u",
+			bt->width, bt->height, bt->पूर्णांकerlaced ? "i" : "p",
+			(u32)bt->pixelघड़ी / (htot * vtot));
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vivid_create_queues(struct vivid_dev *dev)
-{
-	int ret;
+अटल पूर्णांक vivid_create_queues(काष्ठा vivid_dev *dev)
+अणु
+	पूर्णांक ret;
 
 	/* start creating the vb2 queues */
-	if (dev->has_vid_cap) {
+	अगर (dev->has_vid_cap) अणु
 		/* initialize vid_cap queue */
 		ret = vivid_create_queue(dev, &dev->vb_vid_cap_q,
 					 V4L2_BUF_TYPE_VIDEO_CAPTURE, 2,
 					 &vivid_vid_cap_qops);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (dev->has_vid_out) {
+	अगर (dev->has_vid_out) अणु
 		/* initialize vid_out queue */
 		ret = vivid_create_queue(dev, &dev->vb_vid_out_q,
 					 V4L2_BUF_TYPE_VIDEO_OUTPUT, 2,
 					 &vivid_vid_out_qops);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (dev->has_vbi_cap) {
+	अगर (dev->has_vbi_cap) अणु
 		/* initialize vbi_cap queue */
 		ret = vivid_create_queue(dev, &dev->vb_vbi_cap_q,
 					 V4L2_BUF_TYPE_VBI_CAPTURE, 2,
 					 &vivid_vbi_cap_qops);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (dev->has_vbi_out) {
+	अगर (dev->has_vbi_out) अणु
 		/* initialize vbi_out queue */
 		ret = vivid_create_queue(dev, &dev->vb_vbi_out_q,
 					 V4L2_BUF_TYPE_VBI_OUTPUT, 2,
 					 &vivid_vbi_out_qops);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (dev->has_sdr_cap) {
+	अगर (dev->has_sdr_cap) अणु
 		/* initialize sdr_cap queue */
 		ret = vivid_create_queue(dev, &dev->vb_sdr_cap_q,
 					 V4L2_BUF_TYPE_SDR_CAPTURE, 8,
 					 &vivid_sdr_cap_qops);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (dev->has_meta_cap) {
+	अगर (dev->has_meta_cap) अणु
 		/* initialize meta_cap queue */
 		ret = vivid_create_queue(dev, &dev->vb_meta_cap_q,
 					 V4L2_BUF_TYPE_META_CAPTURE, 2,
 					 &vivid_meta_cap_qops);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (dev->has_meta_out) {
+	अगर (dev->has_meta_out) अणु
 		/* initialize meta_out queue */
 		ret = vivid_create_queue(dev, &dev->vb_meta_out_q,
 					 V4L2_BUF_TYPE_META_OUTPUT, 1,
 					 &vivid_meta_out_qops);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (dev->has_touch_cap) {
+	अगर (dev->has_touch_cap) अणु
 		/* initialize touch_cap queue */
 		ret = vivid_create_queue(dev, &dev->vb_touch_cap_q,
 					 V4L2_BUF_TYPE_VIDEO_CAPTURE, 1,
 					 &vivid_touch_cap_qops);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	if (dev->has_fb) {
-		/* Create framebuffer for testing capture/output overlay */
+	अगर (dev->has_fb) अणु
+		/* Create framebuffer क्रम testing capture/output overlay */
 		ret = vivid_fb_init(dev);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev, "Framebuffer device registered as fb%d\n",
 			  dev->fb_info.node);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int vivid_create_devnodes(struct platform_device *pdev,
-				 struct vivid_dev *dev, int inst,
-				 unsigned int cec_tx_bus_cnt,
+अटल पूर्णांक vivid_create_devnodes(काष्ठा platक्रमm_device *pdev,
+				 काष्ठा vivid_dev *dev, पूर्णांक inst,
+				 अचिन्हित पूर्णांक cec_tx_bus_cnt,
 				 v4l2_std_id tvnorms_cap,
 				 v4l2_std_id tvnorms_out,
-				 unsigned in_type_counter[4],
-				 unsigned out_type_counter[4])
-{
-	struct video_device *vfd;
-	int ret;
+				 अचिन्हित in_type_counter[4],
+				 अचिन्हित out_type_counter[4])
+अणु
+	काष्ठा video_device *vfd;
+	पूर्णांक ret;
 
-	if (dev->has_vid_cap) {
+	अगर (dev->has_vid_cap) अणु
 		vfd = &dev->vid_cap_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-vid-cap", inst);
 		vfd->fops = &vivid_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
@@ -1356,42 +1357,42 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->lock = &dev->mutex;
 		video_set_drvdata(vfd, dev);
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 		dev->vid_cap_pad.flags = MEDIA_PAD_FL_SINK;
 		ret = media_entity_pads_init(&vfd->entity, 1, &dev->vid_cap_pad);
-		if (ret)
-			return ret;
-#endif
+		अगर (ret)
+			वापस ret;
+#पूर्ण_अगर
 
-#ifdef CONFIG_VIDEO_VIVID_CEC
-		if (in_type_counter[HDMI]) {
-			ret = cec_register_adapter(dev->cec_rx_adap, &pdev->dev);
-			if (ret < 0) {
+#अगर_घोषित CONFIG_VIDEO_VIVID_CEC
+		अगर (in_type_counter[HDMI]) अणु
+			ret = cec_रेजिस्टर_adapter(dev->cec_rx_adap, &pdev->dev);
+			अगर (ret < 0) अणु
 				cec_delete_adapter(dev->cec_rx_adap);
-				dev->cec_rx_adap = NULL;
-				return ret;
-			}
+				dev->cec_rx_adap = शून्य;
+				वापस ret;
+			पूर्ण
 			cec_s_phys_addr(dev->cec_rx_adap, 0, false);
 			v4l2_info(&dev->v4l2_dev, "CEC adapter %s registered for HDMI input 0\n",
 				  dev_name(&dev->cec_rx_adap->devnode.dev));
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 
-		ret = video_register_device(vfd, VFL_TYPE_VIDEO, vid_cap_nr[inst]);
-		if (ret < 0)
-			return ret;
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, vid_cap_nr[inst]);
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev, "V4L2 capture device registered as %s\n",
 					  video_device_node_name(vfd));
-	}
+	पूर्ण
 
-	if (dev->has_vid_out) {
-#ifdef CONFIG_VIDEO_VIVID_CEC
-		int i;
-#endif
+	अगर (dev->has_vid_out) अणु
+#अगर_घोषित CONFIG_VIDEO_VIVID_CEC
+		पूर्णांक i;
+#पूर्ण_अगर
 		vfd = &dev->vid_out_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-vid-out", inst);
-		vfd->vfl_dir = VFL_DIR_TX;
+		vfd->vfl_dir = VFL_सूची_TX;
 		vfd->fops = &vivid_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
 		vfd->device_caps = dev->vid_out_caps;
@@ -1407,42 +1408,42 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->lock = &dev->mutex;
 		video_set_drvdata(vfd, dev);
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 		dev->vid_out_pad.flags = MEDIA_PAD_FL_SOURCE;
 		ret = media_entity_pads_init(&vfd->entity, 1, &dev->vid_out_pad);
-		if (ret)
-			return ret;
-#endif
+		अगर (ret)
+			वापस ret;
+#पूर्ण_अगर
 
-#ifdef CONFIG_VIDEO_VIVID_CEC
-		for (i = 0; i < cec_tx_bus_cnt; i++) {
-			ret = cec_register_adapter(dev->cec_tx_adap[i], &pdev->dev);
-			if (ret < 0) {
-				for (; i < cec_tx_bus_cnt; i++) {
+#अगर_घोषित CONFIG_VIDEO_VIVID_CEC
+		क्रम (i = 0; i < cec_tx_bus_cnt; i++) अणु
+			ret = cec_रेजिस्टर_adapter(dev->cec_tx_adap[i], &pdev->dev);
+			अगर (ret < 0) अणु
+				क्रम (; i < cec_tx_bus_cnt; i++) अणु
 					cec_delete_adapter(dev->cec_tx_adap[i]);
-					dev->cec_tx_adap[i] = NULL;
-				}
-				return ret;
-			}
+					dev->cec_tx_adap[i] = शून्य;
+				पूर्ण
+				वापस ret;
+			पूर्ण
 			v4l2_info(&dev->v4l2_dev, "CEC adapter %s registered for HDMI output %d\n",
 				  dev_name(&dev->cec_tx_adap[i]->devnode.dev), i);
-			if (i < out_type_counter[HDMI])
+			अगर (i < out_type_counter[HDMI])
 				cec_s_phys_addr(dev->cec_tx_adap[i], (i + 1) << 12, false);
-			else
+			अन्यथा
 				cec_s_phys_addr(dev->cec_tx_adap[i], 0x1000, false);
-		}
-#endif
+		पूर्ण
+#पूर्ण_अगर
 
-		ret = video_register_device(vfd, VFL_TYPE_VIDEO, vid_out_nr[inst]);
-		if (ret < 0)
-			return ret;
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO, vid_out_nr[inst]);
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev, "V4L2 output device registered as %s\n",
 					  video_device_node_name(vfd));
-	}
+	पूर्ण
 
-	if (dev->has_vbi_cap) {
+	अगर (dev->has_vbi_cap) अणु
 		vfd = &dev->vbi_cap_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-vbi-cap", inst);
 		vfd->fops = &vivid_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
@@ -1454,28 +1455,28 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->tvnorms = tvnorms_cap;
 		video_set_drvdata(vfd, dev);
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 		dev->vbi_cap_pad.flags = MEDIA_PAD_FL_SINK;
 		ret = media_entity_pads_init(&vfd->entity, 1, &dev->vbi_cap_pad);
-		if (ret)
-			return ret;
-#endif
+		अगर (ret)
+			वापस ret;
+#पूर्ण_अगर
 
-		ret = video_register_device(vfd, VFL_TYPE_VBI, vbi_cap_nr[inst]);
-		if (ret < 0)
-			return ret;
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VBI, vbi_cap_nr[inst]);
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev, "V4L2 capture device registered as %s, supports %s VBI\n",
 					  video_device_node_name(vfd),
 					  (dev->has_raw_vbi_cap && dev->has_sliced_vbi_cap) ?
 					  "raw and sliced" :
 					  (dev->has_raw_vbi_cap ? "raw" : "sliced"));
-	}
+	पूर्ण
 
-	if (dev->has_vbi_out) {
+	अगर (dev->has_vbi_out) अणु
 		vfd = &dev->vbi_out_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-vbi-out", inst);
-		vfd->vfl_dir = VFL_DIR_TX;
+		vfd->vfl_dir = VFL_सूची_TX;
 		vfd->fops = &vivid_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
 		vfd->device_caps = dev->vbi_out_caps;
@@ -1486,26 +1487,26 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->tvnorms = tvnorms_out;
 		video_set_drvdata(vfd, dev);
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 		dev->vbi_out_pad.flags = MEDIA_PAD_FL_SOURCE;
 		ret = media_entity_pads_init(&vfd->entity, 1, &dev->vbi_out_pad);
-		if (ret)
-			return ret;
-#endif
+		अगर (ret)
+			वापस ret;
+#पूर्ण_अगर
 
-		ret = video_register_device(vfd, VFL_TYPE_VBI, vbi_out_nr[inst]);
-		if (ret < 0)
-			return ret;
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VBI, vbi_out_nr[inst]);
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev, "V4L2 output device registered as %s, supports %s VBI\n",
 					  video_device_node_name(vfd),
 					  (dev->has_raw_vbi_out && dev->has_sliced_vbi_out) ?
 					  "raw and sliced" :
 					  (dev->has_raw_vbi_out ? "raw" : "sliced"));
-	}
+	पूर्ण
 
-	if (dev->has_sdr_cap) {
+	अगर (dev->has_sdr_cap) अणु
 		vfd = &dev->sdr_cap_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-sdr-cap", inst);
 		vfd->fops = &vivid_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
@@ -1516,23 +1517,23 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->lock = &dev->mutex;
 		video_set_drvdata(vfd, dev);
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 		dev->sdr_cap_pad.flags = MEDIA_PAD_FL_SINK;
 		ret = media_entity_pads_init(&vfd->entity, 1, &dev->sdr_cap_pad);
-		if (ret)
-			return ret;
-#endif
+		अगर (ret)
+			वापस ret;
+#पूर्ण_अगर
 
-		ret = video_register_device(vfd, VFL_TYPE_SDR, sdr_cap_nr[inst]);
-		if (ret < 0)
-			return ret;
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_SDR, sdr_cap_nr[inst]);
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev, "V4L2 capture device registered as %s\n",
 					  video_device_node_name(vfd));
-	}
+	पूर्ण
 
-	if (dev->has_radio_rx) {
+	अगर (dev->has_radio_rx) अणु
 		vfd = &dev->radio_rx_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-rad-rx", inst);
 		vfd->fops = &vivid_radio_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
@@ -1542,18 +1543,18 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->lock = &dev->mutex;
 		video_set_drvdata(vfd, dev);
 
-		ret = video_register_device(vfd, VFL_TYPE_RADIO, radio_rx_nr[inst]);
-		if (ret < 0)
-			return ret;
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_RADIO, radio_rx_nr[inst]);
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev, "V4L2 receiver device registered as %s\n",
 					  video_device_node_name(vfd));
-	}
+	पूर्ण
 
-	if (dev->has_radio_tx) {
+	अगर (dev->has_radio_tx) अणु
 		vfd = &dev->radio_tx_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-rad-tx", inst);
-		vfd->vfl_dir = VFL_DIR_TX;
+		vfd->vfl_dir = VFL_सूची_TX;
 		vfd->fops = &vivid_radio_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
 		vfd->device_caps = dev->radio_tx_caps;
@@ -1562,16 +1563,16 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->lock = &dev->mutex;
 		video_set_drvdata(vfd, dev);
 
-		ret = video_register_device(vfd, VFL_TYPE_RADIO, radio_tx_nr[inst]);
-		if (ret < 0)
-			return ret;
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_RADIO, radio_tx_nr[inst]);
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev, "V4L2 transmitter device registered as %s\n",
 					  video_device_node_name(vfd));
-	}
+	पूर्ण
 
-	if (dev->has_meta_cap) {
+	अगर (dev->has_meta_cap) अणु
 		vfd = &dev->meta_cap_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-meta-cap", inst);
 		vfd->fops = &vivid_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
@@ -1582,27 +1583,27 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->lock = &dev->mutex;
 		vfd->tvnorms = tvnorms_cap;
 		video_set_drvdata(vfd, dev);
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 		dev->meta_cap_pad.flags = MEDIA_PAD_FL_SINK;
 		ret = media_entity_pads_init(&vfd->entity, 1,
 					     &dev->meta_cap_pad);
-		if (ret)
-			return ret;
-#endif
-		ret = video_register_device(vfd, VFL_TYPE_VIDEO,
+		अगर (ret)
+			वापस ret;
+#पूर्ण_अगर
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO,
 					    meta_cap_nr[inst]);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev,
 			  "V4L2 metadata capture device registered as %s\n",
 			  video_device_node_name(vfd));
-	}
+	पूर्ण
 
-	if (dev->has_meta_out) {
+	अगर (dev->has_meta_out) अणु
 		vfd = &dev->meta_out_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-meta-out", inst);
-		vfd->vfl_dir = VFL_DIR_TX;
+		vfd->vfl_dir = VFL_सूची_TX;
 		vfd->fops = &vivid_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
 		vfd->device_caps = dev->meta_out_caps;
@@ -1612,25 +1613,25 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->lock = &dev->mutex;
 		vfd->tvnorms = tvnorms_out;
 		video_set_drvdata(vfd, dev);
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 		dev->meta_out_pad.flags = MEDIA_PAD_FL_SOURCE;
 		ret = media_entity_pads_init(&vfd->entity, 1,
 					     &dev->meta_out_pad);
-		if (ret)
-			return ret;
-#endif
-		ret = video_register_device(vfd, VFL_TYPE_VIDEO,
+		अगर (ret)
+			वापस ret;
+#पूर्ण_अगर
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_VIDEO,
 					    meta_out_nr[inst]);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev,
 			  "V4L2 metadata output device registered as %s\n",
 			  video_device_node_name(vfd));
-	}
+	पूर्ण
 
-	if (dev->has_touch_cap) {
+	अगर (dev->has_touch_cap) अणु
 		vfd = &dev->touch_cap_dev;
-		snprintf(vfd->name, sizeof(vfd->name),
+		snम_लिखो(vfd->name, माप(vfd->name),
 			 "vivid-%03d-touch-cap", inst);
 		vfd->fops = &vivid_fops;
 		vfd->ioctl_ops = &vivid_ioctl_ops;
@@ -1641,130 +1642,130 @@ static int vivid_create_devnodes(struct platform_device *pdev,
 		vfd->tvnorms = tvnorms_cap;
 		vfd->lock = &dev->mutex;
 		video_set_drvdata(vfd, dev);
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 		dev->touch_cap_pad.flags = MEDIA_PAD_FL_SINK;
 		ret = media_entity_pads_init(&vfd->entity, 1,
 					     &dev->touch_cap_pad);
-		if (ret)
-			return ret;
-#endif
-		ret = video_register_device(vfd, VFL_TYPE_TOUCH,
+		अगर (ret)
+			वापस ret;
+#पूर्ण_अगर
+		ret = video_रेजिस्टर_device(vfd, VFL_TYPE_TOUCH,
 					    touch_cap_nr[inst]);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 		v4l2_info(&dev->v4l2_dev,
 			  "V4L2 touch capture device registered as %s\n",
 			  video_device_node_name(vfd));
-	}
+	पूर्ण
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 	/* Register the media device */
-	ret = media_device_register(&dev->mdev);
-	if (ret) {
+	ret = media_device_रेजिस्टर(&dev->mdev);
+	अगर (ret) अणु
 		dev_err(dev->mdev.dev,
 			"media device register failed (err=%d)\n", ret);
-		return ret;
-	}
-#endif
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
+पूर्ण
 
-static int vivid_create_instance(struct platform_device *pdev, int inst)
-{
-	static const struct v4l2_dv_timings def_dv_timings =
+अटल पूर्णांक vivid_create_instance(काष्ठा platक्रमm_device *pdev, पूर्णांक inst)
+अणु
+	अटल स्थिर काष्ठा v4l2_dv_timings def_dv_timings =
 					V4L2_DV_BT_CEA_1280X720P60;
-	unsigned in_type_counter[4] = { 0, 0, 0, 0 };
-	unsigned out_type_counter[4] = { 0, 0, 0, 0 };
-	int ccs_cap = ccs_cap_mode[inst];
-	int ccs_out = ccs_out_mode[inst];
+	अचिन्हित in_type_counter[4] = अणु 0, 0, 0, 0 पूर्ण;
+	अचिन्हित out_type_counter[4] = अणु 0, 0, 0, 0 पूर्ण;
+	पूर्णांक ccs_cap = ccs_cap_mode[inst];
+	पूर्णांक ccs_out = ccs_out_mode[inst];
 	bool has_tuner;
 	bool has_modulator;
-	struct vivid_dev *dev;
-	unsigned node_type = node_types[inst];
+	काष्ठा vivid_dev *dev;
+	अचिन्हित node_type = node_types[inst];
 	v4l2_std_id tvnorms_cap = 0, tvnorms_out = 0;
-	unsigned int cec_tx_bus_cnt = 0;
-	int ret;
-	int i;
+	अचिन्हित पूर्णांक cec_tx_bus_cnt = 0;
+	पूर्णांक ret;
+	पूर्णांक i;
 
-	/* allocate main vivid state structure */
-	dev = kzalloc(sizeof(*dev), GFP_KERNEL);
-	if (!dev)
-		return -ENOMEM;
+	/* allocate मुख्य vivid state काष्ठाure */
+	dev = kzalloc(माप(*dev), GFP_KERNEL);
+	अगर (!dev)
+		वापस -ENOMEM;
 
 	dev->inst = inst;
 
-#ifdef CONFIG_MEDIA_CONTROLLER
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
 	dev->v4l2_dev.mdev = &dev->mdev;
 
 	/* Initialize media device */
-	strscpy(dev->mdev.model, VIVID_MODULE_NAME, sizeof(dev->mdev.model));
-	snprintf(dev->mdev.bus_info, sizeof(dev->mdev.bus_info),
+	strscpy(dev->mdev.model, VIVID_MODULE_NAME, माप(dev->mdev.model));
+	snम_लिखो(dev->mdev.bus_info, माप(dev->mdev.bus_info),
 		 "platform:%s-%03d", VIVID_MODULE_NAME, inst);
 	dev->mdev.dev = &pdev->dev;
 	media_device_init(&dev->mdev);
 	dev->mdev.ops = &vivid_media_ops;
-#endif
+#पूर्ण_अगर
 
-	/* register v4l2_device */
-	snprintf(dev->v4l2_dev.name, sizeof(dev->v4l2_dev.name),
+	/* रेजिस्टर v4l2_device */
+	snम_लिखो(dev->v4l2_dev.name, माप(dev->v4l2_dev.name),
 			"%s-%03d", VIVID_MODULE_NAME, inst);
-	ret = v4l2_device_register(&pdev->dev, &dev->v4l2_dev);
-	if (ret) {
-		kfree(dev);
-		return ret;
-	}
+	ret = v4l2_device_रेजिस्टर(&pdev->dev, &dev->v4l2_dev);
+	अगर (ret) अणु
+		kमुक्त(dev);
+		वापस ret;
+	पूर्ण
 	dev->v4l2_dev.release = vivid_dev_release;
 
 	ret = vivid_detect_feature_set(dev, inst, node_type,
 				       &has_tuner, &has_modulator,
 				       &ccs_cap, &ccs_out,
 				       in_type_counter, out_type_counter);
-	if (ret)
-		goto free_dev;
+	अगर (ret)
+		जाओ मुक्त_dev;
 
 	vivid_set_capabilities(dev);
 
 	ret = -ENOMEM;
 	/* initialize the test pattern generator */
 	tpg_init(&dev->tpg, 640, 360);
-	if (tpg_alloc(&dev->tpg, array_size(MAX_WIDTH, MAX_ZOOM)))
-		goto free_dev;
+	अगर (tpg_alloc(&dev->tpg, array_size(MAX_WIDTH, MAX_ZOOM)))
+		जाओ मुक्त_dev;
 	dev->scaled_line = vzalloc(array_size(MAX_WIDTH, MAX_ZOOM));
-	if (!dev->scaled_line)
-		goto free_dev;
+	अगर (!dev->scaled_line)
+		जाओ मुक्त_dev;
 	dev->blended_line = vzalloc(array_size(MAX_WIDTH, MAX_ZOOM));
-	if (!dev->blended_line)
-		goto free_dev;
+	अगर (!dev->blended_line)
+		जाओ मुक्त_dev;
 
 	/* load the edid */
-	dev->edid = vmalloc(array_size(256, 128));
-	if (!dev->edid)
-		goto free_dev;
+	dev->edid = vदो_स्मृति(array_size(256, 128));
+	अगर (!dev->edid)
+		जाओ मुक्त_dev;
 
 	ret = vivid_init_dv_timings(dev);
-	if (ret < 0)
-		goto free_dev;
+	अगर (ret < 0)
+		जाओ मुक्त_dev;
 
 	vivid_disable_unused_ioctls(dev, has_tuner, has_modulator,
 				    in_type_counter, out_type_counter);
 
-	/* configure internal data */
-	dev->fmt_cap = &vivid_formats[0];
-	dev->fmt_out = &vivid_formats[0];
-	if (!dev->multiplanar)
-		vivid_formats[0].data_offset[0] = 0;
+	/* configure पूर्णांकernal data */
+	dev->fmt_cap = &vivid_क्रमmats[0];
+	dev->fmt_out = &vivid_क्रमmats[0];
+	अगर (!dev->multiplanar)
+		vivid_क्रमmats[0].data_offset[0] = 0;
 	dev->webcam_size_idx = 1;
 	dev->webcam_ival_idx = 3;
 	tpg_s_fourcc(&dev->tpg, dev->fmt_cap->fourcc);
 	dev->std_out = V4L2_STD_PAL;
-	if (dev->input_type[0] == TV || dev->input_type[0] == SVID)
+	अगर (dev->input_type[0] == TV || dev->input_type[0] == SVID)
 		tvnorms_cap = V4L2_STD_ALL;
-	if (dev->output_type[0] == SVID)
+	अगर (dev->output_type[0] == SVID)
 		tvnorms_out = V4L2_STD_ALL;
-	for (i = 0; i < MAX_INPUTS; i++) {
+	क्रम (i = 0; i < MAX_INPUTS; i++) अणु
 		dev->dv_timings_cap[i] = def_dv_timings;
 		dev->std_cap[i] = V4L2_STD_PAL;
-	}
+	पूर्ण
 	dev->dv_timings_out = def_dv_timings;
 	dev->tv_freq = 2804 /* 175.25 * 16 */;
 	dev->tv_audmode = V4L2_TUNER_MODE_STEREO;
@@ -1772,56 +1773,56 @@ static int vivid_create_instance(struct platform_device *pdev, int inst)
 	dev->tv_field_out = V4L2_FIELD_INTERLACED;
 	dev->radio_rx_freq = 95000 * 16;
 	dev->radio_rx_audmode = V4L2_TUNER_MODE_STEREO;
-	if (dev->has_radio_tx) {
+	अगर (dev->has_radio_tx) अणु
 		dev->radio_tx_freq = 95500 * 16;
 		dev->radio_rds_loop = false;
-	}
+	पूर्ण
 	dev->radio_tx_subchans = V4L2_TUNER_SUB_STEREO | V4L2_TUNER_SUB_RDS;
 	dev->sdr_adc_freq = 300000;
 	dev->sdr_fm_freq = 50000000;
-	dev->sdr_pixelformat = V4L2_SDR_FMT_CU8;
+	dev->sdr_pixelक्रमmat = V4L2_SDR_FMT_CU8;
 	dev->sdr_buffersize = SDR_CAP_SAMPLES_PER_BUF * 2;
 
 	dev->edid_max_blocks = dev->edid_blocks = 2;
-	memcpy(dev->edid, vivid_hdmi_edid, sizeof(vivid_hdmi_edid));
-	dev->radio_rds_init_time = ktime_get();
+	स_नकल(dev->edid, vivid_hdmi_edid, माप(vivid_hdmi_edid));
+	dev->radio_rds_init_समय = kसमय_get();
 
 	/* create all controls */
 	ret = vivid_create_controls(dev, ccs_cap == -1, ccs_out == -1, no_error_inj,
 			in_type_counter[TV] || in_type_counter[SVID] ||
 			out_type_counter[SVID],
 			in_type_counter[HDMI] || out_type_counter[HDMI]);
-	if (ret)
-		goto unreg_dev;
+	अगर (ret)
+		जाओ unreg_dev;
 
-	/* enable/disable interface specific controls */
-	if (dev->num_outputs && dev->output_type[0] != HDMI)
+	/* enable/disable पूर्णांकerface specअगरic controls */
+	अगर (dev->num_outमाला_दो && dev->output_type[0] != HDMI)
 		v4l2_ctrl_activate(dev->ctrl_display_present, false);
-	if (dev->num_inputs && dev->input_type[0] != HDMI) {
-		v4l2_ctrl_activate(dev->ctrl_dv_timings_signal_mode, false);
+	अगर (dev->num_inमाला_दो && dev->input_type[0] != HDMI) अणु
+		v4l2_ctrl_activate(dev->ctrl_dv_timings_संकेत_mode, false);
 		v4l2_ctrl_activate(dev->ctrl_dv_timings, false);
-	} else if (dev->num_inputs && dev->input_type[0] == HDMI) {
-		v4l2_ctrl_activate(dev->ctrl_std_signal_mode, false);
+	पूर्ण अन्यथा अगर (dev->num_inमाला_दो && dev->input_type[0] == HDMI) अणु
+		v4l2_ctrl_activate(dev->ctrl_std_संकेत_mode, false);
 		v4l2_ctrl_activate(dev->ctrl_standard, false);
-	}
+	पूर्ण
 
 	/*
-	 * update the capture and output formats to do a proper initial
+	 * update the capture and output क्रमmats to करो a proper initial
 	 * configuration.
 	 */
-	vivid_update_format_cap(dev, false);
-	vivid_update_format_out(dev);
+	vivid_update_क्रमmat_cap(dev, false);
+	vivid_update_क्रमmat_out(dev);
 
 	/* initialize overlay */
 	dev->fb_cap.fmt.width = dev->src_rect.width;
 	dev->fb_cap.fmt.height = dev->src_rect.height;
-	dev->fb_cap.fmt.pixelformat = dev->fmt_cap->fourcc;
+	dev->fb_cap.fmt.pixelक्रमmat = dev->fmt_cap->fourcc;
 	dev->fb_cap.fmt.bytesperline = dev->src_rect.width * tpg_g_twopixelsize(&dev->tpg, 0) / 2;
 	dev->fb_cap.fmt.sizeimage = dev->src_rect.height * dev->fb_cap.fmt.bytesperline;
 
 	/* update touch configuration */
-	dev->timeperframe_tch_cap.numerator = 1;
-	dev->timeperframe_tch_cap.denominator = 10;
+	dev->समयperframe_tch_cap.numerator = 1;
+	dev->समयperframe_tch_cap.denominator = 10;
 	vivid_set_touch(dev, 0);
 
 	/* initialize locks */
@@ -1841,55 +1842,55 @@ static int vivid_create_instance(struct platform_device *pdev, int inst)
 	INIT_LIST_HEAD(&dev->cec_work_list);
 	spin_lock_init(&dev->cec_slock);
 	/*
-	 * Same as create_singlethread_workqueue, but now I can use the
-	 * string formatting of alloc_ordered_workqueue.
+	 * Same as create_singlethपढ़ो_workqueue, but now I can use the
+	 * string क्रमmatting of alloc_ordered_workqueue.
 	 */
 	dev->cec_workqueue = alloc_ordered_workqueue("vivid-%03d-cec",
 						     WQ_MEM_RECLAIM, inst);
-	if (!dev->cec_workqueue) {
+	अगर (!dev->cec_workqueue) अणु
 		ret = -ENOMEM;
-		goto unreg_dev;
-	}
+		जाओ unreg_dev;
+	पूर्ण
 
-	if (allocators[inst] == 1)
+	अगर (allocators[inst] == 1)
 		dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(32));
 
 	ret = vivid_create_queues(dev);
-	if (ret)
-		goto unreg_dev;
+	अगर (ret)
+		जाओ unreg_dev;
 
-#ifdef CONFIG_VIDEO_VIVID_CEC
-	if (dev->has_vid_cap && in_type_counter[HDMI]) {
-		struct cec_adapter *adap;
+#अगर_घोषित CONFIG_VIDEO_VIVID_CEC
+	अगर (dev->has_vid_cap && in_type_counter[HDMI]) अणु
+		काष्ठा cec_adapter *adap;
 
 		adap = vivid_cec_alloc_adap(dev, 0, false);
 		ret = PTR_ERR_OR_ZERO(adap);
-		if (ret < 0)
-			goto unreg_dev;
+		अगर (ret < 0)
+			जाओ unreg_dev;
 		dev->cec_rx_adap = adap;
-	}
+	पूर्ण
 
-	if (dev->has_vid_out) {
-		for (i = 0; i < dev->num_outputs; i++) {
-			struct cec_adapter *adap;
+	अगर (dev->has_vid_out) अणु
+		क्रम (i = 0; i < dev->num_outमाला_दो; i++) अणु
+			काष्ठा cec_adapter *adap;
 
-			if (dev->output_type[i] != HDMI)
-				continue;
+			अगर (dev->output_type[i] != HDMI)
+				जारी;
 
 			dev->cec_output2bus_map[i] = cec_tx_bus_cnt;
 			adap = vivid_cec_alloc_adap(dev, cec_tx_bus_cnt, true);
 			ret = PTR_ERR_OR_ZERO(adap);
-			if (ret < 0) {
-				for (i = 0; i < dev->num_outputs; i++)
+			अगर (ret < 0) अणु
+				क्रम (i = 0; i < dev->num_outमाला_दो; i++)
 					cec_delete_adapter(dev->cec_tx_adap[i]);
-				goto unreg_dev;
-			}
+				जाओ unreg_dev;
+			पूर्ण
 
 			dev->cec_tx_adap[cec_tx_bus_cnt] = adap;
 			cec_tx_bus_cnt++;
-		}
-	}
-#endif
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
 
 	v4l2_ctrl_handler_setup(&dev->ctrl_hdl_vid_cap);
 	v4l2_ctrl_handler_setup(&dev->ctrl_hdl_vid_out);
@@ -1906,200 +1907,200 @@ static int vivid_create_instance(struct platform_device *pdev, int inst)
 	ret = vivid_create_devnodes(pdev, dev, inst, cec_tx_bus_cnt,
 				    tvnorms_cap, tvnorms_out,
 				    in_type_counter, out_type_counter);
-	if (ret)
-		goto unreg_dev;
+	अगर (ret)
+		जाओ unreg_dev;
 
 	/* Now that everything is fine, let's add it to device list */
 	vivid_devs[inst] = dev;
 
-	return 0;
+	वापस 0;
 
 unreg_dev:
-	vb2_video_unregister_device(&dev->touch_cap_dev);
-	vb2_video_unregister_device(&dev->meta_out_dev);
-	vb2_video_unregister_device(&dev->meta_cap_dev);
-	video_unregister_device(&dev->radio_tx_dev);
-	video_unregister_device(&dev->radio_rx_dev);
-	vb2_video_unregister_device(&dev->sdr_cap_dev);
-	vb2_video_unregister_device(&dev->vbi_out_dev);
-	vb2_video_unregister_device(&dev->vbi_cap_dev);
-	vb2_video_unregister_device(&dev->vid_out_dev);
-	vb2_video_unregister_device(&dev->vid_cap_dev);
-	cec_unregister_adapter(dev->cec_rx_adap);
-	for (i = 0; i < MAX_OUTPUTS; i++)
-		cec_unregister_adapter(dev->cec_tx_adap[i]);
-	if (dev->cec_workqueue) {
-		vivid_cec_bus_free_work(dev);
+	vb2_video_unरेजिस्टर_device(&dev->touch_cap_dev);
+	vb2_video_unरेजिस्टर_device(&dev->meta_out_dev);
+	vb2_video_unरेजिस्टर_device(&dev->meta_cap_dev);
+	video_unरेजिस्टर_device(&dev->radio_tx_dev);
+	video_unरेजिस्टर_device(&dev->radio_rx_dev);
+	vb2_video_unरेजिस्टर_device(&dev->sdr_cap_dev);
+	vb2_video_unरेजिस्टर_device(&dev->vbi_out_dev);
+	vb2_video_unरेजिस्टर_device(&dev->vbi_cap_dev);
+	vb2_video_unरेजिस्टर_device(&dev->vid_out_dev);
+	vb2_video_unरेजिस्टर_device(&dev->vid_cap_dev);
+	cec_unरेजिस्टर_adapter(dev->cec_rx_adap);
+	क्रम (i = 0; i < MAX_OUTPUTS; i++)
+		cec_unरेजिस्टर_adapter(dev->cec_tx_adap[i]);
+	अगर (dev->cec_workqueue) अणु
+		vivid_cec_bus_मुक्त_work(dev);
 		destroy_workqueue(dev->cec_workqueue);
-	}
-free_dev:
+	पूर्ण
+मुक्त_dev:
 	v4l2_device_put(&dev->v4l2_dev);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-/* This routine allocates from 1 to n_devs virtual drivers.
+/* This routine allocates from 1 to n_devs भव drivers.
 
-   The real maximum number of virtual drivers will depend on how many drivers
+   The real maximum number of भव drivers will depend on how many drivers
    will succeed. This is limited to the maximum number of devices that
    videodev supports, which is equal to VIDEO_NUM_DEVICES.
  */
-static int vivid_probe(struct platform_device *pdev)
-{
-	const struct font_desc *font = find_font("VGA8x16");
-	int ret = 0, i;
+अटल पूर्णांक vivid_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	स्थिर काष्ठा font_desc *font = find_font("VGA8x16");
+	पूर्णांक ret = 0, i;
 
-	if (font == NULL) {
+	अगर (font == शून्य) अणु
 		pr_err("vivid: could not find font\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	tpg_set_font(font->data);
 
-	n_devs = clamp_t(unsigned, n_devs, 1, VIVID_MAX_DEVS);
+	n_devs = clamp_t(अचिन्हित, n_devs, 1, VIVID_MAX_DEVS);
 
-	for (i = 0; i < n_devs; i++) {
+	क्रम (i = 0; i < n_devs; i++) अणु
 		ret = vivid_create_instance(pdev, i);
-		if (ret) {
+		अगर (ret) अणु
 			/* If some instantiations succeeded, keep driver */
-			if (i)
+			अगर (i)
 				ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		pr_err("vivid: error %d while loading driver\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	/* n_devs will reflect the actual number of allocated devices */
 	n_devs = i;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int vivid_remove(struct platform_device *pdev)
-{
-	struct vivid_dev *dev;
-	unsigned int i, j;
+अटल पूर्णांक vivid_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा vivid_dev *dev;
+	अचिन्हित पूर्णांक i, j;
 
-	for (i = 0; i < n_devs; i++) {
+	क्रम (i = 0; i < n_devs; i++) अणु
 		dev = vivid_devs[i];
-		if (!dev)
-			continue;
+		अगर (!dev)
+			जारी;
 
-		if (dev->disconnect_error)
+		अगर (dev->disconnect_error)
 			vivid_reconnect(dev);
-#ifdef CONFIG_MEDIA_CONTROLLER
-		media_device_unregister(&dev->mdev);
-#endif
+#अगर_घोषित CONFIG_MEDIA_CONTROLLER
+		media_device_unरेजिस्टर(&dev->mdev);
+#पूर्ण_अगर
 
-		if (dev->has_vid_cap) {
+		अगर (dev->has_vid_cap) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				video_device_node_name(&dev->vid_cap_dev));
-			vb2_video_unregister_device(&dev->vid_cap_dev);
-		}
-		if (dev->has_vid_out) {
+			vb2_video_unरेजिस्टर_device(&dev->vid_cap_dev);
+		पूर्ण
+		अगर (dev->has_vid_out) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				video_device_node_name(&dev->vid_out_dev));
-			vb2_video_unregister_device(&dev->vid_out_dev);
-		}
-		if (dev->has_vbi_cap) {
+			vb2_video_unरेजिस्टर_device(&dev->vid_out_dev);
+		पूर्ण
+		अगर (dev->has_vbi_cap) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				video_device_node_name(&dev->vbi_cap_dev));
-			vb2_video_unregister_device(&dev->vbi_cap_dev);
-		}
-		if (dev->has_vbi_out) {
+			vb2_video_unरेजिस्टर_device(&dev->vbi_cap_dev);
+		पूर्ण
+		अगर (dev->has_vbi_out) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				video_device_node_name(&dev->vbi_out_dev));
-			vb2_video_unregister_device(&dev->vbi_out_dev);
-		}
-		if (dev->has_sdr_cap) {
+			vb2_video_unरेजिस्टर_device(&dev->vbi_out_dev);
+		पूर्ण
+		अगर (dev->has_sdr_cap) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				video_device_node_name(&dev->sdr_cap_dev));
-			vb2_video_unregister_device(&dev->sdr_cap_dev);
-		}
-		if (dev->has_radio_rx) {
+			vb2_video_unरेजिस्टर_device(&dev->sdr_cap_dev);
+		पूर्ण
+		अगर (dev->has_radio_rx) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				video_device_node_name(&dev->radio_rx_dev));
-			video_unregister_device(&dev->radio_rx_dev);
-		}
-		if (dev->has_radio_tx) {
+			video_unरेजिस्टर_device(&dev->radio_rx_dev);
+		पूर्ण
+		अगर (dev->has_radio_tx) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				video_device_node_name(&dev->radio_tx_dev));
-			video_unregister_device(&dev->radio_tx_dev);
-		}
-		if (dev->has_fb) {
+			video_unरेजिस्टर_device(&dev->radio_tx_dev);
+		पूर्ण
+		अगर (dev->has_fb) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering fb%d\n",
 				dev->fb_info.node);
-			unregister_framebuffer(&dev->fb_info);
+			unरेजिस्टर_framebuffer(&dev->fb_info);
 			vivid_fb_release_buffers(dev);
-		}
-		if (dev->has_meta_cap) {
+		पूर्ण
+		अगर (dev->has_meta_cap) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				  video_device_node_name(&dev->meta_cap_dev));
-			vb2_video_unregister_device(&dev->meta_cap_dev);
-		}
-		if (dev->has_meta_out) {
+			vb2_video_unरेजिस्टर_device(&dev->meta_cap_dev);
+		पूर्ण
+		अगर (dev->has_meta_out) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				  video_device_node_name(&dev->meta_out_dev));
-			vb2_video_unregister_device(&dev->meta_out_dev);
-		}
-		if (dev->has_touch_cap) {
+			vb2_video_unरेजिस्टर_device(&dev->meta_out_dev);
+		पूर्ण
+		अगर (dev->has_touch_cap) अणु
 			v4l2_info(&dev->v4l2_dev, "unregistering %s\n",
 				  video_device_node_name(&dev->touch_cap_dev));
-			vb2_video_unregister_device(&dev->touch_cap_dev);
-		}
-		cec_unregister_adapter(dev->cec_rx_adap);
-		for (j = 0; j < MAX_OUTPUTS; j++)
-			cec_unregister_adapter(dev->cec_tx_adap[j]);
-		if (dev->cec_workqueue) {
-			vivid_cec_bus_free_work(dev);
+			vb2_video_unरेजिस्टर_device(&dev->touch_cap_dev);
+		पूर्ण
+		cec_unरेजिस्टर_adapter(dev->cec_rx_adap);
+		क्रम (j = 0; j < MAX_OUTPUTS; j++)
+			cec_unरेजिस्टर_adapter(dev->cec_tx_adap[j]);
+		अगर (dev->cec_workqueue) अणु
+			vivid_cec_bus_मुक्त_work(dev);
 			destroy_workqueue(dev->cec_workqueue);
-		}
+		पूर्ण
 		v4l2_device_put(&dev->v4l2_dev);
-		vivid_devs[i] = NULL;
-	}
-	return 0;
-}
+		vivid_devs[i] = शून्य;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void vivid_pdev_release(struct device *dev)
-{
-}
+अटल व्योम vivid_pdev_release(काष्ठा device *dev)
+अणु
+पूर्ण
 
-static struct platform_device vivid_pdev = {
+अटल काष्ठा platक्रमm_device vivid_pdev = अणु
 	.name		= "vivid",
 	.dev.release	= vivid_pdev_release,
-};
+पूर्ण;
 
-static struct platform_driver vivid_pdrv = {
+अटल काष्ठा platक्रमm_driver vivid_pdrv = अणु
 	.probe		= vivid_probe,
-	.remove		= vivid_remove,
-	.driver		= {
+	.हटाओ		= vivid_हटाओ,
+	.driver		= अणु
 		.name	= "vivid",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init vivid_init(void)
-{
-	int ret;
+अटल पूर्णांक __init vivid_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	ret = platform_device_register(&vivid_pdev);
-	if (ret)
-		return ret;
+	ret = platक्रमm_device_रेजिस्टर(&vivid_pdev);
+	अगर (ret)
+		वापस ret;
 
-	ret = platform_driver_register(&vivid_pdrv);
-	if (ret)
-		platform_device_unregister(&vivid_pdev);
+	ret = platक्रमm_driver_रेजिस्टर(&vivid_pdrv);
+	अगर (ret)
+		platक्रमm_device_unरेजिस्टर(&vivid_pdev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit vivid_exit(void)
-{
-	platform_driver_unregister(&vivid_pdrv);
-	platform_device_unregister(&vivid_pdev);
-}
+अटल व्योम __निकास vivid_निकास(व्योम)
+अणु
+	platक्रमm_driver_unरेजिस्टर(&vivid_pdrv);
+	platक्रमm_device_unरेजिस्टर(&vivid_pdev);
+पूर्ण
 
 module_init(vivid_init);
-module_exit(vivid_exit);
+module_निकास(vivid_निकास);

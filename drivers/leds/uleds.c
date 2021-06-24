@@ -1,122 +1,123 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Userspace driver for the LED subsystem
+ * Userspace driver क्रम the LED subप्रणाली
  *
  * Copyright (C) 2016 David Lechner <david@lechnology.com>
  *
- * Based on uinput.c: Aristeu Sergio Rozanski Filho <aris@cathedrallabs.org>
+ * Based on uinput.c: Aristeu Sergio Rozanski Filho <aris@cathedralद_असल.org>
  */
-#include <linux/fs.h>
-#include <linux/init.h>
-#include <linux/leds.h>
-#include <linux/miscdevice.h>
-#include <linux/module.h>
-#include <linux/poll.h>
-#include <linux/sched.h>
-#include <linux/slab.h>
+#समावेश <linux/fs.h>
+#समावेश <linux/init.h>
+#समावेश <linux/leds.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/module.h>
+#समावेश <linux/poll.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/slab.h>
 
-#include <uapi/linux/uleds.h>
+#समावेश <uapi/linux/uleds.h>
 
-#define ULEDS_NAME	"uleds"
+#घोषणा ULEDS_NAME	"uleds"
 
-enum uleds_state {
+क्रमागत uleds_state अणु
 	ULEDS_STATE_UNKNOWN,
 	ULEDS_STATE_REGISTERED,
-};
+पूर्ण;
 
-struct uleds_device {
-	struct uleds_user_dev	user_dev;
-	struct led_classdev	led_cdev;
-	struct mutex		mutex;
-	enum uleds_state	state;
-	wait_queue_head_t	waitq;
-	int			brightness;
+काष्ठा uleds_device अणु
+	काष्ठा uleds_user_dev	user_dev;
+	काष्ठा led_classdev	led_cdev;
+	काष्ठा mutex		mutex;
+	क्रमागत uleds_state	state;
+	रुको_queue_head_t	रुकोq;
+	पूर्णांक			brightness;
 	bool			new_data;
-};
+पूर्ण;
 
-static struct miscdevice uleds_misc;
+अटल काष्ठा miscdevice uleds_misc;
 
-static void uleds_brightness_set(struct led_classdev *led_cdev,
-				 enum led_brightness brightness)
-{
-	struct uleds_device *udev = container_of(led_cdev, struct uleds_device,
+अटल व्योम uleds_brightness_set(काष्ठा led_classdev *led_cdev,
+				 क्रमागत led_brightness brightness)
+अणु
+	काष्ठा uleds_device *udev = container_of(led_cdev, काष्ठा uleds_device,
 						 led_cdev);
 
-	if (udev->brightness != brightness) {
+	अगर (udev->brightness != brightness) अणु
 		udev->brightness = brightness;
 		udev->new_data = true;
-		wake_up_interruptible(&udev->waitq);
-	}
-}
+		wake_up_पूर्णांकerruptible(&udev->रुकोq);
+	पूर्ण
+पूर्ण
 
-static int uleds_open(struct inode *inode, struct file *file)
-{
-	struct uleds_device *udev;
+अटल पूर्णांक uleds_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा uleds_device *udev;
 
-	udev = kzalloc(sizeof(*udev), GFP_KERNEL);
-	if (!udev)
-		return -ENOMEM;
+	udev = kzalloc(माप(*udev), GFP_KERNEL);
+	अगर (!udev)
+		वापस -ENOMEM;
 
 	udev->led_cdev.name = udev->user_dev.name;
 	udev->led_cdev.brightness_set = uleds_brightness_set;
 
 	mutex_init(&udev->mutex);
-	init_waitqueue_head(&udev->waitq);
+	init_रुकोqueue_head(&udev->रुकोq);
 	udev->state = ULEDS_STATE_UNKNOWN;
 
-	file->private_data = udev;
-	stream_open(inode, file);
+	file->निजी_data = udev;
+	stream_खोलो(inode, file);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static ssize_t uleds_write(struct file *file, const char __user *buffer,
-			   size_t count, loff_t *ppos)
-{
-	struct uleds_device *udev = file->private_data;
-	const char *name;
-	int ret;
+अटल sमाप_प्रकार uleds_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buffer,
+			   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा uleds_device *udev = file->निजी_data;
+	स्थिर अक्षर *name;
+	पूर्णांक ret;
 
-	if (count == 0)
-		return 0;
+	अगर (count == 0)
+		वापस 0;
 
-	ret = mutex_lock_interruptible(&udev->mutex);
-	if (ret)
-		return ret;
+	ret = mutex_lock_पूर्णांकerruptible(&udev->mutex);
+	अगर (ret)
+		वापस ret;
 
-	if (udev->state == ULEDS_STATE_REGISTERED) {
+	अगर (udev->state == ULEDS_STATE_REGISTERED) अणु
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (count != sizeof(struct uleds_user_dev)) {
+	अगर (count != माप(काष्ठा uleds_user_dev)) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (copy_from_user(&udev->user_dev, buffer,
-			   sizeof(struct uleds_user_dev))) {
+	अगर (copy_from_user(&udev->user_dev, buffer,
+			   माप(काष्ठा uleds_user_dev))) अणु
 		ret = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	name = udev->user_dev.name;
-	if (!name[0] || !strcmp(name, ".") || !strcmp(name, "..") ||
-	    strchr(name, '/')) {
+	अगर (!name[0] || !म_भेद(name, ".") || !म_भेद(name, "..") ||
+	    म_अक्षर(name, '/')) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (udev->user_dev.max_brightness <= 0) {
+	अगर (udev->user_dev.max_brightness <= 0) अणु
 		ret = -EINVAL;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	udev->led_cdev.max_brightness = udev->user_dev.max_brightness;
 
-	ret = devm_led_classdev_register(uleds_misc.this_device,
+	ret = devm_led_classdev_रेजिस्टर(uleds_misc.this_device,
 					 &udev->led_cdev);
-	if (ret < 0)
-		goto out;
+	अगर (ret < 0)
+		जाओ out;
 
 	udev->new_data = true;
 	udev->state = ULEDS_STATE_REGISTERED;
@@ -125,101 +126,101 @@ static ssize_t uleds_write(struct file *file, const char __user *buffer,
 out:
 	mutex_unlock(&udev->mutex);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t uleds_read(struct file *file, char __user *buffer, size_t count,
+अटल sमाप_प्रकार uleds_पढ़ो(काष्ठा file *file, अक्षर __user *buffer, माप_प्रकार count,
 			  loff_t *ppos)
-{
-	struct uleds_device *udev = file->private_data;
-	ssize_t retval;
+अणु
+	काष्ठा uleds_device *udev = file->निजी_data;
+	sमाप_प्रकार retval;
 
-	if (count < sizeof(udev->brightness))
-		return 0;
+	अगर (count < माप(udev->brightness))
+		वापस 0;
 
-	do {
-		retval = mutex_lock_interruptible(&udev->mutex);
-		if (retval)
-			return retval;
+	करो अणु
+		retval = mutex_lock_पूर्णांकerruptible(&udev->mutex);
+		अगर (retval)
+			वापस retval;
 
-		if (udev->state != ULEDS_STATE_REGISTERED) {
+		अगर (udev->state != ULEDS_STATE_REGISTERED) अणु
 			retval = -ENODEV;
-		} else if (!udev->new_data && (file->f_flags & O_NONBLOCK)) {
+		पूर्ण अन्यथा अगर (!udev->new_data && (file->f_flags & O_NONBLOCK)) अणु
 			retval = -EAGAIN;
-		} else if (udev->new_data) {
+		पूर्ण अन्यथा अगर (udev->new_data) अणु
 			retval = copy_to_user(buffer, &udev->brightness,
-					      sizeof(udev->brightness));
+					      माप(udev->brightness));
 			udev->new_data = false;
-			retval = sizeof(udev->brightness);
-		}
+			retval = माप(udev->brightness);
+		पूर्ण
 
 		mutex_unlock(&udev->mutex);
 
-		if (retval)
-			break;
+		अगर (retval)
+			अवरोध;
 
-		if (!(file->f_flags & O_NONBLOCK))
-			retval = wait_event_interruptible(udev->waitq,
+		अगर (!(file->f_flags & O_NONBLOCK))
+			retval = रुको_event_पूर्णांकerruptible(udev->रुकोq,
 					udev->new_data ||
 					udev->state != ULEDS_STATE_REGISTERED);
-	} while (retval == 0);
+	पूर्ण जबतक (retval == 0);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static __poll_t uleds_poll(struct file *file, poll_table *wait)
-{
-	struct uleds_device *udev = file->private_data;
+अटल __poll_t uleds_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा uleds_device *udev = file->निजी_data;
 
-	poll_wait(file, &udev->waitq, wait);
+	poll_रुको(file, &udev->रुकोq, रुको);
 
-	if (udev->new_data)
-		return EPOLLIN | EPOLLRDNORM;
+	अगर (udev->new_data)
+		वापस EPOLLIN | EPOLLRDNORM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uleds_release(struct inode *inode, struct file *file)
-{
-	struct uleds_device *udev = file->private_data;
+अटल पूर्णांक uleds_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा uleds_device *udev = file->निजी_data;
 
-	if (udev->state == ULEDS_STATE_REGISTERED) {
+	अगर (udev->state == ULEDS_STATE_REGISTERED) अणु
 		udev->state = ULEDS_STATE_UNKNOWN;
-		devm_led_classdev_unregister(uleds_misc.this_device,
+		devm_led_classdev_unरेजिस्टर(uleds_misc.this_device,
 					     &udev->led_cdev);
-	}
-	kfree(udev);
+	पूर्ण
+	kमुक्त(udev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations uleds_fops = {
+अटल स्थिर काष्ठा file_operations uleds_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= uleds_open,
+	.खोलो		= uleds_खोलो,
 	.release	= uleds_release,
-	.read		= uleds_read,
-	.write		= uleds_write,
+	.पढ़ो		= uleds_पढ़ो,
+	.ग_लिखो		= uleds_ग_लिखो,
 	.poll		= uleds_poll,
 	.llseek		= no_llseek,
-};
+पूर्ण;
 
-static struct miscdevice uleds_misc = {
+अटल काष्ठा miscdevice uleds_misc = अणु
 	.fops		= &uleds_fops,
 	.minor		= MISC_DYNAMIC_MINOR,
 	.name		= ULEDS_NAME,
-};
+पूर्ण;
 
-static int __init uleds_init(void)
-{
-	return misc_register(&uleds_misc);
-}
+अटल पूर्णांक __init uleds_init(व्योम)
+अणु
+	वापस misc_रेजिस्टर(&uleds_misc);
+पूर्ण
 module_init(uleds_init);
 
-static void __exit uleds_exit(void)
-{
-	misc_deregister(&uleds_misc);
-}
-module_exit(uleds_exit);
+अटल व्योम __निकास uleds_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&uleds_misc);
+पूर्ण
+module_निकास(uleds_निकास);
 
 MODULE_AUTHOR("David Lechner <david@lechnology.com>");
 MODULE_DESCRIPTION("Userspace driver for the LED subsystem");

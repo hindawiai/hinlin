@@ -1,549 +1,550 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * Copyright (c) 2000-2001,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#ifndef __XFS_BTREE_H__
-#define	__XFS_BTREE_H__
+#अगर_अघोषित __XFS_BTREE_H__
+#घोषणा	__XFS_BTREE_H__
 
-struct xfs_buf;
-struct xfs_inode;
-struct xfs_mount;
-struct xfs_trans;
-struct xfs_ifork;
+काष्ठा xfs_buf;
+काष्ठा xfs_inode;
+काष्ठा xfs_mount;
+काष्ठा xfs_trans;
+काष्ठा xfs_अगरork;
 
-extern kmem_zone_t	*xfs_btree_cur_zone;
+बाह्य kmem_zone_t	*xfs_btree_cur_zone;
 
 /*
- * Generic key, ptr and record wrapper structures.
+ * Generic key, ptr and record wrapper काष्ठाures.
  *
- * These are disk format structures, and are converted where necessary
- * by the btree specific code that needs to interpret them.
+ * These are disk क्रमmat काष्ठाures, and are converted where necessary
+ * by the btree specअगरic code that needs to पूर्णांकerpret them.
  */
-union xfs_btree_ptr {
-	__be32			s;	/* short form ptr */
-	__be64			l;	/* long form ptr */
-};
+जोड़ xfs_btree_ptr अणु
+	__be32			s;	/* लघु क्रमm ptr */
+	__be64			l;	/* दीर्घ क्रमm ptr */
+पूर्ण;
 
 /*
  * The in-core btree key.  Overlapping btrees actually store two keys
- * per pointer, so we reserve enough memory to hold both.  The __*bigkey
+ * per poपूर्णांकer, so we reserve enough memory to hold both.  The __*bigkey
  * items should never be accessed directly.
  */
-union xfs_btree_key {
-	struct xfs_bmbt_key		bmbt;
+जोड़ xfs_btree_key अणु
+	काष्ठा xfs_bmbt_key		bmbt;
 	xfs_bmdr_key_t			bmbr;	/* bmbt root block */
 	xfs_alloc_key_t			alloc;
-	struct xfs_inobt_key		inobt;
-	struct xfs_rmap_key		rmap;
-	struct xfs_rmap_key		__rmap_bigkey[2];
-	struct xfs_refcount_key		refc;
-};
+	काष्ठा xfs_inobt_key		inobt;
+	काष्ठा xfs_rmap_key		rmap;
+	काष्ठा xfs_rmap_key		__rmap_bigkey[2];
+	काष्ठा xfs_refcount_key		refc;
+पूर्ण;
 
-union xfs_btree_rec {
-	struct xfs_bmbt_rec		bmbt;
+जोड़ xfs_btree_rec अणु
+	काष्ठा xfs_bmbt_rec		bmbt;
 	xfs_bmdr_rec_t			bmbr;	/* bmbt root block */
-	struct xfs_alloc_rec		alloc;
-	struct xfs_inobt_rec		inobt;
-	struct xfs_rmap_rec		rmap;
-	struct xfs_refcount_rec		refc;
-};
+	काष्ठा xfs_alloc_rec		alloc;
+	काष्ठा xfs_inobt_rec		inobt;
+	काष्ठा xfs_rmap_rec		rmap;
+	काष्ठा xfs_refcount_rec		refc;
+पूर्ण;
 
 /*
- * This nonsense is to make -wlint happy.
+ * This nonsense is to make -wlपूर्णांक happy.
  */
-#define	XFS_LOOKUP_EQ	((xfs_lookup_t)XFS_LOOKUP_EQi)
-#define	XFS_LOOKUP_LE	((xfs_lookup_t)XFS_LOOKUP_LEi)
-#define	XFS_LOOKUP_GE	((xfs_lookup_t)XFS_LOOKUP_GEi)
+#घोषणा	XFS_LOOKUP_EQ	((xfs_lookup_t)XFS_LOOKUP_EQi)
+#घोषणा	XFS_LOOKUP_LE	((xfs_lookup_t)XFS_LOOKUP_LEi)
+#घोषणा	XFS_LOOKUP_GE	((xfs_lookup_t)XFS_LOOKUP_GEi)
 
-#define	XFS_BTNUM_BNO	((xfs_btnum_t)XFS_BTNUM_BNOi)
-#define	XFS_BTNUM_CNT	((xfs_btnum_t)XFS_BTNUM_CNTi)
-#define	XFS_BTNUM_BMAP	((xfs_btnum_t)XFS_BTNUM_BMAPi)
-#define	XFS_BTNUM_INO	((xfs_btnum_t)XFS_BTNUM_INOi)
-#define	XFS_BTNUM_FINO	((xfs_btnum_t)XFS_BTNUM_FINOi)
-#define	XFS_BTNUM_RMAP	((xfs_btnum_t)XFS_BTNUM_RMAPi)
-#define	XFS_BTNUM_REFC	((xfs_btnum_t)XFS_BTNUM_REFCi)
+#घोषणा	XFS_BTNUM_BNO	((xfs_btnum_t)XFS_BTNUM_BNOi)
+#घोषणा	XFS_BTNUM_CNT	((xfs_btnum_t)XFS_BTNUM_CNTi)
+#घोषणा	XFS_BTNUM_BMAP	((xfs_btnum_t)XFS_BTNUM_BMAPi)
+#घोषणा	XFS_BTNUM_INO	((xfs_btnum_t)XFS_BTNUM_INOi)
+#घोषणा	XFS_BTNUM_FINO	((xfs_btnum_t)XFS_BTNUM_FINOi)
+#घोषणा	XFS_BTNUM_RMAP	((xfs_btnum_t)XFS_BTNUM_RMAPi)
+#घोषणा	XFS_BTNUM_REFC	((xfs_btnum_t)XFS_BTNUM_REFCi)
 
-uint32_t xfs_btree_magic(int crc, xfs_btnum_t btnum);
+uपूर्णांक32_t xfs_btree_magic(पूर्णांक crc, xfs_btnum_t btnum);
 
 /*
  * For logging record fields.
  */
-#define	XFS_BB_MAGIC		(1 << 0)
-#define	XFS_BB_LEVEL		(1 << 1)
-#define	XFS_BB_NUMRECS		(1 << 2)
-#define	XFS_BB_LEFTSIB		(1 << 3)
-#define	XFS_BB_RIGHTSIB		(1 << 4)
-#define	XFS_BB_BLKNO		(1 << 5)
-#define	XFS_BB_LSN		(1 << 6)
-#define	XFS_BB_UUID		(1 << 7)
-#define	XFS_BB_OWNER		(1 << 8)
-#define	XFS_BB_NUM_BITS		5
-#define	XFS_BB_ALL_BITS		((1 << XFS_BB_NUM_BITS) - 1)
-#define	XFS_BB_NUM_BITS_CRC	9
-#define	XFS_BB_ALL_BITS_CRC	((1 << XFS_BB_NUM_BITS_CRC) - 1)
+#घोषणा	XFS_BB_MAGIC		(1 << 0)
+#घोषणा	XFS_BB_LEVEL		(1 << 1)
+#घोषणा	XFS_BB_NUMRECS		(1 << 2)
+#घोषणा	XFS_BB_LEFTSIB		(1 << 3)
+#घोषणा	XFS_BB_RIGHTSIB		(1 << 4)
+#घोषणा	XFS_BB_BLKNO		(1 << 5)
+#घोषणा	XFS_BB_LSN		(1 << 6)
+#घोषणा	XFS_BB_UUID		(1 << 7)
+#घोषणा	XFS_BB_OWNER		(1 << 8)
+#घोषणा	XFS_BB_NUM_BITS		5
+#घोषणा	XFS_BB_ALL_BITS		((1 << XFS_BB_NUM_BITS) - 1)
+#घोषणा	XFS_BB_NUM_BITS_CRC	9
+#घोषणा	XFS_BB_ALL_BITS_CRC	((1 << XFS_BB_NUM_BITS_CRC) - 1)
 
 /*
- * Generic stats interface
+ * Generic stats पूर्णांकerface
  */
-#define XFS_BTREE_STATS_INC(cur, stat)	\
-	XFS_STATS_INC_OFF((cur)->bc_mp, (cur)->bc_statoff + __XBTS_ ## stat)
-#define XFS_BTREE_STATS_ADD(cur, stat, val)	\
-	XFS_STATS_ADD_OFF((cur)->bc_mp, (cur)->bc_statoff + __XBTS_ ## stat, val)
+#घोषणा XFS_BTREE_STATS_INC(cur, stat)	\
+	XFS_STATS_INC_OFF((cur)->bc_mp, (cur)->bc_stम_से_भf + __XBTS_ ## stat)
+#घोषणा XFS_BTREE_STATS_ADD(cur, stat, val)	\
+	XFS_STATS_ADD_OFF((cur)->bc_mp, (cur)->bc_stम_से_भf + __XBTS_ ## stat, val)
 
-#define	XFS_BTREE_MAXLEVELS	9	/* max of all btrees */
+#घोषणा	XFS_BTREE_MAXLEVELS	9	/* max of all btrees */
 
-struct xfs_btree_ops {
-	/* size of the key and record structures */
-	size_t	key_len;
-	size_t	rec_len;
+काष्ठा xfs_btree_ops अणु
+	/* size of the key and record काष्ठाures */
+	माप_प्रकार	key_len;
+	माप_प्रकार	rec_len;
 
 	/* cursor operations */
-	struct xfs_btree_cur *(*dup_cursor)(struct xfs_btree_cur *);
-	void	(*update_cursor)(struct xfs_btree_cur *src,
-				 struct xfs_btree_cur *dst);
+	काष्ठा xfs_btree_cur *(*dup_cursor)(काष्ठा xfs_btree_cur *);
+	व्योम	(*update_cursor)(काष्ठा xfs_btree_cur *src,
+				 काष्ठा xfs_btree_cur *dst);
 
-	/* update btree root pointer */
-	void	(*set_root)(struct xfs_btree_cur *cur,
-			    union xfs_btree_ptr *nptr, int level_change);
+	/* update btree root poपूर्णांकer */
+	व्योम	(*set_root)(काष्ठा xfs_btree_cur *cur,
+			    जोड़ xfs_btree_ptr *nptr, पूर्णांक level_change);
 
-	/* block allocation / freeing */
-	int	(*alloc_block)(struct xfs_btree_cur *cur,
-			       union xfs_btree_ptr *start_bno,
-			       union xfs_btree_ptr *new_bno,
-			       int *stat);
-	int	(*free_block)(struct xfs_btree_cur *cur, struct xfs_buf *bp);
+	/* block allocation / मुक्तing */
+	पूर्णांक	(*alloc_block)(काष्ठा xfs_btree_cur *cur,
+			       जोड़ xfs_btree_ptr *start_bno,
+			       जोड़ xfs_btree_ptr *new_bno,
+			       पूर्णांक *stat);
+	पूर्णांक	(*मुक्त_block)(काष्ठा xfs_btree_cur *cur, काष्ठा xfs_buf *bp);
 
-	/* update last record information */
-	void	(*update_lastrec)(struct xfs_btree_cur *cur,
-				  struct xfs_btree_block *block,
-				  union xfs_btree_rec *rec,
-				  int ptr, int reason);
+	/* update last record inक्रमmation */
+	व्योम	(*update_lastrec)(काष्ठा xfs_btree_cur *cur,
+				  काष्ठा xfs_btree_block *block,
+				  जोड़ xfs_btree_rec *rec,
+				  पूर्णांक ptr, पूर्णांक reason);
 
 	/* records in block/level */
-	int	(*get_minrecs)(struct xfs_btree_cur *cur, int level);
-	int	(*get_maxrecs)(struct xfs_btree_cur *cur, int level);
+	पूर्णांक	(*get_minrecs)(काष्ठा xfs_btree_cur *cur, पूर्णांक level);
+	पूर्णांक	(*get_maxrecs)(काष्ठा xfs_btree_cur *cur, पूर्णांक level);
 
-	/* records on disk.  Matter for the root in inode case. */
-	int	(*get_dmaxrecs)(struct xfs_btree_cur *cur, int level);
+	/* records on disk.  Matter क्रम the root in inode हाल. */
+	पूर्णांक	(*get_dmaxrecs)(काष्ठा xfs_btree_cur *cur, पूर्णांक level);
 
-	/* init values of btree structures */
-	void	(*init_key_from_rec)(union xfs_btree_key *key,
-				     union xfs_btree_rec *rec);
-	void	(*init_rec_from_cur)(struct xfs_btree_cur *cur,
-				     union xfs_btree_rec *rec);
-	void	(*init_ptr_from_cur)(struct xfs_btree_cur *cur,
-				     union xfs_btree_ptr *ptr);
-	void	(*init_high_key_from_rec)(union xfs_btree_key *key,
-					  union xfs_btree_rec *rec);
+	/* init values of btree काष्ठाures */
+	व्योम	(*init_key_from_rec)(जोड़ xfs_btree_key *key,
+				     जोड़ xfs_btree_rec *rec);
+	व्योम	(*init_rec_from_cur)(काष्ठा xfs_btree_cur *cur,
+				     जोड़ xfs_btree_rec *rec);
+	व्योम	(*init_ptr_from_cur)(काष्ठा xfs_btree_cur *cur,
+				     जोड़ xfs_btree_ptr *ptr);
+	व्योम	(*init_high_key_from_rec)(जोड़ xfs_btree_key *key,
+					  जोड़ xfs_btree_rec *rec);
 
-	/* difference between key value and cursor value */
-	int64_t (*key_diff)(struct xfs_btree_cur *cur,
-			      union xfs_btree_key *key);
+	/* dअगरference between key value and cursor value */
+	पूर्णांक64_t (*key_dअगरf)(काष्ठा xfs_btree_cur *cur,
+			      जोड़ xfs_btree_key *key);
 
 	/*
-	 * Difference between key2 and key1 -- positive if key1 > key2,
-	 * negative if key1 < key2, and zero if equal.
+	 * Dअगरference between key2 and key1 -- positive अगर key1 > key2,
+	 * negative अगर key1 < key2, and zero अगर equal.
 	 */
-	int64_t (*diff_two_keys)(struct xfs_btree_cur *cur,
-				   union xfs_btree_key *key1,
-				   union xfs_btree_key *key2);
+	पूर्णांक64_t (*dअगरf_two_keys)(काष्ठा xfs_btree_cur *cur,
+				   जोड़ xfs_btree_key *key1,
+				   जोड़ xfs_btree_key *key2);
 
-	const struct xfs_buf_ops	*buf_ops;
+	स्थिर काष्ठा xfs_buf_ops	*buf_ops;
 
 	/* check that k1 is lower than k2 */
-	int	(*keys_inorder)(struct xfs_btree_cur *cur,
-				union xfs_btree_key *k1,
-				union xfs_btree_key *k2);
+	पूर्णांक	(*keys_inorder)(काष्ठा xfs_btree_cur *cur,
+				जोड़ xfs_btree_key *k1,
+				जोड़ xfs_btree_key *k2);
 
 	/* check that r1 is lower than r2 */
-	int	(*recs_inorder)(struct xfs_btree_cur *cur,
-				union xfs_btree_rec *r1,
-				union xfs_btree_rec *r2);
-};
+	पूर्णांक	(*recs_inorder)(काष्ठा xfs_btree_cur *cur,
+				जोड़ xfs_btree_rec *r1,
+				जोड़ xfs_btree_rec *r2);
+पूर्ण;
 
 /*
- * Reasons for the update_lastrec method to be called.
+ * Reasons क्रम the update_lastrec method to be called.
  */
-#define LASTREC_UPDATE	0
-#define LASTREC_INSREC	1
-#define LASTREC_DELREC	2
+#घोषणा LASTREC_UPDATE	0
+#घोषणा LASTREC_INSREC	1
+#घोषणा LASTREC_DELREC	2
 
 
-union xfs_btree_irec {
-	struct xfs_alloc_rec_incore	a;
-	struct xfs_bmbt_irec		b;
-	struct xfs_inobt_rec_incore	i;
-	struct xfs_rmap_irec		r;
-	struct xfs_refcount_irec	rc;
-};
+जोड़ xfs_btree_irec अणु
+	काष्ठा xfs_alloc_rec_incore	a;
+	काष्ठा xfs_bmbt_irec		b;
+	काष्ठा xfs_inobt_rec_incore	i;
+	काष्ठा xfs_rmap_irec		r;
+	काष्ठा xfs_refcount_irec	rc;
+पूर्ण;
 
-/* Per-AG btree information. */
-struct xfs_btree_cur_ag {
-	union {
-		struct xfs_buf		*agbp;
-		struct xbtree_afakeroot	*afake;	/* for staging cursor */
-	};
+/* Per-AG btree inक्रमmation. */
+काष्ठा xfs_btree_cur_ag अणु
+	जोड़ अणु
+		काष्ठा xfs_buf		*agbp;
+		काष्ठा xbtree_afakeroot	*afake;	/* क्रम staging cursor */
+	पूर्ण;
 	xfs_agnumber_t		agno;
-	union {
-		struct {
-			unsigned long nr_ops;	/* # record updates */
-			int	shape_changes;	/* # of extent splits */
-		} refc;
-		struct {
+	जोड़ अणु
+		काष्ठा अणु
+			अचिन्हित दीर्घ nr_ops;	/* # record updates */
+			पूर्णांक	shape_changes;	/* # of extent splits */
+		पूर्ण refc;
+		काष्ठा अणु
 			bool	active;		/* allocation cursor state */
-		} abt;
-	};
-};
+		पूर्ण abt;
+	पूर्ण;
+पूर्ण;
 
-/* Btree-in-inode cursor information */
-struct xfs_btree_cur_ino {
-	struct xfs_inode		*ip;
-	struct xbtree_ifakeroot		*ifake;	/* for staging cursor */
-	int				allocated;
-	short				forksize;
-	char				whichfork;
-	char				flags;
+/* Btree-in-inode cursor inक्रमmation */
+काष्ठा xfs_btree_cur_ino अणु
+	काष्ठा xfs_inode		*ip;
+	काष्ठा xbtree_अगरakeroot		*अगरake;	/* क्रम staging cursor */
+	पूर्णांक				allocated;
+	लघु				विभाजनsize;
+	अक्षर				whichविभाजन;
+	अक्षर				flags;
 /* We are converting a delalloc reservation */
-#define	XFS_BTCUR_BMBT_WASDEL		(1 << 0)
+#घोषणा	XFS_BTCUR_BMBT_WASDEL		(1 << 0)
 
-/* For extent swap, ignore owner check in verifier */
-#define	XFS_BTCUR_BMBT_INVALID_OWNER	(1 << 1)
-};
+/* For extent swap, ignore owner check in verअगरier */
+#घोषणा	XFS_BTCUR_BMBT_INVALID_OWNER	(1 << 1)
+पूर्ण;
 
 /*
- * Btree cursor structure.
- * This collects all information needed by the btree code in one place.
+ * Btree cursor काष्ठाure.
+ * This collects all inक्रमmation needed by the btree code in one place.
  */
-typedef struct xfs_btree_cur
-{
-	struct xfs_trans	*bc_tp;	/* transaction we're in, if any */
-	struct xfs_mount	*bc_mp;	/* file system mount struct */
-	const struct xfs_btree_ops *bc_ops;
-	uint			bc_flags; /* btree features - below */
-	union xfs_btree_irec	bc_rec;	/* current insert/search record value */
-	struct xfs_buf	*bc_bufs[XFS_BTREE_MAXLEVELS];	/* buf ptr per level */
-	int		bc_ptrs[XFS_BTREE_MAXLEVELS];	/* key/record # */
-	uint8_t		bc_ra[XFS_BTREE_MAXLEVELS];	/* readahead bits */
-#define	XFS_BTCUR_LEFTRA	1	/* left sibling has been read-ahead */
-#define	XFS_BTCUR_RIGHTRA	2	/* right sibling has been read-ahead */
-	uint8_t		bc_nlevels;	/* number of levels in the tree */
-	uint8_t		bc_blocklog;	/* log2(blocksize) of btree blocks */
-	xfs_btnum_t	bc_btnum;	/* identifies which btree type */
-	int		bc_statoff;	/* offset of btre stats array */
-	union {
-		struct xfs_btree_cur_ag	bc_ag;
-		struct xfs_btree_cur_ino bc_ino;
-	};
-} xfs_btree_cur_t;
+प्रकार काष्ठा xfs_btree_cur
+अणु
+	काष्ठा xfs_trans	*bc_tp;	/* transaction we're in, अगर any */
+	काष्ठा xfs_mount	*bc_mp;	/* file प्रणाली mount काष्ठा */
+	स्थिर काष्ठा xfs_btree_ops *bc_ops;
+	uपूर्णांक			bc_flags; /* btree features - below */
+	जोड़ xfs_btree_irec	bc_rec;	/* current insert/search record value */
+	काष्ठा xfs_buf	*bc_bufs[XFS_BTREE_MAXLEVELS];	/* buf ptr per level */
+	पूर्णांक		bc_ptrs[XFS_BTREE_MAXLEVELS];	/* key/record # */
+	uपूर्णांक8_t		bc_ra[XFS_BTREE_MAXLEVELS];	/* पढ़ोahead bits */
+#घोषणा	XFS_BTCUR_LEFTRA	1	/* left sibling has been पढ़ो-ahead */
+#घोषणा	XFS_BTCUR_RIGHTRA	2	/* right sibling has been पढ़ो-ahead */
+	uपूर्णांक8_t		bc_nlevels;	/* number of levels in the tree */
+	uपूर्णांक8_t		bc_blocklog;	/* log2(blocksize) of btree blocks */
+	xfs_btnum_t	bc_btnum;	/* identअगरies which btree type */
+	पूर्णांक		bc_stम_से_भf;	/* offset of btre stats array */
+	जोड़ अणु
+		काष्ठा xfs_btree_cur_ag	bc_ag;
+		काष्ठा xfs_btree_cur_ino bc_ino;
+	पूर्ण;
+पूर्ण xfs_btree_cur_t;
 
 /* cursor flags */
-#define XFS_BTREE_LONG_PTRS		(1<<0)	/* pointers are 64bits long */
-#define XFS_BTREE_ROOT_IN_INODE		(1<<1)	/* root may be variable size */
-#define XFS_BTREE_LASTREC_UPDATE	(1<<2)	/* track last rec externally */
-#define XFS_BTREE_CRC_BLOCKS		(1<<3)	/* uses extended btree blocks */
-#define XFS_BTREE_OVERLAPPING		(1<<4)	/* overlapping intervals */
+#घोषणा XFS_BTREE_LONG_PTRS		(1<<0)	/* poपूर्णांकers are 64bits दीर्घ */
+#घोषणा XFS_BTREE_ROOT_IN_INODE		(1<<1)	/* root may be variable size */
+#घोषणा XFS_BTREE_LASTREC_UPDATE	(1<<2)	/* track last rec बाह्यally */
+#घोषणा XFS_BTREE_CRC_BLOCKS		(1<<3)	/* uses extended btree blocks */
+#घोषणा XFS_BTREE_OVERLAPPING		(1<<4)	/* overlapping पूर्णांकervals */
 /*
- * The root of this btree is a fakeroot structure so that we can stage a btree
- * rebuild without leaving it accessible via primary metadata.  The ops struct
- * is dynamically allocated and must be freed when the cursor is deleted.
+ * The root of this btree is a fakeroot काष्ठाure so that we can stage a btree
+ * rebuild without leaving it accessible via primary metadata.  The ops काष्ठा
+ * is dynamically allocated and must be मुक्तd when the cursor is deleted.
  */
-#define XFS_BTREE_STAGING		(1<<5)
+#घोषणा XFS_BTREE_STAGING		(1<<5)
 
 
-#define	XFS_BTREE_NOERROR	0
-#define	XFS_BTREE_ERROR		1
+#घोषणा	XFS_BTREE_NOERROR	0
+#घोषणा	XFS_BTREE_ERROR		1
 
 /*
  * Convert from buffer to btree block header.
  */
-#define	XFS_BUF_TO_BLOCK(bp)	((struct xfs_btree_block *)((bp)->b_addr))
+#घोषणा	XFS_BUF_TO_BLOCK(bp)	((काष्ठा xfs_btree_block *)((bp)->b_addr))
 
 /*
- * Internal long and short btree block checks.  They return NULL if the
+ * Internal दीर्घ and लघु btree block checks.  They वापस शून्य अगर the
  * block is ok or the address of the failed check otherwise.
  */
-xfs_failaddr_t __xfs_btree_check_lblock(struct xfs_btree_cur *cur,
-		struct xfs_btree_block *block, int level, struct xfs_buf *bp);
-xfs_failaddr_t __xfs_btree_check_sblock(struct xfs_btree_cur *cur,
-		struct xfs_btree_block *block, int level, struct xfs_buf *bp);
+xfs_failaddr_t __xfs_btree_check_lblock(काष्ठा xfs_btree_cur *cur,
+		काष्ठा xfs_btree_block *block, पूर्णांक level, काष्ठा xfs_buf *bp);
+xfs_failaddr_t __xfs_btree_check_sblock(काष्ठा xfs_btree_cur *cur,
+		काष्ठा xfs_btree_block *block, पूर्णांक level, काष्ठा xfs_buf *bp);
 
 /*
  * Check that block header is ok.
  */
-int
+पूर्णांक
 xfs_btree_check_block(
-	struct xfs_btree_cur	*cur,	/* btree cursor */
-	struct xfs_btree_block	*block,	/* generic btree block pointer */
-	int			level,	/* level of the btree block */
-	struct xfs_buf		*bp);	/* buffer containing block, if any */
+	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
+	काष्ठा xfs_btree_block	*block,	/* generic btree block poपूर्णांकer */
+	पूर्णांक			level,	/* level of the btree block */
+	काष्ठा xfs_buf		*bp);	/* buffer containing block, अगर any */
 
 /*
- * Check that (long) pointer is ok.
+ * Check that (दीर्घ) poपूर्णांकer is ok.
  */
 bool					/* error (0 or EFSCORRUPTED) */
 xfs_btree_check_lptr(
-	struct xfs_btree_cur	*cur,	/* btree cursor */
+	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
 	xfs_fsblock_t		fsbno,	/* btree block disk address */
-	int			level);	/* btree block level */
+	पूर्णांक			level);	/* btree block level */
 
 /*
- * Check that (short) pointer is ok.
+ * Check that (लघु) poपूर्णांकer is ok.
  */
 bool					/* error (0 or EFSCORRUPTED) */
 xfs_btree_check_sptr(
-	struct xfs_btree_cur	*cur,	/* btree cursor */
+	काष्ठा xfs_btree_cur	*cur,	/* btree cursor */
 	xfs_agblock_t		agbno,	/* btree block disk address */
-	int			level);	/* btree block level */
+	पूर्णांक			level);	/* btree block level */
 
 /*
  * Delete the btree cursor.
  */
-void
+व्योम
 xfs_btree_del_cursor(
 	xfs_btree_cur_t		*cur,	/* btree cursor */
-	int			error);	/* del because of error */
+	पूर्णांक			error);	/* del because of error */
 
 /*
  * Duplicate the btree cursor.
  * Allocate a new one, copy the record, re-get the buffers.
  */
-int					/* error */
+पूर्णांक					/* error */
 xfs_btree_dup_cursor(
 	xfs_btree_cur_t		*cur,	/* input cursor */
 	xfs_btree_cur_t		**ncur);/* output cursor */
 
 /*
- * Compute first and last byte offsets for the fields given.
- * Interprets the offsets table, which contains struct field offsets.
+ * Compute first and last byte offsets क्रम the fields given.
+ * Interprets the offsets table, which contains काष्ठा field offsets.
  */
-void
+व्योम
 xfs_btree_offsets(
-	int64_t			fields,	/* bitmask of fields */
-	const short		*offsets,/* table of field offsets */
-	int			nbits,	/* number of bits to inspect */
-	int			*first,	/* output: first byte offset */
-	int			*last);	/* output: last byte offset */
+	पूर्णांक64_t			fields,	/* biपंचांगask of fields */
+	स्थिर लघु		*offsets,/* table of field offsets */
+	पूर्णांक			nbits,	/* number of bits to inspect */
+	पूर्णांक			*first,	/* output: first byte offset */
+	पूर्णांक			*last);	/* output: last byte offset */
 
 /*
- * Get a buffer for the block, return it read in.
- * Long-form addressing.
+ * Get a buffer क्रम the block, वापस it पढ़ो in.
+ * Long-क्रमm addressing.
  */
-int					/* error */
-xfs_btree_read_bufl(
-	struct xfs_mount	*mp,	/* file system mount point */
-	struct xfs_trans	*tp,	/* transaction pointer */
-	xfs_fsblock_t		fsbno,	/* file system block number */
-	struct xfs_buf		**bpp,	/* buffer for fsbno */
-	int			refval,	/* ref count value for buffer */
-	const struct xfs_buf_ops *ops);
+पूर्णांक					/* error */
+xfs_btree_पढ़ो_bufl(
+	काष्ठा xfs_mount	*mp,	/* file प्रणाली mount poपूर्णांक */
+	काष्ठा xfs_trans	*tp,	/* transaction poपूर्णांकer */
+	xfs_fsblock_t		fsbno,	/* file प्रणाली block number */
+	काष्ठा xfs_buf		**bpp,	/* buffer क्रम fsbno */
+	पूर्णांक			refval,	/* ref count value क्रम buffer */
+	स्थिर काष्ठा xfs_buf_ops *ops);
 
 /*
- * Read-ahead the block, don't wait for it, don't return a buffer.
- * Long-form addressing.
+ * Read-ahead the block, करोn't wait for it, don't वापस a buffer.
+ * Long-क्रमm addressing.
  */
-void					/* error */
-xfs_btree_reada_bufl(
-	struct xfs_mount	*mp,	/* file system mount point */
-	xfs_fsblock_t		fsbno,	/* file system block number */
-	xfs_extlen_t		count,	/* count of filesystem blocks */
-	const struct xfs_buf_ops *ops);
+व्योम					/* error */
+xfs_btree_पढ़ोa_bufl(
+	काष्ठा xfs_mount	*mp,	/* file प्रणाली mount poपूर्णांक */
+	xfs_fsblock_t		fsbno,	/* file प्रणाली block number */
+	xfs_extlen_t		count,	/* count of fileप्रणाली blocks */
+	स्थिर काष्ठा xfs_buf_ops *ops);
 
 /*
- * Read-ahead the block, don't wait for it, don't return a buffer.
- * Short-form addressing.
+ * Read-ahead the block, करोn't wait for it, don't वापस a buffer.
+ * Short-क्रमm addressing.
  */
-void					/* error */
-xfs_btree_reada_bufs(
-	struct xfs_mount	*mp,	/* file system mount point */
+व्योम					/* error */
+xfs_btree_पढ़ोa_bufs(
+	काष्ठा xfs_mount	*mp,	/* file प्रणाली mount poपूर्णांक */
 	xfs_agnumber_t		agno,	/* allocation group number */
 	xfs_agblock_t		agbno,	/* allocation group block number */
-	xfs_extlen_t		count,	/* count of filesystem blocks */
-	const struct xfs_buf_ops *ops);
+	xfs_extlen_t		count,	/* count of fileप्रणाली blocks */
+	स्थिर काष्ठा xfs_buf_ops *ops);
 
 /*
  * Initialise a new btree block header
  */
-void
+व्योम
 xfs_btree_init_block(
-	struct xfs_mount *mp,
-	struct xfs_buf	*bp,
+	काष्ठा xfs_mount *mp,
+	काष्ठा xfs_buf	*bp,
 	xfs_btnum_t	btnum,
 	__u16		level,
 	__u16		numrecs,
 	__u64		owner);
 
-void
-xfs_btree_init_block_int(
-	struct xfs_mount	*mp,
-	struct xfs_btree_block	*buf,
+व्योम
+xfs_btree_init_block_पूर्णांक(
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_btree_block	*buf,
 	xfs_daddr_t		blkno,
 	xfs_btnum_t		btnum,
 	__u16			level,
 	__u16			numrecs,
 	__u64			owner,
-	unsigned int		flags);
+	अचिन्हित पूर्णांक		flags);
 
 /*
- * Common btree core entry points.
+ * Common btree core entry poपूर्णांकs.
  */
-int xfs_btree_increment(struct xfs_btree_cur *, int, int *);
-int xfs_btree_decrement(struct xfs_btree_cur *, int, int *);
-int xfs_btree_lookup(struct xfs_btree_cur *, xfs_lookup_t, int *);
-int xfs_btree_update(struct xfs_btree_cur *, union xfs_btree_rec *);
-int xfs_btree_new_iroot(struct xfs_btree_cur *, int *, int *);
-int xfs_btree_insert(struct xfs_btree_cur *, int *);
-int xfs_btree_delete(struct xfs_btree_cur *, int *);
-int xfs_btree_get_rec(struct xfs_btree_cur *, union xfs_btree_rec **, int *);
-int xfs_btree_change_owner(struct xfs_btree_cur *cur, uint64_t new_owner,
-			   struct list_head *buffer_list);
+पूर्णांक xfs_btree_increment(काष्ठा xfs_btree_cur *, पूर्णांक, पूर्णांक *);
+पूर्णांक xfs_btree_decrement(काष्ठा xfs_btree_cur *, पूर्णांक, पूर्णांक *);
+पूर्णांक xfs_btree_lookup(काष्ठा xfs_btree_cur *, xfs_lookup_t, पूर्णांक *);
+पूर्णांक xfs_btree_update(काष्ठा xfs_btree_cur *, जोड़ xfs_btree_rec *);
+पूर्णांक xfs_btree_new_iroot(काष्ठा xfs_btree_cur *, पूर्णांक *, पूर्णांक *);
+पूर्णांक xfs_btree_insert(काष्ठा xfs_btree_cur *, पूर्णांक *);
+पूर्णांक xfs_btree_delete(काष्ठा xfs_btree_cur *, पूर्णांक *);
+पूर्णांक xfs_btree_get_rec(काष्ठा xfs_btree_cur *, जोड़ xfs_btree_rec **, पूर्णांक *);
+पूर्णांक xfs_btree_change_owner(काष्ठा xfs_btree_cur *cur, uपूर्णांक64_t new_owner,
+			   काष्ठा list_head *buffer_list);
 
 /*
  * btree block CRC helpers
  */
-void xfs_btree_lblock_calc_crc(struct xfs_buf *);
-bool xfs_btree_lblock_verify_crc(struct xfs_buf *);
-void xfs_btree_sblock_calc_crc(struct xfs_buf *);
-bool xfs_btree_sblock_verify_crc(struct xfs_buf *);
+व्योम xfs_btree_lblock_calc_crc(काष्ठा xfs_buf *);
+bool xfs_btree_lblock_verअगरy_crc(काष्ठा xfs_buf *);
+व्योम xfs_btree_sblock_calc_crc(काष्ठा xfs_buf *);
+bool xfs_btree_sblock_verअगरy_crc(काष्ठा xfs_buf *);
 
 /*
  * Internal btree helpers also used by xfs_bmap.c.
  */
-void xfs_btree_log_block(struct xfs_btree_cur *, struct xfs_buf *, int);
-void xfs_btree_log_recs(struct xfs_btree_cur *, struct xfs_buf *, int, int);
+व्योम xfs_btree_log_block(काष्ठा xfs_btree_cur *, काष्ठा xfs_buf *, पूर्णांक);
+व्योम xfs_btree_log_recs(काष्ठा xfs_btree_cur *, काष्ठा xfs_buf *, पूर्णांक, पूर्णांक);
 
 /*
  * Helpers.
  */
-static inline int xfs_btree_get_numrecs(struct xfs_btree_block *block)
-{
-	return be16_to_cpu(block->bb_numrecs);
-}
+अटल अंतरभूत पूर्णांक xfs_btree_get_numrecs(काष्ठा xfs_btree_block *block)
+अणु
+	वापस be16_to_cpu(block->bb_numrecs);
+पूर्ण
 
-static inline void xfs_btree_set_numrecs(struct xfs_btree_block *block,
-		uint16_t numrecs)
-{
+अटल अंतरभूत व्योम xfs_btree_set_numrecs(काष्ठा xfs_btree_block *block,
+		uपूर्णांक16_t numrecs)
+अणु
 	block->bb_numrecs = cpu_to_be16(numrecs);
-}
+पूर्ण
 
-static inline int xfs_btree_get_level(struct xfs_btree_block *block)
-{
-	return be16_to_cpu(block->bb_level);
-}
+अटल अंतरभूत पूर्णांक xfs_btree_get_level(काष्ठा xfs_btree_block *block)
+अणु
+	वापस be16_to_cpu(block->bb_level);
+पूर्ण
 
 
 /*
- * Min and max functions for extlen, agblock, fileoff, and filblks types.
+ * Min and max functions क्रम extlen, agblock, fileoff, and filblks types.
  */
-#define	XFS_EXTLEN_MIN(a,b)	min_t(xfs_extlen_t, (a), (b))
-#define	XFS_EXTLEN_MAX(a,b)	max_t(xfs_extlen_t, (a), (b))
-#define	XFS_AGBLOCK_MIN(a,b)	min_t(xfs_agblock_t, (a), (b))
-#define	XFS_AGBLOCK_MAX(a,b)	max_t(xfs_agblock_t, (a), (b))
-#define	XFS_FILEOFF_MIN(a,b)	min_t(xfs_fileoff_t, (a), (b))
-#define	XFS_FILEOFF_MAX(a,b)	max_t(xfs_fileoff_t, (a), (b))
-#define	XFS_FILBLKS_MIN(a,b)	min_t(xfs_filblks_t, (a), (b))
-#define	XFS_FILBLKS_MAX(a,b)	max_t(xfs_filblks_t, (a), (b))
+#घोषणा	XFS_EXTLEN_MIN(a,b)	min_t(xfs_extlen_t, (a), (b))
+#घोषणा	XFS_EXTLEN_MAX(a,b)	max_t(xfs_extlen_t, (a), (b))
+#घोषणा	XFS_AGBLOCK_MIN(a,b)	min_t(xfs_agblock_t, (a), (b))
+#घोषणा	XFS_AGBLOCK_MAX(a,b)	max_t(xfs_agblock_t, (a), (b))
+#घोषणा	XFS_खाताOFF_MIN(a,b)	min_t(xfs_fileoff_t, (a), (b))
+#घोषणा	XFS_खाताOFF_MAX(a,b)	max_t(xfs_fileoff_t, (a), (b))
+#घोषणा	XFS_FILBLKS_MIN(a,b)	min_t(xfs_filblks_t, (a), (b))
+#घोषणा	XFS_FILBLKS_MAX(a,b)	max_t(xfs_filblks_t, (a), (b))
 
-xfs_failaddr_t xfs_btree_sblock_v5hdr_verify(struct xfs_buf *bp);
-xfs_failaddr_t xfs_btree_sblock_verify(struct xfs_buf *bp,
-		unsigned int max_recs);
-xfs_failaddr_t xfs_btree_lblock_v5hdr_verify(struct xfs_buf *bp,
-		uint64_t owner);
-xfs_failaddr_t xfs_btree_lblock_verify(struct xfs_buf *bp,
-		unsigned int max_recs);
+xfs_failaddr_t xfs_btree_sblock_v5hdr_verअगरy(काष्ठा xfs_buf *bp);
+xfs_failaddr_t xfs_btree_sblock_verअगरy(काष्ठा xfs_buf *bp,
+		अचिन्हित पूर्णांक max_recs);
+xfs_failaddr_t xfs_btree_lblock_v5hdr_verअगरy(काष्ठा xfs_buf *bp,
+		uपूर्णांक64_t owner);
+xfs_failaddr_t xfs_btree_lblock_verअगरy(काष्ठा xfs_buf *bp,
+		अचिन्हित पूर्णांक max_recs);
 
-uint xfs_btree_compute_maxlevels(uint *limits, unsigned long len);
-unsigned long long xfs_btree_calc_size(uint *limits, unsigned long long len);
+uपूर्णांक xfs_btree_compute_maxlevels(uपूर्णांक *limits, अचिन्हित दीर्घ len);
+अचिन्हित दीर्घ दीर्घ xfs_btree_calc_size(uपूर्णांक *limits, अचिन्हित दीर्घ दीर्घ len);
 
 /*
- * Return codes for the query range iterator function are 0 to continue
+ * Return codes क्रम the query range iterator function are 0 to जारी
  * iterating, and non-zero to stop iterating.  Any non-zero value will be
  * passed up to the _query_range caller.  The special value -ECANCELED can be
  * used to stop iteration, because _query_range never generates that error
  * code on its own.
  */
-typedef int (*xfs_btree_query_range_fn)(struct xfs_btree_cur *cur,
-		union xfs_btree_rec *rec, void *priv);
+प्रकार पूर्णांक (*xfs_btree_query_range_fn)(काष्ठा xfs_btree_cur *cur,
+		जोड़ xfs_btree_rec *rec, व्योम *priv);
 
-int xfs_btree_query_range(struct xfs_btree_cur *cur,
-		union xfs_btree_irec *low_rec, union xfs_btree_irec *high_rec,
-		xfs_btree_query_range_fn fn, void *priv);
-int xfs_btree_query_all(struct xfs_btree_cur *cur, xfs_btree_query_range_fn fn,
-		void *priv);
+पूर्णांक xfs_btree_query_range(काष्ठा xfs_btree_cur *cur,
+		जोड़ xfs_btree_irec *low_rec, जोड़ xfs_btree_irec *high_rec,
+		xfs_btree_query_range_fn fn, व्योम *priv);
+पूर्णांक xfs_btree_query_all(काष्ठा xfs_btree_cur *cur, xfs_btree_query_range_fn fn,
+		व्योम *priv);
 
-typedef int (*xfs_btree_visit_blocks_fn)(struct xfs_btree_cur *cur, int level,
-		void *data);
+प्रकार पूर्णांक (*xfs_btree_visit_blocks_fn)(काष्ठा xfs_btree_cur *cur, पूर्णांक level,
+		व्योम *data);
 /* Visit record blocks. */
-#define XFS_BTREE_VISIT_RECORDS		(1 << 0)
+#घोषणा XFS_BTREE_VISIT_RECORDS		(1 << 0)
 /* Visit leaf blocks. */
-#define XFS_BTREE_VISIT_LEAVES		(1 << 1)
+#घोषणा XFS_BTREE_VISIT_LEAVES		(1 << 1)
 /* Visit all blocks. */
-#define XFS_BTREE_VISIT_ALL		(XFS_BTREE_VISIT_RECORDS | \
+#घोषणा XFS_BTREE_VISIT_ALL		(XFS_BTREE_VISIT_RECORDS | \
 					 XFS_BTREE_VISIT_LEAVES)
-int xfs_btree_visit_blocks(struct xfs_btree_cur *cur,
-		xfs_btree_visit_blocks_fn fn, unsigned int flags, void *data);
+पूर्णांक xfs_btree_visit_blocks(काष्ठा xfs_btree_cur *cur,
+		xfs_btree_visit_blocks_fn fn, अचिन्हित पूर्णांक flags, व्योम *data);
 
-int xfs_btree_count_blocks(struct xfs_btree_cur *cur, xfs_extlen_t *blocks);
+पूर्णांक xfs_btree_count_blocks(काष्ठा xfs_btree_cur *cur, xfs_extlen_t *blocks);
 
-union xfs_btree_rec *xfs_btree_rec_addr(struct xfs_btree_cur *cur, int n,
-		struct xfs_btree_block *block);
-union xfs_btree_key *xfs_btree_key_addr(struct xfs_btree_cur *cur, int n,
-		struct xfs_btree_block *block);
-union xfs_btree_key *xfs_btree_high_key_addr(struct xfs_btree_cur *cur, int n,
-		struct xfs_btree_block *block);
-union xfs_btree_ptr *xfs_btree_ptr_addr(struct xfs_btree_cur *cur, int n,
-		struct xfs_btree_block *block);
-int xfs_btree_lookup_get_block(struct xfs_btree_cur *cur, int level,
-		union xfs_btree_ptr *pp, struct xfs_btree_block **blkp);
-struct xfs_btree_block *xfs_btree_get_block(struct xfs_btree_cur *cur,
-		int level, struct xfs_buf **bpp);
-bool xfs_btree_ptr_is_null(struct xfs_btree_cur *cur, union xfs_btree_ptr *ptr);
-int64_t xfs_btree_diff_two_ptrs(struct xfs_btree_cur *cur,
-				const union xfs_btree_ptr *a,
-				const union xfs_btree_ptr *b);
-void xfs_btree_get_sibling(struct xfs_btree_cur *cur,
-			   struct xfs_btree_block *block,
-			   union xfs_btree_ptr *ptr, int lr);
-void xfs_btree_get_keys(struct xfs_btree_cur *cur,
-		struct xfs_btree_block *block, union xfs_btree_key *key);
-union xfs_btree_key *xfs_btree_high_key_from_key(struct xfs_btree_cur *cur,
-		union xfs_btree_key *key);
-int xfs_btree_has_record(struct xfs_btree_cur *cur, union xfs_btree_irec *low,
-		union xfs_btree_irec *high, bool *exists);
-bool xfs_btree_has_more_records(struct xfs_btree_cur *cur);
-struct xfs_ifork *xfs_btree_ifork_ptr(struct xfs_btree_cur *cur);
+जोड़ xfs_btree_rec *xfs_btree_rec_addr(काष्ठा xfs_btree_cur *cur, पूर्णांक n,
+		काष्ठा xfs_btree_block *block);
+जोड़ xfs_btree_key *xfs_btree_key_addr(काष्ठा xfs_btree_cur *cur, पूर्णांक n,
+		काष्ठा xfs_btree_block *block);
+जोड़ xfs_btree_key *xfs_btree_high_key_addr(काष्ठा xfs_btree_cur *cur, पूर्णांक n,
+		काष्ठा xfs_btree_block *block);
+जोड़ xfs_btree_ptr *xfs_btree_ptr_addr(काष्ठा xfs_btree_cur *cur, पूर्णांक n,
+		काष्ठा xfs_btree_block *block);
+पूर्णांक xfs_btree_lookup_get_block(काष्ठा xfs_btree_cur *cur, पूर्णांक level,
+		जोड़ xfs_btree_ptr *pp, काष्ठा xfs_btree_block **blkp);
+काष्ठा xfs_btree_block *xfs_btree_get_block(काष्ठा xfs_btree_cur *cur,
+		पूर्णांक level, काष्ठा xfs_buf **bpp);
+bool xfs_btree_ptr_is_null(काष्ठा xfs_btree_cur *cur, जोड़ xfs_btree_ptr *ptr);
+पूर्णांक64_t xfs_btree_dअगरf_two_ptrs(काष्ठा xfs_btree_cur *cur,
+				स्थिर जोड़ xfs_btree_ptr *a,
+				स्थिर जोड़ xfs_btree_ptr *b);
+व्योम xfs_btree_get_sibling(काष्ठा xfs_btree_cur *cur,
+			   काष्ठा xfs_btree_block *block,
+			   जोड़ xfs_btree_ptr *ptr, पूर्णांक lr);
+व्योम xfs_btree_get_keys(काष्ठा xfs_btree_cur *cur,
+		काष्ठा xfs_btree_block *block, जोड़ xfs_btree_key *key);
+जोड़ xfs_btree_key *xfs_btree_high_key_from_key(काष्ठा xfs_btree_cur *cur,
+		जोड़ xfs_btree_key *key);
+पूर्णांक xfs_btree_has_record(काष्ठा xfs_btree_cur *cur, जोड़ xfs_btree_irec *low,
+		जोड़ xfs_btree_irec *high, bool *exists);
+bool xfs_btree_has_more_records(काष्ठा xfs_btree_cur *cur);
+काष्ठा xfs_अगरork *xfs_btree_अगरork_ptr(काष्ठा xfs_btree_cur *cur);
 
-/* Does this cursor point to the last block in the given level? */
-static inline bool
+/* Does this cursor poपूर्णांक to the last block in the given level? */
+अटल अंतरभूत bool
 xfs_btree_islastblock(
 	xfs_btree_cur_t		*cur,
-	int			level)
-{
-	struct xfs_btree_block	*block;
-	struct xfs_buf		*bp;
+	पूर्णांक			level)
+अणु
+	काष्ठा xfs_btree_block	*block;
+	काष्ठा xfs_buf		*bp;
 
 	block = xfs_btree_get_block(cur, level, &bp);
 	ASSERT(block && xfs_btree_check_block(cur, block, level, bp) == 0);
 
-	if (cur->bc_flags & XFS_BTREE_LONG_PTRS)
-		return block->bb_u.l.bb_rightsib == cpu_to_be64(NULLFSBLOCK);
-	return block->bb_u.s.bb_rightsib == cpu_to_be32(NULLAGBLOCK);
-}
+	अगर (cur->bc_flags & XFS_BTREE_LONG_PTRS)
+		वापस block->bb_u.l.bb_rightsib == cpu_to_be64(शून्यFSBLOCK);
+	वापस block->bb_u.s.bb_rightsib == cpu_to_be32(शून्यAGBLOCK);
+पूर्ण
 
-void xfs_btree_set_ptr_null(struct xfs_btree_cur *cur,
-		union xfs_btree_ptr *ptr);
-int xfs_btree_get_buf_block(struct xfs_btree_cur *cur, union xfs_btree_ptr *ptr,
-		struct xfs_btree_block **block, struct xfs_buf **bpp);
-void xfs_btree_set_sibling(struct xfs_btree_cur *cur,
-		struct xfs_btree_block *block, union xfs_btree_ptr *ptr,
-		int lr);
-void xfs_btree_init_block_cur(struct xfs_btree_cur *cur,
-		struct xfs_buf *bp, int level, int numrecs);
-void xfs_btree_copy_ptrs(struct xfs_btree_cur *cur,
-		union xfs_btree_ptr *dst_ptr,
-		const union xfs_btree_ptr *src_ptr, int numptrs);
-void xfs_btree_copy_keys(struct xfs_btree_cur *cur,
-		union xfs_btree_key *dst_key, union xfs_btree_key *src_key,
-		int numkeys);
+व्योम xfs_btree_set_ptr_null(काष्ठा xfs_btree_cur *cur,
+		जोड़ xfs_btree_ptr *ptr);
+पूर्णांक xfs_btree_get_buf_block(काष्ठा xfs_btree_cur *cur, जोड़ xfs_btree_ptr *ptr,
+		काष्ठा xfs_btree_block **block, काष्ठा xfs_buf **bpp);
+व्योम xfs_btree_set_sibling(काष्ठा xfs_btree_cur *cur,
+		काष्ठा xfs_btree_block *block, जोड़ xfs_btree_ptr *ptr,
+		पूर्णांक lr);
+व्योम xfs_btree_init_block_cur(काष्ठा xfs_btree_cur *cur,
+		काष्ठा xfs_buf *bp, पूर्णांक level, पूर्णांक numrecs);
+व्योम xfs_btree_copy_ptrs(काष्ठा xfs_btree_cur *cur,
+		जोड़ xfs_btree_ptr *dst_ptr,
+		स्थिर जोड़ xfs_btree_ptr *src_ptr, पूर्णांक numptrs);
+व्योम xfs_btree_copy_keys(काष्ठा xfs_btree_cur *cur,
+		जोड़ xfs_btree_key *dst_key, जोड़ xfs_btree_key *src_key,
+		पूर्णांक numkeys);
 
-#endif	/* __XFS_BTREE_H__ */
+#पूर्ण_अगर	/* __XFS_BTREE_H__ */

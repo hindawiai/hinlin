@@ -1,250 +1,251 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2002 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2002 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <linux/err.h>
-#include <linux/highmem.h>
-#include <linux/mm.h>
-#include <linux/module.h>
-#include <linux/sched.h>
-#include <asm/current.h>
-#include <asm/page.h>
-#include <kern_util.h>
-#include <os.h>
+#समावेश <linux/err.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched.h>
+#समावेश <यंत्र/current.h>
+#समावेश <यंत्र/page.h>
+#समावेश <kern_util.h>
+#समावेश <os.h>
 
-pte_t *virt_to_pte(struct mm_struct *mm, unsigned long addr)
-{
+pte_t *virt_to_pte(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ addr)
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
 
-	if (mm == NULL)
-		return NULL;
+	अगर (mm == शून्य)
+		वापस शून्य;
 
 	pgd = pgd_offset(mm, addr);
-	if (!pgd_present(*pgd))
-		return NULL;
+	अगर (!pgd_present(*pgd))
+		वापस शून्य;
 
 	p4d = p4d_offset(pgd, addr);
-	if (!p4d_present(*p4d))
-		return NULL;
+	अगर (!p4d_present(*p4d))
+		वापस शून्य;
 
 	pud = pud_offset(p4d, addr);
-	if (!pud_present(*pud))
-		return NULL;
+	अगर (!pud_present(*pud))
+		वापस शून्य;
 
 	pmd = pmd_offset(pud, addr);
-	if (!pmd_present(*pmd))
-		return NULL;
+	अगर (!pmd_present(*pmd))
+		वापस शून्य;
 
-	return pte_offset_kernel(pmd, addr);
-}
+	वापस pte_offset_kernel(pmd, addr);
+पूर्ण
 
-static pte_t *maybe_map(unsigned long virt, int is_write)
-{
+अटल pte_t *maybe_map(अचिन्हित दीर्घ virt, पूर्णांक is_ग_लिखो)
+अणु
 	pte_t *pte = virt_to_pte(current->mm, virt);
-	int err, dummy_code;
+	पूर्णांक err, dummy_code;
 
-	if ((pte == NULL) || !pte_present(*pte) ||
-	    (is_write && !pte_write(*pte))) {
-		err = handle_page_fault(virt, 0, is_write, 1, &dummy_code);
-		if (err)
-			return NULL;
+	अगर ((pte == शून्य) || !pte_present(*pte) ||
+	    (is_ग_लिखो && !pte_ग_लिखो(*pte))) अणु
+		err = handle_page_fault(virt, 0, is_ग_लिखो, 1, &dummy_code);
+		अगर (err)
+			वापस शून्य;
 		pte = virt_to_pte(current->mm, virt);
-	}
-	if (!pte_present(*pte))
-		pte = NULL;
+	पूर्ण
+	अगर (!pte_present(*pte))
+		pte = शून्य;
 
-	return pte;
-}
+	वापस pte;
+पूर्ण
 
-static int do_op_one_page(unsigned long addr, int len, int is_write,
-		 int (*op)(unsigned long addr, int len, void *arg), void *arg)
-{
-	struct page *page;
+अटल पूर्णांक करो_op_one_page(अचिन्हित दीर्घ addr, पूर्णांक len, पूर्णांक is_ग_लिखो,
+		 पूर्णांक (*op)(अचिन्हित दीर्घ addr, पूर्णांक len, व्योम *arg), व्योम *arg)
+अणु
+	काष्ठा page *page;
 	pte_t *pte;
-	int n;
+	पूर्णांक n;
 
-	pte = maybe_map(addr, is_write);
-	if (pte == NULL)
-		return -1;
+	pte = maybe_map(addr, is_ग_लिखो);
+	अगर (pte == शून्य)
+		वापस -1;
 
 	page = pte_page(*pte);
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 	pagefault_disable();
-	addr = (unsigned long) page_address(page) +
+	addr = (अचिन्हित दीर्घ) page_address(page) +
 		(addr & ~PAGE_MASK);
-#else
-	addr = (unsigned long) kmap_atomic(page) +
+#अन्यथा
+	addr = (अचिन्हित दीर्घ) kmap_atomic(page) +
 		(addr & ~PAGE_MASK);
-#endif
+#पूर्ण_अगर
 	n = (*op)(addr, len, arg);
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 	pagefault_enable();
-#else
-	kunmap_atomic((void *)addr);
-#endif
+#अन्यथा
+	kunmap_atomic((व्योम *)addr);
+#पूर्ण_अगर
 
-	return n;
-}
+	वापस n;
+पूर्ण
 
-static long buffer_op(unsigned long addr, int len, int is_write,
-		      int (*op)(unsigned long, int, void *), void *arg)
-{
-	long size, remain, n;
+अटल दीर्घ buffer_op(अचिन्हित दीर्घ addr, पूर्णांक len, पूर्णांक is_ग_लिखो,
+		      पूर्णांक (*op)(अचिन्हित दीर्घ, पूर्णांक, व्योम *), व्योम *arg)
+अणु
+	दीर्घ size, reमुख्य, n;
 
-	size = min(PAGE_ALIGN(addr) - addr, (unsigned long) len);
-	remain = len;
+	size = min(PAGE_ALIGN(addr) - addr, (अचिन्हित दीर्घ) len);
+	reमुख्य = len;
 
-	n = do_op_one_page(addr, size, is_write, op, arg);
-	if (n != 0) {
-		remain = (n < 0 ? remain : 0);
-		goto out;
-	}
+	n = करो_op_one_page(addr, size, is_ग_लिखो, op, arg);
+	अगर (n != 0) अणु
+		reमुख्य = (n < 0 ? reमुख्य : 0);
+		जाओ out;
+	पूर्ण
 
 	addr += size;
-	remain -= size;
-	if (remain == 0)
-		goto out;
+	reमुख्य -= size;
+	अगर (reमुख्य == 0)
+		जाओ out;
 
-	while (addr < ((addr + remain) & PAGE_MASK)) {
-		n = do_op_one_page(addr, PAGE_SIZE, is_write, op, arg);
-		if (n != 0) {
-			remain = (n < 0 ? remain : 0);
-			goto out;
-		}
+	जबतक (addr < ((addr + reमुख्य) & PAGE_MASK)) अणु
+		n = करो_op_one_page(addr, PAGE_SIZE, is_ग_लिखो, op, arg);
+		अगर (n != 0) अणु
+			reमुख्य = (n < 0 ? reमुख्य : 0);
+			जाओ out;
+		पूर्ण
 
 		addr += PAGE_SIZE;
-		remain -= PAGE_SIZE;
-	}
-	if (remain == 0)
-		goto out;
+		reमुख्य -= PAGE_SIZE;
+	पूर्ण
+	अगर (reमुख्य == 0)
+		जाओ out;
 
-	n = do_op_one_page(addr, remain, is_write, op, arg);
-	if (n != 0) {
-		remain = (n < 0 ? remain : 0);
-		goto out;
-	}
+	n = करो_op_one_page(addr, reमुख्य, is_ग_लिखो, op, arg);
+	अगर (n != 0) अणु
+		reमुख्य = (n < 0 ? reमुख्य : 0);
+		जाओ out;
+	पूर्ण
 
-	return 0;
+	वापस 0;
  out:
-	return remain;
-}
+	वापस reमुख्य;
+पूर्ण
 
-static int copy_chunk_from_user(unsigned long from, int len, void *arg)
-{
-	unsigned long *to_ptr = arg, to = *to_ptr;
+अटल पूर्णांक copy_chunk_from_user(अचिन्हित दीर्घ from, पूर्णांक len, व्योम *arg)
+अणु
+	अचिन्हित दीर्घ *to_ptr = arg, to = *to_ptr;
 
-	memcpy((void *) to, (void *) from, len);
+	स_नकल((व्योम *) to, (व्योम *) from, len);
 	*to_ptr += len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long raw_copy_from_user(void *to, const void __user *from, unsigned long n)
-{
-	if (uaccess_kernel()) {
-		memcpy(to, (__force void*)from, n);
-		return 0;
-	}
+अचिन्हित दीर्घ raw_copy_from_user(व्योम *to, स्थिर व्योम __user *from, अचिन्हित दीर्घ n)
+अणु
+	अगर (uaccess_kernel()) अणु
+		स_नकल(to, (__क्रमce व्योम*)from, n);
+		वापस 0;
+	पूर्ण
 
-	return buffer_op((unsigned long) from, n, 0, copy_chunk_from_user, &to);
-}
+	वापस buffer_op((अचिन्हित दीर्घ) from, n, 0, copy_chunk_from_user, &to);
+पूर्ण
 EXPORT_SYMBOL(raw_copy_from_user);
 
-static int copy_chunk_to_user(unsigned long to, int len, void *arg)
-{
-	unsigned long *from_ptr = arg, from = *from_ptr;
+अटल पूर्णांक copy_chunk_to_user(अचिन्हित दीर्घ to, पूर्णांक len, व्योम *arg)
+अणु
+	अचिन्हित दीर्घ *from_ptr = arg, from = *from_ptr;
 
-	memcpy((void *) to, (void *) from, len);
+	स_नकल((व्योम *) to, (व्योम *) from, len);
 	*from_ptr += len;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-unsigned long raw_copy_to_user(void __user *to, const void *from, unsigned long n)
-{
-	if (uaccess_kernel()) {
-		memcpy((__force void *) to, from, n);
-		return 0;
-	}
+अचिन्हित दीर्घ raw_copy_to_user(व्योम __user *to, स्थिर व्योम *from, अचिन्हित दीर्घ n)
+अणु
+	अगर (uaccess_kernel()) अणु
+		स_नकल((__क्रमce व्योम *) to, from, n);
+		वापस 0;
+	पूर्ण
 
-	return buffer_op((unsigned long) to, n, 1, copy_chunk_to_user, &from);
-}
+	वापस buffer_op((अचिन्हित दीर्घ) to, n, 1, copy_chunk_to_user, &from);
+पूर्ण
 EXPORT_SYMBOL(raw_copy_to_user);
 
-static int strncpy_chunk_from_user(unsigned long from, int len, void *arg)
-{
-	char **to_ptr = arg, *to = *to_ptr;
-	int n;
+अटल पूर्णांक म_नकलन_chunk_from_user(अचिन्हित दीर्घ from, पूर्णांक len, व्योम *arg)
+अणु
+	अक्षर **to_ptr = arg, *to = *to_ptr;
+	पूर्णांक n;
 
-	strncpy(to, (void *) from, len);
+	म_नकलन(to, (व्योम *) from, len);
 	n = strnlen(to, len);
 	*to_ptr += n;
 
-	if (n < len)
-	        return 1;
-	return 0;
-}
+	अगर (n < len)
+	        वापस 1;
+	वापस 0;
+पूर्ण
 
-long __strncpy_from_user(char *dst, const char __user *src, long count)
-{
-	long n;
-	char *ptr = dst;
+दीर्घ __म_नकलन_from_user(अक्षर *dst, स्थिर अक्षर __user *src, दीर्घ count)
+अणु
+	दीर्घ n;
+	अक्षर *ptr = dst;
 
-	if (uaccess_kernel()) {
-		strncpy(dst, (__force void *) src, count);
-		return strnlen(dst, count);
-	}
+	अगर (uaccess_kernel()) अणु
+		म_नकलन(dst, (__क्रमce व्योम *) src, count);
+		वापस strnlen(dst, count);
+	पूर्ण
 
-	n = buffer_op((unsigned long) src, count, 0, strncpy_chunk_from_user,
+	n = buffer_op((अचिन्हित दीर्घ) src, count, 0, म_नकलन_chunk_from_user,
 		      &ptr);
-	if (n != 0)
-		return -EFAULT;
-	return strnlen(dst, count);
-}
-EXPORT_SYMBOL(__strncpy_from_user);
+	अगर (n != 0)
+		वापस -EFAULT;
+	वापस strnlen(dst, count);
+पूर्ण
+EXPORT_SYMBOL(__म_नकलन_from_user);
 
-static int clear_chunk(unsigned long addr, int len, void *unused)
-{
-	memset((void *) addr, 0, len);
-	return 0;
-}
+अटल पूर्णांक clear_chunk(अचिन्हित दीर्घ addr, पूर्णांक len, व्योम *unused)
+अणु
+	स_रखो((व्योम *) addr, 0, len);
+	वापस 0;
+पूर्ण
 
-unsigned long __clear_user(void __user *mem, unsigned long len)
-{
-	if (uaccess_kernel()) {
-		memset((__force void*)mem, 0, len);
-		return 0;
-	}
+अचिन्हित दीर्घ __clear_user(व्योम __user *mem, अचिन्हित दीर्घ len)
+अणु
+	अगर (uaccess_kernel()) अणु
+		स_रखो((__क्रमce व्योम*)mem, 0, len);
+		वापस 0;
+	पूर्ण
 
-	return buffer_op((unsigned long) mem, len, 1, clear_chunk, NULL);
-}
+	वापस buffer_op((अचिन्हित दीर्घ) mem, len, 1, clear_chunk, शून्य);
+पूर्ण
 EXPORT_SYMBOL(__clear_user);
 
-static int strnlen_chunk(unsigned long str, int len, void *arg)
-{
-	int *len_ptr = arg, n;
+अटल पूर्णांक strnlen_chunk(अचिन्हित दीर्घ str, पूर्णांक len, व्योम *arg)
+अणु
+	पूर्णांक *len_ptr = arg, n;
 
-	n = strnlen((void *) str, len);
+	n = strnlen((व्योम *) str, len);
 	*len_ptr += n;
 
-	if (n < len)
-		return 1;
-	return 0;
-}
+	अगर (n < len)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-long __strnlen_user(const void __user *str, long len)
-{
-	int count = 0, n;
+दीर्घ __strnlen_user(स्थिर व्योम __user *str, दीर्घ len)
+अणु
+	पूर्णांक count = 0, n;
 
-	if (uaccess_kernel())
-		return strnlen((__force char*)str, len) + 1;
+	अगर (uaccess_kernel())
+		वापस strnlen((__क्रमce अक्षर*)str, len) + 1;
 
-	n = buffer_op((unsigned long) str, len, 0, strnlen_chunk, &count);
-	if (n == 0)
-		return count + 1;
-	return 0;
-}
+	n = buffer_op((अचिन्हित दीर्घ) str, len, 0, strnlen_chunk, &count);
+	अगर (n == 0)
+		वापस count + 1;
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(__strnlen_user);

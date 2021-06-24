@@ -1,362 +1,363 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * linux/fs/jbd2/checkpoint.c
+ * linux/fs/jbd2/checkpoपूर्णांक.c
  *
  * Written by Stephen C. Tweedie <sct@redhat.com>, 1999
  *
  * Copyright 1999 Red Hat Software --- All Rights Reserved
  *
- * Checkpoint routines for the generic filesystem journaling code.
- * Part of the ext2fs journaling system.
+ * Checkpoपूर्णांक routines क्रम the generic fileप्रणाली journaling code.
+ * Part of the ext2fs journaling प्रणाली.
  *
- * Checkpointing is the process of ensuring that a section of the log is
+ * Checkpoपूर्णांकing is the process of ensuring that a section of the log is
  * committed fully to disk, so that that portion of the log can be
  * reused.
  */
 
-#include <linux/time.h>
-#include <linux/fs.h>
-#include <linux/jbd2.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/blkdev.h>
-#include <trace/events/jbd2.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/jbd2.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/blkdev.h>
+#समावेश <trace/events/jbd2.h>
 
 /*
- * Unlink a buffer from a transaction checkpoint list.
+ * Unlink a buffer from a transaction checkpoपूर्णांक list.
  *
  * Called with j_list_lock held.
  */
-static inline void __buffer_unlink_first(struct journal_head *jh)
-{
+अटल अंतरभूत व्योम __buffer_unlink_first(काष्ठा journal_head *jh)
+अणु
 	transaction_t *transaction = jh->b_cp_transaction;
 
 	jh->b_cpnext->b_cpprev = jh->b_cpprev;
 	jh->b_cpprev->b_cpnext = jh->b_cpnext;
-	if (transaction->t_checkpoint_list == jh) {
-		transaction->t_checkpoint_list = jh->b_cpnext;
-		if (transaction->t_checkpoint_list == jh)
-			transaction->t_checkpoint_list = NULL;
-	}
-}
+	अगर (transaction->t_checkpoपूर्णांक_list == jh) अणु
+		transaction->t_checkpoपूर्णांक_list = jh->b_cpnext;
+		अगर (transaction->t_checkpoपूर्णांक_list == jh)
+			transaction->t_checkpoपूर्णांक_list = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
- * Unlink a buffer from a transaction checkpoint(io) list.
+ * Unlink a buffer from a transaction checkpoपूर्णांक(io) list.
  *
  * Called with j_list_lock held.
  */
-static inline void __buffer_unlink(struct journal_head *jh)
-{
+अटल अंतरभूत व्योम __buffer_unlink(काष्ठा journal_head *jh)
+अणु
 	transaction_t *transaction = jh->b_cp_transaction;
 
 	__buffer_unlink_first(jh);
-	if (transaction->t_checkpoint_io_list == jh) {
-		transaction->t_checkpoint_io_list = jh->b_cpnext;
-		if (transaction->t_checkpoint_io_list == jh)
-			transaction->t_checkpoint_io_list = NULL;
-	}
-}
+	अगर (transaction->t_checkpoपूर्णांक_io_list == jh) अणु
+		transaction->t_checkpoपूर्णांक_io_list = jh->b_cpnext;
+		अगर (transaction->t_checkpoपूर्णांक_io_list == jh)
+			transaction->t_checkpoपूर्णांक_io_list = शून्य;
+	पूर्ण
+पूर्ण
 
 /*
- * Move a buffer from the checkpoint list to the checkpoint io list
+ * Move a buffer from the checkpoपूर्णांक list to the checkpoपूर्णांक io list
  *
  * Called with j_list_lock held
  */
-static inline void __buffer_relink_io(struct journal_head *jh)
-{
+अटल अंतरभूत व्योम __buffer_relink_io(काष्ठा journal_head *jh)
+अणु
 	transaction_t *transaction = jh->b_cp_transaction;
 
 	__buffer_unlink_first(jh);
 
-	if (!transaction->t_checkpoint_io_list) {
+	अगर (!transaction->t_checkpoपूर्णांक_io_list) अणु
 		jh->b_cpnext = jh->b_cpprev = jh;
-	} else {
-		jh->b_cpnext = transaction->t_checkpoint_io_list;
-		jh->b_cpprev = transaction->t_checkpoint_io_list->b_cpprev;
+	पूर्ण अन्यथा अणु
+		jh->b_cpnext = transaction->t_checkpoपूर्णांक_io_list;
+		jh->b_cpprev = transaction->t_checkpoपूर्णांक_io_list->b_cpprev;
 		jh->b_cpprev->b_cpnext = jh;
 		jh->b_cpnext->b_cpprev = jh;
-	}
-	transaction->t_checkpoint_io_list = jh;
-}
+	पूर्ण
+	transaction->t_checkpoपूर्णांक_io_list = jh;
+पूर्ण
 
 /*
- * Try to release a checkpointed buffer from its transaction.
- * Returns 1 if we released it and 2 if we also released the
+ * Try to release a checkpoपूर्णांकed buffer from its transaction.
+ * Returns 1 अगर we released it and 2 अगर we also released the
  * whole transaction.
  *
  * Requires j_list_lock
  */
-static int __try_to_free_cp_buf(struct journal_head *jh)
-{
-	int ret = 0;
-	struct buffer_head *bh = jh2bh(jh);
+अटल पूर्णांक __try_to_मुक्त_cp_buf(काष्ठा journal_head *jh)
+अणु
+	पूर्णांक ret = 0;
+	काष्ठा buffer_head *bh = jh2bh(jh);
 
-	if (jh->b_transaction == NULL && !buffer_locked(bh) &&
-	    !buffer_dirty(bh) && !buffer_write_io_error(bh)) {
+	अगर (jh->b_transaction == शून्य && !buffer_locked(bh) &&
+	    !buffer_dirty(bh) && !buffer_ग_लिखो_io_error(bh)) अणु
 		JBUFFER_TRACE(jh, "remove from checkpoint list");
-		ret = __jbd2_journal_remove_checkpoint(jh) + 1;
-	}
-	return ret;
-}
+		ret = __jbd2_journal_हटाओ_checkpoपूर्णांक(jh) + 1;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
- * __jbd2_log_wait_for_space: wait until there is space in the journal.
+ * __jbd2_log_रुको_क्रम_space: रुको until there is space in the journal.
  *
- * Called under j-state_lock *only*.  It will be unlocked if we have to wait
- * for a checkpoint to free up some space in the log.
+ * Called under j-state_lock *only*.  It will be unlocked अगर we have to रुको
+ * क्रम a checkpoपूर्णांक to मुक्त up some space in the log.
  */
-void __jbd2_log_wait_for_space(journal_t *journal)
+व्योम __jbd2_log_रुको_क्रम_space(journal_t *journal)
 __acquires(&journal->j_state_lock)
 __releases(&journal->j_state_lock)
-{
-	int nblocks, space_left;
-	/* assert_spin_locked(&journal->j_state_lock); */
+अणु
+	पूर्णांक nblocks, space_left;
+	/* निश्चित_spin_locked(&journal->j_state_lock); */
 
 	nblocks = journal->j_max_transaction_buffers;
-	while (jbd2_log_space_left(journal) < nblocks) {
-		write_unlock(&journal->j_state_lock);
-		mutex_lock_io(&journal->j_checkpoint_mutex);
+	जबतक (jbd2_log_space_left(journal) < nblocks) अणु
+		ग_लिखो_unlock(&journal->j_state_lock);
+		mutex_lock_io(&journal->j_checkpoपूर्णांक_mutex);
 
 		/*
-		 * Test again, another process may have checkpointed while we
-		 * were waiting for the checkpoint lock. If there are no
-		 * transactions ready to be checkpointed, try to recover
-		 * journal space by calling cleanup_journal_tail(), and if
-		 * that doesn't work, by waiting for the currently committing
-		 * transaction to complete.  If there is absolutely no way
+		 * Test again, another process may have checkpoपूर्णांकed जबतक we
+		 * were रुकोing क्रम the checkpoपूर्णांक lock. If there are no
+		 * transactions पढ़ोy to be checkpoपूर्णांकed, try to recover
+		 * journal space by calling cleanup_journal_tail(), and अगर
+		 * that करोesn't work, by रुकोing क्रम the currently committing
+		 * transaction to complete.  If there is असलolutely no way
 		 * to make progress, this is either a BUG or corrupted
-		 * filesystem, so abort the journal and leave a stack
-		 * trace for forensic evidence.
+		 * fileप्रणाली, so पात the journal and leave a stack
+		 * trace क्रम क्रमensic evidence.
 		 */
-		write_lock(&journal->j_state_lock);
-		if (journal->j_flags & JBD2_ABORT) {
-			mutex_unlock(&journal->j_checkpoint_mutex);
-			return;
-		}
+		ग_लिखो_lock(&journal->j_state_lock);
+		अगर (journal->j_flags & JBD2_ABORT) अणु
+			mutex_unlock(&journal->j_checkpoपूर्णांक_mutex);
+			वापस;
+		पूर्ण
 		spin_lock(&journal->j_list_lock);
 		space_left = jbd2_log_space_left(journal);
-		if (space_left < nblocks) {
-			int chkpt = journal->j_checkpoint_transactions != NULL;
+		अगर (space_left < nblocks) अणु
+			पूर्णांक chkpt = journal->j_checkpoपूर्णांक_transactions != शून्य;
 			tid_t tid = 0;
 
-			if (journal->j_committing_transaction)
+			अगर (journal->j_committing_transaction)
 				tid = journal->j_committing_transaction->t_tid;
 			spin_unlock(&journal->j_list_lock);
-			write_unlock(&journal->j_state_lock);
-			if (chkpt) {
-				jbd2_log_do_checkpoint(journal);
-			} else if (jbd2_cleanup_journal_tail(journal) == 0) {
+			ग_लिखो_unlock(&journal->j_state_lock);
+			अगर (chkpt) अणु
+				jbd2_log_करो_checkpoपूर्णांक(journal);
+			पूर्ण अन्यथा अगर (jbd2_cleanup_journal_tail(journal) == 0) अणु
 				/* We were able to recover space; yay! */
 				;
-			} else if (tid) {
+			पूर्ण अन्यथा अगर (tid) अणु
 				/*
 				 * jbd2_journal_commit_transaction() may want
-				 * to take the checkpoint_mutex if JBD2_FLUSHED
+				 * to take the checkpoपूर्णांक_mutex अगर JBD2_FLUSHED
 				 * is set.  So we need to temporarily drop it.
 				 */
-				mutex_unlock(&journal->j_checkpoint_mutex);
-				jbd2_log_wait_commit(journal, tid);
-				write_lock(&journal->j_state_lock);
-				continue;
-			} else {
-				printk(KERN_ERR "%s: needed %d blocks and "
+				mutex_unlock(&journal->j_checkpoपूर्णांक_mutex);
+				jbd2_log_रुको_commit(journal, tid);
+				ग_लिखो_lock(&journal->j_state_lock);
+				जारी;
+			पूर्ण अन्यथा अणु
+				prपूर्णांकk(KERN_ERR "%s: needed %d blocks and "
 				       "only had %d space available\n",
 				       __func__, nblocks, space_left);
-				printk(KERN_ERR "%s: no way to get more "
+				prपूर्णांकk(KERN_ERR "%s: no way to get more "
 				       "journal space in %s\n", __func__,
 				       journal->j_devname);
 				WARN_ON(1);
-				jbd2_journal_abort(journal, -EIO);
-			}
-			write_lock(&journal->j_state_lock);
-		} else {
+				jbd2_journal_पात(journal, -EIO);
+			पूर्ण
+			ग_लिखो_lock(&journal->j_state_lock);
+		पूर्ण अन्यथा अणु
 			spin_unlock(&journal->j_list_lock);
-		}
-		mutex_unlock(&journal->j_checkpoint_mutex);
-	}
-}
+		पूर्ण
+		mutex_unlock(&journal->j_checkpoपूर्णांक_mutex);
+	पूर्ण
+पूर्ण
 
-static void
-__flush_batch(journal_t *journal, int *batch_count)
-{
-	int i;
-	struct blk_plug plug;
+अटल व्योम
+__flush_batch(journal_t *journal, पूर्णांक *batch_count)
+अणु
+	पूर्णांक i;
+	काष्ठा blk_plug plug;
 
 	blk_start_plug(&plug);
-	for (i = 0; i < *batch_count; i++)
-		write_dirty_buffer(journal->j_chkpt_bhs[i], REQ_SYNC);
+	क्रम (i = 0; i < *batch_count; i++)
+		ग_लिखो_dirty_buffer(journal->j_chkpt_bhs[i], REQ_SYNC);
 	blk_finish_plug(&plug);
 
-	for (i = 0; i < *batch_count; i++) {
-		struct buffer_head *bh = journal->j_chkpt_bhs[i];
+	क्रम (i = 0; i < *batch_count; i++) अणु
+		काष्ठा buffer_head *bh = journal->j_chkpt_bhs[i];
 		BUFFER_TRACE(bh, "brelse");
-		__brelse(bh);
-	}
+		__brअन्यथा(bh);
+	पूर्ण
 	*batch_count = 0;
-}
+पूर्ण
 
 /*
- * Perform an actual checkpoint. We take the first transaction on the
- * list of transactions to be checkpointed and send all its buffers
+ * Perक्रमm an actual checkpoपूर्णांक. We take the first transaction on the
+ * list of transactions to be checkpoपूर्णांकed and send all its buffers
  * to disk. We submit larger chunks of data at once.
  *
- * The journal should be locked before calling this function.
- * Called with j_checkpoint_mutex held.
+ * The journal should be locked beक्रमe calling this function.
+ * Called with j_checkpoपूर्णांक_mutex held.
  */
-int jbd2_log_do_checkpoint(journal_t *journal)
-{
-	struct journal_head	*jh;
-	struct buffer_head	*bh;
+पूर्णांक jbd2_log_करो_checkpoपूर्णांक(journal_t *journal)
+अणु
+	काष्ठा journal_head	*jh;
+	काष्ठा buffer_head	*bh;
 	transaction_t		*transaction;
 	tid_t			this_tid;
-	int			result, batch_count = 0;
+	पूर्णांक			result, batch_count = 0;
 
 	jbd_debug(1, "Start checkpoint\n");
 
 	/*
-	 * First thing: if there are any transactions in the log which
-	 * don't need checkpointing, just eliminate them from the
+	 * First thing: अगर there are any transactions in the log which
+	 * करोn't need checkpoपूर्णांकing, just eliminate them from the
 	 * journal straight away.
 	 */
 	result = jbd2_cleanup_journal_tail(journal);
-	trace_jbd2_checkpoint(journal, result);
+	trace_jbd2_checkpoपूर्णांक(journal, result);
 	jbd_debug(1, "cleanup_journal_tail returned %d\n", result);
-	if (result <= 0)
-		return result;
+	अगर (result <= 0)
+		वापस result;
 
 	/*
 	 * OK, we need to start writing disk blocks.  Take one transaction
-	 * and write it.
+	 * and ग_लिखो it.
 	 */
 	result = 0;
 	spin_lock(&journal->j_list_lock);
-	if (!journal->j_checkpoint_transactions)
-		goto out;
-	transaction = journal->j_checkpoint_transactions;
-	if (transaction->t_chp_stats.cs_chp_time == 0)
-		transaction->t_chp_stats.cs_chp_time = jiffies;
+	अगर (!journal->j_checkpoपूर्णांक_transactions)
+		जाओ out;
+	transaction = journal->j_checkpoपूर्णांक_transactions;
+	अगर (transaction->t_chp_stats.cs_chp_समय == 0)
+		transaction->t_chp_stats.cs_chp_समय = jअगरfies;
 	this_tid = transaction->t_tid;
 restart:
 	/*
-	 * If someone cleaned up this transaction while we slept, we're
-	 * done (maybe it's a new transaction, but it fell at the same
+	 * If someone cleaned up this transaction जबतक we slept, we're
+	 * करोne (maybe it's a new transaction, but it fell at the same
 	 * address).
 	 */
-	if (journal->j_checkpoint_transactions != transaction ||
+	अगर (journal->j_checkpoपूर्णांक_transactions != transaction ||
 	    transaction->t_tid != this_tid)
-		goto out;
+		जाओ out;
 
-	/* checkpoint all of the transaction's buffers */
-	while (transaction->t_checkpoint_list) {
-		jh = transaction->t_checkpoint_list;
+	/* checkpoपूर्णांक all of the transaction's buffers */
+	जबतक (transaction->t_checkpoपूर्णांक_list) अणु
+		jh = transaction->t_checkpoपूर्णांक_list;
 		bh = jh2bh(jh);
 
-		if (buffer_locked(bh)) {
+		अगर (buffer_locked(bh)) अणु
 			get_bh(bh);
 			spin_unlock(&journal->j_list_lock);
-			wait_on_buffer(bh);
+			रुको_on_buffer(bh);
 			/* the journal_head may have gone by now */
 			BUFFER_TRACE(bh, "brelse");
-			__brelse(bh);
-			goto retry;
-		}
-		if (jh->b_transaction != NULL) {
+			__brअन्यथा(bh);
+			जाओ retry;
+		पूर्ण
+		अगर (jh->b_transaction != शून्य) अणु
 			transaction_t *t = jh->b_transaction;
 			tid_t tid = t->t_tid;
 
-			transaction->t_chp_stats.cs_forced_to_close++;
+			transaction->t_chp_stats.cs_क्रमced_to_बंद++;
 			spin_unlock(&journal->j_list_lock);
-			if (unlikely(journal->j_flags & JBD2_UNMOUNT))
+			अगर (unlikely(journal->j_flags & JBD2_UNMOUNT))
 				/*
-				 * The journal thread is dead; so
-				 * starting and waiting for a commit
-				 * to finish will cause us to wait for
-				 * a _very_ long time.
+				 * The journal thपढ़ो is dead; so
+				 * starting and रुकोing क्रम a commit
+				 * to finish will cause us to रुको क्रम
+				 * a _very_ दीर्घ समय.
 				 */
-				printk(KERN_ERR
+				prपूर्णांकk(KERN_ERR
 		"JBD2: %s: Waiting for Godot: block %llu\n",
-		journal->j_devname, (unsigned long long) bh->b_blocknr);
+		journal->j_devname, (अचिन्हित दीर्घ दीर्घ) bh->b_blocknr);
 
-			if (batch_count)
+			अगर (batch_count)
 				__flush_batch(journal, &batch_count);
 			jbd2_log_start_commit(journal, tid);
 			/*
 			 * jbd2_journal_commit_transaction() may want
-			 * to take the checkpoint_mutex if JBD2_FLUSHED
+			 * to take the checkpoपूर्णांक_mutex अगर JBD2_FLUSHED
 			 * is set, jbd2_update_log_tail() called by
 			 * jbd2_journal_commit_transaction() may also take
-			 * checkpoint_mutex.  So we need to temporarily
+			 * checkpoपूर्णांक_mutex.  So we need to temporarily
 			 * drop it.
 			 */
-			mutex_unlock(&journal->j_checkpoint_mutex);
-			jbd2_log_wait_commit(journal, tid);
-			mutex_lock_io(&journal->j_checkpoint_mutex);
+			mutex_unlock(&journal->j_checkpoपूर्णांक_mutex);
+			jbd2_log_रुको_commit(journal, tid);
+			mutex_lock_io(&journal->j_checkpoपूर्णांक_mutex);
 			spin_lock(&journal->j_list_lock);
-			goto restart;
-		}
-		if (!buffer_dirty(bh)) {
-			if (unlikely(buffer_write_io_error(bh)) && !result)
+			जाओ restart;
+		पूर्ण
+		अगर (!buffer_dirty(bh)) अणु
+			अगर (unlikely(buffer_ग_लिखो_io_error(bh)) && !result)
 				result = -EIO;
 			BUFFER_TRACE(bh, "remove from checkpoint");
-			if (__jbd2_journal_remove_checkpoint(jh))
-				/* The transaction was released; we're done */
-				goto out;
-			continue;
-		}
+			अगर (__jbd2_journal_हटाओ_checkpoपूर्णांक(jh))
+				/* The transaction was released; we're करोne */
+				जाओ out;
+			जारी;
+		पूर्ण
 		/*
-		 * Important: we are about to write the buffer, and
-		 * possibly block, while still holding the journal
-		 * lock.  We cannot afford to let the transaction
-		 * logic start messing around with this buffer before
-		 * we write it to disk, as that would break
+		 * Important: we are about to ग_लिखो the buffer, and
+		 * possibly block, जबतक still holding the journal
+		 * lock.  We cannot afक्रमd to let the transaction
+		 * logic start messing around with this buffer beक्रमe
+		 * we ग_लिखो it to disk, as that would अवरोध
 		 * recoverability.
 		 */
 		BUFFER_TRACE(bh, "queue");
 		get_bh(bh);
-		J_ASSERT_BH(bh, !buffer_jwrite(bh));
+		J_ASSERT_BH(bh, !buffer_jग_लिखो(bh));
 		journal->j_chkpt_bhs[batch_count++] = bh;
 		__buffer_relink_io(jh);
 		transaction->t_chp_stats.cs_written++;
-		if ((batch_count == JBD2_NR_BATCH) ||
+		अगर ((batch_count == JBD2_NR_BATCH) ||
 		    need_resched() ||
-		    spin_needbreak(&journal->j_list_lock))
-			goto unlock_and_flush;
-	}
+		    spin_needअवरोध(&journal->j_list_lock))
+			जाओ unlock_and_flush;
+	पूर्ण
 
-	if (batch_count) {
+	अगर (batch_count) अणु
 		unlock_and_flush:
 			spin_unlock(&journal->j_list_lock);
 		retry:
-			if (batch_count)
+			अगर (batch_count)
 				__flush_batch(journal, &batch_count);
 			spin_lock(&journal->j_list_lock);
-			goto restart;
-	}
+			जाओ restart;
+	पूर्ण
 
 	/*
 	 * Now we issued all of the transaction's buffers, let's deal
-	 * with the buffers that are out for I/O.
+	 * with the buffers that are out क्रम I/O.
 	 */
 restart2:
-	/* Did somebody clean up the transaction in the meanwhile? */
-	if (journal->j_checkpoint_transactions != transaction ||
+	/* Did somebody clean up the transaction in the meanजबतक? */
+	अगर (journal->j_checkpoपूर्णांक_transactions != transaction ||
 	    transaction->t_tid != this_tid)
-		goto out;
+		जाओ out;
 
-	while (transaction->t_checkpoint_io_list) {
-		jh = transaction->t_checkpoint_io_list;
+	जबतक (transaction->t_checkpoपूर्णांक_io_list) अणु
+		jh = transaction->t_checkpoपूर्णांक_io_list;
 		bh = jh2bh(jh);
-		if (buffer_locked(bh)) {
+		अगर (buffer_locked(bh)) अणु
 			get_bh(bh);
 			spin_unlock(&journal->j_list_lock);
-			wait_on_buffer(bh);
+			रुको_on_buffer(bh);
 			/* the journal_head may have gone by now */
 			BUFFER_TRACE(bh, "brelse");
-			__brelse(bh);
+			__brअन्यथा(bh);
 			spin_lock(&journal->j_list_lock);
-			goto restart2;
-		}
-		if (unlikely(buffer_write_io_error(bh)) && !result)
+			जाओ restart2;
+		पूर्ण
+		अगर (unlikely(buffer_ग_लिखो_io_error(bh)) && !result)
 			result = -EIO;
 
 		/*
@@ -364,317 +365,317 @@ restart2:
 		 * know that it has been written out and so we can
 		 * drop it from the list
 		 */
-		if (__jbd2_journal_remove_checkpoint(jh))
-			break;
-	}
+		अगर (__jbd2_journal_हटाओ_checkpoपूर्णांक(jh))
+			अवरोध;
+	पूर्ण
 out:
 	spin_unlock(&journal->j_list_lock);
-	if (result < 0)
-		jbd2_journal_abort(journal, result);
-	else
+	अगर (result < 0)
+		jbd2_journal_पात(journal, result);
+	अन्यथा
 		result = jbd2_cleanup_journal_tail(journal);
 
-	return (result < 0) ? result : 0;
-}
+	वापस (result < 0) ? result : 0;
+पूर्ण
 
 /*
- * Check the list of checkpoint transactions for the journal to see if
- * we have already got rid of any since the last update of the log tail
+ * Check the list of checkpoपूर्णांक transactions क्रम the journal to see अगर
+ * we have alपढ़ोy got rid of any since the last update of the log tail
  * in the journal superblock.  If so, we can instantly roll the
- * superblock forward to remove those transactions from the log.
+ * superblock क्रमward to हटाओ those transactions from the log.
  *
- * Return <0 on error, 0 on success, 1 if there was nothing to clean up.
+ * Return <0 on error, 0 on success, 1 अगर there was nothing to clean up.
  *
  * Called with the journal lock held.
  *
  * This is the only part of the journaling code which really needs to be
- * aware of transaction aborts.  Checkpointing involves writing to the
- * main filesystem area rather than to the journal, so it can proceed
- * even in abort state, but we must not update the super block if
- * checkpointing may have failed.  Otherwise, we would lose some metadata
- * buffers which should be written-back to the filesystem.
+ * aware of transaction पातs.  Checkpoपूर्णांकing involves writing to the
+ * मुख्य fileप्रणाली area rather than to the journal, so it can proceed
+ * even in पात state, but we must not update the super block अगर
+ * checkpoपूर्णांकing may have failed.  Otherwise, we would lose some metadata
+ * buffers which should be written-back to the fileप्रणाली.
  */
 
-int jbd2_cleanup_journal_tail(journal_t *journal)
-{
+पूर्णांक jbd2_cleanup_journal_tail(journal_t *journal)
+अणु
 	tid_t		first_tid;
-	unsigned long	blocknr;
+	अचिन्हित दीर्घ	blocknr;
 
-	if (is_journal_aborted(journal))
-		return -EIO;
+	अगर (is_journal_पातed(journal))
+		वापस -EIO;
 
-	if (!jbd2_journal_get_log_tail(journal, &first_tid, &blocknr))
-		return 1;
+	अगर (!jbd2_journal_get_log_tail(journal, &first_tid, &blocknr))
+		वापस 1;
 	J_ASSERT(blocknr != 0);
 
 	/*
 	 * We need to make sure that any blocks that were recently written out
-	 * --- perhaps by jbd2_log_do_checkpoint() --- are flushed out before
+	 * --- perhaps by jbd2_log_करो_checkpoपूर्णांक() --- are flushed out beक्रमe
 	 * we drop the transactions from the journal. It's unlikely this will
 	 * be necessary, especially with an appropriately sized journal, but we
 	 * need this to guarantee correctness.  Fortunately
-	 * jbd2_cleanup_journal_tail() doesn't get called all that often.
+	 * jbd2_cleanup_journal_tail() करोesn't get called all that often.
 	 */
-	if (journal->j_flags & JBD2_BARRIER)
+	अगर (journal->j_flags & JBD2_BARRIER)
 		blkdev_issue_flush(journal->j_fs_dev);
 
-	return __jbd2_update_log_tail(journal, first_tid, blocknr);
-}
+	वापस __jbd2_update_log_tail(journal, first_tid, blocknr);
+पूर्ण
 
 
-/* Checkpoint list management */
+/* Checkpoपूर्णांक list management */
 
 /*
  * journal_clean_one_cp_list
  *
- * Find all the written-back checkpoint buffers in the given list and
+ * Find all the written-back checkpoपूर्णांक buffers in the given list and
  * release them. If 'destroy' is set, clean all buffers unconditionally.
  *
  * Called with j_list_lock held.
- * Returns 1 if we freed the transaction, 0 otherwise.
+ * Returns 1 अगर we मुक्तd the transaction, 0 otherwise.
  */
-static int journal_clean_one_cp_list(struct journal_head *jh, bool destroy)
-{
-	struct journal_head *last_jh;
-	struct journal_head *next_jh = jh;
-	int ret;
+अटल पूर्णांक journal_clean_one_cp_list(काष्ठा journal_head *jh, bool destroy)
+अणु
+	काष्ठा journal_head *last_jh;
+	काष्ठा journal_head *next_jh = jh;
+	पूर्णांक ret;
 
-	if (!jh)
-		return 0;
+	अगर (!jh)
+		वापस 0;
 
 	last_jh = jh->b_cpprev;
-	do {
+	करो अणु
 		jh = next_jh;
 		next_jh = jh->b_cpnext;
-		if (!destroy)
-			ret = __try_to_free_cp_buf(jh);
-		else
-			ret = __jbd2_journal_remove_checkpoint(jh) + 1;
-		if (!ret)
-			return 0;
-		if (ret == 2)
-			return 1;
+		अगर (!destroy)
+			ret = __try_to_मुक्त_cp_buf(jh);
+		अन्यथा
+			ret = __jbd2_journal_हटाओ_checkpoपूर्णांक(jh) + 1;
+		अगर (!ret)
+			वापस 0;
+		अगर (ret == 2)
+			वापस 1;
 		/*
-		 * This function only frees up some memory
-		 * if possible so we dont have an obligation
-		 * to finish processing. Bail out if preemption
+		 * This function only मुक्तs up some memory
+		 * अगर possible so we करोnt have an obligation
+		 * to finish processing. Bail out अगर preemption
 		 * requested:
 		 */
-		if (need_resched())
-			return 0;
-	} while (jh != last_jh);
+		अगर (need_resched())
+			वापस 0;
+	पूर्ण जबतक (jh != last_jh);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * journal_clean_checkpoint_list
+ * journal_clean_checkpoपूर्णांक_list
  *
- * Find all the written-back checkpoint buffers in the journal and release them.
+ * Find all the written-back checkpoपूर्णांक buffers in the journal and release them.
  * If 'destroy' is set, release all buffers unconditionally.
  *
  * Called with j_list_lock held.
  */
-void __jbd2_journal_clean_checkpoint_list(journal_t *journal, bool destroy)
-{
+व्योम __jbd2_journal_clean_checkpoपूर्णांक_list(journal_t *journal, bool destroy)
+अणु
 	transaction_t *transaction, *last_transaction, *next_transaction;
-	int ret;
+	पूर्णांक ret;
 
-	transaction = journal->j_checkpoint_transactions;
-	if (!transaction)
-		return;
+	transaction = journal->j_checkpoपूर्णांक_transactions;
+	अगर (!transaction)
+		वापस;
 
 	last_transaction = transaction->t_cpprev;
 	next_transaction = transaction;
-	do {
+	करो अणु
 		transaction = next_transaction;
 		next_transaction = transaction->t_cpnext;
-		ret = journal_clean_one_cp_list(transaction->t_checkpoint_list,
+		ret = journal_clean_one_cp_list(transaction->t_checkpoपूर्णांक_list,
 						destroy);
 		/*
-		 * This function only frees up some memory if possible so we
-		 * dont have an obligation to finish processing. Bail out if
+		 * This function only मुक्तs up some memory अगर possible so we
+		 * करोnt have an obligation to finish processing. Bail out अगर
 		 * preemption requested:
 		 */
-		if (need_resched())
-			return;
-		if (ret)
-			continue;
+		अगर (need_resched())
+			वापस;
+		अगर (ret)
+			जारी;
 		/*
-		 * It is essential that we are as careful as in the case of
-		 * t_checkpoint_list with removing the buffer from the list as
+		 * It is essential that we are as careful as in the हाल of
+		 * t_checkpoपूर्णांक_list with removing the buffer from the list as
 		 * we can possibly see not yet submitted buffers on io_list
 		 */
 		ret = journal_clean_one_cp_list(transaction->
-				t_checkpoint_io_list, destroy);
-		if (need_resched())
-			return;
+				t_checkpoपूर्णांक_io_list, destroy);
+		अगर (need_resched())
+			वापस;
 		/*
-		 * Stop scanning if we couldn't free the transaction. This
-		 * avoids pointless scanning of transactions which still
-		 * weren't checkpointed.
+		 * Stop scanning अगर we couldn't मुक्त the transaction. This
+		 * aव्योमs poपूर्णांकless scanning of transactions which still
+		 * weren't checkpoपूर्णांकed.
 		 */
-		if (!ret)
-			return;
-	} while (transaction != last_transaction);
-}
+		अगर (!ret)
+			वापस;
+	पूर्ण जबतक (transaction != last_transaction);
+पूर्ण
 
 /*
- * Remove buffers from all checkpoint lists as journal is aborted and we just
- * need to free memory
+ * Remove buffers from all checkpoपूर्णांक lists as journal is पातed and we just
+ * need to मुक्त memory
  */
-void jbd2_journal_destroy_checkpoint(journal_t *journal)
-{
+व्योम jbd2_journal_destroy_checkpoपूर्णांक(journal_t *journal)
+अणु
 	/*
-	 * We loop because __jbd2_journal_clean_checkpoint_list() may abort
+	 * We loop because __jbd2_journal_clean_checkpoपूर्णांक_list() may पात
 	 * early due to a need of rescheduling.
 	 */
-	while (1) {
+	जबतक (1) अणु
 		spin_lock(&journal->j_list_lock);
-		if (!journal->j_checkpoint_transactions) {
+		अगर (!journal->j_checkpoपूर्णांक_transactions) अणु
 			spin_unlock(&journal->j_list_lock);
-			break;
-		}
-		__jbd2_journal_clean_checkpoint_list(journal, true);
+			अवरोध;
+		पूर्ण
+		__jbd2_journal_clean_checkpoपूर्णांक_list(journal, true);
 		spin_unlock(&journal->j_list_lock);
 		cond_resched();
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * journal_remove_checkpoint: called after a buffer has been committed
- * to disk (either by being write-back flushed to disk, or being
+ * journal_हटाओ_checkpoपूर्णांक: called after a buffer has been committed
+ * to disk (either by being ग_लिखो-back flushed to disk, or being
  * committed to the log).
  *
  * We cannot safely clean a transaction out of the log until all of the
  * buffer updates committed in that transaction have safely been stored
- * elsewhere on disk.  To achieve this, all of the buffers in a
- * transaction need to be maintained on the transaction's checkpoint
- * lists until they have been rewritten, at which point this function is
- * called to remove the buffer from the existing transaction's
- * checkpoint lists.
+ * अन्यथाwhere on disk.  To achieve this, all of the buffers in a
+ * transaction need to be मुख्यtained on the transaction's checkpoपूर्णांक
+ * lists until they have been rewritten, at which poपूर्णांक this function is
+ * called to हटाओ the buffer from the existing transaction's
+ * checkpoपूर्णांक lists.
  *
- * The function returns 1 if it frees the transaction, 0 otherwise.
- * The function can free jh and bh.
+ * The function वापसs 1 अगर it मुक्तs the transaction, 0 otherwise.
+ * The function can मुक्त jh and bh.
  *
  * This function is called with j_list_lock held.
  */
-int __jbd2_journal_remove_checkpoint(struct journal_head *jh)
-{
-	struct transaction_chp_stats_s *stats;
+पूर्णांक __jbd2_journal_हटाओ_checkpoपूर्णांक(काष्ठा journal_head *jh)
+अणु
+	काष्ठा transaction_chp_stats_s *stats;
 	transaction_t *transaction;
 	journal_t *journal;
-	int ret = 0;
+	पूर्णांक ret = 0;
 
 	JBUFFER_TRACE(jh, "entry");
 
-	if ((transaction = jh->b_cp_transaction) == NULL) {
+	अगर ((transaction = jh->b_cp_transaction) == शून्य) अणु
 		JBUFFER_TRACE(jh, "not on transaction");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	journal = transaction->t_journal;
 
 	JBUFFER_TRACE(jh, "removing from transaction");
 	__buffer_unlink(jh);
-	jh->b_cp_transaction = NULL;
+	jh->b_cp_transaction = शून्य;
 	jbd2_journal_put_journal_head(jh);
 
-	if (transaction->t_checkpoint_list != NULL ||
-	    transaction->t_checkpoint_io_list != NULL)
-		goto out;
+	अगर (transaction->t_checkpoपूर्णांक_list != शून्य ||
+	    transaction->t_checkpoपूर्णांक_io_list != शून्य)
+		जाओ out;
 
 	/*
-	 * There is one special case to worry about: if we have just pulled the
+	 * There is one special हाल to worry about: अगर we have just pulled the
 	 * buffer off a running or committing transaction's checkpoing list,
-	 * then even if the checkpoint list is empty, the transaction obviously
+	 * then even अगर the checkpoपूर्णांक list is empty, the transaction obviously
 	 * cannot be dropped!
 	 *
 	 * The locking here around t_state is a bit sleazy.
 	 * See the comment at the end of jbd2_journal_commit_transaction().
 	 */
-	if (transaction->t_state != T_FINISHED)
-		goto out;
+	अगर (transaction->t_state != T_FINISHED)
+		जाओ out;
 
-	/* OK, that was the last buffer for the transaction: we can now
-	   safely remove this transaction from the log */
+	/* OK, that was the last buffer क्रम the transaction: we can now
+	   safely हटाओ this transaction from the log */
 	stats = &transaction->t_chp_stats;
-	if (stats->cs_chp_time)
-		stats->cs_chp_time = jbd2_time_diff(stats->cs_chp_time,
-						    jiffies);
-	trace_jbd2_checkpoint_stats(journal->j_fs_dev->bd_dev,
+	अगर (stats->cs_chp_समय)
+		stats->cs_chp_समय = jbd2_समय_dअगरf(stats->cs_chp_समय,
+						    jअगरfies);
+	trace_jbd2_checkpoपूर्णांक_stats(journal->j_fs_dev->bd_dev,
 				    transaction->t_tid, stats);
 
 	__jbd2_journal_drop_transaction(journal, transaction);
-	jbd2_journal_free_transaction(transaction);
+	jbd2_journal_मुक्त_transaction(transaction);
 	ret = 1;
 out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * journal_insert_checkpoint: put a committed buffer onto a checkpoint
+ * journal_insert_checkpoपूर्णांक: put a committed buffer onto a checkpoपूर्णांक
  * list so that we know when it is safe to clean the transaction out of
  * the log.
  *
  * Called with the journal locked.
  * Called with j_list_lock held.
  */
-void __jbd2_journal_insert_checkpoint(struct journal_head *jh,
+व्योम __jbd2_journal_insert_checkpoपूर्णांक(काष्ठा journal_head *jh,
 			       transaction_t *transaction)
-{
+अणु
 	JBUFFER_TRACE(jh, "entry");
 	J_ASSERT_JH(jh, buffer_dirty(jh2bh(jh)) || buffer_jbddirty(jh2bh(jh)));
-	J_ASSERT_JH(jh, jh->b_cp_transaction == NULL);
+	J_ASSERT_JH(jh, jh->b_cp_transaction == शून्य);
 
-	/* Get reference for checkpointing transaction */
+	/* Get reference क्रम checkpoपूर्णांकing transaction */
 	jbd2_journal_grab_journal_head(jh2bh(jh));
 	jh->b_cp_transaction = transaction;
 
-	if (!transaction->t_checkpoint_list) {
+	अगर (!transaction->t_checkpoपूर्णांक_list) अणु
 		jh->b_cpnext = jh->b_cpprev = jh;
-	} else {
-		jh->b_cpnext = transaction->t_checkpoint_list;
-		jh->b_cpprev = transaction->t_checkpoint_list->b_cpprev;
+	पूर्ण अन्यथा अणु
+		jh->b_cpnext = transaction->t_checkpoपूर्णांक_list;
+		jh->b_cpprev = transaction->t_checkpoपूर्णांक_list->b_cpprev;
 		jh->b_cpprev->b_cpnext = jh;
 		jh->b_cpnext->b_cpprev = jh;
-	}
-	transaction->t_checkpoint_list = jh;
-}
+	पूर्ण
+	transaction->t_checkpoपूर्णांक_list = jh;
+पूर्ण
 
 /*
- * We've finished with this transaction structure: adios...
+ * We've finished with this transaction काष्ठाure: adios...
  *
- * The transaction must have no links except for the checkpoint by this
- * point.
+ * The transaction must have no links except क्रम the checkpoपूर्णांक by this
+ * poपूर्णांक.
  *
  * Called with the journal locked.
  * Called with j_list_lock held.
  */
 
-void __jbd2_journal_drop_transaction(journal_t *journal, transaction_t *transaction)
-{
-	assert_spin_locked(&journal->j_list_lock);
-	if (transaction->t_cpnext) {
+व्योम __jbd2_journal_drop_transaction(journal_t *journal, transaction_t *transaction)
+अणु
+	निश्चित_spin_locked(&journal->j_list_lock);
+	अगर (transaction->t_cpnext) अणु
 		transaction->t_cpnext->t_cpprev = transaction->t_cpprev;
 		transaction->t_cpprev->t_cpnext = transaction->t_cpnext;
-		if (journal->j_checkpoint_transactions == transaction)
-			journal->j_checkpoint_transactions =
+		अगर (journal->j_checkpoपूर्णांक_transactions == transaction)
+			journal->j_checkpoपूर्णांक_transactions =
 				transaction->t_cpnext;
-		if (journal->j_checkpoint_transactions == transaction)
-			journal->j_checkpoint_transactions = NULL;
-	}
+		अगर (journal->j_checkpoपूर्णांक_transactions == transaction)
+			journal->j_checkpoपूर्णांक_transactions = शून्य;
+	पूर्ण
 
 	J_ASSERT(transaction->t_state == T_FINISHED);
-	J_ASSERT(transaction->t_buffers == NULL);
-	J_ASSERT(transaction->t_forget == NULL);
-	J_ASSERT(transaction->t_shadow_list == NULL);
-	J_ASSERT(transaction->t_checkpoint_list == NULL);
-	J_ASSERT(transaction->t_checkpoint_io_list == NULL);
-	J_ASSERT(atomic_read(&transaction->t_updates) == 0);
+	J_ASSERT(transaction->t_buffers == शून्य);
+	J_ASSERT(transaction->t_क्रमget == शून्य);
+	J_ASSERT(transaction->t_shaकरोw_list == शून्य);
+	J_ASSERT(transaction->t_checkpoपूर्णांक_list == शून्य);
+	J_ASSERT(transaction->t_checkpoपूर्णांक_io_list == शून्य);
+	J_ASSERT(atomic_पढ़ो(&transaction->t_updates) == 0);
 	J_ASSERT(journal->j_committing_transaction != transaction);
 	J_ASSERT(journal->j_running_transaction != transaction);
 
 	trace_jbd2_drop_transaction(journal, transaction);
 
 	jbd_debug(1, "Dropping transaction %d, all done\n", transaction->t_tid);
-}
+पूर्ण

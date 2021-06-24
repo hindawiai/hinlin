@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Sony CXD2820R demodulator driver
  *
@@ -6,464 +7,464 @@
  */
 
 
-#include "cxd2820r_priv.h"
+#समावेश "cxd2820r_priv.h"
 
-/* Write register table */
-int cxd2820r_wr_reg_val_mask_tab(struct cxd2820r_priv *priv,
-				 const struct reg_val_mask *tab, int tab_len)
-{
-	struct i2c_client *client = priv->client[0];
-	int ret;
-	unsigned int i, reg, mask, val;
-	struct regmap *regmap;
+/* Write रेजिस्टर table */
+पूर्णांक cxd2820r_wr_reg_val_mask_tab(काष्ठा cxd2820r_priv *priv,
+				 स्थिर काष्ठा reg_val_mask *tab, पूर्णांक tab_len)
+अणु
+	काष्ठा i2c_client *client = priv->client[0];
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक i, reg, mask, val;
+	काष्ठा regmap *regmap;
 
 	dev_dbg(&client->dev, "tab_len=%d\n", tab_len);
 
-	for (i = 0; i < tab_len; i++) {
-		if ((tab[i].reg >> 16) & 0x1)
+	क्रम (i = 0; i < tab_len; i++) अणु
+		अगर ((tab[i].reg >> 16) & 0x1)
 			regmap = priv->regmap[1];
-		else
+		अन्यथा
 			regmap = priv->regmap[0];
 
 		reg = (tab[i].reg >> 0) & 0xffff;
 		val = tab[i].val;
 		mask = tab[i].mask;
 
-		if (mask == 0xff)
-			ret = regmap_write(regmap, reg, val);
-		else
-			ret = regmap_write_bits(regmap, reg, mask, val);
-		if (ret)
-			goto error;
-	}
+		अगर (mask == 0xff)
+			ret = regmap_ग_लिखो(regmap, reg, val);
+		अन्यथा
+			ret = regmap_ग_लिखो_bits(regmap, reg, mask, val);
+		अगर (ret)
+			जाओ error;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 error:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int cxd2820r_gpio(struct dvb_frontend *fe, u8 *gpio)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int ret, i;
-	u8 tmp0, tmp1;
+पूर्णांक cxd2820r_gpio(काष्ठा dvb_frontend *fe, u8 *gpio)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक ret, i;
+	u8 पंचांगp0, पंचांगp1;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
 	/* update GPIOs only when needed */
-	if (!memcmp(gpio, priv->gpio, sizeof(priv->gpio)))
-		return 0;
+	अगर (!स_भेद(gpio, priv->gpio, माप(priv->gpio)))
+		वापस 0;
 
-	tmp0 = 0x00;
-	tmp1 = 0x00;
-	for (i = 0; i < sizeof(priv->gpio); i++) {
+	पंचांगp0 = 0x00;
+	पंचांगp1 = 0x00;
+	क्रम (i = 0; i < माप(priv->gpio); i++) अणु
 		/* enable / disable */
-		if (gpio[i] & CXD2820R_GPIO_E)
-			tmp0 |= (2 << 6) >> (2 * i);
-		else
-			tmp0 |= (1 << 6) >> (2 * i);
+		अगर (gpio[i] & CXD2820R_GPIO_E)
+			पंचांगp0 |= (2 << 6) >> (2 * i);
+		अन्यथा
+			पंचांगp0 |= (1 << 6) >> (2 * i);
 
 		/* input / output */
-		if (gpio[i] & CXD2820R_GPIO_I)
-			tmp1 |= (1 << (3 + i));
-		else
-			tmp1 |= (0 << (3 + i));
+		अगर (gpio[i] & CXD2820R_GPIO_I)
+			पंचांगp1 |= (1 << (3 + i));
+		अन्यथा
+			पंचांगp1 |= (0 << (3 + i));
 
 		/* high / low */
-		if (gpio[i] & CXD2820R_GPIO_H)
-			tmp1 |= (1 << (0 + i));
-		else
-			tmp1 |= (0 << (0 + i));
+		अगर (gpio[i] & CXD2820R_GPIO_H)
+			पंचांगp1 |= (1 << (0 + i));
+		अन्यथा
+			पंचांगp1 |= (0 << (0 + i));
 
-		dev_dbg(&client->dev, "gpio i=%d %02x %02x\n", i, tmp0, tmp1);
-	}
+		dev_dbg(&client->dev, "gpio i=%d %02x %02x\n", i, पंचांगp0, पंचांगp1);
+	पूर्ण
 
-	dev_dbg(&client->dev, "wr gpio=%02x %02x\n", tmp0, tmp1);
+	dev_dbg(&client->dev, "wr gpio=%02x %02x\n", पंचांगp0, पंचांगp1);
 
-	/* write bits [7:2] */
-	ret = regmap_update_bits(priv->regmap[0], 0x0089, 0xfc, tmp0);
-	if (ret)
-		goto error;
+	/* ग_लिखो bits [7:2] */
+	ret = regmap_update_bits(priv->regmap[0], 0x0089, 0xfc, पंचांगp0);
+	अगर (ret)
+		जाओ error;
 
-	/* write bits [5:0] */
-	ret = regmap_update_bits(priv->regmap[0], 0x008e, 0x3f, tmp1);
-	if (ret)
-		goto error;
+	/* ग_लिखो bits [5:0] */
+	ret = regmap_update_bits(priv->regmap[0], 0x008e, 0x3f, पंचांगp1);
+	अगर (ret)
+		जाओ error;
 
-	memcpy(priv->gpio, gpio, sizeof(priv->gpio));
+	स_नकल(priv->gpio, gpio, माप(priv->gpio));
 
-	return ret;
+	वापस ret;
 error:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2820r_set_frontend(struct dvb_frontend *fe)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int ret;
+अटल पूर्णांक cxd2820r_set_frontend(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक ret;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
-	switch (c->delivery_system) {
-	case SYS_DVBT:
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBT:
 		ret = cxd2820r_init_t(fe);
-		if (ret < 0)
-			goto err;
+		अगर (ret < 0)
+			जाओ err;
 		ret = cxd2820r_set_frontend_t(fe);
-		if (ret < 0)
-			goto err;
-		break;
-	case SYS_DVBT2:
+		अगर (ret < 0)
+			जाओ err;
+		अवरोध;
+	हाल SYS_DVBT2:
 		ret = cxd2820r_init_t(fe);
-		if (ret < 0)
-			goto err;
+		अगर (ret < 0)
+			जाओ err;
 		ret = cxd2820r_set_frontend_t2(fe);
-		if (ret < 0)
-			goto err;
-		break;
-	case SYS_DVBC_ANNEX_A:
+		अगर (ret < 0)
+			जाओ err;
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_A:
 		ret = cxd2820r_init_c(fe);
-		if (ret < 0)
-			goto err;
+		अगर (ret < 0)
+			जाओ err;
 		ret = cxd2820r_set_frontend_c(fe);
-		if (ret < 0)
-			goto err;
-		break;
-	default:
+		अगर (ret < 0)
+			जाओ err;
+		अवरोध;
+	शेष:
 		dev_dbg(&client->dev, "invalid delivery_system\n");
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 err:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2820r_read_status(struct dvb_frontend *fe, enum fe_status *status)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int ret;
+अटल पूर्णांक cxd2820r_पढ़ो_status(काष्ठा dvb_frontend *fe, क्रमागत fe_status *status)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक ret;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
-	switch (c->delivery_system) {
-	case SYS_DVBT:
-		ret = cxd2820r_read_status_t(fe, status);
-		break;
-	case SYS_DVBT2:
-		ret = cxd2820r_read_status_t2(fe, status);
-		break;
-	case SYS_DVBC_ANNEX_A:
-		ret = cxd2820r_read_status_c(fe, status);
-		break;
-	default:
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBT:
+		ret = cxd2820r_पढ़ो_status_t(fe, status);
+		अवरोध;
+	हाल SYS_DVBT2:
+		ret = cxd2820r_पढ़ो_status_t2(fe, status);
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_A:
+		ret = cxd2820r_पढ़ो_status_c(fe, status);
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cxd2820r_get_frontend(struct dvb_frontend *fe,
-				 struct dtv_frontend_properties *p)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int ret;
+अटल पूर्णांक cxd2820r_get_frontend(काष्ठा dvb_frontend *fe,
+				 काष्ठा dtv_frontend_properties *p)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक ret;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
-	if (priv->delivery_system == SYS_UNDEFINED)
-		return 0;
+	अगर (priv->delivery_प्रणाली == SYS_UNDEFINED)
+		वापस 0;
 
-	switch (c->delivery_system) {
-	case SYS_DVBT:
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBT:
 		ret = cxd2820r_get_frontend_t(fe, p);
-		break;
-	case SYS_DVBT2:
+		अवरोध;
+	हाल SYS_DVBT2:
 		ret = cxd2820r_get_frontend_t2(fe, p);
-		break;
-	case SYS_DVBC_ANNEX_A:
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_A:
 		ret = cxd2820r_get_frontend_c(fe, p);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cxd2820r_read_ber(struct dvb_frontend *fe, u32 *ber)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक cxd2820r_पढ़ो_ber(काष्ठा dvb_frontend *fe, u32 *ber)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
 	*ber = (priv->post_bit_error - priv->post_bit_error_prev_dvbv3);
 	priv->post_bit_error_prev_dvbv3 = priv->post_bit_error;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxd2820r_read_signal_strength(struct dvb_frontend *fe, u16 *strength)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक cxd2820r_पढ़ो_संकेत_strength(काष्ठा dvb_frontend *fe, u16 *strength)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
-	if (c->strength.stat[0].scale == FE_SCALE_RELATIVE)
+	अगर (c->strength.stat[0].scale == FE_SCALE_RELATIVE)
 		*strength = c->strength.stat[0].uvalue;
-	else
+	अन्यथा
 		*strength = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxd2820r_read_snr(struct dvb_frontend *fe, u16 *snr)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक cxd2820r_पढ़ो_snr(काष्ठा dvb_frontend *fe, u16 *snr)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
-	if (c->cnr.stat[0].scale == FE_SCALE_DECIBEL)
-		*snr = div_s64(c->cnr.stat[0].svalue, 100);
-	else
+	अगर (c->cnr.stat[0].scale == FE_SCALE_DECIBEL)
+		*snr = भाग_s64(c->cnr.stat[0].svalue, 100);
+	अन्यथा
 		*snr = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxd2820r_read_ucblocks(struct dvb_frontend *fe, u32 *ucblocks)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
+अटल पूर्णांक cxd2820r_पढ़ो_ucblocks(काष्ठा dvb_frontend *fe, u32 *ucblocks)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
 	*ucblocks = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cxd2820r_init(struct dvb_frontend *fe)
-{
-	return 0;
-}
+अटल पूर्णांक cxd2820r_init(काष्ठा dvb_frontend *fe)
+अणु
+	वापस 0;
+पूर्ण
 
-static int cxd2820r_sleep(struct dvb_frontend *fe)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int ret;
+अटल पूर्णांक cxd2820r_sleep(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक ret;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
-	switch (c->delivery_system) {
-	case SYS_DVBT:
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBT:
 		ret = cxd2820r_sleep_t(fe);
-		break;
-	case SYS_DVBT2:
+		अवरोध;
+	हाल SYS_DVBT2:
 		ret = cxd2820r_sleep_t2(fe);
-		break;
-	case SYS_DVBC_ANNEX_A:
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_A:
 		ret = cxd2820r_sleep_c(fe);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cxd2820r_get_tune_settings(struct dvb_frontend *fe,
-				      struct dvb_frontend_tune_settings *s)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int ret;
+अटल पूर्णांक cxd2820r_get_tune_settings(काष्ठा dvb_frontend *fe,
+				      काष्ठा dvb_frontend_tune_settings *s)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक ret;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
-	switch (c->delivery_system) {
-	case SYS_DVBT:
+	चयन (c->delivery_प्रणाली) अणु
+	हाल SYS_DVBT:
 		ret = cxd2820r_get_tune_settings_t(fe, s);
-		break;
-	case SYS_DVBT2:
+		अवरोध;
+	हाल SYS_DVBT2:
 		ret = cxd2820r_get_tune_settings_t2(fe, s);
-		break;
-	case SYS_DVBC_ANNEX_A:
+		अवरोध;
+	हाल SYS_DVBC_ANNEX_A:
 		ret = cxd2820r_get_tune_settings_c(fe, s);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
-	return ret;
-}
+		अवरोध;
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static enum dvbfe_search cxd2820r_search(struct dvb_frontend *fe)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
-	struct dtv_frontend_properties *c = &fe->dtv_property_cache;
-	int ret, i;
-	enum fe_status status = 0;
+अटल क्रमागत dvbfe_search cxd2820r_search(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
+	काष्ठा dtv_frontend_properties *c = &fe->dtv_property_cache;
+	पूर्णांक ret, i;
+	क्रमागत fe_status status = 0;
 
-	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_system);
+	dev_dbg(&client->dev, "delivery_system=%d\n", c->delivery_प्रणाली);
 
-	/* switch between DVB-T and DVB-T2 when tune fails */
-	if (priv->last_tune_failed) {
-		if (priv->delivery_system == SYS_DVBT) {
+	/* चयन between DVB-T and DVB-T2 when tune fails */
+	अगर (priv->last_tune_failed) अणु
+		अगर (priv->delivery_प्रणाली == SYS_DVBT) अणु
 			ret = cxd2820r_sleep_t(fe);
-			if (ret)
-				goto error;
+			अगर (ret)
+				जाओ error;
 
-			c->delivery_system = SYS_DVBT2;
-		} else if (priv->delivery_system == SYS_DVBT2) {
+			c->delivery_प्रणाली = SYS_DVBT2;
+		पूर्ण अन्यथा अगर (priv->delivery_प्रणाली == SYS_DVBT2) अणु
 			ret = cxd2820r_sleep_t2(fe);
-			if (ret)
-				goto error;
+			अगर (ret)
+				जाओ error;
 
-			c->delivery_system = SYS_DVBT;
-		}
-	}
+			c->delivery_प्रणाली = SYS_DVBT;
+		पूर्ण
+	पूर्ण
 
 	/* set frontend */
 	ret = cxd2820r_set_frontend(fe);
-	if (ret)
-		goto error;
+	अगर (ret)
+		जाओ error;
 
-	/* frontend lock wait loop count */
-	switch (priv->delivery_system) {
-	case SYS_DVBT:
-	case SYS_DVBC_ANNEX_A:
+	/* frontend lock रुको loop count */
+	चयन (priv->delivery_प्रणाली) अणु
+	हाल SYS_DVBT:
+	हाल SYS_DVBC_ANNEX_A:
 		i = 20;
-		break;
-	case SYS_DVBT2:
+		अवरोध;
+	हाल SYS_DVBT2:
 		i = 40;
-		break;
-	case SYS_UNDEFINED:
-	default:
+		अवरोध;
+	हाल SYS_UNDEFINED:
+	शेष:
 		i = 0;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	/* wait frontend lock */
-	for (; i > 0; i--) {
+	/* रुको frontend lock */
+	क्रम (; i > 0; i--) अणु
 		dev_dbg(&client->dev, "loop=%d\n", i);
 		msleep(50);
-		ret = cxd2820r_read_status(fe, &status);
-		if (ret)
-			goto error;
+		ret = cxd2820r_पढ़ो_status(fe, &status);
+		अगर (ret)
+			जाओ error;
 
-		if (status & FE_HAS_LOCK)
-			break;
-	}
+		अगर (status & FE_HAS_LOCK)
+			अवरोध;
+	पूर्ण
 
-	/* check if we have a valid signal */
-	if (status & FE_HAS_LOCK) {
+	/* check अगर we have a valid संकेत */
+	अगर (status & FE_HAS_LOCK) अणु
 		priv->last_tune_failed = false;
-		return DVBFE_ALGO_SEARCH_SUCCESS;
-	} else {
+		वापस DVBFE_ALGO_SEARCH_SUCCESS;
+	पूर्ण अन्यथा अणु
 		priv->last_tune_failed = true;
-		return DVBFE_ALGO_SEARCH_AGAIN;
-	}
+		वापस DVBFE_ALGO_SEARCH_AGAIN;
+	पूर्ण
 
 error:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	return DVBFE_ALGO_SEARCH_ERROR;
-}
+	वापस DVBFE_ALGO_SEARCH_ERROR;
+पूर्ण
 
-static enum dvbfe_algo cxd2820r_get_frontend_algo(struct dvb_frontend *fe)
-{
-	return DVBFE_ALGO_CUSTOM;
-}
+अटल क्रमागत dvbfe_algo cxd2820r_get_frontend_algo(काष्ठा dvb_frontend *fe)
+अणु
+	वापस DVBFE_ALGO_CUSTOM;
+पूर्ण
 
-static void cxd2820r_release(struct dvb_frontend *fe)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
+अटल व्योम cxd2820r_release(काष्ठा dvb_frontend *fe)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
 
 	dev_dbg(&client->dev, "\n");
 
-	i2c_unregister_device(client);
+	i2c_unरेजिस्टर_device(client);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int cxd2820r_i2c_gate_ctrl(struct dvb_frontend *fe, int enable)
-{
-	struct cxd2820r_priv *priv = fe->demodulator_priv;
-	struct i2c_client *client = priv->client[0];
+अटल पूर्णांक cxd2820r_i2c_gate_ctrl(काष्ठा dvb_frontend *fe, पूर्णांक enable)
+अणु
+	काष्ठा cxd2820r_priv *priv = fe->demodulator_priv;
+	काष्ठा i2c_client *client = priv->client[0];
 
 	dev_dbg_ratelimited(&client->dev, "enable=%d\n", enable);
 
-	return regmap_update_bits(priv->regmap[0], 0x00db, 0x01, enable ? 1 : 0);
-}
+	वापस regmap_update_bits(priv->regmap[0], 0x00db, 0x01, enable ? 1 : 0);
+पूर्ण
 
-#ifdef CONFIG_GPIOLIB
-static int cxd2820r_gpio_direction_output(struct gpio_chip *chip, unsigned nr,
-		int val)
-{
-	struct cxd2820r_priv *priv = gpiochip_get_data(chip);
-	struct i2c_client *client = priv->client[0];
+#अगर_घोषित CONFIG_GPIOLIB
+अटल पूर्णांक cxd2820r_gpio_direction_output(काष्ठा gpio_chip *chip, अचिन्हित nr,
+		पूर्णांक val)
+अणु
+	काष्ठा cxd2820r_priv *priv = gpiochip_get_data(chip);
+	काष्ठा i2c_client *client = priv->client[0];
 	u8 gpio[GPIO_COUNT];
 
 	dev_dbg(&client->dev, "nr=%u val=%d\n", nr, val);
 
-	memcpy(gpio, priv->gpio, sizeof(gpio));
+	स_नकल(gpio, priv->gpio, माप(gpio));
 	gpio[nr] = CXD2820R_GPIO_E | CXD2820R_GPIO_O | (val << 2);
 
-	return cxd2820r_gpio(&priv->fe, gpio);
-}
+	वापस cxd2820r_gpio(&priv->fe, gpio);
+पूर्ण
 
-static void cxd2820r_gpio_set(struct gpio_chip *chip, unsigned nr, int val)
-{
-	struct cxd2820r_priv *priv = gpiochip_get_data(chip);
-	struct i2c_client *client = priv->client[0];
+अटल व्योम cxd2820r_gpio_set(काष्ठा gpio_chip *chip, अचिन्हित nr, पूर्णांक val)
+अणु
+	काष्ठा cxd2820r_priv *priv = gpiochip_get_data(chip);
+	काष्ठा i2c_client *client = priv->client[0];
 	u8 gpio[GPIO_COUNT];
 
 	dev_dbg(&client->dev, "nr=%u val=%d\n", nr, val);
 
-	memcpy(gpio, priv->gpio, sizeof(gpio));
+	स_नकल(gpio, priv->gpio, माप(gpio));
 	gpio[nr] = CXD2820R_GPIO_E | CXD2820R_GPIO_O | (val << 2);
 
-	(void) cxd2820r_gpio(&priv->fe, gpio);
+	(व्योम) cxd2820r_gpio(&priv->fe, gpio);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int cxd2820r_gpio_get(struct gpio_chip *chip, unsigned nr)
-{
-	struct cxd2820r_priv *priv = gpiochip_get_data(chip);
-	struct i2c_client *client = priv->client[0];
+अटल पूर्णांक cxd2820r_gpio_get(काष्ठा gpio_chip *chip, अचिन्हित nr)
+अणु
+	काष्ठा cxd2820r_priv *priv = gpiochip_get_data(chip);
+	काष्ठा i2c_client *client = priv->client[0];
 
 	dev_dbg(&client->dev, "nr=%u\n", nr);
 
-	return (priv->gpio[nr] >> 2) & 0x01;
-}
-#endif
+	वापस (priv->gpio[nr] >> 2) & 0x01;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct dvb_frontend_ops cxd2820r_ops = {
-	.delsys = { SYS_DVBT, SYS_DVBT2, SYS_DVBC_ANNEX_A },
-	/* default: DVB-T/T2 */
-	.info = {
+अटल स्थिर काष्ठा dvb_frontend_ops cxd2820r_ops = अणु
+	.delsys = अणु SYS_DVBT, SYS_DVBT2, SYS_DVBC_ANNEX_A पूर्ण,
+	/* शेष: DVB-T/T2 */
+	.info = अणु
 		.name = "Sony CXD2820R",
 
 		.caps =	FE_CAN_FEC_1_2			|
@@ -485,7 +486,7 @@ static const struct dvb_frontend_ops cxd2820r_ops = {
 			FE_CAN_MUTE_TS			|
 			FE_CAN_2G_MODULATION		|
 			FE_CAN_MULTISTREAM
-		},
+		पूर्ण,
 
 	.release		= cxd2820r_release,
 	.init			= cxd2820r_init,
@@ -499,154 +500,154 @@ static const struct dvb_frontend_ops cxd2820r_ops = {
 	.get_frontend_algo	= cxd2820r_get_frontend_algo,
 	.search			= cxd2820r_search,
 
-	.read_status		= cxd2820r_read_status,
-	.read_snr		= cxd2820r_read_snr,
-	.read_ber		= cxd2820r_read_ber,
-	.read_ucblocks		= cxd2820r_read_ucblocks,
-	.read_signal_strength	= cxd2820r_read_signal_strength,
-};
+	.पढ़ो_status		= cxd2820r_पढ़ो_status,
+	.पढ़ो_snr		= cxd2820r_पढ़ो_snr,
+	.पढ़ो_ber		= cxd2820r_पढ़ो_ber,
+	.पढ़ो_ucblocks		= cxd2820r_पढ़ो_ucblocks,
+	.पढ़ो_संकेत_strength	= cxd2820r_पढ़ो_संकेत_strength,
+पूर्ण;
 
 /*
  * XXX: That is wrapper to cxd2820r_probe() via driver core in order to provide
- * proper I2C client for legacy media attach binding.
+ * proper I2C client क्रम legacy media attach binding.
  * New users must use I2C client binding directly!
  */
-struct dvb_frontend *cxd2820r_attach(const struct cxd2820r_config *config,
-				     struct i2c_adapter *adapter,
-				     int *gpio_chip_base)
-{
-	struct i2c_client *client;
-	struct i2c_board_info board_info;
-	struct cxd2820r_platform_data pdata;
+काष्ठा dvb_frontend *cxd2820r_attach(स्थिर काष्ठा cxd2820r_config *config,
+				     काष्ठा i2c_adapter *adapter,
+				     पूर्णांक *gpio_chip_base)
+अणु
+	काष्ठा i2c_client *client;
+	काष्ठा i2c_board_info board_info;
+	काष्ठा cxd2820r_platक्रमm_data pdata;
 
 	pdata.ts_mode = config->ts_mode;
-	pdata.ts_clk_inv = config->ts_clock_inv;
-	pdata.if_agc_polarity = config->if_agc_polarity;
+	pdata.ts_clk_inv = config->ts_घड़ी_inv;
+	pdata.अगर_agc_polarity = config->अगर_agc_polarity;
 	pdata.spec_inv = config->spec_inv;
 	pdata.gpio_chip_base = &gpio_chip_base;
 	pdata.attach_in_use = true;
 
-	memset(&board_info, 0, sizeof(board_info));
+	स_रखो(&board_info, 0, माप(board_info));
 	strscpy(board_info.type, "cxd2820r", I2C_NAME_SIZE);
 	board_info.addr = config->i2c_address;
-	board_info.platform_data = &pdata;
+	board_info.platक्रमm_data = &pdata;
 	client = i2c_new_client_device(adapter, &board_info);
-	if (!i2c_client_has_driver(client))
-		return NULL;
+	अगर (!i2c_client_has_driver(client))
+		वापस शून्य;
 
-	return pdata.get_dvb_frontend(client);
-}
+	वापस pdata.get_dvb_frontend(client);
+पूर्ण
 EXPORT_SYMBOL(cxd2820r_attach);
 
-static struct dvb_frontend *cxd2820r_get_dvb_frontend(struct i2c_client *client)
-{
-	struct cxd2820r_priv *priv = i2c_get_clientdata(client);
+अटल काष्ठा dvb_frontend *cxd2820r_get_dvb_frontend(काष्ठा i2c_client *client)
+अणु
+	काष्ठा cxd2820r_priv *priv = i2c_get_clientdata(client);
 
 	dev_dbg(&client->dev, "\n");
 
-	return &priv->fe;
-}
+	वापस &priv->fe;
+पूर्ण
 
-static int cxd2820r_probe(struct i2c_client *client,
-			  const struct i2c_device_id *id)
-{
-	struct cxd2820r_platform_data *pdata = client->dev.platform_data;
-	struct cxd2820r_priv *priv;
-	int ret, *gpio_chip_base;
-	unsigned int utmp;
-	static const struct regmap_range_cfg regmap_range_cfg0[] = {
-		{
+अटल पूर्णांक cxd2820r_probe(काष्ठा i2c_client *client,
+			  स्थिर काष्ठा i2c_device_id *id)
+अणु
+	काष्ठा cxd2820r_platक्रमm_data *pdata = client->dev.platक्रमm_data;
+	काष्ठा cxd2820r_priv *priv;
+	पूर्णांक ret, *gpio_chip_base;
+	अचिन्हित पूर्णांक uपंचांगp;
+	अटल स्थिर काष्ठा regmap_range_cfg regmap_range_cfg0[] = अणु
+		अणु
 			.range_min        = 0x0000,
 			.range_max        = 0x3fff,
 			.selector_reg     = 0x00,
 			.selector_mask    = 0xff,
-			.selector_shift   = 0,
-			.window_start     = 0x00,
-			.window_len       = 0x100,
-		},
-	};
-	static const struct regmap_range_cfg regmap_range_cfg1[] = {
-		{
+			.selector_shअगरt   = 0,
+			.winकरोw_start     = 0x00,
+			.winकरोw_len       = 0x100,
+		पूर्ण,
+	पूर्ण;
+	अटल स्थिर काष्ठा regmap_range_cfg regmap_range_cfg1[] = अणु
+		अणु
 			.range_min        = 0x0000,
 			.range_max        = 0x01ff,
 			.selector_reg     = 0x00,
 			.selector_mask    = 0xff,
-			.selector_shift   = 0,
-			.window_start     = 0x00,
-			.window_len       = 0x100,
-		},
-	};
-	static const struct regmap_config regmap_config0 = {
+			.selector_shअगरt   = 0,
+			.winकरोw_start     = 0x00,
+			.winकरोw_len       = 0x100,
+		पूर्ण,
+	पूर्ण;
+	अटल स्थिर काष्ठा regmap_config regmap_config0 = अणु
 		.reg_bits = 8,
 		.val_bits = 8,
-		.max_register = 0x3fff,
+		.max_रेजिस्टर = 0x3fff,
 		.ranges = regmap_range_cfg0,
 		.num_ranges = ARRAY_SIZE(regmap_range_cfg0),
 		.cache_type = REGCACHE_NONE,
-	};
-	static const struct regmap_config regmap_config1 = {
+	पूर्ण;
+	अटल स्थिर काष्ठा regmap_config regmap_config1 = अणु
 		.reg_bits = 8,
 		.val_bits = 8,
-		.max_register = 0x01ff,
+		.max_रेजिस्टर = 0x01ff,
 		.ranges = regmap_range_cfg1,
 		.num_ranges = ARRAY_SIZE(regmap_range_cfg1),
 		.cache_type = REGCACHE_NONE,
-	};
+	पूर्ण;
 
 	dev_dbg(&client->dev, "\n");
 
-	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
-	if (!priv) {
+	priv = kzalloc(माप(*priv), GFP_KERNEL);
+	अगर (!priv) अणु
 		ret = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	priv->client[0] = client;
 	priv->fe.demodulator_priv = priv;
 	priv->i2c = client->adapter;
 	priv->ts_mode = pdata->ts_mode;
 	priv->ts_clk_inv = pdata->ts_clk_inv;
-	priv->if_agc_polarity = pdata->if_agc_polarity;
+	priv->अगर_agc_polarity = pdata->अगर_agc_polarity;
 	priv->spec_inv = pdata->spec_inv;
 	gpio_chip_base = *pdata->gpio_chip_base;
 	priv->regmap[0] = regmap_init_i2c(priv->client[0], &regmap_config0);
-	if (IS_ERR(priv->regmap[0])) {
+	अगर (IS_ERR(priv->regmap[0])) अणु
 		ret = PTR_ERR(priv->regmap[0]);
-		goto err_kfree;
-	}
+		जाओ err_kमुक्त;
+	पूर्ण
 
 	/* Check demod answers with correct chip id */
-	ret = regmap_read(priv->regmap[0], 0x00fd, &utmp);
-	if (ret)
-		goto err_regmap_0_regmap_exit;
+	ret = regmap_पढ़ो(priv->regmap[0], 0x00fd, &uपंचांगp);
+	अगर (ret)
+		जाओ err_regmap_0_regmap_निकास;
 
-	dev_dbg(&client->dev, "chip_id=%02x\n", utmp);
+	dev_dbg(&client->dev, "chip_id=%02x\n", uपंचांगp);
 
-	if (utmp != 0xe1) {
+	अगर (uपंचांगp != 0xe1) अणु
 		ret = -ENODEV;
-		goto err_regmap_0_regmap_exit;
-	}
+		जाओ err_regmap_0_regmap_निकास;
+	पूर्ण
 
 	/*
-	 * Chip has two I2C addresses for different register banks. We register
-	 * one dummy I2C client in in order to get own I2C client for each
-	 * register bank.
+	 * Chip has two I2C addresses क्रम dअगरferent रेजिस्टर banks. We रेजिस्टर
+	 * one dummy I2C client in in order to get own I2C client क्रम each
+	 * रेजिस्टर bank.
 	 */
 	priv->client[1] = i2c_new_dummy_device(client->adapter, client->addr | (1 << 1));
-	if (IS_ERR(priv->client[1])) {
+	अगर (IS_ERR(priv->client[1])) अणु
 		ret = PTR_ERR(priv->client[1]);
 		dev_err(&client->dev, "I2C registration failed\n");
-		goto err_regmap_0_regmap_exit;
-	}
+		जाओ err_regmap_0_regmap_निकास;
+	पूर्ण
 
 	priv->regmap[1] = regmap_init_i2c(priv->client[1], &regmap_config1);
-	if (IS_ERR(priv->regmap[1])) {
+	अगर (IS_ERR(priv->regmap[1])) अणु
 		ret = PTR_ERR(priv->regmap[1]);
-		goto err_client_1_i2c_unregister_device;
-	}
+		जाओ err_client_1_i2c_unरेजिस्टर_device;
+	पूर्ण
 
-	if (gpio_chip_base) {
-#ifdef CONFIG_GPIOLIB
+	अगर (gpio_chip_base) अणु
+#अगर_घोषित CONFIG_GPIOLIB
 		/* Add GPIOs */
 		priv->gpio_chip.label = KBUILD_MODNAME;
 		priv->gpio_chip.parent = &client->dev;
@@ -658,16 +659,16 @@ static int cxd2820r_probe(struct i2c_client *client,
 		priv->gpio_chip.ngpio = GPIO_COUNT;
 		priv->gpio_chip.can_sleep = 1;
 		ret = gpiochip_add_data(&priv->gpio_chip, priv);
-		if (ret)
-			goto err_regmap_1_regmap_exit;
+		अगर (ret)
+			जाओ err_regmap_1_regmap_निकास;
 
 		dev_dbg(&client->dev, "gpio_chip.base=%d\n",
 			priv->gpio_chip.base);
 
 		*gpio_chip_base = priv->gpio_chip.base;
-#else
+#अन्यथा
 		/*
-		 * Use static GPIO configuration if GPIOLIB is undefined.
+		 * Use अटल GPIO configuration अगर GPIOLIB is undefined.
 		 * This is fallback condition.
 		 */
 		u8 gpio[GPIO_COUNT];
@@ -675,15 +676,15 @@ static int cxd2820r_probe(struct i2c_client *client,
 		gpio[1] = (*gpio_chip_base >> 3) & 0x07;
 		gpio[2] = 0;
 		ret = cxd2820r_gpio(&priv->fe, gpio);
-		if (ret)
-			goto err_regmap_1_regmap_exit;
-#endif
-	}
+		अगर (ret)
+			जाओ err_regmap_1_regmap_निकास;
+#पूर्ण_अगर
+	पूर्ण
 
 	/* Create dvb frontend */
-	memcpy(&priv->fe.ops, &cxd2820r_ops, sizeof(priv->fe.ops));
-	if (!pdata->attach_in_use)
-		priv->fe.ops.release = NULL;
+	स_नकल(&priv->fe.ops, &cxd2820r_ops, माप(priv->fe.ops));
+	अगर (!pdata->attach_in_use)
+		priv->fe.ops.release = शून्य;
 	i2c_set_clientdata(client, priv);
 
 	/* Setup callbacks */
@@ -691,55 +692,55 @@ static int cxd2820r_probe(struct i2c_client *client,
 
 	dev_info(&client->dev, "Sony CXD2820R successfully identified\n");
 
-	return 0;
-err_regmap_1_regmap_exit:
-	regmap_exit(priv->regmap[1]);
-err_client_1_i2c_unregister_device:
-	i2c_unregister_device(priv->client[1]);
-err_regmap_0_regmap_exit:
-	regmap_exit(priv->regmap[0]);
-err_kfree:
-	kfree(priv);
+	वापस 0;
+err_regmap_1_regmap_निकास:
+	regmap_निकास(priv->regmap[1]);
+err_client_1_i2c_unरेजिस्टर_device:
+	i2c_unरेजिस्टर_device(priv->client[1]);
+err_regmap_0_regmap_निकास:
+	regmap_निकास(priv->regmap[0]);
+err_kमुक्त:
+	kमुक्त(priv);
 err:
 	dev_dbg(&client->dev, "failed=%d\n", ret);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int cxd2820r_remove(struct i2c_client *client)
-{
-	struct cxd2820r_priv *priv = i2c_get_clientdata(client);
+अटल पूर्णांक cxd2820r_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा cxd2820r_priv *priv = i2c_get_clientdata(client);
 
 	dev_dbg(&client->dev, "\n");
 
-#ifdef CONFIG_GPIOLIB
-	if (priv->gpio_chip.label)
-		gpiochip_remove(&priv->gpio_chip);
-#endif
-	regmap_exit(priv->regmap[1]);
-	i2c_unregister_device(priv->client[1]);
+#अगर_घोषित CONFIG_GPIOLIB
+	अगर (priv->gpio_chip.label)
+		gpiochip_हटाओ(&priv->gpio_chip);
+#पूर्ण_अगर
+	regmap_निकास(priv->regmap[1]);
+	i2c_unरेजिस्टर_device(priv->client[1]);
 
-	regmap_exit(priv->regmap[0]);
+	regmap_निकास(priv->regmap[0]);
 
-	kfree(priv);
+	kमुक्त(priv);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id cxd2820r_id_table[] = {
-	{"cxd2820r", 0},
-	{}
-};
+अटल स्थिर काष्ठा i2c_device_id cxd2820r_id_table[] = अणु
+	अणु"cxd2820r", 0पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, cxd2820r_id_table);
 
-static struct i2c_driver cxd2820r_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver cxd2820r_driver = अणु
+	.driver = अणु
 		.name                = "cxd2820r",
 		.suppress_bind_attrs = true,
-	},
+	पूर्ण,
 	.probe    = cxd2820r_probe,
-	.remove   = cxd2820r_remove,
+	.हटाओ   = cxd2820r_हटाओ,
 	.id_table = cxd2820r_id_table,
-};
+पूर्ण;
 
 module_i2c_driver(cxd2820r_driver);
 

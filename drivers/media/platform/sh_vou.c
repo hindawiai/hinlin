@@ -1,342 +1,343 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * SuperH Video Output Unit (VOU) driver
  *
  * Copyright (C) 2010, Guennadi Liakhovetski <g.liakhovetski@gmx.de>
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/fs.h>
-#include <linux/i2c.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/slab.h>
-#include <linux/videodev2.h>
-#include <linux/module.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/fs.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/videodev2.h>
+#समावेश <linux/module.h>
 
-#include <media/drv-intf/sh_vou.h>
-#include <media/v4l2-common.h>
-#include <media/v4l2-device.h>
-#include <media/v4l2-ioctl.h>
-#include <media/v4l2-mediabus.h>
-#include <media/videobuf2-v4l2.h>
-#include <media/videobuf2-dma-contig.h>
+#समावेश <media/drv-पूर्णांकf/sh_vou.h>
+#समावेश <media/v4l2-common.h>
+#समावेश <media/v4l2-device.h>
+#समावेश <media/v4l2-ioctl.h>
+#समावेश <media/v4l2-mediabus.h>
+#समावेश <media/videobuf2-v4l2.h>
+#समावेश <media/videobuf2-dma-contig.h>
 
-/* Mirror addresses are not available for all registers */
-#define VOUER	0
-#define VOUCR	4
-#define VOUSTR	8
-#define VOUVCR	0xc
-#define VOUISR	0x10
-#define VOUBCR	0x14
-#define VOUDPR	0x18
-#define VOUDSR	0x1c
-#define VOUVPR	0x20
-#define VOUIR	0x24
-#define VOUSRR	0x28
-#define VOUMSR	0x2c
-#define VOUHIR	0x30
-#define VOUDFR	0x34
-#define VOUAD1R	0x38
-#define VOUAD2R	0x3c
-#define VOUAIR	0x40
-#define VOUSWR	0x44
-#define VOURCR	0x48
-#define VOURPR	0x50
+/* Mirror addresses are not available क्रम all रेजिस्टरs */
+#घोषणा VOUER	0
+#घोषणा VOUCR	4
+#घोषणा VOUSTR	8
+#घोषणा VOUVCR	0xc
+#घोषणा VOUISR	0x10
+#घोषणा VOUBCR	0x14
+#घोषणा VOUDPR	0x18
+#घोषणा VOUDSR	0x1c
+#घोषणा VOUVPR	0x20
+#घोषणा VOUIR	0x24
+#घोषणा VOUSRR	0x28
+#घोषणा VOUMSR	0x2c
+#घोषणा VOUHIR	0x30
+#घोषणा VOUDFR	0x34
+#घोषणा VOUAD1R	0x38
+#घोषणा VOUAD2R	0x3c
+#घोषणा VOUAIR	0x40
+#घोषणा VOUSWR	0x44
+#घोषणा VOURCR	0x48
+#घोषणा VOURPR	0x50
 
-enum sh_vou_status {
+क्रमागत sh_vou_status अणु
 	SH_VOU_IDLE,
 	SH_VOU_INITIALISING,
 	SH_VOU_RUNNING,
-};
+पूर्ण;
 
-#define VOU_MIN_IMAGE_WIDTH	16
-#define VOU_MAX_IMAGE_WIDTH	720
-#define VOU_MIN_IMAGE_HEIGHT	16
+#घोषणा VOU_MIN_IMAGE_WIDTH	16
+#घोषणा VOU_MAX_IMAGE_WIDTH	720
+#घोषणा VOU_MIN_IMAGE_HEIGHT	16
 
-struct sh_vou_buffer {
-	struct vb2_v4l2_buffer vb;
-	struct list_head list;
-};
+काष्ठा sh_vou_buffer अणु
+	काष्ठा vb2_v4l2_buffer vb;
+	काष्ठा list_head list;
+पूर्ण;
 
-static inline struct
-sh_vou_buffer *to_sh_vou_buffer(struct vb2_v4l2_buffer *vb2)
-{
-	return container_of(vb2, struct sh_vou_buffer, vb);
-}
+अटल अंतरभूत काष्ठा
+sh_vou_buffer *to_sh_vou_buffer(काष्ठा vb2_v4l2_buffer *vb2)
+अणु
+	वापस container_of(vb2, काष्ठा sh_vou_buffer, vb);
+पूर्ण
 
-struct sh_vou_device {
-	struct v4l2_device v4l2_dev;
-	struct video_device vdev;
-	struct sh_vou_pdata *pdata;
+काष्ठा sh_vou_device अणु
+	काष्ठा v4l2_device v4l2_dev;
+	काष्ठा video_device vdev;
+	काष्ठा sh_vou_pdata *pdata;
 	spinlock_t lock;
-	void __iomem *base;
-	/* State information */
-	struct v4l2_pix_format pix;
-	struct v4l2_rect rect;
-	struct list_head buf_list;
+	व्योम __iomem *base;
+	/* State inक्रमmation */
+	काष्ठा v4l2_pix_क्रमmat pix;
+	काष्ठा v4l2_rect rect;
+	काष्ठा list_head buf_list;
 	v4l2_std_id std;
-	int pix_idx;
-	struct vb2_queue queue;
-	struct sh_vou_buffer *active;
-	enum sh_vou_status status;
-	unsigned sequence;
-	struct mutex fop_lock;
-};
+	पूर्णांक pix_idx;
+	काष्ठा vb2_queue queue;
+	काष्ठा sh_vou_buffer *active;
+	क्रमागत sh_vou_status status;
+	अचिन्हित sequence;
+	काष्ठा mutex fop_lock;
+पूर्ण;
 
-/* Register access routines for sides A, B and mirror addresses */
-static void sh_vou_reg_a_write(struct sh_vou_device *vou_dev, unsigned int reg,
+/* Register access routines क्रम sides A, B and mirror addresses */
+अटल व्योम sh_vou_reg_a_ग_लिखो(काष्ठा sh_vou_device *vou_dev, अचिन्हित पूर्णांक reg,
 			       u32 value)
-{
-	__raw_writel(value, vou_dev->base + reg);
-}
+अणु
+	__raw_ग_लिखोl(value, vou_dev->base + reg);
+पूर्ण
 
-static void sh_vou_reg_ab_write(struct sh_vou_device *vou_dev, unsigned int reg,
+अटल व्योम sh_vou_reg_ab_ग_लिखो(काष्ठा sh_vou_device *vou_dev, अचिन्हित पूर्णांक reg,
 				u32 value)
-{
-	__raw_writel(value, vou_dev->base + reg);
-	__raw_writel(value, vou_dev->base + reg + 0x1000);
-}
+अणु
+	__raw_ग_लिखोl(value, vou_dev->base + reg);
+	__raw_ग_लिखोl(value, vou_dev->base + reg + 0x1000);
+पूर्ण
 
-static void sh_vou_reg_m_write(struct sh_vou_device *vou_dev, unsigned int reg,
+अटल व्योम sh_vou_reg_m_ग_लिखो(काष्ठा sh_vou_device *vou_dev, अचिन्हित पूर्णांक reg,
 			       u32 value)
-{
-	__raw_writel(value, vou_dev->base + reg + 0x2000);
-}
+अणु
+	__raw_ग_लिखोl(value, vou_dev->base + reg + 0x2000);
+पूर्ण
 
-static u32 sh_vou_reg_a_read(struct sh_vou_device *vou_dev, unsigned int reg)
-{
-	return __raw_readl(vou_dev->base + reg);
-}
+अटल u32 sh_vou_reg_a_पढ़ो(काष्ठा sh_vou_device *vou_dev, अचिन्हित पूर्णांक reg)
+अणु
+	वापस __raw_पढ़ोl(vou_dev->base + reg);
+पूर्ण
 
-static void sh_vou_reg_a_set(struct sh_vou_device *vou_dev, unsigned int reg,
+अटल व्योम sh_vou_reg_a_set(काष्ठा sh_vou_device *vou_dev, अचिन्हित पूर्णांक reg,
 			     u32 value, u32 mask)
-{
-	u32 old = __raw_readl(vou_dev->base + reg);
+अणु
+	u32 old = __raw_पढ़ोl(vou_dev->base + reg);
 
 	value = (value & mask) | (old & ~mask);
-	__raw_writel(value, vou_dev->base + reg);
-}
+	__raw_ग_लिखोl(value, vou_dev->base + reg);
+पूर्ण
 
-static void sh_vou_reg_b_set(struct sh_vou_device *vou_dev, unsigned int reg,
+अटल व्योम sh_vou_reg_b_set(काष्ठा sh_vou_device *vou_dev, अचिन्हित पूर्णांक reg,
 			     u32 value, u32 mask)
-{
+अणु
 	sh_vou_reg_a_set(vou_dev, reg + 0x1000, value, mask);
-}
+पूर्ण
 
-static void sh_vou_reg_ab_set(struct sh_vou_device *vou_dev, unsigned int reg,
+अटल व्योम sh_vou_reg_ab_set(काष्ठा sh_vou_device *vou_dev, अचिन्हित पूर्णांक reg,
 			      u32 value, u32 mask)
-{
+अणु
 	sh_vou_reg_a_set(vou_dev, reg, value, mask);
 	sh_vou_reg_b_set(vou_dev, reg, value, mask);
-}
+पूर्ण
 
-struct sh_vou_fmt {
+काष्ठा sh_vou_fmt अणु
 	u32		pfmt;
-	unsigned char	bpp;
-	unsigned char	bpl;
-	unsigned char	rgb;
-	unsigned char	yf;
-	unsigned char	pkf;
-};
+	अचिन्हित अक्षर	bpp;
+	अचिन्हित अक्षर	bpl;
+	अचिन्हित अक्षर	rgb;
+	अचिन्हित अक्षर	yf;
+	अचिन्हित अक्षर	pkf;
+पूर्ण;
 
-/* Further pixel formats can be added */
-static struct sh_vou_fmt vou_fmt[] = {
-	{
+/* Further pixel क्रमmats can be added */
+अटल काष्ठा sh_vou_fmt vou_fmt[] = अणु
+	अणु
 		.pfmt	= V4L2_PIX_FMT_NV12,
 		.bpp	= 12,
 		.bpl	= 1,
 		.yf	= 0,
 		.rgb	= 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.pfmt	= V4L2_PIX_FMT_NV16,
 		.bpp	= 16,
 		.bpl	= 1,
 		.yf	= 1,
 		.rgb	= 0,
-	},
-	{
+	पूर्ण,
+	अणु
 		.pfmt	= V4L2_PIX_FMT_RGB24,
 		.bpp	= 24,
 		.bpl	= 3,
 		.pkf	= 2,
 		.rgb	= 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.pfmt	= V4L2_PIX_FMT_RGB565,
 		.bpp	= 16,
 		.bpl	= 2,
 		.pkf	= 3,
 		.rgb	= 1,
-	},
-	{
+	पूर्ण,
+	अणु
 		.pfmt	= V4L2_PIX_FMT_RGB565X,
 		.bpp	= 16,
 		.bpl	= 2,
 		.pkf	= 3,
 		.rgb	= 1,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void sh_vou_schedule_next(struct sh_vou_device *vou_dev,
-				 struct vb2_v4l2_buffer *vbuf)
-{
+अटल व्योम sh_vou_schedule_next(काष्ठा sh_vou_device *vou_dev,
+				 काष्ठा vb2_v4l2_buffer *vbuf)
+अणु
 	dma_addr_t addr1, addr2;
 
 	addr1 = vb2_dma_contig_plane_dma_addr(&vbuf->vb2_buf, 0);
-	switch (vou_dev->pix.pixelformat) {
-	case V4L2_PIX_FMT_NV12:
-	case V4L2_PIX_FMT_NV16:
+	चयन (vou_dev->pix.pixelक्रमmat) अणु
+	हाल V4L2_PIX_FMT_NV12:
+	हाल V4L2_PIX_FMT_NV16:
 		addr2 = addr1 + vou_dev->pix.width * vou_dev->pix.height;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		addr2 = 0;
-	}
+	पूर्ण
 
-	sh_vou_reg_m_write(vou_dev, VOUAD1R, addr1);
-	sh_vou_reg_m_write(vou_dev, VOUAD2R, addr2);
-}
+	sh_vou_reg_m_ग_लिखो(vou_dev, VOUAD1R, addr1);
+	sh_vou_reg_m_ग_लिखो(vou_dev, VOUAD2R, addr2);
+पूर्ण
 
-static void sh_vou_stream_config(struct sh_vou_device *vou_dev)
-{
-	unsigned int row_coeff;
-#ifdef __LITTLE_ENDIAN
+अटल व्योम sh_vou_stream_config(काष्ठा sh_vou_device *vou_dev)
+अणु
+	अचिन्हित पूर्णांक row_coeff;
+#अगर_घोषित __LITTLE_ENDIAN
 	u32 dataswap = 7;
-#else
+#अन्यथा
 	u32 dataswap = 0;
-#endif
+#पूर्ण_अगर
 
-	switch (vou_dev->pix.pixelformat) {
-	default:
-	case V4L2_PIX_FMT_NV12:
-	case V4L2_PIX_FMT_NV16:
+	चयन (vou_dev->pix.pixelक्रमmat) अणु
+	शेष:
+	हाल V4L2_PIX_FMT_NV12:
+	हाल V4L2_PIX_FMT_NV16:
 		row_coeff = 1;
-		break;
-	case V4L2_PIX_FMT_RGB565:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB565:
 		dataswap ^= 1;
 		fallthrough;
-	case V4L2_PIX_FMT_RGB565X:
+	हाल V4L2_PIX_FMT_RGB565X:
 		row_coeff = 2;
-		break;
-	case V4L2_PIX_FMT_RGB24:
+		अवरोध;
+	हाल V4L2_PIX_FMT_RGB24:
 		row_coeff = 3;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	sh_vou_reg_a_write(vou_dev, VOUSWR, dataswap);
-	sh_vou_reg_ab_write(vou_dev, VOUAIR, vou_dev->pix.width * row_coeff);
-}
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOUSWR, dataswap);
+	sh_vou_reg_ab_ग_लिखो(vou_dev, VOUAIR, vou_dev->pix.width * row_coeff);
+पूर्ण
 
 /* Locking: caller holds fop_lock mutex */
-static int sh_vou_queue_setup(struct vb2_queue *vq,
-		       unsigned int *nbuffers, unsigned int *nplanes,
-		       unsigned int sizes[], struct device *alloc_devs[])
-{
-	struct sh_vou_device *vou_dev = vb2_get_drv_priv(vq);
-	struct v4l2_pix_format *pix = &vou_dev->pix;
-	int bytes_per_line = vou_fmt[vou_dev->pix_idx].bpp * pix->width / 8;
+अटल पूर्णांक sh_vou_queue_setup(काष्ठा vb2_queue *vq,
+		       अचिन्हित पूर्णांक *nbuffers, अचिन्हित पूर्णांक *nplanes,
+		       अचिन्हित पूर्णांक sizes[], काष्ठा device *alloc_devs[])
+अणु
+	काष्ठा sh_vou_device *vou_dev = vb2_get_drv_priv(vq);
+	काष्ठा v4l2_pix_क्रमmat *pix = &vou_dev->pix;
+	पूर्णांक bytes_per_line = vou_fmt[vou_dev->pix_idx].bpp * pix->width / 8;
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s()\n", __func__);
 
-	if (*nplanes)
-		return sizes[0] < pix->height * bytes_per_line ? -EINVAL : 0;
+	अगर (*nplanes)
+		वापस sizes[0] < pix->height * bytes_per_line ? -EINVAL : 0;
 	*nplanes = 1;
 	sizes[0] = pix->height * bytes_per_line;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_vou_buf_prepare(struct vb2_buffer *vb)
-{
-	struct sh_vou_device *vou_dev = vb2_get_drv_priv(vb->vb2_queue);
-	struct v4l2_pix_format *pix = &vou_dev->pix;
-	unsigned bytes_per_line = vou_fmt[vou_dev->pix_idx].bpp * pix->width / 8;
-	unsigned size = pix->height * bytes_per_line;
+अटल पूर्णांक sh_vou_buf_prepare(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा sh_vou_device *vou_dev = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा v4l2_pix_क्रमmat *pix = &vou_dev->pix;
+	अचिन्हित bytes_per_line = vou_fmt[vou_dev->pix_idx].bpp * pix->width / 8;
+	अचिन्हित size = pix->height * bytes_per_line;
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s()\n", __func__);
 
-	if (vb2_plane_size(vb, 0) < size) {
+	अगर (vb2_plane_size(vb, 0) < size) अणु
 		/* User buffer too small */
 		dev_warn(vou_dev->v4l2_dev.dev, "buffer too small (%lu < %u)\n",
 			 vb2_plane_size(vb, 0), size);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	vb2_set_plane_payload(vb, 0, size);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Locking: caller holds fop_lock mutex and vq->irqlock spinlock */
-static void sh_vou_buf_queue(struct vb2_buffer *vb)
-{
-	struct vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
-	struct sh_vou_device *vou_dev = vb2_get_drv_priv(vb->vb2_queue);
-	struct sh_vou_buffer *shbuf = to_sh_vou_buffer(vbuf);
-	unsigned long flags;
+अटल व्योम sh_vou_buf_queue(काष्ठा vb2_buffer *vb)
+अणु
+	काष्ठा vb2_v4l2_buffer *vbuf = to_vb2_v4l2_buffer(vb);
+	काष्ठा sh_vou_device *vou_dev = vb2_get_drv_priv(vb->vb2_queue);
+	काष्ठा sh_vou_buffer *shbuf = to_sh_vou_buffer(vbuf);
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&vou_dev->lock, flags);
 	list_add_tail(&shbuf->list, &vou_dev->buf_list);
 	spin_unlock_irqrestore(&vou_dev->lock, flags);
-}
+पूर्ण
 
-static int sh_vou_start_streaming(struct vb2_queue *vq, unsigned int count)
-{
-	struct sh_vou_device *vou_dev = vb2_get_drv_priv(vq);
-	struct sh_vou_buffer *buf, *node;
-	int ret;
+अटल पूर्णांक sh_vou_start_streaming(काष्ठा vb2_queue *vq, अचिन्हित पूर्णांक count)
+अणु
+	काष्ठा sh_vou_device *vou_dev = vb2_get_drv_priv(vq);
+	काष्ठा sh_vou_buffer *buf, *node;
+	पूर्णांक ret;
 
 	vou_dev->sequence = 0;
 	ret = v4l2_device_call_until_err(&vou_dev->v4l2_dev, 0,
 					 video, s_stream, 1);
-	if (ret < 0 && ret != -ENOIOCTLCMD) {
-		list_for_each_entry_safe(buf, node, &vou_dev->buf_list, list) {
-			vb2_buffer_done(&buf->vb.vb2_buf,
+	अगर (ret < 0 && ret != -ENOIOCTLCMD) अणु
+		list_क्रम_each_entry_safe(buf, node, &vou_dev->buf_list, list) अणु
+			vb2_buffer_करोne(&buf->vb.vb2_buf,
 					VB2_BUF_STATE_QUEUED);
 			list_del(&buf->list);
-		}
-		vou_dev->active = NULL;
-		return ret;
-	}
+		पूर्ण
+		vou_dev->active = शून्य;
+		वापस ret;
+	पूर्ण
 
-	buf = list_entry(vou_dev->buf_list.next, struct sh_vou_buffer, list);
+	buf = list_entry(vou_dev->buf_list.next, काष्ठा sh_vou_buffer, list);
 
 	vou_dev->active = buf;
 
 	/* Start from side A: we use mirror addresses, so, set B */
-	sh_vou_reg_a_write(vou_dev, VOURPR, 1);
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOURPR, 1);
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s: first buffer status 0x%x\n",
-		__func__, sh_vou_reg_a_read(vou_dev, VOUSTR));
+		__func__, sh_vou_reg_a_पढ़ो(vou_dev, VOUSTR));
 	sh_vou_schedule_next(vou_dev, &buf->vb);
 
-	buf = list_entry(buf->list.next, struct sh_vou_buffer, list);
+	buf = list_entry(buf->list.next, काष्ठा sh_vou_buffer, list);
 
-	/* Second buffer - initialise register side B */
-	sh_vou_reg_a_write(vou_dev, VOURPR, 0);
+	/* Second buffer - initialise रेजिस्टर side B */
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOURPR, 0);
 	sh_vou_schedule_next(vou_dev, &buf->vb);
 
-	/* Register side switching with frame VSYNC */
-	sh_vou_reg_a_write(vou_dev, VOURCR, 5);
+	/* Register side चयनing with frame VSYNC */
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOURCR, 5);
 
 	sh_vou_stream_config(vou_dev);
-	/* Enable End-of-Frame (VSYNC) interrupts */
-	sh_vou_reg_a_write(vou_dev, VOUIR, 0x10004);
+	/* Enable End-of-Frame (VSYNC) पूर्णांकerrupts */
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOUIR, 0x10004);
 
 	/* Two buffers on the queue - activate the hardware */
 	vou_dev->status = SH_VOU_RUNNING;
-	sh_vou_reg_a_write(vou_dev, VOUER, 0x107);
-	return 0;
-}
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOUER, 0x107);
+	वापस 0;
+पूर्ण
 
-static void sh_vou_stop_streaming(struct vb2_queue *vq)
-{
-	struct sh_vou_device *vou_dev = vb2_get_drv_priv(vq);
-	struct sh_vou_buffer *buf, *node;
-	unsigned long flags;
+अटल व्योम sh_vou_stop_streaming(काष्ठा vb2_queue *vq)
+अणु
+	काष्ठा sh_vou_device *vou_dev = vb2_get_drv_priv(vq);
+	काष्ठा sh_vou_buffer *buf, *node;
+	अचिन्हित दीर्घ flags;
 
 	v4l2_device_call_until_err(&vou_dev->v4l2_dev, 0,
 					 video, s_stream, 0);
@@ -346,91 +347,91 @@ static void sh_vou_stop_streaming(struct vb2_queue *vq)
 	sh_vou_reg_a_set(vou_dev, VOUIR, 0, 0x30000);
 	msleep(50);
 	spin_lock_irqsave(&vou_dev->lock, flags);
-	list_for_each_entry_safe(buf, node, &vou_dev->buf_list, list) {
-		vb2_buffer_done(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
+	list_क्रम_each_entry_safe(buf, node, &vou_dev->buf_list, list) अणु
+		vb2_buffer_करोne(&buf->vb.vb2_buf, VB2_BUF_STATE_ERROR);
 		list_del(&buf->list);
-	}
-	vou_dev->active = NULL;
+	पूर्ण
+	vou_dev->active = शून्य;
 	spin_unlock_irqrestore(&vou_dev->lock, flags);
-}
+पूर्ण
 
-static const struct vb2_ops sh_vou_qops = {
+अटल स्थिर काष्ठा vb2_ops sh_vou_qops = अणु
 	.queue_setup		= sh_vou_queue_setup,
 	.buf_prepare		= sh_vou_buf_prepare,
 	.buf_queue		= sh_vou_buf_queue,
 	.start_streaming	= sh_vou_start_streaming,
 	.stop_streaming		= sh_vou_stop_streaming,
-	.wait_prepare		= vb2_ops_wait_prepare,
-	.wait_finish		= vb2_ops_wait_finish,
-};
+	.रुको_prepare		= vb2_ops_रुको_prepare,
+	.रुको_finish		= vb2_ops_रुको_finish,
+पूर्ण;
 
 /* Video IOCTLs */
-static int sh_vou_querycap(struct file *file, void  *priv,
-			   struct v4l2_capability *cap)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
+अटल पूर्णांक sh_vou_querycap(काष्ठा file *file, व्योम  *priv,
+			   काष्ठा v4l2_capability *cap)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s()\n", __func__);
 
-	strscpy(cap->card, "SuperH VOU", sizeof(cap->card));
-	strscpy(cap->driver, "sh-vou", sizeof(cap->driver));
-	strscpy(cap->bus_info, "platform:sh-vou", sizeof(cap->bus_info));
-	return 0;
-}
+	strscpy(cap->card, "SuperH VOU", माप(cap->card));
+	strscpy(cap->driver, "sh-vou", माप(cap->driver));
+	strscpy(cap->bus_info, "platform:sh-vou", माप(cap->bus_info));
+	वापस 0;
+पूर्ण
 
-/* Enumerate formats, that the device can accept from the user */
-static int sh_vou_enum_fmt_vid_out(struct file *file, void  *priv,
-				   struct v4l2_fmtdesc *fmt)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
+/* Enumerate क्रमmats, that the device can accept from the user */
+अटल पूर्णांक sh_vou_क्रमागत_fmt_vid_out(काष्ठा file *file, व्योम  *priv,
+				   काष्ठा v4l2_fmtdesc *fmt)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
 
-	if (fmt->index >= ARRAY_SIZE(vou_fmt))
-		return -EINVAL;
+	अगर (fmt->index >= ARRAY_SIZE(vou_fmt))
+		वापस -EINVAL;
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s()\n", __func__);
 
-	fmt->pixelformat = vou_fmt[fmt->index].pfmt;
+	fmt->pixelक्रमmat = vou_fmt[fmt->index].pfmt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_vou_g_fmt_vid_out(struct file *file, void *priv,
-				struct v4l2_format *fmt)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
+अटल पूर्णांक sh_vou_g_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *fmt)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s()\n", __func__);
 
 	fmt->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	fmt->fmt.pix = vou_dev->pix;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const unsigned char vou_scale_h_num[] = {1, 9, 2, 9, 4};
-static const unsigned char vou_scale_h_den[] = {1, 8, 1, 4, 1};
-static const unsigned char vou_scale_h_fld[] = {0, 2, 1, 3};
-static const unsigned char vou_scale_v_num[] = {1, 2, 4};
-static const unsigned char vou_scale_v_den[] = {1, 1, 1};
-static const unsigned char vou_scale_v_fld[] = {0, 1};
+अटल स्थिर अचिन्हित अक्षर vou_scale_h_num[] = अणु1, 9, 2, 9, 4पूर्ण;
+अटल स्थिर अचिन्हित अक्षर vou_scale_h_den[] = अणु1, 8, 1, 4, 1पूर्ण;
+अटल स्थिर अचिन्हित अक्षर vou_scale_h_fld[] = अणु0, 2, 1, 3पूर्ण;
+अटल स्थिर अचिन्हित अक्षर vou_scale_v_num[] = अणु1, 2, 4पूर्ण;
+अटल स्थिर अचिन्हित अक्षर vou_scale_v_den[] = अणु1, 1, 1पूर्ण;
+अटल स्थिर अचिन्हित अक्षर vou_scale_v_fld[] = अणु0, 1पूर्ण;
 
-static void sh_vou_configure_geometry(struct sh_vou_device *vou_dev,
-				      int pix_idx, int w_idx, int h_idx)
-{
-	struct sh_vou_fmt *fmt = vou_fmt + pix_idx;
-	unsigned int black_left, black_top, width_max,
+अटल व्योम sh_vou_configure_geometry(काष्ठा sh_vou_device *vou_dev,
+				      पूर्णांक pix_idx, पूर्णांक w_idx, पूर्णांक h_idx)
+अणु
+	काष्ठा sh_vou_fmt *fmt = vou_fmt + pix_idx;
+	अचिन्हित पूर्णांक black_left, black_top, width_max,
 		frame_in_height, frame_out_height, frame_out_top;
-	struct v4l2_rect *rect = &vou_dev->rect;
-	struct v4l2_pix_format *pix = &vou_dev->pix;
+	काष्ठा v4l2_rect *rect = &vou_dev->rect;
+	काष्ठा v4l2_pix_क्रमmat *pix = &vou_dev->pix;
 	u32 vouvcr = 0, dsr_h, dsr_v;
 
-	if (vou_dev->std & V4L2_STD_525_60) {
+	अगर (vou_dev->std & V4L2_STD_525_60) अणु
 		width_max = 858;
 		/* height_max = 262; */
-	} else {
+	पूर्ण अन्यथा अणु
 		width_max = 864;
 		/* height_max = 312; */
-	}
+	पूर्ण
 
 	frame_in_height = pix->height / 2;
 	frame_out_height = rect->height / 2;
@@ -439,20 +440,20 @@ static void sh_vou_configure_geometry(struct sh_vou_device *vou_dev,
 	/*
 	 * Cropping scheme: max useful image is 720x480, and the total video
 	 * area is 858x525 (NTSC) or 864x625 (PAL). AK8813 / 8814 starts
-	 * sampling data beginning with fixed 276th (NTSC) / 288th (PAL) clock,
-	 * of which the first 33 / 25 clocks HSYNC must be held active. This
-	 * has to be configured in CR[HW]. 1 pixel equals 2 clock periods.
+	 * sampling data beginning with fixed 276th (NTSC) / 288th (PAL) घड़ी,
+	 * of which the first 33 / 25 घड़ीs HSYNC must be held active. This
+	 * has to be configured in CR[HW]. 1 pixel equals 2 घड़ी periods.
 	 * This gives CR[HW] = 16 / 12, VPR[HVP] = 138 / 144, which gives
 	 * exactly 858 - 138 = 864 - 144 = 720! We call the out-of-display area,
-	 * beyond DSR, specified on the left and top by the VPR register "black
+	 * beyond DSR, specअगरied on the left and top by the VPR रेजिस्टर "black
 	 * pixels" and out-of-image area (DPR) "background pixels." We fix VPR
 	 * at 138 / 144 : 20, because that's the HSYNC timing, that our first
-	 * client requires, and that's exactly what leaves us 720 pixels for the
-	 * image; we leave VPR[VVP] at default 20 for now, because the client
-	 * doesn't seem to have any special requirements for it. Otherwise we
+	 * client requires, and that's exactly what leaves us 720 pixels क्रम the
+	 * image; we leave VPR[VVP] at शेष 20 क्रम now, because the client
+	 * करोesn't seem to have any special requirements क्रम it. Otherwise we
 	 * could also set it to max - 240 = 22 / 72. Thus VPR depends only on
 	 * the selected standard, and DPR and DSR are selected according to
-	 * cropping. Q: how does the client detect the first valid line? Does
+	 * cropping. Q: how करोes the client detect the first valid line? Does
 	 * HSYNC stay inactive during invalid (black) lines?
 	 */
 	black_left = width_max - VOU_MAX_IMAGE_WIDTH;
@@ -467,51 +468,51 @@ static void sh_vou_configure_geometry(struct sh_vou_device *vou_dev,
 		rect->left, frame_out_top, dsr_h, dsr_v);
 
 	/* VOUISR height - half of a frame height in frame mode */
-	sh_vou_reg_ab_write(vou_dev, VOUISR, (pix->width << 16) | frame_in_height);
-	sh_vou_reg_ab_write(vou_dev, VOUVPR, (black_left << 16) | black_top);
-	sh_vou_reg_ab_write(vou_dev, VOUDPR, (rect->left << 16) | frame_out_top);
-	sh_vou_reg_ab_write(vou_dev, VOUDSR, (dsr_h << 16) | dsr_v);
+	sh_vou_reg_ab_ग_लिखो(vou_dev, VOUISR, (pix->width << 16) | frame_in_height);
+	sh_vou_reg_ab_ग_लिखो(vou_dev, VOUVPR, (black_left << 16) | black_top);
+	sh_vou_reg_ab_ग_लिखो(vou_dev, VOUDPR, (rect->left << 16) | frame_out_top);
+	sh_vou_reg_ab_ग_लिखो(vou_dev, VOUDSR, (dsr_h << 16) | dsr_v);
 
 	/*
-	 * if necessary, we could set VOUHIR to
+	 * अगर necessary, we could set VOUHIR to
 	 * max(black_left + dsr_h, width_max) here
 	 */
 
-	if (w_idx)
+	अगर (w_idx)
 		vouvcr |= (1 << 15) | (vou_scale_h_fld[w_idx - 1] << 4);
-	if (h_idx)
+	अगर (h_idx)
 		vouvcr |= (1 << 14) | vou_scale_v_fld[h_idx - 1];
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "0x%08x: scaling 0x%x\n",
 		fmt->pfmt, vouvcr);
 
-	/* To produce a colour bar for testing set bit 23 of VOUVCR */
-	sh_vou_reg_ab_write(vou_dev, VOUVCR, vouvcr);
-	sh_vou_reg_ab_write(vou_dev, VOUDFR,
+	/* To produce a colour bar क्रम testing set bit 23 of VOUVCR */
+	sh_vou_reg_ab_ग_लिखो(vou_dev, VOUVCR, vouvcr);
+	sh_vou_reg_ab_ग_लिखो(vou_dev, VOUDFR,
 			    fmt->pkf | (fmt->yf << 8) | (fmt->rgb << 16));
-}
+पूर्ण
 
-struct sh_vou_geometry {
-	struct v4l2_rect output;
-	unsigned int in_width;
-	unsigned int in_height;
-	int scale_idx_h;
-	int scale_idx_v;
-};
+काष्ठा sh_vou_geometry अणु
+	काष्ठा v4l2_rect output;
+	अचिन्हित पूर्णांक in_width;
+	अचिन्हित पूर्णांक in_height;
+	पूर्णांक scale_idx_h;
+	पूर्णांक scale_idx_v;
+पूर्ण;
 
 /*
- * Find input geometry, that we can use to produce output, closest to the
+ * Find input geometry, that we can use to produce output, बंदst to the
  * requested rectangle, using VOU scaling
  */
-static void vou_adjust_input(struct sh_vou_geometry *geo, v4l2_std_id std)
-{
+अटल व्योम vou_adjust_input(काष्ठा sh_vou_geometry *geo, v4l2_std_id std)
+अणु
 	/* The compiler cannot know, that best and idx will indeed be set */
-	unsigned int best_err = UINT_MAX, best = 0, img_height_max;
-	int i, idx = 0;
+	अचिन्हित पूर्णांक best_err = अच_पूर्णांक_उच्च, best = 0, img_height_max;
+	पूर्णांक i, idx = 0;
 
-	if (std & V4L2_STD_525_60)
+	अगर (std & V4L2_STD_525_60)
 		img_height_max = 480;
-	else
+	अन्यथा
 		img_height_max = 576;
 
 	/* Image width must be a multiple of 4 */
@@ -520,141 +521,141 @@ static void vou_adjust_input(struct sh_vou_geometry *geo, v4l2_std_id std)
 			      &geo->in_height,
 			      VOU_MIN_IMAGE_HEIGHT, img_height_max, 1, 0);
 
-	/* Select scales to come as close as possible to the output image */
-	for (i = ARRAY_SIZE(vou_scale_h_num) - 1; i >= 0; i--) {
-		unsigned int err;
-		unsigned int found = geo->output.width * vou_scale_h_den[i] /
+	/* Select scales to come as बंद as possible to the output image */
+	क्रम (i = ARRAY_SIZE(vou_scale_h_num) - 1; i >= 0; i--) अणु
+		अचिन्हित पूर्णांक err;
+		अचिन्हित पूर्णांक found = geo->output.width * vou_scale_h_den[i] /
 			vou_scale_h_num[i];
 
-		if (found > VOU_MAX_IMAGE_WIDTH)
+		अगर (found > VOU_MAX_IMAGE_WIDTH)
 			/* scales increase */
-			break;
+			अवरोध;
 
-		err = abs(found - geo->in_width);
-		if (err < best_err) {
+		err = असल(found - geo->in_width);
+		अगर (err < best_err) अणु
 			best_err = err;
 			idx = i;
 			best = found;
-		}
-		if (!err)
-			break;
-	}
+		पूर्ण
+		अगर (!err)
+			अवरोध;
+	पूर्ण
 
 	geo->in_width = best;
 	geo->scale_idx_h = idx;
 
-	best_err = UINT_MAX;
+	best_err = अच_पूर्णांक_उच्च;
 
-	/* This loop can be replaced with one division */
-	for (i = ARRAY_SIZE(vou_scale_v_num) - 1; i >= 0; i--) {
-		unsigned int err;
-		unsigned int found = geo->output.height * vou_scale_v_den[i] /
+	/* This loop can be replaced with one भागision */
+	क्रम (i = ARRAY_SIZE(vou_scale_v_num) - 1; i >= 0; i--) अणु
+		अचिन्हित पूर्णांक err;
+		अचिन्हित पूर्णांक found = geo->output.height * vou_scale_v_den[i] /
 			vou_scale_v_num[i];
 
-		if (found > img_height_max)
+		अगर (found > img_height_max)
 			/* scales increase */
-			break;
+			अवरोध;
 
-		err = abs(found - geo->in_height);
-		if (err < best_err) {
+		err = असल(found - geo->in_height);
+		अगर (err < best_err) अणु
 			best_err = err;
 			idx = i;
 			best = found;
-		}
-		if (!err)
-			break;
-	}
+		पूर्ण
+		अगर (!err)
+			अवरोध;
+	पूर्ण
 
 	geo->in_height = best;
 	geo->scale_idx_v = idx;
-}
+पूर्ण
 
 /*
- * Find output geometry, that we can produce, using VOU scaling, closest to
+ * Find output geometry, that we can produce, using VOU scaling, बंदst to
  * the requested rectangle
  */
-static void vou_adjust_output(struct sh_vou_geometry *geo, v4l2_std_id std)
-{
-	unsigned int best_err = UINT_MAX, best = geo->in_width,
+अटल व्योम vou_adjust_output(काष्ठा sh_vou_geometry *geo, v4l2_std_id std)
+अणु
+	अचिन्हित पूर्णांक best_err = अच_पूर्णांक_उच्च, best = geo->in_width,
 		width_max, height_max, img_height_max;
-	int i, idx_h = 0, idx_v = 0;
+	पूर्णांक i, idx_h = 0, idx_v = 0;
 
-	if (std & V4L2_STD_525_60) {
+	अगर (std & V4L2_STD_525_60) अणु
 		width_max = 858;
 		height_max = 262 * 2;
 		img_height_max = 480;
-	} else {
+	पूर्ण अन्यथा अणु
 		width_max = 864;
 		height_max = 312 * 2;
 		img_height_max = 576;
-	}
+	पूर्ण
 
-	/* Select scales to come as close as possible to the output image */
-	for (i = 0; i < ARRAY_SIZE(vou_scale_h_num); i++) {
-		unsigned int err;
-		unsigned int found = geo->in_width * vou_scale_h_num[i] /
+	/* Select scales to come as बंद as possible to the output image */
+	क्रम (i = 0; i < ARRAY_SIZE(vou_scale_h_num); i++) अणु
+		अचिन्हित पूर्णांक err;
+		अचिन्हित पूर्णांक found = geo->in_width * vou_scale_h_num[i] /
 			vou_scale_h_den[i];
 
-		if (found > VOU_MAX_IMAGE_WIDTH)
+		अगर (found > VOU_MAX_IMAGE_WIDTH)
 			/* scales increase */
-			break;
+			अवरोध;
 
-		err = abs(found - geo->output.width);
-		if (err < best_err) {
+		err = असल(found - geo->output.width);
+		अगर (err < best_err) अणु
 			best_err = err;
 			idx_h = i;
 			best = found;
-		}
-		if (!err)
-			break;
-	}
+		पूर्ण
+		अगर (!err)
+			अवरोध;
+	पूर्ण
 
 	geo->output.width = best;
 	geo->scale_idx_h = idx_h;
-	if (geo->output.left + best > width_max)
+	अगर (geo->output.left + best > width_max)
 		geo->output.left = width_max - best;
 
 	pr_debug("%s(): W %u * %u/%u = %u\n", __func__, geo->in_width,
 		 vou_scale_h_num[idx_h], vou_scale_h_den[idx_h], best);
 
-	best_err = UINT_MAX;
+	best_err = अच_पूर्णांक_उच्च;
 
-	/* This loop can be replaced with one division */
-	for (i = 0; i < ARRAY_SIZE(vou_scale_v_num); i++) {
-		unsigned int err;
-		unsigned int found = geo->in_height * vou_scale_v_num[i] /
+	/* This loop can be replaced with one भागision */
+	क्रम (i = 0; i < ARRAY_SIZE(vou_scale_v_num); i++) अणु
+		अचिन्हित पूर्णांक err;
+		अचिन्हित पूर्णांक found = geo->in_height * vou_scale_v_num[i] /
 			vou_scale_v_den[i];
 
-		if (found > img_height_max)
+		अगर (found > img_height_max)
 			/* scales increase */
-			break;
+			अवरोध;
 
-		err = abs(found - geo->output.height);
-		if (err < best_err) {
+		err = असल(found - geo->output.height);
+		अगर (err < best_err) अणु
 			best_err = err;
 			idx_v = i;
 			best = found;
-		}
-		if (!err)
-			break;
-	}
+		पूर्ण
+		अगर (!err)
+			अवरोध;
+	पूर्ण
 
 	geo->output.height = best;
 	geo->scale_idx_v = idx_v;
-	if (geo->output.top + best > height_max)
+	अगर (geo->output.top + best > height_max)
 		geo->output.top = height_max - best;
 
 	pr_debug("%s(): H %u * %u/%u = %u\n", __func__, geo->in_height,
 		 vou_scale_v_num[idx_v], vou_scale_v_den[idx_v], best);
-}
+पूर्ण
 
-static int sh_vou_try_fmt_vid_out(struct file *file, void *priv,
-				  struct v4l2_format *fmt)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
-	struct v4l2_pix_format *pix = &fmt->fmt.pix;
-	unsigned int img_height_max;
-	int pix_idx;
+अटल पूर्णांक sh_vou_try_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				  काष्ठा v4l2_क्रमmat *fmt)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
+	काष्ठा v4l2_pix_क्रमmat *pix = &fmt->fmt.pix;
+	अचिन्हित पूर्णांक img_height_max;
+	पूर्णांक pix_idx;
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s()\n", __func__);
 
@@ -662,16 +663,16 @@ static int sh_vou_try_fmt_vid_out(struct file *file, void *priv,
 	pix->colorspace = V4L2_COLORSPACE_SMPTE170M;
 	pix->ycbcr_enc = pix->quantization = 0;
 
-	for (pix_idx = 0; pix_idx < ARRAY_SIZE(vou_fmt); pix_idx++)
-		if (vou_fmt[pix_idx].pfmt == pix->pixelformat)
-			break;
+	क्रम (pix_idx = 0; pix_idx < ARRAY_SIZE(vou_fmt); pix_idx++)
+		अगर (vou_fmt[pix_idx].pfmt == pix->pixelक्रमmat)
+			अवरोध;
 
-	if (pix_idx == ARRAY_SIZE(vou_fmt))
-		return -EINVAL;
+	अगर (pix_idx == ARRAY_SIZE(vou_fmt))
+		वापस -EINVAL;
 
-	if (vou_dev->std & V4L2_STD_525_60)
+	अगर (vou_dev->std & V4L2_STD_525_60)
 		img_height_max = 480;
-	else
+	अन्यथा
 		img_height_max = 576;
 
 	v4l_bound_align_image(&pix->width,
@@ -681,31 +682,31 @@ static int sh_vou_try_fmt_vid_out(struct file *file, void *priv,
 	pix->bytesperline = pix->width * vou_fmt[pix_idx].bpl;
 	pix->sizeimage = pix->height * ((pix->width * vou_fmt[pix_idx].bpp) >> 3);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_vou_set_fmt_vid_out(struct sh_vou_device *vou_dev,
-				struct v4l2_pix_format *pix)
-{
-	unsigned int img_height_max;
-	struct sh_vou_geometry geo;
-	struct v4l2_subdev_format format = {
+अटल पूर्णांक sh_vou_set_fmt_vid_out(काष्ठा sh_vou_device *vou_dev,
+				काष्ठा v4l2_pix_क्रमmat *pix)
+अणु
+	अचिन्हित पूर्णांक img_height_max;
+	काष्ठा sh_vou_geometry geo;
+	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		/* Revisit: is this the correct code? */
-		.format.code = MEDIA_BUS_FMT_YUYV8_2X8,
-		.format.field = V4L2_FIELD_INTERLACED,
-		.format.colorspace = V4L2_COLORSPACE_SMPTE170M,
-	};
-	struct v4l2_mbus_framefmt *mbfmt = &format.format;
-	int pix_idx;
-	int ret;
+		.क्रमmat.code = MEDIA_BUS_FMT_YUYV8_2X8,
+		.क्रमmat.field = V4L2_FIELD_INTERLACED,
+		.क्रमmat.colorspace = V4L2_COLORSPACE_SMPTE170M,
+	पूर्ण;
+	काष्ठा v4l2_mbus_framefmt *mbfmt = &क्रमmat.क्रमmat;
+	पूर्णांक pix_idx;
+	पूर्णांक ret;
 
-	if (vb2_is_busy(&vou_dev->queue))
-		return -EBUSY;
+	अगर (vb2_is_busy(&vou_dev->queue))
+		वापस -EBUSY;
 
-	for (pix_idx = 0; pix_idx < ARRAY_SIZE(vou_fmt); pix_idx++)
-		if (vou_fmt[pix_idx].pfmt == pix->pixelformat)
-			break;
+	क्रम (pix_idx = 0; pix_idx < ARRAY_SIZE(vou_fmt); pix_idx++)
+		अगर (vou_fmt[pix_idx].pfmt == pix->pixelक्रमmat)
+			अवरोध;
 
 	geo.in_width = pix->width;
 	geo.in_height = pix->height;
@@ -716,32 +717,32 @@ static int sh_vou_set_fmt_vid_out(struct sh_vou_device *vou_dev,
 	mbfmt->width = geo.output.width;
 	mbfmt->height = geo.output.height;
 	ret = v4l2_device_call_until_err(&vou_dev->v4l2_dev, 0, pad,
-					 set_fmt, NULL, &format);
-	/* Must be implemented, so, don't check for -ENOIOCTLCMD */
-	if (ret < 0)
-		return ret;
+					 set_fmt, शून्य, &क्रमmat);
+	/* Must be implemented, so, करोn't check क्रम -ENOIOCTLCMD */
+	अगर (ret < 0)
+		वापस ret;
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s(): %ux%u -> %ux%u\n", __func__,
 		geo.output.width, geo.output.height, mbfmt->width, mbfmt->height);
 
-	if (vou_dev->std & V4L2_STD_525_60)
+	अगर (vou_dev->std & V4L2_STD_525_60)
 		img_height_max = 480;
-	else
+	अन्यथा
 		img_height_max = 576;
 
 	/* Sanity checks */
-	if ((unsigned)mbfmt->width > VOU_MAX_IMAGE_WIDTH ||
-	    (unsigned)mbfmt->height > img_height_max ||
+	अगर ((अचिन्हित)mbfmt->width > VOU_MAX_IMAGE_WIDTH ||
+	    (अचिन्हित)mbfmt->height > img_height_max ||
 	    mbfmt->code != MEDIA_BUS_FMT_YUYV8_2X8)
-		return -EIO;
+		वापस -EIO;
 
-	if (mbfmt->width != geo.output.width ||
-	    mbfmt->height != geo.output.height) {
+	अगर (mbfmt->width != geo.output.width ||
+	    mbfmt->height != geo.output.height) अणु
 		geo.output.width = mbfmt->width;
 		geo.output.height = mbfmt->height;
 
 		vou_adjust_input(&geo, vou_dev->std);
-	}
+	पूर्ण
 
 	/* We tried to preserve output rectangle, but it could have changed */
 	vou_dev->rect = geo.output;
@@ -758,89 +759,89 @@ static int sh_vou_set_fmt_vid_out(struct sh_vou_device *vou_dev,
 	sh_vou_configure_geometry(vou_dev, pix_idx,
 				  geo.scale_idx_h, geo.scale_idx_v);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_vou_s_fmt_vid_out(struct file *file, void *priv,
-				struct v4l2_format *fmt)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
-	int ret = sh_vou_try_fmt_vid_out(file, priv, fmt);
+अटल पूर्णांक sh_vou_s_fmt_vid_out(काष्ठा file *file, व्योम *priv,
+				काष्ठा v4l2_क्रमmat *fmt)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
+	पूर्णांक ret = sh_vou_try_fmt_vid_out(file, priv, fmt);
 
-	if (ret)
-		return ret;
-	return sh_vou_set_fmt_vid_out(vou_dev, &fmt->fmt.pix);
-}
+	अगर (ret)
+		वापस ret;
+	वापस sh_vou_set_fmt_vid_out(vou_dev, &fmt->fmt.pix);
+पूर्ण
 
-static int sh_vou_enum_output(struct file *file, void *fh,
-			      struct v4l2_output *a)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
+अटल पूर्णांक sh_vou_क्रमागत_output(काष्ठा file *file, व्योम *fh,
+			      काष्ठा v4l2_output *a)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
 
-	if (a->index)
-		return -EINVAL;
-	strscpy(a->name, "Video Out", sizeof(a->name));
+	अगर (a->index)
+		वापस -EINVAL;
+	strscpy(a->name, "Video Out", माप(a->name));
 	a->type = V4L2_OUTPUT_TYPE_ANALOG;
 	a->std = vou_dev->vdev.tvnorms;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_vou_g_output(struct file *file, void *fh, unsigned int *i)
-{
+अटल पूर्णांक sh_vou_g_output(काष्ठा file *file, व्योम *fh, अचिन्हित पूर्णांक *i)
+अणु
 	*i = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_vou_s_output(struct file *file, void *fh, unsigned int i)
-{
-	return i ? -EINVAL : 0;
-}
+अटल पूर्णांक sh_vou_s_output(काष्ठा file *file, व्योम *fh, अचिन्हित पूर्णांक i)
+अणु
+	वापस i ? -EINVAL : 0;
+पूर्ण
 
-static u32 sh_vou_ntsc_mode(enum sh_vou_bus_fmt bus_fmt)
-{
-	switch (bus_fmt) {
-	default:
+अटल u32 sh_vou_ntsc_mode(क्रमागत sh_vou_bus_fmt bus_fmt)
+अणु
+	चयन (bus_fmt) अणु
+	शेष:
 		pr_warn("%s(): Invalid bus-format code %d, using default 8-bit\n",
 			__func__, bus_fmt);
 		fallthrough;
-	case SH_VOU_BUS_8BIT:
-		return 1;
-	case SH_VOU_BUS_16BIT:
-		return 0;
-	case SH_VOU_BUS_BT656:
-		return 3;
-	}
-}
+	हाल SH_VOU_BUS_8BIT:
+		वापस 1;
+	हाल SH_VOU_BUS_16BIT:
+		वापस 0;
+	हाल SH_VOU_BUS_BT656:
+		वापस 3;
+	पूर्ण
+पूर्ण
 
-static int sh_vou_s_std(struct file *file, void *priv, v4l2_std_id std_id)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
-	int ret;
+अटल पूर्णांक sh_vou_s_std(काष्ठा file *file, व्योम *priv, v4l2_std_id std_id)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
+	पूर्णांक ret;
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s(): 0x%llx\n", __func__, std_id);
 
-	if (std_id == vou_dev->std)
-		return 0;
+	अगर (std_id == vou_dev->std)
+		वापस 0;
 
-	if (vb2_is_busy(&vou_dev->queue))
-		return -EBUSY;
+	अगर (vb2_is_busy(&vou_dev->queue))
+		वापस -EBUSY;
 
 	ret = v4l2_device_call_until_err(&vou_dev->v4l2_dev, 0, video,
 					 s_std_output, std_id);
-	/* Shall we continue, if the subdev doesn't support .s_std_output()? */
-	if (ret < 0 && ret != -ENOIOCTLCMD)
-		return ret;
+	/* Shall we जारी, अगर the subdev करोesn't support .s_std_output()? */
+	अगर (ret < 0 && ret != -ENOIOCTLCMD)
+		वापस ret;
 
 	vou_dev->rect.top = vou_dev->rect.left = 0;
 	vou_dev->rect.width = VOU_MAX_IMAGE_WIDTH;
-	if (std_id & V4L2_STD_525_60) {
+	अगर (std_id & V4L2_STD_525_60) अणु
 		sh_vou_reg_ab_set(vou_dev, VOUCR,
 			sh_vou_ntsc_mode(vou_dev->pdata->bus_fmt) << 29, 7 << 29);
 		vou_dev->rect.height = 480;
-	} else {
+	पूर्ण अन्यथा अणु
 		sh_vou_reg_ab_set(vou_dev, VOUCR, 5 << 29, 7 << 29);
 		vou_dev->rect.height = 576;
-	}
+	पूर्ण
 
 	vou_dev->pix.width = vou_dev->rect.width;
 	vou_dev->pix.height = vou_dev->rect.height;
@@ -851,106 +852,106 @@ static int sh_vou_s_std(struct file *file, void *priv, v4l2_std_id std_id)
 	vou_dev->std = std_id;
 	sh_vou_set_fmt_vid_out(vou_dev, &vou_dev->pix);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_vou_g_std(struct file *file, void *priv, v4l2_std_id *std)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
+अटल पूर्णांक sh_vou_g_std(काष्ठा file *file, व्योम *priv, v4l2_std_id *std)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "%s()\n", __func__);
 
 	*std = vou_dev->std;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int sh_vou_log_status(struct file *file, void *priv)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
+अटल पूर्णांक sh_vou_log_status(काष्ठा file *file, व्योम *priv)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
 
-	pr_info("VOUER:   0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUER));
-	pr_info("VOUCR:   0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUCR));
-	pr_info("VOUSTR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUSTR));
-	pr_info("VOUVCR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUVCR));
-	pr_info("VOUISR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUISR));
-	pr_info("VOUBCR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUBCR));
-	pr_info("VOUDPR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUDPR));
-	pr_info("VOUDSR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUDSR));
-	pr_info("VOUVPR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUVPR));
-	pr_info("VOUIR:   0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUIR));
-	pr_info("VOUSRR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUSRR));
-	pr_info("VOUMSR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUMSR));
-	pr_info("VOUHIR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUHIR));
-	pr_info("VOUDFR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUDFR));
-	pr_info("VOUAD1R: 0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUAD1R));
-	pr_info("VOUAD2R: 0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUAD2R));
-	pr_info("VOUAIR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUAIR));
-	pr_info("VOUSWR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOUSWR));
-	pr_info("VOURCR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOURCR));
-	pr_info("VOURPR:  0x%08x\n", sh_vou_reg_a_read(vou_dev, VOURPR));
-	return 0;
-}
+	pr_info("VOUER:   0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUER));
+	pr_info("VOUCR:   0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUCR));
+	pr_info("VOUSTR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUSTR));
+	pr_info("VOUVCR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUVCR));
+	pr_info("VOUISR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUISR));
+	pr_info("VOUBCR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUBCR));
+	pr_info("VOUDPR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUDPR));
+	pr_info("VOUDSR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUDSR));
+	pr_info("VOUVPR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUVPR));
+	pr_info("VOUIR:   0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUIR));
+	pr_info("VOUSRR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUSRR));
+	pr_info("VOUMSR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUMSR));
+	pr_info("VOUHIR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUHIR));
+	pr_info("VOUDFR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUDFR));
+	pr_info("VOUAD1R: 0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUAD1R));
+	pr_info("VOUAD2R: 0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUAD2R));
+	pr_info("VOUAIR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUAIR));
+	pr_info("VOUSWR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOUSWR));
+	pr_info("VOURCR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOURCR));
+	pr_info("VOURPR:  0x%08x\n", sh_vou_reg_a_पढ़ो(vou_dev, VOURPR));
+	वापस 0;
+पूर्ण
 
-static int sh_vou_g_selection(struct file *file, void *fh,
-			      struct v4l2_selection *sel)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
+अटल पूर्णांक sh_vou_g_selection(काष्ठा file *file, व्योम *fh,
+			      काष्ठा v4l2_selection *sel)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
 
-	if (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
-		return -EINVAL;
-	switch (sel->target) {
-	case V4L2_SEL_TGT_COMPOSE:
+	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT)
+		वापस -EINVAL;
+	चयन (sel->target) अणु
+	हाल V4L2_SEL_TGT_COMPOSE:
 		sel->r = vou_dev->rect;
-		break;
-	case V4L2_SEL_TGT_COMPOSE_DEFAULT:
-	case V4L2_SEL_TGT_COMPOSE_BOUNDS:
+		अवरोध;
+	हाल V4L2_SEL_TGT_COMPOSE_DEFAULT:
+	हाल V4L2_SEL_TGT_COMPOSE_BOUNDS:
 		sel->r.left = 0;
 		sel->r.top = 0;
 		sel->r.width = VOU_MAX_IMAGE_WIDTH;
-		if (vou_dev->std & V4L2_STD_525_60)
+		अगर (vou_dev->std & V4L2_STD_525_60)
 			sel->r.height = 480;
-		else
+		अन्यथा
 			sel->r.height = 576;
-		break;
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-/* Assume a dull encoder, do all the work ourselves. */
-static int sh_vou_s_selection(struct file *file, void *fh,
-			      struct v4l2_selection *sel)
-{
-	struct v4l2_rect *rect = &sel->r;
-	struct sh_vou_device *vou_dev = video_drvdata(file);
-	struct v4l2_subdev_selection sd_sel = {
+/* Assume a dull encoder, करो all the work ourselves. */
+अटल पूर्णांक sh_vou_s_selection(काष्ठा file *file, व्योम *fh,
+			      काष्ठा v4l2_selection *sel)
+अणु
+	काष्ठा v4l2_rect *rect = &sel->r;
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
+	काष्ठा v4l2_subdev_selection sd_sel = अणु
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		.target = V4L2_SEL_TGT_COMPOSE,
-	};
-	struct v4l2_pix_format *pix = &vou_dev->pix;
-	struct sh_vou_geometry geo;
-	struct v4l2_subdev_format format = {
+	पूर्ण;
+	काष्ठा v4l2_pix_क्रमmat *pix = &vou_dev->pix;
+	काष्ठा sh_vou_geometry geo;
+	काष्ठा v4l2_subdev_क्रमmat क्रमmat = अणु
 		.which = V4L2_SUBDEV_FORMAT_ACTIVE,
 		/* Revisit: is this the correct code? */
-		.format.code = MEDIA_BUS_FMT_YUYV8_2X8,
-		.format.field = V4L2_FIELD_INTERLACED,
-		.format.colorspace = V4L2_COLORSPACE_SMPTE170M,
-	};
-	unsigned int img_height_max;
-	int ret;
+		.क्रमmat.code = MEDIA_BUS_FMT_YUYV8_2X8,
+		.क्रमmat.field = V4L2_FIELD_INTERLACED,
+		.क्रमmat.colorspace = V4L2_COLORSPACE_SMPTE170M,
+	पूर्ण;
+	अचिन्हित पूर्णांक img_height_max;
+	पूर्णांक ret;
 
-	if (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT ||
+	अगर (sel->type != V4L2_BUF_TYPE_VIDEO_OUTPUT ||
 	    sel->target != V4L2_SEL_TGT_COMPOSE)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (vb2_is_busy(&vou_dev->queue))
-		return -EBUSY;
+	अगर (vb2_is_busy(&vou_dev->queue))
+		वापस -EBUSY;
 
-	if (vou_dev->std & V4L2_STD_525_60)
+	अगर (vou_dev->std & V4L2_STD_525_60)
 		img_height_max = 480;
-	else
+	अन्यथा
 		img_height_max = 576;
 
 	v4l_bound_align_image(&rect->width,
@@ -958,10 +959,10 @@ static int sh_vou_s_selection(struct file *file, void *fh,
 			      &rect->height,
 			      VOU_MIN_IMAGE_HEIGHT, img_height_max, 1, 0);
 
-	if (rect->width + rect->left > VOU_MAX_IMAGE_WIDTH)
+	अगर (rect->width + rect->left > VOU_MAX_IMAGE_WIDTH)
 		rect->left = VOU_MAX_IMAGE_WIDTH - rect->width;
 
-	if (rect->height + rect->top > img_height_max)
+	अगर (rect->height + rect->top > img_height_max)
 		rect->top = img_height_max - rect->height;
 
 	geo.output = *rect;
@@ -976,27 +977,27 @@ static int sh_vou_s_selection(struct file *file, void *fh,
 	 * final encoder configuration.
 	 */
 	v4l2_device_call_until_err(&vou_dev->v4l2_dev, 0, pad,
-				   set_selection, NULL, &sd_sel);
-	format.format.width = geo.output.width;
-	format.format.height = geo.output.height;
+				   set_selection, शून्य, &sd_sel);
+	क्रमmat.क्रमmat.width = geo.output.width;
+	क्रमmat.क्रमmat.height = geo.output.height;
 	ret = v4l2_device_call_until_err(&vou_dev->v4l2_dev, 0, pad,
-					 set_fmt, NULL, &format);
-	/* Must be implemented, so, don't check for -ENOIOCTLCMD */
-	if (ret < 0)
-		return ret;
+					 set_fmt, शून्य, &क्रमmat);
+	/* Must be implemented, so, करोn't check क्रम -ENOIOCTLCMD */
+	अगर (ret < 0)
+		वापस ret;
 
 	/* Sanity checks */
-	if ((unsigned)format.format.width > VOU_MAX_IMAGE_WIDTH ||
-	    (unsigned)format.format.height > img_height_max ||
-	    format.format.code != MEDIA_BUS_FMT_YUYV8_2X8)
-		return -EIO;
+	अगर ((अचिन्हित)क्रमmat.क्रमmat.width > VOU_MAX_IMAGE_WIDTH ||
+	    (अचिन्हित)क्रमmat.क्रमmat.height > img_height_max ||
+	    क्रमmat.क्रमmat.code != MEDIA_BUS_FMT_YUYV8_2X8)
+		वापस -EIO;
 
-	geo.output.width = format.format.width;
-	geo.output.height = format.format.height;
+	geo.output.width = क्रमmat.क्रमmat.width;
+	geo.output.height = क्रमmat.क्रमmat.height;
 
 	/*
-	 * No down-scaling. According to the API, current call has precedence:
-	 * https://linuxtv.org/downloads/v4l-dvb-apis/uapi/v4l/crop.html#cropping-structures
+	 * No करोwn-scaling. According to the API, current call has precedence:
+	 * https://linuxtv.org/करोwnloads/v4l-dvb-apis/uapi/v4l/crop.hपंचांगl#cropping-काष्ठाures
 	 */
 	vou_adjust_input(&geo, vou_dev->std);
 
@@ -1008,35 +1009,35 @@ static int sh_vou_s_selection(struct file *file, void *fh,
 	sh_vou_configure_geometry(vou_dev, vou_dev->pix_idx,
 				  geo.scale_idx_h, geo.scale_idx_v);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static irqreturn_t sh_vou_isr(int irq, void *dev_id)
-{
-	struct sh_vou_device *vou_dev = dev_id;
-	static unsigned long j;
-	struct sh_vou_buffer *vb;
-	static int cnt;
-	u32 irq_status = sh_vou_reg_a_read(vou_dev, VOUIR), masked;
-	u32 vou_status = sh_vou_reg_a_read(vou_dev, VOUSTR);
+अटल irqवापस_t sh_vou_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा sh_vou_device *vou_dev = dev_id;
+	अटल अचिन्हित दीर्घ j;
+	काष्ठा sh_vou_buffer *vb;
+	अटल पूर्णांक cnt;
+	u32 irq_status = sh_vou_reg_a_पढ़ो(vou_dev, VOUIR), masked;
+	u32 vou_status = sh_vou_reg_a_पढ़ो(vou_dev, VOUSTR);
 
-	if (!(irq_status & 0x300)) {
-		if (printk_timed_ratelimit(&j, 500))
+	अगर (!(irq_status & 0x300)) अणु
+		अगर (prपूर्णांकk_समयd_ratelimit(&j, 500))
 			dev_warn(vou_dev->v4l2_dev.dev, "IRQ status 0x%x!\n",
 				 irq_status);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	spin_lock(&vou_dev->lock);
-	if (!vou_dev->active || list_empty(&vou_dev->buf_list)) {
-		if (printk_timed_ratelimit(&j, 500))
+	अगर (!vou_dev->active || list_empty(&vou_dev->buf_list)) अणु
+		अगर (prपूर्णांकk_समयd_ratelimit(&j, 500))
 			dev_warn(vou_dev->v4l2_dev.dev,
 				 "IRQ without active buffer: %x!\n", irq_status);
-		/* Just ack: buf_release will disable further interrupts */
+		/* Just ack: buf_release will disable further पूर्णांकerrupts */
 		sh_vou_reg_a_set(vou_dev, VOUIR, 0, 0x300);
 		spin_unlock(&vou_dev->lock);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	masked = ~(0x300 & irq_status) & irq_status & 0x30304;
 	dev_dbg(vou_dev->v4l2_dev.dev,
@@ -1046,129 +1047,129 @@ static irqreturn_t sh_vou_isr(int irq, void *dev_id)
 	cnt++;
 	/* side = vou_status & 0x10000; */
 
-	/* Clear only set interrupts */
-	sh_vou_reg_a_write(vou_dev, VOUIR, masked);
+	/* Clear only set पूर्णांकerrupts */
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOUIR, masked);
 
 	vb = vou_dev->active;
-	if (list_is_singular(&vb->list)) {
-		/* Keep cycling while no next buffer is available */
+	अगर (list_is_singular(&vb->list)) अणु
+		/* Keep cycling जबतक no next buffer is available */
 		sh_vou_schedule_next(vou_dev, &vb->vb);
 		spin_unlock(&vou_dev->lock);
-		return IRQ_HANDLED;
-	}
+		वापस IRQ_HANDLED;
+	पूर्ण
 
 	list_del(&vb->list);
 
-	vb->vb.vb2_buf.timestamp = ktime_get_ns();
+	vb->vb.vb2_buf.बारtamp = kसमय_get_ns();
 	vb->vb.sequence = vou_dev->sequence++;
 	vb->vb.field = V4L2_FIELD_INTERLACED;
-	vb2_buffer_done(&vb->vb.vb2_buf, VB2_BUF_STATE_DONE);
+	vb2_buffer_करोne(&vb->vb.vb2_buf, VB2_BUF_STATE_DONE);
 
 	vou_dev->active = list_entry(vou_dev->buf_list.next,
-				     struct sh_vou_buffer, list);
+				     काष्ठा sh_vou_buffer, list);
 
-	if (list_is_singular(&vou_dev->buf_list)) {
-		/* Keep cycling while no next buffer is available */
+	अगर (list_is_singular(&vou_dev->buf_list)) अणु
+		/* Keep cycling जबतक no next buffer is available */
 		sh_vou_schedule_next(vou_dev, &vou_dev->active->vb);
-	} else {
-		struct sh_vou_buffer *new = list_entry(vou_dev->active->list.next,
-						struct sh_vou_buffer, list);
+	पूर्ण अन्यथा अणु
+		काष्ठा sh_vou_buffer *new = list_entry(vou_dev->active->list.next,
+						काष्ठा sh_vou_buffer, list);
 		sh_vou_schedule_next(vou_dev, &new->vb);
-	}
+	पूर्ण
 
 	spin_unlock(&vou_dev->lock);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int sh_vou_hw_init(struct sh_vou_device *vou_dev)
-{
-	struct sh_vou_pdata *pdata = vou_dev->pdata;
+अटल पूर्णांक sh_vou_hw_init(काष्ठा sh_vou_device *vou_dev)
+अणु
+	काष्ठा sh_vou_pdata *pdata = vou_dev->pdata;
 	u32 voucr = sh_vou_ntsc_mode(pdata->bus_fmt) << 29;
-	int i = 100;
+	पूर्णांक i = 100;
 
 	/* Disable all IRQs */
-	sh_vou_reg_a_write(vou_dev, VOUIR, 0);
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOUIR, 0);
 
-	/* Reset VOU interfaces - registers unaffected */
-	sh_vou_reg_a_write(vou_dev, VOUSRR, 0x101);
-	while (--i && (sh_vou_reg_a_read(vou_dev, VOUSRR) & 0x101))
+	/* Reset VOU पूर्णांकerfaces - रेजिस्टरs unaffected */
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOUSRR, 0x101);
+	जबतक (--i && (sh_vou_reg_a_पढ़ो(vou_dev, VOUSRR) & 0x101))
 		udelay(1);
 
-	if (!i)
-		return -ETIMEDOUT;
+	अगर (!i)
+		वापस -ETIMEDOUT;
 
 	dev_dbg(vou_dev->v4l2_dev.dev, "Reset took %dus\n", 100 - i);
 
-	if (pdata->flags & SH_VOU_PCLK_FALLING)
+	अगर (pdata->flags & SH_VOU_PCLK_FALLING)
 		voucr |= 1 << 28;
-	if (pdata->flags & SH_VOU_HSYNC_LOW)
+	अगर (pdata->flags & SH_VOU_HSYNC_LOW)
 		voucr |= 1 << 27;
-	if (pdata->flags & SH_VOU_VSYNC_LOW)
+	अगर (pdata->flags & SH_VOU_VSYNC_LOW)
 		voucr |= 1 << 26;
 	sh_vou_reg_ab_set(vou_dev, VOUCR, voucr, 0xfc000000);
 
-	/* Manual register side switching at first */
-	sh_vou_reg_a_write(vou_dev, VOURCR, 4);
+	/* Manual रेजिस्टर side चयनing at first */
+	sh_vou_reg_a_ग_लिखो(vou_dev, VOURCR, 4);
 	/* Default - fixed HSYNC length, can be made configurable is required */
-	sh_vou_reg_ab_write(vou_dev, VOUMSR, 0x800000);
+	sh_vou_reg_ab_ग_लिखो(vou_dev, VOUMSR, 0x800000);
 
 	sh_vou_set_fmt_vid_out(vou_dev, &vou_dev->pix);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* File operations */
-static int sh_vou_open(struct file *file)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
-	int err;
+अटल पूर्णांक sh_vou_खोलो(काष्ठा file *file)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
+	पूर्णांक err;
 
-	if (mutex_lock_interruptible(&vou_dev->fop_lock))
-		return -ERESTARTSYS;
+	अगर (mutex_lock_पूर्णांकerruptible(&vou_dev->fop_lock))
+		वापस -ERESTARTSYS;
 
-	err = v4l2_fh_open(file);
-	if (err)
-		goto done_open;
-	if (v4l2_fh_is_singular_file(file) &&
-	    vou_dev->status == SH_VOU_INITIALISING) {
-		/* First open */
-		pm_runtime_get_sync(vou_dev->v4l2_dev.dev);
+	err = v4l2_fh_खोलो(file);
+	अगर (err)
+		जाओ करोne_खोलो;
+	अगर (v4l2_fh_is_singular_file(file) &&
+	    vou_dev->status == SH_VOU_INITIALISING) अणु
+		/* First खोलो */
+		pm_runसमय_get_sync(vou_dev->v4l2_dev.dev);
 		err = sh_vou_hw_init(vou_dev);
-		if (err < 0) {
-			pm_runtime_put(vou_dev->v4l2_dev.dev);
+		अगर (err < 0) अणु
+			pm_runसमय_put(vou_dev->v4l2_dev.dev);
 			v4l2_fh_release(file);
-		} else {
+		पूर्ण अन्यथा अणु
 			vou_dev->status = SH_VOU_IDLE;
-		}
-	}
-done_open:
+		पूर्ण
+	पूर्ण
+करोne_खोलो:
 	mutex_unlock(&vou_dev->fop_lock);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int sh_vou_release(struct file *file)
-{
-	struct sh_vou_device *vou_dev = video_drvdata(file);
+अटल पूर्णांक sh_vou_release(काष्ठा file *file)
+अणु
+	काष्ठा sh_vou_device *vou_dev = video_drvdata(file);
 	bool is_last;
 
 	mutex_lock(&vou_dev->fop_lock);
 	is_last = v4l2_fh_is_singular_file(file);
-	_vb2_fop_release(file, NULL);
-	if (is_last) {
-		/* Last close */
+	_vb2_fop_release(file, शून्य);
+	अगर (is_last) अणु
+		/* Last बंद */
 		vou_dev->status = SH_VOU_INITIALISING;
 		sh_vou_reg_a_set(vou_dev, VOUER, 0, 0x101);
-		pm_runtime_put(vou_dev->v4l2_dev.dev);
-	}
+		pm_runसमय_put(vou_dev->v4l2_dev.dev);
+	पूर्ण
 	mutex_unlock(&vou_dev->fop_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* sh_vou display ioctl operations */
-static const struct v4l2_ioctl_ops sh_vou_ioctl_ops = {
+अटल स्थिर काष्ठा v4l2_ioctl_ops sh_vou_ioctl_ops = अणु
 	.vidioc_querycap		= sh_vou_querycap,
-	.vidioc_enum_fmt_vid_out	= sh_vou_enum_fmt_vid_out,
+	.vidioc_क्रमागत_fmt_vid_out	= sh_vou_क्रमागत_fmt_vid_out,
 	.vidioc_g_fmt_vid_out		= sh_vou_g_fmt_vid_out,
 	.vidioc_s_fmt_vid_out		= sh_vou_s_fmt_vid_out,
 	.vidioc_try_fmt_vid_out		= sh_vou_try_fmt_vid_out,
@@ -1183,58 +1184,58 @@ static const struct v4l2_ioctl_ops sh_vou_ioctl_ops = {
 	.vidioc_expbuf			= vb2_ioctl_expbuf,
 	.vidioc_g_output		= sh_vou_g_output,
 	.vidioc_s_output		= sh_vou_s_output,
-	.vidioc_enum_output		= sh_vou_enum_output,
+	.vidioc_क्रमागत_output		= sh_vou_क्रमागत_output,
 	.vidioc_s_std			= sh_vou_s_std,
 	.vidioc_g_std			= sh_vou_g_std,
 	.vidioc_g_selection		= sh_vou_g_selection,
 	.vidioc_s_selection		= sh_vou_s_selection,
 	.vidioc_log_status		= sh_vou_log_status,
-};
+पूर्ण;
 
-static const struct v4l2_file_operations sh_vou_fops = {
+अटल स्थिर काष्ठा v4l2_file_operations sh_vou_fops = अणु
 	.owner		= THIS_MODULE,
-	.open		= sh_vou_open,
+	.खोलो		= sh_vou_खोलो,
 	.release	= sh_vou_release,
 	.unlocked_ioctl	= video_ioctl2,
 	.mmap		= vb2_fop_mmap,
 	.poll		= vb2_fop_poll,
-	.write		= vb2_fop_write,
-};
+	.ग_लिखो		= vb2_fop_ग_लिखो,
+पूर्ण;
 
-static const struct video_device sh_vou_video_template = {
+अटल स्थिर काष्ठा video_device sh_vou_video_ढाँचा = अणु
 	.name		= "sh_vou",
 	.fops		= &sh_vou_fops,
 	.ioctl_ops	= &sh_vou_ioctl_ops,
 	.tvnorms	= V4L2_STD_525_60, /* PAL only supported in 8-bit non-bt656 mode */
-	.vfl_dir	= VFL_DIR_TX,
+	.vfl_dir	= VFL_सूची_TX,
 	.device_caps	= V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_READWRITE |
 			  V4L2_CAP_STREAMING,
-};
+पूर्ण;
 
-static int sh_vou_probe(struct platform_device *pdev)
-{
-	struct sh_vou_pdata *vou_pdata = pdev->dev.platform_data;
-	struct v4l2_rect *rect;
-	struct v4l2_pix_format *pix;
-	struct i2c_adapter *i2c_adap;
-	struct video_device *vdev;
-	struct sh_vou_device *vou_dev;
-	struct resource *reg_res;
-	struct v4l2_subdev *subdev;
-	struct vb2_queue *q;
-	int irq, ret;
+अटल पूर्णांक sh_vou_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा sh_vou_pdata *vou_pdata = pdev->dev.platक्रमm_data;
+	काष्ठा v4l2_rect *rect;
+	काष्ठा v4l2_pix_क्रमmat *pix;
+	काष्ठा i2c_adapter *i2c_adap;
+	काष्ठा video_device *vdev;
+	काष्ठा sh_vou_device *vou_dev;
+	काष्ठा resource *reg_res;
+	काष्ठा v4l2_subdev *subdev;
+	काष्ठा vb2_queue *q;
+	पूर्णांक irq, ret;
 
-	reg_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	irq = platform_get_irq(pdev, 0);
+	reg_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	irq = platक्रमm_get_irq(pdev, 0);
 
-	if (!vou_pdata || !reg_res || irq <= 0) {
+	अगर (!vou_pdata || !reg_res || irq <= 0) अणु
 		dev_err(&pdev->dev, "Insufficient VOU platform information.\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	vou_dev = devm_kzalloc(&pdev->dev, sizeof(*vou_dev), GFP_KERNEL);
-	if (!vou_dev)
-		return -ENOMEM;
+	vou_dev = devm_kzalloc(&pdev->dev, माप(*vou_dev), GFP_KERNEL);
+	अगर (!vou_dev)
+		वापस -ENOMEM;
 
 	INIT_LIST_HEAD(&vou_dev->buf_list);
 	spin_lock_init(&vou_dev->lock);
@@ -1246,7 +1247,7 @@ static int sh_vou_probe(struct platform_device *pdev)
 	rect = &vou_dev->rect;
 	pix = &vou_dev->pix;
 
-	/* Fill in defaults */
+	/* Fill in शेषs */
 	vou_dev->std		= V4L2_STD_NTSC_M;
 	rect->left		= 0;
 	rect->top		= 0;
@@ -1254,29 +1255,29 @@ static int sh_vou_probe(struct platform_device *pdev)
 	rect->height		= 480;
 	pix->width		= VOU_MAX_IMAGE_WIDTH;
 	pix->height		= 480;
-	pix->pixelformat	= V4L2_PIX_FMT_NV16;
+	pix->pixelक्रमmat	= V4L2_PIX_FMT_NV16;
 	pix->field		= V4L2_FIELD_INTERLACED;
 	pix->bytesperline	= VOU_MAX_IMAGE_WIDTH;
 	pix->sizeimage		= VOU_MAX_IMAGE_WIDTH * 2 * 480;
 	pix->colorspace		= V4L2_COLORSPACE_SMPTE170M;
 
 	vou_dev->base = devm_ioremap_resource(&pdev->dev, reg_res);
-	if (IS_ERR(vou_dev->base))
-		return PTR_ERR(vou_dev->base);
+	अगर (IS_ERR(vou_dev->base))
+		वापस PTR_ERR(vou_dev->base);
 
 	ret = devm_request_irq(&pdev->dev, irq, sh_vou_isr, 0, "vou", vou_dev);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = v4l2_device_register(&pdev->dev, &vou_dev->v4l2_dev);
-	if (ret < 0) {
+	ret = v4l2_device_रेजिस्टर(&pdev->dev, &vou_dev->v4l2_dev);
+	अगर (ret < 0) अणु
 		dev_err(&pdev->dev, "Error registering v4l2 device\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	vdev = &vou_dev->vdev;
-	*vdev = sh_vou_video_template;
-	if (vou_pdata->bus_fmt == SH_VOU_BUS_8BIT)
+	*vdev = sh_vou_video_ढाँचा;
+	अगर (vou_pdata->bus_fmt == SH_VOU_BUS_8BIT)
 		vdev->tvnorms |= V4L2_STD_PAL;
 	vdev->v4l2_dev = &vou_dev->v4l2_dev;
 	vdev->release = video_device_release_empty;
@@ -1289,80 +1290,80 @@ static int sh_vou_probe(struct platform_device *pdev)
 	q->type = V4L2_BUF_TYPE_VIDEO_OUTPUT;
 	q->io_modes = VB2_MMAP | VB2_DMABUF | VB2_WRITE;
 	q->drv_priv = vou_dev;
-	q->buf_struct_size = sizeof(struct sh_vou_buffer);
+	q->buf_काष्ठा_size = माप(काष्ठा sh_vou_buffer);
 	q->ops = &sh_vou_qops;
 	q->mem_ops = &vb2_dma_contig_memops;
-	q->timestamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
+	q->बारtamp_flags = V4L2_BUF_FLAG_TIMESTAMP_MONOTONIC;
 	q->min_buffers_needed = 2;
 	q->lock = &vou_dev->fop_lock;
 	q->dev = &pdev->dev;
 	ret = vb2_queue_init(q);
-	if (ret)
-		goto ei2cgadap;
+	अगर (ret)
+		जाओ ei2cgadap;
 
 	vdev->queue = q;
 	INIT_LIST_HEAD(&vou_dev->buf_list);
 
-	pm_runtime_enable(&pdev->dev);
-	pm_runtime_resume(&pdev->dev);
+	pm_runसमय_enable(&pdev->dev);
+	pm_runसमय_resume(&pdev->dev);
 
 	i2c_adap = i2c_get_adapter(vou_pdata->i2c_adap);
-	if (!i2c_adap) {
+	अगर (!i2c_adap) अणु
 		ret = -ENODEV;
-		goto ei2cgadap;
-	}
+		जाओ ei2cgadap;
+	पूर्ण
 
 	ret = sh_vou_hw_init(vou_dev);
-	if (ret < 0)
-		goto ereset;
+	अगर (ret < 0)
+		जाओ ereset;
 
 	subdev = v4l2_i2c_new_subdev_board(&vou_dev->v4l2_dev, i2c_adap,
-			vou_pdata->board_info, NULL);
-	if (!subdev) {
+			vou_pdata->board_info, शून्य);
+	अगर (!subdev) अणु
 		ret = -ENOMEM;
-		goto ei2cnd;
-	}
+		जाओ ei2cnd;
+	पूर्ण
 
-	ret = video_register_device(vdev, VFL_TYPE_VIDEO, -1);
-	if (ret < 0)
-		goto evregdev;
+	ret = video_रेजिस्टर_device(vdev, VFL_TYPE_VIDEO, -1);
+	अगर (ret < 0)
+		जाओ evregdev;
 
-	return 0;
+	वापस 0;
 
 evregdev:
 ei2cnd:
 ereset:
 	i2c_put_adapter(i2c_adap);
 ei2cgadap:
-	pm_runtime_disable(&pdev->dev);
-	v4l2_device_unregister(&vou_dev->v4l2_dev);
-	return ret;
-}
+	pm_runसमय_disable(&pdev->dev);
+	v4l2_device_unरेजिस्टर(&vou_dev->v4l2_dev);
+	वापस ret;
+पूर्ण
 
-static int sh_vou_remove(struct platform_device *pdev)
-{
-	struct v4l2_device *v4l2_dev = platform_get_drvdata(pdev);
-	struct sh_vou_device *vou_dev = container_of(v4l2_dev,
-						struct sh_vou_device, v4l2_dev);
-	struct v4l2_subdev *sd = list_entry(v4l2_dev->subdevs.next,
-					    struct v4l2_subdev, list);
-	struct i2c_client *client = v4l2_get_subdevdata(sd);
+अटल पूर्णांक sh_vou_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा v4l2_device *v4l2_dev = platक्रमm_get_drvdata(pdev);
+	काष्ठा sh_vou_device *vou_dev = container_of(v4l2_dev,
+						काष्ठा sh_vou_device, v4l2_dev);
+	काष्ठा v4l2_subdev *sd = list_entry(v4l2_dev->subdevs.next,
+					    काष्ठा v4l2_subdev, list);
+	काष्ठा i2c_client *client = v4l2_get_subdevdata(sd);
 
-	pm_runtime_disable(&pdev->dev);
-	video_unregister_device(&vou_dev->vdev);
+	pm_runसमय_disable(&pdev->dev);
+	video_unरेजिस्टर_device(&vou_dev->vdev);
 	i2c_put_adapter(client->adapter);
-	v4l2_device_unregister(&vou_dev->v4l2_dev);
-	return 0;
-}
+	v4l2_device_unरेजिस्टर(&vou_dev->v4l2_dev);
+	वापस 0;
+पूर्ण
 
-static struct platform_driver sh_vou = {
-	.remove  = sh_vou_remove,
-	.driver  = {
+अटल काष्ठा platक्रमm_driver sh_vou = अणु
+	.हटाओ  = sh_vou_हटाओ,
+	.driver  = अणु
 		.name	= "sh-vou",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver_probe(sh_vou, sh_vou_probe);
+module_platक्रमm_driver_probe(sh_vou, sh_vou_probe);
 
 MODULE_DESCRIPTION("SuperH VOU driver");
 MODULE_AUTHOR("Guennadi Liakhovetski <g.liakhovetski@gmx.de>");

@@ -1,219 +1,220 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-2-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-2-Clause
 /*
  * Copyright 2018-2021 Amazon.com, Inc. or its affiliates. All rights reserved.
  */
 
-#include <linux/module.h>
-#include <linux/pci.h>
-#include <linux/utsname.h>
-#include <linux/version.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/utsname.h>
+#समावेश <linux/version.h>
 
-#include <rdma/ib_user_verbs.h>
+#समावेश <rdma/ib_user_verbs.h>
 
-#include "efa.h"
+#समावेश "efa.h"
 
-#define PCI_DEV_ID_EFA0_VF 0xefa0
-#define PCI_DEV_ID_EFA1_VF 0xefa1
+#घोषणा PCI_DEV_ID_EFA0_VF 0xefa0
+#घोषणा PCI_DEV_ID_EFA1_VF 0xefa1
 
-static const struct pci_device_id efa_pci_tbl[] = {
-	{ PCI_VDEVICE(AMAZON, PCI_DEV_ID_EFA0_VF) },
-	{ PCI_VDEVICE(AMAZON, PCI_DEV_ID_EFA1_VF) },
-	{ }
-};
+अटल स्थिर काष्ठा pci_device_id efa_pci_tbl[] = अणु
+	अणु PCI_VDEVICE(AMAZON, PCI_DEV_ID_EFA0_VF) पूर्ण,
+	अणु PCI_VDEVICE(AMAZON, PCI_DEV_ID_EFA1_VF) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
 MODULE_AUTHOR("Amazon.com, Inc. or its affiliates");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION(DEVICE_NAME);
 MODULE_DEVICE_TABLE(pci, efa_pci_tbl);
 
-#define EFA_REG_BAR 0
-#define EFA_MEM_BAR 2
-#define EFA_BASE_BAR_MASK (BIT(EFA_REG_BAR) | BIT(EFA_MEM_BAR))
+#घोषणा EFA_REG_BAR 0
+#घोषणा EFA_MEM_BAR 2
+#घोषणा EFA_BASE_BAR_MASK (BIT(EFA_REG_BAR) | BIT(EFA_MEM_BAR))
 
-#define EFA_AENQ_ENABLED_GROUPS \
+#घोषणा EFA_AENQ_ENABLED_GROUPS \
 	(BIT(EFA_ADMIN_FATAL_ERROR) | BIT(EFA_ADMIN_WARNING) | \
 	 BIT(EFA_ADMIN_NOTIFICATION) | BIT(EFA_ADMIN_KEEP_ALIVE))
 
-/* This handler will called for unknown event group or unimplemented handlers */
-static void unimplemented_aenq_handler(void *data,
-				       struct efa_admin_aenq_entry *aenq_e)
-{
-	struct efa_dev *dev = (struct efa_dev *)data;
+/* This handler will called क्रम unknown event group or unimplemented handlers */
+अटल व्योम unimplemented_aenq_handler(व्योम *data,
+				       काष्ठा efa_admin_aenq_entry *aenq_e)
+अणु
+	काष्ठा efa_dev *dev = (काष्ठा efa_dev *)data;
 
 	ibdev_err(&dev->ibdev,
 		  "Unknown event was received or event with unimplemented handler\n");
-}
+पूर्ण
 
-static void efa_keep_alive(void *data, struct efa_admin_aenq_entry *aenq_e)
-{
-	struct efa_dev *dev = (struct efa_dev *)data;
+अटल व्योम efa_keep_alive(व्योम *data, काष्ठा efa_admin_aenq_entry *aenq_e)
+अणु
+	काष्ठा efa_dev *dev = (काष्ठा efa_dev *)data;
 
 	atomic64_inc(&dev->stats.keep_alive_rcvd);
-}
+पूर्ण
 
-static struct efa_aenq_handlers aenq_handlers = {
-	.handlers = {
+अटल काष्ठा efa_aenq_handlers aenq_handlers = अणु
+	.handlers = अणु
 		[EFA_ADMIN_KEEP_ALIVE] = efa_keep_alive,
-	},
+	पूर्ण,
 	.unimplemented_handler = unimplemented_aenq_handler
-};
+पूर्ण;
 
-static void efa_release_bars(struct efa_dev *dev, int bars_mask)
-{
-	struct pci_dev *pdev = dev->pdev;
-	int release_bars;
+अटल व्योम efa_release_bars(काष्ठा efa_dev *dev, पूर्णांक bars_mask)
+अणु
+	काष्ठा pci_dev *pdev = dev->pdev;
+	पूर्णांक release_bars;
 
 	release_bars = pci_select_bars(pdev, IORESOURCE_MEM) & bars_mask;
 	pci_release_selected_regions(pdev, release_bars);
-}
+पूर्ण
 
-static irqreturn_t efa_intr_msix_mgmnt(int irq, void *data)
-{
-	struct efa_dev *dev = data;
+अटल irqवापस_t efa_पूर्णांकr_msix_mgmnt(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा efa_dev *dev = data;
 
-	efa_com_admin_q_comp_intr_handler(&dev->edev);
-	efa_com_aenq_intr_handler(&dev->edev, data);
+	efa_com_admin_q_comp_पूर्णांकr_handler(&dev->edev);
+	efa_com_aenq_पूर्णांकr_handler(&dev->edev, data);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int efa_request_mgmnt_irq(struct efa_dev *dev)
-{
-	struct efa_irq *irq;
-	int err;
+अटल पूर्णांक efa_request_mgmnt_irq(काष्ठा efa_dev *dev)
+अणु
+	काष्ठा efa_irq *irq;
+	पूर्णांक err;
 
 	irq = &dev->admin_irq;
 	err = request_irq(irq->vector, irq->handler, 0, irq->name,
 			  irq->data);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&dev->pdev->dev, "Failed to request admin irq (%d)\n",
 			err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	dev_dbg(&dev->pdev->dev, "Set affinity hint of mgmnt irq to %*pbl (irq vector: %d)\n",
-		nr_cpumask_bits, &irq->affinity_hint_mask, irq->vector);
-	irq_set_affinity_hint(irq->vector, &irq->affinity_hint_mask);
+		nr_cpumask_bits, &irq->affinity_hपूर्णांक_mask, irq->vector);
+	irq_set_affinity_hपूर्णांक(irq->vector, &irq->affinity_hपूर्णांक_mask);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void efa_setup_mgmnt_irq(struct efa_dev *dev)
-{
+अटल व्योम efa_setup_mgmnt_irq(काष्ठा efa_dev *dev)
+अणु
 	u32 cpu;
 
-	snprintf(dev->admin_irq.name, EFA_IRQNAME_SIZE,
+	snम_लिखो(dev->admin_irq.name, EFA_IRQNAME_SIZE,
 		 "efa-mgmnt@pci:%s", pci_name(dev->pdev));
-	dev->admin_irq.handler = efa_intr_msix_mgmnt;
+	dev->admin_irq.handler = efa_पूर्णांकr_msix_mgmnt;
 	dev->admin_irq.data = dev;
 	dev->admin_irq.vector =
 		pci_irq_vector(dev->pdev, dev->admin_msix_vector_idx);
 	cpu = cpumask_first(cpu_online_mask);
 	dev->admin_irq.cpu = cpu;
 	cpumask_set_cpu(cpu,
-			&dev->admin_irq.affinity_hint_mask);
+			&dev->admin_irq.affinity_hपूर्णांक_mask);
 	dev_info(&dev->pdev->dev, "Setup irq:0x%p vector:%d name:%s\n",
 		 &dev->admin_irq,
 		 dev->admin_irq.vector,
 		 dev->admin_irq.name);
-}
+पूर्ण
 
-static void efa_free_mgmnt_irq(struct efa_dev *dev)
-{
-	struct efa_irq *irq;
+अटल व्योम efa_मुक्त_mgmnt_irq(काष्ठा efa_dev *dev)
+अणु
+	काष्ठा efa_irq *irq;
 
 	irq = &dev->admin_irq;
-	irq_set_affinity_hint(irq->vector, NULL);
-	free_irq(irq->vector, irq->data);
-}
+	irq_set_affinity_hपूर्णांक(irq->vector, शून्य);
+	मुक्त_irq(irq->vector, irq->data);
+पूर्ण
 
-static int efa_set_mgmnt_irq(struct efa_dev *dev)
-{
+अटल पूर्णांक efa_set_mgmnt_irq(काष्ठा efa_dev *dev)
+अणु
 	efa_setup_mgmnt_irq(dev);
 
-	return efa_request_mgmnt_irq(dev);
-}
+	वापस efa_request_mgmnt_irq(dev);
+पूर्ण
 
-static int efa_request_doorbell_bar(struct efa_dev *dev)
-{
+अटल पूर्णांक efa_request_करोorbell_bar(काष्ठा efa_dev *dev)
+अणु
 	u8 db_bar_idx = dev->dev_attr.db_bar;
-	struct pci_dev *pdev = dev->pdev;
-	int bars;
-	int err;
+	काष्ठा pci_dev *pdev = dev->pdev;
+	पूर्णांक bars;
+	पूर्णांक err;
 
-	if (!(BIT(db_bar_idx) & EFA_BASE_BAR_MASK)) {
+	अगर (!(BIT(db_bar_idx) & EFA_BASE_BAR_MASK)) अणु
 		bars = pci_select_bars(pdev, IORESOURCE_MEM) & BIT(db_bar_idx);
 
 		err = pci_request_selected_regions(pdev, bars, DRV_MODULE_NAME);
-		if (err) {
+		अगर (err) अणु
 			dev_err(&dev->pdev->dev,
 				"pci_request_selected_regions for bar %d failed %d\n",
 				db_bar_idx, err);
-			return err;
-		}
-	}
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	dev->db_bar_addr = pci_resource_start(dev->pdev, db_bar_idx);
 	dev->db_bar_len = pci_resource_len(dev->pdev, db_bar_idx);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void efa_release_doorbell_bar(struct efa_dev *dev)
-{
-	if (!(BIT(dev->dev_attr.db_bar) & EFA_BASE_BAR_MASK))
+अटल व्योम efa_release_करोorbell_bar(काष्ठा efa_dev *dev)
+अणु
+	अगर (!(BIT(dev->dev_attr.db_bar) & EFA_BASE_BAR_MASK))
 		efa_release_bars(dev, BIT(dev->dev_attr.db_bar));
-}
+पूर्ण
 
-static void efa_update_hw_hints(struct efa_dev *dev,
-				struct efa_com_get_hw_hints_result *hw_hints)
-{
-	struct efa_com_dev *edev = &dev->edev;
+अटल व्योम efa_update_hw_hपूर्णांकs(काष्ठा efa_dev *dev,
+				काष्ठा efa_com_get_hw_hपूर्णांकs_result *hw_hपूर्णांकs)
+अणु
+	काष्ठा efa_com_dev *edev = &dev->edev;
 
-	if (hw_hints->mmio_read_timeout)
-		edev->mmio_read.mmio_read_timeout =
-			hw_hints->mmio_read_timeout * 1000;
+	अगर (hw_hपूर्णांकs->mmio_पढ़ो_समयout)
+		edev->mmio_पढ़ो.mmio_पढ़ो_समयout =
+			hw_hपूर्णांकs->mmio_पढ़ो_समयout * 1000;
 
-	if (hw_hints->poll_interval)
-		edev->aq.poll_interval = hw_hints->poll_interval;
+	अगर (hw_hपूर्णांकs->poll_पूर्णांकerval)
+		edev->aq.poll_पूर्णांकerval = hw_hपूर्णांकs->poll_पूर्णांकerval;
 
-	if (hw_hints->admin_completion_timeout)
-		edev->aq.completion_timeout =
-			hw_hints->admin_completion_timeout;
-}
+	अगर (hw_hपूर्णांकs->admin_completion_समयout)
+		edev->aq.completion_समयout =
+			hw_hपूर्णांकs->admin_completion_समयout;
+पूर्ण
 
-static void efa_stats_init(struct efa_dev *dev)
-{
+अटल व्योम efa_stats_init(काष्ठा efa_dev *dev)
+अणु
 	atomic64_t *s = (atomic64_t *)&dev->stats;
-	int i;
+	पूर्णांक i;
 
-	for (i = 0; i < sizeof(dev->stats) / sizeof(*s); i++, s++)
+	क्रम (i = 0; i < माप(dev->stats) / माप(*s); i++, s++)
 		atomic64_set(s, 0);
-}
+पूर्ण
 
-static void efa_set_host_info(struct efa_dev *dev)
-{
-	struct efa_admin_set_feature_resp resp = {};
-	struct efa_admin_set_feature_cmd cmd = {};
-	struct efa_admin_host_info *hinf;
-	u32 bufsz = sizeof(*hinf);
+अटल व्योम efa_set_host_info(काष्ठा efa_dev *dev)
+अणु
+	काष्ठा efa_admin_set_feature_resp resp = अणुपूर्ण;
+	काष्ठा efa_admin_set_feature_cmd cmd = अणुपूर्ण;
+	काष्ठा efa_admin_host_info *hinf;
+	u32 bufsz = माप(*hinf);
 	dma_addr_t hinf_dma;
 
-	if (!efa_com_check_supported_feature_id(&dev->edev,
+	अगर (!efa_com_check_supported_feature_id(&dev->edev,
 						EFA_ADMIN_HOST_INFO))
-		return;
+		वापस;
 
 	/* Failures in host info set shall not disturb probe */
 	hinf = dma_alloc_coherent(&dev->pdev->dev, bufsz, &hinf_dma,
 				  GFP_KERNEL);
-	if (!hinf)
-		return;
+	अगर (!hinf)
+		वापस;
 
 	strscpy(hinf->os_dist_str, utsname()->release,
-		sizeof(hinf->os_dist_str));
+		माप(hinf->os_dist_str));
 	hinf->os_type = EFA_ADMIN_OS_LINUX;
 	strscpy(hinf->kernel_ver_str, utsname()->version,
-		sizeof(hinf->kernel_ver_str));
+		माप(hinf->kernel_ver_str));
 	hinf->kernel_ver = LINUX_VERSION_CODE;
 	EFA_SET(&hinf->driver_ver, EFA_ADMIN_HOST_INFO_DRIVER_MAJOR, 0);
 	EFA_SET(&hinf->driver_ver, EFA_ADMIN_HOST_INFO_DRIVER_MINOR, 0);
@@ -234,10 +235,10 @@ static void efa_set_host_info(struct efa_dev *dev)
 	efa_com_set_feature_ex(&dev->edev, &resp, &cmd, EFA_ADMIN_HOST_INFO,
 			       hinf_dma, bufsz);
 
-	dma_free_coherent(&dev->pdev->dev, bufsz, hinf, hinf_dma);
-}
+	dma_मुक्त_coherent(&dev->pdev->dev, bufsz, hinf, hinf_dma);
+पूर्ण
 
-static const struct ib_device_ops efa_dev_ops = {
+अटल स्थिर काष्ठा ib_device_ops efa_dev_ops = अणु
 	.owner = THIS_MODULE,
 	.driver_id = RDMA_DRIVER_EFA,
 	.uverbs_abi_ver = EFA_UVERBS_ABI_VERSION,
@@ -258,8 +259,8 @@ static const struct ib_device_ops efa_dev_ops = {
 	.get_link_layer = efa_port_link_layer,
 	.get_port_immutable = efa_get_port_immutable,
 	.mmap = efa_mmap,
-	.mmap_free = efa_mmap_free,
-	.modify_qp = efa_modify_qp,
+	.mmap_मुक्त = efa_mmap_मुक्त,
+	.modअगरy_qp = efa_modअगरy_qp,
 	.query_device = efa_query_device,
 	.query_gid = efa_query_gid,
 	.query_pkey = efa_query_pkey,
@@ -271,35 +272,35 @@ static const struct ib_device_ops efa_dev_ops = {
 	INIT_RDMA_OBJ_SIZE(ib_cq, efa_cq, ibcq),
 	INIT_RDMA_OBJ_SIZE(ib_pd, efa_pd, ibpd),
 	INIT_RDMA_OBJ_SIZE(ib_ucontext, efa_ucontext, ibucontext),
-};
+पूर्ण;
 
-static int efa_ib_device_add(struct efa_dev *dev)
-{
-	struct efa_com_get_hw_hints_result hw_hints;
-	struct pci_dev *pdev = dev->pdev;
-	int err;
+अटल पूर्णांक efa_ib_device_add(काष्ठा efa_dev *dev)
+अणु
+	काष्ठा efa_com_get_hw_hपूर्णांकs_result hw_hपूर्णांकs;
+	काष्ठा pci_dev *pdev = dev->pdev;
+	पूर्णांक err;
 
 	efa_stats_init(dev);
 
 	err = efa_com_get_device_attr(&dev->edev, &dev->dev_attr);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	dev_dbg(&dev->pdev->dev, "Doorbells bar (%d)\n", dev->dev_attr.db_bar);
-	err = efa_request_doorbell_bar(dev);
-	if (err)
-		return err;
+	err = efa_request_करोorbell_bar(dev);
+	अगर (err)
+		वापस err;
 
-	err = efa_com_get_hw_hints(&dev->edev, &hw_hints);
-	if (err)
-		goto err_release_doorbell_bar;
+	err = efa_com_get_hw_hपूर्णांकs(&dev->edev, &hw_hपूर्णांकs);
+	अगर (err)
+		जाओ err_release_करोorbell_bar;
 
-	efa_update_hw_hints(dev, &hw_hints);
+	efa_update_hw_hपूर्णांकs(dev, &hw_hपूर्णांकs);
 
 	/* Try to enable all the available aenq groups */
 	err = efa_com_set_aenq_config(&dev->edev, EFA_AENQ_ENABLED_GROUPS);
-	if (err)
-		goto err_release_doorbell_bar;
+	अगर (err)
+		जाओ err_release_करोorbell_bar;
 
 	efa_set_host_info(dev);
 
@@ -310,35 +311,35 @@ static int efa_ib_device_add(struct efa_dev *dev)
 
 	ib_set_device_ops(&dev->ibdev, &efa_dev_ops);
 
-	err = ib_register_device(&dev->ibdev, "efa_%d", &pdev->dev);
-	if (err)
-		goto err_release_doorbell_bar;
+	err = ib_रेजिस्टर_device(&dev->ibdev, "efa_%d", &pdev->dev);
+	अगर (err)
+		जाओ err_release_करोorbell_bar;
 
 	ibdev_info(&dev->ibdev, "IB device registered\n");
 
-	return 0;
+	वापस 0;
 
-err_release_doorbell_bar:
-	efa_release_doorbell_bar(dev);
-	return err;
-}
+err_release_करोorbell_bar:
+	efa_release_करोorbell_bar(dev);
+	वापस err;
+पूर्ण
 
-static void efa_ib_device_remove(struct efa_dev *dev)
-{
+अटल व्योम efa_ib_device_हटाओ(काष्ठा efa_dev *dev)
+अणु
 	efa_com_dev_reset(&dev->edev, EFA_REGS_RESET_NORMAL);
 	ibdev_info(&dev->ibdev, "Unregister ib device\n");
-	ib_unregister_device(&dev->ibdev);
-	efa_release_doorbell_bar(dev);
-}
+	ib_unरेजिस्टर_device(&dev->ibdev);
+	efa_release_करोorbell_bar(dev);
+पूर्ण
 
-static void efa_disable_msix(struct efa_dev *dev)
-{
-	pci_free_irq_vectors(dev->pdev);
-}
+अटल व्योम efa_disable_msix(काष्ठा efa_dev *dev)
+अणु
+	pci_मुक्त_irq_vectors(dev->pdev);
+पूर्ण
 
-static int efa_enable_msix(struct efa_dev *dev)
-{
-	int msix_vecs, irq_num;
+अटल पूर्णांक efa_enable_msix(काष्ठा efa_dev *dev)
+अणु
+	पूर्णांक msix_vecs, irq_num;
 
 	/* Reserve the max msix vectors we might need */
 	msix_vecs = EFA_NUM_MSIX_VEC;
@@ -349,72 +350,72 @@ static int efa_enable_msix(struct efa_dev *dev)
 	irq_num = pci_alloc_irq_vectors(dev->pdev, msix_vecs,
 					msix_vecs, PCI_IRQ_MSIX);
 
-	if (irq_num < 0) {
+	अगर (irq_num < 0) अणु
 		dev_err(&dev->pdev->dev, "Failed to enable MSI-X. irq_num %d\n",
 			irq_num);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	if (irq_num != msix_vecs) {
+	अगर (irq_num != msix_vecs) अणु
 		dev_err(&dev->pdev->dev,
 			"Allocated %d MSI-X (out of %d requested)\n",
 			irq_num, msix_vecs);
-		return -ENOSPC;
-	}
+		वापस -ENOSPC;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int efa_device_init(struct efa_com_dev *edev, struct pci_dev *pdev)
-{
-	int dma_width;
-	int err;
+अटल पूर्णांक efa_device_init(काष्ठा efa_com_dev *edev, काष्ठा pci_dev *pdev)
+अणु
+	पूर्णांक dma_width;
+	पूर्णांक err;
 
 	err = efa_com_dev_reset(edev, EFA_REGS_RESET_NORMAL);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	err = efa_com_validate_version(edev);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
 	dma_width = efa_com_get_dma_width(edev);
-	if (dma_width < 0) {
+	अगर (dma_width < 0) अणु
 		err = dma_width;
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	err = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(dma_width));
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "dma_set_mask_and_coherent failed %d\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	dma_set_max_seg_size(&pdev->dev, UINT_MAX);
-	return 0;
-}
+	dma_set_max_seg_size(&pdev->dev, अच_पूर्णांक_उच्च);
+	वापस 0;
+पूर्ण
 
-static struct efa_dev *efa_probe_device(struct pci_dev *pdev)
-{
-	struct efa_com_dev *edev;
-	struct efa_dev *dev;
-	int bars;
-	int err;
+अटल काष्ठा efa_dev *efa_probe_device(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा efa_com_dev *edev;
+	काष्ठा efa_dev *dev;
+	पूर्णांक bars;
+	पूर्णांक err;
 
 	err = pci_enable_device_mem(pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "pci_enable_device_mem() failed!\n");
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	pci_set_master(pdev);
 
 	dev = ib_alloc_device(efa_dev, ibdev);
-	if (!dev) {
+	अगर (!dev) अणु
 		dev_err(&pdev->dev, "Device alloc failed\n");
 		err = -ENOMEM;
-		goto err_disable_device;
-	}
+		जाओ err_disable_device;
+	पूर्ण
 
 	pci_set_drvdata(pdev, dev);
 	edev = &dev->edev;
@@ -424,11 +425,11 @@ static struct efa_dev *efa_probe_device(struct pci_dev *pdev)
 
 	bars = pci_select_bars(pdev, IORESOURCE_MEM) & EFA_BASE_BAR_MASK;
 	err = pci_request_selected_regions(pdev, bars, DRV_MODULE_NAME);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "pci_request_selected_regions failed %d\n",
 			err);
-		goto err_ibdev_destroy;
-	}
+		जाओ err_ibdev_destroy;
+	पूर्ण
 
 	dev->reg_bar_addr = pci_resource_start(pdev, EFA_REG_BAR);
 	dev->reg_bar_len = pci_resource_len(pdev, EFA_REG_BAR);
@@ -438,49 +439,49 @@ static struct efa_dev *efa_probe_device(struct pci_dev *pdev)
 	edev->reg_bar = devm_ioremap(&pdev->dev,
 				     dev->reg_bar_addr,
 				     dev->reg_bar_len);
-	if (!edev->reg_bar) {
+	अगर (!edev->reg_bar) अणु
 		dev_err(&pdev->dev, "Failed to remap register bar\n");
 		err = -EFAULT;
-		goto err_release_bars;
-	}
+		जाओ err_release_bars;
+	पूर्ण
 
-	err = efa_com_mmio_reg_read_init(edev);
-	if (err) {
+	err = efa_com_mmio_reg_पढ़ो_init(edev);
+	अगर (err) अणु
 		dev_err(&pdev->dev, "Failed to init readless MMIO\n");
-		goto err_iounmap;
-	}
+		जाओ err_iounmap;
+	पूर्ण
 
 	err = efa_device_init(edev, pdev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(&pdev->dev, "EFA device init failed\n");
-		if (err == -ETIME)
+		अगर (err == -ETIME)
 			err = -EPROBE_DEFER;
-		goto err_reg_read_destroy;
-	}
+		जाओ err_reg_पढ़ो_destroy;
+	पूर्ण
 
 	err = efa_enable_msix(dev);
-	if (err)
-		goto err_reg_read_destroy;
+	अगर (err)
+		जाओ err_reg_पढ़ो_destroy;
 
 	edev->aq.msix_vector_idx = dev->admin_msix_vector_idx;
 	edev->aenq.msix_vector_idx = dev->admin_msix_vector_idx;
 
 	err = efa_set_mgmnt_irq(dev);
-	if (err)
-		goto err_disable_msix;
+	अगर (err)
+		जाओ err_disable_msix;
 
 	err = efa_com_admin_init(edev, &aenq_handlers);
-	if (err)
-		goto err_free_mgmnt_irq;
+	अगर (err)
+		जाओ err_मुक्त_mgmnt_irq;
 
-	return dev;
+	वापस dev;
 
-err_free_mgmnt_irq:
-	efa_free_mgmnt_irq(dev);
+err_मुक्त_mgmnt_irq:
+	efa_मुक्त_mgmnt_irq(dev);
 err_disable_msix:
 	efa_disable_msix(dev);
-err_reg_read_destroy:
-	efa_com_mmio_reg_read_destroy(edev);
+err_reg_पढ़ो_destroy:
+	efa_com_mmio_reg_पढ़ो_destroy(edev);
 err_iounmap:
 	devm_iounmap(&pdev->dev, edev->reg_bar);
 err_release_bars:
@@ -489,58 +490,58 @@ err_ibdev_destroy:
 	ib_dealloc_device(&dev->ibdev);
 err_disable_device:
 	pci_disable_device(pdev);
-	return ERR_PTR(err);
-}
+	वापस ERR_PTR(err);
+पूर्ण
 
-static void efa_remove_device(struct pci_dev *pdev)
-{
-	struct efa_dev *dev = pci_get_drvdata(pdev);
-	struct efa_com_dev *edev;
+अटल व्योम efa_हटाओ_device(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा efa_dev *dev = pci_get_drvdata(pdev);
+	काष्ठा efa_com_dev *edev;
 
 	edev = &dev->edev;
 	efa_com_admin_destroy(edev);
-	efa_free_mgmnt_irq(dev);
+	efa_मुक्त_mgmnt_irq(dev);
 	efa_disable_msix(dev);
-	efa_com_mmio_reg_read_destroy(edev);
+	efa_com_mmio_reg_पढ़ो_destroy(edev);
 	devm_iounmap(&pdev->dev, edev->reg_bar);
 	efa_release_bars(dev, EFA_BASE_BAR_MASK);
 	ib_dealloc_device(&dev->ibdev);
 	pci_disable_device(pdev);
-}
+पूर्ण
 
-static int efa_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
-{
-	struct efa_dev *dev;
-	int err;
+अटल पूर्णांक efa_probe(काष्ठा pci_dev *pdev, स्थिर काष्ठा pci_device_id *ent)
+अणु
+	काष्ठा efa_dev *dev;
+	पूर्णांक err;
 
 	dev = efa_probe_device(pdev);
-	if (IS_ERR(dev))
-		return PTR_ERR(dev);
+	अगर (IS_ERR(dev))
+		वापस PTR_ERR(dev);
 
 	err = efa_ib_device_add(dev);
-	if (err)
-		goto err_remove_device;
+	अगर (err)
+		जाओ err_हटाओ_device;
 
-	return 0;
+	वापस 0;
 
-err_remove_device:
-	efa_remove_device(pdev);
-	return err;
-}
+err_हटाओ_device:
+	efa_हटाओ_device(pdev);
+	वापस err;
+पूर्ण
 
-static void efa_remove(struct pci_dev *pdev)
-{
-	struct efa_dev *dev = pci_get_drvdata(pdev);
+अटल व्योम efa_हटाओ(काष्ठा pci_dev *pdev)
+अणु
+	काष्ठा efa_dev *dev = pci_get_drvdata(pdev);
 
-	efa_ib_device_remove(dev);
-	efa_remove_device(pdev);
-}
+	efa_ib_device_हटाओ(dev);
+	efa_हटाओ_device(pdev);
+पूर्ण
 
-static struct pci_driver efa_pci_driver = {
+अटल काष्ठा pci_driver efa_pci_driver = अणु
 	.name           = DRV_MODULE_NAME,
 	.id_table       = efa_pci_tbl,
 	.probe          = efa_probe,
-	.remove         = efa_remove,
-};
+	.हटाओ         = efa_हटाओ,
+पूर्ण;
 
 module_pci_driver(efa_pci_driver);

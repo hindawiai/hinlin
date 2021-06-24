@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __DRV_TYPES_SDIO_H__
-#define __DRV_TYPES_SDIO_H__
+#अगर_अघोषित __DRV_TYPES_SDIO_H__
+#घोषणा __DRV_TYPES_SDIO_H__
 
 /*  SDIO Header Files */
-	#include <linux/mmc/sdio_func.h>
-	#include <linux/mmc/sdio_ids.h>
+	#समावेश <linux/mmc/sdio_func.h>
+	#समावेश <linux/mmc/sdio_ids.h>
 
-struct sdio_data {
+काष्ठा sdio_data अणु
 	u8  func_number;
 
 	u8  tx_block_mode;
 	u8  rx_block_mode;
 	u32 block_transfer_len;
 
-	struct sdio_func	 *func;
-	void *sys_sdio_irq_thd;
-};
+	काष्ठा sdio_func	 *func;
+	व्योम *sys_sdio_irq_thd;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

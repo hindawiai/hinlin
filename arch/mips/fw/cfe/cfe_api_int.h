@@ -1,92 +1,93 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2000, 2001, 2002 Broadcom Corporation
  */
-#ifndef CFE_API_INT_H
-#define CFE_API_INT_H
+#अगर_अघोषित CFE_API_INT_H
+#घोषणा CFE_API_INT_H
 
 /*
  * Constants.
  */
-#define CFE_CMD_FW_GETINFO	0
-#define CFE_CMD_FW_RESTART	1
-#define CFE_CMD_FW_BOOT		2
-#define CFE_CMD_FW_CPUCTL	3
-#define CFE_CMD_FW_GETTIME      4
-#define CFE_CMD_FW_MEMENUM	5
-#define CFE_CMD_FW_FLUSHCACHE	6
+#घोषणा CFE_CMD_FW_GETINFO	0
+#घोषणा CFE_CMD_FW_RESTART	1
+#घोषणा CFE_CMD_FW_BOOT		2
+#घोषणा CFE_CMD_FW_CPUCTL	3
+#घोषणा CFE_CMD_FW_GETTIME      4
+#घोषणा CFE_CMD_FW_MEMENUM	5
+#घोषणा CFE_CMD_FW_FLUSHCACHE	6
 
-#define CFE_CMD_DEV_GETHANDLE	9
-#define CFE_CMD_DEV_ENUM	10
-#define CFE_CMD_DEV_OPEN	11
-#define CFE_CMD_DEV_INPSTAT	12
-#define CFE_CMD_DEV_READ	13
-#define CFE_CMD_DEV_WRITE	14
-#define CFE_CMD_DEV_IOCTL	15
-#define CFE_CMD_DEV_CLOSE	16
-#define CFE_CMD_DEV_GETINFO	17
+#घोषणा CFE_CMD_DEV_GETHANDLE	9
+#घोषणा CFE_CMD_DEV_ENUM	10
+#घोषणा CFE_CMD_DEV_OPEN	11
+#घोषणा CFE_CMD_DEV_INPSTAT	12
+#घोषणा CFE_CMD_DEV_READ	13
+#घोषणा CFE_CMD_DEV_WRITE	14
+#घोषणा CFE_CMD_DEV_IOCTL	15
+#घोषणा CFE_CMD_DEV_CLOSE	16
+#घोषणा CFE_CMD_DEV_GETINFO	17
 
-#define CFE_CMD_ENV_ENUM	20
-#define CFE_CMD_ENV_GET		22
-#define CFE_CMD_ENV_SET		23
-#define CFE_CMD_ENV_DEL		24
+#घोषणा CFE_CMD_ENV_ENUM	20
+#घोषणा CFE_CMD_ENV_GET		22
+#घोषणा CFE_CMD_ENV_SET		23
+#घोषणा CFE_CMD_ENV_DEL		24
 
-#define CFE_CMD_MAX		32
+#घोषणा CFE_CMD_MAX		32
 
-#define CFE_CMD_VENDOR_USE	0x8000	/* codes above this are for customer use */
+#घोषणा CFE_CMD_VENDOR_USE	0x8000	/* codes above this are क्रम customer use */
 
 /*
  * Structures.
  */
 
-/* eeek, signed "pointers" */
-typedef s64 cfe_xptr_t;
+/* eeek, चिन्हित "pointers" */
+प्रकार s64 cfe_xptr_t;
 
-struct xiocb_buffer {
+काष्ठा xiocb_buffer अणु
 	u64 buf_offset;		/* offset on device (bytes) */
-	cfe_xptr_t  buf_ptr;		/* pointer to a buffer */
+	cfe_xptr_t  buf_ptr;		/* poपूर्णांकer to a buffer */
 	u64 buf_length;		/* length of this buffer */
-	u64 buf_retlen;		/* returned length (for read ops) */
-	u64 buf_ioctlcmd;	/* IOCTL command (used only for IOCTLs) */
-};
+	u64 buf_retlen;		/* वापसed length (क्रम पढ़ो ops) */
+	u64 buf_ioctlcmd;	/* IOCTL command (used only क्रम IOCTLs) */
+पूर्ण;
 
-struct xiocb_inpstat {
+काष्ठा xiocb_inpstat अणु
 	u64 inp_status;		/* 1 means input available */
-};
+पूर्ण;
 
-struct xiocb_envbuf {
-	s64 enum_idx;		/* 0-based enumeration index */
+काष्ठा xiocb_envbuf अणु
+	s64 क्रमागत_idx;		/* 0-based क्रमागतeration index */
 	cfe_xptr_t name_ptr;		/* name string buffer */
 	s64 name_length;		/* size of name buffer */
 	cfe_xptr_t val_ptr;		/* value string buffer */
 	s64 val_length;		/* size of value string buffer */
-};
+पूर्ण;
 
-struct xiocb_cpuctl {
+काष्ठा xiocb_cpuctl अणु
 	u64 cpu_number;		/* cpu number to control */
 	u64 cpu_command;	/* command to issue to CPU */
 	u64 start_addr;		/* CPU start address */
 	u64 gp_val;		/* starting GP value */
 	u64 sp_val;		/* starting SP value */
 	u64 a1_val;		/* starting A1 value */
-};
+पूर्ण;
 
-struct xiocb_time {
-	s64 ticks;		/* current time in ticks */
-};
+काष्ठा xiocb_समय अणु
+	s64 ticks;		/* current समय in ticks */
+पूर्ण;
 
-struct xiocb_exitstat{
+काष्ठा xiocb_निकासstatअणु
 	s64 status;
-};
+पूर्ण;
 
-struct xiocb_meminfo {
-	s64 mi_idx;		/* 0-based enumeration index */
+काष्ठा xiocb_meminfo अणु
+	s64 mi_idx;		/* 0-based क्रमागतeration index */
 	s64 mi_type;		/* type of memory block */
 	u64 mi_addr;		/* physical start address */
 	u64 mi_size;		/* block size */
-};
+पूर्ण;
 
-struct xiocb_fwinfo {
+काष्ठा xiocb_fwinfo अणु
 	s64 fwi_version;		/* major, minor, eco version */
 	s64 fwi_totalmem;	/* total installed mem */
 	s64 fwi_flags;		/* various flags */
@@ -97,39 +98,39 @@ struct xiocb_fwinfo {
 	s64 fwi_reserved1;
 	s64 fwi_reserved2;
 	s64 fwi_reserved3;
-};
+पूर्ण;
 
-struct cfe_xiocb {
+काष्ठा cfe_xiocb अणु
 	u64 xiocb_fcode;	/* IOCB function code */
-	s64 xiocb_status;	/* return status */
+	s64 xiocb_status;	/* वापस status */
 	s64 xiocb_handle;	/* file/device handle */
-	u64 xiocb_flags;	/* flags for this IOCB */
+	u64 xiocb_flags;	/* flags क्रम this IOCB */
 	u64 xiocb_psize;	/* size of parameter list */
-	union {
+	जोड़ अणु
 		/* buffer parameters */
-		struct xiocb_buffer xiocb_buffer;
+		काष्ठा xiocb_buffer xiocb_buffer;
 
 		/* input status parameters */
-		struct xiocb_inpstat xiocb_inpstat;
+		काष्ठा xiocb_inpstat xiocb_inpstat;
 
 		/* environment function parameters */
-		struct xiocb_envbuf xiocb_envbuf;
+		काष्ठा xiocb_envbuf xiocb_envbuf;
 
 		/* CPU control parameters */
-		struct xiocb_cpuctl xiocb_cpuctl;
+		काष्ठा xiocb_cpuctl xiocb_cpuctl;
 
-		/* timer parameters */
-		struct xiocb_time xiocb_time;
+		/* समयr parameters */
+		काष्ठा xiocb_समय xiocb_समय;
 
 		/* memory arena info parameters */
-		struct xiocb_meminfo xiocb_meminfo;
+		काष्ठा xiocb_meminfo xiocb_meminfo;
 
-		/* firmware information */
-		struct xiocb_fwinfo xiocb_fwinfo;
+		/* firmware inक्रमmation */
+		काष्ठा xiocb_fwinfo xiocb_fwinfo;
 
 		/* Exit Status */
-		struct xiocb_exitstat xiocb_exitstat;
-	} plist;
-};
+		काष्ठा xiocb_निकासstat xiocb_निकासstat;
+	पूर्ण plist;
+पूर्ण;
 
-#endif /* CFE_API_INT_H */
+#पूर्ण_अगर /* CFE_API_INT_H */

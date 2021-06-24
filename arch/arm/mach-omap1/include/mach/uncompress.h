@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * arch/arm/plat-omap/include/mach/uncompress.h
  *
- * Serial port stubs for kernel decompress status messages
+ * Serial port stubs क्रम kernel decompress status messages
  *
  * Initially based on:
  * linux-2.4.15-rmk1-dsplinux1.6/arch/arm/plat-omap/include/mach1510/uncompress.h
@@ -17,84 +18,84 @@
  * kind, whether express or implied.
  */
 
-#include <linux/types.h>
-#include <linux/serial_reg.h>
+#समावेश <linux/types.h>
+#समावेश <linux/serial_reg.h>
 
-#include <asm/memory.h>
-#include <asm/mach-types.h>
+#समावेश <यंत्र/memory.h>
+#समावेश <यंत्र/mach-types.h>
 
-#include "serial.h"
+#समावेश "serial.h"
 
-#define MDR1_MODE_MASK			0x07
+#घोषणा MDR1_MODE_MASK			0x07
 
-volatile u8 *uart_base;
-int uart_shift;
+अस्थिर u8 *uart_base;
+पूर्णांक uart_shअगरt;
 
 /*
- * Store the DEBUG_LL uart number into memory.
- * See also debug-macro.S, and serial.c for related code.
+ * Store the DEBUG_LL uart number पूर्णांकo memory.
+ * See also debug-macro.S, and serial.c क्रम related code.
  */
-static void set_omap_uart_info(unsigned char port)
-{
+अटल व्योम set_omap_uart_info(अचिन्हित अक्षर port)
+अणु
 	/*
-	 * Get address of some.bss variable and round it down
+	 * Get address of some.bss variable and round it करोwn
 	 * a la CONFIG_AUTO_ZRELADDR.
 	 */
-	u32 ram_start = (u32)&uart_shift & 0xf8000000;
+	u32 ram_start = (u32)&uart_shअगरt & 0xf8000000;
 	u32 *uart_info = (u32 *)(ram_start + OMAP_UART_INFO_OFS);
 	*uart_info = port;
-}
+पूर्ण
 
-static inline void putc(int c)
-{
-	if (!uart_base)
-		return;
+अटल अंतरभूत व्योम अ_दो(पूर्णांक c)
+अणु
+	अगर (!uart_base)
+		वापस;
 
-	/* Check for UART 16x mode */
-	if ((uart_base[UART_OMAP_MDR1 << uart_shift] & MDR1_MODE_MASK) != 0)
-		return;
+	/* Check क्रम UART 16x mode */
+	अगर ((uart_base[UART_OMAP_MDR1 << uart_shअगरt] & MDR1_MODE_MASK) != 0)
+		वापस;
 
-	while (!(uart_base[UART_LSR << uart_shift] & UART_LSR_THRE))
+	जबतक (!(uart_base[UART_LSR << uart_shअगरt] & UART_LSR_THRE))
 		barrier();
-	uart_base[UART_TX << uart_shift] = c;
-}
+	uart_base[UART_TX << uart_shअगरt] = c;
+पूर्ण
 
-static inline void flush(void)
-{
-}
+अटल अंतरभूत व्योम flush(व्योम)
+अणु
+पूर्ण
 
 /*
  * Macros to configure UART1 and debug UART
  */
-#define _DEBUG_LL_ENTRY(mach, dbg_uart, dbg_shft, dbg_id)		\
-	if (machine_is_##mach()) {					\
-		uart_base = (volatile u8 *)(dbg_uart);			\
-		uart_shift = (dbg_shft);				\
+#घोषणा _DEBUG_LL_ENTRY(mach, dbg_uart, dbg_shft, dbg_id)		\
+	अगर (machine_is_##mach()) अणु					\
+		uart_base = (अस्थिर u8 *)(dbg_uart);			\
+		uart_shअगरt = (dbg_shft);				\
 		port = (dbg_id);					\
 		set_omap_uart_info(port);				\
-		break;							\
-	}
+		अवरोध;							\
+	पूर्ण
 
-#define DEBUG_LL_OMAP7XX(p, mach)					\
+#घोषणा DEBUG_LL_OMAP7XX(p, mach)					\
 	_DEBUG_LL_ENTRY(mach, OMAP1_UART##p##_BASE, OMAP7XX_PORT_SHIFT,	\
 		OMAP1UART##p)
 
-#define DEBUG_LL_OMAP1(p, mach)						\
+#घोषणा DEBUG_LL_OMAP1(p, mach)						\
 	_DEBUG_LL_ENTRY(mach, OMAP1_UART##p##_BASE, OMAP_PORT_SHIFT,	\
 		OMAP1UART##p)
 
-static inline void arch_decomp_setup(void)
-{
-	int port = 0;
+अटल अंतरभूत व्योम arch_decomp_setup(व्योम)
+अणु
+	पूर्णांक port = 0;
 
 	/*
 	 * Initialize the port based on the machine ID from the bootloader.
-	 * Note that we're using macros here instead of switch statement
-	 * as machine_is functions are optimized out for the boards that
+	 * Note that we're using macros here instead of चयन statement
+	 * as machine_is functions are optimized out क्रम the boards that
 	 * are not selected.
 	 */
-	do {
-		/* omap7xx/8xx based boards using UART1 with shift 0 */
+	करो अणु
+		/* omap7xx/8xx based boards using UART1 with shअगरt 0 */
 		DEBUG_LL_OMAP7XX(1, herald);
 		DEBUG_LL_OMAP7XX(1, omap_perseus2);
 
@@ -113,5 +114,5 @@ static inline void arch_decomp_setup(void)
 
 		/* omap15xx/16xx based boards using UART3 */
 		DEBUG_LL_OMAP1(3, sx1);
-	} while (0);
-}
+	पूर्ण जबतक (0);
+पूर्ण

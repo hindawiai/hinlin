@@ -1,3 +1,4 @@
+<शैली गुरु>
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have (backend half).
  *
@@ -6,17 +7,17 @@
  * Copyright (C) 2005, 2006 XenSource Ltd
  * Copyright (C) 2007 Solarflare Communications, Inc.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License version 2
+ * This program is मुक्त software; you can redistribute it and/or
+ * modअगरy it under the terms of the GNU General Public License version 2
  * as published by the Free Software Foundation; or, when distributed
- * separately from the Linux kernel or incorporated into other
+ * separately from the Linux kernel or incorporated पूर्णांकo other
  * software packages, subject to the following license:
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a copy
  * of this source file (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use, copy, modify,
+ * restriction, including without limitation the rights to use, copy, modअगरy,
  * merge, publish, distribute, sublicense, and/or sell copies of the Software,
- * and to permit persons to whom the Software is furnished to do so, subject to
+ * and to permit persons to whom the Software is furnished to करो so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
@@ -31,283 +32,283 @@
  * IN THE SOFTWARE.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#define DPRINTK(fmt, ...)				\
+#घोषणा DPRINTK(fmt, ...)				\
 	pr_debug("(%s:%d) " fmt "\n",			\
 		 __func__, __LINE__, ##__VA_ARGS__)
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/notifier.h>
-#include <linux/export.h>
-#include <linux/semaphore.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/export.h>
+#समावेश <linux/semaphore.h>
 
-#include <asm/page.h>
-#include <asm/xen/hypervisor.h>
-#include <asm/hypervisor.h>
-#include <xen/xenbus.h>
-#include <xen/features.h>
+#समावेश <यंत्र/page.h>
+#समावेश <यंत्र/xen/hypervisor.h>
+#समावेश <यंत्र/hypervisor.h>
+#समावेश <xen/xenbus.h>
+#समावेश <xen/features.h>
 
-#include "xenbus.h"
+#समावेश "xenbus.h"
 
-/* backend/<type>/<fe-uuid>/<id> => <type>-<fe-domid>-<id> */
-static int backend_bus_id(char bus_id[XEN_BUS_ID_SIZE], const char *nodename)
-{
-	int domid, err;
-	const char *devid, *type, *frontend;
-	unsigned int typelen;
+/* backend/<type>/<fe-uuid>/<id> => <type>-<fe-करोmid>-<id> */
+अटल पूर्णांक backend_bus_id(अक्षर bus_id[XEN_BUS_ID_SIZE], स्थिर अक्षर *nodename)
+अणु
+	पूर्णांक करोmid, err;
+	स्थिर अक्षर *devid, *type, *frontend;
+	अचिन्हित पूर्णांक typelen;
 
-	type = strchr(nodename, '/');
-	if (!type)
-		return -EINVAL;
+	type = म_अक्षर(nodename, '/');
+	अगर (!type)
+		वापस -EINVAL;
 	type++;
-	typelen = strcspn(type, "/");
-	if (!typelen || type[typelen] != '/')
-		return -EINVAL;
+	typelen = म_खोज(type, "/");
+	अगर (!typelen || type[typelen] != '/')
+		वापस -EINVAL;
 
-	devid = strrchr(nodename, '/') + 1;
+	devid = म_खोजप(nodename, '/') + 1;
 
-	err = xenbus_gather(XBT_NIL, nodename, "frontend-id", "%i", &domid,
-			    "frontend", NULL, &frontend,
-			    NULL);
-	if (err)
-		return err;
-	if (strlen(frontend) == 0)
-		err = -ERANGE;
-	if (!err && !xenbus_exists(XBT_NIL, frontend, ""))
+	err = xenbus_gather(XBT_NIL, nodename, "frontend-id", "%i", &करोmid,
+			    "frontend", शून्य, &frontend,
+			    शून्य);
+	अगर (err)
+		वापस err;
+	अगर (म_माप(frontend) == 0)
+		err = -दुस्फल;
+	अगर (!err && !xenbus_exists(XBT_NIL, frontend, ""))
 		err = -ENOENT;
-	kfree(frontend);
+	kमुक्त(frontend);
 
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if (snprintf(bus_id, XEN_BUS_ID_SIZE, "%.*s-%i-%s",
-		     typelen, type, domid, devid) >= XEN_BUS_ID_SIZE)
-		return -ENOSPC;
-	return 0;
-}
+	अगर (snम_लिखो(bus_id, XEN_BUS_ID_SIZE, "%.*s-%i-%s",
+		     typelen, type, करोmid, devid) >= XEN_BUS_ID_SIZE)
+		वापस -ENOSPC;
+	वापस 0;
+पूर्ण
 
-static int xenbus_uevent_backend(struct device *dev,
-				 struct kobj_uevent_env *env)
-{
-	struct xenbus_device *xdev;
-	struct xenbus_driver *drv;
-	struct xen_bus_type *bus;
+अटल पूर्णांक xenbus_uevent_backend(काष्ठा device *dev,
+				 काष्ठा kobj_uevent_env *env)
+अणु
+	काष्ठा xenbus_device *xdev;
+	काष्ठा xenbus_driver *drv;
+	काष्ठा xen_bus_type *bus;
 
 	DPRINTK("");
 
-	if (dev == NULL)
-		return -ENODEV;
+	अगर (dev == शून्य)
+		वापस -ENODEV;
 
 	xdev = to_xenbus_device(dev);
-	bus = container_of(xdev->dev.bus, struct xen_bus_type, bus);
+	bus = container_of(xdev->dev.bus, काष्ठा xen_bus_type, bus);
 
-	if (add_uevent_var(env, "MODALIAS=xen-backend:%s", xdev->devicetype))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "MODALIAS=xen-backend:%s", xdev->devicetype))
+		वापस -ENOMEM;
 
 	/* stuff we want to pass to /sbin/hotplug */
-	if (add_uevent_var(env, "XENBUS_TYPE=%s", xdev->devicetype))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "XENBUS_TYPE=%s", xdev->devicetype))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "XENBUS_PATH=%s", xdev->nodename))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "XENBUS_PATH=%s", xdev->nodename))
+		वापस -ENOMEM;
 
-	if (add_uevent_var(env, "XENBUS_BASE_PATH=%s", bus->root))
-		return -ENOMEM;
+	अगर (add_uevent_var(env, "XENBUS_BASE_PATH=%s", bus->root))
+		वापस -ENOMEM;
 
-	if (dev->driver) {
+	अगर (dev->driver) अणु
 		drv = to_xenbus_driver(dev->driver);
-		if (drv && drv->uevent)
-			return drv->uevent(xdev, env);
-	}
+		अगर (drv && drv->uevent)
+			वापस drv->uevent(xdev, env);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* backend/<typename>/<frontend-uuid>/<name> */
-static int xenbus_probe_backend_unit(struct xen_bus_type *bus,
-				     const char *dir,
-				     const char *type,
-				     const char *name)
-{
-	char *nodename;
-	int err;
+अटल पूर्णांक xenbus_probe_backend_unit(काष्ठा xen_bus_type *bus,
+				     स्थिर अक्षर *dir,
+				     स्थिर अक्षर *type,
+				     स्थिर अक्षर *name)
+अणु
+	अक्षर *nodename;
+	पूर्णांक err;
 
-	nodename = kasprintf(GFP_KERNEL, "%s/%s", dir, name);
-	if (!nodename)
-		return -ENOMEM;
+	nodename = kaप्र_लिखो(GFP_KERNEL, "%s/%s", dir, name);
+	अगर (!nodename)
+		वापस -ENOMEM;
 
 	DPRINTK("%s\n", nodename);
 
 	err = xenbus_probe_node(bus, type, nodename);
-	kfree(nodename);
-	return err;
-}
+	kमुक्त(nodename);
+	वापस err;
+पूर्ण
 
-/* backend/<typename>/<frontend-domid> */
-static int xenbus_probe_backend(struct xen_bus_type *bus, const char *type,
-				const char *domid)
-{
-	char *nodename;
-	int err = 0;
-	char **dir;
-	unsigned int i, dir_n = 0;
+/* backend/<typename>/<frontend-करोmid> */
+अटल पूर्णांक xenbus_probe_backend(काष्ठा xen_bus_type *bus, स्थिर अक्षर *type,
+				स्थिर अक्षर *करोmid)
+अणु
+	अक्षर *nodename;
+	पूर्णांक err = 0;
+	अक्षर **dir;
+	अचिन्हित पूर्णांक i, dir_n = 0;
 
 	DPRINTK("");
 
-	nodename = kasprintf(GFP_KERNEL, "%s/%s/%s", bus->root, type, domid);
-	if (!nodename)
-		return -ENOMEM;
+	nodename = kaप्र_लिखो(GFP_KERNEL, "%s/%s/%s", bus->root, type, करोmid);
+	अगर (!nodename)
+		वापस -ENOMEM;
 
 	dir = xenbus_directory(XBT_NIL, nodename, "", &dir_n);
-	if (IS_ERR(dir)) {
-		kfree(nodename);
-		return PTR_ERR(dir);
-	}
+	अगर (IS_ERR(dir)) अणु
+		kमुक्त(nodename);
+		वापस PTR_ERR(dir);
+	पूर्ण
 
-	for (i = 0; i < dir_n; i++) {
+	क्रम (i = 0; i < dir_n; i++) अणु
 		err = xenbus_probe_backend_unit(bus, nodename, type, dir[i]);
-		if (err)
-			break;
-	}
-	kfree(dir);
-	kfree(nodename);
-	return err;
-}
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	kमुक्त(dir);
+	kमुक्त(nodename);
+	वापस err;
+पूर्ण
 
-static bool frontend_will_handle(struct xenbus_watch *watch,
-				 const char *path, const char *token)
-{
-	return watch->nr_pending == 0;
-}
+अटल bool frontend_will_handle(काष्ठा xenbus_watch *watch,
+				 स्थिर अक्षर *path, स्थिर अक्षर *token)
+अणु
+	वापस watch->nr_pending == 0;
+पूर्ण
 
-static void frontend_changed(struct xenbus_watch *watch,
-			     const char *path, const char *token)
-{
+अटल व्योम frontend_changed(काष्ठा xenbus_watch *watch,
+			     स्थिर अक्षर *path, स्थिर अक्षर *token)
+अणु
 	xenbus_otherend_changed(watch, path, token, 0);
-}
+पूर्ण
 
-static struct xen_bus_type xenbus_backend = {
+अटल काष्ठा xen_bus_type xenbus_backend = अणु
 	.root = "backend",
 	.levels = 3,		/* backend/type/<frontend>/<id> */
 	.get_bus_id = backend_bus_id,
 	.probe = xenbus_probe_backend,
 	.otherend_will_handle = frontend_will_handle,
 	.otherend_changed = frontend_changed,
-	.bus = {
+	.bus = अणु
 		.name		= "xen-backend",
 		.match		= xenbus_match,
 		.uevent		= xenbus_uevent_backend,
 		.probe		= xenbus_dev_probe,
-		.remove		= xenbus_dev_remove,
+		.हटाओ		= xenbus_dev_हटाओ,
 		.dev_groups	= xenbus_dev_groups,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void backend_changed(struct xenbus_watch *watch,
-			    const char *path, const char *token)
-{
+अटल व्योम backend_changed(काष्ठा xenbus_watch *watch,
+			    स्थिर अक्षर *path, स्थिर अक्षर *token)
+अणु
 	DPRINTK("");
 
 	xenbus_dev_changed(path, &xenbus_backend);
-}
+पूर्ण
 
-static struct xenbus_watch be_watch = {
+अटल काष्ठा xenbus_watch be_watch = अणु
 	.node = "backend",
 	.callback = backend_changed,
-};
+पूर्ण;
 
-static int read_frontend_details(struct xenbus_device *xendev)
-{
-	return xenbus_read_otherend_details(xendev, "frontend-id", "frontend");
-}
+अटल पूर्णांक पढ़ो_frontend_details(काष्ठा xenbus_device *xendev)
+अणु
+	वापस xenbus_पढ़ो_otherend_details(xendev, "frontend-id", "frontend");
+पूर्ण
 
-int xenbus_dev_is_online(struct xenbus_device *dev)
-{
-	return !!xenbus_read_unsigned(dev->nodename, "online", 0);
-}
+पूर्णांक xenbus_dev_is_online(काष्ठा xenbus_device *dev)
+अणु
+	वापस !!xenbus_पढ़ो_अचिन्हित(dev->nodename, "online", 0);
+पूर्ण
 EXPORT_SYMBOL_GPL(xenbus_dev_is_online);
 
-int __xenbus_register_backend(struct xenbus_driver *drv, struct module *owner,
-			      const char *mod_name)
-{
-	drv->read_otherend_details = read_frontend_details;
+पूर्णांक __xenbus_रेजिस्टर_backend(काष्ठा xenbus_driver *drv, काष्ठा module *owner,
+			      स्थिर अक्षर *mod_name)
+अणु
+	drv->पढ़ो_otherend_details = पढ़ो_frontend_details;
 
-	return xenbus_register_driver_common(drv, &xenbus_backend,
+	वापस xenbus_रेजिस्टर_driver_common(drv, &xenbus_backend,
 					     owner, mod_name);
-}
-EXPORT_SYMBOL_GPL(__xenbus_register_backend);
+पूर्ण
+EXPORT_SYMBOL_GPL(__xenbus_रेजिस्टर_backend);
 
-static int backend_probe_and_watch(struct notifier_block *notifier,
-				   unsigned long event,
-				   void *data)
-{
-	/* Enumerate devices in xenstore and watch for changes. */
+अटल पूर्णांक backend_probe_and_watch(काष्ठा notअगरier_block *notअगरier,
+				   अचिन्हित दीर्घ event,
+				   व्योम *data)
+अणु
+	/* Enumerate devices in xenstore and watch क्रम changes. */
 	xenbus_probe_devices(&xenbus_backend);
-	register_xenbus_watch(&be_watch);
+	रेजिस्टर_xenbus_watch(&be_watch);
 
-	return NOTIFY_DONE;
-}
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int backend_reclaim_memory(struct device *dev, void *data)
-{
-	const struct xenbus_driver *drv;
-	struct xenbus_device *xdev;
+अटल पूर्णांक backend_reclaim_memory(काष्ठा device *dev, व्योम *data)
+अणु
+	स्थिर काष्ठा xenbus_driver *drv;
+	काष्ठा xenbus_device *xdev;
 
-	if (!dev->driver)
-		return 0;
+	अगर (!dev->driver)
+		वापस 0;
 	drv = to_xenbus_driver(dev->driver);
-	if (drv && drv->reclaim_memory) {
+	अगर (drv && drv->reclaim_memory) अणु
 		xdev = to_xenbus_device(dev);
-		if (down_trylock(&xdev->reclaim_sem))
-			return 0;
+		अगर (करोwn_trylock(&xdev->reclaim_sem))
+			वापस 0;
 		drv->reclaim_memory(xdev);
 		up(&xdev->reclaim_sem);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
  * Returns 0 always because we are using shrinker to only detect memory
  * pressure.
  */
-static unsigned long backend_shrink_memory_count(struct shrinker *shrinker,
-				struct shrink_control *sc)
-{
-	bus_for_each_dev(&xenbus_backend.bus, NULL, NULL,
+अटल अचिन्हित दीर्घ backend_shrink_memory_count(काष्ठा shrinker *shrinker,
+				काष्ठा shrink_control *sc)
+अणु
+	bus_क्रम_each_dev(&xenbus_backend.bus, शून्य, शून्य,
 			backend_reclaim_memory);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct shrinker backend_memory_shrinker = {
+अटल काष्ठा shrinker backend_memory_shrinker = अणु
 	.count_objects = backend_shrink_memory_count,
 	.seeks = DEFAULT_SEEKS,
-};
+पूर्ण;
 
-static int __init xenbus_probe_backend_init(void)
-{
-	static struct notifier_block xenstore_notifier = {
-		.notifier_call = backend_probe_and_watch
-	};
-	int err;
+अटल पूर्णांक __init xenbus_probe_backend_init(व्योम)
+अणु
+	अटल काष्ठा notअगरier_block xenstore_notअगरier = अणु
+		.notअगरier_call = backend_probe_and_watch
+	पूर्ण;
+	पूर्णांक err;
 
 	DPRINTK("");
 
-	/* Register ourselves with the kernel bus subsystem */
-	err = bus_register(&xenbus_backend.bus);
-	if (err)
-		return err;
+	/* Register ourselves with the kernel bus subप्रणाली */
+	err = bus_रेजिस्टर(&xenbus_backend.bus);
+	अगर (err)
+		वापस err;
 
-	register_xenstore_notifier(&xenstore_notifier);
+	रेजिस्टर_xenstore_notअगरier(&xenstore_notअगरier);
 
-	if (register_shrinker(&backend_memory_shrinker))
+	अगर (रेजिस्टर_shrinker(&backend_memory_shrinker))
 		pr_warn("shrinker registration failed\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(xenbus_probe_backend_init);

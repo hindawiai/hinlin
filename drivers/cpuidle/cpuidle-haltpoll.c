@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * cpuidle driver for haltpoll governor.
+ * cpuidle driver क्रम haltpoll governor.
  *
  * Copyright 2019 Red Hat, Inc. and/or its affiliates.
  *
@@ -10,137 +11,137 @@
  * Authors: Marcelo Tosatti <mtosatti@redhat.com>
  */
 
-#include <linux/init.h>
-#include <linux/cpu.h>
-#include <linux/cpuidle.h>
-#include <linux/module.h>
-#include <linux/sched/idle.h>
-#include <linux/kvm_para.h>
-#include <linux/cpuidle_haltpoll.h>
+#समावेश <linux/init.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/cpuidle.h>
+#समावेश <linux/module.h>
+#समावेश <linux/sched/idle.h>
+#समावेश <linux/kvm_para.h>
+#समावेश <linux/cpuidle_haltpoll.h>
 
-static bool force __read_mostly;
-module_param(force, bool, 0444);
-MODULE_PARM_DESC(force, "Load unconditionally");
+अटल bool क्रमce __पढ़ो_mostly;
+module_param(क्रमce, bool, 0444);
+MODULE_PARM_DESC(क्रमce, "Load unconditionally");
 
-static struct cpuidle_device __percpu *haltpoll_cpuidle_devices;
-static enum cpuhp_state haltpoll_hp_state;
+अटल काष्ठा cpuidle_device __percpu *haltpoll_cpuidle_devices;
+अटल क्रमागत cpuhp_state haltpoll_hp_state;
 
-static int default_enter_idle(struct cpuidle_device *dev,
-			      struct cpuidle_driver *drv, int index)
-{
-	if (current_clr_polling_and_test()) {
+अटल पूर्णांक शेष_enter_idle(काष्ठा cpuidle_device *dev,
+			      काष्ठा cpuidle_driver *drv, पूर्णांक index)
+अणु
+	अगर (current_clr_polling_and_test()) अणु
 		local_irq_enable();
-		return index;
-	}
-	default_idle();
-	return index;
-}
+		वापस index;
+	पूर्ण
+	शेष_idle();
+	वापस index;
+पूर्ण
 
-static struct cpuidle_driver haltpoll_driver = {
+अटल काष्ठा cpuidle_driver haltpoll_driver = अणु
 	.name = "haltpoll",
 	.governor = "haltpoll",
-	.states = {
-		{ /* entry 0 is for polling */ },
-		{
-			.enter			= default_enter_idle,
-			.exit_latency		= 1,
+	.states = अणु
+		अणु /* entry 0 is क्रम polling */ पूर्ण,
+		अणु
+			.enter			= शेष_enter_idle,
+			.निकास_latency		= 1,
 			.target_residency	= 1,
-			.power_usage		= -1,
+			.घातer_usage		= -1,
 			.name			= "haltpoll idle",
 			.desc			= "default architecture idle",
-		},
-	},
+		पूर्ण,
+	पूर्ण,
 	.safe_state_index = 0,
 	.state_count = 2,
-};
+पूर्ण;
 
-static int haltpoll_cpu_online(unsigned int cpu)
-{
-	struct cpuidle_device *dev;
+अटल पूर्णांक haltpoll_cpu_online(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpuidle_device *dev;
 
 	dev = per_cpu_ptr(haltpoll_cpuidle_devices, cpu);
-	if (!dev->registered) {
+	अगर (!dev->रेजिस्टरed) अणु
 		dev->cpu = cpu;
-		if (cpuidle_register_device(dev)) {
+		अगर (cpuidle_रेजिस्टर_device(dev)) अणु
 			pr_notice("cpuidle_register_device %d failed!\n", cpu);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		arch_haltpoll_enable(cpu);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int haltpoll_cpu_offline(unsigned int cpu)
-{
-	struct cpuidle_device *dev;
+अटल पूर्णांक haltpoll_cpu_offline(अचिन्हित पूर्णांक cpu)
+अणु
+	काष्ठा cpuidle_device *dev;
 
 	dev = per_cpu_ptr(haltpoll_cpuidle_devices, cpu);
-	if (dev->registered) {
+	अगर (dev->रेजिस्टरed) अणु
 		arch_haltpoll_disable(cpu);
-		cpuidle_unregister_device(dev);
-	}
+		cpuidle_unरेजिस्टर_device(dev);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void haltpoll_uninit(void)
-{
-	if (haltpoll_hp_state)
-		cpuhp_remove_state(haltpoll_hp_state);
-	cpuidle_unregister_driver(&haltpoll_driver);
+अटल व्योम haltpoll_uninit(व्योम)
+अणु
+	अगर (haltpoll_hp_state)
+		cpuhp_हटाओ_state(haltpoll_hp_state);
+	cpuidle_unरेजिस्टर_driver(&haltpoll_driver);
 
-	free_percpu(haltpoll_cpuidle_devices);
-	haltpoll_cpuidle_devices = NULL;
-}
+	मुक्त_percpu(haltpoll_cpuidle_devices);
+	haltpoll_cpuidle_devices = शून्य;
+पूर्ण
 
-static bool haltpoll_want(void)
-{
-	return kvm_para_has_hint(KVM_HINTS_REALTIME) || force;
-}
+अटल bool haltpoll_want(व्योम)
+अणु
+	वापस kvm_para_has_hपूर्णांक(KVM_HINTS_REALTIME) || क्रमce;
+पूर्ण
 
-static int __init haltpoll_init(void)
-{
-	int ret;
-	struct cpuidle_driver *drv = &haltpoll_driver;
+अटल पूर्णांक __init haltpoll_init(व्योम)
+अणु
+	पूर्णांक ret;
+	काष्ठा cpuidle_driver *drv = &haltpoll_driver;
 
-	/* Do not load haltpoll if idle= is passed */
-	if (boot_option_idle_override != IDLE_NO_OVERRIDE)
-		return -ENODEV;
+	/* Do not load haltpoll अगर idle= is passed */
+	अगर (boot_option_idle_override != IDLE_NO_OVERRIDE)
+		वापस -ENODEV;
 
 	cpuidle_poll_state_init(drv);
 
-	if (!kvm_para_available() || !haltpoll_want())
-		return -ENODEV;
+	अगर (!kvm_para_available() || !haltpoll_want())
+		वापस -ENODEV;
 
-	ret = cpuidle_register_driver(drv);
-	if (ret < 0)
-		return ret;
+	ret = cpuidle_रेजिस्टर_driver(drv);
+	अगर (ret < 0)
+		वापस ret;
 
-	haltpoll_cpuidle_devices = alloc_percpu(struct cpuidle_device);
-	if (haltpoll_cpuidle_devices == NULL) {
-		cpuidle_unregister_driver(drv);
-		return -ENOMEM;
-	}
+	haltpoll_cpuidle_devices = alloc_percpu(काष्ठा cpuidle_device);
+	अगर (haltpoll_cpuidle_devices == शून्य) अणु
+		cpuidle_unरेजिस्टर_driver(drv);
+		वापस -ENOMEM;
+	पूर्ण
 
 	ret = cpuhp_setup_state(CPUHP_AP_ONLINE_DYN, "cpuidle/haltpoll:online",
 				haltpoll_cpu_online, haltpoll_cpu_offline);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		haltpoll_uninit();
-	} else {
+	पूर्ण अन्यथा अणु
 		haltpoll_hp_state = ret;
 		ret = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void __exit haltpoll_exit(void)
-{
+अटल व्योम __निकास haltpoll_निकास(व्योम)
+अणु
 	haltpoll_uninit();
-}
+पूर्ण
 
 module_init(haltpoll_init);
-module_exit(haltpoll_exit);
+module_निकास(haltpoll_निकास);
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Marcelo Tosatti <mtosatti@redhat.com>");

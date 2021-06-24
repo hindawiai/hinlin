@@ -1,28 +1,29 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *  syscore_ops.h - System core operations.
  *
  *  Copyright (C) 2011 Rafael J. Wysocki <rjw@sisk.pl>, Novell Inc.
  */
 
-#ifndef _LINUX_SYSCORE_OPS_H
-#define _LINUX_SYSCORE_OPS_H
+#अगर_अघोषित _LINUX_SYSCORE_OPS_H
+#घोषणा _LINUX_SYSCORE_OPS_H
 
-#include <linux/list.h>
+#समावेश <linux/list.h>
 
-struct syscore_ops {
-	struct list_head node;
-	int (*suspend)(void);
-	void (*resume)(void);
-	void (*shutdown)(void);
-};
+काष्ठा syscore_ops अणु
+	काष्ठा list_head node;
+	पूर्णांक (*suspend)(व्योम);
+	व्योम (*resume)(व्योम);
+	व्योम (*shutकरोwn)(व्योम);
+पूर्ण;
 
-extern void register_syscore_ops(struct syscore_ops *ops);
-extern void unregister_syscore_ops(struct syscore_ops *ops);
-#ifdef CONFIG_PM_SLEEP
-extern int syscore_suspend(void);
-extern void syscore_resume(void);
-#endif
-extern void syscore_shutdown(void);
+बाह्य व्योम रेजिस्टर_syscore_ops(काष्ठा syscore_ops *ops);
+बाह्य व्योम unरेजिस्टर_syscore_ops(काष्ठा syscore_ops *ops);
+#अगर_घोषित CONFIG_PM_SLEEP
+बाह्य पूर्णांक syscore_suspend(व्योम);
+बाह्य व्योम syscore_resume(व्योम);
+#पूर्ण_अगर
+बाह्य व्योम syscore_shutकरोwn(व्योम);
 
-#endif
+#पूर्ण_अगर

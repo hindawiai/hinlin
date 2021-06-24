@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#include <linux/entry-kvm.h>
-#include <linux/kvm_host.h>
+#समावेश <linux/entry-kvm.h>
+#समावेश <linux/kvm_host.h>
 
-static int xfer_to_guest_mode_work(struct kvm_vcpu *vcpu, unsigned long ti_work)
-{
-	do {
-		int ret;
+अटल पूर्णांक xfer_to_guest_mode_work(काष्ठा kvm_vcpu *vcpu, अचिन्हित दीर्घ ti_work)
+अणु
+	करो अणु
+		पूर्णांक ret;
 
-		if (ti_work & _TIF_NOTIFY_SIGNAL)
-			tracehook_notify_signal();
+		अगर (ti_work & _TIF_NOTIFY_SIGNAL)
+			tracehook_notअगरy_संकेत();
 
-		if (ti_work & _TIF_SIGPENDING) {
-			kvm_handle_signal_exit(vcpu);
-			return -EINTR;
-		}
+		अगर (ti_work & _TIF_SIGPENDING) अणु
+			kvm_handle_संकेत_निकास(vcpu);
+			वापस -EINTR;
+		पूर्ण
 
-		if (ti_work & _TIF_NEED_RESCHED)
+		अगर (ti_work & _TIF_NEED_RESCHED)
 			schedule();
 
-		if (ti_work & _TIF_NOTIFY_RESUME)
-			tracehook_notify_resume(NULL);
+		अगर (ti_work & _TIF_NOTIFY_RESUME)
+			tracehook_notअगरy_resume(शून्य);
 
 		ret = arch_xfer_to_guest_mode_handle_work(vcpu, ti_work);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
-		ti_work = READ_ONCE(current_thread_info()->flags);
-	} while (ti_work & XFER_TO_GUEST_MODE_WORK || need_resched());
-	return 0;
-}
+		ti_work = READ_ONCE(current_thपढ़ो_info()->flags);
+	पूर्ण जबतक (ti_work & XFER_TO_GUEST_MODE_WORK || need_resched());
+	वापस 0;
+पूर्ण
 
-int xfer_to_guest_mode_handle_work(struct kvm_vcpu *vcpu)
-{
-	unsigned long ti_work;
+पूर्णांक xfer_to_guest_mode_handle_work(काष्ठा kvm_vcpu *vcpu)
+अणु
+	अचिन्हित दीर्घ ti_work;
 
 	/*
-	 * This is invoked from the outer guest loop with interrupts and
+	 * This is invoked from the outer guest loop with पूर्णांकerrupts and
 	 * preemption enabled.
 	 *
-	 * KVM invokes xfer_to_guest_mode_work_pending() with interrupts
-	 * disabled in the inner loop before going into guest mode. No need
-	 * to disable interrupts here.
+	 * KVM invokes xfer_to_guest_mode_work_pending() with पूर्णांकerrupts
+	 * disabled in the inner loop beक्रमe going पूर्णांकo guest mode. No need
+	 * to disable पूर्णांकerrupts here.
 	 */
-	ti_work = READ_ONCE(current_thread_info()->flags);
-	if (!(ti_work & XFER_TO_GUEST_MODE_WORK))
-		return 0;
+	ti_work = READ_ONCE(current_thपढ़ो_info()->flags);
+	अगर (!(ti_work & XFER_TO_GUEST_MODE_WORK))
+		वापस 0;
 
-	return xfer_to_guest_mode_work(vcpu, ti_work);
-}
+	वापस xfer_to_guest_mode_work(vcpu, ti_work);
+पूर्ण
 EXPORT_SYMBOL_GPL(xfer_to_guest_mode_handle_work);

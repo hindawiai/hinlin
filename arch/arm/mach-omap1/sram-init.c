@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * OMAP SRAM detection and management
  *
@@ -6,68 +7,68 @@
  * Written by Tony Lindgren <tony@atomide.com>
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/io.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पन.स>
 
-#include <asm/fncpy.h>
-#include <asm/tlb.h>
-#include <asm/cacheflush.h>
+#समावेश <यंत्र/fncpy.h>
+#समावेश <यंत्र/tlb.h>
+#समावेश <यंत्र/cacheflush.h>
 
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include "soc.h"
-#include "sram.h"
+#समावेश "soc.h"
+#समावेश "sram.h"
 
-#define OMAP1_SRAM_PA		0x20000000
-#define SRAM_BOOTLOADER_SZ	0x80
+#घोषणा OMAP1_SRAM_PA		0x20000000
+#घोषणा SRAM_BOOTLOADER_SZ	0x80
 
 /*
  * The amount of SRAM depends on the core type.
- * Note that we cannot try to test for SRAM here because writes
- * to secure SRAM will hang the system. Also the SRAM is not
- * yet mapped at this point.
+ * Note that we cannot try to test क्रम SRAM here because ग_लिखोs
+ * to secure SRAM will hang the प्रणाली. Also the SRAM is not
+ * yet mapped at this poपूर्णांक.
  */
-static void __init omap_detect_and_map_sram(void)
-{
-	unsigned long omap_sram_skip = SRAM_BOOTLOADER_SZ;
-	unsigned long omap_sram_start = OMAP1_SRAM_PA;
-	unsigned long omap_sram_size;
+अटल व्योम __init omap_detect_and_map_sram(व्योम)
+अणु
+	अचिन्हित दीर्घ omap_sram_skip = SRAM_BOOTLOADER_SZ;
+	अचिन्हित दीर्घ omap_sram_start = OMAP1_SRAM_PA;
+	अचिन्हित दीर्घ omap_sram_size;
 
-	if (cpu_is_omap7xx())
+	अगर (cpu_is_omap7xx())
 		omap_sram_size = 0x32000;	/* 200K */
-	else if (cpu_is_omap15xx())
+	अन्यथा अगर (cpu_is_omap15xx())
 		omap_sram_size = 0x30000;	/* 192K */
-	else if (cpu_is_omap1610() || cpu_is_omap1611() ||
+	अन्यथा अगर (cpu_is_omap1610() || cpu_is_omap1611() ||
 			cpu_is_omap1621() || cpu_is_omap1710())
 		omap_sram_size = 0x4000;	/* 16K */
-	else {
+	अन्यथा अणु
 		pr_err("Could not detect SRAM size\n");
 		omap_sram_size = 0x4000;
-	}
+	पूर्ण
 
 	omap_map_sram(omap_sram_start, omap_sram_size,
 		omap_sram_skip, 1);
-}
+पूर्ण
 
-static void (*_omap_sram_reprogram_clock)(u32 dpllctl, u32 ckctl);
+अटल व्योम (*_omap_sram_reprogram_घड़ी)(u32 dpllctl, u32 ckctl);
 
-void omap_sram_reprogram_clock(u32 dpllctl, u32 ckctl)
-{
-	BUG_ON(!_omap_sram_reprogram_clock);
+व्योम omap_sram_reprogram_घड़ी(u32 dpllctl, u32 ckctl)
+अणु
+	BUG_ON(!_omap_sram_reprogram_घड़ी);
 	/* On 730, bit 13 must always be 1 */
-	if (cpu_is_omap7xx())
+	अगर (cpu_is_omap7xx())
 		ckctl |= 0x2000;
-	_omap_sram_reprogram_clock(dpllctl, ckctl);
-}
+	_omap_sram_reprogram_घड़ी(dpllctl, ckctl);
+पूर्ण
 
-int __init omap_sram_init(void)
-{
+पूर्णांक __init omap_sram_init(व्योम)
+अणु
 	omap_detect_and_map_sram();
-	_omap_sram_reprogram_clock =
-			omap_sram_push(omap1_sram_reprogram_clock,
-					omap1_sram_reprogram_clock_sz);
+	_omap_sram_reprogram_घड़ी =
+			omap_sram_push(omap1_sram_reprogram_घड़ी,
+					omap1_sram_reprogram_घड़ी_sz);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

@@ -1,17 +1,18 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_MMU_CONTEXT_H
-#define _LINUX_MMU_CONTEXT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_MMU_CONTEXT_H
+#घोषणा _LINUX_MMU_CONTEXT_H
 
-#include <asm/mmu_context.h>
-#include <asm/mmu.h>
+#समावेश <यंत्र/mmu_context.h>
+#समावेश <यंत्र/mmu.h>
 
-/* Architectures that care about IRQ state in switch_mm can override this. */
-#ifndef switch_mm_irqs_off
-# define switch_mm_irqs_off switch_mm
-#endif
+/* Architectures that care about IRQ state in चयन_mm can override this. */
+#अगर_अघोषित चयन_mm_irqs_off
+# define चयन_mm_irqs_off चयन_mm
+#पूर्ण_अगर
 
-#ifndef leave_mm
-static inline void leave_mm(int cpu) { }
-#endif
+#अगर_अघोषित leave_mm
+अटल अंतरभूत व्योम leave_mm(पूर्णांक cpu) अणु पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

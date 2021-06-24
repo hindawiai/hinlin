@@ -1,96 +1,97 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
  */
 
-#include <linux/clk-provider.h>
-#include <linux/err.h>
-#include <linux/io.h>
-#include <linux/slab.h>
-#include "clk.h"
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/err.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/slab.h>
+#समावेश "clk.h"
 
 /**
- * struct clk_gate_exclusive - i.MX specific gate clock which is mutually
- * exclusive with other gate clocks
+ * काष्ठा clk_gate_exclusive - i.MX specअगरic gate घड़ी which is mutually
+ * exclusive with other gate घड़ीs
  *
  * @gate: the parent class
  * @exclusive_mask: mask of gate bits which are mutually exclusive to this
- *	gate clock
+ *	gate घड़ी
  *
- * The imx exclusive gate clock is a subclass of basic clk_gate
+ * The imx exclusive gate घड़ी is a subclass of basic clk_gate
  * with an addtional mask to indicate which other gate bits in the same
- * register is mutually exclusive to this gate clock.
+ * रेजिस्टर is mutually exclusive to this gate घड़ी.
  */
-struct clk_gate_exclusive {
-	struct clk_gate gate;
+काष्ठा clk_gate_exclusive अणु
+	काष्ठा clk_gate gate;
 	u32 exclusive_mask;
-};
+पूर्ण;
 
-static int clk_gate_exclusive_enable(struct clk_hw *hw)
-{
-	struct clk_gate *gate = to_clk_gate(hw);
-	struct clk_gate_exclusive *exgate = container_of(gate,
-					struct clk_gate_exclusive, gate);
-	u32 val = readl(gate->reg);
+अटल पूर्णांक clk_gate_exclusive_enable(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा clk_gate *gate = to_clk_gate(hw);
+	काष्ठा clk_gate_exclusive *exgate = container_of(gate,
+					काष्ठा clk_gate_exclusive, gate);
+	u32 val = पढ़ोl(gate->reg);
 
-	if (val & exgate->exclusive_mask)
-		return -EBUSY;
+	अगर (val & exgate->exclusive_mask)
+		वापस -EBUSY;
 
-	return clk_gate_ops.enable(hw);
-}
+	वापस clk_gate_ops.enable(hw);
+पूर्ण
 
-static void clk_gate_exclusive_disable(struct clk_hw *hw)
-{
+अटल व्योम clk_gate_exclusive_disable(काष्ठा clk_hw *hw)
+अणु
 	clk_gate_ops.disable(hw);
-}
+पूर्ण
 
-static int clk_gate_exclusive_is_enabled(struct clk_hw *hw)
-{
-	return clk_gate_ops.is_enabled(hw);
-}
+अटल पूर्णांक clk_gate_exclusive_is_enabled(काष्ठा clk_hw *hw)
+अणु
+	वापस clk_gate_ops.is_enabled(hw);
+पूर्ण
 
-static const struct clk_ops clk_gate_exclusive_ops = {
+अटल स्थिर काष्ठा clk_ops clk_gate_exclusive_ops = अणु
 	.enable = clk_gate_exclusive_enable,
 	.disable = clk_gate_exclusive_disable,
 	.is_enabled = clk_gate_exclusive_is_enabled,
-};
+पूर्ण;
 
-struct clk_hw *imx_clk_hw_gate_exclusive(const char *name, const char *parent,
-	 void __iomem *reg, u8 shift, u32 exclusive_mask)
-{
-	struct clk_gate_exclusive *exgate;
-	struct clk_gate *gate;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+काष्ठा clk_hw *imx_clk_hw_gate_exclusive(स्थिर अक्षर *name, स्थिर अक्षर *parent,
+	 व्योम __iomem *reg, u8 shअगरt, u32 exclusive_mask)
+अणु
+	काष्ठा clk_gate_exclusive *exgate;
+	काष्ठा clk_gate *gate;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	if (exclusive_mask == 0)
-		return ERR_PTR(-EINVAL);
+	अगर (exclusive_mask == 0)
+		वापस ERR_PTR(-EINVAL);
 
-	exgate = kzalloc(sizeof(*exgate), GFP_KERNEL);
-	if (!exgate)
-		return ERR_PTR(-ENOMEM);
+	exgate = kzalloc(माप(*exgate), GFP_KERNEL);
+	अगर (!exgate)
+		वापस ERR_PTR(-ENOMEM);
 	gate = &exgate->gate;
 
 	init.name = name;
 	init.ops = &clk_gate_exclusive_ops;
 	init.flags = CLK_SET_RATE_PARENT;
-	init.parent_names = parent ? &parent : NULL;
+	init.parent_names = parent ? &parent : शून्य;
 	init.num_parents = parent ? 1 : 0;
 
 	gate->reg = reg;
-	gate->bit_idx = shift;
+	gate->bit_idx = shअगरt;
 	gate->lock = &imx_ccm_lock;
 	gate->hw.init = &init;
 	exgate->exclusive_mask = exclusive_mask;
 
 	hw = &gate->hw;
 
-	ret = clk_hw_register(NULL, hw);
-	if (ret) {
-		kfree(gate);
-		return ERR_PTR(ret);
-	}
+	ret = clk_hw_रेजिस्टर(शून्य, hw);
+	अगर (ret) अणु
+		kमुक्त(gate);
+		वापस ERR_PTR(ret);
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण

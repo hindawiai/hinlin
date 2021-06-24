@@ -1,87 +1,88 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (c) 1997, 1999 by Ralf Baechle
  * Copyright (c) 1999 Silicon Graphics, Inc.
  */
-#ifndef _ASM_BCACHE_H
-#define _ASM_BCACHE_H
+#अगर_अघोषित _ASM_BCACHE_H
+#घोषणा _ASM_BCACHE_H
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
 /* Some R4000 / R4400 / R4600 / R5000 machines may have a non-dma-coherent,
-   chipset implemented caches.	On machines with other CPUs the CPU does the
+   chipset implemented caches.	On machines with other CPUs the CPU करोes the
    cache thing itself. */
-struct bcache_ops {
-	void (*bc_enable)(void);
-	void (*bc_disable)(void);
-	void (*bc_wback_inv)(unsigned long page, unsigned long size);
-	void (*bc_inv)(unsigned long page, unsigned long size);
-	void (*bc_prefetch_enable)(void);
-	void (*bc_prefetch_disable)(void);
-	bool (*bc_prefetch_is_enabled)(void);
-};
+काष्ठा bcache_ops अणु
+	व्योम (*bc_enable)(व्योम);
+	व्योम (*bc_disable)(व्योम);
+	व्योम (*bc_wback_inv)(अचिन्हित दीर्घ page, अचिन्हित दीर्घ size);
+	व्योम (*bc_inv)(अचिन्हित दीर्घ page, अचिन्हित दीर्घ size);
+	व्योम (*bc_prefetch_enable)(व्योम);
+	व्योम (*bc_prefetch_disable)(व्योम);
+	bool (*bc_prefetch_is_enabled)(व्योम);
+पूर्ण;
 
-extern void indy_sc_init(void);
+बाह्य व्योम indy_sc_init(व्योम);
 
-#ifdef CONFIG_BOARD_SCACHE
+#अगर_घोषित CONFIG_BOARD_SCACHE
 
-extern struct bcache_ops *bcops;
+बाह्य काष्ठा bcache_ops *bcops;
 
-static inline void bc_enable(void)
-{
+अटल अंतरभूत व्योम bc_enable(व्योम)
+अणु
 	bcops->bc_enable();
-}
+पूर्ण
 
-static inline void bc_disable(void)
-{
+अटल अंतरभूत व्योम bc_disable(व्योम)
+अणु
 	bcops->bc_disable();
-}
+पूर्ण
 
-static inline void bc_wback_inv(unsigned long page, unsigned long size)
-{
+अटल अंतरभूत व्योम bc_wback_inv(अचिन्हित दीर्घ page, अचिन्हित दीर्घ size)
+अणु
 	bcops->bc_wback_inv(page, size);
-}
+पूर्ण
 
-static inline void bc_inv(unsigned long page, unsigned long size)
-{
+अटल अंतरभूत व्योम bc_inv(अचिन्हित दीर्घ page, अचिन्हित दीर्घ size)
+अणु
 	bcops->bc_inv(page, size);
-}
+पूर्ण
 
-static inline void bc_prefetch_enable(void)
-{
-	if (bcops->bc_prefetch_enable)
+अटल अंतरभूत व्योम bc_prefetch_enable(व्योम)
+अणु
+	अगर (bcops->bc_prefetch_enable)
 		bcops->bc_prefetch_enable();
-}
+पूर्ण
 
-static inline void bc_prefetch_disable(void)
-{
-	if (bcops->bc_prefetch_disable)
+अटल अंतरभूत व्योम bc_prefetch_disable(व्योम)
+अणु
+	अगर (bcops->bc_prefetch_disable)
 		bcops->bc_prefetch_disable();
-}
+पूर्ण
 
-static inline bool bc_prefetch_is_enabled(void)
-{
-	if (bcops->bc_prefetch_is_enabled)
-		return bcops->bc_prefetch_is_enabled();
+अटल अंतरभूत bool bc_prefetch_is_enabled(व्योम)
+अणु
+	अगर (bcops->bc_prefetch_is_enabled)
+		वापस bcops->bc_prefetch_is_enabled();
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-#else /* !defined(CONFIG_BOARD_SCACHE) */
+#अन्यथा /* !defined(CONFIG_BOARD_SCACHE) */
 
 /* Not R4000 / R4400 / R4600 / R5000.  */
 
-#define bc_enable() do { } while (0)
-#define bc_disable() do { } while (0)
-#define bc_wback_inv(page, size) do { } while (0)
-#define bc_inv(page, size) do { } while (0)
-#define bc_prefetch_enable() do { } while (0)
-#define bc_prefetch_disable() do { } while (0)
-#define bc_prefetch_is_enabled() 0
+#घोषणा bc_enable() करो अणु पूर्ण जबतक (0)
+#घोषणा bc_disable() करो अणु पूर्ण जबतक (0)
+#घोषणा bc_wback_inv(page, size) करो अणु पूर्ण जबतक (0)
+#घोषणा bc_inv(page, size) करो अणु पूर्ण जबतक (0)
+#घोषणा bc_prefetch_enable() करो अणु पूर्ण जबतक (0)
+#घोषणा bc_prefetch_disable() करो अणु पूर्ण जबतक (0)
+#घोषणा bc_prefetch_is_enabled() 0
 
-#endif /* !defined(CONFIG_BOARD_SCACHE) */
+#पूर्ण_अगर /* !defined(CONFIG_BOARD_SCACHE) */
 
-#endif /* _ASM_BCACHE_H */
+#पूर्ण_अगर /* _ASM_BCACHE_H */

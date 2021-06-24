@@ -1,122 +1,123 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: MIT
+ * SPDX-License-Identअगरier: MIT
  *
- * Copyright © 2016 Intel Corporation
+ * Copyright तऊ 2016 Intel Corporation
  */
 
-#include "display/intel_frontbuffer.h"
+#समावेश "display/intel_frontbuffer.h"
 
-#include "i915_drv.h"
-#include "i915_gem_clflush.h"
-#include "i915_sw_fence_work.h"
-#include "i915_trace.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_gem_clflush.h"
+#समावेश "i915_sw_fence_work.h"
+#समावेश "i915_trace.h"
 
-struct clflush {
-	struct dma_fence_work base;
-	struct drm_i915_gem_object *obj;
-};
+काष्ठा clflush अणु
+	काष्ठा dma_fence_work base;
+	काष्ठा drm_i915_gem_object *obj;
+पूर्ण;
 
-static void __do_clflush(struct drm_i915_gem_object *obj)
-{
+अटल व्योम __करो_clflush(काष्ठा drm_i915_gem_object *obj)
+अणु
 	GEM_BUG_ON(!i915_gem_object_has_pages(obj));
 	drm_clflush_sg(obj->mm.pages);
 
 	i915_gem_object_flush_frontbuffer(obj, ORIGIN_CPU);
-}
+पूर्ण
 
-static int clflush_work(struct dma_fence_work *base)
-{
-	struct clflush *clflush = container_of(base, typeof(*clflush), base);
+अटल पूर्णांक clflush_work(काष्ठा dma_fence_work *base)
+अणु
+	काष्ठा clflush *clflush = container_of(base, typeof(*clflush), base);
 
-	__do_clflush(clflush->obj);
+	__करो_clflush(clflush->obj);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void clflush_release(struct dma_fence_work *base)
-{
-	struct clflush *clflush = container_of(base, typeof(*clflush), base);
+अटल व्योम clflush_release(काष्ठा dma_fence_work *base)
+अणु
+	काष्ठा clflush *clflush = container_of(base, typeof(*clflush), base);
 
 	i915_gem_object_unpin_pages(clflush->obj);
 	i915_gem_object_put(clflush->obj);
-}
+पूर्ण
 
-static const struct dma_fence_work_ops clflush_ops = {
+अटल स्थिर काष्ठा dma_fence_work_ops clflush_ops = अणु
 	.name = "clflush",
 	.work = clflush_work,
 	.release = clflush_release,
-};
+पूर्ण;
 
-static struct clflush *clflush_work_create(struct drm_i915_gem_object *obj)
-{
-	struct clflush *clflush;
+अटल काष्ठा clflush *clflush_work_create(काष्ठा drm_i915_gem_object *obj)
+अणु
+	काष्ठा clflush *clflush;
 
 	GEM_BUG_ON(!obj->cache_dirty);
 
-	clflush = kmalloc(sizeof(*clflush), GFP_KERNEL);
-	if (!clflush)
-		return NULL;
+	clflush = kदो_स्मृति(माप(*clflush), GFP_KERNEL);
+	अगर (!clflush)
+		वापस शून्य;
 
-	if (__i915_gem_object_get_pages(obj) < 0) {
-		kfree(clflush);
-		return NULL;
-	}
+	अगर (__i915_gem_object_get_pages(obj) < 0) अणु
+		kमुक्त(clflush);
+		वापस शून्य;
+	पूर्ण
 
 	dma_fence_work_init(&clflush->base, &clflush_ops);
 	clflush->obj = i915_gem_object_get(obj); /* obj <-> clflush cycle */
 
-	return clflush;
-}
+	वापस clflush;
+पूर्ण
 
-bool i915_gem_clflush_object(struct drm_i915_gem_object *obj,
-			     unsigned int flags)
-{
-	struct clflush *clflush;
+bool i915_gem_clflush_object(काष्ठा drm_i915_gem_object *obj,
+			     अचिन्हित पूर्णांक flags)
+अणु
+	काष्ठा clflush *clflush;
 
-	assert_object_held(obj);
+	निश्चित_object_held(obj);
 
 	/*
 	 * Stolen memory is always coherent with the GPU as it is explicitly
-	 * marked as wc by the system, or the system is cache-coherent.
-	 * Similarly, we only access struct pages through the CPU cache, so
+	 * marked as wc by the प्रणाली, or the प्रणाली is cache-coherent.
+	 * Similarly, we only access काष्ठा pages through the CPU cache, so
 	 * anything not backed by physical memory we consider to be always
 	 * coherent and not need clflushing.
 	 */
-	if (!i915_gem_object_has_struct_page(obj)) {
+	अगर (!i915_gem_object_has_काष्ठा_page(obj)) अणु
 		obj->cache_dirty = false;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	/* If the GPU is snooping the contents of the CPU cache,
-	 * we do not need to manually clear the CPU cache lines.  However,
+	 * we करो not need to manually clear the CPU cache lines.  However,
 	 * the caches are only snooped when the render cache is
 	 * flushed/invalidated.  As we always have to emit invalidations
-	 * and flushes when moving into and out of the RENDER domain, correct
-	 * snooping behaviour occurs naturally as the result of our domain
+	 * and flushes when moving पूर्णांकo and out of the RENDER करोमुख्य, correct
+	 * snooping behaviour occurs naturally as the result of our करोमुख्य
 	 * tracking.
 	 */
-	if (!(flags & I915_CLFLUSH_FORCE) &&
+	अगर (!(flags & I915_CLFLUSH_FORCE) &&
 	    obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_READ)
-		return false;
+		वापस false;
 
 	trace_i915_gem_object_clflush(obj);
 
-	clflush = NULL;
-	if (!(flags & I915_CLFLUSH_SYNC))
+	clflush = शून्य;
+	अगर (!(flags & I915_CLFLUSH_SYNC))
 		clflush = clflush_work_create(obj);
-	if (clflush) {
-		i915_sw_fence_await_reservation(&clflush->base.chain,
-						obj->base.resv, NULL, true,
-						i915_fence_timeout(to_i915(obj->base.dev)),
+	अगर (clflush) अणु
+		i915_sw_fence_aरुको_reservation(&clflush->base.chain,
+						obj->base.resv, शून्य, true,
+						i915_fence_समयout(to_i915(obj->base.dev)),
 						I915_FENCE_GFP);
 		dma_resv_add_excl_fence(obj->base.resv, &clflush->base.dma);
 		dma_fence_work_commit(&clflush->base);
-	} else if (obj->mm.pages) {
-		__do_clflush(obj);
-	} else {
-		GEM_BUG_ON(obj->write_domain != I915_GEM_DOMAIN_CPU);
-	}
+	पूर्ण अन्यथा अगर (obj->mm.pages) अणु
+		__करो_clflush(obj);
+	पूर्ण अन्यथा अणु
+		GEM_BUG_ON(obj->ग_लिखो_करोमुख्य != I915_GEM_DOMAIN_CPU);
+	पूर्ण
 
 	obj->cache_dirty = false;
-	return true;
-}
+	वापस true;
+पूर्ण

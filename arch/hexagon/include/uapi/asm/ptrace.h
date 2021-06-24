@@ -1,45 +1,46 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
- * Ptrace definitions for the Hexagon architecture
+ * Ptrace definitions क्रम the Hexagon architecture
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 and
  * only version 2 as published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * aदीर्घ with this program; अगर not, ग_लिखो to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fअगरth Floor, Boston, MA
  * 02110-1301, USA.
  */
 
-#ifndef _ASM_PTRACE_H
-#define _ASM_PTRACE_H
+#अगर_अघोषित _ASM_PTRACE_H
+#घोषणा _ASM_PTRACE_H
 
-#include <asm/registers.h>
+#समावेश <यंत्र/रेजिस्टरs.h>
 
-#define instruction_pointer(regs) pt_elr(regs)
-#define user_stack_pointer(regs) ((regs)->r29)
+#घोषणा inकाष्ठाion_poपूर्णांकer(regs) pt_elr(regs)
+#घोषणा user_stack_poपूर्णांकer(regs) ((regs)->r29)
 
-#define profile_pc(regs) instruction_pointer(regs)
+#घोषणा profile_pc(regs) inकाष्ठाion_poपूर्णांकer(regs)
 
 /* kprobe-based event tracer support */
-extern int regs_query_register_offset(const char *name);
-extern const char *regs_query_register_name(unsigned int offset);
+बाह्य पूर्णांक regs_query_रेजिस्टर_offset(स्थिर अक्षर *name);
+बाह्य स्थिर अक्षर *regs_query_रेजिस्टर_name(अचिन्हित पूर्णांक offset);
 
-#define current_pt_regs() \
-	((struct pt_regs *) \
-	 ((unsigned long)current_thread_info() + THREAD_SIZE) - 1)
+#घोषणा current_pt_regs() \
+	((काष्ठा pt_regs *) \
+	 ((अचिन्हित दीर्घ)current_thपढ़ो_info() + THREAD_SIZE) - 1)
 
-#if CONFIG_HEXAGON_ARCH_VERSION >= 4
-#define arch_has_single_step()	(1)
-#endif
+#अगर CONFIG_HEXAGON_ARCH_VERSION >= 4
+#घोषणा arch_has_single_step()	(1)
+#पूर्ण_अगर
 
 
-#endif
+#पूर्ण_अगर

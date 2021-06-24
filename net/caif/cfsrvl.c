@@ -1,169 +1,170 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) ST-Ericsson AB 2010
  * Author:	Sjur Brendeland
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ":%s(): " fmt, __func__
 
-#include <linux/kernel.h>
-#include <linux/types.h>
-#include <linux/errno.h>
-#include <linux/slab.h>
-#include <linux/module.h>
-#include <linux/pkt_sched.h>
-#include <net/caif/caif_layer.h>
-#include <net/caif/cfsrvl.h>
-#include <net/caif/cfpkt.h>
-#include <net/caif/caif_dev.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/pkt_sched.h>
+#समावेश <net/caअगर/caअगर_layer.h>
+#समावेश <net/caअगर/cfsrvl.h>
+#समावेश <net/caअगर/cfpkt.h>
+#समावेश <net/caअगर/caअगर_dev.h>
 
-#define SRVL_CTRL_PKT_SIZE 1
-#define SRVL_FLOW_OFF 0x81
-#define SRVL_FLOW_ON  0x80
-#define SRVL_SET_PIN  0x82
+#घोषणा SRVL_CTRL_PKT_SIZE 1
+#घोषणा SRVL_FLOW_OFF 0x81
+#घोषणा SRVL_FLOW_ON  0x80
+#घोषणा SRVL_SET_PIN  0x82
 
-#define container_obj(layr) container_of(layr, struct cfsrvl, layer)
+#घोषणा container_obj(layr) container_of(layr, काष्ठा cfsrvl, layer)
 
-static void cfservl_ctrlcmd(struct cflayer *layr, enum caif_ctrlcmd ctrl,
-			    int phyid)
-{
-	struct cfsrvl *service = container_obj(layr);
+अटल व्योम cfservl_ctrlcmd(काष्ठा cflayer *layr, क्रमागत caअगर_ctrlcmd ctrl,
+			    पूर्णांक phyid)
+अणु
+	काष्ठा cfsrvl *service = container_obj(layr);
 
-	if (layr->up == NULL || layr->up->ctrlcmd == NULL)
-		return;
+	अगर (layr->up == शून्य || layr->up->ctrlcmd == शून्य)
+		वापस;
 
-	switch (ctrl) {
-	case CAIF_CTRLCMD_INIT_RSP:
-		service->open = true;
+	चयन (ctrl) अणु
+	हाल CAIF_CTRLCMD_INIT_RSP:
+		service->खोलो = true;
 		layr->up->ctrlcmd(layr->up, ctrl, phyid);
-		break;
-	case CAIF_CTRLCMD_DEINIT_RSP:
-	case CAIF_CTRLCMD_INIT_FAIL_RSP:
-		service->open = false;
+		अवरोध;
+	हाल CAIF_CTRLCMD_DEINIT_RSP:
+	हाल CAIF_CTRLCMD_INIT_FAIL_RSP:
+		service->खोलो = false;
 		layr->up->ctrlcmd(layr->up, ctrl, phyid);
-		break;
-	case _CAIF_CTRLCMD_PHYIF_FLOW_OFF_IND:
-		if (phyid != service->dev_info.id)
-			break;
-		if (service->modem_flow_on)
+		अवरोध;
+	हाल _CAIF_CTRLCMD_PHYIF_FLOW_OFF_IND:
+		अगर (phyid != service->dev_info.id)
+			अवरोध;
+		अगर (service->modem_flow_on)
 			layr->up->ctrlcmd(layr->up,
 					  CAIF_CTRLCMD_FLOW_OFF_IND, phyid);
 		service->phy_flow_on = false;
-		break;
-	case _CAIF_CTRLCMD_PHYIF_FLOW_ON_IND:
-		if (phyid != service->dev_info.id)
-			return;
-		if (service->modem_flow_on) {
+		अवरोध;
+	हाल _CAIF_CTRLCMD_PHYIF_FLOW_ON_IND:
+		अगर (phyid != service->dev_info.id)
+			वापस;
+		अगर (service->modem_flow_on) अणु
 			layr->up->ctrlcmd(layr->up,
 					   CAIF_CTRLCMD_FLOW_ON_IND,
 					   phyid);
-		}
+		पूर्ण
 		service->phy_flow_on = true;
-		break;
-	case CAIF_CTRLCMD_FLOW_OFF_IND:
-		if (service->phy_flow_on) {
+		अवरोध;
+	हाल CAIF_CTRLCMD_FLOW_OFF_IND:
+		अगर (service->phy_flow_on) अणु
 			layr->up->ctrlcmd(layr->up,
 					  CAIF_CTRLCMD_FLOW_OFF_IND, phyid);
-		}
+		पूर्ण
 		service->modem_flow_on = false;
-		break;
-	case CAIF_CTRLCMD_FLOW_ON_IND:
-		if (service->phy_flow_on) {
+		अवरोध;
+	हाल CAIF_CTRLCMD_FLOW_ON_IND:
+		अगर (service->phy_flow_on) अणु
 			layr->up->ctrlcmd(layr->up,
 					  CAIF_CTRLCMD_FLOW_ON_IND, phyid);
-		}
+		पूर्ण
 		service->modem_flow_on = true;
-		break;
-	case _CAIF_CTRLCMD_PHYIF_DOWN_IND:
-		/* In case interface is down, let's fake a remove shutdown */
+		अवरोध;
+	हाल _CAIF_CTRLCMD_PHYIF_DOWN_IND:
+		/* In हाल पूर्णांकerface is करोwn, let's fake a हटाओ shutकरोwn */
 		layr->up->ctrlcmd(layr->up,
 				CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND, phyid);
-		break;
-	case CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND:
+		अवरोध;
+	हाल CAIF_CTRLCMD_REMOTE_SHUTDOWN_IND:
 		layr->up->ctrlcmd(layr->up, ctrl, phyid);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("Unexpected ctrl in cfsrvl (%d)\n", ctrl);
 		/* We have both modem and phy flow on, send flow on */
 		layr->up->ctrlcmd(layr->up, ctrl, phyid);
 		service->phy_flow_on = true;
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int cfservl_modemcmd(struct cflayer *layr, enum caif_modemcmd ctrl)
-{
-	struct cfsrvl *service = container_obj(layr);
+अटल पूर्णांक cfservl_modemcmd(काष्ठा cflayer *layr, क्रमागत caअगर_modemcmd ctrl)
+अणु
+	काष्ठा cfsrvl *service = container_obj(layr);
 
-	caif_assert(layr != NULL);
-	caif_assert(layr->dn != NULL);
-	caif_assert(layr->dn->transmit != NULL);
+	caअगर_निश्चित(layr != शून्य);
+	caअगर_निश्चित(layr->dn != शून्य);
+	caअगर_निश्चित(layr->dn->transmit != शून्य);
 
-	if (!service->supports_flowctrl)
-		return 0;
+	अगर (!service->supports_flowctrl)
+		वापस 0;
 
-	switch (ctrl) {
-	case CAIF_MODEMCMD_FLOW_ON_REQ:
-		{
-			struct cfpkt *pkt;
-			struct caif_payload_info *info;
+	चयन (ctrl) अणु
+	हाल CAIF_MODEMCMD_FLOW_ON_REQ:
+		अणु
+			काष्ठा cfpkt *pkt;
+			काष्ठा caअगर_payload_info *info;
 			u8 flow_on = SRVL_FLOW_ON;
 			pkt = cfpkt_create(SRVL_CTRL_PKT_SIZE);
-			if (!pkt)
-				return -ENOMEM;
+			अगर (!pkt)
+				वापस -ENOMEM;
 
-			if (cfpkt_add_head(pkt, &flow_on, 1) < 0) {
+			अगर (cfpkt_add_head(pkt, &flow_on, 1) < 0) अणु
 				pr_err("Packet is erroneous!\n");
 				cfpkt_destroy(pkt);
-				return -EPROTO;
-			}
+				वापस -EPROTO;
+			पूर्ण
 			info = cfpkt_info(pkt);
 			info->channel_id = service->layer.id;
 			info->hdr_len = 1;
 			info->dev_info = &service->dev_info;
 			cfpkt_set_prio(pkt, TC_PRIO_CONTROL);
-			return layr->dn->transmit(layr->dn, pkt);
-		}
-	case CAIF_MODEMCMD_FLOW_OFF_REQ:
-		{
-			struct cfpkt *pkt;
-			struct caif_payload_info *info;
+			वापस layr->dn->transmit(layr->dn, pkt);
+		पूर्ण
+	हाल CAIF_MODEMCMD_FLOW_OFF_REQ:
+		अणु
+			काष्ठा cfpkt *pkt;
+			काष्ठा caअगर_payload_info *info;
 			u8 flow_off = SRVL_FLOW_OFF;
 			pkt = cfpkt_create(SRVL_CTRL_PKT_SIZE);
-			if (!pkt)
-				return -ENOMEM;
+			अगर (!pkt)
+				वापस -ENOMEM;
 
-			if (cfpkt_add_head(pkt, &flow_off, 1) < 0) {
+			अगर (cfpkt_add_head(pkt, &flow_off, 1) < 0) अणु
 				pr_err("Packet is erroneous!\n");
 				cfpkt_destroy(pkt);
-				return -EPROTO;
-			}
+				वापस -EPROTO;
+			पूर्ण
 			info = cfpkt_info(pkt);
 			info->channel_id = service->layer.id;
 			info->hdr_len = 1;
 			info->dev_info = &service->dev_info;
 			cfpkt_set_prio(pkt, TC_PRIO_CONTROL);
-			return layr->dn->transmit(layr->dn, pkt);
-		}
-	default:
-	  break;
-	}
-	return -EINVAL;
-}
+			वापस layr->dn->transmit(layr->dn, pkt);
+		पूर्ण
+	शेष:
+	  अवरोध;
+	पूर्ण
+	वापस -EINVAL;
+पूर्ण
 
-static void cfsrvl_release(struct cflayer *layer)
-{
-	struct cfsrvl *service = container_of(layer, struct cfsrvl, layer);
-	kfree(service);
-}
+अटल व्योम cfsrvl_release(काष्ठा cflayer *layer)
+अणु
+	काष्ठा cfsrvl *service = container_of(layer, काष्ठा cfsrvl, layer);
+	kमुक्त(service);
+पूर्ण
 
-void cfsrvl_init(struct cfsrvl *service,
+व्योम cfsrvl_init(काष्ठा cfsrvl *service,
 		 u8 channel_id,
-		 struct dev_info *dev_info,
+		 काष्ठा dev_info *dev_info,
 		 bool supports_flowctrl)
-{
-	caif_assert(offsetof(struct cfsrvl, layer) == 0);
-	service->open = false;
+अणु
+	caअगर_निश्चित(दुरत्व(काष्ठा cfsrvl, layer) == 0);
+	service->खोलो = false;
 	service->modem_flow_on = true;
 	service->phy_flow_on = true;
 	service->layer.id = channel_id;
@@ -172,49 +173,49 @@ void cfsrvl_init(struct cfsrvl *service,
 	service->dev_info = *dev_info;
 	service->supports_flowctrl = supports_flowctrl;
 	service->release = cfsrvl_release;
-}
+पूर्ण
 
-bool cfsrvl_ready(struct cfsrvl *service, int *err)
-{
-	if (!service->open) {
+bool cfsrvl_पढ़ोy(काष्ठा cfsrvl *service, पूर्णांक *err)
+अणु
+	अगर (!service->खोलो) अणु
 		*err = -ENOTCONN;
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-u8 cfsrvl_getphyid(struct cflayer *layer)
-{
-	struct cfsrvl *servl = container_obj(layer);
-	return servl->dev_info.id;
-}
+u8 cfsrvl_getphyid(काष्ठा cflayer *layer)
+अणु
+	काष्ठा cfsrvl *servl = container_obj(layer);
+	वापस servl->dev_info.id;
+पूर्ण
 
-bool cfsrvl_phyid_match(struct cflayer *layer, int phyid)
-{
-	struct cfsrvl *servl = container_obj(layer);
-	return servl->dev_info.id == phyid;
-}
+bool cfsrvl_phyid_match(काष्ठा cflayer *layer, पूर्णांक phyid)
+अणु
+	काष्ठा cfsrvl *servl = container_obj(layer);
+	वापस servl->dev_info.id == phyid;
+पूर्ण
 
-void caif_free_client(struct cflayer *adap_layer)
-{
-	struct cfsrvl *servl;
-	if (adap_layer == NULL || adap_layer->dn == NULL)
-		return;
+व्योम caअगर_मुक्त_client(काष्ठा cflayer *adap_layer)
+अणु
+	काष्ठा cfsrvl *servl;
+	अगर (adap_layer == शून्य || adap_layer->dn == शून्य)
+		वापस;
 	servl = container_obj(adap_layer->dn);
 	servl->release(&servl->layer);
-}
-EXPORT_SYMBOL(caif_free_client);
+पूर्ण
+EXPORT_SYMBOL(caअगर_मुक्त_client);
 
-void caif_client_register_refcnt(struct cflayer *adapt_layer,
-				 void (*hold)(struct cflayer *lyr),
-				 void (*put)(struct cflayer *lyr))
-{
-	struct cfsrvl *service;
+व्योम caअगर_client_रेजिस्टर_refcnt(काष्ठा cflayer *adapt_layer,
+				 व्योम (*hold)(काष्ठा cflayer *lyr),
+				 व्योम (*put)(काष्ठा cflayer *lyr))
+अणु
+	काष्ठा cfsrvl *service;
 
-	if (WARN_ON(adapt_layer == NULL || adapt_layer->dn == NULL))
-		return;
-	service = container_of(adapt_layer->dn, struct cfsrvl, layer);
+	अगर (WARN_ON(adapt_layer == शून्य || adapt_layer->dn == शून्य))
+		वापस;
+	service = container_of(adapt_layer->dn, काष्ठा cfsrvl, layer);
 	service->hold = hold;
 	service->put = put;
-}
-EXPORT_SYMBOL(caif_client_register_refcnt);
+पूर्ण
+EXPORT_SYMBOL(caअगर_client_रेजिस्टर_refcnt);

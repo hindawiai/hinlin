@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * IEEE802154.4 socket interface
+ * IEEE802154.4 socket पूर्णांकerface
  *
  * Copyright 2007, 2008 Siemens AG
  *
@@ -9,389 +10,389 @@
  * Maxim Gorbachyov <maxim.gorbachev@siemens.com>
  */
 
-#include <linux/net.h>
-#include <linux/capability.h>
-#include <linux/module.h>
-#include <linux/if_arp.h>
-#include <linux/if.h>
-#include <linux/termios.h>	/* For TIOCOUTQ/INQ */
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/socket.h>
-#include <net/datalink.h>
-#include <net/psnap.h>
-#include <net/sock.h>
-#include <net/tcp_states.h>
-#include <net/route.h>
+#समावेश <linux/net.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/module.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/अगर.h>
+#समावेश <linux/termios.h>	/* For TIOCOUTQ/INQ */
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/socket.h>
+#समावेश <net/datalink.h>
+#समावेश <net/psnap.h>
+#समावेश <net/sock.h>
+#समावेश <net/tcp_states.h>
+#समावेश <net/route.h>
 
-#include <net/af_ieee802154.h>
-#include <net/ieee802154_netdev.h>
+#समावेश <net/af_ieee802154.h>
+#समावेश <net/ieee802154_netdev.h>
 
-/* Utility function for families */
-static struct net_device*
-ieee802154_get_dev(struct net *net, const struct ieee802154_addr *addr)
-{
-	struct net_device *dev = NULL;
-	struct net_device *tmp;
-	__le16 pan_id, short_addr;
+/* Utility function क्रम families */
+अटल काष्ठा net_device*
+ieee802154_get_dev(काष्ठा net *net, स्थिर काष्ठा ieee802154_addr *addr)
+अणु
+	काष्ठा net_device *dev = शून्य;
+	काष्ठा net_device *पंचांगp;
+	__le16 pan_id, लघु_addr;
 	u8 hwaddr[IEEE802154_ADDR_LEN];
 
-	switch (addr->mode) {
-	case IEEE802154_ADDR_LONG:
+	चयन (addr->mode) अणु
+	हाल IEEE802154_ADDR_LONG:
 		ieee802154_devaddr_to_raw(hwaddr, addr->extended_addr);
-		rcu_read_lock();
+		rcu_पढ़ो_lock();
 		dev = dev_getbyhwaddr_rcu(net, ARPHRD_IEEE802154, hwaddr);
-		if (dev)
+		अगर (dev)
 			dev_hold(dev);
-		rcu_read_unlock();
-		break;
-	case IEEE802154_ADDR_SHORT:
-		if (addr->pan_id == cpu_to_le16(IEEE802154_PANID_BROADCAST) ||
-		    addr->short_addr == cpu_to_le16(IEEE802154_ADDR_UNDEF) ||
-		    addr->short_addr == cpu_to_le16(IEEE802154_ADDR_BROADCAST))
-			break;
+		rcu_पढ़ो_unlock();
+		अवरोध;
+	हाल IEEE802154_ADDR_SHORT:
+		अगर (addr->pan_id == cpu_to_le16(IEEE802154_PANID_BROADCAST) ||
+		    addr->लघु_addr == cpu_to_le16(IEEE802154_ADDR_UNDEF) ||
+		    addr->लघु_addr == cpu_to_le16(IEEE802154_ADDR_BROADCAST))
+			अवरोध;
 
 		rtnl_lock();
 
-		for_each_netdev(net, tmp) {
-			if (tmp->type != ARPHRD_IEEE802154)
-				continue;
+		क्रम_each_netdev(net, पंचांगp) अणु
+			अगर (पंचांगp->type != ARPHRD_IEEE802154)
+				जारी;
 
-			pan_id = tmp->ieee802154_ptr->pan_id;
-			short_addr = tmp->ieee802154_ptr->short_addr;
-			if (pan_id == addr->pan_id &&
-			    short_addr == addr->short_addr) {
-				dev = tmp;
+			pan_id = पंचांगp->ieee802154_ptr->pan_id;
+			लघु_addr = पंचांगp->ieee802154_ptr->लघु_addr;
+			अगर (pan_id == addr->pan_id &&
+			    लघु_addr == addr->लघु_addr) अणु
+				dev = पंचांगp;
 				dev_hold(dev);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
 		rtnl_unlock();
-		break;
-	default:
+		अवरोध;
+	शेष:
 		pr_warn("Unsupported ieee802154 address type: %d\n",
 			addr->mode);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return dev;
-}
+	वापस dev;
+पूर्ण
 
-static int ieee802154_sock_release(struct socket *sock)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक ieee802154_sock_release(काष्ठा socket *sock)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	if (sk) {
-		sock->sk = NULL;
-		sk->sk_prot->close(sk, 0);
-	}
-	return 0;
-}
+	अगर (sk) अणु
+		sock->sk = शून्य;
+		sk->sk_prot->बंद(sk, 0);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ieee802154_sock_sendmsg(struct socket *sock, struct msghdr *msg,
-				   size_t len)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक ieee802154_sock_sendmsg(काष्ठा socket *sock, काष्ठा msghdr *msg,
+				   माप_प्रकार len)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	return sk->sk_prot->sendmsg(sk, msg, len);
-}
+	वापस sk->sk_prot->sendmsg(sk, msg, len);
+पूर्ण
 
-static int ieee802154_sock_bind(struct socket *sock, struct sockaddr *uaddr,
-				int addr_len)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक ieee802154_sock_bind(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+				पूर्णांक addr_len)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	if (sk->sk_prot->bind)
-		return sk->sk_prot->bind(sk, uaddr, addr_len);
+	अगर (sk->sk_prot->bind)
+		वापस sk->sk_prot->bind(sk, uaddr, addr_len);
 
-	return sock_no_bind(sock, uaddr, addr_len);
-}
+	वापस sock_no_bind(sock, uaddr, addr_len);
+पूर्ण
 
-static int ieee802154_sock_connect(struct socket *sock, struct sockaddr *uaddr,
-				   int addr_len, int flags)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक ieee802154_sock_connect(काष्ठा socket *sock, काष्ठा sockaddr *uaddr,
+				   पूर्णांक addr_len, पूर्णांक flags)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	if (addr_len < sizeof(uaddr->sa_family))
-		return -EINVAL;
+	अगर (addr_len < माप(uaddr->sa_family))
+		वापस -EINVAL;
 
-	if (uaddr->sa_family == AF_UNSPEC)
-		return sk->sk_prot->disconnect(sk, flags);
+	अगर (uaddr->sa_family == AF_UNSPEC)
+		वापस sk->sk_prot->disconnect(sk, flags);
 
-	return sk->sk_prot->connect(sk, uaddr, addr_len);
-}
+	वापस sk->sk_prot->connect(sk, uaddr, addr_len);
+पूर्ण
 
-static int ieee802154_dev_ioctl(struct sock *sk, struct ifreq __user *arg,
-				unsigned int cmd)
-{
-	struct ifreq ifr;
-	int ret = -ENOIOCTLCMD;
-	struct net_device *dev;
+अटल पूर्णांक ieee802154_dev_ioctl(काष्ठा sock *sk, काष्ठा अगरreq __user *arg,
+				अचिन्हित पूर्णांक cmd)
+अणु
+	काष्ठा अगरreq अगरr;
+	पूर्णांक ret = -ENOIOCTLCMD;
+	काष्ठा net_device *dev;
 
-	if (copy_from_user(&ifr, arg, sizeof(struct ifreq)))
-		return -EFAULT;
+	अगर (copy_from_user(&अगरr, arg, माप(काष्ठा अगरreq)))
+		वापस -EFAULT;
 
-	ifr.ifr_name[IFNAMSIZ-1] = 0;
+	अगरr.अगरr_name[IFNAMSIZ-1] = 0;
 
-	dev_load(sock_net(sk), ifr.ifr_name);
-	dev = dev_get_by_name(sock_net(sk), ifr.ifr_name);
+	dev_load(sock_net(sk), अगरr.अगरr_name);
+	dev = dev_get_by_name(sock_net(sk), अगरr.अगरr_name);
 
-	if (!dev)
-		return -ENODEV;
+	अगर (!dev)
+		वापस -ENODEV;
 
-	if (dev->type == ARPHRD_IEEE802154 && dev->netdev_ops->ndo_do_ioctl)
-		ret = dev->netdev_ops->ndo_do_ioctl(dev, &ifr, cmd);
+	अगर (dev->type == ARPHRD_IEEE802154 && dev->netdev_ops->nकरो_करो_ioctl)
+		ret = dev->netdev_ops->nकरो_करो_ioctl(dev, &अगरr, cmd);
 
-	if (!ret && copy_to_user(arg, &ifr, sizeof(struct ifreq)))
+	अगर (!ret && copy_to_user(arg, &अगरr, माप(काष्ठा अगरreq)))
 		ret = -EFAULT;
 	dev_put(dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ieee802154_sock_ioctl(struct socket *sock, unsigned int cmd,
-				 unsigned long arg)
-{
-	struct sock *sk = sock->sk;
+अटल पूर्णांक ieee802154_sock_ioctl(काष्ठा socket *sock, अचिन्हित पूर्णांक cmd,
+				 अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा sock *sk = sock->sk;
 
-	switch (cmd) {
-	case SIOCGIFADDR:
-	case SIOCSIFADDR:
-		return ieee802154_dev_ioctl(sk, (struct ifreq __user *)arg,
+	चयन (cmd) अणु
+	हाल SIOCGIFADDR:
+	हाल SIOCSIFADDR:
+		वापस ieee802154_dev_ioctl(sk, (काष्ठा अगरreq __user *)arg,
 				cmd);
-	default:
-		if (!sk->sk_prot->ioctl)
-			return -ENOIOCTLCMD;
-		return sk->sk_prot->ioctl(sk, cmd, arg);
-	}
-}
+	शेष:
+		अगर (!sk->sk_prot->ioctl)
+			वापस -ENOIOCTLCMD;
+		वापस sk->sk_prot->ioctl(sk, cmd, arg);
+	पूर्ण
+पूर्ण
 
 /* RAW Sockets (802.15.4 created in userspace) */
-static HLIST_HEAD(raw_head);
-static DEFINE_RWLOCK(raw_lock);
+अटल HLIST_HEAD(raw_head);
+अटल DEFINE_RWLOCK(raw_lock);
 
-static int raw_hash(struct sock *sk)
-{
-	write_lock_bh(&raw_lock);
+अटल पूर्णांक raw_hash(काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock_bh(&raw_lock);
 	sk_add_node(sk, &raw_head);
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, 1);
-	write_unlock_bh(&raw_lock);
+	ग_लिखो_unlock_bh(&raw_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void raw_unhash(struct sock *sk)
-{
-	write_lock_bh(&raw_lock);
-	if (sk_del_node_init(sk))
+अटल व्योम raw_unhash(काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock_bh(&raw_lock);
+	अगर (sk_del_node_init(sk))
 		sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
-	write_unlock_bh(&raw_lock);
-}
+	ग_लिखो_unlock_bh(&raw_lock);
+पूर्ण
 
-static void raw_close(struct sock *sk, long timeout)
-{
+अटल व्योम raw_बंद(काष्ठा sock *sk, दीर्घ समयout)
+अणु
 	sk_common_release(sk);
-}
+पूर्ण
 
-static int raw_bind(struct sock *sk, struct sockaddr *_uaddr, int len)
-{
-	struct ieee802154_addr addr;
-	struct sockaddr_ieee802154 *uaddr = (struct sockaddr_ieee802154 *)_uaddr;
-	int err = 0;
-	struct net_device *dev = NULL;
+अटल पूर्णांक raw_bind(काष्ठा sock *sk, काष्ठा sockaddr *_uaddr, पूर्णांक len)
+अणु
+	काष्ठा ieee802154_addr addr;
+	काष्ठा sockaddr_ieee802154 *uaddr = (काष्ठा sockaddr_ieee802154 *)_uaddr;
+	पूर्णांक err = 0;
+	काष्ठा net_device *dev = शून्य;
 
-	if (len < sizeof(*uaddr))
-		return -EINVAL;
+	अगर (len < माप(*uaddr))
+		वापस -EINVAL;
 
-	uaddr = (struct sockaddr_ieee802154 *)_uaddr;
-	if (uaddr->family != AF_IEEE802154)
-		return -EINVAL;
+	uaddr = (काष्ठा sockaddr_ieee802154 *)_uaddr;
+	अगर (uaddr->family != AF_IEEE802154)
+		वापस -EINVAL;
 
 	lock_sock(sk);
 
 	ieee802154_addr_from_sa(&addr, &uaddr->addr);
 	dev = ieee802154_get_dev(sock_net(sk), &addr);
-	if (!dev) {
+	अगर (!dev) अणु
 		err = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	sk->sk_bound_dev_if = dev->ifindex;
+	sk->sk_bound_dev_अगर = dev->अगरindex;
 	sk_dst_reset(sk);
 
 	dev_put(dev);
 out:
 	release_sock(sk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int raw_connect(struct sock *sk, struct sockaddr *uaddr,
-		       int addr_len)
-{
-	return -ENOTSUPP;
-}
+अटल पूर्णांक raw_connect(काष्ठा sock *sk, काष्ठा sockaddr *uaddr,
+		       पूर्णांक addr_len)
+अणु
+	वापस -ENOTSUPP;
+पूर्ण
 
-static int raw_disconnect(struct sock *sk, int flags)
-{
-	return 0;
-}
+अटल पूर्णांक raw_disconnect(काष्ठा sock *sk, पूर्णांक flags)
+अणु
+	वापस 0;
+पूर्ण
 
-static int raw_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
-{
-	struct net_device *dev;
-	unsigned int mtu;
-	struct sk_buff *skb;
-	int hlen, tlen;
-	int err;
+अटल पूर्णांक raw_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार size)
+अणु
+	काष्ठा net_device *dev;
+	अचिन्हित पूर्णांक mtu;
+	काष्ठा sk_buff *skb;
+	पूर्णांक hlen, tlen;
+	पूर्णांक err;
 
-	if (msg->msg_flags & MSG_OOB) {
+	अगर (msg->msg_flags & MSG_OOB) अणु
 		pr_debug("msg->msg_flags = 0x%x\n", msg->msg_flags);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
 	lock_sock(sk);
-	if (!sk->sk_bound_dev_if)
+	अगर (!sk->sk_bound_dev_अगर)
 		dev = dev_getfirstbyhwtype(sock_net(sk), ARPHRD_IEEE802154);
-	else
-		dev = dev_get_by_index(sock_net(sk), sk->sk_bound_dev_if);
+	अन्यथा
+		dev = dev_get_by_index(sock_net(sk), sk->sk_bound_dev_अगर);
 	release_sock(sk);
 
-	if (!dev) {
+	अगर (!dev) अणु
 		pr_debug("no dev\n");
 		err = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	mtu = IEEE802154_MTU;
 	pr_debug("name = %s, mtu = %u\n", dev->name, mtu);
 
-	if (size > mtu) {
+	अगर (size > mtu) अणु
 		pr_debug("size = %zu, mtu = %u\n", size, mtu);
 		err = -EMSGSIZE;
-		goto out_dev;
-	}
+		जाओ out_dev;
+	पूर्ण
 
 	hlen = LL_RESERVED_SPACE(dev);
 	tlen = dev->needed_tailroom;
 	skb = sock_alloc_send_skb(sk, hlen + tlen + size,
 				  msg->msg_flags & MSG_DONTWAIT, &err);
-	if (!skb)
-		goto out_dev;
+	अगर (!skb)
+		जाओ out_dev;
 
 	skb_reserve(skb, hlen);
 
 	skb_reset_mac_header(skb);
 	skb_reset_network_header(skb);
 
-	err = memcpy_from_msg(skb_put(skb, size), msg, size);
-	if (err < 0)
-		goto out_skb;
+	err = स_नकल_from_msg(skb_put(skb, size), msg, size);
+	अगर (err < 0)
+		जाओ out_skb;
 
 	skb->dev = dev;
 	skb->protocol = htons(ETH_P_IEEE802154);
 
 	err = dev_queue_xmit(skb);
-	if (err > 0)
-		err = net_xmit_errno(err);
+	अगर (err > 0)
+		err = net_xmit_त्रुटि_सं(err);
 
 	dev_put(dev);
 
-	return err ?: size;
+	वापस err ?: size;
 
 out_skb:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 out_dev:
 	dev_put(dev);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int raw_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
-		       int noblock, int flags, int *addr_len)
-{
-	size_t copied = 0;
-	int err = -EOPNOTSUPP;
-	struct sk_buff *skb;
+अटल पूर्णांक raw_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
+		       पूर्णांक noblock, पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+	माप_प्रकार copied = 0;
+	पूर्णांक err = -EOPNOTSUPP;
+	काष्ठा sk_buff *skb;
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
 	copied = skb->len;
-	if (len < copied) {
+	अगर (len < copied) अणु
 		msg->msg_flags |= MSG_TRUNC;
 		copied = len;
-	}
+	पूर्ण
 
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
 	sock_recv_ts_and_drops(msg, sk, skb);
 
-	if (flags & MSG_TRUNC)
+	अगर (flags & MSG_TRUNC)
 		copied = skb->len;
-done:
-	skb_free_datagram(sk, skb);
+करोne:
+	skb_मुक्त_datagram(sk, skb);
 out:
-	if (err)
-		return err;
-	return copied;
-}
+	अगर (err)
+		वापस err;
+	वापस copied;
+पूर्ण
 
-static int raw_rcv_skb(struct sock *sk, struct sk_buff *skb)
-{
+अटल पूर्णांक raw_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	if (!skb)
-		return NET_RX_DROP;
+	अगर (!skb)
+		वापस NET_RX_DROP;
 
-	if (sock_queue_rcv_skb(sk, skb) < 0) {
-		kfree_skb(skb);
-		return NET_RX_DROP;
-	}
+	अगर (sock_queue_rcv_skb(sk, skb) < 0) अणु
+		kमुक्त_skb(skb);
+		वापस NET_RX_DROP;
+	पूर्ण
 
-	return NET_RX_SUCCESS;
-}
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
-static void ieee802154_raw_deliver(struct net_device *dev, struct sk_buff *skb)
-{
-	struct sock *sk;
+अटल व्योम ieee802154_raw_deliver(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *sk;
 
-	read_lock(&raw_lock);
-	sk_for_each(sk, &raw_head) {
+	पढ़ो_lock(&raw_lock);
+	sk_क्रम_each(sk, &raw_head) अणु
 		bh_lock_sock(sk);
-		if (!sk->sk_bound_dev_if ||
-		    sk->sk_bound_dev_if == dev->ifindex) {
-			struct sk_buff *clone;
+		अगर (!sk->sk_bound_dev_अगर ||
+		    sk->sk_bound_dev_अगर == dev->अगरindex) अणु
+			काष्ठा sk_buff *clone;
 
 			clone = skb_clone(skb, GFP_ATOMIC);
-			if (clone)
+			अगर (clone)
 				raw_rcv_skb(sk, clone);
-		}
+		पूर्ण
 		bh_unlock_sock(sk);
-	}
-	read_unlock(&raw_lock);
-}
+	पूर्ण
+	पढ़ो_unlock(&raw_lock);
+पूर्ण
 
-static int raw_getsockopt(struct sock *sk, int level, int optname,
-			  char __user *optval, int __user *optlen)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक raw_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			  अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static int raw_setsockopt(struct sock *sk, int level, int optname,
-			  sockptr_t optval, unsigned int optlen)
-{
-	return -EOPNOTSUPP;
-}
+अटल पूर्णांक raw_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			  sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	वापस -EOPNOTSUPP;
+पूर्ण
 
-static struct proto ieee802154_raw_prot = {
+अटल काष्ठा proto ieee802154_raw_prot = अणु
 	.name		= "IEEE-802.15.4-RAW",
 	.owner		= THIS_MODULE,
-	.obj_size	= sizeof(struct sock),
-	.close		= raw_close,
+	.obj_size	= माप(काष्ठा sock),
+	.बंद		= raw_बंद,
 	.bind		= raw_bind,
 	.sendmsg	= raw_sendmsg,
 	.recvmsg	= raw_recvmsg,
@@ -399,11 +400,11 @@ static struct proto ieee802154_raw_prot = {
 	.unhash		= raw_unhash,
 	.connect	= raw_connect,
 	.disconnect	= raw_disconnect,
-	.getsockopt	= raw_getsockopt,
+	.माला_लोockopt	= raw_माला_लोockopt,
 	.setsockopt	= raw_setsockopt,
-};
+पूर्ण;
 
-static const struct proto_ops ieee802154_raw_ops = {
+अटल स्थिर काष्ठा proto_ops ieee802154_raw_ops = अणु
 	.family		   = PF_IEEE802154,
 	.owner		   = THIS_MODULE,
 	.release	   = ieee802154_sock_release,
@@ -416,101 +417,101 @@ static const struct proto_ops ieee802154_raw_ops = {
 	.ioctl		   = ieee802154_sock_ioctl,
 	.gettstamp	   = sock_gettstamp,
 	.listen		   = sock_no_listen,
-	.shutdown	   = sock_no_shutdown,
+	.shutकरोwn	   = sock_no_shutकरोwn,
 	.setsockopt	   = sock_common_setsockopt,
-	.getsockopt	   = sock_common_getsockopt,
+	.माला_लोockopt	   = sock_common_माला_लोockopt,
 	.sendmsg	   = ieee802154_sock_sendmsg,
 	.recvmsg	   = sock_common_recvmsg,
 	.mmap		   = sock_no_mmap,
 	.sendpage	   = sock_no_sendpage,
-};
+पूर्ण;
 
 /* DGRAM Sockets (802.15.4 dataframes) */
-static HLIST_HEAD(dgram_head);
-static DEFINE_RWLOCK(dgram_lock);
+अटल HLIST_HEAD(dgram_head);
+अटल DEFINE_RWLOCK(dgram_lock);
 
-struct dgram_sock {
-	struct sock sk;
+काष्ठा dgram_sock अणु
+	काष्ठा sock sk;
 
-	struct ieee802154_addr src_addr;
-	struct ieee802154_addr dst_addr;
+	काष्ठा ieee802154_addr src_addr;
+	काष्ठा ieee802154_addr dst_addr;
 
-	unsigned int bound:1;
-	unsigned int connected:1;
-	unsigned int want_ack:1;
-	unsigned int want_lqi:1;
-	unsigned int secen:1;
-	unsigned int secen_override:1;
-	unsigned int seclevel:3;
-	unsigned int seclevel_override:1;
-};
+	अचिन्हित पूर्णांक bound:1;
+	अचिन्हित पूर्णांक connected:1;
+	अचिन्हित पूर्णांक want_ack:1;
+	अचिन्हित पूर्णांक want_lqi:1;
+	अचिन्हित पूर्णांक secen:1;
+	अचिन्हित पूर्णांक secen_override:1;
+	अचिन्हित पूर्णांक seclevel:3;
+	अचिन्हित पूर्णांक seclevel_override:1;
+पूर्ण;
 
-static inline struct dgram_sock *dgram_sk(const struct sock *sk)
-{
-	return container_of(sk, struct dgram_sock, sk);
-}
+अटल अंतरभूत काष्ठा dgram_sock *dgram_sk(स्थिर काष्ठा sock *sk)
+अणु
+	वापस container_of(sk, काष्ठा dgram_sock, sk);
+पूर्ण
 
-static int dgram_hash(struct sock *sk)
-{
-	write_lock_bh(&dgram_lock);
+अटल पूर्णांक dgram_hash(काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock_bh(&dgram_lock);
 	sk_add_node(sk, &dgram_head);
 	sock_prot_inuse_add(sock_net(sk), sk->sk_prot, 1);
-	write_unlock_bh(&dgram_lock);
+	ग_लिखो_unlock_bh(&dgram_lock);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dgram_unhash(struct sock *sk)
-{
-	write_lock_bh(&dgram_lock);
-	if (sk_del_node_init(sk))
+अटल व्योम dgram_unhash(काष्ठा sock *sk)
+अणु
+	ग_लिखो_lock_bh(&dgram_lock);
+	अगर (sk_del_node_init(sk))
 		sock_prot_inuse_add(sock_net(sk), sk->sk_prot, -1);
-	write_unlock_bh(&dgram_lock);
-}
+	ग_लिखो_unlock_bh(&dgram_lock);
+पूर्ण
 
-static int dgram_init(struct sock *sk)
-{
-	struct dgram_sock *ro = dgram_sk(sk);
+अटल पूर्णांक dgram_init(काष्ठा sock *sk)
+अणु
+	काष्ठा dgram_sock *ro = dgram_sk(sk);
 
 	ro->want_ack = 1;
 	ro->want_lqi = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dgram_close(struct sock *sk, long timeout)
-{
+अटल व्योम dgram_बंद(काष्ठा sock *sk, दीर्घ समयout)
+अणु
 	sk_common_release(sk);
-}
+पूर्ण
 
-static int dgram_bind(struct sock *sk, struct sockaddr *uaddr, int len)
-{
-	struct sockaddr_ieee802154 *addr = (struct sockaddr_ieee802154 *)uaddr;
-	struct ieee802154_addr haddr;
-	struct dgram_sock *ro = dgram_sk(sk);
-	int err = -EINVAL;
-	struct net_device *dev;
+अटल पूर्णांक dgram_bind(काष्ठा sock *sk, काष्ठा sockaddr *uaddr, पूर्णांक len)
+अणु
+	काष्ठा sockaddr_ieee802154 *addr = (काष्ठा sockaddr_ieee802154 *)uaddr;
+	काष्ठा ieee802154_addr haddr;
+	काष्ठा dgram_sock *ro = dgram_sk(sk);
+	पूर्णांक err = -EINVAL;
+	काष्ठा net_device *dev;
 
 	lock_sock(sk);
 
 	ro->bound = 0;
 
-	if (len < sizeof(*addr))
-		goto out;
+	अगर (len < माप(*addr))
+		जाओ out;
 
-	if (addr->family != AF_IEEE802154)
-		goto out;
+	अगर (addr->family != AF_IEEE802154)
+		जाओ out;
 
 	ieee802154_addr_from_sa(&haddr, &addr->addr);
 	dev = ieee802154_get_dev(sock_net(sk), &haddr);
-	if (!dev) {
+	अगर (!dev) अणु
 		err = -ENODEV;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (dev->type != ARPHRD_IEEE802154) {
+	अगर (dev->type != ARPHRD_IEEE802154) अणु
 		err = -ENODEV;
-		goto out_put;
-	}
+		जाओ out_put;
+	पूर्ण
 
 	ro->src_addr = haddr;
 
@@ -521,129 +522,129 @@ out_put:
 out:
 	release_sock(sk);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dgram_ioctl(struct sock *sk, int cmd, unsigned long arg)
-{
-	switch (cmd) {
-	case SIOCOUTQ:
-	{
-		int amount = sk_wmem_alloc_get(sk);
+अटल पूर्णांक dgram_ioctl(काष्ठा sock *sk, पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	चयन (cmd) अणु
+	हाल SIOCOUTQ:
+	अणु
+		पूर्णांक amount = sk_wmem_alloc_get(sk);
 
-		return put_user(amount, (int __user *)arg);
-	}
+		वापस put_user(amount, (पूर्णांक __user *)arg);
+	पूर्ण
 
-	case SIOCINQ:
-	{
-		struct sk_buff *skb;
-		unsigned long amount;
+	हाल SIOCINQ:
+	अणु
+		काष्ठा sk_buff *skb;
+		अचिन्हित दीर्घ amount;
 
 		amount = 0;
 		spin_lock_bh(&sk->sk_receive_queue.lock);
 		skb = skb_peek(&sk->sk_receive_queue);
-		if (skb) {
-			/* We will only return the amount
+		अगर (skb) अणु
+			/* We will only वापस the amount
 			 * of this packet since that is all
-			 * that will be read.
+			 * that will be पढ़ो.
 			 */
 			amount = skb->len - ieee802154_hdr_length(skb);
-		}
+		पूर्ण
 		spin_unlock_bh(&sk->sk_receive_queue.lock);
-		return put_user(amount, (int __user *)arg);
-	}
-	}
+		वापस put_user(amount, (पूर्णांक __user *)arg);
+	पूर्ण
+	पूर्ण
 
-	return -ENOIOCTLCMD;
-}
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
-/* FIXME: autobind */
-static int dgram_connect(struct sock *sk, struct sockaddr *uaddr,
-			 int len)
-{
-	struct sockaddr_ieee802154 *addr = (struct sockaddr_ieee802154 *)uaddr;
-	struct dgram_sock *ro = dgram_sk(sk);
-	int err = 0;
+/* FIXME: स्वतःbind */
+अटल पूर्णांक dgram_connect(काष्ठा sock *sk, काष्ठा sockaddr *uaddr,
+			 पूर्णांक len)
+अणु
+	काष्ठा sockaddr_ieee802154 *addr = (काष्ठा sockaddr_ieee802154 *)uaddr;
+	काष्ठा dgram_sock *ro = dgram_sk(sk);
+	पूर्णांक err = 0;
 
-	if (len < sizeof(*addr))
-		return -EINVAL;
+	अगर (len < माप(*addr))
+		वापस -EINVAL;
 
-	if (addr->family != AF_IEEE802154)
-		return -EINVAL;
+	अगर (addr->family != AF_IEEE802154)
+		वापस -EINVAL;
 
 	lock_sock(sk);
 
-	if (!ro->bound) {
+	अगर (!ro->bound) अणु
 		err = -ENETUNREACH;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ieee802154_addr_from_sa(&ro->dst_addr, &addr->addr);
 	ro->connected = 1;
 
 out:
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dgram_disconnect(struct sock *sk, int flags)
-{
-	struct dgram_sock *ro = dgram_sk(sk);
+अटल पूर्णांक dgram_disconnect(काष्ठा sock *sk, पूर्णांक flags)
+अणु
+	काष्ठा dgram_sock *ro = dgram_sk(sk);
 
 	lock_sock(sk);
 	ro->connected = 0;
 	release_sock(sk);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dgram_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
-{
-	struct net_device *dev;
-	unsigned int mtu;
-	struct sk_buff *skb;
-	struct ieee802154_mac_cb *cb;
-	struct dgram_sock *ro = dgram_sk(sk);
-	struct ieee802154_addr dst_addr;
-	int hlen, tlen;
-	int err;
+अटल पूर्णांक dgram_sendmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार size)
+अणु
+	काष्ठा net_device *dev;
+	अचिन्हित पूर्णांक mtu;
+	काष्ठा sk_buff *skb;
+	काष्ठा ieee802154_mac_cb *cb;
+	काष्ठा dgram_sock *ro = dgram_sk(sk);
+	काष्ठा ieee802154_addr dst_addr;
+	पूर्णांक hlen, tlen;
+	पूर्णांक err;
 
-	if (msg->msg_flags & MSG_OOB) {
+	अगर (msg->msg_flags & MSG_OOB) अणु
 		pr_debug("msg->msg_flags = 0x%x\n", msg->msg_flags);
-		return -EOPNOTSUPP;
-	}
+		वापस -EOPNOTSUPP;
+	पूर्ण
 
-	if (!ro->connected && !msg->msg_name)
-		return -EDESTADDRREQ;
-	else if (ro->connected && msg->msg_name)
-		return -EISCONN;
+	अगर (!ro->connected && !msg->msg_name)
+		वापस -EDESTADDRREQ;
+	अन्यथा अगर (ro->connected && msg->msg_name)
+		वापस -EISCONN;
 
-	if (!ro->bound)
+	अगर (!ro->bound)
 		dev = dev_getfirstbyhwtype(sock_net(sk), ARPHRD_IEEE802154);
-	else
+	अन्यथा
 		dev = ieee802154_get_dev(sock_net(sk), &ro->src_addr);
 
-	if (!dev) {
+	अगर (!dev) अणु
 		pr_debug("no dev\n");
 		err = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 	mtu = IEEE802154_MTU;
 	pr_debug("name = %s, mtu = %u\n", dev->name, mtu);
 
-	if (size > mtu) {
+	अगर (size > mtu) अणु
 		pr_debug("size = %zu, mtu = %u\n", size, mtu);
 		err = -EMSGSIZE;
-		goto out_dev;
-	}
+		जाओ out_dev;
+	पूर्ण
 
 	hlen = LL_RESERVED_SPACE(dev);
 	tlen = dev->needed_tailroom;
 	skb = sock_alloc_send_skb(sk, hlen + tlen + size,
 				  msg->msg_flags & MSG_DONTWAIT,
 				  &err);
-	if (!skb)
-		goto out_dev;
+	अगर (!skb)
+		जाओ out_dev;
 
 	skb_reserve(skb, hlen);
 
@@ -653,14 +654,14 @@ static int dgram_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 	cb->type = IEEE802154_FC_TYPE_DATA;
 	cb->ackreq = ro->want_ack;
 
-	if (msg->msg_name) {
-		DECLARE_SOCKADDR(struct sockaddr_ieee802154*,
+	अगर (msg->msg_name) अणु
+		DECLARE_SOCKADDR(काष्ठा sockaddr_ieee802154*,
 				 daddr, msg->msg_name);
 
 		ieee802154_addr_from_sa(&dst_addr, &daddr->addr);
-	} else {
+	पूर्ण अन्यथा अणु
 		dst_addr = ro->dst_addr;
-	}
+	पूर्ण
 
 	cb->secen = ro->secen;
 	cb->secen_override = ro->secen_override;
@@ -668,288 +669,288 @@ static int dgram_sendmsg(struct sock *sk, struct msghdr *msg, size_t size)
 	cb->seclevel_override = ro->seclevel_override;
 
 	err = wpan_dev_hard_header(skb, dev, &dst_addr,
-				   ro->bound ? &ro->src_addr : NULL, size);
-	if (err < 0)
-		goto out_skb;
+				   ro->bound ? &ro->src_addr : शून्य, size);
+	अगर (err < 0)
+		जाओ out_skb;
 
-	err = memcpy_from_msg(skb_put(skb, size), msg, size);
-	if (err < 0)
-		goto out_skb;
+	err = स_नकल_from_msg(skb_put(skb, size), msg, size);
+	अगर (err < 0)
+		जाओ out_skb;
 
 	skb->dev = dev;
 	skb->protocol = htons(ETH_P_IEEE802154);
 
 	err = dev_queue_xmit(skb);
-	if (err > 0)
-		err = net_xmit_errno(err);
+	अगर (err > 0)
+		err = net_xmit_त्रुटि_सं(err);
 
 	dev_put(dev);
 
-	return err ?: size;
+	वापस err ?: size;
 
 out_skb:
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 out_dev:
 	dev_put(dev);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int dgram_recvmsg(struct sock *sk, struct msghdr *msg, size_t len,
-			 int noblock, int flags, int *addr_len)
-{
-	size_t copied = 0;
-	int err = -EOPNOTSUPP;
-	struct sk_buff *skb;
-	struct dgram_sock *ro = dgram_sk(sk);
-	DECLARE_SOCKADDR(struct sockaddr_ieee802154 *, saddr, msg->msg_name);
+अटल पूर्णांक dgram_recvmsg(काष्ठा sock *sk, काष्ठा msghdr *msg, माप_प्रकार len,
+			 पूर्णांक noblock, पूर्णांक flags, पूर्णांक *addr_len)
+अणु
+	माप_प्रकार copied = 0;
+	पूर्णांक err = -EOPNOTSUPP;
+	काष्ठा sk_buff *skb;
+	काष्ठा dgram_sock *ro = dgram_sk(sk);
+	DECLARE_SOCKADDR(काष्ठा sockaddr_ieee802154 *, saddr, msg->msg_name);
 
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
-	if (!skb)
-		goto out;
+	अगर (!skb)
+		जाओ out;
 
 	copied = skb->len;
-	if (len < copied) {
+	अगर (len < copied) अणु
 		msg->msg_flags |= MSG_TRUNC;
 		copied = len;
-	}
+	पूर्ण
 
-	/* FIXME: skip headers if necessary ?! */
+	/* FIXME: skip headers अगर necessary ?! */
 	err = skb_copy_datagram_msg(skb, 0, msg, copied);
-	if (err)
-		goto done;
+	अगर (err)
+		जाओ करोne;
 
 	sock_recv_ts_and_drops(msg, sk, skb);
 
-	if (saddr) {
-		/* Clear the implicit padding in struct sockaddr_ieee802154
-		 * (16 bits between 'family' and 'addr') and in struct
-		 * ieee802154_addr_sa (16 bits at the end of the structure).
+	अगर (saddr) अणु
+		/* Clear the implicit padding in काष्ठा sockaddr_ieee802154
+		 * (16 bits between 'family' and 'addr') and in काष्ठा
+		 * ieee802154_addr_sa (16 bits at the end of the काष्ठाure).
 		 */
-		memset(saddr, 0, sizeof(*saddr));
+		स_रखो(saddr, 0, माप(*saddr));
 
 		saddr->family = AF_IEEE802154;
 		ieee802154_addr_to_sa(&saddr->addr, &mac_cb(skb)->source);
-		*addr_len = sizeof(*saddr);
-	}
+		*addr_len = माप(*saddr);
+	पूर्ण
 
-	if (ro->want_lqi) {
+	अगर (ro->want_lqi) अणु
 		err = put_cmsg(msg, SOL_IEEE802154, WPAN_WANTLQI,
-			       sizeof(uint8_t), &(mac_cb(skb)->lqi));
-		if (err)
-			goto done;
-	}
+			       माप(uपूर्णांक8_t), &(mac_cb(skb)->lqi));
+		अगर (err)
+			जाओ करोne;
+	पूर्ण
 
-	if (flags & MSG_TRUNC)
+	अगर (flags & MSG_TRUNC)
 		copied = skb->len;
-done:
-	skb_free_datagram(sk, skb);
+करोne:
+	skb_मुक्त_datagram(sk, skb);
 out:
-	if (err)
-		return err;
-	return copied;
-}
+	अगर (err)
+		वापस err;
+	वापस copied;
+पूर्ण
 
-static int dgram_rcv_skb(struct sock *sk, struct sk_buff *skb)
-{
+अटल पूर्णांक dgram_rcv_skb(काष्ठा sock *sk, काष्ठा sk_buff *skb)
+अणु
 	skb = skb_share_check(skb, GFP_ATOMIC);
-	if (!skb)
-		return NET_RX_DROP;
+	अगर (!skb)
+		वापस NET_RX_DROP;
 
-	if (sock_queue_rcv_skb(sk, skb) < 0) {
-		kfree_skb(skb);
-		return NET_RX_DROP;
-	}
+	अगर (sock_queue_rcv_skb(sk, skb) < 0) अणु
+		kमुक्त_skb(skb);
+		वापस NET_RX_DROP;
+	पूर्ण
 
-	return NET_RX_SUCCESS;
-}
+	वापस NET_RX_SUCCESS;
+पूर्ण
 
-static inline bool
-ieee802154_match_sock(__le64 hw_addr, __le16 pan_id, __le16 short_addr,
-		      struct dgram_sock *ro)
-{
-	if (!ro->bound)
-		return true;
+अटल अंतरभूत bool
+ieee802154_match_sock(__le64 hw_addr, __le16 pan_id, __le16 लघु_addr,
+		      काष्ठा dgram_sock *ro)
+अणु
+	अगर (!ro->bound)
+		वापस true;
 
-	if (ro->src_addr.mode == IEEE802154_ADDR_LONG &&
+	अगर (ro->src_addr.mode == IEEE802154_ADDR_LONG &&
 	    hw_addr == ro->src_addr.extended_addr)
-		return true;
+		वापस true;
 
-	if (ro->src_addr.mode == IEEE802154_ADDR_SHORT &&
+	अगर (ro->src_addr.mode == IEEE802154_ADDR_SHORT &&
 	    pan_id == ro->src_addr.pan_id &&
-	    short_addr == ro->src_addr.short_addr)
-		return true;
+	    लघु_addr == ro->src_addr.लघु_addr)
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int ieee802154_dgram_deliver(struct net_device *dev, struct sk_buff *skb)
-{
-	struct sock *sk, *prev = NULL;
-	int ret = NET_RX_SUCCESS;
-	__le16 pan_id, short_addr;
+अटल पूर्णांक ieee802154_dgram_deliver(काष्ठा net_device *dev, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sock *sk, *prev = शून्य;
+	पूर्णांक ret = NET_RX_SUCCESS;
+	__le16 pan_id, लघु_addr;
 	__le64 hw_addr;
 
 	/* Data frame processing */
 	BUG_ON(dev->type != ARPHRD_IEEE802154);
 
 	pan_id = dev->ieee802154_ptr->pan_id;
-	short_addr = dev->ieee802154_ptr->short_addr;
+	लघु_addr = dev->ieee802154_ptr->लघु_addr;
 	hw_addr = dev->ieee802154_ptr->extended_addr;
 
-	read_lock(&dgram_lock);
-	sk_for_each(sk, &dgram_head) {
-		if (ieee802154_match_sock(hw_addr, pan_id, short_addr,
-					  dgram_sk(sk))) {
-			if (prev) {
-				struct sk_buff *clone;
+	पढ़ो_lock(&dgram_lock);
+	sk_क्रम_each(sk, &dgram_head) अणु
+		अगर (ieee802154_match_sock(hw_addr, pan_id, लघु_addr,
+					  dgram_sk(sk))) अणु
+			अगर (prev) अणु
+				काष्ठा sk_buff *clone;
 
 				clone = skb_clone(skb, GFP_ATOMIC);
-				if (clone)
+				अगर (clone)
 					dgram_rcv_skb(prev, clone);
-			}
+			पूर्ण
 
 			prev = sk;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (prev) {
+	अगर (prev) अणु
 		dgram_rcv_skb(prev, skb);
-	} else {
-		kfree_skb(skb);
+	पूर्ण अन्यथा अणु
+		kमुक्त_skb(skb);
 		ret = NET_RX_DROP;
-	}
-	read_unlock(&dgram_lock);
+	पूर्ण
+	पढ़ो_unlock(&dgram_lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int dgram_getsockopt(struct sock *sk, int level, int optname,
-			    char __user *optval, int __user *optlen)
-{
-	struct dgram_sock *ro = dgram_sk(sk);
+अटल पूर्णांक dgram_माला_लोockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			    अक्षर __user *optval, पूर्णांक __user *optlen)
+अणु
+	काष्ठा dgram_sock *ro = dgram_sk(sk);
 
-	int val, len;
+	पूर्णांक val, len;
 
-	if (level != SOL_IEEE802154)
-		return -EOPNOTSUPP;
+	अगर (level != SOL_IEEE802154)
+		वापस -EOPNOTSUPP;
 
-	if (get_user(len, optlen))
-		return -EFAULT;
+	अगर (get_user(len, optlen))
+		वापस -EFAULT;
 
-	len = min_t(unsigned int, len, sizeof(int));
+	len = min_t(अचिन्हित पूर्णांक, len, माप(पूर्णांक));
 
-	switch (optname) {
-	case WPAN_WANTACK:
+	चयन (optname) अणु
+	हाल WPAN_WANTACK:
 		val = ro->want_ack;
-		break;
-	case WPAN_WANTLQI:
+		अवरोध;
+	हाल WPAN_WANTLQI:
 		val = ro->want_lqi;
-		break;
-	case WPAN_SECURITY:
-		if (!ro->secen_override)
+		अवरोध;
+	हाल WPAN_SECURITY:
+		अगर (!ro->secen_override)
 			val = WPAN_SECURITY_DEFAULT;
-		else if (ro->secen)
+		अन्यथा अगर (ro->secen)
 			val = WPAN_SECURITY_ON;
-		else
+		अन्यथा
 			val = WPAN_SECURITY_OFF;
-		break;
-	case WPAN_SECURITY_LEVEL:
-		if (!ro->seclevel_override)
+		अवरोध;
+	हाल WPAN_SECURITY_LEVEL:
+		अगर (!ro->seclevel_override)
 			val = WPAN_SECURITY_LEVEL_DEFAULT;
-		else
+		अन्यथा
 			val = ro->seclevel;
-		break;
-	default:
-		return -ENOPROTOOPT;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOPROTOOPT;
+	पूर्ण
 
-	if (put_user(len, optlen))
-		return -EFAULT;
-	if (copy_to_user(optval, &val, len))
-		return -EFAULT;
-	return 0;
-}
+	अगर (put_user(len, optlen))
+		वापस -EFAULT;
+	अगर (copy_to_user(optval, &val, len))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int dgram_setsockopt(struct sock *sk, int level, int optname,
-			    sockptr_t optval, unsigned int optlen)
-{
-	struct dgram_sock *ro = dgram_sk(sk);
-	struct net *net = sock_net(sk);
-	int val;
-	int err = 0;
+अटल पूर्णांक dgram_setsockopt(काष्ठा sock *sk, पूर्णांक level, पूर्णांक optname,
+			    sockptr_t optval, अचिन्हित पूर्णांक optlen)
+अणु
+	काष्ठा dgram_sock *ro = dgram_sk(sk);
+	काष्ठा net *net = sock_net(sk);
+	पूर्णांक val;
+	पूर्णांक err = 0;
 
-	if (optlen < sizeof(int))
-		return -EINVAL;
+	अगर (optlen < माप(पूर्णांक))
+		वापस -EINVAL;
 
-	if (copy_from_sockptr(&val, optval, sizeof(int)))
-		return -EFAULT;
+	अगर (copy_from_sockptr(&val, optval, माप(पूर्णांक)))
+		वापस -EFAULT;
 
 	lock_sock(sk);
 
-	switch (optname) {
-	case WPAN_WANTACK:
+	चयन (optname) अणु
+	हाल WPAN_WANTACK:
 		ro->want_ack = !!val;
-		break;
-	case WPAN_WANTLQI:
+		अवरोध;
+	हाल WPAN_WANTLQI:
 		ro->want_lqi = !!val;
-		break;
-	case WPAN_SECURITY:
-		if (!ns_capable(net->user_ns, CAP_NET_ADMIN) &&
-		    !ns_capable(net->user_ns, CAP_NET_RAW)) {
+		अवरोध;
+	हाल WPAN_SECURITY:
+		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN) &&
+		    !ns_capable(net->user_ns, CAP_NET_RAW)) अणु
 			err = -EPERM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		switch (val) {
-		case WPAN_SECURITY_DEFAULT:
+		चयन (val) अणु
+		हाल WPAN_SECURITY_DEFAULT:
 			ro->secen_override = 0;
-			break;
-		case WPAN_SECURITY_ON:
+			अवरोध;
+		हाल WPAN_SECURITY_ON:
 			ro->secen_override = 1;
 			ro->secen = 1;
-			break;
-		case WPAN_SECURITY_OFF:
+			अवरोध;
+		हाल WPAN_SECURITY_OFF:
 			ro->secen_override = 1;
 			ro->secen = 0;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			err = -EINVAL;
-			break;
-		}
-		break;
-	case WPAN_SECURITY_LEVEL:
-		if (!ns_capable(net->user_ns, CAP_NET_ADMIN) &&
-		    !ns_capable(net->user_ns, CAP_NET_RAW)) {
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल WPAN_SECURITY_LEVEL:
+		अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN) &&
+		    !ns_capable(net->user_ns, CAP_NET_RAW)) अणु
 			err = -EPERM;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (val < WPAN_SECURITY_LEVEL_DEFAULT ||
-		    val > IEEE802154_SCF_SECLEVEL_ENC_MIC128) {
+		अगर (val < WPAN_SECURITY_LEVEL_DEFAULT ||
+		    val > IEEE802154_SCF_SECLEVEL_ENC_MIC128) अणु
 			err = -EINVAL;
-		} else if (val == WPAN_SECURITY_LEVEL_DEFAULT) {
+		पूर्ण अन्यथा अगर (val == WPAN_SECURITY_LEVEL_DEFAULT) अणु
 			ro->seclevel_override = 0;
-		} else {
+		पूर्ण अन्यथा अणु
 			ro->seclevel_override = 1;
 			ro->seclevel = val;
-		}
-		break;
-	default:
+		पूर्ण
+		अवरोध;
+	शेष:
 		err = -ENOPROTOOPT;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	release_sock(sk);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static struct proto ieee802154_dgram_prot = {
+अटल काष्ठा proto ieee802154_dgram_prot = अणु
 	.name		= "IEEE-802.15.4-MAC",
 	.owner		= THIS_MODULE,
-	.obj_size	= sizeof(struct dgram_sock),
+	.obj_size	= माप(काष्ठा dgram_sock),
 	.init		= dgram_init,
-	.close		= dgram_close,
+	.बंद		= dgram_बंद,
 	.bind		= dgram_bind,
 	.sendmsg	= dgram_sendmsg,
 	.recvmsg	= dgram_recvmsg,
@@ -958,11 +959,11 @@ static struct proto ieee802154_dgram_prot = {
 	.connect	= dgram_connect,
 	.disconnect	= dgram_disconnect,
 	.ioctl		= dgram_ioctl,
-	.getsockopt	= dgram_getsockopt,
+	.माला_लोockopt	= dgram_माला_लोockopt,
 	.setsockopt	= dgram_setsockopt,
-};
+पूर्ण;
 
-static const struct proto_ops ieee802154_dgram_ops = {
+अटल स्थिर काष्ठा proto_ops ieee802154_dgram_ops = अणु
 	.family		   = PF_IEEE802154,
 	.owner		   = THIS_MODULE,
 	.release	   = ieee802154_sock_release,
@@ -975,155 +976,155 @@ static const struct proto_ops ieee802154_dgram_ops = {
 	.ioctl		   = ieee802154_sock_ioctl,
 	.gettstamp	   = sock_gettstamp,
 	.listen		   = sock_no_listen,
-	.shutdown	   = sock_no_shutdown,
+	.shutकरोwn	   = sock_no_shutकरोwn,
 	.setsockopt	   = sock_common_setsockopt,
-	.getsockopt	   = sock_common_getsockopt,
+	.माला_लोockopt	   = sock_common_माला_लोockopt,
 	.sendmsg	   = ieee802154_sock_sendmsg,
 	.recvmsg	   = sock_common_recvmsg,
 	.mmap		   = sock_no_mmap,
 	.sendpage	   = sock_no_sendpage,
-};
+पूर्ण;
 
 /* Create a socket. Initialise the socket, blank the addresses
  * set the state.
  */
-static int ieee802154_create(struct net *net, struct socket *sock,
-			     int protocol, int kern)
-{
-	struct sock *sk;
-	int rc;
-	struct proto *proto;
-	const struct proto_ops *ops;
+अटल पूर्णांक ieee802154_create(काष्ठा net *net, काष्ठा socket *sock,
+			     पूर्णांक protocol, पूर्णांक kern)
+अणु
+	काष्ठा sock *sk;
+	पूर्णांक rc;
+	काष्ठा proto *proto;
+	स्थिर काष्ठा proto_ops *ops;
 
-	if (!net_eq(net, &init_net))
-		return -EAFNOSUPPORT;
+	अगर (!net_eq(net, &init_net))
+		वापस -EAFNOSUPPORT;
 
-	switch (sock->type) {
-	case SOCK_RAW:
+	चयन (sock->type) अणु
+	हाल SOCK_RAW:
 		rc = -EPERM;
-		if (!capable(CAP_NET_RAW))
-			goto out;
+		अगर (!capable(CAP_NET_RAW))
+			जाओ out;
 		proto = &ieee802154_raw_prot;
 		ops = &ieee802154_raw_ops;
-		break;
-	case SOCK_DGRAM:
+		अवरोध;
+	हाल SOCK_DGRAM:
 		proto = &ieee802154_dgram_prot;
 		ops = &ieee802154_dgram_ops;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -ESOCKTNOSUPPORT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	rc = -ENOMEM;
 	sk = sk_alloc(net, PF_IEEE802154, GFP_KERNEL, proto, kern);
-	if (!sk)
-		goto out;
+	अगर (!sk)
+		जाओ out;
 	rc = 0;
 
 	sock->ops = ops;
 
 	sock_init_data(sock, sk);
-	/* FIXME: sk->sk_destruct */
+	/* FIXME: sk->sk_deकाष्ठा */
 	sk->sk_family = PF_IEEE802154;
 
-	/* Checksums on by default */
+	/* Checksums on by शेष */
 	sock_set_flag(sk, SOCK_ZAPPED);
 
-	if (sk->sk_prot->hash) {
+	अगर (sk->sk_prot->hash) अणु
 		rc = sk->sk_prot->hash(sk);
-		if (rc) {
+		अगर (rc) अणु
 			sk_common_release(sk);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	if (sk->sk_prot->init) {
+	अगर (sk->sk_prot->init) अणु
 		rc = sk->sk_prot->init(sk);
-		if (rc)
+		अगर (rc)
 			sk_common_release(sk);
-	}
+	पूर्ण
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static const struct net_proto_family ieee802154_family_ops = {
+अटल स्थिर काष्ठा net_proto_family ieee802154_family_ops = अणु
 	.family		= PF_IEEE802154,
 	.create		= ieee802154_create,
 	.owner		= THIS_MODULE,
-};
+पूर्ण;
 
-static int ieee802154_rcv(struct sk_buff *skb, struct net_device *dev,
-			  struct packet_type *pt, struct net_device *orig_dev)
-{
-	if (!netif_running(dev))
-		goto drop;
+अटल पूर्णांक ieee802154_rcv(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
+			  काष्ठा packet_type *pt, काष्ठा net_device *orig_dev)
+अणु
+	अगर (!netअगर_running(dev))
+		जाओ drop;
 	pr_debug("got frame, type %d, dev %p\n", dev->type, dev);
-#ifdef DEBUG
-	print_hex_dump_bytes("ieee802154_rcv ",
+#अगर_घोषित DEBUG
+	prपूर्णांक_hex_dump_bytes("ieee802154_rcv ",
 			     DUMP_PREFIX_NONE, skb->data, skb->len);
-#endif
+#पूर्ण_अगर
 
-	if (!net_eq(dev_net(dev), &init_net))
-		goto drop;
+	अगर (!net_eq(dev_net(dev), &init_net))
+		जाओ drop;
 
 	ieee802154_raw_deliver(dev, skb);
 
-	if (dev->type != ARPHRD_IEEE802154)
-		goto drop;
+	अगर (dev->type != ARPHRD_IEEE802154)
+		जाओ drop;
 
-	if (skb->pkt_type != PACKET_OTHERHOST)
-		return ieee802154_dgram_deliver(dev, skb);
+	अगर (skb->pkt_type != PACKET_OTHERHOST)
+		वापस ieee802154_dgram_deliver(dev, skb);
 
 drop:
-	kfree_skb(skb);
-	return NET_RX_DROP;
-}
+	kमुक्त_skb(skb);
+	वापस NET_RX_DROP;
+पूर्ण
 
-static struct packet_type ieee802154_packet_type = {
+अटल काष्ठा packet_type ieee802154_packet_type = अणु
 	.type = htons(ETH_P_IEEE802154),
 	.func = ieee802154_rcv,
-};
+पूर्ण;
 
-static int __init af_ieee802154_init(void)
-{
-	int rc;
+अटल पूर्णांक __init af_ieee802154_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = proto_register(&ieee802154_raw_prot, 1);
-	if (rc)
-		goto out;
+	rc = proto_रेजिस्टर(&ieee802154_raw_prot, 1);
+	अगर (rc)
+		जाओ out;
 
-	rc = proto_register(&ieee802154_dgram_prot, 1);
-	if (rc)
-		goto err_dgram;
+	rc = proto_रेजिस्टर(&ieee802154_dgram_prot, 1);
+	अगर (rc)
+		जाओ err_dgram;
 
 	/* Tell SOCKET that we are alive */
-	rc = sock_register(&ieee802154_family_ops);
-	if (rc)
-		goto err_sock;
+	rc = sock_रेजिस्टर(&ieee802154_family_ops);
+	अगर (rc)
+		जाओ err_sock;
 	dev_add_pack(&ieee802154_packet_type);
 
 	rc = 0;
-	goto out;
+	जाओ out;
 
 err_sock:
-	proto_unregister(&ieee802154_dgram_prot);
+	proto_unरेजिस्टर(&ieee802154_dgram_prot);
 err_dgram:
-	proto_unregister(&ieee802154_raw_prot);
+	proto_unरेजिस्टर(&ieee802154_raw_prot);
 out:
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit af_ieee802154_remove(void)
-{
-	dev_remove_pack(&ieee802154_packet_type);
-	sock_unregister(PF_IEEE802154);
-	proto_unregister(&ieee802154_dgram_prot);
-	proto_unregister(&ieee802154_raw_prot);
-}
+अटल व्योम __निकास af_ieee802154_हटाओ(व्योम)
+अणु
+	dev_हटाओ_pack(&ieee802154_packet_type);
+	sock_unरेजिस्टर(PF_IEEE802154);
+	proto_unरेजिस्टर(&ieee802154_dgram_prot);
+	proto_unरेजिस्टर(&ieee802154_raw_prot);
+पूर्ण
 
 module_init(af_ieee802154_init);
-module_exit(af_ieee802154_remove);
+module_निकास(af_ieee802154_हटाओ);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_NETPROTO(PF_IEEE802154);

@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __RAS_DEBUGFS_H__
-#define __RAS_DEBUGFS_H__
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __RAS_DEBUGFS_H__
+#घोषणा __RAS_DEBUGFS_H__
 
-#include <linux/debugfs.h>
+#समावेश <linux/debugfs.h>
 
-extern struct dentry *ras_debugfs_dir;
+बाह्य काष्ठा dentry *ras_debugfs_dir;
 
-#endif /* __RAS_DEBUGFS_H__ */
+#पूर्ण_अगर /* __RAS_DEBUGFS_H__ */

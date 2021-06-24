@@ -1,36 +1,37 @@
-// SPDX-License-Identifier: GPL-2.0
-/* Helper functions for Thinkpad LED control;
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+/* Helper functions क्रम Thinkpad LED control;
  * to be included from codec driver
  */
 
-#if IS_ENABLED(CONFIG_THINKPAD_ACPI)
+#अगर IS_ENABLED(CONFIG_THINKPAD_ACPI)
 
-#include <linux/acpi.h>
-#include <linux/leds.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/leds.h>
 
-static bool is_thinkpad(struct hda_codec *codec)
-{
-	return (codec->core.subsystem_id >> 16 == 0x17aa) &&
+अटल bool is_thinkpad(काष्ठा hda_codec *codec)
+अणु
+	वापस (codec->core.subप्रणाली_id >> 16 == 0x17aa) &&
 	       (acpi_dev_found("LEN0068") || acpi_dev_found("LEN0268") ||
 		acpi_dev_found("IBM0068"));
-}
+पूर्ण
 
-static void hda_fixup_thinkpad_acpi(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-	if (action == HDA_FIXUP_ACT_PRE_PROBE) {
-		if (!is_thinkpad(codec))
-			return;
-		snd_hda_gen_add_mute_led_cdev(codec, NULL);
-		snd_hda_gen_add_micmute_led_cdev(codec, NULL);
-	}
-}
+अटल व्योम hda_fixup_thinkpad_acpi(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+	अगर (action == HDA_FIXUP_ACT_PRE_PROBE) अणु
+		अगर (!is_thinkpad(codec))
+			वापस;
+		snd_hda_gen_add_mute_led_cdev(codec, शून्य);
+		snd_hda_gen_add_micmute_led_cdev(codec, शून्य);
+	पूर्ण
+पूर्ण
 
-#else /* CONFIG_THINKPAD_ACPI */
+#अन्यथा /* CONFIG_THINKPAD_ACPI */
 
-static void hda_fixup_thinkpad_acpi(struct hda_codec *codec,
-				    const struct hda_fixup *fix, int action)
-{
-}
+अटल व्योम hda_fixup_thinkpad_acpi(काष्ठा hda_codec *codec,
+				    स्थिर काष्ठा hda_fixup *fix, पूर्णांक action)
+अणु
+पूर्ण
 
-#endif /* CONFIG_THINKPAD_ACPI */
+#पूर्ण_अगर /* CONFIG_THINKPAD_ACPI */

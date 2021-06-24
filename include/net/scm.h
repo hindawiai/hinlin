@@ -1,145 +1,146 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __LINUX_NET_SCM_H
-#define __LINUX_NET_SCM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __LINUX_NET_SCM_H
+#घोषणा __LINUX_NET_SCM_H
 
-#include <linux/limits.h>
-#include <linux/net.h>
-#include <linux/cred.h>
-#include <linux/security.h>
-#include <linux/pid.h>
-#include <linux/nsproxy.h>
-#include <linux/sched/signal.h>
+#समावेश <linux/सीमा.स>
+#समावेश <linux/net.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/security.h>
+#समावेश <linux/pid.h>
+#समावेश <linux/nsproxy.h>
+#समावेश <linux/sched/संकेत.स>
 
-/* Well, we should have at least one descriptor open
+/* Well, we should have at least one descriptor खोलो
  * to accept passed FDs 8)
  */
-#define SCM_MAX_FD	253
+#घोषणा SCM_MAX_FD	253
 
-struct scm_creds {
+काष्ठा scm_creds अणु
 	u32	pid;
 	kuid_t	uid;
 	kgid_t	gid;
-};
+पूर्ण;
 
-struct scm_fp_list {
-	short			count;
-	short			max;
-	struct user_struct	*user;
-	struct file		*fp[SCM_MAX_FD];
-};
+काष्ठा scm_fp_list अणु
+	लघु			count;
+	लघु			max;
+	काष्ठा user_काष्ठा	*user;
+	काष्ठा file		*fp[SCM_MAX_FD];
+पूर्ण;
 
-struct scm_cookie {
-	struct pid		*pid;		/* Skb credentials */
-	struct scm_fp_list	*fp;		/* Passed files		*/
-	struct scm_creds	creds;		/* Skb credentials	*/
-#ifdef CONFIG_SECURITY_NETWORK
+काष्ठा scm_cookie अणु
+	काष्ठा pid		*pid;		/* Skb credentials */
+	काष्ठा scm_fp_list	*fp;		/* Passed files		*/
+	काष्ठा scm_creds	creds;		/* Skb credentials	*/
+#अगर_घोषित CONFIG_SECURITY_NETWORK
 	u32			secid;		/* Passed security ID 	*/
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-void scm_detach_fds(struct msghdr *msg, struct scm_cookie *scm);
-void scm_detach_fds_compat(struct msghdr *msg, struct scm_cookie *scm);
-int __scm_send(struct socket *sock, struct msghdr *msg, struct scm_cookie *scm);
-void __scm_destroy(struct scm_cookie *scm);
-struct scm_fp_list *scm_fp_dup(struct scm_fp_list *fpl);
+व्योम scm_detach_fds(काष्ठा msghdr *msg, काष्ठा scm_cookie *scm);
+व्योम scm_detach_fds_compat(काष्ठा msghdr *msg, काष्ठा scm_cookie *scm);
+पूर्णांक __scm_send(काष्ठा socket *sock, काष्ठा msghdr *msg, काष्ठा scm_cookie *scm);
+व्योम __scm_destroy(काष्ठा scm_cookie *scm);
+काष्ठा scm_fp_list *scm_fp_dup(काष्ठा scm_fp_list *fpl);
 
-#ifdef CONFIG_SECURITY_NETWORK
-static __inline__ void unix_get_peersec_dgram(struct socket *sock, struct scm_cookie *scm)
-{
-	security_socket_getpeersec_dgram(sock, NULL, &scm->secid);
-}
-#else
-static __inline__ void unix_get_peersec_dgram(struct socket *sock, struct scm_cookie *scm)
-{ }
-#endif /* CONFIG_SECURITY_NETWORK */
+#अगर_घोषित CONFIG_SECURITY_NETWORK
+अटल __अंतरभूत__ व्योम unix_get_peersec_dgram(काष्ठा socket *sock, काष्ठा scm_cookie *scm)
+अणु
+	security_socket_getpeersec_dgram(sock, शून्य, &scm->secid);
+पूर्ण
+#अन्यथा
+अटल __अंतरभूत__ व्योम unix_get_peersec_dgram(काष्ठा socket *sock, काष्ठा scm_cookie *scm)
+अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_SECURITY_NETWORK */
 
-static __inline__ void scm_set_cred(struct scm_cookie *scm,
-				    struct pid *pid, kuid_t uid, kgid_t gid)
-{
+अटल __अंतरभूत__ व्योम scm_set_cred(काष्ठा scm_cookie *scm,
+				    काष्ठा pid *pid, kuid_t uid, kgid_t gid)
+अणु
 	scm->pid  = get_pid(pid);
 	scm->creds.pid = pid_vnr(pid);
 	scm->creds.uid = uid;
 	scm->creds.gid = gid;
-}
+पूर्ण
 
-static __inline__ void scm_destroy_cred(struct scm_cookie *scm)
-{
+अटल __अंतरभूत__ व्योम scm_destroy_cred(काष्ठा scm_cookie *scm)
+अणु
 	put_pid(scm->pid);
-	scm->pid  = NULL;
-}
+	scm->pid  = शून्य;
+पूर्ण
 
-static __inline__ void scm_destroy(struct scm_cookie *scm)
-{
+अटल __अंतरभूत__ व्योम scm_destroy(काष्ठा scm_cookie *scm)
+अणु
 	scm_destroy_cred(scm);
-	if (scm->fp)
+	अगर (scm->fp)
 		__scm_destroy(scm);
-}
+पूर्ण
 
-static __inline__ int scm_send(struct socket *sock, struct msghdr *msg,
-			       struct scm_cookie *scm, bool forcecreds)
-{
-	memset(scm, 0, sizeof(*scm));
+अटल __अंतरभूत__ पूर्णांक scm_send(काष्ठा socket *sock, काष्ठा msghdr *msg,
+			       काष्ठा scm_cookie *scm, bool क्रमcecreds)
+अणु
+	स_रखो(scm, 0, माप(*scm));
 	scm->creds.uid = INVALID_UID;
 	scm->creds.gid = INVALID_GID;
-	if (forcecreds)
+	अगर (क्रमcecreds)
 		scm_set_cred(scm, task_tgid(current), current_uid(), current_gid());
 	unix_get_peersec_dgram(sock, scm);
-	if (msg->msg_controllen <= 0)
-		return 0;
-	return __scm_send(sock, msg, scm);
-}
+	अगर (msg->msg_controllen <= 0)
+		वापस 0;
+	वापस __scm_send(sock, msg, scm);
+पूर्ण
 
-#ifdef CONFIG_SECURITY_NETWORK
-static inline void scm_passec(struct socket *sock, struct msghdr *msg, struct scm_cookie *scm)
-{
-	char *secdata;
+#अगर_घोषित CONFIG_SECURITY_NETWORK
+अटल अंतरभूत व्योम scm_passec(काष्ठा socket *sock, काष्ठा msghdr *msg, काष्ठा scm_cookie *scm)
+अणु
+	अक्षर *secdata;
 	u32 seclen;
-	int err;
+	पूर्णांक err;
 
-	if (test_bit(SOCK_PASSSEC, &sock->flags)) {
+	अगर (test_bit(SOCK_PASSSEC, &sock->flags)) अणु
 		err = security_secid_to_secctx(scm->secid, &secdata, &seclen);
 
-		if (!err) {
+		अगर (!err) अणु
 			put_cmsg(msg, SOL_SOCKET, SCM_SECURITY, seclen, secdata);
 			security_release_secctx(secdata, seclen);
-		}
-	}
-}
-#else
-static inline void scm_passec(struct socket *sock, struct msghdr *msg, struct scm_cookie *scm)
-{ }
-#endif /* CONFIG_SECURITY_NETWORK */
+		पूर्ण
+	पूर्ण
+पूर्ण
+#अन्यथा
+अटल अंतरभूत व्योम scm_passec(काष्ठा socket *sock, काष्ठा msghdr *msg, काष्ठा scm_cookie *scm)
+अणु पूर्ण
+#पूर्ण_अगर /* CONFIG_SECURITY_NETWORK */
 
-static __inline__ void scm_recv(struct socket *sock, struct msghdr *msg,
-				struct scm_cookie *scm, int flags)
-{
-	if (!msg->msg_control) {
-		if (test_bit(SOCK_PASSCRED, &sock->flags) || scm->fp)
+अटल __अंतरभूत__ व्योम scm_recv(काष्ठा socket *sock, काष्ठा msghdr *msg,
+				काष्ठा scm_cookie *scm, पूर्णांक flags)
+अणु
+	अगर (!msg->msg_control) अणु
+		अगर (test_bit(SOCK_PASSCRED, &sock->flags) || scm->fp)
 			msg->msg_flags |= MSG_CTRUNC;
 		scm_destroy(scm);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (test_bit(SOCK_PASSCRED, &sock->flags)) {
-		struct user_namespace *current_ns = current_user_ns();
-		struct ucred ucreds = {
+	अगर (test_bit(SOCK_PASSCRED, &sock->flags)) अणु
+		काष्ठा user_namespace *current_ns = current_user_ns();
+		काष्ठा ucred ucreds = अणु
 			.pid = scm->creds.pid,
 			.uid = from_kuid_munged(current_ns, scm->creds.uid),
 			.gid = from_kgid_munged(current_ns, scm->creds.gid),
-		};
-		put_cmsg(msg, SOL_SOCKET, SCM_CREDENTIALS, sizeof(ucreds), &ucreds);
-	}
+		पूर्ण;
+		put_cmsg(msg, SOL_SOCKET, SCM_CREDENTIALS, माप(ucreds), &ucreds);
+	पूर्ण
 
 	scm_destroy_cred(scm);
 
 	scm_passec(sock, msg, scm);
 
-	if (!scm->fp)
-		return;
+	अगर (!scm->fp)
+		वापस;
 	
 	scm_detach_fds(msg, scm);
-}
+पूर्ण
 
 
-#endif /* __LINUX_NET_SCM_H */
+#पूर्ण_अगर /* __LINUX_NET_SCM_H */
 

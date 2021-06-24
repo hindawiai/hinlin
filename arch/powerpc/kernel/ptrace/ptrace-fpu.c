@@ -1,50 +1,51 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 
-#include <linux/regset.h>
+#समावेश <linux/regset.h>
 
-#include <asm/switch_to.h>
+#समावेश <यंत्र/चयन_to.h>
 
-#include "ptrace-decl.h"
+#समावेश "ptrace-decl.h"
 
-int ptrace_get_fpr(struct task_struct *child, int index, unsigned long *data)
-{
-#ifdef CONFIG_PPC_FPU_REGS
-	unsigned int fpidx = index - PT_FPR0;
-#endif
+पूर्णांक ptrace_get_fpr(काष्ठा task_काष्ठा *child, पूर्णांक index, अचिन्हित दीर्घ *data)
+अणु
+#अगर_घोषित CONFIG_PPC_FPU_REGS
+	अचिन्हित पूर्णांक fpidx = index - PT_FPR0;
+#पूर्ण_अगर
 
-	if (index > PT_FPSCR)
-		return -EIO;
+	अगर (index > PT_FPSCR)
+		वापस -EIO;
 
-#ifdef CONFIG_PPC_FPU_REGS
-	flush_fp_to_thread(child);
-	if (fpidx < (PT_FPSCR - PT_FPR0))
-		memcpy(data, &child->thread.TS_FPR(fpidx), sizeof(long));
-	else
-		*data = child->thread.fp_state.fpscr;
-#else
+#अगर_घोषित CONFIG_PPC_FPU_REGS
+	flush_fp_to_thपढ़ो(child);
+	अगर (fpidx < (PT_FPSCR - PT_FPR0))
+		स_नकल(data, &child->thपढ़ो.TS_FPR(fpidx), माप(दीर्घ));
+	अन्यथा
+		*data = child->thपढ़ो.fp_state.fpscr;
+#अन्यथा
 	*data = 0;
-#endif
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int ptrace_put_fpr(struct task_struct *child, int index, unsigned long data)
-{
-#ifdef CONFIG_PPC_FPU_REGS
-	unsigned int fpidx = index - PT_FPR0;
-#endif
+पूर्णांक ptrace_put_fpr(काष्ठा task_काष्ठा *child, पूर्णांक index, अचिन्हित दीर्घ data)
+अणु
+#अगर_घोषित CONFIG_PPC_FPU_REGS
+	अचिन्हित पूर्णांक fpidx = index - PT_FPR0;
+#पूर्ण_अगर
 
-	if (index > PT_FPSCR)
-		return -EIO;
+	अगर (index > PT_FPSCR)
+		वापस -EIO;
 
-#ifdef CONFIG_PPC_FPU_REGS
-	flush_fp_to_thread(child);
-	if (fpidx < (PT_FPSCR - PT_FPR0))
-		memcpy(&child->thread.TS_FPR(fpidx), &data, sizeof(long));
-	else
-		child->thread.fp_state.fpscr = data;
-#endif
+#अगर_घोषित CONFIG_PPC_FPU_REGS
+	flush_fp_to_thपढ़ो(child);
+	अगर (fpidx < (PT_FPSCR - PT_FPR0))
+		स_नकल(&child->thपढ़ो.TS_FPR(fpidx), &data, माप(दीर्घ));
+	अन्यथा
+		child->thपढ़ो.fp_state.fpscr = data;
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 

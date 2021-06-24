@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * STMicroelectronics sensors core library driver
  *
@@ -7,579 +8,579 @@
  * Denis Ciocca <denis.ciocca@st.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/iio/iio.h>
-#include <linux/property.h>
-#include <linux/regulator/consumer.h>
-#include <linux/regmap.h>
-#include <asm/unaligned.h>
-#include <linux/iio/common/st_sensors.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/iio/iपन.स>
+#समावेश <linux/property.h>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/regmap.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश <linux/iio/common/st_sensors.h>
 
-#include "st_sensors_core.h"
+#समावेश "st_sensors_core.h"
 
-int st_sensors_write_data_with_mask(struct iio_dev *indio_dev,
+पूर्णांक st_sensors_ग_लिखो_data_with_mask(काष्ठा iio_dev *indio_dev,
 				    u8 reg_addr, u8 mask, u8 data)
-{
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+अणु
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
-	return regmap_update_bits(sdata->regmap,
+	वापस regmap_update_bits(sdata->regmap,
 				  reg_addr, mask, data << __ffs(mask));
-}
+पूर्ण
 
-int st_sensors_debugfs_reg_access(struct iio_dev *indio_dev,
-				  unsigned reg, unsigned writeval,
-				  unsigned *readval)
-{
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
-	int err;
+पूर्णांक st_sensors_debugfs_reg_access(काष्ठा iio_dev *indio_dev,
+				  अचिन्हित reg, अचिन्हित ग_लिखोval,
+				  अचिन्हित *पढ़ोval)
+अणु
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
+	पूर्णांक err;
 
-	if (!readval)
-		return regmap_write(sdata->regmap, reg, writeval);
+	अगर (!पढ़ोval)
+		वापस regmap_ग_लिखो(sdata->regmap, reg, ग_लिखोval);
 
-	err = regmap_read(sdata->regmap, reg, readval);
-	if (err < 0)
-		return err;
+	err = regmap_पढ़ो(sdata->regmap, reg, पढ़ोval);
+	अगर (err < 0)
+		वापस err;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(st_sensors_debugfs_reg_access);
 
-static int st_sensors_match_odr(struct st_sensor_settings *sensor_settings,
-			unsigned int odr, struct st_sensor_odr_avl *odr_out)
-{
-	int i, ret = -EINVAL;
+अटल पूर्णांक st_sensors_match_odr(काष्ठा st_sensor_settings *sensor_settings,
+			अचिन्हित पूर्णांक odr, काष्ठा st_sensor_odr_avl *odr_out)
+अणु
+	पूर्णांक i, ret = -EINVAL;
 
-	for (i = 0; i < ST_SENSORS_ODR_LIST_MAX; i++) {
-		if (sensor_settings->odr.odr_avl[i].hz == 0)
-			goto st_sensors_match_odr_error;
+	क्रम (i = 0; i < ST_SENSORS_ODR_LIST_MAX; i++) अणु
+		अगर (sensor_settings->odr.odr_avl[i].hz == 0)
+			जाओ st_sensors_match_odr_error;
 
-		if (sensor_settings->odr.odr_avl[i].hz == odr) {
+		अगर (sensor_settings->odr.odr_avl[i].hz == odr) अणु
 			odr_out->hz = sensor_settings->odr.odr_avl[i].hz;
 			odr_out->value = sensor_settings->odr.odr_avl[i].value;
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 st_sensors_match_odr_error:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int st_sensors_set_odr(struct iio_dev *indio_dev, unsigned int odr)
-{
-	int err;
-	struct st_sensor_odr_avl odr_out = {0, 0};
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+पूर्णांक st_sensors_set_odr(काष्ठा iio_dev *indio_dev, अचिन्हित पूर्णांक odr)
+अणु
+	पूर्णांक err;
+	काष्ठा st_sensor_odr_avl odr_out = अणु0, 0पूर्ण;
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
-	if (!sdata->sensor_settings->odr.mask)
-		return 0;
+	अगर (!sdata->sensor_settings->odr.mask)
+		वापस 0;
 
 	err = st_sensors_match_odr(sdata->sensor_settings, odr, &odr_out);
-	if (err < 0)
-		goto st_sensors_match_odr_error;
+	अगर (err < 0)
+		जाओ st_sensors_match_odr_error;
 
-	if ((sdata->sensor_settings->odr.addr ==
+	अगर ((sdata->sensor_settings->odr.addr ==
 					sdata->sensor_settings->pw.addr) &&
 				(sdata->sensor_settings->odr.mask ==
-					sdata->sensor_settings->pw.mask)) {
-		if (sdata->enabled == true) {
-			err = st_sensors_write_data_with_mask(indio_dev,
+					sdata->sensor_settings->pw.mask)) अणु
+		अगर (sdata->enabled == true) अणु
+			err = st_sensors_ग_लिखो_data_with_mask(indio_dev,
 				sdata->sensor_settings->odr.addr,
 				sdata->sensor_settings->odr.mask,
 				odr_out.value);
-		} else {
+		पूर्ण अन्यथा अणु
 			err = 0;
-		}
-	} else {
-		err = st_sensors_write_data_with_mask(indio_dev,
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		err = st_sensors_ग_लिखो_data_with_mask(indio_dev,
 			sdata->sensor_settings->odr.addr,
 			sdata->sensor_settings->odr.mask,
 			odr_out.value);
-	}
-	if (err >= 0)
+	पूर्ण
+	अगर (err >= 0)
 		sdata->odr = odr_out.hz;
 
 st_sensors_match_odr_error:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(st_sensors_set_odr);
 
-static int st_sensors_match_fs(struct st_sensor_settings *sensor_settings,
-					unsigned int fs, int *index_fs_avl)
-{
-	int i, ret = -EINVAL;
+अटल पूर्णांक st_sensors_match_fs(काष्ठा st_sensor_settings *sensor_settings,
+					अचिन्हित पूर्णांक fs, पूर्णांक *index_fs_avl)
+अणु
+	पूर्णांक i, ret = -EINVAL;
 
-	for (i = 0; i < ST_SENSORS_FULLSCALE_AVL_MAX; i++) {
-		if (sensor_settings->fs.fs_avl[i].num == 0)
-			return ret;
+	क्रम (i = 0; i < ST_SENSORS_FULLSCALE_AVL_MAX; i++) अणु
+		अगर (sensor_settings->fs.fs_avl[i].num == 0)
+			वापस ret;
 
-		if (sensor_settings->fs.fs_avl[i].num == fs) {
+		अगर (sensor_settings->fs.fs_avl[i].num == fs) अणु
 			*index_fs_avl = i;
 			ret = 0;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int st_sensors_set_fullscale(struct iio_dev *indio_dev, unsigned int fs)
-{
-	int err, i = 0;
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+अटल पूर्णांक st_sensors_set_fullscale(काष्ठा iio_dev *indio_dev, अचिन्हित पूर्णांक fs)
+अणु
+	पूर्णांक err, i = 0;
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
-	if (sdata->sensor_settings->fs.addr == 0)
-		return 0;
+	अगर (sdata->sensor_settings->fs.addr == 0)
+		वापस 0;
 
 	err = st_sensors_match_fs(sdata->sensor_settings, fs, &i);
-	if (err < 0)
-		goto st_accel_set_fullscale_error;
+	अगर (err < 0)
+		जाओ st_accel_set_fullscale_error;
 
-	err = st_sensors_write_data_with_mask(indio_dev,
+	err = st_sensors_ग_लिखो_data_with_mask(indio_dev,
 				sdata->sensor_settings->fs.addr,
 				sdata->sensor_settings->fs.mask,
 				sdata->sensor_settings->fs.fs_avl[i].value);
-	if (err < 0)
-		goto st_accel_set_fullscale_error;
+	अगर (err < 0)
+		जाओ st_accel_set_fullscale_error;
 
 	sdata->current_fullscale = &sdata->sensor_settings->fs.fs_avl[i];
-	return err;
+	वापस err;
 
 st_accel_set_fullscale_error:
 	dev_err(&indio_dev->dev, "failed to set new fullscale.\n");
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int st_sensors_set_enable(struct iio_dev *indio_dev, bool enable)
-{
-	u8 tmp_value;
-	int err = -EINVAL;
+पूर्णांक st_sensors_set_enable(काष्ठा iio_dev *indio_dev, bool enable)
+अणु
+	u8 पंचांगp_value;
+	पूर्णांक err = -EINVAL;
 	bool found = false;
-	struct st_sensor_odr_avl odr_out = {0, 0};
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+	काष्ठा st_sensor_odr_avl odr_out = अणु0, 0पूर्ण;
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
-	if (enable) {
-		tmp_value = sdata->sensor_settings->pw.value_on;
-		if ((sdata->sensor_settings->odr.addr ==
+	अगर (enable) अणु
+		पंचांगp_value = sdata->sensor_settings->pw.value_on;
+		अगर ((sdata->sensor_settings->odr.addr ==
 					sdata->sensor_settings->pw.addr) &&
 				(sdata->sensor_settings->odr.mask ==
-					sdata->sensor_settings->pw.mask)) {
+					sdata->sensor_settings->pw.mask)) अणु
 			err = st_sensors_match_odr(sdata->sensor_settings,
 							sdata->odr, &odr_out);
-			if (err < 0)
-				goto set_enable_error;
-			tmp_value = odr_out.value;
+			अगर (err < 0)
+				जाओ set_enable_error;
+			पंचांगp_value = odr_out.value;
 			found = true;
-		}
-		err = st_sensors_write_data_with_mask(indio_dev,
+		पूर्ण
+		err = st_sensors_ग_लिखो_data_with_mask(indio_dev,
 				sdata->sensor_settings->pw.addr,
-				sdata->sensor_settings->pw.mask, tmp_value);
-		if (err < 0)
-			goto set_enable_error;
+				sdata->sensor_settings->pw.mask, पंचांगp_value);
+		अगर (err < 0)
+			जाओ set_enable_error;
 
 		sdata->enabled = true;
 
-		if (found)
+		अगर (found)
 			sdata->odr = odr_out.hz;
-	} else {
-		err = st_sensors_write_data_with_mask(indio_dev,
+	पूर्ण अन्यथा अणु
+		err = st_sensors_ग_लिखो_data_with_mask(indio_dev,
 				sdata->sensor_settings->pw.addr,
 				sdata->sensor_settings->pw.mask,
 				sdata->sensor_settings->pw.value_off);
-		if (err < 0)
-			goto set_enable_error;
+		अगर (err < 0)
+			जाओ set_enable_error;
 
 		sdata->enabled = false;
-	}
+	पूर्ण
 
 set_enable_error:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(st_sensors_set_enable);
 
-int st_sensors_set_axis_enable(struct iio_dev *indio_dev, u8 axis_enable)
-{
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
-	int err = 0;
+पूर्णांक st_sensors_set_axis_enable(काष्ठा iio_dev *indio_dev, u8 axis_enable)
+अणु
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
+	पूर्णांक err = 0;
 
-	if (sdata->sensor_settings->enable_axis.addr)
-		err = st_sensors_write_data_with_mask(indio_dev,
+	अगर (sdata->sensor_settings->enable_axis.addr)
+		err = st_sensors_ग_लिखो_data_with_mask(indio_dev,
 				sdata->sensor_settings->enable_axis.addr,
 				sdata->sensor_settings->enable_axis.mask,
 				axis_enable);
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(st_sensors_set_axis_enable);
 
-int st_sensors_power_enable(struct iio_dev *indio_dev)
-{
-	struct st_sensor_data *pdata = iio_priv(indio_dev);
-	int err;
+पूर्णांक st_sensors_घातer_enable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा st_sensor_data *pdata = iio_priv(indio_dev);
+	पूर्णांक err;
 
-	/* Regulators not mandatory, but if requested we should enable them. */
+	/* Regulators not mandatory, but अगर requested we should enable them. */
 	pdata->vdd = devm_regulator_get(indio_dev->dev.parent, "vdd");
-	if (IS_ERR(pdata->vdd)) {
+	अगर (IS_ERR(pdata->vdd)) अणु
 		dev_err(&indio_dev->dev, "unable to get Vdd supply\n");
-		return PTR_ERR(pdata->vdd);
-	}
+		वापस PTR_ERR(pdata->vdd);
+	पूर्ण
 	err = regulator_enable(pdata->vdd);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		dev_warn(&indio_dev->dev,
 			 "Failed to enable specified Vdd supply\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	pdata->vdd_io = devm_regulator_get(indio_dev->dev.parent, "vddio");
-	if (IS_ERR(pdata->vdd_io)) {
+	अगर (IS_ERR(pdata->vdd_io)) अणु
 		dev_err(&indio_dev->dev, "unable to get Vdd_IO supply\n");
 		err = PTR_ERR(pdata->vdd_io);
-		goto st_sensors_disable_vdd;
-	}
+		जाओ st_sensors_disable_vdd;
+	पूर्ण
 	err = regulator_enable(pdata->vdd_io);
-	if (err != 0) {
+	अगर (err != 0) अणु
 		dev_warn(&indio_dev->dev,
 			 "Failed to enable specified Vdd_IO supply\n");
-		goto st_sensors_disable_vdd;
-	}
+		जाओ st_sensors_disable_vdd;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 st_sensors_disable_vdd:
 	regulator_disable(pdata->vdd);
-	return err;
-}
-EXPORT_SYMBOL(st_sensors_power_enable);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(st_sensors_घातer_enable);
 
-void st_sensors_power_disable(struct iio_dev *indio_dev)
-{
-	struct st_sensor_data *pdata = iio_priv(indio_dev);
+व्योम st_sensors_घातer_disable(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा st_sensor_data *pdata = iio_priv(indio_dev);
 
 	regulator_disable(pdata->vdd);
 	regulator_disable(pdata->vdd_io);
-}
-EXPORT_SYMBOL(st_sensors_power_disable);
+पूर्ण
+EXPORT_SYMBOL(st_sensors_घातer_disable);
 
-static int st_sensors_set_drdy_int_pin(struct iio_dev *indio_dev,
-					struct st_sensors_platform_data *pdata)
-{
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+अटल पूर्णांक st_sensors_set_drdy_पूर्णांक_pin(काष्ठा iio_dev *indio_dev,
+					काष्ठा st_sensors_platक्रमm_data *pdata)
+अणु
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
-	/* Sensor does not support interrupts */
-	if (!sdata->sensor_settings->drdy_irq.int1.addr &&
-	    !sdata->sensor_settings->drdy_irq.int2.addr) {
-		if (pdata->drdy_int_pin)
+	/* Sensor करोes not support पूर्णांकerrupts */
+	अगर (!sdata->sensor_settings->drdy_irq.पूर्णांक1.addr &&
+	    !sdata->sensor_settings->drdy_irq.पूर्णांक2.addr) अणु
+		अगर (pdata->drdy_पूर्णांक_pin)
 			dev_info(&indio_dev->dev,
 				 "DRDY on pin INT%d specified, but sensor does not support interrupts\n",
-				 pdata->drdy_int_pin);
-		return 0;
-	}
+				 pdata->drdy_पूर्णांक_pin);
+		वापस 0;
+	पूर्ण
 
-	switch (pdata->drdy_int_pin) {
-	case 1:
-		if (!sdata->sensor_settings->drdy_irq.int1.mask) {
+	चयन (pdata->drdy_पूर्णांक_pin) अणु
+	हाल 1:
+		अगर (!sdata->sensor_settings->drdy_irq.पूर्णांक1.mask) अणु
 			dev_err(&indio_dev->dev,
 					"DRDY on INT1 not available.\n");
-			return -EINVAL;
-		}
-		sdata->drdy_int_pin = 1;
-		break;
-	case 2:
-		if (!sdata->sensor_settings->drdy_irq.int2.mask) {
+			वापस -EINVAL;
+		पूर्ण
+		sdata->drdy_पूर्णांक_pin = 1;
+		अवरोध;
+	हाल 2:
+		अगर (!sdata->sensor_settings->drdy_irq.पूर्णांक2.mask) अणु
 			dev_err(&indio_dev->dev,
 					"DRDY on INT2 not available.\n");
-			return -EINVAL;
-		}
-		sdata->drdy_int_pin = 2;
-		break;
-	default:
+			वापस -EINVAL;
+		पूर्ण
+		sdata->drdy_पूर्णांक_pin = 2;
+		अवरोध;
+	शेष:
 		dev_err(&indio_dev->dev, "DRDY on pdata not valid.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (pdata->open_drain) {
-		if (!sdata->sensor_settings->drdy_irq.int1.addr_od &&
-		    !sdata->sensor_settings->drdy_irq.int2.addr_od)
+	अगर (pdata->खोलो_drain) अणु
+		अगर (!sdata->sensor_settings->drdy_irq.पूर्णांक1.addr_od &&
+		    !sdata->sensor_settings->drdy_irq.पूर्णांक2.addr_od)
 			dev_err(&indio_dev->dev,
 				"open drain requested but unsupported.\n");
-		else
-			sdata->int_pin_open_drain = true;
-	}
+		अन्यथा
+			sdata->पूर्णांक_pin_खोलो_drain = true;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct st_sensors_platform_data *st_sensors_dev_probe(struct device *dev,
-		struct st_sensors_platform_data *defdata)
-{
-	struct st_sensors_platform_data *pdata;
+अटल काष्ठा st_sensors_platक्रमm_data *st_sensors_dev_probe(काष्ठा device *dev,
+		काष्ठा st_sensors_platक्रमm_data *defdata)
+अणु
+	काष्ठा st_sensors_platक्रमm_data *pdata;
 	u32 val;
 
-	if (!dev_fwnode(dev))
-		return NULL;
+	अगर (!dev_fwnode(dev))
+		वापस शून्य;
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
-	if (!device_property_read_u32(dev, "st,drdy-int-pin", &val) && (val <= 2))
-		pdata->drdy_int_pin = (u8) val;
-	else
-		pdata->drdy_int_pin = defdata ? defdata->drdy_int_pin : 0;
+	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
+	अगर (!pdata)
+		वापस ERR_PTR(-ENOMEM);
+	अगर (!device_property_पढ़ो_u32(dev, "st,drdy-int-pin", &val) && (val <= 2))
+		pdata->drdy_पूर्णांक_pin = (u8) val;
+	अन्यथा
+		pdata->drdy_पूर्णांक_pin = defdata ? defdata->drdy_पूर्णांक_pin : 0;
 
-	pdata->open_drain = device_property_read_bool(dev, "drive-open-drain");
+	pdata->खोलो_drain = device_property_पढ़ो_bool(dev, "drive-open-drain");
 
-	return pdata;
-}
+	वापस pdata;
+पूर्ण
 
 /**
- * st_sensors_dev_name_probe() - device probe for ST sensor name
+ * st_sensors_dev_name_probe() - device probe क्रम ST sensor name
  * @dev: driver model representation of the device.
  * @name: device name buffer reference.
  * @len: device name buffer length.
  *
- * In effect this function matches an ID to an internal kernel
- * name for a certain sensor device, so that the rest of the autodetection can
- * rely on that name from this point on. I2C/SPI devices will be renamed
- * to match the internal kernel convention.
+ * In effect this function matches an ID to an पूर्णांकernal kernel
+ * name क्रम a certain sensor device, so that the rest of the स्वतःdetection can
+ * rely on that name from this poपूर्णांक on. I2C/SPI devices will be नामd
+ * to match the पूर्णांकernal kernel convention.
  */
-void st_sensors_dev_name_probe(struct device *dev, char *name, int len)
-{
-	const void *match;
+व्योम st_sensors_dev_name_probe(काष्ठा device *dev, अक्षर *name, पूर्णांक len)
+अणु
+	स्थिर व्योम *match;
 
 	match = device_get_match_data(dev);
-	if (!match)
-		return;
+	अगर (!match)
+		वापस;
 
-	/* The name from the match takes precedence if present */
+	/* The name from the match takes precedence अगर present */
 	strlcpy(name, match, len);
-}
+पूर्ण
 EXPORT_SYMBOL(st_sensors_dev_name_probe);
 
-int st_sensors_init_sensor(struct iio_dev *indio_dev,
-					struct st_sensors_platform_data *pdata)
-{
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
-	struct st_sensors_platform_data *of_pdata;
-	int err = 0;
+पूर्णांक st_sensors_init_sensor(काष्ठा iio_dev *indio_dev,
+					काष्ठा st_sensors_platक्रमm_data *pdata)
+अणु
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
+	काष्ठा st_sensors_platक्रमm_data *of_pdata;
+	पूर्णांक err = 0;
 
-	/* If OF/DT pdata exists, it will take precedence of anything else */
+	/* If OF/DT pdata exists, it will take precedence of anything अन्यथा */
 	of_pdata = st_sensors_dev_probe(indio_dev->dev.parent, pdata);
-	if (IS_ERR(of_pdata))
-		return PTR_ERR(of_pdata);
-	if (of_pdata)
+	अगर (IS_ERR(of_pdata))
+		वापस PTR_ERR(of_pdata);
+	अगर (of_pdata)
 		pdata = of_pdata;
 
-	if (pdata) {
-		err = st_sensors_set_drdy_int_pin(indio_dev, pdata);
-		if (err < 0)
-			return err;
-	}
+	अगर (pdata) अणु
+		err = st_sensors_set_drdy_पूर्णांक_pin(indio_dev, pdata);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	err = st_sensors_set_enable(indio_dev, false);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* Disable DRDY, this might be still be enabled after reboot. */
-	err = st_sensors_set_dataready_irq(indio_dev, false);
-	if (err < 0)
-		return err;
+	err = st_sensors_set_dataपढ़ोy_irq(indio_dev, false);
+	अगर (err < 0)
+		वापस err;
 
-	if (sdata->current_fullscale) {
+	अगर (sdata->current_fullscale) अणु
 		err = st_sensors_set_fullscale(indio_dev,
 						sdata->current_fullscale->num);
-		if (err < 0)
-			return err;
-	} else
+		अगर (err < 0)
+			वापस err;
+	पूर्ण अन्यथा
 		dev_info(&indio_dev->dev, "Full-scale not possible\n");
 
 	err = st_sensors_set_odr(indio_dev, sdata->odr);
-	if (err < 0)
-		return err;
+	अगर (err < 0)
+		वापस err;
 
 	/* set BDU */
-	if (sdata->sensor_settings->bdu.addr) {
-		err = st_sensors_write_data_with_mask(indio_dev,
+	अगर (sdata->sensor_settings->bdu.addr) अणु
+		err = st_sensors_ग_लिखो_data_with_mask(indio_dev,
 					sdata->sensor_settings->bdu.addr,
 					sdata->sensor_settings->bdu.mask, true);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	/* set DAS */
-	if (sdata->sensor_settings->das.addr) {
-		err = st_sensors_write_data_with_mask(indio_dev,
+	अगर (sdata->sensor_settings->das.addr) अणु
+		err = st_sensors_ग_लिखो_data_with_mask(indio_dev,
 					sdata->sensor_settings->das.addr,
 					sdata->sensor_settings->das.mask, 1);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (sdata->int_pin_open_drain) {
+	अगर (sdata->पूर्णांक_pin_खोलो_drain) अणु
 		u8 addr, mask;
 
-		if (sdata->drdy_int_pin == 1) {
-			addr = sdata->sensor_settings->drdy_irq.int1.addr_od;
-			mask = sdata->sensor_settings->drdy_irq.int1.mask_od;
-		} else {
-			addr = sdata->sensor_settings->drdy_irq.int2.addr_od;
-			mask = sdata->sensor_settings->drdy_irq.int2.mask_od;
-		}
+		अगर (sdata->drdy_पूर्णांक_pin == 1) अणु
+			addr = sdata->sensor_settings->drdy_irq.पूर्णांक1.addr_od;
+			mask = sdata->sensor_settings->drdy_irq.पूर्णांक1.mask_od;
+		पूर्ण अन्यथा अणु
+			addr = sdata->sensor_settings->drdy_irq.पूर्णांक2.addr_od;
+			mask = sdata->sensor_settings->drdy_irq.पूर्णांक2.mask_od;
+		पूर्ण
 
 		dev_info(&indio_dev->dev,
 			 "set interrupt line to open drain mode on pin %d\n",
-			 sdata->drdy_int_pin);
-		err = st_sensors_write_data_with_mask(indio_dev, addr,
+			 sdata->drdy_पूर्णांक_pin);
+		err = st_sensors_ग_लिखो_data_with_mask(indio_dev, addr,
 						      mask, 1);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
 	err = st_sensors_set_axis_enable(indio_dev, ST_SENSORS_ENABLE_ALL_AXIS);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(st_sensors_init_sensor);
 
-int st_sensors_set_dataready_irq(struct iio_dev *indio_dev, bool enable)
-{
-	int err;
+पूर्णांक st_sensors_set_dataपढ़ोy_irq(काष्ठा iio_dev *indio_dev, bool enable)
+अणु
+	पूर्णांक err;
 	u8 drdy_addr, drdy_mask;
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
-	if (!sdata->sensor_settings->drdy_irq.int1.addr &&
-	    !sdata->sensor_settings->drdy_irq.int2.addr) {
+	अगर (!sdata->sensor_settings->drdy_irq.पूर्णांक1.addr &&
+	    !sdata->sensor_settings->drdy_irq.पूर्णांक2.addr) अणु
 		/*
 		 * there are some devices (e.g. LIS3MDL) where drdy line is
 		 * routed to a given pin and it is not possible to select a
-		 * different one. Take into account irq status register
-		 * to understand if irq trigger can be properly supported
+		 * dअगरferent one. Take पूर्णांकo account irq status रेजिस्टर
+		 * to understand अगर irq trigger can be properly supported
 		 */
-		if (sdata->sensor_settings->drdy_irq.stat_drdy.addr)
+		अगर (sdata->sensor_settings->drdy_irq.stat_drdy.addr)
 			sdata->hw_irq_trigger = enable;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Enable/Disable the interrupt generator 1. */
-	if (sdata->sensor_settings->drdy_irq.ig1.en_addr > 0) {
-		err = st_sensors_write_data_with_mask(indio_dev,
+	/* Enable/Disable the पूर्णांकerrupt generator 1. */
+	अगर (sdata->sensor_settings->drdy_irq.ig1.en_addr > 0) अणु
+		err = st_sensors_ग_लिखो_data_with_mask(indio_dev,
 				sdata->sensor_settings->drdy_irq.ig1.en_addr,
 				sdata->sensor_settings->drdy_irq.ig1.en_mask,
-				(int)enable);
-		if (err < 0)
-			goto st_accel_set_dataready_irq_error;
-	}
+				(पूर्णांक)enable);
+		अगर (err < 0)
+			जाओ st_accel_set_dataपढ़ोy_irq_error;
+	पूर्ण
 
-	if (sdata->drdy_int_pin == 1) {
-		drdy_addr = sdata->sensor_settings->drdy_irq.int1.addr;
-		drdy_mask = sdata->sensor_settings->drdy_irq.int1.mask;
-	} else {
-		drdy_addr = sdata->sensor_settings->drdy_irq.int2.addr;
-		drdy_mask = sdata->sensor_settings->drdy_irq.int2.mask;
-	}
+	अगर (sdata->drdy_पूर्णांक_pin == 1) अणु
+		drdy_addr = sdata->sensor_settings->drdy_irq.पूर्णांक1.addr;
+		drdy_mask = sdata->sensor_settings->drdy_irq.पूर्णांक1.mask;
+	पूर्ण अन्यथा अणु
+		drdy_addr = sdata->sensor_settings->drdy_irq.पूर्णांक2.addr;
+		drdy_mask = sdata->sensor_settings->drdy_irq.पूर्णांक2.mask;
+	पूर्ण
 
 	/* Flag to the poll function that the hardware trigger is in use */
 	sdata->hw_irq_trigger = enable;
 
-	/* Enable/Disable the interrupt generator for data ready. */
-	err = st_sensors_write_data_with_mask(indio_dev, drdy_addr,
-					      drdy_mask, (int)enable);
+	/* Enable/Disable the पूर्णांकerrupt generator क्रम data पढ़ोy. */
+	err = st_sensors_ग_लिखो_data_with_mask(indio_dev, drdy_addr,
+					      drdy_mask, (पूर्णांक)enable);
 
-st_accel_set_dataready_irq_error:
-	return err;
-}
-EXPORT_SYMBOL(st_sensors_set_dataready_irq);
+st_accel_set_dataपढ़ोy_irq_error:
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(st_sensors_set_dataपढ़ोy_irq);
 
-int st_sensors_set_fullscale_by_gain(struct iio_dev *indio_dev, int scale)
-{
-	int err = -EINVAL, i;
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+पूर्णांक st_sensors_set_fullscale_by_gain(काष्ठा iio_dev *indio_dev, पूर्णांक scale)
+अणु
+	पूर्णांक err = -EINVAL, i;
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
-	for (i = 0; i < ST_SENSORS_FULLSCALE_AVL_MAX; i++) {
-		if ((sdata->sensor_settings->fs.fs_avl[i].gain == scale) &&
-				(sdata->sensor_settings->fs.fs_avl[i].gain != 0)) {
+	क्रम (i = 0; i < ST_SENSORS_FULLSCALE_AVL_MAX; i++) अणु
+		अगर ((sdata->sensor_settings->fs.fs_avl[i].gain == scale) &&
+				(sdata->sensor_settings->fs.fs_avl[i].gain != 0)) अणु
 			err = 0;
-			break;
-		}
-	}
-	if (err < 0)
-		goto st_sensors_match_scale_error;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	अगर (err < 0)
+		जाओ st_sensors_match_scale_error;
 
 	err = st_sensors_set_fullscale(indio_dev,
 				sdata->sensor_settings->fs.fs_avl[i].num);
 
 st_sensors_match_scale_error:
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(st_sensors_set_fullscale_by_gain);
 
-static int st_sensors_read_axis_data(struct iio_dev *indio_dev,
-				     struct iio_chan_spec const *ch, int *data)
-{
-	int err;
+अटल पूर्णांक st_sensors_पढ़ो_axis_data(काष्ठा iio_dev *indio_dev,
+				     काष्ठा iio_chan_spec स्थिर *ch, पूर्णांक *data)
+अणु
+	पूर्णांक err;
 	u8 *outdata;
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
-	unsigned int byte_for_channel;
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
+	अचिन्हित पूर्णांक byte_क्रम_channel;
 
-	byte_for_channel = DIV_ROUND_UP(ch->scan_type.realbits +
-					ch->scan_type.shift, 8);
-	outdata = kmalloc(byte_for_channel, GFP_DMA | GFP_KERNEL);
-	if (!outdata)
-		return -ENOMEM;
+	byte_क्रम_channel = DIV_ROUND_UP(ch->scan_type.realbits +
+					ch->scan_type.shअगरt, 8);
+	outdata = kदो_स्मृति(byte_क्रम_channel, GFP_DMA | GFP_KERNEL);
+	अगर (!outdata)
+		वापस -ENOMEM;
 
-	err = regmap_bulk_read(sdata->regmap, ch->address,
-			       outdata, byte_for_channel);
-	if (err < 0)
-		goto st_sensors_free_memory;
+	err = regmap_bulk_पढ़ो(sdata->regmap, ch->address,
+			       outdata, byte_क्रम_channel);
+	अगर (err < 0)
+		जाओ st_sensors_मुक्त_memory;
 
-	if (byte_for_channel == 1)
+	अगर (byte_क्रम_channel == 1)
 		*data = (s8)*outdata;
-	else if (byte_for_channel == 2)
+	अन्यथा अगर (byte_क्रम_channel == 2)
 		*data = (s16)get_unaligned_le16(outdata);
-	else if (byte_for_channel == 3)
+	अन्यथा अगर (byte_क्रम_channel == 3)
 		*data = (s32)sign_extend32(get_unaligned_le24(outdata), 23);
 
-st_sensors_free_memory:
-	kfree(outdata);
+st_sensors_मुक्त_memory:
+	kमुक्त(outdata);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int st_sensors_read_info_raw(struct iio_dev *indio_dev,
-				struct iio_chan_spec const *ch, int *val)
-{
-	int err;
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+पूर्णांक st_sensors_पढ़ो_info_raw(काष्ठा iio_dev *indio_dev,
+				काष्ठा iio_chan_spec स्थिर *ch, पूर्णांक *val)
+अणु
+	पूर्णांक err;
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
 	mutex_lock(&indio_dev->mlock);
-	if (indio_dev->currentmode == INDIO_BUFFER_TRIGGERED) {
+	अगर (indio_dev->currenपंचांगode == INDIO_BUFFER_TRIGGERED) अणु
 		err = -EBUSY;
-		goto out;
-	} else {
+		जाओ out;
+	पूर्ण अन्यथा अणु
 		err = st_sensors_set_enable(indio_dev, true);
-		if (err < 0)
-			goto out;
+		अगर (err < 0)
+			जाओ out;
 
-		msleep((sdata->sensor_settings->bootime * 1000) / sdata->odr);
-		err = st_sensors_read_axis_data(indio_dev, ch, val);
-		if (err < 0)
-			goto out;
+		msleep((sdata->sensor_settings->booसमय * 1000) / sdata->odr);
+		err = st_sensors_पढ़ो_axis_data(indio_dev, ch, val);
+		अगर (err < 0)
+			जाओ out;
 
-		*val = *val >> ch->scan_type.shift;
+		*val = *val >> ch->scan_type.shअगरt;
 
 		err = st_sensors_set_enable(indio_dev, false);
-	}
+	पूर्ण
 out:
 	mutex_unlock(&indio_dev->mlock);
 
-	return err;
-}
-EXPORT_SYMBOL(st_sensors_read_info_raw);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(st_sensors_पढ़ो_info_raw);
 
 /*
- * st_sensors_get_settings_index() - get index of the sensor settings for a
- *				     specific device from list of settings
+ * st_sensors_get_settings_index() - get index of the sensor settings क्रम a
+ *				     specअगरic device from list of settings
  * @name: device name buffer reference.
  * @list: sensor settings list.
  * @list_length: length of sensor settings list.
@@ -587,100 +588,100 @@ EXPORT_SYMBOL(st_sensors_read_info_raw);
  * Return: non negative number on success (valid index),
  *	   negative error code otherwise.
  */
-int st_sensors_get_settings_index(const char *name,
-				  const struct st_sensor_settings *list,
-				  const int list_length)
-{
-	int i, n;
+पूर्णांक st_sensors_get_settings_index(स्थिर अक्षर *name,
+				  स्थिर काष्ठा st_sensor_settings *list,
+				  स्थिर पूर्णांक list_length)
+अणु
+	पूर्णांक i, n;
 
-	for (i = 0; i < list_length; i++) {
-		for (n = 0; n < ST_SENSORS_MAX_4WAI; n++) {
-			if (strcmp(name, list[i].sensors_supported[n]) == 0)
-				return i;
-		}
-	}
+	क्रम (i = 0; i < list_length; i++) अणु
+		क्रम (n = 0; n < ST_SENSORS_MAX_4WAI; n++) अणु
+			अगर (म_भेद(name, list[i].sensors_supported[n]) == 0)
+				वापस i;
+		पूर्ण
+	पूर्ण
 
-	return -ENODEV;
-}
+	वापस -ENODEV;
+पूर्ण
 EXPORT_SYMBOL(st_sensors_get_settings_index);
 
 /*
- * st_sensors_verify_id() - verify sensor ID (WhoAmI) is matching with the
+ * st_sensors_verअगरy_id() - verअगरy sensor ID (WhoAmI) is matching with the
  *			    expected value
  * @indio_dev: IIO device reference.
  *
- * Return: 0 on success (valid sensor ID), else a negative error code.
+ * Return: 0 on success (valid sensor ID), अन्यथा a negative error code.
  */
-int st_sensors_verify_id(struct iio_dev *indio_dev)
-{
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
-	int wai, err;
+पूर्णांक st_sensors_verअगरy_id(काष्ठा iio_dev *indio_dev)
+अणु
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
+	पूर्णांक wai, err;
 
-	if (sdata->sensor_settings->wai_addr) {
-		err = regmap_read(sdata->regmap,
+	अगर (sdata->sensor_settings->wai_addr) अणु
+		err = regmap_पढ़ो(sdata->regmap,
 				  sdata->sensor_settings->wai_addr, &wai);
-		if (err < 0) {
+		अगर (err < 0) अणु
 			dev_err(&indio_dev->dev,
 				"failed to read Who-Am-I register.\n");
-			return err;
-		}
+			वापस err;
+		पूर्ण
 
-		if (sdata->sensor_settings->wai != wai) {
+		अगर (sdata->sensor_settings->wai != wai) अणु
 			dev_err(&indio_dev->dev,
 				"%s: WhoAmI mismatch (0x%x).\n",
 				indio_dev->name, wai);
-			return -EINVAL;
-		}
-	}
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL(st_sensors_verify_id);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL(st_sensors_verअगरy_id);
 
-ssize_t st_sensors_sysfs_sampling_frequency_avail(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	int i, len = 0;
-	struct iio_dev *indio_dev = dev_get_drvdata(dev);
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+sमाप_प्रकार st_sensors_sysfs_sampling_frequency_avail(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक i, len = 0;
+	काष्ठा iio_dev *indio_dev = dev_get_drvdata(dev);
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
 	mutex_lock(&indio_dev->mlock);
-	for (i = 0; i < ST_SENSORS_ODR_LIST_MAX; i++) {
-		if (sdata->sensor_settings->odr.odr_avl[i].hz == 0)
-			break;
+	क्रम (i = 0; i < ST_SENSORS_ODR_LIST_MAX; i++) अणु
+		अगर (sdata->sensor_settings->odr.odr_avl[i].hz == 0)
+			अवरोध;
 
-		len += scnprintf(buf + len, PAGE_SIZE - len, "%d ",
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len, "%d ",
 				sdata->sensor_settings->odr.odr_avl[i].hz);
-	}
+	पूर्ण
 	mutex_unlock(&indio_dev->mlock);
 	buf[len - 1] = '\n';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 EXPORT_SYMBOL(st_sensors_sysfs_sampling_frequency_avail);
 
-ssize_t st_sensors_sysfs_scale_avail(struct device *dev,
-				struct device_attribute *attr, char *buf)
-{
-	int i, len = 0, q, r;
-	struct iio_dev *indio_dev = dev_get_drvdata(dev);
-	struct st_sensor_data *sdata = iio_priv(indio_dev);
+sमाप_प्रकार st_sensors_sysfs_scale_avail(काष्ठा device *dev,
+				काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक i, len = 0, q, r;
+	काष्ठा iio_dev *indio_dev = dev_get_drvdata(dev);
+	काष्ठा st_sensor_data *sdata = iio_priv(indio_dev);
 
 	mutex_lock(&indio_dev->mlock);
-	for (i = 0; i < ST_SENSORS_FULLSCALE_AVL_MAX; i++) {
-		if (sdata->sensor_settings->fs.fs_avl[i].num == 0)
-			break;
+	क्रम (i = 0; i < ST_SENSORS_FULLSCALE_AVL_MAX; i++) अणु
+		अगर (sdata->sensor_settings->fs.fs_avl[i].num == 0)
+			अवरोध;
 
 		q = sdata->sensor_settings->fs.fs_avl[i].gain / 1000000;
 		r = sdata->sensor_settings->fs.fs_avl[i].gain % 1000000;
 
-		len += scnprintf(buf + len, PAGE_SIZE - len, "%u.%06u ", q, r);
-	}
+		len += scnम_लिखो(buf + len, PAGE_SIZE - len, "%u.%06u ", q, r);
+	पूर्ण
 	mutex_unlock(&indio_dev->mlock);
 	buf[len - 1] = '\n';
 
-	return len;
-}
+	वापस len;
+पूर्ण
 EXPORT_SYMBOL(st_sensors_sysfs_scale_avail);
 
 MODULE_AUTHOR("Denis Ciocca <denis.ciocca@st.com>");

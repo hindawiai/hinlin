@@ -1,106 +1,107 @@
-/* SPDX-License-Identifier: (GPL-2.0-only OR BSD-3-Clause) */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: (GPL-2.0-only OR BSD-3-Clause) */
 /* QLogic qed NIC Driver
  * Copyright (c) 2015-2017  QLogic Corporation
  * Copyright (c) 2019-2020 Marvell International Ltd.
  */
 
-#ifndef _QED_DCBX_H
-#define _QED_DCBX_H
-#include <linux/types.h>
-#include <linux/slab.h>
-#include "qed.h"
-#include "qed_hsi.h"
-#include "qed_hw.h"
-#include "qed_mcp.h"
-#include "qed_reg_addr.h"
+#अगर_अघोषित _QED_DCBX_H
+#घोषणा _QED_DCBX_H
+#समावेश <linux/types.h>
+#समावेश <linux/slab.h>
+#समावेश "qed.h"
+#समावेश "qed_hsi.h"
+#समावेश "qed_hw.h"
+#समावेश "qed_mcp.h"
+#समावेश "qed_reg_addr.h"
 
-#define DCBX_CONFIG_MAX_APP_PROTOCOL    4
+#घोषणा DCBX_CONFIG_MAX_APP_PROTOCOL    4
 
-enum qed_mib_read_type {
+क्रमागत qed_mib_पढ़ो_type अणु
 	QED_DCBX_OPERATIONAL_MIB,
 	QED_DCBX_REMOTE_MIB,
 	QED_DCBX_LOCAL_MIB,
 	QED_DCBX_REMOTE_LLDP_MIB,
 	QED_DCBX_LOCAL_LLDP_MIB
-};
+पूर्ण;
 
-struct qed_dcbx_app_data {
+काष्ठा qed_dcbx_app_data अणु
 	bool enable;		/* DCB enabled */
 	u8 update;		/* Update indication */
 	u8 priority;		/* Priority */
 	u8 tc;			/* Traffic Class */
-	bool dont_add_vlan0;	/* Do not insert a vlan tag with id 0 */
-};
+	bool करोnt_add_vlan0;	/* Do not insert a vlan tag with id 0 */
+पूर्ण;
 
-#define QED_DCBX_VERSION_DISABLED       0
-#define QED_DCBX_VERSION_IEEE           1
-#define QED_DCBX_VERSION_CEE            2
+#घोषणा QED_DCBX_VERSION_DISABLED       0
+#घोषणा QED_DCBX_VERSION_IEEE           1
+#घोषणा QED_DCBX_VERSION_CEE            2
 
-struct qed_dcbx_set {
-#define QED_DCBX_OVERRIDE_STATE	        BIT(0)
-#define QED_DCBX_OVERRIDE_PFC_CFG       BIT(1)
-#define QED_DCBX_OVERRIDE_ETS_CFG       BIT(2)
-#define QED_DCBX_OVERRIDE_APP_CFG       BIT(3)
-#define QED_DCBX_OVERRIDE_DSCP_CFG      BIT(4)
+काष्ठा qed_dcbx_set अणु
+#घोषणा QED_DCBX_OVERRIDE_STATE	        BIT(0)
+#घोषणा QED_DCBX_OVERRIDE_PFC_CFG       BIT(1)
+#घोषणा QED_DCBX_OVERRIDE_ETS_CFG       BIT(2)
+#घोषणा QED_DCBX_OVERRIDE_APP_CFG       BIT(3)
+#घोषणा QED_DCBX_OVERRIDE_DSCP_CFG      BIT(4)
 	u32 override_flags;
 	bool enabled;
-	struct qed_dcbx_admin_params config;
+	काष्ठा qed_dcbx_admin_params config;
 	u32 ver_num;
-};
+पूर्ण;
 
-struct qed_dcbx_results {
+काष्ठा qed_dcbx_results अणु
 	bool dcbx_enabled;
 	u8 pf_id;
-	struct qed_dcbx_app_data arr[DCBX_MAX_PROTOCOL_TYPE];
-};
+	काष्ठा qed_dcbx_app_data arr[DCBX_MAX_PROTOCOL_TYPE];
+पूर्ण;
 
-struct qed_dcbx_app_metadata {
-	enum dcbx_protocol_type id;
-	char *name;
-	enum qed_pci_personality personality;
-};
+काष्ठा qed_dcbx_app_metadata अणु
+	क्रमागत dcbx_protocol_type id;
+	अक्षर *name;
+	क्रमागत qed_pci_personality personality;
+पूर्ण;
 
-struct qed_dcbx_info {
-	struct lldp_status_params_s lldp_remote[LLDP_MAX_LLDP_AGENTS];
-	struct lldp_config_params_s lldp_local[LLDP_MAX_LLDP_AGENTS];
-	struct dcbx_local_params local_admin;
-	struct qed_dcbx_results results;
-	struct dcbx_mib operational;
-	struct dcbx_mib remote;
-	struct qed_dcbx_set set;
-	struct qed_dcbx_get get;
+काष्ठा qed_dcbx_info अणु
+	काष्ठा lldp_status_params_s lldp_remote[LLDP_MAX_LLDP_AGENTS];
+	काष्ठा lldp_config_params_s lldp_local[LLDP_MAX_LLDP_AGENTS];
+	काष्ठा dcbx_local_params local_admin;
+	काष्ठा qed_dcbx_results results;
+	काष्ठा dcbx_mib operational;
+	काष्ठा dcbx_mib remote;
+	काष्ठा qed_dcbx_set set;
+	काष्ठा qed_dcbx_get get;
 	u8 dcbx_cap;
-};
+पूर्ण;
 
-struct qed_dcbx_mib_meta_data {
-	struct lldp_config_params_s *lldp_local;
-	struct lldp_status_params_s *lldp_remote;
-	struct dcbx_local_params *local_admin;
-	struct dcbx_mib *mib;
-	size_t size;
+काष्ठा qed_dcbx_mib_meta_data अणु
+	काष्ठा lldp_config_params_s *lldp_local;
+	काष्ठा lldp_status_params_s *lldp_remote;
+	काष्ठा dcbx_local_params *local_admin;
+	काष्ठा dcbx_mib *mib;
+	माप_प्रकार size;
 	u32 addr;
-};
+पूर्ण;
 
-extern const struct qed_eth_dcbnl_ops qed_dcbnl_ops_pass;
+बाह्य स्थिर काष्ठा qed_eth_dcbnl_ops qed_dcbnl_ops_pass;
 
-#ifdef CONFIG_DCB
-int qed_dcbx_get_config_params(struct qed_hwfn *, struct qed_dcbx_set *);
+#अगर_घोषित CONFIG_DCB
+पूर्णांक qed_dcbx_get_config_params(काष्ठा qed_hwfn *, काष्ठा qed_dcbx_set *);
 
-int qed_dcbx_config_params(struct qed_hwfn *,
-			   struct qed_ptt *, struct qed_dcbx_set *, bool);
-#endif
+पूर्णांक qed_dcbx_config_params(काष्ठा qed_hwfn *,
+			   काष्ठा qed_ptt *, काष्ठा qed_dcbx_set *, bool);
+#पूर्ण_अगर
 
-/* QED local interface routines */
-int
-qed_dcbx_mib_update_event(struct qed_hwfn *,
-			  struct qed_ptt *, enum qed_mib_read_type);
+/* QED local पूर्णांकerface routines */
+पूर्णांक
+qed_dcbx_mib_update_event(काष्ठा qed_hwfn *,
+			  काष्ठा qed_ptt *, क्रमागत qed_mib_पढ़ो_type);
 
-int qed_dcbx_info_alloc(struct qed_hwfn *p_hwfn);
-void qed_dcbx_info_free(struct qed_hwfn *p_hwfn);
-void qed_dcbx_set_pf_update_params(struct qed_dcbx_results *p_src,
-				   struct pf_update_ramrod_data *p_dest);
+पूर्णांक qed_dcbx_info_alloc(काष्ठा qed_hwfn *p_hwfn);
+व्योम qed_dcbx_info_मुक्त(काष्ठा qed_hwfn *p_hwfn);
+व्योम qed_dcbx_set_pf_update_params(काष्ठा qed_dcbx_results *p_src,
+				   काष्ठा pf_update_ramrod_data *p_dest);
 
-#define QED_DCBX_DEFAULT_TC	0
+#घोषणा QED_DCBX_DEFAULT_TC	0
 
-u8 qed_dcbx_get_priority_tc(struct qed_hwfn *p_hwfn, u8 pri);
-#endif
+u8 qed_dcbx_get_priority_tc(काष्ठा qed_hwfn *p_hwfn, u8 pri);
+#पूर्ण_अगर

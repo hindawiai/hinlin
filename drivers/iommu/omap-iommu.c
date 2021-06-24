@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * omap iommu: tlb and pagetable primitives
  *
@@ -9,216 +10,216 @@
  *		Paul Mundt and Toshihiro Kobayashi
  */
 
-#include <linux/dma-mapping.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/interrupt.h>
-#include <linux/ioport.h>
-#include <linux/platform_device.h>
-#include <linux/iommu.h>
-#include <linux/omap-iommu.h>
-#include <linux/mutex.h>
-#include <linux/spinlock.h>
-#include <linux/io.h>
-#include <linux/pm_runtime.h>
-#include <linux/of.h>
-#include <linux/of_iommu.h>
-#include <linux/of_irq.h>
-#include <linux/of_platform.h>
-#include <linux/regmap.h>
-#include <linux/mfd/syscon.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/iommu.h>
+#समावेश <linux/omap-iommu.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/of.h>
+#समावेश <linux/of_iommu.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/regmap.h>
+#समावेश <linux/mfd/syscon.h>
 
-#include <linux/platform_data/iommu-omap.h>
+#समावेश <linux/platक्रमm_data/iommu-omap.h>
 
-#include "omap-iopgtable.h"
-#include "omap-iommu.h"
+#समावेश "omap-iopgtable.h"
+#समावेश "omap-iommu.h"
 
-static const struct iommu_ops omap_iommu_ops;
+अटल स्थिर काष्ठा iommu_ops omap_iommu_ops;
 
-#define to_iommu(dev)	((struct omap_iommu *)dev_get_drvdata(dev))
+#घोषणा to_iommu(dev)	((काष्ठा omap_iommu *)dev_get_drvdata(dev))
 
-/* bitmap of the page sizes currently supported */
-#define OMAP_IOMMU_PGSIZES	(SZ_4K | SZ_64K | SZ_1M | SZ_16M)
+/* biपंचांगap of the page sizes currently supported */
+#घोषणा OMAP_IOMMU_PGSIZES	(SZ_4K | SZ_64K | SZ_1M | SZ_16M)
 
-#define MMU_LOCK_BASE_SHIFT	10
-#define MMU_LOCK_BASE_MASK	(0x1f << MMU_LOCK_BASE_SHIFT)
-#define MMU_LOCK_BASE(x)	\
+#घोषणा MMU_LOCK_BASE_SHIFT	10
+#घोषणा MMU_LOCK_BASE_MASK	(0x1f << MMU_LOCK_BASE_SHIFT)
+#घोषणा MMU_LOCK_BASE(x)	\
 	((x & MMU_LOCK_BASE_MASK) >> MMU_LOCK_BASE_SHIFT)
 
-#define MMU_LOCK_VICT_SHIFT	4
-#define MMU_LOCK_VICT_MASK	(0x1f << MMU_LOCK_VICT_SHIFT)
-#define MMU_LOCK_VICT(x)	\
+#घोषणा MMU_LOCK_VICT_SHIFT	4
+#घोषणा MMU_LOCK_VICT_MASK	(0x1f << MMU_LOCK_VICT_SHIFT)
+#घोषणा MMU_LOCK_VICT(x)	\
 	((x & MMU_LOCK_VICT_MASK) >> MMU_LOCK_VICT_SHIFT)
 
-static struct platform_driver omap_iommu_driver;
-static struct kmem_cache *iopte_cachep;
+अटल काष्ठा platक्रमm_driver omap_iommu_driver;
+अटल काष्ठा kmem_cache *iopte_cachep;
 
 /**
- * to_omap_domain - Get struct omap_iommu_domain from generic iommu_domain
- * @dom:	generic iommu domain handle
+ * to_omap_करोमुख्य - Get काष्ठा omap_iommu_करोमुख्य from generic iommu_करोमुख्य
+ * @करोm:	generic iommu करोमुख्य handle
  **/
-static struct omap_iommu_domain *to_omap_domain(struct iommu_domain *dom)
-{
-	return container_of(dom, struct omap_iommu_domain, domain);
-}
+अटल काष्ठा omap_iommu_करोमुख्य *to_omap_करोमुख्य(काष्ठा iommu_करोमुख्य *करोm)
+अणु
+	वापस container_of(करोm, काष्ठा omap_iommu_करोमुख्य, करोमुख्य);
+पूर्ण
 
 /**
- * omap_iommu_save_ctx - Save registers for pm off-mode support
+ * omap_iommu_save_ctx - Save रेजिस्टरs क्रम pm off-mode support
  * @dev:	client device
  *
  * This should be treated as an deprecated API. It is preserved only
- * to maintain existing functionality for OMAP3 ISP driver.
+ * to मुख्यtain existing functionality क्रम OMAP3 ISP driver.
  **/
-void omap_iommu_save_ctx(struct device *dev)
-{
-	struct omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
-	struct omap_iommu *obj;
+व्योम omap_iommu_save_ctx(काष्ठा device *dev)
+अणु
+	काष्ठा omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
+	काष्ठा omap_iommu *obj;
 	u32 *p;
-	int i;
+	पूर्णांक i;
 
-	if (!arch_data)
-		return;
+	अगर (!arch_data)
+		वापस;
 
-	while (arch_data->iommu_dev) {
+	जबतक (arch_data->iommu_dev) अणु
 		obj = arch_data->iommu_dev;
 		p = obj->ctx;
-		for (i = 0; i < (MMU_REG_SIZE / sizeof(u32)); i++) {
-			p[i] = iommu_read_reg(obj, i * sizeof(u32));
+		क्रम (i = 0; i < (MMU_REG_SIZE / माप(u32)); i++) अणु
+			p[i] = iommu_पढ़ो_reg(obj, i * माप(u32));
 			dev_dbg(obj->dev, "%s\t[%02d] %08x\n", __func__, i,
 				p[i]);
-		}
+		पूर्ण
 		arch_data++;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(omap_iommu_save_ctx);
 
 /**
- * omap_iommu_restore_ctx - Restore registers for pm off-mode support
+ * omap_iommu_restore_ctx - Restore रेजिस्टरs क्रम pm off-mode support
  * @dev:	client device
  *
  * This should be treated as an deprecated API. It is preserved only
- * to maintain existing functionality for OMAP3 ISP driver.
+ * to मुख्यtain existing functionality क्रम OMAP3 ISP driver.
  **/
-void omap_iommu_restore_ctx(struct device *dev)
-{
-	struct omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
-	struct omap_iommu *obj;
+व्योम omap_iommu_restore_ctx(काष्ठा device *dev)
+अणु
+	काष्ठा omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
+	काष्ठा omap_iommu *obj;
 	u32 *p;
-	int i;
+	पूर्णांक i;
 
-	if (!arch_data)
-		return;
+	अगर (!arch_data)
+		वापस;
 
-	while (arch_data->iommu_dev) {
+	जबतक (arch_data->iommu_dev) अणु
 		obj = arch_data->iommu_dev;
 		p = obj->ctx;
-		for (i = 0; i < (MMU_REG_SIZE / sizeof(u32)); i++) {
-			iommu_write_reg(obj, p[i], i * sizeof(u32));
+		क्रम (i = 0; i < (MMU_REG_SIZE / माप(u32)); i++) अणु
+			iommu_ग_लिखो_reg(obj, p[i], i * माप(u32));
 			dev_dbg(obj->dev, "%s\t[%02d] %08x\n", __func__, i,
 				p[i]);
-		}
+		पूर्ण
 		arch_data++;
-	}
-}
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL_GPL(omap_iommu_restore_ctx);
 
-static void dra7_cfg_dspsys_mmu(struct omap_iommu *obj, bool enable)
-{
+अटल व्योम dra7_cfg_dspsys_mmu(काष्ठा omap_iommu *obj, bool enable)
+अणु
 	u32 val, mask;
 
-	if (!obj->syscfg)
-		return;
+	अगर (!obj->syscfg)
+		वापस;
 
 	mask = (1 << (obj->id * DSP_SYS_MMU_CONFIG_EN_SHIFT));
 	val = enable ? mask : 0;
 	regmap_update_bits(obj->syscfg, DSP_SYS_MMU_CONFIG, mask, val);
-}
+पूर्ण
 
-static void __iommu_set_twl(struct omap_iommu *obj, bool on)
-{
-	u32 l = iommu_read_reg(obj, MMU_CNTL);
+अटल व्योम __iommu_set_twl(काष्ठा omap_iommu *obj, bool on)
+अणु
+	u32 l = iommu_पढ़ो_reg(obj, MMU_CNTL);
 
-	if (on)
-		iommu_write_reg(obj, MMU_IRQ_TWL_MASK, MMU_IRQENABLE);
-	else
-		iommu_write_reg(obj, MMU_IRQ_TLB_MISS_MASK, MMU_IRQENABLE);
+	अगर (on)
+		iommu_ग_लिखो_reg(obj, MMU_IRQ_TWL_MASK, MMU_IRQENABLE);
+	अन्यथा
+		iommu_ग_लिखो_reg(obj, MMU_IRQ_TLB_MISS_MASK, MMU_IRQENABLE);
 
 	l &= ~MMU_CNTL_MASK;
-	if (on)
+	अगर (on)
 		l |= (MMU_CNTL_MMU_EN | MMU_CNTL_TWL_EN);
-	else
+	अन्यथा
 		l |= (MMU_CNTL_MMU_EN);
 
-	iommu_write_reg(obj, l, MMU_CNTL);
-}
+	iommu_ग_लिखो_reg(obj, l, MMU_CNTL);
+पूर्ण
 
-static int omap2_iommu_enable(struct omap_iommu *obj)
-{
+अटल पूर्णांक omap2_iommu_enable(काष्ठा omap_iommu *obj)
+अणु
 	u32 l, pa;
 
-	if (!obj->iopgd || !IS_ALIGNED((unsigned long)obj->iopgd,  SZ_16K))
-		return -EINVAL;
+	अगर (!obj->iopgd || !IS_ALIGNED((अचिन्हित दीर्घ)obj->iopgd,  SZ_16K))
+		वापस -EINVAL;
 
 	pa = virt_to_phys(obj->iopgd);
-	if (!IS_ALIGNED(pa, SZ_16K))
-		return -EINVAL;
+	अगर (!IS_ALIGNED(pa, SZ_16K))
+		वापस -EINVAL;
 
-	l = iommu_read_reg(obj, MMU_REVISION);
+	l = iommu_पढ़ो_reg(obj, MMU_REVISION);
 	dev_info(obj->dev, "%s: version %d.%d\n", obj->name,
 		 (l >> 4) & 0xf, l & 0xf);
 
-	iommu_write_reg(obj, pa, MMU_TTB);
+	iommu_ग_लिखो_reg(obj, pa, MMU_TTB);
 
 	dra7_cfg_dspsys_mmu(obj, true);
 
-	if (obj->has_bus_err_back)
-		iommu_write_reg(obj, MMU_GP_REG_BUS_ERR_BACK_EN, MMU_GP_REG);
+	अगर (obj->has_bus_err_back)
+		iommu_ग_लिखो_reg(obj, MMU_GP_REG_BUS_ERR_BACK_EN, MMU_GP_REG);
 
 	__iommu_set_twl(obj, true);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap2_iommu_disable(struct omap_iommu *obj)
-{
-	u32 l = iommu_read_reg(obj, MMU_CNTL);
+अटल व्योम omap2_iommu_disable(काष्ठा omap_iommu *obj)
+अणु
+	u32 l = iommu_पढ़ो_reg(obj, MMU_CNTL);
 
 	l &= ~MMU_CNTL_MASK;
-	iommu_write_reg(obj, l, MMU_CNTL);
+	iommu_ग_लिखो_reg(obj, l, MMU_CNTL);
 	dra7_cfg_dspsys_mmu(obj, false);
 
 	dev_dbg(obj->dev, "%s is shutting down\n", obj->name);
-}
+पूर्ण
 
-static int iommu_enable(struct omap_iommu *obj)
-{
-	int ret;
+अटल पूर्णांक iommu_enable(काष्ठा omap_iommu *obj)
+अणु
+	पूर्णांक ret;
 
-	ret = pm_runtime_get_sync(obj->dev);
-	if (ret < 0)
-		pm_runtime_put_noidle(obj->dev);
+	ret = pm_runसमय_get_sync(obj->dev);
+	अगर (ret < 0)
+		pm_runसमय_put_noidle(obj->dev);
 
-	return ret < 0 ? ret : 0;
-}
+	वापस ret < 0 ? ret : 0;
+पूर्ण
 
-static void iommu_disable(struct omap_iommu *obj)
-{
-	pm_runtime_put_sync(obj->dev);
-}
+अटल व्योम iommu_disable(काष्ठा omap_iommu *obj)
+अणु
+	pm_runसमय_put_sync(obj->dev);
+पूर्ण
 
 /*
  *	TLB operations
  */
-static u32 iotlb_cr_to_virt(struct cr_regs *cr)
-{
+अटल u32 iotlb_cr_to_virt(काष्ठा cr_regs *cr)
+अणु
 	u32 page_size = cr->cam & MMU_CAM_PGSZ_MASK;
 	u32 mask = get_cam_va_mask(cr->cam & page_size);
 
-	return cr->cam & mask;
-}
+	वापस cr->cam & mask;
+पूर्ण
 
-static u32 get_iopte_attr(struct iotlb_entry *e)
-{
+अटल u32 get_iopte_attr(काष्ठा iotlb_entry *e)
+अणु
 	u32 attr;
 
 	attr = e->mixed << 5;
@@ -226,365 +227,365 @@ static u32 get_iopte_attr(struct iotlb_entry *e)
 	attr |= e->elsz >> 3;
 	attr <<= (((e->pgsz == MMU_CAM_PGSZ_4K) ||
 			(e->pgsz == MMU_CAM_PGSZ_64K)) ? 0 : 6);
-	return attr;
-}
+	वापस attr;
+पूर्ण
 
-static u32 iommu_report_fault(struct omap_iommu *obj, u32 *da)
-{
+अटल u32 iommu_report_fault(काष्ठा omap_iommu *obj, u32 *da)
+अणु
 	u32 status, fault_addr;
 
-	status = iommu_read_reg(obj, MMU_IRQSTATUS);
+	status = iommu_पढ़ो_reg(obj, MMU_IRQSTATUS);
 	status &= MMU_IRQ_MASK;
-	if (!status) {
+	अगर (!status) अणु
 		*da = 0;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	fault_addr = iommu_read_reg(obj, MMU_FAULT_AD);
+	fault_addr = iommu_पढ़ो_reg(obj, MMU_FAULT_AD);
 	*da = fault_addr;
 
-	iommu_write_reg(obj, status, MMU_IRQSTATUS);
+	iommu_ग_लिखो_reg(obj, status, MMU_IRQSTATUS);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-void iotlb_lock_get(struct omap_iommu *obj, struct iotlb_lock *l)
-{
+व्योम iotlb_lock_get(काष्ठा omap_iommu *obj, काष्ठा iotlb_lock *l)
+अणु
 	u32 val;
 
-	val = iommu_read_reg(obj, MMU_LOCK);
+	val = iommu_पढ़ो_reg(obj, MMU_LOCK);
 
 	l->base = MMU_LOCK_BASE(val);
 	l->vict = MMU_LOCK_VICT(val);
-}
+पूर्ण
 
-void iotlb_lock_set(struct omap_iommu *obj, struct iotlb_lock *l)
-{
+व्योम iotlb_lock_set(काष्ठा omap_iommu *obj, काष्ठा iotlb_lock *l)
+अणु
 	u32 val;
 
 	val = (l->base << MMU_LOCK_BASE_SHIFT);
 	val |= (l->vict << MMU_LOCK_VICT_SHIFT);
 
-	iommu_write_reg(obj, val, MMU_LOCK);
-}
+	iommu_ग_लिखो_reg(obj, val, MMU_LOCK);
+पूर्ण
 
-static void iotlb_read_cr(struct omap_iommu *obj, struct cr_regs *cr)
-{
-	cr->cam = iommu_read_reg(obj, MMU_READ_CAM);
-	cr->ram = iommu_read_reg(obj, MMU_READ_RAM);
-}
+अटल व्योम iotlb_पढ़ो_cr(काष्ठा omap_iommu *obj, काष्ठा cr_regs *cr)
+अणु
+	cr->cam = iommu_पढ़ो_reg(obj, MMU_READ_CAM);
+	cr->ram = iommu_पढ़ो_reg(obj, MMU_READ_RAM);
+पूर्ण
 
-static void iotlb_load_cr(struct omap_iommu *obj, struct cr_regs *cr)
-{
-	iommu_write_reg(obj, cr->cam | MMU_CAM_V, MMU_CAM);
-	iommu_write_reg(obj, cr->ram, MMU_RAM);
+अटल व्योम iotlb_load_cr(काष्ठा omap_iommu *obj, काष्ठा cr_regs *cr)
+अणु
+	iommu_ग_लिखो_reg(obj, cr->cam | MMU_CAM_V, MMU_CAM);
+	iommu_ग_लिखो_reg(obj, cr->ram, MMU_RAM);
 
-	iommu_write_reg(obj, 1, MMU_FLUSH_ENTRY);
-	iommu_write_reg(obj, 1, MMU_LD_TLB);
-}
+	iommu_ग_लिखो_reg(obj, 1, MMU_FLUSH_ENTRY);
+	iommu_ग_लिखो_reg(obj, 1, MMU_LD_TLB);
+पूर्ण
 
-/* only used in iotlb iteration for-loop */
-struct cr_regs __iotlb_read_cr(struct omap_iommu *obj, int n)
-{
-	struct cr_regs cr;
-	struct iotlb_lock l;
+/* only used in iotlb iteration क्रम-loop */
+काष्ठा cr_regs __iotlb_पढ़ो_cr(काष्ठा omap_iommu *obj, पूर्णांक n)
+अणु
+	काष्ठा cr_regs cr;
+	काष्ठा iotlb_lock l;
 
 	iotlb_lock_get(obj, &l);
 	l.vict = n;
 	iotlb_lock_set(obj, &l);
-	iotlb_read_cr(obj, &cr);
+	iotlb_पढ़ो_cr(obj, &cr);
 
-	return cr;
-}
+	वापस cr;
+पूर्ण
 
-#ifdef PREFETCH_IOTLB
-static struct cr_regs *iotlb_alloc_cr(struct omap_iommu *obj,
-				      struct iotlb_entry *e)
-{
-	struct cr_regs *cr;
+#अगर_घोषित PREFETCH_IOTLB
+अटल काष्ठा cr_regs *iotlb_alloc_cr(काष्ठा omap_iommu *obj,
+				      काष्ठा iotlb_entry *e)
+अणु
+	काष्ठा cr_regs *cr;
 
-	if (!e)
-		return NULL;
+	अगर (!e)
+		वापस शून्य;
 
-	if (e->da & ~(get_cam_va_mask(e->pgsz))) {
+	अगर (e->da & ~(get_cam_va_mask(e->pgsz))) अणु
 		dev_err(obj->dev, "%s:\twrong alignment: %08x\n", __func__,
 			e->da);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	cr = kmalloc(sizeof(*cr), GFP_KERNEL);
-	if (!cr)
-		return ERR_PTR(-ENOMEM);
+	cr = kदो_स्मृति(माप(*cr), GFP_KERNEL);
+	अगर (!cr)
+		वापस ERR_PTR(-ENOMEM);
 
 	cr->cam = (e->da & MMU_CAM_VATAG_MASK) | e->prsvd | e->pgsz | e->valid;
 	cr->ram = e->pa | e->endian | e->elsz | e->mixed;
 
-	return cr;
-}
+	वापस cr;
+पूर्ण
 
 /**
  * load_iotlb_entry - Set an iommu tlb entry
  * @obj:	target iommu
  * @e:		an iommu tlb entry info
  **/
-static int load_iotlb_entry(struct omap_iommu *obj, struct iotlb_entry *e)
-{
-	int err = 0;
-	struct iotlb_lock l;
-	struct cr_regs *cr;
+अटल पूर्णांक load_iotlb_entry(काष्ठा omap_iommu *obj, काष्ठा iotlb_entry *e)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा iotlb_lock l;
+	काष्ठा cr_regs *cr;
 
-	if (!obj || !obj->nr_tlb_entries || !e)
-		return -EINVAL;
+	अगर (!obj || !obj->nr_tlb_entries || !e)
+		वापस -EINVAL;
 
-	pm_runtime_get_sync(obj->dev);
+	pm_runसमय_get_sync(obj->dev);
 
 	iotlb_lock_get(obj, &l);
-	if (l.base == obj->nr_tlb_entries) {
+	अगर (l.base == obj->nr_tlb_entries) अणु
 		dev_warn(obj->dev, "%s: preserve entries full\n", __func__);
 		err = -EBUSY;
-		goto out;
-	}
-	if (!e->prsvd) {
-		int i;
-		struct cr_regs tmp;
+		जाओ out;
+	पूर्ण
+	अगर (!e->prsvd) अणु
+		पूर्णांक i;
+		काष्ठा cr_regs पंचांगp;
 
-		for_each_iotlb_cr(obj, obj->nr_tlb_entries, i, tmp)
-			if (!iotlb_cr_valid(&tmp))
-				break;
+		क्रम_each_iotlb_cr(obj, obj->nr_tlb_entries, i, पंचांगp)
+			अगर (!iotlb_cr_valid(&पंचांगp))
+				अवरोध;
 
-		if (i == obj->nr_tlb_entries) {
+		अगर (i == obj->nr_tlb_entries) अणु
 			dev_dbg(obj->dev, "%s: full: no entry\n", __func__);
 			err = -EBUSY;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		iotlb_lock_get(obj, &l);
-	} else {
+	पूर्ण अन्यथा अणु
 		l.vict = l.base;
 		iotlb_lock_set(obj, &l);
-	}
+	पूर्ण
 
 	cr = iotlb_alloc_cr(obj, e);
-	if (IS_ERR(cr)) {
-		pm_runtime_put_sync(obj->dev);
-		return PTR_ERR(cr);
-	}
+	अगर (IS_ERR(cr)) अणु
+		pm_runसमय_put_sync(obj->dev);
+		वापस PTR_ERR(cr);
+	पूर्ण
 
 	iotlb_load_cr(obj, cr);
-	kfree(cr);
+	kमुक्त(cr);
 
-	if (e->prsvd)
+	अगर (e->prsvd)
 		l.base++;
-	/* increment victim for next tlb load */
-	if (++l.vict == obj->nr_tlb_entries)
+	/* increment victim क्रम next tlb load */
+	अगर (++l.vict == obj->nr_tlb_entries)
 		l.vict = l.base;
 	iotlb_lock_set(obj, &l);
 out:
-	pm_runtime_put_sync(obj->dev);
-	return err;
-}
+	pm_runसमय_put_sync(obj->dev);
+	वापस err;
+पूर्ण
 
-#else /* !PREFETCH_IOTLB */
+#अन्यथा /* !PREFETCH_IOTLB */
 
-static int load_iotlb_entry(struct omap_iommu *obj, struct iotlb_entry *e)
-{
-	return 0;
-}
+अटल पूर्णांक load_iotlb_entry(काष्ठा omap_iommu *obj, काष्ठा iotlb_entry *e)
+अणु
+	वापस 0;
+पूर्ण
 
-#endif /* !PREFETCH_IOTLB */
+#पूर्ण_अगर /* !PREFETCH_IOTLB */
 
-static int prefetch_iotlb_entry(struct omap_iommu *obj, struct iotlb_entry *e)
-{
-	return load_iotlb_entry(obj, e);
-}
+अटल पूर्णांक prefetch_iotlb_entry(काष्ठा omap_iommu *obj, काष्ठा iotlb_entry *e)
+अणु
+	वापस load_iotlb_entry(obj, e);
+पूर्ण
 
 /**
  * flush_iotlb_page - Clear an iommu tlb entry
  * @obj:	target iommu
- * @da:		iommu device virtual address
+ * @da:		iommu device भव address
  *
  * Clear an iommu tlb entry which includes 'da' address.
  **/
-static void flush_iotlb_page(struct omap_iommu *obj, u32 da)
-{
-	int i;
-	struct cr_regs cr;
+अटल व्योम flush_iotlb_page(काष्ठा omap_iommu *obj, u32 da)
+अणु
+	पूर्णांक i;
+	काष्ठा cr_regs cr;
 
-	pm_runtime_get_sync(obj->dev);
+	pm_runसमय_get_sync(obj->dev);
 
-	for_each_iotlb_cr(obj, obj->nr_tlb_entries, i, cr) {
+	क्रम_each_iotlb_cr(obj, obj->nr_tlb_entries, i, cr) अणु
 		u32 start;
-		size_t bytes;
+		माप_प्रकार bytes;
 
-		if (!iotlb_cr_valid(&cr))
-			continue;
+		अगर (!iotlb_cr_valid(&cr))
+			जारी;
 
 		start = iotlb_cr_to_virt(&cr);
 		bytes = iopgsz_to_bytes(cr.cam & 3);
 
-		if ((start <= da) && (da < start + bytes)) {
+		अगर ((start <= da) && (da < start + bytes)) अणु
 			dev_dbg(obj->dev, "%s: %08x<=%08x(%zx)\n",
 				__func__, start, da, bytes);
 			iotlb_load_cr(obj, &cr);
-			iommu_write_reg(obj, 1, MMU_FLUSH_ENTRY);
-			break;
-		}
-	}
-	pm_runtime_put_sync(obj->dev);
+			iommu_ग_लिखो_reg(obj, 1, MMU_FLUSH_ENTRY);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	pm_runसमय_put_sync(obj->dev);
 
-	if (i == obj->nr_tlb_entries)
+	अगर (i == obj->nr_tlb_entries)
 		dev_dbg(obj->dev, "%s: no page for %08x\n", __func__, da);
-}
+पूर्ण
 
 /**
  * flush_iotlb_all - Clear all iommu tlb entries
  * @obj:	target iommu
  **/
-static void flush_iotlb_all(struct omap_iommu *obj)
-{
-	struct iotlb_lock l;
+अटल व्योम flush_iotlb_all(काष्ठा omap_iommu *obj)
+अणु
+	काष्ठा iotlb_lock l;
 
-	pm_runtime_get_sync(obj->dev);
+	pm_runसमय_get_sync(obj->dev);
 
 	l.base = 0;
 	l.vict = 0;
 	iotlb_lock_set(obj, &l);
 
-	iommu_write_reg(obj, 1, MMU_GFLUSH);
+	iommu_ग_लिखो_reg(obj, 1, MMU_GFLUSH);
 
-	pm_runtime_put_sync(obj->dev);
-}
+	pm_runसमय_put_sync(obj->dev);
+पूर्ण
 
 /*
  *	H/W pagetable operations
  */
-static void flush_iopte_range(struct device *dev, dma_addr_t dma,
-			      unsigned long offset, int num_entries)
-{
-	size_t size = num_entries * sizeof(u32);
+अटल व्योम flush_iopte_range(काष्ठा device *dev, dma_addr_t dma,
+			      अचिन्हित दीर्घ offset, पूर्णांक num_entries)
+अणु
+	माप_प्रकार size = num_entries * माप(u32);
 
-	dma_sync_single_range_for_device(dev, dma, offset, size, DMA_TO_DEVICE);
-}
+	dma_sync_single_range_क्रम_device(dev, dma, offset, size, DMA_TO_DEVICE);
+पूर्ण
 
-static void iopte_free(struct omap_iommu *obj, u32 *iopte, bool dma_valid)
-{
+अटल व्योम iopte_मुक्त(काष्ठा omap_iommu *obj, u32 *iopte, bool dma_valid)
+अणु
 	dma_addr_t pt_dma;
 
-	/* Note: freed iopte's must be clean ready for re-use */
-	if (iopte) {
-		if (dma_valid) {
+	/* Note: मुक्तd iopte's must be clean पढ़ोy क्रम re-use */
+	अगर (iopte) अणु
+		अगर (dma_valid) अणु
 			pt_dma = virt_to_phys(iopte);
 			dma_unmap_single(obj->dev, pt_dma, IOPTE_TABLE_SIZE,
 					 DMA_TO_DEVICE);
-		}
+		पूर्ण
 
-		kmem_cache_free(iopte_cachep, iopte);
-	}
-}
+		kmem_cache_मुक्त(iopte_cachep, iopte);
+	पूर्ण
+पूर्ण
 
-static u32 *iopte_alloc(struct omap_iommu *obj, u32 *iopgd,
+अटल u32 *iopte_alloc(काष्ठा omap_iommu *obj, u32 *iopgd,
 			dma_addr_t *pt_dma, u32 da)
-{
+अणु
 	u32 *iopte;
-	unsigned long offset = iopgd_index(da) * sizeof(da);
+	अचिन्हित दीर्घ offset = iopgd_index(da) * माप(da);
 
-	/* a table has already existed */
-	if (*iopgd)
-		goto pte_ready;
+	/* a table has alपढ़ोy existed */
+	अगर (*iopgd)
+		जाओ pte_पढ़ोy;
 
 	/*
-	 * do the allocation outside the page table lock
+	 * करो the allocation outside the page table lock
 	 */
 	spin_unlock(&obj->page_table_lock);
 	iopte = kmem_cache_zalloc(iopte_cachep, GFP_KERNEL);
 	spin_lock(&obj->page_table_lock);
 
-	if (!*iopgd) {
-		if (!iopte)
-			return ERR_PTR(-ENOMEM);
+	अगर (!*iopgd) अणु
+		अगर (!iopte)
+			वापस ERR_PTR(-ENOMEM);
 
 		*pt_dma = dma_map_single(obj->dev, iopte, IOPTE_TABLE_SIZE,
 					 DMA_TO_DEVICE);
-		if (dma_mapping_error(obj->dev, *pt_dma)) {
+		अगर (dma_mapping_error(obj->dev, *pt_dma)) अणु
 			dev_err(obj->dev, "DMA map error for L2 table\n");
-			iopte_free(obj, iopte, false);
-			return ERR_PTR(-ENOMEM);
-		}
+			iopte_मुक्त(obj, iopte, false);
+			वापस ERR_PTR(-ENOMEM);
+		पूर्ण
 
 		/*
 		 * we rely on dma address and the physical address to be
-		 * the same for mapping the L2 table
+		 * the same क्रम mapping the L2 table
 		 */
-		if (WARN_ON(*pt_dma != virt_to_phys(iopte))) {
+		अगर (WARN_ON(*pt_dma != virt_to_phys(iopte))) अणु
 			dev_err(obj->dev, "DMA translation error for L2 table\n");
 			dma_unmap_single(obj->dev, *pt_dma, IOPTE_TABLE_SIZE,
 					 DMA_TO_DEVICE);
-			iopte_free(obj, iopte, false);
-			return ERR_PTR(-ENOMEM);
-		}
+			iopte_मुक्त(obj, iopte, false);
+			वापस ERR_PTR(-ENOMEM);
+		पूर्ण
 
 		*iopgd = virt_to_phys(iopte) | IOPGD_TABLE;
 
 		flush_iopte_range(obj->dev, obj->pd_dma, offset, 1);
 		dev_vdbg(obj->dev, "%s: a new pte:%p\n", __func__, iopte);
-	} else {
-		/* We raced, free the reduniovant table */
-		iopte_free(obj, iopte, false);
-	}
+	पूर्ण अन्यथा अणु
+		/* We raced, मुक्त the reduniovant table */
+		iopte_मुक्त(obj, iopte, false);
+	पूर्ण
 
-pte_ready:
+pte_पढ़ोy:
 	iopte = iopte_offset(iopgd, da);
 	*pt_dma = iopgd_page_paddr(iopgd);
 	dev_vdbg(obj->dev,
 		 "%s: da:%08x pgd:%p *pgd:%08x pte:%p *pte:%08x\n",
 		 __func__, da, iopgd, *iopgd, iopte, *iopte);
 
-	return iopte;
-}
+	वापस iopte;
+पूर्ण
 
-static int iopgd_alloc_section(struct omap_iommu *obj, u32 da, u32 pa, u32 prot)
-{
+अटल पूर्णांक iopgd_alloc_section(काष्ठा omap_iommu *obj, u32 da, u32 pa, u32 prot)
+अणु
 	u32 *iopgd = iopgd_offset(obj, da);
-	unsigned long offset = iopgd_index(da) * sizeof(da);
+	अचिन्हित दीर्घ offset = iopgd_index(da) * माप(da);
 
-	if ((da | pa) & ~IOSECTION_MASK) {
+	अगर ((da | pa) & ~IOSECTION_MASK) अणु
 		dev_err(obj->dev, "%s: %08x:%08x should aligned on %08lx\n",
 			__func__, da, pa, IOSECTION_SIZE);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	*iopgd = (pa & IOSECTION_MASK) | prot | IOPGD_SECTION;
 	flush_iopte_range(obj->dev, obj->pd_dma, offset, 1);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iopgd_alloc_super(struct omap_iommu *obj, u32 da, u32 pa, u32 prot)
-{
+अटल पूर्णांक iopgd_alloc_super(काष्ठा omap_iommu *obj, u32 da, u32 pa, u32 prot)
+अणु
 	u32 *iopgd = iopgd_offset(obj, da);
-	unsigned long offset = iopgd_index(da) * sizeof(da);
-	int i;
+	अचिन्हित दीर्घ offset = iopgd_index(da) * माप(da);
+	पूर्णांक i;
 
-	if ((da | pa) & ~IOSUPER_MASK) {
+	अगर ((da | pa) & ~IOSUPER_MASK) अणु
 		dev_err(obj->dev, "%s: %08x:%08x should aligned on %08lx\n",
 			__func__, da, pa, IOSUPER_SIZE);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	for (i = 0; i < 16; i++)
+	क्रम (i = 0; i < 16; i++)
 		*(iopgd + i) = (pa & IOSUPER_MASK) | prot | IOPGD_SUPER;
 	flush_iopte_range(obj->dev, obj->pd_dma, offset, 16);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iopte_alloc_page(struct omap_iommu *obj, u32 da, u32 pa, u32 prot)
-{
+अटल पूर्णांक iopte_alloc_page(काष्ठा omap_iommu *obj, u32 da, u32 pa, u32 prot)
+अणु
 	u32 *iopgd = iopgd_offset(obj, da);
 	dma_addr_t pt_dma;
 	u32 *iopte = iopte_alloc(obj, iopgd, &pt_dma, da);
-	unsigned long offset = iopte_index(da) * sizeof(da);
+	अचिन्हित दीर्घ offset = iopte_index(da) * माप(da);
 
-	if (IS_ERR(iopte))
-		return PTR_ERR(iopte);
+	अगर (IS_ERR(iopte))
+		वापस PTR_ERR(iopte);
 
 	*iopte = (pa & IOPAGE_MASK) | prot | IOPTE_SMALL;
 	flush_iopte_range(obj->dev, pt_dma, offset, 1);
@@ -592,62 +593,62 @@ static int iopte_alloc_page(struct omap_iommu *obj, u32 da, u32 pa, u32 prot)
 	dev_vdbg(obj->dev, "%s: da:%08x pa:%08x pte:%p *pte:%08x\n",
 		 __func__, da, pa, iopte, *iopte);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int iopte_alloc_large(struct omap_iommu *obj, u32 da, u32 pa, u32 prot)
-{
+अटल पूर्णांक iopte_alloc_large(काष्ठा omap_iommu *obj, u32 da, u32 pa, u32 prot)
+अणु
 	u32 *iopgd = iopgd_offset(obj, da);
 	dma_addr_t pt_dma;
 	u32 *iopte = iopte_alloc(obj, iopgd, &pt_dma, da);
-	unsigned long offset = iopte_index(da) * sizeof(da);
-	int i;
+	अचिन्हित दीर्घ offset = iopte_index(da) * माप(da);
+	पूर्णांक i;
 
-	if ((da | pa) & ~IOLARGE_MASK) {
+	अगर ((da | pa) & ~IOLARGE_MASK) अणु
 		dev_err(obj->dev, "%s: %08x:%08x should aligned on %08lx\n",
 			__func__, da, pa, IOLARGE_SIZE);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (IS_ERR(iopte))
-		return PTR_ERR(iopte);
+	अगर (IS_ERR(iopte))
+		वापस PTR_ERR(iopte);
 
-	for (i = 0; i < 16; i++)
+	क्रम (i = 0; i < 16; i++)
 		*(iopte + i) = (pa & IOLARGE_MASK) | prot | IOPTE_LARGE;
 	flush_iopte_range(obj->dev, pt_dma, offset, 16);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int
-iopgtable_store_entry_core(struct omap_iommu *obj, struct iotlb_entry *e)
-{
-	int (*fn)(struct omap_iommu *, u32, u32, u32);
+अटल पूर्णांक
+iopgtable_store_entry_core(काष्ठा omap_iommu *obj, काष्ठा iotlb_entry *e)
+अणु
+	पूर्णांक (*fn)(काष्ठा omap_iommu *, u32, u32, u32);
 	u32 prot;
-	int err;
+	पूर्णांक err;
 
-	if (!obj || !e)
-		return -EINVAL;
+	अगर (!obj || !e)
+		वापस -EINVAL;
 
-	switch (e->pgsz) {
-	case MMU_CAM_PGSZ_16M:
+	चयन (e->pgsz) अणु
+	हाल MMU_CAM_PGSZ_16M:
 		fn = iopgd_alloc_super;
-		break;
-	case MMU_CAM_PGSZ_1M:
+		अवरोध;
+	हाल MMU_CAM_PGSZ_1M:
 		fn = iopgd_alloc_section;
-		break;
-	case MMU_CAM_PGSZ_64K:
+		अवरोध;
+	हाल MMU_CAM_PGSZ_64K:
 		fn = iopte_alloc_large;
-		break;
-	case MMU_CAM_PGSZ_4K:
+		अवरोध;
+	हाल MMU_CAM_PGSZ_4K:
 		fn = iopte_alloc_page;
-		break;
-	default:
-		fn = NULL;
-		break;
-	}
+		अवरोध;
+	शेष:
+		fn = शून्य;
+		अवरोध;
+	पूर्ण
 
-	if (WARN_ON(!fn))
-		return -EINVAL;
+	अगर (WARN_ON(!fn))
+		वापस -EINVAL;
 
 	prot = get_iopte_attr(e);
 
@@ -655,109 +656,109 @@ iopgtable_store_entry_core(struct omap_iommu *obj, struct iotlb_entry *e)
 	err = fn(obj, e->da, e->pa, prot);
 	spin_unlock(&obj->page_table_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * omap_iopgtable_store_entry - Make an iommu pte entry
  * @obj:	target iommu
  * @e:		an iommu tlb entry info
  **/
-static int
-omap_iopgtable_store_entry(struct omap_iommu *obj, struct iotlb_entry *e)
-{
-	int err;
+अटल पूर्णांक
+omap_iopgtable_store_entry(काष्ठा omap_iommu *obj, काष्ठा iotlb_entry *e)
+अणु
+	पूर्णांक err;
 
 	flush_iotlb_page(obj, e->da);
 	err = iopgtable_store_entry_core(obj, e);
-	if (!err)
+	अगर (!err)
 		prefetch_iotlb_entry(obj, e);
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * iopgtable_lookup_entry - Lookup an iommu pte entry
  * @obj:	target iommu
- * @da:		iommu device virtual address
- * @ppgd:	iommu pgd entry pointer to be returned
- * @ppte:	iommu pte entry pointer to be returned
+ * @da:		iommu device भव address
+ * @ppgd:	iommu pgd entry poपूर्णांकer to be वापसed
+ * @ppte:	iommu pte entry poपूर्णांकer to be वापसed
  **/
-static void
-iopgtable_lookup_entry(struct omap_iommu *obj, u32 da, u32 **ppgd, u32 **ppte)
-{
-	u32 *iopgd, *iopte = NULL;
+अटल व्योम
+iopgtable_lookup_entry(काष्ठा omap_iommu *obj, u32 da, u32 **ppgd, u32 **ppte)
+अणु
+	u32 *iopgd, *iopte = शून्य;
 
 	iopgd = iopgd_offset(obj, da);
-	if (!*iopgd)
-		goto out;
+	अगर (!*iopgd)
+		जाओ out;
 
-	if (iopgd_is_table(*iopgd))
+	अगर (iopgd_is_table(*iopgd))
 		iopte = iopte_offset(iopgd, da);
 out:
 	*ppgd = iopgd;
 	*ppte = iopte;
-}
+पूर्ण
 
-static size_t iopgtable_clear_entry_core(struct omap_iommu *obj, u32 da)
-{
-	size_t bytes;
+अटल माप_प्रकार iopgtable_clear_entry_core(काष्ठा omap_iommu *obj, u32 da)
+अणु
+	माप_प्रकार bytes;
 	u32 *iopgd = iopgd_offset(obj, da);
-	int nent = 1;
+	पूर्णांक nent = 1;
 	dma_addr_t pt_dma;
-	unsigned long pd_offset = iopgd_index(da) * sizeof(da);
-	unsigned long pt_offset = iopte_index(da) * sizeof(da);
+	अचिन्हित दीर्घ pd_offset = iopgd_index(da) * माप(da);
+	अचिन्हित दीर्घ pt_offset = iopte_index(da) * माप(da);
 
-	if (!*iopgd)
-		return 0;
+	अगर (!*iopgd)
+		वापस 0;
 
-	if (iopgd_is_table(*iopgd)) {
-		int i;
+	अगर (iopgd_is_table(*iopgd)) अणु
+		पूर्णांक i;
 		u32 *iopte = iopte_offset(iopgd, da);
 
 		bytes = IOPTE_SIZE;
-		if (*iopte & IOPTE_LARGE) {
+		अगर (*iopte & IOPTE_LARGE) अणु
 			nent *= 16;
-			/* rewind to the 1st entry */
+			/* शुरुआत to the 1st entry */
 			iopte = iopte_offset(iopgd, (da & IOLARGE_MASK));
-		}
+		पूर्ण
 		bytes *= nent;
-		memset(iopte, 0, nent * sizeof(*iopte));
+		स_रखो(iopte, 0, nent * माप(*iopte));
 		pt_dma = iopgd_page_paddr(iopgd);
 		flush_iopte_range(obj->dev, pt_dma, pt_offset, nent);
 
 		/*
-		 * do table walk to check if this table is necessary or not
+		 * करो table walk to check अगर this table is necessary or not
 		 */
 		iopte = iopte_offset(iopgd, 0);
-		for (i = 0; i < PTRS_PER_IOPTE; i++)
-			if (iopte[i])
-				goto out;
+		क्रम (i = 0; i < PTRS_PER_IOPTE; i++)
+			अगर (iopte[i])
+				जाओ out;
 
-		iopte_free(obj, iopte, true);
-		nent = 1; /* for the next L1 entry */
-	} else {
+		iopte_मुक्त(obj, iopte, true);
+		nent = 1; /* क्रम the next L1 entry */
+	पूर्ण अन्यथा अणु
 		bytes = IOPGD_SIZE;
-		if ((*iopgd & IOPGD_SUPER) == IOPGD_SUPER) {
+		अगर ((*iopgd & IOPGD_SUPER) == IOPGD_SUPER) अणु
 			nent *= 16;
-			/* rewind to the 1st entry */
+			/* शुरुआत to the 1st entry */
 			iopgd = iopgd_offset(obj, (da & IOSUPER_MASK));
-		}
+		पूर्ण
 		bytes *= nent;
-	}
-	memset(iopgd, 0, nent * sizeof(*iopgd));
+	पूर्ण
+	स_रखो(iopgd, 0, nent * माप(*iopgd));
 	flush_iopte_range(obj->dev, obj->pd_dma, pd_offset, nent);
 out:
-	return bytes;
-}
+	वापस bytes;
+पूर्ण
 
 /**
  * iopgtable_clear_entry - Remove an iommu pte entry
  * @obj:	target iommu
- * @da:		iommu device virtual address
+ * @da:		iommu device भव address
  **/
-static size_t iopgtable_clear_entry(struct omap_iommu *obj, u32 da)
-{
-	size_t bytes;
+अटल माप_प्रकार iopgtable_clear_entry(काष्ठा omap_iommu *obj, u32 da)
+अणु
+	माप_प्रकार bytes;
 
 	spin_lock(&obj->page_table_lock);
 
@@ -766,547 +767,547 @@ static size_t iopgtable_clear_entry(struct omap_iommu *obj, u32 da)
 
 	spin_unlock(&obj->page_table_lock);
 
-	return bytes;
-}
+	वापस bytes;
+पूर्ण
 
-static void iopgtable_clear_entry_all(struct omap_iommu *obj)
-{
-	unsigned long offset;
-	int i;
+अटल व्योम iopgtable_clear_entry_all(काष्ठा omap_iommu *obj)
+अणु
+	अचिन्हित दीर्घ offset;
+	पूर्णांक i;
 
 	spin_lock(&obj->page_table_lock);
 
-	for (i = 0; i < PTRS_PER_IOPGD; i++) {
+	क्रम (i = 0; i < PTRS_PER_IOPGD; i++) अणु
 		u32 da;
 		u32 *iopgd;
 
 		da = i << IOPGD_SHIFT;
 		iopgd = iopgd_offset(obj, da);
-		offset = iopgd_index(da) * sizeof(da);
+		offset = iopgd_index(da) * माप(da);
 
-		if (!*iopgd)
-			continue;
+		अगर (!*iopgd)
+			जारी;
 
-		if (iopgd_is_table(*iopgd))
-			iopte_free(obj, iopte_offset(iopgd, 0), true);
+		अगर (iopgd_is_table(*iopgd))
+			iopte_मुक्त(obj, iopte_offset(iopgd, 0), true);
 
 		*iopgd = 0;
 		flush_iopte_range(obj->dev, obj->pd_dma, offset, 1);
-	}
+	पूर्ण
 
 	flush_iotlb_all(obj);
 
 	spin_unlock(&obj->page_table_lock);
-}
+पूर्ण
 
 /*
  *	Device IOMMU generic operations
  */
-static irqreturn_t iommu_fault_handler(int irq, void *data)
-{
+अटल irqवापस_t iommu_fault_handler(पूर्णांक irq, व्योम *data)
+अणु
 	u32 da, errs;
 	u32 *iopgd, *iopte;
-	struct omap_iommu *obj = data;
-	struct iommu_domain *domain = obj->domain;
-	struct omap_iommu_domain *omap_domain = to_omap_domain(domain);
+	काष्ठा omap_iommu *obj = data;
+	काष्ठा iommu_करोमुख्य *करोमुख्य = obj->करोमुख्य;
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य = to_omap_करोमुख्य(करोमुख्य);
 
-	if (!omap_domain->dev)
-		return IRQ_NONE;
+	अगर (!omap_करोमुख्य->dev)
+		वापस IRQ_NONE;
 
 	errs = iommu_report_fault(obj, &da);
-	if (errs == 0)
-		return IRQ_HANDLED;
+	अगर (errs == 0)
+		वापस IRQ_HANDLED;
 
 	/* Fault callback or TLB/PTE Dynamic loading */
-	if (!report_iommu_fault(domain, obj->dev, da, 0))
-		return IRQ_HANDLED;
+	अगर (!report_iommu_fault(करोमुख्य, obj->dev, da, 0))
+		वापस IRQ_HANDLED;
 
-	iommu_write_reg(obj, 0, MMU_IRQENABLE);
+	iommu_ग_लिखो_reg(obj, 0, MMU_IRQENABLE);
 
 	iopgd = iopgd_offset(obj, da);
 
-	if (!iopgd_is_table(*iopgd)) {
+	अगर (!iopgd_is_table(*iopgd)) अणु
 		dev_err(obj->dev, "%s: errs:0x%08x da:0x%08x pgd:0x%p *pgd:px%08x\n",
 			obj->name, errs, da, iopgd, *iopgd);
-		return IRQ_NONE;
-	}
+		वापस IRQ_NONE;
+	पूर्ण
 
 	iopte = iopte_offset(iopgd, da);
 
 	dev_err(obj->dev, "%s: errs:0x%08x da:0x%08x pgd:0x%p *pgd:0x%08x pte:0x%p *pte:0x%08x\n",
 		obj->name, errs, da, iopgd, *iopgd, iopte, *iopte);
 
-	return IRQ_NONE;
-}
+	वापस IRQ_NONE;
+पूर्ण
 
 /**
- * omap_iommu_attach() - attach iommu device to an iommu domain
+ * omap_iommu_attach() - attach iommu device to an iommu करोमुख्य
  * @obj:	target omap iommu device
  * @iopgd:	page table
  **/
-static int omap_iommu_attach(struct omap_iommu *obj, u32 *iopgd)
-{
-	int err;
+अटल पूर्णांक omap_iommu_attach(काष्ठा omap_iommu *obj, u32 *iopgd)
+अणु
+	पूर्णांक err;
 
 	spin_lock(&obj->iommu_lock);
 
 	obj->pd_dma = dma_map_single(obj->dev, iopgd, IOPGD_TABLE_SIZE,
 				     DMA_TO_DEVICE);
-	if (dma_mapping_error(obj->dev, obj->pd_dma)) {
+	अगर (dma_mapping_error(obj->dev, obj->pd_dma)) अणु
 		dev_err(obj->dev, "DMA map error for L1 table\n");
 		err = -ENOMEM;
-		goto out_err;
-	}
+		जाओ out_err;
+	पूर्ण
 
 	obj->iopgd = iopgd;
 	err = iommu_enable(obj);
-	if (err)
-		goto out_err;
+	अगर (err)
+		जाओ out_err;
 	flush_iotlb_all(obj);
 
 	spin_unlock(&obj->iommu_lock);
 
 	dev_dbg(obj->dev, "%s: %s\n", __func__, obj->name);
 
-	return 0;
+	वापस 0;
 
 out_err:
 	spin_unlock(&obj->iommu_lock);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /**
  * omap_iommu_detach - release iommu device
  * @obj:	target iommu
  **/
-static void omap_iommu_detach(struct omap_iommu *obj)
-{
-	if (!obj || IS_ERR(obj))
-		return;
+अटल व्योम omap_iommu_detach(काष्ठा omap_iommu *obj)
+अणु
+	अगर (!obj || IS_ERR(obj))
+		वापस;
 
 	spin_lock(&obj->iommu_lock);
 
 	dma_unmap_single(obj->dev, obj->pd_dma, IOPGD_TABLE_SIZE,
 			 DMA_TO_DEVICE);
 	obj->pd_dma = 0;
-	obj->iopgd = NULL;
+	obj->iopgd = शून्य;
 	iommu_disable(obj);
 
 	spin_unlock(&obj->iommu_lock);
 
 	dev_dbg(obj->dev, "%s: %s\n", __func__, obj->name);
-}
+पूर्ण
 
-static void omap_iommu_save_tlb_entries(struct omap_iommu *obj)
-{
-	struct iotlb_lock lock;
-	struct cr_regs cr;
-	struct cr_regs *tmp;
-	int i;
+अटल व्योम omap_iommu_save_tlb_entries(काष्ठा omap_iommu *obj)
+अणु
+	काष्ठा iotlb_lock lock;
+	काष्ठा cr_regs cr;
+	काष्ठा cr_regs *पंचांगp;
+	पूर्णांक i;
 
-	/* check if there are any locked tlbs to save */
+	/* check अगर there are any locked tlbs to save */
 	iotlb_lock_get(obj, &lock);
 	obj->num_cr_ctx = lock.base;
-	if (!obj->num_cr_ctx)
-		return;
+	अगर (!obj->num_cr_ctx)
+		वापस;
 
-	tmp = obj->cr_ctx;
-	for_each_iotlb_cr(obj, obj->num_cr_ctx, i, cr)
-		* tmp++ = cr;
-}
+	पंचांगp = obj->cr_ctx;
+	क्रम_each_iotlb_cr(obj, obj->num_cr_ctx, i, cr)
+		* पंचांगp++ = cr;
+पूर्ण
 
-static void omap_iommu_restore_tlb_entries(struct omap_iommu *obj)
-{
-	struct iotlb_lock l;
-	struct cr_regs *tmp;
-	int i;
+अटल व्योम omap_iommu_restore_tlb_entries(काष्ठा omap_iommu *obj)
+अणु
+	काष्ठा iotlb_lock l;
+	काष्ठा cr_regs *पंचांगp;
+	पूर्णांक i;
 
 	/* no locked tlbs to restore */
-	if (!obj->num_cr_ctx)
-		return;
+	अगर (!obj->num_cr_ctx)
+		वापस;
 
 	l.base = 0;
-	tmp = obj->cr_ctx;
-	for (i = 0; i < obj->num_cr_ctx; i++, tmp++) {
+	पंचांगp = obj->cr_ctx;
+	क्रम (i = 0; i < obj->num_cr_ctx; i++, पंचांगp++) अणु
 		l.vict = i;
 		iotlb_lock_set(obj, &l);
-		iotlb_load_cr(obj, tmp);
-	}
+		iotlb_load_cr(obj, पंचांगp);
+	पूर्ण
 	l.base = obj->num_cr_ctx;
 	l.vict = i;
 	iotlb_lock_set(obj, &l);
-}
+पूर्ण
 
 /**
- * omap_iommu_domain_deactivate - deactivate attached iommu devices
- * @domain: iommu domain attached to the target iommu device
+ * omap_iommu_करोमुख्य_deactivate - deactivate attached iommu devices
+ * @करोमुख्य: iommu करोमुख्य attached to the target iommu device
  *
  * This API allows the client devices of IOMMU devices to suspend
- * the IOMMUs they control at runtime, after they are idled and
+ * the IOMMUs they control at runसमय, after they are idled and
  * suspended all activity. System Suspend will leverage the PM
  * driver late callbacks.
  **/
-int omap_iommu_domain_deactivate(struct iommu_domain *domain)
-{
-	struct omap_iommu_domain *omap_domain = to_omap_domain(domain);
-	struct omap_iommu_device *iommu;
-	struct omap_iommu *oiommu;
-	int i;
+पूर्णांक omap_iommu_करोमुख्य_deactivate(काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य = to_omap_करोमुख्य(करोमुख्य);
+	काष्ठा omap_iommu_device *iommu;
+	काष्ठा omap_iommu *oiommu;
+	पूर्णांक i;
 
-	if (!omap_domain->dev)
-		return 0;
+	अगर (!omap_करोमुख्य->dev)
+		वापस 0;
 
-	iommu = omap_domain->iommus;
-	iommu += (omap_domain->num_iommus - 1);
-	for (i = 0; i < omap_domain->num_iommus; i++, iommu--) {
+	iommu = omap_करोमुख्य->iommus;
+	iommu += (omap_करोमुख्य->num_iommus - 1);
+	क्रम (i = 0; i < omap_करोमुख्य->num_iommus; i++, iommu--) अणु
 		oiommu = iommu->iommu_dev;
-		pm_runtime_put_sync(oiommu->dev);
-	}
+		pm_runसमय_put_sync(oiommu->dev);
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(omap_iommu_domain_deactivate);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(omap_iommu_करोमुख्य_deactivate);
 
 /**
- * omap_iommu_domain_activate - activate attached iommu devices
- * @domain: iommu domain attached to the target iommu device
+ * omap_iommu_करोमुख्य_activate - activate attached iommu devices
+ * @करोमुख्य: iommu करोमुख्य attached to the target iommu device
  *
  * This API allows the client devices of IOMMU devices to resume the
- * IOMMUs they control at runtime, before they can resume operations.
+ * IOMMUs they control at runसमय, beक्रमe they can resume operations.
  * System Resume will leverage the PM driver late callbacks.
  **/
-int omap_iommu_domain_activate(struct iommu_domain *domain)
-{
-	struct omap_iommu_domain *omap_domain = to_omap_domain(domain);
-	struct omap_iommu_device *iommu;
-	struct omap_iommu *oiommu;
-	int i;
+पूर्णांक omap_iommu_करोमुख्य_activate(काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य = to_omap_करोमुख्य(करोमुख्य);
+	काष्ठा omap_iommu_device *iommu;
+	काष्ठा omap_iommu *oiommu;
+	पूर्णांक i;
 
-	if (!omap_domain->dev)
-		return 0;
+	अगर (!omap_करोमुख्य->dev)
+		वापस 0;
 
-	iommu = omap_domain->iommus;
-	for (i = 0; i < omap_domain->num_iommus; i++, iommu++) {
+	iommu = omap_करोमुख्य->iommus;
+	क्रम (i = 0; i < omap_करोमुख्य->num_iommus; i++, iommu++) अणु
 		oiommu = iommu->iommu_dev;
-		pm_runtime_get_sync(oiommu->dev);
-	}
+		pm_runसमय_get_sync(oiommu->dev);
+	पूर्ण
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(omap_iommu_domain_activate);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(omap_iommu_करोमुख्य_activate);
 
 /**
- * omap_iommu_runtime_suspend - disable an iommu device
+ * omap_iommu_runसमय_suspend - disable an iommu device
  * @dev:	iommu device
  *
- * This function performs all that is necessary to disable an
+ * This function perक्रमms all that is necessary to disable an
  * IOMMU device, either during final detachment from a client
- * device, or during system/runtime suspend of the device. This
- * includes programming all the appropriate IOMMU registers, and
+ * device, or during प्रणाली/runसमय suspend of the device. This
+ * includes programming all the appropriate IOMMU रेजिस्टरs, and
  * managing the associated omap_hwmod's state and the device's
  * reset line. This function also saves the context of any
- * locked TLBs if suspending.
+ * locked TLBs अगर suspending.
  **/
-static __maybe_unused int omap_iommu_runtime_suspend(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct iommu_platform_data *pdata = dev_get_platdata(dev);
-	struct omap_iommu *obj = to_iommu(dev);
-	int ret;
+अटल __maybe_unused पूर्णांक omap_iommu_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा iommu_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा omap_iommu *obj = to_iommu(dev);
+	पूर्णांक ret;
 
-	/* save the TLBs only during suspend, and not for power down */
-	if (obj->domain && obj->iopgd)
+	/* save the TLBs only during suspend, and not क्रम घातer करोwn */
+	अगर (obj->करोमुख्य && obj->iopgd)
 		omap_iommu_save_tlb_entries(obj);
 
 	omap2_iommu_disable(obj);
 
-	if (pdata && pdata->device_idle)
+	अगर (pdata && pdata->device_idle)
 		pdata->device_idle(pdev);
 
-	if (pdata && pdata->assert_reset)
-		pdata->assert_reset(pdev, pdata->reset_name);
+	अगर (pdata && pdata->निश्चित_reset)
+		pdata->निश्चित_reset(pdev, pdata->reset_name);
 
-	if (pdata && pdata->set_pwrdm_constraint) {
-		ret = pdata->set_pwrdm_constraint(pdev, false, &obj->pwrst);
-		if (ret) {
+	अगर (pdata && pdata->set_pwrdm_स्थिरraपूर्णांक) अणु
+		ret = pdata->set_pwrdm_स्थिरraपूर्णांक(pdev, false, &obj->pwrst);
+		अगर (ret) अणु
 			dev_warn(obj->dev, "pwrdm_constraint failed to be reset, status = %d\n",
 				 ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * omap_iommu_runtime_resume - enable an iommu device
+ * omap_iommu_runसमय_resume - enable an iommu device
  * @dev:	iommu device
  *
- * This function performs all that is necessary to enable an
+ * This function perक्रमms all that is necessary to enable an
  * IOMMU device, either during initial attachment to a client
- * device, or during system/runtime resume of the device. This
- * includes programming all the appropriate IOMMU registers, and
+ * device, or during प्रणाली/runसमय resume of the device. This
+ * includes programming all the appropriate IOMMU रेजिस्टरs, and
  * managing the associated omap_hwmod's state and the device's
- * reset line. The function also restores any locked TLBs if
+ * reset line. The function also restores any locked TLBs अगर
  * resuming after a suspend.
  **/
-static __maybe_unused int omap_iommu_runtime_resume(struct device *dev)
-{
-	struct platform_device *pdev = to_platform_device(dev);
-	struct iommu_platform_data *pdata = dev_get_platdata(dev);
-	struct omap_iommu *obj = to_iommu(dev);
-	int ret = 0;
+अटल __maybe_unused पूर्णांक omap_iommu_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा platक्रमm_device *pdev = to_platक्रमm_device(dev);
+	काष्ठा iommu_platक्रमm_data *pdata = dev_get_platdata(dev);
+	काष्ठा omap_iommu *obj = to_iommu(dev);
+	पूर्णांक ret = 0;
 
-	if (pdata && pdata->set_pwrdm_constraint) {
-		ret = pdata->set_pwrdm_constraint(pdev, true, &obj->pwrst);
-		if (ret) {
+	अगर (pdata && pdata->set_pwrdm_स्थिरraपूर्णांक) अणु
+		ret = pdata->set_pwrdm_स्थिरraपूर्णांक(pdev, true, &obj->pwrst);
+		अगर (ret) अणु
 			dev_warn(obj->dev, "pwrdm_constraint failed to be set, status = %d\n",
 				 ret);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pdata && pdata->deassert_reset) {
-		ret = pdata->deassert_reset(pdev, pdata->reset_name);
-		if (ret) {
+	अगर (pdata && pdata->deनिश्चित_reset) अणु
+		ret = pdata->deनिश्चित_reset(pdev, pdata->reset_name);
+		अगर (ret) अणु
 			dev_err(dev, "deassert_reset failed: %d\n", ret);
-			return ret;
-		}
-	}
+			वापस ret;
+		पूर्ण
+	पूर्ण
 
-	if (pdata && pdata->device_enable)
+	अगर (pdata && pdata->device_enable)
 		pdata->device_enable(pdev);
 
-	/* restore the TLBs only during resume, and not for power up */
-	if (obj->domain)
+	/* restore the TLBs only during resume, and not क्रम घातer up */
+	अगर (obj->करोमुख्य)
 		omap_iommu_restore_tlb_entries(obj);
 
 	ret = omap2_iommu_enable(obj);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * omap_iommu_suspend_prepare - prepare() dev_pm_ops implementation
  * @dev:	iommu device
  *
- * This function performs the necessary checks to determine if the IOMMU
- * device needs suspending or not. The function checks if the runtime_pm
- * status of the device is suspended, and returns 1 in that case. This
+ * This function perक्रमms the necessary checks to determine अगर the IOMMU
+ * device needs suspending or not. The function checks अगर the runसमय_pm
+ * status of the device is suspended, and वापसs 1 in that हाल. This
  * results in the PM core to skip invoking any of the Sleep PM callbacks
  * (suspend, suspend_late, resume, resume_early etc).
  */
-static int omap_iommu_prepare(struct device *dev)
-{
-	if (pm_runtime_status_suspended(dev))
-		return 1;
-	return 0;
-}
+अटल पूर्णांक omap_iommu_prepare(काष्ठा device *dev)
+अणु
+	अगर (pm_runसमय_status_suspended(dev))
+		वापस 1;
+	वापस 0;
+पूर्ण
 
-static bool omap_iommu_can_register(struct platform_device *pdev)
-{
-	struct device_node *np = pdev->dev.of_node;
+अटल bool omap_iommu_can_रेजिस्टर(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
 
-	if (!of_device_is_compatible(np, "ti,dra7-dsp-iommu"))
-		return true;
+	अगर (!of_device_is_compatible(np, "ti,dra7-dsp-iommu"))
+		वापस true;
 
 	/*
-	 * restrict IOMMU core registration only for processor-port MDMA MMUs
+	 * restrict IOMMU core registration only क्रम processor-port MDMA MMUs
 	 * on DRA7 DSPs
 	 */
-	if ((!strcmp(dev_name(&pdev->dev), "40d01000.mmu")) ||
-	    (!strcmp(dev_name(&pdev->dev), "41501000.mmu")))
-		return true;
+	अगर ((!म_भेद(dev_name(&pdev->dev), "40d01000.mmu")) ||
+	    (!म_भेद(dev_name(&pdev->dev), "41501000.mmu")))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int omap_iommu_dra7_get_dsp_system_cfg(struct platform_device *pdev,
-					      struct omap_iommu *obj)
-{
-	struct device_node *np = pdev->dev.of_node;
-	int ret;
+अटल पूर्णांक omap_iommu_dra7_get_dsp_प्रणाली_cfg(काष्ठा platक्रमm_device *pdev,
+					      काष्ठा omap_iommu *obj)
+अणु
+	काष्ठा device_node *np = pdev->dev.of_node;
+	पूर्णांक ret;
 
-	if (!of_device_is_compatible(np, "ti,dra7-dsp-iommu"))
-		return 0;
+	अगर (!of_device_is_compatible(np, "ti,dra7-dsp-iommu"))
+		वापस 0;
 
-	if (!of_property_read_bool(np, "ti,syscon-mmuconfig")) {
+	अगर (!of_property_पढ़ो_bool(np, "ti,syscon-mmuconfig")) अणु
 		dev_err(&pdev->dev, "ti,syscon-mmuconfig property is missing\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	obj->syscfg =
 		syscon_regmap_lookup_by_phandle(np, "ti,syscon-mmuconfig");
-	if (IS_ERR(obj->syscfg)) {
+	अगर (IS_ERR(obj->syscfg)) अणु
 		/* can fail with -EPROBE_DEFER */
 		ret = PTR_ERR(obj->syscfg);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (of_property_read_u32_index(np, "ti,syscon-mmuconfig", 1,
-				       &obj->id)) {
+	अगर (of_property_पढ़ो_u32_index(np, "ti,syscon-mmuconfig", 1,
+				       &obj->id)) अणु
 		dev_err(&pdev->dev, "couldn't get the IOMMU instance id within subsystem\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (obj->id != 0 && obj->id != 1) {
+	अगर (obj->id != 0 && obj->id != 1) अणु
 		dev_err(&pdev->dev, "invalid IOMMU instance id\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	OMAP Device MMU(IOMMU) detection
  */
-static int omap_iommu_probe(struct platform_device *pdev)
-{
-	int err = -ENODEV;
-	int irq;
-	struct omap_iommu *obj;
-	struct resource *res;
-	struct device_node *of = pdev->dev.of_node;
+अटल पूर्णांक omap_iommu_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	पूर्णांक err = -ENODEV;
+	पूर्णांक irq;
+	काष्ठा omap_iommu *obj;
+	काष्ठा resource *res;
+	काष्ठा device_node *of = pdev->dev.of_node;
 
-	if (!of) {
+	अगर (!of) अणु
 		pr_err("%s: only DT-based devices are supported\n", __func__);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	obj = devm_kzalloc(&pdev->dev, sizeof(*obj) + MMU_REG_SIZE, GFP_KERNEL);
-	if (!obj)
-		return -ENOMEM;
+	obj = devm_kzalloc(&pdev->dev, माप(*obj) + MMU_REG_SIZE, GFP_KERNEL);
+	अगर (!obj)
+		वापस -ENOMEM;
 
 	/*
 	 * self-manage the ordering dependencies between omap_device_enable/idle
-	 * and omap_device_assert/deassert_hardreset API
+	 * and omap_device_निश्चित/deनिश्चित_hardreset API
 	 */
-	if (pdev->dev.pm_domain) {
+	अगर (pdev->dev.pm_करोमुख्य) अणु
 		dev_dbg(&pdev->dev, "device pm_domain is being reset\n");
-		pdev->dev.pm_domain = NULL;
-	}
+		pdev->dev.pm_करोमुख्य = शून्य;
+	पूर्ण
 
 	obj->name = dev_name(&pdev->dev);
 	obj->nr_tlb_entries = 32;
-	err = of_property_read_u32(of, "ti,#tlb-entries", &obj->nr_tlb_entries);
-	if (err && err != -EINVAL)
-		return err;
-	if (obj->nr_tlb_entries != 32 && obj->nr_tlb_entries != 8)
-		return -EINVAL;
-	if (of_find_property(of, "ti,iommu-bus-err-back", NULL))
+	err = of_property_पढ़ो_u32(of, "ti,#tlb-entries", &obj->nr_tlb_entries);
+	अगर (err && err != -EINVAL)
+		वापस err;
+	अगर (obj->nr_tlb_entries != 32 && obj->nr_tlb_entries != 8)
+		वापस -EINVAL;
+	अगर (of_find_property(of, "ti,iommu-bus-err-back", शून्य))
 		obj->has_bus_err_back = MMU_GP_REG_BUS_ERR_BACK_EN;
 
 	obj->dev = &pdev->dev;
-	obj->ctx = (void *)obj + sizeof(*obj);
+	obj->ctx = (व्योम *)obj + माप(*obj);
 	obj->cr_ctx = devm_kzalloc(&pdev->dev,
-				   sizeof(*obj->cr_ctx) * obj->nr_tlb_entries,
+				   माप(*obj->cr_ctx) * obj->nr_tlb_entries,
 				   GFP_KERNEL);
-	if (!obj->cr_ctx)
-		return -ENOMEM;
+	अगर (!obj->cr_ctx)
+		वापस -ENOMEM;
 
 	spin_lock_init(&obj->iommu_lock);
 	spin_lock_init(&obj->page_table_lock);
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	obj->regbase = devm_ioremap_resource(obj->dev, res);
-	if (IS_ERR(obj->regbase))
-		return PTR_ERR(obj->regbase);
+	अगर (IS_ERR(obj->regbase))
+		वापस PTR_ERR(obj->regbase);
 
-	err = omap_iommu_dra7_get_dsp_system_cfg(pdev, obj);
-	if (err)
-		return err;
+	err = omap_iommu_dra7_get_dsp_प्रणाली_cfg(pdev, obj);
+	अगर (err)
+		वापस err;
 
-	irq = platform_get_irq(pdev, 0);
-	if (irq < 0)
-		return -ENODEV;
+	irq = platक्रमm_get_irq(pdev, 0);
+	अगर (irq < 0)
+		वापस -ENODEV;
 
 	err = devm_request_irq(obj->dev, irq, iommu_fault_handler, IRQF_SHARED,
 			       dev_name(obj->dev), obj);
-	if (err < 0)
-		return err;
-	platform_set_drvdata(pdev, obj);
+	अगर (err < 0)
+		वापस err;
+	platक्रमm_set_drvdata(pdev, obj);
 
-	if (omap_iommu_can_register(pdev)) {
+	अगर (omap_iommu_can_रेजिस्टर(pdev)) अणु
 		obj->group = iommu_group_alloc();
-		if (IS_ERR(obj->group))
-			return PTR_ERR(obj->group);
+		अगर (IS_ERR(obj->group))
+			वापस PTR_ERR(obj->group);
 
-		err = iommu_device_sysfs_add(&obj->iommu, obj->dev, NULL,
+		err = iommu_device_sysfs_add(&obj->iommu, obj->dev, शून्य,
 					     obj->name);
-		if (err)
-			goto out_group;
+		अगर (err)
+			जाओ out_group;
 
-		err = iommu_device_register(&obj->iommu, &omap_iommu_ops, &pdev->dev);
-		if (err)
-			goto out_sysfs;
-	}
+		err = iommu_device_रेजिस्टर(&obj->iommu, &omap_iommu_ops, &pdev->dev);
+		अगर (err)
+			जाओ out_sysfs;
+	पूर्ण
 
-	pm_runtime_enable(obj->dev);
+	pm_runसमय_enable(obj->dev);
 
 	omap_iommu_debugfs_add(obj);
 
 	dev_info(&pdev->dev, "%s registered\n", obj->name);
 
 	/* Re-probe bus to probe device attached to this IOMMU */
-	bus_iommu_probe(&platform_bus_type);
+	bus_iommu_probe(&platक्रमm_bus_type);
 
-	return 0;
+	वापस 0;
 
 out_sysfs:
-	iommu_device_sysfs_remove(&obj->iommu);
+	iommu_device_sysfs_हटाओ(&obj->iommu);
 out_group:
 	iommu_group_put(obj->group);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int omap_iommu_remove(struct platform_device *pdev)
-{
-	struct omap_iommu *obj = platform_get_drvdata(pdev);
+अटल पूर्णांक omap_iommu_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा omap_iommu *obj = platक्रमm_get_drvdata(pdev);
 
-	if (obj->group) {
+	अगर (obj->group) अणु
 		iommu_group_put(obj->group);
-		obj->group = NULL;
+		obj->group = शून्य;
 
-		iommu_device_sysfs_remove(&obj->iommu);
-		iommu_device_unregister(&obj->iommu);
-	}
+		iommu_device_sysfs_हटाओ(&obj->iommu);
+		iommu_device_unरेजिस्टर(&obj->iommu);
+	पूर्ण
 
-	omap_iommu_debugfs_remove(obj);
+	omap_iommu_debugfs_हटाओ(obj);
 
-	pm_runtime_disable(obj->dev);
+	pm_runसमय_disable(obj->dev);
 
 	dev_info(&pdev->dev, "%s removed\n", obj->name);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct dev_pm_ops omap_iommu_pm_ops = {
+अटल स्थिर काष्ठा dev_pm_ops omap_iommu_pm_ops = अणु
 	.prepare = omap_iommu_prepare,
-	SET_LATE_SYSTEM_SLEEP_PM_OPS(pm_runtime_force_suspend,
-				     pm_runtime_force_resume)
-	SET_RUNTIME_PM_OPS(omap_iommu_runtime_suspend,
-			   omap_iommu_runtime_resume, NULL)
-};
+	SET_LATE_SYSTEM_SLEEP_PM_OPS(pm_runसमय_क्रमce_suspend,
+				     pm_runसमय_क्रमce_resume)
+	SET_RUNTIME_PM_OPS(omap_iommu_runसमय_suspend,
+			   omap_iommu_runसमय_resume, शून्य)
+पूर्ण;
 
-static const struct of_device_id omap_iommu_of_match[] = {
-	{ .compatible = "ti,omap2-iommu" },
-	{ .compatible = "ti,omap4-iommu" },
-	{ .compatible = "ti,dra7-iommu"	},
-	{ .compatible = "ti,dra7-dsp-iommu" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id omap_iommu_of_match[] = अणु
+	अणु .compatible = "ti,omap2-iommu" पूर्ण,
+	अणु .compatible = "ti,omap4-iommu" पूर्ण,
+	अणु .compatible = "ti,dra7-iommu"	पूर्ण,
+	अणु .compatible = "ti,dra7-dsp-iommu" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static struct platform_driver omap_iommu_driver = {
+अटल काष्ठा platक्रमm_driver omap_iommu_driver = अणु
 	.probe	= omap_iommu_probe,
-	.remove	= omap_iommu_remove,
-	.driver	= {
+	.हटाओ	= omap_iommu_हटाओ,
+	.driver	= अणु
 		.name	= "omap-iommu",
 		.pm	= &omap_iommu_pm_ops,
 		.of_match_table = of_match_ptr(omap_iommu_of_match),
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static u32 iotlb_init_entry(struct iotlb_entry *e, u32 da, u32 pa, int pgsz)
-{
-	memset(e, 0, sizeof(*e));
+अटल u32 iotlb_init_entry(काष्ठा iotlb_entry *e, u32 da, u32 pa, पूर्णांक pgsz)
+अणु
+	स_रखो(e, 0, माप(*e));
 
 	e->da		= da;
 	e->pa		= pa;
@@ -1316,426 +1317,426 @@ static u32 iotlb_init_entry(struct iotlb_entry *e, u32 da, u32 pa, int pgsz)
 	e->elsz		= MMU_RAM_ELSZ_8;
 	e->mixed	= 0;
 
-	return iopgsz_to_bytes(e->pgsz);
-}
+	वापस iopgsz_to_bytes(e->pgsz);
+पूर्ण
 
-static int omap_iommu_map(struct iommu_domain *domain, unsigned long da,
-			  phys_addr_t pa, size_t bytes, int prot, gfp_t gfp)
-{
-	struct omap_iommu_domain *omap_domain = to_omap_domain(domain);
-	struct device *dev = omap_domain->dev;
-	struct omap_iommu_device *iommu;
-	struct omap_iommu *oiommu;
-	struct iotlb_entry e;
-	int omap_pgsz;
+अटल पूर्णांक omap_iommu_map(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ da,
+			  phys_addr_t pa, माप_प्रकार bytes, पूर्णांक prot, gfp_t gfp)
+अणु
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य = to_omap_करोमुख्य(करोमुख्य);
+	काष्ठा device *dev = omap_करोमुख्य->dev;
+	काष्ठा omap_iommu_device *iommu;
+	काष्ठा omap_iommu *oiommu;
+	काष्ठा iotlb_entry e;
+	पूर्णांक omap_pgsz;
 	u32 ret = -EINVAL;
-	int i;
+	पूर्णांक i;
 
 	omap_pgsz = bytes_to_iopgsz(bytes);
-	if (omap_pgsz < 0) {
+	अगर (omap_pgsz < 0) अणु
 		dev_err(dev, "invalid size to map: %zu\n", bytes);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	dev_dbg(dev, "mapping da 0x%lx to pa %pa size 0x%zx\n", da, &pa, bytes);
 
 	iotlb_init_entry(&e, da, pa, omap_pgsz);
 
-	iommu = omap_domain->iommus;
-	for (i = 0; i < omap_domain->num_iommus; i++, iommu++) {
+	iommu = omap_करोमुख्य->iommus;
+	क्रम (i = 0; i < omap_करोमुख्य->num_iommus; i++, iommu++) अणु
 		oiommu = iommu->iommu_dev;
 		ret = omap_iopgtable_store_entry(oiommu, &e);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "omap_iopgtable_store_entry failed: %d\n",
 				ret);
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (ret) {
-		while (i--) {
+	अगर (ret) अणु
+		जबतक (i--) अणु
 			iommu--;
 			oiommu = iommu->iommu_dev;
 			iopgtable_clear_entry(oiommu, da);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static size_t omap_iommu_unmap(struct iommu_domain *domain, unsigned long da,
-			       size_t size, struct iommu_iotlb_gather *gather)
-{
-	struct omap_iommu_domain *omap_domain = to_omap_domain(domain);
-	struct device *dev = omap_domain->dev;
-	struct omap_iommu_device *iommu;
-	struct omap_iommu *oiommu;
+अटल माप_प्रकार omap_iommu_unmap(काष्ठा iommu_करोमुख्य *करोमुख्य, अचिन्हित दीर्घ da,
+			       माप_प्रकार size, काष्ठा iommu_iotlb_gather *gather)
+अणु
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य = to_omap_करोमुख्य(करोमुख्य);
+	काष्ठा device *dev = omap_करोमुख्य->dev;
+	काष्ठा omap_iommu_device *iommu;
+	काष्ठा omap_iommu *oiommu;
 	bool error = false;
-	size_t bytes = 0;
-	int i;
+	माप_प्रकार bytes = 0;
+	पूर्णांक i;
 
 	dev_dbg(dev, "unmapping da 0x%lx size %zu\n", da, size);
 
-	iommu = omap_domain->iommus;
-	for (i = 0; i < omap_domain->num_iommus; i++, iommu++) {
+	iommu = omap_करोमुख्य->iommus;
+	क्रम (i = 0; i < omap_करोमुख्य->num_iommus; i++, iommu++) अणु
 		oiommu = iommu->iommu_dev;
 		bytes = iopgtable_clear_entry(oiommu, da);
-		if (!bytes)
+		अगर (!bytes)
 			error = true;
-	}
+	पूर्ण
 
 	/*
-	 * simplify return - we are only checking if any of the iommus
-	 * reported an error, but not if all of them are unmapping the
+	 * simplअगरy वापस - we are only checking अगर any of the iommus
+	 * reported an error, but not अगर all of them are unmapping the
 	 * same number of entries. This should not occur due to the
 	 * mirror programming.
 	 */
-	return error ? 0 : bytes;
-}
+	वापस error ? 0 : bytes;
+पूर्ण
 
-static int omap_iommu_count(struct device *dev)
-{
-	struct omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
-	int count = 0;
+अटल पूर्णांक omap_iommu_count(काष्ठा device *dev)
+अणु
+	काष्ठा omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
+	पूर्णांक count = 0;
 
-	while (arch_data->iommu_dev) {
+	जबतक (arch_data->iommu_dev) अणु
 		count++;
 		arch_data++;
-	}
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-/* caller should call cleanup if this function fails */
-static int omap_iommu_attach_init(struct device *dev,
-				  struct omap_iommu_domain *odomain)
-{
-	struct omap_iommu_device *iommu;
-	int i;
+/* caller should call cleanup अगर this function fails */
+अटल पूर्णांक omap_iommu_attach_init(काष्ठा device *dev,
+				  काष्ठा omap_iommu_करोमुख्य *oकरोमुख्य)
+अणु
+	काष्ठा omap_iommu_device *iommu;
+	पूर्णांक i;
 
-	odomain->num_iommus = omap_iommu_count(dev);
-	if (!odomain->num_iommus)
-		return -EINVAL;
+	oकरोमुख्य->num_iommus = omap_iommu_count(dev);
+	अगर (!oकरोमुख्य->num_iommus)
+		वापस -EINVAL;
 
-	odomain->iommus = kcalloc(odomain->num_iommus, sizeof(*iommu),
+	oकरोमुख्य->iommus = kसुस्मृति(oकरोमुख्य->num_iommus, माप(*iommu),
 				  GFP_ATOMIC);
-	if (!odomain->iommus)
-		return -ENOMEM;
+	अगर (!oकरोमुख्य->iommus)
+		वापस -ENOMEM;
 
-	iommu = odomain->iommus;
-	for (i = 0; i < odomain->num_iommus; i++, iommu++) {
+	iommu = oकरोमुख्य->iommus;
+	क्रम (i = 0; i < oकरोमुख्य->num_iommus; i++, iommu++) अणु
 		iommu->pgtable = kzalloc(IOPGD_TABLE_SIZE, GFP_ATOMIC);
-		if (!iommu->pgtable)
-			return -ENOMEM;
+		अगर (!iommu->pgtable)
+			वापस -ENOMEM;
 
 		/*
 		 * should never fail, but please keep this around to ensure
 		 * we keep the hardware happy
 		 */
-		if (WARN_ON(!IS_ALIGNED((long)iommu->pgtable,
+		अगर (WARN_ON(!IS_ALIGNED((दीर्घ)iommu->pgtable,
 					IOPGD_TABLE_SIZE)))
-			return -EINVAL;
-	}
+			वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void omap_iommu_detach_fini(struct omap_iommu_domain *odomain)
-{
-	int i;
-	struct omap_iommu_device *iommu = odomain->iommus;
+अटल व्योम omap_iommu_detach_fini(काष्ठा omap_iommu_करोमुख्य *oकरोमुख्य)
+अणु
+	पूर्णांक i;
+	काष्ठा omap_iommu_device *iommu = oकरोमुख्य->iommus;
 
-	for (i = 0; iommu && i < odomain->num_iommus; i++, iommu++)
-		kfree(iommu->pgtable);
+	क्रम (i = 0; iommu && i < oकरोमुख्य->num_iommus; i++, iommu++)
+		kमुक्त(iommu->pgtable);
 
-	kfree(odomain->iommus);
-	odomain->num_iommus = 0;
-	odomain->iommus = NULL;
-}
+	kमुक्त(oकरोमुख्य->iommus);
+	oकरोमुख्य->num_iommus = 0;
+	oकरोमुख्य->iommus = शून्य;
+पूर्ण
 
-static int
-omap_iommu_attach_dev(struct iommu_domain *domain, struct device *dev)
-{
-	struct omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
-	struct omap_iommu_domain *omap_domain = to_omap_domain(domain);
-	struct omap_iommu_device *iommu;
-	struct omap_iommu *oiommu;
-	int ret = 0;
-	int i;
+अटल पूर्णांक
+omap_iommu_attach_dev(काष्ठा iommu_करोमुख्य *करोमुख्य, काष्ठा device *dev)
+अणु
+	काष्ठा omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य = to_omap_करोमुख्य(करोमुख्य);
+	काष्ठा omap_iommu_device *iommu;
+	काष्ठा omap_iommu *oiommu;
+	पूर्णांक ret = 0;
+	पूर्णांक i;
 
-	if (!arch_data || !arch_data->iommu_dev) {
+	अगर (!arch_data || !arch_data->iommu_dev) अणु
 		dev_err(dev, "device doesn't have an associated iommu\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	spin_lock(&omap_domain->lock);
+	spin_lock(&omap_करोमुख्य->lock);
 
-	/* only a single client device can be attached to a domain */
-	if (omap_domain->dev) {
+	/* only a single client device can be attached to a करोमुख्य */
+	अगर (omap_करोमुख्य->dev) अणु
 		dev_err(dev, "iommu domain is already attached\n");
 		ret = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = omap_iommu_attach_init(dev, omap_domain);
-	if (ret) {
+	ret = omap_iommu_attach_init(dev, omap_करोमुख्य);
+	अगर (ret) अणु
 		dev_err(dev, "failed to allocate required iommu data %d\n",
 			ret);
-		goto init_fail;
-	}
+		जाओ init_fail;
+	पूर्ण
 
-	iommu = omap_domain->iommus;
-	for (i = 0; i < omap_domain->num_iommus; i++, iommu++, arch_data++) {
+	iommu = omap_करोमुख्य->iommus;
+	क्रम (i = 0; i < omap_करोमुख्य->num_iommus; i++, iommu++, arch_data++) अणु
 		/* configure and enable the omap iommu */
 		oiommu = arch_data->iommu_dev;
 		ret = omap_iommu_attach(oiommu, iommu->pgtable);
-		if (ret) {
+		अगर (ret) अणु
 			dev_err(dev, "can't get omap iommu: %d\n", ret);
-			goto attach_fail;
-		}
+			जाओ attach_fail;
+		पूर्ण
 
-		oiommu->domain = domain;
+		oiommu->करोमुख्य = करोमुख्य;
 		iommu->iommu_dev = oiommu;
-	}
+	पूर्ण
 
-	omap_domain->dev = dev;
+	omap_करोमुख्य->dev = dev;
 
-	goto out;
+	जाओ out;
 
 attach_fail:
-	while (i--) {
+	जबतक (i--) अणु
 		iommu--;
 		arch_data--;
 		oiommu = iommu->iommu_dev;
 		omap_iommu_detach(oiommu);
-		iommu->iommu_dev = NULL;
-		oiommu->domain = NULL;
-	}
+		iommu->iommu_dev = शून्य;
+		oiommu->करोमुख्य = शून्य;
+	पूर्ण
 init_fail:
-	omap_iommu_detach_fini(omap_domain);
+	omap_iommu_detach_fini(omap_करोमुख्य);
 out:
-	spin_unlock(&omap_domain->lock);
-	return ret;
-}
+	spin_unlock(&omap_करोमुख्य->lock);
+	वापस ret;
+पूर्ण
 
-static void _omap_iommu_detach_dev(struct omap_iommu_domain *omap_domain,
-				   struct device *dev)
-{
-	struct omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
-	struct omap_iommu_device *iommu = omap_domain->iommus;
-	struct omap_iommu *oiommu;
-	int i;
+अटल व्योम _omap_iommu_detach_dev(काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य,
+				   काष्ठा device *dev)
+अणु
+	काष्ठा omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
+	काष्ठा omap_iommu_device *iommu = omap_करोमुख्य->iommus;
+	काष्ठा omap_iommu *oiommu;
+	पूर्णांक i;
 
-	if (!omap_domain->dev) {
+	अगर (!omap_करोमुख्य->dev) अणु
 		dev_err(dev, "domain has no attached device\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* only a single device is supported per domain for now */
-	if (omap_domain->dev != dev) {
+	/* only a single device is supported per करोमुख्य क्रम now */
+	अगर (omap_करोमुख्य->dev != dev) अणु
 		dev_err(dev, "invalid attached device\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * cleanup in the reverse order of attachment - this addresses
-	 * any h/w dependencies between multiple instances, if any
+	 * any h/w dependencies between multiple instances, अगर any
 	 */
-	iommu += (omap_domain->num_iommus - 1);
-	arch_data += (omap_domain->num_iommus - 1);
-	for (i = 0; i < omap_domain->num_iommus; i++, iommu--, arch_data--) {
+	iommu += (omap_करोमुख्य->num_iommus - 1);
+	arch_data += (omap_करोमुख्य->num_iommus - 1);
+	क्रम (i = 0; i < omap_करोमुख्य->num_iommus; i++, iommu--, arch_data--) अणु
 		oiommu = iommu->iommu_dev;
 		iopgtable_clear_entry_all(oiommu);
 
 		omap_iommu_detach(oiommu);
-		iommu->iommu_dev = NULL;
-		oiommu->domain = NULL;
-	}
+		iommu->iommu_dev = शून्य;
+		oiommu->करोमुख्य = शून्य;
+	पूर्ण
 
-	omap_iommu_detach_fini(omap_domain);
+	omap_iommu_detach_fini(omap_करोमुख्य);
 
-	omap_domain->dev = NULL;
-}
+	omap_करोमुख्य->dev = शून्य;
+पूर्ण
 
-static void omap_iommu_detach_dev(struct iommu_domain *domain,
-				  struct device *dev)
-{
-	struct omap_iommu_domain *omap_domain = to_omap_domain(domain);
+अटल व्योम omap_iommu_detach_dev(काष्ठा iommu_करोमुख्य *करोमुख्य,
+				  काष्ठा device *dev)
+अणु
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य = to_omap_करोमुख्य(करोमुख्य);
 
-	spin_lock(&omap_domain->lock);
-	_omap_iommu_detach_dev(omap_domain, dev);
-	spin_unlock(&omap_domain->lock);
-}
+	spin_lock(&omap_करोमुख्य->lock);
+	_omap_iommu_detach_dev(omap_करोमुख्य, dev);
+	spin_unlock(&omap_करोमुख्य->lock);
+पूर्ण
 
-static struct iommu_domain *omap_iommu_domain_alloc(unsigned type)
-{
-	struct omap_iommu_domain *omap_domain;
+अटल काष्ठा iommu_करोमुख्य *omap_iommu_करोमुख्य_alloc(अचिन्हित type)
+अणु
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य;
 
-	if (type != IOMMU_DOMAIN_UNMANAGED)
-		return NULL;
+	अगर (type != IOMMU_DOMAIN_UNMANAGED)
+		वापस शून्य;
 
-	omap_domain = kzalloc(sizeof(*omap_domain), GFP_KERNEL);
-	if (!omap_domain)
-		return NULL;
+	omap_करोमुख्य = kzalloc(माप(*omap_करोमुख्य), GFP_KERNEL);
+	अगर (!omap_करोमुख्य)
+		वापस शून्य;
 
-	spin_lock_init(&omap_domain->lock);
+	spin_lock_init(&omap_करोमुख्य->lock);
 
-	omap_domain->domain.geometry.aperture_start = 0;
-	omap_domain->domain.geometry.aperture_end   = (1ULL << 32) - 1;
-	omap_domain->domain.geometry.force_aperture = true;
+	omap_करोमुख्य->करोमुख्य.geometry.aperture_start = 0;
+	omap_करोमुख्य->करोमुख्य.geometry.aperture_end   = (1ULL << 32) - 1;
+	omap_करोमुख्य->करोमुख्य.geometry.क्रमce_aperture = true;
 
-	return &omap_domain->domain;
-}
+	वापस &omap_करोमुख्य->करोमुख्य;
+पूर्ण
 
-static void omap_iommu_domain_free(struct iommu_domain *domain)
-{
-	struct omap_iommu_domain *omap_domain = to_omap_domain(domain);
+अटल व्योम omap_iommu_करोमुख्य_मुक्त(काष्ठा iommu_करोमुख्य *करोमुख्य)
+अणु
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य = to_omap_करोमुख्य(करोमुख्य);
 
 	/*
 	 * An iommu device is still attached
 	 * (currently, only one device can be attached) ?
 	 */
-	if (omap_domain->dev)
-		_omap_iommu_detach_dev(omap_domain, omap_domain->dev);
+	अगर (omap_करोमुख्य->dev)
+		_omap_iommu_detach_dev(omap_करोमुख्य, omap_करोमुख्य->dev);
 
-	kfree(omap_domain);
-}
+	kमुक्त(omap_करोमुख्य);
+पूर्ण
 
-static phys_addr_t omap_iommu_iova_to_phys(struct iommu_domain *domain,
+अटल phys_addr_t omap_iommu_iova_to_phys(काष्ठा iommu_करोमुख्य *करोमुख्य,
 					   dma_addr_t da)
-{
-	struct omap_iommu_domain *omap_domain = to_omap_domain(domain);
-	struct omap_iommu_device *iommu = omap_domain->iommus;
-	struct omap_iommu *oiommu = iommu->iommu_dev;
-	struct device *dev = oiommu->dev;
+अणु
+	काष्ठा omap_iommu_करोमुख्य *omap_करोमुख्य = to_omap_करोमुख्य(करोमुख्य);
+	काष्ठा omap_iommu_device *iommu = omap_करोमुख्य->iommus;
+	काष्ठा omap_iommu *oiommu = iommu->iommu_dev;
+	काष्ठा device *dev = oiommu->dev;
 	u32 *pgd, *pte;
 	phys_addr_t ret = 0;
 
 	/*
-	 * all the iommus within the domain will have identical programming,
-	 * so perform the lookup using just the first iommu
+	 * all the iommus within the करोमुख्य will have identical programming,
+	 * so perक्रमm the lookup using just the first iommu
 	 */
 	iopgtable_lookup_entry(oiommu, da, &pgd, &pte);
 
-	if (pte) {
-		if (iopte_is_small(*pte))
+	अगर (pte) अणु
+		अगर (iopte_is_small(*pte))
 			ret = omap_iommu_translate(*pte, da, IOPTE_MASK);
-		else if (iopte_is_large(*pte))
+		अन्यथा अगर (iopte_is_large(*pte))
 			ret = omap_iommu_translate(*pte, da, IOLARGE_MASK);
-		else
+		अन्यथा
 			dev_err(dev, "bogus pte 0x%x, da 0x%llx", *pte,
-				(unsigned long long)da);
-	} else {
-		if (iopgd_is_section(*pgd))
+				(अचिन्हित दीर्घ दीर्घ)da);
+	पूर्ण अन्यथा अणु
+		अगर (iopgd_is_section(*pgd))
 			ret = omap_iommu_translate(*pgd, da, IOSECTION_MASK);
-		else if (iopgd_is_super(*pgd))
+		अन्यथा अगर (iopgd_is_super(*pgd))
 			ret = omap_iommu_translate(*pgd, da, IOSUPER_MASK);
-		else
+		अन्यथा
 			dev_err(dev, "bogus pgd 0x%x, da 0x%llx", *pgd,
-				(unsigned long long)da);
-	}
+				(अचिन्हित दीर्घ दीर्घ)da);
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct iommu_device *omap_iommu_probe_device(struct device *dev)
-{
-	struct omap_iommu_arch_data *arch_data, *tmp;
-	struct platform_device *pdev;
-	struct omap_iommu *oiommu;
-	struct device_node *np;
-	int num_iommus, i;
+अटल काष्ठा iommu_device *omap_iommu_probe_device(काष्ठा device *dev)
+अणु
+	काष्ठा omap_iommu_arch_data *arch_data, *पंचांगp;
+	काष्ठा platक्रमm_device *pdev;
+	काष्ठा omap_iommu *oiommu;
+	काष्ठा device_node *np;
+	पूर्णांक num_iommus, i;
 
 	/*
-	 * Allocate the per-device iommu structure for DT-based devices.
+	 * Allocate the per-device iommu काष्ठाure क्रम DT-based devices.
 	 *
-	 * TODO: Simplify this when removing non-DT support completely from the
+	 * TODO: Simplअगरy this when removing non-DT support completely from the
 	 * IOMMU users.
 	 */
-	if (!dev->of_node)
-		return ERR_PTR(-ENODEV);
+	अगर (!dev->of_node)
+		वापस ERR_PTR(-ENODEV);
 
 	/*
 	 * retrieve the count of IOMMU nodes using phandle size as element size
-	 * since #iommu-cells = 0 for OMAP
+	 * since #iommu-cells = 0 क्रम OMAP
 	 */
 	num_iommus = of_property_count_elems_of_size(dev->of_node, "iommus",
-						     sizeof(phandle));
-	if (num_iommus < 0)
-		return 0;
+						     माप(phandle));
+	अगर (num_iommus < 0)
+		वापस 0;
 
-	arch_data = kcalloc(num_iommus + 1, sizeof(*arch_data), GFP_KERNEL);
-	if (!arch_data)
-		return ERR_PTR(-ENOMEM);
+	arch_data = kसुस्मृति(num_iommus + 1, माप(*arch_data), GFP_KERNEL);
+	अगर (!arch_data)
+		वापस ERR_PTR(-ENOMEM);
 
-	for (i = 0, tmp = arch_data; i < num_iommus; i++, tmp++) {
+	क्रम (i = 0, पंचांगp = arch_data; i < num_iommus; i++, पंचांगp++) अणु
 		np = of_parse_phandle(dev->of_node, "iommus", i);
-		if (!np) {
-			kfree(arch_data);
-			return ERR_PTR(-EINVAL);
-		}
+		अगर (!np) अणु
+			kमुक्त(arch_data);
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
 
 		pdev = of_find_device_by_node(np);
-		if (!pdev) {
+		अगर (!pdev) अणु
 			of_node_put(np);
-			kfree(arch_data);
-			return ERR_PTR(-ENODEV);
-		}
+			kमुक्त(arch_data);
+			वापस ERR_PTR(-ENODEV);
+		पूर्ण
 
-		oiommu = platform_get_drvdata(pdev);
-		if (!oiommu) {
+		oiommu = platक्रमm_get_drvdata(pdev);
+		अगर (!oiommu) अणु
 			of_node_put(np);
-			kfree(arch_data);
-			return ERR_PTR(-EINVAL);
-		}
+			kमुक्त(arch_data);
+			वापस ERR_PTR(-EINVAL);
+		पूर्ण
 
-		tmp->iommu_dev = oiommu;
-		tmp->dev = &pdev->dev;
+		पंचांगp->iommu_dev = oiommu;
+		पंचांगp->dev = &pdev->dev;
 
 		of_node_put(np);
-	}
+	पूर्ण
 
 	dev_iommu_priv_set(dev, arch_data);
 
 	/*
-	 * use the first IOMMU alone for the sysfs device linking.
-	 * TODO: Evaluate if a single iommu_group needs to be
-	 * maintained for both IOMMUs
+	 * use the first IOMMU alone क्रम the sysfs device linking.
+	 * TODO: Evaluate अगर a single iommu_group needs to be
+	 * मुख्यtained क्रम both IOMMUs
 	 */
 	oiommu = arch_data->iommu_dev;
 
-	return &oiommu->iommu;
-}
+	वापस &oiommu->iommu;
+पूर्ण
 
-static void omap_iommu_release_device(struct device *dev)
-{
-	struct omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
+अटल व्योम omap_iommu_release_device(काष्ठा device *dev)
+अणु
+	काष्ठा omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
 
-	if (!dev->of_node || !arch_data)
-		return;
+	अगर (!dev->of_node || !arch_data)
+		वापस;
 
-	dev_iommu_priv_set(dev, NULL);
-	kfree(arch_data);
+	dev_iommu_priv_set(dev, शून्य);
+	kमुक्त(arch_data);
 
-}
+पूर्ण
 
-static struct iommu_group *omap_iommu_device_group(struct device *dev)
-{
-	struct omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
-	struct iommu_group *group = ERR_PTR(-EINVAL);
+अटल काष्ठा iommu_group *omap_iommu_device_group(काष्ठा device *dev)
+अणु
+	काष्ठा omap_iommu_arch_data *arch_data = dev_iommu_priv_get(dev);
+	काष्ठा iommu_group *group = ERR_PTR(-EINVAL);
 
-	if (!arch_data)
-		return ERR_PTR(-ENODEV);
+	अगर (!arch_data)
+		वापस ERR_PTR(-ENODEV);
 
-	if (arch_data->iommu_dev)
+	अगर (arch_data->iommu_dev)
 		group = iommu_group_ref_get(arch_data->iommu_dev->group);
 
-	return group;
-}
+	वापस group;
+पूर्ण
 
-static const struct iommu_ops omap_iommu_ops = {
-	.domain_alloc	= omap_iommu_domain_alloc,
-	.domain_free	= omap_iommu_domain_free,
+अटल स्थिर काष्ठा iommu_ops omap_iommu_ops = अणु
+	.करोमुख्य_alloc	= omap_iommu_करोमुख्य_alloc,
+	.करोमुख्य_मुक्त	= omap_iommu_करोमुख्य_मुक्त,
 	.attach_dev	= omap_iommu_attach_dev,
 	.detach_dev	= omap_iommu_detach_dev,
 	.map		= omap_iommu_map,
@@ -1744,48 +1745,48 @@ static const struct iommu_ops omap_iommu_ops = {
 	.probe_device	= omap_iommu_probe_device,
 	.release_device	= omap_iommu_release_device,
 	.device_group	= omap_iommu_device_group,
-	.pgsize_bitmap	= OMAP_IOMMU_PGSIZES,
-};
+	.pgsize_biपंचांगap	= OMAP_IOMMU_PGSIZES,
+पूर्ण;
 
-static int __init omap_iommu_init(void)
-{
-	struct kmem_cache *p;
-	const slab_flags_t flags = SLAB_HWCACHE_ALIGN;
-	size_t align = 1 << 10; /* L2 pagetable alignement */
-	struct device_node *np;
-	int ret;
+अटल पूर्णांक __init omap_iommu_init(व्योम)
+अणु
+	काष्ठा kmem_cache *p;
+	स्थिर slab_flags_t flags = SLAB_HWCACHE_ALIGN;
+	माप_प्रकार align = 1 << 10; /* L2 pagetable alignement */
+	काष्ठा device_node *np;
+	पूर्णांक ret;
 
-	np = of_find_matching_node(NULL, omap_iommu_of_match);
-	if (!np)
-		return 0;
+	np = of_find_matching_node(शून्य, omap_iommu_of_match);
+	अगर (!np)
+		वापस 0;
 
 	of_node_put(np);
 
 	p = kmem_cache_create("iopte_cache", IOPTE_TABLE_SIZE, align, flags,
-			      NULL);
-	if (!p)
-		return -ENOMEM;
+			      शून्य);
+	अगर (!p)
+		वापस -ENOMEM;
 	iopte_cachep = p;
 
 	omap_iommu_debugfs_init();
 
-	ret = platform_driver_register(&omap_iommu_driver);
-	if (ret) {
+	ret = platक्रमm_driver_रेजिस्टर(&omap_iommu_driver);
+	अगर (ret) अणु
 		pr_err("%s: failed to register driver\n", __func__);
-		goto fail_driver;
-	}
+		जाओ fail_driver;
+	पूर्ण
 
-	ret = bus_set_iommu(&platform_bus_type, &omap_iommu_ops);
-	if (ret)
-		goto fail_bus;
+	ret = bus_set_iommu(&platक्रमm_bus_type, &omap_iommu_ops);
+	अगर (ret)
+		जाओ fail_bus;
 
-	return 0;
+	वापस 0;
 
 fail_bus:
-	platform_driver_unregister(&omap_iommu_driver);
+	platक्रमm_driver_unरेजिस्टर(&omap_iommu_driver);
 fail_driver:
 	kmem_cache_destroy(iopte_cachep);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 subsys_initcall(omap_iommu_init);
-/* must be ready before omap3isp is probed */
+/* must be पढ़ोy beक्रमe omap3isp is probed */

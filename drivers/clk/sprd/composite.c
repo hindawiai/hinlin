@@ -1,60 +1,61 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 //
-// Spreadtrum composite clock driver
+// Spपढ़ोtrum composite घड़ी driver
 //
-// Copyright (C) 2017 Spreadtrum, Inc.
-// Author: Chunyan Zhang <chunyan.zhang@spreadtrum.com>
+// Copyright (C) 2017 Spपढ़ोtrum, Inc.
+// Author: Chunyan Zhang <chunyan.zhang@spपढ़ोtrum.com>
 
-#include <linux/clk-provider.h>
+#समावेश <linux/clk-provider.h>
 
-#include "composite.h"
+#समावेश "composite.h"
 
-static long sprd_comp_round_rate(struct clk_hw *hw, unsigned long rate,
-				unsigned long *parent_rate)
-{
-	struct sprd_comp *cc = hw_to_sprd_comp(hw);
+अटल दीर्घ sprd_comp_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				अचिन्हित दीर्घ *parent_rate)
+अणु
+	काष्ठा sprd_comp *cc = hw_to_sprd_comp(hw);
 
-	return sprd_div_helper_round_rate(&cc->common, &cc->div,
+	वापस sprd_भाग_helper_round_rate(&cc->common, &cc->भाग,
 					 rate, parent_rate);
-}
+पूर्ण
 
-static unsigned long sprd_comp_recalc_rate(struct clk_hw *hw,
-					  unsigned long parent_rate)
-{
-	struct sprd_comp *cc = hw_to_sprd_comp(hw);
+अटल अचिन्हित दीर्घ sprd_comp_recalc_rate(काष्ठा clk_hw *hw,
+					  अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा sprd_comp *cc = hw_to_sprd_comp(hw);
 
-	return sprd_div_helper_recalc_rate(&cc->common, &cc->div, parent_rate);
-}
+	वापस sprd_भाग_helper_recalc_rate(&cc->common, &cc->भाग, parent_rate);
+पूर्ण
 
-static int sprd_comp_set_rate(struct clk_hw *hw, unsigned long rate,
-			     unsigned long parent_rate)
-{
-	struct sprd_comp *cc = hw_to_sprd_comp(hw);
+अटल पूर्णांक sprd_comp_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+			     अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा sprd_comp *cc = hw_to_sprd_comp(hw);
 
-	return sprd_div_helper_set_rate(&cc->common, &cc->div,
+	वापस sprd_भाग_helper_set_rate(&cc->common, &cc->भाग,
 				       rate, parent_rate);
-}
+पूर्ण
 
-static u8 sprd_comp_get_parent(struct clk_hw *hw)
-{
-	struct sprd_comp *cc = hw_to_sprd_comp(hw);
+अटल u8 sprd_comp_get_parent(काष्ठा clk_hw *hw)
+अणु
+	काष्ठा sprd_comp *cc = hw_to_sprd_comp(hw);
 
-	return sprd_mux_helper_get_parent(&cc->common, &cc->mux);
-}
+	वापस sprd_mux_helper_get_parent(&cc->common, &cc->mux);
+पूर्ण
 
-static int sprd_comp_set_parent(struct clk_hw *hw, u8 index)
-{
-	struct sprd_comp *cc = hw_to_sprd_comp(hw);
+अटल पूर्णांक sprd_comp_set_parent(काष्ठा clk_hw *hw, u8 index)
+अणु
+	काष्ठा sprd_comp *cc = hw_to_sprd_comp(hw);
 
-	return sprd_mux_helper_set_parent(&cc->common, &cc->mux, index);
-}
+	वापस sprd_mux_helper_set_parent(&cc->common, &cc->mux, index);
+पूर्ण
 
-const struct clk_ops sprd_comp_ops = {
+स्थिर काष्ठा clk_ops sprd_comp_ops = अणु
 	.get_parent	= sprd_comp_get_parent,
 	.set_parent	= sprd_comp_set_parent,
 
 	.round_rate	= sprd_comp_round_rate,
 	.recalc_rate	= sprd_comp_recalc_rate,
 	.set_rate	= sprd_comp_set_rate,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(sprd_comp_ops);

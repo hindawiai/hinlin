@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Realtek PCI-Express card reader
+ * Driver क्रम Realtek PCI-Express card पढ़ोer
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -9,80 +10,80 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
-#include <linux/blkdev.h>
-#include <linux/kthread.h>
-#include <linux/sched.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/sched.h>
 
-#include "rtsx.h"
-#include "spi.h"
+#समावेश "rtsx.h"
+#समावेश "spi.h"
 
-static inline void spi_set_err_code(struct rtsx_chip *chip, u8 err_code)
-{
-	struct spi_info *spi = &chip->spi;
+अटल अंतरभूत व्योम spi_set_err_code(काष्ठा rtsx_chip *chip, u8 err_code)
+अणु
+	काष्ठा spi_info *spi = &chip->spi;
 
 	spi->err_code = err_code;
-}
+पूर्ण
 
-static int spi_init(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक spi_init(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
-	retval = rtsx_write_register(chip, SPI_CONTROL, 0xFF,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SPI_CONTROL, 0xFF,
 				     CS_POLARITY_LOW | DTO_MSB_FIRST
 				     | SPI_MASTER | SPI_MODE0 | SPI_AUTO);
-	if (retval)
-		return retval;
-	retval = rtsx_write_register(chip, SPI_TCTL, EDO_TIMING_MASK,
+	अगर (retval)
+		वापस retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SPI_TCTL, EDO_TIMING_MASK,
 				     SAMPLE_DELAY_HALF);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int spi_set_init_para(struct rtsx_chip *chip)
-{
-	struct spi_info *spi = &chip->spi;
-	int retval;
+अटल पूर्णांक spi_set_init_para(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा spi_info *spi = &chip->spi;
+	पूर्णांक retval;
 
-	retval = rtsx_write_register(chip, SPI_CLK_DIVIDER1, 0xFF,
-				     (u8)(spi->clk_div >> 8));
-	if (retval)
-		return retval;
-	retval = rtsx_write_register(chip, SPI_CLK_DIVIDER0, 0xFF,
-				     (u8)(spi->clk_div));
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SPI_CLK_DIVIDER1, 0xFF,
+				     (u8)(spi->clk_भाग >> 8));
+	अगर (retval)
+		वापस retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SPI_CLK_DIVIDER0, 0xFF,
+				     (u8)(spi->clk_भाग));
+	अगर (retval)
+		वापस retval;
 
-	retval = switch_clock(chip, spi->spi_clock);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = चयन_घड़ी(chip, spi->spi_घड़ी);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	retval = select_card(chip, SPI_CARD);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, CARD_CLK_EN, SPI_CLK_EN,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_CLK_EN, SPI_CLK_EN,
 				     SPI_CLK_EN);
-	if (retval)
-		return retval;
-	retval = rtsx_write_register(chip, CARD_OE, SPI_OUTPUT_EN,
+	अगर (retval)
+		वापस retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_OE, SPI_OUTPUT_EN,
 				     SPI_OUTPUT_EN);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	wait_timeout(10);
+	रुको_समयout(10);
 
 	retval = spi_init(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sf_polling_status(struct rtsx_chip *chip, int msec)
-{
-	int retval;
+अटल पूर्णांक sf_polling_status(काष्ठा rtsx_chip *chip, पूर्णांक msec)
+अणु
+	पूर्णांक retval;
 
 	rtsx_init_cmd(chip);
 
@@ -93,50 +94,22 @@ static int sf_polling_status(struct rtsx_chip *chip, int msec)
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, msec);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		rtsx_clear_spi_error(chip);
 		spi_set_err_code(chip, SPI_BUSY_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sf_enable_write(struct rtsx_chip *chip, u8 ins)
-{
-	struct spi_info *spi = &chip->spi;
-	int retval;
+अटल पूर्णांक sf_enable_ग_लिखो(काष्ठा rtsx_chip *chip, u8 ins)
+अणु
+	काष्ठा spi_info *spi = &chip->spi;
+	पूर्णांक retval;
 
-	if (!spi->write_en)
-		return STATUS_SUCCESS;
-
-	rtsx_init_cmd(chip);
-
-	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_COMMAND, 0xFF, ins);
-	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_CA_NUMBER, 0xFF,
-		     SPI_COMMAND_BIT_8 | SPI_ADDRESS_BIT_24);
-	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0, 0xFF,
-		     SPI_TRANSFER0_START | SPI_C_MODE0);
-	rtsx_add_cmd(chip, CHECK_REG_CMD, SPI_TRANSFER0, SPI_TRANSFER0_END,
-		     SPI_TRANSFER0_END);
-
-	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval < 0) {
-		rtsx_clear_spi_error(chip);
-		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
-
-	return STATUS_SUCCESS;
-}
-
-static int sf_disable_write(struct rtsx_chip *chip, u8 ins)
-{
-	struct spi_info *spi = &chip->spi;
-	int retval;
-
-	if (!spi->write_en)
-		return STATUS_SUCCESS;
+	अगर (!spi->ग_लिखो_en)
+		वापस STATUS_SUCCESS;
 
 	rtsx_init_cmd(chip);
 
@@ -149,24 +122,52 @@ static int sf_disable_write(struct rtsx_chip *chip, u8 ins)
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		rtsx_clear_spi_error(chip);
 		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static void sf_program(struct rtsx_chip *chip, u8 ins, u8 addr_mode, u32 addr,
+अटल पूर्णांक sf_disable_ग_लिखो(काष्ठा rtsx_chip *chip, u8 ins)
+अणु
+	काष्ठा spi_info *spi = &chip->spi;
+	पूर्णांक retval;
+
+	अगर (!spi->ग_लिखो_en)
+		वापस STATUS_SUCCESS;
+
+	rtsx_init_cmd(chip);
+
+	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_COMMAND, 0xFF, ins);
+	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_CA_NUMBER, 0xFF,
+		     SPI_COMMAND_BIT_8 | SPI_ADDRESS_BIT_24);
+	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0, 0xFF,
+		     SPI_TRANSFER0_START | SPI_C_MODE0);
+	rtsx_add_cmd(chip, CHECK_REG_CMD, SPI_TRANSFER0, SPI_TRANSFER0_END,
+		     SPI_TRANSFER0_END);
+
+	retval = rtsx_send_cmd(chip, 0, 100);
+	अगर (retval < 0) अणु
+		rtsx_clear_spi_error(chip);
+		spi_set_err_code(chip, SPI_HW_ERR);
+		वापस STATUS_FAIL;
+	पूर्ण
+
+	वापस STATUS_SUCCESS;
+पूर्ण
+
+अटल व्योम sf_program(काष्ठा rtsx_chip *chip, u8 ins, u8 addr_mode, u32 addr,
 		       u16 len)
-{
+अणु
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_COMMAND, 0xFF, ins);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_CA_NUMBER, 0xFF,
 		     SPI_COMMAND_BIT_8 | SPI_ADDRESS_BIT_24);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_LENGTH0, 0xFF, (u8)len);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_LENGTH1, 0xFF, (u8)(len >> 8));
-	if (addr_mode) {
+	अगर (addr_mode) अणु
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR0, 0xFF, (u8)addr);
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR1, 0xFF,
 			     (u8)(addr >> 8));
@@ -174,24 +175,24 @@ static void sf_program(struct rtsx_chip *chip, u8 ins, u8 addr_mode, u32 addr,
 			     (u8)(addr >> 16));
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0, 0xFF,
 			     SPI_TRANSFER0_START | SPI_CADO_MODE0);
-	} else {
+	पूर्ण अन्यथा अणु
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0, 0xFF,
 			     SPI_TRANSFER0_START | SPI_CDO_MODE0);
-	}
+	पूर्ण
 	rtsx_add_cmd(chip, CHECK_REG_CMD, SPI_TRANSFER0, SPI_TRANSFER0_END,
 		     SPI_TRANSFER0_END);
-}
+पूर्ण
 
-static int sf_erase(struct rtsx_chip *chip, u8 ins, u8 addr_mode, u32 addr)
-{
-	int retval;
+अटल पूर्णांक sf_erase(काष्ठा rtsx_chip *chip, u8 ins, u8 addr_mode, u32 addr)
+अणु
+	पूर्णांक retval;
 
 	rtsx_init_cmd(chip);
 
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_COMMAND, 0xFF, ins);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_CA_NUMBER, 0xFF,
 		     SPI_COMMAND_BIT_8 | SPI_ADDRESS_BIT_24);
-	if (addr_mode) {
+	अगर (addr_mode) अणु
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR0, 0xFF, (u8)addr);
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR1, 0xFF,
 			     (u8)(addr >> 8));
@@ -199,74 +200,74 @@ static int sf_erase(struct rtsx_chip *chip, u8 ins, u8 addr_mode, u32 addr)
 			     (u8)(addr >> 16));
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0, 0xFF,
 			     SPI_TRANSFER0_START | SPI_CA_MODE0);
-	} else {
+	पूर्ण अन्यथा अणु
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0, 0xFF,
 			     SPI_TRANSFER0_START | SPI_C_MODE0);
-	}
+	पूर्ण
 	rtsx_add_cmd(chip, CHECK_REG_CMD, SPI_TRANSFER0, SPI_TRANSFER0_END,
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		rtsx_clear_spi_error(chip);
 		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int spi_init_eeprom(struct rtsx_chip *chip)
-{
-	int retval;
-	int clk;
+अटल पूर्णांक spi_init_eeprom(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
+	पूर्णांक clk;
 
-	if (chip->asic_code)
+	अगर (chip->asic_code)
 		clk = 30;
-	else
+	अन्यथा
 		clk = CLK_30;
 
-	retval = rtsx_write_register(chip, SPI_CLK_DIVIDER1, 0xFF, 0x00);
-	if (retval)
-		return retval;
-	retval = rtsx_write_register(chip, SPI_CLK_DIVIDER0, 0xFF, 0x27);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SPI_CLK_DIVIDER1, 0xFF, 0x00);
+	अगर (retval)
+		वापस retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SPI_CLK_DIVIDER0, 0xFF, 0x27);
+	अगर (retval)
+		वापस retval;
 
-	retval = switch_clock(chip, clk);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = चयन_घड़ी(chip, clk);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	retval = select_card(chip, SPI_CARD);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, CARD_CLK_EN, SPI_CLK_EN,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_CLK_EN, SPI_CLK_EN,
 				     SPI_CLK_EN);
-	if (retval)
-		return retval;
-	retval = rtsx_write_register(chip, CARD_OE, SPI_OUTPUT_EN,
+	अगर (retval)
+		वापस retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_OE, SPI_OUTPUT_EN,
 				     SPI_OUTPUT_EN);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	wait_timeout(10);
+	रुको_समयout(10);
 
-	retval = rtsx_write_register(chip, SPI_CONTROL, 0xFF,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SPI_CONTROL, 0xFF,
 				     CS_POLARITY_HIGH | SPI_EEPROM_AUTO);
-	if (retval)
-		return retval;
-	retval = rtsx_write_register(chip, SPI_TCTL, EDO_TIMING_MASK,
+	अगर (retval)
+		वापस retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SPI_TCTL, EDO_TIMING_MASK,
 				     SAMPLE_DELAY_HALF);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int spi_eeprom_program_enable(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक spi_eeprom_program_enable(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
 	rtsx_init_cmd(chip);
 
@@ -278,27 +279,27 @@ static int spi_eeprom_program_enable(struct rtsx_chip *chip)
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval < 0)
-		return STATUS_FAIL;
+	अगर (retval < 0)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_erase_eeprom_chip(struct rtsx_chip *chip)
-{
-	int retval;
+पूर्णांक spi_erase_eeprom_chip(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
 	retval = spi_init_eeprom(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	retval = spi_eeprom_program_enable(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	rtsx_init_cmd(chip);
 
-	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_GPIO_DIR, 0x01, 0);
+	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_GPIO_सूची, 0x01, 0);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_DATA_SOURCE, 0x01, RING_BUFFER);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_COMMAND, 0xFF, 0x12);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_CA_NUMBER, 0xFF, 0x84);
@@ -308,31 +309,31 @@ int spi_erase_eeprom_chip(struct rtsx_chip *chip)
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval < 0)
-		return STATUS_FAIL;
+	अगर (retval < 0)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, CARD_GPIO_DIR, 0x01, 0x01);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_GPIO_सूची, 0x01, 0x01);
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_erase_eeprom_byte(struct rtsx_chip *chip, u16 addr)
-{
-	int retval;
+पूर्णांक spi_erase_eeprom_byte(काष्ठा rtsx_chip *chip, u16 addr)
+अणु
+	पूर्णांक retval;
 
 	retval = spi_init_eeprom(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	retval = spi_eeprom_program_enable(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	rtsx_init_cmd(chip);
 
-	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_GPIO_DIR, 0x01, 0);
+	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_GPIO_सूची, 0x01, 0);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_DATA_SOURCE, 0x01, RING_BUFFER);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_COMMAND, 0xFF, 0x07);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR0, 0xFF, (u8)addr);
@@ -344,28 +345,28 @@ int spi_erase_eeprom_byte(struct rtsx_chip *chip, u16 addr)
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval < 0)
-		return STATUS_FAIL;
+	अगर (retval < 0)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, CARD_GPIO_DIR, 0x01, 0x01);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_GPIO_सूची, 0x01, 0x01);
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_read_eeprom(struct rtsx_chip *chip, u16 addr, u8 *val)
-{
-	int retval;
+पूर्णांक spi_पढ़ो_eeprom(काष्ठा rtsx_chip *chip, u16 addr, u8 *val)
+अणु
+	पूर्णांक retval;
 	u8 data;
 
 	retval = spi_init_eeprom(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	rtsx_init_cmd(chip);
 
-	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_GPIO_DIR, 0x01, 0);
+	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_GPIO_सूची, 0x01, 0);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_DATA_SOURCE, 0x01, RING_BUFFER);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_COMMAND, 0xFF, 0x06);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR0, 0xFF, (u8)addr);
@@ -378,39 +379,39 @@ int spi_read_eeprom(struct rtsx_chip *chip, u16 addr, u8 *val)
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval < 0)
-		return STATUS_FAIL;
+	अगर (retval < 0)
+		वापस STATUS_FAIL;
 
-	wait_timeout(5);
-	retval = rtsx_read_register(chip, SPI_DATA, &data);
-	if (retval)
-		return retval;
+	रुको_समयout(5);
+	retval = rtsx_पढ़ो_रेजिस्टर(chip, SPI_DATA, &data);
+	अगर (retval)
+		वापस retval;
 
-	if (val)
+	अगर (val)
 		*val = data;
 
-	retval = rtsx_write_register(chip, CARD_GPIO_DIR, 0x01, 0x01);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_GPIO_सूची, 0x01, 0x01);
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_write_eeprom(struct rtsx_chip *chip, u16 addr, u8 val)
-{
-	int retval;
+पूर्णांक spi_ग_लिखो_eeprom(काष्ठा rtsx_chip *chip, u16 addr, u8 val)
+अणु
+	पूर्णांक retval;
 
 	retval = spi_init_eeprom(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	retval = spi_eeprom_program_enable(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	rtsx_init_cmd(chip);
 
-	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_GPIO_DIR, 0x01, 0);
+	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_GPIO_सूची, 0x01, 0);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_DATA_SOURCE, 0x01, RING_BUFFER);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_COMMAND, 0xFF, 0x05);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR0, 0xFF, val);
@@ -423,70 +424,70 @@ int spi_write_eeprom(struct rtsx_chip *chip, u16 addr, u8 val)
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval < 0)
-		return STATUS_FAIL;
+	अगर (retval < 0)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, CARD_GPIO_DIR, 0x01, 0x01);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_GPIO_सूची, 0x01, 0x01);
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_get_status(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	struct spi_info *spi = &chip->spi;
+पूर्णांक spi_get_status(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा spi_info *spi = &chip->spi;
 
 	dev_dbg(rtsx_dev(chip), "%s: err_code = 0x%x\n", __func__,
 		spi->err_code);
 	rtsx_stor_set_xfer_buf(&spi->err_code,
-			       min_t(int, scsi_bufflen(srb), 1), srb);
+			       min_t(पूर्णांक, scsi_bufflen(srb), 1), srb);
 	scsi_set_resid(srb, scsi_bufflen(srb) - 1);
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_set_parameter(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	struct spi_info *spi = &chip->spi;
+पूर्णांक spi_set_parameter(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा spi_info *spi = &chip->spi;
 
 	spi_set_err_code(chip, SPI_NO_ERR);
 
-	if (chip->asic_code)
-		spi->spi_clock = ((u16)(srb->cmnd[8]) << 8) | srb->cmnd[9];
-	else
-		spi->spi_clock = srb->cmnd[3];
+	अगर (chip->asic_code)
+		spi->spi_घड़ी = ((u16)(srb->cmnd[8]) << 8) | srb->cmnd[9];
+	अन्यथा
+		spi->spi_घड़ी = srb->cmnd[3];
 
-	spi->clk_div = ((u16)(srb->cmnd[4]) << 8) | srb->cmnd[5];
-	spi->write_en = srb->cmnd[6];
+	spi->clk_भाग = ((u16)(srb->cmnd[4]) << 8) | srb->cmnd[5];
+	spi->ग_लिखो_en = srb->cmnd[6];
 
 	dev_dbg(rtsx_dev(chip), "%s: ", __func__);
-	dev_dbg(rtsx_dev(chip), "spi_clock = %d, ", spi->spi_clock);
-	dev_dbg(rtsx_dev(chip), "clk_div = %d, ", spi->clk_div);
-	dev_dbg(rtsx_dev(chip), "write_en = %d\n", spi->write_en);
+	dev_dbg(rtsx_dev(chip), "spi_clock = %d, ", spi->spi_घड़ी);
+	dev_dbg(rtsx_dev(chip), "clk_div = %d, ", spi->clk_भाग);
+	dev_dbg(rtsx_dev(chip), "write_en = %d\n", spi->ग_लिखो_en);
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_read_flash_id(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	int retval;
+पूर्णांक spi_पढ़ो_flash_id(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 	u16 len;
 	u8 *buf;
 
 	spi_set_err_code(chip, SPI_NO_ERR);
 
 	len = ((u16)(srb->cmnd[7]) << 8) | srb->cmnd[8];
-	if (len > 512) {
+	अगर (len > 512) अणु
 		spi_set_err_code(chip, SPI_INVALID_COMMAND);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
 	retval = spi_set_init_para(chip);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
 	rtsx_init_cmd(chip);
 
@@ -502,60 +503,60 @@ int spi_read_flash_id(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_LENGTH1, 0xFF, srb->cmnd[7]);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_LENGTH0, 0xFF, srb->cmnd[8]);
 
-	if (len == 0) {
-		if (srb->cmnd[9]) {
+	अगर (len == 0) अणु
+		अगर (srb->cmnd[9]) अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0,
 				     0xFF, SPI_TRANSFER0_START | SPI_CA_MODE0);
-		} else {
+		पूर्ण अन्यथा अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0,
 				     0xFF, SPI_TRANSFER0_START | SPI_C_MODE0);
-		}
-	} else {
-		if (srb->cmnd[9]) {
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (srb->cmnd[9]) अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0, 0xFF,
 				     SPI_TRANSFER0_START | SPI_CADI_MODE0);
-		} else {
+		पूर्ण अन्यथा अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_TRANSFER0, 0xFF,
 				     SPI_TRANSFER0_START | SPI_CDI_MODE0);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	rtsx_add_cmd(chip, CHECK_REG_CMD, SPI_TRANSFER0, SPI_TRANSFER0_END,
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		rtsx_clear_spi_error(chip);
 		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (len) {
-		buf = kmalloc(len, GFP_KERNEL);
-		if (!buf)
-			return STATUS_ERROR;
+	अगर (len) अणु
+		buf = kदो_स्मृति(len, GFP_KERNEL);
+		अगर (!buf)
+			वापस STATUS_ERROR;
 
-		retval = rtsx_read_ppbuf(chip, buf, len);
-		if (retval != STATUS_SUCCESS) {
+		retval = rtsx_पढ़ो_ppbuf(chip, buf, len);
+		अगर (retval != STATUS_SUCCESS) अणु
 			spi_set_err_code(chip, SPI_READ_ERR);
-			kfree(buf);
-			return STATUS_FAIL;
-		}
+			kमुक्त(buf);
+			वापस STATUS_FAIL;
+		पूर्ण
 
 		rtsx_stor_set_xfer_buf(buf, scsi_bufflen(srb), srb);
 		scsi_set_resid(srb, 0);
 
-		kfree(buf);
-	}
+		kमुक्त(buf);
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_read_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	int retval;
-	unsigned int index = 0, offset = 0;
-	u8 ins, slow_read;
+पूर्णांक spi_पढ़ो_flash(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
+	अचिन्हित पूर्णांक index = 0, offset = 0;
+	u8 ins, slow_पढ़ो;
 	u32 addr;
 	u16 len;
 	u8 *buf;
@@ -566,22 +567,22 @@ int spi_read_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	addr = ((u32)(srb->cmnd[4]) << 16) | ((u32)(srb->cmnd[5])
 					<< 8) | srb->cmnd[6];
 	len = ((u16)(srb->cmnd[7]) << 8) | srb->cmnd[8];
-	slow_read = srb->cmnd[9];
+	slow_पढ़ो = srb->cmnd[9];
 
 	retval = spi_set_init_para(chip);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	buf = kmalloc(SF_PAGE_LEN, GFP_KERNEL);
-	if (!buf)
-		return STATUS_ERROR;
+	buf = kदो_स्मृति(SF_PAGE_LEN, GFP_KERNEL);
+	अगर (!buf)
+		वापस STATUS_ERROR;
 
-	while (len) {
+	जबतक (len) अणु
 		u16 pagelen = SF_PAGE_LEN - (u8)addr;
 
-		if (pagelen > len)
+		अगर (pagelen > len)
 			pagelen = len;
 
 		rtsx_init_cmd(chip);
@@ -590,7 +591,7 @@ int spi_read_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_COMMAND, 0xFF, ins);
 
-		if (slow_read) {
+		अगर (slow_पढ़ो) अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR0, 0xFF,
 				     (u8)addr);
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR1, 0xFF,
@@ -599,7 +600,7 @@ int spi_read_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 				     (u8)(addr >> 16));
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_CA_NUMBER, 0xFF,
 				     SPI_COMMAND_BIT_8 | SPI_ADDRESS_BIT_24);
-		} else {
+		पूर्ण अन्यथा अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR1, 0xFF,
 				     (u8)addr);
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_ADDR2, 0xFF,
@@ -608,7 +609,7 @@ int spi_read_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 				     (u8)(addr >> 16));
 			rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_CA_NUMBER, 0xFF,
 				     SPI_COMMAND_BIT_8 | SPI_ADDRESS_BIT_32);
-		}
+		पूर्ण
 
 		rtsx_add_cmd(chip, WRITE_REG_CMD, SPI_LENGTH1, 0xFF,
 			     (u8)(pagelen >> 8));
@@ -620,38 +621,38 @@ int spi_read_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		rtsx_add_cmd(chip, CHECK_REG_CMD, SPI_TRANSFER0,
 			     SPI_TRANSFER0_END, SPI_TRANSFER0_END);
 
-		rtsx_send_cmd_no_wait(chip);
+		rtsx_send_cmd_no_रुको(chip);
 
 		retval = rtsx_transfer_data(chip, 0, buf, pagelen, 0,
 					    DMA_FROM_DEVICE, 10000);
-		if (retval < 0) {
-			kfree(buf);
+		अगर (retval < 0) अणु
+			kमुक्त(buf);
 			rtsx_clear_spi_error(chip);
 			spi_set_err_code(chip, SPI_HW_ERR);
-			return STATUS_FAIL;
-		}
+			वापस STATUS_FAIL;
+		पूर्ण
 
 		rtsx_stor_access_xfer_buf(buf, pagelen, srb, &index, &offset,
 					  TO_XFER_BUF);
 
 		addr += pagelen;
 		len -= pagelen;
-	}
+	पूर्ण
 
 	scsi_set_resid(srb, 0);
-	kfree(buf);
+	kमुक्त(buf);
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_write_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	int retval;
+पूर्णांक spi_ग_लिखो_flash(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 	u8 ins, program_mode;
 	u32 addr;
 	u16 len;
 	u8 *buf;
-	unsigned int index = 0, offset = 0;
+	अचिन्हित पूर्णांक index = 0, offset = 0;
 
 	spi_set_err_code(chip, SPI_NO_ERR);
 
@@ -662,22 +663,22 @@ int spi_write_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	program_mode = srb->cmnd[9];
 
 	retval = spi_set_init_para(chip);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (program_mode == BYTE_PROGRAM) {
-		buf = kmalloc(4, GFP_KERNEL);
-		if (!buf)
-			return STATUS_ERROR;
+	अगर (program_mode == BYTE_PROGRAM) अणु
+		buf = kदो_स्मृति(4, GFP_KERNEL);
+		अगर (!buf)
+			वापस STATUS_ERROR;
 
-		while (len) {
-			retval = sf_enable_write(chip, SPI_WREN);
-			if (retval != STATUS_SUCCESS) {
-				kfree(buf);
-				return STATUS_FAIL;
-			}
+		जबतक (len) अणु
+			retval = sf_enable_ग_लिखो(chip, SPI_WREN);
+			अगर (retval != STATUS_SUCCESS) अणु
+				kमुक्त(buf);
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			rtsx_stor_access_xfer_buf(buf, 1, srb, &index, &offset,
 						  FROM_XFER_BUF);
@@ -691,37 +692,37 @@ int spi_write_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 			sf_program(chip, ins, 1, addr, 1);
 
 			retval = rtsx_send_cmd(chip, 0, 100);
-			if (retval < 0) {
-				kfree(buf);
+			अगर (retval < 0) अणु
+				kमुक्त(buf);
 				rtsx_clear_spi_error(chip);
 				spi_set_err_code(chip, SPI_HW_ERR);
-				return STATUS_FAIL;
-			}
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			retval = sf_polling_status(chip, 100);
-			if (retval != STATUS_SUCCESS) {
-				kfree(buf);
-				return STATUS_FAIL;
-			}
+			अगर (retval != STATUS_SUCCESS) अणु
+				kमुक्त(buf);
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			addr++;
 			len--;
-		}
+		पूर्ण
 
-		kfree(buf);
+		kमुक्त(buf);
 
-	} else if (program_mode == AAI_PROGRAM) {
-		int first_byte = 1;
+	पूर्ण अन्यथा अगर (program_mode == AAI_PROGRAM) अणु
+		पूर्णांक first_byte = 1;
 
-		retval = sf_enable_write(chip, SPI_WREN);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+		retval = sf_enable_ग_लिखो(chip, SPI_WREN);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
-		buf = kmalloc(4, GFP_KERNEL);
-		if (!buf)
-			return STATUS_ERROR;
+		buf = kदो_स्मृति(4, GFP_KERNEL);
+		अगर (!buf)
+			वापस STATUS_ERROR;
 
-		while (len) {
+		जबतक (len) अणु
 			rtsx_stor_access_xfer_buf(buf, 1, srb, &index, &offset,
 						  FROM_XFER_BUF);
 
@@ -731,97 +732,97 @@ int spi_write_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 				     0x01, PINGPONG_BUFFER);
 			rtsx_add_cmd(chip, WRITE_REG_CMD, PPBUF_BASE2, 0xFF,
 				     buf[0]);
-			if (first_byte) {
+			अगर (first_byte) अणु
 				sf_program(chip, ins, 1, addr, 1);
 				first_byte = 0;
-			} else {
+			पूर्ण अन्यथा अणु
 				sf_program(chip, ins, 0, 0, 1);
-			}
+			पूर्ण
 
 			retval = rtsx_send_cmd(chip, 0, 100);
-			if (retval < 0) {
-				kfree(buf);
+			अगर (retval < 0) अणु
+				kमुक्त(buf);
 				rtsx_clear_spi_error(chip);
 				spi_set_err_code(chip, SPI_HW_ERR);
-				return STATUS_FAIL;
-			}
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			retval = sf_polling_status(chip, 100);
-			if (retval != STATUS_SUCCESS) {
-				kfree(buf);
-				return STATUS_FAIL;
-			}
+			अगर (retval != STATUS_SUCCESS) अणु
+				kमुक्त(buf);
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			len--;
-		}
+		पूर्ण
 
-		kfree(buf);
+		kमुक्त(buf);
 
-		retval = sf_disable_write(chip, SPI_WRDI);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+		retval = sf_disable_ग_लिखो(chip, SPI_WRDI);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
 		retval = sf_polling_status(chip, 100);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	} else if (program_mode == PAGE_PROGRAM) {
-		buf = kmalloc(SF_PAGE_LEN, GFP_KERNEL);
-		if (!buf)
-			return STATUS_NOMEM;
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण अन्यथा अगर (program_mode == PAGE_PROGRAM) अणु
+		buf = kदो_स्मृति(SF_PAGE_LEN, GFP_KERNEL);
+		अगर (!buf)
+			वापस STATUS_NOMEM;
 
-		while (len) {
+		जबतक (len) अणु
 			u16 pagelen = SF_PAGE_LEN - (u8)addr;
 
-			if (pagelen > len)
+			अगर (pagelen > len)
 				pagelen = len;
 
-			retval = sf_enable_write(chip, SPI_WREN);
-			if (retval != STATUS_SUCCESS) {
-				kfree(buf);
-				return STATUS_FAIL;
-			}
+			retval = sf_enable_ग_लिखो(chip, SPI_WREN);
+			अगर (retval != STATUS_SUCCESS) अणु
+				kमुक्त(buf);
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			rtsx_init_cmd(chip);
 
 			trans_dma_enable(DMA_TO_DEVICE, chip, 256, DMA_256);
 			sf_program(chip, ins, 1, addr, pagelen);
 
-			rtsx_send_cmd_no_wait(chip);
+			rtsx_send_cmd_no_रुको(chip);
 
 			rtsx_stor_access_xfer_buf(buf, pagelen, srb, &index,
 						  &offset, FROM_XFER_BUF);
 
 			retval = rtsx_transfer_data(chip, 0, buf, pagelen, 0,
 						    DMA_TO_DEVICE, 100);
-			if (retval < 0) {
-				kfree(buf);
+			अगर (retval < 0) अणु
+				kमुक्त(buf);
 				rtsx_clear_spi_error(chip);
 				spi_set_err_code(chip, SPI_HW_ERR);
-				return STATUS_FAIL;
-			}
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			retval = sf_polling_status(chip, 100);
-			if (retval != STATUS_SUCCESS) {
-				kfree(buf);
-				return STATUS_FAIL;
-			}
+			अगर (retval != STATUS_SUCCESS) अणु
+				kमुक्त(buf);
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			addr += pagelen;
 			len -= pagelen;
-		}
+		पूर्ण
 
-		kfree(buf);
-	} else {
+		kमुक्त(buf);
+	पूर्ण अन्यथा अणु
 		spi_set_err_code(chip, SPI_INVALID_COMMAND);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_erase_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	int retval;
+पूर्णांक spi_erase_flash(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 	u8 ins, erase_mode;
 	u32 addr;
 
@@ -833,38 +834,38 @@ int spi_erase_flash(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	erase_mode = srb->cmnd[9];
 
 	retval = spi_set_init_para(chip);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (erase_mode == PAGE_ERASE) {
-		retval = sf_enable_write(chip, SPI_WREN);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+	अगर (erase_mode == PAGE_ERASE) अणु
+		retval = sf_enable_ग_लिखो(chip, SPI_WREN);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
 		retval = sf_erase(chip, ins, 1, addr);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	} else if (erase_mode == CHIP_ERASE) {
-		retval = sf_enable_write(chip, SPI_WREN);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण अन्यथा अगर (erase_mode == CHIP_ERASE) अणु
+		retval = sf_enable_ग_लिखो(chip, SPI_WREN);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
 		retval = sf_erase(chip, ins, 0, 0);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	} else {
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण अन्यथा अणु
 		spi_set_err_code(chip, SPI_INVALID_COMMAND);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int spi_write_flash_status(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	int retval;
+पूर्णांक spi_ग_लिखो_flash_status(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 	u8 ins, status, ewsr;
 
 	ins = srb->cmnd[3];
@@ -872,14 +873,14 @@ int spi_write_flash_status(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	ewsr = srb->cmnd[5];
 
 	retval = spi_set_init_para(chip);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	retval = sf_enable_write(chip, ewsr);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sf_enable_ग_लिखो(chip, ewsr);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	rtsx_init_cmd(chip);
 
@@ -898,11 +899,11 @@ int spi_write_flash_status(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		     SPI_TRANSFER0_END);
 
 	retval = rtsx_send_cmd(chip, 0, 100);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		rtsx_clear_spi_error(chip);
 		spi_set_err_code(chip, SPI_HW_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण

@@ -1,37 +1,38 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Resolve DNS hostnames into valid ip addresses
+ * Resolve DNS hostnames पूर्णांकo valid ip addresses
  */
-#ifndef __LINUX_FS_NFS_DNS_RESOLVE_H
-#define __LINUX_FS_NFS_DNS_RESOLVE_H
+#अगर_अघोषित __LINUX_FS_NFS_DNS_RESOLVE_H
+#घोषणा __LINUX_FS_NFS_DNS_RESOLVE_H
 
-#define NFS_DNS_HOSTNAME_MAXLEN	(128)
+#घोषणा NFS_DNS_HOSTNAME_MAXLEN	(128)
 
 
-#ifdef CONFIG_NFS_USE_KERNEL_DNS
-static inline int nfs_dns_resolver_init(void)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_NFS_USE_KERNEL_DNS
+अटल अंतरभूत पूर्णांक nfs_dns_resolver_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void nfs_dns_resolver_destroy(void)
-{}
+अटल अंतरभूत व्योम nfs_dns_resolver_destroy(व्योम)
+अणुपूर्ण
 
-static inline int nfs_dns_resolver_cache_init(struct net *net)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक nfs_dns_resolver_cache_init(काष्ठा net *net)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void nfs_dns_resolver_cache_destroy(struct net *net)
-{}
-#else
-extern int nfs_dns_resolver_init(void);
-extern void nfs_dns_resolver_destroy(void);
-extern int nfs_dns_resolver_cache_init(struct net *net);
-extern void nfs_dns_resolver_cache_destroy(struct net *net);
-#endif
+अटल अंतरभूत व्योम nfs_dns_resolver_cache_destroy(काष्ठा net *net)
+अणुपूर्ण
+#अन्यथा
+बाह्य पूर्णांक nfs_dns_resolver_init(व्योम);
+बाह्य व्योम nfs_dns_resolver_destroy(व्योम);
+बाह्य पूर्णांक nfs_dns_resolver_cache_init(काष्ठा net *net);
+बाह्य व्योम nfs_dns_resolver_cache_destroy(काष्ठा net *net);
+#पूर्ण_अगर
 
-extern ssize_t nfs_dns_resolve_name(struct net *net, char *name,
-		size_t namelen,	struct sockaddr *sa, size_t salen);
+बाह्य sमाप_प्रकार nfs_dns_resolve_name(काष्ठा net *net, अक्षर *name,
+		माप_प्रकार namelen,	काष्ठा sockaddr *sa, माप_प्रकार salen);
 
-#endif
+#पूर्ण_अगर

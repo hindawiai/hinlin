@@ -1,15 +1,16 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2013 Federico Simoncelli
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions, and the following disclaimer,
- *    without modification.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    without modअगरication.
+ * 2. The name of the author may not be used to enकरोrse or promote products
+ *    derived from this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL").
@@ -18,7 +19,7 @@
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -30,26 +31,26 @@
  * Fushicai USBTV007 Audio-Video Grabber Driver
  *
  * Product web site:
- * http://www.fushicai.com/products_detail/&productId=d05449ee-b690-42f9-a661-aa7353894bed.html
+ * http://www.fushicai.com/products_detail/&productId=d05449ee-b690-42f9-a661-aa7353894bed.hपंचांगl
  *
- * No physical hardware was harmed running Windows during the
+ * No physical hardware was harmed running Winकरोws during the
  * reverse-engineering activity
  */
 
-#include <sound/core.h>
-#include <sound/initval.h>
-#include <sound/ac97_codec.h>
-#include <sound/pcm_params.h>
+#समावेश <sound/core.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/ac97_codec.h>
+#समावेश <sound/pcm_params.h>
 
-#include "usbtv.h"
+#समावेश "usbtv.h"
 
-static const struct snd_pcm_hardware snd_usbtv_digital_hw = {
+अटल स्थिर काष्ठा snd_pcm_hardware snd_usbtv_digital_hw = अणु
 	.info = SNDRV_PCM_INFO_BATCH |
 		SNDRV_PCM_INFO_MMAP |
 		SNDRV_PCM_INFO_INTERLEAVED |
 		SNDRV_PCM_INFO_BLOCK_TRANSFER |
 		SNDRV_PCM_INFO_MMAP_VALID,
-	.formats = SNDRV_PCM_FMTBIT_S16_LE,
+	.क्रमmats = SNDRV_PCM_FMTBIT_S16_LE,
 	.rates = SNDRV_PCM_RATE_48000,
 	.rate_min = 48000,
 	.rate_max = 48000,
@@ -60,101 +61,101 @@ static const struct snd_pcm_hardware snd_usbtv_digital_hw = {
 	.periods_min = 2,
 	.periods_max = 98,
 	.buffer_bytes_max = 62720 * 8, /* value in usbaudio.c */
-};
+पूर्ण;
 
-static int snd_usbtv_pcm_open(struct snd_pcm_substream *substream)
-{
-	struct usbtv *chip = snd_pcm_substream_chip(substream);
-	struct snd_pcm_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_usbtv_pcm_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा usbtv *chip = snd_pcm_substream_chip(substream);
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
 
 	chip->snd_substream = substream;
-	runtime->hw = snd_usbtv_digital_hw;
+	runसमय->hw = snd_usbtv_digital_hw;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_usbtv_pcm_close(struct snd_pcm_substream *substream)
-{
-	struct usbtv *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_usbtv_pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा usbtv *chip = snd_pcm_substream_chip(substream);
 
-	if (atomic_read(&chip->snd_stream)) {
+	अगर (atomic_पढ़ो(&chip->snd_stream)) अणु
 		atomic_set(&chip->snd_stream, 0);
 		schedule_work(&chip->snd_trigger);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_usbtv_prepare(struct snd_pcm_substream *substream)
-{
-	struct usbtv *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_usbtv_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा usbtv *chip = snd_pcm_substream_chip(substream);
 
 	chip->snd_buffer_pos = 0;
 	chip->snd_period_pos = 0;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void usbtv_audio_urb_received(struct urb *urb)
-{
-	struct usbtv *chip = urb->context;
-	struct snd_pcm_substream *substream = chip->snd_substream;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	size_t i, frame_bytes, chunk_length, buffer_pos, period_pos;
-	int period_elapsed;
-	unsigned long flags;
-	void *urb_current;
+अटल व्योम usbtv_audio_urb_received(काष्ठा urb *urb)
+अणु
+	काष्ठा usbtv *chip = urb->context;
+	काष्ठा snd_pcm_substream *substream = chip->snd_substream;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	माप_प्रकार i, frame_bytes, chunk_length, buffer_pos, period_pos;
+	पूर्णांक period_elapsed;
+	अचिन्हित दीर्घ flags;
+	व्योम *urb_current;
 
-	switch (urb->status) {
-	case 0:
-	case -ETIMEDOUT:
-		break;
-	case -ENOENT:
-	case -EPROTO:
-	case -ECONNRESET:
-	case -ESHUTDOWN:
-		return;
-	default:
+	चयन (urb->status) अणु
+	हाल 0:
+	हाल -ETIMEDOUT:
+		अवरोध;
+	हाल -ENOENT:
+	हाल -EPROTO:
+	हाल -ECONNRESET:
+	हाल -ESHUTDOWN:
+		वापस;
+	शेष:
 		dev_warn(chip->dev, "unknown audio urb status %i\n",
 			urb->status);
-	}
+	पूर्ण
 
-	if (!atomic_read(&chip->snd_stream))
-		return;
+	अगर (!atomic_पढ़ो(&chip->snd_stream))
+		वापस;
 
-	frame_bytes = runtime->frame_bits >> 3;
+	frame_bytes = runसमय->frame_bits >> 3;
 	chunk_length = USBTV_CHUNK / frame_bytes;
 
 	buffer_pos = chip->snd_buffer_pos;
 	period_pos = chip->snd_period_pos;
 	period_elapsed = 0;
 
-	for (i = 0; i < urb->actual_length; i += USBTV_CHUNK_SIZE) {
+	क्रम (i = 0; i < urb->actual_length; i += USBTV_CHUNK_SIZE) अणु
 		urb_current = urb->transfer_buffer + i + USBTV_AUDIO_HDRSIZE;
 
-		if (buffer_pos + chunk_length >= runtime->buffer_size) {
-			size_t cnt = (runtime->buffer_size - buffer_pos) *
+		अगर (buffer_pos + chunk_length >= runसमय->buffer_size) अणु
+			माप_प्रकार cnt = (runसमय->buffer_size - buffer_pos) *
 				frame_bytes;
-			memcpy(runtime->dma_area + buffer_pos * frame_bytes,
+			स_नकल(runसमय->dma_area + buffer_pos * frame_bytes,
 				urb_current, cnt);
-			memcpy(runtime->dma_area, urb_current + cnt,
+			स_नकल(runसमय->dma_area, urb_current + cnt,
 				chunk_length * frame_bytes - cnt);
-		} else {
-			memcpy(runtime->dma_area + buffer_pos * frame_bytes,
+		पूर्ण अन्यथा अणु
+			स_नकल(runसमय->dma_area + buffer_pos * frame_bytes,
 				urb_current, chunk_length * frame_bytes);
-		}
+		पूर्ण
 
 		buffer_pos += chunk_length;
 		period_pos += chunk_length;
 
-		if (buffer_pos >= runtime->buffer_size)
-			buffer_pos -= runtime->buffer_size;
+		अगर (buffer_pos >= runसमय->buffer_size)
+			buffer_pos -= runसमय->buffer_size;
 
-		if (period_pos >= runtime->period_size) {
-			period_pos -= runtime->period_size;
+		अगर (period_pos >= runसमय->period_size) अणु
+			period_pos -= runसमय->period_size;
 			period_elapsed = 1;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	snd_pcm_stream_lock_irqsave(substream, flags);
 
@@ -163,50 +164,50 @@ static void usbtv_audio_urb_received(struct urb *urb)
 
 	snd_pcm_stream_unlock_irqrestore(substream, flags);
 
-	if (period_elapsed)
+	अगर (period_elapsed)
 		snd_pcm_period_elapsed(substream);
 
 	usb_submit_urb(urb, GFP_ATOMIC);
-}
+पूर्ण
 
-static int usbtv_audio_start(struct usbtv *chip)
-{
-	unsigned int pipe;
-	static const u16 setup[][2] = {
+अटल पूर्णांक usbtv_audio_start(काष्ठा usbtv *chip)
+अणु
+	अचिन्हित पूर्णांक pipe;
+	अटल स्थिर u16 setup[][2] = अणु
 		/* These seem to enable the device. */
-		{ USBTV_BASE + 0x0008, 0x0001 },
-		{ USBTV_BASE + 0x01d0, 0x00ff },
-		{ USBTV_BASE + 0x01d9, 0x0002 },
+		अणु USBTV_BASE + 0x0008, 0x0001 पूर्ण,
+		अणु USBTV_BASE + 0x01d0, 0x00ff पूर्ण,
+		अणु USBTV_BASE + 0x01d9, 0x0002 पूर्ण,
 
-		{ USBTV_BASE + 0x01da, 0x0013 },
-		{ USBTV_BASE + 0x01db, 0x0012 },
-		{ USBTV_BASE + 0x01e9, 0x0002 },
-		{ USBTV_BASE + 0x01ec, 0x006c },
-		{ USBTV_BASE + 0x0294, 0x0020 },
-		{ USBTV_BASE + 0x0255, 0x00cf },
-		{ USBTV_BASE + 0x0256, 0x0020 },
-		{ USBTV_BASE + 0x01eb, 0x0030 },
-		{ USBTV_BASE + 0x027d, 0x00a6 },
-		{ USBTV_BASE + 0x0280, 0x0011 },
-		{ USBTV_BASE + 0x0281, 0x0040 },
-		{ USBTV_BASE + 0x0282, 0x0011 },
-		{ USBTV_BASE + 0x0283, 0x0040 },
-		{ 0xf891, 0x0010 },
+		अणु USBTV_BASE + 0x01da, 0x0013 पूर्ण,
+		अणु USBTV_BASE + 0x01db, 0x0012 पूर्ण,
+		अणु USBTV_BASE + 0x01e9, 0x0002 पूर्ण,
+		अणु USBTV_BASE + 0x01ec, 0x006c पूर्ण,
+		अणु USBTV_BASE + 0x0294, 0x0020 पूर्ण,
+		अणु USBTV_BASE + 0x0255, 0x00cf पूर्ण,
+		अणु USBTV_BASE + 0x0256, 0x0020 पूर्ण,
+		अणु USBTV_BASE + 0x01eb, 0x0030 पूर्ण,
+		अणु USBTV_BASE + 0x027d, 0x00a6 पूर्ण,
+		अणु USBTV_BASE + 0x0280, 0x0011 पूर्ण,
+		अणु USBTV_BASE + 0x0281, 0x0040 पूर्ण,
+		अणु USBTV_BASE + 0x0282, 0x0011 पूर्ण,
+		अणु USBTV_BASE + 0x0283, 0x0040 पूर्ण,
+		अणु 0xf891, 0x0010 पूर्ण,
 
 		/* this sets the input from composite */
-		{ USBTV_BASE + 0x0284, 0x00aa },
-	};
+		अणु USBTV_BASE + 0x0284, 0x00aa पूर्ण,
+	पूर्ण;
 
 	chip->snd_bulk_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (chip->snd_bulk_urb == NULL)
-		goto err_alloc_urb;
+	अगर (chip->snd_bulk_urb == शून्य)
+		जाओ err_alloc_urb;
 
 	pipe = usb_rcvbulkpipe(chip->udev, USBTV_AUDIO_ENDP);
 
 	chip->snd_bulk_urb->transfer_buffer = kzalloc(
 		USBTV_AUDIO_URBSIZE, GFP_KERNEL);
-	if (chip->snd_bulk_urb->transfer_buffer == NULL)
-		goto err_transfer_buffer;
+	अगर (chip->snd_bulk_urb->transfer_buffer == शून्य)
+		जाओ err_transfer_buffer;
 
 	usb_fill_bulk_urb(chip->snd_bulk_urb, chip->udev, pipe,
 		chip->snd_bulk_urb->transfer_buffer, USBTV_AUDIO_URBSIZE,
@@ -218,122 +219,122 @@ static int usbtv_audio_start(struct usbtv *chip)
 	usb_clear_halt(chip->udev, pipe);
 	usb_submit_urb(chip->snd_bulk_urb, GFP_ATOMIC);
 
-	return 0;
+	वापस 0;
 
 err_transfer_buffer:
-	usb_free_urb(chip->snd_bulk_urb);
-	chip->snd_bulk_urb = NULL;
+	usb_मुक्त_urb(chip->snd_bulk_urb);
+	chip->snd_bulk_urb = शून्य;
 
 err_alloc_urb:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int usbtv_audio_stop(struct usbtv *chip)
-{
-	static const u16 setup[][2] = {
-	/* The original windows driver sometimes sends also:
-	 *   { USBTV_BASE + 0x00a2, 0x0013 }
+अटल पूर्णांक usbtv_audio_stop(काष्ठा usbtv *chip)
+अणु
+	अटल स्थिर u16 setup[][2] = अणु
+	/* The original winकरोws driver someबार sends also:
+	 *   अणु USBTV_BASE + 0x00a2, 0x0013 पूर्ण
 	 * but it seems useless and its real effects are untested at
 	 * the moment.
 	 */
-		{ USBTV_BASE + 0x027d, 0x0000 },
-		{ USBTV_BASE + 0x0280, 0x0010 },
-		{ USBTV_BASE + 0x0282, 0x0010 },
-	};
+		अणु USBTV_BASE + 0x027d, 0x0000 पूर्ण,
+		अणु USBTV_BASE + 0x0280, 0x0010 पूर्ण,
+		अणु USBTV_BASE + 0x0282, 0x0010 पूर्ण,
+	पूर्ण;
 
-	if (chip->snd_bulk_urb) {
-		usb_kill_urb(chip->snd_bulk_urb);
-		kfree(chip->snd_bulk_urb->transfer_buffer);
-		usb_free_urb(chip->snd_bulk_urb);
-		chip->snd_bulk_urb = NULL;
-	}
+	अगर (chip->snd_bulk_urb) अणु
+		usb_समाप्त_urb(chip->snd_bulk_urb);
+		kमुक्त(chip->snd_bulk_urb->transfer_buffer);
+		usb_मुक्त_urb(chip->snd_bulk_urb);
+		chip->snd_bulk_urb = शून्य;
+	पूर्ण
 
 	usbtv_set_regs(chip, setup, ARRAY_SIZE(setup));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-void usbtv_audio_suspend(struct usbtv *usbtv)
-{
-	if (atomic_read(&usbtv->snd_stream) && usbtv->snd_bulk_urb)
-		usb_kill_urb(usbtv->snd_bulk_urb);
-}
+व्योम usbtv_audio_suspend(काष्ठा usbtv *usbtv)
+अणु
+	अगर (atomic_पढ़ो(&usbtv->snd_stream) && usbtv->snd_bulk_urb)
+		usb_समाप्त_urb(usbtv->snd_bulk_urb);
+पूर्ण
 
-void usbtv_audio_resume(struct usbtv *usbtv)
-{
-	if (atomic_read(&usbtv->snd_stream) && usbtv->snd_bulk_urb)
+व्योम usbtv_audio_resume(काष्ठा usbtv *usbtv)
+अणु
+	अगर (atomic_पढ़ो(&usbtv->snd_stream) && usbtv->snd_bulk_urb)
 		usb_submit_urb(usbtv->snd_bulk_urb, GFP_ATOMIC);
-}
+पूर्ण
 
-static void snd_usbtv_trigger(struct work_struct *work)
-{
-	struct usbtv *chip = container_of(work, struct usbtv, snd_trigger);
+अटल व्योम snd_usbtv_trigger(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा usbtv *chip = container_of(work, काष्ठा usbtv, snd_trigger);
 
-	if (!chip->snd)
-		return;
+	अगर (!chip->snd)
+		वापस;
 
-	if (atomic_read(&chip->snd_stream))
+	अगर (atomic_पढ़ो(&chip->snd_stream))
 		usbtv_audio_start(chip);
-	else
+	अन्यथा
 		usbtv_audio_stop(chip);
-}
+पूर्ण
 
-static int snd_usbtv_card_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct usbtv *chip = snd_pcm_substream_chip(substream);
+अटल पूर्णांक snd_usbtv_card_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा usbtv *chip = snd_pcm_substream_chip(substream);
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		atomic_set(&chip->snd_stream, 1);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		atomic_set(&chip->snd_stream, 0);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	schedule_work(&chip->snd_trigger);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static snd_pcm_uframes_t snd_usbtv_pointer(struct snd_pcm_substream *substream)
-{
-	struct usbtv *chip = snd_pcm_substream_chip(substream);
+अटल snd_pcm_uframes_t snd_usbtv_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा usbtv *chip = snd_pcm_substream_chip(substream);
 
-	return chip->snd_buffer_pos;
-}
+	वापस chip->snd_buffer_pos;
+पूर्ण
 
-static const struct snd_pcm_ops snd_usbtv_pcm_ops = {
-	.open = snd_usbtv_pcm_open,
-	.close = snd_usbtv_pcm_close,
+अटल स्थिर काष्ठा snd_pcm_ops snd_usbtv_pcm_ops = अणु
+	.खोलो = snd_usbtv_pcm_खोलो,
+	.बंद = snd_usbtv_pcm_बंद,
 	.prepare = snd_usbtv_prepare,
 	.trigger = snd_usbtv_card_trigger,
-	.pointer = snd_usbtv_pointer,
-};
+	.poपूर्णांकer = snd_usbtv_poपूर्णांकer,
+पूर्ण;
 
-int usbtv_audio_init(struct usbtv *usbtv)
-{
-	int rv;
-	struct snd_card *card;
-	struct snd_pcm *pcm;
+पूर्णांक usbtv_audio_init(काष्ठा usbtv *usbtv)
+अणु
+	पूर्णांक rv;
+	काष्ठा snd_card *card;
+	काष्ठा snd_pcm *pcm;
 
 	INIT_WORK(&usbtv->snd_trigger, snd_usbtv_trigger);
 	atomic_set(&usbtv->snd_stream, 0);
 
 	rv = snd_card_new(&usbtv->udev->dev, SNDRV_DEFAULT_IDX1, "usbtv",
 		THIS_MODULE, 0, &card);
-	if (rv < 0)
-		return rv;
+	अगर (rv < 0)
+		वापस rv;
 
-	strscpy(card->driver, usbtv->dev->driver->name, sizeof(card->driver));
-	strscpy(card->shortname, "usbtv", sizeof(card->shortname));
-	snprintf(card->longname, sizeof(card->longname),
+	strscpy(card->driver, usbtv->dev->driver->name, माप(card->driver));
+	strscpy(card->लघुname, "usbtv", माप(card->लघुname));
+	snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
 		"USBTV Audio at bus %d device %d", usbtv->udev->bus->busnum,
 		usbtv->udev->devnum);
 
@@ -342,36 +343,36 @@ int usbtv_audio_init(struct usbtv *usbtv)
 	usbtv->snd = card;
 
 	rv = snd_pcm_new(card, "USBTV Audio", 0, 0, 1, &pcm);
-	if (rv < 0)
-		goto err;
+	अगर (rv < 0)
+		जाओ err;
 
-	strscpy(pcm->name, "USBTV Audio Input", sizeof(pcm->name));
+	strscpy(pcm->name, "USBTV Audio Input", माप(pcm->name));
 	pcm->info_flags = 0;
-	pcm->private_data = usbtv;
+	pcm->निजी_data = usbtv;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_usbtv_pcm_ops);
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_CONTINUOUS,
-		NULL, USBTV_AUDIO_BUFFER, USBTV_AUDIO_BUFFER);
+		शून्य, USBTV_AUDIO_BUFFER, USBTV_AUDIO_BUFFER);
 
-	rv = snd_card_register(card);
-	if (rv)
-		goto err;
+	rv = snd_card_रेजिस्टर(card);
+	अगर (rv)
+		जाओ err;
 
-	return 0;
+	वापस 0;
 
 err:
-	usbtv->snd = NULL;
-	snd_card_free(card);
+	usbtv->snd = शून्य;
+	snd_card_मुक्त(card);
 
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-void usbtv_audio_free(struct usbtv *usbtv)
-{
+व्योम usbtv_audio_मुक्त(काष्ठा usbtv *usbtv)
+अणु
 	cancel_work_sync(&usbtv->snd_trigger);
 
-	if (usbtv->snd && usbtv->udev) {
-		snd_card_free_when_closed(usbtv->snd);
-		usbtv->snd = NULL;
-	}
-}
+	अगर (usbtv->snd && usbtv->udev) अणु
+		snd_card_मुक्त_when_बंदd(usbtv->snd);
+		usbtv->snd = शून्य;
+	पूर्ण
+पूर्ण

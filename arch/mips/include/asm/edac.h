@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ASM_EDAC_H
-#define ASM_EDAC_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ASM_EDAC_H
+#घोषणा ASM_EDAC_H
 
-#include <asm/compiler.h>
+#समावेश <यंत्र/compiler.h>
 
-/* ECC atomic, DMA, SMP and interrupt safe scrub function */
+/* ECC atomic, DMA, SMP and पूर्णांकerrupt safe scrub function */
 
-static inline void edac_atomic_scrub(void *va, u32 size)
-{
-	unsigned long *virt_addr = va;
-	unsigned long temp;
+अटल अंतरभूत व्योम edac_atomic_scrub(व्योम *va, u32 size)
+अणु
+	अचिन्हित दीर्घ *virt_addr = va;
+	अचिन्हित दीर्घ temp;
 	u32 i;
 
-	for (i = 0; i < size / sizeof(unsigned long); i++) {
+	क्रम (i = 0; i < size / माप(अचिन्हित दीर्घ); i++) अणु
 		/*
-		 * Very carefully read and write to memory atomically
-		 * so we are interrupt, DMA and SMP safe.
+		 * Very carefully पढ़ो and ग_लिखो to memory atomically
+		 * so we are पूर्णांकerrupt, DMA and SMP safe.
 		 *
-		 * Intel: asm("lock; addl $0, %0"::"m"(*virt_addr));
+		 * Intel: यंत्र("lock; addl $0, %0"::"m"(*virt_addr));
 		 */
 
-		__asm__ __volatile__ (
+		__यंत्र__ __अस्थिर__ (
 		"	.set	push					\n"
 		"	.set	mips2					\n"
 		"1:	ll	%0, %1		# edac_atomic_scrub	\n"
@@ -32,7 +33,7 @@ static inline void edac_atomic_scrub(void *va, u32 size)
 		: GCC_OFF_SMALL_ASM() (*virt_addr));
 
 		virt_addr++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर

@@ -1,88 +1,89 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
 * linux/arch/arm/mach-omap1/board-sx1.c
 *
-* Modified from board-generic.c
+* Modअगरied from board-generic.c
 *
-* Support for the Siemens SX1 mobile phone.
+* Support क्रम the Siemens SX1 mobile phone.
 *
 * Original version : Vladimir Ananiev (Vovan888-at-gmail com)
 *
-* Maintainters : Vladimir Ananiev (aka Vovan888), Sergge
+* Maपूर्णांकaपूर्णांकers : Vladimir Ananiev (aka Vovan888), Sergge
 *		oslik.ru
 */
-#include <linux/gpio.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/input.h>
-#include <linux/platform_device.h>
-#include <linux/notifier.h>
-#include <linux/mtd/mtd.h>
-#include <linux/mtd/partitions.h>
-#include <linux/mtd/physmap.h>
-#include <linux/types.h>
-#include <linux/i2c.h>
-#include <linux/errno.h>
-#include <linux/export.h>
-#include <linux/omapfb.h>
-#include <linux/platform_data/keypad-omap.h>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/input.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/mtd/mtd.h>
+#समावेश <linux/mtd/partitions.h>
+#समावेश <linux/mtd/physmap.h>
+#समावेश <linux/types.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/export.h>
+#समावेश <linux/omapfb.h>
+#समावेश <linux/platक्रमm_data/keypad-omap.h>
 
-#include <asm/mach-types.h>
-#include <asm/mach/arch.h>
-#include <asm/mach/map.h>
+#समावेश <यंत्र/mach-types.h>
+#समावेश <यंत्र/mach/arch.h>
+#समावेश <यंत्र/mach/map.h>
 
-#include "flash.h"
-#include <mach/mux.h>
-#include <linux/omap-dma.h>
-#include <mach/tc.h>
-#include "board-sx1.h"
+#समावेश "flash.h"
+#समावेश <mach/mux.h>
+#समावेश <linux/omap-dma.h>
+#समावेश <mach/tc.h>
+#समावेश "board-sx1.h"
 
-#include <mach/hardware.h>
-#include <mach/usb.h>
+#समावेश <mach/hardware.h>
+#समावेश <mach/usb.h>
 
-#include "common.h"
+#समावेश "common.h"
 
 /* Write to I2C device */
-int sx1_i2c_write_byte(u8 devaddr, u8 regoffset, u8 value)
-{
-	struct i2c_adapter *adap;
-	int err;
-	struct i2c_msg msg[1];
-	unsigned char data[2];
+पूर्णांक sx1_i2c_ग_लिखो_byte(u8 devaddr, u8 regoffset, u8 value)
+अणु
+	काष्ठा i2c_adapter *adap;
+	पूर्णांक err;
+	काष्ठा i2c_msg msg[1];
+	अचिन्हित अक्षर data[2];
 
 	adap = i2c_get_adapter(0);
-	if (!adap)
-		return -ENODEV;
+	अगर (!adap)
+		वापस -ENODEV;
 	msg->addr = devaddr;	/* I2C address of chip */
 	msg->flags = 0;
 	msg->len = 2;
 	msg->buf = data;
-	data[0] = regoffset;	/* register num */
-	data[1] = value;		/* register data */
+	data[0] = regoffset;	/* रेजिस्टर num */
+	data[1] = value;		/* रेजिस्टर data */
 	err = i2c_transfer(adap, msg, 1);
 	i2c_put_adapter(adap);
-	if (err >= 0)
-		return 0;
-	return err;
-}
+	अगर (err >= 0)
+		वापस 0;
+	वापस err;
+पूर्ण
 
 /* Read from I2C device */
-int sx1_i2c_read_byte(u8 devaddr, u8 regoffset, u8 *value)
-{
-	struct i2c_adapter *adap;
-	int err;
-	struct i2c_msg msg[1];
-	unsigned char data[2];
+पूर्णांक sx1_i2c_पढ़ो_byte(u8 devaddr, u8 regoffset, u8 *value)
+अणु
+	काष्ठा i2c_adapter *adap;
+	पूर्णांक err;
+	काष्ठा i2c_msg msg[1];
+	अचिन्हित अक्षर data[2];
 
 	adap = i2c_get_adapter(0);
-	if (!adap)
-		return -ENODEV;
+	अगर (!adap)
+		वापस -ENODEV;
 
 	msg->addr = devaddr;	/* I2C address of chip */
 	msg->flags = 0;
 	msg->len = 1;
 	msg->buf = data;
-	data[0] = regoffset;	/* register num */
+	data[0] = regoffset;	/* रेजिस्टर num */
 	err = i2c_transfer(adap, msg, 1);
 
 	msg->addr = devaddr;	/* I2C address */
@@ -93,76 +94,76 @@ int sx1_i2c_read_byte(u8 devaddr, u8 regoffset, u8 *value)
 	*value = data[0];
 	i2c_put_adapter(adap);
 
-	if (err >= 0)
-		return 0;
-	return err;
-}
-/* set keyboard backlight intensity */
-int sx1_setkeylight(u8 keylight)
-{
-	if (keylight > SOFIA_MAX_LIGHT_VAL)
+	अगर (err >= 0)
+		वापस 0;
+	वापस err;
+पूर्ण
+/* set keyboard backlight पूर्णांकensity */
+पूर्णांक sx1_setkeylight(u8 keylight)
+अणु
+	अगर (keylight > SOFIA_MAX_LIGHT_VAL)
 		keylight = SOFIA_MAX_LIGHT_VAL;
-	return sx1_i2c_write_byte(SOFIA_I2C_ADDR, SOFIA_KEYLIGHT_REG, keylight);
-}
-/* get current keylight intensity */
-int sx1_getkeylight(u8 * keylight)
-{
-	return sx1_i2c_read_byte(SOFIA_I2C_ADDR, SOFIA_KEYLIGHT_REG, keylight);
-}
-/* set LCD backlight intensity */
-int sx1_setbacklight(u8 backlight)
-{
-	if (backlight > SOFIA_MAX_LIGHT_VAL)
+	वापस sx1_i2c_ग_लिखो_byte(SOFIA_I2C_ADDR, SOFIA_KEYLIGHT_REG, keylight);
+पूर्ण
+/* get current keylight पूर्णांकensity */
+पूर्णांक sx1_getkeylight(u8 * keylight)
+अणु
+	वापस sx1_i2c_पढ़ो_byte(SOFIA_I2C_ADDR, SOFIA_KEYLIGHT_REG, keylight);
+पूर्ण
+/* set LCD backlight पूर्णांकensity */
+पूर्णांक sx1_setbacklight(u8 backlight)
+अणु
+	अगर (backlight > SOFIA_MAX_LIGHT_VAL)
 		backlight = SOFIA_MAX_LIGHT_VAL;
-	return sx1_i2c_write_byte(SOFIA_I2C_ADDR, SOFIA_BACKLIGHT_REG,
+	वापस sx1_i2c_ग_लिखो_byte(SOFIA_I2C_ADDR, SOFIA_BACKLIGHT_REG,
 				  backlight);
-}
-/* get current LCD backlight intensity */
-int sx1_getbacklight (u8 * backlight)
-{
-	return sx1_i2c_read_byte(SOFIA_I2C_ADDR, SOFIA_BACKLIGHT_REG,
+पूर्ण
+/* get current LCD backlight पूर्णांकensity */
+पूर्णांक sx1_getbacklight (u8 * backlight)
+अणु
+	वापस sx1_i2c_पढ़ो_byte(SOFIA_I2C_ADDR, SOFIA_BACKLIGHT_REG,
 				 backlight);
-}
-/* set LCD backlight power on/off */
-int sx1_setmmipower(u8 onoff)
-{
-	int err;
+पूर्ण
+/* set LCD backlight घातer on/off */
+पूर्णांक sx1_seपंचांगmiघातer(u8 onoff)
+अणु
+	पूर्णांक err;
 	u8 dat = 0;
-	err = sx1_i2c_read_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, &dat);
-	if (err < 0)
-		return err;
-	if (onoff)
+	err = sx1_i2c_पढ़ो_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, &dat);
+	अगर (err < 0)
+		वापस err;
+	अगर (onoff)
 		dat |= SOFIA_MMILIGHT_POWER;
-	else
+	अन्यथा
 		dat &= ~SOFIA_MMILIGHT_POWER;
-	return sx1_i2c_write_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, dat);
-}
+	वापस sx1_i2c_ग_लिखो_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, dat);
+पूर्ण
 
-/* set USB power on/off */
-int sx1_setusbpower(u8 onoff)
-{
-	int err;
+/* set USB घातer on/off */
+पूर्णांक sx1_setusbघातer(u8 onoff)
+अणु
+	पूर्णांक err;
 	u8 dat = 0;
-	err = sx1_i2c_read_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, &dat);
-	if (err < 0)
-		return err;
-	if (onoff)
+	err = sx1_i2c_पढ़ो_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, &dat);
+	अगर (err < 0)
+		वापस err;
+	अगर (onoff)
 		dat |= SOFIA_USB_POWER;
-	else
+	अन्यथा
 		dat &= ~SOFIA_USB_POWER;
-	return sx1_i2c_write_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, dat);
-}
+	वापस sx1_i2c_ग_लिखो_byte(SOFIA_I2C_ADDR, SOFIA_POWER1_REG, dat);
+पूर्ण
 
 EXPORT_SYMBOL(sx1_setkeylight);
 EXPORT_SYMBOL(sx1_getkeylight);
 EXPORT_SYMBOL(sx1_setbacklight);
 EXPORT_SYMBOL(sx1_getbacklight);
-EXPORT_SYMBOL(sx1_setmmipower);
-EXPORT_SYMBOL(sx1_setusbpower);
+EXPORT_SYMBOL(sx1_seपंचांगmiघातer);
+EXPORT_SYMBOL(sx1_setusbघातer);
 
 /*----------- Keypad -------------------------*/
 
-static const unsigned int sx1_keymap[] = {
+अटल स्थिर अचिन्हित पूर्णांक sx1_keymap[] = अणु
 	KEY(3, 5, GROUP_0 | 117), /* camera Qt::Key_F17 */
 	KEY(4, 0, GROUP_0 | 114), /* voice memo Qt::Key_F14 */
 	KEY(4, 1, GROUP_2 | 114), /* voice memo */
@@ -188,127 +189,127 @@ static const unsigned int sx1_keymap[] = {
 	KEY(1, 0, GROUP_1 | KEY_F11),	/* green button Qt::Key_Call */
 	KEY(2, 1, GROUP_1 | KEY_YEN),	/* left soft Qt::Key_Context1 */
 	KEY(2, 2, GROUP_1 | KEY_F8),	/* right soft Qt::Key_Back */
-	KEY(1, 2, GROUP_1 | KEY_LEFTSHIFT), /* shift */
+	KEY(1, 2, GROUP_1 | KEY_LEFTSHIFT), /* shअगरt */
 	KEY(1, 1, GROUP_1 | KEY_BACKSPACE), /* C (clear) */
 	KEY(2, 0, GROUP_1 | KEY_F7),	/* menu Qt::Key_Menu */
-};
+पूर्ण;
 
-static struct resource sx1_kp_resources[] = {
-	[0] = {
+अटल काष्ठा resource sx1_kp_resources[] = अणु
+	[0] = अणु
 		.start	= INT_KEYBOARD,
 		.end	= INT_KEYBOARD,
 		.flags	= IORESOURCE_IRQ,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static const struct matrix_keymap_data sx1_keymap_data = {
+अटल स्थिर काष्ठा matrix_keymap_data sx1_keymap_data = अणु
 	.keymap		= sx1_keymap,
 	.keymap_size	= ARRAY_SIZE(sx1_keymap),
-};
+पूर्ण;
 
-static struct omap_kp_platform_data sx1_kp_data = {
+अटल काष्ठा omap_kp_platक्रमm_data sx1_kp_data = अणु
 	.rows		= 6,
 	.cols		= 6,
 	.keymap_data	= &sx1_keymap_data,
 	.delay	= 80,
-};
+पूर्ण;
 
-static struct platform_device sx1_kp_device = {
+अटल काष्ठा platक्रमm_device sx1_kp_device = अणु
 	.name		= "omap-keypad",
 	.id		= -1,
-	.dev		= {
-		.platform_data = &sx1_kp_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data = &sx1_kp_data,
+	पूर्ण,
 	.num_resources	= ARRAY_SIZE(sx1_kp_resources),
 	.resource	= sx1_kp_resources,
-};
+पूर्ण;
 
 /*----------- MTD -------------------------*/
 
-static struct mtd_partition sx1_partitions[] = {
+अटल काष्ठा mtd_partition sx1_partitions[] = अणु
 	/* bootloader (U-Boot, etc) in first sector */
-	{
+	अणु
 		.name		= "bootloader",
 		.offset		= 0x01800000,
 		.size		= SZ_128K,
-		.mask_flags	= MTD_WRITEABLE, /* force read-only */
-	},
+		.mask_flags	= MTD_WRITEABLE, /* क्रमce पढ़ो-only */
+	पूर्ण,
 	/* bootloader params in the next sector */
-	{
+	अणु
 		.name		= "params",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= SZ_128K,
 		.mask_flags	= 0,
-	},
+	पूर्ण,
 	/* kernel */
-	{
+	अणु
 		.name		= "kernel",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= SZ_2M - 2 * SZ_128K,
 		.mask_flags	= 0
-	},
-	/* file system */
-	{
+	पूर्ण,
+	/* file प्रणाली */
+	अणु
 		.name		= "filesystem",
 		.offset		= MTDPART_OFS_APPEND,
 		.size		= MTDPART_SIZ_FULL,
 		.mask_flags	= 0
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static struct physmap_flash_data sx1_flash_data = {
+अटल काष्ठा physmap_flash_data sx1_flash_data = अणु
 	.width		= 2,
 	.set_vpp	= omap1_set_vpp,
 	.parts		= sx1_partitions,
 	.nr_parts	= ARRAY_SIZE(sx1_partitions),
-};
+पूर्ण;
 
 /* MTD Intel 4000 flash - new flashes */
-static struct resource sx1_new_flash_resource = {
+अटल काष्ठा resource sx1_new_flash_resource = अणु
 	.start		= OMAP_CS0_PHYS,
 	.end		= OMAP_CS0_PHYS + SZ_32M - 1,
 	.flags		= IORESOURCE_MEM,
-};
+पूर्ण;
 
-static struct platform_device sx1_flash_device = {
+अटल काष्ठा platक्रमm_device sx1_flash_device = अणु
 	.name		= "physmap-flash",
 	.id		= 0,
-	.dev		= {
-		.platform_data	= &sx1_flash_data,
-	},
+	.dev		= अणु
+		.platक्रमm_data	= &sx1_flash_data,
+	पूर्ण,
 	.num_resources	= 1,
 	.resource	= &sx1_new_flash_resource,
-};
+पूर्ण;
 
 /*----------- USB -------------------------*/
 
-static struct omap_usb_config sx1_usb_config __initdata = {
+अटल काष्ठा omap_usb_config sx1_usb_config __initdata = अणु
 	.otg		= 0,
-	.register_dev	= 1,
-	.register_host	= 0,
+	.रेजिस्टर_dev	= 1,
+	.रेजिस्टर_host	= 0,
 	.hmc_mode	= 0,
 	.pins[0]	= 2,
 	.pins[1]	= 0,
 	.pins[2]	= 0,
-};
+पूर्ण;
 
 /*----------- LCD -------------------------*/
 
-static const struct omap_lcd_config sx1_lcd_config __initconst = {
+अटल स्थिर काष्ठा omap_lcd_config sx1_lcd_config __initस्थिर = अणु
 	.ctrl_name	= "internal",
-};
+पूर्ण;
 
 /*-----------------------------------------*/
-static struct platform_device *sx1_devices[] __initdata = {
+अटल काष्ठा platक्रमm_device *sx1_devices[] __initdata = अणु
 	&sx1_flash_device,
 	&sx1_kp_device,
-};
+पूर्ण;
 
 /*-----------------------------------------*/
 
-static void __init omap_sx1_init(void)
-{
-	/* mux pins for uarts */
+अटल व्योम __init omap_sx1_init(व्योम)
+अणु
+	/* mux pins क्रम uarts */
 	omap_cfg_reg(UART1_TX);
 	omap_cfg_reg(UART1_RTS);
 	omap_cfg_reg(UART2_TX);
@@ -316,15 +317,15 @@ static void __init omap_sx1_init(void)
 	omap_cfg_reg(UART3_TX);
 	omap_cfg_reg(UART3_RX);
 
-	platform_add_devices(sx1_devices, ARRAY_SIZE(sx1_devices));
+	platक्रमm_add_devices(sx1_devices, ARRAY_SIZE(sx1_devices));
 
 	omap_serial_init();
-	omap_register_i2c_bus(1, 100, NULL, 0);
+	omap_रेजिस्टर_i2c_bus(1, 100, शून्य, 0);
 	omap1_usb_init(&sx1_usb_config);
 	sx1_mmc_init();
 
-	/* turn on USB power */
-	/* sx1_setusbpower(1); can't do it here because i2c is not ready */
+	/* turn on USB घातer */
+	/* sx1_setusbघातer(1); can't करो it here because i2c is not पढ़ोy */
 	gpio_request(1, "A_IRDA_OFF");
 	gpio_request(11, "A_SWITCH");
 	gpio_request(15, "A_USB_ON");
@@ -333,7 +334,7 @@ static void __init omap_sx1_init(void)
 	gpio_direction_output(15, 0);	/*A_USB_ON = 0 */
 
 	omapfb_set_lcd_config(&sx1_lcd_config);
-}
+पूर्ण
 
 MACHINE_START(SX1, "OMAP310 based Siemens SX1")
 	.atag_offset	= 0x100,
@@ -343,6 +344,6 @@ MACHINE_START(SX1, "OMAP310 based Siemens SX1")
 	.handle_irq	= omap1_handle_irq,
 	.init_machine	= omap_sx1_init,
 	.init_late	= omap1_init_late,
-	.init_time	= omap1_timer_init,
+	.init_समय	= omap1_समयr_init,
 	.restart	= omap1_restart,
 MACHINE_END

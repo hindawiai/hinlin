@@ -1,83 +1,84 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *
  * Copyright (C) Hans Alblas PE1AYX <hans@esrac.ele.tue.nl>
  * Copyright (C) 2004, 05 Ralf Baechle DL5RB <ralf@linux-mips.org>
  * Copyright (C) 2004, 05 Thomas Osterried DL9SAU <thomas@x-berg.in-berlin.de>
  */
-#include <linux/module.h>
-#include <linux/bitops.h>
-#include <linux/uaccess.h>
-#include <linux/crc16.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/in.h>
-#include <linux/inet.h>
-#include <linux/slab.h>
-#include <linux/tty.h>
-#include <linux/errno.h>
-#include <linux/netdevice.h>
-#include <linux/major.h>
-#include <linux/init.h>
-#include <linux/rtnetlink.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/if_arp.h>
-#include <linux/jiffies.h>
-#include <linux/refcount.h>
+#समावेश <linux/module.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/crc16.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/in.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/major.h>
+#समावेश <linux/init.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/अगर_arp.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/refcount.h>
 
-#include <net/ax25.h>
+#समावेश <net/ax25.h>
 
-#define AX_MTU		236
+#घोषणा AX_MTU		236
 
-/* SLIP/KISS protocol characters. */
-#define END             0300		/* indicates end of frame	*/
-#define ESC             0333		/* indicates byte stuffing	*/
-#define ESC_END         0334		/* ESC ESC_END means END 'data'	*/
-#define ESC_ESC         0335		/* ESC ESC_ESC means ESC 'data'	*/
+/* SLIP/KISS protocol अक्षरacters. */
+#घोषणा END             0300		/* indicates end of frame	*/
+#घोषणा ESC             0333		/* indicates byte stuffing	*/
+#घोषणा ESC_END         0334		/* ESC ESC_END means END 'data'	*/
+#घोषणा ESC_ESC         0335		/* ESC ESC_ESC means ESC 'data'	*/
 
-struct mkiss {
-	struct tty_struct	*tty;	/* ptr to TTY structure		*/
-	struct net_device	*dev;	/* easy for intr handling	*/
+काष्ठा mkiss अणु
+	काष्ठा tty_काष्ठा	*tty;	/* ptr to TTY काष्ठाure		*/
+	काष्ठा net_device	*dev;	/* easy क्रम पूर्णांकr handling	*/
 
-	/* These are pointers to the malloc()ed frame buffers. */
-	spinlock_t		buflock;/* lock for rbuf and xbuf */
-	unsigned char		*rbuff;	/* receiver buffer		*/
-	int			rcount;	/* received chars counter       */
-	unsigned char		*xbuff;	/* transmitter buffer		*/
-	unsigned char		*xhead;	/* pointer to next byte to XMIT */
-	int			xleft;	/* bytes left in XMIT queue     */
+	/* These are poपूर्णांकers to the दो_स्मृति()ed frame buffers. */
+	spinlock_t		buflock;/* lock क्रम rbuf and xbuf */
+	अचिन्हित अक्षर		*rbuff;	/* receiver buffer		*/
+	पूर्णांक			rcount;	/* received अक्षरs counter       */
+	अचिन्हित अक्षर		*xbuff;	/* transmitter buffer		*/
+	अचिन्हित अक्षर		*xhead;	/* poपूर्णांकer to next byte to XMIT */
+	पूर्णांक			xleft;	/* bytes left in XMIT queue     */
 
 	/* Detailed SLIP statistics. */
-	int		mtu;		/* Our mtu (to spot changes!)   */
-	int		buffsize;	/* Max buffers sizes            */
+	पूर्णांक		mtu;		/* Our mtu (to spot changes!)   */
+	पूर्णांक		buffsize;	/* Max buffers sizes            */
 
-	unsigned long	flags;		/* Flag values/ mode etc	*/
-					/* long req'd: used by set_bit --RR */
-#define AXF_INUSE	0		/* Channel in use               */
-#define AXF_ESCAPE	1               /* ESC received                 */
-#define AXF_ERROR	2               /* Parity, etc. error           */
-#define AXF_KEEPTEST	3		/* Keepalive test flag		*/
-#define AXF_OUTWAIT	4		/* is outpacket was flag	*/
+	अचिन्हित दीर्घ	flags;		/* Flag values/ mode etc	*/
+					/* दीर्घ req'd: used by set_bit --RR */
+#घोषणा AXF_INUSE	0		/* Channel in use               */
+#घोषणा AXF_ESCAPE	1               /* ESC received                 */
+#घोषणा AXF_ERROR	2               /* Parity, etc. error           */
+#घोषणा AXF_KEEPTEST	3		/* Keepalive test flag		*/
+#घोषणा AXF_OUTWAIT	4		/* is outpacket was flag	*/
 
-	int		mode;
-        int		crcmode;	/* MW: for FlexNet, SMACK etc.  */
-	int		crcauto;	/* CRC auto mode */
+	पूर्णांक		mode;
+        पूर्णांक		crcmode;	/* MW: क्रम FlexNet, SMACK etc.  */
+	पूर्णांक		crcस्वतः;	/* CRC स्वतः mode */
 
-#define CRC_MODE_NONE		0
-#define CRC_MODE_FLEX		1
-#define CRC_MODE_SMACK		2
-#define CRC_MODE_FLEX_TEST	3
-#define CRC_MODE_SMACK_TEST	4
+#घोषणा CRC_MODE_NONE		0
+#घोषणा CRC_MODE_FLEX		1
+#घोषणा CRC_MODE_SMACK		2
+#घोषणा CRC_MODE_FLEX_TEST	3
+#घोषणा CRC_MODE_SMACK_TEST	4
 
 	refcount_t		refcnt;
-	struct completion	dead;
-};
+	काष्ठा completion	dead;
+पूर्ण;
 
 /*---------------------------------------------------------------------------*/
 
-static const unsigned short crc_flex_table[] = {
+अटल स्थिर अचिन्हित लघु crc_flex_table[] = अणु
 	0x0f87, 0x1e0e, 0x2c95, 0x3d1c, 0x49a3, 0x582a, 0x6ab1, 0x7b38,
 	0x83cf, 0x9246, 0xa0dd, 0xb154, 0xc5eb, 0xd462, 0xe6f9, 0xf770,
 	0x1f06, 0x0e8f, 0x3c14, 0x2d9d, 0x5922, 0x48ab, 0x7a30, 0x6bb9,
@@ -110,162 +111,162 @@ static const unsigned short crc_flex_table[] = {
 	0x64c1, 0x7548, 0x47d3, 0x565a, 0x22e5, 0x336c, 0x01f7, 0x107e,
 	0xf808, 0xe981, 0xdb1a, 0xca93, 0xbe2c, 0xafa5, 0x9d3e, 0x8cb7,
 	0x7440, 0x65c9, 0x5752, 0x46db, 0x3264, 0x23ed, 0x1176, 0x00ff
-};
+पूर्ण;
 
-static unsigned short calc_crc_flex(unsigned char *cp, int size)
-{
-	unsigned short crc = 0xffff;
+अटल अचिन्हित लघु calc_crc_flex(अचिन्हित अक्षर *cp, पूर्णांक size)
+अणु
+	अचिन्हित लघु crc = 0xffff;
 
-	while (size--)
+	जबतक (size--)
 		crc = (crc << 8) ^ crc_flex_table[((crc >> 8) ^ *cp++) & 0xff];
 
-	return crc;
-}
+	वापस crc;
+पूर्ण
 
-static int check_crc_flex(unsigned char *cp, int size)
-{
-	unsigned short crc = 0xffff;
+अटल पूर्णांक check_crc_flex(अचिन्हित अक्षर *cp, पूर्णांक size)
+अणु
+	अचिन्हित लघु crc = 0xffff;
 
-	if (size < 3)
-		return -1;
+	अगर (size < 3)
+		वापस -1;
 
-	while (size--)
+	जबतक (size--)
 		crc = (crc << 8) ^ crc_flex_table[((crc >> 8) ^ *cp++) & 0xff];
 
-	if ((crc & 0xffff) != 0x7070)
-		return -1;
+	अगर ((crc & 0xffff) != 0x7070)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int check_crc_16(unsigned char *cp, int size)
-{
-	unsigned short crc = 0x0000;
+अटल पूर्णांक check_crc_16(अचिन्हित अक्षर *cp, पूर्णांक size)
+अणु
+	अचिन्हित लघु crc = 0x0000;
 
-	if (size < 3)
-		return -1;
+	अगर (size < 3)
+		वापस -1;
 
 	crc = crc16(0, cp, size);
 
-	if (crc != 0x0000)
-		return -1;
+	अगर (crc != 0x0000)
+		वापस -1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Standard encapsulation
  */
 
-static int kiss_esc(unsigned char *s, unsigned char *d, int len)
-{
-	unsigned char *ptr = d;
-	unsigned char c;
+अटल पूर्णांक kiss_esc(अचिन्हित अक्षर *s, अचिन्हित अक्षर *d, पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *ptr = d;
+	अचिन्हित अक्षर c;
 
 	/*
-	 * Send an initial END character to flush out any data that may have
+	 * Send an initial END अक्षरacter to flush out any data that may have
 	 * accumulated in the receiver due to line noise.
 	 */
 
 	*ptr++ = END;
 
-	while (len-- > 0) {
-		switch (c = *s++) {
-		case END:
+	जबतक (len-- > 0) अणु
+		चयन (c = *s++) अणु
+		हाल END:
 			*ptr++ = ESC;
 			*ptr++ = ESC_END;
-			break;
-		case ESC:
+			अवरोध;
+		हाल ESC:
 			*ptr++ = ESC;
 			*ptr++ = ESC_ESC;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			*ptr++ = c;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	*ptr++ = END;
 
-	return ptr - d;
-}
+	वापस ptr - d;
+पूर्ण
 
 /*
  * MW:
  * OK its ugly, but tell me a better solution without copying the
  * packet to a temporary buffer :-)
  */
-static int kiss_esc_crc(unsigned char *s, unsigned char *d, unsigned short crc,
-	int len)
-{
-	unsigned char *ptr = d;
-	unsigned char c=0;
+अटल पूर्णांक kiss_esc_crc(अचिन्हित अक्षर *s, अचिन्हित अक्षर *d, अचिन्हित लघु crc,
+	पूर्णांक len)
+अणु
+	अचिन्हित अक्षर *ptr = d;
+	अचिन्हित अक्षर c=0;
 
 	*ptr++ = END;
-	while (len > 0) {
-		if (len > 2)
+	जबतक (len > 0) अणु
+		अगर (len > 2)
 			c = *s++;
-		else if (len > 1)
+		अन्यथा अगर (len > 1)
 			c = crc >> 8;
-		else
+		अन्यथा
 			c = crc & 0xff;
 
 		len--;
 
-		switch (c) {
-		case END:
+		चयन (c) अणु
+		हाल END:
 			*ptr++ = ESC;
 			*ptr++ = ESC_END;
-			break;
-		case ESC:
+			अवरोध;
+		हाल ESC:
 			*ptr++ = ESC;
 			*ptr++ = ESC_ESC;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			*ptr++ = c;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	*ptr++ = END;
 
-	return ptr - d;
-}
+	वापस ptr - d;
+पूर्ण
 
 /* Send one completely decapsulated AX.25 packet to the AX.25 layer. */
-static void ax_bump(struct mkiss *ax)
-{
-	struct sk_buff *skb;
-	int count;
+अटल व्योम ax_bump(काष्ठा mkiss *ax)
+अणु
+	काष्ठा sk_buff *skb;
+	पूर्णांक count;
 
 	spin_lock_bh(&ax->buflock);
-	if (ax->rbuff[0] > 0x0f) {
-		if (ax->rbuff[0] & 0x80) {
-			if (check_crc_16(ax->rbuff, ax->rcount) < 0) {
+	अगर (ax->rbuff[0] > 0x0f) अणु
+		अगर (ax->rbuff[0] & 0x80) अणु
+			अगर (check_crc_16(ax->rbuff, ax->rcount) < 0) अणु
 				ax->dev->stats.rx_errors++;
 				spin_unlock_bh(&ax->buflock);
 
-				return;
-			}
-			if (ax->crcmode != CRC_MODE_SMACK && ax->crcauto) {
-				printk(KERN_INFO
+				वापस;
+			पूर्ण
+			अगर (ax->crcmode != CRC_MODE_SMACK && ax->crcस्वतः) अणु
+				prपूर्णांकk(KERN_INFO
 				       "mkiss: %s: Switching to crc-smack\n",
 				       ax->dev->name);
 				ax->crcmode = CRC_MODE_SMACK;
-			}
+			पूर्ण
 			ax->rcount -= 2;
 			*ax->rbuff &= ~0x80;
-		} else if (ax->rbuff[0] & 0x20)  {
-			if (check_crc_flex(ax->rbuff, ax->rcount) < 0) {
+		पूर्ण अन्यथा अगर (ax->rbuff[0] & 0x20)  अणु
+			अगर (check_crc_flex(ax->rbuff, ax->rcount) < 0) अणु
 				ax->dev->stats.rx_errors++;
 				spin_unlock_bh(&ax->buflock);
-				return;
-			}
-			if (ax->crcmode != CRC_MODE_FLEX && ax->crcauto) {
-				printk(KERN_INFO
+				वापस;
+			पूर्ण
+			अगर (ax->crcmode != CRC_MODE_FLEX && ax->crcस्वतः) अणु
+				prपूर्णांकk(KERN_INFO
 				       "mkiss: %s: Switching to crc-flexnet\n",
 				       ax->dev->name);
 				ax->crcmode = CRC_MODE_FLEX;
-			}
+			पूर्ण
 			ax->rcount -= 2;
 
 			/*
@@ -275,112 +276,112 @@ static void ax_bump(struct mkiss *ax)
 			 * a crc but there's none
 			 */
 			*ax->rbuff &= ~0x20;
-		}
- 	}
+		पूर्ण
+ 	पूर्ण
 
 	count = ax->rcount;
 
-	if ((skb = dev_alloc_skb(count)) == NULL) {
-		printk(KERN_ERR "mkiss: %s: memory squeeze, dropping packet.\n",
+	अगर ((skb = dev_alloc_skb(count)) == शून्य) अणु
+		prपूर्णांकk(KERN_ERR "mkiss: %s: memory squeeze, dropping packet.\n",
 		       ax->dev->name);
 		ax->dev->stats.rx_dropped++;
 		spin_unlock_bh(&ax->buflock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	skb_put_data(skb, ax->rbuff, count);
 	skb->protocol = ax25_type_trans(skb, ax->dev);
-	netif_rx(skb);
+	netअगर_rx(skb);
 	ax->dev->stats.rx_packets++;
 	ax->dev->stats.rx_bytes += count;
 	spin_unlock_bh(&ax->buflock);
-}
+पूर्ण
 
-static void kiss_unesc(struct mkiss *ax, unsigned char s)
-{
-	switch (s) {
-	case END:
+अटल व्योम kiss_unesc(काष्ठा mkiss *ax, अचिन्हित अक्षर s)
+अणु
+	चयन (s) अणु
+	हाल END:
 		/* drop keeptest bit = VSV */
-		if (test_bit(AXF_KEEPTEST, &ax->flags))
+		अगर (test_bit(AXF_KEEPTEST, &ax->flags))
 			clear_bit(AXF_KEEPTEST, &ax->flags);
 
-		if (!test_and_clear_bit(AXF_ERROR, &ax->flags) && (ax->rcount > 2))
+		अगर (!test_and_clear_bit(AXF_ERROR, &ax->flags) && (ax->rcount > 2))
 			ax_bump(ax);
 
 		clear_bit(AXF_ESCAPE, &ax->flags);
 		ax->rcount = 0;
-		return;
+		वापस;
 
-	case ESC:
+	हाल ESC:
 		set_bit(AXF_ESCAPE, &ax->flags);
-		return;
-	case ESC_ESC:
-		if (test_and_clear_bit(AXF_ESCAPE, &ax->flags))
+		वापस;
+	हाल ESC_ESC:
+		अगर (test_and_clear_bit(AXF_ESCAPE, &ax->flags))
 			s = ESC;
-		break;
-	case ESC_END:
-		if (test_and_clear_bit(AXF_ESCAPE, &ax->flags))
+		अवरोध;
+	हाल ESC_END:
+		अगर (test_and_clear_bit(AXF_ESCAPE, &ax->flags))
 			s = END;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	spin_lock_bh(&ax->buflock);
-	if (!test_bit(AXF_ERROR, &ax->flags)) {
-		if (ax->rcount < ax->buffsize) {
+	अगर (!test_bit(AXF_ERROR, &ax->flags)) अणु
+		अगर (ax->rcount < ax->buffsize) अणु
 			ax->rbuff[ax->rcount++] = s;
 			spin_unlock_bh(&ax->buflock);
-			return;
-		}
+			वापस;
+		पूर्ण
 
 		ax->dev->stats.rx_over_errors++;
 		set_bit(AXF_ERROR, &ax->flags);
-	}
+	पूर्ण
 	spin_unlock_bh(&ax->buflock);
-}
+पूर्ण
 
-static int ax_set_mac_address(struct net_device *dev, void *addr)
-{
-	struct sockaddr_ax25 *sa = addr;
+अटल पूर्णांक ax_set_mac_address(काष्ठा net_device *dev, व्योम *addr)
+अणु
+	काष्ठा sockaddr_ax25 *sa = addr;
 
-	netif_tx_lock_bh(dev);
-	netif_addr_lock(dev);
-	memcpy(dev->dev_addr, &sa->sax25_call, AX25_ADDR_LEN);
-	netif_addr_unlock(dev);
-	netif_tx_unlock_bh(dev);
+	netअगर_tx_lock_bh(dev);
+	netअगर_addr_lock(dev);
+	स_नकल(dev->dev_addr, &sa->sax25_call, AX25_ADDR_LEN);
+	netअगर_addr_unlock(dev);
+	netअगर_tx_unlock_bh(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*---------------------------------------------------------------------------*/
 
-static void ax_changedmtu(struct mkiss *ax)
-{
-	struct net_device *dev = ax->dev;
-	unsigned char *xbuff, *rbuff, *oxbuff, *orbuff;
-	int len;
+अटल व्योम ax_changedmtu(काष्ठा mkiss *ax)
+अणु
+	काष्ठा net_device *dev = ax->dev;
+	अचिन्हित अक्षर *xbuff, *rbuff, *oxbuff, *orbuff;
+	पूर्णांक len;
 
 	len = dev->mtu * 2;
 
 	/*
-	 * allow for arrival of larger UDP packets, even if we say not to
+	 * allow क्रम arrival of larger UDP packets, even अगर we say not to
 	 * also fixes a bug in which SunOS sends 512-byte packets even with
 	 * an MSS of 128
 	 */
-	if (len < 576 * 2)
+	अगर (len < 576 * 2)
 		len = 576 * 2;
 
-	xbuff = kmalloc(len + 4, GFP_ATOMIC);
-	rbuff = kmalloc(len + 4, GFP_ATOMIC);
+	xbuff = kदो_स्मृति(len + 4, GFP_ATOMIC);
+	rbuff = kदो_स्मृति(len + 4, GFP_ATOMIC);
 
-	if (xbuff == NULL || rbuff == NULL)  {
-		printk(KERN_ERR "mkiss: %s: unable to grow ax25 buffers, "
+	अगर (xbuff == शून्य || rbuff == शून्य)  अणु
+		prपूर्णांकk(KERN_ERR "mkiss: %s: unable to grow ax25 buffers, "
 		       "MTU change cancelled.\n",
 		       ax->dev->name);
 		dev->mtu = ax->mtu;
-		kfree(xbuff);
-		kfree(rbuff);
-		return;
-	}
+		kमुक्त(xbuff);
+		kमुक्त(rbuff);
+		वापस;
+	पूर्ण
 
 	spin_lock_bh(&ax->buflock);
 
@@ -389,189 +390,189 @@ static void ax_changedmtu(struct mkiss *ax)
 	orbuff    = ax->rbuff;
 	ax->rbuff = rbuff;
 
-	if (ax->xleft) {
-		if (ax->xleft <= len) {
-			memcpy(ax->xbuff, ax->xhead, ax->xleft);
-		} else  {
+	अगर (ax->xleft) अणु
+		अगर (ax->xleft <= len) अणु
+			स_नकल(ax->xbuff, ax->xhead, ax->xleft);
+		पूर्ण अन्यथा  अणु
 			ax->xleft = 0;
 			dev->stats.tx_dropped++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ax->xhead = ax->xbuff;
 
-	if (ax->rcount) {
-		if (ax->rcount <= len) {
-			memcpy(ax->rbuff, orbuff, ax->rcount);
-		} else  {
+	अगर (ax->rcount) अणु
+		अगर (ax->rcount <= len) अणु
+			स_नकल(ax->rbuff, orbuff, ax->rcount);
+		पूर्ण अन्यथा  अणु
 			ax->rcount = 0;
 			dev->stats.rx_over_errors++;
 			set_bit(AXF_ERROR, &ax->flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	ax->mtu      = dev->mtu + 73;
 	ax->buffsize = len;
 
 	spin_unlock_bh(&ax->buflock);
 
-	kfree(oxbuff);
-	kfree(orbuff);
-}
+	kमुक्त(oxbuff);
+	kमुक्त(orbuff);
+पूर्ण
 
-/* Encapsulate one AX.25 packet and stuff into a TTY queue. */
-static void ax_encaps(struct net_device *dev, unsigned char *icp, int len)
-{
-	struct mkiss *ax = netdev_priv(dev);
-	unsigned char *p;
-	int actual, count;
+/* Encapsulate one AX.25 packet and stuff पूर्णांकo a TTY queue. */
+अटल व्योम ax_encaps(काष्ठा net_device *dev, अचिन्हित अक्षर *icp, पूर्णांक len)
+अणु
+	काष्ठा mkiss *ax = netdev_priv(dev);
+	अचिन्हित अक्षर *p;
+	पूर्णांक actual, count;
 
-	if (ax->mtu != ax->dev->mtu + 73)	/* Someone has been ifconfigging */
+	अगर (ax->mtu != ax->dev->mtu + 73)	/* Someone has been अगरconfigging */
 		ax_changedmtu(ax);
 
-	if (len > ax->mtu) {		/* Sigh, shouldn't occur BUT ... */
-		printk(KERN_ERR "mkiss: %s: truncating oversized transmit packet!\n", ax->dev->name);
+	अगर (len > ax->mtu) अणु		/* Sigh, shouldn't occur BUT ... */
+		prपूर्णांकk(KERN_ERR "mkiss: %s: truncating oversized transmit packet!\n", ax->dev->name);
 		dev->stats.tx_dropped++;
-		netif_start_queue(dev);
-		return;
-	}
+		netअगर_start_queue(dev);
+		वापस;
+	पूर्ण
 
 	p = icp;
 
 	spin_lock_bh(&ax->buflock);
-	if ((*p & 0x0f) != 0) {
+	अगर ((*p & 0x0f) != 0) अणु
 		/* Configuration Command (kissparms(1).
 		 * Protocol spec says: never append CRC.
 		 * This fixes a very old bug in the linux
 		 * kiss driver. -- dl9sau */
-		switch (*p & 0xff) {
-		case 0x85:
-			/* command from userspace especially for us,
-			 * not for delivery to the tnc */
-			if (len > 1) {
-				int cmd = (p[1] & 0xff);
-				switch(cmd) {
-				case 3:
+		चयन (*p & 0xff) अणु
+		हाल 0x85:
+			/* command from userspace especially क्रम us,
+			 * not क्रम delivery to the tnc */
+			अगर (len > 1) अणु
+				पूर्णांक cmd = (p[1] & 0xff);
+				चयन(cmd) अणु
+				हाल 3:
 				  ax->crcmode = CRC_MODE_SMACK;
-				  break;
-				case 2:
+				  अवरोध;
+				हाल 2:
 				  ax->crcmode = CRC_MODE_FLEX;
-				  break;
-				case 1:
+				  अवरोध;
+				हाल 1:
 				  ax->crcmode = CRC_MODE_NONE;
-				  break;
-				case 0:
-				default:
+				  अवरोध;
+				हाल 0:
+				शेष:
 				  ax->crcmode = CRC_MODE_SMACK_TEST;
 				  cmd = 0;
-				}
-				ax->crcauto = (cmd ? 0 : 1);
-				printk(KERN_INFO "mkiss: %s: crc mode set to %d\n",
+				पूर्ण
+				ax->crcस्वतः = (cmd ? 0 : 1);
+				prपूर्णांकk(KERN_INFO "mkiss: %s: crc mode set to %d\n",
 				       ax->dev->name, cmd);
-			}
+			पूर्ण
 			spin_unlock_bh(&ax->buflock);
-			netif_start_queue(dev);
+			netअगर_start_queue(dev);
 
-			return;
-		default:
+			वापस;
+		शेष:
 			count = kiss_esc(p, ax->xbuff, len);
-		}
-	} else {
-		unsigned short crc;
-		switch (ax->crcmode) {
-		case CRC_MODE_SMACK_TEST:
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अचिन्हित लघु crc;
+		चयन (ax->crcmode) अणु
+		हाल CRC_MODE_SMACK_TEST:
 			ax->crcmode  = CRC_MODE_FLEX_TEST;
-			printk(KERN_INFO "mkiss: %s: Trying crc-smack\n", ax->dev->name);
+			prपूर्णांकk(KERN_INFO "mkiss: %s: Trying crc-smack\n", ax->dev->name);
 			fallthrough;
-		case CRC_MODE_SMACK:
+		हाल CRC_MODE_SMACK:
 			*p |= 0x80;
 			crc = swab16(crc16(0, p, len));
 			count = kiss_esc_crc(p, ax->xbuff, crc, len+2);
-			break;
-		case CRC_MODE_FLEX_TEST:
+			अवरोध;
+		हाल CRC_MODE_FLEX_TEST:
 			ax->crcmode = CRC_MODE_NONE;
-			printk(KERN_INFO "mkiss: %s: Trying crc-flexnet\n", ax->dev->name);
+			prपूर्णांकk(KERN_INFO "mkiss: %s: Trying crc-flexnet\n", ax->dev->name);
 			fallthrough;
-		case CRC_MODE_FLEX:
+		हाल CRC_MODE_FLEX:
 			*p |= 0x20;
 			crc = calc_crc_flex(p, len);
 			count = kiss_esc_crc(p, ax->xbuff, crc, len+2);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			count = kiss_esc(p, ax->xbuff, len);
-		}
-  	}
+		पूर्ण
+  	पूर्ण
 	spin_unlock_bh(&ax->buflock);
 
 	set_bit(TTY_DO_WRITE_WAKEUP, &ax->tty->flags);
-	actual = ax->tty->ops->write(ax->tty, ax->xbuff, count);
+	actual = ax->tty->ops->ग_लिखो(ax->tty, ax->xbuff, count);
 	dev->stats.tx_packets++;
 	dev->stats.tx_bytes += actual;
 
-	netif_trans_update(ax->dev);
+	netअगर_trans_update(ax->dev);
 	ax->xleft = count - actual;
 	ax->xhead = ax->xbuff + actual;
-}
+पूर्ण
 
-/* Encapsulate an AX.25 packet and kick it into a TTY queue. */
-static netdev_tx_t ax_xmit(struct sk_buff *skb, struct net_device *dev)
-{
-	struct mkiss *ax = netdev_priv(dev);
+/* Encapsulate an AX.25 packet and kick it पूर्णांकo a TTY queue. */
+अटल netdev_tx_t ax_xmit(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा mkiss *ax = netdev_priv(dev);
 
-	if (skb->protocol == htons(ETH_P_IP))
-		return ax25_ip_xmit(skb);
+	अगर (skb->protocol == htons(ETH_P_IP))
+		वापस ax25_ip_xmit(skb);
 
-	if (!netif_running(dev))  {
-		printk(KERN_ERR "mkiss: %s: xmit call when iface is down\n", dev->name);
-		return NETDEV_TX_BUSY;
-	}
+	अगर (!netअगर_running(dev))  अणु
+		prपूर्णांकk(KERN_ERR "mkiss: %s: xmit call when iface is down\n", dev->name);
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	if (netif_queue_stopped(dev)) {
+	अगर (netअगर_queue_stopped(dev)) अणु
 		/*
-		 * May be we must check transmitter timeout here ?
+		 * May be we must check transmitter समयout here ?
 		 *      14 Oct 1994 Dmitry Gorodchanin.
 		 */
-		if (time_before(jiffies, dev_trans_start(dev) + 20 * HZ)) {
-			/* 20 sec timeout not reached */
-			return NETDEV_TX_BUSY;
-		}
+		अगर (समय_beक्रमe(jअगरfies, dev_trans_start(dev) + 20 * HZ)) अणु
+			/* 20 sec समयout not reached */
+			वापस NETDEV_TX_BUSY;
+		पूर्ण
 
-		printk(KERN_ERR "mkiss: %s: transmit timed out, %s?\n", dev->name,
-		       (tty_chars_in_buffer(ax->tty) || ax->xleft) ?
+		prपूर्णांकk(KERN_ERR "mkiss: %s: transmit timed out, %s?\n", dev->name,
+		       (tty_अक्षरs_in_buffer(ax->tty) || ax->xleft) ?
 		       "bad line quality" : "driver error");
 
 		ax->xleft = 0;
 		clear_bit(TTY_DO_WRITE_WAKEUP, &ax->tty->flags);
-		netif_start_queue(dev);
-	}
+		netअगर_start_queue(dev);
+	पूर्ण
 
 	/* We were not busy, so we are now... :-) */
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 	ax_encaps(dev, skb->data, skb->len);
-	kfree_skb(skb);
+	kमुक्त_skb(skb);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static int ax_open_dev(struct net_device *dev)
-{
-	struct mkiss *ax = netdev_priv(dev);
+अटल पूर्णांक ax_खोलो_dev(काष्ठा net_device *dev)
+अणु
+	काष्ठा mkiss *ax = netdev_priv(dev);
 
-	if (ax->tty == NULL)
-		return -ENODEV;
+	अगर (ax->tty == शून्य)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* Open the low-level part of the AX25 channel. Easy! */
-static int ax_open(struct net_device *dev)
-{
-	struct mkiss *ax = netdev_priv(dev);
-	unsigned long len;
+अटल पूर्णांक ax_खोलो(काष्ठा net_device *dev)
+अणु
+	काष्ठा mkiss *ax = netdev_priv(dev);
+	अचिन्हित दीर्घ len;
 
-	if (ax->tty == NULL)
-		return -ENODEV;
+	अगर (ax->tty == शून्य)
+		वापस -ENODEV;
 
 	/*
 	 * Allocate the frame buffers:
@@ -582,18 +583,18 @@ static int ax_open(struct net_device *dev)
 	len = dev->mtu * 2;
 
 	/*
-	 * allow for arrival of larger UDP packets, even if we say not to
+	 * allow क्रम arrival of larger UDP packets, even अगर we say not to
 	 * also fixes a bug in which SunOS sends 512-byte packets even with
 	 * an MSS of 128
 	 */
-	if (len < 576 * 2)
+	अगर (len < 576 * 2)
 		len = 576 * 2;
 
-	if ((ax->rbuff = kmalloc(len + 4, GFP_KERNEL)) == NULL)
-		goto norbuff;
+	अगर ((ax->rbuff = kदो_स्मृति(len + 4, GFP_KERNEL)) == शून्य)
+		जाओ norbuff;
 
-	if ((ax->xbuff = kmalloc(len + 4, GFP_KERNEL)) == NULL)
-		goto noxbuff;
+	अगर ((ax->xbuff = kदो_स्मृति(len + 4, GFP_KERNEL)) == शून्य)
+		जाओ noxbuff;
 
 	ax->mtu	     = dev->mtu + 73;
 	ax->buffsize = len;
@@ -604,38 +605,38 @@ static int ax_open(struct net_device *dev)
 
 	spin_lock_init(&ax->buflock);
 
-	return 0;
+	वापस 0;
 
 noxbuff:
-	kfree(ax->rbuff);
+	kमुक्त(ax->rbuff);
 
 norbuff:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 
 /* Close the low-level part of the AX25 channel. Easy! */
-static int ax_close(struct net_device *dev)
-{
-	struct mkiss *ax = netdev_priv(dev);
+अटल पूर्णांक ax_बंद(काष्ठा net_device *dev)
+अणु
+	काष्ठा mkiss *ax = netdev_priv(dev);
 
-	if (ax->tty)
+	अगर (ax->tty)
 		clear_bit(TTY_DO_WRITE_WAKEUP, &ax->tty->flags);
 
-	netif_stop_queue(dev);
+	netअगर_stop_queue(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct net_device_ops ax_netdev_ops = {
-	.ndo_open            = ax_open_dev,
-	.ndo_stop            = ax_close,
-	.ndo_start_xmit	     = ax_xmit,
-	.ndo_set_mac_address = ax_set_mac_address,
-};
+अटल स्थिर काष्ठा net_device_ops ax_netdev_ops = अणु
+	.nकरो_खोलो            = ax_खोलो_dev,
+	.nकरो_stop            = ax_बंद,
+	.nकरो_start_xmit	     = ax_xmit,
+	.nकरो_set_mac_address = ax_set_mac_address,
+पूर्ण;
 
-static void ax_setup(struct net_device *dev)
-{
+अटल व्योम ax_setup(काष्ठा net_device *dev)
+अणु
 	/* Finish setting up the DEVICE info. */
 	dev->mtu             = AX_MTU;
 	dev->hard_header_len = AX25_MAX_HEADER_LEN;
@@ -646,60 +647,60 @@ static void ax_setup(struct net_device *dev)
 	dev->netdev_ops	     = &ax_netdev_ops;
 
 
-	memcpy(dev->broadcast, &ax25_bcast, AX25_ADDR_LEN);
-	memcpy(dev->dev_addr,  &ax25_defaddr,  AX25_ADDR_LEN);
+	स_नकल(dev->broadcast, &ax25_bcast, AX25_ADDR_LEN);
+	स_नकल(dev->dev_addr,  &ax25_defaddr,  AX25_ADDR_LEN);
 
 	dev->flags      = IFF_BROADCAST | IFF_MULTICAST;
-}
+पूर्ण
 
 /*
  * We have a potential race on dereferencing tty->disc_data, because the tty
  * layer provides no locking at all - thus one cpu could be running
- * sixpack_receive_buf while another calls sixpack_close, which zeroes
- * tty->disc_data and frees the memory that sixpack_receive_buf is using.  The
- * best way to fix this is to use a rwlock in the tty struct, but for now we
- * use a single global rwlock for all ttys in ppp line discipline.
+ * sixpack_receive_buf जबतक another calls sixpack_बंद, which zeroes
+ * tty->disc_data and मुक्तs the memory that sixpack_receive_buf is using.  The
+ * best way to fix this is to use a rwlock in the tty काष्ठा, but क्रम now we
+ * use a single global rwlock क्रम all ttys in ppp line discipline.
  */
-static DEFINE_RWLOCK(disc_data_lock);
+अटल DEFINE_RWLOCK(disc_data_lock);
 
-static struct mkiss *mkiss_get(struct tty_struct *tty)
-{
-	struct mkiss *ax;
+अटल काष्ठा mkiss *mkiss_get(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा mkiss *ax;
 
-	read_lock(&disc_data_lock);
+	पढ़ो_lock(&disc_data_lock);
 	ax = tty->disc_data;
-	if (ax)
+	अगर (ax)
 		refcount_inc(&ax->refcnt);
-	read_unlock(&disc_data_lock);
+	पढ़ो_unlock(&disc_data_lock);
 
-	return ax;
-}
+	वापस ax;
+पूर्ण
 
-static void mkiss_put(struct mkiss *ax)
-{
-	if (refcount_dec_and_test(&ax->refcnt))
+अटल व्योम mkiss_put(काष्ठा mkiss *ax)
+अणु
+	अगर (refcount_dec_and_test(&ax->refcnt))
 		complete(&ax->dead);
-}
+पूर्ण
 
-static int crc_force = 0;	/* Can be overridden with insmod */
+अटल पूर्णांक crc_क्रमce = 0;	/* Can be overridden with insmod */
 
-static int mkiss_open(struct tty_struct *tty)
-{
-	struct net_device *dev;
-	struct mkiss *ax;
-	int err;
+अटल पूर्णांक mkiss_खोलो(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा net_device *dev;
+	काष्ठा mkiss *ax;
+	पूर्णांक err;
 
-	if (!capable(CAP_NET_ADMIN))
-		return -EPERM;
-	if (tty->ops->write == NULL)
-		return -EOPNOTSUPP;
+	अगर (!capable(CAP_NET_ADMIN))
+		वापस -EPERM;
+	अगर (tty->ops->ग_लिखो == शून्य)
+		वापस -EOPNOTSUPP;
 
-	dev = alloc_netdev(sizeof(struct mkiss), "ax%d", NET_NAME_UNKNOWN,
+	dev = alloc_netdev(माप(काष्ठा mkiss), "ax%d", NET_NAME_UNKNOWN,
 			   ax_setup);
-	if (!dev) {
+	अगर (!dev) अणु
 		err = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ax = netdev_priv(dev);
 	ax->dev = dev;
@@ -714,269 +715,269 @@ static int mkiss_open(struct tty_struct *tty)
 
 	tty_driver_flush_buffer(tty);
 
-	/* Restore default settings */
+	/* Restore शेष settings */
 	dev->type = ARPHRD_AX25;
 
-	/* Perform the low-level AX25 initialization. */
-	err = ax_open(ax->dev);
-	if (err)
-		goto out_free_netdev;
+	/* Perक्रमm the low-level AX25 initialization. */
+	err = ax_खोलो(ax->dev);
+	अगर (err)
+		जाओ out_मुक्त_netdev;
 
-	err = register_netdev(dev);
-	if (err)
-		goto out_free_buffers;
+	err = रेजिस्टर_netdev(dev);
+	अगर (err)
+		जाओ out_मुक्त_buffers;
 
-	/* after register_netdev() - because else printk smashes the kernel */
-	switch (crc_force) {
-	case 3:
+	/* after रेजिस्टर_netdev() - because अन्यथा prपूर्णांकk smashes the kernel */
+	चयन (crc_क्रमce) अणु
+	हाल 3:
 		ax->crcmode  = CRC_MODE_SMACK;
-		printk(KERN_INFO "mkiss: %s: crc mode smack forced.\n",
+		prपूर्णांकk(KERN_INFO "mkiss: %s: crc mode smack forced.\n",
 		       ax->dev->name);
-		break;
-	case 2:
+		अवरोध;
+	हाल 2:
 		ax->crcmode  = CRC_MODE_FLEX;
-		printk(KERN_INFO "mkiss: %s: crc mode flexnet forced.\n",
+		prपूर्णांकk(KERN_INFO "mkiss: %s: crc mode flexnet forced.\n",
 		       ax->dev->name);
-		break;
-	case 1:
+		अवरोध;
+	हाल 1:
 		ax->crcmode  = CRC_MODE_NONE;
-		printk(KERN_INFO "mkiss: %s: crc mode disabled.\n",
+		prपूर्णांकk(KERN_INFO "mkiss: %s: crc mode disabled.\n",
 		       ax->dev->name);
-		break;
-	case 0:
-	default:
-		crc_force = 0;
-		printk(KERN_INFO "mkiss: %s: crc mode is auto.\n",
+		अवरोध;
+	हाल 0:
+	शेष:
+		crc_क्रमce = 0;
+		prपूर्णांकk(KERN_INFO "mkiss: %s: crc mode is auto.\n",
 		       ax->dev->name);
 		ax->crcmode  = CRC_MODE_SMACK_TEST;
-	}
-	ax->crcauto = (crc_force ? 0 : 1);
+	पूर्ण
+	ax->crcस्वतः = (crc_क्रमce ? 0 : 1);
 
-	netif_start_queue(dev);
+	netअगर_start_queue(dev);
 
 	/* Done.  We have linked the TTY line to a channel. */
-	return 0;
+	वापस 0;
 
-out_free_buffers:
-	kfree(ax->rbuff);
-	kfree(ax->xbuff);
+out_मुक्त_buffers:
+	kमुक्त(ax->rbuff);
+	kमुक्त(ax->xbuff);
 
-out_free_netdev:
-	free_netdev(dev);
+out_मुक्त_netdev:
+	मुक्त_netdev(dev);
 
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void mkiss_close(struct tty_struct *tty)
-{
-	struct mkiss *ax;
+अटल व्योम mkiss_बंद(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा mkiss *ax;
 
-	write_lock_irq(&disc_data_lock);
+	ग_लिखो_lock_irq(&disc_data_lock);
 	ax = tty->disc_data;
-	tty->disc_data = NULL;
-	write_unlock_irq(&disc_data_lock);
+	tty->disc_data = शून्य;
+	ग_लिखो_unlock_irq(&disc_data_lock);
 
-	if (!ax)
-		return;
+	अगर (!ax)
+		वापस;
 
 	/*
 	 * We have now ensured that nobody can start using ap from now on, but
-	 * we have to wait for all existing users to finish.
+	 * we have to रुको क्रम all existing users to finish.
 	 */
-	if (!refcount_dec_and_test(&ax->refcnt))
-		wait_for_completion(&ax->dead);
+	अगर (!refcount_dec_and_test(&ax->refcnt))
+		रुको_क्रम_completion(&ax->dead);
 	/*
 	 * Halt the transmit queue so that a new transmit cannot scribble
 	 * on our buffers
 	 */
-	netif_stop_queue(ax->dev);
+	netअगर_stop_queue(ax->dev);
 
 	/* Free all AX25 frame buffers. */
-	kfree(ax->rbuff);
-	kfree(ax->xbuff);
+	kमुक्त(ax->rbuff);
+	kमुक्त(ax->xbuff);
 
-	ax->tty = NULL;
+	ax->tty = शून्य;
 
-	unregister_netdev(ax->dev);
-	free_netdev(ax->dev);
-}
+	unरेजिस्टर_netdev(ax->dev);
+	मुक्त_netdev(ax->dev);
+पूर्ण
 
-/* Perform I/O control on an active ax25 channel. */
-static int mkiss_ioctl(struct tty_struct *tty, struct file *file,
-	unsigned int cmd, unsigned long arg)
-{
-	struct mkiss *ax = mkiss_get(tty);
-	struct net_device *dev;
-	unsigned int tmp, err;
+/* Perक्रमm I/O control on an active ax25 channel. */
+अटल पूर्णांक mkiss_ioctl(काष्ठा tty_काष्ठा *tty, काष्ठा file *file,
+	अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा mkiss *ax = mkiss_get(tty);
+	काष्ठा net_device *dev;
+	अचिन्हित पूर्णांक पंचांगp, err;
 
 	/* First make sure we're connected. */
-	if (ax == NULL)
-		return -ENXIO;
+	अगर (ax == शून्य)
+		वापस -ENXIO;
 	dev = ax->dev;
 
-	switch (cmd) {
- 	case SIOCGIFNAME:
-		err = copy_to_user((void __user *) arg, ax->dev->name,
-		                   strlen(ax->dev->name) + 1) ? -EFAULT : 0;
-		break;
+	चयन (cmd) अणु
+ 	हाल SIOCGIFNAME:
+		err = copy_to_user((व्योम __user *) arg, ax->dev->name,
+		                   म_माप(ax->dev->name) + 1) ? -EFAULT : 0;
+		अवरोध;
 
-	case SIOCGIFENCAP:
-		err = put_user(4, (int __user *) arg);
-		break;
+	हाल SIOCGIFENCAP:
+		err = put_user(4, (पूर्णांक __user *) arg);
+		अवरोध;
 
-	case SIOCSIFENCAP:
-		if (get_user(tmp, (int __user *) arg)) {
+	हाल SIOCSIFENCAP:
+		अगर (get_user(पंचांगp, (पूर्णांक __user *) arg)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		ax->mode = tmp;
+		ax->mode = पंचांगp;
 		dev->addr_len        = AX25_ADDR_LEN;
 		dev->hard_header_len = AX25_KISS_HEADER_LEN +
 		                       AX25_MAX_HEADER_LEN + 3;
 		dev->type            = ARPHRD_AX25;
 
 		err = 0;
-		break;
+		अवरोध;
 
-	case SIOCSIFHWADDR: {
-		char addr[AX25_ADDR_LEN];
+	हाल SIOCSIFHWADDR: अणु
+		अक्षर addr[AX25_ADDR_LEN];
 
-		if (copy_from_user(&addr,
-		                   (void __user *) arg, AX25_ADDR_LEN)) {
+		अगर (copy_from_user(&addr,
+		                   (व्योम __user *) arg, AX25_ADDR_LEN)) अणु
 			err = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		netif_tx_lock_bh(dev);
-		memcpy(dev->dev_addr, addr, AX25_ADDR_LEN);
-		netif_tx_unlock_bh(dev);
+		netअगर_tx_lock_bh(dev);
+		स_नकल(dev->dev_addr, addr, AX25_ADDR_LEN);
+		netअगर_tx_unlock_bh(dev);
 
 		err = 0;
-		break;
-	}
-	default:
+		अवरोध;
+	पूर्ण
+	शेष:
 		err = -ENOIOCTLCMD;
-	}
+	पूर्ण
 
 	mkiss_put(ax);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /*
- * Handle the 'receiver data ready' interrupt.
+ * Handle the 'receiver data ready' पूर्णांकerrupt.
  * This function is called by the 'tty_io' module in the kernel when
  * a block of data has been received, which can now be decapsulated
- * and sent on to the AX.25 layer for further processing.
+ * and sent on to the AX.25 layer क्रम further processing.
  */
-static void mkiss_receive_buf(struct tty_struct *tty, const unsigned char *cp,
-	char *fp, int count)
-{
-	struct mkiss *ax = mkiss_get(tty);
+अटल व्योम mkiss_receive_buf(काष्ठा tty_काष्ठा *tty, स्थिर अचिन्हित अक्षर *cp,
+	अक्षर *fp, पूर्णांक count)
+अणु
+	काष्ठा mkiss *ax = mkiss_get(tty);
 
-	if (!ax)
-		return;
+	अगर (!ax)
+		वापस;
 
 	/*
-	 * Argh! mtu change time! - costs us the packet part received
+	 * Argh! mtu change समय! - costs us the packet part received
 	 * at the change
 	 */
-	if (ax->mtu != ax->dev->mtu + 73)
+	अगर (ax->mtu != ax->dev->mtu + 73)
 		ax_changedmtu(ax);
 
-	/* Read the characters out of the buffer */
-	while (count--) {
-		if (fp != NULL && *fp++) {
-			if (!test_and_set_bit(AXF_ERROR, &ax->flags))
+	/* Read the अक्षरacters out of the buffer */
+	जबतक (count--) अणु
+		अगर (fp != शून्य && *fp++) अणु
+			अगर (!test_and_set_bit(AXF_ERROR, &ax->flags))
 				ax->dev->stats.rx_errors++;
 			cp++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		kiss_unesc(ax, *cp++);
-	}
+	पूर्ण
 
 	mkiss_put(ax);
 	tty_unthrottle(tty);
-}
+पूर्ण
 
 /*
- * Called by the driver when there's room for more data.  If we have
+ * Called by the driver when there's room क्रम more data.  If we have
  * more packets to send, we send them here.
  */
-static void mkiss_write_wakeup(struct tty_struct *tty)
-{
-	struct mkiss *ax = mkiss_get(tty);
-	int actual;
+अटल व्योम mkiss_ग_लिखो_wakeup(काष्ठा tty_काष्ठा *tty)
+अणु
+	काष्ठा mkiss *ax = mkiss_get(tty);
+	पूर्णांक actual;
 
-	if (!ax)
-		return;
+	अगर (!ax)
+		वापस;
 
-	if (ax->xleft <= 0)  {
-		/* Now serial buffer is almost free & we can start
+	अगर (ax->xleft <= 0)  अणु
+		/* Now serial buffer is almost मुक्त & we can start
 		 * transmission of another packet
 		 */
 		clear_bit(TTY_DO_WRITE_WAKEUP, &tty->flags);
 
-		netif_wake_queue(ax->dev);
-		goto out;
-	}
+		netअगर_wake_queue(ax->dev);
+		जाओ out;
+	पूर्ण
 
-	actual = tty->ops->write(tty, ax->xhead, ax->xleft);
+	actual = tty->ops->ग_लिखो(tty, ax->xhead, ax->xleft);
 	ax->xleft -= actual;
 	ax->xhead += actual;
 
 out:
 	mkiss_put(ax);
-}
+पूर्ण
 
-static struct tty_ldisc_ops ax_ldisc = {
+अटल काष्ठा tty_ldisc_ops ax_ldisc = अणु
 	.owner		= THIS_MODULE,
 	.name		= "mkiss",
-	.open		= mkiss_open,
-	.close		= mkiss_close,
+	.खोलो		= mkiss_खोलो,
+	.बंद		= mkiss_बंद,
 	.ioctl		= mkiss_ioctl,
 	.receive_buf	= mkiss_receive_buf,
-	.write_wakeup	= mkiss_write_wakeup
-};
+	.ग_लिखो_wakeup	= mkiss_ग_लिखो_wakeup
+पूर्ण;
 
-static const char banner[] __initconst = KERN_INFO \
+अटल स्थिर अक्षर banner[] __initस्थिर = KERN_INFO \
 	"mkiss: AX.25 Multikiss, Hans Albas PE1AYX\n";
-static const char msg_regfail[] __initconst = KERN_ERR \
+अटल स्थिर अक्षर msg_regfail[] __initस्थिर = KERN_ERR \
 	"mkiss: can't register line discipline (err = %d)\n";
 
-static int __init mkiss_init_driver(void)
-{
-	int status;
+अटल पूर्णांक __init mkiss_init_driver(व्योम)
+अणु
+	पूर्णांक status;
 
-	printk(banner);
+	prपूर्णांकk(banner);
 
-	status = tty_register_ldisc(N_AX25, &ax_ldisc);
-	if (status != 0)
-		printk(msg_regfail, status);
+	status = tty_रेजिस्टर_ldisc(N_AX25, &ax_ldisc);
+	अगर (status != 0)
+		prपूर्णांकk(msg_regfail, status);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static const char msg_unregfail[] = KERN_ERR \
+अटल स्थिर अक्षर msg_unregfail[] = KERN_ERR \
 	"mkiss: can't unregister line discipline (err = %d)\n";
 
-static void __exit mkiss_exit_driver(void)
-{
-	int ret;
+अटल व्योम __निकास mkiss_निकास_driver(व्योम)
+अणु
+	पूर्णांक ret;
 
-	if ((ret = tty_unregister_ldisc(N_AX25)))
-		printk(msg_unregfail, ret);
-}
+	अगर ((ret = tty_unरेजिस्टर_ldisc(N_AX25)))
+		prपूर्णांकk(msg_unregfail, ret);
+पूर्ण
 
 MODULE_AUTHOR("Ralf Baechle DL5RB <ralf@linux-mips.org>");
 MODULE_DESCRIPTION("KISS driver for AX.25 over TTYs");
-module_param(crc_force, int, 0);
-MODULE_PARM_DESC(crc_force, "crc [0 = auto | 1 = none | 2 = flexnet | 3 = smack]");
+module_param(crc_क्रमce, पूर्णांक, 0);
+MODULE_PARM_DESC(crc_क्रमce, "crc [0 = auto | 1 = none | 2 = flexnet | 3 = smack]");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_LDISC(N_AX25);
 
 module_init(mkiss_init_driver);
-module_exit(mkiss_exit_driver);
+module_निकास(mkiss_निकास_driver);

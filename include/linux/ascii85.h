@@ -1,38 +1,39 @@
+<शैली गुरु>
 /*
- * SPDX-License-Identifier: GPL-2.0
+ * SPDX-License-Identअगरier: GPL-2.0
  *
  * Copyright (c) 2008 Intel Corporation
  * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASCII85_H_
-#define _ASCII85_H_
+#अगर_अघोषित _ASCII85_H_
+#घोषणा _ASCII85_H_
 
-#include <linux/kernel.h>
+#समावेश <linux/kernel.h>
 
-#define ASCII85_BUFSZ 6
+#घोषणा ASCII85_BUFSZ 6
 
-static inline long
-ascii85_encode_len(long len)
-{
-	return DIV_ROUND_UP(len, 4);
-}
+अटल अंतरभूत दीर्घ
+ascii85_encode_len(दीर्घ len)
+अणु
+	वापस DIV_ROUND_UP(len, 4);
+पूर्ण
 
-static inline const char *
-ascii85_encode(u32 in, char *out)
-{
-	int i;
+अटल अंतरभूत स्थिर अक्षर *
+ascii85_encode(u32 in, अक्षर *out)
+अणु
+	पूर्णांक i;
 
-	if (in == 0)
-		return "z";
+	अगर (in == 0)
+		वापस "z";
 
 	out[5] = '\0';
-	for (i = 5; i--; ) {
+	क्रम (i = 5; i--; ) अणु
 		out[i] = '!' + in % 85;
 		in /= 85;
-	}
+	पूर्ण
 
-	return out;
-}
+	वापस out;
+पूर्ण
 
-#endif
+#पूर्ण_अगर

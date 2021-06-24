@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2000-2002,2005 Silicon Graphics, Inc.
  * All Rights Reserved.
  */
-#include "xfs.h"
-#include "xfs_fs.h"
-#include "xfs_shared.h"
-#include "xfs_format.h"
-#include "xfs_log_format.h"
-#include "xfs_trans_resv.h"
-#include "xfs_mount.h"
-#include "xfs_trans.h"
-#include "xfs_buf_item.h"
-#include "xfs_trans_priv.h"
-#include "xfs_trace.h"
+#समावेश "xfs.h"
+#समावेश "xfs_fs.h"
+#समावेश "xfs_shared.h"
+#समावेश "xfs_format.h"
+#समावेश "xfs_log_format.h"
+#समावेश "xfs_trans_resv.h"
+#समावेश "xfs_mount.h"
+#समावेश "xfs_trans.h"
+#समावेश "xfs_buf_item.h"
+#समावेश "xfs_trans_priv.h"
+#समावेश "xfs_trace.h"
 
 /*
- * Check to see if a buffer matching the given parameters is already
+ * Check to see अगर a buffer matching the given parameters is alपढ़ोy
  * a part of the given transaction.
  */
-STATIC struct xfs_buf *
+STATIC काष्ठा xfs_buf *
 xfs_trans_buf_item_match(
-	struct xfs_trans	*tp,
-	struct xfs_buftarg	*target,
-	struct xfs_buf_map	*map,
-	int			nmaps)
-{
-	struct xfs_log_item	*lip;
-	struct xfs_buf_log_item	*blip;
-	int			len = 0;
-	int			i;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buftarg	*target,
+	काष्ठा xfs_buf_map	*map,
+	पूर्णांक			nmaps)
+अणु
+	काष्ठा xfs_log_item	*lip;
+	काष्ठा xfs_buf_log_item	*blip;
+	पूर्णांक			len = 0;
+	पूर्णांक			i;
 
-	for (i = 0; i < nmaps; i++)
+	क्रम (i = 0; i < nmaps; i++)
 		len += map[i].bm_len;
 
-	list_for_each_entry(lip, &tp->t_items, li_trans) {
-		blip = (struct xfs_buf_log_item *)lip;
-		if (blip->bli_item.li_type == XFS_LI_BUF &&
+	list_क्रम_each_entry(lip, &tp->t_items, li_trans) अणु
+		blip = (काष्ठा xfs_buf_log_item *)lip;
+		अगर (blip->bli_item.li_type == XFS_LI_BUF &&
 		    blip->bli_buf->b_target == target &&
 		    XFS_BUF_ADDR(blip->bli_buf) == map[0].bm_bn &&
-		    blip->bli_buf->b_length == len) {
+		    blip->bli_buf->b_length == len) अणु
 			ASSERT(blip->bli_buf->b_map_count == nmaps);
-			return blip->bli_buf;
-		}
-	}
+			वापस blip->bli_buf;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /*
  * Add the locked buffer to the transaction.
@@ -54,331 +55,331 @@ xfs_trans_buf_item_match(
  * The buffer must be locked, and it cannot be associated with any
  * transaction.
  *
- * If the buffer does not yet have a buf log item associated with it,
- * then allocate one for it.  Then add the buf item to the transaction.
+ * If the buffer करोes not yet have a buf log item associated with it,
+ * then allocate one क्रम it.  Then add the buf item to the transaction.
  */
-STATIC void
+STATIC व्योम
 _xfs_trans_bjoin(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*bp,
-	int			reset_recur)
-{
-	struct xfs_buf_log_item	*bip;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buf		*bp,
+	पूर्णांक			reset_recur)
+अणु
+	काष्ठा xfs_buf_log_item	*bip;
 
-	ASSERT(bp->b_transp == NULL);
+	ASSERT(bp->b_transp == शून्य);
 
 	/*
-	 * The xfs_buf_log_item pointer is stored in b_log_item.  If
-	 * it doesn't have one yet, then allocate one and initialize it.
-	 * The checks to see if one is there are in xfs_buf_item_init().
+	 * The xfs_buf_log_item poपूर्णांकer is stored in b_log_item.  If
+	 * it करोesn't have one yet, then allocate one and initialize it.
+	 * The checks to see अगर one is there are in xfs_buf_item_init().
 	 */
 	xfs_buf_item_init(bp, tp->t_mountp);
 	bip = bp->b_log_item;
 	ASSERT(!(bip->bli_flags & XFS_BLI_STALE));
-	ASSERT(!(bip->__bli_format.blf_flags & XFS_BLF_CANCEL));
+	ASSERT(!(bip->__bli_क्रमmat.blf_flags & XFS_BLF_CANCEL));
 	ASSERT(!(bip->bli_flags & XFS_BLI_LOGGED));
-	if (reset_recur)
+	अगर (reset_recur)
 		bip->bli_recur = 0;
 
 	/*
-	 * Take a reference for this transaction on the buf item.
+	 * Take a reference क्रम this transaction on the buf item.
 	 */
 	atomic_inc(&bip->bli_refcount);
 
 	/*
 	 * Attach the item to the transaction so we can find it in
-	 * xfs_trans_get_buf() and friends.
+	 * xfs_trans_get_buf() and मित्रs.
 	 */
 	xfs_trans_add_item(tp, &bip->bli_item);
 	bp->b_transp = tp;
 
-}
+पूर्ण
 
-void
+व्योम
 xfs_trans_bjoin(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*bp)
-{
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buf		*bp)
+अणु
 	_xfs_trans_bjoin(tp, bp, 0);
 	trace_xfs_trans_bjoin(bp->b_log_item);
-}
+पूर्ण
 
 /*
- * Get and lock the buffer for the caller if it is not already
- * locked within the given transaction.  If it is already locked
+ * Get and lock the buffer क्रम the caller अगर it is not alपढ़ोy
+ * locked within the given transaction.  If it is alपढ़ोy locked
  * within the transaction, just increment its lock recursion count
- * and return a pointer to it.
+ * and वापस a poपूर्णांकer to it.
  *
- * If the transaction pointer is NULL, make this just a normal
+ * If the transaction poपूर्णांकer is शून्य, make this just a normal
  * get_buf() call.
  */
-int
+पूर्णांक
 xfs_trans_get_buf_map(
-	struct xfs_trans	*tp,
-	struct xfs_buftarg	*target,
-	struct xfs_buf_map	*map,
-	int			nmaps,
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buftarg	*target,
+	काष्ठा xfs_buf_map	*map,
+	पूर्णांक			nmaps,
 	xfs_buf_flags_t		flags,
-	struct xfs_buf		**bpp)
-{
-	struct xfs_buf		*bp;
-	struct xfs_buf_log_item	*bip;
-	int			error;
+	काष्ठा xfs_buf		**bpp)
+अणु
+	काष्ठा xfs_buf		*bp;
+	काष्ठा xfs_buf_log_item	*bip;
+	पूर्णांक			error;
 
-	*bpp = NULL;
-	if (!tp)
-		return xfs_buf_get_map(target, map, nmaps, flags, bpp);
+	*bpp = शून्य;
+	अगर (!tp)
+		वापस xfs_buf_get_map(target, map, nmaps, flags, bpp);
 
 	/*
 	 * If we find the buffer in the cache with this transaction
-	 * pointer in its b_fsprivate2 field, then we know we already
-	 * have it locked.  In this case we just increment the lock
-	 * recursion count and return the buffer to the caller.
+	 * poपूर्णांकer in its b_fsनिजी2 field, then we know we alपढ़ोy
+	 * have it locked.  In this हाल we just increment the lock
+	 * recursion count and वापस the buffer to the caller.
 	 */
 	bp = xfs_trans_buf_item_match(tp, target, map, nmaps);
-	if (bp != NULL) {
+	अगर (bp != शून्य) अणु
 		ASSERT(xfs_buf_islocked(bp));
-		if (XFS_FORCED_SHUTDOWN(tp->t_mountp)) {
+		अगर (XFS_FORCED_SHUTDOWN(tp->t_mountp)) अणु
 			xfs_buf_stale(bp);
 			bp->b_flags |= XBF_DONE;
-		}
+		पूर्ण
 
 		ASSERT(bp->b_transp == tp);
 		bip = bp->b_log_item;
-		ASSERT(bip != NULL);
-		ASSERT(atomic_read(&bip->bli_refcount) > 0);
+		ASSERT(bip != शून्य);
+		ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 		bip->bli_recur++;
 		trace_xfs_trans_get_buf_recur(bip);
 		*bpp = bp;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	error = xfs_buf_get_map(target, map, nmaps, flags, &bp);
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	ASSERT(!bp->b_error);
 
 	_xfs_trans_bjoin(tp, bp, 1);
 	trace_xfs_trans_get_buf(bp->b_log_item);
 	*bpp = bp;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Get and lock the superblock buffer for the given transaction.
+ * Get and lock the superblock buffer क्रम the given transaction.
  */
-struct xfs_buf *
-xfs_trans_getsb(
-	struct xfs_trans	*tp)
-{
-	struct xfs_buf		*bp = tp->t_mountp->m_sb_bp;
+काष्ठा xfs_buf *
+xfs_trans_माला_लोb(
+	काष्ठा xfs_trans	*tp)
+अणु
+	काष्ठा xfs_buf		*bp = tp->t_mountp->m_sb_bp;
 
 	/*
-	 * Just increment the lock recursion count if the buffer is already
+	 * Just increment the lock recursion count अगर the buffer is alपढ़ोy
 	 * attached to this transaction.
 	 */
-	if (bp->b_transp == tp) {
-		struct xfs_buf_log_item	*bip = bp->b_log_item;
+	अगर (bp->b_transp == tp) अणु
+		काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
-		ASSERT(bip != NULL);
-		ASSERT(atomic_read(&bip->bli_refcount) > 0);
+		ASSERT(bip != शून्य);
+		ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 		bip->bli_recur++;
 
-		trace_xfs_trans_getsb_recur(bip);
-	} else {
+		trace_xfs_trans_माला_लोb_recur(bip);
+	पूर्ण अन्यथा अणु
 		xfs_buf_lock(bp);
 		xfs_buf_hold(bp);
 		_xfs_trans_bjoin(tp, bp, 1);
 
-		trace_xfs_trans_getsb(bp->b_log_item);
-	}
+		trace_xfs_trans_माला_लोb(bp->b_log_item);
+	पूर्ण
 
-	return bp;
-}
+	वापस bp;
+पूर्ण
 
 /*
- * Get and lock the buffer for the caller if it is not already
+ * Get and lock the buffer क्रम the caller अगर it is not alपढ़ोy
  * locked within the given transaction.  If it has not yet been
- * read in, read it from disk. If it is already locked
- * within the transaction and already read in, just increment its
- * lock recursion count and return a pointer to it.
+ * पढ़ो in, पढ़ो it from disk. If it is alपढ़ोy locked
+ * within the transaction and alपढ़ोy पढ़ो in, just increment its
+ * lock recursion count and वापस a poपूर्णांकer to it.
  *
- * If the transaction pointer is NULL, make this just a normal
- * read_buf() call.
+ * If the transaction poपूर्णांकer is शून्य, make this just a normal
+ * पढ़ो_buf() call.
  */
-int
-xfs_trans_read_buf_map(
-	struct xfs_mount	*mp,
-	struct xfs_trans	*tp,
-	struct xfs_buftarg	*target,
-	struct xfs_buf_map	*map,
-	int			nmaps,
+पूर्णांक
+xfs_trans_पढ़ो_buf_map(
+	काष्ठा xfs_mount	*mp,
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buftarg	*target,
+	काष्ठा xfs_buf_map	*map,
+	पूर्णांक			nmaps,
 	xfs_buf_flags_t		flags,
-	struct xfs_buf		**bpp,
-	const struct xfs_buf_ops *ops)
-{
-	struct xfs_buf		*bp = NULL;
-	struct xfs_buf_log_item	*bip;
-	int			error;
+	काष्ठा xfs_buf		**bpp,
+	स्थिर काष्ठा xfs_buf_ops *ops)
+अणु
+	काष्ठा xfs_buf		*bp = शून्य;
+	काष्ठा xfs_buf_log_item	*bip;
+	पूर्णांक			error;
 
-	*bpp = NULL;
+	*bpp = शून्य;
 	/*
 	 * If we find the buffer in the cache with this transaction
-	 * pointer in its b_fsprivate2 field, then we know we already
-	 * have it locked.  If it is already read in we just increment
-	 * the lock recursion count and return the buffer to the caller.
-	 * If the buffer is not yet read in, then we read it in, increment
-	 * the lock recursion count, and return it to the caller.
+	 * poपूर्णांकer in its b_fsनिजी2 field, then we know we alपढ़ोy
+	 * have it locked.  If it is alपढ़ोy पढ़ो in we just increment
+	 * the lock recursion count and वापस the buffer to the caller.
+	 * If the buffer is not yet पढ़ो in, then we पढ़ो it in, increment
+	 * the lock recursion count, and वापस it to the caller.
 	 */
-	if (tp)
+	अगर (tp)
 		bp = xfs_trans_buf_item_match(tp, target, map, nmaps);
-	if (bp) {
+	अगर (bp) अणु
 		ASSERT(xfs_buf_islocked(bp));
 		ASSERT(bp->b_transp == tp);
-		ASSERT(bp->b_log_item != NULL);
+		ASSERT(bp->b_log_item != शून्य);
 		ASSERT(!bp->b_error);
 		ASSERT(bp->b_flags & XBF_DONE);
 
 		/*
 		 * We never locked this buf ourselves, so we shouldn't
-		 * brelse it either. Just get out.
+		 * brअन्यथा it either. Just get out.
 		 */
-		if (XFS_FORCED_SHUTDOWN(mp)) {
-			trace_xfs_trans_read_buf_shut(bp, _RET_IP_);
-			return -EIO;
-		}
+		अगर (XFS_FORCED_SHUTDOWN(mp)) अणु
+			trace_xfs_trans_पढ़ो_buf_shut(bp, _RET_IP_);
+			वापस -EIO;
+		पूर्ण
 
 		/*
-		 * Check if the caller is trying to read a buffer that is
-		 * already attached to the transaction yet has no buffer ops
-		 * assigned.  Ops are usually attached when the buffer is
-		 * attached to the transaction, or by the read caller if
+		 * Check अगर the caller is trying to पढ़ो a buffer that is
+		 * alपढ़ोy attached to the transaction yet has no buffer ops
+		 * asचिन्हित.  Ops are usually attached when the buffer is
+		 * attached to the transaction, or by the पढ़ो caller अगर
 		 * special circumstances.  That didn't happen, which is not
 		 * how this is supposed to go.
 		 *
-		 * If the buffer passes verification we'll let this go, but if
-		 * not we have to shut down.  Let the transaction cleanup code
-		 * release this buffer when it kills the tranaction.
+		 * If the buffer passes verअगरication we'll let this go, but अगर
+		 * not we have to shut करोwn.  Let the transaction cleanup code
+		 * release this buffer when it समाप्तs the tranaction.
 		 */
-		ASSERT(bp->b_ops != NULL);
-		error = xfs_buf_reverify(bp, ops);
-		if (error) {
-			xfs_buf_ioerror_alert(bp, __return_address);
+		ASSERT(bp->b_ops != शून्य);
+		error = xfs_buf_reverअगरy(bp, ops);
+		अगर (error) अणु
+			xfs_buf_ioerror_alert(bp, __वापस_address);
 
-			if (tp->t_flags & XFS_TRANS_DIRTY)
-				xfs_force_shutdown(tp->t_mountp,
+			अगर (tp->t_flags & XFS_TRANS_सूचीTY)
+				xfs_क्रमce_shutकरोwn(tp->t_mountp,
 						SHUTDOWN_META_IO_ERROR);
 
 			/* bad CRC means corrupted metadata */
-			if (error == -EFSBADCRC)
+			अगर (error == -EFSBADCRC)
 				error = -EFSCORRUPTED;
-			return error;
-		}
+			वापस error;
+		पूर्ण
 
 		bip = bp->b_log_item;
 		bip->bli_recur++;
 
-		ASSERT(atomic_read(&bip->bli_refcount) > 0);
-		trace_xfs_trans_read_buf_recur(bip);
-		ASSERT(bp->b_ops != NULL || ops == NULL);
+		ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
+		trace_xfs_trans_पढ़ो_buf_recur(bip);
+		ASSERT(bp->b_ops != शून्य || ops == शून्य);
 		*bpp = bp;
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	error = xfs_buf_read_map(target, map, nmaps, flags, &bp, ops,
-			__return_address);
-	switch (error) {
-	case 0:
-		break;
-	default:
-		if (tp && (tp->t_flags & XFS_TRANS_DIRTY))
-			xfs_force_shutdown(tp->t_mountp, SHUTDOWN_META_IO_ERROR);
+	error = xfs_buf_पढ़ो_map(target, map, nmaps, flags, &bp, ops,
+			__वापस_address);
+	चयन (error) अणु
+	हाल 0:
+		अवरोध;
+	शेष:
+		अगर (tp && (tp->t_flags & XFS_TRANS_सूचीTY))
+			xfs_क्रमce_shutकरोwn(tp->t_mountp, SHUTDOWN_META_IO_ERROR);
 		/* fall through */
-	case -ENOMEM:
-	case -EAGAIN:
-		return error;
-	}
+	हाल -ENOMEM:
+	हाल -EAGAIN:
+		वापस error;
+	पूर्ण
 
-	if (XFS_FORCED_SHUTDOWN(mp)) {
-		xfs_buf_relse(bp);
-		trace_xfs_trans_read_buf_shut(bp, _RET_IP_);
-		return -EIO;
-	}
+	अगर (XFS_FORCED_SHUTDOWN(mp)) अणु
+		xfs_buf_rअन्यथा(bp);
+		trace_xfs_trans_पढ़ो_buf_shut(bp, _RET_IP_);
+		वापस -EIO;
+	पूर्ण
 
-	if (tp) {
+	अगर (tp) अणु
 		_xfs_trans_bjoin(tp, bp, 1);
-		trace_xfs_trans_read_buf(bp->b_log_item);
-	}
-	ASSERT(bp->b_ops != NULL || ops == NULL);
+		trace_xfs_trans_पढ़ो_buf(bp->b_log_item);
+	पूर्ण
+	ASSERT(bp->b_ops != शून्य || ops == शून्य);
 	*bpp = bp;
-	return 0;
+	वापस 0;
 
-}
+पूर्ण
 
 /* Has this buffer been dirtied by anyone? */
 bool
 xfs_trans_buf_is_dirty(
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
-	if (!bip)
-		return false;
+	अगर (!bip)
+		वापस false;
 	ASSERT(bip->bli_item.li_type == XFS_LI_BUF);
-	return test_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags);
-}
+	वापस test_bit(XFS_LI_सूचीTY, &bip->bli_item.li_flags);
+पूर्ण
 
 /*
  * Release a buffer previously joined to the transaction. If the buffer is
- * modified within this transaction, decrement the recursion count but do not
- * release the buffer even if the count goes to 0. If the buffer is not modified
+ * modअगरied within this transaction, decrement the recursion count but करो not
+ * release the buffer even अगर the count goes to 0. If the buffer is not modअगरied
  * within the transaction, decrement the recursion count and release the buffer
- * if the recursion count goes to 0.
+ * अगर the recursion count goes to 0.
  *
- * If the buffer is to be released and it was not already dirty before this
- * transaction began, then also free the buf_log_item associated with it.
+ * If the buffer is to be released and it was not alपढ़ोy dirty beक्रमe this
+ * transaction began, then also मुक्त the buf_log_item associated with it.
  *
- * If the transaction pointer is NULL, this is a normal xfs_buf_relse() call.
+ * If the transaction poपूर्णांकer is शून्य, this is a normal xfs_buf_rअन्यथा() call.
  */
-void
-xfs_trans_brelse(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+व्योम
+xfs_trans_brअन्यथा(
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
 
-	if (!tp) {
-		xfs_buf_relse(bp);
-		return;
-	}
+	अगर (!tp) अणु
+		xfs_buf_rअन्यथा(bp);
+		वापस;
+	पूर्ण
 
-	trace_xfs_trans_brelse(bip);
+	trace_xfs_trans_brअन्यथा(bip);
 	ASSERT(bip->bli_item.li_type == XFS_LI_BUF);
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 
 	/*
-	 * If the release is for a recursive lookup, then decrement the count
-	 * and return.
+	 * If the release is क्रम a recursive lookup, then decrement the count
+	 * and वापस.
 	 */
-	if (bip->bli_recur > 0) {
+	अगर (bip->bli_recur > 0) अणु
 		bip->bli_recur--;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
 	 * If the buffer is invalidated or dirty in this transaction, we can't
 	 * release it until we commit.
 	 */
-	if (test_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags))
-		return;
-	if (bip->bli_flags & XFS_BLI_STALE)
-		return;
+	अगर (test_bit(XFS_LI_सूचीTY, &bip->bli_item.li_flags))
+		वापस;
+	अगर (bip->bli_flags & XFS_BLI_STALE)
+		वापस;
 
 	/*
-	 * Unlink the log item from the transaction and clear the hold flag, if
+	 * Unlink the log item from the transaction and clear the hold flag, अगर
 	 * set. We wouldn't want the next user of the buffer to get confused.
 	 */
 	ASSERT(!(bip->bli_flags & XFS_BLI_LOGGED));
@@ -388,113 +389,113 @@ xfs_trans_brelse(
 	/* drop the reference to the bli */
 	xfs_buf_item_put(bip);
 
-	bp->b_transp = NULL;
-	xfs_buf_relse(bp);
-}
+	bp->b_transp = शून्य;
+	xfs_buf_rअन्यथा(bp);
+पूर्ण
 
 /*
  * Mark the buffer as not needing to be unlocked when the buf item's
- * iop_committing() routine is called.  The buffer must already be locked
+ * iop_committing() routine is called.  The buffer must alपढ़ोy be locked
  * and associated with the given transaction.
  */
 /* ARGSUSED */
-void
+व्योम
 xfs_trans_bhold(
 	xfs_trans_t		*tp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
-	ASSERT(bip != NULL);
+	ASSERT(bip != शून्य);
 	ASSERT(!(bip->bli_flags & XFS_BLI_STALE));
-	ASSERT(!(bip->__bli_format.blf_flags & XFS_BLF_CANCEL));
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(!(bip->__bli_क्रमmat.blf_flags & XFS_BLF_CANCEL));
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 
 	bip->bli_flags |= XFS_BLI_HOLD;
 	trace_xfs_trans_bhold(bip);
-}
+पूर्ण
 
 /*
  * Cancel the previous buffer hold request made on this buffer
- * for this transaction.
+ * क्रम this transaction.
  */
-void
+व्योम
 xfs_trans_bhold_release(
 	xfs_trans_t		*tp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
-	ASSERT(bip != NULL);
+	ASSERT(bip != शून्य);
 	ASSERT(!(bip->bli_flags & XFS_BLI_STALE));
-	ASSERT(!(bip->__bli_format.blf_flags & XFS_BLF_CANCEL));
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(!(bip->__bli_क्रमmat.blf_flags & XFS_BLF_CANCEL));
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 	ASSERT(bip->bli_flags & XFS_BLI_HOLD);
 
 	bip->bli_flags &= ~XFS_BLI_HOLD;
 	trace_xfs_trans_bhold_release(bip);
-}
+पूर्ण
 
 /*
  * Mark a buffer dirty in the transaction.
  */
-void
+व्योम
 xfs_trans_dirty_buf(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
-	ASSERT(bip != NULL);
+	ASSERT(bip != शून्य);
 
 	/*
 	 * Mark the buffer as needing to be written out eventually,
-	 * and set its iodone function to remove the buffer's buf log
-	 * item from the AIL and free it when the buffer is flushed
+	 * and set its ioकरोne function to हटाओ the buffer's buf log
+	 * item from the AIL and मुक्त it when the buffer is flushed
 	 * to disk.
 	 */
 	bp->b_flags |= XBF_DONE;
 
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 
 	/*
 	 * If we invalidated the buffer within this transaction, then
 	 * cancel the invalidation now that we're dirtying the buffer
 	 * again.  There are no races with the code in xfs_buf_item_unpin(),
-	 * because we have a reference to the buffer this entire time.
+	 * because we have a reference to the buffer this entire समय.
 	 */
-	if (bip->bli_flags & XFS_BLI_STALE) {
+	अगर (bip->bli_flags & XFS_BLI_STALE) अणु
 		bip->bli_flags &= ~XFS_BLI_STALE;
 		ASSERT(bp->b_flags & XBF_STALE);
 		bp->b_flags &= ~XBF_STALE;
-		bip->__bli_format.blf_flags &= ~XFS_BLF_CANCEL;
-	}
-	bip->bli_flags |= XFS_BLI_DIRTY | XFS_BLI_LOGGED;
+		bip->__bli_क्रमmat.blf_flags &= ~XFS_BLF_CANCEL;
+	पूर्ण
+	bip->bli_flags |= XFS_BLI_सूचीTY | XFS_BLI_LOGGED;
 
-	tp->t_flags |= XFS_TRANS_DIRTY;
-	set_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags);
-}
+	tp->t_flags |= XFS_TRANS_सूचीTY;
+	set_bit(XFS_LI_सूचीTY, &bip->bli_item.li_flags);
+पूर्ण
 
 /*
  * This is called to mark bytes first through last inclusive of the given
  * buffer as needing to be logged when the transaction is committed.
- * The buffer must already be associated with the given transaction.
+ * The buffer must alपढ़ोy be associated with the given transaction.
  *
  * First and last are numbers relative to the beginning of this buffer,
  * so the first byte in the buffer is numbered 0 regardless of the
  * value of b_blkno.
  */
-void
+व्योम
 xfs_trans_log_buf(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*bp,
-	uint			first,
-	uint			last)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buf		*bp,
+	uपूर्णांक			first,
+	uपूर्णांक			last)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(first <= last && last < BBTOB(bp->b_length));
 	ASSERT(!(bip->bli_flags & XFS_BLI_ORDERED));
@@ -503,81 +504,81 @@ xfs_trans_log_buf(
 
 	trace_xfs_trans_log_buf(bip);
 	xfs_buf_item_log(bip, first, last);
-}
+पूर्ण
 
 
 /*
  * Invalidate a buffer that is being used within a transaction.
  *
- * Typically this is because the blocks in the buffer are being freed, so we
- * need to prevent it from being written out when we're done.  Allowing it
- * to be written again might overwrite data in the free blocks if they are
- * reallocated to a file.
+ * Typically this is because the blocks in the buffer are being मुक्तd, so we
+ * need to prevent it from being written out when we're करोne.  Allowing it
+ * to be written again might overग_लिखो data in the मुक्त blocks अगर they are
+ * पुनः_स्मृतिated to a file.
  *
  * We prevent the buffer from being written out by marking it stale.  We can't
- * get rid of the buf log item at this point because the buffer may still be
- * pinned by another transaction.  If that is the case, then we'll wait until
- * the buffer is committed to disk for the last time (we can tell by the ref
- * count) and free it in xfs_buf_item_unpin().  Until that happens we will
+ * get rid of the buf log item at this poपूर्णांक because the buffer may still be
+ * pinned by another transaction.  If that is the हाल, then we'll रुको until
+ * the buffer is committed to disk क्रम the last समय (we can tell by the ref
+ * count) and मुक्त it in xfs_buf_item_unpin().  Until that happens we will
  * keep the buffer locked so that the buffer and buf log item are not reused.
  *
- * We also set the XFS_BLF_CANCEL flag in the buf log format structure and log
- * the buf item.  This will be used at recovery time to determine that copies
- * of the buffer in the log before this should not be replayed.
+ * We also set the XFS_BLF_CANCEL flag in the buf log क्रमmat काष्ठाure and log
+ * the buf item.  This will be used at recovery समय to determine that copies
+ * of the buffer in the log beक्रमe this should not be replayed.
  *
  * We mark the item descriptor and the transaction dirty so that we'll hold
  * the buffer until after the commit.
  *
  * Since we're invalidating the buffer, we also clear the state about which
  * parts of the buffer have been logged.  We also clear the flag indicating
- * that this is an inode buffer since the data in the buffer will no longer
+ * that this is an inode buffer since the data in the buffer will no दीर्घer
  * be valid.
  *
  * We set the stale bit in the buffer as well since we're getting rid of it.
  */
-void
+व्योम
 xfs_trans_binval(
 	xfs_trans_t		*tp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
-	int			i;
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
+	पूर्णांक			i;
 
 	ASSERT(bp->b_transp == tp);
-	ASSERT(bip != NULL);
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(bip != शून्य);
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 
 	trace_xfs_trans_binval(bip);
 
-	if (bip->bli_flags & XFS_BLI_STALE) {
+	अगर (bip->bli_flags & XFS_BLI_STALE) अणु
 		/*
-		 * If the buffer is already invalidated, then
-		 * just return.
+		 * If the buffer is alपढ़ोy invalidated, then
+		 * just वापस.
 		 */
 		ASSERT(bp->b_flags & XBF_STALE);
-		ASSERT(!(bip->bli_flags & (XFS_BLI_LOGGED | XFS_BLI_DIRTY)));
-		ASSERT(!(bip->__bli_format.blf_flags & XFS_BLF_INODE_BUF));
-		ASSERT(!(bip->__bli_format.blf_flags & XFS_BLFT_MASK));
-		ASSERT(bip->__bli_format.blf_flags & XFS_BLF_CANCEL);
-		ASSERT(test_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags));
-		ASSERT(tp->t_flags & XFS_TRANS_DIRTY);
-		return;
-	}
+		ASSERT(!(bip->bli_flags & (XFS_BLI_LOGGED | XFS_BLI_सूचीTY)));
+		ASSERT(!(bip->__bli_क्रमmat.blf_flags & XFS_BLF_INODE_BUF));
+		ASSERT(!(bip->__bli_क्रमmat.blf_flags & XFS_BLFT_MASK));
+		ASSERT(bip->__bli_क्रमmat.blf_flags & XFS_BLF_CANCEL);
+		ASSERT(test_bit(XFS_LI_सूचीTY, &bip->bli_item.li_flags));
+		ASSERT(tp->t_flags & XFS_TRANS_सूचीTY);
+		वापस;
+	पूर्ण
 
 	xfs_buf_stale(bp);
 
 	bip->bli_flags |= XFS_BLI_STALE;
-	bip->bli_flags &= ~(XFS_BLI_INODE_BUF | XFS_BLI_LOGGED | XFS_BLI_DIRTY);
-	bip->__bli_format.blf_flags &= ~XFS_BLF_INODE_BUF;
-	bip->__bli_format.blf_flags |= XFS_BLF_CANCEL;
-	bip->__bli_format.blf_flags &= ~XFS_BLFT_MASK;
-	for (i = 0; i < bip->bli_format_count; i++) {
-		memset(bip->bli_formats[i].blf_data_map, 0,
-		       (bip->bli_formats[i].blf_map_size * sizeof(uint)));
-	}
-	set_bit(XFS_LI_DIRTY, &bip->bli_item.li_flags);
-	tp->t_flags |= XFS_TRANS_DIRTY;
-}
+	bip->bli_flags &= ~(XFS_BLI_INODE_BUF | XFS_BLI_LOGGED | XFS_BLI_सूचीTY);
+	bip->__bli_क्रमmat.blf_flags &= ~XFS_BLF_INODE_BUF;
+	bip->__bli_क्रमmat.blf_flags |= XFS_BLF_CANCEL;
+	bip->__bli_क्रमmat.blf_flags &= ~XFS_BLFT_MASK;
+	क्रम (i = 0; i < bip->bli_क्रमmat_count; i++) अणु
+		स_रखो(bip->bli_क्रमmats[i].blf_data_map, 0,
+		       (bip->bli_क्रमmats[i].blf_map_size * माप(uपूर्णांक)));
+	पूर्ण
+	set_bit(XFS_LI_सूचीTY, &bip->bli_item.li_flags);
+	tp->t_flags |= XFS_TRANS_सूचीTY;
+पूर्ण
 
 /*
  * This call is used to indicate that the buffer contains on-disk inodes which
@@ -586,183 +587,183 @@ xfs_trans_binval(
  * recovered.  The rest of the data in the buffer is logged via the inodes
  * themselves.
  *
- * All we do is set the XFS_BLI_INODE_BUF flag in the items flags so it can be
+ * All we करो is set the XFS_BLI_INODE_BUF flag in the items flags so it can be
  * transferred to the buffer's log format structure so that we'll know what to
- * do at recovery time.
+ * करो at recovery समय.
  */
-void
+व्योम
 xfs_trans_inode_buf(
 	xfs_trans_t		*tp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
-	ASSERT(bip != NULL);
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(bip != शून्य);
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 
 	bip->bli_flags |= XFS_BLI_INODE_BUF;
 	bp->b_flags |= _XBF_INODES;
 	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_DINO_BUF);
-}
+पूर्ण
 
 /*
  * This call is used to indicate that the buffer is going to
- * be staled and was an inode buffer. This means it gets
+ * be staled and was an inode buffer. This means it माला_लो
  * special processing during unpin - where any inodes
- * associated with the buffer should be removed from ail.
+ * associated with the buffer should be हटाओd from ail.
  * There is also special processing during recovery,
  * any replay of the inodes in the buffer needs to be
  * prevented as the buffer may have been reused.
  */
-void
+व्योम
 xfs_trans_stale_inode_buf(
 	xfs_trans_t		*tp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
-	ASSERT(bip != NULL);
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(bip != शून्य);
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 
 	bip->bli_flags |= XFS_BLI_STALE_INODE;
 	bp->b_flags |= _XBF_INODES;
 	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_DINO_BUF);
-}
+पूर्ण
 
 /*
  * Mark the buffer as being one which contains newly allocated
- * inodes.  We need to make sure that even if this buffer is
+ * inodes.  We need to make sure that even अगर this buffer is
  * relogged as an 'inode buf' we still recover all of the inode
  * images in the face of a crash.  This works in coordination with
- * xfs_buf_item_committed() to ensure that the buffer remains in the
+ * xfs_buf_item_committed() to ensure that the buffer reमुख्यs in the
  * AIL at its original location even after it has been relogged.
  */
 /* ARGSUSED */
-void
+व्योम
 xfs_trans_inode_alloc_buf(
 	xfs_trans_t		*tp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
-	ASSERT(bip != NULL);
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(bip != शून्य);
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 
 	bip->bli_flags |= XFS_BLI_INODE_ALLOC_BUF;
 	bp->b_flags |= _XBF_INODES;
 	xfs_trans_buf_set_type(tp, bp, XFS_BLFT_DINO_BUF);
-}
+पूर्ण
 
 /*
- * Mark the buffer as ordered for this transaction. This means that the contents
+ * Mark the buffer as ordered क्रम this transaction. This means that the contents
  * of the buffer are not recorded in the transaction but it is tracked in the
  * AIL as though it was. This allows us to record logical changes in
  * transactions rather than the physical changes we make to the buffer without
- * changing writeback ordering constraints of metadata buffers.
+ * changing ग_लिखोback ordering स्थिरraपूर्णांकs of metadata buffers.
  */
 bool
 xfs_trans_ordered_buf(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*bp)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buf		*bp)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(bp->b_transp == tp);
-	ASSERT(bip != NULL);
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(bip != शून्य);
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 
-	if (xfs_buf_item_dirty_format(bip))
-		return false;
+	अगर (xfs_buf_item_dirty_क्रमmat(bip))
+		वापस false;
 
 	bip->bli_flags |= XFS_BLI_ORDERED;
 	trace_xfs_buf_item_ordered(bip);
 
 	/*
-	 * We don't log a dirty range of an ordered buffer but it still needs
+	 * We करोn't log a dirty range of an ordered buffer but it still needs
 	 * to be marked dirty and that it has been logged.
 	 */
 	xfs_trans_dirty_buf(tp, bp);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Set the type of the buffer for log recovery so that it can correctly identify
+ * Set the type of the buffer क्रम log recovery so that it can correctly identअगरy
  * and hence attach the correct buffer ops to the buffer after replay.
  */
-void
+व्योम
 xfs_trans_buf_set_type(
-	struct xfs_trans	*tp,
-	struct xfs_buf		*bp,
-	enum xfs_blft		type)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_trans	*tp,
+	काष्ठा xfs_buf		*bp,
+	क्रमागत xfs_blft		type)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
-	if (!tp)
-		return;
+	अगर (!tp)
+		वापस;
 
 	ASSERT(bp->b_transp == tp);
-	ASSERT(bip != NULL);
-	ASSERT(atomic_read(&bip->bli_refcount) > 0);
+	ASSERT(bip != शून्य);
+	ASSERT(atomic_पढ़ो(&bip->bli_refcount) > 0);
 
-	xfs_blft_to_flags(&bip->__bli_format, type);
-}
+	xfs_blft_to_flags(&bip->__bli_क्रमmat, type);
+पूर्ण
 
-void
+व्योम
 xfs_trans_buf_copy_type(
-	struct xfs_buf		*dst_bp,
-	struct xfs_buf		*src_bp)
-{
-	struct xfs_buf_log_item	*sbip = src_bp->b_log_item;
-	struct xfs_buf_log_item	*dbip = dst_bp->b_log_item;
-	enum xfs_blft		type;
+	काष्ठा xfs_buf		*dst_bp,
+	काष्ठा xfs_buf		*src_bp)
+अणु
+	काष्ठा xfs_buf_log_item	*sbip = src_bp->b_log_item;
+	काष्ठा xfs_buf_log_item	*dbip = dst_bp->b_log_item;
+	क्रमागत xfs_blft		type;
 
-	type = xfs_blft_from_flags(&sbip->__bli_format);
-	xfs_blft_to_flags(&dbip->__bli_format, type);
-}
+	type = xfs_blft_from_flags(&sbip->__bli_क्रमmat);
+	xfs_blft_to_flags(&dbip->__bli_क्रमmat, type);
+पूर्ण
 
 /*
  * Similar to xfs_trans_inode_buf(), this marks the buffer as a cluster of
  * dquots. However, unlike in inode buffer recovery, dquot buffers get
  * recovered in their entirety. (Hence, no XFS_BLI_DQUOT_ALLOC_BUF flag).
- * The only thing that makes dquot buffers different from regular
+ * The only thing that makes dquot buffers dअगरferent from regular
  * buffers is that we must not replay dquot bufs when recovering
- * if a _corresponding_ quotaoff has happened. We also have to distinguish
+ * अगर a _corresponding_ quotaoff has happened. We also have to distinguish
  * between usr dquot bufs and grp dquot bufs, because usr and grp quotas
  * can be turned off independently.
  */
 /* ARGSUSED */
-void
+व्योम
 xfs_trans_dquot_buf(
 	xfs_trans_t		*tp,
-	struct xfs_buf		*bp,
-	uint			type)
-{
-	struct xfs_buf_log_item	*bip = bp->b_log_item;
+	काष्ठा xfs_buf		*bp,
+	uपूर्णांक			type)
+अणु
+	काष्ठा xfs_buf_log_item	*bip = bp->b_log_item;
 
 	ASSERT(type == XFS_BLF_UDQUOT_BUF ||
 	       type == XFS_BLF_PDQUOT_BUF ||
 	       type == XFS_BLF_GDQUOT_BUF);
 
-	bip->__bli_format.blf_flags |= type;
+	bip->__bli_क्रमmat.blf_flags |= type;
 
-	switch (type) {
-	case XFS_BLF_UDQUOT_BUF:
+	चयन (type) अणु
+	हाल XFS_BLF_UDQUOT_BUF:
 		type = XFS_BLFT_UDQUOT_BUF;
-		break;
-	case XFS_BLF_PDQUOT_BUF:
+		अवरोध;
+	हाल XFS_BLF_PDQUOT_BUF:
 		type = XFS_BLFT_PDQUOT_BUF;
-		break;
-	case XFS_BLF_GDQUOT_BUF:
+		अवरोध;
+	हाल XFS_BLF_GDQUOT_BUF:
 		type = XFS_BLFT_GDQUOT_BUF;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		type = XFS_BLFT_UNKNOWN_BUF;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	bp->b_flags |= _XBF_DQUOTS;
 	xfs_trans_buf_set_type(tp, bp, type);
-}
+पूर्ण

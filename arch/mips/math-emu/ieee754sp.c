@@ -1,82 +1,83 @@
-// SPDX-License-Identifier: GPL-2.0-only
-/* IEEE754 floating point arithmetic
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+/* IEEE754 भग्नing poपूर्णांक arithmetic
  * single precision
  */
 /*
- * MIPS floating point support
+ * MIPS भग्नing poपूर्णांक support
  * Copyright (C) 1994-2000 Algorithmics Ltd.
  */
 
-#include <linux/compiler.h>
+#समावेश <linux/compiler.h>
 
-#include "ieee754sp.h"
+#समावेश "ieee754sp.h"
 
-int ieee754sp_class(union ieee754sp x)
-{
+पूर्णांक ieee754sp_class(जोड़ ieee754sp x)
+अणु
 	COMPXSP;
 	EXPLODEXSP;
-	return xc;
-}
+	वापस xc;
+पूर्ण
 
-static inline int ieee754sp_isnan(union ieee754sp x)
-{
-	return ieee754_class_nan(ieee754sp_class(x));
-}
+अटल अंतरभूत पूर्णांक ieee754sp_isnan(जोड़ ieee754sp x)
+अणु
+	वापस ieee754_class_nan(ieee754sp_class(x));
+पूर्ण
 
-static inline int ieee754sp_issnan(union ieee754sp x)
-{
-	int qbit;
+अटल अंतरभूत पूर्णांक ieee754sp_issnan(जोड़ ieee754sp x)
+अणु
+	पूर्णांक qbit;
 
-	assert(ieee754sp_isnan(x));
+	निश्चित(ieee754sp_isnan(x));
 	qbit = (SPMANT(x) & SP_MBIT(SP_FBITS - 1)) == SP_MBIT(SP_FBITS - 1);
-	return ieee754_csr.nan2008 ^ qbit;
-}
+	वापस ieee754_csr.nan2008 ^ qbit;
+पूर्ण
 
 
 /*
  * Raise the Invalid Operation IEEE 754 exception
- * and convert the signaling NaN supplied to a quiet NaN.
+ * and convert the संकेतing NaN supplied to a quiet NaN.
  */
-union ieee754sp __cold ieee754sp_nanxcpt(union ieee754sp r)
-{
-	assert(ieee754sp_issnan(r));
+जोड़ ieee754sp __cold ieee754sp_nanxcpt(जोड़ ieee754sp r)
+अणु
+	निश्चित(ieee754sp_issnan(r));
 
 	ieee754_setcx(IEEE754_INVALID_OPERATION);
-	if (ieee754_csr.nan2008) {
+	अगर (ieee754_csr.nan2008) अणु
 		SPMANT(r) |= SP_MBIT(SP_FBITS - 1);
-	} else {
+	पूर्ण अन्यथा अणु
 		SPMANT(r) &= ~SP_MBIT(SP_FBITS - 1);
-		if (!ieee754sp_isnan(r))
+		अगर (!ieee754sp_isnan(r))
 			SPMANT(r) |= SP_MBIT(SP_FBITS - 2);
-	}
+	पूर्ण
 
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static unsigned int ieee754sp_get_rounding(int sn, unsigned int xm)
-{
+अटल अचिन्हित पूर्णांक ieee754sp_get_rounding(पूर्णांक sn, अचिन्हित पूर्णांक xm)
+अणु
 	/* inexact must round of 3 bits
 	 */
-	if (xm & (SP_MBIT(3) - 1)) {
-		switch (ieee754_csr.rm) {
-		case FPU_CSR_RZ:
-			break;
-		case FPU_CSR_RN:
+	अगर (xm & (SP_MBIT(3) - 1)) अणु
+		चयन (ieee754_csr.rm) अणु
+		हाल FPU_CSR_RZ:
+			अवरोध;
+		हाल FPU_CSR_RN:
 			xm += 0x3 + ((xm >> 3) & 1);
 			/* xm += (xm&0x8)?0x4:0x3 */
-			break;
-		case FPU_CSR_RU:	/* toward +Infinity */
-			if (!sn)	/* ?? */
+			अवरोध;
+		हाल FPU_CSR_RU:	/* toward +Infinity */
+			अगर (!sn)	/* ?? */
 				xm += 0x8;
-			break;
-		case FPU_CSR_RD:	/* toward -Infinity */
-			if (sn) /* ?? */
+			अवरोध;
+		हाल FPU_CSR_RD:	/* toward -Infinity */
+			अगर (sn) /* ?? */
 				xm += 0x8;
-			break;
-		}
-	}
-	return xm;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस xm;
+पूर्ण
 
 
 /* generate a normal/denormal number with over,under handling
@@ -84,41 +85,41 @@ static unsigned int ieee754sp_get_rounding(int sn, unsigned int xm)
  * xe is an unbiased exponent
  * xm is 3bit extended precision value.
  */
-union ieee754sp ieee754sp_format(int sn, int xe, unsigned int xm)
-{
-	assert(xm);		/* we don't gen exact zeros (probably should) */
+जोड़ ieee754sp ieee754sp_क्रमmat(पूर्णांक sn, पूर्णांक xe, अचिन्हित पूर्णांक xm)
+अणु
+	निश्चित(xm);		/* we करोn't gen exact zeros (probably should) */
 
-	assert((xm >> (SP_FBITS + 1 + 3)) == 0);	/* no excess */
-	assert(xm & (SP_HIDDEN_BIT << 3));
+	निश्चित((xm >> (SP_FBITS + 1 + 3)) == 0);	/* no excess */
+	निश्चित(xm & (SP_HIDDEN_BIT << 3));
 
-	if (xe < SP_EMIN) {
+	अगर (xe < SP_EMIN) अणु
 		/* strip lower bits */
-		int es = SP_EMIN - xe;
+		पूर्णांक es = SP_EMIN - xe;
 
-		if (ieee754_csr.nod) {
+		अगर (ieee754_csr.nod) अणु
 			ieee754_setcx(IEEE754_UNDERFLOW);
 			ieee754_setcx(IEEE754_INEXACT);
 
-			switch(ieee754_csr.rm) {
-			case FPU_CSR_RN:
-			case FPU_CSR_RZ:
-				return ieee754sp_zero(sn);
-			case FPU_CSR_RU:      /* toward +Infinity */
-				if (sn == 0)
-					return ieee754sp_min(0);
-				else
-					return ieee754sp_zero(1);
-			case FPU_CSR_RD:      /* toward -Infinity */
-				if (sn == 0)
-					return ieee754sp_zero(0);
-				else
-					return ieee754sp_min(1);
-			}
-		}
+			चयन(ieee754_csr.rm) अणु
+			हाल FPU_CSR_RN:
+			हाल FPU_CSR_RZ:
+				वापस ieee754sp_zero(sn);
+			हाल FPU_CSR_RU:      /* toward +Infinity */
+				अगर (sn == 0)
+					वापस ieee754sp_min(0);
+				अन्यथा
+					वापस ieee754sp_zero(1);
+			हाल FPU_CSR_RD:      /* toward -Infinity */
+				अगर (sn == 0)
+					वापस ieee754sp_zero(0);
+				अन्यथा
+					वापस ieee754sp_min(1);
+			पूर्ण
+		पूर्ण
 
-		if (xe == SP_EMIN - 1 &&
+		अगर (xe == SP_EMIN - 1 &&
 		    ieee754sp_get_rounding(sn, xm) >> (SP_FBITS + 1 + 3))
-		{
+		अणु
 			/* Not tiny after rounding */
 			ieee754_setcx(IEEE754_INEXACT);
 			xm = ieee754sp_get_rounding(sn, xm);
@@ -126,71 +127,71 @@ union ieee754sp ieee754sp_format(int sn, int xe, unsigned int xm)
 			/* Clear grs bits */
 			xm &= ~(SP_MBIT(3) - 1);
 			xe++;
-		} else {
-			/* sticky right shift es bits
+		पूर्ण अन्यथा अणु
+			/* sticky right shअगरt es bits
 			 */
 			xm = XSPSRS(xm, es);
 			xe += es;
-			assert((xm & (SP_HIDDEN_BIT << 3)) == 0);
-			assert(xe == SP_EMIN);
-		}
-	}
-	if (xm & (SP_MBIT(3) - 1)) {
+			निश्चित((xm & (SP_HIDDEN_BIT << 3)) == 0);
+			निश्चित(xe == SP_EMIN);
+		पूर्ण
+	पूर्ण
+	अगर (xm & (SP_MBIT(3) - 1)) अणु
 		ieee754_setcx(IEEE754_INEXACT);
-		if ((xm & (SP_HIDDEN_BIT << 3)) == 0) {
+		अगर ((xm & (SP_HIDDEN_BIT << 3)) == 0) अणु
 			ieee754_setcx(IEEE754_UNDERFLOW);
-		}
+		पूर्ण
 
 		/* inexact must round of 3 bits
 		 */
 		xm = ieee754sp_get_rounding(sn, xm);
-		/* adjust exponent for rounding add overflowing
+		/* adjust exponent क्रम rounding add overflowing
 		 */
-		if (xm >> (SP_FBITS + 1 + 3)) {
+		अगर (xm >> (SP_FBITS + 1 + 3)) अणु
 			/* add causes mantissa overflow */
 			xm >>= 1;
 			xe++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 	/* strip grs bits */
 	xm >>= 3;
 
-	assert((xm >> (SP_FBITS + 1)) == 0);	/* no excess */
-	assert(xe >= SP_EMIN);
+	निश्चित((xm >> (SP_FBITS + 1)) == 0);	/* no excess */
+	निश्चित(xe >= SP_EMIN);
 
-	if (xe > SP_EMAX) {
+	अगर (xe > SP_EMAX) अणु
 		ieee754_setcx(IEEE754_OVERFLOW);
 		ieee754_setcx(IEEE754_INEXACT);
 		/* -O can be table indexed by (rm,sn) */
-		switch (ieee754_csr.rm) {
-		case FPU_CSR_RN:
-			return ieee754sp_inf(sn);
-		case FPU_CSR_RZ:
-			return ieee754sp_max(sn);
-		case FPU_CSR_RU:	/* toward +Infinity */
-			if (sn == 0)
-				return ieee754sp_inf(0);
-			else
-				return ieee754sp_max(1);
-		case FPU_CSR_RD:	/* toward -Infinity */
-			if (sn == 0)
-				return ieee754sp_max(0);
-			else
-				return ieee754sp_inf(1);
-		}
-	}
+		चयन (ieee754_csr.rm) अणु
+		हाल FPU_CSR_RN:
+			वापस ieee754sp_inf(sn);
+		हाल FPU_CSR_RZ:
+			वापस ieee754sp_max(sn);
+		हाल FPU_CSR_RU:	/* toward +Infinity */
+			अगर (sn == 0)
+				वापस ieee754sp_inf(0);
+			अन्यथा
+				वापस ieee754sp_max(1);
+		हाल FPU_CSR_RD:	/* toward -Infinity */
+			अगर (sn == 0)
+				वापस ieee754sp_max(0);
+			अन्यथा
+				वापस ieee754sp_inf(1);
+		पूर्ण
+	पूर्ण
 	/* gen norm/denorm/zero */
 
-	if ((xm & SP_HIDDEN_BIT) == 0) {
+	अगर ((xm & SP_HIDDEN_BIT) == 0) अणु
 		/* we underflow (tiny/zero) */
-		assert(xe == SP_EMIN);
-		if (ieee754_csr.mx & IEEE754_UNDERFLOW)
+		निश्चित(xe == SP_EMIN);
+		अगर (ieee754_csr.mx & IEEE754_UNDERFLOW)
 			ieee754_setcx(IEEE754_UNDERFLOW);
-		return buildsp(sn, SP_EMIN - 1 + SP_EBIAS, xm);
-	} else {
-		assert((xm >> (SP_FBITS + 1)) == 0);	/* no excess */
-		assert(xm & SP_HIDDEN_BIT);
+		वापस buildsp(sn, SP_EMIN - 1 + SP_EBIAS, xm);
+	पूर्ण अन्यथा अणु
+		निश्चित((xm >> (SP_FBITS + 1)) == 0);	/* no excess */
+		निश्चित(xm & SP_HIDDEN_BIT);
 
-		return buildsp(sn, xe + SP_EBIAS, xm & ~SP_HIDDEN_BIT);
-	}
-}
+		वापस buildsp(sn, xe + SP_EBIAS, xm & ~SP_HIDDEN_BIT);
+	पूर्ण
+पूर्ण

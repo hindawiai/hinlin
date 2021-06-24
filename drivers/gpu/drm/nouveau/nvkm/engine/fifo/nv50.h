@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NV50_FIFO_H__
-#define __NV50_FIFO_H__
-#define nv50_fifo(p) container_of((p), struct nv50_fifo, base)
-#include "priv.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NV50_FIFO_H__
+#घोषणा __NV50_FIFO_H__
+#घोषणा nv50_fअगरo(p) container_of((p), काष्ठा nv50_fअगरo, base)
+#समावेश "priv.h"
 
-struct nv50_fifo {
-	struct nvkm_fifo base;
-	struct nvkm_memory *runlist[2];
-	int cur_runlist;
-};
+काष्ठा nv50_fअगरo अणु
+	काष्ठा nvkm_fअगरo base;
+	काष्ठा nvkm_memory *runlist[2];
+	पूर्णांक cur_runlist;
+पूर्ण;
 
-int nv50_fifo_new_(const struct nvkm_fifo_func *, struct nvkm_device *, enum nvkm_subdev_type, int,
-		   struct nvkm_fifo **);
+पूर्णांक nv50_fअगरo_new_(स्थिर काष्ठा nvkm_fअगरo_func *, काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक,
+		   काष्ठा nvkm_fअगरo **);
 
-void *nv50_fifo_dtor(struct nvkm_fifo *);
-int nv50_fifo_oneinit(struct nvkm_fifo *);
-void nv50_fifo_init(struct nvkm_fifo *);
-void nv50_fifo_runlist_update(struct nv50_fifo *);
-#endif
+व्योम *nv50_fअगरo_dtor(काष्ठा nvkm_fअगरo *);
+पूर्णांक nv50_fअगरo_oneinit(काष्ठा nvkm_fअगरo *);
+व्योम nv50_fअगरo_init(काष्ठा nvkm_fअगरo *);
+व्योम nv50_fअगरo_runlist_update(काष्ठा nv50_fअगरo *);
+#पूर्ण_अगर

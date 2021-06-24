@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _XT_CONNSECMARK_H_target
-#define _XT_CONNSECMARK_H_target
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _XT_CONNSECMARK_H_target
+#घोषणा _XT_CONNSECMARK_H_target
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-enum {
+क्रमागत अणु
 	CONNSECMARK_SAVE = 1,
 	CONNSECMARK_RESTORE,
-};
+पूर्ण;
 
-struct xt_connsecmark_target_info {
+काष्ठा xt_connsecmark_target_info अणु
 	__u8 mode;
-};
+पूर्ण;
 
-#endif /*_XT_CONNSECMARK_H_target */
+#पूर्ण_अगर /*_XT_CONNSECMARK_H_target */

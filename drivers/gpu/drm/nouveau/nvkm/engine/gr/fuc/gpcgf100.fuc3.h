@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: MIT */
-static uint32_t gf100_grgpc_data[] = {
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+अटल uपूर्णांक32_t gf100_grgpc_data[] = अणु
 /* 0x0000: gpc_mmio_list_head */
 	0x00000064,
 /* 0x0004: gpc_mmio_list_tail */
@@ -35,9 +36,9 @@ static uint32_t gf100_grgpc_data[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;
 
-static uint32_t gf100_grgpc_code[] = {
+अटल uपूर्णांक32_t gf100_grgpc_code[] = अणु
 	0x03a10ef5,
 /* 0x0004: queue_put */
 	0x9800d898,
@@ -66,14 +67,14 @@ static uint32_t gf100_grgpc_code[] = {
 	0x80b6019f,
 	0x0f84f001,
 	0xf400d880,
-/* 0x0066: queue_get_done */
+/* 0x0066: queue_get_करोne */
 	0x00f80132,
 /* 0x0068: nv_rd32 */
 	0xf002ecb9,
 	0x07f11fc9,
 	0x03f0ca00,
 	0x000cd001,
-/* 0x007a: nv_rd32_wait */
+/* 0x007a: nv_rd32_रुको */
 	0xc7f104bd,
 	0xc3f0ca00,
 	0x00cccf01,
@@ -92,13 +93,13 @@ static uint32_t gf100_grgpc_code[] = {
 	0x07f11ec9,
 	0x03f0ca00,
 	0x000cd001,
-/* 0x00be: nv_wr32_wait */
+/* 0x00be: nv_wr32_रुको */
 	0xc7f104bd,
 	0xc3f0ca00,
 	0x00cccf01,
 	0xf41fccc8,
 	0x00f8f31b,
-/* 0x00d0: wait_donez */
+/* 0x00d0: रुको_करोnez */
 	0x99f094bd,
 	0x0007f100,
 	0x0203f00f,
@@ -106,7 +107,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0x0007f104,
 	0x0203f006,
 	0xbd000ad0,
-/* 0x00ed: wait_donez_ne */
+/* 0x00ed: रुको_करोnez_ne */
 	0x0087f104,
 	0x0183f000,
 	0xff0088cf,
@@ -116,7 +117,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0x03f01700,
 	0x0009d002,
 	0x00f804bd,
-/* 0x0110: wait_doneo */
+/* 0x0110: रुको_करोneo */
 	0x99f094bd,
 	0x0007f100,
 	0x0203f00f,
@@ -124,7 +125,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0x0007f104,
 	0x0203f006,
 	0xbd000ad0,
-/* 0x012d: wait_doneo_e */
+/* 0x012d: रुको_करोneo_e */
 	0x0087f104,
 	0x0183f000,
 	0xff0088cf,
@@ -173,7 +174,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0x03f0c500,
 	0x000bd001,
 /* 0x01d6: mmctx_exec_loop */
-/* 0x01d6: mmctx_wait_free */
+/* 0x01d6: mmctx_रुको_मुक्त */
 	0xe7f104bd,
 	0xe3f0c500,
 	0x00eecf01,
@@ -186,7 +187,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0xb804c0b6,
 	0x1bf404cd,
 	0x02abc8d8,
-/* 0x0207: mmctx_fini_wait */
+/* 0x0207: mmctx_fini_रुको */
 	0xf11f1bf4,
 	0xf0c500b7,
 	0xbbcf01b3,
@@ -201,35 +202,35 @@ static uint32_t gf100_grgpc_code[] = {
 	0xf112b9f0,
 	0xf0c50007,
 	0x0bd00103,
-/* 0x023b: mmctx_stop_wait */
+/* 0x023b: mmctx_stop_रुको */
 	0xf104bd00,
 	0xf0c500b7,
 	0xbbcf01b3,
 	0x12bbc800,
-/* 0x024b: mmctx_done */
+/* 0x024b: mmctx_करोne */
 	0xbdf31bf4,
 	0x0199f094,
 	0x170007f1,
 	0xd00203f0,
 	0x04bd0009,
-/* 0x025e: strand_wait */
+/* 0x025e: stअक्रम_रुको */
 	0xa0f900f8,
 	0xf402a7f0,
 	0xa0fcd021,
-/* 0x026a: strand_pre */
+/* 0x026a: stअक्रम_pre */
 	0x97f000f8,
 	0xfc07f10c,
 	0x0203f04a,
 	0xbd0009d0,
 	0x5e21f504,
-/* 0x027f: strand_post */
+/* 0x027f: stअक्रम_post */
 	0xf000f802,
 	0x07f10d97,
 	0x03f04afc,
 	0x0009d002,
 	0x21f504bd,
 	0x00f8025e,
-/* 0x0294: strand_set */
+/* 0x0294: stअक्रम_set */
 	0xf10fc7f0,
 	0xf04ffc07,
 	0x0cd00203,
@@ -245,7 +246,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0x0203f04a,
 	0xbd000cd0,
 	0x5e21f504,
-/* 0x02d3: strand_ctx_init */
+/* 0x02d3: stअक्रम_ctx_init */
 	0xbd00f802,
 	0x0399f094,
 	0x0f0007f1,
@@ -276,7 +277,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0x0097f102,
 	0x0293f020,
 	0x950099cf,
-/* 0x034a: ctx_init_strand_loop */
+/* 0x034a: ctx_init_stअक्रम_loop */
 	0x8ed008fe,
 	0x408ed000,
 	0xb6808acf,
@@ -371,10 +372,10 @@ static uint32_t gf100_grgpc_code[] = {
 	0xf11f29f0,
 	0xf0080007,
 	0x02d00203,
-/* 0x04bb: wait */
+/* 0x04bb: रुको */
 	0xf404bd00,
 	0x31f40028,
-/* 0x04c1: main */
+/* 0x04c1: मुख्य */
 	0x1cd7f000,
 	0xf43921f4,
 	0xe4b0f401,
@@ -385,7 +386,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0x1efd01e4,
 	0x0018fe05,
 	0x05b421f5,
-/* 0x04eb: main_not_ctx_xfer */
+/* 0x04eb: मुख्य_not_ctx_xfer */
 	0x94d90ef4,
 	0xf5f010ef,
 	0x7e21f501,
@@ -411,7 +412,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0x1d0007f1,
 	0xd00003f0,
 	0x04bd000e,
-/* 0x0548: ih_no_fifo */
+/* 0x0548: ih_no_fअगरo */
 	0x010007f1,
 	0xd00003f0,
 	0x04bd000a,
@@ -421,20 +422,20 @@ static uint32_t gf100_grgpc_code[] = {
 	0x88fe80fc,
 	0xfc80fc00,
 	0x0032f400,
-/* 0x056e: hub_barrier_done */
+/* 0x056e: hub_barrier_करोne */
 	0xf7f001f8,
 	0x040e9801,
 	0xb904febb,
 	0xe7f102ff,
 	0xe3f09418,
 	0x9d21f440,
-/* 0x0586: ctx_redswitch */
+/* 0x0586: ctx_redचयन */
 	0xf7f000f8,
 	0x0007f120,
 	0x0103f085,
 	0xbd000fd0,
 	0x08e7f004,
-/* 0x0598: ctx_redswitch_delay */
+/* 0x0598: ctx_redचयन_delay */
 	0xf401e2b6,
 	0xf5f1fd1b,
 	0xf5f10800,
@@ -480,7 +481,7 @@ static uint32_t gf100_grgpc_code[] = {
 	0x0601f402,
 /* 0x063f: ctx_xfer_post */
 	0xf50712f4,
-/* 0x0643: ctx_xfer_done */
+/* 0x0643: ctx_xfer_करोne */
 	0xf5027f21,
 	0xf8056e21,
 	0x00000000,
@@ -529,4 +530,4 @@ static uint32_t gf100_grgpc_code[] = {
 	0x00000000,
 	0x00000000,
 	0x00000000,
-};
+पूर्ण;

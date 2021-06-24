@@ -1,64 +1,65 @@
-// SPDX-License-Identifier: GPL-2.0 OR Linux-OpenIB
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR Linux-OpenIB
 // Copyright (c) 2018 Mellanox Technologies
 
-#include <linux/hyperv.h>
-#include "mlx5_core.h"
-#include "lib/hv.h"
+#समावेश <linux/hyperv.h>
+#समावेश "mlx5_core.h"
+#समावेश "lib/hv.h"
 
-static int mlx5_hv_config_common(struct mlx5_core_dev *dev, void *buf, int len,
-				 int offset, bool read)
-{
-	int rc = -EOPNOTSUPP;
-	int bytes_returned;
-	int block_id;
+अटल पूर्णांक mlx5_hv_config_common(काष्ठा mlx5_core_dev *dev, व्योम *buf, पूर्णांक len,
+				 पूर्णांक offset, bool पढ़ो)
+अणु
+	पूर्णांक rc = -EOPNOTSUPP;
+	पूर्णांक bytes_वापसed;
+	पूर्णांक block_id;
 
-	if (offset % HV_CONFIG_BLOCK_SIZE_MAX || len != HV_CONFIG_BLOCK_SIZE_MAX)
-		return -EINVAL;
+	अगर (offset % HV_CONFIG_BLOCK_SIZE_MAX || len != HV_CONFIG_BLOCK_SIZE_MAX)
+		वापस -EINVAL;
 
 	block_id = offset / HV_CONFIG_BLOCK_SIZE_MAX;
 
-	rc = read ?
-	     hyperv_read_cfg_blk(dev->pdev, buf,
+	rc = पढ़ो ?
+	     hyperv_पढ़ो_cfg_blk(dev->pdev, buf,
 				 HV_CONFIG_BLOCK_SIZE_MAX, block_id,
-				 &bytes_returned) :
-	     hyperv_write_cfg_blk(dev->pdev, buf,
+				 &bytes_वापसed) :
+	     hyperv_ग_लिखो_cfg_blk(dev->pdev, buf,
 				  HV_CONFIG_BLOCK_SIZE_MAX, block_id);
 
-	/* Make sure len bytes were read successfully  */
-	if (read && !rc && len != bytes_returned)
+	/* Make sure len bytes were पढ़ो successfully  */
+	अगर (पढ़ो && !rc && len != bytes_वापसed)
 		rc = -EIO;
 
-	if (rc) {
+	अगर (rc) अणु
 		mlx5_core_err(dev, "Failed to %s hv config, err = %d, len = %d, offset = %d\n",
-			      read ? "read" : "write", rc, len,
+			      पढ़ो ? "read" : "write", rc, len,
 			      offset);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int mlx5_hv_read_config(struct mlx5_core_dev *dev, void *buf, int len,
-			int offset)
-{
-	return mlx5_hv_config_common(dev, buf, len, offset, true);
-}
+पूर्णांक mlx5_hv_पढ़ो_config(काष्ठा mlx5_core_dev *dev, व्योम *buf, पूर्णांक len,
+			पूर्णांक offset)
+अणु
+	वापस mlx5_hv_config_common(dev, buf, len, offset, true);
+पूर्ण
 
-int mlx5_hv_write_config(struct mlx5_core_dev *dev, void *buf, int len,
-			 int offset)
-{
-	return mlx5_hv_config_common(dev, buf, len, offset, false);
-}
+पूर्णांक mlx5_hv_ग_लिखो_config(काष्ठा mlx5_core_dev *dev, व्योम *buf, पूर्णांक len,
+			 पूर्णांक offset)
+अणु
+	वापस mlx5_hv_config_common(dev, buf, len, offset, false);
+पूर्ण
 
-int mlx5_hv_register_invalidate(struct mlx5_core_dev *dev, void *context,
-				void (*block_invalidate)(void *context,
+पूर्णांक mlx5_hv_रेजिस्टर_invalidate(काष्ठा mlx5_core_dev *dev, व्योम *context,
+				व्योम (*block_invalidate)(व्योम *context,
 							 u64 block_mask))
-{
-	return hyperv_reg_block_invalidate(dev->pdev, context,
+अणु
+	वापस hyperv_reg_block_invalidate(dev->pdev, context,
 					   block_invalidate);
-}
+पूर्ण
 
-void mlx5_hv_unregister_invalidate(struct mlx5_core_dev *dev)
-{
-	hyperv_reg_block_invalidate(dev->pdev, NULL, NULL);
-}
+व्योम mlx5_hv_unरेजिस्टर_invalidate(काष्ठा mlx5_core_dev *dev)
+अणु
+	hyperv_reg_block_invalidate(dev->pdev, शून्य, शून्य);
+पूर्ण

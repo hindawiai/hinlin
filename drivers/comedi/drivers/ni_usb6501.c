@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * comedi/drivers/ni_usb6501.c
- * Comedi driver for National Instruments USB-6501
+ * Comedi driver क्रम National Instruments USB-6501
  *
  * COMEDI - Linux Control and Measurement Device Interface
  * Copyright (C) 2014 Luca Ellero <luca.ellero@brickedbrain.com>
@@ -27,7 +28,7 @@
  *	- request (out)
  *	- response (in)
  *
- * Every packet is at least 12 bytes long, here is the meaning of
+ * Every packet is at least 12 bytes दीर्घ, here is the meaning of
  * every field (all values are hex):
  *
  *	byte 0 is always 00
@@ -55,7 +56,7 @@
  *	REQ: 00 01 00 14 00 10 01 0F 02 10 00 00 00 03 <PORT> 00 03 <BMAP> 00 00
  *	RES: 00 01 00 0C 00 08 01 00 00 00 00 02
  *
- *	CMD: 0x12 SET_PORT_DIR (0 = input, 1 = output)
+ *	CMD: 0x12 SET_PORT_सूची (0 = input, 1 = output)
  *	REQ: 00 01 00 18 00 14 01 12 02 10 00 00
  *	     00 05 <PORT 0> <PORT 1> <PORT 2> 00 05 00 00 00 00 00
  *	RES: 00 01 00 0C 00 08 01 00 00 00 00 02
@@ -79,457 +80,457 @@
  *	RES: 00 01 00 0C 00 08 01 00 00 00 00 02
  *
  *
- *	Please  visit https://www.brickedbrain.com if you need
- *	additional information or have any questions.
+ *	Please  visit https://www.brickedbrain.com अगर you need
+ *	additional inक्रमmation or have any questions.
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
 
-#include "../comedi_usb.h"
+#समावेश "../comedi_usb.h"
 
-#define	NI6501_TIMEOUT	1000
+#घोषणा	NI6501_TIMEOUT	1000
 
 /* Port request packets */
-static const u8 READ_PORT_REQUEST[]	= {0x00, 0x01, 0x00, 0x10,
+अटल स्थिर u8 READ_PORT_REQUEST[]	= अणु0x00, 0x01, 0x00, 0x10,
 					   0x00, 0x0C, 0x01, 0x0E,
 					   0x02, 0x10, 0x00, 0x00,
-					   0x00, 0x03, 0x00, 0x00};
+					   0x00, 0x03, 0x00, 0x00पूर्ण;
 
-static const u8 WRITE_PORT_REQUEST[]	= {0x00, 0x01, 0x00, 0x14,
+अटल स्थिर u8 WRITE_PORT_REQUEST[]	= अणु0x00, 0x01, 0x00, 0x14,
 					   0x00, 0x10, 0x01, 0x0F,
 					   0x02, 0x10, 0x00, 0x00,
 					   0x00, 0x03, 0x00, 0x00,
-					   0x03, 0x00, 0x00, 0x00};
+					   0x03, 0x00, 0x00, 0x00पूर्ण;
 
-static const u8 SET_PORT_DIR_REQUEST[]	= {0x00, 0x01, 0x00, 0x18,
+अटल स्थिर u8 SET_PORT_सूची_REQUEST[]	= अणु0x00, 0x01, 0x00, 0x18,
 					   0x00, 0x14, 0x01, 0x12,
 					   0x02, 0x10, 0x00, 0x00,
 					   0x00, 0x05, 0x00, 0x00,
 					   0x00, 0x00, 0x05, 0x00,
-					   0x00, 0x00, 0x00, 0x00};
+					   0x00, 0x00, 0x00, 0x00पूर्ण;
 
 /* Counter request packets */
-static const u8 START_COUNTER_REQUEST[]	= {0x00, 0x01, 0x00, 0x0C,
+अटल स्थिर u8 START_COUNTER_REQUEST[]	= अणु0x00, 0x01, 0x00, 0x0C,
 					   0x00, 0x08, 0x01, 0x09,
-					   0x02, 0x20, 0x00, 0x00};
+					   0x02, 0x20, 0x00, 0x00पूर्ण;
 
-static const u8 STOP_COUNTER_REQUEST[]	= {0x00, 0x01, 0x00, 0x0C,
+अटल स्थिर u8 STOP_COUNTER_REQUEST[]	= अणु0x00, 0x01, 0x00, 0x0C,
 					   0x00, 0x08, 0x01, 0x0C,
-					   0x02, 0x20, 0x00, 0x00};
+					   0x02, 0x20, 0x00, 0x00पूर्ण;
 
-static const u8 READ_COUNTER_REQUEST[]	= {0x00, 0x01, 0x00, 0x0C,
+अटल स्थिर u8 READ_COUNTER_REQUEST[]	= अणु0x00, 0x01, 0x00, 0x0C,
 					   0x00, 0x08, 0x01, 0x0E,
-					   0x02, 0x20, 0x00, 0x00};
+					   0x02, 0x20, 0x00, 0x00पूर्ण;
 
-static const u8 WRITE_COUNTER_REQUEST[]	= {0x00, 0x01, 0x00, 0x10,
+अटल स्थिर u8 WRITE_COUNTER_REQUEST[]	= अणु0x00, 0x01, 0x00, 0x10,
 					   0x00, 0x0C, 0x01, 0x0F,
 					   0x02, 0x20, 0x00, 0x00,
-					   0x00, 0x00, 0x00, 0x00};
+					   0x00, 0x00, 0x00, 0x00पूर्ण;
 
 /* Response packets */
-static const u8 GENERIC_RESPONSE[]	= {0x00, 0x01, 0x00, 0x0C,
+अटल स्थिर u8 GENERIC_RESPONSE[]	= अणु0x00, 0x01, 0x00, 0x0C,
 					   0x00, 0x08, 0x01, 0x00,
-					   0x00, 0x00, 0x00, 0x02};
+					   0x00, 0x00, 0x00, 0x02पूर्ण;
 
-static const u8 READ_PORT_RESPONSE[]	= {0x00, 0x01, 0x00, 0x10,
+अटल स्थिर u8 READ_PORT_RESPONSE[]	= अणु0x00, 0x01, 0x00, 0x10,
 					   0x00, 0x0C, 0x01, 0x00,
 					   0x00, 0x00, 0x00, 0x02,
-					   0x00, 0x03, 0x00, 0x00};
+					   0x00, 0x03, 0x00, 0x00पूर्ण;
 
-static const u8 READ_COUNTER_RESPONSE[]	= {0x00, 0x01, 0x00, 0x10,
+अटल स्थिर u8 READ_COUNTER_RESPONSE[]	= अणु0x00, 0x01, 0x00, 0x10,
 					   0x00, 0x0C, 0x01, 0x00,
 					   0x00, 0x00, 0x00, 0x02,
-					   0x00, 0x00, 0x00, 0x00};
+					   0x00, 0x00, 0x00, 0x00पूर्ण;
 
-enum commands {
+क्रमागत commands अणु
 	READ_PORT,
 	WRITE_PORT,
-	SET_PORT_DIR,
+	SET_PORT_सूची,
 	START_COUNTER,
 	STOP_COUNTER,
 	READ_COUNTER,
 	WRITE_COUNTER
-};
+पूर्ण;
 
-struct ni6501_private {
-	struct usb_endpoint_descriptor *ep_rx;
-	struct usb_endpoint_descriptor *ep_tx;
-	struct mutex mut;
+काष्ठा ni6501_निजी अणु
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep_rx;
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep_tx;
+	काष्ठा mutex mut;
 	u8 *usb_rx_buf;
 	u8 *usb_tx_buf;
-};
+पूर्ण;
 
-static int ni6501_port_command(struct comedi_device *dev, int command,
-			       unsigned int val, u8 *bitmap)
-{
-	struct usb_device *usb = comedi_to_usb_dev(dev);
-	struct ni6501_private *devpriv = dev->private;
-	int request_size, response_size;
+अटल पूर्णांक ni6501_port_command(काष्ठा comedi_device *dev, पूर्णांक command,
+			       अचिन्हित पूर्णांक val, u8 *biपंचांगap)
+अणु
+	काष्ठा usb_device *usb = comedi_to_usb_dev(dev);
+	काष्ठा ni6501_निजी *devpriv = dev->निजी;
+	पूर्णांक request_size, response_size;
 	u8 *tx = devpriv->usb_tx_buf;
-	int ret;
+	पूर्णांक ret;
 
-	if (command != SET_PORT_DIR && !bitmap)
-		return -EINVAL;
+	अगर (command != SET_PORT_सूची && !biपंचांगap)
+		वापस -EINVAL;
 
 	mutex_lock(&devpriv->mut);
 
-	switch (command) {
-	case READ_PORT:
-		request_size = sizeof(READ_PORT_REQUEST);
-		response_size = sizeof(READ_PORT_RESPONSE);
-		memcpy(tx, READ_PORT_REQUEST, request_size);
+	चयन (command) अणु
+	हाल READ_PORT:
+		request_size = माप(READ_PORT_REQUEST);
+		response_size = माप(READ_PORT_RESPONSE);
+		स_नकल(tx, READ_PORT_REQUEST, request_size);
 		tx[14] = val & 0xff;
-		break;
-	case WRITE_PORT:
-		request_size = sizeof(WRITE_PORT_REQUEST);
-		response_size = sizeof(GENERIC_RESPONSE);
-		memcpy(tx, WRITE_PORT_REQUEST, request_size);
+		अवरोध;
+	हाल WRITE_PORT:
+		request_size = माप(WRITE_PORT_REQUEST);
+		response_size = माप(GENERIC_RESPONSE);
+		स_नकल(tx, WRITE_PORT_REQUEST, request_size);
 		tx[14] = val & 0xff;
-		tx[17] = *bitmap;
-		break;
-	case SET_PORT_DIR:
-		request_size = sizeof(SET_PORT_DIR_REQUEST);
-		response_size = sizeof(GENERIC_RESPONSE);
-		memcpy(tx, SET_PORT_DIR_REQUEST, request_size);
+		tx[17] = *biपंचांगap;
+		अवरोध;
+	हाल SET_PORT_सूची:
+		request_size = माप(SET_PORT_सूची_REQUEST);
+		response_size = माप(GENERIC_RESPONSE);
+		स_नकल(tx, SET_PORT_सूची_REQUEST, request_size);
 		tx[14] = val & 0xff;
 		tx[15] = (val >> 8) & 0xff;
 		tx[16] = (val >> 16) & 0xff;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	ret = usb_bulk_msg(usb,
 			   usb_sndbulkpipe(usb,
-					   devpriv->ep_tx->bEndpointAddress),
+					   devpriv->ep_tx->bEndpoपूर्णांकAddress),
 			   devpriv->usb_tx_buf,
 			   request_size,
-			   NULL,
+			   शून्य,
 			   NI6501_TIMEOUT);
-	if (ret)
-		goto end;
+	अगर (ret)
+		जाओ end;
 
 	ret = usb_bulk_msg(usb,
 			   usb_rcvbulkpipe(usb,
-					   devpriv->ep_rx->bEndpointAddress),
+					   devpriv->ep_rx->bEndpoपूर्णांकAddress),
 			   devpriv->usb_rx_buf,
 			   response_size,
-			   NULL,
+			   शून्य,
 			   NI6501_TIMEOUT);
-	if (ret)
-		goto end;
+	अगर (ret)
+		जाओ end;
 
-	/* Check if results are valid */
+	/* Check अगर results are valid */
 
-	if (command == READ_PORT) {
-		*bitmap = devpriv->usb_rx_buf[14];
-		/* mask bitmap for comparing */
+	अगर (command == READ_PORT) अणु
+		*biपंचांगap = devpriv->usb_rx_buf[14];
+		/* mask biपंचांगap क्रम comparing */
 		devpriv->usb_rx_buf[14] = 0x00;
 
-		if (memcmp(devpriv->usb_rx_buf, READ_PORT_RESPONSE,
-			   sizeof(READ_PORT_RESPONSE))) {
+		अगर (स_भेद(devpriv->usb_rx_buf, READ_PORT_RESPONSE,
+			   माप(READ_PORT_RESPONSE))) अणु
 			ret = -EINVAL;
-		}
-	} else if (memcmp(devpriv->usb_rx_buf, GENERIC_RESPONSE,
-			  sizeof(GENERIC_RESPONSE))) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (स_भेद(devpriv->usb_rx_buf, GENERIC_RESPONSE,
+			  माप(GENERIC_RESPONSE))) अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 end:
 	mutex_unlock(&devpriv->mut);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ni6501_counter_command(struct comedi_device *dev, int command,
+अटल पूर्णांक ni6501_counter_command(काष्ठा comedi_device *dev, पूर्णांक command,
 				  u32 *val)
-{
-	struct usb_device *usb = comedi_to_usb_dev(dev);
-	struct ni6501_private *devpriv = dev->private;
-	int request_size, response_size;
+अणु
+	काष्ठा usb_device *usb = comedi_to_usb_dev(dev);
+	काष्ठा ni6501_निजी *devpriv = dev->निजी;
+	पूर्णांक request_size, response_size;
 	u8 *tx = devpriv->usb_tx_buf;
-	int ret;
+	पूर्णांक ret;
 
-	if ((command == READ_COUNTER || command ==  WRITE_COUNTER) && !val)
-		return -EINVAL;
+	अगर ((command == READ_COUNTER || command ==  WRITE_COUNTER) && !val)
+		वापस -EINVAL;
 
 	mutex_lock(&devpriv->mut);
 
-	switch (command) {
-	case START_COUNTER:
-		request_size = sizeof(START_COUNTER_REQUEST);
-		response_size = sizeof(GENERIC_RESPONSE);
-		memcpy(tx, START_COUNTER_REQUEST, request_size);
-		break;
-	case STOP_COUNTER:
-		request_size = sizeof(STOP_COUNTER_REQUEST);
-		response_size = sizeof(GENERIC_RESPONSE);
-		memcpy(tx, STOP_COUNTER_REQUEST, request_size);
-		break;
-	case READ_COUNTER:
-		request_size = sizeof(READ_COUNTER_REQUEST);
-		response_size = sizeof(READ_COUNTER_RESPONSE);
-		memcpy(tx, READ_COUNTER_REQUEST, request_size);
-		break;
-	case WRITE_COUNTER:
-		request_size = sizeof(WRITE_COUNTER_REQUEST);
-		response_size = sizeof(GENERIC_RESPONSE);
-		memcpy(tx, WRITE_COUNTER_REQUEST, request_size);
+	चयन (command) अणु
+	हाल START_COUNTER:
+		request_size = माप(START_COUNTER_REQUEST);
+		response_size = माप(GENERIC_RESPONSE);
+		स_नकल(tx, START_COUNTER_REQUEST, request_size);
+		अवरोध;
+	हाल STOP_COUNTER:
+		request_size = माप(STOP_COUNTER_REQUEST);
+		response_size = माप(GENERIC_RESPONSE);
+		स_नकल(tx, STOP_COUNTER_REQUEST, request_size);
+		अवरोध;
+	हाल READ_COUNTER:
+		request_size = माप(READ_COUNTER_REQUEST);
+		response_size = माप(READ_COUNTER_RESPONSE);
+		स_नकल(tx, READ_COUNTER_REQUEST, request_size);
+		अवरोध;
+	हाल WRITE_COUNTER:
+		request_size = माप(WRITE_COUNTER_REQUEST);
+		response_size = माप(GENERIC_RESPONSE);
+		स_नकल(tx, WRITE_COUNTER_REQUEST, request_size);
 		/* Setup tx packet: bytes 12,13,14,15 hold the */
 		/* u32 counter value (Big Endian)	       */
 		*((__be32 *)&tx[12]) = cpu_to_be32(*val);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ret = -EINVAL;
-		goto end;
-	}
+		जाओ end;
+	पूर्ण
 
 	ret = usb_bulk_msg(usb,
 			   usb_sndbulkpipe(usb,
-					   devpriv->ep_tx->bEndpointAddress),
+					   devpriv->ep_tx->bEndpoपूर्णांकAddress),
 			   devpriv->usb_tx_buf,
 			   request_size,
-			   NULL,
+			   शून्य,
 			   NI6501_TIMEOUT);
-	if (ret)
-		goto end;
+	अगर (ret)
+		जाओ end;
 
 	ret = usb_bulk_msg(usb,
 			   usb_rcvbulkpipe(usb,
-					   devpriv->ep_rx->bEndpointAddress),
+					   devpriv->ep_rx->bEndpoपूर्णांकAddress),
 			   devpriv->usb_rx_buf,
 			   response_size,
-			   NULL,
+			   शून्य,
 			   NI6501_TIMEOUT);
-	if (ret)
-		goto end;
+	अगर (ret)
+		जाओ end;
 
-	/* Check if results are valid */
+	/* Check अगर results are valid */
 
-	if (command == READ_COUNTER) {
-		int i;
+	अगर (command == READ_COUNTER) अणु
+		पूर्णांक i;
 
 		/* Read counter value: bytes 12,13,14,15 of rx packet */
 		/* hold the u32 counter value (Big Endian)	      */
 		*val = be32_to_cpu(*((__be32 *)&devpriv->usb_rx_buf[12]));
 
-		/* mask counter value for comparing */
-		for (i = 12; i < sizeof(READ_COUNTER_RESPONSE); ++i)
+		/* mask counter value क्रम comparing */
+		क्रम (i = 12; i < माप(READ_COUNTER_RESPONSE); ++i)
 			devpriv->usb_rx_buf[i] = 0x00;
 
-		if (memcmp(devpriv->usb_rx_buf, READ_COUNTER_RESPONSE,
-			   sizeof(READ_COUNTER_RESPONSE))) {
+		अगर (स_भेद(devpriv->usb_rx_buf, READ_COUNTER_RESPONSE,
+			   माप(READ_COUNTER_RESPONSE))) अणु
 			ret = -EINVAL;
-		}
-	} else if (memcmp(devpriv->usb_rx_buf, GENERIC_RESPONSE,
-			  sizeof(GENERIC_RESPONSE))) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (स_भेद(devpriv->usb_rx_buf, GENERIC_RESPONSE,
+			  माप(GENERIC_RESPONSE))) अणु
 		ret = -EINVAL;
-	}
+	पूर्ण
 end:
 	mutex_unlock(&devpriv->mut);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ni6501_dio_insn_config(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  struct comedi_insn *insn,
-				  unsigned int *data)
-{
-	int ret;
+अटल पूर्णांक ni6501_dio_insn_config(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  काष्ठा comedi_insn *insn,
+				  अचिन्हित पूर्णांक *data)
+अणु
+	पूर्णांक ret;
 
 	ret = comedi_dio_insn_config(dev, s, insn, data, 0);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	ret = ni6501_port_command(dev, SET_PORT_DIR, s->io_bits, NULL);
-	if (ret)
-		return ret;
+	ret = ni6501_port_command(dev, SET_PORT_सूची, s->io_bits, शून्य);
+	अगर (ret)
+		वापस ret;
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int ni6501_dio_insn_bits(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
-	unsigned int mask;
-	int ret;
+अटल पूर्णांक ni6501_dio_insn_bits(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
+	अचिन्हित पूर्णांक mask;
+	पूर्णांक ret;
 	u8 port;
-	u8 bitmap;
+	u8 biपंचांगap;
 
 	mask = comedi_dio_update_state(s, data);
 
-	for (port = 0; port < 3; port++) {
-		if (mask & (0xFF << port * 8)) {
-			bitmap = (s->state >> port * 8) & 0xFF;
+	क्रम (port = 0; port < 3; port++) अणु
+		अगर (mask & (0xFF << port * 8)) अणु
+			biपंचांगap = (s->state >> port * 8) & 0xFF;
 			ret = ni6501_port_command(dev, WRITE_PORT,
-						  port, &bitmap);
-			if (ret)
-				return ret;
-		}
-	}
+						  port, &biपंचांगap);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
 	data[1] = 0;
 
-	for (port = 0; port < 3; port++) {
-		ret = ni6501_port_command(dev, READ_PORT, port, &bitmap);
-		if (ret)
-			return ret;
-		data[1] |= bitmap << port * 8;
-	}
+	क्रम (port = 0; port < 3; port++) अणु
+		ret = ni6501_port_command(dev, READ_PORT, port, &biपंचांगap);
+		अगर (ret)
+			वापस ret;
+		data[1] |= biपंचांगap << port * 8;
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int ni6501_cnt_insn_config(struct comedi_device *dev,
-				  struct comedi_subdevice *s,
-				  struct comedi_insn *insn,
-				  unsigned int *data)
-{
-	int ret;
+अटल पूर्णांक ni6501_cnt_insn_config(काष्ठा comedi_device *dev,
+				  काष्ठा comedi_subdevice *s,
+				  काष्ठा comedi_insn *insn,
+				  अचिन्हित पूर्णांक *data)
+अणु
+	पूर्णांक ret;
 	u32 val = 0;
 
-	switch (data[0]) {
-	case INSN_CONFIG_ARM:
-		ret = ni6501_counter_command(dev, START_COUNTER, NULL);
-		break;
-	case INSN_CONFIG_DISARM:
-		ret = ni6501_counter_command(dev, STOP_COUNTER, NULL);
-		break;
-	case INSN_CONFIG_RESET:
-		ret = ni6501_counter_command(dev, STOP_COUNTER, NULL);
-		if (ret)
-			break;
+	चयन (data[0]) अणु
+	हाल INSN_CONFIG_ARM:
+		ret = ni6501_counter_command(dev, START_COUNTER, शून्य);
+		अवरोध;
+	हाल INSN_CONFIG_DISARM:
+		ret = ni6501_counter_command(dev, STOP_COUNTER, शून्य);
+		अवरोध;
+	हाल INSN_CONFIG_RESET:
+		ret = ni6501_counter_command(dev, STOP_COUNTER, शून्य);
+		अगर (ret)
+			अवरोध;
 		ret = ni6501_counter_command(dev, WRITE_COUNTER, &val);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return ret ? ret : insn->n;
-}
+	वापस ret ? ret : insn->n;
+पूर्ण
 
-static int ni6501_cnt_insn_read(struct comedi_device *dev,
-				struct comedi_subdevice *s,
-				struct comedi_insn *insn,
-				unsigned int *data)
-{
-	int ret;
+अटल पूर्णांक ni6501_cnt_insn_पढ़ो(काष्ठा comedi_device *dev,
+				काष्ठा comedi_subdevice *s,
+				काष्ठा comedi_insn *insn,
+				अचिन्हित पूर्णांक *data)
+अणु
+	पूर्णांक ret;
 	u32 val;
-	unsigned int i;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < insn->n; i++) {
+	क्रम (i = 0; i < insn->n; i++) अणु
 		ret = ni6501_counter_command(dev, READ_COUNTER,	&val);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 		data[i] = val;
-	}
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int ni6501_cnt_insn_write(struct comedi_device *dev,
-				 struct comedi_subdevice *s,
-				 struct comedi_insn *insn,
-				 unsigned int *data)
-{
-	int ret;
+अटल पूर्णांक ni6501_cnt_insn_ग_लिखो(काष्ठा comedi_device *dev,
+				 काष्ठा comedi_subdevice *s,
+				 काष्ठा comedi_insn *insn,
+				 अचिन्हित पूर्णांक *data)
+अणु
+	पूर्णांक ret;
 
-	if (insn->n) {
+	अगर (insn->n) अणु
 		u32 val = data[insn->n - 1];
 
 		ret = ni6501_counter_command(dev, WRITE_COUNTER, &val);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return insn->n;
-}
+	वापस insn->n;
+पूर्ण
 
-static int ni6501_alloc_usb_buffers(struct comedi_device *dev)
-{
-	struct ni6501_private *devpriv = dev->private;
-	size_t size;
+अटल पूर्णांक ni6501_alloc_usb_buffers(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा ni6501_निजी *devpriv = dev->निजी;
+	माप_प्रकार size;
 
-	size = usb_endpoint_maxp(devpriv->ep_rx);
+	size = usb_endpoपूर्णांक_maxp(devpriv->ep_rx);
 	devpriv->usb_rx_buf = kzalloc(size, GFP_KERNEL);
-	if (!devpriv->usb_rx_buf)
-		return -ENOMEM;
+	अगर (!devpriv->usb_rx_buf)
+		वापस -ENOMEM;
 
-	size = usb_endpoint_maxp(devpriv->ep_tx);
+	size = usb_endpoपूर्णांक_maxp(devpriv->ep_tx);
 	devpriv->usb_tx_buf = kzalloc(size, GFP_KERNEL);
-	if (!devpriv->usb_tx_buf)
-		return -ENOMEM;
+	अगर (!devpriv->usb_tx_buf)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni6501_find_endpoints(struct comedi_device *dev)
-{
-	struct usb_interface *intf = comedi_to_usb_interface(dev);
-	struct ni6501_private *devpriv = dev->private;
-	struct usb_host_interface *iface_desc = intf->cur_altsetting;
-	struct usb_endpoint_descriptor *ep_desc;
-	int i;
+अटल पूर्णांक ni6501_find_endpoपूर्णांकs(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = comedi_to_usb_पूर्णांकerface(dev);
+	काष्ठा ni6501_निजी *devpriv = dev->निजी;
+	काष्ठा usb_host_पूर्णांकerface *अगरace_desc = पूर्णांकf->cur_altsetting;
+	काष्ठा usb_endpoपूर्णांक_descriptor *ep_desc;
+	पूर्णांक i;
 
-	if (iface_desc->desc.bNumEndpoints != 2) {
+	अगर (अगरace_desc->desc.bNumEndpoपूर्णांकs != 2) अणु
 		dev_err(dev->class_dev, "Wrong number of endpoints\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	for (i = 0; i < iface_desc->desc.bNumEndpoints; i++) {
-		ep_desc = &iface_desc->endpoint[i].desc;
+	क्रम (i = 0; i < अगरace_desc->desc.bNumEndpoपूर्णांकs; i++) अणु
+		ep_desc = &अगरace_desc->endpoपूर्णांक[i].desc;
 
-		if (usb_endpoint_is_bulk_in(ep_desc)) {
-			if (!devpriv->ep_rx)
+		अगर (usb_endpoपूर्णांक_is_bulk_in(ep_desc)) अणु
+			अगर (!devpriv->ep_rx)
 				devpriv->ep_rx = ep_desc;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (usb_endpoint_is_bulk_out(ep_desc)) {
-			if (!devpriv->ep_tx)
+		अगर (usb_endpoपूर्णांक_is_bulk_out(ep_desc)) अणु
+			अगर (!devpriv->ep_tx)
 				devpriv->ep_tx = ep_desc;
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 
-	if (!devpriv->ep_rx || !devpriv->ep_tx)
-		return -ENODEV;
+	अगर (!devpriv->ep_rx || !devpriv->ep_tx)
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ni6501_auto_attach(struct comedi_device *dev,
-			      unsigned long context)
-{
-	struct usb_interface *intf = comedi_to_usb_interface(dev);
-	struct ni6501_private *devpriv;
-	struct comedi_subdevice *s;
-	int ret;
+अटल पूर्णांक ni6501_स्वतः_attach(काष्ठा comedi_device *dev,
+			      अचिन्हित दीर्घ context)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = comedi_to_usb_पूर्णांकerface(dev);
+	काष्ठा ni6501_निजी *devpriv;
+	काष्ठा comedi_subdevice *s;
+	पूर्णांक ret;
 
-	devpriv = comedi_alloc_devpriv(dev, sizeof(*devpriv));
-	if (!devpriv)
-		return -ENOMEM;
+	devpriv = comedi_alloc_devpriv(dev, माप(*devpriv));
+	अगर (!devpriv)
+		वापस -ENOMEM;
 
 	mutex_init(&devpriv->mut);
-	usb_set_intfdata(intf, devpriv);
+	usb_set_पूर्णांकfdata(पूर्णांकf, devpriv);
 
-	ret = ni6501_find_endpoints(dev);
-	if (ret)
-		return ret;
+	ret = ni6501_find_endpoपूर्णांकs(dev);
+	अगर (ret)
+		वापस ret;
 
 	ret = ni6501_alloc_usb_buffers(dev);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ret = comedi_alloc_subdevices(dev, 2);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Digital Input/Output subdevice */
 	s = &dev->subdevices[0];
@@ -547,54 +548,54 @@ static int ni6501_auto_attach(struct comedi_device *dev,
 	s->subdev_flags	= SDF_READABLE | SDF_WRITABLE | SDF_LSAMPL;
 	s->n_chan	= 1;
 	s->maxdata	= 0xffffffff;
-	s->insn_read	= ni6501_cnt_insn_read;
-	s->insn_write	= ni6501_cnt_insn_write;
+	s->insn_पढ़ो	= ni6501_cnt_insn_पढ़ो;
+	s->insn_ग_लिखो	= ni6501_cnt_insn_ग_लिखो;
 	s->insn_config	= ni6501_cnt_insn_config;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ni6501_detach(struct comedi_device *dev)
-{
-	struct usb_interface *intf = comedi_to_usb_interface(dev);
-	struct ni6501_private *devpriv = dev->private;
+अटल व्योम ni6501_detach(काष्ठा comedi_device *dev)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf = comedi_to_usb_पूर्णांकerface(dev);
+	काष्ठा ni6501_निजी *devpriv = dev->निजी;
 
-	if (!devpriv)
-		return;
+	अगर (!devpriv)
+		वापस;
 
 	mutex_destroy(&devpriv->mut);
 
-	usb_set_intfdata(intf, NULL);
+	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
 
-	kfree(devpriv->usb_rx_buf);
-	kfree(devpriv->usb_tx_buf);
-}
+	kमुक्त(devpriv->usb_rx_buf);
+	kमुक्त(devpriv->usb_tx_buf);
+पूर्ण
 
-static struct comedi_driver ni6501_driver = {
+अटल काष्ठा comedi_driver ni6501_driver = अणु
 	.module		= THIS_MODULE,
 	.driver_name	= "ni6501",
-	.auto_attach	= ni6501_auto_attach,
+	.स्वतः_attach	= ni6501_स्वतः_attach,
 	.detach		= ni6501_detach,
-};
+पूर्ण;
 
-static int ni6501_usb_probe(struct usb_interface *intf,
-			    const struct usb_device_id *id)
-{
-	return comedi_usb_auto_config(intf, &ni6501_driver, id->driver_info);
-}
+अटल पूर्णांक ni6501_usb_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
+			    स्थिर काष्ठा usb_device_id *id)
+अणु
+	वापस comedi_usb_स्वतः_config(पूर्णांकf, &ni6501_driver, id->driver_info);
+पूर्ण
 
-static const struct usb_device_id ni6501_usb_table[] = {
-	{ USB_DEVICE(0x3923, 0x718a) },
-	{ }
-};
+अटल स्थिर काष्ठा usb_device_id ni6501_usb_table[] = अणु
+	अणु USB_DEVICE(0x3923, 0x718a) पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(usb, ni6501_usb_table);
 
-static struct usb_driver ni6501_usb_driver = {
+अटल काष्ठा usb_driver ni6501_usb_driver = अणु
 	.name		= "ni6501",
 	.id_table	= ni6501_usb_table,
 	.probe		= ni6501_usb_probe,
-	.disconnect	= comedi_usb_auto_unconfig,
-};
+	.disconnect	= comedi_usb_स्वतः_unconfig,
+पूर्ण;
 module_comedi_usb_driver(ni6501_driver, ni6501_usb_driver);
 
 MODULE_AUTHOR("Luca Ellero");

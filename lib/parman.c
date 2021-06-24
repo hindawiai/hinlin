@@ -1,19 +1,20 @@
+<शैली गुरु>
 /*
- * lib/parman.c - Manager for linear priority array areas
+ * lib/parman.c - Manager क्रम linear priority array areas
  * Copyright (c) 2017 Mellanox Technologies. All rights reserved.
  * Copyright (c) 2017 Jiri Pirko <jiri@mellanox.com>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
+ * Redistribution and use in source and binary क्रमms, with or without
+ * modअगरication, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary क्रमm must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *    करोcumentation and/or other materials provided with the distribution.
  * 3. Neither the names of the copyright holders nor the names of its
- *    contributors may be used to endorse or promote products derived from
- *    this software without specific prior written permission.
+ *    contributors may be used to enकरोrse or promote products derived from
+ *    this software without specअगरic prior written permission.
  *
  * Alternatively, this software may be distributed under the terms of the
  * GNU General Public License ("GPL") version 2 as published by the Free
@@ -23,7 +24,7 @@
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
  * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
@@ -32,203 +33,203 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/export.h>
-#include <linux/list.h>
-#include <linux/err.h>
-#include <linux/parman.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/export.h>
+#समावेश <linux/list.h>
+#समावेश <linux/err.h>
+#समावेश <linux/parman.h>
 
-struct parman_algo {
-	int (*item_add)(struct parman *parman, struct parman_prio *prio,
-			struct parman_item *item);
-	void (*item_remove)(struct parman *parman, struct parman_prio *prio,
-			    struct parman_item *item);
-};
+काष्ठा parman_algo अणु
+	पूर्णांक (*item_add)(काष्ठा parman *parman, काष्ठा parman_prio *prio,
+			काष्ठा parman_item *item);
+	व्योम (*item_हटाओ)(काष्ठा parman *parman, काष्ठा parman_prio *prio,
+			    काष्ठा parman_item *item);
+पूर्ण;
 
-struct parman {
-	const struct parman_ops *ops;
-	void *priv;
-	const struct parman_algo *algo;
-	unsigned long count;
-	unsigned long limit_count;
-	struct list_head prio_list;
-};
+काष्ठा parman अणु
+	स्थिर काष्ठा parman_ops *ops;
+	व्योम *priv;
+	स्थिर काष्ठा parman_algo *algo;
+	अचिन्हित दीर्घ count;
+	अचिन्हित दीर्घ limit_count;
+	काष्ठा list_head prio_list;
+पूर्ण;
 
-static int parman_enlarge(struct parman *parman)
-{
-	unsigned long new_count = parman->limit_count +
+अटल पूर्णांक parman_enlarge(काष्ठा parman *parman)
+अणु
+	अचिन्हित दीर्घ new_count = parman->limit_count +
 				  parman->ops->resize_step;
-	int err;
+	पूर्णांक err;
 
 	err = parman->ops->resize(parman->priv, new_count);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	parman->limit_count = new_count;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int parman_shrink(struct parman *parman)
-{
-	unsigned long new_count = parman->limit_count -
+अटल पूर्णांक parman_shrink(काष्ठा parman *parman)
+अणु
+	अचिन्हित दीर्घ new_count = parman->limit_count -
 				  parman->ops->resize_step;
-	int err;
+	पूर्णांक err;
 
-	if (new_count < parman->ops->base_count)
-		return 0;
+	अगर (new_count < parman->ops->base_count)
+		वापस 0;
 	err = parman->ops->resize(parman->priv, new_count);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	parman->limit_count = new_count;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static bool parman_prio_used(struct parman_prio *prio)
-{
-	return !list_empty(&prio->item_list);
-}
+अटल bool parman_prio_used(काष्ठा parman_prio *prio)
+अणु
+	वापस !list_empty(&prio->item_list);
+पूर्ण
 
-static struct parman_item *parman_prio_first_item(struct parman_prio *prio)
-{
-	return list_first_entry(&prio->item_list,
-				typeof(struct parman_item), list);
-}
+अटल काष्ठा parman_item *parman_prio_first_item(काष्ठा parman_prio *prio)
+अणु
+	वापस list_first_entry(&prio->item_list,
+				typeof(काष्ठा parman_item), list);
+पूर्ण
 
-static unsigned long parman_prio_first_index(struct parman_prio *prio)
-{
-	return parman_prio_first_item(prio)->index;
-}
+अटल अचिन्हित दीर्घ parman_prio_first_index(काष्ठा parman_prio *prio)
+अणु
+	वापस parman_prio_first_item(prio)->index;
+पूर्ण
 
-static struct parman_item *parman_prio_last_item(struct parman_prio *prio)
-{
-	return list_last_entry(&prio->item_list,
-			       typeof(struct parman_item), list);
-}
+अटल काष्ठा parman_item *parman_prio_last_item(काष्ठा parman_prio *prio)
+अणु
+	वापस list_last_entry(&prio->item_list,
+			       typeof(काष्ठा parman_item), list);
+पूर्ण
 
-static unsigned long parman_prio_last_index(struct parman_prio *prio)
-{
-	return parman_prio_last_item(prio)->index;
-}
+अटल अचिन्हित दीर्घ parman_prio_last_index(काष्ठा parman_prio *prio)
+अणु
+	वापस parman_prio_last_item(prio)->index;
+पूर्ण
 
-static unsigned long parman_lsort_new_index_find(struct parman *parman,
-						 struct parman_prio *prio)
-{
-	list_for_each_entry_from_reverse(prio, &parman->prio_list, list) {
-		if (!parman_prio_used(prio))
-			continue;
-		return parman_prio_last_index(prio) + 1;
-	}
-	return 0;
-}
+अटल अचिन्हित दीर्घ parman_lsort_new_index_find(काष्ठा parman *parman,
+						 काष्ठा parman_prio *prio)
+अणु
+	list_क्रम_each_entry_from_reverse(prio, &parman->prio_list, list) अणु
+		अगर (!parman_prio_used(prio))
+			जारी;
+		वापस parman_prio_last_index(prio) + 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void __parman_prio_move(struct parman *parman, struct parman_prio *prio,
-			       struct parman_item *item, unsigned long to_index,
-			       unsigned long count)
-{
+अटल व्योम __parman_prio_move(काष्ठा parman *parman, काष्ठा parman_prio *prio,
+			       काष्ठा parman_item *item, अचिन्हित दीर्घ to_index,
+			       अचिन्हित दीर्घ count)
+अणु
 	parman->ops->move(parman->priv, item->index, to_index, count);
-}
+पूर्ण
 
-static void parman_prio_shift_down(struct parman *parman,
-				   struct parman_prio *prio)
-{
-	struct parman_item *item;
-	unsigned long to_index;
+अटल व्योम parman_prio_shअगरt_करोwn(काष्ठा parman *parman,
+				   काष्ठा parman_prio *prio)
+अणु
+	काष्ठा parman_item *item;
+	अचिन्हित दीर्घ to_index;
 
-	if (!parman_prio_used(prio))
-		return;
+	अगर (!parman_prio_used(prio))
+		वापस;
 	item = parman_prio_first_item(prio);
 	to_index = parman_prio_last_index(prio) + 1;
 	__parman_prio_move(parman, prio, item, to_index, 1);
 	list_move_tail(&item->list, &prio->item_list);
 	item->index = to_index;
-}
+पूर्ण
 
-static void parman_prio_shift_up(struct parman *parman,
-				 struct parman_prio *prio)
-{
-	struct parman_item *item;
-	unsigned long to_index;
+अटल व्योम parman_prio_shअगरt_up(काष्ठा parman *parman,
+				 काष्ठा parman_prio *prio)
+अणु
+	काष्ठा parman_item *item;
+	अचिन्हित दीर्घ to_index;
 
-	if (!parman_prio_used(prio))
-		return;
+	अगर (!parman_prio_used(prio))
+		वापस;
 	item = parman_prio_last_item(prio);
 	to_index = parman_prio_first_index(prio) - 1;
 	__parman_prio_move(parman, prio, item, to_index, 1);
 	list_move(&item->list, &prio->item_list);
 	item->index = to_index;
-}
+पूर्ण
 
-static void parman_prio_item_remove(struct parman *parman,
-				    struct parman_prio *prio,
-				    struct parman_item *item)
-{
-	struct parman_item *last_item;
-	unsigned long to_index;
+अटल व्योम parman_prio_item_हटाओ(काष्ठा parman *parman,
+				    काष्ठा parman_prio *prio,
+				    काष्ठा parman_item *item)
+अणु
+	काष्ठा parman_item *last_item;
+	अचिन्हित दीर्घ to_index;
 
 	last_item = parman_prio_last_item(prio);
-	if (last_item == item) {
+	अगर (last_item == item) अणु
 		list_del(&item->list);
-		return;
-	}
+		वापस;
+	पूर्ण
 	to_index = item->index;
 	__parman_prio_move(parman, prio, last_item, to_index, 1);
 	list_del(&last_item->list);
 	list_replace(&item->list, &last_item->list);
 	last_item->index = to_index;
-}
+पूर्ण
 
-static int parman_lsort_item_add(struct parman *parman,
-				 struct parman_prio *prio,
-				 struct parman_item *item)
-{
-	struct parman_prio *prio2;
-	unsigned long new_index;
-	int err;
+अटल पूर्णांक parman_lsort_item_add(काष्ठा parman *parman,
+				 काष्ठा parman_prio *prio,
+				 काष्ठा parman_item *item)
+अणु
+	काष्ठा parman_prio *prio2;
+	अचिन्हित दीर्घ new_index;
+	पूर्णांक err;
 
-	if (parman->count + 1 > parman->limit_count) {
+	अगर (parman->count + 1 > parman->limit_count) अणु
 		err = parman_enlarge(parman);
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
 	new_index = parman_lsort_new_index_find(parman, prio);
-	list_for_each_entry_reverse(prio2, &parman->prio_list, list) {
-		if (prio2 == prio)
-			break;
-		parman_prio_shift_down(parman, prio2);
-	}
+	list_क्रम_each_entry_reverse(prio2, &parman->prio_list, list) अणु
+		अगर (prio2 == prio)
+			अवरोध;
+		parman_prio_shअगरt_करोwn(parman, prio2);
+	पूर्ण
 	item->index = new_index;
 	list_add_tail(&item->list, &prio->item_list);
 	parman->count++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void parman_lsort_item_remove(struct parman *parman,
-				     struct parman_prio *prio,
-				     struct parman_item *item)
-{
-	parman_prio_item_remove(parman, prio, item);
-	list_for_each_entry_continue(prio, &parman->prio_list, list)
-		parman_prio_shift_up(parman, prio);
+अटल व्योम parman_lsort_item_हटाओ(काष्ठा parman *parman,
+				     काष्ठा parman_prio *prio,
+				     काष्ठा parman_item *item)
+अणु
+	parman_prio_item_हटाओ(parman, prio, item);
+	list_क्रम_each_entry_जारी(prio, &parman->prio_list, list)
+		parman_prio_shअगरt_up(parman, prio);
 	parman->count--;
-	if (parman->limit_count - parman->count >= parman->ops->resize_step)
+	अगर (parman->limit_count - parman->count >= parman->ops->resize_step)
 		parman_shrink(parman);
-}
+पूर्ण
 
-static const struct parman_algo parman_lsort = {
+अटल स्थिर काष्ठा parman_algo parman_lsort = अणु
 	.item_add	= parman_lsort_item_add,
-	.item_remove	= parman_lsort_item_remove,
-};
+	.item_हटाओ	= parman_lsort_item_हटाओ,
+पूर्ण;
 
-static const struct parman_algo *parman_algos[] = {
+अटल स्थिर काष्ठा parman_algo *parman_algos[] = अणु
 	&parman_lsort,
-};
+पूर्ण;
 
 /**
  * parman_create - creates a new parman instance
- * @ops:	caller-specific callbacks
- * @priv:	pointer to a private data passed to the ops
+ * @ops:	caller-specअगरic callbacks
+ * @priv:	poपूर्णांकer to a निजी data passed to the ops
  *
  * Note: all locking must be provided by the caller.
  *
@@ -245,7 +246,7 @@ static const struct parman_algo *parman_algos[] = {
  * item 8 with prio 30
  *
  * In this example, there are 3 priority chunks. The order of the priorities
- * matters, however the order of items within a single priority chunk does not
+ * matters, however the order of items within a single priority chunk करोes not
  * matter. So the same array could be ordered as follows:
  *
  * item 2 with prio 10
@@ -257,27 +258,27 @@ static const struct parman_algo *parman_algos[] = {
  * item 8 with prio 30
  * item 6 with prio 30
  *
- * The goal of parman is to maintain the priority ordering. The caller
+ * The goal of parman is to मुख्यtain the priority ordering. The caller
  * provides @ops with callbacks parman uses to move the items
  * and resize the array area.
  *
- * Returns a pointer to newly created parman instance in case of success,
- * otherwise it returns NULL.
+ * Returns a poपूर्णांकer to newly created parman instance in हाल of success,
+ * otherwise it वापसs शून्य.
  */
-struct parman *parman_create(const struct parman_ops *ops, void *priv)
-{
-	struct parman *parman;
+काष्ठा parman *parman_create(स्थिर काष्ठा parman_ops *ops, व्योम *priv)
+अणु
+	काष्ठा parman *parman;
 
-	parman = kzalloc(sizeof(*parman), GFP_KERNEL);
-	if (!parman)
-		return NULL;
+	parman = kzalloc(माप(*parman), GFP_KERNEL);
+	अगर (!parman)
+		वापस शून्य;
 	INIT_LIST_HEAD(&parman->prio_list);
 	parman->ops = ops;
 	parman->priv = priv;
 	parman->limit_count = ops->base_count;
 	parman->algo = parman_algos[ops->algo];
-	return parman;
-}
+	वापस parman;
+पूर्ण
 EXPORT_SYMBOL(parman_create);
 
 /**
@@ -286,54 +287,54 @@ EXPORT_SYMBOL(parman_create);
  *
  * Note: all locking must be provided by the caller.
  */
-void parman_destroy(struct parman *parman)
-{
+व्योम parman_destroy(काष्ठा parman *parman)
+अणु
 	WARN_ON(!list_empty(&parman->prio_list));
-	kfree(parman);
-}
+	kमुक्त(parman);
+पूर्ण
 EXPORT_SYMBOL(parman_destroy);
 
 /**
  * parman_prio_init - initializes a parman priority chunk
  * @parman:	parman instance
- * @prio:	parman prio structure to be initialized
+ * @prio:	parman prio काष्ठाure to be initialized
  * @priority:	desired priority of the chunk
  *
  * Note: all locking must be provided by the caller.
  *
- * Before caller could add an item with certain priority, he has to
- * initialize a priority chunk for it using this function.
+ * Beक्रमe caller could add an item with certain priority, he has to
+ * initialize a priority chunk क्रम it using this function.
  */
-void parman_prio_init(struct parman *parman, struct parman_prio *prio,
-		      unsigned long priority)
-{
-	struct parman_prio *prio2;
-	struct list_head *pos;
+व्योम parman_prio_init(काष्ठा parman *parman, काष्ठा parman_prio *prio,
+		      अचिन्हित दीर्घ priority)
+अणु
+	काष्ठा parman_prio *prio2;
+	काष्ठा list_head *pos;
 
 	INIT_LIST_HEAD(&prio->item_list);
 	prio->priority = priority;
 
 	/* Position inside the list according to priority */
-	list_for_each(pos, &parman->prio_list) {
+	list_क्रम_each(pos, &parman->prio_list) अणु
 		prio2 = list_entry(pos, typeof(*prio2), list);
-		if (prio2->priority > prio->priority)
-			break;
-	}
+		अगर (prio2->priority > prio->priority)
+			अवरोध;
+	पूर्ण
 	list_add_tail(&prio->list, pos);
-}
+पूर्ण
 EXPORT_SYMBOL(parman_prio_init);
 
 /**
  * parman_prio_fini - finalizes use of parman priority chunk
- * @prio:	parman prio structure
+ * @prio:	parman prio काष्ठाure
  *
  * Note: all locking must be provided by the caller.
  */
-void parman_prio_fini(struct parman_prio *prio)
-{
+व्योम parman_prio_fini(काष्ठा parman_prio *prio)
+अणु
 	WARN_ON(parman_prio_used(prio));
 	list_del(&prio->list);
-}
+पूर्ण
 EXPORT_SYMBOL(parman_prio_fini);
 
 /**
@@ -344,31 +345,31 @@ EXPORT_SYMBOL(parman_prio_fini);
  *
  * Note: all locking must be provided by the caller.
  *
- * Adds item to a array managed by parman instance under the specified priority.
+ * Adds item to a array managed by parman instance under the specअगरied priority.
  *
- * Returns 0 in case of success, negative number to indicate an error.
+ * Returns 0 in हाल of success, negative number to indicate an error.
  */
-int parman_item_add(struct parman *parman, struct parman_prio *prio,
-		    struct parman_item *item)
-{
-	return parman->algo->item_add(parman, prio, item);
-}
+पूर्णांक parman_item_add(काष्ठा parman *parman, काष्ठा parman_prio *prio,
+		    काष्ठा parman_item *item)
+अणु
+	वापस parman->algo->item_add(parman, prio, item);
+पूर्ण
 EXPORT_SYMBOL(parman_item_add);
 
 /**
- * parman_item_remove - deletes parman item
+ * parman_item_हटाओ - deletes parman item
  * @parman:	parman instance
  * @prio:	parman prio instance to delete the item from
  * @item:	parman item instance
  *
  * Note: all locking must be provided by the caller.
  */
-void parman_item_remove(struct parman *parman, struct parman_prio *prio,
-			struct parman_item *item)
-{
-	parman->algo->item_remove(parman, prio, item);
-}
-EXPORT_SYMBOL(parman_item_remove);
+व्योम parman_item_हटाओ(काष्ठा parman *parman, काष्ठा parman_prio *prio,
+			काष्ठा parman_item *item)
+अणु
+	parman->algo->item_हटाओ(parman, prio, item);
+पूर्ण
+EXPORT_SYMBOL(parman_item_हटाओ);
 
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Jiri Pirko <jiri@mellanox.com>");

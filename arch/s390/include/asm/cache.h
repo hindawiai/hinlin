@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999
@@ -7,13 +8,13 @@
  *    Copyright (C) 1992, Linus Torvalds
  */
 
-#ifndef __ARCH_S390_CACHE_H
-#define __ARCH_S390_CACHE_H
+#अगर_अघोषित __ARCH_S390_CACHE_H
+#घोषणा __ARCH_S390_CACHE_H
 
-#define L1_CACHE_BYTES     256
-#define L1_CACHE_SHIFT     8
-#define NET_SKB_PAD	   32
+#घोषणा L1_CACHE_BYTES     256
+#घोषणा L1_CACHE_SHIFT     8
+#घोषणा NET_SKB_PAD	   32
 
-#define __read_mostly __section(".data..read_mostly")
+#घोषणा __पढ़ो_mostly __section(".data..read_mostly")
 
-#endif
+#पूर्ण_अगर

@@ -1,93 +1,94 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * Driver for Digigram pcxhr compatible soundcards
+ * Driver क्रम Digigram pcxhr compatible soundcards
  *
  * hwdep device manager
  *
  * Copyright (c) 2004 by Digigram <alsa@digigram.com>
  */
 
-#include <linux/interrupt.h>
-#include <linux/vmalloc.h>
-#include <linux/firmware.h>
-#include <linux/pci.h>
-#include <linux/module.h>
-#include <linux/io.h>
-#include <sound/core.h>
-#include <sound/hwdep.h>
-#include "pcxhr.h"
-#include "pcxhr_mixer.h"
-#include "pcxhr_hwdep.h"
-#include "pcxhr_core.h"
-#include "pcxhr_mix22.h"
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/firmware.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/module.h>
+#समावेश <linux/पन.स>
+#समावेश <sound/core.h>
+#समावेश <sound/hwdep.h>
+#समावेश "pcxhr.h"
+#समावेश "pcxhr_mixer.h"
+#समावेश "pcxhr_hwdep.h"
+#समावेश "pcxhr_core.h"
+#समावेश "pcxhr_mix22.h"
 
 
-static int pcxhr_sub_init(struct pcxhr_mgr *mgr);
+अटल पूर्णांक pcxhr_sub_init(काष्ठा pcxhr_mgr *mgr);
 /*
- * get basic information and init pcxhr card
+ * get basic inक्रमmation and init pcxhr card
  */
-static int pcxhr_init_board(struct pcxhr_mgr *mgr)
-{
-	int err;
-	struct pcxhr_rmh rmh;
-	int card_streams;
+अटल पूर्णांक pcxhr_init_board(काष्ठा pcxhr_mgr *mgr)
+अणु
+	पूर्णांक err;
+	काष्ठा pcxhr_rmh rmh;
+	पूर्णांक card_streams;
 
 	/* calc the number of all streams used */
-	if (mgr->mono_capture)
+	अगर (mgr->mono_capture)
 		card_streams = mgr->capture_chips * 2;
-	else
+	अन्यथा
 		card_streams = mgr->capture_chips;
 	card_streams += mgr->playback_chips * PCXHR_PLAYBACK_STREAMS;
 
-	/* enable interrupts */
+	/* enable पूर्णांकerrupts */
 	pcxhr_enable_dsp(mgr);
 
 	pcxhr_init_rmh(&rmh, CMD_SUPPORTED);
 	err = pcxhr_send_msg(mgr, &rmh);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	/* test 4, 8 or 12 phys out */
-	if ((rmh.stat[0] & MASK_FIRST_FIELD) < mgr->playback_chips * 2)
-		return -EINVAL;
+	अगर ((rmh.stat[0] & MASK_FIRST_FIELD) < mgr->playback_chips * 2)
+		वापस -EINVAL;
 	/* test 4, 8 or 2 phys in */
-	if (((rmh.stat[0] >> (2 * FIELD_SIZE)) & MASK_FIRST_FIELD) <
+	अगर (((rmh.stat[0] >> (2 * FIELD_SIZE)) & MASK_FIRST_FIELD) <
 	    mgr->capture_chips * 2)
-		return -EINVAL;
+		वापस -EINVAL;
 	/* test max nb substream per board */
-	if ((rmh.stat[1] & 0x5F) < card_streams)
-		return -EINVAL;
+	अगर ((rmh.stat[1] & 0x5F) < card_streams)
+		वापस -EINVAL;
 	/* test max nb substream per pipe */
-	if (((rmh.stat[1] >> 7) & 0x5F) < PCXHR_PLAYBACK_STREAMS)
-		return -EINVAL;
+	अगर (((rmh.stat[1] >> 7) & 0x5F) < PCXHR_PLAYBACK_STREAMS)
+		वापस -EINVAL;
 	dev_dbg(&mgr->pci->dev,
 		"supported formats : playback=%x capture=%x\n",
 		    rmh.stat[2], rmh.stat[3]);
 
 	pcxhr_init_rmh(&rmh, CMD_VERSION);
-	/* firmware num for DSP */
+	/* firmware num क्रम DSP */
 	rmh.cmd[0] |= mgr->firmware_num;
 	/* transfer granularity in samples (should be multiple of 48) */
 	rmh.cmd[1] = (1<<23) + mgr->granularity;
 	rmh.cmd_len = 2;
 	err = pcxhr_send_msg(mgr, &rmh);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 	dev_dbg(&mgr->pci->dev,
 		"PCXHR DSP version is %d.%d.%d\n", (rmh.stat[0]>>16)&0xff,
 		    (rmh.stat[0]>>8)&0xff, rmh.stat[0]&0xff);
 	mgr->dsp_version = rmh.stat[0];
 
-	if (mgr->is_hr_stereo)
+	अगर (mgr->is_hr_stereo)
 		err = hr222_sub_init(mgr);
-	else
+	अन्यथा
 		err = pcxhr_sub_init(mgr);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int pcxhr_sub_init(struct pcxhr_mgr *mgr)
-{
-	int err;
-	struct pcxhr_rmh rmh;
+अटल पूर्णांक pcxhr_sub_init(काष्ठा pcxhr_mgr *mgr)
+अणु
+	पूर्णांक err;
+	काष्ठा pcxhr_rmh rmh;
 
 	/* get options */
 	pcxhr_init_rmh(&rmh, CMD_ACCESS_IO_READ);
@@ -95,79 +96,79 @@ static int pcxhr_sub_init(struct pcxhr_mgr *mgr)
 	rmh.cmd[1]  = REG_STATUS_OPTIONS;
 	rmh.cmd_len = 2;
 	err = pcxhr_send_msg(mgr, &rmh);
-	if (err)
-		return err;
+	अगर (err)
+		वापस err;
 
-	if ((rmh.stat[1] & REG_STATUS_OPT_DAUGHTER_MASK) ==
+	अगर ((rmh.stat[1] & REG_STATUS_OPT_DAUGHTER_MASK) ==
 	    REG_STATUS_OPT_ANALOG_BOARD)
-		mgr->board_has_analog = 1;	/* analog addon board found */
+		mgr->board_has_analog = 1;	/* analog adकरोn board found */
 
-	/* unmute inputs */
-	err = pcxhr_write_io_num_reg_cont(mgr, REG_CONT_UNMUTE_INPUTS,
-					  REG_CONT_UNMUTE_INPUTS, NULL);
-	if (err)
-		return err;
-	/* unmute outputs (a write to IO_NUM_REG_MUTE_OUT mutes!) */
+	/* unmute inमाला_दो */
+	err = pcxhr_ग_लिखो_io_num_reg_cont(mgr, REG_CONT_UNMUTE_INPUTS,
+					  REG_CONT_UNMUTE_INPUTS, शून्य);
+	अगर (err)
+		वापस err;
+	/* unmute outमाला_दो (a ग_लिखो to IO_NUM_REG_MUTE_OUT mutes!) */
 	pcxhr_init_rmh(&rmh, CMD_ACCESS_IO_READ);
 	rmh.cmd[0] |= IO_NUM_REG_MUTE_OUT;
-	if (DSP_EXT_CMD_SET(mgr)) {
+	अगर (DSP_EXT_CMD_SET(mgr)) अणु
 		rmh.cmd[1]  = 1;	/* unmute digital plugs */
 		rmh.cmd_len = 2;
-	}
+	पूर्ण
 	err = pcxhr_send_msg(mgr, &rmh);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void pcxhr_reset_board(struct pcxhr_mgr *mgr)
-{
-	struct pcxhr_rmh rmh;
+व्योम pcxhr_reset_board(काष्ठा pcxhr_mgr *mgr)
+अणु
+	काष्ठा pcxhr_rmh rmh;
 
-	if (mgr->dsp_loaded & (1 << PCXHR_FIRMWARE_DSP_MAIN_INDEX)) {
-		/* mute outputs */
-	    if (!mgr->is_hr_stereo) {
-		/* a read to IO_NUM_REG_MUTE_OUT register unmutes! */
+	अगर (mgr->dsp_loaded & (1 << PCXHR_FIRMWARE_DSP_MAIN_INDEX)) अणु
+		/* mute outमाला_दो */
+	    अगर (!mgr->is_hr_stereo) अणु
+		/* a पढ़ो to IO_NUM_REG_MUTE_OUT रेजिस्टर unmutes! */
 		pcxhr_init_rmh(&rmh, CMD_ACCESS_IO_WRITE);
 		rmh.cmd[0] |= IO_NUM_REG_MUTE_OUT;
 		pcxhr_send_msg(mgr, &rmh);
-		/* mute inputs */
-		pcxhr_write_io_num_reg_cont(mgr, REG_CONT_UNMUTE_INPUTS,
-					    0, NULL);
-	    }
+		/* mute inमाला_दो */
+		pcxhr_ग_लिखो_io_num_reg_cont(mgr, REG_CONT_UNMUTE_INPUTS,
+					    0, शून्य);
+	    पूर्ण
 		/* stereo cards mute with reset of dsp */
-	}
+	पूर्ण
 	/* reset pcxhr dsp */
-	if (mgr->dsp_loaded & (1 << PCXHR_FIRMWARE_DSP_EPRM_INDEX))
+	अगर (mgr->dsp_loaded & (1 << PCXHR_FIRMWARE_DSP_EPRM_INDEX))
 		pcxhr_reset_dsp(mgr);
 	/* reset second xilinx */
-	if (mgr->dsp_loaded & (1 << PCXHR_FIRMWARE_XLX_COM_INDEX)) {
+	अगर (mgr->dsp_loaded & (1 << PCXHR_FIRMWARE_XLX_COM_INDEX)) अणु
 		pcxhr_reset_xilinx_com(mgr);
 		mgr->dsp_loaded = 1;
-	}
-	return;
-}
+	पूर्ण
+	वापस;
+पूर्ण
 
 
 /*
  *  allocate a playback/capture pipe (pcmp0/pcmc0)
  */
-static int pcxhr_dsp_allocate_pipe(struct pcxhr_mgr *mgr,
-				   struct pcxhr_pipe *pipe,
-				   int is_capture, int pin)
-{
-	int stream_count, audio_count;
-	int err;
-	struct pcxhr_rmh rmh;
+अटल पूर्णांक pcxhr_dsp_allocate_pipe(काष्ठा pcxhr_mgr *mgr,
+				   काष्ठा pcxhr_pipe *pipe,
+				   पूर्णांक is_capture, पूर्णांक pin)
+अणु
+	पूर्णांक stream_count, audio_count;
+	पूर्णांक err;
+	काष्ठा pcxhr_rmh rmh;
 
-	if (is_capture) {
+	अगर (is_capture) अणु
 		stream_count = 1;
-		if (mgr->mono_capture)
+		अगर (mgr->mono_capture)
 			audio_count = 1;
-		else
+		अन्यथा
 			audio_count = 2;
-	} else {
+	पूर्ण अन्यथा अणु
 		stream_count = PCXHR_PLAYBACK_STREAMS;
 		audio_count = 2;	/* always stereo */
-	}
+	पूर्ण
 	dev_dbg(&mgr->pci->dev, "snd_add_ref_pipe pin(%d) pcm%c0\n",
 		    pin, is_capture ? 'c' : 'p');
 	pipe->is_capture = is_capture;
@@ -177,216 +178,216 @@ static int pcxhr_dsp_allocate_pipe(struct pcxhr_mgr *mgr,
 	pcxhr_set_pipe_cmd_params(&rmh, is_capture, pin,
 				  audio_count, stream_count);
 	rmh.cmd[1] |= 0x020000; /* add P_PCM_ONLY_MASK */
-	if (DSP_EXT_CMD_SET(mgr)) {
+	अगर (DSP_EXT_CMD_SET(mgr)) अणु
 		/* add channel mask to command */
 	  rmh.cmd[rmh.cmd_len++] = (audio_count == 1) ? 0x01 : 0x03;
-	}
+	पूर्ण
 	err = pcxhr_send_msg(mgr, &rmh);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		dev_err(&mgr->pci->dev, "error pipe allocation "
 			   "(CMD_RES_PIPE) err=%x!\n", err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	pipe->status = PCXHR_PIPE_DEFINED;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *  free playback/capture pipe (pcmp0/pcmc0)
+ *  मुक्त playback/capture pipe (pcmp0/pcmc0)
  */
-#if 0
-static int pcxhr_dsp_free_pipe( struct pcxhr_mgr *mgr, struct pcxhr_pipe *pipe)
-{
-	struct pcxhr_rmh rmh;
-	int capture_mask = 0;
-	int playback_mask = 0;
-	int err = 0;
+#अगर 0
+अटल पूर्णांक pcxhr_dsp_मुक्त_pipe( काष्ठा pcxhr_mgr *mgr, काष्ठा pcxhr_pipe *pipe)
+अणु
+	काष्ठा pcxhr_rmh rmh;
+	पूर्णांक capture_mask = 0;
+	पूर्णांक playback_mask = 0;
+	पूर्णांक err = 0;
 
-	if (pipe->is_capture)
+	अगर (pipe->is_capture)
 		capture_mask  = (1 << pipe->first_audio);
-	else
+	अन्यथा
 		playback_mask = (1 << pipe->first_audio);
 
 	/* stop one pipe */
 	err = pcxhr_set_pipe_state(mgr, playback_mask, capture_mask, 0);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&mgr->pci->dev, "error stopping pipe!\n");
 	/* release the pipe */
 	pcxhr_init_rmh(&rmh, CMD_FREE_PIPE);
 	pcxhr_set_pipe_cmd_params(&rmh, pipe->is_capture, pipe->first_audio,
 				  0, 0);
 	err = pcxhr_send_msg(mgr, &rmh);
-	if (err < 0)
+	अगर (err < 0)
 		dev_err(&mgr->pci->dev, "error pipe release "
 			   "(CMD_FREE_PIPE) err(%x)\n", err);
 	pipe->status = PCXHR_PIPE_UNDEFINED;
-	return err;
-}
-#endif
+	वापस err;
+पूर्ण
+#पूर्ण_अगर
 
 
-static int pcxhr_config_pipes(struct pcxhr_mgr *mgr)
-{
-	int err, i, j;
-	struct snd_pcxhr *chip;
-	struct pcxhr_pipe *pipe;
+अटल पूर्णांक pcxhr_config_pipes(काष्ठा pcxhr_mgr *mgr)
+अणु
+	पूर्णांक err, i, j;
+	काष्ठा snd_pcxhr *chip;
+	काष्ठा pcxhr_pipe *pipe;
 
 	/* allocate the pipes on the dsp */
-	for (i = 0; i < mgr->num_cards; i++) {
+	क्रम (i = 0; i < mgr->num_cards; i++) अणु
 		chip = mgr->chip[i];
-		if (chip->nb_streams_play) {
+		अगर (chip->nb_streams_play) अणु
 			pipe = &chip->playback_pipe;
 			err = pcxhr_dsp_allocate_pipe( mgr, pipe, 0, i*2);
-			if (err)
-				return err;
-			for(j = 0; j < chip->nb_streams_play; j++)
+			अगर (err)
+				वापस err;
+			क्रम(j = 0; j < chip->nb_streams_play; j++)
 				chip->playback_stream[j].pipe = pipe;
-		}
-		for (j = 0; j < chip->nb_streams_capt; j++) {
+		पूर्ण
+		क्रम (j = 0; j < chip->nb_streams_capt; j++) अणु
 			pipe = &chip->capture_pipe[j];
 			err = pcxhr_dsp_allocate_pipe(mgr, pipe, 1, i*2 + j);
-			if (err)
-				return err;
+			अगर (err)
+				वापस err;
 			chip->capture_stream[j].pipe = pipe;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int pcxhr_start_pipes(struct pcxhr_mgr *mgr)
-{
-	int i, j;
-	struct snd_pcxhr *chip;
-	int playback_mask = 0;
-	int capture_mask = 0;
+अटल पूर्णांक pcxhr_start_pipes(काष्ठा pcxhr_mgr *mgr)
+अणु
+	पूर्णांक i, j;
+	काष्ठा snd_pcxhr *chip;
+	पूर्णांक playback_mask = 0;
+	पूर्णांक capture_mask = 0;
 
 	/* start all the pipes on the dsp */
-	for (i = 0; i < mgr->num_cards; i++) {
+	क्रम (i = 0; i < mgr->num_cards; i++) अणु
 		chip = mgr->chip[i];
-		if (chip->nb_streams_play)
+		अगर (chip->nb_streams_play)
 			playback_mask |= 1 << chip->playback_pipe.first_audio;
-		for (j = 0; j < chip->nb_streams_capt; j++)
+		क्रम (j = 0; j < chip->nb_streams_capt; j++)
 			capture_mask |= 1 << chip->capture_pipe[j].first_audio;
-	}
-	return pcxhr_set_pipe_state(mgr, playback_mask, capture_mask, 1);
-}
+	पूर्ण
+	वापस pcxhr_set_pipe_state(mgr, playback_mask, capture_mask, 1);
+पूर्ण
 
 
-static int pcxhr_dsp_load(struct pcxhr_mgr *mgr, int index,
-			  const struct firmware *dsp)
-{
-	int err, card_index;
+अटल पूर्णांक pcxhr_dsp_load(काष्ठा pcxhr_mgr *mgr, पूर्णांक index,
+			  स्थिर काष्ठा firmware *dsp)
+अणु
+	पूर्णांक err, card_index;
 
 	dev_dbg(&mgr->pci->dev,
 		"loading dsp [%d] size = %zd\n", index, dsp->size);
 
-	switch (index) {
-	case PCXHR_FIRMWARE_XLX_INT_INDEX:
+	चयन (index) अणु
+	हाल PCXHR_FIRMWARE_XLX_INT_INDEX:
 		pcxhr_reset_xilinx_com(mgr);
-		return pcxhr_load_xilinx_binary(mgr, dsp, 0);
+		वापस pcxhr_load_xilinx_binary(mgr, dsp, 0);
 
-	case PCXHR_FIRMWARE_XLX_COM_INDEX:
+	हाल PCXHR_FIRMWARE_XLX_COM_INDEX:
 		pcxhr_reset_xilinx_com(mgr);
-		return pcxhr_load_xilinx_binary(mgr, dsp, 1);
+		वापस pcxhr_load_xilinx_binary(mgr, dsp, 1);
 
-	case PCXHR_FIRMWARE_DSP_EPRM_INDEX:
+	हाल PCXHR_FIRMWARE_DSP_EPRM_INDEX:
 		pcxhr_reset_dsp(mgr);
-		return pcxhr_load_eeprom_binary(mgr, dsp);
+		वापस pcxhr_load_eeprom_binary(mgr, dsp);
 
-	case PCXHR_FIRMWARE_DSP_BOOT_INDEX:
-		return pcxhr_load_boot_binary(mgr, dsp);
+	हाल PCXHR_FIRMWARE_DSP_BOOT_INDEX:
+		वापस pcxhr_load_boot_binary(mgr, dsp);
 
-	case PCXHR_FIRMWARE_DSP_MAIN_INDEX:
+	हाल PCXHR_FIRMWARE_DSP_MAIN_INDEX:
 		err = pcxhr_load_dsp_binary(mgr, dsp);
-		if (err)
-			return err;
-		break;	/* continue with first init */
-	default:
+		अगर (err)
+			वापस err;
+		अवरोध;	/* जारी with first init */
+	शेष:
 		dev_err(&mgr->pci->dev, "wrong file index\n");
-		return -EFAULT;
-	} /* end of switch file index*/
+		वापस -EFAULT;
+	पूर्ण /* end of चयन file index*/
 
 	/* first communication with embedded */
 	err = pcxhr_init_board(mgr);
-        if (err < 0) {
+        अगर (err < 0) अणु
 		dev_err(&mgr->pci->dev, "pcxhr could not be set up\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	err = pcxhr_config_pipes(mgr);
-        if (err < 0) {
+        अगर (err < 0) अणु
 		dev_err(&mgr->pci->dev, "pcxhr pipes could not be set up\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
        	/* create devices and mixer in accordance with HW options*/
-        for (card_index = 0; card_index < mgr->num_cards; card_index++) {
-		struct snd_pcxhr *chip = mgr->chip[card_index];
+        क्रम (card_index = 0; card_index < mgr->num_cards; card_index++) अणु
+		काष्ठा snd_pcxhr *chip = mgr->chip[card_index];
 
-		if ((err = pcxhr_create_pcm(chip)) < 0)
-			return err;
+		अगर ((err = pcxhr_create_pcm(chip)) < 0)
+			वापस err;
 
-		if (card_index == 0) {
-			if ((err = pcxhr_create_mixer(chip->mgr)) < 0)
-				return err;
-		}
-		if ((err = snd_card_register(chip->card)) < 0)
-			return err;
-	}
+		अगर (card_index == 0) अणु
+			अगर ((err = pcxhr_create_mixer(chip->mgr)) < 0)
+				वापस err;
+		पूर्ण
+		अगर ((err = snd_card_रेजिस्टर(chip->card)) < 0)
+			वापस err;
+	पूर्ण
 	err = pcxhr_start_pipes(mgr);
-        if (err < 0) {
+        अगर (err < 0) अणु
 		dev_err(&mgr->pci->dev, "pcxhr pipes could not be started\n");
-		return err;
-	}
+		वापस err;
+	पूर्ण
 	dev_dbg(&mgr->pci->dev,
 		"pcxhr firmware downloaded and successfully set up\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * fw loader entry
  */
-int pcxhr_setup_firmware(struct pcxhr_mgr *mgr)
-{
-	static const char * const fw_files[][5] = {
-	[0] = { "xlxint.dat", "xlxc882hr.dat",
-		"dspe882.e56", "dspb882hr.b56", "dspd882.d56" },
-	[1] = { "xlxint.dat", "xlxc882e.dat",
-		"dspe882.e56", "dspb882e.b56", "dspd882.d56" },
-	[2] = { "xlxint.dat", "xlxc1222hr.dat",
-		"dspe882.e56", "dspb1222hr.b56", "dspd1222.d56" },
-	[3] = { "xlxint.dat", "xlxc1222e.dat",
-		"dspe882.e56", "dspb1222e.b56", "dspd1222.d56" },
-	[4] = { NULL, "xlxc222.dat",
-		"dspe924.e56", "dspb924.b56", "dspd222.d56" },
-	[5] = { NULL, "xlxc924.dat",
-		"dspe924.e56", "dspb924.b56", "dspd222.d56" },
-	};
-	char path[32];
+पूर्णांक pcxhr_setup_firmware(काष्ठा pcxhr_mgr *mgr)
+अणु
+	अटल स्थिर अक्षर * स्थिर fw_files[][5] = अणु
+	[0] = अणु "xlxint.dat", "xlxc882hr.dat",
+		"dspe882.e56", "dspb882hr.b56", "dspd882.d56" पूर्ण,
+	[1] = अणु "xlxint.dat", "xlxc882e.dat",
+		"dspe882.e56", "dspb882e.b56", "dspd882.d56" पूर्ण,
+	[2] = अणु "xlxint.dat", "xlxc1222hr.dat",
+		"dspe882.e56", "dspb1222hr.b56", "dspd1222.d56" पूर्ण,
+	[3] = अणु "xlxint.dat", "xlxc1222e.dat",
+		"dspe882.e56", "dspb1222e.b56", "dspd1222.d56" पूर्ण,
+	[4] = अणु शून्य, "xlxc222.dat",
+		"dspe924.e56", "dspb924.b56", "dspd222.d56" पूर्ण,
+	[5] = अणु शून्य, "xlxc924.dat",
+		"dspe924.e56", "dspb924.b56", "dspd222.d56" पूर्ण,
+	पूर्ण;
+	अक्षर path[32];
 
-	const struct firmware *fw_entry;
-	int i, err;
-	int fw_set = mgr->fw_file_set;
+	स्थिर काष्ठा firmware *fw_entry;
+	पूर्णांक i, err;
+	पूर्णांक fw_set = mgr->fw_file_set;
 
-	for (i = 0; i < 5; i++) {
-		if (!fw_files[fw_set][i])
-			continue;
-		sprintf(path, "pcxhr/%s", fw_files[fw_set][i]);
-		if (request_firmware(&fw_entry, path, &mgr->pci->dev)) {
+	क्रम (i = 0; i < 5; i++) अणु
+		अगर (!fw_files[fw_set][i])
+			जारी;
+		प्र_लिखो(path, "pcxhr/%s", fw_files[fw_set][i]);
+		अगर (request_firmware(&fw_entry, path, &mgr->pci->dev)) अणु
 			dev_err(&mgr->pci->dev,
 				"pcxhr: can't load firmware %s\n",
 				   path);
-			return -ENOENT;
-		}
+			वापस -ENOENT;
+		पूर्ण
 		/* fake hwdep dsp record */
 		err = pcxhr_dsp_load(mgr, i, fw_entry);
 		release_firmware(fw_entry);
-		if (err < 0)
-			return err;
+		अगर (err < 0)
+			वापस err;
 		mgr->dsp_loaded |= 1 << i;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 MODULE_FIRMWARE("pcxhr/xlxint.dat");
 MODULE_FIRMWARE("pcxhr/xlxc882hr.dat");

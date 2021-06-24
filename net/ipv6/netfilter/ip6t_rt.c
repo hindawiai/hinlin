@@ -1,69 +1,70 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Kernel module to match ROUTING parameters. */
 
 /* (C) 2001-2002 Andras Kis-Szabo <kisza@sch.bme.hu>
  */
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#include <linux/module.h>
-#include <linux/skbuff.h>
-#include <linux/ipv6.h>
-#include <linux/types.h>
-#include <net/checksum.h>
-#include <net/ipv6.h>
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#समावेश <linux/module.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/types.h>
+#समावेश <net/checksum.h>
+#समावेश <net/ipv6.h>
 
-#include <asm/byteorder.h>
+#समावेश <यंत्र/byteorder.h>
 
-#include <linux/netfilter/x_tables.h>
-#include <linux/netfilter_ipv6/ip6_tables.h>
-#include <linux/netfilter_ipv6/ip6t_rt.h>
+#समावेश <linux/netfilter/x_tables.h>
+#समावेश <linux/netfilter_ipv6/ip6_tables.h>
+#समावेश <linux/netfilter_ipv6/ip6t_rt.h>
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Xtables: IPv6 Routing Header match");
 MODULE_AUTHOR("Andras Kis-Szabo <kisza@sch.bme.hu>");
 
-/* Returns 1 if the id is matched by the range, 0 otherwise */
-static inline bool
-segsleft_match(u_int32_t min, u_int32_t max, u_int32_t id, bool invert)
-{
+/* Returns 1 अगर the id is matched by the range, 0 otherwise */
+अटल अंतरभूत bool
+segsleft_match(u_पूर्णांक32_t min, u_पूर्णांक32_t max, u_पूर्णांक32_t id, bool invert)
+अणु
 	bool r;
 	pr_debug("segsleft_match:%c 0x%x <= 0x%x <= 0x%x\n",
 		 invert ? '!' : ' ', min, id, max);
 	r = (id >= min && id <= max) ^ invert;
 	pr_debug(" result %s\n", r ? "PASS" : "FAILED");
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static bool rt_mt6(const struct sk_buff *skb, struct xt_action_param *par)
-{
-	struct ipv6_rt_hdr _route;
-	const struct ipv6_rt_hdr *rh;
-	const struct ip6t_rt *rtinfo = par->matchinfo;
-	unsigned int temp;
-	unsigned int ptr = 0;
-	unsigned int hdrlen = 0;
+अटल bool rt_mt6(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
+अणु
+	काष्ठा ipv6_rt_hdr _route;
+	स्थिर काष्ठा ipv6_rt_hdr *rh;
+	स्थिर काष्ठा ip6t_rt *rtinfo = par->matchinfo;
+	अचिन्हित पूर्णांक temp;
+	अचिन्हित पूर्णांक ptr = 0;
+	अचिन्हित पूर्णांक hdrlen = 0;
 	bool ret = false;
-	struct in6_addr _addr;
-	const struct in6_addr *ap;
-	int err;
+	काष्ठा in6_addr _addr;
+	स्थिर काष्ठा in6_addr *ap;
+	पूर्णांक err;
 
-	err = ipv6_find_hdr(skb, &ptr, NEXTHDR_ROUTING, NULL, NULL);
-	if (err < 0) {
-		if (err != -ENOENT)
+	err = ipv6_find_hdr(skb, &ptr, NEXTHDR_ROUTING, शून्य, शून्य);
+	अगर (err < 0) अणु
+		अगर (err != -ENOENT)
 			par->hotdrop = true;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	rh = skb_header_pointer(skb, ptr, sizeof(_route), &_route);
-	if (rh == NULL) {
+	rh = skb_header_poपूर्णांकer(skb, ptr, माप(_route), &_route);
+	अगर (rh == शून्य) अणु
 		par->hotdrop = true;
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	hdrlen = ipv6_optlen(rh);
-	if (skb->len - ptr < hdrlen) {
+	अगर (skb->len - ptr < hdrlen) अणु
 		/* Pcket smaller than its length field */
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
 	pr_debug("IPv6 RT LEN %u %u ", hdrlen, rh->hdrlen);
 	pr_debug("TYPE %04X ", rh->type);
@@ -85,9 +86,9 @@ static bool rt_mt6(const struct sk_buff *skb, struct xt_action_param *par)
 		   !!(rtinfo->invflags & IP6T_RT_INV_LEN)));
 	pr_debug("res %02X %02X %02X ",
 		 rtinfo->flags & IP6T_RT_RES,
-		 ((const struct rt0_hdr *)rh)->reserved,
+		 ((स्थिर काष्ठा rt0_hdr *)rh)->reserved,
 		 !((rtinfo->flags & IP6T_RT_RES) &&
-		   (((const struct rt0_hdr *)rh)->reserved)));
+		   (((स्थिर काष्ठा rt0_hdr *)rh)->reserved)));
 
 	ret = (segsleft_match(rtinfo->segsleft[0], rtinfo->segsleft[1],
 			      rh->segments_left,
@@ -99,129 +100,129 @@ static bool rt_mt6(const struct sk_buff *skb, struct xt_action_param *par)
 	       ((rtinfo->rt_type == rh->type) ^
 		!!(rtinfo->invflags & IP6T_RT_INV_TYP)));
 
-	if (ret && (rtinfo->flags & IP6T_RT_RES)) {
-		const u_int32_t *rp;
-		u_int32_t _reserved;
-		rp = skb_header_pointer(skb,
-					ptr + offsetof(struct rt0_hdr,
+	अगर (ret && (rtinfo->flags & IP6T_RT_RES)) अणु
+		स्थिर u_पूर्णांक32_t *rp;
+		u_पूर्णांक32_t _reserved;
+		rp = skb_header_poपूर्णांकer(skb,
+					ptr + दुरत्व(काष्ठा rt0_hdr,
 						       reserved),
-					sizeof(_reserved),
+					माप(_reserved),
 					&_reserved);
 
 		ret = (*rp == 0);
-	}
+	पूर्ण
 
 	pr_debug("#%d ", rtinfo->addrnr);
-	if (!(rtinfo->flags & IP6T_RT_FST)) {
-		return ret;
-	} else if (rtinfo->flags & IP6T_RT_FST_NSTRICT) {
+	अगर (!(rtinfo->flags & IP6T_RT_FST)) अणु
+		वापस ret;
+	पूर्ण अन्यथा अगर (rtinfo->flags & IP6T_RT_FST_NSTRICT) अणु
 		pr_debug("Not strict ");
-		if (rtinfo->addrnr > (unsigned int)((hdrlen - 8) / 16)) {
+		अगर (rtinfo->addrnr > (अचिन्हित पूर्णांक)((hdrlen - 8) / 16)) अणु
 			pr_debug("There isn't enough space\n");
-			return false;
-		} else {
-			unsigned int i = 0;
+			वापस false;
+		पूर्ण अन्यथा अणु
+			अचिन्हित पूर्णांक i = 0;
 
 			pr_debug("#%d ", rtinfo->addrnr);
-			for (temp = 0;
-			     temp < (unsigned int)((hdrlen - 8) / 16);
-			     temp++) {
-				ap = skb_header_pointer(skb,
+			क्रम (temp = 0;
+			     temp < (अचिन्हित पूर्णांक)((hdrlen - 8) / 16);
+			     temp++) अणु
+				ap = skb_header_poपूर्णांकer(skb,
 							ptr
-							+ sizeof(struct rt0_hdr)
-							+ temp * sizeof(_addr),
-							sizeof(_addr),
+							+ माप(काष्ठा rt0_hdr)
+							+ temp * माप(_addr),
+							माप(_addr),
 							&_addr);
 
-				if (ap == NULL) {
+				अगर (ap == शून्य) अणु
 					par->hotdrop = true;
-					return false;
-				}
+					वापस false;
+				पूर्ण
 
-				if (ipv6_addr_equal(ap, &rtinfo->addrs[i])) {
+				अगर (ipv6_addr_equal(ap, &rtinfo->addrs[i])) अणु
 					pr_debug("i=%d temp=%d;\n", i, temp);
 					i++;
-				}
-				if (i == rtinfo->addrnr)
-					break;
-			}
+				पूर्ण
+				अगर (i == rtinfo->addrnr)
+					अवरोध;
+			पूर्ण
 			pr_debug("i=%d #%d\n", i, rtinfo->addrnr);
-			if (i == rtinfo->addrnr)
-				return ret;
-			else
-				return false;
-		}
-	} else {
+			अगर (i == rtinfo->addrnr)
+				वापस ret;
+			अन्यथा
+				वापस false;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		pr_debug("Strict ");
-		if (rtinfo->addrnr > (unsigned int)((hdrlen - 8) / 16)) {
+		अगर (rtinfo->addrnr > (अचिन्हित पूर्णांक)((hdrlen - 8) / 16)) अणु
 			pr_debug("There isn't enough space\n");
-			return false;
-		} else {
+			वापस false;
+		पूर्ण अन्यथा अणु
 			pr_debug("#%d ", rtinfo->addrnr);
-			for (temp = 0; temp < rtinfo->addrnr; temp++) {
-				ap = skb_header_pointer(skb,
+			क्रम (temp = 0; temp < rtinfo->addrnr; temp++) अणु
+				ap = skb_header_poपूर्णांकer(skb,
 							ptr
-							+ sizeof(struct rt0_hdr)
-							+ temp * sizeof(_addr),
-							sizeof(_addr),
+							+ माप(काष्ठा rt0_hdr)
+							+ temp * माप(_addr),
+							माप(_addr),
 							&_addr);
-				if (ap == NULL) {
+				अगर (ap == शून्य) अणु
 					par->hotdrop = true;
-					return false;
-				}
+					वापस false;
+				पूर्ण
 
-				if (!ipv6_addr_equal(ap, &rtinfo->addrs[temp]))
-					break;
-			}
+				अगर (!ipv6_addr_equal(ap, &rtinfo->addrs[temp]))
+					अवरोध;
+			पूर्ण
 			pr_debug("temp=%d #%d\n", temp, rtinfo->addrnr);
-			if (temp == rtinfo->addrnr &&
-			    temp == (unsigned int)((hdrlen - 8) / 16))
-				return ret;
-			else
-				return false;
-		}
-	}
+			अगर (temp == rtinfo->addrnr &&
+			    temp == (अचिन्हित पूर्णांक)((hdrlen - 8) / 16))
+				वापस ret;
+			अन्यथा
+				वापस false;
+		पूर्ण
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int rt_mt6_check(const struct xt_mtchk_param *par)
-{
-	const struct ip6t_rt *rtinfo = par->matchinfo;
+अटल पूर्णांक rt_mt6_check(स्थिर काष्ठा xt_mtchk_param *par)
+अणु
+	स्थिर काष्ठा ip6t_rt *rtinfo = par->matchinfo;
 
-	if (rtinfo->invflags & ~IP6T_RT_INV_MASK) {
+	अगर (rtinfo->invflags & ~IP6T_RT_INV_MASK) अणु
 		pr_debug("unknown flags %X\n", rtinfo->invflags);
-		return -EINVAL;
-	}
-	if ((rtinfo->flags & (IP6T_RT_RES | IP6T_RT_FST_MASK)) &&
+		वापस -EINVAL;
+	पूर्ण
+	अगर ((rtinfo->flags & (IP6T_RT_RES | IP6T_RT_FST_MASK)) &&
 	    (!(rtinfo->flags & IP6T_RT_TYP) ||
 	     (rtinfo->rt_type != 0) ||
-	     (rtinfo->invflags & IP6T_RT_INV_TYP))) {
+	     (rtinfo->invflags & IP6T_RT_INV_TYP))) अणु
 		pr_debug("`--rt-type 0' required before `--rt-0-*'");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct xt_match rt_mt6_reg __read_mostly = {
+अटल काष्ठा xt_match rt_mt6_reg __पढ़ो_mostly = अणु
 	.name		= "rt",
 	.family		= NFPROTO_IPV6,
 	.match		= rt_mt6,
-	.matchsize	= sizeof(struct ip6t_rt),
+	.matchsize	= माप(काष्ठा ip6t_rt),
 	.checkentry	= rt_mt6_check,
 	.me		= THIS_MODULE,
-};
+पूर्ण;
 
-static int __init rt_mt6_init(void)
-{
-	return xt_register_match(&rt_mt6_reg);
-}
+अटल पूर्णांक __init rt_mt6_init(व्योम)
+अणु
+	वापस xt_रेजिस्टर_match(&rt_mt6_reg);
+पूर्ण
 
-static void __exit rt_mt6_exit(void)
-{
-	xt_unregister_match(&rt_mt6_reg);
-}
+अटल व्योम __निकास rt_mt6_निकास(व्योम)
+अणु
+	xt_unरेजिस्टर_match(&rt_mt6_reg);
+पूर्ण
 
 module_init(rt_mt6_init);
-module_exit(rt_mt6_exit);
+module_निकास(rt_mt6_निकास);

@@ -1,685 +1,686 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Quota code necessary even when VFS quota support is not compiled
- * into the kernel.  The interesting stuff is over in dquot.c, here
- * we have symbols for initial quotactl(2) handling, the sysctl(2)
+ * पूर्णांकo the kernel.  The पूर्णांकeresting stuff is over in dquot.c, here
+ * we have symbols क्रम initial quotactl(2) handling, the sysctl(2)
  * variables, etc - things needed even when quota support disabled.
  */
 
-#include <linux/fs.h>
-#include <linux/namei.h>
-#include <linux/slab.h>
-#include <asm/current.h>
-#include <linux/uaccess.h>
-#include <linux/kernel.h>
-#include <linux/security.h>
-#include <linux/syscalls.h>
-#include <linux/capability.h>
-#include <linux/quotaops.h>
-#include <linux/types.h>
-#include <linux/mount.h>
-#include <linux/writeback.h>
-#include <linux/nospec.h>
-#include "compat.h"
-#include "../internal.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/namei.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/current.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/security.h>
+#समावेश <linux/syscalls.h>
+#समावेश <linux/capability.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/types.h>
+#समावेश <linux/mount.h>
+#समावेश <linux/ग_लिखोback.h>
+#समावेश <linux/nospec.h>
+#समावेश "compat.h"
+#समावेश "../internal.h"
 
-static int check_quotactl_permission(struct super_block *sb, int type, int cmd,
+अटल पूर्णांक check_quotactl_permission(काष्ठा super_block *sb, पूर्णांक type, पूर्णांक cmd,
 				     qid_t id)
-{
-	switch (cmd) {
-	/* these commands do not require any special privilegues */
-	case Q_GETFMT:
-	case Q_SYNC:
-	case Q_GETINFO:
-	case Q_XGETQSTAT:
-	case Q_XGETQSTATV:
-	case Q_XQUOTASYNC:
-		break;
-	/* allow to query information for dquots we "own" */
-	case Q_GETQUOTA:
-	case Q_XGETQUOTA:
-		if ((type == USRQUOTA && uid_eq(current_euid(), make_kuid(current_user_ns(), id))) ||
+अणु
+	चयन (cmd) अणु
+	/* these commands करो not require any special privilegues */
+	हाल Q_GETFMT:
+	हाल Q_SYNC:
+	हाल Q_GETINFO:
+	हाल Q_XGETQSTAT:
+	हाल Q_XGETQSTATV:
+	हाल Q_XQUOTASYNC:
+		अवरोध;
+	/* allow to query inक्रमmation क्रम dquots we "own" */
+	हाल Q_GETQUOTA:
+	हाल Q_XGETQUOTA:
+		अगर ((type == USRQUOTA && uid_eq(current_euid(), make_kuid(current_user_ns(), id))) ||
 		    (type == GRPQUOTA && in_egroup_p(make_kgid(current_user_ns(), id))))
-			break;
+			अवरोध;
 		fallthrough;
-	default:
-		if (!capable(CAP_SYS_ADMIN))
-			return -EPERM;
-	}
+	शेष:
+		अगर (!capable(CAP_SYS_ADMIN))
+			वापस -EPERM;
+	पूर्ण
 
-	return security_quotactl(cmd, type, id, sb);
-}
+	वापस security_quotactl(cmd, type, id, sb);
+पूर्ण
 
-static void quota_sync_one(struct super_block *sb, void *arg)
-{
-	int type = *(int *)arg;
+अटल व्योम quota_sync_one(काष्ठा super_block *sb, व्योम *arg)
+अणु
+	पूर्णांक type = *(पूर्णांक *)arg;
 
-	if (sb->s_qcop && sb->s_qcop->quota_sync &&
+	अगर (sb->s_qcop && sb->s_qcop->quota_sync &&
 	    (sb->s_quota_types & (1 << type)))
 		sb->s_qcop->quota_sync(sb, type);
-}
+पूर्ण
 
-static int quota_sync_all(int type)
-{
-	int ret;
+अटल पूर्णांक quota_sync_all(पूर्णांक type)
+अणु
+	पूर्णांक ret;
 
-	ret = security_quotactl(Q_SYNC, type, 0, NULL);
-	if (!ret)
+	ret = security_quotactl(Q_SYNC, type, 0, शून्य);
+	अगर (!ret)
 		iterate_supers(quota_sync_one, &type);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-unsigned int qtype_enforce_flag(int type)
-{
-	switch (type) {
-	case USRQUOTA:
-		return FS_QUOTA_UDQ_ENFD;
-	case GRPQUOTA:
-		return FS_QUOTA_GDQ_ENFD;
-	case PRJQUOTA:
-		return FS_QUOTA_PDQ_ENFD;
-	}
-	return 0;
-}
+अचिन्हित पूर्णांक qtype_enक्रमce_flag(पूर्णांक type)
+अणु
+	चयन (type) अणु
+	हाल USRQUOTA:
+		वापस FS_QUOTA_UDQ_ENFD;
+	हाल GRPQUOTA:
+		वापस FS_QUOTA_GDQ_ENFD;
+	हाल PRJQUOTA:
+		वापस FS_QUOTA_PDQ_ENFD;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int quota_quotaon(struct super_block *sb, int type, qid_t id,
-		         const struct path *path)
-{
-	if (!sb->s_qcop->quota_on && !sb->s_qcop->quota_enable)
-		return -ENOSYS;
-	if (sb->s_qcop->quota_enable)
-		return sb->s_qcop->quota_enable(sb, qtype_enforce_flag(type));
-	if (IS_ERR(path))
-		return PTR_ERR(path);
-	return sb->s_qcop->quota_on(sb, type, id, path);
-}
+अटल पूर्णांक quota_quotaon(काष्ठा super_block *sb, पूर्णांक type, qid_t id,
+		         स्थिर काष्ठा path *path)
+अणु
+	अगर (!sb->s_qcop->quota_on && !sb->s_qcop->quota_enable)
+		वापस -ENOSYS;
+	अगर (sb->s_qcop->quota_enable)
+		वापस sb->s_qcop->quota_enable(sb, qtype_enक्रमce_flag(type));
+	अगर (IS_ERR(path))
+		वापस PTR_ERR(path);
+	वापस sb->s_qcop->quota_on(sb, type, id, path);
+पूर्ण
 
-static int quota_quotaoff(struct super_block *sb, int type)
-{
-	if (!sb->s_qcop->quota_off && !sb->s_qcop->quota_disable)
-		return -ENOSYS;
-	if (sb->s_qcop->quota_disable)
-		return sb->s_qcop->quota_disable(sb, qtype_enforce_flag(type));
-	return sb->s_qcop->quota_off(sb, type);
-}
+अटल पूर्णांक quota_quotaoff(काष्ठा super_block *sb, पूर्णांक type)
+अणु
+	अगर (!sb->s_qcop->quota_off && !sb->s_qcop->quota_disable)
+		वापस -ENOSYS;
+	अगर (sb->s_qcop->quota_disable)
+		वापस sb->s_qcop->quota_disable(sb, qtype_enक्रमce_flag(type));
+	वापस sb->s_qcop->quota_off(sb, type);
+पूर्ण
 
-static int quota_getfmt(struct super_block *sb, int type, void __user *addr)
-{
+अटल पूर्णांक quota_getfmt(काष्ठा super_block *sb, पूर्णांक type, व्योम __user *addr)
+अणु
 	__u32 fmt;
 
-	if (!sb_has_quota_active(sb, type))
-		return -ESRCH;
-	fmt = sb_dqopt(sb)->info[type].dqi_format->qf_fmt_id;
-	if (copy_to_user(addr, &fmt, sizeof(fmt)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (!sb_has_quota_active(sb, type))
+		वापस -ESRCH;
+	fmt = sb_dqopt(sb)->info[type].dqi_क्रमmat->qf_fmt_id;
+	अगर (copy_to_user(addr, &fmt, माप(fmt)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int quota_getinfo(struct super_block *sb, int type, void __user *addr)
-{
-	struct qc_state state;
-	struct qc_type_state *tstate;
-	struct if_dqinfo uinfo;
-	int ret;
+अटल पूर्णांक quota_getinfo(काष्ठा super_block *sb, पूर्णांक type, व्योम __user *addr)
+अणु
+	काष्ठा qc_state state;
+	काष्ठा qc_type_state *tstate;
+	काष्ठा अगर_dqinfo uinfo;
+	पूर्णांक ret;
 
-	if (!sb->s_qcop->get_state)
-		return -ENOSYS;
+	अगर (!sb->s_qcop->get_state)
+		वापस -ENOSYS;
 	ret = sb->s_qcop->get_state(sb, &state);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	tstate = state.s_state + type;
-	if (!(tstate->flags & QCI_ACCT_ENABLED))
-		return -ESRCH;
-	memset(&uinfo, 0, sizeof(uinfo));
-	uinfo.dqi_bgrace = tstate->spc_timelimit;
-	uinfo.dqi_igrace = tstate->ino_timelimit;
-	if (tstate->flags & QCI_SYSFILE)
-		uinfo.dqi_flags |= DQF_SYS_FILE;
-	if (tstate->flags & QCI_ROOT_SQUASH)
+	अगर (!(tstate->flags & QCI_ACCT_ENABLED))
+		वापस -ESRCH;
+	स_रखो(&uinfo, 0, माप(uinfo));
+	uinfo.dqi_bgrace = tstate->spc_समयlimit;
+	uinfo.dqi_igrace = tstate->ino_समयlimit;
+	अगर (tstate->flags & QCI_SYSखाता)
+		uinfo.dqi_flags |= DQF_SYS_खाता;
+	अगर (tstate->flags & QCI_ROOT_SQUASH)
 		uinfo.dqi_flags |= DQF_ROOT_SQUASH;
 	uinfo.dqi_valid = IIF_ALL;
-	if (copy_to_user(addr, &uinfo, sizeof(uinfo)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(addr, &uinfo, माप(uinfo)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int quota_setinfo(struct super_block *sb, int type, void __user *addr)
-{
-	struct if_dqinfo info;
-	struct qc_info qinfo;
+अटल पूर्णांक quota_setinfo(काष्ठा super_block *sb, पूर्णांक type, व्योम __user *addr)
+अणु
+	काष्ठा अगर_dqinfo info;
+	काष्ठा qc_info qinfo;
 
-	if (copy_from_user(&info, addr, sizeof(info)))
-		return -EFAULT;
-	if (!sb->s_qcop->set_info)
-		return -ENOSYS;
-	if (info.dqi_valid & ~(IIF_FLAGS | IIF_BGRACE | IIF_IGRACE))
-		return -EINVAL;
-	memset(&qinfo, 0, sizeof(qinfo));
-	if (info.dqi_valid & IIF_FLAGS) {
-		if (info.dqi_flags & ~DQF_SETINFO_MASK)
-			return -EINVAL;
-		if (info.dqi_flags & DQF_ROOT_SQUASH)
+	अगर (copy_from_user(&info, addr, माप(info)))
+		वापस -EFAULT;
+	अगर (!sb->s_qcop->set_info)
+		वापस -ENOSYS;
+	अगर (info.dqi_valid & ~(IIF_FLAGS | IIF_BGRACE | IIF_IGRACE))
+		वापस -EINVAL;
+	स_रखो(&qinfo, 0, माप(qinfo));
+	अगर (info.dqi_valid & IIF_FLAGS) अणु
+		अगर (info.dqi_flags & ~DQF_SETINFO_MASK)
+			वापस -EINVAL;
+		अगर (info.dqi_flags & DQF_ROOT_SQUASH)
 			qinfo.i_flags |= QCI_ROOT_SQUASH;
 		qinfo.i_fieldmask |= QC_FLAGS;
-	}
-	if (info.dqi_valid & IIF_BGRACE) {
-		qinfo.i_spc_timelimit = info.dqi_bgrace;
+	पूर्ण
+	अगर (info.dqi_valid & IIF_BGRACE) अणु
+		qinfo.i_spc_समयlimit = info.dqi_bgrace;
 		qinfo.i_fieldmask |= QC_SPC_TIMER;
-	}
-	if (info.dqi_valid & IIF_IGRACE) {
-		qinfo.i_ino_timelimit = info.dqi_igrace;
+	पूर्ण
+	अगर (info.dqi_valid & IIF_IGRACE) अणु
+		qinfo.i_ino_समयlimit = info.dqi_igrace;
 		qinfo.i_fieldmask |= QC_INO_TIMER;
-	}
-	return sb->s_qcop->set_info(sb, type, &qinfo);
-}
+	पूर्ण
+	वापस sb->s_qcop->set_info(sb, type, &qinfo);
+पूर्ण
 
-static inline qsize_t qbtos(qsize_t blocks)
-{
-	return blocks << QIF_DQBLKSIZE_BITS;
-}
+अटल अंतरभूत qमाप_प्रकार qbtos(qमाप_प्रकार blocks)
+अणु
+	वापस blocks << QIF_DQBLKSIZE_BITS;
+पूर्ण
 
-static inline qsize_t stoqb(qsize_t space)
-{
-	return (space + QIF_DQBLKSIZE - 1) >> QIF_DQBLKSIZE_BITS;
-}
+अटल अंतरभूत qमाप_प्रकार stoqb(qमाप_प्रकार space)
+अणु
+	वापस (space + QIF_DQBLKSIZE - 1) >> QIF_DQBLKSIZE_BITS;
+पूर्ण
 
-static void copy_to_if_dqblk(struct if_dqblk *dst, struct qc_dqblk *src)
-{
-	memset(dst, 0, sizeof(*dst));
+अटल व्योम copy_to_अगर_dqblk(काष्ठा अगर_dqblk *dst, काष्ठा qc_dqblk *src)
+अणु
+	स_रखो(dst, 0, माप(*dst));
 	dst->dqb_bhardlimit = stoqb(src->d_spc_hardlimit);
 	dst->dqb_bsoftlimit = stoqb(src->d_spc_softlimit);
 	dst->dqb_curspace = src->d_space;
 	dst->dqb_ihardlimit = src->d_ino_hardlimit;
 	dst->dqb_isoftlimit = src->d_ino_softlimit;
 	dst->dqb_curinodes = src->d_ino_count;
-	dst->dqb_btime = src->d_spc_timer;
-	dst->dqb_itime = src->d_ino_timer;
+	dst->dqb_bसमय = src->d_spc_समयr;
+	dst->dqb_iसमय = src->d_ino_समयr;
 	dst->dqb_valid = QIF_ALL;
-}
+पूर्ण
 
-static int quota_getquota(struct super_block *sb, int type, qid_t id,
-			  void __user *addr)
-{
-	struct kqid qid;
-	struct qc_dqblk fdq;
-	struct if_dqblk idq;
-	int ret;
+अटल पूर्णांक quota_getquota(काष्ठा super_block *sb, पूर्णांक type, qid_t id,
+			  व्योम __user *addr)
+अणु
+	काष्ठा kqid qid;
+	काष्ठा qc_dqblk fdq;
+	काष्ठा अगर_dqblk idq;
+	पूर्णांक ret;
 
-	if (!sb->s_qcop->get_dqblk)
-		return -ENOSYS;
+	अगर (!sb->s_qcop->get_dqblk)
+		वापस -ENOSYS;
 	qid = make_kqid(current_user_ns(), type, id);
-	if (!qid_has_mapping(sb->s_user_ns, qid))
-		return -EINVAL;
+	अगर (!qid_has_mapping(sb->s_user_ns, qid))
+		वापस -EINVAL;
 	ret = sb->s_qcop->get_dqblk(sb, qid, &fdq);
-	if (ret)
-		return ret;
-	copy_to_if_dqblk(&idq, &fdq);
+	अगर (ret)
+		वापस ret;
+	copy_to_अगर_dqblk(&idq, &fdq);
 
-	if (compat_need_64bit_alignment_fixup()) {
-		struct compat_if_dqblk __user *compat_dqblk = addr;
+	अगर (compat_need_64bit_alignment_fixup()) अणु
+		काष्ठा compat_अगर_dqblk __user *compat_dqblk = addr;
 
-		if (copy_to_user(compat_dqblk, &idq, sizeof(*compat_dqblk)))
-			return -EFAULT;
-		if (put_user(idq.dqb_valid, &compat_dqblk->dqb_valid))
-			return -EFAULT;
-	} else {
-		if (copy_to_user(addr, &idq, sizeof(idq)))
-			return -EFAULT;
-	}
-	return 0;
-}
+		अगर (copy_to_user(compat_dqblk, &idq, माप(*compat_dqblk)))
+			वापस -EFAULT;
+		अगर (put_user(idq.dqb_valid, &compat_dqblk->dqb_valid))
+			वापस -EFAULT;
+	पूर्ण अन्यथा अणु
+		अगर (copy_to_user(addr, &idq, माप(idq)))
+			वापस -EFAULT;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /*
- * Return quota for next active quota >= this id, if any exists,
- * otherwise return -ENOENT via ->get_nextdqblk
+ * Return quota क्रम next active quota >= this id, अगर any exists,
+ * otherwise वापस -ENOENT via ->get_nextdqblk
  */
-static int quota_getnextquota(struct super_block *sb, int type, qid_t id,
-			  void __user *addr)
-{
-	struct kqid qid;
-	struct qc_dqblk fdq;
-	struct if_nextdqblk idq;
-	int ret;
+अटल पूर्णांक quota_getnextquota(काष्ठा super_block *sb, पूर्णांक type, qid_t id,
+			  व्योम __user *addr)
+अणु
+	काष्ठा kqid qid;
+	काष्ठा qc_dqblk fdq;
+	काष्ठा अगर_nextdqblk idq;
+	पूर्णांक ret;
 
-	if (!sb->s_qcop->get_nextdqblk)
-		return -ENOSYS;
+	अगर (!sb->s_qcop->get_nextdqblk)
+		वापस -ENOSYS;
 	qid = make_kqid(current_user_ns(), type, id);
-	if (!qid_has_mapping(sb->s_user_ns, qid))
-		return -EINVAL;
+	अगर (!qid_has_mapping(sb->s_user_ns, qid))
+		वापस -EINVAL;
 	ret = sb->s_qcop->get_nextdqblk(sb, &qid, &fdq);
-	if (ret)
-		return ret;
-	/* struct if_nextdqblk is a superset of struct if_dqblk */
-	copy_to_if_dqblk((struct if_dqblk *)&idq, &fdq);
+	अगर (ret)
+		वापस ret;
+	/* काष्ठा अगर_nextdqblk is a superset of काष्ठा अगर_dqblk */
+	copy_to_अगर_dqblk((काष्ठा अगर_dqblk *)&idq, &fdq);
 	idq.dqb_id = from_kqid(current_user_ns(), qid);
-	if (copy_to_user(addr, &idq, sizeof(idq)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (copy_to_user(addr, &idq, माप(idq)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static void copy_from_if_dqblk(struct qc_dqblk *dst, struct if_dqblk *src)
-{
+अटल व्योम copy_from_अगर_dqblk(काष्ठा qc_dqblk *dst, काष्ठा अगर_dqblk *src)
+अणु
 	dst->d_spc_hardlimit = qbtos(src->dqb_bhardlimit);
 	dst->d_spc_softlimit = qbtos(src->dqb_bsoftlimit);
 	dst->d_space = src->dqb_curspace;
 	dst->d_ino_hardlimit = src->dqb_ihardlimit;
 	dst->d_ino_softlimit = src->dqb_isoftlimit;
 	dst->d_ino_count = src->dqb_curinodes;
-	dst->d_spc_timer = src->dqb_btime;
-	dst->d_ino_timer = src->dqb_itime;
+	dst->d_spc_समयr = src->dqb_bसमय;
+	dst->d_ino_समयr = src->dqb_iसमय;
 
 	dst->d_fieldmask = 0;
-	if (src->dqb_valid & QIF_BLIMITS)
+	अगर (src->dqb_valid & QIF_BLIMITS)
 		dst->d_fieldmask |= QC_SPC_SOFT | QC_SPC_HARD;
-	if (src->dqb_valid & QIF_SPACE)
+	अगर (src->dqb_valid & QIF_SPACE)
 		dst->d_fieldmask |= QC_SPACE;
-	if (src->dqb_valid & QIF_ILIMITS)
+	अगर (src->dqb_valid & QIF_ILIMITS)
 		dst->d_fieldmask |= QC_INO_SOFT | QC_INO_HARD;
-	if (src->dqb_valid & QIF_INODES)
+	अगर (src->dqb_valid & QIF_INODES)
 		dst->d_fieldmask |= QC_INO_COUNT;
-	if (src->dqb_valid & QIF_BTIME)
+	अगर (src->dqb_valid & QIF_BTIME)
 		dst->d_fieldmask |= QC_SPC_TIMER;
-	if (src->dqb_valid & QIF_ITIME)
+	अगर (src->dqb_valid & QIF_ITIME)
 		dst->d_fieldmask |= QC_INO_TIMER;
-}
+पूर्ण
 
-static int quota_setquota(struct super_block *sb, int type, qid_t id,
-			  void __user *addr)
-{
-	struct qc_dqblk fdq;
-	struct if_dqblk idq;
-	struct kqid qid;
+अटल पूर्णांक quota_setquota(काष्ठा super_block *sb, पूर्णांक type, qid_t id,
+			  व्योम __user *addr)
+अणु
+	काष्ठा qc_dqblk fdq;
+	काष्ठा अगर_dqblk idq;
+	काष्ठा kqid qid;
 
-	if (compat_need_64bit_alignment_fixup()) {
-		struct compat_if_dqblk __user *compat_dqblk = addr;
+	अगर (compat_need_64bit_alignment_fixup()) अणु
+		काष्ठा compat_अगर_dqblk __user *compat_dqblk = addr;
 
-		if (copy_from_user(&idq, compat_dqblk, sizeof(*compat_dqblk)) ||
+		अगर (copy_from_user(&idq, compat_dqblk, माप(*compat_dqblk)) ||
 		    get_user(idq.dqb_valid, &compat_dqblk->dqb_valid))
-			return -EFAULT;
-	} else {
-		if (copy_from_user(&idq, addr, sizeof(idq)))
-			return -EFAULT;
-	}
-	if (!sb->s_qcop->set_dqblk)
-		return -ENOSYS;
+			वापस -EFAULT;
+	पूर्ण अन्यथा अणु
+		अगर (copy_from_user(&idq, addr, माप(idq)))
+			वापस -EFAULT;
+	पूर्ण
+	अगर (!sb->s_qcop->set_dqblk)
+		वापस -ENOSYS;
 	qid = make_kqid(current_user_ns(), type, id);
-	if (!qid_has_mapping(sb->s_user_ns, qid))
-		return -EINVAL;
-	copy_from_if_dqblk(&fdq, &idq);
-	return sb->s_qcop->set_dqblk(sb, qid, &fdq);
-}
+	अगर (!qid_has_mapping(sb->s_user_ns, qid))
+		वापस -EINVAL;
+	copy_from_अगर_dqblk(&fdq, &idq);
+	वापस sb->s_qcop->set_dqblk(sb, qid, &fdq);
+पूर्ण
 
-static int quota_enable(struct super_block *sb, void __user *addr)
-{
+अटल पूर्णांक quota_enable(काष्ठा super_block *sb, व्योम __user *addr)
+अणु
 	__u32 flags;
 
-	if (copy_from_user(&flags, addr, sizeof(flags)))
-		return -EFAULT;
-	if (!sb->s_qcop->quota_enable)
-		return -ENOSYS;
-	return sb->s_qcop->quota_enable(sb, flags);
-}
+	अगर (copy_from_user(&flags, addr, माप(flags)))
+		वापस -EFAULT;
+	अगर (!sb->s_qcop->quota_enable)
+		वापस -ENOSYS;
+	वापस sb->s_qcop->quota_enable(sb, flags);
+पूर्ण
 
-static int quota_disable(struct super_block *sb, void __user *addr)
-{
+अटल पूर्णांक quota_disable(काष्ठा super_block *sb, व्योम __user *addr)
+अणु
 	__u32 flags;
 
-	if (copy_from_user(&flags, addr, sizeof(flags)))
-		return -EFAULT;
-	if (!sb->s_qcop->quota_disable)
-		return -ENOSYS;
-	return sb->s_qcop->quota_disable(sb, flags);
-}
+	अगर (copy_from_user(&flags, addr, माप(flags)))
+		वापस -EFAULT;
+	अगर (!sb->s_qcop->quota_disable)
+		वापस -ENOSYS;
+	वापस sb->s_qcop->quota_disable(sb, flags);
+पूर्ण
 
-static int quota_state_to_flags(struct qc_state *state)
-{
-	int flags = 0;
+अटल पूर्णांक quota_state_to_flags(काष्ठा qc_state *state)
+अणु
+	पूर्णांक flags = 0;
 
-	if (state->s_state[USRQUOTA].flags & QCI_ACCT_ENABLED)
+	अगर (state->s_state[USRQUOTA].flags & QCI_ACCT_ENABLED)
 		flags |= FS_QUOTA_UDQ_ACCT;
-	if (state->s_state[USRQUOTA].flags & QCI_LIMITS_ENFORCED)
+	अगर (state->s_state[USRQUOTA].flags & QCI_LIMITS_ENFORCED)
 		flags |= FS_QUOTA_UDQ_ENFD;
-	if (state->s_state[GRPQUOTA].flags & QCI_ACCT_ENABLED)
+	अगर (state->s_state[GRPQUOTA].flags & QCI_ACCT_ENABLED)
 		flags |= FS_QUOTA_GDQ_ACCT;
-	if (state->s_state[GRPQUOTA].flags & QCI_LIMITS_ENFORCED)
+	अगर (state->s_state[GRPQUOTA].flags & QCI_LIMITS_ENFORCED)
 		flags |= FS_QUOTA_GDQ_ENFD;
-	if (state->s_state[PRJQUOTA].flags & QCI_ACCT_ENABLED)
+	अगर (state->s_state[PRJQUOTA].flags & QCI_ACCT_ENABLED)
 		flags |= FS_QUOTA_PDQ_ACCT;
-	if (state->s_state[PRJQUOTA].flags & QCI_LIMITS_ENFORCED)
+	अगर (state->s_state[PRJQUOTA].flags & QCI_LIMITS_ENFORCED)
 		flags |= FS_QUOTA_PDQ_ENFD;
-	return flags;
-}
+	वापस flags;
+पूर्ण
 
-static int quota_getstate(struct super_block *sb, int type,
-			  struct fs_quota_stat *fqs)
-{
-	struct qc_state state;
-	int ret;
+अटल पूर्णांक quota_माला_लोtate(काष्ठा super_block *sb, पूर्णांक type,
+			  काष्ठा fs_quota_stat *fqs)
+अणु
+	काष्ठा qc_state state;
+	पूर्णांक ret;
 
-	memset(&state, 0, sizeof (struct qc_state));
+	स_रखो(&state, 0, माप (काष्ठा qc_state));
 	ret = sb->s_qcop->get_state(sb, &state);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	memset(fqs, 0, sizeof(*fqs));
+	स_रखो(fqs, 0, माप(*fqs));
 	fqs->qs_version = FS_QSTAT_VERSION;
 	fqs->qs_flags = quota_state_to_flags(&state);
 	/* No quota enabled? */
-	if (!fqs->qs_flags)
-		return -ENOSYS;
+	अगर (!fqs->qs_flags)
+		वापस -ENOSYS;
 	fqs->qs_incoredqs = state.s_incoredqs;
 
-	fqs->qs_btimelimit = state.s_state[type].spc_timelimit;
-	fqs->qs_itimelimit = state.s_state[type].ino_timelimit;
-	fqs->qs_rtbtimelimit = state.s_state[type].rt_spc_timelimit;
+	fqs->qs_bसमयlimit = state.s_state[type].spc_समयlimit;
+	fqs->qs_iसमयlimit = state.s_state[type].ino_समयlimit;
+	fqs->qs_rtbसमयlimit = state.s_state[type].rt_spc_समयlimit;
 	fqs->qs_bwarnlimit = state.s_state[type].spc_warnlimit;
 	fqs->qs_iwarnlimit = state.s_state[type].ino_warnlimit;
 
-	/* Inodes may be allocated even if inactive; copy out if present */
-	if (state.s_state[USRQUOTA].ino) {
+	/* Inodes may be allocated even अगर inactive; copy out अगर present */
+	अगर (state.s_state[USRQUOTA].ino) अणु
 		fqs->qs_uquota.qfs_ino = state.s_state[USRQUOTA].ino;
 		fqs->qs_uquota.qfs_nblks = state.s_state[USRQUOTA].blocks;
 		fqs->qs_uquota.qfs_nextents = state.s_state[USRQUOTA].nextents;
-	}
-	if (state.s_state[GRPQUOTA].ino) {
+	पूर्ण
+	अगर (state.s_state[GRPQUOTA].ino) अणु
 		fqs->qs_gquota.qfs_ino = state.s_state[GRPQUOTA].ino;
 		fqs->qs_gquota.qfs_nblks = state.s_state[GRPQUOTA].blocks;
 		fqs->qs_gquota.qfs_nextents = state.s_state[GRPQUOTA].nextents;
-	}
-	if (state.s_state[PRJQUOTA].ino) {
+	पूर्ण
+	अगर (state.s_state[PRJQUOTA].ino) अणु
 		/*
-		 * Q_XGETQSTAT doesn't have room for both group and project
+		 * Q_XGETQSTAT करोesn't have room क्रम both group and project
 		 * quotas.  So, allow the project quota values to be copied out
-		 * only if there is no group quota information available.
+		 * only अगर there is no group quota inक्रमmation available.
 		 */
-		if (!(state.s_state[GRPQUOTA].flags & QCI_ACCT_ENABLED)) {
+		अगर (!(state.s_state[GRPQUOTA].flags & QCI_ACCT_ENABLED)) अणु
 			fqs->qs_gquota.qfs_ino = state.s_state[PRJQUOTA].ino;
 			fqs->qs_gquota.qfs_nblks =
 					state.s_state[PRJQUOTA].blocks;
 			fqs->qs_gquota.qfs_nextents =
 					state.s_state[PRJQUOTA].nextents;
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int compat_copy_fs_qfilestat(struct compat_fs_qfilestat __user *to,
-		struct fs_qfilestat *from)
-{
-	if (copy_to_user(to, from, sizeof(*to)) ||
+अटल पूर्णांक compat_copy_fs_qfilestat(काष्ठा compat_fs_qfilestat __user *to,
+		काष्ठा fs_qfilestat *from)
+अणु
+	अगर (copy_to_user(to, from, माप(*to)) ||
 	    put_user(from->qfs_nextents, &to->qfs_nextents))
-		return -EFAULT;
-	return 0;
-}
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int compat_copy_fs_quota_stat(struct compat_fs_quota_stat __user *to,
-		struct fs_quota_stat *from)
-{
-	if (put_user(from->qs_version, &to->qs_version) ||
+अटल पूर्णांक compat_copy_fs_quota_stat(काष्ठा compat_fs_quota_stat __user *to,
+		काष्ठा fs_quota_stat *from)
+अणु
+	अगर (put_user(from->qs_version, &to->qs_version) ||
 	    put_user(from->qs_flags, &to->qs_flags) ||
 	    put_user(from->qs_pad, &to->qs_pad) ||
 	    compat_copy_fs_qfilestat(&to->qs_uquota, &from->qs_uquota) ||
 	    compat_copy_fs_qfilestat(&to->qs_gquota, &from->qs_gquota) ||
 	    put_user(from->qs_incoredqs, &to->qs_incoredqs) ||
-	    put_user(from->qs_btimelimit, &to->qs_btimelimit) ||
-	    put_user(from->qs_itimelimit, &to->qs_itimelimit) ||
-	    put_user(from->qs_rtbtimelimit, &to->qs_rtbtimelimit) ||
+	    put_user(from->qs_bसमयlimit, &to->qs_bसमयlimit) ||
+	    put_user(from->qs_iसमयlimit, &to->qs_iसमयlimit) ||
+	    put_user(from->qs_rtbसमयlimit, &to->qs_rtbसमयlimit) ||
 	    put_user(from->qs_bwarnlimit, &to->qs_bwarnlimit) ||
 	    put_user(from->qs_iwarnlimit, &to->qs_iwarnlimit))
-		return -EFAULT;
-	return 0;
-}
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int quota_getxstate(struct super_block *sb, int type, void __user *addr)
-{
-	struct fs_quota_stat fqs;
-	int ret;
+अटल पूर्णांक quota_getxstate(काष्ठा super_block *sb, पूर्णांक type, व्योम __user *addr)
+अणु
+	काष्ठा fs_quota_stat fqs;
+	पूर्णांक ret;
 
-	if (!sb->s_qcop->get_state)
-		return -ENOSYS;
-	ret = quota_getstate(sb, type, &fqs);
-	if (ret)
-		return ret;
+	अगर (!sb->s_qcop->get_state)
+		वापस -ENOSYS;
+	ret = quota_माला_लोtate(sb, type, &fqs);
+	अगर (ret)
+		वापस ret;
 
-	if (compat_need_64bit_alignment_fixup())
-		return compat_copy_fs_quota_stat(addr, &fqs);
-	if (copy_to_user(addr, &fqs, sizeof(fqs)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (compat_need_64bit_alignment_fixup())
+		वापस compat_copy_fs_quota_stat(addr, &fqs);
+	अगर (copy_to_user(addr, &fqs, माप(fqs)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int quota_getstatev(struct super_block *sb, int type,
-			   struct fs_quota_statv *fqs)
-{
-	struct qc_state state;
-	int ret;
+अटल पूर्णांक quota_माला_लोtatev(काष्ठा super_block *sb, पूर्णांक type,
+			   काष्ठा fs_quota_statv *fqs)
+अणु
+	काष्ठा qc_state state;
+	पूर्णांक ret;
 
-	memset(&state, 0, sizeof (struct qc_state));
+	स_रखो(&state, 0, माप (काष्ठा qc_state));
 	ret = sb->s_qcop->get_state(sb, &state);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	memset(fqs, 0, sizeof(*fqs));
+	स_रखो(fqs, 0, माप(*fqs));
 	fqs->qs_version = FS_QSTAT_VERSION;
 	fqs->qs_flags = quota_state_to_flags(&state);
 	/* No quota enabled? */
-	if (!fqs->qs_flags)
-		return -ENOSYS;
+	अगर (!fqs->qs_flags)
+		वापस -ENOSYS;
 	fqs->qs_incoredqs = state.s_incoredqs;
 
-	fqs->qs_btimelimit = state.s_state[type].spc_timelimit;
-	fqs->qs_itimelimit = state.s_state[type].ino_timelimit;
-	fqs->qs_rtbtimelimit = state.s_state[type].rt_spc_timelimit;
+	fqs->qs_bसमयlimit = state.s_state[type].spc_समयlimit;
+	fqs->qs_iसमयlimit = state.s_state[type].ino_समयlimit;
+	fqs->qs_rtbसमयlimit = state.s_state[type].rt_spc_समयlimit;
 	fqs->qs_bwarnlimit = state.s_state[type].spc_warnlimit;
 	fqs->qs_iwarnlimit = state.s_state[type].ino_warnlimit;
 	fqs->qs_rtbwarnlimit = state.s_state[type].rt_spc_warnlimit;
 
-	/* Inodes may be allocated even if inactive; copy out if present */
-	if (state.s_state[USRQUOTA].ino) {
+	/* Inodes may be allocated even अगर inactive; copy out अगर present */
+	अगर (state.s_state[USRQUOTA].ino) अणु
 		fqs->qs_uquota.qfs_ino = state.s_state[USRQUOTA].ino;
 		fqs->qs_uquota.qfs_nblks = state.s_state[USRQUOTA].blocks;
 		fqs->qs_uquota.qfs_nextents = state.s_state[USRQUOTA].nextents;
-	}
-	if (state.s_state[GRPQUOTA].ino) {
+	पूर्ण
+	अगर (state.s_state[GRPQUOTA].ino) अणु
 		fqs->qs_gquota.qfs_ino = state.s_state[GRPQUOTA].ino;
 		fqs->qs_gquota.qfs_nblks = state.s_state[GRPQUOTA].blocks;
 		fqs->qs_gquota.qfs_nextents = state.s_state[GRPQUOTA].nextents;
-	}
-	if (state.s_state[PRJQUOTA].ino) {
+	पूर्ण
+	अगर (state.s_state[PRJQUOTA].ino) अणु
 		fqs->qs_pquota.qfs_ino = state.s_state[PRJQUOTA].ino;
 		fqs->qs_pquota.qfs_nblks = state.s_state[PRJQUOTA].blocks;
 		fqs->qs_pquota.qfs_nextents = state.s_state[PRJQUOTA].nextents;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int quota_getxstatev(struct super_block *sb, int type, void __user *addr)
-{
-	struct fs_quota_statv fqs;
-	int ret;
+अटल पूर्णांक quota_getxstatev(काष्ठा super_block *sb, पूर्णांक type, व्योम __user *addr)
+अणु
+	काष्ठा fs_quota_statv fqs;
+	पूर्णांक ret;
 
-	if (!sb->s_qcop->get_state)
-		return -ENOSYS;
+	अगर (!sb->s_qcop->get_state)
+		वापस -ENOSYS;
 
-	memset(&fqs, 0, sizeof(fqs));
-	if (copy_from_user(&fqs, addr, 1)) /* Just read qs_version */
-		return -EFAULT;
+	स_रखो(&fqs, 0, माप(fqs));
+	अगर (copy_from_user(&fqs, addr, 1)) /* Just पढ़ो qs_version */
+		वापस -EFAULT;
 
-	/* If this kernel doesn't support user specified version, fail */
-	switch (fqs.qs_version) {
-	case FS_QSTATV_VERSION1:
-		break;
-	default:
-		return -EINVAL;
-	}
-	ret = quota_getstatev(sb, type, &fqs);
-	if (!ret && copy_to_user(addr, &fqs, sizeof(fqs)))
-		return -EFAULT;
-	return ret;
-}
+	/* If this kernel करोesn't support user specअगरied version, fail */
+	चयन (fqs.qs_version) अणु
+	हाल FS_QSTATV_VERSION1:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	ret = quota_माला_लोtatev(sb, type, &fqs);
+	अगर (!ret && copy_to_user(addr, &fqs, माप(fqs)))
+		वापस -EFAULT;
+	वापस ret;
+पूर्ण
 
 /*
  * XFS defines BBTOB and BTOBB macros inside fs/xfs/ and we cannot move them
  * out of there as xfsprogs rely on definitions being in that header file. So
- * just define same functions here for quota purposes.
+ * just define same functions here क्रम quota purposes.
  */
-#define XFS_BB_SHIFT 9
+#घोषणा XFS_BB_SHIFT 9
 
-static inline u64 quota_bbtob(u64 blocks)
-{
-	return blocks << XFS_BB_SHIFT;
-}
+अटल अंतरभूत u64 quota_bbtob(u64 blocks)
+अणु
+	वापस blocks << XFS_BB_SHIFT;
+पूर्ण
 
-static inline u64 quota_btobb(u64 bytes)
-{
-	return (bytes + (1 << XFS_BB_SHIFT) - 1) >> XFS_BB_SHIFT;
-}
+अटल अंतरभूत u64 quota_btobb(u64 bytes)
+अणु
+	वापस (bytes + (1 << XFS_BB_SHIFT) - 1) >> XFS_BB_SHIFT;
+पूर्ण
 
-static inline s64 copy_from_xfs_dqblk_ts(const struct fs_disk_quota *d,
-		__s32 timer, __s8 timer_hi)
-{
-	if (d->d_fieldmask & FS_DQ_BIGTIME)
-		return (u32)timer | (s64)timer_hi << 32;
-	return timer;
-}
+अटल अंतरभूत s64 copy_from_xfs_dqblk_ts(स्थिर काष्ठा fs_disk_quota *d,
+		__s32 समयr, __s8 समयr_hi)
+अणु
+	अगर (d->d_fieldmask & FS_DQ_BIGTIME)
+		वापस (u32)समयr | (s64)समयr_hi << 32;
+	वापस समयr;
+पूर्ण
 
-static void copy_from_xfs_dqblk(struct qc_dqblk *dst, struct fs_disk_quota *src)
-{
+अटल व्योम copy_from_xfs_dqblk(काष्ठा qc_dqblk *dst, काष्ठा fs_disk_quota *src)
+अणु
 	dst->d_spc_hardlimit = quota_bbtob(src->d_blk_hardlimit);
 	dst->d_spc_softlimit = quota_bbtob(src->d_blk_softlimit);
 	dst->d_ino_hardlimit = src->d_ino_hardlimit;
 	dst->d_ino_softlimit = src->d_ino_softlimit;
 	dst->d_space = quota_bbtob(src->d_bcount);
 	dst->d_ino_count = src->d_icount;
-	dst->d_ino_timer = copy_from_xfs_dqblk_ts(src, src->d_itimer,
-						  src->d_itimer_hi);
-	dst->d_spc_timer = copy_from_xfs_dqblk_ts(src, src->d_btimer,
-						  src->d_btimer_hi);
+	dst->d_ino_समयr = copy_from_xfs_dqblk_ts(src, src->d_iसमयr,
+						  src->d_iसमयr_hi);
+	dst->d_spc_समयr = copy_from_xfs_dqblk_ts(src, src->d_bसमयr,
+						  src->d_bसमयr_hi);
 	dst->d_ino_warns = src->d_iwarns;
 	dst->d_spc_warns = src->d_bwarns;
 	dst->d_rt_spc_hardlimit = quota_bbtob(src->d_rtb_hardlimit);
 	dst->d_rt_spc_softlimit = quota_bbtob(src->d_rtb_softlimit);
 	dst->d_rt_space = quota_bbtob(src->d_rtbcount);
-	dst->d_rt_spc_timer = copy_from_xfs_dqblk_ts(src, src->d_rtbtimer,
-						     src->d_rtbtimer_hi);
+	dst->d_rt_spc_समयr = copy_from_xfs_dqblk_ts(src, src->d_rtbसमयr,
+						     src->d_rtbसमयr_hi);
 	dst->d_rt_spc_warns = src->d_rtbwarns;
 	dst->d_fieldmask = 0;
-	if (src->d_fieldmask & FS_DQ_ISOFT)
+	अगर (src->d_fieldmask & FS_DQ_ISOFT)
 		dst->d_fieldmask |= QC_INO_SOFT;
-	if (src->d_fieldmask & FS_DQ_IHARD)
+	अगर (src->d_fieldmask & FS_DQ_IHARD)
 		dst->d_fieldmask |= QC_INO_HARD;
-	if (src->d_fieldmask & FS_DQ_BSOFT)
+	अगर (src->d_fieldmask & FS_DQ_BSOFT)
 		dst->d_fieldmask |= QC_SPC_SOFT;
-	if (src->d_fieldmask & FS_DQ_BHARD)
+	अगर (src->d_fieldmask & FS_DQ_BHARD)
 		dst->d_fieldmask |= QC_SPC_HARD;
-	if (src->d_fieldmask & FS_DQ_RTBSOFT)
+	अगर (src->d_fieldmask & FS_DQ_RTBSOFT)
 		dst->d_fieldmask |= QC_RT_SPC_SOFT;
-	if (src->d_fieldmask & FS_DQ_RTBHARD)
+	अगर (src->d_fieldmask & FS_DQ_RTBHARD)
 		dst->d_fieldmask |= QC_RT_SPC_HARD;
-	if (src->d_fieldmask & FS_DQ_BTIMER)
+	अगर (src->d_fieldmask & FS_DQ_BTIMER)
 		dst->d_fieldmask |= QC_SPC_TIMER;
-	if (src->d_fieldmask & FS_DQ_ITIMER)
+	अगर (src->d_fieldmask & FS_DQ_ITIMER)
 		dst->d_fieldmask |= QC_INO_TIMER;
-	if (src->d_fieldmask & FS_DQ_RTBTIMER)
+	अगर (src->d_fieldmask & FS_DQ_RTBTIMER)
 		dst->d_fieldmask |= QC_RT_SPC_TIMER;
-	if (src->d_fieldmask & FS_DQ_BWARNS)
+	अगर (src->d_fieldmask & FS_DQ_BWARNS)
 		dst->d_fieldmask |= QC_SPC_WARNS;
-	if (src->d_fieldmask & FS_DQ_IWARNS)
+	अगर (src->d_fieldmask & FS_DQ_IWARNS)
 		dst->d_fieldmask |= QC_INO_WARNS;
-	if (src->d_fieldmask & FS_DQ_RTBWARNS)
+	अगर (src->d_fieldmask & FS_DQ_RTBWARNS)
 		dst->d_fieldmask |= QC_RT_SPC_WARNS;
-	if (src->d_fieldmask & FS_DQ_BCOUNT)
+	अगर (src->d_fieldmask & FS_DQ_BCOUNT)
 		dst->d_fieldmask |= QC_SPACE;
-	if (src->d_fieldmask & FS_DQ_ICOUNT)
+	अगर (src->d_fieldmask & FS_DQ_ICOUNT)
 		dst->d_fieldmask |= QC_INO_COUNT;
-	if (src->d_fieldmask & FS_DQ_RTBCOUNT)
+	अगर (src->d_fieldmask & FS_DQ_RTBCOUNT)
 		dst->d_fieldmask |= QC_RT_SPACE;
-}
+पूर्ण
 
-static void copy_qcinfo_from_xfs_dqblk(struct qc_info *dst,
-				       struct fs_disk_quota *src)
-{
-	memset(dst, 0, sizeof(*dst));
-	dst->i_spc_timelimit = src->d_btimer;
-	dst->i_ino_timelimit = src->d_itimer;
-	dst->i_rt_spc_timelimit = src->d_rtbtimer;
+अटल व्योम copy_qcinfo_from_xfs_dqblk(काष्ठा qc_info *dst,
+				       काष्ठा fs_disk_quota *src)
+अणु
+	स_रखो(dst, 0, माप(*dst));
+	dst->i_spc_समयlimit = src->d_bसमयr;
+	dst->i_ino_समयlimit = src->d_iसमयr;
+	dst->i_rt_spc_समयlimit = src->d_rtbसमयr;
 	dst->i_ino_warnlimit = src->d_iwarns;
 	dst->i_spc_warnlimit = src->d_bwarns;
 	dst->i_rt_spc_warnlimit = src->d_rtbwarns;
-	if (src->d_fieldmask & FS_DQ_BWARNS)
+	अगर (src->d_fieldmask & FS_DQ_BWARNS)
 		dst->i_fieldmask |= QC_SPC_WARNS;
-	if (src->d_fieldmask & FS_DQ_IWARNS)
+	अगर (src->d_fieldmask & FS_DQ_IWARNS)
 		dst->i_fieldmask |= QC_INO_WARNS;
-	if (src->d_fieldmask & FS_DQ_RTBWARNS)
+	अगर (src->d_fieldmask & FS_DQ_RTBWARNS)
 		dst->i_fieldmask |= QC_RT_SPC_WARNS;
-	if (src->d_fieldmask & FS_DQ_BTIMER)
+	अगर (src->d_fieldmask & FS_DQ_BTIMER)
 		dst->i_fieldmask |= QC_SPC_TIMER;
-	if (src->d_fieldmask & FS_DQ_ITIMER)
+	अगर (src->d_fieldmask & FS_DQ_ITIMER)
 		dst->i_fieldmask |= QC_INO_TIMER;
-	if (src->d_fieldmask & FS_DQ_RTBTIMER)
+	अगर (src->d_fieldmask & FS_DQ_RTBTIMER)
 		dst->i_fieldmask |= QC_RT_SPC_TIMER;
-}
+पूर्ण
 
-static int quota_setxquota(struct super_block *sb, int type, qid_t id,
-			   void __user *addr)
-{
-	struct fs_disk_quota fdq;
-	struct qc_dqblk qdq;
-	struct kqid qid;
+अटल पूर्णांक quota_setxquota(काष्ठा super_block *sb, पूर्णांक type, qid_t id,
+			   व्योम __user *addr)
+अणु
+	काष्ठा fs_disk_quota fdq;
+	काष्ठा qc_dqblk qdq;
+	काष्ठा kqid qid;
 
-	if (copy_from_user(&fdq, addr, sizeof(fdq)))
-		return -EFAULT;
-	if (!sb->s_qcop->set_dqblk)
-		return -ENOSYS;
+	अगर (copy_from_user(&fdq, addr, माप(fdq)))
+		वापस -EFAULT;
+	अगर (!sb->s_qcop->set_dqblk)
+		वापस -ENOSYS;
 	qid = make_kqid(current_user_ns(), type, id);
-	if (!qid_has_mapping(sb->s_user_ns, qid))
-		return -EINVAL;
-	/* Are we actually setting timer / warning limits for all users? */
-	if (from_kqid(sb->s_user_ns, qid) == 0 &&
-	    fdq.d_fieldmask & (FS_DQ_WARNS_MASK | FS_DQ_TIMER_MASK)) {
-		struct qc_info qinfo;
-		int ret;
+	अगर (!qid_has_mapping(sb->s_user_ns, qid))
+		वापस -EINVAL;
+	/* Are we actually setting समयr / warning limits क्रम all users? */
+	अगर (from_kqid(sb->s_user_ns, qid) == 0 &&
+	    fdq.d_fieldmask & (FS_DQ_WARNS_MASK | FS_DQ_TIMER_MASK)) अणु
+		काष्ठा qc_info qinfo;
+		पूर्णांक ret;
 
-		if (!sb->s_qcop->set_info)
-			return -EINVAL;
+		अगर (!sb->s_qcop->set_info)
+			वापस -EINVAL;
 		copy_qcinfo_from_xfs_dqblk(&qinfo, &fdq);
 		ret = sb->s_qcop->set_info(sb, type, &qinfo);
-		if (ret)
-			return ret;
-		/* These are already done */
+		अगर (ret)
+			वापस ret;
+		/* These are alपढ़ोy करोne */
 		fdq.d_fieldmask &= ~(FS_DQ_WARNS_MASK | FS_DQ_TIMER_MASK);
-	}
+	पूर्ण
 	copy_from_xfs_dqblk(&qdq, &fdq);
-	return sb->s_qcop->set_dqblk(sb, qid, &qdq);
-}
+	वापस sb->s_qcop->set_dqblk(sb, qid, &qdq);
+पूर्ण
 
-static inline void copy_to_xfs_dqblk_ts(const struct fs_disk_quota *d,
-		__s32 *timer_lo, __s8 *timer_hi, s64 timer)
-{
-	*timer_lo = timer;
-	if (d->d_fieldmask & FS_DQ_BIGTIME)
-		*timer_hi = timer >> 32;
-}
+अटल अंतरभूत व्योम copy_to_xfs_dqblk_ts(स्थिर काष्ठा fs_disk_quota *d,
+		__s32 *समयr_lo, __s8 *समयr_hi, s64 समयr)
+अणु
+	*समयr_lo = समयr;
+	अगर (d->d_fieldmask & FS_DQ_BIGTIME)
+		*समयr_hi = समयr >> 32;
+पूर्ण
 
-static inline bool want_bigtime(s64 timer)
-{
-	return timer > S32_MAX || timer < S32_MIN;
-}
+अटल अंतरभूत bool want_bigसमय(s64 समयr)
+अणु
+	वापस समयr > S32_MAX || समयr < S32_MIN;
+पूर्ण
 
-static void copy_to_xfs_dqblk(struct fs_disk_quota *dst, struct qc_dqblk *src,
-			      int type, qid_t id)
-{
-	memset(dst, 0, sizeof(*dst));
-	if (want_bigtime(src->d_ino_timer) || want_bigtime(src->d_spc_timer) ||
-	    want_bigtime(src->d_rt_spc_timer))
+अटल व्योम copy_to_xfs_dqblk(काष्ठा fs_disk_quota *dst, काष्ठा qc_dqblk *src,
+			      पूर्णांक type, qid_t id)
+अणु
+	स_रखो(dst, 0, माप(*dst));
+	अगर (want_bigसमय(src->d_ino_समयr) || want_bigसमय(src->d_spc_समयr) ||
+	    want_bigसमय(src->d_rt_spc_समयr))
 		dst->d_fieldmask |= FS_DQ_BIGTIME;
 	dst->d_version = FS_DQUOT_VERSION;
 	dst->d_id = id;
-	if (type == USRQUOTA)
+	अगर (type == USRQUOTA)
 		dst->d_flags = FS_USER_QUOTA;
-	else if (type == PRJQUOTA)
+	अन्यथा अगर (type == PRJQUOTA)
 		dst->d_flags = FS_PROJ_QUOTA;
-	else
+	अन्यथा
 		dst->d_flags = FS_GROUP_QUOTA;
 	dst->d_blk_hardlimit = quota_btobb(src->d_spc_hardlimit);
 	dst->d_blk_softlimit = quota_btobb(src->d_spc_softlimit);
@@ -687,328 +688,328 @@ static void copy_to_xfs_dqblk(struct fs_disk_quota *dst, struct qc_dqblk *src,
 	dst->d_ino_softlimit = src->d_ino_softlimit;
 	dst->d_bcount = quota_btobb(src->d_space);
 	dst->d_icount = src->d_ino_count;
-	copy_to_xfs_dqblk_ts(dst, &dst->d_itimer, &dst->d_itimer_hi,
-			     src->d_ino_timer);
-	copy_to_xfs_dqblk_ts(dst, &dst->d_btimer, &dst->d_btimer_hi,
-			     src->d_spc_timer);
+	copy_to_xfs_dqblk_ts(dst, &dst->d_iसमयr, &dst->d_iसमयr_hi,
+			     src->d_ino_समयr);
+	copy_to_xfs_dqblk_ts(dst, &dst->d_bसमयr, &dst->d_bसमयr_hi,
+			     src->d_spc_समयr);
 	dst->d_iwarns = src->d_ino_warns;
 	dst->d_bwarns = src->d_spc_warns;
 	dst->d_rtb_hardlimit = quota_btobb(src->d_rt_spc_hardlimit);
 	dst->d_rtb_softlimit = quota_btobb(src->d_rt_spc_softlimit);
 	dst->d_rtbcount = quota_btobb(src->d_rt_space);
-	copy_to_xfs_dqblk_ts(dst, &dst->d_rtbtimer, &dst->d_rtbtimer_hi,
-			     src->d_rt_spc_timer);
+	copy_to_xfs_dqblk_ts(dst, &dst->d_rtbसमयr, &dst->d_rtbसमयr_hi,
+			     src->d_rt_spc_समयr);
 	dst->d_rtbwarns = src->d_rt_spc_warns;
-}
+पूर्ण
 
-static int quota_getxquota(struct super_block *sb, int type, qid_t id,
-			   void __user *addr)
-{
-	struct fs_disk_quota fdq;
-	struct qc_dqblk qdq;
-	struct kqid qid;
-	int ret;
+अटल पूर्णांक quota_getxquota(काष्ठा super_block *sb, पूर्णांक type, qid_t id,
+			   व्योम __user *addr)
+अणु
+	काष्ठा fs_disk_quota fdq;
+	काष्ठा qc_dqblk qdq;
+	काष्ठा kqid qid;
+	पूर्णांक ret;
 
-	if (!sb->s_qcop->get_dqblk)
-		return -ENOSYS;
+	अगर (!sb->s_qcop->get_dqblk)
+		वापस -ENOSYS;
 	qid = make_kqid(current_user_ns(), type, id);
-	if (!qid_has_mapping(sb->s_user_ns, qid))
-		return -EINVAL;
+	अगर (!qid_has_mapping(sb->s_user_ns, qid))
+		वापस -EINVAL;
 	ret = sb->s_qcop->get_dqblk(sb, qid, &qdq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	copy_to_xfs_dqblk(&fdq, &qdq, type, id);
-	if (copy_to_user(addr, &fdq, sizeof(fdq)))
-		return -EFAULT;
-	return ret;
-}
+	अगर (copy_to_user(addr, &fdq, माप(fdq)))
+		वापस -EFAULT;
+	वापस ret;
+पूर्ण
 
 /*
- * Return quota for next active quota >= this id, if any exists,
- * otherwise return -ENOENT via ->get_nextdqblk.
+ * Return quota क्रम next active quota >= this id, अगर any exists,
+ * otherwise वापस -ENOENT via ->get_nextdqblk.
  */
-static int quota_getnextxquota(struct super_block *sb, int type, qid_t id,
-			    void __user *addr)
-{
-	struct fs_disk_quota fdq;
-	struct qc_dqblk qdq;
-	struct kqid qid;
+अटल पूर्णांक quota_getnextxquota(काष्ठा super_block *sb, पूर्णांक type, qid_t id,
+			    व्योम __user *addr)
+अणु
+	काष्ठा fs_disk_quota fdq;
+	काष्ठा qc_dqblk qdq;
+	काष्ठा kqid qid;
 	qid_t id_out;
-	int ret;
+	पूर्णांक ret;
 
-	if (!sb->s_qcop->get_nextdqblk)
-		return -ENOSYS;
+	अगर (!sb->s_qcop->get_nextdqblk)
+		वापस -ENOSYS;
 	qid = make_kqid(current_user_ns(), type, id);
-	if (!qid_has_mapping(sb->s_user_ns, qid))
-		return -EINVAL;
+	अगर (!qid_has_mapping(sb->s_user_ns, qid))
+		वापस -EINVAL;
 	ret = sb->s_qcop->get_nextdqblk(sb, &qid, &qdq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 	id_out = from_kqid(current_user_ns(), qid);
 	copy_to_xfs_dqblk(&fdq, &qdq, type, id_out);
-	if (copy_to_user(addr, &fdq, sizeof(fdq)))
-		return -EFAULT;
-	return ret;
-}
+	अगर (copy_to_user(addr, &fdq, माप(fdq)))
+		वापस -EFAULT;
+	वापस ret;
+पूर्ण
 
-static int quota_rmxquota(struct super_block *sb, void __user *addr)
-{
+अटल पूर्णांक quota_rmxquota(काष्ठा super_block *sb, व्योम __user *addr)
+अणु
 	__u32 flags;
 
-	if (copy_from_user(&flags, addr, sizeof(flags)))
-		return -EFAULT;
-	if (!sb->s_qcop->rm_xquota)
-		return -ENOSYS;
-	return sb->s_qcop->rm_xquota(sb, flags);
-}
+	अगर (copy_from_user(&flags, addr, माप(flags)))
+		वापस -EFAULT;
+	अगर (!sb->s_qcop->rm_xquota)
+		वापस -ENOSYS;
+	वापस sb->s_qcop->rm_xquota(sb, flags);
+पूर्ण
 
 /* Copy parameters and call proper function */
-static int do_quotactl(struct super_block *sb, int type, int cmd, qid_t id,
-		       void __user *addr, const struct path *path)
-{
-	int ret;
+अटल पूर्णांक करो_quotactl(काष्ठा super_block *sb, पूर्णांक type, पूर्णांक cmd, qid_t id,
+		       व्योम __user *addr, स्थिर काष्ठा path *path)
+अणु
+	पूर्णांक ret;
 
 	type = array_index_nospec(type, MAXQUOTAS);
 	/*
-	 * Quota not supported on this fs? Check this before s_quota_types
-	 * since they needn't be set if quota is not supported at all.
+	 * Quota not supported on this fs? Check this beक्रमe s_quota_types
+	 * since they needn't be set अगर quota is not supported at all.
 	 */
-	if (!sb->s_qcop)
-		return -ENOSYS;
-	if (!(sb->s_quota_types & (1 << type)))
-		return -EINVAL;
+	अगर (!sb->s_qcop)
+		वापस -ENOSYS;
+	अगर (!(sb->s_quota_types & (1 << type)))
+		वापस -EINVAL;
 
 	ret = check_quotactl_permission(sb, type, cmd, id);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	switch (cmd) {
-	case Q_QUOTAON:
-		return quota_quotaon(sb, type, id, path);
-	case Q_QUOTAOFF:
-		return quota_quotaoff(sb, type);
-	case Q_GETFMT:
-		return quota_getfmt(sb, type, addr);
-	case Q_GETINFO:
-		return quota_getinfo(sb, type, addr);
-	case Q_SETINFO:
-		return quota_setinfo(sb, type, addr);
-	case Q_GETQUOTA:
-		return quota_getquota(sb, type, id, addr);
-	case Q_GETNEXTQUOTA:
-		return quota_getnextquota(sb, type, id, addr);
-	case Q_SETQUOTA:
-		return quota_setquota(sb, type, id, addr);
-	case Q_SYNC:
-		if (!sb->s_qcop->quota_sync)
-			return -ENOSYS;
-		return sb->s_qcop->quota_sync(sb, type);
-	case Q_XQUOTAON:
-		return quota_enable(sb, addr);
-	case Q_XQUOTAOFF:
-		return quota_disable(sb, addr);
-	case Q_XQUOTARM:
-		return quota_rmxquota(sb, addr);
-	case Q_XGETQSTAT:
-		return quota_getxstate(sb, type, addr);
-	case Q_XGETQSTATV:
-		return quota_getxstatev(sb, type, addr);
-	case Q_XSETQLIM:
-		return quota_setxquota(sb, type, id, addr);
-	case Q_XGETQUOTA:
-		return quota_getxquota(sb, type, id, addr);
-	case Q_XGETNEXTQUOTA:
-		return quota_getnextxquota(sb, type, id, addr);
-	case Q_XQUOTASYNC:
-		if (sb_rdonly(sb))
-			return -EROFS;
+	चयन (cmd) अणु
+	हाल Q_QUOTAON:
+		वापस quota_quotaon(sb, type, id, path);
+	हाल Q_QUOTAOFF:
+		वापस quota_quotaoff(sb, type);
+	हाल Q_GETFMT:
+		वापस quota_getfmt(sb, type, addr);
+	हाल Q_GETINFO:
+		वापस quota_getinfo(sb, type, addr);
+	हाल Q_SETINFO:
+		वापस quota_setinfo(sb, type, addr);
+	हाल Q_GETQUOTA:
+		वापस quota_getquota(sb, type, id, addr);
+	हाल Q_GETNEXTQUOTA:
+		वापस quota_getnextquota(sb, type, id, addr);
+	हाल Q_SETQUOTA:
+		वापस quota_setquota(sb, type, id, addr);
+	हाल Q_SYNC:
+		अगर (!sb->s_qcop->quota_sync)
+			वापस -ENOSYS;
+		वापस sb->s_qcop->quota_sync(sb, type);
+	हाल Q_XQUOTAON:
+		वापस quota_enable(sb, addr);
+	हाल Q_XQUOTAOFF:
+		वापस quota_disable(sb, addr);
+	हाल Q_XQUOTARM:
+		वापस quota_rmxquota(sb, addr);
+	हाल Q_XGETQSTAT:
+		वापस quota_getxstate(sb, type, addr);
+	हाल Q_XGETQSTATV:
+		वापस quota_getxstatev(sb, type, addr);
+	हाल Q_XSETQLIM:
+		वापस quota_setxquota(sb, type, id, addr);
+	हाल Q_XGETQUOTA:
+		वापस quota_getxquota(sb, type, id, addr);
+	हाल Q_XGETNEXTQUOTA:
+		वापस quota_getnextxquota(sb, type, id, addr);
+	हाल Q_XQUOTASYNC:
+		अगर (sb_rकरोnly(sb))
+			वापस -EROFS;
 		/* XFS quotas are fully coherent now, making this call a noop */
-		return 0;
-	default:
-		return -EINVAL;
-	}
-}
+		वापस 0;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-/* Return 1 if 'cmd' will block on frozen filesystem */
-static int quotactl_cmd_write(int cmd)
-{
+/* Return 1 अगर 'cmd' will block on frozen fileप्रणाली */
+अटल पूर्णांक quotactl_cmd_ग_लिखो(पूर्णांक cmd)
+अणु
 	/*
-	 * We cannot allow Q_GETQUOTA and Q_GETNEXTQUOTA without write access
-	 * as dquot_acquire() may allocate space for new structure and OCFS2
+	 * We cannot allow Q_GETQUOTA and Q_GETNEXTQUOTA without ग_लिखो access
+	 * as dquot_acquire() may allocate space क्रम new काष्ठाure and OCFS2
 	 * needs to increment on-disk use count.
 	 */
-	switch (cmd) {
-	case Q_GETFMT:
-	case Q_GETINFO:
-	case Q_SYNC:
-	case Q_XGETQSTAT:
-	case Q_XGETQSTATV:
-	case Q_XGETQUOTA:
-	case Q_XGETNEXTQUOTA:
-	case Q_XQUOTASYNC:
-		return 0;
-	}
-	return 1;
-}
+	चयन (cmd) अणु
+	हाल Q_GETFMT:
+	हाल Q_GETINFO:
+	हाल Q_SYNC:
+	हाल Q_XGETQSTAT:
+	हाल Q_XGETQSTATV:
+	हाल Q_XGETQUOTA:
+	हाल Q_XGETNEXTQUOTA:
+	हाल Q_XQUOTASYNC:
+		वापस 0;
+	पूर्ण
+	वापस 1;
+पूर्ण
 
-/* Return true if quotactl command is manipulating quota on/off state */
-static bool quotactl_cmd_onoff(int cmd)
-{
-	return (cmd == Q_QUOTAON) || (cmd == Q_QUOTAOFF) ||
+/* Return true अगर quotactl command is manipulating quota on/off state */
+अटल bool quotactl_cmd_onoff(पूर्णांक cmd)
+अणु
+	वापस (cmd == Q_QUOTAON) || (cmd == Q_QUOTAOFF) ||
 		 (cmd == Q_XQUOTAON) || (cmd == Q_XQUOTAOFF);
-}
+पूर्ण
 
 /*
- * look up a superblock on which quota ops will be performed
+ * look up a superblock on which quota ops will be perक्रमmed
  * - use the name of a block device to find the superblock thereon
  */
-static struct super_block *quotactl_block(const char __user *special, int cmd)
-{
-#ifdef CONFIG_BLOCK
-	struct super_block *sb;
-	struct filename *tmp = getname(special);
+अटल काष्ठा super_block *quotactl_block(स्थिर अक्षर __user *special, पूर्णांक cmd)
+अणु
+#अगर_घोषित CONFIG_BLOCK
+	काष्ठा super_block *sb;
+	काष्ठा filename *पंचांगp = getname(special);
 	bool excl = false, thawed = false;
-	int error;
+	पूर्णांक error;
 	dev_t dev;
 
-	if (IS_ERR(tmp))
-		return ERR_CAST(tmp);
-	error = lookup_bdev(tmp->name, &dev);
-	putname(tmp);
-	if (error)
-		return ERR_PTR(error);
+	अगर (IS_ERR(पंचांगp))
+		वापस ERR_CAST(पंचांगp);
+	error = lookup_bdev(पंचांगp->name, &dev);
+	putname(पंचांगp);
+	अगर (error)
+		वापस ERR_PTR(error);
 
-	if (quotactl_cmd_onoff(cmd)) {
+	अगर (quotactl_cmd_onoff(cmd)) अणु
 		excl = true;
 		thawed = true;
-	} else if (quotactl_cmd_write(cmd)) {
+	पूर्ण अन्यथा अगर (quotactl_cmd_ग_लिखो(cmd)) अणु
 		thawed = true;
-	}
+	पूर्ण
 
 retry:
 	sb = user_get_super(dev, excl);
-	if (!sb)
-		return ERR_PTR(-ENODEV);
-	if (thawed && sb->s_writers.frozen != SB_UNFROZEN) {
-		if (excl)
-			up_write(&sb->s_umount);
-		else
-			up_read(&sb->s_umount);
-		wait_event(sb->s_writers.wait_unfrozen,
-			   sb->s_writers.frozen == SB_UNFROZEN);
+	अगर (!sb)
+		वापस ERR_PTR(-ENODEV);
+	अगर (thawed && sb->s_ग_लिखोrs.frozen != SB_UNFROZEN) अणु
+		अगर (excl)
+			up_ग_लिखो(&sb->s_umount);
+		अन्यथा
+			up_पढ़ो(&sb->s_umount);
+		रुको_event(sb->s_ग_लिखोrs.रुको_unfrozen,
+			   sb->s_ग_लिखोrs.frozen == SB_UNFROZEN);
 		put_super(sb);
-		goto retry;
-	}
-	return sb;
+		जाओ retry;
+	पूर्ण
+	वापस sb;
 
-#else
-	return ERR_PTR(-ENODEV);
-#endif
-}
+#अन्यथा
+	वापस ERR_PTR(-ENODEV);
+#पूर्ण_अगर
+पूर्ण
 
 /*
- * This is the system call interface. This communicates with
+ * This is the प्रणाली call पूर्णांकerface. This communicates with
  * the user-level programs. Currently this only supports diskquota
  * calls. Maybe we need to add the process quotas etc. in the future,
- * but we probably should use rlimits for that.
+ * but we probably should use rlimits क्रम that.
  */
-SYSCALL_DEFINE4(quotactl, unsigned int, cmd, const char __user *, special,
-		qid_t, id, void __user *, addr)
-{
-	uint cmds, type;
-	struct super_block *sb = NULL;
-	struct path path, *pathp = NULL;
-	int ret;
+SYSCALL_DEFINE4(quotactl, अचिन्हित पूर्णांक, cmd, स्थिर अक्षर __user *, special,
+		qid_t, id, व्योम __user *, addr)
+अणु
+	uपूर्णांक cmds, type;
+	काष्ठा super_block *sb = शून्य;
+	काष्ठा path path, *pathp = शून्य;
+	पूर्णांक ret;
 
 	cmds = cmd >> SUBCMDSHIFT;
 	type = cmd & SUBCMDMASK;
 
-	if (type >= MAXQUOTAS)
-		return -EINVAL;
+	अगर (type >= MAXQUOTAS)
+		वापस -EINVAL;
 
 	/*
-	 * As a special case Q_SYNC can be called without a specific device.
+	 * As a special हाल Q_SYNC can be called without a specअगरic device.
 	 * It will iterate all superblocks that have quota enabled and call
 	 * the sync action on each of them.
 	 */
-	if (!special) {
-		if (cmds == Q_SYNC)
-			return quota_sync_all(type);
-		return -ENODEV;
-	}
+	अगर (!special) अणु
+		अगर (cmds == Q_SYNC)
+			वापस quota_sync_all(type);
+		वापस -ENODEV;
+	पूर्ण
 
 	/*
-	 * Path for quotaon has to be resolved before grabbing superblock
-	 * because that gets s_umount sem which is also possibly needed by path
-	 * resolution (think about autofs) and thus deadlocks could arise.
+	 * Path क्रम quotaon has to be resolved beक्रमe grabbing superblock
+	 * because that माला_लो s_umount sem which is also possibly needed by path
+	 * resolution (think about स्वतःfs) and thus deadlocks could arise.
 	 */
-	if (cmds == Q_QUOTAON) {
+	अगर (cmds == Q_QUOTAON) अणु
 		ret = user_path_at(AT_FDCWD, addr, LOOKUP_FOLLOW|LOOKUP_AUTOMOUNT, &path);
-		if (ret)
+		अगर (ret)
 			pathp = ERR_PTR(ret);
-		else
+		अन्यथा
 			pathp = &path;
-	}
+	पूर्ण
 
 	sb = quotactl_block(special, cmds);
-	if (IS_ERR(sb)) {
+	अगर (IS_ERR(sb)) अणु
 		ret = PTR_ERR(sb);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	ret = do_quotactl(sb, type, cmds, id, addr, pathp);
+	ret = करो_quotactl(sb, type, cmds, id, addr, pathp);
 
-	if (!quotactl_cmd_onoff(cmds))
+	अगर (!quotactl_cmd_onoff(cmds))
 		drop_super(sb);
-	else
+	अन्यथा
 		drop_super_exclusive(sb);
 out:
-	if (pathp && !IS_ERR(pathp))
+	अगर (pathp && !IS_ERR(pathp))
 		path_put(pathp);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-SYSCALL_DEFINE4(quotactl_path, unsigned int, cmd, const char __user *,
-		mountpoint, qid_t, id, void __user *, addr)
-{
-	struct super_block *sb;
-	struct path mountpath;
-	unsigned int cmds = cmd >> SUBCMDSHIFT;
-	unsigned int type = cmd & SUBCMDMASK;
-	int ret;
+SYSCALL_DEFINE4(quotactl_path, अचिन्हित पूर्णांक, cmd, स्थिर अक्षर __user *,
+		mountpoपूर्णांक, qid_t, id, व्योम __user *, addr)
+अणु
+	काष्ठा super_block *sb;
+	काष्ठा path mountpath;
+	अचिन्हित पूर्णांक cmds = cmd >> SUBCMDSHIFT;
+	अचिन्हित पूर्णांक type = cmd & SUBCMDMASK;
+	पूर्णांक ret;
 
-	if (type >= MAXQUOTAS)
-		return -EINVAL;
+	अगर (type >= MAXQUOTAS)
+		वापस -EINVAL;
 
-	ret = user_path_at(AT_FDCWD, mountpoint,
+	ret = user_path_at(AT_FDCWD, mountpoपूर्णांक,
 			     LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT, &mountpath);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	sb = mountpath.mnt->mnt_sb;
 
-	if (quotactl_cmd_write(cmds)) {
-		ret = mnt_want_write(mountpath.mnt);
-		if (ret)
-			goto out;
-	}
+	अगर (quotactl_cmd_ग_लिखो(cmds)) अणु
+		ret = mnt_want_ग_लिखो(mountpath.mnt);
+		अगर (ret)
+			जाओ out;
+	पूर्ण
 
-	if (quotactl_cmd_onoff(cmds))
-		down_write(&sb->s_umount);
-	else
-		down_read(&sb->s_umount);
+	अगर (quotactl_cmd_onoff(cmds))
+		करोwn_ग_लिखो(&sb->s_umount);
+	अन्यथा
+		करोwn_पढ़ो(&sb->s_umount);
 
-	ret = do_quotactl(sb, type, cmds, id, addr, ERR_PTR(-EINVAL));
+	ret = करो_quotactl(sb, type, cmds, id, addr, ERR_PTR(-EINVAL));
 
-	if (quotactl_cmd_onoff(cmds))
-		up_write(&sb->s_umount);
-	else
-		up_read(&sb->s_umount);
+	अगर (quotactl_cmd_onoff(cmds))
+		up_ग_लिखो(&sb->s_umount);
+	अन्यथा
+		up_पढ़ो(&sb->s_umount);
 
-	if (quotactl_cmd_write(cmds))
-		mnt_drop_write(mountpath.mnt);
+	अगर (quotactl_cmd_ग_लिखो(cmds))
+		mnt_drop_ग_लिखो(mountpath.mnt);
 out:
 	path_put(&mountpath);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण

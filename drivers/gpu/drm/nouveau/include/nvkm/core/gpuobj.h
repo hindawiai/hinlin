@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_GPUOBJ_H__
-#define __NVKM_GPUOBJ_H__
-#include <core/memory.h>
-#include <core/mm.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_GPUOBJ_H__
+#घोषणा __NVKM_GPUOBJ_H__
+#समावेश <core/memory.h>
+#समावेश <core/mm.h>
 
-#define NVOBJ_FLAG_ZERO_ALLOC 0x00000001
-#define NVOBJ_FLAG_HEAP       0x00000004
+#घोषणा NVOBJ_FLAG_ZERO_ALLOC 0x00000001
+#घोषणा NVOBJ_FLAG_HEAP       0x00000004
 
-struct nvkm_gpuobj {
-	union {
-		const struct nvkm_gpuobj_func *func;
-		const struct nvkm_gpuobj_func *ptrs;
-	};
-	struct nvkm_gpuobj *parent;
-	struct nvkm_memory *memory;
-	struct nvkm_mm_node *node;
+काष्ठा nvkm_gpuobj अणु
+	जोड़ अणु
+		स्थिर काष्ठा nvkm_gpuobj_func *func;
+		स्थिर काष्ठा nvkm_gpuobj_func *ptrs;
+	पूर्ण;
+	काष्ठा nvkm_gpuobj *parent;
+	काष्ठा nvkm_memory *memory;
+	काष्ठा nvkm_mm_node *node;
 
 	u64 addr;
 	u32 size;
-	struct nvkm_mm heap;
+	काष्ठा nvkm_mm heap;
 
-	void __iomem *map;
-};
+	व्योम __iomem *map;
+पूर्ण;
 
-struct nvkm_gpuobj_func {
-	void *(*acquire)(struct nvkm_gpuobj *);
-	void (*release)(struct nvkm_gpuobj *);
-	u32 (*rd32)(struct nvkm_gpuobj *, u32 offset);
-	void (*wr32)(struct nvkm_gpuobj *, u32 offset, u32 data);
-	int (*map)(struct nvkm_gpuobj *, u64 offset, struct nvkm_vmm *,
-		   struct nvkm_vma *, void *argv, u32 argc);
-};
+काष्ठा nvkm_gpuobj_func अणु
+	व्योम *(*acquire)(काष्ठा nvkm_gpuobj *);
+	व्योम (*release)(काष्ठा nvkm_gpuobj *);
+	u32 (*rd32)(काष्ठा nvkm_gpuobj *, u32 offset);
+	व्योम (*wr32)(काष्ठा nvkm_gpuobj *, u32 offset, u32 data);
+	पूर्णांक (*map)(काष्ठा nvkm_gpuobj *, u64 offset, काष्ठा nvkm_vmm *,
+		   काष्ठा nvkm_vma *, व्योम *argv, u32 argc);
+पूर्ण;
 
-int nvkm_gpuobj_new(struct nvkm_device *, u32 size, int align, bool zero,
-		    struct nvkm_gpuobj *parent, struct nvkm_gpuobj **);
-void nvkm_gpuobj_del(struct nvkm_gpuobj **);
-int nvkm_gpuobj_wrap(struct nvkm_memory *, struct nvkm_gpuobj **);
-void nvkm_gpuobj_memcpy_to(struct nvkm_gpuobj *dst, u32 dstoffset, void *src,
+पूर्णांक nvkm_gpuobj_new(काष्ठा nvkm_device *, u32 size, पूर्णांक align, bool zero,
+		    काष्ठा nvkm_gpuobj *parent, काष्ठा nvkm_gpuobj **);
+व्योम nvkm_gpuobj_del(काष्ठा nvkm_gpuobj **);
+पूर्णांक nvkm_gpuobj_wrap(काष्ठा nvkm_memory *, काष्ठा nvkm_gpuobj **);
+व्योम nvkm_gpuobj_स_नकल_to(काष्ठा nvkm_gpuobj *dst, u32 dstoffset, व्योम *src,
 			   u32 length);
-void nvkm_gpuobj_memcpy_from(void *dst, struct nvkm_gpuobj *src, u32 srcoffset,
+व्योम nvkm_gpuobj_स_नकल_from(व्योम *dst, काष्ठा nvkm_gpuobj *src, u32 srcoffset,
 			     u32 length);
-#endif
+#पूर्ण_अगर

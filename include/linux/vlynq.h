@@ -1,149 +1,150 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- * Copyright (C) 2006, 2007 Eugene Konev <ejka@openwrt.org>
+ * Copyright (C) 2006, 2007 Eugene Konev <ejka@खोलोwrt.org>
  */
 
-#ifndef __VLYNQ_H__
-#define __VLYNQ_H__
+#अगर_अघोषित __VLYNQ_H__
+#घोषणा __VLYNQ_H__
 
-#include <linux/device.h>
-#include <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/types.h>
 
-struct module;
+काष्ठा module;
 
-#define VLYNQ_NUM_IRQS 32
+#घोषणा VLYNQ_NUM_IRQS 32
 
-struct vlynq_mapping {
+काष्ठा vlynq_mapping अणु
 	u32 size;
 	u32 offset;
-};
+पूर्ण;
 
-enum vlynq_divisor {
-	vlynq_div_auto = 0,
-	vlynq_ldiv1,
-	vlynq_ldiv2,
-	vlynq_ldiv3,
-	vlynq_ldiv4,
-	vlynq_ldiv5,
-	vlynq_ldiv6,
-	vlynq_ldiv7,
-	vlynq_ldiv8,
-	vlynq_rdiv1,
-	vlynq_rdiv2,
-	vlynq_rdiv3,
-	vlynq_rdiv4,
-	vlynq_rdiv5,
-	vlynq_rdiv6,
-	vlynq_rdiv7,
-	vlynq_rdiv8,
-	vlynq_div_external
-};
+क्रमागत vlynq_भागisor अणु
+	vlynq_भाग_स्वतः = 0,
+	vlynq_द_भाग1,
+	vlynq_द_भाग2,
+	vlynq_द_भाग3,
+	vlynq_द_भाग4,
+	vlynq_द_भाग5,
+	vlynq_द_भाग6,
+	vlynq_द_भाग7,
+	vlynq_द_भाग8,
+	vlynq_rभाग1,
+	vlynq_rभाग2,
+	vlynq_rभाग3,
+	vlynq_rभाग4,
+	vlynq_rभाग5,
+	vlynq_rभाग6,
+	vlynq_rभाग7,
+	vlynq_rभाग8,
+	vlynq_भाग_बाह्यal
+पूर्ण;
 
-struct vlynq_device_id {
+काष्ठा vlynq_device_id अणु
 	u32 id;
-	enum vlynq_divisor divisor;
-	unsigned long driver_data;
-};
+	क्रमागत vlynq_भागisor भागisor;
+	अचिन्हित दीर्घ driver_data;
+पूर्ण;
 
-struct vlynq_regs;
-struct vlynq_device {
+काष्ठा vlynq_regs;
+काष्ठा vlynq_device अणु
 	u32 id, dev_id;
-	int local_irq;
-	int remote_irq;
-	enum vlynq_divisor divisor;
+	पूर्णांक local_irq;
+	पूर्णांक remote_irq;
+	क्रमागत vlynq_भागisor भागisor;
 	u32 regs_start, regs_end;
 	u32 mem_start, mem_end;
 	u32 irq_start, irq_end;
-	int irq;
-	int enabled;
-	struct vlynq_regs *local;
-	struct vlynq_regs *remote;
-	struct device dev;
-};
+	पूर्णांक irq;
+	पूर्णांक enabled;
+	काष्ठा vlynq_regs *local;
+	काष्ठा vlynq_regs *remote;
+	काष्ठा device dev;
+पूर्ण;
 
-struct vlynq_driver {
-	char *name;
-	struct vlynq_device_id *id_table;
-	int (*probe)(struct vlynq_device *dev, struct vlynq_device_id *id);
-	void (*remove)(struct vlynq_device *dev);
-	struct device_driver driver;
-};
+काष्ठा vlynq_driver अणु
+	अक्षर *name;
+	काष्ठा vlynq_device_id *id_table;
+	पूर्णांक (*probe)(काष्ठा vlynq_device *dev, काष्ठा vlynq_device_id *id);
+	व्योम (*हटाओ)(काष्ठा vlynq_device *dev);
+	काष्ठा device_driver driver;
+पूर्ण;
 
-struct plat_vlynq_ops {
-	int (*on)(struct vlynq_device *dev);
-	void (*off)(struct vlynq_device *dev);
-};
+काष्ठा plat_vlynq_ops अणु
+	पूर्णांक (*on)(काष्ठा vlynq_device *dev);
+	व्योम (*off)(काष्ठा vlynq_device *dev);
+पूर्ण;
 
-static inline struct vlynq_driver *to_vlynq_driver(struct device_driver *drv)
-{
-	return container_of(drv, struct vlynq_driver, driver);
-}
+अटल अंतरभूत काष्ठा vlynq_driver *to_vlynq_driver(काष्ठा device_driver *drv)
+अणु
+	वापस container_of(drv, काष्ठा vlynq_driver, driver);
+पूर्ण
 
-static inline struct vlynq_device *to_vlynq_device(struct device *device)
-{
-	return container_of(device, struct vlynq_device, dev);
-}
+अटल अंतरभूत काष्ठा vlynq_device *to_vlynq_device(काष्ठा device *device)
+अणु
+	वापस container_of(device, काष्ठा vlynq_device, dev);
+पूर्ण
 
-extern struct bus_type vlynq_bus_type;
+बाह्य काष्ठा bus_type vlynq_bus_type;
 
-extern int __vlynq_register_driver(struct vlynq_driver *driver,
-				   struct module *owner);
+बाह्य पूर्णांक __vlynq_रेजिस्टर_driver(काष्ठा vlynq_driver *driver,
+				   काष्ठा module *owner);
 
-static inline int vlynq_register_driver(struct vlynq_driver *driver)
-{
-	return __vlynq_register_driver(driver, THIS_MODULE);
-}
+अटल अंतरभूत पूर्णांक vlynq_रेजिस्टर_driver(काष्ठा vlynq_driver *driver)
+अणु
+	वापस __vlynq_रेजिस्टर_driver(driver, THIS_MODULE);
+पूर्ण
 
-static inline void *vlynq_get_drvdata(struct vlynq_device *dev)
-{
-	return dev_get_drvdata(&dev->dev);
-}
+अटल अंतरभूत व्योम *vlynq_get_drvdata(काष्ठा vlynq_device *dev)
+अणु
+	वापस dev_get_drvdata(&dev->dev);
+पूर्ण
 
-static inline void vlynq_set_drvdata(struct vlynq_device *dev, void *data)
-{
+अटल अंतरभूत व्योम vlynq_set_drvdata(काष्ठा vlynq_device *dev, व्योम *data)
+अणु
 	dev_set_drvdata(&dev->dev, data);
-}
+पूर्ण
 
-static inline u32 vlynq_mem_start(struct vlynq_device *dev)
-{
-	return dev->mem_start;
-}
+अटल अंतरभूत u32 vlynq_mem_start(काष्ठा vlynq_device *dev)
+अणु
+	वापस dev->mem_start;
+पूर्ण
 
-static inline u32 vlynq_mem_end(struct vlynq_device *dev)
-{
-	return dev->mem_end;
-}
+अटल अंतरभूत u32 vlynq_mem_end(काष्ठा vlynq_device *dev)
+अणु
+	वापस dev->mem_end;
+पूर्ण
 
-static inline u32 vlynq_mem_len(struct vlynq_device *dev)
-{
-	return dev->mem_end - dev->mem_start + 1;
-}
+अटल अंतरभूत u32 vlynq_mem_len(काष्ठा vlynq_device *dev)
+अणु
+	वापस dev->mem_end - dev->mem_start + 1;
+पूर्ण
 
-static inline int vlynq_virq_to_irq(struct vlynq_device *dev, int virq)
-{
-	int irq = dev->irq_start + virq;
-	if ((irq < dev->irq_start) || (irq > dev->irq_end))
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक vlynq_virq_to_irq(काष्ठा vlynq_device *dev, पूर्णांक virq)
+अणु
+	पूर्णांक irq = dev->irq_start + virq;
+	अगर ((irq < dev->irq_start) || (irq > dev->irq_end))
+		वापस -EINVAL;
 
-	return irq;
-}
+	वापस irq;
+पूर्ण
 
-static inline int vlynq_irq_to_virq(struct vlynq_device *dev, int irq)
-{
-	if ((irq < dev->irq_start) || (irq > dev->irq_end))
-		return -EINVAL;
+अटल अंतरभूत पूर्णांक vlynq_irq_to_virq(काष्ठा vlynq_device *dev, पूर्णांक irq)
+अणु
+	अगर ((irq < dev->irq_start) || (irq > dev->irq_end))
+		वापस -EINVAL;
 
-	return irq - dev->irq_start;
-}
+	वापस irq - dev->irq_start;
+पूर्ण
 
-extern void vlynq_unregister_driver(struct vlynq_driver *driver);
-extern int vlynq_enable_device(struct vlynq_device *dev);
-extern void vlynq_disable_device(struct vlynq_device *dev);
-extern int vlynq_set_local_mapping(struct vlynq_device *dev, u32 tx_offset,
-				   struct vlynq_mapping *mapping);
-extern int vlynq_set_remote_mapping(struct vlynq_device *dev, u32 tx_offset,
-				    struct vlynq_mapping *mapping);
-extern int vlynq_set_local_irq(struct vlynq_device *dev, int virq);
-extern int vlynq_set_remote_irq(struct vlynq_device *dev, int virq);
+बाह्य व्योम vlynq_unरेजिस्टर_driver(काष्ठा vlynq_driver *driver);
+बाह्य पूर्णांक vlynq_enable_device(काष्ठा vlynq_device *dev);
+बाह्य व्योम vlynq_disable_device(काष्ठा vlynq_device *dev);
+बाह्य पूर्णांक vlynq_set_local_mapping(काष्ठा vlynq_device *dev, u32 tx_offset,
+				   काष्ठा vlynq_mapping *mapping);
+बाह्य पूर्णांक vlynq_set_remote_mapping(काष्ठा vlynq_device *dev, u32 tx_offset,
+				    काष्ठा vlynq_mapping *mapping);
+बाह्य पूर्णांक vlynq_set_local_irq(काष्ठा vlynq_device *dev, पूर्णांक virq);
+बाह्य पूर्णांक vlynq_set_remote_irq(काष्ठा vlynq_device *dev, पूर्णांक virq);
 
-#endif /* __VLYNQ_H__ */
+#पूर्ण_अगर /* __VLYNQ_H__ */

@@ -1,25 +1,26 @@
+<शैली गुरु>
 /*
- * This file is part of the Chelsio T6 Ethernet driver for Linux.
+ * This file is part of the Chelsio T6 Ethernet driver क्रम Linux.
  *
  * Copyright (c) 2017-2018 Chelsio Communications, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * OpenIB.org BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -32,15 +33,15 @@
  * SOFTWARE.
  */
 
-#ifndef __CXGB4_SRQ_H
-#define __CXGB4_SRQ_H
+#अगर_अघोषित __CXGB4_SRQ_H
+#घोषणा __CXGB4_SRQ_H
 
-struct adapter;
-struct cpl_srq_table_rpl;
+काष्ठा adapter;
+काष्ठा cpl_srq_table_rpl;
 
-#define SRQ_WAIT_TO	(HZ * 5)
+#घोषणा SRQ_WAIT_TO	(HZ * 5)
 
-struct srq_entry {
+काष्ठा srq_entry अणु
 	u8 valid;
 	u8 idx;
 	u8 qlen;
@@ -48,18 +49,18 @@ struct srq_entry {
 	u16 cur_msn;
 	u16 max_msn;
 	u32 qbase;
-};
+पूर्ण;
 
-struct srq_data {
-	unsigned int srq_size;
-	struct srq_entry *entryp;
-	struct completion comp;
-	struct mutex lock; /* generic mutex for srq data */
-};
+काष्ठा srq_data अणु
+	अचिन्हित पूर्णांक srq_size;
+	काष्ठा srq_entry *entryp;
+	काष्ठा completion comp;
+	काष्ठा mutex lock; /* generic mutex क्रम srq data */
+पूर्ण;
 
-struct srq_data *t4_init_srq(int srq_size);
-int cxgb4_get_srq_entry(struct net_device *dev,
-			int srq_idx, struct srq_entry *entryp);
-void do_srq_table_rpl(struct adapter *adap,
-		      const struct cpl_srq_table_rpl *rpl);
-#endif  /* __CXGB4_SRQ_H */
+काष्ठा srq_data *t4_init_srq(पूर्णांक srq_size);
+पूर्णांक cxgb4_get_srq_entry(काष्ठा net_device *dev,
+			पूर्णांक srq_idx, काष्ठा srq_entry *entryp);
+व्योम करो_srq_table_rpl(काष्ठा adapter *adap,
+		      स्थिर काष्ठा cpl_srq_table_rpl *rpl);
+#पूर्ण_अगर  /* __CXGB4_SRQ_H */

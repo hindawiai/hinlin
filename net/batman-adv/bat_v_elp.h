@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Linus Lüssing, Marek Lindner
+ * Linus Lथञssing, Marek Lindner
  */
 
-#ifndef _NET_BATMAN_ADV_BAT_V_ELP_H_
-#define _NET_BATMAN_ADV_BAT_V_ELP_H_
+#अगर_अघोषित _NET_BATMAN_ADV_BAT_V_ELP_H_
+#घोषणा _NET_BATMAN_ADV_BAT_V_ELP_H_
 
-#include "main.h"
+#समावेश "main.h"
 
-#include <linux/skbuff.h>
-#include <linux/workqueue.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/workqueue.h>
 
-int batadv_v_elp_iface_enable(struct batadv_hard_iface *hard_iface);
-void batadv_v_elp_iface_disable(struct batadv_hard_iface *hard_iface);
-void batadv_v_elp_iface_activate(struct batadv_hard_iface *primary_iface,
-				 struct batadv_hard_iface *hard_iface);
-void batadv_v_elp_primary_iface_set(struct batadv_hard_iface *primary_iface);
-int batadv_v_elp_packet_recv(struct sk_buff *skb,
-			     struct batadv_hard_iface *if_incoming);
-void batadv_v_elp_throughput_metric_update(struct work_struct *work);
+पूर्णांक batadv_v_elp_अगरace_enable(काष्ठा batadv_hard_अगरace *hard_अगरace);
+व्योम batadv_v_elp_अगरace_disable(काष्ठा batadv_hard_अगरace *hard_अगरace);
+व्योम batadv_v_elp_अगरace_activate(काष्ठा batadv_hard_अगरace *primary_अगरace,
+				 काष्ठा batadv_hard_अगरace *hard_अगरace);
+व्योम batadv_v_elp_primary_अगरace_set(काष्ठा batadv_hard_अगरace *primary_अगरace);
+पूर्णांक batadv_v_elp_packet_recv(काष्ठा sk_buff *skb,
+			     काष्ठा batadv_hard_अगरace *अगर_incoming);
+व्योम batadv_v_elp_throughput_metric_update(काष्ठा work_काष्ठा *work);
 
-#endif /* _NET_BATMAN_ADV_BAT_V_ELP_H_ */
+#पूर्ण_अगर /* _NET_BATMAN_ADV_BAT_V_ELP_H_ */

@@ -1,53 +1,54 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Driver for Sharp IX2505V (marked B0017) DVB-S silicon tuner
+ * Driver क्रम Sharp IX2505V (marked B0017) DVB-S silicon tuner
  *
  * Copyright (C) 2010 Malcolm Priestley
  */
 
-#ifndef DVB_IX2505V_H
-#define DVB_IX2505V_H
+#अगर_अघोषित DVB_IX2505V_H
+#घोषणा DVB_IX2505V_H
 
-#include <linux/i2c.h>
-#include <media/dvb_frontend.h>
+#समावेश <linux/i2c.h>
+#समावेश <media/dvb_frontend.h>
 
 /**
- * struct ix2505v_config - ix2505 attachment configuration
+ * काष्ठा ix2505v_config - ix2505 attachment configuration
  *
  * @tuner_address: tuner address
- * @tuner_gain: Baseband AMP gain control 0/1=0dB(default) 2=-2bB 3=-4dB
- * @tuner_chargepump: Charge pump output +/- 0=120 1=260 2=555 3=1200(default)
+ * @tuner_gain: Baseband AMP gain control 0/1=0dB(शेष) 2=-2bB 3=-4dB
+ * @tuner_अक्षरgepump: Charge pump output +/- 0=120 1=260 2=555 3=1200(शेष)
  * @min_delay_ms: delay after tune
- * @tuner_write_only: disables reads
+ * @tuner_ग_लिखो_only: disables पढ़ोs
  */
-struct ix2505v_config {
+काष्ठा ix2505v_config अणु
 	u8 tuner_address;
 	u8 tuner_gain;
-	u8 tuner_chargepump;
-	int min_delay_ms;
-	u8 tuner_write_only;
+	u8 tuner_अक्षरgepump;
+	पूर्णांक min_delay_ms;
+	u8 tuner_ग_लिखो_only;
 
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_DVB_IX2505V)
+#अगर IS_REACHABLE(CONFIG_DVB_IX2505V)
 /**
- * ix2505v_attach - Attach a ix2505v tuner to the supplied frontend structure.
+ * ix2505v_attach - Attach a ix2505v tuner to the supplied frontend काष्ठाure.
  *
  * @fe: Frontend to attach to.
- * @config: pointer to &struct ix2505v_config
- * @i2c: pointer to &struct i2c_adapter.
+ * @config: poपूर्णांकer to &काष्ठा ix2505v_config
+ * @i2c: poपूर्णांकer to &काष्ठा i2c_adapter.
  *
- * return: FE pointer on success, NULL on failure.
+ * वापस: FE poपूर्णांकer on success, शून्य on failure.
  */
-extern struct dvb_frontend *ix2505v_attach(struct dvb_frontend *fe,
-	const struct ix2505v_config *config, struct i2c_adapter *i2c);
-#else
-static inline struct dvb_frontend *ix2505v_attach(struct dvb_frontend *fe,
-	const struct ix2505v_config *config, struct i2c_adapter *i2c)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif
+बाह्य काष्ठा dvb_frontend *ix2505v_attach(काष्ठा dvb_frontend *fe,
+	स्थिर काष्ठा ix2505v_config *config, काष्ठा i2c_adapter *i2c);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *ix2505v_attach(काष्ठा dvb_frontend *fe,
+	स्थिर काष्ठा ix2505v_config *config, काष्ठा i2c_adapter *i2c)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-#endif /* DVB_IX2505V_H */
+#पूर्ण_अगर /* DVB_IX2505V_H */

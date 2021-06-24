@@ -1,138 +1,139 @@
+<शैली गुरु>
 /* New Hydra driver using generic 8390 core */
 /* Based on old hydra driver by Topi Kanerva (topi@susanna.oulu.fi) */
 
 /* This file is subject to the terms and conditions of the GNU General      */
-/* Public License.  See the file COPYING in the main directory of the       */
-/* Linux distribution for more details.                                     */
+/* Public License.  See the file COPYING in the मुख्य directory of the       */
+/* Linux distribution क्रम more details.                                     */
 
 /* Peter De Schrijver (p2@mind.be) */
 /* Oldenburg 2000 */
 
 /* The Amiganet is a Zorro-II board made by Hydra Systems. It contains a    */
-/* NS8390 NIC (network interface controller) clone, 16 or 64K on-board RAM  */
+/* NS8390 NIC (network पूर्णांकerface controller) clone, 16 or 64K on-board RAM  */
 /* and 10BASE-2 (thin coax) and AUI connectors.                             */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <linux/ioport.h>
-#include <linux/interrupt.h>
-#include <linux/netdevice.h>
-#include <linux/etherdevice.h>
-#include <linux/skbuff.h>
-#include <linux/init.h>
-#include <linux/bitops.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/init.h>
+#समावेश <linux/bitops.h>
 
-#include <asm/io.h>
-#include <asm/irq.h>
-#include <asm/amigaints.h>
-#include <asm/amigahw.h>
-#include <linux/zorro.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/amigaपूर्णांकs.h>
+#समावेश <यंत्र/amigahw.h>
+#समावेश <linux/zorro.h>
 
-#define EI_SHIFT(x)	(ei_local->reg_offset[x])
-#define ei_inb(port)   in_8(port)
-#define ei_outb(val,port)  out_8(port,val)
-#define ei_inb_p(port)   in_8(port)
-#define ei_outb_p(val,port)  out_8(port,val)
+#घोषणा EI_SHIFT(x)	(ei_local->reg_offset[x])
+#घोषणा ei_inb(port)   in_8(port)
+#घोषणा ei_outb(val,port)  out_8(port,val)
+#घोषणा ei_inb_p(port)   in_8(port)
+#घोषणा ei_outb_p(val,port)  out_8(port,val)
 
-static const char version[] =
+अटल स्थिर अक्षर version[] =
     "8390.c:v1.10cvs 9/23/94 Donald Becker (becker@cesdis.gsfc.nasa.gov)\n";
 
-#include "lib8390.c"
+#समावेश "lib8390.c"
 
-#define NE_EN0_DCFG     (0x0e*2)
+#घोषणा NE_EN0_DCFG     (0x0e*2)
 
-#define NESM_START_PG   0x0    /* First page of TX buffer */
-#define NESM_STOP_PG    0x40    /* Last page +1 of RX ring */
+#घोषणा NESM_START_PG   0x0    /* First page of TX buffer */
+#घोषणा NESM_STOP_PG    0x40    /* Last page +1 of RX ring */
 
-#define HYDRA_NIC_BASE 0xffe1
-#define HYDRA_ADDRPROM 0xffc0
-#define HYDRA_VERSION "v3.0alpha"
+#घोषणा HYDRA_NIC_BASE 0xffe1
+#घोषणा HYDRA_ADDRPROM 0xffc0
+#घोषणा HYDRA_VERSION "v3.0alpha"
 
-#define WORDSWAP(a)     ((((a)>>8)&0xff) | ((a)<<8))
+#घोषणा WORDSWAP(a)     ((((a)>>8)&0xff) | ((a)<<8))
 
 
-static int hydra_init_one(struct zorro_dev *z,
-				    const struct zorro_device_id *ent);
-static int hydra_init(struct zorro_dev *z);
-static int hydra_open(struct net_device *dev);
-static int hydra_close(struct net_device *dev);
-static void hydra_reset_8390(struct net_device *dev);
-static void hydra_get_8390_hdr(struct net_device *dev,
-			       struct e8390_pkt_hdr *hdr, int ring_page);
-static void hydra_block_input(struct net_device *dev, int count,
-			      struct sk_buff *skb, int ring_offset);
-static void hydra_block_output(struct net_device *dev, int count,
-			       const unsigned char *buf, int start_page);
-static void hydra_remove_one(struct zorro_dev *z);
+अटल पूर्णांक hydra_init_one(काष्ठा zorro_dev *z,
+				    स्थिर काष्ठा zorro_device_id *ent);
+अटल पूर्णांक hydra_init(काष्ठा zorro_dev *z);
+अटल पूर्णांक hydra_खोलो(काष्ठा net_device *dev);
+अटल पूर्णांक hydra_बंद(काष्ठा net_device *dev);
+अटल व्योम hydra_reset_8390(काष्ठा net_device *dev);
+अटल व्योम hydra_get_8390_hdr(काष्ठा net_device *dev,
+			       काष्ठा e8390_pkt_hdr *hdr, पूर्णांक ring_page);
+अटल व्योम hydra_block_input(काष्ठा net_device *dev, पूर्णांक count,
+			      काष्ठा sk_buff *skb, पूर्णांक ring_offset);
+अटल व्योम hydra_block_output(काष्ठा net_device *dev, पूर्णांक count,
+			       स्थिर अचिन्हित अक्षर *buf, पूर्णांक start_page);
+अटल व्योम hydra_हटाओ_one(काष्ठा zorro_dev *z);
 
-static struct zorro_device_id hydra_zorro_tbl[] = {
-    { ZORRO_PROD_HYDRA_SYSTEMS_AMIGANET },
-    { 0 }
-};
+अटल काष्ठा zorro_device_id hydra_zorro_tbl[] = अणु
+    अणु ZORRO_PROD_HYDRA_SYSTEMS_AMIGANET पूर्ण,
+    अणु 0 पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(zorro, hydra_zorro_tbl);
 
-static struct zorro_driver hydra_driver = {
+अटल काष्ठा zorro_driver hydra_driver = अणु
     .name	= "hydra",
     .id_table	= hydra_zorro_tbl,
     .probe	= hydra_init_one,
-    .remove	= hydra_remove_one,
-};
+    .हटाओ	= hydra_हटाओ_one,
+पूर्ण;
 
-static int hydra_init_one(struct zorro_dev *z,
-			  const struct zorro_device_id *ent)
-{
-    int err;
+अटल पूर्णांक hydra_init_one(काष्ठा zorro_dev *z,
+			  स्थिर काष्ठा zorro_device_id *ent)
+अणु
+    पूर्णांक err;
 
-    if (!request_mem_region(z->resource.start, 0x10000, "Hydra"))
-	return -EBUSY;
-    if ((err = hydra_init(z))) {
+    अगर (!request_mem_region(z->resource.start, 0x10000, "Hydra"))
+	वापस -EBUSY;
+    अगर ((err = hydra_init(z))) अणु
 	release_mem_region(z->resource.start, 0x10000);
-	return -EBUSY;
-    }
-    return 0;
-}
+	वापस -EBUSY;
+    पूर्ण
+    वापस 0;
+पूर्ण
 
-static const struct net_device_ops hydra_netdev_ops = {
-	.ndo_open		= hydra_open,
-	.ndo_stop		= hydra_close,
+अटल स्थिर काष्ठा net_device_ops hydra_netdev_ops = अणु
+	.nकरो_खोलो		= hydra_खोलो,
+	.nकरो_stop		= hydra_बंद,
 
-	.ndo_start_xmit		= __ei_start_xmit,
-	.ndo_tx_timeout		= __ei_tx_timeout,
-	.ndo_get_stats		= __ei_get_stats,
-	.ndo_set_rx_mode	= __ei_set_multicast_list,
-	.ndo_validate_addr	= eth_validate_addr,
-	.ndo_set_mac_address	= eth_mac_addr,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= __ei_poll,
-#endif
-};
+	.nकरो_start_xmit		= __ei_start_xmit,
+	.nकरो_tx_समयout		= __ei_tx_समयout,
+	.nकरो_get_stats		= __ei_get_stats,
+	.nकरो_set_rx_mode	= __ei_set_multicast_list,
+	.nकरो_validate_addr	= eth_validate_addr,
+	.nकरो_set_mac_address	= eth_mac_addr,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	= __ei_poll,
+#पूर्ण_अगर
+पूर्ण;
 
-static int hydra_init(struct zorro_dev *z)
-{
-    struct net_device *dev;
-    unsigned long board = (unsigned long)ZTWO_VADDR(z->resource.start);
-    unsigned long ioaddr = board+HYDRA_NIC_BASE;
-    const char name[] = "NE2000";
-    int start_page, stop_page;
-    int j;
-    int err;
+अटल पूर्णांक hydra_init(काष्ठा zorro_dev *z)
+अणु
+    काष्ठा net_device *dev;
+    अचिन्हित दीर्घ board = (अचिन्हित दीर्घ)ZTWO_VADDR(z->resource.start);
+    अचिन्हित दीर्घ ioaddr = board+HYDRA_NIC_BASE;
+    स्थिर अक्षर name[] = "NE2000";
+    पूर्णांक start_page, stop_page;
+    पूर्णांक j;
+    पूर्णांक err;
 
-    static u32 hydra_offsets[16] = {
+    अटल u32 hydra_offsets[16] = अणु
 	0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e,
 	0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e,
-    };
+    पूर्ण;
 
     dev = ____alloc_ei_netdev(0);
-    if (!dev)
-	return -ENOMEM;
+    अगर (!dev)
+	वापस -ENOMEM;
 
-    for (j = 0; j < ETH_ALEN; j++)
+    क्रम (j = 0; j < ETH_ALEN; j++)
 	dev->dev_addr[j] = *((u8 *)(board + HYDRA_ADDRPROM + 2*j));
 
-    /* We must set the 8390 for word mode. */
-    z_writeb(0x4b, ioaddr + NE_EN0_DCFG);
+    /* We must set the 8390 क्रम word mode. */
+    z_ग_लिखोb(0x4b, ioaddr + NE_EN0_DCFG);
     start_page = NESM_START_PG;
     stop_page = NESM_STOP_PG;
 
@@ -140,11 +141,11 @@ static int hydra_init(struct zorro_dev *z)
     dev->irq = IRQ_AMIGA_PORTS;
 
     /* Install the Interrupt handler */
-    if (request_irq(IRQ_AMIGA_PORTS, __ei_interrupt, IRQF_SHARED, "Hydra Ethernet",
-		    dev)) {
-	free_netdev(dev);
-	return -EAGAIN;
-    }
+    अगर (request_irq(IRQ_AMIGA_PORTS, __ei_पूर्णांकerrupt, IRQF_SHARED, "Hydra Ethernet",
+		    dev)) अणु
+	मुक्त_netdev(dev);
+	वापस -EAGAIN;
+    पूर्ण
 
     ei_status.name = name;
     ei_status.tx_start_page = start_page;
@@ -163,111 +164,111 @@ static int hydra_init(struct zorro_dev *z)
     dev->netdev_ops = &hydra_netdev_ops;
     __NS8390_init(dev, 0);
 
-    err = register_netdev(dev);
-    if (err) {
-	free_irq(IRQ_AMIGA_PORTS, dev);
-	free_netdev(dev);
-	return err;
-    }
+    err = रेजिस्टर_netdev(dev);
+    अगर (err) अणु
+	मुक्त_irq(IRQ_AMIGA_PORTS, dev);
+	मुक्त_netdev(dev);
+	वापस err;
+    पूर्ण
 
     zorro_set_drvdata(z, dev);
 
     pr_info("%s: Hydra at %pR, address %pM (hydra.c " HYDRA_VERSION ")\n",
 	    dev->name, &z->resource, dev->dev_addr);
 
-    return 0;
-}
+    वापस 0;
+पूर्ण
 
-static int hydra_open(struct net_device *dev)
-{
-    __ei_open(dev);
-    return 0;
-}
+अटल पूर्णांक hydra_खोलो(काष्ठा net_device *dev)
+अणु
+    __ei_खोलो(dev);
+    वापस 0;
+पूर्ण
 
-static int hydra_close(struct net_device *dev)
-{
-    struct ei_device *ei_local = netdev_priv(dev);
+अटल पूर्णांक hydra_बंद(काष्ठा net_device *dev)
+अणु
+    काष्ठा ei_device *ei_local = netdev_priv(dev);
 
-    netif_dbg(ei_local, ifdown, dev, "Shutting down ethercard.\n");
-    __ei_close(dev);
-    return 0;
-}
+    netअगर_dbg(ei_local, अगरकरोwn, dev, "Shutting down ethercard.\n");
+    __ei_बंद(dev);
+    वापस 0;
+पूर्ण
 
-static void hydra_reset_8390(struct net_device *dev)
-{
+अटल व्योम hydra_reset_8390(काष्ठा net_device *dev)
+अणु
     netdev_info(dev, "Hydra hw reset not there\n");
-}
+पूर्ण
 
-static void hydra_get_8390_hdr(struct net_device *dev,
-			       struct e8390_pkt_hdr *hdr, int ring_page)
-{
-    int nic_base = dev->base_addr;
-    short *ptrs;
-    unsigned long hdr_start= (nic_base-HYDRA_NIC_BASE) +
+अटल व्योम hydra_get_8390_hdr(काष्ठा net_device *dev,
+			       काष्ठा e8390_pkt_hdr *hdr, पूर्णांक ring_page)
+अणु
+    पूर्णांक nic_base = dev->base_addr;
+    लघु *ptrs;
+    अचिन्हित दीर्घ hdr_start= (nic_base-HYDRA_NIC_BASE) +
 			     ((ring_page - NESM_START_PG)<<8);
-    ptrs = (short *)hdr;
+    ptrs = (लघु *)hdr;
 
-    *(ptrs++) = z_readw(hdr_start);
-    *((short *)hdr) = WORDSWAP(*((short *)hdr));
+    *(ptrs++) = z_पढ़ोw(hdr_start);
+    *((लघु *)hdr) = WORDSWAP(*((लघु *)hdr));
     hdr_start += 2;
-    *(ptrs++) = z_readw(hdr_start);
-    *((short *)hdr+1) = WORDSWAP(*((short *)hdr+1));
-}
+    *(ptrs++) = z_पढ़ोw(hdr_start);
+    *((लघु *)hdr+1) = WORDSWAP(*((लघु *)hdr+1));
+पूर्ण
 
-static void hydra_block_input(struct net_device *dev, int count,
-			      struct sk_buff *skb, int ring_offset)
-{
-    unsigned long nic_base = dev->base_addr;
-    unsigned long mem_base = nic_base - HYDRA_NIC_BASE;
-    unsigned long xfer_start = mem_base + ring_offset - (NESM_START_PG<<8);
+अटल व्योम hydra_block_input(काष्ठा net_device *dev, पूर्णांक count,
+			      काष्ठा sk_buff *skb, पूर्णांक ring_offset)
+अणु
+    अचिन्हित दीर्घ nic_base = dev->base_addr;
+    अचिन्हित दीर्घ mem_base = nic_base - HYDRA_NIC_BASE;
+    अचिन्हित दीर्घ xfer_start = mem_base + ring_offset - (NESM_START_PG<<8);
 
-    if (count&1)
+    अगर (count&1)
 	count++;
 
-    if (xfer_start+count >  mem_base + (NESM_STOP_PG<<8)) {
-	int semi_count = (mem_base + (NESM_STOP_PG<<8)) - xfer_start;
+    अगर (xfer_start+count >  mem_base + (NESM_STOP_PG<<8)) अणु
+	पूर्णांक semi_count = (mem_base + (NESM_STOP_PG<<8)) - xfer_start;
 
-	z_memcpy_fromio(skb->data,xfer_start,semi_count);
+	z_स_नकल_fromio(skb->data,xfer_start,semi_count);
 	count -= semi_count;
-	z_memcpy_fromio(skb->data+semi_count, mem_base, count);
-    } else
-	z_memcpy_fromio(skb->data, xfer_start,count);
+	z_स_नकल_fromio(skb->data+semi_count, mem_base, count);
+    पूर्ण अन्यथा
+	z_स_नकल_fromio(skb->data, xfer_start,count);
 
-}
+पूर्ण
 
-static void hydra_block_output(struct net_device *dev, int count,
-			       const unsigned char *buf, int start_page)
-{
-    unsigned long nic_base = dev->base_addr;
-    unsigned long mem_base = nic_base - HYDRA_NIC_BASE;
+अटल व्योम hydra_block_output(काष्ठा net_device *dev, पूर्णांक count,
+			       स्थिर अचिन्हित अक्षर *buf, पूर्णांक start_page)
+अणु
+    अचिन्हित दीर्घ nic_base = dev->base_addr;
+    अचिन्हित दीर्घ mem_base = nic_base - HYDRA_NIC_BASE;
 
-    if (count&1)
+    अगर (count&1)
 	count++;
 
-    z_memcpy_toio(mem_base+((start_page - NESM_START_PG)<<8), buf, count);
-}
+    z_स_नकल_toio(mem_base+((start_page - NESM_START_PG)<<8), buf, count);
+पूर्ण
 
-static void hydra_remove_one(struct zorro_dev *z)
-{
-    struct net_device *dev = zorro_get_drvdata(z);
+अटल व्योम hydra_हटाओ_one(काष्ठा zorro_dev *z)
+अणु
+    काष्ठा net_device *dev = zorro_get_drvdata(z);
 
-    unregister_netdev(dev);
-    free_irq(IRQ_AMIGA_PORTS, dev);
+    unरेजिस्टर_netdev(dev);
+    मुक्त_irq(IRQ_AMIGA_PORTS, dev);
     release_mem_region(ZTWO_PADDR(dev->base_addr)-HYDRA_NIC_BASE, 0x10000);
-    free_netdev(dev);
-}
+    मुक्त_netdev(dev);
+पूर्ण
 
-static int __init hydra_init_module(void)
-{
-    return zorro_register_driver(&hydra_driver);
-}
+अटल पूर्णांक __init hydra_init_module(व्योम)
+अणु
+    वापस zorro_रेजिस्टर_driver(&hydra_driver);
+पूर्ण
 
-static void __exit hydra_cleanup_module(void)
-{
-    zorro_unregister_driver(&hydra_driver);
-}
+अटल व्योम __निकास hydra_cleanup_module(व्योम)
+अणु
+    zorro_unरेजिस्टर_driver(&hydra_driver);
+पूर्ण
 
 module_init(hydra_init_module);
-module_exit(hydra_cleanup_module);
+module_निकास(hydra_cleanup_module);
 
 MODULE_LICENSE("GPL");

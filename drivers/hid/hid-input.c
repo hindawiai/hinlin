@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) 2000-2001 Vojtech Pavlik
  *  Copyright (c) 2006-2010 Jiri Kosina
@@ -8,23 +9,23 @@
 
 /*
  *
- * Should you need to contact me, the author, you can do so either by
+ * Should you need to contact me, the author, you can करो so either by
  * e-mail - mail your message to <vojtech@ucw.cz>, or by paper mail:
- * Vojtech Pavlik, Simunkova 1594, Prague 8, 182 00 Czech Republic
+ * Vojtech Pavlik, Simunkova 1594, Prague 8, 182 00 Czech Reखुला
  */
 
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/kernel.h>
 
-#include <linux/hid.h>
-#include <linux/hid-debug.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/hid-debug.h>
 
-#include "hid-ids.h"
+#समावेश "hid-ids.h"
 
-#define unk	KEY_UNKNOWN
+#घोषणा unk	KEY_UNKNOWN
 
-static const unsigned char hid_keyboard[256] = {
+अटल स्थिर अचिन्हित अक्षर hid_keyboard[256] = अणु
 	  0,  0,  0,  0, 30, 48, 46, 32, 18, 33, 34, 35, 23, 36, 37, 38,
 	 50, 49, 24, 25, 16, 19, 31, 20, 22, 47, 17, 45, 21, 44,  2,  3,
 	  4,  5,  6,  7,  8,  9, 10, 11, 28,  1, 14, 15, 57, 12, 13, 26,
@@ -41,123 +42,123 @@ static const unsigned char hid_keyboard[256] = {
 	unk,unk,unk,unk,unk,unk,unk,unk,111,unk,unk,unk,unk,unk,unk,unk,
 	 29, 42, 56,125, 97, 54,100,126,164,166,165,163,161,115,114,113,
 	150,158,159,128,136,177,178,176,142,152,173,140,unk,unk,unk,unk
-};
+पूर्ण;
 
-static const struct {
+अटल स्थिर काष्ठा अणु
 	__s32 x;
 	__s32 y;
-}  hid_hat_to_axis[] = {{ 0, 0}, { 0,-1}, { 1,-1}, { 1, 0}, { 1, 1}, { 0, 1}, {-1, 1}, {-1, 0}, {-1,-1}};
+पूर्ण  hid_hat_to_axis[] = अणुअणु 0, 0पूर्ण, अणु 0,-1पूर्ण, अणु 1,-1पूर्ण, अणु 1, 0पूर्ण, अणु 1, 1पूर्ण, अणु 0, 1पूर्ण, अणु-1, 1पूर्ण, अणु-1, 0पूर्ण, अणु-1,-1पूर्णपूर्ण;
 
-#define map_abs(c)	hid_map_usage(hidinput, usage, &bit, &max, EV_ABS, (c))
-#define map_rel(c)	hid_map_usage(hidinput, usage, &bit, &max, EV_REL, (c))
-#define map_key(c)	hid_map_usage(hidinput, usage, &bit, &max, EV_KEY, (c))
-#define map_led(c)	hid_map_usage(hidinput, usage, &bit, &max, EV_LED, (c))
+#घोषणा map_असल(c)	hid_map_usage(hidinput, usage, &bit, &max, EV_ABS, (c))
+#घोषणा map_rel(c)	hid_map_usage(hidinput, usage, &bit, &max, EV_REL, (c))
+#घोषणा map_key(c)	hid_map_usage(hidinput, usage, &bit, &max, EV_KEY, (c))
+#घोषणा map_led(c)	hid_map_usage(hidinput, usage, &bit, &max, EV_LED, (c))
 
-#define map_abs_clear(c)	hid_map_usage_clear(hidinput, usage, &bit, \
+#घोषणा map_असल_clear(c)	hid_map_usage_clear(hidinput, usage, &bit, \
 		&max, EV_ABS, (c))
-#define map_key_clear(c)	hid_map_usage_clear(hidinput, usage, &bit, \
+#घोषणा map_key_clear(c)	hid_map_usage_clear(hidinput, usage, &bit, \
 		&max, EV_KEY, (c))
 
-static bool match_scancode(struct hid_usage *usage,
-			   unsigned int cur_idx, unsigned int scancode)
-{
-	return (usage->hid & (HID_USAGE_PAGE | HID_USAGE)) == scancode;
-}
+अटल bool match_scancode(काष्ठा hid_usage *usage,
+			   अचिन्हित पूर्णांक cur_idx, अचिन्हित पूर्णांक scancode)
+अणु
+	वापस (usage->hid & (HID_USAGE_PAGE | HID_USAGE)) == scancode;
+पूर्ण
 
-static bool match_keycode(struct hid_usage *usage,
-			  unsigned int cur_idx, unsigned int keycode)
-{
+अटल bool match_keycode(काष्ठा hid_usage *usage,
+			  अचिन्हित पूर्णांक cur_idx, अचिन्हित पूर्णांक keycode)
+अणु
 	/*
-	 * We should exclude unmapped usages when doing lookup by keycode.
+	 * We should exclude unmapped usages when करोing lookup by keycode.
 	 */
-	return (usage->type == EV_KEY && usage->code == keycode);
-}
+	वापस (usage->type == EV_KEY && usage->code == keycode);
+पूर्ण
 
-static bool match_index(struct hid_usage *usage,
-			unsigned int cur_idx, unsigned int idx)
-{
-	return cur_idx == idx;
-}
+अटल bool match_index(काष्ठा hid_usage *usage,
+			अचिन्हित पूर्णांक cur_idx, अचिन्हित पूर्णांक idx)
+अणु
+	वापस cur_idx == idx;
+पूर्ण
 
-typedef bool (*hid_usage_cmp_t)(struct hid_usage *usage,
-				unsigned int cur_idx, unsigned int val);
+प्रकार bool (*hid_usage_cmp_t)(काष्ठा hid_usage *usage,
+				अचिन्हित पूर्णांक cur_idx, अचिन्हित पूर्णांक val);
 
-static struct hid_usage *hidinput_find_key(struct hid_device *hid,
+अटल काष्ठा hid_usage *hidinput_find_key(काष्ठा hid_device *hid,
 					   hid_usage_cmp_t match,
-					   unsigned int value,
-					   unsigned int *usage_idx)
-{
-	unsigned int i, j, k, cur_idx = 0;
-	struct hid_report *report;
-	struct hid_usage *usage;
+					   अचिन्हित पूर्णांक value,
+					   अचिन्हित पूर्णांक *usage_idx)
+अणु
+	अचिन्हित पूर्णांक i, j, k, cur_idx = 0;
+	काष्ठा hid_report *report;
+	काष्ठा hid_usage *usage;
 
-	for (k = HID_INPUT_REPORT; k <= HID_OUTPUT_REPORT; k++) {
-		list_for_each_entry(report, &hid->report_enum[k].report_list, list) {
-			for (i = 0; i < report->maxfield; i++) {
-				for (j = 0; j < report->field[i]->maxusage; j++) {
+	क्रम (k = HID_INPUT_REPORT; k <= HID_OUTPUT_REPORT; k++) अणु
+		list_क्रम_each_entry(report, &hid->report_क्रमागत[k].report_list, list) अणु
+			क्रम (i = 0; i < report->maxfield; i++) अणु
+				क्रम (j = 0; j < report->field[i]->maxusage; j++) अणु
 					usage = report->field[i]->usage + j;
-					if (usage->type == EV_KEY || usage->type == 0) {
-						if (match(usage, cur_idx, value)) {
-							if (usage_idx)
+					अगर (usage->type == EV_KEY || usage->type == 0) अणु
+						अगर (match(usage, cur_idx, value)) अणु
+							अगर (usage_idx)
 								*usage_idx = cur_idx;
-							return usage;
-						}
+							वापस usage;
+						पूर्ण
 						cur_idx++;
-					}
-				}
-			}
-		}
-	}
-	return NULL;
-}
+					पूर्ण
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
-static struct hid_usage *hidinput_locate_usage(struct hid_device *hid,
-					const struct input_keymap_entry *ke,
-					unsigned int *index)
-{
-	struct hid_usage *usage;
-	unsigned int scancode;
+अटल काष्ठा hid_usage *hidinput_locate_usage(काष्ठा hid_device *hid,
+					स्थिर काष्ठा input_keymap_entry *ke,
+					अचिन्हित पूर्णांक *index)
+अणु
+	काष्ठा hid_usage *usage;
+	अचिन्हित पूर्णांक scancode;
 
-	if (ke->flags & INPUT_KEYMAP_BY_INDEX)
+	अगर (ke->flags & INPUT_KEYMAP_BY_INDEX)
 		usage = hidinput_find_key(hid, match_index, ke->index, index);
-	else if (input_scancode_to_scalar(ke, &scancode) == 0)
+	अन्यथा अगर (input_scancode_to_scalar(ke, &scancode) == 0)
 		usage = hidinput_find_key(hid, match_scancode, scancode, index);
-	else
-		usage = NULL;
+	अन्यथा
+		usage = शून्य;
 
-	return usage;
-}
+	वापस usage;
+पूर्ण
 
-static int hidinput_getkeycode(struct input_dev *dev,
-			       struct input_keymap_entry *ke)
-{
-	struct hid_device *hid = input_get_drvdata(dev);
-	struct hid_usage *usage;
-	unsigned int scancode, index;
+अटल पूर्णांक hidinput_getkeycode(काष्ठा input_dev *dev,
+			       काष्ठा input_keymap_entry *ke)
+अणु
+	काष्ठा hid_device *hid = input_get_drvdata(dev);
+	काष्ठा hid_usage *usage;
+	अचिन्हित पूर्णांक scancode, index;
 
 	usage = hidinput_locate_usage(hid, ke, &index);
-	if (usage) {
+	अगर (usage) अणु
 		ke->keycode = usage->type == EV_KEY ?
 				usage->code : KEY_RESERVED;
 		ke->index = index;
 		scancode = usage->hid & (HID_USAGE_PAGE | HID_USAGE);
-		ke->len = sizeof(scancode);
-		memcpy(ke->scancode, &scancode, sizeof(scancode));
-		return 0;
-	}
+		ke->len = माप(scancode);
+		स_नकल(ke->scancode, &scancode, माप(scancode));
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int hidinput_setkeycode(struct input_dev *dev,
-			       const struct input_keymap_entry *ke,
-			       unsigned int *old_keycode)
-{
-	struct hid_device *hid = input_get_drvdata(dev);
-	struct hid_usage *usage;
+अटल पूर्णांक hidinput_setkeycode(काष्ठा input_dev *dev,
+			       स्थिर काष्ठा input_keymap_entry *ke,
+			       अचिन्हित पूर्णांक *old_keycode)
+अणु
+	काष्ठा hid_device *hid = input_get_drvdata(dev);
+	काष्ठा hid_usage *usage;
 
-	usage = hidinput_locate_usage(hid, ke, NULL);
-	if (usage) {
+	usage = hidinput_locate_usage(hid, ke, शून्य);
+	अगर (usage) अणु
 		*old_keycode = usage->type == EV_KEY ?
 				usage->code : KEY_RESERVED;
 		usage->code = ke->keycode;
@@ -168,36 +169,36 @@ static int hidinput_setkeycode(struct input_dev *dev,
 			usage->code, usage->hid);
 
 		/*
-		 * Set the keybit for the old keycode if the old keycode is used
+		 * Set the keybit क्रम the old keycode अगर the old keycode is used
 		 * by another key
 		 */
-		if (hidinput_find_key(hid, match_keycode, *old_keycode, NULL))
+		अगर (hidinput_find_key(hid, match_keycode, *old_keycode, शून्य))
 			set_bit(*old_keycode, dev->keybit);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
 
 /**
- * hidinput_calc_abs_res - calculate an absolute axis resolution
- * @field: the HID report field to calculate resolution for
+ * hidinput_calc_असल_res - calculate an असलolute axis resolution
+ * @field: the HID report field to calculate resolution क्रम
  * @code: axis code
  *
- * The formula is:
+ * The क्रमmula is:
  *                         (logical_maximum - logical_minimum)
  * resolution = ----------------------------------------------------------
  *              (physical_maximum - physical_minimum) * 10 ^ unit_exponent
  *
- * as seen in the HID specification v1.11 6.2.2.7 Global Items.
+ * as seen in the HID specअगरication v1.11 6.2.2.7 Global Items.
  *
- * Only exponent 1 length units are processed. Centimeters and inches are
+ * Only exponent 1 length units are processed. Cenसमयters and inches are
  * converted to millimeters. Degrees are converted to radians.
  */
-__s32 hidinput_calc_abs_res(const struct hid_field *field, __u16 code)
-{
+__s32 hidinput_calc_असल_res(स्थिर काष्ठा hid_field *field, __u16 code)
+अणु
 	__s32 unit_exponent = field->unit_exponent;
 	__s32 logical_extents = field->logical_maximum -
 					field->logical_minimum;
@@ -205,283 +206,283 @@ __s32 hidinput_calc_abs_res(const struct hid_field *field, __u16 code)
 					field->physical_minimum;
 	__s32 prev;
 
-	/* Check if the extents are sane */
-	if (logical_extents <= 0 || physical_extents <= 0)
-		return 0;
+	/* Check अगर the extents are sane */
+	अगर (logical_extents <= 0 || physical_extents <= 0)
+		वापस 0;
 
 	/*
-	 * Verify and convert units.
-	 * See HID specification v1.11 6.2.2.7 Global Items for unit decoding
+	 * Verअगरy and convert units.
+	 * See HID specअगरication v1.11 6.2.2.7 Global Items क्रम unit decoding
 	 */
-	switch (code) {
-	case ABS_X:
-	case ABS_Y:
-	case ABS_Z:
-	case ABS_MT_POSITION_X:
-	case ABS_MT_POSITION_Y:
-	case ABS_MT_TOOL_X:
-	case ABS_MT_TOOL_Y:
-	case ABS_MT_TOUCH_MAJOR:
-	case ABS_MT_TOUCH_MINOR:
-		if (field->unit == 0x11) {		/* If centimeters */
+	चयन (code) अणु
+	हाल ABS_X:
+	हाल ABS_Y:
+	हाल ABS_Z:
+	हाल ABS_MT_POSITION_X:
+	हाल ABS_MT_POSITION_Y:
+	हाल ABS_MT_TOOL_X:
+	हाल ABS_MT_TOOL_Y:
+	हाल ABS_MT_TOUCH_MAJOR:
+	हाल ABS_MT_TOUCH_MINOR:
+		अगर (field->unit == 0x11) अणु		/* If cenसमयters */
 			/* Convert to millimeters */
 			unit_exponent += 1;
-		} else if (field->unit == 0x13) {	/* If inches */
+		पूर्ण अन्यथा अगर (field->unit == 0x13) अणु	/* If inches */
 			/* Convert to millimeters */
 			prev = physical_extents;
 			physical_extents *= 254;
-			if (physical_extents < prev)
-				return 0;
+			अगर (physical_extents < prev)
+				वापस 0;
 			unit_exponent -= 1;
-		} else {
-			return 0;
-		}
-		break;
+		पूर्ण अन्यथा अणु
+			वापस 0;
+		पूर्ण
+		अवरोध;
 
-	case ABS_RX:
-	case ABS_RY:
-	case ABS_RZ:
-	case ABS_WHEEL:
-	case ABS_TILT_X:
-	case ABS_TILT_Y:
-		if (field->unit == 0x14) {		/* If degrees */
+	हाल ABS_RX:
+	हाल ABS_RY:
+	हाल ABS_RZ:
+	हाल ABS_WHEEL:
+	हाल ABS_TILT_X:
+	हाल ABS_TILT_Y:
+		अगर (field->unit == 0x14) अणु		/* If degrees */
 			/* Convert to radians */
 			prev = logical_extents;
 			logical_extents *= 573;
-			if (logical_extents < prev)
-				return 0;
+			अगर (logical_extents < prev)
+				वापस 0;
 			unit_exponent += 1;
-		} else if (field->unit != 0x12) {	/* If not radians */
-			return 0;
-		}
-		break;
+		पूर्ण अन्यथा अगर (field->unit != 0x12) अणु	/* If not radians */
+			वापस 0;
+		पूर्ण
+		अवरोध;
 
-	default:
-		return 0;
-	}
+	शेष:
+		वापस 0;
+	पूर्ण
 
 	/* Apply negative unit exponent */
-	for (; unit_exponent < 0; unit_exponent++) {
+	क्रम (; unit_exponent < 0; unit_exponent++) अणु
 		prev = logical_extents;
 		logical_extents *= 10;
-		if (logical_extents < prev)
-			return 0;
-	}
+		अगर (logical_extents < prev)
+			वापस 0;
+	पूर्ण
 	/* Apply positive unit exponent */
-	for (; unit_exponent > 0; unit_exponent--) {
+	क्रम (; unit_exponent > 0; unit_exponent--) अणु
 		prev = physical_extents;
 		physical_extents *= 10;
-		if (physical_extents < prev)
-			return 0;
-	}
+		अगर (physical_extents < prev)
+			वापस 0;
+	पूर्ण
 
 	/* Calculate resolution */
-	return DIV_ROUND_CLOSEST(logical_extents, physical_extents);
-}
-EXPORT_SYMBOL_GPL(hidinput_calc_abs_res);
+	वापस DIV_ROUND_CLOSEST(logical_extents, physical_extents);
+पूर्ण
+EXPORT_SYMBOL_GPL(hidinput_calc_असल_res);
 
-#ifdef CONFIG_HID_BATTERY_STRENGTH
-static enum power_supply_property hidinput_battery_props[] = {
+#अगर_घोषित CONFIG_HID_BATTERY_STRENGTH
+अटल क्रमागत घातer_supply_property hidinput_battery_props[] = अणु
 	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_ONLINE,
 	POWER_SUPPLY_PROP_CAPACITY,
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_STATUS,
 	POWER_SUPPLY_PROP_SCOPE,
-};
+पूर्ण;
 
-#define HID_BATTERY_QUIRK_PERCENT	(1 << 0) /* always reports percent */
-#define HID_BATTERY_QUIRK_FEATURE	(1 << 1) /* ask for feature report */
-#define HID_BATTERY_QUIRK_IGNORE	(1 << 2) /* completely ignore the battery */
+#घोषणा HID_BATTERY_QUIRK_PERCENT	(1 << 0) /* always reports percent */
+#घोषणा HID_BATTERY_QUIRK_FEATURE	(1 << 1) /* ask क्रम feature report */
+#घोषणा HID_BATTERY_QUIRK_IGNORE	(1 << 2) /* completely ignore the battery */
 
-static const struct hid_device_id hid_battery_quirks[] = {
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
+अटल स्थिर काष्ठा hid_device_id hid_battery_quirks[] = अणु
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
 		USB_DEVICE_ID_APPLE_ALU_WIRELESS_2009_ISO),
-	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
+	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE पूर्ण,
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
 		USB_DEVICE_ID_APPLE_ALU_WIRELESS_2009_ANSI),
-	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
+	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE पूर्ण,
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
 		USB_DEVICE_ID_APPLE_ALU_WIRELESS_2011_ANSI),
-	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
+	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE पूर्ण,
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
 			       USB_DEVICE_ID_APPLE_ALU_WIRELESS_2011_ISO),
-	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
+	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE पूर्ण,
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_APPLE,
 		USB_DEVICE_ID_APPLE_ALU_WIRELESS_ANSI),
-	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_ELECOM,
+	  HID_BATTERY_QUIRK_PERCENT | HID_BATTERY_QUIRK_FEATURE पूर्ण,
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_ELECOM,
 		USB_DEVICE_ID_ELECOM_BM084),
-	  HID_BATTERY_QUIRK_IGNORE },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_SYMBOL,
+	  HID_BATTERY_QUIRK_IGNORE पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_SYMBOL,
 		USB_DEVICE_ID_SYMBOL_SCANNER_3),
-	  HID_BATTERY_QUIRK_IGNORE },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_ASUSTEK,
+	  HID_BATTERY_QUIRK_IGNORE पूर्ण,
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_ASUSTEK,
 		USB_DEVICE_ID_ASUSTEK_T100CHI_KEYBOARD),
-	  HID_BATTERY_QUIRK_IGNORE },
-	{ HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_LOGITECH,
+	  HID_BATTERY_QUIRK_IGNORE पूर्ण,
+	अणु HID_BLUETOOTH_DEVICE(USB_VENDOR_ID_LOGITECH,
 		USB_DEVICE_ID_LOGITECH_DINOVO_EDGE_KBD),
-	  HID_BATTERY_QUIRK_IGNORE },
-	{ HID_USB_DEVICE(USB_VENDOR_ID_ELAN, USB_DEVICE_ID_ASUS_UX550_TOUCHSCREEN),
-	  HID_BATTERY_QUIRK_IGNORE },
-	{ HID_I2C_DEVICE(USB_VENDOR_ID_ELAN, I2C_DEVICE_ID_HP_SPECTRE_X360_15),
-	  HID_BATTERY_QUIRK_IGNORE },
-	{}
-};
+	  HID_BATTERY_QUIRK_IGNORE पूर्ण,
+	अणु HID_USB_DEVICE(USB_VENDOR_ID_ELAN, USB_DEVICE_ID_ASUS_UX550_TOUCHSCREEN),
+	  HID_BATTERY_QUIRK_IGNORE पूर्ण,
+	अणु HID_I2C_DEVICE(USB_VENDOR_ID_ELAN, I2C_DEVICE_ID_HP_SPECTRE_X360_15),
+	  HID_BATTERY_QUIRK_IGNORE पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static unsigned find_battery_quirk(struct hid_device *hdev)
-{
-	unsigned quirks = 0;
-	const struct hid_device_id *match;
+अटल अचिन्हित find_battery_quirk(काष्ठा hid_device *hdev)
+अणु
+	अचिन्हित quirks = 0;
+	स्थिर काष्ठा hid_device_id *match;
 
 	match = hid_match_id(hdev, hid_battery_quirks);
-	if (match != NULL)
+	अगर (match != शून्य)
 		quirks = match->driver_data;
 
-	return quirks;
-}
+	वापस quirks;
+पूर्ण
 
-static int hidinput_scale_battery_capacity(struct hid_device *dev,
-					   int value)
-{
-	if (dev->battery_min < dev->battery_max &&
+अटल पूर्णांक hidinput_scale_battery_capacity(काष्ठा hid_device *dev,
+					   पूर्णांक value)
+अणु
+	अगर (dev->battery_min < dev->battery_max &&
 	    value >= dev->battery_min && value <= dev->battery_max)
 		value = ((value - dev->battery_min) * 100) /
 			(dev->battery_max - dev->battery_min);
 
-	return value;
-}
+	वापस value;
+पूर्ण
 
-static int hidinput_query_battery_capacity(struct hid_device *dev)
-{
+अटल पूर्णांक hidinput_query_battery_capacity(काष्ठा hid_device *dev)
+अणु
 	u8 *buf;
-	int ret;
+	पूर्णांक ret;
 
-	buf = kmalloc(4, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
+	buf = kदो_स्मृति(4, GFP_KERNEL);
+	अगर (!buf)
+		वापस -ENOMEM;
 
 	ret = hid_hw_raw_request(dev, dev->battery_report_id, buf, 4,
 				 dev->battery_report_type, HID_REQ_GET_REPORT);
-	if (ret < 2) {
-		kfree(buf);
-		return -ENODATA;
-	}
+	अगर (ret < 2) अणु
+		kमुक्त(buf);
+		वापस -ENODATA;
+	पूर्ण
 
 	ret = hidinput_scale_battery_capacity(dev, buf[1]);
-	kfree(buf);
-	return ret;
-}
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-static int hidinput_get_battery_property(struct power_supply *psy,
-					 enum power_supply_property prop,
-					 union power_supply_propval *val)
-{
-	struct hid_device *dev = power_supply_get_drvdata(psy);
-	int value;
-	int ret = 0;
+अटल पूर्णांक hidinput_get_battery_property(काष्ठा घातer_supply *psy,
+					 क्रमागत घातer_supply_property prop,
+					 जोड़ घातer_supply_propval *val)
+अणु
+	काष्ठा hid_device *dev = घातer_supply_get_drvdata(psy);
+	पूर्णांक value;
+	पूर्णांक ret = 0;
 
-	switch (prop) {
-	case POWER_SUPPLY_PROP_PRESENT:
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = 1;
-		break;
+	चयन (prop) अणु
+	हाल POWER_SUPPLY_PROP_PRESENT:
+	हाल POWER_SUPPLY_PROP_ONLINE:
+		val->पूर्णांकval = 1;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_CAPACITY:
-		if (dev->battery_status != HID_BATTERY_REPORTED &&
-		    !dev->battery_avoid_query) {
+	हाल POWER_SUPPLY_PROP_CAPACITY:
+		अगर (dev->battery_status != HID_BATTERY_REPORTED &&
+		    !dev->battery_aव्योम_query) अणु
 			value = hidinput_query_battery_capacity(dev);
-			if (value < 0)
-				return value;
-		} else  {
+			अगर (value < 0)
+				वापस value;
+		पूर्ण अन्यथा  अणु
 			value = dev->battery_capacity;
-		}
+		पूर्ण
 
-		val->intval = value;
-		break;
+		val->पूर्णांकval = value;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_MODEL_NAME:
+	हाल POWER_SUPPLY_PROP_MODEL_NAME:
 		val->strval = dev->name;
-		break;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_STATUS:
-		if (dev->battery_status != HID_BATTERY_REPORTED &&
-		    !dev->battery_avoid_query) {
+	हाल POWER_SUPPLY_PROP_STATUS:
+		अगर (dev->battery_status != HID_BATTERY_REPORTED &&
+		    !dev->battery_aव्योम_query) अणु
 			value = hidinput_query_battery_capacity(dev);
-			if (value < 0)
-				return value;
+			अगर (value < 0)
+				वापस value;
 
 			dev->battery_capacity = value;
 			dev->battery_status = HID_BATTERY_QUERIED;
-		}
+		पूर्ण
 
-		if (dev->battery_status == HID_BATTERY_UNKNOWN)
-			val->intval = POWER_SUPPLY_STATUS_UNKNOWN;
-		else if (dev->battery_capacity == 100)
-			val->intval = POWER_SUPPLY_STATUS_FULL;
-		else
-			val->intval = POWER_SUPPLY_STATUS_DISCHARGING;
-		break;
+		अगर (dev->battery_status == HID_BATTERY_UNKNOWN)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_UNKNOWN;
+		अन्यथा अगर (dev->battery_capacity == 100)
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_FULL;
+		अन्यथा
+			val->पूर्णांकval = POWER_SUPPLY_STATUS_DISCHARGING;
+		अवरोध;
 
-	case POWER_SUPPLY_PROP_SCOPE:
-		val->intval = POWER_SUPPLY_SCOPE_DEVICE;
-		break;
+	हाल POWER_SUPPLY_PROP_SCOPE:
+		val->पूर्णांकval = POWER_SUPPLY_SCOPE_DEVICE;
+		अवरोध;
 
-	default:
+	शेष:
 		ret = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int hidinput_setup_battery(struct hid_device *dev, unsigned report_type,
-				  struct hid_field *field, bool is_percentage)
-{
-	struct power_supply_desc *psy_desc;
-	struct power_supply_config psy_cfg = { .drv_data = dev, };
-	unsigned quirks;
+अटल पूर्णांक hidinput_setup_battery(काष्ठा hid_device *dev, अचिन्हित report_type,
+				  काष्ठा hid_field *field, bool is_percentage)
+अणु
+	काष्ठा घातer_supply_desc *psy_desc;
+	काष्ठा घातer_supply_config psy_cfg = अणु .drv_data = dev, पूर्ण;
+	अचिन्हित quirks;
 	s32 min, max;
-	int error;
+	पूर्णांक error;
 
-	if (dev->battery)
-		return 0;	/* already initialized? */
+	अगर (dev->battery)
+		वापस 0;	/* alपढ़ोy initialized? */
 
 	quirks = find_battery_quirk(dev);
 
 	hid_dbg(dev, "device %x:%x:%x %d quirks %d\n",
-		dev->bus, dev->vendor, dev->product, dev->version, quirks);
+		dev->bus, dev->venकरोr, dev->product, dev->version, quirks);
 
-	if (quirks & HID_BATTERY_QUIRK_IGNORE)
-		return 0;
+	अगर (quirks & HID_BATTERY_QUIRK_IGNORE)
+		वापस 0;
 
-	psy_desc = kzalloc(sizeof(*psy_desc), GFP_KERNEL);
-	if (!psy_desc)
-		return -ENOMEM;
+	psy_desc = kzalloc(माप(*psy_desc), GFP_KERNEL);
+	अगर (!psy_desc)
+		वापस -ENOMEM;
 
-	psy_desc->name = kasprintf(GFP_KERNEL, "hid-%s-battery",
-				   strlen(dev->uniq) ?
+	psy_desc->name = kaप्र_लिखो(GFP_KERNEL, "hid-%s-battery",
+				   म_माप(dev->uniq) ?
 					dev->uniq : dev_name(&dev->dev));
-	if (!psy_desc->name) {
+	अगर (!psy_desc->name) अणु
 		error = -ENOMEM;
-		goto err_free_mem;
-	}
+		जाओ err_मुक्त_mem;
+	पूर्ण
 
 	psy_desc->type = POWER_SUPPLY_TYPE_BATTERY;
 	psy_desc->properties = hidinput_battery_props;
 	psy_desc->num_properties = ARRAY_SIZE(hidinput_battery_props);
-	psy_desc->use_for_apm = 0;
+	psy_desc->use_क्रम_apm = 0;
 	psy_desc->get_property = hidinput_get_battery_property;
 
 	min = field->logical_minimum;
 	max = field->logical_maximum;
 
-	if (is_percentage || (quirks & HID_BATTERY_QUIRK_PERCENT)) {
+	अगर (is_percentage || (quirks & HID_BATTERY_QUIRK_PERCENT)) अणु
 		min = 0;
 		max = 100;
-	}
+	पूर्ण
 
-	if (quirks & HID_BATTERY_QUIRK_FEATURE)
+	अगर (quirks & HID_BATTERY_QUIRK_FEATURE)
 		report_type = HID_FEATURE_REPORT;
 
 	dev->battery_min = min;
@@ -492,1272 +493,1272 @@ static int hidinput_setup_battery(struct hid_device *dev, unsigned report_type,
 	/*
 	 * Stylus is normally not connected to the device and thus we
 	 * can't query the device and get meaningful battery strength.
-	 * We have to wait for the device to report it on its own.
+	 * We have to रुको क्रम the device to report it on its own.
 	 */
-	dev->battery_avoid_query = report_type == HID_INPUT_REPORT &&
+	dev->battery_aव्योम_query = report_type == HID_INPUT_REPORT &&
 				   field->physical == HID_DG_STYLUS;
 
-	dev->battery = power_supply_register(&dev->dev, psy_desc, &psy_cfg);
-	if (IS_ERR(dev->battery)) {
+	dev->battery = घातer_supply_रेजिस्टर(&dev->dev, psy_desc, &psy_cfg);
+	अगर (IS_ERR(dev->battery)) अणु
 		error = PTR_ERR(dev->battery);
 		hid_warn(dev, "can't register power supply: %d\n", error);
-		goto err_free_name;
-	}
+		जाओ err_मुक्त_name;
+	पूर्ण
 
-	power_supply_powers(dev->battery, &dev->dev);
-	return 0;
+	घातer_supply_घातers(dev->battery, &dev->dev);
+	वापस 0;
 
-err_free_name:
-	kfree(psy_desc->name);
-err_free_mem:
-	kfree(psy_desc);
-	dev->battery = NULL;
-	return error;
-}
+err_मुक्त_name:
+	kमुक्त(psy_desc->name);
+err_मुक्त_mem:
+	kमुक्त(psy_desc);
+	dev->battery = शून्य;
+	वापस error;
+पूर्ण
 
-static void hidinput_cleanup_battery(struct hid_device *dev)
-{
-	const struct power_supply_desc *psy_desc;
+अटल व्योम hidinput_cleanup_battery(काष्ठा hid_device *dev)
+अणु
+	स्थिर काष्ठा घातer_supply_desc *psy_desc;
 
-	if (!dev->battery)
-		return;
+	अगर (!dev->battery)
+		वापस;
 
 	psy_desc = dev->battery->desc;
-	power_supply_unregister(dev->battery);
-	kfree(psy_desc->name);
-	kfree(psy_desc);
-	dev->battery = NULL;
-}
+	घातer_supply_unरेजिस्टर(dev->battery);
+	kमुक्त(psy_desc->name);
+	kमुक्त(psy_desc);
+	dev->battery = शून्य;
+पूर्ण
 
-static void hidinput_update_battery(struct hid_device *dev, int value)
-{
-	int capacity;
+अटल व्योम hidinput_update_battery(काष्ठा hid_device *dev, पूर्णांक value)
+अणु
+	पूर्णांक capacity;
 
-	if (!dev->battery)
-		return;
+	अगर (!dev->battery)
+		वापस;
 
-	if (value == 0 || value < dev->battery_min || value > dev->battery_max)
-		return;
+	अगर (value == 0 || value < dev->battery_min || value > dev->battery_max)
+		वापस;
 
 	capacity = hidinput_scale_battery_capacity(dev, value);
 
-	if (dev->battery_status != HID_BATTERY_REPORTED ||
+	अगर (dev->battery_status != HID_BATTERY_REPORTED ||
 	    capacity != dev->battery_capacity ||
-	    ktime_after(ktime_get_coarse(), dev->battery_ratelimit_time)) {
+	    kसमय_after(kसमय_get_coarse(), dev->battery_ratelimit_समय)) अणु
 		dev->battery_capacity = capacity;
 		dev->battery_status = HID_BATTERY_REPORTED;
-		dev->battery_ratelimit_time =
-			ktime_add_ms(ktime_get_coarse(), 30 * 1000);
-		power_supply_changed(dev->battery);
-	}
-}
-#else  /* !CONFIG_HID_BATTERY_STRENGTH */
-static int hidinput_setup_battery(struct hid_device *dev, unsigned report_type,
-				  struct hid_field *field, bool is_percentage)
-{
-	return 0;
-}
+		dev->battery_ratelimit_समय =
+			kसमय_add_ms(kसमय_get_coarse(), 30 * 1000);
+		घातer_supply_changed(dev->battery);
+	पूर्ण
+पूर्ण
+#अन्यथा  /* !CONFIG_HID_BATTERY_STRENGTH */
+अटल पूर्णांक hidinput_setup_battery(काष्ठा hid_device *dev, अचिन्हित report_type,
+				  काष्ठा hid_field *field, bool is_percentage)
+अणु
+	वापस 0;
+पूर्ण
 
-static void hidinput_cleanup_battery(struct hid_device *dev)
-{
-}
+अटल व्योम hidinput_cleanup_battery(काष्ठा hid_device *dev)
+अणु
+पूर्ण
 
-static void hidinput_update_battery(struct hid_device *dev, int value)
-{
-}
-#endif	/* CONFIG_HID_BATTERY_STRENGTH */
+अटल व्योम hidinput_update_battery(काष्ठा hid_device *dev, पूर्णांक value)
+अणु
+पूर्ण
+#पूर्ण_अगर	/* CONFIG_HID_BATTERY_STRENGTH */
 
-static void hidinput_configure_usage(struct hid_input *hidinput, struct hid_field *field,
-				     struct hid_usage *usage)
-{
-	struct input_dev *input = hidinput->input;
-	struct hid_device *device = input_get_drvdata(input);
-	int max = 0, code;
-	unsigned long *bit = NULL;
+अटल व्योम hidinput_configure_usage(काष्ठा hid_input *hidinput, काष्ठा hid_field *field,
+				     काष्ठा hid_usage *usage)
+अणु
+	काष्ठा input_dev *input = hidinput->input;
+	काष्ठा hid_device *device = input_get_drvdata(input);
+	पूर्णांक max = 0, code;
+	अचिन्हित दीर्घ *bit = शून्य;
 
 	field->hidinput = hidinput;
 
-	if (field->flags & HID_MAIN_ITEM_CONSTANT)
-		goto ignore;
+	अगर (field->flags & HID_MAIN_ITEM_CONSTANT)
+		जाओ ignore;
 
-	/* Ignore if report count is out of bounds. */
-	if (field->report_count < 1)
-		goto ignore;
+	/* Ignore अगर report count is out of bounds. */
+	अगर (field->report_count < 1)
+		जाओ ignore;
 
 	/* only LED usages are supported in output fields */
-	if (field->report_type == HID_OUTPUT_REPORT &&
-			(usage->hid & HID_USAGE_PAGE) != HID_UP_LED) {
-		goto ignore;
-	}
+	अगर (field->report_type == HID_OUTPUT_REPORT &&
+			(usage->hid & HID_USAGE_PAGE) != HID_UP_LED) अणु
+		जाओ ignore;
+	पूर्ण
 
-	if (device->driver->input_mapping) {
-		int ret = device->driver->input_mapping(device, hidinput, field,
+	अगर (device->driver->input_mapping) अणु
+		पूर्णांक ret = device->driver->input_mapping(device, hidinput, field,
 				usage, &bit, &max);
-		if (ret > 0)
-			goto mapped;
-		if (ret < 0)
-			goto ignore;
-	}
+		अगर (ret > 0)
+			जाओ mapped;
+		अगर (ret < 0)
+			जाओ ignore;
+	पूर्ण
 
-	switch (usage->hid & HID_USAGE_PAGE) {
-	case HID_UP_UNDEFINED:
-		goto ignore;
+	चयन (usage->hid & HID_USAGE_PAGE) अणु
+	हाल HID_UP_UNDEFINED:
+		जाओ ignore;
 
-	case HID_UP_KEYBOARD:
+	हाल HID_UP_KEYBOARD:
 		set_bit(EV_REP, input->evbit);
 
-		if ((usage->hid & HID_USAGE) < 256) {
-			if (!hid_keyboard[usage->hid & HID_USAGE]) goto ignore;
+		अगर ((usage->hid & HID_USAGE) < 256) अणु
+			अगर (!hid_keyboard[usage->hid & HID_USAGE]) जाओ ignore;
 			map_key_clear(hid_keyboard[usage->hid & HID_USAGE]);
-		} else
+		पूर्ण अन्यथा
 			map_key(KEY_UNKNOWN);
 
-		break;
+		अवरोध;
 
-	case HID_UP_BUTTON:
+	हाल HID_UP_BUTTON:
 		code = ((usage->hid - 1) & HID_USAGE);
 
-		switch (field->application) {
-		case HID_GD_MOUSE:
-		case HID_GD_POINTER:  code += BTN_MOUSE; break;
-		case HID_GD_JOYSTICK:
-				if (code <= 0xf)
+		चयन (field->application) अणु
+		हाल HID_GD_MOUSE:
+		हाल HID_GD_POINTER:  code += BTN_MOUSE; अवरोध;
+		हाल HID_GD_JOYSTICK:
+				अगर (code <= 0xf)
 					code += BTN_JOYSTICK;
-				else
+				अन्यथा
 					code += BTN_TRIGGER_HAPPY - 0x10;
-				break;
-		case HID_GD_GAMEPAD:
-				if (code <= 0xf)
+				अवरोध;
+		हाल HID_GD_GAMEPAD:
+				अगर (code <= 0xf)
 					code += BTN_GAMEPAD;
-				else
+				अन्यथा
 					code += BTN_TRIGGER_HAPPY - 0x10;
-				break;
-		default:
-			switch (field->physical) {
-			case HID_GD_MOUSE:
-			case HID_GD_POINTER:  code += BTN_MOUSE; break;
-			case HID_GD_JOYSTICK: code += BTN_JOYSTICK; break;
-			case HID_GD_GAMEPAD:  code += BTN_GAMEPAD; break;
-			default:              code += BTN_MISC;
-			}
-		}
+				अवरोध;
+		शेष:
+			चयन (field->physical) अणु
+			हाल HID_GD_MOUSE:
+			हाल HID_GD_POINTER:  code += BTN_MOUSE; अवरोध;
+			हाल HID_GD_JOYSTICK: code += BTN_JOYSTICK; अवरोध;
+			हाल HID_GD_GAMEPAD:  code += BTN_GAMEPAD; अवरोध;
+			शेष:              code += BTN_MISC;
+			पूर्ण
+		पूर्ण
 
 		map_key(code);
-		break;
+		अवरोध;
 
-	case HID_UP_SIMULATION:
-		switch (usage->hid & 0xffff) {
-		case 0xba: map_abs(ABS_RUDDER);   break;
-		case 0xbb: map_abs(ABS_THROTTLE); break;
-		case 0xc4: map_abs(ABS_GAS);      break;
-		case 0xc5: map_abs(ABS_BRAKE);    break;
-		case 0xc8: map_abs(ABS_WHEEL);    break;
-		default:   goto ignore;
-		}
-		break;
+	हाल HID_UP_SIMULATION:
+		चयन (usage->hid & 0xffff) अणु
+		हाल 0xba: map_असल(ABS_RUDDER);   अवरोध;
+		हाल 0xbb: map_असल(ABS_THROTTLE); अवरोध;
+		हाल 0xc4: map_असल(ABS_GAS);      अवरोध;
+		हाल 0xc5: map_असल(ABS_BRAKE);    अवरोध;
+		हाल 0xc8: map_असल(ABS_WHEEL);    अवरोध;
+		शेष:   जाओ ignore;
+		पूर्ण
+		अवरोध;
 
-	case HID_UP_GENDESK:
-		if ((usage->hid & 0xf0) == 0x80) {	/* SystemControl */
-			switch (usage->hid & 0xf) {
-			case 0x1: map_key_clear(KEY_POWER);  break;
-			case 0x2: map_key_clear(KEY_SLEEP);  break;
-			case 0x3: map_key_clear(KEY_WAKEUP); break;
-			case 0x4: map_key_clear(KEY_CONTEXT_MENU); break;
-			case 0x5: map_key_clear(KEY_MENU); break;
-			case 0x6: map_key_clear(KEY_PROG1); break;
-			case 0x7: map_key_clear(KEY_HELP); break;
-			case 0x8: map_key_clear(KEY_EXIT); break;
-			case 0x9: map_key_clear(KEY_SELECT); break;
-			case 0xa: map_key_clear(KEY_RIGHT); break;
-			case 0xb: map_key_clear(KEY_LEFT); break;
-			case 0xc: map_key_clear(KEY_UP); break;
-			case 0xd: map_key_clear(KEY_DOWN); break;
-			case 0xe: map_key_clear(KEY_POWER2); break;
-			case 0xf: map_key_clear(KEY_RESTART); break;
-			default: goto unknown;
-			}
-			break;
-		}
+	हाल HID_UP_GENDESK:
+		अगर ((usage->hid & 0xf0) == 0x80) अणु	/* SystemControl */
+			चयन (usage->hid & 0xf) अणु
+			हाल 0x1: map_key_clear(KEY_POWER);  अवरोध;
+			हाल 0x2: map_key_clear(KEY_SLEEP);  अवरोध;
+			हाल 0x3: map_key_clear(KEY_WAKEUP); अवरोध;
+			हाल 0x4: map_key_clear(KEY_CONTEXT_MENU); अवरोध;
+			हाल 0x5: map_key_clear(KEY_MENU); अवरोध;
+			हाल 0x6: map_key_clear(KEY_PROG1); अवरोध;
+			हाल 0x7: map_key_clear(KEY_HELP); अवरोध;
+			हाल 0x8: map_key_clear(KEY_EXIT); अवरोध;
+			हाल 0x9: map_key_clear(KEY_SELECT); अवरोध;
+			हाल 0xa: map_key_clear(KEY_RIGHT); अवरोध;
+			हाल 0xb: map_key_clear(KEY_LEFT); अवरोध;
+			हाल 0xc: map_key_clear(KEY_UP); अवरोध;
+			हाल 0xd: map_key_clear(KEY_DOWN); अवरोध;
+			हाल 0xe: map_key_clear(KEY_POWER2); अवरोध;
+			हाल 0xf: map_key_clear(KEY_RESTART); अवरोध;
+			शेष: जाओ unknown;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
-		if ((usage->hid & 0xf0) == 0xb0) {	/* SC - Display */
-			switch (usage->hid & 0xf) {
-			case 0x05: map_key_clear(KEY_SWITCHVIDEOMODE); break;
-			default: goto ignore;
-			}
-			break;
-		}
+		अगर ((usage->hid & 0xf0) == 0xb0) अणु	/* SC - Display */
+			चयन (usage->hid & 0xf) अणु
+			हाल 0x05: map_key_clear(KEY_SWITCHVIDEOMODE); अवरोध;
+			शेष: जाओ ignore;
+			पूर्ण
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * Some lazy vendors declare 255 usages for System Control,
+		 * Some lazy venकरोrs declare 255 usages क्रम System Control,
 		 * leading to the creation of ABS_X|Y axis and too many others.
 		 * It wouldn't be a problem if joydev doesn't consider the
 		 * device as a joystick then.
 		 */
-		if (field->application == HID_GD_SYSTEM_CONTROL)
-			goto ignore;
+		अगर (field->application == HID_GD_SYSTEM_CONTROL)
+			जाओ ignore;
 
-		if ((usage->hid & 0xf0) == 0x90) {	/* D-pad */
-			switch (usage->hid) {
-			case HID_GD_UP:	   usage->hat_dir = 1; break;
-			case HID_GD_DOWN:  usage->hat_dir = 5; break;
-			case HID_GD_RIGHT: usage->hat_dir = 3; break;
-			case HID_GD_LEFT:  usage->hat_dir = 7; break;
-			default: goto unknown;
-			}
-			if (field->dpad) {
-				map_abs(field->dpad);
-				goto ignore;
-			}
-			map_abs(ABS_HAT0X);
-			break;
-		}
+		अगर ((usage->hid & 0xf0) == 0x90) अणु	/* D-pad */
+			चयन (usage->hid) अणु
+			हाल HID_GD_UP:	   usage->hat_dir = 1; अवरोध;
+			हाल HID_GD_DOWN:  usage->hat_dir = 5; अवरोध;
+			हाल HID_GD_RIGHT: usage->hat_dir = 3; अवरोध;
+			हाल HID_GD_LEFT:  usage->hat_dir = 7; अवरोध;
+			शेष: जाओ unknown;
+			पूर्ण
+			अगर (field->dpad) अणु
+				map_असल(field->dpad);
+				जाओ ignore;
+			पूर्ण
+			map_असल(ABS_HAT0X);
+			अवरोध;
+		पूर्ण
 
-		switch (usage->hid) {
+		चयन (usage->hid) अणु
 		/* These usage IDs map directly to the usage codes. */
-		case HID_GD_X: case HID_GD_Y: case HID_GD_Z:
-		case HID_GD_RX: case HID_GD_RY: case HID_GD_RZ:
-			if (field->flags & HID_MAIN_ITEM_RELATIVE)
+		हाल HID_GD_X: हाल HID_GD_Y: हाल HID_GD_Z:
+		हाल HID_GD_RX: हाल HID_GD_RY: हाल HID_GD_RZ:
+			अगर (field->flags & HID_MAIN_ITEM_RELATIVE)
 				map_rel(usage->hid & 0xf);
-			else
-				map_abs_clear(usage->hid & 0xf);
-			break;
+			अन्यथा
+				map_असल_clear(usage->hid & 0xf);
+			अवरोध;
 
-		case HID_GD_WHEEL:
-			if (field->flags & HID_MAIN_ITEM_RELATIVE) {
+		हाल HID_GD_WHEEL:
+			अगर (field->flags & HID_MAIN_ITEM_RELATIVE) अणु
 				set_bit(REL_WHEEL, input->relbit);
 				map_rel(REL_WHEEL_HI_RES);
-			} else {
-				map_abs(usage->hid & 0xf);
-			}
-			break;
-		case HID_GD_SLIDER: case HID_GD_DIAL:
-			if (field->flags & HID_MAIN_ITEM_RELATIVE)
+			पूर्ण अन्यथा अणु
+				map_असल(usage->hid & 0xf);
+			पूर्ण
+			अवरोध;
+		हाल HID_GD_SLIDER: हाल HID_GD_DIAL:
+			अगर (field->flags & HID_MAIN_ITEM_RELATIVE)
 				map_rel(usage->hid & 0xf);
-			else
-				map_abs(usage->hid & 0xf);
-			break;
+			अन्यथा
+				map_असल(usage->hid & 0xf);
+			अवरोध;
 
-		case HID_GD_HATSWITCH:
+		हाल HID_GD_HATSWITCH:
 			usage->hat_min = field->logical_minimum;
 			usage->hat_max = field->logical_maximum;
-			map_abs(ABS_HAT0X);
-			break;
+			map_असल(ABS_HAT0X);
+			अवरोध;
 
-		case HID_GD_START:	map_key_clear(BTN_START);	break;
-		case HID_GD_SELECT:	map_key_clear(BTN_SELECT);	break;
+		हाल HID_GD_START:	map_key_clear(BTN_START);	अवरोध;
+		हाल HID_GD_SELECT:	map_key_clear(BTN_SELECT);	अवरोध;
 
-		case HID_GD_RFKILL_BTN:
+		हाल HID_GD_RFKILL_BTN:
 			/* MS wireless radio ctl extension, also check CA */
-			if (field->application == HID_GD_WIRELESS_RADIO_CTLS) {
+			अगर (field->application == HID_GD_WIRELESS_RADIO_CTLS) अणु
 				map_key_clear(KEY_RFKILL);
 				/* We need to simulate the btn release */
 				field->flags |= HID_MAIN_ITEM_RELATIVE;
-				break;
-			}
-			goto unknown;
+				अवरोध;
+			पूर्ण
+			जाओ unknown;
 
-		default: goto unknown;
-		}
+		शेष: जाओ unknown;
+		पूर्ण
 
-		break;
+		अवरोध;
 
-	case HID_UP_LED:
-		switch (usage->hid & 0xffff) {		      /* HID-Value:                   */
-		case 0x01:  map_led (LED_NUML);     break;    /*   "Num Lock"                 */
-		case 0x02:  map_led (LED_CAPSL);    break;    /*   "Caps Lock"                */
-		case 0x03:  map_led (LED_SCROLLL);  break;    /*   "Scroll Lock"              */
-		case 0x04:  map_led (LED_COMPOSE);  break;    /*   "Compose"                  */
-		case 0x05:  map_led (LED_KANA);     break;    /*   "Kana"                     */
-		case 0x27:  map_led (LED_SLEEP);    break;    /*   "Stand-By"                 */
-		case 0x4c:  map_led (LED_SUSPEND);  break;    /*   "System Suspend"           */
-		case 0x09:  map_led (LED_MUTE);     break;    /*   "Mute"                     */
-		case 0x4b:  map_led (LED_MISC);     break;    /*   "Generic Indicator"        */
-		case 0x19:  map_led (LED_MAIL);     break;    /*   "Message Waiting"          */
-		case 0x4d:  map_led (LED_CHARGING); break;    /*   "External Power Connected" */
+	हाल HID_UP_LED:
+		चयन (usage->hid & 0xffff) अणु		      /* HID-Value:                   */
+		हाल 0x01:  map_led (LED_NUML);     अवरोध;    /*   "Num Lock"                 */
+		हाल 0x02:  map_led (LED_CAPSL);    अवरोध;    /*   "Caps Lock"                */
+		हाल 0x03:  map_led (LED_SCROLLL);  अवरोध;    /*   "Scroll Lock"              */
+		हाल 0x04:  map_led (LED_COMPOSE);  अवरोध;    /*   "Compose"                  */
+		हाल 0x05:  map_led (LED_KANA);     अवरोध;    /*   "Kana"                     */
+		हाल 0x27:  map_led (LED_SLEEP);    अवरोध;    /*   "Stand-By"                 */
+		हाल 0x4c:  map_led (LED_SUSPEND);  अवरोध;    /*   "System Suspend"           */
+		हाल 0x09:  map_led (LED_MUTE);     अवरोध;    /*   "Mute"                     */
+		हाल 0x4b:  map_led (LED_MISC);     अवरोध;    /*   "Generic Indicator"        */
+		हाल 0x19:  map_led (LED_MAIL);     अवरोध;    /*   "Message Waiting"          */
+		हाल 0x4d:  map_led (LED_CHARGING); अवरोध;    /*   "External Power Connected" */
 
-		default: goto ignore;
-		}
-		break;
+		शेष: जाओ ignore;
+		पूर्ण
+		अवरोध;
 
-	case HID_UP_DIGITIZER:
-		if ((field->application & 0xff) == 0x01) /* Digitizer */
+	हाल HID_UP_DIGITIZER:
+		अगर ((field->application & 0xff) == 0x01) /* Digitizer */
 			__set_bit(INPUT_PROP_POINTER, input->propbit);
-		else if ((field->application & 0xff) == 0x02) /* Pen */
-			__set_bit(INPUT_PROP_DIRECT, input->propbit);
+		अन्यथा अगर ((field->application & 0xff) == 0x02) /* Pen */
+			__set_bit(INPUT_PROP_सूचीECT, input->propbit);
 
-		switch (usage->hid & 0xff) {
-		case 0x00: /* Undefined */
-			goto ignore;
+		चयन (usage->hid & 0xff) अणु
+		हाल 0x00: /* Undefined */
+			जाओ ignore;
 
-		case 0x30: /* TipPressure */
-			if (!test_bit(BTN_TOUCH, input->keybit)) {
+		हाल 0x30: /* TipPressure */
+			अगर (!test_bit(BTN_TOUCH, input->keybit)) अणु
 				device->quirks |= HID_QUIRK_NOTOUCH;
 				set_bit(EV_KEY, input->evbit);
 				set_bit(BTN_TOUCH, input->keybit);
-			}
-			map_abs_clear(ABS_PRESSURE);
-			break;
+			पूर्ण
+			map_असल_clear(ABS_PRESSURE);
+			अवरोध;
 
-		case 0x32: /* InRange */
-			switch (field->physical & 0xff) {
-			case 0x21: map_key(BTN_TOOL_MOUSE); break;
-			case 0x22: map_key(BTN_TOOL_FINGER); break;
-			default: map_key(BTN_TOOL_PEN); break;
-			}
-			break;
+		हाल 0x32: /* InRange */
+			चयन (field->physical & 0xff) अणु
+			हाल 0x21: map_key(BTN_TOOL_MOUSE); अवरोध;
+			हाल 0x22: map_key(BTN_TOOL_FINGER); अवरोध;
+			शेष: map_key(BTN_TOOL_PEN); अवरोध;
+			पूर्ण
+			अवरोध;
 
-		case 0x3b: /* Battery Strength */
+		हाल 0x3b: /* Battery Strength */
 			hidinput_setup_battery(device, HID_INPUT_REPORT, field, false);
 			usage->type = EV_PWR;
-			return;
+			वापस;
 
-		case 0x3c: /* Invert */
+		हाल 0x3c: /* Invert */
 			map_key_clear(BTN_TOOL_RUBBER);
-			break;
+			अवरोध;
 
-		case 0x3d: /* X Tilt */
-			map_abs_clear(ABS_TILT_X);
-			break;
+		हाल 0x3d: /* X Tilt */
+			map_असल_clear(ABS_TILT_X);
+			अवरोध;
 
-		case 0x3e: /* Y Tilt */
-			map_abs_clear(ABS_TILT_Y);
-			break;
+		हाल 0x3e: /* Y Tilt */
+			map_असल_clear(ABS_TILT_Y);
+			अवरोध;
 
-		case 0x33: /* Touch */
-		case 0x42: /* TipSwitch */
-		case 0x43: /* TipSwitch2 */
+		हाल 0x33: /* Touch */
+		हाल 0x42: /* TipSwitch */
+		हाल 0x43: /* TipSwitch2 */
 			device->quirks &= ~HID_QUIRK_NOTOUCH;
 			map_key_clear(BTN_TOUCH);
-			break;
+			अवरोध;
 
-		case 0x44: /* BarrelSwitch */
+		हाल 0x44: /* BarrelSwitch */
 			map_key_clear(BTN_STYLUS);
-			break;
+			अवरोध;
 
-		case 0x45: /* ERASER */
+		हाल 0x45: /* ERASER */
 			/*
 			 * This event is reported when eraser tip touches the surface.
 			 * Actual eraser (BTN_TOOL_RUBBER) is set by Invert usage when
-			 * tool gets in proximity.
+			 * tool माला_लो in proximity.
 			 */
 			map_key_clear(BTN_TOUCH);
-			break;
+			अवरोध;
 
-		case 0x46: /* TabletPick */
-		case 0x5a: /* SecondaryBarrelSwitch */
+		हाल 0x46: /* TabletPick */
+		हाल 0x5a: /* SecondaryBarrelSwitch */
 			map_key_clear(BTN_STYLUS2);
-			break;
+			अवरोध;
 
-		case 0x5b: /* TransducerSerialNumber */
+		हाल 0x5b: /* TransducerSerialNumber */
 			usage->type = EV_MSC;
 			usage->code = MSC_SERIAL;
 			bit = input->mscbit;
 			max = MSC_MAX;
-			break;
+			अवरोध;
 
-		default:  goto unknown;
-		}
-		break;
+		शेष:  जाओ unknown;
+		पूर्ण
+		अवरोध;
 
-	case HID_UP_TELEPHONY:
-		switch (usage->hid & HID_USAGE) {
-		case 0x2f: map_key_clear(KEY_MICMUTE);		break;
-		case 0xb0: map_key_clear(KEY_NUMERIC_0);	break;
-		case 0xb1: map_key_clear(KEY_NUMERIC_1);	break;
-		case 0xb2: map_key_clear(KEY_NUMERIC_2);	break;
-		case 0xb3: map_key_clear(KEY_NUMERIC_3);	break;
-		case 0xb4: map_key_clear(KEY_NUMERIC_4);	break;
-		case 0xb5: map_key_clear(KEY_NUMERIC_5);	break;
-		case 0xb6: map_key_clear(KEY_NUMERIC_6);	break;
-		case 0xb7: map_key_clear(KEY_NUMERIC_7);	break;
-		case 0xb8: map_key_clear(KEY_NUMERIC_8);	break;
-		case 0xb9: map_key_clear(KEY_NUMERIC_9);	break;
-		case 0xba: map_key_clear(KEY_NUMERIC_STAR);	break;
-		case 0xbb: map_key_clear(KEY_NUMERIC_POUND);	break;
-		case 0xbc: map_key_clear(KEY_NUMERIC_A);	break;
-		case 0xbd: map_key_clear(KEY_NUMERIC_B);	break;
-		case 0xbe: map_key_clear(KEY_NUMERIC_C);	break;
-		case 0xbf: map_key_clear(KEY_NUMERIC_D);	break;
-		default: goto ignore;
-		}
-		break;
+	हाल HID_UP_TELEPHONY:
+		चयन (usage->hid & HID_USAGE) अणु
+		हाल 0x2f: map_key_clear(KEY_MICMUTE);		अवरोध;
+		हाल 0xb0: map_key_clear(KEY_NUMERIC_0);	अवरोध;
+		हाल 0xb1: map_key_clear(KEY_NUMERIC_1);	अवरोध;
+		हाल 0xb2: map_key_clear(KEY_NUMERIC_2);	अवरोध;
+		हाल 0xb3: map_key_clear(KEY_NUMERIC_3);	अवरोध;
+		हाल 0xb4: map_key_clear(KEY_NUMERIC_4);	अवरोध;
+		हाल 0xb5: map_key_clear(KEY_NUMERIC_5);	अवरोध;
+		हाल 0xb6: map_key_clear(KEY_NUMERIC_6);	अवरोध;
+		हाल 0xb7: map_key_clear(KEY_NUMERIC_7);	अवरोध;
+		हाल 0xb8: map_key_clear(KEY_NUMERIC_8);	अवरोध;
+		हाल 0xb9: map_key_clear(KEY_NUMERIC_9);	अवरोध;
+		हाल 0xba: map_key_clear(KEY_NUMERIC_STAR);	अवरोध;
+		हाल 0xbb: map_key_clear(KEY_NUMERIC_POUND);	अवरोध;
+		हाल 0xbc: map_key_clear(KEY_NUMERIC_A);	अवरोध;
+		हाल 0xbd: map_key_clear(KEY_NUMERIC_B);	अवरोध;
+		हाल 0xbe: map_key_clear(KEY_NUMERIC_C);	अवरोध;
+		हाल 0xbf: map_key_clear(KEY_NUMERIC_D);	अवरोध;
+		शेष: जाओ ignore;
+		पूर्ण
+		अवरोध;
 
-	case HID_UP_CONSUMER:	/* USB HUT v1.12, pages 75-84 */
-		switch (usage->hid & HID_USAGE) {
-		case 0x000: goto ignore;
-		case 0x030: map_key_clear(KEY_POWER);		break;
-		case 0x031: map_key_clear(KEY_RESTART);		break;
-		case 0x032: map_key_clear(KEY_SLEEP);		break;
-		case 0x034: map_key_clear(KEY_SLEEP);		break;
-		case 0x035: map_key_clear(KEY_KBDILLUMTOGGLE);	break;
-		case 0x036: map_key_clear(BTN_MISC);		break;
+	हाल HID_UP_CONSUMER:	/* USB HUT v1.12, pages 75-84 */
+		चयन (usage->hid & HID_USAGE) अणु
+		हाल 0x000: जाओ ignore;
+		हाल 0x030: map_key_clear(KEY_POWER);		अवरोध;
+		हाल 0x031: map_key_clear(KEY_RESTART);		अवरोध;
+		हाल 0x032: map_key_clear(KEY_SLEEP);		अवरोध;
+		हाल 0x034: map_key_clear(KEY_SLEEP);		अवरोध;
+		हाल 0x035: map_key_clear(KEY_KBDILLUMTOGGLE);	अवरोध;
+		हाल 0x036: map_key_clear(BTN_MISC);		अवरोध;
 
-		case 0x040: map_key_clear(KEY_MENU);		break; /* Menu */
-		case 0x041: map_key_clear(KEY_SELECT);		break; /* Menu Pick */
-		case 0x042: map_key_clear(KEY_UP);		break; /* Menu Up */
-		case 0x043: map_key_clear(KEY_DOWN);		break; /* Menu Down */
-		case 0x044: map_key_clear(KEY_LEFT);		break; /* Menu Left */
-		case 0x045: map_key_clear(KEY_RIGHT);		break; /* Menu Right */
-		case 0x046: map_key_clear(KEY_ESC);		break; /* Menu Escape */
-		case 0x047: map_key_clear(KEY_KPPLUS);		break; /* Menu Value Increase */
-		case 0x048: map_key_clear(KEY_KPMINUS);		break; /* Menu Value Decrease */
+		हाल 0x040: map_key_clear(KEY_MENU);		अवरोध; /* Menu */
+		हाल 0x041: map_key_clear(KEY_SELECT);		अवरोध; /* Menu Pick */
+		हाल 0x042: map_key_clear(KEY_UP);		अवरोध; /* Menu Up */
+		हाल 0x043: map_key_clear(KEY_DOWN);		अवरोध; /* Menu Down */
+		हाल 0x044: map_key_clear(KEY_LEFT);		अवरोध; /* Menu Left */
+		हाल 0x045: map_key_clear(KEY_RIGHT);		अवरोध; /* Menu Right */
+		हाल 0x046: map_key_clear(KEY_ESC);		अवरोध; /* Menu Escape */
+		हाल 0x047: map_key_clear(KEY_KPPLUS);		अवरोध; /* Menu Value Increase */
+		हाल 0x048: map_key_clear(KEY_KPMINUS);		अवरोध; /* Menu Value Decrease */
 
-		case 0x060: map_key_clear(KEY_INFO);		break; /* Data On Screen */
-		case 0x061: map_key_clear(KEY_SUBTITLE);	break; /* Closed Caption */
-		case 0x063: map_key_clear(KEY_VCR);		break; /* VCR/TV */
-		case 0x065: map_key_clear(KEY_CAMERA);		break; /* Snapshot */
-		case 0x069: map_key_clear(KEY_RED);		break;
-		case 0x06a: map_key_clear(KEY_GREEN);		break;
-		case 0x06b: map_key_clear(KEY_BLUE);		break;
-		case 0x06c: map_key_clear(KEY_YELLOW);		break;
-		case 0x06d: map_key_clear(KEY_ASPECT_RATIO);	break;
+		हाल 0x060: map_key_clear(KEY_INFO);		अवरोध; /* Data On Screen */
+		हाल 0x061: map_key_clear(KEY_SUBTITLE);	अवरोध; /* Closed Caption */
+		हाल 0x063: map_key_clear(KEY_VCR);		अवरोध; /* VCR/TV */
+		हाल 0x065: map_key_clear(KEY_CAMERA);		अवरोध; /* Snapshot */
+		हाल 0x069: map_key_clear(KEY_RED);		अवरोध;
+		हाल 0x06a: map_key_clear(KEY_GREEN);		अवरोध;
+		हाल 0x06b: map_key_clear(KEY_BLUE);		अवरोध;
+		हाल 0x06c: map_key_clear(KEY_YELLOW);		अवरोध;
+		हाल 0x06d: map_key_clear(KEY_ASPECT_RATIO);	अवरोध;
 
-		case 0x06f: map_key_clear(KEY_BRIGHTNESSUP);		break;
-		case 0x070: map_key_clear(KEY_BRIGHTNESSDOWN);		break;
-		case 0x072: map_key_clear(KEY_BRIGHTNESS_TOGGLE);	break;
-		case 0x073: map_key_clear(KEY_BRIGHTNESS_MIN);		break;
-		case 0x074: map_key_clear(KEY_BRIGHTNESS_MAX);		break;
-		case 0x075: map_key_clear(KEY_BRIGHTNESS_AUTO);		break;
+		हाल 0x06f: map_key_clear(KEY_BRIGHTNESSUP);		अवरोध;
+		हाल 0x070: map_key_clear(KEY_BRIGHTNESSDOWN);		अवरोध;
+		हाल 0x072: map_key_clear(KEY_BRIGHTNESS_TOGGLE);	अवरोध;
+		हाल 0x073: map_key_clear(KEY_BRIGHTNESS_MIN);		अवरोध;
+		हाल 0x074: map_key_clear(KEY_BRIGHTNESS_MAX);		अवरोध;
+		हाल 0x075: map_key_clear(KEY_BRIGHTNESS_AUTO);		अवरोध;
 
-		case 0x079: map_key_clear(KEY_KBDILLUMUP);	break;
-		case 0x07a: map_key_clear(KEY_KBDILLUMDOWN);	break;
-		case 0x07c: map_key_clear(KEY_KBDILLUMTOGGLE);	break;
+		हाल 0x079: map_key_clear(KEY_KBDILLUMUP);	अवरोध;
+		हाल 0x07a: map_key_clear(KEY_KBDILLUMDOWN);	अवरोध;
+		हाल 0x07c: map_key_clear(KEY_KBDILLUMTOGGLE);	अवरोध;
 
-		case 0x082: map_key_clear(KEY_VIDEO_NEXT);	break;
-		case 0x083: map_key_clear(KEY_LAST);		break;
-		case 0x084: map_key_clear(KEY_ENTER);		break;
-		case 0x088: map_key_clear(KEY_PC);		break;
-		case 0x089: map_key_clear(KEY_TV);		break;
-		case 0x08a: map_key_clear(KEY_WWW);		break;
-		case 0x08b: map_key_clear(KEY_DVD);		break;
-		case 0x08c: map_key_clear(KEY_PHONE);		break;
-		case 0x08d: map_key_clear(KEY_PROGRAM);		break;
-		case 0x08e: map_key_clear(KEY_VIDEOPHONE);	break;
-		case 0x08f: map_key_clear(KEY_GAMES);		break;
-		case 0x090: map_key_clear(KEY_MEMO);		break;
-		case 0x091: map_key_clear(KEY_CD);		break;
-		case 0x092: map_key_clear(KEY_VCR);		break;
-		case 0x093: map_key_clear(KEY_TUNER);		break;
-		case 0x094: map_key_clear(KEY_EXIT);		break;
-		case 0x095: map_key_clear(KEY_HELP);		break;
-		case 0x096: map_key_clear(KEY_TAPE);		break;
-		case 0x097: map_key_clear(KEY_TV2);		break;
-		case 0x098: map_key_clear(KEY_SAT);		break;
-		case 0x09a: map_key_clear(KEY_PVR);		break;
+		हाल 0x082: map_key_clear(KEY_VIDEO_NEXT);	अवरोध;
+		हाल 0x083: map_key_clear(KEY_LAST);		अवरोध;
+		हाल 0x084: map_key_clear(KEY_ENTER);		अवरोध;
+		हाल 0x088: map_key_clear(KEY_PC);		अवरोध;
+		हाल 0x089: map_key_clear(KEY_TV);		अवरोध;
+		हाल 0x08a: map_key_clear(KEY_WWW);		अवरोध;
+		हाल 0x08b: map_key_clear(KEY_DVD);		अवरोध;
+		हाल 0x08c: map_key_clear(KEY_PHONE);		अवरोध;
+		हाल 0x08d: map_key_clear(KEY_PROGRAM);		अवरोध;
+		हाल 0x08e: map_key_clear(KEY_VIDEOPHONE);	अवरोध;
+		हाल 0x08f: map_key_clear(KEY_GAMES);		अवरोध;
+		हाल 0x090: map_key_clear(KEY_MEMO);		अवरोध;
+		हाल 0x091: map_key_clear(KEY_CD);		अवरोध;
+		हाल 0x092: map_key_clear(KEY_VCR);		अवरोध;
+		हाल 0x093: map_key_clear(KEY_TUNER);		अवरोध;
+		हाल 0x094: map_key_clear(KEY_EXIT);		अवरोध;
+		हाल 0x095: map_key_clear(KEY_HELP);		अवरोध;
+		हाल 0x096: map_key_clear(KEY_TAPE);		अवरोध;
+		हाल 0x097: map_key_clear(KEY_TV2);		अवरोध;
+		हाल 0x098: map_key_clear(KEY_SAT);		अवरोध;
+		हाल 0x09a: map_key_clear(KEY_PVR);		अवरोध;
 
-		case 0x09c: map_key_clear(KEY_CHANNELUP);	break;
-		case 0x09d: map_key_clear(KEY_CHANNELDOWN);	break;
-		case 0x0a0: map_key_clear(KEY_VCR2);		break;
+		हाल 0x09c: map_key_clear(KEY_CHANNELUP);	अवरोध;
+		हाल 0x09d: map_key_clear(KEY_CHANNELDOWN);	अवरोध;
+		हाल 0x0a0: map_key_clear(KEY_VCR2);		अवरोध;
 
-		case 0x0b0: map_key_clear(KEY_PLAY);		break;
-		case 0x0b1: map_key_clear(KEY_PAUSE);		break;
-		case 0x0b2: map_key_clear(KEY_RECORD);		break;
-		case 0x0b3: map_key_clear(KEY_FASTFORWARD);	break;
-		case 0x0b4: map_key_clear(KEY_REWIND);		break;
-		case 0x0b5: map_key_clear(KEY_NEXTSONG);	break;
-		case 0x0b6: map_key_clear(KEY_PREVIOUSSONG);	break;
-		case 0x0b7: map_key_clear(KEY_STOPCD);		break;
-		case 0x0b8: map_key_clear(KEY_EJECTCD);		break;
-		case 0x0bc: map_key_clear(KEY_MEDIA_REPEAT);	break;
-		case 0x0b9: map_key_clear(KEY_SHUFFLE);		break;
-		case 0x0bf: map_key_clear(KEY_SLOW);		break;
+		हाल 0x0b0: map_key_clear(KEY_PLAY);		अवरोध;
+		हाल 0x0b1: map_key_clear(KEY_PAUSE);		अवरोध;
+		हाल 0x0b2: map_key_clear(KEY_RECORD);		अवरोध;
+		हाल 0x0b3: map_key_clear(KEY_FASTFORWARD);	अवरोध;
+		हाल 0x0b4: map_key_clear(KEY_REWIND);		अवरोध;
+		हाल 0x0b5: map_key_clear(KEY_NEXTSONG);	अवरोध;
+		हाल 0x0b6: map_key_clear(KEY_PREVIOUSSONG);	अवरोध;
+		हाल 0x0b7: map_key_clear(KEY_STOPCD);		अवरोध;
+		हाल 0x0b8: map_key_clear(KEY_EJECTCD);		अवरोध;
+		हाल 0x0bc: map_key_clear(KEY_MEDIA_REPEAT);	अवरोध;
+		हाल 0x0b9: map_key_clear(KEY_SHUFFLE);		अवरोध;
+		हाल 0x0bf: map_key_clear(KEY_SLOW);		अवरोध;
 
-		case 0x0cd: map_key_clear(KEY_PLAYPAUSE);	break;
-		case 0x0cf: map_key_clear(KEY_VOICECOMMAND);	break;
+		हाल 0x0cd: map_key_clear(KEY_PLAYPAUSE);	अवरोध;
+		हाल 0x0cf: map_key_clear(KEY_VOICECOMMAND);	अवरोध;
 
-		case 0x0d9: map_key_clear(KEY_EMOJI_PICKER);	break;
+		हाल 0x0d9: map_key_clear(KEY_EMOJI_PICKER);	अवरोध;
 
-		case 0x0e0: map_abs_clear(ABS_VOLUME);		break;
-		case 0x0e2: map_key_clear(KEY_MUTE);		break;
-		case 0x0e5: map_key_clear(KEY_BASSBOOST);	break;
-		case 0x0e9: map_key_clear(KEY_VOLUMEUP);	break;
-		case 0x0ea: map_key_clear(KEY_VOLUMEDOWN);	break;
-		case 0x0f5: map_key_clear(KEY_SLOW);		break;
+		हाल 0x0e0: map_असल_clear(ABS_VOLUME);		अवरोध;
+		हाल 0x0e2: map_key_clear(KEY_MUTE);		अवरोध;
+		हाल 0x0e5: map_key_clear(KEY_BASSBOOST);	अवरोध;
+		हाल 0x0e9: map_key_clear(KEY_VOLUMEUP);	अवरोध;
+		हाल 0x0ea: map_key_clear(KEY_VOLUMEDOWN);	अवरोध;
+		हाल 0x0f5: map_key_clear(KEY_SLOW);		अवरोध;
 
-		case 0x181: map_key_clear(KEY_BUTTONCONFIG);	break;
-		case 0x182: map_key_clear(KEY_BOOKMARKS);	break;
-		case 0x183: map_key_clear(KEY_CONFIG);		break;
-		case 0x184: map_key_clear(KEY_WORDPROCESSOR);	break;
-		case 0x185: map_key_clear(KEY_EDITOR);		break;
-		case 0x186: map_key_clear(KEY_SPREADSHEET);	break;
-		case 0x187: map_key_clear(KEY_GRAPHICSEDITOR);	break;
-		case 0x188: map_key_clear(KEY_PRESENTATION);	break;
-		case 0x189: map_key_clear(KEY_DATABASE);	break;
-		case 0x18a: map_key_clear(KEY_MAIL);		break;
-		case 0x18b: map_key_clear(KEY_NEWS);		break;
-		case 0x18c: map_key_clear(KEY_VOICEMAIL);	break;
-		case 0x18d: map_key_clear(KEY_ADDRESSBOOK);	break;
-		case 0x18e: map_key_clear(KEY_CALENDAR);	break;
-		case 0x18f: map_key_clear(KEY_TASKMANAGER);	break;
-		case 0x190: map_key_clear(KEY_JOURNAL);		break;
-		case 0x191: map_key_clear(KEY_FINANCE);		break;
-		case 0x192: map_key_clear(KEY_CALC);		break;
-		case 0x193: map_key_clear(KEY_PLAYER);		break;
-		case 0x194: map_key_clear(KEY_FILE);		break;
-		case 0x196: map_key_clear(KEY_WWW);		break;
-		case 0x199: map_key_clear(KEY_CHAT);		break;
-		case 0x19c: map_key_clear(KEY_LOGOFF);		break;
-		case 0x19e: map_key_clear(KEY_COFFEE);		break;
-		case 0x19f: map_key_clear(KEY_CONTROLPANEL);		break;
-		case 0x1a2: map_key_clear(KEY_APPSELECT);		break;
-		case 0x1a3: map_key_clear(KEY_NEXT);		break;
-		case 0x1a4: map_key_clear(KEY_PREVIOUS);	break;
-		case 0x1a6: map_key_clear(KEY_HELP);		break;
-		case 0x1a7: map_key_clear(KEY_DOCUMENTS);	break;
-		case 0x1ab: map_key_clear(KEY_SPELLCHECK);	break;
-		case 0x1ae: map_key_clear(KEY_KEYBOARD);	break;
-		case 0x1b1: map_key_clear(KEY_SCREENSAVER);		break;
-		case 0x1b4: map_key_clear(KEY_FILE);		break;
-		case 0x1b6: map_key_clear(KEY_IMAGES);		break;
-		case 0x1b7: map_key_clear(KEY_AUDIO);		break;
-		case 0x1b8: map_key_clear(KEY_VIDEO);		break;
-		case 0x1bc: map_key_clear(KEY_MESSENGER);	break;
-		case 0x1bd: map_key_clear(KEY_INFO);		break;
-		case 0x1cb: map_key_clear(KEY_ASSISTANT);	break;
-		case 0x201: map_key_clear(KEY_NEW);		break;
-		case 0x202: map_key_clear(KEY_OPEN);		break;
-		case 0x203: map_key_clear(KEY_CLOSE);		break;
-		case 0x204: map_key_clear(KEY_EXIT);		break;
-		case 0x207: map_key_clear(KEY_SAVE);		break;
-		case 0x208: map_key_clear(KEY_PRINT);		break;
-		case 0x209: map_key_clear(KEY_PROPS);		break;
-		case 0x21a: map_key_clear(KEY_UNDO);		break;
-		case 0x21b: map_key_clear(KEY_COPY);		break;
-		case 0x21c: map_key_clear(KEY_CUT);		break;
-		case 0x21d: map_key_clear(KEY_PASTE);		break;
-		case 0x21f: map_key_clear(KEY_FIND);		break;
-		case 0x221: map_key_clear(KEY_SEARCH);		break;
-		case 0x222: map_key_clear(KEY_GOTO);		break;
-		case 0x223: map_key_clear(KEY_HOMEPAGE);	break;
-		case 0x224: map_key_clear(KEY_BACK);		break;
-		case 0x225: map_key_clear(KEY_FORWARD);		break;
-		case 0x226: map_key_clear(KEY_STOP);		break;
-		case 0x227: map_key_clear(KEY_REFRESH);		break;
-		case 0x22a: map_key_clear(KEY_BOOKMARKS);	break;
-		case 0x22d: map_key_clear(KEY_ZOOMIN);		break;
-		case 0x22e: map_key_clear(KEY_ZOOMOUT);		break;
-		case 0x22f: map_key_clear(KEY_ZOOMRESET);	break;
-		case 0x232: map_key_clear(KEY_FULL_SCREEN);	break;
-		case 0x233: map_key_clear(KEY_SCROLLUP);	break;
-		case 0x234: map_key_clear(KEY_SCROLLDOWN);	break;
-		case 0x238: /* AC Pan */
+		हाल 0x181: map_key_clear(KEY_BUTTONCONFIG);	अवरोध;
+		हाल 0x182: map_key_clear(KEY_BOOKMARKS);	अवरोध;
+		हाल 0x183: map_key_clear(KEY_CONFIG);		अवरोध;
+		हाल 0x184: map_key_clear(KEY_WORDPROCESSOR);	अवरोध;
+		हाल 0x185: map_key_clear(KEY_EDITOR);		अवरोध;
+		हाल 0x186: map_key_clear(KEY_SPREADSHEET);	अवरोध;
+		हाल 0x187: map_key_clear(KEY_GRAPHICSEDITOR);	अवरोध;
+		हाल 0x188: map_key_clear(KEY_PRESENTATION);	अवरोध;
+		हाल 0x189: map_key_clear(KEY_DATABASE);	अवरोध;
+		हाल 0x18a: map_key_clear(KEY_MAIL);		अवरोध;
+		हाल 0x18b: map_key_clear(KEY_NEWS);		अवरोध;
+		हाल 0x18c: map_key_clear(KEY_VOICEMAIL);	अवरोध;
+		हाल 0x18d: map_key_clear(KEY_ADDRESSBOOK);	अवरोध;
+		हाल 0x18e: map_key_clear(KEY_CALENDAR);	अवरोध;
+		हाल 0x18f: map_key_clear(KEY_TASKMANAGER);	अवरोध;
+		हाल 0x190: map_key_clear(KEY_JOURNAL);		अवरोध;
+		हाल 0x191: map_key_clear(KEY_FIन_अंकCE);		अवरोध;
+		हाल 0x192: map_key_clear(KEY_CALC);		अवरोध;
+		हाल 0x193: map_key_clear(KEY_PLAYER);		अवरोध;
+		हाल 0x194: map_key_clear(KEY_खाता);		अवरोध;
+		हाल 0x196: map_key_clear(KEY_WWW);		अवरोध;
+		हाल 0x199: map_key_clear(KEY_CHAT);		अवरोध;
+		हाल 0x19c: map_key_clear(KEY_LOGOFF);		अवरोध;
+		हाल 0x19e: map_key_clear(KEY_COFFEE);		अवरोध;
+		हाल 0x19f: map_key_clear(KEY_CONTROLPANEL);		अवरोध;
+		हाल 0x1a2: map_key_clear(KEY_APPSELECT);		अवरोध;
+		हाल 0x1a3: map_key_clear(KEY_NEXT);		अवरोध;
+		हाल 0x1a4: map_key_clear(KEY_PREVIOUS);	अवरोध;
+		हाल 0x1a6: map_key_clear(KEY_HELP);		अवरोध;
+		हाल 0x1a7: map_key_clear(KEY_DOCUMENTS);	अवरोध;
+		हाल 0x1ab: map_key_clear(KEY_SPELLCHECK);	अवरोध;
+		हाल 0x1ae: map_key_clear(KEY_KEYBOARD);	अवरोध;
+		हाल 0x1b1: map_key_clear(KEY_SCREENSAVER);		अवरोध;
+		हाल 0x1b4: map_key_clear(KEY_खाता);		अवरोध;
+		हाल 0x1b6: map_key_clear(KEY_IMAGES);		अवरोध;
+		हाल 0x1b7: map_key_clear(KEY_AUDIO);		अवरोध;
+		हाल 0x1b8: map_key_clear(KEY_VIDEO);		अवरोध;
+		हाल 0x1bc: map_key_clear(KEY_MESSENGER);	अवरोध;
+		हाल 0x1bd: map_key_clear(KEY_INFO);		अवरोध;
+		हाल 0x1cb: map_key_clear(KEY_ASSISTANT);	अवरोध;
+		हाल 0x201: map_key_clear(KEY_NEW);		अवरोध;
+		हाल 0x202: map_key_clear(KEY_OPEN);		अवरोध;
+		हाल 0x203: map_key_clear(KEY_CLOSE);		अवरोध;
+		हाल 0x204: map_key_clear(KEY_EXIT);		अवरोध;
+		हाल 0x207: map_key_clear(KEY_SAVE);		अवरोध;
+		हाल 0x208: map_key_clear(KEY_PRINT);		अवरोध;
+		हाल 0x209: map_key_clear(KEY_PROPS);		अवरोध;
+		हाल 0x21a: map_key_clear(KEY_UNDO);		अवरोध;
+		हाल 0x21b: map_key_clear(KEY_COPY);		अवरोध;
+		हाल 0x21c: map_key_clear(KEY_CUT);		अवरोध;
+		हाल 0x21d: map_key_clear(KEY_PASTE);		अवरोध;
+		हाल 0x21f: map_key_clear(KEY_FIND);		अवरोध;
+		हाल 0x221: map_key_clear(KEY_SEARCH);		अवरोध;
+		हाल 0x222: map_key_clear(KEY_GOTO);		अवरोध;
+		हाल 0x223: map_key_clear(KEY_HOMEPAGE);	अवरोध;
+		हाल 0x224: map_key_clear(KEY_BACK);		अवरोध;
+		हाल 0x225: map_key_clear(KEY_FORWARD);		अवरोध;
+		हाल 0x226: map_key_clear(KEY_STOP);		अवरोध;
+		हाल 0x227: map_key_clear(KEY_REFRESH);		अवरोध;
+		हाल 0x22a: map_key_clear(KEY_BOOKMARKS);	अवरोध;
+		हाल 0x22d: map_key_clear(KEY_ZOOMIN);		अवरोध;
+		हाल 0x22e: map_key_clear(KEY_ZOOMOUT);		अवरोध;
+		हाल 0x22f: map_key_clear(KEY_ZOOMRESET);	अवरोध;
+		हाल 0x232: map_key_clear(KEY_FULL_SCREEN);	अवरोध;
+		हाल 0x233: map_key_clear(KEY_SCROLLUP);	अवरोध;
+		हाल 0x234: map_key_clear(KEY_SCROLLDOWN);	अवरोध;
+		हाल 0x238: /* AC Pan */
 			set_bit(REL_HWHEEL, input->relbit);
 			map_rel(REL_HWHEEL_HI_RES);
-			break;
-		case 0x23d: map_key_clear(KEY_EDIT);		break;
-		case 0x25f: map_key_clear(KEY_CANCEL);		break;
-		case 0x269: map_key_clear(KEY_INSERT);		break;
-		case 0x26a: map_key_clear(KEY_DELETE);		break;
-		case 0x279: map_key_clear(KEY_REDO);		break;
+			अवरोध;
+		हाल 0x23d: map_key_clear(KEY_EDIT);		अवरोध;
+		हाल 0x25f: map_key_clear(KEY_CANCEL);		अवरोध;
+		हाल 0x269: map_key_clear(KEY_INSERT);		अवरोध;
+		हाल 0x26a: map_key_clear(KEY_DELETE);		अवरोध;
+		हाल 0x279: map_key_clear(KEY_REDO);		अवरोध;
 
-		case 0x289: map_key_clear(KEY_REPLY);		break;
-		case 0x28b: map_key_clear(KEY_FORWARDMAIL);	break;
-		case 0x28c: map_key_clear(KEY_SEND);		break;
+		हाल 0x289: map_key_clear(KEY_REPLY);		अवरोध;
+		हाल 0x28b: map_key_clear(KEY_FORWARDMAIL);	अवरोध;
+		हाल 0x28c: map_key_clear(KEY_SEND);		अवरोध;
 
-		case 0x29d: map_key_clear(KEY_KBD_LAYOUT_NEXT);	break;
+		हाल 0x29d: map_key_clear(KEY_KBD_LAYOUT_NEXT);	अवरोध;
 
-		case 0x2c7: map_key_clear(KEY_KBDINPUTASSIST_PREV);		break;
-		case 0x2c8: map_key_clear(KEY_KBDINPUTASSIST_NEXT);		break;
-		case 0x2c9: map_key_clear(KEY_KBDINPUTASSIST_PREVGROUP);		break;
-		case 0x2ca: map_key_clear(KEY_KBDINPUTASSIST_NEXTGROUP);		break;
-		case 0x2cb: map_key_clear(KEY_KBDINPUTASSIST_ACCEPT);	break;
-		case 0x2cc: map_key_clear(KEY_KBDINPUTASSIST_CANCEL);	break;
+		हाल 0x2c7: map_key_clear(KEY_KBDINPUTASSIST_PREV);		अवरोध;
+		हाल 0x2c8: map_key_clear(KEY_KBDINPUTASSIST_NEXT);		अवरोध;
+		हाल 0x2c9: map_key_clear(KEY_KBDINPUTASSIST_PREVGROUP);		अवरोध;
+		हाल 0x2ca: map_key_clear(KEY_KBDINPUTASSIST_NEXTGROUP);		अवरोध;
+		हाल 0x2cb: map_key_clear(KEY_KBDINPUTASSIST_ACCEPT);	अवरोध;
+		हाल 0x2cc: map_key_clear(KEY_KBDINPUTASSIST_CANCEL);	अवरोध;
 
-		case 0x29f: map_key_clear(KEY_SCALE);		break;
+		हाल 0x29f: map_key_clear(KEY_SCALE);		अवरोध;
 
-		default: map_key_clear(KEY_UNKNOWN);
-		}
-		break;
+		शेष: map_key_clear(KEY_UNKNOWN);
+		पूर्ण
+		अवरोध;
 
-	case HID_UP_GENDEVCTRLS:
-		switch (usage->hid) {
-		case HID_DC_BATTERYSTRENGTH:
+	हाल HID_UP_GENDEVCTRLS:
+		चयन (usage->hid) अणु
+		हाल HID_DC_BATTERYSTRENGTH:
 			hidinput_setup_battery(device, HID_INPUT_REPORT, field, false);
 			usage->type = EV_PWR;
-			return;
-		}
-		goto unknown;
+			वापस;
+		पूर्ण
+		जाओ unknown;
 
-	case HID_UP_BATTERY:
-		switch (usage->hid) {
-		case HID_BAT_ABSOLUTESTATEOFCHARGE:
+	हाल HID_UP_BATTERY:
+		चयन (usage->hid) अणु
+		हाल HID_BAT_ABSOLUTESTATखातापूर्णCHARGE:
 			hidinput_setup_battery(device, HID_INPUT_REPORT, field, true);
 			usage->type = EV_PWR;
-			return;
-		}
-		goto unknown;
+			वापस;
+		पूर्ण
+		जाओ unknown;
 
-	case HID_UP_HPVENDOR:	/* Reported on a Dutch layout HP5308 */
+	हाल HID_UP_HPVENDOR:	/* Reported on a Dutch layout HP5308 */
 		set_bit(EV_REP, input->evbit);
-		switch (usage->hid & HID_USAGE) {
-		case 0x021: map_key_clear(KEY_PRINT);           break;
-		case 0x070: map_key_clear(KEY_HP);		break;
-		case 0x071: map_key_clear(KEY_CAMERA);		break;
-		case 0x072: map_key_clear(KEY_SOUND);		break;
-		case 0x073: map_key_clear(KEY_QUESTION);	break;
-		case 0x080: map_key_clear(KEY_EMAIL);		break;
-		case 0x081: map_key_clear(KEY_CHAT);		break;
-		case 0x082: map_key_clear(KEY_SEARCH);		break;
-		case 0x083: map_key_clear(KEY_CONNECT);	        break;
-		case 0x084: map_key_clear(KEY_FINANCE);		break;
-		case 0x085: map_key_clear(KEY_SPORT);		break;
-		case 0x086: map_key_clear(KEY_SHOP);	        break;
-		default:    goto ignore;
-		}
-		break;
+		चयन (usage->hid & HID_USAGE) अणु
+		हाल 0x021: map_key_clear(KEY_PRINT);           अवरोध;
+		हाल 0x070: map_key_clear(KEY_HP);		अवरोध;
+		हाल 0x071: map_key_clear(KEY_CAMERA);		अवरोध;
+		हाल 0x072: map_key_clear(KEY_SOUND);		अवरोध;
+		हाल 0x073: map_key_clear(KEY_QUESTION);	अवरोध;
+		हाल 0x080: map_key_clear(KEY_EMAIL);		अवरोध;
+		हाल 0x081: map_key_clear(KEY_CHAT);		अवरोध;
+		हाल 0x082: map_key_clear(KEY_SEARCH);		अवरोध;
+		हाल 0x083: map_key_clear(KEY_CONNECT);	        अवरोध;
+		हाल 0x084: map_key_clear(KEY_FIन_अंकCE);		अवरोध;
+		हाल 0x085: map_key_clear(KEY_SPORT);		अवरोध;
+		हाल 0x086: map_key_clear(KEY_SHOP);	        अवरोध;
+		शेष:    जाओ ignore;
+		पूर्ण
+		अवरोध;
 
-	case HID_UP_HPVENDOR2:
+	हाल HID_UP_HPVENDOR2:
 		set_bit(EV_REP, input->evbit);
-		switch (usage->hid & HID_USAGE) {
-		case 0x001: map_key_clear(KEY_MICMUTE);		break;
-		case 0x003: map_key_clear(KEY_BRIGHTNESSDOWN);	break;
-		case 0x004: map_key_clear(KEY_BRIGHTNESSUP);	break;
-		default:    goto ignore;
-		}
-		break;
+		चयन (usage->hid & HID_USAGE) अणु
+		हाल 0x001: map_key_clear(KEY_MICMUTE);		अवरोध;
+		हाल 0x003: map_key_clear(KEY_BRIGHTNESSDOWN);	अवरोध;
+		हाल 0x004: map_key_clear(KEY_BRIGHTNESSUP);	अवरोध;
+		शेष:    जाओ ignore;
+		पूर्ण
+		अवरोध;
 
-	case HID_UP_MSVENDOR:
-		goto ignore;
+	हाल HID_UP_MSVENDOR:
+		जाओ ignore;
 
-	case HID_UP_CUSTOM: /* Reported on Logitech and Apple USB keyboards */
+	हाल HID_UP_CUSTOM: /* Reported on Logitech and Apple USB keyboards */
 		set_bit(EV_REP, input->evbit);
-		goto ignore;
+		जाओ ignore;
 
-	case HID_UP_LOGIVENDOR:
-		/* intentional fallback */
-	case HID_UP_LOGIVENDOR2:
-		/* intentional fallback */
-	case HID_UP_LOGIVENDOR3:
-		goto ignore;
+	हाल HID_UP_LOGIVENDOR:
+		/* पूर्णांकentional fallback */
+	हाल HID_UP_LOGIVENDOR2:
+		/* पूर्णांकentional fallback */
+	हाल HID_UP_LOGIVENDOR3:
+		जाओ ignore;
 
-	case HID_UP_PID:
-		switch (usage->hid & HID_USAGE) {
-		case 0xa4: map_key_clear(BTN_DEAD);	break;
-		default: goto ignore;
-		}
-		break;
+	हाल HID_UP_PID:
+		चयन (usage->hid & HID_USAGE) अणु
+		हाल 0xa4: map_key_clear(BTN_DEAD);	अवरोध;
+		शेष: जाओ ignore;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 	unknown:
-		if (field->report_size == 1) {
-			if (field->report->type == HID_OUTPUT_REPORT) {
+		अगर (field->report_size == 1) अणु
+			अगर (field->report->type == HID_OUTPUT_REPORT) अणु
 				map_led(LED_MISC);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			map_key(BTN_MISC);
-			break;
-		}
-		if (field->flags & HID_MAIN_ITEM_RELATIVE) {
+			अवरोध;
+		पूर्ण
+		अगर (field->flags & HID_MAIN_ITEM_RELATIVE) अणु
 			map_rel(REL_MISC);
-			break;
-		}
-		map_abs(ABS_MISC);
-		break;
-	}
+			अवरोध;
+		पूर्ण
+		map_असल(ABS_MISC);
+		अवरोध;
+	पूर्ण
 
 mapped:
 	/* Mapping failed, bail out */
-	if (!bit)
-		return;
+	अगर (!bit)
+		वापस;
 
-	if (device->driver->input_mapped &&
+	अगर (device->driver->input_mapped &&
 	    device->driver->input_mapped(device, hidinput, field, usage,
-					 &bit, &max) < 0) {
+					 &bit, &max) < 0) अणु
 		/*
 		 * The driver indicated that no further generic handling
 		 * of the usage is desired.
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	set_bit(usage->type, input->evbit);
 
 	/*
 	 * This part is *really* controversial:
-	 * - HID aims at being generic so we should do our best to export
+	 * - HID aims at being generic so we should करो our best to export
 	 *   all incoming events
-	 * - HID describes what events are, so there is no reason for ABS_X
+	 * - HID describes what events are, so there is no reason क्रम ABS_X
 	 *   to be mapped to ABS_Y
-	 * - HID is using *_MISC+N as a default value, but nothing prevents
-	 *   *_MISC+N to overwrite a legitimate even, which confuses userspace
-	 *   (for instance ABS_MISC + 7 is ABS_MT_SLOT, which has a different
+	 * - HID is using *_MISC+N as a शेष value, but nothing prevents
+	 *   *_MISC+N to overग_लिखो a legitimate even, which confuses userspace
+	 *   (क्रम instance ABS_MISC + 7 is ABS_MT_SLOT, which has a dअगरferent
 	 *   processing)
 	 *
 	 * If devices still want to use this (at their own risk), they will
 	 * have to use the quirk HID_QUIRK_INCREMENT_USAGE_ON_DUPLICATE, but
-	 * the default should be a reliable mapping.
+	 * the शेष should be a reliable mapping.
 	 */
-	while (usage->code <= max && test_and_set_bit(usage->code, bit)) {
-		if (device->quirks & HID_QUIRK_INCREMENT_USAGE_ON_DUPLICATE) {
+	जबतक (usage->code <= max && test_and_set_bit(usage->code, bit)) अणु
+		अगर (device->quirks & HID_QUIRK_INCREMENT_USAGE_ON_DUPLICATE) अणु
 			usage->code = find_next_zero_bit(bit,
 							 max + 1,
 							 usage->code);
-		} else {
+		पूर्ण अन्यथा अणु
 			device->status |= HID_STAT_DUP_DETECTED;
-			goto ignore;
-		}
-	}
+			जाओ ignore;
+		पूर्ण
+	पूर्ण
 
-	if (usage->code > max)
-		goto ignore;
+	अगर (usage->code > max)
+		जाओ ignore;
 
-	if (usage->type == EV_ABS) {
+	अगर (usage->type == EV_ABS) अणु
 
-		int a = field->logical_minimum;
-		int b = field->logical_maximum;
+		पूर्णांक a = field->logical_minimum;
+		पूर्णांक b = field->logical_maximum;
 
-		if ((device->quirks & HID_QUIRK_BADPAD) && (usage->code == ABS_X || usage->code == ABS_Y)) {
+		अगर ((device->quirks & HID_QUIRK_BADPAD) && (usage->code == ABS_X || usage->code == ABS_Y)) अणु
 			a = field->logical_minimum = 0;
 			b = field->logical_maximum = 255;
-		}
+		पूर्ण
 
-		if (field->application == HID_GD_GAMEPAD || field->application == HID_GD_JOYSTICK)
-			input_set_abs_params(input, usage->code, a, b, (b - a) >> 8, (b - a) >> 4);
-		else	input_set_abs_params(input, usage->code, a, b, 0, 0);
+		अगर (field->application == HID_GD_GAMEPAD || field->application == HID_GD_JOYSTICK)
+			input_set_असल_params(input, usage->code, a, b, (b - a) >> 8, (b - a) >> 4);
+		अन्यथा	input_set_असल_params(input, usage->code, a, b, 0, 0);
 
-		input_abs_set_res(input, usage->code,
-				  hidinput_calc_abs_res(field, usage->code));
+		input_असल_set_res(input, usage->code,
+				  hidinput_calc_असल_res(field, usage->code));
 
-		/* use a larger default input buffer for MT devices */
-		if (usage->code == ABS_MT_POSITION_X && input->hint_events_per_packet == 0)
+		/* use a larger शेष input buffer क्रम MT devices */
+		अगर (usage->code == ABS_MT_POSITION_X && input->hपूर्णांक_events_per_packet == 0)
 			input_set_events_per_packet(input, 60);
-	}
+	पूर्ण
 
-	if (usage->type == EV_ABS &&
-	    (usage->hat_min < usage->hat_max || usage->hat_dir)) {
-		int i;
-		for (i = usage->code; i < usage->code + 2 && i <= max; i++) {
-			input_set_abs_params(input, i, -1, 1, 0, 0);
-			set_bit(i, input->absbit);
-		}
-		if (usage->hat_dir && !field->dpad)
+	अगर (usage->type == EV_ABS &&
+	    (usage->hat_min < usage->hat_max || usage->hat_dir)) अणु
+		पूर्णांक i;
+		क्रम (i = usage->code; i < usage->code + 2 && i <= max; i++) अणु
+			input_set_असल_params(input, i, -1, 1, 0, 0);
+			set_bit(i, input->असलbit);
+		पूर्ण
+		अगर (usage->hat_dir && !field->dpad)
 			field->dpad = usage->code;
-	}
+	पूर्ण
 
-	/* for those devices which produce Consumer volume usage as relative,
-	 * we emulate pressing volumeup/volumedown appropriate number of times
+	/* क्रम those devices which produce Consumer volume usage as relative,
+	 * we emulate pressing volumeup/volumeकरोwn appropriate number of बार
 	 * in hidinput_hid_event()
 	 */
-	if ((usage->type == EV_ABS) && (field->flags & HID_MAIN_ITEM_RELATIVE) &&
-			(usage->code == ABS_VOLUME)) {
+	अगर ((usage->type == EV_ABS) && (field->flags & HID_MAIN_ITEM_RELATIVE) &&
+			(usage->code == ABS_VOLUME)) अणु
 		set_bit(KEY_VOLUMEUP, input->keybit);
 		set_bit(KEY_VOLUMEDOWN, input->keybit);
-	}
+	पूर्ण
 
-	if (usage->type == EV_KEY) {
+	अगर (usage->type == EV_KEY) अणु
 		set_bit(EV_MSC, input->evbit);
 		set_bit(MSC_SCAN, input->mscbit);
-	}
+	पूर्ण
 
-	return;
+	वापस;
 
 ignore:
 	usage->type = 0;
 	usage->code = 0;
-}
+पूर्ण
 
-static void hidinput_handle_scroll(struct hid_usage *usage,
-				   struct input_dev *input,
+अटल व्योम hidinput_handle_scroll(काष्ठा hid_usage *usage,
+				   काष्ठा input_dev *input,
 				   __s32 value)
-{
-	int code;
-	int hi_res, lo_res;
+अणु
+	पूर्णांक code;
+	पूर्णांक hi_res, lo_res;
 
-	if (value == 0)
-		return;
+	अगर (value == 0)
+		वापस;
 
-	if (usage->code == REL_WHEEL_HI_RES)
+	अगर (usage->code == REL_WHEEL_HI_RES)
 		code = REL_WHEEL;
-	else
+	अन्यथा
 		code = REL_HWHEEL;
 
 	/*
-	 * Windows reports one wheel click as value 120. Where a high-res
+	 * Winकरोws reports one wheel click as value 120. Where a high-res
 	 * scroll wheel is present, a fraction of 120 is reported instead.
-	 * Our REL_WHEEL_HI_RES axis does the same because all HW must
+	 * Our REL_WHEEL_HI_RES axis करोes the same because all HW must
 	 * adhere to the 120 expectation.
 	 */
 	hi_res = value * 120/usage->resolution_multiplier;
 
 	usage->wheel_accumulated += hi_res;
 	lo_res = usage->wheel_accumulated/120;
-	if (lo_res)
+	अगर (lo_res)
 		usage->wheel_accumulated -= lo_res * 120;
 
 	input_event(input, EV_REL, code, lo_res);
 	input_event(input, EV_REL, usage->code, hi_res);
-}
+पूर्ण
 
-void hidinput_hid_event(struct hid_device *hid, struct hid_field *field, struct hid_usage *usage, __s32 value)
-{
-	struct input_dev *input;
-	unsigned *quirks = &hid->quirks;
+व्योम hidinput_hid_event(काष्ठा hid_device *hid, काष्ठा hid_field *field, काष्ठा hid_usage *usage, __s32 value)
+अणु
+	काष्ठा input_dev *input;
+	अचिन्हित *quirks = &hid->quirks;
 
-	if (!usage->type)
-		return;
+	अगर (!usage->type)
+		वापस;
 
-	if (usage->type == EV_PWR) {
+	अगर (usage->type == EV_PWR) अणु
 		hidinput_update_battery(hid, value);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (!field->hidinput)
-		return;
+	अगर (!field->hidinput)
+		वापस;
 
 	input = field->hidinput->input;
 
-	if (usage->hat_min < usage->hat_max || usage->hat_dir) {
-		int hat_dir = usage->hat_dir;
-		if (!hat_dir)
+	अगर (usage->hat_min < usage->hat_max || usage->hat_dir) अणु
+		पूर्णांक hat_dir = usage->hat_dir;
+		अगर (!hat_dir)
 			hat_dir = (value - usage->hat_min) * 8 / (usage->hat_max - usage->hat_min + 1) + 1;
-		if (hat_dir < 0 || hat_dir > 8) hat_dir = 0;
+		अगर (hat_dir < 0 || hat_dir > 8) hat_dir = 0;
 		input_event(input, usage->type, usage->code    , hid_hat_to_axis[hat_dir].x);
 		input_event(input, usage->type, usage->code + 1, hid_hat_to_axis[hat_dir].y);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (usage->hid == (HID_UP_DIGITIZER | 0x003c)) { /* Invert */
+	अगर (usage->hid == (HID_UP_DIGITIZER | 0x003c)) अणु /* Invert */
 		*quirks = value ? (*quirks | HID_QUIRK_INVERT) : (*quirks & ~HID_QUIRK_INVERT);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (usage->hid == (HID_UP_DIGITIZER | 0x0032)) { /* InRange */
-		if (value) {
+	अगर (usage->hid == (HID_UP_DIGITIZER | 0x0032)) अणु /* InRange */
+		अगर (value) अणु
 			input_event(input, usage->type, (*quirks & HID_QUIRK_INVERT) ? BTN_TOOL_RUBBER : usage->code, 1);
-			return;
-		}
+			वापस;
+		पूर्ण
 		input_event(input, usage->type, usage->code, 0);
 		input_event(input, usage->type, BTN_TOOL_RUBBER, 0);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (usage->hid == (HID_UP_DIGITIZER | 0x0030) && (*quirks & HID_QUIRK_NOTOUCH)) { /* Pressure */
-		int a = field->logical_minimum;
-		int b = field->logical_maximum;
+	अगर (usage->hid == (HID_UP_DIGITIZER | 0x0030) && (*quirks & HID_QUIRK_NOTOUCH)) अणु /* Pressure */
+		पूर्णांक a = field->logical_minimum;
+		पूर्णांक b = field->logical_maximum;
 		input_event(input, EV_KEY, BTN_TOUCH, value > a + ((b - a) >> 3));
-	}
+	पूर्ण
 
-	if (usage->hid == (HID_UP_PID | 0x83UL)) { /* Simultaneous Effects Max */
+	अगर (usage->hid == (HID_UP_PID | 0x83UL)) अणु /* Simultaneous Effects Max */
 		dbg_hid("Maximum Effects - %d\n",value);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (usage->hid == (HID_UP_PID | 0x7fUL)) {
+	अगर (usage->hid == (HID_UP_PID | 0x7fUL)) अणु
 		dbg_hid("PID Pool Report\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if ((usage->type == EV_KEY) && (usage->code == 0)) /* Key 0 is "unassigned", not KEY_UNKNOWN */
-		return;
+	अगर ((usage->type == EV_KEY) && (usage->code == 0)) /* Key 0 is "unassigned", not KEY_UNKNOWN */
+		वापस;
 
-	if ((usage->type == EV_REL) && (usage->code == REL_WHEEL_HI_RES ||
-					usage->code == REL_HWHEEL_HI_RES)) {
+	अगर ((usage->type == EV_REL) && (usage->code == REL_WHEEL_HI_RES ||
+					usage->code == REL_HWHEEL_HI_RES)) अणु
 		hidinput_handle_scroll(usage, input, value);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if ((usage->type == EV_ABS) && (field->flags & HID_MAIN_ITEM_RELATIVE) &&
-			(usage->code == ABS_VOLUME)) {
-		int count = abs(value);
-		int direction = value > 0 ? KEY_VOLUMEUP : KEY_VOLUMEDOWN;
-		int i;
+	अगर ((usage->type == EV_ABS) && (field->flags & HID_MAIN_ITEM_RELATIVE) &&
+			(usage->code == ABS_VOLUME)) अणु
+		पूर्णांक count = असल(value);
+		पूर्णांक direction = value > 0 ? KEY_VOLUMEUP : KEY_VOLUMEDOWN;
+		पूर्णांक i;
 
-		for (i = 0; i < count; i++) {
+		क्रम (i = 0; i < count; i++) अणु
 			input_event(input, EV_KEY, direction, 1);
 			input_sync(input);
 			input_event(input, EV_KEY, direction, 0);
 			input_sync(input);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
 	/*
-	 * Ignore out-of-range values as per HID specification,
-	 * section 5.10 and 6.2.25, when NULL state bit is present.
+	 * Ignore out-of-range values as per HID specअगरication,
+	 * section 5.10 and 6.2.25, when शून्य state bit is present.
 	 * When it's not, clamp the value to match Microsoft's input
 	 * driver as mentioned in "Required HID usages for digitizers":
-	 * https://msdn.microsoft.com/en-us/library/windows/hardware/dn672278(v=vs.85).asp
+	 * https://msdn.microsoft.com/en-us/library/winकरोws/hardware/dn672278(v=vs.85).asp
 	 *
-	 * The logical_minimum < logical_maximum check is done so that we
-	 * don't unintentionally discard values sent by devices which
-	 * don't specify logical min and max.
+	 * The logical_minimum < logical_maximum check is करोne so that we
+	 * करोn't unपूर्णांकentionally discard values sent by devices which
+	 * करोn't specअगरy logical min and max.
 	 */
-	if ((field->flags & HID_MAIN_ITEM_VARIABLE) &&
-	    (field->logical_minimum < field->logical_maximum)) {
-		if (field->flags & HID_MAIN_ITEM_NULL_STATE &&
+	अगर ((field->flags & HID_MAIN_ITEM_VARIABLE) &&
+	    (field->logical_minimum < field->logical_maximum)) अणु
+		अगर (field->flags & HID_MAIN_ITEM_शून्य_STATE &&
 		    (value < field->logical_minimum ||
-		     value > field->logical_maximum)) {
+		     value > field->logical_maximum)) अणु
 			dbg_hid("Ignoring out-of-range value %x\n", value);
-			return;
-		}
+			वापस;
+		पूर्ण
 		value = clamp(value,
 			      field->logical_minimum,
 			      field->logical_maximum);
-	}
+	पूर्ण
 
 	/*
-	 * Ignore reports for absolute data if the data didn't change. This is
+	 * Ignore reports क्रम असलolute data अगर the data didn't change. This is
 	 * not only an optimization but also fixes 'dead' key reports. Some
-	 * RollOver implementations for localized keys (like BACKSLASH/PIPE; HID
+	 * RollOver implementations क्रम localized keys (like BACKSLASH/PIPE; HID
 	 * 0x31 and 0x32) report multiple keys, even though a localized keyboard
 	 * can only have one of them physically available. The 'dead' keys
-	 * report constant 0. As all map to the same keycode, they'd confuse
+	 * report स्थिरant 0. As all map to the same keycode, they'd confuse
 	 * the input layer. If we filter the 'dead' keys on the HID level, we
-	 * skip the keycode translation and only forward real events.
+	 * skip the keycode translation and only क्रमward real events.
 	 */
-	if (!(field->flags & (HID_MAIN_ITEM_RELATIVE |
+	अगर (!(field->flags & (HID_MAIN_ITEM_RELATIVE |
 	                      HID_MAIN_ITEM_BUFFERED_BYTE)) &&
 			      (field->flags & HID_MAIN_ITEM_VARIABLE) &&
 	    usage->usage_index < field->maxusage &&
 	    value == field->value[usage->usage_index])
-		return;
+		वापस;
 
-	/* report the usage code as scancode if the key status has changed */
-	if (usage->type == EV_KEY &&
+	/* report the usage code as scancode अगर the key status has changed */
+	अगर (usage->type == EV_KEY &&
 	    (!test_bit(usage->code, input->key)) == value)
 		input_event(input, EV_MSC, MSC_SCAN, usage->hid);
 
 	input_event(input, usage->type, usage->code, value);
 
-	if ((field->flags & HID_MAIN_ITEM_RELATIVE) &&
-	    usage->type == EV_KEY && value) {
+	अगर ((field->flags & HID_MAIN_ITEM_RELATIVE) &&
+	    usage->type == EV_KEY && value) अणु
 		input_sync(input);
 		input_event(input, usage->type, usage->code, 0);
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hidinput_report_event(struct hid_device *hid, struct hid_report *report)
-{
-	struct hid_input *hidinput;
+व्योम hidinput_report_event(काष्ठा hid_device *hid, काष्ठा hid_report *report)
+अणु
+	काष्ठा hid_input *hidinput;
 
-	if (hid->quirks & HID_QUIRK_NO_INPUT_SYNC)
-		return;
+	अगर (hid->quirks & HID_QUIRK_NO_INPUT_SYNC)
+		वापस;
 
-	list_for_each_entry(hidinput, &hid->inputs, list)
+	list_क्रम_each_entry(hidinput, &hid->inमाला_दो, list)
 		input_sync(hidinput->input);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(hidinput_report_event);
 
-int hidinput_find_field(struct hid_device *hid, unsigned int type, unsigned int code, struct hid_field **field)
-{
-	struct hid_report *report;
-	int i, j;
+पूर्णांक hidinput_find_field(काष्ठा hid_device *hid, अचिन्हित पूर्णांक type, अचिन्हित पूर्णांक code, काष्ठा hid_field **field)
+अणु
+	काष्ठा hid_report *report;
+	पूर्णांक i, j;
 
-	list_for_each_entry(report, &hid->report_enum[HID_OUTPUT_REPORT].report_list, list) {
-		for (i = 0; i < report->maxfield; i++) {
+	list_क्रम_each_entry(report, &hid->report_क्रमागत[HID_OUTPUT_REPORT].report_list, list) अणु
+		क्रम (i = 0; i < report->maxfield; i++) अणु
 			*field = report->field[i];
-			for (j = 0; j < (*field)->maxusage; j++)
-				if ((*field)->usage[j].type == type && (*field)->usage[j].code == code)
-					return j;
-		}
-	}
-	return -1;
-}
+			क्रम (j = 0; j < (*field)->maxusage; j++)
+				अगर ((*field)->usage[j].type == type && (*field)->usage[j].code == code)
+					वापस j;
+		पूर्ण
+	पूर्ण
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL_GPL(hidinput_find_field);
 
-struct hid_field *hidinput_get_led_field(struct hid_device *hid)
-{
-	struct hid_report *report;
-	struct hid_field *field;
-	int i, j;
+काष्ठा hid_field *hidinput_get_led_field(काष्ठा hid_device *hid)
+अणु
+	काष्ठा hid_report *report;
+	काष्ठा hid_field *field;
+	पूर्णांक i, j;
 
-	list_for_each_entry(report,
-			    &hid->report_enum[HID_OUTPUT_REPORT].report_list,
-			    list) {
-		for (i = 0; i < report->maxfield; i++) {
+	list_क्रम_each_entry(report,
+			    &hid->report_क्रमागत[HID_OUTPUT_REPORT].report_list,
+			    list) अणु
+		क्रम (i = 0; i < report->maxfield; i++) अणु
 			field = report->field[i];
-			for (j = 0; j < field->maxusage; j++)
-				if (field->usage[j].type == EV_LED)
-					return field;
-		}
-	}
-	return NULL;
-}
+			क्रम (j = 0; j < field->maxusage; j++)
+				अगर (field->usage[j].type == EV_LED)
+					वापस field;
+		पूर्ण
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 EXPORT_SYMBOL_GPL(hidinput_get_led_field);
 
-unsigned int hidinput_count_leds(struct hid_device *hid)
-{
-	struct hid_report *report;
-	struct hid_field *field;
-	int i, j;
-	unsigned int count = 0;
+अचिन्हित पूर्णांक hidinput_count_leds(काष्ठा hid_device *hid)
+अणु
+	काष्ठा hid_report *report;
+	काष्ठा hid_field *field;
+	पूर्णांक i, j;
+	अचिन्हित पूर्णांक count = 0;
 
-	list_for_each_entry(report,
-			    &hid->report_enum[HID_OUTPUT_REPORT].report_list,
-			    list) {
-		for (i = 0; i < report->maxfield; i++) {
+	list_क्रम_each_entry(report,
+			    &hid->report_क्रमागत[HID_OUTPUT_REPORT].report_list,
+			    list) अणु
+		क्रम (i = 0; i < report->maxfield; i++) अणु
 			field = report->field[i];
-			for (j = 0; j < field->maxusage; j++)
-				if (field->usage[j].type == EV_LED &&
+			क्रम (j = 0; j < field->maxusage; j++)
+				अगर (field->usage[j].type == EV_LED &&
 				    field->value[j])
 					count += 1;
-		}
-	}
-	return count;
-}
+		पूर्ण
+	पूर्ण
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(hidinput_count_leds);
 
-static void hidinput_led_worker(struct work_struct *work)
-{
-	struct hid_device *hid = container_of(work, struct hid_device,
+अटल व्योम hidinput_led_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा hid_device *hid = container_of(work, काष्ठा hid_device,
 					      led_work);
-	struct hid_field *field;
-	struct hid_report *report;
-	int ret;
+	काष्ठा hid_field *field;
+	काष्ठा hid_report *report;
+	पूर्णांक ret;
 	u32 len;
 	__u8 *buf;
 
 	field = hidinput_get_led_field(hid);
-	if (!field)
-		return;
+	अगर (!field)
+		वापस;
 
 	/*
 	 * field->report is accessed unlocked regarding HID core. So there might
 	 * be another incoming SET-LED request from user-space, which changes
-	 * the LED state while we assemble our outgoing buffer. However, this
-	 * doesn't matter as hid_output_report() correctly converts it into a
-	 * boolean value no matter what information is currently set on the LED
+	 * the LED state जबतक we assemble our outgoing buffer. However, this
+	 * करोesn't matter as hid_output_report() correctly converts it पूर्णांकo a
+	 * boolean value no matter what inक्रमmation is currently set on the LED
 	 * field (even garbage). So the remote device will always get a valid
 	 * request.
-	 * And in case we send a wrong value, a next led worker is spawned
-	 * for every SET-LED request so the following worker will send the
+	 * And in हाल we send a wrong value, a next led worker is spawned
+	 * क्रम every SET-LED request so the following worker will send the
 	 * correct value, guaranteed!
 	 */
 
 	report = field->report;
 
-	/* use custom SET_REPORT request if possible (asynchronous) */
-	if (hid->ll_driver->request)
-		return hid->ll_driver->request(hid, report, HID_REQ_SET_REPORT);
+	/* use custom SET_REPORT request अगर possible (asynchronous) */
+	अगर (hid->ll_driver->request)
+		वापस hid->ll_driver->request(hid, report, HID_REQ_SET_REPORT);
 
 	/* fall back to generic raw-output-report */
 	len = hid_report_len(report);
 	buf = hid_alloc_report_buf(report, GFP_KERNEL);
-	if (!buf)
-		return;
+	अगर (!buf)
+		वापस;
 
 	hid_output_report(report, buf);
 	/* synchronous output report */
 	ret = hid_hw_output_report(hid, buf, len);
-	if (ret == -ENOSYS)
+	अगर (ret == -ENOSYS)
 		hid_hw_raw_request(hid, report->id, buf, len, HID_OUTPUT_REPORT,
 				HID_REQ_SET_REPORT);
-	kfree(buf);
-}
+	kमुक्त(buf);
+पूर्ण
 
-static int hidinput_input_event(struct input_dev *dev, unsigned int type,
-				unsigned int code, int value)
-{
-	struct hid_device *hid = input_get_drvdata(dev);
-	struct hid_field *field;
-	int offset;
+अटल पूर्णांक hidinput_input_event(काष्ठा input_dev *dev, अचिन्हित पूर्णांक type,
+				अचिन्हित पूर्णांक code, पूर्णांक value)
+अणु
+	काष्ठा hid_device *hid = input_get_drvdata(dev);
+	काष्ठा hid_field *field;
+	पूर्णांक offset;
 
-	if (type == EV_FF)
-		return input_ff_event(dev, type, code, value);
+	अगर (type == EV_FF)
+		वापस input_ff_event(dev, type, code, value);
 
-	if (type != EV_LED)
-		return -1;
+	अगर (type != EV_LED)
+		वापस -1;
 
-	if ((offset = hidinput_find_field(hid, type, code, &field)) == -1) {
+	अगर ((offset = hidinput_find_field(hid, type, code, &field)) == -1) अणु
 		hid_warn(dev, "event field not found\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
 	hid_set_field(field, offset, value);
 
 	schedule_work(&hid->led_work);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int hidinput_open(struct input_dev *dev)
-{
-	struct hid_device *hid = input_get_drvdata(dev);
+अटल पूर्णांक hidinput_खोलो(काष्ठा input_dev *dev)
+अणु
+	काष्ठा hid_device *hid = input_get_drvdata(dev);
 
-	return hid_hw_open(hid);
-}
+	वापस hid_hw_खोलो(hid);
+पूर्ण
 
-static void hidinput_close(struct input_dev *dev)
-{
-	struct hid_device *hid = input_get_drvdata(dev);
+अटल व्योम hidinput_बंद(काष्ठा input_dev *dev)
+अणु
+	काष्ठा hid_device *hid = input_get_drvdata(dev);
 
-	hid_hw_close(hid);
-}
+	hid_hw_बंद(hid);
+पूर्ण
 
-static bool __hidinput_change_resolution_multipliers(struct hid_device *hid,
-		struct hid_report *report, bool use_logical_max)
-{
-	struct hid_usage *usage;
+अटल bool __hidinput_change_resolution_multipliers(काष्ठा hid_device *hid,
+		काष्ठा hid_report *report, bool use_logical_max)
+अणु
+	काष्ठा hid_usage *usage;
 	bool update_needed = false;
 	bool get_report_completed = false;
-	int i, j;
+	पूर्णांक i, j;
 
-	if (report->maxfield == 0)
-		return false;
+	अगर (report->maxfield == 0)
+		वापस false;
 
-	for (i = 0; i < report->maxfield; i++) {
+	क्रम (i = 0; i < report->maxfield; i++) अणु
 		__s32 value = use_logical_max ?
 			      report->field[i]->logical_maximum :
 			      report->field[i]->logical_minimum;
 
-		/* There is no good reason for a Resolution
+		/* There is no good reason क्रम a Resolution
 		 * Multiplier to have a count other than 1.
-		 * Ignore that case.
+		 * Ignore that हाल.
 		 */
-		if (report->field[i]->report_count != 1)
-			continue;
+		अगर (report->field[i]->report_count != 1)
+			जारी;
 
-		for (j = 0; j < report->field[i]->maxusage; j++) {
+		क्रम (j = 0; j < report->field[i]->maxusage; j++) अणु
 			usage = &report->field[i]->usage[j];
 
-			if (usage->hid != HID_GD_RESOLUTION_MULTIPLIER)
-				continue;
+			अगर (usage->hid != HID_GD_RESOLUTION_MULTIPLIER)
+				जारी;
 
 			/*
 			 * If we have more than one feature within this
 			 * report we need to fill in the bits from the
-			 * others before we can overwrite the ones for the
+			 * others beक्रमe we can overग_लिखो the ones क्रम the
 			 * Resolution Multiplier.
 			 *
-			 * But if we're not allowed to read from the device,
+			 * But अगर we're not allowed to पढ़ो from the device,
 			 * we just bail. Such a device should not exist
 			 * anyway.
 			 */
-			if (!get_report_completed && report->maxfield > 1) {
-				if (hid->quirks & HID_QUIRK_NO_INIT_REPORTS)
-					return update_needed;
+			अगर (!get_report_completed && report->maxfield > 1) अणु
+				अगर (hid->quirks & HID_QUIRK_NO_INIT_REPORTS)
+					वापस update_needed;
 
 				hid_hw_request(hid, report, HID_REQ_GET_REPORT);
-				hid_hw_wait(hid);
+				hid_hw_रुको(hid);
 				get_report_completed = true;
-			}
+			पूर्ण
 
 			report->field[i]->value[j] = value;
 			update_needed = true;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return update_needed;
-}
+	वापस update_needed;
+पूर्ण
 
-static void hidinput_change_resolution_multipliers(struct hid_device *hid)
-{
-	struct hid_report_enum *rep_enum;
-	struct hid_report *rep;
-	int ret;
+अटल व्योम hidinput_change_resolution_multipliers(काष्ठा hid_device *hid)
+अणु
+	काष्ठा hid_report_क्रमागत *rep_क्रमागत;
+	काष्ठा hid_report *rep;
+	पूर्णांक ret;
 
-	rep_enum = &hid->report_enum[HID_FEATURE_REPORT];
-	list_for_each_entry(rep, &rep_enum->report_list, list) {
+	rep_क्रमागत = &hid->report_क्रमागत[HID_FEATURE_REPORT];
+	list_क्रम_each_entry(rep, &rep_क्रमागत->report_list, list) अणु
 		bool update_needed = __hidinput_change_resolution_multipliers(hid,
 								     rep, true);
 
-		if (update_needed) {
+		अगर (update_needed) अणु
 			ret = __hid_request(hid, rep, HID_REQ_SET_REPORT);
-			if (ret) {
+			अगर (ret) अणु
 				__hidinput_change_resolution_multipliers(hid,
 								    rep, false);
-				return;
-			}
-		}
-	}
+				वापस;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	/* refresh our structs */
+	/* refresh our काष्ठाs */
 	hid_setup_resolution_multiplier(hid);
-}
+पूर्ण
 
-static void report_features(struct hid_device *hid)
-{
-	struct hid_driver *drv = hid->driver;
-	struct hid_report_enum *rep_enum;
-	struct hid_report *rep;
-	struct hid_usage *usage;
-	int i, j;
+अटल व्योम report_features(काष्ठा hid_device *hid)
+अणु
+	काष्ठा hid_driver *drv = hid->driver;
+	काष्ठा hid_report_क्रमागत *rep_क्रमागत;
+	काष्ठा hid_report *rep;
+	काष्ठा hid_usage *usage;
+	पूर्णांक i, j;
 
-	rep_enum = &hid->report_enum[HID_FEATURE_REPORT];
-	list_for_each_entry(rep, &rep_enum->report_list, list)
-		for (i = 0; i < rep->maxfield; i++) {
-			/* Ignore if report count is out of bounds. */
-			if (rep->field[i]->report_count < 1)
-				continue;
+	rep_क्रमागत = &hid->report_क्रमागत[HID_FEATURE_REPORT];
+	list_क्रम_each_entry(rep, &rep_क्रमागत->report_list, list)
+		क्रम (i = 0; i < rep->maxfield; i++) अणु
+			/* Ignore अगर report count is out of bounds. */
+			अगर (rep->field[i]->report_count < 1)
+				जारी;
 
-			for (j = 0; j < rep->field[i]->maxusage; j++) {
+			क्रम (j = 0; j < rep->field[i]->maxusage; j++) अणु
 				usage = &rep->field[i]->usage[j];
 
-				/* Verify if Battery Strength feature is available */
-				if (usage->hid == HID_DC_BATTERYSTRENGTH)
+				/* Verअगरy अगर Battery Strength feature is available */
+				अगर (usage->hid == HID_DC_BATTERYSTRENGTH)
 					hidinput_setup_battery(hid, HID_FEATURE_REPORT,
 							       rep->field[i], false);
 
-				if (drv->feature_mapping)
+				अगर (drv->feature_mapping)
 					drv->feature_mapping(hid, rep->field[i], usage);
-			}
-		}
-}
+			पूर्ण
+		पूर्ण
+पूर्ण
 
-static struct hid_input *hidinput_allocate(struct hid_device *hid,
-					   unsigned int application)
-{
-	struct hid_input *hidinput = kzalloc(sizeof(*hidinput), GFP_KERNEL);
-	struct input_dev *input_dev = input_allocate_device();
-	const char *suffix = NULL;
-	size_t suffix_len, name_len;
+अटल काष्ठा hid_input *hidinput_allocate(काष्ठा hid_device *hid,
+					   अचिन्हित पूर्णांक application)
+अणु
+	काष्ठा hid_input *hidinput = kzalloc(माप(*hidinput), GFP_KERNEL);
+	काष्ठा input_dev *input_dev = input_allocate_device();
+	स्थिर अक्षर *suffix = शून्य;
+	माप_प्रकार suffix_len, name_len;
 
-	if (!hidinput || !input_dev)
-		goto fail;
+	अगर (!hidinput || !input_dev)
+		जाओ fail;
 
-	if ((hid->quirks & HID_QUIRK_INPUT_PER_APP) &&
-	    hid->maxapplication > 1) {
-		switch (application) {
-		case HID_GD_KEYBOARD:
+	अगर ((hid->quirks & HID_QUIRK_INPUT_PER_APP) &&
+	    hid->maxapplication > 1) अणु
+		चयन (application) अणु
+		हाल HID_GD_KEYBOARD:
 			suffix = "Keyboard";
-			break;
-		case HID_GD_KEYPAD:
+			अवरोध;
+		हाल HID_GD_KEYPAD:
 			suffix = "Keypad";
-			break;
-		case HID_GD_MOUSE:
+			अवरोध;
+		हाल HID_GD_MOUSE:
 			suffix = "Mouse";
-			break;
-		case HID_DG_STYLUS:
+			अवरोध;
+		हाल HID_DG_STYLUS:
 			suffix = "Pen";
-			break;
-		case HID_DG_TOUCHSCREEN:
+			अवरोध;
+		हाल HID_DG_TOUCHSCREEN:
 			suffix = "Touchscreen";
-			break;
-		case HID_DG_TOUCHPAD:
+			अवरोध;
+		हाल HID_DG_TOUCHPAD:
 			suffix = "Touchpad";
-			break;
-		case HID_GD_SYSTEM_CONTROL:
+			अवरोध;
+		हाल HID_GD_SYSTEM_CONTROL:
 			suffix = "System Control";
-			break;
-		case HID_CP_CONSUMER_CONTROL:
+			अवरोध;
+		हाल HID_CP_CONSUMER_CONTROL:
 			suffix = "Consumer Control";
-			break;
-		case HID_GD_WIRELESS_RADIO_CTLS:
+			अवरोध;
+		हाल HID_GD_WIRELESS_RADIO_CTLS:
 			suffix = "Wireless Radio Control";
-			break;
-		case HID_GD_SYSTEM_MULTIAXIS:
+			अवरोध;
+		हाल HID_GD_SYSTEM_MULTIAXIS:
 			suffix = "System Multi Axis";
-			break;
-		default:
-			break;
-		}
-	}
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (suffix) {
-		name_len = strlen(hid->name);
-		suffix_len = strlen(suffix);
-		if ((name_len < suffix_len) ||
-		    strcmp(hid->name + name_len - suffix_len, suffix)) {
-			hidinput->name = kasprintf(GFP_KERNEL, "%s %s",
+	अगर (suffix) अणु
+		name_len = म_माप(hid->name);
+		suffix_len = म_माप(suffix);
+		अगर ((name_len < suffix_len) ||
+		    म_भेद(hid->name + name_len - suffix_len, suffix)) अणु
+			hidinput->name = kaप्र_लिखो(GFP_KERNEL, "%s %s",
 						   hid->name, suffix);
-			if (!hidinput->name)
-				goto fail;
-		}
-	}
+			अगर (!hidinput->name)
+				जाओ fail;
+		पूर्ण
+	पूर्ण
 
 	input_set_drvdata(input_dev, hid);
 	input_dev->event = hidinput_input_event;
-	input_dev->open = hidinput_open;
-	input_dev->close = hidinput_close;
+	input_dev->खोलो = hidinput_खोलो;
+	input_dev->बंद = hidinput_बंद;
 	input_dev->setkeycode = hidinput_setkeycode;
 	input_dev->getkeycode = hidinput_getkeycode;
 
@@ -1765,179 +1766,179 @@ static struct hid_input *hidinput_allocate(struct hid_device *hid,
 	input_dev->phys = hid->phys;
 	input_dev->uniq = hid->uniq;
 	input_dev->id.bustype = hid->bus;
-	input_dev->id.vendor  = hid->vendor;
+	input_dev->id.venकरोr  = hid->venकरोr;
 	input_dev->id.product = hid->product;
 	input_dev->id.version = hid->version;
 	input_dev->dev.parent = &hid->dev;
 
 	hidinput->input = input_dev;
 	hidinput->application = application;
-	list_add_tail(&hidinput->list, &hid->inputs);
+	list_add_tail(&hidinput->list, &hid->inमाला_दो);
 
 	INIT_LIST_HEAD(&hidinput->reports);
 
-	return hidinput;
+	वापस hidinput;
 
 fail:
-	kfree(hidinput);
-	input_free_device(input_dev);
+	kमुक्त(hidinput);
+	input_मुक्त_device(input_dev);
 	hid_err(hid, "Out of memory during hid input probe\n");
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static bool hidinput_has_been_populated(struct hid_input *hidinput)
-{
-	int i;
-	unsigned long r = 0;
+अटल bool hidinput_has_been_populated(काष्ठा hid_input *hidinput)
+अणु
+	पूर्णांक i;
+	अचिन्हित दीर्घ r = 0;
 
-	for (i = 0; i < BITS_TO_LONGS(EV_CNT); i++)
+	क्रम (i = 0; i < BITS_TO_LONGS(EV_CNT); i++)
 		r |= hidinput->input->evbit[i];
 
-	for (i = 0; i < BITS_TO_LONGS(KEY_CNT); i++)
+	क्रम (i = 0; i < BITS_TO_LONGS(KEY_CNT); i++)
 		r |= hidinput->input->keybit[i];
 
-	for (i = 0; i < BITS_TO_LONGS(REL_CNT); i++)
+	क्रम (i = 0; i < BITS_TO_LONGS(REL_CNT); i++)
 		r |= hidinput->input->relbit[i];
 
-	for (i = 0; i < BITS_TO_LONGS(ABS_CNT); i++)
-		r |= hidinput->input->absbit[i];
+	क्रम (i = 0; i < BITS_TO_LONGS(ABS_CNT); i++)
+		r |= hidinput->input->असलbit[i];
 
-	for (i = 0; i < BITS_TO_LONGS(MSC_CNT); i++)
+	क्रम (i = 0; i < BITS_TO_LONGS(MSC_CNT); i++)
 		r |= hidinput->input->mscbit[i];
 
-	for (i = 0; i < BITS_TO_LONGS(LED_CNT); i++)
+	क्रम (i = 0; i < BITS_TO_LONGS(LED_CNT); i++)
 		r |= hidinput->input->ledbit[i];
 
-	for (i = 0; i < BITS_TO_LONGS(SND_CNT); i++)
+	क्रम (i = 0; i < BITS_TO_LONGS(SND_CNT); i++)
 		r |= hidinput->input->sndbit[i];
 
-	for (i = 0; i < BITS_TO_LONGS(FF_CNT); i++)
+	क्रम (i = 0; i < BITS_TO_LONGS(FF_CNT); i++)
 		r |= hidinput->input->ffbit[i];
 
-	for (i = 0; i < BITS_TO_LONGS(SW_CNT); i++)
+	क्रम (i = 0; i < BITS_TO_LONGS(SW_CNT); i++)
 		r |= hidinput->input->swbit[i];
 
-	return !!r;
-}
+	वापस !!r;
+पूर्ण
 
-static void hidinput_cleanup_hidinput(struct hid_device *hid,
-		struct hid_input *hidinput)
-{
-	struct hid_report *report;
-	int i, k;
+अटल व्योम hidinput_cleanup_hidinput(काष्ठा hid_device *hid,
+		काष्ठा hid_input *hidinput)
+अणु
+	काष्ठा hid_report *report;
+	पूर्णांक i, k;
 
 	list_del(&hidinput->list);
-	input_free_device(hidinput->input);
-	kfree(hidinput->name);
+	input_मुक्त_device(hidinput->input);
+	kमुक्त(hidinput->name);
 
-	for (k = HID_INPUT_REPORT; k <= HID_OUTPUT_REPORT; k++) {
-		if (k == HID_OUTPUT_REPORT &&
+	क्रम (k = HID_INPUT_REPORT; k <= HID_OUTPUT_REPORT; k++) अणु
+		अगर (k == HID_OUTPUT_REPORT &&
 			hid->quirks & HID_QUIRK_SKIP_OUTPUT_REPORTS)
-			continue;
+			जारी;
 
-		list_for_each_entry(report, &hid->report_enum[k].report_list,
-				    list) {
+		list_क्रम_each_entry(report, &hid->report_क्रमागत[k].report_list,
+				    list) अणु
 
-			for (i = 0; i < report->maxfield; i++)
-				if (report->field[i]->hidinput == hidinput)
-					report->field[i]->hidinput = NULL;
-		}
-	}
+			क्रम (i = 0; i < report->maxfield; i++)
+				अगर (report->field[i]->hidinput == hidinput)
+					report->field[i]->hidinput = शून्य;
+		पूर्ण
+	पूर्ण
 
-	kfree(hidinput);
-}
+	kमुक्त(hidinput);
+पूर्ण
 
-static struct hid_input *hidinput_match(struct hid_report *report)
-{
-	struct hid_device *hid = report->device;
-	struct hid_input *hidinput;
+अटल काष्ठा hid_input *hidinput_match(काष्ठा hid_report *report)
+अणु
+	काष्ठा hid_device *hid = report->device;
+	काष्ठा hid_input *hidinput;
 
-	list_for_each_entry(hidinput, &hid->inputs, list) {
-		if (hidinput->report &&
+	list_क्रम_each_entry(hidinput, &hid->inमाला_दो, list) अणु
+		अगर (hidinput->report &&
 		    hidinput->report->id == report->id)
-			return hidinput;
-	}
+			वापस hidinput;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static struct hid_input *hidinput_match_application(struct hid_report *report)
-{
-	struct hid_device *hid = report->device;
-	struct hid_input *hidinput;
+अटल काष्ठा hid_input *hidinput_match_application(काष्ठा hid_report *report)
+अणु
+	काष्ठा hid_device *hid = report->device;
+	काष्ठा hid_input *hidinput;
 
-	list_for_each_entry(hidinput, &hid->inputs, list) {
-		if (hidinput->application == report->application)
-			return hidinput;
+	list_क्रम_each_entry(hidinput, &hid->inमाला_दो, list) अणु
+		अगर (hidinput->application == report->application)
+			वापस hidinput;
 
 		/*
 		 * Keep SystemControl and ConsumerControl applications together
-		 * with the main keyboard, if present.
+		 * with the मुख्य keyboard, अगर present.
 		 */
-		if ((report->application == HID_GD_SYSTEM_CONTROL ||
+		अगर ((report->application == HID_GD_SYSTEM_CONTROL ||
 		     report->application == HID_CP_CONSUMER_CONTROL) &&
-		    hidinput->application == HID_GD_KEYBOARD) {
-			return hidinput;
-		}
-	}
+		    hidinput->application == HID_GD_KEYBOARD) अणु
+			वापस hidinput;
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline void hidinput_configure_usages(struct hid_input *hidinput,
-					     struct hid_report *report)
-{
-	int i, j;
+अटल अंतरभूत व्योम hidinput_configure_usages(काष्ठा hid_input *hidinput,
+					     काष्ठा hid_report *report)
+अणु
+	पूर्णांक i, j;
 
-	for (i = 0; i < report->maxfield; i++)
-		for (j = 0; j < report->field[i]->maxusage; j++)
+	क्रम (i = 0; i < report->maxfield; i++)
+		क्रम (j = 0; j < report->field[i]->maxusage; j++)
 			hidinput_configure_usage(hidinput, report->field[i],
 						 report->field[i]->usage + j);
-}
+पूर्ण
 
 /*
- * Register the input device; print a message.
- * Configure the input layer interface
- * Read all reports and initialize the absolute field values.
+ * Register the input device; prपूर्णांक a message.
+ * Configure the input layer पूर्णांकerface
+ * Read all reports and initialize the असलolute field values.
  */
 
-int hidinput_connect(struct hid_device *hid, unsigned int force)
-{
-	struct hid_driver *drv = hid->driver;
-	struct hid_report *report;
-	struct hid_input *next, *hidinput = NULL;
-	unsigned int application;
-	int i, k;
+पूर्णांक hidinput_connect(काष्ठा hid_device *hid, अचिन्हित पूर्णांक क्रमce)
+अणु
+	काष्ठा hid_driver *drv = hid->driver;
+	काष्ठा hid_report *report;
+	काष्ठा hid_input *next, *hidinput = शून्य;
+	अचिन्हित पूर्णांक application;
+	पूर्णांक i, k;
 
-	INIT_LIST_HEAD(&hid->inputs);
+	INIT_LIST_HEAD(&hid->inमाला_दो);
 	INIT_WORK(&hid->led_work, hidinput_led_worker);
 
 	hid->status &= ~HID_STAT_DUP_DETECTED;
 
-	if (!force) {
-		for (i = 0; i < hid->maxcollection; i++) {
-			struct hid_collection *col = &hid->collection[i];
-			if (col->type == HID_COLLECTION_APPLICATION ||
+	अगर (!क्रमce) अणु
+		क्रम (i = 0; i < hid->maxcollection; i++) अणु
+			काष्ठा hid_collection *col = &hid->collection[i];
+			अगर (col->type == HID_COLLECTION_APPLICATION ||
 					col->type == HID_COLLECTION_PHYSICAL)
-				if (IS_INPUT_APPLICATION(col->usage))
-					break;
-		}
+				अगर (IS_INPUT_APPLICATION(col->usage))
+					अवरोध;
+		पूर्ण
 
-		if (i == hid->maxcollection)
-			return -1;
-	}
+		अगर (i == hid->maxcollection)
+			वापस -1;
+	पूर्ण
 
 	report_features(hid);
 
-	for (k = HID_INPUT_REPORT; k <= HID_OUTPUT_REPORT; k++) {
-		if (k == HID_OUTPUT_REPORT &&
+	क्रम (k = HID_INPUT_REPORT; k <= HID_OUTPUT_REPORT; k++) अणु
+		अगर (k == HID_OUTPUT_REPORT &&
 			hid->quirks & HID_QUIRK_SKIP_OUTPUT_REPORTS)
-			continue;
+			जारी;
 
-		list_for_each_entry(report, &hid->report_enum[k].report_list, list) {
+		list_क्रम_each_entry(report, &hid->report_क्रमागत[k].report_list, list) अणु
 
-			if (!report->maxfield)
-				continue;
+			अगर (!report->maxfield)
+				जारी;
 
 			application = report->application;
 
@@ -1945,85 +1946,85 @@ int hidinput_connect(struct hid_device *hid, unsigned int force)
 			 * Find the previous hidinput report attached
 			 * to this report id.
 			 */
-			if (hid->quirks & HID_QUIRK_MULTI_INPUT)
+			अगर (hid->quirks & HID_QUIRK_MULTI_INPUT)
 				hidinput = hidinput_match(report);
-			else if (hid->maxapplication > 1 &&
+			अन्यथा अगर (hid->maxapplication > 1 &&
 				 (hid->quirks & HID_QUIRK_INPUT_PER_APP))
 				hidinput = hidinput_match_application(report);
 
-			if (!hidinput) {
+			अगर (!hidinput) अणु
 				hidinput = hidinput_allocate(hid, application);
-				if (!hidinput)
-					goto out_unwind;
-			}
+				अगर (!hidinput)
+					जाओ out_unwind;
+			पूर्ण
 
 			hidinput_configure_usages(hidinput, report);
 
-			if (hid->quirks & HID_QUIRK_MULTI_INPUT)
+			अगर (hid->quirks & HID_QUIRK_MULTI_INPUT)
 				hidinput->report = report;
 
 			list_add_tail(&report->hidinput_list,
 				      &hidinput->reports);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	hidinput_change_resolution_multipliers(hid);
 
-	list_for_each_entry_safe(hidinput, next, &hid->inputs, list) {
-		if (drv->input_configured &&
+	list_क्रम_each_entry_safe(hidinput, next, &hid->inमाला_दो, list) अणु
+		अगर (drv->input_configured &&
 		    drv->input_configured(hid, hidinput))
-			goto out_unwind;
+			जाओ out_unwind;
 
-		if (!hidinput_has_been_populated(hidinput)) {
-			/* no need to register an input device not populated */
+		अगर (!hidinput_has_been_populated(hidinput)) अणु
+			/* no need to रेजिस्टर an input device not populated */
 			hidinput_cleanup_hidinput(hid, hidinput);
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (input_register_device(hidinput->input))
-			goto out_unwind;
-		hidinput->registered = true;
-	}
+		अगर (input_रेजिस्टर_device(hidinput->input))
+			जाओ out_unwind;
+		hidinput->रेजिस्टरed = true;
+	पूर्ण
 
-	if (list_empty(&hid->inputs)) {
+	अगर (list_empty(&hid->inमाला_दो)) अणु
 		hid_err(hid, "No inputs registered, leaving\n");
-		goto out_unwind;
-	}
+		जाओ out_unwind;
+	पूर्ण
 
-	if (hid->status & HID_STAT_DUP_DETECTED)
+	अगर (hid->status & HID_STAT_DUP_DETECTED)
 		hid_dbg(hid,
 			"Some usages could not be mapped, please use HID_QUIRK_INCREMENT_USAGE_ON_DUPLICATE if this is legitimate.\n");
 
-	return 0;
+	वापस 0;
 
 out_unwind:
-	/* unwind the ones we already registered */
+	/* unwind the ones we alपढ़ोy रेजिस्टरed */
 	hidinput_disconnect(hid);
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 EXPORT_SYMBOL_GPL(hidinput_connect);
 
-void hidinput_disconnect(struct hid_device *hid)
-{
-	struct hid_input *hidinput, *next;
+व्योम hidinput_disconnect(काष्ठा hid_device *hid)
+अणु
+	काष्ठा hid_input *hidinput, *next;
 
 	hidinput_cleanup_battery(hid);
 
-	list_for_each_entry_safe(hidinput, next, &hid->inputs, list) {
+	list_क्रम_each_entry_safe(hidinput, next, &hid->inमाला_दो, list) अणु
 		list_del(&hidinput->list);
-		if (hidinput->registered)
-			input_unregister_device(hidinput->input);
-		else
-			input_free_device(hidinput->input);
-		kfree(hidinput->name);
-		kfree(hidinput);
-	}
+		अगर (hidinput->रेजिस्टरed)
+			input_unरेजिस्टर_device(hidinput->input);
+		अन्यथा
+			input_मुक्त_device(hidinput->input);
+		kमुक्त(hidinput->name);
+		kमुक्त(hidinput);
+	पूर्ण
 
-	/* led_work is spawned by input_dev callbacks, but doesn't access the
-	 * parent input_dev at all. Once all input devices are removed, we
+	/* led_work is spawned by input_dev callbacks, but करोesn't access the
+	 * parent input_dev at all. Once all input devices are हटाओd, we
 	 * know that led_work will never get restarted, so we can cancel it
 	 * synchronously and are safe. */
 	cancel_work_sync(&hid->led_work);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(hidinput_disconnect);

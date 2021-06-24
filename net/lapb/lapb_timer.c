@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *	LAPB release 002
  *
@@ -6,201 +7,201 @@
  *
  *	History
  *	LAPB 001	Jonathan Naylor	Started Coding
- *	LAPB 002	Jonathan Naylor	New timer architecture.
+ *	LAPB 002	Jonathan Naylor	New समयr architecture.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/errno.h>
-#include <linux/types.h>
-#include <linux/socket.h>
-#include <linux/in.h>
-#include <linux/kernel.h>
-#include <linux/jiffies.h>
-#include <linux/timer.h>
-#include <linux/string.h>
-#include <linux/sockios.h>
-#include <linux/net.h>
-#include <linux/inet.h>
-#include <linux/skbuff.h>
-#include <net/sock.h>
-#include <linux/uaccess.h>
-#include <linux/fcntl.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <net/lapb.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/types.h>
+#समावेश <linux/socket.h>
+#समावेश <linux/in.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/jअगरfies.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/sockios.h>
+#समावेश <linux/net.h>
+#समावेश <linux/inet.h>
+#समावेश <linux/skbuff.h>
+#समावेश <net/sock.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/fcntl.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <net/lapb.h>
 
-static void lapb_t1timer_expiry(struct timer_list *);
-static void lapb_t2timer_expiry(struct timer_list *);
+अटल व्योम lapb_t1समयr_expiry(काष्ठा समयr_list *);
+अटल व्योम lapb_t2समयr_expiry(काष्ठा समयr_list *);
 
-void lapb_start_t1timer(struct lapb_cb *lapb)
-{
-	del_timer(&lapb->t1timer);
+व्योम lapb_start_t1समयr(काष्ठा lapb_cb *lapb)
+अणु
+	del_समयr(&lapb->t1समयr);
 
-	lapb->t1timer.function = lapb_t1timer_expiry;
-	lapb->t1timer.expires  = jiffies + lapb->t1;
+	lapb->t1समयr.function = lapb_t1समयr_expiry;
+	lapb->t1समयr.expires  = jअगरfies + lapb->t1;
 
-	lapb->t1timer_running = true;
-	add_timer(&lapb->t1timer);
-}
+	lapb->t1समयr_running = true;
+	add_समयr(&lapb->t1समयr);
+पूर्ण
 
-void lapb_start_t2timer(struct lapb_cb *lapb)
-{
-	del_timer(&lapb->t2timer);
+व्योम lapb_start_t2समयr(काष्ठा lapb_cb *lapb)
+अणु
+	del_समयr(&lapb->t2समयr);
 
-	lapb->t2timer.function = lapb_t2timer_expiry;
-	lapb->t2timer.expires  = jiffies + lapb->t2;
+	lapb->t2समयr.function = lapb_t2समयr_expiry;
+	lapb->t2समयr.expires  = jअगरfies + lapb->t2;
 
-	lapb->t2timer_running = true;
-	add_timer(&lapb->t2timer);
-}
+	lapb->t2समयr_running = true;
+	add_समयr(&lapb->t2समयr);
+पूर्ण
 
-void lapb_stop_t1timer(struct lapb_cb *lapb)
-{
-	lapb->t1timer_running = false;
-	del_timer(&lapb->t1timer);
-}
+व्योम lapb_stop_t1समयr(काष्ठा lapb_cb *lapb)
+अणु
+	lapb->t1समयr_running = false;
+	del_समयr(&lapb->t1समयr);
+पूर्ण
 
-void lapb_stop_t2timer(struct lapb_cb *lapb)
-{
-	lapb->t2timer_running = false;
-	del_timer(&lapb->t2timer);
-}
+व्योम lapb_stop_t2समयr(काष्ठा lapb_cb *lapb)
+अणु
+	lapb->t2समयr_running = false;
+	del_समयr(&lapb->t2समयr);
+पूर्ण
 
-int lapb_t1timer_running(struct lapb_cb *lapb)
-{
-	return lapb->t1timer_running;
-}
+पूर्णांक lapb_t1समयr_running(काष्ठा lapb_cb *lapb)
+अणु
+	वापस lapb->t1समयr_running;
+पूर्ण
 
-static void lapb_t2timer_expiry(struct timer_list *t)
-{
-	struct lapb_cb *lapb = from_timer(lapb, t, t2timer);
+अटल व्योम lapb_t2समयr_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा lapb_cb *lapb = from_समयr(lapb, t, t2समयr);
 
 	spin_lock_bh(&lapb->lock);
-	if (timer_pending(&lapb->t2timer)) /* A new timer has been set up */
-		goto out;
-	if (!lapb->t2timer_running) /* The timer has been stopped */
-		goto out;
+	अगर (समयr_pending(&lapb->t2समयr)) /* A new समयr has been set up */
+		जाओ out;
+	अगर (!lapb->t2समयr_running) /* The समयr has been stopped */
+		जाओ out;
 
-	if (lapb->condition & LAPB_ACK_PENDING_CONDITION) {
+	अगर (lapb->condition & LAPB_ACK_PENDING_CONDITION) अणु
 		lapb->condition &= ~LAPB_ACK_PENDING_CONDITION;
-		lapb_timeout_response(lapb);
-	}
-	lapb->t2timer_running = false;
+		lapb_समयout_response(lapb);
+	पूर्ण
+	lapb->t2समयr_running = false;
 
 out:
 	spin_unlock_bh(&lapb->lock);
-}
+पूर्ण
 
-static void lapb_t1timer_expiry(struct timer_list *t)
-{
-	struct lapb_cb *lapb = from_timer(lapb, t, t1timer);
+अटल व्योम lapb_t1समयr_expiry(काष्ठा समयr_list *t)
+अणु
+	काष्ठा lapb_cb *lapb = from_समयr(lapb, t, t1समयr);
 
 	spin_lock_bh(&lapb->lock);
-	if (timer_pending(&lapb->t1timer)) /* A new timer has been set up */
-		goto out;
-	if (!lapb->t1timer_running) /* The timer has been stopped */
-		goto out;
+	अगर (समयr_pending(&lapb->t1समयr)) /* A new समयr has been set up */
+		जाओ out;
+	अगर (!lapb->t1समयr_running) /* The समयr has been stopped */
+		जाओ out;
 
-	switch (lapb->state) {
+	चयन (lapb->state) अणु
 
 		/*
-		 *	If we are a DCE, send DM up to N2 times, then switch to
+		 *	If we are a DCE, send DM up to N2 बार, then चयन to
 		 *	STATE_1 and send SABM(E).
 		 */
-		case LAPB_STATE_0:
-			if (lapb->mode & LAPB_DCE &&
-			    lapb->n2count != lapb->n2) {
+		हाल LAPB_STATE_0:
+			अगर (lapb->mode & LAPB_DCE &&
+			    lapb->n2count != lapb->n2) अणु
 				lapb->n2count++;
 				lapb_send_control(lapb, LAPB_DM, LAPB_POLLOFF, LAPB_RESPONSE);
-			} else {
+			पूर्ण अन्यथा अणु
 				lapb->state = LAPB_STATE_1;
 				lapb_establish_data_link(lapb);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
 		/*
-		 *	Awaiting connection state, send SABM(E), up to N2 times.
+		 *	Aरुकोing connection state, send SABM(E), up to N2 बार.
 		 */
-		case LAPB_STATE_1:
-			if (lapb->n2count == lapb->n2) {
+		हाल LAPB_STATE_1:
+			अगर (lapb->n2count == lapb->n2) अणु
 				lapb_clear_queues(lapb);
 				lapb->state = LAPB_STATE_0;
 				lapb_disconnect_indication(lapb, LAPB_TIMEDOUT);
 				lapb_dbg(0, "(%p) S1 -> S0\n", lapb->dev);
-				lapb->t1timer_running = false;
-				goto out;
-			} else {
+				lapb->t1समयr_running = false;
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				lapb->n2count++;
-				if (lapb->mode & LAPB_EXTENDED) {
+				अगर (lapb->mode & LAPB_EXTENDED) अणु
 					lapb_dbg(1, "(%p) S1 TX SABME(1)\n",
 						 lapb->dev);
 					lapb_send_control(lapb, LAPB_SABME, LAPB_POLLON, LAPB_COMMAND);
-				} else {
+				पूर्ण अन्यथा अणु
 					lapb_dbg(1, "(%p) S1 TX SABM(1)\n",
 						 lapb->dev);
 					lapb_send_control(lapb, LAPB_SABM, LAPB_POLLON, LAPB_COMMAND);
-				}
-			}
-			break;
+				पूर्ण
+			पूर्ण
+			अवरोध;
 
 		/*
-		 *	Awaiting disconnection state, send DISC, up to N2 times.
+		 *	Aरुकोing disconnection state, send DISC, up to N2 बार.
 		 */
-		case LAPB_STATE_2:
-			if (lapb->n2count == lapb->n2) {
+		हाल LAPB_STATE_2:
+			अगर (lapb->n2count == lapb->n2) अणु
 				lapb_clear_queues(lapb);
 				lapb->state = LAPB_STATE_0;
 				lapb_disconnect_confirmation(lapb, LAPB_TIMEDOUT);
 				lapb_dbg(0, "(%p) S2 -> S0\n", lapb->dev);
-				lapb->t1timer_running = false;
-				goto out;
-			} else {
+				lapb->t1समयr_running = false;
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				lapb->n2count++;
 				lapb_dbg(1, "(%p) S2 TX DISC(1)\n", lapb->dev);
 				lapb_send_control(lapb, LAPB_DISC, LAPB_POLLON, LAPB_COMMAND);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
 		/*
-		 *	Data transfer state, restransmit I frames, up to N2 times.
+		 *	Data transfer state, restransmit I frames, up to N2 बार.
 		 */
-		case LAPB_STATE_3:
-			if (lapb->n2count == lapb->n2) {
+		हाल LAPB_STATE_3:
+			अगर (lapb->n2count == lapb->n2) अणु
 				lapb_clear_queues(lapb);
 				lapb->state = LAPB_STATE_0;
-				lapb_stop_t2timer(lapb);
+				lapb_stop_t2समयr(lapb);
 				lapb_disconnect_indication(lapb, LAPB_TIMEDOUT);
 				lapb_dbg(0, "(%p) S3 -> S0\n", lapb->dev);
-				lapb->t1timer_running = false;
-				goto out;
-			} else {
+				lapb->t1समयr_running = false;
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				lapb->n2count++;
 				lapb_requeue_frames(lapb);
 				lapb_kick(lapb);
-			}
-			break;
+			पूर्ण
+			अवरोध;
 
 		/*
-		 *	Frame reject state, restransmit FRMR frames, up to N2 times.
+		 *	Frame reject state, restransmit FRMR frames, up to N2 बार.
 		 */
-		case LAPB_STATE_4:
-			if (lapb->n2count == lapb->n2) {
+		हाल LAPB_STATE_4:
+			अगर (lapb->n2count == lapb->n2) अणु
 				lapb_clear_queues(lapb);
 				lapb->state = LAPB_STATE_0;
 				lapb_disconnect_indication(lapb, LAPB_TIMEDOUT);
 				lapb_dbg(0, "(%p) S4 -> S0\n", lapb->dev);
-				lapb->t1timer_running = false;
-				goto out;
-			} else {
+				lapb->t1समयr_running = false;
+				जाओ out;
+			पूर्ण अन्यथा अणु
 				lapb->n2count++;
 				lapb_transmit_frmr(lapb);
-			}
-			break;
-	}
+			पूर्ण
+			अवरोध;
+	पूर्ण
 
-	lapb_start_t1timer(lapb);
+	lapb_start_t1समयr(lapb);
 
 out:
 	spin_unlock_bh(&lapb->lock);
-}
+पूर्ण

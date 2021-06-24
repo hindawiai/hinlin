@@ -1,260 +1,261 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2018, Intel Corporation. */
 
-/* A common module to handle registrations and notifications for paravirtual
+/* A common module to handle registrations and notअगरications क्रम paraभव
  * drivers to enable accelerated datapath and support VF live migration.
  *
- * The notifier and event handling code is based on netvsc driver.
+ * The notअगरier and event handling code is based on netvsc driver.
  */
 
-#include <linux/module.h>
-#include <linux/etherdevice.h>
-#include <uapi/linux/if_arp.h>
-#include <linux/rtnetlink.h>
-#include <linux/if_vlan.h>
-#include <net/failover.h>
+#समावेश <linux/module.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <uapi/linux/अगर_arp.h>
+#समावेश <linux/rtnetlink.h>
+#समावेश <linux/अगर_vlan.h>
+#समावेश <net/failover.h>
 
-static LIST_HEAD(failover_list);
-static DEFINE_SPINLOCK(failover_lock);
+अटल LIST_HEAD(failover_list);
+अटल DEFINE_SPINLOCK(failover_lock);
 
-static struct net_device *failover_get_bymac(u8 *mac, struct failover_ops **ops)
-{
-	struct net_device *failover_dev;
-	struct failover *failover;
+अटल काष्ठा net_device *failover_get_bymac(u8 *mac, काष्ठा failover_ops **ops)
+अणु
+	काष्ठा net_device *failover_dev;
+	काष्ठा failover *failover;
 
 	spin_lock(&failover_lock);
-	list_for_each_entry(failover, &failover_list, list) {
+	list_क्रम_each_entry(failover, &failover_list, list) अणु
 		failover_dev = rtnl_dereference(failover->failover_dev);
-		if (ether_addr_equal(failover_dev->perm_addr, mac)) {
+		अगर (ether_addr_equal(failover_dev->perm_addr, mac)) अणु
 			*ops = rtnl_dereference(failover->ops);
 			spin_unlock(&failover_lock);
-			return failover_dev;
-		}
-	}
+			वापस failover_dev;
+		पूर्ण
+	पूर्ण
 	spin_unlock(&failover_lock);
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
 /**
- * failover_slave_register - Register a slave netdev
+ * failover_slave_रेजिस्टर - Register a slave netdev
  *
- * @slave_dev: slave netdev that is being registered
+ * @slave_dev: slave netdev that is being रेजिस्टरed
  *
  * Registers a slave device to a failover instance. Only ethernet devices
  * are supported.
  */
-static int failover_slave_register(struct net_device *slave_dev)
-{
-	struct netdev_lag_upper_info lag_upper_info;
-	struct net_device *failover_dev;
-	struct failover_ops *fops;
-	int err;
+अटल पूर्णांक failover_slave_रेजिस्टर(काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा netdev_lag_upper_info lag_upper_info;
+	काष्ठा net_device *failover_dev;
+	काष्ठा failover_ops *fops;
+	पूर्णांक err;
 
-	if (slave_dev->type != ARPHRD_ETHER)
-		goto done;
+	अगर (slave_dev->type != ARPHRD_ETHER)
+		जाओ करोne;
 
 	ASSERT_RTNL();
 
 	failover_dev = failover_get_bymac(slave_dev->perm_addr, &fops);
-	if (!failover_dev)
-		goto done;
+	अगर (!failover_dev)
+		जाओ करोne;
 
-	if (fops && fops->slave_pre_register &&
-	    fops->slave_pre_register(slave_dev, failover_dev))
-		goto done;
+	अगर (fops && fops->slave_pre_रेजिस्टर &&
+	    fops->slave_pre_रेजिस्टर(slave_dev, failover_dev))
+		जाओ करोne;
 
-	err = netdev_rx_handler_register(slave_dev, fops->slave_handle_frame,
+	err = netdev_rx_handler_रेजिस्टर(slave_dev, fops->slave_handle_frame,
 					 failover_dev);
-	if (err) {
+	अगर (err) अणु
 		netdev_err(slave_dev, "can not register failover rx handler (err = %d)\n",
 			   err);
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	lag_upper_info.tx_type = NETDEV_LAG_TX_TYPE_ACTIVEBACKUP;
-	err = netdev_master_upper_dev_link(slave_dev, failover_dev, NULL,
-					   &lag_upper_info, NULL);
-	if (err) {
+	err = netdev_master_upper_dev_link(slave_dev, failover_dev, शून्य,
+					   &lag_upper_info, शून्य);
+	अगर (err) अणु
 		netdev_err(slave_dev, "can not set failover device %s (err = %d)\n",
 			   failover_dev->name, err);
-		goto err_upper_link;
-	}
+		जाओ err_upper_link;
+	पूर्ण
 
 	slave_dev->priv_flags |= (IFF_FAILOVER_SLAVE | IFF_LIVE_RENAME_OK);
 
-	if (fops && fops->slave_register &&
-	    !fops->slave_register(slave_dev, failover_dev))
-		return NOTIFY_OK;
+	अगर (fops && fops->slave_रेजिस्टर &&
+	    !fops->slave_रेजिस्टर(slave_dev, failover_dev))
+		वापस NOTIFY_OK;
 
 	netdev_upper_dev_unlink(slave_dev, failover_dev);
 	slave_dev->priv_flags &= ~(IFF_FAILOVER_SLAVE | IFF_LIVE_RENAME_OK);
 err_upper_link:
-	netdev_rx_handler_unregister(slave_dev);
-done:
-	return NOTIFY_DONE;
-}
+	netdev_rx_handler_unरेजिस्टर(slave_dev);
+करोne:
+	वापस NOTIFY_DONE;
+पूर्ण
 
 /**
- * failover_slave_unregister - Unregister a slave netdev
+ * failover_slave_unरेजिस्टर - Unरेजिस्टर a slave netdev
  *
- * @slave_dev: slave netdev that is being unregistered
+ * @slave_dev: slave netdev that is being unरेजिस्टरed
  *
- * Unregisters a slave device from a failover instance.
+ * Unरेजिस्टरs a slave device from a failover instance.
  */
-int failover_slave_unregister(struct net_device *slave_dev)
-{
-	struct net_device *failover_dev;
-	struct failover_ops *fops;
+पूर्णांक failover_slave_unरेजिस्टर(काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा net_device *failover_dev;
+	काष्ठा failover_ops *fops;
 
-	if (!netif_is_failover_slave(slave_dev))
-		goto done;
+	अगर (!netअगर_is_failover_slave(slave_dev))
+		जाओ करोne;
 
 	ASSERT_RTNL();
 
 	failover_dev = failover_get_bymac(slave_dev->perm_addr, &fops);
-	if (!failover_dev)
-		goto done;
+	अगर (!failover_dev)
+		जाओ करोne;
 
-	if (fops && fops->slave_pre_unregister &&
-	    fops->slave_pre_unregister(slave_dev, failover_dev))
-		goto done;
+	अगर (fops && fops->slave_pre_unरेजिस्टर &&
+	    fops->slave_pre_unरेजिस्टर(slave_dev, failover_dev))
+		जाओ करोne;
 
-	netdev_rx_handler_unregister(slave_dev);
+	netdev_rx_handler_unरेजिस्टर(slave_dev);
 	netdev_upper_dev_unlink(slave_dev, failover_dev);
 	slave_dev->priv_flags &= ~(IFF_FAILOVER_SLAVE | IFF_LIVE_RENAME_OK);
 
-	if (fops && fops->slave_unregister &&
-	    !fops->slave_unregister(slave_dev, failover_dev))
-		return NOTIFY_OK;
+	अगर (fops && fops->slave_unरेजिस्टर &&
+	    !fops->slave_unरेजिस्टर(slave_dev, failover_dev))
+		वापस NOTIFY_OK;
 
-done:
-	return NOTIFY_DONE;
-}
-EXPORT_SYMBOL_GPL(failover_slave_unregister);
+करोne:
+	वापस NOTIFY_DONE;
+पूर्ण
+EXPORT_SYMBOL_GPL(failover_slave_unरेजिस्टर);
 
-static int failover_slave_link_change(struct net_device *slave_dev)
-{
-	struct net_device *failover_dev;
-	struct failover_ops *fops;
+अटल पूर्णांक failover_slave_link_change(काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा net_device *failover_dev;
+	काष्ठा failover_ops *fops;
 
-	if (!netif_is_failover_slave(slave_dev))
-		goto done;
+	अगर (!netअगर_is_failover_slave(slave_dev))
+		जाओ करोne;
 
 	ASSERT_RTNL();
 
 	failover_dev = failover_get_bymac(slave_dev->perm_addr, &fops);
-	if (!failover_dev)
-		goto done;
+	अगर (!failover_dev)
+		जाओ करोne;
 
-	if (!netif_running(failover_dev))
-		goto done;
+	अगर (!netअगर_running(failover_dev))
+		जाओ करोne;
 
-	if (fops && fops->slave_link_change &&
+	अगर (fops && fops->slave_link_change &&
 	    !fops->slave_link_change(slave_dev, failover_dev))
-		return NOTIFY_OK;
+		वापस NOTIFY_OK;
 
-done:
-	return NOTIFY_DONE;
-}
+करोne:
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int failover_slave_name_change(struct net_device *slave_dev)
-{
-	struct net_device *failover_dev;
-	struct failover_ops *fops;
+अटल पूर्णांक failover_slave_name_change(काष्ठा net_device *slave_dev)
+अणु
+	काष्ठा net_device *failover_dev;
+	काष्ठा failover_ops *fops;
 
-	if (!netif_is_failover_slave(slave_dev))
-		goto done;
+	अगर (!netअगर_is_failover_slave(slave_dev))
+		जाओ करोne;
 
 	ASSERT_RTNL();
 
 	failover_dev = failover_get_bymac(slave_dev->perm_addr, &fops);
-	if (!failover_dev)
-		goto done;
+	अगर (!failover_dev)
+		जाओ करोne;
 
-	if (!netif_running(failover_dev))
-		goto done;
+	अगर (!netअगर_running(failover_dev))
+		जाओ करोne;
 
-	if (fops && fops->slave_name_change &&
+	अगर (fops && fops->slave_name_change &&
 	    !fops->slave_name_change(slave_dev, failover_dev))
-		return NOTIFY_OK;
+		वापस NOTIFY_OK;
 
-done:
-	return NOTIFY_DONE;
-}
+करोne:
+	वापस NOTIFY_DONE;
+पूर्ण
 
-static int
-failover_event(struct notifier_block *this, unsigned long event, void *ptr)
-{
-	struct net_device *event_dev = netdev_notifier_info_to_dev(ptr);
+अटल पूर्णांक
+failover_event(काष्ठा notअगरier_block *this, अचिन्हित दीर्घ event, व्योम *ptr)
+अणु
+	काष्ठा net_device *event_dev = netdev_notअगरier_info_to_dev(ptr);
 
 	/* Skip parent events */
-	if (netif_is_failover(event_dev))
-		return NOTIFY_DONE;
+	अगर (netअगर_is_failover(event_dev))
+		वापस NOTIFY_DONE;
 
-	switch (event) {
-	case NETDEV_REGISTER:
-		return failover_slave_register(event_dev);
-	case NETDEV_UNREGISTER:
-		return failover_slave_unregister(event_dev);
-	case NETDEV_UP:
-	case NETDEV_DOWN:
-	case NETDEV_CHANGE:
-		return failover_slave_link_change(event_dev);
-	case NETDEV_CHANGENAME:
-		return failover_slave_name_change(event_dev);
-	default:
-		return NOTIFY_DONE;
-	}
-}
+	चयन (event) अणु
+	हाल NETDEV_REGISTER:
+		वापस failover_slave_रेजिस्टर(event_dev);
+	हाल NETDEV_UNREGISTER:
+		वापस failover_slave_unरेजिस्टर(event_dev);
+	हाल NETDEV_UP:
+	हाल NETDEV_DOWN:
+	हाल NETDEV_CHANGE:
+		वापस failover_slave_link_change(event_dev);
+	हाल NETDEV_CHANGENAME:
+		वापस failover_slave_name_change(event_dev);
+	शेष:
+		वापस NOTIFY_DONE;
+	पूर्ण
+पूर्ण
 
-static struct notifier_block failover_notifier = {
-	.notifier_call = failover_event,
-};
+अटल काष्ठा notअगरier_block failover_notअगरier = अणु
+	.notअगरier_call = failover_event,
+पूर्ण;
 
-static void
-failover_existing_slave_register(struct net_device *failover_dev)
-{
-	struct net *net = dev_net(failover_dev);
-	struct net_device *dev;
+अटल व्योम
+failover_existing_slave_रेजिस्टर(काष्ठा net_device *failover_dev)
+अणु
+	काष्ठा net *net = dev_net(failover_dev);
+	काष्ठा net_device *dev;
 
 	rtnl_lock();
-	for_each_netdev(net, dev) {
-		if (netif_is_failover(dev))
-			continue;
-		if (ether_addr_equal(failover_dev->perm_addr, dev->perm_addr))
-			failover_slave_register(dev);
-	}
+	क्रम_each_netdev(net, dev) अणु
+		अगर (netअगर_is_failover(dev))
+			जारी;
+		अगर (ether_addr_equal(failover_dev->perm_addr, dev->perm_addr))
+			failover_slave_रेजिस्टर(dev);
+	पूर्ण
 	rtnl_unlock();
-}
+पूर्ण
 
 /**
- * failover_register - Register a failover instance
+ * failover_रेजिस्टर - Register a failover instance
  *
  * @dev: failover netdev
  * @ops: failover ops
  *
- * Allocate and register a failover instance for a failover netdev. ops
- * provides handlers for slave device register/unregister/link change/
+ * Allocate and रेजिस्टर a failover instance क्रम a failover netdev. ops
+ * provides handlers क्रम slave device रेजिस्टर/unरेजिस्टर/link change/
  * name change events.
  *
- * Return: pointer to failover instance
+ * Return: poपूर्णांकer to failover instance
  */
-struct failover *failover_register(struct net_device *dev,
-				   struct failover_ops *ops)
-{
-	struct failover *failover;
+काष्ठा failover *failover_रेजिस्टर(काष्ठा net_device *dev,
+				   काष्ठा failover_ops *ops)
+अणु
+	काष्ठा failover *failover;
 
-	if (dev->type != ARPHRD_ETHER)
-		return ERR_PTR(-EINVAL);
+	अगर (dev->type != ARPHRD_ETHER)
+		वापस ERR_PTR(-EINVAL);
 
-	failover = kzalloc(sizeof(*failover), GFP_KERNEL);
-	if (!failover)
-		return ERR_PTR(-ENOMEM);
+	failover = kzalloc(माप(*failover), GFP_KERNEL);
+	अगर (!failover)
+		वापस ERR_PTR(-ENOMEM);
 
-	rcu_assign_pointer(failover->ops, ops);
+	rcu_assign_poपूर्णांकer(failover->ops, ops);
 	dev_hold(dev);
 	dev->priv_flags |= IFF_FAILOVER;
-	rcu_assign_pointer(failover->failover_dev, dev);
+	rcu_assign_poपूर्णांकer(failover->failover_dev, dev);
 
 	spin_lock(&failover_lock);
 	list_add_tail(&failover->list, &failover_list);
@@ -262,22 +263,22 @@ struct failover *failover_register(struct net_device *dev,
 
 	netdev_info(dev, "failover master:%s registered\n", dev->name);
 
-	failover_existing_slave_register(dev);
+	failover_existing_slave_रेजिस्टर(dev);
 
-	return failover;
-}
-EXPORT_SYMBOL_GPL(failover_register);
+	वापस failover;
+पूर्ण
+EXPORT_SYMBOL_GPL(failover_रेजिस्टर);
 
 /**
- * failover_unregister - Unregister a failover instance
+ * failover_unरेजिस्टर - Unरेजिस्टर a failover instance
  *
- * @failover: pointer to failover instance
+ * @failover: poपूर्णांकer to failover instance
  *
- * Unregisters and frees a failover instance.
+ * Unरेजिस्टरs and मुक्तs a failover instance.
  */
-void failover_unregister(struct failover *failover)
-{
-	struct net_device *failover_dev;
+व्योम failover_unरेजिस्टर(काष्ठा failover *failover)
+अणु
+	काष्ठा net_device *failover_dev;
 
 	failover_dev = rcu_dereference(failover->failover_dev);
 
@@ -291,25 +292,25 @@ void failover_unregister(struct failover *failover)
 	list_del(&failover->list);
 	spin_unlock(&failover_lock);
 
-	kfree(failover);
-}
-EXPORT_SYMBOL_GPL(failover_unregister);
+	kमुक्त(failover);
+पूर्ण
+EXPORT_SYMBOL_GPL(failover_unरेजिस्टर);
 
-static __init int
-failover_init(void)
-{
-	register_netdevice_notifier(&failover_notifier);
+अटल __init पूर्णांक
+failover_init(व्योम)
+अणु
+	रेजिस्टर_netdevice_notअगरier(&failover_notअगरier);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 module_init(failover_init);
 
-static __exit
-void failover_exit(void)
-{
-	unregister_netdevice_notifier(&failover_notifier);
-}
-module_exit(failover_exit);
+अटल __निकास
+व्योम failover_निकास(व्योम)
+अणु
+	unरेजिस्टर_netdevice_notअगरier(&failover_notअगरier);
+पूर्ण
+module_निकास(failover_निकास);
 
 MODULE_DESCRIPTION("Generic failover infrastructure/interface");
 MODULE_LICENSE("GPL v2");

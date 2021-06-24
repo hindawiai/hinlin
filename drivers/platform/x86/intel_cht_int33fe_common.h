@@ -1,41 +1,42 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
- * Common code for Intel Cherry Trail ACPI INT33FE pseudo device drivers
+ * Common code क्रम Intel Cherry Trail ACPI INT33FE pseuकरो device drivers
  * (USB Micro-B and Type-C connector variants), header file
  *
  * Copyright (c) 2019 Yauhen Kharuzhy <jekhor@gmail.com>
  */
 
-#ifndef _INTEL_CHT_INT33FE_COMMON_H
-#define _INTEL_CHT_INT33FE_COMMON_H
+#अगर_अघोषित _INTEL_CHT_INT33FE_COMMON_H
+#घोषणा _INTEL_CHT_INT33FE_COMMON_H
 
-#include <linux/device.h>
-#include <linux/fwnode.h>
-#include <linux/i2c.h>
+#समावेश <linux/device.h>
+#समावेश <linux/fwnode.h>
+#समावेश <linux/i2c.h>
 
-enum int33fe_hw_type {
+क्रमागत पूर्णांक33fe_hw_type अणु
 	INT33FE_HW_MICROB,
 	INT33FE_HW_TYPEC,
-};
+पूर्ण;
 
-struct cht_int33fe_data {
-	struct device *dev;
+काष्ठा cht_पूर्णांक33fe_data अणु
+	काष्ठा device *dev;
 
-	int (*probe)(struct cht_int33fe_data *data);
-	int (*remove)(struct cht_int33fe_data *data);
+	पूर्णांक (*probe)(काष्ठा cht_पूर्णांक33fe_data *data);
+	पूर्णांक (*हटाओ)(काष्ठा cht_पूर्णांक33fe_data *data);
 
-	struct i2c_client *battery_fg;
+	काष्ठा i2c_client *battery_fg;
 
 	/* Type-C only */
-	struct i2c_client *fusb302;
-	struct i2c_client *pi3usb30532;
+	काष्ठा i2c_client *fusb302;
+	काष्ठा i2c_client *pi3usb30532;
 
-	struct fwnode_handle *dp;
-};
+	काष्ठा fwnode_handle *dp;
+पूर्ण;
 
-int cht_int33fe_microb_probe(struct cht_int33fe_data *data);
-int cht_int33fe_microb_remove(struct cht_int33fe_data *data);
-int cht_int33fe_typec_probe(struct cht_int33fe_data *data);
-int cht_int33fe_typec_remove(struct cht_int33fe_data *data);
+पूर्णांक cht_पूर्णांक33fe_microb_probe(काष्ठा cht_पूर्णांक33fe_data *data);
+पूर्णांक cht_पूर्णांक33fe_microb_हटाओ(काष्ठा cht_पूर्णांक33fe_data *data);
+पूर्णांक cht_पूर्णांक33fe_typec_probe(काष्ठा cht_पूर्णांक33fe_data *data);
+पूर्णांक cht_पूर्णांक33fe_typec_हटाओ(काष्ठा cht_पूर्णांक33fe_data *data);
 
-#endif /* _INTEL_CHT_INT33FE_COMMON_H */
+#पूर्ण_अगर /* _INTEL_CHT_INT33FE_COMMON_H */

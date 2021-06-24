@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * RDMA Network Block Driver
  *
@@ -6,76 +7,76 @@
  * Copyright (c) 2018 - 2019 1&1 IONOS Cloud GmbH. All rights reserved.
  * Copyright (c) 2019 - 2020 1&1 IONOS SE. All rights reserved.
  */
-#ifndef RNBD_SRV_H
-#define RNBD_SRV_H
+#अगर_अघोषित RNBD_SRV_H
+#घोषणा RNBD_SRV_H
 
-#include <linux/types.h>
-#include <linux/idr.h>
-#include <linux/kref.h>
+#समावेश <linux/types.h>
+#समावेश <linux/idr.h>
+#समावेश <linux/kref.h>
 
-#include <rtrs.h>
-#include "rnbd-proto.h"
-#include "rnbd-log.h"
+#समावेश <rtrs.h>
+#समावेश "rnbd-proto.h"
+#समावेश "rnbd-log.h"
 
-struct rnbd_srv_session {
+काष्ठा rnbd_srv_session अणु
 	/* Entry inside global sess_list */
-	struct list_head        list;
-	struct rtrs_srv		*rtrs;
-	char			sessname[NAME_MAX];
-	int			queue_depth;
-	struct bio_set		sess_bio_set;
+	काष्ठा list_head        list;
+	काष्ठा rtrs_srv		*rtrs;
+	अक्षर			sessname[NAME_MAX];
+	पूर्णांक			queue_depth;
+	काष्ठा bio_set		sess_bio_set;
 
-	struct xarray		index_idr;
-	/* List of struct rnbd_srv_sess_dev */
-	struct list_head        sess_dev_list;
-	struct mutex		lock;
+	काष्ठा xarray		index_idr;
+	/* List of काष्ठा rnbd_srv_sess_dev */
+	काष्ठा list_head        sess_dev_list;
+	काष्ठा mutex		lock;
 	u8			ver;
-};
+पूर्ण;
 
-struct rnbd_srv_dev {
+काष्ठा rnbd_srv_dev अणु
 	/* Entry inside global dev_list */
-	struct list_head                list;
-	struct kobject                  dev_kobj;
-	struct kobject                  *dev_sessions_kobj;
-	struct kref                     kref;
-	char				id[NAME_MAX];
-	/* List of rnbd_srv_sess_dev structs */
-	struct list_head		sess_dev_list;
-	struct mutex			lock;
-	int				open_write_cnt;
-};
+	काष्ठा list_head                list;
+	काष्ठा kobject                  dev_kobj;
+	काष्ठा kobject                  *dev_sessions_kobj;
+	काष्ठा kref                     kref;
+	अक्षर				id[NAME_MAX];
+	/* List of rnbd_srv_sess_dev काष्ठाs */
+	काष्ठा list_head		sess_dev_list;
+	काष्ठा mutex			lock;
+	पूर्णांक				खोलो_ग_लिखो_cnt;
+पूर्ण;
 
 /* Structure which binds N devices and N sessions */
-struct rnbd_srv_sess_dev {
-	/* Entry inside rnbd_srv_dev struct */
-	struct list_head		dev_list;
-	/* Entry inside rnbd_srv_session struct */
-	struct list_head		sess_list;
-	struct rnbd_dev			*rnbd_dev;
-	struct rnbd_srv_session		*sess;
-	struct rnbd_srv_dev		*dev;
-	struct kobject                  kobj;
+काष्ठा rnbd_srv_sess_dev अणु
+	/* Entry inside rnbd_srv_dev काष्ठा */
+	काष्ठा list_head		dev_list;
+	/* Entry inside rnbd_srv_session काष्ठा */
+	काष्ठा list_head		sess_list;
+	काष्ठा rnbd_dev			*rnbd_dev;
+	काष्ठा rnbd_srv_session		*sess;
+	काष्ठा rnbd_srv_dev		*dev;
+	काष्ठा kobject                  kobj;
 	u32                             device_id;
 	bool				keep_id;
-	fmode_t                         open_flags;
-	struct kref			kref;
-	struct completion               *destroy_comp;
-	char				pathname[NAME_MAX];
-	enum rnbd_access_mode		access_mode;
-};
+	भ_शेषe_t                         खोलो_flags;
+	काष्ठा kref			kref;
+	काष्ठा completion               *destroy_comp;
+	अक्षर				pathname[NAME_MAX];
+	क्रमागत rnbd_access_mode		access_mode;
+पूर्ण;
 
-void rnbd_srv_sess_dev_force_close(struct rnbd_srv_sess_dev *sess_dev,
-				   struct kobj_attribute *attr);
+व्योम rnbd_srv_sess_dev_क्रमce_बंद(काष्ठा rnbd_srv_sess_dev *sess_dev,
+				   काष्ठा kobj_attribute *attr);
 /* rnbd-srv-sysfs.c */
 
-int rnbd_srv_create_dev_sysfs(struct rnbd_srv_dev *dev,
-			      struct block_device *bdev,
-			      const char *dir_name);
-void rnbd_srv_destroy_dev_sysfs(struct rnbd_srv_dev *dev);
-int rnbd_srv_create_dev_session_sysfs(struct rnbd_srv_sess_dev *sess_dev);
-void rnbd_srv_destroy_dev_session_sysfs(struct rnbd_srv_sess_dev *sess_dev);
-int rnbd_srv_create_sysfs_files(void);
-void rnbd_srv_destroy_sysfs_files(void);
-void rnbd_destroy_sess_dev(struct rnbd_srv_sess_dev *sess_dev, bool keep_id);
+पूर्णांक rnbd_srv_create_dev_sysfs(काष्ठा rnbd_srv_dev *dev,
+			      काष्ठा block_device *bdev,
+			      स्थिर अक्षर *dir_name);
+व्योम rnbd_srv_destroy_dev_sysfs(काष्ठा rnbd_srv_dev *dev);
+पूर्णांक rnbd_srv_create_dev_session_sysfs(काष्ठा rnbd_srv_sess_dev *sess_dev);
+व्योम rnbd_srv_destroy_dev_session_sysfs(काष्ठा rnbd_srv_sess_dev *sess_dev);
+पूर्णांक rnbd_srv_create_sysfs_files(व्योम);
+व्योम rnbd_srv_destroy_sysfs_files(व्योम);
+व्योम rnbd_destroy_sess_dev(काष्ठा rnbd_srv_sess_dev *sess_dev, bool keep_id);
 
-#endif /* RNBD_SRV_H */
+#पूर्ण_अगर /* RNBD_SRV_H */

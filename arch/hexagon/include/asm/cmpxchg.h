@@ -1,64 +1,65 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * xchg/cmpxchg operations for the Hexagon architecture
+ * xchg/cmpxchg operations क्रम the Hexagon architecture
  *
  * Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
  */
 
-#ifndef _ASM_CMPXCHG_H
-#define _ASM_CMPXCHG_H
+#अगर_अघोषित _ASM_CMPXCHG_H
+#घोषणा _ASM_CMPXCHG_H
 
 /*
- * __xchg - atomically exchange a register and a memory location
+ * __xchg - atomically exchange a रेजिस्टर and a memory location
  * @x: value to swap
- * @ptr: pointer to memory
+ * @ptr: poपूर्णांकer to memory
  * @size:  size of the value
  *
  * Only 4 bytes supported currently.
  *
- * Note:  there was an errata for V2 about .new's and memw_locked.
+ * Note:  there was an errata क्रम V2 about .new's and memw_locked.
  *
  */
-static inline unsigned long __xchg(unsigned long x, volatile void *ptr,
-				   int size)
-{
-	unsigned long retval;
+अटल अंतरभूत अचिन्हित दीर्घ __xchg(अचिन्हित दीर्घ x, अस्थिर व्योम *ptr,
+				   पूर्णांक size)
+अणु
+	अचिन्हित दीर्घ retval;
 
-	/*  Can't seem to use printk or panic here, so just stop  */
-	if (size != 4) do { asm volatile("brkpt;\n"); } while (1);
+	/*  Can't seem to use prपूर्णांकk or panic here, so just stop  */
+	अगर (size != 4) करो अणु यंत्र अस्थिर("brkpt;\n"); पूर्ण जबतक (1);
 
-	__asm__ __volatile__ (
-	"1:	%0 = memw_locked(%1);\n"    /*  load into retval */
-	"	memw_locked(%1,P0) = %2;\n" /*  store into memory */
+	__यंत्र__ __अस्थिर__ (
+	"1:	%0 = memw_locked(%1);\n"    /*  load पूर्णांकo retval */
+	"	memw_locked(%1,P0) = %2;\n" /*  store पूर्णांकo memory */
 	"	if (!P0) jump 1b;\n"
 	: "=&r" (retval)
 	: "r" (ptr), "r" (x)
 	: "memory", "p0"
 	);
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
- * Atomically swap the contents of a register with memory.  Should be atomic
- * between multiple CPU's and within interrupts on the same CPU.
+ * Atomically swap the contents of a रेजिस्टर with memory.  Should be atomic
+ * between multiple CPU's and within पूर्णांकerrupts on the same CPU.
  */
-#define xchg(ptr, v) ((__typeof__(*(ptr)))__xchg((unsigned long)(v), (ptr), \
-	sizeof(*(ptr))))
+#घोषणा xchg(ptr, v) ((__typeof__(*(ptr)))__xchg((अचिन्हित दीर्घ)(v), (ptr), \
+	माप(*(ptr))))
 
 /*
- *  see rt-mutex-design.txt; cmpxchg supposedly checks if *ptr == A and swaps.
+ *  see rt-mutex-design.txt; cmpxchg supposedly checks अगर *ptr == A and swaps.
  *  looks just like atomic_cmpxchg on our arch currently with a bunch of
  *  variable casting.
  */
 
-#define cmpxchg(ptr, old, new)					\
-({								\
+#घोषणा cmpxchg(ptr, old, new)					\
+(अणु								\
 	__typeof__(ptr) __ptr = (ptr);				\
 	__typeof__(*(ptr)) __old = (old);			\
 	__typeof__(*(ptr)) __new = (new);			\
 	__typeof__(*(ptr)) __oldval = 0;			\
 								\
-	asm volatile(						\
+	यंत्र अस्थिर(						\
 		"1:	%0 = memw_locked(%1);\n"		\
 		"	{ P0 = cmp.eq(%0,%2);\n"		\
 		"	  if (!P0.new) jump:nt 2f; }\n"		\
@@ -70,6 +71,6 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr,
 		: "memory", "p0"				\
 	);							\
 	__oldval;						\
-})
+पूर्ण)
 
-#endif /* _ASM_CMPXCHG_H */
+#पूर्ण_अगर /* _ASM_CMPXCHG_H */

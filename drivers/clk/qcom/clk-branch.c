@@ -1,160 +1,161 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (c) 2013, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/kernel.h>
-#include <linux/bitops.h>
-#include <linux/err.h>
-#include <linux/delay.h>
-#include <linux/export.h>
-#include <linux/clk-provider.h>
-#include <linux/regmap.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/bitops.h>
+#समावेश <linux/err.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/export.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/regmap.h>
 
-#include "clk-branch.h"
+#समावेश "clk-branch.h"
 
-static bool clk_branch_in_hwcg_mode(const struct clk_branch *br)
-{
+अटल bool clk_branch_in_hwcg_mode(स्थिर काष्ठा clk_branch *br)
+अणु
 	u32 val;
 
-	if (!br->hwcg_reg)
-		return false;
+	अगर (!br->hwcg_reg)
+		वापस false;
 
-	regmap_read(br->clkr.regmap, br->hwcg_reg, &val);
+	regmap_पढ़ो(br->clkr.regmap, br->hwcg_reg, &val);
 
-	return !!(val & BIT(br->hwcg_bit));
-}
+	वापस !!(val & BIT(br->hwcg_bit));
+पूर्ण
 
-static bool clk_branch_check_halt(const struct clk_branch *br, bool enabling)
-{
+अटल bool clk_branch_check_halt(स्थिर काष्ठा clk_branch *br, bool enabling)
+अणु
 	bool invert = (br->halt_check == BRANCH_HALT_ENABLE);
 	u32 val;
 
-	regmap_read(br->clkr.regmap, br->halt_reg, &val);
+	regmap_पढ़ो(br->clkr.regmap, br->halt_reg, &val);
 
 	val &= BIT(br->halt_bit);
-	if (invert)
+	अगर (invert)
 		val = !val;
 
-	return !!val == !enabling;
-}
+	वापस !!val == !enabling;
+पूर्ण
 
-#define BRANCH_CLK_OFF			BIT(31)
-#define BRANCH_NOC_FSM_STATUS_SHIFT	28
-#define BRANCH_NOC_FSM_STATUS_MASK	0x7
-#define BRANCH_NOC_FSM_STATUS_ON	(0x2 << BRANCH_NOC_FSM_STATUS_SHIFT)
+#घोषणा BRANCH_CLK_OFF			BIT(31)
+#घोषणा BRANCH_NOC_FSM_STATUS_SHIFT	28
+#घोषणा BRANCH_NOC_FSM_STATUS_MASK	0x7
+#घोषणा BRANCH_NOC_FSM_STATUS_ON	(0x2 << BRANCH_NOC_FSM_STATUS_SHIFT)
 
-static bool clk_branch2_check_halt(const struct clk_branch *br, bool enabling)
-{
+अटल bool clk_branch2_check_halt(स्थिर काष्ठा clk_branch *br, bool enabling)
+अणु
 	u32 val;
 	u32 mask;
 
 	mask = BRANCH_NOC_FSM_STATUS_MASK << BRANCH_NOC_FSM_STATUS_SHIFT;
 	mask |= BRANCH_CLK_OFF;
 
-	regmap_read(br->clkr.regmap, br->halt_reg, &val);
+	regmap_पढ़ो(br->clkr.regmap, br->halt_reg, &val);
 
-	if (enabling) {
+	अगर (enabling) अणु
 		val &= mask;
-		return (val & BRANCH_CLK_OFF) == 0 ||
+		वापस (val & BRANCH_CLK_OFF) == 0 ||
 			val == BRANCH_NOC_FSM_STATUS_ON;
-	} else {
-		return val & BRANCH_CLK_OFF;
-	}
-}
+	पूर्ण अन्यथा अणु
+		वापस val & BRANCH_CLK_OFF;
+	पूर्ण
+पूर्ण
 
-static int clk_branch_wait(const struct clk_branch *br, bool enabling,
-		bool (check_halt)(const struct clk_branch *, bool))
-{
+अटल पूर्णांक clk_branch_रुको(स्थिर काष्ठा clk_branch *br, bool enabling,
+		bool (check_halt)(स्थिर काष्ठा clk_branch *, bool))
+अणु
 	bool voted = br->halt_check & BRANCH_VOTED;
-	const char *name = clk_hw_get_name(&br->clkr.hw);
+	स्थिर अक्षर *name = clk_hw_get_name(&br->clkr.hw);
 
 	/*
-	 * Skip checking halt bit if we're explicitly ignoring the bit or the
-	 * clock is in hardware gated mode
+	 * Skip checking halt bit अगर we're explicitly ignoring the bit or the
+	 * घड़ी is in hardware gated mode
 	 */
-	if (br->halt_check == BRANCH_HALT_SKIP || clk_branch_in_hwcg_mode(br))
-		return 0;
+	अगर (br->halt_check == BRANCH_HALT_SKIP || clk_branch_in_hwcg_mode(br))
+		वापस 0;
 
-	if (br->halt_check == BRANCH_HALT_DELAY || (!enabling && voted)) {
+	अगर (br->halt_check == BRANCH_HALT_DELAY || (!enabling && voted)) अणु
 		udelay(10);
-	} else if (br->halt_check == BRANCH_HALT_ENABLE ||
+	पूर्ण अन्यथा अगर (br->halt_check == BRANCH_HALT_ENABLE ||
 		   br->halt_check == BRANCH_HALT ||
-		   (enabling && voted)) {
-		int count = 200;
+		   (enabling && voted)) अणु
+		पूर्णांक count = 200;
 
-		while (count-- > 0) {
-			if (check_halt(br, enabling))
-				return 0;
+		जबतक (count-- > 0) अणु
+			अगर (check_halt(br, enabling))
+				वापस 0;
 			udelay(1);
-		}
+		पूर्ण
 		WARN(1, "%s status stuck at 'o%s'", name,
 				enabling ? "ff" : "n");
-		return -EBUSY;
-	}
-	return 0;
-}
+		वापस -EBUSY;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int clk_branch_toggle(struct clk_hw *hw, bool en,
-		bool (check_halt)(const struct clk_branch *, bool))
-{
-	struct clk_branch *br = to_clk_branch(hw);
-	int ret;
+अटल पूर्णांक clk_branch_toggle(काष्ठा clk_hw *hw, bool en,
+		bool (check_halt)(स्थिर काष्ठा clk_branch *, bool))
+अणु
+	काष्ठा clk_branch *br = to_clk_branch(hw);
+	पूर्णांक ret;
 
-	if (en) {
+	अगर (en) अणु
 		ret = clk_enable_regmap(hw);
-		if (ret)
-			return ret;
-	} else {
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
 		clk_disable_regmap(hw);
-	}
+	पूर्ण
 
-	return clk_branch_wait(br, en, check_halt);
-}
+	वापस clk_branch_रुको(br, en, check_halt);
+पूर्ण
 
-static int clk_branch_enable(struct clk_hw *hw)
-{
-	return clk_branch_toggle(hw, true, clk_branch_check_halt);
-}
+अटल पूर्णांक clk_branch_enable(काष्ठा clk_hw *hw)
+अणु
+	वापस clk_branch_toggle(hw, true, clk_branch_check_halt);
+पूर्ण
 
-static void clk_branch_disable(struct clk_hw *hw)
-{
+अटल व्योम clk_branch_disable(काष्ठा clk_hw *hw)
+अणु
 	clk_branch_toggle(hw, false, clk_branch_check_halt);
-}
+पूर्ण
 
-const struct clk_ops clk_branch_ops = {
+स्थिर काष्ठा clk_ops clk_branch_ops = अणु
 	.enable = clk_branch_enable,
 	.disable = clk_branch_disable,
 	.is_enabled = clk_is_enabled_regmap,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(clk_branch_ops);
 
-static int clk_branch2_enable(struct clk_hw *hw)
-{
-	return clk_branch_toggle(hw, true, clk_branch2_check_halt);
-}
+अटल पूर्णांक clk_branch2_enable(काष्ठा clk_hw *hw)
+अणु
+	वापस clk_branch_toggle(hw, true, clk_branch2_check_halt);
+पूर्ण
 
-static void clk_branch2_disable(struct clk_hw *hw)
-{
+अटल व्योम clk_branch2_disable(काष्ठा clk_hw *hw)
+अणु
 	clk_branch_toggle(hw, false, clk_branch2_check_halt);
-}
+पूर्ण
 
-const struct clk_ops clk_branch2_ops = {
+स्थिर काष्ठा clk_ops clk_branch2_ops = अणु
 	.enable = clk_branch2_enable,
 	.disable = clk_branch2_disable,
 	.is_enabled = clk_is_enabled_regmap,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(clk_branch2_ops);
 
-const struct clk_ops clk_branch2_aon_ops = {
+स्थिर काष्ठा clk_ops clk_branch2_aon_ops = अणु
 	.enable = clk_branch2_enable,
 	.is_enabled = clk_is_enabled_regmap,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(clk_branch2_aon_ops);
 
-const struct clk_ops clk_branch_simple_ops = {
+स्थिर काष्ठा clk_ops clk_branch_simple_ops = अणु
 	.enable = clk_enable_regmap,
 	.disable = clk_disable_regmap,
 	.is_enabled = clk_is_enabled_regmap,
-};
+पूर्ण;
 EXPORT_SYMBOL_GPL(clk_branch_simple_ops);

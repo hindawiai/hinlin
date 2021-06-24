@@ -1,6 +1,7 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Header file for:
+ * Header file क्रम:
  * Cypress TrueTouch(TM) Standard Product (TTSP) touchscreen drivers.
  * For use with Cypress Txx3xx parts.
  * Supported parts include:
@@ -8,50 +9,50 @@
  * CY8CTMA340
  *
  * Copyright (C) 2009, 2010, 2011 Cypress Semiconductor, Inc.
- * Copyright (C) 2012 Javier Martinez Canillas <javier@dowhile0.org>
+ * Copyright (C) 2012 Javier Martinez Canillas <javier@करोजबतक0.org>
  *
  * Contact Cypress Semiconductor at www.cypress.com <kev@cypress.com>
  */
 
 
-#ifndef __CYTTSP_CORE_H__
-#define __CYTTSP_CORE_H__
+#अगर_अघोषित __CYTTSP_CORE_H__
+#घोषणा __CYTTSP_CORE_H__
 
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/device.h>
-#include <linux/input/cyttsp.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/device.h>
+#समावेश <linux/input/cyttsp.h>
 
-#define CY_NUM_RETRY		16 /* max number of retries for read ops */
+#घोषणा CY_NUM_RETRY		16 /* max number of retries क्रम पढ़ो ops */
 
-struct cyttsp_tch {
+काष्ठा cyttsp_tch अणु
 	__be16 x, y;
 	u8 z;
-} __packed;
+पूर्ण __packed;
 
-/* TrueTouch Standard Product Gen3 interface definition */
-struct cyttsp_xydata {
+/* TrueTouch Standard Product Gen3 पूर्णांकerface definition */
+काष्ठा cyttsp_xydata अणु
 	u8 hst_mode;
 	u8 tt_mode;
 	u8 tt_stat;
-	struct cyttsp_tch tch1;
+	काष्ठा cyttsp_tch tch1;
 	u8 touch12_id;
-	struct cyttsp_tch tch2;
+	काष्ठा cyttsp_tch tch2;
 	u8 gest_cnt;
 	u8 gest_id;
-	struct cyttsp_tch tch3;
+	काष्ठा cyttsp_tch tch3;
 	u8 touch34_id;
-	struct cyttsp_tch tch4;
+	काष्ठा cyttsp_tch tch4;
 	u8 tt_undef[3];
 	u8 act_dist;
 	u8 tt_reserved;
-} __packed;
+पूर्ण __packed;
 
 
-/* TTSP System Information interface definition */
-struct cyttsp_sysinfo_data {
+/* TTSP System Inक्रमmation पूर्णांकerface definition */
+काष्ठा cyttsp_sysinfo_data अणु
 	u8 hst_mode;
 	u8 mfg_stat;
 	u8 mfg_cmd;
@@ -68,14 +69,14 @@ struct cyttsp_sysinfo_data {
 	u8 app_verl;
 	u8 tt_undef[5];
 	u8 scn_typ;
-	u8 act_intrvl;
-	u8 tch_tmout;
-	u8 lp_intrvl;
-};
+	u8 act_पूर्णांकrvl;
+	u8 tch_पंचांगout;
+	u8 lp_पूर्णांकrvl;
+पूर्ण;
 
-/* TTSP Bootloader Register Map interface definition */
-#define CY_BL_CHKSUM_OK 0x01
-struct cyttsp_bootloader_data {
+/* TTSP Bootloader Register Map पूर्णांकerface definition */
+#घोषणा CY_BL_CHKSUM_OK 0x01
+काष्ठा cyttsp_bootloader_data अणु
 	u8 bl_file;
 	u8 bl_status;
 	u8 bl_error;
@@ -92,54 +93,54 @@ struct cyttsp_bootloader_data {
 	u8 cid_0;
 	u8 cid_1;
 	u8 cid_2;
-};
+पूर्ण;
 
-struct cyttsp;
+काष्ठा cyttsp;
 
-struct cyttsp_bus_ops {
+काष्ठा cyttsp_bus_ops अणु
 	u16 bustype;
-	int (*write)(struct device *dev, u8 *xfer_buf, u16 addr, u8 length,
-			const void *values);
-	int (*read)(struct device *dev, u8 *xfer_buf, u16 addr, u8 length,
-			void *values);
-};
+	पूर्णांक (*ग_लिखो)(काष्ठा device *dev, u8 *xfer_buf, u16 addr, u8 length,
+			स्थिर व्योम *values);
+	पूर्णांक (*पढ़ो)(काष्ठा device *dev, u8 *xfer_buf, u16 addr, u8 length,
+			व्योम *values);
+पूर्ण;
 
-enum cyttsp_state {
+क्रमागत cyttsp_state अणु
 	CY_IDLE_STATE,
 	CY_ACTIVE_STATE,
 	CY_BL_STATE,
-};
+पूर्ण;
 
-struct cyttsp {
-	struct device *dev;
-	int irq;
-	struct input_dev *input;
-	const struct cyttsp_bus_ops *bus_ops;
-	struct cyttsp_bootloader_data bl_data;
-	struct cyttsp_sysinfo_data sysinfo_data;
-	struct cyttsp_xydata xy_data;
-	struct completion bl_ready;
-	enum cyttsp_state state;
+काष्ठा cyttsp अणु
+	काष्ठा device *dev;
+	पूर्णांक irq;
+	काष्ठा input_dev *input;
+	स्थिर काष्ठा cyttsp_bus_ops *bus_ops;
+	काष्ठा cyttsp_bootloader_data bl_data;
+	काष्ठा cyttsp_sysinfo_data sysinfo_data;
+	काष्ठा cyttsp_xydata xy_data;
+	काष्ठा completion bl_पढ़ोy;
+	क्रमागत cyttsp_state state;
 	bool suspended;
 
-	struct gpio_desc *reset_gpio;
+	काष्ठा gpio_desc *reset_gpio;
 	bool use_hndshk;
 	u8 act_dist;
-	u8 act_intrvl;
-	u8 tch_tmout;
-	u8 lp_intrvl;
+	u8 act_पूर्णांकrvl;
+	u8 tch_पंचांगout;
+	u8 lp_पूर्णांकrvl;
 	u8 *bl_keys;
 
 	u8 xfer_buf[] ____cacheline_aligned;
-};
+पूर्ण;
 
-struct cyttsp *cyttsp_probe(const struct cyttsp_bus_ops *bus_ops,
-			    struct device *dev, int irq, size_t xfer_buf_size);
+काष्ठा cyttsp *cyttsp_probe(स्थिर काष्ठा cyttsp_bus_ops *bus_ops,
+			    काष्ठा device *dev, पूर्णांक irq, माप_प्रकार xfer_buf_size);
 
-int cyttsp_i2c_write_block_data(struct device *dev, u8 *xfer_buf, u16 addr,
-		u8 length, const void *values);
-int cyttsp_i2c_read_block_data(struct device *dev, u8 *xfer_buf, u16 addr,
-		u8 length, void *values);
-extern const struct dev_pm_ops cyttsp_pm_ops;
+पूर्णांक cyttsp_i2c_ग_लिखो_block_data(काष्ठा device *dev, u8 *xfer_buf, u16 addr,
+		u8 length, स्थिर व्योम *values);
+पूर्णांक cyttsp_i2c_पढ़ो_block_data(काष्ठा device *dev, u8 *xfer_buf, u16 addr,
+		u8 length, व्योम *values);
+बाह्य स्थिर काष्ठा dev_pm_ops cyttsp_pm_ops;
 
-#endif /* __CYTTSP_CORE_H__ */
+#पूर्ण_अगर /* __CYTTSP_CORE_H__ */

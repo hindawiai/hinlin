@@ -1,136 +1,137 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2021 Intel Corporation
+ * Copyright तऊ 2021 Intel Corporation
  */
 
-#include <linux/kernel.h>
-#include <linux/moduleparam.h>
-#include <linux/slab.h>
-#include <linux/string.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/माला.स>
 
-#include "i915_drv.h"
-#include "i915_mitigations.h"
+#समावेश "i915_drv.h"
+#समावेश "i915_mitigations.h"
 
-static unsigned long mitigations __read_mostly = ~0UL;
+अटल अचिन्हित दीर्घ mitigations __पढ़ो_mostly = ~0UL;
 
-enum {
+क्रमागत अणु
 	CLEAR_RESIDUALS = 0,
-};
+पूर्ण;
 
-static const char * const names[] = {
+अटल स्थिर अक्षर * स्थिर names[] = अणु
 	[CLEAR_RESIDUALS] = "residuals",
-};
+पूर्ण;
 
-bool i915_mitigate_clear_residuals(void)
-{
-	return READ_ONCE(mitigations) & BIT(CLEAR_RESIDUALS);
-}
+bool i915_mitigate_clear_residuals(व्योम)
+अणु
+	वापस READ_ONCE(mitigations) & BIT(CLEAR_RESIDUALS);
+पूर्ण
 
-static int mitigations_set(const char *val, const struct kernel_param *kp)
-{
-	unsigned long new = ~0UL;
-	char *str, *sep, *tok;
+अटल पूर्णांक mitigations_set(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	अचिन्हित दीर्घ new = ~0UL;
+	अक्षर *str, *sep, *tok;
 	bool first = true;
-	int err = 0;
+	पूर्णांक err = 0;
 
 	BUILD_BUG_ON(ARRAY_SIZE(names) >= BITS_PER_TYPE(mitigations));
 
 	str = kstrdup(val, GFP_KERNEL);
-	if (!str)
-		return -ENOMEM;
+	अगर (!str)
+		वापस -ENOMEM;
 
-	for (sep = str; (tok = strsep(&sep, ","));) {
+	क्रम (sep = str; (tok = strsep(&sep, ","));) अणु
 		bool enable = true;
-		int i;
+		पूर्णांक i;
 
 		/* Be tolerant of leading/trailing whitespace */
 		tok = strim(tok);
 
-		if (first) {
+		अगर (first) अणु
 			first = false;
 
-			if (!strcmp(tok, "auto"))
-				continue;
+			अगर (!म_भेद(tok, "auto"))
+				जारी;
 
 			new = 0;
-			if (!strcmp(tok, "off"))
-				continue;
-		}
+			अगर (!म_भेद(tok, "off"))
+				जारी;
+		पूर्ण
 
-		if (*tok == '!') {
+		अगर (*tok == '!') अणु
 			enable = !enable;
 			tok++;
-		}
+		पूर्ण
 
-		if (!strncmp(tok, "no", 2)) {
+		अगर (!म_भेदन(tok, "no", 2)) अणु
 			enable = !enable;
 			tok += 2;
-		}
+		पूर्ण
 
-		if (*tok == '\0')
-			continue;
+		अगर (*tok == '\0')
+			जारी;
 
-		for (i = 0; i < ARRAY_SIZE(names); i++) {
-			if (!strcmp(tok, names[i])) {
-				if (enable)
+		क्रम (i = 0; i < ARRAY_SIZE(names); i++) अणु
+			अगर (!म_भेद(tok, names[i])) अणु
+				अगर (enable)
 					new |= BIT(i);
-				else
+				अन्यथा
 					new &= ~BIT(i);
-				break;
-			}
-		}
-		if (i == ARRAY_SIZE(names)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+		अगर (i == ARRAY_SIZE(names)) अणु
 			pr_err("Bad \"%s.mitigations=%s\", '%s' is unknown\n",
 			       DRIVER_NAME, val, tok);
 			err = -EINVAL;
-			break;
-		}
-	}
-	kfree(str);
-	if (err)
-		return err;
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	kमुक्त(str);
+	अगर (err)
+		वापस err;
 
 	WRITE_ONCE(mitigations, new);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int mitigations_get(char *buffer, const struct kernel_param *kp)
-{
-	unsigned long local = READ_ONCE(mitigations);
-	int count, i;
+अटल पूर्णांक mitigations_get(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	अचिन्हित दीर्घ local = READ_ONCE(mitigations);
+	पूर्णांक count, i;
 	bool enable;
 
-	if (!local)
-		return scnprintf(buffer, PAGE_SIZE, "%s\n", "off");
+	अगर (!local)
+		वापस scnम_लिखो(buffer, PAGE_SIZE, "%s\n", "off");
 
-	if (local & BIT(BITS_PER_LONG - 1)) {
-		count = scnprintf(buffer, PAGE_SIZE, "%s,", "auto");
+	अगर (local & BIT(BITS_PER_LONG - 1)) अणु
+		count = scnम_लिखो(buffer, PAGE_SIZE, "%s,", "auto");
 		enable = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		enable = true;
 		count = 0;
-	}
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(names); i++) {
-		if ((local & BIT(i)) != enable)
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(names); i++) अणु
+		अगर ((local & BIT(i)) != enable)
+			जारी;
 
-		count += scnprintf(buffer + count, PAGE_SIZE - count,
+		count += scnम_लिखो(buffer + count, PAGE_SIZE - count,
 				   "%s%s,", enable ? "" : "!", names[i]);
-	}
+	पूर्ण
 
 	buffer[count - 1] = '\n';
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static const struct kernel_param_ops ops = {
+अटल स्थिर काष्ठा kernel_param_ops ops = अणु
 	.set = mitigations_set,
 	.get = mitigations_get,
-};
+पूर्ण;
 
-module_param_cb_unsafe(mitigations, &ops, NULL, 0600);
+module_param_cb_unsafe(mitigations, &ops, शून्य, 0600);
 MODULE_PARM_DESC(mitigations,
-"Selectively enable security mitigations for all Intel® GPUs in the system.\n"
+"Selectively enable security mitigations for all Intelतऍ GPUs in the system.\n"
 "\n"
 "  auto -- enables all mitigations required for the platform [default]\n"
 "  off  -- disables all mitigations\n"

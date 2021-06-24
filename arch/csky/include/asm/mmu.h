@@ -1,12 +1,13 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef __ASM_CSKY_MMU_H
-#define __ASM_CSKY_MMU_H
+#अगर_अघोषित __ASM_CSKY_MMU_H
+#घोषणा __ASM_CSKY_MMU_H
 
-typedef struct {
+प्रकार काष्ठा अणु
 	atomic64_t	asid;
-	void *vdso;
+	व्योम *vdso;
 	cpumask_t	icache_stale_mask;
-} mm_context_t;
+पूर्ण mm_context_t;
 
-#endif /* __ASM_CSKY_MMU_H */
+#पूर्ण_अगर /* __ASM_CSKY_MMU_H */

@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _PARISC_STATFS_H
-#define _PARISC_STATFS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _PARISC_STATFS_H
+#घोषणा _PARISC_STATFS_H
 
-#define __statfs_word long
-#include <asm-generic/statfs.h>
+#घोषणा __statfs_word दीर्घ
+#समावेश <यंत्र-generic/statfs.h>
 
-#endif
+#पूर्ण_अगर

@@ -1,119 +1,120 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Universal power supply monitor class
+ *  Universal घातer supply monitor class
  *
- *  Copyright © 2007  Anton Vorontsov <cbou@mail.ru>
- *  Copyright © 2004  Szabolcs Gyurko
- *  Copyright © 2003  Ian Molton <spyro@f2s.com>
+ *  Copyright तऊ 2007  Anton Vorontsov <cbou@mail.ru>
+ *  Copyright तऊ 2004  Szabolcs Gyurko
+ *  Copyright तऊ 2003  Ian Molton <spyro@f2s.com>
  *
- *  Modified: 2004, Oct     Szabolcs Gyurko
+ *  Modअगरied: 2004, Oct     Szabolcs Gyurko
  */
 
-#include <linux/module.h>
-#include <linux/types.h>
-#include <linux/init.h>
-#include <linux/slab.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/notifier.h>
-#include <linux/err.h>
-#include <linux/of.h>
-#include <linux/power_supply.h>
-#include <linux/property.h>
-#include <linux/thermal.h>
-#include "power_supply.h"
+#समावेश <linux/module.h>
+#समावेश <linux/types.h>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/err.h>
+#समावेश <linux/of.h>
+#समावेश <linux/घातer_supply.h>
+#समावेश <linux/property.h>
+#समावेश <linux/thermal.h>
+#समावेश "power_supply.h"
 
-/* exported for the APM Power driver, APM emulation */
-struct class *power_supply_class;
-EXPORT_SYMBOL_GPL(power_supply_class);
+/* exported क्रम the APM Power driver, APM emulation */
+काष्ठा class *घातer_supply_class;
+EXPORT_SYMBOL_GPL(घातer_supply_class);
 
-ATOMIC_NOTIFIER_HEAD(power_supply_notifier);
-EXPORT_SYMBOL_GPL(power_supply_notifier);
+ATOMIC_NOTIFIER_HEAD(घातer_supply_notअगरier);
+EXPORT_SYMBOL_GPL(घातer_supply_notअगरier);
 
-static struct device_type power_supply_dev_type;
+अटल काष्ठा device_type घातer_supply_dev_type;
 
-#define POWER_SUPPLY_DEFERRED_REGISTER_TIME	msecs_to_jiffies(10)
+#घोषणा POWER_SUPPLY_DEFERRED_REGISTER_TIME	msecs_to_jअगरfies(10)
 
-static bool __power_supply_is_supplied_by(struct power_supply *supplier,
-					 struct power_supply *supply)
-{
-	int i;
+अटल bool __घातer_supply_is_supplied_by(काष्ठा घातer_supply *supplier,
+					 काष्ठा घातer_supply *supply)
+अणु
+	पूर्णांक i;
 
-	if (!supply->supplied_from && !supplier->supplied_to)
-		return false;
+	अगर (!supply->supplied_from && !supplier->supplied_to)
+		वापस false;
 
 	/* Support both supplied_to and supplied_from modes */
-	if (supply->supplied_from) {
-		if (!supplier->desc->name)
-			return false;
-		for (i = 0; i < supply->num_supplies; i++)
-			if (!strcmp(supplier->desc->name, supply->supplied_from[i]))
-				return true;
-	} else {
-		if (!supply->desc->name)
-			return false;
-		for (i = 0; i < supplier->num_supplicants; i++)
-			if (!strcmp(supplier->supplied_to[i], supply->desc->name))
-				return true;
-	}
+	अगर (supply->supplied_from) अणु
+		अगर (!supplier->desc->name)
+			वापस false;
+		क्रम (i = 0; i < supply->num_supplies; i++)
+			अगर (!म_भेद(supplier->desc->name, supply->supplied_from[i]))
+				वापस true;
+	पूर्ण अन्यथा अणु
+		अगर (!supply->desc->name)
+			वापस false;
+		क्रम (i = 0; i < supplier->num_supplicants; i++)
+			अगर (!म_भेद(supplier->supplied_to[i], supply->desc->name))
+				वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int __power_supply_changed_work(struct device *dev, void *data)
-{
-	struct power_supply *psy = data;
-	struct power_supply *pst = dev_get_drvdata(dev);
+अटल पूर्णांक __घातer_supply_changed_work(काष्ठा device *dev, व्योम *data)
+अणु
+	काष्ठा घातer_supply *psy = data;
+	काष्ठा घातer_supply *pst = dev_get_drvdata(dev);
 
-	if (__power_supply_is_supplied_by(psy, pst)) {
-		if (pst->desc->external_power_changed)
-			pst->desc->external_power_changed(pst);
-	}
+	अगर (__घातer_supply_is_supplied_by(psy, pst)) अणु
+		अगर (pst->desc->बाह्यal_घातer_changed)
+			pst->desc->बाह्यal_घातer_changed(pst);
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void power_supply_changed_work(struct work_struct *work)
-{
-	unsigned long flags;
-	struct power_supply *psy = container_of(work, struct power_supply,
+अटल व्योम घातer_supply_changed_work(काष्ठा work_काष्ठा *work)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा घातer_supply *psy = container_of(work, काष्ठा घातer_supply,
 						changed_work);
 
 	dev_dbg(&psy->dev, "%s\n", __func__);
 
 	spin_lock_irqsave(&psy->changed_lock, flags);
 	/*
-	 * Check 'changed' here to avoid issues due to race between
-	 * power_supply_changed() and this routine. In worst case
-	 * power_supply_changed() can be called again just before we take above
+	 * Check 'changed' here to aव्योम issues due to race between
+	 * घातer_supply_changed() and this routine. In worst हाल
+	 * घातer_supply_changed() can be called again just beक्रमe we take above
 	 * lock. During the first call of this routine we will mark 'changed' as
-	 * false and it will stay false for the next call as well.
+	 * false and it will stay false क्रम the next call as well.
 	 */
-	if (likely(psy->changed)) {
+	अगर (likely(psy->changed)) अणु
 		psy->changed = false;
 		spin_unlock_irqrestore(&psy->changed_lock, flags);
-		class_for_each_device(power_supply_class, NULL, psy,
-				      __power_supply_changed_work);
-		power_supply_update_leds(psy);
-		atomic_notifier_call_chain(&power_supply_notifier,
+		class_क्रम_each_device(घातer_supply_class, शून्य, psy,
+				      __घातer_supply_changed_work);
+		घातer_supply_update_leds(psy);
+		atomic_notअगरier_call_chain(&घातer_supply_notअगरier,
 				PSY_EVENT_PROP_CHANGED, psy);
 		kobject_uevent(&psy->dev.kobj, KOBJ_CHANGE);
 		spin_lock_irqsave(&psy->changed_lock, flags);
-	}
+	पूर्ण
 
 	/*
 	 * Hold the wakeup_source until all events are processed.
-	 * power_supply_changed() might have called again and have set 'changed'
+	 * घातer_supply_changed() might have called again and have set 'changed'
 	 * to true.
 	 */
-	if (likely(!psy->changed))
+	अगर (likely(!psy->changed))
 		pm_relax(&psy->dev);
 	spin_unlock_irqrestore(&psy->changed_lock, flags);
-}
+पूर्ण
 
-void power_supply_changed(struct power_supply *psy)
-{
-	unsigned long flags;
+व्योम घातer_supply_changed(काष्ठा घातer_supply *psy)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	dev_dbg(&psy->dev, "%s\n", __func__);
 
@@ -122,674 +123,674 @@ void power_supply_changed(struct power_supply *psy)
 	pm_stay_awake(&psy->dev);
 	spin_unlock_irqrestore(&psy->changed_lock, flags);
 	schedule_work(&psy->changed_work);
-}
-EXPORT_SYMBOL_GPL(power_supply_changed);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_changed);
 
 /*
- * Notify that power supply was registered after parent finished the probing.
+ * Notअगरy that घातer supply was रेजिस्टरed after parent finished the probing.
  *
- * Often power supply is registered from driver's probe function. However
- * calling power_supply_changed() directly from power_supply_register()
+ * Often घातer supply is रेजिस्टरed from driver's probe function. However
+ * calling घातer_supply_changed() directly from घातer_supply_रेजिस्टर()
  * would lead to execution of get_property() function provided by the driver
- * too early - before the probe ends.
+ * too early - beक्रमe the probe ends.
  *
- * Avoid that by waiting on parent's mutex.
+ * Aव्योम that by रुकोing on parent's mutex.
  */
-static void power_supply_deferred_register_work(struct work_struct *work)
-{
-	struct power_supply *psy = container_of(work, struct power_supply,
-						deferred_register_work.work);
+अटल व्योम घातer_supply_deferred_रेजिस्टर_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा घातer_supply *psy = container_of(work, काष्ठा घातer_supply,
+						deferred_रेजिस्टर_work.work);
 
-	if (psy->dev.parent) {
-		while (!mutex_trylock(&psy->dev.parent->mutex)) {
-			if (psy->removing)
-				return;
+	अगर (psy->dev.parent) अणु
+		जबतक (!mutex_trylock(&psy->dev.parent->mutex)) अणु
+			अगर (psy->removing)
+				वापस;
 			msleep(10);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	power_supply_changed(psy);
+	घातer_supply_changed(psy);
 
-	if (psy->dev.parent)
+	अगर (psy->dev.parent)
 		mutex_unlock(&psy->dev.parent->mutex);
-}
+पूर्ण
 
-#ifdef CONFIG_OF
-static int __power_supply_populate_supplied_from(struct device *dev,
-						 void *data)
-{
-	struct power_supply *psy = data;
-	struct power_supply *epsy = dev_get_drvdata(dev);
-	struct device_node *np;
-	int i = 0;
+#अगर_घोषित CONFIG_OF
+अटल पूर्णांक __घातer_supply_populate_supplied_from(काष्ठा device *dev,
+						 व्योम *data)
+अणु
+	काष्ठा घातer_supply *psy = data;
+	काष्ठा घातer_supply *epsy = dev_get_drvdata(dev);
+	काष्ठा device_node *np;
+	पूर्णांक i = 0;
 
-	do {
+	करो अणु
 		np = of_parse_phandle(psy->of_node, "power-supplies", i++);
-		if (!np)
-			break;
+		अगर (!np)
+			अवरोध;
 
-		if (np == epsy->of_node) {
+		अगर (np == epsy->of_node) अणु
 			dev_dbg(&psy->dev, "%s: Found supply : %s\n",
 				psy->desc->name, epsy->desc->name);
-			psy->supplied_from[i-1] = (char *)epsy->desc->name;
+			psy->supplied_from[i-1] = (अक्षर *)epsy->desc->name;
 			psy->num_supplies++;
 			of_node_put(np);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		of_node_put(np);
-	} while (np);
+	पूर्ण जबतक (np);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int power_supply_populate_supplied_from(struct power_supply *psy)
-{
-	int error;
+अटल पूर्णांक घातer_supply_populate_supplied_from(काष्ठा घातer_supply *psy)
+अणु
+	पूर्णांक error;
 
-	error = class_for_each_device(power_supply_class, NULL, psy,
-				      __power_supply_populate_supplied_from);
+	error = class_क्रम_each_device(घातer_supply_class, शून्य, psy,
+				      __घातer_supply_populate_supplied_from);
 
 	dev_dbg(&psy->dev, "%s %d\n", __func__, error);
 
-	return error;
-}
+	वापस error;
+पूर्ण
 
-static int  __power_supply_find_supply_from_node(struct device *dev,
-						 void *data)
-{
-	struct device_node *np = data;
-	struct power_supply *epsy = dev_get_drvdata(dev);
+अटल पूर्णांक  __घातer_supply_find_supply_from_node(काष्ठा device *dev,
+						 व्योम *data)
+अणु
+	काष्ठा device_node *np = data;
+	काष्ठा घातer_supply *epsy = dev_get_drvdata(dev);
 
-	/* returning non-zero breaks out of class_for_each_device loop */
-	if (epsy->of_node == np)
-		return 1;
+	/* वापसing non-zero अवरोधs out of class_क्रम_each_device loop */
+	अगर (epsy->of_node == np)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int power_supply_find_supply_from_node(struct device_node *supply_node)
-{
-	int error;
+अटल पूर्णांक घातer_supply_find_supply_from_node(काष्ठा device_node *supply_node)
+अणु
+	पूर्णांक error;
 
 	/*
-	 * class_for_each_device() either returns its own errors or values
-	 * returned by __power_supply_find_supply_from_node().
+	 * class_क्रम_each_device() either वापसs its own errors or values
+	 * वापसed by __घातer_supply_find_supply_from_node().
 	 *
-	 * __power_supply_find_supply_from_node() will return 0 (no match)
+	 * __घातer_supply_find_supply_from_node() will वापस 0 (no match)
 	 * or 1 (match).
 	 *
-	 * We return 0 if class_for_each_device() returned 1, -EPROBE_DEFER if
-	 * it returned 0, or error as returned by it.
+	 * We वापस 0 अगर class_क्रम_each_device() वापसed 1, -EPROBE_DEFER अगर
+	 * it वापसed 0, or error as वापसed by it.
 	 */
-	error = class_for_each_device(power_supply_class, NULL, supply_node,
-				       __power_supply_find_supply_from_node);
+	error = class_क्रम_each_device(घातer_supply_class, शून्य, supply_node,
+				       __घातer_supply_find_supply_from_node);
 
-	return error ? (error == 1 ? 0 : error) : -EPROBE_DEFER;
-}
+	वापस error ? (error == 1 ? 0 : error) : -EPROBE_DEFER;
+पूर्ण
 
-static int power_supply_check_supplies(struct power_supply *psy)
-{
-	struct device_node *np;
-	int cnt = 0;
+अटल पूर्णांक घातer_supply_check_supplies(काष्ठा घातer_supply *psy)
+अणु
+	काष्ठा device_node *np;
+	पूर्णांक cnt = 0;
 
-	/* If there is already a list honor it */
-	if (psy->supplied_from && psy->num_supplies > 0)
-		return 0;
+	/* If there is alपढ़ोy a list honor it */
+	अगर (psy->supplied_from && psy->num_supplies > 0)
+		वापस 0;
 
-	/* No device node found, nothing to do */
-	if (!psy->of_node)
-		return 0;
+	/* No device node found, nothing to करो */
+	अगर (!psy->of_node)
+		वापस 0;
 
-	do {
-		int ret;
+	करो अणु
+		पूर्णांक ret;
 
 		np = of_parse_phandle(psy->of_node, "power-supplies", cnt++);
-		if (!np)
-			break;
+		अगर (!np)
+			अवरोध;
 
-		ret = power_supply_find_supply_from_node(np);
+		ret = घातer_supply_find_supply_from_node(np);
 		of_node_put(np);
 
-		if (ret) {
+		अगर (ret) अणु
 			dev_dbg(&psy->dev, "Failed to find supply!\n");
-			return ret;
-		}
-	} while (np);
+			वापस ret;
+		पूर्ण
+	पूर्ण जबतक (np);
 
 	/* Missing valid "power-supplies" entries */
-	if (cnt == 1)
-		return 0;
+	अगर (cnt == 1)
+		वापस 0;
 
-	/* All supplies found, allocate char ** array for filling */
-	psy->supplied_from = devm_kzalloc(&psy->dev, sizeof(psy->supplied_from),
+	/* All supplies found, allocate अक्षर ** array क्रम filling */
+	psy->supplied_from = devm_kzalloc(&psy->dev, माप(psy->supplied_from),
 					  GFP_KERNEL);
-	if (!psy->supplied_from)
-		return -ENOMEM;
+	अगर (!psy->supplied_from)
+		वापस -ENOMEM;
 
-	*psy->supplied_from = devm_kcalloc(&psy->dev,
-					   cnt - 1, sizeof(char *),
+	*psy->supplied_from = devm_kसुस्मृति(&psy->dev,
+					   cnt - 1, माप(अक्षर *),
 					   GFP_KERNEL);
-	if (!*psy->supplied_from)
-		return -ENOMEM;
+	अगर (!*psy->supplied_from)
+		वापस -ENOMEM;
 
-	return power_supply_populate_supplied_from(psy);
-}
-#else
-static int power_supply_check_supplies(struct power_supply *psy)
-{
-	int nval, ret;
+	वापस घातer_supply_populate_supplied_from(psy);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक घातer_supply_check_supplies(काष्ठा घातer_supply *psy)
+अणु
+	पूर्णांक nval, ret;
 
-	if (!psy->dev.parent)
-		return 0;
+	अगर (!psy->dev.parent)
+		वापस 0;
 
-	nval = device_property_read_string_array(psy->dev.parent,
-						 "supplied-from", NULL, 0);
-	if (nval <= 0)
-		return 0;
+	nval = device_property_पढ़ो_string_array(psy->dev.parent,
+						 "supplied-from", शून्य, 0);
+	अगर (nval <= 0)
+		वापस 0;
 
-	psy->supplied_from = devm_kmalloc_array(&psy->dev, nval,
-						sizeof(char *), GFP_KERNEL);
-	if (!psy->supplied_from)
-		return -ENOMEM;
+	psy->supplied_from = devm_kदो_स्मृति_array(&psy->dev, nval,
+						माप(अक्षर *), GFP_KERNEL);
+	अगर (!psy->supplied_from)
+		वापस -ENOMEM;
 
-	ret = device_property_read_string_array(psy->dev.parent,
-		"supplied-from", (const char **)psy->supplied_from, nval);
-	if (ret < 0)
-		return ret;
+	ret = device_property_पढ़ो_string_array(psy->dev.parent,
+		"supplied-from", (स्थिर अक्षर **)psy->supplied_from, nval);
+	अगर (ret < 0)
+		वापस ret;
 
 	psy->num_supplies = nval;
 
-	return 0;
-}
-#endif
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-struct psy_am_i_supplied_data {
-	struct power_supply *psy;
-	unsigned int count;
-};
+काष्ठा psy_am_i_supplied_data अणु
+	काष्ठा घातer_supply *psy;
+	अचिन्हित पूर्णांक count;
+पूर्ण;
 
-static int __power_supply_am_i_supplied(struct device *dev, void *_data)
-{
-	union power_supply_propval ret = {0,};
-	struct power_supply *epsy = dev_get_drvdata(dev);
-	struct psy_am_i_supplied_data *data = _data;
+अटल पूर्णांक __घातer_supply_am_i_supplied(काष्ठा device *dev, व्योम *_data)
+अणु
+	जोड़ घातer_supply_propval ret = अणु0,पूर्ण;
+	काष्ठा घातer_supply *epsy = dev_get_drvdata(dev);
+	काष्ठा psy_am_i_supplied_data *data = _data;
 
-	if (__power_supply_is_supplied_by(epsy, data->psy)) {
+	अगर (__घातer_supply_is_supplied_by(epsy, data->psy)) अणु
 		data->count++;
-		if (!epsy->desc->get_property(epsy, POWER_SUPPLY_PROP_ONLINE,
+		अगर (!epsy->desc->get_property(epsy, POWER_SUPPLY_PROP_ONLINE,
 					&ret))
-			return ret.intval;
-	}
+			वापस ret.पूर्णांकval;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int power_supply_am_i_supplied(struct power_supply *psy)
-{
-	struct psy_am_i_supplied_data data = { psy, 0 };
-	int error;
+पूर्णांक घातer_supply_am_i_supplied(काष्ठा घातer_supply *psy)
+अणु
+	काष्ठा psy_am_i_supplied_data data = अणु psy, 0 पूर्ण;
+	पूर्णांक error;
 
-	error = class_for_each_device(power_supply_class, NULL, &data,
-				      __power_supply_am_i_supplied);
+	error = class_क्रम_each_device(घातer_supply_class, शून्य, &data,
+				      __घातer_supply_am_i_supplied);
 
 	dev_dbg(&psy->dev, "%s count %u err %d\n", __func__, data.count, error);
 
-	if (data.count == 0)
-		return -ENODEV;
+	अगर (data.count == 0)
+		वापस -ENODEV;
 
-	return error;
-}
-EXPORT_SYMBOL_GPL(power_supply_am_i_supplied);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_am_i_supplied);
 
-static int __power_supply_is_system_supplied(struct device *dev, void *data)
-{
-	union power_supply_propval ret = {0,};
-	struct power_supply *psy = dev_get_drvdata(dev);
-	unsigned int *count = data;
+अटल पूर्णांक __घातer_supply_is_प्रणाली_supplied(काष्ठा device *dev, व्योम *data)
+अणु
+	जोड़ घातer_supply_propval ret = अणु0,पूर्ण;
+	काष्ठा घातer_supply *psy = dev_get_drvdata(dev);
+	अचिन्हित पूर्णांक *count = data;
 
 	(*count)++;
-	if (psy->desc->type != POWER_SUPPLY_TYPE_BATTERY)
-		if (!psy->desc->get_property(psy, POWER_SUPPLY_PROP_ONLINE,
+	अगर (psy->desc->type != POWER_SUPPLY_TYPE_BATTERY)
+		अगर (!psy->desc->get_property(psy, POWER_SUPPLY_PROP_ONLINE,
 					&ret))
-			return ret.intval;
+			वापस ret.पूर्णांकval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int power_supply_is_system_supplied(void)
-{
-	int error;
-	unsigned int count = 0;
+पूर्णांक घातer_supply_is_प्रणाली_supplied(व्योम)
+अणु
+	पूर्णांक error;
+	अचिन्हित पूर्णांक count = 0;
 
-	error = class_for_each_device(power_supply_class, NULL, &count,
-				      __power_supply_is_system_supplied);
+	error = class_क्रम_each_device(घातer_supply_class, शून्य, &count,
+				      __घातer_supply_is_प्रणाली_supplied);
 
 	/*
-	 * If no power class device was found at all, most probably we are
-	 * running on a desktop system, so assume we are on mains power.
+	 * If no घातer class device was found at all, most probably we are
+	 * running on a desktop प्रणाली, so assume we are on मुख्यs घातer.
 	 */
-	if (count == 0)
-		return 1;
+	अगर (count == 0)
+		वापस 1;
 
-	return error;
-}
-EXPORT_SYMBOL_GPL(power_supply_is_system_supplied);
+	वापस error;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_is_प्रणाली_supplied);
 
-static int __power_supply_get_supplier_max_current(struct device *dev,
-						   void *data)
-{
-	union power_supply_propval ret = {0,};
-	struct power_supply *epsy = dev_get_drvdata(dev);
-	struct power_supply *psy = data;
+अटल पूर्णांक __घातer_supply_get_supplier_max_current(काष्ठा device *dev,
+						   व्योम *data)
+अणु
+	जोड़ घातer_supply_propval ret = अणु0,पूर्ण;
+	काष्ठा घातer_supply *epsy = dev_get_drvdata(dev);
+	काष्ठा घातer_supply *psy = data;
 
-	if (__power_supply_is_supplied_by(epsy, psy))
-		if (!epsy->desc->get_property(epsy,
+	अगर (__घातer_supply_is_supplied_by(epsy, psy))
+		अगर (!epsy->desc->get_property(epsy,
 					      POWER_SUPPLY_PROP_CURRENT_MAX,
 					      &ret))
-			return ret.intval;
+			वापस ret.पूर्णांकval;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int power_supply_set_input_current_limit_from_supplier(struct power_supply *psy)
-{
-	union power_supply_propval val = {0,};
-	int curr;
+पूर्णांक घातer_supply_set_input_current_limit_from_supplier(काष्ठा घातer_supply *psy)
+अणु
+	जोड़ घातer_supply_propval val = अणु0,पूर्ण;
+	पूर्णांक curr;
 
-	if (!psy->desc->set_property)
-		return -EINVAL;
+	अगर (!psy->desc->set_property)
+		वापस -EINVAL;
 
 	/*
-	 * This function is not intended for use with a supply with multiple
+	 * This function is not पूर्णांकended क्रम use with a supply with multiple
 	 * suppliers, we simply pick the first supply to report a non 0
 	 * max-current.
 	 */
-	curr = class_for_each_device(power_supply_class, NULL, psy,
-				      __power_supply_get_supplier_max_current);
-	if (curr <= 0)
-		return (curr == 0) ? -ENODEV : curr;
+	curr = class_क्रम_each_device(घातer_supply_class, शून्य, psy,
+				      __घातer_supply_get_supplier_max_current);
+	अगर (curr <= 0)
+		वापस (curr == 0) ? -ENODEV : curr;
 
-	val.intval = curr;
+	val.पूर्णांकval = curr;
 
-	return psy->desc->set_property(psy,
+	वापस psy->desc->set_property(psy,
 				POWER_SUPPLY_PROP_INPUT_CURRENT_LIMIT, &val);
-}
-EXPORT_SYMBOL_GPL(power_supply_set_input_current_limit_from_supplier);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_set_input_current_limit_from_supplier);
 
-int power_supply_set_battery_charged(struct power_supply *psy)
-{
-	if (atomic_read(&psy->use_cnt) >= 0 &&
+पूर्णांक घातer_supply_set_battery_अक्षरged(काष्ठा घातer_supply *psy)
+अणु
+	अगर (atomic_पढ़ो(&psy->use_cnt) >= 0 &&
 			psy->desc->type == POWER_SUPPLY_TYPE_BATTERY &&
-			psy->desc->set_charged) {
-		psy->desc->set_charged(psy);
-		return 0;
-	}
+			psy->desc->set_अक्षरged) अणु
+		psy->desc->set_अक्षरged(psy);
+		वापस 0;
+	पूर्ण
 
-	return -EINVAL;
-}
-EXPORT_SYMBOL_GPL(power_supply_set_battery_charged);
+	वापस -EINVAL;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_set_battery_अक्षरged);
 
-static int power_supply_match_device_by_name(struct device *dev, const void *data)
-{
-	const char *name = data;
-	struct power_supply *psy = dev_get_drvdata(dev);
+अटल पूर्णांक घातer_supply_match_device_by_name(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	स्थिर अक्षर *name = data;
+	काष्ठा घातer_supply *psy = dev_get_drvdata(dev);
 
-	return strcmp(psy->desc->name, name) == 0;
-}
+	वापस म_भेद(psy->desc->name, name) == 0;
+पूर्ण
 
 /**
- * power_supply_get_by_name() - Search for a power supply and returns its ref
+ * घातer_supply_get_by_name() - Search क्रम a घातer supply and वापसs its ref
  * @name: Power supply name to fetch
  *
- * If power supply was found, it increases reference count for the
- * internal power supply's device. The user should power_supply_put()
+ * If घातer supply was found, it increases reference count क्रम the
+ * पूर्णांकernal घातer supply's device. The user should घातer_supply_put()
  * after usage.
  *
- * Return: On success returns a reference to a power supply with
- * matching name equals to @name, a NULL otherwise.
+ * Return: On success वापसs a reference to a घातer supply with
+ * matching name equals to @name, a शून्य otherwise.
  */
-struct power_supply *power_supply_get_by_name(const char *name)
-{
-	struct power_supply *psy = NULL;
-	struct device *dev = class_find_device(power_supply_class, NULL, name,
-					power_supply_match_device_by_name);
+काष्ठा घातer_supply *घातer_supply_get_by_name(स्थिर अक्षर *name)
+अणु
+	काष्ठा घातer_supply *psy = शून्य;
+	काष्ठा device *dev = class_find_device(घातer_supply_class, शून्य, name,
+					घातer_supply_match_device_by_name);
 
-	if (dev) {
+	अगर (dev) अणु
 		psy = dev_get_drvdata(dev);
 		atomic_inc(&psy->use_cnt);
-	}
+	पूर्ण
 
-	return psy;
-}
-EXPORT_SYMBOL_GPL(power_supply_get_by_name);
+	वापस psy;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_get_by_name);
 
 /**
- * power_supply_put() - Drop reference obtained with power_supply_get_by_name
+ * घातer_supply_put() - Drop reference obtained with घातer_supply_get_by_name
  * @psy: Reference to put
  *
- * The reference to power supply should be put before unregistering
- * the power supply.
+ * The reference to घातer supply should be put beक्रमe unरेजिस्टरing
+ * the घातer supply.
  */
-void power_supply_put(struct power_supply *psy)
-{
+व्योम घातer_supply_put(काष्ठा घातer_supply *psy)
+अणु
 	might_sleep();
 
 	atomic_dec(&psy->use_cnt);
 	put_device(&psy->dev);
-}
-EXPORT_SYMBOL_GPL(power_supply_put);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_put);
 
-#ifdef CONFIG_OF
-static int power_supply_match_device_node(struct device *dev, const void *data)
-{
-	return dev->parent && dev->parent->of_node == data;
-}
+#अगर_घोषित CONFIG_OF
+अटल पूर्णांक घातer_supply_match_device_node(काष्ठा device *dev, स्थिर व्योम *data)
+अणु
+	वापस dev->parent && dev->parent->of_node == data;
+पूर्ण
 
 /**
- * power_supply_get_by_phandle() - Search for a power supply and returns its ref
- * @np: Pointer to device node holding phandle property
- * @property: Name of property holding a power supply name
+ * घातer_supply_get_by_phandle() - Search क्रम a घातer supply and वापसs its ref
+ * @np: Poपूर्णांकer to device node holding phandle property
+ * @property: Name of property holding a घातer supply name
  *
- * If power supply was found, it increases reference count for the
- * internal power supply's device. The user should power_supply_put()
+ * If घातer supply was found, it increases reference count क्रम the
+ * पूर्णांकernal घातer supply's device. The user should घातer_supply_put()
  * after usage.
  *
- * Return: On success returns a reference to a power supply with
- * matching name equals to value under @property, NULL or ERR_PTR otherwise.
+ * Return: On success वापसs a reference to a घातer supply with
+ * matching name equals to value under @property, शून्य or ERR_PTR otherwise.
  */
-struct power_supply *power_supply_get_by_phandle(struct device_node *np,
-							const char *property)
-{
-	struct device_node *power_supply_np;
-	struct power_supply *psy = NULL;
-	struct device *dev;
+काष्ठा घातer_supply *घातer_supply_get_by_phandle(काष्ठा device_node *np,
+							स्थिर अक्षर *property)
+अणु
+	काष्ठा device_node *घातer_supply_np;
+	काष्ठा घातer_supply *psy = शून्य;
+	काष्ठा device *dev;
 
-	power_supply_np = of_parse_phandle(np, property, 0);
-	if (!power_supply_np)
-		return ERR_PTR(-ENODEV);
+	घातer_supply_np = of_parse_phandle(np, property, 0);
+	अगर (!घातer_supply_np)
+		वापस ERR_PTR(-ENODEV);
 
-	dev = class_find_device(power_supply_class, NULL, power_supply_np,
-						power_supply_match_device_node);
+	dev = class_find_device(घातer_supply_class, शून्य, घातer_supply_np,
+						घातer_supply_match_device_node);
 
-	of_node_put(power_supply_np);
+	of_node_put(घातer_supply_np);
 
-	if (dev) {
+	अगर (dev) अणु
 		psy = dev_get_drvdata(dev);
 		atomic_inc(&psy->use_cnt);
-	}
+	पूर्ण
 
-	return psy;
-}
-EXPORT_SYMBOL_GPL(power_supply_get_by_phandle);
+	वापस psy;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_get_by_phandle);
 
-static void devm_power_supply_put(struct device *dev, void *res)
-{
-	struct power_supply **psy = res;
+अटल व्योम devm_घातer_supply_put(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा घातer_supply **psy = res;
 
-	power_supply_put(*psy);
-}
+	घातer_supply_put(*psy);
+पूर्ण
 
 /**
- * devm_power_supply_get_by_phandle() - Resource managed version of
- *  power_supply_get_by_phandle()
- * @dev: Pointer to device holding phandle property
- * @property: Name of property holding a power supply phandle
+ * devm_घातer_supply_get_by_phandle() - Resource managed version of
+ *  घातer_supply_get_by_phandle()
+ * @dev: Poपूर्णांकer to device holding phandle property
+ * @property: Name of property holding a घातer supply phandle
  *
- * Return: On success returns a reference to a power supply with
- * matching name equals to value under @property, NULL or ERR_PTR otherwise.
+ * Return: On success वापसs a reference to a घातer supply with
+ * matching name equals to value under @property, शून्य or ERR_PTR otherwise.
  */
-struct power_supply *devm_power_supply_get_by_phandle(struct device *dev,
-						      const char *property)
-{
-	struct power_supply **ptr, *psy;
+काष्ठा घातer_supply *devm_घातer_supply_get_by_phandle(काष्ठा device *dev,
+						      स्थिर अक्षर *property)
+अणु
+	काष्ठा घातer_supply **ptr, *psy;
 
-	if (!dev->of_node)
-		return ERR_PTR(-ENODEV);
+	अगर (!dev->of_node)
+		वापस ERR_PTR(-ENODEV);
 
-	ptr = devres_alloc(devm_power_supply_put, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_घातer_supply_put, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
-	psy = power_supply_get_by_phandle(dev->of_node, property);
-	if (IS_ERR_OR_NULL(psy)) {
-		devres_free(ptr);
-	} else {
+	psy = घातer_supply_get_by_phandle(dev->of_node, property);
+	अगर (IS_ERR_OR_शून्य(psy)) अणु
+		devres_मुक्त(ptr);
+	पूर्ण अन्यथा अणु
 		*ptr = psy;
 		devres_add(dev, ptr);
-	}
-	return psy;
-}
-EXPORT_SYMBOL_GPL(devm_power_supply_get_by_phandle);
-#endif /* CONFIG_OF */
+	पूर्ण
+	वापस psy;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_घातer_supply_get_by_phandle);
+#पूर्ण_अगर /* CONFIG_OF */
 
-int power_supply_get_battery_info(struct power_supply *psy,
-				  struct power_supply_battery_info *info)
-{
-	struct power_supply_resistance_temp_table *resist_table;
-	struct device_node *battery_np;
-	const char *value;
-	int err, len, index;
-	const __be32 *list;
+पूर्णांक घातer_supply_get_battery_info(काष्ठा घातer_supply *psy,
+				  काष्ठा घातer_supply_battery_info *info)
+अणु
+	काष्ठा घातer_supply_resistance_temp_table *resist_table;
+	काष्ठा device_node *battery_np;
+	स्थिर अक्षर *value;
+	पूर्णांक err, len, index;
+	स्थिर __be32 *list;
 
 	info->energy_full_design_uwh         = -EINVAL;
-	info->charge_full_design_uah         = -EINVAL;
+	info->अक्षरge_full_design_uah         = -EINVAL;
 	info->voltage_min_design_uv          = -EINVAL;
 	info->voltage_max_design_uv          = -EINVAL;
-	info->precharge_current_ua           = -EINVAL;
-	info->charge_term_current_ua         = -EINVAL;
-	info->constant_charge_current_max_ua = -EINVAL;
-	info->constant_charge_voltage_max_uv = -EINVAL;
-	info->temp_ambient_alert_min         = INT_MIN;
-	info->temp_ambient_alert_max         = INT_MAX;
-	info->temp_alert_min                 = INT_MIN;
-	info->temp_alert_max                 = INT_MAX;
-	info->temp_min                       = INT_MIN;
-	info->temp_max                       = INT_MAX;
-	info->factory_internal_resistance_uohm  = -EINVAL;
-	info->resist_table = NULL;
+	info->preअक्षरge_current_ua           = -EINVAL;
+	info->अक्षरge_term_current_ua         = -EINVAL;
+	info->स्थिरant_अक्षरge_current_max_ua = -EINVAL;
+	info->स्थिरant_अक्षरge_voltage_max_uv = -EINVAL;
+	info->temp_ambient_alert_min         = पूर्णांक_न्यून;
+	info->temp_ambient_alert_max         = पूर्णांक_उच्च;
+	info->temp_alert_min                 = पूर्णांक_न्यून;
+	info->temp_alert_max                 = पूर्णांक_उच्च;
+	info->temp_min                       = पूर्णांक_न्यून;
+	info->temp_max                       = पूर्णांक_उच्च;
+	info->factory_पूर्णांकernal_resistance_uohm  = -EINVAL;
+	info->resist_table = शून्य;
 
-	for (index = 0; index < POWER_SUPPLY_OCV_TEMP_MAX; index++) {
-		info->ocv_table[index]       = NULL;
+	क्रम (index = 0; index < POWER_SUPPLY_OCV_TEMP_MAX; index++) अणु
+		info->ocv_table[index]       = शून्य;
 		info->ocv_temp[index]        = -EINVAL;
 		info->ocv_table_size[index]  = -EINVAL;
-	}
+	पूर्ण
 
-	if (!psy->of_node) {
+	अगर (!psy->of_node) अणु
 		dev_warn(&psy->dev, "%s currently only supports devicetree\n",
 			 __func__);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
 	battery_np = of_parse_phandle(psy->of_node, "monitored-battery", 0);
-	if (!battery_np)
-		return -ENODEV;
+	अगर (!battery_np)
+		वापस -ENODEV;
 
-	err = of_property_read_string(battery_np, "compatible", &value);
-	if (err)
-		goto out_put_node;
+	err = of_property_पढ़ो_string(battery_np, "compatible", &value);
+	अगर (err)
+		जाओ out_put_node;
 
-	if (strcmp("simple-battery", value)) {
+	अगर (म_भेद("simple-battery", value)) अणु
 		err = -ENODEV;
-		goto out_put_node;
-	}
+		जाओ out_put_node;
+	पूर्ण
 
 	/* The property and field names below must correspond to elements
-	 * in enum power_supply_property. For reasoning, see
-	 * Documentation/power/power_supply_class.rst.
+	 * in क्रमागत घातer_supply_property. For reasoning, see
+	 * Documentation/घातer/घातer_supply_class.rst.
 	 */
 
-	of_property_read_u32(battery_np, "energy-full-design-microwatt-hours",
+	of_property_पढ़ो_u32(battery_np, "energy-full-design-microwatt-hours",
 			     &info->energy_full_design_uwh);
-	of_property_read_u32(battery_np, "charge-full-design-microamp-hours",
-			     &info->charge_full_design_uah);
-	of_property_read_u32(battery_np, "voltage-min-design-microvolt",
+	of_property_पढ़ो_u32(battery_np, "charge-full-design-microamp-hours",
+			     &info->अक्षरge_full_design_uah);
+	of_property_पढ़ो_u32(battery_np, "voltage-min-design-microvolt",
 			     &info->voltage_min_design_uv);
-	of_property_read_u32(battery_np, "voltage-max-design-microvolt",
+	of_property_पढ़ो_u32(battery_np, "voltage-max-design-microvolt",
 			     &info->voltage_max_design_uv);
-	of_property_read_u32(battery_np, "trickle-charge-current-microamp",
-			     &info->tricklecharge_current_ua);
-	of_property_read_u32(battery_np, "precharge-current-microamp",
-			     &info->precharge_current_ua);
-	of_property_read_u32(battery_np, "precharge-upper-limit-microvolt",
-			     &info->precharge_voltage_max_uv);
-	of_property_read_u32(battery_np, "charge-term-current-microamp",
-			     &info->charge_term_current_ua);
-	of_property_read_u32(battery_np, "re-charge-voltage-microvolt",
-			     &info->charge_restart_voltage_uv);
-	of_property_read_u32(battery_np, "over-voltage-threshold-microvolt",
+	of_property_पढ़ो_u32(battery_np, "trickle-charge-current-microamp",
+			     &info->trickleअक्षरge_current_ua);
+	of_property_पढ़ो_u32(battery_np, "precharge-current-microamp",
+			     &info->preअक्षरge_current_ua);
+	of_property_पढ़ो_u32(battery_np, "precharge-upper-limit-microvolt",
+			     &info->preअक्षरge_voltage_max_uv);
+	of_property_पढ़ो_u32(battery_np, "charge-term-current-microamp",
+			     &info->अक्षरge_term_current_ua);
+	of_property_पढ़ो_u32(battery_np, "re-charge-voltage-microvolt",
+			     &info->अक्षरge_restart_voltage_uv);
+	of_property_पढ़ो_u32(battery_np, "over-voltage-threshold-microvolt",
 			     &info->overvoltage_limit_uv);
-	of_property_read_u32(battery_np, "constant-charge-current-max-microamp",
-			     &info->constant_charge_current_max_ua);
-	of_property_read_u32(battery_np, "constant-charge-voltage-max-microvolt",
-			     &info->constant_charge_voltage_max_uv);
-	of_property_read_u32(battery_np, "factory-internal-resistance-micro-ohms",
-			     &info->factory_internal_resistance_uohm);
+	of_property_पढ़ो_u32(battery_np, "constant-charge-current-max-microamp",
+			     &info->स्थिरant_अक्षरge_current_max_ua);
+	of_property_पढ़ो_u32(battery_np, "constant-charge-voltage-max-microvolt",
+			     &info->स्थिरant_अक्षरge_voltage_max_uv);
+	of_property_पढ़ो_u32(battery_np, "factory-internal-resistance-micro-ohms",
+			     &info->factory_पूर्णांकernal_resistance_uohm);
 
-	of_property_read_u32_index(battery_np, "ambient-celsius",
+	of_property_पढ़ो_u32_index(battery_np, "ambient-celsius",
 				   0, &info->temp_ambient_alert_min);
-	of_property_read_u32_index(battery_np, "ambient-celsius",
+	of_property_पढ़ो_u32_index(battery_np, "ambient-celsius",
 				   1, &info->temp_ambient_alert_max);
-	of_property_read_u32_index(battery_np, "alert-celsius",
+	of_property_पढ़ो_u32_index(battery_np, "alert-celsius",
 				   0, &info->temp_alert_min);
-	of_property_read_u32_index(battery_np, "alert-celsius",
+	of_property_पढ़ो_u32_index(battery_np, "alert-celsius",
 				   1, &info->temp_alert_max);
-	of_property_read_u32_index(battery_np, "operating-range-celsius",
+	of_property_पढ़ो_u32_index(battery_np, "operating-range-celsius",
 				   0, &info->temp_min);
-	of_property_read_u32_index(battery_np, "operating-range-celsius",
+	of_property_पढ़ो_u32_index(battery_np, "operating-range-celsius",
 				   1, &info->temp_max);
 
 	len = of_property_count_u32_elems(battery_np, "ocv-capacity-celsius");
-	if (len < 0 && len != -EINVAL) {
+	अगर (len < 0 && len != -EINVAL) अणु
 		err = len;
-		goto out_put_node;
-	} else if (len > POWER_SUPPLY_OCV_TEMP_MAX) {
+		जाओ out_put_node;
+	पूर्ण अन्यथा अगर (len > POWER_SUPPLY_OCV_TEMP_MAX) अणु
 		dev_err(&psy->dev, "Too many temperature values\n");
 		err = -EINVAL;
-		goto out_put_node;
-	} else if (len > 0) {
-		of_property_read_u32_array(battery_np, "ocv-capacity-celsius",
+		जाओ out_put_node;
+	पूर्ण अन्यथा अगर (len > 0) अणु
+		of_property_पढ़ो_u32_array(battery_np, "ocv-capacity-celsius",
 					   info->ocv_temp, len);
-	}
+	पूर्ण
 
-	for (index = 0; index < len; index++) {
-		struct power_supply_battery_ocv_table *table;
-		char *propname;
-		int i, tab_len, size;
+	क्रम (index = 0; index < len; index++) अणु
+		काष्ठा घातer_supply_battery_ocv_table *table;
+		अक्षर *propname;
+		पूर्णांक i, tab_len, size;
 
-		propname = kasprintf(GFP_KERNEL, "ocv-capacity-table-%d", index);
+		propname = kaप्र_लिखो(GFP_KERNEL, "ocv-capacity-table-%d", index);
 		list = of_get_property(battery_np, propname, &size);
-		if (!list || !size) {
+		अगर (!list || !size) अणु
 			dev_err(&psy->dev, "failed to get %s\n", propname);
-			kfree(propname);
-			power_supply_put_battery_info(psy, info);
+			kमुक्त(propname);
+			घातer_supply_put_battery_info(psy, info);
 			err = -EINVAL;
-			goto out_put_node;
-		}
+			जाओ out_put_node;
+		पूर्ण
 
-		kfree(propname);
-		tab_len = size / (2 * sizeof(__be32));
+		kमुक्त(propname);
+		tab_len = size / (2 * माप(__be32));
 		info->ocv_table_size[index] = tab_len;
 
 		table = info->ocv_table[index] =
-			devm_kcalloc(&psy->dev, tab_len, sizeof(*table), GFP_KERNEL);
-		if (!info->ocv_table[index]) {
-			power_supply_put_battery_info(psy, info);
+			devm_kसुस्मृति(&psy->dev, tab_len, माप(*table), GFP_KERNEL);
+		अगर (!info->ocv_table[index]) अणु
+			घातer_supply_put_battery_info(psy, info);
 			err = -ENOMEM;
-			goto out_put_node;
-		}
+			जाओ out_put_node;
+		पूर्ण
 
-		for (i = 0; i < tab_len; i++) {
+		क्रम (i = 0; i < tab_len; i++) अणु
 			table[i].ocv = be32_to_cpu(*list);
 			list++;
 			table[i].capacity = be32_to_cpu(*list);
 			list++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	list = of_get_property(battery_np, "resistance-temp-table", &len);
-	if (!list || !len)
-		goto out_put_node;
+	अगर (!list || !len)
+		जाओ out_put_node;
 
-	info->resist_table_size = len / (2 * sizeof(__be32));
-	resist_table = info->resist_table = devm_kcalloc(&psy->dev,
+	info->resist_table_size = len / (2 * माप(__be32));
+	resist_table = info->resist_table = devm_kसुस्मृति(&psy->dev,
 							 info->resist_table_size,
-							 sizeof(*resist_table),
+							 माप(*resist_table),
 							 GFP_KERNEL);
-	if (!info->resist_table) {
-		power_supply_put_battery_info(psy, info);
+	अगर (!info->resist_table) अणु
+		घातer_supply_put_battery_info(psy, info);
 		err = -ENOMEM;
-		goto out_put_node;
-	}
+		जाओ out_put_node;
+	पूर्ण
 
-	for (index = 0; index < info->resist_table_size; index++) {
+	क्रम (index = 0; index < info->resist_table_size; index++) अणु
 		resist_table[index].temp = be32_to_cpu(*list++);
 		resist_table[index].resistance = be32_to_cpu(*list++);
-	}
+	पूर्ण
 
 out_put_node:
 	of_node_put(battery_np);
-	return err;
-}
-EXPORT_SYMBOL_GPL(power_supply_get_battery_info);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_get_battery_info);
 
-void power_supply_put_battery_info(struct power_supply *psy,
-				   struct power_supply_battery_info *info)
-{
-	int i;
+व्योम घातer_supply_put_battery_info(काष्ठा घातer_supply *psy,
+				   काष्ठा घातer_supply_battery_info *info)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < POWER_SUPPLY_OCV_TEMP_MAX; i++) {
-		if (info->ocv_table[i])
-			devm_kfree(&psy->dev, info->ocv_table[i]);
-	}
+	क्रम (i = 0; i < POWER_SUPPLY_OCV_TEMP_MAX; i++) अणु
+		अगर (info->ocv_table[i])
+			devm_kमुक्त(&psy->dev, info->ocv_table[i]);
+	पूर्ण
 
-	if (info->resist_table)
-		devm_kfree(&psy->dev, info->resist_table);
-}
-EXPORT_SYMBOL_GPL(power_supply_put_battery_info);
+	अगर (info->resist_table)
+		devm_kमुक्त(&psy->dev, info->resist_table);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_put_battery_info);
 
 /**
- * power_supply_temp2resist_simple() - find the battery internal resistance
+ * घातer_supply_temp2resist_simple() - find the battery पूर्णांकernal resistance
  * percent
- * @table: Pointer to battery resistance temperature table
+ * @table: Poपूर्णांकer to battery resistance temperature table
  * @table_len: The table length
  * @temp: Current temperature
  *
- * This helper function is used to look up battery internal resistance percent
+ * This helper function is used to look up battery पूर्णांकernal resistance percent
  * according to current temperature value from the resistance temperature table,
- * and the table must be ordered descending. Then the actual battery internal
- * resistance = the ideal battery internal resistance * percent / 100.
+ * and the table must be ordered descending. Then the actual battery पूर्णांकernal
+ * resistance = the ideal battery पूर्णांकernal resistance * percent / 100.
  *
- * Return: the battery internal resistance percent
+ * Return: the battery पूर्णांकernal resistance percent
  */
-int power_supply_temp2resist_simple(struct power_supply_resistance_temp_table *table,
-				    int table_len, int temp)
-{
-	int i, resist;
+पूर्णांक घातer_supply_temp2resist_simple(काष्ठा घातer_supply_resistance_temp_table *table,
+				    पूर्णांक table_len, पूर्णांक temp)
+अणु
+	पूर्णांक i, resist;
 
-	for (i = 0; i < table_len; i++)
-		if (temp > table[i].temp)
-			break;
+	क्रम (i = 0; i < table_len; i++)
+		अगर (temp > table[i].temp)
+			अवरोध;
 
-	if (i > 0 && i < table_len) {
-		int tmp;
+	अगर (i > 0 && i < table_len) अणु
+		पूर्णांक पंचांगp;
 
-		tmp = (table[i - 1].resistance - table[i].resistance) *
+		पंचांगp = (table[i - 1].resistance - table[i].resistance) *
 			(temp - table[i].temp);
-		tmp /= table[i - 1].temp - table[i].temp;
-		resist = tmp + table[i].resistance;
-	} else if (i == 0) {
+		पंचांगp /= table[i - 1].temp - table[i].temp;
+		resist = पंचांगp + table[i].resistance;
+	पूर्ण अन्यथा अगर (i == 0) अणु
 		resist = table[0].resistance;
-	} else {
+	पूर्ण अन्यथा अणु
 		resist = table[table_len - 1].resistance;
-	}
+	पूर्ण
 
-	return resist;
-}
-EXPORT_SYMBOL_GPL(power_supply_temp2resist_simple);
+	वापस resist;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_temp2resist_simple);
 
 /**
- * power_supply_ocv2cap_simple() - find the battery capacity
- * @table: Pointer to battery OCV lookup table
+ * घातer_supply_ocv2cap_simple() - find the battery capacity
+ * @table: Poपूर्णांकer to battery OCV lookup table
  * @table_len: OCV table length
  * @ocv: Current OCV value
  *
@@ -799,586 +800,586 @@ EXPORT_SYMBOL_GPL(power_supply_temp2resist_simple);
  *
  * Return: the battery capacity.
  */
-int power_supply_ocv2cap_simple(struct power_supply_battery_ocv_table *table,
-				int table_len, int ocv)
-{
-	int i, cap, tmp;
+पूर्णांक घातer_supply_ocv2cap_simple(काष्ठा घातer_supply_battery_ocv_table *table,
+				पूर्णांक table_len, पूर्णांक ocv)
+अणु
+	पूर्णांक i, cap, पंचांगp;
 
-	for (i = 0; i < table_len; i++)
-		if (ocv > table[i].ocv)
-			break;
+	क्रम (i = 0; i < table_len; i++)
+		अगर (ocv > table[i].ocv)
+			अवरोध;
 
-	if (i > 0 && i < table_len) {
-		tmp = (table[i - 1].capacity - table[i].capacity) *
+	अगर (i > 0 && i < table_len) अणु
+		पंचांगp = (table[i - 1].capacity - table[i].capacity) *
 			(ocv - table[i].ocv);
-		tmp /= table[i - 1].ocv - table[i].ocv;
-		cap = tmp + table[i].capacity;
-	} else if (i == 0) {
+		पंचांगp /= table[i - 1].ocv - table[i].ocv;
+		cap = पंचांगp + table[i].capacity;
+	पूर्ण अन्यथा अगर (i == 0) अणु
 		cap = table[0].capacity;
-	} else {
+	पूर्ण अन्यथा अणु
 		cap = table[table_len - 1].capacity;
-	}
+	पूर्ण
 
-	return cap;
-}
-EXPORT_SYMBOL_GPL(power_supply_ocv2cap_simple);
+	वापस cap;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_ocv2cap_simple);
 
-struct power_supply_battery_ocv_table *
-power_supply_find_ocv2cap_table(struct power_supply_battery_info *info,
-				int temp, int *table_len)
-{
-	int best_temp_diff = INT_MAX, temp_diff;
+काष्ठा घातer_supply_battery_ocv_table *
+घातer_supply_find_ocv2cap_table(काष्ठा घातer_supply_battery_info *info,
+				पूर्णांक temp, पूर्णांक *table_len)
+अणु
+	पूर्णांक best_temp_dअगरf = पूर्णांक_उच्च, temp_dअगरf;
 	u8 i, best_index = 0;
 
-	if (!info->ocv_table[0])
-		return NULL;
+	अगर (!info->ocv_table[0])
+		वापस शून्य;
 
-	for (i = 0; i < POWER_SUPPLY_OCV_TEMP_MAX; i++) {
-		temp_diff = abs(info->ocv_temp[i] - temp);
+	क्रम (i = 0; i < POWER_SUPPLY_OCV_TEMP_MAX; i++) अणु
+		temp_dअगरf = असल(info->ocv_temp[i] - temp);
 
-		if (temp_diff < best_temp_diff) {
-			best_temp_diff = temp_diff;
+		अगर (temp_dअगरf < best_temp_dअगरf) अणु
+			best_temp_dअगरf = temp_dअगरf;
 			best_index = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*table_len = info->ocv_table_size[best_index];
-	return info->ocv_table[best_index];
-}
-EXPORT_SYMBOL_GPL(power_supply_find_ocv2cap_table);
+	वापस info->ocv_table[best_index];
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_find_ocv2cap_table);
 
-int power_supply_batinfo_ocv2cap(struct power_supply_battery_info *info,
-				 int ocv, int temp)
-{
-	struct power_supply_battery_ocv_table *table;
-	int table_len;
+पूर्णांक घातer_supply_batinfo_ocv2cap(काष्ठा घातer_supply_battery_info *info,
+				 पूर्णांक ocv, पूर्णांक temp)
+अणु
+	काष्ठा घातer_supply_battery_ocv_table *table;
+	पूर्णांक table_len;
 
-	table = power_supply_find_ocv2cap_table(info, temp, &table_len);
-	if (!table)
-		return -EINVAL;
+	table = घातer_supply_find_ocv2cap_table(info, temp, &table_len);
+	अगर (!table)
+		वापस -EINVAL;
 
-	return power_supply_ocv2cap_simple(table, table_len, ocv);
-}
-EXPORT_SYMBOL_GPL(power_supply_batinfo_ocv2cap);
+	वापस घातer_supply_ocv2cap_simple(table, table_len, ocv);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_batinfo_ocv2cap);
 
-int power_supply_get_property(struct power_supply *psy,
-			    enum power_supply_property psp,
-			    union power_supply_propval *val)
-{
-	if (atomic_read(&psy->use_cnt) <= 0) {
-		if (!psy->initialized)
-			return -EAGAIN;
-		return -ENODEV;
-	}
+पूर्णांक घातer_supply_get_property(काष्ठा घातer_supply *psy,
+			    क्रमागत घातer_supply_property psp,
+			    जोड़ घातer_supply_propval *val)
+अणु
+	अगर (atomic_पढ़ो(&psy->use_cnt) <= 0) अणु
+		अगर (!psy->initialized)
+			वापस -EAGAIN;
+		वापस -ENODEV;
+	पूर्ण
 
-	return psy->desc->get_property(psy, psp, val);
-}
-EXPORT_SYMBOL_GPL(power_supply_get_property);
+	वापस psy->desc->get_property(psy, psp, val);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_get_property);
 
-int power_supply_set_property(struct power_supply *psy,
-			    enum power_supply_property psp,
-			    const union power_supply_propval *val)
-{
-	if (atomic_read(&psy->use_cnt) <= 0 || !psy->desc->set_property)
-		return -ENODEV;
+पूर्णांक घातer_supply_set_property(काष्ठा घातer_supply *psy,
+			    क्रमागत घातer_supply_property psp,
+			    स्थिर जोड़ घातer_supply_propval *val)
+अणु
+	अगर (atomic_पढ़ो(&psy->use_cnt) <= 0 || !psy->desc->set_property)
+		वापस -ENODEV;
 
-	return psy->desc->set_property(psy, psp, val);
-}
-EXPORT_SYMBOL_GPL(power_supply_set_property);
+	वापस psy->desc->set_property(psy, psp, val);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_set_property);
 
-int power_supply_property_is_writeable(struct power_supply *psy,
-					enum power_supply_property psp)
-{
-	if (atomic_read(&psy->use_cnt) <= 0 ||
-			!psy->desc->property_is_writeable)
-		return -ENODEV;
+पूर्णांक घातer_supply_property_is_ग_लिखोable(काष्ठा घातer_supply *psy,
+					क्रमागत घातer_supply_property psp)
+अणु
+	अगर (atomic_पढ़ो(&psy->use_cnt) <= 0 ||
+			!psy->desc->property_is_ग_लिखोable)
+		वापस -ENODEV;
 
-	return psy->desc->property_is_writeable(psy, psp);
-}
-EXPORT_SYMBOL_GPL(power_supply_property_is_writeable);
+	वापस psy->desc->property_is_ग_लिखोable(psy, psp);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_property_is_ग_लिखोable);
 
-void power_supply_external_power_changed(struct power_supply *psy)
-{
-	if (atomic_read(&psy->use_cnt) <= 0 ||
-			!psy->desc->external_power_changed)
-		return;
+व्योम घातer_supply_बाह्यal_घातer_changed(काष्ठा घातer_supply *psy)
+अणु
+	अगर (atomic_पढ़ो(&psy->use_cnt) <= 0 ||
+			!psy->desc->बाह्यal_घातer_changed)
+		वापस;
 
-	psy->desc->external_power_changed(psy);
-}
-EXPORT_SYMBOL_GPL(power_supply_external_power_changed);
+	psy->desc->बाह्यal_घातer_changed(psy);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_बाह्यal_घातer_changed);
 
-int power_supply_powers(struct power_supply *psy, struct device *dev)
-{
-	return sysfs_create_link(&psy->dev.kobj, &dev->kobj, "powers");
-}
-EXPORT_SYMBOL_GPL(power_supply_powers);
+पूर्णांक घातer_supply_घातers(काष्ठा घातer_supply *psy, काष्ठा device *dev)
+अणु
+	वापस sysfs_create_link(&psy->dev.kobj, &dev->kobj, "powers");
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_घातers);
 
-static void power_supply_dev_release(struct device *dev)
-{
-	struct power_supply *psy = to_power_supply(dev);
+अटल व्योम घातer_supply_dev_release(काष्ठा device *dev)
+अणु
+	काष्ठा घातer_supply *psy = to_घातer_supply(dev);
 	dev_dbg(dev, "%s\n", __func__);
-	kfree(psy);
-}
+	kमुक्त(psy);
+पूर्ण
 
-int power_supply_reg_notifier(struct notifier_block *nb)
-{
-	return atomic_notifier_chain_register(&power_supply_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(power_supply_reg_notifier);
+पूर्णांक घातer_supply_reg_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	वापस atomic_notअगरier_chain_रेजिस्टर(&घातer_supply_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_reg_notअगरier);
 
-void power_supply_unreg_notifier(struct notifier_block *nb)
-{
-	atomic_notifier_chain_unregister(&power_supply_notifier, nb);
-}
-EXPORT_SYMBOL_GPL(power_supply_unreg_notifier);
+व्योम घातer_supply_unreg_notअगरier(काष्ठा notअगरier_block *nb)
+अणु
+	atomic_notअगरier_chain_unरेजिस्टर(&घातer_supply_notअगरier, nb);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_unreg_notअगरier);
 
-#ifdef CONFIG_THERMAL
-static int power_supply_read_temp(struct thermal_zone_device *tzd,
-		int *temp)
-{
-	struct power_supply *psy;
-	union power_supply_propval val;
-	int ret;
+#अगर_घोषित CONFIG_THERMAL
+अटल पूर्णांक घातer_supply_पढ़ो_temp(काष्ठा thermal_zone_device *tzd,
+		पूर्णांक *temp)
+अणु
+	काष्ठा घातer_supply *psy;
+	जोड़ घातer_supply_propval val;
+	पूर्णांक ret;
 
-	WARN_ON(tzd == NULL);
+	WARN_ON(tzd == शून्य);
 	psy = tzd->devdata;
-	ret = power_supply_get_property(psy, POWER_SUPPLY_PROP_TEMP, &val);
-	if (ret)
-		return ret;
+	ret = घातer_supply_get_property(psy, POWER_SUPPLY_PROP_TEMP, &val);
+	अगर (ret)
+		वापस ret;
 
 	/* Convert tenths of degree Celsius to milli degree Celsius. */
-	*temp = val.intval * 100;
+	*temp = val.पूर्णांकval * 100;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static struct thermal_zone_device_ops psy_tzd_ops = {
-	.get_temp = power_supply_read_temp,
-};
+अटल काष्ठा thermal_zone_device_ops psy_tzd_ops = अणु
+	.get_temp = घातer_supply_पढ़ो_temp,
+पूर्ण;
 
-static int psy_register_thermal(struct power_supply *psy)
-{
-	int i, ret;
+अटल पूर्णांक psy_रेजिस्टर_thermal(काष्ठा घातer_supply *psy)
+अणु
+	पूर्णांक i, ret;
 
-	if (psy->desc->no_thermal)
-		return 0;
+	अगर (psy->desc->no_thermal)
+		वापस 0;
 
 	/* Register battery zone device psy reports temperature */
-	for (i = 0; i < psy->desc->num_properties; i++) {
-		if (psy->desc->properties[i] == POWER_SUPPLY_PROP_TEMP) {
-			psy->tzd = thermal_zone_device_register(psy->desc->name,
-					0, 0, psy, &psy_tzd_ops, NULL, 0, 0);
-			if (IS_ERR(psy->tzd))
-				return PTR_ERR(psy->tzd);
+	क्रम (i = 0; i < psy->desc->num_properties; i++) अणु
+		अगर (psy->desc->properties[i] == POWER_SUPPLY_PROP_TEMP) अणु
+			psy->tzd = thermal_zone_device_रेजिस्टर(psy->desc->name,
+					0, 0, psy, &psy_tzd_ops, शून्य, 0, 0);
+			अगर (IS_ERR(psy->tzd))
+				वापस PTR_ERR(psy->tzd);
 			ret = thermal_zone_device_enable(psy->tzd);
-			if (ret)
-				thermal_zone_device_unregister(psy->tzd);
-			return ret;
-		}
-	}
-	return 0;
-}
+			अगर (ret)
+				thermal_zone_device_unरेजिस्टर(psy->tzd);
+			वापस ret;
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void psy_unregister_thermal(struct power_supply *psy)
-{
-	if (IS_ERR_OR_NULL(psy->tzd))
-		return;
-	thermal_zone_device_unregister(psy->tzd);
-}
+अटल व्योम psy_unरेजिस्टर_thermal(काष्ठा घातer_supply *psy)
+अणु
+	अगर (IS_ERR_OR_शून्य(psy->tzd))
+		वापस;
+	thermal_zone_device_unरेजिस्टर(psy->tzd);
+पूर्ण
 
 /* thermal cooling device callbacks */
-static int ps_get_max_charge_cntl_limit(struct thermal_cooling_device *tcd,
-					unsigned long *state)
-{
-	struct power_supply *psy;
-	union power_supply_propval val;
-	int ret;
+अटल पूर्णांक ps_get_max_अक्षरge_cntl_limit(काष्ठा thermal_cooling_device *tcd,
+					अचिन्हित दीर्घ *state)
+अणु
+	काष्ठा घातer_supply *psy;
+	जोड़ घातer_supply_propval val;
+	पूर्णांक ret;
 
 	psy = tcd->devdata;
-	ret = power_supply_get_property(psy,
+	ret = घातer_supply_get_property(psy,
 			POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT_MAX, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	*state = val.intval;
+	*state = val.पूर्णांकval;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ps_get_cur_charge_cntl_limit(struct thermal_cooling_device *tcd,
-					unsigned long *state)
-{
-	struct power_supply *psy;
-	union power_supply_propval val;
-	int ret;
+अटल पूर्णांक ps_get_cur_अक्षरge_cntl_limit(काष्ठा thermal_cooling_device *tcd,
+					अचिन्हित दीर्घ *state)
+अणु
+	काष्ठा घातer_supply *psy;
+	जोड़ घातer_supply_propval val;
+	पूर्णांक ret;
 
 	psy = tcd->devdata;
-	ret = power_supply_get_property(psy,
+	ret = घातer_supply_get_property(psy,
 			POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT, &val);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	*state = val.intval;
+	*state = val.पूर्णांकval;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ps_set_cur_charge_cntl_limit(struct thermal_cooling_device *tcd,
-					unsigned long state)
-{
-	struct power_supply *psy;
-	union power_supply_propval val;
-	int ret;
+अटल पूर्णांक ps_set_cur_अक्षरge_cntl_limit(काष्ठा thermal_cooling_device *tcd,
+					अचिन्हित दीर्घ state)
+अणु
+	काष्ठा घातer_supply *psy;
+	जोड़ घातer_supply_propval val;
+	पूर्णांक ret;
 
 	psy = tcd->devdata;
-	val.intval = state;
+	val.पूर्णांकval = state;
 	ret = psy->desc->set_property(psy,
 		POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT, &val);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct thermal_cooling_device_ops psy_tcd_ops = {
-	.get_max_state = ps_get_max_charge_cntl_limit,
-	.get_cur_state = ps_get_cur_charge_cntl_limit,
-	.set_cur_state = ps_set_cur_charge_cntl_limit,
-};
+अटल स्थिर काष्ठा thermal_cooling_device_ops psy_tcd_ops = अणु
+	.get_max_state = ps_get_max_अक्षरge_cntl_limit,
+	.get_cur_state = ps_get_cur_अक्षरge_cntl_limit,
+	.set_cur_state = ps_set_cur_अक्षरge_cntl_limit,
+पूर्ण;
 
-static int psy_register_cooler(struct power_supply *psy)
-{
-	int i;
+अटल पूर्णांक psy_रेजिस्टर_cooler(काष्ठा घातer_supply *psy)
+अणु
+	पूर्णांक i;
 
-	/* Register for cooling device if psy can control charging */
-	for (i = 0; i < psy->desc->num_properties; i++) {
-		if (psy->desc->properties[i] ==
-				POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT) {
-			psy->tcd = thermal_cooling_device_register(
-							(char *)psy->desc->name,
+	/* Register क्रम cooling device अगर psy can control अक्षरging */
+	क्रम (i = 0; i < psy->desc->num_properties; i++) अणु
+		अगर (psy->desc->properties[i] ==
+				POWER_SUPPLY_PROP_CHARGE_CONTROL_LIMIT) अणु
+			psy->tcd = thermal_cooling_device_रेजिस्टर(
+							(अक्षर *)psy->desc->name,
 							psy, &psy_tcd_ops);
-			return PTR_ERR_OR_ZERO(psy->tcd);
-		}
-	}
-	return 0;
-}
+			वापस PTR_ERR_OR_ZERO(psy->tcd);
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void psy_unregister_cooler(struct power_supply *psy)
-{
-	if (IS_ERR_OR_NULL(psy->tcd))
-		return;
-	thermal_cooling_device_unregister(psy->tcd);
-}
-#else
-static int psy_register_thermal(struct power_supply *psy)
-{
-	return 0;
-}
+अटल व्योम psy_unरेजिस्टर_cooler(काष्ठा घातer_supply *psy)
+अणु
+	अगर (IS_ERR_OR_शून्य(psy->tcd))
+		वापस;
+	thermal_cooling_device_unरेजिस्टर(psy->tcd);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक psy_रेजिस्टर_thermal(काष्ठा घातer_supply *psy)
+अणु
+	वापस 0;
+पूर्ण
 
-static void psy_unregister_thermal(struct power_supply *psy)
-{
-}
+अटल व्योम psy_unरेजिस्टर_thermal(काष्ठा घातer_supply *psy)
+अणु
+पूर्ण
 
-static int psy_register_cooler(struct power_supply *psy)
-{
-	return 0;
-}
+अटल पूर्णांक psy_रेजिस्टर_cooler(काष्ठा घातer_supply *psy)
+अणु
+	वापस 0;
+पूर्ण
 
-static void psy_unregister_cooler(struct power_supply *psy)
-{
-}
-#endif
+अटल व्योम psy_unरेजिस्टर_cooler(काष्ठा घातer_supply *psy)
+अणु
+पूर्ण
+#पूर्ण_अगर
 
-static struct power_supply *__must_check
-__power_supply_register(struct device *parent,
-				   const struct power_supply_desc *desc,
-				   const struct power_supply_config *cfg,
+अटल काष्ठा घातer_supply *__must_check
+__घातer_supply_रेजिस्टर(काष्ठा device *parent,
+				   स्थिर काष्ठा घातer_supply_desc *desc,
+				   स्थिर काष्ठा घातer_supply_config *cfg,
 				   bool ws)
-{
-	struct device *dev;
-	struct power_supply *psy;
-	int i, rc;
+अणु
+	काष्ठा device *dev;
+	काष्ठा घातer_supply *psy;
+	पूर्णांक i, rc;
 
-	if (!parent)
+	अगर (!parent)
 		pr_warn("%s: Expected proper parent device for '%s'\n",
 			__func__, desc->name);
 
-	if (!desc || !desc->name || !desc->properties || !desc->num_properties)
-		return ERR_PTR(-EINVAL);
+	अगर (!desc || !desc->name || !desc->properties || !desc->num_properties)
+		वापस ERR_PTR(-EINVAL);
 
-	for (i = 0; i < desc->num_properties; ++i) {
-		if ((desc->properties[i] == POWER_SUPPLY_PROP_USB_TYPE) &&
+	क्रम (i = 0; i < desc->num_properties; ++i) अणु
+		अगर ((desc->properties[i] == POWER_SUPPLY_PROP_USB_TYPE) &&
 		    (!desc->usb_types || !desc->num_usb_types))
-			return ERR_PTR(-EINVAL);
-	}
+			वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
-	psy = kzalloc(sizeof(*psy), GFP_KERNEL);
-	if (!psy)
-		return ERR_PTR(-ENOMEM);
+	psy = kzalloc(माप(*psy), GFP_KERNEL);
+	अगर (!psy)
+		वापस ERR_PTR(-ENOMEM);
 
 	dev = &psy->dev;
 
 	device_initialize(dev);
 
-	dev->class = power_supply_class;
-	dev->type = &power_supply_dev_type;
+	dev->class = घातer_supply_class;
+	dev->type = &घातer_supply_dev_type;
 	dev->parent = parent;
-	dev->release = power_supply_dev_release;
+	dev->release = घातer_supply_dev_release;
 	dev_set_drvdata(dev, psy);
 	psy->desc = desc;
-	if (cfg) {
+	अगर (cfg) अणु
 		dev->groups = cfg->attr_grp;
 		psy->drv_data = cfg->drv_data;
 		psy->of_node =
 			cfg->fwnode ? to_of_node(cfg->fwnode) : cfg->of_node;
 		psy->supplied_to = cfg->supplied_to;
 		psy->num_supplicants = cfg->num_supplicants;
-	}
+	पूर्ण
 
 	rc = dev_set_name(dev, "%s", desc->name);
-	if (rc)
-		goto dev_set_name_failed;
+	अगर (rc)
+		जाओ dev_set_name_failed;
 
-	INIT_WORK(&psy->changed_work, power_supply_changed_work);
-	INIT_DELAYED_WORK(&psy->deferred_register_work,
-			  power_supply_deferred_register_work);
+	INIT_WORK(&psy->changed_work, घातer_supply_changed_work);
+	INIT_DELAYED_WORK(&psy->deferred_रेजिस्टर_work,
+			  घातer_supply_deferred_रेजिस्टर_work);
 
-	rc = power_supply_check_supplies(psy);
-	if (rc) {
+	rc = घातer_supply_check_supplies(psy);
+	अगर (rc) अणु
 		dev_dbg(dev, "Not all required supplies found, defer probe\n");
-		goto check_supplies_failed;
-	}
+		जाओ check_supplies_failed;
+	पूर्ण
 
 	spin_lock_init(&psy->changed_lock);
 	rc = device_add(dev);
-	if (rc)
-		goto device_add_failed;
+	अगर (rc)
+		जाओ device_add_failed;
 
 	rc = device_init_wakeup(dev, ws);
-	if (rc)
-		goto wakeup_init_failed;
+	अगर (rc)
+		जाओ wakeup_init_failed;
 
-	rc = psy_register_thermal(psy);
-	if (rc)
-		goto register_thermal_failed;
+	rc = psy_रेजिस्टर_thermal(psy);
+	अगर (rc)
+		जाओ रेजिस्टर_thermal_failed;
 
-	rc = psy_register_cooler(psy);
-	if (rc)
-		goto register_cooler_failed;
+	rc = psy_रेजिस्टर_cooler(psy);
+	अगर (rc)
+		जाओ रेजिस्टर_cooler_failed;
 
-	rc = power_supply_create_triggers(psy);
-	if (rc)
-		goto create_triggers_failed;
+	rc = घातer_supply_create_triggers(psy);
+	अगर (rc)
+		जाओ create_triggers_failed;
 
-	rc = power_supply_add_hwmon_sysfs(psy);
-	if (rc)
-		goto add_hwmon_sysfs_failed;
+	rc = घातer_supply_add_hwmon_sysfs(psy);
+	अगर (rc)
+		जाओ add_hwmon_sysfs_failed;
 
 	/*
 	 * Update use_cnt after any uevents (most notably from device_add()).
 	 * We are here still during driver's probe but
-	 * the power_supply_uevent() calls back driver's get_property
+	 * the घातer_supply_uevent() calls back driver's get_property
 	 * method so:
-	 * 1. Driver did not assigned the returned struct power_supply,
+	 * 1. Driver did not asचिन्हित the वापसed काष्ठा घातer_supply,
 	 * 2. Driver could not finish initialization (anything in its probe
-	 *    after calling power_supply_register()).
+	 *    after calling घातer_supply_रेजिस्टर()).
 	 */
 	atomic_inc(&psy->use_cnt);
 	psy->initialized = true;
 
-	queue_delayed_work(system_power_efficient_wq,
-			   &psy->deferred_register_work,
+	queue_delayed_work(प्रणाली_घातer_efficient_wq,
+			   &psy->deferred_रेजिस्टर_work,
 			   POWER_SUPPLY_DEFERRED_REGISTER_TIME);
 
-	return psy;
+	वापस psy;
 
 add_hwmon_sysfs_failed:
-	power_supply_remove_triggers(psy);
+	घातer_supply_हटाओ_triggers(psy);
 create_triggers_failed:
-	psy_unregister_cooler(psy);
-register_cooler_failed:
-	psy_unregister_thermal(psy);
-register_thermal_failed:
+	psy_unरेजिस्टर_cooler(psy);
+रेजिस्टर_cooler_failed:
+	psy_unरेजिस्टर_thermal(psy);
+रेजिस्टर_thermal_failed:
 	device_del(dev);
 wakeup_init_failed:
 device_add_failed:
 check_supplies_failed:
 dev_set_name_failed:
 	put_device(dev);
-	return ERR_PTR(rc);
-}
+	वापस ERR_PTR(rc);
+पूर्ण
 
 /**
- * power_supply_register() - Register new power supply
- * @parent:	Device to be a parent of power supply's device, usually
+ * घातer_supply_रेजिस्टर() - Register new घातer supply
+ * @parent:	Device to be a parent of घातer supply's device, usually
  *		the device which probe function calls this
- * @desc:	Description of power supply, must be valid through whole
- *		lifetime of this power supply
- * @cfg:	Run-time specific configuration accessed during registering,
- *		may be NULL
+ * @desc:	Description of घातer supply, must be valid through whole
+ *		lअगरeसमय of this घातer supply
+ * @cfg:	Run-समय specअगरic configuration accessed during रेजिस्टरing,
+ *		may be शून्य
  *
- * Return: A pointer to newly allocated power_supply on success
+ * Return: A poपूर्णांकer to newly allocated घातer_supply on success
  * or ERR_PTR otherwise.
- * Use power_supply_unregister() on returned power_supply pointer to release
+ * Use घातer_supply_unरेजिस्टर() on वापसed घातer_supply poपूर्णांकer to release
  * resources.
  */
-struct power_supply *__must_check power_supply_register(struct device *parent,
-		const struct power_supply_desc *desc,
-		const struct power_supply_config *cfg)
-{
-	return __power_supply_register(parent, desc, cfg, true);
-}
-EXPORT_SYMBOL_GPL(power_supply_register);
+काष्ठा घातer_supply *__must_check घातer_supply_रेजिस्टर(काष्ठा device *parent,
+		स्थिर काष्ठा घातer_supply_desc *desc,
+		स्थिर काष्ठा घातer_supply_config *cfg)
+अणु
+	वापस __घातer_supply_रेजिस्टर(parent, desc, cfg, true);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_रेजिस्टर);
 
 /**
- * power_supply_register_no_ws() - Register new non-waking-source power supply
- * @parent:	Device to be a parent of power supply's device, usually
+ * घातer_supply_रेजिस्टर_no_ws() - Register new non-waking-source घातer supply
+ * @parent:	Device to be a parent of घातer supply's device, usually
  *		the device which probe function calls this
- * @desc:	Description of power supply, must be valid through whole
- *		lifetime of this power supply
- * @cfg:	Run-time specific configuration accessed during registering,
- *		may be NULL
+ * @desc:	Description of घातer supply, must be valid through whole
+ *		lअगरeसमय of this घातer supply
+ * @cfg:	Run-समय specअगरic configuration accessed during रेजिस्टरing,
+ *		may be शून्य
  *
- * Return: A pointer to newly allocated power_supply on success
+ * Return: A poपूर्णांकer to newly allocated घातer_supply on success
  * or ERR_PTR otherwise.
- * Use power_supply_unregister() on returned power_supply pointer to release
+ * Use घातer_supply_unरेजिस्टर() on वापसed घातer_supply poपूर्णांकer to release
  * resources.
  */
-struct power_supply *__must_check
-power_supply_register_no_ws(struct device *parent,
-		const struct power_supply_desc *desc,
-		const struct power_supply_config *cfg)
-{
-	return __power_supply_register(parent, desc, cfg, false);
-}
-EXPORT_SYMBOL_GPL(power_supply_register_no_ws);
+काष्ठा घातer_supply *__must_check
+घातer_supply_रेजिस्टर_no_ws(काष्ठा device *parent,
+		स्थिर काष्ठा घातer_supply_desc *desc,
+		स्थिर काष्ठा घातer_supply_config *cfg)
+अणु
+	वापस __घातer_supply_रेजिस्टर(parent, desc, cfg, false);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_रेजिस्टर_no_ws);
 
-static void devm_power_supply_release(struct device *dev, void *res)
-{
-	struct power_supply **psy = res;
+अटल व्योम devm_घातer_supply_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा घातer_supply **psy = res;
 
-	power_supply_unregister(*psy);
-}
+	घातer_supply_unरेजिस्टर(*psy);
+पूर्ण
 
 /**
- * devm_power_supply_register() - Register managed power supply
- * @parent:	Device to be a parent of power supply's device, usually
+ * devm_घातer_supply_रेजिस्टर() - Register managed घातer supply
+ * @parent:	Device to be a parent of घातer supply's device, usually
  *		the device which probe function calls this
- * @desc:	Description of power supply, must be valid through whole
- *		lifetime of this power supply
- * @cfg:	Run-time specific configuration accessed during registering,
- *		may be NULL
+ * @desc:	Description of घातer supply, must be valid through whole
+ *		lअगरeसमय of this घातer supply
+ * @cfg:	Run-समय specअगरic configuration accessed during रेजिस्टरing,
+ *		may be शून्य
  *
- * Return: A pointer to newly allocated power_supply on success
+ * Return: A poपूर्णांकer to newly allocated घातer_supply on success
  * or ERR_PTR otherwise.
- * The returned power_supply pointer will be automatically unregistered
+ * The वापसed घातer_supply poपूर्णांकer will be स्वतःmatically unरेजिस्टरed
  * on driver detach.
  */
-struct power_supply *__must_check
-devm_power_supply_register(struct device *parent,
-		const struct power_supply_desc *desc,
-		const struct power_supply_config *cfg)
-{
-	struct power_supply **ptr, *psy;
+काष्ठा घातer_supply *__must_check
+devm_घातer_supply_रेजिस्टर(काष्ठा device *parent,
+		स्थिर काष्ठा घातer_supply_desc *desc,
+		स्थिर काष्ठा घातer_supply_config *cfg)
+अणु
+	काष्ठा घातer_supply **ptr, *psy;
 
-	ptr = devres_alloc(devm_power_supply_release, sizeof(*ptr), GFP_KERNEL);
+	ptr = devres_alloc(devm_घातer_supply_release, माप(*ptr), GFP_KERNEL);
 
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
-	psy = __power_supply_register(parent, desc, cfg, true);
-	if (IS_ERR(psy)) {
-		devres_free(ptr);
-	} else {
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
+	psy = __घातer_supply_रेजिस्टर(parent, desc, cfg, true);
+	अगर (IS_ERR(psy)) अणु
+		devres_मुक्त(ptr);
+	पूर्ण अन्यथा अणु
 		*ptr = psy;
 		devres_add(parent, ptr);
-	}
-	return psy;
-}
-EXPORT_SYMBOL_GPL(devm_power_supply_register);
+	पूर्ण
+	वापस psy;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_घातer_supply_रेजिस्टर);
 
 /**
- * devm_power_supply_register_no_ws() - Register managed non-waking-source power supply
- * @parent:	Device to be a parent of power supply's device, usually
+ * devm_घातer_supply_रेजिस्टर_no_ws() - Register managed non-waking-source घातer supply
+ * @parent:	Device to be a parent of घातer supply's device, usually
  *		the device which probe function calls this
- * @desc:	Description of power supply, must be valid through whole
- *		lifetime of this power supply
- * @cfg:	Run-time specific configuration accessed during registering,
- *		may be NULL
+ * @desc:	Description of घातer supply, must be valid through whole
+ *		lअगरeसमय of this घातer supply
+ * @cfg:	Run-समय specअगरic configuration accessed during रेजिस्टरing,
+ *		may be शून्य
  *
- * Return: A pointer to newly allocated power_supply on success
+ * Return: A poपूर्णांकer to newly allocated घातer_supply on success
  * or ERR_PTR otherwise.
- * The returned power_supply pointer will be automatically unregistered
+ * The वापसed घातer_supply poपूर्णांकer will be स्वतःmatically unरेजिस्टरed
  * on driver detach.
  */
-struct power_supply *__must_check
-devm_power_supply_register_no_ws(struct device *parent,
-		const struct power_supply_desc *desc,
-		const struct power_supply_config *cfg)
-{
-	struct power_supply **ptr, *psy;
+काष्ठा घातer_supply *__must_check
+devm_घातer_supply_रेजिस्टर_no_ws(काष्ठा device *parent,
+		स्थिर काष्ठा घातer_supply_desc *desc,
+		स्थिर काष्ठा घातer_supply_config *cfg)
+अणु
+	काष्ठा घातer_supply **ptr, *psy;
 
-	ptr = devres_alloc(devm_power_supply_release, sizeof(*ptr), GFP_KERNEL);
+	ptr = devres_alloc(devm_घातer_supply_release, माप(*ptr), GFP_KERNEL);
 
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
-	psy = __power_supply_register(parent, desc, cfg, false);
-	if (IS_ERR(psy)) {
-		devres_free(ptr);
-	} else {
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
+	psy = __घातer_supply_रेजिस्टर(parent, desc, cfg, false);
+	अगर (IS_ERR(psy)) अणु
+		devres_मुक्त(ptr);
+	पूर्ण अन्यथा अणु
 		*ptr = psy;
 		devres_add(parent, ptr);
-	}
-	return psy;
-}
-EXPORT_SYMBOL_GPL(devm_power_supply_register_no_ws);
+	पूर्ण
+	वापस psy;
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_घातer_supply_रेजिस्टर_no_ws);
 
 /**
- * power_supply_unregister() - Remove this power supply from system
- * @psy:	Pointer to power supply to unregister
+ * घातer_supply_unरेजिस्टर() - Remove this घातer supply from प्रणाली
+ * @psy:	Poपूर्णांकer to घातer supply to unरेजिस्टर
  *
- * Remove this power supply from the system. The resources of power supply
- * will be freed here or on last power_supply_put() call.
+ * Remove this घातer supply from the प्रणाली. The resources of घातer supply
+ * will be मुक्तd here or on last घातer_supply_put() call.
  */
-void power_supply_unregister(struct power_supply *psy)
-{
-	WARN_ON(atomic_dec_return(&psy->use_cnt));
+व्योम घातer_supply_unरेजिस्टर(काष्ठा घातer_supply *psy)
+अणु
+	WARN_ON(atomic_dec_वापस(&psy->use_cnt));
 	psy->removing = true;
 	cancel_work_sync(&psy->changed_work);
-	cancel_delayed_work_sync(&psy->deferred_register_work);
-	sysfs_remove_link(&psy->dev.kobj, "powers");
-	power_supply_remove_hwmon_sysfs(psy);
-	power_supply_remove_triggers(psy);
-	psy_unregister_cooler(psy);
-	psy_unregister_thermal(psy);
+	cancel_delayed_work_sync(&psy->deferred_रेजिस्टर_work);
+	sysfs_हटाओ_link(&psy->dev.kobj, "powers");
+	घातer_supply_हटाओ_hwmon_sysfs(psy);
+	घातer_supply_हटाओ_triggers(psy);
+	psy_unरेजिस्टर_cooler(psy);
+	psy_unरेजिस्टर_thermal(psy);
 	device_init_wakeup(&psy->dev, false);
-	device_unregister(&psy->dev);
-}
-EXPORT_SYMBOL_GPL(power_supply_unregister);
+	device_unरेजिस्टर(&psy->dev);
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_unरेजिस्टर);
 
-void *power_supply_get_drvdata(struct power_supply *psy)
-{
-	return psy->drv_data;
-}
-EXPORT_SYMBOL_GPL(power_supply_get_drvdata);
+व्योम *घातer_supply_get_drvdata(काष्ठा घातer_supply *psy)
+अणु
+	वापस psy->drv_data;
+पूर्ण
+EXPORT_SYMBOL_GPL(घातer_supply_get_drvdata);
 
-static int __init power_supply_class_init(void)
-{
-	power_supply_class = class_create(THIS_MODULE, "power_supply");
+अटल पूर्णांक __init घातer_supply_class_init(व्योम)
+अणु
+	घातer_supply_class = class_create(THIS_MODULE, "power_supply");
 
-	if (IS_ERR(power_supply_class))
-		return PTR_ERR(power_supply_class);
+	अगर (IS_ERR(घातer_supply_class))
+		वापस PTR_ERR(घातer_supply_class);
 
-	power_supply_class->dev_uevent = power_supply_uevent;
-	power_supply_init_attrs(&power_supply_dev_type);
+	घातer_supply_class->dev_uevent = घातer_supply_uevent;
+	घातer_supply_init_attrs(&घातer_supply_dev_type);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit power_supply_class_exit(void)
-{
-	class_destroy(power_supply_class);
-}
+अटल व्योम __निकास घातer_supply_class_निकास(व्योम)
+अणु
+	class_destroy(घातer_supply_class);
+पूर्ण
 
-subsys_initcall(power_supply_class_init);
-module_exit(power_supply_class_exit);
+subsys_initcall(घातer_supply_class_init);
+module_निकास(घातer_supply_class_निकास);
 
 MODULE_DESCRIPTION("Universal power supply monitor class");
 MODULE_AUTHOR("Ian Molton <spyro@f2s.com>, "

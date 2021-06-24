@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2015-2016 Samsung Electronics
  *               Igor Kotrasinski <i.kotrasinsk@samsung.com>
@@ -9,84 +10,84 @@
  *               2005-2007 Takahiro Hirofuchi
  */
 
-#ifndef __USBIP_HOST_COMMON_H
-#define __USBIP_HOST_COMMON_H
+#अगर_अघोषित __USBIP_HOST_COMMON_H
+#घोषणा __USBIP_HOST_COMMON_H
 
-#include <stdint.h>
-#include <libudev.h>
-#include <errno.h>
-#include "list.h"
-#include "usbip_common.h"
-#include "sysfs_utils.h"
+#समावेश <मानक_निवेशt.h>
+#समावेश <libudev.h>
+#समावेश <त्रुटिसं.स>
+#समावेश "list.h"
+#समावेश "usbip_common.h"
+#समावेश "sysfs_utils.h"
 
-struct usbip_host_driver;
+काष्ठा usbip_host_driver;
 
-struct usbip_host_driver_ops {
-	int (*open)(struct usbip_host_driver *hdriver);
-	void (*close)(struct usbip_host_driver *hdriver);
-	int (*refresh_device_list)(struct usbip_host_driver *hdriver);
-	struct usbip_exported_device * (*get_device)(
-		struct usbip_host_driver *hdriver, int num);
+काष्ठा usbip_host_driver_ops अणु
+	पूर्णांक (*खोलो)(काष्ठा usbip_host_driver *hdriver);
+	व्योम (*बंद)(काष्ठा usbip_host_driver *hdriver);
+	पूर्णांक (*refresh_device_list)(काष्ठा usbip_host_driver *hdriver);
+	काष्ठा usbip_exported_device * (*get_device)(
+		काष्ठा usbip_host_driver *hdriver, पूर्णांक num);
 
-	int (*read_device)(struct udev_device *sdev,
-			   struct usbip_usb_device *dev);
-	int (*read_interface)(struct usbip_usb_device *udev, int i,
-			      struct usbip_usb_interface *uinf);
-	int (*is_my_device)(struct udev_device *udev);
-};
+	पूर्णांक (*पढ़ो_device)(काष्ठा udev_device *sdev,
+			   काष्ठा usbip_usb_device *dev);
+	पूर्णांक (*पढ़ो_पूर्णांकerface)(काष्ठा usbip_usb_device *udev, पूर्णांक i,
+			      काष्ठा usbip_usb_पूर्णांकerface *uinf);
+	पूर्णांक (*is_my_device)(काष्ठा udev_device *udev);
+पूर्ण;
 
-struct usbip_host_driver {
-	int ndevs;
+काष्ठा usbip_host_driver अणु
+	पूर्णांक ndevs;
 	/* list of exported device */
-	struct list_head edev_list;
-	const char *udev_subsystem;
-	struct usbip_host_driver_ops ops;
-};
+	काष्ठा list_head edev_list;
+	स्थिर अक्षर *udev_subप्रणाली;
+	काष्ठा usbip_host_driver_ops ops;
+पूर्ण;
 
-struct usbip_exported_device {
-	struct udev_device *sudev;
-	int32_t status;
-	struct usbip_usb_device udev;
-	struct list_head node;
-	struct usbip_usb_interface uinf[];
-};
+काष्ठा usbip_exported_device अणु
+	काष्ठा udev_device *sudev;
+	पूर्णांक32_t status;
+	काष्ठा usbip_usb_device udev;
+	काष्ठा list_head node;
+	काष्ठा usbip_usb_पूर्णांकerface uinf[];
+पूर्ण;
 
 /* External API to access the driver */
-static inline int usbip_driver_open(struct usbip_host_driver *hdriver)
-{
-	if (!hdriver->ops.open)
-		return -EOPNOTSUPP;
-	return hdriver->ops.open(hdriver);
-}
+अटल अंतरभूत पूर्णांक usbip_driver_खोलो(काष्ठा usbip_host_driver *hdriver)
+अणु
+	अगर (!hdriver->ops.खोलो)
+		वापस -EOPNOTSUPP;
+	वापस hdriver->ops.खोलो(hdriver);
+पूर्ण
 
-static inline void usbip_driver_close(struct usbip_host_driver *hdriver)
-{
-	if (!hdriver->ops.close)
-		return;
-	hdriver->ops.close(hdriver);
-}
+अटल अंतरभूत व्योम usbip_driver_बंद(काष्ठा usbip_host_driver *hdriver)
+अणु
+	अगर (!hdriver->ops.बंद)
+		वापस;
+	hdriver->ops.बंद(hdriver);
+पूर्ण
 
-static inline int usbip_refresh_device_list(struct usbip_host_driver *hdriver)
-{
-	if (!hdriver->ops.refresh_device_list)
-		return -EOPNOTSUPP;
-	return hdriver->ops.refresh_device_list(hdriver);
-}
+अटल अंतरभूत पूर्णांक usbip_refresh_device_list(काष्ठा usbip_host_driver *hdriver)
+अणु
+	अगर (!hdriver->ops.refresh_device_list)
+		वापस -EOPNOTSUPP;
+	वापस hdriver->ops.refresh_device_list(hdriver);
+पूर्ण
 
-static inline struct usbip_exported_device *
-usbip_get_device(struct usbip_host_driver *hdriver, int num)
-{
-	if (!hdriver->ops.get_device)
-		return NULL;
-	return hdriver->ops.get_device(hdriver, num);
-}
+अटल अंतरभूत काष्ठा usbip_exported_device *
+usbip_get_device(काष्ठा usbip_host_driver *hdriver, पूर्णांक num)
+अणु
+	अगर (!hdriver->ops.get_device)
+		वापस शून्य;
+	वापस hdriver->ops.get_device(hdriver, num);
+पूर्ण
 
-/* Helper functions for implementing driver backend */
-int usbip_generic_driver_open(struct usbip_host_driver *hdriver);
-void usbip_generic_driver_close(struct usbip_host_driver *hdriver);
-int usbip_generic_refresh_device_list(struct usbip_host_driver *hdriver);
-int usbip_export_device(struct usbip_exported_device *edev, int sockfd);
-struct usbip_exported_device *usbip_generic_get_device(
-		struct usbip_host_driver *hdriver, int num);
+/* Helper functions क्रम implementing driver backend */
+पूर्णांक usbip_generic_driver_खोलो(काष्ठा usbip_host_driver *hdriver);
+व्योम usbip_generic_driver_बंद(काष्ठा usbip_host_driver *hdriver);
+पूर्णांक usbip_generic_refresh_device_list(काष्ठा usbip_host_driver *hdriver);
+पूर्णांक usbip_export_device(काष्ठा usbip_exported_device *edev, पूर्णांक sockfd);
+काष्ठा usbip_exported_device *usbip_generic_get_device(
+		काष्ठा usbip_host_driver *hdriver, पूर्णांक num);
 
-#endif /* __USBIP_HOST_COMMON_H */
+#पूर्ण_अगर /* __USBIP_HOST_COMMON_H */

@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *	include/linux/vt_buffer.h -- Access to VT screen buffer
  *
@@ -6,68 +7,68 @@
  *
  *	This is a set of macros and functions which are used in the
  *	console driver and related code to access the screen buffer.
- *	In most cases the console works with simple in-memory buffer,
+ *	In most हालs the console works with simple in-memory buffer,
  *	but when handling hardware text mode consoles, we store
- *	the foreground console directly in video memory.
+ *	the क्रमeground console directly in video memory.
  */
 
-#ifndef _LINUX_VT_BUFFER_H_
-#define _LINUX_VT_BUFFER_H_
+#अगर_अघोषित _LINUX_VT_BUFFER_H_
+#घोषणा _LINUX_VT_BUFFER_H_
 
-#include <linux/string.h>
+#समावेश <linux/माला.स>
 
-#if defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_MDA_CONSOLE)
-#include <asm/vga.h>
-#endif
+#अगर defined(CONFIG_VGA_CONSOLE) || defined(CONFIG_MDA_CONSOLE)
+#समावेश <यंत्र/vga.h>
+#पूर्ण_अगर
 
-#ifndef VT_BUF_HAVE_RW
-#define scr_writew(val, addr) (*(addr) = (val))
-#define scr_readw(addr) (*(addr))
-#endif
+#अगर_अघोषित VT_BUF_HAVE_RW
+#घोषणा scr_ग_लिखोw(val, addr) (*(addr) = (val))
+#घोषणा scr_पढ़ोw(addr) (*(addr))
+#पूर्ण_अगर
 
-#ifndef VT_BUF_HAVE_MEMSETW
-static inline void scr_memsetw(u16 *s, u16 c, unsigned int count)
-{
-#ifdef VT_BUF_HAVE_RW
+#अगर_अघोषित VT_BUF_HAVE_MEMSETW
+अटल अंतरभूत व्योम scr_स_रखोw(u16 *s, u16 c, अचिन्हित पूर्णांक count)
+अणु
+#अगर_घोषित VT_BUF_HAVE_RW
 	count /= 2;
-	while (count--)
-		scr_writew(c, s++);
-#else
-	memset16(s, c, count / 2);
-#endif
-}
-#endif
+	जबतक (count--)
+		scr_ग_लिखोw(c, s++);
+#अन्यथा
+	स_रखो16(s, c, count / 2);
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef VT_BUF_HAVE_MEMCPYW
-static inline void scr_memcpyw(u16 *d, const u16 *s, unsigned int count)
-{
-#ifdef VT_BUF_HAVE_RW
+#अगर_अघोषित VT_BUF_HAVE_MEMCPYW
+अटल अंतरभूत व्योम scr_स_नकलw(u16 *d, स्थिर u16 *s, अचिन्हित पूर्णांक count)
+अणु
+#अगर_घोषित VT_BUF_HAVE_RW
 	count /= 2;
-	while (count--)
-		scr_writew(scr_readw(s++), d++);
-#else
-	memcpy(d, s, count);
-#endif
-}
-#endif
+	जबतक (count--)
+		scr_ग_लिखोw(scr_पढ़ोw(s++), d++);
+#अन्यथा
+	स_नकल(d, s, count);
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
-#ifndef VT_BUF_HAVE_MEMMOVEW
-static inline void scr_memmovew(u16 *d, const u16 *s, unsigned int count)
-{
-#ifdef VT_BUF_HAVE_RW
-	if (d < s)
-		scr_memcpyw(d, s, count);
-	else {
+#अगर_अघोषित VT_BUF_HAVE_MEMMOVEW
+अटल अंतरभूत व्योम scr_स_हटाओw(u16 *d, स्थिर u16 *s, अचिन्हित पूर्णांक count)
+अणु
+#अगर_घोषित VT_BUF_HAVE_RW
+	अगर (d < s)
+		scr_स_नकलw(d, s, count);
+	अन्यथा अणु
 		count /= 2;
 		d += count;
 		s += count;
-		while (count--)
-			scr_writew(scr_readw(--s), --d);
-	}
-#else
-	memmove(d, s, count);
-#endif
-}
-#endif
+		जबतक (count--)
+			scr_ग_लिखोw(scr_पढ़ोw(--s), --d);
+	पूर्ण
+#अन्यथा
+	स_हटाओ(d, s, count);
+#पूर्ण_अगर
+पूर्ण
+#पूर्ण_अगर
 
-#endif
+#पूर्ण_अगर

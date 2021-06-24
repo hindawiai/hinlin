@@ -1,192 +1,193 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  *  V4L2 controls support header.
  *
  *  Copyright (C) 2010  Hans Verkuil <hverkuil@xs4all.nl>
  */
 
-#ifndef _V4L2_CTRLS_H
-#define _V4L2_CTRLS_H
+#अगर_अघोषित _V4L2_CTRLS_H
+#घोषणा _V4L2_CTRLS_H
 
-#include <linux/list.h>
-#include <linux/mutex.h>
-#include <linux/videodev2.h>
-#include <media/media-request.h>
+#समावेश <linux/list.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/videodev2.h>
+#समावेश <media/media-request.h>
 
 /*
  * Include the stateless codec compound control definitions.
- * This will move to the public headers once this API is fully stable.
+ * This will move to the खुला headers once this API is fully stable.
  */
-#include <media/mpeg2-ctrls.h>
-#include <media/hevc-ctrls.h>
+#समावेश <media/mpeg2-ctrls.h>
+#समावेश <media/hevc-ctrls.h>
 
-/* forward references */
-struct file;
-struct poll_table_struct;
-struct v4l2_ctrl;
-struct v4l2_ctrl_handler;
-struct v4l2_ctrl_helper;
-struct v4l2_fh;
-struct v4l2_fwnode_device_properties;
-struct v4l2_subdev;
-struct v4l2_subscribed_event;
-struct video_device;
+/* क्रमward references */
+काष्ठा file;
+काष्ठा poll_table_काष्ठा;
+काष्ठा v4l2_ctrl;
+काष्ठा v4l2_ctrl_handler;
+काष्ठा v4l2_ctrl_helper;
+काष्ठा v4l2_fh;
+काष्ठा v4l2_fwnode_device_properties;
+काष्ठा v4l2_subdev;
+काष्ठा v4l2_subscribed_event;
+काष्ठा video_device;
 
 /**
- * union v4l2_ctrl_ptr - A pointer to a control value.
- * @p_s32:			Pointer to a 32-bit signed value.
- * @p_s64:			Pointer to a 64-bit signed value.
- * @p_u8:			Pointer to a 8-bit unsigned value.
- * @p_u16:			Pointer to a 16-bit unsigned value.
- * @p_u32:			Pointer to a 32-bit unsigned value.
- * @p_char:			Pointer to a string.
- * @p_mpeg2_slice_params:	Pointer to a MPEG2 slice parameters structure.
- * @p_mpeg2_quantization:	Pointer to a MPEG2 quantization data structure.
- * @p_fwht_params:		Pointer to a FWHT stateless parameters structure.
- * @p_h264_sps:			Pointer to a struct v4l2_ctrl_h264_sps.
- * @p_h264_pps:			Pointer to a struct v4l2_ctrl_h264_pps.
- * @p_h264_scaling_matrix:	Pointer to a struct v4l2_ctrl_h264_scaling_matrix.
- * @p_h264_slice_params:	Pointer to a struct v4l2_ctrl_h264_slice_params.
- * @p_h264_decode_params:	Pointer to a struct v4l2_ctrl_h264_decode_params.
- * @p_h264_pred_weights:	Pointer to a struct v4l2_ctrl_h264_pred_weights.
- * @p_vp8_frame:		Pointer to a VP8 frame params structure.
- * @p_hevc_sps:			Pointer to an HEVC sequence parameter set structure.
- * @p_hevc_pps:			Pointer to an HEVC picture parameter set structure.
- * @p_hevc_slice_params:	Pointer to an HEVC slice parameters structure.
- * @p_hdr10_cll:		Pointer to an HDR10 Content Light Level structure.
- * @p_hdr10_mastering:		Pointer to an HDR10 Mastering Display structure.
- * @p_area:			Pointer to an area.
- * @p:				Pointer to a compound value.
- * @p_const:			Pointer to a constant compound value.
+ * जोड़ v4l2_ctrl_ptr - A poपूर्णांकer to a control value.
+ * @p_s32:			Poपूर्णांकer to a 32-bit चिन्हित value.
+ * @p_s64:			Poपूर्णांकer to a 64-bit चिन्हित value.
+ * @p_u8:			Poपूर्णांकer to a 8-bit अचिन्हित value.
+ * @p_u16:			Poपूर्णांकer to a 16-bit अचिन्हित value.
+ * @p_u32:			Poपूर्णांकer to a 32-bit अचिन्हित value.
+ * @p_अक्षर:			Poपूर्णांकer to a string.
+ * @p_mpeg2_slice_params:	Poपूर्णांकer to a MPEG2 slice parameters काष्ठाure.
+ * @p_mpeg2_quantization:	Poपूर्णांकer to a MPEG2 quantization data काष्ठाure.
+ * @p_fwht_params:		Poपूर्णांकer to a FWHT stateless parameters काष्ठाure.
+ * @p_h264_sps:			Poपूर्णांकer to a काष्ठा v4l2_ctrl_h264_sps.
+ * @p_h264_pps:			Poपूर्णांकer to a काष्ठा v4l2_ctrl_h264_pps.
+ * @p_h264_scaling_matrix:	Poपूर्णांकer to a काष्ठा v4l2_ctrl_h264_scaling_matrix.
+ * @p_h264_slice_params:	Poपूर्णांकer to a काष्ठा v4l2_ctrl_h264_slice_params.
+ * @p_h264_decode_params:	Poपूर्णांकer to a काष्ठा v4l2_ctrl_h264_decode_params.
+ * @p_h264_pred_weights:	Poपूर्णांकer to a काष्ठा v4l2_ctrl_h264_pred_weights.
+ * @p_vp8_frame:		Poपूर्णांकer to a VP8 frame params काष्ठाure.
+ * @p_hevc_sps:			Poपूर्णांकer to an HEVC sequence parameter set काष्ठाure.
+ * @p_hevc_pps:			Poपूर्णांकer to an HEVC picture parameter set काष्ठाure.
+ * @p_hevc_slice_params:	Poपूर्णांकer to an HEVC slice parameters काष्ठाure.
+ * @p_hdr10_cll:		Poपूर्णांकer to an HDR10 Content Light Level काष्ठाure.
+ * @p_hdr10_mastering:		Poपूर्णांकer to an HDR10 Mastering Display काष्ठाure.
+ * @p_area:			Poपूर्णांकer to an area.
+ * @p:				Poपूर्णांकer to a compound value.
+ * @p_स्थिर:			Poपूर्णांकer to a स्थिरant compound value.
  */
-union v4l2_ctrl_ptr {
+जोड़ v4l2_ctrl_ptr अणु
 	s32 *p_s32;
 	s64 *p_s64;
 	u8 *p_u8;
 	u16 *p_u16;
 	u32 *p_u32;
-	char *p_char;
-	struct v4l2_ctrl_mpeg2_slice_params *p_mpeg2_slice_params;
-	struct v4l2_ctrl_mpeg2_quantization *p_mpeg2_quantization;
-	struct v4l2_ctrl_fwht_params *p_fwht_params;
-	struct v4l2_ctrl_h264_sps *p_h264_sps;
-	struct v4l2_ctrl_h264_pps *p_h264_pps;
-	struct v4l2_ctrl_h264_scaling_matrix *p_h264_scaling_matrix;
-	struct v4l2_ctrl_h264_slice_params *p_h264_slice_params;
-	struct v4l2_ctrl_h264_decode_params *p_h264_decode_params;
-	struct v4l2_ctrl_h264_pred_weights *p_h264_pred_weights;
-	struct v4l2_ctrl_vp8_frame *p_vp8_frame;
-	struct v4l2_ctrl_hevc_sps *p_hevc_sps;
-	struct v4l2_ctrl_hevc_pps *p_hevc_pps;
-	struct v4l2_ctrl_hevc_slice_params *p_hevc_slice_params;
-	struct v4l2_ctrl_hdr10_cll_info *p_hdr10_cll;
-	struct v4l2_ctrl_hdr10_mastering_display *p_hdr10_mastering;
-	struct v4l2_area *p_area;
-	void *p;
-	const void *p_const;
-};
+	अक्षर *p_अक्षर;
+	काष्ठा v4l2_ctrl_mpeg2_slice_params *p_mpeg2_slice_params;
+	काष्ठा v4l2_ctrl_mpeg2_quantization *p_mpeg2_quantization;
+	काष्ठा v4l2_ctrl_fwht_params *p_fwht_params;
+	काष्ठा v4l2_ctrl_h264_sps *p_h264_sps;
+	काष्ठा v4l2_ctrl_h264_pps *p_h264_pps;
+	काष्ठा v4l2_ctrl_h264_scaling_matrix *p_h264_scaling_matrix;
+	काष्ठा v4l2_ctrl_h264_slice_params *p_h264_slice_params;
+	काष्ठा v4l2_ctrl_h264_decode_params *p_h264_decode_params;
+	काष्ठा v4l2_ctrl_h264_pred_weights *p_h264_pred_weights;
+	काष्ठा v4l2_ctrl_vp8_frame *p_vp8_frame;
+	काष्ठा v4l2_ctrl_hevc_sps *p_hevc_sps;
+	काष्ठा v4l2_ctrl_hevc_pps *p_hevc_pps;
+	काष्ठा v4l2_ctrl_hevc_slice_params *p_hevc_slice_params;
+	काष्ठा v4l2_ctrl_hdr10_cll_info *p_hdr10_cll;
+	काष्ठा v4l2_ctrl_hdr10_mastering_display *p_hdr10_mastering;
+	काष्ठा v4l2_area *p_area;
+	व्योम *p;
+	स्थिर व्योम *p_स्थिर;
+पूर्ण;
 
 /**
- * v4l2_ctrl_ptr_create() - Helper function to return a v4l2_ctrl_ptr from a
- * void pointer
- * @ptr:	The void pointer
+ * v4l2_ctrl_ptr_create() - Helper function to वापस a v4l2_ctrl_ptr from a
+ * व्योम poपूर्णांकer
+ * @ptr:	The व्योम poपूर्णांकer
  */
-static inline union v4l2_ctrl_ptr v4l2_ctrl_ptr_create(void *ptr)
-{
-	union v4l2_ctrl_ptr p = { .p = ptr };
+अटल अंतरभूत जोड़ v4l2_ctrl_ptr v4l2_ctrl_ptr_create(व्योम *ptr)
+अणु
+	जोड़ v4l2_ctrl_ptr p = अणु .p = ptr पूर्ण;
 
-	return p;
-}
+	वापस p;
+पूर्ण
 
 /**
- * struct v4l2_ctrl_ops - The control operations that the driver has to provide.
+ * काष्ठा v4l2_ctrl_ops - The control operations that the driver has to provide.
  *
- * @g_volatile_ctrl: Get a new value for this control. Generally only relevant
- *		for volatile (and usually read-only) controls such as a control
- *		that returns the current signal strength which changes
+ * @g_अस्थिर_ctrl: Get a new value क्रम this control. Generally only relevant
+ *		क्रम अस्थिर (and usually पढ़ो-only) controls such as a control
+ *		that वापसs the current संकेत strength which changes
  *		continuously.
- *		If not set, then the currently cached value will be returned.
+ *		If not set, then the currently cached value will be वापसed.
  * @try_ctrl:	Test whether the control's value is valid. Only relevant when
  *		the usual min/max/step checks are not sufficient.
  * @s_ctrl:	Actually set the new control value. s_ctrl is compulsory. The
  *		ctrl->handler->lock is held when these ops are called, so no
- *		one else can access controls owned by that handler.
+ *		one अन्यथा can access controls owned by that handler.
  */
-struct v4l2_ctrl_ops {
-	int (*g_volatile_ctrl)(struct v4l2_ctrl *ctrl);
-	int (*try_ctrl)(struct v4l2_ctrl *ctrl);
-	int (*s_ctrl)(struct v4l2_ctrl *ctrl);
-};
+काष्ठा v4l2_ctrl_ops अणु
+	पूर्णांक (*g_अस्थिर_ctrl)(काष्ठा v4l2_ctrl *ctrl);
+	पूर्णांक (*try_ctrl)(काष्ठा v4l2_ctrl *ctrl);
+	पूर्णांक (*s_ctrl)(काष्ठा v4l2_ctrl *ctrl);
+पूर्ण;
 
 /**
- * struct v4l2_ctrl_type_ops - The control type operations that the driver
+ * काष्ठा v4l2_ctrl_type_ops - The control type operations that the driver
  *			       has to provide.
  *
- * @equal: return true if both values are equal.
+ * @equal: वापस true अगर both values are equal.
  * @init: initialize the value.
  * @log: log the value.
  * @validate: validate the value. Return 0 on success and a negative value
  *	otherwise.
  */
-struct v4l2_ctrl_type_ops {
-	bool (*equal)(const struct v4l2_ctrl *ctrl, u32 idx,
-		      union v4l2_ctrl_ptr ptr1,
-		      union v4l2_ctrl_ptr ptr2);
-	void (*init)(const struct v4l2_ctrl *ctrl, u32 idx,
-		     union v4l2_ctrl_ptr ptr);
-	void (*log)(const struct v4l2_ctrl *ctrl);
-	int (*validate)(const struct v4l2_ctrl *ctrl, u32 idx,
-			union v4l2_ctrl_ptr ptr);
-};
+काष्ठा v4l2_ctrl_type_ops अणु
+	bool (*equal)(स्थिर काष्ठा v4l2_ctrl *ctrl, u32 idx,
+		      जोड़ v4l2_ctrl_ptr ptr1,
+		      जोड़ v4l2_ctrl_ptr ptr2);
+	व्योम (*init)(स्थिर काष्ठा v4l2_ctrl *ctrl, u32 idx,
+		     जोड़ v4l2_ctrl_ptr ptr);
+	व्योम (*log)(स्थिर काष्ठा v4l2_ctrl *ctrl);
+	पूर्णांक (*validate)(स्थिर काष्ठा v4l2_ctrl *ctrl, u32 idx,
+			जोड़ v4l2_ctrl_ptr ptr);
+पूर्ण;
 
 /**
- * typedef v4l2_ctrl_notify_fnc - typedef for a notify argument with a function
+ * प्रकार v4l2_ctrl_notअगरy_fnc - प्रकार क्रम a notअगरy argument with a function
  *	that should be called when a control value has changed.
  *
- * @ctrl: pointer to struct &v4l2_ctrl
- * @priv: control private data
+ * @ctrl: poपूर्णांकer to काष्ठा &v4l2_ctrl
+ * @priv: control निजी data
  *
- * This typedef definition is used as an argument to v4l2_ctrl_notify()
- * and as an argument at struct &v4l2_ctrl_handler.
+ * This प्रकार definition is used as an argument to v4l2_ctrl_notअगरy()
+ * and as an argument at काष्ठा &v4l2_ctrl_handler.
  */
-typedef void (*v4l2_ctrl_notify_fnc)(struct v4l2_ctrl *ctrl, void *priv);
+प्रकार व्योम (*v4l2_ctrl_notअगरy_fnc)(काष्ठा v4l2_ctrl *ctrl, व्योम *priv);
 
 /**
- * struct v4l2_ctrl - The control structure.
+ * काष्ठा v4l2_ctrl - The control काष्ठाure.
  *
  * @node:	The list node.
  * @ev_subs:	The list of control event subscriptions.
  * @handler:	The handler that owns the control.
- * @cluster:	Point to start of cluster array.
+ * @cluster:	Poपूर्णांक to start of cluster array.
  * @ncontrols:	Number of controls in cluster array.
- * @done:	Internal flag: set for each processed control.
- * @is_new:	Set when the user specified a new value for this control. It
+ * @करोne:	Internal flag: set क्रम each processed control.
+ * @is_new:	Set when the user specअगरied a new value क्रम this control. It
  *		is also set when called from v4l2_ctrl_handler_setup(). Drivers
  *		should never set this flag.
- * @has_changed: Set when the current value differs from the new value. Drivers
+ * @has_changed: Set when the current value dअगरfers from the new value. Drivers
  *		should never use this flag.
- * @is_private: If set, then this control is private to its handler and it
+ * @is_निजी: If set, then this control is निजी to its handler and it
  *		will not be added to any other handlers. Drivers can set
  *		this flag.
- * @is_auto:   If set, then this control selects whether the other cluster
+ * @is_स्वतः:   If set, then this control selects whether the other cluster
  *		members are in 'automatic' mode or 'manual' mode. This is
- *		used for autogain/gain type clusters. Drivers should never
+ *		used क्रम स्वतःgain/gain type clusters. Drivers should never
  *		set this flag directly.
- * @is_int:    If set, then this control has a simple integer value (i.e. it
+ * @is_पूर्णांक:    If set, then this control has a simple पूर्णांकeger value (i.e. it
  *		uses ctrl->val).
  * @is_string: If set, then this control has type %V4L2_CTRL_TYPE_STRING.
  * @is_ptr:	If set, then this control is an array and/or has type >=
  *		%V4L2_CTRL_COMPOUND_TYPES
- *		and/or has type %V4L2_CTRL_TYPE_STRING. In other words, &struct
- *		v4l2_ext_control uses field p to point to the data.
+ *		and/or has type %V4L2_CTRL_TYPE_STRING. In other words, &काष्ठा
+ *		v4l2_ext_control uses field p to poपूर्णांक to the data.
  * @is_array: If set, then this control contains an N-dimensional array.
- * @has_volatiles: If set, then one or more members of the cluster are volatile.
+ * @has_अस्थिरs: If set, then one or more members of the cluster are अस्थिर.
  *		Drivers should never touch this flag.
- * @call_notify: If set, then call the handler's notify function whenever the
+ * @call_notअगरy: If set, then call the handler's notअगरy function whenever the
  *		control's value changes.
- * @manual_mode_value: If the is_auto flag is set, then this is the value
- *		of the auto control that determines if that control is in
- *		manual mode. So if the value of the auto control equals this
+ * @manual_mode_value: If the is_स्वतः flag is set, then this is the value
+ *		of the स्वतः control that determines अगर that control is in
+ *		manual mode. So अगर the value of the स्वतः control equals this
  *		value, then the whole cluster is in manual mode. Drivers should
  *		never set this flag directly.
  * @ops:	The control ops.
@@ -196,398 +197,398 @@ typedef void (*v4l2_ctrl_notify_fnc)(struct v4l2_ctrl *ctrl, void *priv);
  * @type:	The control type.
  * @minimum:	The control's minimum value.
  * @maximum:	The control's maximum value.
- * @default_value: The control's default value.
- * @step:	The control's step value for non-menu controls.
+ * @शेष_value: The control's शेष value.
+ * @step:	The control's step value क्रम non-menu controls.
  * @elems:	The number of elements in the N-dimensional array.
  * @elem_size:	The size in bytes of the control.
  * @dims:	The size of each dimension.
  * @nr_of_dims:The number of dimensions in @dims.
- * @menu_skip_mask: The control's skip mask for menu controls. This makes it
+ * @menu_skip_mask: The control's skip mask क्रम menu controls. This makes it
  *		easy to skip menu items that are not valid. If bit X is set,
- *		then menu item X is skipped. Of course, this only works for
+ *		then menu item X is skipped. Of course, this only works क्रम
  *		menus with <= 32 menu items. There are no menus that come
- *		close to that number, so this is OK. Should we ever need more,
+ *		बंद to that number, so this is OK. Should we ever need more,
  *		then this will have to be extended to a u64 or a bit array.
- * @qmenu:	A const char * array for all menu items. Array entries that are
+ * @qmenu:	A स्थिर अक्षर * array क्रम all menu items. Array entries that are
  *		empty strings ("") correspond to non-existing menu items (this
  *		is in addition to the menu_skip_mask above). The last entry
- *		must be NULL.
- *		Used only if the @type is %V4L2_CTRL_TYPE_MENU.
- * @qmenu_int:	A 64-bit integer array for with integer menu items.
+ *		must be शून्य.
+ *		Used only अगर the @type is %V4L2_CTRL_TYPE_MENU.
+ * @qmenu_पूर्णांक:	A 64-bit पूर्णांकeger array क्रम with पूर्णांकeger menu items.
  *		The size of array must be equal to the menu size, e. g.:
- *		:math:`ceil(\frac{maximum - minimum}{step}) + 1`.
- *		Used only if the @type is %V4L2_CTRL_TYPE_INTEGER_MENU.
+ *		:math:`उच्चमान(\पracअणुmaximum - minimumपूर्णअणुstepपूर्ण) + 1`.
+ *		Used only अगर the @type is %V4L2_CTRL_TYPE_INTEGER_MENU.
  * @flags:	The control's flags.
  * @cur:	Structure to store the current value.
- * @cur.val:	The control's current value, if the @type is represented via
- *		a u32 integer (see &enum v4l2_ctrl_type).
+ * @cur.val:	The control's current value, अगर the @type is represented via
+ *		a u32 पूर्णांकeger (see &क्रमागत v4l2_ctrl_type).
  * @val:	The control's new s32 value.
- * @priv:	The control's private pointer. For use by the driver. It is
- *		untouched by the control framework. Note that this pointer is
- *		not freed when the control is deleted. Should this be needed
- *		then a new internal bitfield can be added to tell the framework
- *		to free this pointer.
- * @p_def:	The control's default value represented via a union which
+ * @priv:	The control's निजी poपूर्णांकer. For use by the driver. It is
+ *		untouched by the control framework. Note that this poपूर्णांकer is
+ *		not मुक्तd when the control is deleted. Should this be needed
+ *		then a new पूर्णांकernal bitfield can be added to tell the framework
+ *		to मुक्त this poपूर्णांकer.
+ * @p_def:	The control's शेष value represented via a जोड़ which
  *		provides a standard way of accessing control types
- *		through a pointer (for compound controls only).
- * @p_cur:	The control's current value represented via a union which
+ *		through a poपूर्णांकer (क्रम compound controls only).
+ * @p_cur:	The control's current value represented via a जोड़ which
  *		provides a standard way of accessing control types
- *		through a pointer.
- * @p_new:	The control's new value represented via a union which provides
+ *		through a poपूर्णांकer.
+ * @p_new:	The control's new value represented via a जोड़ which provides
  *		a standard way of accessing control types
- *		through a pointer.
+ *		through a poपूर्णांकer.
  */
-struct v4l2_ctrl {
+काष्ठा v4l2_ctrl अणु
 	/* Administrative fields */
-	struct list_head node;
-	struct list_head ev_subs;
-	struct v4l2_ctrl_handler *handler;
-	struct v4l2_ctrl **cluster;
-	unsigned int ncontrols;
+	काष्ठा list_head node;
+	काष्ठा list_head ev_subs;
+	काष्ठा v4l2_ctrl_handler *handler;
+	काष्ठा v4l2_ctrl **cluster;
+	अचिन्हित पूर्णांक ncontrols;
 
-	unsigned int done:1;
+	अचिन्हित पूर्णांक करोne:1;
 
-	unsigned int is_new:1;
-	unsigned int has_changed:1;
-	unsigned int is_private:1;
-	unsigned int is_auto:1;
-	unsigned int is_int:1;
-	unsigned int is_string:1;
-	unsigned int is_ptr:1;
-	unsigned int is_array:1;
-	unsigned int has_volatiles:1;
-	unsigned int call_notify:1;
-	unsigned int manual_mode_value:8;
+	अचिन्हित पूर्णांक is_new:1;
+	अचिन्हित पूर्णांक has_changed:1;
+	अचिन्हित पूर्णांक is_निजी:1;
+	अचिन्हित पूर्णांक is_स्वतः:1;
+	अचिन्हित पूर्णांक is_पूर्णांक:1;
+	अचिन्हित पूर्णांक is_string:1;
+	अचिन्हित पूर्णांक is_ptr:1;
+	अचिन्हित पूर्णांक is_array:1;
+	अचिन्हित पूर्णांक has_अस्थिरs:1;
+	अचिन्हित पूर्णांक call_notअगरy:1;
+	अचिन्हित पूर्णांक manual_mode_value:8;
 
-	const struct v4l2_ctrl_ops *ops;
-	const struct v4l2_ctrl_type_ops *type_ops;
+	स्थिर काष्ठा v4l2_ctrl_ops *ops;
+	स्थिर काष्ठा v4l2_ctrl_type_ops *type_ops;
 	u32 id;
-	const char *name;
-	enum v4l2_ctrl_type type;
-	s64 minimum, maximum, default_value;
+	स्थिर अक्षर *name;
+	क्रमागत v4l2_ctrl_type type;
+	s64 minimum, maximum, शेष_value;
 	u32 elems;
 	u32 elem_size;
 	u32 dims[V4L2_CTRL_MAX_DIMS];
 	u32 nr_of_dims;
-	union {
+	जोड़ अणु
 		u64 step;
 		u64 menu_skip_mask;
-	};
-	union {
-		const char * const *qmenu;
-		const s64 *qmenu_int;
-	};
-	unsigned long flags;
-	void *priv;
+	पूर्ण;
+	जोड़ अणु
+		स्थिर अक्षर * स्थिर *qmenu;
+		स्थिर s64 *qmenu_पूर्णांक;
+	पूर्ण;
+	अचिन्हित दीर्घ flags;
+	व्योम *priv;
 	s32 val;
-	struct {
+	काष्ठा अणु
 		s32 val;
-	} cur;
+	पूर्ण cur;
 
-	union v4l2_ctrl_ptr p_def;
-	union v4l2_ctrl_ptr p_new;
-	union v4l2_ctrl_ptr p_cur;
-};
+	जोड़ v4l2_ctrl_ptr p_def;
+	जोड़ v4l2_ctrl_ptr p_new;
+	जोड़ v4l2_ctrl_ptr p_cur;
+पूर्ण;
 
 /**
- * struct v4l2_ctrl_ref - The control reference.
+ * काष्ठा v4l2_ctrl_ref - The control reference.
  *
- * @node:	List node for the sorted list.
- * @next:	Single-link list node for the hash.
- * @ctrl:	The actual control information.
- * @helper:	Pointer to helper struct. Used internally in
+ * @node:	List node क्रम the sorted list.
+ * @next:	Single-link list node क्रम the hash.
+ * @ctrl:	The actual control inक्रमmation.
+ * @helper:	Poपूर्णांकer to helper काष्ठा. Used पूर्णांकernally in
  *		``prepare_ext_ctrls`` function at ``v4l2-ctrl.c``.
  * @from_other_dev: If true, then @ctrl was defined in another
- *		device than the &struct v4l2_ctrl_handler.
- * @req_done:	Internal flag: if the control handler containing this control
+ *		device than the &काष्ठा v4l2_ctrl_handler.
+ * @req_करोne:	Internal flag: अगर the control handler containing this control
  *		reference is bound to a media request, then this is set when
  *		the control has been applied. This prevents applying controls
  *		from a cluster with multiple controls twice (when the first
  *		control of a cluster is applied, they all are).
- * @valid_p_req: If set, then p_req contains the control value for the request.
+ * @valid_p_req: If set, then p_req contains the control value क्रम the request.
  * @p_req:	If the control handler containing this control reference
- *		is bound to a media request, then this points to the
+ *		is bound to a media request, then this poपूर्णांकs to the
  *		value of the control that must be applied when the request
- *		is executed, or to the value of the control at the time
+ *		is executed, or to the value of the control at the समय
  *		that the request was completed. If @valid_p_req is false,
- *		then this control was never set for this request and the
+ *		then this control was never set क्रम this request and the
  *		control will not be updated when this request is applied.
  *
  * Each control handler has a list of these refs. The list_head is used to
- * keep a sorted-by-control-ID list of all controls, while the next pointer
+ * keep a sorted-by-control-ID list of all controls, जबतक the next poपूर्णांकer
  * is used to link the control in the hash's bucket.
  */
-struct v4l2_ctrl_ref {
-	struct list_head node;
-	struct v4l2_ctrl_ref *next;
-	struct v4l2_ctrl *ctrl;
-	struct v4l2_ctrl_helper *helper;
+काष्ठा v4l2_ctrl_ref अणु
+	काष्ठा list_head node;
+	काष्ठा v4l2_ctrl_ref *next;
+	काष्ठा v4l2_ctrl *ctrl;
+	काष्ठा v4l2_ctrl_helper *helper;
 	bool from_other_dev;
-	bool req_done;
+	bool req_करोne;
 	bool valid_p_req;
-	union v4l2_ctrl_ptr p_req;
-};
+	जोड़ v4l2_ctrl_ptr p_req;
+पूर्ण;
 
 /**
- * struct v4l2_ctrl_handler - The control handler keeps track of all the
+ * काष्ठा v4l2_ctrl_handler - The control handler keeps track of all the
  *	controls: both the controls owned by the handler and those inherited
  *	from other handlers.
  *
- * @_lock:	Default for "lock".
+ * @_lock:	Default क्रम "lock".
  * @lock:	Lock to control access to this handler and its controls.
  *		May be replaced by the user right after init.
  * @ctrls:	The list of controls owned by this handler.
  * @ctrl_refs:	The list of control references.
  * @cached:	The last found control reference. It is common that the same
- *		control is needed multiple times, so this is a simple
+ *		control is needed multiple बार, so this is a simple
  *		optimization.
- * @buckets:	Buckets for the hashing. Allows for quick control lookup.
- * @notify:	A notify callback that is called whenever the control changes
+ * @buckets:	Buckets क्रम the hashing. Allows क्रम quick control lookup.
+ * @notअगरy:	A notअगरy callback that is called whenever the control changes
  *		value.
- *		Note that the handler's lock is held when the notify function
+ *		Note that the handler's lock is held when the notअगरy function
  *		is called!
- * @notify_priv: Passed as argument to the v4l2_ctrl notify callback.
+ * @notअगरy_priv: Passed as argument to the v4l2_ctrl notअगरy callback.
  * @nr_of_buckets: Total number of buckets in the array.
  * @error:	The error code of the first failed control addition.
- * @request_is_queued: True if the request was queued.
- * @requests:	List to keep track of open control handler request objects.
- *		For the parent control handler (@req_obj.ops == NULL) this
+ * @request_is_queued: True अगर the request was queued.
+ * @requests:	List to keep track of खोलो control handler request objects.
+ *		For the parent control handler (@req_obj.ops == शून्य) this
  *		is the list header. When the parent control handler is
- *		removed, it has to unbind and put all these requests since
+ *		हटाओd, it has to unbind and put all these requests since
  *		they refer to the parent.
  * @requests_queued: List of the queued requests. This determines the order
  *		in which these controls are applied. Once the request is
- *		completed it is removed from this list.
- * @req_obj:	The &struct media_request_object, used to link into a
- *		&struct media_request. This request object has a refcount.
+ *		completed it is हटाओd from this list.
+ * @req_obj:	The &काष्ठा media_request_object, used to link पूर्णांकo a
+ *		&काष्ठा media_request. This request object has a refcount.
  */
-struct v4l2_ctrl_handler {
-	struct mutex _lock;
-	struct mutex *lock;
-	struct list_head ctrls;
-	struct list_head ctrl_refs;
-	struct v4l2_ctrl_ref *cached;
-	struct v4l2_ctrl_ref **buckets;
-	v4l2_ctrl_notify_fnc notify;
-	void *notify_priv;
+काष्ठा v4l2_ctrl_handler अणु
+	काष्ठा mutex _lock;
+	काष्ठा mutex *lock;
+	काष्ठा list_head ctrls;
+	काष्ठा list_head ctrl_refs;
+	काष्ठा v4l2_ctrl_ref *cached;
+	काष्ठा v4l2_ctrl_ref **buckets;
+	v4l2_ctrl_notअगरy_fnc notअगरy;
+	व्योम *notअगरy_priv;
 	u16 nr_of_buckets;
-	int error;
+	पूर्णांक error;
 	bool request_is_queued;
-	struct list_head requests;
-	struct list_head requests_queued;
-	struct media_request_object req_obj;
-};
+	काष्ठा list_head requests;
+	काष्ठा list_head requests_queued;
+	काष्ठा media_request_object req_obj;
+पूर्ण;
 
 /**
- * struct v4l2_ctrl_config - Control configuration structure.
+ * काष्ठा v4l2_ctrl_config - Control configuration काष्ठाure.
  *
  * @ops:	The control ops.
- * @type_ops:	The control type ops. Only needed for compound controls.
+ * @type_ops:	The control type ops. Only needed क्रम compound controls.
  * @id:	The control ID.
  * @name:	The control name.
  * @type:	The control type.
  * @min:	The control's minimum value.
  * @max:	The control's maximum value.
- * @step:	The control's step value for non-menu controls.
- * @def:	The control's default value.
- * @p_def:	The control's default value for compound controls.
+ * @step:	The control's step value क्रम non-menu controls.
+ * @def:	The control's शेष value.
+ * @p_def:	The control's शेष value क्रम compound controls.
  * @dims:	The size of each dimension.
  * @elem_size:	The size in bytes of the control.
  * @flags:	The control's flags.
- * @menu_skip_mask: The control's skip mask for menu controls. This makes it
+ * @menu_skip_mask: The control's skip mask क्रम menu controls. This makes it
  *		easy to skip menu items that are not valid. If bit X is set,
- *		then menu item X is skipped. Of course, this only works for
+ *		then menu item X is skipped. Of course, this only works क्रम
  *		menus with <= 64 menu items. There are no menus that come
- *		close to that number, so this is OK. Should we ever need more,
+ *		बंद to that number, so this is OK. Should we ever need more,
  *		then this will have to be extended to a bit array.
- * @qmenu:	A const char * array for all menu items. Array entries that are
+ * @qmenu:	A स्थिर अक्षर * array क्रम all menu items. Array entries that are
  *		empty strings ("") correspond to non-existing menu items (this
  *		is in addition to the menu_skip_mask above). The last entry
- *		must be NULL.
- * @qmenu_int:	A const s64 integer array for all menu items of the type
+ *		must be शून्य.
+ * @qmenu_पूर्णांक:	A स्थिर s64 पूर्णांकeger array क्रम all menu items of the type
  *		V4L2_CTRL_TYPE_INTEGER_MENU.
- * @is_private: If set, then this control is private to its handler and it
+ * @is_निजी: If set, then this control is निजी to its handler and it
  *		will not be added to any other handlers.
  */
-struct v4l2_ctrl_config {
-	const struct v4l2_ctrl_ops *ops;
-	const struct v4l2_ctrl_type_ops *type_ops;
+काष्ठा v4l2_ctrl_config अणु
+	स्थिर काष्ठा v4l2_ctrl_ops *ops;
+	स्थिर काष्ठा v4l2_ctrl_type_ops *type_ops;
 	u32 id;
-	const char *name;
-	enum v4l2_ctrl_type type;
+	स्थिर अक्षर *name;
+	क्रमागत v4l2_ctrl_type type;
 	s64 min;
 	s64 max;
 	u64 step;
 	s64 def;
-	union v4l2_ctrl_ptr p_def;
+	जोड़ v4l2_ctrl_ptr p_def;
 	u32 dims[V4L2_CTRL_MAX_DIMS];
 	u32 elem_size;
 	u32 flags;
 	u64 menu_skip_mask;
-	const char * const *qmenu;
-	const s64 *qmenu_int;
-	unsigned int is_private:1;
-};
+	स्थिर अक्षर * स्थिर *qmenu;
+	स्थिर s64 *qmenu_पूर्णांक;
+	अचिन्हित पूर्णांक is_निजी:1;
+पूर्ण;
 
 /**
  * v4l2_ctrl_fill - Fill in the control fields based on the control ID.
  *
  * @id: ID of the control
- * @name: pointer to be filled with a string with the name of the control
- * @type: pointer for storing the type of the control
- * @min: pointer for storing the minimum value for the control
- * @max: pointer for storing the maximum value for the control
- * @step: pointer for storing the control step
- * @def: pointer for storing the default value for the control
- * @flags: pointer for storing the flags to be used on the control
+ * @name: poपूर्णांकer to be filled with a string with the name of the control
+ * @type: poपूर्णांकer क्रम storing the type of the control
+ * @min: poपूर्णांकer क्रम storing the minimum value क्रम the control
+ * @max: poपूर्णांकer क्रम storing the maximum value क्रम the control
+ * @step: poपूर्णांकer क्रम storing the control step
+ * @def: poपूर्णांकer क्रम storing the शेष value क्रम the control
+ * @flags: poपूर्णांकer क्रम storing the flags to be used on the control
  *
- * This works for all standard V4L2 controls.
+ * This works क्रम all standard V4L2 controls.
  * For non-standard controls it will only fill in the given arguments
- * and @name content will be set to %NULL.
+ * and @name content will be set to %शून्य.
  *
- * This function will overwrite the contents of @name, @type and @flags.
- * The contents of @min, @max, @step and @def may be modified depending on
+ * This function will overग_लिखो the contents of @name, @type and @flags.
+ * The contents of @min, @max, @step and @def may be modअगरied depending on
  * the type.
  *
  * .. note::
  *
- *    Do not use in drivers! It is used internally for backwards compatibility
+ *    Do not use in drivers! It is used पूर्णांकernally क्रम backwards compatibility
  *    control handling only. Once all drivers are converted to use the new
- *    control framework this function will no longer be exported.
+ *    control framework this function will no दीर्घer be exported.
  */
-void v4l2_ctrl_fill(u32 id, const char **name, enum v4l2_ctrl_type *type,
+व्योम v4l2_ctrl_fill(u32 id, स्थिर अक्षर **name, क्रमागत v4l2_ctrl_type *type,
 		    s64 *min, s64 *max, u64 *step, s64 *def, u32 *flags);
 
 
 /**
  * v4l2_ctrl_handler_init_class() - Initialize the control handler.
  * @hdl:	The control handler.
- * @nr_of_controls_hint: A hint of how many controls this handler is
+ * @nr_of_controls_hपूर्णांक: A hपूर्णांक of how many controls this handler is
  *		expected to refer to. This is the total number, so including
- *		any inherited controls. It doesn't have to be precise, but if
+ *		any inherited controls. It करोesn't have to be precise, but अगर
  *		it is way off, then you either waste memory (too many buckets
  *		are allocated) or the control lookup becomes slower (not enough
  *		buckets are allocated, so there are more slow list lookups).
  *		It will always work, though.
- * @key:	Used by the lock validator if CONFIG_LOCKDEP is set.
- * @name:	Used by the lock validator if CONFIG_LOCKDEP is set.
+ * @key:	Used by the lock validator अगर CONFIG_LOCKDEP is set.
+ * @name:	Used by the lock validator अगर CONFIG_LOCKDEP is set.
  *
  * .. attention::
  *
  *    Never use this call directly, always use the v4l2_ctrl_handler_init()
  *    macro that hides the @key and @name arguments.
  *
- * Return: returns an error if the buckets could not be allocated. This
+ * Return: वापसs an error अगर the buckets could not be allocated. This
  * error will also be stored in @hdl->error.
  */
-int v4l2_ctrl_handler_init_class(struct v4l2_ctrl_handler *hdl,
-				 unsigned int nr_of_controls_hint,
-				 struct lock_class_key *key, const char *name);
+पूर्णांक v4l2_ctrl_handler_init_class(काष्ठा v4l2_ctrl_handler *hdl,
+				 अचिन्हित पूर्णांक nr_of_controls_hपूर्णांक,
+				 काष्ठा lock_class_key *key, स्थिर अक्षर *name);
 
-#ifdef CONFIG_LOCKDEP
+#अगर_घोषित CONFIG_LOCKDEP
 
 /**
- * v4l2_ctrl_handler_init - helper function to create a static struct
+ * v4l2_ctrl_handler_init - helper function to create a अटल काष्ठा
  *	 &lock_class_key and calls v4l2_ctrl_handler_init_class()
  *
  * @hdl:	The control handler.
- * @nr_of_controls_hint: A hint of how many controls this handler is
+ * @nr_of_controls_hपूर्णांक: A hपूर्णांक of how many controls this handler is
  *		expected to refer to. This is the total number, so including
- *		any inherited controls. It doesn't have to be precise, but if
+ *		any inherited controls. It करोesn't have to be precise, but अगर
  *		it is way off, then you either waste memory (too many buckets
  *		are allocated) or the control lookup becomes slower (not enough
  *		buckets are allocated, so there are more slow list lookups).
  *		It will always work, though.
  *
- * This helper function creates a static struct &lock_class_key and
- * calls v4l2_ctrl_handler_init_class(), providing a proper name for the lock
- * validador.
+ * This helper function creates a अटल काष्ठा &lock_class_key and
+ * calls v4l2_ctrl_handler_init_class(), providing a proper name क्रम the lock
+ * validaकरोr.
  *
  * Use this helper function to initialize a control handler.
  */
-#define v4l2_ctrl_handler_init(hdl, nr_of_controls_hint)		\
+#घोषणा v4l2_ctrl_handler_init(hdl, nr_of_controls_hपूर्णांक)		\
 (									\
-	({								\
-		static struct lock_class_key _key;			\
-		v4l2_ctrl_handler_init_class(hdl, nr_of_controls_hint,	\
+	(अणु								\
+		अटल काष्ठा lock_class_key _key;			\
+		v4l2_ctrl_handler_init_class(hdl, nr_of_controls_hपूर्णांक,	\
 					&_key,				\
 					KBUILD_BASENAME ":"		\
-					__stringify(__LINE__) ":"	\
+					__stringअगरy(__LINE__) ":"	\
 					"(" #hdl ")->_lock");		\
-	})								\
+	पूर्ण)								\
 )
-#else
-#define v4l2_ctrl_handler_init(hdl, nr_of_controls_hint)		\
-	v4l2_ctrl_handler_init_class(hdl, nr_of_controls_hint, NULL, NULL)
-#endif
+#अन्यथा
+#घोषणा v4l2_ctrl_handler_init(hdl, nr_of_controls_hपूर्णांक)		\
+	v4l2_ctrl_handler_init_class(hdl, nr_of_controls_hपूर्णांक, शून्य, शून्य)
+#पूर्ण_अगर
 
 /**
- * v4l2_ctrl_handler_free() - Free all controls owned by the handler and free
+ * v4l2_ctrl_handler_मुक्त() - Free all controls owned by the handler and मुक्त
  * the control list.
  * @hdl:	The control handler.
  *
- * Does nothing if @hdl == NULL.
+ * Does nothing अगर @hdl == शून्य.
  */
-void v4l2_ctrl_handler_free(struct v4l2_ctrl_handler *hdl);
+व्योम v4l2_ctrl_handler_मुक्त(काष्ठा v4l2_ctrl_handler *hdl);
 
 /**
  * v4l2_ctrl_lock() - Helper function to lock the handler
  * associated with the control.
  * @ctrl:	The control to lock.
  */
-static inline void v4l2_ctrl_lock(struct v4l2_ctrl *ctrl)
-{
+अटल अंतरभूत व्योम v4l2_ctrl_lock(काष्ठा v4l2_ctrl *ctrl)
+अणु
 	mutex_lock(ctrl->handler->lock);
-}
+पूर्ण
 
 /**
  * v4l2_ctrl_unlock() - Helper function to unlock the handler
  * associated with the control.
  * @ctrl:	The control to unlock.
  */
-static inline void v4l2_ctrl_unlock(struct v4l2_ctrl *ctrl)
-{
+अटल अंतरभूत व्योम v4l2_ctrl_unlock(काष्ठा v4l2_ctrl *ctrl)
+अणु
 	mutex_unlock(ctrl->handler->lock);
-}
+पूर्ण
 
 /**
- * __v4l2_ctrl_handler_setup() - Call the s_ctrl op for all controls belonging
+ * __v4l2_ctrl_handler_setup() - Call the s_ctrl op क्रम all controls beदीर्घing
  * to the handler to initialize the hardware to the current control values. The
- * caller is responsible for acquiring the control handler mutex on behalf of
+ * caller is responsible क्रम acquiring the control handler mutex on behalf of
  * __v4l2_ctrl_handler_setup().
  * @hdl:	The control handler.
  *
- * Button controls will be skipped, as are read-only controls.
+ * Button controls will be skipped, as are पढ़ो-only controls.
  *
- * If @hdl == NULL, then this just returns 0.
+ * If @hdl == शून्य, then this just वापसs 0.
  */
-int __v4l2_ctrl_handler_setup(struct v4l2_ctrl_handler *hdl);
+पूर्णांक __v4l2_ctrl_handler_setup(काष्ठा v4l2_ctrl_handler *hdl);
 
 /**
- * v4l2_ctrl_handler_setup() - Call the s_ctrl op for all controls belonging
+ * v4l2_ctrl_handler_setup() - Call the s_ctrl op क्रम all controls beदीर्घing
  * to the handler to initialize the hardware to the current control values.
  * @hdl:	The control handler.
  *
- * Button controls will be skipped, as are read-only controls.
+ * Button controls will be skipped, as are पढ़ो-only controls.
  *
- * If @hdl == NULL, then this just returns 0.
+ * If @hdl == शून्य, then this just वापसs 0.
  */
-int v4l2_ctrl_handler_setup(struct v4l2_ctrl_handler *hdl);
+पूर्णांक v4l2_ctrl_handler_setup(काष्ठा v4l2_ctrl_handler *hdl);
 
 /**
  * v4l2_ctrl_handler_log_status() - Log all controls owned by the handler.
  * @hdl:	The control handler.
  * @prefix:	The prefix to use when logging the control values. If the
- *		prefix does not end with a space, then ": " will be added
- *		after the prefix. If @prefix == NULL, then no prefix will be
+ *		prefix करोes not end with a space, then ": " will be added
+ *		after the prefix. If @prefix == शून्य, then no prefix will be
  *		used.
  *
  * For use with VIDIOC_LOG_STATUS.
  *
- * Does nothing if @hdl == NULL.
+ * Does nothing अगर @hdl == शून्य.
  */
-void v4l2_ctrl_handler_log_status(struct v4l2_ctrl_handler *hdl,
-				  const char *prefix);
+व्योम v4l2_ctrl_handler_log_status(काष्ठा v4l2_ctrl_handler *hdl,
+				  स्थिर अक्षर *prefix);
 
 /**
  * v4l2_ctrl_new_custom() - Allocate and initialize a new custom V4L2
@@ -595,14 +596,14 @@ void v4l2_ctrl_handler_log_status(struct v4l2_ctrl_handler *hdl,
  *
  * @hdl:	The control handler.
  * @cfg:	The control's configuration data.
- * @priv:	The control's driver-specific private data.
+ * @priv:	The control's driver-specअगरic निजी data.
  *
- * If the &v4l2_ctrl struct could not be allocated then NULL is returned
- * and @hdl->error is set to the error code (if it wasn't set already).
+ * If the &v4l2_ctrl काष्ठा could not be allocated then शून्य is वापसed
+ * and @hdl->error is set to the error code (अगर it wasn't set alपढ़ोy).
  */
-struct v4l2_ctrl *v4l2_ctrl_new_custom(struct v4l2_ctrl_handler *hdl,
-				       const struct v4l2_ctrl_config *cfg,
-				       void *priv);
+काष्ठा v4l2_ctrl *v4l2_ctrl_new_custom(काष्ठा v4l2_ctrl_handler *hdl,
+				       स्थिर काष्ठा v4l2_ctrl_config *cfg,
+				       व्योम *priv);
 
 /**
  * v4l2_ctrl_new_std() - Allocate and initialize a new standard V4L2 non-menu
@@ -614,18 +615,18 @@ struct v4l2_ctrl *v4l2_ctrl_new_custom(struct v4l2_ctrl_handler *hdl,
  * @min:	The control's minimum value.
  * @max:	The control's maximum value.
  * @step:	The control's step value
- * @def:	The control's default value.
+ * @def:	The control's शेष value.
  *
- * If the &v4l2_ctrl struct could not be allocated, or the control
- * ID is not known, then NULL is returned and @hdl->error is set to the
- * appropriate error code (if it wasn't set already).
+ * If the &v4l2_ctrl काष्ठा could not be allocated, or the control
+ * ID is not known, then शून्य is वापसed and @hdl->error is set to the
+ * appropriate error code (अगर it wasn't set alपढ़ोy).
  *
- * If @id refers to a menu control, then this function will return NULL.
+ * If @id refers to a menu control, then this function will वापस शून्य.
  *
  * Use v4l2_ctrl_new_std_menu() when adding menu controls.
  */
-struct v4l2_ctrl *v4l2_ctrl_new_std(struct v4l2_ctrl_handler *hdl,
-				    const struct v4l2_ctrl_ops *ops,
+काष्ठा v4l2_ctrl *v4l2_ctrl_new_std(काष्ठा v4l2_ctrl_handler *hdl,
+				    स्थिर काष्ठा v4l2_ctrl_ops *ops,
 				    u32 id, s64 min, s64 max, u64 step,
 				    s64 def);
 
@@ -637,49 +638,49 @@ struct v4l2_ctrl *v4l2_ctrl_new_std(struct v4l2_ctrl_handler *hdl,
  * @ops:	The control ops.
  * @id:		The control ID.
  * @max:	The control's maximum value.
- * @mask:	The control's skip mask for menu controls. This makes it
+ * @mask:	The control's skip mask क्रम menu controls. This makes it
  *		easy to skip menu items that are not valid. If bit X is set,
- *		then menu item X is skipped. Of course, this only works for
+ *		then menu item X is skipped. Of course, this only works क्रम
  *		menus with <= 64 menu items. There are no menus that come
- *		close to that number, so this is OK. Should we ever need more,
+ *		बंद to that number, so this is OK. Should we ever need more,
  *		then this will have to be extended to a bit array.
- * @def:	The control's default value.
+ * @def:	The control's शेष value.
  *
  * Same as v4l2_ctrl_new_std(), but @min is set to 0 and the @mask value
  * determines which menu items are to be skipped.
  *
- * If @id refers to a non-menu control, then this function will return NULL.
+ * If @id refers to a non-menu control, then this function will वापस शून्य.
  */
-struct v4l2_ctrl *v4l2_ctrl_new_std_menu(struct v4l2_ctrl_handler *hdl,
-					 const struct v4l2_ctrl_ops *ops,
+काष्ठा v4l2_ctrl *v4l2_ctrl_new_std_menu(काष्ठा v4l2_ctrl_handler *hdl,
+					 स्थिर काष्ठा v4l2_ctrl_ops *ops,
 					 u32 id, u8 max, u64 mask, u8 def);
 
 /**
  * v4l2_ctrl_new_std_menu_items() - Create a new standard V4L2 menu control
- *	with driver specific menu.
+ *	with driver specअगरic menu.
  *
  * @hdl:	The control handler.
  * @ops:	The control ops.
  * @id:	The control ID.
  * @max:	The control's maximum value.
- * @mask:	The control's skip mask for menu controls. This makes it
+ * @mask:	The control's skip mask क्रम menu controls. This makes it
  *		easy to skip menu items that are not valid. If bit X is set,
- *		then menu item X is skipped. Of course, this only works for
+ *		then menu item X is skipped. Of course, this only works क्रम
  *		menus with <= 64 menu items. There are no menus that come
- *		close to that number, so this is OK. Should we ever need more,
+ *		बंद to that number, so this is OK. Should we ever need more,
  *		then this will have to be extended to a bit array.
- * @def:	The control's default value.
+ * @def:	The control's शेष value.
  * @qmenu:	The new menu.
  *
- * Same as v4l2_ctrl_new_std_menu(), but @qmenu will be the driver specific
+ * Same as v4l2_ctrl_new_std_menu(), but @qmenu will be the driver specअगरic
  * menu of this control.
  *
  */
-struct v4l2_ctrl *v4l2_ctrl_new_std_menu_items(struct v4l2_ctrl_handler *hdl,
-					       const struct v4l2_ctrl_ops *ops,
+काष्ठा v4l2_ctrl *v4l2_ctrl_new_std_menu_items(काष्ठा v4l2_ctrl_handler *hdl,
+					       स्थिर काष्ठा v4l2_ctrl_ops *ops,
 					       u32 id, u8 max,
 					       u64 mask, u8 def,
-					       const char * const *qmenu);
+					       स्थिर अक्षर * स्थिर *qmenu);
 
 /**
  * v4l2_ctrl_new_std_compound() - Allocate and initialize a new standard V4L2
@@ -688,48 +689,48 @@ struct v4l2_ctrl *v4l2_ctrl_new_std_menu_items(struct v4l2_ctrl_handler *hdl,
  * @hdl:       The control handler.
  * @ops:       The control ops.
  * @id:        The control ID.
- * @p_def:     The control's default value.
+ * @p_def:     The control's शेष value.
  *
  * Sames as v4l2_ctrl_new_std(), but with support to compound controls, thanks
  * to the @p_def field. Use v4l2_ctrl_ptr_create() to create @p_def from a
- * pointer. Use v4l2_ctrl_ptr_create(NULL) if the default value of the
+ * poपूर्णांकer. Use v4l2_ctrl_ptr_create(शून्य) अगर the शेष value of the
  * compound control should be all zeroes.
  *
  */
-struct v4l2_ctrl *v4l2_ctrl_new_std_compound(struct v4l2_ctrl_handler *hdl,
-					     const struct v4l2_ctrl_ops *ops,
+काष्ठा v4l2_ctrl *v4l2_ctrl_new_std_compound(काष्ठा v4l2_ctrl_handler *hdl,
+					     स्थिर काष्ठा v4l2_ctrl_ops *ops,
 					     u32 id,
-					     const union v4l2_ctrl_ptr p_def);
+					     स्थिर जोड़ v4l2_ctrl_ptr p_def);
 
 /**
- * v4l2_ctrl_new_int_menu() - Create a new standard V4L2 integer menu control.
+ * v4l2_ctrl_new_पूर्णांक_menu() - Create a new standard V4L2 पूर्णांकeger menu control.
  *
  * @hdl:	The control handler.
  * @ops:	The control ops.
  * @id:	The control ID.
  * @max:	The control's maximum value.
- * @def:	The control's default value.
- * @qmenu_int:	The control's menu entries.
+ * @def:	The control's शेष value.
+ * @qmenu_पूर्णांक:	The control's menu entries.
  *
  * Same as v4l2_ctrl_new_std_menu(), but @mask is set to 0 and it additionally
- * takes as an argument an array of integers determining the menu items.
+ * takes as an argument an array of पूर्णांकegers determining the menu items.
  *
- * If @id refers to a non-integer-menu control, then this function will
- * return %NULL.
+ * If @id refers to a non-पूर्णांकeger-menu control, then this function will
+ * वापस %शून्य.
  */
-struct v4l2_ctrl *v4l2_ctrl_new_int_menu(struct v4l2_ctrl_handler *hdl,
-					 const struct v4l2_ctrl_ops *ops,
+काष्ठा v4l2_ctrl *v4l2_ctrl_new_पूर्णांक_menu(काष्ठा v4l2_ctrl_handler *hdl,
+					 स्थिर काष्ठा v4l2_ctrl_ops *ops,
 					 u32 id, u8 max, u8 def,
-					 const s64 *qmenu_int);
+					 स्थिर s64 *qmenu_पूर्णांक);
 
 /**
- * typedef v4l2_ctrl_filter - Typedef to define the filter function to be
+ * प्रकार v4l2_ctrl_filter - Typedef to define the filter function to be
  *	used when adding a control handler.
  *
- * @ctrl: pointer to struct &v4l2_ctrl.
+ * @ctrl: poपूर्णांकer to काष्ठा &v4l2_ctrl.
  */
 
-typedef bool (*v4l2_ctrl_filter)(const struct v4l2_ctrl *ctrl);
+प्रकार bool (*v4l2_ctrl_filter)(स्थिर काष्ठा v4l2_ctrl *ctrl);
 
 /**
  * v4l2_ctrl_add_handler() - Add all controls from handler @add to
@@ -742,74 +743,74 @@ typedef bool (*v4l2_ctrl_filter)(const struct v4l2_ctrl *ctrl);
  * @from_other_dev: If true, then the controls in @add were defined in another
  *		device than @hdl.
  *
- * Does nothing if either of the two handlers is a NULL pointer.
- * If @filter is NULL, then all controls are added. Otherwise only those
- * controls for which @filter returns true will be added.
- * In case of an error @hdl->error will be set to the error code (if it
- * wasn't set already).
+ * Does nothing अगर either of the two handlers is a शून्य poपूर्णांकer.
+ * If @filter is शून्य, then all controls are added. Otherwise only those
+ * controls क्रम which @filter वापसs true will be added.
+ * In हाल of an error @hdl->error will be set to the error code (अगर it
+ * wasn't set alपढ़ोy).
  */
-int v4l2_ctrl_add_handler(struct v4l2_ctrl_handler *hdl,
-			  struct v4l2_ctrl_handler *add,
+पूर्णांक v4l2_ctrl_add_handler(काष्ठा v4l2_ctrl_handler *hdl,
+			  काष्ठा v4l2_ctrl_handler *add,
 			  v4l2_ctrl_filter filter,
 			  bool from_other_dev);
 
 /**
- * v4l2_ctrl_radio_filter() - Standard filter for radio controls.
+ * v4l2_ctrl_radio_filter() - Standard filter क्रम radio controls.
  *
  * @ctrl:	The control that is filtered.
  *
- * This will return true for any controls that are valid for radio device
+ * This will वापस true क्रम any controls that are valid क्रम radio device
  * nodes. Those are all of the V4L2_CID_AUDIO_* user controls and all FM
  * transmitter class controls.
  *
  * This function is to be used with v4l2_ctrl_add_handler().
  */
-bool v4l2_ctrl_radio_filter(const struct v4l2_ctrl *ctrl);
+bool v4l2_ctrl_radio_filter(स्थिर काष्ठा v4l2_ctrl *ctrl);
 
 /**
- * v4l2_ctrl_cluster() - Mark all controls in the cluster as belonging
+ * v4l2_ctrl_cluster() - Mark all controls in the cluster as beदीर्घing
  *	to that cluster.
  *
  * @ncontrols:	The number of controls in this cluster.
  * @controls:	The cluster control array of size @ncontrols.
  */
-void v4l2_ctrl_cluster(unsigned int ncontrols, struct v4l2_ctrl **controls);
+व्योम v4l2_ctrl_cluster(अचिन्हित पूर्णांक ncontrols, काष्ठा v4l2_ctrl **controls);
 
 
 /**
- * v4l2_ctrl_auto_cluster() - Mark all controls in the cluster as belonging
- *	to that cluster and set it up for autofoo/foo-type handling.
+ * v4l2_ctrl_स्वतः_cluster() - Mark all controls in the cluster as beदीर्घing
+ *	to that cluster and set it up क्रम स्वतःfoo/foo-type handling.
  *
  * @ncontrols:	The number of controls in this cluster.
  * @controls:	The cluster control array of size @ncontrols. The first control
- *		must be the 'auto' control (e.g. autogain, autoexposure, etc.)
- * @manual_val: The value for the first control in the cluster that equals the
+ *		must be the 'auto' control (e.g. स्वतःgain, स्वतःexposure, etc.)
+ * @manual_val: The value क्रम the first control in the cluster that equals the
  *		manual setting.
- * @set_volatile: If true, then all controls except the first auto control will
- *		be volatile.
+ * @set_अस्थिर: If true, then all controls except the first स्वतः control will
+ *		be अस्थिर.
  *
- * Use for control groups where one control selects some automatic feature and
- * the other controls are only active whenever the automatic feature is turned
- * off (manual mode). Typical examples: autogain vs gain, auto-whitebalance vs
+ * Use क्रम control groups where one control selects some स्वतःmatic feature and
+ * the other controls are only active whenever the स्वतःmatic feature is turned
+ * off (manual mode). Typical examples: स्वतःgain vs gain, स्वतः-whitebalance vs
  * red and blue balance, etc.
  *
  * The behavior of such controls is as follows:
  *
- * When the autofoo control is set to automatic, then any manual controls
- * are set to inactive and any reads will call g_volatile_ctrl (if the control
- * was marked volatile).
+ * When the स्वतःfoo control is set to स्वतःmatic, then any manual controls
+ * are set to inactive and any पढ़ोs will call g_अस्थिर_ctrl (अगर the control
+ * was marked अस्थिर).
  *
- * When the autofoo control is set to manual, then any manual controls will
- * be marked active, and any reads will just return the current value without
- * going through g_volatile_ctrl.
+ * When the स्वतःfoo control is set to manual, then any manual controls will
+ * be marked active, and any पढ़ोs will just वापस the current value without
+ * going through g_अस्थिर_ctrl.
  *
  * In addition, this function will set the %V4L2_CTRL_FLAG_UPDATE flag
- * on the autofoo control and %V4L2_CTRL_FLAG_INACTIVE on the foo control(s)
- * if autofoo is in auto mode.
+ * on the स्वतःfoo control and %V4L2_CTRL_FLAG_INACTIVE on the foo control(s)
+ * अगर स्वतःfoo is in स्वतः mode.
  */
-void v4l2_ctrl_auto_cluster(unsigned int ncontrols,
-			    struct v4l2_ctrl **controls,
-			    u8 manual_val, bool set_volatile);
+व्योम v4l2_ctrl_स्वतः_cluster(अचिन्हित पूर्णांक ncontrols,
+			    काष्ठा v4l2_ctrl **controls,
+			    u8 manual_val, bool set_अस्थिर);
 
 
 /**
@@ -818,49 +819,49 @@ void v4l2_ctrl_auto_cluster(unsigned int ncontrols,
  * @hdl:	The control handler.
  * @id:	The control ID to find.
  *
- * If @hdl == NULL this will return NULL as well. Will lock the handler so
- * do not use from inside &v4l2_ctrl_ops.
+ * If @hdl == शून्य this will वापस शून्य as well. Will lock the handler so
+ * करो not use from inside &v4l2_ctrl_ops.
  */
-struct v4l2_ctrl *v4l2_ctrl_find(struct v4l2_ctrl_handler *hdl, u32 id);
+काष्ठा v4l2_ctrl *v4l2_ctrl_find(काष्ठा v4l2_ctrl_handler *hdl, u32 id);
 
 /**
  * v4l2_ctrl_activate() - Make the control active or inactive.
  * @ctrl:	The control to (de)activate.
- * @active:	True if the control should become active.
+ * @active:	True अगर the control should become active.
  *
  * This sets or clears the V4L2_CTRL_FLAG_INACTIVE flag atomically.
- * Does nothing if @ctrl == NULL.
+ * Does nothing अगर @ctrl == शून्य.
  * This will usually be called from within the s_ctrl op.
  * The V4L2_EVENT_CTRL event will be generated afterwards.
  *
  * This function assumes that the control handler is locked.
  */
-void v4l2_ctrl_activate(struct v4l2_ctrl *ctrl, bool active);
+व्योम v4l2_ctrl_activate(काष्ठा v4l2_ctrl *ctrl, bool active);
 
 /**
  * __v4l2_ctrl_grab() - Unlocked variant of v4l2_ctrl_grab.
  *
  * @ctrl:	The control to (de)activate.
- * @grabbed:	True if the control should become grabbed.
+ * @grabbed:	True अगर the control should become grabbed.
  *
  * This sets or clears the V4L2_CTRL_FLAG_GRABBED flag atomically.
- * Does nothing if @ctrl == NULL.
+ * Does nothing अगर @ctrl == शून्य.
  * The V4L2_EVENT_CTRL event will be generated afterwards.
  * This will usually be called when starting or stopping streaming in the
  * driver.
  *
  * This function assumes that the control handler is locked by the caller.
  */
-void __v4l2_ctrl_grab(struct v4l2_ctrl *ctrl, bool grabbed);
+व्योम __v4l2_ctrl_grab(काष्ठा v4l2_ctrl *ctrl, bool grabbed);
 
 /**
  * v4l2_ctrl_grab() - Mark the control as grabbed or not grabbed.
  *
  * @ctrl:	The control to (de)activate.
- * @grabbed:	True if the control should become grabbed.
+ * @grabbed:	True अगर the control should become grabbed.
  *
  * This sets or clears the V4L2_CTRL_FLAG_GRABBED flag atomically.
- * Does nothing if @ctrl == NULL.
+ * Does nothing अगर @ctrl == शून्य.
  * The V4L2_EVENT_CTRL event will be generated afterwards.
  * This will usually be called when starting or stopping streaming in the
  * driver.
@@ -868,116 +869,116 @@ void __v4l2_ctrl_grab(struct v4l2_ctrl *ctrl, bool grabbed);
  * This function assumes that the control handler is not locked and will
  * take the lock itself.
  */
-static inline void v4l2_ctrl_grab(struct v4l2_ctrl *ctrl, bool grabbed)
-{
-	if (!ctrl)
-		return;
+अटल अंतरभूत व्योम v4l2_ctrl_grab(काष्ठा v4l2_ctrl *ctrl, bool grabbed)
+अणु
+	अगर (!ctrl)
+		वापस;
 
 	v4l2_ctrl_lock(ctrl);
 	__v4l2_ctrl_grab(ctrl, grabbed);
 	v4l2_ctrl_unlock(ctrl);
-}
+पूर्ण
 
 /**
- *__v4l2_ctrl_modify_range() - Unlocked variant of v4l2_ctrl_modify_range()
+ *__v4l2_ctrl_modअगरy_range() - Unlocked variant of v4l2_ctrl_modअगरy_range()
  *
  * @ctrl:	The control to update.
  * @min:	The control's minimum value.
  * @max:	The control's maximum value.
  * @step:	The control's step value
- * @def:	The control's default value.
+ * @def:	The control's शेष value.
  *
- * Update the range of a control on the fly. This works for control types
+ * Update the range of a control on the fly. This works क्रम control types
  * INTEGER, BOOLEAN, MENU, INTEGER MENU and BITMASK. For menu controls the
- * @step value is interpreted as a menu_skip_mask.
+ * @step value is पूर्णांकerpreted as a menu_skip_mask.
  *
- * An error is returned if one of the range arguments is invalid for this
+ * An error is वापसed अगर one of the range arguments is invalid क्रम this
  * control type.
  *
- * The caller is responsible for acquiring the control handler mutex on behalf
- * of __v4l2_ctrl_modify_range().
+ * The caller is responsible क्रम acquiring the control handler mutex on behalf
+ * of __v4l2_ctrl_modअगरy_range().
  */
-int __v4l2_ctrl_modify_range(struct v4l2_ctrl *ctrl,
+पूर्णांक __v4l2_ctrl_modअगरy_range(काष्ठा v4l2_ctrl *ctrl,
 			     s64 min, s64 max, u64 step, s64 def);
 
 /**
- * v4l2_ctrl_modify_range() - Update the range of a control.
+ * v4l2_ctrl_modअगरy_range() - Update the range of a control.
  *
  * @ctrl:	The control to update.
  * @min:	The control's minimum value.
  * @max:	The control's maximum value.
  * @step:	The control's step value
- * @def:	The control's default value.
+ * @def:	The control's शेष value.
  *
- * Update the range of a control on the fly. This works for control types
+ * Update the range of a control on the fly. This works क्रम control types
  * INTEGER, BOOLEAN, MENU, INTEGER MENU and BITMASK. For menu controls the
- * @step value is interpreted as a menu_skip_mask.
+ * @step value is पूर्णांकerpreted as a menu_skip_mask.
  *
- * An error is returned if one of the range arguments is invalid for this
+ * An error is वापसed अगर one of the range arguments is invalid क्रम this
  * control type.
  *
  * This function assumes that the control handler is not locked and will
  * take the lock itself.
  */
-static inline int v4l2_ctrl_modify_range(struct v4l2_ctrl *ctrl,
+अटल अंतरभूत पूर्णांक v4l2_ctrl_modअगरy_range(काष्ठा v4l2_ctrl *ctrl,
 					 s64 min, s64 max, u64 step, s64 def)
-{
-	int rval;
+अणु
+	पूर्णांक rval;
 
 	v4l2_ctrl_lock(ctrl);
-	rval = __v4l2_ctrl_modify_range(ctrl, min, max, step, def);
+	rval = __v4l2_ctrl_modअगरy_range(ctrl, min, max, step, def);
 	v4l2_ctrl_unlock(ctrl);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /**
- * v4l2_ctrl_notify() - Function to set a notify callback for a control.
+ * v4l2_ctrl_notअगरy() - Function to set a notअगरy callback क्रम a control.
  *
  * @ctrl:	The control.
- * @notify:	The callback function.
- * @priv:	The callback private handle, passed as argument to the callback.
+ * @notअगरy:	The callback function.
+ * @priv:	The callback निजी handle, passed as argument to the callback.
  *
- * This function sets a callback function for the control. If @ctrl is NULL,
- * then it will do nothing. If @notify is NULL, then the notify callback will
- * be removed.
+ * This function sets a callback function क्रम the control. If @ctrl is शून्य,
+ * then it will करो nothing. If @notअगरy is शून्य, then the notअगरy callback will
+ * be हटाओd.
  *
- * There can be only one notify. If another already exists, then a WARN_ON
- * will be issued and the function will do nothing.
+ * There can be only one notअगरy. If another alपढ़ोy exists, then a WARN_ON
+ * will be issued and the function will करो nothing.
  */
-void v4l2_ctrl_notify(struct v4l2_ctrl *ctrl, v4l2_ctrl_notify_fnc notify,
-		      void *priv);
+व्योम v4l2_ctrl_notअगरy(काष्ठा v4l2_ctrl *ctrl, v4l2_ctrl_notअगरy_fnc notअगरy,
+		      व्योम *priv);
 
 /**
  * v4l2_ctrl_get_name() - Get the name of the control
  *
  * @id:		The control ID.
  *
- * This function returns the name of the given control ID or NULL if it isn't
+ * This function वापसs the name of the given control ID or शून्य अगर it isn't
  * a known control.
  */
-const char *v4l2_ctrl_get_name(u32 id);
+स्थिर अक्षर *v4l2_ctrl_get_name(u32 id);
 
 /**
  * v4l2_ctrl_get_menu() - Get the menu string array of the control
  *
  * @id:		The control ID.
  *
- * This function returns the NULL-terminated menu string array name of the
- * given control ID or NULL if it isn't a known menu control.
+ * This function वापसs the शून्य-terminated menu string array name of the
+ * given control ID or शून्य अगर it isn't a known menu control.
  */
-const char * const *v4l2_ctrl_get_menu(u32 id);
+स्थिर अक्षर * स्थिर *v4l2_ctrl_get_menu(u32 id);
 
 /**
- * v4l2_ctrl_get_int_menu() - Get the integer menu array of the control
+ * v4l2_ctrl_get_पूर्णांक_menu() - Get the पूर्णांकeger menu array of the control
  *
  * @id:		The control ID.
- * @len:	The size of the integer array.
+ * @len:	The size of the पूर्णांकeger array.
  *
- * This function returns the integer array of the given control ID or NULL if it
- * if it isn't a known integer menu control.
+ * This function वापसs the पूर्णांकeger array of the given control ID or शून्य अगर it
+ * अगर it isn't a known पूर्णांकeger menu control.
  */
-const s64 *v4l2_ctrl_get_int_menu(u32 id, u32 *len);
+स्थिर s64 *v4l2_ctrl_get_पूर्णांक_menu(u32 id, u32 *len);
 
 /**
  * v4l2_ctrl_g_ctrl() - Helper function to get the control's value from
@@ -985,13 +986,13 @@ const s64 *v4l2_ctrl_get_int_menu(u32 id, u32 *len);
  *
  * @ctrl:	The control.
  *
- * This returns the control's value safely by going through the control
+ * This वापसs the control's value safely by going through the control
  * framework. This function will lock the control's handler, so it cannot be
  * used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for integer type controls only.
+ * This function is क्रम पूर्णांकeger type controls only.
  */
-s32 v4l2_ctrl_g_ctrl(struct v4l2_ctrl *ctrl);
+s32 v4l2_ctrl_g_ctrl(काष्ठा v4l2_ctrl *ctrl);
 
 /**
  * __v4l2_ctrl_s_ctrl() - Unlocked variant of v4l2_ctrl_s_ctrl().
@@ -1000,12 +1001,12 @@ s32 v4l2_ctrl_g_ctrl(struct v4l2_ctrl *ctrl);
  * @val:	The new value.
  *
  * This sets the control's new value safely by going through the control
- * framework. This function assumes the control's handler is already locked,
+ * framework. This function assumes the control's handler is alपढ़ोy locked,
  * allowing it to be used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for integer type controls only.
+ * This function is क्रम पूर्णांकeger type controls only.
  */
-int __v4l2_ctrl_s_ctrl(struct v4l2_ctrl *ctrl, s32 val);
+पूर्णांक __v4l2_ctrl_s_ctrl(काष्ठा v4l2_ctrl *ctrl, s32 val);
 
 /**
  * v4l2_ctrl_s_ctrl() - Helper function to set the control's value from
@@ -1017,49 +1018,49 @@ int __v4l2_ctrl_s_ctrl(struct v4l2_ctrl *ctrl, s32 val);
  * framework. This function will lock the control's handler, so it cannot be
  * used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for integer type controls only.
+ * This function is क्रम पूर्णांकeger type controls only.
  */
-static inline int v4l2_ctrl_s_ctrl(struct v4l2_ctrl *ctrl, s32 val)
-{
-	int rval;
+अटल अंतरभूत पूर्णांक v4l2_ctrl_s_ctrl(काष्ठा v4l2_ctrl *ctrl, s32 val)
+अणु
+	पूर्णांक rval;
 
 	v4l2_ctrl_lock(ctrl);
 	rval = __v4l2_ctrl_s_ctrl(ctrl, val);
 	v4l2_ctrl_unlock(ctrl);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /**
- * v4l2_ctrl_g_ctrl_int64() - Helper function to get a 64-bit control's value
+ * v4l2_ctrl_g_ctrl_पूर्णांक64() - Helper function to get a 64-bit control's value
  *	from within a driver.
  *
  * @ctrl:	The control.
  *
- * This returns the control's value safely by going through the control
+ * This वापसs the control's value safely by going through the control
  * framework. This function will lock the control's handler, so it cannot be
  * used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for 64-bit integer type controls only.
+ * This function is क्रम 64-bit पूर्णांकeger type controls only.
  */
-s64 v4l2_ctrl_g_ctrl_int64(struct v4l2_ctrl *ctrl);
+s64 v4l2_ctrl_g_ctrl_पूर्णांक64(काष्ठा v4l2_ctrl *ctrl);
 
 /**
- * __v4l2_ctrl_s_ctrl_int64() - Unlocked variant of v4l2_ctrl_s_ctrl_int64().
+ * __v4l2_ctrl_s_ctrl_पूर्णांक64() - Unlocked variant of v4l2_ctrl_s_ctrl_पूर्णांक64().
  *
  * @ctrl:	The control.
  * @val:	The new value.
  *
  * This sets the control's new value safely by going through the control
- * framework. This function assumes the control's handler is already locked,
+ * framework. This function assumes the control's handler is alपढ़ोy locked,
  * allowing it to be used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for 64-bit integer type controls only.
+ * This function is क्रम 64-bit पूर्णांकeger type controls only.
  */
-int __v4l2_ctrl_s_ctrl_int64(struct v4l2_ctrl *ctrl, s64 val);
+पूर्णांक __v4l2_ctrl_s_ctrl_पूर्णांक64(काष्ठा v4l2_ctrl *ctrl, s64 val);
 
 /**
- * v4l2_ctrl_s_ctrl_int64() - Helper function to set a 64-bit control's value
+ * v4l2_ctrl_s_ctrl_पूर्णांक64() - Helper function to set a 64-bit control's value
  *	from within a driver.
  *
  * @ctrl:	The control.
@@ -1069,18 +1070,18 @@ int __v4l2_ctrl_s_ctrl_int64(struct v4l2_ctrl *ctrl, s64 val);
  * framework. This function will lock the control's handler, so it cannot be
  * used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for 64-bit integer type controls only.
+ * This function is क्रम 64-bit पूर्णांकeger type controls only.
  */
-static inline int v4l2_ctrl_s_ctrl_int64(struct v4l2_ctrl *ctrl, s64 val)
-{
-	int rval;
+अटल अंतरभूत पूर्णांक v4l2_ctrl_s_ctrl_पूर्णांक64(काष्ठा v4l2_ctrl *ctrl, s64 val)
+अणु
+	पूर्णांक rval;
 
 	v4l2_ctrl_lock(ctrl);
-	rval = __v4l2_ctrl_s_ctrl_int64(ctrl, val);
+	rval = __v4l2_ctrl_s_ctrl_पूर्णांक64(ctrl, val);
 	v4l2_ctrl_unlock(ctrl);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /**
  * __v4l2_ctrl_s_ctrl_string() - Unlocked variant of v4l2_ctrl_s_ctrl_string().
@@ -1089,12 +1090,12 @@ static inline int v4l2_ctrl_s_ctrl_int64(struct v4l2_ctrl *ctrl, s64 val)
  * @s:		The new string.
  *
  * This sets the control's new string safely by going through the control
- * framework. This function assumes the control's handler is already locked,
+ * framework. This function assumes the control's handler is alपढ़ोy locked,
  * allowing it to be used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for string type controls only.
+ * This function is क्रम string type controls only.
  */
-int __v4l2_ctrl_s_ctrl_string(struct v4l2_ctrl *ctrl, const char *s);
+पूर्णांक __v4l2_ctrl_s_ctrl_string(काष्ठा v4l2_ctrl *ctrl, स्थिर अक्षर *s);
 
 /**
  * v4l2_ctrl_s_ctrl_string() - Helper function to set a control's string value
@@ -1107,18 +1108,18 @@ int __v4l2_ctrl_s_ctrl_string(struct v4l2_ctrl *ctrl, const char *s);
  * framework. This function will lock the control's handler, so it cannot be
  * used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for string type controls only.
+ * This function is क्रम string type controls only.
  */
-static inline int v4l2_ctrl_s_ctrl_string(struct v4l2_ctrl *ctrl, const char *s)
-{
-	int rval;
+अटल अंतरभूत पूर्णांक v4l2_ctrl_s_ctrl_string(काष्ठा v4l2_ctrl *ctrl, स्थिर अक्षर *s)
+अणु
+	पूर्णांक rval;
 
 	v4l2_ctrl_lock(ctrl);
 	rval = __v4l2_ctrl_s_ctrl_string(ctrl, s);
 	v4l2_ctrl_unlock(ctrl);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
 /**
  * __v4l2_ctrl_s_ctrl_compound() - Unlocked variant to set a compound control
@@ -1128,13 +1129,13 @@ static inline int v4l2_ctrl_s_ctrl_string(struct v4l2_ctrl *ctrl, const char *s)
  * @p:    The new compound payload.
  *
  * This sets the control's new compound payload safely by going through the
- * control framework. This function assumes the control's handler is already
+ * control framework. This function assumes the control's handler is alपढ़ोy
  * locked, allowing it to be used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for compound type controls only.
+ * This function is क्रम compound type controls only.
  */
-int __v4l2_ctrl_s_ctrl_compound(struct v4l2_ctrl *ctrl,
-				enum v4l2_ctrl_type type, const void *p);
+पूर्णांक __v4l2_ctrl_s_ctrl_compound(काष्ठा v4l2_ctrl *ctrl,
+				क्रमागत v4l2_ctrl_type type, स्थिर व्योम *p);
 
 /**
  * v4l2_ctrl_s_ctrl_compound() - Helper function to set a compound control
@@ -1148,85 +1149,85 @@ int __v4l2_ctrl_s_ctrl_compound(struct v4l2_ctrl *ctrl,
  * control framework. This function will lock the control's handler, so it
  * cannot be used from within the &v4l2_ctrl_ops functions.
  *
- * This function is for compound type controls only.
+ * This function is क्रम compound type controls only.
  */
-static inline int v4l2_ctrl_s_ctrl_compound(struct v4l2_ctrl *ctrl,
-					    enum v4l2_ctrl_type type,
-					    const void *p)
-{
-	int rval;
+अटल अंतरभूत पूर्णांक v4l2_ctrl_s_ctrl_compound(काष्ठा v4l2_ctrl *ctrl,
+					    क्रमागत v4l2_ctrl_type type,
+					    स्थिर व्योम *p)
+अणु
+	पूर्णांक rval;
 
 	v4l2_ctrl_lock(ctrl);
 	rval = __v4l2_ctrl_s_ctrl_compound(ctrl, type, p);
 	v4l2_ctrl_unlock(ctrl);
 
-	return rval;
-}
+	वापस rval;
+पूर्ण
 
-/* Helper defines for area type controls */
-#define __v4l2_ctrl_s_ctrl_area(ctrl, area) \
+/* Helper defines क्रम area type controls */
+#घोषणा __v4l2_ctrl_s_ctrl_area(ctrl, area) \
 	__v4l2_ctrl_s_ctrl_compound((ctrl), V4L2_CTRL_TYPE_AREA, (area))
-#define v4l2_ctrl_s_ctrl_area(ctrl, area) \
+#घोषणा v4l2_ctrl_s_ctrl_area(ctrl, area) \
 	v4l2_ctrl_s_ctrl_compound((ctrl), V4L2_CTRL_TYPE_AREA, (area))
 
 /* Internal helper functions that deal with control events. */
-extern const struct v4l2_subscribed_event_ops v4l2_ctrl_sub_ev_ops;
+बाह्य स्थिर काष्ठा v4l2_subscribed_event_ops v4l2_ctrl_sub_ev_ops;
 
 /**
  * v4l2_ctrl_replace - Function to be used as a callback to
- *	&struct v4l2_subscribed_event_ops replace\(\)
+ *	&काष्ठा v4l2_subscribed_event_ops replace\(\)
  *
- * @old: pointer to struct &v4l2_event with the reported
+ * @old: poपूर्णांकer to काष्ठा &v4l2_event with the reported
  *	 event;
- * @new: pointer to struct &v4l2_event with the modified
+ * @new: poपूर्णांकer to काष्ठा &v4l2_event with the modअगरied
  *	 event;
  */
-void v4l2_ctrl_replace(struct v4l2_event *old, const struct v4l2_event *new);
+व्योम v4l2_ctrl_replace(काष्ठा v4l2_event *old, स्थिर काष्ठा v4l2_event *new);
 
 /**
  * v4l2_ctrl_merge - Function to be used as a callback to
- *	&struct v4l2_subscribed_event_ops merge(\)
+ *	&काष्ठा v4l2_subscribed_event_ops merge(\)
  *
- * @old: pointer to struct &v4l2_event with the reported
+ * @old: poपूर्णांकer to काष्ठा &v4l2_event with the reported
  *	 event;
- * @new: pointer to struct &v4l2_event with the merged
+ * @new: poपूर्णांकer to काष्ठा &v4l2_event with the merged
  *	 event;
  */
-void v4l2_ctrl_merge(const struct v4l2_event *old, struct v4l2_event *new);
+व्योम v4l2_ctrl_merge(स्थिर काष्ठा v4l2_event *old, काष्ठा v4l2_event *new);
 
 /**
  * v4l2_ctrl_log_status - helper function to implement %VIDIOC_LOG_STATUS ioctl
  *
- * @file: pointer to struct file
+ * @file: poपूर्णांकer to काष्ठा file
  * @fh: unused. Kept just to be compatible to the arguments expected by
- *	&struct v4l2_ioctl_ops.vidioc_log_status.
+ *	&काष्ठा v4l2_ioctl_ops.vidioc_log_status.
  *
  * Can be used as a vidioc_log_status function that just dumps all controls
  * associated with the filehandle.
  */
-int v4l2_ctrl_log_status(struct file *file, void *fh);
+पूर्णांक v4l2_ctrl_log_status(काष्ठा file *file, व्योम *fh);
 
 /**
  * v4l2_ctrl_subscribe_event - Subscribes to an event
  *
  *
- * @fh: pointer to struct v4l2_fh
- * @sub: pointer to &struct v4l2_event_subscription
+ * @fh: poपूर्णांकer to काष्ठा v4l2_fh
+ * @sub: poपूर्णांकer to &काष्ठा v4l2_event_subscription
  *
  * Can be used as a vidioc_subscribe_event function that just subscribes
  * control events.
  */
-int v4l2_ctrl_subscribe_event(struct v4l2_fh *fh,
-				const struct v4l2_event_subscription *sub);
+पूर्णांक v4l2_ctrl_subscribe_event(काष्ठा v4l2_fh *fh,
+				स्थिर काष्ठा v4l2_event_subscription *sub);
 
 /**
  * v4l2_ctrl_poll - function to be used as a callback to the poll()
- *	That just polls for control events.
+ *	That just polls क्रम control events.
  *
- * @file: pointer to struct file
- * @wait: pointer to struct poll_table_struct
+ * @file: poपूर्णांकer to काष्ठा file
+ * @रुको: poपूर्णांकer to काष्ठा poll_table_काष्ठा
  */
-__poll_t v4l2_ctrl_poll(struct file *file, struct poll_table_struct *wait);
+__poll_t v4l2_ctrl_poll(काष्ठा file *file, काष्ठा poll_table_काष्ठा *रुको);
 
 /**
  * v4l2_ctrl_request_setup - helper function to apply control values in a request
@@ -1239,8 +1240,8 @@ __poll_t v4l2_ctrl_poll(struct file *file, struct poll_table_struct *wait);
  * applying control values in a request is only applicable to memory-to-memory
  * devices.
  */
-int v4l2_ctrl_request_setup(struct media_request *req,
-			     struct v4l2_ctrl_handler *parent);
+पूर्णांक v4l2_ctrl_request_setup(काष्ठा media_request *req,
+			     काष्ठा v4l2_ctrl_handler *parent);
 
 /**
  * v4l2_ctrl_request_complete - Complete a control handler request object
@@ -1252,12 +1253,12 @@ int v4l2_ctrl_request_setup(struct media_request *req,
  * request object associated with it, i.e. control handlers of a driver that
  * supports requests.
  *
- * The function first obtains the values of any volatile controls in the control
+ * The function first obtains the values of any अस्थिर controls in the control
  * handler and attach them to the request. Then, the function completes the
  * request object.
  */
-void v4l2_ctrl_request_complete(struct media_request *req,
-				struct v4l2_ctrl_handler *parent);
+व्योम v4l2_ctrl_request_complete(काष्ठा media_request *req,
+				काष्ठा v4l2_ctrl_handler *parent);
 
 /**
  * v4l2_ctrl_request_hdl_find - Find the control handler in the request
@@ -1265,20 +1266,20 @@ void v4l2_ctrl_request_complete(struct media_request *req,
  * @req: The request
  * @parent: The parent control handler ('priv' in media_request_object_find())
  *
- * This function finds the control handler in the request. It may return
- * NULL if not found. When done, you must call v4l2_ctrl_request_put_hdl()
- * with the returned handler pointer.
+ * This function finds the control handler in the request. It may वापस
+ * शून्य अगर not found. When करोne, you must call v4l2_ctrl_request_put_hdl()
+ * with the वापसed handler poपूर्णांकer.
  *
  * If the request is not in state VALIDATING or QUEUED, then this function
- * will always return NULL.
+ * will always वापस शून्य.
  *
  * Note that in state VALIDATING the req_queue_mutex is held, so
  * no objects can be added or deleted from the request.
  *
  * In state QUEUED it is the driver that will have to ensure this.
  */
-struct v4l2_ctrl_handler *v4l2_ctrl_request_hdl_find(struct media_request *req,
-					struct v4l2_ctrl_handler *parent);
+काष्ठा v4l2_ctrl_handler *v4l2_ctrl_request_hdl_find(काष्ठा media_request *req,
+					काष्ठा v4l2_ctrl_handler *parent);
 
 /**
  * v4l2_ctrl_request_hdl_put - Put the control handler
@@ -1288,11 +1289,11 @@ struct v4l2_ctrl_handler *v4l2_ctrl_request_hdl_find(struct media_request *req,
  * This function released the control handler previously obtained from'
  * v4l2_ctrl_request_hdl_find().
  */
-static inline void v4l2_ctrl_request_hdl_put(struct v4l2_ctrl_handler *hdl)
-{
-	if (hdl)
+अटल अंतरभूत व्योम v4l2_ctrl_request_hdl_put(काष्ठा v4l2_ctrl_handler *hdl)
+अणु
+	अगर (hdl)
 		media_request_object_put(&hdl->req_obj);
-}
+पूर्ण
 
 /**
  * v4l2_ctrl_request_hdl_ctrl_find() - Find a control with the given ID.
@@ -1300,163 +1301,163 @@ static inline void v4l2_ctrl_request_hdl_put(struct v4l2_ctrl_handler *hdl)
  * @hdl: The control handler from the request.
  * @id: The ID of the control to find.
  *
- * This function returns a pointer to the control if this control is
- * part of the request or NULL otherwise.
+ * This function वापसs a poपूर्णांकer to the control अगर this control is
+ * part of the request or शून्य otherwise.
  */
-struct v4l2_ctrl *
-v4l2_ctrl_request_hdl_ctrl_find(struct v4l2_ctrl_handler *hdl, u32 id);
+काष्ठा v4l2_ctrl *
+v4l2_ctrl_request_hdl_ctrl_find(काष्ठा v4l2_ctrl_handler *hdl, u32 id);
 
-/* Helpers for ioctl_ops */
+/* Helpers क्रम ioctl_ops */
 
 /**
  * v4l2_queryctrl - Helper function to implement
  *	:ref:`VIDIOC_QUERYCTRL <vidioc_queryctrl>` ioctl
  *
- * @hdl: pointer to &struct v4l2_ctrl_handler
- * @qc: pointer to &struct v4l2_queryctrl
+ * @hdl: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler
+ * @qc: poपूर्णांकer to &काष्ठा v4l2_queryctrl
  *
- * If hdl == NULL then they will all return -EINVAL.
+ * If hdl == शून्य then they will all वापस -EINVAL.
  */
-int v4l2_queryctrl(struct v4l2_ctrl_handler *hdl, struct v4l2_queryctrl *qc);
+पूर्णांक v4l2_queryctrl(काष्ठा v4l2_ctrl_handler *hdl, काष्ठा v4l2_queryctrl *qc);
 
 /**
  * v4l2_query_ext_ctrl - Helper function to implement
  *	 :ref:`VIDIOC_QUERY_EXT_CTRL <vidioc_queryctrl>` ioctl
  *
- * @hdl: pointer to &struct v4l2_ctrl_handler
- * @qc: pointer to &struct v4l2_query_ext_ctrl
+ * @hdl: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler
+ * @qc: poपूर्णांकer to &काष्ठा v4l2_query_ext_ctrl
  *
- * If hdl == NULL then they will all return -EINVAL.
+ * If hdl == शून्य then they will all वापस -EINVAL.
  */
-int v4l2_query_ext_ctrl(struct v4l2_ctrl_handler *hdl,
-			struct v4l2_query_ext_ctrl *qc);
+पूर्णांक v4l2_query_ext_ctrl(काष्ठा v4l2_ctrl_handler *hdl,
+			काष्ठा v4l2_query_ext_ctrl *qc);
 
 /**
  * v4l2_querymenu - Helper function to implement
  *	:ref:`VIDIOC_QUERYMENU <vidioc_queryctrl>` ioctl
  *
- * @hdl: pointer to &struct v4l2_ctrl_handler
- * @qm: pointer to &struct v4l2_querymenu
+ * @hdl: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler
+ * @qm: poपूर्णांकer to &काष्ठा v4l2_querymenu
  *
- * If hdl == NULL then they will all return -EINVAL.
+ * If hdl == शून्य then they will all वापस -EINVAL.
  */
-int v4l2_querymenu(struct v4l2_ctrl_handler *hdl, struct v4l2_querymenu *qm);
+पूर्णांक v4l2_querymenu(काष्ठा v4l2_ctrl_handler *hdl, काष्ठा v4l2_querymenu *qm);
 
 /**
  * v4l2_g_ctrl - Helper function to implement
  *	:ref:`VIDIOC_G_CTRL <vidioc_g_ctrl>` ioctl
  *
- * @hdl: pointer to &struct v4l2_ctrl_handler
- * @ctrl: pointer to &struct v4l2_control
+ * @hdl: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler
+ * @ctrl: poपूर्णांकer to &काष्ठा v4l2_control
  *
- * If hdl == NULL then they will all return -EINVAL.
+ * If hdl == शून्य then they will all वापस -EINVAL.
  */
-int v4l2_g_ctrl(struct v4l2_ctrl_handler *hdl, struct v4l2_control *ctrl);
+पूर्णांक v4l2_g_ctrl(काष्ठा v4l2_ctrl_handler *hdl, काष्ठा v4l2_control *ctrl);
 
 /**
  * v4l2_s_ctrl - Helper function to implement
  *	:ref:`VIDIOC_S_CTRL <vidioc_g_ctrl>` ioctl
  *
- * @fh: pointer to &struct v4l2_fh
- * @hdl: pointer to &struct v4l2_ctrl_handler
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
+ * @hdl: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler
  *
- * @ctrl: pointer to &struct v4l2_control
+ * @ctrl: poपूर्णांकer to &काष्ठा v4l2_control
  *
- * If hdl == NULL then they will all return -EINVAL.
+ * If hdl == शून्य then they will all वापस -EINVAL.
  */
-int v4l2_s_ctrl(struct v4l2_fh *fh, struct v4l2_ctrl_handler *hdl,
-		struct v4l2_control *ctrl);
+पूर्णांक v4l2_s_ctrl(काष्ठा v4l2_fh *fh, काष्ठा v4l2_ctrl_handler *hdl,
+		काष्ठा v4l2_control *ctrl);
 
 /**
  * v4l2_g_ext_ctrls - Helper function to implement
  *	:ref:`VIDIOC_G_EXT_CTRLS <vidioc_g_ext_ctrls>` ioctl
  *
- * @hdl: pointer to &struct v4l2_ctrl_handler
- * @vdev: pointer to &struct video_device
- * @mdev: pointer to &struct media_device
- * @c: pointer to &struct v4l2_ext_controls
+ * @hdl: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler
+ * @vdev: poपूर्णांकer to &काष्ठा video_device
+ * @mdev: poपूर्णांकer to &काष्ठा media_device
+ * @c: poपूर्णांकer to &काष्ठा v4l2_ext_controls
  *
- * If hdl == NULL then they will all return -EINVAL.
+ * If hdl == शून्य then they will all वापस -EINVAL.
  */
-int v4l2_g_ext_ctrls(struct v4l2_ctrl_handler *hdl, struct video_device *vdev,
-		     struct media_device *mdev, struct v4l2_ext_controls *c);
+पूर्णांक v4l2_g_ext_ctrls(काष्ठा v4l2_ctrl_handler *hdl, काष्ठा video_device *vdev,
+		     काष्ठा media_device *mdev, काष्ठा v4l2_ext_controls *c);
 
 /**
  * v4l2_try_ext_ctrls - Helper function to implement
  *	:ref:`VIDIOC_TRY_EXT_CTRLS <vidioc_g_ext_ctrls>` ioctl
  *
- * @hdl: pointer to &struct v4l2_ctrl_handler
- * @vdev: pointer to &struct video_device
- * @mdev: pointer to &struct media_device
- * @c: pointer to &struct v4l2_ext_controls
+ * @hdl: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler
+ * @vdev: poपूर्णांकer to &काष्ठा video_device
+ * @mdev: poपूर्णांकer to &काष्ठा media_device
+ * @c: poपूर्णांकer to &काष्ठा v4l2_ext_controls
  *
- * If hdl == NULL then they will all return -EINVAL.
+ * If hdl == शून्य then they will all वापस -EINVAL.
  */
-int v4l2_try_ext_ctrls(struct v4l2_ctrl_handler *hdl,
-		       struct video_device *vdev,
-		       struct media_device *mdev,
-		       struct v4l2_ext_controls *c);
+पूर्णांक v4l2_try_ext_ctrls(काष्ठा v4l2_ctrl_handler *hdl,
+		       काष्ठा video_device *vdev,
+		       काष्ठा media_device *mdev,
+		       काष्ठा v4l2_ext_controls *c);
 
 /**
  * v4l2_s_ext_ctrls - Helper function to implement
  *	:ref:`VIDIOC_S_EXT_CTRLS <vidioc_g_ext_ctrls>` ioctl
  *
- * @fh: pointer to &struct v4l2_fh
- * @hdl: pointer to &struct v4l2_ctrl_handler
- * @vdev: pointer to &struct video_device
- * @mdev: pointer to &struct media_device
- * @c: pointer to &struct v4l2_ext_controls
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
+ * @hdl: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler
+ * @vdev: poपूर्णांकer to &काष्ठा video_device
+ * @mdev: poपूर्णांकer to &काष्ठा media_device
+ * @c: poपूर्णांकer to &काष्ठा v4l2_ext_controls
  *
- * If hdl == NULL then they will all return -EINVAL.
+ * If hdl == शून्य then they will all वापस -EINVAL.
  */
-int v4l2_s_ext_ctrls(struct v4l2_fh *fh, struct v4l2_ctrl_handler *hdl,
-		     struct video_device *vdev,
-		     struct media_device *mdev,
-		     struct v4l2_ext_controls *c);
+पूर्णांक v4l2_s_ext_ctrls(काष्ठा v4l2_fh *fh, काष्ठा v4l2_ctrl_handler *hdl,
+		     काष्ठा video_device *vdev,
+		     काष्ठा media_device *mdev,
+		     काष्ठा v4l2_ext_controls *c);
 
 /**
  * v4l2_ctrl_subdev_subscribe_event - Helper function to implement
- *	as a &struct v4l2_subdev_core_ops subscribe_event function
+ *	as a &काष्ठा v4l2_subdev_core_ops subscribe_event function
  *	that just subscribes control events.
  *
- * @sd: pointer to &struct v4l2_subdev
- * @fh: pointer to &struct v4l2_fh
- * @sub: pointer to &struct v4l2_event_subscription
+ * @sd: poपूर्णांकer to &काष्ठा v4l2_subdev
+ * @fh: poपूर्णांकer to &काष्ठा v4l2_fh
+ * @sub: poपूर्णांकer to &काष्ठा v4l2_event_subscription
  */
-int v4l2_ctrl_subdev_subscribe_event(struct v4l2_subdev *sd, struct v4l2_fh *fh,
-				     struct v4l2_event_subscription *sub);
+पूर्णांक v4l2_ctrl_subdev_subscribe_event(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_fh *fh,
+				     काष्ठा v4l2_event_subscription *sub);
 
 /**
  * v4l2_ctrl_subdev_log_status - Log all controls owned by subdev's control
  *	 handler.
  *
- * @sd: pointer to &struct v4l2_subdev
+ * @sd: poपूर्णांकer to &काष्ठा v4l2_subdev
  */
-int v4l2_ctrl_subdev_log_status(struct v4l2_subdev *sd);
+पूर्णांक v4l2_ctrl_subdev_log_status(काष्ठा v4l2_subdev *sd);
 
 /**
- * v4l2_ctrl_new_fwnode_properties() - Register controls for the device
+ * v4l2_ctrl_new_fwnode_properties() - Register controls क्रम the device
  *				       properties
  *
- * @hdl: pointer to &struct v4l2_ctrl_handler to register controls on
- * @ctrl_ops: pointer to &struct v4l2_ctrl_ops to register controls with
- * @p: pointer to &struct v4l2_fwnode_device_properties
+ * @hdl: poपूर्णांकer to &काष्ठा v4l2_ctrl_handler to रेजिस्टर controls on
+ * @ctrl_ops: poपूर्णांकer to &काष्ठा v4l2_ctrl_ops to रेजिस्टर controls with
+ * @p: poपूर्णांकer to &काष्ठा v4l2_fwnode_device_properties
  *
- * This function registers controls associated to device properties, using the
- * property values contained in @p parameter, if the property has been set to
+ * This function रेजिस्टरs controls associated to device properties, using the
+ * property values contained in @p parameter, अगर the property has been set to
  * a value.
  *
- * Currently the following v4l2 controls are parsed and registered:
+ * Currently the following v4l2 controls are parsed and रेजिस्टरed:
  * - V4L2_CID_CAMERA_ORIENTATION
  * - V4L2_CID_CAMERA_SENSOR_ROTATION;
  *
- * Controls already registered by the caller with the @hdl control handler are
- * not overwritten. Callers should register the controls they want to handle
- * themselves before calling this function.
+ * Controls alपढ़ोy रेजिस्टरed by the caller with the @hdl control handler are
+ * not overwritten. Callers should रेजिस्टर the controls they want to handle
+ * themselves beक्रमe calling this function.
  *
  * Return: 0 on success, a negative error code on failure.
  */
-int v4l2_ctrl_new_fwnode_properties(struct v4l2_ctrl_handler *hdl,
-				    const struct v4l2_ctrl_ops *ctrl_ops,
-				    const struct v4l2_fwnode_device_properties *p);
-#endif
+पूर्णांक v4l2_ctrl_new_fwnode_properties(काष्ठा v4l2_ctrl_handler *hdl,
+				    स्थिर काष्ठा v4l2_ctrl_ops *ctrl_ops,
+				    स्थिर काष्ठा v4l2_fwnode_device_properties *p);
+#पूर्ण_अगर

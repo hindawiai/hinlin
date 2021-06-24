@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * IMG SPDIF output controller driver
  *
@@ -7,480 +8,480 @@
  * Author: Damien Horsley <Damien.Horsley@imgtec.com>
  */
 
-#include <linux/clk.h>
-#include <linux/init.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pm_runtime.h>
-#include <linux/reset.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/init.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/reset.h>
 
-#include <sound/core.h>
-#include <sound/dmaengine_pcm.h>
-#include <sound/initval.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <sound/soc.h>
+#समावेश <sound/core.h>
+#समावेश <sound/dmaengine_pcm.h>
+#समावेश <sound/initval.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <sound/soc.h>
 
-#define IMG_SPDIF_OUT_TX_FIFO		0x0
+#घोषणा IMG_SPDIF_OUT_TX_FIFO		0x0
 
-#define IMG_SPDIF_OUT_CTL		0x4
-#define IMG_SPDIF_OUT_CTL_FS_MASK	BIT(4)
-#define IMG_SPDIF_OUT_CTL_CLK_MASK	BIT(2)
-#define IMG_SPDIF_OUT_CTL_SRT_MASK	BIT(0)
+#घोषणा IMG_SPDIF_OUT_CTL		0x4
+#घोषणा IMG_SPDIF_OUT_CTL_FS_MASK	BIT(4)
+#घोषणा IMG_SPDIF_OUT_CTL_CLK_MASK	BIT(2)
+#घोषणा IMG_SPDIF_OUT_CTL_SRT_MASK	BIT(0)
 
-#define IMG_SPDIF_OUT_CSL		0x14
+#घोषणा IMG_SPDIF_OUT_CSL		0x14
 
-#define IMG_SPDIF_OUT_CSH_UV		0x18
-#define IMG_SPDIF_OUT_CSH_UV_CSH_SHIFT	0
-#define IMG_SPDIF_OUT_CSH_UV_CSH_MASK	0xff
+#घोषणा IMG_SPDIF_OUT_CSH_UV		0x18
+#घोषणा IMG_SPDIF_OUT_CSH_UV_CSH_SHIFT	0
+#घोषणा IMG_SPDIF_OUT_CSH_UV_CSH_MASK	0xff
 
-struct img_spdif_out {
+काष्ठा img_spdअगर_out अणु
 	spinlock_t lock;
-	void __iomem *base;
-	struct clk *clk_sys;
-	struct clk *clk_ref;
-	struct snd_dmaengine_dai_dma_data dma_data;
-	struct device *dev;
-	struct reset_control *rst;
+	व्योम __iomem *base;
+	काष्ठा clk *clk_sys;
+	काष्ठा clk *clk_ref;
+	काष्ठा snd_dmaengine_dai_dma_data dma_data;
+	काष्ठा device *dev;
+	काष्ठा reset_control *rst;
 	u32 suspend_ctl;
 	u32 suspend_csl;
 	u32 suspend_csh;
-};
+पूर्ण;
 
-static int img_spdif_out_runtime_suspend(struct device *dev)
-{
-	struct img_spdif_out *spdif = dev_get_drvdata(dev);
+अटल पूर्णांक img_spdअगर_out_runसमय_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा img_spdअगर_out *spdअगर = dev_get_drvdata(dev);
 
-	clk_disable_unprepare(spdif->clk_ref);
-	clk_disable_unprepare(spdif->clk_sys);
+	clk_disable_unprepare(spdअगर->clk_ref);
+	clk_disable_unprepare(spdअगर->clk_sys);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int img_spdif_out_runtime_resume(struct device *dev)
-{
-	struct img_spdif_out *spdif = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक img_spdअगर_out_runसमय_resume(काष्ठा device *dev)
+अणु
+	काष्ठा img_spdअगर_out *spdअगर = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	ret = clk_prepare_enable(spdif->clk_sys);
-	if (ret) {
+	ret = clk_prepare_enable(spdअगर->clk_sys);
+	अगर (ret) अणु
 		dev_err(dev, "clk_enable failed: %d\n", ret);
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	ret = clk_prepare_enable(spdif->clk_ref);
-	if (ret) {
+	ret = clk_prepare_enable(spdअगर->clk_ref);
+	अगर (ret) अणु
 		dev_err(dev, "clk_enable failed: %d\n", ret);
-		clk_disable_unprepare(spdif->clk_sys);
-		return ret;
-	}
+		clk_disable_unprepare(spdअगर->clk_sys);
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void img_spdif_out_writel(struct img_spdif_out *spdif, u32 val,
+अटल अंतरभूत व्योम img_spdअगर_out_ग_लिखोl(काष्ठा img_spdअगर_out *spdअगर, u32 val,
 				u32 reg)
-{
-	writel(val, spdif->base + reg);
-}
+अणु
+	ग_लिखोl(val, spdअगर->base + reg);
+पूर्ण
 
-static inline u32 img_spdif_out_readl(struct img_spdif_out *spdif, u32 reg)
-{
-	return readl(spdif->base + reg);
-}
+अटल अंतरभूत u32 img_spdअगर_out_पढ़ोl(काष्ठा img_spdअगर_out *spdअगर, u32 reg)
+अणु
+	वापस पढ़ोl(spdअगर->base + reg);
+पूर्ण
 
-static void img_spdif_out_reset(struct img_spdif_out *spdif)
-{
+अटल व्योम img_spdअगर_out_reset(काष्ठा img_spdअगर_out *spdअगर)
+अणु
 	u32 ctl, status_low, status_high;
 
-	ctl = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CTL) &
+	ctl = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CTL) &
 			~IMG_SPDIF_OUT_CTL_SRT_MASK;
-	status_low = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CSL);
-	status_high = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CSH_UV);
+	status_low = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CSL);
+	status_high = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CSH_UV);
 
-	reset_control_assert(spdif->rst);
-	reset_control_deassert(spdif->rst);
+	reset_control_निश्चित(spdअगर->rst);
+	reset_control_deनिश्चित(spdअगर->rst);
 
-	img_spdif_out_writel(spdif, ctl, IMG_SPDIF_OUT_CTL);
-	img_spdif_out_writel(spdif, status_low, IMG_SPDIF_OUT_CSL);
-	img_spdif_out_writel(spdif, status_high, IMG_SPDIF_OUT_CSH_UV);
-}
+	img_spdअगर_out_ग_लिखोl(spdअगर, ctl, IMG_SPDIF_OUT_CTL);
+	img_spdअगर_out_ग_लिखोl(spdअगर, status_low, IMG_SPDIF_OUT_CSL);
+	img_spdअगर_out_ग_लिखोl(spdअगर, status_high, IMG_SPDIF_OUT_CSH_UV);
+पूर्ण
 
-static int img_spdif_out_info(struct snd_kcontrol *kcontrol,
-					struct snd_ctl_elem_info *uinfo)
-{
+अटल पूर्णांक img_spdअगर_out_info(काष्ठा snd_kcontrol *kcontrol,
+					काष्ठा snd_ctl_elem_info *uinfo)
+अणु
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_IEC958;
 	uinfo->count = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int img_spdif_out_get_status_mask(struct snd_kcontrol *kcontrol,
-				       struct snd_ctl_elem_value *ucontrol)
-{
+अटल पूर्णांक img_spdअगर_out_get_status_mask(काष्ठा snd_kcontrol *kcontrol,
+				       काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
 	ucontrol->value.iec958.status[0] = 0xff;
 	ucontrol->value.iec958.status[1] = 0xff;
 	ucontrol->value.iec958.status[2] = 0xff;
 	ucontrol->value.iec958.status[3] = 0xff;
 	ucontrol->value.iec958.status[4] = 0xff;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int img_spdif_out_get_status(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dai *cpu_dai = snd_kcontrol_chip(kcontrol);
-	struct img_spdif_out *spdif = snd_soc_dai_get_drvdata(cpu_dai);
+अटल पूर्णांक img_spdअगर_out_get_status(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dai *cpu_dai = snd_kcontrol_chip(kcontrol);
+	काष्ठा img_spdअगर_out *spdअगर = snd_soc_dai_get_drvdata(cpu_dai);
 	u32 reg;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&spdif->lock, flags);
+	spin_lock_irqsave(&spdअगर->lock, flags);
 
-	reg = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CSL);
+	reg = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CSL);
 	ucontrol->value.iec958.status[0] = reg & 0xff;
 	ucontrol->value.iec958.status[1] = (reg >> 8) & 0xff;
 	ucontrol->value.iec958.status[2] = (reg >> 16) & 0xff;
 	ucontrol->value.iec958.status[3] = (reg >> 24) & 0xff;
 
-	reg = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CSH_UV);
+	reg = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CSH_UV);
 	ucontrol->value.iec958.status[4] =
 		(reg & IMG_SPDIF_OUT_CSH_UV_CSH_MASK) >>
 		IMG_SPDIF_OUT_CSH_UV_CSH_SHIFT;
 
-	spin_unlock_irqrestore(&spdif->lock, flags);
+	spin_unlock_irqrestore(&spdअगर->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int img_spdif_out_set_status(struct snd_kcontrol *kcontrol,
-				  struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_dai *cpu_dai = snd_kcontrol_chip(kcontrol);
-	struct img_spdif_out *spdif = snd_soc_dai_get_drvdata(cpu_dai);
+अटल पूर्णांक img_spdअगर_out_set_status(काष्ठा snd_kcontrol *kcontrol,
+				  काष्ठा snd_ctl_elem_value *ucontrol)
+अणु
+	काष्ठा snd_soc_dai *cpu_dai = snd_kcontrol_chip(kcontrol);
+	काष्ठा img_spdअगर_out *spdअगर = snd_soc_dai_get_drvdata(cpu_dai);
 	u32 reg;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
 	reg = ((u32)ucontrol->value.iec958.status[3] << 24);
 	reg |= ((u32)ucontrol->value.iec958.status[2] << 16);
 	reg |= ((u32)ucontrol->value.iec958.status[1] << 8);
 	reg |= (u32)ucontrol->value.iec958.status[0];
 
-	spin_lock_irqsave(&spdif->lock, flags);
+	spin_lock_irqsave(&spdअगर->lock, flags);
 
-	img_spdif_out_writel(spdif, reg, IMG_SPDIF_OUT_CSL);
+	img_spdअगर_out_ग_लिखोl(spdअगर, reg, IMG_SPDIF_OUT_CSL);
 
-	reg = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CSH_UV);
+	reg = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CSH_UV);
 	reg &= ~IMG_SPDIF_OUT_CSH_UV_CSH_MASK;
 	reg |= (u32)ucontrol->value.iec958.status[4] <<
 			IMG_SPDIF_OUT_CSH_UV_CSH_SHIFT;
-	img_spdif_out_writel(spdif, reg, IMG_SPDIF_OUT_CSH_UV);
+	img_spdअगर_out_ग_लिखोl(spdअगर, reg, IMG_SPDIF_OUT_CSH_UV);
 
-	spin_unlock_irqrestore(&spdif->lock, flags);
+	spin_unlock_irqrestore(&spdअगर->lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct snd_kcontrol_new img_spdif_out_controls[] = {
-	{
+अटल काष्ठा snd_kcontrol_new img_spdअगर_out_controls[] = अणु
+	अणु
 		.access = SNDRV_CTL_ELEM_ACCESS_READ,
-		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = SNDRV_CTL_NAME_IEC958("", PLAYBACK, MASK),
-		.info = img_spdif_out_info,
-		.get = img_spdif_out_get_status_mask
-	},
-	{
-		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.info = img_spdअगर_out_info,
+		.get = img_spdअगर_out_get_status_mask
+	पूर्ण,
+	अणु
+		.अगरace = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name = SNDRV_CTL_NAME_IEC958("", PLAYBACK, DEFAULT),
-		.info = img_spdif_out_info,
-		.get = img_spdif_out_get_status,
-		.put = img_spdif_out_set_status
-	}
-};
+		.info = img_spdअगर_out_info,
+		.get = img_spdअगर_out_get_status,
+		.put = img_spdअगर_out_set_status
+	पूर्ण
+पूर्ण;
 
-static int img_spdif_out_trigger(struct snd_pcm_substream *substream, int cmd,
-			struct snd_soc_dai *dai)
-{
-	struct img_spdif_out *spdif = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक img_spdअगर_out_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd,
+			काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा img_spdअगर_out *spdअगर = snd_soc_dai_get_drvdata(dai);
 	u32 reg;
-	unsigned long flags;
+	अचिन्हित दीर्घ flags;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
-	case SNDRV_PCM_TRIGGER_RESUME:
-	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		reg = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CTL);
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
+	हाल SNDRV_PCM_TRIGGER_RESUME:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		reg = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CTL);
 		reg |= IMG_SPDIF_OUT_CTL_SRT_MASK;
-		img_spdif_out_writel(spdif, reg, IMG_SPDIF_OUT_CTL);
-		break;
-	case SNDRV_PCM_TRIGGER_STOP:
-	case SNDRV_PCM_TRIGGER_SUSPEND:
-	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-		spin_lock_irqsave(&spdif->lock, flags);
-		img_spdif_out_reset(spdif);
-		spin_unlock_irqrestore(&spdif->lock, flags);
-		break;
-	default:
-		return -EINVAL;
-	}
+		img_spdअगर_out_ग_लिखोl(spdअगर, reg, IMG_SPDIF_OUT_CTL);
+		अवरोध;
+	हाल SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_SUSPEND:
+	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+		spin_lock_irqsave(&spdअगर->lock, flags);
+		img_spdअगर_out_reset(spdअगर);
+		spin_unlock_irqrestore(&spdअगर->lock, flags);
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int img_spdif_out_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params, struct snd_soc_dai *dai)
-{
-	struct img_spdif_out *spdif = snd_soc_dai_get_drvdata(dai);
-	unsigned int channels;
-	long pre_div_a, pre_div_b, diff_a, diff_b, rate, clk_rate;
+अटल पूर्णांक img_spdअगर_out_hw_params(काष्ठा snd_pcm_substream *substream,
+	काष्ठा snd_pcm_hw_params *params, काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा img_spdअगर_out *spdअगर = snd_soc_dai_get_drvdata(dai);
+	अचिन्हित पूर्णांक channels;
+	दीर्घ pre_भाग_a, pre_भाग_b, dअगरf_a, dअगरf_b, rate, clk_rate;
 	u32 reg;
-	snd_pcm_format_t format;
+	snd_pcm_क्रमmat_t क्रमmat;
 
 	rate = params_rate(params);
-	format = params_format(params);
+	क्रमmat = params_क्रमmat(params);
 	channels = params_channels(params);
 
-	dev_dbg(spdif->dev, "hw_params rate %ld channels %u format %u\n",
-			rate, channels, format);
+	dev_dbg(spdअगर->dev, "hw_params rate %ld channels %u format %u\n",
+			rate, channels, क्रमmat);
 
-	if (format != SNDRV_PCM_FORMAT_S32_LE)
-		return -EINVAL;
+	अगर (क्रमmat != SNDRV_PCM_FORMAT_S32_LE)
+		वापस -EINVAL;
 
-	if (channels != 2)
-		return -EINVAL;
+	अगर (channels != 2)
+		वापस -EINVAL;
 
-	pre_div_a = clk_round_rate(spdif->clk_ref, rate * 256);
-	if (pre_div_a < 0)
-		return pre_div_a;
-	pre_div_b = clk_round_rate(spdif->clk_ref, rate * 384);
-	if (pre_div_b < 0)
-		return pre_div_b;
+	pre_भाग_a = clk_round_rate(spdअगर->clk_ref, rate * 256);
+	अगर (pre_भाग_a < 0)
+		वापस pre_भाग_a;
+	pre_भाग_b = clk_round_rate(spdअगर->clk_ref, rate * 384);
+	अगर (pre_भाग_b < 0)
+		वापस pre_भाग_b;
 
-	diff_a = abs((pre_div_a / 256) - rate);
-	diff_b = abs((pre_div_b / 384) - rate);
+	dअगरf_a = असल((pre_भाग_a / 256) - rate);
+	dअगरf_b = असल((pre_भाग_b / 384) - rate);
 
-	/* If diffs are equal, use lower clock rate */
-	if (diff_a > diff_b)
-		clk_set_rate(spdif->clk_ref, pre_div_b);
-	else
-		clk_set_rate(spdif->clk_ref, pre_div_a);
+	/* If dअगरfs are equal, use lower घड़ी rate */
+	अगर (dअगरf_a > dअगरf_b)
+		clk_set_rate(spdअगर->clk_ref, pre_भाग_b);
+	अन्यथा
+		clk_set_rate(spdअगर->clk_ref, pre_भाग_a);
 
 	/*
 	 * Another driver (eg machine driver) may have rejected the above
-	 * change. Get the current rate and set the register bit according to
-	 * the new min diff
+	 * change. Get the current rate and set the रेजिस्टर bit according to
+	 * the new min dअगरf
 	 */
-	clk_rate = clk_get_rate(spdif->clk_ref);
+	clk_rate = clk_get_rate(spdअगर->clk_ref);
 
-	diff_a = abs((clk_rate / 256) - rate);
-	diff_b = abs((clk_rate / 384) - rate);
+	dअगरf_a = असल((clk_rate / 256) - rate);
+	dअगरf_b = असल((clk_rate / 384) - rate);
 
-	reg = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CTL);
-	if (diff_a <= diff_b)
+	reg = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CTL);
+	अगर (dअगरf_a <= dअगरf_b)
 		reg &= ~IMG_SPDIF_OUT_CTL_CLK_MASK;
-	else
+	अन्यथा
 		reg |= IMG_SPDIF_OUT_CTL_CLK_MASK;
-	img_spdif_out_writel(spdif, reg, IMG_SPDIF_OUT_CTL);
+	img_spdअगर_out_ग_लिखोl(spdअगर, reg, IMG_SPDIF_OUT_CTL);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct snd_soc_dai_ops img_spdif_out_dai_ops = {
-	.trigger = img_spdif_out_trigger,
-	.hw_params = img_spdif_out_hw_params
-};
+अटल स्थिर काष्ठा snd_soc_dai_ops img_spdअगर_out_dai_ops = अणु
+	.trigger = img_spdअगर_out_trigger,
+	.hw_params = img_spdअगर_out_hw_params
+पूर्ण;
 
-static int img_spdif_out_dai_probe(struct snd_soc_dai *dai)
-{
-	struct img_spdif_out *spdif = snd_soc_dai_get_drvdata(dai);
+अटल पूर्णांक img_spdअगर_out_dai_probe(काष्ठा snd_soc_dai *dai)
+अणु
+	काष्ठा img_spdअगर_out *spdअगर = snd_soc_dai_get_drvdata(dai);
 
-	snd_soc_dai_init_dma_data(dai, &spdif->dma_data, NULL);
+	snd_soc_dai_init_dma_data(dai, &spdअगर->dma_data, शून्य);
 
-	snd_soc_add_dai_controls(dai, img_spdif_out_controls,
-			ARRAY_SIZE(img_spdif_out_controls));
+	snd_soc_add_dai_controls(dai, img_spdअगर_out_controls,
+			ARRAY_SIZE(img_spdअगर_out_controls));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct snd_soc_dai_driver img_spdif_out_dai = {
-	.probe = img_spdif_out_dai_probe,
-	.playback = {
+अटल काष्ठा snd_soc_dai_driver img_spdअगर_out_dai = अणु
+	.probe = img_spdअगर_out_dai_probe,
+	.playback = अणु
 		.channels_min = 2,
 		.channels_max = 2,
 		.rates = SNDRV_PCM_RATE_8000_192000,
-		.formats = SNDRV_PCM_FMTBIT_S32_LE
-	},
-	.ops = &img_spdif_out_dai_ops
-};
+		.क्रमmats = SNDRV_PCM_FMTBIT_S32_LE
+	पूर्ण,
+	.ops = &img_spdअगर_out_dai_ops
+पूर्ण;
 
-static const struct snd_soc_component_driver img_spdif_out_component = {
+अटल स्थिर काष्ठा snd_soc_component_driver img_spdअगर_out_component = अणु
 	.name = "img-spdif-out"
-};
+पूर्ण;
 
-static int img_spdif_out_probe(struct platform_device *pdev)
-{
-	struct img_spdif_out *spdif;
-	struct resource *res;
-	void __iomem *base;
-	int ret;
-	struct device *dev = &pdev->dev;
+अटल पूर्णांक img_spdअगर_out_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा img_spdअगर_out *spdअगर;
+	काष्ठा resource *res;
+	व्योम __iomem *base;
+	पूर्णांक ret;
+	काष्ठा device *dev = &pdev->dev;
 
-	spdif = devm_kzalloc(&pdev->dev, sizeof(*spdif), GFP_KERNEL);
-	if (!spdif)
-		return -ENOMEM;
+	spdअगर = devm_kzalloc(&pdev->dev, माप(*spdअगर), GFP_KERNEL);
+	अगर (!spdअगर)
+		वापस -ENOMEM;
 
-	platform_set_drvdata(pdev, spdif);
+	platक्रमm_set_drvdata(pdev, spdअगर);
 
-	spdif->dev = &pdev->dev;
+	spdअगर->dev = &pdev->dev;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	base = devm_ioremap_resource(&pdev->dev, res);
-	if (IS_ERR(base))
-		return PTR_ERR(base);
+	अगर (IS_ERR(base))
+		वापस PTR_ERR(base);
 
-	spdif->base = base;
+	spdअगर->base = base;
 
-	spdif->rst = devm_reset_control_get_exclusive(&pdev->dev, "rst");
-	if (IS_ERR(spdif->rst)) {
-		if (PTR_ERR(spdif->rst) != -EPROBE_DEFER)
+	spdअगर->rst = devm_reset_control_get_exclusive(&pdev->dev, "rst");
+	अगर (IS_ERR(spdअगर->rst)) अणु
+		अगर (PTR_ERR(spdअगर->rst) != -EPROBE_DEFER)
 			dev_err(&pdev->dev, "No top level reset found\n");
-		return PTR_ERR(spdif->rst);
-	}
+		वापस PTR_ERR(spdअगर->rst);
+	पूर्ण
 
-	spdif->clk_sys = devm_clk_get(&pdev->dev, "sys");
-	if (IS_ERR(spdif->clk_sys)) {
-		if (PTR_ERR(spdif->clk_sys) != -EPROBE_DEFER)
+	spdअगर->clk_sys = devm_clk_get(&pdev->dev, "sys");
+	अगर (IS_ERR(spdअगर->clk_sys)) अणु
+		अगर (PTR_ERR(spdअगर->clk_sys) != -EPROBE_DEFER)
 			dev_err(dev, "Failed to acquire clock 'sys'\n");
-		return PTR_ERR(spdif->clk_sys);
-	}
+		वापस PTR_ERR(spdअगर->clk_sys);
+	पूर्ण
 
-	spdif->clk_ref = devm_clk_get(&pdev->dev, "ref");
-	if (IS_ERR(spdif->clk_ref)) {
-		if (PTR_ERR(spdif->clk_ref) != -EPROBE_DEFER)
+	spdअगर->clk_ref = devm_clk_get(&pdev->dev, "ref");
+	अगर (IS_ERR(spdअगर->clk_ref)) अणु
+		अगर (PTR_ERR(spdअगर->clk_ref) != -EPROBE_DEFER)
 			dev_err(dev, "Failed to acquire clock 'ref'\n");
-		return PTR_ERR(spdif->clk_ref);
-	}
+		वापस PTR_ERR(spdअगर->clk_ref);
+	पूर्ण
 
-	pm_runtime_enable(&pdev->dev);
-	if (!pm_runtime_enabled(&pdev->dev)) {
-		ret = img_spdif_out_runtime_resume(&pdev->dev);
-		if (ret)
-			goto err_pm_disable;
-	}
-	ret = pm_runtime_get_sync(&pdev->dev);
-	if (ret < 0) {
-		pm_runtime_put_noidle(&pdev->dev);
-		goto err_suspend;
-	}
+	pm_runसमय_enable(&pdev->dev);
+	अगर (!pm_runसमय_enabled(&pdev->dev)) अणु
+		ret = img_spdअगर_out_runसमय_resume(&pdev->dev);
+		अगर (ret)
+			जाओ err_pm_disable;
+	पूर्ण
+	ret = pm_runसमय_get_sync(&pdev->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_put_noidle(&pdev->dev);
+		जाओ err_suspend;
+	पूर्ण
 
-	img_spdif_out_writel(spdif, IMG_SPDIF_OUT_CTL_FS_MASK,
+	img_spdअगर_out_ग_लिखोl(spdअगर, IMG_SPDIF_OUT_CTL_FS_MASK,
 			     IMG_SPDIF_OUT_CTL);
 
-	img_spdif_out_reset(spdif);
-	pm_runtime_put(&pdev->dev);
+	img_spdअगर_out_reset(spdअगर);
+	pm_runसमय_put(&pdev->dev);
 
-	spin_lock_init(&spdif->lock);
+	spin_lock_init(&spdअगर->lock);
 
-	spdif->dma_data.addr = res->start + IMG_SPDIF_OUT_TX_FIFO;
-	spdif->dma_data.addr_width = 4;
-	spdif->dma_data.maxburst = 4;
+	spdअगर->dma_data.addr = res->start + IMG_SPDIF_OUT_TX_FIFO;
+	spdअगर->dma_data.addr_width = 4;
+	spdअगर->dma_data.maxburst = 4;
 
-	ret = devm_snd_soc_register_component(&pdev->dev,
-			&img_spdif_out_component,
-			&img_spdif_out_dai, 1);
-	if (ret)
-		goto err_suspend;
+	ret = devm_snd_soc_रेजिस्टर_component(&pdev->dev,
+			&img_spdअगर_out_component,
+			&img_spdअगर_out_dai, 1);
+	अगर (ret)
+		जाओ err_suspend;
 
-	ret = devm_snd_dmaengine_pcm_register(&pdev->dev, NULL, 0);
-	if (ret)
-		goto err_suspend;
+	ret = devm_snd_dmaengine_pcm_रेजिस्टर(&pdev->dev, शून्य, 0);
+	अगर (ret)
+		जाओ err_suspend;
 
 	dev_dbg(&pdev->dev, "Probe successful\n");
 
-	return 0;
+	वापस 0;
 
 err_suspend:
-	if (!pm_runtime_status_suspended(&pdev->dev))
-		img_spdif_out_runtime_suspend(&pdev->dev);
+	अगर (!pm_runसमय_status_suspended(&pdev->dev))
+		img_spdअगर_out_runसमय_suspend(&pdev->dev);
 err_pm_disable:
-	pm_runtime_disable(&pdev->dev);
+	pm_runसमय_disable(&pdev->dev);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int img_spdif_out_dev_remove(struct platform_device *pdev)
-{
-	pm_runtime_disable(&pdev->dev);
-	if (!pm_runtime_status_suspended(&pdev->dev))
-		img_spdif_out_runtime_suspend(&pdev->dev);
+अटल पूर्णांक img_spdअगर_out_dev_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	pm_runसमय_disable(&pdev->dev);
+	अगर (!pm_runसमय_status_suspended(&pdev->dev))
+		img_spdअगर_out_runसमय_suspend(&pdev->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int img_spdif_out_suspend(struct device *dev)
-{
-	struct img_spdif_out *spdif = dev_get_drvdata(dev);
-	int ret;
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक img_spdअगर_out_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा img_spdअगर_out *spdअगर = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	if (pm_runtime_status_suspended(dev)) {
-		ret = img_spdif_out_runtime_resume(dev);
-		if (ret)
-			return ret;
-	}
+	अगर (pm_runसमय_status_suspended(dev)) अणु
+		ret = img_spdअगर_out_runसमय_resume(dev);
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	spdif->suspend_ctl = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CTL);
-	spdif->suspend_csl = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CSL);
-	spdif->suspend_csh = img_spdif_out_readl(spdif, IMG_SPDIF_OUT_CSH_UV);
+	spdअगर->suspend_ctl = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CTL);
+	spdअगर->suspend_csl = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CSL);
+	spdअगर->suspend_csh = img_spdअगर_out_पढ़ोl(spdअगर, IMG_SPDIF_OUT_CSH_UV);
 
-	img_spdif_out_runtime_suspend(dev);
+	img_spdअगर_out_runसमय_suspend(dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int img_spdif_out_resume(struct device *dev)
-{
-	struct img_spdif_out *spdif = dev_get_drvdata(dev);
-	int ret;
+अटल पूर्णांक img_spdअगर_out_resume(काष्ठा device *dev)
+अणु
+	काष्ठा img_spdअगर_out *spdअगर = dev_get_drvdata(dev);
+	पूर्णांक ret;
 
-	ret = img_spdif_out_runtime_resume(dev);
-	if (ret)
-		return ret;
+	ret = img_spdअगर_out_runसमय_resume(dev);
+	अगर (ret)
+		वापस ret;
 
-	img_spdif_out_writel(spdif, spdif->suspend_ctl, IMG_SPDIF_OUT_CTL);
-	img_spdif_out_writel(spdif, spdif->suspend_csl, IMG_SPDIF_OUT_CSL);
-	img_spdif_out_writel(spdif, spdif->suspend_csh, IMG_SPDIF_OUT_CSH_UV);
+	img_spdअगर_out_ग_लिखोl(spdअगर, spdअगर->suspend_ctl, IMG_SPDIF_OUT_CTL);
+	img_spdअगर_out_ग_लिखोl(spdअगर, spdअगर->suspend_csl, IMG_SPDIF_OUT_CSL);
+	img_spdअगर_out_ग_लिखोl(spdअगर, spdअगर->suspend_csh, IMG_SPDIF_OUT_CSH_UV);
 
-	if (pm_runtime_status_suspended(dev))
-		img_spdif_out_runtime_suspend(dev);
+	अगर (pm_runसमय_status_suspended(dev))
+		img_spdअगर_out_runसमय_suspend(dev);
 
-	return 0;
-}
-#endif
-static const struct of_device_id img_spdif_out_of_match[] = {
-	{ .compatible = "img,spdif-out" },
-	{}
-};
-MODULE_DEVICE_TABLE(of, img_spdif_out_of_match);
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
+अटल स्थिर काष्ठा of_device_id img_spdअगर_out_of_match[] = अणु
+	अणु .compatible = "img,spdif-out" पूर्ण,
+	अणुपूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(of, img_spdअगर_out_of_match);
 
-static const struct dev_pm_ops img_spdif_out_pm_ops = {
-	SET_RUNTIME_PM_OPS(img_spdif_out_runtime_suspend,
-			   img_spdif_out_runtime_resume, NULL)
-	SET_SYSTEM_SLEEP_PM_OPS(img_spdif_out_suspend, img_spdif_out_resume)
-};
+अटल स्थिर काष्ठा dev_pm_ops img_spdअगर_out_pm_ops = अणु
+	SET_RUNTIME_PM_OPS(img_spdअगर_out_runसमय_suspend,
+			   img_spdअगर_out_runसमय_resume, शून्य)
+	SET_SYSTEM_SLEEP_PM_OPS(img_spdअगर_out_suspend, img_spdअगर_out_resume)
+पूर्ण;
 
-static struct platform_driver img_spdif_out_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver img_spdअगर_out_driver = अणु
+	.driver = अणु
 		.name = "img-spdif-out",
-		.of_match_table = img_spdif_out_of_match,
-		.pm = &img_spdif_out_pm_ops
-	},
-	.probe = img_spdif_out_probe,
-	.remove = img_spdif_out_dev_remove
-};
-module_platform_driver(img_spdif_out_driver);
+		.of_match_table = img_spdअगर_out_of_match,
+		.pm = &img_spdअगर_out_pm_ops
+	पूर्ण,
+	.probe = img_spdअगर_out_probe,
+	.हटाओ = img_spdअगर_out_dev_हटाओ
+पूर्ण;
+module_platक्रमm_driver(img_spdअगर_out_driver);
 
 MODULE_AUTHOR("Damien Horsley <Damien.Horsley@imgtec.com>");
 MODULE_DESCRIPTION("IMG SPDIF Output driver");

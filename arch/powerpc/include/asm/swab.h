@@ -1,9 +1,10 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
  */
-#ifndef _ASM_POWERPC_SWAB_H
-#define _ASM_POWERPC_SWAB_H
+#अगर_अघोषित _ASM_POWERPC_SWAB_H
+#घोषणा _ASM_POWERPC_SWAB_H
 
-#include <uapi/asm/swab.h>
+#समावेश <uapi/यंत्र/swab.h>
 
-#endif /* _ASM_POWERPC_SWAB_H */
+#पूर्ण_अगर /* _ASM_POWERPC_SWAB_H */

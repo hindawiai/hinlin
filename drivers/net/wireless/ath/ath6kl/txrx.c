@@ -1,158 +1,159 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2004-2011 Atheros Communications Inc.
  * Copyright (c) 2011-2012 Qualcomm Atheros, Inc.
  *
- * Permission to use, copy, modify, and/or distribute this software for any
+ * Permission to use, copy, modअगरy, and/or distribute this software क्रम any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include "core.h"
-#include "debug.h"
-#include "htc-ops.h"
-#include "trace.h"
+#समावेश "core.h"
+#समावेश "debug.h"
+#समावेश "htc-ops.h"
+#समावेश "trace.h"
 
 /*
  * tid - tid_mux0..tid_mux3
  * aid - tid_mux4..tid_mux7
  */
-#define ATH6KL_TID_MASK 0xf
-#define ATH6KL_AID_SHIFT 4
+#घोषणा ATH6KL_TID_MASK 0xf
+#घोषणा ATH6KL_AID_SHIFT 4
 
-static inline u8 ath6kl_get_tid(u8 tid_mux)
-{
-	return tid_mux & ATH6KL_TID_MASK;
-}
+अटल अंतरभूत u8 ath6kl_get_tid(u8 tid_mux)
+अणु
+	वापस tid_mux & ATH6KL_TID_MASK;
+पूर्ण
 
-static inline u8 ath6kl_get_aid(u8 tid_mux)
-{
-	return tid_mux >> ATH6KL_AID_SHIFT;
-}
+अटल अंतरभूत u8 ath6kl_get_aid(u8 tid_mux)
+अणु
+	वापस tid_mux >> ATH6KL_AID_SHIFT;
+पूर्ण
 
-static u8 ath6kl_ibss_map_epid(struct sk_buff *skb, struct net_device *dev,
+अटल u8 ath6kl_ibss_map_epid(काष्ठा sk_buff *skb, काष्ठा net_device *dev,
 			       u32 *map_no)
-{
-	struct ath6kl *ar = ath6kl_priv(dev);
-	struct ethhdr *eth_hdr;
+अणु
+	काष्ठा ath6kl *ar = ath6kl_priv(dev);
+	काष्ठा ethhdr *eth_hdr;
 	u32 i, ep_map = -1;
 	u8 *datap;
 
 	*map_no = 0;
 	datap = skb->data;
-	eth_hdr = (struct ethhdr *) (datap + sizeof(struct wmi_data_hdr));
+	eth_hdr = (काष्ठा ethhdr *) (datap + माप(काष्ठा wmi_data_hdr));
 
-	if (is_multicast_ether_addr(eth_hdr->h_dest))
-		return ENDPOINT_2;
+	अगर (is_multicast_ether_addr(eth_hdr->h_dest))
+		वापस ENDPOINT_2;
 
-	for (i = 0; i < ar->node_num; i++) {
-		if (memcmp(eth_hdr->h_dest, ar->node_map[i].mac_addr,
-			   ETH_ALEN) == 0) {
+	क्रम (i = 0; i < ar->node_num; i++) अणु
+		अगर (स_भेद(eth_hdr->h_dest, ar->node_map[i].mac_addr,
+			   ETH_ALEN) == 0) अणु
 			*map_no = i + 1;
 			ar->node_map[i].tx_pend++;
-			return ar->node_map[i].ep_id;
-		}
+			वापस ar->node_map[i].ep_id;
+		पूर्ण
 
-		if ((ep_map == -1) && !ar->node_map[i].tx_pend)
+		अगर ((ep_map == -1) && !ar->node_map[i].tx_pend)
 			ep_map = i;
-	}
+	पूर्ण
 
-	if (ep_map == -1) {
+	अगर (ep_map == -1) अणु
 		ep_map = ar->node_num;
 		ar->node_num++;
-		if (ar->node_num > MAX_NODE_NUM)
-			return ENDPOINT_UNUSED;
-	}
+		अगर (ar->node_num > MAX_NODE_NUM)
+			वापस ENDPOINT_UNUSED;
+	पूर्ण
 
-	memcpy(ar->node_map[ep_map].mac_addr, eth_hdr->h_dest, ETH_ALEN);
+	स_नकल(ar->node_map[ep_map].mac_addr, eth_hdr->h_dest, ETH_ALEN);
 
-	for (i = ENDPOINT_2; i <= ENDPOINT_5; i++) {
-		if (!ar->tx_pending[i]) {
+	क्रम (i = ENDPOINT_2; i <= ENDPOINT_5; i++) अणु
+		अगर (!ar->tx_pending[i]) अणु
 			ar->node_map[ep_map].ep_id = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/*
-		 * No free endpoint is available, start redistribution on
-		 * the inuse endpoints.
+		 * No मुक्त endpoपूर्णांक is available, start redistribution on
+		 * the inuse endpoपूर्णांकs.
 		 */
-		if (i == ENDPOINT_5) {
+		अगर (i == ENDPOINT_5) अणु
 			ar->node_map[ep_map].ep_id = ar->next_ep_id;
 			ar->next_ep_id++;
-			if (ar->next_ep_id > ENDPOINT_5)
+			अगर (ar->next_ep_id > ENDPOINT_5)
 				ar->next_ep_id = ENDPOINT_2;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	*map_no = ep_map + 1;
 	ar->node_map[ep_map].tx_pend++;
 
-	return ar->node_map[ep_map].ep_id;
-}
+	वापस ar->node_map[ep_map].ep_id;
+पूर्ण
 
-static bool ath6kl_process_uapsdq(struct ath6kl_sta *conn,
-				struct ath6kl_vif *vif,
-				struct sk_buff *skb,
+अटल bool ath6kl_process_uapsdq(काष्ठा ath6kl_sta *conn,
+				काष्ठा ath6kl_vअगर *vअगर,
+				काष्ठा sk_buff *skb,
 				u32 *flags)
-{
-	struct ath6kl *ar = vif->ar;
+अणु
+	काष्ठा ath6kl *ar = vअगर->ar;
 	bool is_apsdq_empty = false;
-	struct ethhdr *datap = (struct ethhdr *) skb->data;
+	काष्ठा ethhdr *datap = (काष्ठा ethhdr *) skb->data;
 	u8 up = 0, traffic_class, *ip_hdr;
 	u16 ether_type;
-	struct ath6kl_llc_snap_hdr *llc_hdr;
+	काष्ठा ath6kl_llc_snap_hdr *llc_hdr;
 
-	if (conn->sta_flags & STA_PS_APSD_TRIGGER) {
+	अगर (conn->sta_flags & STA_PS_APSD_TRIGGER) अणु
 		/*
 		 * This tx is because of a uAPSD trigger, determine
-		 * more and EOSP bit. Set EOSP if queue is empty
-		 * or sufficient frames are delivered for this trigger.
+		 * more and EOSP bit. Set EOSP अगर queue is empty
+		 * or sufficient frames are delivered क्रम this trigger.
 		 */
 		spin_lock_bh(&conn->psq_lock);
-		if (!skb_queue_empty(&conn->apsdq))
+		अगर (!skb_queue_empty(&conn->apsdq))
 			*flags |= WMI_DATA_HDR_FLAGS_MORE;
-		else if (conn->sta_flags & STA_PS_APSD_EOSP)
+		अन्यथा अगर (conn->sta_flags & STA_PS_APSD_EOSP)
 			*flags |= WMI_DATA_HDR_FLAGS_EOSP;
 		*flags |= WMI_DATA_HDR_FLAGS_UAPSD;
 		spin_unlock_bh(&conn->psq_lock);
-		return false;
-	} else if (!conn->apsd_info) {
-		return false;
-	}
+		वापस false;
+	पूर्ण अन्यथा अगर (!conn->apsd_info) अणु
+		वापस false;
+	पूर्ण
 
-	if (test_bit(WMM_ENABLED, &vif->flags)) {
+	अगर (test_bit(WMM_ENABLED, &vअगर->flags)) अणु
 		ether_type = be16_to_cpu(datap->h_proto);
-		if (is_ethertype(ether_type)) {
-			/* packet is in DIX format  */
+		अगर (is_ethertype(ether_type)) अणु
+			/* packet is in DIX क्रमmat  */
 			ip_hdr = (u8 *)(datap + 1);
-		} else {
-			/* packet is in 802.3 format */
-			llc_hdr = (struct ath6kl_llc_snap_hdr *)
+		पूर्ण अन्यथा अणु
+			/* packet is in 802.3 क्रमmat */
+			llc_hdr = (काष्ठा ath6kl_llc_snap_hdr *)
 							(datap + 1);
 			ether_type = be16_to_cpu(llc_hdr->eth_type);
 			ip_hdr = (u8 *)(llc_hdr + 1);
-		}
+		पूर्ण
 
-		if (ether_type == IP_ETHERTYPE)
+		अगर (ether_type == IP_ETHERTYPE)
 			up = ath6kl_wmi_determine_user_priority(
 							ip_hdr, 0);
-	}
+	पूर्ण
 
 	traffic_class = ath6kl_wmi_get_traffic_class(up);
 
-	if ((conn->apsd_info & (1 << traffic_class)) == 0)
-		return false;
+	अगर ((conn->apsd_info & (1 << traffic_class)) == 0)
+		वापस false;
 
-	/* Queue the frames if the STA is sleeping */
+	/* Queue the frames अगर the STA is sleeping */
 	spin_lock_bh(&conn->psq_lock);
 	is_apsdq_empty = skb_queue_empty(&conn->apsdq);
 	skb_queue_tail(&conn->apsdq, skb);
@@ -160,35 +161,35 @@ static bool ath6kl_process_uapsdq(struct ath6kl_sta *conn,
 
 	/*
 	 * If this is the first pkt getting queued
-	 * for this STA, update the PVB for this STA
+	 * क्रम this STA, update the PVB क्रम this STA
 	 */
-	if (is_apsdq_empty) {
+	अगर (is_apsdq_empty) अणु
 		ath6kl_wmi_set_apsd_bfrd_traf(ar->wmi,
-					      vif->fw_vif_idx,
+					      vअगर->fw_vअगर_idx,
 					      conn->aid, 1, 0);
-	}
+	पूर्ण
 	*flags |= WMI_DATA_HDR_FLAGS_UAPSD;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool ath6kl_process_psq(struct ath6kl_sta *conn,
-				struct ath6kl_vif *vif,
-				struct sk_buff *skb,
+अटल bool ath6kl_process_psq(काष्ठा ath6kl_sta *conn,
+				काष्ठा ath6kl_vअगर *vअगर,
+				काष्ठा sk_buff *skb,
 				u32 *flags)
-{
+अणु
 	bool is_psq_empty = false;
-	struct ath6kl *ar = vif->ar;
+	काष्ठा ath6kl *ar = vअगर->ar;
 
-	if (conn->sta_flags & STA_PS_POLLED) {
+	अगर (conn->sta_flags & STA_PS_POLLED) अणु
 		spin_lock_bh(&conn->psq_lock);
-		if (!skb_queue_empty(&conn->psq))
+		अगर (!skb_queue_empty(&conn->psq))
 			*flags |= WMI_DATA_HDR_FLAGS_MORE;
 		spin_unlock_bh(&conn->psq_lock);
-		return false;
-	}
+		वापस false;
+	पूर्ण
 
-	/* Queue the frames if the STA is sleeping */
+	/* Queue the frames अगर the STA is sleeping */
 	spin_lock_bh(&conn->psq_lock);
 	is_psq_empty = skb_queue_empty(&conn->psq);
 	skb_queue_tail(&conn->psq, skb);
@@ -196,41 +197,41 @@ static bool ath6kl_process_psq(struct ath6kl_sta *conn,
 
 	/*
 	 * If this is the first pkt getting queued
-	 * for this STA, update the PVB for this
+	 * क्रम this STA, update the PVB क्रम this
 	 * STA.
 	 */
-	if (is_psq_empty)
+	अगर (is_psq_empty)
 		ath6kl_wmi_set_pvb_cmd(ar->wmi,
-				       vif->fw_vif_idx,
+				       vअगर->fw_vअगर_idx,
 				       conn->aid, 1);
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static bool ath6kl_powersave_ap(struct ath6kl_vif *vif, struct sk_buff *skb,
+अटल bool ath6kl_घातersave_ap(काष्ठा ath6kl_vअगर *vअगर, काष्ठा sk_buff *skb,
 				u32 *flags)
-{
-	struct ethhdr *datap = (struct ethhdr *) skb->data;
-	struct ath6kl_sta *conn = NULL;
+अणु
+	काष्ठा ethhdr *datap = (काष्ठा ethhdr *) skb->data;
+	काष्ठा ath6kl_sta *conn = शून्य;
 	bool ps_queued = false;
-	struct ath6kl *ar = vif->ar;
+	काष्ठा ath6kl *ar = vअगर->ar;
 
-	if (is_multicast_ether_addr(datap->h_dest)) {
+	अगर (is_multicast_ether_addr(datap->h_dest)) अणु
 		u8 ctr = 0;
 		bool q_mcast = false;
 
-		for (ctr = 0; ctr < AP_MAX_NUM_STA; ctr++) {
-			if (ar->sta_list[ctr].sta_flags & STA_PS_SLEEP) {
+		क्रम (ctr = 0; ctr < AP_MAX_NUM_STA; ctr++) अणु
+			अगर (ar->sta_list[ctr].sta_flags & STA_PS_SLEEP) अणु
 				q_mcast = true;
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (q_mcast) {
+		अगर (q_mcast) अणु
 			/*
 			 * If this transmit is not because of a Dtim Expiry
 			 * q it.
 			 */
-			if (!test_bit(DTIM_EXPIRED, &vif->flags)) {
+			अगर (!test_bit(DTIM_EXPIRED, &vअगर->flags)) अणु
 				bool is_mcastq_empty = false;
 
 				spin_lock_bh(&ar->mcastpsq_lock);
@@ -242,66 +243,66 @@ static bool ath6kl_powersave_ap(struct ath6kl_vif *vif, struct sk_buff *skb,
 				/*
 				 * If this is the first Mcast pkt getting
 				 * queued indicate to the target to set the
-				 * BitmapControl LSB of the TIM IE.
+				 * BiपंचांगapControl LSB of the TIM IE.
 				 */
-				if (is_mcastq_empty)
+				अगर (is_mcastq_empty)
 					ath6kl_wmi_set_pvb_cmd(ar->wmi,
-							       vif->fw_vif_idx,
+							       vअगर->fw_vअगर_idx,
 							       MCAST_AID, 1);
 
 				ps_queued = true;
-			} else {
+			पूर्ण अन्यथा अणु
 				/*
 				 * This transmit is because of Dtim expiry.
-				 * Determine if MoreData bit has to be set.
+				 * Determine अगर MoreData bit has to be set.
 				 */
 				spin_lock_bh(&ar->mcastpsq_lock);
-				if (!skb_queue_empty(&ar->mcastpsq))
+				अगर (!skb_queue_empty(&ar->mcastpsq))
 					*flags |= WMI_DATA_HDR_FLAGS_MORE;
 				spin_unlock_bh(&ar->mcastpsq_lock);
-			}
-		}
-	} else {
-		conn = ath6kl_find_sta(vif, datap->h_dest);
-		if (!conn) {
-			dev_kfree_skb(skb);
+			पूर्ण
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		conn = ath6kl_find_sta(vअगर, datap->h_dest);
+		अगर (!conn) अणु
+			dev_kमुक्त_skb(skb);
 
-			/* Inform the caller that the skb is consumed */
-			return true;
-		}
+			/* Inक्रमm the caller that the skb is consumed */
+			वापस true;
+		पूर्ण
 
-		if (conn->sta_flags & STA_PS_SLEEP) {
+		अगर (conn->sta_flags & STA_PS_SLEEP) अणु
 			ps_queued = ath6kl_process_uapsdq(conn,
-						vif, skb, flags);
-			if (!(*flags & WMI_DATA_HDR_FLAGS_UAPSD))
+						vअगर, skb, flags);
+			अगर (!(*flags & WMI_DATA_HDR_FLAGS_UAPSD))
 				ps_queued = ath6kl_process_psq(conn,
-						vif, skb, flags);
-		}
-	}
-	return ps_queued;
-}
+						vअगर, skb, flags);
+		पूर्ण
+	पूर्ण
+	वापस ps_queued;
+पूर्ण
 
 /* Tx functions */
 
-int ath6kl_control_tx(void *devt, struct sk_buff *skb,
-		      enum htc_endpoint_id eid)
-{
-	struct ath6kl *ar = devt;
-	int status = 0;
-	struct ath6kl_cookie *cookie = NULL;
+पूर्णांक ath6kl_control_tx(व्योम *devt, काष्ठा sk_buff *skb,
+		      क्रमागत htc_endpoपूर्णांक_id eid)
+अणु
+	काष्ठा ath6kl *ar = devt;
+	पूर्णांक status = 0;
+	काष्ठा ath6kl_cookie *cookie = शून्य;
 
 	trace_ath6kl_wmi_cmd(skb->data, skb->len);
 
-	if (WARN_ON_ONCE(ar->state == ATH6KL_STATE_WOW)) {
-		dev_kfree_skb(skb);
-		return -EACCES;
-	}
+	अगर (WARN_ON_ONCE(ar->state == ATH6KL_STATE_WOW)) अणु
+		dev_kमुक्त_skb(skb);
+		वापस -EACCES;
+	पूर्ण
 
-	if (WARN_ON_ONCE(eid == ENDPOINT_UNUSED ||
-			 eid >= ENDPOINT_MAX)) {
+	अगर (WARN_ON_ONCE(eid == ENDPOINT_UNUSED ||
+			 eid >= ENDPOपूर्णांक_उच्च)) अणु
 		status = -EINVAL;
-		goto fail_ctrl_tx;
-	}
+		जाओ fail_ctrl_tx;
+	पूर्ण
 
 	spin_lock_bh(&ar->lock);
 
@@ -309,27 +310,27 @@ int ath6kl_control_tx(void *devt, struct sk_buff *skb,
 		   "%s: skb=0x%p, len=0x%x eid =%d\n", __func__,
 		   skb, skb->len, eid);
 
-	if (test_bit(WMI_CTRL_EP_FULL, &ar->flag) && (eid == ar->ctrl_ep)) {
+	अगर (test_bit(WMI_CTRL_EP_FULL, &ar->flag) && (eid == ar->ctrl_ep)) अणु
 		/*
-		 * Control endpoint is full, don't allocate resources, we
+		 * Control endpoपूर्णांक is full, करोn't allocate resources, we
 		 * are just going to drop this packet.
 		 */
-		cookie = NULL;
+		cookie = शून्य;
 		ath6kl_err("wmi ctrl ep full, dropping pkt : 0x%p, len:%d\n",
 			   skb, skb->len);
-	} else {
+	पूर्ण अन्यथा अणु
 		cookie = ath6kl_alloc_cookie(ar);
-	}
+	पूर्ण
 
-	if (cookie == NULL) {
+	अगर (cookie == शून्य) अणु
 		spin_unlock_bh(&ar->lock);
 		status = -ENOMEM;
-		goto fail_ctrl_tx;
-	}
+		जाओ fail_ctrl_tx;
+	पूर्ण
 
 	ar->tx_pending[eid]++;
 
-	if (eid != ar->ctrl_ep)
+	अगर (eid != ar->ctrl_ep)
 		ar->total_tx_data_pend++;
 
 	spin_unlock_bh(&ar->lock);
@@ -341,31 +342,31 @@ int ath6kl_control_tx(void *devt, struct sk_buff *skb,
 	cookie->htc_pkt.skb = skb;
 
 	/*
-	 * This interface is asynchronous, if there is an error, cleanup
+	 * This पूर्णांकerface is asynchronous, अगर there is an error, cleanup
 	 * will happen in the TX completion callback.
 	 */
 	ath6kl_htc_tx(ar->htc_target, &cookie->htc_pkt);
 
-	return 0;
+	वापस 0;
 
 fail_ctrl_tx:
-	dev_kfree_skb(skb);
-	return status;
-}
+	dev_kमुक्त_skb(skb);
+	वापस status;
+पूर्ण
 
-netdev_tx_t ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
-{
-	struct ath6kl *ar = ath6kl_priv(dev);
-	struct ath6kl_cookie *cookie = NULL;
-	enum htc_endpoint_id eid = ENDPOINT_UNUSED;
-	struct ath6kl_vif *vif = netdev_priv(dev);
+netdev_tx_t ath6kl_data_tx(काष्ठा sk_buff *skb, काष्ठा net_device *dev)
+अणु
+	काष्ठा ath6kl *ar = ath6kl_priv(dev);
+	काष्ठा ath6kl_cookie *cookie = शून्य;
+	क्रमागत htc_endpoपूर्णांक_id eid = ENDPOINT_UNUSED;
+	काष्ठा ath6kl_vअगर *vअगर = netdev_priv(dev);
 	u32 map_no = 0;
 	u16 htc_tag = ATH6KL_DATA_PKT_TAG;
 	u8 ac = 99; /* initialize to unmapped ac */
 	bool chk_adhoc_ps_mapping = false;
-	int ret;
-	struct wmi_tx_meta_v2 meta_v2;
-	void *meta;
+	पूर्णांक ret;
+	काष्ठा wmi_tx_meta_v2 meta_v2;
+	व्योम *meta;
 	u8 csum_start = 0, csum_dest = 0, csum = skb->ip_summed;
 	u8 meta_ver = 0;
 	u32 flags = 0;
@@ -375,125 +376,125 @@ netdev_tx_t ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
 		   skb, skb->data, skb->len);
 
 	/* If target is not associated */
-	if (!test_bit(CONNECTED, &vif->flags))
-		goto fail_tx;
+	अगर (!test_bit(CONNECTED, &vअगर->flags))
+		जाओ fail_tx;
 
-	if (WARN_ON_ONCE(ar->state != ATH6KL_STATE_ON))
-		goto fail_tx;
+	अगर (WARN_ON_ONCE(ar->state != ATH6KL_STATE_ON))
+		जाओ fail_tx;
 
-	if (!test_bit(WMI_READY, &ar->flag))
-		goto fail_tx;
+	अगर (!test_bit(WMI_READY, &ar->flag))
+		जाओ fail_tx;
 
 	/* AP mode Power saving processing */
-	if (vif->nw_type == AP_NETWORK) {
-		if (ath6kl_powersave_ap(vif, skb, &flags))
-			return 0;
-	}
+	अगर (vअगर->nw_type == AP_NETWORK) अणु
+		अगर (ath6kl_घातersave_ap(vअगर, skb, &flags))
+			वापस 0;
+	पूर्ण
 
-	if (test_bit(WMI_ENABLED, &ar->flag)) {
-		if ((dev->features & NETIF_F_IP_CSUM) &&
-		    (csum == CHECKSUM_PARTIAL)) {
+	अगर (test_bit(WMI_ENABLED, &ar->flag)) अणु
+		अगर ((dev->features & NETIF_F_IP_CSUM) &&
+		    (csum == CHECKSUM_PARTIAL)) अणु
 			csum_start = skb->csum_start -
 					(skb_network_header(skb) - skb->head) +
-					sizeof(struct ath6kl_llc_snap_hdr);
+					माप(काष्ठा ath6kl_llc_snap_hdr);
 			csum_dest = skb->csum_offset + csum_start;
-		}
+		पूर्ण
 
-		if (skb_cow_head(skb, dev->needed_headroom)) {
+		अगर (skb_cow_head(skb, dev->needed_headroom)) अणु
 			dev->stats.tx_dropped++;
-			kfree_skb(skb);
-			return 0;
-		}
+			kमुक्त_skb(skb);
+			वापस 0;
+		पूर्ण
 
-		if (ath6kl_wmi_dix_2_dot3(ar->wmi, skb)) {
+		अगर (ath6kl_wmi_dix_2_करोt3(ar->wmi, skb)) अणु
 			ath6kl_err("ath6kl_wmi_dix_2_dot3 failed\n");
-			goto fail_tx;
-		}
+			जाओ fail_tx;
+		पूर्ण
 
-		if ((dev->features & NETIF_F_IP_CSUM) &&
-		    (csum == CHECKSUM_PARTIAL)) {
+		अगर ((dev->features & NETIF_F_IP_CSUM) &&
+		    (csum == CHECKSUM_PARTIAL)) अणु
 			meta_v2.csum_start = csum_start;
 			meta_v2.csum_dest = csum_dest;
 
-			/* instruct target to calculate checksum */
+			/* inकाष्ठा target to calculate checksum */
 			meta_v2.csum_flags = WMI_META_V2_FLAG_CSUM_OFFLOAD;
 			meta_ver = WMI_META_VERSION_2;
 			meta = &meta_v2;
-		} else {
+		पूर्ण अन्यथा अणु
 			meta_ver = 0;
-			meta = NULL;
-		}
+			meta = शून्य;
+		पूर्ण
 
 		ret = ath6kl_wmi_data_hdr_add(ar->wmi, skb,
 				DATA_MSGTYPE, flags, 0,
 				meta_ver,
-				meta, vif->fw_vif_idx);
+				meta, vअगर->fw_vअगर_idx);
 
-		if (ret) {
+		अगर (ret) अणु
 			ath6kl_warn("failed to add wmi data header:%d\n"
 				, ret);
-			goto fail_tx;
-		}
+			जाओ fail_tx;
+		पूर्ण
 
-		if ((vif->nw_type == ADHOC_NETWORK) &&
-		    ar->ibss_ps_enable && test_bit(CONNECTED, &vif->flags))
+		अगर ((vअगर->nw_type == ADHOC_NETWORK) &&
+		    ar->ibss_ps_enable && test_bit(CONNECTED, &vअगर->flags))
 			chk_adhoc_ps_mapping = true;
-		else {
+		अन्यथा अणु
 			/* get the stream mapping */
 			ret = ath6kl_wmi_implicit_create_pstream(ar->wmi,
-				    vif->fw_vif_idx, skb,
-				    0, test_bit(WMM_ENABLED, &vif->flags), &ac);
-			if (ret)
-				goto fail_tx;
-		}
-	} else {
-		goto fail_tx;
-	}
+				    vअगर->fw_vअगर_idx, skb,
+				    0, test_bit(WMM_ENABLED, &vअगर->flags), &ac);
+			अगर (ret)
+				जाओ fail_tx;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		जाओ fail_tx;
+	पूर्ण
 
 	spin_lock_bh(&ar->lock);
 
-	if (chk_adhoc_ps_mapping)
+	अगर (chk_adhoc_ps_mapping)
 		eid = ath6kl_ibss_map_epid(skb, dev, &map_no);
-	else
+	अन्यथा
 		eid = ar->ac2ep_map[ac];
 
-	if (eid == 0 || eid == ENDPOINT_UNUSED) {
+	अगर (eid == 0 || eid == ENDPOINT_UNUSED) अणु
 		ath6kl_err("eid %d is not mapped!\n", eid);
 		spin_unlock_bh(&ar->lock);
-		goto fail_tx;
-	}
+		जाओ fail_tx;
+	पूर्ण
 
-	/* allocate resource for this packet */
+	/* allocate resource क्रम this packet */
 	cookie = ath6kl_alloc_cookie(ar);
 
-	if (!cookie) {
+	अगर (!cookie) अणु
 		spin_unlock_bh(&ar->lock);
-		goto fail_tx;
-	}
+		जाओ fail_tx;
+	पूर्ण
 
-	/* update counts while the lock is held */
+	/* update counts जबतक the lock is held */
 	ar->tx_pending[eid]++;
 	ar->total_tx_data_pend++;
 
 	spin_unlock_bh(&ar->lock);
 
-	if (!IS_ALIGNED((unsigned long) skb->data - HTC_HDR_LENGTH, 4) &&
-	    skb_cloned(skb)) {
+	अगर (!IS_ALIGNED((अचिन्हित दीर्घ) skb->data - HTC_HDR_LENGTH, 4) &&
+	    skb_cloned(skb)) अणु
 		/*
 		 * We will touch (move the buffer data to align it. Since the
 		 * skb buffer is cloned and not only the header is changed, we
 		 * have to copy it to allow the changes. Since we are copying
 		 * the data here, we may as well align it by reserving suitable
-		 * headroom to avoid the memmove in ath6kl_htc_tx_buf_align().
+		 * headroom to aव्योम the स_हटाओ in ath6kl_htc_tx_buf_align().
 		 */
-		struct sk_buff *nskb;
+		काष्ठा sk_buff *nskb;
 
 		nskb = skb_copy_expand(skb, HTC_HDR_LENGTH, 0, GFP_ATOMIC);
-		if (nskb == NULL)
-			goto fail_tx;
-		kfree_skb(skb);
+		अगर (nskb == शून्य)
+			जाओ fail_tx;
+		kमुक्त_skb(skb);
 		skb = nskb;
-	}
+	पूर्ण
 
 	cookie->skb = skb;
 	cookie->map_no = map_no;
@@ -505,65 +506,65 @@ netdev_tx_t ath6kl_data_tx(struct sk_buff *skb, struct net_device *dev)
 			skb->data, skb->len);
 
 	/*
-	 * HTC interface is asynchronous, if this fails, cleanup will
+	 * HTC पूर्णांकerface is asynchronous, अगर this fails, cleanup will
 	 * happen in the ath6kl_tx_complete callback.
 	 */
 	ath6kl_htc_tx(ar->htc_target, &cookie->htc_pkt);
 
-	return 0;
+	वापस 0;
 
 fail_tx:
-	dev_kfree_skb(skb);
+	dev_kमुक्त_skb(skb);
 
 	dev->stats.tx_dropped++;
-	dev->stats.tx_aborted_errors++;
+	dev->stats.tx_पातed_errors++;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* indicate tx activity or inactivity on a WMI stream */
-void ath6kl_indicate_tx_activity(void *devt, u8 traffic_class, bool active)
-{
-	struct ath6kl *ar = devt;
-	enum htc_endpoint_id eid;
-	int i;
+व्योम ath6kl_indicate_tx_activity(व्योम *devt, u8 traffic_class, bool active)
+अणु
+	काष्ठा ath6kl *ar = devt;
+	क्रमागत htc_endpoपूर्णांक_id eid;
+	पूर्णांक i;
 
 	eid = ar->ac2ep_map[traffic_class];
 
-	if (!test_bit(WMI_ENABLED, &ar->flag))
-		goto notify_htc;
+	अगर (!test_bit(WMI_ENABLED, &ar->flag))
+		जाओ notअगरy_htc;
 
 	spin_lock_bh(&ar->lock);
 
 	ar->ac_stream_active[traffic_class] = active;
 
-	if (active) {
+	अगर (active) अणु
 		/*
 		 * Keep track of the active stream with the highest
 		 * priority.
 		 */
-		if (ar->ac_stream_pri_map[traffic_class] >
+		अगर (ar->ac_stream_pri_map[traffic_class] >
 		    ar->hiac_stream_active_pri)
 			/* set the new highest active priority */
 			ar->hiac_stream_active_pri =
 					ar->ac_stream_pri_map[traffic_class];
 
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
-		 * We may have to search for the next active stream
+		 * We may have to search क्रम the next active stream
 		 * that is the highest priority.
 		 */
-		if (ar->hiac_stream_active_pri ==
-			ar->ac_stream_pri_map[traffic_class]) {
+		अगर (ar->hiac_stream_active_pri ==
+			ar->ac_stream_pri_map[traffic_class]) अणु
 			/*
 			 * The highest priority stream just went inactive
-			 * reset and search for the "next" highest "active"
+			 * reset and search क्रम the "next" highest "active"
 			 * priority stream.
 			 */
 			ar->hiac_stream_active_pri = 0;
 
-			for (i = 0; i < WMM_NUM_AC; i++) {
-				if (ar->ac_stream_active[i] &&
+			क्रम (i = 0; i < WMM_NUM_AC; i++) अणु
+				अगर (ar->ac_stream_active[i] &&
 				    (ar->ac_stream_pri_map[i] >
 				     ar->hiac_stream_active_pri))
 					/*
@@ -572,49 +573,49 @@ void ath6kl_indicate_tx_activity(void *devt, u8 traffic_class, bool active)
 					 */
 					ar->hiac_stream_active_pri =
 						ar->ac_stream_pri_map[i];
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_bh(&ar->lock);
 
-notify_htc:
-	/* notify HTC, this may cause credit distribution changes */
+notअगरy_htc:
+	/* notअगरy HTC, this may cause credit distribution changes */
 	ath6kl_htc_activity_changed(ar->htc_target, eid, active);
-}
+पूर्ण
 
-enum htc_send_full_action ath6kl_tx_queue_full(struct htc_target *target,
-					       struct htc_packet *packet)
-{
-	struct ath6kl *ar = target->dev->ar;
-	struct ath6kl_vif *vif;
-	enum htc_endpoint_id endpoint = packet->endpoint;
-	enum htc_send_full_action action = HTC_SEND_FULL_KEEP;
+क्रमागत htc_send_full_action ath6kl_tx_queue_full(काष्ठा htc_target *target,
+					       काष्ठा htc_packet *packet)
+अणु
+	काष्ठा ath6kl *ar = target->dev->ar;
+	काष्ठा ath6kl_vअगर *vअगर;
+	क्रमागत htc_endpoपूर्णांक_id endpoपूर्णांक = packet->endpoपूर्णांक;
+	क्रमागत htc_send_full_action action = HTC_SEND_FULL_KEEP;
 
-	if (endpoint == ar->ctrl_ep) {
+	अगर (endpoपूर्णांक == ar->ctrl_ep) अणु
 		/*
-		 * Under normal WMI if this is getting full, then something
+		 * Under normal WMI अगर this is getting full, then something
 		 * is running rampant the host should not be exhausting the
 		 * WMI queue with too many commands the only exception to
-		 * this is during testing using endpointping.
+		 * this is during testing using endpoपूर्णांकping.
 		 */
 		set_bit(WMI_CTRL_EP_FULL, &ar->flag);
 		ath6kl_err("wmi ctrl ep is full\n");
-		ath6kl_recovery_err_notify(ar, ATH6KL_FW_EP_FULL);
-		return action;
-	}
+		ath6kl_recovery_err_notअगरy(ar, ATH6KL_FW_EP_FULL);
+		वापस action;
+	पूर्ण
 
-	if (packet->info.tx.tag == ATH6KL_CONTROL_PKT_TAG)
-		return action;
+	अगर (packet->info.tx.tag == ATH6KL_CONTROL_PKT_TAG)
+		वापस action;
 
 	/*
-	 * The last MAX_HI_COOKIE_NUM "batch" of cookies are reserved for
+	 * The last MAX_HI_COOKIE_NUM "batch" of cookies are reserved क्रम
 	 * the highest active stream.
 	 */
-	if (ar->ac_stream_pri_map[ar->ep2ac_map[endpoint]] <
+	अगर (ar->ac_stream_pri_map[ar->ep2ac_map[endpoपूर्णांक]] <
 	    ar->hiac_stream_active_pri &&
 	    ar->cookie_count <=
-			target->endpoint[endpoint].tx_drop_packet_threshold)
+			target->endpoपूर्णांक[endpoपूर्णांक].tx_drop_packet_threshold)
 		/*
 		 * Give preference to the highest priority stream by
 		 * dropping the packets which overflowed.
@@ -623,172 +624,172 @@ enum htc_send_full_action ath6kl_tx_queue_full(struct htc_target *target,
 
 	/* FIXME: Locking */
 	spin_lock_bh(&ar->list_lock);
-	list_for_each_entry(vif, &ar->vif_list, list) {
-		if (vif->nw_type == ADHOC_NETWORK ||
-		    action != HTC_SEND_FULL_DROP) {
+	list_क्रम_each_entry(vअगर, &ar->vअगर_list, list) अणु
+		अगर (vअगर->nw_type == ADHOC_NETWORK ||
+		    action != HTC_SEND_FULL_DROP) अणु
 			spin_unlock_bh(&ar->list_lock);
 
-			set_bit(NETQ_STOPPED, &vif->flags);
-			netif_stop_queue(vif->ndev);
+			set_bit(NETQ_STOPPED, &vअगर->flags);
+			netअगर_stop_queue(vअगर->ndev);
 
-			return action;
-		}
-	}
+			वापस action;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&ar->list_lock);
 
-	return action;
-}
+	वापस action;
+पूर्ण
 
 /* TODO this needs to be looked at */
-static void ath6kl_tx_clear_node_map(struct ath6kl_vif *vif,
-				     enum htc_endpoint_id eid, u32 map_no)
-{
-	struct ath6kl *ar = vif->ar;
+अटल व्योम ath6kl_tx_clear_node_map(काष्ठा ath6kl_vअगर *vअगर,
+				     क्रमागत htc_endpoपूर्णांक_id eid, u32 map_no)
+अणु
+	काष्ठा ath6kl *ar = vअगर->ar;
 	u32 i;
 
-	if (vif->nw_type != ADHOC_NETWORK)
-		return;
+	अगर (vअगर->nw_type != ADHOC_NETWORK)
+		वापस;
 
-	if (!ar->ibss_ps_enable)
-		return;
+	अगर (!ar->ibss_ps_enable)
+		वापस;
 
-	if (eid == ar->ctrl_ep)
-		return;
+	अगर (eid == ar->ctrl_ep)
+		वापस;
 
-	if (map_no == 0)
-		return;
+	अगर (map_no == 0)
+		वापस;
 
 	map_no--;
 	ar->node_map[map_no].tx_pend--;
 
-	if (ar->node_map[map_no].tx_pend)
-		return;
+	अगर (ar->node_map[map_no].tx_pend)
+		वापस;
 
-	if (map_no != (ar->node_num - 1))
-		return;
+	अगर (map_no != (ar->node_num - 1))
+		वापस;
 
-	for (i = ar->node_num; i > 0; i--) {
-		if (ar->node_map[i - 1].tx_pend)
-			break;
+	क्रम (i = ar->node_num; i > 0; i--) अणु
+		अगर (ar->node_map[i - 1].tx_pend)
+			अवरोध;
 
-		memset(&ar->node_map[i - 1], 0,
-		       sizeof(struct ath6kl_node_mapping));
+		स_रखो(&ar->node_map[i - 1], 0,
+		       माप(काष्ठा ath6kl_node_mapping));
 		ar->node_num--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-void ath6kl_tx_complete(struct htc_target *target,
-			struct list_head *packet_queue)
-{
-	struct ath6kl *ar = target->dev->ar;
-	struct sk_buff_head skb_queue;
-	struct htc_packet *packet;
-	struct sk_buff *skb;
-	struct ath6kl_cookie *ath6kl_cookie;
+व्योम ath6kl_tx_complete(काष्ठा htc_target *target,
+			काष्ठा list_head *packet_queue)
+अणु
+	काष्ठा ath6kl *ar = target->dev->ar;
+	काष्ठा sk_buff_head skb_queue;
+	काष्ठा htc_packet *packet;
+	काष्ठा sk_buff *skb;
+	काष्ठा ath6kl_cookie *ath6kl_cookie;
 	u32 map_no = 0;
-	int status;
-	enum htc_endpoint_id eid;
+	पूर्णांक status;
+	क्रमागत htc_endpoपूर्णांक_id eid;
 	bool wake_event = false;
-	bool flushing[ATH6KL_VIF_MAX] = {false};
-	u8 if_idx;
-	struct ath6kl_vif *vif;
+	bool flushing[ATH6KL_VIF_MAX] = अणुfalseपूर्ण;
+	u8 अगर_idx;
+	काष्ठा ath6kl_vअगर *vअगर;
 
 	skb_queue_head_init(&skb_queue);
 
-	/* lock the driver as we update internal state */
+	/* lock the driver as we update पूर्णांकernal state */
 	spin_lock_bh(&ar->lock);
 
 	/* reap completed packets */
-	while (!list_empty(packet_queue)) {
-		packet = list_first_entry(packet_queue, struct htc_packet,
+	जबतक (!list_empty(packet_queue)) अणु
+		packet = list_first_entry(packet_queue, काष्ठा htc_packet,
 					  list);
 		list_del(&packet->list);
 
-		if (WARN_ON_ONCE(packet->endpoint == ENDPOINT_UNUSED ||
-				 packet->endpoint >= ENDPOINT_MAX))
-			continue;
+		अगर (WARN_ON_ONCE(packet->endpoपूर्णांक == ENDPOINT_UNUSED ||
+				 packet->endpoपूर्णांक >= ENDPOपूर्णांक_उच्च))
+			जारी;
 
-		ath6kl_cookie = (struct ath6kl_cookie *)packet->pkt_cntxt;
-		if (WARN_ON_ONCE(!ath6kl_cookie))
-			continue;
+		ath6kl_cookie = (काष्ठा ath6kl_cookie *)packet->pkt_cntxt;
+		अगर (WARN_ON_ONCE(!ath6kl_cookie))
+			जारी;
 
 		status = packet->status;
 		skb = ath6kl_cookie->skb;
-		eid = packet->endpoint;
+		eid = packet->endpoपूर्णांक;
 		map_no = ath6kl_cookie->map_no;
 
-		if (WARN_ON_ONCE(!skb || !skb->data)) {
-			dev_kfree_skb(skb);
-			ath6kl_free_cookie(ar, ath6kl_cookie);
-			continue;
-		}
+		अगर (WARN_ON_ONCE(!skb || !skb->data)) अणु
+			dev_kमुक्त_skb(skb);
+			ath6kl_मुक्त_cookie(ar, ath6kl_cookie);
+			जारी;
+		पूर्ण
 
 		__skb_queue_tail(&skb_queue, skb);
 
-		if (WARN_ON_ONCE(!status && (packet->act_len != skb->len))) {
-			ath6kl_free_cookie(ar, ath6kl_cookie);
-			continue;
-		}
+		अगर (WARN_ON_ONCE(!status && (packet->act_len != skb->len))) अणु
+			ath6kl_मुक्त_cookie(ar, ath6kl_cookie);
+			जारी;
+		पूर्ण
 
 		ar->tx_pending[eid]--;
 
-		if (eid != ar->ctrl_ep)
+		अगर (eid != ar->ctrl_ep)
 			ar->total_tx_data_pend--;
 
-		if (eid == ar->ctrl_ep) {
-			if (test_bit(WMI_CTRL_EP_FULL, &ar->flag))
+		अगर (eid == ar->ctrl_ep) अणु
+			अगर (test_bit(WMI_CTRL_EP_FULL, &ar->flag))
 				clear_bit(WMI_CTRL_EP_FULL, &ar->flag);
 
-			if (ar->tx_pending[eid] == 0)
+			अगर (ar->tx_pending[eid] == 0)
 				wake_event = true;
-		}
+		पूर्ण
 
-		if (eid == ar->ctrl_ep) {
-			if_idx = wmi_cmd_hdr_get_if_idx(
-				(struct wmi_cmd_hdr *) packet->buf);
-		} else {
-			if_idx = wmi_data_hdr_get_if_idx(
-				(struct wmi_data_hdr *) packet->buf);
-		}
+		अगर (eid == ar->ctrl_ep) अणु
+			अगर_idx = wmi_cmd_hdr_get_अगर_idx(
+				(काष्ठा wmi_cmd_hdr *) packet->buf);
+		पूर्ण अन्यथा अणु
+			अगर_idx = wmi_data_hdr_get_अगर_idx(
+				(काष्ठा wmi_data_hdr *) packet->buf);
+		पूर्ण
 
-		vif = ath6kl_get_vif_by_index(ar, if_idx);
-		if (!vif) {
-			ath6kl_free_cookie(ar, ath6kl_cookie);
-			continue;
-		}
+		vअगर = ath6kl_get_vअगर_by_index(ar, अगर_idx);
+		अगर (!vअगर) अणु
+			ath6kl_मुक्त_cookie(ar, ath6kl_cookie);
+			जारी;
+		पूर्ण
 
-		if (status) {
-			if (status == -ECANCELED)
+		अगर (status) अणु
+			अगर (status == -ECANCELED)
 				/* a packet was flushed  */
-				flushing[if_idx] = true;
+				flushing[अगर_idx] = true;
 
-			vif->ndev->stats.tx_errors++;
+			vअगर->ndev->stats.tx_errors++;
 
-			if (status != -ENOSPC && status != -ECANCELED)
+			अगर (status != -ENOSPC && status != -ECANCELED)
 				ath6kl_warn("tx complete error: %d\n", status);
 
 			ath6kl_dbg(ATH6KL_DBG_WLAN_TX,
 				   "%s: skb=0x%p data=0x%p len=0x%x eid=%d %s\n",
 				   __func__, skb, packet->buf, packet->act_len,
 				   eid, "error!");
-		} else {
+		पूर्ण अन्यथा अणु
 			ath6kl_dbg(ATH6KL_DBG_WLAN_TX,
 				   "%s: skb=0x%p data=0x%p len=0x%x eid=%d %s\n",
 				   __func__, skb, packet->buf, packet->act_len,
 				   eid, "OK");
 
-			flushing[if_idx] = false;
-			vif->ndev->stats.tx_packets++;
-			vif->ndev->stats.tx_bytes += skb->len;
-		}
+			flushing[अगर_idx] = false;
+			vअगर->ndev->stats.tx_packets++;
+			vअगर->ndev->stats.tx_bytes += skb->len;
+		पूर्ण
 
-		ath6kl_tx_clear_node_map(vif, eid, map_no);
+		ath6kl_tx_clear_node_map(vअगर, eid, map_no);
 
-		ath6kl_free_cookie(ar, ath6kl_cookie);
+		ath6kl_मुक्त_cookie(ar, ath6kl_cookie);
 
-		if (test_bit(NETQ_STOPPED, &vif->flags))
-			clear_bit(NETQ_STOPPED, &vif->flags);
-	}
+		अगर (test_bit(NETQ_STOPPED, &vअगर->flags))
+			clear_bit(NETQ_STOPPED, &vअगर->flags);
+	पूर्ण
 
 	spin_unlock_bh(&ar->lock);
 
@@ -796,139 +797,139 @@ void ath6kl_tx_complete(struct htc_target *target,
 
 	/* FIXME: Locking */
 	spin_lock_bh(&ar->list_lock);
-	list_for_each_entry(vif, &ar->vif_list, list) {
-		if (test_bit(CONNECTED, &vif->flags) &&
-		    !flushing[vif->fw_vif_idx]) {
+	list_क्रम_each_entry(vअगर, &ar->vअगर_list, list) अणु
+		अगर (test_bit(CONNECTED, &vअगर->flags) &&
+		    !flushing[vअगर->fw_vअगर_idx]) अणु
 			spin_unlock_bh(&ar->list_lock);
-			netif_wake_queue(vif->ndev);
+			netअगर_wake_queue(vअगर->ndev);
 			spin_lock_bh(&ar->list_lock);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&ar->list_lock);
 
-	if (wake_event)
+	अगर (wake_event)
 		wake_up(&ar->event_wq);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-void ath6kl_tx_data_cleanup(struct ath6kl *ar)
-{
-	int i;
+व्योम ath6kl_tx_data_cleanup(काष्ठा ath6kl *ar)
+अणु
+	पूर्णांक i;
 
 	/* flush all the data (non-control) streams */
-	for (i = 0; i < WMM_NUM_AC; i++)
+	क्रम (i = 0; i < WMM_NUM_AC; i++)
 		ath6kl_htc_flush_txep(ar->htc_target, ar->ac2ep_map[i],
 				      ATH6KL_DATA_PKT_TAG);
-}
+पूर्ण
 
 /* Rx functions */
 
-static void ath6kl_deliver_frames_to_nw_stack(struct net_device *dev,
-					      struct sk_buff *skb)
-{
-	if (!skb)
-		return;
+अटल व्योम ath6kl_deliver_frames_to_nw_stack(काष्ठा net_device *dev,
+					      काष्ठा sk_buff *skb)
+अणु
+	अगर (!skb)
+		वापस;
 
 	skb->dev = dev;
 
-	if (!(skb->dev->flags & IFF_UP)) {
-		dev_kfree_skb(skb);
-		return;
-	}
+	अगर (!(skb->dev->flags & IFF_UP)) अणु
+		dev_kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	skb->protocol = eth_type_trans(skb, skb->dev);
 
-	netif_rx_ni(skb);
-}
+	netअगर_rx_ni(skb);
+पूर्ण
 
-static void ath6kl_alloc_netbufs(struct sk_buff_head *q, u16 num)
-{
-	struct sk_buff *skb;
+अटल व्योम ath6kl_alloc_netbufs(काष्ठा sk_buff_head *q, u16 num)
+अणु
+	काष्ठा sk_buff *skb;
 
-	while (num) {
+	जबतक (num) अणु
 		skb = ath6kl_buf_alloc(ATH6KL_BUFFER_SIZE);
-		if (!skb) {
+		अगर (!skb) अणु
 			ath6kl_err("netbuf allocation failed\n");
-			return;
-		}
+			वापस;
+		पूर्ण
 		skb_queue_tail(q, skb);
 		num--;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static struct sk_buff *aggr_get_free_skb(struct aggr_info *p_aggr)
-{
-	struct sk_buff *skb = NULL;
+अटल काष्ठा sk_buff *aggr_get_मुक्त_skb(काष्ठा aggr_info *p_aggr)
+अणु
+	काष्ठा sk_buff *skb = शून्य;
 
-	if (skb_queue_len(&p_aggr->rx_amsdu_freeq) <
+	अगर (skb_queue_len(&p_aggr->rx_amsdu_मुक्तq) <
 	    (AGGR_NUM_OF_FREE_NETBUFS >> 2))
-		ath6kl_alloc_netbufs(&p_aggr->rx_amsdu_freeq,
+		ath6kl_alloc_netbufs(&p_aggr->rx_amsdu_मुक्तq,
 				     AGGR_NUM_OF_FREE_NETBUFS);
 
-	skb = skb_dequeue(&p_aggr->rx_amsdu_freeq);
+	skb = skb_dequeue(&p_aggr->rx_amsdu_मुक्तq);
 
-	return skb;
-}
+	वापस skb;
+पूर्ण
 
-void ath6kl_rx_refill(struct htc_target *target, enum htc_endpoint_id endpoint)
-{
-	struct ath6kl *ar = target->dev->ar;
-	struct sk_buff *skb;
-	int rx_buf;
-	int n_buf_refill;
-	struct htc_packet *packet;
-	struct list_head queue;
+व्योम ath6kl_rx_refill(काष्ठा htc_target *target, क्रमागत htc_endpoपूर्णांक_id endpoपूर्णांक)
+अणु
+	काष्ठा ath6kl *ar = target->dev->ar;
+	काष्ठा sk_buff *skb;
+	पूर्णांक rx_buf;
+	पूर्णांक n_buf_refill;
+	काष्ठा htc_packet *packet;
+	काष्ठा list_head queue;
 
 	n_buf_refill = ATH6KL_MAX_RX_BUFFERS -
-			  ath6kl_htc_get_rxbuf_num(ar->htc_target, endpoint);
+			  ath6kl_htc_get_rxbuf_num(ar->htc_target, endpoपूर्णांक);
 
-	if (n_buf_refill <= 0)
-		return;
+	अगर (n_buf_refill <= 0)
+		वापस;
 
 	INIT_LIST_HEAD(&queue);
 
 	ath6kl_dbg(ATH6KL_DBG_WLAN_RX,
 		   "%s: providing htc with %d buffers at eid=%d\n",
-		   __func__, n_buf_refill, endpoint);
+		   __func__, n_buf_refill, endpoपूर्णांक);
 
-	for (rx_buf = 0; rx_buf < n_buf_refill; rx_buf++) {
+	क्रम (rx_buf = 0; rx_buf < n_buf_refill; rx_buf++) अणु
 		skb = ath6kl_buf_alloc(ATH6KL_BUFFER_SIZE);
-		if (!skb)
-			break;
+		अगर (!skb)
+			अवरोध;
 
-		packet = (struct htc_packet *) skb->head;
-		if (!IS_ALIGNED((unsigned long) skb->data, 4)) {
-			size_t len = skb_headlen(skb);
+		packet = (काष्ठा htc_packet *) skb->head;
+		अगर (!IS_ALIGNED((अचिन्हित दीर्घ) skb->data, 4)) अणु
+			माप_प्रकार len = skb_headlen(skb);
 			skb->data = PTR_ALIGN(skb->data - 4, 4);
-			skb_set_tail_pointer(skb, len);
-		}
+			skb_set_tail_poपूर्णांकer(skb, len);
+		पूर्ण
 		set_htc_rxpkt_info(packet, skb, skb->data,
-				   ATH6KL_BUFFER_SIZE, endpoint);
+				   ATH6KL_BUFFER_SIZE, endpoपूर्णांक);
 		packet->skb = skb;
 		list_add_tail(&packet->list, &queue);
-	}
+	पूर्ण
 
-	if (!list_empty(&queue))
+	अगर (!list_empty(&queue))
 		ath6kl_htc_add_rxbuf_multiple(ar->htc_target, &queue);
-}
+पूर्ण
 
-void ath6kl_refill_amsdu_rxbufs(struct ath6kl *ar, int count)
-{
-	struct htc_packet *packet;
-	struct sk_buff *skb;
+व्योम ath6kl_refill_amsdu_rxbufs(काष्ठा ath6kl *ar, पूर्णांक count)
+अणु
+	काष्ठा htc_packet *packet;
+	काष्ठा sk_buff *skb;
 
-	while (count) {
+	जबतक (count) अणु
 		skb = ath6kl_buf_alloc(ATH6KL_AMSDU_BUFFER_SIZE);
-		if (!skb)
-			return;
+		अगर (!skb)
+			वापस;
 
-		packet = (struct htc_packet *) skb->head;
-		if (!IS_ALIGNED((unsigned long) skb->data, 4)) {
-			size_t len = skb_headlen(skb);
+		packet = (काष्ठा htc_packet *) skb->head;
+		अगर (!IS_ALIGNED((अचिन्हित दीर्घ) skb->data, 4)) अणु
+			माप_प्रकार len = skb_headlen(skb);
 			skb->data = PTR_ALIGN(skb->data - 4, 4);
-			skb_set_tail_pointer(skb, len);
-		}
+			skb_set_tail_poपूर्णांकer(skb, len);
+		पूर्ण
 		set_htc_rxpkt_info(packet, skb, skb->data,
 				   ATH6KL_AMSDU_BUFFER_SIZE, 0);
 		packet->skb = skb;
@@ -937,99 +938,99 @@ void ath6kl_refill_amsdu_rxbufs(struct ath6kl *ar, int count)
 		list_add_tail(&packet->list, &ar->amsdu_rx_buffer_queue);
 		spin_unlock_bh(&ar->lock);
 		count--;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /*
- * Callback to allocate a receive buffer for a pending packet. We use a
+ * Callback to allocate a receive buffer क्रम a pending packet. We use a
  * pre-allocated list of buffers of maximum AMSDU size (4K).
  */
-struct htc_packet *ath6kl_alloc_amsdu_rxbuf(struct htc_target *target,
-					    enum htc_endpoint_id endpoint,
-					    int len)
-{
-	struct ath6kl *ar = target->dev->ar;
-	struct htc_packet *packet = NULL;
-	struct list_head *pkt_pos;
-	int refill_cnt = 0, depth = 0;
+काष्ठा htc_packet *ath6kl_alloc_amsdu_rxbuf(काष्ठा htc_target *target,
+					    क्रमागत htc_endpoपूर्णांक_id endpoपूर्णांक,
+					    पूर्णांक len)
+अणु
+	काष्ठा ath6kl *ar = target->dev->ar;
+	काष्ठा htc_packet *packet = शून्य;
+	काष्ठा list_head *pkt_pos;
+	पूर्णांक refill_cnt = 0, depth = 0;
 
 	ath6kl_dbg(ATH6KL_DBG_WLAN_RX, "%s: eid=%d, len:%d\n",
-		   __func__, endpoint, len);
+		   __func__, endpoपूर्णांक, len);
 
-	if ((len <= ATH6KL_BUFFER_SIZE) ||
+	अगर ((len <= ATH6KL_BUFFER_SIZE) ||
 	    (len > ATH6KL_AMSDU_BUFFER_SIZE))
-		return NULL;
+		वापस शून्य;
 
 	spin_lock_bh(&ar->lock);
 
-	if (list_empty(&ar->amsdu_rx_buffer_queue)) {
+	अगर (list_empty(&ar->amsdu_rx_buffer_queue)) अणु
 		spin_unlock_bh(&ar->lock);
 		refill_cnt = ATH6KL_MAX_AMSDU_RX_BUFFERS;
-		goto refill_buf;
-	}
+		जाओ refill_buf;
+	पूर्ण
 
 	packet = list_first_entry(&ar->amsdu_rx_buffer_queue,
-				  struct htc_packet, list);
+				  काष्ठा htc_packet, list);
 	list_del(&packet->list);
-	list_for_each(pkt_pos, &ar->amsdu_rx_buffer_queue)
+	list_क्रम_each(pkt_pos, &ar->amsdu_rx_buffer_queue)
 		depth++;
 
 	refill_cnt = ATH6KL_MAX_AMSDU_RX_BUFFERS - depth;
 	spin_unlock_bh(&ar->lock);
 
-	/* set actual endpoint ID */
-	packet->endpoint = endpoint;
+	/* set actual endpoपूर्णांक ID */
+	packet->endpoपूर्णांक = endpoपूर्णांक;
 
 refill_buf:
-	if (refill_cnt >= ATH6KL_AMSDU_REFILL_THRESHOLD)
+	अगर (refill_cnt >= ATH6KL_AMSDU_REFILL_THRESHOLD)
 		ath6kl_refill_amsdu_rxbufs(ar, refill_cnt);
 
-	return packet;
-}
+	वापस packet;
+पूर्ण
 
-static void aggr_slice_amsdu(struct aggr_info *p_aggr,
-			     struct rxtid *rxtid, struct sk_buff *skb)
-{
-	struct sk_buff *new_skb;
-	struct ethhdr *hdr;
+अटल व्योम aggr_slice_amsdu(काष्ठा aggr_info *p_aggr,
+			     काष्ठा rxtid *rxtid, काष्ठा sk_buff *skb)
+अणु
+	काष्ठा sk_buff *new_skb;
+	काष्ठा ethhdr *hdr;
 	u16 frame_8023_len, payload_8023_len, mac_hdr_len, amsdu_len;
 	u8 *framep;
 
-	mac_hdr_len = sizeof(struct ethhdr);
+	mac_hdr_len = माप(काष्ठा ethhdr);
 	framep = skb->data + mac_hdr_len;
 	amsdu_len = skb->len - mac_hdr_len;
 
-	while (amsdu_len > mac_hdr_len) {
-		hdr = (struct ethhdr *) framep;
+	जबतक (amsdu_len > mac_hdr_len) अणु
+		hdr = (काष्ठा ethhdr *) framep;
 		payload_8023_len = be16_to_cpu(hdr->h_proto);
 
-		if (payload_8023_len < MIN_MSDU_SUBFRAME_PAYLOAD_LEN ||
-		    payload_8023_len > MAX_MSDU_SUBFRAME_PAYLOAD_LEN) {
+		अगर (payload_8023_len < MIN_MSDU_SUBFRAME_PAYLOAD_LEN ||
+		    payload_8023_len > MAX_MSDU_SUBFRAME_PAYLOAD_LEN) अणु
 			ath6kl_err("802.3 AMSDU frame bound check failed. len %d\n",
 				   payload_8023_len);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		frame_8023_len = payload_8023_len + mac_hdr_len;
-		new_skb = aggr_get_free_skb(p_aggr);
-		if (!new_skb) {
+		new_skb = aggr_get_मुक्त_skb(p_aggr);
+		अगर (!new_skb) अणु
 			ath6kl_err("no buffer available\n");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		memcpy(new_skb->data, framep, frame_8023_len);
+		स_नकल(new_skb->data, framep, frame_8023_len);
 		skb_put(new_skb, frame_8023_len);
-		if (ath6kl_wmi_dot3_2_dix(new_skb)) {
+		अगर (ath6kl_wmi_करोt3_2_dix(new_skb)) अणु
 			ath6kl_err("dot3_2_dix error\n");
-			dev_kfree_skb(new_skb);
-			break;
-		}
+			dev_kमुक्त_skb(new_skb);
+			अवरोध;
+		पूर्ण
 
 		skb_queue_tail(&rxtid->q, new_skb);
 
 		/* Is this the last subframe within this aggregate ? */
-		if ((amsdu_len - frame_8023_len) == 0)
-			break;
+		अगर ((amsdu_len - frame_8023_len) == 0)
+			अवरोध;
 
 		/* Add the length of A-MSDU subframe padding bytes -
 		 * Round to nearest word.
@@ -1038,19 +1039,19 @@ static void aggr_slice_amsdu(struct aggr_info *p_aggr,
 
 		framep += frame_8023_len;
 		amsdu_len -= frame_8023_len;
-	}
+	पूर्ण
 
-	dev_kfree_skb(skb);
-}
+	dev_kमुक्त_skb(skb);
+पूर्ण
 
-static void aggr_deque_frms(struct aggr_info_conn *agg_conn, u8 tid,
+अटल व्योम aggr_deque_frms(काष्ठा aggr_info_conn *agg_conn, u8 tid,
 			    u16 seq_no, u8 order)
-{
-	struct sk_buff *skb;
-	struct rxtid *rxtid;
-	struct skb_hold_q *node;
+अणु
+	काष्ठा sk_buff *skb;
+	काष्ठा rxtid *rxtid;
+	काष्ठा skb_hold_q *node;
 	u16 idx, idx_end, seq_end;
-	struct rxtid_stats *stats;
+	काष्ठा rxtid_stats *stats;
 
 	rxtid = &agg_conn->rx_tid[tid];
 	stats = &agg_conn->stat[tid];
@@ -1059,12 +1060,12 @@ static void aggr_deque_frms(struct aggr_info_conn *agg_conn, u8 tid,
 	idx = AGGR_WIN_IDX(rxtid->seq_next, rxtid->hold_q_sz);
 
 	/*
-	 * idx_end is typically the last possible frame in the window,
+	 * idx_end is typically the last possible frame in the winकरोw,
 	 * but changes to 'the' seq_no, when BAR comes. If seq_no
 	 * is non-zero, we will go up to that and stop.
-	 * Note: last seq no in current window will occupy the same
+	 * Note: last seq no in current winकरोw will occupy the same
 	 * index position as index that is just previous to start.
-	 * An imp point : if win_sz is 7, for seq_no space of 4095,
+	 * An imp poपूर्णांक : अगर win_sz is 7, क्रम seq_no space of 4095,
 	 * then, there would be holes when sequence wrap around occurs.
 	 * Target should judiciously choose the win_sz, based on
 	 * this condition. For 4095, (TID_WINDOW_SZ = 2 x win_sz
@@ -1074,42 +1075,42 @@ static void aggr_deque_frms(struct aggr_info_conn *agg_conn, u8 tid,
 	seq_end = seq_no ? seq_no : rxtid->seq_next;
 	idx_end = AGGR_WIN_IDX(seq_end, rxtid->hold_q_sz);
 
-	do {
+	करो अणु
 		node = &rxtid->hold_q[idx];
-		if ((order == 1) && (!node->skb))
-			break;
+		अगर ((order == 1) && (!node->skb))
+			अवरोध;
 
-		if (node->skb) {
-			if (node->is_amsdu)
+		अगर (node->skb) अणु
+			अगर (node->is_amsdu)
 				aggr_slice_amsdu(agg_conn->aggr_info, rxtid,
 						 node->skb);
-			else
+			अन्यथा
 				skb_queue_tail(&rxtid->q, node->skb);
-			node->skb = NULL;
-		} else {
+			node->skb = शून्य;
+		पूर्ण अन्यथा अणु
 			stats->num_hole++;
-		}
+		पूर्ण
 
 		rxtid->seq_next = ATH6KL_NEXT_SEQ_NO(rxtid->seq_next);
 		idx = AGGR_WIN_IDX(rxtid->seq_next, rxtid->hold_q_sz);
-	} while (idx != idx_end);
+	पूर्ण जबतक (idx != idx_end);
 
 	spin_unlock_bh(&rxtid->lock);
 
 	stats->num_delivered += skb_queue_len(&rxtid->q);
 
-	while ((skb = skb_dequeue(&rxtid->q)))
+	जबतक ((skb = skb_dequeue(&rxtid->q)))
 		ath6kl_deliver_frames_to_nw_stack(agg_conn->dev, skb);
-}
+पूर्ण
 
-static bool aggr_process_recv_frm(struct aggr_info_conn *agg_conn, u8 tid,
+अटल bool aggr_process_recv_frm(काष्ठा aggr_info_conn *agg_conn, u8 tid,
 				  u16 seq_no,
-				  bool is_amsdu, struct sk_buff *frame)
-{
-	struct rxtid *rxtid;
-	struct rxtid_stats *stats;
-	struct sk_buff *skb;
-	struct skb_hold_q *node;
+				  bool is_amsdu, काष्ठा sk_buff *frame)
+अणु
+	काष्ठा rxtid *rxtid;
+	काष्ठा rxtid_stats *stats;
+	काष्ठा sk_buff *skb;
+	काष्ठा skb_hold_q *node;
 	u16 idx, st, cur, end;
 	bool is_queued = false;
 	u16 extended_end;
@@ -1117,58 +1118,58 @@ static bool aggr_process_recv_frm(struct aggr_info_conn *agg_conn, u8 tid,
 	rxtid = &agg_conn->rx_tid[tid];
 	stats = &agg_conn->stat[tid];
 
-	stats->num_into_aggr++;
+	stats->num_पूर्णांकo_aggr++;
 
-	if (!rxtid->aggr) {
-		if (is_amsdu) {
+	अगर (!rxtid->aggr) अणु
+		अगर (is_amsdu) अणु
 			aggr_slice_amsdu(agg_conn->aggr_info, rxtid, frame);
 			is_queued = true;
 			stats->num_amsdu++;
-			while ((skb = skb_dequeue(&rxtid->q)))
+			जबतक ((skb = skb_dequeue(&rxtid->q)))
 				ath6kl_deliver_frames_to_nw_stack(agg_conn->dev,
 								  skb);
-		}
-		return is_queued;
-	}
+		पूर्ण
+		वापस is_queued;
+	पूर्ण
 
-	/* Check the incoming sequence no, if it's in the window */
+	/* Check the incoming sequence no, अगर it's in the winकरोw */
 	st = rxtid->seq_next;
 	cur = seq_no;
 	end = (st + rxtid->hold_q_sz-1) & ATH6KL_MAX_SEQ_NO;
 
-	if (((st < end) && (cur < st || cur > end)) ||
-	    ((st > end) && (cur > end) && (cur < st))) {
+	अगर (((st < end) && (cur < st || cur > end)) ||
+	    ((st > end) && (cur > end) && (cur < st))) अणु
 		extended_end = (end + rxtid->hold_q_sz - 1) &
 			ATH6KL_MAX_SEQ_NO;
 
-		if (((end < extended_end) &&
+		अगर (((end < extended_end) &&
 		     (cur < end || cur > extended_end)) ||
 		    ((end > extended_end) && (cur > extended_end) &&
-		     (cur < end))) {
+		     (cur < end))) अणु
 			aggr_deque_frms(agg_conn, tid, 0, 0);
 			spin_lock_bh(&rxtid->lock);
-			if (cur >= rxtid->hold_q_sz - 1)
+			अगर (cur >= rxtid->hold_q_sz - 1)
 				rxtid->seq_next = cur - (rxtid->hold_q_sz - 1);
-			else
+			अन्यथा
 				rxtid->seq_next = ATH6KL_MAX_SEQ_NO -
 						  (rxtid->hold_q_sz - 2 - cur);
 			spin_unlock_bh(&rxtid->lock);
-		} else {
+		पूर्ण अन्यथा अणु
 			/*
 			 * Dequeue only those frames that are outside the
-			 * new shifted window.
+			 * new shअगरted winकरोw.
 			 */
-			if (cur >= rxtid->hold_q_sz - 1)
+			अगर (cur >= rxtid->hold_q_sz - 1)
 				st = cur - (rxtid->hold_q_sz - 1);
-			else
+			अन्यथा
 				st = ATH6KL_MAX_SEQ_NO -
 					(rxtid->hold_q_sz - 2 - cur);
 
 			aggr_deque_frms(agg_conn, tid, st, 0);
-		}
+		पूर्ण
 
 		stats->num_oow++;
-	}
+	पूर्ण
 
 	idx = AGGR_WIN_IDX(seq_no, rxtid->hold_q_sz);
 
@@ -1177,18 +1178,18 @@ static bool aggr_process_recv_frm(struct aggr_info_conn *agg_conn, u8 tid,
 	spin_lock_bh(&rxtid->lock);
 
 	/*
-	 * Is the cur frame duplicate or something beyond our window(hold_q
-	 * -> which is 2x, already)?
+	 * Is the cur frame duplicate or something beyond our winकरोw(hold_q
+	 * -> which is 2x, alपढ़ोy)?
 	 *
 	 * 1. Duplicate is easy - drop incoming frame.
-	 * 2. Not falling in current sliding window.
+	 * 2. Not falling in current sliding winकरोw.
 	 *  2a. is the frame_seq_no preceding current tid_seq_no?
 	 *      -> drop the frame. perhaps sender did not get our ACK.
 	 *         this is taken care of above.
-	 *  2b. is the frame_seq_no beyond window(st, TID_WINDOW_SZ);
-	 *      -> Taken care of it above, by moving window forward.
+	 *  2b. is the frame_seq_no beyond winकरोw(st, TID_WINDOW_SZ);
+	 *      -> Taken care of it above, by moving winकरोw क्रमward.
 	 */
-	dev_kfree_skb(node->skb);
+	dev_kमुक्त_skb(node->skb);
 	stats->num_dups++;
 
 	node->skb = frame;
@@ -1196,54 +1197,54 @@ static bool aggr_process_recv_frm(struct aggr_info_conn *agg_conn, u8 tid,
 	node->is_amsdu = is_amsdu;
 	node->seq_no = seq_no;
 
-	if (node->is_amsdu)
+	अगर (node->is_amsdu)
 		stats->num_amsdu++;
-	else
+	अन्यथा
 		stats->num_mpdu++;
 
 	spin_unlock_bh(&rxtid->lock);
 
 	aggr_deque_frms(agg_conn, tid, 0, 1);
 
-	if (agg_conn->timer_scheduled)
-		return is_queued;
+	अगर (agg_conn->समयr_scheduled)
+		वापस is_queued;
 
 	spin_lock_bh(&rxtid->lock);
-	for (idx = 0; idx < rxtid->hold_q_sz; idx++) {
-		if (rxtid->hold_q[idx].skb) {
+	क्रम (idx = 0; idx < rxtid->hold_q_sz; idx++) अणु
+		अगर (rxtid->hold_q[idx].skb) अणु
 			/*
 			 * There is a frame in the queue and no
-			 * timer so start a timer to ensure that
-			 * the frame doesn't remain stuck
-			 * forever.
+			 * समयr so start a समयr to ensure that
+			 * the frame करोesn't reमुख्य stuck
+			 * क्रमever.
 			 */
-			agg_conn->timer_scheduled = true;
-			mod_timer(&agg_conn->timer,
-				  (jiffies + (HZ * AGGR_RX_TIMEOUT) / 1000));
-			rxtid->timer_mon = true;
-			break;
-		}
-	}
+			agg_conn->समयr_scheduled = true;
+			mod_समयr(&agg_conn->समयr,
+				  (jअगरfies + (HZ * AGGR_RX_TIMEOUT) / 1000));
+			rxtid->समयr_mon = true;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 	spin_unlock_bh(&rxtid->lock);
 
-	return is_queued;
-}
+	वापस is_queued;
+पूर्ण
 
-static void ath6kl_uapsd_trigger_frame_rx(struct ath6kl_vif *vif,
-						 struct ath6kl_sta *conn)
-{
-	struct ath6kl *ar = vif->ar;
+अटल व्योम ath6kl_uapsd_trigger_frame_rx(काष्ठा ath6kl_vअगर *vअगर,
+						 काष्ठा ath6kl_sta *conn)
+अणु
+	काष्ठा ath6kl *ar = vअगर->ar;
 	bool is_apsdq_empty, is_apsdq_empty_at_start;
 	u32 num_frames_to_deliver, flags;
-	struct sk_buff *skb = NULL;
+	काष्ठा sk_buff *skb = शून्य;
 
 	/*
-	 * If the APSD q for this STA is not empty, dequeue and
+	 * If the APSD q क्रम this STA is not empty, dequeue and
 	 * send a pkt from the head of the q. Also update the
-	 * More data bit in the WMI_DATA_HDR if there are
-	 * more pkts for this STA in the APSD q.
-	 * If there are no more pkts for this STA,
-	 * update the APSD bitmap for this STA.
+	 * More data bit in the WMI_DATA_HDR अगर there are
+	 * more pkts क्रम this STA in the APSD q.
+	 * If there are no more pkts क्रम this STA,
+	 * update the APSD biपंचांगap क्रम this STA.
 	 */
 
 	num_frames_to_deliver = (conn->apsd_info >> ATH6KL_APSD_NUM_OF_AC) &
@@ -1254,7 +1255,7 @@ static void ath6kl_uapsd_trigger_frame_rx(struct ath6kl_vif *vif,
 	 * in the QOS_INFO of the association request
 	 * If it is zero, send all frames
 	 */
-	if (!num_frames_to_deliver)
+	अगर (!num_frames_to_deliver)
 		num_frames_to_deliver = ATH6KL_APSD_ALL_FRAME;
 
 	spin_lock_bh(&conn->psq_lock);
@@ -1262,7 +1263,7 @@ static void ath6kl_uapsd_trigger_frame_rx(struct ath6kl_vif *vif,
 	spin_unlock_bh(&conn->psq_lock);
 	is_apsdq_empty_at_start = is_apsdq_empty;
 
-	while ((!is_apsdq_empty) && (num_frames_to_deliver)) {
+	जबतक ((!is_apsdq_empty) && (num_frames_to_deliver)) अणु
 		spin_lock_bh(&conn->psq_lock);
 		skb = skb_dequeue(&conn->apsdq);
 		is_apsdq_empty = skb_queue_empty(&conn->apsdq);
@@ -1276,58 +1277,58 @@ static void ath6kl_uapsd_trigger_frame_rx(struct ath6kl_vif *vif,
 		num_frames_to_deliver--;
 
 		/* Last frame in the service period, set EOSP or queue empty */
-		if ((is_apsdq_empty) || (!num_frames_to_deliver))
+		अगर ((is_apsdq_empty) || (!num_frames_to_deliver))
 			conn->sta_flags |= STA_PS_APSD_EOSP;
 
-		ath6kl_data_tx(skb, vif->ndev);
+		ath6kl_data_tx(skb, vअगर->ndev);
 		conn->sta_flags &= ~(STA_PS_APSD_TRIGGER);
 		conn->sta_flags &= ~(STA_PS_APSD_EOSP);
-	}
+	पूर्ण
 
-	if (is_apsdq_empty) {
-		if (is_apsdq_empty_at_start)
+	अगर (is_apsdq_empty) अणु
+		अगर (is_apsdq_empty_at_start)
 			flags = WMI_AP_APSD_NO_DELIVERY_FRAMES;
-		else
+		अन्यथा
 			flags = 0;
 
 		ath6kl_wmi_set_apsd_bfrd_traf(ar->wmi,
-					      vif->fw_vif_idx,
+					      vअगर->fw_vअगर_idx,
 					      conn->aid, 0, flags);
-	}
+	पूर्ण
 
-	return;
-}
+	वापस;
+पूर्ण
 
-void ath6kl_rx(struct htc_target *target, struct htc_packet *packet)
-{
-	struct ath6kl *ar = target->dev->ar;
-	struct sk_buff *skb = packet->pkt_cntxt;
-	struct wmi_rx_meta_v2 *meta;
-	struct wmi_data_hdr *dhdr;
-	int min_hdr_len;
-	u8 meta_type, dot11_hdr = 0;
-	u8 pad_before_data_start;
-	int status = packet->status;
-	enum htc_endpoint_id ept = packet->endpoint;
+व्योम ath6kl_rx(काष्ठा htc_target *target, काष्ठा htc_packet *packet)
+अणु
+	काष्ठा ath6kl *ar = target->dev->ar;
+	काष्ठा sk_buff *skb = packet->pkt_cntxt;
+	काष्ठा wmi_rx_meta_v2 *meta;
+	काष्ठा wmi_data_hdr *dhdr;
+	पूर्णांक min_hdr_len;
+	u8 meta_type, करोt11_hdr = 0;
+	u8 pad_beक्रमe_data_start;
+	पूर्णांक status = packet->status;
+	क्रमागत htc_endpoपूर्णांक_id ept = packet->endpoपूर्णांक;
 	bool is_amsdu, prev_ps, ps_state = false;
 	bool trig_state = false;
-	struct ath6kl_sta *conn = NULL;
-	struct sk_buff *skb1 = NULL;
-	struct ethhdr *datap = NULL;
-	struct ath6kl_vif *vif;
-	struct aggr_info_conn *aggr_conn;
+	काष्ठा ath6kl_sta *conn = शून्य;
+	काष्ठा sk_buff *skb1 = शून्य;
+	काष्ठा ethhdr *datap = शून्य;
+	काष्ठा ath6kl_vअगर *vअगर;
+	काष्ठा aggr_info_conn *aggr_conn;
 	u16 seq_no, offset;
-	u8 tid, if_idx;
+	u8 tid, अगर_idx;
 
 	ath6kl_dbg(ATH6KL_DBG_WLAN_RX,
 		   "%s: ar=0x%p eid=%d, skb=0x%p, data=0x%p, len=0x%x status:%d",
 		   __func__, ar, ept, skb, packet->buf,
 		   packet->act_len, status);
 
-	if (status || packet->act_len < HTC_HDR_LENGTH) {
-		dev_kfree_skb(skb);
-		return;
-	}
+	अगर (status || packet->act_len < HTC_HDR_LENGTH) अणु
+		dev_kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	skb_put(skb, packet->act_len + HTC_HDR_LENGTH);
 	skb_pull(skb, HTC_HDR_LENGTH);
@@ -1335,535 +1336,535 @@ void ath6kl_rx(struct htc_target *target, struct htc_packet *packet)
 	ath6kl_dbg_dump(ATH6KL_DBG_RAW_BYTES, __func__, "rx ",
 			skb->data, skb->len);
 
-	if (ept == ar->ctrl_ep) {
-		if (test_bit(WMI_ENABLED, &ar->flag)) {
+	अगर (ept == ar->ctrl_ep) अणु
+		अगर (test_bit(WMI_ENABLED, &ar->flag)) अणु
 			ath6kl_check_wow_status(ar);
 			ath6kl_wmi_control_rx(ar->wmi, skb);
-			return;
-		}
-		if_idx =
-		wmi_cmd_hdr_get_if_idx((struct wmi_cmd_hdr *) skb->data);
-	} else {
-		if_idx =
-		wmi_data_hdr_get_if_idx((struct wmi_data_hdr *) skb->data);
-	}
+			वापस;
+		पूर्ण
+		अगर_idx =
+		wmi_cmd_hdr_get_अगर_idx((काष्ठा wmi_cmd_hdr *) skb->data);
+	पूर्ण अन्यथा अणु
+		अगर_idx =
+		wmi_data_hdr_get_अगर_idx((काष्ठा wmi_data_hdr *) skb->data);
+	पूर्ण
 
-	vif = ath6kl_get_vif_by_index(ar, if_idx);
-	if (!vif) {
-		dev_kfree_skb(skb);
-		return;
-	}
+	vअगर = ath6kl_get_vअगर_by_index(ar, अगर_idx);
+	अगर (!vअगर) अणु
+		dev_kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
 	/*
-	 * Take lock to protect buffer counts and adaptive power throughput
+	 * Take lock to protect buffer counts and adaptive घातer throughput
 	 * state.
 	 */
-	spin_lock_bh(&vif->if_lock);
+	spin_lock_bh(&vअगर->अगर_lock);
 
-	vif->ndev->stats.rx_packets++;
-	vif->ndev->stats.rx_bytes += packet->act_len;
+	vअगर->ndev->stats.rx_packets++;
+	vअगर->ndev->stats.rx_bytes += packet->act_len;
 
-	spin_unlock_bh(&vif->if_lock);
+	spin_unlock_bh(&vअगर->अगर_lock);
 
-	skb->dev = vif->ndev;
+	skb->dev = vअगर->ndev;
 
-	if (!test_bit(WMI_ENABLED, &ar->flag)) {
-		if (EPPING_ALIGNMENT_PAD > 0)
+	अगर (!test_bit(WMI_ENABLED, &ar->flag)) अणु
+		अगर (EPPING_ALIGNMENT_PAD > 0)
 			skb_pull(skb, EPPING_ALIGNMENT_PAD);
-		ath6kl_deliver_frames_to_nw_stack(vif->ndev, skb);
-		return;
-	}
+		ath6kl_deliver_frames_to_nw_stack(vअगर->ndev, skb);
+		वापस;
+	पूर्ण
 
 	ath6kl_check_wow_status(ar);
 
-	min_hdr_len = sizeof(struct ethhdr) + sizeof(struct wmi_data_hdr) +
-		      sizeof(struct ath6kl_llc_snap_hdr);
+	min_hdr_len = माप(काष्ठा ethhdr) + माप(काष्ठा wmi_data_hdr) +
+		      माप(काष्ठा ath6kl_llc_snap_hdr);
 
-	dhdr = (struct wmi_data_hdr *) skb->data;
+	dhdr = (काष्ठा wmi_data_hdr *) skb->data;
 
 	/*
-	 * In the case of AP mode we may receive NULL data frames
-	 * that do not have LLC hdr. They are 16 bytes in size.
+	 * In the हाल of AP mode we may receive शून्य data frames
+	 * that करो not have LLC hdr. They are 16 bytes in size.
 	 * Allow these frames in the AP mode.
 	 */
-	if (vif->nw_type != AP_NETWORK &&
+	अगर (vअगर->nw_type != AP_NETWORK &&
 	    ((packet->act_len < min_hdr_len) ||
-	     (packet->act_len > WMI_MAX_AMSDU_RX_DATA_FRAME_LENGTH))) {
+	     (packet->act_len > WMI_MAX_AMSDU_RX_DATA_FRAME_LENGTH))) अणु
 		ath6kl_info("frame len is too short or too long\n");
-		vif->ndev->stats.rx_errors++;
-		vif->ndev->stats.rx_length_errors++;
-		dev_kfree_skb(skb);
-		return;
-	}
+		vअगर->ndev->stats.rx_errors++;
+		vअगर->ndev->stats.rx_length_errors++;
+		dev_kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	pad_before_data_start =
+	pad_beक्रमe_data_start =
 		(le16_to_cpu(dhdr->info3) >> WMI_DATA_HDR_PAD_BEFORE_DATA_SHIFT)
 			& WMI_DATA_HDR_PAD_BEFORE_DATA_MASK;
 
 	/* Get the Power save state of the STA */
-	if (vif->nw_type == AP_NETWORK) {
+	अगर (vअगर->nw_type == AP_NETWORK) अणु
 		meta_type = wmi_data_hdr_get_meta(dhdr);
 
 		ps_state = !!((dhdr->info >> WMI_DATA_HDR_PS_SHIFT) &
 			      WMI_DATA_HDR_PS_MASK);
 
-		offset = sizeof(struct wmi_data_hdr) + pad_before_data_start;
+		offset = माप(काष्ठा wmi_data_hdr) + pad_beक्रमe_data_start;
 		trig_state = !!(le16_to_cpu(dhdr->info3) & WMI_DATA_HDR_TRIG);
 
-		switch (meta_type) {
-		case 0:
-			break;
-		case WMI_META_VERSION_1:
-			offset += sizeof(struct wmi_rx_meta_v1);
-			break;
-		case WMI_META_VERSION_2:
-			offset += sizeof(struct wmi_rx_meta_v2);
-			break;
-		default:
-			break;
-		}
+		चयन (meta_type) अणु
+		हाल 0:
+			अवरोध;
+		हाल WMI_META_VERSION_1:
+			offset += माप(काष्ठा wmi_rx_meta_v1);
+			अवरोध;
+		हाल WMI_META_VERSION_2:
+			offset += माप(काष्ठा wmi_rx_meta_v2);
+			अवरोध;
+		शेष:
+			अवरोध;
+		पूर्ण
 
-		datap = (struct ethhdr *) (skb->data + offset);
-		conn = ath6kl_find_sta(vif, datap->h_source);
+		datap = (काष्ठा ethhdr *) (skb->data + offset);
+		conn = ath6kl_find_sta(vअगर, datap->h_source);
 
-		if (!conn) {
-			dev_kfree_skb(skb);
-			return;
-		}
+		अगर (!conn) अणु
+			dev_kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
 
 		/*
 		 * If there is a change in PS state of the STA,
 		 * take appropriate steps:
 		 *
-		 * 1. If Sleep-->Awake, flush the psq for the STA
-		 *    Clear the PVB for the STA.
+		 * 1. If Sleep-->Awake, flush the psq क्रम the STA
+		 *    Clear the PVB क्रम the STA.
 		 * 2. If Awake-->Sleep, Starting queueing frames
 		 *    the STA.
 		 */
 		prev_ps = !!(conn->sta_flags & STA_PS_SLEEP);
 
-		if (ps_state)
+		अगर (ps_state)
 			conn->sta_flags |= STA_PS_SLEEP;
-		else
+		अन्यथा
 			conn->sta_flags &= ~STA_PS_SLEEP;
 
 		/* Accept trigger only when the station is in sleep */
-		if ((conn->sta_flags & STA_PS_SLEEP) && trig_state)
-			ath6kl_uapsd_trigger_frame_rx(vif, conn);
+		अगर ((conn->sta_flags & STA_PS_SLEEP) && trig_state)
+			ath6kl_uapsd_trigger_frame_rx(vअगर, conn);
 
-		if (prev_ps ^ !!(conn->sta_flags & STA_PS_SLEEP)) {
-			if (!(conn->sta_flags & STA_PS_SLEEP)) {
-				struct sk_buff *skbuff = NULL;
+		अगर (prev_ps ^ !!(conn->sta_flags & STA_PS_SLEEP)) अणु
+			अगर (!(conn->sta_flags & STA_PS_SLEEP)) अणु
+				काष्ठा sk_buff *skbuff = शून्य;
 				bool is_apsdq_empty;
-				struct ath6kl_mgmt_buff *mgmt;
+				काष्ठा ath6kl_mgmt_buff *mgmt;
 				u8 idx;
 
 				spin_lock_bh(&conn->psq_lock);
-				while (conn->mgmt_psq_len > 0) {
+				जबतक (conn->mgmt_psq_len > 0) अणु
 					mgmt = list_first_entry(
 							&conn->mgmt_psq,
-							struct ath6kl_mgmt_buff,
+							काष्ठा ath6kl_mgmt_buff,
 							list);
 					list_del(&mgmt->list);
 					conn->mgmt_psq_len--;
 					spin_unlock_bh(&conn->psq_lock);
-					idx = vif->fw_vif_idx;
+					idx = vअगर->fw_vअगर_idx;
 
 					ath6kl_wmi_send_mgmt_cmd(ar->wmi,
 								 idx,
 								 mgmt->id,
 								 mgmt->freq,
-								 mgmt->wait,
+								 mgmt->रुको,
 								 mgmt->buf,
 								 mgmt->len,
 								 mgmt->no_cck);
 
-					kfree(mgmt);
+					kमुक्त(mgmt);
 					spin_lock_bh(&conn->psq_lock);
-				}
+				पूर्ण
 				conn->mgmt_psq_len = 0;
-				while ((skbuff = skb_dequeue(&conn->psq))) {
+				जबतक ((skbuff = skb_dequeue(&conn->psq))) अणु
 					spin_unlock_bh(&conn->psq_lock);
-					ath6kl_data_tx(skbuff, vif->ndev);
+					ath6kl_data_tx(skbuff, vअगर->ndev);
 					spin_lock_bh(&conn->psq_lock);
-				}
+				पूर्ण
 
 				is_apsdq_empty = skb_queue_empty(&conn->apsdq);
-				while ((skbuff = skb_dequeue(&conn->apsdq))) {
+				जबतक ((skbuff = skb_dequeue(&conn->apsdq))) अणु
 					spin_unlock_bh(&conn->psq_lock);
-					ath6kl_data_tx(skbuff, vif->ndev);
+					ath6kl_data_tx(skbuff, vअगर->ndev);
 					spin_lock_bh(&conn->psq_lock);
-				}
+				पूर्ण
 				spin_unlock_bh(&conn->psq_lock);
 
-				if (!is_apsdq_empty)
+				अगर (!is_apsdq_empty)
 					ath6kl_wmi_set_apsd_bfrd_traf(
 							ar->wmi,
-							vif->fw_vif_idx,
+							vअगर->fw_vअगर_idx,
 							conn->aid, 0, 0);
 
-				/* Clear the PVB for this STA */
-				ath6kl_wmi_set_pvb_cmd(ar->wmi, vif->fw_vif_idx,
+				/* Clear the PVB क्रम this STA */
+				ath6kl_wmi_set_pvb_cmd(ar->wmi, vअगर->fw_vअगर_idx,
 						       conn->aid, 0);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		/* drop NULL data frames here */
-		if ((packet->act_len < min_hdr_len) ||
+		/* drop शून्य data frames here */
+		अगर ((packet->act_len < min_hdr_len) ||
 		    (packet->act_len >
-		     WMI_MAX_AMSDU_RX_DATA_FRAME_LENGTH)) {
-			dev_kfree_skb(skb);
-			return;
-		}
-	}
+		     WMI_MAX_AMSDU_RX_DATA_FRAME_LENGTH)) अणु
+			dev_kमुक्त_skb(skb);
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	is_amsdu = wmi_data_hdr_is_amsdu(dhdr) ? true : false;
 	tid = wmi_data_hdr_get_up(dhdr);
 	seq_no = wmi_data_hdr_get_seqno(dhdr);
 	meta_type = wmi_data_hdr_get_meta(dhdr);
-	dot11_hdr = wmi_data_hdr_get_dot11(dhdr);
+	करोt11_hdr = wmi_data_hdr_get_करोt11(dhdr);
 
-	skb_pull(skb, sizeof(struct wmi_data_hdr));
+	skb_pull(skb, माप(काष्ठा wmi_data_hdr));
 
-	switch (meta_type) {
-	case WMI_META_VERSION_1:
-		skb_pull(skb, sizeof(struct wmi_rx_meta_v1));
-		break;
-	case WMI_META_VERSION_2:
-		meta = (struct wmi_rx_meta_v2 *) skb->data;
-		if (meta->csum_flags & 0x1) {
+	चयन (meta_type) अणु
+	हाल WMI_META_VERSION_1:
+		skb_pull(skb, माप(काष्ठा wmi_rx_meta_v1));
+		अवरोध;
+	हाल WMI_META_VERSION_2:
+		meta = (काष्ठा wmi_rx_meta_v2 *) skb->data;
+		अगर (meta->csum_flags & 0x1) अणु
 			skb->ip_summed = CHECKSUM_COMPLETE;
-			skb->csum = (__force __wsum) meta->csum;
-		}
-		skb_pull(skb, sizeof(struct wmi_rx_meta_v2));
-		break;
-	default:
-		break;
-	}
+			skb->csum = (__क्रमce __wsum) meta->csum;
+		पूर्ण
+		skb_pull(skb, माप(काष्ठा wmi_rx_meta_v2));
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	skb_pull(skb, pad_before_data_start);
+	skb_pull(skb, pad_beक्रमe_data_start);
 
-	if (dot11_hdr)
-		status = ath6kl_wmi_dot11_hdr_remove(ar->wmi, skb);
-	else if (!is_amsdu)
-		status = ath6kl_wmi_dot3_2_dix(skb);
+	अगर (करोt11_hdr)
+		status = ath6kl_wmi_करोt11_hdr_हटाओ(ar->wmi, skb);
+	अन्यथा अगर (!is_amsdu)
+		status = ath6kl_wmi_करोt3_2_dix(skb);
 
-	if (status) {
+	अगर (status) अणु
 		/*
 		 * Drop frames that could not be processed (lack of
 		 * memory, etc.)
 		 */
-		dev_kfree_skb(skb);
-		return;
-	}
+		dev_kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	if (!(vif->ndev->flags & IFF_UP)) {
-		dev_kfree_skb(skb);
-		return;
-	}
+	अगर (!(vअगर->ndev->flags & IFF_UP)) अणु
+		dev_kमुक्त_skb(skb);
+		वापस;
+	पूर्ण
 
-	if (vif->nw_type == AP_NETWORK) {
-		datap = (struct ethhdr *) skb->data;
-		if (is_multicast_ether_addr(datap->h_dest))
+	अगर (vअगर->nw_type == AP_NETWORK) अणु
+		datap = (काष्ठा ethhdr *) skb->data;
+		अगर (is_multicast_ether_addr(datap->h_dest))
 			/*
 			 * Bcast/Mcast frames should be sent to the
 			 * OS stack as well as on the air.
 			 */
 			skb1 = skb_copy(skb, GFP_ATOMIC);
-		else {
+		अन्यथा अणु
 			/*
-			 * Search for a connected STA with dstMac
+			 * Search क्रम a connected STA with dstMac
 			 * as the Mac address. If found send the
-			 * frame to it on the air else send the
+			 * frame to it on the air अन्यथा send the
 			 * frame up the stack.
 			 */
-			conn = ath6kl_find_sta(vif, datap->h_dest);
+			conn = ath6kl_find_sta(vअगर, datap->h_dest);
 
-			if (conn && ar->intra_bss) {
+			अगर (conn && ar->पूर्णांकra_bss) अणु
 				skb1 = skb;
-				skb = NULL;
-			} else if (conn && !ar->intra_bss) {
-				dev_kfree_skb(skb);
-				skb = NULL;
-			}
-		}
-		if (skb1)
-			ath6kl_data_tx(skb1, vif->ndev);
+				skb = शून्य;
+			पूर्ण अन्यथा अगर (conn && !ar->पूर्णांकra_bss) अणु
+				dev_kमुक्त_skb(skb);
+				skb = शून्य;
+			पूर्ण
+		पूर्ण
+		अगर (skb1)
+			ath6kl_data_tx(skb1, vअगर->ndev);
 
-		if (skb == NULL) {
+		अगर (skb == शून्य) अणु
 			/* nothing to deliver up the stack */
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	datap = (struct ethhdr *) skb->data;
+	datap = (काष्ठा ethhdr *) skb->data;
 
-	if (is_unicast_ether_addr(datap->h_dest)) {
-		if (vif->nw_type == AP_NETWORK) {
-			conn = ath6kl_find_sta(vif, datap->h_source);
-			if (!conn)
-				return;
+	अगर (is_unicast_ether_addr(datap->h_dest)) अणु
+		अगर (vअगर->nw_type == AP_NETWORK) अणु
+			conn = ath6kl_find_sta(vअगर, datap->h_source);
+			अगर (!conn)
+				वापस;
 			aggr_conn = conn->aggr_conn;
-		} else {
-			aggr_conn = vif->aggr_cntxt->aggr_conn;
-		}
+		पूर्ण अन्यथा अणु
+			aggr_conn = vअगर->aggr_cntxt->aggr_conn;
+		पूर्ण
 
-		if (aggr_process_recv_frm(aggr_conn, tid, seq_no,
-					  is_amsdu, skb)) {
+		अगर (aggr_process_recv_frm(aggr_conn, tid, seq_no,
+					  is_amsdu, skb)) अणु
 			/* aggregation code will handle the skb */
-			return;
-		}
-	} else if (!is_broadcast_ether_addr(datap->h_dest)) {
-		vif->ndev->stats.multicast++;
-	}
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अगर (!is_broadcast_ether_addr(datap->h_dest)) अणु
+		vअगर->ndev->stats.multicast++;
+	पूर्ण
 
-	ath6kl_deliver_frames_to_nw_stack(vif->ndev, skb);
-}
+	ath6kl_deliver_frames_to_nw_stack(vअगर->ndev, skb);
+पूर्ण
 
-static void aggr_timeout(struct timer_list *t)
-{
+अटल व्योम aggr_समयout(काष्ठा समयr_list *t)
+अणु
 	u8 i, j;
-	struct aggr_info_conn *aggr_conn = from_timer(aggr_conn, t, timer);
-	struct rxtid *rxtid;
-	struct rxtid_stats *stats;
+	काष्ठा aggr_info_conn *aggr_conn = from_समयr(aggr_conn, t, समयr);
+	काष्ठा rxtid *rxtid;
+	काष्ठा rxtid_stats *stats;
 
-	for (i = 0; i < NUM_OF_TIDS; i++) {
+	क्रम (i = 0; i < NUM_OF_TIDS; i++) अणु
 		rxtid = &aggr_conn->rx_tid[i];
 		stats = &aggr_conn->stat[i];
 
-		if (!rxtid->aggr || !rxtid->timer_mon)
-			continue;
+		अगर (!rxtid->aggr || !rxtid->समयr_mon)
+			जारी;
 
-		stats->num_timeouts++;
+		stats->num_समयouts++;
 		ath6kl_dbg(ATH6KL_DBG_AGGR,
 			   "aggr timeout (st %d end %d)\n",
 			   rxtid->seq_next,
 			   ((rxtid->seq_next + rxtid->hold_q_sz-1) &
 			    ATH6KL_MAX_SEQ_NO));
 		aggr_deque_frms(aggr_conn, i, 0, 0);
-	}
+	पूर्ण
 
-	aggr_conn->timer_scheduled = false;
+	aggr_conn->समयr_scheduled = false;
 
-	for (i = 0; i < NUM_OF_TIDS; i++) {
+	क्रम (i = 0; i < NUM_OF_TIDS; i++) अणु
 		rxtid = &aggr_conn->rx_tid[i];
 
-		if (rxtid->aggr && rxtid->hold_q) {
+		अगर (rxtid->aggr && rxtid->hold_q) अणु
 			spin_lock_bh(&rxtid->lock);
-			for (j = 0; j < rxtid->hold_q_sz; j++) {
-				if (rxtid->hold_q[j].skb) {
-					aggr_conn->timer_scheduled = true;
-					rxtid->timer_mon = true;
-					break;
-				}
-			}
+			क्रम (j = 0; j < rxtid->hold_q_sz; j++) अणु
+				अगर (rxtid->hold_q[j].skb) अणु
+					aggr_conn->समयr_scheduled = true;
+					rxtid->समयr_mon = true;
+					अवरोध;
+				पूर्ण
+			पूर्ण
 			spin_unlock_bh(&rxtid->lock);
 
-			if (j >= rxtid->hold_q_sz)
-				rxtid->timer_mon = false;
-		}
-	}
+			अगर (j >= rxtid->hold_q_sz)
+				rxtid->समयr_mon = false;
+		पूर्ण
+	पूर्ण
 
-	if (aggr_conn->timer_scheduled)
-		mod_timer(&aggr_conn->timer,
-			  jiffies + msecs_to_jiffies(AGGR_RX_TIMEOUT));
-}
+	अगर (aggr_conn->समयr_scheduled)
+		mod_समयr(&aggr_conn->समयr,
+			  jअगरfies + msecs_to_jअगरfies(AGGR_RX_TIMEOUT));
+पूर्ण
 
-static void aggr_delete_tid_state(struct aggr_info_conn *aggr_conn, u8 tid)
-{
-	struct rxtid *rxtid;
-	struct rxtid_stats *stats;
+अटल व्योम aggr_delete_tid_state(काष्ठा aggr_info_conn *aggr_conn, u8 tid)
+अणु
+	काष्ठा rxtid *rxtid;
+	काष्ठा rxtid_stats *stats;
 
-	if (!aggr_conn || tid >= NUM_OF_TIDS)
-		return;
+	अगर (!aggr_conn || tid >= NUM_OF_TIDS)
+		वापस;
 
 	rxtid = &aggr_conn->rx_tid[tid];
 	stats = &aggr_conn->stat[tid];
 
-	if (rxtid->aggr)
+	अगर (rxtid->aggr)
 		aggr_deque_frms(aggr_conn, tid, 0, 0);
 
 	rxtid->aggr = false;
-	rxtid->timer_mon = false;
+	rxtid->समयr_mon = false;
 	rxtid->win_sz = 0;
 	rxtid->seq_next = 0;
 	rxtid->hold_q_sz = 0;
 
-	kfree(rxtid->hold_q);
-	rxtid->hold_q = NULL;
+	kमुक्त(rxtid->hold_q);
+	rxtid->hold_q = शून्य;
 
-	memset(stats, 0, sizeof(struct rxtid_stats));
-}
+	स_रखो(stats, 0, माप(काष्ठा rxtid_stats));
+पूर्ण
 
-void aggr_recv_addba_req_evt(struct ath6kl_vif *vif, u8 tid_mux, u16 seq_no,
+व्योम aggr_recv_addba_req_evt(काष्ठा ath6kl_vअगर *vअगर, u8 tid_mux, u16 seq_no,
 			     u8 win_sz)
-{
-	struct ath6kl_sta *sta;
-	struct aggr_info_conn *aggr_conn = NULL;
-	struct rxtid *rxtid;
+अणु
+	काष्ठा ath6kl_sta *sta;
+	काष्ठा aggr_info_conn *aggr_conn = शून्य;
+	काष्ठा rxtid *rxtid;
 	u16 hold_q_size;
 	u8 tid, aid;
 
-	if (vif->nw_type == AP_NETWORK) {
+	अगर (vअगर->nw_type == AP_NETWORK) अणु
 		aid = ath6kl_get_aid(tid_mux);
-		sta = ath6kl_find_sta_by_aid(vif->ar, aid);
-		if (sta)
+		sta = ath6kl_find_sta_by_aid(vअगर->ar, aid);
+		अगर (sta)
 			aggr_conn = sta->aggr_conn;
-	} else {
-		aggr_conn = vif->aggr_cntxt->aggr_conn;
-	}
+	पूर्ण अन्यथा अणु
+		aggr_conn = vअगर->aggr_cntxt->aggr_conn;
+	पूर्ण
 
-	if (!aggr_conn)
-		return;
+	अगर (!aggr_conn)
+		वापस;
 
 	tid = ath6kl_get_tid(tid_mux);
-	if (tid >= NUM_OF_TIDS)
-		return;
+	अगर (tid >= NUM_OF_TIDS)
+		वापस;
 
 	rxtid = &aggr_conn->rx_tid[tid];
 
-	if (win_sz < AGGR_WIN_SZ_MIN || win_sz > AGGR_WIN_SZ_MAX)
+	अगर (win_sz < AGGR_WIN_SZ_MIN || win_sz > AGGR_WIN_SZ_MAX)
 		ath6kl_dbg(ATH6KL_DBG_WLAN_RX, "%s: win_sz %d, tid %d\n",
 			   __func__, win_sz, tid);
 
-	if (rxtid->aggr)
+	अगर (rxtid->aggr)
 		aggr_delete_tid_state(aggr_conn, tid);
 
 	rxtid->seq_next = seq_no;
-	hold_q_size = TID_WINDOW_SZ(win_sz) * sizeof(struct skb_hold_q);
+	hold_q_size = TID_WINDOW_SZ(win_sz) * माप(काष्ठा skb_hold_q);
 	rxtid->hold_q = kzalloc(hold_q_size, GFP_KERNEL);
-	if (!rxtid->hold_q)
-		return;
+	अगर (!rxtid->hold_q)
+		वापस;
 
 	rxtid->win_sz = win_sz;
 	rxtid->hold_q_sz = TID_WINDOW_SZ(win_sz);
-	if (!skb_queue_empty(&rxtid->q))
-		return;
+	अगर (!skb_queue_empty(&rxtid->q))
+		वापस;
 
 	rxtid->aggr = true;
-}
+पूर्ण
 
-void aggr_conn_init(struct ath6kl_vif *vif, struct aggr_info *aggr_info,
-		    struct aggr_info_conn *aggr_conn)
-{
-	struct rxtid *rxtid;
+व्योम aggr_conn_init(काष्ठा ath6kl_vअगर *vअगर, काष्ठा aggr_info *aggr_info,
+		    काष्ठा aggr_info_conn *aggr_conn)
+अणु
+	काष्ठा rxtid *rxtid;
 	u8 i;
 
 	aggr_conn->aggr_sz = AGGR_SZ_DEFAULT;
-	aggr_conn->dev = vif->ndev;
-	timer_setup(&aggr_conn->timer, aggr_timeout, 0);
+	aggr_conn->dev = vअगर->ndev;
+	समयr_setup(&aggr_conn->समयr, aggr_समयout, 0);
 	aggr_conn->aggr_info = aggr_info;
 
-	aggr_conn->timer_scheduled = false;
+	aggr_conn->समयr_scheduled = false;
 
-	for (i = 0; i < NUM_OF_TIDS; i++) {
+	क्रम (i = 0; i < NUM_OF_TIDS; i++) अणु
 		rxtid = &aggr_conn->rx_tid[i];
 		rxtid->aggr = false;
-		rxtid->timer_mon = false;
+		rxtid->समयr_mon = false;
 		skb_queue_head_init(&rxtid->q);
 		spin_lock_init(&rxtid->lock);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct aggr_info *aggr_init(struct ath6kl_vif *vif)
-{
-	struct aggr_info *p_aggr = NULL;
+काष्ठा aggr_info *aggr_init(काष्ठा ath6kl_vअगर *vअगर)
+अणु
+	काष्ठा aggr_info *p_aggr = शून्य;
 
-	p_aggr = kzalloc(sizeof(struct aggr_info), GFP_KERNEL);
-	if (!p_aggr) {
+	p_aggr = kzalloc(माप(काष्ठा aggr_info), GFP_KERNEL);
+	अगर (!p_aggr) अणु
 		ath6kl_err("failed to alloc memory for aggr_node\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	p_aggr->aggr_conn = kzalloc(sizeof(struct aggr_info_conn), GFP_KERNEL);
-	if (!p_aggr->aggr_conn) {
+	p_aggr->aggr_conn = kzalloc(माप(काष्ठा aggr_info_conn), GFP_KERNEL);
+	अगर (!p_aggr->aggr_conn) अणु
 		ath6kl_err("failed to alloc memory for connection specific aggr info\n");
-		kfree(p_aggr);
-		return NULL;
-	}
+		kमुक्त(p_aggr);
+		वापस शून्य;
+	पूर्ण
 
-	aggr_conn_init(vif, p_aggr, p_aggr->aggr_conn);
+	aggr_conn_init(vअगर, p_aggr, p_aggr->aggr_conn);
 
-	skb_queue_head_init(&p_aggr->rx_amsdu_freeq);
-	ath6kl_alloc_netbufs(&p_aggr->rx_amsdu_freeq, AGGR_NUM_OF_FREE_NETBUFS);
+	skb_queue_head_init(&p_aggr->rx_amsdu_मुक्तq);
+	ath6kl_alloc_netbufs(&p_aggr->rx_amsdu_मुक्तq, AGGR_NUM_OF_FREE_NETBUFS);
 
-	return p_aggr;
-}
+	वापस p_aggr;
+पूर्ण
 
-void aggr_recv_delba_req_evt(struct ath6kl_vif *vif, u8 tid_mux)
-{
-	struct ath6kl_sta *sta;
-	struct rxtid *rxtid;
-	struct aggr_info_conn *aggr_conn = NULL;
+व्योम aggr_recv_delba_req_evt(काष्ठा ath6kl_vअगर *vअगर, u8 tid_mux)
+अणु
+	काष्ठा ath6kl_sta *sta;
+	काष्ठा rxtid *rxtid;
+	काष्ठा aggr_info_conn *aggr_conn = शून्य;
 	u8 tid, aid;
 
-	if (vif->nw_type == AP_NETWORK) {
+	अगर (vअगर->nw_type == AP_NETWORK) अणु
 		aid = ath6kl_get_aid(tid_mux);
-		sta = ath6kl_find_sta_by_aid(vif->ar, aid);
-		if (sta)
+		sta = ath6kl_find_sta_by_aid(vअगर->ar, aid);
+		अगर (sta)
 			aggr_conn = sta->aggr_conn;
-	} else {
-		aggr_conn = vif->aggr_cntxt->aggr_conn;
-	}
+	पूर्ण अन्यथा अणु
+		aggr_conn = vअगर->aggr_cntxt->aggr_conn;
+	पूर्ण
 
-	if (!aggr_conn)
-		return;
+	अगर (!aggr_conn)
+		वापस;
 
 	tid = ath6kl_get_tid(tid_mux);
-	if (tid >= NUM_OF_TIDS)
-		return;
+	अगर (tid >= NUM_OF_TIDS)
+		वापस;
 
 	rxtid = &aggr_conn->rx_tid[tid];
 
-	if (rxtid->aggr)
+	अगर (rxtid->aggr)
 		aggr_delete_tid_state(aggr_conn, tid);
-}
+पूर्ण
 
-void aggr_reset_state(struct aggr_info_conn *aggr_conn)
-{
+व्योम aggr_reset_state(काष्ठा aggr_info_conn *aggr_conn)
+अणु
 	u8 tid;
 
-	if (!aggr_conn)
-		return;
+	अगर (!aggr_conn)
+		वापस;
 
-	if (aggr_conn->timer_scheduled) {
-		del_timer(&aggr_conn->timer);
-		aggr_conn->timer_scheduled = false;
-	}
+	अगर (aggr_conn->समयr_scheduled) अणु
+		del_समयr(&aggr_conn->समयr);
+		aggr_conn->समयr_scheduled = false;
+	पूर्ण
 
-	for (tid = 0; tid < NUM_OF_TIDS; tid++)
+	क्रम (tid = 0; tid < NUM_OF_TIDS; tid++)
 		aggr_delete_tid_state(aggr_conn, tid);
-}
+पूर्ण
 
 /* clean up our amsdu buffer list */
-void ath6kl_cleanup_amsdu_rxbufs(struct ath6kl *ar)
-{
-	struct htc_packet *packet, *tmp_pkt;
+व्योम ath6kl_cleanup_amsdu_rxbufs(काष्ठा ath6kl *ar)
+अणु
+	काष्ठा htc_packet *packet, *पंचांगp_pkt;
 
 	spin_lock_bh(&ar->lock);
-	if (list_empty(&ar->amsdu_rx_buffer_queue)) {
+	अगर (list_empty(&ar->amsdu_rx_buffer_queue)) अणु
 		spin_unlock_bh(&ar->lock);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	list_for_each_entry_safe(packet, tmp_pkt, &ar->amsdu_rx_buffer_queue,
-				 list) {
+	list_क्रम_each_entry_safe(packet, पंचांगp_pkt, &ar->amsdu_rx_buffer_queue,
+				 list) अणु
 		list_del(&packet->list);
 		spin_unlock_bh(&ar->lock);
-		dev_kfree_skb(packet->pkt_cntxt);
+		dev_kमुक्त_skb(packet->pkt_cntxt);
 		spin_lock_bh(&ar->lock);
-	}
+	पूर्ण
 
 	spin_unlock_bh(&ar->lock);
-}
+पूर्ण
 
-void aggr_module_destroy(struct aggr_info *aggr_info)
-{
-	if (!aggr_info)
-		return;
+व्योम aggr_module_destroy(काष्ठा aggr_info *aggr_info)
+अणु
+	अगर (!aggr_info)
+		वापस;
 
 	aggr_reset_state(aggr_info->aggr_conn);
-	skb_queue_purge(&aggr_info->rx_amsdu_freeq);
-	kfree(aggr_info->aggr_conn);
-	kfree(aggr_info);
-}
+	skb_queue_purge(&aggr_info->rx_amsdu_मुक्तq);
+	kमुक्त(aggr_info->aggr_conn);
+	kमुक्त(aggr_info);
+पूर्ण

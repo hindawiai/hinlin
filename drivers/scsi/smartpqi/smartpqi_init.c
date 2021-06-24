@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- *    driver for Microsemi PQI-based storage controllers
+ *    driver क्रम Microsemi PQI-based storage controllers
  *    Copyright (c) 2019-2020 Microchip Technology Inc. and its subsidiaries
  *    Copyright (c) 2016-2018 Microsemi Corporation
  *    Copyright (c) 2016 PMC-Sierra, Inc.
@@ -9,44 +10,44 @@
  *
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/pci.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/sched.h>
-#include <linux/rtc.h>
-#include <linux/bcd.h>
-#include <linux/reboot.h>
-#include <linux/cciss_ioctl.h>
-#include <linux/blk-mq-pci.h>
-#include <scsi/scsi_host.h>
-#include <scsi/scsi_cmnd.h>
-#include <scsi/scsi_device.h>
-#include <scsi/scsi_eh.h>
-#include <scsi/scsi_transport_sas.h>
-#include <asm/unaligned.h>
-#include "smartpqi.h"
-#include "smartpqi_sis.h"
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/pci.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/bcd.h>
+#समावेश <linux/reboot.h>
+#समावेश <linux/cciss_ioctl.h>
+#समावेश <linux/blk-mq-pci.h>
+#समावेश <scsi/scsi_host.h>
+#समावेश <scsi/scsi_cmnd.h>
+#समावेश <scsi/scsi_device.h>
+#समावेश <scsi/scsi_eh.h>
+#समावेश <scsi/scsi_transport_sas.h>
+#समावेश <यंत्र/unaligned.h>
+#समावेश "smartpqi.h"
+#समावेश "smartpqi_sis.h"
 
-#if !defined(BUILD_TIMESTAMP)
-#define BUILD_TIMESTAMP
-#endif
+#अगर !defined(BUILD_TIMESTAMP)
+#घोषणा BUILD_TIMESTAMP
+#पूर्ण_अगर
 
-#define DRIVER_VERSION		"2.1.8-045"
-#define DRIVER_MAJOR		2
-#define DRIVER_MINOR		1
-#define DRIVER_RELEASE		8
-#define DRIVER_REVISION		45
+#घोषणा DRIVER_VERSION		"2.1.8-045"
+#घोषणा DRIVER_MAJOR		2
+#घोषणा DRIVER_MINOR		1
+#घोषणा DRIVER_RELEASE		8
+#घोषणा DRIVER_REVISION		45
 
-#define DRIVER_NAME		"Microsemi PQI Driver (v" \
+#घोषणा DRIVER_NAME		"Microsemi PQI Driver (v" \
 				DRIVER_VERSION BUILD_TIMESTAMP ")"
-#define DRIVER_NAME_SHORT	"smartpqi"
+#घोषणा DRIVER_NAME_SHORT	"smartpqi"
 
-#define PQI_EXTRA_SGL_MEMORY	(12 * sizeof(struct pqi_sg_descriptor))
+#घोषणा PQI_EXTRA_SGL_MEMORY	(12 * माप(काष्ठा pqi_sg_descriptor))
 
-#define PQI_POST_RESET_DELAY_SECS			5
-#define PQI_POST_OFA_RESET_DELAY_UPON_TIMEOUT_SECS	10
+#घोषणा PQI_POST_RESET_DELAY_SECS			5
+#घोषणा PQI_POST_OFA_RESET_DELAY_UPON_TIMEOUT_SECS	10
 
 MODULE_AUTHOR("Microsemi");
 MODULE_DESCRIPTION("Driver for Microsemi Smart Family Controller version "
@@ -54,71 +55,71 @@ MODULE_DESCRIPTION("Driver for Microsemi Smart Family Controller version "
 MODULE_VERSION(DRIVER_VERSION);
 MODULE_LICENSE("GPL");
 
-static void pqi_take_ctrl_offline(struct pqi_ctrl_info *ctrl_info);
-static void pqi_ctrl_offline_worker(struct work_struct *work);
-static int pqi_scan_scsi_devices(struct pqi_ctrl_info *ctrl_info);
-static void pqi_scan_start(struct Scsi_Host *shost);
-static void pqi_start_io(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_queue_group *queue_group, enum pqi_io_path path,
-	struct pqi_io_request *io_request);
-static int pqi_submit_raid_request_synchronous(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_iu_header *request, unsigned int flags,
-	struct pqi_raid_error_info *error_info);
-static int pqi_aio_submit_io(struct pqi_ctrl_info *ctrl_info,
-	struct scsi_cmnd *scmd, u32 aio_handle, u8 *cdb,
-	unsigned int cdb_length, struct pqi_queue_group *queue_group,
-	struct pqi_encryption_info *encryption_info, bool raid_bypass);
-static  int pqi_aio_submit_r1_write_io(struct pqi_ctrl_info *ctrl_info,
-	struct scsi_cmnd *scmd, struct pqi_queue_group *queue_group,
-	struct pqi_encryption_info *encryption_info, struct pqi_scsi_dev *device,
-	struct pqi_scsi_dev_raid_map_data *rmd);
-static int pqi_aio_submit_r56_write_io(struct pqi_ctrl_info *ctrl_info,
-	struct scsi_cmnd *scmd, struct pqi_queue_group *queue_group,
-	struct pqi_encryption_info *encryption_info, struct pqi_scsi_dev *device,
-	struct pqi_scsi_dev_raid_map_data *rmd);
-static void pqi_ofa_ctrl_quiesce(struct pqi_ctrl_info *ctrl_info);
-static void pqi_ofa_ctrl_unquiesce(struct pqi_ctrl_info *ctrl_info);
-static int pqi_ofa_ctrl_restart(struct pqi_ctrl_info *ctrl_info, unsigned int delay_secs);
-static void pqi_ofa_setup_host_buffer(struct pqi_ctrl_info *ctrl_info);
-static void pqi_ofa_free_host_buffer(struct pqi_ctrl_info *ctrl_info);
-static int pqi_ofa_host_memory_update(struct pqi_ctrl_info *ctrl_info);
-static int pqi_device_wait_for_pending_io(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device, unsigned long timeout_msecs);
+अटल व्योम pqi_take_ctrl_offline(काष्ठा pqi_ctrl_info *ctrl_info);
+अटल व्योम pqi_ctrl_offline_worker(काष्ठा work_काष्ठा *work);
+अटल पूर्णांक pqi_scan_scsi_devices(काष्ठा pqi_ctrl_info *ctrl_info);
+अटल व्योम pqi_scan_start(काष्ठा Scsi_Host *shost);
+अटल व्योम pqi_start_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_queue_group *queue_group, क्रमागत pqi_io_path path,
+	काष्ठा pqi_io_request *io_request);
+अटल पूर्णांक pqi_submit_raid_request_synchronous(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_iu_header *request, अचिन्हित पूर्णांक flags,
+	काष्ठा pqi_raid_error_info *error_info);
+अटल पूर्णांक pqi_aio_submit_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा scsi_cmnd *scmd, u32 aio_handle, u8 *cdb,
+	अचिन्हित पूर्णांक cdb_length, काष्ठा pqi_queue_group *queue_group,
+	काष्ठा pqi_encryption_info *encryption_info, bool raid_bypass);
+अटल  पूर्णांक pqi_aio_submit_r1_ग_लिखो_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा scsi_cmnd *scmd, काष्ठा pqi_queue_group *queue_group,
+	काष्ठा pqi_encryption_info *encryption_info, काष्ठा pqi_scsi_dev *device,
+	काष्ठा pqi_scsi_dev_raid_map_data *rmd);
+अटल पूर्णांक pqi_aio_submit_r56_ग_लिखो_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा scsi_cmnd *scmd, काष्ठा pqi_queue_group *queue_group,
+	काष्ठा pqi_encryption_info *encryption_info, काष्ठा pqi_scsi_dev *device,
+	काष्ठा pqi_scsi_dev_raid_map_data *rmd);
+अटल व्योम pqi_ofa_ctrl_quiesce(काष्ठा pqi_ctrl_info *ctrl_info);
+अटल व्योम pqi_ofa_ctrl_unquiesce(काष्ठा pqi_ctrl_info *ctrl_info);
+अटल पूर्णांक pqi_ofa_ctrl_restart(काष्ठा pqi_ctrl_info *ctrl_info, अचिन्हित पूर्णांक delay_secs);
+अटल व्योम pqi_ofa_setup_host_buffer(काष्ठा pqi_ctrl_info *ctrl_info);
+अटल व्योम pqi_ofa_मुक्त_host_buffer(काष्ठा pqi_ctrl_info *ctrl_info);
+अटल पूर्णांक pqi_ofa_host_memory_update(काष्ठा pqi_ctrl_info *ctrl_info);
+अटल पूर्णांक pqi_device_रुको_क्रम_pending_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device, अचिन्हित दीर्घ समयout_msecs);
 
-/* for flags argument to pqi_submit_raid_request_synchronous() */
-#define PQI_SYNC_FLAGS_INTERRUPTABLE	0x1
+/* क्रम flags argument to pqi_submit_raid_request_synchronous() */
+#घोषणा PQI_SYNC_FLAGS_INTERRUPTABLE	0x1
 
-static struct scsi_transport_template *pqi_sas_transport_template;
+अटल काष्ठा scsi_transport_ढाँचा *pqi_sas_transport_ढाँचा;
 
-static atomic_t pqi_controller_count = ATOMIC_INIT(0);
+अटल atomic_t pqi_controller_count = ATOMIC_INIT(0);
 
-enum pqi_lockup_action {
+क्रमागत pqi_lockup_action अणु
 	NONE,
 	REBOOT,
 	PANIC
-};
+पूर्ण;
 
-static enum pqi_lockup_action pqi_lockup_action = NONE;
+अटल क्रमागत pqi_lockup_action pqi_lockup_action = NONE;
 
-static struct {
-	enum pqi_lockup_action	action;
-	char			*name;
-} pqi_lockup_actions[] = {
-	{
+अटल काष्ठा अणु
+	क्रमागत pqi_lockup_action	action;
+	अक्षर			*name;
+पूर्ण pqi_lockup_actions[] = अणु
+	अणु
 		.action = NONE,
 		.name = "none",
-	},
-	{
+	पूर्ण,
+	अणु
 		.action = REBOOT,
 		.name = "reboot",
-	},
-	{
+	पूर्ण,
+	अणु
 		.action = PANIC,
 		.name = "panic",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static unsigned int pqi_supported_event_types[] = {
+अटल अचिन्हित पूर्णांक pqi_supported_event_types[] = अणु
 	PQI_EVENT_TYPE_HOTPLUG,
 	PQI_EVENT_TYPE_HARDWARE,
 	PQI_EVENT_TYPE_PHYSICAL_DEVICE,
@@ -126,44 +127,44 @@ static unsigned int pqi_supported_event_types[] = {
 	PQI_EVENT_TYPE_OFA,
 	PQI_EVENT_TYPE_AIO_STATE_CHANGE,
 	PQI_EVENT_TYPE_AIO_CONFIG_CHANGE,
-};
+पूर्ण;
 
-static int pqi_disable_device_id_wildcards;
+अटल पूर्णांक pqi_disable_device_id_wildcards;
 module_param_named(disable_device_id_wildcards,
-	pqi_disable_device_id_wildcards, int, 0644);
+	pqi_disable_device_id_wildcards, पूर्णांक, 0644);
 MODULE_PARM_DESC(disable_device_id_wildcards,
 	"Disable device ID wildcards.");
 
-static int pqi_disable_heartbeat;
+अटल पूर्णांक pqi_disable_heartbeat;
 module_param_named(disable_heartbeat,
-	pqi_disable_heartbeat, int, 0644);
+	pqi_disable_heartbeat, पूर्णांक, 0644);
 MODULE_PARM_DESC(disable_heartbeat,
 	"Disable heartbeat.");
 
-static int pqi_disable_ctrl_shutdown;
-module_param_named(disable_ctrl_shutdown,
-	pqi_disable_ctrl_shutdown, int, 0644);
-MODULE_PARM_DESC(disable_ctrl_shutdown,
+अटल पूर्णांक pqi_disable_ctrl_shutकरोwn;
+module_param_named(disable_ctrl_shutकरोwn,
+	pqi_disable_ctrl_shutकरोwn, पूर्णांक, 0644);
+MODULE_PARM_DESC(disable_ctrl_shutकरोwn,
 	"Disable controller shutdown when controller locked up.");
 
-static char *pqi_lockup_action_param;
+अटल अक्षर *pqi_lockup_action_param;
 module_param_named(lockup_action,
-	pqi_lockup_action_param, charp, 0644);
+	pqi_lockup_action_param, अक्षरp, 0644);
 MODULE_PARM_DESC(lockup_action, "Action to take when controller locked up.\n"
 	"\t\tSupported: none, reboot, panic\n"
 	"\t\tDefault: none");
 
-static int pqi_expose_ld_first;
+अटल पूर्णांक pqi_expose_ld_first;
 module_param_named(expose_ld_first,
-	pqi_expose_ld_first, int, 0644);
+	pqi_expose_ld_first, पूर्णांक, 0644);
 MODULE_PARM_DESC(expose_ld_first, "Expose logical drives before physical drives.");
 
-static int pqi_hide_vsep;
+अटल पूर्णांक pqi_hide_vsep;
 module_param_named(hide_vsep,
-	pqi_hide_vsep, int, 0644);
+	pqi_hide_vsep, पूर्णांक, 0644);
 MODULE_PARM_DESC(hide_vsep, "Hide the virtual SEP for direct attached drives.");
 
-static char *raid_levels[] = {
+अटल अक्षर *raid_levels[] = अणु
 	"RAID-0",
 	"RAID-4",
 	"RAID-1(1+0)",
@@ -171,112 +172,112 @@ static char *raid_levels[] = {
 	"RAID-5+1",
 	"RAID-6",
 	"RAID-1(Triple)",
-};
+पूर्ण;
 
-static char *pqi_raid_level_to_string(u8 raid_level)
-{
-	if (raid_level < ARRAY_SIZE(raid_levels))
-		return raid_levels[raid_level];
+अटल अक्षर *pqi_raid_level_to_string(u8 raid_level)
+अणु
+	अगर (raid_level < ARRAY_SIZE(raid_levels))
+		वापस raid_levels[raid_level];
 
-	return "RAID UNKNOWN";
-}
+	वापस "RAID UNKNOWN";
+पूर्ण
 
-#define SA_RAID_0		0
-#define SA_RAID_4		1
-#define SA_RAID_1		2	/* also used for RAID 10 */
-#define SA_RAID_5		3	/* also used for RAID 50 */
-#define SA_RAID_51		4
-#define SA_RAID_6		5	/* also used for RAID 60 */
-#define SA_RAID_TRIPLE		6	/* also used for RAID 1+0 Triple */
-#define SA_RAID_MAX		SA_RAID_TRIPLE
-#define SA_RAID_UNKNOWN		0xff
+#घोषणा SA_RAID_0		0
+#घोषणा SA_RAID_4		1
+#घोषणा SA_RAID_1		2	/* also used क्रम RAID 10 */
+#घोषणा SA_RAID_5		3	/* also used क्रम RAID 50 */
+#घोषणा SA_RAID_51		4
+#घोषणा SA_RAID_6		5	/* also used क्रम RAID 60 */
+#घोषणा SA_RAID_TRIPLE		6	/* also used क्रम RAID 1+0 Triple */
+#घोषणा SA_RAID_MAX		SA_RAID_TRIPLE
+#घोषणा SA_RAID_UNKNOWN		0xff
 
-static inline void pqi_scsi_done(struct scsi_cmnd *scmd)
-{
-	pqi_prep_for_scsi_done(scmd);
-	scmd->scsi_done(scmd);
-}
+अटल अंतरभूत व्योम pqi_scsi_करोne(काष्ठा scsi_cmnd *scmd)
+अणु
+	pqi_prep_क्रम_scsi_करोne(scmd);
+	scmd->scsi_करोne(scmd);
+पूर्ण
 
-static inline void pqi_disable_write_same(struct scsi_device *sdev)
-{
-	sdev->no_write_same = 1;
-}
+अटल अंतरभूत व्योम pqi_disable_ग_लिखो_same(काष्ठा scsi_device *sdev)
+अणु
+	sdev->no_ग_लिखो_same = 1;
+पूर्ण
 
-static inline bool pqi_scsi3addr_equal(u8 *scsi3addr1, u8 *scsi3addr2)
-{
-	return memcmp(scsi3addr1, scsi3addr2, 8) == 0;
-}
+अटल अंतरभूत bool pqi_scsi3addr_equal(u8 *scsi3addr1, u8 *scsi3addr2)
+अणु
+	वापस स_भेद(scsi3addr1, scsi3addr2, 8) == 0;
+पूर्ण
 
-static inline bool pqi_is_logical_device(struct pqi_scsi_dev *device)
-{
-	return !device->is_physical_device;
-}
+अटल अंतरभूत bool pqi_is_logical_device(काष्ठा pqi_scsi_dev *device)
+अणु
+	वापस !device->is_physical_device;
+पूर्ण
 
-static inline bool pqi_is_external_raid_addr(u8 *scsi3addr)
-{
-	return scsi3addr[2] != 0;
-}
+अटल अंतरभूत bool pqi_is_बाह्यal_raid_addr(u8 *scsi3addr)
+अणु
+	वापस scsi3addr[2] != 0;
+पूर्ण
 
-static inline bool pqi_ctrl_offline(struct pqi_ctrl_info *ctrl_info)
-{
-	return !ctrl_info->controller_online;
-}
+अटल अंतरभूत bool pqi_ctrl_offline(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	वापस !ctrl_info->controller_online;
+पूर्ण
 
-static inline void pqi_check_ctrl_health(struct pqi_ctrl_info *ctrl_info)
-{
-	if (ctrl_info->controller_online)
-		if (!sis_is_firmware_running(ctrl_info))
+अटल अंतरभूत व्योम pqi_check_ctrl_health(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अगर (ctrl_info->controller_online)
+		अगर (!sis_is_firmware_running(ctrl_info))
 			pqi_take_ctrl_offline(ctrl_info);
-}
+पूर्ण
 
-static inline bool pqi_is_hba_lunid(u8 *scsi3addr)
-{
-	return pqi_scsi3addr_equal(scsi3addr, RAID_CTLR_LUNID);
-}
+अटल अंतरभूत bool pqi_is_hba_lunid(u8 *scsi3addr)
+अणु
+	वापस pqi_scsi3addr_equal(scsi3addr, RAID_CTLR_LUNID);
+पूर्ण
 
-static inline enum pqi_ctrl_mode pqi_get_ctrl_mode(struct pqi_ctrl_info *ctrl_info)
-{
-	return sis_read_driver_scratch(ctrl_info);
-}
+अटल अंतरभूत क्रमागत pqi_ctrl_mode pqi_get_ctrl_mode(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	वापस sis_पढ़ो_driver_scratch(ctrl_info);
+पूर्ण
 
-static inline void pqi_save_ctrl_mode(struct pqi_ctrl_info *ctrl_info,
-	enum pqi_ctrl_mode mode)
-{
-	sis_write_driver_scratch(ctrl_info, mode);
-}
+अटल अंतरभूत व्योम pqi_save_ctrl_mode(काष्ठा pqi_ctrl_info *ctrl_info,
+	क्रमागत pqi_ctrl_mode mode)
+अणु
+	sis_ग_लिखो_driver_scratch(ctrl_info, mode);
+पूर्ण
 
-static inline void pqi_ctrl_block_scan(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_ctrl_block_scan(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	ctrl_info->scan_blocked = true;
 	mutex_lock(&ctrl_info->scan_mutex);
-}
+पूर्ण
 
-static inline void pqi_ctrl_unblock_scan(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_ctrl_unblock_scan(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	ctrl_info->scan_blocked = false;
 	mutex_unlock(&ctrl_info->scan_mutex);
-}
+पूर्ण
 
-static inline bool pqi_ctrl_scan_blocked(struct pqi_ctrl_info *ctrl_info)
-{
-	return ctrl_info->scan_blocked;
-}
+अटल अंतरभूत bool pqi_ctrl_scan_blocked(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	वापस ctrl_info->scan_blocked;
+पूर्ण
 
-static inline void pqi_ctrl_block_device_reset(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_ctrl_block_device_reset(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	mutex_lock(&ctrl_info->lun_reset_mutex);
-}
+पूर्ण
 
-static inline void pqi_ctrl_unblock_device_reset(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_ctrl_unblock_device_reset(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	mutex_unlock(&ctrl_info->lun_reset_mutex);
-}
+पूर्ण
 
-static inline void pqi_scsi_block_requests(struct pqi_ctrl_info *ctrl_info)
-{
-	struct Scsi_Host *shost;
-	unsigned int num_loops;
-	int msecs_sleep;
+अटल अंतरभूत व्योम pqi_scsi_block_requests(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	काष्ठा Scsi_Host *shost;
+	अचिन्हित पूर्णांक num_loops;
+	पूर्णांक msecs_sleep;
 
 	shost = ctrl_info->scsi_host;
 
@@ -284,507 +285,507 @@ static inline void pqi_scsi_block_requests(struct pqi_ctrl_info *ctrl_info)
 
 	num_loops = 0;
 	msecs_sleep = 20;
-	while (scsi_host_busy(shost)) {
+	जबतक (scsi_host_busy(shost)) अणु
 		num_loops++;
-		if (num_loops == 10)
+		अगर (num_loops == 10)
 			msecs_sleep = 500;
 		msleep(msecs_sleep);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static inline void pqi_scsi_unblock_requests(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_scsi_unblock_requests(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	scsi_unblock_requests(ctrl_info->scsi_host);
-}
+पूर्ण
 
-static inline void pqi_ctrl_busy(struct pqi_ctrl_info *ctrl_info)
-{
-	atomic_inc(&ctrl_info->num_busy_threads);
-}
+अटल अंतरभूत व्योम pqi_ctrl_busy(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	atomic_inc(&ctrl_info->num_busy_thपढ़ोs);
+पूर्ण
 
-static inline void pqi_ctrl_unbusy(struct pqi_ctrl_info *ctrl_info)
-{
-	atomic_dec(&ctrl_info->num_busy_threads);
-}
+अटल अंतरभूत व्योम pqi_ctrl_unbusy(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	atomic_dec(&ctrl_info->num_busy_thपढ़ोs);
+पूर्ण
 
-static inline bool pqi_ctrl_blocked(struct pqi_ctrl_info *ctrl_info)
-{
-	return ctrl_info->block_requests;
-}
+अटल अंतरभूत bool pqi_ctrl_blocked(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	वापस ctrl_info->block_requests;
+पूर्ण
 
-static inline void pqi_ctrl_block_requests(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_ctrl_block_requests(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	ctrl_info->block_requests = true;
-}
+पूर्ण
 
-static inline void pqi_ctrl_unblock_requests(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_ctrl_unblock_requests(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	ctrl_info->block_requests = false;
-	wake_up_all(&ctrl_info->block_requests_wait);
-}
+	wake_up_all(&ctrl_info->block_requests_रुको);
+पूर्ण
 
-static void pqi_wait_if_ctrl_blocked(struct pqi_ctrl_info *ctrl_info)
-{
-	if (!pqi_ctrl_blocked(ctrl_info))
-		return;
+अटल व्योम pqi_रुको_अगर_ctrl_blocked(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अगर (!pqi_ctrl_blocked(ctrl_info))
+		वापस;
 
-	atomic_inc(&ctrl_info->num_blocked_threads);
-	wait_event(ctrl_info->block_requests_wait,
+	atomic_inc(&ctrl_info->num_blocked_thपढ़ोs);
+	रुको_event(ctrl_info->block_requests_रुको,
 		!pqi_ctrl_blocked(ctrl_info));
-	atomic_dec(&ctrl_info->num_blocked_threads);
-}
+	atomic_dec(&ctrl_info->num_blocked_thपढ़ोs);
+पूर्ण
 
-#define PQI_QUIESCE_WARNING_TIMEOUT_SECS		10
+#घोषणा PQI_QUIESCE_WARNING_TIMEOUT_SECS		10
 
-static inline void pqi_ctrl_wait_until_quiesced(struct pqi_ctrl_info *ctrl_info)
-{
-	unsigned long start_jiffies;
-	unsigned long warning_timeout;
+अटल अंतरभूत व्योम pqi_ctrl_रुको_until_quiesced(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अचिन्हित दीर्घ start_jअगरfies;
+	अचिन्हित दीर्घ warning_समयout;
 	bool displayed_warning;
 
 	displayed_warning = false;
-	start_jiffies = jiffies;
-	warning_timeout = (PQI_QUIESCE_WARNING_TIMEOUT_SECS * PQI_HZ) + start_jiffies;
+	start_jअगरfies = jअगरfies;
+	warning_समयout = (PQI_QUIESCE_WARNING_TIMEOUT_SECS * PQI_HZ) + start_jअगरfies;
 
-	while (atomic_read(&ctrl_info->num_busy_threads) >
-		atomic_read(&ctrl_info->num_blocked_threads)) {
-		if (time_after(jiffies, warning_timeout)) {
+	जबतक (atomic_पढ़ो(&ctrl_info->num_busy_thपढ़ोs) >
+		atomic_पढ़ो(&ctrl_info->num_blocked_thपढ़ोs)) अणु
+		अगर (समय_after(jअगरfies, warning_समयout)) अणु
 			dev_warn(&ctrl_info->pci_dev->dev,
 				"waiting %u seconds for driver activity to quiesce\n",
-				jiffies_to_msecs(jiffies - start_jiffies) / 1000);
+				jअगरfies_to_msecs(jअगरfies - start_jअगरfies) / 1000);
 			displayed_warning = true;
-			warning_timeout = (PQI_QUIESCE_WARNING_TIMEOUT_SECS * PQI_HZ) + jiffies;
-		}
+			warning_समयout = (PQI_QUIESCE_WARNING_TIMEOUT_SECS * PQI_HZ) + jअगरfies;
+		पूर्ण
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
-	if (displayed_warning)
+	अगर (displayed_warning)
 		dev_warn(&ctrl_info->pci_dev->dev,
 			"driver activity quiesced after waiting for %u seconds\n",
-			jiffies_to_msecs(jiffies - start_jiffies) / 1000);
-}
+			jअगरfies_to_msecs(jअगरfies - start_jअगरfies) / 1000);
+पूर्ण
 
-static inline bool pqi_device_offline(struct pqi_scsi_dev *device)
-{
-	return device->device_offline;
-}
+अटल अंतरभूत bool pqi_device_offline(काष्ठा pqi_scsi_dev *device)
+अणु
+	वापस device->device_offline;
+पूर्ण
 
-static inline void pqi_ctrl_ofa_start(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_ctrl_ofa_start(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	mutex_lock(&ctrl_info->ofa_mutex);
-}
+पूर्ण
 
-static inline void pqi_ctrl_ofa_done(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_ctrl_ofa_करोne(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	mutex_unlock(&ctrl_info->ofa_mutex);
-}
+पूर्ण
 
-static inline void pqi_wait_until_ofa_finished(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_रुको_until_ofa_finished(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	mutex_lock(&ctrl_info->ofa_mutex);
 	mutex_unlock(&ctrl_info->ofa_mutex);
-}
+पूर्ण
 
-static inline bool pqi_ofa_in_progress(struct pqi_ctrl_info *ctrl_info)
-{
-	return mutex_is_locked(&ctrl_info->ofa_mutex);
-}
+अटल अंतरभूत bool pqi_ofa_in_progress(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	वापस mutex_is_locked(&ctrl_info->ofa_mutex);
+पूर्ण
 
-static inline void pqi_device_remove_start(struct pqi_scsi_dev *device)
-{
-	device->in_remove = true;
-}
+अटल अंतरभूत व्योम pqi_device_हटाओ_start(काष्ठा pqi_scsi_dev *device)
+अणु
+	device->in_हटाओ = true;
+पूर्ण
 
-static inline bool pqi_device_in_remove(struct pqi_scsi_dev *device)
-{
-	return device->in_remove;
-}
+अटल अंतरभूत bool pqi_device_in_हटाओ(काष्ठा pqi_scsi_dev *device)
+अणु
+	वापस device->in_हटाओ;
+पूर्ण
 
-static inline int pqi_event_type_to_event_index(unsigned int event_type)
-{
-	int index;
+अटल अंतरभूत पूर्णांक pqi_event_type_to_event_index(अचिन्हित पूर्णांक event_type)
+अणु
+	पूर्णांक index;
 
-	for (index = 0; index < ARRAY_SIZE(pqi_supported_event_types); index++)
-		if (event_type == pqi_supported_event_types[index])
-			return index;
+	क्रम (index = 0; index < ARRAY_SIZE(pqi_supported_event_types); index++)
+		अगर (event_type == pqi_supported_event_types[index])
+			वापस index;
 
-	return -1;
-}
+	वापस -1;
+पूर्ण
 
-static inline bool pqi_is_supported_event(unsigned int event_type)
-{
-	return pqi_event_type_to_event_index(event_type) != -1;
-}
+अटल अंतरभूत bool pqi_is_supported_event(अचिन्हित पूर्णांक event_type)
+अणु
+	वापस pqi_event_type_to_event_index(event_type) != -1;
+पूर्ण
 
-static inline void pqi_schedule_rescan_worker_with_delay(struct pqi_ctrl_info *ctrl_info,
-	unsigned long delay)
-{
-	if (pqi_ctrl_offline(ctrl_info))
-		return;
+अटल अंतरभूत व्योम pqi_schedule_rescan_worker_with_delay(काष्ठा pqi_ctrl_info *ctrl_info,
+	अचिन्हित दीर्घ delay)
+अणु
+	अगर (pqi_ctrl_offline(ctrl_info))
+		वापस;
 
 	schedule_delayed_work(&ctrl_info->rescan_work, delay);
-}
+पूर्ण
 
-static inline void pqi_schedule_rescan_worker(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_schedule_rescan_worker(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	pqi_schedule_rescan_worker_with_delay(ctrl_info, 0);
-}
+पूर्ण
 
-#define PQI_RESCAN_WORK_DELAY	(10 * PQI_HZ)
+#घोषणा PQI_RESCAN_WORK_DELAY	(10 * PQI_HZ)
 
-static inline void pqi_schedule_rescan_worker_delayed(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_schedule_rescan_worker_delayed(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	pqi_schedule_rescan_worker_with_delay(ctrl_info, PQI_RESCAN_WORK_DELAY);
-}
+पूर्ण
 
-static inline void pqi_cancel_rescan_worker(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_cancel_rescan_worker(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	cancel_delayed_work_sync(&ctrl_info->rescan_work);
-}
+पूर्ण
 
-static inline u32 pqi_read_heartbeat_counter(struct pqi_ctrl_info *ctrl_info)
-{
-	if (!ctrl_info->heartbeat_counter)
-		return 0;
+अटल अंतरभूत u32 pqi_पढ़ो_heartbeat_counter(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अगर (!ctrl_info->heartbeat_counter)
+		वापस 0;
 
-	return readl(ctrl_info->heartbeat_counter);
-}
+	वापस पढ़ोl(ctrl_info->heartbeat_counter);
+पूर्ण
 
-static inline u8 pqi_read_soft_reset_status(struct pqi_ctrl_info *ctrl_info)
-{
-	return readb(ctrl_info->soft_reset_status);
-}
+अटल अंतरभूत u8 pqi_पढ़ो_soft_reset_status(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	वापस पढ़ोb(ctrl_info->soft_reset_status);
+पूर्ण
 
-static inline void pqi_clear_soft_reset_status(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_clear_soft_reset_status(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	u8 status;
 
-	status = pqi_read_soft_reset_status(ctrl_info);
+	status = pqi_पढ़ो_soft_reset_status(ctrl_info);
 	status &= ~PQI_SOFT_RESET_ABORT;
-	writeb(status, ctrl_info->soft_reset_status);
-}
+	ग_लिखोb(status, ctrl_info->soft_reset_status);
+पूर्ण
 
-static int pqi_map_single(struct pci_dev *pci_dev,
-	struct pqi_sg_descriptor *sg_descriptor, void *buffer,
-	size_t buffer_length, enum dma_data_direction data_direction)
-{
+अटल पूर्णांक pqi_map_single(काष्ठा pci_dev *pci_dev,
+	काष्ठा pqi_sg_descriptor *sg_descriptor, व्योम *buffer,
+	माप_प्रकार buffer_length, क्रमागत dma_data_direction data_direction)
+अणु
 	dma_addr_t bus_address;
 
-	if (!buffer || buffer_length == 0 || data_direction == DMA_NONE)
-		return 0;
+	अगर (!buffer || buffer_length == 0 || data_direction == DMA_NONE)
+		वापस 0;
 
 	bus_address = dma_map_single(&pci_dev->dev, buffer, buffer_length,
 		data_direction);
-	if (dma_mapping_error(&pci_dev->dev, bus_address))
-		return -ENOMEM;
+	अगर (dma_mapping_error(&pci_dev->dev, bus_address))
+		वापस -ENOMEM;
 
 	put_unaligned_le64((u64)bus_address, &sg_descriptor->address);
 	put_unaligned_le32(buffer_length, &sg_descriptor->length);
 	put_unaligned_le32(CISS_SG_LAST, &sg_descriptor->flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_pci_unmap(struct pci_dev *pci_dev,
-	struct pqi_sg_descriptor *descriptors, int num_descriptors,
-	enum dma_data_direction data_direction)
-{
-	int i;
+अटल व्योम pqi_pci_unmap(काष्ठा pci_dev *pci_dev,
+	काष्ठा pqi_sg_descriptor *descriptors, पूर्णांक num_descriptors,
+	क्रमागत dma_data_direction data_direction)
+अणु
+	पूर्णांक i;
 
-	if (data_direction == DMA_NONE)
-		return;
+	अगर (data_direction == DMA_NONE)
+		वापस;
 
-	for (i = 0; i < num_descriptors; i++)
+	क्रम (i = 0; i < num_descriptors; i++)
 		dma_unmap_single(&pci_dev->dev,
 			(dma_addr_t)get_unaligned_le64(&descriptors[i].address),
 			get_unaligned_le32(&descriptors[i].length),
 			data_direction);
-}
+पूर्ण
 
-static int pqi_build_raid_path_request(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_raid_path_request *request, u8 cmd,
-	u8 *scsi3addr, void *buffer, size_t buffer_length,
-	u16 vpd_page, enum dma_data_direction *dir)
-{
+अटल पूर्णांक pqi_build_raid_path_request(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_raid_path_request *request, u8 cmd,
+	u8 *scsi3addr, व्योम *buffer, माप_प्रकार buffer_length,
+	u16 vpd_page, क्रमागत dma_data_direction *dir)
+अणु
 	u8 *cdb;
-	size_t cdb_length = buffer_length;
+	माप_प्रकार cdb_length = buffer_length;
 
-	memset(request, 0, sizeof(*request));
+	स_रखो(request, 0, माप(*request));
 
 	request->header.iu_type = PQI_REQUEST_IU_RAID_PATH_IO;
-	put_unaligned_le16(offsetof(struct pqi_raid_path_request,
+	put_unaligned_le16(दुरत्व(काष्ठा pqi_raid_path_request,
 		sg_descriptors[1]) - PQI_REQUEST_HEADER_LENGTH,
 		&request->header.iu_length);
 	put_unaligned_le32(buffer_length, &request->buffer_length);
-	memcpy(request->lun_number, scsi3addr, sizeof(request->lun_number));
+	स_नकल(request->lun_number, scsi3addr, माप(request->lun_number));
 	request->task_attribute = SOP_TASK_ATTRIBUTE_SIMPLE;
 	request->additional_cdb_bytes_usage = SOP_ADDITIONAL_CDB_BYTES_0;
 
 	cdb = request->cdb;
 
-	switch (cmd) {
-	case INQUIRY:
+	चयन (cmd) अणु
+	हाल INQUIRY:
 		request->data_direction = SOP_READ_FLAG;
 		cdb[0] = INQUIRY;
-		if (vpd_page & VPD_PAGE) {
+		अगर (vpd_page & VPD_PAGE) अणु
 			cdb[1] = 0x1;
 			cdb[2] = (u8)vpd_page;
-		}
+		पूर्ण
 		cdb[4] = (u8)cdb_length;
-		break;
-	case CISS_REPORT_LOG:
-	case CISS_REPORT_PHYS:
+		अवरोध;
+	हाल CISS_REPORT_LOG:
+	हाल CISS_REPORT_PHYS:
 		request->data_direction = SOP_READ_FLAG;
 		cdb[0] = cmd;
-		if (cmd == CISS_REPORT_PHYS)
+		अगर (cmd == CISS_REPORT_PHYS)
 			cdb[1] = CISS_REPORT_PHYS_FLAG_OTHER;
-		else
+		अन्यथा
 			cdb[1] = ctrl_info->ciss_report_log_flags;
 		put_unaligned_be32(cdb_length, &cdb[6]);
-		break;
-	case CISS_GET_RAID_MAP:
+		अवरोध;
+	हाल CISS_GET_RAID_MAP:
 		request->data_direction = SOP_READ_FLAG;
 		cdb[0] = CISS_READ;
 		cdb[1] = CISS_GET_RAID_MAP;
 		put_unaligned_be32(cdb_length, &cdb[6]);
-		break;
-	case SA_FLUSH_CACHE:
+		अवरोध;
+	हाल SA_FLUSH_CACHE:
 		request->header.driver_flags = PQI_DRIVER_NONBLOCKABLE_REQUEST;
 		request->data_direction = SOP_WRITE_FLAG;
 		cdb[0] = BMIC_WRITE;
 		cdb[6] = BMIC_FLUSH_CACHE;
 		put_unaligned_be16(cdb_length, &cdb[7]);
-		break;
-	case BMIC_SENSE_DIAG_OPTIONS:
+		अवरोध;
+	हाल BMIC_SENSE_DIAG_OPTIONS:
 		cdb_length = 0;
 		fallthrough;
-	case BMIC_IDENTIFY_CONTROLLER:
-	case BMIC_IDENTIFY_PHYSICAL_DEVICE:
-	case BMIC_SENSE_SUBSYSTEM_INFORMATION:
-	case BMIC_SENSE_FEATURE:
+	हाल BMIC_IDENTIFY_CONTROLLER:
+	हाल BMIC_IDENTIFY_PHYSICAL_DEVICE:
+	हाल BMIC_SENSE_SUBSYSTEM_INFORMATION:
+	हाल BMIC_SENSE_FEATURE:
 		request->data_direction = SOP_READ_FLAG;
 		cdb[0] = BMIC_READ;
 		cdb[6] = cmd;
 		put_unaligned_be16(cdb_length, &cdb[7]);
-		break;
-	case BMIC_SET_DIAG_OPTIONS:
+		अवरोध;
+	हाल BMIC_SET_DIAG_OPTIONS:
 		cdb_length = 0;
 		fallthrough;
-	case BMIC_WRITE_HOST_WELLNESS:
+	हाल BMIC_WRITE_HOST_WELLNESS:
 		request->data_direction = SOP_WRITE_FLAG;
 		cdb[0] = BMIC_WRITE;
 		cdb[6] = cmd;
 		put_unaligned_be16(cdb_length, &cdb[7]);
-		break;
-	case BMIC_CSMI_PASSTHRU:
-		request->data_direction = SOP_BIDIRECTIONAL;
+		अवरोध;
+	हाल BMIC_CSMI_PASSTHRU:
+		request->data_direction = SOP_BIसूचीECTIONAL;
 		cdb[0] = BMIC_WRITE;
 		cdb[5] = CSMI_CC_SAS_SMP_PASSTHRU;
 		cdb[6] = cmd;
 		put_unaligned_be16(cdb_length, &cdb[7]);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		dev_err(&ctrl_info->pci_dev->dev, "unknown command 0x%c\n", cmd);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (request->data_direction) {
-	case SOP_READ_FLAG:
+	चयन (request->data_direction) अणु
+	हाल SOP_READ_FLAG:
 		*dir = DMA_FROM_DEVICE;
-		break;
-	case SOP_WRITE_FLAG:
+		अवरोध;
+	हाल SOP_WRITE_FLAG:
 		*dir = DMA_TO_DEVICE;
-		break;
-	case SOP_NO_DIRECTION_FLAG:
+		अवरोध;
+	हाल SOP_NO_सूचीECTION_FLAG:
 		*dir = DMA_NONE;
-		break;
-	default:
-		*dir = DMA_BIDIRECTIONAL;
-		break;
-	}
+		अवरोध;
+	शेष:
+		*dir = DMA_BIसूचीECTIONAL;
+		अवरोध;
+	पूर्ण
 
-	return pqi_map_single(ctrl_info->pci_dev, &request->sg_descriptors[0],
+	वापस pqi_map_single(ctrl_info->pci_dev, &request->sg_descriptors[0],
 		buffer, buffer_length, *dir);
-}
+पूर्ण
 
-static inline void pqi_reinit_io_request(struct pqi_io_request *io_request)
-{
-	io_request->scmd = NULL;
+अटल अंतरभूत व्योम pqi_reinit_io_request(काष्ठा pqi_io_request *io_request)
+अणु
+	io_request->scmd = शून्य;
 	io_request->status = 0;
-	io_request->error_info = NULL;
+	io_request->error_info = शून्य;
 	io_request->raid_bypass = false;
-}
+पूर्ण
 
-static struct pqi_io_request *pqi_alloc_io_request(
-	struct pqi_ctrl_info *ctrl_info)
-{
-	struct pqi_io_request *io_request;
+अटल काष्ठा pqi_io_request *pqi_alloc_io_request(
+	काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	काष्ठा pqi_io_request *io_request;
 	u16 i = ctrl_info->next_io_request_slot;	/* benignly racy */
 
-	while (1) {
+	जबतक (1) अणु
 		io_request = &ctrl_info->io_request_pool[i];
-		if (atomic_inc_return(&io_request->refcount) == 1)
-			break;
+		अगर (atomic_inc_वापस(&io_request->refcount) == 1)
+			अवरोध;
 		atomic_dec(&io_request->refcount);
 		i = (i + 1) % ctrl_info->max_io_slots;
-	}
+	पूर्ण
 
 	/* benignly racy */
 	ctrl_info->next_io_request_slot = (i + 1) % ctrl_info->max_io_slots;
 
 	pqi_reinit_io_request(io_request);
 
-	return io_request;
-}
+	वापस io_request;
+पूर्ण
 
-static void pqi_free_io_request(struct pqi_io_request *io_request)
-{
+अटल व्योम pqi_मुक्त_io_request(काष्ठा pqi_io_request *io_request)
+अणु
 	atomic_dec(&io_request->refcount);
-}
+पूर्ण
 
-static int pqi_send_scsi_raid_request(struct pqi_ctrl_info *ctrl_info, u8 cmd,
-	u8 *scsi3addr, void *buffer, size_t buffer_length, u16 vpd_page,
-	struct pqi_raid_error_info *error_info)
-{
-	int rc;
-	struct pqi_raid_path_request request;
-	enum dma_data_direction dir;
+अटल पूर्णांक pqi_send_scsi_raid_request(काष्ठा pqi_ctrl_info *ctrl_info, u8 cmd,
+	u8 *scsi3addr, व्योम *buffer, माप_प्रकार buffer_length, u16 vpd_page,
+	काष्ठा pqi_raid_error_info *error_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_raid_path_request request;
+	क्रमागत dma_data_direction dir;
 
 	rc = pqi_build_raid_path_request(ctrl_info, &request, cmd, scsi3addr,
 		buffer, buffer_length, vpd_page, &dir);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, error_info);
 
 	pqi_pci_unmap(ctrl_info->pci_dev, request.sg_descriptors, 1, dir);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-/* helper functions for pqi_send_scsi_raid_request */
+/* helper functions क्रम pqi_send_scsi_raid_request */
 
-static inline int pqi_send_ctrl_raid_request(struct pqi_ctrl_info *ctrl_info,
-	u8 cmd, void *buffer, size_t buffer_length)
-{
-	return pqi_send_scsi_raid_request(ctrl_info, cmd, RAID_CTLR_LUNID,
-		buffer, buffer_length, 0, NULL);
-}
+अटल अंतरभूत पूर्णांक pqi_send_ctrl_raid_request(काष्ठा pqi_ctrl_info *ctrl_info,
+	u8 cmd, व्योम *buffer, माप_प्रकार buffer_length)
+अणु
+	वापस pqi_send_scsi_raid_request(ctrl_info, cmd, RAID_CTLR_LUNID,
+		buffer, buffer_length, 0, शून्य);
+पूर्ण
 
-static inline int pqi_send_ctrl_raid_with_error(struct pqi_ctrl_info *ctrl_info,
-	u8 cmd, void *buffer, size_t buffer_length,
-	struct pqi_raid_error_info *error_info)
-{
-	return pqi_send_scsi_raid_request(ctrl_info, cmd, RAID_CTLR_LUNID,
+अटल अंतरभूत पूर्णांक pqi_send_ctrl_raid_with_error(काष्ठा pqi_ctrl_info *ctrl_info,
+	u8 cmd, व्योम *buffer, माप_प्रकार buffer_length,
+	काष्ठा pqi_raid_error_info *error_info)
+अणु
+	वापस pqi_send_scsi_raid_request(ctrl_info, cmd, RAID_CTLR_LUNID,
 		buffer, buffer_length, 0, error_info);
-}
+पूर्ण
 
-static inline int pqi_identify_controller(struct pqi_ctrl_info *ctrl_info,
-	struct bmic_identify_controller *buffer)
-{
-	return pqi_send_ctrl_raid_request(ctrl_info, BMIC_IDENTIFY_CONTROLLER,
-		buffer, sizeof(*buffer));
-}
+अटल अंतरभूत पूर्णांक pqi_identअगरy_controller(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा bmic_identअगरy_controller *buffer)
+अणु
+	वापस pqi_send_ctrl_raid_request(ctrl_info, BMIC_IDENTIFY_CONTROLLER,
+		buffer, माप(*buffer));
+पूर्ण
 
-static inline int pqi_sense_subsystem_info(struct  pqi_ctrl_info *ctrl_info,
-	struct bmic_sense_subsystem_info *sense_info)
-{
-	return pqi_send_ctrl_raid_request(ctrl_info,
+अटल अंतरभूत पूर्णांक pqi_sense_subप्रणाली_info(काष्ठा  pqi_ctrl_info *ctrl_info,
+	काष्ठा bmic_sense_subप्रणाली_info *sense_info)
+अणु
+	वापस pqi_send_ctrl_raid_request(ctrl_info,
 		BMIC_SENSE_SUBSYSTEM_INFORMATION, sense_info,
-		sizeof(*sense_info));
-}
+		माप(*sense_info));
+पूर्ण
 
-static inline int pqi_scsi_inquiry(struct pqi_ctrl_info *ctrl_info,
-	u8 *scsi3addr, u16 vpd_page, void *buffer, size_t buffer_length)
-{
-	return pqi_send_scsi_raid_request(ctrl_info, INQUIRY, scsi3addr,
-		buffer, buffer_length, vpd_page, NULL);
-}
+अटल अंतरभूत पूर्णांक pqi_scsi_inquiry(काष्ठा pqi_ctrl_info *ctrl_info,
+	u8 *scsi3addr, u16 vpd_page, व्योम *buffer, माप_प्रकार buffer_length)
+अणु
+	वापस pqi_send_scsi_raid_request(ctrl_info, INQUIRY, scsi3addr,
+		buffer, buffer_length, vpd_page, शून्य);
+पूर्ण
 
-static int pqi_identify_physical_device(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device,
-	struct bmic_identify_physical_device *buffer, size_t buffer_length)
-{
-	int rc;
-	enum dma_data_direction dir;
+अटल पूर्णांक pqi_identअगरy_physical_device(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device,
+	काष्ठा bmic_identअगरy_physical_device *buffer, माप_प्रकार buffer_length)
+अणु
+	पूर्णांक rc;
+	क्रमागत dma_data_direction dir;
 	u16 bmic_device_index;
-	struct pqi_raid_path_request request;
+	काष्ठा pqi_raid_path_request request;
 
 	rc = pqi_build_raid_path_request(ctrl_info, &request,
 		BMIC_IDENTIFY_PHYSICAL_DEVICE, RAID_CTLR_LUNID, buffer,
 		buffer_length, 0, &dir);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	bmic_device_index = CISS_GET_DRIVE_NUMBER(device->scsi3addr);
 	request.cdb[2] = (u8)bmic_device_index;
 	request.cdb[9] = (u8)(bmic_device_index >> 8);
 
-	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, NULL);
+	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, शून्य);
 
 	pqi_pci_unmap(ctrl_info->pci_dev, request.sg_descriptors, 1, dir);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline u32 pqi_aio_limit_to_bytes(__le16 *limit)
-{
+अटल अंतरभूत u32 pqi_aio_limit_to_bytes(__le16 *limit)
+अणु
 	u32 bytes;
 
 	bytes = get_unaligned_le16(limit);
-	if (bytes == 0)
+	अगर (bytes == 0)
 		bytes = ~0;
-	else
+	अन्यथा
 		bytes *= 1024;
 
-	return bytes;
-}
+	वापस bytes;
+पूर्ण
 
-#pragma pack(1)
+#आशय pack(1)
 
-struct bmic_sense_feature_buffer {
-	struct bmic_sense_feature_buffer_header header;
-	struct bmic_sense_feature_io_page_aio_subpage aio_subpage;
-};
+काष्ठा bmic_sense_feature_buffer अणु
+	काष्ठा bmic_sense_feature_buffer_header header;
+	काष्ठा bmic_sense_feature_io_page_aio_subpage aio_subpage;
+पूर्ण;
 
-#pragma pack()
+#आशय pack()
 
-#define MINIMUM_AIO_SUBPAGE_BUFFER_LENGTH	\
-	offsetofend(struct bmic_sense_feature_buffer, \
-		aio_subpage.max_write_raid_1_10_3drive)
+#घोषणा MINIMUM_AIO_SUBPAGE_BUFFER_LENGTH	\
+	दुरत्वend(काष्ठा bmic_sense_feature_buffer, \
+		aio_subpage.max_ग_लिखो_raid_1_10_3drive)
 
-#define MINIMUM_AIO_SUBPAGE_LENGTH	\
-	(offsetofend(struct bmic_sense_feature_io_page_aio_subpage, \
-		max_write_raid_1_10_3drive) - \
-		sizeof_field(struct bmic_sense_feature_io_page_aio_subpage, header))
+#घोषणा MINIMUM_AIO_SUBPAGE_LENGTH	\
+	(दुरत्वend(काष्ठा bmic_sense_feature_io_page_aio_subpage, \
+		max_ग_लिखो_raid_1_10_3drive) - \
+		माप_field(काष्ठा bmic_sense_feature_io_page_aio_subpage, header))
 
-static int pqi_get_advanced_raid_bypass_config(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	enum dma_data_direction dir;
-	struct pqi_raid_path_request request;
-	struct bmic_sense_feature_buffer *buffer;
+अटल पूर्णांक pqi_get_advanced_raid_bypass_config(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	क्रमागत dma_data_direction dir;
+	काष्ठा pqi_raid_path_request request;
+	काष्ठा bmic_sense_feature_buffer *buffer;
 
-	buffer = kmalloc(sizeof(*buffer), GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	buffer = kदो_स्मृति(माप(*buffer), GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	rc = pqi_build_raid_path_request(ctrl_info, &request, BMIC_SENSE_FEATURE, RAID_CTLR_LUNID,
-		buffer, sizeof(*buffer), 0, &dir);
-	if (rc)
-		goto error;
+		buffer, माप(*buffer), 0, &dir);
+	अगर (rc)
+		जाओ error;
 
 	request.cdb[2] = BMIC_SENSE_FEATURE_IO_PAGE;
 	request.cdb[3] = BMIC_SENSE_FEATURE_IO_PAGE_AIO_SUBPAGE;
 
-	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, NULL);
+	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, शून्य);
 
 	pqi_pci_unmap(ctrl_info->pci_dev, request.sg_descriptors, 1, dir);
 
-	if (rc)
-		goto error;
+	अगर (rc)
+		जाओ error;
 
-	if (buffer->header.page_code != BMIC_SENSE_FEATURE_IO_PAGE ||
+	अगर (buffer->header.page_code != BMIC_SENSE_FEATURE_IO_PAGE ||
 		buffer->header.subpage_code !=
 			BMIC_SENSE_FEATURE_IO_PAGE_AIO_SUBPAGE ||
 		get_unaligned_le16(&buffer->header.buffer_length) <
@@ -794,9 +795,9 @@ static int pqi_get_advanced_raid_bypass_config(struct pqi_ctrl_info *ctrl_info)
 		buffer->aio_subpage.header.subpage_code !=
 			BMIC_SENSE_FEATURE_IO_PAGE_AIO_SUBPAGE ||
 		get_unaligned_le16(&buffer->aio_subpage.header.page_length) <
-			MINIMUM_AIO_SUBPAGE_LENGTH) {
-		goto error;
-	}
+			MINIMUM_AIO_SUBPAGE_LENGTH) अणु
+		जाओ error;
+	पूर्ण
 
 	ctrl_info->max_transfer_encrypted_sas_sata =
 		pqi_aio_limit_to_bytes(
@@ -806,111 +807,111 @@ static int pqi_get_advanced_raid_bypass_config(struct pqi_ctrl_info *ctrl_info)
 		pqi_aio_limit_to_bytes(
 			&buffer->aio_subpage.max_transfer_encrypted_nvme);
 
-	ctrl_info->max_write_raid_5_6 =
+	ctrl_info->max_ग_लिखो_raid_5_6 =
 		pqi_aio_limit_to_bytes(
-			&buffer->aio_subpage.max_write_raid_5_6);
+			&buffer->aio_subpage.max_ग_लिखो_raid_5_6);
 
-	ctrl_info->max_write_raid_1_10_2drive =
+	ctrl_info->max_ग_लिखो_raid_1_10_2drive =
 		pqi_aio_limit_to_bytes(
-			&buffer->aio_subpage.max_write_raid_1_10_2drive);
+			&buffer->aio_subpage.max_ग_लिखो_raid_1_10_2drive);
 
-	ctrl_info->max_write_raid_1_10_3drive =
+	ctrl_info->max_ग_लिखो_raid_1_10_3drive =
 		pqi_aio_limit_to_bytes(
-			&buffer->aio_subpage.max_write_raid_1_10_3drive);
+			&buffer->aio_subpage.max_ग_लिखो_raid_1_10_3drive);
 
 error:
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_flush_cache(struct pqi_ctrl_info *ctrl_info,
-	enum bmic_flush_cache_shutdown_event shutdown_event)
-{
-	int rc;
-	struct bmic_flush_cache *flush_cache;
+अटल पूर्णांक pqi_flush_cache(काष्ठा pqi_ctrl_info *ctrl_info,
+	क्रमागत bmic_flush_cache_shutकरोwn_event shutकरोwn_event)
+अणु
+	पूर्णांक rc;
+	काष्ठा bmic_flush_cache *flush_cache;
 
-	flush_cache = kzalloc(sizeof(*flush_cache), GFP_KERNEL);
-	if (!flush_cache)
-		return -ENOMEM;
+	flush_cache = kzalloc(माप(*flush_cache), GFP_KERNEL);
+	अगर (!flush_cache)
+		वापस -ENOMEM;
 
-	flush_cache->shutdown_event = shutdown_event;
+	flush_cache->shutकरोwn_event = shutकरोwn_event;
 
 	rc = pqi_send_ctrl_raid_request(ctrl_info, SA_FLUSH_CACHE, flush_cache,
-		sizeof(*flush_cache));
+		माप(*flush_cache));
 
-	kfree(flush_cache);
+	kमुक्त(flush_cache);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int pqi_csmi_smp_passthru(struct pqi_ctrl_info *ctrl_info,
-	struct bmic_csmi_smp_passthru_buffer *buffer, size_t buffer_length,
-	struct pqi_raid_error_info *error_info)
-{
-	return pqi_send_ctrl_raid_with_error(ctrl_info, BMIC_CSMI_PASSTHRU,
+पूर्णांक pqi_csmi_smp_passthru(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा bmic_csmi_smp_passthru_buffer *buffer, माप_प्रकार buffer_length,
+	काष्ठा pqi_raid_error_info *error_info)
+अणु
+	वापस pqi_send_ctrl_raid_with_error(ctrl_info, BMIC_CSMI_PASSTHRU,
 		buffer, buffer_length, error_info);
-}
+पूर्ण
 
-#define PQI_FETCH_PTRAID_DATA		(1 << 31)
+#घोषणा PQI_FETCH_PTRAID_DATA		(1 << 31)
 
-static int pqi_set_diag_rescan(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	struct bmic_diag_options *diag;
+अटल पूर्णांक pqi_set_diag_rescan(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा bmic_diag_options *diag;
 
-	diag = kzalloc(sizeof(*diag), GFP_KERNEL);
-	if (!diag)
-		return -ENOMEM;
+	diag = kzalloc(माप(*diag), GFP_KERNEL);
+	अगर (!diag)
+		वापस -ENOMEM;
 
 	rc = pqi_send_ctrl_raid_request(ctrl_info, BMIC_SENSE_DIAG_OPTIONS,
-		diag, sizeof(*diag));
-	if (rc)
-		goto out;
+		diag, माप(*diag));
+	अगर (rc)
+		जाओ out;
 
 	diag->options |= cpu_to_le32(PQI_FETCH_PTRAID_DATA);
 
 	rc = pqi_send_ctrl_raid_request(ctrl_info, BMIC_SET_DIAG_OPTIONS, diag,
-		sizeof(*diag));
+		माप(*diag));
 
 out:
-	kfree(diag);
+	kमुक्त(diag);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline int pqi_write_host_wellness(struct pqi_ctrl_info *ctrl_info,
-	void *buffer, size_t buffer_length)
-{
-	return pqi_send_ctrl_raid_request(ctrl_info, BMIC_WRITE_HOST_WELLNESS,
+अटल अंतरभूत पूर्णांक pqi_ग_लिखो_host_wellness(काष्ठा pqi_ctrl_info *ctrl_info,
+	व्योम *buffer, माप_प्रकार buffer_length)
+अणु
+	वापस pqi_send_ctrl_raid_request(ctrl_info, BMIC_WRITE_HOST_WELLNESS,
 		buffer, buffer_length);
-}
+पूर्ण
 
-#pragma pack(1)
+#आशय pack(1)
 
-struct bmic_host_wellness_driver_version {
+काष्ठा bmic_host_wellness_driver_version अणु
 	u8	start_tag[4];
 	u8	driver_version_tag[2];
 	__le16	driver_version_length;
-	char	driver_version[32];
-	u8	dont_write_tag[2];
+	अक्षर	driver_version[32];
+	u8	करोnt_ग_लिखो_tag[2];
 	u8	end_tag[2];
-};
+पूर्ण;
 
-#pragma pack()
+#आशय pack()
 
-static int pqi_write_driver_version_to_host_wellness(
-	struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	struct bmic_host_wellness_driver_version *buffer;
-	size_t buffer_length;
+अटल पूर्णांक pqi_ग_लिखो_driver_version_to_host_wellness(
+	काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा bmic_host_wellness_driver_version *buffer;
+	माप_प्रकार buffer_length;
 
-	buffer_length = sizeof(*buffer);
+	buffer_length = माप(*buffer);
 
-	buffer = kmalloc(buffer_length, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	buffer = kदो_स्मृति(buffer_length, GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	buffer->start_tag[0] = '<';
 	buffer->start_tag[1] = 'H';
@@ -918,210 +919,210 @@ static int pqi_write_driver_version_to_host_wellness(
 	buffer->start_tag[3] = '>';
 	buffer->driver_version_tag[0] = 'D';
 	buffer->driver_version_tag[1] = 'V';
-	put_unaligned_le16(sizeof(buffer->driver_version),
+	put_unaligned_le16(माप(buffer->driver_version),
 		&buffer->driver_version_length);
-	strncpy(buffer->driver_version, "Linux " DRIVER_VERSION,
-		sizeof(buffer->driver_version) - 1);
-	buffer->driver_version[sizeof(buffer->driver_version) - 1] = '\0';
-	buffer->dont_write_tag[0] = 'D';
-	buffer->dont_write_tag[1] = 'W';
+	म_नकलन(buffer->driver_version, "Linux " DRIVER_VERSION,
+		माप(buffer->driver_version) - 1);
+	buffer->driver_version[माप(buffer->driver_version) - 1] = '\0';
+	buffer->करोnt_ग_लिखो_tag[0] = 'D';
+	buffer->करोnt_ग_लिखो_tag[1] = 'W';
 	buffer->end_tag[0] = 'Z';
 	buffer->end_tag[1] = 'Z';
 
-	rc = pqi_write_host_wellness(ctrl_info, buffer, buffer_length);
+	rc = pqi_ग_लिखो_host_wellness(ctrl_info, buffer, buffer_length);
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#pragma pack(1)
+#आशय pack(1)
 
-struct bmic_host_wellness_time {
+काष्ठा bmic_host_wellness_समय अणु
 	u8	start_tag[4];
-	u8	time_tag[2];
-	__le16	time_length;
-	u8	time[8];
-	u8	dont_write_tag[2];
+	u8	समय_प्रकारag[2];
+	__le16	समय_length;
+	u8	समय[8];
+	u8	करोnt_ग_लिखो_tag[2];
 	u8	end_tag[2];
-};
+पूर्ण;
 
-#pragma pack()
+#आशय pack()
 
-static int pqi_write_current_time_to_host_wellness(
-	struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	struct bmic_host_wellness_time *buffer;
-	size_t buffer_length;
-	time64_t local_time;
-	unsigned int year;
-	struct tm tm;
+अटल पूर्णांक pqi_ग_लिखो_current_समय_प्रकारo_host_wellness(
+	काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा bmic_host_wellness_समय *buffer;
+	माप_प्रकार buffer_length;
+	समय64_t local_समय;
+	अचिन्हित पूर्णांक year;
+	काष्ठा पंचांग पंचांग;
 
-	buffer_length = sizeof(*buffer);
+	buffer_length = माप(*buffer);
 
-	buffer = kmalloc(buffer_length, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	buffer = kदो_स्मृति(buffer_length, GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	buffer->start_tag[0] = '<';
 	buffer->start_tag[1] = 'H';
 	buffer->start_tag[2] = 'W';
 	buffer->start_tag[3] = '>';
-	buffer->time_tag[0] = 'T';
-	buffer->time_tag[1] = 'D';
-	put_unaligned_le16(sizeof(buffer->time),
-		&buffer->time_length);
+	buffer->समय_प्रकारag[0] = 'T';
+	buffer->समय_प्रकारag[1] = 'D';
+	put_unaligned_le16(माप(buffer->समय),
+		&buffer->समय_length);
 
-	local_time = ktime_get_real_seconds();
-	time64_to_tm(local_time, -sys_tz.tz_minuteswest * 60, &tm);
-	year = tm.tm_year + 1900;
+	local_समय = kसमय_get_real_seconds();
+	समय64_to_पंचांग(local_समय, -sys_tz.tz_minuteswest * 60, &पंचांग);
+	year = पंचांग.पंचांग_year + 1900;
 
-	buffer->time[0] = bin2bcd(tm.tm_hour);
-	buffer->time[1] = bin2bcd(tm.tm_min);
-	buffer->time[2] = bin2bcd(tm.tm_sec);
-	buffer->time[3] = 0;
-	buffer->time[4] = bin2bcd(tm.tm_mon + 1);
-	buffer->time[5] = bin2bcd(tm.tm_mday);
-	buffer->time[6] = bin2bcd(year / 100);
-	buffer->time[7] = bin2bcd(year % 100);
+	buffer->समय[0] = bin2bcd(पंचांग.पंचांग_hour);
+	buffer->समय[1] = bin2bcd(पंचांग.पंचांग_min);
+	buffer->समय[2] = bin2bcd(पंचांग.पंचांग_sec);
+	buffer->समय[3] = 0;
+	buffer->समय[4] = bin2bcd(पंचांग.पंचांग_mon + 1);
+	buffer->समय[5] = bin2bcd(पंचांग.पंचांग_mday);
+	buffer->समय[6] = bin2bcd(year / 100);
+	buffer->समय[7] = bin2bcd(year % 100);
 
-	buffer->dont_write_tag[0] = 'D';
-	buffer->dont_write_tag[1] = 'W';
+	buffer->करोnt_ग_लिखो_tag[0] = 'D';
+	buffer->करोnt_ग_लिखो_tag[1] = 'W';
 	buffer->end_tag[0] = 'Z';
 	buffer->end_tag[1] = 'Z';
 
-	rc = pqi_write_host_wellness(ctrl_info, buffer, buffer_length);
+	rc = pqi_ग_लिखो_host_wellness(ctrl_info, buffer, buffer_length);
 
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#define PQI_UPDATE_TIME_WORK_INTERVAL	(24UL * 60 * 60 * PQI_HZ)
+#घोषणा PQI_UPDATE_TIME_WORK_INTERVAL	(24UL * 60 * 60 * PQI_HZ)
 
-static void pqi_update_time_worker(struct work_struct *work)
-{
-	int rc;
-	struct pqi_ctrl_info *ctrl_info;
+अटल व्योम pqi_update_समय_worker(काष्ठा work_काष्ठा *work)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
-	ctrl_info = container_of(to_delayed_work(work), struct pqi_ctrl_info,
-		update_time_work);
+	ctrl_info = container_of(to_delayed_work(work), काष्ठा pqi_ctrl_info,
+		update_समय_work);
 
-	rc = pqi_write_current_time_to_host_wellness(ctrl_info);
-	if (rc)
+	rc = pqi_ग_लिखो_current_समय_प्रकारo_host_wellness(ctrl_info);
+	अगर (rc)
 		dev_warn(&ctrl_info->pci_dev->dev,
 			"error updating time on controller\n");
 
-	schedule_delayed_work(&ctrl_info->update_time_work,
+	schedule_delayed_work(&ctrl_info->update_समय_work,
 		PQI_UPDATE_TIME_WORK_INTERVAL);
-}
+पूर्ण
 
-static inline void pqi_schedule_update_time_worker(struct pqi_ctrl_info *ctrl_info)
-{
-	schedule_delayed_work(&ctrl_info->update_time_work, 0);
-}
+अटल अंतरभूत व्योम pqi_schedule_update_समय_worker(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	schedule_delayed_work(&ctrl_info->update_समय_work, 0);
+पूर्ण
 
-static inline void pqi_cancel_update_time_worker(struct pqi_ctrl_info *ctrl_info)
-{
-	cancel_delayed_work_sync(&ctrl_info->update_time_work);
-}
+अटल अंतरभूत व्योम pqi_cancel_update_समय_worker(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	cancel_delayed_work_sync(&ctrl_info->update_समय_work);
+पूर्ण
 
-static inline int pqi_report_luns(struct pqi_ctrl_info *ctrl_info, u8 cmd, void *buffer,
-	size_t buffer_length)
-{
-	return pqi_send_ctrl_raid_request(ctrl_info, cmd, buffer, buffer_length);
-}
+अटल अंतरभूत पूर्णांक pqi_report_luns(काष्ठा pqi_ctrl_info *ctrl_info, u8 cmd, व्योम *buffer,
+	माप_प्रकार buffer_length)
+अणु
+	वापस pqi_send_ctrl_raid_request(ctrl_info, cmd, buffer, buffer_length);
+पूर्ण
 
-static int pqi_report_phys_logical_luns(struct pqi_ctrl_info *ctrl_info, u8 cmd, void **buffer)
-{
-	int rc;
-	size_t lun_list_length;
-	size_t lun_data_length;
-	size_t new_lun_list_length;
-	void *lun_data = NULL;
-	struct report_lun_header *report_lun_header;
+अटल पूर्णांक pqi_report_phys_logical_luns(काष्ठा pqi_ctrl_info *ctrl_info, u8 cmd, व्योम **buffer)
+अणु
+	पूर्णांक rc;
+	माप_प्रकार lun_list_length;
+	माप_प्रकार lun_data_length;
+	माप_प्रकार new_lun_list_length;
+	व्योम *lun_data = शून्य;
+	काष्ठा report_lun_header *report_lun_header;
 
-	report_lun_header = kmalloc(sizeof(*report_lun_header), GFP_KERNEL);
-	if (!report_lun_header) {
+	report_lun_header = kदो_स्मृति(माप(*report_lun_header), GFP_KERNEL);
+	अगर (!report_lun_header) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rc = pqi_report_luns(ctrl_info, cmd, report_lun_header, sizeof(*report_lun_header));
-	if (rc)
-		goto out;
+	rc = pqi_report_luns(ctrl_info, cmd, report_lun_header, माप(*report_lun_header));
+	अगर (rc)
+		जाओ out;
 
 	lun_list_length = get_unaligned_be32(&report_lun_header->list_length);
 
 again:
-	lun_data_length = sizeof(struct report_lun_header) + lun_list_length;
+	lun_data_length = माप(काष्ठा report_lun_header) + lun_list_length;
 
-	lun_data = kmalloc(lun_data_length, GFP_KERNEL);
-	if (!lun_data) {
+	lun_data = kदो_स्मृति(lun_data_length, GFP_KERNEL);
+	अगर (!lun_data) अणु
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (lun_list_length == 0) {
-		memcpy(lun_data, report_lun_header, sizeof(*report_lun_header));
-		goto out;
-	}
+	अगर (lun_list_length == 0) अणु
+		स_नकल(lun_data, report_lun_header, माप(*report_lun_header));
+		जाओ out;
+	पूर्ण
 
 	rc = pqi_report_luns(ctrl_info, cmd, lun_data, lun_data_length);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	new_lun_list_length =
-		get_unaligned_be32(&((struct report_lun_header *)lun_data)->list_length);
+		get_unaligned_be32(&((काष्ठा report_lun_header *)lun_data)->list_length);
 
-	if (new_lun_list_length > lun_list_length) {
+	अगर (new_lun_list_length > lun_list_length) अणु
 		lun_list_length = new_lun_list_length;
-		kfree(lun_data);
-		goto again;
-	}
+		kमुक्त(lun_data);
+		जाओ again;
+	पूर्ण
 
 out:
-	kfree(report_lun_header);
+	kमुक्त(report_lun_header);
 
-	if (rc) {
-		kfree(lun_data);
-		lun_data = NULL;
-	}
+	अगर (rc) अणु
+		kमुक्त(lun_data);
+		lun_data = शून्य;
+	पूर्ण
 
 	*buffer = lun_data;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline int pqi_report_phys_luns(struct pqi_ctrl_info *ctrl_info, void **buffer)
-{
-	return pqi_report_phys_logical_luns(ctrl_info, CISS_REPORT_PHYS, buffer);
-}
+अटल अंतरभूत पूर्णांक pqi_report_phys_luns(काष्ठा pqi_ctrl_info *ctrl_info, व्योम **buffer)
+अणु
+	वापस pqi_report_phys_logical_luns(ctrl_info, CISS_REPORT_PHYS, buffer);
+पूर्ण
 
-static inline int pqi_report_logical_luns(struct pqi_ctrl_info *ctrl_info, void **buffer)
-{
-	return pqi_report_phys_logical_luns(ctrl_info, CISS_REPORT_LOG, buffer);
-}
+अटल अंतरभूत पूर्णांक pqi_report_logical_luns(काष्ठा pqi_ctrl_info *ctrl_info, व्योम **buffer)
+अणु
+	वापस pqi_report_phys_logical_luns(ctrl_info, CISS_REPORT_LOG, buffer);
+पूर्ण
 
-static int pqi_get_device_lists(struct pqi_ctrl_info *ctrl_info,
-	struct report_phys_lun_extended **physdev_list,
-	struct report_log_lun_extended **logdev_list)
-{
-	int rc;
-	size_t logdev_list_length;
-	size_t logdev_data_length;
-	struct report_log_lun_extended *internal_logdev_list;
-	struct report_log_lun_extended *logdev_data;
-	struct report_lun_header report_lun_header;
+अटल पूर्णांक pqi_get_device_lists(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा report_phys_lun_extended **physdev_list,
+	काष्ठा report_log_lun_extended **logdev_list)
+अणु
+	पूर्णांक rc;
+	माप_प्रकार logdev_list_length;
+	माप_प्रकार logdev_data_length;
+	काष्ठा report_log_lun_extended *पूर्णांकernal_logdev_list;
+	काष्ठा report_log_lun_extended *logdev_data;
+	काष्ठा report_lun_header report_lun_header;
 
-	rc = pqi_report_phys_luns(ctrl_info, (void **)physdev_list);
-	if (rc)
+	rc = pqi_report_phys_luns(ctrl_info, (व्योम **)physdev_list);
+	अगर (rc)
 		dev_err(&ctrl_info->pci_dev->dev,
 			"report physical LUNs failed\n");
 
-	rc = pqi_report_logical_luns(ctrl_info, (void **)logdev_list);
-	if (rc)
+	rc = pqi_report_logical_luns(ctrl_info, (व्योम **)logdev_list);
+	अगर (rc)
 		dev_err(&ctrl_info->pci_dev->dev,
 			"report logical LUNs failed\n");
 
@@ -1131,150 +1132,150 @@ static int pqi_get_device_lists(struct pqi_ctrl_info *ctrl_info,
 
 	logdev_data = *logdev_list;
 
-	if (logdev_data) {
+	अगर (logdev_data) अणु
 		logdev_list_length =
 			get_unaligned_be32(&logdev_data->header.list_length);
-	} else {
-		memset(&report_lun_header, 0, sizeof(report_lun_header));
+	पूर्ण अन्यथा अणु
+		स_रखो(&report_lun_header, 0, माप(report_lun_header));
 		logdev_data =
-			(struct report_log_lun_extended *)&report_lun_header;
+			(काष्ठा report_log_lun_extended *)&report_lun_header;
 		logdev_list_length = 0;
-	}
+	पूर्ण
 
-	logdev_data_length = sizeof(struct report_lun_header) +
+	logdev_data_length = माप(काष्ठा report_lun_header) +
 		logdev_list_length;
 
-	internal_logdev_list = kmalloc(logdev_data_length +
-		sizeof(struct report_log_lun_extended), GFP_KERNEL);
-	if (!internal_logdev_list) {
-		kfree(*logdev_list);
-		*logdev_list = NULL;
-		return -ENOMEM;
-	}
+	पूर्णांकernal_logdev_list = kदो_स्मृति(logdev_data_length +
+		माप(काष्ठा report_log_lun_extended), GFP_KERNEL);
+	अगर (!पूर्णांकernal_logdev_list) अणु
+		kमुक्त(*logdev_list);
+		*logdev_list = शून्य;
+		वापस -ENOMEM;
+	पूर्ण
 
-	memcpy(internal_logdev_list, logdev_data, logdev_data_length);
-	memset((u8 *)internal_logdev_list + logdev_data_length, 0,
-		sizeof(struct report_log_lun_extended_entry));
+	स_नकल(पूर्णांकernal_logdev_list, logdev_data, logdev_data_length);
+	स_रखो((u8 *)पूर्णांकernal_logdev_list + logdev_data_length, 0,
+		माप(काष्ठा report_log_lun_extended_entry));
 	put_unaligned_be32(logdev_list_length +
-		sizeof(struct report_log_lun_extended_entry),
-		&internal_logdev_list->header.list_length);
+		माप(काष्ठा report_log_lun_extended_entry),
+		&पूर्णांकernal_logdev_list->header.list_length);
 
-	kfree(*logdev_list);
-	*logdev_list = internal_logdev_list;
+	kमुक्त(*logdev_list);
+	*logdev_list = पूर्णांकernal_logdev_list;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void pqi_set_bus_target_lun(struct pqi_scsi_dev *device,
-	int bus, int target, int lun)
-{
+अटल अंतरभूत व्योम pqi_set_bus_target_lun(काष्ठा pqi_scsi_dev *device,
+	पूर्णांक bus, पूर्णांक target, पूर्णांक lun)
+अणु
 	device->bus = bus;
 	device->target = target;
 	device->lun = lun;
-}
+पूर्ण
 
-static void pqi_assign_bus_target_lun(struct pqi_scsi_dev *device)
-{
+अटल व्योम pqi_assign_bus_target_lun(काष्ठा pqi_scsi_dev *device)
+अणु
 	u8 *scsi3addr;
 	u32 lunid;
-	int bus;
-	int target;
-	int lun;
+	पूर्णांक bus;
+	पूर्णांक target;
+	पूर्णांक lun;
 
 	scsi3addr = device->scsi3addr;
 	lunid = get_unaligned_le32(scsi3addr);
 
-	if (pqi_is_hba_lunid(scsi3addr)) {
-		/* The specified device is the controller. */
+	अगर (pqi_is_hba_lunid(scsi3addr)) अणु
+		/* The specअगरied device is the controller. */
 		pqi_set_bus_target_lun(device, PQI_HBA_BUS, 0, lunid & 0x3fff);
 		device->target_lun_valid = true;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (pqi_is_logical_device(device)) {
-		if (device->is_external_raid_device) {
+	अगर (pqi_is_logical_device(device)) अणु
+		अगर (device->is_बाह्यal_raid_device) अणु
 			bus = PQI_EXTERNAL_RAID_VOLUME_BUS;
 			target = (lunid >> 16) & 0x3fff;
 			lun = lunid & 0xff;
-		} else {
+		पूर्ण अन्यथा अणु
 			bus = PQI_RAID_VOLUME_BUS;
 			target = 0;
 			lun = lunid & 0x3fff;
-		}
+		पूर्ण
 		pqi_set_bus_target_lun(device, bus, target, lun);
 		device->target_lun_valid = true;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/*
-	 * Defer target and LUN assignment for non-controller physical devices
+	 * Defer target and LUN assignment क्रम non-controller physical devices
 	 * because the SAS transport layer will make these assignments later.
 	 */
 	pqi_set_bus_target_lun(device, PQI_PHYSICAL_DEVICE_BUS, 0, 0);
-}
+पूर्ण
 
-static void pqi_get_raid_level(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	int rc;
+अटल व्योम pqi_get_raid_level(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक rc;
 	u8 raid_level;
 	u8 *buffer;
 
 	raid_level = SA_RAID_UNKNOWN;
 
-	buffer = kmalloc(64, GFP_KERNEL);
-	if (buffer) {
+	buffer = kदो_स्मृति(64, GFP_KERNEL);
+	अगर (buffer) अणु
 		rc = pqi_scsi_inquiry(ctrl_info, device->scsi3addr,
 			VPD_PAGE | CISS_VPD_LV_DEVICE_GEOMETRY, buffer, 64);
-		if (rc == 0) {
+		अगर (rc == 0) अणु
 			raid_level = buffer[8];
-			if (raid_level > SA_RAID_MAX)
+			अगर (raid_level > SA_RAID_MAX)
 				raid_level = SA_RAID_UNKNOWN;
-		}
-		kfree(buffer);
-	}
+		पूर्ण
+		kमुक्त(buffer);
+	पूर्ण
 
 	device->raid_level = raid_level;
-}
+पूर्ण
 
-static int pqi_validate_raid_map(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device, struct raid_map *raid_map)
-{
-	char *err_msg;
+अटल पूर्णांक pqi_validate_raid_map(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device, काष्ठा raid_map *raid_map)
+अणु
+	अक्षर *err_msg;
 	u32 raid_map_size;
 	u32 r5or6_blocks_per_row;
 
-	raid_map_size = get_unaligned_le32(&raid_map->structure_size);
+	raid_map_size = get_unaligned_le32(&raid_map->काष्ठाure_size);
 
-	if (raid_map_size < offsetof(struct raid_map, disk_data)) {
+	अगर (raid_map_size < दुरत्व(काष्ठा raid_map, disk_data)) अणु
 		err_msg = "RAID map too small";
-		goto bad_raid_map;
-	}
+		जाओ bad_raid_map;
+	पूर्ण
 
-	if (device->raid_level == SA_RAID_1) {
-		if (get_unaligned_le16(&raid_map->layout_map_count) != 2) {
+	अगर (device->raid_level == SA_RAID_1) अणु
+		अगर (get_unaligned_le16(&raid_map->layout_map_count) != 2) अणु
 			err_msg = "invalid RAID-1 map";
-			goto bad_raid_map;
-		}
-	} else if (device->raid_level == SA_RAID_TRIPLE) {
-		if (get_unaligned_le16(&raid_map->layout_map_count) != 3) {
+			जाओ bad_raid_map;
+		पूर्ण
+	पूर्ण अन्यथा अगर (device->raid_level == SA_RAID_TRIPLE) अणु
+		अगर (get_unaligned_le16(&raid_map->layout_map_count) != 3) अणु
 			err_msg = "invalid RAID-1(Triple) map";
-			goto bad_raid_map;
-		}
-	} else if ((device->raid_level == SA_RAID_5 ||
+			जाओ bad_raid_map;
+		पूर्ण
+	पूर्ण अन्यथा अगर ((device->raid_level == SA_RAID_5 ||
 		device->raid_level == SA_RAID_6) &&
-		get_unaligned_le16(&raid_map->layout_map_count) > 1) {
+		get_unaligned_le16(&raid_map->layout_map_count) > 1) अणु
 		/* RAID 50/60 */
 		r5or6_blocks_per_row =
 			get_unaligned_le16(&raid_map->strip_size) *
 			get_unaligned_le16(&raid_map->data_disks_per_row);
-		if (r5or6_blocks_per_row == 0) {
+		अगर (r5or6_blocks_per_row == 0) अणु
 			err_msg = "invalid RAID-5 or RAID-6 map";
-			goto bad_raid_map;
-		}
-	}
+			जाओ bad_raid_map;
+		पूर्ण
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 bad_raid_map:
 	dev_warn(&ctrl_info->pci_dev->dev,
@@ -1282,197 +1283,197 @@ bad_raid_map:
 		*((u32 *)&device->scsi3addr),
 		*((u32 *)&device->scsi3addr[4]), err_msg);
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static int pqi_get_raid_map(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	int rc;
+अटल पूर्णांक pqi_get_raid_map(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक rc;
 	u32 raid_map_size;
-	struct raid_map *raid_map;
+	काष्ठा raid_map *raid_map;
 
-	raid_map = kmalloc(sizeof(*raid_map), GFP_KERNEL);
-	if (!raid_map)
-		return -ENOMEM;
+	raid_map = kदो_स्मृति(माप(*raid_map), GFP_KERNEL);
+	अगर (!raid_map)
+		वापस -ENOMEM;
 
 	rc = pqi_send_scsi_raid_request(ctrl_info, CISS_GET_RAID_MAP,
-		device->scsi3addr, raid_map, sizeof(*raid_map), 0, NULL);
-	if (rc)
-		goto error;
+		device->scsi3addr, raid_map, माप(*raid_map), 0, शून्य);
+	अगर (rc)
+		जाओ error;
 
-	raid_map_size = get_unaligned_le32(&raid_map->structure_size);
+	raid_map_size = get_unaligned_le32(&raid_map->काष्ठाure_size);
 
-	if (raid_map_size > sizeof(*raid_map)) {
+	अगर (raid_map_size > माप(*raid_map)) अणु
 
-		kfree(raid_map);
+		kमुक्त(raid_map);
 
-		raid_map = kmalloc(raid_map_size, GFP_KERNEL);
-		if (!raid_map)
-			return -ENOMEM;
+		raid_map = kदो_स्मृति(raid_map_size, GFP_KERNEL);
+		अगर (!raid_map)
+			वापस -ENOMEM;
 
 		rc = pqi_send_scsi_raid_request(ctrl_info, CISS_GET_RAID_MAP,
-			device->scsi3addr, raid_map, raid_map_size, 0, NULL);
-		if (rc)
-			goto error;
+			device->scsi3addr, raid_map, raid_map_size, 0, शून्य);
+		अगर (rc)
+			जाओ error;
 
-		if (get_unaligned_le32(&raid_map->structure_size)
-			!= raid_map_size) {
+		अगर (get_unaligned_le32(&raid_map->काष्ठाure_size)
+			!= raid_map_size) अणु
 			dev_warn(&ctrl_info->pci_dev->dev,
 				"requested %u bytes, received %u bytes\n",
 				raid_map_size,
-				get_unaligned_le32(&raid_map->structure_size));
-			goto error;
-		}
-	}
+				get_unaligned_le32(&raid_map->काष्ठाure_size));
+			जाओ error;
+		पूर्ण
+	पूर्ण
 
 	rc = pqi_validate_raid_map(ctrl_info, device, raid_map);
-	if (rc)
-		goto error;
+	अगर (rc)
+		जाओ error;
 
 	device->raid_map = raid_map;
 
-	return 0;
+	वापस 0;
 
 error:
-	kfree(raid_map);
+	kमुक्त(raid_map);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pqi_set_max_transfer_encrypted(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	if (!ctrl_info->lv_drive_type_mix_valid) {
+अटल व्योम pqi_set_max_transfer_encrypted(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	अगर (!ctrl_info->lv_drive_type_mix_valid) अणु
 		device->max_transfer_encrypted = ~0;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	switch (LV_GET_DRIVE_TYPE_MIX(device->scsi3addr)) {
-	case LV_DRIVE_TYPE_MIX_SAS_HDD_ONLY:
-	case LV_DRIVE_TYPE_MIX_SATA_HDD_ONLY:
-	case LV_DRIVE_TYPE_MIX_SAS_OR_SATA_SSD_ONLY:
-	case LV_DRIVE_TYPE_MIX_SAS_SSD_ONLY:
-	case LV_DRIVE_TYPE_MIX_SATA_SSD_ONLY:
-	case LV_DRIVE_TYPE_MIX_SAS_ONLY:
-	case LV_DRIVE_TYPE_MIX_SATA_ONLY:
+	चयन (LV_GET_DRIVE_TYPE_MIX(device->scsi3addr)) अणु
+	हाल LV_DRIVE_TYPE_MIX_SAS_HDD_ONLY:
+	हाल LV_DRIVE_TYPE_MIX_SATA_HDD_ONLY:
+	हाल LV_DRIVE_TYPE_MIX_SAS_OR_SATA_SSD_ONLY:
+	हाल LV_DRIVE_TYPE_MIX_SAS_SSD_ONLY:
+	हाल LV_DRIVE_TYPE_MIX_SATA_SSD_ONLY:
+	हाल LV_DRIVE_TYPE_MIX_SAS_ONLY:
+	हाल LV_DRIVE_TYPE_MIX_SATA_ONLY:
 		device->max_transfer_encrypted =
 			ctrl_info->max_transfer_encrypted_sas_sata;
-		break;
-	case LV_DRIVE_TYPE_MIX_NVME_ONLY:
+		अवरोध;
+	हाल LV_DRIVE_TYPE_MIX_NVME_ONLY:
 		device->max_transfer_encrypted =
 			ctrl_info->max_transfer_encrypted_nvme;
-		break;
-	case LV_DRIVE_TYPE_MIX_UNKNOWN:
-	case LV_DRIVE_TYPE_MIX_NO_RESTRICTION:
-	default:
+		अवरोध;
+	हाल LV_DRIVE_TYPE_MIX_UNKNOWN:
+	हाल LV_DRIVE_TYPE_MIX_NO_RESTRICTION:
+	शेष:
 		device->max_transfer_encrypted =
 			min(ctrl_info->max_transfer_encrypted_sas_sata,
 				ctrl_info->max_transfer_encrypted_nvme);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void pqi_get_raid_bypass_status(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	int rc;
+अटल व्योम pqi_get_raid_bypass_status(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक rc;
 	u8 *buffer;
 	u8 bypass_status;
 
-	buffer = kmalloc(64, GFP_KERNEL);
-	if (!buffer)
-		return;
+	buffer = kदो_स्मृति(64, GFP_KERNEL);
+	अगर (!buffer)
+		वापस;
 
 	rc = pqi_scsi_inquiry(ctrl_info, device->scsi3addr,
 		VPD_PAGE | CISS_VPD_LV_BYPASS_STATUS, buffer, 64);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-#define RAID_BYPASS_STATUS		4
-#define RAID_BYPASS_CONFIGURED		0x1
-#define RAID_BYPASS_ENABLED		0x2
+#घोषणा RAID_BYPASS_STATUS		4
+#घोषणा RAID_BYPASS_CONFIGURED		0x1
+#घोषणा RAID_BYPASS_ENABLED		0x2
 
 	bypass_status = buffer[RAID_BYPASS_STATUS];
 	device->raid_bypass_configured =
 		(bypass_status & RAID_BYPASS_CONFIGURED) != 0;
-	if (device->raid_bypass_configured &&
+	अगर (device->raid_bypass_configured &&
 		(bypass_status & RAID_BYPASS_ENABLED) &&
-		pqi_get_raid_map(ctrl_info, device) == 0) {
+		pqi_get_raid_map(ctrl_info, device) == 0) अणु
 		device->raid_bypass_enabled = true;
-		if (get_unaligned_le16(&device->raid_map->flags) &
+		अगर (get_unaligned_le16(&device->raid_map->flags) &
 			RAID_MAP_ENCRYPTION_ENABLED)
 			pqi_set_max_transfer_encrypted(ctrl_info, device);
-	}
+	पूर्ण
 
 out:
-	kfree(buffer);
-}
+	kमुक्त(buffer);
+पूर्ण
 
 /*
- * Use vendor-specific VPD to determine online/offline status of a volume.
+ * Use venकरोr-specअगरic VPD to determine online/offline status of a volume.
  */
 
-static void pqi_get_volume_status(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	int rc;
-	size_t page_length;
+अटल व्योम pqi_get_volume_status(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक rc;
+	माप_प्रकार page_length;
 	u8 volume_status = CISS_LV_STATUS_UNAVAILABLE;
 	bool volume_offline = true;
 	u32 volume_flags;
-	struct ciss_vpd_logical_volume_status *vpd;
+	काष्ठा ciss_vpd_logical_volume_status *vpd;
 
-	vpd = kmalloc(sizeof(*vpd), GFP_KERNEL);
-	if (!vpd)
-		goto no_buffer;
+	vpd = kदो_स्मृति(माप(*vpd), GFP_KERNEL);
+	अगर (!vpd)
+		जाओ no_buffer;
 
 	rc = pqi_scsi_inquiry(ctrl_info, device->scsi3addr,
-		VPD_PAGE | CISS_VPD_LV_STATUS, vpd, sizeof(*vpd));
-	if (rc)
-		goto out;
+		VPD_PAGE | CISS_VPD_LV_STATUS, vpd, माप(*vpd));
+	अगर (rc)
+		जाओ out;
 
-	if (vpd->page_code != CISS_VPD_LV_STATUS)
-		goto out;
+	अगर (vpd->page_code != CISS_VPD_LV_STATUS)
+		जाओ out;
 
-	page_length = offsetof(struct ciss_vpd_logical_volume_status,
+	page_length = दुरत्व(काष्ठा ciss_vpd_logical_volume_status,
 		volume_status) + vpd->page_length;
-	if (page_length < sizeof(*vpd))
-		goto out;
+	अगर (page_length < माप(*vpd))
+		जाओ out;
 
 	volume_status = vpd->volume_status;
 	volume_flags = get_unaligned_be32(&vpd->flags);
 	volume_offline = (volume_flags & CISS_LV_FLAGS_NO_HOST_IO) != 0;
 
 out:
-	kfree(vpd);
+	kमुक्त(vpd);
 no_buffer:
 	device->volume_status = volume_status;
 	device->volume_offline = volume_offline;
-}
+पूर्ण
 
-#define PQI_DEVICE_PHY_MAP_SUPPORTED	0x10
+#घोषणा PQI_DEVICE_PHY_MAP_SUPPORTED	0x10
 
-static int pqi_get_physical_device_info(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device,
-	struct bmic_identify_physical_device *id_phys)
-{
-	int rc;
+अटल पूर्णांक pqi_get_physical_device_info(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device,
+	काष्ठा bmic_identअगरy_physical_device *id_phys)
+अणु
+	पूर्णांक rc;
 
-	memset(id_phys, 0, sizeof(*id_phys));
+	स_रखो(id_phys, 0, माप(*id_phys));
 
-	rc = pqi_identify_physical_device(ctrl_info, device,
-		id_phys, sizeof(*id_phys));
-	if (rc) {
+	rc = pqi_identअगरy_physical_device(ctrl_info, device,
+		id_phys, माप(*id_phys));
+	अगर (rc) अणु
 		device->queue_depth = PQI_PHYSICAL_DISK_DEFAULT_MAX_QUEUE_DEPTH;
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	scsi_sanitize_inquiry_string(&id_phys->model[0], 8);
 	scsi_sanitize_inquiry_string(&id_phys->model[8], 16);
 
-	memcpy(device->vendor, &id_phys->model[0], sizeof(device->vendor));
-	memcpy(device->model, &id_phys->model[8], sizeof(device->model));
+	स_नकल(device->venकरोr, &id_phys->model[0], माप(device->venकरोr));
+	स_नकल(device->model, &id_phys->model[8], माप(device->model));
 
 	device->box_index = id_phys->box_index;
 	device->phys_box_on_bus = id_phys->phys_box_on_bus;
@@ -1481,384 +1482,384 @@ static int pqi_get_physical_device_info(struct pqi_ctrl_info *ctrl_info,
 		get_unaligned_le16(&id_phys->current_queue_depth_limit);
 	device->active_path_index = id_phys->active_path_number;
 	device->path_map = id_phys->redundant_path_present_map;
-	memcpy(&device->box,
+	स_नकल(&device->box,
 		&id_phys->alternate_paths_phys_box_on_port,
-		sizeof(device->box));
-	memcpy(&device->phys_connector,
+		माप(device->box));
+	स_नकल(&device->phys_connector,
 		&id_phys->alternate_paths_phys_connector,
-		sizeof(device->phys_connector));
+		माप(device->phys_connector));
 	device->bay = id_phys->phys_bay_in_box;
 
-	memcpy(&device->page_83_identifier, &id_phys->page_83_identifier,
-		sizeof(device->page_83_identifier));
+	स_नकल(&device->page_83_identअगरier, &id_phys->page_83_identअगरier,
+		माप(device->page_83_identअगरier));
 
-	if ((id_phys->even_more_flags & PQI_DEVICE_PHY_MAP_SUPPORTED) &&
+	अगर ((id_phys->even_more_flags & PQI_DEVICE_PHY_MAP_SUPPORTED) &&
 		id_phys->phy_count)
 		device->phy_id =
 			id_phys->phy_to_phy_map[device->active_path_index];
-	else
+	अन्यथा
 		device->phy_id = 0xFF;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_get_logical_device_info(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	int rc;
+अटल पूर्णांक pqi_get_logical_device_info(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक rc;
 	u8 *buffer;
 
-	buffer = kmalloc(64, GFP_KERNEL);
-	if (!buffer)
-		return -ENOMEM;
+	buffer = kदो_स्मृति(64, GFP_KERNEL);
+	अगर (!buffer)
+		वापस -ENOMEM;
 
 	/* Send an inquiry to the device to see what it is. */
 	rc = pqi_scsi_inquiry(ctrl_info, device->scsi3addr, 0, buffer, 64);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	scsi_sanitize_inquiry_string(&buffer[8], 8);
 	scsi_sanitize_inquiry_string(&buffer[16], 16);
 
 	device->devtype = buffer[0] & 0x1f;
-	memcpy(device->vendor, &buffer[8], sizeof(device->vendor));
-	memcpy(device->model, &buffer[16], sizeof(device->model));
+	स_नकल(device->venकरोr, &buffer[8], माप(device->venकरोr));
+	स_नकल(device->model, &buffer[16], माप(device->model));
 
-	if (device->devtype == TYPE_DISK) {
-		if (device->is_external_raid_device) {
+	अगर (device->devtype == TYPE_DISK) अणु
+		अगर (device->is_बाह्यal_raid_device) अणु
 			device->raid_level = SA_RAID_UNKNOWN;
 			device->volume_status = CISS_LV_OK;
 			device->volume_offline = false;
-		} else {
+		पूर्ण अन्यथा अणु
 			pqi_get_raid_level(ctrl_info, device);
 			pqi_get_raid_bypass_status(ctrl_info, device);
 			pqi_get_volume_status(ctrl_info, device);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	kfree(buffer);
+	kमुक्त(buffer);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_get_device_info(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device,
-	struct bmic_identify_physical_device *id_phys)
-{
-	int rc;
+अटल पूर्णांक pqi_get_device_info(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device,
+	काष्ठा bmic_identअगरy_physical_device *id_phys)
+अणु
+	पूर्णांक rc;
 
-	if (device->is_expander_smp_device)
-		return 0;
+	अगर (device->is_expander_smp_device)
+		वापस 0;
 
-	if (pqi_is_logical_device(device))
+	अगर (pqi_is_logical_device(device))
 		rc = pqi_get_logical_device_info(ctrl_info, device);
-	else
+	अन्यथा
 		rc = pqi_get_physical_device_info(ctrl_info, device, id_phys);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pqi_show_volume_status(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	char *status;
-	static const char unknown_state_str[] =
+अटल व्योम pqi_show_volume_status(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	अक्षर *status;
+	अटल स्थिर अक्षर unknown_state_str[] =
 		"Volume is in an unknown state (%u)";
-	char unknown_state_buffer[sizeof(unknown_state_str) + 10];
+	अक्षर unknown_state_buffer[माप(unknown_state_str) + 10];
 
-	switch (device->volume_status) {
-	case CISS_LV_OK:
+	चयन (device->volume_status) अणु
+	हाल CISS_LV_OK:
 		status = "Volume online";
-		break;
-	case CISS_LV_FAILED:
+		अवरोध;
+	हाल CISS_LV_FAILED:
 		status = "Volume failed";
-		break;
-	case CISS_LV_NOT_CONFIGURED:
+		अवरोध;
+	हाल CISS_LV_NOT_CONFIGURED:
 		status = "Volume not configured";
-		break;
-	case CISS_LV_DEGRADED:
+		अवरोध;
+	हाल CISS_LV_DEGRADED:
 		status = "Volume degraded";
-		break;
-	case CISS_LV_READY_FOR_RECOVERY:
+		अवरोध;
+	हाल CISS_LV_READY_FOR_RECOVERY:
 		status = "Volume ready for recovery operation";
-		break;
-	case CISS_LV_UNDERGOING_RECOVERY:
+		अवरोध;
+	हाल CISS_LV_UNDERGOING_RECOVERY:
 		status = "Volume undergoing recovery";
-		break;
-	case CISS_LV_WRONG_PHYSICAL_DRIVE_REPLACED:
+		अवरोध;
+	हाल CISS_LV_WRONG_PHYSICAL_DRIVE_REPLACED:
 		status = "Wrong physical drive was replaced";
-		break;
-	case CISS_LV_PHYSICAL_DRIVE_CONNECTION_PROBLEM:
+		अवरोध;
+	हाल CISS_LV_PHYSICAL_DRIVE_CONNECTION_PROBLEM:
 		status = "A physical drive not properly connected";
-		break;
-	case CISS_LV_HARDWARE_OVERHEATING:
+		अवरोध;
+	हाल CISS_LV_HARDWARE_OVERHEATING:
 		status = "Hardware is overheating";
-		break;
-	case CISS_LV_HARDWARE_HAS_OVERHEATED:
+		अवरोध;
+	हाल CISS_LV_HARDWARE_HAS_OVERHEATED:
 		status = "Hardware has overheated";
-		break;
-	case CISS_LV_UNDERGOING_EXPANSION:
+		अवरोध;
+	हाल CISS_LV_UNDERGOING_EXPANSION:
 		status = "Volume undergoing expansion";
-		break;
-	case CISS_LV_NOT_AVAILABLE:
+		अवरोध;
+	हाल CISS_LV_NOT_AVAILABLE:
 		status = "Volume waiting for transforming volume";
-		break;
-	case CISS_LV_QUEUED_FOR_EXPANSION:
+		अवरोध;
+	हाल CISS_LV_QUEUED_FOR_EXPANSION:
 		status = "Volume queued for expansion";
-		break;
-	case CISS_LV_DISABLED_SCSI_ID_CONFLICT:
+		अवरोध;
+	हाल CISS_LV_DISABLED_SCSI_ID_CONFLICT:
 		status = "Volume disabled due to SCSI ID conflict";
-		break;
-	case CISS_LV_EJECTED:
+		अवरोध;
+	हाल CISS_LV_EJECTED:
 		status = "Volume has been ejected";
-		break;
-	case CISS_LV_UNDERGOING_ERASE:
+		अवरोध;
+	हाल CISS_LV_UNDERGOING_ERASE:
 		status = "Volume undergoing background erase";
-		break;
-	case CISS_LV_READY_FOR_PREDICTIVE_SPARE_REBUILD:
+		अवरोध;
+	हाल CISS_LV_READY_FOR_PREDICTIVE_SPARE_REBUILD:
 		status = "Volume ready for predictive spare rebuild";
-		break;
-	case CISS_LV_UNDERGOING_RPI:
+		अवरोध;
+	हाल CISS_LV_UNDERGOING_RPI:
 		status = "Volume undergoing rapid parity initialization";
-		break;
-	case CISS_LV_PENDING_RPI:
+		अवरोध;
+	हाल CISS_LV_PENDING_RPI:
 		status = "Volume queued for rapid parity initialization";
-		break;
-	case CISS_LV_ENCRYPTED_NO_KEY:
+		अवरोध;
+	हाल CISS_LV_ENCRYPTED_NO_KEY:
 		status = "Encrypted volume inaccessible - key not present";
-		break;
-	case CISS_LV_UNDERGOING_ENCRYPTION:
+		अवरोध;
+	हाल CISS_LV_UNDERGOING_ENCRYPTION:
 		status = "Volume undergoing encryption process";
-		break;
-	case CISS_LV_UNDERGOING_ENCRYPTION_REKEYING:
+		अवरोध;
+	हाल CISS_LV_UNDERGOING_ENCRYPTION_REKEYING:
 		status = "Volume undergoing encryption re-keying process";
-		break;
-	case CISS_LV_ENCRYPTED_IN_NON_ENCRYPTED_CONTROLLER:
+		अवरोध;
+	हाल CISS_LV_ENCRYPTED_IN_NON_ENCRYPTED_CONTROLLER:
 		status = "Volume encrypted but encryption is disabled";
-		break;
-	case CISS_LV_PENDING_ENCRYPTION:
+		अवरोध;
+	हाल CISS_LV_PENDING_ENCRYPTION:
 		status = "Volume pending migration to encrypted state";
-		break;
-	case CISS_LV_PENDING_ENCRYPTION_REKEYING:
+		अवरोध;
+	हाल CISS_LV_PENDING_ENCRYPTION_REKEYING:
 		status = "Volume pending encryption rekeying";
-		break;
-	case CISS_LV_NOT_SUPPORTED:
+		अवरोध;
+	हाल CISS_LV_NOT_SUPPORTED:
 		status = "Volume not supported on this controller";
-		break;
-	case CISS_LV_STATUS_UNAVAILABLE:
+		अवरोध;
+	हाल CISS_LV_STATUS_UNAVAILABLE:
 		status = "Volume status not available";
-		break;
-	default:
-		snprintf(unknown_state_buffer, sizeof(unknown_state_buffer),
+		अवरोध;
+	शेष:
+		snम_लिखो(unknown_state_buffer, माप(unknown_state_buffer),
 			unknown_state_str, device->volume_status);
 		status = unknown_state_buffer;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	dev_info(&ctrl_info->pci_dev->dev,
 		"scsi %d:%d:%d:%d %s\n",
 		ctrl_info->scsi_host->host_no,
 		device->bus, device->target, device->lun, status);
-}
+पूर्ण
 
-static void pqi_rescan_worker(struct work_struct *work)
-{
-	struct pqi_ctrl_info *ctrl_info;
+अटल व्योम pqi_rescan_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
-	ctrl_info = container_of(to_delayed_work(work), struct pqi_ctrl_info,
+	ctrl_info = container_of(to_delayed_work(work), काष्ठा pqi_ctrl_info,
 		rescan_work);
 
 	pqi_scan_scsi_devices(ctrl_info);
-}
+पूर्ण
 
-static int pqi_add_device(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	int rc;
+अटल पूर्णांक pqi_add_device(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक rc;
 
-	if (pqi_is_logical_device(device))
+	अगर (pqi_is_logical_device(device))
 		rc = scsi_add_device(ctrl_info->scsi_host, device->bus,
 			device->target, device->lun);
-	else
+	अन्यथा
 		rc = pqi_add_sas_device(ctrl_info->sas_host, device);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#define PQI_REMOVE_DEVICE_PENDING_IO_TIMEOUT_MSECS	(20 * 1000)
+#घोषणा PQI_REMOVE_DEVICE_PENDING_IO_TIMEOUT_MSECS	(20 * 1000)
 
-static inline void pqi_remove_device(struct pqi_ctrl_info *ctrl_info, struct pqi_scsi_dev *device)
-{
-	int rc;
+अटल अंतरभूत व्योम pqi_हटाओ_device(काष्ठा pqi_ctrl_info *ctrl_info, काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक rc;
 
-	pqi_device_remove_start(device);
+	pqi_device_हटाओ_start(device);
 
-	rc = pqi_device_wait_for_pending_io(ctrl_info, device,
+	rc = pqi_device_रुको_क्रम_pending_io(ctrl_info, device,
 		PQI_REMOVE_DEVICE_PENDING_IO_TIMEOUT_MSECS);
-	if (rc)
+	अगर (rc)
 		dev_err(&ctrl_info->pci_dev->dev,
 			"scsi %d:%d:%d:%d removing device with %d outstanding command(s)\n",
 			ctrl_info->scsi_host->host_no, device->bus,
 			device->target, device->lun,
-			atomic_read(&device->scsi_cmds_outstanding));
+			atomic_पढ़ो(&device->scsi_cmds_outstanding));
 
-	if (pqi_is_logical_device(device))
-		scsi_remove_device(device->sdev);
-	else
-		pqi_remove_sas_device(device);
-}
+	अगर (pqi_is_logical_device(device))
+		scsi_हटाओ_device(device->sdev);
+	अन्यथा
+		pqi_हटाओ_sas_device(device);
+पूर्ण
 
 /* Assumes the SCSI device list lock is held. */
 
-static struct pqi_scsi_dev *pqi_find_scsi_dev(struct pqi_ctrl_info *ctrl_info,
-	int bus, int target, int lun)
-{
-	struct pqi_scsi_dev *device;
+अटल काष्ठा pqi_scsi_dev *pqi_find_scsi_dev(काष्ठा pqi_ctrl_info *ctrl_info,
+	पूर्णांक bus, पूर्णांक target, पूर्णांक lun)
+अणु
+	काष्ठा pqi_scsi_dev *device;
 
-	list_for_each_entry(device, &ctrl_info->scsi_device_list, scsi_device_list_entry)
-		if (device->bus == bus && device->target == target && device->lun == lun)
-			return device;
+	list_क्रम_each_entry(device, &ctrl_info->scsi_device_list, scsi_device_list_entry)
+		अगर (device->bus == bus && device->target == target && device->lun == lun)
+			वापस device;
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline bool pqi_device_equal(struct pqi_scsi_dev *dev1, struct pqi_scsi_dev *dev2)
-{
-	if (dev1->is_physical_device != dev2->is_physical_device)
-		return false;
+अटल अंतरभूत bool pqi_device_equal(काष्ठा pqi_scsi_dev *dev1, काष्ठा pqi_scsi_dev *dev2)
+अणु
+	अगर (dev1->is_physical_device != dev2->is_physical_device)
+		वापस false;
 
-	if (dev1->is_physical_device)
-		return dev1->wwid == dev2->wwid;
+	अगर (dev1->is_physical_device)
+		वापस dev1->wwid == dev2->wwid;
 
-	return memcmp(dev1->volume_id, dev2->volume_id, sizeof(dev1->volume_id)) == 0;
-}
+	वापस स_भेद(dev1->volume_id, dev2->volume_id, माप(dev1->volume_id)) == 0;
+पूर्ण
 
-enum pqi_find_result {
+क्रमागत pqi_find_result अणु
 	DEVICE_NOT_FOUND,
 	DEVICE_CHANGED,
 	DEVICE_SAME,
-};
+पूर्ण;
 
-static enum pqi_find_result pqi_scsi_find_entry(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device_to_find, struct pqi_scsi_dev **matching_device)
-{
-	struct pqi_scsi_dev *device;
+अटल क्रमागत pqi_find_result pqi_scsi_find_entry(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device_to_find, काष्ठा pqi_scsi_dev **matching_device)
+अणु
+	काष्ठा pqi_scsi_dev *device;
 
-	list_for_each_entry(device, &ctrl_info->scsi_device_list, scsi_device_list_entry) {
-		if (pqi_scsi3addr_equal(device_to_find->scsi3addr, device->scsi3addr)) {
+	list_क्रम_each_entry(device, &ctrl_info->scsi_device_list, scsi_device_list_entry) अणु
+		अगर (pqi_scsi3addr_equal(device_to_find->scsi3addr, device->scsi3addr)) अणु
 			*matching_device = device;
-			if (pqi_device_equal(device_to_find, device)) {
-				if (device_to_find->volume_offline)
-					return DEVICE_CHANGED;
-				return DEVICE_SAME;
-			}
-			return DEVICE_CHANGED;
-		}
-	}
+			अगर (pqi_device_equal(device_to_find, device)) अणु
+				अगर (device_to_find->volume_offline)
+					वापस DEVICE_CHANGED;
+				वापस DEVICE_SAME;
+			पूर्ण
+			वापस DEVICE_CHANGED;
+		पूर्ण
+	पूर्ण
 
-	return DEVICE_NOT_FOUND;
-}
+	वापस DEVICE_NOT_FOUND;
+पूर्ण
 
-static inline const char *pqi_device_type(struct pqi_scsi_dev *device)
-{
-	if (device->is_expander_smp_device)
-		return "Enclosure SMP    ";
+अटल अंतरभूत स्थिर अक्षर *pqi_device_type(काष्ठा pqi_scsi_dev *device)
+अणु
+	अगर (device->is_expander_smp_device)
+		वापस "Enclosure SMP    ";
 
-	return scsi_device_type(device->devtype);
-}
+	वापस scsi_device_type(device->devtype);
+पूर्ण
 
-#define PQI_DEV_INFO_BUFFER_LENGTH	128
+#घोषणा PQI_DEV_INFO_BUFFER_LENGTH	128
 
-static void pqi_dev_info(struct pqi_ctrl_info *ctrl_info,
-	char *action, struct pqi_scsi_dev *device)
-{
-	ssize_t count;
-	char buffer[PQI_DEV_INFO_BUFFER_LENGTH];
+अटल व्योम pqi_dev_info(काष्ठा pqi_ctrl_info *ctrl_info,
+	अक्षर *action, काष्ठा pqi_scsi_dev *device)
+अणु
+	sमाप_प्रकार count;
+	अक्षर buffer[PQI_DEV_INFO_BUFFER_LENGTH];
 
-	count = scnprintf(buffer, PQI_DEV_INFO_BUFFER_LENGTH,
+	count = scnम_लिखो(buffer, PQI_DEV_INFO_BUFFER_LENGTH,
 		"%d:%d:", ctrl_info->scsi_host->host_no, device->bus);
 
-	if (device->target_lun_valid)
-		count += scnprintf(buffer + count,
+	अगर (device->target_lun_valid)
+		count += scnम_लिखो(buffer + count,
 			PQI_DEV_INFO_BUFFER_LENGTH - count,
 			"%d:%d",
 			device->target,
 			device->lun);
-	else
-		count += scnprintf(buffer + count,
+	अन्यथा
+		count += scnम_लिखो(buffer + count,
 			PQI_DEV_INFO_BUFFER_LENGTH - count,
 			"-:-");
 
-	if (pqi_is_logical_device(device))
-		count += scnprintf(buffer + count,
+	अगर (pqi_is_logical_device(device))
+		count += scnम_लिखो(buffer + count,
 			PQI_DEV_INFO_BUFFER_LENGTH - count,
 			" %08x%08x",
 			*((u32 *)&device->scsi3addr),
 			*((u32 *)&device->scsi3addr[4]));
-	else
-		count += scnprintf(buffer + count,
+	अन्यथा
+		count += scnम_लिखो(buffer + count,
 			PQI_DEV_INFO_BUFFER_LENGTH - count,
 			" %016llx", device->sas_address);
 
-	count += scnprintf(buffer + count, PQI_DEV_INFO_BUFFER_LENGTH - count,
+	count += scnम_लिखो(buffer + count, PQI_DEV_INFO_BUFFER_LENGTH - count,
 		" %s %.8s %.16s ",
 		pqi_device_type(device),
-		device->vendor,
+		device->venकरोr,
 		device->model);
 
-	if (pqi_is_logical_device(device)) {
-		if (device->devtype == TYPE_DISK)
-			count += scnprintf(buffer + count,
+	अगर (pqi_is_logical_device(device)) अणु
+		अगर (device->devtype == TYPE_DISK)
+			count += scnम_लिखो(buffer + count,
 				PQI_DEV_INFO_BUFFER_LENGTH - count,
 				"SSDSmartPathCap%c En%c %-12s",
 				device->raid_bypass_configured ? '+' : '-',
 				device->raid_bypass_enabled ? '+' : '-',
 				pqi_raid_level_to_string(device->raid_level));
-	} else {
-		count += scnprintf(buffer + count,
+	पूर्ण अन्यथा अणु
+		count += scnम_लिखो(buffer + count,
 			PQI_DEV_INFO_BUFFER_LENGTH - count,
 			"AIO%c", device->aio_enabled ? '+' : '-');
-		if (device->devtype == TYPE_DISK ||
+		अगर (device->devtype == TYPE_DISK ||
 			device->devtype == TYPE_ZBC)
-			count += scnprintf(buffer + count,
+			count += scnम_लिखो(buffer + count,
 				PQI_DEV_INFO_BUFFER_LENGTH - count,
 				" qd=%-6d", device->queue_depth);
-	}
+	पूर्ण
 
 	dev_info(&ctrl_info->pci_dev->dev, "%s %s\n", action, buffer);
-}
+पूर्ण
 
 /* Assumes the SCSI device list lock is held. */
 
-static void pqi_scsi_update_device(struct pqi_scsi_dev *existing_device,
-	struct pqi_scsi_dev *new_device)
-{
+अटल व्योम pqi_scsi_update_device(काष्ठा pqi_scsi_dev *existing_device,
+	काष्ठा pqi_scsi_dev *new_device)
+अणु
 	existing_device->device_type = new_device->device_type;
 	existing_device->bus = new_device->bus;
-	if (new_device->target_lun_valid) {
+	अगर (new_device->target_lun_valid) अणु
 		existing_device->target = new_device->target;
 		existing_device->lun = new_device->lun;
 		existing_device->target_lun_valid = true;
-	}
+	पूर्ण
 
-	if ((existing_device->volume_status == CISS_LV_QUEUED_FOR_EXPANSION ||
+	अगर ((existing_device->volume_status == CISS_LV_QUEUED_FOR_EXPANSION ||
 		existing_device->volume_status == CISS_LV_UNDERGOING_EXPANSION) &&
 		new_device->volume_status == CISS_LV_OK)
 		existing_device->rescan = true;
 
-	/* By definition, the scsi3addr and wwid fields are already the same. */
+	/* By definition, the scsi3addr and wwid fields are alपढ़ोy the same. */
 
 	existing_device->is_physical_device = new_device->is_physical_device;
-	existing_device->is_external_raid_device =
-		new_device->is_external_raid_device;
+	existing_device->is_बाह्यal_raid_device =
+		new_device->is_बाह्यal_raid_device;
 	existing_device->is_expander_smp_device =
 		new_device->is_expander_smp_device;
 	existing_device->aio_enabled = new_device->aio_enabled;
-	memcpy(existing_device->vendor, new_device->vendor,
-		sizeof(existing_device->vendor));
-	memcpy(existing_device->model, new_device->model,
-		sizeof(existing_device->model));
+	स_नकल(existing_device->venकरोr, new_device->venकरोr,
+		माप(existing_device->venकरोr));
+	स_नकल(existing_device->model, new_device->model,
+		माप(existing_device->model));
 	existing_device->sas_address = new_device->sas_address;
 	existing_device->raid_level = new_device->raid_level;
 	existing_device->queue_depth = new_device->queue_depth;
@@ -1871,12 +1872,12 @@ static void pqi_scsi_update_device(struct pqi_scsi_dev *existing_device,
 	existing_device->box_index = new_device->box_index;
 	existing_device->phys_box_on_bus = new_device->phys_box_on_bus;
 	existing_device->phy_connected_dev_type = new_device->phy_connected_dev_type;
-	memcpy(existing_device->box, new_device->box,
-		sizeof(existing_device->box));
-	memcpy(existing_device->phys_connector, new_device->phys_connector,
-		sizeof(existing_device->phys_connector));
+	स_नकल(existing_device->box, new_device->box,
+		माप(existing_device->box));
+	स_नकल(existing_device->phys_connector, new_device->phys_connector,
+		माप(existing_device->phys_connector));
 	existing_device->next_bypass_group = 0;
-	kfree(existing_device->raid_map);
+	kमुक्त(existing_device->raid_map);
 	existing_device->raid_map = new_device->raid_map;
 	existing_device->raid_bypass_configured =
 		new_device->raid_bypass_configured;
@@ -1884,499 +1885,499 @@ static void pqi_scsi_update_device(struct pqi_scsi_dev *existing_device,
 		new_device->raid_bypass_enabled;
 	existing_device->device_offline = false;
 
-	/* To prevent this from being freed later. */
-	new_device->raid_map = NULL;
-}
+	/* To prevent this from being मुक्तd later. */
+	new_device->raid_map = शून्य;
+पूर्ण
 
-static inline void pqi_free_device(struct pqi_scsi_dev *device)
-{
-	if (device) {
-		kfree(device->raid_map);
-		kfree(device);
-	}
-}
+अटल अंतरभूत व्योम pqi_मुक्त_device(काष्ठा pqi_scsi_dev *device)
+अणु
+	अगर (device) अणु
+		kमुक्त(device->raid_map);
+		kमुक्त(device);
+	पूर्ण
+पूर्ण
 
 /*
  * Called when exposing a new device to the OS fails in order to re-adjust
- * our internal SCSI device list to match the SCSI ML's view.
+ * our पूर्णांकernal SCSI device list to match the SCSI ML's view.
  */
 
-static inline void pqi_fixup_botched_add(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	unsigned long flags;
+अटल अंतरभूत व्योम pqi_fixup_botched_add(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 	list_del(&device->scsi_device_list_entry);
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	/* Allow the device structure to be freed later. */
+	/* Allow the device काष्ठाure to be मुक्तd later. */
 	device->keep_device = false;
-}
+पूर्ण
 
-static inline bool pqi_is_device_added(struct pqi_scsi_dev *device)
-{
-	if (device->is_expander_smp_device)
-		return device->sas_port != NULL;
+अटल अंतरभूत bool pqi_is_device_added(काष्ठा pqi_scsi_dev *device)
+अणु
+	अगर (device->is_expander_smp_device)
+		वापस device->sas_port != शून्य;
 
-	return device->sdev != NULL;
-}
+	वापस device->sdev != शून्य;
+पूर्ण
 
-static void pqi_update_device_list(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *new_device_list[], unsigned int num_new_devices)
-{
-	int rc;
-	unsigned int i;
-	unsigned long flags;
-	enum pqi_find_result find_result;
-	struct pqi_scsi_dev *device;
-	struct pqi_scsi_dev *next;
-	struct pqi_scsi_dev *matching_device;
+अटल व्योम pqi_update_device_list(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *new_device_list[], अचिन्हित पूर्णांक num_new_devices)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित दीर्घ flags;
+	क्रमागत pqi_find_result find_result;
+	काष्ठा pqi_scsi_dev *device;
+	काष्ठा pqi_scsi_dev *next;
+	काष्ठा pqi_scsi_dev *matching_device;
 	LIST_HEAD(add_list);
 	LIST_HEAD(delete_list);
 
 	/*
-	 * The idea here is to do as little work as possible while holding the
+	 * The idea here is to करो as little work as possible जबतक holding the
 	 * spinlock.  That's why we go to great pains to defer anything other
-	 * than updating the internal device list until after we release the
+	 * than updating the पूर्णांकernal device list until after we release the
 	 * spinlock.
 	 */
 
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
 	/* Assume that all devices in the existing list have gone away. */
-	list_for_each_entry(device, &ctrl_info->scsi_device_list, scsi_device_list_entry)
+	list_क्रम_each_entry(device, &ctrl_info->scsi_device_list, scsi_device_list_entry)
 		device->device_gone = true;
 
-	for (i = 0; i < num_new_devices; i++) {
+	क्रम (i = 0; i < num_new_devices; i++) अणु
 		device = new_device_list[i];
 
 		find_result = pqi_scsi_find_entry(ctrl_info, device,
 			&matching_device);
 
-		switch (find_result) {
-		case DEVICE_SAME:
+		चयन (find_result) अणु
+		हाल DEVICE_SAME:
 			/*
-			 * The newly found device is already in the existing
+			 * The newly found device is alपढ़ोy in the existing
 			 * device list.
 			 */
 			device->new_device = false;
 			matching_device->device_gone = false;
 			pqi_scsi_update_device(matching_device, device);
-			break;
-		case DEVICE_NOT_FOUND:
+			अवरोध;
+		हाल DEVICE_NOT_FOUND:
 			/*
 			 * The newly found device is NOT in the existing device
 			 * list.
 			 */
 			device->new_device = true;
-			break;
-		case DEVICE_CHANGED:
+			अवरोध;
+		हाल DEVICE_CHANGED:
 			/*
 			 * The original device has gone away and we need to add
 			 * the new device.
 			 */
 			device->new_device = true;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* Process all devices that have gone away. */
-	list_for_each_entry_safe(device, next, &ctrl_info->scsi_device_list,
-		scsi_device_list_entry) {
-		if (device->device_gone) {
+	list_क्रम_each_entry_safe(device, next, &ctrl_info->scsi_device_list,
+		scsi_device_list_entry) अणु
+		अगर (device->device_gone) अणु
 			list_del_init(&device->scsi_device_list_entry);
 			list_add_tail(&device->delete_list_entry, &delete_list);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Process all new devices. */
-	for (i = 0; i < num_new_devices; i++) {
+	क्रम (i = 0; i < num_new_devices; i++) अणु
 		device = new_device_list[i];
-		if (!device->new_device)
-			continue;
-		if (device->volume_offline)
-			continue;
+		अगर (!device->new_device)
+			जारी;
+		अगर (device->volume_offline)
+			जारी;
 		list_add_tail(&device->scsi_device_list_entry,
 			&ctrl_info->scsi_device_list);
 		list_add_tail(&device->add_list_entry, &add_list);
-		/* To prevent this device structure from being freed later. */
+		/* To prevent this device काष्ठाure from being मुक्तd later. */
 		device->keep_device = true;
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
 	/*
 	 * If OFA is in progress and there are devices that need to be deleted,
-	 * allow any pending reset operations to continue and unblock any SCSI
-	 * requests before removal.
+	 * allow any pending reset operations to जारी and unblock any SCSI
+	 * requests beक्रमe removal.
 	 */
-	if (pqi_ofa_in_progress(ctrl_info)) {
-		list_for_each_entry_safe(device, next, &delete_list, delete_list_entry)
-			if (pqi_is_device_added(device))
-				pqi_device_remove_start(device);
+	अगर (pqi_ofa_in_progress(ctrl_info)) अणु
+		list_क्रम_each_entry_safe(device, next, &delete_list, delete_list_entry)
+			अगर (pqi_is_device_added(device))
+				pqi_device_हटाओ_start(device);
 		pqi_ctrl_unblock_device_reset(ctrl_info);
 		pqi_scsi_unblock_requests(ctrl_info);
-	}
+	पूर्ण
 
 	/* Remove all devices that have gone away. */
-	list_for_each_entry_safe(device, next, &delete_list, delete_list_entry) {
-		if (device->volume_offline) {
+	list_क्रम_each_entry_safe(device, next, &delete_list, delete_list_entry) अणु
+		अगर (device->volume_offline) अणु
 			pqi_dev_info(ctrl_info, "offline", device);
 			pqi_show_volume_status(ctrl_info, device);
-		}
+		पूर्ण
 		list_del(&device->delete_list_entry);
-		if (pqi_is_device_added(device)) {
-			pqi_remove_device(ctrl_info, device);
-		} else {
-			if (!device->volume_offline)
+		अगर (pqi_is_device_added(device)) अणु
+			pqi_हटाओ_device(ctrl_info, device);
+		पूर्ण अन्यथा अणु
+			अगर (!device->volume_offline)
 				pqi_dev_info(ctrl_info, "removed", device);
-			pqi_free_device(device);
-		}
-	}
+			pqi_मुक्त_device(device);
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * Notify the SCSI ML if the queue depth of any existing device has
+	 * Notअगरy the SCSI ML अगर the queue depth of any existing device has
 	 * changed.
 	 */
-	list_for_each_entry(device, &ctrl_info->scsi_device_list, scsi_device_list_entry) {
-		if (device->sdev && device->queue_depth != device->advertised_queue_depth) {
+	list_क्रम_each_entry(device, &ctrl_info->scsi_device_list, scsi_device_list_entry) अणु
+		अगर (device->sdev && device->queue_depth != device->advertised_queue_depth) अणु
 			device->advertised_queue_depth = device->queue_depth;
 			scsi_change_queue_depth(device->sdev, device->advertised_queue_depth);
-			if (device->rescan) {
+			अगर (device->rescan) अणु
 				scsi_rescan_device(&device->sdev->sdev_gendev);
 				device->rescan = false;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/* Expose any new devices. */
-	list_for_each_entry_safe(device, next, &add_list, add_list_entry) {
-		if (!pqi_is_device_added(device)) {
+	list_क्रम_each_entry_safe(device, next, &add_list, add_list_entry) अणु
+		अगर (!pqi_is_device_added(device)) अणु
 			rc = pqi_add_device(ctrl_info, device);
-			if (rc == 0) {
+			अगर (rc == 0) अणु
 				pqi_dev_info(ctrl_info, "added", device);
-			} else {
+			पूर्ण अन्यथा अणु
 				dev_warn(&ctrl_info->pci_dev->dev,
 					"scsi %d:%d:%d:%d addition failed, device not added\n",
 					ctrl_info->scsi_host->host_no,
 					device->bus, device->target,
 					device->lun);
 				pqi_fixup_botched_add(ctrl_info, device);
-			}
-		}
-	}
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static inline bool pqi_is_supported_device(struct pqi_scsi_dev *device)
-{
+अटल अंतरभूत bool pqi_is_supported_device(काष्ठा pqi_scsi_dev *device)
+अणु
 	/*
 	 * Only support the HBA controller itself as a RAID
 	 * controller.  If it's a RAID controller other than
-	 * the HBA itself (an external RAID controller, for
-	 * example), we don't support it.
+	 * the HBA itself (an बाह्यal RAID controller, क्रम
+	 * example), we करोn't support it.
 	 */
-	if (device->device_type == SA_DEVICE_TYPE_CONTROLLER &&
+	अगर (device->device_type == SA_DEVICE_TYPE_CONTROLLER &&
 		!pqi_is_hba_lunid(device->scsi3addr))
-			return false;
+			वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool pqi_skip_device(u8 *scsi3addr)
-{
+अटल अंतरभूत bool pqi_skip_device(u8 *scsi3addr)
+अणु
 	/* Ignore all masked devices. */
-	if (MASKED_DEVICE(scsi3addr))
-		return true;
+	अगर (MASKED_DEVICE(scsi3addr))
+		वापस true;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline void pqi_mask_device(u8 *scsi3addr)
-{
+अटल अंतरभूत व्योम pqi_mask_device(u8 *scsi3addr)
+अणु
 	scsi3addr[3] |= 0xc0;
-}
+पूर्ण
 
-static inline bool pqi_is_device_with_sas_address(struct pqi_scsi_dev *device)
-{
-	switch (device->device_type) {
-	case SA_DEVICE_TYPE_SAS:
-	case SA_DEVICE_TYPE_EXPANDER_SMP:
-	case SA_DEVICE_TYPE_SES:
-		return true;
-	}
+अटल अंतरभूत bool pqi_is_device_with_sas_address(काष्ठा pqi_scsi_dev *device)
+अणु
+	चयन (device->device_type) अणु
+	हाल SA_DEVICE_TYPE_SAS:
+	हाल SA_DEVICE_TYPE_EXPANDER_SMP:
+	हाल SA_DEVICE_TYPE_SES:
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static inline bool pqi_expose_device(struct pqi_scsi_dev *device)
-{
-	return !device->is_physical_device || !pqi_skip_device(device->scsi3addr);
-}
+अटल अंतरभूत bool pqi_expose_device(काष्ठा pqi_scsi_dev *device)
+अणु
+	वापस !device->is_physical_device || !pqi_skip_device(device->scsi3addr);
+पूर्ण
 
-static inline void pqi_set_physical_device_wwid(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device, struct report_phys_lun_extended_entry *phys_lun_ext_entry)
-{
-	if (ctrl_info->unique_wwid_in_report_phys_lun_supported ||
+अटल अंतरभूत व्योम pqi_set_physical_device_wwid(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device, काष्ठा report_phys_lun_extended_entry *phys_lun_ext_entry)
+अणु
+	अगर (ctrl_info->unique_wwid_in_report_phys_lun_supported ||
 		pqi_is_device_with_sas_address(device))
 		device->wwid = phys_lun_ext_entry->wwid;
-	else
-		device->wwid = cpu_to_be64(get_unaligned_be64(&device->page_83_identifier));
-}
+	अन्यथा
+		device->wwid = cpu_to_be64(get_unaligned_be64(&device->page_83_identअगरier));
+पूर्ण
 
-static int pqi_update_scsi_devices(struct pqi_ctrl_info *ctrl_info)
-{
-	int i;
-	int rc;
+अटल पूर्णांक pqi_update_scsi_devices(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक i;
+	पूर्णांक rc;
 	LIST_HEAD(new_device_list_head);
-	struct report_phys_lun_extended *physdev_list = NULL;
-	struct report_log_lun_extended *logdev_list = NULL;
-	struct report_phys_lun_extended_entry *phys_lun_ext_entry;
-	struct report_log_lun_extended_entry *log_lun_ext_entry;
-	struct bmic_identify_physical_device *id_phys = NULL;
+	काष्ठा report_phys_lun_extended *physdev_list = शून्य;
+	काष्ठा report_log_lun_extended *logdev_list = शून्य;
+	काष्ठा report_phys_lun_extended_entry *phys_lun_ext_entry;
+	काष्ठा report_log_lun_extended_entry *log_lun_ext_entry;
+	काष्ठा bmic_identअगरy_physical_device *id_phys = शून्य;
 	u32 num_physicals;
 	u32 num_logicals;
-	struct pqi_scsi_dev **new_device_list = NULL;
-	struct pqi_scsi_dev *device;
-	struct pqi_scsi_dev *next;
-	unsigned int num_new_devices;
-	unsigned int num_valid_devices;
+	काष्ठा pqi_scsi_dev **new_device_list = शून्य;
+	काष्ठा pqi_scsi_dev *device;
+	काष्ठा pqi_scsi_dev *next;
+	अचिन्हित पूर्णांक num_new_devices;
+	अचिन्हित पूर्णांक num_valid_devices;
 	bool is_physical_device;
 	u8 *scsi3addr;
-	unsigned int physical_index;
-	unsigned int logical_index;
-	static char *out_of_memory_msg =
+	अचिन्हित पूर्णांक physical_index;
+	अचिन्हित पूर्णांक logical_index;
+	अटल अक्षर *out_of_memory_msg =
 		"failed to allocate memory, device discovery stopped";
 
 	rc = pqi_get_device_lists(ctrl_info, &physdev_list, &logdev_list);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if (physdev_list)
+	अगर (physdev_list)
 		num_physicals =
 			get_unaligned_be32(&physdev_list->header.list_length)
-				/ sizeof(physdev_list->lun_entries[0]);
-	else
+				/ माप(physdev_list->lun_entries[0]);
+	अन्यथा
 		num_physicals = 0;
 
-	if (logdev_list)
+	अगर (logdev_list)
 		num_logicals =
 			get_unaligned_be32(&logdev_list->header.list_length)
-				/ sizeof(logdev_list->lun_entries[0]);
-	else
+				/ माप(logdev_list->lun_entries[0]);
+	अन्यथा
 		num_logicals = 0;
 
-	if (num_physicals) {
+	अगर (num_physicals) अणु
 		/*
-		 * We need this buffer for calls to pqi_get_physical_disk_info()
+		 * We need this buffer क्रम calls to pqi_get_physical_disk_info()
 		 * below.  We allocate it here instead of inside
 		 * pqi_get_physical_disk_info() because it's a fairly large
 		 * buffer.
 		 */
-		id_phys = kmalloc(sizeof(*id_phys), GFP_KERNEL);
-		if (!id_phys) {
+		id_phys = kदो_स्मृति(माप(*id_phys), GFP_KERNEL);
+		अगर (!id_phys) अणु
 			dev_warn(&ctrl_info->pci_dev->dev, "%s\n",
 				out_of_memory_msg);
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		if (pqi_hide_vsep) {
-			for (i = num_physicals - 1; i >= 0; i--) {
+		अगर (pqi_hide_vsep) अणु
+			क्रम (i = num_physicals - 1; i >= 0; i--) अणु
 				phys_lun_ext_entry =
 						&physdev_list->lun_entries[i];
-				if (CISS_GET_DRIVE_NUMBER(phys_lun_ext_entry->lunid) == PQI_VSEP_CISS_BTL) {
+				अगर (CISS_GET_DRIVE_NUMBER(phys_lun_ext_entry->lunid) == PQI_VSEP_CISS_BTL) अणु
 					pqi_mask_device(phys_lun_ext_entry->lunid);
-					break;
-				}
-			}
-		}
-	}
+					अवरोध;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (num_logicals &&
+	अगर (num_logicals &&
 		(logdev_list->header.flags & CISS_REPORT_LOG_FLAG_DRIVE_TYPE_MIX))
 		ctrl_info->lv_drive_type_mix_valid = true;
 
 	num_new_devices = num_physicals + num_logicals;
 
-	new_device_list = kmalloc_array(num_new_devices,
-					sizeof(*new_device_list),
+	new_device_list = kदो_स्मृति_array(num_new_devices,
+					माप(*new_device_list),
 					GFP_KERNEL);
-	if (!new_device_list) {
+	अगर (!new_device_list) अणु
 		dev_warn(&ctrl_info->pci_dev->dev, "%s\n", out_of_memory_msg);
 		rc = -ENOMEM;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	for (i = 0; i < num_new_devices; i++) {
-		device = kzalloc(sizeof(*device), GFP_KERNEL);
-		if (!device) {
+	क्रम (i = 0; i < num_new_devices; i++) अणु
+		device = kzalloc(माप(*device), GFP_KERNEL);
+		अगर (!device) अणु
 			dev_warn(&ctrl_info->pci_dev->dev, "%s\n",
 				out_of_memory_msg);
 			rc = -ENOMEM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		list_add_tail(&device->new_device_list_entry,
 			&new_device_list_head);
-	}
+	पूर्ण
 
-	device = NULL;
+	device = शून्य;
 	num_valid_devices = 0;
 	physical_index = 0;
 	logical_index = 0;
 
-	for (i = 0; i < num_new_devices; i++) {
+	क्रम (i = 0; i < num_new_devices; i++) अणु
 
-		if ((!pqi_expose_ld_first && i < num_physicals) ||
-			(pqi_expose_ld_first && i >= num_logicals)) {
+		अगर ((!pqi_expose_ld_first && i < num_physicals) ||
+			(pqi_expose_ld_first && i >= num_logicals)) अणु
 			is_physical_device = true;
 			phys_lun_ext_entry =
 				&physdev_list->lun_entries[physical_index++];
-			log_lun_ext_entry = NULL;
+			log_lun_ext_entry = शून्य;
 			scsi3addr = phys_lun_ext_entry->lunid;
-		} else {
+		पूर्ण अन्यथा अणु
 			is_physical_device = false;
-			phys_lun_ext_entry = NULL;
+			phys_lun_ext_entry = शून्य;
 			log_lun_ext_entry =
 				&logdev_list->lun_entries[logical_index++];
 			scsi3addr = log_lun_ext_entry->lunid;
-		}
+		पूर्ण
 
-		if (is_physical_device && pqi_skip_device(scsi3addr))
-			continue;
+		अगर (is_physical_device && pqi_skip_device(scsi3addr))
+			जारी;
 
-		if (device)
+		अगर (device)
 			device = list_next_entry(device, new_device_list_entry);
-		else
+		अन्यथा
 			device = list_first_entry(&new_device_list_head,
-				struct pqi_scsi_dev, new_device_list_entry);
+				काष्ठा pqi_scsi_dev, new_device_list_entry);
 
-		memcpy(device->scsi3addr, scsi3addr, sizeof(device->scsi3addr));
+		स_नकल(device->scsi3addr, scsi3addr, माप(device->scsi3addr));
 		device->is_physical_device = is_physical_device;
-		if (is_physical_device) {
+		अगर (is_physical_device) अणु
 			device->device_type = phys_lun_ext_entry->device_type;
-			if (device->device_type == SA_DEVICE_TYPE_EXPANDER_SMP)
+			अगर (device->device_type == SA_DEVICE_TYPE_EXPANDER_SMP)
 				device->is_expander_smp_device = true;
-		} else {
-			device->is_external_raid_device =
-				pqi_is_external_raid_addr(scsi3addr);
-		}
+		पूर्ण अन्यथा अणु
+			device->is_बाह्यal_raid_device =
+				pqi_is_बाह्यal_raid_addr(scsi3addr);
+		पूर्ण
 
-		if (!pqi_is_supported_device(device))
-			continue;
+		अगर (!pqi_is_supported_device(device))
+			जारी;
 
-		/* Gather information about the device. */
+		/* Gather inक्रमmation about the device. */
 		rc = pqi_get_device_info(ctrl_info, device, id_phys);
-		if (rc == -ENOMEM) {
+		अगर (rc == -ENOMEM) अणु
 			dev_warn(&ctrl_info->pci_dev->dev, "%s\n",
 				out_of_memory_msg);
-			goto out;
-		}
-		if (rc) {
-			if (device->is_physical_device)
+			जाओ out;
+		पूर्ण
+		अगर (rc) अणु
+			अगर (device->is_physical_device)
 				dev_warn(&ctrl_info->pci_dev->dev,
 					"obtaining device info failed, skipping physical device %016llx\n",
 					get_unaligned_be64(&phys_lun_ext_entry->wwid));
-			else
+			अन्यथा
 				dev_warn(&ctrl_info->pci_dev->dev,
 					"obtaining device info failed, skipping logical device %08x%08x\n",
 					*((u32 *)&device->scsi3addr),
 					*((u32 *)&device->scsi3addr[4]));
 			rc = 0;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		pqi_assign_bus_target_lun(device);
 
-		if (device->is_physical_device) {
+		अगर (device->is_physical_device) अणु
 			pqi_set_physical_device_wwid(ctrl_info, device, phys_lun_ext_entry);
-			if ((phys_lun_ext_entry->device_flags &
+			अगर ((phys_lun_ext_entry->device_flags &
 				CISS_REPORT_PHYS_DEV_FLAG_AIO_ENABLED) &&
-				phys_lun_ext_entry->aio_handle) {
+				phys_lun_ext_entry->aio_handle) अणु
 					device->aio_enabled = true;
 					device->aio_handle =
 						phys_lun_ext_entry->aio_handle;
-			}
-		} else {
-			memcpy(device->volume_id, log_lun_ext_entry->volume_id,
-				sizeof(device->volume_id));
-		}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			स_नकल(device->volume_id, log_lun_ext_entry->volume_id,
+				माप(device->volume_id));
+		पूर्ण
 
-		if (pqi_is_device_with_sas_address(device))
+		अगर (pqi_is_device_with_sas_address(device))
 			device->sas_address = get_unaligned_be64(&device->wwid);
 
 		new_device_list[num_valid_devices++] = device;
-	}
+	पूर्ण
 
 	pqi_update_device_list(ctrl_info, new_device_list, num_valid_devices);
 
 out:
-	list_for_each_entry_safe(device, next, &new_device_list_head,
-		new_device_list_entry) {
-		if (device->keep_device)
-			continue;
+	list_क्रम_each_entry_safe(device, next, &new_device_list_head,
+		new_device_list_entry) अणु
+		अगर (device->keep_device)
+			जारी;
 		list_del(&device->new_device_list_entry);
-		pqi_free_device(device);
-	}
+		pqi_मुक्त_device(device);
+	पूर्ण
 
-	kfree(new_device_list);
-	kfree(physdev_list);
-	kfree(logdev_list);
-	kfree(id_phys);
+	kमुक्त(new_device_list);
+	kमुक्त(physdev_list);
+	kमुक्त(logdev_list);
+	kमुक्त(id_phys);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_scan_scsi_devices(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	int mutex_acquired;
+अटल पूर्णांक pqi_scan_scsi_devices(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	पूर्णांक mutex_acquired;
 
-	if (pqi_ctrl_offline(ctrl_info))
-		return -ENXIO;
+	अगर (pqi_ctrl_offline(ctrl_info))
+		वापस -ENXIO;
 
 	mutex_acquired = mutex_trylock(&ctrl_info->scan_mutex);
 
-	if (!mutex_acquired) {
-		if (pqi_ctrl_scan_blocked(ctrl_info))
-			return -EBUSY;
+	अगर (!mutex_acquired) अणु
+		अगर (pqi_ctrl_scan_blocked(ctrl_info))
+			वापस -EBUSY;
 		pqi_schedule_rescan_worker_delayed(ctrl_info);
-		return -EINPROGRESS;
-	}
+		वापस -EINPROGRESS;
+	पूर्ण
 
 	rc = pqi_update_scsi_devices(ctrl_info);
-	if (rc && !pqi_ctrl_scan_blocked(ctrl_info))
+	अगर (rc && !pqi_ctrl_scan_blocked(ctrl_info))
 		pqi_schedule_rescan_worker_delayed(ctrl_info);
 
 	mutex_unlock(&ctrl_info->scan_mutex);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pqi_scan_start(struct Scsi_Host *shost)
-{
-	struct pqi_ctrl_info *ctrl_info;
+अटल व्योम pqi_scan_start(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	ctrl_info = shost_to_hba(shost);
 
 	pqi_scan_scsi_devices(ctrl_info);
-}
+पूर्ण
 
-/* Returns TRUE if scan is finished. */
+/* Returns TRUE अगर scan is finished. */
 
-static int pqi_scan_finished(struct Scsi_Host *shost,
-	unsigned long elapsed_time)
-{
-	struct pqi_ctrl_info *ctrl_info;
+अटल पूर्णांक pqi_scan_finished(काष्ठा Scsi_Host *shost,
+	अचिन्हित दीर्घ elapsed_समय)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	ctrl_info = shost_priv(shost);
 
-	return !mutex_is_locked(&ctrl_info->scan_mutex);
-}
+	वापस !mutex_is_locked(&ctrl_info->scan_mutex);
+पूर्ण
 
-static inline void pqi_set_encryption_info(struct pqi_encryption_info *encryption_info,
-	struct raid_map *raid_map, u64 first_block)
-{
+अटल अंतरभूत व्योम pqi_set_encryption_info(काष्ठा pqi_encryption_info *encryption_info,
+	काष्ठा raid_map *raid_map, u64 first_block)
+अणु
 	u32 volume_blk_size;
 
 	/*
@@ -2385,143 +2386,143 @@ static inline void pqi_set_encryption_info(struct pqi_encryption_info *encryptio
 	 * For other block sizes, tweak value is (LBA * block size) / 512.
 	 */
 	volume_blk_size = get_unaligned_le32(&raid_map->volume_blk_size);
-	if (volume_blk_size != 512)
+	अगर (volume_blk_size != 512)
 		first_block = (first_block * volume_blk_size) / 512;
 
 	encryption_info->data_encryption_key_index =
 		get_unaligned_le16(&raid_map->data_encryption_key_index);
 	encryption_info->encrypt_tweak_lower = lower_32_bits(first_block);
 	encryption_info->encrypt_tweak_upper = upper_32_bits(first_block);
-}
+पूर्ण
 
 /*
- * Attempt to perform RAID bypass mapping for a logical volume I/O.
+ * Attempt to perक्रमm RAID bypass mapping क्रम a logical volume I/O.
  */
 
-static bool pqi_aio_raid_level_supported(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev_raid_map_data *rmd)
-{
+अटल bool pqi_aio_raid_level_supported(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev_raid_map_data *rmd)
+अणु
 	bool is_supported = true;
 
-	switch (rmd->raid_level) {
-	case SA_RAID_0:
-		break;
-	case SA_RAID_1:
-		if (rmd->is_write && (!ctrl_info->enable_r1_writes ||
-			rmd->data_length > ctrl_info->max_write_raid_1_10_2drive))
+	चयन (rmd->raid_level) अणु
+	हाल SA_RAID_0:
+		अवरोध;
+	हाल SA_RAID_1:
+		अगर (rmd->is_ग_लिखो && (!ctrl_info->enable_r1_ग_लिखोs ||
+			rmd->data_length > ctrl_info->max_ग_लिखो_raid_1_10_2drive))
 			is_supported = false;
-		break;
-	case SA_RAID_TRIPLE:
-		if (rmd->is_write && (!ctrl_info->enable_r1_writes ||
-			rmd->data_length > ctrl_info->max_write_raid_1_10_3drive))
+		अवरोध;
+	हाल SA_RAID_TRIPLE:
+		अगर (rmd->is_ग_लिखो && (!ctrl_info->enable_r1_ग_लिखोs ||
+			rmd->data_length > ctrl_info->max_ग_लिखो_raid_1_10_3drive))
 			is_supported = false;
-		break;
-	case SA_RAID_5:
-		if (rmd->is_write && (!ctrl_info->enable_r5_writes ||
-			rmd->data_length > ctrl_info->max_write_raid_5_6))
+		अवरोध;
+	हाल SA_RAID_5:
+		अगर (rmd->is_ग_लिखो && (!ctrl_info->enable_r5_ग_लिखोs ||
+			rmd->data_length > ctrl_info->max_ग_लिखो_raid_5_6))
 			is_supported = false;
-		break;
-	case SA_RAID_6:
-		if (rmd->is_write && (!ctrl_info->enable_r6_writes ||
-			rmd->data_length > ctrl_info->max_write_raid_5_6))
+		अवरोध;
+	हाल SA_RAID_6:
+		अगर (rmd->is_ग_लिखो && (!ctrl_info->enable_r6_ग_लिखोs ||
+			rmd->data_length > ctrl_info->max_ग_लिखो_raid_5_6))
 			is_supported = false;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		is_supported = false;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return is_supported;
-}
+	वापस is_supported;
+पूर्ण
 
-#define PQI_RAID_BYPASS_INELIGIBLE	1
+#घोषणा PQI_RAID_BYPASS_INELIGIBLE	1
 
-static int pqi_get_aio_lba_and_block_count(struct scsi_cmnd *scmd,
-	struct pqi_scsi_dev_raid_map_data *rmd)
-{
-	/* Check for valid opcode, get LBA and block count. */
-	switch (scmd->cmnd[0]) {
-	case WRITE_6:
-		rmd->is_write = true;
+अटल पूर्णांक pqi_get_aio_lba_and_block_count(काष्ठा scsi_cmnd *scmd,
+	काष्ठा pqi_scsi_dev_raid_map_data *rmd)
+अणु
+	/* Check क्रम valid opcode, get LBA and block count. */
+	चयन (scmd->cmnd[0]) अणु
+	हाल WRITE_6:
+		rmd->is_ग_लिखो = true;
 		fallthrough;
-	case READ_6:
+	हाल READ_6:
 		rmd->first_block = (u64)(((scmd->cmnd[1] & 0x1f) << 16) |
 			(scmd->cmnd[2] << 8) | scmd->cmnd[3]);
 		rmd->block_cnt = (u32)scmd->cmnd[4];
-		if (rmd->block_cnt == 0)
+		अगर (rmd->block_cnt == 0)
 			rmd->block_cnt = 256;
-		break;
-	case WRITE_10:
-		rmd->is_write = true;
+		अवरोध;
+	हाल WRITE_10:
+		rmd->is_ग_लिखो = true;
 		fallthrough;
-	case READ_10:
+	हाल READ_10:
 		rmd->first_block = (u64)get_unaligned_be32(&scmd->cmnd[2]);
 		rmd->block_cnt = (u32)get_unaligned_be16(&scmd->cmnd[7]);
-		break;
-	case WRITE_12:
-		rmd->is_write = true;
+		अवरोध;
+	हाल WRITE_12:
+		rmd->is_ग_लिखो = true;
 		fallthrough;
-	case READ_12:
+	हाल READ_12:
 		rmd->first_block = (u64)get_unaligned_be32(&scmd->cmnd[2]);
 		rmd->block_cnt = get_unaligned_be32(&scmd->cmnd[6]);
-		break;
-	case WRITE_16:
-		rmd->is_write = true;
+		अवरोध;
+	हाल WRITE_16:
+		rmd->is_ग_लिखो = true;
 		fallthrough;
-	case READ_16:
+	हाल READ_16:
 		rmd->first_block = get_unaligned_be64(&scmd->cmnd[2]);
 		rmd->block_cnt = get_unaligned_be32(&scmd->cmnd[10]);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		/* Process via normal I/O path. */
-		return PQI_RAID_BYPASS_INELIGIBLE;
-	}
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
+	पूर्ण
 
 	put_unaligned_le32(scsi_bufflen(scmd), &rmd->data_length);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pci_get_aio_common_raid_map_values(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev_raid_map_data *rmd, struct raid_map *raid_map)
-{
-#if BITS_PER_LONG == 32
-	u64 tmpdiv;
-#endif
+अटल पूर्णांक pci_get_aio_common_raid_map_values(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev_raid_map_data *rmd, काष्ठा raid_map *raid_map)
+अणु
+#अगर BITS_PER_LONG == 32
+	u64 पंचांगpभाग;
+#पूर्ण_अगर
 
 	rmd->last_block = rmd->first_block + rmd->block_cnt - 1;
 
-	/* Check for invalid block or wraparound. */
-	if (rmd->last_block >=
+	/* Check क्रम invalid block or wraparound. */
+	अगर (rmd->last_block >=
 		get_unaligned_le64(&raid_map->volume_blk_cnt) ||
 		rmd->last_block < rmd->first_block)
-		return PQI_RAID_BYPASS_INELIGIBLE;
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
 	rmd->data_disks_per_row =
 		get_unaligned_le16(&raid_map->data_disks_per_row);
 	rmd->strip_size = get_unaligned_le16(&raid_map->strip_size);
 	rmd->layout_map_count = get_unaligned_le16(&raid_map->layout_map_count);
 
-	/* Calculate stripe information for the request. */
+	/* Calculate stripe inक्रमmation क्रम the request. */
 	rmd->blocks_per_row = rmd->data_disks_per_row * rmd->strip_size;
-	if (rmd->blocks_per_row == 0) /* Used as a divisor in many calculations */
-		return PQI_RAID_BYPASS_INELIGIBLE;
-#if BITS_PER_LONG == 32
-	tmpdiv = rmd->first_block;
-	do_div(tmpdiv, rmd->blocks_per_row);
-	rmd->first_row = tmpdiv;
-	tmpdiv = rmd->last_block;
-	do_div(tmpdiv, rmd->blocks_per_row);
-	rmd->last_row = tmpdiv;
+	अगर (rmd->blocks_per_row == 0) /* Used as a भागisor in many calculations */
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
+#अगर BITS_PER_LONG == 32
+	पंचांगpभाग = rmd->first_block;
+	करो_भाग(पंचांगpभाग, rmd->blocks_per_row);
+	rmd->first_row = पंचांगpभाग;
+	पंचांगpभाग = rmd->last_block;
+	करो_भाग(पंचांगpभाग, rmd->blocks_per_row);
+	rmd->last_row = पंचांगpभाग;
 	rmd->first_row_offset = (u32)(rmd->first_block - (rmd->first_row * rmd->blocks_per_row));
 	rmd->last_row_offset = (u32)(rmd->last_block - (rmd->last_row * rmd->blocks_per_row));
-	tmpdiv = rmd->first_row_offset;
-	do_div(tmpdiv, rmd->strip_size);
-	rmd->first_column = tmpdiv;
-	tmpdiv = rmd->last_row_offset;
-	do_div(tmpdiv, rmd->strip_size);
-	rmd->last_column = tmpdiv;
-#else
+	पंचांगpभाग = rmd->first_row_offset;
+	करो_भाग(पंचांगpभाग, rmd->strip_size);
+	rmd->first_column = पंचांगpभाग;
+	पंचांगpभाग = rmd->last_row_offset;
+	करो_भाग(पंचांगpभाग, rmd->strip_size);
+	rmd->last_column = पंचांगpभाग;
+#अन्यथा
 	rmd->first_row = rmd->first_block / rmd->blocks_per_row;
 	rmd->last_row = rmd->last_block / rmd->blocks_per_row;
 	rmd->first_row_offset = (u32)(rmd->first_block -
@@ -2530,91 +2531,91 @@ static int pci_get_aio_common_raid_map_values(struct pqi_ctrl_info *ctrl_info,
 		rmd->blocks_per_row));
 	rmd->first_column = rmd->first_row_offset / rmd->strip_size;
 	rmd->last_column = rmd->last_row_offset / rmd->strip_size;
-#endif
+#पूर्ण_अगर
 
 	/* If this isn't a single row/column then give to the controller. */
-	if (rmd->first_row != rmd->last_row ||
+	अगर (rmd->first_row != rmd->last_row ||
 		rmd->first_column != rmd->last_column)
-		return PQI_RAID_BYPASS_INELIGIBLE;
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
 	/* Proceeding with driver mapping. */
 	rmd->total_disks_per_row = rmd->data_disks_per_row +
 		get_unaligned_le16(&raid_map->metadata_disks_per_row);
 	rmd->map_row = ((u32)(rmd->first_row >>
-		raid_map->parity_rotation_shift)) %
+		raid_map->parity_rotation_shअगरt)) %
 		get_unaligned_le16(&raid_map->row_cnt);
 	rmd->map_index = (rmd->map_row * rmd->total_disks_per_row) +
 		rmd->first_column;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_calc_aio_r5_or_r6(struct pqi_scsi_dev_raid_map_data *rmd,
-	struct raid_map *raid_map)
-{
-#if BITS_PER_LONG == 32
-	u64 tmpdiv;
-#endif
+अटल पूर्णांक pqi_calc_aio_r5_or_r6(काष्ठा pqi_scsi_dev_raid_map_data *rmd,
+	काष्ठा raid_map *raid_map)
+अणु
+#अगर BITS_PER_LONG == 32
+	u64 पंचांगpभाग;
+#पूर्ण_अगर
 
-	if (rmd->blocks_per_row == 0) /* Used as a divisor in many calculations */
-		return PQI_RAID_BYPASS_INELIGIBLE;
+	अगर (rmd->blocks_per_row == 0) /* Used as a भागisor in many calculations */
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
 	/* RAID 50/60 */
-	/* Verify first and last block are in same RAID group. */
+	/* Verअगरy first and last block are in same RAID group. */
 	rmd->stripesize = rmd->blocks_per_row * rmd->layout_map_count;
-#if BITS_PER_LONG == 32
-	tmpdiv = rmd->first_block;
-	rmd->first_group = do_div(tmpdiv, rmd->stripesize);
-	tmpdiv = rmd->first_group;
-	do_div(tmpdiv, rmd->blocks_per_row);
-	rmd->first_group = tmpdiv;
-	tmpdiv = rmd->last_block;
-	rmd->last_group = do_div(tmpdiv, rmd->stripesize);
-	tmpdiv = rmd->last_group;
-	do_div(tmpdiv, rmd->blocks_per_row);
-	rmd->last_group = tmpdiv;
-#else
+#अगर BITS_PER_LONG == 32
+	पंचांगpभाग = rmd->first_block;
+	rmd->first_group = करो_भाग(पंचांगpभाग, rmd->stripesize);
+	पंचांगpभाग = rmd->first_group;
+	करो_भाग(पंचांगpभाग, rmd->blocks_per_row);
+	rmd->first_group = पंचांगpभाग;
+	पंचांगpभाग = rmd->last_block;
+	rmd->last_group = करो_भाग(पंचांगpभाग, rmd->stripesize);
+	पंचांगpभाग = rmd->last_group;
+	करो_भाग(पंचांगpभाग, rmd->blocks_per_row);
+	rmd->last_group = पंचांगpभाग;
+#अन्यथा
 	rmd->first_group = (rmd->first_block % rmd->stripesize) / rmd->blocks_per_row;
 	rmd->last_group = (rmd->last_block % rmd->stripesize) / rmd->blocks_per_row;
-#endif
-	if (rmd->first_group != rmd->last_group)
-		return PQI_RAID_BYPASS_INELIGIBLE;
+#पूर्ण_अगर
+	अगर (rmd->first_group != rmd->last_group)
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
-	/* Verify request is in a single row of RAID 5/6. */
-#if BITS_PER_LONG == 32
-	tmpdiv = rmd->first_block;
-	do_div(tmpdiv, rmd->stripesize);
-	rmd->first_row = tmpdiv;
-	rmd->r5or6_first_row = tmpdiv;
-	tmpdiv = rmd->last_block;
-	do_div(tmpdiv, rmd->stripesize);
-	rmd->r5or6_last_row = tmpdiv;
-#else
+	/* Verअगरy request is in a single row of RAID 5/6. */
+#अगर BITS_PER_LONG == 32
+	पंचांगpभाग = rmd->first_block;
+	करो_भाग(पंचांगpभाग, rmd->stripesize);
+	rmd->first_row = पंचांगpभाग;
+	rmd->r5or6_first_row = पंचांगpभाग;
+	पंचांगpभाग = rmd->last_block;
+	करो_भाग(पंचांगpभाग, rmd->stripesize);
+	rmd->r5or6_last_row = पंचांगpभाग;
+#अन्यथा
 	rmd->first_row = rmd->r5or6_first_row =
 		rmd->first_block / rmd->stripesize;
 	rmd->r5or6_last_row = rmd->last_block / rmd->stripesize;
-#endif
-	if (rmd->r5or6_first_row != rmd->r5or6_last_row)
-		return PQI_RAID_BYPASS_INELIGIBLE;
+#पूर्ण_अगर
+	अगर (rmd->r5or6_first_row != rmd->r5or6_last_row)
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
-	/* Verify request is in a single column. */
-#if BITS_PER_LONG == 32
-	tmpdiv = rmd->first_block;
-	rmd->first_row_offset = do_div(tmpdiv, rmd->stripesize);
-	tmpdiv = rmd->first_row_offset;
-	rmd->first_row_offset = (u32)do_div(tmpdiv, rmd->blocks_per_row);
+	/* Verअगरy request is in a single column. */
+#अगर BITS_PER_LONG == 32
+	पंचांगpभाग = rmd->first_block;
+	rmd->first_row_offset = करो_भाग(पंचांगpभाग, rmd->stripesize);
+	पंचांगpभाग = rmd->first_row_offset;
+	rmd->first_row_offset = (u32)करो_भाग(पंचांगpभाग, rmd->blocks_per_row);
 	rmd->r5or6_first_row_offset = rmd->first_row_offset;
-	tmpdiv = rmd->last_block;
-	rmd->r5or6_last_row_offset = do_div(tmpdiv, rmd->stripesize);
-	tmpdiv = rmd->r5or6_last_row_offset;
-	rmd->r5or6_last_row_offset = do_div(tmpdiv, rmd->blocks_per_row);
-	tmpdiv = rmd->r5or6_first_row_offset;
-	do_div(tmpdiv, rmd->strip_size);
-	rmd->first_column = rmd->r5or6_first_column = tmpdiv;
-	tmpdiv = rmd->r5or6_last_row_offset;
-	do_div(tmpdiv, rmd->strip_size);
-	rmd->r5or6_last_column = tmpdiv;
-#else
+	पंचांगpभाग = rmd->last_block;
+	rmd->r5or6_last_row_offset = करो_भाग(पंचांगpभाग, rmd->stripesize);
+	पंचांगpभाग = rmd->r5or6_last_row_offset;
+	rmd->r5or6_last_row_offset = करो_भाग(पंचांगpभाग, rmd->blocks_per_row);
+	पंचांगpभाग = rmd->r5or6_first_row_offset;
+	करो_भाग(पंचांगpभाग, rmd->strip_size);
+	rmd->first_column = rmd->r5or6_first_column = पंचांगpभाग;
+	पंचांगpभाग = rmd->r5or6_last_row_offset;
+	करो_भाग(पंचांगpभाग, rmd->strip_size);
+	rmd->r5or6_last_column = पंचांगpभाग;
+#अन्यथा
 	rmd->first_row_offset = rmd->r5or6_first_row_offset =
 		(u32)((rmd->first_block % rmd->stripesize) %
 		rmd->blocks_per_row);
@@ -2627,13 +2628,13 @@ static int pqi_calc_aio_r5_or_r6(struct pqi_scsi_dev_raid_map_data *rmd,
 		rmd->r5or6_first_row_offset / rmd->strip_size;
 	rmd->r5or6_first_column = rmd->first_column;
 	rmd->r5or6_last_column = rmd->r5or6_last_row_offset / rmd->strip_size;
-#endif
-	if (rmd->r5or6_first_column != rmd->r5or6_last_column)
-		return PQI_RAID_BYPASS_INELIGIBLE;
+#पूर्ण_अगर
+	अगर (rmd->r5or6_first_column != rmd->r5or6_last_column)
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
 	/* Request is eligible. */
 	rmd->map_row =
-		((u32)(rmd->first_row >> raid_map->parity_rotation_shift)) %
+		((u32)(rmd->first_row >> raid_map->parity_rotation_shअगरt)) %
 		get_unaligned_le16(&raid_map->row_cnt);
 
 	rmd->map_index = (rmd->first_group *
@@ -2641,11 +2642,11 @@ static int pqi_calc_aio_r5_or_r6(struct pqi_scsi_dev_raid_map_data *rmd,
 		rmd->total_disks_per_row)) +
 		(rmd->map_row * rmd->total_disks_per_row) + rmd->first_column;
 
-	if (rmd->is_write) {
+	अगर (rmd->is_ग_लिखो) अणु
 		u32 index;
 
 		/*
-		 * p_parity_it_nexus and q_parity_it_nexus are pointers to the
+		 * p_parity_it_nexus and q_parity_it_nexus are poपूर्णांकers to the
 		 * parity entries inside the device's raid_map.
 		 *
 		 * A device's RAID map is bounded by: number of RAID disks squared.
@@ -2658,47 +2659,47 @@ static int pqi_calc_aio_r5_or_r6(struct pqi_scsi_dev_raid_map_data *rmd,
 		index -= get_unaligned_le16(&raid_map->metadata_disks_per_row);
 
 		rmd->p_parity_it_nexus = raid_map->disk_data[index].aio_handle;
-		if (rmd->raid_level == SA_RAID_6) {
+		अगर (rmd->raid_level == SA_RAID_6) अणु
 			rmd->q_parity_it_nexus = raid_map->disk_data[index + 1].aio_handle;
 			rmd->xor_mult = raid_map->disk_data[rmd->map_index].xor_mult[1];
-		}
-#if BITS_PER_LONG == 32
-		tmpdiv = rmd->first_block;
-		do_div(tmpdiv, rmd->blocks_per_row);
-		rmd->row = tmpdiv;
-#else
+		पूर्ण
+#अगर BITS_PER_LONG == 32
+		पंचांगpभाग = rmd->first_block;
+		करो_भाग(पंचांगpभाग, rmd->blocks_per_row);
+		rmd->row = पंचांगpभाग;
+#अन्यथा
 		rmd->row = rmd->first_block / rmd->blocks_per_row;
-#endif
-	}
+#पूर्ण_अगर
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_set_aio_cdb(struct pqi_scsi_dev_raid_map_data *rmd)
-{
-	/* Build the new CDB for the physical disk I/O. */
-	if (rmd->disk_block > 0xffffffff) {
-		rmd->cdb[0] = rmd->is_write ? WRITE_16 : READ_16;
+अटल व्योम pqi_set_aio_cdb(काष्ठा pqi_scsi_dev_raid_map_data *rmd)
+अणु
+	/* Build the new CDB क्रम the physical disk I/O. */
+	अगर (rmd->disk_block > 0xffffffff) अणु
+		rmd->cdb[0] = rmd->is_ग_लिखो ? WRITE_16 : READ_16;
 		rmd->cdb[1] = 0;
 		put_unaligned_be64(rmd->disk_block, &rmd->cdb[2]);
 		put_unaligned_be32(rmd->disk_block_cnt, &rmd->cdb[10]);
 		rmd->cdb[14] = 0;
 		rmd->cdb[15] = 0;
 		rmd->cdb_length = 16;
-	} else {
-		rmd->cdb[0] = rmd->is_write ? WRITE_10 : READ_10;
+	पूर्ण अन्यथा अणु
+		rmd->cdb[0] = rmd->is_ग_लिखो ? WRITE_10 : READ_10;
 		rmd->cdb[1] = 0;
 		put_unaligned_be32((u32)rmd->disk_block, &rmd->cdb[2]);
 		rmd->cdb[6] = 0;
 		put_unaligned_be16((u16)rmd->disk_block_cnt, &rmd->cdb[7]);
 		rmd->cdb[9] = 0;
 		rmd->cdb_length = 10;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pqi_calc_aio_r1_nexus(struct raid_map *raid_map,
-	struct pqi_scsi_dev_raid_map_data *rmd)
-{
+अटल व्योम pqi_calc_aio_r1_nexus(काष्ठा raid_map *raid_map,
+	काष्ठा pqi_scsi_dev_raid_map_data *rmd)
+अणु
 	u32 index;
 	u32 group;
 
@@ -2708,66 +2709,66 @@ static void pqi_calc_aio_r1_nexus(struct raid_map *raid_map,
 	rmd->it_nexus[0] = raid_map->disk_data[index].aio_handle;
 	index += rmd->data_disks_per_row;
 	rmd->it_nexus[1] = raid_map->disk_data[index].aio_handle;
-	if (rmd->layout_map_count > 2) {
+	अगर (rmd->layout_map_count > 2) अणु
 		index += rmd->data_disks_per_row;
 		rmd->it_nexus[2] = raid_map->disk_data[index].aio_handle;
-	}
+	पूर्ण
 
 	rmd->num_it_nexus_entries = rmd->layout_map_count;
-}
+पूर्ण
 
-static int pqi_raid_bypass_submit_scsi_cmd(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device, struct scsi_cmnd *scmd,
-	struct pqi_queue_group *queue_group)
-{
-	int rc;
-	struct raid_map *raid_map;
+अटल पूर्णांक pqi_raid_bypass_submit_scsi_cmd(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device, काष्ठा scsi_cmnd *scmd,
+	काष्ठा pqi_queue_group *queue_group)
+अणु
+	पूर्णांक rc;
+	काष्ठा raid_map *raid_map;
 	u32 group;
 	u32 next_bypass_group;
-	struct pqi_encryption_info *encryption_info_ptr;
-	struct pqi_encryption_info encryption_info;
-	struct pqi_scsi_dev_raid_map_data rmd = { 0 };
+	काष्ठा pqi_encryption_info *encryption_info_ptr;
+	काष्ठा pqi_encryption_info encryption_info;
+	काष्ठा pqi_scsi_dev_raid_map_data rmd = अणु 0 पूर्ण;
 
 	rc = pqi_get_aio_lba_and_block_count(scmd, &rmd);
-	if (rc)
-		return PQI_RAID_BYPASS_INELIGIBLE;
+	अगर (rc)
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
 	rmd.raid_level = device->raid_level;
 
-	if (!pqi_aio_raid_level_supported(ctrl_info, &rmd))
-		return PQI_RAID_BYPASS_INELIGIBLE;
+	अगर (!pqi_aio_raid_level_supported(ctrl_info, &rmd))
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
-	if (unlikely(rmd.block_cnt == 0))
-		return PQI_RAID_BYPASS_INELIGIBLE;
+	अगर (unlikely(rmd.block_cnt == 0))
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
 	raid_map = device->raid_map;
 
 	rc = pci_get_aio_common_raid_map_values(ctrl_info, &rmd, raid_map);
-	if (rc)
-		return PQI_RAID_BYPASS_INELIGIBLE;
+	अगर (rc)
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
-	if (device->raid_level == SA_RAID_1 ||
-		device->raid_level == SA_RAID_TRIPLE) {
-		if (rmd.is_write) {
+	अगर (device->raid_level == SA_RAID_1 ||
+		device->raid_level == SA_RAID_TRIPLE) अणु
+		अगर (rmd.is_ग_लिखो) अणु
 			pqi_calc_aio_r1_nexus(raid_map, &rmd);
-		} else {
+		पूर्ण अन्यथा अणु
 			group = device->next_bypass_group;
 			next_bypass_group = group + 1;
-			if (next_bypass_group >= rmd.layout_map_count)
+			अगर (next_bypass_group >= rmd.layout_map_count)
 				next_bypass_group = 0;
 			device->next_bypass_group = next_bypass_group;
 			rmd.map_index += group * rmd.data_disks_per_row;
-		}
-	} else if ((device->raid_level == SA_RAID_5 ||
+		पूर्ण
+	पूर्ण अन्यथा अगर ((device->raid_level == SA_RAID_5 ||
 		device->raid_level == SA_RAID_6) &&
-		(rmd.layout_map_count > 1 || rmd.is_write)) {
+		(rmd.layout_map_count > 1 || rmd.is_ग_लिखो)) अणु
 		rc = pqi_calc_aio_r5_or_r6(&rmd, raid_map);
-		if (rc)
-			return PQI_RAID_BYPASS_INELIGIBLE;
-	}
+		अगर (rc)
+			वापस PQI_RAID_BYPASS_INELIGIBLE;
+	पूर्ण
 
-	if (unlikely(rmd.map_index >= RAID_MAP_MAX_ENTRIES))
-		return PQI_RAID_BYPASS_INELIGIBLE;
+	अगर (unlikely(rmd.map_index >= RAID_MAP_MAX_ENTRIES))
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
 	rmd.aio_handle = raid_map->disk_data[rmd.map_index].aio_handle;
 	rmd.disk_block = get_unaligned_le64(&raid_map->disk_starting_blk) +
@@ -2775,125 +2776,125 @@ static int pqi_raid_bypass_submit_scsi_cmd(struct pqi_ctrl_info *ctrl_info,
 		(rmd.first_row_offset - rmd.first_column * rmd.strip_size);
 	rmd.disk_block_cnt = rmd.block_cnt;
 
-	/* Handle differing logical/physical block sizes. */
-	if (raid_map->phys_blk_shift) {
-		rmd.disk_block <<= raid_map->phys_blk_shift;
-		rmd.disk_block_cnt <<= raid_map->phys_blk_shift;
-	}
+	/* Handle dअगरfering logical/physical block sizes. */
+	अगर (raid_map->phys_blk_shअगरt) अणु
+		rmd.disk_block <<= raid_map->phys_blk_shअगरt;
+		rmd.disk_block_cnt <<= raid_map->phys_blk_shअगरt;
+	पूर्ण
 
-	if (unlikely(rmd.disk_block_cnt > 0xffff))
-		return PQI_RAID_BYPASS_INELIGIBLE;
+	अगर (unlikely(rmd.disk_block_cnt > 0xffff))
+		वापस PQI_RAID_BYPASS_INELIGIBLE;
 
 	pqi_set_aio_cdb(&rmd);
 
-	if (get_unaligned_le16(&raid_map->flags) & RAID_MAP_ENCRYPTION_ENABLED) {
-		if (rmd.data_length > device->max_transfer_encrypted)
-			return PQI_RAID_BYPASS_INELIGIBLE;
+	अगर (get_unaligned_le16(&raid_map->flags) & RAID_MAP_ENCRYPTION_ENABLED) अणु
+		अगर (rmd.data_length > device->max_transfer_encrypted)
+			वापस PQI_RAID_BYPASS_INELIGIBLE;
 		pqi_set_encryption_info(&encryption_info, raid_map, rmd.first_block);
 		encryption_info_ptr = &encryption_info;
-	} else {
-		encryption_info_ptr = NULL;
-	}
+	पूर्ण अन्यथा अणु
+		encryption_info_ptr = शून्य;
+	पूर्ण
 
-	if (rmd.is_write) {
-		switch (device->raid_level) {
-		case SA_RAID_1:
-		case SA_RAID_TRIPLE:
-			return pqi_aio_submit_r1_write_io(ctrl_info, scmd, queue_group,
+	अगर (rmd.is_ग_लिखो) अणु
+		चयन (device->raid_level) अणु
+		हाल SA_RAID_1:
+		हाल SA_RAID_TRIPLE:
+			वापस pqi_aio_submit_r1_ग_लिखो_io(ctrl_info, scmd, queue_group,
 				encryption_info_ptr, device, &rmd);
-		case SA_RAID_5:
-		case SA_RAID_6:
-			return pqi_aio_submit_r56_write_io(ctrl_info, scmd, queue_group,
+		हाल SA_RAID_5:
+		हाल SA_RAID_6:
+			वापस pqi_aio_submit_r56_ग_लिखो_io(ctrl_info, scmd, queue_group,
 				encryption_info_ptr, device, &rmd);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return pqi_aio_submit_io(ctrl_info, scmd, rmd.aio_handle,
+	वापस pqi_aio_submit_io(ctrl_info, scmd, rmd.aio_handle,
 		rmd.cdb, rmd.cdb_length, queue_group,
 		encryption_info_ptr, true);
-}
+पूर्ण
 
-#define PQI_STATUS_IDLE		0x0
+#घोषणा PQI_STATUS_IDLE		0x0
 
-#define PQI_CREATE_ADMIN_QUEUE_PAIR	1
-#define PQI_DELETE_ADMIN_QUEUE_PAIR	2
+#घोषणा PQI_CREATE_ADMIN_QUEUE_PAIR	1
+#घोषणा PQI_DELETE_ADMIN_QUEUE_PAIR	2
 
-#define PQI_DEVICE_STATE_POWER_ON_AND_RESET		0x0
-#define PQI_DEVICE_STATE_STATUS_AVAILABLE		0x1
-#define PQI_DEVICE_STATE_ALL_REGISTERS_READY		0x2
-#define PQI_DEVICE_STATE_ADMIN_QUEUE_PAIR_READY		0x3
-#define PQI_DEVICE_STATE_ERROR				0x4
+#घोषणा PQI_DEVICE_STATE_POWER_ON_AND_RESET		0x0
+#घोषणा PQI_DEVICE_STATE_STATUS_AVAILABLE		0x1
+#घोषणा PQI_DEVICE_STATE_ALL_REGISTERS_READY		0x2
+#घोषणा PQI_DEVICE_STATE_ADMIN_QUEUE_PAIR_READY		0x3
+#घोषणा PQI_DEVICE_STATE_ERROR				0x4
 
-#define PQI_MODE_READY_TIMEOUT_SECS		30
-#define PQI_MODE_READY_POLL_INTERVAL_MSECS	1
+#घोषणा PQI_MODE_READY_TIMEOUT_SECS		30
+#घोषणा PQI_MODE_READY_POLL_INTERVAL_MSECS	1
 
-static int pqi_wait_for_pqi_mode_ready(struct pqi_ctrl_info *ctrl_info)
-{
-	struct pqi_device_registers __iomem *pqi_registers;
-	unsigned long timeout;
+अटल पूर्णांक pqi_रुको_क्रम_pqi_mode_पढ़ोy(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	काष्ठा pqi_device_रेजिस्टरs __iomem *pqi_रेजिस्टरs;
+	अचिन्हित दीर्घ समयout;
 	u64 signature;
 	u8 status;
 
-	pqi_registers = ctrl_info->pqi_registers;
-	timeout = (PQI_MODE_READY_TIMEOUT_SECS * PQI_HZ) + jiffies;
+	pqi_रेजिस्टरs = ctrl_info->pqi_रेजिस्टरs;
+	समयout = (PQI_MODE_READY_TIMEOUT_SECS * PQI_HZ) + jअगरfies;
 
-	while (1) {
-		signature = readq(&pqi_registers->signature);
-		if (memcmp(&signature, PQI_DEVICE_SIGNATURE,
-			sizeof(signature)) == 0)
-			break;
-		if (time_after(jiffies, timeout)) {
+	जबतक (1) अणु
+		signature = पढ़ोq(&pqi_रेजिस्टरs->signature);
+		अगर (स_भेद(&signature, PQI_DEVICE_SIGNATURE,
+			माप(signature)) == 0)
+			अवरोध;
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"timed out waiting for PQI signature\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		msleep(PQI_MODE_READY_POLL_INTERVAL_MSECS);
-	}
+	पूर्ण
 
-	while (1) {
-		status = readb(&pqi_registers->function_and_status_code);
-		if (status == PQI_STATUS_IDLE)
-			break;
-		if (time_after(jiffies, timeout)) {
+	जबतक (1) अणु
+		status = पढ़ोb(&pqi_रेजिस्टरs->function_and_status_code);
+		अगर (status == PQI_STATUS_IDLE)
+			अवरोध;
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"timed out waiting for PQI IDLE\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		msleep(PQI_MODE_READY_POLL_INTERVAL_MSECS);
-	}
+	पूर्ण
 
-	while (1) {
-		if (readl(&pqi_registers->device_status) ==
+	जबतक (1) अणु
+		अगर (पढ़ोl(&pqi_रेजिस्टरs->device_status) ==
 			PQI_DEVICE_STATE_ALL_REGISTERS_READY)
-			break;
-		if (time_after(jiffies, timeout)) {
+			अवरोध;
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"timed out waiting for PQI all registers ready\n");
-			return -ETIMEDOUT;
-		}
+			वापस -ETIMEDOUT;
+		पूर्ण
 		msleep(PQI_MODE_READY_POLL_INTERVAL_MSECS);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline void pqi_aio_path_disabled(struct pqi_io_request *io_request)
-{
-	struct pqi_scsi_dev *device;
+अटल अंतरभूत व्योम pqi_aio_path_disabled(काष्ठा pqi_io_request *io_request)
+अणु
+	काष्ठा pqi_scsi_dev *device;
 
 	device = io_request->scmd->device->hostdata;
 	device->raid_bypass_enabled = false;
 	device->aio_enabled = false;
-}
+पूर्ण
 
-static inline void pqi_take_device_offline(struct scsi_device *sdev, char *path)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct pqi_scsi_dev *device;
+अटल अंतरभूत व्योम pqi_take_device_offline(काष्ठा scsi_device *sdev, अक्षर *path)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा pqi_scsi_dev *device;
 
 	device = sdev->hostdata;
-	if (device->device_offline)
-		return;
+	अगर (device->device_offline)
+		वापस;
 
 	device->device_offline = true;
 	ctrl_info = shost_to_hba(sdev->host);
@@ -2901,118 +2902,118 @@ static inline void pqi_take_device_offline(struct scsi_device *sdev, char *path)
 	dev_err(&ctrl_info->pci_dev->dev, "re-scanning %s scsi %d:%d:%d:%d\n",
 		path, ctrl_info->scsi_host->host_no, device->bus,
 		device->target, device->lun);
-}
+पूर्ण
 
-static void pqi_process_raid_io_error(struct pqi_io_request *io_request)
-{
+अटल व्योम pqi_process_raid_io_error(काष्ठा pqi_io_request *io_request)
+अणु
 	u8 scsi_status;
 	u8 host_byte;
-	struct scsi_cmnd *scmd;
-	struct pqi_raid_error_info *error_info;
-	size_t sense_data_length;
-	int residual_count;
-	int xfer_count;
-	struct scsi_sense_hdr sshdr;
+	काष्ठा scsi_cmnd *scmd;
+	काष्ठा pqi_raid_error_info *error_info;
+	माप_प्रकार sense_data_length;
+	पूर्णांक residual_count;
+	पूर्णांक xfer_count;
+	काष्ठा scsi_sense_hdr sshdr;
 
 	scmd = io_request->scmd;
-	if (!scmd)
-		return;
+	अगर (!scmd)
+		वापस;
 
 	error_info = io_request->error_info;
 	scsi_status = error_info->status;
 	host_byte = DID_OK;
 
-	switch (error_info->data_out_result) {
-	case PQI_DATA_IN_OUT_GOOD:
-		break;
-	case PQI_DATA_IN_OUT_UNDERFLOW:
+	चयन (error_info->data_out_result) अणु
+	हाल PQI_DATA_IN_OUT_GOOD:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_UNDERFLOW:
 		xfer_count =
 			get_unaligned_le32(&error_info->data_out_transferred);
 		residual_count = scsi_bufflen(scmd) - xfer_count;
 		scsi_set_resid(scmd, residual_count);
-		if (xfer_count < scmd->underflow)
+		अगर (xfer_count < scmd->underflow)
 			host_byte = DID_SOFT_ERROR;
-		break;
-	case PQI_DATA_IN_OUT_UNSOLICITED_ABORT:
-	case PQI_DATA_IN_OUT_ABORTED:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_UNSOLICITED_ABORT:
+	हाल PQI_DATA_IN_OUT_ABORTED:
 		host_byte = DID_ABORT;
-		break;
-	case PQI_DATA_IN_OUT_TIMEOUT:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_TIMEOUT:
 		host_byte = DID_TIME_OUT;
-		break;
-	case PQI_DATA_IN_OUT_BUFFER_OVERFLOW:
-	case PQI_DATA_IN_OUT_PROTOCOL_ERROR:
-	case PQI_DATA_IN_OUT_BUFFER_ERROR:
-	case PQI_DATA_IN_OUT_BUFFER_OVERFLOW_DESCRIPTOR_AREA:
-	case PQI_DATA_IN_OUT_BUFFER_OVERFLOW_BRIDGE:
-	case PQI_DATA_IN_OUT_ERROR:
-	case PQI_DATA_IN_OUT_HARDWARE_ERROR:
-	case PQI_DATA_IN_OUT_PCIE_FABRIC_ERROR:
-	case PQI_DATA_IN_OUT_PCIE_COMPLETION_TIMEOUT:
-	case PQI_DATA_IN_OUT_PCIE_COMPLETER_ABORT_RECEIVED:
-	case PQI_DATA_IN_OUT_PCIE_UNSUPPORTED_REQUEST_RECEIVED:
-	case PQI_DATA_IN_OUT_PCIE_ECRC_CHECK_FAILED:
-	case PQI_DATA_IN_OUT_PCIE_UNSUPPORTED_REQUEST:
-	case PQI_DATA_IN_OUT_PCIE_ACS_VIOLATION:
-	case PQI_DATA_IN_OUT_PCIE_TLP_PREFIX_BLOCKED:
-	case PQI_DATA_IN_OUT_PCIE_POISONED_MEMORY_READ:
-	default:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_BUFFER_OVERFLOW:
+	हाल PQI_DATA_IN_OUT_PROTOCOL_ERROR:
+	हाल PQI_DATA_IN_OUT_BUFFER_ERROR:
+	हाल PQI_DATA_IN_OUT_BUFFER_OVERFLOW_DESCRIPTOR_AREA:
+	हाल PQI_DATA_IN_OUT_BUFFER_OVERFLOW_BRIDGE:
+	हाल PQI_DATA_IN_OUT_ERROR:
+	हाल PQI_DATA_IN_OUT_HARDWARE_ERROR:
+	हाल PQI_DATA_IN_OUT_PCIE_FABRIC_ERROR:
+	हाल PQI_DATA_IN_OUT_PCIE_COMPLETION_TIMEOUT:
+	हाल PQI_DATA_IN_OUT_PCIE_COMPLETER_ABORT_RECEIVED:
+	हाल PQI_DATA_IN_OUT_PCIE_UNSUPPORTED_REQUEST_RECEIVED:
+	हाल PQI_DATA_IN_OUT_PCIE_ECRC_CHECK_FAILED:
+	हाल PQI_DATA_IN_OUT_PCIE_UNSUPPORTED_REQUEST:
+	हाल PQI_DATA_IN_OUT_PCIE_ACS_VIOLATION:
+	हाल PQI_DATA_IN_OUT_PCIE_TLP_PREFIX_BLOCKED:
+	हाल PQI_DATA_IN_OUT_PCIE_POISONED_MEMORY_READ:
+	शेष:
 		host_byte = DID_ERROR;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	sense_data_length = get_unaligned_le16(&error_info->sense_data_length);
-	if (sense_data_length == 0)
+	अगर (sense_data_length == 0)
 		sense_data_length =
 			get_unaligned_le16(&error_info->response_data_length);
-	if (sense_data_length) {
-		if (sense_data_length > sizeof(error_info->data))
-			sense_data_length = sizeof(error_info->data);
+	अगर (sense_data_length) अणु
+		अगर (sense_data_length > माप(error_info->data))
+			sense_data_length = माप(error_info->data);
 
-		if (scsi_status == SAM_STAT_CHECK_CONDITION &&
+		अगर (scsi_status == SAM_STAT_CHECK_CONDITION &&
 			scsi_normalize_sense(error_info->data,
 				sense_data_length, &sshdr) &&
 				sshdr.sense_key == HARDWARE_ERROR &&
-				sshdr.asc == 0x3e) {
-			struct pqi_ctrl_info *ctrl_info = shost_to_hba(scmd->device->host);
-			struct pqi_scsi_dev *device = scmd->device->hostdata;
+				sshdr.asc == 0x3e) अणु
+			काष्ठा pqi_ctrl_info *ctrl_info = shost_to_hba(scmd->device->host);
+			काष्ठा pqi_scsi_dev *device = scmd->device->hostdata;
 
-			switch (sshdr.ascq) {
-			case 0x1: /* LOGICAL UNIT FAILURE */
-				if (printk_ratelimit())
-					scmd_printk(KERN_ERR, scmd, "received 'logical unit failure' from controller for scsi %d:%d:%d:%d\n",
+			चयन (sshdr.ascq) अणु
+			हाल 0x1: /* LOGICAL UNIT FAILURE */
+				अगर (prपूर्णांकk_ratelimit())
+					scmd_prपूर्णांकk(KERN_ERR, scmd, "received 'logical unit failure' from controller for scsi %d:%d:%d:%d\n",
 						ctrl_info->scsi_host->host_no, device->bus, device->target, device->lun);
 				pqi_take_device_offline(scmd->device, "RAID");
 				host_byte = DID_NO_CONNECT;
-				break;
+				अवरोध;
 
-			default: /* See http://www.t10.org/lists/asc-num.htm#ASC_3E */
-				if (printk_ratelimit())
-					scmd_printk(KERN_ERR, scmd, "received unhandled error %d from controller for scsi %d:%d:%d:%d\n",
+			शेष: /* See http://www.t10.org/lists/asc-num.hपंचांग#ASC_3E */
+				अगर (prपूर्णांकk_ratelimit())
+					scmd_prपूर्णांकk(KERN_ERR, scmd, "received unhandled error %d from controller for scsi %d:%d:%d:%d\n",
 						sshdr.ascq, ctrl_info->scsi_host->host_no, device->bus, device->target, device->lun);
-				break;
-			}
-		}
+				अवरोध;
+			पूर्ण
+		पूर्ण
 
-		if (sense_data_length > SCSI_SENSE_BUFFERSIZE)
+		अगर (sense_data_length > SCSI_SENSE_BUFFERSIZE)
 			sense_data_length = SCSI_SENSE_BUFFERSIZE;
-		memcpy(scmd->sense_buffer, error_info->data,
+		स_नकल(scmd->sense_buffer, error_info->data,
 			sense_data_length);
-	}
+	पूर्ण
 
 	scmd->result = scsi_status;
 	set_host_byte(scmd, host_byte);
-}
+पूर्ण
 
-static void pqi_process_aio_io_error(struct pqi_io_request *io_request)
-{
+अटल व्योम pqi_process_aio_io_error(काष्ठा pqi_io_request *io_request)
+अणु
 	u8 scsi_status;
 	u8 host_byte;
-	struct scsi_cmnd *scmd;
-	struct pqi_aio_error_info *error_info;
-	size_t sense_data_length;
-	int residual_count;
-	int xfer_count;
+	काष्ठा scsi_cmnd *scmd;
+	काष्ठा pqi_aio_error_info *error_info;
+	माप_प्रकार sense_data_length;
+	पूर्णांक residual_count;
+	पूर्णांक xfer_count;
 	bool device_offline;
 
 	scmd = io_request->scmd;
@@ -3021,809 +3022,809 @@ static void pqi_process_aio_io_error(struct pqi_io_request *io_request)
 	sense_data_length = 0;
 	device_offline = false;
 
-	switch (error_info->service_response) {
-	case PQI_AIO_SERV_RESPONSE_COMPLETE:
+	चयन (error_info->service_response) अणु
+	हाल PQI_AIO_SERV_RESPONSE_COMPLETE:
 		scsi_status = error_info->status;
-		break;
-	case PQI_AIO_SERV_RESPONSE_FAILURE:
-		switch (error_info->status) {
-		case PQI_AIO_STATUS_IO_ABORTED:
+		अवरोध;
+	हाल PQI_AIO_SERV_RESPONSE_FAILURE:
+		चयन (error_info->status) अणु
+		हाल PQI_AIO_STATUS_IO_ABORTED:
 			scsi_status = SAM_STAT_TASK_ABORTED;
-			break;
-		case PQI_AIO_STATUS_UNDERRUN:
+			अवरोध;
+		हाल PQI_AIO_STATUS_UNDERRUN:
 			scsi_status = SAM_STAT_GOOD;
 			residual_count = get_unaligned_le32(
 						&error_info->residual_count);
 			scsi_set_resid(scmd, residual_count);
 			xfer_count = scsi_bufflen(scmd) - residual_count;
-			if (xfer_count < scmd->underflow)
+			अगर (xfer_count < scmd->underflow)
 				host_byte = DID_SOFT_ERROR;
-			break;
-		case PQI_AIO_STATUS_OVERRUN:
+			अवरोध;
+		हाल PQI_AIO_STATUS_OVERRUN:
 			scsi_status = SAM_STAT_GOOD;
-			break;
-		case PQI_AIO_STATUS_AIO_PATH_DISABLED:
+			अवरोध;
+		हाल PQI_AIO_STATUS_AIO_PATH_DISABLED:
 			pqi_aio_path_disabled(io_request);
 			scsi_status = SAM_STAT_GOOD;
 			io_request->status = -EAGAIN;
-			break;
-		case PQI_AIO_STATUS_NO_PATH_TO_DEVICE:
-		case PQI_AIO_STATUS_INVALID_DEVICE:
-			if (!io_request->raid_bypass) {
+			अवरोध;
+		हाल PQI_AIO_STATUS_NO_PATH_TO_DEVICE:
+		हाल PQI_AIO_STATUS_INVALID_DEVICE:
+			अगर (!io_request->raid_bypass) अणु
 				device_offline = true;
 				pqi_take_device_offline(scmd->device, "AIO");
 				host_byte = DID_NO_CONNECT;
-			}
+			पूर्ण
 			scsi_status = SAM_STAT_CHECK_CONDITION;
-			break;
-		case PQI_AIO_STATUS_IO_ERROR:
-		default:
+			अवरोध;
+		हाल PQI_AIO_STATUS_IO_ERROR:
+		शेष:
 			scsi_status = SAM_STAT_CHECK_CONDITION;
-			break;
-		}
-		break;
-	case PQI_AIO_SERV_RESPONSE_TMF_COMPLETE:
-	case PQI_AIO_SERV_RESPONSE_TMF_SUCCEEDED:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल PQI_AIO_SERV_RESPONSE_TMF_COMPLETE:
+	हाल PQI_AIO_SERV_RESPONSE_TMF_SUCCEEDED:
 		scsi_status = SAM_STAT_GOOD;
-		break;
-	case PQI_AIO_SERV_RESPONSE_TMF_REJECTED:
-	case PQI_AIO_SERV_RESPONSE_TMF_INCORRECT_LUN:
-	default:
+		अवरोध;
+	हाल PQI_AIO_SERV_RESPONSE_TMF_REJECTED:
+	हाल PQI_AIO_SERV_RESPONSE_TMF_INCORRECT_LUN:
+	शेष:
 		scsi_status = SAM_STAT_CHECK_CONDITION;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (error_info->data_present) {
+	अगर (error_info->data_present) अणु
 		sense_data_length =
 			get_unaligned_le16(&error_info->data_length);
-		if (sense_data_length) {
-			if (sense_data_length > sizeof(error_info->data))
-				sense_data_length = sizeof(error_info->data);
-			if (sense_data_length > SCSI_SENSE_BUFFERSIZE)
+		अगर (sense_data_length) अणु
+			अगर (sense_data_length > माप(error_info->data))
+				sense_data_length = माप(error_info->data);
+			अगर (sense_data_length > SCSI_SENSE_BUFFERSIZE)
 				sense_data_length = SCSI_SENSE_BUFFERSIZE;
-			memcpy(scmd->sense_buffer, error_info->data,
+			स_नकल(scmd->sense_buffer, error_info->data,
 				sense_data_length);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (device_offline && sense_data_length == 0)
+	अगर (device_offline && sense_data_length == 0)
 		scsi_build_sense_buffer(0, scmd->sense_buffer, HARDWARE_ERROR,
 			0x3e, 0x1);
 
 	scmd->result = scsi_status;
 	set_host_byte(scmd, host_byte);
-}
+पूर्ण
 
-static void pqi_process_io_error(unsigned int iu_type,
-	struct pqi_io_request *io_request)
-{
-	switch (iu_type) {
-	case PQI_RESPONSE_IU_RAID_PATH_IO_ERROR:
+अटल व्योम pqi_process_io_error(अचिन्हित पूर्णांक iu_type,
+	काष्ठा pqi_io_request *io_request)
+अणु
+	चयन (iu_type) अणु
+	हाल PQI_RESPONSE_IU_RAID_PATH_IO_ERROR:
 		pqi_process_raid_io_error(io_request);
-		break;
-	case PQI_RESPONSE_IU_AIO_PATH_IO_ERROR:
+		अवरोध;
+	हाल PQI_RESPONSE_IU_AIO_PATH_IO_ERROR:
 		pqi_process_aio_io_error(io_request);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int pqi_interpret_task_management_response(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_task_management_response *response)
-{
-	int rc;
+अटल पूर्णांक pqi_पूर्णांकerpret_task_management_response(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_task_management_response *response)
+अणु
+	पूर्णांक rc;
 
-	switch (response->response_code) {
-	case SOP_TMF_COMPLETE:
-	case SOP_TMF_FUNCTION_SUCCEEDED:
+	चयन (response->response_code) अणु
+	हाल SOP_TMF_COMPLETE:
+	हाल SOP_TMF_FUNCTION_SUCCEEDED:
 		rc = 0;
-		break;
-	case SOP_TMF_REJECTED:
+		अवरोध;
+	हाल SOP_TMF_REJECTED:
 		rc = -EAGAIN;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EIO;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (rc)
+	अगर (rc)
 		dev_err(&ctrl_info->pci_dev->dev,
 			"Task Management Function error: %d (response code: %u)\n", rc, response->response_code);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline void pqi_invalid_response(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत व्योम pqi_invalid_response(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	pqi_take_ctrl_offline(ctrl_info);
-}
+पूर्ण
 
-static int pqi_process_io_intr(struct pqi_ctrl_info *ctrl_info, struct pqi_queue_group *queue_group)
-{
-	int num_responses;
+अटल पूर्णांक pqi_process_io_पूर्णांकr(काष्ठा pqi_ctrl_info *ctrl_info, काष्ठा pqi_queue_group *queue_group)
+अणु
+	पूर्णांक num_responses;
 	pqi_index_t oq_pi;
 	pqi_index_t oq_ci;
-	struct pqi_io_request *io_request;
-	struct pqi_io_response *response;
+	काष्ठा pqi_io_request *io_request;
+	काष्ठा pqi_io_response *response;
 	u16 request_id;
 
 	num_responses = 0;
 	oq_ci = queue_group->oq_ci_copy;
 
-	while (1) {
-		oq_pi = readl(queue_group->oq_pi);
-		if (oq_pi >= ctrl_info->num_elements_per_oq) {
+	जबतक (1) अणु
+		oq_pi = पढ़ोl(queue_group->oq_pi);
+		अगर (oq_pi >= ctrl_info->num_elements_per_oq) अणु
 			pqi_invalid_response(ctrl_info);
 			dev_err(&ctrl_info->pci_dev->dev,
 				"I/O interrupt: producer index (%u) out of range (0-%u): consumer index: %u\n",
 				oq_pi, ctrl_info->num_elements_per_oq - 1, oq_ci);
-			return -1;
-		}
-		if (oq_pi == oq_ci)
-			break;
+			वापस -1;
+		पूर्ण
+		अगर (oq_pi == oq_ci)
+			अवरोध;
 
 		num_responses++;
 		response = queue_group->oq_element_array +
 			(oq_ci * PQI_OPERATIONAL_OQ_ELEMENT_LENGTH);
 
 		request_id = get_unaligned_le16(&response->request_id);
-		if (request_id >= ctrl_info->max_io_slots) {
+		अगर (request_id >= ctrl_info->max_io_slots) अणु
 			pqi_invalid_response(ctrl_info);
 			dev_err(&ctrl_info->pci_dev->dev,
 				"request ID in response (%u) out of range (0-%u): producer index: %u  consumer index: %u\n",
 				request_id, ctrl_info->max_io_slots - 1, oq_pi, oq_ci);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		io_request = &ctrl_info->io_request_pool[request_id];
-		if (atomic_read(&io_request->refcount) == 0) {
+		अगर (atomic_पढ़ो(&io_request->refcount) == 0) अणु
 			pqi_invalid_response(ctrl_info);
 			dev_err(&ctrl_info->pci_dev->dev,
 				"request ID in response (%u) does not match an outstanding I/O request: producer index: %u  consumer index: %u\n",
 				request_id, oq_pi, oq_ci);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		switch (response->header.iu_type) {
-		case PQI_RESPONSE_IU_RAID_PATH_IO_SUCCESS:
-		case PQI_RESPONSE_IU_AIO_PATH_IO_SUCCESS:
-			if (io_request->scmd)
+		चयन (response->header.iu_type) अणु
+		हाल PQI_RESPONSE_IU_RAID_PATH_IO_SUCCESS:
+		हाल PQI_RESPONSE_IU_AIO_PATH_IO_SUCCESS:
+			अगर (io_request->scmd)
 				io_request->scmd->result = 0;
 			fallthrough;
-		case PQI_RESPONSE_IU_GENERAL_MANAGEMENT:
-			break;
-		case PQI_RESPONSE_IU_VENDOR_GENERAL:
+		हाल PQI_RESPONSE_IU_GENERAL_MANAGEMENT:
+			अवरोध;
+		हाल PQI_RESPONSE_IU_VENDOR_GENERAL:
 			io_request->status =
 				get_unaligned_le16(
-				&((struct pqi_vendor_general_response *)response)->status);
-			break;
-		case PQI_RESPONSE_IU_TASK_MANAGEMENT:
-			io_request->status = pqi_interpret_task_management_response(ctrl_info,
-				(void *)response);
-			break;
-		case PQI_RESPONSE_IU_AIO_PATH_DISABLED:
+				&((काष्ठा pqi_venकरोr_general_response *)response)->status);
+			अवरोध;
+		हाल PQI_RESPONSE_IU_TASK_MANAGEMENT:
+			io_request->status = pqi_पूर्णांकerpret_task_management_response(ctrl_info,
+				(व्योम *)response);
+			अवरोध;
+		हाल PQI_RESPONSE_IU_AIO_PATH_DISABLED:
 			pqi_aio_path_disabled(io_request);
 			io_request->status = -EAGAIN;
-			break;
-		case PQI_RESPONSE_IU_RAID_PATH_IO_ERROR:
-		case PQI_RESPONSE_IU_AIO_PATH_IO_ERROR:
+			अवरोध;
+		हाल PQI_RESPONSE_IU_RAID_PATH_IO_ERROR:
+		हाल PQI_RESPONSE_IU_AIO_PATH_IO_ERROR:
 			io_request->error_info = ctrl_info->error_buffer +
 				(get_unaligned_le16(&response->error_index) *
 				PQI_ERROR_BUFFER_ELEMENT_LENGTH);
 			pqi_process_io_error(response->header.iu_type, io_request);
-			break;
-		default:
+			अवरोध;
+		शेष:
 			pqi_invalid_response(ctrl_info);
 			dev_err(&ctrl_info->pci_dev->dev,
 				"unexpected IU type: 0x%x: producer index: %u  consumer index: %u\n",
 				response->header.iu_type, oq_pi, oq_ci);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
 		io_request->io_complete_callback(io_request, io_request->context);
 
 		/*
-		 * Note that the I/O request structure CANNOT BE TOUCHED after
-		 * returning from the I/O completion callback!
+		 * Note that the I/O request काष्ठाure CANNOT BE TOUCHED after
+		 * वापसing from the I/O completion callback!
 		 */
 		oq_ci = (oq_ci + 1) % ctrl_info->num_elements_per_oq;
-	}
+	पूर्ण
 
-	if (num_responses) {
+	अगर (num_responses) अणु
 		queue_group->oq_ci_copy = oq_ci;
-		writel(oq_ci, queue_group->oq_ci);
-	}
+		ग_लिखोl(oq_ci, queue_group->oq_ci);
+	पूर्ण
 
-	return num_responses;
-}
+	वापस num_responses;
+पूर्ण
 
-static inline unsigned int pqi_num_elements_free(unsigned int pi,
-	unsigned int ci, unsigned int elements_in_queue)
-{
-	unsigned int num_elements_used;
+अटल अंतरभूत अचिन्हित पूर्णांक pqi_num_elements_मुक्त(अचिन्हित पूर्णांक pi,
+	अचिन्हित पूर्णांक ci, अचिन्हित पूर्णांक elements_in_queue)
+अणु
+	अचिन्हित पूर्णांक num_elements_used;
 
-	if (pi >= ci)
+	अगर (pi >= ci)
 		num_elements_used = pi - ci;
-	else
+	अन्यथा
 		num_elements_used = elements_in_queue - ci + pi;
 
-	return elements_in_queue - num_elements_used - 1;
-}
+	वापस elements_in_queue - num_elements_used - 1;
+पूर्ण
 
-static void pqi_send_event_ack(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_event_acknowledge_request *iu, size_t iu_length)
-{
+अटल व्योम pqi_send_event_ack(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_event_acknowledge_request *iu, माप_प्रकार iu_length)
+अणु
 	pqi_index_t iq_pi;
 	pqi_index_t iq_ci;
-	unsigned long flags;
-	void *next_element;
-	struct pqi_queue_group *queue_group;
+	अचिन्हित दीर्घ flags;
+	व्योम *next_element;
+	काष्ठा pqi_queue_group *queue_group;
 
 	queue_group = &ctrl_info->queue_groups[PQI_DEFAULT_QUEUE_GROUP];
 	put_unaligned_le16(queue_group->oq_id, &iu->header.response_queue_id);
 
-	while (1) {
+	जबतक (1) अणु
 		spin_lock_irqsave(&queue_group->submit_lock[RAID_PATH], flags);
 
 		iq_pi = queue_group->iq_pi_copy[RAID_PATH];
-		iq_ci = readl(queue_group->iq_ci[RAID_PATH]);
+		iq_ci = पढ़ोl(queue_group->iq_ci[RAID_PATH]);
 
-		if (pqi_num_elements_free(iq_pi, iq_ci,
+		अगर (pqi_num_elements_मुक्त(iq_pi, iq_ci,
 			ctrl_info->num_elements_per_iq))
-			break;
+			अवरोध;
 
 		spin_unlock_irqrestore(
 			&queue_group->submit_lock[RAID_PATH], flags);
 
-		if (pqi_ctrl_offline(ctrl_info))
-			return;
-	}
+		अगर (pqi_ctrl_offline(ctrl_info))
+			वापस;
+	पूर्ण
 
 	next_element = queue_group->iq_element_array[RAID_PATH] +
 		(iq_pi * PQI_OPERATIONAL_IQ_ELEMENT_LENGTH);
 
-	memcpy(next_element, iu, iu_length);
+	स_नकल(next_element, iu, iu_length);
 
 	iq_pi = (iq_pi + 1) % ctrl_info->num_elements_per_iq;
 	queue_group->iq_pi_copy[RAID_PATH] = iq_pi;
 
 	/*
-	 * This write notifies the controller that an IU is available to be
+	 * This ग_लिखो notअगरies the controller that an IU is available to be
 	 * processed.
 	 */
-	writel(iq_pi, queue_group->iq_pi[RAID_PATH]);
+	ग_लिखोl(iq_pi, queue_group->iq_pi[RAID_PATH]);
 
 	spin_unlock_irqrestore(&queue_group->submit_lock[RAID_PATH], flags);
-}
+पूर्ण
 
-static void pqi_acknowledge_event(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_event *event)
-{
-	struct pqi_event_acknowledge_request request;
+अटल व्योम pqi_acknowledge_event(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_event *event)
+अणु
+	काष्ठा pqi_event_acknowledge_request request;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 
 	request.header.iu_type = PQI_REQUEST_IU_ACKNOWLEDGE_VENDOR_EVENT;
-	put_unaligned_le16(sizeof(request) - PQI_REQUEST_HEADER_LENGTH,
+	put_unaligned_le16(माप(request) - PQI_REQUEST_HEADER_LENGTH,
 		&request.header.iu_length);
 	request.event_type = event->event_type;
 	put_unaligned_le16(event->event_id, &request.event_id);
 	put_unaligned_le32(event->additional_event_id, &request.additional_event_id);
 
-	pqi_send_event_ack(ctrl_info, &request, sizeof(request));
-}
+	pqi_send_event_ack(ctrl_info, &request, माप(request));
+पूर्ण
 
-#define PQI_SOFT_RESET_STATUS_TIMEOUT_SECS		30
-#define PQI_SOFT_RESET_STATUS_POLL_INTERVAL_SECS	1
+#घोषणा PQI_SOFT_RESET_STATUS_TIMEOUT_SECS		30
+#घोषणा PQI_SOFT_RESET_STATUS_POLL_INTERVAL_SECS	1
 
-static enum pqi_soft_reset_status pqi_poll_for_soft_reset_status(
-	struct pqi_ctrl_info *ctrl_info)
-{
+अटल क्रमागत pqi_soft_reset_status pqi_poll_क्रम_soft_reset_status(
+	काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	u8 status;
-	unsigned long timeout;
+	अचिन्हित दीर्घ समयout;
 
-	timeout = (PQI_SOFT_RESET_STATUS_TIMEOUT_SECS * PQI_HZ) + jiffies;
+	समयout = (PQI_SOFT_RESET_STATUS_TIMEOUT_SECS * PQI_HZ) + jअगरfies;
 
-	while (1) {
-		status = pqi_read_soft_reset_status(ctrl_info);
-		if (status & PQI_SOFT_RESET_INITIATE)
-			return RESET_INITIATE_DRIVER;
+	जबतक (1) अणु
+		status = pqi_पढ़ो_soft_reset_status(ctrl_info);
+		अगर (status & PQI_SOFT_RESET_INITIATE)
+			वापस RESET_INITIATE_DRIVER;
 
-		if (status & PQI_SOFT_RESET_ABORT)
-			return RESET_ABORT;
+		अगर (status & PQI_SOFT_RESET_ABORT)
+			वापस RESET_ABORT;
 
-		if (!sis_is_firmware_running(ctrl_info))
-			return RESET_NORESPONSE;
+		अगर (!sis_is_firmware_running(ctrl_info))
+			वापस RESET_NORESPONSE;
 
-		if (time_after(jiffies, timeout)) {
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_warn(&ctrl_info->pci_dev->dev,
 				"timed out waiting for soft reset status\n");
-			return RESET_TIMEDOUT;
-		}
+			वापस RESET_TIMEDOUT;
+		पूर्ण
 
 		ssleep(PQI_SOFT_RESET_STATUS_POLL_INTERVAL_SECS);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pqi_process_soft_reset(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	unsigned int delay_secs;
-	enum pqi_soft_reset_status reset_status;
+अटल व्योम pqi_process_soft_reset(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक delay_secs;
+	क्रमागत pqi_soft_reset_status reset_status;
 
-	if (ctrl_info->soft_reset_handshake_supported)
-		reset_status = pqi_poll_for_soft_reset_status(ctrl_info);
-	else
+	अगर (ctrl_info->soft_reset_handshake_supported)
+		reset_status = pqi_poll_क्रम_soft_reset_status(ctrl_info);
+	अन्यथा
 		reset_status = RESET_INITIATE_FIRMWARE;
 
 	delay_secs = PQI_POST_RESET_DELAY_SECS;
 
-	switch (reset_status) {
-	case RESET_TIMEDOUT:
+	चयन (reset_status) अणु
+	हाल RESET_TIMEDOUT:
 		delay_secs = PQI_POST_OFA_RESET_DELAY_UPON_TIMEOUT_SECS;
 		fallthrough;
-	case RESET_INITIATE_DRIVER:
+	हाल RESET_INITIATE_DRIVER:
 		dev_info(&ctrl_info->pci_dev->dev,
 				"Online Firmware Activation: resetting controller\n");
 		sis_soft_reset(ctrl_info);
 		fallthrough;
-	case RESET_INITIATE_FIRMWARE:
+	हाल RESET_INITIATE_FIRMWARE:
 		ctrl_info->pqi_mode_enabled = false;
 		pqi_save_ctrl_mode(ctrl_info, SIS_MODE);
 		rc = pqi_ofa_ctrl_restart(ctrl_info, delay_secs);
-		pqi_ofa_free_host_buffer(ctrl_info);
-		pqi_ctrl_ofa_done(ctrl_info);
+		pqi_ofa_मुक्त_host_buffer(ctrl_info);
+		pqi_ctrl_ofa_करोne(ctrl_info);
 		dev_info(&ctrl_info->pci_dev->dev,
 				"Online Firmware Activation: %s\n",
 				rc == 0 ? "SUCCESS" : "FAILED");
-		break;
-	case RESET_ABORT:
+		अवरोध;
+	हाल RESET_ABORT:
 		dev_info(&ctrl_info->pci_dev->dev,
 				"Online Firmware Activation ABORTED\n");
-		if (ctrl_info->soft_reset_handshake_supported)
+		अगर (ctrl_info->soft_reset_handshake_supported)
 			pqi_clear_soft_reset_status(ctrl_info);
-		pqi_ofa_free_host_buffer(ctrl_info);
-		pqi_ctrl_ofa_done(ctrl_info);
+		pqi_ofa_मुक्त_host_buffer(ctrl_info);
+		pqi_ctrl_ofa_करोne(ctrl_info);
 		pqi_ofa_ctrl_unquiesce(ctrl_info);
-		break;
-	case RESET_NORESPONSE:
+		अवरोध;
+	हाल RESET_NORESPONSE:
 		fallthrough;
-	default:
+	शेष:
 		dev_err(&ctrl_info->pci_dev->dev,
 			"unexpected Online Firmware Activation reset status: 0x%x\n",
 			reset_status);
-		pqi_ofa_free_host_buffer(ctrl_info);
-		pqi_ctrl_ofa_done(ctrl_info);
+		pqi_ofa_मुक्त_host_buffer(ctrl_info);
+		pqi_ctrl_ofa_करोne(ctrl_info);
 		pqi_ofa_ctrl_unquiesce(ctrl_info);
 		pqi_take_ctrl_offline(ctrl_info);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void pqi_ofa_memory_alloc_worker(struct work_struct *work)
-{
-	struct pqi_ctrl_info *ctrl_info;
+अटल व्योम pqi_ofa_memory_alloc_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
-	ctrl_info = container_of(work, struct pqi_ctrl_info, ofa_memory_alloc_work);
+	ctrl_info = container_of(work, काष्ठा pqi_ctrl_info, ofa_memory_alloc_work);
 
 	pqi_ctrl_ofa_start(ctrl_info);
 	pqi_ofa_setup_host_buffer(ctrl_info);
 	pqi_ofa_host_memory_update(ctrl_info);
-}
+पूर्ण
 
-static void pqi_ofa_quiesce_worker(struct work_struct *work)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct pqi_event *event;
+अटल व्योम pqi_ofa_quiesce_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा pqi_event *event;
 
-	ctrl_info = container_of(work, struct pqi_ctrl_info, ofa_quiesce_work);
+	ctrl_info = container_of(work, काष्ठा pqi_ctrl_info, ofa_quiesce_work);
 
 	event = &ctrl_info->events[pqi_event_type_to_event_index(PQI_EVENT_TYPE_OFA)];
 
 	pqi_ofa_ctrl_quiesce(ctrl_info);
 	pqi_acknowledge_event(ctrl_info, event);
 	pqi_process_soft_reset(ctrl_info);
-}
+पूर्ण
 
-static bool pqi_ofa_process_event(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_event *event)
-{
+अटल bool pqi_ofa_process_event(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_event *event)
+अणु
 	bool ack_event;
 
 	ack_event = true;
 
-	switch (event->event_id) {
-	case PQI_EVENT_OFA_MEMORY_ALLOCATION:
+	चयन (event->event_id) अणु
+	हाल PQI_EVENT_OFA_MEMORY_ALLOCATION:
 		dev_info(&ctrl_info->pci_dev->dev,
 			"received Online Firmware Activation memory allocation request\n");
 		schedule_work(&ctrl_info->ofa_memory_alloc_work);
-		break;
-	case PQI_EVENT_OFA_QUIESCE:
+		अवरोध;
+	हाल PQI_EVENT_OFA_QUIESCE:
 		dev_info(&ctrl_info->pci_dev->dev,
 			"received Online Firmware Activation quiesce request\n");
 		schedule_work(&ctrl_info->ofa_quiesce_work);
 		ack_event = false;
-		break;
-	case PQI_EVENT_OFA_CANCELED:
+		अवरोध;
+	हाल PQI_EVENT_OFA_CANCELED:
 		dev_info(&ctrl_info->pci_dev->dev,
 			"received Online Firmware Activation cancel request: reason: %u\n",
 			ctrl_info->ofa_cancel_reason);
-		pqi_ofa_free_host_buffer(ctrl_info);
-		pqi_ctrl_ofa_done(ctrl_info);
-		break;
-	default:
+		pqi_ofa_मुक्त_host_buffer(ctrl_info);
+		pqi_ctrl_ofa_करोne(ctrl_info);
+		अवरोध;
+	शेष:
 		dev_err(&ctrl_info->pci_dev->dev,
 			"received unknown Online Firmware Activation request: event ID: %u\n",
 			event->event_id);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return ack_event;
-}
+	वापस ack_event;
+पूर्ण
 
-static void pqi_event_worker(struct work_struct *work)
-{
-	unsigned int i;
+अटल व्योम pqi_event_worker(काष्ठा work_काष्ठा *work)
+अणु
+	अचिन्हित पूर्णांक i;
 	bool rescan_needed;
-	struct pqi_ctrl_info *ctrl_info;
-	struct pqi_event *event;
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा pqi_event *event;
 	bool ack_event;
 
-	ctrl_info = container_of(work, struct pqi_ctrl_info, event_work);
+	ctrl_info = container_of(work, काष्ठा pqi_ctrl_info, event_work);
 
 	pqi_ctrl_busy(ctrl_info);
-	pqi_wait_if_ctrl_blocked(ctrl_info);
-	if (pqi_ctrl_offline(ctrl_info))
-		goto out;
+	pqi_रुको_अगर_ctrl_blocked(ctrl_info);
+	अगर (pqi_ctrl_offline(ctrl_info))
+		जाओ out;
 
 	rescan_needed = false;
 	event = ctrl_info->events;
-	for (i = 0; i < PQI_NUM_SUPPORTED_EVENTS; i++) {
-		if (event->pending) {
+	क्रम (i = 0; i < PQI_NUM_SUPPORTED_EVENTS; i++) अणु
+		अगर (event->pending) अणु
 			event->pending = false;
-			if (event->event_type == PQI_EVENT_TYPE_OFA) {
+			अगर (event->event_type == PQI_EVENT_TYPE_OFA) अणु
 				ack_event = pqi_ofa_process_event(ctrl_info, event);
-			} else {
+			पूर्ण अन्यथा अणु
 				ack_event = true;
 				rescan_needed = true;
-			}
-			if (ack_event)
+			पूर्ण
+			अगर (ack_event)
 				pqi_acknowledge_event(ctrl_info, event);
-		}
+		पूर्ण
 		event++;
-	}
+	पूर्ण
 
-	if (rescan_needed)
+	अगर (rescan_needed)
 		pqi_schedule_rescan_worker_delayed(ctrl_info);
 
 out:
 	pqi_ctrl_unbusy(ctrl_info);
-}
+पूर्ण
 
-#define PQI_HEARTBEAT_TIMER_INTERVAL	(10 * PQI_HZ)
+#घोषणा PQI_HEARTBEAT_TIMER_INTERVAL	(10 * PQI_HZ)
 
-static void pqi_heartbeat_timer_handler(struct timer_list *t)
-{
-	int num_interrupts;
+अटल व्योम pqi_heartbeat_समयr_handler(काष्ठा समयr_list *t)
+अणु
+	पूर्णांक num_पूर्णांकerrupts;
 	u32 heartbeat_count;
-	struct pqi_ctrl_info *ctrl_info = from_timer(ctrl_info, t, heartbeat_timer);
+	काष्ठा pqi_ctrl_info *ctrl_info = from_समयr(ctrl_info, t, heartbeat_समयr);
 
 	pqi_check_ctrl_health(ctrl_info);
-	if (pqi_ctrl_offline(ctrl_info))
-		return;
+	अगर (pqi_ctrl_offline(ctrl_info))
+		वापस;
 
-	num_interrupts = atomic_read(&ctrl_info->num_interrupts);
-	heartbeat_count = pqi_read_heartbeat_counter(ctrl_info);
+	num_पूर्णांकerrupts = atomic_पढ़ो(&ctrl_info->num_पूर्णांकerrupts);
+	heartbeat_count = pqi_पढ़ो_heartbeat_counter(ctrl_info);
 
-	if (num_interrupts == ctrl_info->previous_num_interrupts) {
-		if (heartbeat_count == ctrl_info->previous_heartbeat_count) {
+	अगर (num_पूर्णांकerrupts == ctrl_info->previous_num_पूर्णांकerrupts) अणु
+		अगर (heartbeat_count == ctrl_info->previous_heartbeat_count) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"no heartbeat detected - last heartbeat count: %u\n",
 				heartbeat_count);
 			pqi_take_ctrl_offline(ctrl_info);
-			return;
-		}
-	} else {
-		ctrl_info->previous_num_interrupts = num_interrupts;
-	}
+			वापस;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		ctrl_info->previous_num_पूर्णांकerrupts = num_पूर्णांकerrupts;
+	पूर्ण
 
 	ctrl_info->previous_heartbeat_count = heartbeat_count;
-	mod_timer(&ctrl_info->heartbeat_timer,
-		jiffies + PQI_HEARTBEAT_TIMER_INTERVAL);
-}
+	mod_समयr(&ctrl_info->heartbeat_समयr,
+		jअगरfies + PQI_HEARTBEAT_TIMER_INTERVAL);
+पूर्ण
 
-static void pqi_start_heartbeat_timer(struct pqi_ctrl_info *ctrl_info)
-{
-	if (!ctrl_info->heartbeat_counter)
-		return;
+अटल व्योम pqi_start_heartbeat_समयr(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अगर (!ctrl_info->heartbeat_counter)
+		वापस;
 
-	ctrl_info->previous_num_interrupts =
-		atomic_read(&ctrl_info->num_interrupts);
+	ctrl_info->previous_num_पूर्णांकerrupts =
+		atomic_पढ़ो(&ctrl_info->num_पूर्णांकerrupts);
 	ctrl_info->previous_heartbeat_count =
-		pqi_read_heartbeat_counter(ctrl_info);
+		pqi_पढ़ो_heartbeat_counter(ctrl_info);
 
-	ctrl_info->heartbeat_timer.expires =
-		jiffies + PQI_HEARTBEAT_TIMER_INTERVAL;
-	add_timer(&ctrl_info->heartbeat_timer);
-}
+	ctrl_info->heartbeat_समयr.expires =
+		jअगरfies + PQI_HEARTBEAT_TIMER_INTERVAL;
+	add_समयr(&ctrl_info->heartbeat_समयr);
+पूर्ण
 
-static inline void pqi_stop_heartbeat_timer(struct pqi_ctrl_info *ctrl_info)
-{
-	del_timer_sync(&ctrl_info->heartbeat_timer);
-}
+अटल अंतरभूत व्योम pqi_stop_heartbeat_समयr(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	del_समयr_sync(&ctrl_info->heartbeat_समयr);
+पूर्ण
 
-static void pqi_ofa_capture_event_payload(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_event *event, struct pqi_event_response *response)
-{
-	switch (event->event_id) {
-	case PQI_EVENT_OFA_MEMORY_ALLOCATION:
+अटल व्योम pqi_ofa_capture_event_payload(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_event *event, काष्ठा pqi_event_response *response)
+अणु
+	चयन (event->event_id) अणु
+	हाल PQI_EVENT_OFA_MEMORY_ALLOCATION:
 		ctrl_info->ofa_bytes_requested =
 			get_unaligned_le32(&response->data.ofa_memory_allocation.bytes_requested);
-		break;
-	case PQI_EVENT_OFA_CANCELED:
+		अवरोध;
+	हाल PQI_EVENT_OFA_CANCELED:
 		ctrl_info->ofa_cancel_reason =
 			get_unaligned_le16(&response->data.ofa_cancelled.reason);
-		break;
-	}
-}
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static int pqi_process_event_intr(struct pqi_ctrl_info *ctrl_info)
-{
-	int num_events;
+अटल पूर्णांक pqi_process_event_पूर्णांकr(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक num_events;
 	pqi_index_t oq_pi;
 	pqi_index_t oq_ci;
-	struct pqi_event_queue *event_queue;
-	struct pqi_event_response *response;
-	struct pqi_event *event;
-	int event_index;
+	काष्ठा pqi_event_queue *event_queue;
+	काष्ठा pqi_event_response *response;
+	काष्ठा pqi_event *event;
+	पूर्णांक event_index;
 
 	event_queue = &ctrl_info->event_queue;
 	num_events = 0;
 	oq_ci = event_queue->oq_ci_copy;
 
-	while (1) {
-		oq_pi = readl(event_queue->oq_pi);
-		if (oq_pi >= PQI_NUM_EVENT_QUEUE_ELEMENTS) {
+	जबतक (1) अणु
+		oq_pi = पढ़ोl(event_queue->oq_pi);
+		अगर (oq_pi >= PQI_NUM_EVENT_QUEUE_ELEMENTS) अणु
 			pqi_invalid_response(ctrl_info);
 			dev_err(&ctrl_info->pci_dev->dev,
 				"event interrupt: producer index (%u) out of range (0-%u): consumer index: %u\n",
 				oq_pi, PQI_NUM_EVENT_QUEUE_ELEMENTS - 1, oq_ci);
-			return -1;
-		}
+			वापस -1;
+		पूर्ण
 
-		if (oq_pi == oq_ci)
-			break;
+		अगर (oq_pi == oq_ci)
+			अवरोध;
 
 		num_events++;
 		response = event_queue->oq_element_array + (oq_ci * PQI_EVENT_OQ_ELEMENT_LENGTH);
 
 		event_index = pqi_event_type_to_event_index(response->event_type);
 
-		if (event_index >= 0 && response->request_acknowledge) {
+		अगर (event_index >= 0 && response->request_acknowledge) अणु
 			event = &ctrl_info->events[event_index];
 			event->pending = true;
 			event->event_type = response->event_type;
 			event->event_id = get_unaligned_le16(&response->event_id);
 			event->additional_event_id =
 				get_unaligned_le32(&response->additional_event_id);
-			if (event->event_type == PQI_EVENT_TYPE_OFA)
+			अगर (event->event_type == PQI_EVENT_TYPE_OFA)
 				pqi_ofa_capture_event_payload(ctrl_info, event, response);
-		}
+		पूर्ण
 
 		oq_ci = (oq_ci + 1) % PQI_NUM_EVENT_QUEUE_ELEMENTS;
-	}
+	पूर्ण
 
-	if (num_events) {
+	अगर (num_events) अणु
 		event_queue->oq_ci_copy = oq_ci;
-		writel(oq_ci, event_queue->oq_ci);
+		ग_लिखोl(oq_ci, event_queue->oq_ci);
 		schedule_work(&ctrl_info->event_work);
-	}
+	पूर्ण
 
-	return num_events;
-}
+	वापस num_events;
+पूर्ण
 
-#define PQI_LEGACY_INTX_MASK	0x1
+#घोषणा PQI_LEGACY_INTX_MASK	0x1
 
-static inline void pqi_configure_legacy_intx(struct pqi_ctrl_info *ctrl_info, bool enable_intx)
-{
-	u32 intx_mask;
-	struct pqi_device_registers __iomem *pqi_registers;
-	volatile void __iomem *register_addr;
+अटल अंतरभूत व्योम pqi_configure_legacy_पूर्णांकx(काष्ठा pqi_ctrl_info *ctrl_info, bool enable_पूर्णांकx)
+अणु
+	u32 पूर्णांकx_mask;
+	काष्ठा pqi_device_रेजिस्टरs __iomem *pqi_रेजिस्टरs;
+	अस्थिर व्योम __iomem *रेजिस्टर_addr;
 
-	pqi_registers = ctrl_info->pqi_registers;
+	pqi_रेजिस्टरs = ctrl_info->pqi_रेजिस्टरs;
 
-	if (enable_intx)
-		register_addr = &pqi_registers->legacy_intx_mask_clear;
-	else
-		register_addr = &pqi_registers->legacy_intx_mask_set;
+	अगर (enable_पूर्णांकx)
+		रेजिस्टर_addr = &pqi_रेजिस्टरs->legacy_पूर्णांकx_mask_clear;
+	अन्यथा
+		रेजिस्टर_addr = &pqi_रेजिस्टरs->legacy_पूर्णांकx_mask_set;
 
-	intx_mask = readl(register_addr);
-	intx_mask |= PQI_LEGACY_INTX_MASK;
-	writel(intx_mask, register_addr);
-}
+	पूर्णांकx_mask = पढ़ोl(रेजिस्टर_addr);
+	पूर्णांकx_mask |= PQI_LEGACY_INTX_MASK;
+	ग_लिखोl(पूर्णांकx_mask, रेजिस्टर_addr);
+पूर्ण
 
-static void pqi_change_irq_mode(struct pqi_ctrl_info *ctrl_info,
-	enum pqi_irq_mode new_mode)
-{
-	switch (ctrl_info->irq_mode) {
-	case IRQ_MODE_MSIX:
-		switch (new_mode) {
-		case IRQ_MODE_MSIX:
-			break;
-		case IRQ_MODE_INTX:
-			pqi_configure_legacy_intx(ctrl_info, true);
-			sis_enable_intx(ctrl_info);
-			break;
-		case IRQ_MODE_NONE:
-			break;
-		}
-		break;
-	case IRQ_MODE_INTX:
-		switch (new_mode) {
-		case IRQ_MODE_MSIX:
-			pqi_configure_legacy_intx(ctrl_info, false);
+अटल व्योम pqi_change_irq_mode(काष्ठा pqi_ctrl_info *ctrl_info,
+	क्रमागत pqi_irq_mode new_mode)
+अणु
+	चयन (ctrl_info->irq_mode) अणु
+	हाल IRQ_MODE_MSIX:
+		चयन (new_mode) अणु
+		हाल IRQ_MODE_MSIX:
+			अवरोध;
+		हाल IRQ_MODE_INTX:
+			pqi_configure_legacy_पूर्णांकx(ctrl_info, true);
+			sis_enable_पूर्णांकx(ctrl_info);
+			अवरोध;
+		हाल IRQ_MODE_NONE:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल IRQ_MODE_INTX:
+		चयन (new_mode) अणु
+		हाल IRQ_MODE_MSIX:
+			pqi_configure_legacy_पूर्णांकx(ctrl_info, false);
 			sis_enable_msix(ctrl_info);
-			break;
-		case IRQ_MODE_INTX:
-			break;
-		case IRQ_MODE_NONE:
-			pqi_configure_legacy_intx(ctrl_info, false);
-			break;
-		}
-		break;
-	case IRQ_MODE_NONE:
-		switch (new_mode) {
-		case IRQ_MODE_MSIX:
+			अवरोध;
+		हाल IRQ_MODE_INTX:
+			अवरोध;
+		हाल IRQ_MODE_NONE:
+			pqi_configure_legacy_पूर्णांकx(ctrl_info, false);
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	हाल IRQ_MODE_NONE:
+		चयन (new_mode) अणु
+		हाल IRQ_MODE_MSIX:
 			sis_enable_msix(ctrl_info);
-			break;
-		case IRQ_MODE_INTX:
-			pqi_configure_legacy_intx(ctrl_info, true);
-			sis_enable_intx(ctrl_info);
-			break;
-		case IRQ_MODE_NONE:
-			break;
-		}
-		break;
-	}
+			अवरोध;
+		हाल IRQ_MODE_INTX:
+			pqi_configure_legacy_पूर्णांकx(ctrl_info, true);
+			sis_enable_पूर्णांकx(ctrl_info);
+			अवरोध;
+		हाल IRQ_MODE_NONE:
+			अवरोध;
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
 	ctrl_info->irq_mode = new_mode;
-}
+पूर्ण
 
-#define PQI_LEGACY_INTX_PENDING		0x1
+#घोषणा PQI_LEGACY_INTX_PENDING		0x1
 
-static inline bool pqi_is_valid_irq(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत bool pqi_is_valid_irq(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	bool valid_irq;
-	u32 intx_status;
+	u32 पूर्णांकx_status;
 
-	switch (ctrl_info->irq_mode) {
-	case IRQ_MODE_MSIX:
+	चयन (ctrl_info->irq_mode) अणु
+	हाल IRQ_MODE_MSIX:
 		valid_irq = true;
-		break;
-	case IRQ_MODE_INTX:
-		intx_status = readl(&ctrl_info->pqi_registers->legacy_intx_status);
-		if (intx_status & PQI_LEGACY_INTX_PENDING)
+		अवरोध;
+	हाल IRQ_MODE_INTX:
+		पूर्णांकx_status = पढ़ोl(&ctrl_info->pqi_रेजिस्टरs->legacy_पूर्णांकx_status);
+		अगर (पूर्णांकx_status & PQI_LEGACY_INTX_PENDING)
 			valid_irq = true;
-		else
+		अन्यथा
 			valid_irq = false;
-		break;
-	case IRQ_MODE_NONE:
-	default:
+		अवरोध;
+	हाल IRQ_MODE_NONE:
+	शेष:
 		valid_irq = false;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return valid_irq;
-}
+	वापस valid_irq;
+पूर्ण
 
-static irqreturn_t pqi_irq_handler(int irq, void *data)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct pqi_queue_group *queue_group;
-	int num_io_responses_handled;
-	int num_events_handled;
+अटल irqवापस_t pqi_irq_handler(पूर्णांक irq, व्योम *data)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा pqi_queue_group *queue_group;
+	पूर्णांक num_io_responses_handled;
+	पूर्णांक num_events_handled;
 
 	queue_group = data;
 	ctrl_info = queue_group->ctrl_info;
 
-	if (!pqi_is_valid_irq(ctrl_info))
-		return IRQ_NONE;
+	अगर (!pqi_is_valid_irq(ctrl_info))
+		वापस IRQ_NONE;
 
-	num_io_responses_handled = pqi_process_io_intr(ctrl_info, queue_group);
-	if (num_io_responses_handled < 0)
-		goto out;
+	num_io_responses_handled = pqi_process_io_पूर्णांकr(ctrl_info, queue_group);
+	अगर (num_io_responses_handled < 0)
+		जाओ out;
 
-	if (irq == ctrl_info->event_irq) {
-		num_events_handled = pqi_process_event_intr(ctrl_info);
-		if (num_events_handled < 0)
-			goto out;
-	} else {
+	अगर (irq == ctrl_info->event_irq) अणु
+		num_events_handled = pqi_process_event_पूर्णांकr(ctrl_info);
+		अगर (num_events_handled < 0)
+			जाओ out;
+	पूर्ण अन्यथा अणु
 		num_events_handled = 0;
-	}
+	पूर्ण
 
-	if (num_io_responses_handled + num_events_handled > 0)
-		atomic_inc(&ctrl_info->num_interrupts);
+	अगर (num_io_responses_handled + num_events_handled > 0)
+		atomic_inc(&ctrl_info->num_पूर्णांकerrupts);
 
-	pqi_start_io(ctrl_info, queue_group, RAID_PATH, NULL);
-	pqi_start_io(ctrl_info, queue_group, AIO_PATH, NULL);
+	pqi_start_io(ctrl_info, queue_group, RAID_PATH, शून्य);
+	pqi_start_io(ctrl_info, queue_group, AIO_PATH, शून्य);
 
 out:
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int pqi_request_irqs(struct pqi_ctrl_info *ctrl_info)
-{
-	struct pci_dev *pci_dev = ctrl_info->pci_dev;
-	int i;
-	int rc;
+अटल पूर्णांक pqi_request_irqs(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	काष्ठा pci_dev *pci_dev = ctrl_info->pci_dev;
+	पूर्णांक i;
+	पूर्णांक rc;
 
 	ctrl_info->event_irq = pci_irq_vector(pci_dev, 0);
 
-	for (i = 0; i < ctrl_info->num_msix_vectors_enabled; i++) {
+	क्रम (i = 0; i < ctrl_info->num_msix_vectors_enabled; i++) अणु
 		rc = request_irq(pci_irq_vector(pci_dev, i), pqi_irq_handler, 0,
 			DRIVER_NAME_SHORT, &ctrl_info->queue_groups[i]);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(&pci_dev->dev,
 				"irq %u init failed with error %d\n",
 				pci_irq_vector(pci_dev, i), rc);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 		ctrl_info->num_msix_vectors_initialized++;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_free_irqs(struct pqi_ctrl_info *ctrl_info)
-{
-	int i;
+अटल व्योम pqi_मुक्त_irqs(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ctrl_info->num_msix_vectors_initialized; i++)
-		free_irq(pci_irq_vector(ctrl_info->pci_dev, i),
+	क्रम (i = 0; i < ctrl_info->num_msix_vectors_initialized; i++)
+		मुक्त_irq(pci_irq_vector(ctrl_info->pci_dev, i),
 			&ctrl_info->queue_groups[i]);
 
 	ctrl_info->num_msix_vectors_initialized = 0;
-}
+पूर्ण
 
-static int pqi_enable_msix_interrupts(struct pqi_ctrl_info *ctrl_info)
-{
-	int num_vectors_enabled;
+अटल पूर्णांक pqi_enable_msix_पूर्णांकerrupts(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक num_vectors_enabled;
 
 	num_vectors_enabled = pci_alloc_irq_vectors(ctrl_info->pci_dev,
 			PQI_MIN_MSIX_VECTORS, ctrl_info->num_queue_groups,
 			PCI_IRQ_MSIX | PCI_IRQ_AFFINITY);
-	if (num_vectors_enabled < 0) {
+	अगर (num_vectors_enabled < 0) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"MSI-X init failed with error %d\n",
 			num_vectors_enabled);
-		return num_vectors_enabled;
-	}
+		वापस num_vectors_enabled;
+	पूर्ण
 
 	ctrl_info->num_msix_vectors_enabled = num_vectors_enabled;
 	ctrl_info->irq_mode = IRQ_MODE_MSIX;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_disable_msix_interrupts(struct pqi_ctrl_info *ctrl_info)
-{
-	if (ctrl_info->num_msix_vectors_enabled) {
-		pci_free_irq_vectors(ctrl_info->pci_dev);
+अटल व्योम pqi_disable_msix_पूर्णांकerrupts(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अगर (ctrl_info->num_msix_vectors_enabled) अणु
+		pci_मुक्त_irq_vectors(ctrl_info->pci_dev);
 		ctrl_info->num_msix_vectors_enabled = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pqi_alloc_operational_queues(struct pqi_ctrl_info *ctrl_info)
-{
-	unsigned int i;
-	size_t alloc_length;
-	size_t element_array_length_per_iq;
-	size_t element_array_length_per_oq;
-	void *element_array;
-	void __iomem *next_queue_index;
-	void *aligned_pointer;
-	unsigned int num_inbound_queues;
-	unsigned int num_outbound_queues;
-	unsigned int num_queue_indexes;
-	struct pqi_queue_group *queue_group;
+अटल पूर्णांक pqi_alloc_operational_queues(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अचिन्हित पूर्णांक i;
+	माप_प्रकार alloc_length;
+	माप_प्रकार element_array_length_per_iq;
+	माप_प्रकार element_array_length_per_oq;
+	व्योम *element_array;
+	व्योम __iomem *next_queue_index;
+	व्योम *aligned_poपूर्णांकer;
+	अचिन्हित पूर्णांक num_inbound_queues;
+	अचिन्हित पूर्णांक num_outbound_queues;
+	अचिन्हित पूर्णांक num_queue_indexes;
+	काष्ठा pqi_queue_group *queue_group;
 
 	element_array_length_per_iq =
 		PQI_OPERATIONAL_IQ_ELEMENT_LENGTH *
@@ -3835,32 +3836,32 @@ static int pqi_alloc_operational_queues(struct pqi_ctrl_info *ctrl_info)
 	num_outbound_queues = ctrl_info->num_queue_groups;
 	num_queue_indexes = (ctrl_info->num_queue_groups * 3) + 1;
 
-	aligned_pointer = NULL;
+	aligned_poपूर्णांकer = शून्य;
 
-	for (i = 0; i < num_inbound_queues; i++) {
-		aligned_pointer = PTR_ALIGN(aligned_pointer,
+	क्रम (i = 0; i < num_inbound_queues; i++) अणु
+		aligned_poपूर्णांकer = PTR_ALIGN(aligned_poपूर्णांकer,
 			PQI_QUEUE_ELEMENT_ARRAY_ALIGNMENT);
-		aligned_pointer += element_array_length_per_iq;
-	}
+		aligned_poपूर्णांकer += element_array_length_per_iq;
+	पूर्ण
 
-	for (i = 0; i < num_outbound_queues; i++) {
-		aligned_pointer = PTR_ALIGN(aligned_pointer,
+	क्रम (i = 0; i < num_outbound_queues; i++) अणु
+		aligned_poपूर्णांकer = PTR_ALIGN(aligned_poपूर्णांकer,
 			PQI_QUEUE_ELEMENT_ARRAY_ALIGNMENT);
-		aligned_pointer += element_array_length_per_oq;
-	}
+		aligned_poपूर्णांकer += element_array_length_per_oq;
+	पूर्ण
 
-	aligned_pointer = PTR_ALIGN(aligned_pointer,
+	aligned_poपूर्णांकer = PTR_ALIGN(aligned_poपूर्णांकer,
 		PQI_QUEUE_ELEMENT_ARRAY_ALIGNMENT);
-	aligned_pointer += PQI_NUM_EVENT_QUEUE_ELEMENTS *
+	aligned_poपूर्णांकer += PQI_NUM_EVENT_QUEUE_ELEMENTS *
 		PQI_EVENT_OQ_ELEMENT_LENGTH;
 
-	for (i = 0; i < num_queue_indexes; i++) {
-		aligned_pointer = PTR_ALIGN(aligned_pointer,
+	क्रम (i = 0; i < num_queue_indexes; i++) अणु
+		aligned_poपूर्णांकer = PTR_ALIGN(aligned_poपूर्णांकer,
 			PQI_OPERATIONAL_INDEX_ALIGNMENT);
-		aligned_pointer += sizeof(pqi_index_t);
-	}
+		aligned_poपूर्णांकer += माप(pqi_index_t);
+	पूर्ण
 
-	alloc_length = (size_t)aligned_pointer +
+	alloc_length = (माप_प्रकार)aligned_poपूर्णांकer +
 		PQI_QUEUE_ELEMENT_ARRAY_ALIGNMENT;
 
 	alloc_length += PQI_EXTRA_SGL_MEMORY;
@@ -3870,15 +3871,15 @@ static int pqi_alloc_operational_queues(struct pqi_ctrl_info *ctrl_info)
 				   &ctrl_info->queue_memory_base_dma_handle,
 				   GFP_KERNEL);
 
-	if (!ctrl_info->queue_memory_base)
-		return -ENOMEM;
+	अगर (!ctrl_info->queue_memory_base)
+		वापस -ENOMEM;
 
 	ctrl_info->queue_memory_length = alloc_length;
 
 	element_array = PTR_ALIGN(ctrl_info->queue_memory_base,
 		PQI_QUEUE_ELEMENT_ARRAY_ALIGNMENT);
 
-	for (i = 0; i < ctrl_info->num_queue_groups; i++) {
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++) अणु
 		queue_group = &ctrl_info->queue_groups[i];
 		queue_group->iq_element_array[RAID_PATH] = element_array;
 		queue_group->iq_element_array_bus_addr[RAID_PATH] =
@@ -3894,9 +3895,9 @@ static int pqi_alloc_operational_queues(struct pqi_ctrl_info *ctrl_info)
 		element_array += element_array_length_per_iq;
 		element_array = PTR_ALIGN(element_array,
 			PQI_QUEUE_ELEMENT_ARRAY_ALIGNMENT);
-	}
+	पूर्ण
 
-	for (i = 0; i < ctrl_info->num_queue_groups; i++) {
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++) अणु
 		queue_group = &ctrl_info->queue_groups[i];
 		queue_group->oq_element_array = element_array;
 		queue_group->oq_element_array_bus_addr =
@@ -3905,7 +3906,7 @@ static int pqi_alloc_operational_queues(struct pqi_ctrl_info *ctrl_info)
 		element_array += element_array_length_per_oq;
 		element_array = PTR_ALIGN(element_array,
 			PQI_QUEUE_ELEMENT_ARRAY_ALIGNMENT);
-	}
+	पूर्ण
 
 	ctrl_info->event_queue.oq_element_array = element_array;
 	ctrl_info->event_queue.oq_element_array_bus_addr =
@@ -3914,94 +3915,94 @@ static int pqi_alloc_operational_queues(struct pqi_ctrl_info *ctrl_info)
 	element_array += PQI_NUM_EVENT_QUEUE_ELEMENTS *
 		PQI_EVENT_OQ_ELEMENT_LENGTH;
 
-	next_queue_index = (void __iomem *)PTR_ALIGN(element_array,
+	next_queue_index = (व्योम __iomem *)PTR_ALIGN(element_array,
 		PQI_OPERATIONAL_INDEX_ALIGNMENT);
 
-	for (i = 0; i < ctrl_info->num_queue_groups; i++) {
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++) अणु
 		queue_group = &ctrl_info->queue_groups[i];
 		queue_group->iq_ci[RAID_PATH] = next_queue_index;
 		queue_group->iq_ci_bus_addr[RAID_PATH] =
 			ctrl_info->queue_memory_base_dma_handle +
 			(next_queue_index -
-			(void __iomem *)ctrl_info->queue_memory_base);
-		next_queue_index += sizeof(pqi_index_t);
+			(व्योम __iomem *)ctrl_info->queue_memory_base);
+		next_queue_index += माप(pqi_index_t);
 		next_queue_index = PTR_ALIGN(next_queue_index,
 			PQI_OPERATIONAL_INDEX_ALIGNMENT);
 		queue_group->iq_ci[AIO_PATH] = next_queue_index;
 		queue_group->iq_ci_bus_addr[AIO_PATH] =
 			ctrl_info->queue_memory_base_dma_handle +
 			(next_queue_index -
-			(void __iomem *)ctrl_info->queue_memory_base);
-		next_queue_index += sizeof(pqi_index_t);
+			(व्योम __iomem *)ctrl_info->queue_memory_base);
+		next_queue_index += माप(pqi_index_t);
 		next_queue_index = PTR_ALIGN(next_queue_index,
 			PQI_OPERATIONAL_INDEX_ALIGNMENT);
 		queue_group->oq_pi = next_queue_index;
 		queue_group->oq_pi_bus_addr =
 			ctrl_info->queue_memory_base_dma_handle +
 			(next_queue_index -
-			(void __iomem *)ctrl_info->queue_memory_base);
-		next_queue_index += sizeof(pqi_index_t);
+			(व्योम __iomem *)ctrl_info->queue_memory_base);
+		next_queue_index += माप(pqi_index_t);
 		next_queue_index = PTR_ALIGN(next_queue_index,
 			PQI_OPERATIONAL_INDEX_ALIGNMENT);
-	}
+	पूर्ण
 
 	ctrl_info->event_queue.oq_pi = next_queue_index;
 	ctrl_info->event_queue.oq_pi_bus_addr =
 		ctrl_info->queue_memory_base_dma_handle +
 		(next_queue_index -
-		(void __iomem *)ctrl_info->queue_memory_base);
+		(व्योम __iomem *)ctrl_info->queue_memory_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_init_operational_queues(struct pqi_ctrl_info *ctrl_info)
-{
-	unsigned int i;
+अटल व्योम pqi_init_operational_queues(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अचिन्हित पूर्णांक i;
 	u16 next_iq_id = PQI_MIN_OPERATIONAL_QUEUE_ID;
 	u16 next_oq_id = PQI_MIN_OPERATIONAL_QUEUE_ID;
 
 	/*
-	 * Initialize the backpointers to the controller structure in
-	 * each operational queue group structure.
+	 * Initialize the backpoपूर्णांकers to the controller काष्ठाure in
+	 * each operational queue group काष्ठाure.
 	 */
-	for (i = 0; i < ctrl_info->num_queue_groups; i++)
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++)
 		ctrl_info->queue_groups[i].ctrl_info = ctrl_info;
 
 	/*
 	 * Assign IDs to all operational queues.  Note that the IDs
-	 * assigned to operational IQs are independent of the IDs
-	 * assigned to operational OQs.
+	 * asचिन्हित to operational IQs are independent of the IDs
+	 * asचिन्हित to operational OQs.
 	 */
 	ctrl_info->event_queue.oq_id = next_oq_id++;
-	for (i = 0; i < ctrl_info->num_queue_groups; i++) {
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++) अणु
 		ctrl_info->queue_groups[i].iq_id[RAID_PATH] = next_iq_id++;
 		ctrl_info->queue_groups[i].iq_id[AIO_PATH] = next_iq_id++;
 		ctrl_info->queue_groups[i].oq_id = next_oq_id++;
-	}
+	पूर्ण
 
 	/*
 	 * Assign MSI-X table entry indexes to all queues.  Note that the
-	 * interrupt for the event queue is shared with the first queue group.
+	 * पूर्णांकerrupt क्रम the event queue is shared with the first queue group.
 	 */
-	ctrl_info->event_queue.int_msg_num = 0;
-	for (i = 0; i < ctrl_info->num_queue_groups; i++)
-		ctrl_info->queue_groups[i].int_msg_num = i;
+	ctrl_info->event_queue.पूर्णांक_msg_num = 0;
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++)
+		ctrl_info->queue_groups[i].पूर्णांक_msg_num = i;
 
-	for (i = 0; i < ctrl_info->num_queue_groups; i++) {
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++) अणु
 		spin_lock_init(&ctrl_info->queue_groups[i].submit_lock[0]);
 		spin_lock_init(&ctrl_info->queue_groups[i].submit_lock[1]);
 		INIT_LIST_HEAD(&ctrl_info->queue_groups[i].request_list[0]);
 		INIT_LIST_HEAD(&ctrl_info->queue_groups[i].request_list[1]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int pqi_alloc_admin_queues(struct pqi_ctrl_info *ctrl_info)
-{
-	size_t alloc_length;
-	struct pqi_admin_queues_aligned *admin_queues_aligned;
-	struct pqi_admin_queues *admin_queues;
+अटल पूर्णांक pqi_alloc_admin_queues(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	माप_प्रकार alloc_length;
+	काष्ठा pqi_admin_queues_aligned *admin_queues_aligned;
+	काष्ठा pqi_admin_queues *admin_queues;
 
-	alloc_length = sizeof(struct pqi_admin_queues_aligned) +
+	alloc_length = माप(काष्ठा pqi_admin_queues_aligned) +
 		PQI_QUEUE_ELEMENT_ARRAY_ALIGNMENT;
 
 	ctrl_info->admin_queue_memory_base =
@@ -4009,8 +4010,8 @@ static int pqi_alloc_admin_queues(struct pqi_ctrl_info *ctrl_info)
 				   &ctrl_info->admin_queue_memory_base_dma_handle,
 				   GFP_KERNEL);
 
-	if (!ctrl_info->admin_queue_memory_base)
-		return -ENOMEM;
+	अगर (!ctrl_info->admin_queue_memory_base)
+		वापस -ENOMEM;
 
 	ctrl_info->admin_queue_memory_length = alloc_length;
 
@@ -4036,77 +4037,77 @@ static int pqi_alloc_admin_queues(struct pqi_ctrl_info *ctrl_info)
 		ctrl_info->admin_queue_memory_base);
 	admin_queues->iq_ci_bus_addr =
 		ctrl_info->admin_queue_memory_base_dma_handle +
-		((void __iomem *)admin_queues->iq_ci -
-		(void __iomem *)ctrl_info->admin_queue_memory_base);
+		((व्योम __iomem *)admin_queues->iq_ci -
+		(व्योम __iomem *)ctrl_info->admin_queue_memory_base);
 	admin_queues->oq_pi_bus_addr =
 		ctrl_info->admin_queue_memory_base_dma_handle +
-		((void __iomem *)admin_queues->oq_pi -
-		(void __iomem *)ctrl_info->admin_queue_memory_base);
+		((व्योम __iomem *)admin_queues->oq_pi -
+		(व्योम __iomem *)ctrl_info->admin_queue_memory_base);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define PQI_ADMIN_QUEUE_CREATE_TIMEOUT_JIFFIES		PQI_HZ
-#define PQI_ADMIN_QUEUE_CREATE_POLL_INTERVAL_MSECS	1
+#घोषणा PQI_ADMIN_QUEUE_CREATE_TIMEOUT_JIFFIES		PQI_HZ
+#घोषणा PQI_ADMIN_QUEUE_CREATE_POLL_INTERVAL_MSECS	1
 
-static int pqi_create_admin_queues(struct pqi_ctrl_info *ctrl_info)
-{
-	struct pqi_device_registers __iomem *pqi_registers;
-	struct pqi_admin_queues *admin_queues;
-	unsigned long timeout;
+अटल पूर्णांक pqi_create_admin_queues(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	काष्ठा pqi_device_रेजिस्टरs __iomem *pqi_रेजिस्टरs;
+	काष्ठा pqi_admin_queues *admin_queues;
+	अचिन्हित दीर्घ समयout;
 	u8 status;
 	u32 reg;
 
-	pqi_registers = ctrl_info->pqi_registers;
+	pqi_रेजिस्टरs = ctrl_info->pqi_रेजिस्टरs;
 	admin_queues = &ctrl_info->admin_queues;
 
-	writeq((u64)admin_queues->iq_element_array_bus_addr,
-		&pqi_registers->admin_iq_element_array_addr);
-	writeq((u64)admin_queues->oq_element_array_bus_addr,
-		&pqi_registers->admin_oq_element_array_addr);
-	writeq((u64)admin_queues->iq_ci_bus_addr,
-		&pqi_registers->admin_iq_ci_addr);
-	writeq((u64)admin_queues->oq_pi_bus_addr,
-		&pqi_registers->admin_oq_pi_addr);
+	ग_लिखोq((u64)admin_queues->iq_element_array_bus_addr,
+		&pqi_रेजिस्टरs->admin_iq_element_array_addr);
+	ग_लिखोq((u64)admin_queues->oq_element_array_bus_addr,
+		&pqi_रेजिस्टरs->admin_oq_element_array_addr);
+	ग_लिखोq((u64)admin_queues->iq_ci_bus_addr,
+		&pqi_रेजिस्टरs->admin_iq_ci_addr);
+	ग_लिखोq((u64)admin_queues->oq_pi_bus_addr,
+		&pqi_रेजिस्टरs->admin_oq_pi_addr);
 
 	reg = PQI_ADMIN_IQ_NUM_ELEMENTS |
 		(PQI_ADMIN_OQ_NUM_ELEMENTS << 8) |
-		(admin_queues->int_msg_num << 16);
-	writel(reg, &pqi_registers->admin_iq_num_elements);
+		(admin_queues->पूर्णांक_msg_num << 16);
+	ग_लिखोl(reg, &pqi_रेजिस्टरs->admin_iq_num_elements);
 
-	writel(PQI_CREATE_ADMIN_QUEUE_PAIR,
-		&pqi_registers->function_and_status_code);
+	ग_लिखोl(PQI_CREATE_ADMIN_QUEUE_PAIR,
+		&pqi_रेजिस्टरs->function_and_status_code);
 
-	timeout = PQI_ADMIN_QUEUE_CREATE_TIMEOUT_JIFFIES + jiffies;
-	while (1) {
-		status = readb(&pqi_registers->function_and_status_code);
-		if (status == PQI_STATUS_IDLE)
-			break;
-		if (time_after(jiffies, timeout))
-			return -ETIMEDOUT;
+	समयout = PQI_ADMIN_QUEUE_CREATE_TIMEOUT_JIFFIES + jअगरfies;
+	जबतक (1) अणु
+		status = पढ़ोb(&pqi_रेजिस्टरs->function_and_status_code);
+		अगर (status == PQI_STATUS_IDLE)
+			अवरोध;
+		अगर (समय_after(jअगरfies, समयout))
+			वापस -ETIMEDOUT;
 		msleep(PQI_ADMIN_QUEUE_CREATE_POLL_INTERVAL_MSECS);
-	}
+	पूर्ण
 
 	/*
-	 * The offset registers are not initialized to the correct
+	 * The offset रेजिस्टरs are not initialized to the correct
 	 * offsets until *after* the create admin queue pair command
 	 * completes successfully.
 	 */
 	admin_queues->iq_pi = ctrl_info->iomem_base +
 		PQI_DEVICE_REGISTERS_OFFSET +
-		readq(&pqi_registers->admin_iq_pi_offset);
+		पढ़ोq(&pqi_रेजिस्टरs->admin_iq_pi_offset);
 	admin_queues->oq_ci = ctrl_info->iomem_base +
 		PQI_DEVICE_REGISTERS_OFFSET +
-		readq(&pqi_registers->admin_oq_ci_offset);
+		पढ़ोq(&pqi_रेजिस्टरs->admin_oq_ci_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_submit_admin_request(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_general_admin_request *request)
-{
-	struct pqi_admin_queues *admin_queues;
-	void *next_element;
+अटल व्योम pqi_submit_admin_request(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_general_admin_request *request)
+अणु
+	काष्ठा pqi_admin_queues *admin_queues;
+	व्योम *next_element;
 	pqi_index_t iq_pi;
 
 	admin_queues = &ctrl_info->admin_queues;
@@ -4115,84 +4116,84 @@ static void pqi_submit_admin_request(struct pqi_ctrl_info *ctrl_info,
 	next_element = admin_queues->iq_element_array +
 		(iq_pi * PQI_ADMIN_IQ_ELEMENT_LENGTH);
 
-	memcpy(next_element, request, sizeof(*request));
+	स_नकल(next_element, request, माप(*request));
 
 	iq_pi = (iq_pi + 1) % PQI_ADMIN_IQ_NUM_ELEMENTS;
 	admin_queues->iq_pi_copy = iq_pi;
 
 	/*
-	 * This write notifies the controller that an IU is available to be
+	 * This ग_लिखो notअगरies the controller that an IU is available to be
 	 * processed.
 	 */
-	writel(iq_pi, admin_queues->iq_pi);
-}
+	ग_लिखोl(iq_pi, admin_queues->iq_pi);
+पूर्ण
 
-#define PQI_ADMIN_REQUEST_TIMEOUT_SECS	60
+#घोषणा PQI_ADMIN_REQUEST_TIMEOUT_SECS	60
 
-static int pqi_poll_for_admin_response(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_general_admin_response *response)
-{
-	struct pqi_admin_queues *admin_queues;
+अटल पूर्णांक pqi_poll_क्रम_admin_response(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_general_admin_response *response)
+अणु
+	काष्ठा pqi_admin_queues *admin_queues;
 	pqi_index_t oq_pi;
 	pqi_index_t oq_ci;
-	unsigned long timeout;
+	अचिन्हित दीर्घ समयout;
 
 	admin_queues = &ctrl_info->admin_queues;
 	oq_ci = admin_queues->oq_ci_copy;
 
-	timeout = (PQI_ADMIN_REQUEST_TIMEOUT_SECS * PQI_HZ) + jiffies;
+	समयout = (PQI_ADMIN_REQUEST_TIMEOUT_SECS * PQI_HZ) + jअगरfies;
 
-	while (1) {
-		oq_pi = readl(admin_queues->oq_pi);
-		if (oq_pi != oq_ci)
-			break;
-		if (time_after(jiffies, timeout)) {
+	जबतक (1) अणु
+		oq_pi = पढ़ोl(admin_queues->oq_pi);
+		अगर (oq_pi != oq_ci)
+			अवरोध;
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"timed out waiting for admin response\n");
-			return -ETIMEDOUT;
-		}
-		if (!sis_is_firmware_running(ctrl_info))
-			return -ENXIO;
+			वापस -ETIMEDOUT;
+		पूर्ण
+		अगर (!sis_is_firmware_running(ctrl_info))
+			वापस -ENXIO;
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
-	memcpy(response, admin_queues->oq_element_array +
-		(oq_ci * PQI_ADMIN_OQ_ELEMENT_LENGTH), sizeof(*response));
+	स_नकल(response, admin_queues->oq_element_array +
+		(oq_ci * PQI_ADMIN_OQ_ELEMENT_LENGTH), माप(*response));
 
 	oq_ci = (oq_ci + 1) % PQI_ADMIN_OQ_NUM_ELEMENTS;
 	admin_queues->oq_ci_copy = oq_ci;
-	writel(oq_ci, admin_queues->oq_ci);
+	ग_लिखोl(oq_ci, admin_queues->oq_ci);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_start_io(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_queue_group *queue_group, enum pqi_io_path path,
-	struct pqi_io_request *io_request)
-{
-	struct pqi_io_request *next;
-	void *next_element;
+अटल व्योम pqi_start_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_queue_group *queue_group, क्रमागत pqi_io_path path,
+	काष्ठा pqi_io_request *io_request)
+अणु
+	काष्ठा pqi_io_request *next;
+	व्योम *next_element;
 	pqi_index_t iq_pi;
 	pqi_index_t iq_ci;
-	size_t iu_length;
-	unsigned long flags;
-	unsigned int num_elements_needed;
-	unsigned int num_elements_to_end_of_queue;
-	size_t copy_count;
-	struct pqi_iu_header *request;
+	माप_प्रकार iu_length;
+	अचिन्हित दीर्घ flags;
+	अचिन्हित पूर्णांक num_elements_needed;
+	अचिन्हित पूर्णांक num_elements_to_end_of_queue;
+	माप_प्रकार copy_count;
+	काष्ठा pqi_iu_header *request;
 
 	spin_lock_irqsave(&queue_group->submit_lock[path], flags);
 
-	if (io_request) {
+	अगर (io_request) अणु
 		io_request->queue_group = queue_group;
 		list_add_tail(&io_request->request_list_entry,
 			&queue_group->request_list[path]);
-	}
+	पूर्ण
 
 	iq_pi = queue_group->iq_pi_copy[path];
 
-	list_for_each_entry_safe(io_request, next,
-		&queue_group->request_list[path], request_list_entry) {
+	list_क्रम_each_entry_safe(io_request, next,
+		&queue_group->request_list[path], request_list_entry) अणु
 
 		request = io_request->iu;
 
@@ -4202,11 +4203,11 @@ static void pqi_start_io(struct pqi_ctrl_info *ctrl_info,
 			DIV_ROUND_UP(iu_length,
 				PQI_OPERATIONAL_IQ_ELEMENT_LENGTH);
 
-		iq_ci = readl(queue_group->iq_ci[path]);
+		iq_ci = पढ़ोl(queue_group->iq_ci[path]);
 
-		if (num_elements_needed > pqi_num_elements_free(iq_pi, iq_ci,
+		अगर (num_elements_needed > pqi_num_elements_मुक्त(iq_pi, iq_ci,
 			ctrl_info->num_elements_per_iq))
-			break;
+			अवरोध;
 
 		put_unaligned_le16(queue_group->oq_id,
 			&request->response_queue_id);
@@ -4217,227 +4218,227 @@ static void pqi_start_io(struct pqi_ctrl_info *ctrl_info,
 		num_elements_to_end_of_queue =
 			ctrl_info->num_elements_per_iq - iq_pi;
 
-		if (num_elements_needed <= num_elements_to_end_of_queue) {
-			memcpy(next_element, request, iu_length);
-		} else {
+		अगर (num_elements_needed <= num_elements_to_end_of_queue) अणु
+			स_नकल(next_element, request, iu_length);
+		पूर्ण अन्यथा अणु
 			copy_count = num_elements_to_end_of_queue *
 				PQI_OPERATIONAL_IQ_ELEMENT_LENGTH;
-			memcpy(next_element, request, copy_count);
-			memcpy(queue_group->iq_element_array[path],
+			स_नकल(next_element, request, copy_count);
+			स_नकल(queue_group->iq_element_array[path],
 				(u8 *)request + copy_count,
 				iu_length - copy_count);
-		}
+		पूर्ण
 
 		iq_pi = (iq_pi + num_elements_needed) %
 			ctrl_info->num_elements_per_iq;
 
 		list_del(&io_request->request_list_entry);
-	}
+	पूर्ण
 
-	if (iq_pi != queue_group->iq_pi_copy[path]) {
+	अगर (iq_pi != queue_group->iq_pi_copy[path]) अणु
 		queue_group->iq_pi_copy[path] = iq_pi;
 		/*
-		 * This write notifies the controller that one or more IUs are
+		 * This ग_लिखो notअगरies the controller that one or more IUs are
 		 * available to be processed.
 		 */
-		writel(iq_pi, queue_group->iq_pi[path]);
-	}
+		ग_लिखोl(iq_pi, queue_group->iq_pi[path]);
+	पूर्ण
 
 	spin_unlock_irqrestore(&queue_group->submit_lock[path], flags);
-}
+पूर्ण
 
-#define PQI_WAIT_FOR_COMPLETION_IO_TIMEOUT_SECS		10
+#घोषणा PQI_WAIT_FOR_COMPLETION_IO_TIMEOUT_SECS		10
 
-static int pqi_wait_for_completion_io(struct pqi_ctrl_info *ctrl_info,
-	struct completion *wait)
-{
-	int rc;
+अटल पूर्णांक pqi_रुको_क्रम_completion_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा completion *रुको)
+अणु
+	पूर्णांक rc;
 
-	while (1) {
-		if (wait_for_completion_io_timeout(wait,
-			PQI_WAIT_FOR_COMPLETION_IO_TIMEOUT_SECS * PQI_HZ)) {
+	जबतक (1) अणु
+		अगर (रुको_क्रम_completion_io_समयout(रुको,
+			PQI_WAIT_FOR_COMPLETION_IO_TIMEOUT_SECS * PQI_HZ)) अणु
 			rc = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		pqi_check_ctrl_health(ctrl_info);
-		if (pqi_ctrl_offline(ctrl_info)) {
+		अगर (pqi_ctrl_offline(ctrl_info)) अणु
 			rc = -ENXIO;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pqi_raid_synchronous_complete(struct pqi_io_request *io_request,
-	void *context)
-{
-	struct completion *waiting = context;
+अटल व्योम pqi_raid_synchronous_complete(काष्ठा pqi_io_request *io_request,
+	व्योम *context)
+अणु
+	काष्ठा completion *रुकोing = context;
 
-	complete(waiting);
-}
+	complete(रुकोing);
+पूर्ण
 
-static int pqi_process_raid_io_error_synchronous(
-	struct pqi_raid_error_info *error_info)
-{
-	int rc = -EIO;
+अटल पूर्णांक pqi_process_raid_io_error_synchronous(
+	काष्ठा pqi_raid_error_info *error_info)
+अणु
+	पूर्णांक rc = -EIO;
 
-	switch (error_info->data_out_result) {
-	case PQI_DATA_IN_OUT_GOOD:
-		if (error_info->status == SAM_STAT_GOOD)
+	चयन (error_info->data_out_result) अणु
+	हाल PQI_DATA_IN_OUT_GOOD:
+		अगर (error_info->status == SAM_STAT_GOOD)
 			rc = 0;
-		break;
-	case PQI_DATA_IN_OUT_UNDERFLOW:
-		if (error_info->status == SAM_STAT_GOOD ||
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_UNDERFLOW:
+		अगर (error_info->status == SAM_STAT_GOOD ||
 			error_info->status == SAM_STAT_CHECK_CONDITION)
 			rc = 0;
-		break;
-	case PQI_DATA_IN_OUT_ABORTED:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_ABORTED:
 		rc = PQI_CMD_STATUS_ABORTED;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline bool pqi_is_blockable_request(struct pqi_iu_header *request)
-{
-	return (request->driver_flags & PQI_DRIVER_NONBLOCKABLE_REQUEST) == 0;
-}
+अटल अंतरभूत bool pqi_is_blockable_request(काष्ठा pqi_iu_header *request)
+अणु
+	वापस (request->driver_flags & PQI_DRIVER_NONBLOCKABLE_REQUEST) == 0;
+पूर्ण
 
-static int pqi_submit_raid_request_synchronous(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_iu_header *request, unsigned int flags,
-	struct pqi_raid_error_info *error_info)
-{
-	int rc = 0;
-	struct pqi_io_request *io_request;
-	size_t iu_length;
-	DECLARE_COMPLETION_ONSTACK(wait);
+अटल पूर्णांक pqi_submit_raid_request_synchronous(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_iu_header *request, अचिन्हित पूर्णांक flags,
+	काष्ठा pqi_raid_error_info *error_info)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा pqi_io_request *io_request;
+	माप_प्रकार iu_length;
+	DECLARE_COMPLETION_ONSTACK(रुको);
 
-	if (flags & PQI_SYNC_FLAGS_INTERRUPTABLE) {
-		if (down_interruptible(&ctrl_info->sync_request_sem))
-			return -ERESTARTSYS;
-	} else {
-		down(&ctrl_info->sync_request_sem);
-	}
+	अगर (flags & PQI_SYNC_FLAGS_INTERRUPTABLE) अणु
+		अगर (करोwn_पूर्णांकerruptible(&ctrl_info->sync_request_sem))
+			वापस -ERESTARTSYS;
+	पूर्ण अन्यथा अणु
+		करोwn(&ctrl_info->sync_request_sem);
+	पूर्ण
 
 	pqi_ctrl_busy(ctrl_info);
 	/*
-	 * Wait for other admin queue updates such as;
+	 * Wait क्रम other admin queue updates such as;
 	 * config table changes, OFA memory updates, ...
 	 */
-	if (pqi_is_blockable_request(request))
-		pqi_wait_if_ctrl_blocked(ctrl_info);
+	अगर (pqi_is_blockable_request(request))
+		pqi_रुको_अगर_ctrl_blocked(ctrl_info);
 
-	if (pqi_ctrl_offline(ctrl_info)) {
+	अगर (pqi_ctrl_offline(ctrl_info)) अणु
 		rc = -ENXIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	io_request = pqi_alloc_io_request(ctrl_info);
 
 	put_unaligned_le16(io_request->index,
-		&(((struct pqi_raid_path_request *)request)->request_id));
+		&(((काष्ठा pqi_raid_path_request *)request)->request_id));
 
-	if (request->iu_type == PQI_REQUEST_IU_RAID_PATH_IO)
-		((struct pqi_raid_path_request *)request)->error_index =
-			((struct pqi_raid_path_request *)request)->request_id;
+	अगर (request->iu_type == PQI_REQUEST_IU_RAID_PATH_IO)
+		((काष्ठा pqi_raid_path_request *)request)->error_index =
+			((काष्ठा pqi_raid_path_request *)request)->request_id;
 
 	iu_length = get_unaligned_le16(&request->iu_length) +
 		PQI_REQUEST_HEADER_LENGTH;
-	memcpy(io_request->iu, request, iu_length);
+	स_नकल(io_request->iu, request, iu_length);
 
 	io_request->io_complete_callback = pqi_raid_synchronous_complete;
-	io_request->context = &wait;
+	io_request->context = &रुको;
 
 	pqi_start_io(ctrl_info, &ctrl_info->queue_groups[PQI_DEFAULT_QUEUE_GROUP], RAID_PATH,
 		io_request);
 
-	pqi_wait_for_completion_io(ctrl_info, &wait);
+	pqi_रुको_क्रम_completion_io(ctrl_info, &रुको);
 
-	if (error_info) {
-		if (io_request->error_info)
-			memcpy(error_info, io_request->error_info, sizeof(*error_info));
-		else
-			memset(error_info, 0, sizeof(*error_info));
-	} else if (rc == 0 && io_request->error_info) {
+	अगर (error_info) अणु
+		अगर (io_request->error_info)
+			स_नकल(error_info, io_request->error_info, माप(*error_info));
+		अन्यथा
+			स_रखो(error_info, 0, माप(*error_info));
+	पूर्ण अन्यथा अगर (rc == 0 && io_request->error_info) अणु
 		rc = pqi_process_raid_io_error_synchronous(io_request->error_info);
-	}
+	पूर्ण
 
-	pqi_free_io_request(io_request);
+	pqi_मुक्त_io_request(io_request);
 
 out:
 	pqi_ctrl_unbusy(ctrl_info);
 	up(&ctrl_info->sync_request_sem);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_validate_admin_response(
-	struct pqi_general_admin_response *response, u8 expected_function_code)
-{
-	if (response->header.iu_type != PQI_RESPONSE_IU_GENERAL_ADMIN)
-		return -EINVAL;
+अटल पूर्णांक pqi_validate_admin_response(
+	काष्ठा pqi_general_admin_response *response, u8 expected_function_code)
+अणु
+	अगर (response->header.iu_type != PQI_RESPONSE_IU_GENERAL_ADMIN)
+		वापस -EINVAL;
 
-	if (get_unaligned_le16(&response->header.iu_length) !=
+	अगर (get_unaligned_le16(&response->header.iu_length) !=
 		PQI_GENERAL_ADMIN_IU_LENGTH)
-		return -EINVAL;
+		वापस -EINVAL;
 
-	if (response->function_code != expected_function_code)
-		return -EINVAL;
+	अगर (response->function_code != expected_function_code)
+		वापस -EINVAL;
 
-	if (response->status != PQI_GENERAL_ADMIN_STATUS_SUCCESS)
-		return -EINVAL;
+	अगर (response->status != PQI_GENERAL_ADMIN_STATUS_SUCCESS)
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_submit_admin_request_synchronous(
-	struct pqi_ctrl_info *ctrl_info,
-	struct pqi_general_admin_request *request,
-	struct pqi_general_admin_response *response)
-{
-	int rc;
+अटल पूर्णांक pqi_submit_admin_request_synchronous(
+	काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_general_admin_request *request,
+	काष्ठा pqi_general_admin_response *response)
+अणु
+	पूर्णांक rc;
 
 	pqi_submit_admin_request(ctrl_info, request);
 
-	rc = pqi_poll_for_admin_response(ctrl_info, response);
+	rc = pqi_poll_क्रम_admin_response(ctrl_info, response);
 
-	if (rc == 0)
+	अगर (rc == 0)
 		rc = pqi_validate_admin_response(response, request->function_code);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_report_device_capability(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	struct pqi_general_admin_request request;
-	struct pqi_general_admin_response response;
-	struct pqi_device_capability *capability;
-	struct pqi_iu_layer_descriptor *sop_iu_layer_descriptor;
+अटल पूर्णांक pqi_report_device_capability(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_general_admin_request request;
+	काष्ठा pqi_general_admin_response response;
+	काष्ठा pqi_device_capability *capability;
+	काष्ठा pqi_iu_layer_descriptor *sop_iu_layer_descriptor;
 
-	capability = kmalloc(sizeof(*capability), GFP_KERNEL);
-	if (!capability)
-		return -ENOMEM;
+	capability = kदो_स्मृति(माप(*capability), GFP_KERNEL);
+	अगर (!capability)
+		वापस -ENOMEM;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 
 	request.header.iu_type = PQI_REQUEST_IU_GENERAL_ADMIN;
 	put_unaligned_le16(PQI_GENERAL_ADMIN_IU_LENGTH,
 		&request.header.iu_length);
 	request.function_code =
 		PQI_GENERAL_ADMIN_FUNCTION_REPORT_DEVICE_CAPABILITY;
-	put_unaligned_le32(sizeof(*capability),
+	put_unaligned_le32(माप(*capability),
 		&request.data.report_device_capability.buffer_length);
 
 	rc = pqi_map_single(ctrl_info->pci_dev,
 		&request.data.report_device_capability.sg_descriptor,
-		capability, sizeof(*capability),
+		capability, माप(*capability),
 		DMA_FROM_DEVICE);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
 	rc = pqi_submit_admin_request_synchronous(ctrl_info, &request, &response);
 
@@ -4445,13 +4446,13 @@ static int pqi_report_device_capability(struct pqi_ctrl_info *ctrl_info)
 		&request.data.report_device_capability.sg_descriptor, 1,
 		DMA_FROM_DEVICE);
 
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	if (response.status != PQI_GENERAL_ADMIN_STATUS_SUCCESS) {
+	अगर (response.status != PQI_GENERAL_ADMIN_STATUS_SUCCESS) अणु
 		rc = -EIO;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	ctrl_info->max_inbound_queues =
 		get_unaligned_le16(&capability->max_inbound_queues);
@@ -4480,61 +4481,61 @@ static int pqi_report_device_capability(struct pqi_ctrl_info *ctrl_info)
 		sop_iu_layer_descriptor->outbound_spanning_supported;
 
 out:
-	kfree(capability);
+	kमुक्त(capability);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_validate_device_capability(struct pqi_ctrl_info *ctrl_info)
-{
-	if (ctrl_info->max_iq_element_length <
-		PQI_OPERATIONAL_IQ_ELEMENT_LENGTH) {
+अटल पूर्णांक pqi_validate_device_capability(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अगर (ctrl_info->max_iq_element_length <
+		PQI_OPERATIONAL_IQ_ELEMENT_LENGTH) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"max. inbound queue element length of %d is less than the required length of %d\n",
 			ctrl_info->max_iq_element_length,
 			PQI_OPERATIONAL_IQ_ELEMENT_LENGTH);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ctrl_info->max_oq_element_length <
-		PQI_OPERATIONAL_OQ_ELEMENT_LENGTH) {
+	अगर (ctrl_info->max_oq_element_length <
+		PQI_OPERATIONAL_OQ_ELEMENT_LENGTH) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"max. outbound queue element length of %d is less than the required length of %d\n",
 			ctrl_info->max_oq_element_length,
 			PQI_OPERATIONAL_OQ_ELEMENT_LENGTH);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ctrl_info->max_inbound_iu_length_per_firmware <
-		PQI_OPERATIONAL_IQ_ELEMENT_LENGTH) {
+	अगर (ctrl_info->max_inbound_iu_length_per_firmware <
+		PQI_OPERATIONAL_IQ_ELEMENT_LENGTH) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"max. inbound IU length of %u is less than the min. required length of %d\n",
 			ctrl_info->max_inbound_iu_length_per_firmware,
 			PQI_OPERATIONAL_IQ_ELEMENT_LENGTH);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!ctrl_info->inbound_spanning_supported) {
+	अगर (!ctrl_info->inbound_spanning_supported) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"the controller does not support inbound spanning\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (ctrl_info->outbound_spanning_supported) {
+	अगर (ctrl_info->outbound_spanning_supported) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"the controller supports outbound spanning but this driver does not\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_create_event_queue(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	struct pqi_event_queue *event_queue;
-	struct pqi_general_admin_request request;
-	struct pqi_general_admin_response response;
+अटल पूर्णांक pqi_create_event_queue(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_event_queue *event_queue;
+	काष्ठा pqi_general_admin_request request;
+	काष्ठा pqi_general_admin_response response;
 
 	event_queue = &ctrl_info->event_queue;
 
@@ -4542,7 +4543,7 @@ static int pqi_create_event_queue(struct pqi_ctrl_info *ctrl_info)
 	 * Create OQ (Outbound Queue - device to host queue) to dedicate
 	 * to events.
 	 */
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.header.iu_type = PQI_REQUEST_IU_GENERAL_ADMIN;
 	put_unaligned_le16(PQI_GENERAL_ADMIN_IU_LENGTH,
 		&request.header.iu_length);
@@ -4558,37 +4559,37 @@ static int pqi_create_event_queue(struct pqi_ctrl_info *ctrl_info)
 	put_unaligned_le16(PQI_EVENT_OQ_ELEMENT_LENGTH / 16,
 		&request.data.create_operational_oq.element_length);
 	request.data.create_operational_oq.queue_protocol = PQI_PROTOCOL_SOP;
-	put_unaligned_le16(event_queue->int_msg_num,
-		&request.data.create_operational_oq.int_msg_num);
+	put_unaligned_le16(event_queue->पूर्णांक_msg_num,
+		&request.data.create_operational_oq.पूर्णांक_msg_num);
 
 	rc = pqi_submit_admin_request_synchronous(ctrl_info, &request,
 		&response);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	event_queue->oq_ci = ctrl_info->iomem_base +
 		PQI_DEVICE_REGISTERS_OFFSET +
 		get_unaligned_le64(
 			&response.data.create_operational_oq.oq_ci_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_create_queue_group(struct pqi_ctrl_info *ctrl_info,
-	unsigned int group_number)
-{
-	int rc;
-	struct pqi_queue_group *queue_group;
-	struct pqi_general_admin_request request;
-	struct pqi_general_admin_response response;
+अटल पूर्णांक pqi_create_queue_group(काष्ठा pqi_ctrl_info *ctrl_info,
+	अचिन्हित पूर्णांक group_number)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_queue_group *queue_group;
+	काष्ठा pqi_general_admin_request request;
+	काष्ठा pqi_general_admin_response response;
 
 	queue_group = &ctrl_info->queue_groups[group_number];
 
 	/*
-	 * Create IQ (Inbound Queue - host to device queue) for
+	 * Create IQ (Inbound Queue - host to device queue) क्रम
 	 * RAID path.
 	 */
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.header.iu_type = PQI_REQUEST_IU_GENERAL_ADMIN;
 	put_unaligned_le16(PQI_GENERAL_ADMIN_IU_LENGTH,
 		&request.header.iu_length);
@@ -4608,11 +4609,11 @@ static int pqi_create_queue_group(struct pqi_ctrl_info *ctrl_info,
 
 	rc = pqi_submit_admin_request_synchronous(ctrl_info, &request,
 		&response);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error creating inbound RAID queue\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	queue_group->iq_pi[RAID_PATH] = ctrl_info->iomem_base +
 		PQI_DEVICE_REGISTERS_OFFSET +
@@ -4620,10 +4621,10 @@ static int pqi_create_queue_group(struct pqi_ctrl_info *ctrl_info,
 			&response.data.create_operational_iq.iq_pi_offset);
 
 	/*
-	 * Create IQ (Inbound Queue - host to device queue) for
+	 * Create IQ (Inbound Queue - host to device queue) क्रम
 	 * Advanced I/O (AIO) path.
 	 */
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.header.iu_type = PQI_REQUEST_IU_GENERAL_ADMIN;
 	put_unaligned_le16(PQI_GENERAL_ADMIN_IU_LENGTH,
 		&request.header.iu_length);
@@ -4643,11 +4644,11 @@ static int pqi_create_queue_group(struct pqi_ctrl_info *ctrl_info,
 
 	rc = pqi_submit_admin_request_synchronous(ctrl_info, &request,
 		&response);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error creating inbound AIO queue\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	queue_group->iq_pi[AIO_PATH] = ctrl_info->iomem_base +
 		PQI_DEVICE_REGISTERS_OFFSET +
@@ -4655,11 +4656,11 @@ static int pqi_create_queue_group(struct pqi_ctrl_info *ctrl_info,
 			&response.data.create_operational_iq.iq_pi_offset);
 
 	/*
-	 * Designate the 2nd IQ as the AIO path.  By default, all IQs are
-	 * assumed to be for RAID path I/O unless we change the queue's
+	 * Designate the 2nd IQ as the AIO path.  By शेष, all IQs are
+	 * assumed to be क्रम RAID path I/O unless we change the queue's
 	 * property.
 	 */
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.header.iu_type = PQI_REQUEST_IU_GENERAL_ADMIN;
 	put_unaligned_le16(PQI_GENERAL_ADMIN_IU_LENGTH,
 		&request.header.iu_length);
@@ -4667,20 +4668,20 @@ static int pqi_create_queue_group(struct pqi_ctrl_info *ctrl_info,
 	put_unaligned_le16(queue_group->iq_id[AIO_PATH],
 		&request.data.change_operational_iq_properties.queue_id);
 	put_unaligned_le32(PQI_IQ_PROPERTY_IS_AIO_QUEUE,
-		&request.data.change_operational_iq_properties.vendor_specific);
+		&request.data.change_operational_iq_properties.venकरोr_specअगरic);
 
 	rc = pqi_submit_admin_request_synchronous(ctrl_info, &request,
 		&response);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error changing queue property\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/*
 	 * Create OQ (Outbound Queue - device to host queue).
 	 */
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 	request.header.iu_type = PQI_REQUEST_IU_GENERAL_ADMIN;
 	put_unaligned_le16(PQI_GENERAL_ADMIN_IU_LENGTH,
 		&request.header.iu_length);
@@ -4696,72 +4697,72 @@ static int pqi_create_queue_group(struct pqi_ctrl_info *ctrl_info,
 	put_unaligned_le16(PQI_OPERATIONAL_OQ_ELEMENT_LENGTH / 16,
 		&request.data.create_operational_oq.element_length);
 	request.data.create_operational_oq.queue_protocol = PQI_PROTOCOL_SOP;
-	put_unaligned_le16(queue_group->int_msg_num,
-		&request.data.create_operational_oq.int_msg_num);
+	put_unaligned_le16(queue_group->पूर्णांक_msg_num,
+		&request.data.create_operational_oq.पूर्णांक_msg_num);
 
 	rc = pqi_submit_admin_request_synchronous(ctrl_info, &request,
 		&response);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error creating outbound queue\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	queue_group->oq_ci = ctrl_info->iomem_base +
 		PQI_DEVICE_REGISTERS_OFFSET +
 		get_unaligned_le64(
 			&response.data.create_operational_oq.oq_ci_offset);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_create_queues(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	unsigned int i;
+अटल पूर्णांक pqi_create_queues(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक i;
 
 	rc = pqi_create_event_queue(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error creating event queue\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	for (i = 0; i < ctrl_info->num_queue_groups; i++) {
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++) अणु
 		rc = pqi_create_queue_group(ctrl_info, i);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"error creating queue group number %u/%u\n",
 				i, ctrl_info->num_queue_groups);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define PQI_REPORT_EVENT_CONFIG_BUFFER_LENGTH	\
-	(offsetof(struct pqi_event_config, descriptors) + \
-	(PQI_MAX_EVENT_DESCRIPTORS * sizeof(struct pqi_event_descriptor)))
+#घोषणा PQI_REPORT_EVENT_CONFIG_BUFFER_LENGTH	\
+	(दुरत्व(काष्ठा pqi_event_config, descriptors) + \
+	(PQI_MAX_EVENT_DESCRIPTORS * माप(काष्ठा pqi_event_descriptor)))
 
-static int pqi_configure_events(struct pqi_ctrl_info *ctrl_info,
+अटल पूर्णांक pqi_configure_events(काष्ठा pqi_ctrl_info *ctrl_info,
 	bool enable_events)
-{
-	int rc;
-	unsigned int i;
-	struct pqi_event_config *event_config;
-	struct pqi_event_descriptor *event_descriptor;
-	struct pqi_general_management_request request;
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक i;
+	काष्ठा pqi_event_config *event_config;
+	काष्ठा pqi_event_descriptor *event_descriptor;
+	काष्ठा pqi_general_management_request request;
 
-	event_config = kmalloc(PQI_REPORT_EVENT_CONFIG_BUFFER_LENGTH,
+	event_config = kदो_स्मृति(PQI_REPORT_EVENT_CONFIG_BUFFER_LENGTH,
 		GFP_KERNEL);
-	if (!event_config)
-		return -ENOMEM;
+	अगर (!event_config)
+		वापस -ENOMEM;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 
 	request.header.iu_type = PQI_REQUEST_IU_REPORT_VENDOR_EVENT_CONFIG;
-	put_unaligned_le16(offsetof(struct pqi_general_management_request,
+	put_unaligned_le16(दुरत्व(काष्ठा pqi_general_management_request,
 		data.report_event_configuration.sg_descriptors[1]) -
 		PQI_REQUEST_HEADER_LENGTH, &request.header.iu_length);
 	put_unaligned_le32(PQI_REPORT_EVENT_CONFIG_BUFFER_LENGTH,
@@ -4771,32 +4772,32 @@ static int pqi_configure_events(struct pqi_ctrl_info *ctrl_info,
 		request.data.report_event_configuration.sg_descriptors,
 		event_config, PQI_REPORT_EVENT_CONFIG_BUFFER_LENGTH,
 		DMA_FROM_DEVICE);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, NULL);
+	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, शून्य);
 
 	pqi_pci_unmap(ctrl_info->pci_dev,
 		request.data.report_event_configuration.sg_descriptors, 1,
 		DMA_FROM_DEVICE);
 
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	for (i = 0; i < event_config->num_event_descriptors; i++) {
+	क्रम (i = 0; i < event_config->num_event_descriptors; i++) अणु
 		event_descriptor = &event_config->descriptors[i];
-		if (enable_events &&
+		अगर (enable_events &&
 			pqi_is_supported_event(event_descriptor->event_type))
 				put_unaligned_le16(ctrl_info->event_queue.oq_id,
 					&event_descriptor->oq_id);
-		else
+		अन्यथा
 			put_unaligned_le16(0, &event_descriptor->oq_id);
-	}
+	पूर्ण
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 
 	request.header.iu_type = PQI_REQUEST_IU_SET_VENDOR_EVENT_CONFIG;
-	put_unaligned_le16(offsetof(struct pqi_general_management_request,
+	put_unaligned_le16(दुरत्व(काष्ठा pqi_general_management_request,
 		data.report_event_configuration.sg_descriptors[1]) -
 		PQI_REQUEST_HEADER_LENGTH, &request.header.iu_length);
 	put_unaligned_le32(PQI_REPORT_EVENT_CONFIG_BUFFER_LENGTH,
@@ -4806,128 +4807,128 @@ static int pqi_configure_events(struct pqi_ctrl_info *ctrl_info,
 		request.data.report_event_configuration.sg_descriptors,
 		event_config, PQI_REPORT_EVENT_CONFIG_BUFFER_LENGTH,
 		DMA_TO_DEVICE);
-	if (rc)
-		goto out;
+	अगर (rc)
+		जाओ out;
 
-	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, NULL);
+	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, शून्य);
 
 	pqi_pci_unmap(ctrl_info->pci_dev,
 		request.data.report_event_configuration.sg_descriptors, 1,
 		DMA_TO_DEVICE);
 
 out:
-	kfree(event_config);
+	kमुक्त(event_config);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static inline int pqi_enable_events(struct pqi_ctrl_info *ctrl_info)
-{
-	return pqi_configure_events(ctrl_info, true);
-}
+अटल अंतरभूत पूर्णांक pqi_enable_events(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	वापस pqi_configure_events(ctrl_info, true);
+पूर्ण
 
-static void pqi_free_all_io_requests(struct pqi_ctrl_info *ctrl_info)
-{
-	unsigned int i;
-	struct device *dev;
-	size_t sg_chain_buffer_length;
-	struct pqi_io_request *io_request;
+अटल व्योम pqi_मुक्त_all_io_requests(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा device *dev;
+	माप_प्रकार sg_chain_buffer_length;
+	काष्ठा pqi_io_request *io_request;
 
-	if (!ctrl_info->io_request_pool)
-		return;
+	अगर (!ctrl_info->io_request_pool)
+		वापस;
 
 	dev = &ctrl_info->pci_dev->dev;
 	sg_chain_buffer_length = ctrl_info->sg_chain_buffer_length;
 	io_request = ctrl_info->io_request_pool;
 
-	for (i = 0; i < ctrl_info->max_io_slots; i++) {
-		kfree(io_request->iu);
-		if (!io_request->sg_chain_buffer)
-			break;
-		dma_free_coherent(dev, sg_chain_buffer_length,
+	क्रम (i = 0; i < ctrl_info->max_io_slots; i++) अणु
+		kमुक्त(io_request->iu);
+		अगर (!io_request->sg_chain_buffer)
+			अवरोध;
+		dma_मुक्त_coherent(dev, sg_chain_buffer_length,
 			io_request->sg_chain_buffer,
 			io_request->sg_chain_buffer_dma_handle);
 		io_request++;
-	}
+	पूर्ण
 
-	kfree(ctrl_info->io_request_pool);
-	ctrl_info->io_request_pool = NULL;
-}
+	kमुक्त(ctrl_info->io_request_pool);
+	ctrl_info->io_request_pool = शून्य;
+पूर्ण
 
-static inline int pqi_alloc_error_buffer(struct pqi_ctrl_info *ctrl_info)
-{
+अटल अंतरभूत पूर्णांक pqi_alloc_error_buffer(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	ctrl_info->error_buffer = dma_alloc_coherent(&ctrl_info->pci_dev->dev,
 				     ctrl_info->error_buffer_length,
 				     &ctrl_info->error_buffer_dma_handle,
 				     GFP_KERNEL);
-	if (!ctrl_info->error_buffer)
-		return -ENOMEM;
+	अगर (!ctrl_info->error_buffer)
+		वापस -ENOMEM;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_alloc_io_resources(struct pqi_ctrl_info *ctrl_info)
-{
-	unsigned int i;
-	void *sg_chain_buffer;
-	size_t sg_chain_buffer_length;
+अटल पूर्णांक pqi_alloc_io_resources(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अचिन्हित पूर्णांक i;
+	व्योम *sg_chain_buffer;
+	माप_प्रकार sg_chain_buffer_length;
 	dma_addr_t sg_chain_buffer_dma_handle;
-	struct device *dev;
-	struct pqi_io_request *io_request;
+	काष्ठा device *dev;
+	काष्ठा pqi_io_request *io_request;
 
-	ctrl_info->io_request_pool = kcalloc(ctrl_info->max_io_slots,
-		sizeof(ctrl_info->io_request_pool[0]), GFP_KERNEL);
+	ctrl_info->io_request_pool = kसुस्मृति(ctrl_info->max_io_slots,
+		माप(ctrl_info->io_request_pool[0]), GFP_KERNEL);
 
-	if (!ctrl_info->io_request_pool) {
+	अगर (!ctrl_info->io_request_pool) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to allocate I/O request pool\n");
-		goto error;
-	}
+		जाओ error;
+	पूर्ण
 
 	dev = &ctrl_info->pci_dev->dev;
 	sg_chain_buffer_length = ctrl_info->sg_chain_buffer_length;
 	io_request = ctrl_info->io_request_pool;
 
-	for (i = 0; i < ctrl_info->max_io_slots; i++) {
-		io_request->iu = kmalloc(ctrl_info->max_inbound_iu_length, GFP_KERNEL);
+	क्रम (i = 0; i < ctrl_info->max_io_slots; i++) अणु
+		io_request->iu = kदो_स्मृति(ctrl_info->max_inbound_iu_length, GFP_KERNEL);
 
-		if (!io_request->iu) {
+		अगर (!io_request->iu) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"failed to allocate IU buffers\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		sg_chain_buffer = dma_alloc_coherent(dev,
 			sg_chain_buffer_length, &sg_chain_buffer_dma_handle,
 			GFP_KERNEL);
 
-		if (!sg_chain_buffer) {
+		अगर (!sg_chain_buffer) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"failed to allocate PQI scatter-gather chain buffers\n");
-			goto error;
-		}
+			जाओ error;
+		पूर्ण
 
 		io_request->index = i;
 		io_request->sg_chain_buffer = sg_chain_buffer;
 		io_request->sg_chain_buffer_dma_handle = sg_chain_buffer_dma_handle;
 		io_request++;
-	}
+	पूर्ण
 
-	return 0;
+	वापस 0;
 
 error:
-	pqi_free_all_io_requests(ctrl_info);
+	pqi_मुक्त_all_io_requests(ctrl_info);
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
 /*
  * Calculate required resources that are sized based on max. outstanding
  * requests and max. transfer size.
  */
 
-static void pqi_calculate_io_resources(struct pqi_ctrl_info *ctrl_info)
-{
+अटल व्योम pqi_calculate_io_resources(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	u32 max_transfer_size;
 	u32 max_sg_entries;
 
@@ -4938,10 +4939,10 @@ static void pqi_calculate_io_resources(struct pqi_ctrl_info *ctrl_info)
 	ctrl_info->error_buffer_length =
 		ctrl_info->max_io_slots * PQI_ERROR_BUFFER_ELEMENT_LENGTH;
 
-	if (reset_devices)
+	अगर (reset_devices)
 		max_transfer_size = min(ctrl_info->max_transfer_size,
 			PQI_MAX_TRANSFER_SIZE_KDUMP);
-	else
+	अन्यथा
 		max_transfer_size = min(ctrl_info->max_transfer_size,
 			PQI_MAX_TRANSFER_SIZE);
 
@@ -4955,23 +4956,23 @@ static void pqi_calculate_io_resources(struct pqi_ctrl_info *ctrl_info)
 	max_transfer_size = (max_sg_entries - 1) * PAGE_SIZE;
 
 	ctrl_info->sg_chain_buffer_length =
-		(max_sg_entries * sizeof(struct pqi_sg_descriptor)) +
+		(max_sg_entries * माप(काष्ठा pqi_sg_descriptor)) +
 		PQI_EXTRA_SGL_MEMORY;
 	ctrl_info->sg_tablesize = max_sg_entries;
 	ctrl_info->max_sectors = max_transfer_size / 512;
-}
+पूर्ण
 
-static void pqi_calculate_queue_resources(struct pqi_ctrl_info *ctrl_info)
-{
-	int num_queue_groups;
+अटल व्योम pqi_calculate_queue_resources(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक num_queue_groups;
 	u16 num_elements_per_iq;
 	u16 num_elements_per_oq;
 
-	if (reset_devices) {
+	अगर (reset_devices) अणु
 		num_queue_groups = 1;
-	} else {
-		int num_cpus;
-		int max_queue_groups;
+	पूर्ण अन्यथा अणु
+		पूर्णांक num_cpus;
+		पूर्णांक max_queue_groups;
 
 		max_queue_groups = min(ctrl_info->max_inbound_queues / 2,
 			ctrl_info->max_outbound_queues - 1);
@@ -4980,7 +4981,7 @@ static void pqi_calculate_queue_resources(struct pqi_ctrl_info *ctrl_info)
 		num_cpus = num_online_cpus();
 		num_queue_groups = min(num_cpus, ctrl_info->max_msix_vectors);
 		num_queue_groups = min(num_queue_groups, max_queue_groups);
-	}
+	पूर्ण
 
 	ctrl_info->num_queue_groups = num_queue_groups;
 	ctrl_info->max_hw_queue_index = num_queue_groups - 1;
@@ -5014,85 +5015,85 @@ static void pqi_calculate_queue_resources(struct pqi_ctrl_info *ctrl_info)
 	ctrl_info->max_sg_per_iu =
 		((ctrl_info->max_inbound_iu_length -
 		PQI_OPERATIONAL_IQ_ELEMENT_LENGTH) /
-		sizeof(struct pqi_sg_descriptor)) +
+		माप(काष्ठा pqi_sg_descriptor)) +
 		PQI_MAX_EMBEDDED_SG_DESCRIPTORS;
 
 	ctrl_info->max_sg_per_r56_iu =
 		((ctrl_info->max_inbound_iu_length -
 		PQI_OPERATIONAL_IQ_ELEMENT_LENGTH) /
-		sizeof(struct pqi_sg_descriptor)) +
+		माप(काष्ठा pqi_sg_descriptor)) +
 		PQI_MAX_EMBEDDED_R56_SG_DESCRIPTORS;
-}
+पूर्ण
 
-static inline void pqi_set_sg_descriptor(struct pqi_sg_descriptor *sg_descriptor,
-	struct scatterlist *sg)
-{
+अटल अंतरभूत व्योम pqi_set_sg_descriptor(काष्ठा pqi_sg_descriptor *sg_descriptor,
+	काष्ठा scatterlist *sg)
+अणु
 	u64 address = (u64)sg_dma_address(sg);
-	unsigned int length = sg_dma_len(sg);
+	अचिन्हित पूर्णांक length = sg_dma_len(sg);
 
 	put_unaligned_le64(address, &sg_descriptor->address);
 	put_unaligned_le32(length, &sg_descriptor->length);
 	put_unaligned_le32(0, &sg_descriptor->flags);
-}
+पूर्ण
 
-static unsigned int pqi_build_sg_list(struct pqi_sg_descriptor *sg_descriptor,
-	struct scatterlist *sg, int sg_count, struct pqi_io_request *io_request,
-	int max_sg_per_iu, bool *chained)
-{
-	int i;
-	unsigned int num_sg_in_iu;
+अटल अचिन्हित पूर्णांक pqi_build_sg_list(काष्ठा pqi_sg_descriptor *sg_descriptor,
+	काष्ठा scatterlist *sg, पूर्णांक sg_count, काष्ठा pqi_io_request *io_request,
+	पूर्णांक max_sg_per_iu, bool *chained)
+अणु
+	पूर्णांक i;
+	अचिन्हित पूर्णांक num_sg_in_iu;
 
 	*chained = false;
 	i = 0;
 	num_sg_in_iu = 0;
-	max_sg_per_iu--;	/* Subtract 1 to leave room for chain marker. */
+	max_sg_per_iu--;	/* Subtract 1 to leave room क्रम chain marker. */
 
-	while (1) {
+	जबतक (1) अणु
 		pqi_set_sg_descriptor(sg_descriptor, sg);
-		if (!*chained)
+		अगर (!*chained)
 			num_sg_in_iu++;
 		i++;
-		if (i == sg_count)
-			break;
+		अगर (i == sg_count)
+			अवरोध;
 		sg_descriptor++;
-		if (i == max_sg_per_iu) {
+		अगर (i == max_sg_per_iu) अणु
 			put_unaligned_le64((u64)io_request->sg_chain_buffer_dma_handle,
 				&sg_descriptor->address);
-			put_unaligned_le32((sg_count - num_sg_in_iu) * sizeof(*sg_descriptor),
+			put_unaligned_le32((sg_count - num_sg_in_iu) * माप(*sg_descriptor),
 				&sg_descriptor->length);
 			put_unaligned_le32(CISS_SG_CHAIN, &sg_descriptor->flags);
 			*chained = true;
 			num_sg_in_iu++;
 			sg_descriptor = io_request->sg_chain_buffer;
-		}
+		पूर्ण
 		sg = sg_next(sg);
-	}
+	पूर्ण
 
 	put_unaligned_le32(CISS_SG_LAST, &sg_descriptor->flags);
 
-	return num_sg_in_iu;
-}
+	वापस num_sg_in_iu;
+पूर्ण
 
-static int pqi_build_raid_sg_list(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_raid_path_request *request, struct scsi_cmnd *scmd,
-	struct pqi_io_request *io_request)
-{
+अटल पूर्णांक pqi_build_raid_sg_list(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_raid_path_request *request, काष्ठा scsi_cmnd *scmd,
+	काष्ठा pqi_io_request *io_request)
+अणु
 	u16 iu_length;
-	int sg_count;
+	पूर्णांक sg_count;
 	bool chained;
-	unsigned int num_sg_in_iu;
-	struct scatterlist *sg;
-	struct pqi_sg_descriptor *sg_descriptor;
+	अचिन्हित पूर्णांक num_sg_in_iu;
+	काष्ठा scatterlist *sg;
+	काष्ठा pqi_sg_descriptor *sg_descriptor;
 
 	sg_count = scsi_dma_map(scmd);
-	if (sg_count < 0)
-		return sg_count;
+	अगर (sg_count < 0)
+		वापस sg_count;
 
-	iu_length = offsetof(struct pqi_raid_path_request, sg_descriptors) -
+	iu_length = दुरत्व(काष्ठा pqi_raid_path_request, sg_descriptors) -
 		PQI_REQUEST_HEADER_LENGTH;
 
-	if (sg_count == 0)
-		goto out;
+	अगर (sg_count == 0)
+		जाओ out;
 
 	sg = scsi_sglist(scmd);
 	sg_descriptor = request->sg_descriptors;
@@ -5101,35 +5102,35 @@ static int pqi_build_raid_sg_list(struct pqi_ctrl_info *ctrl_info,
 		ctrl_info->max_sg_per_iu, &chained);
 
 	request->partial = chained;
-	iu_length += num_sg_in_iu * sizeof(*sg_descriptor);
+	iu_length += num_sg_in_iu * माप(*sg_descriptor);
 
 out:
 	put_unaligned_le16(iu_length, &request->header.iu_length);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_build_aio_r1_sg_list(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_aio_r1_path_request *request, struct scsi_cmnd *scmd,
-	struct pqi_io_request *io_request)
-{
+अटल पूर्णांक pqi_build_aio_r1_sg_list(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_aio_r1_path_request *request, काष्ठा scsi_cmnd *scmd,
+	काष्ठा pqi_io_request *io_request)
+अणु
 	u16 iu_length;
-	int sg_count;
+	पूर्णांक sg_count;
 	bool chained;
-	unsigned int num_sg_in_iu;
-	struct scatterlist *sg;
-	struct pqi_sg_descriptor *sg_descriptor;
+	अचिन्हित पूर्णांक num_sg_in_iu;
+	काष्ठा scatterlist *sg;
+	काष्ठा pqi_sg_descriptor *sg_descriptor;
 
 	sg_count = scsi_dma_map(scmd);
-	if (sg_count < 0)
-		return sg_count;
+	अगर (sg_count < 0)
+		वापस sg_count;
 
-	iu_length = offsetof(struct pqi_aio_r1_path_request, sg_descriptors) -
+	iu_length = दुरत्व(काष्ठा pqi_aio_r1_path_request, sg_descriptors) -
 		PQI_REQUEST_HEADER_LENGTH;
 	num_sg_in_iu = 0;
 
-	if (sg_count == 0)
-		goto out;
+	अगर (sg_count == 0)
+		जाओ out;
 
 	sg = scsi_sglist(scmd);
 	sg_descriptor = request->sg_descriptors;
@@ -5138,35 +5139,35 @@ static int pqi_build_aio_r1_sg_list(struct pqi_ctrl_info *ctrl_info,
 		ctrl_info->max_sg_per_iu, &chained);
 
 	request->partial = chained;
-	iu_length += num_sg_in_iu * sizeof(*sg_descriptor);
+	iu_length += num_sg_in_iu * माप(*sg_descriptor);
 
 out:
 	put_unaligned_le16(iu_length, &request->header.iu_length);
 	request->num_sg_descriptors = num_sg_in_iu;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_build_aio_r56_sg_list(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_aio_r56_path_request *request, struct scsi_cmnd *scmd,
-	struct pqi_io_request *io_request)
-{
+अटल पूर्णांक pqi_build_aio_r56_sg_list(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_aio_r56_path_request *request, काष्ठा scsi_cmnd *scmd,
+	काष्ठा pqi_io_request *io_request)
+अणु
 	u16 iu_length;
-	int sg_count;
+	पूर्णांक sg_count;
 	bool chained;
-	unsigned int num_sg_in_iu;
-	struct scatterlist *sg;
-	struct pqi_sg_descriptor *sg_descriptor;
+	अचिन्हित पूर्णांक num_sg_in_iu;
+	काष्ठा scatterlist *sg;
+	काष्ठा pqi_sg_descriptor *sg_descriptor;
 
 	sg_count = scsi_dma_map(scmd);
-	if (sg_count < 0)
-		return sg_count;
+	अगर (sg_count < 0)
+		वापस sg_count;
 
-	iu_length = offsetof(struct pqi_aio_r56_path_request, sg_descriptors) -
+	iu_length = दुरत्व(काष्ठा pqi_aio_r56_path_request, sg_descriptors) -
 		PQI_REQUEST_HEADER_LENGTH;
 	num_sg_in_iu = 0;
 
-	if (sg_count != 0) {
+	अगर (sg_count != 0) अणु
 		sg = scsi_sglist(scmd);
 		sg_descriptor = request->sg_descriptors;
 
@@ -5174,36 +5175,36 @@ static int pqi_build_aio_r56_sg_list(struct pqi_ctrl_info *ctrl_info,
 			ctrl_info->max_sg_per_r56_iu, &chained);
 
 		request->partial = chained;
-		iu_length += num_sg_in_iu * sizeof(*sg_descriptor);
-	}
+		iu_length += num_sg_in_iu * माप(*sg_descriptor);
+	पूर्ण
 
 	put_unaligned_le16(iu_length, &request->header.iu_length);
 	request->num_sg_descriptors = num_sg_in_iu;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_build_aio_sg_list(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_aio_path_request *request, struct scsi_cmnd *scmd,
-	struct pqi_io_request *io_request)
-{
+अटल पूर्णांक pqi_build_aio_sg_list(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_aio_path_request *request, काष्ठा scsi_cmnd *scmd,
+	काष्ठा pqi_io_request *io_request)
+अणु
 	u16 iu_length;
-	int sg_count;
+	पूर्णांक sg_count;
 	bool chained;
-	unsigned int num_sg_in_iu;
-	struct scatterlist *sg;
-	struct pqi_sg_descriptor *sg_descriptor;
+	अचिन्हित पूर्णांक num_sg_in_iu;
+	काष्ठा scatterlist *sg;
+	काष्ठा pqi_sg_descriptor *sg_descriptor;
 
 	sg_count = scsi_dma_map(scmd);
-	if (sg_count < 0)
-		return sg_count;
+	अगर (sg_count < 0)
+		वापस sg_count;
 
-	iu_length = offsetof(struct pqi_aio_path_request, sg_descriptors) -
+	iu_length = दुरत्व(काष्ठा pqi_aio_path_request, sg_descriptors) -
 		PQI_REQUEST_HEADER_LENGTH;
 	num_sg_in_iu = 0;
 
-	if (sg_count == 0)
-		goto out;
+	अगर (sg_count == 0)
+		जाओ out;
 
 	sg = scsi_sglist(scmd);
 	sg_descriptor = request->sg_descriptors;
@@ -5212,174 +5213,174 @@ static int pqi_build_aio_sg_list(struct pqi_ctrl_info *ctrl_info,
 		ctrl_info->max_sg_per_iu, &chained);
 
 	request->partial = chained;
-	iu_length += num_sg_in_iu * sizeof(*sg_descriptor);
+	iu_length += num_sg_in_iu * माप(*sg_descriptor);
 
 out:
 	put_unaligned_le16(iu_length, &request->header.iu_length);
 	request->num_sg_descriptors = num_sg_in_iu;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_raid_io_complete(struct pqi_io_request *io_request,
-	void *context)
-{
-	struct scsi_cmnd *scmd;
+अटल व्योम pqi_raid_io_complete(काष्ठा pqi_io_request *io_request,
+	व्योम *context)
+अणु
+	काष्ठा scsi_cmnd *scmd;
 
 	scmd = io_request->scmd;
-	pqi_free_io_request(io_request);
+	pqi_मुक्त_io_request(io_request);
 	scsi_dma_unmap(scmd);
-	pqi_scsi_done(scmd);
-}
+	pqi_scsi_करोne(scmd);
+पूर्ण
 
-static int pqi_raid_submit_scsi_cmd_with_io_request(
-	struct pqi_ctrl_info *ctrl_info, struct pqi_io_request *io_request,
-	struct pqi_scsi_dev *device, struct scsi_cmnd *scmd,
-	struct pqi_queue_group *queue_group)
-{
-	int rc;
-	size_t cdb_length;
-	struct pqi_raid_path_request *request;
+अटल पूर्णांक pqi_raid_submit_scsi_cmd_with_io_request(
+	काष्ठा pqi_ctrl_info *ctrl_info, काष्ठा pqi_io_request *io_request,
+	काष्ठा pqi_scsi_dev *device, काष्ठा scsi_cmnd *scmd,
+	काष्ठा pqi_queue_group *queue_group)
+अणु
+	पूर्णांक rc;
+	माप_प्रकार cdb_length;
+	काष्ठा pqi_raid_path_request *request;
 
 	io_request->io_complete_callback = pqi_raid_io_complete;
 	io_request->scmd = scmd;
 
 	request = io_request->iu;
-	memset(request, 0, offsetof(struct pqi_raid_path_request, sg_descriptors));
+	स_रखो(request, 0, दुरत्व(काष्ठा pqi_raid_path_request, sg_descriptors));
 
 	request->header.iu_type = PQI_REQUEST_IU_RAID_PATH_IO;
 	put_unaligned_le32(scsi_bufflen(scmd), &request->buffer_length);
 	request->task_attribute = SOP_TASK_ATTRIBUTE_SIMPLE;
 	put_unaligned_le16(io_request->index, &request->request_id);
 	request->error_index = request->request_id;
-	memcpy(request->lun_number, device->scsi3addr, sizeof(request->lun_number));
+	स_नकल(request->lun_number, device->scsi3addr, माप(request->lun_number));
 
-	cdb_length = min_t(size_t, scmd->cmd_len, sizeof(request->cdb));
-	memcpy(request->cdb, scmd->cmnd, cdb_length);
+	cdb_length = min_t(माप_प्रकार, scmd->cmd_len, माप(request->cdb));
+	स_नकल(request->cdb, scmd->cmnd, cdb_length);
 
-	switch (cdb_length) {
-	case 6:
-	case 10:
-	case 12:
-	case 16:
+	चयन (cdb_length) अणु
+	हाल 6:
+	हाल 10:
+	हाल 12:
+	हाल 16:
 		request->additional_cdb_bytes_usage = SOP_ADDITIONAL_CDB_BYTES_0;
-		break;
-	case 20:
+		अवरोध;
+	हाल 20:
 		request->additional_cdb_bytes_usage = SOP_ADDITIONAL_CDB_BYTES_4;
-		break;
-	case 24:
+		अवरोध;
+	हाल 24:
 		request->additional_cdb_bytes_usage = SOP_ADDITIONAL_CDB_BYTES_8;
-		break;
-	case 28:
+		अवरोध;
+	हाल 28:
 		request->additional_cdb_bytes_usage = SOP_ADDITIONAL_CDB_BYTES_12;
-		break;
-	case 32:
-	default:
+		अवरोध;
+	हाल 32:
+	शेष:
 		request->additional_cdb_bytes_usage = SOP_ADDITIONAL_CDB_BYTES_16;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	switch (scmd->sc_data_direction) {
-	case DMA_TO_DEVICE:
+	चयन (scmd->sc_data_direction) अणु
+	हाल DMA_TO_DEVICE:
 		request->data_direction = SOP_READ_FLAG;
-		break;
-	case DMA_FROM_DEVICE:
+		अवरोध;
+	हाल DMA_FROM_DEVICE:
 		request->data_direction = SOP_WRITE_FLAG;
-		break;
-	case DMA_NONE:
-		request->data_direction = SOP_NO_DIRECTION_FLAG;
-		break;
-	case DMA_BIDIRECTIONAL:
-		request->data_direction = SOP_BIDIRECTIONAL;
-		break;
-	default:
+		अवरोध;
+	हाल DMA_NONE:
+		request->data_direction = SOP_NO_सूचीECTION_FLAG;
+		अवरोध;
+	हाल DMA_BIसूचीECTIONAL:
+		request->data_direction = SOP_BIसूचीECTIONAL;
+		अवरोध;
+	शेष:
 		dev_err(&ctrl_info->pci_dev->dev,
 			"unknown data direction: %d\n",
 			scmd->sc_data_direction);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	rc = pqi_build_raid_sg_list(ctrl_info, request, scmd, io_request);
-	if (rc) {
-		pqi_free_io_request(io_request);
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+	अगर (rc) अणु
+		pqi_मुक्त_io_request(io_request);
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
 	pqi_start_io(ctrl_info, queue_group, RAID_PATH, io_request);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int pqi_raid_submit_scsi_cmd(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device, struct scsi_cmnd *scmd,
-	struct pqi_queue_group *queue_group)
-{
-	struct pqi_io_request *io_request;
+अटल अंतरभूत पूर्णांक pqi_raid_submit_scsi_cmd(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device, काष्ठा scsi_cmnd *scmd,
+	काष्ठा pqi_queue_group *queue_group)
+अणु
+	काष्ठा pqi_io_request *io_request;
 
 	io_request = pqi_alloc_io_request(ctrl_info);
 
-	return pqi_raid_submit_scsi_cmd_with_io_request(ctrl_info, io_request,
+	वापस pqi_raid_submit_scsi_cmd_with_io_request(ctrl_info, io_request,
 		device, scmd, queue_group);
-}
+पूर्ण
 
-static bool pqi_raid_bypass_retry_needed(struct pqi_io_request *io_request)
-{
-	struct scsi_cmnd *scmd;
-	struct pqi_scsi_dev *device;
-	struct pqi_ctrl_info *ctrl_info;
+अटल bool pqi_raid_bypass_retry_needed(काष्ठा pqi_io_request *io_request)
+अणु
+	काष्ठा scsi_cmnd *scmd;
+	काष्ठा pqi_scsi_dev *device;
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
-	if (!io_request->raid_bypass)
-		return false;
+	अगर (!io_request->raid_bypass)
+		वापस false;
 
 	scmd = io_request->scmd;
-	if ((scmd->result & 0xff) == SAM_STAT_GOOD)
-		return false;
-	if (host_byte(scmd->result) == DID_NO_CONNECT)
-		return false;
+	अगर ((scmd->result & 0xff) == SAM_STAT_GOOD)
+		वापस false;
+	अगर (host_byte(scmd->result) == DID_NO_CONNECT)
+		वापस false;
 
 	device = scmd->device->hostdata;
-	if (pqi_device_offline(device) || pqi_device_in_remove(device))
-		return false;
+	अगर (pqi_device_offline(device) || pqi_device_in_हटाओ(device))
+		वापस false;
 
 	ctrl_info = shost_to_hba(scmd->device->host);
-	if (pqi_ctrl_offline(ctrl_info))
-		return false;
+	अगर (pqi_ctrl_offline(ctrl_info))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static void pqi_aio_io_complete(struct pqi_io_request *io_request,
-	void *context)
-{
-	struct scsi_cmnd *scmd;
+अटल व्योम pqi_aio_io_complete(काष्ठा pqi_io_request *io_request,
+	व्योम *context)
+अणु
+	काष्ठा scsi_cmnd *scmd;
 
 	scmd = io_request->scmd;
 	scsi_dma_unmap(scmd);
-	if (io_request->status == -EAGAIN || pqi_raid_bypass_retry_needed(io_request)) {
+	अगर (io_request->status == -EAGAIN || pqi_raid_bypass_retry_needed(io_request)) अणु
 		set_host_byte(scmd, DID_IMM_RETRY);
 		scmd->SCp.this_residual++;
-	}
+	पूर्ण
 
-	pqi_free_io_request(io_request);
-	pqi_scsi_done(scmd);
-}
+	pqi_मुक्त_io_request(io_request);
+	pqi_scsi_करोne(scmd);
+पूर्ण
 
-static inline int pqi_aio_submit_scsi_cmd(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device, struct scsi_cmnd *scmd,
-	struct pqi_queue_group *queue_group)
-{
-	return pqi_aio_submit_io(ctrl_info, scmd, device->aio_handle,
-		scmd->cmnd, scmd->cmd_len, queue_group, NULL, false);
-}
+अटल अंतरभूत पूर्णांक pqi_aio_submit_scsi_cmd(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device, काष्ठा scsi_cmnd *scmd,
+	काष्ठा pqi_queue_group *queue_group)
+अणु
+	वापस pqi_aio_submit_io(ctrl_info, scmd, device->aio_handle,
+		scmd->cmnd, scmd->cmd_len, queue_group, शून्य, false);
+पूर्ण
 
-static int pqi_aio_submit_io(struct pqi_ctrl_info *ctrl_info,
-	struct scsi_cmnd *scmd, u32 aio_handle, u8 *cdb,
-	unsigned int cdb_length, struct pqi_queue_group *queue_group,
-	struct pqi_encryption_info *encryption_info, bool raid_bypass)
-{
-	int rc;
-	struct pqi_io_request *io_request;
-	struct pqi_aio_path_request *request;
+अटल पूर्णांक pqi_aio_submit_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा scsi_cmnd *scmd, u32 aio_handle, u8 *cdb,
+	अचिन्हित पूर्णांक cdb_length, काष्ठा pqi_queue_group *queue_group,
+	काष्ठा pqi_encryption_info *encryption_info, bool raid_bypass)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_io_request *io_request;
+	काष्ठा pqi_aio_path_request *request;
 
 	io_request = pqi_alloc_io_request(ctrl_info);
 	io_request->io_complete_callback = pqi_aio_io_complete;
@@ -5387,7 +5388,7 @@ static int pqi_aio_submit_io(struct pqi_ctrl_info *ctrl_info,
 	io_request->raid_bypass = raid_bypass;
 
 	request = io_request->iu;
-	memset(request, 0, offsetof(struct pqi_raid_path_request, sg_descriptors));
+	स_रखो(request, 0, दुरत्व(काष्ठा pqi_raid_path_request, sg_descriptors));
 
 	request->header.iu_type = PQI_REQUEST_IU_AIO_PATH_IO;
 	put_unaligned_le32(aio_handle, &request->nexus_id);
@@ -5395,32 +5396,32 @@ static int pqi_aio_submit_io(struct pqi_ctrl_info *ctrl_info,
 	request->task_attribute = SOP_TASK_ATTRIBUTE_SIMPLE;
 	put_unaligned_le16(io_request->index, &request->request_id);
 	request->error_index = request->request_id;
-	if (cdb_length > sizeof(request->cdb))
-		cdb_length = sizeof(request->cdb);
+	अगर (cdb_length > माप(request->cdb))
+		cdb_length = माप(request->cdb);
 	request->cdb_length = cdb_length;
-	memcpy(request->cdb, cdb, cdb_length);
+	स_नकल(request->cdb, cdb, cdb_length);
 
-	switch (scmd->sc_data_direction) {
-	case DMA_TO_DEVICE:
+	चयन (scmd->sc_data_direction) अणु
+	हाल DMA_TO_DEVICE:
 		request->data_direction = SOP_READ_FLAG;
-		break;
-	case DMA_FROM_DEVICE:
+		अवरोध;
+	हाल DMA_FROM_DEVICE:
 		request->data_direction = SOP_WRITE_FLAG;
-		break;
-	case DMA_NONE:
-		request->data_direction = SOP_NO_DIRECTION_FLAG;
-		break;
-	case DMA_BIDIRECTIONAL:
-		request->data_direction = SOP_BIDIRECTIONAL;
-		break;
-	default:
+		अवरोध;
+	हाल DMA_NONE:
+		request->data_direction = SOP_NO_सूचीECTION_FLAG;
+		अवरोध;
+	हाल DMA_BIसूचीECTIONAL:
+		request->data_direction = SOP_BIसूचीECTIONAL;
+		अवरोध;
+	शेष:
 		dev_err(&ctrl_info->pci_dev->dev,
 			"unknown data direction: %d\n",
 			scmd->sc_data_direction);
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	if (encryption_info) {
+	अगर (encryption_info) अणु
 		request->encryption_enable = true;
 		put_unaligned_le16(encryption_info->data_encryption_key_index,
 			&request->data_encryption_key_index);
@@ -5428,27 +5429,27 @@ static int pqi_aio_submit_io(struct pqi_ctrl_info *ctrl_info,
 			&request->encrypt_tweak_lower);
 		put_unaligned_le32(encryption_info->encrypt_tweak_upper,
 			&request->encrypt_tweak_upper);
-	}
+	पूर्ण
 
 	rc = pqi_build_aio_sg_list(ctrl_info, request, scmd, io_request);
-	if (rc) {
-		pqi_free_io_request(io_request);
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+	अगर (rc) अणु
+		pqi_मुक्त_io_request(io_request);
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
 	pqi_start_io(ctrl_info, queue_group, AIO_PATH, io_request);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static  int pqi_aio_submit_r1_write_io(struct pqi_ctrl_info *ctrl_info,
-	struct scsi_cmnd *scmd, struct pqi_queue_group *queue_group,
-	struct pqi_encryption_info *encryption_info, struct pqi_scsi_dev *device,
-	struct pqi_scsi_dev_raid_map_data *rmd)
-{
-	int rc;
-	struct pqi_io_request *io_request;
-	struct pqi_aio_r1_path_request *r1_request;
+अटल  पूर्णांक pqi_aio_submit_r1_ग_लिखो_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा scsi_cmnd *scmd, काष्ठा pqi_queue_group *queue_group,
+	काष्ठा pqi_encryption_info *encryption_info, काष्ठा pqi_scsi_dev *device,
+	काष्ठा pqi_scsi_dev_raid_map_data *rmd)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_io_request *io_request;
+	काष्ठा pqi_aio_r1_path_request *r1_request;
 
 	io_request = pqi_alloc_io_request(ctrl_info);
 	io_request->io_complete_callback = pqi_aio_io_complete;
@@ -5456,29 +5457,29 @@ static  int pqi_aio_submit_r1_write_io(struct pqi_ctrl_info *ctrl_info,
 	io_request->raid_bypass = true;
 
 	r1_request = io_request->iu;
-	memset(r1_request, 0, offsetof(struct pqi_aio_r1_path_request, sg_descriptors));
+	स_रखो(r1_request, 0, दुरत्व(काष्ठा pqi_aio_r1_path_request, sg_descriptors));
 
 	r1_request->header.iu_type = PQI_REQUEST_IU_AIO_PATH_RAID1_IO;
 	put_unaligned_le16(*(u16 *)device->scsi3addr & 0x3fff, &r1_request->volume_id);
 	r1_request->num_drives = rmd->num_it_nexus_entries;
 	put_unaligned_le32(rmd->it_nexus[0], &r1_request->it_nexus_1);
 	put_unaligned_le32(rmd->it_nexus[1], &r1_request->it_nexus_2);
-	if (rmd->num_it_nexus_entries == 3)
+	अगर (rmd->num_it_nexus_entries == 3)
 		put_unaligned_le32(rmd->it_nexus[2], &r1_request->it_nexus_3);
 
 	put_unaligned_le32(scsi_bufflen(scmd), &r1_request->data_length);
 	r1_request->task_attribute = SOP_TASK_ATTRIBUTE_SIMPLE;
 	put_unaligned_le16(io_request->index, &r1_request->request_id);
 	r1_request->error_index = r1_request->request_id;
-	if (rmd->cdb_length > sizeof(r1_request->cdb))
-		rmd->cdb_length = sizeof(r1_request->cdb);
+	अगर (rmd->cdb_length > माप(r1_request->cdb))
+		rmd->cdb_length = माप(r1_request->cdb);
 	r1_request->cdb_length = rmd->cdb_length;
-	memcpy(r1_request->cdb, rmd->cdb, rmd->cdb_length);
+	स_नकल(r1_request->cdb, rmd->cdb, rmd->cdb_length);
 
-	/* The direction is always write. */
+	/* The direction is always ग_लिखो. */
 	r1_request->data_direction = SOP_READ_FLAG;
 
-	if (encryption_info) {
+	अगर (encryption_info) अणु
 		r1_request->encryption_enable = true;
 		put_unaligned_le16(encryption_info->data_encryption_key_index,
 				&r1_request->data_encryption_key_index);
@@ -5486,27 +5487,27 @@ static  int pqi_aio_submit_r1_write_io(struct pqi_ctrl_info *ctrl_info,
 				&r1_request->encrypt_tweak_lower);
 		put_unaligned_le32(encryption_info->encrypt_tweak_upper,
 				&r1_request->encrypt_tweak_upper);
-	}
+	पूर्ण
 
 	rc = pqi_build_aio_r1_sg_list(ctrl_info, r1_request, scmd, io_request);
-	if (rc) {
-		pqi_free_io_request(io_request);
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+	अगर (rc) अणु
+		pqi_मुक्त_io_request(io_request);
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
 	pqi_start_io(ctrl_info, queue_group, AIO_PATH, io_request);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_aio_submit_r56_write_io(struct pqi_ctrl_info *ctrl_info,
-	struct scsi_cmnd *scmd, struct pqi_queue_group *queue_group,
-	struct pqi_encryption_info *encryption_info, struct pqi_scsi_dev *device,
-	struct pqi_scsi_dev_raid_map_data *rmd)
-{
-	int rc;
-	struct pqi_io_request *io_request;
-	struct pqi_aio_r56_path_request *r56_request;
+अटल पूर्णांक pqi_aio_submit_r56_ग_लिखो_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा scsi_cmnd *scmd, काष्ठा pqi_queue_group *queue_group,
+	काष्ठा pqi_encryption_info *encryption_info, काष्ठा pqi_scsi_dev *device,
+	काष्ठा pqi_scsi_dev_raid_map_data *rmd)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_io_request *io_request;
+	काष्ठा pqi_aio_r56_path_request *r56_request;
 
 	io_request = pqi_alloc_io_request(ctrl_info);
 	io_request->io_complete_callback = pqi_aio_io_complete;
@@ -5514,20 +5515,20 @@ static int pqi_aio_submit_r56_write_io(struct pqi_ctrl_info *ctrl_info,
 	io_request->raid_bypass = true;
 
 	r56_request = io_request->iu;
-	memset(r56_request, 0, offsetof(struct pqi_aio_r56_path_request, sg_descriptors));
+	स_रखो(r56_request, 0, दुरत्व(काष्ठा pqi_aio_r56_path_request, sg_descriptors));
 
-	if (device->raid_level == SA_RAID_5 || device->raid_level == SA_RAID_51)
+	अगर (device->raid_level == SA_RAID_5 || device->raid_level == SA_RAID_51)
 		r56_request->header.iu_type = PQI_REQUEST_IU_AIO_PATH_RAID5_IO;
-	else
+	अन्यथा
 		r56_request->header.iu_type = PQI_REQUEST_IU_AIO_PATH_RAID6_IO;
 
 	put_unaligned_le16(*(u16 *)device->scsi3addr & 0x3fff, &r56_request->volume_id);
 	put_unaligned_le32(rmd->aio_handle, &r56_request->data_it_nexus);
 	put_unaligned_le32(rmd->p_parity_it_nexus, &r56_request->p_parity_it_nexus);
-	if (rmd->raid_level == SA_RAID_6) {
+	अगर (rmd->raid_level == SA_RAID_6) अणु
 		put_unaligned_le32(rmd->q_parity_it_nexus, &r56_request->q_parity_it_nexus);
 		r56_request->xor_multiplier = rmd->xor_mult;
-	}
+	पूर्ण
 	put_unaligned_le32(scsi_bufflen(scmd), &r56_request->data_length);
 	r56_request->task_attribute = SOP_TASK_ATTRIBUTE_SIMPLE;
 	put_unaligned_le64(rmd->row, &r56_request->row);
@@ -5535,15 +5536,15 @@ static int pqi_aio_submit_r56_write_io(struct pqi_ctrl_info *ctrl_info,
 	put_unaligned_le16(io_request->index, &r56_request->request_id);
 	r56_request->error_index = r56_request->request_id;
 
-	if (rmd->cdb_length > sizeof(r56_request->cdb))
-		rmd->cdb_length = sizeof(r56_request->cdb);
+	अगर (rmd->cdb_length > माप(r56_request->cdb))
+		rmd->cdb_length = माप(r56_request->cdb);
 	r56_request->cdb_length = rmd->cdb_length;
-	memcpy(r56_request->cdb, rmd->cdb, rmd->cdb_length);
+	स_नकल(r56_request->cdb, rmd->cdb, rmd->cdb_length);
 
-	/* The direction is always write. */
+	/* The direction is always ग_लिखो. */
 	r56_request->data_direction = SOP_READ_FLAG;
 
-	if (encryption_info) {
+	अगर (encryption_info) अणु
 		r56_request->encryption_enable = true;
 		put_unaligned_le16(encryption_info->data_encryption_key_index,
 				&r56_request->data_encryption_key_index);
@@ -5551,171 +5552,171 @@ static int pqi_aio_submit_r56_write_io(struct pqi_ctrl_info *ctrl_info,
 				&r56_request->encrypt_tweak_lower);
 		put_unaligned_le32(encryption_info->encrypt_tweak_upper,
 				&r56_request->encrypt_tweak_upper);
-	}
+	पूर्ण
 
 	rc = pqi_build_aio_r56_sg_list(ctrl_info, r56_request, scmd, io_request);
-	if (rc) {
-		pqi_free_io_request(io_request);
-		return SCSI_MLQUEUE_HOST_BUSY;
-	}
+	अगर (rc) अणु
+		pqi_मुक्त_io_request(io_request);
+		वापस SCSI_MLQUEUE_HOST_BUSY;
+	पूर्ण
 
 	pqi_start_io(ctrl_info, queue_group, AIO_PATH, io_request);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline u16 pqi_get_hw_queue(struct pqi_ctrl_info *ctrl_info,
-	struct scsi_cmnd *scmd)
-{
+अटल अंतरभूत u16 pqi_get_hw_queue(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा scsi_cmnd *scmd)
+अणु
 	u16 hw_queue;
 
 	hw_queue = blk_mq_unique_tag_to_hwq(blk_mq_unique_tag(scmd->request));
-	if (hw_queue > ctrl_info->max_hw_queue_index)
+	अगर (hw_queue > ctrl_info->max_hw_queue_index)
 		hw_queue = 0;
 
-	return hw_queue;
-}
+	वापस hw_queue;
+पूर्ण
 
-static inline bool pqi_is_bypass_eligible_request(struct scsi_cmnd *scmd)
-{
-	if (blk_rq_is_passthrough(scmd->request))
-		return false;
+अटल अंतरभूत bool pqi_is_bypass_eligible_request(काष्ठा scsi_cmnd *scmd)
+अणु
+	अगर (blk_rq_is_passthrough(scmd->request))
+		वापस false;
 
-	return scmd->SCp.this_residual == 0;
-}
+	वापस scmd->SCp.this_residual == 0;
+पूर्ण
 
 /*
- * This function gets called just before we hand the completed SCSI request
+ * This function माला_लो called just beक्रमe we hand the completed SCSI request
  * back to the SML.
  */
 
-void pqi_prep_for_scsi_done(struct scsi_cmnd *scmd)
-{
-	struct pqi_scsi_dev *device;
+व्योम pqi_prep_क्रम_scsi_करोne(काष्ठा scsi_cmnd *scmd)
+अणु
+	काष्ठा pqi_scsi_dev *device;
 
-	if (!scmd->device) {
+	अगर (!scmd->device) अणु
 		set_host_byte(scmd, DID_NO_CONNECT);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	device = scmd->device->hostdata;
-	if (!device) {
+	अगर (!device) अणु
 		set_host_byte(scmd, DID_NO_CONNECT);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	atomic_dec(&device->scsi_cmds_outstanding);
-}
+पूर्ण
 
-static bool pqi_is_parity_write_stream(struct pqi_ctrl_info *ctrl_info,
-	struct scsi_cmnd *scmd)
-{
-	u32 oldest_jiffies;
+अटल bool pqi_is_parity_ग_लिखो_stream(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा scsi_cmnd *scmd)
+अणु
+	u32 oldest_jअगरfies;
 	u8 lru_index;
-	int i;
-	int rc;
-	struct pqi_scsi_dev *device;
-	struct pqi_stream_data *pqi_stream_data;
-	struct pqi_scsi_dev_raid_map_data rmd;
+	पूर्णांक i;
+	पूर्णांक rc;
+	काष्ठा pqi_scsi_dev *device;
+	काष्ठा pqi_stream_data *pqi_stream_data;
+	काष्ठा pqi_scsi_dev_raid_map_data rmd;
 
-	if (!ctrl_info->enable_stream_detection)
-		return false;
+	अगर (!ctrl_info->enable_stream_detection)
+		वापस false;
 
 	rc = pqi_get_aio_lba_and_block_count(scmd, &rmd);
-	if (rc)
-		return false;
+	अगर (rc)
+		वापस false;
 
-	/* Check writes only. */
-	if (!rmd.is_write)
-		return false;
+	/* Check ग_लिखोs only. */
+	अगर (!rmd.is_ग_लिखो)
+		वापस false;
 
 	device = scmd->device->hostdata;
 
-	/* Check for RAID 5/6 streams. */
-	if (device->raid_level != SA_RAID_5 && device->raid_level != SA_RAID_6)
-		return false;
+	/* Check क्रम RAID 5/6 streams. */
+	अगर (device->raid_level != SA_RAID_5 && device->raid_level != SA_RAID_6)
+		वापस false;
 
 	/*
-	 * If controller does not support AIO RAID{5,6} writes, need to send
-	 * requests down non-AIO path.
+	 * If controller करोes not support AIO RAIDअणु5,6पूर्ण ग_लिखोs, need to send
+	 * requests करोwn non-AIO path.
 	 */
-	if ((device->raid_level == SA_RAID_5 && !ctrl_info->enable_r5_writes) ||
-		(device->raid_level == SA_RAID_6 && !ctrl_info->enable_r6_writes))
-		return true;
+	अगर ((device->raid_level == SA_RAID_5 && !ctrl_info->enable_r5_ग_लिखोs) ||
+		(device->raid_level == SA_RAID_6 && !ctrl_info->enable_r6_ग_लिखोs))
+		वापस true;
 
 	lru_index = 0;
-	oldest_jiffies = INT_MAX;
-	for (i = 0; i < NUM_STREAMS_PER_LUN; i++) {
+	oldest_jअगरfies = पूर्णांक_उच्च;
+	क्रम (i = 0; i < NUM_STREAMS_PER_LUN; i++) अणु
 		pqi_stream_data = &device->stream_data[i];
 		/*
-		 * Check for adjacent request or request is within
+		 * Check क्रम adjacent request or request is within
 		 * the previous request.
 		 */
-		if ((pqi_stream_data->next_lba &&
+		अगर ((pqi_stream_data->next_lba &&
 			rmd.first_block >= pqi_stream_data->next_lba) &&
 			rmd.first_block <= pqi_stream_data->next_lba +
-				rmd.block_cnt) {
+				rmd.block_cnt) अणु
 			pqi_stream_data->next_lba = rmd.first_block +
 				rmd.block_cnt;
-			pqi_stream_data->last_accessed = jiffies;
-			return true;
-		}
+			pqi_stream_data->last_accessed = jअगरfies;
+			वापस true;
+		पूर्ण
 
 		/* unused entry */
-		if (pqi_stream_data->last_accessed == 0) {
+		अगर (pqi_stream_data->last_accessed == 0) अणु
 			lru_index = i;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		/* Find entry with oldest last accessed time. */
-		if (pqi_stream_data->last_accessed <= oldest_jiffies) {
-			oldest_jiffies = pqi_stream_data->last_accessed;
+		/* Find entry with oldest last accessed समय. */
+		अगर (pqi_stream_data->last_accessed <= oldest_jअगरfies) अणु
+			oldest_jअगरfies = pqi_stream_data->last_accessed;
 			lru_index = i;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Set LRU entry. */
 	pqi_stream_data = &device->stream_data[lru_index];
-	pqi_stream_data->last_accessed = jiffies;
+	pqi_stream_data->last_accessed = jअगरfies;
 	pqi_stream_data->next_lba = rmd.first_block + rmd.block_cnt;
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static int pqi_scsi_queue_command(struct Scsi_Host *shost, struct scsi_cmnd *scmd)
-{
-	int rc;
-	struct pqi_ctrl_info *ctrl_info;
-	struct pqi_scsi_dev *device;
+अटल पूर्णांक pqi_scsi_queue_command(काष्ठा Scsi_Host *shost, काष्ठा scsi_cmnd *scmd)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा pqi_scsi_dev *device;
 	u16 hw_queue;
-	struct pqi_queue_group *queue_group;
+	काष्ठा pqi_queue_group *queue_group;
 	bool raid_bypassed;
 
 	device = scmd->device->hostdata;
 
-	if (!device) {
+	अगर (!device) अणु
 		set_host_byte(scmd, DID_NO_CONNECT);
-		pqi_scsi_done(scmd);
-		return 0;
-	}
+		pqi_scsi_करोne(scmd);
+		वापस 0;
+	पूर्ण
 
 	atomic_inc(&device->scsi_cmds_outstanding);
 
 	ctrl_info = shost_to_hba(shost);
 
-	if (pqi_ctrl_offline(ctrl_info) || pqi_device_in_remove(device)) {
+	अगर (pqi_ctrl_offline(ctrl_info) || pqi_device_in_हटाओ(device)) अणु
 		set_host_byte(scmd, DID_NO_CONNECT);
-		pqi_scsi_done(scmd);
-		return 0;
-	}
+		pqi_scsi_करोne(scmd);
+		वापस 0;
+	पूर्ण
 
-	if (pqi_ctrl_blocked(ctrl_info)) {
+	अगर (pqi_ctrl_blocked(ctrl_info)) अणु
 		rc = SCSI_MLQUEUE_HOST_BUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
-	 * This is necessary because the SML doesn't zero out this field during
+	 * This is necessary because the SML करोesn't zero out this field during
 	 * error recovery.
 	 */
 	scmd->result = 0;
@@ -5723,309 +5724,309 @@ static int pqi_scsi_queue_command(struct Scsi_Host *shost, struct scsi_cmnd *scm
 	hw_queue = pqi_get_hw_queue(ctrl_info, scmd);
 	queue_group = &ctrl_info->queue_groups[hw_queue];
 
-	if (pqi_is_logical_device(device)) {
+	अगर (pqi_is_logical_device(device)) अणु
 		raid_bypassed = false;
-		if (device->raid_bypass_enabled &&
+		अगर (device->raid_bypass_enabled &&
 			pqi_is_bypass_eligible_request(scmd) &&
-			!pqi_is_parity_write_stream(ctrl_info, scmd)) {
+			!pqi_is_parity_ग_लिखो_stream(ctrl_info, scmd)) अणु
 			rc = pqi_raid_bypass_submit_scsi_cmd(ctrl_info, device, scmd, queue_group);
-			if (rc == 0 || rc == SCSI_MLQUEUE_HOST_BUSY) {
+			अगर (rc == 0 || rc == SCSI_MLQUEUE_HOST_BUSY) अणु
 				raid_bypassed = true;
 				atomic_inc(&device->raid_bypass_cnt);
-			}
-		}
-		if (!raid_bypassed)
+			पूर्ण
+		पूर्ण
+		अगर (!raid_bypassed)
 			rc = pqi_raid_submit_scsi_cmd(ctrl_info, device, scmd, queue_group);
-	} else {
-		if (device->aio_enabled)
+	पूर्ण अन्यथा अणु
+		अगर (device->aio_enabled)
 			rc = pqi_aio_submit_scsi_cmd(ctrl_info, device, scmd, queue_group);
-		else
+		अन्यथा
 			rc = pqi_raid_submit_scsi_cmd(ctrl_info, device, scmd, queue_group);
-	}
+	पूर्ण
 
 out:
-	if (rc)
+	अगर (rc)
 		atomic_dec(&device->scsi_cmds_outstanding);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_wait_until_queued_io_drained(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_queue_group *queue_group)
-{
-	unsigned int path;
-	unsigned long flags;
+अटल पूर्णांक pqi_रुको_until_queued_io_drained(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_queue_group *queue_group)
+अणु
+	अचिन्हित पूर्णांक path;
+	अचिन्हित दीर्घ flags;
 	bool list_is_empty;
 
-	for (path = 0; path < 2; path++) {
-		while (1) {
+	क्रम (path = 0; path < 2; path++) अणु
+		जबतक (1) अणु
 			spin_lock_irqsave(
 				&queue_group->submit_lock[path], flags);
 			list_is_empty =
 				list_empty(&queue_group->request_list[path]);
 			spin_unlock_irqrestore(
 				&queue_group->submit_lock[path], flags);
-			if (list_is_empty)
-				break;
+			अगर (list_is_empty)
+				अवरोध;
 			pqi_check_ctrl_health(ctrl_info);
-			if (pqi_ctrl_offline(ctrl_info))
-				return -ENXIO;
+			अगर (pqi_ctrl_offline(ctrl_info))
+				वापस -ENXIO;
 			usleep_range(1000, 2000);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_wait_until_inbound_queues_empty(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	unsigned int i;
-	unsigned int path;
-	struct pqi_queue_group *queue_group;
+अटल पूर्णांक pqi_रुको_until_inbound_queues_empty(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक path;
+	काष्ठा pqi_queue_group *queue_group;
 	pqi_index_t iq_pi;
 	pqi_index_t iq_ci;
 
-	for (i = 0; i < ctrl_info->num_queue_groups; i++) {
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++) अणु
 		queue_group = &ctrl_info->queue_groups[i];
 
-		rc = pqi_wait_until_queued_io_drained(ctrl_info, queue_group);
-		if (rc)
-			return rc;
+		rc = pqi_रुको_until_queued_io_drained(ctrl_info, queue_group);
+		अगर (rc)
+			वापस rc;
 
-		for (path = 0; path < 2; path++) {
+		क्रम (path = 0; path < 2; path++) अणु
 			iq_pi = queue_group->iq_pi_copy[path];
 
-			while (1) {
-				iq_ci = readl(queue_group->iq_ci[path]);
-				if (iq_ci == iq_pi)
-					break;
+			जबतक (1) अणु
+				iq_ci = पढ़ोl(queue_group->iq_ci[path]);
+				अगर (iq_ci == iq_pi)
+					अवरोध;
 				pqi_check_ctrl_health(ctrl_info);
-				if (pqi_ctrl_offline(ctrl_info))
-					return -ENXIO;
+				अगर (pqi_ctrl_offline(ctrl_info))
+					वापस -ENXIO;
 				usleep_range(1000, 2000);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_fail_io_queued_for_device(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	unsigned int i;
-	unsigned int path;
-	struct pqi_queue_group *queue_group;
-	unsigned long flags;
-	struct pqi_io_request *io_request;
-	struct pqi_io_request *next;
-	struct scsi_cmnd *scmd;
-	struct pqi_scsi_dev *scsi_device;
+अटल व्योम pqi_fail_io_queued_क्रम_device(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक path;
+	काष्ठा pqi_queue_group *queue_group;
+	अचिन्हित दीर्घ flags;
+	काष्ठा pqi_io_request *io_request;
+	काष्ठा pqi_io_request *next;
+	काष्ठा scsi_cmnd *scmd;
+	काष्ठा pqi_scsi_dev *scsi_device;
 
-	for (i = 0; i < ctrl_info->num_queue_groups; i++) {
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++) अणु
 		queue_group = &ctrl_info->queue_groups[i];
 
-		for (path = 0; path < 2; path++) {
+		क्रम (path = 0; path < 2; path++) अणु
 			spin_lock_irqsave(
 				&queue_group->submit_lock[path], flags);
 
-			list_for_each_entry_safe(io_request, next,
+			list_क्रम_each_entry_safe(io_request, next,
 				&queue_group->request_list[path],
-				request_list_entry) {
+				request_list_entry) अणु
 
 				scmd = io_request->scmd;
-				if (!scmd)
-					continue;
+				अगर (!scmd)
+					जारी;
 
 				scsi_device = scmd->device->hostdata;
-				if (scsi_device != device)
-					continue;
+				अगर (scsi_device != device)
+					जारी;
 
 				list_del(&io_request->request_list_entry);
 				set_host_byte(scmd, DID_RESET);
-				pqi_free_io_request(io_request);
+				pqi_मुक्त_io_request(io_request);
 				scsi_dma_unmap(scmd);
-				pqi_scsi_done(scmd);
-			}
+				pqi_scsi_करोne(scmd);
+			पूर्ण
 
 			spin_unlock_irqrestore(
 				&queue_group->submit_lock[path], flags);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define PQI_PENDING_IO_WARNING_TIMEOUT_SECS	10
+#घोषणा PQI_PENDING_IO_WARNING_TIMEOUT_SECS	10
 
-static int pqi_device_wait_for_pending_io(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device, unsigned long timeout_msecs)
-{
-	int cmds_outstanding;
-	unsigned long start_jiffies;
-	unsigned long warning_timeout;
-	unsigned long msecs_waiting;
+अटल पूर्णांक pqi_device_रुको_क्रम_pending_io(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device, अचिन्हित दीर्घ समयout_msecs)
+अणु
+	पूर्णांक cmds_outstanding;
+	अचिन्हित दीर्घ start_jअगरfies;
+	अचिन्हित दीर्घ warning_समयout;
+	अचिन्हित दीर्घ msecs_रुकोing;
 
-	start_jiffies = jiffies;
-	warning_timeout = (PQI_PENDING_IO_WARNING_TIMEOUT_SECS * PQI_HZ) + start_jiffies;
+	start_jअगरfies = jअगरfies;
+	warning_समयout = (PQI_PENDING_IO_WARNING_TIMEOUT_SECS * PQI_HZ) + start_jअगरfies;
 
-	while ((cmds_outstanding = atomic_read(&device->scsi_cmds_outstanding)) > 0) {
+	जबतक ((cmds_outstanding = atomic_पढ़ो(&device->scsi_cmds_outstanding)) > 0) अणु
 		pqi_check_ctrl_health(ctrl_info);
-		if (pqi_ctrl_offline(ctrl_info))
-			return -ENXIO;
-		msecs_waiting = jiffies_to_msecs(jiffies - start_jiffies);
-		if (msecs_waiting > timeout_msecs) {
+		अगर (pqi_ctrl_offline(ctrl_info))
+			वापस -ENXIO;
+		msecs_रुकोing = jअगरfies_to_msecs(jअगरfies - start_jअगरfies);
+		अगर (msecs_रुकोing > समयout_msecs) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"scsi %d:%d:%d:%d: timed out after %lu seconds waiting for %d outstanding command(s)\n",
 				ctrl_info->scsi_host->host_no, device->bus, device->target,
-				device->lun, msecs_waiting / 1000, cmds_outstanding);
-			return -ETIMEDOUT;
-		}
-		if (time_after(jiffies, warning_timeout)) {
+				device->lun, msecs_रुकोing / 1000, cmds_outstanding);
+			वापस -ETIMEDOUT;
+		पूर्ण
+		अगर (समय_after(jअगरfies, warning_समयout)) अणु
 			dev_warn(&ctrl_info->pci_dev->dev,
 				"scsi %d:%d:%d:%d: waiting %lu seconds for %d outstanding command(s)\n",
 				ctrl_info->scsi_host->host_no, device->bus, device->target,
-				device->lun, msecs_waiting / 1000, cmds_outstanding);
-			warning_timeout = (PQI_PENDING_IO_WARNING_TIMEOUT_SECS * PQI_HZ) + jiffies;
-		}
+				device->lun, msecs_रुकोing / 1000, cmds_outstanding);
+			warning_समयout = (PQI_PENDING_IO_WARNING_TIMEOUT_SECS * PQI_HZ) + jअगरfies;
+		पूर्ण
 		usleep_range(1000, 2000);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_lun_reset_complete(struct pqi_io_request *io_request,
-	void *context)
-{
-	struct completion *waiting = context;
+अटल व्योम pqi_lun_reset_complete(काष्ठा pqi_io_request *io_request,
+	व्योम *context)
+अणु
+	काष्ठा completion *रुकोing = context;
 
-	complete(waiting);
-}
+	complete(रुकोing);
+पूर्ण
 
-#define PQI_LUN_RESET_POLL_COMPLETION_SECS	10
+#घोषणा PQI_LUN_RESET_POLL_COMPLETION_SECS	10
 
-static int pqi_wait_for_lun_reset_completion(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device, struct completion *wait)
-{
-	int rc;
-	unsigned int wait_secs;
+अटल पूर्णांक pqi_रुको_क्रम_lun_reset_completion(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device, काष्ठा completion *रुको)
+अणु
+	पूर्णांक rc;
+	अचिन्हित पूर्णांक रुको_secs;
 
-	wait_secs = 0;
+	रुको_secs = 0;
 
-	while (1) {
-		if (wait_for_completion_io_timeout(wait,
-			PQI_LUN_RESET_POLL_COMPLETION_SECS * PQI_HZ)) {
+	जबतक (1) अणु
+		अगर (रुको_क्रम_completion_io_समयout(रुको,
+			PQI_LUN_RESET_POLL_COMPLETION_SECS * PQI_HZ)) अणु
 			rc = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		pqi_check_ctrl_health(ctrl_info);
-		if (pqi_ctrl_offline(ctrl_info)) {
+		अगर (pqi_ctrl_offline(ctrl_info)) अणु
 			rc = -ENXIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		wait_secs += PQI_LUN_RESET_POLL_COMPLETION_SECS;
+		रुको_secs += PQI_LUN_RESET_POLL_COMPLETION_SECS;
 
 		dev_warn(&ctrl_info->pci_dev->dev,
 			"scsi %d:%d:%d:%d: waiting %u seconds for LUN reset to complete\n",
 			ctrl_info->scsi_host->host_no, device->bus, device->target, device->lun,
-			wait_secs);
-	}
+			रुको_secs);
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#define PQI_LUN_RESET_FIRMWARE_TIMEOUT_SECS	30
+#घोषणा PQI_LUN_RESET_FIRMWARE_TIMEOUT_SECS	30
 
-static int pqi_lun_reset(struct pqi_ctrl_info *ctrl_info, struct pqi_scsi_dev *device)
-{
-	int rc;
-	struct pqi_io_request *io_request;
-	DECLARE_COMPLETION_ONSTACK(wait);
-	struct pqi_task_management_request *request;
+अटल पूर्णांक pqi_lun_reset(काष्ठा pqi_ctrl_info *ctrl_info, काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_io_request *io_request;
+	DECLARE_COMPLETION_ONSTACK(रुको);
+	काष्ठा pqi_task_management_request *request;
 
 	io_request = pqi_alloc_io_request(ctrl_info);
 	io_request->io_complete_callback = pqi_lun_reset_complete;
-	io_request->context = &wait;
+	io_request->context = &रुको;
 
 	request = io_request->iu;
-	memset(request, 0, sizeof(*request));
+	स_रखो(request, 0, माप(*request));
 
 	request->header.iu_type = PQI_REQUEST_IU_TASK_MANAGEMENT;
-	put_unaligned_le16(sizeof(*request) - PQI_REQUEST_HEADER_LENGTH,
+	put_unaligned_le16(माप(*request) - PQI_REQUEST_HEADER_LENGTH,
 		&request->header.iu_length);
 	put_unaligned_le16(io_request->index, &request->request_id);
-	memcpy(request->lun_number, device->scsi3addr,
-		sizeof(request->lun_number));
+	स_नकल(request->lun_number, device->scsi3addr,
+		माप(request->lun_number));
 	request->task_management_function = SOP_TASK_MANAGEMENT_LUN_RESET;
-	if (ctrl_info->tmf_iu_timeout_supported)
-		put_unaligned_le16(PQI_LUN_RESET_FIRMWARE_TIMEOUT_SECS, &request->timeout);
+	अगर (ctrl_info->पंचांगf_iu_समयout_supported)
+		put_unaligned_le16(PQI_LUN_RESET_FIRMWARE_TIMEOUT_SECS, &request->समयout);
 
 	pqi_start_io(ctrl_info, &ctrl_info->queue_groups[PQI_DEFAULT_QUEUE_GROUP], RAID_PATH,
 		io_request);
 
-	rc = pqi_wait_for_lun_reset_completion(ctrl_info, device, &wait);
-	if (rc == 0)
+	rc = pqi_रुको_क्रम_lun_reset_completion(ctrl_info, device, &रुको);
+	अगर (rc == 0)
 		rc = io_request->status;
 
-	pqi_free_io_request(io_request);
+	pqi_मुक्त_io_request(io_request);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-#define PQI_LUN_RESET_RETRIES				3
-#define PQI_LUN_RESET_RETRY_INTERVAL_MSECS		(10 * 1000)
-#define PQI_LUN_RESET_PENDING_IO_TIMEOUT_MSECS		(10 * 60 * 1000)
-#define PQI_LUN_RESET_FAILED_PENDING_IO_TIMEOUT_MSECS	(2 * 60 * 1000)
+#घोषणा PQI_LUN_RESET_RETRIES				3
+#घोषणा PQI_LUN_RESET_RETRY_INTERVAL_MSECS		(10 * 1000)
+#घोषणा PQI_LUN_RESET_PENDING_IO_TIMEOUT_MSECS		(10 * 60 * 1000)
+#घोषणा PQI_LUN_RESET_FAILED_PENDING_IO_TIMEOUT_MSECS	(2 * 60 * 1000)
 
-static int pqi_lun_reset_with_retries(struct pqi_ctrl_info *ctrl_info, struct pqi_scsi_dev *device)
-{
-	int reset_rc;
-	int wait_rc;
-	unsigned int retries;
-	unsigned long timeout_msecs;
+अटल पूर्णांक pqi_lun_reset_with_retries(काष्ठा pqi_ctrl_info *ctrl_info, काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक reset_rc;
+	पूर्णांक रुको_rc;
+	अचिन्हित पूर्णांक retries;
+	अचिन्हित दीर्घ समयout_msecs;
 
-	for (retries = 0;;) {
+	क्रम (retries = 0;;) अणु
 		reset_rc = pqi_lun_reset(ctrl_info, device);
-		if (reset_rc == 0 || ++retries > PQI_LUN_RESET_RETRIES)
-			break;
+		अगर (reset_rc == 0 || ++retries > PQI_LUN_RESET_RETRIES)
+			अवरोध;
 		msleep(PQI_LUN_RESET_RETRY_INTERVAL_MSECS);
-	}
+	पूर्ण
 
-	timeout_msecs = reset_rc ? PQI_LUN_RESET_FAILED_PENDING_IO_TIMEOUT_MSECS :
+	समयout_msecs = reset_rc ? PQI_LUN_RESET_FAILED_PENDING_IO_TIMEOUT_MSECS :
 		PQI_LUN_RESET_PENDING_IO_TIMEOUT_MSECS;
 
-	wait_rc = pqi_device_wait_for_pending_io(ctrl_info, device, timeout_msecs);
-	if (wait_rc && reset_rc == 0)
-		reset_rc = wait_rc;
+	रुको_rc = pqi_device_रुको_क्रम_pending_io(ctrl_info, device, समयout_msecs);
+	अगर (रुको_rc && reset_rc == 0)
+		reset_rc = रुको_rc;
 
-	return reset_rc == 0 ? SUCCESS : FAILED;
-}
+	वापस reset_rc == 0 ? SUCCESS : FAILED;
+पूर्ण
 
-static int pqi_device_reset(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_scsi_dev *device)
-{
-	int rc;
+अटल पूर्णांक pqi_device_reset(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_scsi_dev *device)
+अणु
+	पूर्णांक rc;
 
 	pqi_ctrl_block_requests(ctrl_info);
-	pqi_ctrl_wait_until_quiesced(ctrl_info);
-	pqi_fail_io_queued_for_device(ctrl_info, device);
-	rc = pqi_wait_until_inbound_queues_empty(ctrl_info);
-	if (rc)
+	pqi_ctrl_रुको_until_quiesced(ctrl_info);
+	pqi_fail_io_queued_क्रम_device(ctrl_info, device);
+	rc = pqi_रुको_until_inbound_queues_empty(ctrl_info);
+	अगर (rc)
 		rc = FAILED;
-	else
+	अन्यथा
 		rc = pqi_lun_reset_with_retries(ctrl_info, device);
 	pqi_ctrl_unblock_requests(ctrl_info);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_eh_device_reset_handler(struct scsi_cmnd *scmd)
-{
-	int rc;
-	struct Scsi_Host *shost;
-	struct pqi_ctrl_info *ctrl_info;
-	struct pqi_scsi_dev *device;
+अटल पूर्णांक pqi_eh_device_reset_handler(काष्ठा scsi_cmnd *scmd)
+अणु
+	पूर्णांक rc;
+	काष्ठा Scsi_Host *shost;
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा pqi_scsi_dev *device;
 
 	shost = scmd->device->host;
 	ctrl_info = shost_to_hba(shost);
@@ -6038,9 +6039,9 @@ static int pqi_eh_device_reset_handler(struct scsi_cmnd *scmd)
 		shost->host_no, device->bus, device->target, device->lun);
 
 	pqi_check_ctrl_health(ctrl_info);
-	if (pqi_ctrl_offline(ctrl_info))
+	अगर (pqi_ctrl_offline(ctrl_info))
 		rc = FAILED;
-	else
+	अन्यथा
 		rc = pqi_device_reset(ctrl_info, device);
 
 	dev_err(&ctrl_info->pci_dev->dev,
@@ -6050,607 +6051,607 @@ static int pqi_eh_device_reset_handler(struct scsi_cmnd *scmd)
 
 	mutex_unlock(&ctrl_info->lun_reset_mutex);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_slave_alloc(struct scsi_device *sdev)
-{
-	struct pqi_scsi_dev *device;
-	unsigned long flags;
-	struct pqi_ctrl_info *ctrl_info;
-	struct scsi_target *starget;
-	struct sas_rphy *rphy;
+अटल पूर्णांक pqi_slave_alloc(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा pqi_scsi_dev *device;
+	अचिन्हित दीर्घ flags;
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा scsi_target *starget;
+	काष्ठा sas_rphy *rphy;
 
 	ctrl_info = shost_to_hba(sdev->host);
 
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
-	if (sdev_channel(sdev) == PQI_PHYSICAL_DEVICE_BUS) {
+	अगर (sdev_channel(sdev) == PQI_PHYSICAL_DEVICE_BUS) अणु
 		starget = scsi_target(sdev);
 		rphy = target_to_rphy(starget);
 		device = pqi_find_device_by_sas_rphy(ctrl_info, rphy);
-		if (device) {
+		अगर (device) अणु
 			device->target = sdev_id(sdev);
 			device->lun = sdev->lun;
 			device->target_lun_valid = true;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		device = pqi_find_scsi_dev(ctrl_info, sdev_channel(sdev),
 			sdev_id(sdev), sdev->lun);
-	}
+	पूर्ण
 
-	if (device) {
+	अगर (device) अणु
 		sdev->hostdata = device;
 		device->sdev = sdev;
-		if (device->queue_depth) {
+		अगर (device->queue_depth) अणु
 			device->advertised_queue_depth = device->queue_depth;
 			scsi_change_queue_depth(sdev,
 				device->advertised_queue_depth);
-		}
-		if (pqi_is_logical_device(device)) {
-			pqi_disable_write_same(sdev);
-		} else {
+		पूर्ण
+		अगर (pqi_is_logical_device(device)) अणु
+			pqi_disable_ग_लिखो_same(sdev);
+		पूर्ण अन्यथा अणु
 			sdev->allow_restart = 1;
-			if (device->device_type == SA_DEVICE_TYPE_NVME)
-				pqi_disable_write_same(sdev);
-		}
-	}
+			अगर (device->device_type == SA_DEVICE_TYPE_NVME)
+				pqi_disable_ग_लिखो_same(sdev);
+		पूर्ण
+	पूर्ण
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_map_queues(struct Scsi_Host *shost)
-{
-	struct pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
+अटल पूर्णांक pqi_map_queues(काष्ठा Scsi_Host *shost)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
 
-	return blk_mq_pci_map_queues(&shost->tag_set.map[HCTX_TYPE_DEFAULT],
+	वापस blk_mq_pci_map_queues(&shost->tag_set.map[HCTX_TYPE_DEFAULT],
 					ctrl_info->pci_dev, 0);
-}
+पूर्ण
 
-static int pqi_slave_configure(struct scsi_device *sdev)
-{
-	struct pqi_scsi_dev *device;
+अटल पूर्णांक pqi_slave_configure(काष्ठा scsi_device *sdev)
+अणु
+	काष्ठा pqi_scsi_dev *device;
 
 	device = sdev->hostdata;
 	device->devtype = sdev->type;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_slave_destroy(struct scsi_device *sdev)
-{
-	unsigned long flags;
-	struct pqi_scsi_dev *device;
-	struct pqi_ctrl_info *ctrl_info;
+अटल व्योम pqi_slave_destroy(काष्ठा scsi_device *sdev)
+अणु
+	अचिन्हित दीर्घ flags;
+	काष्ठा pqi_scsi_dev *device;
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	ctrl_info = shost_to_hba(sdev->host);
 
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
 	device = sdev->hostdata;
-	if (device) {
-		sdev->hostdata = NULL;
-		if (!list_empty(&device->scsi_device_list_entry))
+	अगर (device) अणु
+		sdev->hostdata = शून्य;
+		अगर (!list_empty(&device->scsi_device_list_entry))
 			list_del(&device->scsi_device_list_entry);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	if (device) {
+	अगर (device) अणु
 		pqi_dev_info(ctrl_info, "removed", device);
-		pqi_free_device(device);
-	}
-}
+		pqi_मुक्त_device(device);
+	पूर्ण
+पूर्ण
 
-static int pqi_getpciinfo_ioctl(struct pqi_ctrl_info *ctrl_info, void __user *arg)
-{
-	struct pci_dev *pci_dev;
-	u32 subsystem_vendor;
-	u32 subsystem_device;
-	cciss_pci_info_struct pciinfo;
+अटल पूर्णांक pqi_getpciinfo_ioctl(काष्ठा pqi_ctrl_info *ctrl_info, व्योम __user *arg)
+अणु
+	काष्ठा pci_dev *pci_dev;
+	u32 subप्रणाली_venकरोr;
+	u32 subप्रणाली_device;
+	cciss_pci_info_काष्ठा pciinfo;
 
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 
 	pci_dev = ctrl_info->pci_dev;
 
-	pciinfo.domain = pci_domain_nr(pci_dev->bus);
+	pciinfo.करोमुख्य = pci_करोमुख्य_nr(pci_dev->bus);
 	pciinfo.bus = pci_dev->bus->number;
 	pciinfo.dev_fn = pci_dev->devfn;
-	subsystem_vendor = pci_dev->subsystem_vendor;
-	subsystem_device = pci_dev->subsystem_device;
-	pciinfo.board_id = ((subsystem_device << 16) & 0xffff0000) | subsystem_vendor;
+	subप्रणाली_venकरोr = pci_dev->subप्रणाली_venकरोr;
+	subप्रणाली_device = pci_dev->subप्रणाली_device;
+	pciinfo.board_id = ((subप्रणाली_device << 16) & 0xffff0000) | subप्रणाली_venकरोr;
 
-	if (copy_to_user(arg, &pciinfo, sizeof(pciinfo)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &pciinfo, माप(pciinfo)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pqi_getdrivver_ioctl(void __user *arg)
-{
+अटल पूर्णांक pqi_getdrivver_ioctl(व्योम __user *arg)
+अणु
 	u32 version;
 
-	if (!arg)
-		return -EINVAL;
+	अगर (!arg)
+		वापस -EINVAL;
 
 	version = (DRIVER_MAJOR << 28) | (DRIVER_MINOR << 24) |
 		(DRIVER_RELEASE << 16) | DRIVER_REVISION;
 
-	if (copy_to_user(arg, &version, sizeof(version)))
-		return -EFAULT;
+	अगर (copy_to_user(arg, &version, माप(version)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-struct ciss_error_info {
+काष्ठा ciss_error_info अणु
 	u8	scsi_status;
-	int	command_status;
-	size_t	sense_data_length;
-};
+	पूर्णांक	command_status;
+	माप_प्रकार	sense_data_length;
+पूर्ण;
 
-static void pqi_error_info_to_ciss(struct pqi_raid_error_info *pqi_error_info,
-	struct ciss_error_info *ciss_error_info)
-{
-	int ciss_cmd_status;
-	size_t sense_data_length;
+अटल व्योम pqi_error_info_to_ciss(काष्ठा pqi_raid_error_info *pqi_error_info,
+	काष्ठा ciss_error_info *ciss_error_info)
+अणु
+	पूर्णांक ciss_cmd_status;
+	माप_प्रकार sense_data_length;
 
-	switch (pqi_error_info->data_out_result) {
-	case PQI_DATA_IN_OUT_GOOD:
+	चयन (pqi_error_info->data_out_result) अणु
+	हाल PQI_DATA_IN_OUT_GOOD:
 		ciss_cmd_status = CISS_CMD_STATUS_SUCCESS;
-		break;
-	case PQI_DATA_IN_OUT_UNDERFLOW:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_UNDERFLOW:
 		ciss_cmd_status = CISS_CMD_STATUS_DATA_UNDERRUN;
-		break;
-	case PQI_DATA_IN_OUT_BUFFER_OVERFLOW:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_BUFFER_OVERFLOW:
 		ciss_cmd_status = CISS_CMD_STATUS_DATA_OVERRUN;
-		break;
-	case PQI_DATA_IN_OUT_PROTOCOL_ERROR:
-	case PQI_DATA_IN_OUT_BUFFER_ERROR:
-	case PQI_DATA_IN_OUT_BUFFER_OVERFLOW_DESCRIPTOR_AREA:
-	case PQI_DATA_IN_OUT_BUFFER_OVERFLOW_BRIDGE:
-	case PQI_DATA_IN_OUT_ERROR:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_PROTOCOL_ERROR:
+	हाल PQI_DATA_IN_OUT_BUFFER_ERROR:
+	हाल PQI_DATA_IN_OUT_BUFFER_OVERFLOW_DESCRIPTOR_AREA:
+	हाल PQI_DATA_IN_OUT_BUFFER_OVERFLOW_BRIDGE:
+	हाल PQI_DATA_IN_OUT_ERROR:
 		ciss_cmd_status = CISS_CMD_STATUS_PROTOCOL_ERROR;
-		break;
-	case PQI_DATA_IN_OUT_HARDWARE_ERROR:
-	case PQI_DATA_IN_OUT_PCIE_FABRIC_ERROR:
-	case PQI_DATA_IN_OUT_PCIE_COMPLETION_TIMEOUT:
-	case PQI_DATA_IN_OUT_PCIE_COMPLETER_ABORT_RECEIVED:
-	case PQI_DATA_IN_OUT_PCIE_UNSUPPORTED_REQUEST_RECEIVED:
-	case PQI_DATA_IN_OUT_PCIE_ECRC_CHECK_FAILED:
-	case PQI_DATA_IN_OUT_PCIE_UNSUPPORTED_REQUEST:
-	case PQI_DATA_IN_OUT_PCIE_ACS_VIOLATION:
-	case PQI_DATA_IN_OUT_PCIE_TLP_PREFIX_BLOCKED:
-	case PQI_DATA_IN_OUT_PCIE_POISONED_MEMORY_READ:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_HARDWARE_ERROR:
+	हाल PQI_DATA_IN_OUT_PCIE_FABRIC_ERROR:
+	हाल PQI_DATA_IN_OUT_PCIE_COMPLETION_TIMEOUT:
+	हाल PQI_DATA_IN_OUT_PCIE_COMPLETER_ABORT_RECEIVED:
+	हाल PQI_DATA_IN_OUT_PCIE_UNSUPPORTED_REQUEST_RECEIVED:
+	हाल PQI_DATA_IN_OUT_PCIE_ECRC_CHECK_FAILED:
+	हाल PQI_DATA_IN_OUT_PCIE_UNSUPPORTED_REQUEST:
+	हाल PQI_DATA_IN_OUT_PCIE_ACS_VIOLATION:
+	हाल PQI_DATA_IN_OUT_PCIE_TLP_PREFIX_BLOCKED:
+	हाल PQI_DATA_IN_OUT_PCIE_POISONED_MEMORY_READ:
 		ciss_cmd_status = CISS_CMD_STATUS_HARDWARE_ERROR;
-		break;
-	case PQI_DATA_IN_OUT_UNSOLICITED_ABORT:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_UNSOLICITED_ABORT:
 		ciss_cmd_status = CISS_CMD_STATUS_UNSOLICITED_ABORT;
-		break;
-	case PQI_DATA_IN_OUT_ABORTED:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_ABORTED:
 		ciss_cmd_status = CISS_CMD_STATUS_ABORTED;
-		break;
-	case PQI_DATA_IN_OUT_TIMEOUT:
+		अवरोध;
+	हाल PQI_DATA_IN_OUT_TIMEOUT:
 		ciss_cmd_status = CISS_CMD_STATUS_TIMEOUT;
-		break;
-	default:
+		अवरोध;
+	शेष:
 		ciss_cmd_status = CISS_CMD_STATUS_TARGET_STATUS;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	sense_data_length =
 		get_unaligned_le16(&pqi_error_info->sense_data_length);
-	if (sense_data_length == 0)
+	अगर (sense_data_length == 0)
 		sense_data_length =
 		get_unaligned_le16(&pqi_error_info->response_data_length);
-	if (sense_data_length)
-		if (sense_data_length > sizeof(pqi_error_info->data))
-			sense_data_length = sizeof(pqi_error_info->data);
+	अगर (sense_data_length)
+		अगर (sense_data_length > माप(pqi_error_info->data))
+			sense_data_length = माप(pqi_error_info->data);
 
 	ciss_error_info->scsi_status = pqi_error_info->status;
 	ciss_error_info->command_status = ciss_cmd_status;
 	ciss_error_info->sense_data_length = sense_data_length;
-}
+पूर्ण
 
-static int pqi_passthru_ioctl(struct pqi_ctrl_info *ctrl_info, void __user *arg)
-{
-	int rc;
-	char *kernel_buffer = NULL;
+अटल पूर्णांक pqi_passthru_ioctl(काष्ठा pqi_ctrl_info *ctrl_info, व्योम __user *arg)
+अणु
+	पूर्णांक rc;
+	अक्षर *kernel_buffer = शून्य;
 	u16 iu_length;
-	size_t sense_data_length;
-	IOCTL_Command_struct iocommand;
-	struct pqi_raid_path_request request;
-	struct pqi_raid_error_info pqi_error_info;
-	struct ciss_error_info ciss_error_info;
+	माप_प्रकार sense_data_length;
+	IOCTL_Command_काष्ठा iocommand;
+	काष्ठा pqi_raid_path_request request;
+	काष्ठा pqi_raid_error_info pqi_error_info;
+	काष्ठा ciss_error_info ciss_error_info;
 
-	if (pqi_ctrl_offline(ctrl_info))
-		return -ENXIO;
-	if (pqi_ofa_in_progress(ctrl_info) && pqi_ctrl_blocked(ctrl_info))
-		return -EBUSY;
-	if (!arg)
-		return -EINVAL;
-	if (!capable(CAP_SYS_RAWIO))
-		return -EPERM;
-	if (copy_from_user(&iocommand, arg, sizeof(iocommand)))
-		return -EFAULT;
-	if (iocommand.buf_size < 1 &&
+	अगर (pqi_ctrl_offline(ctrl_info))
+		वापस -ENXIO;
+	अगर (pqi_ofa_in_progress(ctrl_info) && pqi_ctrl_blocked(ctrl_info))
+		वापस -EBUSY;
+	अगर (!arg)
+		वापस -EINVAL;
+	अगर (!capable(CAP_SYS_RAWIO))
+		वापस -EPERM;
+	अगर (copy_from_user(&iocommand, arg, माप(iocommand)))
+		वापस -EFAULT;
+	अगर (iocommand.buf_size < 1 &&
 		iocommand.Request.Type.Direction != XFER_NONE)
-		return -EINVAL;
-	if (iocommand.Request.CDBLen > sizeof(request.cdb))
-		return -EINVAL;
-	if (iocommand.Request.Type.Type != TYPE_CMD)
-		return -EINVAL;
+		वापस -EINVAL;
+	अगर (iocommand.Request.CDBLen > माप(request.cdb))
+		वापस -EINVAL;
+	अगर (iocommand.Request.Type.Type != TYPE_CMD)
+		वापस -EINVAL;
 
-	switch (iocommand.Request.Type.Direction) {
-	case XFER_NONE:
-	case XFER_WRITE:
-	case XFER_READ:
-	case XFER_READ | XFER_WRITE:
-		break;
-	default:
-		return -EINVAL;
-	}
+	चयन (iocommand.Request.Type.Direction) अणु
+	हाल XFER_NONE:
+	हाल XFER_WRITE:
+	हाल XFER_READ:
+	हाल XFER_READ | XFER_WRITE:
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
-	if (iocommand.buf_size > 0) {
-		kernel_buffer = kmalloc(iocommand.buf_size, GFP_KERNEL);
-		if (!kernel_buffer)
-			return -ENOMEM;
-		if (iocommand.Request.Type.Direction & XFER_WRITE) {
-			if (copy_from_user(kernel_buffer, iocommand.buf,
-				iocommand.buf_size)) {
+	अगर (iocommand.buf_size > 0) अणु
+		kernel_buffer = kदो_स्मृति(iocommand.buf_size, GFP_KERNEL);
+		अगर (!kernel_buffer)
+			वापस -ENOMEM;
+		अगर (iocommand.Request.Type.Direction & XFER_WRITE) अणु
+			अगर (copy_from_user(kernel_buffer, iocommand.buf,
+				iocommand.buf_size)) अणु
 				rc = -EFAULT;
-				goto out;
-			}
-		} else {
-			memset(kernel_buffer, 0, iocommand.buf_size);
-		}
-	}
+				जाओ out;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			स_रखो(kernel_buffer, 0, iocommand.buf_size);
+		पूर्ण
+	पूर्ण
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 
 	request.header.iu_type = PQI_REQUEST_IU_RAID_PATH_IO;
-	iu_length = offsetof(struct pqi_raid_path_request, sg_descriptors) -
+	iu_length = दुरत्व(काष्ठा pqi_raid_path_request, sg_descriptors) -
 		PQI_REQUEST_HEADER_LENGTH;
-	memcpy(request.lun_number, iocommand.LUN_info.LunAddrBytes,
-		sizeof(request.lun_number));
-	memcpy(request.cdb, iocommand.Request.CDB, iocommand.Request.CDBLen);
+	स_नकल(request.lun_number, iocommand.LUN_info.LunAddrBytes,
+		माप(request.lun_number));
+	स_नकल(request.cdb, iocommand.Request.CDB, iocommand.Request.CDBLen);
 	request.additional_cdb_bytes_usage = SOP_ADDITIONAL_CDB_BYTES_0;
 
-	switch (iocommand.Request.Type.Direction) {
-	case XFER_NONE:
-		request.data_direction = SOP_NO_DIRECTION_FLAG;
-		break;
-	case XFER_WRITE:
+	चयन (iocommand.Request.Type.Direction) अणु
+	हाल XFER_NONE:
+		request.data_direction = SOP_NO_सूचीECTION_FLAG;
+		अवरोध;
+	हाल XFER_WRITE:
 		request.data_direction = SOP_WRITE_FLAG;
-		break;
-	case XFER_READ:
+		अवरोध;
+	हाल XFER_READ:
 		request.data_direction = SOP_READ_FLAG;
-		break;
-	case XFER_READ | XFER_WRITE:
-		request.data_direction = SOP_BIDIRECTIONAL;
-		break;
-	}
+		अवरोध;
+	हाल XFER_READ | XFER_WRITE:
+		request.data_direction = SOP_BIसूचीECTIONAL;
+		अवरोध;
+	पूर्ण
 
 	request.task_attribute = SOP_TASK_ATTRIBUTE_SIMPLE;
 
-	if (iocommand.buf_size > 0) {
+	अगर (iocommand.buf_size > 0) अणु
 		put_unaligned_le32(iocommand.buf_size, &request.buffer_length);
 
 		rc = pqi_map_single(ctrl_info->pci_dev,
 			&request.sg_descriptors[0], kernel_buffer,
-			iocommand.buf_size, DMA_BIDIRECTIONAL);
-		if (rc)
-			goto out;
+			iocommand.buf_size, DMA_BIसूचीECTIONAL);
+		अगर (rc)
+			जाओ out;
 
-		iu_length += sizeof(request.sg_descriptors[0]);
-	}
+		iu_length += माप(request.sg_descriptors[0]);
+	पूर्ण
 
 	put_unaligned_le16(iu_length, &request.header.iu_length);
 
-	if (ctrl_info->raid_iu_timeout_supported)
-		put_unaligned_le32(iocommand.Request.Timeout, &request.timeout);
+	अगर (ctrl_info->raid_iu_समयout_supported)
+		put_unaligned_le32(iocommand.Request.Timeout, &request.समयout);
 
 	rc = pqi_submit_raid_request_synchronous(ctrl_info, &request.header,
 		PQI_SYNC_FLAGS_INTERRUPTABLE, &pqi_error_info);
 
-	if (iocommand.buf_size > 0)
+	अगर (iocommand.buf_size > 0)
 		pqi_pci_unmap(ctrl_info->pci_dev, request.sg_descriptors, 1,
-			DMA_BIDIRECTIONAL);
+			DMA_BIसूचीECTIONAL);
 
-	memset(&iocommand.error_info, 0, sizeof(iocommand.error_info));
+	स_रखो(&iocommand.error_info, 0, माप(iocommand.error_info));
 
-	if (rc == 0) {
+	अगर (rc == 0) अणु
 		pqi_error_info_to_ciss(&pqi_error_info, &ciss_error_info);
 		iocommand.error_info.ScsiStatus = ciss_error_info.scsi_status;
 		iocommand.error_info.CommandStatus =
 			ciss_error_info.command_status;
 		sense_data_length = ciss_error_info.sense_data_length;
-		if (sense_data_length) {
-			if (sense_data_length >
-				sizeof(iocommand.error_info.SenseInfo))
+		अगर (sense_data_length) अणु
+			अगर (sense_data_length >
+				माप(iocommand.error_info.SenseInfo))
 				sense_data_length =
-					sizeof(iocommand.error_info.SenseInfo);
-			memcpy(iocommand.error_info.SenseInfo,
+					माप(iocommand.error_info.SenseInfo);
+			स_नकल(iocommand.error_info.SenseInfo,
 				pqi_error_info.data, sense_data_length);
 			iocommand.error_info.SenseLen = sense_data_length;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (copy_to_user(arg, &iocommand, sizeof(iocommand))) {
+	अगर (copy_to_user(arg, &iocommand, माप(iocommand))) अणु
 		rc = -EFAULT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (rc == 0 && iocommand.buf_size > 0 &&
-		(iocommand.Request.Type.Direction & XFER_READ)) {
-		if (copy_to_user(iocommand.buf, kernel_buffer,
-			iocommand.buf_size)) {
+	अगर (rc == 0 && iocommand.buf_size > 0 &&
+		(iocommand.Request.Type.Direction & XFER_READ)) अणु
+		अगर (copy_to_user(iocommand.buf, kernel_buffer,
+			iocommand.buf_size)) अणु
 			rc = -EFAULT;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 out:
-	kfree(kernel_buffer);
+	kमुक्त(kernel_buffer);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_ioctl(struct scsi_device *sdev, unsigned int cmd,
-		     void __user *arg)
-{
-	int rc;
-	struct pqi_ctrl_info *ctrl_info;
+अटल पूर्णांक pqi_ioctl(काष्ठा scsi_device *sdev, अचिन्हित पूर्णांक cmd,
+		     व्योम __user *arg)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	ctrl_info = shost_to_hba(sdev->host);
 
-	switch (cmd) {
-	case CCISS_DEREGDISK:
-	case CCISS_REGNEWDISK:
-	case CCISS_REGNEWD:
+	चयन (cmd) अणु
+	हाल CCISS_DEREGDISK:
+	हाल CCISS_REGNEWDISK:
+	हाल CCISS_REGNEWD:
 		rc = pqi_scan_scsi_devices(ctrl_info);
-		break;
-	case CCISS_GETPCIINFO:
+		अवरोध;
+	हाल CCISS_GETPCIINFO:
 		rc = pqi_getpciinfo_ioctl(ctrl_info, arg);
-		break;
-	case CCISS_GETDRIVVER:
+		अवरोध;
+	हाल CCISS_GETDRIVVER:
 		rc = pqi_getdrivver_ioctl(arg);
-		break;
-	case CCISS_PASSTHRU:
+		अवरोध;
+	हाल CCISS_PASSTHRU:
 		rc = pqi_passthru_ioctl(ctrl_info, arg);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		rc = -EINVAL;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t pqi_firmware_version_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct Scsi_Host *shost;
-	struct pqi_ctrl_info *ctrl_info;
-
-	shost = class_to_shost(dev);
-	ctrl_info = shost_to_hba(shost);
-
-	return scnprintf(buffer, PAGE_SIZE, "%s\n", ctrl_info->firmware_version);
-}
-
-static ssize_t pqi_driver_version_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	return scnprintf(buffer, PAGE_SIZE, "%s\n", DRIVER_VERSION BUILD_TIMESTAMP);
-}
-
-static ssize_t pqi_serial_number_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct Scsi_Host *shost;
-	struct pqi_ctrl_info *ctrl_info;
+अटल sमाप_प्रकार pqi_firmware_version_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा Scsi_Host *shost;
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	shost = class_to_shost(dev);
 	ctrl_info = shost_to_hba(shost);
 
-	return scnprintf(buffer, PAGE_SIZE, "%s\n", ctrl_info->serial_number);
-}
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "%s\n", ctrl_info->firmware_version);
+पूर्ण
 
-static ssize_t pqi_model_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct Scsi_Host *shost;
-	struct pqi_ctrl_info *ctrl_info;
+अटल sमाप_प्रकार pqi_driver_version_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "%s\n", DRIVER_VERSION BUILD_TIMESTAMP);
+पूर्ण
 
-	shost = class_to_shost(dev);
-	ctrl_info = shost_to_hba(shost);
-
-	return scnprintf(buffer, PAGE_SIZE, "%s\n", ctrl_info->model);
-}
-
-static ssize_t pqi_vendor_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct Scsi_Host *shost;
-	struct pqi_ctrl_info *ctrl_info;
+अटल sमाप_प्रकार pqi_serial_number_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा Scsi_Host *shost;
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	shost = class_to_shost(dev);
 	ctrl_info = shost_to_hba(shost);
 
-	return scnprintf(buffer, PAGE_SIZE, "%s\n", ctrl_info->vendor);
-}
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "%s\n", ctrl_info->serial_number);
+पूर्ण
 
-static ssize_t pqi_host_rescan_store(struct device *dev,
-	struct device_attribute *attr, const char *buffer, size_t count)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
+अटल sमाप_प्रकार pqi_model_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा Scsi_Host *shost;
+	काष्ठा pqi_ctrl_info *ctrl_info;
+
+	shost = class_to_shost(dev);
+	ctrl_info = shost_to_hba(shost);
+
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "%s\n", ctrl_info->model);
+पूर्ण
+
+अटल sमाप_प्रकार pqi_venकरोr_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा Scsi_Host *shost;
+	काष्ठा pqi_ctrl_info *ctrl_info;
+
+	shost = class_to_shost(dev);
+	ctrl_info = shost_to_hba(shost);
+
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "%s\n", ctrl_info->venकरोr);
+पूर्ण
+
+अटल sमाप_प्रकार pqi_host_rescan_store(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
 
 	pqi_scan_start(shost);
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t pqi_lockup_action_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	int count = 0;
-	unsigned int i;
+अटल sमाप_प्रकार pqi_lockup_action_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	पूर्णांक count = 0;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(pqi_lockup_actions); i++) {
-		if (pqi_lockup_actions[i].action == pqi_lockup_action)
-			count += scnprintf(buffer + count, PAGE_SIZE - count,
+	क्रम (i = 0; i < ARRAY_SIZE(pqi_lockup_actions); i++) अणु
+		अगर (pqi_lockup_actions[i].action == pqi_lockup_action)
+			count += scnम_लिखो(buffer + count, PAGE_SIZE - count,
 				"[%s] ", pqi_lockup_actions[i].name);
-		else
-			count += scnprintf(buffer + count, PAGE_SIZE - count,
+		अन्यथा
+			count += scnम_लिखो(buffer + count, PAGE_SIZE - count,
 				"%s ", pqi_lockup_actions[i].name);
-	}
+	पूर्ण
 
-	count += scnprintf(buffer + count, PAGE_SIZE - count, "\n");
+	count += scnम_लिखो(buffer + count, PAGE_SIZE - count, "\n");
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t pqi_lockup_action_store(struct device *dev,
-	struct device_attribute *attr, const char *buffer, size_t count)
-{
-	unsigned int i;
-	char *action_name;
-	char action_name_buffer[32];
+अटल sमाप_प्रकार pqi_lockup_action_store(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	अचिन्हित पूर्णांक i;
+	अक्षर *action_name;
+	अक्षर action_name_buffer[32];
 
-	strlcpy(action_name_buffer, buffer, sizeof(action_name_buffer));
-	action_name = strstrip(action_name_buffer);
+	strlcpy(action_name_buffer, buffer, माप(action_name_buffer));
+	action_name = म_मालाip(action_name_buffer);
 
-	for (i = 0; i < ARRAY_SIZE(pqi_lockup_actions); i++) {
-		if (strcmp(action_name, pqi_lockup_actions[i].name) == 0) {
+	क्रम (i = 0; i < ARRAY_SIZE(pqi_lockup_actions); i++) अणु
+		अगर (म_भेद(action_name, pqi_lockup_actions[i].name) == 0) अणु
 			pqi_lockup_action = pqi_lockup_actions[i].action;
-			return count;
-		}
-	}
+			वापस count;
+		पूर्ण
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static ssize_t pqi_host_enable_stream_detection_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
+अटल sमाप_प्रकार pqi_host_enable_stream_detection_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
 
-	return scnprintf(buffer, 10, "%x\n",
+	वापस scnम_लिखो(buffer, 10, "%x\n",
 			ctrl_info->enable_stream_detection);
-}
+पूर्ण
 
-static ssize_t pqi_host_enable_stream_detection_store(struct device *dev,
-	struct device_attribute *attr, const char *buffer, size_t count)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
+अटल sमाप_प्रकार pqi_host_enable_stream_detection_store(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
 	u8 set_stream_detection = 0;
 
-	if (kstrtou8(buffer, 0, &set_stream_detection))
-		return -EINVAL;
+	अगर (kstrtou8(buffer, 0, &set_stream_detection))
+		वापस -EINVAL;
 
-	if (set_stream_detection > 0)
+	अगर (set_stream_detection > 0)
 		set_stream_detection = 1;
 
 	ctrl_info->enable_stream_detection = set_stream_detection;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t pqi_host_enable_r5_writes_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
+अटल sमाप_प्रकार pqi_host_enable_r5_ग_लिखोs_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
 
-	return scnprintf(buffer, 10, "%x\n", ctrl_info->enable_r5_writes);
-}
+	वापस scnम_लिखो(buffer, 10, "%x\n", ctrl_info->enable_r5_ग_लिखोs);
+पूर्ण
 
-static ssize_t pqi_host_enable_r5_writes_store(struct device *dev,
-	struct device_attribute *attr, const char *buffer, size_t count)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
-	u8 set_r5_writes = 0;
+अटल sमाप_प्रकार pqi_host_enable_r5_ग_लिखोs_store(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
+	u8 set_r5_ग_लिखोs = 0;
 
-	if (kstrtou8(buffer, 0, &set_r5_writes))
-		return -EINVAL;
+	अगर (kstrtou8(buffer, 0, &set_r5_ग_लिखोs))
+		वापस -EINVAL;
 
-	if (set_r5_writes > 0)
-		set_r5_writes = 1;
+	अगर (set_r5_ग_लिखोs > 0)
+		set_r5_ग_लिखोs = 1;
 
-	ctrl_info->enable_r5_writes = set_r5_writes;
+	ctrl_info->enable_r5_ग_लिखोs = set_r5_ग_लिखोs;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static ssize_t pqi_host_enable_r6_writes_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
+अटल sमाप_प्रकार pqi_host_enable_r6_ग_लिखोs_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
 
-	return scnprintf(buffer, 10, "%x\n", ctrl_info->enable_r6_writes);
-}
+	वापस scnम_लिखो(buffer, 10, "%x\n", ctrl_info->enable_r6_ग_लिखोs);
+पूर्ण
 
-static ssize_t pqi_host_enable_r6_writes_store(struct device *dev,
-	struct device_attribute *attr, const char *buffer, size_t count)
-{
-	struct Scsi_Host *shost = class_to_shost(dev);
-	struct pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
-	u8 set_r6_writes = 0;
+अटल sमाप_प्रकार pqi_host_enable_r6_ग_लिखोs_store(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, स्थिर अक्षर *buffer, माप_प्रकार count)
+अणु
+	काष्ठा Scsi_Host *shost = class_to_shost(dev);
+	काष्ठा pqi_ctrl_info *ctrl_info = shost_to_hba(shost);
+	u8 set_r6_ग_लिखोs = 0;
 
-	if (kstrtou8(buffer, 0, &set_r6_writes))
-		return -EINVAL;
+	अगर (kstrtou8(buffer, 0, &set_r6_ग_लिखोs))
+		वापस -EINVAL;
 
-	if (set_r6_writes > 0)
-		set_r6_writes = 1;
+	अगर (set_r6_ग_लिखोs > 0)
+		set_r6_ग_लिखोs = 1;
 
-	ctrl_info->enable_r6_writes = set_r6_writes;
+	ctrl_info->enable_r6_ग_लिखोs = set_r6_ग_लिखोs;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static DEVICE_ATTR(driver_version, 0444, pqi_driver_version_show, NULL);
-static DEVICE_ATTR(firmware_version, 0444, pqi_firmware_version_show, NULL);
-static DEVICE_ATTR(model, 0444, pqi_model_show, NULL);
-static DEVICE_ATTR(serial_number, 0444, pqi_serial_number_show, NULL);
-static DEVICE_ATTR(vendor, 0444, pqi_vendor_show, NULL);
-static DEVICE_ATTR(rescan, 0200, NULL, pqi_host_rescan_store);
-static DEVICE_ATTR(lockup_action, 0644, pqi_lockup_action_show,
+अटल DEVICE_ATTR(driver_version, 0444, pqi_driver_version_show, शून्य);
+अटल DEVICE_ATTR(firmware_version, 0444, pqi_firmware_version_show, शून्य);
+अटल DEVICE_ATTR(model, 0444, pqi_model_show, शून्य);
+अटल DEVICE_ATTR(serial_number, 0444, pqi_serial_number_show, शून्य);
+अटल DEVICE_ATTR(venकरोr, 0444, pqi_venकरोr_show, शून्य);
+अटल DEVICE_ATTR(rescan, 0200, शून्य, pqi_host_rescan_store);
+अटल DEVICE_ATTR(lockup_action, 0644, pqi_lockup_action_show,
 	pqi_lockup_action_store);
-static DEVICE_ATTR(enable_stream_detection, 0644,
+अटल DEVICE_ATTR(enable_stream_detection, 0644,
 	pqi_host_enable_stream_detection_show,
 	pqi_host_enable_stream_detection_store);
-static DEVICE_ATTR(enable_r5_writes, 0644,
-	pqi_host_enable_r5_writes_show, pqi_host_enable_r5_writes_store);
-static DEVICE_ATTR(enable_r6_writes, 0644,
-	pqi_host_enable_r6_writes_show, pqi_host_enable_r6_writes_store);
+अटल DEVICE_ATTR(enable_r5_ग_लिखोs, 0644,
+	pqi_host_enable_r5_ग_लिखोs_show, pqi_host_enable_r5_ग_लिखोs_store);
+अटल DEVICE_ATTR(enable_r6_ग_लिखोs, 0644,
+	pqi_host_enable_r6_ग_लिखोs_show, pqi_host_enable_r6_ग_लिखोs_store);
 
-static struct device_attribute *pqi_shost_attrs[] = {
+अटल काष्ठा device_attribute *pqi_shost_attrs[] = अणु
 	&dev_attr_driver_version,
 	&dev_attr_firmware_version,
 	&dev_attr_model,
 	&dev_attr_serial_number,
-	&dev_attr_vendor,
+	&dev_attr_venकरोr,
 	&dev_attr_rescan,
 	&dev_attr_lockup_action,
 	&dev_attr_enable_stream_detection,
-	&dev_attr_enable_r5_writes,
-	&dev_attr_enable_r6_writes,
-	NULL
-};
+	&dev_attr_enable_r5_ग_लिखोs,
+	&dev_attr_enable_r6_ग_लिखोs,
+	शून्य
+पूर्ण;
 
-static ssize_t pqi_unique_id_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct scsi_device *sdev;
-	struct pqi_scsi_dev *device;
-	unsigned long flags;
+अटल sमाप_प्रकार pqi_unique_id_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा scsi_device *sdev;
+	काष्ठा pqi_scsi_dev *device;
+	अचिन्हित दीर्घ flags;
 	u8 unique_id[16];
 
 	sdev = to_scsi_device(dev);
@@ -6659,36 +6660,36 @@ static ssize_t pqi_unique_id_show(struct device *dev,
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
 	device = sdev->hostdata;
-	if (!device) {
+	अगर (!device) अणु
 		spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (device->is_physical_device) {
-		memset(unique_id, 0, 8);
-		memcpy(unique_id + 8, &device->wwid, sizeof(device->wwid));
-	} else {
-		memcpy(unique_id, device->volume_id, sizeof(device->volume_id));
-	}
+	अगर (device->is_physical_device) अणु
+		स_रखो(unique_id, 0, 8);
+		स_नकल(unique_id + 8, &device->wwid, माप(device->wwid));
+	पूर्ण अन्यथा अणु
+		स_नकल(unique_id, device->volume_id, माप(device->volume_id));
+	पूर्ण
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	return scnprintf(buffer, PAGE_SIZE,
+	वापस scnम_लिखो(buffer, PAGE_SIZE,
 		"%02X%02X%02X%02X%02X%02X%02X%02X"
 		"%02X%02X%02X%02X%02X%02X%02X%02X\n",
 		unique_id[0], unique_id[1], unique_id[2], unique_id[3],
 		unique_id[4], unique_id[5], unique_id[6], unique_id[7],
 		unique_id[8], unique_id[9], unique_id[10], unique_id[11],
 		unique_id[12], unique_id[13], unique_id[14], unique_id[15]);
-}
+पूर्ण
 
-static ssize_t pqi_lunid_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct scsi_device *sdev;
-	struct pqi_scsi_dev *device;
-	unsigned long flags;
+अटल sमाप_प्रकार pqi_lunid_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा scsi_device *sdev;
+	काष्ठा pqi_scsi_dev *device;
+	अचिन्हित दीर्घ flags;
 	u8 lunid[8];
 
 	sdev = to_scsi_device(dev);
@@ -6697,33 +6698,33 @@ static ssize_t pqi_lunid_show(struct device *dev,
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
 	device = sdev->hostdata;
-	if (!device) {
+	अगर (!device) अणु
 		spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	memcpy(lunid, device->scsi3addr, sizeof(lunid));
+	स_नकल(lunid, device->scsi3addr, माप(lunid));
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	return scnprintf(buffer, PAGE_SIZE, "0x%8phN\n", lunid);
-}
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "0x%8phN\n", lunid);
+पूर्ण
 
-#define MAX_PATHS	8
+#घोषणा MAX_PATHS	8
 
-static ssize_t pqi_path_info_show(struct device *dev,
-	struct device_attribute *attr, char *buf)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct scsi_device *sdev;
-	struct pqi_scsi_dev *device;
-	unsigned long flags;
-	int i;
-	int output_len = 0;
+अटल sमाप_प्रकार pqi_path_info_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा scsi_device *sdev;
+	काष्ठा pqi_scsi_dev *device;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक i;
+	पूर्णांक output_len = 0;
 	u8 box;
 	u8 bay;
 	u8 path_map_index;
-	char *active;
+	अक्षर *active;
 	u8 phys_connector[2];
 
 	sdev = to_scsi_device(dev);
@@ -6732,22 +6733,22 @@ static ssize_t pqi_path_info_show(struct device *dev,
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
 	device = sdev->hostdata;
-	if (!device) {
+	अगर (!device) अणु
 		spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	bay = device->bay;
-	for (i = 0; i < MAX_PATHS; i++) {
+	क्रम (i = 0; i < MAX_PATHS; i++) अणु
 		path_map_index = 1 << i;
-		if (i == device->active_path_index)
+		अगर (i == device->active_path_index)
 			active = "Active";
-		else if (device->path_map & path_map_index)
+		अन्यथा अगर (device->path_map & path_map_index)
 			active = "Inactive";
-		else
-			continue;
+		अन्यथा
+			जारी;
 
-		output_len += scnprintf(buf + output_len,
+		output_len += scnम_लिखो(buf + output_len,
 					PAGE_SIZE - output_len,
 					"[%d:%d:%d:%d] %20.20s ",
 					ctrl_info->scsi_host->host_no,
@@ -6755,52 +6756,52 @@ static ssize_t pqi_path_info_show(struct device *dev,
 					device->lun,
 					scsi_device_type(device->devtype));
 
-		if (device->devtype == TYPE_RAID ||
+		अगर (device->devtype == TYPE_RAID ||
 			pqi_is_logical_device(device))
-			goto end_buffer;
+			जाओ end_buffer;
 
-		memcpy(&phys_connector, &device->phys_connector[i],
-			sizeof(phys_connector));
-		if (phys_connector[0] < '0')
+		स_नकल(&phys_connector, &device->phys_connector[i],
+			माप(phys_connector));
+		अगर (phys_connector[0] < '0')
 			phys_connector[0] = '0';
-		if (phys_connector[1] < '0')
+		अगर (phys_connector[1] < '0')
 			phys_connector[1] = '0';
 
-		output_len += scnprintf(buf + output_len,
+		output_len += scnम_लिखो(buf + output_len,
 					PAGE_SIZE - output_len,
 					"PORT: %.2s ", phys_connector);
 
 		box = device->box[i];
-		if (box != 0 && box != 0xFF)
-			output_len += scnprintf(buf + output_len,
+		अगर (box != 0 && box != 0xFF)
+			output_len += scnम_लिखो(buf + output_len,
 						PAGE_SIZE - output_len,
 						"BOX: %hhu ", box);
 
-		if ((device->devtype == TYPE_DISK ||
+		अगर ((device->devtype == TYPE_DISK ||
 			device->devtype == TYPE_ZBC) &&
 			pqi_expose_device(device))
-			output_len += scnprintf(buf + output_len,
+			output_len += scnम_लिखो(buf + output_len,
 						PAGE_SIZE - output_len,
 						"BAY: %hhu ", bay);
 
 end_buffer:
-		output_len += scnprintf(buf + output_len,
+		output_len += scnम_लिखो(buf + output_len,
 					PAGE_SIZE - output_len,
 					"%s\n", active);
-	}
+	पूर्ण
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	return output_len;
-}
+	वापस output_len;
+पूर्ण
 
-static ssize_t pqi_sas_address_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct scsi_device *sdev;
-	struct pqi_scsi_dev *device;
-	unsigned long flags;
+अटल sमाप_प्रकार pqi_sas_address_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा scsi_device *sdev;
+	काष्ठा pqi_scsi_dev *device;
+	अचिन्हित दीर्घ flags;
 	u64 sas_address;
 
 	sdev = to_scsi_device(dev);
@@ -6809,25 +6810,25 @@ static ssize_t pqi_sas_address_show(struct device *dev,
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
 	device = sdev->hostdata;
-	if (!device || !pqi_is_device_with_sas_address(device)) {
+	अगर (!device || !pqi_is_device_with_sas_address(device)) अणु
 		spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	sas_address = device->sas_address;
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	return scnprintf(buffer, PAGE_SIZE, "0x%016llx\n", sas_address);
-}
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "0x%016llx\n", sas_address);
+पूर्ण
 
-static ssize_t pqi_ssd_smart_path_enabled_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct scsi_device *sdev;
-	struct pqi_scsi_dev *device;
-	unsigned long flags;
+अटल sमाप_प्रकार pqi_ssd_smart_path_enabled_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा scsi_device *sdev;
+	काष्ठा pqi_scsi_dev *device;
+	अचिन्हित दीर्घ flags;
 
 	sdev = to_scsi_device(dev);
 	ctrl_info = shost_to_hba(sdev->host);
@@ -6835,10 +6836,10 @@ static ssize_t pqi_ssd_smart_path_enabled_show(struct device *dev,
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
 	device = sdev->hostdata;
-	if (!device) {
+	अगर (!device) अणु
 		spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
 	buffer[0] = device->raid_bypass_enabled ? '1' : '0';
 	buffer[1] = '\n';
@@ -6846,17 +6847,17 @@ static ssize_t pqi_ssd_smart_path_enabled_show(struct device *dev,
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	return 2;
-}
+	वापस 2;
+पूर्ण
 
-static ssize_t pqi_raid_level_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct scsi_device *sdev;
-	struct pqi_scsi_dev *device;
-	unsigned long flags;
-	char *raid_level;
+अटल sमाप_प्रकार pqi_raid_level_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा scsi_device *sdev;
+	काष्ठा pqi_scsi_dev *device;
+	अचिन्हित दीर्घ flags;
+	अक्षर *raid_level;
 
 	sdev = to_scsi_device(dev);
 	ctrl_info = shost_to_hba(sdev->host);
@@ -6864,29 +6865,29 @@ static ssize_t pqi_raid_level_show(struct device *dev,
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
 	device = sdev->hostdata;
-	if (!device) {
+	अगर (!device) अणु
 		spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (pqi_is_logical_device(device))
+	अगर (pqi_is_logical_device(device))
 		raid_level = pqi_raid_level_to_string(device->raid_level);
-	else
+	अन्यथा
 		raid_level = "N/A";
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	return scnprintf(buffer, PAGE_SIZE, "%s\n", raid_level);
-}
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "%s\n", raid_level);
+पूर्ण
 
-static ssize_t pqi_raid_bypass_cnt_show(struct device *dev,
-	struct device_attribute *attr, char *buffer)
-{
-	struct pqi_ctrl_info *ctrl_info;
-	struct scsi_device *sdev;
-	struct pqi_scsi_dev *device;
-	unsigned long flags;
-	int raid_bypass_cnt;
+अटल sमाप_प्रकार pqi_raid_bypass_cnt_show(काष्ठा device *dev,
+	काष्ठा device_attribute *attr, अक्षर *buffer)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा scsi_device *sdev;
+	काष्ठा pqi_scsi_dev *device;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक raid_bypass_cnt;
 
 	sdev = to_scsi_device(dev);
 	ctrl_info = shost_to_hba(sdev->host);
@@ -6894,27 +6895,27 @@ static ssize_t pqi_raid_bypass_cnt_show(struct device *dev,
 	spin_lock_irqsave(&ctrl_info->scsi_device_list_lock, flags);
 
 	device = sdev->hostdata;
-	if (!device) {
+	अगर (!device) अणु
 		spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	raid_bypass_cnt = atomic_read(&device->raid_bypass_cnt);
+	raid_bypass_cnt = atomic_पढ़ो(&device->raid_bypass_cnt);
 
 	spin_unlock_irqrestore(&ctrl_info->scsi_device_list_lock, flags);
 
-	return scnprintf(buffer, PAGE_SIZE, "0x%x\n", raid_bypass_cnt);
-}
+	वापस scnम_लिखो(buffer, PAGE_SIZE, "0x%x\n", raid_bypass_cnt);
+पूर्ण
 
-static DEVICE_ATTR(lunid, 0444, pqi_lunid_show, NULL);
-static DEVICE_ATTR(unique_id, 0444, pqi_unique_id_show, NULL);
-static DEVICE_ATTR(path_info, 0444, pqi_path_info_show, NULL);
-static DEVICE_ATTR(sas_address, 0444, pqi_sas_address_show, NULL);
-static DEVICE_ATTR(ssd_smart_path_enabled, 0444, pqi_ssd_smart_path_enabled_show, NULL);
-static DEVICE_ATTR(raid_level, 0444, pqi_raid_level_show, NULL);
-static DEVICE_ATTR(raid_bypass_cnt, 0444, pqi_raid_bypass_cnt_show, NULL);
+अटल DEVICE_ATTR(lunid, 0444, pqi_lunid_show, शून्य);
+अटल DEVICE_ATTR(unique_id, 0444, pqi_unique_id_show, शून्य);
+अटल DEVICE_ATTR(path_info, 0444, pqi_path_info_show, शून्य);
+अटल DEVICE_ATTR(sas_address, 0444, pqi_sas_address_show, शून्य);
+अटल DEVICE_ATTR(ssd_smart_path_enabled, 0444, pqi_ssd_smart_path_enabled_show, शून्य);
+अटल DEVICE_ATTR(raid_level, 0444, pqi_raid_level_show, शून्य);
+अटल DEVICE_ATTR(raid_bypass_cnt, 0444, pqi_raid_bypass_cnt_show, शून्य);
 
-static struct device_attribute *pqi_sdev_attrs[] = {
+अटल काष्ठा device_attribute *pqi_sdev_attrs[] = अणु
 	&dev_attr_lunid,
 	&dev_attr_unique_id,
 	&dev_attr_path_info,
@@ -6922,10 +6923,10 @@ static struct device_attribute *pqi_sdev_attrs[] = {
 	&dev_attr_ssd_smart_path_enabled,
 	&dev_attr_raid_level,
 	&dev_attr_raid_bypass_cnt,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static struct scsi_host_template pqi_driver_template = {
+अटल काष्ठा scsi_host_ढाँचा pqi_driver_ढाँचा = अणु
 	.module = THIS_MODULE,
 	.name = DRIVER_NAME_SHORT,
 	.proc_name = DRIVER_NAME_SHORT,
@@ -6941,18 +6942,18 @@ static struct scsi_host_template pqi_driver_template = {
 	.map_queues = pqi_map_queues,
 	.sdev_attrs = pqi_sdev_attrs,
 	.shost_attrs = pqi_shost_attrs,
-};
+पूर्ण;
 
-static int pqi_register_scsi(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	struct Scsi_Host *shost;
+अटल पूर्णांक pqi_रेजिस्टर_scsi(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा Scsi_Host *shost;
 
-	shost = scsi_host_alloc(&pqi_driver_template, sizeof(ctrl_info));
-	if (!shost) {
+	shost = scsi_host_alloc(&pqi_driver_ढाँचा, माप(ctrl_info));
+	अगर (!shost) अणु
 		dev_err(&ctrl_info->pci_dev->dev, "scsi_host_alloc failed\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	shost->io_port = 0;
 	shost->n_io_port = 0;
@@ -6965,242 +6966,242 @@ static int pqi_register_scsi(struct pqi_ctrl_info *ctrl_info)
 	shost->can_queue = ctrl_info->scsi_ml_can_queue;
 	shost->cmd_per_lun = shost->can_queue;
 	shost->sg_tablesize = ctrl_info->sg_tablesize;
-	shost->transportt = pqi_sas_transport_template;
+	shost->transportt = pqi_sas_transport_ढाँचा;
 	shost->irq = pci_irq_vector(ctrl_info->pci_dev, 0);
 	shost->unique_id = shost->irq;
 	shost->nr_hw_queues = ctrl_info->num_queue_groups;
 	shost->host_tagset = 1;
-	shost->hostdata[0] = (unsigned long)ctrl_info;
+	shost->hostdata[0] = (अचिन्हित दीर्घ)ctrl_info;
 
 	rc = scsi_add_host(shost, &ctrl_info->pci_dev->dev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev, "scsi_add_host failed\n");
-		goto free_host;
-	}
+		जाओ मुक्त_host;
+	पूर्ण
 
 	rc = pqi_add_sas_host(shost, ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev, "add SAS host failed\n");
-		goto remove_host;
-	}
+		जाओ हटाओ_host;
+	पूर्ण
 
 	ctrl_info->scsi_host = shost;
 
-	return 0;
+	वापस 0;
 
-remove_host:
-	scsi_remove_host(shost);
-free_host:
+हटाओ_host:
+	scsi_हटाओ_host(shost);
+मुक्त_host:
 	scsi_host_put(shost);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pqi_unregister_scsi(struct pqi_ctrl_info *ctrl_info)
-{
-	struct Scsi_Host *shost;
+अटल व्योम pqi_unरेजिस्टर_scsi(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	काष्ठा Scsi_Host *shost;
 
 	pqi_delete_sas_host(ctrl_info);
 
 	shost = ctrl_info->scsi_host;
-	if (!shost)
-		return;
+	अगर (!shost)
+		वापस;
 
-	scsi_remove_host(shost);
+	scsi_हटाओ_host(shost);
 	scsi_host_put(shost);
-}
+पूर्ण
 
-static int pqi_wait_for_pqi_reset_completion(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc = 0;
-	struct pqi_device_registers __iomem *pqi_registers;
-	unsigned long timeout;
-	unsigned int timeout_msecs;
-	union pqi_reset_register reset_reg;
+अटल पूर्णांक pqi_रुको_क्रम_pqi_reset_completion(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा pqi_device_रेजिस्टरs __iomem *pqi_रेजिस्टरs;
+	अचिन्हित दीर्घ समयout;
+	अचिन्हित पूर्णांक समयout_msecs;
+	जोड़ pqi_reset_रेजिस्टर reset_reg;
 
-	pqi_registers = ctrl_info->pqi_registers;
-	timeout_msecs = readw(&pqi_registers->max_reset_timeout) * 100;
-	timeout = msecs_to_jiffies(timeout_msecs) + jiffies;
+	pqi_रेजिस्टरs = ctrl_info->pqi_रेजिस्टरs;
+	समयout_msecs = पढ़ोw(&pqi_रेजिस्टरs->max_reset_समयout) * 100;
+	समयout = msecs_to_jअगरfies(समयout_msecs) + jअगरfies;
 
-	while (1) {
+	जबतक (1) अणु
 		msleep(PQI_RESET_POLL_INTERVAL_MSECS);
-		reset_reg.all_bits = readl(&pqi_registers->device_reset);
-		if (reset_reg.bits.reset_action == PQI_RESET_ACTION_COMPLETED)
-			break;
+		reset_reg.all_bits = पढ़ोl(&pqi_रेजिस्टरs->device_reset);
+		अगर (reset_reg.bits.reset_action == PQI_RESET_ACTION_COMPLETED)
+			अवरोध;
 		pqi_check_ctrl_health(ctrl_info);
-		if (pqi_ctrl_offline(ctrl_info)) {
+		अगर (pqi_ctrl_offline(ctrl_info)) अणु
 			rc = -ENXIO;
-			break;
-		}
-		if (time_after(jiffies, timeout)) {
+			अवरोध;
+		पूर्ण
+		अगर (समय_after(jअगरfies, समयout)) अणु
 			rc = -ETIMEDOUT;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_reset(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	union pqi_reset_register reset_reg;
+अटल पूर्णांक pqi_reset(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	जोड़ pqi_reset_रेजिस्टर reset_reg;
 
-	if (ctrl_info->pqi_reset_quiesce_supported) {
+	अगर (ctrl_info->pqi_reset_quiesce_supported) अणु
 		rc = sis_pqi_reset_quiesce(ctrl_info);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"PQI reset failed during quiesce with error %d\n", rc);
-			return rc;
-		}
-	}
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
 	reset_reg.all_bits = 0;
 	reset_reg.bits.reset_type = PQI_RESET_TYPE_HARD_RESET;
 	reset_reg.bits.reset_action = PQI_RESET_ACTION_RESET;
 
-	writel(reset_reg.all_bits, &ctrl_info->pqi_registers->device_reset);
+	ग_लिखोl(reset_reg.all_bits, &ctrl_info->pqi_रेजिस्टरs->device_reset);
 
-	rc = pqi_wait_for_pqi_reset_completion(ctrl_info);
-	if (rc)
+	rc = pqi_रुको_क्रम_pqi_reset_completion(ctrl_info);
+	अगर (rc)
 		dev_err(&ctrl_info->pci_dev->dev,
 			"PQI reset failed with error %d\n", rc);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_get_ctrl_serial_number(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	struct bmic_sense_subsystem_info *sense_info;
+अटल पूर्णांक pqi_get_ctrl_serial_number(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा bmic_sense_subप्रणाली_info *sense_info;
 
-	sense_info = kzalloc(sizeof(*sense_info), GFP_KERNEL);
-	if (!sense_info)
-		return -ENOMEM;
+	sense_info = kzalloc(माप(*sense_info), GFP_KERNEL);
+	अगर (!sense_info)
+		वापस -ENOMEM;
 
-	rc = pqi_sense_subsystem_info(ctrl_info, sense_info);
-	if (rc)
-		goto out;
+	rc = pqi_sense_subप्रणाली_info(ctrl_info, sense_info);
+	अगर (rc)
+		जाओ out;
 
-	memcpy(ctrl_info->serial_number, sense_info->ctrl_serial_number,
-		sizeof(sense_info->ctrl_serial_number));
-	ctrl_info->serial_number[sizeof(sense_info->ctrl_serial_number)] = '\0';
+	स_नकल(ctrl_info->serial_number, sense_info->ctrl_serial_number,
+		माप(sense_info->ctrl_serial_number));
+	ctrl_info->serial_number[माप(sense_info->ctrl_serial_number)] = '\0';
 
 out:
-	kfree(sense_info);
+	kमुक्त(sense_info);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static int pqi_get_ctrl_product_details(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
-	struct bmic_identify_controller *identify;
+अटल पूर्णांक pqi_get_ctrl_product_details(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा bmic_identअगरy_controller *identअगरy;
 
-	identify = kmalloc(sizeof(*identify), GFP_KERNEL);
-	if (!identify)
-		return -ENOMEM;
+	identअगरy = kदो_स्मृति(माप(*identअगरy), GFP_KERNEL);
+	अगर (!identअगरy)
+		वापस -ENOMEM;
 
-	rc = pqi_identify_controller(ctrl_info, identify);
-	if (rc)
-		goto out;
+	rc = pqi_identअगरy_controller(ctrl_info, identअगरy);
+	अगर (rc)
+		जाओ out;
 
-	if (get_unaligned_le32(&identify->extra_controller_flags) &
-		BMIC_IDENTIFY_EXTRA_FLAGS_LONG_FW_VERSION_SUPPORTED) {
-		memcpy(ctrl_info->firmware_version,
-			identify->firmware_version_long,
-			sizeof(identify->firmware_version_long));
-	} else {
-		memcpy(ctrl_info->firmware_version,
-			identify->firmware_version_short,
-			sizeof(identify->firmware_version_short));
+	अगर (get_unaligned_le32(&identअगरy->extra_controller_flags) &
+		BMIC_IDENTIFY_EXTRA_FLAGS_LONG_FW_VERSION_SUPPORTED) अणु
+		स_नकल(ctrl_info->firmware_version,
+			identअगरy->firmware_version_दीर्घ,
+			माप(identअगरy->firmware_version_दीर्घ));
+	पूर्ण अन्यथा अणु
+		स_नकल(ctrl_info->firmware_version,
+			identअगरy->firmware_version_लघु,
+			माप(identअगरy->firmware_version_लघु));
 		ctrl_info->firmware_version
-			[sizeof(identify->firmware_version_short)] = '\0';
-		snprintf(ctrl_info->firmware_version +
-			strlen(ctrl_info->firmware_version),
-			sizeof(ctrl_info->firmware_version) -
-			sizeof(identify->firmware_version_short),
+			[माप(identअगरy->firmware_version_लघु)] = '\0';
+		snम_लिखो(ctrl_info->firmware_version +
+			म_माप(ctrl_info->firmware_version),
+			माप(ctrl_info->firmware_version) -
+			माप(identअगरy->firmware_version_लघु),
 			"-%u",
-			get_unaligned_le16(&identify->firmware_build_number));
-	}
+			get_unaligned_le16(&identअगरy->firmware_build_number));
+	पूर्ण
 
-	memcpy(ctrl_info->model, identify->product_id,
-		sizeof(identify->product_id));
-	ctrl_info->model[sizeof(identify->product_id)] = '\0';
+	स_नकल(ctrl_info->model, identअगरy->product_id,
+		माप(identअगरy->product_id));
+	ctrl_info->model[माप(identअगरy->product_id)] = '\0';
 
-	memcpy(ctrl_info->vendor, identify->vendor_id,
-		sizeof(identify->vendor_id));
-	ctrl_info->vendor[sizeof(identify->vendor_id)] = '\0';
+	स_नकल(ctrl_info->venकरोr, identअगरy->venकरोr_id,
+		माप(identअगरy->venकरोr_id));
+	ctrl_info->venकरोr[माप(identअगरy->venकरोr_id)] = '\0';
 
 out:
-	kfree(identify);
+	kमुक्त(identअगरy);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-struct pqi_config_table_section_info {
-	struct pqi_ctrl_info *ctrl_info;
-	void		*section;
+काष्ठा pqi_config_table_section_info अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	व्योम		*section;
 	u32		section_offset;
-	void __iomem	*section_iomem_addr;
-};
+	व्योम __iomem	*section_iomem_addr;
+पूर्ण;
 
-static inline bool pqi_is_firmware_feature_supported(
-	struct pqi_config_table_firmware_features *firmware_features,
-	unsigned int bit_position)
-{
-	unsigned int byte_index;
+अटल अंतरभूत bool pqi_is_firmware_feature_supported(
+	काष्ठा pqi_config_table_firmware_features *firmware_features,
+	अचिन्हित पूर्णांक bit_position)
+अणु
+	अचिन्हित पूर्णांक byte_index;
 
 	byte_index = bit_position / BITS_PER_BYTE;
 
-	if (byte_index >= le16_to_cpu(firmware_features->num_elements))
-		return false;
+	अगर (byte_index >= le16_to_cpu(firmware_features->num_elements))
+		वापस false;
 
-	return firmware_features->features_supported[byte_index] &
+	वापस firmware_features->features_supported[byte_index] &
 		(1 << (bit_position % BITS_PER_BYTE)) ? true : false;
-}
+पूर्ण
 
-static inline bool pqi_is_firmware_feature_enabled(
-	struct pqi_config_table_firmware_features *firmware_features,
-	void __iomem *firmware_features_iomem_addr,
-	unsigned int bit_position)
-{
-	unsigned int byte_index;
+अटल अंतरभूत bool pqi_is_firmware_feature_enabled(
+	काष्ठा pqi_config_table_firmware_features *firmware_features,
+	व्योम __iomem *firmware_features_iomem_addr,
+	अचिन्हित पूर्णांक bit_position)
+अणु
+	अचिन्हित पूर्णांक byte_index;
 	u8 __iomem *features_enabled_iomem_addr;
 
 	byte_index = (bit_position / BITS_PER_BYTE) +
 		(le16_to_cpu(firmware_features->num_elements) * 2);
 
 	features_enabled_iomem_addr = firmware_features_iomem_addr +
-		offsetof(struct pqi_config_table_firmware_features,
+		दुरत्व(काष्ठा pqi_config_table_firmware_features,
 			features_supported) + byte_index;
 
-	return *((__force u8 *)features_enabled_iomem_addr) &
+	वापस *((__क्रमce u8 *)features_enabled_iomem_addr) &
 		(1 << (bit_position % BITS_PER_BYTE)) ? true : false;
-}
+पूर्ण
 
-static inline void pqi_request_firmware_feature(
-	struct pqi_config_table_firmware_features *firmware_features,
-	unsigned int bit_position)
-{
-	unsigned int byte_index;
+अटल अंतरभूत व्योम pqi_request_firmware_feature(
+	काष्ठा pqi_config_table_firmware_features *firmware_features,
+	अचिन्हित पूर्णांक bit_position)
+अणु
+	अचिन्हित पूर्णांक byte_index;
 
 	byte_index = (bit_position / BITS_PER_BYTE) +
 		le16_to_cpu(firmware_features->num_elements);
 
 	firmware_features->features_supported[byte_index] |=
 		(1 << (bit_position % BITS_PER_BYTE));
-}
+पूर्ण
 
-static int pqi_config_table_update(struct pqi_ctrl_info *ctrl_info,
+अटल पूर्णांक pqi_config_table_update(काष्ठा pqi_ctrl_info *ctrl_info,
 	u16 first_section, u16 last_section)
-{
-	struct pqi_vendor_general_request request;
+अणु
+	काष्ठा pqi_venकरोr_general_request request;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 
 	request.header.iu_type = PQI_REQUEST_IU_VENDOR_GENERAL;
-	put_unaligned_le16(sizeof(request) - PQI_REQUEST_HEADER_LENGTH,
+	put_unaligned_le16(माप(request) - PQI_REQUEST_HEADER_LENGTH,
 		&request.header.iu_length);
 	put_unaligned_le16(PQI_VENDOR_GENERAL_CONFIG_TABLE_UPDATE,
 		&request.function_code);
@@ -7209,711 +7210,711 @@ static int pqi_config_table_update(struct pqi_ctrl_info *ctrl_info,
 	put_unaligned_le16(last_section,
 		&request.data.config_table_update.last_section);
 
-	return pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, NULL);
-}
+	वापस pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, शून्य);
+पूर्ण
 
-static int pqi_enable_firmware_features(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_config_table_firmware_features *firmware_features,
-	void __iomem *firmware_features_iomem_addr)
-{
-	void *features_requested;
-	void __iomem *features_requested_iomem_addr;
-	void __iomem *host_max_known_feature_iomem_addr;
+अटल पूर्णांक pqi_enable_firmware_features(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_config_table_firmware_features *firmware_features,
+	व्योम __iomem *firmware_features_iomem_addr)
+अणु
+	व्योम *features_requested;
+	व्योम __iomem *features_requested_iomem_addr;
+	व्योम __iomem *host_max_known_feature_iomem_addr;
 
 	features_requested = firmware_features->features_supported +
 		le16_to_cpu(firmware_features->num_elements);
 
 	features_requested_iomem_addr = firmware_features_iomem_addr +
-		(features_requested - (void *)firmware_features);
+		(features_requested - (व्योम *)firmware_features);
 
-	memcpy_toio(features_requested_iomem_addr, features_requested,
+	स_नकल_toio(features_requested_iomem_addr, features_requested,
 		le16_to_cpu(firmware_features->num_elements));
 
-	if (pqi_is_firmware_feature_supported(firmware_features,
-		PQI_FIRMWARE_FEATURE_MAX_KNOWN_FEATURE)) {
+	अगर (pqi_is_firmware_feature_supported(firmware_features,
+		PQI_FIRMWARE_FEATURE_MAX_KNOWN_FEATURE)) अणु
 		host_max_known_feature_iomem_addr =
 			features_requested_iomem_addr +
 			(le16_to_cpu(firmware_features->num_elements) * 2) +
-			sizeof(__le16);
-		writew(PQI_FIRMWARE_FEATURE_MAXIMUM,
+			माप(__le16);
+		ग_लिखोw(PQI_FIRMWARE_FEATURE_MAXIMUM,
 			host_max_known_feature_iomem_addr);
-	}
+	पूर्ण
 
-	return pqi_config_table_update(ctrl_info,
+	वापस pqi_config_table_update(ctrl_info,
 		PQI_CONFIG_TABLE_SECTION_FIRMWARE_FEATURES,
 		PQI_CONFIG_TABLE_SECTION_FIRMWARE_FEATURES);
-}
+पूर्ण
 
-struct pqi_firmware_feature {
-	char		*feature_name;
-	unsigned int	feature_bit;
+काष्ठा pqi_firmware_feature अणु
+	अक्षर		*feature_name;
+	अचिन्हित पूर्णांक	feature_bit;
 	bool		supported;
 	bool		enabled;
-	void (*feature_status)(struct pqi_ctrl_info *ctrl_info,
-		struct pqi_firmware_feature *firmware_feature);
-};
+	व्योम (*feature_status)(काष्ठा pqi_ctrl_info *ctrl_info,
+		काष्ठा pqi_firmware_feature *firmware_feature);
+पूर्ण;
 
-static void pqi_firmware_feature_status(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_firmware_feature *firmware_feature)
-{
-	if (!firmware_feature->supported) {
+अटल व्योम pqi_firmware_feature_status(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_firmware_feature *firmware_feature)
+अणु
+	अगर (!firmware_feature->supported) अणु
 		dev_info(&ctrl_info->pci_dev->dev, "%s not supported by controller\n",
 			firmware_feature->feature_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (firmware_feature->enabled) {
+	अगर (firmware_feature->enabled) अणु
 		dev_info(&ctrl_info->pci_dev->dev,
 			"%s enabled\n", firmware_feature->feature_name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	dev_err(&ctrl_info->pci_dev->dev, "failed to enable %s\n",
 		firmware_feature->feature_name);
-}
+पूर्ण
 
-static void pqi_ctrl_update_feature_flags(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_firmware_feature *firmware_feature)
-{
-	switch (firmware_feature->feature_bit) {
-	case PQI_FIRMWARE_FEATURE_RAID_1_WRITE_BYPASS:
-		ctrl_info->enable_r1_writes = firmware_feature->enabled;
-		break;
-	case PQI_FIRMWARE_FEATURE_RAID_5_WRITE_BYPASS:
-		ctrl_info->enable_r5_writes = firmware_feature->enabled;
-		break;
-	case PQI_FIRMWARE_FEATURE_RAID_6_WRITE_BYPASS:
-		ctrl_info->enable_r6_writes = firmware_feature->enabled;
-		break;
-	case PQI_FIRMWARE_FEATURE_SOFT_RESET_HANDSHAKE:
+अटल व्योम pqi_ctrl_update_feature_flags(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_firmware_feature *firmware_feature)
+अणु
+	चयन (firmware_feature->feature_bit) अणु
+	हाल PQI_FIRMWARE_FEATURE_RAID_1_WRITE_BYPASS:
+		ctrl_info->enable_r1_ग_लिखोs = firmware_feature->enabled;
+		अवरोध;
+	हाल PQI_FIRMWARE_FEATURE_RAID_5_WRITE_BYPASS:
+		ctrl_info->enable_r5_ग_लिखोs = firmware_feature->enabled;
+		अवरोध;
+	हाल PQI_FIRMWARE_FEATURE_RAID_6_WRITE_BYPASS:
+		ctrl_info->enable_r6_ग_लिखोs = firmware_feature->enabled;
+		अवरोध;
+	हाल PQI_FIRMWARE_FEATURE_SOFT_RESET_HANDSHAKE:
 		ctrl_info->soft_reset_handshake_supported =
 			firmware_feature->enabled &&
-			pqi_read_soft_reset_status(ctrl_info);
-		break;
-	case PQI_FIRMWARE_FEATURE_RAID_IU_TIMEOUT:
-		ctrl_info->raid_iu_timeout_supported = firmware_feature->enabled;
-		break;
-	case PQI_FIRMWARE_FEATURE_TMF_IU_TIMEOUT:
-		ctrl_info->tmf_iu_timeout_supported = firmware_feature->enabled;
-		break;
-	case PQI_FIRMWARE_FEATURE_UNIQUE_WWID_IN_REPORT_PHYS_LUN:
+			pqi_पढ़ो_soft_reset_status(ctrl_info);
+		अवरोध;
+	हाल PQI_FIRMWARE_FEATURE_RAID_IU_TIMEOUT:
+		ctrl_info->raid_iu_समयout_supported = firmware_feature->enabled;
+		अवरोध;
+	हाल PQI_FIRMWARE_FEATURE_TMF_IU_TIMEOUT:
+		ctrl_info->पंचांगf_iu_समयout_supported = firmware_feature->enabled;
+		अवरोध;
+	हाल PQI_FIRMWARE_FEATURE_UNIQUE_WWID_IN_REPORT_PHYS_LUN:
 		ctrl_info->unique_wwid_in_report_phys_lun_supported =
 			firmware_feature->enabled;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	pqi_firmware_feature_status(ctrl_info, firmware_feature);
-}
+पूर्ण
 
-static inline void pqi_firmware_feature_update(struct pqi_ctrl_info *ctrl_info,
-	struct pqi_firmware_feature *firmware_feature)
-{
-	if (firmware_feature->feature_status)
+अटल अंतरभूत व्योम pqi_firmware_feature_update(काष्ठा pqi_ctrl_info *ctrl_info,
+	काष्ठा pqi_firmware_feature *firmware_feature)
+अणु
+	अगर (firmware_feature->feature_status)
 		firmware_feature->feature_status(ctrl_info, firmware_feature);
-}
+पूर्ण
 
-static DEFINE_MUTEX(pqi_firmware_features_mutex);
+अटल DEFINE_MUTEX(pqi_firmware_features_mutex);
 
-static struct pqi_firmware_feature pqi_firmware_features[] = {
-	{
+अटल काष्ठा pqi_firmware_feature pqi_firmware_features[] = अणु
+	अणु
 		.feature_name = "Online Firmware Activation",
 		.feature_bit = PQI_FIRMWARE_FEATURE_OFA,
 		.feature_status = pqi_firmware_feature_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "Serial Management Protocol",
 		.feature_bit = PQI_FIRMWARE_FEATURE_SMP,
 		.feature_status = pqi_firmware_feature_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "Maximum Known Feature",
 		.feature_bit = PQI_FIRMWARE_FEATURE_MAX_KNOWN_FEATURE,
 		.feature_status = pqi_firmware_feature_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID 0 Read Bypass",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_0_READ_BYPASS,
 		.feature_status = pqi_firmware_feature_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID 1 Read Bypass",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_1_READ_BYPASS,
 		.feature_status = pqi_firmware_feature_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID 5 Read Bypass",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_5_READ_BYPASS,
 		.feature_status = pqi_firmware_feature_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID 6 Read Bypass",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_6_READ_BYPASS,
 		.feature_status = pqi_firmware_feature_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID 0 Write Bypass",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_0_WRITE_BYPASS,
 		.feature_status = pqi_firmware_feature_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID 1 Write Bypass",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_1_WRITE_BYPASS,
 		.feature_status = pqi_ctrl_update_feature_flags,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID 5 Write Bypass",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_5_WRITE_BYPASS,
 		.feature_status = pqi_ctrl_update_feature_flags,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID 6 Write Bypass",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_6_WRITE_BYPASS,
 		.feature_status = pqi_ctrl_update_feature_flags,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "New Soft Reset Handshake",
 		.feature_bit = PQI_FIRMWARE_FEATURE_SOFT_RESET_HANDSHAKE,
 		.feature_status = pqi_ctrl_update_feature_flags,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID IU Timeout",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_IU_TIMEOUT,
 		.feature_status = pqi_ctrl_update_feature_flags,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "TMF IU Timeout",
 		.feature_bit = PQI_FIRMWARE_FEATURE_TMF_IU_TIMEOUT,
 		.feature_status = pqi_ctrl_update_feature_flags,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "RAID Bypass on encrypted logical volumes on NVMe",
 		.feature_bit = PQI_FIRMWARE_FEATURE_RAID_BYPASS_ON_ENCRYPTED_NVME,
 		.feature_status = pqi_firmware_feature_status,
-	},
-	{
+	पूर्ण,
+	अणु
 		.feature_name = "Unique WWID in Report Physical LUN",
 		.feature_bit = PQI_FIRMWARE_FEATURE_UNIQUE_WWID_IN_REPORT_PHYS_LUN,
 		.feature_status = pqi_ctrl_update_feature_flags,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static void pqi_process_firmware_features(
-	struct pqi_config_table_section_info *section_info)
-{
-	int rc;
-	struct pqi_ctrl_info *ctrl_info;
-	struct pqi_config_table_firmware_features *firmware_features;
-	void __iomem *firmware_features_iomem_addr;
-	unsigned int i;
-	unsigned int num_features_supported;
+अटल व्योम pqi_process_firmware_features(
+	काष्ठा pqi_config_table_section_info *section_info)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_ctrl_info *ctrl_info;
+	काष्ठा pqi_config_table_firmware_features *firmware_features;
+	व्योम __iomem *firmware_features_iomem_addr;
+	अचिन्हित पूर्णांक i;
+	अचिन्हित पूर्णांक num_features_supported;
 
 	ctrl_info = section_info->ctrl_info;
 	firmware_features = section_info->section;
 	firmware_features_iomem_addr = section_info->section_iomem_addr;
 
-	for (i = 0, num_features_supported = 0;
-		i < ARRAY_SIZE(pqi_firmware_features); i++) {
-		if (pqi_is_firmware_feature_supported(firmware_features,
-			pqi_firmware_features[i].feature_bit)) {
+	क्रम (i = 0, num_features_supported = 0;
+		i < ARRAY_SIZE(pqi_firmware_features); i++) अणु
+		अगर (pqi_is_firmware_feature_supported(firmware_features,
+			pqi_firmware_features[i].feature_bit)) अणु
 			pqi_firmware_features[i].supported = true;
 			num_features_supported++;
-		} else {
+		पूर्ण अन्यथा अणु
 			pqi_firmware_feature_update(ctrl_info,
 				&pqi_firmware_features[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (num_features_supported == 0)
-		return;
+	अगर (num_features_supported == 0)
+		वापस;
 
-	for (i = 0; i < ARRAY_SIZE(pqi_firmware_features); i++) {
-		if (!pqi_firmware_features[i].supported)
-			continue;
+	क्रम (i = 0; i < ARRAY_SIZE(pqi_firmware_features); i++) अणु
+		अगर (!pqi_firmware_features[i].supported)
+			जारी;
 		pqi_request_firmware_feature(firmware_features,
 			pqi_firmware_features[i].feature_bit);
-	}
+	पूर्ण
 
 	rc = pqi_enable_firmware_features(ctrl_info, firmware_features,
 		firmware_features_iomem_addr);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to enable firmware features in PQI configuration table\n");
-		for (i = 0; i < ARRAY_SIZE(pqi_firmware_features); i++) {
-			if (!pqi_firmware_features[i].supported)
-				continue;
+		क्रम (i = 0; i < ARRAY_SIZE(pqi_firmware_features); i++) अणु
+			अगर (!pqi_firmware_features[i].supported)
+				जारी;
 			pqi_firmware_feature_update(ctrl_info,
 				&pqi_firmware_features[i]);
-		}
-		return;
-	}
+		पूर्ण
+		वापस;
+	पूर्ण
 
-	for (i = 0; i < ARRAY_SIZE(pqi_firmware_features); i++) {
-		if (!pqi_firmware_features[i].supported)
-			continue;
-		if (pqi_is_firmware_feature_enabled(firmware_features,
+	क्रम (i = 0; i < ARRAY_SIZE(pqi_firmware_features); i++) अणु
+		अगर (!pqi_firmware_features[i].supported)
+			जारी;
+		अगर (pqi_is_firmware_feature_enabled(firmware_features,
 			firmware_features_iomem_addr,
-			pqi_firmware_features[i].feature_bit)) {
+			pqi_firmware_features[i].feature_bit)) अणु
 				pqi_firmware_features[i].enabled = true;
-		}
+		पूर्ण
 		pqi_firmware_feature_update(ctrl_info,
 			&pqi_firmware_features[i]);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pqi_init_firmware_features(void)
-{
-	unsigned int i;
+अटल व्योम pqi_init_firmware_features(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(pqi_firmware_features); i++) {
+	क्रम (i = 0; i < ARRAY_SIZE(pqi_firmware_features); i++) अणु
 		pqi_firmware_features[i].supported = false;
 		pqi_firmware_features[i].enabled = false;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pqi_process_firmware_features_section(
-	struct pqi_config_table_section_info *section_info)
-{
+अटल व्योम pqi_process_firmware_features_section(
+	काष्ठा pqi_config_table_section_info *section_info)
+अणु
 	mutex_lock(&pqi_firmware_features_mutex);
 	pqi_init_firmware_features();
 	pqi_process_firmware_features(section_info);
 	mutex_unlock(&pqi_firmware_features_mutex);
-}
+पूर्ण
 
 /*
  * Reset all controller settings that can be initialized during the processing
  * of the PQI Configuration Table.
  */
 
-static void pqi_ctrl_reset_config(struct pqi_ctrl_info *ctrl_info)
-{
-	ctrl_info->heartbeat_counter = NULL;
-	ctrl_info->soft_reset_status = NULL;
+अटल व्योम pqi_ctrl_reset_config(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	ctrl_info->heartbeat_counter = शून्य;
+	ctrl_info->soft_reset_status = शून्य;
 	ctrl_info->soft_reset_handshake_supported = false;
-	ctrl_info->enable_r1_writes = false;
-	ctrl_info->enable_r5_writes = false;
-	ctrl_info->enable_r6_writes = false;
-	ctrl_info->raid_iu_timeout_supported = false;
-	ctrl_info->tmf_iu_timeout_supported = false;
+	ctrl_info->enable_r1_ग_लिखोs = false;
+	ctrl_info->enable_r5_ग_लिखोs = false;
+	ctrl_info->enable_r6_ग_लिखोs = false;
+	ctrl_info->raid_iu_समयout_supported = false;
+	ctrl_info->पंचांगf_iu_समयout_supported = false;
 	ctrl_info->unique_wwid_in_report_phys_lun_supported = false;
-}
+पूर्ण
 
-static int pqi_process_config_table(struct pqi_ctrl_info *ctrl_info)
-{
+अटल पूर्णांक pqi_process_config_table(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	u32 table_length;
 	u32 section_offset;
 	bool firmware_feature_section_present;
-	void __iomem *table_iomem_addr;
-	struct pqi_config_table *config_table;
-	struct pqi_config_table_section_header *section;
-	struct pqi_config_table_section_info section_info;
-	struct pqi_config_table_section_info feature_section_info;
+	व्योम __iomem *table_iomem_addr;
+	काष्ठा pqi_config_table *config_table;
+	काष्ठा pqi_config_table_section_header *section;
+	काष्ठा pqi_config_table_section_info section_info;
+	काष्ठा pqi_config_table_section_info feature_section_info;
 
 	table_length = ctrl_info->config_table_length;
-	if (table_length == 0)
-		return 0;
+	अगर (table_length == 0)
+		वापस 0;
 
-	config_table = kmalloc(table_length, GFP_KERNEL);
-	if (!config_table) {
+	config_table = kदो_स्मृति(table_length, GFP_KERNEL);
+	अगर (!config_table) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to allocate memory for PQI configuration table\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	/*
-	 * Copy the config table contents from I/O memory space into the
+	 * Copy the config table contents from I/O memory space पूर्णांकo the
 	 * temporary buffer.
 	 */
 	table_iomem_addr = ctrl_info->iomem_base + ctrl_info->config_table_offset;
-	memcpy_fromio(config_table, table_iomem_addr, table_length);
+	स_नकल_fromio(config_table, table_iomem_addr, table_length);
 
 	firmware_feature_section_present = false;
 	section_info.ctrl_info = ctrl_info;
 	section_offset = get_unaligned_le32(&config_table->first_section_offset);
 
-	while (section_offset) {
-		section = (void *)config_table + section_offset;
+	जबतक (section_offset) अणु
+		section = (व्योम *)config_table + section_offset;
 
 		section_info.section = section;
 		section_info.section_offset = section_offset;
 		section_info.section_iomem_addr = table_iomem_addr + section_offset;
 
-		switch (get_unaligned_le16(&section->section_id)) {
-		case PQI_CONFIG_TABLE_SECTION_FIRMWARE_FEATURES:
+		चयन (get_unaligned_le16(&section->section_id)) अणु
+		हाल PQI_CONFIG_TABLE_SECTION_FIRMWARE_FEATURES:
 			firmware_feature_section_present = true;
 			feature_section_info = section_info;
-			break;
-		case PQI_CONFIG_TABLE_SECTION_HEARTBEAT:
-			if (pqi_disable_heartbeat)
+			अवरोध;
+		हाल PQI_CONFIG_TABLE_SECTION_HEARTBEAT:
+			अगर (pqi_disable_heartbeat)
 				dev_warn(&ctrl_info->pci_dev->dev,
 				"heartbeat disabled by module parameter\n");
-			else
+			अन्यथा
 				ctrl_info->heartbeat_counter =
 					table_iomem_addr +
 					section_offset +
-					offsetof(struct pqi_config_table_heartbeat,
+					दुरत्व(काष्ठा pqi_config_table_heartbeat,
 						heartbeat_counter);
-			break;
-		case PQI_CONFIG_TABLE_SECTION_SOFT_RESET:
+			अवरोध;
+		हाल PQI_CONFIG_TABLE_SECTION_SOFT_RESET:
 			ctrl_info->soft_reset_status =
 				table_iomem_addr +
 				section_offset +
-				offsetof(struct pqi_config_table_soft_reset,
+				दुरत्व(काष्ठा pqi_config_table_soft_reset,
 					soft_reset_status);
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		section_offset = get_unaligned_le16(&section->next_section_offset);
-	}
+	पूर्ण
 
 	/*
 	 * We process the firmware feature section after all other sections
 	 * have been processed so that the feature bit callbacks can take
-	 * into account the settings configured by other sections.
+	 * पूर्णांकo account the settings configured by other sections.
 	 */
-	if (firmware_feature_section_present)
+	अगर (firmware_feature_section_present)
 		pqi_process_firmware_features_section(&feature_section_info);
 
-	kfree(config_table);
+	kमुक्त(config_table);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Switches the controller from PQI mode back into SIS mode. */
+/* Switches the controller from PQI mode back पूर्णांकo SIS mode. */
 
-static int pqi_revert_to_sis_mode(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
+अटल पूर्णांक pqi_revert_to_sis_mode(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
 
 	pqi_change_irq_mode(ctrl_info, IRQ_MODE_NONE);
 	rc = pqi_reset(ctrl_info);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 	rc = sis_reenable_sis_mode(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"re-enabling SIS mode failed with error %d\n", rc);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 	pqi_save_ctrl_mode(ctrl_info, SIS_MODE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * If the controller isn't already in SIS mode, this function forces it into
+ * If the controller isn't alपढ़ोy in SIS mode, this function क्रमces it पूर्णांकo
  * SIS mode.
  */
 
-static int pqi_force_sis_mode(struct pqi_ctrl_info *ctrl_info)
-{
-	if (!sis_is_firmware_running(ctrl_info))
-		return -ENXIO;
+अटल पूर्णांक pqi_क्रमce_sis_mode(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अगर (!sis_is_firmware_running(ctrl_info))
+		वापस -ENXIO;
 
-	if (pqi_get_ctrl_mode(ctrl_info) == SIS_MODE)
-		return 0;
+	अगर (pqi_get_ctrl_mode(ctrl_info) == SIS_MODE)
+		वापस 0;
 
-	if (sis_is_kernel_up(ctrl_info)) {
+	अगर (sis_is_kernel_up(ctrl_info)) अणु
 		pqi_save_ctrl_mode(ctrl_info, SIS_MODE);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	return pqi_revert_to_sis_mode(ctrl_info);
-}
+	वापस pqi_revert_to_sis_mode(ctrl_info);
+पूर्ण
 
-static int pqi_ctrl_init(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
+अटल पूर्णांक pqi_ctrl_init(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
 	u32 product_id;
 
-	if (reset_devices) {
+	अगर (reset_devices) अणु
 		sis_soft_reset(ctrl_info);
 		msleep(PQI_POST_RESET_DELAY_SECS * PQI_HZ);
-	} else {
-		rc = pqi_force_sis_mode(ctrl_info);
-		if (rc)
-			return rc;
-	}
+	पूर्ण अन्यथा अणु
+		rc = pqi_क्रमce_sis_mode(ctrl_info);
+		अगर (rc)
+			वापस rc;
+	पूर्ण
 
 	/*
-	 * Wait until the controller is ready to start accepting SIS
+	 * Wait until the controller is पढ़ोy to start accepting SIS
 	 * commands.
 	 */
-	rc = sis_wait_for_ctrl_ready(ctrl_info);
-	if (rc)
-		return rc;
+	rc = sis_रुको_क्रम_ctrl_पढ़ोy(ctrl_info);
+	अगर (rc)
+		वापस rc;
 
 	/*
 	 * Get the controller properties.  This allows us to determine
 	 * whether or not it supports PQI mode.
 	 */
 	rc = sis_get_ctrl_properties(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error obtaining controller properties\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = sis_get_pqi_capabilities(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error obtaining controller capabilities\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	product_id = sis_get_product_id(ctrl_info);
 	ctrl_info->product_id = (u8)product_id;
 	ctrl_info->product_revision = (u8)(product_id >> 8);
 
-	if (reset_devices) {
-		if (ctrl_info->max_outstanding_requests >
+	अगर (reset_devices) अणु
+		अगर (ctrl_info->max_outstanding_requests >
 			PQI_MAX_OUTSTANDING_REQUESTS_KDUMP)
 				ctrl_info->max_outstanding_requests =
 					PQI_MAX_OUTSTANDING_REQUESTS_KDUMP;
-	} else {
-		if (ctrl_info->max_outstanding_requests >
+	पूर्ण अन्यथा अणु
+		अगर (ctrl_info->max_outstanding_requests >
 			PQI_MAX_OUTSTANDING_REQUESTS)
 				ctrl_info->max_outstanding_requests =
 					PQI_MAX_OUTSTANDING_REQUESTS;
-	}
+	पूर्ण
 
 	pqi_calculate_io_resources(ctrl_info);
 
 	rc = pqi_alloc_error_buffer(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to allocate PQI error buffer\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/*
 	 * If the function we are about to call succeeds, the
 	 * controller will transition from legacy SIS mode
-	 * into PQI mode.
+	 * पूर्णांकo PQI mode.
 	 */
-	rc = sis_init_base_struct_addr(ctrl_info);
-	if (rc) {
+	rc = sis_init_base_काष्ठा_addr(ctrl_info);
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error initializing PQI mode\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Wait for the controller to complete the SIS -> PQI transition. */
-	rc = pqi_wait_for_pqi_mode_ready(ctrl_info);
-	if (rc) {
+	/* Wait क्रम the controller to complete the SIS -> PQI transition. */
+	rc = pqi_रुको_क्रम_pqi_mode_पढ़ोy(ctrl_info);
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"transition to PQI mode failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* From here on, we are running in PQI mode. */
 	ctrl_info->pqi_mode_enabled = true;
 	pqi_save_ctrl_mode(ctrl_info, PQI_MODE);
 
 	rc = pqi_alloc_admin_queues(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to allocate admin queues\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = pqi_create_admin_queues(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error creating admin queues\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = pqi_report_device_capability(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"obtaining device capability failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = pqi_validate_device_capability(ctrl_info);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	pqi_calculate_queue_resources(ctrl_info);
 
-	rc = pqi_enable_msix_interrupts(ctrl_info);
-	if (rc)
-		return rc;
+	rc = pqi_enable_msix_पूर्णांकerrupts(ctrl_info);
+	अगर (rc)
+		वापस rc;
 
-	if (ctrl_info->num_msix_vectors_enabled < ctrl_info->num_queue_groups) {
+	अगर (ctrl_info->num_msix_vectors_enabled < ctrl_info->num_queue_groups) अणु
 		ctrl_info->max_msix_vectors =
 			ctrl_info->num_msix_vectors_enabled;
 		pqi_calculate_queue_resources(ctrl_info);
-	}
+	पूर्ण
 
 	rc = pqi_alloc_io_resources(ctrl_info);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = pqi_alloc_operational_queues(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to allocate operational queues\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	pqi_init_operational_queues(ctrl_info);
 
 	rc = pqi_request_irqs(ctrl_info);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	rc = pqi_create_queues(ctrl_info);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	pqi_change_irq_mode(ctrl_info, IRQ_MODE_MSIX);
 
 	ctrl_info->controller_online = true;
 
 	rc = pqi_process_config_table(ctrl_info);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	pqi_start_heartbeat_timer(ctrl_info);
+	pqi_start_heartbeat_समयr(ctrl_info);
 
-	if (ctrl_info->enable_r5_writes || ctrl_info->enable_r6_writes) {
+	अगर (ctrl_info->enable_r5_ग_लिखोs || ctrl_info->enable_r6_ग_लिखोs) अणु
 		rc = pqi_get_advanced_raid_bypass_config(ctrl_info);
-		if (rc) { /* Supported features not returned correctly. */
+		अगर (rc) अणु /* Supported features not वापसed correctly. */
 			dev_err(&ctrl_info->pci_dev->dev,
 				"error obtaining advanced RAID bypass configuration\n");
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 		ctrl_info->ciss_report_log_flags |=
 			CISS_REPORT_LOG_FLAG_DRIVE_TYPE_MIX;
-	}
+	पूर्ण
 
 	rc = pqi_enable_events(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error enabling events\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Register with the SCSI subsystem. */
-	rc = pqi_register_scsi(ctrl_info);
-	if (rc)
-		return rc;
+	/* Register with the SCSI subप्रणाली. */
+	rc = pqi_रेजिस्टर_scsi(ctrl_info);
+	अगर (rc)
+		वापस rc;
 
 	rc = pqi_get_ctrl_product_details(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error obtaining product details\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = pqi_get_ctrl_serial_number(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error obtaining ctrl serial number\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = pqi_set_diag_rescan(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error enabling multi-lun rescan\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = pqi_write_driver_version_to_host_wellness(ctrl_info);
-	if (rc) {
+	rc = pqi_ग_लिखो_driver_version_to_host_wellness(ctrl_info);
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error updating host wellness\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	pqi_schedule_update_time_worker(ctrl_info);
+	pqi_schedule_update_समय_worker(ctrl_info);
 
 	pqi_scan_scsi_devices(ctrl_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void pqi_reinit_queues(struct pqi_ctrl_info *ctrl_info)
-{
-	unsigned int i;
-	struct pqi_admin_queues *admin_queues;
-	struct pqi_event_queue *event_queue;
+अटल व्योम pqi_reinit_queues(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा pqi_admin_queues *admin_queues;
+	काष्ठा pqi_event_queue *event_queue;
 
 	admin_queues = &ctrl_info->admin_queues;
 	admin_queues->iq_pi_copy = 0;
 	admin_queues->oq_ci_copy = 0;
-	writel(0, admin_queues->oq_pi);
+	ग_लिखोl(0, admin_queues->oq_pi);
 
-	for (i = 0; i < ctrl_info->num_queue_groups; i++) {
+	क्रम (i = 0; i < ctrl_info->num_queue_groups; i++) अणु
 		ctrl_info->queue_groups[i].iq_pi_copy[RAID_PATH] = 0;
 		ctrl_info->queue_groups[i].iq_pi_copy[AIO_PATH] = 0;
 		ctrl_info->queue_groups[i].oq_ci_copy = 0;
 
-		writel(0, ctrl_info->queue_groups[i].iq_ci[RAID_PATH]);
-		writel(0, ctrl_info->queue_groups[i].iq_ci[AIO_PATH]);
-		writel(0, ctrl_info->queue_groups[i].oq_pi);
-	}
+		ग_लिखोl(0, ctrl_info->queue_groups[i].iq_ci[RAID_PATH]);
+		ग_लिखोl(0, ctrl_info->queue_groups[i].iq_ci[AIO_PATH]);
+		ग_लिखोl(0, ctrl_info->queue_groups[i].oq_pi);
+	पूर्ण
 
 	event_queue = &ctrl_info->event_queue;
-	writel(0, event_queue->oq_pi);
+	ग_लिखोl(0, event_queue->oq_pi);
 	event_queue->oq_ci_copy = 0;
-}
+पूर्ण
 
-static int pqi_ctrl_init_resume(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
+अटल पूर्णांक pqi_ctrl_init_resume(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
 
-	rc = pqi_force_sis_mode(ctrl_info);
-	if (rc)
-		return rc;
+	rc = pqi_क्रमce_sis_mode(ctrl_info);
+	अगर (rc)
+		वापस rc;
 
 	/*
-	 * Wait until the controller is ready to start accepting SIS
+	 * Wait until the controller is पढ़ोy to start accepting SIS
 	 * commands.
 	 */
-	rc = sis_wait_for_ctrl_ready_resume(ctrl_info);
-	if (rc)
-		return rc;
+	rc = sis_रुको_क्रम_ctrl_पढ़ोy_resume(ctrl_info);
+	अगर (rc)
+		वापस rc;
 
 	/*
 	 * Get the controller properties.  This allows us to determine
 	 * whether or not it supports PQI mode.
 	 */
 	rc = sis_get_ctrl_properties(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error obtaining controller properties\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = sis_get_pqi_capabilities(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error obtaining controller capabilities\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/*
 	 * If the function we are about to call succeeds, the
 	 * controller will transition from legacy SIS mode
-	 * into PQI mode.
+	 * पूर्णांकo PQI mode.
 	 */
-	rc = sis_init_base_struct_addr(ctrl_info);
-	if (rc) {
+	rc = sis_init_base_काष्ठा_addr(ctrl_info);
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error initializing PQI mode\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	/* Wait for the controller to complete the SIS -> PQI transition. */
-	rc = pqi_wait_for_pqi_mode_ready(ctrl_info);
-	if (rc) {
+	/* Wait क्रम the controller to complete the SIS -> PQI transition. */
+	rc = pqi_रुको_क्रम_pqi_mode_पढ़ोy(ctrl_info);
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"transition to PQI mode failed\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/* From here on, we are running in PQI mode. */
 	ctrl_info->pqi_mode_enabled = true;
@@ -7922,15 +7923,15 @@ static int pqi_ctrl_init_resume(struct pqi_ctrl_info *ctrl_info)
 	pqi_reinit_queues(ctrl_info);
 
 	rc = pqi_create_admin_queues(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error creating admin queues\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = pqi_create_queues(ctrl_info);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	pqi_change_irq_mode(ctrl_info, IRQ_MODE_MSIX);
 
@@ -7940,154 +7941,154 @@ static int pqi_ctrl_init_resume(struct pqi_ctrl_info *ctrl_info)
 	pqi_ctrl_reset_config(ctrl_info);
 
 	rc = pqi_process_config_table(ctrl_info);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	pqi_start_heartbeat_timer(ctrl_info);
+	pqi_start_heartbeat_समयr(ctrl_info);
 
-	if (ctrl_info->enable_r5_writes || ctrl_info->enable_r6_writes) {
+	अगर (ctrl_info->enable_r5_ग_लिखोs || ctrl_info->enable_r6_ग_लिखोs) अणु
 		rc = pqi_get_advanced_raid_bypass_config(ctrl_info);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"error obtaining advanced RAID bypass configuration\n");
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 		ctrl_info->ciss_report_log_flags |=
 			CISS_REPORT_LOG_FLAG_DRIVE_TYPE_MIX;
-	}
+	पूर्ण
 
 	rc = pqi_enable_events(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error enabling events\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = pqi_get_ctrl_product_details(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error obtaining product details\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	rc = pqi_set_diag_rescan(ctrl_info);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error enabling multi-lun rescan\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	rc = pqi_write_driver_version_to_host_wellness(ctrl_info);
-	if (rc) {
+	rc = pqi_ग_लिखो_driver_version_to_host_wellness(ctrl_info);
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"error updating host wellness\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (pqi_ofa_in_progress(ctrl_info))
+	अगर (pqi_ofa_in_progress(ctrl_info))
 		pqi_ctrl_unblock_scan(ctrl_info);
 
 	pqi_scan_scsi_devices(ctrl_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static inline int pqi_set_pcie_completion_timeout(struct pci_dev *pci_dev, u16 timeout)
-{
-	int rc;
+अटल अंतरभूत पूर्णांक pqi_set_pcie_completion_समयout(काष्ठा pci_dev *pci_dev, u16 समयout)
+अणु
+	पूर्णांक rc;
 
 	rc = pcie_capability_clear_and_set_word(pci_dev, PCI_EXP_DEVCTL2,
-		PCI_EXP_DEVCTL2_COMP_TIMEOUT, timeout);
+		PCI_EXP_DEVCTL2_COMP_TIMEOUT, समयout);
 
-	return pcibios_err_to_errno(rc);
-}
+	वापस pcibios_err_to_त्रुटि_सं(rc);
+पूर्ण
 
-static int pqi_pci_init(struct pqi_ctrl_info *ctrl_info)
-{
-	int rc;
+अटल पूर्णांक pqi_pci_init(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	पूर्णांक rc;
 	u64 mask;
 
 	rc = pci_enable_device(ctrl_info->pci_dev);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to enable PCI device\n");
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	if (sizeof(dma_addr_t) > 4)
+	अगर (माप(dma_addr_t) > 4)
 		mask = DMA_BIT_MASK(64);
-	else
+	अन्यथा
 		mask = DMA_BIT_MASK(32);
 
 	rc = dma_set_mask_and_coherent(&ctrl_info->pci_dev->dev, mask);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev, "failed to set DMA mask\n");
-		goto disable_device;
-	}
+		जाओ disable_device;
+	पूर्ण
 
 	rc = pci_request_regions(ctrl_info->pci_dev, DRIVER_NAME_SHORT);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to obtain PCI resources\n");
-		goto disable_device;
-	}
+		जाओ disable_device;
+	पूर्ण
 
 	ctrl_info->iomem_base = ioremap(pci_resource_start(
 		ctrl_info->pci_dev, 0),
-		sizeof(struct pqi_ctrl_registers));
-	if (!ctrl_info->iomem_base) {
+		माप(काष्ठा pqi_ctrl_रेजिस्टरs));
+	अगर (!ctrl_info->iomem_base) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to map memory for controller registers\n");
 		rc = -ENOMEM;
-		goto release_regions;
-	}
+		जाओ release_regions;
+	पूर्ण
 
-#define PCI_EXP_COMP_TIMEOUT_65_TO_210_MS		0x6
+#घोषणा PCI_EXP_COMP_TIMEOUT_65_TO_210_MS		0x6
 
-	/* Increase the PCIe completion timeout. */
-	rc = pqi_set_pcie_completion_timeout(ctrl_info->pci_dev,
+	/* Increase the PCIe completion समयout. */
+	rc = pqi_set_pcie_completion_समयout(ctrl_info->pci_dev,
 		PCI_EXP_COMP_TIMEOUT_65_TO_210_MS);
-	if (rc) {
+	अगर (rc) अणु
 		dev_err(&ctrl_info->pci_dev->dev,
 			"failed to set PCIe completion timeout\n");
-		goto release_regions;
-	}
+		जाओ release_regions;
+	पूर्ण
 
 	/* Enable bus mastering. */
 	pci_set_master(ctrl_info->pci_dev);
 
-	ctrl_info->registers = ctrl_info->iomem_base;
-	ctrl_info->pqi_registers = &ctrl_info->registers->pqi_registers;
+	ctrl_info->रेजिस्टरs = ctrl_info->iomem_base;
+	ctrl_info->pqi_रेजिस्टरs = &ctrl_info->रेजिस्टरs->pqi_रेजिस्टरs;
 
 	pci_set_drvdata(ctrl_info->pci_dev, ctrl_info);
 
-	return 0;
+	वापस 0;
 
 release_regions:
 	pci_release_regions(ctrl_info->pci_dev);
 disable_device:
 	pci_disable_device(ctrl_info->pci_dev);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pqi_cleanup_pci_init(struct pqi_ctrl_info *ctrl_info)
-{
+अटल व्योम pqi_cleanup_pci_init(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	iounmap(ctrl_info->iomem_base);
 	pci_release_regions(ctrl_info->pci_dev);
-	if (pci_is_enabled(ctrl_info->pci_dev))
+	अगर (pci_is_enabled(ctrl_info->pci_dev))
 		pci_disable_device(ctrl_info->pci_dev);
-	pci_set_drvdata(ctrl_info->pci_dev, NULL);
-}
+	pci_set_drvdata(ctrl_info->pci_dev, शून्य);
+पूर्ण
 
-static struct pqi_ctrl_info *pqi_alloc_ctrl_info(int numa_node)
-{
-	struct pqi_ctrl_info *ctrl_info;
+अटल काष्ठा pqi_ctrl_info *pqi_alloc_ctrl_info(पूर्णांक numa_node)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
-	ctrl_info = kzalloc_node(sizeof(struct pqi_ctrl_info),
+	ctrl_info = kzalloc_node(माप(काष्ठा pqi_ctrl_info),
 			GFP_KERNEL, numa_node);
-	if (!ctrl_info)
-		return NULL;
+	अगर (!ctrl_info)
+		वापस शून्य;
 
 	mutex_init(&ctrl_info->scan_mutex);
 	mutex_init(&ctrl_info->lun_reset_mutex);
@@ -8097,12 +8098,12 @@ static struct pqi_ctrl_info *pqi_alloc_ctrl_info(int numa_node)
 	spin_lock_init(&ctrl_info->scsi_device_list_lock);
 
 	INIT_WORK(&ctrl_info->event_work, pqi_event_worker);
-	atomic_set(&ctrl_info->num_interrupts, 0);
+	atomic_set(&ctrl_info->num_पूर्णांकerrupts, 0);
 
 	INIT_DELAYED_WORK(&ctrl_info->rescan_work, pqi_rescan_worker);
-	INIT_DELAYED_WORK(&ctrl_info->update_time_work, pqi_update_time_worker);
+	INIT_DELAYED_WORK(&ctrl_info->update_समय_work, pqi_update_समय_worker);
 
-	timer_setup(&ctrl_info->heartbeat_timer, pqi_heartbeat_timer_handler, 0);
+	समयr_setup(&ctrl_info->heartbeat_समयr, pqi_heartbeat_समयr_handler, 0);
 	INIT_WORK(&ctrl_info->ctrl_offline_work, pqi_ctrl_offline_worker);
 
 	INIT_WORK(&ctrl_info->ofa_memory_alloc_work, pqi_ofa_memory_alloc_worker);
@@ -8110,9 +8111,9 @@ static struct pqi_ctrl_info *pqi_alloc_ctrl_info(int numa_node)
 
 	sema_init(&ctrl_info->sync_request_sem,
 		PQI_RESERVED_IO_SLOTS_SYNCHRONOUS_REQUESTS);
-	init_waitqueue_head(&ctrl_info->block_requests_wait);
+	init_रुकोqueue_head(&ctrl_info->block_requests_रुको);
 
-	ctrl_info->ctrl_id = atomic_inc_return(&pqi_controller_count) - 1;
+	ctrl_info->ctrl_id = atomic_inc_वापस(&pqi_controller_count) - 1;
 	ctrl_info->irq_mode = IRQ_MODE_NONE;
 	ctrl_info->max_msix_vectors = PQI_MAX_MSIX_VECTORS;
 
@@ -8121,537 +8122,537 @@ static struct pqi_ctrl_info *pqi_alloc_ctrl_info(int numa_node)
 		PQI_DEFAULT_MAX_TRANSFER_ENCRYPTED_SAS_SATA;
 	ctrl_info->max_transfer_encrypted_nvme =
 		PQI_DEFAULT_MAX_TRANSFER_ENCRYPTED_NVME;
-	ctrl_info->max_write_raid_5_6 = PQI_DEFAULT_MAX_WRITE_RAID_5_6;
-	ctrl_info->max_write_raid_1_10_2drive = ~0;
-	ctrl_info->max_write_raid_1_10_3drive = ~0;
+	ctrl_info->max_ग_लिखो_raid_5_6 = PQI_DEFAULT_MAX_WRITE_RAID_5_6;
+	ctrl_info->max_ग_लिखो_raid_1_10_2drive = ~0;
+	ctrl_info->max_ग_लिखो_raid_1_10_3drive = ~0;
 
-	return ctrl_info;
-}
+	वापस ctrl_info;
+पूर्ण
 
-static inline void pqi_free_ctrl_info(struct pqi_ctrl_info *ctrl_info)
-{
-	kfree(ctrl_info);
-}
+अटल अंतरभूत व्योम pqi_मुक्त_ctrl_info(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	kमुक्त(ctrl_info);
+पूर्ण
 
-static void pqi_free_interrupts(struct pqi_ctrl_info *ctrl_info)
-{
-	pqi_free_irqs(ctrl_info);
-	pqi_disable_msix_interrupts(ctrl_info);
-}
+अटल व्योम pqi_मुक्त_पूर्णांकerrupts(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	pqi_मुक्त_irqs(ctrl_info);
+	pqi_disable_msix_पूर्णांकerrupts(ctrl_info);
+पूर्ण
 
-static void pqi_free_ctrl_resources(struct pqi_ctrl_info *ctrl_info)
-{
-	pqi_stop_heartbeat_timer(ctrl_info);
-	pqi_free_interrupts(ctrl_info);
-	if (ctrl_info->queue_memory_base)
-		dma_free_coherent(&ctrl_info->pci_dev->dev,
+अटल व्योम pqi_मुक्त_ctrl_resources(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	pqi_stop_heartbeat_समयr(ctrl_info);
+	pqi_मुक्त_पूर्णांकerrupts(ctrl_info);
+	अगर (ctrl_info->queue_memory_base)
+		dma_मुक्त_coherent(&ctrl_info->pci_dev->dev,
 			ctrl_info->queue_memory_length,
 			ctrl_info->queue_memory_base,
 			ctrl_info->queue_memory_base_dma_handle);
-	if (ctrl_info->admin_queue_memory_base)
-		dma_free_coherent(&ctrl_info->pci_dev->dev,
+	अगर (ctrl_info->admin_queue_memory_base)
+		dma_मुक्त_coherent(&ctrl_info->pci_dev->dev,
 			ctrl_info->admin_queue_memory_length,
 			ctrl_info->admin_queue_memory_base,
 			ctrl_info->admin_queue_memory_base_dma_handle);
-	pqi_free_all_io_requests(ctrl_info);
-	if (ctrl_info->error_buffer)
-		dma_free_coherent(&ctrl_info->pci_dev->dev,
+	pqi_मुक्त_all_io_requests(ctrl_info);
+	अगर (ctrl_info->error_buffer)
+		dma_मुक्त_coherent(&ctrl_info->pci_dev->dev,
 			ctrl_info->error_buffer_length,
 			ctrl_info->error_buffer,
 			ctrl_info->error_buffer_dma_handle);
-	if (ctrl_info->iomem_base)
+	अगर (ctrl_info->iomem_base)
 		pqi_cleanup_pci_init(ctrl_info);
-	pqi_free_ctrl_info(ctrl_info);
-}
+	pqi_मुक्त_ctrl_info(ctrl_info);
+पूर्ण
 
-static void pqi_remove_ctrl(struct pqi_ctrl_info *ctrl_info)
-{
+अटल व्योम pqi_हटाओ_ctrl(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	pqi_cancel_rescan_worker(ctrl_info);
-	pqi_cancel_update_time_worker(ctrl_info);
-	pqi_unregister_scsi(ctrl_info);
-	if (ctrl_info->pqi_mode_enabled)
+	pqi_cancel_update_समय_worker(ctrl_info);
+	pqi_unरेजिस्टर_scsi(ctrl_info);
+	अगर (ctrl_info->pqi_mode_enabled)
 		pqi_revert_to_sis_mode(ctrl_info);
-	pqi_free_ctrl_resources(ctrl_info);
-}
+	pqi_मुक्त_ctrl_resources(ctrl_info);
+पूर्ण
 
-static void pqi_ofa_ctrl_quiesce(struct pqi_ctrl_info *ctrl_info)
-{
+अटल व्योम pqi_ofa_ctrl_quiesce(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	pqi_ctrl_block_scan(ctrl_info);
 	pqi_scsi_block_requests(ctrl_info);
 	pqi_ctrl_block_device_reset(ctrl_info);
 	pqi_ctrl_block_requests(ctrl_info);
-	pqi_ctrl_wait_until_quiesced(ctrl_info);
-	pqi_stop_heartbeat_timer(ctrl_info);
-}
+	pqi_ctrl_रुको_until_quiesced(ctrl_info);
+	pqi_stop_heartbeat_समयr(ctrl_info);
+पूर्ण
 
-static void pqi_ofa_ctrl_unquiesce(struct pqi_ctrl_info *ctrl_info)
-{
-	pqi_start_heartbeat_timer(ctrl_info);
+अटल व्योम pqi_ofa_ctrl_unquiesce(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	pqi_start_heartbeat_समयr(ctrl_info);
 	pqi_ctrl_unblock_requests(ctrl_info);
 	pqi_ctrl_unblock_device_reset(ctrl_info);
 	pqi_scsi_unblock_requests(ctrl_info);
 	pqi_ctrl_unblock_scan(ctrl_info);
-}
+पूर्ण
 
-static int pqi_ofa_alloc_mem(struct pqi_ctrl_info *ctrl_info, u32 total_size, u32 chunk_size)
-{
-	int i;
+अटल पूर्णांक pqi_ofa_alloc_mem(काष्ठा pqi_ctrl_info *ctrl_info, u32 total_size, u32 chunk_size)
+अणु
+	पूर्णांक i;
 	u32 sg_count;
-	struct device *dev;
-	struct pqi_ofa_memory *ofap;
-	struct pqi_sg_descriptor *mem_descriptor;
+	काष्ठा device *dev;
+	काष्ठा pqi_ofa_memory *ofap;
+	काष्ठा pqi_sg_descriptor *mem_descriptor;
 	dma_addr_t dma_handle;
 
 	ofap = ctrl_info->pqi_ofa_mem_virt_addr;
 
 	sg_count = DIV_ROUND_UP(total_size, chunk_size);
-	if (sg_count == 0 || sg_count > PQI_OFA_MAX_SG_DESCRIPTORS)
-		goto out;
+	अगर (sg_count == 0 || sg_count > PQI_OFA_MAX_SG_DESCRIPTORS)
+		जाओ out;
 
-	ctrl_info->pqi_ofa_chunk_virt_addr = kmalloc_array(sg_count, sizeof(void *), GFP_KERNEL);
-	if (!ctrl_info->pqi_ofa_chunk_virt_addr)
-		goto out;
+	ctrl_info->pqi_ofa_chunk_virt_addr = kदो_स्मृति_array(sg_count, माप(व्योम *), GFP_KERNEL);
+	अगर (!ctrl_info->pqi_ofa_chunk_virt_addr)
+		जाओ out;
 
 	dev = &ctrl_info->pci_dev->dev;
 
-	for (i = 0; i < sg_count; i++) {
+	क्रम (i = 0; i < sg_count; i++) अणु
 		ctrl_info->pqi_ofa_chunk_virt_addr[i] =
 			dma_alloc_coherent(dev, chunk_size, &dma_handle, GFP_KERNEL);
-		if (!ctrl_info->pqi_ofa_chunk_virt_addr[i])
-			goto out_free_chunks;
+		अगर (!ctrl_info->pqi_ofa_chunk_virt_addr[i])
+			जाओ out_मुक्त_chunks;
 		mem_descriptor = &ofap->sg_descriptor[i];
 		put_unaligned_le64((u64)dma_handle, &mem_descriptor->address);
 		put_unaligned_le32(chunk_size, &mem_descriptor->length);
-	}
+	पूर्ण
 
 	put_unaligned_le32(CISS_SG_LAST, &mem_descriptor->flags);
 	put_unaligned_le16(sg_count, &ofap->num_memory_descriptors);
 	put_unaligned_le32(sg_count * chunk_size, &ofap->bytes_allocated);
 
-	return 0;
+	वापस 0;
 
-out_free_chunks:
-	while (--i >= 0) {
+out_मुक्त_chunks:
+	जबतक (--i >= 0) अणु
 		mem_descriptor = &ofap->sg_descriptor[i];
-		dma_free_coherent(dev, chunk_size,
+		dma_मुक्त_coherent(dev, chunk_size,
 			ctrl_info->pqi_ofa_chunk_virt_addr[i],
 			get_unaligned_le64(&mem_descriptor->address));
-	}
-	kfree(ctrl_info->pqi_ofa_chunk_virt_addr);
+	पूर्ण
+	kमुक्त(ctrl_info->pqi_ofa_chunk_virt_addr);
 
 out:
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static int pqi_ofa_alloc_host_buffer(struct pqi_ctrl_info *ctrl_info)
-{
+अटल पूर्णांक pqi_ofa_alloc_host_buffer(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	u32 total_size;
 	u32 chunk_size;
 	u32 min_chunk_size;
 
-	if (ctrl_info->ofa_bytes_requested == 0)
-		return 0;
+	अगर (ctrl_info->ofa_bytes_requested == 0)
+		वापस 0;
 
 	total_size = PAGE_ALIGN(ctrl_info->ofa_bytes_requested);
 	min_chunk_size = DIV_ROUND_UP(total_size, PQI_OFA_MAX_SG_DESCRIPTORS);
 	min_chunk_size = PAGE_ALIGN(min_chunk_size);
 
-	for (chunk_size = total_size; chunk_size >= min_chunk_size;) {
-		if (pqi_ofa_alloc_mem(ctrl_info, total_size, chunk_size) == 0)
-			return 0;
+	क्रम (chunk_size = total_size; chunk_size >= min_chunk_size;) अणु
+		अगर (pqi_ofa_alloc_mem(ctrl_info, total_size, chunk_size) == 0)
+			वापस 0;
 		chunk_size /= 2;
 		chunk_size = PAGE_ALIGN(chunk_size);
-	}
+	पूर्ण
 
-	return -ENOMEM;
-}
+	वापस -ENOMEM;
+पूर्ण
 
-static void pqi_ofa_setup_host_buffer(struct pqi_ctrl_info *ctrl_info)
-{
-	struct device *dev;
-	struct pqi_ofa_memory *ofap;
+अटल व्योम pqi_ofa_setup_host_buffer(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	काष्ठा device *dev;
+	काष्ठा pqi_ofa_memory *ofap;
 
 	dev = &ctrl_info->pci_dev->dev;
 
-	ofap = dma_alloc_coherent(dev, sizeof(*ofap),
+	ofap = dma_alloc_coherent(dev, माप(*ofap),
 		&ctrl_info->pqi_ofa_mem_dma_handle, GFP_KERNEL);
-	if (!ofap)
-		return;
+	अगर (!ofap)
+		वापस;
 
 	ctrl_info->pqi_ofa_mem_virt_addr = ofap;
 
-	if (pqi_ofa_alloc_host_buffer(ctrl_info) < 0) {
+	अगर (pqi_ofa_alloc_host_buffer(ctrl_info) < 0) अणु
 		dev_err(dev,
 			"failed to allocate host buffer for Online Firmware Activation\n");
-		dma_free_coherent(dev, sizeof(*ofap), ofap, ctrl_info->pqi_ofa_mem_dma_handle);
-		ctrl_info->pqi_ofa_mem_virt_addr = NULL;
-		return;
-	}
+		dma_मुक्त_coherent(dev, माप(*ofap), ofap, ctrl_info->pqi_ofa_mem_dma_handle);
+		ctrl_info->pqi_ofa_mem_virt_addr = शून्य;
+		वापस;
+	पूर्ण
 
 	put_unaligned_le16(PQI_OFA_VERSION, &ofap->version);
-	memcpy(&ofap->signature, PQI_OFA_SIGNATURE, sizeof(ofap->signature));
-}
+	स_नकल(&ofap->signature, PQI_OFA_SIGNATURE, माप(ofap->signature));
+पूर्ण
 
-static void pqi_ofa_free_host_buffer(struct pqi_ctrl_info *ctrl_info)
-{
-	unsigned int i;
-	struct device *dev;
-	struct pqi_ofa_memory *ofap;
-	struct pqi_sg_descriptor *mem_descriptor;
-	unsigned int num_memory_descriptors;
+अटल व्योम pqi_ofa_मुक्त_host_buffer(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा device *dev;
+	काष्ठा pqi_ofa_memory *ofap;
+	काष्ठा pqi_sg_descriptor *mem_descriptor;
+	अचिन्हित पूर्णांक num_memory_descriptors;
 
 	ofap = ctrl_info->pqi_ofa_mem_virt_addr;
-	if (!ofap)
-		return;
+	अगर (!ofap)
+		वापस;
 
 	dev = &ctrl_info->pci_dev->dev;
 
-	if (get_unaligned_le32(&ofap->bytes_allocated) == 0)
-		goto out;
+	अगर (get_unaligned_le32(&ofap->bytes_allocated) == 0)
+		जाओ out;
 
 	mem_descriptor = ofap->sg_descriptor;
 	num_memory_descriptors =
 		get_unaligned_le16(&ofap->num_memory_descriptors);
 
-	for (i = 0; i < num_memory_descriptors; i++) {
-		dma_free_coherent(dev,
+	क्रम (i = 0; i < num_memory_descriptors; i++) अणु
+		dma_मुक्त_coherent(dev,
 			get_unaligned_le32(&mem_descriptor[i].length),
 			ctrl_info->pqi_ofa_chunk_virt_addr[i],
 			get_unaligned_le64(&mem_descriptor[i].address));
-	}
-	kfree(ctrl_info->pqi_ofa_chunk_virt_addr);
+	पूर्ण
+	kमुक्त(ctrl_info->pqi_ofa_chunk_virt_addr);
 
 out:
-	dma_free_coherent(dev, sizeof(*ofap), ofap,
+	dma_मुक्त_coherent(dev, माप(*ofap), ofap,
 		ctrl_info->pqi_ofa_mem_dma_handle);
-	ctrl_info->pqi_ofa_mem_virt_addr = NULL;
-}
+	ctrl_info->pqi_ofa_mem_virt_addr = शून्य;
+पूर्ण
 
-static int pqi_ofa_host_memory_update(struct pqi_ctrl_info *ctrl_info)
-{
+अटल पूर्णांक pqi_ofa_host_memory_update(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
 	u32 buffer_length;
-	struct pqi_vendor_general_request request;
-	struct pqi_ofa_memory *ofap;
+	काष्ठा pqi_venकरोr_general_request request;
+	काष्ठा pqi_ofa_memory *ofap;
 
-	memset(&request, 0, sizeof(request));
+	स_रखो(&request, 0, माप(request));
 
 	request.header.iu_type = PQI_REQUEST_IU_VENDOR_GENERAL;
-	put_unaligned_le16(sizeof(request) - PQI_REQUEST_HEADER_LENGTH,
+	put_unaligned_le16(माप(request) - PQI_REQUEST_HEADER_LENGTH,
 		&request.header.iu_length);
 	put_unaligned_le16(PQI_VENDOR_GENERAL_HOST_MEMORY_UPDATE,
 		&request.function_code);
 
 	ofap = ctrl_info->pqi_ofa_mem_virt_addr;
 
-	if (ofap) {
-		buffer_length = offsetof(struct pqi_ofa_memory, sg_descriptor) +
+	अगर (ofap) अणु
+		buffer_length = दुरत्व(काष्ठा pqi_ofa_memory, sg_descriptor) +
 			get_unaligned_le16(&ofap->num_memory_descriptors) *
-			sizeof(struct pqi_sg_descriptor);
+			माप(काष्ठा pqi_sg_descriptor);
 
 		put_unaligned_le64((u64)ctrl_info->pqi_ofa_mem_dma_handle,
 			&request.data.ofa_memory_allocation.buffer_address);
 		put_unaligned_le32(buffer_length,
 			&request.data.ofa_memory_allocation.buffer_length);
-	}
+	पूर्ण
 
-	return pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, NULL);
-}
+	वापस pqi_submit_raid_request_synchronous(ctrl_info, &request.header, 0, शून्य);
+पूर्ण
 
-static int pqi_ofa_ctrl_restart(struct pqi_ctrl_info *ctrl_info, unsigned int delay_secs)
-{
+अटल पूर्णांक pqi_ofa_ctrl_restart(काष्ठा pqi_ctrl_info *ctrl_info, अचिन्हित पूर्णांक delay_secs)
+अणु
 	ssleep(delay_secs);
 
-	return pqi_ctrl_init_resume(ctrl_info);
-}
+	वापस pqi_ctrl_init_resume(ctrl_info);
+पूर्ण
 
-static void pqi_perform_lockup_action(void)
-{
-	switch (pqi_lockup_action) {
-	case PANIC:
+अटल व्योम pqi_perक्रमm_lockup_action(व्योम)
+अणु
+	चयन (pqi_lockup_action) अणु
+	हाल PANIC:
 		panic("FATAL: Smart Family Controller lockup detected");
-		break;
-	case REBOOT:
+		अवरोध;
+	हाल REBOOT:
 		emergency_restart();
-		break;
-	case NONE:
-	default:
-		break;
-	}
-}
+		अवरोध;
+	हाल NONE:
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static struct pqi_raid_error_info pqi_ctrl_offline_raid_error_info = {
+अटल काष्ठा pqi_raid_error_info pqi_ctrl_offline_raid_error_info = अणु
 	.data_out_result = PQI_DATA_IN_OUT_HARDWARE_ERROR,
 	.status = SAM_STAT_CHECK_CONDITION,
-};
+पूर्ण;
 
-static void pqi_fail_all_outstanding_requests(struct pqi_ctrl_info *ctrl_info)
-{
-	unsigned int i;
-	struct pqi_io_request *io_request;
-	struct scsi_cmnd *scmd;
+अटल व्योम pqi_fail_all_outstanding_requests(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा pqi_io_request *io_request;
+	काष्ठा scsi_cmnd *scmd;
 
-	for (i = 0; i < ctrl_info->max_io_slots; i++) {
+	क्रम (i = 0; i < ctrl_info->max_io_slots; i++) अणु
 		io_request = &ctrl_info->io_request_pool[i];
-		if (atomic_read(&io_request->refcount) == 0)
-			continue;
+		अगर (atomic_पढ़ो(&io_request->refcount) == 0)
+			जारी;
 
 		scmd = io_request->scmd;
-		if (scmd) {
+		अगर (scmd) अणु
 			set_host_byte(scmd, DID_NO_CONNECT);
-		} else {
+		पूर्ण अन्यथा अणु
 			io_request->status = -ENXIO;
 			io_request->error_info =
 				&pqi_ctrl_offline_raid_error_info;
-		}
+		पूर्ण
 
 		io_request->io_complete_callback(io_request,
 			io_request->context);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void pqi_take_ctrl_offline_deferred(struct pqi_ctrl_info *ctrl_info)
-{
-	pqi_perform_lockup_action();
-	pqi_stop_heartbeat_timer(ctrl_info);
-	pqi_free_interrupts(ctrl_info);
+अटल व्योम pqi_take_ctrl_offline_deferred(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	pqi_perक्रमm_lockup_action();
+	pqi_stop_heartbeat_समयr(ctrl_info);
+	pqi_मुक्त_पूर्णांकerrupts(ctrl_info);
 	pqi_cancel_rescan_worker(ctrl_info);
-	pqi_cancel_update_time_worker(ctrl_info);
-	pqi_ctrl_wait_until_quiesced(ctrl_info);
+	pqi_cancel_update_समय_worker(ctrl_info);
+	pqi_ctrl_रुको_until_quiesced(ctrl_info);
 	pqi_fail_all_outstanding_requests(ctrl_info);
 	pqi_ctrl_unblock_requests(ctrl_info);
-}
+पूर्ण
 
-static void pqi_ctrl_offline_worker(struct work_struct *work)
-{
-	struct pqi_ctrl_info *ctrl_info;
+अटल व्योम pqi_ctrl_offline_worker(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
-	ctrl_info = container_of(work, struct pqi_ctrl_info, ctrl_offline_work);
+	ctrl_info = container_of(work, काष्ठा pqi_ctrl_info, ctrl_offline_work);
 	pqi_take_ctrl_offline_deferred(ctrl_info);
-}
+पूर्ण
 
-static void pqi_take_ctrl_offline(struct pqi_ctrl_info *ctrl_info)
-{
-	if (!ctrl_info->controller_online)
-		return;
+अटल व्योम pqi_take_ctrl_offline(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अगर (!ctrl_info->controller_online)
+		वापस;
 
 	ctrl_info->controller_online = false;
 	ctrl_info->pqi_mode_enabled = false;
 	pqi_ctrl_block_requests(ctrl_info);
-	if (!pqi_disable_ctrl_shutdown)
-		sis_shutdown_ctrl(ctrl_info);
+	अगर (!pqi_disable_ctrl_shutकरोwn)
+		sis_shutकरोwn_ctrl(ctrl_info);
 	pci_disable_device(ctrl_info->pci_dev);
 	dev_err(&ctrl_info->pci_dev->dev, "controller offline\n");
 	schedule_work(&ctrl_info->ctrl_offline_work);
-}
+पूर्ण
 
-static void pqi_print_ctrl_info(struct pci_dev *pci_dev,
-	const struct pci_device_id *id)
-{
-	char *ctrl_description;
+अटल व्योम pqi_prपूर्णांक_ctrl_info(काष्ठा pci_dev *pci_dev,
+	स्थिर काष्ठा pci_device_id *id)
+अणु
+	अक्षर *ctrl_description;
 
-	if (id->driver_data)
-		ctrl_description = (char *)id->driver_data;
-	else
+	अगर (id->driver_data)
+		ctrl_description = (अक्षर *)id->driver_data;
+	अन्यथा
 		ctrl_description = "Microsemi Smart Family Controller";
 
 	dev_info(&pci_dev->dev, "%s found\n", ctrl_description);
-}
+पूर्ण
 
-static int pqi_pci_probe(struct pci_dev *pci_dev,
-	const struct pci_device_id *id)
-{
-	int rc;
-	int node, cp_node;
-	struct pqi_ctrl_info *ctrl_info;
+अटल पूर्णांक pqi_pci_probe(काष्ठा pci_dev *pci_dev,
+	स्थिर काष्ठा pci_device_id *id)
+अणु
+	पूर्णांक rc;
+	पूर्णांक node, cp_node;
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
-	pqi_print_ctrl_info(pci_dev, id);
+	pqi_prपूर्णांक_ctrl_info(pci_dev, id);
 
-	if (pqi_disable_device_id_wildcards &&
-		id->subvendor == PCI_ANY_ID &&
-		id->subdevice == PCI_ANY_ID) {
+	अगर (pqi_disable_device_id_wildcards &&
+		id->subvenकरोr == PCI_ANY_ID &&
+		id->subdevice == PCI_ANY_ID) अणु
 		dev_warn(&pci_dev->dev,
 			"controller not probed because device ID wildcards are disabled\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (id->subvendor == PCI_ANY_ID || id->subdevice == PCI_ANY_ID)
+	अगर (id->subvenकरोr == PCI_ANY_ID || id->subdevice == PCI_ANY_ID)
 		dev_warn(&pci_dev->dev,
 			"controller device ID matched using wildcards\n");
 
 	node = dev_to_node(&pci_dev->dev);
-	if (node == NUMA_NO_NODE) {
+	अगर (node == NUMA_NO_NODE) अणु
 		cp_node = cpu_to_node(0);
-		if (cp_node == NUMA_NO_NODE)
+		अगर (cp_node == NUMA_NO_NODE)
 			cp_node = 0;
 		set_dev_node(&pci_dev->dev, cp_node);
-	}
+	पूर्ण
 
 	ctrl_info = pqi_alloc_ctrl_info(node);
-	if (!ctrl_info) {
+	अगर (!ctrl_info) अणु
 		dev_err(&pci_dev->dev,
 			"failed to allocate controller info block\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	ctrl_info->pci_dev = pci_dev;
 
 	rc = pqi_pci_init(ctrl_info);
-	if (rc)
-		goto error;
+	अगर (rc)
+		जाओ error;
 
 	rc = pqi_ctrl_init(ctrl_info);
-	if (rc)
-		goto error;
+	अगर (rc)
+		जाओ error;
 
-	return 0;
+	वापस 0;
 
 error:
-	pqi_remove_ctrl(ctrl_info);
+	pqi_हटाओ_ctrl(ctrl_info);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void pqi_pci_remove(struct pci_dev *pci_dev)
-{
-	struct pqi_ctrl_info *ctrl_info;
+अटल व्योम pqi_pci_हटाओ(काष्ठा pci_dev *pci_dev)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	ctrl_info = pci_get_drvdata(pci_dev);
-	if (!ctrl_info)
-		return;
+	अगर (!ctrl_info)
+		वापस;
 
-	pqi_remove_ctrl(ctrl_info);
-}
+	pqi_हटाओ_ctrl(ctrl_info);
+पूर्ण
 
-static void pqi_crash_if_pending_command(struct pqi_ctrl_info *ctrl_info)
-{
-	unsigned int i;
-	struct pqi_io_request *io_request;
-	struct scsi_cmnd *scmd;
+अटल व्योम pqi_crash_अगर_pending_command(काष्ठा pqi_ctrl_info *ctrl_info)
+अणु
+	अचिन्हित पूर्णांक i;
+	काष्ठा pqi_io_request *io_request;
+	काष्ठा scsi_cmnd *scmd;
 
-	for (i = 0; i < ctrl_info->max_io_slots; i++) {
+	क्रम (i = 0; i < ctrl_info->max_io_slots; i++) अणु
 		io_request = &ctrl_info->io_request_pool[i];
-		if (atomic_read(&io_request->refcount) == 0)
-			continue;
+		अगर (atomic_पढ़ो(&io_request->refcount) == 0)
+			जारी;
 		scmd = io_request->scmd;
-		WARN_ON(scmd != NULL); /* IO command from SML */
-		WARN_ON(scmd == NULL); /* Non-IO cmd or driver initiated*/
-	}
-}
+		WARN_ON(scmd != शून्य); /* IO command from SML */
+		WARN_ON(scmd == शून्य); /* Non-IO cmd or driver initiated*/
+	पूर्ण
+पूर्ण
 
-static void pqi_shutdown(struct pci_dev *pci_dev)
-{
-	int rc;
-	struct pqi_ctrl_info *ctrl_info;
+अटल व्योम pqi_shutकरोwn(काष्ठा pci_dev *pci_dev)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	ctrl_info = pci_get_drvdata(pci_dev);
-	if (!ctrl_info) {
+	अगर (!ctrl_info) अणु
 		dev_err(&pci_dev->dev,
 			"cache could not be flushed\n");
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	pqi_wait_until_ofa_finished(ctrl_info);
+	pqi_रुको_until_ofa_finished(ctrl_info);
 
 	pqi_scsi_block_requests(ctrl_info);
 	pqi_ctrl_block_device_reset(ctrl_info);
 	pqi_ctrl_block_requests(ctrl_info);
-	pqi_ctrl_wait_until_quiesced(ctrl_info);
+	pqi_ctrl_रुको_until_quiesced(ctrl_info);
 
 	/*
 	 * Write all data in the controller's battery-backed cache to
 	 * storage.
 	 */
 	rc = pqi_flush_cache(ctrl_info, SHUTDOWN);
-	if (rc)
+	अगर (rc)
 		dev_err(&pci_dev->dev,
 			"unable to flush controller cache\n");
 
-	pqi_crash_if_pending_command(ctrl_info);
+	pqi_crash_अगर_pending_command(ctrl_info);
 	pqi_reset(ctrl_info);
-}
+पूर्ण
 
-static void pqi_process_lockup_action_param(void)
-{
-	unsigned int i;
+अटल व्योम pqi_process_lockup_action_param(व्योम)
+अणु
+	अचिन्हित पूर्णांक i;
 
-	if (!pqi_lockup_action_param)
-		return;
+	अगर (!pqi_lockup_action_param)
+		वापस;
 
-	for (i = 0; i < ARRAY_SIZE(pqi_lockup_actions); i++) {
-		if (strcmp(pqi_lockup_action_param,
-			pqi_lockup_actions[i].name) == 0) {
+	क्रम (i = 0; i < ARRAY_SIZE(pqi_lockup_actions); i++) अणु
+		अगर (म_भेद(pqi_lockup_action_param,
+			pqi_lockup_actions[i].name) == 0) अणु
 			pqi_lockup_action = pqi_lockup_actions[i].action;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
 	pr_warn("%s: invalid lockup action setting \"%s\" - supported settings: none, reboot, panic\n",
 		DRIVER_NAME_SHORT, pqi_lockup_action_param);
-}
+पूर्ण
 
-static void pqi_process_module_params(void)
-{
+अटल व्योम pqi_process_module_params(व्योम)
+अणु
 	pqi_process_lockup_action_param();
-}
+पूर्ण
 
-static __maybe_unused int pqi_suspend(struct pci_dev *pci_dev, pm_message_t state)
-{
-	struct pqi_ctrl_info *ctrl_info;
+अटल __maybe_unused पूर्णांक pqi_suspend(काष्ठा pci_dev *pci_dev, pm_message_t state)
+अणु
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	ctrl_info = pci_get_drvdata(pci_dev);
 
-	pqi_wait_until_ofa_finished(ctrl_info);
+	pqi_रुको_until_ofa_finished(ctrl_info);
 
 	pqi_ctrl_block_scan(ctrl_info);
 	pqi_scsi_block_requests(ctrl_info);
 	pqi_ctrl_block_device_reset(ctrl_info);
 	pqi_ctrl_block_requests(ctrl_info);
-	pqi_ctrl_wait_until_quiesced(ctrl_info);
+	pqi_ctrl_रुको_until_quiesced(ctrl_info);
 	pqi_flush_cache(ctrl_info, SUSPEND);
-	pqi_stop_heartbeat_timer(ctrl_info);
+	pqi_stop_heartbeat_समयr(ctrl_info);
 
-	pqi_crash_if_pending_command(ctrl_info);
+	pqi_crash_अगर_pending_command(ctrl_info);
 
-	if (state.event == PM_EVENT_FREEZE)
-		return 0;
+	अगर (state.event == PM_EVENT_FREEZE)
+		वापस 0;
 
 	pci_save_state(pci_dev);
-	pci_set_power_state(pci_dev, pci_choose_state(pci_dev, state));
+	pci_set_घातer_state(pci_dev, pci_choose_state(pci_dev, state));
 
 	ctrl_info->controller_online = false;
 	ctrl_info->pqi_mode_enabled = false;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static __maybe_unused int pqi_resume(struct pci_dev *pci_dev)
-{
-	int rc;
-	struct pqi_ctrl_info *ctrl_info;
+अटल __maybe_unused पूर्णांक pqi_resume(काष्ठा pci_dev *pci_dev)
+अणु
+	पूर्णांक rc;
+	काष्ठा pqi_ctrl_info *ctrl_info;
 
 	ctrl_info = pci_get_drvdata(pci_dev);
 
-	if (pci_dev->current_state != PCI_D0) {
+	अगर (pci_dev->current_state != PCI_D0) अणु
 		ctrl_info->max_hw_queue_index = 0;
-		pqi_free_interrupts(ctrl_info);
+		pqi_मुक्त_पूर्णांकerrupts(ctrl_info);
 		pqi_change_irq_mode(ctrl_info, IRQ_MODE_INTX);
 		rc = request_irq(pci_irq_vector(pci_dev, 0), pqi_irq_handler,
 			IRQF_SHARED, DRIVER_NAME_SHORT,
 			&ctrl_info->queue_groups[0]);
-		if (rc) {
+		अगर (rc) अणु
 			dev_err(&ctrl_info->pci_dev->dev,
 				"irq %u init failed with error %d\n",
 				pci_dev->irq, rc);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 		pqi_ctrl_unblock_device_reset(ctrl_info);
 		pqi_ctrl_unblock_requests(ctrl_info);
 		pqi_scsi_unblock_requests(ctrl_info);
 		pqi_ctrl_unblock_scan(ctrl_info);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	pci_set_power_state(pci_dev, PCI_D0);
+	pci_set_घातer_state(pci_dev, PCI_D0);
 	pci_restore_state(pci_dev);
 
 	pqi_ctrl_unblock_device_reset(ctrl_info);
@@ -8659,1050 +8660,1050 @@ static __maybe_unused int pqi_resume(struct pci_dev *pci_dev)
 	pqi_scsi_unblock_requests(ctrl_info);
 	pqi_ctrl_unblock_scan(ctrl_info);
 
-	return pqi_ctrl_init_resume(ctrl_info);
-}
+	वापस pqi_ctrl_init_resume(ctrl_info);
+पूर्ण
 
-/* Define the PCI IDs for the controllers that we support. */
-static const struct pci_device_id pqi_pci_id_table[] = {
-	{
+/* Define the PCI IDs क्रम the controllers that we support. */
+अटल स्थिर काष्ठा pci_device_id pqi_pci_id_table[] = अणु
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x105b, 0x1211)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x105b, 0x1321)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x152d, 0x8a22)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x152d, 0x8a23)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x152d, 0x8a24)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x152d, 0x8a36)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x152d, 0x8a37)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0x8460)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0x1104)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0x1105)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0x1106)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0x1107)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0x8460)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0x8461)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0xc460)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0xc461)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0xf460)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x193d, 0xf461)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x0045)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x0046)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x0047)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x0048)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x004a)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x004b)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x004c)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x004f)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x0051)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x0052)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x0053)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1bd4, 0x0054)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x19e5, 0xd227)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x19e5, 0xd228)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x19e5, 0xd229)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x19e5, 0xd22a)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x19e5, 0xd22b)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x19e5, 0xd22c)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0110)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0608)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0800)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0801)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0802)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0803)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0804)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0805)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0806)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0807)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0808)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0809)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x080a)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0900)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0901)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0902)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0903)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0904)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0905)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0906)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0907)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x0908)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x090a)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1200)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1201)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1202)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1280)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1281)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1282)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1300)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1301)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1302)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1303)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1380)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1400)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1402)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1410)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1411)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1412)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1420)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1430)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1440)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1441)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1450)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1452)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1460)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1461)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1462)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1470)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1471)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1472)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1480)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1490)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x1491)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x14a0)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x14a1)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x14b0)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x14b1)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x14c0)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x14c1)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x14d0)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x14e0)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADAPTEC2, 0x14f0)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_ADVANTECH, 0x8312)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_DELL, 0x1fe0)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0600)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0601)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0602)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0603)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0609)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0650)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0651)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0652)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0653)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0654)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0655)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0700)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x0701)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x1001)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x1002)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x1100)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_HP, 0x1101)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1590, 0x0294)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1590, 0x02db)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1590, 0x02dc)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1590, 0x032e)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1d8d, 0x0800)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1d8d, 0x0908)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1d8d, 0x0806)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       0x1d8d, 0x0916)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_VENDOR_ID_GIGABYTE, 0x1000)
-	},
-	{
+	पूर्ण,
+	अणु
 		PCI_DEVICE_SUB(PCI_VENDOR_ID_ADAPTEC2, 0x028f,
 			       PCI_ANY_ID, PCI_ANY_ID)
-	},
-	{ 0 }
-};
+	पूर्ण,
+	अणु 0 पूर्ण
+पूर्ण;
 
 MODULE_DEVICE_TABLE(pci, pqi_pci_id_table);
 
-static struct pci_driver pqi_pci_driver = {
+अटल काष्ठा pci_driver pqi_pci_driver = अणु
 	.name = DRIVER_NAME_SHORT,
 	.id_table = pqi_pci_id_table,
 	.probe = pqi_pci_probe,
-	.remove = pqi_pci_remove,
-	.shutdown = pqi_shutdown,
-#if defined(CONFIG_PM)
+	.हटाओ = pqi_pci_हटाओ,
+	.shutकरोwn = pqi_shutकरोwn,
+#अगर defined(CONFIG_PM)
 	.suspend = pqi_suspend,
 	.resume = pqi_resume,
-#endif
-};
+#पूर्ण_अगर
+पूर्ण;
 
-static int __init pqi_init(void)
-{
-	int rc;
+अटल पूर्णांक __init pqi_init(व्योम)
+अणु
+	पूर्णांक rc;
 
 	pr_info(DRIVER_NAME "\n");
 
-	pqi_sas_transport_template = sas_attach_transport(&pqi_sas_transport_functions);
-	if (!pqi_sas_transport_template)
-		return -ENODEV;
+	pqi_sas_transport_ढाँचा = sas_attach_transport(&pqi_sas_transport_functions);
+	अगर (!pqi_sas_transport_ढाँचा)
+		वापस -ENODEV;
 
 	pqi_process_module_params();
 
-	rc = pci_register_driver(&pqi_pci_driver);
-	if (rc)
-		sas_release_transport(pqi_sas_transport_template);
+	rc = pci_रेजिस्टर_driver(&pqi_pci_driver);
+	अगर (rc)
+		sas_release_transport(pqi_sas_transport_ढाँचा);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static void __exit pqi_cleanup(void)
-{
-	pci_unregister_driver(&pqi_pci_driver);
-	sas_release_transport(pqi_sas_transport_template);
-}
+अटल व्योम __निकास pqi_cleanup(व्योम)
+अणु
+	pci_unरेजिस्टर_driver(&pqi_pci_driver);
+	sas_release_transport(pqi_sas_transport_ढाँचा);
+पूर्ण
 
 module_init(pqi_init);
-module_exit(pqi_cleanup);
+module_निकास(pqi_cleanup);
 
-static void __attribute__((unused)) verify_structures(void)
-{
-	BUILD_BUG_ON(offsetof(struct pqi_ctrl_registers,
-		sis_host_to_ctrl_doorbell) != 0x20);
-	BUILD_BUG_ON(offsetof(struct pqi_ctrl_registers,
-		sis_interrupt_mask) != 0x34);
-	BUILD_BUG_ON(offsetof(struct pqi_ctrl_registers,
-		sis_ctrl_to_host_doorbell) != 0x9c);
-	BUILD_BUG_ON(offsetof(struct pqi_ctrl_registers,
-		sis_ctrl_to_host_doorbell_clear) != 0xa0);
-	BUILD_BUG_ON(offsetof(struct pqi_ctrl_registers,
+अटल व्योम __attribute__((unused)) verअगरy_काष्ठाures(व्योम)
+अणु
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_ctrl_रेजिस्टरs,
+		sis_host_to_ctrl_करोorbell) != 0x20);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_ctrl_रेजिस्टरs,
+		sis_पूर्णांकerrupt_mask) != 0x34);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_ctrl_रेजिस्टरs,
+		sis_ctrl_to_host_करोorbell) != 0x9c);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_ctrl_रेजिस्टरs,
+		sis_ctrl_to_host_करोorbell_clear) != 0xa0);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_ctrl_रेजिस्टरs,
 		sis_driver_scratch) != 0xb0);
-	BUILD_BUG_ON(offsetof(struct pqi_ctrl_registers,
-		sis_product_identifier) != 0xb4);
-	BUILD_BUG_ON(offsetof(struct pqi_ctrl_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_ctrl_रेजिस्टरs,
+		sis_product_identअगरier) != 0xb4);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_ctrl_रेजिस्टरs,
 		sis_firmware_status) != 0xbc);
-	BUILD_BUG_ON(offsetof(struct pqi_ctrl_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_ctrl_रेजिस्टरs,
 		sis_mailbox) != 0x1000);
-	BUILD_BUG_ON(offsetof(struct pqi_ctrl_registers,
-		pqi_registers) != 0x4000);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_ctrl_रेजिस्टरs,
+		pqi_रेजिस्टरs) != 0x4000);
 
-	BUILD_BUG_ON(offsetof(struct pqi_iu_header,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_iu_header,
 		iu_type) != 0x0);
-	BUILD_BUG_ON(offsetof(struct pqi_iu_header,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_iu_header,
 		iu_length) != 0x2);
-	BUILD_BUG_ON(offsetof(struct pqi_iu_header,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_iu_header,
 		response_queue_id) != 0x4);
-	BUILD_BUG_ON(offsetof(struct pqi_iu_header,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_iu_header,
 		driver_flags) != 0x6);
-	BUILD_BUG_ON(sizeof(struct pqi_iu_header) != 0x8);
+	BUILD_BUG_ON(माप(काष्ठा pqi_iu_header) != 0x8);
 
-	BUILD_BUG_ON(offsetof(struct pqi_aio_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_error_info,
 		status) != 0x0);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_error_info,
 		service_response) != 0x1);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_error_info,
 		data_present) != 0x2);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_error_info,
 		reserved) != 0x3);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_error_info,
 		residual_count) != 0x4);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_error_info,
 		data_length) != 0x8);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_error_info,
 		reserved1) != 0xa);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_error_info,
 		data) != 0xc);
-	BUILD_BUG_ON(sizeof(struct pqi_aio_error_info) != 0x10c);
+	BUILD_BUG_ON(माप(काष्ठा pqi_aio_error_info) != 0x10c);
 
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
 		data_in_result) != 0x0);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
 		data_out_result) != 0x1);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
 		reserved) != 0x2);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
 		status) != 0x5);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
-		status_qualifier) != 0x6);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
+		status_qualअगरier) != 0x6);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
 		sense_data_length) != 0x8);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
 		response_data_length) != 0xa);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
 		data_in_transferred) != 0xc);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
 		data_out_transferred) != 0x10);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_error_info,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_error_info,
 		data) != 0x14);
-	BUILD_BUG_ON(sizeof(struct pqi_raid_error_info) != 0x114);
+	BUILD_BUG_ON(माप(काष्ठा pqi_raid_error_info) != 0x114);
 
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		signature) != 0x0);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		function_and_status_code) != 0x8);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		max_admin_iq_elements) != 0x10);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		max_admin_oq_elements) != 0x11);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_iq_element_length) != 0x12);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_oq_element_length) != 0x13);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
-		max_reset_timeout) != 0x14);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
-		legacy_intx_status) != 0x18);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
-		legacy_intx_mask_set) != 0x1c);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
-		legacy_intx_mask_clear) != 0x20);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
+		max_reset_समयout) != 0x14);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
+		legacy_पूर्णांकx_status) != 0x18);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
+		legacy_पूर्णांकx_mask_set) != 0x1c);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
+		legacy_पूर्णांकx_mask_clear) != 0x20);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		device_status) != 0x40);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_iq_pi_offset) != 0x48);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_oq_ci_offset) != 0x50);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_iq_element_array_addr) != 0x58);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_oq_element_array_addr) != 0x60);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_iq_ci_addr) != 0x68);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_oq_pi_addr) != 0x70);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_iq_num_elements) != 0x78);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		admin_oq_num_elements) != 0x79);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
-		admin_queue_int_msg_num) != 0x7a);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
+		admin_queue_पूर्णांक_msg_num) != 0x7a);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		device_error) != 0x80);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		error_details) != 0x88);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
 		device_reset) != 0x90);
-	BUILD_BUG_ON(offsetof(struct pqi_device_registers,
-		power_action) != 0x94);
-	BUILD_BUG_ON(sizeof(struct pqi_device_registers) != 0x100);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_रेजिस्टरs,
+		घातer_action) != 0x94);
+	BUILD_BUG_ON(माप(काष्ठा pqi_device_रेजिस्टरs) != 0x100);
 
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		header.driver_flags) != 6);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		request_id) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		function_code) != 10);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.report_device_capability.buffer_length) != 44);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.report_device_capability.sg_descriptor) != 48);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_iq.queue_id) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_iq.element_array_addr) != 16);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_iq.ci_addr) != 24);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_iq.num_elements) != 32);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_iq.element_length) != 34);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_iq.queue_protocol) != 36);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_oq.queue_id) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_oq.element_array_addr) != 16);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_oq.pi_addr) != 24);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_oq.num_elements) != 32);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_oq.element_length) != 34);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_oq.queue_protocol) != 36);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
-		data.create_operational_oq.int_msg_num) != 40);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
+		data.create_operational_oq.पूर्णांक_msg_num) != 40);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.create_operational_oq.coalescing_count) != 42);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
-		data.create_operational_oq.min_coalescing_time) != 44);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
-		data.create_operational_oq.max_coalescing_time) != 48);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
+		data.create_operational_oq.min_coalescing_समय) != 44);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
+		data.create_operational_oq.max_coalescing_समय) != 48);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_request,
 		data.delete_operational_queue.queue_id) != 12);
-	BUILD_BUG_ON(sizeof(struct pqi_general_admin_request) != 64);
-	BUILD_BUG_ON(sizeof_field(struct pqi_general_admin_request,
+	BUILD_BUG_ON(माप(काष्ठा pqi_general_admin_request) != 64);
+	BUILD_BUG_ON(माप_field(काष्ठा pqi_general_admin_request,
 		data.create_operational_iq) != 64 - 11);
-	BUILD_BUG_ON(sizeof_field(struct pqi_general_admin_request,
+	BUILD_BUG_ON(माप_field(काष्ठा pqi_general_admin_request,
 		data.create_operational_oq) != 64 - 11);
-	BUILD_BUG_ON(sizeof_field(struct pqi_general_admin_request,
+	BUILD_BUG_ON(माप_field(काष्ठा pqi_general_admin_request,
 		data.delete_operational_queue) != 64 - 11);
 
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		header.driver_flags) != 6);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		request_id) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		function_code) != 10);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		status) != 11);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		data.create_operational_iq.status_descriptor) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		data.create_operational_iq.iq_pi_offset) != 16);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		data.create_operational_oq.status_descriptor) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_general_admin_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_admin_response,
 		data.create_operational_oq.oq_ci_offset) != 16);
-	BUILD_BUG_ON(sizeof(struct pqi_general_admin_response) != 64);
+	BUILD_BUG_ON(माप(काष्ठा pqi_general_admin_response) != 64);
 
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		header.response_queue_id) != 4);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		header.driver_flags) != 6);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		request_id) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		nexus_id) != 10);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		buffer_length) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		lun_number) != 16);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
-		protocol_specific) != 24);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
+		protocol_specअगरic) != 24);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		error_index) != 27);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		cdb) != 32);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
-		timeout) != 60);
-	BUILD_BUG_ON(offsetof(struct pqi_raid_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
+		समयout) != 60);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_raid_path_request,
 		sg_descriptors) != 64);
-	BUILD_BUG_ON(sizeof(struct pqi_raid_path_request) !=
+	BUILD_BUG_ON(माप(काष्ठा pqi_raid_path_request) !=
 		PQI_OPERATIONAL_IQ_ELEMENT_LENGTH);
 
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		header.response_queue_id) != 4);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		header.driver_flags) != 6);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		request_id) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		nexus_id) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		buffer_length) != 16);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		data_encryption_key_index) != 22);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		encrypt_tweak_lower) != 24);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		encrypt_tweak_upper) != 28);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		cdb) != 32);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		error_index) != 48);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		num_sg_descriptors) != 50);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		cdb_length) != 51);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		lun_number) != 52);
-	BUILD_BUG_ON(offsetof(struct pqi_aio_path_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_aio_path_request,
 		sg_descriptors) != 64);
-	BUILD_BUG_ON(sizeof(struct pqi_aio_path_request) !=
+	BUILD_BUG_ON(माप(काष्ठा pqi_aio_path_request) !=
 		PQI_OPERATIONAL_IQ_ELEMENT_LENGTH);
 
-	BUILD_BUG_ON(offsetof(struct pqi_io_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_io_response,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_io_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_io_response,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_io_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_io_response,
 		request_id) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_io_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_io_response,
 		error_index) != 10);
 
-	BUILD_BUG_ON(offsetof(struct pqi_general_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_management_request,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_general_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_management_request,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_general_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_management_request,
 		header.response_queue_id) != 4);
-	BUILD_BUG_ON(offsetof(struct pqi_general_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_management_request,
 		request_id) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_general_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_management_request,
 		data.report_event_configuration.buffer_length) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_general_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_management_request,
 		data.report_event_configuration.sg_descriptors) != 16);
-	BUILD_BUG_ON(offsetof(struct pqi_general_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_management_request,
 		data.set_event_configuration.global_event_oq_id) != 10);
-	BUILD_BUG_ON(offsetof(struct pqi_general_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_management_request,
 		data.set_event_configuration.buffer_length) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_general_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_general_management_request,
 		data.set_event_configuration.sg_descriptors) != 16);
 
-	BUILD_BUG_ON(offsetof(struct pqi_iu_layer_descriptor,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_iu_layer_descriptor,
 		max_inbound_iu_length) != 6);
-	BUILD_BUG_ON(offsetof(struct pqi_iu_layer_descriptor,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_iu_layer_descriptor,
 		max_outbound_iu_length) != 14);
-	BUILD_BUG_ON(sizeof(struct pqi_iu_layer_descriptor) != 16);
+	BUILD_BUG_ON(माप(काष्ठा pqi_iu_layer_descriptor) != 16);
 
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		data_length) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
-		iq_arbitration_priority_support_bitmask) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
+		iq_arbitration_priority_support_biपंचांगask) != 8);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		maximum_aw_a) != 9);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		maximum_aw_b) != 10);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		maximum_aw_c) != 11);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		max_inbound_queues) != 16);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		max_elements_per_iq) != 18);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		max_iq_element_length) != 24);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		min_iq_element_length) != 26);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		max_outbound_queues) != 30);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		max_elements_per_oq) != 32);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
-		intr_coalescing_time_granularity) != 34);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
+		पूर्णांकr_coalescing_समय_granularity) != 34);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		max_oq_element_length) != 36);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		min_oq_element_length) != 38);
-	BUILD_BUG_ON(offsetof(struct pqi_device_capability,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_device_capability,
 		iu_layer_descriptors) != 64);
-	BUILD_BUG_ON(sizeof(struct pqi_device_capability) != 576);
+	BUILD_BUG_ON(माप(काष्ठा pqi_device_capability) != 576);
 
-	BUILD_BUG_ON(offsetof(struct pqi_event_descriptor,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_descriptor,
 		event_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_event_descriptor,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_descriptor,
 		oq_id) != 2);
-	BUILD_BUG_ON(sizeof(struct pqi_event_descriptor) != 4);
+	BUILD_BUG_ON(माप(काष्ठा pqi_event_descriptor) != 4);
 
-	BUILD_BUG_ON(offsetof(struct pqi_event_config,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_config,
 		num_event_descriptors) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_event_config,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_config,
 		descriptors) != 4);
 
 	BUILD_BUG_ON(PQI_NUM_SUPPORTED_EVENTS !=
 		ARRAY_SIZE(pqi_supported_event_types));
 
-	BUILD_BUG_ON(offsetof(struct pqi_event_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_response,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_event_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_response,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_event_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_response,
 		event_type) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_event_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_response,
 		event_id) != 10);
-	BUILD_BUG_ON(offsetof(struct pqi_event_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_response,
 		additional_event_id) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_event_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_response,
 		data) != 16);
-	BUILD_BUG_ON(sizeof(struct pqi_event_response) != 32);
+	BUILD_BUG_ON(माप(काष्ठा pqi_event_response) != 32);
 
-	BUILD_BUG_ON(offsetof(struct pqi_event_acknowledge_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_acknowledge_request,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_event_acknowledge_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_acknowledge_request,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_event_acknowledge_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_acknowledge_request,
 		event_type) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_event_acknowledge_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_acknowledge_request,
 		event_id) != 10);
-	BUILD_BUG_ON(offsetof(struct pqi_event_acknowledge_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_event_acknowledge_request,
 		additional_event_id) != 12);
-	BUILD_BUG_ON(sizeof(struct pqi_event_acknowledge_request) != 16);
+	BUILD_BUG_ON(माप(काष्ठा pqi_event_acknowledge_request) != 16);
 
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
 		request_id) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
 		nexus_id) != 10);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
-		timeout) != 14);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
+		समयout) != 14);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
 		lun_number) != 16);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
-		protocol_specific) != 24);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
+		protocol_specअगरic) != 24);
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
 		outbound_queue_id_to_manage) != 26);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
 		request_id_to_manage) != 28);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_request,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_request,
 		task_management_function) != 30);
-	BUILD_BUG_ON(sizeof(struct pqi_task_management_request) != 32);
+	BUILD_BUG_ON(माप(काष्ठा pqi_task_management_request) != 32);
 
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_response,
 		header.iu_type) != 0);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_response,
 		header.iu_length) != 2);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_response,
 		request_id) != 8);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_response,
 		nexus_id) != 10);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_response,
 		additional_response_info) != 12);
-	BUILD_BUG_ON(offsetof(struct pqi_task_management_response,
+	BUILD_BUG_ON(दुरत्व(काष्ठा pqi_task_management_response,
 		response_code) != 15);
-	BUILD_BUG_ON(sizeof(struct pqi_task_management_response) != 16);
+	BUILD_BUG_ON(माप(काष्ठा pqi_task_management_response) != 16);
 
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
 		configured_logical_drive_count) != 0);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
 		configuration_signature) != 1);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
-		firmware_version_short) != 5);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
+		firmware_version_लघु) != 5);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
 		extended_logical_unit_count) != 154);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
 		firmware_build_number) != 190);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
-		vendor_id) != 200);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
+		venकरोr_id) != 200);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
 		product_id) != 208);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
 		extra_controller_flags) != 286);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
 		controller_mode) != 292);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
 		spare_part_number) != 293);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_controller,
-		firmware_version_long) != 325);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_controller,
+		firmware_version_दीर्घ) != 325);
 
-	BUILD_BUG_ON(offsetof(struct bmic_identify_physical_device,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_physical_device,
 		phys_bay_in_box) != 115);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_physical_device,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_physical_device,
 		device_type) != 120);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_physical_device,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_physical_device,
 		redundant_path_present_map) != 1736);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_physical_device,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_physical_device,
 		active_path_number) != 1738);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_physical_device,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_physical_device,
 		alternate_paths_phys_connector) != 1739);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_physical_device,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_physical_device,
 		alternate_paths_phys_box_on_port) != 1755);
-	BUILD_BUG_ON(offsetof(struct bmic_identify_physical_device,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_identअगरy_physical_device,
 		current_queue_depth_limit) != 1796);
-	BUILD_BUG_ON(sizeof(struct bmic_identify_physical_device) != 2560);
+	BUILD_BUG_ON(माप(काष्ठा bmic_identअगरy_physical_device) != 2560);
 
-	BUILD_BUG_ON(sizeof(struct bmic_sense_feature_buffer_header) != 4);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_buffer_header,
+	BUILD_BUG_ON(माप(काष्ठा bmic_sense_feature_buffer_header) != 4);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_buffer_header,
 		page_code) != 0);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_buffer_header,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_buffer_header,
 		subpage_code) != 1);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_buffer_header,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_buffer_header,
 		buffer_length) != 2);
 
-	BUILD_BUG_ON(sizeof(struct bmic_sense_feature_page_header) != 4);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_page_header,
+	BUILD_BUG_ON(माप(काष्ठा bmic_sense_feature_page_header) != 4);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_page_header,
 		page_code) != 0);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_page_header,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_page_header,
 		subpage_code) != 1);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_page_header,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_page_header,
 		page_length) != 2);
 
-	BUILD_BUG_ON(sizeof(struct bmic_sense_feature_io_page_aio_subpage)
+	BUILD_BUG_ON(माप(काष्ठा bmic_sense_feature_io_page_aio_subpage)
 		!= 18);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
 		header) != 0);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
-		firmware_read_support) != 4);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
-		driver_read_support) != 5);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
-		firmware_write_support) != 6);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
-		driver_write_support) != 7);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
+		firmware_पढ़ो_support) != 4);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
+		driver_पढ़ो_support) != 5);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
+		firmware_ग_लिखो_support) != 6);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
+		driver_ग_लिखो_support) != 7);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
 		max_transfer_encrypted_sas_sata) != 8);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
 		max_transfer_encrypted_nvme) != 10);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
-		max_write_raid_5_6) != 12);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
-		max_write_raid_1_10_2drive) != 14);
-	BUILD_BUG_ON(offsetof(struct bmic_sense_feature_io_page_aio_subpage,
-		max_write_raid_1_10_3drive) != 16);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
+		max_ग_लिखो_raid_5_6) != 12);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
+		max_ग_लिखो_raid_1_10_2drive) != 14);
+	BUILD_BUG_ON(दुरत्व(काष्ठा bmic_sense_feature_io_page_aio_subpage,
+		max_ग_लिखो_raid_1_10_3drive) != 16);
 
 	BUILD_BUG_ON(PQI_ADMIN_IQ_NUM_ELEMENTS > 255);
 	BUILD_BUG_ON(PQI_ADMIN_OQ_NUM_ELEMENTS > 255);
@@ -9720,4 +9721,4 @@ static void __attribute__((unused)) verify_structures(void)
 	BUILD_BUG_ON(PQI_RESERVED_IO_SLOTS >= PQI_MAX_OUTSTANDING_REQUESTS);
 	BUILD_BUG_ON(PQI_RESERVED_IO_SLOTS >=
 		PQI_MAX_OUTSTANDING_REQUESTS_KDUMP);
-}
+पूर्ण

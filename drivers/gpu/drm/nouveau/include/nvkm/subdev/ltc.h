@@ -1,44 +1,45 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __NVKM_LTC_H__
-#define __NVKM_LTC_H__
-#include <core/subdev.h>
-#include <core/mm.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __NVKM_LTC_H__
+#घोषणा __NVKM_LTC_H__
+#समावेश <core/subdev.h>
+#समावेश <core/mm.h>
 
-#define NVKM_LTC_MAX_ZBC_CNT 16
+#घोषणा NVKM_LTC_MAX_ZBC_CNT 16
 
-struct nvkm_ltc {
-	const struct nvkm_ltc_func *func;
-	struct nvkm_subdev subdev;
+काष्ठा nvkm_ltc अणु
+	स्थिर काष्ठा nvkm_ltc_func *func;
+	काष्ठा nvkm_subdev subdev;
 
 	u32 ltc_nr;
 	u32 lts_nr;
 
-	struct mutex mutex; /* serialises CBC operations */
+	काष्ठा mutex mutex; /* serialises CBC operations */
 	u32 num_tags;
 	u32 tag_base;
-	struct nvkm_memory *tag_ram;
+	काष्ठा nvkm_memory *tag_ram;
 
-	int zbc_min;
-	int zbc_max;
+	पूर्णांक zbc_min;
+	पूर्णांक zbc_max;
 	u32 zbc_color[NVKM_LTC_MAX_ZBC_CNT][4];
 	u32 zbc_depth[NVKM_LTC_MAX_ZBC_CNT];
 	u32 zbc_stencil[NVKM_LTC_MAX_ZBC_CNT];
-};
+पूर्ण;
 
-void nvkm_ltc_tags_clear(struct nvkm_device *, u32 first, u32 count);
+व्योम nvkm_ltc_tags_clear(काष्ठा nvkm_device *, u32 first, u32 count);
 
-int nvkm_ltc_zbc_color_get(struct nvkm_ltc *, int index, const u32[4]);
-int nvkm_ltc_zbc_depth_get(struct nvkm_ltc *, int index, const u32);
-int nvkm_ltc_zbc_stencil_get(struct nvkm_ltc *, int index, const u32);
+पूर्णांक nvkm_ltc_zbc_color_get(काष्ठा nvkm_ltc *, पूर्णांक index, स्थिर u32[4]);
+पूर्णांक nvkm_ltc_zbc_depth_get(काष्ठा nvkm_ltc *, पूर्णांक index, स्थिर u32);
+पूर्णांक nvkm_ltc_zbc_stencil_get(काष्ठा nvkm_ltc *, पूर्णांक index, स्थिर u32);
 
-void nvkm_ltc_invalidate(struct nvkm_ltc *);
-void nvkm_ltc_flush(struct nvkm_ltc *);
+व्योम nvkm_ltc_invalidate(काष्ठा nvkm_ltc *);
+व्योम nvkm_ltc_flush(काष्ठा nvkm_ltc *);
 
-int gf100_ltc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_ltc **);
-int gk104_ltc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_ltc **);
-int gm107_ltc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_ltc **);
-int gm200_ltc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_ltc **);
-int gp100_ltc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_ltc **);
-int gp102_ltc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_ltc **);
-int gp10b_ltc_new(struct nvkm_device *, enum nvkm_subdev_type, int inst, struct nvkm_ltc **);
-#endif
+पूर्णांक gf100_ltc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_ltc **);
+पूर्णांक gk104_ltc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_ltc **);
+पूर्णांक gm107_ltc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_ltc **);
+पूर्णांक gm200_ltc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_ltc **);
+पूर्णांक gp100_ltc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_ltc **);
+पूर्णांक gp102_ltc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_ltc **);
+पूर्णांक gp10b_ltc_new(काष्ठा nvkm_device *, क्रमागत nvkm_subdev_type, पूर्णांक inst, काष्ठा nvkm_ltc **);
+#पूर्ण_अगर

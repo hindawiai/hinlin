@@ -1,173 +1,174 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  Copyright (c) 2001 Paul Stewart
  *  Copyright (c) 2001 Vojtech Pavlik
  *
- *  HID char devices, giving access to raw HID device events.
+ *  HID अक्षर devices, giving access to raw HID device events.
  */
 
 /*
  *
- * Should you need to contact me, the author, you can do so either by
+ * Should you need to contact me, the author, you can करो so either by
  * e-mail - mail your message to Paul Stewart <stewart@wetlogic.net>
  */
 
-#include <linux/poll.h>
-#include <linux/slab.h>
-#include <linux/sched/signal.h>
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/input.h>
-#include <linux/usb.h>
-#include <linux/hid.h>
-#include <linux/hiddev.h>
-#include <linux/compat.h>
-#include <linux/vmalloc.h>
-#include <linux/nospec.h>
-#include "usbhid.h"
+#समावेश <linux/poll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/input.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/hid.h>
+#समावेश <linux/hiddev.h>
+#समावेश <linux/compat.h>
+#समावेश <linux/vदो_स्मृति.h>
+#समावेश <linux/nospec.h>
+#समावेश "usbhid.h"
 
-#ifdef CONFIG_USB_DYNAMIC_MINORS
-#define HIDDEV_MINOR_BASE	0
-#define HIDDEV_MINORS		256
-#else
-#define HIDDEV_MINOR_BASE	96
-#define HIDDEV_MINORS		16
-#endif
-#define HIDDEV_BUFFER_SIZE	2048
+#अगर_घोषित CONFIG_USB_DYNAMIC_MINORS
+#घोषणा HIDDEV_MINOR_BASE	0
+#घोषणा HIDDEV_MINORS		256
+#अन्यथा
+#घोषणा HIDDEV_MINOR_BASE	96
+#घोषणा HIDDEV_MINORS		16
+#पूर्ण_अगर
+#घोषणा HIDDEV_BUFFER_SIZE	2048
 
-struct hiddev_list {
-	struct hiddev_usage_ref buffer[HIDDEV_BUFFER_SIZE];
-	int head;
-	int tail;
-	unsigned flags;
-	struct fasync_struct *fasync;
-	struct hiddev *hiddev;
-	struct list_head node;
-	struct mutex thread_lock;
-};
+काष्ठा hiddev_list अणु
+	काष्ठा hiddev_usage_ref buffer[HIDDEV_BUFFER_SIZE];
+	पूर्णांक head;
+	पूर्णांक tail;
+	अचिन्हित flags;
+	काष्ठा fasync_काष्ठा *fasync;
+	काष्ठा hiddev *hiddev;
+	काष्ठा list_head node;
+	काष्ठा mutex thपढ़ो_lock;
+पूर्ण;
 
 /*
- * Find a report, given the report's type and ID.  The ID can be specified
- * indirectly by REPORT_ID_FIRST (which returns the first report of the given
- * type) or by (REPORT_ID_NEXT | old_id), which returns the next report of the
+ * Find a report, given the report's type and ID.  The ID can be specअगरied
+ * indirectly by REPORT_ID_FIRST (which वापसs the first report of the given
+ * type) or by (REPORT_ID_NEXT | old_id), which वापसs the next report of the
  * given type which follows old_id.
  */
-static struct hid_report *
-hiddev_lookup_report(struct hid_device *hid, struct hiddev_report_info *rinfo)
-{
-	unsigned int flags = rinfo->report_id & ~HID_REPORT_ID_MASK;
-	unsigned int rid = rinfo->report_id & HID_REPORT_ID_MASK;
-	struct hid_report_enum *report_enum;
-	struct hid_report *report;
-	struct list_head *list;
+अटल काष्ठा hid_report *
+hiddev_lookup_report(काष्ठा hid_device *hid, काष्ठा hiddev_report_info *rinfo)
+अणु
+	अचिन्हित पूर्णांक flags = rinfo->report_id & ~HID_REPORT_ID_MASK;
+	अचिन्हित पूर्णांक rid = rinfo->report_id & HID_REPORT_ID_MASK;
+	काष्ठा hid_report_क्रमागत *report_क्रमागत;
+	काष्ठा hid_report *report;
+	काष्ठा list_head *list;
 
-	if (rinfo->report_type < HID_REPORT_TYPE_MIN ||
+	अगर (rinfo->report_type < HID_REPORT_TYPE_MIN ||
 	    rinfo->report_type > HID_REPORT_TYPE_MAX)
-		return NULL;
+		वापस शून्य;
 
-	report_enum = hid->report_enum +
+	report_क्रमागत = hid->report_क्रमागत +
 		(rinfo->report_type - HID_REPORT_TYPE_MIN);
 
-	switch (flags) {
-	case 0: /* Nothing to do -- report_id is already set correctly */
-		break;
+	चयन (flags) अणु
+	हाल 0: /* Nothing to करो -- report_id is alपढ़ोy set correctly */
+		अवरोध;
 
-	case HID_REPORT_ID_FIRST:
-		if (list_empty(&report_enum->report_list))
-			return NULL;
+	हाल HID_REPORT_ID_FIRST:
+		अगर (list_empty(&report_क्रमागत->report_list))
+			वापस शून्य;
 
-		list = report_enum->report_list.next;
-		report = list_entry(list, struct hid_report, list);
+		list = report_क्रमागत->report_list.next;
+		report = list_entry(list, काष्ठा hid_report, list);
 		rinfo->report_id = report->id;
-		break;
+		अवरोध;
 
-	case HID_REPORT_ID_NEXT:
-		report = report_enum->report_id_hash[rid];
-		if (!report)
-			return NULL;
+	हाल HID_REPORT_ID_NEXT:
+		report = report_क्रमागत->report_id_hash[rid];
+		अगर (!report)
+			वापस शून्य;
 
 		list = report->list.next;
-		if (list == &report_enum->report_list)
-			return NULL;
+		अगर (list == &report_क्रमागत->report_list)
+			वापस शून्य;
 
-		report = list_entry(list, struct hid_report, list);
+		report = list_entry(list, काष्ठा hid_report, list);
 		rinfo->report_id = report->id;
-		break;
+		अवरोध;
 
-	default:
-		return NULL;
-	}
+	शेष:
+		वापस शून्य;
+	पूर्ण
 
-	return report_enum->report_id_hash[rinfo->report_id];
-}
+	वापस report_क्रमागत->report_id_hash[rinfo->report_id];
+पूर्ण
 
 /*
- * Perform an exhaustive search of the report table for a usage, given its
+ * Perक्रमm an exhaustive search of the report table क्रम a usage, given its
  * type and usage id.
  */
-static struct hid_field *
-hiddev_lookup_usage(struct hid_device *hid, struct hiddev_usage_ref *uref)
-{
-	int i, j;
-	struct hid_report *report;
-	struct hid_report_enum *report_enum;
-	struct hid_field *field;
+अटल काष्ठा hid_field *
+hiddev_lookup_usage(काष्ठा hid_device *hid, काष्ठा hiddev_usage_ref *uref)
+अणु
+	पूर्णांक i, j;
+	काष्ठा hid_report *report;
+	काष्ठा hid_report_क्रमागत *report_क्रमागत;
+	काष्ठा hid_field *field;
 
-	if (uref->report_type < HID_REPORT_TYPE_MIN ||
+	अगर (uref->report_type < HID_REPORT_TYPE_MIN ||
 	    uref->report_type > HID_REPORT_TYPE_MAX)
-		return NULL;
+		वापस शून्य;
 
-	report_enum = hid->report_enum +
+	report_क्रमागत = hid->report_क्रमागत +
 		(uref->report_type - HID_REPORT_TYPE_MIN);
 
-	list_for_each_entry(report, &report_enum->report_list, list) {
-		for (i = 0; i < report->maxfield; i++) {
+	list_क्रम_each_entry(report, &report_क्रमागत->report_list, list) अणु
+		क्रम (i = 0; i < report->maxfield; i++) अणु
 			field = report->field[i];
-			for (j = 0; j < field->maxusage; j++) {
-				if (field->usage[j].hid == uref->usage_code) {
+			क्रम (j = 0; j < field->maxusage; j++) अणु
+				अगर (field->usage[j].hid == uref->usage_code) अणु
 					uref->report_id = report->id;
 					uref->field_index = i;
 					uref->usage_index = j;
-					return field;
-				}
-			}
-		}
-	}
+					वापस field;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void hiddev_send_event(struct hid_device *hid,
-			      struct hiddev_usage_ref *uref)
-{
-	struct hiddev *hiddev = hid->hiddev;
-	struct hiddev_list *list;
-	unsigned long flags;
+अटल व्योम hiddev_send_event(काष्ठा hid_device *hid,
+			      काष्ठा hiddev_usage_ref *uref)
+अणु
+	काष्ठा hiddev *hiddev = hid->hiddev;
+	काष्ठा hiddev_list *list;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&hiddev->list_lock, flags);
-	list_for_each_entry(list, &hiddev->list, node) {
-		if (uref->field_index != HID_FIELD_INDEX_NONE ||
-		    (list->flags & HIDDEV_FLAG_REPORT) != 0) {
+	list_क्रम_each_entry(list, &hiddev->list, node) अणु
+		अगर (uref->field_index != HID_FIELD_INDEX_NONE ||
+		    (list->flags & HIDDEV_FLAG_REPORT) != 0) अणु
 			list->buffer[list->head] = *uref;
 			list->head = (list->head + 1) &
 				(HIDDEV_BUFFER_SIZE - 1);
-			kill_fasync(&list->fasync, SIGIO, POLL_IN);
-		}
-	}
+			समाप्त_fasync(&list->fasync, SIGIO, POLL_IN);
+		पूर्ण
+	पूर्ण
 	spin_unlock_irqrestore(&hiddev->list_lock, flags);
 
-	wake_up_interruptible(&hiddev->wait);
-}
+	wake_up_पूर्णांकerruptible(&hiddev->रुको);
+पूर्ण
 
 /*
- * This is where hid.c calls into hiddev to pass an event that occurred over
- * the interrupt pipe
+ * This is where hid.c calls पूर्णांकo hiddev to pass an event that occurred over
+ * the पूर्णांकerrupt pipe
  */
-void hiddev_hid_event(struct hid_device *hid, struct hid_field *field,
-		      struct hid_usage *usage, __s32 value)
-{
-	unsigned type = field->report_type;
-	struct hiddev_usage_ref uref;
+व्योम hiddev_hid_event(काष्ठा hid_device *hid, काष्ठा hid_field *field,
+		      काष्ठा hid_usage *usage, __s32 value)
+अणु
+	अचिन्हित type = field->report_type;
+	काष्ठा hiddev_usage_ref uref;
 
 	uref.report_type =
 	  (type == HID_INPUT_REPORT) ? HID_REPORT_TYPE_INPUT :
@@ -180,15 +181,15 @@ void hiddev_hid_event(struct hid_device *hid, struct hid_field *field,
 	uref.value = value;
 
 	hiddev_send_event(hid, &uref);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(hiddev_hid_event);
 
-void hiddev_report_event(struct hid_device *hid, struct hid_report *report)
-{
-	unsigned type = report->type;
-	struct hiddev_usage_ref uref;
+व्योम hiddev_report_event(काष्ठा hid_device *hid, काष्ठा hid_report *report)
+अणु
+	अचिन्हित type = report->type;
+	काष्ठा hiddev_usage_ref uref;
 
-	memset(&uref, 0, sizeof(uref));
+	स_रखो(&uref, 0, माप(uref));
 	uref.report_type =
 	  (type == HID_INPUT_REPORT) ? HID_REPORT_TYPE_INPUT :
 	  ((type == HID_OUTPUT_REPORT) ? HID_REPORT_TYPE_OUTPUT :
@@ -197,574 +198,574 @@ void hiddev_report_event(struct hid_device *hid, struct hid_report *report)
 	uref.field_index = HID_FIELD_INDEX_NONE;
 
 	hiddev_send_event(hid, &uref);
-}
+पूर्ण
 
 /*
  * fasync file op
  */
-static int hiddev_fasync(int fd, struct file *file, int on)
-{
-	struct hiddev_list *list = file->private_data;
+अटल पूर्णांक hiddev_fasync(पूर्णांक fd, काष्ठा file *file, पूर्णांक on)
+अणु
+	काष्ठा hiddev_list *list = file->निजी_data;
 
-	return fasync_helper(fd, file, on, &list->fasync);
-}
+	वापस fasync_helper(fd, file, on, &list->fasync);
+पूर्ण
 
 
 /*
  * release file op
  */
-static int hiddev_release(struct inode * inode, struct file * file)
-{
-	struct hiddev_list *list = file->private_data;
-	unsigned long flags;
+अटल पूर्णांक hiddev_release(काष्ठा inode * inode, काष्ठा file * file)
+अणु
+	काष्ठा hiddev_list *list = file->निजी_data;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(&list->hiddev->list_lock, flags);
 	list_del(&list->node);
 	spin_unlock_irqrestore(&list->hiddev->list_lock, flags);
 
 	mutex_lock(&list->hiddev->existancelock);
-	if (!--list->hiddev->open) {
-		if (list->hiddev->exist) {
-			hid_hw_close(list->hiddev->hid);
-			hid_hw_power(list->hiddev->hid, PM_HINT_NORMAL);
-		} else {
+	अगर (!--list->hiddev->खोलो) अणु
+		अगर (list->hiddev->exist) अणु
+			hid_hw_बंद(list->hiddev->hid);
+			hid_hw_घातer(list->hiddev->hid, PM_HINT_NORMAL);
+		पूर्ण अन्यथा अणु
 			mutex_unlock(&list->hiddev->existancelock);
-			kfree(list->hiddev);
-			vfree(list);
-			return 0;
-		}
-	}
+			kमुक्त(list->hiddev);
+			vमुक्त(list);
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
 	mutex_unlock(&list->hiddev->existancelock);
-	vfree(list);
+	vमुक्त(list);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __hiddev_open(struct hiddev *hiddev, struct file *file)
-{
-	struct hiddev_list *list;
-	int error;
+अटल पूर्णांक __hiddev_खोलो(काष्ठा hiddev *hiddev, काष्ठा file *file)
+अणु
+	काष्ठा hiddev_list *list;
+	पूर्णांक error;
 
-	lockdep_assert_held(&hiddev->existancelock);
+	lockdep_निश्चित_held(&hiddev->existancelock);
 
-	list = vzalloc(sizeof(*list));
-	if (!list)
-		return -ENOMEM;
+	list = vzalloc(माप(*list));
+	अगर (!list)
+		वापस -ENOMEM;
 
-	mutex_init(&list->thread_lock);
+	mutex_init(&list->thपढ़ो_lock);
 	list->hiddev = hiddev;
 
-	if (!hiddev->open++) {
-		error = hid_hw_power(hiddev->hid, PM_HINT_FULLON);
-		if (error < 0)
-			goto err_drop_count;
+	अगर (!hiddev->खोलो++) अणु
+		error = hid_hw_घातer(hiddev->hid, PM_HINT_FULLON);
+		अगर (error < 0)
+			जाओ err_drop_count;
 
-		error = hid_hw_open(hiddev->hid);
-		if (error < 0)
-			goto err_normal_power;
-	}
+		error = hid_hw_खोलो(hiddev->hid);
+		अगर (error < 0)
+			जाओ err_normal_घातer;
+	पूर्ण
 
 	spin_lock_irq(&hiddev->list_lock);
 	list_add_tail(&list->node, &hiddev->list);
 	spin_unlock_irq(&hiddev->list_lock);
 
-	file->private_data = list;
+	file->निजी_data = list;
 
-	return 0;
+	वापस 0;
 
-err_normal_power:
-	hid_hw_power(hiddev->hid, PM_HINT_NORMAL);
+err_normal_घातer:
+	hid_hw_घातer(hiddev->hid, PM_HINT_NORMAL);
 err_drop_count:
-	hiddev->open--;
-	vfree(list);
-	return error;
-}
+	hiddev->खोलो--;
+	vमुक्त(list);
+	वापस error;
+पूर्ण
 
 /*
- * open file op
+ * खोलो file op
  */
-static int hiddev_open(struct inode *inode, struct file *file)
-{
-	struct usb_interface *intf;
-	struct hid_device *hid;
-	struct hiddev *hiddev;
-	int res;
+अटल पूर्णांक hiddev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा usb_पूर्णांकerface *पूर्णांकf;
+	काष्ठा hid_device *hid;
+	काष्ठा hiddev *hiddev;
+	पूर्णांक res;
 
-	intf = usbhid_find_interface(iminor(inode));
-	if (!intf)
-		return -ENODEV;
+	पूर्णांकf = usbhid_find_पूर्णांकerface(iminor(inode));
+	अगर (!पूर्णांकf)
+		वापस -ENODEV;
 
-	hid = usb_get_intfdata(intf);
+	hid = usb_get_पूर्णांकfdata(पूर्णांकf);
 	hiddev = hid->hiddev;
 
 	mutex_lock(&hiddev->existancelock);
-	res = hiddev->exist ? __hiddev_open(hiddev, file) : -ENODEV;
+	res = hiddev->exist ? __hiddev_खोलो(hiddev, file) : -ENODEV;
 	mutex_unlock(&hiddev->existancelock);
 
-	return res;
-}
+	वापस res;
+पूर्ण
 
 /*
  * "write" file op
  */
-static ssize_t hiddev_write(struct file * file, const char __user * buffer, size_t count, loff_t *ppos)
-{
-	return -EINVAL;
-}
+अटल sमाप_प्रकार hiddev_ग_लिखो(काष्ठा file * file, स्थिर अक्षर __user * buffer, माप_प्रकार count, loff_t *ppos)
+अणु
+	वापस -EINVAL;
+पूर्ण
 
 /*
  * "read" file op
  */
-static ssize_t hiddev_read(struct file * file, char __user * buffer, size_t count, loff_t *ppos)
-{
-	DEFINE_WAIT(wait);
-	struct hiddev_list *list = file->private_data;
-	int event_size;
-	int retval;
+अटल sमाप_प्रकार hiddev_पढ़ो(काष्ठा file * file, अक्षर __user * buffer, माप_प्रकार count, loff_t *ppos)
+अणु
+	DEFINE_WAIT(रुको);
+	काष्ठा hiddev_list *list = file->निजी_data;
+	पूर्णांक event_size;
+	पूर्णांक retval;
 
 	event_size = ((list->flags & HIDDEV_FLAG_UREF) != 0) ?
-		sizeof(struct hiddev_usage_ref) : sizeof(struct hiddev_event);
+		माप(काष्ठा hiddev_usage_ref) : माप(काष्ठा hiddev_event);
 
-	if (count < event_size)
-		return 0;
+	अगर (count < event_size)
+		वापस 0;
 
-	/* lock against other threads */
-	retval = mutex_lock_interruptible(&list->thread_lock);
-	if (retval)
-		return -ERESTARTSYS;
+	/* lock against other thपढ़ोs */
+	retval = mutex_lock_पूर्णांकerruptible(&list->thपढ़ो_lock);
+	अगर (retval)
+		वापस -ERESTARTSYS;
 
-	while (retval == 0) {
-		if (list->head == list->tail) {
-			prepare_to_wait(&list->hiddev->wait, &wait, TASK_INTERRUPTIBLE);
+	जबतक (retval == 0) अणु
+		अगर (list->head == list->tail) अणु
+			prepare_to_रुको(&list->hiddev->रुको, &रुको, TASK_INTERRUPTIBLE);
 
-			while (list->head == list->tail) {
-				if (signal_pending(current)) {
+			जबतक (list->head == list->tail) अणु
+				अगर (संकेत_pending(current)) अणु
 					retval = -ERESTARTSYS;
-					break;
-				}
-				if (!list->hiddev->exist) {
+					अवरोध;
+				पूर्ण
+				अगर (!list->hiddev->exist) अणु
 					retval = -EIO;
-					break;
-				}
-				if (file->f_flags & O_NONBLOCK) {
+					अवरोध;
+				पूर्ण
+				अगर (file->f_flags & O_NONBLOCK) अणु
 					retval = -EAGAIN;
-					break;
-				}
+					अवरोध;
+				पूर्ण
 
 				/* let O_NONBLOCK tasks run */
-				mutex_unlock(&list->thread_lock);
+				mutex_unlock(&list->thपढ़ो_lock);
 				schedule();
-				if (mutex_lock_interruptible(&list->thread_lock)) {
-					finish_wait(&list->hiddev->wait, &wait);
-					return -EINTR;
-				}
+				अगर (mutex_lock_पूर्णांकerruptible(&list->thपढ़ो_lock)) अणु
+					finish_रुको(&list->hiddev->रुको, &रुको);
+					वापस -EINTR;
+				पूर्ण
 				set_current_state(TASK_INTERRUPTIBLE);
-			}
-			finish_wait(&list->hiddev->wait, &wait);
+			पूर्ण
+			finish_रुको(&list->hiddev->रुको, &रुको);
 
-		}
+		पूर्ण
 
-		if (retval) {
-			mutex_unlock(&list->thread_lock);
-			return retval;
-		}
+		अगर (retval) अणु
+			mutex_unlock(&list->thपढ़ो_lock);
+			वापस retval;
+		पूर्ण
 
 
-		while (list->head != list->tail &&
-		       retval + event_size <= count) {
-			if ((list->flags & HIDDEV_FLAG_UREF) == 0) {
-				if (list->buffer[list->tail].field_index != HID_FIELD_INDEX_NONE) {
-					struct hiddev_event event;
+		जबतक (list->head != list->tail &&
+		       retval + event_size <= count) अणु
+			अगर ((list->flags & HIDDEV_FLAG_UREF) == 0) अणु
+				अगर (list->buffer[list->tail].field_index != HID_FIELD_INDEX_NONE) अणु
+					काष्ठा hiddev_event event;
 
 					event.hid = list->buffer[list->tail].usage_code;
 					event.value = list->buffer[list->tail].value;
-					if (copy_to_user(buffer + retval, &event, sizeof(struct hiddev_event))) {
-						mutex_unlock(&list->thread_lock);
-						return -EFAULT;
-					}
-					retval += sizeof(struct hiddev_event);
-				}
-			} else {
-				if (list->buffer[list->tail].field_index != HID_FIELD_INDEX_NONE ||
-				    (list->flags & HIDDEV_FLAG_REPORT) != 0) {
+					अगर (copy_to_user(buffer + retval, &event, माप(काष्ठा hiddev_event))) अणु
+						mutex_unlock(&list->thपढ़ो_lock);
+						वापस -EFAULT;
+					पूर्ण
+					retval += माप(काष्ठा hiddev_event);
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				अगर (list->buffer[list->tail].field_index != HID_FIELD_INDEX_NONE ||
+				    (list->flags & HIDDEV_FLAG_REPORT) != 0) अणु
 
-					if (copy_to_user(buffer + retval, list->buffer + list->tail, sizeof(struct hiddev_usage_ref))) {
-						mutex_unlock(&list->thread_lock);
-						return -EFAULT;
-					}
-					retval += sizeof(struct hiddev_usage_ref);
-				}
-			}
+					अगर (copy_to_user(buffer + retval, list->buffer + list->tail, माप(काष्ठा hiddev_usage_ref))) अणु
+						mutex_unlock(&list->thपढ़ो_lock);
+						वापस -EFAULT;
+					पूर्ण
+					retval += माप(काष्ठा hiddev_usage_ref);
+				पूर्ण
+			पूर्ण
 			list->tail = (list->tail + 1) & (HIDDEV_BUFFER_SIZE - 1);
-		}
+		पूर्ण
 
-	}
-	mutex_unlock(&list->thread_lock);
+	पूर्ण
+	mutex_unlock(&list->thपढ़ो_lock);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
 /*
  * "poll" file op
  * No kernel lock - fine
  */
-static __poll_t hiddev_poll(struct file *file, poll_table *wait)
-{
-	struct hiddev_list *list = file->private_data;
+अटल __poll_t hiddev_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा hiddev_list *list = file->निजी_data;
 
-	poll_wait(file, &list->hiddev->wait, wait);
-	if (list->head != list->tail)
-		return EPOLLIN | EPOLLRDNORM | EPOLLOUT;
-	if (!list->hiddev->exist)
-		return EPOLLERR | EPOLLHUP;
-	return 0;
-}
+	poll_रुको(file, &list->hiddev->रुको, रुको);
+	अगर (list->head != list->tail)
+		वापस EPOLLIN | EPOLLRDNORM | EPOLLOUT;
+	अगर (!list->hiddev->exist)
+		वापस EPOLLERR | EPOLLHUP;
+	वापस 0;
+पूर्ण
 
 /*
  * "ioctl" file op
  */
-static noinline int hiddev_ioctl_usage(struct hiddev *hiddev, unsigned int cmd, void __user *user_arg)
-{
-	struct hid_device *hid = hiddev->hid;
-	struct hiddev_report_info rinfo;
-	struct hiddev_usage_ref_multi *uref_multi = NULL;
-	struct hiddev_usage_ref *uref;
-	struct hid_report *report;
-	struct hid_field *field;
-	int i;
+अटल noअंतरभूत पूर्णांक hiddev_ioctl_usage(काष्ठा hiddev *hiddev, अचिन्हित पूर्णांक cmd, व्योम __user *user_arg)
+अणु
+	काष्ठा hid_device *hid = hiddev->hid;
+	काष्ठा hiddev_report_info rinfo;
+	काष्ठा hiddev_usage_ref_multi *uref_multi = शून्य;
+	काष्ठा hiddev_usage_ref *uref;
+	काष्ठा hid_report *report;
+	काष्ठा hid_field *field;
+	पूर्णांक i;
 
-	uref_multi = kmalloc(sizeof(struct hiddev_usage_ref_multi), GFP_KERNEL);
-	if (!uref_multi)
-		return -ENOMEM;
+	uref_multi = kदो_स्मृति(माप(काष्ठा hiddev_usage_ref_multi), GFP_KERNEL);
+	अगर (!uref_multi)
+		वापस -ENOMEM;
 	uref = &uref_multi->uref;
-	if (cmd == HIDIOCGUSAGES || cmd == HIDIOCSUSAGES) {
-		if (copy_from_user(uref_multi, user_arg,
-				   sizeof(*uref_multi)))
-			goto fault;
-	} else {
-		if (copy_from_user(uref, user_arg, sizeof(*uref)))
-			goto fault;
-	}
+	अगर (cmd == HIDIOCGUSAGES || cmd == HIDIOCSUSAGES) अणु
+		अगर (copy_from_user(uref_multi, user_arg,
+				   माप(*uref_multi)))
+			जाओ fault;
+	पूर्ण अन्यथा अणु
+		अगर (copy_from_user(uref, user_arg, माप(*uref)))
+			जाओ fault;
+	पूर्ण
 
-	switch (cmd) {
-	case HIDIOCGUCODE:
+	चयन (cmd) अणु
+	हाल HIDIOCGUCODE:
 		rinfo.report_type = uref->report_type;
 		rinfo.report_id = uref->report_id;
-		if ((report = hiddev_lookup_report(hid, &rinfo)) == NULL)
-			goto inval;
+		अगर ((report = hiddev_lookup_report(hid, &rinfo)) == शून्य)
+			जाओ inval;
 
-		if (uref->field_index >= report->maxfield)
-			goto inval;
+		अगर (uref->field_index >= report->maxfield)
+			जाओ inval;
 		uref->field_index = array_index_nospec(uref->field_index,
 						       report->maxfield);
 
 		field = report->field[uref->field_index];
-		if (uref->usage_index >= field->maxusage)
-			goto inval;
+		अगर (uref->usage_index >= field->maxusage)
+			जाओ inval;
 		uref->usage_index = array_index_nospec(uref->usage_index,
 						       field->maxusage);
 
 		uref->usage_code = field->usage[uref->usage_index].hid;
 
-		if (copy_to_user(user_arg, uref, sizeof(*uref)))
-			goto fault;
+		अगर (copy_to_user(user_arg, uref, माप(*uref)))
+			जाओ fault;
 
-		goto goodreturn;
+		जाओ goodवापस;
 
-	default:
-		if (cmd != HIDIOCGUSAGE &&
+	शेष:
+		अगर (cmd != HIDIOCGUSAGE &&
 		    cmd != HIDIOCGUSAGES &&
 		    uref->report_type == HID_REPORT_TYPE_INPUT)
-			goto inval;
+			जाओ inval;
 
-		if (uref->report_id == HID_REPORT_ID_UNKNOWN) {
+		अगर (uref->report_id == HID_REPORT_ID_UNKNOWN) अणु
 			field = hiddev_lookup_usage(hid, uref);
-			if (field == NULL)
-				goto inval;
-		} else {
+			अगर (field == शून्य)
+				जाओ inval;
+		पूर्ण अन्यथा अणु
 			rinfo.report_type = uref->report_type;
 			rinfo.report_id = uref->report_id;
-			if ((report = hiddev_lookup_report(hid, &rinfo)) == NULL)
-				goto inval;
+			अगर ((report = hiddev_lookup_report(hid, &rinfo)) == शून्य)
+				जाओ inval;
 
-			if (uref->field_index >= report->maxfield)
-				goto inval;
+			अगर (uref->field_index >= report->maxfield)
+				जाओ inval;
 			uref->field_index = array_index_nospec(uref->field_index,
 							       report->maxfield);
 
 			field = report->field[uref->field_index];
 
-			if (cmd == HIDIOCGCOLLECTIONINDEX) {
-				if (uref->usage_index >= field->maxusage)
-					goto inval;
+			अगर (cmd == HIDIOCGCOLLECTIONINDEX) अणु
+				अगर (uref->usage_index >= field->maxusage)
+					जाओ inval;
 				uref->usage_index =
 					array_index_nospec(uref->usage_index,
 							   field->maxusage);
-			} else if (uref->usage_index >= field->report_count)
-				goto inval;
-		}
+			पूर्ण अन्यथा अगर (uref->usage_index >= field->report_count)
+				जाओ inval;
+		पूर्ण
 
-		if (cmd == HIDIOCGUSAGES || cmd == HIDIOCSUSAGES) {
-			if (uref_multi->num_values > HID_MAX_MULTI_USAGES ||
+		अगर (cmd == HIDIOCGUSAGES || cmd == HIDIOCSUSAGES) अणु
+			अगर (uref_multi->num_values > HID_MAX_MULTI_USAGES ||
 			    uref->usage_index + uref_multi->num_values >
 			    field->report_count)
-				goto inval;
+				जाओ inval;
 
 			uref->usage_index =
 				array_index_nospec(uref->usage_index,
 						   field->report_count -
 						   uref_multi->num_values);
-		}
+		पूर्ण
 
-		switch (cmd) {
-		case HIDIOCGUSAGE:
-			if (uref->usage_index >= field->report_count)
-				goto inval;
+		चयन (cmd) अणु
+		हाल HIDIOCGUSAGE:
+			अगर (uref->usage_index >= field->report_count)
+				जाओ inval;
 			uref->value = field->value[uref->usage_index];
-			if (copy_to_user(user_arg, uref, sizeof(*uref)))
-				goto fault;
-			goto goodreturn;
+			अगर (copy_to_user(user_arg, uref, माप(*uref)))
+				जाओ fault;
+			जाओ goodवापस;
 
-		case HIDIOCSUSAGE:
-			if (uref->usage_index >= field->report_count)
-				goto inval;
+		हाल HIDIOCSUSAGE:
+			अगर (uref->usage_index >= field->report_count)
+				जाओ inval;
 			field->value[uref->usage_index] = uref->value;
-			goto goodreturn;
+			जाओ goodवापस;
 
-		case HIDIOCGCOLLECTIONINDEX:
+		हाल HIDIOCGCOLLECTIONINDEX:
 			i = field->usage[uref->usage_index].collection_index;
-			kfree(uref_multi);
-			return i;
-		case HIDIOCGUSAGES:
-			for (i = 0; i < uref_multi->num_values; i++)
+			kमुक्त(uref_multi);
+			वापस i;
+		हाल HIDIOCGUSAGES:
+			क्रम (i = 0; i < uref_multi->num_values; i++)
 				uref_multi->values[i] =
 				    field->value[uref->usage_index + i];
-			if (copy_to_user(user_arg, uref_multi,
-					 sizeof(*uref_multi)))
-				goto fault;
-			goto goodreturn;
-		case HIDIOCSUSAGES:
-			for (i = 0; i < uref_multi->num_values; i++)
+			अगर (copy_to_user(user_arg, uref_multi,
+					 माप(*uref_multi)))
+				जाओ fault;
+			जाओ goodवापस;
+		हाल HIDIOCSUSAGES:
+			क्रम (i = 0; i < uref_multi->num_values; i++)
 				field->value[uref->usage_index + i] =
 				    uref_multi->values[i];
-			goto goodreturn;
-		}
+			जाओ goodवापस;
+		पूर्ण
 
-goodreturn:
-		kfree(uref_multi);
-		return 0;
+goodवापस:
+		kमुक्त(uref_multi);
+		वापस 0;
 fault:
-		kfree(uref_multi);
-		return -EFAULT;
+		kमुक्त(uref_multi);
+		वापस -EFAULT;
 inval:
-		kfree(uref_multi);
-		return -EINVAL;
-	}
-}
+		kमुक्त(uref_multi);
+		वापस -EINVAL;
+	पूर्ण
+पूर्ण
 
-static noinline int hiddev_ioctl_string(struct hiddev *hiddev, unsigned int cmd, void __user *user_arg)
-{
-	struct hid_device *hid = hiddev->hid;
-	struct usb_device *dev = hid_to_usb_dev(hid);
-	int idx, len;
-	char *buf;
+अटल noअंतरभूत पूर्णांक hiddev_ioctl_string(काष्ठा hiddev *hiddev, अचिन्हित पूर्णांक cmd, व्योम __user *user_arg)
+अणु
+	काष्ठा hid_device *hid = hiddev->hid;
+	काष्ठा usb_device *dev = hid_to_usb_dev(hid);
+	पूर्णांक idx, len;
+	अक्षर *buf;
 
-	if (get_user(idx, (int __user *)user_arg))
-		return -EFAULT;
+	अगर (get_user(idx, (पूर्णांक __user *)user_arg))
+		वापस -EFAULT;
 
-	if ((buf = kmalloc(HID_STRING_SIZE, GFP_KERNEL)) == NULL)
-		return -ENOMEM;
+	अगर ((buf = kदो_स्मृति(HID_STRING_SIZE, GFP_KERNEL)) == शून्य)
+		वापस -ENOMEM;
 
-	if ((len = usb_string(dev, idx, buf, HID_STRING_SIZE-1)) < 0) {
-		kfree(buf);
-		return -EINVAL;
-	}
+	अगर ((len = usb_string(dev, idx, buf, HID_STRING_SIZE-1)) < 0) अणु
+		kमुक्त(buf);
+		वापस -EINVAL;
+	पूर्ण
 
-	if (copy_to_user(user_arg+sizeof(int), buf, len+1)) {
-		kfree(buf);
-		return -EFAULT;
-	}
+	अगर (copy_to_user(user_arg+माप(पूर्णांक), buf, len+1)) अणु
+		kमुक्त(buf);
+		वापस -EFAULT;
+	पूर्ण
 
-	kfree(buf);
+	kमुक्त(buf);
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static long hiddev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct hiddev_list *list = file->private_data;
-	struct hiddev *hiddev = list->hiddev;
-	struct hid_device *hid;
-	struct hiddev_collection_info cinfo;
-	struct hiddev_report_info rinfo;
-	struct hiddev_field_info finfo;
-	struct hiddev_devinfo dinfo;
-	struct hid_report *report;
-	struct hid_field *field;
-	void __user *user_arg = (void __user *)arg;
-	int i, r = -EINVAL;
+अटल दीर्घ hiddev_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा hiddev_list *list = file->निजी_data;
+	काष्ठा hiddev *hiddev = list->hiddev;
+	काष्ठा hid_device *hid;
+	काष्ठा hiddev_collection_info cinfo;
+	काष्ठा hiddev_report_info rinfo;
+	काष्ठा hiddev_field_info finfo;
+	काष्ठा hiddev_devinfo dinfo;
+	काष्ठा hid_report *report;
+	काष्ठा hid_field *field;
+	व्योम __user *user_arg = (व्योम __user *)arg;
+	पूर्णांक i, r = -EINVAL;
 
 	/* Called without BKL by compat methods so no BKL taken */
 
 	mutex_lock(&hiddev->existancelock);
-	if (!hiddev->exist) {
+	अगर (!hiddev->exist) अणु
 		r = -ENODEV;
-		goto ret_unlock;
-	}
+		जाओ ret_unlock;
+	पूर्ण
 
 	hid = hiddev->hid;
 
-	switch (cmd) {
+	चयन (cmd) अणु
 
-	case HIDIOCGVERSION:
-		r = put_user(HID_VERSION, (int __user *)arg) ?
+	हाल HIDIOCGVERSION:
+		r = put_user(HID_VERSION, (पूर्णांक __user *)arg) ?
 			-EFAULT : 0;
-		break;
+		अवरोध;
 
-	case HIDIOCAPPLICATION:
-		if (arg >= hid->maxapplication)
-			break;
+	हाल HIDIOCAPPLICATION:
+		अगर (arg >= hid->maxapplication)
+			अवरोध;
 
-		for (i = 0; i < hid->maxcollection; i++)
-			if (hid->collection[i].type ==
+		क्रम (i = 0; i < hid->maxcollection; i++)
+			अगर (hid->collection[i].type ==
 			    HID_COLLECTION_APPLICATION && arg-- == 0)
-				break;
+				अवरोध;
 
-		if (i < hid->maxcollection)
+		अगर (i < hid->maxcollection)
 			r = hid->collection[i].usage;
-		break;
+		अवरोध;
 
-	case HIDIOCGDEVINFO:
-		{
-			struct usb_device *dev = hid_to_usb_dev(hid);
-			struct usbhid_device *usbhid = hid->driver_data;
+	हाल HIDIOCGDEVINFO:
+		अणु
+			काष्ठा usb_device *dev = hid_to_usb_dev(hid);
+			काष्ठा usbhid_device *usbhid = hid->driver_data;
 
-			memset(&dinfo, 0, sizeof(dinfo));
+			स_रखो(&dinfo, 0, माप(dinfo));
 
 			dinfo.bustype = BUS_USB;
 			dinfo.busnum = dev->bus->busnum;
 			dinfo.devnum = dev->devnum;
-			dinfo.ifnum = usbhid->ifnum;
-			dinfo.vendor = le16_to_cpu(dev->descriptor.idVendor);
+			dinfo.अगरnum = usbhid->अगरnum;
+			dinfo.venकरोr = le16_to_cpu(dev->descriptor.idVenकरोr);
 			dinfo.product = le16_to_cpu(dev->descriptor.idProduct);
 			dinfo.version = le16_to_cpu(dev->descriptor.bcdDevice);
 			dinfo.num_applications = hid->maxapplication;
 
-			r = copy_to_user(user_arg, &dinfo, sizeof(dinfo)) ?
+			r = copy_to_user(user_arg, &dinfo, माप(dinfo)) ?
 				-EFAULT : 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	case HIDIOCGFLAG:
-		r = put_user(list->flags, (int __user *)arg) ?
+	हाल HIDIOCGFLAG:
+		r = put_user(list->flags, (पूर्णांक __user *)arg) ?
 			-EFAULT : 0;
-		break;
+		अवरोध;
 
-	case HIDIOCSFLAG:
-		{
-			int newflags;
+	हाल HIDIOCSFLAG:
+		अणु
+			पूर्णांक newflags;
 
-			if (get_user(newflags, (int __user *)arg)) {
+			अगर (get_user(newflags, (पूर्णांक __user *)arg)) अणु
 				r = -EFAULT;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			if ((newflags & ~HIDDEV_FLAGS) != 0 ||
+			अगर ((newflags & ~HIDDEV_FLAGS) != 0 ||
 			    ((newflags & HIDDEV_FLAG_REPORT) != 0 &&
 			     (newflags & HIDDEV_FLAG_UREF) == 0))
-				break;
+				अवरोध;
 
 			list->flags = newflags;
 
 			r = 0;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-	case HIDIOCGSTRING:
+	हाल HIDIOCGSTRING:
 		r = hiddev_ioctl_string(hiddev, cmd, user_arg);
-		break;
+		अवरोध;
 
-	case HIDIOCINITREPORT:
+	हाल HIDIOCINITREPORT:
 		usbhid_init_reports(hid);
 		hiddev->initialized = true;
 		r = 0;
-		break;
+		अवरोध;
 
-	case HIDIOCGREPORT:
-		if (copy_from_user(&rinfo, user_arg, sizeof(rinfo))) {
+	हाल HIDIOCGREPORT:
+		अगर (copy_from_user(&rinfo, user_arg, माप(rinfo))) अणु
 			r = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (rinfo.report_type == HID_REPORT_TYPE_OUTPUT)
-			break;
+		अगर (rinfo.report_type == HID_REPORT_TYPE_OUTPUT)
+			अवरोध;
 
 		report = hiddev_lookup_report(hid, &rinfo);
-		if (report == NULL)
-			break;
+		अगर (report == शून्य)
+			अवरोध;
 
 		hid_hw_request(hid, report, HID_REQ_GET_REPORT);
-		hid_hw_wait(hid);
+		hid_hw_रुको(hid);
 
 		r = 0;
-		break;
+		अवरोध;
 
-	case HIDIOCSREPORT:
-		if (copy_from_user(&rinfo, user_arg, sizeof(rinfo))) {
+	हाल HIDIOCSREPORT:
+		अगर (copy_from_user(&rinfo, user_arg, माप(rinfo))) अणु
 			r = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (rinfo.report_type == HID_REPORT_TYPE_INPUT)
-			break;
+		अगर (rinfo.report_type == HID_REPORT_TYPE_INPUT)
+			अवरोध;
 
 		report = hiddev_lookup_report(hid, &rinfo);
-		if (report == NULL)
-			break;
+		अगर (report == शून्य)
+			अवरोध;
 
 		hid_hw_request(hid, report, HID_REQ_SET_REPORT);
-		hid_hw_wait(hid);
+		hid_hw_रुको(hid);
 
 		r = 0;
-		break;
+		अवरोध;
 
-	case HIDIOCGREPORTINFO:
-		if (copy_from_user(&rinfo, user_arg, sizeof(rinfo))) {
+	हाल HIDIOCGREPORTINFO:
+		अगर (copy_from_user(&rinfo, user_arg, माप(rinfo))) अणु
 			r = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		report = hiddev_lookup_report(hid, &rinfo);
-		if (report == NULL)
-			break;
+		अगर (report == शून्य)
+			अवरोध;
 
 		rinfo.num_fields = report->maxfield;
 
-		r = copy_to_user(user_arg, &rinfo, sizeof(rinfo)) ?
+		r = copy_to_user(user_arg, &rinfo, माप(rinfo)) ?
 			-EFAULT : 0;
-		break;
+		अवरोध;
 
-	case HIDIOCGFIELDINFO:
-		if (copy_from_user(&finfo, user_arg, sizeof(finfo))) {
+	हाल HIDIOCGFIELDINFO:
+		अगर (copy_from_user(&finfo, user_arg, माप(finfo))) अणु
 			r = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		rinfo.report_type = finfo.report_type;
 		rinfo.report_id = finfo.report_id;
 
 		report = hiddev_lookup_report(hid, &rinfo);
-		if (report == NULL)
-			break;
+		अगर (report == शून्य)
+			अवरोध;
 
-		if (finfo.field_index >= report->maxfield)
-			break;
+		अगर (finfo.field_index >= report->maxfield)
+			अवरोध;
 		finfo.field_index = array_index_nospec(finfo.field_index,
 						       report->maxfield);
 
 		field = report->field[finfo.field_index];
-		memset(&finfo, 0, sizeof(finfo));
+		स_रखो(&finfo, 0, माप(finfo));
 		finfo.report_type = rinfo.report_type;
 		finfo.report_id = rinfo.report_id;
 		finfo.field_index = field->report_count - 1;
@@ -780,31 +781,31 @@ static long hiddev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		finfo.unit_exponent = field->unit_exponent;
 		finfo.unit = field->unit;
 
-		r = copy_to_user(user_arg, &finfo, sizeof(finfo)) ?
+		r = copy_to_user(user_arg, &finfo, माप(finfo)) ?
 			-EFAULT : 0;
-		break;
+		अवरोध;
 
-	case HIDIOCGUCODE:
-	case HIDIOCGUSAGE:
-	case HIDIOCSUSAGE:
-	case HIDIOCGUSAGES:
-	case HIDIOCSUSAGES:
-	case HIDIOCGCOLLECTIONINDEX:
-		if (!hiddev->initialized) {
+	हाल HIDIOCGUCODE:
+	हाल HIDIOCGUSAGE:
+	हाल HIDIOCSUSAGE:
+	हाल HIDIOCGUSAGES:
+	हाल HIDIOCSUSAGES:
+	हाल HIDIOCGCOLLECTIONINDEX:
+		अगर (!hiddev->initialized) अणु
 			usbhid_init_reports(hid);
 			hiddev->initialized = true;
-		}
+		पूर्ण
 		r = hiddev_ioctl_usage(hiddev, cmd, user_arg);
-		break;
+		अवरोध;
 
-	case HIDIOCGCOLLECTIONINFO:
-		if (copy_from_user(&cinfo, user_arg, sizeof(cinfo))) {
+	हाल HIDIOCGCOLLECTIONINFO:
+		अगर (copy_from_user(&cinfo, user_arg, माप(cinfo))) अणु
 			r = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (cinfo.index >= hid->maxcollection)
-			break;
+		अगर (cinfo.index >= hid->maxcollection)
+			अवरोध;
 		cinfo.index = array_index_nospec(cinfo.index,
 						 hid->maxcollection);
 
@@ -812,134 +813,134 @@ static long hiddev_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		cinfo.usage = hid->collection[cinfo.index].usage;
 		cinfo.level = hid->collection[cinfo.index].level;
 
-		r = copy_to_user(user_arg, &cinfo, sizeof(cinfo)) ?
+		r = copy_to_user(user_arg, &cinfo, माप(cinfo)) ?
 			-EFAULT : 0;
-		break;
+		अवरोध;
 
-	default:
-		if (_IOC_TYPE(cmd) != 'H' || _IOC_DIR(cmd) != _IOC_READ)
-			break;
+	शेष:
+		अगर (_IOC_TYPE(cmd) != 'H' || _IOC_सूची(cmd) != _IOC_READ)
+			अवरोध;
 
-		if (_IOC_NR(cmd) == _IOC_NR(HIDIOCGNAME(0))) {
-			int len = strlen(hid->name) + 1;
-			if (len > _IOC_SIZE(cmd))
+		अगर (_IOC_NR(cmd) == _IOC_NR(HIDIOCGNAME(0))) अणु
+			पूर्णांक len = म_माप(hid->name) + 1;
+			अगर (len > _IOC_SIZE(cmd))
 				 len = _IOC_SIZE(cmd);
 			r = copy_to_user(user_arg, hid->name, len) ?
 				-EFAULT : len;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (_IOC_NR(cmd) == _IOC_NR(HIDIOCGPHYS(0))) {
-			int len = strlen(hid->phys) + 1;
-			if (len > _IOC_SIZE(cmd))
+		अगर (_IOC_NR(cmd) == _IOC_NR(HIDIOCGPHYS(0))) अणु
+			पूर्णांक len = म_माप(hid->phys) + 1;
+			अगर (len > _IOC_SIZE(cmd))
 				len = _IOC_SIZE(cmd);
 			r = copy_to_user(user_arg, hid->phys, len) ?
 				-EFAULT : len;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 ret_unlock:
 	mutex_unlock(&hiddev->existancelock);
-	return r;
-}
+	वापस r;
+पूर्ण
 
-static const struct file_operations hiddev_fops = {
+अटल स्थिर काष्ठा file_operations hiddev_fops = अणु
 	.owner =	THIS_MODULE,
-	.read =		hiddev_read,
-	.write =	hiddev_write,
+	.पढ़ो =		hiddev_पढ़ो,
+	.ग_लिखो =	hiddev_ग_लिखो,
 	.poll =		hiddev_poll,
-	.open =		hiddev_open,
+	.खोलो =		hiddev_खोलो,
 	.release =	hiddev_release,
 	.unlocked_ioctl =	hiddev_ioctl,
 	.fasync =	hiddev_fasync,
 	.compat_ioctl	= compat_ptr_ioctl,
 	.llseek		= noop_llseek,
-};
+पूर्ण;
 
-static char *hiddev_devnode(struct device *dev, umode_t *mode)
-{
-	return kasprintf(GFP_KERNEL, "usb/%s", dev_name(dev));
-}
+अटल अक्षर *hiddev_devnode(काष्ठा device *dev, umode_t *mode)
+अणु
+	वापस kaप्र_लिखो(GFP_KERNEL, "usb/%s", dev_name(dev));
+पूर्ण
 
-static struct usb_class_driver hiddev_class = {
+अटल काष्ठा usb_class_driver hiddev_class = अणु
 	.name =		"hiddev%d",
 	.devnode =	hiddev_devnode,
 	.fops =		&hiddev_fops,
 	.minor_base =	HIDDEV_MINOR_BASE,
-};
+पूर्ण;
 
 /*
  * This is where hid.c calls us to connect a hid device to the hiddev driver
  */
-int hiddev_connect(struct hid_device *hid, unsigned int force)
-{
-	struct hiddev *hiddev;
-	struct usbhid_device *usbhid = hid->driver_data;
-	int retval;
+पूर्णांक hiddev_connect(काष्ठा hid_device *hid, अचिन्हित पूर्णांक क्रमce)
+अणु
+	काष्ठा hiddev *hiddev;
+	काष्ठा usbhid_device *usbhid = hid->driver_data;
+	पूर्णांक retval;
 
-	if (!force) {
-		unsigned int i;
-		for (i = 0; i < hid->maxcollection; i++)
-			if (hid->collection[i].type ==
+	अगर (!क्रमce) अणु
+		अचिन्हित पूर्णांक i;
+		क्रम (i = 0; i < hid->maxcollection; i++)
+			अगर (hid->collection[i].type ==
 			    HID_COLLECTION_APPLICATION &&
 			    !IS_INPUT_APPLICATION(hid->collection[i].usage))
-				break;
+				अवरोध;
 
-		if (i == hid->maxcollection)
-			return -EINVAL;
-	}
+		अगर (i == hid->maxcollection)
+			वापस -EINVAL;
+	पूर्ण
 
-	if (!(hiddev = kzalloc(sizeof(struct hiddev), GFP_KERNEL)))
-		return -ENOMEM;
+	अगर (!(hiddev = kzalloc(माप(काष्ठा hiddev), GFP_KERNEL)))
+		वापस -ENOMEM;
 
-	init_waitqueue_head(&hiddev->wait);
+	init_रुकोqueue_head(&hiddev->रुको);
 	INIT_LIST_HEAD(&hiddev->list);
 	spin_lock_init(&hiddev->list_lock);
 	mutex_init(&hiddev->existancelock);
 	hid->hiddev = hiddev;
 	hiddev->hid = hid;
 	hiddev->exist = 1;
-	retval = usb_register_dev(usbhid->intf, &hiddev_class);
-	if (retval) {
+	retval = usb_रेजिस्टर_dev(usbhid->पूर्णांकf, &hiddev_class);
+	अगर (retval) अणु
 		hid_err(hid, "Not able to get a minor for this device\n");
-		hid->hiddev = NULL;
-		kfree(hiddev);
-		return retval;
-	}
+		hid->hiddev = शून्य;
+		kमुक्त(hiddev);
+		वापस retval;
+	पूर्ण
 
 	/*
-	 * If HID_QUIRK_NO_INIT_REPORTS is set, make sure we don't initialize
+	 * If HID_QUIRK_NO_INIT_REPORTS is set, make sure we करोn't initialize
 	 * the reports.
 	 */
 	hiddev->initialized = hid->quirks & HID_QUIRK_NO_INIT_REPORTS;
 
-	hiddev->minor = usbhid->intf->minor;
+	hiddev->minor = usbhid->पूर्णांकf->minor;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * This is where hid.c calls us to disconnect a hiddev device from the
  * corresponding hid device (usually because the usb device has disconnected)
  */
-static struct usb_class_driver hiddev_class;
-void hiddev_disconnect(struct hid_device *hid)
-{
-	struct hiddev *hiddev = hid->hiddev;
-	struct usbhid_device *usbhid = hid->driver_data;
+अटल काष्ठा usb_class_driver hiddev_class;
+व्योम hiddev_disconnect(काष्ठा hid_device *hid)
+अणु
+	काष्ठा hiddev *hiddev = hid->hiddev;
+	काष्ठा usbhid_device *usbhid = hid->driver_data;
 
-	usb_deregister_dev(usbhid->intf, &hiddev_class);
+	usb_deरेजिस्टर_dev(usbhid->पूर्णांकf, &hiddev_class);
 
 	mutex_lock(&hiddev->existancelock);
 	hiddev->exist = 0;
 
-	if (hiddev->open) {
-		hid_hw_close(hiddev->hid);
-		wake_up_interruptible(&hiddev->wait);
+	अगर (hiddev->खोलो) अणु
+		hid_hw_बंद(hiddev->hid);
+		wake_up_पूर्णांकerruptible(&hiddev->रुको);
 		mutex_unlock(&hiddev->existancelock);
-	} else {
+	पूर्ण अन्यथा अणु
 		mutex_unlock(&hiddev->existancelock);
-		kfree(hiddev);
-	}
-}
+		kमुक्त(hiddev);
+	पूर्ण
+पूर्ण

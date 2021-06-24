@@ -1,42 +1,43 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Copyright (C) 2017 Marvell
  *
- * Antoine Tenart <antoine.tenart@free-electrons.com>
+ * Antoine Tenart <antoine.tenart@मुक्त-electrons.com>
  */
 
-#include <crypto/aes.h>
-#include <crypto/hmac.h>
-#include <crypto/md5.h>
-#include <crypto/sha1.h>
-#include <crypto/sha2.h>
-#include <crypto/sha3.h>
-#include <crypto/skcipher.h>
-#include <crypto/sm3.h>
-#include <crypto/internal/cipher.h>
-#include <linux/device.h>
-#include <linux/dma-mapping.h>
-#include <linux/dmapool.h>
+#समावेश <crypto/aes.h>
+#समावेश <crypto/hmac.h>
+#समावेश <crypto/md5.h>
+#समावेश <crypto/sha1.h>
+#समावेश <crypto/sha2.h>
+#समावेश <crypto/sha3.h>
+#समावेश <crypto/skcipher.h>
+#समावेश <crypto/sm3.h>
+#समावेश <crypto/पूर्णांकernal/cipher.h>
+#समावेश <linux/device.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/dmapool.h>
 
-#include "safexcel.h"
+#समावेश "safexcel.h"
 
-struct safexcel_ahash_ctx {
-	struct safexcel_context base;
+काष्ठा safexcel_ahash_ctx अणु
+	काष्ठा safexcel_context base;
 
 	u32 alg;
 	u8  key_sz;
 	bool cbcmac;
-	bool do_fallback;
-	bool fb_init_done;
-	bool fb_do_setkey;
+	bool करो_fallback;
+	bool fb_init_करोne;
+	bool fb_करो_setkey;
 
-	struct crypto_cipher *kaes;
-	struct crypto_ahash *fback;
-	struct crypto_shash *shpre;
-	struct shash_desc *shdesc;
-};
+	काष्ठा crypto_cipher *kaes;
+	काष्ठा crypto_ahash *fback;
+	काष्ठा crypto_shash *shpre;
+	काष्ठा shash_desc *shdesc;
+पूर्ण;
 
-struct safexcel_ahash_req {
+काष्ठा safexcel_ahash_req अणु
 	bool last_req;
 	bool finish;
 	bool hmac;
@@ -46,7 +47,7 @@ struct safexcel_ahash_req {
 	bool not_first;
 	bool xcbcmac;
 
-	int nents;
+	पूर्णांक nents;
 	dma_addr_t result_dma;
 
 	u32 digest;
@@ -55,142 +56,142 @@ struct safexcel_ahash_req {
 	u8 block_sz;    /* block size, only set once */
 	u8 digest_sz;   /* output digest size, only set once */
 	__le32 state[SHA3_512_BLOCK_SIZE /
-		     sizeof(__le32)] __aligned(sizeof(__le32));
+		     माप(__le32)] __aligned(माप(__le32));
 
 	u64 len;
 	u64 processed;
 
-	u8 cache[HASH_CACHE_SIZE] __aligned(sizeof(u32));
+	u8 cache[HASH_CACHE_SIZE] __aligned(माप(u32));
 	dma_addr_t cache_dma;
-	unsigned int cache_sz;
+	अचिन्हित पूर्णांक cache_sz;
 
-	u8 cache_next[HASH_CACHE_SIZE] __aligned(sizeof(u32));
-};
+	u8 cache_next[HASH_CACHE_SIZE] __aligned(माप(u32));
+पूर्ण;
 
-static inline u64 safexcel_queued_len(struct safexcel_ahash_req *req)
-{
-	return req->len - req->processed;
-}
+अटल अंतरभूत u64 safexcel_queued_len(काष्ठा safexcel_ahash_req *req)
+अणु
+	वापस req->len - req->processed;
+पूर्ण
 
-static void safexcel_hash_token(struct safexcel_command_desc *cdesc,
+अटल व्योम safexcel_hash_token(काष्ठा safexcel_command_desc *cdesc,
 				u32 input_length, u32 result_length,
 				bool cbcmac)
-{
-	struct safexcel_token *token =
-		(struct safexcel_token *)cdesc->control_data.token;
+अणु
+	काष्ठा safexcel_token *token =
+		(काष्ठा safexcel_token *)cdesc->control_data.token;
 
-	token[0].opcode = EIP197_TOKEN_OPCODE_DIRECTION;
+	token[0].opcode = EIP197_TOKEN_OPCODE_सूचीECTION;
 	token[0].packet_length = input_length;
-	token[0].instructions = EIP197_TOKEN_INS_TYPE_HASH;
+	token[0].inकाष्ठाions = EIP197_TOKEN_INS_TYPE_HASH;
 
 	input_length &= 15;
-	if (unlikely(cbcmac && input_length)) {
+	अगर (unlikely(cbcmac && input_length)) अणु
 		token[0].stat =  0;
 		token[1].opcode = EIP197_TOKEN_OPCODE_INSERT;
 		token[1].packet_length = 16 - input_length;
 		token[1].stat = EIP197_TOKEN_STAT_LAST_HASH;
-		token[1].instructions = EIP197_TOKEN_INS_TYPE_HASH;
-	} else {
+		token[1].inकाष्ठाions = EIP197_TOKEN_INS_TYPE_HASH;
+	पूर्ण अन्यथा अणु
 		token[0].stat = EIP197_TOKEN_STAT_LAST_HASH;
 		eip197_noop_token(&token[1]);
-	}
+	पूर्ण
 
 	token[2].opcode = EIP197_TOKEN_OPCODE_INSERT;
 	token[2].stat = EIP197_TOKEN_STAT_LAST_HASH |
 			EIP197_TOKEN_STAT_LAST_PACKET;
 	token[2].packet_length = result_length;
-	token[2].instructions = EIP197_TOKEN_INS_TYPE_OUTPUT |
+	token[2].inकाष्ठाions = EIP197_TOKEN_INS_TYPE_OUTPUT |
 				EIP197_TOKEN_INS_INSERT_HASH_DIGEST;
 
 	eip197_noop_token(&token[3]);
-}
+पूर्ण
 
-static void safexcel_context_control(struct safexcel_ahash_ctx *ctx,
-				     struct safexcel_ahash_req *req,
-				     struct safexcel_command_desc *cdesc)
-{
-	struct safexcel_crypto_priv *priv = ctx->base.priv;
+अटल व्योम safexcel_context_control(काष्ठा safexcel_ahash_ctx *ctx,
+				     काष्ठा safexcel_ahash_req *req,
+				     काष्ठा safexcel_command_desc *cdesc)
+अणु
+	काष्ठा safexcel_crypto_priv *priv = ctx->base.priv;
 	u64 count = 0;
 
 	cdesc->control_data.control0 = ctx->alg;
 	cdesc->control_data.control1 = 0;
 
 	/*
-	 * Copy the input digest if needed, and setup the context
+	 * Copy the input digest अगर needed, and setup the context
 	 * fields. Do this now as we need it to setup the first command
 	 * descriptor.
 	 */
-	if (unlikely(req->digest == CONTEXT_CONTROL_DIGEST_XCM)) {
-		if (req->xcbcmac)
-			memcpy(ctx->base.ctxr->data, &ctx->base.ipad, ctx->key_sz);
-		else
-			memcpy(ctx->base.ctxr->data, req->state, req->state_sz);
+	अगर (unlikely(req->digest == CONTEXT_CONTROL_DIGEST_XCM)) अणु
+		अगर (req->xcbcmac)
+			स_नकल(ctx->base.ctxr->data, &ctx->base.ipad, ctx->key_sz);
+		अन्यथा
+			स_नकल(ctx->base.ctxr->data, req->state, req->state_sz);
 
-		if (!req->finish && req->xcbcmac)
+		अगर (!req->finish && req->xcbcmac)
 			cdesc->control_data.control0 |=
 				CONTEXT_CONTROL_DIGEST_XCM |
 				CONTEXT_CONTROL_TYPE_HASH_OUT  |
 				CONTEXT_CONTROL_NO_FINISH_HASH |
 				CONTEXT_CONTROL_SIZE(req->state_sz /
-						     sizeof(u32));
-		else
+						     माप(u32));
+		अन्यथा
 			cdesc->control_data.control0 |=
 				CONTEXT_CONTROL_DIGEST_XCM |
 				CONTEXT_CONTROL_TYPE_HASH_OUT  |
 				CONTEXT_CONTROL_SIZE(req->state_sz /
-						     sizeof(u32));
-		return;
-	} else if (!req->processed) {
+						     माप(u32));
+		वापस;
+	पूर्ण अन्यथा अगर (!req->processed) अणु
 		/* First - and possibly only - block of basic hash only */
-		if (req->finish)
+		अगर (req->finish)
 			cdesc->control_data.control0 |= req->digest |
 				CONTEXT_CONTROL_TYPE_HASH_OUT |
 				CONTEXT_CONTROL_RESTART_HASH  |
 				/* ensure its not 0! */
 				CONTEXT_CONTROL_SIZE(1);
-		else
+		अन्यथा
 			cdesc->control_data.control0 |= req->digest |
 				CONTEXT_CONTROL_TYPE_HASH_OUT  |
 				CONTEXT_CONTROL_RESTART_HASH   |
 				CONTEXT_CONTROL_NO_FINISH_HASH |
 				/* ensure its not 0! */
 				CONTEXT_CONTROL_SIZE(1);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Hash continuation or HMAC, setup (inner) digest from state */
-	memcpy(ctx->base.ctxr->data, req->state, req->state_sz);
+	स_नकल(ctx->base.ctxr->data, req->state, req->state_sz);
 
-	if (req->finish) {
-		/* Compute digest count for hash/HMAC finish operations */
-		if ((req->digest == CONTEXT_CONTROL_DIGEST_PRECOMPUTED) ||
-		    req->hmac_zlen || (req->processed != req->block_sz)) {
+	अगर (req->finish) अणु
+		/* Compute digest count क्रम hash/HMAC finish operations */
+		अगर ((req->digest == CONTEXT_CONTROL_DIGEST_PRECOMPUTED) ||
+		    req->hmac_zlen || (req->processed != req->block_sz)) अणु
 			count = req->processed / EIP197_COUNTER_BLOCK_SIZE;
 
 			/* This is a hardware limitation, as the
-			 * counter must fit into an u32. This represents
+			 * counter must fit पूर्णांकo an u32. This represents
 			 * a fairly big amount of input data, so we
 			 * shouldn't see this.
 			 */
-			if (unlikely(count & 0xffffffff00000000ULL)) {
+			अगर (unlikely(count & 0xffffffff00000000ULL)) अणु
 				dev_warn(priv->dev,
 					 "Input data is too big\n");
-				return;
-			}
-		}
+				वापस;
+			पूर्ण
+		पूर्ण
 
-		if ((req->digest == CONTEXT_CONTROL_DIGEST_PRECOMPUTED) ||
-		    /* Special case: zero length HMAC */
+		अगर ((req->digest == CONTEXT_CONTROL_DIGEST_PRECOMPUTED) ||
+		    /* Special हाल: zero length HMAC */
 		    req->hmac_zlen ||
-		    /* PE HW < 4.4 cannot do HMAC continue, fake using hash */
-		    (req->processed != req->block_sz)) {
-			/* Basic hash continue operation, need digest + cnt */
+		    /* PE HW < 4.4 cannot करो HMAC जारी, fake using hash */
+		    (req->processed != req->block_sz)) अणु
+			/* Basic hash जारी operation, need digest + cnt */
 			cdesc->control_data.control0 |=
 				CONTEXT_CONTROL_SIZE((req->state_sz >> 2) + 1) |
 				CONTEXT_CONTROL_TYPE_HASH_OUT |
 				CONTEXT_CONTROL_DIGEST_PRECOMPUTED;
-			/* For zero-len HMAC, don't finalize, already padded! */
-			if (req->hmac_zlen)
+			/* For zero-len HMAC, करोn't finalize, alपढ़ोy padded! */
+			अगर (req->hmac_zlen)
 				cdesc->control_data.control0 |=
 					CONTEXT_CONTROL_NO_FINISH_HASH;
 			cdesc->control_data.control1 |=
@@ -199,11 +200,11 @@ static void safexcel_context_control(struct safexcel_ahash_ctx *ctx,
 				cpu_to_le32(count);
 			req->digest = CONTEXT_CONTROL_DIGEST_PRECOMPUTED;
 
-			/* Clear zero-length HMAC flag for next operation! */
+			/* Clear zero-length HMAC flag क्रम next operation! */
 			req->hmac_zlen = false;
-		} else { /* HMAC */
-			/* Need outer digest for HMAC finalization */
-			memcpy(ctx->base.ctxr->data + (req->state_sz >> 2),
+		पूर्ण अन्यथा अणु /* HMAC */
+			/* Need outer digest क्रम HMAC finalization */
+			स_नकल(ctx->base.ctxr->data + (req->state_sz >> 2),
 			       &ctx->base.opad, req->state_sz);
 
 			/* Single pass HMAC - no digest count */
@@ -211,133 +212,133 @@ static void safexcel_context_control(struct safexcel_ahash_ctx *ctx,
 				CONTEXT_CONTROL_SIZE(req->state_sz >> 1) |
 				CONTEXT_CONTROL_TYPE_HASH_OUT |
 				CONTEXT_CONTROL_DIGEST_HMAC;
-		}
-	} else { /* Hash continuation, do not finish yet */
+		पूर्ण
+	पूर्ण अन्यथा अणु /* Hash continuation, करो not finish yet */
 		cdesc->control_data.control0 |=
 			CONTEXT_CONTROL_SIZE(req->state_sz >> 2) |
 			CONTEXT_CONTROL_DIGEST_PRECOMPUTED |
 			CONTEXT_CONTROL_TYPE_HASH_OUT |
 			CONTEXT_CONTROL_NO_FINISH_HASH;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int safexcel_ahash_enqueue(struct ahash_request *areq);
+अटल पूर्णांक safexcel_ahash_enqueue(काष्ठा ahash_request *areq);
 
-static int safexcel_handle_req_result(struct safexcel_crypto_priv *priv,
-				      int ring,
-				      struct crypto_async_request *async,
-				      bool *should_complete, int *ret)
-{
-	struct safexcel_result_desc *rdesc;
-	struct ahash_request *areq = ahash_request_cast(async);
-	struct crypto_ahash *ahash = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_req *sreq = ahash_request_ctx(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(ahash);
+अटल पूर्णांक safexcel_handle_req_result(काष्ठा safexcel_crypto_priv *priv,
+				      पूर्णांक ring,
+				      काष्ठा crypto_async_request *async,
+				      bool *should_complete, पूर्णांक *ret)
+अणु
+	काष्ठा safexcel_result_desc *rdesc;
+	काष्ठा ahash_request *areq = ahash_request_cast(async);
+	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_req *sreq = ahash_request_ctx(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(ahash);
 	u64 cache_len;
 
 	*ret = 0;
 
 	rdesc = safexcel_ring_next_rptr(priv, &priv->ring[ring].rdr);
-	if (IS_ERR(rdesc)) {
+	अगर (IS_ERR(rdesc)) अणु
 		dev_err(priv->dev,
 			"hash: result: could not retrieve the result descriptor\n");
 		*ret = PTR_ERR(rdesc);
-	} else {
+	पूर्ण अन्यथा अणु
 		*ret = safexcel_rdesc_check_errors(priv, rdesc);
-	}
+	पूर्ण
 
 	safexcel_complete(priv, ring);
 
-	if (sreq->nents) {
+	अगर (sreq->nents) अणु
 		dma_unmap_sg(priv->dev, areq->src, sreq->nents, DMA_TO_DEVICE);
 		sreq->nents = 0;
-	}
+	पूर्ण
 
-	if (sreq->result_dma) {
+	अगर (sreq->result_dma) अणु
 		dma_unmap_single(priv->dev, sreq->result_dma, sreq->digest_sz,
 				 DMA_FROM_DEVICE);
 		sreq->result_dma = 0;
-	}
+	पूर्ण
 
-	if (sreq->cache_dma) {
+	अगर (sreq->cache_dma) अणु
 		dma_unmap_single(priv->dev, sreq->cache_dma, sreq->cache_sz,
 				 DMA_TO_DEVICE);
 		sreq->cache_dma = 0;
 		sreq->cache_sz = 0;
-	}
+	पूर्ण
 
-	if (sreq->finish) {
-		if (sreq->hmac &&
-		    (sreq->digest != CONTEXT_CONTROL_DIGEST_HMAC)) {
-			/* Faking HMAC using hash - need to do outer hash */
-			memcpy(sreq->cache, sreq->state,
+	अगर (sreq->finish) अणु
+		अगर (sreq->hmac &&
+		    (sreq->digest != CONTEXT_CONTROL_DIGEST_HMAC)) अणु
+			/* Faking HMAC using hash - need to करो outer hash */
+			स_नकल(sreq->cache, sreq->state,
 			       crypto_ahash_digestsize(ahash));
 
-			memcpy(sreq->state, &ctx->base.opad, sreq->digest_sz);
+			स_नकल(sreq->state, &ctx->base.opad, sreq->digest_sz);
 
 			sreq->len = sreq->block_sz +
 				    crypto_ahash_digestsize(ahash);
 			sreq->processed = sreq->block_sz;
 			sreq->hmac = 0;
 
-			if (priv->flags & EIP197_TRC_CACHE)
+			अगर (priv->flags & EIP197_TRC_CACHE)
 				ctx->base.needs_inv = true;
 			areq->nbytes = 0;
 			safexcel_ahash_enqueue(areq);
 
-			*should_complete = false; /* Not done yet */
-			return 1;
-		}
+			*should_complete = false; /* Not करोne yet */
+			वापस 1;
+		पूर्ण
 
-		if (unlikely(sreq->digest == CONTEXT_CONTROL_DIGEST_XCM &&
-			     ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_CRC32)) {
-			/* Undo final XOR with 0xffffffff ...*/
+		अगर (unlikely(sreq->digest == CONTEXT_CONTROL_DIGEST_XCM &&
+			     ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_CRC32)) अणु
+			/* Unकरो final XOR with 0xffffffff ...*/
 			*(__le32 *)areq->result = ~sreq->state[0];
-		} else {
-			memcpy(areq->result, sreq->state,
+		पूर्ण अन्यथा अणु
+			स_नकल(areq->result, sreq->state,
 			       crypto_ahash_digestsize(ahash));
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	cache_len = safexcel_queued_len(sreq);
-	if (cache_len)
-		memcpy(sreq->cache, sreq->cache_next, cache_len);
+	अगर (cache_len)
+		स_नकल(sreq->cache, sreq->cache_next, cache_len);
 
 	*should_complete = true;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int safexcel_ahash_send_req(struct crypto_async_request *async, int ring,
-				   int *commands, int *results)
-{
-	struct ahash_request *areq = ahash_request_cast(async);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_crypto_priv *priv = ctx->base.priv;
-	struct safexcel_command_desc *cdesc, *first_cdesc = NULL;
-	struct safexcel_result_desc *rdesc;
-	struct scatterlist *sg;
-	struct safexcel_token *dmmy;
-	int i, extra = 0, n_cdesc = 0, ret = 0, cache_len, skip = 0;
+अटल पूर्णांक safexcel_ahash_send_req(काष्ठा crypto_async_request *async, पूर्णांक ring,
+				   पूर्णांक *commands, पूर्णांक *results)
+अणु
+	काष्ठा ahash_request *areq = ahash_request_cast(async);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_crypto_priv *priv = ctx->base.priv;
+	काष्ठा safexcel_command_desc *cdesc, *first_cdesc = शून्य;
+	काष्ठा safexcel_result_desc *rdesc;
+	काष्ठा scatterlist *sg;
+	काष्ठा safexcel_token *dmmy;
+	पूर्णांक i, extra = 0, n_cdesc = 0, ret = 0, cache_len, skip = 0;
 	u64 queued, len;
 
 	queued = safexcel_queued_len(req);
-	if (queued <= HASH_CACHE_SIZE)
+	अगर (queued <= HASH_CACHE_SIZE)
 		cache_len = queued;
-	else
+	अन्यथा
 		cache_len = queued - areq->nbytes;
 
-	if (!req->finish && !req->last_req) {
-		/* If this is not the last request and the queued data does not
-		 * fit into full cache blocks, cache it for the next send call.
+	अगर (!req->finish && !req->last_req) अणु
+		/* If this is not the last request and the queued data करोes not
+		 * fit पूर्णांकo full cache blocks, cache it क्रम the next send call.
 		 */
 		extra = queued & (HASH_CACHE_SIZE - 1);
 
 		/* If this is not the last request and the queued data
-		 * is a multiple of a block, cache the last one for now.
+		 * is a multiple of a block, cache the last one क्रम now.
 		 */
-		if (!extra)
+		अगर (!extra)
 			extra = HASH_CACHE_SIZE;
 
 		sg_pcopy_to_buffer(areq->src, sg_nents(areq->src),
@@ -346,61 +347,61 @@ static int safexcel_ahash_send_req(struct crypto_async_request *async, int ring,
 
 		queued -= extra;
 
-		if (!queued) {
+		अगर (!queued) अणु
 			*commands = 0;
 			*results = 0;
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		extra = 0;
-	}
+	पूर्ण
 
-	if (unlikely(req->xcbcmac && req->processed > AES_BLOCK_SIZE)) {
-		if (unlikely(cache_len < AES_BLOCK_SIZE)) {
+	अगर (unlikely(req->xcbcmac && req->processed > AES_BLOCK_SIZE)) अणु
+		अगर (unlikely(cache_len < AES_BLOCK_SIZE)) अणु
 			/*
 			 * Cache contains less than 1 full block, complete.
 			 */
 			extra = AES_BLOCK_SIZE - cache_len;
-			if (queued > cache_len) {
+			अगर (queued > cache_len) अणु
 				/* More data follows: borrow bytes */
-				u64 tmp = queued - cache_len;
+				u64 पंचांगp = queued - cache_len;
 
-				skip = min_t(u64, tmp, extra);
+				skip = min_t(u64, पंचांगp, extra);
 				sg_pcopy_to_buffer(areq->src,
 					sg_nents(areq->src),
 					req->cache + cache_len,
 					skip, 0);
-			}
+			पूर्ण
 			extra -= skip;
-			memset(req->cache + cache_len + skip, 0, extra);
-			if (!ctx->cbcmac && extra) {
-				// 10- padding for XCBCMAC & CMAC
+			स_रखो(req->cache + cache_len + skip, 0, extra);
+			अगर (!ctx->cbcmac && extra) अणु
+				// 10- padding क्रम XCBCMAC & CMAC
 				req->cache[cache_len + skip] = 0x80;
 				// HW will use K2 iso K3 - compensate!
-				for (i = 0; i < AES_BLOCK_SIZE / 4; i++) {
-					u32 *cache = (void *)req->cache;
+				क्रम (i = 0; i < AES_BLOCK_SIZE / 4; i++) अणु
+					u32 *cache = (व्योम *)req->cache;
 					u32 *ipad = ctx->base.ipad.word;
 					u32 x;
 
 					x = ipad[i] ^ ipad[i + 4];
 					cache[i] ^= swab(x);
-				}
-			}
+				पूर्ण
+			पूर्ण
 			cache_len = AES_BLOCK_SIZE;
 			queued = queued + extra;
-		}
+		पूर्ण
 
-		/* XCBC continue: XOR previous result into 1st word */
-		crypto_xor(req->cache, (const u8 *)req->state, AES_BLOCK_SIZE);
-	}
+		/* XCBC जारी: XOR previous result पूर्णांकo 1st word */
+		crypto_xor(req->cache, (स्थिर u8 *)req->state, AES_BLOCK_SIZE);
+	पूर्ण
 
 	len = queued;
-	/* Add a command descriptor for the cached data, if any */
-	if (cache_len) {
+	/* Add a command descriptor क्रम the cached data, अगर any */
+	अगर (cache_len) अणु
 		req->cache_dma = dma_map_single(priv->dev, req->cache,
 						cache_len, DMA_TO_DEVICE);
-		if (dma_mapping_error(priv->dev, req->cache_dma))
-			return -EINVAL;
+		अगर (dma_mapping_error(priv->dev, req->cache_dma))
+			वापस -EINVAL;
 
 		req->cache_sz = cache_len;
 		first_cdesc = safexcel_add_cdesc(priv, ring, 1,
@@ -408,59 +409,59 @@ static int safexcel_ahash_send_req(struct crypto_async_request *async, int ring,
 						 req->cache_dma, cache_len,
 						 len, ctx->base.ctxr_dma,
 						 &dmmy);
-		if (IS_ERR(first_cdesc)) {
+		अगर (IS_ERR(first_cdesc)) अणु
 			ret = PTR_ERR(first_cdesc);
-			goto unmap_cache;
-		}
+			जाओ unmap_cache;
+		पूर्ण
 		n_cdesc++;
 
 		queued -= cache_len;
-		if (!queued)
-			goto send_command;
-	}
+		अगर (!queued)
+			जाओ send_command;
+	पूर्ण
 
 	/* Now handle the current ahash request buffer(s) */
 	req->nents = dma_map_sg(priv->dev, areq->src,
-				sg_nents_for_len(areq->src,
+				sg_nents_क्रम_len(areq->src,
 						 areq->nbytes),
 				DMA_TO_DEVICE);
-	if (!req->nents) {
+	अगर (!req->nents) अणु
 		ret = -ENOMEM;
-		goto cdesc_rollback;
-	}
+		जाओ cdesc_rollback;
+	पूर्ण
 
-	for_each_sg(areq->src, sg, req->nents, i) {
-		int sglen = sg_dma_len(sg);
+	क्रम_each_sg(areq->src, sg, req->nents, i) अणु
+		पूर्णांक sglen = sg_dma_len(sg);
 
-		if (unlikely(sglen <= skip)) {
+		अगर (unlikely(sglen <= skip)) अणु
 			skip -= sglen;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Do not overflow the request */
-		if ((queued + skip) <= sglen)
+		अगर ((queued + skip) <= sglen)
 			sglen = queued;
-		else
+		अन्यथा
 			sglen -= skip;
 
 		cdesc = safexcel_add_cdesc(priv, ring, !n_cdesc,
 					   !(queued - sglen),
 					   sg_dma_address(sg) + skip, sglen,
 					   len, ctx->base.ctxr_dma, &dmmy);
-		if (IS_ERR(cdesc)) {
+		अगर (IS_ERR(cdesc)) अणु
 			ret = PTR_ERR(cdesc);
-			goto unmap_sg;
-		}
+			जाओ unmap_sg;
+		पूर्ण
 
-		if (!n_cdesc)
+		अगर (!n_cdesc)
 			first_cdesc = cdesc;
 		n_cdesc++;
 
 		queued -= sglen;
-		if (!queued)
-			break;
+		अगर (!queued)
+			अवरोध;
 		skip = 0;
-	}
+	पूर्ण
 
 send_command:
 	/* Setup the context options */
@@ -471,18 +472,18 @@ send_command:
 
 	req->result_dma = dma_map_single(priv->dev, req->state, req->digest_sz,
 					 DMA_FROM_DEVICE);
-	if (dma_mapping_error(priv->dev, req->result_dma)) {
+	अगर (dma_mapping_error(priv->dev, req->result_dma)) अणु
 		ret = -EINVAL;
-		goto unmap_sg;
-	}
+		जाओ unmap_sg;
+	पूर्ण
 
 	/* Add a result descriptor */
 	rdesc = safexcel_add_rdesc(priv, ring, 1, 1, req->result_dma,
 				   req->digest_sz);
-	if (IS_ERR(rdesc)) {
+	अगर (IS_ERR(rdesc)) अणु
 		ret = PTR_ERR(rdesc);
-		goto unmap_result;
-	}
+		जाओ unmap_result;
+	पूर्ण
 
 	safexcel_rdr_req_set(priv, ring, rdesc, &areq->base);
 
@@ -490,61 +491,61 @@ send_command:
 
 	*commands = n_cdesc;
 	*results = 1;
-	return 0;
+	वापस 0;
 
 unmap_result:
 	dma_unmap_single(priv->dev, req->result_dma, req->digest_sz,
 			 DMA_FROM_DEVICE);
 unmap_sg:
-	if (req->nents) {
+	अगर (req->nents) अणु
 		dma_unmap_sg(priv->dev, areq->src, req->nents, DMA_TO_DEVICE);
 		req->nents = 0;
-	}
+	पूर्ण
 cdesc_rollback:
-	for (i = 0; i < n_cdesc; i++)
+	क्रम (i = 0; i < n_cdesc; i++)
 		safexcel_ring_rollback_wptr(priv, &priv->ring[ring].cdr);
 unmap_cache:
-	if (req->cache_dma) {
+	अगर (req->cache_dma) अणु
 		dma_unmap_single(priv->dev, req->cache_dma, req->cache_sz,
 				 DMA_TO_DEVICE);
 		req->cache_dma = 0;
 		req->cache_sz = 0;
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int safexcel_handle_inv_result(struct safexcel_crypto_priv *priv,
-				      int ring,
-				      struct crypto_async_request *async,
-				      bool *should_complete, int *ret)
-{
-	struct safexcel_result_desc *rdesc;
-	struct ahash_request *areq = ahash_request_cast(async);
-	struct crypto_ahash *ahash = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(ahash);
-	int enq_ret;
+अटल पूर्णांक safexcel_handle_inv_result(काष्ठा safexcel_crypto_priv *priv,
+				      पूर्णांक ring,
+				      काष्ठा crypto_async_request *async,
+				      bool *should_complete, पूर्णांक *ret)
+अणु
+	काष्ठा safexcel_result_desc *rdesc;
+	काष्ठा ahash_request *areq = ahash_request_cast(async);
+	काष्ठा crypto_ahash *ahash = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(ahash);
+	पूर्णांक enq_ret;
 
 	*ret = 0;
 
 	rdesc = safexcel_ring_next_rptr(priv, &priv->ring[ring].rdr);
-	if (IS_ERR(rdesc)) {
+	अगर (IS_ERR(rdesc)) अणु
 		dev_err(priv->dev,
 			"hash: invalidate: could not retrieve the result descriptor\n");
 		*ret = PTR_ERR(rdesc);
-	} else {
+	पूर्ण अन्यथा अणु
 		*ret = safexcel_rdesc_check_errors(priv, rdesc);
-	}
+	पूर्ण
 
 	safexcel_complete(priv, ring);
 
-	if (ctx->base.exit_inv) {
-		dma_pool_free(priv->context_pool, ctx->base.ctxr,
+	अगर (ctx->base.निकास_inv) अणु
+		dma_pool_मुक्त(priv->context_pool, ctx->base.ctxr,
 			      ctx->base.ctxr_dma);
 
 		*should_complete = true;
-		return 1;
-	}
+		वापस 1;
+	पूर्ण
 
 	ring = safexcel_select_ring(priv);
 	ctx->base.ring = ring;
@@ -553,7 +554,7 @@ static int safexcel_handle_inv_result(struct safexcel_crypto_priv *priv,
 	enq_ret = crypto_enqueue_request(&priv->ring[ring].queue, async);
 	spin_unlock_bh(&priv->ring[ring].queue_lock);
 
-	if (enq_ret != -EINPROGRESS)
+	अगर (enq_ret != -EINPROGRESS)
 		*ret = enq_ret;
 
 	queue_work(priv->ring[ring].workqueue,
@@ -561,74 +562,74 @@ static int safexcel_handle_inv_result(struct safexcel_crypto_priv *priv,
 
 	*should_complete = false;
 
-	return 1;
-}
+	वापस 1;
+पूर्ण
 
-static int safexcel_handle_result(struct safexcel_crypto_priv *priv, int ring,
-				  struct crypto_async_request *async,
-				  bool *should_complete, int *ret)
-{
-	struct ahash_request *areq = ahash_request_cast(async);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
-	int err;
+अटल पूर्णांक safexcel_handle_result(काष्ठा safexcel_crypto_priv *priv, पूर्णांक ring,
+				  काष्ठा crypto_async_request *async,
+				  bool *should_complete, पूर्णांक *ret)
+अणु
+	काष्ठा ahash_request *areq = ahash_request_cast(async);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
+	पूर्णांक err;
 
 	BUG_ON(!(priv->flags & EIP197_TRC_CACHE) && req->needs_inv);
 
-	if (req->needs_inv) {
+	अगर (req->needs_inv) अणु
 		req->needs_inv = false;
 		err = safexcel_handle_inv_result(priv, ring, async,
 						 should_complete, ret);
-	} else {
+	पूर्ण अन्यथा अणु
 		err = safexcel_handle_req_result(priv, ring, async,
 						 should_complete, ret);
-	}
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int safexcel_ahash_send_inv(struct crypto_async_request *async,
-				   int ring, int *commands, int *results)
-{
-	struct ahash_request *areq = ahash_request_cast(async);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	int ret;
+अटल पूर्णांक safexcel_ahash_send_inv(काष्ठा crypto_async_request *async,
+				   पूर्णांक ring, पूर्णांक *commands, पूर्णांक *results)
+अणु
+	काष्ठा ahash_request *areq = ahash_request_cast(async);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	पूर्णांक ret;
 
 	ret = safexcel_invalidate_cache(async, ctx->base.priv,
 					ctx->base.ctxr_dma, ring);
-	if (unlikely(ret))
-		return ret;
+	अगर (unlikely(ret))
+		वापस ret;
 
 	*commands = 1;
 	*results = 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_ahash_send(struct crypto_async_request *async,
-			       int ring, int *commands, int *results)
-{
-	struct ahash_request *areq = ahash_request_cast(async);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
-	int ret;
+अटल पूर्णांक safexcel_ahash_send(काष्ठा crypto_async_request *async,
+			       पूर्णांक ring, पूर्णांक *commands, पूर्णांक *results)
+अणु
+	काष्ठा ahash_request *areq = ahash_request_cast(async);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
+	पूर्णांक ret;
 
-	if (req->needs_inv)
+	अगर (req->needs_inv)
 		ret = safexcel_ahash_send_inv(async, ring, commands, results);
-	else
+	अन्यथा
 		ret = safexcel_ahash_send_req(async, ring, commands, results);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int safexcel_ahash_exit_inv(struct crypto_tfm *tfm)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
-	struct safexcel_crypto_priv *priv = ctx->base.priv;
+अटल पूर्णांक safexcel_ahash_निकास_inv(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+	काष्ठा safexcel_crypto_priv *priv = ctx->base.priv;
 	EIP197_REQUEST_ON_STACK(req, ahash, EIP197_AHASH_REQ_SIZE);
-	struct safexcel_ahash_req *rctx = ahash_request_ctx(req);
-	struct safexcel_inv_result result = {};
-	int ring = ctx->base.ring;
+	काष्ठा safexcel_ahash_req *rctx = ahash_request_ctx(req);
+	काष्ठा safexcel_inv_result result = अणुपूर्ण;
+	पूर्णांक ring = ctx->base.ring;
 
-	memset(req, 0, EIP197_AHASH_REQ_SIZE);
+	स_रखो(req, 0, EIP197_AHASH_REQ_SIZE);
 
 	/* create invalidation request */
 	init_completion(&result.completion);
@@ -637,7 +638,7 @@ static int safexcel_ahash_exit_inv(struct crypto_tfm *tfm)
 
 	ahash_request_set_tfm(req, __crypto_ahash_cast(tfm));
 	ctx = crypto_tfm_ctx(req->base.tfm);
-	ctx->base.exit_inv = true;
+	ctx->base.निकास_inv = true;
 	rctx->needs_inv = true;
 
 	spin_lock_bh(&priv->ring[ring].queue_lock);
@@ -647,23 +648,23 @@ static int safexcel_ahash_exit_inv(struct crypto_tfm *tfm)
 	queue_work(priv->ring[ring].workqueue,
 		   &priv->ring[ring].work_data.work);
 
-	wait_for_completion(&result.completion);
+	रुको_क्रम_completion(&result.completion);
 
-	if (result.error) {
+	अगर (result.error) अणु
 		dev_warn(priv->dev, "hash: completion error (%d)\n",
 			 result.error);
-		return result.error;
-	}
+		वापस result.error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* safexcel_ahash_cache: cache data until at least one request can be sent to
  * the engine, aka. when there is at least 1 block size in the pipe.
  */
-static int safexcel_ahash_cache(struct ahash_request *areq)
-{
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_ahash_cache(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 	u64 cache_len;
 
 	/* cache_len: everything accepted by the driver but not sent yet,
@@ -672,38 +673,38 @@ static int safexcel_ahash_cache(struct ahash_request *areq)
 	cache_len = safexcel_queued_len(req);
 
 	/*
-	 * In case there isn't enough bytes to proceed (less than a
+	 * In हाल there isn't enough bytes to proceed (less than a
 	 * block size), cache the data until we have enough.
 	 */
-	if (cache_len + areq->nbytes <= HASH_CACHE_SIZE) {
+	अगर (cache_len + areq->nbytes <= HASH_CACHE_SIZE) अणु
 		sg_pcopy_to_buffer(areq->src, sg_nents(areq->src),
 				   req->cache + cache_len,
 				   areq->nbytes, 0);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/* We couldn't cache all the data */
-	return -E2BIG;
-}
+	वापस -E2BIG;
+पूर्ण
 
-static int safexcel_ahash_enqueue(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
-	struct safexcel_crypto_priv *priv = ctx->base.priv;
-	int ret, ring;
+अटल पूर्णांक safexcel_ahash_enqueue(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
+	काष्ठा safexcel_crypto_priv *priv = ctx->base.priv;
+	पूर्णांक ret, ring;
 
 	req->needs_inv = false;
 
-	if (ctx->base.ctxr) {
-		if (priv->flags & EIP197_TRC_CACHE && !ctx->base.needs_inv &&
-		     /* invalidate for *any* non-XCBC continuation */
+	अगर (ctx->base.ctxr) अणु
+		अगर (priv->flags & EIP197_TRC_CACHE && !ctx->base.needs_inv &&
+		     /* invalidate क्रम *any* non-XCBC continuation */
 		   ((req->not_first && !req->xcbcmac) ||
-		     /* invalidate if (i)digest changed */
-		     memcmp(ctx->base.ctxr->data, req->state, req->state_sz) ||
-		     /* invalidate for HMAC finish with odigest changed */
+		     /* invalidate अगर (i)digest changed */
+		     स_भेद(ctx->base.ctxr->data, req->state, req->state_sz) ||
+		     /* invalidate क्रम HMAC finish with odigest changed */
 		     (req->finish && req->hmac &&
-		      memcmp(ctx->base.ctxr->data + (req->state_sz>>2),
+		      स_भेद(ctx->base.ctxr->data + (req->state_sz>>2),
 			     &ctx->base.opad, req->state_sz))))
 			/*
 			 * We're still setting needs_inv here, even though it is
@@ -713,18 +714,18 @@ static int safexcel_ahash_enqueue(struct ahash_request *areq)
 			 */
 			ctx->base.needs_inv = true;
 
-		if (ctx->base.needs_inv) {
+		अगर (ctx->base.needs_inv) अणु
 			ctx->base.needs_inv = false;
 			req->needs_inv = true;
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		ctx->base.ring = safexcel_select_ring(priv);
 		ctx->base.ctxr = dma_pool_zalloc(priv->context_pool,
 						 EIP197_GFP_FLAGS(areq->base),
 						 &ctx->base.ctxr_dma);
-		if (!ctx->base.ctxr)
-			return -ENOMEM;
-	}
+		अगर (!ctx->base.ctxr)
+			वापस -ENOMEM;
+	पूर्ण
 	req->not_first = true;
 
 	ring = ctx->base.ring;
@@ -736,122 +737,122 @@ static int safexcel_ahash_enqueue(struct ahash_request *areq)
 	queue_work(priv->ring[ring].workqueue,
 		   &priv->ring[ring].work_data.work);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int safexcel_ahash_update(struct ahash_request *areq)
-{
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
-	int ret;
+अटल पूर्णांक safexcel_ahash_update(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
+	पूर्णांक ret;
 
-	/* If the request is 0 length, do nothing */
-	if (!areq->nbytes)
-		return 0;
+	/* If the request is 0 length, करो nothing */
+	अगर (!areq->nbytes)
+		वापस 0;
 
-	/* Add request to the cache if it fits */
+	/* Add request to the cache अगर it fits */
 	ret = safexcel_ahash_cache(areq);
 
 	/* Update total request length */
 	req->len += areq->nbytes;
 
-	/* If not all data could fit into the cache, go process the excess.
-	 * Also go process immediately for an HMAC IV precompute, which
+	/* If not all data could fit पूर्णांकo the cache, go process the excess.
+	 * Also go process immediately क्रम an HMAC IV precompute, which
 	 * will never be finished at all, but needs to be processed anyway.
 	 */
-	if ((ret && !req->finish) || req->last_req)
-		return safexcel_ahash_enqueue(areq);
+	अगर ((ret && !req->finish) || req->last_req)
+		वापस safexcel_ahash_enqueue(areq);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_ahash_final(struct ahash_request *areq)
-{
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+अटल पूर्णांक safexcel_ahash_final(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
 
 	req->finish = true;
 
-	if (unlikely(!req->len && !areq->nbytes)) {
+	अगर (unlikely(!req->len && !areq->nbytes)) अणु
 		/*
 		 * If we have an overall 0 length *hash* request:
-		 * The HW cannot do 0 length hash, so we provide the correct
+		 * The HW cannot करो 0 length hash, so we provide the correct
 		 * result directly here.
 		 */
-		if (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_MD5)
-			memcpy(areq->result, md5_zero_message_hash,
+		अगर (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_MD5)
+			स_नकल(areq->result, md5_zero_message_hash,
 			       MD5_DIGEST_SIZE);
-		else if (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA1)
-			memcpy(areq->result, sha1_zero_message_hash,
+		अन्यथा अगर (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA1)
+			स_नकल(areq->result, sha1_zero_message_hash,
 			       SHA1_DIGEST_SIZE);
-		else if (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA224)
-			memcpy(areq->result, sha224_zero_message_hash,
+		अन्यथा अगर (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA224)
+			स_नकल(areq->result, sha224_zero_message_hash,
 			       SHA224_DIGEST_SIZE);
-		else if (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA256)
-			memcpy(areq->result, sha256_zero_message_hash,
+		अन्यथा अगर (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA256)
+			स_नकल(areq->result, sha256_zero_message_hash,
 			       SHA256_DIGEST_SIZE);
-		else if (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA384)
-			memcpy(areq->result, sha384_zero_message_hash,
+		अन्यथा अगर (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA384)
+			स_नकल(areq->result, sha384_zero_message_hash,
 			       SHA384_DIGEST_SIZE);
-		else if (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA512)
-			memcpy(areq->result, sha512_zero_message_hash,
+		अन्यथा अगर (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SHA512)
+			स_नकल(areq->result, sha512_zero_message_hash,
 			       SHA512_DIGEST_SIZE);
-		else if (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SM3) {
-			memcpy(areq->result,
+		अन्यथा अगर (ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_SM3) अणु
+			स_नकल(areq->result,
 			       EIP197_SM3_ZEROM_HASH, SM3_DIGEST_SIZE);
-		}
+		पूर्ण
 
-		return 0;
-	} else if (unlikely(req->digest == CONTEXT_CONTROL_DIGEST_XCM &&
+		वापस 0;
+	पूर्ण अन्यथा अगर (unlikely(req->digest == CONTEXT_CONTROL_DIGEST_XCM &&
 			    ctx->alg == CONTEXT_CONTROL_CRYPTO_ALG_MD5 &&
-			    req->len == sizeof(u32) && !areq->nbytes)) {
+			    req->len == माप(u32) && !areq->nbytes)) अणु
 		/* Zero length CRC32 */
-		memcpy(areq->result, &ctx->base.ipad, sizeof(u32));
-		return 0;
-	} else if (unlikely(ctx->cbcmac && req->len == AES_BLOCK_SIZE &&
-			    !areq->nbytes)) {
+		स_नकल(areq->result, &ctx->base.ipad, माप(u32));
+		वापस 0;
+	पूर्ण अन्यथा अगर (unlikely(ctx->cbcmac && req->len == AES_BLOCK_SIZE &&
+			    !areq->nbytes)) अणु
 		/* Zero length CBC MAC */
-		memset(areq->result, 0, AES_BLOCK_SIZE);
-		return 0;
-	} else if (unlikely(req->xcbcmac && req->len == AES_BLOCK_SIZE &&
-			    !areq->nbytes)) {
+		स_रखो(areq->result, 0, AES_BLOCK_SIZE);
+		वापस 0;
+	पूर्ण अन्यथा अगर (unlikely(req->xcbcmac && req->len == AES_BLOCK_SIZE &&
+			    !areq->nbytes)) अणु
 		/* Zero length (X)CBC/CMAC */
-		int i;
+		पूर्णांक i;
 
-		for (i = 0; i < AES_BLOCK_SIZE / sizeof(u32); i++) {
-			u32 *result = (void *)areq->result;
+		क्रम (i = 0; i < AES_BLOCK_SIZE / माप(u32); i++) अणु
+			u32 *result = (व्योम *)areq->result;
 
 			/* K3 */
 			result[i] = swab(ctx->base.ipad.word[i + 4]);
-		}
+		पूर्ण
 		areq->result[0] ^= 0x80;			// 10- padding
 		crypto_cipher_encrypt_one(ctx->kaes, areq->result, areq->result);
-		return 0;
-	} else if (unlikely(req->hmac &&
+		वापस 0;
+	पूर्ण अन्यथा अगर (unlikely(req->hmac &&
 			    (req->len == req->block_sz) &&
-			    !areq->nbytes)) {
+			    !areq->nbytes)) अणु
 		/*
 		 * If we have an overall 0 length *HMAC* request:
 		 * For HMAC, we need to finalize the inner digest
-		 * and then perform the outer hash.
+		 * and then perक्रमm the outer hash.
 		 */
 
 		/* generate pad block in the cache */
 		/* start with a hash block of all zeroes */
-		memset(req->cache, 0, req->block_sz);
+		स_रखो(req->cache, 0, req->block_sz);
 		/* set the first byte to 0x80 to 'append a 1 bit' */
 		req->cache[0] = 0x80;
 		/* add the length in bits in the last 2 bytes */
-		if (req->len_is_le) {
+		अगर (req->len_is_le) अणु
 			/* Little endian length word (e.g. MD5) */
 			req->cache[req->block_sz-8] = (req->block_sz << 3) &
 						      255;
 			req->cache[req->block_sz-7] = (req->block_sz >> 5);
-		} else {
+		पूर्ण अन्यथा अणु
 			/* Big endian length word (e.g. any SHA) */
 			req->cache[req->block_sz-2] = (req->block_sz >> 5);
 			req->cache[req->block_sz-1] = (req->block_sz << 3) &
 						      255;
-		}
+		पूर्ण
 
 		req->len += req->block_sz; /* plus 1 hash block */
 
@@ -860,84 +861,84 @@ static int safexcel_ahash_final(struct ahash_request *areq)
 
 		/* Finalize HMAC */
 		req->digest = CONTEXT_CONTROL_DIGEST_HMAC;
-	} else if (req->hmac) {
+	पूर्ण अन्यथा अगर (req->hmac) अणु
 		/* Finalize HMAC */
 		req->digest = CONTEXT_CONTROL_DIGEST_HMAC;
-	}
+	पूर्ण
 
-	return safexcel_ahash_enqueue(areq);
-}
+	वापस safexcel_ahash_enqueue(areq);
+पूर्ण
 
-static int safexcel_ahash_finup(struct ahash_request *areq)
-{
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_ahash_finup(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
 	req->finish = true;
 
 	safexcel_ahash_update(areq);
-	return safexcel_ahash_final(areq);
-}
+	वापस safexcel_ahash_final(areq);
+पूर्ण
 
-static int safexcel_ahash_export(struct ahash_request *areq, void *out)
-{
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
-	struct safexcel_ahash_export_state *export = out;
+अटल पूर्णांक safexcel_ahash_export(काष्ठा ahash_request *areq, व्योम *out)
+अणु
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
+	काष्ठा safexcel_ahash_export_state *export = out;
 
 	export->len = req->len;
 	export->processed = req->processed;
 
 	export->digest = req->digest;
 
-	memcpy(export->state, req->state, req->state_sz);
-	memcpy(export->cache, req->cache, HASH_CACHE_SIZE);
+	स_नकल(export->state, req->state, req->state_sz);
+	स_नकल(export->cache, req->cache, HASH_CACHE_SIZE);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_ahash_import(struct ahash_request *areq, const void *in)
-{
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
-	const struct safexcel_ahash_export_state *export = in;
-	int ret;
+अटल पूर्णांक safexcel_ahash_import(काष्ठा ahash_request *areq, स्थिर व्योम *in)
+अणु
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
+	स्थिर काष्ठा safexcel_ahash_export_state *export = in;
+	पूर्णांक ret;
 
 	ret = crypto_ahash_init(areq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	req->len = export->len;
 	req->processed = export->processed;
 
 	req->digest = export->digest;
 
-	memcpy(req->cache, export->cache, HASH_CACHE_SIZE);
-	memcpy(req->state, export->state, req->state_sz);
+	स_नकल(req->cache, export->cache, HASH_CACHE_SIZE);
+	स_नकल(req->state, export->state, req->state_sz);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_ahash_cra_init(struct crypto_tfm *tfm)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
-	struct safexcel_alg_template *tmpl =
+अटल पूर्णांक safexcel_ahash_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+	काष्ठा safexcel_alg_ढाँचा *पंचांगpl =
 		container_of(__crypto_ahash_alg(tfm->__crt_alg),
-			     struct safexcel_alg_template, alg.ahash);
+			     काष्ठा safexcel_alg_ढाँचा, alg.ahash);
 
-	ctx->base.priv = tmpl->priv;
+	ctx->base.priv = पंचांगpl->priv;
 	ctx->base.send = safexcel_ahash_send;
 	ctx->base.handle_result = safexcel_handle_result;
-	ctx->fb_do_setkey = false;
+	ctx->fb_करो_setkey = false;
 
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 sizeof(struct safexcel_ahash_req));
-	return 0;
-}
+				 माप(काष्ठा safexcel_ahash_req));
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha1_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sha1_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SHA1;
 	req->digest = CONTEXT_CONTROL_DIGEST_PRECOMPUTED;
@@ -945,43 +946,43 @@ static int safexcel_sha1_init(struct ahash_request *areq)
 	req->digest_sz = SHA1_DIGEST_SIZE;
 	req->block_sz = SHA1_BLOCK_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha1_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_sha1_init(areq);
+अटल पूर्णांक safexcel_sha1_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_sha1_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-static void safexcel_ahash_cra_exit(struct crypto_tfm *tfm)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
-	struct safexcel_crypto_priv *priv = ctx->base.priv;
-	int ret;
+अटल व्योम safexcel_ahash_cra_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+	काष्ठा safexcel_crypto_priv *priv = ctx->base.priv;
+	पूर्णांक ret;
 
 	/* context not allocated, skip invalidation */
-	if (!ctx->base.ctxr)
-		return;
+	अगर (!ctx->base.ctxr)
+		वापस;
 
-	if (priv->flags & EIP197_TRC_CACHE) {
-		ret = safexcel_ahash_exit_inv(tfm);
-		if (ret)
+	अगर (priv->flags & EIP197_TRC_CACHE) अणु
+		ret = safexcel_ahash_निकास_inv(tfm);
+		अगर (ret)
 			dev_warn(priv->dev, "hash: invalidation error %d\n", ret);
-	} else {
-		dma_pool_free(priv->context_pool, ctx->base.ctxr,
+	पूर्ण अन्यथा अणु
+		dma_pool_मुक्त(priv->context_pool, ctx->base.ctxr,
 			      ctx->base.ctxr_dma);
-	}
-}
+	पूर्ण
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sha1 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sha1 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA1,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sha1_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -989,10 +990,10 @@ struct safexcel_alg_template safexcel_alg_sha1 = {
 		.digest = safexcel_sha1_digest,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA1_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sha1",
 				.cra_driver_name = "safexcel-sha1",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1000,25 +1001,25 @@ struct safexcel_alg_template safexcel_alg_sha1 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA1_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sha1_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sha1_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Start from ipad precompute */
-	memcpy(req->state, &ctx->base.ipad, SHA1_DIGEST_SIZE);
-	/* Already processed the key^ipad part now! */
+	स_नकल(req->state, &ctx->base.ipad, SHA1_DIGEST_SIZE);
+	/* Alपढ़ोy processed the key^ipad part now! */
 	req->len	= SHA1_BLOCK_SIZE;
 	req->processed	= SHA1_BLOCK_SIZE;
 
@@ -1029,50 +1030,50 @@ static int safexcel_hmac_sha1_init(struct ahash_request *areq)
 	req->block_sz = SHA1_BLOCK_SIZE;
 	req->hmac = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sha1_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_hmac_sha1_init(areq);
+अटल पूर्णांक safexcel_hmac_sha1_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_hmac_sha1_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_ahash_result {
-	struct completion completion;
-	int error;
-};
+काष्ठा safexcel_ahash_result अणु
+	काष्ठा completion completion;
+	पूर्णांक error;
+पूर्ण;
 
-static void safexcel_ahash_complete(struct crypto_async_request *req, int error)
-{
-	struct safexcel_ahash_result *result = req->data;
+अटल व्योम safexcel_ahash_complete(काष्ठा crypto_async_request *req, पूर्णांक error)
+अणु
+	काष्ठा safexcel_ahash_result *result = req->data;
 
-	if (error == -EINPROGRESS)
-		return;
+	अगर (error == -EINPROGRESS)
+		वापस;
 
 	result->error = error;
 	complete(&result->completion);
-}
+पूर्ण
 
-static int safexcel_hmac_init_pad(struct ahash_request *areq,
-				  unsigned int blocksize, const u8 *key,
-				  unsigned int keylen, u8 *ipad, u8 *opad)
-{
-	struct safexcel_ahash_result result;
-	struct scatterlist sg;
-	int ret, i;
+अटल पूर्णांक safexcel_hmac_init_pad(काष्ठा ahash_request *areq,
+				  अचिन्हित पूर्णांक blocksize, स्थिर u8 *key,
+				  अचिन्हित पूर्णांक keylen, u8 *ipad, u8 *opad)
+अणु
+	काष्ठा safexcel_ahash_result result;
+	काष्ठा scatterlist sg;
+	पूर्णांक ret, i;
 	u8 *keydup;
 
-	if (keylen <= blocksize) {
-		memcpy(ipad, key, keylen);
-	} else {
+	अगर (keylen <= blocksize) अणु
+		स_नकल(ipad, key, keylen);
+	पूर्ण अन्यथा अणु
 		keydup = kmemdup(key, keylen, GFP_KERNEL);
-		if (!keydup)
-			return -ENOMEM;
+		अगर (!keydup)
+			वापस -ENOMEM;
 
 		ahash_request_set_callback(areq, CRYPTO_TFM_REQ_MAY_BACKLOG,
 					   safexcel_ahash_complete, &result);
@@ -1081,38 +1082,38 @@ static int safexcel_hmac_init_pad(struct ahash_request *areq,
 		init_completion(&result.completion);
 
 		ret = crypto_ahash_digest(areq);
-		if (ret == -EINPROGRESS || ret == -EBUSY) {
-			wait_for_completion_interruptible(&result.completion);
+		अगर (ret == -EINPROGRESS || ret == -EBUSY) अणु
+			रुको_क्रम_completion_पूर्णांकerruptible(&result.completion);
 			ret = result.error;
-		}
+		पूर्ण
 
-		/* Avoid leaking */
-		kfree_sensitive(keydup);
+		/* Aव्योम leaking */
+		kमुक्त_sensitive(keydup);
 
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		keylen = crypto_ahash_digestsize(crypto_ahash_reqtfm(areq));
-	}
+	पूर्ण
 
-	memset(ipad + keylen, 0, blocksize - keylen);
-	memcpy(opad, ipad, blocksize);
+	स_रखो(ipad + keylen, 0, blocksize - keylen);
+	स_नकल(opad, ipad, blocksize);
 
-	for (i = 0; i < blocksize; i++) {
+	क्रम (i = 0; i < blocksize; i++) अणु
 		ipad[i] ^= HMAC_IPAD_VALUE;
 		opad[i] ^= HMAC_OPAD_VALUE;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_init_iv(struct ahash_request *areq,
-				 unsigned int blocksize, u8 *pad, void *state)
-{
-	struct safexcel_ahash_result result;
-	struct safexcel_ahash_req *req;
-	struct scatterlist sg;
-	int ret;
+अटल पूर्णांक safexcel_hmac_init_iv(काष्ठा ahash_request *areq,
+				 अचिन्हित पूर्णांक blocksize, u8 *pad, व्योम *state)
+अणु
+	काष्ठा safexcel_ahash_result result;
+	काष्ठा safexcel_ahash_req *req;
+	काष्ठा scatterlist sg;
+	पूर्णांक ret;
 
 	ahash_request_set_callback(areq, CRYPTO_TFM_REQ_MAY_BACKLOG,
 				   safexcel_ahash_complete, &result);
@@ -1121,118 +1122,118 @@ static int safexcel_hmac_init_iv(struct ahash_request *areq,
 	init_completion(&result.completion);
 
 	ret = crypto_ahash_init(areq);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	req = ahash_request_ctx(areq);
 	req->hmac = true;
 	req->last_req = true;
 
 	ret = crypto_ahash_update(areq);
-	if (ret && ret != -EINPROGRESS && ret != -EBUSY)
-		return ret;
+	अगर (ret && ret != -EINPROGRESS && ret != -EBUSY)
+		वापस ret;
 
-	wait_for_completion_interruptible(&result.completion);
-	if (result.error)
-		return result.error;
+	रुको_क्रम_completion_पूर्णांकerruptible(&result.completion);
+	अगर (result.error)
+		वापस result.error;
 
-	return crypto_ahash_export(areq, state);
-}
+	वापस crypto_ahash_export(areq, state);
+पूर्ण
 
-static int __safexcel_hmac_setkey(const char *alg, const u8 *key,
-				  unsigned int keylen,
-				  void *istate, void *ostate)
-{
-	struct ahash_request *areq;
-	struct crypto_ahash *tfm;
-	unsigned int blocksize;
+अटल पूर्णांक __safexcel_hmac_setkey(स्थिर अक्षर *alg, स्थिर u8 *key,
+				  अचिन्हित पूर्णांक keylen,
+				  व्योम *istate, व्योम *ostate)
+अणु
+	काष्ठा ahash_request *areq;
+	काष्ठा crypto_ahash *tfm;
+	अचिन्हित पूर्णांक blocksize;
 	u8 *ipad, *opad;
-	int ret;
+	पूर्णांक ret;
 
 	tfm = crypto_alloc_ahash(alg, 0, 0);
-	if (IS_ERR(tfm))
-		return PTR_ERR(tfm);
+	अगर (IS_ERR(tfm))
+		वापस PTR_ERR(tfm);
 
 	areq = ahash_request_alloc(tfm, GFP_KERNEL);
-	if (!areq) {
+	अगर (!areq) अणु
 		ret = -ENOMEM;
-		goto free_ahash;
-	}
+		जाओ मुक्त_ahash;
+	पूर्ण
 
 	crypto_ahash_clear_flags(tfm, ~0);
 	blocksize = crypto_tfm_alg_blocksize(crypto_ahash_tfm(tfm));
 
-	ipad = kcalloc(2, blocksize, GFP_KERNEL);
-	if (!ipad) {
+	ipad = kसुस्मृति(2, blocksize, GFP_KERNEL);
+	अगर (!ipad) अणु
 		ret = -ENOMEM;
-		goto free_request;
-	}
+		जाओ मुक्त_request;
+	पूर्ण
 
 	opad = ipad + blocksize;
 
 	ret = safexcel_hmac_init_pad(areq, blocksize, key, keylen, ipad, opad);
-	if (ret)
-		goto free_ipad;
+	अगर (ret)
+		जाओ मुक्त_ipad;
 
 	ret = safexcel_hmac_init_iv(areq, blocksize, ipad, istate);
-	if (ret)
-		goto free_ipad;
+	अगर (ret)
+		जाओ मुक्त_ipad;
 
 	ret = safexcel_hmac_init_iv(areq, blocksize, opad, ostate);
 
-free_ipad:
-	kfree(ipad);
-free_request:
-	ahash_request_free(areq);
-free_ahash:
-	crypto_free_ahash(tfm);
+मुक्त_ipad:
+	kमुक्त(ipad);
+मुक्त_request:
+	ahash_request_मुक्त(areq);
+मुक्त_ahash:
+	crypto_मुक्त_ahash(tfm);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int safexcel_hmac_setkey(struct safexcel_context *base, const u8 *key,
-			 unsigned int keylen, const char *alg,
-			 unsigned int state_sz)
-{
-	struct safexcel_crypto_priv *priv = base->priv;
-	struct safexcel_ahash_export_state istate, ostate;
-	int ret;
+पूर्णांक safexcel_hmac_setkey(काष्ठा safexcel_context *base, स्थिर u8 *key,
+			 अचिन्हित पूर्णांक keylen, स्थिर अक्षर *alg,
+			 अचिन्हित पूर्णांक state_sz)
+अणु
+	काष्ठा safexcel_crypto_priv *priv = base->priv;
+	काष्ठा safexcel_ahash_export_state istate, ostate;
+	पूर्णांक ret;
 
 	ret = __safexcel_hmac_setkey(alg, key, keylen, &istate, &ostate);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	if (priv->flags & EIP197_TRC_CACHE && base->ctxr &&
-	    (memcmp(&base->ipad, istate.state, state_sz) ||
-	     memcmp(&base->opad, ostate.state, state_sz)))
+	अगर (priv->flags & EIP197_TRC_CACHE && base->ctxr &&
+	    (स_भेद(&base->ipad, istate.state, state_sz) ||
+	     स_भेद(&base->opad, ostate.state, state_sz)))
 		base->needs_inv = true;
 
-	memcpy(&base->ipad, &istate.state, state_sz);
-	memcpy(&base->opad, &ostate.state, state_sz);
+	स_नकल(&base->ipad, &istate.state, state_sz);
+	स_नकल(&base->opad, &ostate.state, state_sz);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_alg_setkey(struct crypto_ahash *tfm, const u8 *key,
-				    unsigned int keylen, const char *alg,
-				    unsigned int state_sz)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+अटल पूर्णांक safexcel_hmac_alg_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				    अचिन्हित पूर्णांक keylen, स्थिर अक्षर *alg,
+				    अचिन्हित पूर्णांक state_sz)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
 
-	return safexcel_hmac_setkey(&ctx->base, key, keylen, alg, state_sz);
-}
+	वापस safexcel_hmac_setkey(&ctx->base, key, keylen, alg, state_sz);
+पूर्ण
 
-static int safexcel_hmac_sha1_setkey(struct crypto_ahash *tfm, const u8 *key,
-				     unsigned int keylen)
-{
-	return safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha1",
+अटल पूर्णांक safexcel_hmac_sha1_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				     अचिन्हित पूर्णांक keylen)
+अणु
+	वापस safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha1",
 					SHA1_DIGEST_SIZE);
-}
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_sha1 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sha1 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA1,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sha1_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1241,10 +1242,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sha1 = {
 		.setkey = safexcel_hmac_sha1_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA1_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sha1)",
 				.cra_driver_name = "safexcel-hmac-sha1",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1252,21 +1253,21 @@ struct safexcel_alg_template safexcel_alg_hmac_sha1 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA1_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_sha256_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sha256_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SHA256;
 	req->digest = CONTEXT_CONTROL_DIGEST_PRECOMPUTED;
@@ -1274,23 +1275,23 @@ static int safexcel_sha256_init(struct ahash_request *areq)
 	req->digest_sz = SHA256_DIGEST_SIZE;
 	req->block_sz = SHA256_BLOCK_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha256_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_sha256_init(areq);
+अटल पूर्णांक safexcel_sha256_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_sha256_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sha256 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sha256 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA2_256,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sha256_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1298,10 +1299,10 @@ struct safexcel_alg_template safexcel_alg_sha256 = {
 		.digest = safexcel_sha256_digest,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA256_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sha256",
 				.cra_driver_name = "safexcel-sha256",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1309,21 +1310,21 @@ struct safexcel_alg_template safexcel_alg_sha256 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA256_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_sha224_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sha224_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SHA224;
 	req->digest = CONTEXT_CONTROL_DIGEST_PRECOMPUTED;
@@ -1331,23 +1332,23 @@ static int safexcel_sha224_init(struct ahash_request *areq)
 	req->digest_sz = SHA256_DIGEST_SIZE;
 	req->block_sz = SHA256_BLOCK_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha224_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_sha224_init(areq);
+अटल पूर्णांक safexcel_sha224_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_sha224_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sha224 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sha224 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA2_256,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sha224_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1355,10 +1356,10 @@ struct safexcel_alg_template safexcel_alg_sha224 = {
 		.digest = safexcel_sha224_digest,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA224_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sha224",
 				.cra_driver_name = "safexcel-sha224",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1366,32 +1367,32 @@ struct safexcel_alg_template safexcel_alg_sha224 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA224_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sha224_setkey(struct crypto_ahash *tfm, const u8 *key,
-				       unsigned int keylen)
-{
-	return safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha224",
+अटल पूर्णांक safexcel_hmac_sha224_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				       अचिन्हित पूर्णांक keylen)
+अणु
+	वापस safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha224",
 					SHA256_DIGEST_SIZE);
-}
+पूर्ण
 
-static int safexcel_hmac_sha224_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sha224_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Start from ipad precompute */
-	memcpy(req->state, &ctx->base.ipad, SHA256_DIGEST_SIZE);
-	/* Already processed the key^ipad part now! */
+	स_नकल(req->state, &ctx->base.ipad, SHA256_DIGEST_SIZE);
+	/* Alपढ़ोy processed the key^ipad part now! */
 	req->len	= SHA256_BLOCK_SIZE;
 	req->processed	= SHA256_BLOCK_SIZE;
 
@@ -1402,23 +1403,23 @@ static int safexcel_hmac_sha224_init(struct ahash_request *areq)
 	req->block_sz = SHA256_BLOCK_SIZE;
 	req->hmac = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sha224_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_hmac_sha224_init(areq);
+अटल पूर्णांक safexcel_hmac_sha224_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_hmac_sha224_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_sha224 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sha224 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA2_256,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sha224_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1427,10 +1428,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sha224 = {
 		.setkey = safexcel_hmac_sha224_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA224_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sha224)",
 				.cra_driver_name = "safexcel-hmac-sha224",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1438,32 +1439,32 @@ struct safexcel_alg_template safexcel_alg_hmac_sha224 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA224_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sha256_setkey(struct crypto_ahash *tfm, const u8 *key,
-				     unsigned int keylen)
-{
-	return safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha256",
+अटल पूर्णांक safexcel_hmac_sha256_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				     अचिन्हित पूर्णांक keylen)
+अणु
+	वापस safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha256",
 					SHA256_DIGEST_SIZE);
-}
+पूर्ण
 
-static int safexcel_hmac_sha256_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sha256_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Start from ipad precompute */
-	memcpy(req->state, &ctx->base.ipad, SHA256_DIGEST_SIZE);
-	/* Already processed the key^ipad part now! */
+	स_नकल(req->state, &ctx->base.ipad, SHA256_DIGEST_SIZE);
+	/* Alपढ़ोy processed the key^ipad part now! */
 	req->len	= SHA256_BLOCK_SIZE;
 	req->processed	= SHA256_BLOCK_SIZE;
 
@@ -1474,23 +1475,23 @@ static int safexcel_hmac_sha256_init(struct ahash_request *areq)
 	req->block_sz = SHA256_BLOCK_SIZE;
 	req->hmac = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sha256_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_hmac_sha256_init(areq);
+अटल पूर्णांक safexcel_hmac_sha256_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_hmac_sha256_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_sha256 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sha256 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA2_256,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sha256_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1499,10 +1500,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sha256 = {
 		.setkey = safexcel_hmac_sha256_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA256_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sha256)",
 				.cra_driver_name = "safexcel-hmac-sha256",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1510,21 +1511,21 @@ struct safexcel_alg_template safexcel_alg_hmac_sha256 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA256_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_sha512_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sha512_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SHA512;
 	req->digest = CONTEXT_CONTROL_DIGEST_PRECOMPUTED;
@@ -1532,23 +1533,23 @@ static int safexcel_sha512_init(struct ahash_request *areq)
 	req->digest_sz = SHA512_DIGEST_SIZE;
 	req->block_sz = SHA512_BLOCK_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha512_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_sha512_init(areq);
+अटल पूर्णांक safexcel_sha512_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_sha512_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sha512 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sha512 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA2_512,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sha512_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1556,10 +1557,10 @@ struct safexcel_alg_template safexcel_alg_sha512 = {
 		.digest = safexcel_sha512_digest,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA512_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sha512",
 				.cra_driver_name = "safexcel-sha512",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1567,21 +1568,21 @@ struct safexcel_alg_template safexcel_alg_sha512 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA512_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_sha384_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sha384_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SHA384;
 	req->digest = CONTEXT_CONTROL_DIGEST_PRECOMPUTED;
@@ -1589,23 +1590,23 @@ static int safexcel_sha384_init(struct ahash_request *areq)
 	req->digest_sz = SHA512_DIGEST_SIZE;
 	req->block_sz = SHA512_BLOCK_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha384_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_sha384_init(areq);
+अटल पूर्णांक safexcel_sha384_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_sha384_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sha384 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sha384 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA2_512,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sha384_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1613,10 +1614,10 @@ struct safexcel_alg_template safexcel_alg_sha384 = {
 		.digest = safexcel_sha384_digest,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA384_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sha384",
 				.cra_driver_name = "safexcel-sha384",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1624,32 +1625,32 @@ struct safexcel_alg_template safexcel_alg_sha384 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA384_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sha512_setkey(struct crypto_ahash *tfm, const u8 *key,
-				       unsigned int keylen)
-{
-	return safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha512",
+अटल पूर्णांक safexcel_hmac_sha512_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				       अचिन्हित पूर्णांक keylen)
+अणु
+	वापस safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha512",
 					SHA512_DIGEST_SIZE);
-}
+पूर्ण
 
-static int safexcel_hmac_sha512_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sha512_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Start from ipad precompute */
-	memcpy(req->state, &ctx->base.ipad, SHA512_DIGEST_SIZE);
-	/* Already processed the key^ipad part now! */
+	स_नकल(req->state, &ctx->base.ipad, SHA512_DIGEST_SIZE);
+	/* Alपढ़ोy processed the key^ipad part now! */
 	req->len	= SHA512_BLOCK_SIZE;
 	req->processed	= SHA512_BLOCK_SIZE;
 
@@ -1660,23 +1661,23 @@ static int safexcel_hmac_sha512_init(struct ahash_request *areq)
 	req->block_sz = SHA512_BLOCK_SIZE;
 	req->hmac = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sha512_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_hmac_sha512_init(areq);
+अटल पूर्णांक safexcel_hmac_sha512_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_hmac_sha512_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_sha512 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sha512 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA2_512,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sha512_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1685,10 +1686,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sha512 = {
 		.setkey = safexcel_hmac_sha512_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA512_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sha512)",
 				.cra_driver_name = "safexcel-hmac-sha512",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1696,32 +1697,32 @@ struct safexcel_alg_template safexcel_alg_hmac_sha512 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA512_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sha384_setkey(struct crypto_ahash *tfm, const u8 *key,
-				       unsigned int keylen)
-{
-	return safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha384",
+अटल पूर्णांक safexcel_hmac_sha384_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				       अचिन्हित पूर्णांक keylen)
+अणु
+	वापस safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sha384",
 					SHA512_DIGEST_SIZE);
-}
+पूर्ण
 
-static int safexcel_hmac_sha384_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sha384_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Start from ipad precompute */
-	memcpy(req->state, &ctx->base.ipad, SHA512_DIGEST_SIZE);
-	/* Already processed the key^ipad part now! */
+	स_नकल(req->state, &ctx->base.ipad, SHA512_DIGEST_SIZE);
+	/* Alपढ़ोy processed the key^ipad part now! */
 	req->len	= SHA512_BLOCK_SIZE;
 	req->processed	= SHA512_BLOCK_SIZE;
 
@@ -1732,23 +1733,23 @@ static int safexcel_hmac_sha384_init(struct ahash_request *areq)
 	req->block_sz = SHA512_BLOCK_SIZE;
 	req->hmac = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sha384_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_hmac_sha384_init(areq);
+अटल पूर्णांक safexcel_hmac_sha384_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_hmac_sha384_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_sha384 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sha384 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA2_512,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sha384_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1757,10 +1758,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sha384 = {
 		.setkey = safexcel_hmac_sha384_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA384_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sha384)",
 				.cra_driver_name = "safexcel-hmac-sha384",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1768,21 +1769,21 @@ struct safexcel_alg_template safexcel_alg_hmac_sha384 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SHA384_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_md5_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_md5_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_MD5;
 	req->digest = CONTEXT_CONTROL_DIGEST_PRECOMPUTED;
@@ -1790,23 +1791,23 @@ static int safexcel_md5_init(struct ahash_request *areq)
 	req->digest_sz = MD5_DIGEST_SIZE;
 	req->block_sz = MD5_HMAC_BLOCK_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_md5_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_md5_init(areq);
+अटल पूर्णांक safexcel_md5_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_md5_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_md5 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_md5 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_MD5,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_md5_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1814,10 +1815,10 @@ struct safexcel_alg_template safexcel_alg_md5 = {
 		.digest = safexcel_md5_digest,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = MD5_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "md5",
 				.cra_driver_name = "safexcel-md5",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1825,25 +1826,25 @@ struct safexcel_alg_template safexcel_alg_md5 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = MD5_HMAC_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_md5_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_md5_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Start from ipad precompute */
-	memcpy(req->state, &ctx->base.ipad, MD5_DIGEST_SIZE);
-	/* Already processed the key^ipad part now! */
+	स_नकल(req->state, &ctx->base.ipad, MD5_DIGEST_SIZE);
+	/* Alपढ़ोy processed the key^ipad part now! */
 	req->len	= MD5_HMAC_BLOCK_SIZE;
 	req->processed	= MD5_HMAC_BLOCK_SIZE;
 
@@ -1855,30 +1856,30 @@ static int safexcel_hmac_md5_init(struct ahash_request *areq)
 	req->len_is_le = true; /* MD5 is little endian! ... */
 	req->hmac = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_md5_setkey(struct crypto_ahash *tfm, const u8 *key,
-				     unsigned int keylen)
-{
-	return safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-md5",
+अटल पूर्णांक safexcel_hmac_md5_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				     अचिन्हित पूर्णांक keylen)
+अणु
+	वापस safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-md5",
 					MD5_DIGEST_SIZE);
-}
+पूर्ण
 
-static int safexcel_hmac_md5_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_hmac_md5_init(areq);
+अटल पूर्णांक safexcel_hmac_md5_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_hmac_md5_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_md5 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_md5 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_MD5,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_md5_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1887,10 +1888,10 @@ struct safexcel_alg_template safexcel_alg_hmac_md5 = {
 		.setkey = safexcel_hmac_md5_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = MD5_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(md5)",
 				.cra_driver_name = "safexcel-hmac-md5",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1898,68 +1899,68 @@ struct safexcel_alg_template safexcel_alg_hmac_md5 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = MD5_HMAC_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_crc32_cra_init(struct crypto_tfm *tfm)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
-	int ret = safexcel_ahash_cra_init(tfm);
+अटल पूर्णांक safexcel_crc32_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+	पूर्णांक ret = safexcel_ahash_cra_init(tfm);
 
 	/* Default 'key' is all zeroes */
-	memset(&ctx->base.ipad, 0, sizeof(u32));
-	return ret;
-}
+	स_रखो(&ctx->base.ipad, 0, माप(u32));
+	वापस ret;
+पूर्ण
 
-static int safexcel_crc32_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_crc32_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Start from loaded key */
 	req->state[0]	= cpu_to_le32(~ctx->base.ipad.word[0]);
 	/* Set processed to non-zero to enable invalidation detection */
-	req->len	= sizeof(u32);
-	req->processed	= sizeof(u32);
+	req->len	= माप(u32);
+	req->processed	= माप(u32);
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_CRC32;
 	req->digest = CONTEXT_CONTROL_DIGEST_XCM;
-	req->state_sz = sizeof(u32);
-	req->digest_sz = sizeof(u32);
-	req->block_sz = sizeof(u32);
+	req->state_sz = माप(u32);
+	req->digest_sz = माप(u32);
+	req->block_sz = माप(u32);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_crc32_setkey(struct crypto_ahash *tfm, const u8 *key,
-				 unsigned int keylen)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(crypto_ahash_tfm(tfm));
+अटल पूर्णांक safexcel_crc32_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				 अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(crypto_ahash_tfm(tfm));
 
-	if (keylen != sizeof(u32))
-		return -EINVAL;
+	अगर (keylen != माप(u32))
+		वापस -EINVAL;
 
-	memcpy(&ctx->base.ipad, key, sizeof(u32));
-	return 0;
-}
+	स_नकल(&ctx->base.ipad, key, माप(u32));
+	वापस 0;
+पूर्ण
 
-static int safexcel_crc32_digest(struct ahash_request *areq)
-{
-	return safexcel_crc32_init(areq) ?: safexcel_ahash_finup(areq);
-}
+अटल पूर्णांक safexcel_crc32_digest(काष्ठा ahash_request *areq)
+अणु
+	वापस safexcel_crc32_init(areq) ?: safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_crc32 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_crc32 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = 0,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_crc32_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -1968,10 +1969,10 @@ struct safexcel_alg_template safexcel_alg_crc32 = {
 		.setkey = safexcel_crc32_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
-			.digestsize = sizeof(u32),
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+		.halg = अणु
+			.digestsize = माप(u32),
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "crc32",
 				.cra_driver_name = "safexcel-crc32",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -1980,24 +1981,24 @@ struct safexcel_alg_template safexcel_alg_crc32 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = 1,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_crc32_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_cbcmac_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_cbcmac_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Start from loaded keys */
-	memcpy(req->state, &ctx->base.ipad, ctx->key_sz);
+	स_नकल(req->state, &ctx->base.ipad, ctx->key_sz);
 	/* Set processed to non-zero to enable invalidation detection */
 	req->len	= AES_BLOCK_SIZE;
 	req->processed	= AES_BLOCK_SIZE;
@@ -2008,49 +2009,49 @@ static int safexcel_cbcmac_init(struct ahash_request *areq)
 	req->block_sz = AES_BLOCK_SIZE;
 	req->xcbcmac  = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_cbcmac_setkey(struct crypto_ahash *tfm, const u8 *key,
-				 unsigned int len)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(crypto_ahash_tfm(tfm));
-	struct crypto_aes_ctx aes;
-	int ret, i;
+अटल पूर्णांक safexcel_cbcmac_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(crypto_ahash_tfm(tfm));
+	काष्ठा crypto_aes_ctx aes;
+	पूर्णांक ret, i;
 
 	ret = aes_expandkey(&aes, key, len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	memset(&ctx->base.ipad, 0, 2 * AES_BLOCK_SIZE);
-	for (i = 0; i < len / sizeof(u32); i++)
+	स_रखो(&ctx->base.ipad, 0, 2 * AES_BLOCK_SIZE);
+	क्रम (i = 0; i < len / माप(u32); i++)
 		ctx->base.ipad.be[i + 8] = cpu_to_be32(aes.key_enc[i]);
 
-	if (len == AES_KEYSIZE_192) {
+	अगर (len == AES_KEYSIZE_192) अणु
 		ctx->alg    = CONTEXT_CONTROL_CRYPTO_ALG_XCBC192;
 		ctx->key_sz = AES_MAX_KEY_SIZE + 2 * AES_BLOCK_SIZE;
-	} else if (len == AES_KEYSIZE_256) {
+	पूर्ण अन्यथा अगर (len == AES_KEYSIZE_256) अणु
 		ctx->alg    = CONTEXT_CONTROL_CRYPTO_ALG_XCBC256;
 		ctx->key_sz = AES_MAX_KEY_SIZE + 2 * AES_BLOCK_SIZE;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctx->alg    = CONTEXT_CONTROL_CRYPTO_ALG_XCBC128;
 		ctx->key_sz = AES_MIN_KEY_SIZE + 2 * AES_BLOCK_SIZE;
-	}
+	पूर्ण
 	ctx->cbcmac  = true;
 
-	memzero_explicit(&aes, sizeof(aes));
-	return 0;
-}
+	memzero_explicit(&aes, माप(aes));
+	वापस 0;
+पूर्ण
 
-static int safexcel_cbcmac_digest(struct ahash_request *areq)
-{
-	return safexcel_cbcmac_init(areq) ?: safexcel_ahash_finup(areq);
-}
+अटल पूर्णांक safexcel_cbcmac_digest(काष्ठा ahash_request *areq)
+अणु
+	वापस safexcel_cbcmac_init(areq) ?: safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_cbcmac = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_cbcmac = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = 0,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_cbcmac_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -2059,10 +2060,10 @@ struct safexcel_alg_template safexcel_alg_cbcmac = {
 		.setkey = safexcel_cbcmac_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = AES_BLOCK_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "cbcmac(aes)",
 				.cra_driver_name = "safexcel-cbcmac-aes",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2070,82 +2071,82 @@ struct safexcel_alg_template safexcel_alg_cbcmac = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = 1,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_xcbcmac_setkey(struct crypto_ahash *tfm, const u8 *key,
-				 unsigned int len)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(crypto_ahash_tfm(tfm));
-	struct crypto_aes_ctx aes;
-	u32 key_tmp[3 * AES_BLOCK_SIZE / sizeof(u32)];
-	int ret, i;
+अटल पूर्णांक safexcel_xcbcmac_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				 अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(crypto_ahash_tfm(tfm));
+	काष्ठा crypto_aes_ctx aes;
+	u32 key_पंचांगp[3 * AES_BLOCK_SIZE / माप(u32)];
+	पूर्णांक ret, i;
 
 	ret = aes_expandkey(&aes, key, len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* precompute the XCBC key material */
 	crypto_cipher_clear_flags(ctx->kaes, CRYPTO_TFM_REQ_MASK);
 	crypto_cipher_set_flags(ctx->kaes, crypto_ahash_get_flags(tfm) &
 				CRYPTO_TFM_REQ_MASK);
 	ret = crypto_cipher_setkey(ctx->kaes, key, len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	crypto_cipher_encrypt_one(ctx->kaes, (u8 *)key_tmp + 2 * AES_BLOCK_SIZE,
+	crypto_cipher_encrypt_one(ctx->kaes, (u8 *)key_पंचांगp + 2 * AES_BLOCK_SIZE,
 		"\x1\x1\x1\x1\x1\x1\x1\x1\x1\x1\x1\x1\x1\x1\x1\x1");
-	crypto_cipher_encrypt_one(ctx->kaes, (u8 *)key_tmp,
+	crypto_cipher_encrypt_one(ctx->kaes, (u8 *)key_पंचांगp,
 		"\x2\x2\x2\x2\x2\x2\x2\x2\x2\x2\x2\x2\x2\x2\x2\x2");
-	crypto_cipher_encrypt_one(ctx->kaes, (u8 *)key_tmp + AES_BLOCK_SIZE,
+	crypto_cipher_encrypt_one(ctx->kaes, (u8 *)key_पंचांगp + AES_BLOCK_SIZE,
 		"\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3\x3");
-	for (i = 0; i < 3 * AES_BLOCK_SIZE / sizeof(u32); i++)
-		ctx->base.ipad.word[i] = swab(key_tmp[i]);
+	क्रम (i = 0; i < 3 * AES_BLOCK_SIZE / माप(u32); i++)
+		ctx->base.ipad.word[i] = swab(key_पंचांगp[i]);
 
 	crypto_cipher_clear_flags(ctx->kaes, CRYPTO_TFM_REQ_MASK);
 	crypto_cipher_set_flags(ctx->kaes, crypto_ahash_get_flags(tfm) &
 				CRYPTO_TFM_REQ_MASK);
 	ret = crypto_cipher_setkey(ctx->kaes,
-				   (u8 *)key_tmp + 2 * AES_BLOCK_SIZE,
+				   (u8 *)key_पंचांगp + 2 * AES_BLOCK_SIZE,
 				   AES_MIN_KEY_SIZE);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	ctx->alg    = CONTEXT_CONTROL_CRYPTO_ALG_XCBC128;
 	ctx->key_sz = AES_MIN_KEY_SIZE + 2 * AES_BLOCK_SIZE;
 	ctx->cbcmac = false;
 
-	memzero_explicit(&aes, sizeof(aes));
-	return 0;
-}
+	memzero_explicit(&aes, माप(aes));
+	वापस 0;
+पूर्ण
 
-static int safexcel_xcbcmac_cra_init(struct crypto_tfm *tfm)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक safexcel_xcbcmac_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	safexcel_ahash_cra_init(tfm);
 	ctx->kaes = crypto_alloc_cipher("aes", 0, 0);
-	return PTR_ERR_OR_ZERO(ctx->kaes);
-}
+	वापस PTR_ERR_OR_ZERO(ctx->kaes);
+पूर्ण
 
-static void safexcel_xcbcmac_cra_exit(struct crypto_tfm *tfm)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम safexcel_xcbcmac_cra_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	crypto_free_cipher(ctx->kaes);
-	safexcel_ahash_cra_exit(tfm);
-}
+	crypto_मुक्त_cipher(ctx->kaes);
+	safexcel_ahash_cra_निकास(tfm);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_xcbcmac = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_xcbcmac = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = 0,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_cbcmac_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -2154,10 +2155,10 @@ struct safexcel_alg_template safexcel_alg_xcbcmac = {
 		.setkey = safexcel_xcbcmac_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = AES_BLOCK_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "xcbc(aes)",
 				.cra_driver_name = "safexcel-xcbc-aes",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2165,30 +2166,30 @@ struct safexcel_alg_template safexcel_alg_xcbcmac = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = AES_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_xcbcmac_cra_init,
-				.cra_exit = safexcel_xcbcmac_cra_exit,
+				.cra_निकास = safexcel_xcbcmac_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_cmac_setkey(struct crypto_ahash *tfm, const u8 *key,
-				unsigned int len)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(crypto_ahash_tfm(tfm));
-	struct crypto_aes_ctx aes;
-	__be64 consts[4];
-	u64 _const[2];
+अटल पूर्णांक safexcel_cmac_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(crypto_ahash_tfm(tfm));
+	काष्ठा crypto_aes_ctx aes;
+	__be64 स्थिरs[4];
+	u64 _स्थिर[2];
 	u8 msb_mask, gfmask;
-	int ret, i;
+	पूर्णांक ret, i;
 
 	ret = aes_expandkey(&aes, key, len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	for (i = 0; i < len / sizeof(u32); i++)
+	क्रम (i = 0; i < len / माप(u32); i++)
 		ctx->base.ipad.word[i + 8] = swab(aes.key_enc[i]);
 
 	/* precompute the CMAC key material */
@@ -2196,52 +2197,52 @@ static int safexcel_cmac_setkey(struct crypto_ahash *tfm, const u8 *key,
 	crypto_cipher_set_flags(ctx->kaes, crypto_ahash_get_flags(tfm) &
 				CRYPTO_TFM_REQ_MASK);
 	ret = crypto_cipher_setkey(ctx->kaes, key, len);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* code below borrowed from crypto/cmac.c */
 	/* encrypt the zero block */
-	memset(consts, 0, AES_BLOCK_SIZE);
-	crypto_cipher_encrypt_one(ctx->kaes, (u8 *)consts, (u8 *)consts);
+	स_रखो(स्थिरs, 0, AES_BLOCK_SIZE);
+	crypto_cipher_encrypt_one(ctx->kaes, (u8 *)स्थिरs, (u8 *)स्थिरs);
 
 	gfmask = 0x87;
-	_const[0] = be64_to_cpu(consts[1]);
-	_const[1] = be64_to_cpu(consts[0]);
+	_स्थिर[0] = be64_to_cpu(स्थिरs[1]);
+	_स्थिर[1] = be64_to_cpu(स्थिरs[0]);
 
 	/* gf(2^128) multiply zero-ciphertext with u and u^2 */
-	for (i = 0; i < 4; i += 2) {
-		msb_mask = ((s64)_const[1] >> 63) & gfmask;
-		_const[1] = (_const[1] << 1) | (_const[0] >> 63);
-		_const[0] = (_const[0] << 1) ^ msb_mask;
+	क्रम (i = 0; i < 4; i += 2) अणु
+		msb_mask = ((s64)_स्थिर[1] >> 63) & gfmask;
+		_स्थिर[1] = (_स्थिर[1] << 1) | (_स्थिर[0] >> 63);
+		_स्थिर[0] = (_स्थिर[0] << 1) ^ msb_mask;
 
-		consts[i + 0] = cpu_to_be64(_const[1]);
-		consts[i + 1] = cpu_to_be64(_const[0]);
-	}
+		स्थिरs[i + 0] = cpu_to_be64(_स्थिर[1]);
+		स्थिरs[i + 1] = cpu_to_be64(_स्थिर[0]);
+	पूर्ण
 	/* end of code borrowed from crypto/cmac.c */
 
-	for (i = 0; i < 2 * AES_BLOCK_SIZE / sizeof(u32); i++)
-		ctx->base.ipad.be[i] = cpu_to_be32(((u32 *)consts)[i]);
+	क्रम (i = 0; i < 2 * AES_BLOCK_SIZE / माप(u32); i++)
+		ctx->base.ipad.be[i] = cpu_to_be32(((u32 *)स्थिरs)[i]);
 
-	if (len == AES_KEYSIZE_192) {
+	अगर (len == AES_KEYSIZE_192) अणु
 		ctx->alg    = CONTEXT_CONTROL_CRYPTO_ALG_XCBC192;
 		ctx->key_sz = AES_MAX_KEY_SIZE + 2 * AES_BLOCK_SIZE;
-	} else if (len == AES_KEYSIZE_256) {
+	पूर्ण अन्यथा अगर (len == AES_KEYSIZE_256) अणु
 		ctx->alg    = CONTEXT_CONTROL_CRYPTO_ALG_XCBC256;
 		ctx->key_sz = AES_MAX_KEY_SIZE + 2 * AES_BLOCK_SIZE;
-	} else {
+	पूर्ण अन्यथा अणु
 		ctx->alg    = CONTEXT_CONTROL_CRYPTO_ALG_XCBC128;
 		ctx->key_sz = AES_MIN_KEY_SIZE + 2 * AES_BLOCK_SIZE;
-	}
+	पूर्ण
 	ctx->cbcmac = false;
 
-	memzero_explicit(&aes, sizeof(aes));
-	return 0;
-}
+	memzero_explicit(&aes, माप(aes));
+	वापस 0;
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_cmac = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_cmac = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = 0,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_cbcmac_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -2250,10 +2251,10 @@ struct safexcel_alg_template safexcel_alg_cmac = {
 		.setkey = safexcel_cmac_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = AES_BLOCK_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "cmac(aes)",
 				.cra_driver_name = "safexcel-cmac-aes",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2261,21 +2262,21 @@ struct safexcel_alg_template safexcel_alg_cmac = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = AES_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_xcbcmac_cra_init,
-				.cra_exit = safexcel_xcbcmac_cra_exit,
+				.cra_निकास = safexcel_xcbcmac_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_sm3_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sm3_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SM3;
 	req->digest = CONTEXT_CONTROL_DIGEST_PRECOMPUTED;
@@ -2283,23 +2284,23 @@ static int safexcel_sm3_init(struct ahash_request *areq)
 	req->digest_sz = SM3_DIGEST_SIZE;
 	req->block_sz = SM3_BLOCK_SIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_sm3_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_sm3_init(areq);
+अटल पूर्णांक safexcel_sm3_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_sm3_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sm3 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sm3 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SM3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sm3_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -2307,10 +2308,10 @@ struct safexcel_alg_template safexcel_alg_sm3 = {
 		.digest = safexcel_sm3_digest,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SM3_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sm3",
 				.cra_driver_name = "safexcel-sm3",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2318,32 +2319,32 @@ struct safexcel_alg_template safexcel_alg_sm3 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SM3_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sm3_setkey(struct crypto_ahash *tfm, const u8 *key,
-				    unsigned int keylen)
-{
-	return safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sm3",
+अटल पूर्णांक safexcel_hmac_sm3_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				    अचिन्हित पूर्णांक keylen)
+अणु
+	वापस safexcel_hmac_alg_setkey(tfm, key, keylen, "safexcel-sm3",
 					SM3_DIGEST_SIZE);
-}
+पूर्ण
 
-static int safexcel_hmac_sm3_init(struct ahash_request *areq)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sm3_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(crypto_ahash_reqtfm(areq));
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Start from ipad precompute */
-	memcpy(req->state, &ctx->base.ipad, SM3_DIGEST_SIZE);
-	/* Already processed the key^ipad part now! */
+	स_नकल(req->state, &ctx->base.ipad, SM3_DIGEST_SIZE);
+	/* Alपढ़ोy processed the key^ipad part now! */
 	req->len	= SM3_BLOCK_SIZE;
 	req->processed	= SM3_BLOCK_SIZE;
 
@@ -2354,23 +2355,23 @@ static int safexcel_hmac_sm3_init(struct ahash_request *areq)
 	req->block_sz = SM3_BLOCK_SIZE;
 	req->hmac = true;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sm3_digest(struct ahash_request *areq)
-{
-	int ret = safexcel_hmac_sm3_init(areq);
+अटल पूर्णांक safexcel_hmac_sm3_digest(काष्ठा ahash_request *areq)
+अणु
+	पूर्णांक ret = safexcel_hmac_sm3_init(areq);
 
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
-	return safexcel_ahash_finup(areq);
-}
+	वापस safexcel_ahash_finup(areq);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_sm3 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sm3 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SM3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sm3_init,
 		.update = safexcel_ahash_update,
 		.final = safexcel_ahash_final,
@@ -2379,10 +2380,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sm3 = {
 		.setkey = safexcel_hmac_sm3_setkey,
 		.export = safexcel_ahash_export,
 		.import = safexcel_ahash_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SM3_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sm3)",
 				.cra_driver_name = "safexcel-hmac-sm3",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2390,54 +2391,54 @@ struct safexcel_alg_template safexcel_alg_hmac_sm3 = {
 					     CRYPTO_ALG_ALLOCATES_MEMORY |
 					     CRYPTO_ALG_KERN_DRIVER_ONLY,
 				.cra_blocksize = SM3_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_ahash_cra_init,
-				.cra_exit = safexcel_ahash_cra_exit,
+				.cra_निकास = safexcel_ahash_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_sha3_224_init(struct ahash_request *areq)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sha3_224_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SHA3_224;
 	req->digest = CONTEXT_CONTROL_DIGEST_INITIAL;
 	req->state_sz = SHA3_224_DIGEST_SIZE;
 	req->digest_sz = SHA3_224_DIGEST_SIZE;
 	req->block_sz = SHA3_224_BLOCK_SIZE;
-	ctx->do_fallback = false;
-	ctx->fb_init_done = false;
-	return 0;
-}
+	ctx->करो_fallback = false;
+	ctx->fb_init_करोne = false;
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha3_fbcheck(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *subreq = ahash_request_ctx(req);
-	int ret = 0;
+अटल पूर्णांक safexcel_sha3_fbcheck(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *subreq = ahash_request_ctx(req);
+	पूर्णांक ret = 0;
 
-	if (ctx->do_fallback) {
+	अगर (ctx->करो_fallback) अणु
 		ahash_request_set_tfm(subreq, ctx->fback);
 		ahash_request_set_callback(subreq, req->base.flags,
 					   req->base.complete, req->base.data);
 		ahash_request_set_crypt(subreq, req->src, req->result,
 					req->nbytes);
-		if (!ctx->fb_init_done) {
-			if (ctx->fb_do_setkey) {
+		अगर (!ctx->fb_init_करोne) अणु
+			अगर (ctx->fb_करो_setkey) अणु
 				/* Set fallback cipher HMAC key */
 				u8 key[SHA3_224_BLOCK_SIZE];
 
-				memcpy(key, &ctx->base.ipad,
+				स_नकल(key, &ctx->base.ipad,
 				       crypto_ahash_blocksize(ctx->fback) / 2);
-				memcpy(key +
+				स_नकल(key +
 				       crypto_ahash_blocksize(ctx->fback) / 2,
 				       &ctx->base.opad,
 				       crypto_ahash_blocksize(ctx->fback) / 2);
@@ -2445,95 +2446,95 @@ static int safexcel_sha3_fbcheck(struct ahash_request *req)
 					crypto_ahash_blocksize(ctx->fback));
 				memzero_explicit(key,
 					crypto_ahash_blocksize(ctx->fback));
-				ctx->fb_do_setkey = false;
-			}
+				ctx->fb_करो_setkey = false;
+			पूर्ण
 			ret = ret ?: crypto_ahash_init(subreq);
-			ctx->fb_init_done = true;
-		}
-	}
-	return ret;
-}
+			ctx->fb_init_करोne = true;
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int safexcel_sha3_update(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *subreq = ahash_request_ctx(req);
+अटल पूर्णांक safexcel_sha3_update(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *subreq = ahash_request_ctx(req);
 
-	ctx->do_fallback = true;
-	return safexcel_sha3_fbcheck(req) ?: crypto_ahash_update(subreq);
-}
+	ctx->करो_fallback = true;
+	वापस safexcel_sha3_fbcheck(req) ?: crypto_ahash_update(subreq);
+पूर्ण
 
-static int safexcel_sha3_final(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *subreq = ahash_request_ctx(req);
+अटल पूर्णांक safexcel_sha3_final(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *subreq = ahash_request_ctx(req);
 
-	ctx->do_fallback = true;
-	return safexcel_sha3_fbcheck(req) ?: crypto_ahash_final(subreq);
-}
+	ctx->करो_fallback = true;
+	वापस safexcel_sha3_fbcheck(req) ?: crypto_ahash_final(subreq);
+पूर्ण
 
-static int safexcel_sha3_finup(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *subreq = ahash_request_ctx(req);
+अटल पूर्णांक safexcel_sha3_finup(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *subreq = ahash_request_ctx(req);
 
-	ctx->do_fallback |= !req->nbytes;
-	if (ctx->do_fallback)
+	ctx->करो_fallback |= !req->nbytes;
+	अगर (ctx->करो_fallback)
 		/* Update or ex/import happened or len 0, cannot use the HW */
-		return safexcel_sha3_fbcheck(req) ?:
+		वापस safexcel_sha3_fbcheck(req) ?:
 		       crypto_ahash_finup(subreq);
-	else
-		return safexcel_ahash_finup(req);
-}
+	अन्यथा
+		वापस safexcel_ahash_finup(req);
+पूर्ण
 
-static int safexcel_sha3_digest_fallback(struct ahash_request *req)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *subreq = ahash_request_ctx(req);
+अटल पूर्णांक safexcel_sha3_digest_fallback(काष्ठा ahash_request *req)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *subreq = ahash_request_ctx(req);
 
-	ctx->do_fallback = true;
-	ctx->fb_init_done = false;
-	return safexcel_sha3_fbcheck(req) ?: crypto_ahash_finup(subreq);
-}
+	ctx->करो_fallback = true;
+	ctx->fb_init_करोne = false;
+	वापस safexcel_sha3_fbcheck(req) ?: crypto_ahash_finup(subreq);
+पूर्ण
 
-static int safexcel_sha3_224_digest(struct ahash_request *req)
-{
-	if (req->nbytes)
-		return safexcel_sha3_224_init(req) ?: safexcel_ahash_finup(req);
+अटल पूर्णांक safexcel_sha3_224_digest(काष्ठा ahash_request *req)
+अणु
+	अगर (req->nbytes)
+		वापस safexcel_sha3_224_init(req) ?: safexcel_ahash_finup(req);
 
-	/* HW cannot do zero length hash, use fallback instead */
-	return safexcel_sha3_digest_fallback(req);
-}
+	/* HW cannot करो zero length hash, use fallback instead */
+	वापस safexcel_sha3_digest_fallback(req);
+पूर्ण
 
-static int safexcel_sha3_export(struct ahash_request *req, void *out)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *subreq = ahash_request_ctx(req);
+अटल पूर्णांक safexcel_sha3_export(काष्ठा ahash_request *req, व्योम *out)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *subreq = ahash_request_ctx(req);
 
-	ctx->do_fallback = true;
-	return safexcel_sha3_fbcheck(req) ?: crypto_ahash_export(subreq, out);
-}
+	ctx->करो_fallback = true;
+	वापस safexcel_sha3_fbcheck(req) ?: crypto_ahash_export(subreq, out);
+पूर्ण
 
-static int safexcel_sha3_import(struct ahash_request *req, const void *in)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct ahash_request *subreq = ahash_request_ctx(req);
+अटल पूर्णांक safexcel_sha3_import(काष्ठा ahash_request *req, स्थिर व्योम *in)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा ahash_request *subreq = ahash_request_ctx(req);
 
-	ctx->do_fallback = true;
-	return safexcel_sha3_fbcheck(req) ?: crypto_ahash_import(subreq, in);
-	// return safexcel_ahash_import(req, in);
-}
+	ctx->करो_fallback = true;
+	वापस safexcel_sha3_fbcheck(req) ?: crypto_ahash_import(subreq, in);
+	// वापस safexcel_ahash_import(req, in);
+पूर्ण
 
-static int safexcel_sha3_cra_init(struct crypto_tfm *tfm)
-{
-	struct crypto_ahash *ahash = __crypto_ahash_cast(tfm);
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल पूर्णांक safexcel_sha3_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा crypto_ahash *ahash = __crypto_ahash_cast(tfm);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	safexcel_ahash_cra_init(tfm);
 
@@ -2541,30 +2542,30 @@ static int safexcel_sha3_cra_init(struct crypto_tfm *tfm)
 	ctx->fback = crypto_alloc_ahash(crypto_tfm_alg_name(tfm), 0,
 					CRYPTO_ALG_ASYNC |
 					CRYPTO_ALG_NEED_FALLBACK);
-	if (IS_ERR(ctx->fback))
-		return PTR_ERR(ctx->fback);
+	अगर (IS_ERR(ctx->fback))
+		वापस PTR_ERR(ctx->fback);
 
 	/* Update statesize from fallback algorithm! */
 	crypto_hash_alg_common(ahash)->statesize =
 		crypto_ahash_statesize(ctx->fback);
-	crypto_ahash_set_reqsize(ahash, max(sizeof(struct safexcel_ahash_req),
-					    sizeof(struct ahash_request) +
+	crypto_ahash_set_reqsize(ahash, max(माप(काष्ठा safexcel_ahash_req),
+					    माप(काष्ठा ahash_request) +
 					    crypto_ahash_reqsize(ctx->fback)));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void safexcel_sha3_cra_exit(struct crypto_tfm *tfm)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम safexcel_sha3_cra_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	crypto_free_ahash(ctx->fback);
-	safexcel_ahash_cra_exit(tfm);
-}
+	crypto_मुक्त_ahash(ctx->fback);
+	safexcel_ahash_cra_निकास(tfm);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sha3_224 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sha3_224 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sha3_224_init,
 		.update = safexcel_sha3_update,
 		.final = safexcel_sha3_final,
@@ -2572,10 +2573,10 @@ struct safexcel_alg_template safexcel_alg_sha3_224 = {
 		.digest = safexcel_sha3_224_digest,
 		.export = safexcel_sha3_export,
 		.import = safexcel_sha3_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA3_224_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sha3-224",
 				.cra_driver_name = "safexcel-sha3-224",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2583,46 +2584,46 @@ struct safexcel_alg_template safexcel_alg_sha3_224 = {
 					     CRYPTO_ALG_KERN_DRIVER_ONLY |
 					     CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize = SHA3_224_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_sha3_cra_init,
-				.cra_exit = safexcel_sha3_cra_exit,
+				.cra_निकास = safexcel_sha3_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_sha3_256_init(struct ahash_request *areq)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sha3_256_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SHA3_256;
 	req->digest = CONTEXT_CONTROL_DIGEST_INITIAL;
 	req->state_sz = SHA3_256_DIGEST_SIZE;
 	req->digest_sz = SHA3_256_DIGEST_SIZE;
 	req->block_sz = SHA3_256_BLOCK_SIZE;
-	ctx->do_fallback = false;
-	ctx->fb_init_done = false;
-	return 0;
-}
+	ctx->करो_fallback = false;
+	ctx->fb_init_करोne = false;
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha3_256_digest(struct ahash_request *req)
-{
-	if (req->nbytes)
-		return safexcel_sha3_256_init(req) ?: safexcel_ahash_finup(req);
+अटल पूर्णांक safexcel_sha3_256_digest(काष्ठा ahash_request *req)
+अणु
+	अगर (req->nbytes)
+		वापस safexcel_sha3_256_init(req) ?: safexcel_ahash_finup(req);
 
-	/* HW cannot do zero length hash, use fallback instead */
-	return safexcel_sha3_digest_fallback(req);
-}
+	/* HW cannot करो zero length hash, use fallback instead */
+	वापस safexcel_sha3_digest_fallback(req);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sha3_256 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sha3_256 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sha3_256_init,
 		.update = safexcel_sha3_update,
 		.final = safexcel_sha3_final,
@@ -2630,10 +2631,10 @@ struct safexcel_alg_template safexcel_alg_sha3_256 = {
 		.digest = safexcel_sha3_256_digest,
 		.export = safexcel_sha3_export,
 		.import = safexcel_sha3_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA3_256_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sha3-256",
 				.cra_driver_name = "safexcel-sha3-256",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2641,46 +2642,46 @@ struct safexcel_alg_template safexcel_alg_sha3_256 = {
 					     CRYPTO_ALG_KERN_DRIVER_ONLY |
 					     CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize = SHA3_256_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_sha3_cra_init,
-				.cra_exit = safexcel_sha3_cra_exit,
+				.cra_निकास = safexcel_sha3_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_sha3_384_init(struct ahash_request *areq)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sha3_384_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SHA3_384;
 	req->digest = CONTEXT_CONTROL_DIGEST_INITIAL;
 	req->state_sz = SHA3_384_DIGEST_SIZE;
 	req->digest_sz = SHA3_384_DIGEST_SIZE;
 	req->block_sz = SHA3_384_BLOCK_SIZE;
-	ctx->do_fallback = false;
-	ctx->fb_init_done = false;
-	return 0;
-}
+	ctx->करो_fallback = false;
+	ctx->fb_init_करोne = false;
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha3_384_digest(struct ahash_request *req)
-{
-	if (req->nbytes)
-		return safexcel_sha3_384_init(req) ?: safexcel_ahash_finup(req);
+अटल पूर्णांक safexcel_sha3_384_digest(काष्ठा ahash_request *req)
+अणु
+	अगर (req->nbytes)
+		वापस safexcel_sha3_384_init(req) ?: safexcel_ahash_finup(req);
 
-	/* HW cannot do zero length hash, use fallback instead */
-	return safexcel_sha3_digest_fallback(req);
-}
+	/* HW cannot करो zero length hash, use fallback instead */
+	वापस safexcel_sha3_digest_fallback(req);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sha3_384 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sha3_384 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sha3_384_init,
 		.update = safexcel_sha3_update,
 		.final = safexcel_sha3_final,
@@ -2688,10 +2689,10 @@ struct safexcel_alg_template safexcel_alg_sha3_384 = {
 		.digest = safexcel_sha3_384_digest,
 		.export = safexcel_sha3_export,
 		.import = safexcel_sha3_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA3_384_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sha3-384",
 				.cra_driver_name = "safexcel-sha3-384",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2699,46 +2700,46 @@ struct safexcel_alg_template safexcel_alg_sha3_384 = {
 					     CRYPTO_ALG_KERN_DRIVER_ONLY |
 					     CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize = SHA3_384_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_sha3_cra_init,
-				.cra_exit = safexcel_sha3_cra_exit,
+				.cra_निकास = safexcel_sha3_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_sha3_512_init(struct ahash_request *areq)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_sha3_512_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	ctx->alg = CONTEXT_CONTROL_CRYPTO_ALG_SHA3_512;
 	req->digest = CONTEXT_CONTROL_DIGEST_INITIAL;
 	req->state_sz = SHA3_512_DIGEST_SIZE;
 	req->digest_sz = SHA3_512_DIGEST_SIZE;
 	req->block_sz = SHA3_512_BLOCK_SIZE;
-	ctx->do_fallback = false;
-	ctx->fb_init_done = false;
-	return 0;
-}
+	ctx->करो_fallback = false;
+	ctx->fb_init_करोne = false;
+	वापस 0;
+पूर्ण
 
-static int safexcel_sha3_512_digest(struct ahash_request *req)
-{
-	if (req->nbytes)
-		return safexcel_sha3_512_init(req) ?: safexcel_ahash_finup(req);
+अटल पूर्णांक safexcel_sha3_512_digest(काष्ठा ahash_request *req)
+अणु
+	अगर (req->nbytes)
+		वापस safexcel_sha3_512_init(req) ?: safexcel_ahash_finup(req);
 
-	/* HW cannot do zero length hash, use fallback instead */
-	return safexcel_sha3_digest_fallback(req);
-}
+	/* HW cannot करो zero length hash, use fallback instead */
+	वापस safexcel_sha3_digest_fallback(req);
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_sha3_512 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_sha3_512 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_sha3_512_init,
 		.update = safexcel_sha3_update,
 		.final = safexcel_sha3_final,
@@ -2746,10 +2747,10 @@ struct safexcel_alg_template safexcel_alg_sha3_512 = {
 		.digest = safexcel_sha3_512_digest,
 		.export = safexcel_sha3_export,
 		.import = safexcel_sha3_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA3_512_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "sha3-512",
 				.cra_driver_name = "safexcel-sha3-512",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2757,56 +2758,56 @@ struct safexcel_alg_template safexcel_alg_sha3_512 = {
 					     CRYPTO_ALG_KERN_DRIVER_ONLY |
 					     CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize = SHA3_512_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_sha3_cra_init,
-				.cra_exit = safexcel_sha3_cra_exit,
+				.cra_निकास = safexcel_sha3_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sha3_cra_init(struct crypto_tfm *tfm, const char *alg)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
-	int ret;
+अटल पूर्णांक safexcel_hmac_sha3_cra_init(काष्ठा crypto_tfm *tfm, स्थिर अक्षर *alg)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+	पूर्णांक ret;
 
 	ret = safexcel_sha3_cra_init(tfm);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	/* Allocate precalc basic digest implementation */
 	ctx->shpre = crypto_alloc_shash(alg, 0, CRYPTO_ALG_NEED_FALLBACK);
-	if (IS_ERR(ctx->shpre))
-		return PTR_ERR(ctx->shpre);
+	अगर (IS_ERR(ctx->shpre))
+		वापस PTR_ERR(ctx->shpre);
 
-	ctx->shdesc = kmalloc(sizeof(*ctx->shdesc) +
+	ctx->shdesc = kदो_स्मृति(माप(*ctx->shdesc) +
 			      crypto_shash_descsize(ctx->shpre), GFP_KERNEL);
-	if (!ctx->shdesc) {
-		crypto_free_shash(ctx->shpre);
-		return -ENOMEM;
-	}
+	अगर (!ctx->shdesc) अणु
+		crypto_मुक्त_shash(ctx->shpre);
+		वापस -ENOMEM;
+	पूर्ण
 	ctx->shdesc->tfm = ctx->shpre;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void safexcel_hmac_sha3_cra_exit(struct crypto_tfm *tfm)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम safexcel_hmac_sha3_cra_निकास(काष्ठा crypto_tfm *tfm)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_tfm_ctx(tfm);
 
-	crypto_free_ahash(ctx->fback);
-	crypto_free_shash(ctx->shpre);
-	kfree(ctx->shdesc);
-	safexcel_ahash_cra_exit(tfm);
-}
+	crypto_मुक्त_ahash(ctx->fback);
+	crypto_मुक्त_shash(ctx->shpre);
+	kमुक्त(ctx->shdesc);
+	safexcel_ahash_cra_निकास(tfm);
+पूर्ण
 
-static int safexcel_hmac_sha3_setkey(struct crypto_ahash *tfm, const u8 *key,
-				     unsigned int keylen)
-{
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	int ret = 0;
+अटल पूर्णांक safexcel_hmac_sha3_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
+				     अचिन्हित पूर्णांक keylen)
+अणु
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	पूर्णांक ret = 0;
 
-	if (keylen > crypto_ahash_blocksize(tfm)) {
+	अगर (keylen > crypto_ahash_blocksize(tfm)) अणु
 		/*
 		 * If the key is larger than the blocksize, then hash it
 		 * first using our fallback cipher
@@ -2819,55 +2820,55 @@ static int safexcel_hmac_sha3_setkey(struct crypto_ahash *tfm, const u8 *key,
 		 * If the digest is larger than half the blocksize, we need to
 		 * move the rest to opad due to the way our HMAC infra works.
 		 */
-		if (keylen > crypto_ahash_blocksize(tfm) / 2)
-			/* Buffers overlap, need to use memmove iso memcpy! */
-			memmove(&ctx->base.opad,
+		अगर (keylen > crypto_ahash_blocksize(tfm) / 2)
+			/* Buffers overlap, need to use स_हटाओ iso स_नकल! */
+			स_हटाओ(&ctx->base.opad,
 				ctx->base.ipad.byte +
 					crypto_ahash_blocksize(tfm) / 2,
 				keylen - crypto_ahash_blocksize(tfm) / 2);
-	} else {
+	पूर्ण अन्यथा अणु
 		/*
 		 * Copy the key to our ipad & opad buffers
 		 * Note that ipad and opad each contain one half of the key,
-		 * to match the existing HMAC driver infrastructure.
+		 * to match the existing HMAC driver infraकाष्ठाure.
 		 */
-		if (keylen <= crypto_ahash_blocksize(tfm) / 2) {
-			memcpy(&ctx->base.ipad, key, keylen);
-		} else {
-			memcpy(&ctx->base.ipad, key,
+		अगर (keylen <= crypto_ahash_blocksize(tfm) / 2) अणु
+			स_नकल(&ctx->base.ipad, key, keylen);
+		पूर्ण अन्यथा अणु
+			स_नकल(&ctx->base.ipad, key,
 			       crypto_ahash_blocksize(tfm) / 2);
-			memcpy(&ctx->base.opad,
+			स_नकल(&ctx->base.opad,
 			       key + crypto_ahash_blocksize(tfm) / 2,
 			       keylen - crypto_ahash_blocksize(tfm) / 2);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Pad key with zeroes */
-	if (keylen <= crypto_ahash_blocksize(tfm) / 2) {
-		memset(ctx->base.ipad.byte + keylen, 0,
+	अगर (keylen <= crypto_ahash_blocksize(tfm) / 2) अणु
+		स_रखो(ctx->base.ipad.byte + keylen, 0,
 		       crypto_ahash_blocksize(tfm) / 2 - keylen);
-		memset(&ctx->base.opad, 0, crypto_ahash_blocksize(tfm) / 2);
-	} else {
-		memset(ctx->base.opad.byte + keylen -
+		स_रखो(&ctx->base.opad, 0, crypto_ahash_blocksize(tfm) / 2);
+	पूर्ण अन्यथा अणु
+		स_रखो(ctx->base.opad.byte + keylen -
 		       crypto_ahash_blocksize(tfm) / 2, 0,
 		       crypto_ahash_blocksize(tfm) - keylen);
-	}
+	पूर्ण
 
-	/* If doing fallback, still need to set the new key! */
-	ctx->fb_do_setkey = true;
-	return ret;
-}
+	/* If करोing fallback, still need to set the new key! */
+	ctx->fb_करो_setkey = true;
+	वापस ret;
+पूर्ण
 
-static int safexcel_hmac_sha3_224_init(struct ahash_request *areq)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sha3_224_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Copy (half of) the key */
-	memcpy(req->state, &ctx->base.ipad, SHA3_224_BLOCK_SIZE / 2);
+	स_नकल(req->state, &ctx->base.ipad, SHA3_224_BLOCK_SIZE / 2);
 	/* Start of HMAC should have len == processed == blocksize */
 	req->len	= SHA3_224_BLOCK_SIZE;
 	req->processed	= SHA3_224_BLOCK_SIZE;
@@ -2877,30 +2878,30 @@ static int safexcel_hmac_sha3_224_init(struct ahash_request *areq)
 	req->digest_sz = SHA3_224_DIGEST_SIZE;
 	req->block_sz = SHA3_224_BLOCK_SIZE;
 	req->hmac = true;
-	ctx->do_fallback = false;
-	ctx->fb_init_done = false;
-	return 0;
-}
+	ctx->करो_fallback = false;
+	ctx->fb_init_करोne = false;
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sha3_224_digest(struct ahash_request *req)
-{
-	if (req->nbytes)
-		return safexcel_hmac_sha3_224_init(req) ?:
+अटल पूर्णांक safexcel_hmac_sha3_224_digest(काष्ठा ahash_request *req)
+अणु
+	अगर (req->nbytes)
+		वापस safexcel_hmac_sha3_224_init(req) ?:
 		       safexcel_ahash_finup(req);
 
-	/* HW cannot do zero length HMAC, use fallback instead */
-	return safexcel_sha3_digest_fallback(req);
-}
+	/* HW cannot करो zero length HMAC, use fallback instead */
+	वापस safexcel_sha3_digest_fallback(req);
+पूर्ण
 
-static int safexcel_hmac_sha3_224_cra_init(struct crypto_tfm *tfm)
-{
-	return safexcel_hmac_sha3_cra_init(tfm, "sha3-224");
-}
+अटल पूर्णांक safexcel_hmac_sha3_224_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	वापस safexcel_hmac_sha3_cra_init(tfm, "sha3-224");
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_sha3_224 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sha3_224 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sha3_224_init,
 		.update = safexcel_sha3_update,
 		.final = safexcel_sha3_final,
@@ -2909,10 +2910,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sha3_224 = {
 		.setkey = safexcel_hmac_sha3_setkey,
 		.export = safexcel_sha3_export,
 		.import = safexcel_sha3_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA3_224_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sha3-224)",
 				.cra_driver_name = "safexcel-hmac-sha3-224",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2920,25 +2921,25 @@ struct safexcel_alg_template safexcel_alg_hmac_sha3_224 = {
 					     CRYPTO_ALG_KERN_DRIVER_ONLY |
 					     CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize = SHA3_224_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_hmac_sha3_224_cra_init,
-				.cra_exit = safexcel_hmac_sha3_cra_exit,
+				.cra_निकास = safexcel_hmac_sha3_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sha3_256_init(struct ahash_request *areq)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sha3_256_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Copy (half of) the key */
-	memcpy(req->state, &ctx->base.ipad, SHA3_256_BLOCK_SIZE / 2);
+	स_नकल(req->state, &ctx->base.ipad, SHA3_256_BLOCK_SIZE / 2);
 	/* Start of HMAC should have len == processed == blocksize */
 	req->len	= SHA3_256_BLOCK_SIZE;
 	req->processed	= SHA3_256_BLOCK_SIZE;
@@ -2948,30 +2949,30 @@ static int safexcel_hmac_sha3_256_init(struct ahash_request *areq)
 	req->digest_sz = SHA3_256_DIGEST_SIZE;
 	req->block_sz = SHA3_256_BLOCK_SIZE;
 	req->hmac = true;
-	ctx->do_fallback = false;
-	ctx->fb_init_done = false;
-	return 0;
-}
+	ctx->करो_fallback = false;
+	ctx->fb_init_करोne = false;
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sha3_256_digest(struct ahash_request *req)
-{
-	if (req->nbytes)
-		return safexcel_hmac_sha3_256_init(req) ?:
+अटल पूर्णांक safexcel_hmac_sha3_256_digest(काष्ठा ahash_request *req)
+अणु
+	अगर (req->nbytes)
+		वापस safexcel_hmac_sha3_256_init(req) ?:
 		       safexcel_ahash_finup(req);
 
-	/* HW cannot do zero length HMAC, use fallback instead */
-	return safexcel_sha3_digest_fallback(req);
-}
+	/* HW cannot करो zero length HMAC, use fallback instead */
+	वापस safexcel_sha3_digest_fallback(req);
+पूर्ण
 
-static int safexcel_hmac_sha3_256_cra_init(struct crypto_tfm *tfm)
-{
-	return safexcel_hmac_sha3_cra_init(tfm, "sha3-256");
-}
+अटल पूर्णांक safexcel_hmac_sha3_256_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	वापस safexcel_hmac_sha3_cra_init(tfm, "sha3-256");
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_sha3_256 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sha3_256 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sha3_256_init,
 		.update = safexcel_sha3_update,
 		.final = safexcel_sha3_final,
@@ -2980,10 +2981,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sha3_256 = {
 		.setkey = safexcel_hmac_sha3_setkey,
 		.export = safexcel_sha3_export,
 		.import = safexcel_sha3_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA3_256_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sha3-256)",
 				.cra_driver_name = "safexcel-hmac-sha3-256",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -2991,25 +2992,25 @@ struct safexcel_alg_template safexcel_alg_hmac_sha3_256 = {
 					     CRYPTO_ALG_KERN_DRIVER_ONLY |
 					     CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize = SHA3_256_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_hmac_sha3_256_cra_init,
-				.cra_exit = safexcel_hmac_sha3_cra_exit,
+				.cra_निकास = safexcel_hmac_sha3_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sha3_384_init(struct ahash_request *areq)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sha3_384_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Copy (half of) the key */
-	memcpy(req->state, &ctx->base.ipad, SHA3_384_BLOCK_SIZE / 2);
+	स_नकल(req->state, &ctx->base.ipad, SHA3_384_BLOCK_SIZE / 2);
 	/* Start of HMAC should have len == processed == blocksize */
 	req->len	= SHA3_384_BLOCK_SIZE;
 	req->processed	= SHA3_384_BLOCK_SIZE;
@@ -3019,30 +3020,30 @@ static int safexcel_hmac_sha3_384_init(struct ahash_request *areq)
 	req->digest_sz = SHA3_384_DIGEST_SIZE;
 	req->block_sz = SHA3_384_BLOCK_SIZE;
 	req->hmac = true;
-	ctx->do_fallback = false;
-	ctx->fb_init_done = false;
-	return 0;
-}
+	ctx->करो_fallback = false;
+	ctx->fb_init_करोne = false;
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sha3_384_digest(struct ahash_request *req)
-{
-	if (req->nbytes)
-		return safexcel_hmac_sha3_384_init(req) ?:
+अटल पूर्णांक safexcel_hmac_sha3_384_digest(काष्ठा ahash_request *req)
+अणु
+	अगर (req->nbytes)
+		वापस safexcel_hmac_sha3_384_init(req) ?:
 		       safexcel_ahash_finup(req);
 
-	/* HW cannot do zero length HMAC, use fallback instead */
-	return safexcel_sha3_digest_fallback(req);
-}
+	/* HW cannot करो zero length HMAC, use fallback instead */
+	वापस safexcel_sha3_digest_fallback(req);
+पूर्ण
 
-static int safexcel_hmac_sha3_384_cra_init(struct crypto_tfm *tfm)
-{
-	return safexcel_hmac_sha3_cra_init(tfm, "sha3-384");
-}
+अटल पूर्णांक safexcel_hmac_sha3_384_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	वापस safexcel_hmac_sha3_cra_init(tfm, "sha3-384");
+पूर्ण
 
-struct safexcel_alg_template safexcel_alg_hmac_sha3_384 = {
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sha3_384 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sha3_384_init,
 		.update = safexcel_sha3_update,
 		.final = safexcel_sha3_final,
@@ -3051,10 +3052,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sha3_384 = {
 		.setkey = safexcel_hmac_sha3_setkey,
 		.export = safexcel_sha3_export,
 		.import = safexcel_sha3_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA3_384_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sha3-384)",
 				.cra_driver_name = "safexcel-hmac-sha3-384",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -3062,25 +3063,25 @@ struct safexcel_alg_template safexcel_alg_hmac_sha3_384 = {
 					     CRYPTO_ALG_KERN_DRIVER_ONLY |
 					     CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize = SHA3_384_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_hmac_sha3_384_cra_init,
-				.cra_exit = safexcel_hmac_sha3_cra_exit,
+				.cra_निकास = safexcel_hmac_sha3_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;
 
-static int safexcel_hmac_sha3_512_init(struct ahash_request *areq)
-{
-	struct crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
-	struct safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
-	struct safexcel_ahash_req *req = ahash_request_ctx(areq);
+अटल पूर्णांक safexcel_hmac_sha3_512_init(काष्ठा ahash_request *areq)
+अणु
+	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(areq);
+	काष्ठा safexcel_ahash_ctx *ctx = crypto_ahash_ctx(tfm);
+	काष्ठा safexcel_ahash_req *req = ahash_request_ctx(areq);
 
-	memset(req, 0, sizeof(*req));
+	स_रखो(req, 0, माप(*req));
 
 	/* Copy (half of) the key */
-	memcpy(req->state, &ctx->base.ipad, SHA3_512_BLOCK_SIZE / 2);
+	स_नकल(req->state, &ctx->base.ipad, SHA3_512_BLOCK_SIZE / 2);
 	/* Start of HMAC should have len == processed == blocksize */
 	req->len	= SHA3_512_BLOCK_SIZE;
 	req->processed	= SHA3_512_BLOCK_SIZE;
@@ -3090,29 +3091,29 @@ static int safexcel_hmac_sha3_512_init(struct ahash_request *areq)
 	req->digest_sz = SHA3_512_DIGEST_SIZE;
 	req->block_sz = SHA3_512_BLOCK_SIZE;
 	req->hmac = true;
-	ctx->do_fallback = false;
-	ctx->fb_init_done = false;
-	return 0;
-}
+	ctx->करो_fallback = false;
+	ctx->fb_init_करोne = false;
+	वापस 0;
+पूर्ण
 
-static int safexcel_hmac_sha3_512_digest(struct ahash_request *req)
-{
-	if (req->nbytes)
-		return safexcel_hmac_sha3_512_init(req) ?:
+अटल पूर्णांक safexcel_hmac_sha3_512_digest(काष्ठा ahash_request *req)
+अणु
+	अगर (req->nbytes)
+		वापस safexcel_hmac_sha3_512_init(req) ?:
 		       safexcel_ahash_finup(req);
 
-	/* HW cannot do zero length HMAC, use fallback instead */
-	return safexcel_sha3_digest_fallback(req);
-}
+	/* HW cannot करो zero length HMAC, use fallback instead */
+	वापस safexcel_sha3_digest_fallback(req);
+पूर्ण
 
-static int safexcel_hmac_sha3_512_cra_init(struct crypto_tfm *tfm)
-{
-	return safexcel_hmac_sha3_cra_init(tfm, "sha3-512");
-}
-struct safexcel_alg_template safexcel_alg_hmac_sha3_512 = {
+अटल पूर्णांक safexcel_hmac_sha3_512_cra_init(काष्ठा crypto_tfm *tfm)
+अणु
+	वापस safexcel_hmac_sha3_cra_init(tfm, "sha3-512");
+पूर्ण
+काष्ठा safexcel_alg_ढाँचा safexcel_alg_hmac_sha3_512 = अणु
 	.type = SAFEXCEL_ALG_TYPE_AHASH,
 	.algo_mask = SAFEXCEL_ALG_SHA3,
-	.alg.ahash = {
+	.alg.ahash = अणु
 		.init = safexcel_hmac_sha3_512_init,
 		.update = safexcel_sha3_update,
 		.final = safexcel_sha3_final,
@@ -3121,10 +3122,10 @@ struct safexcel_alg_template safexcel_alg_hmac_sha3_512 = {
 		.setkey = safexcel_hmac_sha3_setkey,
 		.export = safexcel_sha3_export,
 		.import = safexcel_sha3_import,
-		.halg = {
+		.halg = अणु
 			.digestsize = SHA3_512_DIGEST_SIZE,
-			.statesize = sizeof(struct safexcel_ahash_export_state),
-			.base = {
+			.statesize = माप(काष्ठा safexcel_ahash_export_state),
+			.base = अणु
 				.cra_name = "hmac(sha3-512)",
 				.cra_driver_name = "safexcel-hmac-sha3-512",
 				.cra_priority = SAFEXCEL_CRA_PRIORITY,
@@ -3132,11 +3133,11 @@ struct safexcel_alg_template safexcel_alg_hmac_sha3_512 = {
 					     CRYPTO_ALG_KERN_DRIVER_ONLY |
 					     CRYPTO_ALG_NEED_FALLBACK,
 				.cra_blocksize = SHA3_512_BLOCK_SIZE,
-				.cra_ctxsize = sizeof(struct safexcel_ahash_ctx),
+				.cra_ctxsize = माप(काष्ठा safexcel_ahash_ctx),
 				.cra_init = safexcel_hmac_sha3_512_cra_init,
-				.cra_exit = safexcel_hmac_sha3_cra_exit,
+				.cra_निकास = safexcel_hmac_sha3_cra_निकास,
 				.cra_module = THIS_MODULE,
-			},
-		},
-	},
-};
+			पूर्ण,
+		पूर्ण,
+	पूर्ण,
+पूर्ण;

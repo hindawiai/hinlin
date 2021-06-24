@@ -1,33 +1,34 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2007-2014 Nicira, Inc.
  */
 
-#ifndef DATAPATH_H
-#define DATAPATH_H 1
+#अगर_अघोषित DATAPATH_H
+#घोषणा DATAPATH_H 1
 
-#include <asm/page.h>
-#include <linux/kernel.h>
-#include <linux/mutex.h>
-#include <linux/netdevice.h>
-#include <linux/skbuff.h>
-#include <linux/u64_stats_sync.h>
-#include <net/ip_tunnels.h>
+#समावेश <यंत्र/page.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/netdevice.h>
+#समावेश <linux/skbuff.h>
+#समावेश <linux/u64_stats_sync.h>
+#समावेश <net/ip_tunnels.h>
 
-#include "conntrack.h"
-#include "flow.h"
-#include "flow_table.h"
-#include "meter.h"
-#include "vport-internal_dev.h"
+#समावेश "conntrack.h"
+#समावेश "flow.h"
+#समावेश "flow_table.h"
+#समावेश "meter.h"
+#समावेश "vport-internal_dev.h"
 
-#define DP_MAX_PORTS                USHRT_MAX
-#define DP_VPORT_HASH_BUCKETS       1024
-#define DP_MASKS_REBALANCE_INTERVAL 4000
+#घोषणा DP_MAX_PORTS                अच_लघु_उच्च
+#घोषणा DP_VPORT_HASH_BUCKETS       1024
+#घोषणा DP_MASKS_REBALANCE_INTERVAL 4000
 
 /**
- * struct dp_stats_percpu - per-cpu packet processing statistics for a given
+ * काष्ठा dp_stats_percpu - per-cpu packet processing statistics क्रम a given
  * datapath.
- * @n_hit: Number of received packets for which a matching flow was found in
+ * @n_hit: Number of received packets क्रम which a matching flow was found in
  * the flow table.
  * @n_miss: Number of received packets that had no matching flow in the flow
  * table.  The sum of @n_hit and @n_miss is the number of packets that have
@@ -35,48 +36,48 @@
  * @n_lost: Number of received packets that had no matching flow in the flow
  * table that could not be sent to userspace (normally due to an overflow in
  * one of the datapath's queues).
- * @n_mask_hit: Number of masks looked up for flow match.
+ * @n_mask_hit: Number of masks looked up क्रम flow match.
  *   @n_mask_hit / (@n_hit + @n_missed)  will be the average masks looked
  *   up per packet.
  * @n_cache_hit: The number of received packets that had their mask found using
  * the mask cache.
  */
-struct dp_stats_percpu {
+काष्ठा dp_stats_percpu अणु
 	u64 n_hit;
 	u64 n_missed;
 	u64 n_lost;
 	u64 n_mask_hit;
 	u64 n_cache_hit;
-	struct u64_stats_sync syncp;
-};
+	काष्ठा u64_stats_sync syncp;
+पूर्ण;
 
 /**
- * struct datapath - datapath for flow-based packet switching
- * @rcu: RCU callback head for deferred destruction.
+ * काष्ठा datapath - datapath क्रम flow-based packet चयनing
+ * @rcu: RCU callback head क्रम deferred deकाष्ठाion.
  * @list_node: Element in global 'dps' list.
  * @table: flow table.
- * @ports: Hash table for ports.  %OVSP_LOCAL port always exists.  Protected by
+ * @ports: Hash table क्रम ports.  %OVSP_LOCAL port always exists.  Protected by
  * ovs_mutex and RCU.
  * @stats_percpu: Per-CPU datapath statistics.
  * @net: Reference to net namespace.
  * @max_headroom: the maximum headroom of all vports in this datapath; it will
- * be used by all the internal vports in this dp.
+ * be used by all the पूर्णांकernal vports in this dp.
  *
- * Context: See the comment on locking at the top of datapath.c for additional
- * locking information.
+ * Context: See the comment on locking at the top of datapath.c क्रम additional
+ * locking inक्रमmation.
  */
-struct datapath {
-	struct rcu_head rcu;
-	struct list_head list_node;
+काष्ठा datapath अणु
+	काष्ठा rcu_head rcu;
+	काष्ठा list_head list_node;
 
 	/* Flow table. */
-	struct flow_table table;
+	काष्ठा flow_table table;
 
 	/* Switch ports. */
-	struct hlist_head *ports;
+	काष्ठा hlist_head *ports;
 
 	/* Stats. */
-	struct dp_stats_percpu __percpu *stats_percpu;
+	काष्ठा dp_stats_percpu __percpu *stats_percpu;
 
 	/* Network namespace ref. */
 	possible_net_t net;
@@ -86,28 +87,28 @@ struct datapath {
 	u32 max_headroom;
 
 	/* Switch meters. */
-	struct dp_meter_table meter_tbl;
-};
+	काष्ठा dp_meter_table meter_tbl;
+पूर्ण;
 
 /**
- * struct ovs_skb_cb - OVS data in skb CB
+ * काष्ठा ovs_skb_cb - OVS data in skb CB
  * @input_vport: The original vport packet came in on. This value is cached
  * when a packet is received by OVS.
- * @mru: The maximum received fragement size; 0 if the packet is not
+ * @mru: The maximum received fragement size; 0 अगर the packet is not
  * fragmented.
  * @acts_origlen: The netlink size of the flow actions applied to this skb.
- * @cutlen: The number of bytes from the packet end to be removed.
+ * @cutlen: The number of bytes from the packet end to be हटाओd.
  */
-struct ovs_skb_cb {
-	struct vport		*input_vport;
+काष्ठा ovs_skb_cb अणु
+	काष्ठा vport		*input_vport;
 	u16			mru;
 	u16			acts_origlen;
 	u32			cutlen;
-};
-#define OVS_CB(skb) ((struct ovs_skb_cb *)(skb)->cb)
+पूर्ण;
+#घोषणा OVS_CB(skb) ((काष्ठा ovs_skb_cb *)(skb)->cb)
 
 /**
- * struct dp_upcall - metadata to include with a packet to send to userspace
+ * काष्ठा dp_upcall - metadata to include with a packet to send to userspace
  * @cmd: One of %OVS_PACKET_CMD_*.
  * @userdata: If nonnull, its variable-length value is passed to userspace as
  * %OVS_PACKET_ATTR_USERDATA.
@@ -117,151 +118,151 @@ struct ovs_skb_cb {
  * @egress_tun_info: If nonnull, becomes %OVS_PACKET_ATTR_EGRESS_TUN_KEY.
  * @mru: If not zero, Maximum received IP fragment size.
  */
-struct dp_upcall_info {
-	struct ip_tunnel_info *egress_tun_info;
-	const struct nlattr *userdata;
-	const struct nlattr *actions;
-	int actions_len;
+काष्ठा dp_upcall_info अणु
+	काष्ठा ip_tunnel_info *egress_tun_info;
+	स्थिर काष्ठा nlattr *userdata;
+	स्थिर काष्ठा nlattr *actions;
+	पूर्णांक actions_len;
 	u32 portid;
 	u8 cmd;
 	u16 mru;
-};
+पूर्ण;
 
 /**
- * struct ovs_net - Per net-namespace data for ovs.
+ * काष्ठा ovs_net - Per net-namespace data क्रम ovs.
  * @dps: List of datapaths to enable dumping them all out.
  * Protected by genl_mutex.
  */
-struct ovs_net {
-	struct list_head dps;
-	struct work_struct dp_notify_work;
-	struct delayed_work masks_rebalance;
-#if	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
-	struct ovs_ct_limit_info *ct_limit_info;
-#endif
+काष्ठा ovs_net अणु
+	काष्ठा list_head dps;
+	काष्ठा work_काष्ठा dp_notअगरy_work;
+	काष्ठा delayed_work masks_rebalance;
+#अगर	IS_ENABLED(CONFIG_NETFILTER_CONNCOUNT)
+	काष्ठा ovs_ct_limit_info *ct_limit_info;
+#पूर्ण_अगर
 
-	/* Module reference for configuring conntrack. */
+	/* Module reference क्रम configuring conntrack. */
 	bool xt_label;
-};
+पूर्ण;
 
 /**
- * enum ovs_pkt_hash_types - hash info to include with a packet
+ * क्रमागत ovs_pkt_hash_types - hash info to include with a packet
  * to send to userspace.
  * @OVS_PACKET_HASH_SW_BIT: indicates hash was computed in software stack.
  * @OVS_PACKET_HASH_L4_BIT: indicates hash is a canonical 4-tuple hash
  * over transport ports.
  */
-enum ovs_pkt_hash_types {
+क्रमागत ovs_pkt_hash_types अणु
 	OVS_PACKET_HASH_SW_BIT = (1ULL << 32),
 	OVS_PACKET_HASH_L4_BIT = (1ULL << 33),
-};
+पूर्ण;
 
-extern unsigned int ovs_net_id;
-void ovs_lock(void);
-void ovs_unlock(void);
+बाह्य अचिन्हित पूर्णांक ovs_net_id;
+व्योम ovs_lock(व्योम);
+व्योम ovs_unlock(व्योम);
 
-#ifdef CONFIG_LOCKDEP
-int lockdep_ovsl_is_held(void);
-#else
-#define lockdep_ovsl_is_held()	1
-#endif
+#अगर_घोषित CONFIG_LOCKDEP
+पूर्णांक lockdep_ovsl_is_held(व्योम);
+#अन्यथा
+#घोषणा lockdep_ovsl_is_held()	1
+#पूर्ण_अगर
 
-#define ASSERT_OVSL()		WARN_ON(!lockdep_ovsl_is_held())
-#define ovsl_dereference(p)					\
-	rcu_dereference_protected(p, lockdep_ovsl_is_held())
-#define rcu_dereference_ovsl(p)					\
+#घोषणा ASSERT_OVSL()		WARN_ON(!lockdep_ovsl_is_held())
+#घोषणा ovsl_dereference(p)					\
+	rcu_dereference_रक्षित(p, lockdep_ovsl_is_held())
+#घोषणा rcu_dereference_ovsl(p)					\
 	rcu_dereference_check(p, lockdep_ovsl_is_held())
 
-static inline struct net *ovs_dp_get_net(const struct datapath *dp)
-{
-	return read_pnet(&dp->net);
-}
+अटल अंतरभूत काष्ठा net *ovs_dp_get_net(स्थिर काष्ठा datapath *dp)
+अणु
+	वापस पढ़ो_pnet(&dp->net);
+पूर्ण
 
-static inline void ovs_dp_set_net(struct datapath *dp, struct net *net)
-{
-	write_pnet(&dp->net, net);
-}
+अटल अंतरभूत व्योम ovs_dp_set_net(काष्ठा datapath *dp, काष्ठा net *net)
+अणु
+	ग_लिखो_pnet(&dp->net, net);
+पूर्ण
 
-struct vport *ovs_lookup_vport(const struct datapath *dp, u16 port_no);
+काष्ठा vport *ovs_lookup_vport(स्थिर काष्ठा datapath *dp, u16 port_no);
 
-static inline struct vport *ovs_vport_rcu(const struct datapath *dp, int port_no)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held());
-	return ovs_lookup_vport(dp, port_no);
-}
+अटल अंतरभूत काष्ठा vport *ovs_vport_rcu(स्थिर काष्ठा datapath *dp, पूर्णांक port_no)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held());
+	वापस ovs_lookup_vport(dp, port_no);
+पूर्ण
 
-static inline struct vport *ovs_vport_ovsl_rcu(const struct datapath *dp, int port_no)
-{
-	WARN_ON_ONCE(!rcu_read_lock_held() && !lockdep_ovsl_is_held());
-	return ovs_lookup_vport(dp, port_no);
-}
+अटल अंतरभूत काष्ठा vport *ovs_vport_ovsl_rcu(स्थिर काष्ठा datapath *dp, पूर्णांक port_no)
+अणु
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held() && !lockdep_ovsl_is_held());
+	वापस ovs_lookup_vport(dp, port_no);
+पूर्ण
 
-static inline struct vport *ovs_vport_ovsl(const struct datapath *dp, int port_no)
-{
+अटल अंतरभूत काष्ठा vport *ovs_vport_ovsl(स्थिर काष्ठा datapath *dp, पूर्णांक port_no)
+अणु
 	ASSERT_OVSL();
-	return ovs_lookup_vport(dp, port_no);
-}
+	वापस ovs_lookup_vport(dp, port_no);
+पूर्ण
 
-/* Must be called with rcu_read_lock. */
-static inline struct datapath *get_dp_rcu(struct net *net, int dp_ifindex)
-{
-	struct net_device *dev = dev_get_by_index_rcu(net, dp_ifindex);
+/* Must be called with rcu_पढ़ो_lock. */
+अटल अंतरभूत काष्ठा datapath *get_dp_rcu(काष्ठा net *net, पूर्णांक dp_अगरindex)
+अणु
+	काष्ठा net_device *dev = dev_get_by_index_rcu(net, dp_अगरindex);
 
-	if (dev) {
-		struct vport *vport = ovs_internal_dev_get_vport(dev);
+	अगर (dev) अणु
+		काष्ठा vport *vport = ovs_पूर्णांकernal_dev_get_vport(dev);
 
-		if (vport)
-			return vport->dp;
-	}
+		अगर (vport)
+			वापस vport->dp;
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-/* The caller must hold either ovs_mutex or rcu_read_lock to keep the
- * returned dp pointer valid.
+/* The caller must hold either ovs_mutex or rcu_पढ़ो_lock to keep the
+ * वापसed dp poपूर्णांकer valid.
  */
-static inline struct datapath *get_dp(struct net *net, int dp_ifindex)
-{
-	struct datapath *dp;
+अटल अंतरभूत काष्ठा datapath *get_dp(काष्ठा net *net, पूर्णांक dp_अगरindex)
+अणु
+	काष्ठा datapath *dp;
 
-	WARN_ON_ONCE(!rcu_read_lock_held() && !lockdep_ovsl_is_held());
-	rcu_read_lock();
-	dp = get_dp_rcu(net, dp_ifindex);
-	rcu_read_unlock();
+	WARN_ON_ONCE(!rcu_पढ़ो_lock_held() && !lockdep_ovsl_is_held());
+	rcu_पढ़ो_lock();
+	dp = get_dp_rcu(net, dp_अगरindex);
+	rcu_पढ़ो_unlock();
 
-	return dp;
-}
+	वापस dp;
+पूर्ण
 
-extern struct notifier_block ovs_dp_device_notifier;
-extern struct genl_family dp_vport_genl_family;
+बाह्य काष्ठा notअगरier_block ovs_dp_device_notअगरier;
+बाह्य काष्ठा genl_family dp_vport_genl_family;
 
 DECLARE_STATIC_KEY_FALSE(tc_recirc_sharing_support);
 
-void ovs_dp_process_packet(struct sk_buff *skb, struct sw_flow_key *key);
-void ovs_dp_detach_port(struct vport *);
-int ovs_dp_upcall(struct datapath *, struct sk_buff *,
-		  const struct sw_flow_key *, const struct dp_upcall_info *,
-		  uint32_t cutlen);
+व्योम ovs_dp_process_packet(काष्ठा sk_buff *skb, काष्ठा sw_flow_key *key);
+व्योम ovs_dp_detach_port(काष्ठा vport *);
+पूर्णांक ovs_dp_upcall(काष्ठा datapath *, काष्ठा sk_buff *,
+		  स्थिर काष्ठा sw_flow_key *, स्थिर काष्ठा dp_upcall_info *,
+		  uपूर्णांक32_t cutlen);
 
-const char *ovs_dp_name(const struct datapath *dp);
-struct sk_buff *ovs_vport_cmd_build_info(struct vport *vport, struct net *net,
+स्थिर अक्षर *ovs_dp_name(स्थिर काष्ठा datapath *dp);
+काष्ठा sk_buff *ovs_vport_cmd_build_info(काष्ठा vport *vport, काष्ठा net *net,
 					 u32 portid, u32 seq, u8 cmd);
 
-int ovs_execute_actions(struct datapath *dp, struct sk_buff *skb,
-			const struct sw_flow_actions *, struct sw_flow_key *);
+पूर्णांक ovs_execute_actions(काष्ठा datapath *dp, काष्ठा sk_buff *skb,
+			स्थिर काष्ठा sw_flow_actions *, काष्ठा sw_flow_key *);
 
-void ovs_dp_notify_wq(struct work_struct *work);
+व्योम ovs_dp_notअगरy_wq(काष्ठा work_काष्ठा *work);
 
-int action_fifos_init(void);
-void action_fifos_exit(void);
+पूर्णांक action_fअगरos_init(व्योम);
+व्योम action_fअगरos_निकास(व्योम);
 
 /* 'KEY' must not have any bits set outside of the 'MASK' */
-#define OVS_MASKED(OLD, KEY, MASK) ((KEY) | ((OLD) & ~(MASK)))
-#define OVS_SET_MASKED(OLD, KEY, MASK) ((OLD) = OVS_MASKED(OLD, KEY, MASK))
+#घोषणा OVS_MASKED(OLD, KEY, MASK) ((KEY) | ((OLD) & ~(MASK)))
+#घोषणा OVS_SET_MASKED(OLD, KEY, MASK) ((OLD) = OVS_MASKED(OLD, KEY, MASK))
 
-#define OVS_NLERR(logging_allowed, fmt, ...)			\
-do {								\
-	if (logging_allowed && net_ratelimit())			\
+#घोषणा OVS_NLERR(logging_allowed, fmt, ...)			\
+करो अणु								\
+	अगर (logging_allowed && net_ratelimit())			\
 		pr_info("netlink: " fmt "\n", ##__VA_ARGS__);	\
-} while (0)
-#endif /* datapath.h */
+पूर्ण जबतक (0)
+#पूर्ण_अगर /* datapath.h */

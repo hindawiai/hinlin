@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *  cx18 file operation functions
  *
@@ -8,107 +9,107 @@
  *  Copyright (C) 2008  Andy Walls <awalls@md.metrocast.net>
  */
 
-#include "cx18-driver.h"
-#include "cx18-fileops.h"
-#include "cx18-i2c.h"
-#include "cx18-queue.h"
-#include "cx18-vbi.h"
-#include "cx18-audio.h"
-#include "cx18-mailbox.h"
-#include "cx18-scb.h"
-#include "cx18-streams.h"
-#include "cx18-controls.h"
-#include "cx18-ioctl.h"
-#include "cx18-cards.h"
-#include <media/v4l2-event.h>
+#समावेश "cx18-driver.h"
+#समावेश "cx18-fileops.h"
+#समावेश "cx18-i2c.h"
+#समावेश "cx18-queue.h"
+#समावेश "cx18-vbi.h"
+#समावेश "cx18-audio.h"
+#समावेश "cx18-mailbox.h"
+#समावेश "cx18-scb.h"
+#समावेश "cx18-streams.h"
+#समावेश "cx18-controls.h"
+#समावेश "cx18-ioctl.h"
+#समावेश "cx18-cards.h"
+#समावेश <media/v4l2-event.h>
 
-/* This function tries to claim the stream for a specific file descriptor.
-   If no one else is using this stream then the stream is claimed and
-   associated VBI and IDX streams are also automatically claimed.
-   Possible error returns: -EBUSY if someone else has claimed
+/* This function tries to claim the stream क्रम a specअगरic file descriptor.
+   If no one अन्यथा is using this stream then the stream is claimed and
+   associated VBI and IDX streams are also स्वतःmatically claimed.
+   Possible error वापसs: -EBUSY अगर someone अन्यथा has claimed
    the stream or 0 on success. */
-int cx18_claim_stream(struct cx18_open_id *id, int type)
-{
-	struct cx18 *cx = id->cx;
-	struct cx18_stream *s = &cx->streams[type];
-	struct cx18_stream *s_assoc;
+पूर्णांक cx18_claim_stream(काष्ठा cx18_खोलो_id *id, पूर्णांक type)
+अणु
+	काष्ठा cx18 *cx = id->cx;
+	काष्ठा cx18_stream *s = &cx->streams[type];
+	काष्ठा cx18_stream *s_assoc;
 
 	/* Nothing should ever try to directly claim the IDX stream */
-	if (type == CX18_ENC_STREAM_TYPE_IDX) {
+	अगर (type == CX18_ENC_STREAM_TYPE_IDX) अणु
 		CX18_WARN("MPEG Index stream cannot be claimed directly, but something tried.\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (test_and_set_bit(CX18_F_S_CLAIMED, &s->s_flags)) {
-		/* someone already claimed this stream */
-		if (s->id == id->open_id) {
+	अगर (test_and_set_bit(CX18_F_S_CLAIMED, &s->s_flags)) अणु
+		/* someone alपढ़ोy claimed this stream */
+		अगर (s->id == id->खोलो_id) अणु
 			/* yes, this file descriptor did. So that's OK. */
-			return 0;
-		}
-		if (s->id == -1 && type == CX18_ENC_STREAM_TYPE_VBI) {
-			/* VBI is handled already internally, now also assign
-			   the file descriptor to this stream for external
-			   reading of the stream. */
-			s->id = id->open_id;
+			वापस 0;
+		पूर्ण
+		अगर (s->id == -1 && type == CX18_ENC_STREAM_TYPE_VBI) अणु
+			/* VBI is handled alपढ़ोy पूर्णांकernally, now also assign
+			   the file descriptor to this stream क्रम बाह्यal
+			   पढ़ोing of the stream. */
+			s->id = id->खोलो_id;
 			CX18_DEBUG_INFO("Start Read VBI\n");
-			return 0;
-		}
-		/* someone else is using this stream already */
+			वापस 0;
+		पूर्ण
+		/* someone अन्यथा is using this stream alपढ़ोy */
 		CX18_DEBUG_INFO("Stream %d is busy\n", type);
-		return -EBUSY;
-	}
-	s->id = id->open_id;
+		वापस -EBUSY;
+	पूर्ण
+	s->id = id->खोलो_id;
 
 	/*
 	 * CX18_ENC_STREAM_TYPE_MPG needs to claim:
-	 * CX18_ENC_STREAM_TYPE_VBI, if VBI insertion is on for sliced VBI, or
-	 * CX18_ENC_STREAM_TYPE_IDX, if VBI insertion is off for sliced VBI
-	 * (We don't yet fix up MPEG Index entries for our inserted packets).
+	 * CX18_ENC_STREAM_TYPE_VBI, अगर VBI insertion is on क्रम sliced VBI, or
+	 * CX18_ENC_STREAM_TYPE_IDX, अगर VBI insertion is off क्रम sliced VBI
+	 * (We करोn't yet fix up MPEG Index entries क्रम our inserted packets).
 	 *
-	 * For all other streams we're done.
+	 * For all other streams we're करोne.
 	 */
-	if (type != CX18_ENC_STREAM_TYPE_MPG)
-		return 0;
+	अगर (type != CX18_ENC_STREAM_TYPE_MPG)
+		वापस 0;
 
 	s_assoc = &cx->streams[CX18_ENC_STREAM_TYPE_IDX];
-	if (cx->vbi.insert_mpeg && !cx18_raw_vbi(cx))
+	अगर (cx->vbi.insert_mpeg && !cx18_raw_vbi(cx))
 		s_assoc = &cx->streams[CX18_ENC_STREAM_TYPE_VBI];
-	else if (!cx18_stream_enabled(s_assoc))
-		return 0;
+	अन्यथा अगर (!cx18_stream_enabled(s_assoc))
+		वापस 0;
 
 	set_bit(CX18_F_S_CLAIMED, &s_assoc->s_flags);
 
-	/* mark that it is used internally */
+	/* mark that it is used पूर्णांकernally */
 	set_bit(CX18_F_S_INTERNAL_USE, &s_assoc->s_flags);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(cx18_claim_stream);
 
-/* This function releases a previously claimed stream. It will take into
+/* This function releases a previously claimed stream. It will take पूर्णांकo
    account associated VBI streams. */
-void cx18_release_stream(struct cx18_stream *s)
-{
-	struct cx18 *cx = s->cx;
-	struct cx18_stream *s_assoc;
+व्योम cx18_release_stream(काष्ठा cx18_stream *s)
+अणु
+	काष्ठा cx18 *cx = s->cx;
+	काष्ठा cx18_stream *s_assoc;
 
 	s->id = -1;
-	if (s->type == CX18_ENC_STREAM_TYPE_IDX) {
+	अगर (s->type == CX18_ENC_STREAM_TYPE_IDX) अणु
 		/*
-		 * The IDX stream is only used internally, and can
+		 * The IDX stream is only used पूर्णांकernally, and can
 		 * only be indirectly unclaimed by unclaiming the MPG stream.
 		 */
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (s->type == CX18_ENC_STREAM_TYPE_VBI &&
-		test_bit(CX18_F_S_INTERNAL_USE, &s->s_flags)) {
-		/* this stream is still in use internally */
-		return;
-	}
-	if (!test_and_clear_bit(CX18_F_S_CLAIMED, &s->s_flags)) {
+	अगर (s->type == CX18_ENC_STREAM_TYPE_VBI &&
+		test_bit(CX18_F_S_INTERNAL_USE, &s->s_flags)) अणु
+		/* this stream is still in use पूर्णांकernally */
+		वापस;
+	पूर्ण
+	अगर (!test_and_clear_bit(CX18_F_S_CLAIMED, &s->s_flags)) अणु
 		CX18_DEBUG_WARN("Release stream %s not in use!\n", s->name);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	cx18_flush_queues(s);
 
@@ -116,166 +117,166 @@ void cx18_release_stream(struct cx18_stream *s)
 	 * CX18_ENC_STREAM_TYPE_MPG needs to release the
 	 * CX18_ENC_STREAM_TYPE_VBI and/or CX18_ENC_STREAM_TYPE_IDX streams.
 	 *
-	 * For all other streams we're done.
+	 * For all other streams we're करोne.
 	 */
-	if (s->type != CX18_ENC_STREAM_TYPE_MPG)
-		return;
+	अगर (s->type != CX18_ENC_STREAM_TYPE_MPG)
+		वापस;
 
 	/* Unclaim the associated MPEG Index stream */
 	s_assoc = &cx->streams[CX18_ENC_STREAM_TYPE_IDX];
-	if (test_and_clear_bit(CX18_F_S_INTERNAL_USE, &s_assoc->s_flags)) {
+	अगर (test_and_clear_bit(CX18_F_S_INTERNAL_USE, &s_assoc->s_flags)) अणु
 		clear_bit(CX18_F_S_CLAIMED, &s_assoc->s_flags);
 		cx18_flush_queues(s_assoc);
-	}
+	पूर्ण
 
 	/* Unclaim the associated VBI stream */
 	s_assoc = &cx->streams[CX18_ENC_STREAM_TYPE_VBI];
-	if (test_and_clear_bit(CX18_F_S_INTERNAL_USE, &s_assoc->s_flags)) {
-		if (s_assoc->id == -1) {
+	अगर (test_and_clear_bit(CX18_F_S_INTERNAL_USE, &s_assoc->s_flags)) अणु
+		अगर (s_assoc->id == -1) अणु
 			/*
 			 * The VBI stream is not still claimed by a file
 			 * descriptor, so completely unclaim it.
 			 */
 			clear_bit(CX18_F_S_CLAIMED, &s_assoc->s_flags);
 			cx18_flush_queues(s_assoc);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 EXPORT_SYMBOL(cx18_release_stream);
 
-static void cx18_dualwatch(struct cx18 *cx)
-{
-	struct v4l2_tuner vt;
+अटल व्योम cx18_dualwatch(काष्ठा cx18 *cx)
+अणु
+	काष्ठा v4l2_tuner vt;
 	u32 new_stereo_mode;
-	const u32 dual = 0x0200;
+	स्थिर u32 dual = 0x0200;
 
 	new_stereo_mode = v4l2_ctrl_g_ctrl(cx->cxhdl.audio_mode);
-	memset(&vt, 0, sizeof(vt));
+	स_रखो(&vt, 0, माप(vt));
 	cx18_call_all(cx, tuner, g_tuner, &vt);
-	if (vt.audmode == V4L2_TUNER_MODE_LANG1_LANG2 &&
+	अगर (vt.audmode == V4L2_TUNER_MODE_LANG1_LANG2 &&
 			(vt.rxsubchans & V4L2_TUNER_SUB_LANG2))
 		new_stereo_mode = dual;
 
-	if (new_stereo_mode == cx->dualwatch_stereo_mode)
-		return;
+	अगर (new_stereo_mode == cx->dualwatch_stereo_mode)
+		वापस;
 
 	CX18_DEBUG_INFO("dualwatch: change stereo flag from 0x%x to 0x%x.\n",
 			   cx->dualwatch_stereo_mode, new_stereo_mode);
-	if (v4l2_ctrl_s_ctrl(cx->cxhdl.audio_mode, new_stereo_mode))
+	अगर (v4l2_ctrl_s_ctrl(cx->cxhdl.audio_mode, new_stereo_mode))
 		CX18_DEBUG_INFO("dualwatch: changing stereo flag failed\n");
-}
+पूर्ण
 
 
-static struct cx18_mdl *cx18_get_mdl(struct cx18_stream *s, int non_block,
-				     int *err)
-{
-	struct cx18 *cx = s->cx;
-	struct cx18_stream *s_vbi = &cx->streams[CX18_ENC_STREAM_TYPE_VBI];
-	struct cx18_mdl *mdl;
-	DEFINE_WAIT(wait);
+अटल काष्ठा cx18_mdl *cx18_get_mdl(काष्ठा cx18_stream *s, पूर्णांक non_block,
+				     पूर्णांक *err)
+अणु
+	काष्ठा cx18 *cx = s->cx;
+	काष्ठा cx18_stream *s_vbi = &cx->streams[CX18_ENC_STREAM_TYPE_VBI];
+	काष्ठा cx18_mdl *mdl;
+	DEFINE_WAIT(रुको);
 
 	*err = 0;
-	while (1) {
-		if (s->type == CX18_ENC_STREAM_TYPE_MPG) {
+	जबतक (1) अणु
+		अगर (s->type == CX18_ENC_STREAM_TYPE_MPG) अणु
 			/* Process pending program updates and VBI data */
-			if (time_after(jiffies, cx->dualwatch_jiffies + msecs_to_jiffies(1000))) {
-				cx->dualwatch_jiffies = jiffies;
+			अगर (समय_after(jअगरfies, cx->dualwatch_jअगरfies + msecs_to_jअगरfies(1000))) अणु
+				cx->dualwatch_jअगरfies = jअगरfies;
 				cx18_dualwatch(cx);
-			}
-			if (test_bit(CX18_F_S_INTERNAL_USE, &s_vbi->s_flags) &&
-			    !test_bit(CX18_F_S_APPL_IO, &s_vbi->s_flags)) {
-				while ((mdl = cx18_dequeue(s_vbi,
-							   &s_vbi->q_full))) {
+			पूर्ण
+			अगर (test_bit(CX18_F_S_INTERNAL_USE, &s_vbi->s_flags) &&
+			    !test_bit(CX18_F_S_APPL_IO, &s_vbi->s_flags)) अणु
+				जबतक ((mdl = cx18_dequeue(s_vbi,
+							   &s_vbi->q_full))) अणु
 					/* byteswap and process VBI data */
 					cx18_process_vbi_data(cx, mdl,
 							      s_vbi->type);
 					cx18_stream_put_mdl_fw(s_vbi, mdl);
-				}
-			}
+				पूर्ण
+			पूर्ण
 			mdl = &cx->vbi.sliced_mpeg_mdl;
-			if (mdl->readpos != mdl->bytesused)
-				return mdl;
-		}
+			अगर (mdl->पढ़ोpos != mdl->bytesused)
+				वापस mdl;
+		पूर्ण
 
-		/* do we have new data? */
+		/* करो we have new data? */
 		mdl = cx18_dequeue(s, &s->q_full);
-		if (mdl) {
-			if (!test_and_clear_bit(CX18_F_M_NEED_SWAP,
+		अगर (mdl) अणु
+			अगर (!test_and_clear_bit(CX18_F_M_NEED_SWAP,
 						&mdl->m_flags))
-				return mdl;
-			if (s->type == CX18_ENC_STREAM_TYPE_MPG)
+				वापस mdl;
+			अगर (s->type == CX18_ENC_STREAM_TYPE_MPG)
 				/* byteswap MPG data */
 				cx18_mdl_swap(mdl);
-			else {
+			अन्यथा अणु
 				/* byteswap and process VBI data */
 				cx18_process_vbi_data(cx, mdl, s->type);
-			}
-			return mdl;
-		}
+			पूर्ण
+			वापस mdl;
+		पूर्ण
 
-		/* return if end of stream */
-		if (!test_bit(CX18_F_S_STREAMING, &s->s_flags)) {
+		/* वापस अगर end of stream */
+		अगर (!test_bit(CX18_F_S_STREAMING, &s->s_flags)) अणु
 			CX18_DEBUG_INFO("EOS %s\n", s->name);
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		/* return if file was opened with O_NONBLOCK */
-		if (non_block) {
+		/* वापस अगर file was खोलोed with O_NONBLOCK */
+		अगर (non_block) अणु
 			*err = -EAGAIN;
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
-		/* wait for more data to arrive */
-		prepare_to_wait(&s->waitq, &wait, TASK_INTERRUPTIBLE);
-		/* New buffers might have become available before we were added
-		   to the waitqueue */
-		if (!atomic_read(&s->q_full.depth))
+		/* रुको क्रम more data to arrive */
+		prepare_to_रुको(&s->रुकोq, &रुको, TASK_INTERRUPTIBLE);
+		/* New buffers might have become available beक्रमe we were added
+		   to the रुकोqueue */
+		अगर (!atomic_पढ़ो(&s->q_full.depth))
 			schedule();
-		finish_wait(&s->waitq, &wait);
-		if (signal_pending(current)) {
-			/* return if a signal was received */
+		finish_रुको(&s->रुकोq, &रुको);
+		अगर (संकेत_pending(current)) अणु
+			/* वापस अगर a संकेत was received */
 			CX18_DEBUG_INFO("User stopped %s\n", s->name);
 			*err = -EINTR;
-			return NULL;
-		}
-	}
-}
+			वापस शून्य;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void cx18_setup_sliced_vbi_mdl(struct cx18 *cx)
-{
-	struct cx18_mdl *mdl = &cx->vbi.sliced_mpeg_mdl;
-	struct cx18_buffer *buf = &cx->vbi.sliced_mpeg_buf;
-	int idx = cx->vbi.inserted_frame % CX18_VBI_FRAMES;
+अटल व्योम cx18_setup_sliced_vbi_mdl(काष्ठा cx18 *cx)
+अणु
+	काष्ठा cx18_mdl *mdl = &cx->vbi.sliced_mpeg_mdl;
+	काष्ठा cx18_buffer *buf = &cx->vbi.sliced_mpeg_buf;
+	पूर्णांक idx = cx->vbi.inserted_frame % CX18_VBI_FRAMES;
 
 	buf->buf = cx->vbi.sliced_mpeg_data[idx];
 	buf->bytesused = cx->vbi.sliced_mpeg_size[idx];
-	buf->readpos = 0;
+	buf->पढ़ोpos = 0;
 
-	mdl->curr_buf = NULL;
+	mdl->curr_buf = शून्य;
 	mdl->bytesused = cx->vbi.sliced_mpeg_size[idx];
-	mdl->readpos = 0;
-}
+	mdl->पढ़ोpos = 0;
+पूर्ण
 
-static size_t cx18_copy_buf_to_user(struct cx18_stream *s,
-	struct cx18_buffer *buf, char __user *ubuf, size_t ucount, bool *stop)
-{
-	struct cx18 *cx = s->cx;
-	size_t len = buf->bytesused - buf->readpos;
+अटल माप_प्रकार cx18_copy_buf_to_user(काष्ठा cx18_stream *s,
+	काष्ठा cx18_buffer *buf, अक्षर __user *ubuf, माप_प्रकार ucount, bool *stop)
+अणु
+	काष्ठा cx18 *cx = s->cx;
+	माप_प्रकार len = buf->bytesused - buf->पढ़ोpos;
 
 	*stop = false;
-	if (len > ucount)
+	अगर (len > ucount)
 		len = ucount;
-	if (cx->vbi.insert_mpeg && s->type == CX18_ENC_STREAM_TYPE_MPG &&
-	    !cx18_raw_vbi(cx) && buf != &cx->vbi.sliced_mpeg_buf) {
+	अगर (cx->vbi.insert_mpeg && s->type == CX18_ENC_STREAM_TYPE_MPG &&
+	    !cx18_raw_vbi(cx) && buf != &cx->vbi.sliced_mpeg_buf) अणु
 		/*
-		 * Try to find a good splice point in the PS, just before
+		 * Try to find a good splice poपूर्णांक in the PS, just beक्रमe
 		 * an MPEG-2 Program Pack start code, and provide only
-		 * up to that point to the user, so it's easy to insert VBI data
-		 * the next time around.
+		 * up to that poपूर्णांक to the user, so it's easy to insert VBI data
+		 * the next समय around.
 		 *
-		 * This will not work for an MPEG-2 TS and has only been
-		 * verified by analysis to work for an MPEG-2 PS.  Helen Buus
-		 * pointed out this works for the CX23416 MPEG-2 DVD compatible
+		 * This will not work क्रम an MPEG-2 TS and has only been
+		 * verअगरied by analysis to work क्रम an MPEG-2 PS.  Helen Buus
+		 * poपूर्णांकed out this works क्रम the CX23416 MPEG-2 DVD compatible
 		 * stream, and research indicates both the MPEG 2 SVCD and DVD
 		 * stream types use an MPEG-2 PS container.
 		 */
@@ -286,531 +287,531 @@ static size_t cx18_copy_buf_to_user(struct cx18_stream *s,
 		 * A Program Pack may hold a PS System Header packet and any
 		 * number of Program Elementary Stream (PES) Packets
 		 */
-		const char *start = buf->buf + buf->readpos;
-		const char *p = start + 1;
-		const u8 *q;
+		स्थिर अक्षर *start = buf->buf + buf->पढ़ोpos;
+		स्थिर अक्षर *p = start + 1;
+		स्थिर u8 *q;
 		u8 ch = cx->search_pack_header ? 0xba : 0xe0;
-		int stuffing, i;
+		पूर्णांक stuffing, i;
 
-		while (start + len > p) {
-			/* Scan for a 0 to find a potential MPEG-2 start code */
-			q = memchr(p, 0, start + len - p);
-			if (q == NULL)
-				break;
+		जबतक (start + len > p) अणु
+			/* Scan क्रम a 0 to find a potential MPEG-2 start code */
+			q = स_प्रथम(p, 0, start + len - p);
+			अगर (q == शून्य)
+				अवरोध;
 			p = q + 1;
 			/*
-			 * Keep looking if not a
+			 * Keep looking अगर not a
 			 * MPEG-2 Pack header start code:  0x00 0x00 0x01 0xba
 			 * or MPEG-2 video PES start code: 0x00 0x00 0x01 0xe0
 			 */
-			if ((char *)q + 15 >= buf->buf + buf->bytesused ||
+			अगर ((अक्षर *)q + 15 >= buf->buf + buf->bytesused ||
 			    q[1] != 0 || q[2] != 1 || q[3] != ch)
-				continue;
+				जारी;
 
 			/* If expecting the primary video PES */
-			if (!cx->search_pack_header) {
-				/* Continue if it couldn't be a PES packet */
-				if ((q[6] & 0xc0) != 0x80)
-					continue;
-				/* Check if a PTS or PTS & DTS follow */
-				if (((q[7] & 0xc0) == 0x80 &&  /* PTS only */
+			अगर (!cx->search_pack_header) अणु
+				/* Continue अगर it couldn't be a PES packet */
+				अगर ((q[6] & 0xc0) != 0x80)
+					जारी;
+				/* Check अगर a PTS or PTS & DTS follow */
+				अगर (((q[7] & 0xc0) == 0x80 &&  /* PTS only */
 				     (q[9] & 0xf0) == 0x20) || /* PTS only */
 				    ((q[7] & 0xc0) == 0xc0 &&  /* PTS & DTS */
-				     (q[9] & 0xf0) == 0x30)) { /* DTS follows */
+				     (q[9] & 0xf0) == 0x30)) अणु /* DTS follows */
 					/* Assume we found the video PES hdr */
 					ch = 0xba; /* next want a Program Pack*/
 					cx->search_pack_header = 1;
 					p = q + 9; /* Skip this video PES hdr */
-				}
-				continue;
-			}
+				पूर्ण
+				जारी;
+			पूर्ण
 
 			/* We may have found a Program Pack start code */
 
-			/* Get the count of stuffing bytes & verify them */
+			/* Get the count of stuffing bytes & verअगरy them */
 			stuffing = q[13] & 7;
 			/* all stuffing bytes must be 0xff */
-			for (i = 0; i < stuffing; i++)
-				if (q[14 + i] != 0xff)
-					break;
-			if (i == stuffing && /* right number of stuffing bytes*/
+			क्रम (i = 0; i < stuffing; i++)
+				अगर (q[14 + i] != 0xff)
+					अवरोध;
+			अगर (i == stuffing && /* right number of stuffing bytes*/
 			    (q[4] & 0xc4) == 0x44 && /* marker check */
 			    (q[12] & 3) == 3 &&  /* marker check */
 			    q[14 + stuffing] == 0 && /* PES Pack or Sys Hdr */
 			    q[15 + stuffing] == 0 &&
-			    q[16 + stuffing] == 1) {
+			    q[16 + stuffing] == 1) अणु
 				/* We declare we actually found a Program Pack*/
 				cx->search_pack_header = 0; /* expect vid PES */
-				len = (char *)q - start;
+				len = (अक्षर *)q - start;
 				cx18_setup_sliced_vbi_mdl(cx);
 				*stop = true;
-				break;
-			}
-		}
-	}
-	if (copy_to_user(ubuf, (u8 *)buf->buf + buf->readpos, len)) {
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (copy_to_user(ubuf, (u8 *)buf->buf + buf->पढ़ोpos, len)) अणु
 		CX18_DEBUG_WARN("copy %zd bytes to user failed for %s\n",
 				len, s->name);
-		return -EFAULT;
-	}
-	buf->readpos += len;
-	if (s->type == CX18_ENC_STREAM_TYPE_MPG &&
+		वापस -EFAULT;
+	पूर्ण
+	buf->पढ़ोpos += len;
+	अगर (s->type == CX18_ENC_STREAM_TYPE_MPG &&
 	    buf != &cx->vbi.sliced_mpeg_buf)
 		cx->mpg_data_received += len;
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static size_t cx18_copy_mdl_to_user(struct cx18_stream *s,
-		struct cx18_mdl *mdl, char __user *ubuf, size_t ucount)
-{
-	size_t tot_written = 0;
-	int rc;
+अटल माप_प्रकार cx18_copy_mdl_to_user(काष्ठा cx18_stream *s,
+		काष्ठा cx18_mdl *mdl, अक्षर __user *ubuf, माप_प्रकार ucount)
+अणु
+	माप_प्रकार tot_written = 0;
+	पूर्णांक rc;
 	bool stop = false;
 
-	if (mdl->curr_buf == NULL)
+	अगर (mdl->curr_buf == शून्य)
 		mdl->curr_buf = list_first_entry(&mdl->buf_list,
-						 struct cx18_buffer, list);
+						 काष्ठा cx18_buffer, list);
 
-	if (list_entry_is_past_end(mdl->curr_buf, &mdl->buf_list, list)) {
+	अगर (list_entry_is_past_end(mdl->curr_buf, &mdl->buf_list, list)) अणु
 		/*
 		 * For some reason we've exhausted the buffers, but the MDL
-		 * object still said some data was unread.
+		 * object still said some data was unपढ़ो.
 		 * Fix that and bail out.
 		 */
-		mdl->readpos = mdl->bytesused;
-		return 0;
-	}
+		mdl->पढ़ोpos = mdl->bytesused;
+		वापस 0;
+	पूर्ण
 
-	list_for_each_entry_from(mdl->curr_buf, &mdl->buf_list, list) {
+	list_क्रम_each_entry_from(mdl->curr_buf, &mdl->buf_list, list) अणु
 
-		if (mdl->curr_buf->readpos >= mdl->curr_buf->bytesused)
-			continue;
+		अगर (mdl->curr_buf->पढ़ोpos >= mdl->curr_buf->bytesused)
+			जारी;
 
 		rc = cx18_copy_buf_to_user(s, mdl->curr_buf, ubuf + tot_written,
 					   ucount - tot_written, &stop);
-		if (rc < 0)
-			return rc;
-		mdl->readpos += rc;
+		अगर (rc < 0)
+			वापस rc;
+		mdl->पढ़ोpos += rc;
 		tot_written += rc;
 
-		if (stop ||	/* Forced stopping point for VBI insertion */
+		अगर (stop ||	/* Forced stopping poपूर्णांक क्रम VBI insertion */
 		    tot_written >= ucount ||	/* Reader request satisfied */
-		    mdl->curr_buf->readpos < mdl->curr_buf->bytesused ||
-		    mdl->readpos >= mdl->bytesused) /* MDL buffers drained */
-			break;
-	}
-	return tot_written;
-}
+		    mdl->curr_buf->पढ़ोpos < mdl->curr_buf->bytesused ||
+		    mdl->पढ़ोpos >= mdl->bytesused) /* MDL buffers drained */
+			अवरोध;
+	पूर्ण
+	वापस tot_written;
+पूर्ण
 
-static ssize_t cx18_read(struct cx18_stream *s, char __user *ubuf,
-		size_t tot_count, int non_block)
-{
-	struct cx18 *cx = s->cx;
-	size_t tot_written = 0;
-	int single_frame = 0;
+अटल sमाप_प्रकार cx18_पढ़ो(काष्ठा cx18_stream *s, अक्षर __user *ubuf,
+		माप_प्रकार tot_count, पूर्णांक non_block)
+अणु
+	काष्ठा cx18 *cx = s->cx;
+	माप_प्रकार tot_written = 0;
+	पूर्णांक single_frame = 0;
 
-	if (atomic_read(&cx->ana_capturing) == 0 && s->id == -1) {
+	अगर (atomic_पढ़ो(&cx->ana_capturing) == 0 && s->id == -1) अणु
 		/* shouldn't happen */
 		CX18_DEBUG_WARN("Stream %s not initialized before read\n",
 				s->name);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 
-	/* Each VBI buffer is one frame, the v4l2 API says that for VBI the
+	/* Each VBI buffer is one frame, the v4l2 API says that क्रम VBI the
 	   frames should arrive one-by-one, so make sure we never output more
-	   than one VBI frame at a time */
-	if (s->type == CX18_ENC_STREAM_TYPE_VBI && !cx18_raw_vbi(cx))
+	   than one VBI frame at a समय */
+	अगर (s->type == CX18_ENC_STREAM_TYPE_VBI && !cx18_raw_vbi(cx))
 		single_frame = 1;
 
-	for (;;) {
-		struct cx18_mdl *mdl;
-		int rc;
+	क्रम (;;) अणु
+		काष्ठा cx18_mdl *mdl;
+		पूर्णांक rc;
 
 		mdl = cx18_get_mdl(s, non_block, &rc);
-		/* if there is no data available... */
-		if (mdl == NULL) {
-			/* if we got data, then return that regardless */
-			if (tot_written)
-				break;
+		/* अगर there is no data available... */
+		अगर (mdl == शून्य) अणु
+			/* अगर we got data, then वापस that regardless */
+			अगर (tot_written)
+				अवरोध;
 			/* EOS condition */
-			if (rc == 0) {
+			अगर (rc == 0) अणु
 				clear_bit(CX18_F_S_STREAMOFF, &s->s_flags);
 				clear_bit(CX18_F_S_APPL_IO, &s->s_flags);
 				cx18_release_stream(s);
-			}
-			/* set errno */
-			return rc;
-		}
+			पूर्ण
+			/* set त्रुटि_सं */
+			वापस rc;
+		पूर्ण
 
 		rc = cx18_copy_mdl_to_user(s, mdl, ubuf + tot_written,
 				tot_count - tot_written);
 
-		if (mdl != &cx->vbi.sliced_mpeg_mdl) {
-			if (mdl->readpos == mdl->bytesused)
+		अगर (mdl != &cx->vbi.sliced_mpeg_mdl) अणु
+			अगर (mdl->पढ़ोpos == mdl->bytesused)
 				cx18_stream_put_mdl_fw(s, mdl);
-			else
+			अन्यथा
 				cx18_push(s, mdl, &s->q_full);
-		} else if (mdl->readpos == mdl->bytesused) {
-			int idx = cx->vbi.inserted_frame % CX18_VBI_FRAMES;
+		पूर्ण अन्यथा अगर (mdl->पढ़ोpos == mdl->bytesused) अणु
+			पूर्णांक idx = cx->vbi.inserted_frame % CX18_VBI_FRAMES;
 
 			cx->vbi.sliced_mpeg_size[idx] = 0;
 			cx->vbi.inserted_frame++;
 			cx->vbi_data_inserted += mdl->bytesused;
-		}
-		if (rc < 0)
-			return rc;
+		पूर्ण
+		अगर (rc < 0)
+			वापस rc;
 		tot_written += rc;
 
-		if (tot_written == tot_count || single_frame)
-			break;
-	}
-	return tot_written;
-}
+		अगर (tot_written == tot_count || single_frame)
+			अवरोध;
+	पूर्ण
+	वापस tot_written;
+पूर्ण
 
-static ssize_t cx18_read_pos(struct cx18_stream *s, char __user *ubuf,
-		size_t count, loff_t *pos, int non_block)
-{
-	ssize_t rc = count ? cx18_read(s, ubuf, count, non_block) : 0;
-	struct cx18 *cx = s->cx;
+अटल sमाप_प्रकार cx18_पढ़ो_pos(काष्ठा cx18_stream *s, अक्षर __user *ubuf,
+		माप_प्रकार count, loff_t *pos, पूर्णांक non_block)
+अणु
+	sमाप_प्रकार rc = count ? cx18_पढ़ो(s, ubuf, count, non_block) : 0;
+	काष्ठा cx18 *cx = s->cx;
 
-	CX18_DEBUG_HI_FILE("read %zd from %s, got %zd\n", count, s->name, rc);
-	if (rc > 0)
+	CX18_DEBUG_HI_खाता("read %zd from %s, got %zd\n", count, s->name, rc);
+	अगर (rc > 0)
 		*pos += rc;
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-int cx18_start_capture(struct cx18_open_id *id)
-{
-	struct cx18 *cx = id->cx;
-	struct cx18_stream *s = &cx->streams[id->type];
-	struct cx18_stream *s_vbi;
-	struct cx18_stream *s_idx;
+पूर्णांक cx18_start_capture(काष्ठा cx18_खोलो_id *id)
+अणु
+	काष्ठा cx18 *cx = id->cx;
+	काष्ठा cx18_stream *s = &cx->streams[id->type];
+	काष्ठा cx18_stream *s_vbi;
+	काष्ठा cx18_stream *s_idx;
 
-	if (s->type == CX18_ENC_STREAM_TYPE_RAD) {
-		/* you cannot read from these stream types. */
-		return -EPERM;
-	}
+	अगर (s->type == CX18_ENC_STREAM_TYPE_RAD) अणु
+		/* you cannot पढ़ो from these stream types. */
+		वापस -EPERM;
+	पूर्ण
 
 	/* Try to claim this stream. */
-	if (cx18_claim_stream(id, s->type))
-		return -EBUSY;
+	अगर (cx18_claim_stream(id, s->type))
+		वापस -EBUSY;
 
-	/* If capture is already in progress, then we also have to
-	   do nothing extra. */
-	if (test_bit(CX18_F_S_STREAMOFF, &s->s_flags) ||
-	    test_and_set_bit(CX18_F_S_STREAMING, &s->s_flags)) {
+	/* If capture is alपढ़ोy in progress, then we also have to
+	   करो nothing extra. */
+	अगर (test_bit(CX18_F_S_STREAMOFF, &s->s_flags) ||
+	    test_and_set_bit(CX18_F_S_STREAMING, &s->s_flags)) अणु
 		set_bit(CX18_F_S_APPL_IO, &s->s_flags);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	/* Start associated VBI or IDX stream capture if required */
+	/* Start associated VBI or IDX stream capture अगर required */
 	s_vbi = &cx->streams[CX18_ENC_STREAM_TYPE_VBI];
 	s_idx = &cx->streams[CX18_ENC_STREAM_TYPE_IDX];
-	if (s->type == CX18_ENC_STREAM_TYPE_MPG) {
+	अगर (s->type == CX18_ENC_STREAM_TYPE_MPG) अणु
 		/*
 		 * The VBI and IDX streams should have been claimed
-		 * automatically, if for internal use, when the MPG stream was
+		 * स्वतःmatically, अगर क्रम पूर्णांकernal use, when the MPG stream was
 		 * claimed.  We only need to start these streams capturing.
 		 */
-		if (test_bit(CX18_F_S_INTERNAL_USE, &s_idx->s_flags) &&
-		    !test_and_set_bit(CX18_F_S_STREAMING, &s_idx->s_flags)) {
-			if (cx18_start_v4l2_encode_stream(s_idx)) {
+		अगर (test_bit(CX18_F_S_INTERNAL_USE, &s_idx->s_flags) &&
+		    !test_and_set_bit(CX18_F_S_STREAMING, &s_idx->s_flags)) अणु
+			अगर (cx18_start_v4l2_encode_stream(s_idx)) अणु
 				CX18_DEBUG_WARN("IDX capture start failed\n");
 				clear_bit(CX18_F_S_STREAMING, &s_idx->s_flags);
-				goto start_failed;
-			}
+				जाओ start_failed;
+			पूर्ण
 			CX18_DEBUG_INFO("IDX capture started\n");
-		}
-		if (test_bit(CX18_F_S_INTERNAL_USE, &s_vbi->s_flags) &&
-		    !test_and_set_bit(CX18_F_S_STREAMING, &s_vbi->s_flags)) {
-			if (cx18_start_v4l2_encode_stream(s_vbi)) {
+		पूर्ण
+		अगर (test_bit(CX18_F_S_INTERNAL_USE, &s_vbi->s_flags) &&
+		    !test_and_set_bit(CX18_F_S_STREAMING, &s_vbi->s_flags)) अणु
+			अगर (cx18_start_v4l2_encode_stream(s_vbi)) अणु
 				CX18_DEBUG_WARN("VBI capture start failed\n");
 				clear_bit(CX18_F_S_STREAMING, &s_vbi->s_flags);
-				goto start_failed;
-			}
+				जाओ start_failed;
+			पूर्ण
 			CX18_DEBUG_INFO("VBI insertion started\n");
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/* Tell the card to start capturing */
-	if (!cx18_start_v4l2_encode_stream(s)) {
-		/* We're done */
+	अगर (!cx18_start_v4l2_encode_stream(s)) अणु
+		/* We're करोne */
 		set_bit(CX18_F_S_APPL_IO, &s->s_flags);
-		/* Resume a possibly paused encoder */
-		if (test_and_clear_bit(CX18_F_I_ENC_PAUSED, &cx->i_flags))
+		/* Resume a possibly छोड़ोd encoder */
+		अगर (test_and_clear_bit(CX18_F_I_ENC_PAUSED, &cx->i_flags))
 			cx18_vapi(cx, CX18_CPU_CAPTURE_PAUSE, 1, s->handle);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 start_failed:
 	CX18_DEBUG_WARN("Failed to start capturing for stream %s\n", s->name);
 
 	/*
-	 * The associated VBI and IDX streams for internal use are released
-	 * automatically when the MPG stream is released.  We only need to stop
+	 * The associated VBI and IDX streams क्रम पूर्णांकernal use are released
+	 * स्वतःmatically when the MPG stream is released.  We only need to stop
 	 * the associated stream.
 	 */
-	if (s->type == CX18_ENC_STREAM_TYPE_MPG) {
-		/* Stop the IDX stream which is always for internal use */
-		if (test_bit(CX18_F_S_STREAMING, &s_idx->s_flags)) {
+	अगर (s->type == CX18_ENC_STREAM_TYPE_MPG) अणु
+		/* Stop the IDX stream which is always क्रम पूर्णांकernal use */
+		अगर (test_bit(CX18_F_S_STREAMING, &s_idx->s_flags)) अणु
 			cx18_stop_v4l2_encode_stream(s_idx, 0);
 			clear_bit(CX18_F_S_STREAMING, &s_idx->s_flags);
-		}
-		/* Stop the VBI stream, if only running for internal use */
-		if (test_bit(CX18_F_S_STREAMING, &s_vbi->s_flags) &&
-		    !test_bit(CX18_F_S_APPL_IO, &s_vbi->s_flags)) {
+		पूर्ण
+		/* Stop the VBI stream, अगर only running क्रम पूर्णांकernal use */
+		अगर (test_bit(CX18_F_S_STREAMING, &s_vbi->s_flags) &&
+		    !test_bit(CX18_F_S_APPL_IO, &s_vbi->s_flags)) अणु
 			cx18_stop_v4l2_encode_stream(s_vbi, 0);
 			clear_bit(CX18_F_S_STREAMING, &s_vbi->s_flags);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	clear_bit(CX18_F_S_STREAMING, &s->s_flags);
 	cx18_release_stream(s); /* Also releases associated streams */
-	return -EIO;
-}
+	वापस -EIO;
+पूर्ण
 
-ssize_t cx18_v4l2_read(struct file *filp, char __user *buf, size_t count,
+sमाप_प्रकार cx18_v4l2_पढ़ो(काष्ठा file *filp, अक्षर __user *buf, माप_प्रकार count,
 		loff_t *pos)
-{
-	struct cx18_open_id *id = file2id(filp);
-	struct cx18 *cx = id->cx;
-	struct cx18_stream *s = &cx->streams[id->type];
-	int rc;
+अणु
+	काष्ठा cx18_खोलो_id *id = file2id(filp);
+	काष्ठा cx18 *cx = id->cx;
+	काष्ठा cx18_stream *s = &cx->streams[id->type];
+	पूर्णांक rc;
 
-	CX18_DEBUG_HI_FILE("read %zd bytes from %s\n", count, s->name);
+	CX18_DEBUG_HI_खाता("read %zd bytes from %s\n", count, s->name);
 
 	mutex_lock(&cx->serialize_lock);
 	rc = cx18_start_capture(id);
 	mutex_unlock(&cx->serialize_lock);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if ((s->vb_type == V4L2_BUF_TYPE_VIDEO_CAPTURE) &&
-		(id->type == CX18_ENC_STREAM_TYPE_YUV)) {
-		return videobuf_read_stream(&s->vbuf_q, buf, count, pos, 0,
+	अगर ((s->vb_type == V4L2_BUF_TYPE_VIDEO_CAPTURE) &&
+		(id->type == CX18_ENC_STREAM_TYPE_YUV)) अणु
+		वापस videobuf_पढ़ो_stream(&s->vbuf_q, buf, count, pos, 0,
 			filp->f_flags & O_NONBLOCK);
-	}
+	पूर्ण
 
-	return cx18_read_pos(s, buf, count, pos, filp->f_flags & O_NONBLOCK);
-}
+	वापस cx18_पढ़ो_pos(s, buf, count, pos, filp->f_flags & O_NONBLOCK);
+पूर्ण
 
-__poll_t cx18_v4l2_enc_poll(struct file *filp, poll_table *wait)
-{
-	__poll_t req_events = poll_requested_events(wait);
-	struct cx18_open_id *id = file2id(filp);
-	struct cx18 *cx = id->cx;
-	struct cx18_stream *s = &cx->streams[id->type];
-	int eof = test_bit(CX18_F_S_STREAMOFF, &s->s_flags);
+__poll_t cx18_v4l2_enc_poll(काष्ठा file *filp, poll_table *रुको)
+अणु
+	__poll_t req_events = poll_requested_events(रुको);
+	काष्ठा cx18_खोलो_id *id = file2id(filp);
+	काष्ठा cx18 *cx = id->cx;
+	काष्ठा cx18_stream *s = &cx->streams[id->type];
+	पूर्णांक eof = test_bit(CX18_F_S_STREAMOFF, &s->s_flags);
 	__poll_t res = 0;
 
-	/* Start a capture if there is none */
-	if (!eof && !test_bit(CX18_F_S_STREAMING, &s->s_flags) &&
-			(req_events & (EPOLLIN | EPOLLRDNORM))) {
-		int rc;
+	/* Start a capture अगर there is none */
+	अगर (!eof && !test_bit(CX18_F_S_STREAMING, &s->s_flags) &&
+			(req_events & (EPOLLIN | EPOLLRDNORM))) अणु
+		पूर्णांक rc;
 
 		mutex_lock(&cx->serialize_lock);
 		rc = cx18_start_capture(id);
 		mutex_unlock(&cx->serialize_lock);
-		if (rc) {
+		अगर (rc) अणु
 			CX18_DEBUG_INFO("Could not start capture for %s (%d)\n",
 					s->name, rc);
-			return EPOLLERR;
-		}
-		CX18_DEBUG_FILE("Encoder poll started capture\n");
-	}
+			वापस EPOLLERR;
+		पूर्ण
+		CX18_DEBUG_खाता("Encoder poll started capture\n");
+	पूर्ण
 
-	if ((s->vb_type == V4L2_BUF_TYPE_VIDEO_CAPTURE) &&
-		(id->type == CX18_ENC_STREAM_TYPE_YUV)) {
-		__poll_t videobuf_poll = videobuf_poll_stream(filp, &s->vbuf_q, wait);
+	अगर ((s->vb_type == V4L2_BUF_TYPE_VIDEO_CAPTURE) &&
+		(id->type == CX18_ENC_STREAM_TYPE_YUV)) अणु
+		__poll_t videobuf_poll = videobuf_poll_stream(filp, &s->vbuf_q, रुको);
 
-		if (v4l2_event_pending(&id->fh))
+		अगर (v4l2_event_pending(&id->fh))
 			res |= EPOLLPRI;
-		if (eof && videobuf_poll == EPOLLERR)
-			return res | EPOLLHUP;
-		return res | videobuf_poll;
-	}
+		अगर (eof && videobuf_poll == EPOLLERR)
+			वापस res | EPOLLHUP;
+		वापस res | videobuf_poll;
+	पूर्ण
 
-	/* add stream's waitq to the poll list */
-	CX18_DEBUG_HI_FILE("Encoder poll\n");
-	if (v4l2_event_pending(&id->fh))
+	/* add stream's रुकोq to the poll list */
+	CX18_DEBUG_HI_खाता("Encoder poll\n");
+	अगर (v4l2_event_pending(&id->fh))
 		res |= EPOLLPRI;
-	else
-		poll_wait(filp, &s->waitq, wait);
+	अन्यथा
+		poll_रुको(filp, &s->रुकोq, रुको);
 
-	if (atomic_read(&s->q_full.depth))
-		return res | EPOLLIN | EPOLLRDNORM;
-	if (eof)
-		return res | EPOLLHUP;
-	return res;
-}
+	अगर (atomic_पढ़ो(&s->q_full.depth))
+		वापस res | EPOLLIN | EPOLLRDNORM;
+	अगर (eof)
+		वापस res | EPOLLHUP;
+	वापस res;
+पूर्ण
 
-int cx18_v4l2_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	struct cx18_open_id *id = file->private_data;
-	struct cx18 *cx = id->cx;
-	struct cx18_stream *s = &cx->streams[id->type];
-	int eof = test_bit(CX18_F_S_STREAMOFF, &s->s_flags);
+पूर्णांक cx18_v4l2_mmap(काष्ठा file *file, काष्ठा vm_area_काष्ठा *vma)
+अणु
+	काष्ठा cx18_खोलो_id *id = file->निजी_data;
+	काष्ठा cx18 *cx = id->cx;
+	काष्ठा cx18_stream *s = &cx->streams[id->type];
+	पूर्णांक eof = test_bit(CX18_F_S_STREAMOFF, &s->s_flags);
 
-	if ((s->vb_type == V4L2_BUF_TYPE_VIDEO_CAPTURE) &&
-		(id->type == CX18_ENC_STREAM_TYPE_YUV)) {
+	अगर ((s->vb_type == V4L2_BUF_TYPE_VIDEO_CAPTURE) &&
+		(id->type == CX18_ENC_STREAM_TYPE_YUV)) अणु
 
-		/* Start a capture if there is none */
-		if (!eof && !test_bit(CX18_F_S_STREAMING, &s->s_flags)) {
-			int rc;
+		/* Start a capture अगर there is none */
+		अगर (!eof && !test_bit(CX18_F_S_STREAMING, &s->s_flags)) अणु
+			पूर्णांक rc;
 
 			mutex_lock(&cx->serialize_lock);
 			rc = cx18_start_capture(id);
 			mutex_unlock(&cx->serialize_lock);
-			if (rc) {
+			अगर (rc) अणु
 				CX18_DEBUG_INFO(
 					"Could not start capture for %s (%d)\n",
 					s->name, rc);
-				return -EINVAL;
-			}
-			CX18_DEBUG_FILE("Encoder mmap started capture\n");
-		}
+				वापस -EINVAL;
+			पूर्ण
+			CX18_DEBUG_खाता("Encoder mmap started capture\n");
+		पूर्ण
 
-		return videobuf_mmap_mapper(&s->vbuf_q, vma);
-	}
+		वापस videobuf_mmap_mapper(&s->vbuf_q, vma);
+	पूर्ण
 
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-void cx18_vb_timeout(struct timer_list *t)
-{
-	struct cx18_stream *s = from_timer(s, t, vb_timeout);
-	struct cx18_videobuf_buffer *buf;
-	unsigned long flags;
+व्योम cx18_vb_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा cx18_stream *s = from_समयr(s, t, vb_समयout);
+	काष्ठा cx18_videobuf_buffer *buf;
+	अचिन्हित दीर्घ flags;
 
 	/* Return all of the buffers in error state, so the vbi/vid inode
-	 * can return from blocking.
+	 * can वापस from blocking.
 	 */
 	spin_lock_irqsave(&s->vb_lock, flags);
-	while (!list_empty(&s->vb_capture)) {
+	जबतक (!list_empty(&s->vb_capture)) अणु
 		buf = list_entry(s->vb_capture.next,
-			struct cx18_videobuf_buffer, vb.queue);
+			काष्ठा cx18_videobuf_buffer, vb.queue);
 		list_del(&buf->vb.queue);
 		buf->vb.state = VIDEOBUF_ERROR;
-		wake_up(&buf->vb.done);
-	}
+		wake_up(&buf->vb.करोne);
+	पूर्ण
 	spin_unlock_irqrestore(&s->vb_lock, flags);
-}
+पूर्ण
 
-void cx18_stop_capture(struct cx18_open_id *id, int gop_end)
-{
-	struct cx18 *cx = id->cx;
-	struct cx18_stream *s = &cx->streams[id->type];
-	struct cx18_stream *s_vbi = &cx->streams[CX18_ENC_STREAM_TYPE_VBI];
-	struct cx18_stream *s_idx = &cx->streams[CX18_ENC_STREAM_TYPE_IDX];
+व्योम cx18_stop_capture(काष्ठा cx18_खोलो_id *id, पूर्णांक gop_end)
+अणु
+	काष्ठा cx18 *cx = id->cx;
+	काष्ठा cx18_stream *s = &cx->streams[id->type];
+	काष्ठा cx18_stream *s_vbi = &cx->streams[CX18_ENC_STREAM_TYPE_VBI];
+	काष्ठा cx18_stream *s_idx = &cx->streams[CX18_ENC_STREAM_TYPE_IDX];
 
 	CX18_DEBUG_IOCTL("close() of %s\n", s->name);
 
 	/* 'Unclaim' this stream */
 
 	/* Stop capturing */
-	if (test_bit(CX18_F_S_STREAMING, &s->s_flags)) {
+	अगर (test_bit(CX18_F_S_STREAMING, &s->s_flags)) अणु
 		CX18_DEBUG_INFO("close stopping capture\n");
-		if (id->type == CX18_ENC_STREAM_TYPE_MPG) {
-			/* Stop internal use associated VBI and IDX streams */
-			if (test_bit(CX18_F_S_STREAMING, &s_vbi->s_flags) &&
-			    !test_bit(CX18_F_S_APPL_IO, &s_vbi->s_flags)) {
+		अगर (id->type == CX18_ENC_STREAM_TYPE_MPG) अणु
+			/* Stop पूर्णांकernal use associated VBI and IDX streams */
+			अगर (test_bit(CX18_F_S_STREAMING, &s_vbi->s_flags) &&
+			    !test_bit(CX18_F_S_APPL_IO, &s_vbi->s_flags)) अणु
 				CX18_DEBUG_INFO("close stopping embedded VBI capture\n");
 				cx18_stop_v4l2_encode_stream(s_vbi, 0);
-			}
-			if (test_bit(CX18_F_S_STREAMING, &s_idx->s_flags)) {
+			पूर्ण
+			अगर (test_bit(CX18_F_S_STREAMING, &s_idx->s_flags)) अणु
 				CX18_DEBUG_INFO("close stopping IDX capture\n");
 				cx18_stop_v4l2_encode_stream(s_idx, 0);
-			}
-		}
-		if (id->type == CX18_ENC_STREAM_TYPE_VBI &&
+			पूर्ण
+		पूर्ण
+		अगर (id->type == CX18_ENC_STREAM_TYPE_VBI &&
 		    test_bit(CX18_F_S_INTERNAL_USE, &s->s_flags))
-			/* Also used internally, don't stop capturing */
+			/* Also used पूर्णांकernally, करोn't stop capturing */
 			s->id = -1;
-		else
+		अन्यथा
 			cx18_stop_v4l2_encode_stream(s, gop_end);
-	}
-	if (!gop_end) {
+	पूर्ण
+	अगर (!gop_end) अणु
 		clear_bit(CX18_F_S_APPL_IO, &s->s_flags);
 		clear_bit(CX18_F_S_STREAMOFF, &s->s_flags);
 		cx18_release_stream(s);
-	}
-}
+	पूर्ण
+पूर्ण
 
-int cx18_v4l2_close(struct file *filp)
-{
-	struct v4l2_fh *fh = filp->private_data;
-	struct cx18_open_id *id = fh2id(fh);
-	struct cx18 *cx = id->cx;
-	struct cx18_stream *s = &cx->streams[id->type];
+पूर्णांक cx18_v4l2_बंद(काष्ठा file *filp)
+अणु
+	काष्ठा v4l2_fh *fh = filp->निजी_data;
+	काष्ठा cx18_खोलो_id *id = fh2id(fh);
+	काष्ठा cx18 *cx = id->cx;
+	काष्ठा cx18_stream *s = &cx->streams[id->type];
 
 	CX18_DEBUG_IOCTL("close() of %s\n", s->name);
 
 	mutex_lock(&cx->serialize_lock);
 	/* Stop radio */
-	if (id->type == CX18_ENC_STREAM_TYPE_RAD &&
-			v4l2_fh_is_singular_file(filp)) {
-		/* Closing radio device, return to TV mode */
+	अगर (id->type == CX18_ENC_STREAM_TYPE_RAD &&
+			v4l2_fh_is_singular_file(filp)) अणु
+		/* Closing radio device, वापस to TV mode */
 		cx18_mute(cx);
-		/* Mark that the radio is no longer in use */
+		/* Mark that the radio is no दीर्घer in use */
 		clear_bit(CX18_F_I_RADIO_USER, &cx->i_flags);
 		/* Switch tuner to TV */
 		cx18_call_all(cx, video, s_std, cx->std);
 		/* Select correct audio input (i.e. TV tuner or Line in) */
 		cx18_audio_set_io(cx);
-		if (atomic_read(&cx->ana_capturing) > 0) {
-			/* Undo video mute */
+		अगर (atomic_पढ़ो(&cx->ana_capturing) > 0) अणु
+			/* Unकरो video mute */
 			cx18_vapi(cx, CX18_CPU_SET_VIDEO_MUTE, 2, s->handle,
 			    (v4l2_ctrl_g_ctrl(cx->cxhdl.video_mute) |
 			    (v4l2_ctrl_g_ctrl(cx->cxhdl.video_mute_yuv) << 8)));
-		}
-		/* Done! Unmute and continue. */
+		पूर्ण
+		/* Done! Unmute and जारी. */
 		cx18_unmute(cx);
-	}
+	पूर्ण
 
 	v4l2_fh_del(fh);
-	v4l2_fh_exit(fh);
+	v4l2_fh_निकास(fh);
 
 	/* 'Unclaim' this stream */
-	if (s->id == id->open_id)
+	अगर (s->id == id->खोलो_id)
 		cx18_stop_capture(id, 0);
-	kfree(id);
+	kमुक्त(id);
 	mutex_unlock(&cx->serialize_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int cx18_serialized_open(struct cx18_stream *s, struct file *filp)
-{
-	struct cx18 *cx = s->cx;
-	struct cx18_open_id *item;
+अटल पूर्णांक cx18_serialized_खोलो(काष्ठा cx18_stream *s, काष्ठा file *filp)
+अणु
+	काष्ठा cx18 *cx = s->cx;
+	काष्ठा cx18_खोलो_id *item;
 
-	CX18_DEBUG_FILE("open %s\n", s->name);
+	CX18_DEBUG_खाता("open %s\n", s->name);
 
 	/* Allocate memory */
-	item = kzalloc(sizeof(struct cx18_open_id), GFP_KERNEL);
-	if (NULL == item) {
+	item = kzalloc(माप(काष्ठा cx18_खोलो_id), GFP_KERNEL);
+	अगर (शून्य == item) अणु
 		CX18_DEBUG_WARN("nomem on v4l2 open\n");
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 	v4l2_fh_init(&item->fh, &s->video_dev);
 
 	item->cx = cx;
 	item->type = s->type;
 
-	item->open_id = cx->open_id++;
-	filp->private_data = &item->fh;
+	item->खोलो_id = cx->खोलो_id++;
+	filp->निजी_data = &item->fh;
 	v4l2_fh_add(&item->fh);
 
-	if (item->type == CX18_ENC_STREAM_TYPE_RAD &&
-			v4l2_fh_is_singular_file(filp)) {
-		if (!test_bit(CX18_F_I_RADIO_USER, &cx->i_flags)) {
-			if (atomic_read(&cx->ana_capturing) > 0) {
-				/* switching to radio while capture is
+	अगर (item->type == CX18_ENC_STREAM_TYPE_RAD &&
+			v4l2_fh_is_singular_file(filp)) अणु
+		अगर (!test_bit(CX18_F_I_RADIO_USER, &cx->i_flags)) अणु
+			अगर (atomic_पढ़ो(&cx->ana_capturing) > 0) अणु
+				/* चयनing to radio जबतक capture is
 				   in progress is not polite */
 				v4l2_fh_del(&item->fh);
-				v4l2_fh_exit(&item->fh);
-				kfree(item);
-				return -EBUSY;
-			}
-		}
+				v4l2_fh_निकास(&item->fh);
+				kमुक्त(item);
+				वापस -EBUSY;
+			पूर्ण
+		पूर्ण
 
 		/* Mark that the radio is being used. */
 		set_bit(CX18_F_I_RADIO_USER, &cx->i_flags);
@@ -820,55 +821,55 @@ static int cx18_serialized_open(struct cx18_stream *s, struct file *filp)
 		cx18_call_all(cx, tuner, s_radio);
 		/* Select the correct audio input (i.e. radio tuner) */
 		cx18_audio_set_io(cx);
-		/* Done! Unmute and continue. */
+		/* Done! Unmute and जारी. */
 		cx18_unmute(cx);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-int cx18_v4l2_open(struct file *filp)
-{
-	int res;
-	struct video_device *video_dev = video_devdata(filp);
-	struct cx18_stream *s = video_get_drvdata(video_dev);
-	struct cx18 *cx = s->cx;
+पूर्णांक cx18_v4l2_खोलो(काष्ठा file *filp)
+अणु
+	पूर्णांक res;
+	काष्ठा video_device *video_dev = video_devdata(filp);
+	काष्ठा cx18_stream *s = video_get_drvdata(video_dev);
+	काष्ठा cx18 *cx = s->cx;
 
 	mutex_lock(&cx->serialize_lock);
-	if (cx18_init_on_first_open(cx)) {
+	अगर (cx18_init_on_first_खोलो(cx)) अणु
 		CX18_ERR("Failed to initialize on %s\n",
 			 video_device_node_name(video_dev));
 		mutex_unlock(&cx->serialize_lock);
-		return -ENXIO;
-	}
-	res = cx18_serialized_open(s, filp);
+		वापस -ENXIO;
+	पूर्ण
+	res = cx18_serialized_खोलो(s, filp);
 	mutex_unlock(&cx->serialize_lock);
-	return res;
-}
+	वापस res;
+पूर्ण
 
-void cx18_mute(struct cx18 *cx)
-{
+व्योम cx18_mute(काष्ठा cx18 *cx)
+अणु
 	u32 h;
-	if (atomic_read(&cx->ana_capturing)) {
+	अगर (atomic_पढ़ो(&cx->ana_capturing)) अणु
 		h = cx18_find_handle(cx);
-		if (h != CX18_INVALID_TASK_HANDLE)
+		अगर (h != CX18_INVALID_TASK_HANDLE)
 			cx18_vapi(cx, CX18_CPU_SET_AUDIO_MUTE, 2, h, 1);
-		else
+		अन्यथा
 			CX18_ERR("Can't find valid task handle for mute\n");
-	}
+	पूर्ण
 	CX18_DEBUG_INFO("Mute\n");
-}
+पूर्ण
 
-void cx18_unmute(struct cx18 *cx)
-{
+व्योम cx18_unmute(काष्ठा cx18 *cx)
+अणु
 	u32 h;
-	if (atomic_read(&cx->ana_capturing)) {
+	अगर (atomic_पढ़ो(&cx->ana_capturing)) अणु
 		h = cx18_find_handle(cx);
-		if (h != CX18_INVALID_TASK_HANDLE) {
-			cx18_msleep_timeout(100, 0);
+		अगर (h != CX18_INVALID_TASK_HANDLE) अणु
+			cx18_msleep_समयout(100, 0);
 			cx18_vapi(cx, CX18_CPU_SET_MISC_PARAMETERS, 2, h, 12);
 			cx18_vapi(cx, CX18_CPU_SET_AUDIO_MUTE, 2, h, 0);
-		} else
+		पूर्ण अन्यथा
 			CX18_ERR("Can't find valid task handle for unmute\n");
-	}
+	पूर्ण
 	CX18_DEBUG_INFO("Unmute\n");
-}
+पूर्ण

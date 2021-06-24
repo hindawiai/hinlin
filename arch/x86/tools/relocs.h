@@ -1,38 +1,39 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef RELOCS_H
-#define RELOCS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित RELOCS_H
+#घोषणा RELOCS_H
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <inttypes.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <elf.h>
-#include <byteswap.h>
-#define USE_BSD
-#include <endian.h>
-#include <regex.h>
-#include <tools/le_byteshift.h>
+#समावेश <मानकपन.स>
+#समावेश <मानकतर्क.स>
+#समावेश <मानककोष.स>
+#समावेश <मानक_निवेशt.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <unistd.h>
+#समावेश <elf.h>
+#समावेश <byteswap.h>
+#घोषणा USE_BSD
+#समावेश <endian.h>
+#समावेश <regex.h>
+#समावेश <tools/le_byteshअगरt.h>
 
-void die(char *fmt, ...) __attribute__((noreturn));
+व्योम die(अक्षर *fmt, ...) __attribute__((noवापस));
 
-#define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+#घोषणा ARRAY_SIZE(x) (माप(x) / माप((x)[0]))
 
-enum symtype {
+क्रमागत symtype अणु
 	S_ABS,
 	S_REL,
 	S_SEG,
 	S_LIN,
 	S_NSYMTYPES
-};
+पूर्ण;
 
-void process_32(FILE *fp, int use_real_mode, int as_text,
-		int show_absolute_syms, int show_absolute_relocs,
-		int show_reloc_info);
-void process_64(FILE *fp, int use_real_mode, int as_text,
-		int show_absolute_syms, int show_absolute_relocs,
-		int show_reloc_info);
-#endif /* RELOCS_H */
+व्योम process_32(खाता *fp, पूर्णांक use_real_mode, पूर्णांक as_text,
+		पूर्णांक show_असलolute_syms, पूर्णांक show_असलolute_relocs,
+		पूर्णांक show_reloc_info);
+व्योम process_64(खाता *fp, पूर्णांक use_real_mode, पूर्णांक as_text,
+		पूर्णांक show_असलolute_syms, पूर्णांक show_असलolute_relocs,
+		पूर्णांक show_reloc_info);
+#पूर्ण_अगर /* RELOCS_H */

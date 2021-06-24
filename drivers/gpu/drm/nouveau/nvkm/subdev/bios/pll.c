@@ -1,14 +1,15 @@
+<शैली गुरु>
 /*
  * Copyright 2005-2006 Erik Waling
  * Copyright 2006 Stephane Marchesin
  * Copyright 2007-2009 Stuart Bennett
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,260 +22,260 @@
  * OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-#include <subdev/bios.h>
-#include <subdev/bios/bit.h>
-#include <subdev/bios/bmp.h>
-#include <subdev/bios/pll.h>
-#include <subdev/vga.h>
+#समावेश <subdev/मूलप्रण.स>
+#समावेश <subdev/bios/bit.h>
+#समावेश <subdev/bios/bmp.h>
+#समावेश <subdev/bios/pll.h>
+#समावेश <subdev/vga.h>
 
 
-struct pll_mapping {
+काष्ठा pll_mapping अणु
 	u8  type;
 	u32 reg;
-};
+पूर्ण;
 
-static struct pll_mapping
-nv04_pll_mapping[] = {
-	{ PLL_CORE  , 0x680500 },
-	{ PLL_MEMORY, 0x680504 },
-	{ PLL_VPLL0 , 0x680508 },
-	{ PLL_VPLL1 , 0x680520 },
-	{}
-};
+अटल काष्ठा pll_mapping
+nv04_pll_mapping[] = अणु
+	अणु PLL_CORE  , 0x680500 पूर्ण,
+	अणु PLL_MEMORY, 0x680504 पूर्ण,
+	अणु PLL_VPLL0 , 0x680508 पूर्ण,
+	अणु PLL_VPLL1 , 0x680520 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct pll_mapping
-nv40_pll_mapping[] = {
-	{ PLL_CORE  , 0x004000 },
-	{ PLL_MEMORY, 0x004020 },
-	{ PLL_VPLL0 , 0x680508 },
-	{ PLL_VPLL1 , 0x680520 },
-	{}
-};
+अटल काष्ठा pll_mapping
+nv40_pll_mapping[] = अणु
+	अणु PLL_CORE  , 0x004000 पूर्ण,
+	अणु PLL_MEMORY, 0x004020 पूर्ण,
+	अणु PLL_VPLL0 , 0x680508 पूर्ण,
+	अणु PLL_VPLL1 , 0x680520 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct pll_mapping
-nv50_pll_mapping[] = {
-	{ PLL_CORE  , 0x004028 },
-	{ PLL_SHADER, 0x004020 },
-	{ PLL_UNK03 , 0x004000 },
-	{ PLL_MEMORY, 0x004008 },
-	{ PLL_UNK40 , 0x00e810 },
-	{ PLL_UNK41 , 0x00e818 },
-	{ PLL_UNK42 , 0x00e824 },
-	{ PLL_VPLL0 , 0x614100 },
-	{ PLL_VPLL1 , 0x614900 },
-	{}
-};
+अटल काष्ठा pll_mapping
+nv50_pll_mapping[] = अणु
+	अणु PLL_CORE  , 0x004028 पूर्ण,
+	अणु PLL_SHADER, 0x004020 पूर्ण,
+	अणु PLL_UNK03 , 0x004000 पूर्ण,
+	अणु PLL_MEMORY, 0x004008 पूर्ण,
+	अणु PLL_UNK40 , 0x00e810 पूर्ण,
+	अणु PLL_UNK41 , 0x00e818 पूर्ण,
+	अणु PLL_UNK42 , 0x00e824 पूर्ण,
+	अणु PLL_VPLL0 , 0x614100 पूर्ण,
+	अणु PLL_VPLL1 , 0x614900 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static struct pll_mapping
-g84_pll_mapping[] = {
-	{ PLL_CORE  , 0x004028 },
-	{ PLL_SHADER, 0x004020 },
-	{ PLL_MEMORY, 0x004008 },
-	{ PLL_VDEC  , 0x004030 },
-	{ PLL_UNK41 , 0x00e818 },
-	{ PLL_VPLL0 , 0x614100 },
-	{ PLL_VPLL1 , 0x614900 },
-	{}
-};
+अटल काष्ठा pll_mapping
+g84_pll_mapping[] = अणु
+	अणु PLL_CORE  , 0x004028 पूर्ण,
+	अणु PLL_SHADER, 0x004020 पूर्ण,
+	अणु PLL_MEMORY, 0x004008 पूर्ण,
+	अणु PLL_VDEC  , 0x004030 पूर्ण,
+	अणु PLL_UNK41 , 0x00e818 पूर्ण,
+	अणु PLL_VPLL0 , 0x614100 पूर्ण,
+	अणु PLL_VPLL1 , 0x614900 पूर्ण,
+	अणुपूर्ण
+पूर्ण;
 
-static u32
-pll_limits_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
-{
-	struct bit_entry bit_C;
+अटल u32
+pll_limits_table(काष्ठा nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
+अणु
+	काष्ठा bit_entry bit_C;
 	u32 data = 0x0000;
 
-	if (!bit_entry(bios, 'C', &bit_C)) {
-		if (bit_C.version == 1 && bit_C.length >= 10)
+	अगर (!bit_entry(bios, 'C', &bit_C)) अणु
+		अगर (bit_C.version == 1 && bit_C.length >= 10)
 			data = nvbios_rd16(bios, bit_C.offset + 8);
-		if (bit_C.version == 2 && bit_C.length >= 4)
+		अगर (bit_C.version == 2 && bit_C.length >= 4)
 			data = nvbios_rd32(bios, bit_C.offset + 0);
-		if (data) {
+		अगर (data) अणु
 			*ver = nvbios_rd08(bios, data + 0);
 			*hdr = nvbios_rd08(bios, data + 1);
 			*len = nvbios_rd08(bios, data + 2);
 			*cnt = nvbios_rd08(bios, data + 3);
-			return data;
-		}
-	}
+			वापस data;
+		पूर्ण
+	पूर्ण
 
-	if (bmp_version(bios) >= 0x0524) {
+	अगर (bmp_version(bios) >= 0x0524) अणु
 		data = nvbios_rd16(bios, bios->bmp_offset + 142);
-		if (data) {
+		अगर (data) अणु
 			*ver = nvbios_rd08(bios, data + 0);
 			*hdr = 1;
 			*cnt = 1;
 			*len = 0x18;
-			return data;
-		}
-	}
+			वापस data;
+		पूर्ण
+	पूर्ण
 
 	*ver = 0x00;
-	return data;
-}
+	वापस data;
+पूर्ण
 
-static struct pll_mapping *
-pll_map(struct nvkm_bios *bios)
-{
-	struct nvkm_device *device = bios->subdev.device;
-	switch (device->card_type) {
-	case NV_04:
-	case NV_10:
-	case NV_11:
-	case NV_20:
-	case NV_30:
-		return nv04_pll_mapping;
-	case NV_40:
-		return nv40_pll_mapping;
-	case NV_50:
-		if (device->chipset == 0x50)
-			return nv50_pll_mapping;
-		else
-		if (device->chipset <  0xa3 ||
+अटल काष्ठा pll_mapping *
+pll_map(काष्ठा nvkm_bios *bios)
+अणु
+	काष्ठा nvkm_device *device = bios->subdev.device;
+	चयन (device->card_type) अणु
+	हाल NV_04:
+	हाल NV_10:
+	हाल NV_11:
+	हाल NV_20:
+	हाल NV_30:
+		वापस nv04_pll_mapping;
+	हाल NV_40:
+		वापस nv40_pll_mapping;
+	हाल NV_50:
+		अगर (device->chipset == 0x50)
+			वापस nv50_pll_mapping;
+		अन्यथा
+		अगर (device->chipset <  0xa3 ||
 		    device->chipset == 0xaa ||
 		    device->chipset == 0xac)
-			return g84_pll_mapping;
+			वापस g84_pll_mapping;
 		fallthrough;
-	default:
-		return NULL;
-	}
-}
+	शेष:
+		वापस शून्य;
+	पूर्ण
+पूर्ण
 
-static u32
-pll_map_reg(struct nvkm_bios *bios, u32 reg, u32 *type, u8 *ver, u8 *len)
-{
-	struct pll_mapping *map;
+अटल u32
+pll_map_reg(काष्ठा nvkm_bios *bios, u32 reg, u32 *type, u8 *ver, u8 *len)
+अणु
+	काष्ठा pll_mapping *map;
 	u8  hdr, cnt;
 	u32 data;
 
 	data = pll_limits_table(bios, ver, &hdr, &cnt, len);
-	if (data && *ver >= 0x30) {
+	अगर (data && *ver >= 0x30) अणु
 		data += hdr;
-		while (cnt--) {
-			if (nvbios_rd32(bios, data + 3) == reg) {
+		जबतक (cnt--) अणु
+			अगर (nvbios_rd32(bios, data + 3) == reg) अणु
 				*type = nvbios_rd08(bios, data + 0);
-				return data;
-			}
+				वापस data;
+			पूर्ण
 			data += *len;
-		}
-		return 0x0000;
-	}
+		पूर्ण
+		वापस 0x0000;
+	पूर्ण
 
 	map = pll_map(bios);
-	while (map && map->reg) {
-		if (map->reg == reg && *ver >= 0x20) {
+	जबतक (map && map->reg) अणु
+		अगर (map->reg == reg && *ver >= 0x20) अणु
 			u32 addr = (data += hdr);
 			*type = map->type;
-			while (cnt--) {
-				if (nvbios_rd32(bios, data) == map->reg)
-					return data;
+			जबतक (cnt--) अणु
+				अगर (nvbios_rd32(bios, data) == map->reg)
+					वापस data;
 				data += *len;
-			}
-			return addr;
-		} else
-		if (map->reg == reg) {
+			पूर्ण
+			वापस addr;
+		पूर्ण अन्यथा
+		अगर (map->reg == reg) अणु
 			*type = map->type;
-			return data + 1;
-		}
+			वापस data + 1;
+		पूर्ण
 		map++;
-	}
+	पूर्ण
 
-	return 0x0000;
-}
+	वापस 0x0000;
+पूर्ण
 
-static u32
-pll_map_type(struct nvkm_bios *bios, u8 type, u32 *reg, u8 *ver, u8 *len)
-{
-	struct pll_mapping *map;
+अटल u32
+pll_map_type(काष्ठा nvkm_bios *bios, u8 type, u32 *reg, u8 *ver, u8 *len)
+अणु
+	काष्ठा pll_mapping *map;
 	u8  hdr, cnt;
 	u32 data;
 
 	data = pll_limits_table(bios, ver, &hdr, &cnt, len);
-	if (data && *ver >= 0x30) {
+	अगर (data && *ver >= 0x30) अणु
 		data += hdr;
-		while (cnt--) {
-			if (nvbios_rd08(bios, data + 0) == type) {
-				if (*ver < 0x50)
+		जबतक (cnt--) अणु
+			अगर (nvbios_rd08(bios, data + 0) == type) अणु
+				अगर (*ver < 0x50)
 					*reg = nvbios_rd32(bios, data + 3);
-				else
+				अन्यथा
 					*reg = 0;
-				return data;
-			}
+				वापस data;
+			पूर्ण
 			data += *len;
-		}
-		return 0x0000;
-	}
+		पूर्ण
+		वापस 0x0000;
+	पूर्ण
 
 	map = pll_map(bios);
-	while (map && map->reg) {
-		if (map->type == type && *ver >= 0x20) {
+	जबतक (map && map->reg) अणु
+		अगर (map->type == type && *ver >= 0x20) अणु
 			u32 addr = (data += hdr);
 			*reg = map->reg;
-			while (cnt--) {
-				if (nvbios_rd32(bios, data) == map->reg)
-					return data;
+			जबतक (cnt--) अणु
+				अगर (nvbios_rd32(bios, data) == map->reg)
+					वापस data;
 				data += *len;
-			}
-			return addr;
-		} else
-		if (map->type == type) {
+			पूर्ण
+			वापस addr;
+		पूर्ण अन्यथा
+		अगर (map->type == type) अणु
 			*reg = map->reg;
-			return data + 1;
-		}
+			वापस data + 1;
+		पूर्ण
 		map++;
-	}
+	पूर्ण
 
-	return 0x0000;
-}
+	वापस 0x0000;
+पूर्ण
 
-int
-nvbios_pll_parse(struct nvkm_bios *bios, u32 type, struct nvbios_pll *info)
-{
-	struct nvkm_subdev *subdev = &bios->subdev;
-	struct nvkm_device *device = subdev->device;
+पूर्णांक
+nvbios_pll_parse(काष्ठा nvkm_bios *bios, u32 type, काष्ठा nvbios_pll *info)
+अणु
+	काष्ठा nvkm_subdev *subdev = &bios->subdev;
+	काष्ठा nvkm_device *device = subdev->device;
 	u8  ver, len;
 	u32 reg = type;
 	u32 data;
 
-	if (type > PLL_MAX) {
+	अगर (type > PLL_MAX) अणु
 		reg  = type;
 		data = pll_map_reg(bios, reg, &type, &ver, &len);
-	} else {
+	पूर्ण अन्यथा अणु
 		data = pll_map_type(bios, type, &reg, &ver, &len);
-	}
+	पूर्ण
 
-	if (ver && !data)
-		return -ENOENT;
+	अगर (ver && !data)
+		वापस -ENOENT;
 
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 	info->type = type;
 	info->reg = reg;
 
-	switch (ver) {
-	case 0x00:
-		break;
-	case 0x10:
-	case 0x11:
+	चयन (ver) अणु
+	हाल 0x00:
+		अवरोध;
+	हाल 0x10:
+	हाल 0x11:
 		info->vco1.min_freq = nvbios_rd32(bios, data + 0);
 		info->vco1.max_freq = nvbios_rd32(bios, data + 4);
 		info->vco2.min_freq = nvbios_rd32(bios, data + 8);
 		info->vco2.max_freq = nvbios_rd32(bios, data + 12);
 		info->vco1.min_inputfreq = nvbios_rd32(bios, data + 16);
 		info->vco2.min_inputfreq = nvbios_rd32(bios, data + 20);
-		info->vco1.max_inputfreq = INT_MAX;
-		info->vco2.max_inputfreq = INT_MAX;
+		info->vco1.max_inputfreq = पूर्णांक_उच्च;
+		info->vco2.max_inputfreq = पूर्णांक_उच्च;
 
 		info->max_p = 0x7;
 		info->max_p_usable = 0x6;
 
 		/* these values taken from nv30/31/36 */
-		switch (bios->version.chip) {
-		case 0x36:
+		चयन (bios->version.chip) अणु
+		हाल 0x36:
 			info->vco1.min_n = 0x5;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			info->vco1.min_n = 0x1;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		info->vco1.max_n = 0xff;
 		info->vco1.min_m = 0x1;
 		info->vco1.max_m = 0xd;
@@ -286,20 +287,20 @@ nvbios_pll_parse(struct nvkm_bios *bios, u32 type, struct nvbios_pll *info)
 		 * save a comparison
 		 */
 		info->vco2.min_n = 0x4;
-		switch (bios->version.chip) {
-		case 0x30:
-		case 0x35:
+		चयन (bios->version.chip) अणु
+		हाल 0x30:
+		हाल 0x35:
 			info->vco2.max_n = 0x1f;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			info->vco2.max_n = 0x28;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		info->vco2.min_m = 0x1;
 		info->vco2.max_m = 0x4;
-		break;
-	case 0x20:
-	case 0x21:
+		अवरोध;
+	हाल 0x20:
+	हाल 0x21:
 		info->vco1.min_freq = nvbios_rd16(bios, data + 4) * 1000;
 		info->vco1.max_freq = nvbios_rd16(bios, data + 6) * 1000;
 		info->vco2.min_freq = nvbios_rd16(bios, data + 8) * 1000;
@@ -319,14 +320,14 @@ nvbios_pll_parse(struct nvkm_bios *bios, u32 type, struct nvbios_pll *info)
 
 		info->max_p = nvbios_rd08(bios, data + 29);
 		info->max_p_usable = info->max_p;
-		if (bios->version.chip < 0x60)
+		अगर (bios->version.chip < 0x60)
 			info->max_p_usable = 0x6;
 		info->bias_p = nvbios_rd08(bios, data + 30);
 
-		if (len > 0x22)
+		अगर (len > 0x22)
 			info->refclk = nvbios_rd32(bios, data + 31);
-		break;
-	case 0x30:
+		अवरोध;
+	हाल 0x30:
 		data = nvbios_rd16(bios, data + 1);
 
 		info->vco1.min_freq = nvbios_rd16(bios, data + 0) * 1000;
@@ -348,8 +349,8 @@ nvbios_pll_parse(struct nvkm_bios *bios, u32 type, struct nvbios_pll *info)
 		info->max_p_usable = info->max_p = nvbios_rd08(bios, data + 25);
 		info->bias_p = nvbios_rd08(bios, data + 27);
 		info->refclk = nvbios_rd32(bios, data + 28);
-		break;
-	case 0x40:
+		अवरोध;
+	हाल 0x40:
 		info->refclk = nvbios_rd16(bios, data + 9) * 1000;
 		data = nvbios_rd16(bios, data + 1);
 
@@ -363,8 +364,8 @@ nvbios_pll_parse(struct nvkm_bios *bios, u32 type, struct nvbios_pll *info)
 		info->vco1.max_n = nvbios_rd08(bios, data + 11);
 		info->min_p = nvbios_rd08(bios, data + 12);
 		info->max_p = nvbios_rd08(bios, data + 13);
-		break;
-	case 0x50:
+		अवरोध;
+	हाल 0x50:
 		info->refclk = nvbios_rd16(bios, data + 1) * 1000;
 		/* info->refclk_alt = nvbios_rd16(bios, data + 3) * 1000; */
 		info->vco1.min_freq = nvbios_rd16(bios, data + 5) * 1000;
@@ -377,64 +378,64 @@ nvbios_pll_parse(struct nvkm_bios *bios, u32 type, struct nvbios_pll *info)
 		info->vco1.max_n = nvbios_rd08(bios, data + 16);
 		info->min_p = nvbios_rd08(bios, data + 17);
 		info->max_p = nvbios_rd08(bios, data + 18);
-		break;
-	default:
+		अवरोध;
+	शेष:
 		nvkm_error(subdev, "unknown pll limits version 0x%02x\n", ver);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (!info->refclk) {
+	अगर (!info->refclk) अणु
 		info->refclk = device->crystal;
-		if (bios->version.chip == 0x51) {
+		अगर (bios->version.chip == 0x51) अणु
 			u32 sel_clk = nvkm_rd32(device, 0x680524);
-			if ((info->reg == 0x680508 && sel_clk & 0x20) ||
-			    (info->reg == 0x680520 && sel_clk & 0x80)) {
-				if (nvkm_rdvgac(device, 0, 0x27) < 0xa3)
+			अगर ((info->reg == 0x680508 && sel_clk & 0x20) ||
+			    (info->reg == 0x680520 && sel_clk & 0x80)) अणु
+				अगर (nvkm_rdvgac(device, 0, 0x27) < 0xa3)
 					info->refclk = 200000;
-				else
+				अन्यथा
 					info->refclk = 25000;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	/*
-	 * By now any valid limit table ought to have set a max frequency for
-	 * vco1, so if it's zero it's either a pre limit table bios, or one
+	 * By now any valid limit table ought to have set a max frequency क्रम
+	 * vco1, so अगर it's zero it's either a pre limit table bios, or one
 	 * with an empty limit table (seen on nv18)
 	 */
-	if (!info->vco1.max_freq) {
+	अगर (!info->vco1.max_freq) अणु
 		info->vco1.max_freq = nvbios_rd32(bios, bios->bmp_offset + 67);
 		info->vco1.min_freq = nvbios_rd32(bios, bios->bmp_offset + 71);
-		if (bmp_version(bios) < 0x0506) {
+		अगर (bmp_version(bios) < 0x0506) अणु
 			info->vco1.max_freq = 256000;
 			info->vco1.min_freq = 128000;
-		}
+		पूर्ण
 
 		info->vco1.min_inputfreq = 0;
-		info->vco1.max_inputfreq = INT_MAX;
+		info->vco1.max_inputfreq = पूर्णांक_उच्च;
 		info->vco1.min_n = 0x1;
 		info->vco1.max_n = 0xff;
 		info->vco1.min_m = 0x1;
 
-		if (device->crystal == 13500) {
-			/* nv05 does this, nv11 doesn't, nv10 unknown */
-			if (bios->version.chip < 0x11)
+		अगर (device->crystal == 13500) अणु
+			/* nv05 करोes this, nv11 करोesn't, nv10 unknown */
+			अगर (bios->version.chip < 0x11)
 				info->vco1.min_m = 0x7;
 			info->vco1.max_m = 0xd;
-		} else {
-			if (bios->version.chip < 0x11)
+		पूर्ण अन्यथा अणु
+			अगर (bios->version.chip < 0x11)
 				info->vco1.min_m = 0x8;
 			info->vco1.max_m = 0xe;
-		}
+		पूर्ण
 
-		if (bios->version.chip <  0x17 ||
+		अगर (bios->version.chip <  0x17 ||
 		    bios->version.chip == 0x1a ||
 		    bios->version.chip == 0x20)
 			info->max_p = 4;
-		else
+		अन्यथा
 			info->max_p = 5;
 		info->max_p_usable = info->max_p;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

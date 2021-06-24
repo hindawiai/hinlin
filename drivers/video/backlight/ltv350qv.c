@@ -1,304 +1,305 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Power control for Samsung LTV350QV Quarter VGA LCD Panel
+ * Power control क्रम Samsung LTV350QV Quarter VGA LCD Panel
  *
- * Copyright (C) 2006, 2007 Atmel Corporation
+ * Copyright (C) 2006, 2007 Aपंचांगel Corporation
  */
-#include <linux/delay.h>
-#include <linux/err.h>
-#include <linux/fb.h>
-#include <linux/init.h>
-#include <linux/lcd.h>
-#include <linux/module.h>
-#include <linux/slab.h>
-#include <linux/spi/spi.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/err.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/init.h>
+#समावेश <linux/lcd.h>
+#समावेश <linux/module.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/spi/spi.h>
 
-#include "ltv350qv.h"
+#समावेश "ltv350qv.h"
 
-#define POWER_IS_ON(pwr)	((pwr) <= FB_BLANK_NORMAL)
+#घोषणा POWER_IS_ON(pwr)	((pwr) <= FB_BLANK_NORMAL)
 
-struct ltv350qv {
-	struct spi_device	*spi;
+काष्ठा ltv350qv अणु
+	काष्ठा spi_device	*spi;
 	u8			*buffer;
-	int			power;
-	struct lcd_device	*ld;
-};
+	पूर्णांक			घातer;
+	काष्ठा lcd_device	*ld;
+पूर्ण;
 
 /*
- * The power-on and power-off sequences are taken from the
- * LTV350QV-F04 data sheet from Samsung. The register definitions are
+ * The घातer-on and घातer-off sequences are taken from the
+ * LTV350QV-F04 data sheet from Samsung. The रेजिस्टर definitions are
  * taken from the S6F2002 command list also from Samsung. Both
- * documents are distributed with the AVR32 Linux BSP CD from Atmel.
+ * करोcuments are distributed with the AVR32 Linux BSP CD from Aपंचांगel.
  *
  * There's still some voodoo going on here, but it's a lot better than
  * in the first incarnation of the driver where all we had was the raw
  * numbers from the initialization sequence.
  */
-static int ltv350qv_write_reg(struct ltv350qv *lcd, u8 reg, u16 val)
-{
-	struct spi_message msg;
-	struct spi_transfer index_xfer = {
+अटल पूर्णांक ltv350qv_ग_लिखो_reg(काष्ठा ltv350qv *lcd, u8 reg, u16 val)
+अणु
+	काष्ठा spi_message msg;
+	काष्ठा spi_transfer index_xfer = अणु
 		.len		= 3,
 		.cs_change	= 1,
-	};
-	struct spi_transfer value_xfer = {
+	पूर्ण;
+	काष्ठा spi_transfer value_xfer = अणु
 		.len		= 3,
-	};
+	पूर्ण;
 
 	spi_message_init(&msg);
 
-	/* register index */
+	/* रेजिस्टर index */
 	lcd->buffer[0] = LTV_OPC_INDEX;
 	lcd->buffer[1] = 0x00;
 	lcd->buffer[2] = reg & 0x7f;
 	index_xfer.tx_buf = lcd->buffer;
 	spi_message_add_tail(&index_xfer, &msg);
 
-	/* register value */
+	/* रेजिस्टर value */
 	lcd->buffer[4] = LTV_OPC_DATA;
 	lcd->buffer[5] = val >> 8;
 	lcd->buffer[6] = val;
 	value_xfer.tx_buf = lcd->buffer + 4;
 	spi_message_add_tail(&value_xfer, &msg);
 
-	return spi_sync(lcd->spi, &msg);
-}
+	वापस spi_sync(lcd->spi, &msg);
+पूर्ण
 
 /* The comments are taken straight from the data sheet */
-static int ltv350qv_power_on(struct ltv350qv *lcd)
-{
-	int ret;
+अटल पूर्णांक ltv350qv_घातer_on(काष्ठा ltv350qv *lcd)
+अणु
+	पूर्णांक ret;
 
 	/* Power On Reset Display off State */
-	if (ltv350qv_write_reg(lcd, LTV_PWRCTL1, 0x0000))
-		goto err;
+	अगर (ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL1, 0x0000))
+		जाओ err;
 	usleep_range(15000, 16000);
 
 	/* Power Setting Function 1 */
-	if (ltv350qv_write_reg(lcd, LTV_PWRCTL1, LTV_VCOM_DISABLE))
-		goto err;
-	if (ltv350qv_write_reg(lcd, LTV_PWRCTL2, LTV_VCOML_ENABLE))
-		goto err_power1;
+	अगर (ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL1, LTV_VCOM_DISABLE))
+		जाओ err;
+	अगर (ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL2, LTV_VCOML_ENABLE))
+		जाओ err_घातer1;
 
 	/* Power Setting Function 2 */
-	if (ltv350qv_write_reg(lcd, LTV_PWRCTL1,
+	अगर (ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL1,
 			       LTV_VCOM_DISABLE | LTV_DRIVE_CURRENT(5)
 			       | LTV_SUPPLY_CURRENT(5)))
-		goto err_power2;
+		जाओ err_घातer2;
 
 	msleep(55);
 
-	/* Instruction Setting */
-	ret = ltv350qv_write_reg(lcd, LTV_IFCTL,
+	/* Inकाष्ठाion Setting */
+	ret = ltv350qv_ग_लिखो_reg(lcd, LTV_IFCTL,
 				 LTV_NMD | LTV_REV | LTV_NL(0x1d));
-	ret |= ltv350qv_write_reg(lcd, LTV_DATACTL,
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_DATACTL,
 				  LTV_DS_SAME | LTV_CHS_480
 				  | LTV_DF_RGB | LTV_RGB_BGR);
-	ret |= ltv350qv_write_reg(lcd, LTV_ENTRY_MODE,
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_ENTRY_MODE,
 				  LTV_VSPL_ACTIVE_LOW
 				  | LTV_HSPL_ACTIVE_LOW
 				  | LTV_DPL_SAMPLE_RISING
 				  | LTV_EPL_ACTIVE_LOW
 				  | LTV_SS_RIGHT_TO_LEFT);
-	ret |= ltv350qv_write_reg(lcd, LTV_GATECTL1, LTV_CLW(3));
-	ret |= ltv350qv_write_reg(lcd, LTV_GATECTL2,
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GATECTL1, LTV_CLW(3));
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GATECTL2,
 				  LTV_NW_INV_1LINE | LTV_FWI(3));
-	ret |= ltv350qv_write_reg(lcd, LTV_VBP, 0x000a);
-	ret |= ltv350qv_write_reg(lcd, LTV_HBP, 0x0021);
-	ret |= ltv350qv_write_reg(lcd, LTV_SOTCTL, LTV_SDT(3) | LTV_EQ(0));
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(0), 0x0103);
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(1), 0x0301);
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(2), 0x1f0f);
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(3), 0x1f0f);
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(4), 0x0707);
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(5), 0x0307);
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(6), 0x0707);
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(7), 0x0000);
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(8), 0x0004);
-	ret |= ltv350qv_write_reg(lcd, LTV_GAMMA(9), 0x0000);
-	if (ret)
-		goto err_settings;
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_VBP, 0x000a);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_HBP, 0x0021);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_SOTCTL, LTV_SDT(3) | LTV_EQ(0));
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(0), 0x0103);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(1), 0x0301);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(2), 0x1f0f);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(3), 0x1f0f);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(4), 0x0707);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(5), 0x0307);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(6), 0x0707);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(7), 0x0000);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(8), 0x0004);
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GAMMA(9), 0x0000);
+	अगर (ret)
+		जाओ err_settings;
 
 	/* Wait more than 2 frames */
 	msleep(20);
 
 	/* Display On Sequence */
-	ret = ltv350qv_write_reg(lcd, LTV_PWRCTL1,
+	ret = ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL1,
 				 LTV_VCOM_DISABLE | LTV_VCOMOUT_ENABLE
 				 | LTV_POWER_ON | LTV_DRIVE_CURRENT(5)
 				 | LTV_SUPPLY_CURRENT(5));
-	ret |= ltv350qv_write_reg(lcd, LTV_GATECTL2,
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GATECTL2,
 				  LTV_NW_INV_1LINE | LTV_DSC | LTV_FWI(3));
-	if (ret)
-		goto err_disp_on;
+	अगर (ret)
+		जाओ err_disp_on;
 
 	/* Display should now be ON. Phew. */
-	return 0;
+	वापस 0;
 
 err_disp_on:
 	/*
 	 * Try to recover. Error handling probably isn't very useful
-	 * at this point, just make a best effort to switch the panel
+	 * at this poपूर्णांक, just make a best efक्रमt to चयन the panel
 	 * off.
 	 */
-	ltv350qv_write_reg(lcd, LTV_PWRCTL1,
+	ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL1,
 			   LTV_VCOM_DISABLE | LTV_DRIVE_CURRENT(5)
 			   | LTV_SUPPLY_CURRENT(5));
-	ltv350qv_write_reg(lcd, LTV_GATECTL2,
+	ltv350qv_ग_लिखो_reg(lcd, LTV_GATECTL2,
 			   LTV_NW_INV_1LINE | LTV_FWI(3));
 err_settings:
-err_power2:
-err_power1:
-	ltv350qv_write_reg(lcd, LTV_PWRCTL2, 0x0000);
+err_घातer2:
+err_घातer1:
+	ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL2, 0x0000);
 	usleep_range(1000, 1100);
 err:
-	ltv350qv_write_reg(lcd, LTV_PWRCTL1, LTV_VCOM_DISABLE);
-	return -EIO;
-}
+	ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL1, LTV_VCOM_DISABLE);
+	वापस -EIO;
+पूर्ण
 
-static int ltv350qv_power_off(struct ltv350qv *lcd)
-{
-	int ret;
+अटल पूर्णांक ltv350qv_घातer_off(काष्ठा ltv350qv *lcd)
+अणु
+	पूर्णांक ret;
 
 	/* Display Off Sequence */
-	ret = ltv350qv_write_reg(lcd, LTV_PWRCTL1,
+	ret = ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL1,
 				 LTV_VCOM_DISABLE
 				 | LTV_DRIVE_CURRENT(5)
 				 | LTV_SUPPLY_CURRENT(5));
-	ret |= ltv350qv_write_reg(lcd, LTV_GATECTL2,
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_GATECTL2,
 				  LTV_NW_INV_1LINE | LTV_FWI(3));
 
-	/* Power down setting 1 */
-	ret |= ltv350qv_write_reg(lcd, LTV_PWRCTL2, 0x0000);
+	/* Power करोwn setting 1 */
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL2, 0x0000);
 
 	/* Wait at least 1 ms */
 	usleep_range(1000, 1100);
 
-	/* Power down setting 2 */
-	ret |= ltv350qv_write_reg(lcd, LTV_PWRCTL1, LTV_VCOM_DISABLE);
+	/* Power करोwn setting 2 */
+	ret |= ltv350qv_ग_लिखो_reg(lcd, LTV_PWRCTL1, LTV_VCOM_DISABLE);
 
 	/*
-	 * No point in trying to recover here. If we can't switch the
-	 * panel off, what are we supposed to do other than inform the
+	 * No poपूर्णांक in trying to recover here. If we can't चयन the
+	 * panel off, what are we supposed to करो other than inक्रमm the
 	 * user about the failure?
 	 */
-	if (ret)
-		return -EIO;
+	अगर (ret)
+		वापस -EIO;
 
-	/* Display power should now be OFF */
-	return 0;
-}
+	/* Display घातer should now be OFF */
+	वापस 0;
+पूर्ण
 
-static int ltv350qv_power(struct ltv350qv *lcd, int power)
-{
-	int ret = 0;
+अटल पूर्णांक ltv350qv_घातer(काष्ठा ltv350qv *lcd, पूर्णांक घातer)
+अणु
+	पूर्णांक ret = 0;
 
-	if (POWER_IS_ON(power) && !POWER_IS_ON(lcd->power))
-		ret = ltv350qv_power_on(lcd);
-	else if (!POWER_IS_ON(power) && POWER_IS_ON(lcd->power))
-		ret = ltv350qv_power_off(lcd);
+	अगर (POWER_IS_ON(घातer) && !POWER_IS_ON(lcd->घातer))
+		ret = ltv350qv_घातer_on(lcd);
+	अन्यथा अगर (!POWER_IS_ON(घातer) && POWER_IS_ON(lcd->घातer))
+		ret = ltv350qv_घातer_off(lcd);
 
-	if (!ret)
-		lcd->power = power;
+	अगर (!ret)
+		lcd->घातer = घातer;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ltv350qv_set_power(struct lcd_device *ld, int power)
-{
-	struct ltv350qv *lcd = lcd_get_data(ld);
+अटल पूर्णांक ltv350qv_set_घातer(काष्ठा lcd_device *ld, पूर्णांक घातer)
+अणु
+	काष्ठा ltv350qv *lcd = lcd_get_data(ld);
 
-	return ltv350qv_power(lcd, power);
-}
+	वापस ltv350qv_घातer(lcd, घातer);
+पूर्ण
 
-static int ltv350qv_get_power(struct lcd_device *ld)
-{
-	struct ltv350qv *lcd = lcd_get_data(ld);
+अटल पूर्णांक ltv350qv_get_घातer(काष्ठा lcd_device *ld)
+अणु
+	काष्ठा ltv350qv *lcd = lcd_get_data(ld);
 
-	return lcd->power;
-}
+	वापस lcd->घातer;
+पूर्ण
 
-static struct lcd_ops ltv_ops = {
-	.get_power	= ltv350qv_get_power,
-	.set_power	= ltv350qv_set_power,
-};
+अटल काष्ठा lcd_ops ltv_ops = अणु
+	.get_घातer	= ltv350qv_get_घातer,
+	.set_घातer	= ltv350qv_set_घातer,
+पूर्ण;
 
-static int ltv350qv_probe(struct spi_device *spi)
-{
-	struct ltv350qv *lcd;
-	struct lcd_device *ld;
-	int ret;
+अटल पूर्णांक ltv350qv_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा ltv350qv *lcd;
+	काष्ठा lcd_device *ld;
+	पूर्णांक ret;
 
-	lcd = devm_kzalloc(&spi->dev, sizeof(struct ltv350qv), GFP_KERNEL);
-	if (!lcd)
-		return -ENOMEM;
+	lcd = devm_kzalloc(&spi->dev, माप(काष्ठा ltv350qv), GFP_KERNEL);
+	अगर (!lcd)
+		वापस -ENOMEM;
 
 	lcd->spi = spi;
-	lcd->power = FB_BLANK_POWERDOWN;
+	lcd->घातer = FB_BLANK_POWERDOWN;
 	lcd->buffer = devm_kzalloc(&spi->dev, 8, GFP_KERNEL);
-	if (!lcd->buffer)
-		return -ENOMEM;
+	अगर (!lcd->buffer)
+		वापस -ENOMEM;
 
-	ld = devm_lcd_device_register(&spi->dev, "ltv350qv", &spi->dev, lcd,
+	ld = devm_lcd_device_रेजिस्टर(&spi->dev, "ltv350qv", &spi->dev, lcd,
 					&ltv_ops);
-	if (IS_ERR(ld))
-		return PTR_ERR(ld);
+	अगर (IS_ERR(ld))
+		वापस PTR_ERR(ld);
 
 	lcd->ld = ld;
 
-	ret = ltv350qv_power(lcd, FB_BLANK_UNBLANK);
-	if (ret)
-		return ret;
+	ret = ltv350qv_घातer(lcd, FB_BLANK_UNBLANK);
+	अगर (ret)
+		वापस ret;
 
 	spi_set_drvdata(spi, lcd);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ltv350qv_remove(struct spi_device *spi)
-{
-	struct ltv350qv *lcd = spi_get_drvdata(spi);
+अटल पूर्णांक ltv350qv_हटाओ(काष्ठा spi_device *spi)
+अणु
+	काष्ठा ltv350qv *lcd = spi_get_drvdata(spi);
 
-	ltv350qv_power(lcd, FB_BLANK_POWERDOWN);
-	return 0;
-}
+	ltv350qv_घातer(lcd, FB_BLANK_POWERDOWN);
+	वापस 0;
+पूर्ण
 
-#ifdef CONFIG_PM_SLEEP
-static int ltv350qv_suspend(struct device *dev)
-{
-	struct ltv350qv *lcd = dev_get_drvdata(dev);
+#अगर_घोषित CONFIG_PM_SLEEP
+अटल पूर्णांक ltv350qv_suspend(काष्ठा device *dev)
+अणु
+	काष्ठा ltv350qv *lcd = dev_get_drvdata(dev);
 
-	return ltv350qv_power(lcd, FB_BLANK_POWERDOWN);
-}
+	वापस ltv350qv_घातer(lcd, FB_BLANK_POWERDOWN);
+पूर्ण
 
-static int ltv350qv_resume(struct device *dev)
-{
-	struct ltv350qv *lcd = dev_get_drvdata(dev);
+अटल पूर्णांक ltv350qv_resume(काष्ठा device *dev)
+अणु
+	काष्ठा ltv350qv *lcd = dev_get_drvdata(dev);
 
-	return ltv350qv_power(lcd, FB_BLANK_UNBLANK);
-}
-#endif
+	वापस ltv350qv_घातer(lcd, FB_BLANK_UNBLANK);
+पूर्ण
+#पूर्ण_अगर
 
-static SIMPLE_DEV_PM_OPS(ltv350qv_pm_ops, ltv350qv_suspend, ltv350qv_resume);
+अटल SIMPLE_DEV_PM_OPS(ltv350qv_pm_ops, ltv350qv_suspend, ltv350qv_resume);
 
-/* Power down all displays on reboot, poweroff or halt */
-static void ltv350qv_shutdown(struct spi_device *spi)
-{
-	struct ltv350qv *lcd = spi_get_drvdata(spi);
+/* Power करोwn all displays on reboot, घातeroff or halt */
+अटल व्योम ltv350qv_shutकरोwn(काष्ठा spi_device *spi)
+अणु
+	काष्ठा ltv350qv *lcd = spi_get_drvdata(spi);
 
-	ltv350qv_power(lcd, FB_BLANK_POWERDOWN);
-}
+	ltv350qv_घातer(lcd, FB_BLANK_POWERDOWN);
+पूर्ण
 
-static struct spi_driver ltv350qv_driver = {
-	.driver = {
+अटल काष्ठा spi_driver ltv350qv_driver = अणु
+	.driver = अणु
 		.name		= "ltv350qv",
 		.pm		= &ltv350qv_pm_ops,
-	},
+	पूर्ण,
 
 	.probe		= ltv350qv_probe,
-	.remove		= ltv350qv_remove,
-	.shutdown	= ltv350qv_shutdown,
-};
+	.हटाओ		= ltv350qv_हटाओ,
+	.shutकरोwn	= ltv350qv_shutकरोwn,
+पूर्ण;
 
 module_spi_driver(ltv350qv_driver);
 

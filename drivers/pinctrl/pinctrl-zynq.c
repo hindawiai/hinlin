@@ -1,79 +1,80 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Zynq pin controller
  *
  *  Copyright (C) 2014 Xilinx
  *
- *  Sören Brinkmann <soren.brinkmann@xilinx.com>
+ *  Sथघren Brinkmann <soren.brinkmann@xilinx.com>
  */
-#include <linux/io.h>
-#include <linux/mfd/syscon.h>
-#include <linux/init.h>
-#include <linux/of.h>
-#include <linux/platform_device.h>
-#include <linux/pinctrl/pinctrl.h>
-#include <linux/pinctrl/pinmux.h>
-#include <linux/pinctrl/pinconf.h>
-#include <linux/pinctrl/pinconf-generic.h>
-#include <linux/regmap.h>
-#include "pinctrl-utils.h"
-#include "core.h"
+#समावेश <linux/पन.स>
+#समावेश <linux/mfd/syscon.h>
+#समावेश <linux/init.h>
+#समावेश <linux/of.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/pinctrl/pinctrl.h>
+#समावेश <linux/pinctrl/pinmux.h>
+#समावेश <linux/pinctrl/pinconf.h>
+#समावेश <linux/pinctrl/pinconf-generic.h>
+#समावेश <linux/regmap.h>
+#समावेश "pinctrl-utils.h"
+#समावेश "core.h"
 
-#define ZYNQ_NUM_MIOS	54
+#घोषणा ZYNQ_NUM_MIOS	54
 
-#define ZYNQ_PCTRL_MIO_MST_TRI0	0x10c
-#define ZYNQ_PCTRL_MIO_MST_TRI1	0x110
+#घोषणा ZYNQ_PCTRL_MIO_MST_TRI0	0x10c
+#घोषणा ZYNQ_PCTRL_MIO_MST_TRI1	0x110
 
-#define ZYNQ_PINMUX_MUX_SHIFT	1
-#define ZYNQ_PINMUX_MUX_MASK	(0x7f << ZYNQ_PINMUX_MUX_SHIFT)
+#घोषणा ZYNQ_PINMUX_MUX_SHIFT	1
+#घोषणा ZYNQ_PINMUX_MUX_MASK	(0x7f << ZYNQ_PINMUX_MUX_SHIFT)
 
 /**
- * struct zynq_pinctrl - driver data
+ * काष्ठा zynq_pinctrl - driver data
  * @pctrl:		Pinctrl device
  * @syscon:		Syscon regmap
- * @pctrl_offset:	Offset for pinctrl into the @syscon space
+ * @pctrl_offset:	Offset क्रम pinctrl पूर्णांकo the @syscon space
  * @groups:		Pingroups
  * @ngroups:		Number of @groups
  * @funcs:		Pinmux functions
  * @nfuncs:		Number of @funcs
  */
-struct zynq_pinctrl {
-	struct pinctrl_dev *pctrl;
-	struct regmap *syscon;
+काष्ठा zynq_pinctrl अणु
+	काष्ठा pinctrl_dev *pctrl;
+	काष्ठा regmap *syscon;
 	u32 pctrl_offset;
-	const struct zynq_pctrl_group *groups;
-	unsigned int ngroups;
-	const struct zynq_pinmux_function *funcs;
-	unsigned int nfuncs;
-};
+	स्थिर काष्ठा zynq_pctrl_group *groups;
+	अचिन्हित पूर्णांक ngroups;
+	स्थिर काष्ठा zynq_pinmux_function *funcs;
+	अचिन्हित पूर्णांक nfuncs;
+पूर्ण;
 
-struct zynq_pctrl_group {
-	const char *name;
-	const unsigned int *pins;
-	const unsigned int npins;
-};
+काष्ठा zynq_pctrl_group अणु
+	स्थिर अक्षर *name;
+	स्थिर अचिन्हित पूर्णांक *pins;
+	स्थिर अचिन्हित पूर्णांक npins;
+पूर्ण;
 
 /**
- * struct zynq_pinmux_function - a pinmux function
+ * काष्ठा zynq_pinmux_function - a pinmux function
  * @name:	Name of the pinmux function.
- * @groups:	List of pingroups for this function.
+ * @groups:	List of pingroups क्रम this function.
  * @ngroups:	Number of entries in @groups.
- * @mux_val:	Selector for this function
- * @mux:	Offset of function specific mux
- * @mux_mask:	Mask for function specific selector
- * @mux_shift:	Shift for function specific selector
+ * @mux_val:	Selector क्रम this function
+ * @mux:	Offset of function specअगरic mux
+ * @mux_mask:	Mask क्रम function specअगरic selector
+ * @mux_shअगरt:	Shअगरt क्रम function specअगरic selector
  */
-struct zynq_pinmux_function {
-	const char *name;
-	const char * const *groups;
-	unsigned int ngroups;
-	unsigned int mux_val;
+काष्ठा zynq_pinmux_function अणु
+	स्थिर अक्षर *name;
+	स्थिर अक्षर * स्थिर *groups;
+	अचिन्हित पूर्णांक ngroups;
+	अचिन्हित पूर्णांक mux_val;
 	u32 mux;
 	u32 mux_mask;
-	u8 mux_shift;
-};
+	u8 mux_shअगरt;
+पूर्ण;
 
-enum zynq_pinmux_functions {
+क्रमागत zynq_pinmux_functions अणु
 	ZYNQ_PMUX_can0,
 	ZYNQ_PMUX_can1,
 	ZYNQ_PMUX_ethernet0,
@@ -111,9 +112,9 @@ enum zynq_pinmux_functions {
 	ZYNQ_PMUX_usb1,
 	ZYNQ_PMUX_swdt0,
 	ZYNQ_PMUX_MAX_FUNC
-};
+पूर्ण;
 
-static const struct pinctrl_pin_desc zynq_pins[] = {
+अटल स्थिर काष्ठा pinctrl_pin_desc zynq_pins[] = अणु
 	PINCTRL_PIN(0,  "MIO0"),
 	PINCTRL_PIN(1,  "MIO1"),
 	PINCTRL_PIN(2,  "MIO2"),
@@ -172,218 +173,218 @@ static const struct pinctrl_pin_desc zynq_pins[] = {
 	PINCTRL_PIN(55, "EMIO_SD0_CD"),
 	PINCTRL_PIN(56, "EMIO_SD1_WP"),
 	PINCTRL_PIN(57, "EMIO_SD1_CD"),
-};
+पूर्ण;
 
 /* pin groups */
-static const unsigned int ethernet0_0_pins[] = {16, 17, 18, 19, 20, 21, 22, 23,
-						24, 25, 26, 27};
-static const unsigned int ethernet1_0_pins[] = {28, 29, 30, 31, 32, 33, 34, 35,
-						36, 37, 38, 39};
-static const unsigned int mdio0_0_pins[] = {52, 53};
-static const unsigned int mdio1_0_pins[] = {52, 53};
-static const unsigned int qspi0_0_pins[] = {1, 2, 3, 4, 5, 6};
+अटल स्थिर अचिन्हित पूर्णांक ethernet0_0_pins[] = अणु16, 17, 18, 19, 20, 21, 22, 23,
+						24, 25, 26, 27पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ethernet1_0_pins[] = अणु28, 29, 30, 31, 32, 33, 34, 35,
+						36, 37, 38, 39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mdio0_0_pins[] = अणु52, 53पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक mdio1_0_pins[] = अणु52, 53पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक qspi0_0_pins[] = अणु1, 2, 3, 4, 5, 6पूर्ण;
 
-static const unsigned int qspi1_0_pins[] = {9, 10, 11, 12, 13};
-static const unsigned int qspi_cs1_pins[] = {0};
-static const unsigned int qspi_fbclk_pins[] = {8};
-static const unsigned int spi0_0_pins[] = {16, 17, 21};
-static const unsigned int spi0_0_ss0_pins[] = {18};
-static const unsigned int spi0_0_ss1_pins[] = {19};
-static const unsigned int spi0_0_ss2_pins[] = {20,};
-static const unsigned int spi0_1_pins[] = {28, 29, 33};
-static const unsigned int spi0_1_ss0_pins[] = {30};
-static const unsigned int spi0_1_ss1_pins[] = {31};
-static const unsigned int spi0_1_ss2_pins[] = {32};
-static const unsigned int spi0_2_pins[] = {40, 41, 45};
-static const unsigned int spi0_2_ss0_pins[] = {42};
-static const unsigned int spi0_2_ss1_pins[] = {43};
-static const unsigned int spi0_2_ss2_pins[] = {44};
-static const unsigned int spi1_0_pins[] = {10, 11, 12};
-static const unsigned int spi1_0_ss0_pins[] = {13};
-static const unsigned int spi1_0_ss1_pins[] = {14};
-static const unsigned int spi1_0_ss2_pins[] = {15};
-static const unsigned int spi1_1_pins[] = {22, 23, 24};
-static const unsigned int spi1_1_ss0_pins[] = {25};
-static const unsigned int spi1_1_ss1_pins[] = {26};
-static const unsigned int spi1_1_ss2_pins[] = {27};
-static const unsigned int spi1_2_pins[] = {34, 35, 36};
-static const unsigned int spi1_2_ss0_pins[] = {37};
-static const unsigned int spi1_2_ss1_pins[] = {38};
-static const unsigned int spi1_2_ss2_pins[] = {39};
-static const unsigned int spi1_3_pins[] = {46, 47, 48, 49};
-static const unsigned int spi1_3_ss0_pins[] = {49};
-static const unsigned int spi1_3_ss1_pins[] = {50};
-static const unsigned int spi1_3_ss2_pins[] = {51};
+अटल स्थिर अचिन्हित पूर्णांक qspi1_0_pins[] = अणु9, 10, 11, 12, 13पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक qspi_cs1_pins[] = अणु0पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक qspi_fbclk_pins[] = अणु8पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_0_pins[] = अणु16, 17, 21पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_0_ss0_pins[] = अणु18पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_0_ss1_pins[] = अणु19पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_0_ss2_pins[] = अणु20,पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_1_pins[] = अणु28, 29, 33पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_1_ss0_pins[] = अणु30पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_1_ss1_pins[] = अणु31पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_1_ss2_pins[] = अणु32पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_2_pins[] = अणु40, 41, 45पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_2_ss0_pins[] = अणु42पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_2_ss1_pins[] = अणु43पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi0_2_ss2_pins[] = अणु44पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_0_pins[] = अणु10, 11, 12पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_0_ss0_pins[] = अणु13पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_0_ss1_pins[] = अणु14पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_0_ss2_pins[] = अणु15पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_1_pins[] = अणु22, 23, 24पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_1_ss0_pins[] = अणु25पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_1_ss1_pins[] = अणु26पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_1_ss2_pins[] = अणु27पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_2_pins[] = अणु34, 35, 36पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_2_ss0_pins[] = अणु37पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_2_ss1_pins[] = अणु38पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_2_ss2_pins[] = अणु39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_3_pins[] = अणु46, 47, 48, 49पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_3_ss0_pins[] = अणु49पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_3_ss1_pins[] = अणु50पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक spi1_3_ss2_pins[] = अणु51पूर्ण;
 
-static const unsigned int sdio0_0_pins[] = {16, 17, 18, 19, 20, 21};
-static const unsigned int sdio0_1_pins[] = {28, 29, 30, 31, 32, 33};
-static const unsigned int sdio0_2_pins[] = {40, 41, 42, 43, 44, 45};
-static const unsigned int sdio1_0_pins[] = {10, 11, 12, 13, 14, 15};
-static const unsigned int sdio1_1_pins[] = {22, 23, 24, 25, 26, 27};
-static const unsigned int sdio1_2_pins[] = {34, 35, 36, 37, 38, 39};
-static const unsigned int sdio1_3_pins[] = {46, 47, 48, 49, 50, 51};
-static const unsigned int sdio0_emio_wp_pins[] = {54};
-static const unsigned int sdio0_emio_cd_pins[] = {55};
-static const unsigned int sdio1_emio_wp_pins[] = {56};
-static const unsigned int sdio1_emio_cd_pins[] = {57};
-static const unsigned int smc0_nor_pins[] = {0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13,
+अटल स्थिर अचिन्हित पूर्णांक sdio0_0_pins[] = अणु16, 17, 18, 19, 20, 21पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio0_1_pins[] = अणु28, 29, 30, 31, 32, 33पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio0_2_pins[] = अणु40, 41, 42, 43, 44, 45पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio1_0_pins[] = अणु10, 11, 12, 13, 14, 15पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio1_1_pins[] = अणु22, 23, 24, 25, 26, 27पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio1_2_pins[] = अणु34, 35, 36, 37, 38, 39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio1_3_pins[] = अणु46, 47, 48, 49, 50, 51पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio0_emio_wp_pins[] = अणु54पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio0_emio_cd_pins[] = अणु55पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio1_emio_wp_pins[] = अणु56पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक sdio1_emio_cd_pins[] = अणु57पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक smc0_nor_pins[] = अणु0, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13,
 					     15, 16, 17, 18, 19, 20, 21, 22, 23,
 					     24, 25, 26, 27, 28, 29, 30, 31, 32,
-					     33, 34, 35, 36, 37, 38, 39};
-static const unsigned int smc0_nor_cs1_pins[] = {1};
-static const unsigned int smc0_nor_addr25_pins[] = {1};
-static const unsigned int smc0_nand_pins[] = {0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+					     33, 34, 35, 36, 37, 38, 39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक smc0_nor_cs1_pins[] = अणु1पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक smc0_nor_addr25_pins[] = अणु1पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक smc0_nand_pins[] = अणु0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 					      12, 13, 14, 16, 17, 18, 19, 20,
-					      21, 22, 23};
-static const unsigned int smc0_nand8_pins[] = {0, 2, 3,  4,  5,  6,  7,
-					       8, 9, 10, 11, 12, 13, 14};
-/* Note: CAN MIO clock inputs are modeled in the clock framework */
-static const unsigned int can0_0_pins[] = {10, 11};
-static const unsigned int can0_1_pins[] = {14, 15};
-static const unsigned int can0_2_pins[] = {18, 19};
-static const unsigned int can0_3_pins[] = {22, 23};
-static const unsigned int can0_4_pins[] = {26, 27};
-static const unsigned int can0_5_pins[] = {30, 31};
-static const unsigned int can0_6_pins[] = {34, 35};
-static const unsigned int can0_7_pins[] = {38, 39};
-static const unsigned int can0_8_pins[] = {42, 43};
-static const unsigned int can0_9_pins[] = {46, 47};
-static const unsigned int can0_10_pins[] = {50, 51};
-static const unsigned int can1_0_pins[] = {8, 9};
-static const unsigned int can1_1_pins[] = {12, 13};
-static const unsigned int can1_2_pins[] = {16, 17};
-static const unsigned int can1_3_pins[] = {20, 21};
-static const unsigned int can1_4_pins[] = {24, 25};
-static const unsigned int can1_5_pins[] = {28, 29};
-static const unsigned int can1_6_pins[] = {32, 33};
-static const unsigned int can1_7_pins[] = {36, 37};
-static const unsigned int can1_8_pins[] = {40, 41};
-static const unsigned int can1_9_pins[] = {44, 45};
-static const unsigned int can1_10_pins[] = {48, 49};
-static const unsigned int can1_11_pins[] = {52, 53};
-static const unsigned int uart0_0_pins[] = {10, 11};
-static const unsigned int uart0_1_pins[] = {14, 15};
-static const unsigned int uart0_2_pins[] = {18, 19};
-static const unsigned int uart0_3_pins[] = {22, 23};
-static const unsigned int uart0_4_pins[] = {26, 27};
-static const unsigned int uart0_5_pins[] = {30, 31};
-static const unsigned int uart0_6_pins[] = {34, 35};
-static const unsigned int uart0_7_pins[] = {38, 39};
-static const unsigned int uart0_8_pins[] = {42, 43};
-static const unsigned int uart0_9_pins[] = {46, 47};
-static const unsigned int uart0_10_pins[] = {50, 51};
-static const unsigned int uart1_0_pins[] = {8, 9};
-static const unsigned int uart1_1_pins[] = {12, 13};
-static const unsigned int uart1_2_pins[] = {16, 17};
-static const unsigned int uart1_3_pins[] = {20, 21};
-static const unsigned int uart1_4_pins[] = {24, 25};
-static const unsigned int uart1_5_pins[] = {28, 29};
-static const unsigned int uart1_6_pins[] = {32, 33};
-static const unsigned int uart1_7_pins[] = {36, 37};
-static const unsigned int uart1_8_pins[] = {40, 41};
-static const unsigned int uart1_9_pins[] = {44, 45};
-static const unsigned int uart1_10_pins[] = {48, 49};
-static const unsigned int uart1_11_pins[] = {52, 53};
-static const unsigned int i2c0_0_pins[] = {10, 11};
-static const unsigned int i2c0_1_pins[] = {14, 15};
-static const unsigned int i2c0_2_pins[] = {18, 19};
-static const unsigned int i2c0_3_pins[] = {22, 23};
-static const unsigned int i2c0_4_pins[] = {26, 27};
-static const unsigned int i2c0_5_pins[] = {30, 31};
-static const unsigned int i2c0_6_pins[] = {34, 35};
-static const unsigned int i2c0_7_pins[] = {38, 39};
-static const unsigned int i2c0_8_pins[] = {42, 43};
-static const unsigned int i2c0_9_pins[] = {46, 47};
-static const unsigned int i2c0_10_pins[] = {50, 51};
-static const unsigned int i2c1_0_pins[] = {12, 13};
-static const unsigned int i2c1_1_pins[] = {16, 17};
-static const unsigned int i2c1_2_pins[] = {20, 21};
-static const unsigned int i2c1_3_pins[] = {24, 25};
-static const unsigned int i2c1_4_pins[] = {28, 29};
-static const unsigned int i2c1_5_pins[] = {32, 33};
-static const unsigned int i2c1_6_pins[] = {36, 37};
-static const unsigned int i2c1_7_pins[] = {40, 41};
-static const unsigned int i2c1_8_pins[] = {44, 45};
-static const unsigned int i2c1_9_pins[] = {48, 49};
-static const unsigned int i2c1_10_pins[] = {52, 53};
-static const unsigned int ttc0_0_pins[] = {18, 19};
-static const unsigned int ttc0_1_pins[] = {30, 31};
-static const unsigned int ttc0_2_pins[] = {42, 43};
-static const unsigned int ttc1_0_pins[] = {16, 17};
-static const unsigned int ttc1_1_pins[] = {28, 29};
-static const unsigned int ttc1_2_pins[] = {40, 41};
-static const unsigned int swdt0_0_pins[] = {14, 15};
-static const unsigned int swdt0_1_pins[] = {26, 27};
-static const unsigned int swdt0_2_pins[] = {38, 39};
-static const unsigned int swdt0_3_pins[] = {50, 51};
-static const unsigned int swdt0_4_pins[] = {52, 53};
-static const unsigned int gpio0_0_pins[] = {0};
-static const unsigned int gpio0_1_pins[] = {1};
-static const unsigned int gpio0_2_pins[] = {2};
-static const unsigned int gpio0_3_pins[] = {3};
-static const unsigned int gpio0_4_pins[] = {4};
-static const unsigned int gpio0_5_pins[] = {5};
-static const unsigned int gpio0_6_pins[] = {6};
-static const unsigned int gpio0_7_pins[] = {7};
-static const unsigned int gpio0_8_pins[] = {8};
-static const unsigned int gpio0_9_pins[] = {9};
-static const unsigned int gpio0_10_pins[] = {10};
-static const unsigned int gpio0_11_pins[] = {11};
-static const unsigned int gpio0_12_pins[] = {12};
-static const unsigned int gpio0_13_pins[] = {13};
-static const unsigned int gpio0_14_pins[] = {14};
-static const unsigned int gpio0_15_pins[] = {15};
-static const unsigned int gpio0_16_pins[] = {16};
-static const unsigned int gpio0_17_pins[] = {17};
-static const unsigned int gpio0_18_pins[] = {18};
-static const unsigned int gpio0_19_pins[] = {19};
-static const unsigned int gpio0_20_pins[] = {20};
-static const unsigned int gpio0_21_pins[] = {21};
-static const unsigned int gpio0_22_pins[] = {22};
-static const unsigned int gpio0_23_pins[] = {23};
-static const unsigned int gpio0_24_pins[] = {24};
-static const unsigned int gpio0_25_pins[] = {25};
-static const unsigned int gpio0_26_pins[] = {26};
-static const unsigned int gpio0_27_pins[] = {27};
-static const unsigned int gpio0_28_pins[] = {28};
-static const unsigned int gpio0_29_pins[] = {29};
-static const unsigned int gpio0_30_pins[] = {30};
-static const unsigned int gpio0_31_pins[] = {31};
-static const unsigned int gpio0_32_pins[] = {32};
-static const unsigned int gpio0_33_pins[] = {33};
-static const unsigned int gpio0_34_pins[] = {34};
-static const unsigned int gpio0_35_pins[] = {35};
-static const unsigned int gpio0_36_pins[] = {36};
-static const unsigned int gpio0_37_pins[] = {37};
-static const unsigned int gpio0_38_pins[] = {38};
-static const unsigned int gpio0_39_pins[] = {39};
-static const unsigned int gpio0_40_pins[] = {40};
-static const unsigned int gpio0_41_pins[] = {41};
-static const unsigned int gpio0_42_pins[] = {42};
-static const unsigned int gpio0_43_pins[] = {43};
-static const unsigned int gpio0_44_pins[] = {44};
-static const unsigned int gpio0_45_pins[] = {45};
-static const unsigned int gpio0_46_pins[] = {46};
-static const unsigned int gpio0_47_pins[] = {47};
-static const unsigned int gpio0_48_pins[] = {48};
-static const unsigned int gpio0_49_pins[] = {49};
-static const unsigned int gpio0_50_pins[] = {50};
-static const unsigned int gpio0_51_pins[] = {51};
-static const unsigned int gpio0_52_pins[] = {52};
-static const unsigned int gpio0_53_pins[] = {53};
-static const unsigned int usb0_0_pins[] = {28, 29, 30, 31, 32, 33, 34, 35, 36,
-					   37, 38, 39};
-static const unsigned int usb1_0_pins[] = {40, 41, 42, 43, 44, 45, 46, 47, 48,
-					   49, 50, 51};
+					      21, 22, 23पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक smc0_nand8_pins[] = अणु0, 2, 3,  4,  5,  6,  7,
+					       8, 9, 10, 11, 12, 13, 14पूर्ण;
+/* Note: CAN MIO घड़ी inमाला_दो are modeled in the घड़ी framework */
+अटल स्थिर अचिन्हित पूर्णांक can0_0_pins[] = अणु10, 11पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_1_pins[] = अणु14, 15पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_2_pins[] = अणु18, 19पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_3_pins[] = अणु22, 23पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_4_pins[] = अणु26, 27पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_5_pins[] = अणु30, 31पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_6_pins[] = अणु34, 35पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_7_pins[] = अणु38, 39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_8_pins[] = अणु42, 43पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_9_pins[] = अणु46, 47पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can0_10_pins[] = अणु50, 51पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_0_pins[] = अणु8, 9पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_1_pins[] = अणु12, 13पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_2_pins[] = अणु16, 17पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_3_pins[] = अणु20, 21पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_4_pins[] = अणु24, 25पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_5_pins[] = अणु28, 29पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_6_pins[] = अणु32, 33पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_7_pins[] = अणु36, 37पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_8_pins[] = अणु40, 41पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_9_pins[] = अणु44, 45पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_10_pins[] = अणु48, 49पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक can1_11_pins[] = अणु52, 53पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_0_pins[] = अणु10, 11पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_1_pins[] = अणु14, 15पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_2_pins[] = अणु18, 19पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_3_pins[] = अणु22, 23पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_4_pins[] = अणु26, 27पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_5_pins[] = अणु30, 31पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_6_pins[] = अणु34, 35पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_7_pins[] = अणु38, 39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_8_pins[] = अणु42, 43पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_9_pins[] = अणु46, 47पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart0_10_pins[] = अणु50, 51पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_0_pins[] = अणु8, 9पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_1_pins[] = अणु12, 13पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_2_pins[] = अणु16, 17पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_3_pins[] = अणु20, 21पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_4_pins[] = अणु24, 25पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_5_pins[] = अणु28, 29पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_6_pins[] = अणु32, 33पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_7_pins[] = अणु36, 37पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_8_pins[] = अणु40, 41पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_9_pins[] = अणु44, 45पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_10_pins[] = अणु48, 49पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक uart1_11_pins[] = अणु52, 53पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_0_pins[] = अणु10, 11पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_1_pins[] = अणु14, 15पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_2_pins[] = अणु18, 19पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_3_pins[] = अणु22, 23पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_4_pins[] = अणु26, 27पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_5_pins[] = अणु30, 31पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_6_pins[] = अणु34, 35पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_7_pins[] = अणु38, 39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_8_pins[] = अणु42, 43पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_9_pins[] = अणु46, 47पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c0_10_pins[] = अणु50, 51पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_0_pins[] = अणु12, 13पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_1_pins[] = अणु16, 17पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_2_pins[] = अणु20, 21पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_3_pins[] = अणु24, 25पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_4_pins[] = अणु28, 29पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_5_pins[] = अणु32, 33पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_6_pins[] = अणु36, 37पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_7_pins[] = अणु40, 41पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_8_pins[] = अणु44, 45पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_9_pins[] = अणु48, 49पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक i2c1_10_pins[] = अणु52, 53पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ttc0_0_pins[] = अणु18, 19पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ttc0_1_pins[] = अणु30, 31पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ttc0_2_pins[] = अणु42, 43पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ttc1_0_pins[] = अणु16, 17पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ttc1_1_pins[] = अणु28, 29पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक ttc1_2_pins[] = अणु40, 41पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक swdt0_0_pins[] = अणु14, 15पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक swdt0_1_pins[] = अणु26, 27पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक swdt0_2_pins[] = अणु38, 39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक swdt0_3_pins[] = अणु50, 51पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक swdt0_4_pins[] = अणु52, 53पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_0_pins[] = अणु0पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_1_pins[] = अणु1पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_2_pins[] = अणु2पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_3_pins[] = अणु3पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_4_pins[] = अणु4पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_5_pins[] = अणु5पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_6_pins[] = अणु6पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_7_pins[] = अणु7पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_8_pins[] = अणु8पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_9_pins[] = अणु9पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_10_pins[] = अणु10पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_11_pins[] = अणु11पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_12_pins[] = अणु12पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_13_pins[] = अणु13पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_14_pins[] = अणु14पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_15_pins[] = अणु15पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_16_pins[] = अणु16पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_17_pins[] = अणु17पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_18_pins[] = अणु18पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_19_pins[] = अणु19पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_20_pins[] = अणु20पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_21_pins[] = अणु21पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_22_pins[] = अणु22पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_23_pins[] = अणु23पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_24_pins[] = अणु24पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_25_pins[] = अणु25पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_26_pins[] = अणु26पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_27_pins[] = अणु27पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_28_pins[] = अणु28पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_29_pins[] = अणु29पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_30_pins[] = अणु30पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_31_pins[] = अणु31पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_32_pins[] = अणु32पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_33_pins[] = अणु33पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_34_pins[] = अणु34पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_35_pins[] = अणु35पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_36_pins[] = अणु36पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_37_pins[] = अणु37पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_38_pins[] = अणु38पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_39_pins[] = अणु39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_40_pins[] = अणु40पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_41_pins[] = अणु41पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_42_pins[] = अणु42पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_43_pins[] = अणु43पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_44_pins[] = अणु44पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_45_pins[] = अणु45पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_46_pins[] = अणु46पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_47_pins[] = अणु47पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_48_pins[] = अणु48पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_49_pins[] = अणु49पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_50_pins[] = अणु50पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_51_pins[] = अणु51पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_52_pins[] = अणु52पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक gpio0_53_pins[] = अणु53पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक usb0_0_pins[] = अणु28, 29, 30, 31, 32, 33, 34, 35, 36,
+					   37, 38, 39पूर्ण;
+अटल स्थिर अचिन्हित पूर्णांक usb1_0_pins[] = अणु40, 41, 42, 43, 44, 45, 46, 47, 48,
+					   49, 50, 51पूर्ण;
 
-#define DEFINE_ZYNQ_PINCTRL_GRP(nm) \
-	{ \
+#घोषणा DEFINE_ZYNQ_PINCTRL_GRP(nm) \
+	अणु \
 		.name = #nm "_grp", \
 		.pins = nm ## _pins, \
 		.npins = ARRAY_SIZE(nm ## _pins), \
-	}
+	पूर्ण
 
-static const struct zynq_pctrl_group zynq_pctrl_groups[] = {
+अटल स्थिर काष्ठा zynq_pctrl_group zynq_pctrl_groups[] = अणु
 	DEFINE_ZYNQ_PINCTRL_GRP(ethernet0_0),
 	DEFINE_ZYNQ_PINCTRL_GRP(ethernet1_0),
 	DEFINE_ZYNQ_PINCTRL_GRP(mdio0_0),
@@ -571,37 +572,37 @@ static const struct zynq_pctrl_group zynq_pctrl_groups[] = {
 	DEFINE_ZYNQ_PINCTRL_GRP(gpio0_53),
 	DEFINE_ZYNQ_PINCTRL_GRP(usb0_0),
 	DEFINE_ZYNQ_PINCTRL_GRP(usb1_0),
-};
+पूर्ण;
 
 /* function groups */
-static const char * const ethernet0_groups[] = {"ethernet0_0_grp"};
-static const char * const ethernet1_groups[] = {"ethernet1_0_grp"};
-static const char * const usb0_groups[] = {"usb0_0_grp"};
-static const char * const usb1_groups[] = {"usb1_0_grp"};
-static const char * const mdio0_groups[] = {"mdio0_0_grp"};
-static const char * const mdio1_groups[] = {"mdio1_0_grp"};
-static const char * const qspi0_groups[] = {"qspi0_0_grp"};
-static const char * const qspi1_groups[] = {"qspi1_0_grp"};
-static const char * const qspi_fbclk_groups[] = {"qspi_fbclk_grp"};
-static const char * const qspi_cs1_groups[] = {"qspi_cs1_grp"};
-static const char * const spi0_groups[] = {"spi0_0_grp", "spi0_1_grp",
-					   "spi0_2_grp"};
-static const char * const spi1_groups[] = {"spi1_0_grp", "spi1_1_grp",
-					   "spi1_2_grp", "spi1_3_grp"};
-static const char * const spi0_ss_groups[] = {"spi0_0_ss0_grp",
+अटल स्थिर अक्षर * स्थिर ethernet0_groups[] = अणु"ethernet0_0_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर ethernet1_groups[] = अणु"ethernet1_0_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर usb0_groups[] = अणु"usb0_0_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर usb1_groups[] = अणु"usb1_0_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर mdio0_groups[] = अणु"mdio0_0_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर mdio1_groups[] = अणु"mdio1_0_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर qspi0_groups[] = अणु"qspi0_0_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर qspi1_groups[] = अणु"qspi1_0_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर qspi_fbclk_groups[] = अणु"qspi_fbclk_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर qspi_cs1_groups[] = अणु"qspi_cs1_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर spi0_groups[] = अणु"spi0_0_grp", "spi0_1_grp",
+					   "spi0_2_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर spi1_groups[] = अणु"spi1_0_grp", "spi1_1_grp",
+					   "spi1_2_grp", "spi1_3_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर spi0_ss_groups[] = अणु"spi0_0_ss0_grp",
 		"spi0_0_ss1_grp", "spi0_0_ss2_grp", "spi0_1_ss0_grp",
 		"spi0_1_ss1_grp", "spi0_1_ss2_grp", "spi0_2_ss0_grp",
-		"spi0_2_ss1_grp", "spi0_2_ss2_grp"};
-static const char * const spi1_ss_groups[] = {"spi1_0_ss0_grp",
+		"spi0_2_ss1_grp", "spi0_2_ss2_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर spi1_ss_groups[] = अणु"spi1_0_ss0_grp",
 		"spi1_0_ss1_grp", "spi1_0_ss2_grp", "spi1_1_ss0_grp",
 		"spi1_1_ss1_grp", "spi1_1_ss2_grp", "spi1_2_ss0_grp",
 		"spi1_2_ss1_grp", "spi1_2_ss2_grp", "spi1_3_ss0_grp",
-		"spi1_3_ss1_grp", "spi1_3_ss2_grp"};
-static const char * const sdio0_groups[] = {"sdio0_0_grp", "sdio0_1_grp",
-					    "sdio0_2_grp"};
-static const char * const sdio1_groups[] = {"sdio1_0_grp", "sdio1_1_grp",
-					    "sdio1_2_grp", "sdio1_3_grp"};
-static const char * const sdio0_pc_groups[] = {"gpio0_0_grp",
+		"spi1_3_ss1_grp", "spi1_3_ss2_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर sdio0_groups[] = अणु"sdio0_0_grp", "sdio0_1_grp",
+					    "sdio0_2_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर sdio1_groups[] = अणु"sdio1_0_grp", "sdio1_1_grp",
+					    "sdio1_2_grp", "sdio1_3_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर sdio0_pc_groups[] = अणु"gpio0_0_grp",
 		"gpio0_2_grp", "gpio0_4_grp", "gpio0_6_grp",
 		"gpio0_8_grp", "gpio0_10_grp", "gpio0_12_grp",
 		"gpio0_14_grp", "gpio0_16_grp", "gpio0_18_grp",
@@ -610,8 +611,8 @@ static const char * const sdio0_pc_groups[] = {"gpio0_0_grp",
 		"gpio0_32_grp", "gpio0_34_grp", "gpio0_36_grp",
 		"gpio0_38_grp", "gpio0_40_grp", "gpio0_42_grp",
 		"gpio0_44_grp", "gpio0_46_grp", "gpio0_48_grp",
-		"gpio0_50_grp", "gpio0_52_grp"};
-static const char * const sdio1_pc_groups[] = {"gpio0_1_grp",
+		"gpio0_50_grp", "gpio0_52_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर sdio1_pc_groups[] = अणु"gpio0_1_grp",
 		"gpio0_3_grp", "gpio0_5_grp", "gpio0_7_grp",
 		"gpio0_9_grp", "gpio0_11_grp", "gpio0_13_grp",
 		"gpio0_15_grp", "gpio0_17_grp", "gpio0_19_grp",
@@ -620,8 +621,8 @@ static const char * const sdio1_pc_groups[] = {"gpio0_1_grp",
 		"gpio0_33_grp", "gpio0_35_grp", "gpio0_37_grp",
 		"gpio0_39_grp", "gpio0_41_grp", "gpio0_43_grp",
 		"gpio0_45_grp", "gpio0_47_grp", "gpio0_49_grp",
-		"gpio0_51_grp", "gpio0_53_grp"};
-static const char * const sdio0_cd_groups[] = {"gpio0_0_grp",
+		"gpio0_51_grp", "gpio0_53_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर sdio0_cd_groups[] = अणु"gpio0_0_grp",
 		"gpio0_2_grp", "gpio0_4_grp", "gpio0_6_grp",
 		"gpio0_10_grp", "gpio0_12_grp",
 		"gpio0_14_grp", "gpio0_16_grp", "gpio0_18_grp",
@@ -639,8 +640,8 @@ static const char * const sdio0_cd_groups[] = {"gpio0_0_grp",
 		"gpio0_33_grp", "gpio0_35_grp", "gpio0_37_grp",
 		"gpio0_39_grp", "gpio0_41_grp", "gpio0_43_grp",
 		"gpio0_45_grp", "gpio0_47_grp", "gpio0_49_grp",
-		"gpio0_51_grp", "gpio0_53_grp", "sdio0_emio_cd_grp"};
-static const char * const sdio0_wp_groups[] = {"gpio0_0_grp",
+		"gpio0_51_grp", "gpio0_53_grp", "sdio0_emio_cd_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर sdio0_wp_groups[] = अणु"gpio0_0_grp",
 		"gpio0_2_grp", "gpio0_4_grp", "gpio0_6_grp",
 		"gpio0_10_grp", "gpio0_12_grp",
 		"gpio0_14_grp", "gpio0_16_grp", "gpio0_18_grp",
@@ -658,8 +659,8 @@ static const char * const sdio0_wp_groups[] = {"gpio0_0_grp",
 		"gpio0_33_grp", "gpio0_35_grp", "gpio0_37_grp",
 		"gpio0_39_grp", "gpio0_41_grp", "gpio0_43_grp",
 		"gpio0_45_grp", "gpio0_47_grp", "gpio0_49_grp",
-		"gpio0_51_grp", "gpio0_53_grp", "sdio0_emio_wp_grp"};
-static const char * const sdio1_cd_groups[] = {"gpio0_0_grp",
+		"gpio0_51_grp", "gpio0_53_grp", "sdio0_emio_wp_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर sdio1_cd_groups[] = अणु"gpio0_0_grp",
 		"gpio0_2_grp", "gpio0_4_grp", "gpio0_6_grp",
 		"gpio0_10_grp", "gpio0_12_grp",
 		"gpio0_14_grp", "gpio0_16_grp", "gpio0_18_grp",
@@ -677,8 +678,8 @@ static const char * const sdio1_cd_groups[] = {"gpio0_0_grp",
 		"gpio0_33_grp", "gpio0_35_grp", "gpio0_37_grp",
 		"gpio0_39_grp", "gpio0_41_grp", "gpio0_43_grp",
 		"gpio0_45_grp", "gpio0_47_grp", "gpio0_49_grp",
-		"gpio0_51_grp", "gpio0_53_grp", "sdio1_emio_cd_grp"};
-static const char * const sdio1_wp_groups[] = {"gpio0_0_grp",
+		"gpio0_51_grp", "gpio0_53_grp", "sdio1_emio_cd_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर sdio1_wp_groups[] = अणु"gpio0_0_grp",
 		"gpio0_2_grp", "gpio0_4_grp", "gpio0_6_grp",
 		"gpio0_10_grp", "gpio0_12_grp",
 		"gpio0_14_grp", "gpio0_16_grp", "gpio0_18_grp",
@@ -696,43 +697,43 @@ static const char * const sdio1_wp_groups[] = {"gpio0_0_grp",
 		"gpio0_33_grp", "gpio0_35_grp", "gpio0_37_grp",
 		"gpio0_39_grp", "gpio0_41_grp", "gpio0_43_grp",
 		"gpio0_45_grp", "gpio0_47_grp", "gpio0_49_grp",
-		"gpio0_51_grp", "gpio0_53_grp", "sdio1_emio_wp_grp"};
-static const char * const smc0_nor_groups[] = {"smc0_nor_grp"};
-static const char * const smc0_nor_cs1_groups[] = {"smc0_nor_cs1_grp"};
-static const char * const smc0_nor_addr25_groups[] = {"smc0_nor_addr25_grp"};
-static const char * const smc0_nand_groups[] = {"smc0_nand_grp",
-		"smc0_nand8_grp"};
-static const char * const can0_groups[] = {"can0_0_grp", "can0_1_grp",
+		"gpio0_51_grp", "gpio0_53_grp", "sdio1_emio_wp_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर smc0_nor_groups[] = अणु"smc0_nor_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर smc0_nor_cs1_groups[] = अणु"smc0_nor_cs1_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर smc0_nor_addr25_groups[] = अणु"smc0_nor_addr25_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर smc0_nand_groups[] = अणु"smc0_nand_grp",
+		"smc0_nand8_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर can0_groups[] = अणु"can0_0_grp", "can0_1_grp",
 		"can0_2_grp", "can0_3_grp", "can0_4_grp", "can0_5_grp",
 		"can0_6_grp", "can0_7_grp", "can0_8_grp", "can0_9_grp",
-		"can0_10_grp"};
-static const char * const can1_groups[] = {"can1_0_grp", "can1_1_grp",
+		"can0_10_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर can1_groups[] = अणु"can1_0_grp", "can1_1_grp",
 		"can1_2_grp", "can1_3_grp", "can1_4_grp", "can1_5_grp",
 		"can1_6_grp", "can1_7_grp", "can1_8_grp", "can1_9_grp",
-		"can1_10_grp", "can1_11_grp"};
-static const char * const uart0_groups[] = {"uart0_0_grp", "uart0_1_grp",
+		"can1_10_grp", "can1_11_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर uart0_groups[] = अणु"uart0_0_grp", "uart0_1_grp",
 		"uart0_2_grp", "uart0_3_grp", "uart0_4_grp", "uart0_5_grp",
 		"uart0_6_grp", "uart0_7_grp", "uart0_8_grp", "uart0_9_grp",
-		"uart0_10_grp"};
-static const char * const uart1_groups[] = {"uart1_0_grp", "uart1_1_grp",
+		"uart0_10_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर uart1_groups[] = अणु"uart1_0_grp", "uart1_1_grp",
 		"uart1_2_grp", "uart1_3_grp", "uart1_4_grp", "uart1_5_grp",
 		"uart1_6_grp", "uart1_7_grp", "uart1_8_grp", "uart1_9_grp",
-		"uart1_10_grp", "uart1_11_grp"};
-static const char * const i2c0_groups[] = {"i2c0_0_grp", "i2c0_1_grp",
+		"uart1_10_grp", "uart1_11_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर i2c0_groups[] = अणु"i2c0_0_grp", "i2c0_1_grp",
 		"i2c0_2_grp", "i2c0_3_grp", "i2c0_4_grp", "i2c0_5_grp",
 		"i2c0_6_grp", "i2c0_7_grp", "i2c0_8_grp", "i2c0_9_grp",
-		"i2c0_10_grp"};
-static const char * const i2c1_groups[] = {"i2c1_0_grp", "i2c1_1_grp",
+		"i2c0_10_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर i2c1_groups[] = अणु"i2c1_0_grp", "i2c1_1_grp",
 		"i2c1_2_grp", "i2c1_3_grp", "i2c1_4_grp", "i2c1_5_grp",
 		"i2c1_6_grp", "i2c1_7_grp", "i2c1_8_grp", "i2c1_9_grp",
-		"i2c1_10_grp"};
-static const char * const ttc0_groups[] = {"ttc0_0_grp", "ttc0_1_grp",
-					   "ttc0_2_grp"};
-static const char * const ttc1_groups[] = {"ttc1_0_grp", "ttc1_1_grp",
-					   "ttc1_2_grp"};
-static const char * const swdt0_groups[] = {"swdt0_0_grp", "swdt0_1_grp",
-		"swdt0_2_grp", "swdt0_3_grp", "swdt0_4_grp"};
-static const char * const gpio0_groups[] = {"gpio0_0_grp",
+		"i2c1_10_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर ttc0_groups[] = अणु"ttc0_0_grp", "ttc0_1_grp",
+					   "ttc0_2_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर ttc1_groups[] = अणु"ttc1_0_grp", "ttc1_1_grp",
+					   "ttc1_2_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर swdt0_groups[] = अणु"swdt0_0_grp", "swdt0_1_grp",
+		"swdt0_2_grp", "swdt0_3_grp", "swdt0_4_grp"पूर्ण;
+अटल स्थिर अक्षर * स्थिर gpio0_groups[] = अणु"gpio0_0_grp",
 		"gpio0_2_grp", "gpio0_4_grp", "gpio0_6_grp",
 		"gpio0_8_grp", "gpio0_10_grp", "gpio0_12_grp",
 		"gpio0_14_grp", "gpio0_16_grp", "gpio0_18_grp",
@@ -750,33 +751,33 @@ static const char * const gpio0_groups[] = {"gpio0_0_grp",
 		"gpio0_33_grp", "gpio0_35_grp", "gpio0_37_grp",
 		"gpio0_39_grp", "gpio0_41_grp", "gpio0_43_grp",
 		"gpio0_45_grp", "gpio0_47_grp", "gpio0_49_grp",
-		"gpio0_51_grp", "gpio0_53_grp"};
+		"gpio0_51_grp", "gpio0_53_grp"पूर्ण;
 
-#define DEFINE_ZYNQ_PINMUX_FUNCTION(fname, mval)	\
-	[ZYNQ_PMUX_##fname] = {				\
+#घोषणा DEFINE_ZYNQ_PINMUX_FUNCTION(fname, mval)	\
+	[ZYNQ_PMUX_##fname] = अणु				\
 		.name = #fname,				\
 		.groups = fname##_groups,		\
 		.ngroups = ARRAY_SIZE(fname##_groups),	\
 		.mux_val = mval,			\
-	}
+	पूर्ण
 
-#define DEFINE_ZYNQ_PINMUX_FUNCTION_MUX(fname, mval, offset, mask, shift)\
-	[ZYNQ_PMUX_##fname] = {				\
+#घोषणा DEFINE_ZYNQ_PINMUX_FUNCTION_MUX(fname, mval, offset, mask, shअगरt)\
+	[ZYNQ_PMUX_##fname] = अणु				\
 		.name = #fname,				\
 		.groups = fname##_groups,		\
 		.ngroups = ARRAY_SIZE(fname##_groups),	\
 		.mux_val = mval,			\
 		.mux = offset,				\
 		.mux_mask = mask,			\
-		.mux_shift = shift,			\
-	}
+		.mux_shअगरt = shअगरt,			\
+	पूर्ण
 
-#define ZYNQ_SDIO_WP_SHIFT	0
-#define ZYNQ_SDIO_WP_MASK	(0x3f << ZYNQ_SDIO_WP_SHIFT)
-#define ZYNQ_SDIO_CD_SHIFT	16
-#define ZYNQ_SDIO_CD_MASK	(0x3f << ZYNQ_SDIO_CD_SHIFT)
+#घोषणा ZYNQ_SDIO_WP_SHIFT	0
+#घोषणा ZYNQ_SDIO_WP_MASK	(0x3f << ZYNQ_SDIO_WP_SHIFT)
+#घोषणा ZYNQ_SDIO_CD_SHIFT	16
+#घोषणा ZYNQ_SDIO_CD_MASK	(0x3f << ZYNQ_SDIO_CD_SHIFT)
 
-static const struct zynq_pinmux_function zynq_pmux_functions[] = {
+अटल स्थिर काष्ठा zynq_pinmux_function zynq_pmux_functions[] = अणु
 	DEFINE_ZYNQ_PINMUX_FUNCTION(ethernet0, 1),
 	DEFINE_ZYNQ_PINMUX_FUNCTION(ethernet1, 1),
 	DEFINE_ZYNQ_PINMUX_FUNCTION(usb0, 2),
@@ -817,330 +818,330 @@ static const struct zynq_pinmux_function zynq_pmux_functions[] = {
 	DEFINE_ZYNQ_PINMUX_FUNCTION(ttc1, 0x60),
 	DEFINE_ZYNQ_PINMUX_FUNCTION(swdt0, 0x30),
 	DEFINE_ZYNQ_PINMUX_FUNCTION(gpio0, 0),
-};
+पूर्ण;
 
 
 /* pinctrl */
-static int zynq_pctrl_get_groups_count(struct pinctrl_dev *pctldev)
-{
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक zynq_pctrl_get_groups_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctrl->ngroups;
-}
+	वापस pctrl->ngroups;
+पूर्ण
 
-static const char *zynq_pctrl_get_group_name(struct pinctrl_dev *pctldev,
-					     unsigned int selector)
-{
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *zynq_pctrl_get_group_name(काष्ठा pinctrl_dev *pctldev,
+					     अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctrl->groups[selector].name;
-}
+	वापस pctrl->groups[selector].name;
+पूर्ण
 
-static int zynq_pctrl_get_group_pins(struct pinctrl_dev *pctldev,
-				     unsigned int selector,
-				     const unsigned int **pins,
-				     unsigned int *num_pins)
-{
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक zynq_pctrl_get_group_pins(काष्ठा pinctrl_dev *pctldev,
+				     अचिन्हित पूर्णांक selector,
+				     स्थिर अचिन्हित पूर्णांक **pins,
+				     अचिन्हित पूर्णांक *num_pins)
+अणु
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
 	*pins = pctrl->groups[selector].pins;
 	*num_pins = pctrl->groups[selector].npins;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinctrl_ops zynq_pctrl_ops = {
+अटल स्थिर काष्ठा pinctrl_ops zynq_pctrl_ops = अणु
 	.get_groups_count = zynq_pctrl_get_groups_count,
 	.get_group_name = zynq_pctrl_get_group_name,
 	.get_group_pins = zynq_pctrl_get_group_pins,
 	.dt_node_to_map = pinconf_generic_dt_node_to_map_all,
-	.dt_free_map = pinctrl_utils_free_map,
-};
+	.dt_मुक्त_map = pinctrl_utils_मुक्त_map,
+पूर्ण;
 
 /* pinmux */
-static int zynq_pmux_get_functions_count(struct pinctrl_dev *pctldev)
-{
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक zynq_pmux_get_functions_count(काष्ठा pinctrl_dev *pctldev)
+अणु
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctrl->nfuncs;
-}
+	वापस pctrl->nfuncs;
+पूर्ण
 
-static const char *zynq_pmux_get_function_name(struct pinctrl_dev *pctldev,
-					       unsigned int selector)
-{
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल स्थिर अक्षर *zynq_pmux_get_function_name(काष्ठा pinctrl_dev *pctldev,
+					       अचिन्हित पूर्णांक selector)
+अणु
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	return pctrl->funcs[selector].name;
-}
+	वापस pctrl->funcs[selector].name;
+पूर्ण
 
-static int zynq_pmux_get_function_groups(struct pinctrl_dev *pctldev,
-					 unsigned int selector,
-					 const char * const **groups,
-					 unsigned * const num_groups)
-{
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+अटल पूर्णांक zynq_pmux_get_function_groups(काष्ठा pinctrl_dev *pctldev,
+					 अचिन्हित पूर्णांक selector,
+					 स्थिर अक्षर * स्थिर **groups,
+					 अचिन्हित * स्थिर num_groups)
+अणु
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
 	*groups = pctrl->funcs[selector].groups;
 	*num_groups = pctrl->funcs[selector].ngroups;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zynq_pinmux_set_mux(struct pinctrl_dev *pctldev,
-			       unsigned int function,
-			       unsigned int  group)
-{
-	int i, ret;
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
-	const struct zynq_pctrl_group *pgrp = &pctrl->groups[group];
-	const struct zynq_pinmux_function *func = &pctrl->funcs[function];
+अटल पूर्णांक zynq_pinmux_set_mux(काष्ठा pinctrl_dev *pctldev,
+			       अचिन्हित पूर्णांक function,
+			       अचिन्हित पूर्णांक  group)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा zynq_pctrl_group *pgrp = &pctrl->groups[group];
+	स्थिर काष्ठा zynq_pinmux_function *func = &pctrl->funcs[function];
 
 	/*
-	 * SD WP & CD are special. They have dedicated registers
+	 * SD WP & CD are special. They have dedicated रेजिस्टरs
 	 * to mux them in
 	 */
-	if (function == ZYNQ_PMUX_sdio0_cd || function == ZYNQ_PMUX_sdio0_wp ||
+	अगर (function == ZYNQ_PMUX_sdio0_cd || function == ZYNQ_PMUX_sdio0_wp ||
 			function == ZYNQ_PMUX_sdio1_cd ||
-			function == ZYNQ_PMUX_sdio1_wp) {
+			function == ZYNQ_PMUX_sdio1_wp) अणु
 		u32 reg;
 
-		ret = regmap_read(pctrl->syscon,
+		ret = regmap_पढ़ो(pctrl->syscon,
 				  pctrl->pctrl_offset + func->mux, &reg);
-		if (ret)
-			return ret;
+		अगर (ret)
+			वापस ret;
 
 		reg &= ~func->mux_mask;
-		reg |= pgrp->pins[0] << func->mux_shift;
-		ret = regmap_write(pctrl->syscon,
+		reg |= pgrp->pins[0] << func->mux_shअगरt;
+		ret = regmap_ग_लिखो(pctrl->syscon,
 				   pctrl->pctrl_offset + func->mux, reg);
-		if (ret)
-			return ret;
-	} else {
-		for (i = 0; i < pgrp->npins; i++) {
-			unsigned int pin = pgrp->pins[i];
+		अगर (ret)
+			वापस ret;
+	पूर्ण अन्यथा अणु
+		क्रम (i = 0; i < pgrp->npins; i++) अणु
+			अचिन्हित पूर्णांक pin = pgrp->pins[i];
 			u32 reg, addr = pctrl->pctrl_offset + (4 * pin);
 
-			ret = regmap_read(pctrl->syscon, addr, &reg);
-			if (ret)
-				return ret;
+			ret = regmap_पढ़ो(pctrl->syscon, addr, &reg);
+			अगर (ret)
+				वापस ret;
 
 			reg &= ~ZYNQ_PINMUX_MUX_MASK;
 			reg |= func->mux_val << ZYNQ_PINMUX_MUX_SHIFT;
-			ret = regmap_write(pctrl->syscon, addr, reg);
-			if (ret)
-				return ret;
-		}
-	}
+			ret = regmap_ग_लिखो(pctrl->syscon, addr, reg);
+			अगर (ret)
+				वापस ret;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinmux_ops zynq_pinmux_ops = {
+अटल स्थिर काष्ठा pinmux_ops zynq_pinmux_ops = अणु
 	.get_functions_count = zynq_pmux_get_functions_count,
 	.get_function_name = zynq_pmux_get_function_name,
 	.get_function_groups = zynq_pmux_get_function_groups,
 	.set_mux = zynq_pinmux_set_mux,
-};
+पूर्ण;
 
 /* pinconfig */
-#define ZYNQ_PINCONF_TRISTATE		BIT(0)
-#define ZYNQ_PINCONF_SPEED		BIT(8)
-#define ZYNQ_PINCONF_PULLUP		BIT(12)
-#define ZYNQ_PINCONF_DISABLE_RECVR	BIT(13)
+#घोषणा ZYNQ_PINCONF_TRISTATE		BIT(0)
+#घोषणा ZYNQ_PINCONF_SPEED		BIT(8)
+#घोषणा ZYNQ_PINCONF_PULLUP		BIT(12)
+#घोषणा ZYNQ_PINCONF_DISABLE_RECVR	BIT(13)
 
-#define ZYNQ_PINCONF_IOTYPE_SHIFT	9
-#define ZYNQ_PINCONF_IOTYPE_MASK	(7 << ZYNQ_PINCONF_IOTYPE_SHIFT)
+#घोषणा ZYNQ_PINCONF_IOTYPE_SHIFT	9
+#घोषणा ZYNQ_PINCONF_IOTYPE_MASK	(7 << ZYNQ_PINCONF_IOTYPE_SHIFT)
 
-enum zynq_io_standards {
+क्रमागत zynq_io_standards अणु
 	zynq_iostd_min,
 	zynq_iostd_lvcmos18,
 	zynq_iostd_lvcmos25,
 	zynq_iostd_lvcmos33,
 	zynq_iostd_hstl,
 	zynq_iostd_max
-};
+पूर्ण;
 
 /*
- * PIN_CONFIG_IOSTANDARD: if the pin can select an IO standard, the argument to
- *	this parameter (on a custom format) tells the driver which alternative
+ * PIN_CONFIG_IOSTANDARD: अगर the pin can select an IO standard, the argument to
+ *	this parameter (on a custom क्रमmat) tells the driver which alternative
  *	IO standard to use.
  */
-#define PIN_CONFIG_IOSTANDARD		(PIN_CONFIG_END + 1)
+#घोषणा PIN_CONFIG_IOSTANDARD		(PIN_CONFIG_END + 1)
 
-static const struct pinconf_generic_params zynq_dt_params[] = {
-	{"io-standard", PIN_CONFIG_IOSTANDARD, zynq_iostd_lvcmos18},
-};
+अटल स्थिर काष्ठा pinconf_generic_params zynq_dt_params[] = अणु
+	अणु"io-standard", PIN_CONFIG_IOSTANDARD, zynq_iostd_lvcmos18पूर्ण,
+पूर्ण;
 
-#ifdef CONFIG_DEBUG_FS
-static const struct pin_config_item zynq_conf_items[ARRAY_SIZE(zynq_dt_params)]
-	= { PCONFDUMP(PIN_CONFIG_IOSTANDARD, "IO-standard", NULL, true),
-};
-#endif
+#अगर_घोषित CONFIG_DEBUG_FS
+अटल स्थिर काष्ठा pin_config_item zynq_conf_items[ARRAY_SIZE(zynq_dt_params)]
+	= अणु PCONFDUMP(PIN_CONFIG_IOSTANDARD, "IO-standard", शून्य, true),
+पूर्ण;
+#पूर्ण_अगर
 
-static unsigned int zynq_pinconf_iostd_get(u32 reg)
-{
-	return (reg & ZYNQ_PINCONF_IOTYPE_MASK) >> ZYNQ_PINCONF_IOTYPE_SHIFT;
-}
+अटल अचिन्हित पूर्णांक zynq_pinconf_iostd_get(u32 reg)
+अणु
+	वापस (reg & ZYNQ_PINCONF_IOTYPE_MASK) >> ZYNQ_PINCONF_IOTYPE_SHIFT;
+पूर्ण
 
-static int zynq_pinconf_cfg_get(struct pinctrl_dev *pctldev,
-				unsigned int pin,
-				unsigned long *config)
-{
+अटल पूर्णांक zynq_pinconf_cfg_get(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित पूर्णांक pin,
+				अचिन्हित दीर्घ *config)
+अणु
 	u32 reg;
-	int ret;
-	unsigned int arg = 0;
-	unsigned int param = pinconf_to_config_param(*config);
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक arg = 0;
+	अचिन्हित पूर्णांक param = pinconf_to_config_param(*config);
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	if (pin >= ZYNQ_NUM_MIOS)
-		return -ENOTSUPP;
+	अगर (pin >= ZYNQ_NUM_MIOS)
+		वापस -ENOTSUPP;
 
-	ret = regmap_read(pctrl->syscon, pctrl->pctrl_offset + (4 * pin), &reg);
-	if (ret)
-		return -EIO;
+	ret = regmap_पढ़ो(pctrl->syscon, pctrl->pctrl_offset + (4 * pin), &reg);
+	अगर (ret)
+		वापस -EIO;
 
-	switch (param) {
-	case PIN_CONFIG_BIAS_PULL_UP:
-		if (!(reg & ZYNQ_PINCONF_PULLUP))
-			return -EINVAL;
+	चयन (param) अणु
+	हाल PIN_CONFIG_BIAS_PULL_UP:
+		अगर (!(reg & ZYNQ_PINCONF_PULLUP))
+			वापस -EINVAL;
 		arg = 1;
-		break;
-	case PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
-		if (!(reg & ZYNQ_PINCONF_TRISTATE))
-			return -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
+		अगर (!(reg & ZYNQ_PINCONF_TRISTATE))
+			वापस -EINVAL;
 		arg = 1;
-		break;
-	case PIN_CONFIG_BIAS_DISABLE:
-		if (reg & ZYNQ_PINCONF_PULLUP || reg & ZYNQ_PINCONF_TRISTATE)
-			return -EINVAL;
-		break;
-	case PIN_CONFIG_SLEW_RATE:
+		अवरोध;
+	हाल PIN_CONFIG_BIAS_DISABLE:
+		अगर (reg & ZYNQ_PINCONF_PULLUP || reg & ZYNQ_PINCONF_TRISTATE)
+			वापस -EINVAL;
+		अवरोध;
+	हाल PIN_CONFIG_SLEW_RATE:
 		arg = !!(reg & ZYNQ_PINCONF_SPEED);
-		break;
-	case PIN_CONFIG_MODE_LOW_POWER:
-	{
-		enum zynq_io_standards iostd = zynq_pinconf_iostd_get(reg);
+		अवरोध;
+	हाल PIN_CONFIG_MODE_LOW_POWER:
+	अणु
+		क्रमागत zynq_io_standards iostd = zynq_pinconf_iostd_get(reg);
 
-		if (iostd != zynq_iostd_hstl)
-			return -EINVAL;
-		if (!(reg & ZYNQ_PINCONF_DISABLE_RECVR))
-			return -EINVAL;
+		अगर (iostd != zynq_iostd_hstl)
+			वापस -EINVAL;
+		अगर (!(reg & ZYNQ_PINCONF_DISABLE_RECVR))
+			वापस -EINVAL;
 		arg = !!(reg & ZYNQ_PINCONF_DISABLE_RECVR);
-		break;
-	}
-	case PIN_CONFIG_IOSTANDARD:
+		अवरोध;
+	पूर्ण
+	हाल PIN_CONFIG_IOSTANDARD:
 		arg = zynq_pinconf_iostd_get(reg);
-		break;
-	default:
-		return -ENOTSUPP;
-	}
+		अवरोध;
+	शेष:
+		वापस -ENOTSUPP;
+	पूर्ण
 
 	*config = pinconf_to_config_packed(param, arg);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zynq_pinconf_cfg_set(struct pinctrl_dev *pctldev,
-				unsigned int pin,
-				unsigned long *configs,
-				unsigned int num_configs)
-{
-	int i, ret;
+अटल पूर्णांक zynq_pinconf_cfg_set(काष्ठा pinctrl_dev *pctldev,
+				अचिन्हित पूर्णांक pin,
+				अचिन्हित दीर्घ *configs,
+				अचिन्हित पूर्णांक num_configs)
+अणु
+	पूर्णांक i, ret;
 	u32 reg;
 	u32 pullup = 0;
 	u32 tristate = 0;
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
 
-	if (pin >= ZYNQ_NUM_MIOS)
-		return -ENOTSUPP;
+	अगर (pin >= ZYNQ_NUM_MIOS)
+		वापस -ENOTSUPP;
 
-	ret = regmap_read(pctrl->syscon, pctrl->pctrl_offset + (4 * pin), &reg);
-	if (ret)
-		return -EIO;
+	ret = regmap_पढ़ो(pctrl->syscon, pctrl->pctrl_offset + (4 * pin), &reg);
+	अगर (ret)
+		वापस -EIO;
 
-	for (i = 0; i < num_configs; i++) {
-		unsigned int param = pinconf_to_config_param(configs[i]);
-		unsigned int arg = pinconf_to_config_argument(configs[i]);
+	क्रम (i = 0; i < num_configs; i++) अणु
+		अचिन्हित पूर्णांक param = pinconf_to_config_param(configs[i]);
+		अचिन्हित पूर्णांक arg = pinconf_to_config_argument(configs[i]);
 
-		switch (param) {
-		case PIN_CONFIG_BIAS_PULL_UP:
+		चयन (param) अणु
+		हाल PIN_CONFIG_BIAS_PULL_UP:
 			pullup = ZYNQ_PINCONF_PULLUP;
-			break;
-		case PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
 			tristate = ZYNQ_PINCONF_TRISTATE;
-			break;
-		case PIN_CONFIG_BIAS_DISABLE:
+			अवरोध;
+		हाल PIN_CONFIG_BIAS_DISABLE:
 			reg &= ~(ZYNQ_PINCONF_PULLUP | ZYNQ_PINCONF_TRISTATE);
-			break;
-		case PIN_CONFIG_SLEW_RATE:
-			if (arg)
+			अवरोध;
+		हाल PIN_CONFIG_SLEW_RATE:
+			अगर (arg)
 				reg |= ZYNQ_PINCONF_SPEED;
-			else
+			अन्यथा
 				reg &= ~ZYNQ_PINCONF_SPEED;
 
-			break;
-		case PIN_CONFIG_IOSTANDARD:
-			if (arg <= zynq_iostd_min || arg >= zynq_iostd_max) {
+			अवरोध;
+		हाल PIN_CONFIG_IOSTANDARD:
+			अगर (arg <= zynq_iostd_min || arg >= zynq_iostd_max) अणु
 				dev_warn(pctldev->dev,
 					 "unsupported IO standard '%u'\n",
 					 param);
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			reg &= ~ZYNQ_PINCONF_IOTYPE_MASK;
 			reg |= arg << ZYNQ_PINCONF_IOTYPE_SHIFT;
-			break;
-		case PIN_CONFIG_MODE_LOW_POWER:
-			if (arg)
+			अवरोध;
+		हाल PIN_CONFIG_MODE_LOW_POWER:
+			अगर (arg)
 				reg |= ZYNQ_PINCONF_DISABLE_RECVR;
-			else
+			अन्यथा
 				reg &= ~ZYNQ_PINCONF_DISABLE_RECVR;
 
-			break;
-		default:
+			अवरोध;
+		शेष:
 			dev_warn(pctldev->dev,
 				 "unsupported configuration parameter '%u'\n",
 				 param);
-			continue;
-		}
-	}
+			जारी;
+		पूर्ण
+	पूर्ण
 
-	if (tristate || pullup) {
+	अगर (tristate || pullup) अणु
 		reg &= ~(ZYNQ_PINCONF_PULLUP | ZYNQ_PINCONF_TRISTATE);
 		reg |= tristate | pullup;
-	}
+	पूर्ण
 
-	ret = regmap_write(pctrl->syscon, pctrl->pctrl_offset + (4 * pin), reg);
-	if (ret)
-		return -EIO;
+	ret = regmap_ग_लिखो(pctrl->syscon, pctrl->pctrl_offset + (4 * pin), reg);
+	अगर (ret)
+		वापस -EIO;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int zynq_pinconf_group_set(struct pinctrl_dev *pctldev,
-				  unsigned int selector,
-				  unsigned long *configs,
-				  unsigned int  num_configs)
-{
-	int i, ret;
-	struct zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
-	const struct zynq_pctrl_group *pgrp = &pctrl->groups[selector];
+अटल पूर्णांक zynq_pinconf_group_set(काष्ठा pinctrl_dev *pctldev,
+				  अचिन्हित पूर्णांक selector,
+				  अचिन्हित दीर्घ *configs,
+				  अचिन्हित पूर्णांक  num_configs)
+अणु
+	पूर्णांक i, ret;
+	काष्ठा zynq_pinctrl *pctrl = pinctrl_dev_get_drvdata(pctldev);
+	स्थिर काष्ठा zynq_pctrl_group *pgrp = &pctrl->groups[selector];
 
-	for (i = 0; i < pgrp->npins; i++) {
+	क्रम (i = 0; i < pgrp->npins; i++) अणु
 		ret = zynq_pinconf_cfg_set(pctldev, pgrp->pins[i], configs,
 					   num_configs);
-		if (ret)
-			return ret;
-	}
+		अगर (ret)
+			वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct pinconf_ops zynq_pinconf_ops = {
+अटल स्थिर काष्ठा pinconf_ops zynq_pinconf_ops = अणु
 	.is_generic = true,
 	.pin_config_get = zynq_pinconf_cfg_get,
 	.pin_config_set = zynq_pinconf_cfg_set,
 	.pin_config_group_set = zynq_pinconf_group_set,
-};
+पूर्ण;
 
-static struct pinctrl_desc zynq_desc = {
+अटल काष्ठा pinctrl_desc zynq_desc = अणु
 	.name = "zynq_pinctrl",
 	.pins = zynq_pins,
 	.npins = ARRAY_SIZE(zynq_pins),
@@ -1149,34 +1150,34 @@ static struct pinctrl_desc zynq_desc = {
 	.confops = &zynq_pinconf_ops,
 	.num_custom_params = ARRAY_SIZE(zynq_dt_params),
 	.custom_params = zynq_dt_params,
-#ifdef CONFIG_DEBUG_FS
+#अगर_घोषित CONFIG_DEBUG_FS
 	.custom_conf_items = zynq_conf_items,
-#endif
+#पूर्ण_अगर
 	.owner = THIS_MODULE,
-};
+पूर्ण;
 
-static int zynq_pinctrl_probe(struct platform_device *pdev)
+अटल पूर्णांक zynq_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
 
-{
-	struct resource *res;
-	struct zynq_pinctrl *pctrl;
+अणु
+	काष्ठा resource *res;
+	काष्ठा zynq_pinctrl *pctrl;
 
-	pctrl = devm_kzalloc(&pdev->dev, sizeof(*pctrl), GFP_KERNEL);
-	if (!pctrl)
-		return -ENOMEM;
+	pctrl = devm_kzalloc(&pdev->dev, माप(*pctrl), GFP_KERNEL);
+	अगर (!pctrl)
+		वापस -ENOMEM;
 
 	pctrl->syscon = syscon_regmap_lookup_by_phandle(pdev->dev.of_node,
 							"syscon");
-	if (IS_ERR(pctrl->syscon)) {
+	अगर (IS_ERR(pctrl->syscon)) अणु
 		dev_err(&pdev->dev, "unable to get syscon\n");
-		return PTR_ERR(pctrl->syscon);
-	}
+		वापस PTR_ERR(pctrl->syscon);
+	पूर्ण
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (!res) {
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	अगर (!res) अणु
 		dev_err(&pdev->dev, "missing IO resource\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 	pctrl->pctrl_offset = res->start;
 
 	pctrl->groups = zynq_pctrl_groups;
@@ -1184,32 +1185,32 @@ static int zynq_pinctrl_probe(struct platform_device *pdev)
 	pctrl->funcs = zynq_pmux_functions;
 	pctrl->nfuncs = ARRAY_SIZE(zynq_pmux_functions);
 
-	pctrl->pctrl = devm_pinctrl_register(&pdev->dev, &zynq_desc, pctrl);
-	if (IS_ERR(pctrl->pctrl))
-		return PTR_ERR(pctrl->pctrl);
+	pctrl->pctrl = devm_pinctrl_रेजिस्टर(&pdev->dev, &zynq_desc, pctrl);
+	अगर (IS_ERR(pctrl->pctrl))
+		वापस PTR_ERR(pctrl->pctrl);
 
-	platform_set_drvdata(pdev, pctrl);
+	platक्रमm_set_drvdata(pdev, pctrl);
 
 	dev_info(&pdev->dev, "zynq pinctrl initialized\n");
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id zynq_pinctrl_of_match[] = {
-	{ .compatible = "xlnx,pinctrl-zynq" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id zynq_pinctrl_of_match[] = अणु
+	अणु .compatible = "xlnx,pinctrl-zynq" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver zynq_pinctrl_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver zynq_pinctrl_driver = अणु
+	.driver = अणु
 		.name = "zynq-pinctrl",
 		.of_match_table = zynq_pinctrl_of_match,
-	},
+	पूर्ण,
 	.probe = zynq_pinctrl_probe,
-};
+पूर्ण;
 
-static int __init zynq_pinctrl_init(void)
-{
-	return platform_driver_register(&zynq_pinctrl_driver);
-}
+अटल पूर्णांक __init zynq_pinctrl_init(व्योम)
+अणु
+	वापस platक्रमm_driver_रेजिस्टर(&zynq_pinctrl_driver);
+पूर्ण
 arch_initcall(zynq_pinctrl_init);

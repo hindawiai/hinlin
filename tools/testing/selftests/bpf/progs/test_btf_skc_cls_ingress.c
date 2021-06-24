@@ -1,174 +1,175 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /* Copyright (c) 2020 Facebook */
 
-#include <string.h>
-#include <errno.h>
-#include <netinet/in.h>
-#include <linux/stddef.h>
-#include <linux/bpf.h>
-#include <linux/ipv6.h>
-#include <linux/tcp.h>
-#include <linux/if_ether.h>
-#include <linux/pkt_cls.h>
+#समावेश <माला.स>
+#समावेश <त्रुटिसं.स>
+#समावेश <netinet/in.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/bpf.h>
+#समावेश <linux/ipv6.h>
+#समावेश <linux/tcp.h>
+#समावेश <linux/अगर_ether.h>
+#समावेश <linux/pkt_cls.h>
 
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_endian.h>
-#include "bpf_tcp_helpers.h"
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_endian.h>
+#समावेश "bpf_tcp_helpers.h"
 
-struct sockaddr_in6 srv_sa6 = {};
+काष्ठा sockaddr_in6 srv_sa6 = अणुपूर्ण;
 __u16 listen_tp_sport = 0;
 __u16 req_sk_sport = 0;
 __u32 recv_cookie = 0;
 __u32 gen_cookie = 0;
 __u32 linum = 0;
 
-#define LOG() ({ if (!linum) linum = __LINE__; })
+#घोषणा LOG() (अणु अगर (!linum) linum = __LINE__; पूर्ण)
 
-static void test_syncookie_helper(struct ipv6hdr *ip6h, struct tcphdr *th,
-				  struct tcp_sock *tp,
-				  struct __sk_buff *skb)
-{
-	if (th->syn) {
+अटल व्योम test_syncookie_helper(काष्ठा ipv6hdr *ip6h, काष्ठा tcphdr *th,
+				  काष्ठा tcp_sock *tp,
+				  काष्ठा __sk_buff *skb)
+अणु
+	अगर (th->syn) अणु
 		__s64 mss_cookie;
-		void *data_end;
+		व्योम *data_end;
 
-		data_end = (void *)(long)(skb->data_end);
+		data_end = (व्योम *)(दीर्घ)(skb->data_end);
 
-		if (th->doff * 4 != 40) {
+		अगर (th->करोff * 4 != 40) अणु
 			LOG();
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if ((void *)th + 40 > data_end) {
+		अगर ((व्योम *)th + 40 > data_end) अणु
 			LOG();
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		mss_cookie = bpf_tcp_gen_syncookie(tp, ip6h, sizeof(*ip6h),
+		mss_cookie = bpf_tcp_gen_syncookie(tp, ip6h, माप(*ip6h),
 						   th, 40);
-		if (mss_cookie < 0) {
-			if (mss_cookie != -ENOENT)
+		अगर (mss_cookie < 0) अणु
+			अगर (mss_cookie != -ENOENT)
 				LOG();
-		} else {
+		पूर्ण अन्यथा अणु
 			gen_cookie = (__u32)mss_cookie;
-		}
-	} else if (gen_cookie) {
+		पूर्ण
+	पूर्ण अन्यथा अगर (gen_cookie) अणु
 		/* It was in cookie mode */
-		int ret = bpf_tcp_check_syncookie(tp, ip6h, sizeof(*ip6h),
-						  th, sizeof(*th));
+		पूर्णांक ret = bpf_tcp_check_syncookie(tp, ip6h, माप(*ip6h),
+						  th, माप(*th));
 
-		if (ret < 0) {
-			if (ret != -ENOENT)
+		अगर (ret < 0) अणु
+			अगर (ret != -ENOENT)
 				LOG();
-		} else {
+		पूर्ण अन्यथा अणु
 			recv_cookie = bpf_ntohl(th->ack_seq) - 1;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int handle_ip6_tcp(struct ipv6hdr *ip6h, struct __sk_buff *skb)
-{
-	struct bpf_sock_tuple *tuple;
-	struct bpf_sock *bpf_skc;
-	unsigned int tuple_len;
-	struct tcphdr *th;
-	void *data_end;
+अटल पूर्णांक handle_ip6_tcp(काष्ठा ipv6hdr *ip6h, काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा bpf_sock_tuple *tuple;
+	काष्ठा bpf_sock *bpf_skc;
+	अचिन्हित पूर्णांक tuple_len;
+	काष्ठा tcphdr *th;
+	व्योम *data_end;
 
-	data_end = (void *)(long)(skb->data_end);
+	data_end = (व्योम *)(दीर्घ)(skb->data_end);
 
-	th = (struct tcphdr *)(ip6h + 1);
-	if (th + 1 > data_end)
-		return TC_ACT_OK;
+	th = (काष्ठा tcphdr *)(ip6h + 1);
+	अगर (th + 1 > data_end)
+		वापस TC_ACT_OK;
 
 	/* Is it the testing traffic? */
-	if (th->dest != srv_sa6.sin6_port)
-		return TC_ACT_OK;
+	अगर (th->dest != srv_sa6.sin6_port)
+		वापस TC_ACT_OK;
 
-	tuple_len = sizeof(tuple->ipv6);
-	tuple = (struct bpf_sock_tuple *)&ip6h->saddr;
-	if ((void *)tuple + tuple_len > data_end) {
+	tuple_len = माप(tuple->ipv6);
+	tuple = (काष्ठा bpf_sock_tuple *)&ip6h->saddr;
+	अगर ((व्योम *)tuple + tuple_len > data_end) अणु
 		LOG();
-		return TC_ACT_OK;
-	}
+		वापस TC_ACT_OK;
+	पूर्ण
 
 	bpf_skc = bpf_skc_lookup_tcp(skb, tuple, tuple_len,
 				     BPF_F_CURRENT_NETNS, 0);
-	if (!bpf_skc) {
+	अगर (!bpf_skc) अणु
 		LOG();
-		return TC_ACT_OK;
-	}
+		वापस TC_ACT_OK;
+	पूर्ण
 
-	if (bpf_skc->state == BPF_TCP_NEW_SYN_RECV) {
-		struct request_sock *req_sk;
+	अगर (bpf_skc->state == BPF_TCP_NEW_SYN_RECV) अणु
+		काष्ठा request_sock *req_sk;
 
-		req_sk = (struct request_sock *)bpf_skc_to_tcp_request_sock(bpf_skc);
-		if (!req_sk) {
+		req_sk = (काष्ठा request_sock *)bpf_skc_to_tcp_request_sock(bpf_skc);
+		अगर (!req_sk) अणु
 			LOG();
-			goto release;
-		}
+			जाओ release;
+		पूर्ण
 
-		if (bpf_sk_assign(skb, req_sk, 0)) {
+		अगर (bpf_sk_assign(skb, req_sk, 0)) अणु
 			LOG();
-			goto release;
-		}
+			जाओ release;
+		पूर्ण
 
 		req_sk_sport = req_sk->__req_common.skc_num;
 
 		bpf_sk_release(req_sk);
-		return TC_ACT_OK;
-	} else if (bpf_skc->state == BPF_TCP_LISTEN) {
-		struct tcp_sock *tp;
+		वापस TC_ACT_OK;
+	पूर्ण अन्यथा अगर (bpf_skc->state == BPF_TCP_LISTEN) अणु
+		काष्ठा tcp_sock *tp;
 
 		tp = bpf_skc_to_tcp_sock(bpf_skc);
-		if (!tp) {
+		अगर (!tp) अणु
 			LOG();
-			goto release;
-		}
+			जाओ release;
+		पूर्ण
 
-		if (bpf_sk_assign(skb, tp, 0)) {
+		अगर (bpf_sk_assign(skb, tp, 0)) अणु
 			LOG();
-			goto release;
-		}
+			जाओ release;
+		पूर्ण
 
 		listen_tp_sport = tp->inet_conn.icsk_inet.sk.__sk_common.skc_num;
 
 		test_syncookie_helper(ip6h, th, tp, skb);
 		bpf_sk_release(tp);
-		return TC_ACT_OK;
-	}
+		वापस TC_ACT_OK;
+	पूर्ण
 
-	if (bpf_sk_assign(skb, bpf_skc, 0))
+	अगर (bpf_sk_assign(skb, bpf_skc, 0))
 		LOG();
 
 release:
 	bpf_sk_release(bpf_skc);
-	return TC_ACT_OK;
-}
+	वापस TC_ACT_OK;
+पूर्ण
 
 SEC("classifier/ingress")
-int cls_ingress(struct __sk_buff *skb)
-{
-	struct ipv6hdr *ip6h;
-	struct ethhdr *eth;
-	void *data_end;
+पूर्णांक cls_ingress(काष्ठा __sk_buff *skb)
+अणु
+	काष्ठा ipv6hdr *ip6h;
+	काष्ठा ethhdr *eth;
+	व्योम *data_end;
 
-	data_end = (void *)(long)(skb->data_end);
+	data_end = (व्योम *)(दीर्घ)(skb->data_end);
 
-	eth = (struct ethhdr *)(long)(skb->data);
-	if (eth + 1 > data_end)
-		return TC_ACT_OK;
+	eth = (काष्ठा ethhdr *)(दीर्घ)(skb->data);
+	अगर (eth + 1 > data_end)
+		वापस TC_ACT_OK;
 
-	if (eth->h_proto != bpf_htons(ETH_P_IPV6))
-		return TC_ACT_OK;
+	अगर (eth->h_proto != bpf_htons(ETH_P_IPV6))
+		वापस TC_ACT_OK;
 
-	ip6h = (struct ipv6hdr *)(eth + 1);
-	if (ip6h + 1 > data_end)
-		return TC_ACT_OK;
+	ip6h = (काष्ठा ipv6hdr *)(eth + 1);
+	अगर (ip6h + 1 > data_end)
+		वापस TC_ACT_OK;
 
-	if (ip6h->nexthdr == IPPROTO_TCP)
-		return handle_ip6_tcp(ip6h, skb);
+	अगर (ip6h->nexthdr == IPPROTO_TCP)
+		वापस handle_ip6_tcp(ip6h, skb);
 
-	return TC_ACT_OK;
-}
+	वापस TC_ACT_OK;
+पूर्ण
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";

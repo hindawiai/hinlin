@@ -1,26 +1,27 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * Copyright (C) 2012 ARM Ltd.
  *
- * This program is free software; you can redistribute it and/or modify
+ * This program is मुक्त software; you can redistribute it and/or modअगरy
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ * GNU General Public License क्रम more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * aदीर्घ with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef __ASM_AUXVEC_H
-#define __ASM_AUXVEC_H
+#अगर_अघोषित __ASM_AUXVEC_H
+#घोषणा __ASM_AUXVEC_H
 
 /* vDSO location */
-#define AT_SYSINFO_EHDR	33
-#define AT_MINSIGSTKSZ	51	/* stack needed for signal delivery */
+#घोषणा AT_SYSINFO_EHDR	33
+#घोषणा AT_MINSIGSTKSZ	51	/* stack needed क्रम संकेत delivery */
 
-#define AT_VECTOR_SIZE_ARCH 2 /* entries in ARCH_DLINFO */
+#घोषणा AT_VECTOR_SIZE_ARCH 2 /* entries in ARCH_DLINFO */
 
-#endif
+#पूर्ण_अगर

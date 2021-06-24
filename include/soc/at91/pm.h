@@ -1,16 +1,17 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Atmel Power Management
+ * Aपंचांगel Power Management
  *
- * Copyright (C) 2020 Atmel
+ * Copyright (C) 2020 Aपंचांगel
  *
  * Author: Lee Jones <lee.jones@linaro.org>
  */
 
-#ifndef __SOC_ATMEL_PM_H
-#define __SOC_ATMEL_PM_H
+#अगर_अघोषित __SOC_ATMEL_PM_H
+#घोषणा __SOC_ATMEL_PM_H
 
-void at91_pinctrl_gpio_suspend(void);
-void at91_pinctrl_gpio_resume(void);
+व्योम at91_pinctrl_gpio_suspend(व्योम);
+व्योम at91_pinctrl_gpio_resume(व्योम);
 
-#endif /* __SOC_ATMEL_PM_H */
+#पूर्ण_अगर /* __SOC_ATMEL_PM_H */

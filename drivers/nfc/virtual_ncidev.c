@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Virtual NCI device simulation driver
  *
@@ -6,209 +7,209 @@
  * Bongsu Jeon <bongsu.jeon@samsung.com>
  */
 
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/miscdevice.h>
-#include <linux/mutex.h>
-#include <net/nfc/nci_core.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/miscdevice.h>
+#समावेश <linux/mutex.h>
+#समावेश <net/nfc/nci_core.h>
 
-enum virtual_ncidev_mode {
-	virtual_ncidev_enabled,
-	virtual_ncidev_disabled,
-	virtual_ncidev_disabling,
-};
+क्रमागत भव_ncidev_mode अणु
+	भव_ncidev_enabled,
+	भव_ncidev_disabled,
+	भव_ncidev_disabling,
+पूर्ण;
 
-#define IOCTL_GET_NCIDEV_IDX    0
-#define VIRTUAL_NFC_PROTOCOLS	(NFC_PROTO_JEWEL_MASK | \
+#घोषणा IOCTL_GET_NCIDEV_IDX    0
+#घोषणा VIRTUAL_NFC_PROTOCOLS	(NFC_PROTO_JEWEL_MASK | \
 				 NFC_PROTO_MIFARE_MASK | \
 				 NFC_PROTO_FELICA_MASK | \
 				 NFC_PROTO_ISO14443_MASK | \
 				 NFC_PROTO_ISO14443_B_MASK | \
 				 NFC_PROTO_ISO15693_MASK)
 
-static enum virtual_ncidev_mode state;
-static struct miscdevice miscdev;
-static struct sk_buff *send_buff;
-static struct nci_dev *ndev;
-static DEFINE_MUTEX(nci_mutex);
+अटल क्रमागत भव_ncidev_mode state;
+अटल काष्ठा miscdevice miscdev;
+अटल काष्ठा sk_buff *send_buff;
+अटल काष्ठा nci_dev *ndev;
+अटल DEFINE_MUTEX(nci_mutex);
 
-static int virtual_nci_open(struct nci_dev *ndev)
-{
-	return 0;
-}
+अटल पूर्णांक भव_nci_खोलो(काष्ठा nci_dev *ndev)
+अणु
+	वापस 0;
+पूर्ण
 
-static int virtual_nci_close(struct nci_dev *ndev)
-{
+अटल पूर्णांक भव_nci_बंद(काष्ठा nci_dev *ndev)
+अणु
 	mutex_lock(&nci_mutex);
-	kfree_skb(send_buff);
-	send_buff = NULL;
+	kमुक्त_skb(send_buff);
+	send_buff = शून्य;
 	mutex_unlock(&nci_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int virtual_nci_send(struct nci_dev *ndev, struct sk_buff *skb)
-{
+अटल पूर्णांक भव_nci_send(काष्ठा nci_dev *ndev, काष्ठा sk_buff *skb)
+अणु
 	mutex_lock(&nci_mutex);
-	if (state != virtual_ncidev_enabled) {
+	अगर (state != भव_ncidev_enabled) अणु
 		mutex_unlock(&nci_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	if (send_buff) {
+	अगर (send_buff) अणु
 		mutex_unlock(&nci_mutex);
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 	send_buff = skb_copy(skb, GFP_KERNEL);
 	mutex_unlock(&nci_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct nci_ops virtual_nci_ops = {
-	.open = virtual_nci_open,
-	.close = virtual_nci_close,
-	.send = virtual_nci_send
-};
+अटल काष्ठा nci_ops भव_nci_ops = अणु
+	.खोलो = भव_nci_खोलो,
+	.बंद = भव_nci_बंद,
+	.send = भव_nci_send
+पूर्ण;
 
-static ssize_t virtual_ncidev_read(struct file *file, char __user *buf,
-				   size_t count, loff_t *ppos)
-{
-	size_t actual_len;
+अटल sमाप_प्रकार भव_ncidev_पढ़ो(काष्ठा file *file, अक्षर __user *buf,
+				   माप_प्रकार count, loff_t *ppos)
+अणु
+	माप_प्रकार actual_len;
 
 	mutex_lock(&nci_mutex);
-	if (!send_buff) {
+	अगर (!send_buff) अणु
 		mutex_unlock(&nci_mutex);
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
-	actual_len = min_t(size_t, count, send_buff->len);
+	actual_len = min_t(माप_प्रकार, count, send_buff->len);
 
-	if (copy_to_user(buf, send_buff->data, actual_len)) {
+	अगर (copy_to_user(buf, send_buff->data, actual_len)) अणु
 		mutex_unlock(&nci_mutex);
-		return -EFAULT;
-	}
+		वापस -EFAULT;
+	पूर्ण
 
 	skb_pull(send_buff, actual_len);
-	if (send_buff->len == 0) {
+	अगर (send_buff->len == 0) अणु
 		consume_skb(send_buff);
-		send_buff = NULL;
-	}
+		send_buff = शून्य;
+	पूर्ण
 	mutex_unlock(&nci_mutex);
 
-	return actual_len;
-}
+	वापस actual_len;
+पूर्ण
 
-static ssize_t virtual_ncidev_write(struct file *file,
-				    const char __user *buf,
-				    size_t count, loff_t *ppos)
-{
-	struct sk_buff *skb;
+अटल sमाप_प्रकार भव_ncidev_ग_लिखो(काष्ठा file *file,
+				    स्थिर अक्षर __user *buf,
+				    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा sk_buff *skb;
 
 	skb = alloc_skb(count, GFP_KERNEL);
-	if (!skb)
-		return -ENOMEM;
+	अगर (!skb)
+		वापस -ENOMEM;
 
-	if (copy_from_user(skb_put(skb, count), buf, count)) {
-		kfree_skb(skb);
-		return -EFAULT;
-	}
+	अगर (copy_from_user(skb_put(skb, count), buf, count)) अणु
+		kमुक्त_skb(skb);
+		वापस -EFAULT;
+	पूर्ण
 
 	nci_recv_frame(ndev, skb);
-	return count;
-}
+	वापस count;
+पूर्ण
 
-static int virtual_ncidev_open(struct inode *inode, struct file *file)
-{
-	int ret = 0;
+अटल पूर्णांक भव_ncidev_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक ret = 0;
 
 	mutex_lock(&nci_mutex);
-	if (state != virtual_ncidev_disabled) {
+	अगर (state != भव_ncidev_disabled) अणु
 		mutex_unlock(&nci_mutex);
-		return -EBUSY;
-	}
+		वापस -EBUSY;
+	पूर्ण
 
-	ndev = nci_allocate_device(&virtual_nci_ops, VIRTUAL_NFC_PROTOCOLS,
+	ndev = nci_allocate_device(&भव_nci_ops, VIRTUAL_NFC_PROTOCOLS,
 				   0, 0);
-	if (!ndev) {
+	अगर (!ndev) अणु
 		mutex_unlock(&nci_mutex);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
-	ret = nci_register_device(ndev);
-	if (ret < 0) {
-		nci_free_device(ndev);
+	ret = nci_रेजिस्टर_device(ndev);
+	अगर (ret < 0) अणु
+		nci_मुक्त_device(ndev);
 		mutex_unlock(&nci_mutex);
-		return ret;
-	}
-	state = virtual_ncidev_enabled;
+		वापस ret;
+	पूर्ण
+	state = भव_ncidev_enabled;
 	mutex_unlock(&nci_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int virtual_ncidev_close(struct inode *inode, struct file *file)
-{
+अटल पूर्णांक भव_ncidev_बंद(काष्ठा inode *inode, काष्ठा file *file)
+अणु
 	mutex_lock(&nci_mutex);
 
-	if (state == virtual_ncidev_enabled) {
-		state = virtual_ncidev_disabling;
+	अगर (state == भव_ncidev_enabled) अणु
+		state = भव_ncidev_disabling;
 		mutex_unlock(&nci_mutex);
 
-		nci_unregister_device(ndev);
-		nci_free_device(ndev);
+		nci_unरेजिस्टर_device(ndev);
+		nci_मुक्त_device(ndev);
 
 		mutex_lock(&nci_mutex);
-	}
+	पूर्ण
 
-	state = virtual_ncidev_disabled;
+	state = भव_ncidev_disabled;
 	mutex_unlock(&nci_mutex);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long virtual_ncidev_ioctl(struct file *flip, unsigned int cmd,
-				 unsigned long arg)
-{
-	struct nfc_dev *nfc_dev = ndev->nfc_dev;
-	void __user *p = (void __user *)arg;
+अटल दीर्घ भव_ncidev_ioctl(काष्ठा file *flip, अचिन्हित पूर्णांक cmd,
+				 अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा nfc_dev *nfc_dev = ndev->nfc_dev;
+	व्योम __user *p = (व्योम __user *)arg;
 
-	if (cmd != IOCTL_GET_NCIDEV_IDX)
-		return -ENOTTY;
+	अगर (cmd != IOCTL_GET_NCIDEV_IDX)
+		वापस -ENOTTY;
 
-	if (copy_to_user(p, &nfc_dev->idx, sizeof(nfc_dev->idx)))
-		return -EFAULT;
+	अगर (copy_to_user(p, &nfc_dev->idx, माप(nfc_dev->idx)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct file_operations virtual_ncidev_fops = {
+अटल स्थिर काष्ठा file_operations भव_ncidev_fops = अणु
 	.owner = THIS_MODULE,
-	.read = virtual_ncidev_read,
-	.write = virtual_ncidev_write,
-	.open = virtual_ncidev_open,
-	.release = virtual_ncidev_close,
-	.unlocked_ioctl = virtual_ncidev_ioctl
-};
+	.पढ़ो = भव_ncidev_पढ़ो,
+	.ग_लिखो = भव_ncidev_ग_लिखो,
+	.खोलो = भव_ncidev_खोलो,
+	.release = भव_ncidev_बंद,
+	.unlocked_ioctl = भव_ncidev_ioctl
+पूर्ण;
 
-static int __init virtual_ncidev_init(void)
-{
-	state = virtual_ncidev_disabled;
+अटल पूर्णांक __init भव_ncidev_init(व्योम)
+अणु
+	state = भव_ncidev_disabled;
 	miscdev.minor = MISC_DYNAMIC_MINOR;
 	miscdev.name = "virtual_nci";
-	miscdev.fops = &virtual_ncidev_fops;
+	miscdev.fops = &भव_ncidev_fops;
 	miscdev.mode = S_IALLUGO;
 
-	return misc_register(&miscdev);
-}
+	वापस misc_रेजिस्टर(&miscdev);
+पूर्ण
 
-static void __exit virtual_ncidev_exit(void)
-{
-	misc_deregister(&miscdev);
-}
+अटल व्योम __निकास भव_ncidev_निकास(व्योम)
+अणु
+	misc_deरेजिस्टर(&miscdev);
+पूर्ण
 
-module_init(virtual_ncidev_init);
-module_exit(virtual_ncidev_exit);
+module_init(भव_ncidev_init);
+module_निकास(भव_ncidev_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Virtual NCI device simulation driver");

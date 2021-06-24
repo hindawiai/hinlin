@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _M68K_ATARI_STRAM_H
-#define _M68K_ATARI_STRAM_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _M68K_ATARI_STRAM_H
+#घोषणा _M68K_ATARI_STRAM_H
 
 /*
- * Functions for Atari ST-RAM management
+ * Functions क्रम Atari ST-RAM management
  */
 
-/* public interface */
-void *atari_stram_alloc(unsigned long size, const char *owner);
-void atari_stram_free(void *);
-void *atari_stram_to_virt(unsigned long phys);
-unsigned long atari_stram_to_phys(void *);
+/* खुला पूर्णांकerface */
+व्योम *atari_stram_alloc(अचिन्हित दीर्घ size, स्थिर अक्षर *owner);
+व्योम atari_stram_मुक्त(व्योम *);
+व्योम *atari_stram_to_virt(अचिन्हित दीर्घ phys);
+अचिन्हित दीर्घ atari_stram_to_phys(व्योम *);
 
-/* functions called internally by other parts of the kernel */
-void atari_stram_init(void);
-void atari_stram_reserve_pages(void *start_mem);
+/* functions called पूर्णांकernally by other parts of the kernel */
+व्योम atari_stram_init(व्योम);
+व्योम atari_stram_reserve_pages(व्योम *start_mem);
 
-#endif /*_M68K_ATARI_STRAM_H */
+#पूर्ण_अगर /*_M68K_ATARI_STRAM_H */

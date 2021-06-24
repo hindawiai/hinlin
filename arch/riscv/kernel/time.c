@@ -1,41 +1,42 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright (C) 2012 Regents of the University of California
+ * Copyright (C) 2012 Regents of the University of Calअगरornia
  * Copyright (C) 2017 SiFive
  */
 
-#include <linux/of_clk.h>
-#include <linux/clocksource.h>
-#include <linux/delay.h>
-#include <asm/sbi.h>
-#include <asm/processor.h>
-#include <asm/timex.h>
+#समावेश <linux/of_clk.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/delay.h>
+#समावेश <यंत्र/sbi.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/समयx.h>
 
-unsigned long riscv_timebase __ro_after_init;
-EXPORT_SYMBOL_GPL(riscv_timebase);
+अचिन्हित दीर्घ riscv_समयbase __ro_after_init;
+EXPORT_SYMBOL_GPL(riscv_समयbase);
 
-void __init time_init(void)
-{
-	struct device_node *cpu;
+व्योम __init समय_init(व्योम)
+अणु
+	काष्ठा device_node *cpu;
 	u32 prop;
 
 	cpu = of_find_node_by_path("/cpus");
-	if (!cpu || of_property_read_u32(cpu, "timebase-frequency", &prop))
+	अगर (!cpu || of_property_पढ़ो_u32(cpu, "timebase-frequency", &prop))
 		panic(KERN_WARNING "RISC-V system with no 'timebase-frequency' in DTS\n");
 	of_node_put(cpu);
-	riscv_timebase = prop;
+	riscv_समयbase = prop;
 
-	lpj_fine = riscv_timebase / HZ;
+	lpj_fine = riscv_समयbase / HZ;
 
-	of_clk_init(NULL);
-	timer_probe();
-}
+	of_clk_init(शून्य);
+	समयr_probe();
+पूर्ण
 
-void clocksource_arch_init(struct clocksource *cs)
-{
-#ifdef CONFIG_GENERIC_GETTIMEOFDAY
-	cs->vdso_clock_mode = VDSO_CLOCKMODE_ARCHTIMER;
-#else
-	cs->vdso_clock_mode = VDSO_CLOCKMODE_NONE;
-#endif
-}
+व्योम घड़ीsource_arch_init(काष्ठा घड़ीsource *cs)
+अणु
+#अगर_घोषित CONFIG_GENERIC_GETTIMखातापूर्णDAY
+	cs->vdso_घड़ी_mode = VDSO_CLOCKMODE_ARCHTIMER;
+#अन्यथा
+	cs->vdso_घड़ी_mode = VDSO_CLOCKMODE_NONE;
+#पूर्ण_अगर
+पूर्ण

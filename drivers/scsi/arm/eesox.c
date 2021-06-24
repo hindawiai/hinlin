@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  *  linux/drivers/acorn/scsi/eesox.c
  *
@@ -14,164 +15,164 @@
  *				added DMA support and hardware definitions
  *   14-03-1998	RMK		Updated DMA support
  *				Added terminator control
- *   15-04-1998	RMK		Only do PIO if FAS216 will allow it.
- *   27-06-1998	RMK		Changed asm/delay.h to linux/delay.h
- *   02-04-2000	RMK	0.0.3	Fixed NO_IRQ/NO_DMA problem, updated for new
+ *   15-04-1998	RMK		Only करो PIO अगर FAS216 will allow it.
+ *   27-06-1998	RMK		Changed यंत्र/delay.h to linux/delay.h
+ *   02-04-2000	RMK	0.0.3	Fixed NO_IRQ/NO_DMA problem, updated क्रम new
  *				error handling code.
  */
-#include <linux/module.h>
-#include <linux/blkdev.h>
-#include <linux/kernel.h>
-#include <linux/string.h>
-#include <linux/ioport.h>
-#include <linux/proc_fs.h>
-#include <linux/delay.h>
-#include <linux/interrupt.h>
-#include <linux/init.h>
-#include <linux/dma-mapping.h>
-#include <linux/pgtable.h>
+#समावेश <linux/module.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/proc_fs.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/init.h>
+#समावेश <linux/dma-mapping.h>
+#समावेश <linux/pgtable.h>
 
-#include <asm/io.h>
-#include <asm/dma.h>
-#include <asm/ecard.h>
+#समावेश <यंत्र/पन.स>
+#समावेश <यंत्र/dma.h>
+#समावेश <यंत्र/ecard.h>
 
-#include "../scsi.h"
-#include <scsi/scsi_host.h>
-#include "fas216.h"
-#include "scsi.h"
+#समावेश "../scsi.h"
+#समावेश <scsi/scsi_host.h>
+#समावेश "fas216.h"
+#समावेश "scsi.h"
 
-#include <scsi/scsicam.h>
+#समावेश <scsi/scsicam.h>
 
-#define EESOX_FAS216_OFFSET	0x3000
-#define EESOX_FAS216_SHIFT	5
+#घोषणा EESOX_FAS216_OFFSET	0x3000
+#घोषणा EESOX_FAS216_SHIFT	5
 
-#define EESOX_DMASTAT		0x2800
-#define EESOX_STAT_INTR		0x01
-#define EESOX_STAT_DMA		0x02
+#घोषणा EESOX_DMASTAT		0x2800
+#घोषणा EESOX_STAT_INTR		0x01
+#घोषणा EESOX_STAT_DMA		0x02
 
-#define EESOX_CONTROL		0x2800
-#define EESOX_INTR_ENABLE	0x04
-#define EESOX_TERM_ENABLE	0x02
-#define EESOX_RESET		0x01
+#घोषणा EESOX_CONTROL		0x2800
+#घोषणा EESOX_INTR_ENABLE	0x04
+#घोषणा EESOX_TERM_ENABLE	0x02
+#घोषणा EESOX_RESET		0x01
 
-#define EESOX_DMADATA		0x3800
+#घोषणा EESOX_DMADATA		0x3800
 
-#define VERSION "1.10 (17/01/2003 2.5.59)"
+#घोषणा VERSION "1.10 (17/01/2003 2.5.59)"
 
 /*
  * Use term=0,1,0,0,0 to turn terminators on/off
  */
-static int term[MAX_ECARDS] = { 1, 1, 1, 1, 1, 1, 1, 1 };
+अटल पूर्णांक term[MAX_ECARDS] = अणु 1, 1, 1, 1, 1, 1, 1, 1 पूर्ण;
 
-#define NR_SG	256
+#घोषणा NR_SG	256
 
-struct eesoxscsi_info {
+काष्ठा eesoxscsi_info अणु
 	FAS216_Info		info;
-	struct expansion_card	*ec;
-	void __iomem		*base;
-	void __iomem		*ctl_port;
-	unsigned int		control;
-	struct scatterlist	sg[NR_SG];	/* Scatter DMA list	*/
-};
+	काष्ठा expansion_card	*ec;
+	व्योम __iomem		*base;
+	व्योम __iomem		*ctl_port;
+	अचिन्हित पूर्णांक		control;
+	काष्ठा scatterlist	sg[NR_SG];	/* Scatter DMA list	*/
+पूर्ण;
 
-/* Prototype: void eesoxscsi_irqenable(ec, irqnr)
- * Purpose  : Enable interrupts on EESOX SCSI card
- * Params   : ec    - expansion card structure
- *          : irqnr - interrupt number
+/* Prototype: व्योम eesoxscsi_irqenable(ec, irqnr)
+ * Purpose  : Enable पूर्णांकerrupts on EESOX SCSI card
+ * Params   : ec    - expansion card काष्ठाure
+ *          : irqnr - पूर्णांकerrupt number
  */
-static void
-eesoxscsi_irqenable(struct expansion_card *ec, int irqnr)
-{
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)ec->irq_data;
+अटल व्योम
+eesoxscsi_irqenable(काष्ठा expansion_card *ec, पूर्णांक irqnr)
+अणु
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)ec->irq_data;
 
 	info->control |= EESOX_INTR_ENABLE;
 
-	writeb(info->control, info->ctl_port);
-}
+	ग_लिखोb(info->control, info->ctl_port);
+पूर्ण
 
-/* Prototype: void eesoxscsi_irqdisable(ec, irqnr)
- * Purpose  : Disable interrupts on EESOX SCSI card
- * Params   : ec    - expansion card structure
- *          : irqnr - interrupt number
+/* Prototype: व्योम eesoxscsi_irqdisable(ec, irqnr)
+ * Purpose  : Disable पूर्णांकerrupts on EESOX SCSI card
+ * Params   : ec    - expansion card काष्ठाure
+ *          : irqnr - पूर्णांकerrupt number
  */
-static void
-eesoxscsi_irqdisable(struct expansion_card *ec, int irqnr)
-{
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)ec->irq_data;
+अटल व्योम
+eesoxscsi_irqdisable(काष्ठा expansion_card *ec, पूर्णांक irqnr)
+अणु
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)ec->irq_data;
 
 	info->control &= ~EESOX_INTR_ENABLE;
 
-	writeb(info->control, info->ctl_port);
-}
+	ग_लिखोb(info->control, info->ctl_port);
+पूर्ण
 
-static const expansioncard_ops_t eesoxscsi_ops = {
+अटल स्थिर expansioncard_ops_t eesoxscsi_ops = अणु
 	.irqenable	= eesoxscsi_irqenable,
 	.irqdisable	= eesoxscsi_irqdisable,
-};
+पूर्ण;
 
-/* Prototype: void eesoxscsi_terminator_ctl(*host, on_off)
+/* Prototype: व्योम eesoxscsi_terminator_ctl(*host, on_off)
  * Purpose  : Turn the EESOX SCSI terminators on or off
  * Params   : host   - card to turn on/off
  *          : on_off - !0 to turn on, 0 to turn off
  */
-static void
-eesoxscsi_terminator_ctl(struct Scsi_Host *host, int on_off)
-{
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)host->hostdata;
-	unsigned long flags;
+अटल व्योम
+eesoxscsi_terminator_ctl(काष्ठा Scsi_Host *host, पूर्णांक on_off)
+अणु
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)host->hostdata;
+	अचिन्हित दीर्घ flags;
 
 	spin_lock_irqsave(host->host_lock, flags);
-	if (on_off)
+	अगर (on_off)
 		info->control |= EESOX_TERM_ENABLE;
-	else
+	अन्यथा
 		info->control &= ~EESOX_TERM_ENABLE;
 
-	writeb(info->control, info->ctl_port);
+	ग_लिखोb(info->control, info->ctl_port);
 	spin_unlock_irqrestore(host->host_lock, flags);
-}
+पूर्ण
 
-/* Prototype: void eesoxscsi_intr(irq, *dev_id, *regs)
- * Purpose  : handle interrupts from EESOX SCSI card
- * Params   : irq    - interrupt number
- *	      dev_id - user-defined (Scsi_Host structure)
+/* Prototype: व्योम eesoxscsi_पूर्णांकr(irq, *dev_id, *regs)
+ * Purpose  : handle पूर्णांकerrupts from EESOX SCSI card
+ * Params   : irq    - पूर्णांकerrupt number
+ *	      dev_id - user-defined (Scsi_Host काष्ठाure)
  */
-static irqreturn_t
-eesoxscsi_intr(int irq, void *dev_id)
-{
-	struct eesoxscsi_info *info = dev_id;
+अटल irqवापस_t
+eesoxscsi_पूर्णांकr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा eesoxscsi_info *info = dev_id;
 
-	return fas216_intr(&info->info);
-}
+	वापस fas216_पूर्णांकr(&info->info);
+पूर्ण
 
 /* Prototype: fasdmatype_t eesoxscsi_dma_setup(host, SCpnt, direction, min_type)
  * Purpose  : initialises DMA/PIO
  * Params   : host      - host
  *	      SCpnt     - command
  *	      direction - DMA on to/off of card
- *	      min_type  - minimum DMA support that we must have for this transfer
- * Returns  : type of transfer to be performed
+ *	      min_type  - minimum DMA support that we must have क्रम this transfer
+ * Returns  : type of transfer to be perक्रमmed
  */
-static fasdmatype_t
-eesoxscsi_dma_setup(struct Scsi_Host *host, struct scsi_pointer *SCp,
+अटल fasdmatype_t
+eesoxscsi_dma_setup(काष्ठा Scsi_Host *host, काष्ठा scsi_poपूर्णांकer *SCp,
 		       fasdmadir_t direction, fasdmatype_t min_type)
-{
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)host->hostdata;
-	struct device *dev = scsi_get_device(host);
-	int dmach = info->info.scsi.dma;
+अणु
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)host->hostdata;
+	काष्ठा device *dev = scsi_get_device(host);
+	पूर्णांक dmach = info->info.scsi.dma;
 
-	if (dmach != NO_DMA &&
-	    (min_type == fasdma_real_all || SCp->this_residual >= 512)) {
-		int bufs, map_dir, dma_dir;
+	अगर (dmach != NO_DMA &&
+	    (min_type == fasdma_real_all || SCp->this_residual >= 512)) अणु
+		पूर्णांक bufs, map_dir, dma_dir;
 
 		bufs = copy_SCp_to_sg(&info->sg[0], SCp, NR_SG);
 
-		if (direction == DMA_OUT) {
+		अगर (direction == DMA_OUT) अणु
 			map_dir = DMA_TO_DEVICE;
 			dma_dir = DMA_MODE_WRITE;
-		} else {
+		पूर्ण अन्यथा अणु
 			map_dir = DMA_FROM_DEVICE;
 			dma_dir = DMA_MODE_READ;
-		}
+		पूर्ण
 
 		dma_map_sg(dev, info->sg, bufs, map_dir);
 
@@ -179,361 +180,361 @@ eesoxscsi_dma_setup(struct Scsi_Host *host, struct scsi_pointer *SCp,
 		set_dma_sg(dmach, info->sg, bufs);
 		set_dma_mode(dmach, dma_dir);
 		enable_dma(dmach);
-		return fasdma_real_all;
-	}
+		वापस fasdma_real_all;
+	पूर्ण
 	/*
-	 * We don't do DMA, we only do slow PIO
+	 * We करोn't करो DMA, we only करो slow PIO
 	 *
-	 * Some day, we will do Pseudo DMA
+	 * Some day, we will करो Pseuकरो DMA
 	 */
-	return fasdma_pseudo;
-}
+	वापस fasdma_pseuकरो;
+पूर्ण
 
-static void eesoxscsi_buffer_in(void *buf, int length, void __iomem *base)
-{
-	const void __iomem *reg_fas = base + EESOX_FAS216_OFFSET;
-	const void __iomem *reg_dmastat = base + EESOX_DMASTAT;
-	const void __iomem *reg_dmadata = base + EESOX_DMADATA;
-	register const unsigned long mask = 0xffff;
+अटल व्योम eesoxscsi_buffer_in(व्योम *buf, पूर्णांक length, व्योम __iomem *base)
+अणु
+	स्थिर व्योम __iomem *reg_fas = base + EESOX_FAS216_OFFSET;
+	स्थिर व्योम __iomem *reg_dmastat = base + EESOX_DMASTAT;
+	स्थिर व्योम __iomem *reg_dmadata = base + EESOX_DMADATA;
+	रेजिस्टर स्थिर अचिन्हित दीर्घ mask = 0xffff;
 
-	do {
-		unsigned int status;
+	करो अणु
+		अचिन्हित पूर्णांक status;
 
 		/*
 		 * Interrupt request?
 		 */
-		status = readb(reg_fas + (REG_STAT << EESOX_FAS216_SHIFT));
-		if (status & STAT_INT)
-			break;
+		status = पढ़ोb(reg_fas + (REG_STAT << EESOX_FAS216_SHIFT));
+		अगर (status & STAT_INT)
+			अवरोध;
 
 		/*
 		 * DMA request active?
 		 */
-		status = readb(reg_dmastat);
-		if (!(status & EESOX_STAT_DMA))
-			continue;
+		status = पढ़ोb(reg_dmastat);
+		अगर (!(status & EESOX_STAT_DMA))
+			जारी;
 
 		/*
 		 * Get number of bytes in FIFO
 		 */
-		status = readb(reg_fas + (REG_CFIS << EESOX_FAS216_SHIFT)) & CFIS_CF;
-		if (status > 16)
+		status = पढ़ोb(reg_fas + (REG_CFIS << EESOX_FAS216_SHIFT)) & CFIS_CF;
+		अगर (status > 16)
 			status = 16;
-		if (status > length)
+		अगर (status > length)
 			status = length;
 
 		/*
 		 * Align buffer.
 		 */
-		if (((u32)buf) & 2 && status >= 2) {
-			*(u16 *)buf = readl(reg_dmadata);
+		अगर (((u32)buf) & 2 && status >= 2) अणु
+			*(u16 *)buf = पढ़ोl(reg_dmadata);
 			buf += 2;
 			status -= 2;
 			length -= 2;
-		}
+		पूर्ण
 
-		if (status >= 8) {
-			unsigned long l1, l2;
+		अगर (status >= 8) अणु
+			अचिन्हित दीर्घ l1, l2;
 
-			l1 = readl(reg_dmadata) & mask;
-			l1 |= readl(reg_dmadata) << 16;
-			l2 = readl(reg_dmadata) & mask;
-			l2 |= readl(reg_dmadata) << 16;
+			l1 = पढ़ोl(reg_dmadata) & mask;
+			l1 |= पढ़ोl(reg_dmadata) << 16;
+			l2 = पढ़ोl(reg_dmadata) & mask;
+			l2 |= पढ़ोl(reg_dmadata) << 16;
 			*(u32 *)buf = l1;
 			buf += 4;
 			*(u32 *)buf = l2;
 			buf += 4;
 			length -= 8;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (status >= 4) {
-			unsigned long l1;
+		अगर (status >= 4) अणु
+			अचिन्हित दीर्घ l1;
 
-			l1 = readl(reg_dmadata) & mask;
-			l1 |= readl(reg_dmadata) << 16;
+			l1 = पढ़ोl(reg_dmadata) & mask;
+			l1 |= पढ़ोl(reg_dmadata) << 16;
 
 			*(u32 *)buf = l1;
 			buf += 4;
 			length -= 4;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (status >= 2) {
-			*(u16 *)buf = readl(reg_dmadata);
+		अगर (status >= 2) अणु
+			*(u16 *)buf = पढ़ोl(reg_dmadata);
 			buf += 2;
 			length -= 2;
-		}
-	} while (length);
-}
+		पूर्ण
+	पूर्ण जबतक (length);
+पूर्ण
 
-static void eesoxscsi_buffer_out(void *buf, int length, void __iomem *base)
-{
-	const void __iomem *reg_fas = base + EESOX_FAS216_OFFSET;
-	const void __iomem *reg_dmastat = base + EESOX_DMASTAT;
-	void __iomem *reg_dmadata = base + EESOX_DMADATA;
+अटल व्योम eesoxscsi_buffer_out(व्योम *buf, पूर्णांक length, व्योम __iomem *base)
+अणु
+	स्थिर व्योम __iomem *reg_fas = base + EESOX_FAS216_OFFSET;
+	स्थिर व्योम __iomem *reg_dmastat = base + EESOX_DMASTAT;
+	व्योम __iomem *reg_dmadata = base + EESOX_DMADATA;
 
-	do {
-		unsigned int status;
+	करो अणु
+		अचिन्हित पूर्णांक status;
 
 		/*
 		 * Interrupt request?
 		 */
-		status = readb(reg_fas + (REG_STAT << EESOX_FAS216_SHIFT));
-		if (status & STAT_INT)
-			break;
+		status = पढ़ोb(reg_fas + (REG_STAT << EESOX_FAS216_SHIFT));
+		अगर (status & STAT_INT)
+			अवरोध;
 
 		/*
 		 * DMA request active?
 		 */
-		status = readb(reg_dmastat);
-		if (!(status & EESOX_STAT_DMA))
-			continue;
+		status = पढ़ोb(reg_dmastat);
+		अगर (!(status & EESOX_STAT_DMA))
+			जारी;
 
 		/*
 		 * Get number of bytes in FIFO
 		 */
-		status = readb(reg_fas + (REG_CFIS << EESOX_FAS216_SHIFT)) & CFIS_CF;
-		if (status > 16)
+		status = पढ़ोb(reg_fas + (REG_CFIS << EESOX_FAS216_SHIFT)) & CFIS_CF;
+		अगर (status > 16)
 			status = 16;
 		status = 16 - status;
-		if (status > length)
+		अगर (status > length)
 			status = length;
 		status &= ~1;
 
 		/*
 		 * Align buffer.
 		 */
-		if (((u32)buf) & 2 && status >= 2) {
-			writel(*(u16 *)buf << 16, reg_dmadata);
+		अगर (((u32)buf) & 2 && status >= 2) अणु
+			ग_लिखोl(*(u16 *)buf << 16, reg_dmadata);
 			buf += 2;
 			status -= 2;
 			length -= 2;
-		}
+		पूर्ण
 
-		if (status >= 8) {
-			unsigned long l1, l2;
+		अगर (status >= 8) अणु
+			अचिन्हित दीर्घ l1, l2;
 
 			l1 = *(u32 *)buf;
 			buf += 4;
 			l2 = *(u32 *)buf;
 			buf += 4;
 
-			writel(l1 << 16, reg_dmadata);
-			writel(l1, reg_dmadata);
-			writel(l2 << 16, reg_dmadata);
-			writel(l2, reg_dmadata);
+			ग_लिखोl(l1 << 16, reg_dmadata);
+			ग_लिखोl(l1, reg_dmadata);
+			ग_लिखोl(l2 << 16, reg_dmadata);
+			ग_लिखोl(l2, reg_dmadata);
 			length -= 8;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (status >= 4) {
-			unsigned long l1;
+		अगर (status >= 4) अणु
+			अचिन्हित दीर्घ l1;
 
 			l1 = *(u32 *)buf;
 			buf += 4;
 
-			writel(l1 << 16, reg_dmadata);
-			writel(l1, reg_dmadata);
+			ग_लिखोl(l1 << 16, reg_dmadata);
+			ग_लिखोl(l1, reg_dmadata);
 			length -= 4;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		if (status >= 2) {
-			writel(*(u16 *)buf << 16, reg_dmadata);
+		अगर (status >= 2) अणु
+			ग_लिखोl(*(u16 *)buf << 16, reg_dmadata);
 			buf += 2;
 			length -= 2;
-		}
-	} while (length);
-}
+		पूर्ण
+	पूर्ण जबतक (length);
+पूर्ण
 
-static void
-eesoxscsi_dma_pseudo(struct Scsi_Host *host, struct scsi_pointer *SCp,
-		     fasdmadir_t dir, int transfer_size)
-{
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)host->hostdata;
-	if (dir == DMA_IN) {
+अटल व्योम
+eesoxscsi_dma_pseuकरो(काष्ठा Scsi_Host *host, काष्ठा scsi_poपूर्णांकer *SCp,
+		     fasdmadir_t dir, पूर्णांक transfer_size)
+अणु
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)host->hostdata;
+	अगर (dir == DMA_IN) अणु
 		eesoxscsi_buffer_in(SCp->ptr, SCp->this_residual, info->base);
-	} else {
+	पूर्ण अन्यथा अणु
 		eesoxscsi_buffer_out(SCp->ptr, SCp->this_residual, info->base);
-	}
-}
+	पूर्ण
+पूर्ण
 
-/* Prototype: int eesoxscsi_dma_stop(host, SCpnt)
+/* Prototype: पूर्णांक eesoxscsi_dma_stop(host, SCpnt)
  * Purpose  : stops DMA/PIO
  * Params   : host  - host
  *	      SCpnt - command
  */
-static void
-eesoxscsi_dma_stop(struct Scsi_Host *host, struct scsi_pointer *SCp)
-{
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)host->hostdata;
-	if (info->info.scsi.dma != NO_DMA)
+अटल व्योम
+eesoxscsi_dma_stop(काष्ठा Scsi_Host *host, काष्ठा scsi_poपूर्णांकer *SCp)
+अणु
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)host->hostdata;
+	अगर (info->info.scsi.dma != NO_DMA)
 		disable_dma(info->info.scsi.dma);
-}
+पूर्ण
 
-/* Prototype: const char *eesoxscsi_info(struct Scsi_Host * host)
- * Purpose  : returns a descriptive string about this interface,
- * Params   : host - driver host structure to return info for.
- * Returns  : pointer to a static buffer containing null terminated string.
+/* Prototype: स्थिर अक्षर *eesoxscsi_info(काष्ठा Scsi_Host * host)
+ * Purpose  : वापसs a descriptive string about this पूर्णांकerface,
+ * Params   : host - driver host काष्ठाure to वापस info क्रम.
+ * Returns  : poपूर्णांकer to a अटल buffer containing null terminated string.
  */
-const char *eesoxscsi_info(struct Scsi_Host *host)
-{
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)host->hostdata;
-	static char string[150];
+स्थिर अक्षर *eesoxscsi_info(काष्ठा Scsi_Host *host)
+अणु
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)host->hostdata;
+	अटल अक्षर string[150];
 
-	sprintf(string, "%s (%s) in slot %d v%s terminators o%s",
+	प्र_लिखो(string, "%s (%s) in slot %d v%s terminators o%s",
 		host->hostt->name, info->info.scsi.type, info->ec->slot_no,
 		VERSION, info->control & EESOX_TERM_ENABLE ? "n" : "ff");
 
-	return string;
-}
+	वापस string;
+पूर्ण
 
-/* Prototype: int eesoxscsi_set_proc_info(struct Scsi_Host *host, char *buffer, int length)
- * Purpose  : Set a driver specific function
+/* Prototype: पूर्णांक eesoxscsi_set_proc_info(काष्ठा Scsi_Host *host, अक्षर *buffer, पूर्णांक length)
+ * Purpose  : Set a driver specअगरic function
  * Params   : host   - host to setup
  *          : buffer - buffer containing string describing operation
  *          : length - length of string
  * Returns  : -EINVAL, or 0
  */
-static int
-eesoxscsi_set_proc_info(struct Scsi_Host *host, char *buffer, int length)
-{
-	int ret = length;
+अटल पूर्णांक
+eesoxscsi_set_proc_info(काष्ठा Scsi_Host *host, अक्षर *buffer, पूर्णांक length)
+अणु
+	पूर्णांक ret = length;
 
-	if (length >= 9 && strncmp(buffer, "EESOXSCSI", 9) == 0) {
+	अगर (length >= 9 && म_भेदन(buffer, "EESOXSCSI", 9) == 0) अणु
 		buffer += 9;
 		length -= 9;
 
-		if (length >= 5 && strncmp(buffer, "term=", 5) == 0) {
-			if (buffer[5] == '1')
+		अगर (length >= 5 && म_भेदन(buffer, "term=", 5) == 0) अणु
+			अगर (buffer[5] == '1')
 				eesoxscsi_terminator_ctl(host, 1);
-			else if (buffer[5] == '0')
+			अन्यथा अगर (buffer[5] == '0')
 				eesoxscsi_terminator_ctl(host, 0);
-			else
+			अन्यथा
 				ret = -EINVAL;
-		} else
+		पूर्ण अन्यथा
 			ret = -EINVAL;
-	} else
+	पूर्ण अन्यथा
 		ret = -EINVAL;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int eesoxscsi_show_info(struct seq_file *m, struct Scsi_Host *host)
-{
-	struct eesoxscsi_info *info;
+अटल पूर्णांक eesoxscsi_show_info(काष्ठा seq_file *m, काष्ठा Scsi_Host *host)
+अणु
+	काष्ठा eesoxscsi_info *info;
 
-	info = (struct eesoxscsi_info *)host->hostdata;
+	info = (काष्ठा eesoxscsi_info *)host->hostdata;
 
-	seq_printf(m, "EESOX SCSI driver v%s\n", VERSION);
-	fas216_print_host(&info->info, m);
-	seq_printf(m, "Term    : o%s\n",
+	seq_म_लिखो(m, "EESOX SCSI driver v%s\n", VERSION);
+	fas216_prपूर्णांक_host(&info->info, m);
+	seq_म_लिखो(m, "Term    : o%s\n",
 			info->control & EESOX_TERM_ENABLE ? "n" : "ff");
 
-	fas216_print_stats(&info->info, m);
-	fas216_print_devices(&info->info, m);
-	return 0;
-}
+	fas216_prपूर्णांक_stats(&info->info, m);
+	fas216_prपूर्णांक_devices(&info->info, m);
+	वापस 0;
+पूर्ण
 
-static ssize_t eesoxscsi_show_term(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	struct expansion_card *ec = ECARD_DEV(dev);
-	struct Scsi_Host *host = ecard_get_drvdata(ec);
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)host->hostdata;
+अटल sमाप_प्रकार eesoxscsi_show_term(काष्ठा device *dev, काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा expansion_card *ec = ECARD_DEV(dev);
+	काष्ठा Scsi_Host *host = ecard_get_drvdata(ec);
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)host->hostdata;
 
-	return sprintf(buf, "%d\n", info->control & EESOX_TERM_ENABLE ? 1 : 0);
-}
+	वापस प्र_लिखो(buf, "%d\n", info->control & EESOX_TERM_ENABLE ? 1 : 0);
+पूर्ण
 
-static ssize_t eesoxscsi_store_term(struct device *dev, struct device_attribute *attr, const char *buf, size_t len)
-{
-	struct expansion_card *ec = ECARD_DEV(dev);
-	struct Scsi_Host *host = ecard_get_drvdata(ec);
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)host->hostdata;
-	unsigned long flags;
+अटल sमाप_प्रकार eesoxscsi_store_term(काष्ठा device *dev, काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार len)
+अणु
+	काष्ठा expansion_card *ec = ECARD_DEV(dev);
+	काष्ठा Scsi_Host *host = ecard_get_drvdata(ec);
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)host->hostdata;
+	अचिन्हित दीर्घ flags;
 
-	if (len > 1) {
+	अगर (len > 1) अणु
 		spin_lock_irqsave(host->host_lock, flags);
-		if (buf[0] != '0') {
+		अगर (buf[0] != '0') अणु
 			info->control |= EESOX_TERM_ENABLE;
-		} else {
+		पूर्ण अन्यथा अणु
 			info->control &= ~EESOX_TERM_ENABLE;
-		}
-		writeb(info->control, info->ctl_port);
+		पूर्ण
+		ग_लिखोb(info->control, info->ctl_port);
 		spin_unlock_irqrestore(host->host_lock, flags);
-	}
+	पूर्ण
 
-	return len;
-}
+	वापस len;
+पूर्ण
 
-static DEVICE_ATTR(bus_term, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(bus_term, S_IRUGO | S_IWUSR,
 		   eesoxscsi_show_term, eesoxscsi_store_term);
 
-static struct scsi_host_template eesox_template = {
+अटल काष्ठा scsi_host_ढाँचा eesox_ढाँचा = अणु
 	.module				= THIS_MODULE,
 	.show_info			= eesoxscsi_show_info,
-	.write_info			= eesoxscsi_set_proc_info,
+	.ग_लिखो_info			= eesoxscsi_set_proc_info,
 	.name				= "EESOX SCSI",
 	.info				= eesoxscsi_info,
 	.queuecommand			= fas216_queue_command,
 	.eh_host_reset_handler		= fas216_eh_host_reset,
 	.eh_bus_reset_handler		= fas216_eh_bus_reset,
 	.eh_device_reset_handler	= fas216_eh_device_reset,
-	.eh_abort_handler		= fas216_eh_abort,
+	.eh_पात_handler		= fas216_eh_पात,
 	.can_queue			= 1,
 	.this_id			= 7,
 	.sg_tablesize			= SG_MAX_SEGMENTS,
 	.dma_boundary			= IOMD_DMA_BOUNDARY,
 	.proc_name			= "eesox",
-};
+पूर्ण;
 
-static int eesoxscsi_probe(struct expansion_card *ec, const struct ecard_id *id)
-{
-	struct Scsi_Host *host;
-	struct eesoxscsi_info *info;
-	void __iomem *base;
-	int ret;
+अटल पूर्णांक eesoxscsi_probe(काष्ठा expansion_card *ec, स्थिर काष्ठा ecard_id *id)
+अणु
+	काष्ठा Scsi_Host *host;
+	काष्ठा eesoxscsi_info *info;
+	व्योम __iomem *base;
+	पूर्णांक ret;
 
 	ret = ecard_request_resources(ec);
-	if (ret)
-		goto out;
+	अगर (ret)
+		जाओ out;
 
 	base = ecardm_iomap(ec, ECARD_RES_IOCFAST, 0, 0);
-	if (!base) {
+	अगर (!base) अणु
 		ret = -ENOMEM;
-		goto out_region;
-	}
+		जाओ out_region;
+	पूर्ण
 
-	host = scsi_host_alloc(&eesox_template,
-			       sizeof(struct eesoxscsi_info));
-	if (!host) {
+	host = scsi_host_alloc(&eesox_ढाँचा,
+			       माप(काष्ठा eesoxscsi_info));
+	अगर (!host) अणु
 		ret = -ENOMEM;
-		goto out_region;
-	}
+		जाओ out_region;
+	पूर्ण
 
 	ecard_set_drvdata(ec, host);
 
-	info = (struct eesoxscsi_info *)host->hostdata;
+	info = (काष्ठा eesoxscsi_info *)host->hostdata;
 	info->ec	= ec;
 	info->base	= base;
 	info->ctl_port	= base + EESOX_CONTROL;
 	info->control	= term[ec->slot_no] ? EESOX_TERM_ENABLE : 0;
-	writeb(info->control, info->ctl_port);
+	ग_लिखोb(info->control, info->ctl_port);
 
 	info->info.scsi.io_base		= base + EESOX_FAS216_OFFSET;
-	info->info.scsi.io_shift	= EESOX_FAS216_SHIFT;
+	info->info.scsi.io_shअगरt	= EESOX_FAS216_SHIFT;
 	info->info.scsi.irq		= ec->irq;
 	info->info.scsi.dma		= ec->dma;
-	info->info.ifcfg.clockrate	= 40; /* MHz */
-	info->info.ifcfg.select_timeout	= 255;
-	info->info.ifcfg.asyncperiod	= 200; /* ns */
-	info->info.ifcfg.sync_max_depth	= 7;
-	info->info.ifcfg.cntl3		= CNTL3_FASTSCSI | CNTL3_FASTCLK;
-	info->info.ifcfg.disconnect_ok	= 1;
-	info->info.ifcfg.wide_max_size	= 0;
-	info->info.ifcfg.capabilities	= FASCAP_PSEUDODMA;
+	info->info.अगरcfg.घड़ीrate	= 40; /* MHz */
+	info->info.अगरcfg.select_समयout	= 255;
+	info->info.अगरcfg.asyncperiod	= 200; /* ns */
+	info->info.अगरcfg.sync_max_depth	= 7;
+	info->info.अगरcfg.cntl3		= CNTL3_FASTSCSI | CNTL3_FASTCLK;
+	info->info.अगरcfg.disconnect_ok	= 1;
+	info->info.अगरcfg.wide_max_size	= 0;
+	info->info.अगरcfg.capabilities	= FASCAP_PSEUDODMA;
 	info->info.dma.setup		= eesoxscsi_dma_setup;
-	info->info.dma.pseudo		= eesoxscsi_dma_pseudo;
+	info->info.dma.pseuकरो		= eesoxscsi_dma_pseuकरो;
 	info->info.dma.stop		= eesoxscsi_dma_stop;
 
 	ec->irqaddr	= base + EESOX_DMASTAT;
@@ -544,98 +545,98 @@ static int eesoxscsi_probe(struct expansion_card *ec, const struct ecard_id *id)
 	device_create_file(&ec->dev, &dev_attr_bus_term);
 
 	ret = fas216_init(host);
-	if (ret)
-		goto out_free;
+	अगर (ret)
+		जाओ out_मुक्त;
 
-	ret = request_irq(ec->irq, eesoxscsi_intr, 0, "eesoxscsi", info);
-	if (ret) {
-		printk("scsi%d: IRQ%d not free: %d\n",
+	ret = request_irq(ec->irq, eesoxscsi_पूर्णांकr, 0, "eesoxscsi", info);
+	अगर (ret) अणु
+		prपूर्णांकk("scsi%d: IRQ%d not free: %d\n",
 		       host->host_no, ec->irq, ret);
-		goto out_remove;
-	}
+		जाओ out_हटाओ;
+	पूर्ण
 
-	if (info->info.scsi.dma != NO_DMA) {
-		if (request_dma(info->info.scsi.dma, "eesox")) {
-			printk("scsi%d: DMA%d not free, DMA disabled\n",
+	अगर (info->info.scsi.dma != NO_DMA) अणु
+		अगर (request_dma(info->info.scsi.dma, "eesox")) अणु
+			prपूर्णांकk("scsi%d: DMA%d not free, DMA disabled\n",
 			       host->host_no, info->info.scsi.dma);
 			info->info.scsi.dma = NO_DMA;
-		} else {
+		पूर्ण अन्यथा अणु
 			set_dma_speed(info->info.scsi.dma, 180);
-			info->info.ifcfg.capabilities |= FASCAP_DMA;
-			info->info.ifcfg.cntl3 |= CNTL3_BS8;
-		}
-	}
+			info->info.अगरcfg.capabilities |= FASCAP_DMA;
+			info->info.अगरcfg.cntl3 |= CNTL3_BS8;
+		पूर्ण
+	पूर्ण
 
 	ret = fas216_add(host, &ec->dev);
-	if (ret == 0)
-		goto out;
+	अगर (ret == 0)
+		जाओ out;
 
-	if (info->info.scsi.dma != NO_DMA)
-		free_dma(info->info.scsi.dma);
-	free_irq(ec->irq, info);
+	अगर (info->info.scsi.dma != NO_DMA)
+		मुक्त_dma(info->info.scsi.dma);
+	मुक्त_irq(ec->irq, info);
 
- out_remove:
-	fas216_remove(host);
+ out_हटाओ:
+	fas216_हटाओ(host);
 
- out_free:
-	device_remove_file(&ec->dev, &dev_attr_bus_term);
+ out_मुक्त:
+	device_हटाओ_file(&ec->dev, &dev_attr_bus_term);
 	scsi_host_put(host);
 
  out_region:
 	ecard_release_resources(ec);
 
  out:
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void eesoxscsi_remove(struct expansion_card *ec)
-{
-	struct Scsi_Host *host = ecard_get_drvdata(ec);
-	struct eesoxscsi_info *info = (struct eesoxscsi_info *)host->hostdata;
+अटल व्योम eesoxscsi_हटाओ(काष्ठा expansion_card *ec)
+अणु
+	काष्ठा Scsi_Host *host = ecard_get_drvdata(ec);
+	काष्ठा eesoxscsi_info *info = (काष्ठा eesoxscsi_info *)host->hostdata;
 
-	ecard_set_drvdata(ec, NULL);
-	fas216_remove(host);
+	ecard_set_drvdata(ec, शून्य);
+	fas216_हटाओ(host);
 
-	if (info->info.scsi.dma != NO_DMA)
-		free_dma(info->info.scsi.dma);
-	free_irq(ec->irq, info);
+	अगर (info->info.scsi.dma != NO_DMA)
+		मुक्त_dma(info->info.scsi.dma);
+	मुक्त_irq(ec->irq, info);
 
-	device_remove_file(&ec->dev, &dev_attr_bus_term);
+	device_हटाओ_file(&ec->dev, &dev_attr_bus_term);
 
 	fas216_release(host);
 	scsi_host_put(host);
 	ecard_release_resources(ec);
-}
+पूर्ण
 
-static const struct ecard_id eesoxscsi_cids[] = {
-	{ MANU_EESOX, PROD_EESOX_SCSI2 },
-	{ 0xffff, 0xffff },
-};
+अटल स्थिर काष्ठा ecard_id eesoxscsi_cids[] = अणु
+	अणु MANU_EESOX, PROD_EESOX_SCSI2 पूर्ण,
+	अणु 0xffff, 0xffff पूर्ण,
+पूर्ण;
 
-static struct ecard_driver eesoxscsi_driver = {
+अटल काष्ठा ecard_driver eesoxscsi_driver = अणु
 	.probe		= eesoxscsi_probe,
-	.remove		= eesoxscsi_remove,
+	.हटाओ		= eesoxscsi_हटाओ,
 	.id_table	= eesoxscsi_cids,
-	.drv = {
+	.drv = अणु
 		.name		= "eesoxscsi",
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-static int __init eesox_init(void)
-{
-	return ecard_register_driver(&eesoxscsi_driver);
-}
+अटल पूर्णांक __init eesox_init(व्योम)
+अणु
+	वापस ecard_रेजिस्टर_driver(&eesoxscsi_driver);
+पूर्ण
 
-static void __exit eesox_exit(void)
-{
-	ecard_remove_driver(&eesoxscsi_driver);
-}
+अटल व्योम __निकास eesox_निकास(व्योम)
+अणु
+	ecard_हटाओ_driver(&eesoxscsi_driver);
+पूर्ण
 
 module_init(eesox_init);
-module_exit(eesox_exit);
+module_निकास(eesox_निकास);
 
 MODULE_AUTHOR("Russell King");
 MODULE_DESCRIPTION("EESOX 'Fast' SCSI driver for Acorn machines");
-module_param_array(term, int, NULL, 0);
+module_param_array(term, पूर्णांक, शून्य, 0);
 MODULE_PARM_DESC(term, "SCSI bus termination");
 MODULE_LICENSE("GPL");

@@ -1,78 +1,79 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  *
  *  Copyright (C) 2005 Mike Isely <isely@pobox.com>
  */
-#ifndef __PVRUSB2_IO_H
-#define __PVRUSB2_IO_H
+#अगर_अघोषित __PVRUSB2_IO_H
+#घोषणा __PVRUSB2_IO_H
 
-#include <linux/usb.h>
-#include <linux/list.h>
+#समावेश <linux/usb.h>
+#समावेश <linux/list.h>
 
-typedef void (*pvr2_stream_callback)(void *);
+प्रकार व्योम (*pvr2_stream_callback)(व्योम *);
 
-enum pvr2_buffer_state {
+क्रमागत pvr2_buffer_state अणु
 	pvr2_buffer_state_none = 0,   // Not on any list
-	pvr2_buffer_state_idle = 1,   // Buffer is ready to be used again
-	pvr2_buffer_state_queued = 2, // Buffer has been queued for filling
-	pvr2_buffer_state_ready = 3,  // Buffer has data available
-};
+	pvr2_buffer_state_idle = 1,   // Buffer is पढ़ोy to be used again
+	pvr2_buffer_state_queued = 2, // Buffer has been queued क्रम filling
+	pvr2_buffer_state_पढ़ोy = 3,  // Buffer has data available
+पूर्ण;
 
-struct pvr2_stream;
-struct pvr2_buffer;
+काष्ठा pvr2_stream;
+काष्ठा pvr2_buffer;
 
-struct pvr2_stream_stats {
-	unsigned int buffers_in_queue;
-	unsigned int buffers_in_idle;
-	unsigned int buffers_in_ready;
-	unsigned int buffers_processed;
-	unsigned int buffers_failed;
-	unsigned int bytes_processed;
-};
+काष्ठा pvr2_stream_stats अणु
+	अचिन्हित पूर्णांक buffers_in_queue;
+	अचिन्हित पूर्णांक buffers_in_idle;
+	अचिन्हित पूर्णांक buffers_in_पढ़ोy;
+	अचिन्हित पूर्णांक buffers_processed;
+	अचिन्हित पूर्णांक buffers_failed;
+	अचिन्हित पूर्णांक bytes_processed;
+पूर्ण;
 
-/* Initialize / tear down stream structure */
-struct pvr2_stream *pvr2_stream_create(void);
-void pvr2_stream_destroy(struct pvr2_stream *);
-void pvr2_stream_setup(struct pvr2_stream *,
-		       struct usb_device *dev,int endpoint,
-		       unsigned int tolerance);
-void pvr2_stream_set_callback(struct pvr2_stream *,
+/* Initialize / tear करोwn stream काष्ठाure */
+काष्ठा pvr2_stream *pvr2_stream_create(व्योम);
+व्योम pvr2_stream_destroy(काष्ठा pvr2_stream *);
+व्योम pvr2_stream_setup(काष्ठा pvr2_stream *,
+		       काष्ठा usb_device *dev,पूर्णांक endpoपूर्णांक,
+		       अचिन्हित पूर्णांक tolerance);
+व्योम pvr2_stream_set_callback(काष्ठा pvr2_stream *,
 			      pvr2_stream_callback func,
-			      void *data);
-void pvr2_stream_get_stats(struct pvr2_stream *,
-			   struct pvr2_stream_stats *,
-			   int zero_counts);
+			      व्योम *data);
+व्योम pvr2_stream_get_stats(काष्ठा pvr2_stream *,
+			   काष्ठा pvr2_stream_stats *,
+			   पूर्णांक zero_counts);
 
 /* Query / set the nominal buffer count */
-int pvr2_stream_get_buffer_count(struct pvr2_stream *);
-int pvr2_stream_set_buffer_count(struct pvr2_stream *,unsigned int);
+पूर्णांक pvr2_stream_get_buffer_count(काष्ठा pvr2_stream *);
+पूर्णांक pvr2_stream_set_buffer_count(काष्ठा pvr2_stream *,अचिन्हित पूर्णांक);
 
-/* Get a pointer to a buffer that is either idle, ready, or is specified
+/* Get a poपूर्णांकer to a buffer that is either idle, पढ़ोy, or is specअगरied
    named. */
-struct pvr2_buffer *pvr2_stream_get_idle_buffer(struct pvr2_stream *);
-struct pvr2_buffer *pvr2_stream_get_ready_buffer(struct pvr2_stream *);
-struct pvr2_buffer *pvr2_stream_get_buffer(struct pvr2_stream *sp,int id);
+काष्ठा pvr2_buffer *pvr2_stream_get_idle_buffer(काष्ठा pvr2_stream *);
+काष्ठा pvr2_buffer *pvr2_stream_get_पढ़ोy_buffer(काष्ठा pvr2_stream *);
+काष्ठा pvr2_buffer *pvr2_stream_get_buffer(काष्ठा pvr2_stream *sp,पूर्णांक id);
 
-/* Find out how many buffers are idle or ready */
-int pvr2_stream_get_ready_count(struct pvr2_stream *);
+/* Find out how many buffers are idle or पढ़ोy */
+पूर्णांक pvr2_stream_get_पढ़ोy_count(काष्ठा pvr2_stream *);
 
 
-/* Kill all pending buffers and throw away any ready buffers as well */
-void pvr2_stream_kill(struct pvr2_stream *);
+/* Kill all pending buffers and throw away any पढ़ोy buffers as well */
+व्योम pvr2_stream_समाप्त(काष्ठा pvr2_stream *);
 
-/* Set up the actual storage for a buffer */
-int pvr2_buffer_set_buffer(struct pvr2_buffer *,void *ptr,unsigned int cnt);
+/* Set up the actual storage क्रम a buffer */
+पूर्णांक pvr2_buffer_set_buffer(काष्ठा pvr2_buffer *,व्योम *ptr,अचिन्हित पूर्णांक cnt);
 
-/* Find out size of data in the given ready buffer */
-unsigned int pvr2_buffer_get_count(struct pvr2_buffer *);
+/* Find out size of data in the given पढ़ोy buffer */
+अचिन्हित पूर्णांक pvr2_buffer_get_count(काष्ठा pvr2_buffer *);
 
-/* Retrieve completion code for given ready buffer */
-int pvr2_buffer_get_status(struct pvr2_buffer *);
+/* Retrieve completion code क्रम given पढ़ोy buffer */
+पूर्णांक pvr2_buffer_get_status(काष्ठा pvr2_buffer *);
 
 /* Retrieve ID of given buffer */
-int pvr2_buffer_get_id(struct pvr2_buffer *);
+पूर्णांक pvr2_buffer_get_id(काष्ठा pvr2_buffer *);
 
-/* Start reading into given buffer (kill it if needed) */
-int pvr2_buffer_queue(struct pvr2_buffer *);
+/* Start पढ़ोing पूर्णांकo given buffer (समाप्त it अगर needed) */
+पूर्णांक pvr2_buffer_queue(काष्ठा pvr2_buffer *);
 
-#endif /* __PVRUSB2_IO_H */
+#पूर्ण_अगर /* __PVRUSB2_IO_H */

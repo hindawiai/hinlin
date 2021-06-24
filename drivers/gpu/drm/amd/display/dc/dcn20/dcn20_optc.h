@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,12 +24,12 @@
  *
  */
 
-#ifndef __DC_OPTC_DCN20_H__
-#define __DC_OPTC_DCN20_H__
+#अगर_अघोषित __DC_OPTC_DCN20_H__
+#घोषणा __DC_OPTC_DCN20_H__
 
-#include "../dcn10/dcn10_optc.h"
+#समावेश "../dcn10/dcn10_optc.h"
 
-#define TG_COMMON_REG_LIST_DCN2_0(inst) \
+#घोषणा TG_COMMON_REG_LIST_DCN2_0(inst) \
 	TG_COMMON_REG_LIST_DCN(inst),\
 	SRI(OTG_GLOBAL_CONTROL1, OTG, inst),\
 	SRI(OTG_GLOBAL_CONTROL2, OTG, inst),\
@@ -44,7 +45,7 @@
 	SR(DWB_SOURCE_SELECT),\
 	SRI(OTG_MANUAL_FLOW_CONTROL, OTG, inst)
 
-#define TG_COMMON_MASK_SH_LIST_DCN2_0(mask_sh)\
+#घोषणा TG_COMMON_MASK_SH_LIST_DCN2_0(mask_sh)\
 	TG_COMMON_MASK_SH_LIST_DCN(mask_sh),\
 	SF(OTG0_OTG_GLOBAL_CONTROL1, MASTER_UPDATE_LOCK_DB_X, mask_sh),\
 	SF(OTG0_OTG_GLOBAL_CONTROL1, MASTER_UPDATE_LOCK_DB_Y, mask_sh),\
@@ -77,40 +78,40 @@
 	SF(DWB_SOURCE_SELECT, OPTC_DWB1_SOURCE_SELECT, mask_sh),\
 	SF(OTG0_OTG_MANUAL_FLOW_CONTROL, MANUAL_FLOW_CONTROL, mask_sh)
 
-void dcn20_timing_generator_init(struct optc *optc);
+व्योम dcn20_timing_generator_init(काष्ठा optc *optc);
 
-bool optc2_enable_crtc(struct timing_generator *optc);
+bool optc2_enable_crtc(काष्ठा timing_generator *optc);
 
-void optc2_set_gsl(struct timing_generator *optc,
-		const struct gsl_params *params);
+व्योम optc2_set_gsl(काष्ठा timing_generator *optc,
+		स्थिर काष्ठा gsl_params *params);
 
-void optc2_set_gsl_source_select(struct timing_generator *optc,
-		int group_idx,
-		uint32_t gsl_ready_signal);
+व्योम optc2_set_gsl_source_select(काष्ठा timing_generator *optc,
+		पूर्णांक group_idx,
+		uपूर्णांक32_t gsl_पढ़ोy_संकेत);
 
-void optc2_set_dsc_config(struct timing_generator *optc,
-					enum optc_dsc_mode dsc_mode,
-					uint32_t dsc_bytes_per_pixel,
-					uint32_t dsc_slice_width);
+व्योम optc2_set_dsc_config(काष्ठा timing_generator *optc,
+					क्रमागत optc_dsc_mode dsc_mode,
+					uपूर्णांक32_t dsc_bytes_per_pixel,
+					uपूर्णांक32_t dsc_slice_width);
 
-void optc2_set_odm_bypass(struct timing_generator *optc,
-		const struct dc_crtc_timing *dc_crtc_timing);
+व्योम optc2_set_odm_bypass(काष्ठा timing_generator *optc,
+		स्थिर काष्ठा dc_crtc_timing *dc_crtc_timing);
 
-void optc2_set_odm_combine(struct timing_generator *optc, int *opp_id, int opp_cnt,
-		struct dc_crtc_timing *timing);
+व्योम optc2_set_odm_combine(काष्ठा timing_generator *optc, पूर्णांक *opp_id, पूर्णांक opp_cnt,
+		काष्ठा dc_crtc_timing *timing);
 
-void optc2_get_optc_source(struct timing_generator *optc,
-		uint32_t *num_of_src_opp,
-		uint32_t *src_opp_id_0,
-		uint32_t *src_opp_id_1);
+व्योम optc2_get_optc_source(काष्ठा timing_generator *optc,
+		uपूर्णांक32_t *num_of_src_opp,
+		uपूर्णांक32_t *src_opp_id_0,
+		uपूर्णांक32_t *src_opp_id_1);
 
-void optc2_triplebuffer_lock(struct timing_generator *optc);
-void optc2_triplebuffer_unlock(struct timing_generator *optc);
-void optc2_lock_doublebuffer_disable(struct timing_generator *optc);
-void optc2_lock_doublebuffer_enable(struct timing_generator *optc);
-void optc2_setup_manual_trigger(struct timing_generator *optc);
-void optc2_program_manual_trigger(struct timing_generator *optc);
-bool optc2_is_two_pixels_per_containter(const struct dc_crtc_timing *timing);
-bool optc2_configure_crc(struct timing_generator *optc,
-			  const struct crc_params *params);
-#endif /* __DC_OPTC_DCN20_H__ */
+व्योम optc2_triplebuffer_lock(काष्ठा timing_generator *optc);
+व्योम optc2_triplebuffer_unlock(काष्ठा timing_generator *optc);
+व्योम optc2_lock_द्विगुनbuffer_disable(काष्ठा timing_generator *optc);
+व्योम optc2_lock_द्विगुनbuffer_enable(काष्ठा timing_generator *optc);
+व्योम optc2_setup_manual_trigger(काष्ठा timing_generator *optc);
+व्योम optc2_program_manual_trigger(काष्ठा timing_generator *optc);
+bool optc2_is_two_pixels_per_contaपूर्णांकer(स्थिर काष्ठा dc_crtc_timing *timing);
+bool optc2_configure_crc(काष्ठा timing_generator *optc,
+			  स्थिर काष्ठा crc_params *params);
+#पूर्ण_अगर /* __DC_OPTC_DCN20_H__ */

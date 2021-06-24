@@ -1,18 +1,19 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Facebook
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
 SEC("socket")
-int combinations(volatile struct __sk_buff* skb)
-{
-	int ret = 0, i;
+पूर्णांक combinations(अस्थिर काष्ठा __sk_buff* skb)
+अणु
+	पूर्णांक ret = 0, i;
 
-#pragma nounroll
-	for (i = 0; i < 20; i++)
-		if (skb->len)
+#आशय nounroll
+	क्रम (i = 0; i < 20; i++)
+		अगर (skb->len)
 			ret |= 1 << i;
-	return ret;
-}
+	वापस ret;
+पूर्ण

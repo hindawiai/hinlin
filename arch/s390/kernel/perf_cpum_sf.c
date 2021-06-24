@@ -1,395 +1,396 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Performance event support for the System z CPU-measurement Sampling Facility
+ * Perक्रमmance event support क्रम the System z CPU-measurement Sampling Facility
  *
  * Copyright IBM Corp. 2013, 2018
  * Author(s): Hendrik Brueckner <brueckner@linux.vnet.ibm.com>
  */
-#define KMSG_COMPONENT	"cpum_sf"
-#define pr_fmt(fmt)	KMSG_COMPONENT ": " fmt
+#घोषणा KMSG_COMPONENT	"cpum_sf"
+#घोषणा pr_fmt(fmt)	KMSG_COMPONENT ": " fmt
 
-#include <linux/kernel.h>
-#include <linux/kernel_stat.h>
-#include <linux/perf_event.h>
-#include <linux/percpu.h>
-#include <linux/pid.h>
-#include <linux/notifier.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/moduleparam.h>
-#include <asm/cpu_mf.h>
-#include <asm/irq.h>
-#include <asm/debug.h>
-#include <asm/timex.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/kernel_स्थिति.स>
+#समावेश <linux/perf_event.h>
+#समावेश <linux/percpu.h>
+#समावेश <linux/pid.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <यंत्र/cpu_mf.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/debug.h>
+#समावेश <यंत्र/समयx.h>
 
 /* Minimum number of sample-data-block-tables:
- * At least one table is required for the sampling buffer structure.
- * A single table contains up to 511 pointers to sample-data-blocks.
+ * At least one table is required क्रम the sampling buffer काष्ठाure.
+ * A single table contains up to 511 poपूर्णांकers to sample-data-blocks.
  */
-#define CPUM_SF_MIN_SDBT	1
+#घोषणा CPUM_SF_MIN_SDBT	1
 
 /* Number of sample-data-blocks per sample-data-block-table (SDBT):
- * A table contains SDB pointers (8 bytes) and one table-link entry
- * that points to the origin of the next SDBT.
+ * A table contains SDB poपूर्णांकers (8 bytes) and one table-link entry
+ * that poपूर्णांकs to the origin of the next SDBT.
  */
-#define CPUM_SF_SDB_PER_TABLE	((PAGE_SIZE - 8) / 8)
+#घोषणा CPUM_SF_SDB_PER_TABLE	((PAGE_SIZE - 8) / 8)
 
-/* Maximum page offset for an SDBT table-link entry:
+/* Maximum page offset क्रम an SDBT table-link entry:
  * If this page offset is reached, a table-link entry to the next SDBT
  * must be added.
  */
-#define CPUM_SF_SDBT_TL_OFFSET	(CPUM_SF_SDB_PER_TABLE * 8)
-static inline int require_table_link(const void *sdbt)
-{
-	return ((unsigned long) sdbt & ~PAGE_MASK) == CPUM_SF_SDBT_TL_OFFSET;
-}
+#घोषणा CPUM_SF_SDBT_TL_OFFSET	(CPUM_SF_SDB_PER_TABLE * 8)
+अटल अंतरभूत पूर्णांक require_table_link(स्थिर व्योम *sdbt)
+अणु
+	वापस ((अचिन्हित दीर्घ) sdbt & ~PAGE_MASK) == CPUM_SF_SDBT_TL_OFFSET;
+पूर्ण
 
 /* Minimum and maximum sampling buffer sizes:
  *
  * This number represents the maximum size of the sampling buffer taking
- * the number of sample-data-block-tables into account.  Note that these
+ * the number of sample-data-block-tables पूर्णांकo account.  Note that these
  * numbers apply to the basic-sampling function only.
- * The maximum number of SDBs is increased by CPUM_SF_SDB_DIAG_FACTOR if
+ * The maximum number of SDBs is increased by CPUM_SF_SDB_DIAG_FACTOR अगर
  * the diagnostic-sampling function is active.
  *
- * Sampling buffer size		Buffer characteristics
+ * Sampling buffer size		Buffer अक्षरacteristics
  * ---------------------------------------------------
  *	 64KB		    ==	  16 pages (4KB per page)
- *				   1 page  for SDB-tables
- *				  15 pages for SDBs
+ *				   1 page  क्रम SDB-tables
+ *				  15 pages क्रम SDBs
  *
  *  32MB		    ==	8192 pages (4KB per page)
- *				  16 pages for SDB-tables
- *				8176 pages for SDBs
+ *				  16 pages क्रम SDB-tables
+ *				8176 pages क्रम SDBs
  */
-static unsigned long __read_mostly CPUM_SF_MIN_SDB = 15;
-static unsigned long __read_mostly CPUM_SF_MAX_SDB = 8176;
-static unsigned long __read_mostly CPUM_SF_SDB_DIAG_FACTOR = 1;
+अटल अचिन्हित दीर्घ __पढ़ो_mostly CPUM_SF_MIN_SDB = 15;
+अटल अचिन्हित दीर्घ __पढ़ो_mostly CPUM_SF_MAX_SDB = 8176;
+अटल अचिन्हित दीर्घ __पढ़ो_mostly CPUM_SF_SDB_DIAG_FACTOR = 1;
 
-struct sf_buffer {
-	unsigned long	 *sdbt;	    /* Sample-data-block-table origin */
-	/* buffer characteristics (required for buffer increments) */
-	unsigned long  num_sdb;	    /* Number of sample-data-blocks */
-	unsigned long num_sdbt;	    /* Number of sample-data-block-tables */
-	unsigned long	 *tail;	    /* last sample-data-block-table */
-};
+काष्ठा sf_buffer अणु
+	अचिन्हित दीर्घ	 *sdbt;	    /* Sample-data-block-table origin */
+	/* buffer अक्षरacteristics (required क्रम buffer increments) */
+	अचिन्हित दीर्घ  num_sdb;	    /* Number of sample-data-blocks */
+	अचिन्हित दीर्घ num_sdbt;	    /* Number of sample-data-block-tables */
+	अचिन्हित दीर्घ	 *tail;	    /* last sample-data-block-table */
+पूर्ण;
 
-struct aux_buffer {
-	struct sf_buffer sfb;
-	unsigned long head;	   /* index of SDB of buffer head */
-	unsigned long alert_mark;  /* index of SDB of alert request position */
-	unsigned long empty_mark;  /* mark of SDB not marked full */
-	unsigned long *sdb_index;  /* SDB address for fast lookup */
-	unsigned long *sdbt_index; /* SDBT address for fast lookup */
-};
+काष्ठा aux_buffer अणु
+	काष्ठा sf_buffer sfb;
+	अचिन्हित दीर्घ head;	   /* index of SDB of buffer head */
+	अचिन्हित दीर्घ alert_mark;  /* index of SDB of alert request position */
+	अचिन्हित दीर्घ empty_mark;  /* mark of SDB not marked full */
+	अचिन्हित दीर्घ *sdb_index;  /* SDB address क्रम fast lookup */
+	अचिन्हित दीर्घ *sdbt_index; /* SDBT address क्रम fast lookup */
+पूर्ण;
 
-struct cpu_hw_sf {
-	/* CPU-measurement sampling information block */
-	struct hws_qsi_info_block qsi;
+काष्ठा cpu_hw_sf अणु
+	/* CPU-measurement sampling inक्रमmation block */
+	काष्ठा hws_qsi_info_block qsi;
 	/* CPU-measurement sampling control block */
-	struct hws_lsctl_request_block lsctl;
-	struct sf_buffer sfb;	    /* Sampling buffer */
-	unsigned int flags;	    /* Status flags */
-	struct perf_event *event;   /* Scheduled perf event */
-	struct perf_output_handle handle; /* AUX buffer output handle */
-};
-static DEFINE_PER_CPU(struct cpu_hw_sf, cpu_hw_sf);
+	काष्ठा hws_lsctl_request_block lsctl;
+	काष्ठा sf_buffer sfb;	    /* Sampling buffer */
+	अचिन्हित पूर्णांक flags;	    /* Status flags */
+	काष्ठा perf_event *event;   /* Scheduled perf event */
+	काष्ठा perf_output_handle handle; /* AUX buffer output handle */
+पूर्ण;
+अटल DEFINE_PER_CPU(काष्ठा cpu_hw_sf, cpu_hw_sf);
 
 /* Debug feature */
-static debug_info_t *sfdbg;
+अटल debug_info_t *sfdbg;
 
 /*
  * sf_disable() - Switch off sampling facility
  */
-static int sf_disable(void)
-{
-	struct hws_lsctl_request_block sreq;
+अटल पूर्णांक sf_disable(व्योम)
+अणु
+	काष्ठा hws_lsctl_request_block sreq;
 
-	memset(&sreq, 0, sizeof(sreq));
-	return lsctl(&sreq);
-}
+	स_रखो(&sreq, 0, माप(sreq));
+	वापस lsctl(&sreq);
+पूर्ण
 
 /*
- * sf_buffer_available() - Check for an allocated sampling buffer
+ * sf_buffer_available() - Check क्रम an allocated sampling buffer
  */
-static int sf_buffer_available(struct cpu_hw_sf *cpuhw)
-{
-	return !!cpuhw->sfb.sdbt;
-}
+अटल पूर्णांक sf_buffer_available(काष्ठा cpu_hw_sf *cpuhw)
+अणु
+	वापस !!cpuhw->sfb.sdbt;
+पूर्ण
 
 /*
  * deallocate sampling facility buffer
  */
-static void free_sampling_buffer(struct sf_buffer *sfb)
-{
-	unsigned long *sdbt, *curr;
+अटल व्योम मुक्त_sampling_buffer(काष्ठा sf_buffer *sfb)
+अणु
+	अचिन्हित दीर्घ *sdbt, *curr;
 
-	if (!sfb->sdbt)
-		return;
+	अगर (!sfb->sdbt)
+		वापस;
 
 	sdbt = sfb->sdbt;
 	curr = sdbt;
 
 	/* Free the SDBT after all SDBs are processed... */
-	while (1) {
-		if (!*curr || !sdbt)
-			break;
+	जबतक (1) अणु
+		अगर (!*curr || !sdbt)
+			अवरोध;
 
 		/* Process table-link entries */
-		if (is_link_entry(curr)) {
+		अगर (is_link_entry(curr)) अणु
 			curr = get_next_sdbt(curr);
-			if (sdbt)
-				free_page((unsigned long) sdbt);
+			अगर (sdbt)
+				मुक्त_page((अचिन्हित दीर्घ) sdbt);
 
-			/* If the origin is reached, sampling buffer is freed */
-			if (curr == sfb->sdbt)
-				break;
-			else
+			/* If the origin is reached, sampling buffer is मुक्तd */
+			अगर (curr == sfb->sdbt)
+				अवरोध;
+			अन्यथा
 				sdbt = curr;
-		} else {
-			/* Process SDB pointer */
-			if (*curr) {
-				free_page(*curr);
+		पूर्ण अन्यथा अणु
+			/* Process SDB poपूर्णांकer */
+			अगर (*curr) अणु
+				मुक्त_page(*curr);
 				curr++;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	debug_sprintf_event(sfdbg, 5, "%s: freed sdbt %#lx\n", __func__,
-			    (unsigned long)sfb->sdbt);
-	memset(sfb, 0, sizeof(*sfb));
-}
+	debug_प्र_लिखो_event(sfdbg, 5, "%s: freed sdbt %#lx\n", __func__,
+			    (अचिन्हित दीर्घ)sfb->sdbt);
+	स_रखो(sfb, 0, माप(*sfb));
+पूर्ण
 
-static int alloc_sample_data_block(unsigned long *sdbt, gfp_t gfp_flags)
-{
-	unsigned long sdb, *trailer;
+अटल पूर्णांक alloc_sample_data_block(अचिन्हित दीर्घ *sdbt, gfp_t gfp_flags)
+अणु
+	अचिन्हित दीर्घ sdb, *trailer;
 
 	/* Allocate and initialize sample-data-block */
 	sdb = get_zeroed_page(gfp_flags);
-	if (!sdb)
-		return -ENOMEM;
+	अगर (!sdb)
+		वापस -ENOMEM;
 	trailer = trailer_entry_ptr(sdb);
 	*trailer = SDB_TE_ALERT_REQ_MASK;
 
-	/* Link SDB into the sample-data-block-table */
+	/* Link SDB पूर्णांकo the sample-data-block-table */
 	*sdbt = sdb;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * realloc_sampling_buffer() - extend sampler memory
+ * पुनः_स्मृति_sampling_buffer() - extend sampler memory
  *
- * Allocates new sample-data-blocks and adds them to the specified sampling
+ * Allocates new sample-data-blocks and adds them to the specअगरied sampling
  * buffer memory.
  *
- * Important: This modifies the sampling buffer and must be called when the
+ * Important: This modअगरies the sampling buffer and must be called when the
  *	      sampling facility is disabled.
  *
  * Returns zero on success, non-zero otherwise.
  */
-static int realloc_sampling_buffer(struct sf_buffer *sfb,
-				   unsigned long num_sdb, gfp_t gfp_flags)
-{
-	int i, rc;
-	unsigned long *new, *tail, *tail_prev = NULL;
+अटल पूर्णांक पुनः_स्मृति_sampling_buffer(काष्ठा sf_buffer *sfb,
+				   अचिन्हित दीर्घ num_sdb, gfp_t gfp_flags)
+अणु
+	पूर्णांक i, rc;
+	अचिन्हित दीर्घ *new, *tail, *tail_prev = शून्य;
 
-	if (!sfb->sdbt || !sfb->tail)
-		return -EINVAL;
+	अगर (!sfb->sdbt || !sfb->tail)
+		वापस -EINVAL;
 
-	if (!is_link_entry(sfb->tail))
-		return -EINVAL;
+	अगर (!is_link_entry(sfb->tail))
+		वापस -EINVAL;
 
 	/* Append to the existing sampling buffer, overwriting the table-link
-	 * register.
-	 * The tail variables always points to the "tail" (last and table-link)
+	 * रेजिस्टर.
+	 * The tail variables always poपूर्णांकs to the "tail" (last and table-link)
 	 * entry in an SDB-table.
 	 */
 	tail = sfb->tail;
 
-	/* Do a sanity check whether the table-link entry points to
+	/* Do a sanity check whether the table-link entry poपूर्णांकs to
 	 * the sampling buffer origin.
 	 */
-	if (sfb->sdbt != get_next_sdbt(tail)) {
-		debug_sprintf_event(sfdbg, 3, "%s: "
+	अगर (sfb->sdbt != get_next_sdbt(tail)) अणु
+		debug_प्र_लिखो_event(sfdbg, 3, "%s: "
 				    "sampling buffer is not linked: origin %#lx"
 				    " tail %#lx\n", __func__,
-				    (unsigned long)sfb->sdbt,
-				    (unsigned long)tail);
-		return -EINVAL;
-	}
+				    (अचिन्हित दीर्घ)sfb->sdbt,
+				    (अचिन्हित दीर्घ)tail);
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Allocate remaining SDBs */
+	/* Allocate reमुख्यing SDBs */
 	rc = 0;
-	for (i = 0; i < num_sdb; i++) {
-		/* Allocate a new SDB-table if it is full. */
-		if (require_table_link(tail)) {
-			new = (unsigned long *) get_zeroed_page(gfp_flags);
-			if (!new) {
+	क्रम (i = 0; i < num_sdb; i++) अणु
+		/* Allocate a new SDB-table अगर it is full. */
+		अगर (require_table_link(tail)) अणु
+			new = (अचिन्हित दीर्घ *) get_zeroed_page(gfp_flags);
+			अगर (!new) अणु
 				rc = -ENOMEM;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 			sfb->num_sdbt++;
 			/* Link current page to tail of chain */
-			*tail = (unsigned long)(void *) new + 1;
+			*tail = (अचिन्हित दीर्घ)(व्योम *) new + 1;
 			tail_prev = tail;
 			tail = new;
-		}
+		पूर्ण
 
 		/* Allocate a new sample-data-block.
-		 * If there is not enough memory, stop the realloc process
+		 * If there is not enough memory, stop the पुनः_स्मृति process
 		 * and simply use what was allocated.  If this is a temporary
-		 * issue, a new realloc call (if required) might succeed.
+		 * issue, a new पुनः_स्मृति call (अगर required) might succeed.
 		 */
 		rc = alloc_sample_data_block(tail, gfp_flags);
-		if (rc) {
-			/* Undo last SDBT. An SDBT with no SDB at its first
+		अगर (rc) अणु
+			/* Unकरो last SDBT. An SDBT with no SDB at its first
 			 * entry but with an SDBT entry instead can not be
-			 * handled by the interrupt handler code.
-			 * Avoid this situation.
+			 * handled by the पूर्णांकerrupt handler code.
+			 * Aव्योम this situation.
 			 */
-			if (tail_prev) {
+			अगर (tail_prev) अणु
 				sfb->num_sdbt--;
-				free_page((unsigned long) new);
+				मुक्त_page((अचिन्हित दीर्घ) new);
 				tail = tail_prev;
-			}
-			break;
-		}
+			पूर्ण
+			अवरोध;
+		पूर्ण
 		sfb->num_sdb++;
 		tail++;
-		tail_prev = new = NULL;	/* Allocated at least one SBD */
-	}
+		tail_prev = new = शून्य;	/* Allocated at least one SBD */
+	पूर्ण
 
 	/* Link sampling buffer to its origin */
-	*tail = (unsigned long) sfb->sdbt + 1;
+	*tail = (अचिन्हित दीर्घ) sfb->sdbt + 1;
 	sfb->tail = tail;
 
-	debug_sprintf_event(sfdbg, 4, "%s: new buffer"
+	debug_प्र_लिखो_event(sfdbg, 4, "%s: new buffer"
 			    " settings: sdbt %lu sdb %lu\n", __func__,
 			    sfb->num_sdbt, sfb->num_sdb);
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * allocate_sampling_buffer() - allocate sampler memory
  *
- * Allocates and initializes a sampling buffer structure using the
- * specified number of sample-data-blocks (SDB).  For each allocation,
+ * Allocates and initializes a sampling buffer काष्ठाure using the
+ * specअगरied number of sample-data-blocks (SDB).  For each allocation,
  * a 4K page is used.  The number of sample-data-block-tables (SDBT)
  * are calculated from SDBs.
  * Also set the ALERT_REQ mask in each SDBs trailer.
  *
  * Returns zero on success, non-zero otherwise.
  */
-static int alloc_sampling_buffer(struct sf_buffer *sfb, unsigned long num_sdb)
-{
-	int rc;
+अटल पूर्णांक alloc_sampling_buffer(काष्ठा sf_buffer *sfb, अचिन्हित दीर्घ num_sdb)
+अणु
+	पूर्णांक rc;
 
-	if (sfb->sdbt)
-		return -EINVAL;
+	अगर (sfb->sdbt)
+		वापस -EINVAL;
 
 	/* Allocate the sample-data-block-table origin */
-	sfb->sdbt = (unsigned long *) get_zeroed_page(GFP_KERNEL);
-	if (!sfb->sdbt)
-		return -ENOMEM;
+	sfb->sdbt = (अचिन्हित दीर्घ *) get_zeroed_page(GFP_KERNEL);
+	अगर (!sfb->sdbt)
+		वापस -ENOMEM;
 	sfb->num_sdb = 0;
 	sfb->num_sdbt = 1;
 
-	/* Link the table origin to point to itself to prepare for
-	 * realloc_sampling_buffer() invocation.
+	/* Link the table origin to poपूर्णांक to itself to prepare क्रम
+	 * पुनः_स्मृति_sampling_buffer() invocation.
 	 */
 	sfb->tail = sfb->sdbt;
-	*sfb->tail = (unsigned long)(void *) sfb->sdbt + 1;
+	*sfb->tail = (अचिन्हित दीर्घ)(व्योम *) sfb->sdbt + 1;
 
 	/* Allocate requested number of sample-data-blocks */
-	rc = realloc_sampling_buffer(sfb, num_sdb, GFP_KERNEL);
-	if (rc) {
-		free_sampling_buffer(sfb);
-		debug_sprintf_event(sfdbg, 4, "%s: "
+	rc = पुनः_स्मृति_sampling_buffer(sfb, num_sdb, GFP_KERNEL);
+	अगर (rc) अणु
+		मुक्त_sampling_buffer(sfb);
+		debug_प्र_लिखो_event(sfdbg, 4, "%s: "
 			"realloc_sampling_buffer failed with rc %i\n",
 			__func__, rc);
-	} else
-		debug_sprintf_event(sfdbg, 4,
+	पूर्ण अन्यथा
+		debug_प्र_लिखो_event(sfdbg, 4,
 			"%s: tear %#lx dear %#lx\n", __func__,
-			(unsigned long)sfb->sdbt, (unsigned long)*sfb->sdbt);
-	return rc;
-}
+			(अचिन्हित दीर्घ)sfb->sdbt, (अचिन्हित दीर्घ)*sfb->sdbt);
+	वापस rc;
+पूर्ण
 
-static void sfb_set_limits(unsigned long min, unsigned long max)
-{
-	struct hws_qsi_info_block si;
+अटल व्योम sfb_set_limits(अचिन्हित दीर्घ min, अचिन्हित दीर्घ max)
+अणु
+	काष्ठा hws_qsi_info_block si;
 
 	CPUM_SF_MIN_SDB = min;
 	CPUM_SF_MAX_SDB = max;
 
-	memset(&si, 0, sizeof(si));
-	if (!qsi(&si))
+	स_रखो(&si, 0, माप(si));
+	अगर (!qsi(&si))
 		CPUM_SF_SDB_DIAG_FACTOR = DIV_ROUND_UP(si.dsdes, si.bsdes);
-}
+पूर्ण
 
-static unsigned long sfb_max_limit(struct hw_perf_event *hwc)
-{
-	return SAMPL_DIAG_MODE(hwc) ? CPUM_SF_MAX_SDB * CPUM_SF_SDB_DIAG_FACTOR
+अटल अचिन्हित दीर्घ sfb_max_limit(काष्ठा hw_perf_event *hwc)
+अणु
+	वापस SAMPL_DIAG_MODE(hwc) ? CPUM_SF_MAX_SDB * CPUM_SF_SDB_DIAG_FACTOR
 				    : CPUM_SF_MAX_SDB;
-}
+पूर्ण
 
-static unsigned long sfb_pending_allocs(struct sf_buffer *sfb,
-					struct hw_perf_event *hwc)
-{
-	if (!sfb->sdbt)
-		return SFB_ALLOC_REG(hwc);
-	if (SFB_ALLOC_REG(hwc) > sfb->num_sdb)
-		return SFB_ALLOC_REG(hwc) - sfb->num_sdb;
-	return 0;
-}
+अटल अचिन्हित दीर्घ sfb_pending_allocs(काष्ठा sf_buffer *sfb,
+					काष्ठा hw_perf_event *hwc)
+अणु
+	अगर (!sfb->sdbt)
+		वापस SFB_ALLOC_REG(hwc);
+	अगर (SFB_ALLOC_REG(hwc) > sfb->num_sdb)
+		वापस SFB_ALLOC_REG(hwc) - sfb->num_sdb;
+	वापस 0;
+पूर्ण
 
-static int sfb_has_pending_allocs(struct sf_buffer *sfb,
-				   struct hw_perf_event *hwc)
-{
-	return sfb_pending_allocs(sfb, hwc) > 0;
-}
+अटल पूर्णांक sfb_has_pending_allocs(काष्ठा sf_buffer *sfb,
+				   काष्ठा hw_perf_event *hwc)
+अणु
+	वापस sfb_pending_allocs(sfb, hwc) > 0;
+पूर्ण
 
-static void sfb_account_allocs(unsigned long num, struct hw_perf_event *hwc)
-{
+अटल व्योम sfb_account_allocs(अचिन्हित दीर्घ num, काष्ठा hw_perf_event *hwc)
+अणु
 	/* Limit the number of SDBs to not exceed the maximum */
-	num = min_t(unsigned long, num, sfb_max_limit(hwc) - SFB_ALLOC_REG(hwc));
-	if (num)
+	num = min_t(अचिन्हित दीर्घ, num, sfb_max_limit(hwc) - SFB_ALLOC_REG(hwc));
+	अगर (num)
 		SFB_ALLOC_REG(hwc) += num;
-}
+पूर्ण
 
-static void sfb_init_allocs(unsigned long num, struct hw_perf_event *hwc)
-{
+अटल व्योम sfb_init_allocs(अचिन्हित दीर्घ num, काष्ठा hw_perf_event *hwc)
+अणु
 	SFB_ALLOC_REG(hwc) = 0;
 	sfb_account_allocs(num, hwc);
-}
+पूर्ण
 
-static void deallocate_buffers(struct cpu_hw_sf *cpuhw)
-{
-	if (cpuhw->sfb.sdbt)
-		free_sampling_buffer(&cpuhw->sfb);
-}
+अटल व्योम deallocate_buffers(काष्ठा cpu_hw_sf *cpuhw)
+अणु
+	अगर (cpuhw->sfb.sdbt)
+		मुक्त_sampling_buffer(&cpuhw->sfb);
+पूर्ण
 
-static int allocate_buffers(struct cpu_hw_sf *cpuhw, struct hw_perf_event *hwc)
-{
-	unsigned long n_sdb, freq;
-	size_t sample_size;
+अटल पूर्णांक allocate_buffers(काष्ठा cpu_hw_sf *cpuhw, काष्ठा hw_perf_event *hwc)
+अणु
+	अचिन्हित दीर्घ n_sdb, freq;
+	माप_प्रकार sample_size;
 
 	/* Calculate sampling buffers using 4K pages
 	 *
-	 *    1. The sampling size is 32 bytes for basic sampling. This size
-	 *	 is the same for all machine types. Diagnostic
+	 *    1. The sampling size is 32 bytes क्रम basic sampling. This size
+	 *	 is the same क्रम all machine types. Diagnostic
 	 *	 sampling uses auxlilary data buffer setup which provides the
-	 *	 memory for SDBs using linux common code auxiliary trace
+	 *	 memory क्रम SDBs using linux common code auxiliary trace
 	 *	 setup.
 	 *
 	 *    2. Function alloc_sampling_buffer() sets the Alert Request
 	 *	 Control indicator to trigger a measurement-alert to harvest
-	 *	 sample-data-blocks (SDB). This is done per SDB. This
-	 *	 measurement alert interrupt fires quick enough to handle
+	 *	 sample-data-blocks (SDB). This is करोne per SDB. This
+	 *	 measurement alert पूर्णांकerrupt fires quick enough to handle
 	 *	 one SDB, on very high frequency and work loads there might
-	 *	 be 2 to 3 SBDs available for sample processing.
-	 *	 Currently there is no need for setup alert request on every
+	 *	 be 2 to 3 SBDs available क्रम sample processing.
+	 *	 Currently there is no need क्रम setup alert request on every
 	 *	 n-th page. This is counterproductive as one IRQ triggers
 	 *	 a very high number of samples to be processed at one IRQ.
 	 *
@@ -397,75 +398,75 @@ static int allocate_buffers(struct cpu_hw_sf *cpuhw, struct hw_perf_event *hwc)
 	 *	 Compute the number of SDBs and ensure a minimum
 	 *	 of CPUM_SF_MIN_SDB.  Depending on frequency add some more
 	 *	 SDBs to handle a higher sampling rate.
-	 *	 Use a minimum of CPUM_SF_MIN_SDB and allow for 100 samples
-	 *	 (one SDB) for every 10000 HZ frequency increment.
+	 *	 Use a minimum of CPUM_SF_MIN_SDB and allow क्रम 100 samples
+	 *	 (one SDB) क्रम every 10000 HZ frequency increment.
 	 *
 	 *    4. Compute the number of sample-data-block-tables (SDBT) and
 	 *	 ensure a minimum of CPUM_SF_MIN_SDBT (one table can manage up
 	 *	 to 511 SDBs).
 	 */
-	sample_size = sizeof(struct hws_basic_entry);
+	sample_size = माप(काष्ठा hws_basic_entry);
 	freq = sample_rate_to_freq(&cpuhw->qsi, SAMPL_RATE(hwc));
 	n_sdb = CPUM_SF_MIN_SDB + DIV_ROUND_UP(freq, 10000);
 
-	/* If there is already a sampling buffer allocated, it is very likely
+	/* If there is alपढ़ोy a sampling buffer allocated, it is very likely
 	 * that the sampling facility is enabled too.  If the event to be
 	 * initialized requires a greater sampling buffer, the allocation must
 	 * be postponed.  Changing the sampling buffer requires the sampling
 	 * facility to be in the disabled state.  So, account the number of
 	 * required SDBs and let cpumsf_pmu_enable() resize the buffer just
-	 * before the event is started.
+	 * beक्रमe the event is started.
 	 */
 	sfb_init_allocs(n_sdb, hwc);
-	if (sf_buffer_available(cpuhw))
-		return 0;
+	अगर (sf_buffer_available(cpuhw))
+		वापस 0;
 
-	debug_sprintf_event(sfdbg, 3,
+	debug_प्र_लिखो_event(sfdbg, 3,
 			    "%s: rate %lu f %lu sdb %lu/%lu"
 			    " sample_size %lu cpuhw %p\n", __func__,
 			    SAMPL_RATE(hwc), freq, n_sdb, sfb_max_limit(hwc),
 			    sample_size, cpuhw);
 
-	return alloc_sampling_buffer(&cpuhw->sfb,
+	वापस alloc_sampling_buffer(&cpuhw->sfb,
 				     sfb_pending_allocs(&cpuhw->sfb, hwc));
-}
+पूर्ण
 
-static unsigned long min_percent(unsigned int percent, unsigned long base,
-				 unsigned long min)
-{
-	return min_t(unsigned long, min, DIV_ROUND_UP(percent * base, 100));
-}
+अटल अचिन्हित दीर्घ min_percent(अचिन्हित पूर्णांक percent, अचिन्हित दीर्घ base,
+				 अचिन्हित दीर्घ min)
+अणु
+	वापस min_t(अचिन्हित दीर्घ, min, DIV_ROUND_UP(percent * base, 100));
+पूर्ण
 
-static unsigned long compute_sfb_extent(unsigned long ratio, unsigned long base)
-{
+अटल अचिन्हित दीर्घ compute_sfb_extent(अचिन्हित दीर्घ ratio, अचिन्हित दीर्घ base)
+अणु
 	/* Use a percentage-based approach to extend the sampling facility
 	 * buffer.  Accept up to 5% sample data loss.
 	 * Vary the extents between 1% to 5% of the current number of
 	 * sample-data-blocks.
 	 */
-	if (ratio <= 5)
-		return 0;
-	if (ratio <= 25)
-		return min_percent(1, base, 1);
-	if (ratio <= 50)
-		return min_percent(1, base, 1);
-	if (ratio <= 75)
-		return min_percent(2, base, 2);
-	if (ratio <= 100)
-		return min_percent(3, base, 3);
-	if (ratio <= 250)
-		return min_percent(4, base, 4);
+	अगर (ratio <= 5)
+		वापस 0;
+	अगर (ratio <= 25)
+		वापस min_percent(1, base, 1);
+	अगर (ratio <= 50)
+		वापस min_percent(1, base, 1);
+	अगर (ratio <= 75)
+		वापस min_percent(2, base, 2);
+	अगर (ratio <= 100)
+		वापस min_percent(3, base, 3);
+	अगर (ratio <= 250)
+		वापस min_percent(4, base, 4);
 
-	return min_percent(5, base, 8);
-}
+	वापस min_percent(5, base, 8);
+पूर्ण
 
-static void sfb_account_overflows(struct cpu_hw_sf *cpuhw,
-				  struct hw_perf_event *hwc)
-{
-	unsigned long ratio, num;
+अटल व्योम sfb_account_overflows(काष्ठा cpu_hw_sf *cpuhw,
+				  काष्ठा hw_perf_event *hwc)
+अणु
+	अचिन्हित दीर्घ ratio, num;
 
-	if (!OVERFLOW_REG(hwc))
-		return;
+	अगर (!OVERFLOW_REG(hwc))
+		वापस;
 
 	/* The sample_overflow contains the average number of sample data
 	 * that has been lost because sample-data-blocks were full.
@@ -479,34 +480,34 @@ static void sfb_account_overflows(struct cpu_hw_sf *cpuhw,
 
 	/* Compute number of sample-data-blocks */
 	num = compute_sfb_extent(ratio, cpuhw->sfb.num_sdb);
-	if (num)
+	अगर (num)
 		sfb_account_allocs(num, hwc);
 
-	debug_sprintf_event(sfdbg, 5, "%s: overflow %llu ratio %lu num %lu\n",
+	debug_प्र_लिखो_event(sfdbg, 5, "%s: overflow %llu ratio %lu num %lu\n",
 			    __func__, OVERFLOW_REG(hwc), ratio, num);
 	OVERFLOW_REG(hwc) = 0;
-}
+पूर्ण
 
 /* extend_sampling_buffer() - Extend sampling buffer
- * @sfb:	Sampling buffer structure (for local CPU)
- * @hwc:	Perf event hardware structure
+ * @sfb:	Sampling buffer काष्ठाure (क्रम local CPU)
+ * @hwc:	Perf event hardware काष्ठाure
  *
  * Use this function to extend the sampling buffer based on the overflow counter
- * and postponed allocation extents stored in the specified Perf event hardware.
+ * and postponed allocation extents stored in the specअगरied Perf event hardware.
  *
  * Important: This function disables the sampling facility in order to safely
- *	      change the sampling buffer structure.  Do not call this function
+ *	      change the sampling buffer काष्ठाure.  Do not call this function
  *	      when the PMU is active.
  */
-static void extend_sampling_buffer(struct sf_buffer *sfb,
-				   struct hw_perf_event *hwc)
-{
-	unsigned long num, num_old;
-	int rc;
+अटल व्योम extend_sampling_buffer(काष्ठा sf_buffer *sfb,
+				   काष्ठा hw_perf_event *hwc)
+अणु
+	अचिन्हित दीर्घ num, num_old;
+	पूर्णांक rc;
 
 	num = sfb_pending_allocs(sfb, hwc);
-	if (!num)
-		return;
+	अगर (!num)
+		वापस;
 	num_old = sfb->num_sdb;
 
 	/* Disable the sampling facility to reset any states and also
@@ -516,151 +517,151 @@ static void extend_sampling_buffer(struct sf_buffer *sfb,
 
 	/* Extend the sampling buffer.
 	 * This memory allocation typically happens in an atomic context when
-	 * called by perf.  Because this is a reallocation, it is fine if the
+	 * called by perf.  Because this is a पुनः_स्मृतिation, it is fine अगर the
 	 * new SDB-request cannot be satisfied immediately.
 	 */
-	rc = realloc_sampling_buffer(sfb, num, GFP_ATOMIC);
-	if (rc)
-		debug_sprintf_event(sfdbg, 5, "%s: realloc failed with rc %i\n",
+	rc = पुनः_स्मृति_sampling_buffer(sfb, num, GFP_ATOMIC);
+	अगर (rc)
+		debug_प्र_लिखो_event(sfdbg, 5, "%s: realloc failed with rc %i\n",
 				    __func__, rc);
 
-	if (sfb_has_pending_allocs(sfb, hwc))
-		debug_sprintf_event(sfdbg, 5, "%s: "
+	अगर (sfb_has_pending_allocs(sfb, hwc))
+		debug_प्र_लिखो_event(sfdbg, 5, "%s: "
 				    "req %lu alloc %lu remaining %lu\n",
 				    __func__, num, sfb->num_sdb - num_old,
 				    sfb_pending_allocs(sfb, hwc));
-}
+पूर्ण
 
 /* Number of perf events counting hardware events */
-static atomic_t num_events;
-/* Used to avoid races in calling reserve/release_cpumf_hardware */
-static DEFINE_MUTEX(pmc_reserve_mutex);
+अटल atomic_t num_events;
+/* Used to aव्योम races in calling reserve/release_cpumf_hardware */
+अटल DEFINE_MUTEX(pmc_reserve_mutex);
 
-#define PMC_INIT      0
-#define PMC_RELEASE   1
-#define PMC_FAILURE   2
-static void setup_pmc_cpu(void *flags)
-{
-	int err;
-	struct cpu_hw_sf *cpusf = this_cpu_ptr(&cpu_hw_sf);
+#घोषणा PMC_INIT      0
+#घोषणा PMC_RELEASE   1
+#घोषणा PMC_FAILURE   2
+अटल व्योम setup_pmc_cpu(व्योम *flags)
+अणु
+	पूर्णांक err;
+	काष्ठा cpu_hw_sf *cpusf = this_cpu_ptr(&cpu_hw_sf);
 
 	err = 0;
-	switch (*((int *) flags)) {
-	case PMC_INIT:
-		memset(cpusf, 0, sizeof(*cpusf));
+	चयन (*((पूर्णांक *) flags)) अणु
+	हाल PMC_INIT:
+		स_रखो(cpusf, 0, माप(*cpusf));
 		err = qsi(&cpusf->qsi);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 		cpusf->flags |= PMU_F_RESERVED;
 		err = sf_disable();
-		if (err)
+		अगर (err)
 			pr_err("Switching off the sampling facility failed "
 			       "with rc %i\n", err);
-		debug_sprintf_event(sfdbg, 5,
+		debug_प्र_लिखो_event(sfdbg, 5,
 				    "%s: initialized: cpuhw %p\n", __func__,
 				    cpusf);
-		break;
-	case PMC_RELEASE:
+		अवरोध;
+	हाल PMC_RELEASE:
 		cpusf->flags &= ~PMU_F_RESERVED;
 		err = sf_disable();
-		if (err) {
+		अगर (err) अणु
 			pr_err("Switching off the sampling facility failed "
 			       "with rc %i\n", err);
-		} else
+		पूर्ण अन्यथा
 			deallocate_buffers(cpusf);
-		debug_sprintf_event(sfdbg, 5,
+		debug_प्र_लिखो_event(sfdbg, 5,
 				    "%s: released: cpuhw %p\n", __func__,
 				    cpusf);
-		break;
-	}
-	if (err)
-		*((int *) flags) |= PMC_FAILURE;
-}
+		अवरोध;
+	पूर्ण
+	अगर (err)
+		*((पूर्णांक *) flags) |= PMC_FAILURE;
+पूर्ण
 
-static void release_pmc_hardware(void)
-{
-	int flags = PMC_RELEASE;
+अटल व्योम release_pmc_hardware(व्योम)
+अणु
+	पूर्णांक flags = PMC_RELEASE;
 
-	irq_subclass_unregister(IRQ_SUBCLASS_MEASUREMENT_ALERT);
+	irq_subclass_unरेजिस्टर(IRQ_SUBCLASS_MEASUREMENT_ALERT);
 	on_each_cpu(setup_pmc_cpu, &flags, 1);
-}
+पूर्ण
 
-static int reserve_pmc_hardware(void)
-{
-	int flags = PMC_INIT;
+अटल पूर्णांक reserve_pmc_hardware(व्योम)
+अणु
+	पूर्णांक flags = PMC_INIT;
 
 	on_each_cpu(setup_pmc_cpu, &flags, 1);
-	if (flags & PMC_FAILURE) {
+	अगर (flags & PMC_FAILURE) अणु
 		release_pmc_hardware();
-		return -ENODEV;
-	}
-	irq_subclass_register(IRQ_SUBCLASS_MEASUREMENT_ALERT);
+		वापस -ENODEV;
+	पूर्ण
+	irq_subclass_रेजिस्टर(IRQ_SUBCLASS_MEASUREMENT_ALERT);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void hw_perf_event_destroy(struct perf_event *event)
-{
-	/* Release PMC if this is the last perf event */
-	if (!atomic_add_unless(&num_events, -1, 1)) {
+अटल व्योम hw_perf_event_destroy(काष्ठा perf_event *event)
+अणु
+	/* Release PMC अगर this is the last perf event */
+	अगर (!atomic_add_unless(&num_events, -1, 1)) अणु
 		mutex_lock(&pmc_reserve_mutex);
-		if (atomic_dec_return(&num_events) == 0)
+		अगर (atomic_dec_वापस(&num_events) == 0)
 			release_pmc_hardware();
 		mutex_unlock(&pmc_reserve_mutex);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void hw_init_period(struct hw_perf_event *hwc, u64 period)
-{
+अटल व्योम hw_init_period(काष्ठा hw_perf_event *hwc, u64 period)
+अणु
 	hwc->sample_period = period;
 	hwc->last_period = hwc->sample_period;
 	local64_set(&hwc->period_left, hwc->sample_period);
-}
+पूर्ण
 
-static unsigned long hw_limit_rate(const struct hws_qsi_info_block *si,
-				   unsigned long rate)
-{
-	return clamp_t(unsigned long, rate,
+अटल अचिन्हित दीर्घ hw_limit_rate(स्थिर काष्ठा hws_qsi_info_block *si,
+				   अचिन्हित दीर्घ rate)
+अणु
+	वापस clamp_t(अचिन्हित दीर्घ, rate,
 		       si->min_sampl_rate, si->max_sampl_rate);
-}
+पूर्ण
 
-static u32 cpumsf_pid_type(struct perf_event *event,
-			   u32 pid, enum pid_type type)
-{
-	struct task_struct *tsk;
+अटल u32 cpumsf_pid_type(काष्ठा perf_event *event,
+			   u32 pid, क्रमागत pid_type type)
+अणु
+	काष्ठा task_काष्ठा *tsk;
 
 	/* Idle process */
-	if (!pid)
-		goto out;
+	अगर (!pid)
+		जाओ out;
 
 	tsk = find_task_by_pid_ns(pid, &init_pid_ns);
 	pid = -1;
-	if (tsk) {
+	अगर (tsk) अणु
 		/*
 		 * Only top level events contain the pid namespace in which
 		 * they are created.
 		 */
-		if (event->parent)
+		अगर (event->parent)
 			event = event->parent;
 		pid = __task_pid_nr_ns(tsk, type, event->ns);
 		/*
 		 * See also 1d953111b648
 		 * "perf/core: Don't report zero PIDs for exiting tasks".
 		 */
-		if (!pid && !pid_alive(tsk))
+		अगर (!pid && !pid_alive(tsk))
 			pid = -1;
-	}
+	पूर्ण
 out:
-	return pid;
-}
+	वापस pid;
+पूर्ण
 
-static void cpumsf_output_event_pid(struct perf_event *event,
-				    struct perf_sample_data *data,
-				    struct pt_regs *regs)
-{
+अटल व्योम cpumsf_output_event_pid(काष्ठा perf_event *event,
+				    काष्ठा perf_sample_data *data,
+				    काष्ठा pt_regs *regs)
+अणु
 	u32 pid;
-	struct perf_event_header header;
-	struct perf_output_handle handle;
+	काष्ठा perf_event_header header;
+	काष्ठा perf_output_handle handle;
 
 	/*
 	 * Obtain the PID from the basic-sampling data entry and
@@ -669,11 +670,11 @@ static void cpumsf_output_event_pid(struct perf_event *event,
 	pid = data->tid_entry.pid;
 
 	/* Protect callchain buffers, tasks */
-	rcu_read_lock();
+	rcu_पढ़ो_lock();
 
 	perf_prepare_sample(&header, data, event, regs);
-	if (perf_output_begin(&handle, data, event, header.size))
-		goto out;
+	अगर (perf_output_begin(&handle, data, event, header.size))
+		जाओ out;
 
 	/* Update the process ID (see also kernel/events/core.c) */
 	data->tid_entry.pid = cpumsf_pid_type(event, pid, PIDTYPE_TGID);
@@ -682,277 +683,277 @@ static void cpumsf_output_event_pid(struct perf_event *event,
 	perf_output_sample(&handle, &header, data, event);
 	perf_output_end(&handle);
 out:
-	rcu_read_unlock();
-}
+	rcu_पढ़ो_unlock();
+पूर्ण
 
-static unsigned long getrate(bool freq, unsigned long sample,
-			     struct hws_qsi_info_block *si)
-{
-	unsigned long rate;
+अटल अचिन्हित दीर्घ getrate(bool freq, अचिन्हित दीर्घ sample,
+			     काष्ठा hws_qsi_info_block *si)
+अणु
+	अचिन्हित दीर्घ rate;
 
-	if (freq) {
+	अगर (freq) अणु
 		rate = freq_to_sample_rate(si, sample);
 		rate = hw_limit_rate(si, rate);
-	} else {
-		/* The min/max sampling rates specifies the valid range
-		 * of sample periods.  If the specified sample period is
+	पूर्ण अन्यथा अणु
+		/* The min/max sampling rates specअगरies the valid range
+		 * of sample periods.  If the specअगरied sample period is
 		 * out of range, limit the period to the range boundary.
 		 */
 		rate = hw_limit_rate(si, sample);
 
-		/* The perf core maintains a maximum sample rate that is
-		 * configurable through the sysctl interface.  Ensure the
-		 * sampling rate does not exceed this value.  This also helps
-		 * to avoid throttling when pushing samples with
+		/* The perf core मुख्यtains a maximum sample rate that is
+		 * configurable through the sysctl पूर्णांकerface.  Ensure the
+		 * sampling rate करोes not exceed this value.  This also helps
+		 * to aव्योम throttling when pushing samples with
 		 * perf_event_overflow().
 		 */
-		if (sample_rate_to_freq(si, rate) >
-		    sysctl_perf_event_sample_rate) {
-			debug_sprintf_event(sfdbg, 1, "%s: "
+		अगर (sample_rate_to_freq(si, rate) >
+		    sysctl_perf_event_sample_rate) अणु
+			debug_प्र_लिखो_event(sfdbg, 1, "%s: "
 					    "Sampling rate exceeds maximum "
 					    "perf sample rate\n", __func__);
 			rate = 0;
-		}
-	}
-	return rate;
-}
+		पूर्ण
+	पूर्ण
+	वापस rate;
+पूर्ण
 
-/* The sampling information (si) contains information about the
- * min/max sampling intervals and the CPU speed.  So calculate the
- * correct sampling interval and avoid the whole period adjust
+/* The sampling inक्रमmation (si) contains inक्रमmation about the
+ * min/max sampling पूर्णांकervals and the CPU speed.  So calculate the
+ * correct sampling पूर्णांकerval and aव्योम the whole period adjust
  * feedback loop.
  *
  * Since the CPU Measurement sampling facility can not handle frequency
- * calculate the sampling interval when frequency is specified using
- * this formula:
- *	interval := cpu_speed * 1000000 / sample_freq
+ * calculate the sampling पूर्णांकerval when frequency is specअगरied using
+ * this क्रमmula:
+ *	पूर्णांकerval := cpu_speed * 1000000 / sample_freq
  *
- * Returns errno on bad input and zero on success with parameter interval
+ * Returns त्रुटि_सं on bad input and zero on success with parameter पूर्णांकerval
  * set to the correct sampling rate.
  *
- * Note: This function turns off freq bit to avoid calling function
- * perf_adjust_period(). This causes frequency adjustment in the common
- * code part which causes tremendous variations in the counter values.
+ * Note: This function turns off freq bit to aव्योम calling function
+ * perf_adjust_period(). This causes frequency adjusपंचांगent in the common
+ * code part which causes tremenकरोus variations in the counter values.
  */
-static int __hw_perf_event_init_rate(struct perf_event *event,
-				     struct hws_qsi_info_block *si)
-{
-	struct perf_event_attr *attr = &event->attr;
-	struct hw_perf_event *hwc = &event->hw;
-	unsigned long rate;
+अटल पूर्णांक __hw_perf_event_init_rate(काष्ठा perf_event *event,
+				     काष्ठा hws_qsi_info_block *si)
+अणु
+	काष्ठा perf_event_attr *attr = &event->attr;
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	अचिन्हित दीर्घ rate;
 
-	if (attr->freq) {
-		if (!attr->sample_freq)
-			return -EINVAL;
+	अगर (attr->freq) अणु
+		अगर (!attr->sample_freq)
+			वापस -EINVAL;
 		rate = getrate(attr->freq, attr->sample_freq, si);
 		attr->freq = 0;		/* Don't call  perf_adjust_period() */
 		SAMPL_FLAGS(hwc) |= PERF_CPUM_SF_FREQ_MODE;
-	} else {
+	पूर्ण अन्यथा अणु
 		rate = getrate(attr->freq, attr->sample_period, si);
-		if (!rate)
-			return -EINVAL;
-	}
+		अगर (!rate)
+			वापस -EINVAL;
+	पूर्ण
 	attr->sample_period = rate;
 	SAMPL_RATE(hwc) = rate;
 	hw_init_period(hwc, SAMPL_RATE(hwc));
-	debug_sprintf_event(sfdbg, 4, "%s: cpu %d period %#llx freq %d,%#lx\n",
+	debug_प्र_लिखो_event(sfdbg, 4, "%s: cpu %d period %#llx freq %d,%#lx\n",
 			    __func__, event->cpu, event->attr.sample_period,
 			    event->attr.freq, SAMPLE_FREQ_MODE(hwc));
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __hw_perf_event_init(struct perf_event *event)
-{
-	struct cpu_hw_sf *cpuhw;
-	struct hws_qsi_info_block si;
-	struct perf_event_attr *attr = &event->attr;
-	struct hw_perf_event *hwc = &event->hw;
-	int cpu, err;
+अटल पूर्णांक __hw_perf_event_init(काष्ठा perf_event *event)
+अणु
+	काष्ठा cpu_hw_sf *cpuhw;
+	काष्ठा hws_qsi_info_block si;
+	काष्ठा perf_event_attr *attr = &event->attr;
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	पूर्णांक cpu, err;
 
 	/* Reserve CPU-measurement sampling facility */
 	err = 0;
-	if (!atomic_inc_not_zero(&num_events)) {
+	अगर (!atomic_inc_not_zero(&num_events)) अणु
 		mutex_lock(&pmc_reserve_mutex);
-		if (atomic_read(&num_events) == 0 && reserve_pmc_hardware())
+		अगर (atomic_पढ़ो(&num_events) == 0 && reserve_pmc_hardware())
 			err = -EBUSY;
-		else
+		अन्यथा
 			atomic_inc(&num_events);
 		mutex_unlock(&pmc_reserve_mutex);
-	}
+	पूर्ण
 	event->destroy = hw_perf_event_destroy;
 
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	/* Access per-CPU sampling information (query sampling info) */
+	/* Access per-CPU sampling inक्रमmation (query sampling info) */
 	/*
-	 * The event->cpu value can be -1 to count on every CPU, for example,
-	 * when attaching to a task.  If this is specified, use the query
+	 * The event->cpu value can be -1 to count on every CPU, क्रम example,
+	 * when attaching to a task.  If this is specअगरied, use the query
 	 * sampling info from the current CPU, otherwise use event->cpu to
-	 * retrieve the per-CPU information.
-	 * Later, cpuhw indicates whether to allocate sampling buffers for a
-	 * particular CPU (cpuhw!=NULL) or each online CPU (cpuw==NULL).
+	 * retrieve the per-CPU inक्रमmation.
+	 * Later, cpuhw indicates whether to allocate sampling buffers क्रम a
+	 * particular CPU (cpuhw!=शून्य) or each online CPU (cpuw==शून्य).
 	 */
-	memset(&si, 0, sizeof(si));
-	cpuhw = NULL;
-	if (event->cpu == -1)
+	स_रखो(&si, 0, माप(si));
+	cpuhw = शून्य;
+	अगर (event->cpu == -1)
 		qsi(&si);
-	else {
+	अन्यथा अणु
 		/* Event is pinned to a particular CPU, retrieve the per-CPU
-		 * sampling structure for accessing the CPU-specific QSI.
+		 * sampling काष्ठाure क्रम accessing the CPU-specअगरic QSI.
 		 */
 		cpuhw = &per_cpu(cpu_hw_sf, event->cpu);
 		si = cpuhw->qsi;
-	}
+	पूर्ण
 
-	/* Check sampling facility authorization and, if not authorized,
+	/* Check sampling facility authorization and, अगर not authorized,
 	 * fall back to other PMUs.  It is safe to check any CPU because
-	 * the authorization is identical for all configured CPUs.
+	 * the authorization is identical क्रम all configured CPUs.
 	 */
-	if (!si.as) {
+	अगर (!si.as) अणु
 		err = -ENOENT;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	if (si.ribm & CPU_MF_SF_RIBM_NOTAV) {
+	अगर (si.ribm & CPU_MF_SF_RIBM_NOTAV) अणु
 		pr_warn("CPU Measurement Facility sampling is temporarily not available\n");
 		err = -EBUSY;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* Always enable basic sampling */
 	SAMPL_FLAGS(hwc) = PERF_CPUM_SF_BASIC_MODE;
 
-	/* Check if diagnostic sampling is requested.  Deny if the required
+	/* Check अगर diagnostic sampling is requested.  Deny अगर the required
 	 * sampling authorization is missing.
 	 */
-	if (attr->config == PERF_EVENT_CPUM_SF_DIAG) {
-		if (!si.ad) {
+	अगर (attr->config == PERF_EVENT_CPUM_SF_DIAG) अणु
+		अगर (!si.ad) अणु
 			err = -EPERM;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		SAMPL_FLAGS(hwc) |= PERF_CPUM_SF_DIAG_MODE;
-	}
+	पूर्ण
 
 	/* Check and set other sampling flags */
-	if (attr->config1 & PERF_CPUM_SF_FULL_BLOCKS)
+	अगर (attr->config1 & PERF_CPUM_SF_FULL_BLOCKS)
 		SAMPL_FLAGS(hwc) |= PERF_CPUM_SF_FULL_BLOCKS;
 
 	err =  __hw_perf_event_init_rate(event, &si);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 	/* Initialize sample data overflow accounting */
 	hwc->extra_reg.reg = REG_OVERFLOW;
 	OVERFLOW_REG(hwc) = 0;
 
 	/* Use AUX buffer. No need to allocate it by ourself */
-	if (attr->config == PERF_EVENT_CPUM_SF_DIAG)
-		return 0;
+	अगर (attr->config == PERF_EVENT_CPUM_SF_DIAG)
+		वापस 0;
 
-	/* Allocate the per-CPU sampling buffer using the CPU information
+	/* Allocate the per-CPU sampling buffer using the CPU inक्रमmation
 	 * from the event.  If the event is not pinned to a particular
-	 * CPU (event->cpu == -1; or cpuhw == NULL), allocate sampling
-	 * buffers for each online CPU.
+	 * CPU (event->cpu == -1; or cpuhw == शून्य), allocate sampling
+	 * buffers क्रम each online CPU.
 	 */
-	if (cpuhw)
+	अगर (cpuhw)
 		/* Event is pinned to a particular CPU */
 		err = allocate_buffers(cpuhw, hwc);
-	else {
+	अन्यथा अणु
 		/* Event is not pinned, allocate sampling buffer on
 		 * each online CPU
 		 */
-		for_each_online_cpu(cpu) {
+		क्रम_each_online_cpu(cpu) अणु
 			cpuhw = &per_cpu(cpu_hw_sf, cpu);
 			err = allocate_buffers(cpuhw, hwc);
-			if (err)
-				break;
-		}
-	}
+			अगर (err)
+				अवरोध;
+		पूर्ण
+	पूर्ण
 
-	/* If PID/TID sampling is active, replace the default overflow
+	/* If PID/TID sampling is active, replace the शेष overflow
 	 * handler to extract and resolve the PIDs from the basic-sampling
 	 * data entries.
 	 */
-	if (event->attr.sample_type & PERF_SAMPLE_TID)
-		if (is_default_overflow_handler(event))
+	अगर (event->attr.sample_type & PERF_SAMPLE_TID)
+		अगर (is_शेष_overflow_handler(event))
 			event->overflow_handler = cpumsf_output_event_pid;
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static bool is_callchain_event(struct perf_event *event)
-{
+अटल bool is_callchain_event(काष्ठा perf_event *event)
+अणु
 	u64 sample_type = event->attr.sample_type;
 
-	return sample_type & (PERF_SAMPLE_CALLCHAIN | PERF_SAMPLE_REGS_USER |
+	वापस sample_type & (PERF_SAMPLE_CALLCHAIN | PERF_SAMPLE_REGS_USER |
 			      PERF_SAMPLE_STACK_USER);
-}
+पूर्ण
 
-static int cpumsf_pmu_event_init(struct perf_event *event)
-{
-	int err;
+अटल पूर्णांक cpumsf_pmu_event_init(काष्ठा perf_event *event)
+अणु
+	पूर्णांक err;
 
-	/* No support for taken branch sampling */
-	/* No support for callchain, stacks and registers */
-	if (has_branch_stack(event) || is_callchain_event(event))
-		return -EOPNOTSUPP;
+	/* No support क्रम taken branch sampling */
+	/* No support क्रम callchain, stacks and रेजिस्टरs */
+	अगर (has_branch_stack(event) || is_callchain_event(event))
+		वापस -EOPNOTSUPP;
 
-	switch (event->attr.type) {
-	case PERF_TYPE_RAW:
-		if ((event->attr.config != PERF_EVENT_CPUM_SF) &&
+	चयन (event->attr.type) अणु
+	हाल PERF_TYPE_RAW:
+		अगर ((event->attr.config != PERF_EVENT_CPUM_SF) &&
 		    (event->attr.config != PERF_EVENT_CPUM_SF_DIAG))
-			return -ENOENT;
-		break;
-	case PERF_TYPE_HARDWARE:
+			वापस -ENOENT;
+		अवरोध;
+	हाल PERF_TYPE_HARDWARE:
 		/* Support sampling of CPU cycles in addition to the
 		 * counter facility.  However, the counter facility
 		 * is more precise and, hence, restrict this PMU to
 		 * sampling events only.
 		 */
-		if (event->attr.config != PERF_COUNT_HW_CPU_CYCLES)
-			return -ENOENT;
-		if (!is_sampling_event(event))
-			return -ENOENT;
-		break;
-	default:
-		return -ENOENT;
-	}
+		अगर (event->attr.config != PERF_COUNT_HW_CPU_CYCLES)
+			वापस -ENOENT;
+		अगर (!is_sampling_event(event))
+			वापस -ENOENT;
+		अवरोध;
+	शेष:
+		वापस -ENOENT;
+	पूर्ण
 
 	/* Check online status of the CPU to which the event is pinned */
-	if (event->cpu >= 0 && !cpu_online(event->cpu))
-		return -ENODEV;
+	अगर (event->cpu >= 0 && !cpu_online(event->cpu))
+		वापस -ENODEV;
 
 	/* Force reset of idle/hv excludes regardless of what the
 	 * user requested.
 	 */
-	if (event->attr.exclude_hv)
+	अगर (event->attr.exclude_hv)
 		event->attr.exclude_hv = 0;
-	if (event->attr.exclude_idle)
+	अगर (event->attr.exclude_idle)
 		event->attr.exclude_idle = 0;
 
 	err = __hw_perf_event_init(event);
-	if (unlikely(err))
-		if (event->destroy)
+	अगर (unlikely(err))
+		अगर (event->destroy)
 			event->destroy(event);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void cpumsf_pmu_enable(struct pmu *pmu)
-{
-	struct cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
-	struct hw_perf_event *hwc;
-	int err;
+अटल व्योम cpumsf_pmu_enable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
+	काष्ठा hw_perf_event *hwc;
+	पूर्णांक err;
 
-	if (cpuhw->flags & PMU_F_ENABLED)
-		return;
+	अगर (cpuhw->flags & PMU_F_ENABLED)
+		वापस;
 
-	if (cpuhw->flags & PMU_F_ERR_MASK)
-		return;
+	अगर (cpuhw->flags & PMU_F_ERR_MASK)
+		वापस;
 
 	/* Check whether to extent the sampling buffer.
 	 *
-	 * Two conditions trigger an increase of the sampling buffer for a
+	 * Two conditions trigger an increase of the sampling buffer क्रम a
 	 * perf event:
 	 *    1. Postponed buffer allocations from the event initialization.
 	 *    2. Sampling overflows that contribute to pending allocations.
@@ -961,54 +962,54 @@ static void cpumsf_pmu_enable(struct pmu *pmu)
 	 * facility, but it can be fully re-enabled using sampling controls that
 	 * have been saved in cpumsf_pmu_disable().
 	 */
-	if (cpuhw->event) {
+	अगर (cpuhw->event) अणु
 		hwc = &cpuhw->event->hw;
-		if (!(SAMPL_DIAG_MODE(hwc))) {
+		अगर (!(SAMPL_DIAG_MODE(hwc))) अणु
 			/*
 			 * Account number of overflow-designated
 			 * buffer extents
 			 */
 			sfb_account_overflows(cpuhw, hwc);
 			extend_sampling_buffer(&cpuhw->sfb, hwc);
-		}
+		पूर्ण
 		/* Rate may be adjusted with ioctl() */
-		cpuhw->lsctl.interval = SAMPL_RATE(&cpuhw->event->hw);
-	}
+		cpuhw->lsctl.पूर्णांकerval = SAMPL_RATE(&cpuhw->event->hw);
+	पूर्ण
 
 	/* (Re)enable the PMU and sampling facility */
 	cpuhw->flags |= PMU_F_ENABLED;
 	barrier();
 
 	err = lsctl(&cpuhw->lsctl);
-	if (err) {
+	अगर (err) अणु
 		cpuhw->flags &= ~PMU_F_ENABLED;
 		pr_err("Loading sampling controls failed: op %i err %i\n",
 			1, err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	/* Load current program parameter */
 	lpp(&S390_lowcore.lpp);
 
-	debug_sprintf_event(sfdbg, 6, "%s: es %i cs %i ed %i cd %i "
+	debug_प्र_लिखो_event(sfdbg, 6, "%s: es %i cs %i ed %i cd %i "
 			    "interval %#lx tear %#lx dear %#lx\n", __func__,
 			    cpuhw->lsctl.es, cpuhw->lsctl.cs, cpuhw->lsctl.ed,
-			    cpuhw->lsctl.cd, cpuhw->lsctl.interval,
+			    cpuhw->lsctl.cd, cpuhw->lsctl.पूर्णांकerval,
 			    cpuhw->lsctl.tear, cpuhw->lsctl.dear);
-}
+पूर्ण
 
-static void cpumsf_pmu_disable(struct pmu *pmu)
-{
-	struct cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
-	struct hws_lsctl_request_block inactive;
-	struct hws_qsi_info_block si;
-	int err;
+अटल व्योम cpumsf_pmu_disable(काष्ठा pmu *pmu)
+अणु
+	काष्ठा cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
+	काष्ठा hws_lsctl_request_block inactive;
+	काष्ठा hws_qsi_info_block si;
+	पूर्णांक err;
 
-	if (!(cpuhw->flags & PMU_F_ENABLED))
-		return;
+	अगर (!(cpuhw->flags & PMU_F_ENABLED))
+		वापस;
 
-	if (cpuhw->flags & PMU_F_ERR_MASK)
-		return;
+	अगर (cpuhw->flags & PMU_F_ERR_MASK)
+		वापस;
 
 	/* Switch off sampling activation control */
 	inactive = cpuhw->lsctl;
@@ -1016,115 +1017,115 @@ static void cpumsf_pmu_disable(struct pmu *pmu)
 	inactive.cd = 0;
 
 	err = lsctl(&inactive);
-	if (err) {
+	अगर (err) अणु
 		pr_err("Loading sampling controls failed: op %i err %i\n",
 			2, err);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* Save state of TEAR and DEAR register contents */
+	/* Save state of TEAR and DEAR रेजिस्टर contents */
 	err = qsi(&si);
-	if (!err) {
-		/* TEAR/DEAR values are valid only if the sampling facility is
+	अगर (!err) अणु
+		/* TEAR/DEAR values are valid only अगर the sampling facility is
 		 * enabled.  Note that cpumsf_pmu_disable() might be called even
-		 * for a disabled sampling facility because cpumsf_pmu_enable()
+		 * क्रम a disabled sampling facility because cpumsf_pmu_enable()
 		 * controls the enable/disable state.
 		 */
-		if (si.es) {
+		अगर (si.es) अणु
 			cpuhw->lsctl.tear = si.tear;
 			cpuhw->lsctl.dear = si.dear;
-		}
-	} else
-		debug_sprintf_event(sfdbg, 3, "%s: qsi() failed with err %i\n",
+		पूर्ण
+	पूर्ण अन्यथा
+		debug_प्र_लिखो_event(sfdbg, 3, "%s: qsi() failed with err %i\n",
 				    __func__, err);
 
 	cpuhw->flags &= ~PMU_F_ENABLED;
-}
+पूर्ण
 
 /* perf_exclude_event() - Filter event
  * @event:	The perf event
- * @regs:	pt_regs structure
- * @sde_regs:	Sample-data-entry (sde) regs structure
+ * @regs:	pt_regs काष्ठाure
+ * @sde_regs:	Sample-data-entry (sde) regs काष्ठाure
  *
- * Filter perf events according to their exclude specification.
+ * Filter perf events according to their exclude specअगरication.
  *
- * Return non-zero if the event shall be excluded.
+ * Return non-zero अगर the event shall be excluded.
  */
-static int perf_exclude_event(struct perf_event *event, struct pt_regs *regs,
-			      struct perf_sf_sde_regs *sde_regs)
-{
-	if (event->attr.exclude_user && user_mode(regs))
-		return 1;
-	if (event->attr.exclude_kernel && !user_mode(regs))
-		return 1;
-	if (event->attr.exclude_guest && sde_regs->in_guest)
-		return 1;
-	if (event->attr.exclude_host && !sde_regs->in_guest)
-		return 1;
-	return 0;
-}
+अटल पूर्णांक perf_exclude_event(काष्ठा perf_event *event, काष्ठा pt_regs *regs,
+			      काष्ठा perf_sf_sde_regs *sde_regs)
+अणु
+	अगर (event->attr.exclude_user && user_mode(regs))
+		वापस 1;
+	अगर (event->attr.exclude_kernel && !user_mode(regs))
+		वापस 1;
+	अगर (event->attr.exclude_guest && sde_regs->in_guest)
+		वापस 1;
+	अगर (event->attr.exclude_host && !sde_regs->in_guest)
+		वापस 1;
+	वापस 0;
+पूर्ण
 
 /* perf_push_sample() - Push samples to perf
  * @event:	The perf event
  * @sample:	Hardware sample data
  *
  * Use the hardware sample data to create perf event sample.  The sample
- * is the pushed to the event subsystem and the function checks for
+ * is the pushed to the event subप्रणाली and the function checks क्रम
  * possible event overflows.  If an event overflow occurs, the PMU is
  * stopped.
  *
- * Return non-zero if an event overflow occurred.
+ * Return non-zero अगर an event overflow occurred.
  */
-static int perf_push_sample(struct perf_event *event,
-			    struct hws_basic_entry *basic)
-{
-	int overflow;
-	struct pt_regs regs;
-	struct perf_sf_sde_regs *sde_regs;
-	struct perf_sample_data data;
+अटल पूर्णांक perf_push_sample(काष्ठा perf_event *event,
+			    काष्ठा hws_basic_entry *basic)
+अणु
+	पूर्णांक overflow;
+	काष्ठा pt_regs regs;
+	काष्ठा perf_sf_sde_regs *sde_regs;
+	काष्ठा perf_sample_data data;
 
 	/* Setup perf sample */
 	perf_sample_data_init(&data, 0, event->hw.last_period);
 
-	/* Setup pt_regs to look like an CPU-measurement external interrupt
-	 * using the Program Request Alert code.  The regs.int_parm_long
+	/* Setup pt_regs to look like an CPU-measurement बाह्यal पूर्णांकerrupt
+	 * using the Program Request Alert code.  The regs.पूर्णांक_parm_दीर्घ
 	 * field which is unused contains additional sample-data-entry related
 	 * indicators.
 	 */
-	memset(&regs, 0, sizeof(regs));
-	regs.int_code = 0x1407;
-	regs.int_parm = CPU_MF_INT_SF_PRA;
-	sde_regs = (struct perf_sf_sde_regs *) &regs.int_parm_long;
+	स_रखो(&regs, 0, माप(regs));
+	regs.पूर्णांक_code = 0x1407;
+	regs.पूर्णांक_parm = CPU_MF_INT_SF_PRA;
+	sde_regs = (काष्ठा perf_sf_sde_regs *) &regs.पूर्णांक_parm_दीर्घ;
 
 	psw_bits(regs.psw).ia	= basic->ia;
 	psw_bits(regs.psw).dat	= basic->T;
-	psw_bits(regs.psw).wait = basic->W;
+	psw_bits(regs.psw).रुको = basic->W;
 	psw_bits(regs.psw).pstate = basic->P;
 	psw_bits(regs.psw).as	= basic->AS;
 
 	/*
-	 * Use the hardware provided configuration level to decide if the
-	 * sample belongs to a guest or host. If that is not available,
+	 * Use the hardware provided configuration level to decide अगर the
+	 * sample beदीर्घs to a guest or host. If that is not available,
 	 * fall back to the following heuristics:
 	 * A non-zero guest program parameter always indicates a guest
 	 * sample. Some early samples or samples from guests without
 	 * lpp usage would be misaccounted to the host. We use the asn
-	 * value as an addon heuristic to detect most of these guest samples.
-	 * If the value differs from 0xffff (the host value), we assume to
+	 * value as an adकरोn heuristic to detect most of these guest samples.
+	 * If the value dअगरfers from 0xffff (the host value), we assume to
 	 * be a KVM guest.
 	 */
-	switch (basic->CL) {
-	case 1: /* logical partition */
+	चयन (basic->CL) अणु
+	हाल 1: /* logical partition */
 		sde_regs->in_guest = 0;
-		break;
-	case 2: /* virtual machine */
+		अवरोध;
+	हाल 2: /* भव machine */
 		sde_regs->in_guest = 1;
-		break;
-	default: /* old machine, use heuristics */
-		if (basic->gpp || basic->prim_asn != 0xffff)
+		अवरोध;
+	शेष: /* old machine, use heuristics */
+		अगर (basic->gpp || basic->prim_asn != 0xffff)
 			sde_regs->in_guest = 1;
-		break;
-	}
+		अवरोध;
+	पूर्ण
 
 	/*
 	 * Store the PID value from the sample-data-entry to be
@@ -1133,21 +1134,21 @@ static int perf_push_sample(struct perf_event *event,
 	data.tid_entry.pid = basic->hpp & LPP_PID_MASK;
 
 	overflow = 0;
-	if (perf_exclude_event(event, &regs, sde_regs))
-		goto out;
-	if (perf_event_overflow(event, &data, &regs)) {
+	अगर (perf_exclude_event(event, &regs, sde_regs))
+		जाओ out;
+	अगर (perf_event_overflow(event, &data, &regs)) अणु
 		overflow = 1;
 		event->pmu->stop(event, 0);
-	}
+	पूर्ण
 	perf_event_update_userpage(event);
 out:
-	return overflow;
-}
+	वापस overflow;
+पूर्ण
 
-static void perf_event_count_update(struct perf_event *event, u64 count)
-{
+अटल व्योम perf_event_count_update(काष्ठा perf_event *event, u64 count)
+अणु
 	local64_add(count, &event->count);
-}
+पूर्ण
 
 /* hw_collect_samples() - Walk through a sample-data-block and collect samples
  * @event:	The perf event
@@ -1155,77 +1156,77 @@ static void perf_event_count_update(struct perf_event *event, u64 count)
  * @overflow:	Event overflow counter
  *
  * Walks through a sample-data-block and collects sampling data entries that are
- * then pushed to the perf event subsystem.  Depending on the sampling function,
+ * then pushed to the perf event subप्रणाली.  Depending on the sampling function,
  * there can be either basic-sampling or combined-sampling data entries.  A
  * combined-sampling data entry consists of a basic- and a diagnostic-sampling
  * data entry.	The sampling function is determined by the flags in the perf
- * event hardware structure.  The function always works with a combined-sampling
- * data entry but ignores the the diagnostic portion if it is not available.
+ * event hardware काष्ठाure.  The function always works with a combined-sampling
+ * data entry but ignores the the diagnostic portion अगर it is not available.
  *
- * Note that the implementation focuses on basic-sampling data entries and, if
+ * Note that the implementation focuses on basic-sampling data entries and, अगर
  * such an entry is not valid, the entire combined-sampling data entry is
  * ignored.
  *
  * The overflow variables counts the number of samples that has been discarded
  * due to a perf event overflow.
  */
-static void hw_collect_samples(struct perf_event *event, unsigned long *sdbt,
-			       unsigned long long *overflow)
-{
-	struct hws_trailer_entry *te;
-	struct hws_basic_entry *sample;
+अटल व्योम hw_collect_samples(काष्ठा perf_event *event, अचिन्हित दीर्घ *sdbt,
+			       अचिन्हित दीर्घ दीर्घ *overflow)
+अणु
+	काष्ठा hws_trailer_entry *te;
+	काष्ठा hws_basic_entry *sample;
 
-	te = (struct hws_trailer_entry *) trailer_entry_ptr(*sdbt);
-	sample = (struct hws_basic_entry *) *sdbt;
-	while ((unsigned long *) sample < (unsigned long *) te) {
-		/* Check for an empty sample */
-		if (!sample->def)
-			break;
+	te = (काष्ठा hws_trailer_entry *) trailer_entry_ptr(*sdbt);
+	sample = (काष्ठा hws_basic_entry *) *sdbt;
+	जबतक ((अचिन्हित दीर्घ *) sample < (अचिन्हित दीर्घ *) te) अणु
+		/* Check क्रम an empty sample */
+		अगर (!sample->def)
+			अवरोध;
 
 		/* Update perf event period */
 		perf_event_count_update(event, SAMPL_RATE(&event->hw));
 
 		/* Check whether sample is valid */
-		if (sample->def == 0x0001) {
+		अगर (sample->def == 0x0001) अणु
 			/* If an event overflow occurred, the PMU is stopped to
-			 * throttle event delivery.  Remaining sample data is
+			 * throttle event delivery.  Reमुख्यing sample data is
 			 * discarded.
 			 */
-			if (!*overflow) {
+			अगर (!*overflow) अणु
 				/* Check whether sample is consistent */
-				if (sample->I == 0 && sample->W == 0) {
+				अगर (sample->I == 0 && sample->W == 0) अणु
 					/* Deliver sample data to perf */
 					*overflow = perf_push_sample(event,
 								     sample);
-				}
-			} else
+				पूर्ण
+			पूर्ण अन्यथा
 				/* Count discarded samples */
 				*overflow += 1;
-		} else {
-			debug_sprintf_event(sfdbg, 4,
+		पूर्ण अन्यथा अणु
+			debug_प्र_लिखो_event(sfdbg, 4,
 					    "%s: Found unknown"
 					    " sampling data entry: te->f %i"
 					    " basic.def %#4x (%p)\n", __func__,
 					    te->f, sample->def, sample);
 			/* Sample slot is not yet written or other record.
 			 *
-			 * This condition can occur if the buffer was reused
+			 * This condition can occur अगर the buffer was reused
 			 * from a combined basic- and diagnostic-sampling.
 			 * If only basic-sampling is then active, entries are
-			 * written into the larger diagnostic entries.
-			 * This is typically the case for sample-data-blocks
-			 * that are not full.  Stop processing if the first
-			 * invalid format was detected.
+			 * written पूर्णांकo the larger diagnostic entries.
+			 * This is typically the हाल क्रम sample-data-blocks
+			 * that are not full.  Stop processing अगर the first
+			 * invalid क्रमmat was detected.
 			 */
-			if (!te->f)
-				break;
-		}
+			अगर (!te->f)
+				अवरोध;
+		पूर्ण
 
 		/* Reset sample slot and advance to next sample */
 		sample->def = 0;
 		sample++;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /* hw_perf_event_update() - Process sampling buffer
  * @event:	The perf event
@@ -1233,160 +1234,160 @@ static void hw_collect_samples(struct perf_event *event, unsigned long *sdbt,
  *
  * Processes the sampling buffer and create perf event samples.
  * The sampling buffer position are retrieved and saved in the TEAR_REG
- * register of the specified perf event.
+ * रेजिस्टर of the specअगरied perf event.
  *
- * Only full sample-data-blocks are processed.	Specify the flash_all flag
+ * Only full sample-data-blocks are processed.	Specअगरy the flash_all flag
  * to also walk through partially filled sample-data-blocks.  It is ignored
- * if PERF_CPUM_SF_FULL_BLOCKS is set.	The PERF_CPUM_SF_FULL_BLOCKS flag
- * enforces the processing of full sample-data-blocks only (trailer entries
+ * अगर PERF_CPUM_SF_FULL_BLOCKS is set.	The PERF_CPUM_SF_FULL_BLOCKS flag
+ * enक्रमces the processing of full sample-data-blocks only (trailer entries
  * with the block-full-indicator bit set).
  */
-static void hw_perf_event_update(struct perf_event *event, int flush_all)
-{
-	struct hw_perf_event *hwc = &event->hw;
-	struct hws_trailer_entry *te;
-	unsigned long *sdbt;
-	unsigned long long event_overflow, sampl_overflow, num_sdb, te_flags;
-	int done;
+अटल व्योम hw_perf_event_update(काष्ठा perf_event *event, पूर्णांक flush_all)
+अणु
+	काष्ठा hw_perf_event *hwc = &event->hw;
+	काष्ठा hws_trailer_entry *te;
+	अचिन्हित दीर्घ *sdbt;
+	अचिन्हित दीर्घ दीर्घ event_overflow, sampl_overflow, num_sdb, te_flags;
+	पूर्णांक करोne;
 
 	/*
 	 * AUX buffer is used when in diagnostic sampling mode.
 	 * No perf events/samples are created.
 	 */
-	if (SAMPL_DIAG_MODE(&event->hw))
-		return;
+	अगर (SAMPL_DIAG_MODE(&event->hw))
+		वापस;
 
-	if (flush_all && SDB_FULL_BLOCKS(hwc))
+	अगर (flush_all && SDB_FULL_BLOCKS(hwc))
 		flush_all = 0;
 
-	sdbt = (unsigned long *) TEAR_REG(hwc);
-	done = event_overflow = sampl_overflow = num_sdb = 0;
-	while (!done) {
+	sdbt = (अचिन्हित दीर्घ *) TEAR_REG(hwc);
+	करोne = event_overflow = sampl_overflow = num_sdb = 0;
+	जबतक (!करोne) अणु
 		/* Get the trailer entry of the sample-data-block */
-		te = (struct hws_trailer_entry *) trailer_entry_ptr(*sdbt);
+		te = (काष्ठा hws_trailer_entry *) trailer_entry_ptr(*sdbt);
 
-		/* Leave loop if no more work to do (block full indicator) */
-		if (!te->f) {
-			done = 1;
-			if (!flush_all)
-				break;
-		}
+		/* Leave loop अगर no more work to करो (block full indicator) */
+		अगर (!te->f) अणु
+			करोne = 1;
+			अगर (!flush_all)
+				अवरोध;
+		पूर्ण
 
 		/* Check the sample overflow count */
-		if (te->overflow)
-			/* Account sample overflows and, if a particular limit
+		अगर (te->overflow)
+			/* Account sample overflows and, अगर a particular limit
 			 * is reached, extend the sampling buffer.
 			 * For details, see sfb_account_overflows().
 			 */
 			sampl_overflow += te->overflow;
 
-		/* Timestamps are valid for full sample-data-blocks only */
-		debug_sprintf_event(sfdbg, 6, "%s: sdbt %#lx "
+		/* Timestamps are valid क्रम full sample-data-blocks only */
+		debug_प्र_लिखो_event(sfdbg, 6, "%s: sdbt %#lx "
 				    "overflow %llu timestamp %#llx\n",
-				    __func__, (unsigned long)sdbt, te->overflow,
-				    (te->f) ? trailer_timestamp(te) : 0ULL);
+				    __func__, (अचिन्हित दीर्घ)sdbt, te->overflow,
+				    (te->f) ? trailer_बारtamp(te) : 0ULL);
 
 		/* Collect all samples from a single sample-data-block and
-		 * flag if an (perf) event overflow happened.  If so, the PMU
-		 * is stopped and remaining samples will be discarded.
+		 * flag अगर an (perf) event overflow happened.  If so, the PMU
+		 * is stopped and reमुख्यing samples will be discarded.
 		 */
 		hw_collect_samples(event, sdbt, &event_overflow);
 		num_sdb++;
 
-		/* Reset trailer (using compare-double-and-swap) */
-		do {
+		/* Reset trailer (using compare-द्विगुन-and-swap) */
+		करो अणु
 			te_flags = te->flags & ~SDB_TE_BUFFER_FULL_MASK;
 			te_flags |= SDB_TE_ALERT_REQ_MASK;
-		} while (!cmpxchg_double(&te->flags, &te->overflow,
+		पूर्ण जबतक (!cmpxchg_द्विगुन(&te->flags, &te->overflow,
 					 te->flags, te->overflow,
 					 te_flags, 0ULL));
 
 		/* Advance to next sample-data-block */
 		sdbt++;
-		if (is_link_entry(sdbt))
+		अगर (is_link_entry(sdbt))
 			sdbt = get_next_sdbt(sdbt);
 
-		/* Update event hardware registers */
-		TEAR_REG(hwc) = (unsigned long) sdbt;
+		/* Update event hardware रेजिस्टरs */
+		TEAR_REG(hwc) = (अचिन्हित दीर्घ) sdbt;
 
-		/* Stop processing sample-data if all samples of the current
-		 * sample-data-block were flushed even if it was not full.
+		/* Stop processing sample-data अगर all samples of the current
+		 * sample-data-block were flushed even अगर it was not full.
 		 */
-		if (flush_all && done)
-			break;
-	}
+		अगर (flush_all && करोne)
+			अवरोध;
+	पूर्ण
 
-	/* Account sample overflows in the event hardware structure */
-	if (sampl_overflow)
+	/* Account sample overflows in the event hardware काष्ठाure */
+	अगर (sampl_overflow)
 		OVERFLOW_REG(hwc) = DIV_ROUND_UP(OVERFLOW_REG(hwc) +
 						 sampl_overflow, 1 + num_sdb);
 
-	/* Perf_event_overflow() and perf_event_account_interrupt() limit
-	 * the interrupt rate to an upper limit. Roughly 1000 samples per
+	/* Perf_event_overflow() and perf_event_account_पूर्णांकerrupt() limit
+	 * the पूर्णांकerrupt rate to an upper limit. Roughly 1000 samples per
 	 * task tick.
 	 * Hitting this limit results in a large number
 	 * of throttled REF_REPORT_THROTTLE entries and the samples
 	 * are dropped.
-	 * Slightly increase the interval to avoid hitting this limit.
+	 * Slightly increase the पूर्णांकerval to aव्योम hitting this limit.
 	 */
-	if (event_overflow) {
+	अगर (event_overflow) अणु
 		SAMPL_RATE(hwc) += DIV_ROUND_UP(SAMPL_RATE(hwc), 10);
-		debug_sprintf_event(sfdbg, 1, "%s: rate adjustment %ld\n",
+		debug_प्र_लिखो_event(sfdbg, 1, "%s: rate adjustment %ld\n",
 				    __func__,
 				    DIV_ROUND_UP(SAMPL_RATE(hwc), 10));
-	}
+	पूर्ण
 
-	if (sampl_overflow || event_overflow)
-		debug_sprintf_event(sfdbg, 4, "%s: "
+	अगर (sampl_overflow || event_overflow)
+		debug_प्र_लिखो_event(sfdbg, 4, "%s: "
 				    "overflows: sample %llu event %llu"
 				    " total %llu num_sdb %llu\n",
 				    __func__, sampl_overflow, event_overflow,
 				    OVERFLOW_REG(hwc), num_sdb);
-}
+पूर्ण
 
-#define AUX_SDB_INDEX(aux, i) ((i) % aux->sfb.num_sdb)
-#define AUX_SDB_NUM(aux, start, end) (end >= start ? end - start + 1 : 0)
-#define AUX_SDB_NUM_ALERT(aux) AUX_SDB_NUM(aux, aux->head, aux->alert_mark)
-#define AUX_SDB_NUM_EMPTY(aux) AUX_SDB_NUM(aux, aux->head, aux->empty_mark)
+#घोषणा AUX_SDB_INDEX(aux, i) ((i) % aux->sfb.num_sdb)
+#घोषणा AUX_SDB_NUM(aux, start, end) (end >= start ? end - start + 1 : 0)
+#घोषणा AUX_SDB_NUM_ALERT(aux) AUX_SDB_NUM(aux, aux->head, aux->alert_mark)
+#घोषणा AUX_SDB_NUM_EMPTY(aux) AUX_SDB_NUM(aux, aux->head, aux->empty_mark)
 
 /*
  * Get trailer entry by index of SDB.
  */
-static struct hws_trailer_entry *aux_sdb_trailer(struct aux_buffer *aux,
-						 unsigned long index)
-{
-	unsigned long sdb;
+अटल काष्ठा hws_trailer_entry *aux_sdb_trailer(काष्ठा aux_buffer *aux,
+						 अचिन्हित दीर्घ index)
+अणु
+	अचिन्हित दीर्घ sdb;
 
 	index = AUX_SDB_INDEX(aux, index);
 	sdb = aux->sdb_index[index];
-	return (struct hws_trailer_entry *)trailer_entry_ptr(sdb);
-}
+	वापस (काष्ठा hws_trailer_entry *)trailer_entry_ptr(sdb);
+पूर्ण
 
 /*
  * Finish sampling on the cpu. Called by cpumsf_pmu_del() with pmu
  * disabled. Collect the full SDBs in AUX buffer which have not reached
- * the point of alert indicator. And ignore the SDBs which are not
+ * the poपूर्णांक of alert indicator. And ignore the SDBs which are not
  * full.
  *
  * 1. Scan SDBs to see how much data is there and consume them.
  * 2. Remove alert indicator in the buffer.
  */
-static void aux_output_end(struct perf_output_handle *handle)
-{
-	unsigned long i, range_scan, idx;
-	struct aux_buffer *aux;
-	struct hws_trailer_entry *te;
+अटल व्योम aux_output_end(काष्ठा perf_output_handle *handle)
+अणु
+	अचिन्हित दीर्घ i, range_scan, idx;
+	काष्ठा aux_buffer *aux;
+	काष्ठा hws_trailer_entry *te;
 
 	aux = perf_get_aux(handle);
-	if (!aux)
-		return;
+	अगर (!aux)
+		वापस;
 
 	range_scan = AUX_SDB_NUM_ALERT(aux);
-	for (i = 0, idx = aux->head; i < range_scan; i++, idx++) {
+	क्रम (i = 0, idx = aux->head; i < range_scan; i++, idx++) अणु
 		te = aux_sdb_trailer(aux, idx);
-		if (!(te->flags & SDB_TE_BUFFER_FULL_MASK))
-			break;
-	}
+		अगर (!(te->flags & SDB_TE_BUFFER_FULL_MASK))
+			अवरोध;
+	पूर्ण
 	/* i is num of SDBs which are full */
 	perf_aux_output_end(handle, i << PAGE_SHIFT);
 
@@ -1394,56 +1395,56 @@ static void aux_output_end(struct perf_output_handle *handle)
 	te = aux_sdb_trailer(aux, aux->alert_mark);
 	te->flags &= ~SDB_TE_ALERT_REQ_MASK;
 
-	debug_sprintf_event(sfdbg, 6, "%s: SDBs %ld range %ld head %ld\n",
+	debug_प्र_लिखो_event(sfdbg, 6, "%s: SDBs %ld range %ld head %ld\n",
 			    __func__, i, range_scan, aux->head);
-}
+पूर्ण
 
 /*
  * Start sampling on the CPU. Called by cpumsf_pmu_add() when an event
  * is first added to the CPU or rescheduled again to the CPU. It is called
  * with pmu disabled.
  *
- * 1. Reset the trailer of SDBs to get ready for new data.
+ * 1. Reset the trailer of SDBs to get पढ़ोy क्रम new data.
  * 2. Tell the hardware where to put the data by reset the SDBs buffer
  *    head(tear/dear).
  */
-static int aux_output_begin(struct perf_output_handle *handle,
-			    struct aux_buffer *aux,
-			    struct cpu_hw_sf *cpuhw)
-{
-	unsigned long range;
-	unsigned long i, range_scan, idx;
-	unsigned long head, base, offset;
-	struct hws_trailer_entry *te;
+अटल पूर्णांक aux_output_begin(काष्ठा perf_output_handle *handle,
+			    काष्ठा aux_buffer *aux,
+			    काष्ठा cpu_hw_sf *cpuhw)
+अणु
+	अचिन्हित दीर्घ range;
+	अचिन्हित दीर्घ i, range_scan, idx;
+	अचिन्हित दीर्घ head, base, offset;
+	काष्ठा hws_trailer_entry *te;
 
-	if (WARN_ON_ONCE(handle->head & ~PAGE_MASK))
-		return -EINVAL;
+	अगर (WARN_ON_ONCE(handle->head & ~PAGE_MASK))
+		वापस -EINVAL;
 
 	aux->head = handle->head >> PAGE_SHIFT;
 	range = (handle->size + 1) >> PAGE_SHIFT;
-	if (range <= 1)
-		return -ENOMEM;
+	अगर (range <= 1)
+		वापस -ENOMEM;
 
 	/*
-	 * SDBs between aux->head and aux->empty_mark are already ready
-	 * for new data. range_scan is num of SDBs not within them.
+	 * SDBs between aux->head and aux->empty_mark are alपढ़ोy पढ़ोy
+	 * क्रम new data. range_scan is num of SDBs not within them.
 	 */
-	debug_sprintf_event(sfdbg, 6,
+	debug_प्र_लिखो_event(sfdbg, 6,
 			    "%s: range %ld head %ld alert %ld empty %ld\n",
 			    __func__, range, aux->head, aux->alert_mark,
 			    aux->empty_mark);
-	if (range > AUX_SDB_NUM_EMPTY(aux)) {
+	अगर (range > AUX_SDB_NUM_EMPTY(aux)) अणु
 		range_scan = range - AUX_SDB_NUM_EMPTY(aux);
 		idx = aux->empty_mark + 1;
-		for (i = 0; i < range_scan; i++, idx++) {
+		क्रम (i = 0; i < range_scan; i++, idx++) अणु
 			te = aux_sdb_trailer(aux, idx);
 			te->flags &= ~(SDB_TE_BUFFER_FULL_MASK |
 				       SDB_TE_ALERT_REQ_MASK);
 			te->overflow = 0;
-		}
+		पूर्ण
 		/* Save the position of empty SDBs */
 		aux->empty_mark = aux->head + range - 1;
-	}
+	पूर्ण
 
 	/* Set alert indicator */
 	aux->alert_mark = aux->head + range/2 - 1;
@@ -1454,322 +1455,322 @@ static int aux_output_begin(struct perf_output_handle *handle,
 	head = AUX_SDB_INDEX(aux, aux->head);
 	base = aux->sdbt_index[head / CPUM_SF_SDB_PER_TABLE];
 	offset = head % CPUM_SF_SDB_PER_TABLE;
-	cpuhw->lsctl.tear = base + offset * sizeof(unsigned long);
+	cpuhw->lsctl.tear = base + offset * माप(अचिन्हित दीर्घ);
 	cpuhw->lsctl.dear = aux->sdb_index[head];
 
-	debug_sprintf_event(sfdbg, 6, "%s: head %ld alert %ld empty %ld "
+	debug_प्र_लिखो_event(sfdbg, 6, "%s: head %ld alert %ld empty %ld "
 			    "index %ld tear %#lx dear %#lx\n", __func__,
 			    aux->head, aux->alert_mark, aux->empty_mark,
 			    head / CPUM_SF_SDB_PER_TABLE,
 			    cpuhw->lsctl.tear, cpuhw->lsctl.dear);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Set alert indicator on SDB at index @alert_index while sampler is running.
+ * Set alert indicator on SDB at index @alert_index जबतक sampler is running.
  *
- * Return true if successfully.
- * Return false if full indicator is already set by hardware sampler.
+ * Return true अगर successfully.
+ * Return false अगर full indicator is alपढ़ोy set by hardware sampler.
  */
-static bool aux_set_alert(struct aux_buffer *aux, unsigned long alert_index,
-			  unsigned long long *overflow)
-{
-	unsigned long long orig_overflow, orig_flags, new_flags;
-	struct hws_trailer_entry *te;
+अटल bool aux_set_alert(काष्ठा aux_buffer *aux, अचिन्हित दीर्घ alert_index,
+			  अचिन्हित दीर्घ दीर्घ *overflow)
+अणु
+	अचिन्हित दीर्घ दीर्घ orig_overflow, orig_flags, new_flags;
+	काष्ठा hws_trailer_entry *te;
 
 	te = aux_sdb_trailer(aux, alert_index);
-	do {
+	करो अणु
 		orig_flags = te->flags;
 		*overflow = orig_overflow = te->overflow;
-		if (orig_flags & SDB_TE_BUFFER_FULL_MASK) {
+		अगर (orig_flags & SDB_TE_BUFFER_FULL_MASK) अणु
 			/*
-			 * SDB is already set by hardware.
+			 * SDB is alपढ़ोy set by hardware.
 			 * Abort and try to set somewhere
 			 * behind.
 			 */
-			return false;
-		}
+			वापस false;
+		पूर्ण
 		new_flags = orig_flags | SDB_TE_ALERT_REQ_MASK;
-	} while (!cmpxchg_double(&te->flags, &te->overflow,
+	पूर्ण जबतक (!cmpxchg_द्विगुन(&te->flags, &te->overflow,
 				 orig_flags, orig_overflow,
 				 new_flags, 0ULL));
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * aux_reset_buffer() - Scan and setup SDBs for new samples
+ * aux_reset_buffer() - Scan and setup SDBs क्रम new samples
  * @aux:	The AUX buffer to set
  * @range:	The range of SDBs to scan started from aux->head
  * @overflow:	Set to overflow count
  *
  * Set alert indicator on the SDB at index of aux->alert_mark. If this SDB is
- * marked as empty, check if it is already set full by the hardware sampler.
- * If yes, that means new data is already there before we can set an alert
+ * marked as empty, check अगर it is alपढ़ोy set full by the hardware sampler.
+ * If yes, that means new data is alपढ़ोy there beक्रमe we can set an alert
  * indicator. Caller should try to set alert indicator to some position behind.
  *
  * Scan the SDBs in AUX buffer from behind aux->empty_mark. They are used
- * previously and have already been consumed by user space. Reset these SDBs
- * (clear full indicator and alert indicator) for new data.
+ * previously and have alपढ़ोy been consumed by user space. Reset these SDBs
+ * (clear full indicator and alert indicator) क्रम new data.
  * If aux->alert_mark fall in this area, just set it. Overflow count is
- * recorded while scanning.
+ * recorded जबतक scanning.
  *
- * SDBs between aux->head and aux->empty_mark are already reset at last time.
- * and ready for new samples. So scanning on this area could be skipped.
+ * SDBs between aux->head and aux->empty_mark are alपढ़ोy reset at last समय.
+ * and पढ़ोy क्रम new samples. So scanning on this area could be skipped.
  *
- * Return true if alert indicator is set successfully and false if not.
+ * Return true अगर alert indicator is set successfully and false अगर not.
  */
-static bool aux_reset_buffer(struct aux_buffer *aux, unsigned long range,
-			     unsigned long long *overflow)
-{
-	unsigned long long orig_overflow, orig_flags, new_flags;
-	unsigned long i, range_scan, idx, idx_old;
-	struct hws_trailer_entry *te;
+अटल bool aux_reset_buffer(काष्ठा aux_buffer *aux, अचिन्हित दीर्घ range,
+			     अचिन्हित दीर्घ दीर्घ *overflow)
+अणु
+	अचिन्हित दीर्घ दीर्घ orig_overflow, orig_flags, new_flags;
+	अचिन्हित दीर्घ i, range_scan, idx, idx_old;
+	काष्ठा hws_trailer_entry *te;
 
-	debug_sprintf_event(sfdbg, 6, "%s: range %ld head %ld alert %ld "
+	debug_प्र_लिखो_event(sfdbg, 6, "%s: range %ld head %ld alert %ld "
 			    "empty %ld\n", __func__, range, aux->head,
 			    aux->alert_mark, aux->empty_mark);
-	if (range <= AUX_SDB_NUM_EMPTY(aux))
+	अगर (range <= AUX_SDB_NUM_EMPTY(aux))
 		/*
 		 * No need to scan. All SDBs in range are marked as empty.
 		 * Just set alert indicator. Should check race with hardware
 		 * sampler.
 		 */
-		return aux_set_alert(aux, aux->alert_mark, overflow);
+		वापस aux_set_alert(aux, aux->alert_mark, overflow);
 
-	if (aux->alert_mark <= aux->empty_mark)
+	अगर (aux->alert_mark <= aux->empty_mark)
 		/*
 		 * Set alert indicator on empty SDB. Should check race
 		 * with hardware sampler.
 		 */
-		if (!aux_set_alert(aux, aux->alert_mark, overflow))
-			return false;
+		अगर (!aux_set_alert(aux, aux->alert_mark, overflow))
+			वापस false;
 
 	/*
 	 * Scan the SDBs to clear full and alert indicator used previously.
 	 * Start scanning from one SDB behind empty_mark. If the new alert
-	 * indicator fall into this range, set it.
+	 * indicator fall पूर्णांकo this range, set it.
 	 */
 	range_scan = range - AUX_SDB_NUM_EMPTY(aux);
 	idx_old = idx = aux->empty_mark + 1;
-	for (i = 0; i < range_scan; i++, idx++) {
+	क्रम (i = 0; i < range_scan; i++, idx++) अणु
 		te = aux_sdb_trailer(aux, idx);
-		do {
+		करो अणु
 			orig_flags = te->flags;
 			orig_overflow = te->overflow;
 			new_flags = orig_flags & ~SDB_TE_BUFFER_FULL_MASK;
-			if (idx == aux->alert_mark)
+			अगर (idx == aux->alert_mark)
 				new_flags |= SDB_TE_ALERT_REQ_MASK;
-			else
+			अन्यथा
 				new_flags &= ~SDB_TE_ALERT_REQ_MASK;
-		} while (!cmpxchg_double(&te->flags, &te->overflow,
+		पूर्ण जबतक (!cmpxchg_द्विगुन(&te->flags, &te->overflow,
 					 orig_flags, orig_overflow,
 					 new_flags, 0ULL));
 		*overflow += orig_overflow;
-	}
+	पूर्ण
 
 	/* Update empty_mark to new position */
 	aux->empty_mark = aux->head + range - 1;
 
-	debug_sprintf_event(sfdbg, 6, "%s: range_scan %ld idx %ld..%ld "
+	debug_प्र_लिखो_event(sfdbg, 6, "%s: range_scan %ld idx %ld..%ld "
 			    "empty %ld\n", __func__, range_scan, idx_old,
 			    idx - 1, aux->empty_mark);
-	return true;
-}
+	वापस true;
+पूर्ण
 
 /*
- * Measurement alert handler for diagnostic mode sampling.
+ * Measurement alert handler क्रम diagnostic mode sampling.
  */
-static void hw_collect_aux(struct cpu_hw_sf *cpuhw)
-{
-	struct aux_buffer *aux;
-	int done = 0;
-	unsigned long range = 0, size;
-	unsigned long long overflow = 0;
-	struct perf_output_handle *handle = &cpuhw->handle;
-	unsigned long num_sdb;
+अटल व्योम hw_collect_aux(काष्ठा cpu_hw_sf *cpuhw)
+अणु
+	काष्ठा aux_buffer *aux;
+	पूर्णांक करोne = 0;
+	अचिन्हित दीर्घ range = 0, size;
+	अचिन्हित दीर्घ दीर्घ overflow = 0;
+	काष्ठा perf_output_handle *handle = &cpuhw->handle;
+	अचिन्हित दीर्घ num_sdb;
 
 	aux = perf_get_aux(handle);
-	if (WARN_ON_ONCE(!aux))
-		return;
+	अगर (WARN_ON_ONCE(!aux))
+		वापस;
 
-	/* Inform user space new data arrived */
+	/* Inक्रमm user space new data arrived */
 	size = AUX_SDB_NUM_ALERT(aux) << PAGE_SHIFT;
-	debug_sprintf_event(sfdbg, 6, "%s: #alert %ld\n", __func__,
+	debug_प्र_लिखो_event(sfdbg, 6, "%s: #alert %ld\n", __func__,
 			    size >> PAGE_SHIFT);
 	perf_aux_output_end(handle, size);
 
 	num_sdb = aux->sfb.num_sdb;
-	while (!done) {
+	जबतक (!करोne) अणु
 		/* Get an output handle */
 		aux = perf_aux_output_begin(handle, cpuhw->event);
-		if (handle->size == 0) {
+		अगर (handle->size == 0) अणु
 			pr_err("The AUX buffer with %lu pages for the "
 			       "diagnostic-sampling mode is full\n",
 				num_sdb);
-			debug_sprintf_event(sfdbg, 1,
+			debug_प्र_लिखो_event(sfdbg, 1,
 					    "%s: AUX buffer used up\n",
 					    __func__);
-			break;
-		}
-		if (WARN_ON_ONCE(!aux))
-			return;
+			अवरोध;
+		पूर्ण
+		अगर (WARN_ON_ONCE(!aux))
+			वापस;
 
 		/* Update head and alert_mark to new position */
 		aux->head = handle->head >> PAGE_SHIFT;
 		range = (handle->size + 1) >> PAGE_SHIFT;
-		if (range == 1)
+		अगर (range == 1)
 			aux->alert_mark = aux->head;
-		else
+		अन्यथा
 			aux->alert_mark = aux->head + range/2 - 1;
 
-		if (aux_reset_buffer(aux, range, &overflow)) {
-			if (!overflow) {
-				done = 1;
-				break;
-			}
+		अगर (aux_reset_buffer(aux, range, &overflow)) अणु
+			अगर (!overflow) अणु
+				करोne = 1;
+				अवरोध;
+			पूर्ण
 			size = range << PAGE_SHIFT;
 			perf_aux_output_end(&cpuhw->handle, size);
 			pr_err("Sample data caused the AUX buffer with %lu "
 			       "pages to overflow\n", aux->sfb.num_sdb);
-			debug_sprintf_event(sfdbg, 1, "%s: head %ld range %ld "
+			debug_प्र_लिखो_event(sfdbg, 1, "%s: head %ld range %ld "
 					    "overflow %lld\n", __func__,
 					    aux->head, range, overflow);
-		} else {
+		पूर्ण अन्यथा अणु
 			size = AUX_SDB_NUM_ALERT(aux) << PAGE_SHIFT;
 			perf_aux_output_end(&cpuhw->handle, size);
-			debug_sprintf_event(sfdbg, 6, "%s: head %ld alert %ld "
+			debug_प्र_लिखो_event(sfdbg, 6, "%s: head %ld alert %ld "
 					    "already full, try another\n",
 					    __func__,
 					    aux->head, aux->alert_mark);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (done)
-		debug_sprintf_event(sfdbg, 6, "%s: head %ld alert %ld "
+	अगर (करोne)
+		debug_प्र_लिखो_event(sfdbg, 6, "%s: head %ld alert %ld "
 				    "empty %ld\n", __func__, aux->head,
 				    aux->alert_mark, aux->empty_mark);
-}
+पूर्ण
 
 /*
- * Callback when freeing AUX buffers.
+ * Callback when मुक्तing AUX buffers.
  */
-static void aux_buffer_free(void *data)
-{
-	struct aux_buffer *aux = data;
-	unsigned long i, num_sdbt;
+अटल व्योम aux_buffer_मुक्त(व्योम *data)
+अणु
+	काष्ठा aux_buffer *aux = data;
+	अचिन्हित दीर्घ i, num_sdbt;
 
-	if (!aux)
-		return;
+	अगर (!aux)
+		वापस;
 
-	/* Free SDBT. SDB is freed by the caller */
+	/* Free SDBT. SDB is मुक्तd by the caller */
 	num_sdbt = aux->sfb.num_sdbt;
-	for (i = 0; i < num_sdbt; i++)
-		free_page(aux->sdbt_index[i]);
+	क्रम (i = 0; i < num_sdbt; i++)
+		मुक्त_page(aux->sdbt_index[i]);
 
-	kfree(aux->sdbt_index);
-	kfree(aux->sdb_index);
-	kfree(aux);
+	kमुक्त(aux->sdbt_index);
+	kमुक्त(aux->sdb_index);
+	kमुक्त(aux);
 
-	debug_sprintf_event(sfdbg, 4, "%s: SDBTs %lu\n", __func__, num_sdbt);
-}
+	debug_प्र_लिखो_event(sfdbg, 4, "%s: SDBTs %lu\n", __func__, num_sdbt);
+पूर्ण
 
-static void aux_sdb_init(unsigned long sdb)
-{
-	struct hws_trailer_entry *te;
+अटल व्योम aux_sdb_init(अचिन्हित दीर्घ sdb)
+अणु
+	काष्ठा hws_trailer_entry *te;
 
-	te = (struct hws_trailer_entry *)trailer_entry_ptr(sdb);
+	te = (काष्ठा hws_trailer_entry *)trailer_entry_ptr(sdb);
 
-	/* Save clock base */
-	te->clock_base = 1;
-	te->progusage2 = tod_clock_base.tod;
-}
+	/* Save घड़ी base */
+	te->घड़ी_base = 1;
+	te->progusage2 = tod_घड़ी_base.tod;
+पूर्ण
 
 /*
- * aux_buffer_setup() - Setup AUX buffer for diagnostic mode sampling
- * @event:	Event the buffer is setup for, event->cpu == -1 means current
- * @pages:	Array of pointers to buffer pages passed from perf core
+ * aux_buffer_setup() - Setup AUX buffer क्रम diagnostic mode sampling
+ * @event:	Event the buffer is setup क्रम, event->cpu == -1 means current
+ * @pages:	Array of poपूर्णांकers to buffer pages passed from perf core
  * @nr_pages:	Total pages
- * @snapshot:	Flag for snapshot mode
+ * @snapshot:	Flag क्रम snapshot mode
  *
  * This is the callback when setup an event using AUX buffer. Perf tool can
  * trigger this by an additional mmap() call on the event. Unlike the buffer
- * for basic samples, AUX buffer belongs to the event. It is scheduled with
- * the task among online cpus when it is a per-thread event.
+ * क्रम basic samples, AUX buffer beदीर्घs to the event. It is scheduled with
+ * the task among online cpus when it is a per-thपढ़ो event.
  *
- * Return the private AUX buffer structure if success or NULL if fails.
+ * Return the निजी AUX buffer काष्ठाure अगर success or शून्य अगर fails.
  */
-static void *aux_buffer_setup(struct perf_event *event, void **pages,
-			      int nr_pages, bool snapshot)
-{
-	struct sf_buffer *sfb;
-	struct aux_buffer *aux;
-	unsigned long *new, *tail;
-	int i, n_sdbt;
+अटल व्योम *aux_buffer_setup(काष्ठा perf_event *event, व्योम **pages,
+			      पूर्णांक nr_pages, bool snapshot)
+अणु
+	काष्ठा sf_buffer *sfb;
+	काष्ठा aux_buffer *aux;
+	अचिन्हित दीर्घ *new, *tail;
+	पूर्णांक i, n_sdbt;
 
-	if (!nr_pages || !pages)
-		return NULL;
+	अगर (!nr_pages || !pages)
+		वापस शून्य;
 
-	if (nr_pages > CPUM_SF_MAX_SDB * CPUM_SF_SDB_DIAG_FACTOR) {
+	अगर (nr_pages > CPUM_SF_MAX_SDB * CPUM_SF_SDB_DIAG_FACTOR) अणु
 		pr_err("AUX buffer size (%i pages) is larger than the "
 		       "maximum sampling buffer limit\n",
 		       nr_pages);
-		return NULL;
-	} else if (nr_pages < CPUM_SF_MIN_SDB * CPUM_SF_SDB_DIAG_FACTOR) {
+		वापस शून्य;
+	पूर्ण अन्यथा अगर (nr_pages < CPUM_SF_MIN_SDB * CPUM_SF_SDB_DIAG_FACTOR) अणु
 		pr_err("AUX buffer size (%i pages) is less than the "
 		       "minimum sampling buffer limit\n",
 		       nr_pages);
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	/* Allocate aux_buffer struct for the event */
-	aux = kzalloc(sizeof(struct aux_buffer), GFP_KERNEL);
-	if (!aux)
-		goto no_aux;
+	/* Allocate aux_buffer काष्ठा क्रम the event */
+	aux = kzalloc(माप(काष्ठा aux_buffer), GFP_KERNEL);
+	अगर (!aux)
+		जाओ no_aux;
 	sfb = &aux->sfb;
 
-	/* Allocate sdbt_index for fast reference */
+	/* Allocate sdbt_index क्रम fast reference */
 	n_sdbt = DIV_ROUND_UP(nr_pages, CPUM_SF_SDB_PER_TABLE);
-	aux->sdbt_index = kmalloc_array(n_sdbt, sizeof(void *), GFP_KERNEL);
-	if (!aux->sdbt_index)
-		goto no_sdbt_index;
+	aux->sdbt_index = kदो_स्मृति_array(n_sdbt, माप(व्योम *), GFP_KERNEL);
+	अगर (!aux->sdbt_index)
+		जाओ no_sdbt_index;
 
-	/* Allocate sdb_index for fast reference */
-	aux->sdb_index = kmalloc_array(nr_pages, sizeof(void *), GFP_KERNEL);
-	if (!aux->sdb_index)
-		goto no_sdb_index;
+	/* Allocate sdb_index क्रम fast reference */
+	aux->sdb_index = kदो_स्मृति_array(nr_pages, माप(व्योम *), GFP_KERNEL);
+	अगर (!aux->sdb_index)
+		जाओ no_sdb_index;
 
 	/* Allocate the first SDBT */
 	sfb->num_sdbt = 0;
-	sfb->sdbt = (unsigned long *) get_zeroed_page(GFP_KERNEL);
-	if (!sfb->sdbt)
-		goto no_sdbt;
-	aux->sdbt_index[sfb->num_sdbt++] = (unsigned long)sfb->sdbt;
+	sfb->sdbt = (अचिन्हित दीर्घ *) get_zeroed_page(GFP_KERNEL);
+	अगर (!sfb->sdbt)
+		जाओ no_sdbt;
+	aux->sdbt_index[sfb->num_sdbt++] = (अचिन्हित दीर्घ)sfb->sdbt;
 	tail = sfb->tail = sfb->sdbt;
 
 	/*
 	 * Link the provided pages of AUX buffer to SDBT.
-	 * Allocate SDBT if needed.
+	 * Allocate SDBT अगर needed.
 	 */
-	for (i = 0; i < nr_pages; i++, tail++) {
-		if (require_table_link(tail)) {
-			new = (unsigned long *) get_zeroed_page(GFP_KERNEL);
-			if (!new)
-				goto no_sdbt;
-			aux->sdbt_index[sfb->num_sdbt++] = (unsigned long)new;
+	क्रम (i = 0; i < nr_pages; i++, tail++) अणु
+		अगर (require_table_link(tail)) अणु
+			new = (अचिन्हित दीर्घ *) get_zeroed_page(GFP_KERNEL);
+			अगर (!new)
+				जाओ no_sdbt;
+			aux->sdbt_index[sfb->num_sdbt++] = (अचिन्हित दीर्घ)new;
 			/* Link current page to tail of chain */
-			*tail = (unsigned long)(void *) new + 1;
+			*tail = (अचिन्हित दीर्घ)(व्योम *) new + 1;
 			tail = new;
-		}
+		पूर्ण
 		/* Tail is the entry in a SDBT */
-		*tail = (unsigned long)pages[i];
-		aux->sdb_index[i] = (unsigned long)pages[i];
-		aux_sdb_init((unsigned long)pages[i]);
-	}
+		*tail = (अचिन्हित दीर्घ)pages[i];
+		aux->sdb_index[i] = (अचिन्हित दीर्घ)pages[i];
+		aux_sdb_init((अचिन्हित दीर्घ)pages[i]);
+	पूर्ण
 	sfb->num_sdb = nr_pages;
 
 	/* Link the last entry in the SDBT to the first SDBT */
-	*tail = (unsigned long) sfb->sdbt + 1;
+	*tail = (अचिन्हित दीर्घ) sfb->sdbt + 1;
 	sfb->tail = tail;
 
 	/*
@@ -1779,175 +1780,175 @@ static void *aux_buffer_setup(struct perf_event *event, void **pages,
 	 */
 	aux->empty_mark = sfb->num_sdb - 1;
 
-	debug_sprintf_event(sfdbg, 4, "%s: SDBTs %lu SDBs %lu\n", __func__,
+	debug_प्र_लिखो_event(sfdbg, 4, "%s: SDBTs %lu SDBs %lu\n", __func__,
 			    sfb->num_sdbt, sfb->num_sdb);
 
-	return aux;
+	वापस aux;
 
 no_sdbt:
-	/* SDBs (AUX buffer pages) are freed by caller */
-	for (i = 0; i < sfb->num_sdbt; i++)
-		free_page(aux->sdbt_index[i]);
-	kfree(aux->sdb_index);
+	/* SDBs (AUX buffer pages) are मुक्तd by caller */
+	क्रम (i = 0; i < sfb->num_sdbt; i++)
+		मुक्त_page(aux->sdbt_index[i]);
+	kमुक्त(aux->sdb_index);
 no_sdb_index:
-	kfree(aux->sdbt_index);
+	kमुक्त(aux->sdbt_index);
 no_sdbt_index:
-	kfree(aux);
+	kमुक्त(aux);
 no_aux:
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static void cpumsf_pmu_read(struct perf_event *event)
-{
-	/* Nothing to do ... updates are interrupt-driven */
-}
+अटल व्योम cpumsf_pmu_पढ़ो(काष्ठा perf_event *event)
+अणु
+	/* Nothing to करो ... updates are पूर्णांकerrupt-driven */
+पूर्ण
 
-/* Check if the new sampling period/freqeuncy is appropriate.
+/* Check अगर the new sampling period/freqeuncy is appropriate.
  *
  * Return non-zero on error and zero on passed checks.
  */
-static int cpumsf_pmu_check_period(struct perf_event *event, u64 value)
-{
-	struct hws_qsi_info_block si;
-	unsigned long rate;
-	bool do_freq;
+अटल पूर्णांक cpumsf_pmu_check_period(काष्ठा perf_event *event, u64 value)
+अणु
+	काष्ठा hws_qsi_info_block si;
+	अचिन्हित दीर्घ rate;
+	bool करो_freq;
 
-	memset(&si, 0, sizeof(si));
-	if (event->cpu == -1) {
-		if (qsi(&si))
-			return -ENODEV;
-	} else {
+	स_रखो(&si, 0, माप(si));
+	अगर (event->cpu == -1) अणु
+		अगर (qsi(&si))
+			वापस -ENODEV;
+	पूर्ण अन्यथा अणु
 		/* Event is pinned to a particular CPU, retrieve the per-CPU
-		 * sampling structure for accessing the CPU-specific QSI.
+		 * sampling काष्ठाure क्रम accessing the CPU-specअगरic QSI.
 		 */
-		struct cpu_hw_sf *cpuhw = &per_cpu(cpu_hw_sf, event->cpu);
+		काष्ठा cpu_hw_sf *cpuhw = &per_cpu(cpu_hw_sf, event->cpu);
 
 		si = cpuhw->qsi;
-	}
+	पूर्ण
 
-	do_freq = !!SAMPLE_FREQ_MODE(&event->hw);
-	rate = getrate(do_freq, value, &si);
-	if (!rate)
-		return -EINVAL;
+	करो_freq = !!SAMPLE_FREQ_MODE(&event->hw);
+	rate = getrate(करो_freq, value, &si);
+	अगर (!rate)
+		वापस -EINVAL;
 
 	event->attr.sample_period = rate;
 	SAMPL_RATE(&event->hw) = rate;
 	hw_init_period(&event->hw, SAMPL_RATE(&event->hw));
-	debug_sprintf_event(sfdbg, 4, "%s:"
+	debug_प्र_लिखो_event(sfdbg, 4, "%s:"
 			    " cpu %d value %#llx period %#llx freq %d\n",
 			    __func__, event->cpu, value,
-			    event->attr.sample_period, do_freq);
-	return 0;
-}
+			    event->attr.sample_period, करो_freq);
+	वापस 0;
+पूर्ण
 
 /* Activate sampling control.
  * Next call of pmu_enable() starts sampling.
  */
-static void cpumsf_pmu_start(struct perf_event *event, int flags)
-{
-	struct cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
+अटल व्योम cpumsf_pmu_start(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
 
-	if (WARN_ON_ONCE(!(event->hw.state & PERF_HES_STOPPED)))
-		return;
+	अगर (WARN_ON_ONCE(!(event->hw.state & PERF_HES_STOPPED)))
+		वापस;
 
-	if (flags & PERF_EF_RELOAD)
+	अगर (flags & PERF_EF_RELOAD)
 		WARN_ON_ONCE(!(event->hw.state & PERF_HES_UPTODATE));
 
 	perf_pmu_disable(event->pmu);
 	event->hw.state = 0;
 	cpuhw->lsctl.cs = 1;
-	if (SAMPL_DIAG_MODE(&event->hw))
+	अगर (SAMPL_DIAG_MODE(&event->hw))
 		cpuhw->lsctl.cd = 1;
 	perf_pmu_enable(event->pmu);
-}
+पूर्ण
 
 /* Deactivate sampling control.
  * Next call of pmu_enable() stops sampling.
  */
-static void cpumsf_pmu_stop(struct perf_event *event, int flags)
-{
-	struct cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
+अटल व्योम cpumsf_pmu_stop(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
 
-	if (event->hw.state & PERF_HES_STOPPED)
-		return;
+	अगर (event->hw.state & PERF_HES_STOPPED)
+		वापस;
 
 	perf_pmu_disable(event->pmu);
 	cpuhw->lsctl.cs = 0;
 	cpuhw->lsctl.cd = 0;
 	event->hw.state |= PERF_HES_STOPPED;
 
-	if ((flags & PERF_EF_UPDATE) && !(event->hw.state & PERF_HES_UPTODATE)) {
+	अगर ((flags & PERF_EF_UPDATE) && !(event->hw.state & PERF_HES_UPTODATE)) अणु
 		hw_perf_event_update(event, 1);
 		event->hw.state |= PERF_HES_UPTODATE;
-	}
+	पूर्ण
 	perf_pmu_enable(event->pmu);
-}
+पूर्ण
 
-static int cpumsf_pmu_add(struct perf_event *event, int flags)
-{
-	struct cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
-	struct aux_buffer *aux;
-	int err;
+अटल पूर्णांक cpumsf_pmu_add(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
+	काष्ठा aux_buffer *aux;
+	पूर्णांक err;
 
-	if (cpuhw->flags & PMU_F_IN_USE)
-		return -EAGAIN;
+	अगर (cpuhw->flags & PMU_F_IN_USE)
+		वापस -EAGAIN;
 
-	if (!SAMPL_DIAG_MODE(&event->hw) && !cpuhw->sfb.sdbt)
-		return -EINVAL;
+	अगर (!SAMPL_DIAG_MODE(&event->hw) && !cpuhw->sfb.sdbt)
+		वापस -EINVAL;
 
 	err = 0;
 	perf_pmu_disable(event->pmu);
 
 	event->hw.state = PERF_HES_UPTODATE | PERF_HES_STOPPED;
 
-	/* Set up sampling controls.  Always program the sampling register
-	 * using the SDB-table start.  Reset TEAR_REG event hardware register
+	/* Set up sampling controls.  Always program the sampling रेजिस्टर
+	 * using the SDB-table start.  Reset TEAR_REG event hardware रेजिस्टर
 	 * that is used by hw_perf_event_update() to store the sampling buffer
 	 * position after samples have been flushed.
 	 */
 	cpuhw->lsctl.s = 0;
 	cpuhw->lsctl.h = 1;
-	cpuhw->lsctl.interval = SAMPL_RATE(&event->hw);
-	if (!SAMPL_DIAG_MODE(&event->hw)) {
-		cpuhw->lsctl.tear = (unsigned long) cpuhw->sfb.sdbt;
-		cpuhw->lsctl.dear = *(unsigned long *) cpuhw->sfb.sdbt;
-		TEAR_REG(&event->hw) = (unsigned long) cpuhw->sfb.sdbt;
-	}
+	cpuhw->lsctl.पूर्णांकerval = SAMPL_RATE(&event->hw);
+	अगर (!SAMPL_DIAG_MODE(&event->hw)) अणु
+		cpuhw->lsctl.tear = (अचिन्हित दीर्घ) cpuhw->sfb.sdbt;
+		cpuhw->lsctl.dear = *(अचिन्हित दीर्घ *) cpuhw->sfb.sdbt;
+		TEAR_REG(&event->hw) = (अचिन्हित दीर्घ) cpuhw->sfb.sdbt;
+	पूर्ण
 
 	/* Ensure sampling functions are in the disabled state.  If disabled,
-	 * switch on sampling enable control. */
-	if (WARN_ON_ONCE(cpuhw->lsctl.es == 1 || cpuhw->lsctl.ed == 1)) {
+	 * चयन on sampling enable control. */
+	अगर (WARN_ON_ONCE(cpuhw->lsctl.es == 1 || cpuhw->lsctl.ed == 1)) अणु
 		err = -EAGAIN;
-		goto out;
-	}
-	if (SAMPL_DIAG_MODE(&event->hw)) {
+		जाओ out;
+	पूर्ण
+	अगर (SAMPL_DIAG_MODE(&event->hw)) अणु
 		aux = perf_aux_output_begin(&cpuhw->handle, event);
-		if (!aux) {
+		अगर (!aux) अणु
 			err = -EINVAL;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		err = aux_output_begin(&cpuhw->handle, aux, cpuhw);
-		if (err)
-			goto out;
+		अगर (err)
+			जाओ out;
 		cpuhw->lsctl.ed = 1;
-	}
+	पूर्ण
 	cpuhw->lsctl.es = 1;
 
 	/* Set in_use flag and store event */
 	cpuhw->event = event;
 	cpuhw->flags |= PMU_F_IN_USE;
 
-	if (flags & PERF_EF_START)
+	अगर (flags & PERF_EF_START)
 		cpumsf_pmu_start(event, PERF_EF_RELOAD);
 out:
 	perf_event_update_userpage(event);
 	perf_pmu_enable(event->pmu);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void cpumsf_pmu_del(struct perf_event *event, int flags)
-{
-	struct cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
+अटल व्योम cpumsf_pmu_del(काष्ठा perf_event *event, पूर्णांक flags)
+अणु
+	काष्ठा cpu_hw_sf *cpuhw = this_cpu_ptr(&cpu_hw_sf);
 
 	perf_pmu_disable(event->pmu);
 	cpumsf_pmu_stop(event, PERF_EF_UPDATE);
@@ -1955,67 +1956,67 @@ static void cpumsf_pmu_del(struct perf_event *event, int flags)
 	cpuhw->lsctl.es = 0;
 	cpuhw->lsctl.ed = 0;
 	cpuhw->flags &= ~PMU_F_IN_USE;
-	cpuhw->event = NULL;
+	cpuhw->event = शून्य;
 
-	if (SAMPL_DIAG_MODE(&event->hw))
+	अगर (SAMPL_DIAG_MODE(&event->hw))
 		aux_output_end(&cpuhw->handle);
 	perf_event_update_userpage(event);
 	perf_pmu_enable(event->pmu);
-}
+पूर्ण
 
 CPUMF_EVENT_ATTR(SF, SF_CYCLES_BASIC, PERF_EVENT_CPUM_SF);
 CPUMF_EVENT_ATTR(SF, SF_CYCLES_BASIC_DIAG, PERF_EVENT_CPUM_SF_DIAG);
 
-/* Attribute list for CPU_SF.
+/* Attribute list क्रम CPU_SF.
  *
  * The availablitiy depends on the CPU_MF sampling facility authorization
- * for basic + diagnositic samples. This is determined at initialization
- * time by the sampling facility device driver.
- * If the authorization for basic samples is turned off, it should be
- * also turned off for diagnostic sampling.
+ * क्रम basic + diagnositic samples. This is determined at initialization
+ * समय by the sampling facility device driver.
+ * If the authorization क्रम basic samples is turned off, it should be
+ * also turned off क्रम diagnostic sampling.
  *
  * During initialization of the device driver, check the authorization
- * level for diagnostic sampling and installs the attribute
- * file for diagnostic sampling if necessary.
+ * level क्रम diagnostic sampling and installs the attribute
+ * file क्रम diagnostic sampling अगर necessary.
  *
  * For now install a placeholder to reference all possible attributes:
  * SF_CYCLES_BASIC and SF_CYCLES_BASIC_DIAG.
- * Add another entry for the final NULL pointer.
+ * Add another entry क्रम the final शून्य poपूर्णांकer.
  */
-enum {
+क्रमागत अणु
 	SF_CYCLES_BASIC_ATTR_IDX = 0,
 	SF_CYCLES_BASIC_DIAG_ATTR_IDX,
 	SF_CYCLES_ATTR_MAX
-};
+पूर्ण;
 
-static struct attribute *cpumsf_pmu_events_attr[SF_CYCLES_ATTR_MAX + 1] = {
+अटल काष्ठा attribute *cpumsf_pmu_events_attr[SF_CYCLES_ATTR_MAX + 1] = अणु
 	[SF_CYCLES_BASIC_ATTR_IDX] = CPUMF_EVENT_PTR(SF, SF_CYCLES_BASIC)
-};
+पूर्ण;
 
 PMU_FORMAT_ATTR(event, "config:0-63");
 
-static struct attribute *cpumsf_pmu_format_attr[] = {
-	&format_attr_event.attr,
-	NULL,
-};
+अटल काष्ठा attribute *cpumsf_pmu_क्रमmat_attr[] = अणु
+	&क्रमmat_attr_event.attr,
+	शून्य,
+पूर्ण;
 
-static struct attribute_group cpumsf_pmu_events_group = {
+अटल काष्ठा attribute_group cpumsf_pmu_events_group = अणु
 	.name = "events",
 	.attrs = cpumsf_pmu_events_attr,
-};
+पूर्ण;
 
-static struct attribute_group cpumsf_pmu_format_group = {
+अटल काष्ठा attribute_group cpumsf_pmu_क्रमmat_group = अणु
 	.name = "format",
-	.attrs = cpumsf_pmu_format_attr,
-};
+	.attrs = cpumsf_pmu_क्रमmat_attr,
+पूर्ण;
 
-static const struct attribute_group *cpumsf_pmu_attr_groups[] = {
+अटल स्थिर काष्ठा attribute_group *cpumsf_pmu_attr_groups[] = अणु
 	&cpumsf_pmu_events_group,
-	&cpumsf_pmu_format_group,
-	NULL,
-};
+	&cpumsf_pmu_क्रमmat_group,
+	शून्य,
+पूर्ण;
 
-static struct pmu cpumf_sampling = {
+अटल काष्ठा pmu cpumf_sampling = अणु
 	.pmu_enable   = cpumsf_pmu_enable,
 	.pmu_disable  = cpumsf_pmu_disable,
 
@@ -2025,207 +2026,207 @@ static struct pmu cpumf_sampling = {
 
 	.start	      = cpumsf_pmu_start,
 	.stop	      = cpumsf_pmu_stop,
-	.read	      = cpumsf_pmu_read,
+	.पढ़ो	      = cpumsf_pmu_पढ़ो,
 
 	.attr_groups  = cpumsf_pmu_attr_groups,
 
 	.setup_aux    = aux_buffer_setup,
-	.free_aux     = aux_buffer_free,
+	.मुक्त_aux     = aux_buffer_मुक्त,
 
 	.check_period = cpumsf_pmu_check_period,
-};
+पूर्ण;
 
-static void cpumf_measurement_alert(struct ext_code ext_code,
-				    unsigned int alert, unsigned long unused)
-{
-	struct cpu_hw_sf *cpuhw;
+अटल व्योम cpumf_measurement_alert(काष्ठा ext_code ext_code,
+				    अचिन्हित पूर्णांक alert, अचिन्हित दीर्घ unused)
+अणु
+	काष्ठा cpu_hw_sf *cpuhw;
 
-	if (!(alert & CPU_MF_INT_SF_MASK))
-		return;
+	अगर (!(alert & CPU_MF_INT_SF_MASK))
+		वापस;
 	inc_irq_stat(IRQEXT_CMS);
 	cpuhw = this_cpu_ptr(&cpu_hw_sf);
 
 	/* Measurement alerts are shared and might happen when the PMU
-	 * is not reserved.  Ignore these alerts in this case. */
-	if (!(cpuhw->flags & PMU_F_RESERVED))
-		return;
+	 * is not reserved.  Ignore these alerts in this हाल. */
+	अगर (!(cpuhw->flags & PMU_F_RESERVED))
+		वापस;
 
 	/* The processing below must take care of multiple alert events that
 	 * might be indicated concurrently. */
 
 	/* Program alert request */
-	if (alert & CPU_MF_INT_SF_PRA) {
-		if (cpuhw->flags & PMU_F_IN_USE)
-			if (SAMPL_DIAG_MODE(&cpuhw->event->hw))
+	अगर (alert & CPU_MF_INT_SF_PRA) अणु
+		अगर (cpuhw->flags & PMU_F_IN_USE)
+			अगर (SAMPL_DIAG_MODE(&cpuhw->event->hw))
 				hw_collect_aux(cpuhw);
-			else
+			अन्यथा
 				hw_perf_event_update(cpuhw->event, 0);
-		else
+		अन्यथा
 			WARN_ON_ONCE(!(cpuhw->flags & PMU_F_IN_USE));
-	}
+	पूर्ण
 
-	/* Report measurement alerts only for non-PRA codes */
-	if (alert != CPU_MF_INT_SF_PRA)
-		debug_sprintf_event(sfdbg, 6, "%s: alert %#x\n", __func__,
+	/* Report measurement alerts only क्रम non-PRA codes */
+	अगर (alert != CPU_MF_INT_SF_PRA)
+		debug_प्र_लिखो_event(sfdbg, 6, "%s: alert %#x\n", __func__,
 				    alert);
 
 	/* Sampling authorization change request */
-	if (alert & CPU_MF_INT_SF_SACA)
+	अगर (alert & CPU_MF_INT_SF_SACA)
 		qsi(&cpuhw->qsi);
 
 	/* Loss of sample data due to high-priority machine activities */
-	if (alert & CPU_MF_INT_SF_LSDA) {
+	अगर (alert & CPU_MF_INT_SF_LSDA) अणु
 		pr_err("Sample data was lost\n");
 		cpuhw->flags |= PMU_F_ERR_LSDA;
 		sf_disable();
-	}
+	पूर्ण
 
 	/* Invalid sampling buffer entry */
-	if (alert & (CPU_MF_INT_SF_IAE|CPU_MF_INT_SF_ISE)) {
+	अगर (alert & (CPU_MF_INT_SF_IAE|CPU_MF_INT_SF_ISE)) अणु
 		pr_err("A sampling buffer entry is incorrect (alert=0x%x)\n",
 		       alert);
 		cpuhw->flags |= PMU_F_ERR_IBE;
 		sf_disable();
-	}
-}
+	पूर्ण
+पूर्ण
 
-static int cpusf_pmu_setup(unsigned int cpu, int flags)
-{
-	/* Ignore the notification if no events are scheduled on the PMU.
+अटल पूर्णांक cpusf_pmu_setup(अचिन्हित पूर्णांक cpu, पूर्णांक flags)
+अणु
+	/* Ignore the notअगरication अगर no events are scheduled on the PMU.
 	 * This might be racy...
 	 */
-	if (!atomic_read(&num_events))
-		return 0;
+	अगर (!atomic_पढ़ो(&num_events))
+		वापस 0;
 
 	local_irq_disable();
 	setup_pmc_cpu(&flags);
 	local_irq_enable();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int s390_pmu_sf_online_cpu(unsigned int cpu)
-{
-	return cpusf_pmu_setup(cpu, PMC_INIT);
-}
+अटल पूर्णांक s390_pmu_sf_online_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस cpusf_pmu_setup(cpu, PMC_INIT);
+पूर्ण
 
-static int s390_pmu_sf_offline_cpu(unsigned int cpu)
-{
-	return cpusf_pmu_setup(cpu, PMC_RELEASE);
-}
+अटल पूर्णांक s390_pmu_sf_offline_cpu(अचिन्हित पूर्णांक cpu)
+अणु
+	वापस cpusf_pmu_setup(cpu, PMC_RELEASE);
+पूर्ण
 
-static int param_get_sfb_size(char *buffer, const struct kernel_param *kp)
-{
-	if (!cpum_sf_avail())
-		return -ENODEV;
-	return sprintf(buffer, "%lu,%lu", CPUM_SF_MIN_SDB, CPUM_SF_MAX_SDB);
-}
+अटल पूर्णांक param_get_sfb_size(अक्षर *buffer, स्थिर काष्ठा kernel_param *kp)
+अणु
+	अगर (!cpum_sf_avail())
+		वापस -ENODEV;
+	वापस प्र_लिखो(buffer, "%lu,%lu", CPUM_SF_MIN_SDB, CPUM_SF_MAX_SDB);
+पूर्ण
 
-static int param_set_sfb_size(const char *val, const struct kernel_param *kp)
-{
-	int rc;
-	unsigned long min, max;
+अटल पूर्णांक param_set_sfb_size(स्थिर अक्षर *val, स्थिर काष्ठा kernel_param *kp)
+अणु
+	पूर्णांक rc;
+	अचिन्हित दीर्घ min, max;
 
-	if (!cpum_sf_avail())
-		return -ENODEV;
-	if (!val || !strlen(val))
-		return -EINVAL;
+	अगर (!cpum_sf_avail())
+		वापस -ENODEV;
+	अगर (!val || !म_माप(val))
+		वापस -EINVAL;
 
 	/* Valid parameter values: "min,max" or "max" */
 	min = CPUM_SF_MIN_SDB;
 	max = CPUM_SF_MAX_SDB;
-	if (strchr(val, ','))
-		rc = (sscanf(val, "%lu,%lu", &min, &max) == 2) ? 0 : -EINVAL;
-	else
-		rc = kstrtoul(val, 10, &max);
+	अगर (म_अक्षर(val, ','))
+		rc = (माला_पूछो(val, "%lu,%lu", &min, &max) == 2) ? 0 : -EINVAL;
+	अन्यथा
+		rc = kम_से_अदीर्घ(val, 10, &max);
 
-	if (min < 2 || min >= max || max > get_num_physpages())
+	अगर (min < 2 || min >= max || max > get_num_physpages())
 		rc = -EINVAL;
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	sfb_set_limits(min, max);
 	pr_info("The sampling buffer limits have changed to: "
 		"min %lu max %lu (diag %lu)\n",
 		CPUM_SF_MIN_SDB, CPUM_SF_MAX_SDB, CPUM_SF_SDB_DIAG_FACTOR);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define param_check_sfb_size(name, p) __param_check(name, p, void)
-static const struct kernel_param_ops param_ops_sfb_size = {
+#घोषणा param_check_sfb_size(name, p) __param_check(name, p, व्योम)
+अटल स्थिर काष्ठा kernel_param_ops param_ops_sfb_size = अणु
 	.set = param_set_sfb_size,
 	.get = param_get_sfb_size,
-};
+पूर्ण;
 
-#define RS_INIT_FAILURE_QSI	  0x0001
-#define RS_INIT_FAILURE_BSDES	  0x0002
-#define RS_INIT_FAILURE_ALRT	  0x0003
-#define RS_INIT_FAILURE_PERF	  0x0004
-static void __init pr_cpumsf_err(unsigned int reason)
-{
+#घोषणा RS_INIT_FAILURE_QSI	  0x0001
+#घोषणा RS_INIT_FAILURE_BSDES	  0x0002
+#घोषणा RS_INIT_FAILURE_ALRT	  0x0003
+#घोषणा RS_INIT_FAILURE_PERF	  0x0004
+अटल व्योम __init pr_cpumsf_err(अचिन्हित पूर्णांक reason)
+अणु
 	pr_err("Sampling facility support for perf is not available: "
 	       "reason %#x\n", reason);
-}
+पूर्ण
 
-static int __init init_cpum_sampling_pmu(void)
-{
-	struct hws_qsi_info_block si;
-	int err;
+अटल पूर्णांक __init init_cpum_sampling_pmu(व्योम)
+अणु
+	काष्ठा hws_qsi_info_block si;
+	पूर्णांक err;
 
-	if (!cpum_sf_avail())
-		return -ENODEV;
+	अगर (!cpum_sf_avail())
+		वापस -ENODEV;
 
-	memset(&si, 0, sizeof(si));
-	if (qsi(&si)) {
+	स_रखो(&si, 0, माप(si));
+	अगर (qsi(&si)) अणु
 		pr_cpumsf_err(RS_INIT_FAILURE_QSI);
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	if (!si.as && !si.ad)
-		return -ENODEV;
+	अगर (!si.as && !si.ad)
+		वापस -ENODEV;
 
-	if (si.bsdes != sizeof(struct hws_basic_entry)) {
+	अगर (si.bsdes != माप(काष्ठा hws_basic_entry)) अणु
 		pr_cpumsf_err(RS_INIT_FAILURE_BSDES);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (si.ad) {
+	अगर (si.ad) अणु
 		sfb_set_limits(CPUM_SF_MIN_SDB, CPUM_SF_MAX_SDB);
 		/* Sampling of diagnostic data authorized,
-		 * install event into attribute list of PMU device.
+		 * install event पूर्णांकo attribute list of PMU device.
 		 */
 		cpumsf_pmu_events_attr[SF_CYCLES_BASIC_DIAG_ATTR_IDX] =
 			CPUMF_EVENT_PTR(SF, SF_CYCLES_BASIC_DIAG);
-	}
+	पूर्ण
 
-	sfdbg = debug_register(KMSG_COMPONENT, 2, 1, 80);
-	if (!sfdbg) {
+	sfdbg = debug_रेजिस्टर(KMSG_COMPONENT, 2, 1, 80);
+	अगर (!sfdbg) अणु
 		pr_err("Registering for s390dbf failed\n");
-		return -ENOMEM;
-	}
-	debug_register_view(sfdbg, &debug_sprintf_view);
+		वापस -ENOMEM;
+	पूर्ण
+	debug_रेजिस्टर_view(sfdbg, &debug_प्र_लिखो_view);
 
-	err = register_external_irq(EXT_IRQ_MEASURE_ALERT,
+	err = रेजिस्टर_बाह्यal_irq(EXT_IRQ_MEASURE_ALERT,
 				    cpumf_measurement_alert);
-	if (err) {
+	अगर (err) अणु
 		pr_cpumsf_err(RS_INIT_FAILURE_ALRT);
-		debug_unregister(sfdbg);
-		goto out;
-	}
+		debug_unरेजिस्टर(sfdbg);
+		जाओ out;
+	पूर्ण
 
-	err = perf_pmu_register(&cpumf_sampling, "cpum_sf", PERF_TYPE_RAW);
-	if (err) {
+	err = perf_pmu_रेजिस्टर(&cpumf_sampling, "cpum_sf", PERF_TYPE_RAW);
+	अगर (err) अणु
 		pr_cpumsf_err(RS_INIT_FAILURE_PERF);
-		unregister_external_irq(EXT_IRQ_MEASURE_ALERT,
+		unरेजिस्टर_बाह्यal_irq(EXT_IRQ_MEASURE_ALERT,
 					cpumf_measurement_alert);
-		debug_unregister(sfdbg);
-		goto out;
-	}
+		debug_unरेजिस्टर(sfdbg);
+		जाओ out;
+	पूर्ण
 
 	cpuhp_setup_state(CPUHP_AP_PERF_S390_SF_ONLINE, "perf/s390/sf:online",
 			  s390_pmu_sf_online_cpu, s390_pmu_sf_offline_cpu);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
 arch_initcall(init_cpum_sampling_pmu);
 core_param(cpum_sfb_size, CPUM_SF_MAX_SDB, sfb_size, 0644);

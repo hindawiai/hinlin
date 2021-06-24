@@ -1,613 +1,614 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/delay.h>
-#include "dpu_hwio.h"
-#include "dpu_hw_ctl.h"
-#include "dpu_kms.h"
-#include "dpu_trace.h"
+#समावेश <linux/delay.h>
+#समावेश "dpu_hwio.h"
+#समावेश "dpu_hw_ctl.h"
+#समावेश "dpu_kms.h"
+#समावेश "dpu_trace.h"
 
-#define   CTL_LAYER(lm)                 \
+#घोषणा   CTL_LAYER(lm)                 \
 	(((lm) == LM_5) ? (0x024) : (((lm) - LM_0) * 0x004))
-#define   CTL_LAYER_EXT(lm)             \
+#घोषणा   CTL_LAYER_EXT(lm)             \
 	(0x40 + (((lm) - LM_0) * 0x004))
-#define   CTL_LAYER_EXT2(lm)             \
+#घोषणा   CTL_LAYER_EXT2(lm)             \
 	(0x70 + (((lm) - LM_0) * 0x004))
-#define   CTL_LAYER_EXT3(lm)             \
+#घोषणा   CTL_LAYER_EXT3(lm)             \
 	(0xA0 + (((lm) - LM_0) * 0x004))
-#define   CTL_TOP                       0x014
-#define   CTL_FLUSH                     0x018
-#define   CTL_START                     0x01C
-#define   CTL_PREPARE                   0x0d0
-#define   CTL_SW_RESET                  0x030
-#define   CTL_LAYER_EXTN_OFFSET         0x40
-#define   CTL_MERGE_3D_ACTIVE           0x0E4
-#define   CTL_INTF_ACTIVE               0x0F4
-#define   CTL_MERGE_3D_FLUSH            0x100
-#define   CTL_INTF_FLUSH                0x110
-#define   CTL_INTF_MASTER               0x134
-#define   CTL_FETCH_PIPE_ACTIVE         0x0FC
+#घोषणा   CTL_TOP                       0x014
+#घोषणा   CTL_FLUSH                     0x018
+#घोषणा   CTL_START                     0x01C
+#घोषणा   CTL_PREPARE                   0x0d0
+#घोषणा   CTL_SW_RESET                  0x030
+#घोषणा   CTL_LAYER_EXTN_OFFSET         0x40
+#घोषणा   CTL_MERGE_3D_ACTIVE           0x0E4
+#घोषणा   CTL_INTF_ACTIVE               0x0F4
+#घोषणा   CTL_MERGE_3D_FLUSH            0x100
+#घोषणा   CTL_INTF_FLUSH                0x110
+#घोषणा   CTL_INTF_MASTER               0x134
+#घोषणा   CTL_FETCH_PIPE_ACTIVE         0x0FC
 
-#define CTL_MIXER_BORDER_OUT            BIT(24)
-#define CTL_FLUSH_MASK_CTL              BIT(17)
+#घोषणा CTL_MIXER_BORDER_OUT            BIT(24)
+#घोषणा CTL_FLUSH_MASK_CTL              BIT(17)
 
-#define DPU_REG_RESET_TIMEOUT_US        2000
-#define  MERGE_3D_IDX   23
-#define  INTF_IDX       31
-#define CTL_INVALID_BIT                 0xffff
+#घोषणा DPU_REG_RESET_TIMEOUT_US        2000
+#घोषणा  MERGE_3D_IDX   23
+#घोषणा  INTF_IDX       31
+#घोषणा CTL_INVALID_BIT                 0xffff
 
-static const u32 fetch_tbl[SSPP_MAX] = {CTL_INVALID_BIT, 16, 17, 18, 19,
+अटल स्थिर u32 fetch_tbl[SSPP_MAX] = अणुCTL_INVALID_BIT, 16, 17, 18, 19,
 	CTL_INVALID_BIT, CTL_INVALID_BIT, CTL_INVALID_BIT, CTL_INVALID_BIT, 0,
-	1, 2, 3, CTL_INVALID_BIT, CTL_INVALID_BIT};
+	1, 2, 3, CTL_INVALID_BIT, CTL_INVALID_BITपूर्ण;
 
-static const struct dpu_ctl_cfg *_ctl_offset(enum dpu_ctl ctl,
-		const struct dpu_mdss_cfg *m,
-		void __iomem *addr,
-		struct dpu_hw_blk_reg_map *b)
-{
-	int i;
+अटल स्थिर काष्ठा dpu_ctl_cfg *_ctl_offset(क्रमागत dpu_ctl ctl,
+		स्थिर काष्ठा dpu_mdss_cfg *m,
+		व्योम __iomem *addr,
+		काष्ठा dpu_hw_blk_reg_map *b)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < m->ctl_count; i++) {
-		if (ctl == m->ctl[i].id) {
+	क्रम (i = 0; i < m->ctl_count; i++) अणु
+		अगर (ctl == m->ctl[i].id) अणु
 			b->base_off = addr;
 			b->blk_off = m->ctl[i].base;
 			b->length = m->ctl[i].len;
 			b->hwversion = m->hwversion;
 			b->log_mask = DPU_DBG_MASK_CTL;
-			return &m->ctl[i];
-		}
-	}
-	return ERR_PTR(-ENOMEM);
-}
+			वापस &m->ctl[i];
+		पूर्ण
+	पूर्ण
+	वापस ERR_PTR(-ENOMEM);
+पूर्ण
 
-static int _mixer_stages(const struct dpu_lm_cfg *mixer, int count,
-		enum dpu_lm lm)
-{
-	int i;
-	int stages = -EINVAL;
+अटल पूर्णांक _mixer_stages(स्थिर काष्ठा dpu_lm_cfg *mixer, पूर्णांक count,
+		क्रमागत dpu_lm lm)
+अणु
+	पूर्णांक i;
+	पूर्णांक stages = -EINVAL;
 
-	for (i = 0; i < count; i++) {
-		if (lm == mixer[i].id) {
+	क्रम (i = 0; i < count; i++) अणु
+		अगर (lm == mixer[i].id) अणु
 			stages = mixer[i].sblk->maxblendstages;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	return stages;
-}
+	वापस stages;
+पूर्ण
 
-static inline u32 dpu_hw_ctl_get_flush_register(struct dpu_hw_ctl *ctx)
-{
-	struct dpu_hw_blk_reg_map *c = &ctx->hw;
+अटल अंतरभूत u32 dpu_hw_ctl_get_flush_रेजिस्टर(काष्ठा dpu_hw_ctl *ctx)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
 
-	return DPU_REG_READ(c, CTL_FLUSH);
-}
+	वापस DPU_REG_READ(c, CTL_FLUSH);
+पूर्ण
 
-static inline void dpu_hw_ctl_trigger_start(struct dpu_hw_ctl *ctx)
-{
+अटल अंतरभूत व्योम dpu_hw_ctl_trigger_start(काष्ठा dpu_hw_ctl *ctx)
+अणु
 	trace_dpu_hw_ctl_trigger_start(ctx->pending_flush_mask,
-				       dpu_hw_ctl_get_flush_register(ctx));
+				       dpu_hw_ctl_get_flush_रेजिस्टर(ctx));
 	DPU_REG_WRITE(&ctx->hw, CTL_START, 0x1);
-}
+पूर्ण
 
-static inline void dpu_hw_ctl_trigger_pending(struct dpu_hw_ctl *ctx)
-{
+अटल अंतरभूत व्योम dpu_hw_ctl_trigger_pending(काष्ठा dpu_hw_ctl *ctx)
+अणु
 	trace_dpu_hw_ctl_trigger_prepare(ctx->pending_flush_mask,
-					 dpu_hw_ctl_get_flush_register(ctx));
+					 dpu_hw_ctl_get_flush_रेजिस्टर(ctx));
 	DPU_REG_WRITE(&ctx->hw, CTL_PREPARE, 0x1);
-}
+पूर्ण
 
-static inline void dpu_hw_ctl_clear_pending_flush(struct dpu_hw_ctl *ctx)
-{
+अटल अंतरभूत व्योम dpu_hw_ctl_clear_pending_flush(काष्ठा dpu_hw_ctl *ctx)
+अणु
 	trace_dpu_hw_ctl_clear_pending_flush(ctx->pending_flush_mask,
-				     dpu_hw_ctl_get_flush_register(ctx));
+				     dpu_hw_ctl_get_flush_रेजिस्टर(ctx));
 	ctx->pending_flush_mask = 0x0;
-}
+पूर्ण
 
-static inline void dpu_hw_ctl_update_pending_flush(struct dpu_hw_ctl *ctx,
+अटल अंतरभूत व्योम dpu_hw_ctl_update_pending_flush(काष्ठा dpu_hw_ctl *ctx,
 		u32 flushbits)
-{
+अणु
 	trace_dpu_hw_ctl_update_pending_flush(flushbits,
 					      ctx->pending_flush_mask);
 	ctx->pending_flush_mask |= flushbits;
-}
+पूर्ण
 
-static u32 dpu_hw_ctl_get_pending_flush(struct dpu_hw_ctl *ctx)
-{
-	return ctx->pending_flush_mask;
-}
+अटल u32 dpu_hw_ctl_get_pending_flush(काष्ठा dpu_hw_ctl *ctx)
+अणु
+	वापस ctx->pending_flush_mask;
+पूर्ण
 
-static inline void dpu_hw_ctl_trigger_flush_v1(struct dpu_hw_ctl *ctx)
-{
+अटल अंतरभूत व्योम dpu_hw_ctl_trigger_flush_v1(काष्ठा dpu_hw_ctl *ctx)
+अणु
 
-	if (ctx->pending_flush_mask & BIT(MERGE_3D_IDX))
+	अगर (ctx->pending_flush_mask & BIT(MERGE_3D_IDX))
 		DPU_REG_WRITE(&ctx->hw, CTL_MERGE_3D_FLUSH,
 				ctx->pending_merge_3d_flush_mask);
-	if (ctx->pending_flush_mask & BIT(INTF_IDX))
+	अगर (ctx->pending_flush_mask & BIT(INTF_IDX))
 		DPU_REG_WRITE(&ctx->hw, CTL_INTF_FLUSH,
-				ctx->pending_intf_flush_mask);
+				ctx->pending_पूर्णांकf_flush_mask);
 
 	DPU_REG_WRITE(&ctx->hw, CTL_FLUSH, ctx->pending_flush_mask);
-}
+पूर्ण
 
-static inline void dpu_hw_ctl_trigger_flush(struct dpu_hw_ctl *ctx)
-{
+अटल अंतरभूत व्योम dpu_hw_ctl_trigger_flush(काष्ठा dpu_hw_ctl *ctx)
+अणु
 	trace_dpu_hw_ctl_trigger_pending_flush(ctx->pending_flush_mask,
-				     dpu_hw_ctl_get_flush_register(ctx));
+				     dpu_hw_ctl_get_flush_रेजिस्टर(ctx));
 	DPU_REG_WRITE(&ctx->hw, CTL_FLUSH, ctx->pending_flush_mask);
-}
+पूर्ण
 
-static uint32_t dpu_hw_ctl_get_bitmask_sspp(struct dpu_hw_ctl *ctx,
-	enum dpu_sspp sspp)
-{
-	uint32_t flushbits = 0;
+अटल uपूर्णांक32_t dpu_hw_ctl_get_biपंचांगask_sspp(काष्ठा dpu_hw_ctl *ctx,
+	क्रमागत dpu_sspp sspp)
+अणु
+	uपूर्णांक32_t flushbits = 0;
 
-	switch (sspp) {
-	case SSPP_VIG0:
+	चयन (sspp) अणु
+	हाल SSPP_VIG0:
 		flushbits =  BIT(0);
-		break;
-	case SSPP_VIG1:
+		अवरोध;
+	हाल SSPP_VIG1:
 		flushbits = BIT(1);
-		break;
-	case SSPP_VIG2:
+		अवरोध;
+	हाल SSPP_VIG2:
 		flushbits = BIT(2);
-		break;
-	case SSPP_VIG3:
+		अवरोध;
+	हाल SSPP_VIG3:
 		flushbits = BIT(18);
-		break;
-	case SSPP_RGB0:
+		अवरोध;
+	हाल SSPP_RGB0:
 		flushbits = BIT(3);
-		break;
-	case SSPP_RGB1:
+		अवरोध;
+	हाल SSPP_RGB1:
 		flushbits = BIT(4);
-		break;
-	case SSPP_RGB2:
+		अवरोध;
+	हाल SSPP_RGB2:
 		flushbits = BIT(5);
-		break;
-	case SSPP_RGB3:
+		अवरोध;
+	हाल SSPP_RGB3:
 		flushbits = BIT(19);
-		break;
-	case SSPP_DMA0:
+		अवरोध;
+	हाल SSPP_DMA0:
 		flushbits = BIT(11);
-		break;
-	case SSPP_DMA1:
+		अवरोध;
+	हाल SSPP_DMA1:
 		flushbits = BIT(12);
-		break;
-	case SSPP_DMA2:
+		अवरोध;
+	हाल SSPP_DMA2:
 		flushbits = BIT(24);
-		break;
-	case SSPP_DMA3:
+		अवरोध;
+	हाल SSPP_DMA3:
 		flushbits = BIT(25);
-		break;
-	case SSPP_CURSOR0:
+		अवरोध;
+	हाल SSPP_CURSOR0:
 		flushbits = BIT(22);
-		break;
-	case SSPP_CURSOR1:
+		अवरोध;
+	हाल SSPP_CURSOR1:
 		flushbits = BIT(23);
-		break;
-	default:
-		break;
-	}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
 
-	return flushbits;
-}
+	वापस flushbits;
+पूर्ण
 
-static uint32_t dpu_hw_ctl_get_bitmask_mixer(struct dpu_hw_ctl *ctx,
-	enum dpu_lm lm)
-{
-	uint32_t flushbits = 0;
+अटल uपूर्णांक32_t dpu_hw_ctl_get_biपंचांगask_mixer(काष्ठा dpu_hw_ctl *ctx,
+	क्रमागत dpu_lm lm)
+अणु
+	uपूर्णांक32_t flushbits = 0;
 
-	switch (lm) {
-	case LM_0:
+	चयन (lm) अणु
+	हाल LM_0:
 		flushbits = BIT(6);
-		break;
-	case LM_1:
+		अवरोध;
+	हाल LM_1:
 		flushbits = BIT(7);
-		break;
-	case LM_2:
+		अवरोध;
+	हाल LM_2:
 		flushbits = BIT(8);
-		break;
-	case LM_3:
+		अवरोध;
+	हाल LM_3:
 		flushbits = BIT(9);
-		break;
-	case LM_4:
+		अवरोध;
+	हाल LM_4:
 		flushbits = BIT(10);
-		break;
-	case LM_5:
+		अवरोध;
+	हाल LM_5:
 		flushbits = BIT(20);
-		break;
-	default:
-		return -EINVAL;
-	}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
 
 	flushbits |= CTL_FLUSH_MASK_CTL;
 
-	return flushbits;
-}
+	वापस flushbits;
+पूर्ण
 
-static void dpu_hw_ctl_update_pending_flush_intf(struct dpu_hw_ctl *ctx,
-		enum dpu_intf intf)
-{
-	switch (intf) {
-	case INTF_0:
+अटल व्योम dpu_hw_ctl_update_pending_flush_पूर्णांकf(काष्ठा dpu_hw_ctl *ctx,
+		क्रमागत dpu_पूर्णांकf पूर्णांकf)
+अणु
+	चयन (पूर्णांकf) अणु
+	हाल INTF_0:
 		ctx->pending_flush_mask |= BIT(31);
-		break;
-	case INTF_1:
+		अवरोध;
+	हाल INTF_1:
 		ctx->pending_flush_mask |= BIT(30);
-		break;
-	case INTF_2:
+		अवरोध;
+	हाल INTF_2:
 		ctx->pending_flush_mask |= BIT(29);
-		break;
-	case INTF_3:
+		अवरोध;
+	हाल INTF_3:
 		ctx->pending_flush_mask |= BIT(28);
-		break;
-	default:
-		break;
-	}
-}
+		अवरोध;
+	शेष:
+		अवरोध;
+	पूर्ण
+पूर्ण
 
-static void dpu_hw_ctl_update_pending_flush_intf_v1(struct dpu_hw_ctl *ctx,
-		enum dpu_intf intf)
-{
-	ctx->pending_intf_flush_mask |= BIT(intf - INTF_0);
+अटल व्योम dpu_hw_ctl_update_pending_flush_पूर्णांकf_v1(काष्ठा dpu_hw_ctl *ctx,
+		क्रमागत dpu_पूर्णांकf पूर्णांकf)
+अणु
+	ctx->pending_पूर्णांकf_flush_mask |= BIT(पूर्णांकf - INTF_0);
 	ctx->pending_flush_mask |= BIT(INTF_IDX);
-}
+पूर्ण
 
-static void dpu_hw_ctl_update_pending_flush_merge_3d_v1(struct dpu_hw_ctl *ctx,
-		enum dpu_merge_3d merge_3d)
-{
+अटल व्योम dpu_hw_ctl_update_pending_flush_merge_3d_v1(काष्ठा dpu_hw_ctl *ctx,
+		क्रमागत dpu_merge_3d merge_3d)
+अणु
 	ctx->pending_merge_3d_flush_mask |= BIT(merge_3d - MERGE_3D_0);
 	ctx->pending_flush_mask |= BIT(MERGE_3D_IDX);
-}
+पूर्ण
 
-static uint32_t dpu_hw_ctl_get_bitmask_dspp(struct dpu_hw_ctl *ctx,
-	enum dpu_dspp dspp)
-{
-	uint32_t flushbits = 0;
+अटल uपूर्णांक32_t dpu_hw_ctl_get_biपंचांगask_dspp(काष्ठा dpu_hw_ctl *ctx,
+	क्रमागत dpu_dspp dspp)
+अणु
+	uपूर्णांक32_t flushbits = 0;
 
-	switch (dspp) {
-	case DSPP_0:
+	चयन (dspp) अणु
+	हाल DSPP_0:
 		flushbits = BIT(13);
-		break;
-	case DSPP_1:
+		अवरोध;
+	हाल DSPP_1:
 		flushbits = BIT(14);
-		break;
-	case DSPP_2:
+		अवरोध;
+	हाल DSPP_2:
 		flushbits = BIT(15);
-		break;
-	case DSPP_3:
+		अवरोध;
+	हाल DSPP_3:
 		flushbits = BIT(21);
-		break;
-	default:
-		return 0;
-	}
+		अवरोध;
+	शेष:
+		वापस 0;
+	पूर्ण
 
-	return flushbits;
-}
+	वापस flushbits;
+पूर्ण
 
-static u32 dpu_hw_ctl_poll_reset_status(struct dpu_hw_ctl *ctx, u32 timeout_us)
-{
-	struct dpu_hw_blk_reg_map *c = &ctx->hw;
-	ktime_t timeout;
+अटल u32 dpu_hw_ctl_poll_reset_status(काष्ठा dpu_hw_ctl *ctx, u32 समयout_us)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
+	kसमय_प्रकार समयout;
 	u32 status;
 
-	timeout = ktime_add_us(ktime_get(), timeout_us);
+	समयout = kसमय_add_us(kसमय_get(), समयout_us);
 
 	/*
 	 * it takes around 30us to have mdp finish resetting its ctl path
 	 * poll every 50us so that reset should be completed at 1st poll
 	 */
-	do {
+	करो अणु
 		status = DPU_REG_READ(c, CTL_SW_RESET);
 		status &= 0x1;
-		if (status)
+		अगर (status)
 			usleep_range(20, 50);
-	} while (status && ktime_compare_safe(ktime_get(), timeout) < 0);
+	पूर्ण जबतक (status && kसमय_compare_safe(kसमय_get(), समयout) < 0);
 
-	return status;
-}
+	वापस status;
+पूर्ण
 
-static int dpu_hw_ctl_reset_control(struct dpu_hw_ctl *ctx)
-{
-	struct dpu_hw_blk_reg_map *c = &ctx->hw;
+अटल पूर्णांक dpu_hw_ctl_reset_control(काष्ठा dpu_hw_ctl *ctx)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
 
 	pr_debug("issuing hw ctl reset for ctl:%d\n", ctx->idx);
 	DPU_REG_WRITE(c, CTL_SW_RESET, 0x1);
-	if (dpu_hw_ctl_poll_reset_status(ctx, DPU_REG_RESET_TIMEOUT_US))
-		return -EINVAL;
+	अगर (dpu_hw_ctl_poll_reset_status(ctx, DPU_REG_RESET_TIMEOUT_US))
+		वापस -EINVAL;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int dpu_hw_ctl_wait_reset_status(struct dpu_hw_ctl *ctx)
-{
-	struct dpu_hw_blk_reg_map *c = &ctx->hw;
+अटल पूर्णांक dpu_hw_ctl_रुको_reset_status(काष्ठा dpu_hw_ctl *ctx)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
 	u32 status;
 
 	status = DPU_REG_READ(c, CTL_SW_RESET);
 	status &= 0x01;
-	if (!status)
-		return 0;
+	अगर (!status)
+		वापस 0;
 
 	pr_debug("hw ctl reset is set for ctl:%d\n", ctx->idx);
-	if (dpu_hw_ctl_poll_reset_status(ctx, DPU_REG_RESET_TIMEOUT_US)) {
+	अगर (dpu_hw_ctl_poll_reset_status(ctx, DPU_REG_RESET_TIMEOUT_US)) अणु
 		pr_err("hw recovery is not complete for ctl:%d\n", ctx->idx);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void dpu_hw_ctl_clear_all_blendstages(struct dpu_hw_ctl *ctx)
-{
-	struct dpu_hw_blk_reg_map *c = &ctx->hw;
-	int i;
+अटल व्योम dpu_hw_ctl_clear_all_blendstages(काष्ठा dpu_hw_ctl *ctx)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
+	पूर्णांक i;
 
-	for (i = 0; i < ctx->mixer_count; i++) {
+	क्रम (i = 0; i < ctx->mixer_count; i++) अणु
 		DPU_REG_WRITE(c, CTL_LAYER(LM_0 + i), 0);
 		DPU_REG_WRITE(c, CTL_LAYER_EXT(LM_0 + i), 0);
 		DPU_REG_WRITE(c, CTL_LAYER_EXT2(LM_0 + i), 0);
 		DPU_REG_WRITE(c, CTL_LAYER_EXT3(LM_0 + i), 0);
-	}
+	पूर्ण
 
 	DPU_REG_WRITE(c, CTL_FETCH_PIPE_ACTIVE, 0);
-}
+पूर्ण
 
-static void dpu_hw_ctl_setup_blendstage(struct dpu_hw_ctl *ctx,
-	enum dpu_lm lm, struct dpu_hw_stage_cfg *stage_cfg)
-{
-	struct dpu_hw_blk_reg_map *c = &ctx->hw;
+अटल व्योम dpu_hw_ctl_setup_blendstage(काष्ठा dpu_hw_ctl *ctx,
+	क्रमागत dpu_lm lm, काष्ठा dpu_hw_stage_cfg *stage_cfg)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
 	u32 mixercfg = 0, mixercfg_ext = 0, mix, ext;
 	u32 mixercfg_ext2 = 0, mixercfg_ext3 = 0;
-	int i, j;
-	int stages;
-	int pipes_per_stage;
+	पूर्णांक i, j;
+	पूर्णांक stages;
+	पूर्णांक pipes_per_stage;
 
 	stages = _mixer_stages(ctx->mixer_hw_caps, ctx->mixer_count, lm);
-	if (stages < 0)
-		return;
+	अगर (stages < 0)
+		वापस;
 
-	if (test_bit(DPU_MIXER_SOURCESPLIT,
+	अगर (test_bit(DPU_MIXER_SOURCESPLIT,
 		&ctx->mixer_hw_caps->features))
 		pipes_per_stage = PIPES_PER_STAGE;
-	else
+	अन्यथा
 		pipes_per_stage = 1;
 
 	mixercfg = CTL_MIXER_BORDER_OUT; /* always set BORDER_OUT */
 
-	if (!stage_cfg)
-		goto exit;
+	अगर (!stage_cfg)
+		जाओ निकास;
 
-	for (i = 0; i <= stages; i++) {
-		/* overflow to ext register if 'i + 1 > 7' */
+	क्रम (i = 0; i <= stages; i++) अणु
+		/* overflow to ext रेजिस्टर अगर 'i + 1 > 7' */
 		mix = (i + 1) & 0x7;
 		ext = i >= 7;
 
-		for (j = 0 ; j < pipes_per_stage; j++) {
-			enum dpu_sspp_multirect_index rect_index =
+		क्रम (j = 0 ; j < pipes_per_stage; j++) अणु
+			क्रमागत dpu_sspp_multirect_index rect_index =
 				stage_cfg->multirect_index[i][j];
 
-			switch (stage_cfg->stage[i][j]) {
-			case SSPP_VIG0:
-				if (rect_index == DPU_SSPP_RECT_1) {
+			चयन (stage_cfg->stage[i][j]) अणु
+			हाल SSPP_VIG0:
+				अगर (rect_index == DPU_SSPP_RECT_1) अणु
 					mixercfg_ext3 |= ((i + 1) & 0xF) << 0;
-				} else {
+				पूर्ण अन्यथा अणु
 					mixercfg |= mix << 0;
 					mixercfg_ext |= ext << 0;
-				}
-				break;
-			case SSPP_VIG1:
-				if (rect_index == DPU_SSPP_RECT_1) {
+				पूर्ण
+				अवरोध;
+			हाल SSPP_VIG1:
+				अगर (rect_index == DPU_SSPP_RECT_1) अणु
 					mixercfg_ext3 |= ((i + 1) & 0xF) << 4;
-				} else {
+				पूर्ण अन्यथा अणु
 					mixercfg |= mix << 3;
 					mixercfg_ext |= ext << 2;
-				}
-				break;
-			case SSPP_VIG2:
-				if (rect_index == DPU_SSPP_RECT_1) {
+				पूर्ण
+				अवरोध;
+			हाल SSPP_VIG2:
+				अगर (rect_index == DPU_SSPP_RECT_1) अणु
 					mixercfg_ext3 |= ((i + 1) & 0xF) << 8;
-				} else {
+				पूर्ण अन्यथा अणु
 					mixercfg |= mix << 6;
 					mixercfg_ext |= ext << 4;
-				}
-				break;
-			case SSPP_VIG3:
-				if (rect_index == DPU_SSPP_RECT_1) {
+				पूर्ण
+				अवरोध;
+			हाल SSPP_VIG3:
+				अगर (rect_index == DPU_SSPP_RECT_1) अणु
 					mixercfg_ext3 |= ((i + 1) & 0xF) << 12;
-				} else {
+				पूर्ण अन्यथा अणु
 					mixercfg |= mix << 26;
 					mixercfg_ext |= ext << 6;
-				}
-				break;
-			case SSPP_RGB0:
+				पूर्ण
+				अवरोध;
+			हाल SSPP_RGB0:
 				mixercfg |= mix << 9;
 				mixercfg_ext |= ext << 8;
-				break;
-			case SSPP_RGB1:
+				अवरोध;
+			हाल SSPP_RGB1:
 				mixercfg |= mix << 12;
 				mixercfg_ext |= ext << 10;
-				break;
-			case SSPP_RGB2:
+				अवरोध;
+			हाल SSPP_RGB2:
 				mixercfg |= mix << 15;
 				mixercfg_ext |= ext << 12;
-				break;
-			case SSPP_RGB3:
+				अवरोध;
+			हाल SSPP_RGB3:
 				mixercfg |= mix << 29;
 				mixercfg_ext |= ext << 14;
-				break;
-			case SSPP_DMA0:
-				if (rect_index == DPU_SSPP_RECT_1) {
+				अवरोध;
+			हाल SSPP_DMA0:
+				अगर (rect_index == DPU_SSPP_RECT_1) अणु
 					mixercfg_ext2 |= ((i + 1) & 0xF) << 8;
-				} else {
+				पूर्ण अन्यथा अणु
 					mixercfg |= mix << 18;
 					mixercfg_ext |= ext << 16;
-				}
-				break;
-			case SSPP_DMA1:
-				if (rect_index == DPU_SSPP_RECT_1) {
+				पूर्ण
+				अवरोध;
+			हाल SSPP_DMA1:
+				अगर (rect_index == DPU_SSPP_RECT_1) अणु
 					mixercfg_ext2 |= ((i + 1) & 0xF) << 12;
-				} else {
+				पूर्ण अन्यथा अणु
 					mixercfg |= mix << 21;
 					mixercfg_ext |= ext << 18;
-				}
-				break;
-			case SSPP_DMA2:
-				if (rect_index == DPU_SSPP_RECT_1) {
+				पूर्ण
+				अवरोध;
+			हाल SSPP_DMA2:
+				अगर (rect_index == DPU_SSPP_RECT_1) अणु
 					mixercfg_ext2 |= ((i + 1) & 0xF) << 16;
-				} else {
+				पूर्ण अन्यथा अणु
 					mix |= (i + 1) & 0xF;
 					mixercfg_ext2 |= mix << 0;
-				}
-				break;
-			case SSPP_DMA3:
-				if (rect_index == DPU_SSPP_RECT_1) {
+				पूर्ण
+				अवरोध;
+			हाल SSPP_DMA3:
+				अगर (rect_index == DPU_SSPP_RECT_1) अणु
 					mixercfg_ext2 |= ((i + 1) & 0xF) << 20;
-				} else {
+				पूर्ण अन्यथा अणु
 					mix |= (i + 1) & 0xF;
 					mixercfg_ext2 |= mix << 4;
-				}
-				break;
-			case SSPP_CURSOR0:
+				पूर्ण
+				अवरोध;
+			हाल SSPP_CURSOR0:
 				mixercfg_ext |= ((i + 1) & 0xF) << 20;
-				break;
-			case SSPP_CURSOR1:
+				अवरोध;
+			हाल SSPP_CURSOR1:
 				mixercfg_ext |= ((i + 1) & 0xF) << 26;
-				break;
-			default:
-				break;
-			}
-		}
-	}
+				अवरोध;
+			शेष:
+				अवरोध;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-exit:
+निकास:
 	DPU_REG_WRITE(c, CTL_LAYER(lm), mixercfg);
 	DPU_REG_WRITE(c, CTL_LAYER_EXT(lm), mixercfg_ext);
 	DPU_REG_WRITE(c, CTL_LAYER_EXT2(lm), mixercfg_ext2);
 	DPU_REG_WRITE(c, CTL_LAYER_EXT3(lm), mixercfg_ext3);
-}
+पूर्ण
 
 
-static void dpu_hw_ctl_intf_cfg_v1(struct dpu_hw_ctl *ctx,
-		struct dpu_hw_intf_cfg *cfg)
-{
-	struct dpu_hw_blk_reg_map *c = &ctx->hw;
-	u32 intf_active = 0;
+अटल व्योम dpu_hw_ctl_पूर्णांकf_cfg_v1(काष्ठा dpu_hw_ctl *ctx,
+		काष्ठा dpu_hw_पूर्णांकf_cfg *cfg)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
+	u32 पूर्णांकf_active = 0;
 	u32 mode_sel = 0;
 
-	if (cfg->intf_mode_sel == DPU_CTL_MODE_SEL_CMD)
+	अगर (cfg->पूर्णांकf_mode_sel == DPU_CTL_MODE_SEL_CMD)
 		mode_sel |= BIT(17);
 
-	intf_active = DPU_REG_READ(c, CTL_INTF_ACTIVE);
-	intf_active |= BIT(cfg->intf - INTF_0);
+	पूर्णांकf_active = DPU_REG_READ(c, CTL_INTF_ACTIVE);
+	पूर्णांकf_active |= BIT(cfg->पूर्णांकf - INTF_0);
 
 	DPU_REG_WRITE(c, CTL_TOP, mode_sel);
-	DPU_REG_WRITE(c, CTL_INTF_ACTIVE, intf_active);
-	if (cfg->merge_3d)
+	DPU_REG_WRITE(c, CTL_INTF_ACTIVE, पूर्णांकf_active);
+	अगर (cfg->merge_3d)
 		DPU_REG_WRITE(c, CTL_MERGE_3D_ACTIVE,
 			      BIT(cfg->merge_3d - MERGE_3D_0));
-}
+पूर्ण
 
-static void dpu_hw_ctl_intf_cfg(struct dpu_hw_ctl *ctx,
-		struct dpu_hw_intf_cfg *cfg)
-{
-	struct dpu_hw_blk_reg_map *c = &ctx->hw;
-	u32 intf_cfg = 0;
+अटल व्योम dpu_hw_ctl_पूर्णांकf_cfg(काष्ठा dpu_hw_ctl *ctx,
+		काष्ठा dpu_hw_पूर्णांकf_cfg *cfg)
+अणु
+	काष्ठा dpu_hw_blk_reg_map *c = &ctx->hw;
+	u32 पूर्णांकf_cfg = 0;
 
-	intf_cfg |= (cfg->intf & 0xF) << 4;
+	पूर्णांकf_cfg |= (cfg->पूर्णांकf & 0xF) << 4;
 
-	if (cfg->mode_3d) {
-		intf_cfg |= BIT(19);
-		intf_cfg |= (cfg->mode_3d - 0x1) << 20;
-	}
+	अगर (cfg->mode_3d) अणु
+		पूर्णांकf_cfg |= BIT(19);
+		पूर्णांकf_cfg |= (cfg->mode_3d - 0x1) << 20;
+	पूर्ण
 
-	switch (cfg->intf_mode_sel) {
-	case DPU_CTL_MODE_SEL_VID:
-		intf_cfg &= ~BIT(17);
-		intf_cfg &= ~(0x3 << 15);
-		break;
-	case DPU_CTL_MODE_SEL_CMD:
-		intf_cfg |= BIT(17);
-		intf_cfg |= ((cfg->stream_sel & 0x3) << 15);
-		break;
-	default:
-		pr_err("unknown interface type %d\n", cfg->intf_mode_sel);
-		return;
-	}
+	चयन (cfg->पूर्णांकf_mode_sel) अणु
+	हाल DPU_CTL_MODE_SEL_VID:
+		पूर्णांकf_cfg &= ~BIT(17);
+		पूर्णांकf_cfg &= ~(0x3 << 15);
+		अवरोध;
+	हाल DPU_CTL_MODE_SEL_CMD:
+		पूर्णांकf_cfg |= BIT(17);
+		पूर्णांकf_cfg |= ((cfg->stream_sel & 0x3) << 15);
+		अवरोध;
+	शेष:
+		pr_err("unknown interface type %d\n", cfg->पूर्णांकf_mode_sel);
+		वापस;
+	पूर्ण
 
-	DPU_REG_WRITE(c, CTL_TOP, intf_cfg);
-}
+	DPU_REG_WRITE(c, CTL_TOP, पूर्णांकf_cfg);
+पूर्ण
 
-static void dpu_hw_ctl_set_fetch_pipe_active(struct dpu_hw_ctl *ctx,
-	unsigned long *fetch_active)
-{
-	int i;
+अटल व्योम dpu_hw_ctl_set_fetch_pipe_active(काष्ठा dpu_hw_ctl *ctx,
+	अचिन्हित दीर्घ *fetch_active)
+अणु
+	पूर्णांक i;
 	u32 val = 0;
 
-	if (fetch_active) {
-		for (i = 0; i < SSPP_MAX; i++) {
-			if (test_bit(i, fetch_active) &&
+	अगर (fetch_active) अणु
+		क्रम (i = 0; i < SSPP_MAX; i++) अणु
+			अगर (test_bit(i, fetch_active) &&
 				fetch_tbl[i] != CTL_INVALID_BIT)
 				val |= BIT(fetch_tbl[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	DPU_REG_WRITE(&ctx->hw, CTL_FETCH_PIPE_ACTIVE, val);
-}
+पूर्ण
 
-static void _setup_ctl_ops(struct dpu_hw_ctl_ops *ops,
-		unsigned long cap)
-{
-	if (cap & BIT(DPU_CTL_ACTIVE_CFG)) {
+अटल व्योम _setup_ctl_ops(काष्ठा dpu_hw_ctl_ops *ops,
+		अचिन्हित दीर्घ cap)
+अणु
+	अगर (cap & BIT(DPU_CTL_ACTIVE_CFG)) अणु
 		ops->trigger_flush = dpu_hw_ctl_trigger_flush_v1;
-		ops->setup_intf_cfg = dpu_hw_ctl_intf_cfg_v1;
-		ops->update_pending_flush_intf =
-			dpu_hw_ctl_update_pending_flush_intf_v1;
+		ops->setup_पूर्णांकf_cfg = dpu_hw_ctl_पूर्णांकf_cfg_v1;
+		ops->update_pending_flush_पूर्णांकf =
+			dpu_hw_ctl_update_pending_flush_पूर्णांकf_v1;
 		ops->update_pending_flush_merge_3d =
 			dpu_hw_ctl_update_pending_flush_merge_3d_v1;
-	} else {
+	पूर्ण अन्यथा अणु
 		ops->trigger_flush = dpu_hw_ctl_trigger_flush;
-		ops->setup_intf_cfg = dpu_hw_ctl_intf_cfg;
-		ops->update_pending_flush_intf =
-			dpu_hw_ctl_update_pending_flush_intf;
-	}
+		ops->setup_पूर्णांकf_cfg = dpu_hw_ctl_पूर्णांकf_cfg;
+		ops->update_pending_flush_पूर्णांकf =
+			dpu_hw_ctl_update_pending_flush_पूर्णांकf;
+	पूर्ण
 	ops->clear_pending_flush = dpu_hw_ctl_clear_pending_flush;
 	ops->update_pending_flush = dpu_hw_ctl_update_pending_flush;
 	ops->get_pending_flush = dpu_hw_ctl_get_pending_flush;
-	ops->get_flush_register = dpu_hw_ctl_get_flush_register;
+	ops->get_flush_रेजिस्टर = dpu_hw_ctl_get_flush_रेजिस्टर;
 	ops->trigger_start = dpu_hw_ctl_trigger_start;
 	ops->trigger_pending = dpu_hw_ctl_trigger_pending;
 	ops->reset = dpu_hw_ctl_reset_control;
-	ops->wait_reset_status = dpu_hw_ctl_wait_reset_status;
+	ops->रुको_reset_status = dpu_hw_ctl_रुको_reset_status;
 	ops->clear_all_blendstages = dpu_hw_ctl_clear_all_blendstages;
 	ops->setup_blendstage = dpu_hw_ctl_setup_blendstage;
-	ops->get_bitmask_sspp = dpu_hw_ctl_get_bitmask_sspp;
-	ops->get_bitmask_mixer = dpu_hw_ctl_get_bitmask_mixer;
-	ops->get_bitmask_dspp = dpu_hw_ctl_get_bitmask_dspp;
-	if (cap & BIT(DPU_CTL_FETCH_ACTIVE))
+	ops->get_biपंचांगask_sspp = dpu_hw_ctl_get_biपंचांगask_sspp;
+	ops->get_biपंचांगask_mixer = dpu_hw_ctl_get_biपंचांगask_mixer;
+	ops->get_biपंचांगask_dspp = dpu_hw_ctl_get_biपंचांगask_dspp;
+	अगर (cap & BIT(DPU_CTL_FETCH_ACTIVE))
 		ops->set_active_pipes = dpu_hw_ctl_set_fetch_pipe_active;
-};
+पूर्ण;
 
-static struct dpu_hw_blk_ops dpu_hw_ops;
+अटल काष्ठा dpu_hw_blk_ops dpu_hw_ops;
 
-struct dpu_hw_ctl *dpu_hw_ctl_init(enum dpu_ctl idx,
-		void __iomem *addr,
-		const struct dpu_mdss_cfg *m)
-{
-	struct dpu_hw_ctl *c;
-	const struct dpu_ctl_cfg *cfg;
+काष्ठा dpu_hw_ctl *dpu_hw_ctl_init(क्रमागत dpu_ctl idx,
+		व्योम __iomem *addr,
+		स्थिर काष्ठा dpu_mdss_cfg *m)
+अणु
+	काष्ठा dpu_hw_ctl *c;
+	स्थिर काष्ठा dpu_ctl_cfg *cfg;
 
-	c = kzalloc(sizeof(*c), GFP_KERNEL);
-	if (!c)
-		return ERR_PTR(-ENOMEM);
+	c = kzalloc(माप(*c), GFP_KERNEL);
+	अगर (!c)
+		वापस ERR_PTR(-ENOMEM);
 
 	cfg = _ctl_offset(idx, m, addr, &c->hw);
-	if (IS_ERR_OR_NULL(cfg)) {
-		kfree(c);
+	अगर (IS_ERR_OR_शून्य(cfg)) अणु
+		kमुक्त(c);
 		pr_err("failed to create dpu_hw_ctl %d\n", idx);
-		return ERR_PTR(-EINVAL);
-	}
+		वापस ERR_PTR(-EINVAL);
+	पूर्ण
 
 	c->caps = cfg;
 	_setup_ctl_ops(&c->ops, c->caps->features);
@@ -617,12 +618,12 @@ struct dpu_hw_ctl *dpu_hw_ctl_init(enum dpu_ctl idx,
 
 	dpu_hw_blk_init(&c->base, DPU_HW_BLK_CTL, idx, &dpu_hw_ops);
 
-	return c;
-}
+	वापस c;
+पूर्ण
 
-void dpu_hw_ctl_destroy(struct dpu_hw_ctl *ctx)
-{
-	if (ctx)
+व्योम dpu_hw_ctl_destroy(काष्ठा dpu_hw_ctl *ctx)
+अणु
+	अगर (ctx)
 		dpu_hw_blk_destroy(&ctx->base);
-	kfree(ctx);
-}
+	kमुक्त(ctx);
+पूर्ण

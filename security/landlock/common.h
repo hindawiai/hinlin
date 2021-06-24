@@ -1,20 +1,21 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
- * Landlock LSM - Common constants and helpers
+ * Landlock LSM - Common स्थिरants and helpers
  *
- * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
- * Copyright © 2018-2020 ANSSI
+ * Copyright तऊ 2016-2020 Mickaथ+l Salaथञn <mic@digikod.net>
+ * Copyright तऊ 2018-2020 ANSSI
  */
 
-#ifndef _SECURITY_LANDLOCK_COMMON_H
-#define _SECURITY_LANDLOCK_COMMON_H
+#अगर_अघोषित _SECURITY_LANDLOCK_COMMON_H
+#घोषणा _SECURITY_LANDLOCK_COMMON_H
 
-#define LANDLOCK_NAME "landlock"
+#घोषणा LANDLOCK_NAME "landlock"
 
-#ifdef pr_fmt
-#undef pr_fmt
-#endif
+#अगर_घोषित pr_fmt
+#अघोषित pr_fmt
+#पूर्ण_अगर
 
-#define pr_fmt(fmt) LANDLOCK_NAME ": " fmt
+#घोषणा pr_fmt(fmt) LANDLOCK_NAME ": " fmt
 
-#endif /* _SECURITY_LANDLOCK_COMMON_H */
+#पूर्ण_अगर /* _SECURITY_LANDLOCK_COMMON_H */

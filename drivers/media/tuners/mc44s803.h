@@ -1,31 +1,32 @@
-/* SPDX-License-Identifier: GPL-2.0-or-later */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-or-later */
 /*
- *  Driver for Freescale MC44S803 Low Power CMOS Broadband Tuner
+ *  Driver क्रम Freescale MC44S803 Low Power CMOS Broadband Tuner
  *
  *  Copyright (c) 2009 Jochen Friedrich <jochen@scram.de>
  */
 
-#ifndef MC44S803_H
-#define MC44S803_H
+#अगर_अघोषित MC44S803_H
+#घोषणा MC44S803_H
 
-struct dvb_frontend;
-struct i2c_adapter;
+काष्ठा dvb_frontend;
+काष्ठा i2c_adapter;
 
-struct mc44s803_config {
+काष्ठा mc44s803_config अणु
 	u8 i2c_address;
 	u8 dig_out;
-};
+पूर्ण;
 
-#if IS_REACHABLE(CONFIG_MEDIA_TUNER_MC44S803)
-extern struct dvb_frontend *mc44s803_attach(struct dvb_frontend *fe,
-	 struct i2c_adapter *i2c, struct mc44s803_config *cfg);
-#else
-static inline struct dvb_frontend *mc44s803_attach(struct dvb_frontend *fe,
-	 struct i2c_adapter *i2c, struct mc44s803_config *cfg)
-{
-	printk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
-	return NULL;
-}
-#endif /* CONFIG_MEDIA_TUNER_MC44S803 */
+#अगर IS_REACHABLE(CONFIG_MEDIA_TUNER_MC44S803)
+बाह्य काष्ठा dvb_frontend *mc44s803_attach(काष्ठा dvb_frontend *fe,
+	 काष्ठा i2c_adapter *i2c, काष्ठा mc44s803_config *cfg);
+#अन्यथा
+अटल अंतरभूत काष्ठा dvb_frontend *mc44s803_attach(काष्ठा dvb_frontend *fe,
+	 काष्ठा i2c_adapter *i2c, काष्ठा mc44s803_config *cfg)
+अणु
+	prपूर्णांकk(KERN_WARNING "%s: driver disabled by Kconfig\n", __func__);
+	वापस शून्य;
+पूर्ण
+#पूर्ण_अगर /* CONFIG_MEDIA_TUNER_MC44S803 */
 
-#endif
+#पूर्ण_अगर

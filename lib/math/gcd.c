@@ -1,85 +1,86 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <linux/kernel.h>
-#include <linux/gcd.h>
-#include <linux/export.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <linux/kernel.h>
+#समावेश <linux/gcd.h>
+#समावेश <linux/export.h>
 
 /*
  * This implements the binary GCD algorithm. (Often attributed to Stein,
  * but as Knuth has noted, appears in a first-century Chinese math text.)
  *
- * This is faster than the division-based algorithm even on x86, which
- * has decent hardware division.
+ * This is faster than the भागision-based algorithm even on x86, which
+ * has decent hardware भागision.
  */
 
-#if !defined(CONFIG_CPU_NO_EFFICIENT_FFS)
+#अगर !defined(CONFIG_CPU_NO_EFFICIENT_FFS)
 
 /* If __ffs is available, the even/odd algorithm benchmarks slower. */
 
 /**
- * gcd - calculate and return the greatest common divisor of 2 unsigned longs
+ * gcd - calculate and वापस the greatest common भागisor of 2 अचिन्हित दीर्घs
  * @a: first value
  * @b: second value
  */
-unsigned long gcd(unsigned long a, unsigned long b)
-{
-	unsigned long r = a | b;
+अचिन्हित दीर्घ gcd(अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
+अणु
+	अचिन्हित दीर्घ r = a | b;
 
-	if (!a || !b)
-		return r;
+	अगर (!a || !b)
+		वापस r;
 
 	b >>= __ffs(b);
-	if (b == 1)
-		return r & -r;
+	अगर (b == 1)
+		वापस r & -r;
 
-	for (;;) {
+	क्रम (;;) अणु
 		a >>= __ffs(a);
-		if (a == 1)
-			return r & -r;
-		if (a == b)
-			return a << __ffs(r);
+		अगर (a == 1)
+			वापस r & -r;
+		अगर (a == b)
+			वापस a << __ffs(r);
 
-		if (a < b)
+		अगर (a < b)
 			swap(a, b);
 		a -= b;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#else
+#अन्यथा
 
-/* If normalization is done by loops, the even/odd algorithm is a win. */
-unsigned long gcd(unsigned long a, unsigned long b)
-{
-	unsigned long r = a | b;
+/* If normalization is करोne by loops, the even/odd algorithm is a win. */
+अचिन्हित दीर्घ gcd(अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
+अणु
+	अचिन्हित दीर्घ r = a | b;
 
-	if (!a || !b)
-		return r;
+	अगर (!a || !b)
+		वापस r;
 
 	/* Isolate lsbit of r */
 	r &= -r;
 
-	while (!(b & r))
+	जबतक (!(b & r))
 		b >>= 1;
-	if (b == r)
-		return r;
+	अगर (b == r)
+		वापस r;
 
-	for (;;) {
-		while (!(a & r))
+	क्रम (;;) अणु
+		जबतक (!(a & r))
 			a >>= 1;
-		if (a == r)
-			return r;
-		if (a == b)
-			return a;
+		अगर (a == r)
+			वापस r;
+		अगर (a == b)
+			वापस a;
 
-		if (a < b)
+		अगर (a < b)
 			swap(a, b);
 		a -= b;
 		a >>= 1;
-		if (a & r)
+		अगर (a & r)
 			a += b;
 		a >>= 1;
-	}
-}
+	पूर्ण
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
 EXPORT_SYMBOL_GPL(gcd);

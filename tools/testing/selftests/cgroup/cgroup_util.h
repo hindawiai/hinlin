@@ -1,56 +1,57 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <stdbool.h>
-#include <stdlib.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <stdbool.h>
+#समावेश <मानककोष.स>
 
-#define PAGE_SIZE 4096
+#घोषणा PAGE_SIZE 4096
 
-#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
+#घोषणा ARRAY_SIZE(arr) (माप(arr) / माप((arr)[0]))
 
-#define MB(x) (x << 20)
+#घोषणा MB(x) (x << 20)
 
 /*
- * Checks if two given values differ by less than err% of their sum.
+ * Checks अगर two given values dअगरfer by less than err% of their sum.
  */
-static inline int values_close(long a, long b, int err)
-{
-	return abs(a - b) <= (a + b) / 100 * err;
-}
+अटल अंतरभूत पूर्णांक values_बंद(दीर्घ a, दीर्घ b, पूर्णांक err)
+अणु
+	वापस असल(a - b) <= (a + b) / 100 * err;
+पूर्ण
 
-extern int cg_find_unified_root(char *root, size_t len);
-extern char *cg_name(const char *root, const char *name);
-extern char *cg_name_indexed(const char *root, const char *name, int index);
-extern char *cg_control(const char *cgroup, const char *control);
-extern int cg_create(const char *cgroup);
-extern int cg_destroy(const char *cgroup);
-extern int cg_read(const char *cgroup, const char *control,
-		   char *buf, size_t len);
-extern int cg_read_strcmp(const char *cgroup, const char *control,
-			  const char *expected);
-extern int cg_read_strstr(const char *cgroup, const char *control,
-			  const char *needle);
-extern long cg_read_long(const char *cgroup, const char *control);
-long cg_read_key_long(const char *cgroup, const char *control, const char *key);
-extern long cg_read_lc(const char *cgroup, const char *control);
-extern int cg_write(const char *cgroup, const char *control, char *buf);
-extern int cg_run(const char *cgroup,
-		  int (*fn)(const char *cgroup, void *arg),
-		  void *arg);
-extern int cg_enter(const char *cgroup, int pid);
-extern int cg_enter_current(const char *cgroup);
-extern int cg_enter_current_thread(const char *cgroup);
-extern int cg_run_nowait(const char *cgroup,
-			 int (*fn)(const char *cgroup, void *arg),
-			 void *arg);
-extern int get_temp_fd(void);
-extern int alloc_pagecache(int fd, size_t size);
-extern int alloc_anon(const char *cgroup, void *arg);
-extern int is_swap_enabled(void);
-extern int set_oom_adj_score(int pid, int score);
-extern int cg_wait_for_proc_count(const char *cgroup, int count);
-extern int cg_killall(const char *cgroup);
-extern ssize_t proc_read_text(int pid, bool thread, const char *item, char *buf, size_t size);
-extern int proc_read_strstr(int pid, bool thread, const char *item, const char *needle);
-extern pid_t clone_into_cgroup(int cgroup_fd);
-extern int clone_reap(pid_t pid, int options);
-extern int clone_into_cgroup_run_wait(const char *cgroup);
-extern int dirfd_open_opath(const char *dir);
+बाह्य पूर्णांक cg_find_unअगरied_root(अक्षर *root, माप_प्रकार len);
+बाह्य अक्षर *cg_name(स्थिर अक्षर *root, स्थिर अक्षर *name);
+बाह्य अक्षर *cg_name_indexed(स्थिर अक्षर *root, स्थिर अक्षर *name, पूर्णांक index);
+बाह्य अक्षर *cg_control(स्थिर अक्षर *cgroup, स्थिर अक्षर *control);
+बाह्य पूर्णांक cg_create(स्थिर अक्षर *cgroup);
+बाह्य पूर्णांक cg_destroy(स्थिर अक्षर *cgroup);
+बाह्य पूर्णांक cg_पढ़ो(स्थिर अक्षर *cgroup, स्थिर अक्षर *control,
+		   अक्षर *buf, माप_प्रकार len);
+बाह्य पूर्णांक cg_पढ़ो_म_भेद(स्थिर अक्षर *cgroup, स्थिर अक्षर *control,
+			  स्थिर अक्षर *expected);
+बाह्य पूर्णांक cg_पढ़ो_म_माला(स्थिर अक्षर *cgroup, स्थिर अक्षर *control,
+			  स्थिर अक्षर *needle);
+बाह्य दीर्घ cg_पढ़ो_दीर्घ(स्थिर अक्षर *cgroup, स्थिर अक्षर *control);
+दीर्घ cg_पढ़ो_key_दीर्घ(स्थिर अक्षर *cgroup, स्थिर अक्षर *control, स्थिर अक्षर *key);
+बाह्य दीर्घ cg_पढ़ो_lc(स्थिर अक्षर *cgroup, स्थिर अक्षर *control);
+बाह्य पूर्णांक cg_ग_लिखो(स्थिर अक्षर *cgroup, स्थिर अक्षर *control, अक्षर *buf);
+बाह्य पूर्णांक cg_run(स्थिर अक्षर *cgroup,
+		  पूर्णांक (*fn)(स्थिर अक्षर *cgroup, व्योम *arg),
+		  व्योम *arg);
+बाह्य पूर्णांक cg_enter(स्थिर अक्षर *cgroup, पूर्णांक pid);
+बाह्य पूर्णांक cg_enter_current(स्थिर अक्षर *cgroup);
+बाह्य पूर्णांक cg_enter_current_thपढ़ो(स्थिर अक्षर *cgroup);
+बाह्य पूर्णांक cg_run_noरुको(स्थिर अक्षर *cgroup,
+			 पूर्णांक (*fn)(स्थिर अक्षर *cgroup, व्योम *arg),
+			 व्योम *arg);
+बाह्य पूर्णांक get_temp_fd(व्योम);
+बाह्य पूर्णांक alloc_pagecache(पूर्णांक fd, माप_प्रकार size);
+बाह्य पूर्णांक alloc_anon(स्थिर अक्षर *cgroup, व्योम *arg);
+बाह्य पूर्णांक is_swap_enabled(व्योम);
+बाह्य पूर्णांक set_oom_adj_score(पूर्णांक pid, पूर्णांक score);
+बाह्य पूर्णांक cg_रुको_क्रम_proc_count(स्थिर अक्षर *cgroup, पूर्णांक count);
+बाह्य पूर्णांक cg_समाप्तall(स्थिर अक्षर *cgroup);
+बाह्य sमाप_प्रकार proc_पढ़ो_text(पूर्णांक pid, bool thपढ़ो, स्थिर अक्षर *item, अक्षर *buf, माप_प्रकार size);
+बाह्य पूर्णांक proc_पढ़ो_म_माला(पूर्णांक pid, bool thपढ़ो, स्थिर अक्षर *item, स्थिर अक्षर *needle);
+बाह्य pid_t clone_पूर्णांकo_cgroup(पूर्णांक cgroup_fd);
+बाह्य पूर्णांक clone_reap(pid_t pid, पूर्णांक options);
+बाह्य पूर्णांक clone_पूर्णांकo_cgroup_run_रुको(स्थिर अक्षर *cgroup);
+बाह्य पूर्णांक dirfd_खोलो_opath(स्थिर अक्षर *dir);

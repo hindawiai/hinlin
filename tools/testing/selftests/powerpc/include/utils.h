@@ -1,148 +1,149 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright 2013, Michael Ellerman, IBM Corp.
  */
 
-#ifndef _SELFTESTS_POWERPC_UTILS_H
-#define _SELFTESTS_POWERPC_UTILS_H
+#अगर_अघोषित _SELFTESTS_POWERPC_UTILS_H
+#घोषणा _SELFTESTS_POWERPC_UTILS_H
 
-#define __cacheline_aligned __attribute__((aligned(128)))
+#घोषणा __cacheline_aligned __attribute__((aligned(128)))
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <linux/auxvec.h>
-#include <linux/perf_event.h>
-#include <asm/cputable.h>
-#include "reg.h"
+#समावेश <मानक_निवेशt.h>
+#समावेश <stdbool.h>
+#समावेश <linux/auxvec.h>
+#समावेश <linux/perf_event.h>
+#समावेश <यंत्र/cputable.h>
+#समावेश "reg.h"
 
-/* Avoid headaches with PRI?64 - just use %ll? always */
-typedef unsigned long long u64;
-typedef   signed long long s64;
+/* Aव्योम headaches with PRI?64 - just use %ll? always */
+प्रकार अचिन्हित दीर्घ दीर्घ u64;
+प्रकार   चिन्हित दीर्घ दीर्घ s64;
 
-/* Just for familiarity */
-typedef uint32_t u32;
-typedef uint16_t u16;
-typedef uint8_t u8;
+/* Just क्रम familiarity */
+प्रकार uपूर्णांक32_t u32;
+प्रकार uपूर्णांक16_t u16;
+प्रकार uपूर्णांक8_t u8;
 
-void test_harness_set_timeout(uint64_t time);
-int test_harness(int (test_function)(void), char *name);
+व्योम test_harness_set_समयout(uपूर्णांक64_t समय);
+पूर्णांक test_harness(पूर्णांक (test_function)(व्योम), अक्षर *name);
 
-int read_auxv(char *buf, ssize_t buf_size);
-void *find_auxv_entry(int type, char *auxv);
-void *get_auxv_entry(int type);
+पूर्णांक पढ़ो_auxv(अक्षर *buf, sमाप_प्रकार buf_size);
+व्योम *find_auxv_entry(पूर्णांक type, अक्षर *auxv);
+व्योम *get_auxv_entry(पूर्णांक type);
 
-int pick_online_cpu(void);
+पूर्णांक pick_online_cpu(व्योम);
 
-int read_debugfs_file(char *debugfs_file, int *result);
-int write_debugfs_file(char *debugfs_file, int result);
-int read_sysfs_file(char *debugfs_file, char *result, size_t result_size);
-int perf_event_open_counter(unsigned int type,
-			    unsigned long config, int group_fd);
-int perf_event_enable(int fd);
-int perf_event_disable(int fd);
-int perf_event_reset(int fd);
+पूर्णांक पढ़ो_debugfs_file(अक्षर *debugfs_file, पूर्णांक *result);
+पूर्णांक ग_लिखो_debugfs_file(अक्षर *debugfs_file, पूर्णांक result);
+पूर्णांक पढ़ो_sysfs_file(अक्षर *debugfs_file, अक्षर *result, माप_प्रकार result_size);
+पूर्णांक perf_event_खोलो_counter(अचिन्हित पूर्णांक type,
+			    अचिन्हित दीर्घ config, पूर्णांक group_fd);
+पूर्णांक perf_event_enable(पूर्णांक fd);
+पूर्णांक perf_event_disable(पूर्णांक fd);
+पूर्णांक perf_event_reset(पूर्णांक fd);
 
-struct perf_event_read {
+काष्ठा perf_event_पढ़ो अणु
 	__u64 nr;
 	__u64 l1d_misses;
-};
+पूर्ण;
 
-#if !defined(__GLIBC_PREREQ) || !__GLIBC_PREREQ(2, 30)
-#include <unistd.h>
-#include <sys/syscall.h>
+#अगर !defined(__GLIBC_PREREQ) || !__GLIBC_PREREQ(2, 30)
+#समावेश <unistd.h>
+#समावेश <sys/syscall.h>
 
-static inline pid_t gettid(void)
-{
-	return syscall(SYS_gettid);
-}
-#endif
+अटल अंतरभूत pid_t gettid(व्योम)
+अणु
+	वापस syscall(SYS_gettid);
+पूर्ण
+#पूर्ण_अगर
 
-static inline bool have_hwcap(unsigned long ftr)
-{
-	return ((unsigned long)get_auxv_entry(AT_HWCAP) & ftr) == ftr;
-}
+अटल अंतरभूत bool have_hwcap(अचिन्हित दीर्घ ftr)
+अणु
+	वापस ((अचिन्हित दीर्घ)get_auxv_entry(AT_HWCAP) & ftr) == ftr;
+पूर्ण
 
-#ifdef AT_HWCAP2
-static inline bool have_hwcap2(unsigned long ftr2)
-{
-	return ((unsigned long)get_auxv_entry(AT_HWCAP2) & ftr2) == ftr2;
-}
-#else
-static inline bool have_hwcap2(unsigned long ftr2)
-{
-	return false;
-}
-#endif
+#अगर_घोषित AT_HWCAP2
+अटल अंतरभूत bool have_hwcap2(अचिन्हित दीर्घ ftr2)
+अणु
+	वापस ((अचिन्हित दीर्घ)get_auxv_entry(AT_HWCAP2) & ftr2) == ftr2;
+पूर्ण
+#अन्यथा
+अटल अंतरभूत bool have_hwcap2(अचिन्हित दीर्घ ftr2)
+अणु
+	वापस false;
+पूर्ण
+#पूर्ण_अगर
 
-bool is_ppc64le(void);
-int using_hash_mmu(bool *using_hash);
+bool is_ppc64le(व्योम);
+पूर्णांक using_hash_mmu(bool *using_hash);
 
 /* Yes, this is evil */
-#define FAIL_IF(x)						\
-do {								\
-	if ((x)) {						\
-		fprintf(stderr,					\
+#घोषणा FAIL_IF(x)						\
+करो अणु								\
+	अगर ((x)) अणु						\
+		ख_लिखो(मानक_त्रुटि,					\
 		"[FAIL] Test FAILED on line %d\n", __LINE__);	\
-		return 1;					\
-	}							\
-} while (0)
+		वापस 1;					\
+	पूर्ण							\
+पूर्ण जबतक (0)
 
-#define FAIL_IF_EXIT(x)						\
-do {								\
-	if ((x)) {						\
-		fprintf(stderr,					\
+#घोषणा FAIL_IF_EXIT(x)						\
+करो अणु								\
+	अगर ((x)) अणु						\
+		ख_लिखो(मानक_त्रुटि,					\
 		"[FAIL] Test FAILED on line %d\n", __LINE__);	\
-		_exit(1);					\
-	}							\
-} while (0)
+		_निकास(1);					\
+	पूर्ण							\
+पूर्ण जबतक (0)
 
 /* The test harness uses this, yes it's gross */
-#define MAGIC_SKIP_RETURN_VALUE	99
+#घोषणा MAGIC_SKIP_RETURN_VALUE	99
 
-#define SKIP_IF(x)						\
-do {								\
-	if ((x)) {						\
-		fprintf(stderr,					\
+#घोषणा SKIP_IF(x)						\
+करो अणु								\
+	अगर ((x)) अणु						\
+		ख_लिखो(मानक_त्रुटि,					\
 		"[SKIP] Test skipped on line %d\n", __LINE__);	\
-		return MAGIC_SKIP_RETURN_VALUE;			\
-	}							\
-} while (0)
+		वापस MAGIC_SKIP_RETURN_VALUE;			\
+	पूर्ण							\
+पूर्ण जबतक (0)
 
-#define SKIP_IF_MSG(x, msg)					\
-do {								\
-	if ((x)) {						\
-		fprintf(stderr,					\
+#घोषणा SKIP_IF_MSG(x, msg)					\
+करो अणु								\
+	अगर ((x)) अणु						\
+		ख_लिखो(मानक_त्रुटि,					\
 		"[SKIP] Test skipped on line %d: %s\n",		\
 		 __LINE__, msg);				\
-		return MAGIC_SKIP_RETURN_VALUE;			\
-	}							\
-} while (0)
+		वापस MAGIC_SKIP_RETURN_VALUE;			\
+	पूर्ण							\
+पूर्ण जबतक (0)
 
-#define _str(s) #s
-#define str(s) _str(s)
+#घोषणा _str(s) #s
+#घोषणा str(s) _str(s)
 
-#define sigsafe_err(msg)	({ \
-		ssize_t nbytes __attribute__((unused)); \
-		nbytes = write(STDERR_FILENO, msg, strlen(msg)); })
+#घोषणा sigsafe_err(msg)	(अणु \
+		sमाप_प्रकार nbytes __attribute__((unused)); \
+		nbytes = ग_लिखो(STDERR_खाताNO, msg, म_माप(msg)); पूर्ण)
 
 /* POWER9 feature */
-#ifndef PPC_FEATURE2_ARCH_3_00
-#define PPC_FEATURE2_ARCH_3_00 0x00800000
-#endif
+#अगर_अघोषित PPC_FEATURE2_ARCH_3_00
+#घोषणा PPC_FEATURE2_ARCH_3_00 0x00800000
+#पूर्ण_अगर
 
 /* POWER10 feature */
-#ifndef PPC_FEATURE2_ARCH_3_1
-#define PPC_FEATURE2_ARCH_3_1 0x00040000
-#endif
+#अगर_अघोषित PPC_FEATURE2_ARCH_3_1
+#घोषणा PPC_FEATURE2_ARCH_3_1 0x00040000
+#पूर्ण_अगर
 
-#if defined(__powerpc64__)
-#define UCONTEXT_NIA(UC)	(UC)->uc_mcontext.gp_regs[PT_NIP]
-#define UCONTEXT_MSR(UC)	(UC)->uc_mcontext.gp_regs[PT_MSR]
-#elif defined(__powerpc__)
-#define UCONTEXT_NIA(UC)	(UC)->uc_mcontext.uc_regs->gregs[PT_NIP]
-#define UCONTEXT_MSR(UC)	(UC)->uc_mcontext.uc_regs->gregs[PT_MSR]
-#else
-#error implement UCONTEXT_NIA
-#endif
+#अगर defined(__घातerpc64__)
+#घोषणा UCONTEXT_NIA(UC)	(UC)->uc_mcontext.gp_regs[PT_NIP]
+#घोषणा UCONTEXT_MSR(UC)	(UC)->uc_mcontext.gp_regs[PT_MSR]
+#या_अगर defined(__घातerpc__)
+#घोषणा UCONTEXT_NIA(UC)	(UC)->uc_mcontext.uc_regs->gregs[PT_NIP]
+#घोषणा UCONTEXT_MSR(UC)	(UC)->uc_mcontext.uc_regs->gregs[PT_MSR]
+#अन्यथा
+#त्रुटि implement UCONTEXT_NIA
+#पूर्ण_अगर
 
-#endif /* _SELFTESTS_POWERPC_UTILS_H */
+#पूर्ण_अगर /* _SELFTESTS_POWERPC_UTILS_H */

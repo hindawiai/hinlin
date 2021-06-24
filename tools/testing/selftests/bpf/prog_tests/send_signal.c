@@ -1,193 +1,194 @@
-// SPDX-License-Identifier: GPL-2.0
-#include <test_progs.h>
-#include "test_send_signal_kern.skel.h"
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश <test_progs.h>
+#समावेश "test_send_signal_kern.skel.h"
 
-static volatile int sigusr1_received = 0;
+अटल अस्थिर पूर्णांक sigusr1_received = 0;
 
-static void sigusr1_handler(int signum)
-{
+अटल व्योम sigusr1_handler(पूर्णांक signum)
+अणु
 	sigusr1_received++;
-}
+पूर्ण
 
-static void test_send_signal_common(struct perf_event_attr *attr,
-				    bool signal_thread,
-				    const char *test_name)
-{
-	struct test_send_signal_kern *skel;
-	int pipe_c2p[2], pipe_p2c[2];
-	int err = -1, pmu_fd = -1;
+अटल व्योम test_send_संकेत_common(काष्ठा perf_event_attr *attr,
+				    bool संकेत_thपढ़ो,
+				    स्थिर अक्षर *test_name)
+अणु
+	काष्ठा test_send_संकेत_kern *skel;
+	पूर्णांक pipe_c2p[2], pipe_p2c[2];
+	पूर्णांक err = -1, pmu_fd = -1;
 	__u32 duration = 0;
-	char buf[256];
+	अक्षर buf[256];
 	pid_t pid;
 
-	if (CHECK(pipe(pipe_c2p), test_name,
-		  "pipe pipe_c2p error: %s\n", strerror(errno)))
-		return;
+	अगर (CHECK(pipe(pipe_c2p), test_name,
+		  "pipe pipe_c2p error: %s\n", म_त्रुटि(त्रुटि_सं)))
+		वापस;
 
-	if (CHECK(pipe(pipe_p2c), test_name,
-		  "pipe pipe_p2c error: %s\n", strerror(errno))) {
-		close(pipe_c2p[0]);
-		close(pipe_c2p[1]);
-		return;
-	}
+	अगर (CHECK(pipe(pipe_p2c), test_name,
+		  "pipe pipe_p2c error: %s\n", म_त्रुटि(त्रुटि_सं))) अणु
+		बंद(pipe_c2p[0]);
+		बंद(pipe_c2p[1]);
+		वापस;
+	पूर्ण
 
-	pid = fork();
-	if (CHECK(pid < 0, test_name, "fork error: %s\n", strerror(errno))) {
-		close(pipe_c2p[0]);
-		close(pipe_c2p[1]);
-		close(pipe_p2c[0]);
-		close(pipe_p2c[1]);
-		return;
-	}
+	pid = विभाजन();
+	अगर (CHECK(pid < 0, test_name, "fork error: %s\n", म_त्रुटि(त्रुटि_सं))) अणु
+		बंद(pipe_c2p[0]);
+		बंद(pipe_c2p[1]);
+		बंद(pipe_p2c[0]);
+		बंद(pipe_p2c[1]);
+		वापस;
+	पूर्ण
 
-	if (pid == 0) {
-		/* install signal handler and notify parent */
-		signal(SIGUSR1, sigusr1_handler);
+	अगर (pid == 0) अणु
+		/* install संकेत handler and notअगरy parent */
+		संकेत(SIGUSR1, sigusr1_handler);
 
-		close(pipe_c2p[0]); /* close read */
-		close(pipe_p2c[1]); /* close write */
+		बंद(pipe_c2p[0]); /* बंद पढ़ो */
+		बंद(pipe_p2c[1]); /* बंद ग_लिखो */
 
-		/* notify parent signal handler is installed */
-		CHECK(write(pipe_c2p[1], buf, 1) != 1, "pipe_write", "err %d\n", -errno);
+		/* notअगरy parent संकेत handler is installed */
+		CHECK(ग_लिखो(pipe_c2p[1], buf, 1) != 1, "pipe_write", "err %d\n", -त्रुटि_सं);
 
-		/* make sure parent enabled bpf program to send_signal */
-		CHECK(read(pipe_p2c[0], buf, 1) != 1, "pipe_read", "err %d\n", -errno);
+		/* make sure parent enabled bpf program to send_संकेत */
+		CHECK(पढ़ो(pipe_p2c[0], buf, 1) != 1, "pipe_read", "err %d\n", -त्रुटि_सं);
 
-		/* wait a little for signal handler */
+		/* रुको a little क्रम संकेत handler */
 		sleep(1);
 
 		buf[0] = sigusr1_received ? '2' : '0';
-		CHECK(write(pipe_c2p[1], buf, 1) != 1, "pipe_write", "err %d\n", -errno);
+		CHECK(ग_लिखो(pipe_c2p[1], buf, 1) != 1, "pipe_write", "err %d\n", -त्रुटि_सं);
 
-		/* wait for parent notification and exit */
-		CHECK(read(pipe_p2c[0], buf, 1) != 1, "pipe_read", "err %d\n", -errno);
+		/* रुको क्रम parent notअगरication and निकास */
+		CHECK(पढ़ो(pipe_p2c[0], buf, 1) != 1, "pipe_read", "err %d\n", -त्रुटि_सं);
 
-		close(pipe_c2p[1]);
-		close(pipe_p2c[0]);
-		exit(0);
-	}
+		बंद(pipe_c2p[1]);
+		बंद(pipe_p2c[0]);
+		निकास(0);
+	पूर्ण
 
-	close(pipe_c2p[1]); /* close write */
-	close(pipe_p2c[0]); /* close read */
+	बंद(pipe_c2p[1]); /* बंद ग_लिखो */
+	बंद(pipe_p2c[0]); /* बंद पढ़ो */
 
-	skel = test_send_signal_kern__open_and_load();
-	if (CHECK(!skel, "skel_open_and_load", "skeleton open_and_load failed\n"))
-		goto skel_open_load_failure;
+	skel = test_send_संकेत_kern__खोलो_and_load();
+	अगर (CHECK(!skel, "skel_open_and_load", "skeleton open_and_load failed\n"))
+		जाओ skel_खोलो_load_failure;
 
-	if (!attr) {
-		err = test_send_signal_kern__attach(skel);
-		if (CHECK(err, "skel_attach", "skeleton attach failed\n")) {
+	अगर (!attr) अणु
+		err = test_send_संकेत_kern__attach(skel);
+		अगर (CHECK(err, "skel_attach", "skeleton attach failed\n")) अणु
 			err = -1;
-			goto destroy_skel;
-		}
-	} else {
-		pmu_fd = syscall(__NR_perf_event_open, attr, pid, -1,
+			जाओ destroy_skel;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		pmu_fd = syscall(__NR_perf_event_खोलो, attr, pid, -1,
 				 -1 /* group id */, 0 /* flags */);
-		if (CHECK(pmu_fd < 0, test_name, "perf_event_open error: %s\n",
-			strerror(errno))) {
+		अगर (CHECK(pmu_fd < 0, test_name, "perf_event_open error: %s\n",
+			म_त्रुटि(त्रुटि_सं))) अणु
 			err = -1;
-			goto destroy_skel;
-		}
+			जाओ destroy_skel;
+		पूर्ण
 
-		skel->links.send_signal_perf =
-			bpf_program__attach_perf_event(skel->progs.send_signal_perf, pmu_fd);
-		if (CHECK(IS_ERR(skel->links.send_signal_perf), "attach_perf_event",
-			  "err %ld\n", PTR_ERR(skel->links.send_signal_perf)))
-			goto disable_pmu;
-	}
+		skel->links.send_संकेत_perf =
+			bpf_program__attach_perf_event(skel->progs.send_संकेत_perf, pmu_fd);
+		अगर (CHECK(IS_ERR(skel->links.send_संकेत_perf), "attach_perf_event",
+			  "err %ld\n", PTR_ERR(skel->links.send_संकेत_perf)))
+			जाओ disable_pmu;
+	पूर्ण
 
-	/* wait until child signal handler installed */
-	CHECK(read(pipe_c2p[0], buf, 1) != 1, "pipe_read", "err %d\n", -errno);
+	/* रुको until child संकेत handler installed */
+	CHECK(पढ़ो(pipe_c2p[0], buf, 1) != 1, "pipe_read", "err %d\n", -त्रुटि_सं);
 
-	/* trigger the bpf send_signal */
+	/* trigger the bpf send_संकेत */
 	skel->bss->pid = pid;
 	skel->bss->sig = SIGUSR1;
-	skel->bss->signal_thread = signal_thread;
+	skel->bss->संकेत_thपढ़ो = संकेत_thपढ़ो;
 
-	/* notify child that bpf program can send_signal now */
-	CHECK(write(pipe_p2c[1], buf, 1) != 1, "pipe_write", "err %d\n", -errno);
+	/* notअगरy child that bpf program can send_संकेत now */
+	CHECK(ग_लिखो(pipe_p2c[1], buf, 1) != 1, "pipe_write", "err %d\n", -त्रुटि_सं);
 
-	/* wait for result */
-	err = read(pipe_c2p[0], buf, 1);
-	if (CHECK(err < 0, test_name, "reading pipe error: %s\n", strerror(errno)))
-		goto disable_pmu;
-	if (CHECK(err == 0, test_name, "reading pipe error: size 0\n")) {
+	/* रुको क्रम result */
+	err = पढ़ो(pipe_c2p[0], buf, 1);
+	अगर (CHECK(err < 0, test_name, "reading pipe error: %s\n", म_त्रुटि(त्रुटि_सं)))
+		जाओ disable_pmu;
+	अगर (CHECK(err == 0, test_name, "reading pipe error: size 0\n")) अणु
 		err = -1;
-		goto disable_pmu;
-	}
+		जाओ disable_pmu;
+	पूर्ण
 
 	CHECK(buf[0] != '2', test_name, "incorrect result\n");
 
-	/* notify child safe to exit */
-	CHECK(write(pipe_p2c[1], buf, 1) != 1, "pipe_write", "err %d\n", -errno);
+	/* notअगरy child safe to निकास */
+	CHECK(ग_लिखो(pipe_p2c[1], buf, 1) != 1, "pipe_write", "err %d\n", -त्रुटि_सं);
 
 disable_pmu:
-	close(pmu_fd);
+	बंद(pmu_fd);
 destroy_skel:
-	test_send_signal_kern__destroy(skel);
-skel_open_load_failure:
-	close(pipe_c2p[0]);
-	close(pipe_p2c[1]);
-	wait(NULL);
-}
+	test_send_संकेत_kern__destroy(skel);
+skel_खोलो_load_failure:
+	बंद(pipe_c2p[0]);
+	बंद(pipe_p2c[1]);
+	रुको(शून्य);
+पूर्ण
 
-static void test_send_signal_tracepoint(bool signal_thread)
-{
-	test_send_signal_common(NULL, signal_thread, "tracepoint");
-}
+अटल व्योम test_send_संकेत_tracepoपूर्णांक(bool संकेत_thपढ़ो)
+अणु
+	test_send_संकेत_common(शून्य, संकेत_thपढ़ो, "tracepoint");
+पूर्ण
 
-static void test_send_signal_perf(bool signal_thread)
-{
-	struct perf_event_attr attr = {
+अटल व्योम test_send_संकेत_perf(bool संकेत_thपढ़ो)
+अणु
+	काष्ठा perf_event_attr attr = अणु
 		.sample_period = 1,
 		.type = PERF_TYPE_SOFTWARE,
 		.config = PERF_COUNT_SW_CPU_CLOCK,
-	};
+	पूर्ण;
 
-	test_send_signal_common(&attr, signal_thread, "perf_sw_event");
-}
+	test_send_संकेत_common(&attr, संकेत_thपढ़ो, "perf_sw_event");
+पूर्ण
 
-static void test_send_signal_nmi(bool signal_thread)
-{
-	struct perf_event_attr attr = {
+अटल व्योम test_send_संकेत_nmi(bool संकेत_thपढ़ो)
+अणु
+	काष्ठा perf_event_attr attr = अणु
 		.sample_period = 1,
 		.type = PERF_TYPE_HARDWARE,
 		.config = PERF_COUNT_HW_CPU_CYCLES,
-	};
-	int pmu_fd;
+	पूर्ण;
+	पूर्णांक pmu_fd;
 
-	/* Some setups (e.g. virtual machines) might run with hardware
-	 * perf events disabled. If this is the case, skip this test.
+	/* Some setups (e.g. भव machines) might run with hardware
+	 * perf events disabled. If this is the हाल, skip this test.
 	 */
-	pmu_fd = syscall(__NR_perf_event_open, &attr, 0 /* pid */,
+	pmu_fd = syscall(__NR_perf_event_खोलो, &attr, 0 /* pid */,
 			 -1 /* cpu */, -1 /* group_fd */, 0 /* flags */);
-	if (pmu_fd == -1) {
-		if (errno == ENOENT) {
-			printf("%s:SKIP:no PERF_COUNT_HW_CPU_CYCLES\n",
+	अगर (pmu_fd == -1) अणु
+		अगर (त्रुटि_सं == ENOENT) अणु
+			म_लिखो("%s:SKIP:no PERF_COUNT_HW_CPU_CYCLES\n",
 			       __func__);
 			test__skip();
-			return;
-		}
-		/* Let the test fail with a more informative message */
-	} else {
-		close(pmu_fd);
-	}
+			वापस;
+		पूर्ण
+		/* Let the test fail with a more inक्रमmative message */
+	पूर्ण अन्यथा अणु
+		बंद(pmu_fd);
+	पूर्ण
 
-	test_send_signal_common(&attr, signal_thread, "perf_hw_event");
-}
+	test_send_संकेत_common(&attr, संकेत_thपढ़ो, "perf_hw_event");
+पूर्ण
 
-void test_send_signal(void)
-{
-	if (test__start_subtest("send_signal_tracepoint"))
-		test_send_signal_tracepoint(false);
-	if (test__start_subtest("send_signal_perf"))
-		test_send_signal_perf(false);
-	if (test__start_subtest("send_signal_nmi"))
-		test_send_signal_nmi(false);
-	if (test__start_subtest("send_signal_tracepoint_thread"))
-		test_send_signal_tracepoint(true);
-	if (test__start_subtest("send_signal_perf_thread"))
-		test_send_signal_perf(true);
-	if (test__start_subtest("send_signal_nmi_thread"))
-		test_send_signal_nmi(true);
-}
+व्योम test_send_संकेत(व्योम)
+अणु
+	अगर (test__start_subtest("send_signal_tracepoint"))
+		test_send_संकेत_tracepoपूर्णांक(false);
+	अगर (test__start_subtest("send_signal_perf"))
+		test_send_संकेत_perf(false);
+	अगर (test__start_subtest("send_signal_nmi"))
+		test_send_संकेत_nmi(false);
+	अगर (test__start_subtest("send_signal_tracepoint_thread"))
+		test_send_संकेत_tracepoपूर्णांक(true);
+	अगर (test__start_subtest("send_signal_perf_thread"))
+		test_send_संकेत_perf(true);
+	अगर (test__start_subtest("send_signal_nmi_thread"))
+		test_send_संकेत_nmi(true);
+पूर्ण

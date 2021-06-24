@@ -1,22 +1,23 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef __UAPI_TC_CONNMARK_H
-#define __UAPI_TC_CONNMARK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित __UAPI_TC_CONNMARK_H
+#घोषणा __UAPI_TC_CONNMARK_H
 
-#include <linux/types.h>
-#include <linux/pkt_cls.h>
+#समावेश <linux/types.h>
+#समावेश <linux/pkt_cls.h>
 
-struct tc_connmark {
+काष्ठा tc_connmark अणु
 	tc_gen;
 	__u16 zone;
-};
+पूर्ण;
 
-enum {
+क्रमागत अणु
 	TCA_CONNMARK_UNSPEC,
 	TCA_CONNMARK_PARMS,
 	TCA_CONNMARK_TM,
 	TCA_CONNMARK_PAD,
 	__TCA_CONNMARK_MAX
-};
-#define TCA_CONNMARK_MAX (__TCA_CONNMARK_MAX - 1)
+पूर्ण;
+#घोषणा TCA_CONNMARK_MAX (__TCA_CONNMARK_MAX - 1)
 
-#endif
+#पूर्ण_अगर

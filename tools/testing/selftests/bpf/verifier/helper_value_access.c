@@ -1,6 +1,7 @@
-{
+<शैली गुरु>
+अणु
 	"helper access to map: full range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -8,18 +9,18 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 4),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_2, sizeof(struct test_val)),
+	BPF_MOV64_IMM(BPF_REG_2, माप(काष्ठा test_val)),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: partial range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -29,16 +30,16 @@
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_MOV64_IMM(BPF_REG_2, 8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: empty range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -47,17 +48,17 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 3),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_MOV64_IMM(BPF_REG_2, 0),
-	BPF_EMIT_CALL(BPF_FUNC_trace_printk),
+	BPF_EMIT_CALL(BPF_FUNC_trace_prपूर्णांकk),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "invalid access to map value, value_size=48 off=0 size=0",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: out-of-bound range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -65,19 +66,19 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 4),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_2, sizeof(struct test_val) + 8),
+	BPF_MOV64_IMM(BPF_REG_2, माप(काष्ठा test_val) + 8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "invalid access to map value, value_size=48 off=0 size=56",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: negative range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -87,17 +88,17 @@
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_MOV64_IMM(BPF_REG_2, -8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R2 min value is negative",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const imm): full range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -105,20 +106,20 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 5),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, offsetof(struct test_val, foo)),
+	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_2,
-		      sizeof(struct test_val) -	offsetof(struct test_val, foo)),
+		      माप(काष्ठा test_val) -	दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const imm): partial range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -126,19 +127,19 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 5),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, offsetof(struct test_val, foo)),
+	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_2, 8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const imm): empty range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -146,19 +147,19 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 4),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, offsetof(struct test_val, foo)),
+	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_2, 0),
-	BPF_EMIT_CALL(BPF_FUNC_trace_printk),
+	BPF_EMIT_CALL(BPF_FUNC_trace_prपूर्णांकk),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "invalid access to map value, value_size=48 off=4 size=0",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const imm): out-of-bound range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -166,21 +167,21 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 5),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, offsetof(struct test_val, foo)),
+	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_2,
-		      sizeof(struct test_val) - offsetof(struct test_val, foo) + 8),
+		      माप(काष्ठा test_val) - दुरत्व(काष्ठा test_val, foo) + 8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "invalid access to map value, value_size=48 off=4 size=52",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const imm): negative range (> adjustment)",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -188,20 +189,20 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 5),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, offsetof(struct test_val, foo)),
+	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_2, -8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R2 min value is negative",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const imm): negative range (< adjustment)",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -209,20 +210,20 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 5),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, offsetof(struct test_val, foo)),
+	BPF_ALU64_IMM(BPF_ADD, BPF_REG_1, दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_2, -1),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R2 min value is negative",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const reg): full range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -230,21 +231,21 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 6),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_3, offsetof(struct test_val, foo)),
+	BPF_MOV64_IMM(BPF_REG_3, दुरत्व(काष्ठा test_val, foo)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2,
-		      sizeof(struct test_val) - offsetof(struct test_val, foo)),
+		      माप(काष्ठा test_val) - दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const reg): partial range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -252,20 +253,20 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 6),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_3, offsetof(struct test_val, foo)),
+	BPF_MOV64_IMM(BPF_REG_3, दुरत्व(काष्ठा test_val, foo)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2, 8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const reg): empty range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -276,17 +277,17 @@
 	BPF_MOV64_IMM(BPF_REG_3, 0),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2, 0),
-	BPF_EMIT_CALL(BPF_FUNC_trace_printk),
+	BPF_EMIT_CALL(BPF_FUNC_trace_prपूर्णांकk),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R1 min value is outside of the allowed memory range",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const reg): out-of-bound range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -294,23 +295,23 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 6),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_3, offsetof(struct test_val, foo)),
+	BPF_MOV64_IMM(BPF_REG_3, दुरत्व(काष्ठा test_val, foo)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2,
-		      sizeof(struct test_val) -
-		      offsetof(struct test_val, foo) + 8),
+		      माप(काष्ठा test_val) -
+		      दुरत्व(काष्ठा test_val, foo) + 8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "invalid access to map value, value_size=48 off=4 size=52",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const reg): negative range (> adjustment)",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -318,21 +319,21 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 6),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_3, offsetof(struct test_val, foo)),
+	BPF_MOV64_IMM(BPF_REG_3, दुरत्व(काष्ठा test_val, foo)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2, -8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R2 min value is negative",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via const reg): negative range (< adjustment)",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -340,21 +341,21 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 6),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_3, offsetof(struct test_val, foo)),
+	BPF_MOV64_IMM(BPF_REG_3, दुरत्व(काष्ठा test_val, foo)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2, -1),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R2 min value is negative",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via variable): full range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -363,21 +364,21 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 7),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_0, 0),
-	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, offsetof(struct test_val, foo), 4),
+	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, दुरत्व(काष्ठा test_val, foo), 4),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2,
-		      sizeof(struct test_val) - offsetof(struct test_val, foo)),
+		      माप(काष्ठा test_val) - दुरत्व(काष्ठा test_val, foo)),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via variable): partial range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -386,20 +387,20 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 7),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_0, 0),
-	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, offsetof(struct test_val, foo), 4),
+	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, दुरत्व(काष्ठा test_val, foo), 4),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2, 8),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via variable): empty range",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -408,20 +409,20 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 6),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_0, 0),
-	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, offsetof(struct test_val, foo), 3),
+	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, दुरत्व(काष्ठा test_val, foo), 3),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2, 0),
-	BPF_EMIT_CALL(BPF_FUNC_trace_printk),
+	BPF_EMIT_CALL(BPF_FUNC_trace_prपूर्णांकk),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R1 min value is outside of the allowed memory range",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via variable): no max check",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -433,17 +434,17 @@
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2, 1),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "R1 unbounded memory access",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to adjusted map (via variable): wrong max check",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -452,23 +453,23 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 7),
 	BPF_MOV64_REG(BPF_REG_1, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_0, 0),
-	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, offsetof(struct test_val, foo), 4),
+	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, दुरत्व(काष्ठा test_val, foo), 4),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_1, BPF_REG_3),
 	BPF_MOV64_IMM(BPF_REG_2,
-		      sizeof(struct test_val) -
-		      offsetof(struct test_val, foo) + 1),
+		      माप(काष्ठा test_val) -
+		      दुरत्व(काष्ठा test_val, foo) + 1),
 	BPF_MOV64_IMM(BPF_REG_3, 0),
-	BPF_EMIT_CALL(BPF_FUNC_probe_read_kernel),
+	BPF_EMIT_CALL(BPF_FUNC_probe_पढ़ो_kernel),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.errstr = "invalid access to map value, value_size=48 off=4 size=45",
 	.result = REJECT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using <, good access",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -484,14 +485,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using <, bad access",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -507,15 +508,15 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = REJECT,
 	.errstr = "R1 unbounded memory access",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using <=, good access",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -531,14 +532,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using <=, bad access",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -554,15 +555,15 @@
 	BPF_EXIT_INSN(),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = REJECT,
 	.errstr = "R1 unbounded memory access",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using s<, good access",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -579,14 +580,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using s<, good access 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -603,14 +604,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using s<, bad access",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -627,15 +628,15 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = REJECT,
 	.errstr = "R1 min value is negative",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using s<=, good access",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -652,14 +653,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using s<=, good access 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -676,14 +677,14 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"helper access to map: bounds check using s<=, bad access",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -700,15 +701,15 @@
 	BPF_ST_MEM(BPF_B, BPF_REG_1, 0, 0),
 	BPF_MOV64_IMM(BPF_REG_0, 0),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_48b = { 3 },
+	पूर्ण,
+	.fixup_map_hash_48b = अणु 3 पूर्ण,
 	.result = REJECT,
 	.errstr = "R1 min value is negative",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map lookup helper access to map",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -719,14 +720,14 @@
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 8 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 8 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map update helper access to map",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -739,14 +740,14 @@
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_update_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 10 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 10 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map update helper access to map: wrong size",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -759,16 +760,16 @@
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_update_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_8b = { 3 },
-	.fixup_map_hash_16b = { 10 },
+	पूर्ण,
+	.fixup_map_hash_8b = अणु 3 पूर्ण,
+	.fixup_map_hash_16b = अणु 10 पूर्ण,
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=8 off=0 size=16",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map helper access to adjusted map (via const imm)",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -776,18 +777,18 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 5),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
-	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, offsetof(struct other_val, bar)),
+	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, दुरत्व(काष्ठा other_val, bar)),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 9 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 9 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map helper access to adjusted map (via const imm): out-of-bound 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -795,19 +796,19 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 5),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
-	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, sizeof(struct other_val) - 4),
+	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, माप(काष्ठा other_val) - 4),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 9 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 9 पूर्ण,
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=16 off=12 size=8",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map helper access to adjusted map (via const imm): out-of-bound 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -819,15 +820,15 @@
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 9 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 9 पूर्ण,
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=16 off=-4 size=8",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map helper access to adjusted map (via const reg)",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -835,19 +836,19 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 6),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_3, offsetof(struct other_val, bar)),
+	BPF_MOV64_IMM(BPF_REG_3, दुरत्व(काष्ठा other_val, bar)),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_2, BPF_REG_3),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 10 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 10 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map helper access to adjusted map (via const reg): out-of-bound 1",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -855,20 +856,20 @@
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 6),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
-	BPF_MOV64_IMM(BPF_REG_3, sizeof(struct other_val) - 4),
+	BPF_MOV64_IMM(BPF_REG_3, माप(काष्ठा other_val) - 4),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_2, BPF_REG_3),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 10 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 10 पूर्ण,
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=16 off=12 size=8",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map helper access to adjusted map (via const reg): out-of-bound 2",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -881,15 +882,15 @@
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 10 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 10 पूर्ण,
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=16 off=-4 size=8",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map helper access to adjusted map (via variable)",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -898,19 +899,19 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 7),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_0, 0),
-	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, offsetof(struct other_val, bar), 4),
+	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, दुरत्व(काष्ठा other_val, bar), 4),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_2, BPF_REG_3),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 11 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 11 पूर्ण,
 	.result = ACCEPT,
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map helper access to adjusted map (via variable): no max check",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -923,15 +924,15 @@
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 10 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 10 पूर्ण,
 	.result = REJECT,
 	.errstr = "R2 unbounded memory access, make sure to bounds check any such access",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
-{
+पूर्ण,
+अणु
 	"map helper access to adjusted map (via variable): wrong max check",
-	.insns = {
+	.insns = अणु
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_10),
 	BPF_ALU64_IMM(BPF_ADD, BPF_REG_2, -8),
 	BPF_ST_MEM(BPF_DW, BPF_REG_2, 0, 0),
@@ -940,14 +941,14 @@
 	BPF_JMP_IMM(BPF_JEQ, BPF_REG_0, 0, 7),
 	BPF_MOV64_REG(BPF_REG_2, BPF_REG_0),
 	BPF_LDX_MEM(BPF_W, BPF_REG_3, BPF_REG_0, 0),
-	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, offsetof(struct other_val, bar) + 1, 4),
+	BPF_JMP_IMM(BPF_JGT, BPF_REG_3, दुरत्व(काष्ठा other_val, bar) + 1, 4),
 	BPF_ALU64_REG(BPF_ADD, BPF_REG_2, BPF_REG_3),
 	BPF_LD_MAP_FD(BPF_REG_1, 0),
 	BPF_EMIT_CALL(BPF_FUNC_map_lookup_elem),
 	BPF_EXIT_INSN(),
-	},
-	.fixup_map_hash_16b = { 3, 11 },
+	पूर्ण,
+	.fixup_map_hash_16b = अणु 3, 11 पूर्ण,
 	.result = REJECT,
 	.errstr = "invalid access to map value, value_size=16 off=9 size=8",
 	.prog_type = BPF_PROG_TYPE_TRACEPOINT,
-},
+पूर्ण,

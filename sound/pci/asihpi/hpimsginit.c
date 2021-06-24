@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /******************************************************************************
 
     AudioScience HPI driver
@@ -10,111 +11,111 @@
  (C) Copyright AudioScience Inc. 2007
 *******************************************************************************/
 
-#include "hpi_internal.h"
-#include "hpimsginit.h"
-#include <linux/nospec.h>
+#समावेश "hpi_internal.h"
+#समावेश "hpimsginit.h"
+#समावेश <linux/nospec.h>
 
-/* The actual message size for each object type */
-static u16 msg_size[HPI_OBJ_MAXINDEX + 1] = HPI_MESSAGE_SIZE_BY_OBJECT;
-/* The actual response size for each object type */
-static u16 res_size[HPI_OBJ_MAXINDEX + 1] = HPI_RESPONSE_SIZE_BY_OBJECT;
-/* Flag to enable alternate message type for SSX2 bypass. */
-static u16 gwSSX2_bypass;
+/* The actual message size क्रम each object type */
+अटल u16 msg_size[HPI_OBJ_MAXINDEX + 1] = HPI_MESSAGE_SIZE_BY_OBJECT;
+/* The actual response size क्रम each object type */
+अटल u16 res_size[HPI_OBJ_MAXINDEX + 1] = HPI_RESPONSE_SIZE_BY_OBJECT;
+/* Flag to enable alternate message type क्रम SSX2 bypass. */
+अटल u16 gwSSX2_bypass;
 
-/** \internal
-  * initialize the HPI message structure
+/** \पूर्णांकernal
+  * initialize the HPI message काष्ठाure
   */
-static void hpi_init_message(struct hpi_message *phm, u16 object,
+अटल व्योम hpi_init_message(काष्ठा hpi_message *phm, u16 object,
 	u16 function)
-{
+अणु
 	u16 size;
 
-	if ((object > 0) && (object <= HPI_OBJ_MAXINDEX)) {
+	अगर ((object > 0) && (object <= HPI_OBJ_MAXINDEX)) अणु
 		object = array_index_nospec(object, HPI_OBJ_MAXINDEX + 1);
 		size = msg_size[object];
-	} else {
-		size = sizeof(*phm);
-	}
+	पूर्ण अन्यथा अणु
+		size = माप(*phm);
+	पूर्ण
 
-	memset(phm, 0, size);
+	स_रखो(phm, 0, size);
 	phm->size = size;
 
-	if (gwSSX2_bypass)
+	अगर (gwSSX2_bypass)
 		phm->type = HPI_TYPE_SSX2BYPASS_MESSAGE;
-	else
+	अन्यथा
 		phm->type = HPI_TYPE_REQUEST;
 	phm->object = object;
 	phm->function = function;
 	phm->version = 0;
 	phm->adapter_index = HPI_ADAPTER_INDEX_INVALID;
 	/* Expect actual adapter index to be set by caller */
-}
+पूर्ण
 
-/** \internal
-  * initialize the HPI response structure
+/** \पूर्णांकernal
+  * initialize the HPI response काष्ठाure
   */
-void hpi_init_response(struct hpi_response *phr, u16 object, u16 function,
+व्योम hpi_init_response(काष्ठा hpi_response *phr, u16 object, u16 function,
 	u16 error)
-{
+अणु
 	u16 size;
 
-	if ((object > 0) && (object <= HPI_OBJ_MAXINDEX)) {
+	अगर ((object > 0) && (object <= HPI_OBJ_MAXINDEX)) अणु
 		object = array_index_nospec(object, HPI_OBJ_MAXINDEX + 1);
 		size = res_size[object];
-	} else {
-		size = sizeof(*phr);
-	}
+	पूर्ण अन्यथा अणु
+		size = माप(*phr);
+	पूर्ण
 
-	memset(phr, 0, sizeof(*phr));
+	स_रखो(phr, 0, माप(*phr));
 	phr->size = size;
 	phr->type = HPI_TYPE_RESPONSE;
 	phr->object = object;
 	phr->function = function;
 	phr->error = error;
-	phr->specific_error = 0;
+	phr->specअगरic_error = 0;
 	phr->version = 0;
-}
+पूर्ण
 
-void hpi_init_message_response(struct hpi_message *phm,
-	struct hpi_response *phr, u16 object, u16 function)
-{
+व्योम hpi_init_message_response(काष्ठा hpi_message *phm,
+	काष्ठा hpi_response *phr, u16 object, u16 function)
+अणु
 	hpi_init_message(phm, object, function);
-	/* default error return if the response is
+	/* शेष error वापस अगर the response is
 	   not filled in by the callee */
 	hpi_init_response(phr, object, function,
 		HPI_ERROR_PROCESSING_MESSAGE);
-}
+पूर्ण
 
-static void hpi_init_messageV1(struct hpi_message_header *phm, u16 size,
+अटल व्योम hpi_init_messageV1(काष्ठा hpi_message_header *phm, u16 size,
 	u16 object, u16 function)
-{
-	memset(phm, 0, size);
-	if ((object > 0) && (object <= HPI_OBJ_MAXINDEX)) {
+अणु
+	स_रखो(phm, 0, size);
+	अगर ((object > 0) && (object <= HPI_OBJ_MAXINDEX)) अणु
 		phm->size = size;
 		phm->type = HPI_TYPE_REQUEST;
 		phm->object = object;
 		phm->function = function;
 		phm->version = 1;
 		/* Expect adapter index to be set by caller */
-	}
-}
+	पूर्ण
+पूर्ण
 
-void hpi_init_responseV1(struct hpi_response_header *phr, u16 size,
+व्योम hpi_init_responseV1(काष्ठा hpi_response_header *phr, u16 size,
 	u16 object, u16 function)
-{
-	(void)object;
-	(void)function;
-	memset(phr, 0, size);
+अणु
+	(व्योम)object;
+	(व्योम)function;
+	स_रखो(phr, 0, size);
 	phr->size = size;
 	phr->version = 1;
 	phr->type = HPI_TYPE_RESPONSE;
 	phr->error = HPI_ERROR_PROCESSING_MESSAGE;
-}
+पूर्ण
 
-void hpi_init_message_responseV1(struct hpi_message_header *phm, u16 msg_size,
-	struct hpi_response_header *phr, u16 res_size, u16 object,
+व्योम hpi_init_message_responseV1(काष्ठा hpi_message_header *phm, u16 msg_size,
+	काष्ठा hpi_response_header *phr, u16 res_size, u16 object,
 	u16 function)
-{
+अणु
 	hpi_init_messageV1(phm, msg_size, object, function);
 	hpi_init_responseV1(phr, res_size, object, function);
-}
+पूर्ण

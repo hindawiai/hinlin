@@ -1,8 +1,9 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __IEEE802154_NL802154_H
-#define __IEEE802154_NL802154_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __IEEE802154_NL802154_H
+#घोषणा __IEEE802154_NL802154_H
 
-int nl802154_init(void);
-void nl802154_exit(void);
+पूर्णांक nl802154_init(व्योम);
+व्योम nl802154_निकास(व्योम);
 
-#endif /* __IEEE802154_NL802154_H */
+#पूर्ण_अगर /* __IEEE802154_NL802154_H */

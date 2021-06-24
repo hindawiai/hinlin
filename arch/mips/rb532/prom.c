@@ -1,117 +1,118 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  RouterBoard 500 specific prom routines
+ *  RouterBoard 500 specअगरic prom routines
  *
  *  Copyright (C) 2003, Peter Sadik <peter.sadik@idt.com>
  *  Copyright (C) 2005-2006, P.Christeas <p_christ@hol.gr>
- *  Copyright (C) 2007, Gabor Juhos <juhosg@openwrt.org>
- *			Felix Fietkau <nbd@openwrt.org>
- *			Florian Fainelli <florian@openwrt.org>
+ *  Copyright (C) 2007, Gabor Juhos <juhosg@खोलोwrt.org>
+ *			Felix Fietkau <nbd@खोलोwrt.org>
+ *			Florian Fainelli <florian@खोलोwrt.org>
  */
 
-#include <linux/init.h>
-#include <linux/mm.h>
-#include <linux/export.h>
-#include <linux/string.h>
-#include <linux/console.h>
-#include <linux/memblock.h>
-#include <linux/ioport.h>
-#include <linux/blkdev.h>
+#समावेश <linux/init.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/export.h>
+#समावेश <linux/माला.स>
+#समावेश <linux/console.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/ioport.h>
+#समावेश <linux/blkdev.h>
 
-#include <asm/bootinfo.h>
-#include <asm/mach-rc32434/ddr.h>
-#include <asm/mach-rc32434/prom.h>
+#समावेश <यंत्र/bootinfo.h>
+#समावेश <यंत्र/mach-rc32434/ddr.h>
+#समावेश <यंत्र/mach-rc32434/prom.h>
 
-unsigned int idt_cpu_freq = 132000000;
+अचिन्हित पूर्णांक idt_cpu_freq = 132000000;
 EXPORT_SYMBOL(idt_cpu_freq);
 
-static struct resource ddr_reg[] = {
-	{
+अटल काष्ठा resource ddr_reg[] = अणु
+	अणु
 		.name = "ddr-reg",
 		.start = DDR0_PHYS_ADDR,
-		.end = DDR0_PHYS_ADDR + sizeof(struct ddr_ram),
+		.end = DDR0_PHYS_ADDR + माप(काष्ठा ddr_ram),
 		.flags = IORESOURCE_MEM,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static inline int match_tag(char *arg, const char *tag)
-{
-	return strncmp(arg, tag, strlen(tag)) == 0;
-}
+अटल अंतरभूत पूर्णांक match_tag(अक्षर *arg, स्थिर अक्षर *tag)
+अणु
+	वापस म_भेदन(arg, tag, म_माप(tag)) == 0;
+पूर्ण
 
-static inline unsigned long tag2ul(char *arg, const char *tag)
-{
-	char *num;
+अटल अंतरभूत अचिन्हित दीर्घ tag2ul(अक्षर *arg, स्थिर अक्षर *tag)
+अणु
+	अक्षर *num;
 
-	num = arg + strlen(tag);
-	return simple_strtoul(num, 0, 10);
-}
+	num = arg + म_माप(tag);
+	वापस simple_म_से_अदीर्घ(num, 0, 10);
+पूर्ण
 
-void __init prom_setup_cmdline(void)
-{
-	static char cmd_line[COMMAND_LINE_SIZE] __initdata;
-	char *cp, *board;
-	int prom_argc;
-	char **prom_argv;
-	int i;
+व्योम __init prom_setup_cmdline(व्योम)
+अणु
+	अटल अक्षर cmd_line[COMMAND_LINE_SIZE] __initdata;
+	अक्षर *cp, *board;
+	पूर्णांक prom_argc;
+	अक्षर **prom_argv;
+	पूर्णांक i;
 
 	prom_argc = fw_arg0;
-	prom_argv = (char **) fw_arg1;
+	prom_argv = (अक्षर **) fw_arg1;
 
 	cp = cmd_line;
 		/* Note: it is common that parameters start
 		 * at argv[1] and not argv[0],
 		 * however, our elf loader starts at [0] */
-	for (i = 0; i < prom_argc; i++) {
-		if (match_tag(prom_argv[i], FREQ_TAG)) {
+	क्रम (i = 0; i < prom_argc; i++) अणु
+		अगर (match_tag(prom_argv[i], FREQ_TAG)) अणु
 			idt_cpu_freq = tag2ul(prom_argv[i], FREQ_TAG);
-			continue;
-		}
-#ifdef IGNORE_CMDLINE_MEM
+			जारी;
+		पूर्ण
+#अगर_घोषित IGNORE_CMDLINE_MEM
 		/* parses out the "mem=xx" arg */
-		if (match_tag(prom_argv[i], MEM_TAG))
-			continue;
-#endif
-		if (i > 0)
+		अगर (match_tag(prom_argv[i], MEM_TAG))
+			जारी;
+#पूर्ण_अगर
+		अगर (i > 0)
 			*(cp++) = ' ';
-		if (match_tag(prom_argv[i], BOARD_TAG)) {
-			board = prom_argv[i] + strlen(BOARD_TAG);
+		अगर (match_tag(prom_argv[i], BOARD_TAG)) अणु
+			board = prom_argv[i] + म_माप(BOARD_TAG);
 
-			if (match_tag(board, BOARD_RB532A))
+			अगर (match_tag(board, BOARD_RB532A))
 				mips_machtype = MACH_MIKROTIK_RB532A;
-			else
+			अन्यथा
 				mips_machtype = MACH_MIKROTIK_RB532;
-		}
+		पूर्ण
 
-		strcpy(cp, prom_argv[i]);
-		cp += strlen(prom_argv[i]);
-	}
+		म_नकल(cp, prom_argv[i]);
+		cp += म_माप(prom_argv[i]);
+	पूर्ण
 	*(cp++) = ' ';
 
-	i = strlen(arcs_cmdline);
-	if (i > 0) {
+	i = म_माप(arcs_cmdline);
+	अगर (i > 0) अणु
 		*(cp++) = ' ';
-		strcpy(cp, arcs_cmdline);
-		cp += strlen(arcs_cmdline);
-	}
+		म_नकल(cp, arcs_cmdline);
+		cp += म_माप(arcs_cmdline);
+	पूर्ण
 	cmd_line[COMMAND_LINE_SIZE - 1] = '\0';
 
-	strcpy(arcs_cmdline, cmd_line);
-}
+	म_नकल(arcs_cmdline, cmd_line);
+पूर्ण
 
-void __init prom_init(void)
-{
-	struct ddr_ram __iomem *ddr;
+व्योम __init prom_init(व्योम)
+अणु
+	काष्ठा ddr_ram __iomem *ddr;
 	phys_addr_t memsize;
 	phys_addr_t ddrbase;
 
 	ddr = ioremap(ddr_reg[0].start,
 			ddr_reg[0].end - ddr_reg[0].start);
 
-	if (!ddr) {
-		printk(KERN_ERR "Unable to remap DDR register\n");
-		return;
-	}
+	अगर (!ddr) अणु
+		prपूर्णांकk(KERN_ERR "Unable to remap DDR register\n");
+		वापस;
+	पूर्ण
 
 	ddrbase = (phys_addr_t)&ddr->ddrbase;
 	memsize = (phys_addr_t)&ddr->ddrmask;
@@ -120,6 +121,6 @@ void __init prom_init(void)
 	prom_setup_cmdline();
 
 	/* give all RAM to boot allocator,
-	 * except for the first 0x400 and the last 0x200 bytes */
+	 * except क्रम the first 0x400 and the last 0x200 bytes */
 	memblock_add(ddrbase + 0x400, memsize - 0x600);
-}
+पूर्ण

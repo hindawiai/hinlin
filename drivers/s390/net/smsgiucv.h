@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  * IUCV special message driver
  *
@@ -6,10 +7,10 @@
  * Author(s): Martin Schwidefsky (schwidefsky@de.ibm.com)
  */
 
-#define SMSGIUCV_DRV_NAME     "SMSGIUCV"
+#घोषणा SMSGIUCV_DRV_NAME     "SMSGIUCV"
 
-int  smsg_register_callback(const char *,
-			    void (*)(const char *, char *));
-void smsg_unregister_callback(const char *,
-			      void (*)(const char *, char *));
+पूर्णांक  smsg_रेजिस्टर_callback(स्थिर अक्षर *,
+			    व्योम (*)(स्थिर अक्षर *, अक्षर *));
+व्योम smsg_unरेजिस्टर_callback(स्थिर अक्षर *,
+			      व्योम (*)(स्थिर अक्षर *, अक्षर *));
 

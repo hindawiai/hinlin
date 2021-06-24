@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * Freescale Memory Controller kernel module
  *
@@ -14,154 +15,154 @@
  * is licensed "as is" without any warranty of any kind, whether express
  * or implied.
  */
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/ctype.h>
-#include <linux/io.h>
-#include <linux/mod_devicetable.h>
-#include <linux/edac.h>
-#include <linux/smp.h>
-#include <linux/gfp.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/पन.स>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/edac.h>
+#समावेश <linux/smp.h>
+#समावेश <linux/gfp.h>
 
-#include <linux/of_platform.h>
-#include <linux/of_device.h>
-#include <linux/of_address.h>
-#include "edac_module.h"
-#include "fsl_ddr_edac.h"
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/of_device.h>
+#समावेश <linux/of_address.h>
+#समावेश "edac_module.h"
+#समावेश "fsl_ddr_edac.h"
 
-#define EDAC_MOD_STR	"fsl_ddr_edac"
+#घोषणा EDAC_MOD_STR	"fsl_ddr_edac"
 
-static int edac_mc_idx;
+अटल पूर्णांक edac_mc_idx;
 
-static u32 orig_ddr_err_disable;
-static u32 orig_ddr_err_sbe;
-static bool little_endian;
+अटल u32 orig_ddr_err_disable;
+अटल u32 orig_ddr_err_sbe;
+अटल bool little_endian;
 
-static inline u32 ddr_in32(void __iomem *addr)
-{
-	return little_endian ? ioread32(addr) : ioread32be(addr);
-}
+अटल अंतरभूत u32 ddr_in32(व्योम __iomem *addr)
+अणु
+	वापस little_endian ? ioपढ़ो32(addr) : ioपढ़ो32be(addr);
+पूर्ण
 
-static inline void ddr_out32(void __iomem *addr, u32 value)
-{
-	if (little_endian)
-		iowrite32(value, addr);
-	else
-		iowrite32be(value, addr);
-}
+अटल अंतरभूत व्योम ddr_out32(व्योम __iomem *addr, u32 value)
+अणु
+	अगर (little_endian)
+		ioग_लिखो32(value, addr);
+	अन्यथा
+		ioग_लिखो32be(value, addr);
+पूर्ण
 
-#ifdef CONFIG_EDAC_DEBUG
+#अगर_घोषित CONFIG_EDAC_DEBUG
 /************************ MC SYSFS parts ***********************************/
 
-#define to_mci(k) container_of(k, struct mem_ctl_info, dev)
+#घोषणा to_mci(k) container_of(k, काष्ठा mem_ctl_info, dev)
 
-static ssize_t fsl_mc_inject_data_hi_show(struct device *dev,
-					  struct device_attribute *mattr,
-					  char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
-	return sprintf(data, "0x%08x",
+अटल sमाप_प्रकार fsl_mc_inject_data_hi_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *mattr,
+					  अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
+	वापस प्र_लिखो(data, "0x%08x",
 		       ddr_in32(pdata->mc_vbase + FSL_MC_DATA_ERR_INJECT_HI));
-}
+पूर्ण
 
-static ssize_t fsl_mc_inject_data_lo_show(struct device *dev,
-					  struct device_attribute *mattr,
-					      char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
-	return sprintf(data, "0x%08x",
+अटल sमाप_प्रकार fsl_mc_inject_data_lo_show(काष्ठा device *dev,
+					  काष्ठा device_attribute *mattr,
+					      अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
+	वापस प्र_लिखो(data, "0x%08x",
 		       ddr_in32(pdata->mc_vbase + FSL_MC_DATA_ERR_INJECT_LO));
-}
+पूर्ण
 
-static ssize_t fsl_mc_inject_ctrl_show(struct device *dev,
-				       struct device_attribute *mattr,
-					   char *data)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
-	return sprintf(data, "0x%08x",
+अटल sमाप_प्रकार fsl_mc_inject_ctrl_show(काष्ठा device *dev,
+				       काष्ठा device_attribute *mattr,
+					   अक्षर *data)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
+	वापस प्र_लिखो(data, "0x%08x",
 		       ddr_in32(pdata->mc_vbase + FSL_MC_ECC_ERR_INJECT));
-}
+पूर्ण
 
-static ssize_t fsl_mc_inject_data_hi_store(struct device *dev,
-					   struct device_attribute *mattr,
-					       const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
-	unsigned long val;
-	int rc;
+अटल sमाप_प्रकार fsl_mc_inject_data_hi_store(काष्ठा device *dev,
+					   काष्ठा device_attribute *mattr,
+					       स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
+	अचिन्हित दीर्घ val;
+	पूर्णांक rc;
 
-	if (isdigit(*data)) {
-		rc = kstrtoul(data, 0, &val);
-		if (rc)
-			return rc;
+	अगर (है_अंक(*data)) अणु
+		rc = kम_से_अदीर्घ(data, 0, &val);
+		अगर (rc)
+			वापस rc;
 
 		ddr_out32(pdata->mc_vbase + FSL_MC_DATA_ERR_INJECT_HI, val);
-		return count;
-	}
-	return 0;
-}
+		वापस count;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static ssize_t fsl_mc_inject_data_lo_store(struct device *dev,
-					   struct device_attribute *mattr,
-					       const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
-	unsigned long val;
-	int rc;
+अटल sमाप_प्रकार fsl_mc_inject_data_lo_store(काष्ठा device *dev,
+					   काष्ठा device_attribute *mattr,
+					       स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
+	अचिन्हित दीर्घ val;
+	पूर्णांक rc;
 
-	if (isdigit(*data)) {
-		rc = kstrtoul(data, 0, &val);
-		if (rc)
-			return rc;
+	अगर (है_अंक(*data)) अणु
+		rc = kम_से_अदीर्घ(data, 0, &val);
+		अगर (rc)
+			वापस rc;
 
 		ddr_out32(pdata->mc_vbase + FSL_MC_DATA_ERR_INJECT_LO, val);
-		return count;
-	}
-	return 0;
-}
+		वापस count;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static ssize_t fsl_mc_inject_ctrl_store(struct device *dev,
-					struct device_attribute *mattr,
-					       const char *data, size_t count)
-{
-	struct mem_ctl_info *mci = to_mci(dev);
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
-	unsigned long val;
-	int rc;
+अटल sमाप_प्रकार fsl_mc_inject_ctrl_store(काष्ठा device *dev,
+					काष्ठा device_attribute *mattr,
+					       स्थिर अक्षर *data, माप_प्रकार count)
+अणु
+	काष्ठा mem_ctl_info *mci = to_mci(dev);
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
+	अचिन्हित दीर्घ val;
+	पूर्णांक rc;
 
-	if (isdigit(*data)) {
-		rc = kstrtoul(data, 0, &val);
-		if (rc)
-			return rc;
+	अगर (है_अंक(*data)) अणु
+		rc = kम_से_अदीर्घ(data, 0, &val);
+		अगर (rc)
+			वापस rc;
 
 		ddr_out32(pdata->mc_vbase + FSL_MC_ECC_ERR_INJECT, val);
-		return count;
-	}
-	return 0;
-}
+		वापस count;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static DEVICE_ATTR(inject_data_hi, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(inject_data_hi, S_IRUGO | S_IWUSR,
 		   fsl_mc_inject_data_hi_show, fsl_mc_inject_data_hi_store);
-static DEVICE_ATTR(inject_data_lo, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(inject_data_lo, S_IRUGO | S_IWUSR,
 		   fsl_mc_inject_data_lo_show, fsl_mc_inject_data_lo_store);
-static DEVICE_ATTR(inject_ctrl, S_IRUGO | S_IWUSR,
+अटल DEVICE_ATTR(inject_ctrl, S_IRUGO | S_IWUSR,
 		   fsl_mc_inject_ctrl_show, fsl_mc_inject_ctrl_store);
-#endif /* CONFIG_EDAC_DEBUG */
+#पूर्ण_अगर /* CONFIG_EDAC_DEBUG */
 
-static struct attribute *fsl_ddr_dev_attrs[] = {
-#ifdef CONFIG_EDAC_DEBUG
+अटल काष्ठा attribute *fsl_ddr_dev_attrs[] = अणु
+#अगर_घोषित CONFIG_EDAC_DEBUG
 	&dev_attr_inject_data_hi.attr,
 	&dev_attr_inject_data_lo.attr,
 	&dev_attr_inject_ctrl.attr,
-#endif
-	NULL
-};
+#पूर्ण_अगर
+	शून्य
+पूर्ण;
 
 ATTRIBUTE_GROUPS(fsl_ddr_dev);
 
@@ -170,10 +171,10 @@ ATTRIBUTE_GROUPS(fsl_ddr_dev);
 /*
  * Taken from table 8-55 in the MPC8641 User's Manual and/or 9-61 in the
  * MPC8572 User's Manual.  Each line represents a syndrome bit column as a
- * 64-bit value, but split into an upper and lower 32-bit chunk.  The labels
+ * 64-bit value, but split पूर्णांकo an upper and lower 32-bit chunk.  The labels
  * below correspond to Freescale's manuals.
  */
-static unsigned int ecc_table[16] = {
+अटल अचिन्हित पूर्णांक ecc_table[16] = अणु
 	/* MSB           LSB */
 	/* [0:31]    [32:63] */
 	0xf00fe11e, 0xc33c0ff7,	/* Syndrome bit 7 */
@@ -184,66 +185,66 @@ static unsigned int ecc_table[16] = {
 	0x44448888, 0xffff4441,
 	0x8888ffff, 0x11118882,
 	0xffff1111, 0x22221114,	/* Syndrome bit 0 */
-};
+पूर्ण;
 
 /*
- * Calculate the correct ECC value for a 64-bit value specified by high:low
+ * Calculate the correct ECC value क्रम a 64-bit value specअगरied by high:low
  */
-static u8 calculate_ecc(u32 high, u32 low)
-{
+अटल u8 calculate_ecc(u32 high, u32 low)
+अणु
 	u32 mask_low;
 	u32 mask_high;
-	int bit_cnt;
+	पूर्णांक bit_cnt;
 	u8 ecc = 0;
-	int i;
-	int j;
+	पूर्णांक i;
+	पूर्णांक j;
 
-	for (i = 0; i < 8; i++) {
+	क्रम (i = 0; i < 8; i++) अणु
 		mask_high = ecc_table[i * 2];
 		mask_low = ecc_table[i * 2 + 1];
 		bit_cnt = 0;
 
-		for (j = 0; j < 32; j++) {
-			if ((mask_high >> j) & 1)
+		क्रम (j = 0; j < 32; j++) अणु
+			अगर ((mask_high >> j) & 1)
 				bit_cnt ^= (high >> j) & 1;
-			if ((mask_low >> j) & 1)
+			अगर ((mask_low >> j) & 1)
 				bit_cnt ^= (low >> j) & 1;
-		}
+		पूर्ण
 
 		ecc |= bit_cnt << i;
-	}
+	पूर्ण
 
-	return ecc;
-}
+	वापस ecc;
+पूर्ण
 
 /*
- * Create the syndrome code which is generated if the data line specified by
+ * Create the syndrome code which is generated अगर the data line specअगरied by
  * 'bit' failed.  Eg generate an 8-bit codes seen in Table 8-55 in the MPC8641
  * User's Manual and 9-61 in the MPC8572 User's Manual.
  */
-static u8 syndrome_from_bit(unsigned int bit) {
-	int i;
+अटल u8 syndrome_from_bit(अचिन्हित पूर्णांक bit) अणु
+	पूर्णांक i;
 	u8 syndrome = 0;
 
 	/*
 	 * Cycle through the upper or lower 32-bit portion of each value in
-	 * ecc_table depending on if 'bit' is in the upper or lower half of
+	 * ecc_table depending on अगर 'bit' is in the upper or lower half of
 	 * 64-bit data.
 	 */
-	for (i = bit < 32; i < 16; i += 2)
+	क्रम (i = bit < 32; i < 16; i += 2)
 		syndrome |= ((ecc_table[i] >> (bit % 32)) & 1) << (i / 2);
 
-	return syndrome;
-}
+	वापस syndrome;
+पूर्ण
 
 /*
  * Decode data and ecc syndrome to determine what went wrong
  * Note: This can only decode single-bit errors
  */
-static void sbe_ecc_decode(u32 cap_high, u32 cap_low, u32 cap_ecc,
-		       int *bad_data_bit, int *bad_ecc_bit)
-{
-	int i;
+अटल व्योम sbe_ecc_decode(u32 cap_high, u32 cap_low, u32 cap_ecc,
+		       पूर्णांक *bad_data_bit, पूर्णांक *bad_ecc_bit)
+अणु
+	पूर्णांक i;
 	u8 syndrome;
 
 	*bad_data_bit = -1;
@@ -251,65 +252,65 @@ static void sbe_ecc_decode(u32 cap_high, u32 cap_low, u32 cap_ecc,
 
 	/*
 	 * Calculate the ECC of the captured data and XOR it with the captured
-	 * ECC to find an ECC syndrome value we can search for
+	 * ECC to find an ECC syndrome value we can search क्रम
 	 */
 	syndrome = calculate_ecc(cap_high, cap_low) ^ cap_ecc;
 
-	/* Check if a data line is stuck... */
-	for (i = 0; i < 64; i++) {
-		if (syndrome == syndrome_from_bit(i)) {
+	/* Check अगर a data line is stuck... */
+	क्रम (i = 0; i < 64; i++) अणु
+		अगर (syndrome == syndrome_from_bit(i)) अणु
 			*bad_data_bit = i;
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
-	/* If data is correct, check ECC bits for errors... */
-	for (i = 0; i < 8; i++) {
-		if ((syndrome >> i) & 0x1) {
+	/* If data is correct, check ECC bits क्रम errors... */
+	क्रम (i = 0; i < 8; i++) अणु
+		अगर ((syndrome >> i) & 0x1) अणु
 			*bad_ecc_bit = i;
-			return;
-		}
-	}
-}
+			वापस;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-#define make64(high, low) (((u64)(high) << 32) | (low))
+#घोषणा make64(high, low) (((u64)(high) << 32) | (low))
 
-static void fsl_mc_check(struct mem_ctl_info *mci)
-{
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
-	struct csrow_info *csrow;
+अटल व्योम fsl_mc_check(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
+	काष्ठा csrow_info *csrow;
 	u32 bus_width;
 	u32 err_detect;
 	u32 syndrome;
 	u64 err_addr;
 	u32 pfn;
-	int row_index;
+	पूर्णांक row_index;
 	u32 cap_high;
 	u32 cap_low;
-	int bad_data_bit;
-	int bad_ecc_bit;
+	पूर्णांक bad_data_bit;
+	पूर्णांक bad_ecc_bit;
 
 	err_detect = ddr_in32(pdata->mc_vbase + FSL_MC_ERR_DETECT);
-	if (!err_detect)
-		return;
+	अगर (!err_detect)
+		वापस;
 
-	fsl_mc_printk(mci, KERN_ERR, "Err Detect Register: %#8.8x\n",
+	fsl_mc_prपूर्णांकk(mci, KERN_ERR, "Err Detect Register: %#8.8x\n",
 		      err_detect);
 
-	/* no more processing if not ECC bit errors */
-	if (!(err_detect & (DDR_EDE_SBE | DDR_EDE_MBE))) {
+	/* no more processing अगर not ECC bit errors */
+	अगर (!(err_detect & (DDR_EDE_SBE | DDR_EDE_MBE))) अणु
 		ddr_out32(pdata->mc_vbase + FSL_MC_ERR_DETECT, err_detect);
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	syndrome = ddr_in32(pdata->mc_vbase + FSL_MC_CAPTURE_ECC);
 
 	/* Mask off appropriate bits of syndrome based on bus width */
 	bus_width = (ddr_in32(pdata->mc_vbase + FSL_MC_DDR_SDRAM_CFG) &
 		     DSC_DBW_MASK) ? 32 : 64;
-	if (bus_width == 64)
+	अगर (bus_width == 64)
 		syndrome &= 0xff;
-	else
+	अन्यथा
 		syndrome &= 0xffff;
 
 	err_addr = make64(
@@ -317,130 +318,130 @@ static void fsl_mc_check(struct mem_ctl_info *mci)
 		ddr_in32(pdata->mc_vbase + FSL_MC_CAPTURE_ADDRESS));
 	pfn = err_addr >> PAGE_SHIFT;
 
-	for (row_index = 0; row_index < mci->nr_csrows; row_index++) {
+	क्रम (row_index = 0; row_index < mci->nr_csrows; row_index++) अणु
 		csrow = mci->csrows[row_index];
-		if ((pfn >= csrow->first_page) && (pfn <= csrow->last_page))
-			break;
-	}
+		अगर ((pfn >= csrow->first_page) && (pfn <= csrow->last_page))
+			अवरोध;
+	पूर्ण
 
 	cap_high = ddr_in32(pdata->mc_vbase + FSL_MC_CAPTURE_DATA_HI);
 	cap_low = ddr_in32(pdata->mc_vbase + FSL_MC_CAPTURE_DATA_LO);
 
 	/*
 	 * Analyze single-bit errors on 64-bit wide buses
-	 * TODO: Add support for 32-bit wide buses
+	 * TODO: Add support क्रम 32-bit wide buses
 	 */
-	if ((err_detect & DDR_EDE_SBE) && (bus_width == 64)) {
+	अगर ((err_detect & DDR_EDE_SBE) && (bus_width == 64)) अणु
 		sbe_ecc_decode(cap_high, cap_low, syndrome,
 				&bad_data_bit, &bad_ecc_bit);
 
-		if (bad_data_bit != -1)
-			fsl_mc_printk(mci, KERN_ERR,
+		अगर (bad_data_bit != -1)
+			fsl_mc_prपूर्णांकk(mci, KERN_ERR,
 				"Faulty Data bit: %d\n", bad_data_bit);
-		if (bad_ecc_bit != -1)
-			fsl_mc_printk(mci, KERN_ERR,
+		अगर (bad_ecc_bit != -1)
+			fsl_mc_prपूर्णांकk(mci, KERN_ERR,
 				"Faulty ECC bit: %d\n", bad_ecc_bit);
 
-		fsl_mc_printk(mci, KERN_ERR,
+		fsl_mc_prपूर्णांकk(mci, KERN_ERR,
 			"Expected Data / ECC:\t%#8.8x_%08x / %#2.2x\n",
 			cap_high ^ (1 << (bad_data_bit - 32)),
 			cap_low ^ (1 << bad_data_bit),
 			syndrome ^ (1 << bad_ecc_bit));
-	}
+	पूर्ण
 
-	fsl_mc_printk(mci, KERN_ERR,
+	fsl_mc_prपूर्णांकk(mci, KERN_ERR,
 			"Captured Data / ECC:\t%#8.8x_%08x / %#2.2x\n",
 			cap_high, cap_low, syndrome);
-	fsl_mc_printk(mci, KERN_ERR, "Err addr: %#8.8llx\n", err_addr);
-	fsl_mc_printk(mci, KERN_ERR, "PFN: %#8.8x\n", pfn);
+	fsl_mc_prपूर्णांकk(mci, KERN_ERR, "Err addr: %#8.8llx\n", err_addr);
+	fsl_mc_prपूर्णांकk(mci, KERN_ERR, "PFN: %#8.8x\n", pfn);
 
 	/* we are out of range */
-	if (row_index == mci->nr_csrows)
-		fsl_mc_printk(mci, KERN_ERR, "PFN out of range!\n");
+	अगर (row_index == mci->nr_csrows)
+		fsl_mc_prपूर्णांकk(mci, KERN_ERR, "PFN out of range!\n");
 
-	if (err_detect & DDR_EDE_SBE)
+	अगर (err_detect & DDR_EDE_SBE)
 		edac_mc_handle_error(HW_EVENT_ERR_CORRECTED, mci, 1,
 				     pfn, err_addr & ~PAGE_MASK, syndrome,
 				     row_index, 0, -1,
 				     mci->ctl_name, "");
 
-	if (err_detect & DDR_EDE_MBE)
+	अगर (err_detect & DDR_EDE_MBE)
 		edac_mc_handle_error(HW_EVENT_ERR_UNCORRECTED, mci, 1,
 				     pfn, err_addr & ~PAGE_MASK, syndrome,
 				     row_index, 0, -1,
 				     mci->ctl_name, "");
 
 	ddr_out32(pdata->mc_vbase + FSL_MC_ERR_DETECT, err_detect);
-}
+पूर्ण
 
-static irqreturn_t fsl_mc_isr(int irq, void *dev_id)
-{
-	struct mem_ctl_info *mci = dev_id;
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
+अटल irqवापस_t fsl_mc_isr(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा mem_ctl_info *mci = dev_id;
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
 	u32 err_detect;
 
 	err_detect = ddr_in32(pdata->mc_vbase + FSL_MC_ERR_DETECT);
-	if (!err_detect)
-		return IRQ_NONE;
+	अगर (!err_detect)
+		वापस IRQ_NONE;
 
 	fsl_mc_check(mci);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static void fsl_ddr_init_csrows(struct mem_ctl_info *mci)
-{
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
-	struct csrow_info *csrow;
-	struct dimm_info *dimm;
+अटल व्योम fsl_ddr_init_csrows(काष्ठा mem_ctl_info *mci)
+अणु
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
+	काष्ठा csrow_info *csrow;
+	काष्ठा dimm_info *dimm;
 	u32 sdram_ctl;
 	u32 sdtype;
-	enum mem_type mtype;
+	क्रमागत mem_type mtype;
 	u32 cs_bnds;
-	int index;
+	पूर्णांक index;
 
 	sdram_ctl = ddr_in32(pdata->mc_vbase + FSL_MC_DDR_SDRAM_CFG);
 
 	sdtype = sdram_ctl & DSC_SDTYPE_MASK;
-	if (sdram_ctl & DSC_RD_EN) {
-		switch (sdtype) {
-		case 0x02000000:
+	अगर (sdram_ctl & DSC_RD_EN) अणु
+		चयन (sdtype) अणु
+		हाल 0x02000000:
 			mtype = MEM_RDDR;
-			break;
-		case 0x03000000:
+			अवरोध;
+		हाल 0x03000000:
 			mtype = MEM_RDDR2;
-			break;
-		case 0x07000000:
+			अवरोध;
+		हाल 0x07000000:
 			mtype = MEM_RDDR3;
-			break;
-		case 0x05000000:
+			अवरोध;
+		हाल 0x05000000:
 			mtype = MEM_RDDR4;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mtype = MEM_UNKNOWN;
-			break;
-		}
-	} else {
-		switch (sdtype) {
-		case 0x02000000:
+			अवरोध;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		चयन (sdtype) अणु
+		हाल 0x02000000:
 			mtype = MEM_DDR;
-			break;
-		case 0x03000000:
+			अवरोध;
+		हाल 0x03000000:
 			mtype = MEM_DDR2;
-			break;
-		case 0x07000000:
+			अवरोध;
+		हाल 0x07000000:
 			mtype = MEM_DDR3;
-			break;
-		case 0x05000000:
+			अवरोध;
+		हाल 0x05000000:
 			mtype = MEM_DDR4;
-			break;
-		default:
+			अवरोध;
+		शेष:
 			mtype = MEM_UNKNOWN;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	for (index = 0; index < mci->nr_csrows; index++) {
+	क्रम (index = 0; index < mci->nr_csrows; index++) अणु
 		u32 start;
 		u32 end;
 
@@ -453,8 +454,8 @@ static void fsl_ddr_init_csrows(struct mem_ctl_info *mci)
 		start = (cs_bnds & 0xffff0000) >> 16;
 		end   = (cs_bnds & 0x0000ffff);
 
-		if (start == end)
-			continue;	/* not populated */
+		अगर (start == end)
+			जारी;	/* not populated */
 
 		start <<= (24 - PAGE_SHIFT);
 		end   <<= (24 - PAGE_SHIFT);
@@ -467,23 +468,23 @@ static void fsl_ddr_init_csrows(struct mem_ctl_info *mci)
 		dimm->grain = 8;
 		dimm->mtype = mtype;
 		dimm->dtype = DEV_UNKNOWN;
-		if (sdram_ctl & DSC_X32_EN)
+		अगर (sdram_ctl & DSC_X32_EN)
 			dimm->dtype = DEV_X32;
 		dimm->edac_mode = EDAC_SECDED;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int fsl_mc_err_probe(struct platform_device *op)
-{
-	struct mem_ctl_info *mci;
-	struct edac_mc_layer layers[2];
-	struct fsl_mc_pdata *pdata;
-	struct resource r;
+पूर्णांक fsl_mc_err_probe(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा mem_ctl_info *mci;
+	काष्ठा edac_mc_layer layers[2];
+	काष्ठा fsl_mc_pdata *pdata;
+	काष्ठा resource r;
 	u32 sdram_ctl;
-	int res;
+	पूर्णांक res;
 
-	if (!devres_open_group(&op->dev, fsl_mc_err_probe, GFP_KERNEL))
-		return -ENOMEM;
+	अगर (!devres_खोलो_group(&op->dev, fsl_mc_err_probe, GFP_KERNEL))
+		वापस -ENOMEM;
 
 	layers[0].type = EDAC_MC_LAYER_CHIP_SELECT;
 	layers[0].size = 4;
@@ -492,11 +493,11 @@ int fsl_mc_err_probe(struct platform_device *op)
 	layers[1].size = 1;
 	layers[1].is_virt_csrow = false;
 	mci = edac_mc_alloc(edac_mc_idx, ARRAY_SIZE(layers), layers,
-			    sizeof(*pdata));
-	if (!mci) {
+			    माप(*pdata));
+	अगर (!mci) अणु
 		devres_release_group(&op->dev, fsl_mc_err_probe);
-		return -ENOMEM;
-	}
+		वापस -ENOMEM;
+	पूर्ण
 
 	pdata = mci->pvt_info;
 	pdata->name = "fsl_mc_err";
@@ -507,40 +508,40 @@ int fsl_mc_err_probe(struct platform_device *op)
 	mci->dev_name = pdata->name;
 
 	/*
-	 * Get the endianness of DDR controller registers.
+	 * Get the endianness of DDR controller रेजिस्टरs.
 	 * Default is big endian.
 	 */
-	little_endian = of_property_read_bool(op->dev.of_node, "little-endian");
+	little_endian = of_property_पढ़ो_bool(op->dev.of_node, "little-endian");
 
 	res = of_address_to_resource(op->dev.of_node, 0, &r);
-	if (res) {
+	अगर (res) अणु
 		pr_err("%s: Unable to get resource for MC err regs\n",
 		       __func__);
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (!devm_request_mem_region(&op->dev, r.start, resource_size(&r),
-				     pdata->name)) {
+	अगर (!devm_request_mem_region(&op->dev, r.start, resource_size(&r),
+				     pdata->name)) अणु
 		pr_err("%s: Error while requesting mem region\n",
 		       __func__);
 		res = -EBUSY;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	pdata->mc_vbase = devm_ioremap(&op->dev, r.start, resource_size(&r));
-	if (!pdata->mc_vbase) {
+	अगर (!pdata->mc_vbase) अणु
 		pr_err("%s: Unable to setup MC err regs\n", __func__);
 		res = -ENOMEM;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	sdram_ctl = ddr_in32(pdata->mc_vbase + FSL_MC_DDR_SDRAM_CFG);
-	if (!(sdram_ctl & DSC_ECC_EN)) {
+	अगर (!(sdram_ctl & DSC_ECC_EN)) अणु
 		/* no ECC */
 		pr_warn("%s: No ECC DIMMs discovered\n", __func__);
 		res = -ENODEV;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	edac_dbg(3, "init mci\n");
 	mci->mtype_cap = MEM_FLAG_DDR | MEM_FLAG_RDDR |
@@ -551,10 +552,10 @@ int fsl_mc_err_probe(struct platform_device *op)
 	mci->edac_cap = EDAC_FLAG_SECDED;
 	mci->mod_name = EDAC_MOD_STR;
 
-	if (edac_op_state == EDAC_OPSTATE_POLL)
+	अगर (edac_op_state == EDAC_OPSTATE_POLL)
 		mci->edac_check = fsl_mc_check;
 
-	mci->ctl_page_to_phys = NULL;
+	mci->ctl_page_to_phys = शून्य;
 
 	mci->scrub_mode = SCRUB_SW_SRC;
 
@@ -568,12 +569,12 @@ int fsl_mc_err_probe(struct platform_device *op)
 	ddr_out32(pdata->mc_vbase + FSL_MC_ERR_DETECT, ~0);
 
 	res = edac_mc_add_mc_with_groups(mci, fsl_ddr_dev_groups);
-	if (res) {
+	अगर (res) अणु
 		edac_dbg(3, "failed edac_mc_add_mc()\n");
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (edac_op_state == EDAC_OPSTATE_INT) {
+	अगर (edac_op_state == EDAC_OPSTATE_INT) अणु
 		ddr_out32(pdata->mc_vbase + FSL_MC_ERR_INT_EN,
 			  DDR_EIE_MBEE | DDR_EIE_SBEE);
 
@@ -581,56 +582,56 @@ int fsl_mc_err_probe(struct platform_device *op)
 		orig_ddr_err_sbe = ddr_in32(pdata->mc_vbase +
 					    FSL_MC_ERR_SBE) & 0xff0000;
 
-		/* set threshold to 1 error per interrupt */
+		/* set threshold to 1 error per पूर्णांकerrupt */
 		ddr_out32(pdata->mc_vbase + FSL_MC_ERR_SBE, 0x10000);
 
-		/* register interrupts */
-		pdata->irq = platform_get_irq(op, 0);
+		/* रेजिस्टर पूर्णांकerrupts */
+		pdata->irq = platक्रमm_get_irq(op, 0);
 		res = devm_request_irq(&op->dev, pdata->irq,
 				       fsl_mc_isr,
 				       IRQF_SHARED,
 				       "[EDAC] MC err", mci);
-		if (res < 0) {
+		अगर (res < 0) अणु
 			pr_err("%s: Unable to request irq %d for FSL DDR DRAM ERR\n",
 			       __func__, pdata->irq);
 			res = -ENODEV;
-			goto err2;
-		}
+			जाओ err2;
+		पूर्ण
 
 		pr_info(EDAC_MOD_STR " acquired irq %d for MC\n",
 		       pdata->irq);
-	}
+	पूर्ण
 
-	devres_remove_group(&op->dev, fsl_mc_err_probe);
+	devres_हटाओ_group(&op->dev, fsl_mc_err_probe);
 	edac_dbg(3, "success\n");
 	pr_info(EDAC_MOD_STR " MC err registered\n");
 
-	return 0;
+	वापस 0;
 
 err2:
 	edac_mc_del_mc(&op->dev);
 err:
 	devres_release_group(&op->dev, fsl_mc_err_probe);
-	edac_mc_free(mci);
-	return res;
-}
+	edac_mc_मुक्त(mci);
+	वापस res;
+पूर्ण
 
-int fsl_mc_err_remove(struct platform_device *op)
-{
-	struct mem_ctl_info *mci = dev_get_drvdata(&op->dev);
-	struct fsl_mc_pdata *pdata = mci->pvt_info;
+पूर्णांक fsl_mc_err_हटाओ(काष्ठा platक्रमm_device *op)
+अणु
+	काष्ठा mem_ctl_info *mci = dev_get_drvdata(&op->dev);
+	काष्ठा fsl_mc_pdata *pdata = mci->pvt_info;
 
 	edac_dbg(0, "\n");
 
-	if (edac_op_state == EDAC_OPSTATE_INT) {
+	अगर (edac_op_state == EDAC_OPSTATE_INT) अणु
 		ddr_out32(pdata->mc_vbase + FSL_MC_ERR_INT_EN, 0);
-	}
+	पूर्ण
 
 	ddr_out32(pdata->mc_vbase + FSL_MC_ERR_DISABLE,
 		  orig_ddr_err_disable);
 	ddr_out32(pdata->mc_vbase + FSL_MC_ERR_SBE, orig_ddr_err_sbe);
 
 	edac_mc_del_mc(&op->dev);
-	edac_mc_free(mci);
-	return 0;
-}
+	edac_mc_मुक्त(mci);
+	वापस 0;
+पूर्ण

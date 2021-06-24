@@ -1,29 +1,30 @@
-/* SPDX-License-Identifier: MIT */
-#ifndef __GF100_FIFO_CHAN_H__
-#define __GF100_FIFO_CHAN_H__
-#define gf100_fifo_chan(p) container_of((p), struct gf100_fifo_chan, base)
-#include "chan.h"
-#include "gf100.h"
+<शैली गुरु>
+/* SPDX-License-Identअगरier: MIT */
+#अगर_अघोषित __GF100_FIFO_CHAN_H__
+#घोषणा __GF100_FIFO_CHAN_H__
+#घोषणा gf100_fअगरo_chan(p) container_of((p), काष्ठा gf100_fअगरo_chan, base)
+#समावेश "chan.h"
+#समावेश "gf100.h"
 
-struct gf100_fifo_chan {
-	struct nvkm_fifo_chan base;
-	struct gf100_fifo *fifo;
+काष्ठा gf100_fअगरo_chan अणु
+	काष्ठा nvkm_fअगरo_chan base;
+	काष्ठा gf100_fअगरo *fअगरo;
 
-	struct list_head head;
-	bool killed;
+	काष्ठा list_head head;
+	bool समाप्तed;
 
-#define GF100_FIFO_ENGN_GR     0
-#define GF100_FIFO_ENGN_MSPDEC 1
-#define GF100_FIFO_ENGN_MSPPP  2
-#define GF100_FIFO_ENGN_MSVLD  3
-#define GF100_FIFO_ENGN_CE0    4
-#define GF100_FIFO_ENGN_CE1    5
-#define GF100_FIFO_ENGN_SW     15
-	struct gf100_fifo_engn {
-		struct nvkm_gpuobj *inst;
-		struct nvkm_vma *vma;
-	} engn[NVKM_FIFO_ENGN_NR];
-};
+#घोषणा GF100_FIFO_ENGN_GR     0
+#घोषणा GF100_FIFO_ENGN_MSPDEC 1
+#घोषणा GF100_FIFO_ENGN_MSPPP  2
+#घोषणा GF100_FIFO_ENGN_MSVLD  3
+#घोषणा GF100_FIFO_ENGN_CE0    4
+#घोषणा GF100_FIFO_ENGN_CE1    5
+#घोषणा GF100_FIFO_ENGN_SW     15
+	काष्ठा gf100_fअगरo_engn अणु
+		काष्ठा nvkm_gpuobj *inst;
+		काष्ठा nvkm_vma *vma;
+	पूर्ण engn[NVKM_FIFO_ENGN_NR];
+पूर्ण;
 
-extern const struct nvkm_fifo_chan_oclass gf100_fifo_gpfifo_oclass;
-#endif
+बाह्य स्थिर काष्ठा nvkm_fअगरo_chan_oclass gf100_fअगरo_gpfअगरo_oclass;
+#पूर्ण_अगर

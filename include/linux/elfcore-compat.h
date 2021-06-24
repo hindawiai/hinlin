@@ -1,61 +1,62 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_ELFCORE_COMPAT_H
-#define _LINUX_ELFCORE_COMPAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_ELFCORE_COMPAT_H
+#घोषणा _LINUX_ELFCORE_COMPAT_H
 
-#include <linux/elf.h>
-#include <linux/elfcore.h>
-#include <linux/compat.h>
+#समावेश <linux/elf.h>
+#समावेश <linux/elfcore.h>
+#समावेश <linux/compat.h>
 
 /*
  * Make sure these layouts match the linux/elfcore.h native definitions.
  */
 
-struct compat_elf_siginfo
-{
-	compat_int_t			si_signo;
-	compat_int_t			si_code;
-	compat_int_t			si_errno;
-};
+काष्ठा compat_elf_siginfo
+अणु
+	compat_पूर्णांक_t			si_signo;
+	compat_पूर्णांक_t			si_code;
+	compat_पूर्णांक_t			si_त्रुटि_सं;
+पूर्ण;
 
-struct compat_elf_prstatus_common
-{
-	struct compat_elf_siginfo	pr_info;
-	short				pr_cursig;
-	compat_ulong_t			pr_sigpend;
-	compat_ulong_t			pr_sighold;
+काष्ठा compat_elf_prstatus_common
+अणु
+	काष्ठा compat_elf_siginfo	pr_info;
+	लघु				pr_cursig;
+	compat_uदीर्घ_t			pr_sigpend;
+	compat_uदीर्घ_t			pr_sighold;
 	compat_pid_t			pr_pid;
 	compat_pid_t			pr_ppid;
 	compat_pid_t			pr_pgrp;
 	compat_pid_t			pr_sid;
-	struct old_timeval32		pr_utime;
-	struct old_timeval32		pr_stime;
-	struct old_timeval32		pr_cutime;
-	struct old_timeval32		pr_cstime;
-};
+	काष्ठा old_समयval32		pr_uसमय;
+	काष्ठा old_समयval32		pr_sसमय;
+	काष्ठा old_समयval32		pr_cuसमय;
+	काष्ठा old_समयval32		pr_csसमय;
+पूर्ण;
 
-struct compat_elf_prpsinfo
-{
-	char				pr_state;
-	char				pr_sname;
-	char				pr_zomb;
-	char				pr_nice;
-	compat_ulong_t			pr_flag;
+काष्ठा compat_elf_prpsinfo
+अणु
+	अक्षर				pr_state;
+	अक्षर				pr_sname;
+	अक्षर				pr_zomb;
+	अक्षर				pr_nice;
+	compat_uदीर्घ_t			pr_flag;
 	__compat_uid_t			pr_uid;
 	__compat_gid_t			pr_gid;
 	compat_pid_t			pr_pid, pr_ppid, pr_pgrp, pr_sid;
-	char				pr_fname[16];
-	char				pr_psargs[ELF_PRARGSZ];
-};
+	अक्षर				pr_fname[16];
+	अक्षर				pr_psargs[ELF_PRARGSZ];
+पूर्ण;
 
-#ifdef CONFIG_ARCH_HAS_ELFCORE_COMPAT
-#include <asm/elfcore-compat.h>
-#endif
+#अगर_घोषित CONFIG_ARCH_HAS_ELFCORE_COMPAT
+#समावेश <यंत्र/elfcore-compat.h>
+#पूर्ण_अगर
 
-struct compat_elf_prstatus
-{
-	struct compat_elf_prstatus_common	common;
+काष्ठा compat_elf_prstatus
+अणु
+	काष्ठा compat_elf_prstatus_common	common;
 	compat_elf_gregset_t		pr_reg;
-	compat_int_t			pr_fpvalid;
-};
+	compat_पूर्णांक_t			pr_fpvalid;
+पूर्ण;
 
-#endif /* _LINUX_ELFCORE_COMPAT_H */
+#पूर्ण_अगर /* _LINUX_ELFCORE_COMPAT_H */

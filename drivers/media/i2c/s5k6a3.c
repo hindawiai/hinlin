@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Samsung S5K6A3 image sensor driver
  *
@@ -6,212 +7,212 @@
  * Author: Sylwester Nawrocki <s.nawrocki@samsung.com>
  */
 
-#include <linux/clk.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/errno.h>
-#include <linux/gpio.h>
-#include <linux/i2c.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_gpio.h>
-#include <linux/pm_runtime.h>
-#include <linux/regulator/consumer.h>
-#include <linux/slab.h>
-#include <linux/videodev2.h>
-#include <media/v4l2-async.h>
-#include <media/v4l2-subdev.h>
+#समावेश <linux/clk.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/gpपन.स>
+#समावेश <linux/i2c.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_gpपन.स>
+#समावेश <linux/pm_runसमय.स>
+#समावेश <linux/regulator/consumer.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/videodev2.h>
+#समावेश <media/v4l2-async.h>
+#समावेश <media/v4l2-subdev.h>
 
-#define S5K6A3_SENSOR_MAX_WIDTH		1412
-#define S5K6A3_SENSOR_MAX_HEIGHT	1412
-#define S5K6A3_SENSOR_MIN_WIDTH		32
-#define S5K6A3_SENSOR_MIN_HEIGHT	32
+#घोषणा S5K6A3_SENSOR_MAX_WIDTH		1412
+#घोषणा S5K6A3_SENSOR_MAX_HEIGHT	1412
+#घोषणा S5K6A3_SENSOR_MIN_WIDTH		32
+#घोषणा S5K6A3_SENSOR_MIN_HEIGHT	32
 
-#define S5K6A3_DEFAULT_WIDTH		1296
-#define S5K6A3_DEFAULT_HEIGHT		732
+#घोषणा S5K6A3_DEFAULT_WIDTH		1296
+#घोषणा S5K6A3_DEFAULT_HEIGHT		732
 
-#define S5K6A3_DRV_NAME			"S5K6A3"
-#define S5K6A3_CLK_NAME			"extclk"
-#define S5K6A3_DEFAULT_CLK_FREQ		24000000U
+#घोषणा S5K6A3_DRV_NAME			"S5K6A3"
+#घोषणा S5K6A3_CLK_NAME			"extclk"
+#घोषणा S5K6A3_DEFAULT_CLK_FREQ		24000000U
 
-enum {
+क्रमागत अणु
 	S5K6A3_SUPP_VDDA,
 	S5K6A3_SUPP_VDDIO,
 	S5K6A3_SUPP_AFVDD,
 	S5K6A3_NUM_SUPPLIES,
-};
+पूर्ण;
 
 /**
- * struct s5k6a3 - fimc-is sensor data structure
- * @dev: pointer to this I2C client device structure
+ * काष्ठा s5k6a3 - fimc-is sensor data काष्ठाure
+ * @dev: poपूर्णांकer to this I2C client device काष्ठाure
  * @subdev: the image sensor's v4l2 subdev
  * @pad: subdev media source pad
  * @supplies: image sensor's voltage regulator supplies
  * @gpio_reset: GPIO connected to the sensor's reset pin
- * @lock: mutex protecting the structure's members below
- * @format: media bus format at the sensor's source pad
- * @clock: pointer to &struct clk.
- * @clock_frequency: clock frequency
- * @power_count: stores state if device is powered
+ * @lock: mutex protecting the काष्ठाure's members below
+ * @क्रमmat: media bus क्रमmat at the sensor's source pad
+ * @घड़ी: poपूर्णांकer to &काष्ठा clk.
+ * @घड़ी_frequency: घड़ी frequency
+ * @घातer_count: stores state अगर device is घातered
  */
-struct s5k6a3 {
-	struct device *dev;
-	struct v4l2_subdev subdev;
-	struct media_pad pad;
-	struct regulator_bulk_data supplies[S5K6A3_NUM_SUPPLIES];
-	int gpio_reset;
-	struct mutex lock;
-	struct v4l2_mbus_framefmt format;
-	struct clk *clock;
-	u32 clock_frequency;
-	int power_count;
-};
+काष्ठा s5k6a3 अणु
+	काष्ठा device *dev;
+	काष्ठा v4l2_subdev subdev;
+	काष्ठा media_pad pad;
+	काष्ठा regulator_bulk_data supplies[S5K6A3_NUM_SUPPLIES];
+	पूर्णांक gpio_reset;
+	काष्ठा mutex lock;
+	काष्ठा v4l2_mbus_framefmt क्रमmat;
+	काष्ठा clk *घड़ी;
+	u32 घड़ी_frequency;
+	पूर्णांक घातer_count;
+पूर्ण;
 
-static const char * const s5k6a3_supply_names[] = {
+अटल स्थिर अक्षर * स्थिर s5k6a3_supply_names[] = अणु
 	[S5K6A3_SUPP_VDDA]	= "svdda",
 	[S5K6A3_SUPP_VDDIO]	= "svddio",
 	[S5K6A3_SUPP_AFVDD]	= "afvdd",
-};
+पूर्ण;
 
-static inline struct s5k6a3 *sd_to_s5k6a3(struct v4l2_subdev *sd)
-{
-	return container_of(sd, struct s5k6a3, subdev);
-}
+अटल अंतरभूत काष्ठा s5k6a3 *sd_to_s5k6a3(काष्ठा v4l2_subdev *sd)
+अणु
+	वापस container_of(sd, काष्ठा s5k6a3, subdev);
+पूर्ण
 
-static const struct v4l2_mbus_framefmt s5k6a3_formats[] = {
-	{
+अटल स्थिर काष्ठा v4l2_mbus_framefmt s5k6a3_क्रमmats[] = अणु
+	अणु
 		.code = MEDIA_BUS_FMT_SGRBG10_1X10,
 		.colorspace = V4L2_COLORSPACE_SRGB,
 		.field = V4L2_FIELD_NONE,
-	}
-};
+	पूर्ण
+पूर्ण;
 
-static const struct v4l2_mbus_framefmt *find_sensor_format(
-	struct v4l2_mbus_framefmt *mf)
-{
-	int i;
+अटल स्थिर काष्ठा v4l2_mbus_framefmt *find_sensor_क्रमmat(
+	काष्ठा v4l2_mbus_framefmt *mf)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(s5k6a3_formats); i++)
-		if (mf->code == s5k6a3_formats[i].code)
-			return &s5k6a3_formats[i];
+	क्रम (i = 0; i < ARRAY_SIZE(s5k6a3_क्रमmats); i++)
+		अगर (mf->code == s5k6a3_क्रमmats[i].code)
+			वापस &s5k6a3_क्रमmats[i];
 
-	return &s5k6a3_formats[0];
-}
+	वापस &s5k6a3_क्रमmats[0];
+पूर्ण
 
-static int s5k6a3_enum_mbus_code(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_pad_config *cfg,
-				  struct v4l2_subdev_mbus_code_enum *code)
-{
-	if (code->index >= ARRAY_SIZE(s5k6a3_formats))
-		return -EINVAL;
+अटल पूर्णांक s5k6a3_क्रमागत_mbus_code(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_subdev_pad_config *cfg,
+				  काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
+अणु
+	अगर (code->index >= ARRAY_SIZE(s5k6a3_क्रमmats))
+		वापस -EINVAL;
 
-	code->code = s5k6a3_formats[code->index].code;
-	return 0;
-}
+	code->code = s5k6a3_क्रमmats[code->index].code;
+	वापस 0;
+पूर्ण
 
-static void s5k6a3_try_format(struct v4l2_mbus_framefmt *mf)
-{
-	const struct v4l2_mbus_framefmt *fmt;
+अटल व्योम s5k6a3_try_क्रमmat(काष्ठा v4l2_mbus_framefmt *mf)
+अणु
+	स्थिर काष्ठा v4l2_mbus_framefmt *fmt;
 
-	fmt = find_sensor_format(mf);
+	fmt = find_sensor_क्रमmat(mf);
 	mf->code = fmt->code;
 	mf->field = V4L2_FIELD_NONE;
 	v4l_bound_align_image(&mf->width, S5K6A3_SENSOR_MIN_WIDTH,
 			      S5K6A3_SENSOR_MAX_WIDTH, 0,
 			      &mf->height, S5K6A3_SENSOR_MIN_HEIGHT,
 			      S5K6A3_SENSOR_MAX_HEIGHT, 0, 0);
-}
+पूर्ण
 
-static struct v4l2_mbus_framefmt *__s5k6a3_get_format(
-		struct s5k6a3 *sensor, struct v4l2_subdev_pad_config *cfg,
-		u32 pad, enum v4l2_subdev_format_whence which)
-{
-	if (which == V4L2_SUBDEV_FORMAT_TRY)
-		return cfg ? v4l2_subdev_get_try_format(&sensor->subdev, cfg, pad) : NULL;
+अटल काष्ठा v4l2_mbus_framefmt *__s5k6a3_get_क्रमmat(
+		काष्ठा s5k6a3 *sensor, काष्ठा v4l2_subdev_pad_config *cfg,
+		u32 pad, क्रमागत v4l2_subdev_क्रमmat_whence which)
+अणु
+	अगर (which == V4L2_SUBDEV_FORMAT_TRY)
+		वापस cfg ? v4l2_subdev_get_try_क्रमmat(&sensor->subdev, cfg, pad) : शून्य;
 
-	return &sensor->format;
-}
+	वापस &sensor->क्रमmat;
+पूर्ण
 
-static int s5k6a3_set_fmt(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_pad_config *cfg,
-				  struct v4l2_subdev_format *fmt)
-{
-	struct s5k6a3 *sensor = sd_to_s5k6a3(sd);
-	struct v4l2_mbus_framefmt *mf;
+अटल पूर्णांक s5k6a3_set_fmt(काष्ठा v4l2_subdev *sd,
+				  काष्ठा v4l2_subdev_pad_config *cfg,
+				  काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा s5k6a3 *sensor = sd_to_s5k6a3(sd);
+	काष्ठा v4l2_mbus_framefmt *mf;
 
-	s5k6a3_try_format(&fmt->format);
+	s5k6a3_try_क्रमmat(&fmt->क्रमmat);
 
-	mf = __s5k6a3_get_format(sensor, cfg, fmt->pad, fmt->which);
-	if (mf) {
+	mf = __s5k6a3_get_क्रमmat(sensor, cfg, fmt->pad, fmt->which);
+	अगर (mf) अणु
 		mutex_lock(&sensor->lock);
-		*mf = fmt->format;
+		*mf = fmt->क्रमmat;
 		mutex_unlock(&sensor->lock);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int s5k6a3_get_fmt(struct v4l2_subdev *sd,
-			  struct v4l2_subdev_pad_config *cfg,
-			  struct v4l2_subdev_format *fmt)
-{
-	struct s5k6a3 *sensor = sd_to_s5k6a3(sd);
-	struct v4l2_mbus_framefmt *mf;
+अटल पूर्णांक s5k6a3_get_fmt(काष्ठा v4l2_subdev *sd,
+			  काष्ठा v4l2_subdev_pad_config *cfg,
+			  काष्ठा v4l2_subdev_क्रमmat *fmt)
+अणु
+	काष्ठा s5k6a3 *sensor = sd_to_s5k6a3(sd);
+	काष्ठा v4l2_mbus_framefmt *mf;
 
-	mf = __s5k6a3_get_format(sensor, cfg, fmt->pad, fmt->which);
+	mf = __s5k6a3_get_क्रमmat(sensor, cfg, fmt->pad, fmt->which);
 
 	mutex_lock(&sensor->lock);
-	fmt->format = *mf;
+	fmt->क्रमmat = *mf;
 	mutex_unlock(&sensor->lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_pad_ops s5k6a3_pad_ops = {
-	.enum_mbus_code	= s5k6a3_enum_mbus_code,
+अटल स्थिर काष्ठा v4l2_subdev_pad_ops s5k6a3_pad_ops = अणु
+	.क्रमागत_mbus_code	= s5k6a3_क्रमागत_mbus_code,
 	.get_fmt	= s5k6a3_get_fmt,
 	.set_fmt	= s5k6a3_set_fmt,
-};
+पूर्ण;
 
-static int s5k6a3_open(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh)
-{
-	struct v4l2_mbus_framefmt *format = v4l2_subdev_get_try_format(sd, fh->pad, 0);
+अटल पूर्णांक s5k6a3_खोलो(काष्ठा v4l2_subdev *sd, काष्ठा v4l2_subdev_fh *fh)
+अणु
+	काष्ठा v4l2_mbus_framefmt *क्रमmat = v4l2_subdev_get_try_क्रमmat(sd, fh->pad, 0);
 
-	*format		= s5k6a3_formats[0];
-	format->width	= S5K6A3_DEFAULT_WIDTH;
-	format->height	= S5K6A3_DEFAULT_HEIGHT;
+	*क्रमmat		= s5k6a3_क्रमmats[0];
+	क्रमmat->width	= S5K6A3_DEFAULT_WIDTH;
+	क्रमmat->height	= S5K6A3_DEFAULT_HEIGHT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct v4l2_subdev_internal_ops s5k6a3_sd_internal_ops = {
-	.open = s5k6a3_open,
-};
+अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops s5k6a3_sd_पूर्णांकernal_ops = अणु
+	.खोलो = s5k6a3_खोलो,
+पूर्ण;
 
-static int __s5k6a3_power_on(struct s5k6a3 *sensor)
-{
-	int i = S5K6A3_SUPP_VDDA;
-	int ret;
+अटल पूर्णांक __s5k6a3_घातer_on(काष्ठा s5k6a3 *sensor)
+अणु
+	पूर्णांक i = S5K6A3_SUPP_VDDA;
+	पूर्णांक ret;
 
-	ret = clk_set_rate(sensor->clock, sensor->clock_frequency);
-	if (ret < 0)
-		return ret;
+	ret = clk_set_rate(sensor->घड़ी, sensor->घड़ी_frequency);
+	अगर (ret < 0)
+		वापस ret;
 
-	ret = pm_runtime_get(sensor->dev);
-	if (ret < 0)
-		goto error_rpm_put;
+	ret = pm_runसमय_get(sensor->dev);
+	अगर (ret < 0)
+		जाओ error_rpm_put;
 
 	ret = regulator_enable(sensor->supplies[i].consumer);
-	if (ret < 0)
-		goto error_rpm_put;
+	अगर (ret < 0)
+		जाओ error_rpm_put;
 
-	ret = clk_prepare_enable(sensor->clock);
-	if (ret < 0)
-		goto error_reg_dis;
+	ret = clk_prepare_enable(sensor->घड़ी);
+	अगर (ret < 0)
+		जाओ error_reg_dis;
 
-	for (i++; i < S5K6A3_NUM_SUPPLIES; i++) {
+	क्रम (i++; i < S5K6A3_NUM_SUPPLIES; i++) अणु
 		ret = regulator_enable(sensor->supplies[i].consumer);
-		if (ret < 0)
-			goto error_reg_dis;
-	}
+		अगर (ret < 0)
+			जाओ error_reg_dis;
+	पूर्ण
 
 	gpio_set_value(sensor->gpio_reset, 1);
 	usleep_range(600, 800);
@@ -219,168 +220,168 @@ static int __s5k6a3_power_on(struct s5k6a3 *sensor)
 	usleep_range(600, 800);
 	gpio_set_value(sensor->gpio_reset, 1);
 
-	/* Delay needed for the sensor initialization */
+	/* Delay needed क्रम the sensor initialization */
 	msleep(20);
-	return 0;
+	वापस 0;
 
 error_reg_dis:
-	for (--i; i >= 0; --i)
+	क्रम (--i; i >= 0; --i)
 		regulator_disable(sensor->supplies[i].consumer);
 error_rpm_put:
-	pm_runtime_put(sensor->dev);
-	return ret;
-}
+	pm_runसमय_put(sensor->dev);
+	वापस ret;
+पूर्ण
 
-static int __s5k6a3_power_off(struct s5k6a3 *sensor)
-{
-	int i;
+अटल पूर्णांक __s5k6a3_घातer_off(काष्ठा s5k6a3 *sensor)
+अणु
+	पूर्णांक i;
 
 	gpio_set_value(sensor->gpio_reset, 0);
 
-	for (i = S5K6A3_NUM_SUPPLIES - 1; i >= 0; i--)
+	क्रम (i = S5K6A3_NUM_SUPPLIES - 1; i >= 0; i--)
 		regulator_disable(sensor->supplies[i].consumer);
 
-	clk_disable_unprepare(sensor->clock);
-	pm_runtime_put(sensor->dev);
-	return 0;
-}
+	clk_disable_unprepare(sensor->घड़ी);
+	pm_runसमय_put(sensor->dev);
+	वापस 0;
+पूर्ण
 
-static int s5k6a3_s_power(struct v4l2_subdev *sd, int on)
-{
-	struct s5k6a3 *sensor = sd_to_s5k6a3(sd);
-	int ret = 0;
+अटल पूर्णांक s5k6a3_s_घातer(काष्ठा v4l2_subdev *sd, पूर्णांक on)
+अणु
+	काष्ठा s5k6a3 *sensor = sd_to_s5k6a3(sd);
+	पूर्णांक ret = 0;
 
 	mutex_lock(&sensor->lock);
 
-	if (sensor->power_count == !on) {
-		if (on)
-			ret = __s5k6a3_power_on(sensor);
-		else
-			ret = __s5k6a3_power_off(sensor);
+	अगर (sensor->घातer_count == !on) अणु
+		अगर (on)
+			ret = __s5k6a3_घातer_on(sensor);
+		अन्यथा
+			ret = __s5k6a3_घातer_off(sensor);
 
-		if (ret == 0)
-			sensor->power_count += on ? 1 : -1;
-	}
+		अगर (ret == 0)
+			sensor->घातer_count += on ? 1 : -1;
+	पूर्ण
 
 	mutex_unlock(&sensor->lock);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct v4l2_subdev_core_ops s5k6a3_core_ops = {
-	.s_power = s5k6a3_s_power,
-};
+अटल स्थिर काष्ठा v4l2_subdev_core_ops s5k6a3_core_ops = अणु
+	.s_घातer = s5k6a3_s_घातer,
+पूर्ण;
 
-static const struct v4l2_subdev_ops s5k6a3_subdev_ops = {
+अटल स्थिर काष्ठा v4l2_subdev_ops s5k6a3_subdev_ops = अणु
 	.core = &s5k6a3_core_ops,
 	.pad = &s5k6a3_pad_ops,
-};
+पूर्ण;
 
-static int s5k6a3_probe(struct i2c_client *client)
-{
-	struct device *dev = &client->dev;
-	struct s5k6a3 *sensor;
-	struct v4l2_subdev *sd;
-	int gpio, i, ret;
+अटल पूर्णांक s5k6a3_probe(काष्ठा i2c_client *client)
+अणु
+	काष्ठा device *dev = &client->dev;
+	काष्ठा s5k6a3 *sensor;
+	काष्ठा v4l2_subdev *sd;
+	पूर्णांक gpio, i, ret;
 
-	sensor = devm_kzalloc(dev, sizeof(*sensor), GFP_KERNEL);
-	if (!sensor)
-		return -ENOMEM;
+	sensor = devm_kzalloc(dev, माप(*sensor), GFP_KERNEL);
+	अगर (!sensor)
+		वापस -ENOMEM;
 
 	mutex_init(&sensor->lock);
 	sensor->gpio_reset = -EINVAL;
-	sensor->clock = ERR_PTR(-EINVAL);
+	sensor->घड़ी = ERR_PTR(-EINVAL);
 	sensor->dev = dev;
 
-	sensor->clock = devm_clk_get(sensor->dev, S5K6A3_CLK_NAME);
-	if (IS_ERR(sensor->clock))
-		return PTR_ERR(sensor->clock);
+	sensor->घड़ी = devm_clk_get(sensor->dev, S5K6A3_CLK_NAME);
+	अगर (IS_ERR(sensor->घड़ी))
+		वापस PTR_ERR(sensor->घड़ी);
 
-	gpio = of_get_gpio_flags(dev->of_node, 0, NULL);
-	if (!gpio_is_valid(gpio))
-		return gpio;
+	gpio = of_get_gpio_flags(dev->of_node, 0, शून्य);
+	अगर (!gpio_is_valid(gpio))
+		वापस gpio;
 
 	ret = devm_gpio_request_one(dev, gpio, GPIOF_OUT_INIT_LOW,
 						S5K6A3_DRV_NAME);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	sensor->gpio_reset = gpio;
 
-	if (of_property_read_u32(dev->of_node, "clock-frequency",
-				 &sensor->clock_frequency)) {
-		sensor->clock_frequency = S5K6A3_DEFAULT_CLK_FREQ;
+	अगर (of_property_पढ़ो_u32(dev->of_node, "clock-frequency",
+				 &sensor->घड़ी_frequency)) अणु
+		sensor->घड़ी_frequency = S5K6A3_DEFAULT_CLK_FREQ;
 		dev_info(dev, "using default %u Hz clock frequency\n",
-					sensor->clock_frequency);
-	}
+					sensor->घड़ी_frequency);
+	पूर्ण
 
-	for (i = 0; i < S5K6A3_NUM_SUPPLIES; i++)
+	क्रम (i = 0; i < S5K6A3_NUM_SUPPLIES; i++)
 		sensor->supplies[i].supply = s5k6a3_supply_names[i];
 
 	ret = devm_regulator_bulk_get(&client->dev, S5K6A3_NUM_SUPPLIES,
 				      sensor->supplies);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
 	sd = &sensor->subdev;
 	v4l2_i2c_subdev_init(sd, client, &s5k6a3_subdev_ops);
 	sensor->subdev.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
-	sd->internal_ops = &s5k6a3_sd_internal_ops;
+	sd->पूर्णांकernal_ops = &s5k6a3_sd_पूर्णांकernal_ops;
 
-	sensor->format.code = s5k6a3_formats[0].code;
-	sensor->format.width = S5K6A3_DEFAULT_WIDTH;
-	sensor->format.height = S5K6A3_DEFAULT_HEIGHT;
+	sensor->क्रमmat.code = s5k6a3_क्रमmats[0].code;
+	sensor->क्रमmat.width = S5K6A3_DEFAULT_WIDTH;
+	sensor->क्रमmat.height = S5K6A3_DEFAULT_HEIGHT;
 
 	sd->entity.function = MEDIA_ENT_F_CAM_SENSOR;
 	sensor->pad.flags = MEDIA_PAD_FL_SOURCE;
 	ret = media_entity_pads_init(&sd->entity, 1, &sensor->pad);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	pm_runtime_no_callbacks(dev);
-	pm_runtime_enable(dev);
+	pm_runसमय_no_callbacks(dev);
+	pm_runसमय_enable(dev);
 
-	ret = v4l2_async_register_subdev(sd);
+	ret = v4l2_async_रेजिस्टर_subdev(sd);
 
-	if (ret < 0) {
-		pm_runtime_disable(&client->dev);
+	अगर (ret < 0) अणु
+		pm_runसमय_disable(&client->dev);
 		media_entity_cleanup(&sd->entity);
-	}
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int s5k6a3_remove(struct i2c_client *client)
-{
-	struct v4l2_subdev *sd = i2c_get_clientdata(client);
+अटल पूर्णांक s5k6a3_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा v4l2_subdev *sd = i2c_get_clientdata(client);
 
-	pm_runtime_disable(&client->dev);
-	v4l2_async_unregister_subdev(sd);
+	pm_runसमय_disable(&client->dev);
+	v4l2_async_unरेजिस्टर_subdev(sd);
 	media_entity_cleanup(&sd->entity);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct i2c_device_id s5k6a3_ids[] = {
-	{ }
-};
+अटल स्थिर काष्ठा i2c_device_id s5k6a3_ids[] = अणु
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(i2c, s5k6a3_ids);
 
-#ifdef CONFIG_OF
-static const struct of_device_id s5k6a3_of_match[] = {
-	{ .compatible = "samsung,s5k6a3" },
-	{ /* sentinel */ }
-};
+#अगर_घोषित CONFIG_OF
+अटल स्थिर काष्ठा of_device_id s5k6a3_of_match[] = अणु
+	अणु .compatible = "samsung,s5k6a3" पूर्ण,
+	अणु /* sentinel */ पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, s5k6a3_of_match);
-#endif
+#पूर्ण_अगर
 
-static struct i2c_driver s5k6a3_driver = {
-	.driver = {
+अटल काष्ठा i2c_driver s5k6a3_driver = अणु
+	.driver = अणु
 		.of_match_table	= of_match_ptr(s5k6a3_of_match),
 		.name		= S5K6A3_DRV_NAME,
-	},
+	पूर्ण,
 	.probe_new	= s5k6a3_probe,
-	.remove		= s5k6a3_remove,
+	.हटाओ		= s5k6a3_हटाओ,
 	.id_table	= s5k6a3_ids,
-};
+पूर्ण;
 
 module_i2c_driver(s5k6a3_driver);
 

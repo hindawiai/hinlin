@@ -1,342 +1,343 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Zynq UltraScale+ MPSoC Divider support
  *
  *  Copyright (C) 2016-2019 Xilinx
  *
- * Adjustable divider clock implementation
+ * Adjustable भागider घड़ी implementation
  */
 
-#include <linux/clk.h>
-#include <linux/clk-provider.h>
-#include <linux/slab.h>
-#include "clk-zynqmp.h"
+#समावेश <linux/clk.h>
+#समावेश <linux/clk-provider.h>
+#समावेश <linux/slab.h>
+#समावेश "clk-zynqmp.h"
 
 /*
- * DOC: basic adjustable divider clock that cannot gate
+ * DOC: basic adjustable भागider घड़ी that cannot gate
  *
- * Traits of this clock:
+ * Traits of this घड़ी:
  * prepare - clk_prepare only ensures that parents are prepared
  * enable - clk_enable only ensures that parents are enabled
- * rate - rate is adjustable.  clk->rate = ceiling(parent->rate / divisor)
+ * rate - rate is adjustable.  clk->rate = उच्चमानing(parent->rate / भागisor)
  * parent - fixed parent.  No clk_set_parent support
  */
 
-#define to_zynqmp_clk_divider(_hw)		\
-	container_of(_hw, struct zynqmp_clk_divider, hw)
+#घोषणा to_zynqmp_clk_भागider(_hw)		\
+	container_of(_hw, काष्ठा zynqmp_clk_भागider, hw)
 
-#define CLK_FRAC		BIT(13) /* has a fractional parent */
-#define CUSTOM_FLAG_CLK_FRAC	BIT(0) /* has a fractional parent in custom type flag */
+#घोषणा CLK_FRAC		BIT(13) /* has a fractional parent */
+#घोषणा CUSTOM_FLAG_CLK_FRAC	BIT(0) /* has a fractional parent in custom type flag */
 
 /**
- * struct zynqmp_clk_divider - adjustable divider clock
- * @hw:		handle between common and hardware-specific interfaces
- * @flags:	Hardware specific flags
- * @is_frac:	The divider is a fractional divider
- * @clk_id:	Id of clock
- * @div_type:	divisor type (TYPE_DIV1 or TYPE_DIV2)
- * @max_div:	maximum supported divisor (fetched from firmware)
+ * काष्ठा zynqmp_clk_भागider - adjustable भागider घड़ी
+ * @hw:		handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @flags:	Hardware specअगरic flags
+ * @is_frac:	The भागider is a fractional भागider
+ * @clk_id:	Id of घड़ी
+ * @भाग_प्रकारype:	भागisor type (TYPE_DIV1 or TYPE_DIV2)
+ * @max_भाग:	maximum supported भागisor (fetched from firmware)
  */
-struct zynqmp_clk_divider {
-	struct clk_hw hw;
+काष्ठा zynqmp_clk_भागider अणु
+	काष्ठा clk_hw hw;
 	u8 flags;
 	bool is_frac;
 	u32 clk_id;
-	u32 div_type;
-	u16 max_div;
-};
+	u32 भाग_प्रकारype;
+	u16 max_भाग;
+पूर्ण;
 
-static inline int zynqmp_divider_get_val(unsigned long parent_rate,
-					 unsigned long rate, u16 flags)
-{
-	int up, down;
-	unsigned long up_rate, down_rate;
+अटल अंतरभूत पूर्णांक zynqmp_भागider_get_val(अचिन्हित दीर्घ parent_rate,
+					 अचिन्हित दीर्घ rate, u16 flags)
+अणु
+	पूर्णांक up, करोwn;
+	अचिन्हित दीर्घ up_rate, करोwn_rate;
 
-	if (flags & CLK_DIVIDER_POWER_OF_TWO) {
+	अगर (flags & CLK_DIVIDER_POWER_OF_TWO) अणु
 		up = DIV_ROUND_UP_ULL((u64)parent_rate, rate);
-		down = DIV_ROUND_DOWN_ULL((u64)parent_rate, rate);
+		करोwn = DIV_ROUND_DOWN_ULL((u64)parent_rate, rate);
 
-		up = __roundup_pow_of_two(up);
-		down = __rounddown_pow_of_two(down);
+		up = __roundup_घात_of_two(up);
+		करोwn = __roundकरोwn_घात_of_two(करोwn);
 
 		up_rate = DIV_ROUND_UP_ULL((u64)parent_rate, up);
-		down_rate = DIV_ROUND_UP_ULL((u64)parent_rate, down);
+		करोwn_rate = DIV_ROUND_UP_ULL((u64)parent_rate, करोwn);
 
-		return (rate - up_rate) <= (down_rate - rate) ? up : down;
+		वापस (rate - up_rate) <= (करोwn_rate - rate) ? up : करोwn;
 
-	} else {
-		return DIV_ROUND_CLOSEST(parent_rate, rate);
-	}
-}
+	पूर्ण अन्यथा अणु
+		वापस DIV_ROUND_CLOSEST(parent_rate, rate);
+	पूर्ण
+पूर्ण
 
 /**
- * zynqmp_clk_divider_recalc_rate() - Recalc rate of divider clock
- * @hw:			handle between common and hardware-specific interfaces
- * @parent_rate:	rate of parent clock
+ * zynqmp_clk_भागider_recalc_rate() - Recalc rate of भागider घड़ी
+ * @hw:			handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @parent_rate:	rate of parent घड़ी
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static unsigned long zynqmp_clk_divider_recalc_rate(struct clk_hw *hw,
-						    unsigned long parent_rate)
-{
-	struct zynqmp_clk_divider *divider = to_zynqmp_clk_divider(hw);
-	const char *clk_name = clk_hw_get_name(hw);
-	u32 clk_id = divider->clk_id;
-	u32 div_type = divider->div_type;
-	u32 div, value;
-	int ret;
+अटल अचिन्हित दीर्घ zynqmp_clk_भागider_recalc_rate(काष्ठा clk_hw *hw,
+						    अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा zynqmp_clk_भागider *भागider = to_zynqmp_clk_भागider(hw);
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
+	u32 clk_id = भागider->clk_id;
+	u32 भाग_प्रकारype = भागider->भाग_प्रकारype;
+	u32 भाग, value;
+	पूर्णांक ret;
 
-	ret = zynqmp_pm_clock_getdivider(clk_id, &div);
+	ret = zynqmp_pm_घड़ी_getभागider(clk_id, &भाग);
 
-	if (ret)
+	अगर (ret)
 		pr_warn_once("%s() get divider failed for %s, ret = %d\n",
 			     __func__, clk_name, ret);
 
-	if (div_type == TYPE_DIV1)
-		value = div & 0xFFFF;
-	else
-		value = div >> 16;
+	अगर (भाग_प्रकारype == TYPE_DIV1)
+		value = भाग & 0xFFFF;
+	अन्यथा
+		value = भाग >> 16;
 
-	if (divider->flags & CLK_DIVIDER_POWER_OF_TWO)
+	अगर (भागider->flags & CLK_DIVIDER_POWER_OF_TWO)
 		value = 1 << value;
 
-	if (!value) {
-		WARN(!(divider->flags & CLK_DIVIDER_ALLOW_ZERO),
+	अगर (!value) अणु
+		WARN(!(भागider->flags & CLK_DIVIDER_ALLOW_ZERO),
 		     "%s: Zero divisor and CLK_DIVIDER_ALLOW_ZERO not set\n",
 		     clk_name);
-		return parent_rate;
-	}
+		वापस parent_rate;
+	पूर्ण
 
-	return DIV_ROUND_UP_ULL(parent_rate, value);
-}
+	वापस DIV_ROUND_UP_ULL(parent_rate, value);
+पूर्ण
 
-static void zynqmp_get_divider2_val(struct clk_hw *hw,
-				    unsigned long rate,
-				    struct zynqmp_clk_divider *divider,
-				    int *bestdiv)
-{
-	int div1;
-	int div2;
-	long error = LONG_MAX;
-	unsigned long div1_prate;
-	struct clk_hw *div1_parent_hw;
-	struct clk_hw *div2_parent_hw = clk_hw_get_parent(hw);
-	struct zynqmp_clk_divider *pdivider =
-				to_zynqmp_clk_divider(div2_parent_hw);
+अटल व्योम zynqmp_get_भागider2_val(काष्ठा clk_hw *hw,
+				    अचिन्हित दीर्घ rate,
+				    काष्ठा zynqmp_clk_भागider *भागider,
+				    पूर्णांक *bestभाग)
+अणु
+	पूर्णांक भाग1;
+	पूर्णांक भाग2;
+	दीर्घ error = दीर्घ_उच्च;
+	अचिन्हित दीर्घ भाग1_prate;
+	काष्ठा clk_hw *भाग1_parent_hw;
+	काष्ठा clk_hw *भाग2_parent_hw = clk_hw_get_parent(hw);
+	काष्ठा zynqmp_clk_भागider *pभागider =
+				to_zynqmp_clk_भागider(भाग2_parent_hw);
 
-	if (!pdivider)
-		return;
+	अगर (!pभागider)
+		वापस;
 
-	div1_parent_hw = clk_hw_get_parent(div2_parent_hw);
-	if (!div1_parent_hw)
-		return;
+	भाग1_parent_hw = clk_hw_get_parent(भाग2_parent_hw);
+	अगर (!भाग1_parent_hw)
+		वापस;
 
-	div1_prate = clk_hw_get_rate(div1_parent_hw);
-	*bestdiv = 1;
-	for (div1 = 1; div1 <= pdivider->max_div;) {
-		for (div2 = 1; div2 <= divider->max_div;) {
-			long new_error = ((div1_prate / div1) / div2) - rate;
+	भाग1_prate = clk_hw_get_rate(भाग1_parent_hw);
+	*bestभाग = 1;
+	क्रम (भाग1 = 1; भाग1 <= pभागider->max_भाग;) अणु
+		क्रम (भाग2 = 1; भाग2 <= भागider->max_भाग;) अणु
+			दीर्घ new_error = ((भाग1_prate / भाग1) / भाग2) - rate;
 
-			if (abs(new_error) < abs(error)) {
-				*bestdiv = div2;
+			अगर (असल(new_error) < असल(error)) अणु
+				*bestभाग = भाग2;
 				error = new_error;
-			}
-			if (divider->flags & CLK_DIVIDER_POWER_OF_TWO)
-				div2 = div2 << 1;
-			else
-				div2++;
-		}
-		if (pdivider->flags & CLK_DIVIDER_POWER_OF_TWO)
-			div1 = div1 << 1;
-		else
-			div1++;
-	}
-}
+			पूर्ण
+			अगर (भागider->flags & CLK_DIVIDER_POWER_OF_TWO)
+				भाग2 = भाग2 << 1;
+			अन्यथा
+				भाग2++;
+		पूर्ण
+		अगर (pभागider->flags & CLK_DIVIDER_POWER_OF_TWO)
+			भाग1 = भाग1 << 1;
+		अन्यथा
+			भाग1++;
+	पूर्ण
+पूर्ण
 
 /**
- * zynqmp_clk_divider_round_rate() - Round rate of divider clock
- * @hw:			handle between common and hardware-specific interfaces
- * @rate:		rate of clock to be set
- * @prate:		rate of parent clock
+ * zynqmp_clk_भागider_round_rate() - Round rate of भागider घड़ी
+ * @hw:			handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @rate:		rate of घड़ी to be set
+ * @prate:		rate of parent घड़ी
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static long zynqmp_clk_divider_round_rate(struct clk_hw *hw,
-					  unsigned long rate,
-					  unsigned long *prate)
-{
-	struct zynqmp_clk_divider *divider = to_zynqmp_clk_divider(hw);
-	const char *clk_name = clk_hw_get_name(hw);
-	u32 clk_id = divider->clk_id;
-	u32 div_type = divider->div_type;
-	u32 bestdiv;
-	int ret;
+अटल दीर्घ zynqmp_clk_भागider_round_rate(काष्ठा clk_hw *hw,
+					  अचिन्हित दीर्घ rate,
+					  अचिन्हित दीर्घ *prate)
+अणु
+	काष्ठा zynqmp_clk_भागider *भागider = to_zynqmp_clk_भागider(hw);
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
+	u32 clk_id = भागider->clk_id;
+	u32 भाग_प्रकारype = भागider->भाग_प्रकारype;
+	u32 bestभाग;
+	पूर्णांक ret;
 
-	/* if read only, just return current value */
-	if (divider->flags & CLK_DIVIDER_READ_ONLY) {
-		ret = zynqmp_pm_clock_getdivider(clk_id, &bestdiv);
+	/* अगर पढ़ो only, just वापस current value */
+	अगर (भागider->flags & CLK_DIVIDER_READ_ONLY) अणु
+		ret = zynqmp_pm_घड़ी_getभागider(clk_id, &bestभाग);
 
-		if (ret)
+		अगर (ret)
 			pr_warn_once("%s() get divider failed for %s, ret = %d\n",
 				     __func__, clk_name, ret);
-		if (div_type == TYPE_DIV1)
-			bestdiv = bestdiv & 0xFFFF;
-		else
-			bestdiv  = bestdiv >> 16;
+		अगर (भाग_प्रकारype == TYPE_DIV1)
+			bestभाग = bestभाग & 0xFFFF;
+		अन्यथा
+			bestभाग  = bestभाग >> 16;
 
-		if (divider->flags & CLK_DIVIDER_POWER_OF_TWO)
-			bestdiv = 1 << bestdiv;
+		अगर (भागider->flags & CLK_DIVIDER_POWER_OF_TWO)
+			bestभाग = 1 << bestभाग;
 
-		return DIV_ROUND_UP_ULL((u64)*prate, bestdiv);
-	}
+		वापस DIV_ROUND_UP_ULL((u64)*prate, bestभाग);
+	पूर्ण
 
-	bestdiv = zynqmp_divider_get_val(*prate, rate, divider->flags);
+	bestभाग = zynqmp_भागider_get_val(*prate, rate, भागider->flags);
 
 	/*
-	 * In case of two divisors, compute best divider values and return
-	 * divider2 value based on compute value. div1 will  be automatically
-	 * set to optimum based on required total divider value.
+	 * In हाल of two भागisors, compute best भागider values and वापस
+	 * भागider2 value based on compute value. भाग1 will  be स्वतःmatically
+	 * set to optimum based on required total भागider value.
 	 */
-	if (div_type == TYPE_DIV2 &&
-	    (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT)) {
-		zynqmp_get_divider2_val(hw, rate, divider, &bestdiv);
-	}
+	अगर (भाग_प्रकारype == TYPE_DIV2 &&
+	    (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT)) अणु
+		zynqmp_get_भागider2_val(hw, rate, भागider, &bestभाग);
+	पूर्ण
 
-	if ((clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) && divider->is_frac)
-		bestdiv = rate % *prate ? 1 : bestdiv;
+	अगर ((clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT) && भागider->is_frac)
+		bestभाग = rate % *prate ? 1 : bestभाग;
 
-	bestdiv = min_t(u32, bestdiv, divider->max_div);
-	*prate = rate * bestdiv;
+	bestभाग = min_t(u32, bestभाग, भागider->max_भाग);
+	*prate = rate * bestभाग;
 
-	return rate;
-}
+	वापस rate;
+पूर्ण
 
 /**
- * zynqmp_clk_divider_set_rate() - Set rate of divider clock
- * @hw:			handle between common and hardware-specific interfaces
- * @rate:		rate of clock to be set
- * @parent_rate:	rate of parent clock
+ * zynqmp_clk_भागider_set_rate() - Set rate of भागider घड़ी
+ * @hw:			handle between common and hardware-specअगरic पूर्णांकerfaces
+ * @rate:		rate of घड़ी to be set
+ * @parent_rate:	rate of parent घड़ी
  *
- * Return: 0 on success else error+reason
+ * Return: 0 on success अन्यथा error+reason
  */
-static int zynqmp_clk_divider_set_rate(struct clk_hw *hw, unsigned long rate,
-				       unsigned long parent_rate)
-{
-	struct zynqmp_clk_divider *divider = to_zynqmp_clk_divider(hw);
-	const char *clk_name = clk_hw_get_name(hw);
-	u32 clk_id = divider->clk_id;
-	u32 div_type = divider->div_type;
-	u32 value, div;
-	int ret;
+अटल पूर्णांक zynqmp_clk_भागider_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
+				       अचिन्हित दीर्घ parent_rate)
+अणु
+	काष्ठा zynqmp_clk_भागider *भागider = to_zynqmp_clk_भागider(hw);
+	स्थिर अक्षर *clk_name = clk_hw_get_name(hw);
+	u32 clk_id = भागider->clk_id;
+	u32 भाग_प्रकारype = भागider->भाग_प्रकारype;
+	u32 value, भाग;
+	पूर्णांक ret;
 
-	value = zynqmp_divider_get_val(parent_rate, rate, divider->flags);
-	if (div_type == TYPE_DIV1) {
-		div = value & 0xFFFF;
-		div |= 0xffff << 16;
-	} else {
-		div = 0xffff;
-		div |= value << 16;
-	}
+	value = zynqmp_भागider_get_val(parent_rate, rate, भागider->flags);
+	अगर (भाग_प्रकारype == TYPE_DIV1) अणु
+		भाग = value & 0xFFFF;
+		भाग |= 0xffff << 16;
+	पूर्ण अन्यथा अणु
+		भाग = 0xffff;
+		भाग |= value << 16;
+	पूर्ण
 
-	if (divider->flags & CLK_DIVIDER_POWER_OF_TWO)
-		div = __ffs(div);
+	अगर (भागider->flags & CLK_DIVIDER_POWER_OF_TWO)
+		भाग = __ffs(भाग);
 
-	ret = zynqmp_pm_clock_setdivider(clk_id, div);
+	ret = zynqmp_pm_घड़ी_setभागider(clk_id, भाग);
 
-	if (ret)
+	अगर (ret)
 		pr_warn_once("%s() set divider failed for %s, ret = %d\n",
 			     __func__, clk_name, ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static const struct clk_ops zynqmp_clk_divider_ops = {
-	.recalc_rate = zynqmp_clk_divider_recalc_rate,
-	.round_rate = zynqmp_clk_divider_round_rate,
-	.set_rate = zynqmp_clk_divider_set_rate,
-};
+अटल स्थिर काष्ठा clk_ops zynqmp_clk_भागider_ops = अणु
+	.recalc_rate = zynqmp_clk_भागider_recalc_rate,
+	.round_rate = zynqmp_clk_भागider_round_rate,
+	.set_rate = zynqmp_clk_भागider_set_rate,
+पूर्ण;
 
 /**
- * zynqmp_clk_get_max_divisor() - Get maximum supported divisor from firmware.
- * @clk_id:		Id of clock
+ * zynqmp_clk_get_max_भागisor() - Get maximum supported भागisor from firmware.
+ * @clk_id:		Id of घड़ी
  * @type:		Divider type
  *
- * Return: Maximum divisor of a clock if query data is successful
- *	   U16_MAX in case of query data is not success
+ * Return: Maximum भागisor of a घड़ी अगर query data is successful
+ *	   U16_MAX in हाल of query data is not success
  */
-static u32 zynqmp_clk_get_max_divisor(u32 clk_id, u32 type)
-{
-	struct zynqmp_pm_query_data qdata = {0};
+अटल u32 zynqmp_clk_get_max_भागisor(u32 clk_id, u32 type)
+अणु
+	काष्ठा zynqmp_pm_query_data qdata = अणु0पूर्ण;
 	u32 ret_payload[PAYLOAD_ARG_CNT];
-	int ret;
+	पूर्णांक ret;
 
 	qdata.qid = PM_QID_CLOCK_GET_MAX_DIVISOR;
 	qdata.arg1 = clk_id;
 	qdata.arg2 = type;
 	ret = zynqmp_pm_query_data(qdata, ret_payload);
 	/*
-	 * To maintain backward compatibility return maximum possible value
-	 * (0xFFFF) if query for max divisor is not successful.
+	 * To मुख्यtain backward compatibility वापस maximum possible value
+	 * (0xFFFF) अगर query क्रम max भागisor is not successful.
 	 */
-	if (ret)
-		return U16_MAX;
+	अगर (ret)
+		वापस U16_MAX;
 
-	return ret_payload[1];
-}
+	वापस ret_payload[1];
+पूर्ण
 
 /**
- * zynqmp_clk_register_divider() - Register a divider clock
- * @name:		Name of this clock
- * @clk_id:		Id of clock
- * @parents:		Name of this clock's parents
+ * zynqmp_clk_रेजिस्टर_भागider() - Register a भागider घड़ी
+ * @name:		Name of this घड़ी
+ * @clk_id:		Id of घड़ी
+ * @parents:		Name of this घड़ी's parents
  * @num_parents:	Number of parents
  * @nodes:		Clock topology node
  *
- * Return: clock hardware to registered clock divider
+ * Return: घड़ी hardware to रेजिस्टरed घड़ी भागider
  */
-struct clk_hw *zynqmp_clk_register_divider(const char *name,
+काष्ठा clk_hw *zynqmp_clk_रेजिस्टर_भागider(स्थिर अक्षर *name,
 					   u32 clk_id,
-					   const char * const *parents,
+					   स्थिर अक्षर * स्थिर *parents,
 					   u8 num_parents,
-					   const struct clock_topology *nodes)
-{
-	struct zynqmp_clk_divider *div;
-	struct clk_hw *hw;
-	struct clk_init_data init;
-	int ret;
+					   स्थिर काष्ठा घड़ी_प्रकारopology *nodes)
+अणु
+	काष्ठा zynqmp_clk_भागider *भाग;
+	काष्ठा clk_hw *hw;
+	काष्ठा clk_init_data init;
+	पूर्णांक ret;
 
-	/* allocate the divider */
-	div = kzalloc(sizeof(*div), GFP_KERNEL);
-	if (!div)
-		return ERR_PTR(-ENOMEM);
+	/* allocate the भागider */
+	भाग = kzalloc(माप(*भाग), GFP_KERNEL);
+	अगर (!भाग)
+		वापस ERR_PTR(-ENOMEM);
 
 	init.name = name;
-	init.ops = &zynqmp_clk_divider_ops;
+	init.ops = &zynqmp_clk_भागider_ops;
 	/* CLK_FRAC is not defined in the common clk framework */
 	init.flags = nodes->flag & ~CLK_FRAC;
 	init.parent_names = parents;
 	init.num_parents = 1;
 
-	/* struct clk_divider assignments */
-	div->is_frac = !!((nodes->flag & CLK_FRAC) |
+	/* काष्ठा clk_भागider assignments */
+	भाग->is_frac = !!((nodes->flag & CLK_FRAC) |
 			  (nodes->custom_type_flag & CUSTOM_FLAG_CLK_FRAC));
-	div->flags = nodes->type_flag;
-	div->hw.init = &init;
-	div->clk_id = clk_id;
-	div->div_type = nodes->type;
+	भाग->flags = nodes->type_flag;
+	भाग->hw.init = &init;
+	भाग->clk_id = clk_id;
+	भाग->भाग_प्रकारype = nodes->type;
 
 	/*
-	 * To achieve best possible rate, maximum limit of divider is required
-	 * while computation.
+	 * To achieve best possible rate, maximum limit of भागider is required
+	 * जबतक computation.
 	 */
-	div->max_div = zynqmp_clk_get_max_divisor(clk_id, nodes->type);
+	भाग->max_भाग = zynqmp_clk_get_max_भागisor(clk_id, nodes->type);
 
-	hw = &div->hw;
-	ret = clk_hw_register(NULL, hw);
-	if (ret) {
-		kfree(div);
+	hw = &भाग->hw;
+	ret = clk_hw_रेजिस्टर(शून्य, hw);
+	अगर (ret) अणु
+		kमुक्त(भाग);
 		hw = ERR_PTR(ret);
-	}
+	पूर्ण
 
-	return hw;
-}
+	वापस hw;
+पूर्ण

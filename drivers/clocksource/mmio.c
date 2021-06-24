@@ -1,70 +1,71 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Generic MMIO clocksource support
+ * Generic MMIO घड़ीsource support
  */
-#include <linux/clocksource.h>
-#include <linux/errno.h>
-#include <linux/init.h>
-#include <linux/slab.h>
+#समावेश <linux/घड़ीsource.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/init.h>
+#समावेश <linux/slab.h>
 
-struct clocksource_mmio {
-	void __iomem *reg;
-	struct clocksource clksrc;
-};
+काष्ठा घड़ीsource_mmio अणु
+	व्योम __iomem *reg;
+	काष्ठा घड़ीsource clksrc;
+पूर्ण;
 
-static inline struct clocksource_mmio *to_mmio_clksrc(struct clocksource *c)
-{
-	return container_of(c, struct clocksource_mmio, clksrc);
-}
+अटल अंतरभूत काष्ठा घड़ीsource_mmio *to_mmio_clksrc(काष्ठा घड़ीsource *c)
+अणु
+	वापस container_of(c, काष्ठा घड़ीsource_mmio, clksrc);
+पूर्ण
 
-u64 clocksource_mmio_readl_up(struct clocksource *c)
-{
-	return (u64)readl_relaxed(to_mmio_clksrc(c)->reg);
-}
+u64 घड़ीsource_mmio_पढ़ोl_up(काष्ठा घड़ीsource *c)
+अणु
+	वापस (u64)पढ़ोl_relaxed(to_mmio_clksrc(c)->reg);
+पूर्ण
 
-u64 clocksource_mmio_readl_down(struct clocksource *c)
-{
-	return ~(u64)readl_relaxed(to_mmio_clksrc(c)->reg) & c->mask;
-}
+u64 घड़ीsource_mmio_पढ़ोl_करोwn(काष्ठा घड़ीsource *c)
+अणु
+	वापस ~(u64)पढ़ोl_relaxed(to_mmio_clksrc(c)->reg) & c->mask;
+पूर्ण
 
-u64 clocksource_mmio_readw_up(struct clocksource *c)
-{
-	return (u64)readw_relaxed(to_mmio_clksrc(c)->reg);
-}
+u64 घड़ीsource_mmio_पढ़ोw_up(काष्ठा घड़ीsource *c)
+अणु
+	वापस (u64)पढ़ोw_relaxed(to_mmio_clksrc(c)->reg);
+पूर्ण
 
-u64 clocksource_mmio_readw_down(struct clocksource *c)
-{
-	return ~(u64)readw_relaxed(to_mmio_clksrc(c)->reg) & c->mask;
-}
+u64 घड़ीsource_mmio_पढ़ोw_करोwn(काष्ठा घड़ीsource *c)
+अणु
+	वापस ~(u64)पढ़ोw_relaxed(to_mmio_clksrc(c)->reg) & c->mask;
+पूर्ण
 
 /**
- * clocksource_mmio_init - Initialize a simple mmio based clocksource
- * @base:	Virtual address of the clock readout register
- * @name:	Name of the clocksource
- * @hz:		Frequency of the clocksource in Hz
- * @rating:	Rating of the clocksource
+ * घड़ीsource_mmio_init - Initialize a simple mmio based घड़ीsource
+ * @base:	Virtual address of the घड़ी पढ़ोout रेजिस्टर
+ * @name:	Name of the घड़ीsource
+ * @hz:		Frequency of the घड़ीsource in Hz
+ * @rating:	Rating of the घड़ीsource
  * @bits:	Number of valid bits
- * @read:	One of clocksource_mmio_read*() above
+ * @पढ़ो:	One of घड़ीsource_mmio_पढ़ो*() above
  */
-int __init clocksource_mmio_init(void __iomem *base, const char *name,
-	unsigned long hz, int rating, unsigned bits,
-	u64 (*read)(struct clocksource *))
-{
-	struct clocksource_mmio *cs;
+पूर्णांक __init घड़ीsource_mmio_init(व्योम __iomem *base, स्थिर अक्षर *name,
+	अचिन्हित दीर्घ hz, पूर्णांक rating, अचिन्हित bits,
+	u64 (*पढ़ो)(काष्ठा घड़ीsource *))
+अणु
+	काष्ठा घड़ीsource_mmio *cs;
 
-	if (bits > 64 || bits < 16)
-		return -EINVAL;
+	अगर (bits > 64 || bits < 16)
+		वापस -EINVAL;
 
-	cs = kzalloc(sizeof(struct clocksource_mmio), GFP_KERNEL);
-	if (!cs)
-		return -ENOMEM;
+	cs = kzalloc(माप(काष्ठा घड़ीsource_mmio), GFP_KERNEL);
+	अगर (!cs)
+		वापस -ENOMEM;
 
 	cs->reg = base;
 	cs->clksrc.name = name;
 	cs->clksrc.rating = rating;
-	cs->clksrc.read = read;
+	cs->clksrc.पढ़ो = पढ़ो;
 	cs->clksrc.mask = CLOCKSOURCE_MASK(bits);
 	cs->clksrc.flags = CLOCK_SOURCE_IS_CONTINUOUS;
 
-	return clocksource_register_hz(&cs->clksrc, hz);
-}
+	वापस घड़ीsource_रेजिस्टर_hz(&cs->clksrc, hz);
+पूर्ण

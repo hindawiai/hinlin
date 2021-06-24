@@ -1,24 +1,25 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * AD5791 SPI DAC driver
  *
  * Copyright 2011 Analog Devices Inc.
  */
 
-#ifndef SPI_AD5791_H_
-#define SPI_AD5791_H_
+#अगर_अघोषित SPI_AD5791_H_
+#घोषणा SPI_AD5791_H_
 
 /**
- * struct ad5791_platform_data - platform specific information
+ * काष्ठा ad5791_platक्रमm_data - platक्रमm specअगरic inक्रमmation
  * @vref_pos_mv:	Vdd Positive Analog Supply Volatge (mV)
  * @vref_neg_mv:	Vdd Negative Analog Supply Volatge (mV)
- * @use_rbuf_gain2:	ext. amplifier connected in gain of two configuration
+ * @use_rbuf_gain2:	ext. amplअगरier connected in gain of two configuration
  */
 
-struct ad5791_platform_data {
+काष्ठा ad5791_platक्रमm_data अणु
 	u16				vref_pos_mv;
 	u16				vref_neg_mv;
 	bool				use_rbuf_gain2;
-};
+पूर्ण;
 
-#endif /* SPI_AD5791_H_ */
+#पूर्ण_अगर /* SPI_AD5791_H_ */

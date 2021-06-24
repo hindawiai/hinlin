@@ -1,12 +1,13 @@
+<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
+ * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
+ * copy of this software and associated करोcumentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * Software is furnished to करो so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -21,62 +22,62 @@
  *
  */
 
-#include "vega10_thermal.h"
-#include "vega10_hwmgr.h"
-#include "vega10_smumgr.h"
-#include "vega10_ppsmc.h"
-#include "vega10_inc.h"
-#include "soc15_common.h"
-#include "pp_debug.h"
+#समावेश "vega10_thermal.h"
+#समावेश "vega10_hwmgr.h"
+#समावेश "vega10_smumgr.h"
+#समावेश "vega10_ppsmc.h"
+#समावेश "vega10_inc.h"
+#समावेश "soc15_common.h"
+#समावेश "pp_debug.h"
 
-static int vega10_get_current_rpm(struct pp_hwmgr *hwmgr, uint32_t *current_rpm)
-{
+अटल पूर्णांक vega10_get_current_rpm(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t *current_rpm)
+अणु
 	smum_send_msg_to_smc(hwmgr, PPSMC_MSG_GetCurrentRpm, current_rpm);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vega10_fan_ctrl_get_fan_speed_info(struct pp_hwmgr *hwmgr,
-		struct phm_fan_speed_info *fan_speed_info)
-{
+पूर्णांक vega10_fan_ctrl_get_fan_speed_info(काष्ठा pp_hwmgr *hwmgr,
+		काष्ठा phm_fan_speed_info *fan_speed_info)
+अणु
 
-	if (hwmgr->thermal_controller.fanInfo.bNoFan)
-		return 0;
+	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
+		वापस 0;
 
-	fan_speed_info->supports_percent_read = true;
-	fan_speed_info->supports_percent_write = true;
+	fan_speed_info->supports_percent_पढ़ो = true;
+	fan_speed_info->supports_percent_ग_लिखो = true;
 	fan_speed_info->min_percent = 0;
 	fan_speed_info->max_percent = 100;
 
-	if (PP_CAP(PHM_PlatformCaps_FanSpeedInTableIsRPM) &&
+	अगर (PP_CAP(PHM_Platक्रमmCaps_FanSpeedInTableIsRPM) &&
 		hwmgr->thermal_controller.fanInfo.
-		ucTachometerPulsesPerRevolution) {
-		fan_speed_info->supports_rpm_read = true;
-		fan_speed_info->supports_rpm_write = true;
+		ucTachometerPulsesPerRevolution) अणु
+		fan_speed_info->supports_rpm_पढ़ो = true;
+		fan_speed_info->supports_rpm_ग_लिखो = true;
 		fan_speed_info->min_rpm =
 				hwmgr->thermal_controller.fanInfo.ulMinRPM;
 		fan_speed_info->max_rpm =
 				hwmgr->thermal_controller.fanInfo.ulMaxRPM;
-	} else {
+	पूर्ण अन्यथा अणु
 		fan_speed_info->min_rpm = 0;
 		fan_speed_info->max_rpm = 0;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vega10_fan_ctrl_get_fan_speed_percent(struct pp_hwmgr *hwmgr,
-		uint32_t *speed)
-{
-	uint32_t current_rpm;
-	uint32_t percent = 0;
+पूर्णांक vega10_fan_ctrl_get_fan_speed_percent(काष्ठा pp_hwmgr *hwmgr,
+		uपूर्णांक32_t *speed)
+अणु
+	uपूर्णांक32_t current_rpm;
+	uपूर्णांक32_t percent = 0;
 
-	if (hwmgr->thermal_controller.fanInfo.bNoFan)
-		return 0;
+	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
+		वापस 0;
 
-	if (vega10_get_current_rpm(hwmgr, &current_rpm))
-		return -1;
+	अगर (vega10_get_current_rpm(hwmgr, &current_rpm))
+		वापस -1;
 
-	if (hwmgr->thermal_controller.
+	अगर (hwmgr->thermal_controller.
 			advanceFanControlParameters.usMaxFanRPM != 0)
 		percent = current_rpm * 100 /
 			hwmgr->thermal_controller.
@@ -84,59 +85,59 @@ int vega10_fan_ctrl_get_fan_speed_percent(struct pp_hwmgr *hwmgr,
 
 	*speed = percent > 100 ? 100 : percent;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vega10_fan_ctrl_get_fan_speed_rpm(struct pp_hwmgr *hwmgr, uint32_t *speed)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	struct vega10_hwmgr *data = hwmgr->backend;
-	uint32_t tach_period;
-	uint32_t crystal_clock_freq;
-	int result = 0;
+पूर्णांक vega10_fan_ctrl_get_fan_speed_rpm(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t *speed)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	काष्ठा vega10_hwmgr *data = hwmgr->backend;
+	uपूर्णांक32_t tach_period;
+	uपूर्णांक32_t crystal_घड़ी_freq;
+	पूर्णांक result = 0;
 
-	if (hwmgr->thermal_controller.fanInfo.bNoFan)
-		return -1;
+	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
+		वापस -1;
 
-	if (data->smu_features[GNLD_FAN_CONTROL].supported) {
+	अगर (data->smu_features[GNLD_FAN_CONTROL].supported) अणु
 		result = vega10_get_current_rpm(hwmgr, speed);
-	} else {
+	पूर्ण अन्यथा अणु
 		tach_period =
 			REG_GET_FIELD(RREG32_SOC15(THM, 0, mmCG_TACH_STATUS),
 					  CG_TACH_STATUS,
 					  TACH_PERIOD);
 
-		if (tach_period == 0)
-			return -EINVAL;
+		अगर (tach_period == 0)
+			वापस -EINVAL;
 
-		crystal_clock_freq = amdgpu_asic_get_xclk((struct amdgpu_device *)hwmgr->adev);
+		crystal_घड़ी_freq = amdgpu_asic_get_xclk((काष्ठा amdgpu_device *)hwmgr->adev);
 
-		*speed = 60 * crystal_clock_freq * 10000 / tach_period;
-	}
+		*speed = 60 * crystal_घड़ी_freq * 10000 / tach_period;
+	पूर्ण
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
- * vega10_fan_ctrl_set_static_mode - Set Fan Speed Control to static mode,
+ * vega10_fan_ctrl_set_अटल_mode - Set Fan Speed Control to अटल mode,
  * so that the user can decide what speed to use.
- * @hwmgr:  the address of the powerplay hardware manager.
- * @mode: the fan control mode, 0 default, 1 by percent, 5, by RPM
+ * @hwmgr:  the address of the घातerplay hardware manager.
+ * @mode: the fan control mode, 0 शेष, 1 by percent, 5, by RPM
  * Exception: Should always succeed.
  */
-int vega10_fan_ctrl_set_static_mode(struct pp_hwmgr *hwmgr, uint32_t mode)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
+पूर्णांक vega10_fan_ctrl_set_अटल_mode(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t mode)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
 
-	if (hwmgr->fan_ctrl_is_in_default_mode) {
-		hwmgr->fan_ctrl_default_mode =
+	अगर (hwmgr->fan_ctrl_is_in_शेष_mode) अणु
+		hwmgr->fan_ctrl_शेष_mode =
 			REG_GET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL2),
 				CG_FDO_CTRL2, FDO_PWM_MODE);
-		hwmgr->tmin =
+		hwmgr->पंचांगin =
 			REG_GET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL2),
 				CG_FDO_CTRL2, TMIN);
-		hwmgr->fan_ctrl_is_in_default_mode = false;
-	}
+		hwmgr->fan_ctrl_is_in_शेष_mode = false;
+	पूर्ण
 
 	WREG32_SOC15(THM, 0, mmCG_FDO_CTRL2,
 			REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL2),
@@ -145,199 +146,199 @@ int vega10_fan_ctrl_set_static_mode(struct pp_hwmgr *hwmgr, uint32_t mode)
 			REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL2),
 				CG_FDO_CTRL2, FDO_PWM_MODE, mode));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vega10_fan_ctrl_set_default_mode - Reset Fan Speed Control to default mode.
- * @hwmgr:  the address of the powerplay hardware manager.
+ * vega10_fan_ctrl_set_शेष_mode - Reset Fan Speed Control to शेष mode.
+ * @hwmgr:  the address of the घातerplay hardware manager.
  * Exception: Should always succeed.
  */
-int vega10_fan_ctrl_set_default_mode(struct pp_hwmgr *hwmgr)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
+पूर्णांक vega10_fan_ctrl_set_शेष_mode(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
 
-	if (!hwmgr->fan_ctrl_is_in_default_mode) {
+	अगर (!hwmgr->fan_ctrl_is_in_शेष_mode) अणु
 		WREG32_SOC15(THM, 0, mmCG_FDO_CTRL2,
 			REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL2),
 				CG_FDO_CTRL2, FDO_PWM_MODE,
-				hwmgr->fan_ctrl_default_mode));
+				hwmgr->fan_ctrl_शेष_mode));
 		WREG32_SOC15(THM, 0, mmCG_FDO_CTRL2,
 			REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL2),
 				CG_FDO_CTRL2, TMIN,
-				hwmgr->tmin << CG_FDO_CTRL2__TMIN__SHIFT));
-		hwmgr->fan_ctrl_is_in_default_mode = true;
-	}
+				hwmgr->पंचांगin << CG_FDO_CTRL2__TMIN__SHIFT));
+		hwmgr->fan_ctrl_is_in_शेष_mode = true;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vega10_enable_fan_control_feature - Enables the SMC Fan Control Feature.
  *
- * @hwmgr: the address of the powerplay hardware manager.
+ * @hwmgr: the address of the घातerplay hardware manager.
  * Return:   0 on success. -1 otherwise.
  */
-static int vega10_enable_fan_control_feature(struct pp_hwmgr *hwmgr)
-{
-	struct vega10_hwmgr *data = hwmgr->backend;
+अटल पूर्णांक vega10_enable_fan_control_feature(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा vega10_hwmgr *data = hwmgr->backend;
 
-	if (data->smu_features[GNLD_FAN_CONTROL].supported) {
+	अगर (data->smu_features[GNLD_FAN_CONTROL].supported) अणु
 		PP_ASSERT_WITH_CODE(!vega10_enable_smc_features(
 				hwmgr, true,
 				data->smu_features[GNLD_FAN_CONTROL].
-				smu_feature_bitmap),
+				smu_feature_biपंचांगap),
 				"Attempt to Enable FAN CONTROL feature Failed!",
-				return -1);
+				वापस -1);
 		data->smu_features[GNLD_FAN_CONTROL].enabled = true;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int vega10_disable_fan_control_feature(struct pp_hwmgr *hwmgr)
-{
-	struct vega10_hwmgr *data = hwmgr->backend;
+अटल पूर्णांक vega10_disable_fan_control_feature(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा vega10_hwmgr *data = hwmgr->backend;
 
-	if (data->smu_features[GNLD_FAN_CONTROL].supported) {
+	अगर (data->smu_features[GNLD_FAN_CONTROL].supported) अणु
 		PP_ASSERT_WITH_CODE(!vega10_enable_smc_features(
 				hwmgr, false,
 				data->smu_features[GNLD_FAN_CONTROL].
-				smu_feature_bitmap),
+				smu_feature_biपंचांगap),
 				"Attempt to Enable FAN CONTROL feature Failed!",
-				return -1);
+				वापस -1);
 		data->smu_features[GNLD_FAN_CONTROL].enabled = false;
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int vega10_fan_ctrl_start_smc_fan_control(struct pp_hwmgr *hwmgr)
-{
-	if (hwmgr->thermal_controller.fanInfo.bNoFan)
-		return -1;
+पूर्णांक vega10_fan_ctrl_start_smc_fan_control(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
+		वापस -1;
 
 	PP_ASSERT_WITH_CODE(!vega10_enable_fan_control_feature(hwmgr),
 			"Attempt to Enable SMC FAN CONTROL Feature Failed!",
-			return -1);
+			वापस -1);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int vega10_fan_ctrl_stop_smc_fan_control(struct pp_hwmgr *hwmgr)
-{
-	struct vega10_hwmgr *data = hwmgr->backend;
+पूर्णांक vega10_fan_ctrl_stop_smc_fan_control(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा vega10_hwmgr *data = hwmgr->backend;
 
-	if (hwmgr->thermal_controller.fanInfo.bNoFan)
-		return -1;
+	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
+		वापस -1;
 
-	if (data->smu_features[GNLD_FAN_CONTROL].supported) {
+	अगर (data->smu_features[GNLD_FAN_CONTROL].supported) अणु
 		PP_ASSERT_WITH_CODE(!vega10_disable_fan_control_feature(hwmgr),
 				"Attempt to Disable SMC FAN CONTROL Feature Failed!",
-				return -1);
-	}
-	return 0;
-}
+				वापस -1);
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
  * vega10_fan_ctrl_set_fan_speed_percent - Set Fan Speed in percent.
- * @hwmgr:  the address of the powerplay hardware manager.
+ * @hwmgr:  the address of the घातerplay hardware manager.
  * @speed: is the percentage value (0% - 100%) to be set.
  * Exception: Fails is the 100% setting appears to be 0.
  */
-int vega10_fan_ctrl_set_fan_speed_percent(struct pp_hwmgr *hwmgr,
-		uint32_t speed)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	uint32_t duty100;
-	uint32_t duty;
-	uint64_t tmp64;
+पूर्णांक vega10_fan_ctrl_set_fan_speed_percent(काष्ठा pp_hwmgr *hwmgr,
+		uपूर्णांक32_t speed)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	uपूर्णांक32_t duty100;
+	uपूर्णांक32_t duty;
+	uपूर्णांक64_t पंचांगp64;
 
-	if (hwmgr->thermal_controller.fanInfo.bNoFan)
-		return 0;
+	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
+		वापस 0;
 
-	if (speed > 100)
+	अगर (speed > 100)
 		speed = 100;
 
-	if (PP_CAP(PHM_PlatformCaps_MicrocodeFanControl))
+	अगर (PP_CAP(PHM_Platक्रमmCaps_MicrocodeFanControl))
 		vega10_fan_ctrl_stop_smc_fan_control(hwmgr);
 
 	duty100 = REG_GET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL1),
 				    CG_FDO_CTRL1, FMAX_DUTY100);
 
-	if (duty100 == 0)
-		return -EINVAL;
+	अगर (duty100 == 0)
+		वापस -EINVAL;
 
-	tmp64 = (uint64_t)speed * duty100;
-	do_div(tmp64, 100);
-	duty = (uint32_t)tmp64;
+	पंचांगp64 = (uपूर्णांक64_t)speed * duty100;
+	करो_भाग(पंचांगp64, 100);
+	duty = (uपूर्णांक32_t)पंचांगp64;
 
 	WREG32_SOC15(THM, 0, mmCG_FDO_CTRL0,
 		REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL0),
 			CG_FDO_CTRL0, FDO_STATIC_DUTY, duty));
 
-	return vega10_fan_ctrl_set_static_mode(hwmgr, FDO_PWM_MODE_STATIC);
-}
+	वापस vega10_fan_ctrl_set_अटल_mode(hwmgr, FDO_PWM_MODE_STATIC);
+पूर्ण
 
 /**
- * vega10_fan_ctrl_reset_fan_speed_to_default - Reset Fan Speed to default.
- * @hwmgr:  the address of the powerplay hardware manager.
+ * vega10_fan_ctrl_reset_fan_speed_to_शेष - Reset Fan Speed to शेष.
+ * @hwmgr:  the address of the घातerplay hardware manager.
  * Exception: Always succeeds.
  */
-int vega10_fan_ctrl_reset_fan_speed_to_default(struct pp_hwmgr *hwmgr)
-{
-	if (hwmgr->thermal_controller.fanInfo.bNoFan)
-		return 0;
+पूर्णांक vega10_fan_ctrl_reset_fan_speed_to_शेष(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (hwmgr->thermal_controller.fanInfo.bNoFan)
+		वापस 0;
 
-	if (PP_CAP(PHM_PlatformCaps_MicrocodeFanControl))
-		return vega10_fan_ctrl_start_smc_fan_control(hwmgr);
-	else
-		return vega10_fan_ctrl_set_default_mode(hwmgr);
-}
+	अगर (PP_CAP(PHM_Platक्रमmCaps_MicrocodeFanControl))
+		वापस vega10_fan_ctrl_start_smc_fan_control(hwmgr);
+	अन्यथा
+		वापस vega10_fan_ctrl_set_शेष_mode(hwmgr);
+पूर्ण
 
 /**
  * vega10_fan_ctrl_set_fan_speed_rpm - Set Fan Speed in RPM.
- * @hwmgr:  the address of the powerplay hardware manager.
+ * @hwmgr:  the address of the घातerplay hardware manager.
  * @speed: is the percentage value (min - max) to be set.
  * Exception: Fails is the speed not lie between min and max.
  */
-int vega10_fan_ctrl_set_fan_speed_rpm(struct pp_hwmgr *hwmgr, uint32_t speed)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	uint32_t tach_period;
-	uint32_t crystal_clock_freq;
-	int result = 0;
+पूर्णांक vega10_fan_ctrl_set_fan_speed_rpm(काष्ठा pp_hwmgr *hwmgr, uपूर्णांक32_t speed)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	uपूर्णांक32_t tach_period;
+	uपूर्णांक32_t crystal_घड़ी_freq;
+	पूर्णांक result = 0;
 
-	if (hwmgr->thermal_controller.fanInfo.bNoFan ||
+	अगर (hwmgr->thermal_controller.fanInfo.bNoFan ||
 	    speed == 0 ||
 	    (speed < hwmgr->thermal_controller.fanInfo.ulMinRPM) ||
 	    (speed > hwmgr->thermal_controller.fanInfo.ulMaxRPM))
-		return -1;
+		वापस -1;
 
-	if (PP_CAP(PHM_PlatformCaps_MicrocodeFanControl))
+	अगर (PP_CAP(PHM_Platक्रमmCaps_MicrocodeFanControl))
 		result = vega10_fan_ctrl_stop_smc_fan_control(hwmgr);
 
-	if (!result) {
-		crystal_clock_freq = amdgpu_asic_get_xclk((struct amdgpu_device *)hwmgr->adev);
-		tach_period = 60 * crystal_clock_freq * 10000 / (8 * speed);
+	अगर (!result) अणु
+		crystal_घड़ी_freq = amdgpu_asic_get_xclk((काष्ठा amdgpu_device *)hwmgr->adev);
+		tach_period = 60 * crystal_घड़ी_freq * 10000 / (8 * speed);
 		WREG32_SOC15(THM, 0, mmCG_TACH_CTRL,
 				REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_TACH_CTRL),
 					CG_TACH_CTRL, TARGET_PERIOD,
 					tach_period));
-	}
-	return vega10_fan_ctrl_set_static_mode(hwmgr, FDO_PWM_MODE_STATIC_RPM);
-}
+	पूर्ण
+	वापस vega10_fan_ctrl_set_अटल_mode(hwmgr, FDO_PWM_MODE_STATIC_RPM);
+पूर्ण
 
 /**
  * vega10_thermal_get_temperature - Reads the remote temperature from the SIslands thermal controller.
  *
  * @hwmgr: The address of the hardware manager.
  */
-int vega10_thermal_get_temperature(struct pp_hwmgr *hwmgr)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	int temp;
+पूर्णांक vega10_thermal_get_temperature(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	पूर्णांक temp;
 
 	temp = RREG32_SOC15(THM, 0, mmCG_MULT_THERMAL_STATUS);
 
@@ -348,46 +349,46 @@ int vega10_thermal_get_temperature(struct pp_hwmgr *hwmgr)
 
 	temp *= PP_TEMPERATURE_UNITS_PER_CENTIGRADES;
 
-	return temp;
-}
+	वापस temp;
+पूर्ण
 
 /**
- * vega10_thermal_set_temperature_range - Set the requested temperature range for high and low alert signals
+ * vega10_thermal_set_temperature_range - Set the requested temperature range क्रम high and low alert संकेतs
  *
  * @hwmgr: The address of the hardware manager.
- * @range: Temperature range to be programmed for
- *           high and low alert signals
- * Exception: PP_Result_BadInput if the input data is not valid.
+ * @range: Temperature range to be programmed क्रम
+ *           high and low alert संकेतs
+ * Exception: PP_Result_BadInput अगर the input data is not valid.
  */
-static int vega10_thermal_set_temperature_range(struct pp_hwmgr *hwmgr,
-		struct PP_TemperatureRange *range)
-{
-	struct phm_ppt_v2_information *pp_table_info =
-		(struct phm_ppt_v2_information *)(hwmgr->pptable);
-	struct phm_tdp_table *tdp_table = pp_table_info->tdp_table;
-	struct amdgpu_device *adev = hwmgr->adev;
-	int low = VEGA10_THERMAL_MINIMUM_ALERT_TEMP;
-	int high = VEGA10_THERMAL_MAXIMUM_ALERT_TEMP;
-	uint32_t val;
+अटल पूर्णांक vega10_thermal_set_temperature_range(काष्ठा pp_hwmgr *hwmgr,
+		काष्ठा PP_TemperatureRange *range)
+अणु
+	काष्ठा phm_ppt_v2_inक्रमmation *pp_table_info =
+		(काष्ठा phm_ppt_v2_inक्रमmation *)(hwmgr->pptable);
+	काष्ठा phm_tdp_table *tdp_table = pp_table_info->tdp_table;
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	पूर्णांक low = VEGA10_THERMAL_MINIMUM_ALERT_TEMP;
+	पूर्णांक high = VEGA10_THERMAL_MAXIMUM_ALERT_TEMP;
+	uपूर्णांक32_t val;
 
 	/* compare them in unit celsius degree */
-	if (low < range->min / PP_TEMPERATURE_UNITS_PER_CENTIGRADES)
+	अगर (low < range->min / PP_TEMPERATURE_UNITS_PER_CENTIGRADES)
 		low = range->min / PP_TEMPERATURE_UNITS_PER_CENTIGRADES;
 
 	/*
-	 * As a common sense, usSoftwareShutdownTemp should be bigger
-	 * than ThotspotLimit. For any invalid usSoftwareShutdownTemp,
+	 * As a common sense, usSoftwareShutकरोwnTemp should be bigger
+	 * than ThotspotLimit. For any invalid usSoftwareShutकरोwnTemp,
 	 * we will just use the max possible setting VEGA10_THERMAL_MAXIMUM_ALERT_TEMP
-	 * to avoid false alarms.
+	 * to aव्योम false alarms.
 	 */
-	if ((tdp_table->usSoftwareShutdownTemp >
-	     range->hotspot_crit_max / PP_TEMPERATURE_UNITS_PER_CENTIGRADES)) {
-		if (high > tdp_table->usSoftwareShutdownTemp)
-			high = tdp_table->usSoftwareShutdownTemp;
-	}
+	अगर ((tdp_table->usSoftwareShutकरोwnTemp >
+	     range->hotspot_crit_max / PP_TEMPERATURE_UNITS_PER_CENTIGRADES)) अणु
+		अगर (high > tdp_table->usSoftwareShutकरोwnTemp)
+			high = tdp_table->usSoftwareShutकरोwnTemp;
+	पूर्ण
 
-	if (low > high)
-		return -EINVAL;
+	अगर (low > high)
+		वापस -EINVAL;
 
 	val = RREG32_SOC15(THM, 0, mmTHM_THERMAL_INT_CTRL);
 
@@ -401,54 +402,54 @@ static int vega10_thermal_set_temperature_range(struct pp_hwmgr *hwmgr,
 
 	WREG32_SOC15(THM, 0, mmTHM_THERMAL_INT_CTRL, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * vega10_thermal_initialize - Programs thermal controller one-time setting registers
+ * vega10_thermal_initialize - Programs thermal controller one-समय setting रेजिस्टरs
  *
  * @hwmgr: The address of the hardware manager.
  */
-static int vega10_thermal_initialize(struct pp_hwmgr *hwmgr)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
+अटल पूर्णांक vega10_thermal_initialize(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
 
-	if (hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution) {
+	अगर (hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution) अणु
 		WREG32_SOC15(THM, 0, mmCG_TACH_CTRL,
 			REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_TACH_CTRL),
 				CG_TACH_CTRL, EDGE_PER_REV,
 				hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution - 1));
-	}
+	पूर्ण
 
 	WREG32_SOC15(THM, 0, mmCG_FDO_CTRL2,
 		REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL2),
 			CG_FDO_CTRL2, TACH_PWM_RESP_RATE, 0x28));
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vega10_thermal_enable_alert - Enable thermal alerts on the RV770 thermal controller.
  *
  * @hwmgr: The address of the hardware manager.
  */
-static int vega10_thermal_enable_alert(struct pp_hwmgr *hwmgr)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	struct vega10_hwmgr *data = hwmgr->backend;
-	uint32_t val = 0;
+अटल पूर्णांक vega10_thermal_enable_alert(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	काष्ठा vega10_hwmgr *data = hwmgr->backend;
+	uपूर्णांक32_t val = 0;
 
-	if (data->smu_features[GNLD_FW_CTF].supported) {
-		if (data->smu_features[GNLD_FW_CTF].enabled)
-			printk("[Thermal_EnableAlert] FW CTF Already Enabled!\n");
+	अगर (data->smu_features[GNLD_FW_CTF].supported) अणु
+		अगर (data->smu_features[GNLD_FW_CTF].enabled)
+			prपूर्णांकk("[Thermal_EnableAlert] FW CTF Already Enabled!\n");
 
 		PP_ASSERT_WITH_CODE(!vega10_enable_smc_features(hwmgr,
 				true,
-				data->smu_features[GNLD_FW_CTF].smu_feature_bitmap),
+				data->smu_features[GNLD_FW_CTF].smu_feature_biपंचांगap),
 				"Attempt to Enable FW CTF feature Failed!",
-				return -1);
+				वापस -1);
 		data->smu_features[GNLD_FW_CTF].enabled = true;
-	}
+	पूर्ण
 
 	val |= (1 << THM_THERMAL_INT_ENA__THERM_INTH_CLR__SHIFT);
 	val |= (1 << THM_THERMAL_INT_ENA__THERM_INTL_CLR__SHIFT);
@@ -456,82 +457,82 @@ static int vega10_thermal_enable_alert(struct pp_hwmgr *hwmgr)
 
 	WREG32_SOC15(THM, 0, mmTHM_THERMAL_INT_ENA, val);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vega10_thermal_disable_alert - Disable thermal alerts on the RV770 thermal controller.
  * @hwmgr: The address of the hardware manager.
  */
-int vega10_thermal_disable_alert(struct pp_hwmgr *hwmgr)
-{
-	struct amdgpu_device *adev = hwmgr->adev;
-	struct vega10_hwmgr *data = hwmgr->backend;
+पूर्णांक vega10_thermal_disable_alert(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा amdgpu_device *adev = hwmgr->adev;
+	काष्ठा vega10_hwmgr *data = hwmgr->backend;
 
-	if (data->smu_features[GNLD_FW_CTF].supported) {
-		if (!data->smu_features[GNLD_FW_CTF].enabled)
-			printk("[Thermal_EnableAlert] FW CTF Already disabled!\n");
+	अगर (data->smu_features[GNLD_FW_CTF].supported) अणु
+		अगर (!data->smu_features[GNLD_FW_CTF].enabled)
+			prपूर्णांकk("[Thermal_EnableAlert] FW CTF Already disabled!\n");
 
 
 		PP_ASSERT_WITH_CODE(!vega10_enable_smc_features(hwmgr,
 			false,
-			data->smu_features[GNLD_FW_CTF].smu_feature_bitmap),
+			data->smu_features[GNLD_FW_CTF].smu_feature_biपंचांगap),
 			"Attempt to disable FW CTF feature Failed!",
-			return -1);
+			वापस -1);
 		data->smu_features[GNLD_FW_CTF].enabled = false;
-	}
+	पूर्ण
 
 	WREG32_SOC15(THM, 0, mmTHM_THERMAL_INT_ENA, 0);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * vega10_thermal_stop_thermal_controller - Uninitialize the thermal controller.
  * Currently just disables alerts.
  * @hwmgr: The address of the hardware manager.
  */
-int vega10_thermal_stop_thermal_controller(struct pp_hwmgr *hwmgr)
-{
-	int result = vega10_thermal_disable_alert(hwmgr);
+पूर्णांक vega10_thermal_stop_thermal_controller(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	पूर्णांक result = vega10_thermal_disable_alert(hwmgr);
 
-	if (!hwmgr->thermal_controller.fanInfo.bNoFan)
-		vega10_fan_ctrl_set_default_mode(hwmgr);
+	अगर (!hwmgr->thermal_controller.fanInfo.bNoFan)
+		vega10_fan_ctrl_set_शेष_mode(hwmgr);
 
-	return result;
-}
+	वापस result;
+पूर्ण
 
 /**
  * vega10_thermal_setup_fan_table - Set up the fan table to control the fan using the SMC.
- * @hwmgr:  the address of the powerplay hardware manager.
+ * @hwmgr:  the address of the घातerplay hardware manager.
  * Return:   result from set temperature range routine
  */
-static int vega10_thermal_setup_fan_table(struct pp_hwmgr *hwmgr)
-{
-	int ret;
-	struct vega10_hwmgr *data = hwmgr->backend;
+अटल पूर्णांक vega10_thermal_setup_fan_table(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	पूर्णांक ret;
+	काष्ठा vega10_hwmgr *data = hwmgr->backend;
 	PPTable_t *table = &(data->smc_state_table.pp_table);
 
-	if (!data->smu_features[GNLD_FAN_CONTROL].supported)
-		return 0;
+	अगर (!data->smu_features[GNLD_FAN_CONTROL].supported)
+		वापस 0;
 
-	table->FanMaximumRpm = (uint16_t)hwmgr->thermal_controller.
+	table->FanMaximumRpm = (uपूर्णांक16_t)hwmgr->thermal_controller.
 			advanceFanControlParameters.usMaxFanRPM;
 	table->FanThrottlingRpm = hwmgr->thermal_controller.
 			advanceFanControlParameters.usFanRPMMaxLimit;
-	table->FanAcousticLimitRpm = (uint16_t)(hwmgr->thermal_controller.
+	table->FanAcousticLimitRpm = (uपूर्णांक16_t)(hwmgr->thermal_controller.
 			advanceFanControlParameters.ulMinFanSCLKAcousticLimit);
 	table->FanTargetTemperature = hwmgr->thermal_controller.
 			advanceFanControlParameters.usTMax;
 
 	smum_send_msg_to_smc_with_parameter(hwmgr,
 				PPSMC_MSG_SetFanTemperatureTarget,
-				(uint32_t)table->FanTargetTemperature,
-				NULL);
+				(uपूर्णांक32_t)table->FanTargetTemperature,
+				शून्य);
 
 	table->FanPwmMin = hwmgr->thermal_controller.
 			advanceFanControlParameters.usPWMMin * 255 / 100;
-	table->FanTargetGfxclk = (uint16_t)(hwmgr->thermal_controller.
+	table->FanTargetGfxclk = (uपूर्णांक16_t)(hwmgr->thermal_controller.
 			advanceFanControlParameters.ulTargetGfxClk);
 	table->FanGainEdge = hwmgr->thermal_controller.
 			advanceFanControlParameters.usFanGainEdge;
@@ -555,106 +556,106 @@ static int vega10_thermal_setup_fan_table(struct pp_hwmgr *hwmgr)
 			advanceFanControlParameters.usZeroRPMStartTemperature;
 
 	ret = smum_smc_table_manager(hwmgr,
-				(uint8_t *)(&(data->smc_state_table.pp_table)),
+				(uपूर्णांक8_t *)(&(data->smc_state_table.pp_table)),
 				PPTABLE, false);
-	if (ret)
+	अगर (ret)
 		pr_info("Failed to update Fan Control Table in PPTable!");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-int vega10_enable_mgpu_fan_boost(struct pp_hwmgr *hwmgr)
-{
-	struct vega10_hwmgr *data = hwmgr->backend;
+पूर्णांक vega10_enable_mgpu_fan_boost(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	काष्ठा vega10_hwmgr *data = hwmgr->backend;
 	PPTable_t *table = &(data->smc_state_table.pp_table);
-	int ret;
+	पूर्णांक ret;
 
-	if (!data->smu_features[GNLD_FAN_CONTROL].supported)
-		return 0;
+	अगर (!data->smu_features[GNLD_FAN_CONTROL].supported)
+		वापस 0;
 
-	if (!hwmgr->thermal_controller.advanceFanControlParameters.
+	अगर (!hwmgr->thermal_controller.advanceFanControlParameters.
 			usMGpuThrottlingRPMLimit)
-		return 0;
+		वापस 0;
 
 	table->FanThrottlingRpm = hwmgr->thermal_controller.
 			advanceFanControlParameters.usMGpuThrottlingRPMLimit;
 
 	ret = smum_smc_table_manager(hwmgr,
-				(uint8_t *)(&(data->smc_state_table.pp_table)),
+				(uपूर्णांक8_t *)(&(data->smc_state_table.pp_table)),
 				PPTABLE, false);
-	if (ret) {
+	अगर (ret) अणु
 		pr_info("Failed to update fan control table in pptable!");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = vega10_disable_fan_control_feature(hwmgr);
-	if (ret) {
+	अगर (ret) अणु
 		pr_info("Attempt to disable SMC fan control feature failed!");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
 	ret = vega10_enable_fan_control_feature(hwmgr);
-	if (ret)
+	अगर (ret)
 		pr_info("Attempt to enable SMC fan control feature failed!");
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
  * vega10_thermal_start_smc_fan_control - Start the fan control on the SMC.
- * @hwmgr:  the address of the powerplay hardware manager.
+ * @hwmgr:  the address of the घातerplay hardware manager.
  * Return:   result from set temperature range routine
  */
-static int vega10_thermal_start_smc_fan_control(struct pp_hwmgr *hwmgr)
-{
+अटल पूर्णांक vega10_thermal_start_smc_fan_control(काष्ठा pp_hwmgr *hwmgr)
+अणु
 /* If the fantable setup has failed we could have disabled
- * PHM_PlatformCaps_MicrocodeFanControl even after
+ * PHM_Platक्रमmCaps_MicrocodeFanControl even after
  * this function was included in the table.
  * Make sure that we still think controlling the fan is OK.
 */
-	if (PP_CAP(PHM_PlatformCaps_MicrocodeFanControl))
+	अगर (PP_CAP(PHM_Platक्रमmCaps_MicrocodeFanControl))
 		vega10_fan_ctrl_start_smc_fan_control(hwmgr);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
-int vega10_start_thermal_controller(struct pp_hwmgr *hwmgr,
-				struct PP_TemperatureRange *range)
-{
-	int ret = 0;
+पूर्णांक vega10_start_thermal_controller(काष्ठा pp_hwmgr *hwmgr,
+				काष्ठा PP_TemperatureRange *range)
+अणु
+	पूर्णांक ret = 0;
 
-	if (range == NULL)
-		return -EINVAL;
+	अगर (range == शून्य)
+		वापस -EINVAL;
 
 	vega10_thermal_initialize(hwmgr);
 	ret = vega10_thermal_set_temperature_range(hwmgr, range);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	vega10_thermal_enable_alert(hwmgr);
-/* We should restrict performance levels to low before we halt the SMC.
- * On the other hand we are still in boot state when we do this
- * so it would be pointless.
+/* We should restrict perक्रमmance levels to low beक्रमe we halt the SMC.
+ * On the other hand we are still in boot state when we करो this
+ * so it would be poपूर्णांकless.
  * If this assumption changes we have to revisit this table.
  */
 	ret = vega10_thermal_setup_fan_table(hwmgr);
-	if (ret)
-		return -EINVAL;
+	अगर (ret)
+		वापस -EINVAL;
 
 	vega10_thermal_start_smc_fan_control(hwmgr);
 
-	return 0;
-};
+	वापस 0;
+पूर्ण;
 
 
 
 
-int vega10_thermal_ctrl_uninitialize_thermal_controller(struct pp_hwmgr *hwmgr)
-{
-	if (!hwmgr->thermal_controller.fanInfo.bNoFan) {
-		vega10_fan_ctrl_set_default_mode(hwmgr);
+पूर्णांक vega10_thermal_ctrl_uninitialize_thermal_controller(काष्ठा pp_hwmgr *hwmgr)
+अणु
+	अगर (!hwmgr->thermal_controller.fanInfo.bNoFan) अणु
+		vega10_fan_ctrl_set_शेष_mode(hwmgr);
 		vega10_fan_ctrl_stop_smc_fan_control(hwmgr);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण

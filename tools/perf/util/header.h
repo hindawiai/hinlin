@@ -1,18 +1,19 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __PERF_HEADER_H
-#define __PERF_HEADER_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __PERF_HEADER_H
+#घोषणा __PERF_HEADER_H
 
-#include <linux/stddef.h>
-#include <linux/perf_event.h>
-#include <sys/types.h>
-#include <stdio.h> // FILE
-#include <stdbool.h>
-#include <linux/bitmap.h>
-#include <linux/types.h>
-#include "env.h"
-#include "pmu.h"
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/perf_event.h>
+#समावेश <sys/types.h>
+#समावेश <मानकपन.स> // खाता
+#समावेश <stdbool.h>
+#समावेश <linux/biपंचांगap.h>
+#समावेश <linux/types.h>
+#समावेश "env.h"
+#समावेश "pmu.h"
 
-enum {
+क्रमागत अणु
 	HEADER_RESERVED		= 0,	/* always cleared */
 	HEADER_FIRST_FEATURE	= 1,
 	HEADER_TRACING_DATA	= 1,
@@ -39,7 +40,7 @@ enum {
 	HEADER_SAMPLE_TIME,
 	HEADER_MEM_TOPOLOGY,
 	HEADER_CLOCKID,
-	HEADER_DIR_FORMAT,
+	HEADER_सूची_FORMAT,
 	HEADER_BPF_PROG_INFO,
 	HEADER_BPF_BTF,
 	HEADER_COMPRESSED,
@@ -47,120 +48,120 @@ enum {
 	HEADER_CLOCK_DATA,
 	HEADER_LAST_FEATURE,
 	HEADER_FEAT_BITS	= 256,
-};
+पूर्ण;
 
-enum perf_header_version {
+क्रमागत perf_header_version अणु
 	PERF_HEADER_VERSION_1,
 	PERF_HEADER_VERSION_2,
-};
+पूर्ण;
 
-struct perf_file_section {
+काष्ठा perf_file_section अणु
 	u64 offset;
 	u64 size;
-};
+पूर्ण;
 
-struct perf_file_header {
+काष्ठा perf_file_header अणु
 	u64				magic;
 	u64				size;
 	u64				attr_size;
-	struct perf_file_section	attrs;
-	struct perf_file_section	data;
+	काष्ठा perf_file_section	attrs;
+	काष्ठा perf_file_section	data;
 	/* event_types is ignored */
-	struct perf_file_section	event_types;
+	काष्ठा perf_file_section	event_types;
 	DECLARE_BITMAP(adds_features, HEADER_FEAT_BITS);
-};
+पूर्ण;
 
-struct perf_pipe_file_header {
+काष्ठा perf_pipe_file_header अणु
 	u64				magic;
 	u64				size;
-};
+पूर्ण;
 
-struct perf_header;
+काष्ठा perf_header;
 
-int perf_file_header__read(struct perf_file_header *header,
-			   struct perf_header *ph, int fd);
+पूर्णांक perf_file_header__पढ़ो(काष्ठा perf_file_header *header,
+			   काष्ठा perf_header *ph, पूर्णांक fd);
 
-struct perf_header {
-	enum perf_header_version	version;
+काष्ठा perf_header अणु
+	क्रमागत perf_header_version	version;
 	bool				needs_swap;
 	u64				data_offset;
 	u64				data_size;
 	u64				feat_offset;
 	DECLARE_BITMAP(adds_features, HEADER_FEAT_BITS);
-	struct perf_env 	env;
-};
+	काष्ठा perf_env 	env;
+पूर्ण;
 
-struct feat_fd {
-	struct perf_header *ph;
-	int		   fd;
-	void		   *buf;	/* Either buf != NULL or fd >= 0 */
-	ssize_t		   offset;
-	size_t		   size;
-	struct evsel	   *events;
-};
+काष्ठा feat_fd अणु
+	काष्ठा perf_header *ph;
+	पूर्णांक		   fd;
+	व्योम		   *buf;	/* Either buf != शून्य or fd >= 0 */
+	sमाप_प्रकार		   offset;
+	माप_प्रकार		   size;
+	काष्ठा evsel	   *events;
+पूर्ण;
 
-struct perf_header_feature_ops {
-	int	   (*write)(struct feat_fd *ff, struct evlist *evlist);
-	void	   (*print)(struct feat_fd *ff, FILE *fp);
-	int	   (*process)(struct feat_fd *ff, void *data);
-	const char *name;
+काष्ठा perf_header_feature_ops अणु
+	पूर्णांक	   (*ग_लिखो)(काष्ठा feat_fd *ff, काष्ठा evlist *evlist);
+	व्योम	   (*prपूर्णांक)(काष्ठा feat_fd *ff, खाता *fp);
+	पूर्णांक	   (*process)(काष्ठा feat_fd *ff, व्योम *data);
+	स्थिर अक्षर *name;
 	bool	   full_only;
 	bool	   synthesize;
-};
+पूर्ण;
 
-struct evlist;
-struct perf_session;
-struct perf_tool;
-union perf_event;
+काष्ठा evlist;
+काष्ठा perf_session;
+काष्ठा perf_tool;
+जोड़ perf_event;
 
-int perf_session__read_header(struct perf_session *session);
-int perf_session__write_header(struct perf_session *session,
-			       struct evlist *evlist,
-			       int fd, bool at_exit);
-int perf_header__write_pipe(int fd);
+पूर्णांक perf_session__पढ़ो_header(काष्ठा perf_session *session);
+पूर्णांक perf_session__ग_लिखो_header(काष्ठा perf_session *session,
+			       काष्ठा evlist *evlist,
+			       पूर्णांक fd, bool at_निकास);
+पूर्णांक perf_header__ग_लिखो_pipe(पूर्णांक fd);
 
-void perf_header__set_feat(struct perf_header *header, int feat);
-void perf_header__clear_feat(struct perf_header *header, int feat);
-bool perf_header__has_feat(const struct perf_header *header, int feat);
+व्योम perf_header__set_feat(काष्ठा perf_header *header, पूर्णांक feat);
+व्योम perf_header__clear_feat(काष्ठा perf_header *header, पूर्णांक feat);
+bool perf_header__has_feat(स्थिर काष्ठा perf_header *header, पूर्णांक feat);
 
-int perf_header__set_cmdline(int argc, const char **argv);
+पूर्णांक perf_header__set_cmdline(पूर्णांक argc, स्थिर अक्षर **argv);
 
-int perf_header__process_sections(struct perf_header *header, int fd,
-				  void *data,
-				  int (*process)(struct perf_file_section *section,
-				  struct perf_header *ph,
-				  int feat, int fd, void *data));
+पूर्णांक perf_header__process_sections(काष्ठा perf_header *header, पूर्णांक fd,
+				  व्योम *data,
+				  पूर्णांक (*process)(काष्ठा perf_file_section *section,
+				  काष्ठा perf_header *ph,
+				  पूर्णांक feat, पूर्णांक fd, व्योम *data));
 
-int perf_header__fprintf_info(struct perf_session *s, FILE *fp, bool full);
+पूर्णांक perf_header__ख_लिखो_info(काष्ठा perf_session *s, खाता *fp, bool full);
 
-int perf_event__process_feature(struct perf_session *session,
-				union perf_event *event);
-int perf_event__process_attr(struct perf_tool *tool, union perf_event *event,
-			     struct evlist **pevlist);
-int perf_event__process_event_update(struct perf_tool *tool,
-				     union perf_event *event,
-				     struct evlist **pevlist);
-size_t perf_event__fprintf_event_update(union perf_event *event, FILE *fp);
-int perf_event__process_tracing_data(struct perf_session *session,
-				     union perf_event *event);
-int perf_event__process_build_id(struct perf_session *session,
-				 union perf_event *event);
+पूर्णांक perf_event__process_feature(काष्ठा perf_session *session,
+				जोड़ perf_event *event);
+पूर्णांक perf_event__process_attr(काष्ठा perf_tool *tool, जोड़ perf_event *event,
+			     काष्ठा evlist **pevlist);
+पूर्णांक perf_event__process_event_update(काष्ठा perf_tool *tool,
+				     जोड़ perf_event *event,
+				     काष्ठा evlist **pevlist);
+माप_प्रकार perf_event__ख_लिखो_event_update(जोड़ perf_event *event, खाता *fp);
+पूर्णांक perf_event__process_tracing_data(काष्ठा perf_session *session,
+				     जोड़ perf_event *event);
+पूर्णांक perf_event__process_build_id(काष्ठा perf_session *session,
+				 जोड़ perf_event *event);
 bool is_perf_magic(u64 magic);
 
-#define NAME_ALIGN 64
+#घोषणा NAME_ALIGN 64
 
-struct feat_fd;
+काष्ठा feat_fd;
 
-int do_write(struct feat_fd *fd, const void *buf, size_t size);
+पूर्णांक करो_ग_लिखो(काष्ठा feat_fd *fd, स्थिर व्योम *buf, माप_प्रकार size);
 
-int write_padded(struct feat_fd *fd, const void *bf,
-		 size_t count, size_t count_aligned);
+पूर्णांक ग_लिखो_padded(काष्ठा feat_fd *fd, स्थिर व्योम *bf,
+		 माप_प्रकार count, माप_प्रकार count_aligned);
 
 /*
- * arch specific callback
+ * arch specअगरic callback
  */
-int get_cpuid(char *buffer, size_t sz);
+पूर्णांक get_cpuid(अक्षर *buffer, माप_प्रकार sz);
 
-char *get_cpuid_str(struct perf_pmu *pmu __maybe_unused);
-int strcmp_cpuid_str(const char *s1, const char *s2);
-#endif /* __PERF_HEADER_H */
+अक्षर *get_cpuid_str(काष्ठा perf_pmu *pmu __maybe_unused);
+पूर्णांक म_भेद_cpuid_str(स्थिर अक्षर *s1, स्थिर अक्षर *s2);
+#पूर्ण_अगर /* __PERF_HEADER_H */

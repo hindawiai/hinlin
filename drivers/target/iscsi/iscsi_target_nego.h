@@ -1,25 +1,26 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef ISCSI_TARGET_NEGO_H
-#define ISCSI_TARGET_NEGO_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित ISCSI_TARGET_NEGO_H
+#घोषणा ISCSI_TARGET_NEGO_H
 
-#define DECIMAL         0
-#define HEX             1
+#घोषणा DECIMAL         0
+#घोषणा HEX             1
 
-struct iscsi_conn;
-struct iscsi_login;
-struct iscsi_np;
+काष्ठा iscsi_conn;
+काष्ठा iscsi_login;
+काष्ठा iscsi_np;
 
-extern void convert_null_to_semi(char *, int);
-extern int extract_param(const char *, const char *, unsigned int, char *,
-		unsigned char *);
-extern int iscsi_target_check_login_request(struct iscsi_conn *,
-		struct iscsi_login *);
-extern int iscsi_target_get_initial_payload(struct iscsi_conn *,
-		struct iscsi_login *);
-extern int iscsi_target_locate_portal(struct iscsi_np *, struct iscsi_conn *,
-		struct iscsi_login *);
-extern int iscsi_target_start_negotiation(
-		struct iscsi_login *, struct iscsi_conn *);
-extern void iscsi_target_nego_release(struct iscsi_conn *);
+बाह्य व्योम convert_null_to_semi(अक्षर *, पूर्णांक);
+बाह्य पूर्णांक extract_param(स्थिर अक्षर *, स्थिर अक्षर *, अचिन्हित पूर्णांक, अक्षर *,
+		अचिन्हित अक्षर *);
+बाह्य पूर्णांक iscsi_target_check_login_request(काष्ठा iscsi_conn *,
+		काष्ठा iscsi_login *);
+बाह्य पूर्णांक iscsi_target_get_initial_payload(काष्ठा iscsi_conn *,
+		काष्ठा iscsi_login *);
+बाह्य पूर्णांक iscsi_target_locate_portal(काष्ठा iscsi_np *, काष्ठा iscsi_conn *,
+		काष्ठा iscsi_login *);
+बाह्य पूर्णांक iscsi_target_start_negotiation(
+		काष्ठा iscsi_login *, काष्ठा iscsi_conn *);
+बाह्य व्योम iscsi_target_nego_release(काष्ठा iscsi_conn *);
 
-#endif /* ISCSI_TARGET_NEGO_H */
+#पूर्ण_अगर /* ISCSI_TARGET_NEGO_H */

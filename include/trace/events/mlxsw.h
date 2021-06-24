@@ -1,27 +1,28 @@
-/* SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0 */
 /* Copyright (c) 2019 Mellanox Technologies. All rights reserved */
 
-#undef TRACE_SYSTEM
-#define TRACE_SYSTEM mlxsw
+#अघोषित TRACE_SYSTEM
+#घोषणा TRACE_SYSTEM mlxsw
 
-#if !defined(_MLXSW_TRACEPOINT_H) || defined(TRACE_HEADER_MULTI_READ)
-#define _MLXSW_TRACEPOINT_H
+#अगर !defined(_MLXSW_TRACEPOINT_H) || defined(TRACE_HEADER_MULTI_READ)
+#घोषणा _MLXSW_TRACEPOINT_H
 
-#include <linux/tracepoint.h>
+#समावेश <linux/tracepoपूर्णांक.h>
 
-struct mlxsw_sp;
-struct mlxsw_sp_acl_atcam_region;
-struct mlxsw_sp_acl_tcam_vregion;
+काष्ठा mlxsw_sp;
+काष्ठा mlxsw_sp_acl_atcam_region;
+काष्ठा mlxsw_sp_acl_tcam_vregion;
 
 TRACE_EVENT(mlxsw_sp_acl_atcam_entry_add_ctcam_spill,
-	TP_PROTO(const struct mlxsw_sp *mlxsw_sp,
-		 const struct mlxsw_sp_acl_atcam_region *aregion),
+	TP_PROTO(स्थिर काष्ठा mlxsw_sp *mlxsw_sp,
+		 स्थिर काष्ठा mlxsw_sp_acl_atcam_region *aregion),
 
 	TP_ARGS(mlxsw_sp, aregion),
 
 	TP_STRUCT__entry(
-		__field(const void *, mlxsw_sp)
-		__field(const void *, aregion)
+		__field(स्थिर व्योम *, mlxsw_sp)
+		__field(स्थिर व्योम *, aregion)
 	),
 
 	TP_fast_assign(
@@ -29,19 +30,19 @@ TRACE_EVENT(mlxsw_sp_acl_atcam_entry_add_ctcam_spill,
 		__entry->aregion = aregion;
 	),
 
-	TP_printk("mlxsw_sp %p, aregion %p",
+	TP_prपूर्णांकk("mlxsw_sp %p, aregion %p",
 		  __entry->mlxsw_sp, __entry->aregion)
 );
 
 TRACE_EVENT(mlxsw_sp_acl_tcam_vregion_rehash,
-	TP_PROTO(const struct mlxsw_sp *mlxsw_sp,
-		 const struct mlxsw_sp_acl_tcam_vregion *vregion),
+	TP_PROTO(स्थिर काष्ठा mlxsw_sp *mlxsw_sp,
+		 स्थिर काष्ठा mlxsw_sp_acl_tcam_vregion *vregion),
 
 	TP_ARGS(mlxsw_sp, vregion),
 
 	TP_STRUCT__entry(
-		__field(const void *, mlxsw_sp)
-		__field(const void *, vregion)
+		__field(स्थिर व्योम *, mlxsw_sp)
+		__field(स्थिर व्योम *, vregion)
 	),
 
 	TP_fast_assign(
@@ -49,19 +50,19 @@ TRACE_EVENT(mlxsw_sp_acl_tcam_vregion_rehash,
 		__entry->vregion = vregion;
 	),
 
-	TP_printk("mlxsw_sp %p, vregion %p",
+	TP_prपूर्णांकk("mlxsw_sp %p, vregion %p",
 		  __entry->mlxsw_sp, __entry->vregion)
 );
 
 TRACE_EVENT(mlxsw_sp_acl_tcam_vregion_migrate,
-	TP_PROTO(const struct mlxsw_sp *mlxsw_sp,
-		 const struct mlxsw_sp_acl_tcam_vregion *vregion),
+	TP_PROTO(स्थिर काष्ठा mlxsw_sp *mlxsw_sp,
+		 स्थिर काष्ठा mlxsw_sp_acl_tcam_vregion *vregion),
 
 	TP_ARGS(mlxsw_sp, vregion),
 
 	TP_STRUCT__entry(
-		__field(const void *, mlxsw_sp)
-		__field(const void *, vregion)
+		__field(स्थिर व्योम *, mlxsw_sp)
+		__field(स्थिर व्योम *, vregion)
 	),
 
 	TP_fast_assign(
@@ -69,19 +70,19 @@ TRACE_EVENT(mlxsw_sp_acl_tcam_vregion_migrate,
 		__entry->vregion = vregion;
 	),
 
-	TP_printk("mlxsw_sp %p, vregion %p",
+	TP_prपूर्णांकk("mlxsw_sp %p, vregion %p",
 		  __entry->mlxsw_sp, __entry->vregion)
 );
 
 TRACE_EVENT(mlxsw_sp_acl_tcam_vregion_migrate_end,
-	TP_PROTO(const struct mlxsw_sp *mlxsw_sp,
-		 const struct mlxsw_sp_acl_tcam_vregion *vregion),
+	TP_PROTO(स्थिर काष्ठा mlxsw_sp *mlxsw_sp,
+		 स्थिर काष्ठा mlxsw_sp_acl_tcam_vregion *vregion),
 
 	TP_ARGS(mlxsw_sp, vregion),
 
 	TP_STRUCT__entry(
-		__field(const void *, mlxsw_sp)
-		__field(const void *, vregion)
+		__field(स्थिर व्योम *, mlxsw_sp)
+		__field(स्थिर व्योम *, vregion)
 	),
 
 	TP_fast_assign(
@@ -89,19 +90,19 @@ TRACE_EVENT(mlxsw_sp_acl_tcam_vregion_migrate_end,
 		__entry->vregion = vregion;
 	),
 
-	TP_printk("mlxsw_sp %p, vregion %p",
+	TP_prपूर्णांकk("mlxsw_sp %p, vregion %p",
 		  __entry->mlxsw_sp, __entry->vregion)
 );
 
 TRACE_EVENT(mlxsw_sp_acl_tcam_vregion_rehash_rollback_failed,
-	TP_PROTO(const struct mlxsw_sp *mlxsw_sp,
-		 const struct mlxsw_sp_acl_tcam_vregion *vregion),
+	TP_PROTO(स्थिर काष्ठा mlxsw_sp *mlxsw_sp,
+		 स्थिर काष्ठा mlxsw_sp_acl_tcam_vregion *vregion),
 
 	TP_ARGS(mlxsw_sp, vregion),
 
 	TP_STRUCT__entry(
-		__field(const void *, mlxsw_sp)
-		__field(const void *, vregion)
+		__field(स्थिर व्योम *, mlxsw_sp)
+		__field(स्थिर व्योम *, vregion)
 	),
 
 	TP_fast_assign(
@@ -109,11 +110,11 @@ TRACE_EVENT(mlxsw_sp_acl_tcam_vregion_rehash_rollback_failed,
 		__entry->vregion = vregion;
 	),
 
-	TP_printk("mlxsw_sp %p, vregion %p",
+	TP_prपूर्णांकk("mlxsw_sp %p, vregion %p",
 		  __entry->mlxsw_sp, __entry->vregion)
 );
 
-#endif /* _MLXSW_TRACEPOINT_H */
+#पूर्ण_अगर /* _MLXSW_TRACEPOINT_H */
 
 /* This part must be outside protection */
-#include <trace/define_trace.h>
+#समावेश <trace/define_trace.h>

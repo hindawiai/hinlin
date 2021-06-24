@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * LCD Lowlevel Control Abstraction
  *
@@ -6,198 +7,198 @@
  *
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/device.h>
-#include <linux/lcd.h>
-#include <linux/notifier.h>
-#include <linux/ctype.h>
-#include <linux/err.h>
-#include <linux/fb.h>
-#include <linux/slab.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/device.h>
+#समावेश <linux/lcd.h>
+#समावेश <linux/notअगरier.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/err.h>
+#समावेश <linux/fb.h>
+#समावेश <linux/slab.h>
 
-#if defined(CONFIG_FB) || (defined(CONFIG_FB_MODULE) && \
+#अगर defined(CONFIG_FB) || (defined(CONFIG_FB_MODULE) && \
 			   defined(CONFIG_LCD_CLASS_DEVICE_MODULE))
-/* This callback gets called when something important happens inside a
- * framebuffer driver. We're looking if that important event is blanking,
- * and if it is, we're switching lcd power as well ...
+/* This callback माला_लो called when something important happens inside a
+ * framebuffer driver. We're looking अगर that important event is blanking,
+ * and अगर it is, we're चयनing lcd घातer as well ...
  */
-static int fb_notifier_callback(struct notifier_block *self,
-				 unsigned long event, void *data)
-{
-	struct lcd_device *ld;
-	struct fb_event *evdata = data;
+अटल पूर्णांक fb_notअगरier_callback(काष्ठा notअगरier_block *self,
+				 अचिन्हित दीर्घ event, व्योम *data)
+अणु
+	काष्ठा lcd_device *ld;
+	काष्ठा fb_event *evdata = data;
 
-	ld = container_of(self, struct lcd_device, fb_notif);
-	if (!ld->ops)
-		return 0;
+	ld = container_of(self, काष्ठा lcd_device, fb_notअगर);
+	अगर (!ld->ops)
+		वापस 0;
 
 	mutex_lock(&ld->ops_lock);
-	if (!ld->ops->check_fb || ld->ops->check_fb(ld, evdata->info)) {
-		if (event == FB_EVENT_BLANK) {
-			if (ld->ops->set_power)
-				ld->ops->set_power(ld, *(int *)evdata->data);
-		} else {
-			if (ld->ops->set_mode)
+	अगर (!ld->ops->check_fb || ld->ops->check_fb(ld, evdata->info)) अणु
+		अगर (event == FB_EVENT_BLANK) अणु
+			अगर (ld->ops->set_घातer)
+				ld->ops->set_घातer(ld, *(पूर्णांक *)evdata->data);
+		पूर्ण अन्यथा अणु
+			अगर (ld->ops->set_mode)
 				ld->ops->set_mode(ld, evdata->data);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	mutex_unlock(&ld->ops_lock);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int lcd_register_fb(struct lcd_device *ld)
-{
-	memset(&ld->fb_notif, 0, sizeof(ld->fb_notif));
-	ld->fb_notif.notifier_call = fb_notifier_callback;
-	return fb_register_client(&ld->fb_notif);
-}
+अटल पूर्णांक lcd_रेजिस्टर_fb(काष्ठा lcd_device *ld)
+अणु
+	स_रखो(&ld->fb_notअगर, 0, माप(ld->fb_notअगर));
+	ld->fb_notअगर.notअगरier_call = fb_notअगरier_callback;
+	वापस fb_रेजिस्टर_client(&ld->fb_notअगर);
+पूर्ण
 
-static void lcd_unregister_fb(struct lcd_device *ld)
-{
-	fb_unregister_client(&ld->fb_notif);
-}
-#else
-static int lcd_register_fb(struct lcd_device *ld)
-{
-	return 0;
-}
+अटल व्योम lcd_unरेजिस्टर_fb(काष्ठा lcd_device *ld)
+अणु
+	fb_unरेजिस्टर_client(&ld->fb_notअगर);
+पूर्ण
+#अन्यथा
+अटल पूर्णांक lcd_रेजिस्टर_fb(काष्ठा lcd_device *ld)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void lcd_unregister_fb(struct lcd_device *ld)
-{
-}
-#endif /* CONFIG_FB */
+अटल अंतरभूत व्योम lcd_unरेजिस्टर_fb(काष्ठा lcd_device *ld)
+अणु
+पूर्ण
+#पूर्ण_अगर /* CONFIG_FB */
 
-static ssize_t lcd_power_show(struct device *dev, struct device_attribute *attr,
-		char *buf)
-{
-	int rc;
-	struct lcd_device *ld = to_lcd_device(dev);
+अटल sमाप_प्रकार lcd_घातer_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+		अक्षर *buf)
+अणु
+	पूर्णांक rc;
+	काष्ठा lcd_device *ld = to_lcd_device(dev);
 
 	mutex_lock(&ld->ops_lock);
-	if (ld->ops && ld->ops->get_power)
-		rc = sprintf(buf, "%d\n", ld->ops->get_power(ld));
-	else
+	अगर (ld->ops && ld->ops->get_घातer)
+		rc = प्र_लिखो(buf, "%d\n", ld->ops->get_घातer(ld));
+	अन्यथा
 		rc = -ENXIO;
 	mutex_unlock(&ld->ops_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t lcd_power_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	int rc;
-	struct lcd_device *ld = to_lcd_device(dev);
-	unsigned long power;
+अटल sमाप_प्रकार lcd_घातer_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक rc;
+	काष्ठा lcd_device *ld = to_lcd_device(dev);
+	अचिन्हित दीर्घ घातer;
 
-	rc = kstrtoul(buf, 0, &power);
-	if (rc)
-		return rc;
+	rc = kम_से_अदीर्घ(buf, 0, &घातer);
+	अगर (rc)
+		वापस rc;
 
 	rc = -ENXIO;
 
 	mutex_lock(&ld->ops_lock);
-	if (ld->ops && ld->ops->set_power) {
-		pr_debug("set power to %lu\n", power);
-		ld->ops->set_power(ld, power);
+	अगर (ld->ops && ld->ops->set_घातer) अणु
+		pr_debug("set power to %lu\n", घातer);
+		ld->ops->set_घातer(ld, घातer);
 		rc = count;
-	}
+	पूर्ण
 	mutex_unlock(&ld->ops_lock);
 
-	return rc;
-}
-static DEVICE_ATTR_RW(lcd_power);
+	वापस rc;
+पूर्ण
+अटल DEVICE_ATTR_RW(lcd_घातer);
 
-static ssize_t contrast_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	int rc = -ENXIO;
-	struct lcd_device *ld = to_lcd_device(dev);
+अटल sमाप_प्रकार contrast_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	पूर्णांक rc = -ENXIO;
+	काष्ठा lcd_device *ld = to_lcd_device(dev);
 
 	mutex_lock(&ld->ops_lock);
-	if (ld->ops && ld->ops->get_contrast)
-		rc = sprintf(buf, "%d\n", ld->ops->get_contrast(ld));
+	अगर (ld->ops && ld->ops->get_contrast)
+		rc = प्र_लिखो(buf, "%d\n", ld->ops->get_contrast(ld));
 	mutex_unlock(&ld->ops_lock);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
-static ssize_t contrast_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t count)
-{
-	int rc;
-	struct lcd_device *ld = to_lcd_device(dev);
-	unsigned long contrast;
+अटल sमाप_प्रकार contrast_store(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
+अणु
+	पूर्णांक rc;
+	काष्ठा lcd_device *ld = to_lcd_device(dev);
+	अचिन्हित दीर्घ contrast;
 
-	rc = kstrtoul(buf, 0, &contrast);
-	if (rc)
-		return rc;
+	rc = kम_से_अदीर्घ(buf, 0, &contrast);
+	अगर (rc)
+		वापस rc;
 
 	rc = -ENXIO;
 
 	mutex_lock(&ld->ops_lock);
-	if (ld->ops && ld->ops->set_contrast) {
+	अगर (ld->ops && ld->ops->set_contrast) अणु
 		pr_debug("set contrast to %lu\n", contrast);
 		ld->ops->set_contrast(ld, contrast);
 		rc = count;
-	}
+	पूर्ण
 	mutex_unlock(&ld->ops_lock);
 
-	return rc;
-}
-static DEVICE_ATTR_RW(contrast);
+	वापस rc;
+पूर्ण
+अटल DEVICE_ATTR_RW(contrast);
 
-static ssize_t max_contrast_show(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	struct lcd_device *ld = to_lcd_device(dev);
+अटल sमाप_प्रकार max_contrast_show(काष्ठा device *dev,
+		काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा lcd_device *ld = to_lcd_device(dev);
 
-	return sprintf(buf, "%d\n", ld->props.max_contrast);
-}
-static DEVICE_ATTR_RO(max_contrast);
+	वापस प्र_लिखो(buf, "%d\n", ld->props.max_contrast);
+पूर्ण
+अटल DEVICE_ATTR_RO(max_contrast);
 
-static struct class *lcd_class;
+अटल काष्ठा class *lcd_class;
 
-static void lcd_device_release(struct device *dev)
-{
-	struct lcd_device *ld = to_lcd_device(dev);
-	kfree(ld);
-}
+अटल व्योम lcd_device_release(काष्ठा device *dev)
+अणु
+	काष्ठा lcd_device *ld = to_lcd_device(dev);
+	kमुक्त(ld);
+पूर्ण
 
-static struct attribute *lcd_device_attrs[] = {
-	&dev_attr_lcd_power.attr,
+अटल काष्ठा attribute *lcd_device_attrs[] = अणु
+	&dev_attr_lcd_घातer.attr,
 	&dev_attr_contrast.attr,
 	&dev_attr_max_contrast.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(lcd_device);
 
 /**
- * lcd_device_register - register a new object of lcd_device class.
+ * lcd_device_रेजिस्टर - रेजिस्टर a new object of lcd_device class.
  * @name: the name of the new object(must be the same as the name of the
  *   respective framebuffer device).
- * @parent: pointer to the parent's struct device .
- * @devdata: an optional pointer to be stored in the device. The
+ * @parent: poपूर्णांकer to the parent's काष्ठा device .
+ * @devdata: an optional poपूर्णांकer to be stored in the device. The
  *   methods may retrieve it by using lcd_get_data(ld).
- * @ops: the lcd operations structure.
+ * @ops: the lcd operations काष्ठाure.
  *
- * Creates and registers a new lcd device. Returns either an ERR_PTR()
- * or a pointer to the newly allocated device.
+ * Creates and रेजिस्टरs a new lcd device. Returns either an ERR_PTR()
+ * or a poपूर्णांकer to the newly allocated device.
  */
-struct lcd_device *lcd_device_register(const char *name, struct device *parent,
-		void *devdata, struct lcd_ops *ops)
-{
-	struct lcd_device *new_ld;
-	int rc;
+काष्ठा lcd_device *lcd_device_रेजिस्टर(स्थिर अक्षर *name, काष्ठा device *parent,
+		व्योम *devdata, काष्ठा lcd_ops *ops)
+अणु
+	काष्ठा lcd_device *new_ld;
+	पूर्णांक rc;
 
 	pr_debug("lcd_device_register: name=%s\n", name);
 
-	new_ld = kzalloc(sizeof(struct lcd_device), GFP_KERNEL);
-	if (!new_ld)
-		return ERR_PTR(-ENOMEM);
+	new_ld = kzalloc(माप(काष्ठा lcd_device), GFP_KERNEL);
+	अगर (!new_ld)
+		वापस ERR_PTR(-ENOMEM);
 
 	mutex_init(&new_ld->ops_lock);
 	mutex_init(&new_ld->update_lock);
@@ -210,136 +211,136 @@ struct lcd_device *lcd_device_register(const char *name, struct device *parent,
 
 	new_ld->ops = ops;
 
-	rc = device_register(&new_ld->dev);
-	if (rc) {
+	rc = device_रेजिस्टर(&new_ld->dev);
+	अगर (rc) अणु
 		put_device(&new_ld->dev);
-		return ERR_PTR(rc);
-	}
+		वापस ERR_PTR(rc);
+	पूर्ण
 
-	rc = lcd_register_fb(new_ld);
-	if (rc) {
-		device_unregister(&new_ld->dev);
-		return ERR_PTR(rc);
-	}
+	rc = lcd_रेजिस्टर_fb(new_ld);
+	अगर (rc) अणु
+		device_unरेजिस्टर(&new_ld->dev);
+		वापस ERR_PTR(rc);
+	पूर्ण
 
-	return new_ld;
-}
-EXPORT_SYMBOL(lcd_device_register);
+	वापस new_ld;
+पूर्ण
+EXPORT_SYMBOL(lcd_device_रेजिस्टर);
 
 /**
- * lcd_device_unregister - unregisters a object of lcd_device class.
- * @ld: the lcd device object to be unregistered and freed.
+ * lcd_device_unरेजिस्टर - unरेजिस्टरs a object of lcd_device class.
+ * @ld: the lcd device object to be unरेजिस्टरed and मुक्तd.
  *
- * Unregisters a previously registered via lcd_device_register object.
+ * Unरेजिस्टरs a previously रेजिस्टरed via lcd_device_रेजिस्टर object.
  */
-void lcd_device_unregister(struct lcd_device *ld)
-{
-	if (!ld)
-		return;
+व्योम lcd_device_unरेजिस्टर(काष्ठा lcd_device *ld)
+अणु
+	अगर (!ld)
+		वापस;
 
 	mutex_lock(&ld->ops_lock);
-	ld->ops = NULL;
+	ld->ops = शून्य;
 	mutex_unlock(&ld->ops_lock);
-	lcd_unregister_fb(ld);
+	lcd_unरेजिस्टर_fb(ld);
 
-	device_unregister(&ld->dev);
-}
-EXPORT_SYMBOL(lcd_device_unregister);
+	device_unरेजिस्टर(&ld->dev);
+पूर्ण
+EXPORT_SYMBOL(lcd_device_unरेजिस्टर);
 
-static void devm_lcd_device_release(struct device *dev, void *res)
-{
-	struct lcd_device *lcd = *(struct lcd_device **)res;
+अटल व्योम devm_lcd_device_release(काष्ठा device *dev, व्योम *res)
+अणु
+	काष्ठा lcd_device *lcd = *(काष्ठा lcd_device **)res;
 
-	lcd_device_unregister(lcd);
-}
+	lcd_device_unरेजिस्टर(lcd);
+पूर्ण
 
-static int devm_lcd_device_match(struct device *dev, void *res, void *data)
-{
-	struct lcd_device **r = res;
+अटल पूर्णांक devm_lcd_device_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा lcd_device **r = res;
 
-	return *r == data;
-}
+	वापस *r == data;
+पूर्ण
 
 /**
- * devm_lcd_device_register - resource managed lcd_device_register()
- * @dev: the device to register
+ * devm_lcd_device_रेजिस्टर - resource managed lcd_device_रेजिस्टर()
+ * @dev: the device to रेजिस्टर
  * @name: the name of the device
- * @parent: a pointer to the parent device
- * @devdata: an optional pointer to be stored for private driver use
- * @ops: the lcd operations structure
+ * @parent: a poपूर्णांकer to the parent device
+ * @devdata: an optional poपूर्णांकer to be stored क्रम निजी driver use
+ * @ops: the lcd operations काष्ठाure
  *
- * @return a struct lcd on success, or an ERR_PTR on error
+ * @वापस a काष्ठा lcd on success, or an ERR_PTR on error
  *
- * Managed lcd_device_register(). The lcd_device returned from this function
- * are automatically freed on driver detach. See lcd_device_register()
- * for more information.
+ * Managed lcd_device_रेजिस्टर(). The lcd_device वापसed from this function
+ * are स्वतःmatically मुक्तd on driver detach. See lcd_device_रेजिस्टर()
+ * क्रम more inक्रमmation.
  */
-struct lcd_device *devm_lcd_device_register(struct device *dev,
-		const char *name, struct device *parent,
-		void *devdata, struct lcd_ops *ops)
-{
-	struct lcd_device **ptr, *lcd;
+काष्ठा lcd_device *devm_lcd_device_रेजिस्टर(काष्ठा device *dev,
+		स्थिर अक्षर *name, काष्ठा device *parent,
+		व्योम *devdata, काष्ठा lcd_ops *ops)
+अणु
+	काष्ठा lcd_device **ptr, *lcd;
 
-	ptr = devres_alloc(devm_lcd_device_release, sizeof(*ptr), GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	ptr = devres_alloc(devm_lcd_device_release, माप(*ptr), GFP_KERNEL);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
-	lcd = lcd_device_register(name, parent, devdata, ops);
-	if (!IS_ERR(lcd)) {
+	lcd = lcd_device_रेजिस्टर(name, parent, devdata, ops);
+	अगर (!IS_ERR(lcd)) अणु
 		*ptr = lcd;
 		devres_add(dev, ptr);
-	} else {
-		devres_free(ptr);
-	}
+	पूर्ण अन्यथा अणु
+		devres_मुक्त(ptr);
+	पूर्ण
 
-	return lcd;
-}
-EXPORT_SYMBOL(devm_lcd_device_register);
+	वापस lcd;
+पूर्ण
+EXPORT_SYMBOL(devm_lcd_device_रेजिस्टर);
 
 /**
- * devm_lcd_device_unregister - resource managed lcd_device_unregister()
- * @dev: the device to unregister
- * @ld: the lcd device to unregister
+ * devm_lcd_device_unरेजिस्टर - resource managed lcd_device_unरेजिस्टर()
+ * @dev: the device to unरेजिस्टर
+ * @ld: the lcd device to unरेजिस्टर
  *
- * Deallocated a lcd allocated with devm_lcd_device_register(). Normally
+ * Deallocated a lcd allocated with devm_lcd_device_रेजिस्टर(). Normally
  * this function will not need to be called and the resource management
- * code will ensure that the resource is freed.
+ * code will ensure that the resource is मुक्तd.
  */
-void devm_lcd_device_unregister(struct device *dev, struct lcd_device *ld)
-{
-	int rc;
+व्योम devm_lcd_device_unरेजिस्टर(काष्ठा device *dev, काष्ठा lcd_device *ld)
+अणु
+	पूर्णांक rc;
 
 	rc = devres_release(dev, devm_lcd_device_release,
 				devm_lcd_device_match, ld);
 	WARN_ON(rc);
-}
-EXPORT_SYMBOL(devm_lcd_device_unregister);
+पूर्ण
+EXPORT_SYMBOL(devm_lcd_device_unरेजिस्टर);
 
 
-static void __exit lcd_class_exit(void)
-{
+अटल व्योम __निकास lcd_class_निकास(व्योम)
+अणु
 	class_destroy(lcd_class);
-}
+पूर्ण
 
-static int __init lcd_class_init(void)
-{
+अटल पूर्णांक __init lcd_class_init(व्योम)
+अणु
 	lcd_class = class_create(THIS_MODULE, "lcd");
-	if (IS_ERR(lcd_class)) {
+	अगर (IS_ERR(lcd_class)) अणु
 		pr_warn("Unable to create backlight class; errno = %ld\n",
 			PTR_ERR(lcd_class));
-		return PTR_ERR(lcd_class);
-	}
+		वापस PTR_ERR(lcd_class);
+	पूर्ण
 
 	lcd_class->dev_groups = lcd_device_groups;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * if this is compiled into the kernel, we need to ensure that the
- * class is registered before users of the class try to register lcd's
+ * अगर this is compiled पूर्णांकo the kernel, we need to ensure that the
+ * class is रेजिस्टरed beक्रमe users of the class try to रेजिस्टर lcd's
  */
 postcore_initcall(lcd_class_init);
-module_exit(lcd_class_exit);
+module_निकास(lcd_class_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Jamey Hicks <jamey.hicks@hp.com>, Andrew Zabolotny <zap@homelink.ru>");

@@ -1,5 +1,6 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __IA64_INTR_REMAPPING_H
-#define __IA64_INTR_REMAPPING_H
-#define irq_remapping_enabled 0
-#endif
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __IA64_INTR_REMAPPING_H
+#घोषणा __IA64_INTR_REMAPPING_H
+#घोषणा irq_remapping_enabled 0
+#पूर्ण_अगर

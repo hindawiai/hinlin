@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
  * Purgatory code running between two kernels.
  *
  * Copyright IBM Corp. 2018
  *
- * Author(s): Philipp Rudo <prudo@linux.vnet.ibm.com>
+ * Author(s): Philipp Ruकरो <pruकरो@linux.vnet.ibm.com>
  */
 
-#include <linux/kexec.h>
-#include <linux/string.h>
-#include <crypto/sha2.h>
-#include <asm/purgatory.h>
+#समावेश <linux/kexec.h>
+#समावेश <linux/माला.स>
+#समावेश <crypto/sha2.h>
+#समावेश <यंत्र/purgatory.h>
 
-int verify_sha256_digest(void)
-{
-	struct kexec_sha_region *ptr, *end;
+पूर्णांक verअगरy_sha256_digest(व्योम)
+अणु
+	काष्ठा kexec_sha_region *ptr, *end;
 	u8 digest[SHA256_DIGEST_SIZE];
-	struct sha256_state sctx;
+	काष्ठा sha256_state sctx;
 
 	sha256_init(&sctx);
 	end = purgatory_sha_regions + ARRAY_SIZE(purgatory_sha_regions);
 
-	for (ptr = purgatory_sha_regions; ptr < end; ptr++)
-		sha256_update(&sctx, (uint8_t *)(ptr->start), ptr->len);
+	क्रम (ptr = purgatory_sha_regions; ptr < end; ptr++)
+		sha256_update(&sctx, (uपूर्णांक8_t *)(ptr->start), ptr->len);
 
 	sha256_final(&sctx, digest);
 
-	if (memcmp(digest, purgatory_sha256_digest, sizeof(digest)))
-		return 1;
+	अगर (स_भेद(digest, purgatory_sha256_digest, माप(digest)))
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

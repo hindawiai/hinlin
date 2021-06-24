@@ -1,1248 +1,1249 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- *  Abstract layer for MIDI v1.0 stream
+ *  Abstract layer क्रम MIDI v1.0 stream
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#include <sound/core.h>
-#include <linux/major.h>
-#include <linux/init.h>
-#include <linux/sched/signal.h>
-#include <linux/slab.h>
-#include <linux/time.h>
-#include <linux/wait.h>
-#include <linux/mutex.h>
-#include <linux/module.h>
-#include <linux/delay.h>
-#include <linux/mm.h>
-#include <linux/nospec.h>
-#include <sound/rawmidi.h>
-#include <sound/info.h>
-#include <sound/control.h>
-#include <sound/minors.h>
-#include <sound/initval.h>
+#समावेश <sound/core.h>
+#समावेश <linux/major.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/slab.h>
+#समावेश <linux/समय.स>
+#समावेश <linux/रुको.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/module.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/nospec.h>
+#समावेश <sound/rawmidi.h>
+#समावेश <sound/info.h>
+#समावेश <sound/control.h>
+#समावेश <sound/minors.h>
+#समावेश <sound/initval.h>
 
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_DESCRIPTION("Midlevel RawMidi code for ALSA.");
 MODULE_LICENSE("GPL");
 
-#ifdef CONFIG_SND_OSSEMUL
-static int midi_map[SNDRV_CARDS];
-static int amidi_map[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS-1)] = 1};
-module_param_array(midi_map, int, NULL, 0444);
+#अगर_घोषित CONFIG_SND_OSSEMUL
+अटल पूर्णांक midi_map[SNDRV_CARDS];
+अटल पूर्णांक amidi_map[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS-1)] = 1पूर्ण;
+module_param_array(midi_map, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(midi_map, "Raw MIDI device number assigned to 1st OSS device.");
-module_param_array(amidi_map, int, NULL, 0444);
+module_param_array(amidi_map, पूर्णांक, शून्य, 0444);
 MODULE_PARM_DESC(amidi_map, "Raw MIDI device number assigned to 2nd OSS device.");
-#endif /* CONFIG_SND_OSSEMUL */
+#पूर्ण_अगर /* CONFIG_SND_OSSEMUL */
 
-static int snd_rawmidi_free(struct snd_rawmidi *rmidi);
-static int snd_rawmidi_dev_free(struct snd_device *device);
-static int snd_rawmidi_dev_register(struct snd_device *device);
-static int snd_rawmidi_dev_disconnect(struct snd_device *device);
+अटल पूर्णांक snd_rawmidi_मुक्त(काष्ठा snd_rawmidi *rmidi);
+अटल पूर्णांक snd_rawmidi_dev_मुक्त(काष्ठा snd_device *device);
+अटल पूर्णांक snd_rawmidi_dev_रेजिस्टर(काष्ठा snd_device *device);
+अटल पूर्णांक snd_rawmidi_dev_disconnect(काष्ठा snd_device *device);
 
-static LIST_HEAD(snd_rawmidi_devices);
-static DEFINE_MUTEX(register_mutex);
+अटल LIST_HEAD(snd_rawmidi_devices);
+अटल DEFINE_MUTEX(रेजिस्टर_mutex);
 
-#define rmidi_err(rmidi, fmt, args...) \
+#घोषणा rmidi_err(rmidi, fmt, args...) \
 	dev_err(&(rmidi)->dev, fmt, ##args)
-#define rmidi_warn(rmidi, fmt, args...) \
+#घोषणा rmidi_warn(rmidi, fmt, args...) \
 	dev_warn(&(rmidi)->dev, fmt, ##args)
-#define rmidi_dbg(rmidi, fmt, args...) \
+#घोषणा rmidi_dbg(rmidi, fmt, args...) \
 	dev_dbg(&(rmidi)->dev, fmt, ##args)
 
-struct snd_rawmidi_status32 {
+काष्ठा snd_rawmidi_status32 अणु
 	s32 stream;
 	s32 tstamp_sec;			/* Timestamp */
 	s32 tstamp_nsec;
 	u32 avail;			/* available bytes */
 	u32 xruns;			/* count of overruns since last status (in bytes) */
-	unsigned char reserved[16];	/* reserved for future use */
-};
+	अचिन्हित अक्षर reserved[16];	/* reserved क्रम future use */
+पूर्ण;
 
-#define SNDRV_RAWMIDI_IOCTL_STATUS32	_IOWR('W', 0x20, struct snd_rawmidi_status32)
+#घोषणा SNDRV_RAWMIDI_IOCTL_STATUS32	_IOWR('W', 0x20, काष्ठा snd_rawmidi_status32)
 
-struct snd_rawmidi_status64 {
-	int stream;
+काष्ठा snd_rawmidi_status64 अणु
+	पूर्णांक stream;
 	u8 rsvd[4];			/* alignment */
 	s64 tstamp_sec;			/* Timestamp */
 	s64 tstamp_nsec;
-	size_t avail;			/* available bytes */
-	size_t xruns;			/* count of overruns since last status (in bytes) */
-	unsigned char reserved[16];	/* reserved for future use */
-};
+	माप_प्रकार avail;			/* available bytes */
+	माप_प्रकार xruns;			/* count of overruns since last status (in bytes) */
+	अचिन्हित अक्षर reserved[16];	/* reserved क्रम future use */
+पूर्ण;
 
-#define SNDRV_RAWMIDI_IOCTL_STATUS64	_IOWR('W', 0x20, struct snd_rawmidi_status64)
+#घोषणा SNDRV_RAWMIDI_IOCTL_STATUS64	_IOWR('W', 0x20, काष्ठा snd_rawmidi_status64)
 
-static struct snd_rawmidi *snd_rawmidi_search(struct snd_card *card, int device)
-{
-	struct snd_rawmidi *rawmidi;
+अटल काष्ठा snd_rawmidi *snd_rawmidi_search(काष्ठा snd_card *card, पूर्णांक device)
+अणु
+	काष्ठा snd_rawmidi *rawmidi;
 
-	list_for_each_entry(rawmidi, &snd_rawmidi_devices, list)
-		if (rawmidi->card == card && rawmidi->device == device)
-			return rawmidi;
-	return NULL;
-}
+	list_क्रम_each_entry(rawmidi, &snd_rawmidi_devices, list)
+		अगर (rawmidi->card == card && rawmidi->device == device)
+			वापस rawmidi;
+	वापस शून्य;
+पूर्ण
 
-static inline unsigned short snd_rawmidi_file_flags(struct file *file)
-{
-	switch (file->f_mode & (FMODE_READ | FMODE_WRITE)) {
-	case FMODE_WRITE:
-		return SNDRV_RAWMIDI_LFLG_OUTPUT;
-	case FMODE_READ:
-		return SNDRV_RAWMIDI_LFLG_INPUT;
-	default:
-		return SNDRV_RAWMIDI_LFLG_OPEN;
-	}
-}
+अटल अंतरभूत अचिन्हित लघु snd_rawmidi_file_flags(काष्ठा file *file)
+अणु
+	चयन (file->f_mode & (FMODE_READ | FMODE_WRITE)) अणु
+	हाल FMODE_WRITE:
+		वापस SNDRV_RAWMIDI_LFLG_OUTPUT;
+	हाल FMODE_READ:
+		वापस SNDRV_RAWMIDI_LFLG_INPUT;
+	शेष:
+		वापस SNDRV_RAWMIDI_LFLG_OPEN;
+	पूर्ण
+पूर्ण
 
-static inline bool __snd_rawmidi_ready(struct snd_rawmidi_runtime *runtime)
-{
-	return runtime->avail >= runtime->avail_min;
-}
+अटल अंतरभूत bool __snd_rawmidi_पढ़ोy(काष्ठा snd_rawmidi_runसमय *runसमय)
+अणु
+	वापस runसमय->avail >= runसमय->avail_min;
+पूर्ण
 
-static bool snd_rawmidi_ready(struct snd_rawmidi_substream *substream)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
-	unsigned long flags;
-	bool ready;
+अटल bool snd_rawmidi_पढ़ोy(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
+	अचिन्हित दीर्घ flags;
+	bool पढ़ोy;
 
-	spin_lock_irqsave(&runtime->lock, flags);
-	ready = __snd_rawmidi_ready(runtime);
-	spin_unlock_irqrestore(&runtime->lock, flags);
-	return ready;
-}
+	spin_lock_irqsave(&runसमय->lock, flags);
+	पढ़ोy = __snd_rawmidi_पढ़ोy(runसमय);
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+	वापस पढ़ोy;
+पूर्ण
 
-static inline int snd_rawmidi_ready_append(struct snd_rawmidi_substream *substream,
-					   size_t count)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
+अटल अंतरभूत पूर्णांक snd_rawmidi_पढ़ोy_append(काष्ठा snd_rawmidi_substream *substream,
+					   माप_प्रकार count)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
 
-	return runtime->avail >= runtime->avail_min &&
-	       (!substream->append || runtime->avail >= count);
-}
+	वापस runसमय->avail >= runसमय->avail_min &&
+	       (!substream->append || runसमय->avail >= count);
+पूर्ण
 
-static void snd_rawmidi_input_event_work(struct work_struct *work)
-{
-	struct snd_rawmidi_runtime *runtime =
-		container_of(work, struct snd_rawmidi_runtime, event_work);
+अटल व्योम snd_rawmidi_input_event_work(काष्ठा work_काष्ठा *work)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय =
+		container_of(work, काष्ठा snd_rawmidi_runसमय, event_work);
 
-	if (runtime->event)
-		runtime->event(runtime->substream);
-}
+	अगर (runसमय->event)
+		runसमय->event(runसमय->substream);
+पूर्ण
 
-/* buffer refcount management: call with runtime->lock held */
-static inline void snd_rawmidi_buffer_ref(struct snd_rawmidi_runtime *runtime)
-{
-	runtime->buffer_ref++;
-}
+/* buffer refcount management: call with runसमय->lock held */
+अटल अंतरभूत व्योम snd_rawmidi_buffer_ref(काष्ठा snd_rawmidi_runसमय *runसमय)
+अणु
+	runसमय->buffer_ref++;
+पूर्ण
 
-static inline void snd_rawmidi_buffer_unref(struct snd_rawmidi_runtime *runtime)
-{
-	runtime->buffer_ref--;
-}
+अटल अंतरभूत व्योम snd_rawmidi_buffer_unref(काष्ठा snd_rawmidi_runसमय *runसमय)
+अणु
+	runसमय->buffer_ref--;
+पूर्ण
 
-static int snd_rawmidi_runtime_create(struct snd_rawmidi_substream *substream)
-{
-	struct snd_rawmidi_runtime *runtime;
+अटल पूर्णांक snd_rawmidi_runसमय_create(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय;
 
-	runtime = kzalloc(sizeof(*runtime), GFP_KERNEL);
-	if (!runtime)
-		return -ENOMEM;
-	runtime->substream = substream;
-	spin_lock_init(&runtime->lock);
-	init_waitqueue_head(&runtime->sleep);
-	INIT_WORK(&runtime->event_work, snd_rawmidi_input_event_work);
-	runtime->event = NULL;
-	runtime->buffer_size = PAGE_SIZE;
-	runtime->avail_min = 1;
-	if (substream->stream == SNDRV_RAWMIDI_STREAM_INPUT)
-		runtime->avail = 0;
-	else
-		runtime->avail = runtime->buffer_size;
-	runtime->buffer = kvzalloc(runtime->buffer_size, GFP_KERNEL);
-	if (!runtime->buffer) {
-		kfree(runtime);
-		return -ENOMEM;
-	}
-	runtime->appl_ptr = runtime->hw_ptr = 0;
-	substream->runtime = runtime;
-	return 0;
-}
+	runसमय = kzalloc(माप(*runसमय), GFP_KERNEL);
+	अगर (!runसमय)
+		वापस -ENOMEM;
+	runसमय->substream = substream;
+	spin_lock_init(&runसमय->lock);
+	init_रुकोqueue_head(&runसमय->sleep);
+	INIT_WORK(&runसमय->event_work, snd_rawmidi_input_event_work);
+	runसमय->event = शून्य;
+	runसमय->buffer_size = PAGE_SIZE;
+	runसमय->avail_min = 1;
+	अगर (substream->stream == SNDRV_RAWMIDI_STREAM_INPUT)
+		runसमय->avail = 0;
+	अन्यथा
+		runसमय->avail = runसमय->buffer_size;
+	runसमय->buffer = kvzalloc(runसमय->buffer_size, GFP_KERNEL);
+	अगर (!runसमय->buffer) अणु
+		kमुक्त(runसमय);
+		वापस -ENOMEM;
+	पूर्ण
+	runसमय->appl_ptr = runसमय->hw_ptr = 0;
+	substream->runसमय = runसमय;
+	वापस 0;
+पूर्ण
 
-static int snd_rawmidi_runtime_free(struct snd_rawmidi_substream *substream)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_rawmidi_runसमय_मुक्त(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
 
-	kvfree(runtime->buffer);
-	kfree(runtime);
-	substream->runtime = NULL;
-	return 0;
-}
+	kvमुक्त(runसमय->buffer);
+	kमुक्त(runसमय);
+	substream->runसमय = शून्य;
+	वापस 0;
+पूर्ण
 
-static inline void snd_rawmidi_output_trigger(struct snd_rawmidi_substream *substream, int up)
-{
-	if (!substream->opened)
-		return;
+अटल अंतरभूत व्योम snd_rawmidi_output_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
+अणु
+	अगर (!substream->खोलोed)
+		वापस;
 	substream->ops->trigger(substream, up);
-}
+पूर्ण
 
-static void snd_rawmidi_input_trigger(struct snd_rawmidi_substream *substream, int up)
-{
-	if (!substream->opened)
-		return;
+अटल व्योम snd_rawmidi_input_trigger(काष्ठा snd_rawmidi_substream *substream, पूर्णांक up)
+अणु
+	अगर (!substream->खोलोed)
+		वापस;
 	substream->ops->trigger(substream, up);
-	if (!up)
-		cancel_work_sync(&substream->runtime->event_work);
-}
+	अगर (!up)
+		cancel_work_sync(&substream->runसमय->event_work);
+पूर्ण
 
-static void __reset_runtime_ptrs(struct snd_rawmidi_runtime *runtime,
+अटल व्योम __reset_runसमय_ptrs(काष्ठा snd_rawmidi_runसमय *runसमय,
 				 bool is_input)
-{
-	runtime->drain = 0;
-	runtime->appl_ptr = runtime->hw_ptr = 0;
-	runtime->avail = is_input ? 0 : runtime->buffer_size;
-}
+अणु
+	runसमय->drain = 0;
+	runसमय->appl_ptr = runसमय->hw_ptr = 0;
+	runसमय->avail = is_input ? 0 : runसमय->buffer_size;
+पूर्ण
 
-static void reset_runtime_ptrs(struct snd_rawmidi_runtime *runtime,
+अटल व्योम reset_runसमय_ptrs(काष्ठा snd_rawmidi_runसमय *runसमय,
 			       bool is_input)
-{
-	unsigned long flags;
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&runtime->lock, flags);
-	__reset_runtime_ptrs(runtime, is_input);
-	spin_unlock_irqrestore(&runtime->lock, flags);
-}
+	spin_lock_irqsave(&runसमय->lock, flags);
+	__reset_runसमय_ptrs(runसमय, is_input);
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+पूर्ण
 
-int snd_rawmidi_drop_output(struct snd_rawmidi_substream *substream)
-{
+पूर्णांक snd_rawmidi_drop_output(काष्ठा snd_rawmidi_substream *substream)
+अणु
 	snd_rawmidi_output_trigger(substream, 0);
-	reset_runtime_ptrs(substream->runtime, false);
-	return 0;
-}
+	reset_runसमय_ptrs(substream->runसमय, false);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_drop_output);
 
-int snd_rawmidi_drain_output(struct snd_rawmidi_substream *substream)
-{
-	int err;
-	long timeout;
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
+पूर्णांक snd_rawmidi_drain_output(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	पूर्णांक err;
+	दीर्घ समयout;
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
 
 	err = 0;
-	runtime->drain = 1;
-	timeout = wait_event_interruptible_timeout(runtime->sleep,
-				(runtime->avail >= runtime->buffer_size),
+	runसमय->drain = 1;
+	समयout = रुको_event_पूर्णांकerruptible_समयout(runसमय->sleep,
+				(runसमय->avail >= runसमय->buffer_size),
 				10*HZ);
-	if (signal_pending(current))
+	अगर (संकेत_pending(current))
 		err = -ERESTARTSYS;
-	if (runtime->avail < runtime->buffer_size && !timeout) {
+	अगर (runसमय->avail < runसमय->buffer_size && !समयout) अणु
 		rmidi_warn(substream->rmidi,
 			   "rawmidi drain error (avail = %li, buffer_size = %li)\n",
-			   (long)runtime->avail, (long)runtime->buffer_size);
+			   (दीर्घ)runसमय->avail, (दीर्घ)runसमय->buffer_size);
 		err = -EIO;
-	}
-	runtime->drain = 0;
-	if (err != -ERESTARTSYS) {
-		/* we need wait a while to make sure that Tx FIFOs are empty */
-		if (substream->ops->drain)
+	पूर्ण
+	runसमय->drain = 0;
+	अगर (err != -ERESTARTSYS) अणु
+		/* we need रुको a जबतक to make sure that Tx FIFOs are empty */
+		अगर (substream->ops->drain)
 			substream->ops->drain(substream);
-		else
+		अन्यथा
 			msleep(50);
 		snd_rawmidi_drop_output(substream);
-	}
-	return err;
-}
+	पूर्ण
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_drain_output);
 
-int snd_rawmidi_drain_input(struct snd_rawmidi_substream *substream)
-{
+पूर्णांक snd_rawmidi_drain_input(काष्ठा snd_rawmidi_substream *substream)
+अणु
 	snd_rawmidi_input_trigger(substream, 0);
-	reset_runtime_ptrs(substream->runtime, true);
-	return 0;
-}
+	reset_runसमय_ptrs(substream->runसमय, true);
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_drain_input);
 
-/* look for an available substream for the given stream direction;
- * if a specific subdevice is given, try to assign it
+/* look क्रम an available substream क्रम the given stream direction;
+ * अगर a specअगरic subdevice is given, try to assign it
  */
-static int assign_substream(struct snd_rawmidi *rmidi, int subdevice,
-			    int stream, int mode,
-			    struct snd_rawmidi_substream **sub_ret)
-{
-	struct snd_rawmidi_substream *substream;
-	struct snd_rawmidi_str *s = &rmidi->streams[stream];
-	static const unsigned int info_flags[2] = {
+अटल पूर्णांक assign_substream(काष्ठा snd_rawmidi *rmidi, पूर्णांक subdevice,
+			    पूर्णांक stream, पूर्णांक mode,
+			    काष्ठा snd_rawmidi_substream **sub_ret)
+अणु
+	काष्ठा snd_rawmidi_substream *substream;
+	काष्ठा snd_rawmidi_str *s = &rmidi->streams[stream];
+	अटल स्थिर अचिन्हित पूर्णांक info_flags[2] = अणु
 		[SNDRV_RAWMIDI_STREAM_OUTPUT] = SNDRV_RAWMIDI_INFO_OUTPUT,
 		[SNDRV_RAWMIDI_STREAM_INPUT] = SNDRV_RAWMIDI_INFO_INPUT,
-	};
+	पूर्ण;
 
-	if (!(rmidi->info_flags & info_flags[stream]))
-		return -ENXIO;
-	if (subdevice >= 0 && subdevice >= s->substream_count)
-		return -ENODEV;
+	अगर (!(rmidi->info_flags & info_flags[stream]))
+		वापस -ENXIO;
+	अगर (subdevice >= 0 && subdevice >= s->substream_count)
+		वापस -ENODEV;
 
-	list_for_each_entry(substream, &s->substreams, list) {
-		if (substream->opened) {
-			if (stream == SNDRV_RAWMIDI_STREAM_INPUT ||
+	list_क्रम_each_entry(substream, &s->substreams, list) अणु
+		अगर (substream->खोलोed) अणु
+			अगर (stream == SNDRV_RAWMIDI_STREAM_INPUT ||
 			    !(mode & SNDRV_RAWMIDI_LFLG_APPEND) ||
 			    !substream->append)
-				continue;
-		}
-		if (subdevice < 0 || subdevice == substream->number) {
+				जारी;
+		पूर्ण
+		अगर (subdevice < 0 || subdevice == substream->number) अणु
 			*sub_ret = substream;
-			return 0;
-		}
-	}
-	return -EAGAIN;
-}
+			वापस 0;
+		पूर्ण
+	पूर्ण
+	वापस -EAGAIN;
+पूर्ण
 
-/* open and do ref-counting for the given substream */
-static int open_substream(struct snd_rawmidi *rmidi,
-			  struct snd_rawmidi_substream *substream,
-			  int mode)
-{
-	int err;
+/* खोलो and करो ref-counting क्रम the given substream */
+अटल पूर्णांक खोलो_substream(काष्ठा snd_rawmidi *rmidi,
+			  काष्ठा snd_rawmidi_substream *substream,
+			  पूर्णांक mode)
+अणु
+	पूर्णांक err;
 
-	if (substream->use_count == 0) {
-		err = snd_rawmidi_runtime_create(substream);
-		if (err < 0)
-			return err;
-		err = substream->ops->open(substream);
-		if (err < 0) {
-			snd_rawmidi_runtime_free(substream);
-			return err;
-		}
-		substream->opened = 1;
+	अगर (substream->use_count == 0) अणु
+		err = snd_rawmidi_runसमय_create(substream);
+		अगर (err < 0)
+			वापस err;
+		err = substream->ops->खोलो(substream);
+		अगर (err < 0) अणु
+			snd_rawmidi_runसमय_मुक्त(substream);
+			वापस err;
+		पूर्ण
+		substream->खोलोed = 1;
 		substream->active_sensing = 0;
-		if (mode & SNDRV_RAWMIDI_LFLG_APPEND)
+		अगर (mode & SNDRV_RAWMIDI_LFLG_APPEND)
 			substream->append = 1;
 		substream->pid = get_pid(task_pid(current));
-		rmidi->streams[substream->stream].substream_opened++;
-	}
+		rmidi->streams[substream->stream].substream_खोलोed++;
+	पूर्ण
 	substream->use_count++;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void close_substream(struct snd_rawmidi *rmidi,
-			    struct snd_rawmidi_substream *substream,
-			    int cleanup);
+अटल व्योम बंद_substream(काष्ठा snd_rawmidi *rmidi,
+			    काष्ठा snd_rawmidi_substream *substream,
+			    पूर्णांक cleanup);
 
-static int rawmidi_open_priv(struct snd_rawmidi *rmidi, int subdevice, int mode,
-			     struct snd_rawmidi_file *rfile)
-{
-	struct snd_rawmidi_substream *sinput = NULL, *soutput = NULL;
-	int err;
+अटल पूर्णांक rawmidi_खोलो_priv(काष्ठा snd_rawmidi *rmidi, पूर्णांक subdevice, पूर्णांक mode,
+			     काष्ठा snd_rawmidi_file *rfile)
+अणु
+	काष्ठा snd_rawmidi_substream *sinput = शून्य, *soutput = शून्य;
+	पूर्णांक err;
 
-	rfile->input = rfile->output = NULL;
-	if (mode & SNDRV_RAWMIDI_LFLG_INPUT) {
+	rfile->input = rfile->output = शून्य;
+	अगर (mode & SNDRV_RAWMIDI_LFLG_INPUT) अणु
 		err = assign_substream(rmidi, subdevice,
 				       SNDRV_RAWMIDI_STREAM_INPUT,
 				       mode, &sinput);
-		if (err < 0)
-			return err;
-	}
-	if (mode & SNDRV_RAWMIDI_LFLG_OUTPUT) {
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	अगर (mode & SNDRV_RAWMIDI_LFLG_OUTPUT) अणु
 		err = assign_substream(rmidi, subdevice,
 				       SNDRV_RAWMIDI_STREAM_OUTPUT,
 				       mode, &soutput);
-		if (err < 0)
-			return err;
-	}
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
 
-	if (sinput) {
-		err = open_substream(rmidi, sinput, mode);
-		if (err < 0)
-			return err;
-	}
-	if (soutput) {
-		err = open_substream(rmidi, soutput, mode);
-		if (err < 0) {
-			if (sinput)
-				close_substream(rmidi, sinput, 0);
-			return err;
-		}
-	}
+	अगर (sinput) अणु
+		err = खोलो_substream(rmidi, sinput, mode);
+		अगर (err < 0)
+			वापस err;
+	पूर्ण
+	अगर (soutput) अणु
+		err = खोलो_substream(rmidi, soutput, mode);
+		अगर (err < 0) अणु
+			अगर (sinput)
+				बंद_substream(rmidi, sinput, 0);
+			वापस err;
+		पूर्ण
+	पूर्ण
 
 	rfile->rmidi = rmidi;
 	rfile->input = sinput;
 	rfile->output = soutput;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* called from sound/core/seq/seq_midi.c */
-int snd_rawmidi_kernel_open(struct snd_card *card, int device, int subdevice,
-			    int mode, struct snd_rawmidi_file *rfile)
-{
-	struct snd_rawmidi *rmidi;
-	int err = 0;
+पूर्णांक snd_rawmidi_kernel_खोलो(काष्ठा snd_card *card, पूर्णांक device, पूर्णांक subdevice,
+			    पूर्णांक mode, काष्ठा snd_rawmidi_file *rfile)
+अणु
+	काष्ठा snd_rawmidi *rmidi;
+	पूर्णांक err = 0;
 
-	if (snd_BUG_ON(!rfile))
-		return -EINVAL;
+	अगर (snd_BUG_ON(!rfile))
+		वापस -EINVAL;
 
-	mutex_lock(&register_mutex);
+	mutex_lock(&रेजिस्टर_mutex);
 	rmidi = snd_rawmidi_search(card, device);
-	if (!rmidi)
+	अगर (!rmidi)
 		err = -ENODEV;
-	else if (!try_module_get(rmidi->card->module))
+	अन्यथा अगर (!try_module_get(rmidi->card->module))
 		err = -ENXIO;
-	mutex_unlock(&register_mutex);
-	if (err < 0)
-		return err;
+	mutex_unlock(&रेजिस्टर_mutex);
+	अगर (err < 0)
+		वापस err;
 
-	mutex_lock(&rmidi->open_mutex);
-	err = rawmidi_open_priv(rmidi, subdevice, mode, rfile);
-	mutex_unlock(&rmidi->open_mutex);
-	if (err < 0)
+	mutex_lock(&rmidi->खोलो_mutex);
+	err = rawmidi_खोलो_priv(rmidi, subdevice, mode, rfile);
+	mutex_unlock(&rmidi->खोलो_mutex);
+	अगर (err < 0)
 		module_put(rmidi->card->module);
-	return err;
-}
-EXPORT_SYMBOL(snd_rawmidi_kernel_open);
+	वापस err;
+पूर्ण
+EXPORT_SYMBOL(snd_rawmidi_kernel_खोलो);
 
-static int snd_rawmidi_open(struct inode *inode, struct file *file)
-{
-	int maj = imajor(inode);
-	struct snd_card *card;
-	int subdevice;
-	unsigned short fflags;
-	int err;
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_file *rawmidi_file = NULL;
-	wait_queue_entry_t wait;
+अटल पूर्णांक snd_rawmidi_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	पूर्णांक maj = imajor(inode);
+	काष्ठा snd_card *card;
+	पूर्णांक subdevice;
+	अचिन्हित लघु fflags;
+	पूर्णांक err;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_file *rawmidi_file = शून्य;
+	रुको_queue_entry_t रुको;
 
-	if ((file->f_flags & O_APPEND) && !(file->f_flags & O_NONBLOCK))
-		return -EINVAL;		/* invalid combination */
+	अगर ((file->f_flags & O_APPEND) && !(file->f_flags & O_NONBLOCK))
+		वापस -EINVAL;		/* invalid combination */
 
-	err = stream_open(inode, file);
-	if (err < 0)
-		return err;
+	err = stream_खोलो(inode, file);
+	अगर (err < 0)
+		वापस err;
 
-	if (maj == snd_major) {
+	अगर (maj == snd_major) अणु
 		rmidi = snd_lookup_minor_data(iminor(inode),
 					      SNDRV_DEVICE_TYPE_RAWMIDI);
-#ifdef CONFIG_SND_OSSEMUL
-	} else if (maj == SOUND_MAJOR) {
+#अगर_घोषित CONFIG_SND_OSSEMUL
+	पूर्ण अन्यथा अगर (maj == SOUND_MAJOR) अणु
 		rmidi = snd_lookup_oss_minor_data(iminor(inode),
 						  SNDRV_OSS_DEVICE_TYPE_MIDI);
-#endif
-	} else
-		return -ENXIO;
+#पूर्ण_अगर
+	पूर्ण अन्यथा
+		वापस -ENXIO;
 
-	if (rmidi == NULL)
-		return -ENODEV;
+	अगर (rmidi == शून्य)
+		वापस -ENODEV;
 
-	if (!try_module_get(rmidi->card->module)) {
+	अगर (!try_module_get(rmidi->card->module)) अणु
 		snd_card_unref(rmidi->card);
-		return -ENXIO;
-	}
+		वापस -ENXIO;
+	पूर्ण
 
-	mutex_lock(&rmidi->open_mutex);
+	mutex_lock(&rmidi->खोलो_mutex);
 	card = rmidi->card;
 	err = snd_card_file_add(card, file);
-	if (err < 0)
-		goto __error_card;
+	अगर (err < 0)
+		जाओ __error_card;
 	fflags = snd_rawmidi_file_flags(file);
-	if ((file->f_flags & O_APPEND) || maj == SOUND_MAJOR) /* OSS emul? */
+	अगर ((file->f_flags & O_APPEND) || maj == SOUND_MAJOR) /* OSS emul? */
 		fflags |= SNDRV_RAWMIDI_LFLG_APPEND;
-	rawmidi_file = kmalloc(sizeof(*rawmidi_file), GFP_KERNEL);
-	if (rawmidi_file == NULL) {
+	rawmidi_file = kदो_स्मृति(माप(*rawmidi_file), GFP_KERNEL);
+	अगर (rawmidi_file == शून्य) अणु
 		err = -ENOMEM;
-		goto __error;
-	}
-	init_waitqueue_entry(&wait, current);
-	add_wait_queue(&rmidi->open_wait, &wait);
-	while (1) {
+		जाओ __error;
+	पूर्ण
+	init_रुकोqueue_entry(&रुको, current);
+	add_रुको_queue(&rmidi->खोलो_रुको, &रुको);
+	जबतक (1) अणु
 		subdevice = snd_ctl_get_preferred_subdevice(card, SND_CTL_SUBDEV_RAWMIDI);
-		err = rawmidi_open_priv(rmidi, subdevice, fflags, rawmidi_file);
-		if (err >= 0)
-			break;
-		if (err == -EAGAIN) {
-			if (file->f_flags & O_NONBLOCK) {
+		err = rawmidi_खोलो_priv(rmidi, subdevice, fflags, rawmidi_file);
+		अगर (err >= 0)
+			अवरोध;
+		अगर (err == -EAGAIN) अणु
+			अगर (file->f_flags & O_NONBLOCK) अणु
 				err = -EBUSY;
-				break;
-			}
-		} else
-			break;
+				अवरोध;
+			पूर्ण
+		पूर्ण अन्यथा
+			अवरोध;
 		set_current_state(TASK_INTERRUPTIBLE);
-		mutex_unlock(&rmidi->open_mutex);
+		mutex_unlock(&rmidi->खोलो_mutex);
 		schedule();
-		mutex_lock(&rmidi->open_mutex);
-		if (rmidi->card->shutdown) {
+		mutex_lock(&rmidi->खोलो_mutex);
+		अगर (rmidi->card->shutकरोwn) अणु
 			err = -ENODEV;
-			break;
-		}
-		if (signal_pending(current)) {
+			अवरोध;
+		पूर्ण
+		अगर (संकेत_pending(current)) अणु
 			err = -ERESTARTSYS;
-			break;
-		}
-	}
-	remove_wait_queue(&rmidi->open_wait, &wait);
-	if (err < 0) {
-		kfree(rawmidi_file);
-		goto __error;
-	}
-#ifdef CONFIG_SND_OSSEMUL
-	if (rawmidi_file->input && rawmidi_file->input->runtime)
-		rawmidi_file->input->runtime->oss = (maj == SOUND_MAJOR);
-	if (rawmidi_file->output && rawmidi_file->output->runtime)
-		rawmidi_file->output->runtime->oss = (maj == SOUND_MAJOR);
-#endif
-	file->private_data = rawmidi_file;
-	mutex_unlock(&rmidi->open_mutex);
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	हटाओ_रुको_queue(&rmidi->खोलो_रुको, &रुको);
+	अगर (err < 0) अणु
+		kमुक्त(rawmidi_file);
+		जाओ __error;
+	पूर्ण
+#अगर_घोषित CONFIG_SND_OSSEMUL
+	अगर (rawmidi_file->input && rawmidi_file->input->runसमय)
+		rawmidi_file->input->runसमय->oss = (maj == SOUND_MAJOR);
+	अगर (rawmidi_file->output && rawmidi_file->output->runसमय)
+		rawmidi_file->output->runसमय->oss = (maj == SOUND_MAJOR);
+#पूर्ण_अगर
+	file->निजी_data = rawmidi_file;
+	mutex_unlock(&rmidi->खोलो_mutex);
 	snd_card_unref(rmidi->card);
-	return 0;
+	वापस 0;
 
  __error:
-	snd_card_file_remove(card, file);
+	snd_card_file_हटाओ(card, file);
  __error_card:
-	mutex_unlock(&rmidi->open_mutex);
+	mutex_unlock(&rmidi->खोलो_mutex);
 	module_put(rmidi->card->module);
 	snd_card_unref(rmidi->card);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void close_substream(struct snd_rawmidi *rmidi,
-			    struct snd_rawmidi_substream *substream,
-			    int cleanup)
-{
-	if (--substream->use_count)
-		return;
+अटल व्योम बंद_substream(काष्ठा snd_rawmidi *rmidi,
+			    काष्ठा snd_rawmidi_substream *substream,
+			    पूर्णांक cleanup)
+अणु
+	अगर (--substream->use_count)
+		वापस;
 
-	if (cleanup) {
-		if (substream->stream == SNDRV_RAWMIDI_STREAM_INPUT)
+	अगर (cleanup) अणु
+		अगर (substream->stream == SNDRV_RAWMIDI_STREAM_INPUT)
 			snd_rawmidi_input_trigger(substream, 0);
-		else {
-			if (substream->active_sensing) {
-				unsigned char buf = 0xfe;
+		अन्यथा अणु
+			अगर (substream->active_sensing) अणु
+				अचिन्हित अक्षर buf = 0xfe;
 				/* sending single active sensing message
 				 * to shut the device up
 				 */
-				snd_rawmidi_kernel_write(substream, &buf, 1);
-			}
-			if (snd_rawmidi_drain_output(substream) == -ERESTARTSYS)
+				snd_rawmidi_kernel_ग_लिखो(substream, &buf, 1);
+			पूर्ण
+			अगर (snd_rawmidi_drain_output(substream) == -ERESTARTSYS)
 				snd_rawmidi_output_trigger(substream, 0);
-		}
-	}
-	substream->ops->close(substream);
-	if (substream->runtime->private_free)
-		substream->runtime->private_free(substream);
-	snd_rawmidi_runtime_free(substream);
-	substream->opened = 0;
+		पूर्ण
+	पूर्ण
+	substream->ops->बंद(substream);
+	अगर (substream->runसमय->निजी_मुक्त)
+		substream->runसमय->निजी_मुक्त(substream);
+	snd_rawmidi_runसमय_मुक्त(substream);
+	substream->खोलोed = 0;
 	substream->append = 0;
 	put_pid(substream->pid);
-	substream->pid = NULL;
-	rmidi->streams[substream->stream].substream_opened--;
-}
+	substream->pid = शून्य;
+	rmidi->streams[substream->stream].substream_खोलोed--;
+पूर्ण
 
-static void rawmidi_release_priv(struct snd_rawmidi_file *rfile)
-{
-	struct snd_rawmidi *rmidi;
+अटल व्योम rawmidi_release_priv(काष्ठा snd_rawmidi_file *rfile)
+अणु
+	काष्ठा snd_rawmidi *rmidi;
 
 	rmidi = rfile->rmidi;
-	mutex_lock(&rmidi->open_mutex);
-	if (rfile->input) {
-		close_substream(rmidi, rfile->input, 1);
-		rfile->input = NULL;
-	}
-	if (rfile->output) {
-		close_substream(rmidi, rfile->output, 1);
-		rfile->output = NULL;
-	}
-	rfile->rmidi = NULL;
-	mutex_unlock(&rmidi->open_mutex);
-	wake_up(&rmidi->open_wait);
-}
+	mutex_lock(&rmidi->खोलो_mutex);
+	अगर (rfile->input) अणु
+		बंद_substream(rmidi, rfile->input, 1);
+		rfile->input = शून्य;
+	पूर्ण
+	अगर (rfile->output) अणु
+		बंद_substream(rmidi, rfile->output, 1);
+		rfile->output = शून्य;
+	पूर्ण
+	rfile->rmidi = शून्य;
+	mutex_unlock(&rmidi->खोलो_mutex);
+	wake_up(&rmidi->खोलो_रुको);
+पूर्ण
 
 /* called from sound/core/seq/seq_midi.c */
-int snd_rawmidi_kernel_release(struct snd_rawmidi_file *rfile)
-{
-	struct snd_rawmidi *rmidi;
+पूर्णांक snd_rawmidi_kernel_release(काष्ठा snd_rawmidi_file *rfile)
+अणु
+	काष्ठा snd_rawmidi *rmidi;
 
-	if (snd_BUG_ON(!rfile))
-		return -ENXIO;
+	अगर (snd_BUG_ON(!rfile))
+		वापस -ENXIO;
 
 	rmidi = rfile->rmidi;
 	rawmidi_release_priv(rfile);
 	module_put(rmidi->card->module);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_kernel_release);
 
-static int snd_rawmidi_release(struct inode *inode, struct file *file)
-{
-	struct snd_rawmidi_file *rfile;
-	struct snd_rawmidi *rmidi;
-	struct module *module;
+अटल पूर्णांक snd_rawmidi_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	काष्ठा snd_rawmidi_file *rfile;
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा module *module;
 
-	rfile = file->private_data;
+	rfile = file->निजी_data;
 	rmidi = rfile->rmidi;
 	rawmidi_release_priv(rfile);
-	kfree(rfile);
+	kमुक्त(rfile);
 	module = rmidi->card->module;
-	snd_card_file_remove(rmidi->card, file);
+	snd_card_file_हटाओ(rmidi->card, file);
 	module_put(module);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_rawmidi_info(struct snd_rawmidi_substream *substream,
-			    struct snd_rawmidi_info *info)
-{
-	struct snd_rawmidi *rmidi;
+अटल पूर्णांक snd_rawmidi_info(काष्ठा snd_rawmidi_substream *substream,
+			    काष्ठा snd_rawmidi_info *info)
+अणु
+	काष्ठा snd_rawmidi *rmidi;
 
-	if (substream == NULL)
-		return -ENODEV;
+	अगर (substream == शून्य)
+		वापस -ENODEV;
 	rmidi = substream->rmidi;
-	memset(info, 0, sizeof(*info));
+	स_रखो(info, 0, माप(*info));
 	info->card = rmidi->card->number;
 	info->device = rmidi->device;
 	info->subdevice = substream->number;
 	info->stream = substream->stream;
 	info->flags = rmidi->info_flags;
-	strcpy(info->id, rmidi->id);
-	strcpy(info->name, rmidi->name);
-	strcpy(info->subname, substream->name);
+	म_नकल(info->id, rmidi->id);
+	म_नकल(info->name, rmidi->name);
+	म_नकल(info->subname, substream->name);
 	info->subdevices_count = substream->pstr->substream_count;
 	info->subdevices_avail = (substream->pstr->substream_count -
-				  substream->pstr->substream_opened);
-	return 0;
-}
+				  substream->pstr->substream_खोलोed);
+	वापस 0;
+पूर्ण
 
-static int snd_rawmidi_info_user(struct snd_rawmidi_substream *substream,
-				 struct snd_rawmidi_info __user *_info)
-{
-	struct snd_rawmidi_info info;
-	int err;
+अटल पूर्णांक snd_rawmidi_info_user(काष्ठा snd_rawmidi_substream *substream,
+				 काष्ठा snd_rawmidi_info __user *_info)
+अणु
+	काष्ठा snd_rawmidi_info info;
+	पूर्णांक err;
 
 	err = snd_rawmidi_info(substream, &info);
-	if (err < 0)
-		return err;
-	if (copy_to_user(_info, &info, sizeof(struct snd_rawmidi_info)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (err < 0)
+		वापस err;
+	अगर (copy_to_user(_info, &info, माप(काष्ठा snd_rawmidi_info)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int __snd_rawmidi_info_select(struct snd_card *card,
-				     struct snd_rawmidi_info *info)
-{
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_str *pstr;
-	struct snd_rawmidi_substream *substream;
+अटल पूर्णांक __snd_rawmidi_info_select(काष्ठा snd_card *card,
+				     काष्ठा snd_rawmidi_info *info)
+अणु
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_str *pstr;
+	काष्ठा snd_rawmidi_substream *substream;
 
 	rmidi = snd_rawmidi_search(card, info->device);
-	if (!rmidi)
-		return -ENXIO;
-	if (info->stream < 0 || info->stream > 1)
-		return -EINVAL;
+	अगर (!rmidi)
+		वापस -ENXIO;
+	अगर (info->stream < 0 || info->stream > 1)
+		वापस -EINVAL;
 	info->stream = array_index_nospec(info->stream, 2);
 	pstr = &rmidi->streams[info->stream];
-	if (pstr->substream_count == 0)
-		return -ENOENT;
-	if (info->subdevice >= pstr->substream_count)
-		return -ENXIO;
-	list_for_each_entry(substream, &pstr->substreams, list) {
-		if ((unsigned int)substream->number == info->subdevice)
-			return snd_rawmidi_info(substream, info);
-	}
-	return -ENXIO;
-}
+	अगर (pstr->substream_count == 0)
+		वापस -ENOENT;
+	अगर (info->subdevice >= pstr->substream_count)
+		वापस -ENXIO;
+	list_क्रम_each_entry(substream, &pstr->substreams, list) अणु
+		अगर ((अचिन्हित पूर्णांक)substream->number == info->subdevice)
+			वापस snd_rawmidi_info(substream, info);
+	पूर्ण
+	वापस -ENXIO;
+पूर्ण
 
-int snd_rawmidi_info_select(struct snd_card *card, struct snd_rawmidi_info *info)
-{
-	int ret;
+पूर्णांक snd_rawmidi_info_select(काष्ठा snd_card *card, काष्ठा snd_rawmidi_info *info)
+अणु
+	पूर्णांक ret;
 
-	mutex_lock(&register_mutex);
+	mutex_lock(&रेजिस्टर_mutex);
 	ret = __snd_rawmidi_info_select(card, info);
-	mutex_unlock(&register_mutex);
-	return ret;
-}
+	mutex_unlock(&रेजिस्टर_mutex);
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_info_select);
 
-static int snd_rawmidi_info_select_user(struct snd_card *card,
-					struct snd_rawmidi_info __user *_info)
-{
-	int err;
-	struct snd_rawmidi_info info;
+अटल पूर्णांक snd_rawmidi_info_select_user(काष्ठा snd_card *card,
+					काष्ठा snd_rawmidi_info __user *_info)
+अणु
+	पूर्णांक err;
+	काष्ठा snd_rawmidi_info info;
 
-	if (get_user(info.device, &_info->device))
-		return -EFAULT;
-	if (get_user(info.stream, &_info->stream))
-		return -EFAULT;
-	if (get_user(info.subdevice, &_info->subdevice))
-		return -EFAULT;
+	अगर (get_user(info.device, &_info->device))
+		वापस -EFAULT;
+	अगर (get_user(info.stream, &_info->stream))
+		वापस -EFAULT;
+	अगर (get_user(info.subdevice, &_info->subdevice))
+		वापस -EFAULT;
 	err = snd_rawmidi_info_select(card, &info);
-	if (err < 0)
-		return err;
-	if (copy_to_user(_info, &info, sizeof(struct snd_rawmidi_info)))
-		return -EFAULT;
-	return 0;
-}
+	अगर (err < 0)
+		वापस err;
+	अगर (copy_to_user(_info, &info, माप(काष्ठा snd_rawmidi_info)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static int resize_runtime_buffer(struct snd_rawmidi_runtime *runtime,
-				 struct snd_rawmidi_params *params,
+अटल पूर्णांक resize_runसमय_buffer(काष्ठा snd_rawmidi_runसमय *runसमय,
+				 काष्ठा snd_rawmidi_params *params,
 				 bool is_input)
-{
-	char *newbuf, *oldbuf;
+अणु
+	अक्षर *newbuf, *oldbuf;
 
-	if (params->buffer_size < 32 || params->buffer_size > 1024L * 1024L)
-		return -EINVAL;
-	if (params->avail_min < 1 || params->avail_min > params->buffer_size)
-		return -EINVAL;
-	if (params->buffer_size != runtime->buffer_size) {
+	अगर (params->buffer_size < 32 || params->buffer_size > 1024L * 1024L)
+		वापस -EINVAL;
+	अगर (params->avail_min < 1 || params->avail_min > params->buffer_size)
+		वापस -EINVAL;
+	अगर (params->buffer_size != runसमय->buffer_size) अणु
 		newbuf = kvzalloc(params->buffer_size, GFP_KERNEL);
-		if (!newbuf)
-			return -ENOMEM;
-		spin_lock_irq(&runtime->lock);
-		if (runtime->buffer_ref) {
-			spin_unlock_irq(&runtime->lock);
-			kvfree(newbuf);
-			return -EBUSY;
-		}
-		oldbuf = runtime->buffer;
-		runtime->buffer = newbuf;
-		runtime->buffer_size = params->buffer_size;
-		__reset_runtime_ptrs(runtime, is_input);
-		spin_unlock_irq(&runtime->lock);
-		kvfree(oldbuf);
-	}
-	runtime->avail_min = params->avail_min;
-	return 0;
-}
+		अगर (!newbuf)
+			वापस -ENOMEM;
+		spin_lock_irq(&runसमय->lock);
+		अगर (runसमय->buffer_ref) अणु
+			spin_unlock_irq(&runसमय->lock);
+			kvमुक्त(newbuf);
+			वापस -EBUSY;
+		पूर्ण
+		oldbuf = runसमय->buffer;
+		runसमय->buffer = newbuf;
+		runसमय->buffer_size = params->buffer_size;
+		__reset_runसमय_ptrs(runसमय, is_input);
+		spin_unlock_irq(&runसमय->lock);
+		kvमुक्त(oldbuf);
+	पूर्ण
+	runसमय->avail_min = params->avail_min;
+	वापस 0;
+पूर्ण
 
-int snd_rawmidi_output_params(struct snd_rawmidi_substream *substream,
-			      struct snd_rawmidi_params *params)
-{
-	if (substream->append && substream->use_count > 1)
-		return -EBUSY;
+पूर्णांक snd_rawmidi_output_params(काष्ठा snd_rawmidi_substream *substream,
+			      काष्ठा snd_rawmidi_params *params)
+अणु
+	अगर (substream->append && substream->use_count > 1)
+		वापस -EBUSY;
 	snd_rawmidi_drain_output(substream);
 	substream->active_sensing = !params->no_active_sensing;
-	return resize_runtime_buffer(substream->runtime, params, false);
-}
+	वापस resize_runसमय_buffer(substream->runसमय, params, false);
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_output_params);
 
-int snd_rawmidi_input_params(struct snd_rawmidi_substream *substream,
-			     struct snd_rawmidi_params *params)
-{
+पूर्णांक snd_rawmidi_input_params(काष्ठा snd_rawmidi_substream *substream,
+			     काष्ठा snd_rawmidi_params *params)
+अणु
 	snd_rawmidi_drain_input(substream);
-	return resize_runtime_buffer(substream->runtime, params, true);
-}
+	वापस resize_runसमय_buffer(substream->runसमय, params, true);
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_input_params);
 
-static int snd_rawmidi_output_status(struct snd_rawmidi_substream *substream,
-				     struct snd_rawmidi_status64 *status)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_rawmidi_output_status(काष्ठा snd_rawmidi_substream *substream,
+				     काष्ठा snd_rawmidi_status64 *status)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
 
-	memset(status, 0, sizeof(*status));
+	स_रखो(status, 0, माप(*status));
 	status->stream = SNDRV_RAWMIDI_STREAM_OUTPUT;
-	spin_lock_irq(&runtime->lock);
-	status->avail = runtime->avail;
-	spin_unlock_irq(&runtime->lock);
-	return 0;
-}
+	spin_lock_irq(&runसमय->lock);
+	status->avail = runसमय->avail;
+	spin_unlock_irq(&runसमय->lock);
+	वापस 0;
+पूर्ण
 
-static int snd_rawmidi_input_status(struct snd_rawmidi_substream *substream,
-				    struct snd_rawmidi_status64 *status)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
+अटल पूर्णांक snd_rawmidi_input_status(काष्ठा snd_rawmidi_substream *substream,
+				    काष्ठा snd_rawmidi_status64 *status)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
 
-	memset(status, 0, sizeof(*status));
+	स_रखो(status, 0, माप(*status));
 	status->stream = SNDRV_RAWMIDI_STREAM_INPUT;
-	spin_lock_irq(&runtime->lock);
-	status->avail = runtime->avail;
-	status->xruns = runtime->xruns;
-	runtime->xruns = 0;
-	spin_unlock_irq(&runtime->lock);
-	return 0;
-}
+	spin_lock_irq(&runसमय->lock);
+	status->avail = runसमय->avail;
+	status->xruns = runसमय->xruns;
+	runसमय->xruns = 0;
+	spin_unlock_irq(&runसमय->lock);
+	वापस 0;
+पूर्ण
 
-static int snd_rawmidi_ioctl_status32(struct snd_rawmidi_file *rfile,
-				      struct snd_rawmidi_status32 __user *argp)
-{
-	int err = 0;
-	struct snd_rawmidi_status32 __user *status = argp;
-	struct snd_rawmidi_status32 status32;
-	struct snd_rawmidi_status64 status64;
+अटल पूर्णांक snd_rawmidi_ioctl_status32(काष्ठा snd_rawmidi_file *rfile,
+				      काष्ठा snd_rawmidi_status32 __user *argp)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा snd_rawmidi_status32 __user *status = argp;
+	काष्ठा snd_rawmidi_status32 status32;
+	काष्ठा snd_rawmidi_status64 status64;
 
-	if (copy_from_user(&status32, argp,
-			   sizeof(struct snd_rawmidi_status32)))
-		return -EFAULT;
+	अगर (copy_from_user(&status32, argp,
+			   माप(काष्ठा snd_rawmidi_status32)))
+		वापस -EFAULT;
 
-	switch (status32.stream) {
-	case SNDRV_RAWMIDI_STREAM_OUTPUT:
-		if (rfile->output == NULL)
-			return -EINVAL;
+	चयन (status32.stream) अणु
+	हाल SNDRV_RAWMIDI_STREAM_OUTPUT:
+		अगर (rfile->output == शून्य)
+			वापस -EINVAL;
 		err = snd_rawmidi_output_status(rfile->output, &status64);
-		break;
-	case SNDRV_RAWMIDI_STREAM_INPUT:
-		if (rfile->input == NULL)
-			return -EINVAL;
+		अवरोध;
+	हाल SNDRV_RAWMIDI_STREAM_INPUT:
+		अगर (rfile->input == शून्य)
+			वापस -EINVAL;
 		err = snd_rawmidi_input_status(rfile->input, &status64);
-		break;
-	default:
-		return -EINVAL;
-	}
-	if (err < 0)
-		return err;
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर (err < 0)
+		वापस err;
 
-	status32 = (struct snd_rawmidi_status32) {
+	status32 = (काष्ठा snd_rawmidi_status32) अणु
 		.stream = status64.stream,
 		.tstamp_sec = status64.tstamp_sec,
 		.tstamp_nsec = status64.tstamp_nsec,
 		.avail = status64.avail,
 		.xruns = status64.xruns,
-	};
+	पूर्ण;
 
-	if (copy_to_user(status, &status32, sizeof(*status)))
-		return -EFAULT;
+	अगर (copy_to_user(status, &status32, माप(*status)))
+		वापस -EFAULT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_rawmidi_ioctl_status64(struct snd_rawmidi_file *rfile,
-				      struct snd_rawmidi_status64 __user *argp)
-{
-	int err = 0;
-	struct snd_rawmidi_status64 status;
+अटल पूर्णांक snd_rawmidi_ioctl_status64(काष्ठा snd_rawmidi_file *rfile,
+				      काष्ठा snd_rawmidi_status64 __user *argp)
+अणु
+	पूर्णांक err = 0;
+	काष्ठा snd_rawmidi_status64 status;
 
-	if (copy_from_user(&status, argp, sizeof(struct snd_rawmidi_status64)))
-		return -EFAULT;
+	अगर (copy_from_user(&status, argp, माप(काष्ठा snd_rawmidi_status64)))
+		वापस -EFAULT;
 
-	switch (status.stream) {
-	case SNDRV_RAWMIDI_STREAM_OUTPUT:
-		if (rfile->output == NULL)
-			return -EINVAL;
+	चयन (status.stream) अणु
+	हाल SNDRV_RAWMIDI_STREAM_OUTPUT:
+		अगर (rfile->output == शून्य)
+			वापस -EINVAL;
 		err = snd_rawmidi_output_status(rfile->output, &status);
-		break;
-	case SNDRV_RAWMIDI_STREAM_INPUT:
-		if (rfile->input == NULL)
-			return -EINVAL;
+		अवरोध;
+	हाल SNDRV_RAWMIDI_STREAM_INPUT:
+		अगर (rfile->input == शून्य)
+			वापस -EINVAL;
 		err = snd_rawmidi_input_status(rfile->input, &status);
-		break;
-	default:
-		return -EINVAL;
-	}
-	if (err < 0)
-		return err;
-	if (copy_to_user(argp, &status,
-			 sizeof(struct snd_rawmidi_status64)))
-		return -EFAULT;
-	return 0;
-}
+		अवरोध;
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	अगर (err < 0)
+		वापस err;
+	अगर (copy_to_user(argp, &status,
+			 माप(काष्ठा snd_rawmidi_status64)))
+		वापस -EFAULT;
+	वापस 0;
+पूर्ण
 
-static long snd_rawmidi_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	struct snd_rawmidi_file *rfile;
-	void __user *argp = (void __user *)arg;
+अटल दीर्घ snd_rawmidi_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	काष्ठा snd_rawmidi_file *rfile;
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	rfile = file->private_data;
-	if (((cmd >> 8) & 0xff) != 'W')
-		return -ENOTTY;
-	switch (cmd) {
-	case SNDRV_RAWMIDI_IOCTL_PVERSION:
-		return put_user(SNDRV_RAWMIDI_VERSION, (int __user *)argp) ? -EFAULT : 0;
-	case SNDRV_RAWMIDI_IOCTL_INFO:
-	{
-		int stream;
-		struct snd_rawmidi_info __user *info = argp;
+	rfile = file->निजी_data;
+	अगर (((cmd >> 8) & 0xff) != 'W')
+		वापस -ENOTTY;
+	चयन (cmd) अणु
+	हाल SNDRV_RAWMIDI_IOCTL_PVERSION:
+		वापस put_user(SNDRV_RAWMIDI_VERSION, (पूर्णांक __user *)argp) ? -EFAULT : 0;
+	हाल SNDRV_RAWMIDI_IOCTL_INFO:
+	अणु
+		पूर्णांक stream;
+		काष्ठा snd_rawmidi_info __user *info = argp;
 
-		if (get_user(stream, &info->stream))
-			return -EFAULT;
-		switch (stream) {
-		case SNDRV_RAWMIDI_STREAM_INPUT:
-			return snd_rawmidi_info_user(rfile->input, info);
-		case SNDRV_RAWMIDI_STREAM_OUTPUT:
-			return snd_rawmidi_info_user(rfile->output, info);
-		default:
-			return -EINVAL;
-		}
-	}
-	case SNDRV_RAWMIDI_IOCTL_PARAMS:
-	{
-		struct snd_rawmidi_params params;
+		अगर (get_user(stream, &info->stream))
+			वापस -EFAULT;
+		चयन (stream) अणु
+		हाल SNDRV_RAWMIDI_STREAM_INPUT:
+			वापस snd_rawmidi_info_user(rfile->input, info);
+		हाल SNDRV_RAWMIDI_STREAM_OUTPUT:
+			वापस snd_rawmidi_info_user(rfile->output, info);
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	हाल SNDRV_RAWMIDI_IOCTL_PARAMS:
+	अणु
+		काष्ठा snd_rawmidi_params params;
 
-		if (copy_from_user(&params, argp, sizeof(struct snd_rawmidi_params)))
-			return -EFAULT;
-		switch (params.stream) {
-		case SNDRV_RAWMIDI_STREAM_OUTPUT:
-			if (rfile->output == NULL)
-				return -EINVAL;
-			return snd_rawmidi_output_params(rfile->output, &params);
-		case SNDRV_RAWMIDI_STREAM_INPUT:
-			if (rfile->input == NULL)
-				return -EINVAL;
-			return snd_rawmidi_input_params(rfile->input, &params);
-		default:
-			return -EINVAL;
-		}
-	}
-	case SNDRV_RAWMIDI_IOCTL_STATUS32:
-		return snd_rawmidi_ioctl_status32(rfile, argp);
-	case SNDRV_RAWMIDI_IOCTL_STATUS64:
-		return snd_rawmidi_ioctl_status64(rfile, argp);
-	case SNDRV_RAWMIDI_IOCTL_DROP:
-	{
-		int val;
+		अगर (copy_from_user(&params, argp, माप(काष्ठा snd_rawmidi_params)))
+			वापस -EFAULT;
+		चयन (params.stream) अणु
+		हाल SNDRV_RAWMIDI_STREAM_OUTPUT:
+			अगर (rfile->output == शून्य)
+				वापस -EINVAL;
+			वापस snd_rawmidi_output_params(rfile->output, &params);
+		हाल SNDRV_RAWMIDI_STREAM_INPUT:
+			अगर (rfile->input == शून्य)
+				वापस -EINVAL;
+			वापस snd_rawmidi_input_params(rfile->input, &params);
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	हाल SNDRV_RAWMIDI_IOCTL_STATUS32:
+		वापस snd_rawmidi_ioctl_status32(rfile, argp);
+	हाल SNDRV_RAWMIDI_IOCTL_STATUS64:
+		वापस snd_rawmidi_ioctl_status64(rfile, argp);
+	हाल SNDRV_RAWMIDI_IOCTL_DROP:
+	अणु
+		पूर्णांक val;
 
-		if (get_user(val, (int __user *) argp))
-			return -EFAULT;
-		switch (val) {
-		case SNDRV_RAWMIDI_STREAM_OUTPUT:
-			if (rfile->output == NULL)
-				return -EINVAL;
-			return snd_rawmidi_drop_output(rfile->output);
-		default:
-			return -EINVAL;
-		}
-	}
-	case SNDRV_RAWMIDI_IOCTL_DRAIN:
-	{
-		int val;
+		अगर (get_user(val, (पूर्णांक __user *) argp))
+			वापस -EFAULT;
+		चयन (val) अणु
+		हाल SNDRV_RAWMIDI_STREAM_OUTPUT:
+			अगर (rfile->output == शून्य)
+				वापस -EINVAL;
+			वापस snd_rawmidi_drop_output(rfile->output);
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	हाल SNDRV_RAWMIDI_IOCTL_DRAIN:
+	अणु
+		पूर्णांक val;
 
-		if (get_user(val, (int __user *) argp))
-			return -EFAULT;
-		switch (val) {
-		case SNDRV_RAWMIDI_STREAM_OUTPUT:
-			if (rfile->output == NULL)
-				return -EINVAL;
-			return snd_rawmidi_drain_output(rfile->output);
-		case SNDRV_RAWMIDI_STREAM_INPUT:
-			if (rfile->input == NULL)
-				return -EINVAL;
-			return snd_rawmidi_drain_input(rfile->input);
-		default:
-			return -EINVAL;
-		}
-	}
-	default:
+		अगर (get_user(val, (पूर्णांक __user *) argp))
+			वापस -EFAULT;
+		चयन (val) अणु
+		हाल SNDRV_RAWMIDI_STREAM_OUTPUT:
+			अगर (rfile->output == शून्य)
+				वापस -EINVAL;
+			वापस snd_rawmidi_drain_output(rfile->output);
+		हाल SNDRV_RAWMIDI_STREAM_INPUT:
+			अगर (rfile->input == शून्य)
+				वापस -EINVAL;
+			वापस snd_rawmidi_drain_input(rfile->input);
+		शेष:
+			वापस -EINVAL;
+		पूर्ण
+	पूर्ण
+	शेष:
 		rmidi_dbg(rfile->rmidi,
 			  "rawmidi: unknown command = 0x%x\n", cmd);
-	}
-	return -ENOTTY;
-}
+	पूर्ण
+	वापस -ENOTTY;
+पूर्ण
 
-static int snd_rawmidi_control_ioctl(struct snd_card *card,
-				     struct snd_ctl_file *control,
-				     unsigned int cmd,
-				     unsigned long arg)
-{
-	void __user *argp = (void __user *)arg;
+अटल पूर्णांक snd_rawmidi_control_ioctl(काष्ठा snd_card *card,
+				     काष्ठा snd_ctl_file *control,
+				     अचिन्हित पूर्णांक cmd,
+				     अचिन्हित दीर्घ arg)
+अणु
+	व्योम __user *argp = (व्योम __user *)arg;
 
-	switch (cmd) {
-	case SNDRV_CTL_IOCTL_RAWMIDI_NEXT_DEVICE:
-	{
-		int device;
+	चयन (cmd) अणु
+	हाल SNDRV_CTL_IOCTL_RAWMIDI_NEXT_DEVICE:
+	अणु
+		पूर्णांक device;
 
-		if (get_user(device, (int __user *)argp))
-			return -EFAULT;
-		if (device >= SNDRV_RAWMIDI_DEVICES) /* next device is -1 */
+		अगर (get_user(device, (पूर्णांक __user *)argp))
+			वापस -EFAULT;
+		अगर (device >= SNDRV_RAWMIDI_DEVICES) /* next device is -1 */
 			device = SNDRV_RAWMIDI_DEVICES - 1;
-		mutex_lock(&register_mutex);
+		mutex_lock(&रेजिस्टर_mutex);
 		device = device < 0 ? 0 : device + 1;
-		while (device < SNDRV_RAWMIDI_DEVICES) {
-			if (snd_rawmidi_search(card, device))
-				break;
+		जबतक (device < SNDRV_RAWMIDI_DEVICES) अणु
+			अगर (snd_rawmidi_search(card, device))
+				अवरोध;
 			device++;
-		}
-		if (device == SNDRV_RAWMIDI_DEVICES)
+		पूर्ण
+		अगर (device == SNDRV_RAWMIDI_DEVICES)
 			device = -1;
-		mutex_unlock(&register_mutex);
-		if (put_user(device, (int __user *)argp))
-			return -EFAULT;
-		return 0;
-	}
-	case SNDRV_CTL_IOCTL_RAWMIDI_PREFER_SUBDEVICE:
-	{
-		int val;
+		mutex_unlock(&रेजिस्टर_mutex);
+		अगर (put_user(device, (पूर्णांक __user *)argp))
+			वापस -EFAULT;
+		वापस 0;
+	पूर्ण
+	हाल SNDRV_CTL_IOCTL_RAWMIDI_PREFER_SUBDEVICE:
+	अणु
+		पूर्णांक val;
 
-		if (get_user(val, (int __user *)argp))
-			return -EFAULT;
+		अगर (get_user(val, (पूर्णांक __user *)argp))
+			वापस -EFAULT;
 		control->preferred_subdevice[SND_CTL_SUBDEV_RAWMIDI] = val;
-		return 0;
-	}
-	case SNDRV_CTL_IOCTL_RAWMIDI_INFO:
-		return snd_rawmidi_info_select_user(card, argp);
-	}
-	return -ENOIOCTLCMD;
-}
+		वापस 0;
+	पूर्ण
+	हाल SNDRV_CTL_IOCTL_RAWMIDI_INFO:
+		वापस snd_rawmidi_info_select_user(card, argp);
+	पूर्ण
+	वापस -ENOIOCTLCMD;
+पूर्ण
 
 /**
  * snd_rawmidi_receive - receive the input data from the device
  * @substream: the rawmidi substream
- * @buffer: the buffer pointer
- * @count: the data size to read
+ * @buffer: the buffer poपूर्णांकer
+ * @count: the data size to पढ़ो
  *
- * Reads the data from the internal buffer.
+ * Reads the data from the पूर्णांकernal buffer.
  *
- * Return: The size of read data, or a negative error code on failure.
+ * Return: The size of पढ़ो data, or a negative error code on failure.
  */
-int snd_rawmidi_receive(struct snd_rawmidi_substream *substream,
-			const unsigned char *buffer, int count)
-{
-	unsigned long flags;
-	int result = 0, count1;
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
+पूर्णांक snd_rawmidi_receive(काष्ठा snd_rawmidi_substream *substream,
+			स्थिर अचिन्हित अक्षर *buffer, पूर्णांक count)
+अणु
+	अचिन्हित दीर्घ flags;
+	पूर्णांक result = 0, count1;
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
 
-	if (!substream->opened)
-		return -EBADFD;
-	if (runtime->buffer == NULL) {
+	अगर (!substream->खोलोed)
+		वापस -EBADFD;
+	अगर (runसमय->buffer == शून्य) अणु
 		rmidi_dbg(substream->rmidi,
 			  "snd_rawmidi_receive: input is not active!!!\n");
-		return -EINVAL;
-	}
-	spin_lock_irqsave(&runtime->lock, flags);
-	if (count == 1) {	/* special case, faster code */
+		वापस -EINVAL;
+	पूर्ण
+	spin_lock_irqsave(&runसमय->lock, flags);
+	अगर (count == 1) अणु	/* special हाल, faster code */
 		substream->bytes++;
-		if (runtime->avail < runtime->buffer_size) {
-			runtime->buffer[runtime->hw_ptr++] = buffer[0];
-			runtime->hw_ptr %= runtime->buffer_size;
-			runtime->avail++;
+		अगर (runसमय->avail < runसमय->buffer_size) अणु
+			runसमय->buffer[runसमय->hw_ptr++] = buffer[0];
+			runसमय->hw_ptr %= runसमय->buffer_size;
+			runसमय->avail++;
 			result++;
-		} else {
-			runtime->xruns++;
-		}
-	} else {
+		पूर्ण अन्यथा अणु
+			runसमय->xruns++;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		substream->bytes += count;
-		count1 = runtime->buffer_size - runtime->hw_ptr;
-		if (count1 > count)
+		count1 = runसमय->buffer_size - runसमय->hw_ptr;
+		अगर (count1 > count)
 			count1 = count;
-		if (count1 > (int)(runtime->buffer_size - runtime->avail))
-			count1 = runtime->buffer_size - runtime->avail;
-		memcpy(runtime->buffer + runtime->hw_ptr, buffer, count1);
-		runtime->hw_ptr += count1;
-		runtime->hw_ptr %= runtime->buffer_size;
-		runtime->avail += count1;
+		अगर (count1 > (पूर्णांक)(runसमय->buffer_size - runसमय->avail))
+			count1 = runसमय->buffer_size - runसमय->avail;
+		स_नकल(runसमय->buffer + runसमय->hw_ptr, buffer, count1);
+		runसमय->hw_ptr += count1;
+		runसमय->hw_ptr %= runसमय->buffer_size;
+		runसमय->avail += count1;
 		count -= count1;
 		result += count1;
-		if (count > 0) {
+		अगर (count > 0) अणु
 			buffer += count1;
 			count1 = count;
-			if (count1 > (int)(runtime->buffer_size - runtime->avail)) {
-				count1 = runtime->buffer_size - runtime->avail;
-				runtime->xruns += count - count1;
-			}
-			if (count1 > 0) {
-				memcpy(runtime->buffer, buffer, count1);
-				runtime->hw_ptr = count1;
-				runtime->avail += count1;
+			अगर (count1 > (पूर्णांक)(runसमय->buffer_size - runसमय->avail)) अणु
+				count1 = runसमय->buffer_size - runसमय->avail;
+				runसमय->xruns += count - count1;
+			पूर्ण
+			अगर (count1 > 0) अणु
+				स_नकल(runसमय->buffer, buffer, count1);
+				runसमय->hw_ptr = count1;
+				runसमय->avail += count1;
 				result += count1;
-			}
-		}
-	}
-	if (result > 0) {
-		if (runtime->event)
-			schedule_work(&runtime->event_work);
-		else if (__snd_rawmidi_ready(runtime))
-			wake_up(&runtime->sleep);
-	}
-	spin_unlock_irqrestore(&runtime->lock, flags);
-	return result;
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (result > 0) अणु
+		अगर (runसमय->event)
+			schedule_work(&runसमय->event_work);
+		अन्यथा अगर (__snd_rawmidi_पढ़ोy(runसमय))
+			wake_up(&runसमय->sleep);
+	पूर्ण
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_receive);
 
-static long snd_rawmidi_kernel_read1(struct snd_rawmidi_substream *substream,
-				     unsigned char __user *userbuf,
-				     unsigned char *kernelbuf, long count)
-{
-	unsigned long flags;
-	long result = 0, count1;
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
-	unsigned long appl_ptr;
-	int err = 0;
+अटल दीर्घ snd_rawmidi_kernel_पढ़ो1(काष्ठा snd_rawmidi_substream *substream,
+				     अचिन्हित अक्षर __user *userbuf,
+				     अचिन्हित अक्षर *kernelbuf, दीर्घ count)
+अणु
+	अचिन्हित दीर्घ flags;
+	दीर्घ result = 0, count1;
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
+	अचिन्हित दीर्घ appl_ptr;
+	पूर्णांक err = 0;
 
-	spin_lock_irqsave(&runtime->lock, flags);
-	snd_rawmidi_buffer_ref(runtime);
-	while (count > 0 && runtime->avail) {
-		count1 = runtime->buffer_size - runtime->appl_ptr;
-		if (count1 > count)
+	spin_lock_irqsave(&runसमय->lock, flags);
+	snd_rawmidi_buffer_ref(runसमय);
+	जबतक (count > 0 && runसमय->avail) अणु
+		count1 = runसमय->buffer_size - runसमय->appl_ptr;
+		अगर (count1 > count)
 			count1 = count;
-		if (count1 > (int)runtime->avail)
-			count1 = runtime->avail;
+		अगर (count1 > (पूर्णांक)runसमय->avail)
+			count1 = runसमय->avail;
 
-		/* update runtime->appl_ptr before unlocking for userbuf */
-		appl_ptr = runtime->appl_ptr;
-		runtime->appl_ptr += count1;
-		runtime->appl_ptr %= runtime->buffer_size;
-		runtime->avail -= count1;
+		/* update runसमय->appl_ptr beक्रमe unlocking क्रम userbuf */
+		appl_ptr = runसमय->appl_ptr;
+		runसमय->appl_ptr += count1;
+		runसमय->appl_ptr %= runसमय->buffer_size;
+		runसमय->avail -= count1;
 
-		if (kernelbuf)
-			memcpy(kernelbuf + result, runtime->buffer + appl_ptr, count1);
-		if (userbuf) {
-			spin_unlock_irqrestore(&runtime->lock, flags);
-			if (copy_to_user(userbuf + result,
-					 runtime->buffer + appl_ptr, count1))
+		अगर (kernelbuf)
+			स_नकल(kernelbuf + result, runसमय->buffer + appl_ptr, count1);
+		अगर (userbuf) अणु
+			spin_unlock_irqrestore(&runसमय->lock, flags);
+			अगर (copy_to_user(userbuf + result,
+					 runसमय->buffer + appl_ptr, count1))
 				err = -EFAULT;
-			spin_lock_irqsave(&runtime->lock, flags);
-			if (err)
-				goto out;
-		}
+			spin_lock_irqsave(&runसमय->lock, flags);
+			अगर (err)
+				जाओ out;
+		पूर्ण
 		result += count1;
 		count -= count1;
-	}
+	पूर्ण
  out:
-	snd_rawmidi_buffer_unref(runtime);
-	spin_unlock_irqrestore(&runtime->lock, flags);
-	return result > 0 ? result : err;
-}
+	snd_rawmidi_buffer_unref(runसमय);
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+	वापस result > 0 ? result : err;
+पूर्ण
 
-long snd_rawmidi_kernel_read(struct snd_rawmidi_substream *substream,
-			     unsigned char *buf, long count)
-{
+दीर्घ snd_rawmidi_kernel_पढ़ो(काष्ठा snd_rawmidi_substream *substream,
+			     अचिन्हित अक्षर *buf, दीर्घ count)
+अणु
 	snd_rawmidi_input_trigger(substream, 1);
-	return snd_rawmidi_kernel_read1(substream, NULL/*userbuf*/, buf, count);
-}
-EXPORT_SYMBOL(snd_rawmidi_kernel_read);
+	वापस snd_rawmidi_kernel_पढ़ो1(substream, शून्य/*userbuf*/, buf, count);
+पूर्ण
+EXPORT_SYMBOL(snd_rawmidi_kernel_पढ़ो);
 
-static ssize_t snd_rawmidi_read(struct file *file, char __user *buf, size_t count,
+अटल sमाप_प्रकार snd_rawmidi_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
 				loff_t *offset)
-{
-	long result;
-	int count1;
-	struct snd_rawmidi_file *rfile;
-	struct snd_rawmidi_substream *substream;
-	struct snd_rawmidi_runtime *runtime;
+अणु
+	दीर्घ result;
+	पूर्णांक count1;
+	काष्ठा snd_rawmidi_file *rfile;
+	काष्ठा snd_rawmidi_substream *substream;
+	काष्ठा snd_rawmidi_runसमय *runसमय;
 
-	rfile = file->private_data;
+	rfile = file->निजी_data;
 	substream = rfile->input;
-	if (substream == NULL)
-		return -EIO;
-	runtime = substream->runtime;
+	अगर (substream == शून्य)
+		वापस -EIO;
+	runसमय = substream->runसमय;
 	snd_rawmidi_input_trigger(substream, 1);
 	result = 0;
-	while (count > 0) {
-		spin_lock_irq(&runtime->lock);
-		while (!__snd_rawmidi_ready(runtime)) {
-			wait_queue_entry_t wait;
+	जबतक (count > 0) अणु
+		spin_lock_irq(&runसमय->lock);
+		जबतक (!__snd_rawmidi_पढ़ोy(runसमय)) अणु
+			रुको_queue_entry_t रुको;
 
-			if ((file->f_flags & O_NONBLOCK) != 0 || result > 0) {
-				spin_unlock_irq(&runtime->lock);
-				return result > 0 ? result : -EAGAIN;
-			}
-			init_waitqueue_entry(&wait, current);
-			add_wait_queue(&runtime->sleep, &wait);
+			अगर ((file->f_flags & O_NONBLOCK) != 0 || result > 0) अणु
+				spin_unlock_irq(&runसमय->lock);
+				वापस result > 0 ? result : -EAGAIN;
+			पूर्ण
+			init_रुकोqueue_entry(&रुको, current);
+			add_रुको_queue(&runसमय->sleep, &रुको);
 			set_current_state(TASK_INTERRUPTIBLE);
-			spin_unlock_irq(&runtime->lock);
+			spin_unlock_irq(&runसमय->lock);
 			schedule();
-			remove_wait_queue(&runtime->sleep, &wait);
-			if (rfile->rmidi->card->shutdown)
-				return -ENODEV;
-			if (signal_pending(current))
-				return result > 0 ? result : -ERESTARTSYS;
-			spin_lock_irq(&runtime->lock);
-			if (!runtime->avail) {
-				spin_unlock_irq(&runtime->lock);
-				return result > 0 ? result : -EIO;
-			}
-		}
-		spin_unlock_irq(&runtime->lock);
-		count1 = snd_rawmidi_kernel_read1(substream,
-						  (unsigned char __user *)buf,
-						  NULL/*kernelbuf*/,
+			हटाओ_रुको_queue(&runसमय->sleep, &रुको);
+			अगर (rfile->rmidi->card->shutकरोwn)
+				वापस -ENODEV;
+			अगर (संकेत_pending(current))
+				वापस result > 0 ? result : -ERESTARTSYS;
+			spin_lock_irq(&runसमय->lock);
+			अगर (!runसमय->avail) अणु
+				spin_unlock_irq(&runसमय->lock);
+				वापस result > 0 ? result : -EIO;
+			पूर्ण
+		पूर्ण
+		spin_unlock_irq(&runसमय->lock);
+		count1 = snd_rawmidi_kernel_पढ़ो1(substream,
+						  (अचिन्हित अक्षर __user *)buf,
+						  शून्य/*kernelbuf*/,
 						  count);
-		if (count1 < 0)
-			return result > 0 ? result : count1;
+		अगर (count1 < 0)
+			वापस result > 0 ? result : count1;
 		result += count1;
 		buf += count1;
 		count -= count1;
-	}
-	return result;
-}
+	पूर्ण
+	वापस result;
+पूर्ण
 
 /**
  * snd_rawmidi_transmit_empty - check whether the output buffer is empty
  * @substream: the rawmidi substream
  *
- * Return: 1 if the internal output buffer is empty, 0 if not.
+ * Return: 1 अगर the पूर्णांकernal output buffer is empty, 0 अगर not.
  */
-int snd_rawmidi_transmit_empty(struct snd_rawmidi_substream *substream)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
-	int result;
-	unsigned long flags;
+पूर्णांक snd_rawmidi_transmit_empty(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
+	पूर्णांक result;
+	अचिन्हित दीर्घ flags;
 
-	if (runtime->buffer == NULL) {
+	अगर (runसमय->buffer == शून्य) अणु
 		rmidi_dbg(substream->rmidi,
 			  "snd_rawmidi_transmit_empty: output is not active!!!\n");
-		return 1;
-	}
-	spin_lock_irqsave(&runtime->lock, flags);
-	result = runtime->avail >= runtime->buffer_size;
-	spin_unlock_irqrestore(&runtime->lock, flags);
-	return result;
-}
+		वापस 1;
+	पूर्ण
+	spin_lock_irqsave(&runसमय->lock, flags);
+	result = runसमय->avail >= runसमय->buffer_size;
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_transmit_empty);
 
 /**
- * __snd_rawmidi_transmit_peek - copy data from the internal buffer
+ * __snd_rawmidi_transmit_peek - copy data from the पूर्णांकernal buffer
  * @substream: the rawmidi substream
- * @buffer: the buffer pointer
+ * @buffer: the buffer poपूर्णांकer
  * @count: data size to transfer
  *
  * This is a variant of snd_rawmidi_transmit_peek() without spinlock.
  */
-int __snd_rawmidi_transmit_peek(struct snd_rawmidi_substream *substream,
-			      unsigned char *buffer, int count)
-{
-	int result, count1;
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
+पूर्णांक __snd_rawmidi_transmit_peek(काष्ठा snd_rawmidi_substream *substream,
+			      अचिन्हित अक्षर *buffer, पूर्णांक count)
+अणु
+	पूर्णांक result, count1;
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
 
-	if (runtime->buffer == NULL) {
+	अगर (runसमय->buffer == शून्य) अणु
 		rmidi_dbg(substream->rmidi,
 			  "snd_rawmidi_transmit_peek: output is not active!!!\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	result = 0;
-	if (runtime->avail >= runtime->buffer_size) {
-		/* warning: lowlevel layer MUST trigger down the hardware */
-		goto __skip;
-	}
-	if (count == 1) {	/* special case, faster code */
-		*buffer = runtime->buffer[runtime->hw_ptr];
+	अगर (runसमय->avail >= runसमय->buffer_size) अणु
+		/* warning: lowlevel layer MUST trigger करोwn the hardware */
+		जाओ __skip;
+	पूर्ण
+	अगर (count == 1) अणु	/* special हाल, faster code */
+		*buffer = runसमय->buffer[runसमय->hw_ptr];
 		result++;
-	} else {
-		count1 = runtime->buffer_size - runtime->hw_ptr;
-		if (count1 > count)
+	पूर्ण अन्यथा अणु
+		count1 = runसमय->buffer_size - runसमय->hw_ptr;
+		अगर (count1 > count)
 			count1 = count;
-		if (count1 > (int)(runtime->buffer_size - runtime->avail))
-			count1 = runtime->buffer_size - runtime->avail;
-		memcpy(buffer, runtime->buffer + runtime->hw_ptr, count1);
+		अगर (count1 > (पूर्णांक)(runसमय->buffer_size - runसमय->avail))
+			count1 = runसमय->buffer_size - runसमय->avail;
+		स_नकल(buffer, runसमय->buffer + runसमय->hw_ptr, count1);
 		count -= count1;
 		result += count1;
-		if (count > 0) {
-			if (count > (int)(runtime->buffer_size - runtime->avail - count1))
-				count = runtime->buffer_size - runtime->avail - count1;
-			memcpy(buffer + count1, runtime->buffer, count);
+		अगर (count > 0) अणु
+			अगर (count > (पूर्णांक)(runसमय->buffer_size - runसमय->avail - count1))
+				count = runसमय->buffer_size - runसमय->avail - count1;
+			स_नकल(buffer + count1, runसमय->buffer, count);
 			result += count;
-		}
-	}
+		पूर्ण
+	पूर्ण
       __skip:
-	return result;
-}
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(__snd_rawmidi_transmit_peek);
 
 /**
- * snd_rawmidi_transmit_peek - copy data from the internal buffer
+ * snd_rawmidi_transmit_peek - copy data from the पूर्णांकernal buffer
  * @substream: the rawmidi substream
- * @buffer: the buffer pointer
+ * @buffer: the buffer poपूर्णांकer
  * @count: data size to transfer
  *
- * Copies data from the internal output buffer to the given buffer.
+ * Copies data from the पूर्णांकernal output buffer to the given buffer.
  *
- * Call this in the interrupt handler when the midi output is ready,
+ * Call this in the पूर्णांकerrupt handler when the midi output is पढ़ोy,
  * and call snd_rawmidi_transmit_ack() after the transmission is
  * finished.
  *
  * Return: The size of copied data, or a negative error code on failure.
  */
-int snd_rawmidi_transmit_peek(struct snd_rawmidi_substream *substream,
-			      unsigned char *buffer, int count)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
-	int result;
-	unsigned long flags;
+पूर्णांक snd_rawmidi_transmit_peek(काष्ठा snd_rawmidi_substream *substream,
+			      अचिन्हित अक्षर *buffer, पूर्णांक count)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
+	पूर्णांक result;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&runtime->lock, flags);
+	spin_lock_irqsave(&runसमय->lock, flags);
 	result = __snd_rawmidi_transmit_peek(substream, buffer, count);
-	spin_unlock_irqrestore(&runtime->lock, flags);
-	return result;
-}
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_transmit_peek);
 
 /**
@@ -1252,26 +1253,26 @@ EXPORT_SYMBOL(snd_rawmidi_transmit_peek);
  *
  * This is a variant of __snd_rawmidi_transmit_ack() without spinlock.
  */
-int __snd_rawmidi_transmit_ack(struct snd_rawmidi_substream *substream, int count)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
+पूर्णांक __snd_rawmidi_transmit_ack(काष्ठा snd_rawmidi_substream *substream, पूर्णांक count)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
 
-	if (runtime->buffer == NULL) {
+	अगर (runसमय->buffer == शून्य) अणु
 		rmidi_dbg(substream->rmidi,
 			  "snd_rawmidi_transmit_ack: output is not active!!!\n");
-		return -EINVAL;
-	}
-	snd_BUG_ON(runtime->avail + count > runtime->buffer_size);
-	runtime->hw_ptr += count;
-	runtime->hw_ptr %= runtime->buffer_size;
-	runtime->avail += count;
+		वापस -EINVAL;
+	पूर्ण
+	snd_BUG_ON(runसमय->avail + count > runसमय->buffer_size);
+	runसमय->hw_ptr += count;
+	runसमय->hw_ptr %= runसमय->buffer_size;
+	runसमय->avail += count;
 	substream->bytes += count;
-	if (count > 0) {
-		if (runtime->drain || __snd_rawmidi_ready(runtime))
-			wake_up(&runtime->sleep);
-	}
-	return count;
-}
+	अगर (count > 0) अणु
+		अगर (runसमय->drain || __snd_rawmidi_पढ़ोy(runसमय))
+			wake_up(&runसमय->sleep);
+	पूर्ण
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL(__snd_rawmidi_transmit_ack);
 
 /**
@@ -1279,55 +1280,55 @@ EXPORT_SYMBOL(__snd_rawmidi_transmit_ack);
  * @substream: the rawmidi substream
  * @count: the transferred count
  *
- * Advances the hardware pointer for the internal output buffer with
+ * Advances the hardware poपूर्णांकer क्रम the पूर्णांकernal output buffer with
  * the given size and updates the condition.
  * Call after the transmission is finished.
  *
- * Return: The advanced size if successful, or a negative error code on failure.
+ * Return: The advanced size अगर successful, or a negative error code on failure.
  */
-int snd_rawmidi_transmit_ack(struct snd_rawmidi_substream *substream, int count)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
-	int result;
-	unsigned long flags;
+पूर्णांक snd_rawmidi_transmit_ack(काष्ठा snd_rawmidi_substream *substream, पूर्णांक count)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
+	पूर्णांक result;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&runtime->lock, flags);
+	spin_lock_irqsave(&runसमय->lock, flags);
 	result = __snd_rawmidi_transmit_ack(substream, count);
-	spin_unlock_irqrestore(&runtime->lock, flags);
-	return result;
-}
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_transmit_ack);
 
 /**
  * snd_rawmidi_transmit - copy from the buffer to the device
  * @substream: the rawmidi substream
- * @buffer: the buffer pointer
+ * @buffer: the buffer poपूर्णांकer
  * @count: the data size to transfer
  *
- * Copies data from the buffer to the device and advances the pointer.
+ * Copies data from the buffer to the device and advances the poपूर्णांकer.
  *
- * Return: The copied size if successful, or a negative error code on failure.
+ * Return: The copied size अगर successful, or a negative error code on failure.
  */
-int snd_rawmidi_transmit(struct snd_rawmidi_substream *substream,
-			 unsigned char *buffer, int count)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
-	int result;
-	unsigned long flags;
+पूर्णांक snd_rawmidi_transmit(काष्ठा snd_rawmidi_substream *substream,
+			 अचिन्हित अक्षर *buffer, पूर्णांक count)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
+	पूर्णांक result;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&runtime->lock, flags);
-	if (!substream->opened)
+	spin_lock_irqsave(&runसमय->lock, flags);
+	अगर (!substream->खोलोed)
 		result = -EBADFD;
-	else {
+	अन्यथा अणु
 		count = __snd_rawmidi_transmit_peek(substream, buffer, count);
-		if (count <= 0)
+		अगर (count <= 0)
 			result = count;
-		else
+		अन्यथा
 			result = __snd_rawmidi_transmit_ack(substream, count);
-	}
-	spin_unlock_irqrestore(&runtime->lock, flags);
-	return result;
-}
+	पूर्ण
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+	वापस result;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_transmit);
 
 /**
@@ -1336,314 +1337,314 @@ EXPORT_SYMBOL(snd_rawmidi_transmit);
  *
  * Return: the number of discarded bytes
  */
-int snd_rawmidi_proceed(struct snd_rawmidi_substream *substream)
-{
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
-	unsigned long flags;
-	int count = 0;
+पूर्णांक snd_rawmidi_proceed(काष्ठा snd_rawmidi_substream *substream)
+अणु
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
+	अचिन्हित दीर्घ flags;
+	पूर्णांक count = 0;
 
-	spin_lock_irqsave(&runtime->lock, flags);
-	if (runtime->avail < runtime->buffer_size) {
-		count = runtime->buffer_size - runtime->avail;
+	spin_lock_irqsave(&runसमय->lock, flags);
+	अगर (runसमय->avail < runसमय->buffer_size) अणु
+		count = runसमय->buffer_size - runसमय->avail;
 		__snd_rawmidi_transmit_ack(substream, count);
-	}
-	spin_unlock_irqrestore(&runtime->lock, flags);
-	return count;
-}
+	पूर्ण
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_proceed);
 
-static long snd_rawmidi_kernel_write1(struct snd_rawmidi_substream *substream,
-				      const unsigned char __user *userbuf,
-				      const unsigned char *kernelbuf,
-				      long count)
-{
-	unsigned long flags;
-	long count1, result;
-	struct snd_rawmidi_runtime *runtime = substream->runtime;
-	unsigned long appl_ptr;
+अटल दीर्घ snd_rawmidi_kernel_ग_लिखो1(काष्ठा snd_rawmidi_substream *substream,
+				      स्थिर अचिन्हित अक्षर __user *userbuf,
+				      स्थिर अचिन्हित अक्षर *kernelbuf,
+				      दीर्घ count)
+अणु
+	अचिन्हित दीर्घ flags;
+	दीर्घ count1, result;
+	काष्ठा snd_rawmidi_runसमय *runसमय = substream->runसमय;
+	अचिन्हित दीर्घ appl_ptr;
 
-	if (!kernelbuf && !userbuf)
-		return -EINVAL;
-	if (snd_BUG_ON(!runtime->buffer))
-		return -EINVAL;
+	अगर (!kernelbuf && !userbuf)
+		वापस -EINVAL;
+	अगर (snd_BUG_ON(!runसमय->buffer))
+		वापस -EINVAL;
 
 	result = 0;
-	spin_lock_irqsave(&runtime->lock, flags);
-	if (substream->append) {
-		if ((long)runtime->avail < count) {
-			spin_unlock_irqrestore(&runtime->lock, flags);
-			return -EAGAIN;
-		}
-	}
-	snd_rawmidi_buffer_ref(runtime);
-	while (count > 0 && runtime->avail > 0) {
-		count1 = runtime->buffer_size - runtime->appl_ptr;
-		if (count1 > count)
+	spin_lock_irqsave(&runसमय->lock, flags);
+	अगर (substream->append) अणु
+		अगर ((दीर्घ)runसमय->avail < count) अणु
+			spin_unlock_irqrestore(&runसमय->lock, flags);
+			वापस -EAGAIN;
+		पूर्ण
+	पूर्ण
+	snd_rawmidi_buffer_ref(runसमय);
+	जबतक (count > 0 && runसमय->avail > 0) अणु
+		count1 = runसमय->buffer_size - runसमय->appl_ptr;
+		अगर (count1 > count)
 			count1 = count;
-		if (count1 > (long)runtime->avail)
-			count1 = runtime->avail;
+		अगर (count1 > (दीर्घ)runसमय->avail)
+			count1 = runसमय->avail;
 
-		/* update runtime->appl_ptr before unlocking for userbuf */
-		appl_ptr = runtime->appl_ptr;
-		runtime->appl_ptr += count1;
-		runtime->appl_ptr %= runtime->buffer_size;
-		runtime->avail -= count1;
+		/* update runसमय->appl_ptr beक्रमe unlocking क्रम userbuf */
+		appl_ptr = runसमय->appl_ptr;
+		runसमय->appl_ptr += count1;
+		runसमय->appl_ptr %= runसमय->buffer_size;
+		runसमय->avail -= count1;
 
-		if (kernelbuf)
-			memcpy(runtime->buffer + appl_ptr,
+		अगर (kernelbuf)
+			स_नकल(runसमय->buffer + appl_ptr,
 			       kernelbuf + result, count1);
-		else if (userbuf) {
-			spin_unlock_irqrestore(&runtime->lock, flags);
-			if (copy_from_user(runtime->buffer + appl_ptr,
-					   userbuf + result, count1)) {
-				spin_lock_irqsave(&runtime->lock, flags);
+		अन्यथा अगर (userbuf) अणु
+			spin_unlock_irqrestore(&runसमय->lock, flags);
+			अगर (copy_from_user(runसमय->buffer + appl_ptr,
+					   userbuf + result, count1)) अणु
+				spin_lock_irqsave(&runसमय->lock, flags);
 				result = result > 0 ? result : -EFAULT;
-				goto __end;
-			}
-			spin_lock_irqsave(&runtime->lock, flags);
-		}
+				जाओ __end;
+			पूर्ण
+			spin_lock_irqsave(&runसमय->lock, flags);
+		पूर्ण
 		result += count1;
 		count -= count1;
-	}
+	पूर्ण
       __end:
-	count1 = runtime->avail < runtime->buffer_size;
-	snd_rawmidi_buffer_unref(runtime);
-	spin_unlock_irqrestore(&runtime->lock, flags);
-	if (count1)
+	count1 = runसमय->avail < runसमय->buffer_size;
+	snd_rawmidi_buffer_unref(runसमय);
+	spin_unlock_irqrestore(&runसमय->lock, flags);
+	अगर (count1)
 		snd_rawmidi_output_trigger(substream, 1);
-	return result;
-}
+	वापस result;
+पूर्ण
 
-long snd_rawmidi_kernel_write(struct snd_rawmidi_substream *substream,
-			      const unsigned char *buf, long count)
-{
-	return snd_rawmidi_kernel_write1(substream, NULL, buf, count);
-}
-EXPORT_SYMBOL(snd_rawmidi_kernel_write);
+दीर्घ snd_rawmidi_kernel_ग_लिखो(काष्ठा snd_rawmidi_substream *substream,
+			      स्थिर अचिन्हित अक्षर *buf, दीर्घ count)
+अणु
+	वापस snd_rawmidi_kernel_ग_लिखो1(substream, शून्य, buf, count);
+पूर्ण
+EXPORT_SYMBOL(snd_rawmidi_kernel_ग_लिखो);
 
-static ssize_t snd_rawmidi_write(struct file *file, const char __user *buf,
-				 size_t count, loff_t *offset)
-{
-	long result, timeout;
-	int count1;
-	struct snd_rawmidi_file *rfile;
-	struct snd_rawmidi_runtime *runtime;
-	struct snd_rawmidi_substream *substream;
+अटल sमाप_प्रकार snd_rawmidi_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+				 माप_प्रकार count, loff_t *offset)
+अणु
+	दीर्घ result, समयout;
+	पूर्णांक count1;
+	काष्ठा snd_rawmidi_file *rfile;
+	काष्ठा snd_rawmidi_runसमय *runसमय;
+	काष्ठा snd_rawmidi_substream *substream;
 
-	rfile = file->private_data;
+	rfile = file->निजी_data;
 	substream = rfile->output;
-	runtime = substream->runtime;
+	runसमय = substream->runसमय;
 	/* we cannot put an atomic message to our buffer */
-	if (substream->append && count > runtime->buffer_size)
-		return -EIO;
+	अगर (substream->append && count > runसमय->buffer_size)
+		वापस -EIO;
 	result = 0;
-	while (count > 0) {
-		spin_lock_irq(&runtime->lock);
-		while (!snd_rawmidi_ready_append(substream, count)) {
-			wait_queue_entry_t wait;
+	जबतक (count > 0) अणु
+		spin_lock_irq(&runसमय->lock);
+		जबतक (!snd_rawmidi_पढ़ोy_append(substream, count)) अणु
+			रुको_queue_entry_t रुको;
 
-			if (file->f_flags & O_NONBLOCK) {
-				spin_unlock_irq(&runtime->lock);
-				return result > 0 ? result : -EAGAIN;
-			}
-			init_waitqueue_entry(&wait, current);
-			add_wait_queue(&runtime->sleep, &wait);
+			अगर (file->f_flags & O_NONBLOCK) अणु
+				spin_unlock_irq(&runसमय->lock);
+				वापस result > 0 ? result : -EAGAIN;
+			पूर्ण
+			init_रुकोqueue_entry(&रुको, current);
+			add_रुको_queue(&runसमय->sleep, &रुको);
 			set_current_state(TASK_INTERRUPTIBLE);
-			spin_unlock_irq(&runtime->lock);
-			timeout = schedule_timeout(30 * HZ);
-			remove_wait_queue(&runtime->sleep, &wait);
-			if (rfile->rmidi->card->shutdown)
-				return -ENODEV;
-			if (signal_pending(current))
-				return result > 0 ? result : -ERESTARTSYS;
-			spin_lock_irq(&runtime->lock);
-			if (!runtime->avail && !timeout) {
-				spin_unlock_irq(&runtime->lock);
-				return result > 0 ? result : -EIO;
-			}
-		}
-		spin_unlock_irq(&runtime->lock);
-		count1 = snd_rawmidi_kernel_write1(substream, buf, NULL, count);
-		if (count1 < 0)
-			return result > 0 ? result : count1;
+			spin_unlock_irq(&runसमय->lock);
+			समयout = schedule_समयout(30 * HZ);
+			हटाओ_रुको_queue(&runसमय->sleep, &रुको);
+			अगर (rfile->rmidi->card->shutकरोwn)
+				वापस -ENODEV;
+			अगर (संकेत_pending(current))
+				वापस result > 0 ? result : -ERESTARTSYS;
+			spin_lock_irq(&runसमय->lock);
+			अगर (!runसमय->avail && !समयout) अणु
+				spin_unlock_irq(&runसमय->lock);
+				वापस result > 0 ? result : -EIO;
+			पूर्ण
+		पूर्ण
+		spin_unlock_irq(&runसमय->lock);
+		count1 = snd_rawmidi_kernel_ग_लिखो1(substream, buf, शून्य, count);
+		अगर (count1 < 0)
+			वापस result > 0 ? result : count1;
 		result += count1;
 		buf += count1;
-		if ((size_t)count1 < count && (file->f_flags & O_NONBLOCK))
-			break;
+		अगर ((माप_प्रकार)count1 < count && (file->f_flags & O_NONBLOCK))
+			अवरोध;
 		count -= count1;
-	}
-	if (file->f_flags & O_DSYNC) {
-		spin_lock_irq(&runtime->lock);
-		while (runtime->avail != runtime->buffer_size) {
-			wait_queue_entry_t wait;
-			unsigned int last_avail = runtime->avail;
+	पूर्ण
+	अगर (file->f_flags & O_DSYNC) अणु
+		spin_lock_irq(&runसमय->lock);
+		जबतक (runसमय->avail != runसमय->buffer_size) अणु
+			रुको_queue_entry_t रुको;
+			अचिन्हित पूर्णांक last_avail = runसमय->avail;
 
-			init_waitqueue_entry(&wait, current);
-			add_wait_queue(&runtime->sleep, &wait);
+			init_रुकोqueue_entry(&रुको, current);
+			add_रुको_queue(&runसमय->sleep, &रुको);
 			set_current_state(TASK_INTERRUPTIBLE);
-			spin_unlock_irq(&runtime->lock);
-			timeout = schedule_timeout(30 * HZ);
-			remove_wait_queue(&runtime->sleep, &wait);
-			if (signal_pending(current))
-				return result > 0 ? result : -ERESTARTSYS;
-			if (runtime->avail == last_avail && !timeout)
-				return result > 0 ? result : -EIO;
-			spin_lock_irq(&runtime->lock);
-		}
-		spin_unlock_irq(&runtime->lock);
-	}
-	return result;
-}
+			spin_unlock_irq(&runसमय->lock);
+			समयout = schedule_समयout(30 * HZ);
+			हटाओ_रुको_queue(&runसमय->sleep, &रुको);
+			अगर (संकेत_pending(current))
+				वापस result > 0 ? result : -ERESTARTSYS;
+			अगर (runसमय->avail == last_avail && !समयout)
+				वापस result > 0 ? result : -EIO;
+			spin_lock_irq(&runसमय->lock);
+		पूर्ण
+		spin_unlock_irq(&runसमय->lock);
+	पूर्ण
+	वापस result;
+पूर्ण
 
-static __poll_t snd_rawmidi_poll(struct file *file, poll_table *wait)
-{
-	struct snd_rawmidi_file *rfile;
-	struct snd_rawmidi_runtime *runtime;
+अटल __poll_t snd_rawmidi_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा snd_rawmidi_file *rfile;
+	काष्ठा snd_rawmidi_runसमय *runसमय;
 	__poll_t mask;
 
-	rfile = file->private_data;
-	if (rfile->input != NULL) {
-		runtime = rfile->input->runtime;
+	rfile = file->निजी_data;
+	अगर (rfile->input != शून्य) अणु
+		runसमय = rfile->input->runसमय;
 		snd_rawmidi_input_trigger(rfile->input, 1);
-		poll_wait(file, &runtime->sleep, wait);
-	}
-	if (rfile->output != NULL) {
-		runtime = rfile->output->runtime;
-		poll_wait(file, &runtime->sleep, wait);
-	}
+		poll_रुको(file, &runसमय->sleep, रुको);
+	पूर्ण
+	अगर (rfile->output != शून्य) अणु
+		runसमय = rfile->output->runसमय;
+		poll_रुको(file, &runसमय->sleep, रुको);
+	पूर्ण
 	mask = 0;
-	if (rfile->input != NULL) {
-		if (snd_rawmidi_ready(rfile->input))
+	अगर (rfile->input != शून्य) अणु
+		अगर (snd_rawmidi_पढ़ोy(rfile->input))
 			mask |= EPOLLIN | EPOLLRDNORM;
-	}
-	if (rfile->output != NULL) {
-		if (snd_rawmidi_ready(rfile->output))
+	पूर्ण
+	अगर (rfile->output != शून्य) अणु
+		अगर (snd_rawmidi_पढ़ोy(rfile->output))
 			mask |= EPOLLOUT | EPOLLWRNORM;
-	}
-	return mask;
-}
+	पूर्ण
+	वापस mask;
+पूर्ण
 
 /*
  */
-#ifdef CONFIG_COMPAT
-#include "rawmidi_compat.c"
-#else
-#define snd_rawmidi_ioctl_compat	NULL
-#endif
+#अगर_घोषित CONFIG_COMPAT
+#समावेश "rawmidi_compat.c"
+#अन्यथा
+#घोषणा snd_rawmidi_ioctl_compat	शून्य
+#पूर्ण_अगर
 
 /*
  */
 
-static void snd_rawmidi_proc_info_read(struct snd_info_entry *entry,
-				       struct snd_info_buffer *buffer)
-{
-	struct snd_rawmidi *rmidi;
-	struct snd_rawmidi_substream *substream;
-	struct snd_rawmidi_runtime *runtime;
-	unsigned long buffer_size, avail, xruns;
+अटल व्योम snd_rawmidi_proc_info_पढ़ो(काष्ठा snd_info_entry *entry,
+				       काष्ठा snd_info_buffer *buffer)
+अणु
+	काष्ठा snd_rawmidi *rmidi;
+	काष्ठा snd_rawmidi_substream *substream;
+	काष्ठा snd_rawmidi_runसमय *runसमय;
+	अचिन्हित दीर्घ buffer_size, avail, xruns;
 
-	rmidi = entry->private_data;
-	snd_iprintf(buffer, "%s\n\n", rmidi->name);
-	mutex_lock(&rmidi->open_mutex);
-	if (rmidi->info_flags & SNDRV_RAWMIDI_INFO_OUTPUT) {
-		list_for_each_entry(substream,
+	rmidi = entry->निजी_data;
+	snd_iम_लिखो(buffer, "%s\n\n", rmidi->name);
+	mutex_lock(&rmidi->खोलो_mutex);
+	अगर (rmidi->info_flags & SNDRV_RAWMIDI_INFO_OUTPUT) अणु
+		list_क्रम_each_entry(substream,
 				    &rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT].substreams,
-				    list) {
-			snd_iprintf(buffer,
+				    list) अणु
+			snd_iम_लिखो(buffer,
 				    "Output %d\n"
 				    "  Tx bytes     : %lu\n",
 				    substream->number,
-				    (unsigned long) substream->bytes);
-			if (substream->opened) {
-				snd_iprintf(buffer,
+				    (अचिन्हित दीर्घ) substream->bytes);
+			अगर (substream->खोलोed) अणु
+				snd_iम_लिखो(buffer,
 				    "  Owner PID    : %d\n",
 				    pid_vnr(substream->pid));
-				runtime = substream->runtime;
-				spin_lock_irq(&runtime->lock);
-				buffer_size = runtime->buffer_size;
-				avail = runtime->avail;
-				spin_unlock_irq(&runtime->lock);
-				snd_iprintf(buffer,
+				runसमय = substream->runसमय;
+				spin_lock_irq(&runसमय->lock);
+				buffer_size = runसमय->buffer_size;
+				avail = runसमय->avail;
+				spin_unlock_irq(&runसमय->lock);
+				snd_iम_लिखो(buffer,
 				    "  Mode         : %s\n"
 				    "  Buffer size  : %lu\n"
 				    "  Avail        : %lu\n",
-				    runtime->oss ? "OSS compatible" : "native",
+				    runसमय->oss ? "OSS compatible" : "native",
 				    buffer_size, avail);
-			}
-		}
-	}
-	if (rmidi->info_flags & SNDRV_RAWMIDI_INFO_INPUT) {
-		list_for_each_entry(substream,
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	अगर (rmidi->info_flags & SNDRV_RAWMIDI_INFO_INPUT) अणु
+		list_क्रम_each_entry(substream,
 				    &rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT].substreams,
-				    list) {
-			snd_iprintf(buffer,
+				    list) अणु
+			snd_iम_लिखो(buffer,
 				    "Input %d\n"
 				    "  Rx bytes     : %lu\n",
 				    substream->number,
-				    (unsigned long) substream->bytes);
-			if (substream->opened) {
-				snd_iprintf(buffer,
+				    (अचिन्हित दीर्घ) substream->bytes);
+			अगर (substream->खोलोed) अणु
+				snd_iम_लिखो(buffer,
 					    "  Owner PID    : %d\n",
 					    pid_vnr(substream->pid));
-				runtime = substream->runtime;
-				spin_lock_irq(&runtime->lock);
-				buffer_size = runtime->buffer_size;
-				avail = runtime->avail;
-				xruns = runtime->xruns;
-				spin_unlock_irq(&runtime->lock);
-				snd_iprintf(buffer,
+				runसमय = substream->runसमय;
+				spin_lock_irq(&runसमय->lock);
+				buffer_size = runसमय->buffer_size;
+				avail = runसमय->avail;
+				xruns = runसमय->xruns;
+				spin_unlock_irq(&runसमय->lock);
+				snd_iम_लिखो(buffer,
 					    "  Buffer size  : %lu\n"
 					    "  Avail        : %lu\n"
 					    "  Overruns     : %lu\n",
 					    buffer_size, avail, xruns);
-			}
-		}
-	}
-	mutex_unlock(&rmidi->open_mutex);
-}
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	mutex_unlock(&rmidi->खोलो_mutex);
+पूर्ण
 
 /*
  *  Register functions
  */
 
-static const struct file_operations snd_rawmidi_f_ops = {
+अटल स्थिर काष्ठा file_operations snd_rawmidi_f_ops = अणु
 	.owner =	THIS_MODULE,
-	.read =		snd_rawmidi_read,
-	.write =	snd_rawmidi_write,
-	.open =		snd_rawmidi_open,
+	.पढ़ो =		snd_rawmidi_पढ़ो,
+	.ग_लिखो =	snd_rawmidi_ग_लिखो,
+	.खोलो =		snd_rawmidi_खोलो,
 	.release =	snd_rawmidi_release,
 	.llseek =	no_llseek,
 	.poll =		snd_rawmidi_poll,
 	.unlocked_ioctl =	snd_rawmidi_ioctl,
 	.compat_ioctl =	snd_rawmidi_ioctl_compat,
-};
+पूर्ण;
 
-static int snd_rawmidi_alloc_substreams(struct snd_rawmidi *rmidi,
-					struct snd_rawmidi_str *stream,
-					int direction,
-					int count)
-{
-	struct snd_rawmidi_substream *substream;
-	int idx;
+अटल पूर्णांक snd_rawmidi_alloc_substreams(काष्ठा snd_rawmidi *rmidi,
+					काष्ठा snd_rawmidi_str *stream,
+					पूर्णांक direction,
+					पूर्णांक count)
+अणु
+	काष्ठा snd_rawmidi_substream *substream;
+	पूर्णांक idx;
 
-	for (idx = 0; idx < count; idx++) {
-		substream = kzalloc(sizeof(*substream), GFP_KERNEL);
-		if (!substream)
-			return -ENOMEM;
+	क्रम (idx = 0; idx < count; idx++) अणु
+		substream = kzalloc(माप(*substream), GFP_KERNEL);
+		अगर (!substream)
+			वापस -ENOMEM;
 		substream->stream = direction;
 		substream->number = idx;
 		substream->rmidi = rmidi;
 		substream->pstr = stream;
 		list_add_tail(&substream->list, &stream->substreams);
 		stream->substream_count++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void release_rawmidi_device(struct device *dev)
-{
-	kfree(container_of(dev, struct snd_rawmidi, dev));
-}
+अटल व्योम release_rawmidi_device(काष्ठा device *dev)
+अणु
+	kमुक्त(container_of(dev, काष्ठा snd_rawmidi, dev));
+पूर्ण
 
 /**
  * snd_rawmidi_new - create a rawmidi instance
@@ -1652,41 +1653,41 @@ static void release_rawmidi_device(struct device *dev)
  * @device: the device index
  * @output_count: the number of output streams
  * @input_count: the number of input streams
- * @rrawmidi: the pointer to store the new rawmidi instance
+ * @rrawmidi: the poपूर्णांकer to store the new rawmidi instance
  *
  * Creates a new rawmidi instance.
- * Use snd_rawmidi_set_ops() to set the operators to the new instance.
+ * Use snd_rawmidi_set_ops() to set the चालकs to the new instance.
  *
- * Return: Zero if successful, or a negative error code on failure.
+ * Return: Zero अगर successful, or a negative error code on failure.
  */
-int snd_rawmidi_new(struct snd_card *card, char *id, int device,
-		    int output_count, int input_count,
-		    struct snd_rawmidi **rrawmidi)
-{
-	struct snd_rawmidi *rmidi;
-	int err;
-	static const struct snd_device_ops ops = {
-		.dev_free = snd_rawmidi_dev_free,
-		.dev_register = snd_rawmidi_dev_register,
+पूर्णांक snd_rawmidi_new(काष्ठा snd_card *card, अक्षर *id, पूर्णांक device,
+		    पूर्णांक output_count, पूर्णांक input_count,
+		    काष्ठा snd_rawmidi **rrawmidi)
+अणु
+	काष्ठा snd_rawmidi *rmidi;
+	पूर्णांक err;
+	अटल स्थिर काष्ठा snd_device_ops ops = अणु
+		.dev_मुक्त = snd_rawmidi_dev_मुक्त,
+		.dev_रेजिस्टर = snd_rawmidi_dev_रेजिस्टर,
 		.dev_disconnect = snd_rawmidi_dev_disconnect,
-	};
+	पूर्ण;
 
-	if (snd_BUG_ON(!card))
-		return -ENXIO;
-	if (rrawmidi)
-		*rrawmidi = NULL;
-	rmidi = kzalloc(sizeof(*rmidi), GFP_KERNEL);
-	if (!rmidi)
-		return -ENOMEM;
+	अगर (snd_BUG_ON(!card))
+		वापस -ENXIO;
+	अगर (rrawmidi)
+		*rrawmidi = शून्य;
+	rmidi = kzalloc(माप(*rmidi), GFP_KERNEL);
+	अगर (!rmidi)
+		वापस -ENOMEM;
 	rmidi->card = card;
 	rmidi->device = device;
-	mutex_init(&rmidi->open_mutex);
-	init_waitqueue_head(&rmidi->open_wait);
+	mutex_init(&rmidi->खोलो_mutex);
+	init_रुकोqueue_head(&rmidi->खोलो_रुको);
 	INIT_LIST_HEAD(&rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT].substreams);
 	INIT_LIST_HEAD(&rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT].substreams);
 
-	if (id != NULL)
-		strscpy(rmidi->id, id, sizeof(rmidi->id));
+	अगर (id != शून्य)
+		strscpy(rmidi->id, id, माप(rmidi->id));
 
 	snd_device_initialize(&rmidi->dev, card);
 	rmidi->dev.release = release_rawmidi_device;
@@ -1696,255 +1697,255 @@ int snd_rawmidi_new(struct snd_card *card, char *id, int device,
 					   &rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT],
 					   SNDRV_RAWMIDI_STREAM_INPUT,
 					   input_count);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 	err = snd_rawmidi_alloc_substreams(rmidi,
 					   &rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT],
 					   SNDRV_RAWMIDI_STREAM_OUTPUT,
 					   output_count);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 	err = snd_device_new(card, SNDRV_DEV_RAWMIDI, rmidi, &ops);
-	if (err < 0)
-		goto error;
+	अगर (err < 0)
+		जाओ error;
 
-	if (rrawmidi)
+	अगर (rrawmidi)
 		*rrawmidi = rmidi;
-	return 0;
+	वापस 0;
 
  error:
-	snd_rawmidi_free(rmidi);
-	return err;
-}
+	snd_rawmidi_मुक्त(rmidi);
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_new);
 
-static void snd_rawmidi_free_substreams(struct snd_rawmidi_str *stream)
-{
-	struct snd_rawmidi_substream *substream;
+अटल व्योम snd_rawmidi_मुक्त_substreams(काष्ठा snd_rawmidi_str *stream)
+अणु
+	काष्ठा snd_rawmidi_substream *substream;
 
-	while (!list_empty(&stream->substreams)) {
-		substream = list_entry(stream->substreams.next, struct snd_rawmidi_substream, list);
+	जबतक (!list_empty(&stream->substreams)) अणु
+		substream = list_entry(stream->substreams.next, काष्ठा snd_rawmidi_substream, list);
 		list_del(&substream->list);
-		kfree(substream);
-	}
-}
+		kमुक्त(substream);
+	पूर्ण
+पूर्ण
 
-static int snd_rawmidi_free(struct snd_rawmidi *rmidi)
-{
-	if (!rmidi)
-		return 0;
+अटल पूर्णांक snd_rawmidi_मुक्त(काष्ठा snd_rawmidi *rmidi)
+अणु
+	अगर (!rmidi)
+		वापस 0;
 
-	snd_info_free_entry(rmidi->proc_entry);
-	rmidi->proc_entry = NULL;
-	mutex_lock(&register_mutex);
-	if (rmidi->ops && rmidi->ops->dev_unregister)
-		rmidi->ops->dev_unregister(rmidi);
-	mutex_unlock(&register_mutex);
+	snd_info_मुक्त_entry(rmidi->proc_entry);
+	rmidi->proc_entry = शून्य;
+	mutex_lock(&रेजिस्टर_mutex);
+	अगर (rmidi->ops && rmidi->ops->dev_unरेजिस्टर)
+		rmidi->ops->dev_unरेजिस्टर(rmidi);
+	mutex_unlock(&रेजिस्टर_mutex);
 
-	snd_rawmidi_free_substreams(&rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT]);
-	snd_rawmidi_free_substreams(&rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT]);
-	if (rmidi->private_free)
-		rmidi->private_free(rmidi);
+	snd_rawmidi_मुक्त_substreams(&rmidi->streams[SNDRV_RAWMIDI_STREAM_INPUT]);
+	snd_rawmidi_मुक्त_substreams(&rmidi->streams[SNDRV_RAWMIDI_STREAM_OUTPUT]);
+	अगर (rmidi->निजी_मुक्त)
+		rmidi->निजी_मुक्त(rmidi);
 	put_device(&rmidi->dev);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int snd_rawmidi_dev_free(struct snd_device *device)
-{
-	struct snd_rawmidi *rmidi = device->device_data;
+अटल पूर्णांक snd_rawmidi_dev_मुक्त(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_rawmidi *rmidi = device->device_data;
 
-	return snd_rawmidi_free(rmidi);
-}
+	वापस snd_rawmidi_मुक्त(rmidi);
+पूर्ण
 
-#if IS_ENABLED(CONFIG_SND_SEQUENCER)
-static void snd_rawmidi_dev_seq_free(struct snd_seq_device *device)
-{
-	struct snd_rawmidi *rmidi = device->private_data;
+#अगर IS_ENABLED(CONFIG_SND_SEQUENCER)
+अटल व्योम snd_rawmidi_dev_seq_मुक्त(काष्ठा snd_seq_device *device)
+अणु
+	काष्ठा snd_rawmidi *rmidi = device->निजी_data;
 
-	rmidi->seq_dev = NULL;
-}
-#endif
+	rmidi->seq_dev = शून्य;
+पूर्ण
+#पूर्ण_अगर
 
-static int snd_rawmidi_dev_register(struct snd_device *device)
-{
-	int err;
-	struct snd_info_entry *entry;
-	char name[16];
-	struct snd_rawmidi *rmidi = device->device_data;
+अटल पूर्णांक snd_rawmidi_dev_रेजिस्टर(काष्ठा snd_device *device)
+अणु
+	पूर्णांक err;
+	काष्ठा snd_info_entry *entry;
+	अक्षर name[16];
+	काष्ठा snd_rawmidi *rmidi = device->device_data;
 
-	if (rmidi->device >= SNDRV_RAWMIDI_DEVICES)
-		return -ENOMEM;
+	अगर (rmidi->device >= SNDRV_RAWMIDI_DEVICES)
+		वापस -ENOMEM;
 	err = 0;
-	mutex_lock(&register_mutex);
-	if (snd_rawmidi_search(rmidi->card, rmidi->device))
+	mutex_lock(&रेजिस्टर_mutex);
+	अगर (snd_rawmidi_search(rmidi->card, rmidi->device))
 		err = -EBUSY;
-	else
+	अन्यथा
 		list_add_tail(&rmidi->list, &snd_rawmidi_devices);
-	mutex_unlock(&register_mutex);
-	if (err < 0)
-		return err;
+	mutex_unlock(&रेजिस्टर_mutex);
+	अगर (err < 0)
+		वापस err;
 
-	err = snd_register_device(SNDRV_DEVICE_TYPE_RAWMIDI,
+	err = snd_रेजिस्टर_device(SNDRV_DEVICE_TYPE_RAWMIDI,
 				  rmidi->card, rmidi->device,
 				  &snd_rawmidi_f_ops, rmidi, &rmidi->dev);
-	if (err < 0) {
+	अगर (err < 0) अणु
 		rmidi_err(rmidi, "unable to register\n");
-		goto error;
-	}
-	if (rmidi->ops && rmidi->ops->dev_register) {
-		err = rmidi->ops->dev_register(rmidi);
-		if (err < 0)
-			goto error_unregister;
-	}
-#ifdef CONFIG_SND_OSSEMUL
+		जाओ error;
+	पूर्ण
+	अगर (rmidi->ops && rmidi->ops->dev_रेजिस्टर) अणु
+		err = rmidi->ops->dev_रेजिस्टर(rmidi);
+		अगर (err < 0)
+			जाओ error_unरेजिस्टर;
+	पूर्ण
+#अगर_घोषित CONFIG_SND_OSSEMUL
 	rmidi->ossreg = 0;
-	if ((int)rmidi->device == midi_map[rmidi->card->number]) {
-		if (snd_register_oss_device(SNDRV_OSS_DEVICE_TYPE_MIDI,
+	अगर ((पूर्णांक)rmidi->device == midi_map[rmidi->card->number]) अणु
+		अगर (snd_रेजिस्टर_oss_device(SNDRV_OSS_DEVICE_TYPE_MIDI,
 					    rmidi->card, 0, &snd_rawmidi_f_ops,
-					    rmidi) < 0) {
+					    rmidi) < 0) अणु
 			rmidi_err(rmidi,
 				  "unable to register OSS rawmidi device %i:%i\n",
 				  rmidi->card->number, 0);
-		} else {
+		पूर्ण अन्यथा अणु
 			rmidi->ossreg++;
-#ifdef SNDRV_OSS_INFO_DEV_MIDI
-			snd_oss_info_register(SNDRV_OSS_INFO_DEV_MIDI, rmidi->card->number, rmidi->name);
-#endif
-		}
-	}
-	if ((int)rmidi->device == amidi_map[rmidi->card->number]) {
-		if (snd_register_oss_device(SNDRV_OSS_DEVICE_TYPE_MIDI,
+#अगर_घोषित SNDRV_OSS_INFO_DEV_MIDI
+			snd_oss_info_रेजिस्टर(SNDRV_OSS_INFO_DEV_MIDI, rmidi->card->number, rmidi->name);
+#पूर्ण_अगर
+		पूर्ण
+	पूर्ण
+	अगर ((पूर्णांक)rmidi->device == amidi_map[rmidi->card->number]) अणु
+		अगर (snd_रेजिस्टर_oss_device(SNDRV_OSS_DEVICE_TYPE_MIDI,
 					    rmidi->card, 1, &snd_rawmidi_f_ops,
-					    rmidi) < 0) {
+					    rmidi) < 0) अणु
 			rmidi_err(rmidi,
 				  "unable to register OSS rawmidi device %i:%i\n",
 				  rmidi->card->number, 1);
-		} else {
+		पूर्ण अन्यथा अणु
 			rmidi->ossreg++;
-		}
-	}
-#endif /* CONFIG_SND_OSSEMUL */
-	sprintf(name, "midi%d", rmidi->device);
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_SND_OSSEMUL */
+	प्र_लिखो(name, "midi%d", rmidi->device);
 	entry = snd_info_create_card_entry(rmidi->card, name, rmidi->card->proc_root);
-	if (entry) {
-		entry->private_data = rmidi;
-		entry->c.text.read = snd_rawmidi_proc_info_read;
-		if (snd_info_register(entry) < 0) {
-			snd_info_free_entry(entry);
-			entry = NULL;
-		}
-	}
+	अगर (entry) अणु
+		entry->निजी_data = rmidi;
+		entry->c.text.पढ़ो = snd_rawmidi_proc_info_पढ़ो;
+		अगर (snd_info_रेजिस्टर(entry) < 0) अणु
+			snd_info_मुक्त_entry(entry);
+			entry = शून्य;
+		पूर्ण
+	पूर्ण
 	rmidi->proc_entry = entry;
-#if IS_ENABLED(CONFIG_SND_SEQUENCER)
-	if (!rmidi->ops || !rmidi->ops->dev_register) { /* own registration mechanism */
-		if (snd_seq_device_new(rmidi->card, rmidi->device, SNDRV_SEQ_DEV_ID_MIDISYNTH, 0, &rmidi->seq_dev) >= 0) {
-			rmidi->seq_dev->private_data = rmidi;
-			rmidi->seq_dev->private_free = snd_rawmidi_dev_seq_free;
-			sprintf(rmidi->seq_dev->name, "MIDI %d-%d", rmidi->card->number, rmidi->device);
-			snd_device_register(rmidi->card, rmidi->seq_dev);
-		}
-	}
-#endif
-	return 0;
+#अगर IS_ENABLED(CONFIG_SND_SEQUENCER)
+	अगर (!rmidi->ops || !rmidi->ops->dev_रेजिस्टर) अणु /* own registration mechanism */
+		अगर (snd_seq_device_new(rmidi->card, rmidi->device, SNDRV_SEQ_DEV_ID_MIDISYNTH, 0, &rmidi->seq_dev) >= 0) अणु
+			rmidi->seq_dev->निजी_data = rmidi;
+			rmidi->seq_dev->निजी_मुक्त = snd_rawmidi_dev_seq_मुक्त;
+			प्र_लिखो(rmidi->seq_dev->name, "MIDI %d-%d", rmidi->card->number, rmidi->device);
+			snd_device_रेजिस्टर(rmidi->card, rmidi->seq_dev);
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर
+	वापस 0;
 
- error_unregister:
-	snd_unregister_device(&rmidi->dev);
+ error_unरेजिस्टर:
+	snd_unरेजिस्टर_device(&rmidi->dev);
  error:
-	mutex_lock(&register_mutex);
+	mutex_lock(&रेजिस्टर_mutex);
 	list_del(&rmidi->list);
-	mutex_unlock(&register_mutex);
-	return err;
-}
+	mutex_unlock(&रेजिस्टर_mutex);
+	वापस err;
+पूर्ण
 
-static int snd_rawmidi_dev_disconnect(struct snd_device *device)
-{
-	struct snd_rawmidi *rmidi = device->device_data;
-	int dir;
+अटल पूर्णांक snd_rawmidi_dev_disconnect(काष्ठा snd_device *device)
+अणु
+	काष्ठा snd_rawmidi *rmidi = device->device_data;
+	पूर्णांक dir;
 
-	mutex_lock(&register_mutex);
-	mutex_lock(&rmidi->open_mutex);
-	wake_up(&rmidi->open_wait);
+	mutex_lock(&रेजिस्टर_mutex);
+	mutex_lock(&rmidi->खोलो_mutex);
+	wake_up(&rmidi->खोलो_रुको);
 	list_del_init(&rmidi->list);
-	for (dir = 0; dir < 2; dir++) {
-		struct snd_rawmidi_substream *s;
+	क्रम (dir = 0; dir < 2; dir++) अणु
+		काष्ठा snd_rawmidi_substream *s;
 
-		list_for_each_entry(s, &rmidi->streams[dir].substreams, list) {
-			if (s->runtime)
-				wake_up(&s->runtime->sleep);
-		}
-	}
+		list_क्रम_each_entry(s, &rmidi->streams[dir].substreams, list) अणु
+			अगर (s->runसमय)
+				wake_up(&s->runसमय->sleep);
+		पूर्ण
+	पूर्ण
 
-#ifdef CONFIG_SND_OSSEMUL
-	if (rmidi->ossreg) {
-		if ((int)rmidi->device == midi_map[rmidi->card->number]) {
-			snd_unregister_oss_device(SNDRV_OSS_DEVICE_TYPE_MIDI, rmidi->card, 0);
-#ifdef SNDRV_OSS_INFO_DEV_MIDI
-			snd_oss_info_unregister(SNDRV_OSS_INFO_DEV_MIDI, rmidi->card->number);
-#endif
-		}
-		if ((int)rmidi->device == amidi_map[rmidi->card->number])
-			snd_unregister_oss_device(SNDRV_OSS_DEVICE_TYPE_MIDI, rmidi->card, 1);
+#अगर_घोषित CONFIG_SND_OSSEMUL
+	अगर (rmidi->ossreg) अणु
+		अगर ((पूर्णांक)rmidi->device == midi_map[rmidi->card->number]) अणु
+			snd_unरेजिस्टर_oss_device(SNDRV_OSS_DEVICE_TYPE_MIDI, rmidi->card, 0);
+#अगर_घोषित SNDRV_OSS_INFO_DEV_MIDI
+			snd_oss_info_unरेजिस्टर(SNDRV_OSS_INFO_DEV_MIDI, rmidi->card->number);
+#पूर्ण_अगर
+		पूर्ण
+		अगर ((पूर्णांक)rmidi->device == amidi_map[rmidi->card->number])
+			snd_unरेजिस्टर_oss_device(SNDRV_OSS_DEVICE_TYPE_MIDI, rmidi->card, 1);
 		rmidi->ossreg = 0;
-	}
-#endif /* CONFIG_SND_OSSEMUL */
-	snd_unregister_device(&rmidi->dev);
-	mutex_unlock(&rmidi->open_mutex);
-	mutex_unlock(&register_mutex);
-	return 0;
-}
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_SND_OSSEMUL */
+	snd_unरेजिस्टर_device(&rmidi->dev);
+	mutex_unlock(&rmidi->खोलो_mutex);
+	mutex_unlock(&रेजिस्टर_mutex);
+	वापस 0;
+पूर्ण
 
 /**
- * snd_rawmidi_set_ops - set the rawmidi operators
+ * snd_rawmidi_set_ops - set the rawmidi चालकs
  * @rmidi: the rawmidi instance
  * @stream: the stream direction, SNDRV_RAWMIDI_STREAM_XXX
- * @ops: the operator table
+ * @ops: the चालक table
  *
- * Sets the rawmidi operators for the given stream direction.
+ * Sets the rawmidi चालकs क्रम the given stream direction.
  */
-void snd_rawmidi_set_ops(struct snd_rawmidi *rmidi, int stream,
-			 const struct snd_rawmidi_ops *ops)
-{
-	struct snd_rawmidi_substream *substream;
+व्योम snd_rawmidi_set_ops(काष्ठा snd_rawmidi *rmidi, पूर्णांक stream,
+			 स्थिर काष्ठा snd_rawmidi_ops *ops)
+अणु
+	काष्ठा snd_rawmidi_substream *substream;
 
-	list_for_each_entry(substream, &rmidi->streams[stream].substreams, list)
+	list_क्रम_each_entry(substream, &rmidi->streams[stream].substreams, list)
 		substream->ops = ops;
-}
+पूर्ण
 EXPORT_SYMBOL(snd_rawmidi_set_ops);
 
 /*
  *  ENTRY functions
  */
 
-static int __init alsa_rawmidi_init(void)
-{
+अटल पूर्णांक __init alsa_rawmidi_init(व्योम)
+अणु
 
-	snd_ctl_register_ioctl(snd_rawmidi_control_ioctl);
-	snd_ctl_register_ioctl_compat(snd_rawmidi_control_ioctl);
-#ifdef CONFIG_SND_OSSEMUL
-	{ int i;
+	snd_ctl_रेजिस्टर_ioctl(snd_rawmidi_control_ioctl);
+	snd_ctl_रेजिस्टर_ioctl_compat(snd_rawmidi_control_ioctl);
+#अगर_घोषित CONFIG_SND_OSSEMUL
+	अणु पूर्णांक i;
 	/* check device map table */
-	for (i = 0; i < SNDRV_CARDS; i++) {
-		if (midi_map[i] < 0 || midi_map[i] >= SNDRV_RAWMIDI_DEVICES) {
+	क्रम (i = 0; i < SNDRV_CARDS; i++) अणु
+		अगर (midi_map[i] < 0 || midi_map[i] >= SNDRV_RAWMIDI_DEVICES) अणु
 			pr_err("ALSA: rawmidi: invalid midi_map[%d] = %d\n",
 			       i, midi_map[i]);
 			midi_map[i] = 0;
-		}
-		if (amidi_map[i] < 0 || amidi_map[i] >= SNDRV_RAWMIDI_DEVICES) {
+		पूर्ण
+		अगर (amidi_map[i] < 0 || amidi_map[i] >= SNDRV_RAWMIDI_DEVICES) अणु
 			pr_err("ALSA: rawmidi: invalid amidi_map[%d] = %d\n",
 			       i, amidi_map[i]);
 			amidi_map[i] = 1;
-		}
-	}
-	}
-#endif /* CONFIG_SND_OSSEMUL */
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* CONFIG_SND_OSSEMUL */
+	वापस 0;
+पूर्ण
 
-static void __exit alsa_rawmidi_exit(void)
-{
-	snd_ctl_unregister_ioctl(snd_rawmidi_control_ioctl);
-	snd_ctl_unregister_ioctl_compat(snd_rawmidi_control_ioctl);
-}
+अटल व्योम __निकास alsa_rawmidi_निकास(व्योम)
+अणु
+	snd_ctl_unरेजिस्टर_ioctl(snd_rawmidi_control_ioctl);
+	snd_ctl_unरेजिस्टर_ioctl_compat(snd_rawmidi_control_ioctl);
+पूर्ण
 
 module_init(alsa_rawmidi_init)
-module_exit(alsa_rawmidi_exit)
+module_निकास(alsa_rawmidi_निकास)

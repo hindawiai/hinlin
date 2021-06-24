@@ -1,69 +1,70 @@
-/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
-#ifndef _LINUX_MINIX_FS_H
-#define _LINUX_MINIX_FS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 WITH Linux-syscall-note */
+#अगर_अघोषित _LINUX_MINIX_FS_H
+#घोषणा _LINUX_MINIX_FS_H
 
-#include <linux/types.h>
-#include <linux/magic.h>
+#समावेश <linux/types.h>
+#समावेश <linux/magic.h>
 
 /*
- * The minix filesystem constants/structures
+ * The minix fileप्रणाली स्थिरants/काष्ठाures
  */
 
 /*
- * Thanks to Kees J Bot for sending me the definitions of the new
- * minix filesystem (aka V2) with bigger inodes and 32-bit block
- * pointers.
+ * Thanks to Kees J Bot क्रम sending me the definitions of the new
+ * minix fileप्रणाली (aka V2) with bigger inodes and 32-bit block
+ * poपूर्णांकers.
  */
 
-#define MINIX_ROOT_INO 1
+#घोषणा MINIX_ROOT_INO 1
 
-/* Not the same as the bogus LINK_MAX in <linux/limits.h>. Oh well. */
-#define MINIX_LINK_MAX	250
-#define MINIX2_LINK_MAX	65530
+/* Not the same as the bogus LINK_MAX in <linux/सीमा.स>. Oh well. */
+#घोषणा MINIX_LINK_MAX	250
+#घोषणा MINIX2_LINK_MAX	65530
 
-#define MINIX_I_MAP_SLOTS	8
-#define MINIX_Z_MAP_SLOTS	64
-#define MINIX_VALID_FS		0x0001		/* Clean fs. */
-#define MINIX_ERROR_FS		0x0002		/* fs has errors. */
+#घोषणा MINIX_I_MAP_SLOTS	8
+#घोषणा MINIX_Z_MAP_SLOTS	64
+#घोषणा MINIX_VALID_FS		0x0001		/* Clean fs. */
+#घोषणा MINIX_ERROR_FS		0x0002		/* fs has errors. */
 
-#define MINIX_INODES_PER_BLOCK ((BLOCK_SIZE)/(sizeof (struct minix_inode)))
+#घोषणा MINIX_INODES_PER_BLOCK ((BLOCK_SIZE)/(माप (काष्ठा minix_inode)))
 
 /*
  * This is the original minix inode layout on disk.
- * Note the 8-bit gid and atime and ctime.
+ * Note the 8-bit gid and aसमय and स_समय.
  */
-struct minix_inode {
+काष्ठा minix_inode अणु
 	__u16 i_mode;
 	__u16 i_uid;
 	__u32 i_size;
-	__u32 i_time;
+	__u32 i_समय;
 	__u8  i_gid;
 	__u8  i_nlinks;
 	__u16 i_zone[9];
-};
+पूर्ण;
 
 /*
- * The new minix inode has all the time entries, as well as
- * long block numbers and a third indirect block (7+1+1+1
+ * The new minix inode has all the समय entries, as well as
+ * दीर्घ block numbers and a third indirect block (7+1+1+1
  * instead of 7+1+1). Also, some previously 8-bit values are
  * now 16-bit. The inode is now 64 bytes instead of 32.
  */
-struct minix2_inode {
+काष्ठा minix2_inode अणु
 	__u16 i_mode;
 	__u16 i_nlinks;
 	__u16 i_uid;
 	__u16 i_gid;
 	__u32 i_size;
-	__u32 i_atime;
-	__u32 i_mtime;
-	__u32 i_ctime;
+	__u32 i_aसमय;
+	__u32 i_mसमय;
+	__u32 i_स_समय;
 	__u32 i_zone[10];
-};
+पूर्ण;
 
 /*
  * minix super-block data on disk
  */
-struct minix_super_block {
+काष्ठा minix_super_block अणु
 	__u16 s_ninodes;
 	__u16 s_nzones;
 	__u16 s_imap_blocks;
@@ -74,12 +75,12 @@ struct minix_super_block {
 	__u16 s_magic;
 	__u16 s_state;
 	__u32 s_zones;
-};
+पूर्ण;
 
 /*
  * V3 minix super-block data on disk
  */
-struct minix3_super_block {
+काष्ठा minix3_super_block अणु
 	__u32 s_ninodes;
 	__u16 s_pad0;
 	__u16 s_imap_blocks;
@@ -93,15 +94,15 @@ struct minix3_super_block {
 	__u16 s_pad2;
 	__u16 s_blocksize;
 	__u8  s_disk_version;
-};
+पूर्ण;
 
-struct minix_dir_entry {
+काष्ठा minix_dir_entry अणु
 	__u16 inode;
-	char name[0];
-};
+	अक्षर name[0];
+पूर्ण;
 
-struct minix3_dir_entry {
+काष्ठा minix3_dir_entry अणु
 	__u32 inode;
-	char name[0];
-};
-#endif
+	अक्षर name[0];
+पूर्ण;
+#पूर्ण_अगर

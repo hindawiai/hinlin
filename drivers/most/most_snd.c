@@ -1,173 +1,174 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * sound.c - Sound component for Mostcore
+ * sound.c - Sound component क्रम Mostcore
  *
  * Copyright (C) 2015 Microchip Technology Germany II GmbH & Co. KG
  */
 
-#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#include <linux/module.h>
-#include <linux/printk.h>
-#include <linux/kernel.h>
-#include <linux/slab.h>
-#include <linux/init.h>
-#include <sound/core.h>
-#include <sound/pcm.h>
-#include <sound/pcm_params.h>
-#include <linux/sched.h>
-#include <linux/kthread.h>
-#include <linux/most.h>
+#समावेश <linux/module.h>
+#समावेश <linux/prपूर्णांकk.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/init.h>
+#समावेश <sound/core.h>
+#समावेश <sound/pcm.h>
+#समावेश <sound/pcm_params.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/most.h>
 
-#define DRIVER_NAME "sound"
-#define STRING_SIZE	80
+#घोषणा DRIVER_NAME "sound"
+#घोषणा STRING_SIZE	80
 
-static struct most_component comp;
+अटल काष्ठा most_component comp;
 
 /**
- * struct channel - private structure to keep channel specific data
- * @substream: stores the substream structure
- * @iface: interface for which the channel belongs to
+ * काष्ठा channel - निजी काष्ठाure to keep channel specअगरic data
+ * @substream: stores the substream काष्ठाure
+ * @अगरace: पूर्णांकerface क्रम which the channel beदीर्घs to
  * @cfg: channel configuration
- * @card: registered sound card
- * @list: list for private use
+ * @card: रेजिस्टरed sound card
+ * @list: list क्रम निजी use
  * @id: channel index
  * @period_pos: current period position (ring buffer)
  * @buffer_pos: current buffer position (ring buffer)
- * @is_stream_running: identifies whether a stream is running or not
- * @opened: set when the stream is opened
- * @playback_task: playback thread
- * @playback_waitq: waitq used by playback thread
+ * @is_stream_running: identअगरies whether a stream is running or not
+ * @खोलोed: set when the stream is खोलोed
+ * @playback_task: playback thपढ़ो
+ * @playback_रुकोq: रुकोq used by playback thपढ़ो
  */
-struct channel {
-	struct snd_pcm_substream *substream;
-	struct snd_pcm_hardware pcm_hardware;
-	struct most_interface *iface;
-	struct most_channel_config *cfg;
-	struct snd_card *card;
-	struct list_head list;
-	int id;
-	unsigned int period_pos;
-	unsigned int buffer_pos;
+काष्ठा channel अणु
+	काष्ठा snd_pcm_substream *substream;
+	काष्ठा snd_pcm_hardware pcm_hardware;
+	काष्ठा most_पूर्णांकerface *अगरace;
+	काष्ठा most_channel_config *cfg;
+	काष्ठा snd_card *card;
+	काष्ठा list_head list;
+	पूर्णांक id;
+	अचिन्हित पूर्णांक period_pos;
+	अचिन्हित पूर्णांक buffer_pos;
 	bool is_stream_running;
-	struct task_struct *playback_task;
-	wait_queue_head_t playback_waitq;
-	void (*copy_fn)(void *alsa, void *most, unsigned int bytes);
-};
+	काष्ठा task_काष्ठा *playback_task;
+	रुको_queue_head_t playback_रुकोq;
+	व्योम (*copy_fn)(व्योम *alsa, व्योम *most, अचिन्हित पूर्णांक bytes);
+पूर्ण;
 
-struct sound_adapter {
-	struct list_head dev_list;
-	struct most_interface *iface;
-	struct snd_card *card;
-	struct list_head list;
-	bool registered;
-	int pcm_dev_idx;
-};
+काष्ठा sound_adapter अणु
+	काष्ठा list_head dev_list;
+	काष्ठा most_पूर्णांकerface *अगरace;
+	काष्ठा snd_card *card;
+	काष्ठा list_head list;
+	bool रेजिस्टरed;
+	पूर्णांक pcm_dev_idx;
+पूर्ण;
 
-static struct list_head adpt_list;
+अटल काष्ठा list_head adpt_list;
 
-#define MOST_PCM_INFO (SNDRV_PCM_INFO_MMAP | \
+#घोषणा MOST_PCM_INFO (SNDRV_PCM_INFO_MMAP | \
 		       SNDRV_PCM_INFO_MMAP_VALID | \
 		       SNDRV_PCM_INFO_BATCH | \
 		       SNDRV_PCM_INFO_INTERLEAVED | \
 		       SNDRV_PCM_INFO_BLOCK_TRANSFER)
 
-static void swap_copy16(u16 *dest, const u16 *source, unsigned int bytes)
-{
-	unsigned int i = 0;
+अटल व्योम swap_copy16(u16 *dest, स्थिर u16 *source, अचिन्हित पूर्णांक bytes)
+अणु
+	अचिन्हित पूर्णांक i = 0;
 
-	while (i < (bytes / 2)) {
+	जबतक (i < (bytes / 2)) अणु
 		dest[i] = swab16(source[i]);
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void swap_copy24(u8 *dest, const u8 *source, unsigned int bytes)
-{
-	unsigned int i = 0;
+अटल व्योम swap_copy24(u8 *dest, स्थिर u8 *source, अचिन्हित पूर्णांक bytes)
+अणु
+	अचिन्हित पूर्णांक i = 0;
 
-	if (bytes < 2)
-		return;
-	while (i < bytes - 2) {
+	अगर (bytes < 2)
+		वापस;
+	जबतक (i < bytes - 2) अणु
 		dest[i] = source[i + 2];
 		dest[i + 1] = source[i + 1];
 		dest[i + 2] = source[i];
 		i += 3;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void swap_copy32(u32 *dest, const u32 *source, unsigned int bytes)
-{
-	unsigned int i = 0;
+अटल व्योम swap_copy32(u32 *dest, स्थिर u32 *source, अचिन्हित पूर्णांक bytes)
+अणु
+	अचिन्हित पूर्णांक i = 0;
 
-	while (i < bytes / 4) {
+	जबतक (i < bytes / 4) अणु
 		dest[i] = swab32(source[i]);
 		i++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void alsa_to_most_memcpy(void *alsa, void *most, unsigned int bytes)
-{
-	memcpy(most, alsa, bytes);
-}
+अटल व्योम alsa_to_most_स_नकल(व्योम *alsa, व्योम *most, अचिन्हित पूर्णांक bytes)
+अणु
+	स_नकल(most, alsa, bytes);
+पूर्ण
 
-static void alsa_to_most_copy16(void *alsa, void *most, unsigned int bytes)
-{
+अटल व्योम alsa_to_most_copy16(व्योम *alsa, व्योम *most, अचिन्हित पूर्णांक bytes)
+अणु
 	swap_copy16(most, alsa, bytes);
-}
+पूर्ण
 
-static void alsa_to_most_copy24(void *alsa, void *most, unsigned int bytes)
-{
+अटल व्योम alsa_to_most_copy24(व्योम *alsa, व्योम *most, अचिन्हित पूर्णांक bytes)
+अणु
 	swap_copy24(most, alsa, bytes);
-}
+पूर्ण
 
-static void alsa_to_most_copy32(void *alsa, void *most, unsigned int bytes)
-{
+अटल व्योम alsa_to_most_copy32(व्योम *alsa, व्योम *most, अचिन्हित पूर्णांक bytes)
+अणु
 	swap_copy32(most, alsa, bytes);
-}
+पूर्ण
 
-static void most_to_alsa_memcpy(void *alsa, void *most, unsigned int bytes)
-{
-	memcpy(alsa, most, bytes);
-}
+अटल व्योम most_to_alsa_स_नकल(व्योम *alsa, व्योम *most, अचिन्हित पूर्णांक bytes)
+अणु
+	स_नकल(alsa, most, bytes);
+पूर्ण
 
-static void most_to_alsa_copy16(void *alsa, void *most, unsigned int bytes)
-{
+अटल व्योम most_to_alsa_copy16(व्योम *alsa, व्योम *most, अचिन्हित पूर्णांक bytes)
+अणु
 	swap_copy16(alsa, most, bytes);
-}
+पूर्ण
 
-static void most_to_alsa_copy24(void *alsa, void *most, unsigned int bytes)
-{
+अटल व्योम most_to_alsa_copy24(व्योम *alsa, व्योम *most, अचिन्हित पूर्णांक bytes)
+अणु
 	swap_copy24(alsa, most, bytes);
-}
+पूर्ण
 
-static void most_to_alsa_copy32(void *alsa, void *most, unsigned int bytes)
-{
+अटल व्योम most_to_alsa_copy32(व्योम *alsa, व्योम *most, अचिन्हित पूर्णांक bytes)
+अणु
 	swap_copy32(alsa, most, bytes);
-}
+पूर्ण
 
 /**
- * get_channel - get pointer to channel
- * @iface: interface structure
+ * get_channel - get poपूर्णांकer to channel
+ * @अगरace: पूर्णांकerface काष्ठाure
  * @channel_id: channel ID
  *
- * This traverses the channel list and returns the channel matching the
- * ID and interface.
+ * This traverses the channel list and वापसs the channel matching the
+ * ID and पूर्णांकerface.
  *
- * Returns pointer to channel on success or NULL otherwise.
+ * Returns poपूर्णांकer to channel on success or शून्य otherwise.
  */
-static struct channel *get_channel(struct most_interface *iface,
-				   int channel_id)
-{
-	struct sound_adapter *adpt = iface->priv;
-	struct channel *channel;
+अटल काष्ठा channel *get_channel(काष्ठा most_पूर्णांकerface *अगरace,
+				   पूर्णांक channel_id)
+अणु
+	काष्ठा sound_adapter *adpt = अगरace->priv;
+	काष्ठा channel *channel;
 
-	list_for_each_entry(channel, &adpt->dev_list, list) {
-		if ((channel->iface == iface) && (channel->id == channel_id))
-			return channel;
-	}
-	return NULL;
-}
+	list_क्रम_each_entry(channel, &adpt->dev_list, list) अणु
+		अगर ((channel->अगरace == अगरace) && (channel->id == channel_id))
+			वापस channel;
+	पूर्ण
+	वापस शून्य;
+पूर्ण
 
 /**
  * copy_data - implements data copying function
@@ -176,296 +177,296 @@ static struct channel *get_channel(struct most_interface *iface,
  *
  * Copy data from/to ring buffer to/from MBO and update the buffer position
  */
-static bool copy_data(struct channel *channel, struct mbo *mbo)
-{
-	struct snd_pcm_runtime *const runtime = channel->substream->runtime;
-	unsigned int const frame_bytes = channel->cfg->subbuffer_size;
-	unsigned int const buffer_size = runtime->buffer_size;
-	unsigned int frames;
-	unsigned int fr0;
+अटल bool copy_data(काष्ठा channel *channel, काष्ठा mbo *mbo)
+अणु
+	काष्ठा snd_pcm_runसमय *स्थिर runसमय = channel->substream->runसमय;
+	अचिन्हित पूर्णांक स्थिर frame_bytes = channel->cfg->subbuffer_size;
+	अचिन्हित पूर्णांक स्थिर buffer_size = runसमय->buffer_size;
+	अचिन्हित पूर्णांक frames;
+	अचिन्हित पूर्णांक fr0;
 
-	if (channel->cfg->direction & MOST_CH_RX)
+	अगर (channel->cfg->direction & MOST_CH_RX)
 		frames = mbo->processed_length / frame_bytes;
-	else
+	अन्यथा
 		frames = mbo->buffer_length / frame_bytes;
 	fr0 = min(buffer_size - channel->buffer_pos, frames);
 
-	channel->copy_fn(runtime->dma_area + channel->buffer_pos * frame_bytes,
+	channel->copy_fn(runसमय->dma_area + channel->buffer_pos * frame_bytes,
 			 mbo->virt_address,
 			 fr0 * frame_bytes);
 
-	if (frames > fr0) {
+	अगर (frames > fr0) अणु
 		/* wrap around at end of ring buffer */
-		channel->copy_fn(runtime->dma_area,
+		channel->copy_fn(runसमय->dma_area,
 				 mbo->virt_address + fr0 * frame_bytes,
 				 (frames - fr0) * frame_bytes);
-	}
+	पूर्ण
 
 	channel->buffer_pos += frames;
-	if (channel->buffer_pos >= buffer_size)
+	अगर (channel->buffer_pos >= buffer_size)
 		channel->buffer_pos -= buffer_size;
 	channel->period_pos += frames;
-	if (channel->period_pos >= runtime->period_size) {
-		channel->period_pos -= runtime->period_size;
-		return true;
-	}
-	return false;
-}
+	अगर (channel->period_pos >= runसमय->period_size) अणु
+		channel->period_pos -= runसमय->period_size;
+		वापस true;
+	पूर्ण
+	वापस false;
+पूर्ण
 
 /**
- * playback_thread - function implements the playback thread
- * @data: private data
+ * playback_thपढ़ो - function implements the playback thपढ़ो
+ * @data: निजी data
  *
- * Thread which does the playback functionality in a loop. It waits for a free
- * MBO from mostcore for a particular channel and copy the data from ring buffer
+ * Thपढ़ो which करोes the playback functionality in a loop. It रुकोs क्रम a मुक्त
+ * MBO from mostcore क्रम a particular channel and copy the data from ring buffer
  * to MBO. Submit the MBO back to mostcore, after copying the data.
  *
  * Returns 0 on success or error code otherwise.
  */
-static int playback_thread(void *data)
-{
-	struct channel *const channel = data;
+अटल पूर्णांक playback_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा channel *स्थिर channel = data;
 
-	while (!kthread_should_stop()) {
-		struct mbo *mbo = NULL;
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		काष्ठा mbo *mbo = शून्य;
 		bool period_elapsed = false;
 
-		wait_event_interruptible(
-			channel->playback_waitq,
-			kthread_should_stop() ||
+		रुको_event_पूर्णांकerruptible(
+			channel->playback_रुकोq,
+			kthपढ़ो_should_stop() ||
 			(channel->is_stream_running &&
-			 (mbo = most_get_mbo(channel->iface, channel->id,
+			 (mbo = most_get_mbo(channel->अगरace, channel->id,
 					     &comp))));
-		if (!mbo)
-			continue;
+		अगर (!mbo)
+			जारी;
 
-		if (channel->is_stream_running)
+		अगर (channel->is_stream_running)
 			period_elapsed = copy_data(channel, mbo);
-		else
-			memset(mbo->virt_address, 0, mbo->buffer_length);
+		अन्यथा
+			स_रखो(mbo->virt_address, 0, mbo->buffer_length);
 
 		most_submit_mbo(mbo);
-		if (period_elapsed)
+		अगर (period_elapsed)
 			snd_pcm_period_elapsed(channel->substream);
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * pcm_open - implements open callback function for PCM middle layer
- * @substream: pointer to ALSA PCM substream
+ * pcm_खोलो - implements खोलो callback function क्रम PCM middle layer
+ * @substream: poपूर्णांकer to ALSA PCM substream
  *
- * This is called when a PCM substream is opened. At least, the function should
- * initialize the runtime->hw record.
+ * This is called when a PCM substream is खोलोed. At least, the function should
+ * initialize the runसमय->hw record.
  *
  * Returns 0 on success or error code otherwise.
  */
-static int pcm_open(struct snd_pcm_substream *substream)
-{
-	struct channel *channel = substream->private_data;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct most_channel_config *cfg = channel->cfg;
-	int ret;
+अटल पूर्णांक pcm_खोलो(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा channel *channel = substream->निजी_data;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा most_channel_config *cfg = channel->cfg;
+	पूर्णांक ret;
 
 	channel->substream = substream;
 
-	if (cfg->direction == MOST_CH_TX) {
-		channel->playback_task = kthread_run(playback_thread, channel,
+	अगर (cfg->direction == MOST_CH_TX) अणु
+		channel->playback_task = kthपढ़ो_run(playback_thपढ़ो, channel,
 						     "most_audio_playback");
-		if (IS_ERR(channel->playback_task)) {
+		अगर (IS_ERR(channel->playback_task)) अणु
 			pr_err("Couldn't start thread\n");
-			return PTR_ERR(channel->playback_task);
-		}
-	}
+			वापस PTR_ERR(channel->playback_task);
+		पूर्ण
+	पूर्ण
 
-	ret = most_start_channel(channel->iface, channel->id, &comp);
-	if (ret) {
+	ret = most_start_channel(channel->अगरace, channel->id, &comp);
+	अगर (ret) अणु
 		pr_err("most_start_channel() failed!\n");
-		if (cfg->direction == MOST_CH_TX)
-			kthread_stop(channel->playback_task);
-		return ret;
-	}
+		अगर (cfg->direction == MOST_CH_TX)
+			kthपढ़ो_stop(channel->playback_task);
+		वापस ret;
+	पूर्ण
 
-	runtime->hw = channel->pcm_hardware;
-	return 0;
-}
+	runसमय->hw = channel->pcm_hardware;
+	वापस 0;
+पूर्ण
 
 /**
- * pcm_close - implements close callback function for PCM middle layer
- * @substream: sub-stream pointer
+ * pcm_बंद - implements बंद callback function क्रम PCM middle layer
+ * @substream: sub-stream poपूर्णांकer
  *
- * Obviously, this is called when a PCM substream is closed. Any private
- * instance for a PCM substream allocated in the open callback will be
+ * Obviously, this is called when a PCM substream is बंदd. Any निजी
+ * instance क्रम a PCM substream allocated in the खोलो callback will be
  * released here.
  *
  * Returns 0 on success or error code otherwise.
  */
-static int pcm_close(struct snd_pcm_substream *substream)
-{
-	struct channel *channel = substream->private_data;
+अटल पूर्णांक pcm_बंद(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा channel *channel = substream->निजी_data;
 
-	if (channel->cfg->direction == MOST_CH_TX)
-		kthread_stop(channel->playback_task);
-	most_stop_channel(channel->iface, channel->id, &comp);
-	return 0;
-}
+	अगर (channel->cfg->direction == MOST_CH_TX)
+		kthपढ़ो_stop(channel->playback_task);
+	most_stop_channel(channel->अगरace, channel->id, &comp);
+	वापस 0;
+पूर्ण
 
 /**
- * pcm_prepare - implements prepare callback function for PCM middle layer
- * @substream: substream pointer
+ * pcm_prepare - implements prepare callback function क्रम PCM middle layer
+ * @substream: substream poपूर्णांकer
  *
  * This callback is called when the PCM is "prepared". Format rate, sample rate,
- * etc., can be set here. This callback can be called many times at each setup.
+ * etc., can be set here. This callback can be called many बार at each setup.
  *
  * Returns 0 on success or error code otherwise.
  */
-static int pcm_prepare(struct snd_pcm_substream *substream)
-{
-	struct channel *channel = substream->private_data;
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct most_channel_config *cfg = channel->cfg;
-	int width = snd_pcm_format_physical_width(runtime->format);
+अटल पूर्णांक pcm_prepare(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा channel *channel = substream->निजी_data;
+	काष्ठा snd_pcm_runसमय *runसमय = substream->runसमय;
+	काष्ठा most_channel_config *cfg = channel->cfg;
+	पूर्णांक width = snd_pcm_क्रमmat_physical_width(runसमय->क्रमmat);
 
-	channel->copy_fn = NULL;
+	channel->copy_fn = शून्य;
 
-	if (cfg->direction == MOST_CH_TX) {
-		if (snd_pcm_format_big_endian(runtime->format) || width == 8)
-			channel->copy_fn = alsa_to_most_memcpy;
-		else if (width == 16)
+	अगर (cfg->direction == MOST_CH_TX) अणु
+		अगर (snd_pcm_क्रमmat_big_endian(runसमय->क्रमmat) || width == 8)
+			channel->copy_fn = alsa_to_most_स_नकल;
+		अन्यथा अगर (width == 16)
 			channel->copy_fn = alsa_to_most_copy16;
-		else if (width == 24)
+		अन्यथा अगर (width == 24)
 			channel->copy_fn = alsa_to_most_copy24;
-		else if (width == 32)
+		अन्यथा अगर (width == 32)
 			channel->copy_fn = alsa_to_most_copy32;
-	} else {
-		if (snd_pcm_format_big_endian(runtime->format) || width == 8)
-			channel->copy_fn = most_to_alsa_memcpy;
-		else if (width == 16)
+	पूर्ण अन्यथा अणु
+		अगर (snd_pcm_क्रमmat_big_endian(runसमय->क्रमmat) || width == 8)
+			channel->copy_fn = most_to_alsa_स_नकल;
+		अन्यथा अगर (width == 16)
 			channel->copy_fn = most_to_alsa_copy16;
-		else if (width == 24)
+		अन्यथा अगर (width == 24)
 			channel->copy_fn = most_to_alsa_copy24;
-		else if (width == 32)
+		अन्यथा अगर (width == 32)
 			channel->copy_fn = most_to_alsa_copy32;
-	}
+	पूर्ण
 
-	if (!channel->copy_fn)
-		return -EINVAL;
+	अगर (!channel->copy_fn)
+		वापस -EINVAL;
 	channel->period_pos = 0;
 	channel->buffer_pos = 0;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * pcm_trigger - implements trigger callback function for PCM middle layer
- * @substream: substream pointer
- * @cmd: action to perform
+ * pcm_trigger - implements trigger callback function क्रम PCM middle layer
+ * @substream: substream poपूर्णांकer
+ * @cmd: action to perक्रमm
  *
- * This is called when the PCM is started, stopped or paused. The action will be
- * specified in the second argument, SNDRV_PCM_TRIGGER_XXX
+ * This is called when the PCM is started, stopped or छोड़ोd. The action will be
+ * specअगरied in the second argument, SNDRV_PCM_TRIGGER_XXX
  *
  * Returns 0 on success or error code otherwise.
  */
-static int pcm_trigger(struct snd_pcm_substream *substream, int cmd)
-{
-	struct channel *channel = substream->private_data;
+अटल पूर्णांक pcm_trigger(काष्ठा snd_pcm_substream *substream, पूर्णांक cmd)
+अणु
+	काष्ठा channel *channel = substream->निजी_data;
 
-	switch (cmd) {
-	case SNDRV_PCM_TRIGGER_START:
+	चयन (cmd) अणु
+	हाल SNDRV_PCM_TRIGGER_START:
 		channel->is_stream_running = true;
-		wake_up_interruptible(&channel->playback_waitq);
-		return 0;
+		wake_up_पूर्णांकerruptible(&channel->playback_रुकोq);
+		वापस 0;
 
-	case SNDRV_PCM_TRIGGER_STOP:
+	हाल SNDRV_PCM_TRIGGER_STOP:
 		channel->is_stream_running = false;
-		return 0;
+		वापस 0;
 
-	default:
-		return -EINVAL;
-	}
-	return 0;
-}
+	शेष:
+		वापस -EINVAL;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
 /**
- * pcm_pointer - implements pointer callback function for PCM middle layer
- * @substream: substream pointer
+ * pcm_poपूर्णांकer - implements poपूर्णांकer callback function क्रम PCM middle layer
+ * @substream: substream poपूर्णांकer
  *
  * This callback is called when the PCM middle layer inquires the current
- * hardware position on the buffer. The position must be returned in frames,
+ * hardware position on the buffer. The position must be वापसed in frames,
  * ranging from 0 to buffer_size-1.
  */
-static snd_pcm_uframes_t pcm_pointer(struct snd_pcm_substream *substream)
-{
-	struct channel *channel = substream->private_data;
+अटल snd_pcm_uframes_t pcm_poपूर्णांकer(काष्ठा snd_pcm_substream *substream)
+अणु
+	काष्ठा channel *channel = substream->निजी_data;
 
-	return channel->buffer_pos;
-}
+	वापस channel->buffer_pos;
+पूर्ण
 
 /**
- * Initialization of struct snd_pcm_ops
+ * Initialization of काष्ठा snd_pcm_ops
  */
-static const struct snd_pcm_ops pcm_ops = {
-	.open       = pcm_open,
-	.close      = pcm_close,
+अटल स्थिर काष्ठा snd_pcm_ops pcm_ops = अणु
+	.खोलो       = pcm_खोलो,
+	.बंद      = pcm_बंद,
 	.prepare    = pcm_prepare,
 	.trigger    = pcm_trigger,
-	.pointer    = pcm_pointer,
-};
+	.poपूर्णांकer    = pcm_poपूर्णांकer,
+पूर्ण;
 
-static int split_arg_list(char *buf, u16 *ch_num, char **sample_res)
-{
-	char *num;
-	int ret;
+अटल पूर्णांक split_arg_list(अक्षर *buf, u16 *ch_num, अक्षर **sample_res)
+अणु
+	अक्षर *num;
+	पूर्णांक ret;
 
 	num = strsep(&buf, "x");
-	if (!num)
-		goto err;
+	अगर (!num)
+		जाओ err;
 	ret = kstrtou16(num, 0, ch_num);
-	if (ret)
-		goto err;
+	अगर (ret)
+		जाओ err;
 	*sample_res = strsep(&buf, ".\n");
-	if (!*sample_res)
-		goto err;
-	return 0;
+	अगर (!*sample_res)
+		जाओ err;
+	वापस 0;
 
 err:
 	pr_err("Bad PCM format\n");
-	return -EINVAL;
-}
+	वापस -EINVAL;
+पूर्ण
 
-static const struct sample_resolution_info {
-	const char *sample_res;
-	int bytes;
-	u64 formats;
-} sinfo[] = {
-	{ "8", 1, SNDRV_PCM_FMTBIT_S8 },
-	{ "16", 2, SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE },
-	{ "24", 3, SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S24_3BE },
-	{ "32", 4, SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S32_BE },
-};
+अटल स्थिर काष्ठा sample_resolution_info अणु
+	स्थिर अक्षर *sample_res;
+	पूर्णांक bytes;
+	u64 क्रमmats;
+पूर्ण sinfo[] = अणु
+	अणु "8", 1, SNDRV_PCM_FMTBIT_S8 पूर्ण,
+	अणु "16", 2, SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE पूर्ण,
+	अणु "24", 3, SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S24_3BE पूर्ण,
+	अणु "32", 4, SNDRV_PCM_FMTBIT_S32_LE | SNDRV_PCM_FMTBIT_S32_BE पूर्ण,
+पूर्ण;
 
-static int audio_set_hw_params(struct snd_pcm_hardware *pcm_hw,
-			       u16 ch_num, char *sample_res,
-			       struct most_channel_config *cfg)
-{
-	int i;
+अटल पूर्णांक audio_set_hw_params(काष्ठा snd_pcm_hardware *pcm_hw,
+			       u16 ch_num, अक्षर *sample_res,
+			       काष्ठा most_channel_config *cfg)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(sinfo); i++) {
-		if (!strcmp(sample_res, sinfo[i].sample_res))
-			goto found;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(sinfo); i++) अणु
+		अगर (!म_भेद(sample_res, sinfo[i].sample_res))
+			जाओ found;
+	पूर्ण
 	pr_err("Unsupported PCM format\n");
-	return -EINVAL;
+	वापस -EINVAL;
 
 found:
-	if (!ch_num) {
+	अगर (!ch_num) अणु
 		pr_err("Bad number of channels\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	if (cfg->subbuffer_size != ch_num * sinfo[i].bytes) {
+	अगर (cfg->subbuffer_size != ch_num * sinfo[i].bytes) अणु
 		pr_err("Audio resolution doesn't fit subbuffer size\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	pcm_hw->info = MOST_PCM_INFO;
 	pcm_hw->rates = SNDRV_PCM_RATE_48000;
@@ -478,231 +479,231 @@ found:
 	pcm_hw->periods_max = cfg->num_buffers;
 	pcm_hw->channels_min = ch_num;
 	pcm_hw->channels_max = ch_num;
-	pcm_hw->formats = sinfo[i].formats;
-	return 0;
-}
+	pcm_hw->क्रमmats = sinfo[i].क्रमmats;
+	वापस 0;
+पूर्ण
 
-static void release_adapter(struct sound_adapter *adpt)
-{
-	struct channel *channel, *tmp;
+अटल व्योम release_adapter(काष्ठा sound_adapter *adpt)
+अणु
+	काष्ठा channel *channel, *पंचांगp;
 
-	list_for_each_entry_safe(channel, tmp, &adpt->dev_list, list) {
+	list_क्रम_each_entry_safe(channel, पंचांगp, &adpt->dev_list, list) अणु
 		list_del(&channel->list);
-		kfree(channel);
-	}
-	if (adpt->card)
-		snd_card_free(adpt->card);
+		kमुक्त(channel);
+	पूर्ण
+	अगर (adpt->card)
+		snd_card_मुक्त(adpt->card);
 	list_del(&adpt->list);
-	kfree(adpt);
-}
+	kमुक्त(adpt);
+पूर्ण
 
 /**
  * audio_probe_channel - probe function of the driver module
- * @iface: pointer to interface instance
+ * @अगरace: poपूर्णांकer to पूर्णांकerface instance
  * @channel_id: channel index/ID
- * @cfg: pointer to actual channel configuration
+ * @cfg: poपूर्णांकer to actual channel configuration
  * @arg_list: string that provides the name of the device to be created in /dev
  *	      plus the desired audio resolution
  *
- * Creates sound card, pcm device, sets pcm ops and registers sound card.
+ * Creates sound card, pcm device, sets pcm ops and रेजिस्टरs sound card.
  *
  * Returns 0 on success or error code otherwise.
  */
-static int audio_probe_channel(struct most_interface *iface, int channel_id,
-			       struct most_channel_config *cfg,
-			       char *device_name, char *arg_list)
-{
-	struct channel *channel;
-	struct sound_adapter *adpt;
-	struct snd_pcm *pcm;
-	int playback_count = 0;
-	int capture_count = 0;
-	int ret;
-	int direction;
+अटल पूर्णांक audio_probe_channel(काष्ठा most_पूर्णांकerface *अगरace, पूर्णांक channel_id,
+			       काष्ठा most_channel_config *cfg,
+			       अक्षर *device_name, अक्षर *arg_list)
+अणु
+	काष्ठा channel *channel;
+	काष्ठा sound_adapter *adpt;
+	काष्ठा snd_pcm *pcm;
+	पूर्णांक playback_count = 0;
+	पूर्णांक capture_count = 0;
+	पूर्णांक ret;
+	पूर्णांक direction;
 	u16 ch_num;
-	char *sample_res;
-	char arg_list_cpy[STRING_SIZE];
+	अक्षर *sample_res;
+	अक्षर arg_list_cpy[STRING_SIZE];
 
-	if (cfg->data_type != MOST_CH_SYNC) {
+	अगर (cfg->data_type != MOST_CH_SYNC) अणु
 		pr_err("Incompatible channel type\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	strscpy(arg_list_cpy, arg_list, STRING_SIZE);
 	ret = split_arg_list(arg_list_cpy, &ch_num, &sample_res);
-	if (ret < 0)
-		return ret;
+	अगर (ret < 0)
+		वापस ret;
 
-	list_for_each_entry(adpt, &adpt_list, list) {
-		if (adpt->iface != iface)
-			continue;
-		if (adpt->registered)
-			return -ENOSPC;
+	list_क्रम_each_entry(adpt, &adpt_list, list) अणु
+		अगर (adpt->अगरace != अगरace)
+			जारी;
+		अगर (adpt->रेजिस्टरed)
+			वापस -ENOSPC;
 		adpt->pcm_dev_idx++;
-		goto skip_adpt_alloc;
-	}
-	adpt = kzalloc(sizeof(*adpt), GFP_KERNEL);
-	if (!adpt)
-		return -ENOMEM;
+		जाओ skip_adpt_alloc;
+	पूर्ण
+	adpt = kzalloc(माप(*adpt), GFP_KERNEL);
+	अगर (!adpt)
+		वापस -ENOMEM;
 
-	adpt->iface = iface;
+	adpt->अगरace = अगरace;
 	INIT_LIST_HEAD(&adpt->dev_list);
-	iface->priv = adpt;
+	अगरace->priv = adpt;
 	list_add_tail(&adpt->list, &adpt_list);
-	ret = snd_card_new(iface->driver_dev, -1, "INIC", THIS_MODULE,
-			   sizeof(*channel), &adpt->card);
-	if (ret < 0)
-		goto err_free_adpt;
-	snprintf(adpt->card->driver, sizeof(adpt->card->driver),
+	ret = snd_card_new(अगरace->driver_dev, -1, "INIC", THIS_MODULE,
+			   माप(*channel), &adpt->card);
+	अगर (ret < 0)
+		जाओ err_मुक्त_adpt;
+	snम_लिखो(adpt->card->driver, माप(adpt->card->driver),
 		 "%s", DRIVER_NAME);
-	snprintf(adpt->card->shortname, sizeof(adpt->card->shortname),
+	snम_लिखो(adpt->card->लघुname, माप(adpt->card->लघुname),
 		 "Microchip INIC");
-	snprintf(adpt->card->longname, sizeof(adpt->card->longname),
-		 "%s at %s", adpt->card->shortname, iface->description);
+	snम_लिखो(adpt->card->दीर्घname, माप(adpt->card->दीर्घname),
+		 "%s at %s", adpt->card->लघुname, अगरace->description);
 skip_adpt_alloc:
-	if (get_channel(iface, channel_id)) {
+	अगर (get_channel(अगरace, channel_id)) अणु
 		pr_err("channel (%s:%d) is already linked\n",
-		       iface->description, channel_id);
-		return -EEXIST;
-	}
+		       अगरace->description, channel_id);
+		वापस -EEXIST;
+	पूर्ण
 
-	if (cfg->direction == MOST_CH_TX) {
+	अगर (cfg->direction == MOST_CH_TX) अणु
 		playback_count = 1;
 		direction = SNDRV_PCM_STREAM_PLAYBACK;
-	} else {
+	पूर्ण अन्यथा अणु
 		capture_count = 1;
 		direction = SNDRV_PCM_STREAM_CAPTURE;
-	}
-	channel = kzalloc(sizeof(*channel), GFP_KERNEL);
-	if (!channel) {
+	पूर्ण
+	channel = kzalloc(माप(*channel), GFP_KERNEL);
+	अगर (!channel) अणु
 		ret = -ENOMEM;
-		goto err_free_adpt;
-	}
+		जाओ err_मुक्त_adpt;
+	पूर्ण
 	channel->card = adpt->card;
 	channel->cfg = cfg;
-	channel->iface = iface;
+	channel->अगरace = अगरace;
 	channel->id = channel_id;
-	init_waitqueue_head(&channel->playback_waitq);
+	init_रुकोqueue_head(&channel->playback_रुकोq);
 	list_add_tail(&channel->list, &adpt->dev_list);
 
 	ret = audio_set_hw_params(&channel->pcm_hardware, ch_num, sample_res,
 				  cfg);
-	if (ret)
-		goto err_free_adpt;
+	अगर (ret)
+		जाओ err_मुक्त_adpt;
 
 	ret = snd_pcm_new(adpt->card, device_name, adpt->pcm_dev_idx,
 			  playback_count, capture_count, &pcm);
 
-	if (ret < 0)
-		goto err_free_adpt;
+	अगर (ret < 0)
+		जाओ err_मुक्त_adpt;
 
-	pcm->private_data = channel;
-	strscpy(pcm->name, device_name, sizeof(pcm->name));
+	pcm->निजी_data = channel;
+	strscpy(pcm->name, device_name, माप(pcm->name));
 	snd_pcm_set_ops(pcm, direction, &pcm_ops);
-	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, NULL, 0, 0);
-	return 0;
+	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_VMALLOC, शून्य, 0, 0);
+	वापस 0;
 
-err_free_adpt:
+err_मुक्त_adpt:
 	release_adapter(adpt);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int audio_create_sound_card(void)
-{
-	int ret;
-	struct sound_adapter *adpt;
+अटल पूर्णांक audio_create_sound_card(व्योम)
+अणु
+	पूर्णांक ret;
+	काष्ठा sound_adapter *adpt;
 
-	list_for_each_entry(adpt, &adpt_list, list) {
-		if (!adpt->registered)
-			goto adpt_alloc;
-	}
-	return -ENODEV;
+	list_क्रम_each_entry(adpt, &adpt_list, list) अणु
+		अगर (!adpt->रेजिस्टरed)
+			जाओ adpt_alloc;
+	पूर्ण
+	वापस -ENODEV;
 adpt_alloc:
-	ret = snd_card_register(adpt->card);
-	if (ret < 0) {
+	ret = snd_card_रेजिस्टर(adpt->card);
+	अगर (ret < 0) अणु
 		release_adapter(adpt);
-		return ret;
-	}
-	adpt->registered = true;
-	return 0;
-}
+		वापस ret;
+	पूर्ण
+	adpt->रेजिस्टरed = true;
+	वापस 0;
+पूर्ण
 
 /**
  * audio_disconnect_channel - function to disconnect a channel
- * @iface: pointer to interface instance
+ * @अगरace: poपूर्णांकer to पूर्णांकerface instance
  * @channel_id: channel index
  *
- * This frees allocated memory and removes the sound card from ALSA
+ * This मुक्तs allocated memory and हटाओs the sound card from ALSA
  *
  * Returns 0 on success or error code otherwise.
  */
-static int audio_disconnect_channel(struct most_interface *iface,
-				    int channel_id)
-{
-	struct channel *channel;
-	struct sound_adapter *adpt = iface->priv;
+अटल पूर्णांक audio_disconnect_channel(काष्ठा most_पूर्णांकerface *अगरace,
+				    पूर्णांक channel_id)
+अणु
+	काष्ठा channel *channel;
+	काष्ठा sound_adapter *adpt = अगरace->priv;
 
-	channel = get_channel(iface, channel_id);
-	if (!channel)
-		return -EINVAL;
+	channel = get_channel(अगरace, channel_id);
+	अगर (!channel)
+		वापस -EINVAL;
 
 	list_del(&channel->list);
 
-	kfree(channel);
-	if (list_empty(&adpt->dev_list))
+	kमुक्त(channel);
+	अगर (list_empty(&adpt->dev_list))
 		release_adapter(adpt);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * audio_rx_completion - completion handler for rx channels
- * @mbo: pointer to buffer object that has completed
+ * audio_rx_completion - completion handler क्रम rx channels
+ * @mbo: poपूर्णांकer to buffer object that has completed
  *
- * This searches for the channel this MBO belongs to and copy the data from MBO
+ * This searches क्रम the channel this MBO beदीर्घs to and copy the data from MBO
  * to ring buffer
  *
  * Returns 0 on success or error code otherwise.
  */
-static int audio_rx_completion(struct mbo *mbo)
-{
-	struct channel *channel = get_channel(mbo->ifp, mbo->hdm_channel_id);
+अटल पूर्णांक audio_rx_completion(काष्ठा mbo *mbo)
+अणु
+	काष्ठा channel *channel = get_channel(mbo->अगरp, mbo->hdm_channel_id);
 	bool period_elapsed = false;
 
-	if (!channel)
-		return -EINVAL;
-	if (channel->is_stream_running)
+	अगर (!channel)
+		वापस -EINVAL;
+	अगर (channel->is_stream_running)
 		period_elapsed = copy_data(channel, mbo);
 	most_put_mbo(mbo);
-	if (period_elapsed)
+	अगर (period_elapsed)
 		snd_pcm_period_elapsed(channel->substream);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * audio_tx_completion - completion handler for tx channels
- * @iface: pointer to interface instance
+ * audio_tx_completion - completion handler क्रम tx channels
+ * @अगरace: poपूर्णांकer to पूर्णांकerface instance
  * @channel_id: channel index/ID
  *
- * This searches the channel that belongs to this combination of interface
- * pointer and channel ID and wakes a process sitting in the wait queue of
+ * This searches the channel that beदीर्घs to this combination of पूर्णांकerface
+ * poपूर्णांकer and channel ID and wakes a process sitting in the रुको queue of
  * this channel.
  *
  * Returns 0 on success or error code otherwise.
  */
-static int audio_tx_completion(struct most_interface *iface, int channel_id)
-{
-	struct channel *channel = get_channel(iface, channel_id);
+अटल पूर्णांक audio_tx_completion(काष्ठा most_पूर्णांकerface *अगरace, पूर्णांक channel_id)
+अणु
+	काष्ठा channel *channel = get_channel(अगरace, channel_id);
 
-	if (!channel)
-		return -EINVAL;
+	अगर (!channel)
+		वापस -EINVAL;
 
-	wake_up_interruptible(&channel->playback_waitq);
-	return 0;
-}
+	wake_up_पूर्णांकerruptible(&channel->playback_रुकोq);
+	वापस 0;
+पूर्ण
 
 /**
- * Initialization of the struct most_component
+ * Initialization of the काष्ठा most_component
  */
-static struct most_component comp = {
+अटल काष्ठा most_component comp = अणु
 	.mod = THIS_MODULE,
 	.name = DRIVER_NAME,
 	.probe_channel = audio_probe_channel,
@@ -710,35 +711,35 @@ static struct most_component comp = {
 	.rx_completion = audio_rx_completion,
 	.tx_completion = audio_tx_completion,
 	.cfg_complete = audio_create_sound_card,
-};
+पूर्ण;
 
-static int __init audio_init(void)
-{
-	int ret;
+अटल पूर्णांक __init audio_init(व्योम)
+अणु
+	पूर्णांक ret;
 
 	INIT_LIST_HEAD(&adpt_list);
 
-	ret = most_register_component(&comp);
-	if (ret) {
+	ret = most_रेजिस्टर_component(&comp);
+	अगर (ret) अणु
 		pr_err("Failed to register %s\n", comp.name);
-		return ret;
-	}
-	ret = most_register_configfs_subsys(&comp);
-	if (ret) {
+		वापस ret;
+	पूर्ण
+	ret = most_रेजिस्टर_configfs_subsys(&comp);
+	अगर (ret) अणु
 		pr_err("Failed to register %s configfs subsys\n", comp.name);
-		most_deregister_component(&comp);
-	}
-	return ret;
-}
+		most_deरेजिस्टर_component(&comp);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void __exit audio_exit(void)
-{
-	most_deregister_configfs_subsys(&comp);
-	most_deregister_component(&comp);
-}
+अटल व्योम __निकास audio_निकास(व्योम)
+अणु
+	most_deरेजिस्टर_configfs_subsys(&comp);
+	most_deरेजिस्टर_component(&comp);
+पूर्ण
 
 module_init(audio_init);
-module_exit(audio_exit);
+module_निकास(audio_निकास);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Christian Gromm <christian.gromm@microchip.com>");

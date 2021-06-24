@@ -1,82 +1,83 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_POWERPC_BOOK3S_32_TLBFLUSH_H
-#define _ASM_POWERPC_BOOK3S_32_TLBFLUSH_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_POWERPC_BOOK3S_32_TLBFLUSH_H
+#घोषणा _ASM_POWERPC_BOOK3S_32_TLBFLUSH_H
 
-#define MMU_NO_CONTEXT      (0)
+#घोषणा MMU_NO_CONTEXT      (0)
 /*
- * TLB flushing for "classic" hash-MMU 32-bit CPUs, 6xx, 7xx, 7xxx
+ * TLB flushing क्रम "classic" hash-MMU 32-bit CPUs, 6xx, 7xx, 7xxx
  */
-void hash__flush_tlb_mm(struct mm_struct *mm);
-void hash__flush_tlb_page(struct vm_area_struct *vma, unsigned long vmaddr);
-void hash__flush_range(struct mm_struct *mm, unsigned long start, unsigned long end);
+व्योम hash__flush_tlb_mm(काष्ठा mm_काष्ठा *mm);
+व्योम hash__flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vmaddr);
+व्योम hash__flush_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end);
 
-#ifdef CONFIG_SMP
-void _tlbie(unsigned long address);
-#else
-static inline void _tlbie(unsigned long address)
-{
-	asm volatile ("tlbie %0; sync" : : "r" (address) : "memory");
-}
-#endif
-void _tlbia(void);
+#अगर_घोषित CONFIG_SMP
+व्योम _tlbie(अचिन्हित दीर्घ address);
+#अन्यथा
+अटल अंतरभूत व्योम _tlbie(अचिन्हित दीर्घ address)
+अणु
+	यंत्र अस्थिर ("tlbie %0; sync" : : "r" (address) : "memory");
+पूर्ण
+#पूर्ण_अगर
+व्योम _tlbia(व्योम);
 
 /*
  * Called at the end of a mmu_gather operation to make sure the
- * TLB flush is completely done.
+ * TLB flush is completely करोne.
  */
-static inline void tlb_flush(struct mmu_gather *tlb)
-{
-	/* 603 needs to flush the whole TLB here since it doesn't use a hash table. */
-	if (!mmu_has_feature(MMU_FTR_HPTE_TABLE))
+अटल अंतरभूत व्योम tlb_flush(काष्ठा mmu_gather *tlb)
+अणु
+	/* 603 needs to flush the whole TLB here since it करोesn't use a hash table. */
+	अगर (!mmu_has_feature(MMU_FTR_HPTE_TABLE))
 		_tlbia();
-}
+पूर्ण
 
-static inline void flush_range(struct mm_struct *mm, unsigned long start, unsigned long end)
-{
+अटल अंतरभूत व्योम flush_range(काष्ठा mm_काष्ठा *mm, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	start &= PAGE_MASK;
-	if (mmu_has_feature(MMU_FTR_HPTE_TABLE))
+	अगर (mmu_has_feature(MMU_FTR_HPTE_TABLE))
 		hash__flush_range(mm, start, end);
-	else if (end - start <= PAGE_SIZE)
+	अन्यथा अगर (end - start <= PAGE_SIZE)
 		_tlbie(start);
-	else
+	अन्यथा
 		_tlbia();
-}
+पूर्ण
 
-static inline void flush_tlb_mm(struct mm_struct *mm)
-{
-	if (mmu_has_feature(MMU_FTR_HPTE_TABLE))
+अटल अंतरभूत व्योम flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
+	अगर (mmu_has_feature(MMU_FTR_HPTE_TABLE))
 		hash__flush_tlb_mm(mm);
-	else
+	अन्यथा
 		_tlbia();
-}
+पूर्ण
 
-static inline void flush_tlb_page(struct vm_area_struct *vma, unsigned long vmaddr)
-{
-	if (mmu_has_feature(MMU_FTR_HPTE_TABLE))
+अटल अंतरभूत व्योम flush_tlb_page(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ vmaddr)
+अणु
+	अगर (mmu_has_feature(MMU_FTR_HPTE_TABLE))
 		hash__flush_tlb_page(vma, vmaddr);
-	else
+	अन्यथा
 		_tlbie(vmaddr);
-}
+पूर्ण
 
-static inline void
-flush_tlb_range(struct vm_area_struct *vma, unsigned long start, unsigned long end)
-{
+अटल अंतरभूत व्योम
+flush_tlb_range(काष्ठा vm_area_काष्ठा *vma, अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	flush_range(vma->vm_mm, start, end);
-}
+पूर्ण
 
-static inline void flush_tlb_kernel_range(unsigned long start, unsigned long end)
-{
+अटल अंतरभूत व्योम flush_tlb_kernel_range(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end)
+अणु
 	flush_range(&init_mm, start, end);
-}
+पूर्ण
 
-static inline void local_flush_tlb_page(struct vm_area_struct *vma,
-					unsigned long vmaddr)
-{
+अटल अंतरभूत व्योम local_flush_tlb_page(काष्ठा vm_area_काष्ठा *vma,
+					अचिन्हित दीर्घ vmaddr)
+अणु
 	flush_tlb_page(vma, vmaddr);
-}
-static inline void local_flush_tlb_mm(struct mm_struct *mm)
-{
+पूर्ण
+अटल अंतरभूत व्योम local_flush_tlb_mm(काष्ठा mm_काष्ठा *mm)
+अणु
 	flush_tlb_mm(mm);
-}
+पूर्ण
 
-#endif /* _ASM_POWERPC_BOOK3S_32_TLBFLUSH_H */
+#पूर्ण_अगर /* _ASM_POWERPC_BOOK3S_32_TLBFLUSH_H */

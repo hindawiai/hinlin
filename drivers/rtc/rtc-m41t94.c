@@ -1,141 +1,142 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Driver for ST M41T94 SPI RTC
+ * Driver क्रम ST M41T94 SPI RTC
  *
  * Copyright (C) 2008 Kim B. Heino
  */
 
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/platform_device.h>
-#include <linux/rtc.h>
-#include <linux/spi/spi.h>
-#include <linux/bcd.h>
+#समावेश <linux/module.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/rtc.h>
+#समावेश <linux/spi/spi.h>
+#समावेश <linux/bcd.h>
 
-#define M41T94_REG_SECONDS	0x01
-#define M41T94_REG_MINUTES	0x02
-#define M41T94_REG_HOURS	0x03
-#define M41T94_REG_WDAY		0x04
-#define M41T94_REG_DAY		0x05
-#define M41T94_REG_MONTH	0x06
-#define M41T94_REG_YEAR		0x07
-#define M41T94_REG_HT		0x0c
+#घोषणा M41T94_REG_SECONDS	0x01
+#घोषणा M41T94_REG_MINUTES	0x02
+#घोषणा M41T94_REG_HOURS	0x03
+#घोषणा M41T94_REG_WDAY		0x04
+#घोषणा M41T94_REG_DAY		0x05
+#घोषणा M41T94_REG_MONTH	0x06
+#घोषणा M41T94_REG_YEAR		0x07
+#घोषणा M41T94_REG_HT		0x0c
 
-#define M41T94_BIT_HALT		0x40
-#define M41T94_BIT_STOP		0x80
-#define M41T94_BIT_CB		0x40
-#define M41T94_BIT_CEB		0x80
+#घोषणा M41T94_BIT_HALT		0x40
+#घोषणा M41T94_BIT_STOP		0x80
+#घोषणा M41T94_BIT_CB		0x40
+#घोषणा M41T94_BIT_CEB		0x80
 
-static int m41t94_set_time(struct device *dev, struct rtc_time *tm)
-{
-	struct spi_device *spi = to_spi_device(dev);
-	u8 buf[8]; /* write cmd + 7 registers */
+अटल पूर्णांक m41t94_set_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
+	u8 buf[8]; /* ग_लिखो cmd + 7 रेजिस्टरs */
 
 	dev_dbg(dev, "%s secs=%d, mins=%d, "
 		"hours=%d, mday=%d, mon=%d, year=%d, wday=%d\n",
-		"write", tm->tm_sec, tm->tm_min,
-		tm->tm_hour, tm->tm_mday,
-		tm->tm_mon, tm->tm_year, tm->tm_wday);
+		"write", पंचांग->पंचांग_sec, पंचांग->पंचांग_min,
+		पंचांग->पंचांग_hour, पंचांग->पंचांग_mday,
+		पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
 
-	buf[0] = 0x80 | M41T94_REG_SECONDS; /* write time + date */
-	buf[M41T94_REG_SECONDS] = bin2bcd(tm->tm_sec);
-	buf[M41T94_REG_MINUTES] = bin2bcd(tm->tm_min);
-	buf[M41T94_REG_HOURS]   = bin2bcd(tm->tm_hour);
-	buf[M41T94_REG_WDAY]    = bin2bcd(tm->tm_wday + 1);
-	buf[M41T94_REG_DAY]     = bin2bcd(tm->tm_mday);
-	buf[M41T94_REG_MONTH]   = bin2bcd(tm->tm_mon + 1);
+	buf[0] = 0x80 | M41T94_REG_SECONDS; /* ग_लिखो समय + date */
+	buf[M41T94_REG_SECONDS] = bin2bcd(पंचांग->पंचांग_sec);
+	buf[M41T94_REG_MINUTES] = bin2bcd(पंचांग->पंचांग_min);
+	buf[M41T94_REG_HOURS]   = bin2bcd(पंचांग->पंचांग_hour);
+	buf[M41T94_REG_WDAY]    = bin2bcd(पंचांग->पंचांग_wday + 1);
+	buf[M41T94_REG_DAY]     = bin2bcd(पंचांग->पंचांग_mday);
+	buf[M41T94_REG_MONTH]   = bin2bcd(पंचांग->पंचांग_mon + 1);
 
 	buf[M41T94_REG_HOURS] |= M41T94_BIT_CEB;
-	if (tm->tm_year >= 100)
+	अगर (पंचांग->पंचांग_year >= 100)
 		buf[M41T94_REG_HOURS] |= M41T94_BIT_CB;
-	buf[M41T94_REG_YEAR] = bin2bcd(tm->tm_year % 100);
+	buf[M41T94_REG_YEAR] = bin2bcd(पंचांग->पंचांग_year % 100);
 
-	return spi_write(spi, buf, 8);
-}
+	वापस spi_ग_लिखो(spi, buf, 8);
+पूर्ण
 
-static int m41t94_read_time(struct device *dev, struct rtc_time *tm)
-{
-	struct spi_device *spi = to_spi_device(dev);
+अटल पूर्णांक m41t94_पढ़ो_समय(काष्ठा device *dev, काष्ठा rtc_समय *पंचांग)
+अणु
+	काष्ठा spi_device *spi = to_spi_device(dev);
 	u8 buf[2];
-	int ret, hour;
+	पूर्णांक ret, hour;
 
 	/* clear halt update bit */
 	ret = spi_w8r8(spi, M41T94_REG_HT);
-	if (ret < 0)
-		return ret;
-	if (ret & M41T94_BIT_HALT) {
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret & M41T94_BIT_HALT) अणु
 		buf[0] = 0x80 | M41T94_REG_HT;
 		buf[1] = ret & ~M41T94_BIT_HALT;
-		spi_write(spi, buf, 2);
-	}
+		spi_ग_लिखो(spi, buf, 2);
+	पूर्ण
 
 	/* clear stop bit */
 	ret = spi_w8r8(spi, M41T94_REG_SECONDS);
-	if (ret < 0)
-		return ret;
-	if (ret & M41T94_BIT_STOP) {
+	अगर (ret < 0)
+		वापस ret;
+	अगर (ret & M41T94_BIT_STOP) अणु
 		buf[0] = 0x80 | M41T94_REG_SECONDS;
 		buf[1] = ret & ~M41T94_BIT_STOP;
-		spi_write(spi, buf, 2);
-	}
+		spi_ग_लिखो(spi, buf, 2);
+	पूर्ण
 
-	tm->tm_sec  = bcd2bin(spi_w8r8(spi, M41T94_REG_SECONDS));
-	tm->tm_min  = bcd2bin(spi_w8r8(spi, M41T94_REG_MINUTES));
+	पंचांग->पंचांग_sec  = bcd2bin(spi_w8r8(spi, M41T94_REG_SECONDS));
+	पंचांग->पंचांग_min  = bcd2bin(spi_w8r8(spi, M41T94_REG_MINUTES));
 	hour = spi_w8r8(spi, M41T94_REG_HOURS);
-	tm->tm_hour = bcd2bin(hour & 0x3f);
-	tm->tm_wday = bcd2bin(spi_w8r8(spi, M41T94_REG_WDAY)) - 1;
-	tm->tm_mday = bcd2bin(spi_w8r8(spi, M41T94_REG_DAY));
-	tm->tm_mon  = bcd2bin(spi_w8r8(spi, M41T94_REG_MONTH)) - 1;
-	tm->tm_year = bcd2bin(spi_w8r8(spi, M41T94_REG_YEAR));
-	if ((hour & M41T94_BIT_CB) || !(hour & M41T94_BIT_CEB))
-		tm->tm_year += 100;
+	पंचांग->पंचांग_hour = bcd2bin(hour & 0x3f);
+	पंचांग->पंचांग_wday = bcd2bin(spi_w8r8(spi, M41T94_REG_WDAY)) - 1;
+	पंचांग->पंचांग_mday = bcd2bin(spi_w8r8(spi, M41T94_REG_DAY));
+	पंचांग->पंचांग_mon  = bcd2bin(spi_w8r8(spi, M41T94_REG_MONTH)) - 1;
+	पंचांग->पंचांग_year = bcd2bin(spi_w8r8(spi, M41T94_REG_YEAR));
+	अगर ((hour & M41T94_BIT_CB) || !(hour & M41T94_BIT_CEB))
+		पंचांग->पंचांग_year += 100;
 
 	dev_dbg(dev, "%s secs=%d, mins=%d, "
 		"hours=%d, mday=%d, mon=%d, year=%d, wday=%d\n",
-		"read", tm->tm_sec, tm->tm_min,
-		tm->tm_hour, tm->tm_mday,
-		tm->tm_mon, tm->tm_year, tm->tm_wday);
+		"read", पंचांग->पंचांग_sec, पंचांग->पंचांग_min,
+		पंचांग->पंचांग_hour, पंचांग->पंचांग_mday,
+		पंचांग->पंचांग_mon, पंचांग->पंचांग_year, पंचांग->पंचांग_wday);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct rtc_class_ops m41t94_rtc_ops = {
-	.read_time	= m41t94_read_time,
-	.set_time	= m41t94_set_time,
-};
+अटल स्थिर काष्ठा rtc_class_ops m41t94_rtc_ops = अणु
+	.पढ़ो_समय	= m41t94_पढ़ो_समय,
+	.set_समय	= m41t94_set_समय,
+पूर्ण;
 
-static struct spi_driver m41t94_driver;
+अटल काष्ठा spi_driver m41t94_driver;
 
-static int m41t94_probe(struct spi_device *spi)
-{
-	struct rtc_device *rtc;
-	int res;
+अटल पूर्णांक m41t94_probe(काष्ठा spi_device *spi)
+अणु
+	काष्ठा rtc_device *rtc;
+	पूर्णांक res;
 
 	spi->bits_per_word = 8;
 	spi_setup(spi);
 
 	res = spi_w8r8(spi, M41T94_REG_SECONDS);
-	if (res < 0) {
+	अगर (res < 0) अणु
 		dev_err(&spi->dev, "not found.\n");
-		return res;
-	}
+		वापस res;
+	पूर्ण
 
-	rtc = devm_rtc_device_register(&spi->dev, m41t94_driver.driver.name,
+	rtc = devm_rtc_device_रेजिस्टर(&spi->dev, m41t94_driver.driver.name,
 					&m41t94_rtc_ops, THIS_MODULE);
-	if (IS_ERR(rtc))
-		return PTR_ERR(rtc);
+	अगर (IS_ERR(rtc))
+		वापस PTR_ERR(rtc);
 
 	spi_set_drvdata(spi, rtc);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct spi_driver m41t94_driver = {
-	.driver = {
+अटल काष्ठा spi_driver m41t94_driver = अणु
+	.driver = अणु
 		.name	= "rtc-m41t94",
-	},
+	पूर्ण,
 	.probe	= m41t94_probe,
-};
+पूर्ण;
 
 module_spi_driver(m41t94_driver);
 

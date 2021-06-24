@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Cryptographic API.
  *
@@ -9,170 +10,170 @@
  *	      Jan Glauber (jan.glauber@de.ibm.com)
  */
 
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/cpufeature.h>
-#include <linux/crypto.h>
-#include <linux/fips.h>
-#include <linux/mutex.h>
-#include <crypto/algapi.h>
-#include <crypto/internal/des.h>
-#include <crypto/internal/skcipher.h>
-#include <asm/cpacf.h>
+#समावेश <linux/init.h>
+#समावेश <linux/module.h>
+#समावेश <linux/cpufeature.h>
+#समावेश <linux/crypto.h>
+#समावेश <linux/fips.h>
+#समावेश <linux/mutex.h>
+#समावेश <crypto/algapi.h>
+#समावेश <crypto/पूर्णांकernal/des.h>
+#समावेश <crypto/पूर्णांकernal/skcipher.h>
+#समावेश <यंत्र/cpacf.h>
 
-#define DES3_KEY_SIZE	(3 * DES_KEY_SIZE)
+#घोषणा DES3_KEY_SIZE	(3 * DES_KEY_SIZE)
 
-static u8 *ctrblk;
-static DEFINE_MUTEX(ctrblk_lock);
+अटल u8 *ctrblk;
+अटल DEFINE_MUTEX(ctrblk_lock);
 
-static cpacf_mask_t km_functions, kmc_functions, kmctr_functions;
+अटल cpacf_mask_t km_functions, kmc_functions, kmctr_functions;
 
-struct s390_des_ctx {
+काष्ठा s390_des_ctx अणु
 	u8 iv[DES_BLOCK_SIZE];
 	u8 key[DES3_KEY_SIZE];
-};
+पूर्ण;
 
-static int des_setkey(struct crypto_tfm *tfm, const u8 *key,
-		      unsigned int key_len)
-{
-	struct s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
-	int err;
+अटल पूर्णांक des_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key,
+		      अचिन्हित पूर्णांक key_len)
+अणु
+	काष्ठा s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
+	पूर्णांक err;
 
-	err = crypto_des_verify_key(tfm, key);
-	if (err)
-		return err;
+	err = crypto_des_verअगरy_key(tfm, key);
+	अगर (err)
+		वापस err;
 
-	memcpy(ctx->key, key, key_len);
-	return 0;
-}
+	स_नकल(ctx->key, key, key_len);
+	वापस 0;
+पूर्ण
 
-static int des_setkey_skcipher(struct crypto_skcipher *tfm, const u8 *key,
-			       unsigned int key_len)
-{
-	return des_setkey(crypto_skcipher_tfm(tfm), key, key_len);
-}
+अटल पूर्णांक des_setkey_skcipher(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+			       अचिन्हित पूर्णांक key_len)
+अणु
+	वापस des_setkey(crypto_skcipher_tfm(tfm), key, key_len);
+पूर्ण
 
-static void s390_des_encrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
-{
-	struct s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम s390_des_encrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
+अणु
+	काष्ठा s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	cpacf_km(CPACF_KM_DEA, ctx->key, out, in, DES_BLOCK_SIZE);
-}
+पूर्ण
 
-static void s390_des_decrypt(struct crypto_tfm *tfm, u8 *out, const u8 *in)
-{
-	struct s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम s390_des_decrypt(काष्ठा crypto_tfm *tfm, u8 *out, स्थिर u8 *in)
+अणु
+	काष्ठा s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	cpacf_km(CPACF_KM_DEA | CPACF_DECRYPT,
 		 ctx->key, out, in, DES_BLOCK_SIZE);
-}
+पूर्ण
 
-static struct crypto_alg des_alg = {
+अटल काष्ठा crypto_alg des_alg = अणु
 	.cra_name		=	"des",
 	.cra_driver_name	=	"des-s390",
 	.cra_priority		=	300,
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	DES_BLOCK_SIZE,
-	.cra_ctxsize		=	sizeof(struct s390_des_ctx),
+	.cra_ctxsize		=	माप(काष्ठा s390_des_ctx),
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	{
-		.cipher = {
+	.cra_u			=	अणु
+		.cipher = अणु
 			.cia_min_keysize	=	DES_KEY_SIZE,
 			.cia_max_keysize	=	DES_KEY_SIZE,
 			.cia_setkey		=	des_setkey,
 			.cia_encrypt		=	s390_des_encrypt,
 			.cia_decrypt		=	s390_des_decrypt,
-		}
-	}
-};
+		पूर्ण
+	पूर्ण
+पूर्ण;
 
-static int ecb_desall_crypt(struct skcipher_request *req, unsigned long fc)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct s390_des_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct skcipher_walk walk;
-	unsigned int nbytes, n;
-	int ret;
+अटल पूर्णांक ecb_desall_crypt(काष्ठा skcipher_request *req, अचिन्हित दीर्घ fc)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा s390_des_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes, n;
+	पूर्णांक ret;
 
 	ret = skcipher_walk_virt(&walk, req, false);
-	while ((nbytes = walk.nbytes) != 0) {
+	जबतक ((nbytes = walk.nbytes) != 0) अणु
 		/* only use complete blocks */
 		n = nbytes & ~(DES_BLOCK_SIZE - 1);
 		cpacf_km(fc, ctx->key, walk.dst.virt.addr,
 			 walk.src.virt.addr, n);
-		ret = skcipher_walk_done(&walk, nbytes - n);
-	}
-	return ret;
-}
+		ret = skcipher_walk_करोne(&walk, nbytes - n);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int cbc_desall_crypt(struct skcipher_request *req, unsigned long fc)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct s390_des_ctx *ctx = crypto_skcipher_ctx(tfm);
-	struct skcipher_walk walk;
-	unsigned int nbytes, n;
-	int ret;
-	struct {
+अटल पूर्णांक cbc_desall_crypt(काष्ठा skcipher_request *req, अचिन्हित दीर्घ fc)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा s390_des_ctx *ctx = crypto_skcipher_ctx(tfm);
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक nbytes, n;
+	पूर्णांक ret;
+	काष्ठा अणु
 		u8 iv[DES_BLOCK_SIZE];
 		u8 key[DES3_KEY_SIZE];
-	} param;
+	पूर्ण param;
 
 	ret = skcipher_walk_virt(&walk, req, false);
-	if (ret)
-		return ret;
-	memcpy(param.iv, walk.iv, DES_BLOCK_SIZE);
-	memcpy(param.key, ctx->key, DES3_KEY_SIZE);
-	while ((nbytes = walk.nbytes) != 0) {
+	अगर (ret)
+		वापस ret;
+	स_नकल(param.iv, walk.iv, DES_BLOCK_SIZE);
+	स_नकल(param.key, ctx->key, DES3_KEY_SIZE);
+	जबतक ((nbytes = walk.nbytes) != 0) अणु
 		/* only use complete blocks */
 		n = nbytes & ~(DES_BLOCK_SIZE - 1);
 		cpacf_kmc(fc, &param, walk.dst.virt.addr,
 			  walk.src.virt.addr, n);
-		memcpy(walk.iv, param.iv, DES_BLOCK_SIZE);
-		ret = skcipher_walk_done(&walk, nbytes - n);
-	}
-	return ret;
-}
+		स_नकल(walk.iv, param.iv, DES_BLOCK_SIZE);
+		ret = skcipher_walk_करोne(&walk, nbytes - n);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ecb_des_encrypt(struct skcipher_request *req)
-{
-	return ecb_desall_crypt(req, CPACF_KM_DEA);
-}
+अटल पूर्णांक ecb_des_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस ecb_desall_crypt(req, CPACF_KM_DEA);
+पूर्ण
 
-static int ecb_des_decrypt(struct skcipher_request *req)
-{
-	return ecb_desall_crypt(req, CPACF_KM_DEA | CPACF_DECRYPT);
-}
+अटल पूर्णांक ecb_des_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस ecb_desall_crypt(req, CPACF_KM_DEA | CPACF_DECRYPT);
+पूर्ण
 
-static struct skcipher_alg ecb_des_alg = {
+अटल काष्ठा skcipher_alg ecb_des_alg = अणु
 	.base.cra_name		=	"ecb(des)",
 	.base.cra_driver_name	=	"ecb-des-s390",
 	.base.cra_priority	=	400,	/* combo: des + ecb */
 	.base.cra_blocksize	=	DES_BLOCK_SIZE,
-	.base.cra_ctxsize	=	sizeof(struct s390_des_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_des_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.min_keysize		=	DES_KEY_SIZE,
 	.max_keysize		=	DES_KEY_SIZE,
 	.setkey			=	des_setkey_skcipher,
 	.encrypt		=	ecb_des_encrypt,
 	.decrypt		=	ecb_des_decrypt,
-};
+पूर्ण;
 
-static int cbc_des_encrypt(struct skcipher_request *req)
-{
-	return cbc_desall_crypt(req, CPACF_KMC_DEA);
-}
+अटल पूर्णांक cbc_des_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cbc_desall_crypt(req, CPACF_KMC_DEA);
+पूर्ण
 
-static int cbc_des_decrypt(struct skcipher_request *req)
-{
-	return cbc_desall_crypt(req, CPACF_KMC_DEA | CPACF_DECRYPT);
-}
+अटल पूर्णांक cbc_des_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cbc_desall_crypt(req, CPACF_KMC_DEA | CPACF_DECRYPT);
+पूर्ण
 
-static struct skcipher_alg cbc_des_alg = {
+अटल काष्ठा skcipher_alg cbc_des_alg = अणु
 	.base.cra_name		=	"cbc(des)",
 	.base.cra_driver_name	=	"cbc-des-s390",
 	.base.cra_priority	=	400,	/* combo: des + cbc */
 	.base.cra_blocksize	=	DES_BLOCK_SIZE,
-	.base.cra_ctxsize	=	sizeof(struct s390_des_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_des_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.min_keysize		=	DES_KEY_SIZE,
 	.max_keysize		=	DES_KEY_SIZE,
@@ -180,7 +181,7 @@ static struct skcipher_alg cbc_des_alg = {
 	.setkey			=	des_setkey_skcipher,
 	.encrypt		=	cbc_des_encrypt,
 	.decrypt		=	cbc_des_decrypt,
-};
+पूर्ण;
 
 /*
  * RFC2451:
@@ -189,108 +190,108 @@ static struct skcipher_alg cbc_des_alg = {
  *   complementation keys.  Any weakness is obviated by the use of
  *   multiple keys.
  *
- *   However, if the first two or last two independent 64-bit keys are
+ *   However, अगर the first two or last two independent 64-bit keys are
  *   equal (k1 == k2 or k2 == k3), then the DES3 operation is simply the
  *   same as DES.  Implementers MUST reject keys that exhibit this
  *   property.
  *
- *   In fips mode additinally check for all 3 keys are unique.
+ *   In fips mode additinally check क्रम all 3 keys are unique.
  *
  */
-static int des3_setkey(struct crypto_tfm *tfm, const u8 *key,
-		       unsigned int key_len)
-{
-	struct s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
-	int err;
+अटल पूर्णांक des3_setkey(काष्ठा crypto_tfm *tfm, स्थिर u8 *key,
+		       अचिन्हित पूर्णांक key_len)
+अणु
+	काष्ठा s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
+	पूर्णांक err;
 
-	err = crypto_des3_ede_verify_key(tfm, key);
-	if (err)
-		return err;
+	err = crypto_des3_ede_verअगरy_key(tfm, key);
+	अगर (err)
+		वापस err;
 
-	memcpy(ctx->key, key, key_len);
-	return 0;
-}
+	स_नकल(ctx->key, key, key_len);
+	वापस 0;
+पूर्ण
 
-static int des3_setkey_skcipher(struct crypto_skcipher *tfm, const u8 *key,
-				unsigned int key_len)
-{
-	return des3_setkey(crypto_skcipher_tfm(tfm), key, key_len);
-}
+अटल पूर्णांक des3_setkey_skcipher(काष्ठा crypto_skcipher *tfm, स्थिर u8 *key,
+				अचिन्हित पूर्णांक key_len)
+अणु
+	वापस des3_setkey(crypto_skcipher_tfm(tfm), key, key_len);
+पूर्ण
 
-static void des3_encrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम des3_encrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	cpacf_km(CPACF_KM_TDEA_192, ctx->key, dst, src, DES_BLOCK_SIZE);
-}
+पूर्ण
 
-static void des3_decrypt(struct crypto_tfm *tfm, u8 *dst, const u8 *src)
-{
-	struct s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
+अटल व्योम des3_decrypt(काष्ठा crypto_tfm *tfm, u8 *dst, स्थिर u8 *src)
+अणु
+	काष्ठा s390_des_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	cpacf_km(CPACF_KM_TDEA_192 | CPACF_DECRYPT,
 		 ctx->key, dst, src, DES_BLOCK_SIZE);
-}
+पूर्ण
 
-static struct crypto_alg des3_alg = {
+अटल काष्ठा crypto_alg des3_alg = अणु
 	.cra_name		=	"des3_ede",
 	.cra_driver_name	=	"des3_ede-s390",
 	.cra_priority		=	300,
 	.cra_flags		=	CRYPTO_ALG_TYPE_CIPHER,
 	.cra_blocksize		=	DES_BLOCK_SIZE,
-	.cra_ctxsize		=	sizeof(struct s390_des_ctx),
+	.cra_ctxsize		=	माप(काष्ठा s390_des_ctx),
 	.cra_module		=	THIS_MODULE,
-	.cra_u			=	{
-		.cipher = {
+	.cra_u			=	अणु
+		.cipher = अणु
 			.cia_min_keysize	=	DES3_KEY_SIZE,
 			.cia_max_keysize	=	DES3_KEY_SIZE,
 			.cia_setkey		=	des3_setkey,
 			.cia_encrypt		=	des3_encrypt,
 			.cia_decrypt		=	des3_decrypt,
-		}
-	}
-};
+		पूर्ण
+	पूर्ण
+पूर्ण;
 
-static int ecb_des3_encrypt(struct skcipher_request *req)
-{
-	return ecb_desall_crypt(req, CPACF_KM_TDEA_192);
-}
+अटल पूर्णांक ecb_des3_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस ecb_desall_crypt(req, CPACF_KM_TDEA_192);
+पूर्ण
 
-static int ecb_des3_decrypt(struct skcipher_request *req)
-{
-	return ecb_desall_crypt(req, CPACF_KM_TDEA_192 | CPACF_DECRYPT);
-}
+अटल पूर्णांक ecb_des3_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस ecb_desall_crypt(req, CPACF_KM_TDEA_192 | CPACF_DECRYPT);
+पूर्ण
 
-static struct skcipher_alg ecb_des3_alg = {
+अटल काष्ठा skcipher_alg ecb_des3_alg = अणु
 	.base.cra_name		=	"ecb(des3_ede)",
 	.base.cra_driver_name	=	"ecb-des3_ede-s390",
 	.base.cra_priority	=	400,	/* combo: des3 + ecb */
 	.base.cra_blocksize	=	DES_BLOCK_SIZE,
-	.base.cra_ctxsize	=	sizeof(struct s390_des_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_des_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.min_keysize		=	DES3_KEY_SIZE,
 	.max_keysize		=	DES3_KEY_SIZE,
 	.setkey			=	des3_setkey_skcipher,
 	.encrypt		=	ecb_des3_encrypt,
 	.decrypt		=	ecb_des3_decrypt,
-};
+पूर्ण;
 
-static int cbc_des3_encrypt(struct skcipher_request *req)
-{
-	return cbc_desall_crypt(req, CPACF_KMC_TDEA_192);
-}
+अटल पूर्णांक cbc_des3_encrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cbc_desall_crypt(req, CPACF_KMC_TDEA_192);
+पूर्ण
 
-static int cbc_des3_decrypt(struct skcipher_request *req)
-{
-	return cbc_desall_crypt(req, CPACF_KMC_TDEA_192 | CPACF_DECRYPT);
-}
+अटल पूर्णांक cbc_des3_decrypt(काष्ठा skcipher_request *req)
+अणु
+	वापस cbc_desall_crypt(req, CPACF_KMC_TDEA_192 | CPACF_DECRYPT);
+पूर्ण
 
-static struct skcipher_alg cbc_des3_alg = {
+अटल काष्ठा skcipher_alg cbc_des3_alg = अणु
 	.base.cra_name		=	"cbc(des3_ede)",
 	.base.cra_driver_name	=	"cbc-des3_ede-s390",
 	.base.cra_priority	=	400,	/* combo: des3 + cbc */
 	.base.cra_blocksize	=	DES_BLOCK_SIZE,
-	.base.cra_ctxsize	=	sizeof(struct s390_des_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_des_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.min_keysize		=	DES3_KEY_SIZE,
 	.max_keysize		=	DES3_KEY_SIZE,
@@ -298,72 +299,72 @@ static struct skcipher_alg cbc_des3_alg = {
 	.setkey			=	des3_setkey_skcipher,
 	.encrypt		=	cbc_des3_encrypt,
 	.decrypt		=	cbc_des3_decrypt,
-};
+पूर्ण;
 
-static unsigned int __ctrblk_init(u8 *ctrptr, u8 *iv, unsigned int nbytes)
-{
-	unsigned int i, n;
+अटल अचिन्हित पूर्णांक __ctrblk_init(u8 *ctrptr, u8 *iv, अचिन्हित पूर्णांक nbytes)
+अणु
+	अचिन्हित पूर्णांक i, n;
 
 	/* align to block size, max. PAGE_SIZE */
 	n = (nbytes > PAGE_SIZE) ? PAGE_SIZE : nbytes & ~(DES_BLOCK_SIZE - 1);
-	memcpy(ctrptr, iv, DES_BLOCK_SIZE);
-	for (i = (n / DES_BLOCK_SIZE) - 1; i > 0; i--) {
-		memcpy(ctrptr + DES_BLOCK_SIZE, ctrptr, DES_BLOCK_SIZE);
+	स_नकल(ctrptr, iv, DES_BLOCK_SIZE);
+	क्रम (i = (n / DES_BLOCK_SIZE) - 1; i > 0; i--) अणु
+		स_नकल(ctrptr + DES_BLOCK_SIZE, ctrptr, DES_BLOCK_SIZE);
 		crypto_inc(ctrptr + DES_BLOCK_SIZE, DES_BLOCK_SIZE);
 		ctrptr += DES_BLOCK_SIZE;
-	}
-	return n;
-}
+	पूर्ण
+	वापस n;
+पूर्ण
 
-static int ctr_desall_crypt(struct skcipher_request *req, unsigned long fc)
-{
-	struct crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
-	struct s390_des_ctx *ctx = crypto_skcipher_ctx(tfm);
+अटल पूर्णांक ctr_desall_crypt(काष्ठा skcipher_request *req, अचिन्हित दीर्घ fc)
+अणु
+	काष्ठा crypto_skcipher *tfm = crypto_skcipher_reqtfm(req);
+	काष्ठा s390_des_ctx *ctx = crypto_skcipher_ctx(tfm);
 	u8 buf[DES_BLOCK_SIZE], *ctrptr;
-	struct skcipher_walk walk;
-	unsigned int n, nbytes;
-	int ret, locked;
+	काष्ठा skcipher_walk walk;
+	अचिन्हित पूर्णांक n, nbytes;
+	पूर्णांक ret, locked;
 
 	locked = mutex_trylock(&ctrblk_lock);
 
 	ret = skcipher_walk_virt(&walk, req, false);
-	while ((nbytes = walk.nbytes) >= DES_BLOCK_SIZE) {
+	जबतक ((nbytes = walk.nbytes) >= DES_BLOCK_SIZE) अणु
 		n = DES_BLOCK_SIZE;
-		if (nbytes >= 2*DES_BLOCK_SIZE && locked)
+		अगर (nbytes >= 2*DES_BLOCK_SIZE && locked)
 			n = __ctrblk_init(ctrblk, walk.iv, nbytes);
 		ctrptr = (n > DES_BLOCK_SIZE) ? ctrblk : walk.iv;
 		cpacf_kmctr(fc, ctx->key, walk.dst.virt.addr,
 			    walk.src.virt.addr, n, ctrptr);
-		if (ctrptr == ctrblk)
-			memcpy(walk.iv, ctrptr + n - DES_BLOCK_SIZE,
+		अगर (ctrptr == ctrblk)
+			स_नकल(walk.iv, ctrptr + n - DES_BLOCK_SIZE,
 				DES_BLOCK_SIZE);
 		crypto_inc(walk.iv, DES_BLOCK_SIZE);
-		ret = skcipher_walk_done(&walk, nbytes - n);
-	}
-	if (locked)
+		ret = skcipher_walk_करोne(&walk, nbytes - n);
+	पूर्ण
+	अगर (locked)
 		mutex_unlock(&ctrblk_lock);
 	/* final block may be < DES_BLOCK_SIZE, copy only nbytes */
-	if (nbytes) {
+	अगर (nbytes) अणु
 		cpacf_kmctr(fc, ctx->key, buf, walk.src.virt.addr,
 			    DES_BLOCK_SIZE, walk.iv);
-		memcpy(walk.dst.virt.addr, buf, nbytes);
+		स_नकल(walk.dst.virt.addr, buf, nbytes);
 		crypto_inc(walk.iv, DES_BLOCK_SIZE);
-		ret = skcipher_walk_done(&walk, 0);
-	}
-	return ret;
-}
+		ret = skcipher_walk_करोne(&walk, 0);
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static int ctr_des_crypt(struct skcipher_request *req)
-{
-	return ctr_desall_crypt(req, CPACF_KMCTR_DEA);
-}
+अटल पूर्णांक ctr_des_crypt(काष्ठा skcipher_request *req)
+अणु
+	वापस ctr_desall_crypt(req, CPACF_KMCTR_DEA);
+पूर्ण
 
-static struct skcipher_alg ctr_des_alg = {
+अटल काष्ठा skcipher_alg ctr_des_alg = अणु
 	.base.cra_name		=	"ctr(des)",
 	.base.cra_driver_name	=	"ctr-des-s390",
 	.base.cra_priority	=	400,	/* combo: des + ctr */
 	.base.cra_blocksize	=	1,
-	.base.cra_ctxsize	=	sizeof(struct s390_des_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_des_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.min_keysize		=	DES_KEY_SIZE,
 	.max_keysize		=	DES_KEY_SIZE,
@@ -372,19 +373,19 @@ static struct skcipher_alg ctr_des_alg = {
 	.encrypt		=	ctr_des_crypt,
 	.decrypt		=	ctr_des_crypt,
 	.chunksize		=	DES_BLOCK_SIZE,
-};
+पूर्ण;
 
-static int ctr_des3_crypt(struct skcipher_request *req)
-{
-	return ctr_desall_crypt(req, CPACF_KMCTR_TDEA_192);
-}
+अटल पूर्णांक ctr_des3_crypt(काष्ठा skcipher_request *req)
+अणु
+	वापस ctr_desall_crypt(req, CPACF_KMCTR_TDEA_192);
+पूर्ण
 
-static struct skcipher_alg ctr_des3_alg = {
+अटल काष्ठा skcipher_alg ctr_des3_alg = अणु
 	.base.cra_name		=	"ctr(des3_ede)",
 	.base.cra_driver_name	=	"ctr-des3_ede-s390",
 	.base.cra_priority	=	400,	/* combo: des3 + ede */
 	.base.cra_blocksize	=	1,
-	.base.cra_ctxsize	=	sizeof(struct s390_des_ctx),
+	.base.cra_ctxsize	=	माप(काष्ठा s390_des_ctx),
 	.base.cra_module	=	THIS_MODULE,
 	.min_keysize		=	DES3_KEY_SIZE,
 	.max_keysize		=	DES3_KEY_SIZE,
@@ -393,107 +394,107 @@ static struct skcipher_alg ctr_des3_alg = {
 	.encrypt		=	ctr_des3_crypt,
 	.decrypt		=	ctr_des3_crypt,
 	.chunksize		=	DES_BLOCK_SIZE,
-};
+पूर्ण;
 
-static struct crypto_alg *des_s390_algs_ptr[2];
-static int des_s390_algs_num;
-static struct skcipher_alg *des_s390_skciphers_ptr[6];
-static int des_s390_skciphers_num;
+अटल काष्ठा crypto_alg *des_s390_algs_ptr[2];
+अटल पूर्णांक des_s390_algs_num;
+अटल काष्ठा skcipher_alg *des_s390_skciphers_ptr[6];
+अटल पूर्णांक des_s390_skciphers_num;
 
-static int des_s390_register_alg(struct crypto_alg *alg)
-{
-	int ret;
+अटल पूर्णांक des_s390_रेजिस्टर_alg(काष्ठा crypto_alg *alg)
+अणु
+	पूर्णांक ret;
 
-	ret = crypto_register_alg(alg);
-	if (!ret)
+	ret = crypto_रेजिस्टर_alg(alg);
+	अगर (!ret)
 		des_s390_algs_ptr[des_s390_algs_num++] = alg;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int des_s390_register_skcipher(struct skcipher_alg *alg)
-{
-	int ret;
+अटल पूर्णांक des_s390_रेजिस्टर_skcipher(काष्ठा skcipher_alg *alg)
+अणु
+	पूर्णांक ret;
 
-	ret = crypto_register_skcipher(alg);
-	if (!ret)
+	ret = crypto_रेजिस्टर_skcipher(alg);
+	अगर (!ret)
 		des_s390_skciphers_ptr[des_s390_skciphers_num++] = alg;
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void des_s390_exit(void)
-{
-	while (des_s390_algs_num--)
-		crypto_unregister_alg(des_s390_algs_ptr[des_s390_algs_num]);
-	while (des_s390_skciphers_num--)
-		crypto_unregister_skcipher(des_s390_skciphers_ptr[des_s390_skciphers_num]);
-	if (ctrblk)
-		free_page((unsigned long) ctrblk);
-}
+अटल व्योम des_s390_निकास(व्योम)
+अणु
+	जबतक (des_s390_algs_num--)
+		crypto_unरेजिस्टर_alg(des_s390_algs_ptr[des_s390_algs_num]);
+	जबतक (des_s390_skciphers_num--)
+		crypto_unरेजिस्टर_skcipher(des_s390_skciphers_ptr[des_s390_skciphers_num]);
+	अगर (ctrblk)
+		मुक्त_page((अचिन्हित दीर्घ) ctrblk);
+पूर्ण
 
-static int __init des_s390_init(void)
-{
-	int ret;
+अटल पूर्णांक __init des_s390_init(व्योम)
+अणु
+	पूर्णांक ret;
 
-	/* Query available functions for KM, KMC and KMCTR */
+	/* Query available functions क्रम KM, KMC and KMCTR */
 	cpacf_query(CPACF_KM, &km_functions);
 	cpacf_query(CPACF_KMC, &kmc_functions);
 	cpacf_query(CPACF_KMCTR, &kmctr_functions);
 
-	if (cpacf_test_func(&km_functions, CPACF_KM_DEA)) {
-		ret = des_s390_register_alg(&des_alg);
-		if (ret)
-			goto out_err;
-		ret = des_s390_register_skcipher(&ecb_des_alg);
-		if (ret)
-			goto out_err;
-	}
-	if (cpacf_test_func(&kmc_functions, CPACF_KMC_DEA)) {
-		ret = des_s390_register_skcipher(&cbc_des_alg);
-		if (ret)
-			goto out_err;
-	}
-	if (cpacf_test_func(&km_functions, CPACF_KM_TDEA_192)) {
-		ret = des_s390_register_alg(&des3_alg);
-		if (ret)
-			goto out_err;
-		ret = des_s390_register_skcipher(&ecb_des3_alg);
-		if (ret)
-			goto out_err;
-	}
-	if (cpacf_test_func(&kmc_functions, CPACF_KMC_TDEA_192)) {
-		ret = des_s390_register_skcipher(&cbc_des3_alg);
-		if (ret)
-			goto out_err;
-	}
+	अगर (cpacf_test_func(&km_functions, CPACF_KM_DEA)) अणु
+		ret = des_s390_रेजिस्टर_alg(&des_alg);
+		अगर (ret)
+			जाओ out_err;
+		ret = des_s390_रेजिस्टर_skcipher(&ecb_des_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
+	अगर (cpacf_test_func(&kmc_functions, CPACF_KMC_DEA)) अणु
+		ret = des_s390_रेजिस्टर_skcipher(&cbc_des_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
+	अगर (cpacf_test_func(&km_functions, CPACF_KM_TDEA_192)) अणु
+		ret = des_s390_रेजिस्टर_alg(&des3_alg);
+		अगर (ret)
+			जाओ out_err;
+		ret = des_s390_रेजिस्टर_skcipher(&ecb_des3_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
+	अगर (cpacf_test_func(&kmc_functions, CPACF_KMC_TDEA_192)) अणु
+		ret = des_s390_रेजिस्टर_skcipher(&cbc_des3_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
 
-	if (cpacf_test_func(&kmctr_functions, CPACF_KMCTR_DEA) ||
-	    cpacf_test_func(&kmctr_functions, CPACF_KMCTR_TDEA_192)) {
-		ctrblk = (u8 *) __get_free_page(GFP_KERNEL);
-		if (!ctrblk) {
+	अगर (cpacf_test_func(&kmctr_functions, CPACF_KMCTR_DEA) ||
+	    cpacf_test_func(&kmctr_functions, CPACF_KMCTR_TDEA_192)) अणु
+		ctrblk = (u8 *) __get_मुक्त_page(GFP_KERNEL);
+		अगर (!ctrblk) अणु
 			ret = -ENOMEM;
-			goto out_err;
-		}
-	}
+			जाओ out_err;
+		पूर्ण
+	पूर्ण
 
-	if (cpacf_test_func(&kmctr_functions, CPACF_KMCTR_DEA)) {
-		ret = des_s390_register_skcipher(&ctr_des_alg);
-		if (ret)
-			goto out_err;
-	}
-	if (cpacf_test_func(&kmctr_functions, CPACF_KMCTR_TDEA_192)) {
-		ret = des_s390_register_skcipher(&ctr_des3_alg);
-		if (ret)
-			goto out_err;
-	}
+	अगर (cpacf_test_func(&kmctr_functions, CPACF_KMCTR_DEA)) अणु
+		ret = des_s390_रेजिस्टर_skcipher(&ctr_des_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
+	अगर (cpacf_test_func(&kmctr_functions, CPACF_KMCTR_TDEA_192)) अणु
+		ret = des_s390_रेजिस्टर_skcipher(&ctr_des3_alg);
+		अगर (ret)
+			जाओ out_err;
+	पूर्ण
 
-	return 0;
+	वापस 0;
 out_err:
-	des_s390_exit();
-	return ret;
-}
+	des_s390_निकास();
+	वापस ret;
+पूर्ण
 
 module_cpu_feature_match(MSA, des_s390_init);
-module_exit(des_s390_exit);
+module_निकास(des_s390_निकास);
 
 MODULE_ALIAS_CRYPTO("des");
 MODULE_ALIAS_CRYPTO("des3_ede");

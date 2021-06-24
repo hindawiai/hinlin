@@ -1,234 +1,235 @@
-// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
 /* Copyright (c) 2015, The Linux Foundation. All rights reserved. */
 /* Copyright (c) 2020 Sartura Ltd. */
 
-#include <linux/delay.h>
-#include <linux/io.h>
-#include <linux/iopoll.h>
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_mdio.h>
-#include <linux/phy.h>
-#include <linux/platform_device.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/iopoll.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/phy.h>
+#समावेश <linux/platक्रमm_device.h>
 
-#define MDIO_MODE_REG				0x40
-#define MDIO_ADDR_REG				0x44
-#define MDIO_DATA_WRITE_REG			0x48
-#define MDIO_DATA_READ_REG			0x4c
-#define MDIO_CMD_REG				0x50
-#define MDIO_CMD_ACCESS_BUSY		BIT(16)
-#define MDIO_CMD_ACCESS_START		BIT(8)
-#define MDIO_CMD_ACCESS_CODE_READ	0
-#define MDIO_CMD_ACCESS_CODE_WRITE	1
-#define MDIO_CMD_ACCESS_CODE_C45_ADDR	0
-#define MDIO_CMD_ACCESS_CODE_C45_WRITE	1
-#define MDIO_CMD_ACCESS_CODE_C45_READ	2
+#घोषणा MDIO_MODE_REG				0x40
+#घोषणा MDIO_ADDR_REG				0x44
+#घोषणा MDIO_DATA_WRITE_REG			0x48
+#घोषणा MDIO_DATA_READ_REG			0x4c
+#घोषणा MDIO_CMD_REG				0x50
+#घोषणा MDIO_CMD_ACCESS_BUSY		BIT(16)
+#घोषणा MDIO_CMD_ACCESS_START		BIT(8)
+#घोषणा MDIO_CMD_ACCESS_CODE_READ	0
+#घोषणा MDIO_CMD_ACCESS_CODE_WRITE	1
+#घोषणा MDIO_CMD_ACCESS_CODE_C45_ADDR	0
+#घोषणा MDIO_CMD_ACCESS_CODE_C45_WRITE	1
+#घोषणा MDIO_CMD_ACCESS_CODE_C45_READ	2
 
 /* 0 = Clause 22, 1 = Clause 45 */
-#define MDIO_MODE_C45				BIT(8)
+#घोषणा MDIO_MODE_C45				BIT(8)
 
-#define IPQ4019_MDIO_TIMEOUT	10000
-#define IPQ4019_MDIO_SLEEP		10
+#घोषणा IPQ4019_MDIO_TIMEOUT	10000
+#घोषणा IPQ4019_MDIO_SLEEP		10
 
-struct ipq4019_mdio_data {
-	void __iomem	*membase;
-};
+काष्ठा ipq4019_mdio_data अणु
+	व्योम __iomem	*membase;
+पूर्ण;
 
-static int ipq4019_mdio_wait_busy(struct mii_bus *bus)
-{
-	struct ipq4019_mdio_data *priv = bus->priv;
-	unsigned int busy;
+अटल पूर्णांक ipq4019_mdio_रुको_busy(काष्ठा mii_bus *bus)
+अणु
+	काष्ठा ipq4019_mdio_data *priv = bus->priv;
+	अचिन्हित पूर्णांक busy;
 
-	return readl_poll_timeout(priv->membase + MDIO_CMD_REG, busy,
+	वापस पढ़ोl_poll_समयout(priv->membase + MDIO_CMD_REG, busy,
 				  (busy & MDIO_CMD_ACCESS_BUSY) == 0,
 				  IPQ4019_MDIO_SLEEP, IPQ4019_MDIO_TIMEOUT);
-}
+पूर्ण
 
-static int ipq4019_mdio_read(struct mii_bus *bus, int mii_id, int regnum)
-{
-	struct ipq4019_mdio_data *priv = bus->priv;
-	unsigned int data;
-	unsigned int cmd;
+अटल पूर्णांक ipq4019_mdio_पढ़ो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum)
+अणु
+	काष्ठा ipq4019_mdio_data *priv = bus->priv;
+	अचिन्हित पूर्णांक data;
+	अचिन्हित पूर्णांक cmd;
 
-	if (ipq4019_mdio_wait_busy(bus))
-		return -ETIMEDOUT;
+	अगर (ipq4019_mdio_रुको_busy(bus))
+		वापस -ETIMEDOUT;
 
 	/* Clause 45 support */
-	if (regnum & MII_ADDR_C45) {
-		unsigned int mmd = (regnum >> 16) & 0x1F;
-		unsigned int reg = regnum & 0xFFFF;
+	अगर (regnum & MII_ADDR_C45) अणु
+		अचिन्हित पूर्णांक mmd = (regnum >> 16) & 0x1F;
+		अचिन्हित पूर्णांक reg = regnum & 0xFFFF;
 
 		/* Enter Clause 45 mode */
-		data = readl(priv->membase + MDIO_MODE_REG);
+		data = पढ़ोl(priv->membase + MDIO_MODE_REG);
 
 		data |= MDIO_MODE_C45;
 
-		writel(data, priv->membase + MDIO_MODE_REG);
+		ग_लिखोl(data, priv->membase + MDIO_MODE_REG);
 
 		/* issue the phy address and mmd */
-		writel((mii_id << 8) | mmd, priv->membase + MDIO_ADDR_REG);
+		ग_लिखोl((mii_id << 8) | mmd, priv->membase + MDIO_ADDR_REG);
 
 		/* issue reg */
-		writel(reg, priv->membase + MDIO_DATA_WRITE_REG);
+		ग_लिखोl(reg, priv->membase + MDIO_DATA_WRITE_REG);
 
 		cmd = MDIO_CMD_ACCESS_START | MDIO_CMD_ACCESS_CODE_C45_ADDR;
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Enter Clause 22 mode */
-		data = readl(priv->membase + MDIO_MODE_REG);
+		data = पढ़ोl(priv->membase + MDIO_MODE_REG);
 
 		data &= ~MDIO_MODE_C45;
 
-		writel(data, priv->membase + MDIO_MODE_REG);
+		ग_लिखोl(data, priv->membase + MDIO_MODE_REG);
 
 		/* issue the phy address and reg */
-		writel((mii_id << 8) | regnum, priv->membase + MDIO_ADDR_REG);
+		ग_लिखोl((mii_id << 8) | regnum, priv->membase + MDIO_ADDR_REG);
 
 		cmd = MDIO_CMD_ACCESS_START | MDIO_CMD_ACCESS_CODE_READ;
-	}
+	पूर्ण
 
-	/* issue read command */
-	writel(cmd, priv->membase + MDIO_CMD_REG);
+	/* issue पढ़ो command */
+	ग_लिखोl(cmd, priv->membase + MDIO_CMD_REG);
 
-	/* Wait read complete */
-	if (ipq4019_mdio_wait_busy(bus))
-		return -ETIMEDOUT;
+	/* Wait पढ़ो complete */
+	अगर (ipq4019_mdio_रुको_busy(bus))
+		वापस -ETIMEDOUT;
 
-	if (regnum & MII_ADDR_C45) {
+	अगर (regnum & MII_ADDR_C45) अणु
 		cmd = MDIO_CMD_ACCESS_START | MDIO_CMD_ACCESS_CODE_C45_READ;
 
-		writel(cmd, priv->membase + MDIO_CMD_REG);
+		ग_लिखोl(cmd, priv->membase + MDIO_CMD_REG);
 
-		if (ipq4019_mdio_wait_busy(bus))
-			return -ETIMEDOUT;
-	}
+		अगर (ipq4019_mdio_रुको_busy(bus))
+			वापस -ETIMEDOUT;
+	पूर्ण
 
-	/* Read and return data */
-	return readl(priv->membase + MDIO_DATA_READ_REG);
-}
+	/* Read and वापस data */
+	वापस पढ़ोl(priv->membase + MDIO_DATA_READ_REG);
+पूर्ण
 
-static int ipq4019_mdio_write(struct mii_bus *bus, int mii_id, int regnum,
+अटल पूर्णांक ipq4019_mdio_ग_लिखो(काष्ठा mii_bus *bus, पूर्णांक mii_id, पूर्णांक regnum,
 							 u16 value)
-{
-	struct ipq4019_mdio_data *priv = bus->priv;
-	unsigned int data;
-	unsigned int cmd;
+अणु
+	काष्ठा ipq4019_mdio_data *priv = bus->priv;
+	अचिन्हित पूर्णांक data;
+	अचिन्हित पूर्णांक cmd;
 
-	if (ipq4019_mdio_wait_busy(bus))
-		return -ETIMEDOUT;
+	अगर (ipq4019_mdio_रुको_busy(bus))
+		वापस -ETIMEDOUT;
 
 	/* Clause 45 support */
-	if (regnum & MII_ADDR_C45) {
-		unsigned int mmd = (regnum >> 16) & 0x1F;
-		unsigned int reg = regnum & 0xFFFF;
+	अगर (regnum & MII_ADDR_C45) अणु
+		अचिन्हित पूर्णांक mmd = (regnum >> 16) & 0x1F;
+		अचिन्हित पूर्णांक reg = regnum & 0xFFFF;
 
 		/* Enter Clause 45 mode */
-		data = readl(priv->membase + MDIO_MODE_REG);
+		data = पढ़ोl(priv->membase + MDIO_MODE_REG);
 
 		data |= MDIO_MODE_C45;
 
-		writel(data, priv->membase + MDIO_MODE_REG);
+		ग_लिखोl(data, priv->membase + MDIO_MODE_REG);
 
 		/* issue the phy address and mmd */
-		writel((mii_id << 8) | mmd, priv->membase + MDIO_ADDR_REG);
+		ग_लिखोl((mii_id << 8) | mmd, priv->membase + MDIO_ADDR_REG);
 
 		/* issue reg */
-		writel(reg, priv->membase + MDIO_DATA_WRITE_REG);
+		ग_लिखोl(reg, priv->membase + MDIO_DATA_WRITE_REG);
 
 		cmd = MDIO_CMD_ACCESS_START | MDIO_CMD_ACCESS_CODE_C45_ADDR;
 
-		writel(cmd, priv->membase + MDIO_CMD_REG);
+		ग_लिखोl(cmd, priv->membase + MDIO_CMD_REG);
 
-		if (ipq4019_mdio_wait_busy(bus))
-			return -ETIMEDOUT;
-	} else {
+		अगर (ipq4019_mdio_रुको_busy(bus))
+			वापस -ETIMEDOUT;
+	पूर्ण अन्यथा अणु
 		/* Enter Clause 22 mode */
-		data = readl(priv->membase + MDIO_MODE_REG);
+		data = पढ़ोl(priv->membase + MDIO_MODE_REG);
 
 		data &= ~MDIO_MODE_C45;
 
-		writel(data, priv->membase + MDIO_MODE_REG);
+		ग_लिखोl(data, priv->membase + MDIO_MODE_REG);
 
 		/* issue the phy address and reg */
-		writel((mii_id << 8) | regnum, priv->membase + MDIO_ADDR_REG);
-	}
+		ग_लिखोl((mii_id << 8) | regnum, priv->membase + MDIO_ADDR_REG);
+	पूर्ण
 
-	/* issue write data */
-	writel(value, priv->membase + MDIO_DATA_WRITE_REG);
+	/* issue ग_लिखो data */
+	ग_लिखोl(value, priv->membase + MDIO_DATA_WRITE_REG);
 
-	/* issue write command */
-	if (regnum & MII_ADDR_C45)
+	/* issue ग_लिखो command */
+	अगर (regnum & MII_ADDR_C45)
 		cmd = MDIO_CMD_ACCESS_START | MDIO_CMD_ACCESS_CODE_C45_WRITE;
-	else
+	अन्यथा
 		cmd = MDIO_CMD_ACCESS_START | MDIO_CMD_ACCESS_CODE_WRITE;
 
-	writel(cmd, priv->membase + MDIO_CMD_REG);
+	ग_लिखोl(cmd, priv->membase + MDIO_CMD_REG);
 
-	/* Wait write complete */
-	if (ipq4019_mdio_wait_busy(bus))
-		return -ETIMEDOUT;
+	/* Wait ग_लिखो complete */
+	अगर (ipq4019_mdio_रुको_busy(bus))
+		वापस -ETIMEDOUT;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipq4019_mdio_probe(struct platform_device *pdev)
-{
-	struct ipq4019_mdio_data *priv;
-	struct mii_bus *bus;
-	int ret;
+अटल पूर्णांक ipq4019_mdio_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा ipq4019_mdio_data *priv;
+	काष्ठा mii_bus *bus;
+	पूर्णांक ret;
 
-	bus = devm_mdiobus_alloc_size(&pdev->dev, sizeof(*priv));
-	if (!bus)
-		return -ENOMEM;
+	bus = devm_mdiobus_alloc_size(&pdev->dev, माप(*priv));
+	अगर (!bus)
+		वापस -ENOMEM;
 
 	priv = bus->priv;
 
-	priv->membase = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR(priv->membase))
-		return PTR_ERR(priv->membase);
+	priv->membase = devm_platक्रमm_ioremap_resource(pdev, 0);
+	अगर (IS_ERR(priv->membase))
+		वापस PTR_ERR(priv->membase);
 
 	bus->name = "ipq4019_mdio";
-	bus->read = ipq4019_mdio_read;
-	bus->write = ipq4019_mdio_write;
+	bus->पढ़ो = ipq4019_mdio_पढ़ो;
+	bus->ग_लिखो = ipq4019_mdio_ग_लिखो;
 	bus->parent = &pdev->dev;
-	snprintf(bus->id, MII_BUS_ID_SIZE, "%s%d", pdev->name, pdev->id);
+	snम_लिखो(bus->id, MII_BUS_ID_SIZE, "%s%d", pdev->name, pdev->id);
 
-	ret = of_mdiobus_register(bus, pdev->dev.of_node);
-	if (ret) {
+	ret = of_mdiobus_रेजिस्टर(bus, pdev->dev.of_node);
+	अगर (ret) अणु
 		dev_err(&pdev->dev, "Cannot register MDIO bus!\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	platform_set_drvdata(pdev, bus);
+	platक्रमm_set_drvdata(pdev, bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int ipq4019_mdio_remove(struct platform_device *pdev)
-{
-	struct mii_bus *bus = platform_get_drvdata(pdev);
+अटल पूर्णांक ipq4019_mdio_हटाओ(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा mii_bus *bus = platक्रमm_get_drvdata(pdev);
 
-	mdiobus_unregister(bus);
+	mdiobus_unरेजिस्टर(bus);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static const struct of_device_id ipq4019_mdio_dt_ids[] = {
-	{ .compatible = "qcom,ipq4019-mdio" },
-	{ }
-};
+अटल स्थिर काष्ठा of_device_id ipq4019_mdio_dt_ids[] = अणु
+	अणु .compatible = "qcom,ipq4019-mdio" पूर्ण,
+	अणु पूर्ण
+पूर्ण;
 MODULE_DEVICE_TABLE(of, ipq4019_mdio_dt_ids);
 
-static struct platform_driver ipq4019_mdio_driver = {
+अटल काष्ठा platक्रमm_driver ipq4019_mdio_driver = अणु
 	.probe = ipq4019_mdio_probe,
-	.remove = ipq4019_mdio_remove,
-	.driver = {
+	.हटाओ = ipq4019_mdio_हटाओ,
+	.driver = अणु
 		.name = "ipq4019-mdio",
 		.of_match_table = ipq4019_mdio_dt_ids,
-	},
-};
+	पूर्ण,
+पूर्ण;
 
-module_platform_driver(ipq4019_mdio_driver);
+module_platक्रमm_driver(ipq4019_mdio_driver);
 
 MODULE_DESCRIPTION("ipq4019 MDIO interface driver");
 MODULE_AUTHOR("Qualcomm Atheros");

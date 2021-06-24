@@ -1,72 +1,73 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ST_PINCFG_H_
-#define _ST_PINCFG_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ST_PINCFG_H_
+#घोषणा _ST_PINCFG_H_
 
 /* Alternate functions */
-#define ALT1	1
-#define ALT2	2
-#define ALT3	3
-#define ALT4	4
-#define ALT5	5
-#define ALT6	6
-#define ALT7	7
+#घोषणा ALT1	1
+#घोषणा ALT2	2
+#घोषणा ALT3	3
+#घोषणा ALT4	4
+#घोषणा ALT5	5
+#घोषणा ALT6	6
+#घोषणा ALT7	7
 
 /* Output enable */
-#define OE			(1 << 27)
+#घोषणा OE			(1 << 27)
 /* Pull Up */
-#define PU			(1 << 26)
+#घोषणा PU			(1 << 26)
 /* Open Drain */
-#define OD			(1 << 25)
-#define RT			(1 << 23)
-#define INVERTCLK		(1 << 22)
-#define CLKNOTDATA		(1 << 21)
-#define DOUBLE_EDGE		(1 << 20)
-#define CLK_A			(0 << 18)
-#define CLK_B			(1 << 18)
-#define CLK_C			(2 << 18)
-#define CLK_D			(3 << 18)
+#घोषणा OD			(1 << 25)
+#घोषणा RT			(1 << 23)
+#घोषणा INVERTCLK		(1 << 22)
+#घोषणा CLKNOTDATA		(1 << 21)
+#घोषणा DOUBLE_EDGE		(1 << 20)
+#घोषणा CLK_A			(0 << 18)
+#घोषणा CLK_B			(1 << 18)
+#घोषणा CLK_C			(2 << 18)
+#घोषणा CLK_D			(3 << 18)
 
-/* User-frendly defines for Pin Direction */
+/* User-frendly defines क्रम Pin Direction */
 		/* oe = 0, pu = 0, od = 0 */
-#define IN			(0)
+#घोषणा IN			(0)
 		/* oe = 0, pu = 1, od = 0 */
-#define IN_PU			(PU)
+#घोषणा IN_PU			(PU)
 		/* oe = 1, pu = 0, od = 0 */
-#define OUT			(OE)
+#घोषणा OUT			(OE)
 		/* oe = 1, pu = 0, od = 1 */
-#define BIDIR			(OE | OD)
+#घोषणा BIसूची			(OE | OD)
 		/* oe = 1, pu = 1, od = 1 */
-#define BIDIR_PU		(OE | PU | OD)
+#घोषणा BIसूची_PU		(OE | PU | OD)
 
 /* RETIME_TYPE */
 /*
  * B Mode
- * Bypass retime with optional delay parameter
+ * Bypass reसमय with optional delay parameter
  */
-#define BYPASS		(0)
+#घोषणा BYPASS		(0)
 /*
  * R0, R1, R0D, R1D modes
- * single-edge data non inverted clock, retime data with clk
+ * single-edge data non inverted घड़ी, reसमय data with clk
  */
-#define SE_NICLK_IO	(RT)
+#घोषणा SE_NICLK_IO	(RT)
 /*
  * RIV0, RIV1, RIV0D, RIV1D modes
- * single-edge data inverted clock, retime data with clk
+ * single-edge data inverted घड़ी, reसमय data with clk
  */
-#define SE_ICLK_IO	(RT | INVERTCLK)
+#घोषणा SE_ICLK_IO	(RT | INVERTCLK)
 /*
  * R0E, R1E, R0ED, R1ED modes
- * double-edge data, retime data with clk
+ * द्विगुन-edge data, reसमय data with clk
  */
-#define DE_IO		(RT | DOUBLE_EDGE)
+#घोषणा DE_IO		(RT | DOUBLE_EDGE)
 /*
- * CIV0, CIV1 modes with inverted clock
- * Retiming the clk pins will park clock & reduce the noise within the core.
+ * CIV0, CIV1 modes with inverted घड़ी
+ * Retiming the clk pins will park घड़ी & reduce the noise within the core.
  */
-#define ICLK		(RT | CLKNOTDATA | INVERTCLK)
+#घोषणा ICLK		(RT | CLKNOTDATA | INVERTCLK)
 /*
- * CLK0, CLK1 modes with non-inverted clock
- * Retiming the clk pins will park clock & reduce the noise within the core.
+ * CLK0, CLK1 modes with non-inverted घड़ी
+ * Retiming the clk pins will park घड़ी & reduce the noise within the core.
  */
-#define NICLK		(RT | CLKNOTDATA)
-#endif /* _ST_PINCFG_H_ */
+#घोषणा NICLK		(RT | CLKNOTDATA)
+#पूर्ण_अगर /* _ST_PINCFG_H_ */

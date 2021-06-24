@@ -1,35 +1,36 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * Copyright 2011 Florian Tobias Schandinat <FlorianSchandinat@gmx.de>
  */
 /*
- * driver for VIA VT1622(M) Digital TV Encoder
+ * driver क्रम VIA VT1622(M) Digital TV Encoder
  */
 
-#include <linux/slab.h>
-#include "via_aux.h"
+#समावेश <linux/slab.h>
+#समावेश "via_aux.h"
 
 
-static const char *name = "VT1622(M) Digital TV Encoder";
+अटल स्थिर अक्षर *name = "VT1622(M) Digital TV Encoder";
 
 
-static void probe(struct via_aux_bus *bus, u8 addr)
-{
-	struct via_aux_drv drv = {
+अटल व्योम probe(काष्ठा via_aux_bus *bus, u8 addr)
+अणु
+	काष्ठा via_aux_drv drv = अणु
 		.bus	=	bus,
 		.addr	=	addr,
-		.name	=	name};
-	u8 tmp;
+		.name	=	nameपूर्ण;
+	u8 पंचांगp;
 
-	if (!via_aux_read(&drv, 0x1B, &tmp, 1) ||  tmp != 0x03)
-		return;
+	अगर (!via_aux_पढ़ो(&drv, 0x1B, &पंचांगp, 1) ||  पंचांगp != 0x03)
+		वापस;
 
-	printk(KERN_INFO "viafb: Found %s at address 0x%x\n", name, addr);
+	prपूर्णांकk(KERN_INFO "viafb: Found %s at address 0x%x\n", name, addr);
 	via_aux_add(&drv);
-}
+पूर्ण
 
-void via_aux_vt1622_probe(struct via_aux_bus *bus)
-{
+व्योम via_aux_vt1622_probe(काष्ठा via_aux_bus *bus)
+अणु
 	probe(bus, 0x20);
 	probe(bus, 0x21);
-}
+पूर्ण

@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * devfreq-event: a framework to provide raw data and events of devfreq devices
  *
@@ -8,22 +9,22 @@
  * This driver is based on drivers/devfreq/devfreq.c.
  */
 
-#include <linux/devfreq-event.h>
-#include <linux/kernel.h>
-#include <linux/err.h>
-#include <linux/init.h>
-#include <linux/export.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/of.h>
+#समावेश <linux/devfreq-event.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/err.h>
+#समावेश <linux/init.h>
+#समावेश <linux/export.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/of.h>
 
-static struct class *devfreq_event_class;
+अटल काष्ठा class *devfreq_event_class;
 
 /* The list of all devfreq event list */
-static LIST_HEAD(devfreq_event_list);
-static DEFINE_MUTEX(devfreq_event_list_lock);
+अटल LIST_HEAD(devfreq_event_list);
+अटल DEFINE_MUTEX(devfreq_event_list_lock);
 
-#define to_devfreq_event(DEV) container_of(DEV, struct devfreq_event_dev, dev)
+#घोषणा to_devfreq_event(DEV) container_of(DEV, काष्ठा devfreq_event_dev, dev)
 
 /**
  * devfreq_event_enable_edev() - Enable the devfreq-event dev and increase
@@ -31,29 +32,29 @@ static DEFINE_MUTEX(devfreq_event_list_lock);
  * @edev	: the devfreq-event device
  *
  * Note that this function increase the enable_count and enable the
- * devfreq-event device. The devfreq-event device should be enabled before
+ * devfreq-event device. The devfreq-event device should be enabled beक्रमe
  * using it by devfreq device.
  */
-int devfreq_event_enable_edev(struct devfreq_event_dev *edev)
-{
-	int ret = 0;
+पूर्णांक devfreq_event_enable_edev(काष्ठा devfreq_event_dev *edev)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!edev || !edev->desc)
-		return -EINVAL;
+	अगर (!edev || !edev->desc)
+		वापस -EINVAL;
 
 	mutex_lock(&edev->lock);
-	if (edev->desc->ops && edev->desc->ops->enable
-			&& edev->enable_count == 0) {
+	अगर (edev->desc->ops && edev->desc->ops->enable
+			&& edev->enable_count == 0) अणु
 		ret = edev->desc->ops->enable(edev);
-		if (ret < 0)
-			goto err;
-	}
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
 	edev->enable_count++;
 err:
 	mutex_unlock(&edev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(devfreq_event_enable_edev);
 
 /**
@@ -63,35 +64,35 @@ EXPORT_SYMBOL_GPL(devfreq_event_enable_edev);
  *
  * Note that this function decrease the enable_count and disable the
  * devfreq-event device. After the devfreq-event device is disabled,
- * devfreq device can't use the devfreq-event device for get/set/reset
+ * devfreq device can't use the devfreq-event device क्रम get/set/reset
  * operations.
  */
-int devfreq_event_disable_edev(struct devfreq_event_dev *edev)
-{
-	int ret = 0;
+पूर्णांक devfreq_event_disable_edev(काष्ठा devfreq_event_dev *edev)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!edev || !edev->desc)
-		return -EINVAL;
+	अगर (!edev || !edev->desc)
+		वापस -EINVAL;
 
 	mutex_lock(&edev->lock);
-	if (edev->enable_count <= 0) {
+	अगर (edev->enable_count <= 0) अणु
 		dev_warn(&edev->dev, "unbalanced enable_count\n");
 		ret = -EIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
-	if (edev->desc->ops && edev->desc->ops->disable
-			&& edev->enable_count == 1) {
+	अगर (edev->desc->ops && edev->desc->ops->disable
+			&& edev->enable_count == 1) अणु
 		ret = edev->desc->ops->disable(edev);
-		if (ret < 0)
-			goto err;
-	}
+		अगर (ret < 0)
+			जाओ err;
+	पूर्ण
 	edev->enable_count--;
 err:
 	mutex_unlock(&edev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(devfreq_event_disable_edev);
 
 /**
@@ -100,25 +101,25 @@ EXPORT_SYMBOL_GPL(devfreq_event_disable_edev);
  * @edev	: the devfreq-event device
  *
  * Note that this function check whether devfreq-event dev is enabled or not.
- * If return true, the devfreq-event dev is enabeld. If return false, the
+ * If वापस true, the devfreq-event dev is enabeld. If वापस false, the
  * devfreq-event dev is disabled.
  */
-bool devfreq_event_is_enabled(struct devfreq_event_dev *edev)
-{
+bool devfreq_event_is_enabled(काष्ठा devfreq_event_dev *edev)
+अणु
 	bool enabled = false;
 
-	if (!edev || !edev->desc)
-		return enabled;
+	अगर (!edev || !edev->desc)
+		वापस enabled;
 
 	mutex_lock(&edev->lock);
 
-	if (edev->enable_count > 0)
+	अगर (edev->enable_count > 0)
 		enabled = true;
 
 	mutex_unlock(&edev->lock);
 
-	return enabled;
-}
+	वापस enabled;
+पूर्ण
 EXPORT_SYMBOL_GPL(devfreq_event_is_enabled);
 
 /**
@@ -126,61 +127,61 @@ EXPORT_SYMBOL_GPL(devfreq_event_is_enabled);
  * @edev	: the devfreq-event device
  *
  * Note that this function set the event to the devfreq-event device to start
- * for getting the event data which could be various event type.
+ * क्रम getting the event data which could be various event type.
  */
-int devfreq_event_set_event(struct devfreq_event_dev *edev)
-{
-	int ret;
+पूर्णांक devfreq_event_set_event(काष्ठा devfreq_event_dev *edev)
+अणु
+	पूर्णांक ret;
 
-	if (!edev || !edev->desc)
-		return -EINVAL;
+	अगर (!edev || !edev->desc)
+		वापस -EINVAL;
 
-	if (!edev->desc->ops || !edev->desc->ops->set_event)
-		return -EINVAL;
+	अगर (!edev->desc->ops || !edev->desc->ops->set_event)
+		वापस -EINVAL;
 
-	if (!devfreq_event_is_enabled(edev))
-		return -EPERM;
+	अगर (!devfreq_event_is_enabled(edev))
+		वापस -EPERM;
 
 	mutex_lock(&edev->lock);
 	ret = edev->desc->ops->set_event(edev);
 	mutex_unlock(&edev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(devfreq_event_set_event);
 
 /**
- * devfreq_event_get_event() - Get {load|total}_count from devfreq-event dev.
+ * devfreq_event_get_event() - Get अणुload|totalपूर्ण_count from devfreq-event dev.
  * @edev	: the devfreq-event device
  * @edata	: the calculated data of devfreq-event device
  *
  * Note that this function get the calculated event data from devfreq-event dev
  * after stoping the progress of whole sequence of devfreq-event dev.
  */
-int devfreq_event_get_event(struct devfreq_event_dev *edev,
-			    struct devfreq_event_data *edata)
-{
-	int ret;
+पूर्णांक devfreq_event_get_event(काष्ठा devfreq_event_dev *edev,
+			    काष्ठा devfreq_event_data *edata)
+अणु
+	पूर्णांक ret;
 
-	if (!edev || !edev->desc)
-		return -EINVAL;
+	अगर (!edev || !edev->desc)
+		वापस -EINVAL;
 
-	if (!edev->desc->ops || !edev->desc->ops->get_event)
-		return -EINVAL;
+	अगर (!edev->desc->ops || !edev->desc->ops->get_event)
+		वापस -EINVAL;
 
-	if (!devfreq_event_is_enabled(edev))
-		return -EINVAL;
+	अगर (!devfreq_event_is_enabled(edev))
+		वापस -EINVAL;
 
 	edata->total_count = edata->load_count = 0;
 
 	mutex_lock(&edev->lock);
 	ret = edev->desc->ops->get_event(edev, edata);
-	if (ret < 0)
+	अगर (ret < 0)
 		edata->total_count = edata->load_count = 0;
 	mutex_unlock(&edev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(devfreq_event_get_event);
 
 /**
@@ -188,138 +189,138 @@ EXPORT_SYMBOL_GPL(devfreq_event_get_event);
  * @edev	: the devfreq-event device
  *
  * Note that this function stop all operations of devfreq-event dev and reset
- * the current event data to make the devfreq-event device into initial state.
+ * the current event data to make the devfreq-event device पूर्णांकo initial state.
  */
-int devfreq_event_reset_event(struct devfreq_event_dev *edev)
-{
-	int ret = 0;
+पूर्णांक devfreq_event_reset_event(काष्ठा devfreq_event_dev *edev)
+अणु
+	पूर्णांक ret = 0;
 
-	if (!edev || !edev->desc)
-		return -EINVAL;
+	अगर (!edev || !edev->desc)
+		वापस -EINVAL;
 
-	if (!devfreq_event_is_enabled(edev))
-		return -EPERM;
+	अगर (!devfreq_event_is_enabled(edev))
+		वापस -EPERM;
 
 	mutex_lock(&edev->lock);
-	if (edev->desc->ops && edev->desc->ops->reset)
+	अगर (edev->desc->ops && edev->desc->ops->reset)
 		ret = edev->desc->ops->reset(edev);
 	mutex_unlock(&edev->lock);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 EXPORT_SYMBOL_GPL(devfreq_event_reset_event);
 
 /**
  * devfreq_event_get_edev_by_phandle() - Get the devfreq-event dev from
  *					 devicetree.
- * @dev		: the pointer to the given device
+ * @dev		: the poपूर्णांकer to the given device
  * @phandle_name: name of property holding a phandle value
- * @index	: the index into list of devfreq-event device
+ * @index	: the index पूर्णांकo list of devfreq-event device
  *
- * Note that this function return the pointer of devfreq-event device.
+ * Note that this function वापस the poपूर्णांकer of devfreq-event device.
  */
-struct devfreq_event_dev *devfreq_event_get_edev_by_phandle(struct device *dev,
-					const char *phandle_name, int index)
-{
-	struct device_node *node;
-	struct devfreq_event_dev *edev;
+काष्ठा devfreq_event_dev *devfreq_event_get_edev_by_phandle(काष्ठा device *dev,
+					स्थिर अक्षर *phandle_name, पूर्णांक index)
+अणु
+	काष्ठा device_node *node;
+	काष्ठा devfreq_event_dev *edev;
 
-	if (!dev->of_node || !phandle_name)
-		return ERR_PTR(-EINVAL);
+	अगर (!dev->of_node || !phandle_name)
+		वापस ERR_PTR(-EINVAL);
 
 	node = of_parse_phandle(dev->of_node, phandle_name, index);
-	if (!node)
-		return ERR_PTR(-ENODEV);
+	अगर (!node)
+		वापस ERR_PTR(-ENODEV);
 
 	mutex_lock(&devfreq_event_list_lock);
-	list_for_each_entry(edev, &devfreq_event_list, node) {
-		if (edev->dev.parent && edev->dev.parent->of_node == node)
-			goto out;
-	}
+	list_क्रम_each_entry(edev, &devfreq_event_list, node) अणु
+		अगर (edev->dev.parent && edev->dev.parent->of_node == node)
+			जाओ out;
+	पूर्ण
 
-	list_for_each_entry(edev, &devfreq_event_list, node) {
-		if (of_node_name_eq(node, edev->desc->name))
-			goto out;
-	}
-	edev = NULL;
+	list_क्रम_each_entry(edev, &devfreq_event_list, node) अणु
+		अगर (of_node_name_eq(node, edev->desc->name))
+			जाओ out;
+	पूर्ण
+	edev = शून्य;
 out:
 	mutex_unlock(&devfreq_event_list_lock);
 
-	if (!edev) {
+	अगर (!edev) अणु
 		of_node_put(node);
-		return ERR_PTR(-ENODEV);
-	}
+		वापस ERR_PTR(-ENODEV);
+	पूर्ण
 
 	of_node_put(node);
 
-	return edev;
-}
+	वापस edev;
+पूर्ण
 EXPORT_SYMBOL_GPL(devfreq_event_get_edev_by_phandle);
 
 /**
  * devfreq_event_get_edev_count() - Get the count of devfreq-event dev
- * @dev		: the pointer to the given device
+ * @dev		: the poपूर्णांकer to the given device
  * @phandle_name: name of property holding a phandle value
  *
- * Note that this function return the count of devfreq-event devices.
+ * Note that this function वापस the count of devfreq-event devices.
  */
-int devfreq_event_get_edev_count(struct device *dev, const char *phandle_name)
-{
-	int count;
+पूर्णांक devfreq_event_get_edev_count(काष्ठा device *dev, स्थिर अक्षर *phandle_name)
+अणु
+	पूर्णांक count;
 
-	if (!dev->of_node || !phandle_name) {
+	अगर (!dev->of_node || !phandle_name) अणु
 		dev_err(dev, "device does not have a device node entry\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	count = of_property_count_elems_of_size(dev->of_node, phandle_name,
-						sizeof(u32));
-	if (count < 0) {
+						माप(u32));
+	अगर (count < 0) अणु
 		dev_err(dev,
 			"failed to get the count of devfreq-event in %pOF node\n",
 			dev->of_node);
-		return count;
-	}
+		वापस count;
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 EXPORT_SYMBOL_GPL(devfreq_event_get_edev_count);
 
-static void devfreq_event_release_edev(struct device *dev)
-{
-	struct devfreq_event_dev *edev = to_devfreq_event(dev);
+अटल व्योम devfreq_event_release_edev(काष्ठा device *dev)
+अणु
+	काष्ठा devfreq_event_dev *edev = to_devfreq_event(dev);
 
-	kfree(edev);
-}
+	kमुक्त(edev);
+पूर्ण
 
 /**
  * devfreq_event_add_edev() - Add new devfreq-event device.
  * @dev		: the device owning the devfreq-event device being created
  * @desc	: the devfreq-event device's descriptor which include essential
- *		  data for devfreq-event device.
+ *		  data क्रम devfreq-event device.
  *
  * Note that this function add new devfreq-event device to devfreq-event class
- * list and register the device of the devfreq-event device.
+ * list and रेजिस्टर the device of the devfreq-event device.
  */
-struct devfreq_event_dev *devfreq_event_add_edev(struct device *dev,
-						struct devfreq_event_desc *desc)
-{
-	struct devfreq_event_dev *edev;
-	static atomic_t event_no = ATOMIC_INIT(-1);
-	int ret;
+काष्ठा devfreq_event_dev *devfreq_event_add_edev(काष्ठा device *dev,
+						काष्ठा devfreq_event_desc *desc)
+अणु
+	काष्ठा devfreq_event_dev *edev;
+	अटल atomic_t event_no = ATOMIC_INIT(-1);
+	पूर्णांक ret;
 
-	if (!dev || !desc)
-		return ERR_PTR(-EINVAL);
+	अगर (!dev || !desc)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!desc->name || !desc->ops)
-		return ERR_PTR(-EINVAL);
+	अगर (!desc->name || !desc->ops)
+		वापस ERR_PTR(-EINVAL);
 
-	if (!desc->ops->set_event || !desc->ops->get_event)
-		return ERR_PTR(-EINVAL);
+	अगर (!desc->ops->set_event || !desc->ops->get_event)
+		वापस ERR_PTR(-EINVAL);
 
-	edev = kzalloc(sizeof(struct devfreq_event_dev), GFP_KERNEL);
-	if (!edev)
-		return ERR_PTR(-ENOMEM);
+	edev = kzalloc(माप(काष्ठा devfreq_event_dev), GFP_KERNEL);
+	अगर (!edev)
+		वापस ERR_PTR(-ENOMEM);
 
 	mutex_init(&edev->lock);
 	edev->desc = desc;
@@ -328,12 +329,12 @@ struct devfreq_event_dev *devfreq_event_add_edev(struct device *dev,
 	edev->dev.class = devfreq_event_class;
 	edev->dev.release = devfreq_event_release_edev;
 
-	dev_set_name(&edev->dev, "event%d", atomic_inc_return(&event_no));
-	ret = device_register(&edev->dev);
-	if (ret < 0) {
+	dev_set_name(&edev->dev, "event%d", atomic_inc_वापस(&event_no));
+	ret = device_रेजिस्टर(&edev->dev);
+	अगर (ret < 0) अणु
 		put_device(&edev->dev);
-		return ERR_PTR(ret);
-	}
+		वापस ERR_PTR(ret);
+	पूर्ण
 	dev_set_drvdata(&edev->dev, edev);
 
 	INIT_LIST_HEAD(&edev->node);
@@ -342,20 +343,20 @@ struct devfreq_event_dev *devfreq_event_add_edev(struct device *dev,
 	list_add(&edev->node, &devfreq_event_list);
 	mutex_unlock(&devfreq_event_list_lock);
 
-	return edev;
-}
+	वापस edev;
+पूर्ण
 EXPORT_SYMBOL_GPL(devfreq_event_add_edev);
 
 /**
- * devfreq_event_remove_edev() - Remove the devfreq-event device registered.
+ * devfreq_event_हटाओ_edev() - Remove the devfreq-event device रेजिस्टरed.
  * @edev	: the devfreq-event device
  *
- * Note that this function removes the registered devfreq-event device.
+ * Note that this function हटाओs the रेजिस्टरed devfreq-event device.
  */
-int devfreq_event_remove_edev(struct devfreq_event_dev *edev)
-{
-	if (!edev)
-		return -EINVAL;
+पूर्णांक devfreq_event_हटाओ_edev(काष्ठा devfreq_event_dev *edev)
+अणु
+	अगर (!edev)
+		वापस -EINVAL;
 
 	WARN_ON(edev->enable_count);
 
@@ -363,120 +364,120 @@ int devfreq_event_remove_edev(struct devfreq_event_dev *edev)
 	list_del(&edev->node);
 	mutex_unlock(&devfreq_event_list_lock);
 
-	device_unregister(&edev->dev);
+	device_unरेजिस्टर(&edev->dev);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(devfreq_event_remove_edev);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(devfreq_event_हटाओ_edev);
 
-static int devm_devfreq_event_match(struct device *dev, void *res, void *data)
-{
-	struct devfreq_event_dev **r = res;
+अटल पूर्णांक devm_devfreq_event_match(काष्ठा device *dev, व्योम *res, व्योम *data)
+अणु
+	काष्ठा devfreq_event_dev **r = res;
 
-	if (WARN_ON(!r || !*r))
-		return 0;
+	अगर (WARN_ON(!r || !*r))
+		वापस 0;
 
-	return *r == data;
-}
+	वापस *r == data;
+पूर्ण
 
-static void devm_devfreq_event_release(struct device *dev, void *res)
-{
-	devfreq_event_remove_edev(*(struct devfreq_event_dev **)res);
-}
+अटल व्योम devm_devfreq_event_release(काष्ठा device *dev, व्योम *res)
+अणु
+	devfreq_event_हटाओ_edev(*(काष्ठा devfreq_event_dev **)res);
+पूर्ण
 
 /**
  * devm_devfreq_event_add_edev() - Resource-managed devfreq_event_add_edev()
  * @dev		: the device owning the devfreq-event device being created
  * @desc	: the devfreq-event device's descriptor which include essential
- *		  data for devfreq-event device.
+ *		  data क्रम devfreq-event device.
  *
- * Note that this function manages automatically the memory of devfreq-event
- * device using device resource management and simplify the free operation
- * for memory of devfreq-event device.
+ * Note that this function manages स्वतःmatically the memory of devfreq-event
+ * device using device resource management and simplअगरy the मुक्त operation
+ * क्रम memory of devfreq-event device.
  */
-struct devfreq_event_dev *devm_devfreq_event_add_edev(struct device *dev,
-						struct devfreq_event_desc *desc)
-{
-	struct devfreq_event_dev **ptr, *edev;
+काष्ठा devfreq_event_dev *devm_devfreq_event_add_edev(काष्ठा device *dev,
+						काष्ठा devfreq_event_desc *desc)
+अणु
+	काष्ठा devfreq_event_dev **ptr, *edev;
 
-	ptr = devres_alloc(devm_devfreq_event_release, sizeof(*ptr),
+	ptr = devres_alloc(devm_devfreq_event_release, माप(*ptr),
 				GFP_KERNEL);
-	if (!ptr)
-		return ERR_PTR(-ENOMEM);
+	अगर (!ptr)
+		वापस ERR_PTR(-ENOMEM);
 
 	edev = devfreq_event_add_edev(dev, desc);
-	if (IS_ERR(edev)) {
-		devres_free(ptr);
-		return ERR_PTR(-ENOMEM);
-	}
+	अगर (IS_ERR(edev)) अणु
+		devres_मुक्त(ptr);
+		वापस ERR_PTR(-ENOMEM);
+	पूर्ण
 
 	*ptr = edev;
 	devres_add(dev, ptr);
 
-	return edev;
-}
+	वापस edev;
+पूर्ण
 EXPORT_SYMBOL_GPL(devm_devfreq_event_add_edev);
 
 /**
- * devm_devfreq_event_remove_edev()- Resource-managed devfreq_event_remove_edev()
+ * devm_devfreq_event_हटाओ_edev()- Resource-managed devfreq_event_हटाओ_edev()
  * @dev		: the device owning the devfreq-event device being created
  * @edev	: the devfreq-event device
  *
- * Note that this function manages automatically the memory of devfreq-event
+ * Note that this function manages स्वतःmatically the memory of devfreq-event
  * device using device resource management.
  */
-void devm_devfreq_event_remove_edev(struct device *dev,
-				struct devfreq_event_dev *edev)
-{
+व्योम devm_devfreq_event_हटाओ_edev(काष्ठा device *dev,
+				काष्ठा devfreq_event_dev *edev)
+अणु
 	WARN_ON(devres_release(dev, devm_devfreq_event_release,
 			       devm_devfreq_event_match, edev));
-}
-EXPORT_SYMBOL_GPL(devm_devfreq_event_remove_edev);
+पूर्ण
+EXPORT_SYMBOL_GPL(devm_devfreq_event_हटाओ_edev);
 
 /*
- * Device attributes for devfreq-event class.
+ * Device attributes क्रम devfreq-event class.
  */
-static ssize_t name_show(struct device *dev, struct device_attribute *attr,
-			 char *buf)
-{
-	struct devfreq_event_dev *edev = to_devfreq_event(dev);
+अटल sमाप_प्रकार name_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
+			 अक्षर *buf)
+अणु
+	काष्ठा devfreq_event_dev *edev = to_devfreq_event(dev);
 
-	if (!edev || !edev->desc)
-		return -EINVAL;
+	अगर (!edev || !edev->desc)
+		वापस -EINVAL;
 
-	return sprintf(buf, "%s\n", edev->desc->name);
-}
-static DEVICE_ATTR_RO(name);
+	वापस प्र_लिखो(buf, "%s\n", edev->desc->name);
+पूर्ण
+अटल DEVICE_ATTR_RO(name);
 
-static ssize_t enable_count_show(struct device *dev,
-				  struct device_attribute *attr, char *buf)
-{
-	struct devfreq_event_dev *edev = to_devfreq_event(dev);
+अटल sमाप_प्रकार enable_count_show(काष्ठा device *dev,
+				  काष्ठा device_attribute *attr, अक्षर *buf)
+अणु
+	काष्ठा devfreq_event_dev *edev = to_devfreq_event(dev);
 
-	if (!edev || !edev->desc)
-		return -EINVAL;
+	अगर (!edev || !edev->desc)
+		वापस -EINVAL;
 
-	return sprintf(buf, "%d\n", edev->enable_count);
-}
-static DEVICE_ATTR_RO(enable_count);
+	वापस प्र_लिखो(buf, "%d\n", edev->enable_count);
+पूर्ण
+अटल DEVICE_ATTR_RO(enable_count);
 
-static struct attribute *devfreq_event_attrs[] = {
+अटल काष्ठा attribute *devfreq_event_attrs[] = अणु
 	&dev_attr_name.attr,
 	&dev_attr_enable_count.attr,
-	NULL,
-};
+	शून्य,
+पूर्ण;
 ATTRIBUTE_GROUPS(devfreq_event);
 
-static int __init devfreq_event_init(void)
-{
+अटल पूर्णांक __init devfreq_event_init(व्योम)
+अणु
 	devfreq_event_class = class_create(THIS_MODULE, "devfreq-event");
-	if (IS_ERR(devfreq_event_class)) {
-		pr_err("%s: couldn't create class\n", __FILE__);
-		return PTR_ERR(devfreq_event_class);
-	}
+	अगर (IS_ERR(devfreq_event_class)) अणु
+		pr_err("%s: couldn't create class\n", __खाता__);
+		वापस PTR_ERR(devfreq_event_class);
+	पूर्ण
 
 	devfreq_event_class->dev_groups = devfreq_event_groups;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 subsys_initcall(devfreq_event_init);

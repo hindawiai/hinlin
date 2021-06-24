@@ -1,121 +1,122 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#include <stdbool.h>
-#include <inttypes.h>
-#include <stdlib.h>
-#include <string.h>
-#include <linux/bitops.h>
-#include <linux/kernel.h>
-#include <linux/types.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#समावेश <stdbool.h>
+#समावेश <पूर्णांकtypes.h>
+#समावेश <मानककोष.स>
+#समावेश <माला.स>
+#समावेश <linux/bitops.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/types.h>
 
-#include "event.h"
-#include "evsel.h"
-#include "debug.h"
-#include "util/synthetic-events.h"
+#समावेश "event.h"
+#समावेश "evsel.h"
+#समावेश "debug.h"
+#समावेश "util/synthetic-events.h"
 
-#include "tests/tests.h"
-#include "arch-tests.h"
+#समावेश "tests/tests.h"
+#समावेश "arch-tests.h"
 
-#define COMP(m) do {					\
-	if (s1->m != s2->m) {				\
+#घोषणा COMP(m) करो अणु					\
+	अगर (s1->m != s2->m) अणु				\
 		pr_debug("Samples differ at '"#m"'\n");	\
-		return false;				\
-	}						\
-} while (0)
+		वापस false;				\
+	पूर्ण						\
+पूर्ण जबतक (0)
 
-static bool samples_same(const struct perf_sample *s1,
-			 const struct perf_sample *s2,
+अटल bool samples_same(स्थिर काष्ठा perf_sample *s1,
+			 स्थिर काष्ठा perf_sample *s2,
 			 u64 type)
-{
-	if (type & PERF_SAMPLE_WEIGHT_STRUCT)
+अणु
+	अगर (type & PERF_SAMPLE_WEIGHT_STRUCT)
 		COMP(ins_lat);
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static int do_test(u64 sample_type)
-{
-	struct evsel evsel = {
+अटल पूर्णांक करो_test(u64 sample_type)
+अणु
+	काष्ठा evsel evsel = अणु
 		.needs_swap = false,
-		.core = {
-			. attr = {
+		.core = अणु
+			. attr = अणु
 				.sample_type = sample_type,
-				.read_format = 0,
-			},
-		},
-	};
-	union perf_event *event;
-	struct perf_sample sample = {
+				.पढ़ो_क्रमmat = 0,
+			पूर्ण,
+		पूर्ण,
+	पूर्ण;
+	जोड़ perf_event *event;
+	काष्ठा perf_sample sample = अणु
 		.weight		= 101,
 		.ins_lat        = 102,
-	};
-	struct perf_sample sample_out;
-	size_t i, sz, bufsz;
-	int err, ret = -1;
+	पूर्ण;
+	काष्ठा perf_sample sample_out;
+	माप_प्रकार i, sz, bufsz;
+	पूर्णांक err, ret = -1;
 
 	sz = perf_event__sample_event_size(&sample, sample_type, 0);
-	bufsz = sz + 4096; /* Add a bit for overrun checking */
-	event = malloc(bufsz);
-	if (!event) {
+	bufsz = sz + 4096; /* Add a bit क्रम overrun checking */
+	event = दो_स्मृति(bufsz);
+	अगर (!event) अणु
 		pr_debug("malloc failed\n");
-		return -1;
-	}
+		वापस -1;
+	पूर्ण
 
-	memset(event, 0xff, bufsz);
+	स_रखो(event, 0xff, bufsz);
 	event->header.type = PERF_RECORD_SAMPLE;
 	event->header.misc = 0;
 	event->header.size = sz;
 
 	err = perf_event__synthesize_sample(event, sample_type, 0, &sample);
-	if (err) {
+	अगर (err) अणु
 		pr_debug("%s failed for sample_type %#"PRIx64", error %d\n",
 			 "perf_event__synthesize_sample", sample_type, err);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	/* The data does not contain 0xff so we use that to check the size */
-	for (i = bufsz; i > 0; i--) {
-		if (*(i - 1 + (u8 *)event) != 0xff)
-			break;
-	}
-	if (i != sz) {
+	/* The data करोes not contain 0xff so we use that to check the size */
+	क्रम (i = bufsz; i > 0; i--) अणु
+		अगर (*(i - 1 + (u8 *)event) != 0xff)
+			अवरोध;
+	पूर्ण
+	अगर (i != sz) अणु
 		pr_debug("Event size mismatch: actual %zu vs expected %zu\n",
 			 i, sz);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	evsel.sample_size = __evsel__sample_size(sample_type);
 
 	err = evsel__parse_sample(&evsel, event, &sample_out);
-	if (err) {
+	अगर (err) अणु
 		pr_debug("%s failed for sample_type %#"PRIx64", error %d\n",
 			 "evsel__parse_sample", sample_type, err);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	if (!samples_same(&sample, &sample_out, sample_type)) {
+	अगर (!samples_same(&sample, &sample_out, sample_type)) अणु
 		pr_debug("parsing failed for sample_type %#"PRIx64"\n",
 			 sample_type);
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	ret = 0;
-out_free:
-	free(event);
+out_मुक्त:
+	मुक्त(event);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /**
- * test__x86_sample_parsing - test X86 specific sample parsing
+ * test__x86_sample_parsing - test X86 specअगरic sample parsing
  *
  * This function implements a test that synthesizes a sample event, parses it
  * and then checks that the parsed sample matches the original sample. If the
- * test passes %0 is returned, otherwise %-1 is returned.
+ * test passes %0 is वापसed, otherwise %-1 is वापसed.
  *
- * For now, the PERF_SAMPLE_WEIGHT_STRUCT is the only X86 specific sample type.
+ * For now, the PERF_SAMPLE_WEIGHT_STRUCT is the only X86 specअगरic sample type.
  * The test only checks the PERF_SAMPLE_WEIGHT_STRUCT type.
  */
-int test__x86_sample_parsing(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	return do_test(PERF_SAMPLE_WEIGHT_STRUCT);
-}
+पूर्णांक test__x86_sample_parsing(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	वापस करो_test(PERF_SAMPLE_WEIGHT_STRUCT);
+पूर्ण

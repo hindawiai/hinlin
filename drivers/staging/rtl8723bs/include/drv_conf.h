@@ -1,19 +1,20 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2011 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
-#ifndef __DRV_CONF_H__
-#define __DRV_CONF_H__
-#include "autoconf.h"
+#अगर_अघोषित __DRV_CONF_H__
+#घोषणा __DRV_CONF_H__
+#समावेश "autoconf.h"
 
-#define DYNAMIC_CAMID_ALLOC
+#घोषणा DYNAMIC_CAMID_ALLOC
 
-#ifndef CONFIG_RTW_HIQ_FILTER
-	#define CONFIG_RTW_HIQ_FILTER 1
-#endif
+#अगर_अघोषित CONFIG_RTW_HIQ_FILTER
+	#घोषणा CONFIG_RTW_HIQ_FILTER 1
+#पूर्ण_अगर
 
-//#include <rtl871x_byteorder.h>
+//#समावेश <rtl871x_byteorder.h>
 
-#endif // __DRV_CONF_H__
+#पूर्ण_अगर // __DRV_CONF_H__

@@ -1,29 +1,30 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 // Copyright (c) 2019 Facebook
-#include <linux/sched.h>
-#include <linux/ptrace.h>
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
-#include <linux/bpf.h>
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/ptrace.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <मानकघोष.स>
+#समावेश <stdbool.h>
+#समावेश <linux/bpf.h>
+#समावेश <bpf/bpf_helpers.h>
+#समावेश <bpf/bpf_tracing.h>
 
-char _license[] SEC("license") = "GPL";
+अक्षर _license[] SEC("license") = "GPL";
 
 SEC("raw_tracepoint/consume_skb")
-int while_true(volatile struct pt_regs* ctx)
-{
-	int i = 0;
+पूर्णांक जबतक_true(अस्थिर काष्ठा pt_regs* ctx)
+अणु
+	पूर्णांक i = 0;
 
-	while (true) {
-		if (PT_REGS_RC(ctx) & 1)
+	जबतक (true) अणु
+		अगर (PT_REGS_RC(ctx) & 1)
 			i += 3;
-		else
+		अन्यथा
 			i += 7;
-		if (i > 40)
-			break;
-	}
+		अगर (i > 40)
+			अवरोध;
+	पूर्ण
 
-	return i;
-}
+	वापस i;
+पूर्ण

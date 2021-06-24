@@ -1,144 +1,145 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (C) 1996, 99 Ralf Baechle
  * Copyright (C) 2000, 2002  Maciej W. Rozycki
  * Copyright (C) 1990, 1999 by Silicon Graphics, Inc.
  */
-#ifndef _ASM_ADDRSPACE_H
-#define _ASM_ADDRSPACE_H
+#अगर_अघोषित _ASM_ADDRSPACE_H
+#घोषणा _ASM_ADDRSPACE_H
 
-#include <spaces.h>
+#समावेश <spaces.h>
 
 /*
  *  Configure language
  */
-#ifdef __ASSEMBLY__
-#define _ATYPE_
-#define _ATYPE32_
-#define _ATYPE64_
-#define _CONST64_(x)	x
-#else
-#define _ATYPE_		__PTRDIFF_TYPE__
-#define _ATYPE32_	int
-#define _ATYPE64_	__s64
-#ifdef CONFIG_64BIT
-#define _CONST64_(x)	x ## L
-#else
-#define _CONST64_(x)	x ## LL
-#endif
-#endif
+#अगर_घोषित __ASSEMBLY__
+#घोषणा _ATYPE_
+#घोषणा _ATYPE32_
+#घोषणा _ATYPE64_
+#घोषणा _CONST64_(x)	x
+#अन्यथा
+#घोषणा _ATYPE_		__PTRDIFF_TYPE__
+#घोषणा _ATYPE32_	पूर्णांक
+#घोषणा _ATYPE64_	__s64
+#अगर_घोषित CONFIG_64BIT
+#घोषणा _CONST64_(x)	x ## L
+#अन्यथा
+#घोषणा _CONST64_(x)	x ## LL
+#पूर्ण_अगर
+#पूर्ण_अगर
 
 /*
  *  32-bit MIPS address spaces
  */
-#ifdef __ASSEMBLY__
-#define _ACAST32_
-#define _ACAST64_
-#else
-#define _ACAST32_		(_ATYPE_)(_ATYPE32_)	/* widen if necessary */
-#define _ACAST64_		(_ATYPE64_)		/* do _not_ narrow */
-#endif
+#अगर_घोषित __ASSEMBLY__
+#घोषणा _ACAST32_
+#घोषणा _ACAST64_
+#अन्यथा
+#घोषणा _ACAST32_		(_ATYPE_)(_ATYPE32_)	/* widen अगर necessary */
+#घोषणा _ACAST64_		(_ATYPE64_)		/* करो _not_ narrow */
+#पूर्ण_अगर
 
 /*
  * Returns the kernel segment base of a given address
  */
-#define KSEGX(a)		((_ACAST32_(a)) & _ACAST32_(0xe0000000))
+#घोषणा KSEGX(a)		((_ACAST32_(a)) & _ACAST32_(0xe0000000))
 
 /*
  * Returns the physical address of a CKSEGx / XKPHYS address
  */
-#define CPHYSADDR(a)		((_ACAST32_(a)) & 0x1fffffff)
-#define XPHYSADDR(a)		((_ACAST64_(a)) &			\
+#घोषणा CPHYSADDR(a)		((_ACAST32_(a)) & 0x1fffffff)
+#घोषणा XPHYSADDR(a)		((_ACAST64_(a)) &			\
 				 _CONST64_(0x0000ffffffffffff))
 
-#ifdef CONFIG_64BIT
+#अगर_घोषित CONFIG_64BIT
 
 /*
  * Memory segments (64bit kernel mode addresses)
  * The compatibility segments use the full 64-bit sign extended value.  Note
- * the R8000 doesn't have them so don't reference these in generic MIPS code.
+ * the R8000 करोesn't have them so don't reference these in generic MIPS code.
  */
-#define XKUSEG			_CONST64_(0x0000000000000000)
-#define XKSSEG			_CONST64_(0x4000000000000000)
-#define XKPHYS			_CONST64_(0x8000000000000000)
-#define XKSEG			_CONST64_(0xc000000000000000)
-#define CKSEG0			_CONST64_(0xffffffff80000000)
-#define CKSEG1			_CONST64_(0xffffffffa0000000)
-#define CKSSEG			_CONST64_(0xffffffffc0000000)
-#define CKSEG3			_CONST64_(0xffffffffe0000000)
+#घोषणा XKUSEG			_CONST64_(0x0000000000000000)
+#घोषणा XKSSEG			_CONST64_(0x4000000000000000)
+#घोषणा XKPHYS			_CONST64_(0x8000000000000000)
+#घोषणा XKSEG			_CONST64_(0xc000000000000000)
+#घोषणा CKSEG0			_CONST64_(0xffffffff80000000)
+#घोषणा CKSEG1			_CONST64_(0xffffffffa0000000)
+#घोषणा CKSSEG			_CONST64_(0xffffffffc0000000)
+#घोषणा CKSEG3			_CONST64_(0xffffffffe0000000)
 
-#define CKSEG0ADDR(a)		(CPHYSADDR(a) | CKSEG0)
-#define CKSEG1ADDR(a)		(CPHYSADDR(a) | CKSEG1)
-#define CKSEG2ADDR(a)		(CPHYSADDR(a) | CKSEG2)
-#define CKSEG3ADDR(a)		(CPHYSADDR(a) | CKSEG3)
+#घोषणा CKSEG0ADDR(a)		(CPHYSADDR(a) | CKSEG0)
+#घोषणा CKSEG1ADDR(a)		(CPHYSADDR(a) | CKSEG1)
+#घोषणा CKSEG2ADDR(a)		(CPHYSADDR(a) | CKSEG2)
+#घोषणा CKSEG3ADDR(a)		(CPHYSADDR(a) | CKSEG3)
 
-#else
+#अन्यथा
 
-#define CKSEG0ADDR(a)		(CPHYSADDR(a) | KSEG0)
-#define CKSEG1ADDR(a)		(CPHYSADDR(a) | KSEG1)
-#define CKSEG2ADDR(a)		(CPHYSADDR(a) | KSEG2)
-#define CKSEG3ADDR(a)		(CPHYSADDR(a) | KSEG3)
+#घोषणा CKSEG0ADDR(a)		(CPHYSADDR(a) | KSEG0)
+#घोषणा CKSEG1ADDR(a)		(CPHYSADDR(a) | KSEG1)
+#घोषणा CKSEG2ADDR(a)		(CPHYSADDR(a) | KSEG2)
+#घोषणा CKSEG3ADDR(a)		(CPHYSADDR(a) | KSEG3)
 
 /*
  * Map an address to a certain kernel segment
  */
-#define KSEG0ADDR(a)		(CPHYSADDR(a) | KSEG0)
-#define KSEG1ADDR(a)		(CPHYSADDR(a) | KSEG1)
-#define KSEG2ADDR(a)		(CPHYSADDR(a) | KSEG2)
-#define KSEG3ADDR(a)		(CPHYSADDR(a) | KSEG3)
+#घोषणा KSEG0ADDR(a)		(CPHYSADDR(a) | KSEG0)
+#घोषणा KSEG1ADDR(a)		(CPHYSADDR(a) | KSEG1)
+#घोषणा KSEG2ADDR(a)		(CPHYSADDR(a) | KSEG2)
+#घोषणा KSEG3ADDR(a)		(CPHYSADDR(a) | KSEG3)
 
 /*
  * Memory segments (32bit kernel mode addresses)
  * These are the traditional names used in the 32-bit universe.
  */
-#define KUSEG			0x00000000
-#define KSEG0			0x80000000
-#define KSEG1			0xa0000000
-#define KSEG2			0xc0000000
-#define KSEG3			0xe0000000
+#घोषणा KUSEG			0x00000000
+#घोषणा KSEG0			0x80000000
+#घोषणा KSEG1			0xa0000000
+#घोषणा KSEG2			0xc0000000
+#घोषणा KSEG3			0xe0000000
 
-#define CKUSEG			0x00000000
-#define CKSEG0			0x80000000
-#define CKSEG1			0xa0000000
-#define CKSEG2			0xc0000000
-#define CKSEG3			0xe0000000
+#घोषणा CKUSEG			0x00000000
+#घोषणा CKSEG0			0x80000000
+#घोषणा CKSEG1			0xa0000000
+#घोषणा CKSEG2			0xc0000000
+#घोषणा CKSEG3			0xe0000000
 
-#endif
+#पूर्ण_अगर
 
 /*
- * Cache modes for XKPHYS address conversion macros
+ * Cache modes क्रम XKPHYS address conversion macros
  */
-#define K_CALG_COH_EXCL1_NOL2	0
-#define K_CALG_COH_SHRL1_NOL2	1
-#define K_CALG_UNCACHED		2
-#define K_CALG_NONCOHERENT	3
-#define K_CALG_COH_EXCL		4
-#define K_CALG_COH_SHAREABLE	5
-#define K_CALG_NOTUSED		6
-#define K_CALG_UNCACHED_ACCEL	7
+#घोषणा K_CALG_COH_EXCL1_NOL2	0
+#घोषणा K_CALG_COH_SHRL1_NOL2	1
+#घोषणा K_CALG_UNCACHED		2
+#घोषणा K_CALG_NONCOHERENT	3
+#घोषणा K_CALG_COH_EXCL		4
+#घोषणा K_CALG_COH_SHAREABLE	5
+#घोषणा K_CALG_NOTUSED		6
+#घोषणा K_CALG_UNCACHED_ACCEL	7
 
 /*
  * 64-bit address conversions
  */
-#define PHYS_TO_XKSEG_UNCACHED(p)	PHYS_TO_XKPHYS(K_CALG_UNCACHED, (p))
-#define PHYS_TO_XKSEG_CACHED(p)		PHYS_TO_XKPHYS(K_CALG_COH_SHAREABLE, (p))
-#define XKPHYS_TO_PHYS(p)		((p) & TO_PHYS_MASK)
-#define PHYS_TO_XKPHYS(cm, a)		(XKPHYS | (_ACAST64_(cm) << 59) | (a))
+#घोषणा PHYS_TO_XKSEG_UNCACHED(p)	PHYS_TO_XKPHYS(K_CALG_UNCACHED, (p))
+#घोषणा PHYS_TO_XKSEG_CACHED(p)		PHYS_TO_XKPHYS(K_CALG_COH_SHAREABLE, (p))
+#घोषणा XKPHYS_TO_PHYS(p)		((p) & TO_PHYS_MASK)
+#घोषणा PHYS_TO_XKPHYS(cm, a)		(XKPHYS | (_ACAST64_(cm) << 59) | (a))
 
 /*
- * The ultimate limited of the 64-bit MIPS architecture:  2 bits for selecting
- * the region, 3 bits for the CCA mode.  This leaves 59 bits of which the
+ * The ultimate limited of the 64-bit MIPS architecture:  2 bits क्रम selecting
+ * the region, 3 bits क्रम the CCA mode.  This leaves 59 bits of which the
  * R8000 implements most with its 48-bit physical address space.
  */
-#define TO_PHYS_MASK	_CONST64_(0x07ffffffffffffff)	/* 2^^59 - 1 */
+#घोषणा TO_PHYS_MASK	_CONST64_(0x07ffffffffffffff)	/* 2^^59 - 1 */
 
-#define COMPAT_K1BASE32		_CONST64_(0xffffffffa0000000)
-#define PHYS_TO_COMPATK1(x)	((x) | COMPAT_K1BASE32) /* 32-bit compat k1 */
+#घोषणा COMPAT_K1BASE32		_CONST64_(0xffffffffa0000000)
+#घोषणा PHYS_TO_COMPATK1(x)	((x) | COMPAT_K1BASE32) /* 32-bit compat k1 */
 
-#define KDM_TO_PHYS(x)		(_ACAST64_ (x) & TO_PHYS_MASK)
-#define PHYS_TO_K0(x)		(_ACAST64_ (x) | CAC_BASE)
+#घोषणा KDM_TO_PHYS(x)		(_ACAST64_ (x) & TO_PHYS_MASK)
+#घोषणा PHYS_TO_K0(x)		(_ACAST64_ (x) | CAC_BASE)
 
-#endif /* _ASM_ADDRSPACE_H */
+#पूर्ण_अगर /* _ASM_ADDRSPACE_H */

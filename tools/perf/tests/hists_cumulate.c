@@ -1,738 +1,739 @@
-// SPDX-License-Identifier: GPL-2.0
-#include "util/debug.h"
-#include "util/dso.h"
-#include "util/event.h"
-#include "util/map.h"
-#include "util/symbol.h"
-#include "util/sort.h"
-#include "util/evsel.h"
-#include "util/evlist.h"
-#include "util/machine.h"
-#include "util/thread.h"
-#include "util/parse-events.h"
-#include "tests/tests.h"
-#include "tests/hists_common.h"
-#include <linux/kernel.h>
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
+#समावेश "util/debug.h"
+#समावेश "util/dso.h"
+#समावेश "util/event.h"
+#समावेश "util/map.h"
+#समावेश "util/symbol.h"
+#समावेश "util/sort.h"
+#समावेश "util/evsel.h"
+#समावेश "util/evlist.h"
+#समावेश "util/machine.h"
+#समावेश "util/thread.h"
+#समावेश "util/parse-events.h"
+#समावेश "tests/tests.h"
+#समावेश "tests/hists_common.h"
+#समावेश <linux/kernel.h>
 
-struct sample {
+काष्ठा sample अणु
 	u32 pid;
 	u64 ip;
-	struct thread *thread;
-	struct map *map;
-	struct symbol *sym;
-};
+	काष्ठा thपढ़ो *thपढ़ो;
+	काष्ठा map *map;
+	काष्ठा symbol *sym;
+पूर्ण;
 
 /* For the numbers, see hists_common.c */
-static struct sample fake_samples[] = {
+अटल काष्ठा sample fake_samples[] = अणु
 	/* perf [kernel] schedule() */
-	{ .pid = FAKE_PID_PERF1, .ip = FAKE_IP_KERNEL_SCHEDULE, },
-	/* perf [perf]   main() */
-	{ .pid = FAKE_PID_PERF1, .ip = FAKE_IP_PERF_MAIN, },
+	अणु .pid = FAKE_PID_PERF1, .ip = FAKE_IP_KERNEL_SCHEDULE, पूर्ण,
+	/* perf [perf]   मुख्य() */
+	अणु .pid = FAKE_PID_PERF1, .ip = FAKE_IP_PERF_MAIN, पूर्ण,
 	/* perf [perf]   cmd_record() */
-	{ .pid = FAKE_PID_PERF1, .ip = FAKE_IP_PERF_CMD_RECORD, },
-	/* perf [libc]   malloc() */
-	{ .pid = FAKE_PID_PERF1, .ip = FAKE_IP_LIBC_MALLOC, },
-	/* perf [libc]   free() */
-	{ .pid = FAKE_PID_PERF1, .ip = FAKE_IP_LIBC_FREE, },
-	/* perf [perf]   main() */
-	{ .pid = FAKE_PID_PERF2, .ip = FAKE_IP_PERF_MAIN, },
+	अणु .pid = FAKE_PID_PERF1, .ip = FAKE_IP_PERF_CMD_RECORD, पूर्ण,
+	/* perf [libc]   दो_स्मृति() */
+	अणु .pid = FAKE_PID_PERF1, .ip = FAKE_IP_LIBC_MALLOC, पूर्ण,
+	/* perf [libc]   मुक्त() */
+	अणु .pid = FAKE_PID_PERF1, .ip = FAKE_IP_LIBC_FREE, पूर्ण,
+	/* perf [perf]   मुख्य() */
+	अणु .pid = FAKE_PID_PERF2, .ip = FAKE_IP_PERF_MAIN, पूर्ण,
 	/* perf [kernel] page_fault() */
-	{ .pid = FAKE_PID_PERF2, .ip = FAKE_IP_KERNEL_PAGE_FAULT, },
-	/* bash [bash]   main() */
-	{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_BASH_MAIN, },
-	/* bash [bash]   xmalloc() */
-	{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_BASH_XMALLOC, },
+	अणु .pid = FAKE_PID_PERF2, .ip = FAKE_IP_KERNEL_PAGE_FAULT, पूर्ण,
+	/* bash [bash]   मुख्य() */
+	अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_BASH_MAIN, पूर्ण,
+	/* bash [bash]   xदो_स्मृति() */
+	अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_BASH_XMALLOC, पूर्ण,
 	/* bash [kernel] page_fault() */
-	{ .pid = FAKE_PID_BASH,  .ip = FAKE_IP_KERNEL_PAGE_FAULT, },
-};
+	अणु .pid = FAKE_PID_BASH,  .ip = FAKE_IP_KERNEL_PAGE_FAULT, पूर्ण,
+पूर्ण;
 
 /*
- * Will be cast to struct ip_callchain which has all 64 bit entries
+ * Will be cast to काष्ठा ip_callchain which has all 64 bit entries
  * of nr and ips[].
  */
-static u64 fake_callchains[][10] = {
-	/*   schedule => run_command => main */
-	{ 3, FAKE_IP_KERNEL_SCHEDULE, FAKE_IP_PERF_RUN_COMMAND, FAKE_IP_PERF_MAIN, },
-	/*   main  */
-	{ 1, FAKE_IP_PERF_MAIN, },
-	/*   cmd_record => run_command => main */
-	{ 3, FAKE_IP_PERF_CMD_RECORD, FAKE_IP_PERF_RUN_COMMAND, FAKE_IP_PERF_MAIN, },
-	/*   malloc => cmd_record => run_command => main */
-	{ 4, FAKE_IP_LIBC_MALLOC, FAKE_IP_PERF_CMD_RECORD, FAKE_IP_PERF_RUN_COMMAND,
-	     FAKE_IP_PERF_MAIN, },
-	/*   free => cmd_record => run_command => main */
-	{ 4, FAKE_IP_LIBC_FREE, FAKE_IP_PERF_CMD_RECORD, FAKE_IP_PERF_RUN_COMMAND,
-	     FAKE_IP_PERF_MAIN, },
-	/*   main */
-	{ 1, FAKE_IP_PERF_MAIN, },
-	/*   page_fault => sys_perf_event_open => run_command => main */
-	{ 4, FAKE_IP_KERNEL_PAGE_FAULT, FAKE_IP_KERNEL_SYS_PERF_EVENT_OPEN,
-	     FAKE_IP_PERF_RUN_COMMAND, FAKE_IP_PERF_MAIN, },
-	/*   main */
-	{ 1, FAKE_IP_BASH_MAIN, },
-	/*   xmalloc => malloc => xmalloc => malloc => xmalloc => main */
-	{ 6, FAKE_IP_BASH_XMALLOC, FAKE_IP_LIBC_MALLOC, FAKE_IP_BASH_XMALLOC,
-	     FAKE_IP_LIBC_MALLOC, FAKE_IP_BASH_XMALLOC, FAKE_IP_BASH_MAIN, },
-	/*   page_fault => malloc => main */
-	{ 3, FAKE_IP_KERNEL_PAGE_FAULT, FAKE_IP_LIBC_MALLOC, FAKE_IP_BASH_MAIN, },
-};
+अटल u64 fake_callchains[][10] = अणु
+	/*   schedule => run_command => मुख्य */
+	अणु 3, FAKE_IP_KERNEL_SCHEDULE, FAKE_IP_PERF_RUN_COMMAND, FAKE_IP_PERF_MAIN, पूर्ण,
+	/*   मुख्य  */
+	अणु 1, FAKE_IP_PERF_MAIN, पूर्ण,
+	/*   cmd_record => run_command => मुख्य */
+	अणु 3, FAKE_IP_PERF_CMD_RECORD, FAKE_IP_PERF_RUN_COMMAND, FAKE_IP_PERF_MAIN, पूर्ण,
+	/*   दो_स्मृति => cmd_record => run_command => मुख्य */
+	अणु 4, FAKE_IP_LIBC_MALLOC, FAKE_IP_PERF_CMD_RECORD, FAKE_IP_PERF_RUN_COMMAND,
+	     FAKE_IP_PERF_MAIN, पूर्ण,
+	/*   मुक्त => cmd_record => run_command => मुख्य */
+	अणु 4, FAKE_IP_LIBC_FREE, FAKE_IP_PERF_CMD_RECORD, FAKE_IP_PERF_RUN_COMMAND,
+	     FAKE_IP_PERF_MAIN, पूर्ण,
+	/*   मुख्य */
+	अणु 1, FAKE_IP_PERF_MAIN, पूर्ण,
+	/*   page_fault => sys_perf_event_खोलो => run_command => मुख्य */
+	अणु 4, FAKE_IP_KERNEL_PAGE_FAULT, FAKE_IP_KERNEL_SYS_PERF_EVENT_OPEN,
+	     FAKE_IP_PERF_RUN_COMMAND, FAKE_IP_PERF_MAIN, पूर्ण,
+	/*   मुख्य */
+	अणु 1, FAKE_IP_BASH_MAIN, पूर्ण,
+	/*   xदो_स्मृति => दो_स्मृति => xदो_स्मृति => दो_स्मृति => xदो_स्मृति => मुख्य */
+	अणु 6, FAKE_IP_BASH_XMALLOC, FAKE_IP_LIBC_MALLOC, FAKE_IP_BASH_XMALLOC,
+	     FAKE_IP_LIBC_MALLOC, FAKE_IP_BASH_XMALLOC, FAKE_IP_BASH_MAIN, पूर्ण,
+	/*   page_fault => दो_स्मृति => मुख्य */
+	अणु 3, FAKE_IP_KERNEL_PAGE_FAULT, FAKE_IP_LIBC_MALLOC, FAKE_IP_BASH_MAIN, पूर्ण,
+पूर्ण;
 
-static int add_hist_entries(struct hists *hists, struct machine *machine)
-{
-	struct addr_location al;
-	struct evsel *evsel = hists_to_evsel(hists);
-	struct perf_sample sample = { .period = 1000, };
-	size_t i;
+अटल पूर्णांक add_hist_entries(काष्ठा hists *hists, काष्ठा machine *machine)
+अणु
+	काष्ठा addr_location al;
+	काष्ठा evsel *evsel = hists_to_evsel(hists);
+	काष्ठा perf_sample sample = अणु .period = 1000, पूर्ण;
+	माप_प्रकार i;
 
-	for (i = 0; i < ARRAY_SIZE(fake_samples); i++) {
-		struct hist_entry_iter iter = {
+	क्रम (i = 0; i < ARRAY_SIZE(fake_samples); i++) अणु
+		काष्ठा hist_entry_iter iter = अणु
 			.evsel = evsel,
 			.sample	= &sample,
 			.hide_unresolved = false,
-		};
+		पूर्ण;
 
-		if (symbol_conf.cumulate_callchain)
+		अगर (symbol_conf.cumulate_callchain)
 			iter.ops = &hist_iter_cumulative;
-		else
+		अन्यथा
 			iter.ops = &hist_iter_normal;
 
 		sample.cpumode = PERF_RECORD_MISC_USER;
 		sample.pid = fake_samples[i].pid;
 		sample.tid = fake_samples[i].pid;
 		sample.ip = fake_samples[i].ip;
-		sample.callchain = (struct ip_callchain *)fake_callchains[i];
+		sample.callchain = (काष्ठा ip_callchain *)fake_callchains[i];
 
-		if (machine__resolve(machine, &al, &sample) < 0)
-			goto out;
+		अगर (machine__resolve(machine, &al, &sample) < 0)
+			जाओ out;
 
-		if (hist_entry_iter__add(&iter, &al, sysctl_perf_event_max_stack,
-					 NULL) < 0) {
+		अगर (hist_entry_iter__add(&iter, &al, sysctl_perf_event_max_stack,
+					 शून्य) < 0) अणु
 			addr_location__put(&al);
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
-		fake_samples[i].thread = al.thread;
+		fake_samples[i].thपढ़ो = al.thपढ़ो;
 		fake_samples[i].map = al.map;
 		fake_samples[i].sym = al.sym;
-	}
+	पूर्ण
 
-	return TEST_OK;
+	वापस TEST_OK;
 
 out:
 	pr_debug("Not enough memory for adding a hist entry\n");
-	return TEST_FAIL;
-}
+	वापस TEST_FAIL;
+पूर्ण
 
-static void del_hist_entries(struct hists *hists)
-{
-	struct hist_entry *he;
-	struct rb_root_cached *root_in;
-	struct rb_root_cached *root_out;
-	struct rb_node *node;
+अटल व्योम del_hist_entries(काष्ठा hists *hists)
+अणु
+	काष्ठा hist_entry *he;
+	काष्ठा rb_root_cached *root_in;
+	काष्ठा rb_root_cached *root_out;
+	काष्ठा rb_node *node;
 
-	if (hists__has(hists, need_collapse))
+	अगर (hists__has(hists, need_collapse))
 		root_in = &hists->entries_collapsed;
-	else
+	अन्यथा
 		root_in = hists->entries_in;
 
 	root_out = &hists->entries;
 
-	while (!RB_EMPTY_ROOT(&root_out->rb_root)) {
+	जबतक (!RB_EMPTY_ROOT(&root_out->rb_root)) अणु
 		node = rb_first_cached(root_out);
 
-		he = rb_entry(node, struct hist_entry, rb_node);
+		he = rb_entry(node, काष्ठा hist_entry, rb_node);
 		rb_erase_cached(node, root_out);
 		rb_erase_cached(&he->rb_node_in, root_in);
 		hist_entry__delete(he);
-	}
-}
+	पूर्ण
+पूर्ण
 
-typedef int (*test_fn_t)(struct evsel *, struct machine *);
+प्रकार पूर्णांक (*test_fn_t)(काष्ठा evsel *, काष्ठा machine *);
 
-#define COMM(he)  (thread__comm_str(he->thread))
-#define DSO(he)   (he->ms.map->dso->short_name)
-#define SYM(he)   (he->ms.sym->name)
-#define CPU(he)   (he->cpu)
-#define PID(he)   (he->thread->tid)
-#define DEPTH(he) (he->callchain->max_depth)
-#define CDSO(cl)  (cl->ms.map->dso->short_name)
-#define CSYM(cl)  (cl->ms.sym->name)
+#घोषणा COMM(he)  (thपढ़ो__comm_str(he->thपढ़ो))
+#घोषणा DSO(he)   (he->ms.map->dso->लघु_name)
+#घोषणा SYM(he)   (he->ms.sym->name)
+#घोषणा CPU(he)   (he->cpu)
+#घोषणा PID(he)   (he->thपढ़ो->tid)
+#घोषणा DEPTH(he) (he->callchain->max_depth)
+#घोषणा CDSO(cl)  (cl->ms.map->dso->लघु_name)
+#घोषणा CSYM(cl)  (cl->ms.sym->name)
 
-struct result {
+काष्ठा result अणु
 	u64 children;
 	u64 self;
-	const char *comm;
-	const char *dso;
-	const char *sym;
-};
+	स्थिर अक्षर *comm;
+	स्थिर अक्षर *dso;
+	स्थिर अक्षर *sym;
+पूर्ण;
 
-struct callchain_result {
+काष्ठा callchain_result अणु
 	u64 nr;
-	struct {
-		const char *dso;
-		const char *sym;
-	} node[10];
-};
+	काष्ठा अणु
+		स्थिर अक्षर *dso;
+		स्थिर अक्षर *sym;
+	पूर्ण node[10];
+पूर्ण;
 
-static int do_test(struct hists *hists, struct result *expected, size_t nr_expected,
-		   struct callchain_result *expected_callchain, size_t nr_callchain)
-{
-	char buf[32];
-	size_t i, c;
-	struct hist_entry *he;
-	struct rb_root *root;
-	struct rb_node *node;
-	struct callchain_node *cnode;
-	struct callchain_list *clist;
+अटल पूर्णांक करो_test(काष्ठा hists *hists, काष्ठा result *expected, माप_प्रकार nr_expected,
+		   काष्ठा callchain_result *expected_callchain, माप_प्रकार nr_callchain)
+अणु
+	अक्षर buf[32];
+	माप_प्रकार i, c;
+	काष्ठा hist_entry *he;
+	काष्ठा rb_root *root;
+	काष्ठा rb_node *node;
+	काष्ठा callchain_node *cnode;
+	काष्ठा callchain_list *clist;
 
 	/*
-	 * adding and deleting hist entries must be done outside of this
-	 * function since TEST_ASSERT_VAL() returns in case of failure.
+	 * adding and deleting hist entries must be करोne outside of this
+	 * function since TEST_ASSERT_VAL() वापसs in हाल of failure.
 	 */
-	hists__collapse_resort(hists, NULL);
-	evsel__output_resort(hists_to_evsel(hists), NULL);
+	hists__collapse_resort(hists, शून्य);
+	evsel__output_resort(hists_to_evsel(hists), शून्य);
 
-	if (verbose > 2) {
+	अगर (verbose > 2) अणु
 		pr_info("use callchain: %d, cumulate callchain: %d\n",
 			symbol_conf.use_callchain,
 			symbol_conf.cumulate_callchain);
-		print_hists_out(hists);
-	}
+		prपूर्णांक_hists_out(hists);
+	पूर्ण
 
 	root = &hists->entries.rb_root;
-	for (node = rb_first(root), i = 0;
-	     node && (he = rb_entry(node, struct hist_entry, rb_node));
-	     node = rb_next(node), i++) {
-		scnprintf(buf, sizeof(buf), "Invalid hist entry #%zd", i);
+	क्रम (node = rb_first(root), i = 0;
+	     node && (he = rb_entry(node, काष्ठा hist_entry, rb_node));
+	     node = rb_next(node), i++) अणु
+		scnम_लिखो(buf, माप(buf), "Invalid hist entry #%zd", i);
 
 		TEST_ASSERT_VAL("Incorrect number of hist entry",
 				i < nr_expected);
 		TEST_ASSERT_VAL(buf, he->stat.period == expected[i].self &&
-				!strcmp(COMM(he), expected[i].comm) &&
-				!strcmp(DSO(he), expected[i].dso) &&
-				!strcmp(SYM(he), expected[i].sym));
+				!म_भेद(COMM(he), expected[i].comm) &&
+				!म_भेद(DSO(he), expected[i].dso) &&
+				!म_भेद(SYM(he), expected[i].sym));
 
-		if (symbol_conf.cumulate_callchain)
+		अगर (symbol_conf.cumulate_callchain)
 			TEST_ASSERT_VAL(buf, he->stat_acc->period == expected[i].children);
 
-		if (!symbol_conf.use_callchain)
-			continue;
+		अगर (!symbol_conf.use_callchain)
+			जारी;
 
 		/* check callchain entries */
 		root = &he->callchain->node.rb_root;
 
 		TEST_ASSERT_VAL("callchains expected", !RB_EMPTY_ROOT(root));
-		cnode = rb_entry(rb_first(root), struct callchain_node, rb_node);
+		cnode = rb_entry(rb_first(root), काष्ठा callchain_node, rb_node);
 
 		c = 0;
-		list_for_each_entry(clist, &cnode->val, list) {
-			scnprintf(buf, sizeof(buf), "Invalid callchain entry #%zd/%zd", i, c);
+		list_क्रम_each_entry(clist, &cnode->val, list) अणु
+			scnम_लिखो(buf, माप(buf), "Invalid callchain entry #%zd/%zd", i, c);
 
 			TEST_ASSERT_VAL("Incorrect number of callchain entry",
 					c < expected_callchain[i].nr);
 			TEST_ASSERT_VAL(buf,
-				!strcmp(CDSO(clist), expected_callchain[i].node[c].dso) &&
-				!strcmp(CSYM(clist), expected_callchain[i].node[c].sym));
+				!म_भेद(CDSO(clist), expected_callchain[i].node[c].dso) &&
+				!म_भेद(CSYM(clist), expected_callchain[i].node[c].sym));
 			c++;
-		}
+		पूर्ण
 		/* TODO: handle multiple child nodes properly */
 		TEST_ASSERT_VAL("Incorrect number of callchain entry",
 				c <= expected_callchain[i].nr);
-	}
+	पूर्ण
 	TEST_ASSERT_VAL("Incorrect number of hist entry",
 			i == nr_expected);
 	TEST_ASSERT_VAL("Incorrect number of callchain entry",
 			!symbol_conf.use_callchain || nr_expected == nr_callchain);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* NO callchain + NO children */
-static int test1(struct evsel *evsel, struct machine *machine)
-{
-	int err;
-	struct hists *hists = evsel__hists(evsel);
+अटल पूर्णांक test1(काष्ठा evsel *evsel, काष्ठा machine *machine)
+अणु
+	पूर्णांक err;
+	काष्ठा hists *hists = evsel__hists(evsel);
 	/*
 	 * expected output:
 	 *
 	 * Overhead  Command  Shared Object          Symbol
 	 * ========  =======  =============  ==============
-	 *   20.00%     perf  perf           [.] main
+	 *   20.00%     perf  perf           [.] मुख्य
 	 *   10.00%     bash  [kernel]       [k] page_fault
-	 *   10.00%     bash  bash           [.] main
-	 *   10.00%     bash  bash           [.] xmalloc
+	 *   10.00%     bash  bash           [.] मुख्य
+	 *   10.00%     bash  bash           [.] xदो_स्मृति
 	 *   10.00%     perf  [kernel]       [k] page_fault
 	 *   10.00%     perf  [kernel]       [k] schedule
-	 *   10.00%     perf  libc           [.] free
-	 *   10.00%     perf  libc           [.] malloc
+	 *   10.00%     perf  libc           [.] मुक्त
+	 *   10.00%     perf  libc           [.] दो_स्मृति
 	 *   10.00%     perf  perf           [.] cmd_record
 	 */
-	struct result expected[] = {
-		{ 0, 2000, "perf", "perf",     "main" },
-		{ 0, 1000, "bash", "[kernel]", "page_fault" },
-		{ 0, 1000, "bash", "bash",     "main" },
-		{ 0, 1000, "bash", "bash",     "xmalloc" },
-		{ 0, 1000, "perf", "[kernel]", "page_fault" },
-		{ 0, 1000, "perf", "[kernel]", "schedule" },
-		{ 0, 1000, "perf", "libc",     "free" },
-		{ 0, 1000, "perf", "libc",     "malloc" },
-		{ 0, 1000, "perf", "perf",     "cmd_record" },
-	};
+	काष्ठा result expected[] = अणु
+		अणु 0, 2000, "perf", "perf",     "main" पूर्ण,
+		अणु 0, 1000, "bash", "[kernel]", "page_fault" पूर्ण,
+		अणु 0, 1000, "bash", "bash",     "main" पूर्ण,
+		अणु 0, 1000, "bash", "bash",     "xmalloc" पूर्ण,
+		अणु 0, 1000, "perf", "[kernel]", "page_fault" पूर्ण,
+		अणु 0, 1000, "perf", "[kernel]", "schedule" पूर्ण,
+		अणु 0, 1000, "perf", "libc",     "free" पूर्ण,
+		अणु 0, 1000, "perf", "libc",     "malloc" पूर्ण,
+		अणु 0, 1000, "perf", "perf",     "cmd_record" पूर्ण,
+	पूर्ण;
 
 	symbol_conf.use_callchain = false;
 	symbol_conf.cumulate_callchain = false;
 	evsel__reset_sample_bit(evsel, CALLCHAIN);
 
-	setup_sorting(NULL);
-	callchain_register_param(&callchain_param);
+	setup_sorting(शून्य);
+	callchain_रेजिस्टर_param(&callchain_param);
 
 	err = add_hist_entries(hists, machine);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	err = do_test(hists, expected, ARRAY_SIZE(expected), NULL, 0);
+	err = करो_test(hists, expected, ARRAY_SIZE(expected), शून्य, 0);
 
 out:
 	del_hist_entries(hists);
 	reset_output_field();
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* callchain + NO children */
-static int test2(struct evsel *evsel, struct machine *machine)
-{
-	int err;
-	struct hists *hists = evsel__hists(evsel);
+अटल पूर्णांक test2(काष्ठा evsel *evsel, काष्ठा machine *machine)
+अणु
+	पूर्णांक err;
+	काष्ठा hists *hists = evsel__hists(evsel);
 	/*
 	 * expected output:
 	 *
 	 * Overhead  Command  Shared Object          Symbol
 	 * ========  =======  =============  ==============
-	 *   20.00%     perf  perf           [.] main
+	 *   20.00%     perf  perf           [.] मुख्य
 	 *              |
-	 *              --- main
+	 *              --- मुख्य
 	 *
 	 *   10.00%     bash  [kernel]       [k] page_fault
 	 *              |
 	 *              --- page_fault
-	 *                  malloc
-	 *                  main
+	 *                  दो_स्मृति
+	 *                  मुख्य
 	 *
-	 *   10.00%     bash  bash           [.] main
+	 *   10.00%     bash  bash           [.] मुख्य
 	 *              |
-	 *              --- main
+	 *              --- मुख्य
 	 *
-	 *   10.00%     bash  bash           [.] xmalloc
+	 *   10.00%     bash  bash           [.] xदो_स्मृति
 	 *              |
-	 *              --- xmalloc
-	 *                  malloc
-	 *                  xmalloc     <--- NOTE: there's a cycle
-	 *                  malloc
-	 *                  xmalloc
-	 *                  main
+	 *              --- xदो_स्मृति
+	 *                  दो_स्मृति
+	 *                  xदो_स्मृति     <--- NOTE: there's a cycle
+	 *                  दो_स्मृति
+	 *                  xदो_स्मृति
+	 *                  मुख्य
 	 *
 	 *   10.00%     perf  [kernel]       [k] page_fault
 	 *              |
 	 *              --- page_fault
-	 *                  sys_perf_event_open
+	 *                  sys_perf_event_खोलो
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
 	 *   10.00%     perf  [kernel]       [k] schedule
 	 *              |
 	 *              --- schedule
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
-	 *   10.00%     perf  libc           [.] free
+	 *   10.00%     perf  libc           [.] मुक्त
 	 *              |
-	 *              --- free
+	 *              --- मुक्त
 	 *                  cmd_record
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
-	 *   10.00%     perf  libc           [.] malloc
+	 *   10.00%     perf  libc           [.] दो_स्मृति
 	 *              |
-	 *              --- malloc
+	 *              --- दो_स्मृति
 	 *                  cmd_record
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
 	 *   10.00%     perf  perf           [.] cmd_record
 	 *              |
 	 *              --- cmd_record
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
 	 */
-	struct result expected[] = {
-		{ 0, 2000, "perf", "perf",     "main" },
-		{ 0, 1000, "bash", "[kernel]", "page_fault" },
-		{ 0, 1000, "bash", "bash",     "main" },
-		{ 0, 1000, "bash", "bash",     "xmalloc" },
-		{ 0, 1000, "perf", "[kernel]", "page_fault" },
-		{ 0, 1000, "perf", "[kernel]", "schedule" },
-		{ 0, 1000, "perf", "libc",     "free" },
-		{ 0, 1000, "perf", "libc",     "malloc" },
-		{ 0, 1000, "perf", "perf",     "cmd_record" },
-	};
-	struct callchain_result expected_callchain[] = {
-		{
-			1, {	{ "perf",     "main" }, },
-		},
-		{
-			3, {	{ "[kernel]", "page_fault" },
-				{ "libc",     "malloc" },
-				{ "bash",     "main" }, },
-		},
-		{
-			1, {	{ "bash",     "main" }, },
-		},
-		{
-			6, {	{ "bash",     "xmalloc" },
-				{ "libc",     "malloc" },
-				{ "bash",     "xmalloc" },
-				{ "libc",     "malloc" },
-				{ "bash",     "xmalloc" },
-				{ "bash",     "main" }, },
-		},
-		{
-			4, {	{ "[kernel]", "page_fault" },
-				{ "[kernel]", "sys_perf_event_open" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			3, {	{ "[kernel]", "schedule" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			4, {	{ "libc",     "free" },
-				{ "perf",     "cmd_record" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			4, {	{ "libc",     "malloc" },
-				{ "perf",     "cmd_record" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			3, {	{ "perf",     "cmd_record" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-	};
+	काष्ठा result expected[] = अणु
+		अणु 0, 2000, "perf", "perf",     "main" पूर्ण,
+		अणु 0, 1000, "bash", "[kernel]", "page_fault" पूर्ण,
+		अणु 0, 1000, "bash", "bash",     "main" पूर्ण,
+		अणु 0, 1000, "bash", "bash",     "xmalloc" पूर्ण,
+		अणु 0, 1000, "perf", "[kernel]", "page_fault" पूर्ण,
+		अणु 0, 1000, "perf", "[kernel]", "schedule" पूर्ण,
+		अणु 0, 1000, "perf", "libc",     "free" पूर्ण,
+		अणु 0, 1000, "perf", "libc",     "malloc" पूर्ण,
+		अणु 0, 1000, "perf", "perf",     "cmd_record" पूर्ण,
+	पूर्ण;
+	काष्ठा callchain_result expected_callchain[] = अणु
+		अणु
+			1, अणु	अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			3, अणु	अणु "[kernel]", "page_fault" पूर्ण,
+				अणु "libc",     "malloc" पूर्ण,
+				अणु "bash",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			1, अणु	अणु "bash",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			6, अणु	अणु "bash",     "xmalloc" पूर्ण,
+				अणु "libc",     "malloc" पूर्ण,
+				अणु "bash",     "xmalloc" पूर्ण,
+				अणु "libc",     "malloc" पूर्ण,
+				अणु "bash",     "xmalloc" पूर्ण,
+				अणु "bash",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			4, अणु	अणु "[kernel]", "page_fault" पूर्ण,
+				अणु "[kernel]", "sys_perf_event_open" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			3, अणु	अणु "[kernel]", "schedule" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			4, अणु	अणु "libc",     "free" पूर्ण,
+				अणु "perf",     "cmd_record" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			4, अणु	अणु "libc",     "malloc" पूर्ण,
+				अणु "perf",     "cmd_record" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			3, अणु	अणु "perf",     "cmd_record" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+	पूर्ण;
 
 	symbol_conf.use_callchain = true;
 	symbol_conf.cumulate_callchain = false;
 	evsel__set_sample_bit(evsel, CALLCHAIN);
 
-	setup_sorting(NULL);
-	callchain_register_param(&callchain_param);
+	setup_sorting(शून्य);
+	callchain_रेजिस्टर_param(&callchain_param);
 
 	err = add_hist_entries(hists, machine);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	err = do_test(hists, expected, ARRAY_SIZE(expected),
+	err = करो_test(hists, expected, ARRAY_SIZE(expected),
 		      expected_callchain, ARRAY_SIZE(expected_callchain));
 
 out:
 	del_hist_entries(hists);
 	reset_output_field();
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* NO callchain + children */
-static int test3(struct evsel *evsel, struct machine *machine)
-{
-	int err;
-	struct hists *hists = evsel__hists(evsel);
+अटल पूर्णांक test3(काष्ठा evsel *evsel, काष्ठा machine *machine)
+अणु
+	पूर्णांक err;
+	काष्ठा hists *hists = evsel__hists(evsel);
 	/*
 	 * expected output:
 	 *
 	 * Children      Self  Command  Shared Object                   Symbol
 	 * ========  ========  =======  =============  =======================
-	 *   70.00%    20.00%     perf  perf           [.] main
+	 *   70.00%    20.00%     perf  perf           [.] मुख्य
 	 *   50.00%     0.00%     perf  perf           [.] run_command
-	 *   30.00%    10.00%     bash  bash           [.] main
+	 *   30.00%    10.00%     bash  bash           [.] मुख्य
 	 *   30.00%    10.00%     perf  perf           [.] cmd_record
-	 *   20.00%     0.00%     bash  libc           [.] malloc
+	 *   20.00%     0.00%     bash  libc           [.] दो_स्मृति
 	 *   10.00%    10.00%     bash  [kernel]       [k] page_fault
-	 *   10.00%    10.00%     bash  bash           [.] xmalloc
+	 *   10.00%    10.00%     bash  bash           [.] xदो_स्मृति
 	 *   10.00%    10.00%     perf  [kernel]       [k] page_fault
-	 *   10.00%    10.00%     perf  libc           [.] malloc
+	 *   10.00%    10.00%     perf  libc           [.] दो_स्मृति
 	 *   10.00%    10.00%     perf  [kernel]       [k] schedule
-	 *   10.00%    10.00%     perf  libc           [.] free
-	 *   10.00%     0.00%     perf  [kernel]       [k] sys_perf_event_open
+	 *   10.00%    10.00%     perf  libc           [.] मुक्त
+	 *   10.00%     0.00%     perf  [kernel]       [k] sys_perf_event_खोलो
 	 */
-	struct result expected[] = {
-		{ 7000, 2000, "perf", "perf",     "main" },
-		{ 5000,    0, "perf", "perf",     "run_command" },
-		{ 3000, 1000, "bash", "bash",     "main" },
-		{ 3000, 1000, "perf", "perf",     "cmd_record" },
-		{ 2000,    0, "bash", "libc",     "malloc" },
-		{ 1000, 1000, "bash", "[kernel]", "page_fault" },
-		{ 1000, 1000, "bash", "bash",     "xmalloc" },
-		{ 1000, 1000, "perf", "[kernel]", "page_fault" },
-		{ 1000, 1000, "perf", "[kernel]", "schedule" },
-		{ 1000, 1000, "perf", "libc",     "free" },
-		{ 1000, 1000, "perf", "libc",     "malloc" },
-		{ 1000,    0, "perf", "[kernel]", "sys_perf_event_open" },
-	};
+	काष्ठा result expected[] = अणु
+		अणु 7000, 2000, "perf", "perf",     "main" पूर्ण,
+		अणु 5000,    0, "perf", "perf",     "run_command" पूर्ण,
+		अणु 3000, 1000, "bash", "bash",     "main" पूर्ण,
+		अणु 3000, 1000, "perf", "perf",     "cmd_record" पूर्ण,
+		अणु 2000,    0, "bash", "libc",     "malloc" पूर्ण,
+		अणु 1000, 1000, "bash", "[kernel]", "page_fault" पूर्ण,
+		अणु 1000, 1000, "bash", "bash",     "xmalloc" पूर्ण,
+		अणु 1000, 1000, "perf", "[kernel]", "page_fault" पूर्ण,
+		अणु 1000, 1000, "perf", "[kernel]", "schedule" पूर्ण,
+		अणु 1000, 1000, "perf", "libc",     "free" पूर्ण,
+		अणु 1000, 1000, "perf", "libc",     "malloc" पूर्ण,
+		अणु 1000,    0, "perf", "[kernel]", "sys_perf_event_open" पूर्ण,
+	पूर्ण;
 
 	symbol_conf.use_callchain = false;
 	symbol_conf.cumulate_callchain = true;
 	evsel__reset_sample_bit(evsel, CALLCHAIN);
 
-	setup_sorting(NULL);
-	callchain_register_param(&callchain_param);
+	setup_sorting(शून्य);
+	callchain_रेजिस्टर_param(&callchain_param);
 
 	err = add_hist_entries(hists, machine);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	err = do_test(hists, expected, ARRAY_SIZE(expected), NULL, 0);
+	err = करो_test(hists, expected, ARRAY_SIZE(expected), शून्य, 0);
 
 out:
 	del_hist_entries(hists);
 	reset_output_field();
-	return err;
-}
+	वापस err;
+पूर्ण
 
 /* callchain + children */
-static int test4(struct evsel *evsel, struct machine *machine)
-{
-	int err;
-	struct hists *hists = evsel__hists(evsel);
+अटल पूर्णांक test4(काष्ठा evsel *evsel, काष्ठा machine *machine)
+अणु
+	पूर्णांक err;
+	काष्ठा hists *hists = evsel__hists(evsel);
 	/*
 	 * expected output:
 	 *
 	 * Children      Self  Command  Shared Object                   Symbol
 	 * ========  ========  =======  =============  =======================
-	 *   70.00%    20.00%     perf  perf           [.] main
+	 *   70.00%    20.00%     perf  perf           [.] मुख्य
 	 *              |
-	 *              --- main
+	 *              --- मुख्य
 	 *
 	 *   50.00%     0.00%     perf  perf           [.] run_command
 	 *              |
 	 *              --- run_command
-	 *                  main
+	 *                  मुख्य
 	 *
-	 *   30.00%    10.00%     bash  bash           [.] main
+	 *   30.00%    10.00%     bash  bash           [.] मुख्य
 	 *              |
-	 *              --- main
+	 *              --- मुख्य
 	 *
 	 *   30.00%    10.00%     perf  perf           [.] cmd_record
 	 *              |
 	 *              --- cmd_record
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
-	 *   20.00%     0.00%     bash  libc           [.] malloc
+	 *   20.00%     0.00%     bash  libc           [.] दो_स्मृति
 	 *              |
-	 *              --- malloc
+	 *              --- दो_स्मृति
 	 *                 |
-	 *                 |--50.00%-- xmalloc
-	 *                 |           main
-	 *                  --50.00%-- main
+	 *                 |--50.00%-- xदो_स्मृति
+	 *                 |           मुख्य
+	 *                  --50.00%-- मुख्य
 	 *
 	 *   10.00%    10.00%     bash  [kernel]       [k] page_fault
 	 *              |
 	 *              --- page_fault
-	 *                  malloc
-	 *                  main
+	 *                  दो_स्मृति
+	 *                  मुख्य
 	 *
-	 *   10.00%    10.00%     bash  bash           [.] xmalloc
+	 *   10.00%    10.00%     bash  bash           [.] xदो_स्मृति
 	 *              |
-	 *              --- xmalloc
-	 *                  malloc
-	 *                  xmalloc     <--- NOTE: there's a cycle
-	 *                  malloc
-	 *                  xmalloc
-	 *                  main
+	 *              --- xदो_स्मृति
+	 *                  दो_स्मृति
+	 *                  xदो_स्मृति     <--- NOTE: there's a cycle
+	 *                  दो_स्मृति
+	 *                  xदो_स्मृति
+	 *                  मुख्य
 	 *
-	 *   10.00%     0.00%     perf  [kernel]       [k] sys_perf_event_open
+	 *   10.00%     0.00%     perf  [kernel]       [k] sys_perf_event_खोलो
 	 *              |
-	 *              --- sys_perf_event_open
+	 *              --- sys_perf_event_खोलो
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
 	 *   10.00%    10.00%     perf  [kernel]       [k] page_fault
 	 *              |
 	 *              --- page_fault
-	 *                  sys_perf_event_open
+	 *                  sys_perf_event_खोलो
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
 	 *   10.00%    10.00%     perf  [kernel]       [k] schedule
 	 *              |
 	 *              --- schedule
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
-	 *   10.00%    10.00%     perf  libc           [.] free
+	 *   10.00%    10.00%     perf  libc           [.] मुक्त
 	 *              |
-	 *              --- free
+	 *              --- मुक्त
 	 *                  cmd_record
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
-	 *   10.00%    10.00%     perf  libc           [.] malloc
+	 *   10.00%    10.00%     perf  libc           [.] दो_स्मृति
 	 *              |
-	 *              --- malloc
+	 *              --- दो_स्मृति
 	 *                  cmd_record
 	 *                  run_command
-	 *                  main
+	 *                  मुख्य
 	 *
 	 */
-	struct result expected[] = {
-		{ 7000, 2000, "perf", "perf",     "main" },
-		{ 5000,    0, "perf", "perf",     "run_command" },
-		{ 3000, 1000, "bash", "bash",     "main" },
-		{ 3000, 1000, "perf", "perf",     "cmd_record" },
-		{ 2000,    0, "bash", "libc",     "malloc" },
-		{ 1000, 1000, "bash", "[kernel]", "page_fault" },
-		{ 1000, 1000, "bash", "bash",     "xmalloc" },
-		{ 1000,    0, "perf", "[kernel]", "sys_perf_event_open" },
-		{ 1000, 1000, "perf", "[kernel]", "page_fault" },
-		{ 1000, 1000, "perf", "[kernel]", "schedule" },
-		{ 1000, 1000, "perf", "libc",     "free" },
-		{ 1000, 1000, "perf", "libc",     "malloc" },
-	};
-	struct callchain_result expected_callchain[] = {
-		{
-			1, {	{ "perf",     "main" }, },
-		},
-		{
-			2, {	{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			1, {	{ "bash",     "main" }, },
-		},
-		{
-			3, {	{ "perf",     "cmd_record" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			4, {	{ "libc",     "malloc" },
-				{ "bash",     "xmalloc" },
-				{ "bash",     "main" },
-				{ "bash",     "main" }, },
-		},
-		{
-			3, {	{ "[kernel]", "page_fault" },
-				{ "libc",     "malloc" },
-				{ "bash",     "main" }, },
-		},
-		{
-			6, {	{ "bash",     "xmalloc" },
-				{ "libc",     "malloc" },
-				{ "bash",     "xmalloc" },
-				{ "libc",     "malloc" },
-				{ "bash",     "xmalloc" },
-				{ "bash",     "main" }, },
-		},
-		{
-			3, {	{ "[kernel]", "sys_perf_event_open" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			4, {	{ "[kernel]", "page_fault" },
-				{ "[kernel]", "sys_perf_event_open" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			3, {	{ "[kernel]", "schedule" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			4, {	{ "libc",     "free" },
-				{ "perf",     "cmd_record" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-		{
-			4, {	{ "libc",     "malloc" },
-				{ "perf",     "cmd_record" },
-				{ "perf",     "run_command" },
-				{ "perf",     "main" }, },
-		},
-	};
+	काष्ठा result expected[] = अणु
+		अणु 7000, 2000, "perf", "perf",     "main" पूर्ण,
+		अणु 5000,    0, "perf", "perf",     "run_command" पूर्ण,
+		अणु 3000, 1000, "bash", "bash",     "main" पूर्ण,
+		अणु 3000, 1000, "perf", "perf",     "cmd_record" पूर्ण,
+		अणु 2000,    0, "bash", "libc",     "malloc" पूर्ण,
+		अणु 1000, 1000, "bash", "[kernel]", "page_fault" पूर्ण,
+		अणु 1000, 1000, "bash", "bash",     "xmalloc" पूर्ण,
+		अणु 1000,    0, "perf", "[kernel]", "sys_perf_event_open" पूर्ण,
+		अणु 1000, 1000, "perf", "[kernel]", "page_fault" पूर्ण,
+		अणु 1000, 1000, "perf", "[kernel]", "schedule" पूर्ण,
+		अणु 1000, 1000, "perf", "libc",     "free" पूर्ण,
+		अणु 1000, 1000, "perf", "libc",     "malloc" पूर्ण,
+	पूर्ण;
+	काष्ठा callchain_result expected_callchain[] = अणु
+		अणु
+			1, अणु	अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			2, अणु	अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			1, अणु	अणु "bash",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			3, अणु	अणु "perf",     "cmd_record" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			4, अणु	अणु "libc",     "malloc" पूर्ण,
+				अणु "bash",     "xmalloc" पूर्ण,
+				अणु "bash",     "main" पूर्ण,
+				अणु "bash",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			3, अणु	अणु "[kernel]", "page_fault" पूर्ण,
+				अणु "libc",     "malloc" पूर्ण,
+				अणु "bash",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			6, अणु	अणु "bash",     "xmalloc" पूर्ण,
+				अणु "libc",     "malloc" पूर्ण,
+				अणु "bash",     "xmalloc" पूर्ण,
+				अणु "libc",     "malloc" पूर्ण,
+				अणु "bash",     "xmalloc" पूर्ण,
+				अणु "bash",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			3, अणु	अणु "[kernel]", "sys_perf_event_open" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			4, अणु	अणु "[kernel]", "page_fault" पूर्ण,
+				अणु "[kernel]", "sys_perf_event_open" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			3, अणु	अणु "[kernel]", "schedule" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			4, अणु	अणु "libc",     "free" पूर्ण,
+				अणु "perf",     "cmd_record" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+		अणु
+			4, अणु	अणु "libc",     "malloc" पूर्ण,
+				अणु "perf",     "cmd_record" पूर्ण,
+				अणु "perf",     "run_command" पूर्ण,
+				अणु "perf",     "main" पूर्ण, पूर्ण,
+		पूर्ण,
+	पूर्ण;
 
 	symbol_conf.use_callchain = true;
 	symbol_conf.cumulate_callchain = true;
 	evsel__set_sample_bit(evsel, CALLCHAIN);
 
-	setup_sorting(NULL);
+	setup_sorting(शून्य);
 
-	callchain_param = callchain_param_default;
-	callchain_register_param(&callchain_param);
+	callchain_param = callchain_param_शेष;
+	callchain_रेजिस्टर_param(&callchain_param);
 
 	err = add_hist_entries(hists, machine);
-	if (err < 0)
-		goto out;
+	अगर (err < 0)
+		जाओ out;
 
-	err = do_test(hists, expected, ARRAY_SIZE(expected),
+	err = करो_test(hists, expected, ARRAY_SIZE(expected),
 		      expected_callchain, ARRAY_SIZE(expected_callchain));
 
 out:
 	del_hist_entries(hists);
 	reset_output_field();
-	return err;
-}
+	वापस err;
+पूर्ण
 
-int test__hists_cumulate(struct test *test __maybe_unused, int subtest __maybe_unused)
-{
-	int err = TEST_FAIL;
-	struct machines machines;
-	struct machine *machine;
-	struct evsel *evsel;
-	struct evlist *evlist = evlist__new();
-	size_t i;
-	test_fn_t testcases[] = {
+पूर्णांक test__hists_cumulate(काष्ठा test *test __maybe_unused, पूर्णांक subtest __maybe_unused)
+अणु
+	पूर्णांक err = TEST_FAIL;
+	काष्ठा machines machines;
+	काष्ठा machine *machine;
+	काष्ठा evsel *evsel;
+	काष्ठा evlist *evlist = evlist__new();
+	माप_प्रकार i;
+	test_fn_t testहालs[] = अणु
 		test1,
 		test2,
 		test3,
 		test4,
-	};
+	पूर्ण;
 
 	TEST_ASSERT_VAL("No memory", evlist);
 
-	err = parse_events(evlist, "cpu-clock", NULL);
-	if (err)
-		goto out;
+	err = parse_events(evlist, "cpu-clock", शून्य);
+	अगर (err)
+		जाओ out;
 	err = TEST_FAIL;
 
 	machines__init(&machines);
 
-	/* setup threads/dso/map/symbols also */
+	/* setup thपढ़ोs/dso/map/symbols also */
 	machine = setup_fake_machine(&machines);
-	if (!machine)
-		goto out;
+	अगर (!machine)
+		जाओ out;
 
-	if (verbose > 1)
-		machine__fprintf(machine, stderr);
+	अगर (verbose > 1)
+		machine__ख_लिखो(machine, मानक_त्रुटि);
 
 	evsel = evlist__first(evlist);
 
-	for (i = 0; i < ARRAY_SIZE(testcases); i++) {
-		err = testcases[i](evsel, machine);
-		if (err < 0)
-			break;
-	}
+	क्रम (i = 0; i < ARRAY_SIZE(testहालs); i++) अणु
+		err = testहालs[i](evsel, machine);
+		अगर (err < 0)
+			अवरोध;
+	पूर्ण
 
 out:
-	/* tear down everything */
+	/* tear करोwn everything */
 	evlist__delete(evlist);
-	machines__exit(&machines);
+	machines__निकास(&machines);
 
-	return err;
-}
+	वापस err;
+पूर्ण

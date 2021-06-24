@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * Copyright (C) 2004-2013 Synopsys, Inc. (www.synopsys.com)
  *
- * Driver for the ARC EMAC 10100 (hardware revision 5)
+ * Driver क्रम the ARC EMAC 10100 (hardware revision 5)
  *
  * Contributors:
  *		Amit Bhor
@@ -10,231 +11,231 @@
  *		Vineet Gupta
  */
 
-#include <linux/crc32.h>
-#include <linux/etherdevice.h>
-#include <linux/interrupt.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/of_address.h>
-#include <linux/of_irq.h>
-#include <linux/of_mdio.h>
-#include <linux/of_net.h>
-#include <linux/of_platform.h>
+#समावेश <linux/crc32.h>
+#समावेश <linux/etherdevice.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_irq.h>
+#समावेश <linux/of_mdपन.स>
+#समावेश <linux/of_net.h>
+#समावेश <linux/of_platक्रमm.h>
 
-#include "emac.h"
+#समावेश "emac.h"
 
-static void arc_emac_restart(struct net_device *ndev);
+अटल व्योम arc_emac_restart(काष्ठा net_device *ndev);
 
 /**
  * arc_emac_tx_avail - Return the number of available slots in the tx ring.
- * @priv: Pointer to ARC EMAC private data structure.
+ * @priv: Poपूर्णांकer to ARC EMAC निजी data काष्ठाure.
  *
- * returns: the number of slots available for transmission in tx the ring.
+ * वापसs: the number of slots available क्रम transmission in tx the ring.
  */
-static inline int arc_emac_tx_avail(struct arc_emac_priv *priv)
-{
-	return (priv->txbd_dirty + TX_BD_NUM - priv->txbd_curr - 1) % TX_BD_NUM;
-}
+अटल अंतरभूत पूर्णांक arc_emac_tx_avail(काष्ठा arc_emac_priv *priv)
+अणु
+	वापस (priv->txbd_dirty + TX_BD_NUM - priv->txbd_curr - 1) % TX_BD_NUM;
+पूर्ण
 
 /**
  * arc_emac_adjust_link - Adjust the PHY link duplex.
- * @ndev:	Pointer to the net_device structure.
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure.
  *
- * This function is called to change the duplex setting after auto negotiation
- * is done by the PHY.
+ * This function is called to change the duplex setting after स्वतः negotiation
+ * is करोne by the PHY.
  */
-static void arc_emac_adjust_link(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	struct phy_device *phy_dev = ndev->phydev;
-	unsigned int reg, state_changed = 0;
+अटल व्योम arc_emac_adjust_link(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	काष्ठा phy_device *phy_dev = ndev->phydev;
+	अचिन्हित पूर्णांक reg, state_changed = 0;
 
-	if (priv->link != phy_dev->link) {
+	अगर (priv->link != phy_dev->link) अणु
 		priv->link = phy_dev->link;
 		state_changed = 1;
-	}
+	पूर्ण
 
-	if (priv->speed != phy_dev->speed) {
+	अगर (priv->speed != phy_dev->speed) अणु
 		priv->speed = phy_dev->speed;
 		state_changed = 1;
-		if (priv->set_mac_speed)
+		अगर (priv->set_mac_speed)
 			priv->set_mac_speed(priv, priv->speed);
-	}
+	पूर्ण
 
-	if (priv->duplex != phy_dev->duplex) {
+	अगर (priv->duplex != phy_dev->duplex) अणु
 		reg = arc_reg_get(priv, R_CTRL);
 
-		if (phy_dev->duplex == DUPLEX_FULL)
+		अगर (phy_dev->duplex == DUPLEX_FULL)
 			reg |= ENFL_MASK;
-		else
+		अन्यथा
 			reg &= ~ENFL_MASK;
 
 		arc_reg_set(priv, R_CTRL, reg);
 		priv->duplex = phy_dev->duplex;
 		state_changed = 1;
-	}
+	पूर्ण
 
-	if (state_changed)
-		phy_print_status(phy_dev);
-}
+	अगर (state_changed)
+		phy_prपूर्णांक_status(phy_dev);
+पूर्ण
 
 /**
- * arc_emac_get_drvinfo - Get EMAC driver information.
- * @ndev:	Pointer to net_device structure.
- * @info:	Pointer to ethtool_drvinfo structure.
+ * arc_emac_get_drvinfo - Get EMAC driver inक्रमmation.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure.
+ * @info:	Poपूर्णांकer to ethtool_drvinfo काष्ठाure.
  *
- * This implements ethtool command for getting the driver information.
+ * This implements ethtool command क्रम getting the driver inक्रमmation.
  * Issue "ethtool -i ethX" under linux prompt to execute this function.
  */
-static void arc_emac_get_drvinfo(struct net_device *ndev,
-				 struct ethtool_drvinfo *info)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
+अटल व्योम arc_emac_get_drvinfo(काष्ठा net_device *ndev,
+				 काष्ठा ethtool_drvinfo *info)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
 
-	strlcpy(info->driver, priv->drv_name, sizeof(info->driver));
-}
+	strlcpy(info->driver, priv->drv_name, माप(info->driver));
+पूर्ण
 
-static const struct ethtool_ops arc_emac_ethtool_ops = {
+अटल स्थिर काष्ठा ethtool_ops arc_emac_ethtool_ops = अणु
 	.get_drvinfo	= arc_emac_get_drvinfo,
 	.get_link	= ethtool_op_get_link,
 	.get_link_ksettings = phy_ethtool_get_link_ksettings,
 	.set_link_ksettings = phy_ethtool_set_link_ksettings,
-};
+पूर्ण;
 
-#define FIRST_OR_LAST_MASK	(FIRST_MASK | LAST_MASK)
+#घोषणा FIRST_OR_LAST_MASK	(FIRST_MASK | LAST_MASK)
 
 /**
  * arc_emac_tx_clean - clears processed by EMAC Tx BDs.
- * @ndev:	Pointer to the network device.
+ * @ndev:	Poपूर्णांकer to the network device.
  */
-static void arc_emac_tx_clean(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	struct net_device_stats *stats = &ndev->stats;
-	unsigned int i;
+अटल व्योम arc_emac_tx_clean(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	काष्ठा net_device_stats *stats = &ndev->stats;
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < TX_BD_NUM; i++) {
-		unsigned int *txbd_dirty = &priv->txbd_dirty;
-		struct arc_emac_bd *txbd = &priv->txbd[*txbd_dirty];
-		struct buffer_state *tx_buff = &priv->tx_buff[*txbd_dirty];
-		struct sk_buff *skb = tx_buff->skb;
-		unsigned int info = le32_to_cpu(txbd->info);
+	क्रम (i = 0; i < TX_BD_NUM; i++) अणु
+		अचिन्हित पूर्णांक *txbd_dirty = &priv->txbd_dirty;
+		काष्ठा arc_emac_bd *txbd = &priv->txbd[*txbd_dirty];
+		काष्ठा buffer_state *tx_buff = &priv->tx_buff[*txbd_dirty];
+		काष्ठा sk_buff *skb = tx_buff->skb;
+		अचिन्हित पूर्णांक info = le32_to_cpu(txbd->info);
 
-		if ((info & FOR_EMAC) || !txbd->data || !skb)
-			break;
+		अगर ((info & FOR_EMAC) || !txbd->data || !skb)
+			अवरोध;
 
-		if (unlikely(info & (DROP | DEFR | LTCL | UFLO))) {
+		अगर (unlikely(info & (DROP | DEFR | LTCL | UFLO))) अणु
 			stats->tx_errors++;
 			stats->tx_dropped++;
 
-			if (info & DEFR)
+			अगर (info & DEFR)
 				stats->tx_carrier_errors++;
 
-			if (info & LTCL)
+			अगर (info & LTCL)
 				stats->collisions++;
 
-			if (info & UFLO)
-				stats->tx_fifo_errors++;
-		} else if (likely(info & FIRST_OR_LAST_MASK)) {
+			अगर (info & UFLO)
+				stats->tx_fअगरo_errors++;
+		पूर्ण अन्यथा अगर (likely(info & FIRST_OR_LAST_MASK)) अणु
 			stats->tx_packets++;
 			stats->tx_bytes += skb->len;
-		}
+		पूर्ण
 
 		dma_unmap_single(&ndev->dev, dma_unmap_addr(tx_buff, addr),
 				 dma_unmap_len(tx_buff, len), DMA_TO_DEVICE);
 
-		/* return the sk_buff to system */
+		/* वापस the sk_buff to प्रणाली */
 		dev_consume_skb_irq(skb);
 
 		txbd->data = 0;
 		txbd->info = 0;
-		tx_buff->skb = NULL;
+		tx_buff->skb = शून्य;
 
 		*txbd_dirty = (*txbd_dirty + 1) % TX_BD_NUM;
-	}
+	पूर्ण
 
-	/* Ensure that txbd_dirty is visible to tx() before checking
-	 * for queue stopped.
+	/* Ensure that txbd_dirty is visible to tx() beक्रमe checking
+	 * क्रम queue stopped.
 	 */
 	smp_mb();
 
-	if (netif_queue_stopped(ndev) && arc_emac_tx_avail(priv))
-		netif_wake_queue(ndev);
-}
+	अगर (netअगर_queue_stopped(ndev) && arc_emac_tx_avail(priv))
+		netअगर_wake_queue(ndev);
+पूर्ण
 
 /**
  * arc_emac_rx - processing of Rx packets.
- * @ndev:	Pointer to the network device.
+ * @ndev:	Poपूर्णांकer to the network device.
  * @budget:	How many BDs to process on 1 call.
  *
- * returns:	Number of processed BDs
+ * वापसs:	Number of processed BDs
  *
  * Iterate through Rx BDs and deliver received packages to upper layer.
  */
-static int arc_emac_rx(struct net_device *ndev, int budget)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	unsigned int work_done;
+अटल पूर्णांक arc_emac_rx(काष्ठा net_device *ndev, पूर्णांक budget)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक work_करोne;
 
-	for (work_done = 0; work_done < budget; work_done++) {
-		unsigned int *last_rx_bd = &priv->last_rx_bd;
-		struct net_device_stats *stats = &ndev->stats;
-		struct buffer_state *rx_buff = &priv->rx_buff[*last_rx_bd];
-		struct arc_emac_bd *rxbd = &priv->rxbd[*last_rx_bd];
-		unsigned int pktlen, info = le32_to_cpu(rxbd->info);
-		struct sk_buff *skb;
+	क्रम (work_करोne = 0; work_करोne < budget; work_करोne++) अणु
+		अचिन्हित पूर्णांक *last_rx_bd = &priv->last_rx_bd;
+		काष्ठा net_device_stats *stats = &ndev->stats;
+		काष्ठा buffer_state *rx_buff = &priv->rx_buff[*last_rx_bd];
+		काष्ठा arc_emac_bd *rxbd = &priv->rxbd[*last_rx_bd];
+		अचिन्हित पूर्णांक pktlen, info = le32_to_cpu(rxbd->info);
+		काष्ठा sk_buff *skb;
 		dma_addr_t addr;
 
-		if (unlikely((info & OWN_MASK) == FOR_EMAC))
-			break;
+		अगर (unlikely((info & OWN_MASK) == FOR_EMAC))
+			अवरोध;
 
 		/* Make a note that we saw a packet at this BD.
-		 * So next time, driver starts from this + 1
+		 * So next समय, driver starts from this + 1
 		 */
 		*last_rx_bd = (*last_rx_bd + 1) % RX_BD_NUM;
 
-		if (unlikely((info & FIRST_OR_LAST_MASK) !=
-			     FIRST_OR_LAST_MASK)) {
+		अगर (unlikely((info & FIRST_OR_LAST_MASK) !=
+			     FIRST_OR_LAST_MASK)) अणु
 			/* We pre-allocate buffers of MTU size so incoming
 			 * packets won't be split/chained.
 			 */
-			if (net_ratelimit())
+			अगर (net_ratelimit())
 				netdev_err(ndev, "incomplete packet received\n");
 
 			/* Return ownership to EMAC */
 			rxbd->info = cpu_to_le32(FOR_EMAC | EMAC_BUFFER_SIZE);
 			stats->rx_errors++;
 			stats->rx_length_errors++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		/* Prepare the BD for next cycle. netif_receive_skb()
-		 * only if new skb was allocated and mapped to avoid holes
-		 * in the RX fifo.
+		/* Prepare the BD क्रम next cycle. netअगर_receive_skb()
+		 * only अगर new skb was allocated and mapped to aव्योम holes
+		 * in the RX fअगरo.
 		 */
 		skb = netdev_alloc_skb_ip_align(ndev, EMAC_BUFFER_SIZE);
-		if (unlikely(!skb)) {
-			if (net_ratelimit())
+		अगर (unlikely(!skb)) अणु
+			अगर (net_ratelimit())
 				netdev_err(ndev, "cannot allocate skb\n");
 			/* Return ownership to EMAC */
 			rxbd->info = cpu_to_le32(FOR_EMAC | EMAC_BUFFER_SIZE);
 			stats->rx_errors++;
 			stats->rx_dropped++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
-		addr = dma_map_single(&ndev->dev, (void *)skb->data,
+		addr = dma_map_single(&ndev->dev, (व्योम *)skb->data,
 				      EMAC_BUFFER_SIZE, DMA_FROM_DEVICE);
-		if (dma_mapping_error(&ndev->dev, addr)) {
-			if (net_ratelimit())
+		अगर (dma_mapping_error(&ndev->dev, addr)) अणु
+			अगर (net_ratelimit())
 				netdev_err(ndev, "cannot map dma buffer\n");
-			dev_kfree_skb(skb);
+			dev_kमुक्त_skb(skb);
 			/* Return ownership to EMAC */
 			rxbd->info = cpu_to_le32(FOR_EMAC | EMAC_BUFFER_SIZE);
 			stats->rx_errors++;
 			stats->rx_dropped++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* unmap previosly mapped skb */
 		dma_unmap_single(&ndev->dev, dma_unmap_addr(rx_buff, addr),
@@ -247,7 +248,7 @@ static int arc_emac_rx(struct net_device *ndev, int budget)
 		rx_buff->skb->dev = ndev;
 		rx_buff->skb->protocol = eth_type_trans(rx_buff->skb, ndev);
 
-		netif_receive_skb(rx_buff->skb);
+		netअगर_receive_skb(rx_buff->skb);
 
 		rx_buff->skb = skb;
 		dma_unmap_addr_set(rx_buff, addr, addr);
@@ -255,106 +256,106 @@ static int arc_emac_rx(struct net_device *ndev, int budget)
 
 		rxbd->data = cpu_to_le32(addr);
 
-		/* Make sure pointer to data buffer is set */
+		/* Make sure poपूर्णांकer to data buffer is set */
 		wmb();
 
 		/* Return ownership to EMAC */
 		rxbd->info = cpu_to_le32(FOR_EMAC | EMAC_BUFFER_SIZE);
-	}
+	पूर्ण
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
 /**
- * arc_emac_rx_miss_handle - handle R_MISS register
- * @ndev:	Pointer to the net_device structure.
+ * arc_emac_rx_miss_handle - handle R_MISS रेजिस्टर
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure.
  */
-static void arc_emac_rx_miss_handle(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	struct net_device_stats *stats = &ndev->stats;
-	unsigned int miss;
+अटल व्योम arc_emac_rx_miss_handle(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	काष्ठा net_device_stats *stats = &ndev->stats;
+	अचिन्हित पूर्णांक miss;
 
 	miss = arc_reg_get(priv, R_MISS);
-	if (miss) {
+	अगर (miss) अणु
 		stats->rx_errors += miss;
 		stats->rx_missed_errors += miss;
 		priv->rx_missed_errors += miss;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
  * arc_emac_rx_stall_check - check RX stall
- * @ndev:	Pointer to the net_device structure.
+ * @ndev:	Poपूर्णांकer to the net_device काष्ठाure.
  * @budget:	How many BDs requested to process on 1 call.
- * @work_done:	How many BDs processed
+ * @work_करोne:	How many BDs processed
  *
  * Under certain conditions EMAC stop reception of incoming packets and
- * continuously increment R_MISS register instead of saving data into
+ * continuously increment R_MISS रेजिस्टर instead of saving data पूर्णांकo
  * provided buffer. This function detect that condition and restart
  * EMAC.
  */
-static void arc_emac_rx_stall_check(struct net_device *ndev,
-				    int budget, unsigned int work_done)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	struct arc_emac_bd *rxbd;
+अटल व्योम arc_emac_rx_stall_check(काष्ठा net_device *ndev,
+				    पूर्णांक budget, अचिन्हित पूर्णांक work_करोne)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	काष्ठा arc_emac_bd *rxbd;
 
-	if (work_done)
+	अगर (work_करोne)
 		priv->rx_missed_errors = 0;
 
-	if (priv->rx_missed_errors && budget) {
+	अगर (priv->rx_missed_errors && budget) अणु
 		rxbd = &priv->rxbd[priv->last_rx_bd];
-		if (le32_to_cpu(rxbd->info) & FOR_EMAC) {
+		अगर (le32_to_cpu(rxbd->info) & FOR_EMAC) अणु
 			arc_emac_restart(ndev);
 			priv->rx_missed_errors = 0;
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
  * arc_emac_poll - NAPI poll handler.
- * @napi:	Pointer to napi_struct structure.
+ * @napi:	Poपूर्णांकer to napi_काष्ठा काष्ठाure.
  * @budget:	How many BDs to process on 1 call.
  *
- * returns:	Number of processed BDs
+ * वापसs:	Number of processed BDs
  */
-static int arc_emac_poll(struct napi_struct *napi, int budget)
-{
-	struct net_device *ndev = napi->dev;
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	unsigned int work_done;
+अटल पूर्णांक arc_emac_poll(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
+अणु
+	काष्ठा net_device *ndev = napi->dev;
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक work_करोne;
 
 	arc_emac_tx_clean(ndev);
 	arc_emac_rx_miss_handle(ndev);
 
-	work_done = arc_emac_rx(ndev, budget);
-	if (work_done < budget) {
-		napi_complete_done(napi, work_done);
+	work_करोne = arc_emac_rx(ndev, budget);
+	अगर (work_करोne < budget) अणु
+		napi_complete_करोne(napi, work_करोne);
 		arc_reg_or(priv, R_ENABLE, RXINT_MASK | TXINT_MASK);
-	}
+	पूर्ण
 
-	arc_emac_rx_stall_check(ndev, budget, work_done);
+	arc_emac_rx_stall_check(ndev, budget, work_करोne);
 
-	return work_done;
-}
+	वापस work_करोne;
+पूर्ण
 
 /**
- * arc_emac_intr - Global interrupt handler for EMAC.
+ * arc_emac_पूर्णांकr - Global पूर्णांकerrupt handler क्रम EMAC.
  * @irq:		irq number.
  * @dev_instance:	device instance.
  *
- * returns: IRQ_HANDLED for all cases.
+ * वापसs: IRQ_HANDLED क्रम all हालs.
  *
- * ARC EMAC has only 1 interrupt line, and depending on bits raised in
- * STATUS register we may tell what is a reason for interrupt to fire.
+ * ARC EMAC has only 1 पूर्णांकerrupt line, and depending on bits उठाओd in
+ * STATUS रेजिस्टर we may tell what is a reason क्रम पूर्णांकerrupt to fire.
  */
-static irqreturn_t arc_emac_intr(int irq, void *dev_instance)
-{
-	struct net_device *ndev = dev_instance;
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	struct net_device_stats *stats = &ndev->stats;
-	unsigned int status;
+अटल irqवापस_t arc_emac_पूर्णांकr(पूर्णांक irq, व्योम *dev_instance)
+अणु
+	काष्ठा net_device *ndev = dev_instance;
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	काष्ठा net_device_stats *stats = &ndev->stats;
+	अचिन्हित पूर्णांक status;
 
 	status = arc_reg_get(priv, R_STATUS);
 	status &= ~MDIO_MASK;
@@ -362,70 +363,70 @@ static irqreturn_t arc_emac_intr(int irq, void *dev_instance)
 	/* Reset all flags except "MDIO complete" */
 	arc_reg_set(priv, R_STATUS, status);
 
-	if (status & (RXINT_MASK | TXINT_MASK)) {
-		if (likely(napi_schedule_prep(&priv->napi))) {
+	अगर (status & (RXINT_MASK | TXINT_MASK)) अणु
+		अगर (likely(napi_schedule_prep(&priv->napi))) अणु
 			arc_reg_clr(priv, R_ENABLE, RXINT_MASK | TXINT_MASK);
 			__napi_schedule(&priv->napi);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (status & ERR_MASK) {
-		/* MSER/RXCR/RXFR/RXFL interrupt fires on corresponding
+	अगर (status & ERR_MASK) अणु
+		/* MSER/RXCR/RXFR/RXFL पूर्णांकerrupt fires on corresponding
 		 * 8-bit error counter overrun.
 		 */
 
-		if (status & MSER_MASK) {
+		अगर (status & MSER_MASK) अणु
 			stats->rx_missed_errors += 0x100;
 			stats->rx_errors += 0x100;
 			priv->rx_missed_errors += 0x100;
 			napi_schedule(&priv->napi);
-		}
+		पूर्ण
 
-		if (status & RXCR_MASK) {
+		अगर (status & RXCR_MASK) अणु
 			stats->rx_crc_errors += 0x100;
 			stats->rx_errors += 0x100;
-		}
+		पूर्ण
 
-		if (status & RXFR_MASK) {
+		अगर (status & RXFR_MASK) अणु
 			stats->rx_frame_errors += 0x100;
 			stats->rx_errors += 0x100;
-		}
+		पूर्ण
 
-		if (status & RXFL_MASK) {
+		अगर (status & RXFL_MASK) अणु
 			stats->rx_over_errors += 0x100;
 			stats->rx_errors += 0x100;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-#ifdef CONFIG_NET_POLL_CONTROLLER
-static void arc_emac_poll_controller(struct net_device *dev)
-{
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+अटल व्योम arc_emac_poll_controller(काष्ठा net_device *dev)
+अणु
 	disable_irq(dev->irq);
-	arc_emac_intr(dev->irq, dev);
+	arc_emac_पूर्णांकr(dev->irq, dev);
 	enable_irq(dev->irq);
-}
-#endif
+पूर्ण
+#पूर्ण_अगर
 
 /**
- * arc_emac_open - Open the network device.
- * @ndev:	Pointer to the network device.
+ * arc_emac_खोलो - Open the network device.
+ * @ndev:	Poपूर्णांकer to the network device.
  *
- * returns: 0, on success or non-zero error value on failure.
+ * वापसs: 0, on success or non-zero error value on failure.
  *
  * This function sets the MAC address, requests and enables an IRQ
- * for the EMAC device and starts the Tx queue.
+ * क्रम the EMAC device and starts the Tx queue.
  * It also connects to the phy device.
  */
-static int arc_emac_open(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	struct phy_device *phy_dev = ndev->phydev;
-	int i;
+अटल पूर्णांक arc_emac_खोलो(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	काष्ठा phy_device *phy_dev = ndev->phydev;
+	पूर्णांक i;
 
-	phy_dev->autoneg = AUTONEG_ENABLE;
+	phy_dev->स्वतःneg = AUTONEG_ENABLE;
 	phy_dev->speed = 0;
 	phy_dev->duplex = 0;
 	linkmode_and(phy_dev->advertising, phy_dev->advertising,
@@ -433,54 +434,54 @@ static int arc_emac_open(struct net_device *ndev)
 
 	priv->last_rx_bd = 0;
 
-	/* Allocate and set buffers for Rx BD's */
-	for (i = 0; i < RX_BD_NUM; i++) {
+	/* Allocate and set buffers क्रम Rx BD's */
+	क्रम (i = 0; i < RX_BD_NUM; i++) अणु
 		dma_addr_t addr;
-		unsigned int *last_rx_bd = &priv->last_rx_bd;
-		struct arc_emac_bd *rxbd = &priv->rxbd[*last_rx_bd];
-		struct buffer_state *rx_buff = &priv->rx_buff[*last_rx_bd];
+		अचिन्हित पूर्णांक *last_rx_bd = &priv->last_rx_bd;
+		काष्ठा arc_emac_bd *rxbd = &priv->rxbd[*last_rx_bd];
+		काष्ठा buffer_state *rx_buff = &priv->rx_buff[*last_rx_bd];
 
 		rx_buff->skb = netdev_alloc_skb_ip_align(ndev,
 							 EMAC_BUFFER_SIZE);
-		if (unlikely(!rx_buff->skb))
-			return -ENOMEM;
+		अगर (unlikely(!rx_buff->skb))
+			वापस -ENOMEM;
 
-		addr = dma_map_single(&ndev->dev, (void *)rx_buff->skb->data,
+		addr = dma_map_single(&ndev->dev, (व्योम *)rx_buff->skb->data,
 				      EMAC_BUFFER_SIZE, DMA_FROM_DEVICE);
-		if (dma_mapping_error(&ndev->dev, addr)) {
+		अगर (dma_mapping_error(&ndev->dev, addr)) अणु
 			netdev_err(ndev, "cannot dma map\n");
-			dev_kfree_skb(rx_buff->skb);
-			return -ENOMEM;
-		}
+			dev_kमुक्त_skb(rx_buff->skb);
+			वापस -ENOMEM;
+		पूर्ण
 		dma_unmap_addr_set(rx_buff, addr, addr);
 		dma_unmap_len_set(rx_buff, len, EMAC_BUFFER_SIZE);
 
 		rxbd->data = cpu_to_le32(addr);
 
-		/* Make sure pointer to data buffer is set */
+		/* Make sure poपूर्णांकer to data buffer is set */
 		wmb();
 
 		/* Return ownership to EMAC */
 		rxbd->info = cpu_to_le32(FOR_EMAC | EMAC_BUFFER_SIZE);
 
 		*last_rx_bd = (*last_rx_bd + 1) % RX_BD_NUM;
-	}
+	पूर्ण
 
 	priv->txbd_curr = 0;
 	priv->txbd_dirty = 0;
 
 	/* Clean Tx BD's */
-	memset(priv->txbd, 0, TX_RING_SZ);
+	स_रखो(priv->txbd, 0, TX_RING_SZ);
 
 	/* Initialize logical address filter */
 	arc_reg_set(priv, R_LAFL, 0);
 	arc_reg_set(priv, R_LAFH, 0);
 
-	/* Set BD ring pointers for device side */
-	arc_reg_set(priv, R_RX_RING, (unsigned int)priv->rxbd_dma);
-	arc_reg_set(priv, R_TX_RING, (unsigned int)priv->txbd_dma);
+	/* Set BD ring poपूर्णांकers क्रम device side */
+	arc_reg_set(priv, R_RX_RING, (अचिन्हित पूर्णांक)priv->rxbd_dma);
+	arc_reg_set(priv, R_TX_RING, (अचिन्हित पूर्णांक)priv->txbd_dma);
 
-	/* Enable interrupts */
+	/* Enable पूर्णांकerrupts */
 	arc_reg_set(priv, R_ENABLE, RXINT_MASK | TXINT_MASK | ERR_MASK);
 
 	/* Set CONTROL */
@@ -496,153 +497,153 @@ static int arc_emac_open(struct net_device *ndev)
 
 	phy_start(ndev->phydev);
 
-	netif_start_queue(ndev);
+	netअगर_start_queue(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * arc_emac_set_rx_mode - Change the receive filtering mode.
- * @ndev:	Pointer to the network device.
+ * @ndev:	Poपूर्णांकer to the network device.
  *
  * This function enables/disables promiscuous or all-multicast mode
  * and updates the multicast filtering list of the network device.
  */
-static void arc_emac_set_rx_mode(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
+अटल व्योम arc_emac_set_rx_mode(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
 
-	if (ndev->flags & IFF_PROMISC) {
+	अगर (ndev->flags & IFF_PROMISC) अणु
 		arc_reg_or(priv, R_CTRL, PROM_MASK);
-	} else {
+	पूर्ण अन्यथा अणु
 		arc_reg_clr(priv, R_CTRL, PROM_MASK);
 
-		if (ndev->flags & IFF_ALLMULTI) {
+		अगर (ndev->flags & IFF_ALLMULTI) अणु
 			arc_reg_set(priv, R_LAFL, ~0);
 			arc_reg_set(priv, R_LAFH, ~0);
-		} else if (ndev->flags & IFF_MULTICAST) {
-			struct netdev_hw_addr *ha;
-			unsigned int filter[2] = { 0, 0 };
-			int bit;
+		पूर्ण अन्यथा अगर (ndev->flags & IFF_MULTICAST) अणु
+			काष्ठा netdev_hw_addr *ha;
+			अचिन्हित पूर्णांक filter[2] = अणु 0, 0 पूर्ण;
+			पूर्णांक bit;
 
-			netdev_for_each_mc_addr(ha, ndev) {
+			netdev_क्रम_each_mc_addr(ha, ndev) अणु
 				bit = ether_crc_le(ETH_ALEN, ha->addr) >> 26;
 				filter[bit >> 5] |= 1 << (bit & 31);
-			}
+			पूर्ण
 
 			arc_reg_set(priv, R_LAFL, filter[0]);
 			arc_reg_set(priv, R_LAFH, filter[1]);
-		} else {
+		पूर्ण अन्यथा अणु
 			arc_reg_set(priv, R_LAFL, 0);
 			arc_reg_set(priv, R_LAFH, 0);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
 /**
- * arc_free_tx_queue - free skb from tx queue
- * @ndev:	Pointer to the network device.
+ * arc_मुक्त_tx_queue - मुक्त skb from tx queue
+ * @ndev:	Poपूर्णांकer to the network device.
  *
- * This function must be called while EMAC disable
+ * This function must be called जबतक EMAC disable
  */
-static void arc_free_tx_queue(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	unsigned int i;
+अटल व्योम arc_मुक्त_tx_queue(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < TX_BD_NUM; i++) {
-		struct arc_emac_bd *txbd = &priv->txbd[i];
-		struct buffer_state *tx_buff = &priv->tx_buff[i];
+	क्रम (i = 0; i < TX_BD_NUM; i++) अणु
+		काष्ठा arc_emac_bd *txbd = &priv->txbd[i];
+		काष्ठा buffer_state *tx_buff = &priv->tx_buff[i];
 
-		if (tx_buff->skb) {
+		अगर (tx_buff->skb) अणु
 			dma_unmap_single(&ndev->dev,
 					 dma_unmap_addr(tx_buff, addr),
 					 dma_unmap_len(tx_buff, len),
 					 DMA_TO_DEVICE);
 
-			/* return the sk_buff to system */
-			dev_kfree_skb_irq(tx_buff->skb);
-		}
+			/* वापस the sk_buff to प्रणाली */
+			dev_kमुक्त_skb_irq(tx_buff->skb);
+		पूर्ण
 
 		txbd->info = 0;
 		txbd->data = 0;
-		tx_buff->skb = NULL;
-	}
-}
+		tx_buff->skb = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
- * arc_free_rx_queue - free skb from rx queue
- * @ndev:	Pointer to the network device.
+ * arc_मुक्त_rx_queue - मुक्त skb from rx queue
+ * @ndev:	Poपूर्णांकer to the network device.
  *
- * This function must be called while EMAC disable
+ * This function must be called जबतक EMAC disable
  */
-static void arc_free_rx_queue(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	unsigned int i;
+अटल व्योम arc_मुक्त_rx_queue(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक i;
 
-	for (i = 0; i < RX_BD_NUM; i++) {
-		struct arc_emac_bd *rxbd = &priv->rxbd[i];
-		struct buffer_state *rx_buff = &priv->rx_buff[i];
+	क्रम (i = 0; i < RX_BD_NUM; i++) अणु
+		काष्ठा arc_emac_bd *rxbd = &priv->rxbd[i];
+		काष्ठा buffer_state *rx_buff = &priv->rx_buff[i];
 
-		if (rx_buff->skb) {
+		अगर (rx_buff->skb) अणु
 			dma_unmap_single(&ndev->dev,
 					 dma_unmap_addr(rx_buff, addr),
 					 dma_unmap_len(rx_buff, len),
 					 DMA_FROM_DEVICE);
 
-			/* return the sk_buff to system */
-			dev_kfree_skb_irq(rx_buff->skb);
-		}
+			/* वापस the sk_buff to प्रणाली */
+			dev_kमुक्त_skb_irq(rx_buff->skb);
+		पूर्ण
 
 		rxbd->info = 0;
 		rxbd->data = 0;
-		rx_buff->skb = NULL;
-	}
-}
+		rx_buff->skb = शून्य;
+	पूर्ण
+पूर्ण
 
 /**
  * arc_emac_stop - Close the network device.
- * @ndev:	Pointer to the network device.
+ * @ndev:	Poपूर्णांकer to the network device.
  *
- * This function stops the Tx queue, disables interrupts and frees the IRQ for
+ * This function stops the Tx queue, disables पूर्णांकerrupts and मुक्तs the IRQ क्रम
  * the EMAC device.
  * It also disconnects the PHY device associated with the EMAC device.
  */
-static int arc_emac_stop(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
+अटल पूर्णांक arc_emac_stop(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
 
 	napi_disable(&priv->napi);
-	netif_stop_queue(ndev);
+	netअगर_stop_queue(ndev);
 
 	phy_stop(ndev->phydev);
 
-	/* Disable interrupts */
+	/* Disable पूर्णांकerrupts */
 	arc_reg_clr(priv, R_ENABLE, RXINT_MASK | TXINT_MASK | ERR_MASK);
 
 	/* Disable EMAC */
 	arc_reg_clr(priv, R_CTRL, EN_MASK);
 
-	/* Return the sk_buff to system */
-	arc_free_tx_queue(ndev);
-	arc_free_rx_queue(ndev);
+	/* Return the sk_buff to प्रणाली */
+	arc_मुक्त_tx_queue(ndev);
+	arc_मुक्त_rx_queue(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
- * arc_emac_stats - Get system network statistics.
- * @ndev:	Pointer to net_device structure.
+ * arc_emac_stats - Get प्रणाली network statistics.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure.
  *
- * Returns the address of the device statistics structure.
- * Statistics are updated in interrupt handler.
+ * Returns the address of the device statistics काष्ठाure.
+ * Statistics are updated in पूर्णांकerrupt handler.
  */
-static struct net_device_stats *arc_emac_stats(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	struct net_device_stats *stats = &ndev->stats;
-	unsigned long miss, rxerr;
+अटल काष्ठा net_device_stats *arc_emac_stats(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	काष्ठा net_device_stats *stats = &ndev->stats;
+	अचिन्हित दीर्घ miss, rxerr;
 	u8 rxcrc, rxfram, rxoflow;
 
 	rxerr = arc_reg_get(priv, R_RXERR);
@@ -660,56 +661,56 @@ static struct net_device_stats *arc_emac_stats(struct net_device *ndev)
 	stats->rx_crc_errors += rxcrc;
 	stats->rx_missed_errors += miss;
 
-	return stats;
-}
+	वापस stats;
+पूर्ण
 
 /**
  * arc_emac_tx - Starts the data transmission.
- * @skb:	sk_buff pointer that contains data to be Transmitted.
- * @ndev:	Pointer to net_device structure.
+ * @skb:	sk_buff poपूर्णांकer that contains data to be Transmitted.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure.
  *
- * returns: NETDEV_TX_OK, on success
- *		NETDEV_TX_BUSY, if any of the descriptors are not free.
+ * वापसs: NETDEV_TX_OK, on success
+ *		NETDEV_TX_BUSY, अगर any of the descriptors are not मुक्त.
  *
  * This function is invoked from upper layers to initiate transmission.
  */
-static netdev_tx_t arc_emac_tx(struct sk_buff *skb, struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	unsigned int len, *txbd_curr = &priv->txbd_curr;
-	struct net_device_stats *stats = &ndev->stats;
+अटल netdev_tx_t arc_emac_tx(काष्ठा sk_buff *skb, काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक len, *txbd_curr = &priv->txbd_curr;
+	काष्ठा net_device_stats *stats = &ndev->stats;
 	__le32 *info = &priv->txbd[*txbd_curr].info;
 	dma_addr_t addr;
 
-	if (skb_padto(skb, ETH_ZLEN))
-		return NETDEV_TX_OK;
+	अगर (skb_padto(skb, ETH_ZLEN))
+		वापस NETDEV_TX_OK;
 
-	len = max_t(unsigned int, ETH_ZLEN, skb->len);
+	len = max_t(अचिन्हित पूर्णांक, ETH_ZLEN, skb->len);
 
-	if (unlikely(!arc_emac_tx_avail(priv))) {
-		netif_stop_queue(ndev);
+	अगर (unlikely(!arc_emac_tx_avail(priv))) अणु
+		netअगर_stop_queue(ndev);
 		netdev_err(ndev, "BUG! Tx Ring full when queue awake!\n");
-		return NETDEV_TX_BUSY;
-	}
+		वापस NETDEV_TX_BUSY;
+	पूर्ण
 
-	addr = dma_map_single(&ndev->dev, (void *)skb->data, len,
+	addr = dma_map_single(&ndev->dev, (व्योम *)skb->data, len,
 			      DMA_TO_DEVICE);
 
-	if (unlikely(dma_mapping_error(&ndev->dev, addr))) {
+	अगर (unlikely(dma_mapping_error(&ndev->dev, addr))) अणु
 		stats->tx_dropped++;
 		stats->tx_errors++;
-		dev_kfree_skb_any(skb);
-		return NETDEV_TX_OK;
-	}
+		dev_kमुक्त_skb_any(skb);
+		वापस NETDEV_TX_OK;
+	पूर्ण
 	dma_unmap_addr_set(&priv->tx_buff[*txbd_curr], addr, addr);
 	dma_unmap_len_set(&priv->tx_buff[*txbd_curr], len, len);
 
 	priv->txbd[*txbd_curr].data = cpu_to_le32(addr);
 
-	/* Make sure pointer to data buffer is set */
+	/* Make sure poपूर्णांकer to data buffer is set */
 	wmb();
 
-	skb_tx_timestamp(skb);
+	skb_tx_बारtamp(skb);
 
 	*info = cpu_to_le32(FOR_EMAC | FIRST_OR_LAST_MASK | len);
 
@@ -718,310 +719,310 @@ static netdev_tx_t arc_emac_tx(struct sk_buff *skb, struct net_device *ndev)
 
 	priv->tx_buff[*txbd_curr].skb = skb;
 
-	/* Increment index to point to the next BD */
+	/* Increment index to poपूर्णांक to the next BD */
 	*txbd_curr = (*txbd_curr + 1) % TX_BD_NUM;
 
-	/* Ensure that tx_clean() sees the new txbd_curr before
+	/* Ensure that tx_clean() sees the new txbd_curr beक्रमe
 	 * checking the queue status. This prevents an unneeded wake
 	 * of the queue in tx_clean().
 	 */
 	smp_mb();
 
-	if (!arc_emac_tx_avail(priv)) {
-		netif_stop_queue(ndev);
+	अगर (!arc_emac_tx_avail(priv)) अणु
+		netअगर_stop_queue(ndev);
 		/* Refresh tx_dirty */
 		smp_mb();
-		if (arc_emac_tx_avail(priv))
-			netif_start_queue(ndev);
-	}
+		अगर (arc_emac_tx_avail(priv))
+			netअगर_start_queue(ndev);
+	पूर्ण
 
 	arc_reg_set(priv, R_STATUS, TXPL_MASK);
 
-	return NETDEV_TX_OK;
-}
+	वापस NETDEV_TX_OK;
+पूर्ण
 
-static void arc_emac_set_address_internal(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	unsigned int addr_low, addr_hi;
+अटल व्योम arc_emac_set_address_पूर्णांकernal(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	अचिन्हित पूर्णांक addr_low, addr_hi;
 
 	addr_low = le32_to_cpu(*(__le32 *)&ndev->dev_addr[0]);
 	addr_hi = le16_to_cpu(*(__le16 *)&ndev->dev_addr[4]);
 
 	arc_reg_set(priv, R_ADDRL, addr_low);
 	arc_reg_set(priv, R_ADDRH, addr_hi);
-}
+पूर्ण
 
 /**
- * arc_emac_set_address - Set the MAC address for this device.
- * @ndev:	Pointer to net_device structure.
+ * arc_emac_set_address - Set the MAC address क्रम this device.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure.
  * @p:		6 byte Address to be written as MAC address.
  *
- * This function copies the HW address from the sockaddr structure to the
- * net_device structure and updates the address in HW.
+ * This function copies the HW address from the sockaddr काष्ठाure to the
+ * net_device काष्ठाure and updates the address in HW.
  *
- * returns:	-EBUSY if the net device is busy or 0 if the address is set
+ * वापसs:	-EBUSY अगर the net device is busy or 0 अगर the address is set
  *		successfully.
  */
-static int arc_emac_set_address(struct net_device *ndev, void *p)
-{
-	struct sockaddr *addr = p;
+अटल पूर्णांक arc_emac_set_address(काष्ठा net_device *ndev, व्योम *p)
+अणु
+	काष्ठा sockaddr *addr = p;
 
-	if (netif_running(ndev))
-		return -EBUSY;
+	अगर (netअगर_running(ndev))
+		वापस -EBUSY;
 
-	if (!is_valid_ether_addr(addr->sa_data))
-		return -EADDRNOTAVAIL;
+	अगर (!is_valid_ether_addr(addr->sa_data))
+		वापस -EADDRNOTAVAIL;
 
-	memcpy(ndev->dev_addr, addr->sa_data, ndev->addr_len);
+	स_नकल(ndev->dev_addr, addr->sa_data, ndev->addr_len);
 
-	arc_emac_set_address_internal(ndev);
+	arc_emac_set_address_पूर्णांकernal(ndev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /**
  * arc_emac_restart - Restart EMAC
- * @ndev:	Pointer to net_device structure.
+ * @ndev:	Poपूर्णांकer to net_device काष्ठाure.
  *
- * This function do hardware reset of EMAC in order to restore
+ * This function करो hardware reset of EMAC in order to restore
  * network packets reception.
  */
-static void arc_emac_restart(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
-	struct net_device_stats *stats = &ndev->stats;
-	int i;
+अटल व्योम arc_emac_restart(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
+	काष्ठा net_device_stats *stats = &ndev->stats;
+	पूर्णांक i;
 
-	if (net_ratelimit())
+	अगर (net_ratelimit())
 		netdev_warn(ndev, "restarting stalled EMAC\n");
 
-	netif_stop_queue(ndev);
+	netअगर_stop_queue(ndev);
 
-	/* Disable interrupts */
+	/* Disable पूर्णांकerrupts */
 	arc_reg_clr(priv, R_ENABLE, RXINT_MASK | TXINT_MASK | ERR_MASK);
 
 	/* Disable EMAC */
 	arc_reg_clr(priv, R_CTRL, EN_MASK);
 
-	/* Return the sk_buff to system */
-	arc_free_tx_queue(ndev);
+	/* Return the sk_buff to प्रणाली */
+	arc_मुक्त_tx_queue(ndev);
 
 	/* Clean Tx BD's */
 	priv->txbd_curr = 0;
 	priv->txbd_dirty = 0;
-	memset(priv->txbd, 0, TX_RING_SZ);
+	स_रखो(priv->txbd, 0, TX_RING_SZ);
 
-	for (i = 0; i < RX_BD_NUM; i++) {
-		struct arc_emac_bd *rxbd = &priv->rxbd[i];
-		unsigned int info = le32_to_cpu(rxbd->info);
+	क्रम (i = 0; i < RX_BD_NUM; i++) अणु
+		काष्ठा arc_emac_bd *rxbd = &priv->rxbd[i];
+		अचिन्हित पूर्णांक info = le32_to_cpu(rxbd->info);
 
-		if (!(info & FOR_EMAC)) {
+		अगर (!(info & FOR_EMAC)) अणु
 			stats->rx_errors++;
 			stats->rx_dropped++;
-		}
+		पूर्ण
 		/* Return ownership to EMAC */
 		rxbd->info = cpu_to_le32(FOR_EMAC | EMAC_BUFFER_SIZE);
-	}
+	पूर्ण
 	priv->last_rx_bd = 0;
 
-	/* Make sure info is visible to EMAC before enable */
+	/* Make sure info is visible to EMAC beक्रमe enable */
 	wmb();
 
-	/* Enable interrupts */
+	/* Enable पूर्णांकerrupts */
 	arc_reg_set(priv, R_ENABLE, RXINT_MASK | TXINT_MASK | ERR_MASK);
 
 	/* Enable EMAC */
 	arc_reg_or(priv, R_CTRL, EN_MASK);
 
-	netif_start_queue(ndev);
-}
+	netअगर_start_queue(ndev);
+पूर्ण
 
-static const struct net_device_ops arc_emac_netdev_ops = {
-	.ndo_open		= arc_emac_open,
-	.ndo_stop		= arc_emac_stop,
-	.ndo_start_xmit		= arc_emac_tx,
-	.ndo_set_mac_address	= arc_emac_set_address,
-	.ndo_get_stats		= arc_emac_stats,
-	.ndo_set_rx_mode	= arc_emac_set_rx_mode,
-	.ndo_do_ioctl		= phy_do_ioctl_running,
-#ifdef CONFIG_NET_POLL_CONTROLLER
-	.ndo_poll_controller	= arc_emac_poll_controller,
-#endif
-};
+अटल स्थिर काष्ठा net_device_ops arc_emac_netdev_ops = अणु
+	.nकरो_खोलो		= arc_emac_खोलो,
+	.nकरो_stop		= arc_emac_stop,
+	.nकरो_start_xmit		= arc_emac_tx,
+	.nकरो_set_mac_address	= arc_emac_set_address,
+	.nकरो_get_stats		= arc_emac_stats,
+	.nकरो_set_rx_mode	= arc_emac_set_rx_mode,
+	.nकरो_करो_ioctl		= phy_करो_ioctl_running,
+#अगर_घोषित CONFIG_NET_POLL_CONTROLLER
+	.nकरो_poll_controller	= arc_emac_poll_controller,
+#पूर्ण_अगर
+पूर्ण;
 
-int arc_emac_probe(struct net_device *ndev, int interface)
-{
-	struct device *dev = ndev->dev.parent;
-	struct resource res_regs;
-	struct device_node *phy_node;
-	struct phy_device *phydev = NULL;
-	struct arc_emac_priv *priv;
-	unsigned int id, clock_frequency, irq;
-	int err;
+पूर्णांक arc_emac_probe(काष्ठा net_device *ndev, पूर्णांक पूर्णांकerface)
+अणु
+	काष्ठा device *dev = ndev->dev.parent;
+	काष्ठा resource res_regs;
+	काष्ठा device_node *phy_node;
+	काष्ठा phy_device *phydev = शून्य;
+	काष्ठा arc_emac_priv *priv;
+	अचिन्हित पूर्णांक id, घड़ी_frequency, irq;
+	पूर्णांक err;
 
 	/* Get PHY from device tree */
 	phy_node = of_parse_phandle(dev->of_node, "phy", 0);
-	if (!phy_node) {
+	अगर (!phy_node) अणु
 		dev_err(dev, "failed to retrieve phy description from device tree\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	/* Get EMAC registers base address from device tree */
+	/* Get EMAC रेजिस्टरs base address from device tree */
 	err = of_address_to_resource(dev->of_node, 0, &res_regs);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "failed to retrieve registers base from device tree\n");
 		err = -ENODEV;
-		goto out_put_node;
-	}
+		जाओ out_put_node;
+	पूर्ण
 
 	/* Get IRQ from device tree */
 	irq = irq_of_parse_and_map(dev->of_node, 0);
-	if (!irq) {
+	अगर (!irq) अणु
 		dev_err(dev, "failed to retrieve <irq> value from device tree\n");
 		err = -ENODEV;
-		goto out_put_node;
-	}
+		जाओ out_put_node;
+	पूर्ण
 
 	ndev->netdev_ops = &arc_emac_netdev_ops;
 	ndev->ethtool_ops = &arc_emac_ethtool_ops;
-	ndev->watchdog_timeo = TX_TIMEOUT;
+	ndev->watchकरोg_समयo = TX_TIMEOUT;
 
 	priv = netdev_priv(ndev);
 	priv->dev = dev;
 
 	priv->regs = devm_ioremap_resource(dev, &res_regs);
-	if (IS_ERR(priv->regs)) {
+	अगर (IS_ERR(priv->regs)) अणु
 		err = PTR_ERR(priv->regs);
-		goto out_put_node;
-	}
+		जाओ out_put_node;
+	पूर्ण
 
 	dev_dbg(dev, "Registers base address is 0x%p\n", priv->regs);
 
-	if (priv->clk) {
+	अगर (priv->clk) अणु
 		err = clk_prepare_enable(priv->clk);
-		if (err) {
+		अगर (err) अणु
 			dev_err(dev, "failed to enable clock\n");
-			goto out_put_node;
-		}
+			जाओ out_put_node;
+		पूर्ण
 
-		clock_frequency = clk_get_rate(priv->clk);
-	} else {
-		/* Get CPU clock frequency from device tree */
-		if (of_property_read_u32(dev->of_node, "clock-frequency",
-					 &clock_frequency)) {
+		घड़ी_frequency = clk_get_rate(priv->clk);
+	पूर्ण अन्यथा अणु
+		/* Get CPU घड़ी frequency from device tree */
+		अगर (of_property_पढ़ो_u32(dev->of_node, "clock-frequency",
+					 &घड़ी_frequency)) अणु
 			dev_err(dev, "failed to retrieve <clock-frequency> from device tree\n");
 			err = -EINVAL;
-			goto out_put_node;
-		}
-	}
+			जाओ out_put_node;
+		पूर्ण
+	पूर्ण
 
 	id = arc_reg_get(priv, R_ID);
 
-	/* Check for EMAC revision 5 or 7, magic number */
-	if (!(id == 0x0005fd02 || id == 0x0007fd02)) {
+	/* Check क्रम EMAC revision 5 or 7, magic number */
+	अगर (!(id == 0x0005fd02 || id == 0x0007fd02)) अणु
 		dev_err(dev, "ARC EMAC not detected, id=0x%x\n", id);
 		err = -ENODEV;
-		goto out_clken;
-	}
+		जाओ out_clken;
+	पूर्ण
 	dev_info(dev, "ARC EMAC detected with id: 0x%x\n", id);
 
 	/* Set poll rate so that it polls every 1 ms */
-	arc_reg_set(priv, R_POLLRATE, clock_frequency / 1000000);
+	arc_reg_set(priv, R_POLLRATE, घड़ी_frequency / 1000000);
 
 	ndev->irq = irq;
 	dev_info(dev, "IRQ is %d\n", ndev->irq);
 
-	/* Register interrupt handler for device */
-	err = devm_request_irq(dev, ndev->irq, arc_emac_intr, 0,
+	/* Register पूर्णांकerrupt handler क्रम device */
+	err = devm_request_irq(dev, ndev->irq, arc_emac_पूर्णांकr, 0,
 			       ndev->name, ndev);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "could not allocate IRQ\n");
-		goto out_clken;
-	}
+		जाओ out_clken;
+	पूर्ण
 
 	/* Get MAC address from device tree */
 	err = of_get_mac_address(dev->of_node, ndev->dev_addr);
-	if (err)
-		eth_hw_addr_random(ndev);
+	अगर (err)
+		eth_hw_addr_अक्रमom(ndev);
 
-	arc_emac_set_address_internal(ndev);
+	arc_emac_set_address_पूर्णांकernal(ndev);
 	dev_info(dev, "MAC address is now %pM\n", ndev->dev_addr);
 
-	/* Do 1 allocation instead of 2 separate ones for Rx and Tx BD rings */
+	/* Do 1 allocation instead of 2 separate ones क्रम Rx and Tx BD rings */
 	priv->rxbd = dmam_alloc_coherent(dev, RX_RING_SZ + TX_RING_SZ,
 					 &priv->rxbd_dma, GFP_KERNEL);
 
-	if (!priv->rxbd) {
+	अगर (!priv->rxbd) अणु
 		dev_err(dev, "failed to allocate data buffers\n");
 		err = -ENOMEM;
-		goto out_clken;
-	}
+		जाओ out_clken;
+	पूर्ण
 
 	priv->txbd = priv->rxbd + RX_BD_NUM;
 
 	priv->txbd_dma = priv->rxbd_dma + RX_RING_SZ;
 	dev_dbg(dev, "EMAC Device addr: Rx Ring [0x%x], Tx Ring[%x]\n",
-		(unsigned int)priv->rxbd_dma, (unsigned int)priv->txbd_dma);
+		(अचिन्हित पूर्णांक)priv->rxbd_dma, (अचिन्हित पूर्णांक)priv->txbd_dma);
 
 	err = arc_mdio_probe(priv);
-	if (err) {
+	अगर (err) अणु
 		dev_err(dev, "failed to probe MII bus\n");
-		goto out_clken;
-	}
+		जाओ out_clken;
+	पूर्ण
 
 	phydev = of_phy_connect(ndev, phy_node, arc_emac_adjust_link, 0,
-				interface);
-	if (!phydev) {
+				पूर्णांकerface);
+	अगर (!phydev) अणु
 		dev_err(dev, "of_phy_connect() failed\n");
 		err = -ENODEV;
-		goto out_mdio;
-	}
+		जाओ out_mdio;
+	पूर्ण
 
 	dev_info(dev, "connected to %s phy with id 0x%x\n",
 		 phydev->drv->name, phydev->phy_id);
 
-	netif_napi_add(ndev, &priv->napi, arc_emac_poll, ARC_EMAC_NAPI_WEIGHT);
+	netअगर_napi_add(ndev, &priv->napi, arc_emac_poll, ARC_EMAC_NAPI_WEIGHT);
 
-	err = register_netdev(ndev);
-	if (err) {
+	err = रेजिस्टर_netdev(ndev);
+	अगर (err) अणु
 		dev_err(dev, "failed to register network device\n");
-		goto out_netif_api;
-	}
+		जाओ out_netअगर_api;
+	पूर्ण
 
 	of_node_put(phy_node);
-	return 0;
+	वापस 0;
 
-out_netif_api:
-	netif_napi_del(&priv->napi);
+out_netअगर_api:
+	netअगर_napi_del(&priv->napi);
 	phy_disconnect(phydev);
 out_mdio:
-	arc_mdio_remove(priv);
+	arc_mdio_हटाओ(priv);
 out_clken:
-	if (priv->clk)
+	अगर (priv->clk)
 		clk_disable_unprepare(priv->clk);
 out_put_node:
 	of_node_put(phy_node);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 EXPORT_SYMBOL_GPL(arc_emac_probe);
 
-int arc_emac_remove(struct net_device *ndev)
-{
-	struct arc_emac_priv *priv = netdev_priv(ndev);
+पूर्णांक arc_emac_हटाओ(काष्ठा net_device *ndev)
+अणु
+	काष्ठा arc_emac_priv *priv = netdev_priv(ndev);
 
 	phy_disconnect(ndev->phydev);
-	arc_mdio_remove(priv);
-	unregister_netdev(ndev);
-	netif_napi_del(&priv->napi);
+	arc_mdio_हटाओ(priv);
+	unरेजिस्टर_netdev(ndev);
+	netअगर_napi_del(&priv->napi);
 
-	if (!IS_ERR(priv->clk))
+	अगर (!IS_ERR(priv->clk))
 		clk_disable_unprepare(priv->clk);
 
-	return 0;
-}
-EXPORT_SYMBOL_GPL(arc_emac_remove);
+	वापस 0;
+पूर्ण
+EXPORT_SYMBOL_GPL(arc_emac_हटाओ);
 
 MODULE_AUTHOR("Alexey Brodkin <abrodkin@synopsys.com>");
 MODULE_DESCRIPTION("ARC EMAC driver");

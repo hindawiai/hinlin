@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  *   Copyright (C) International Business Machines Corp., 2000-2004
  */
@@ -8,42 +9,42 @@
  *
  * B+-tree with variable length key directory:
  *
- * each directory page is structured as an array of 32-byte
- * directory entry slots initialized as a freelist
- * to avoid search/compaction of free space at insertion.
+ * each directory page is काष्ठाured as an array of 32-byte
+ * directory entry slots initialized as a मुक्तlist
+ * to aव्योम search/compaction of मुक्त space at insertion.
  * when an entry is inserted, a number of slots are allocated
- * from the freelist as required to store variable length data
+ * from the मुक्तlist as required to store variable length data
  * of the entry; when the entry is deleted, slots of the entry
- * are returned to freelist.
+ * are वापसed to मुक्तlist.
  *
  * leaf entry stores full name as key and file serial number
  * (aka inode number) as data.
- * internal/router entry stores sufffix compressed name
+ * पूर्णांकernal/router entry stores sufffix compressed name
  * as key and simple extent descriptor as data.
  *
- * each directory page maintains a sorted entry index table
+ * each directory page मुख्यtains a sorted entry index table
  * which stores the start slot index of sorted entries
  * to allow binary search on the table.
  *
  * directory starts as a root/leaf page in on-disk inode
- * inline data area.
- * when it becomes full, it starts a leaf of a external extent
- * of length of 1 block. each time the first leaf becomes full,
- * it is extended rather than split (its size is doubled),
+ * अंतरभूत data area.
+ * when it becomes full, it starts a leaf of a बाह्यal extent
+ * of length of 1 block. each समय the first leaf becomes full,
+ * it is extended rather than split (its size is द्विगुनd),
  * until its length becoms 4 KBytes, from then the extent is split
  * with new 4 Kbyte extent when it becomes full
- * to reduce external fragmentation of small directories.
+ * to reduce बाह्यal fragmentation of small directories.
  *
- * blah, blah, blah, for linear scan of directory in pieces by
- * readdir().
+ * blah, blah, blah, क्रम linear scan of directory in pieces by
+ * सूची_पढ़ो().
  *
  *
- *	case-insensitive directory file system
+ *	हाल-insensitive directory file प्रणाली
  *
- * names are stored in case-sensitive way in leaf entry.
- * but stored, searched and compared in case-insensitive (uppercase) order
- * (i.e., both search key and entry key are folded for search/compare):
- * (note that case-sensitive order is BROKEN in storage, e.g.,
+ * names are stored in हाल-sensitive way in leaf entry.
+ * but stored, searched and compared in हाल-insensitive (upperहाल) order
+ * (i.e., both search key and entry key are folded क्रम search/compare):
+ * (note that हाल-sensitive order is BROKEN in storage, e.g.,
  *  sensitive: Ad, aB, aC, aD -> insensitive: aB, aC, aD, Ad
  *
  *  entries which folds to the same key makes up a equivalent class
@@ -51,254 +52,254 @@
  *  but whose order is arbitrary and acts as duplicate, e.g.,
  *  abc, Abc, aBc, abC)
  *
- * once match is found at leaf, requires scan forward/backward
- * either for, in case-insensitive search, duplicate
- * or for, in case-sensitive search, for exact match
+ * once match is found at leaf, requires scan क्रमward/backward
+ * either क्रम, in हाल-insensitive search, duplicate
+ * or क्रम, in हाल-sensitive search, क्रम exact match
  *
- * router entry must be created/stored in case-insensitive way
- * in internal entry:
+ * router entry must be created/stored in हाल-insensitive way
+ * in पूर्णांकernal entry:
  * (right most key of left page and left most key of right page
  * are folded, and its suffix compression is propagated as router
  * key in parent)
- * (e.g., if split occurs <abc> and <aBd>, <ABD> trather than <aB>
- * should be made the router key for the split)
+ * (e.g., अगर split occurs <abc> and <aBd>, <ABD> trather than <aB>
+ * should be made the router key क्रम the split)
  *
- * case-insensitive search:
+ * हाल-insensitive search:
  *
  *	fold search key;
  *
- *	case-insensitive search of B-tree:
- *	for internal entry, router key is already folded;
- *	for leaf entry, fold the entry key before comparison.
+ *	हाल-insensitive search of B-tree:
+ *	क्रम पूर्णांकernal entry, router key is alपढ़ोy folded;
+ *	क्रम leaf entry, fold the entry key beक्रमe comparison.
  *
- *	if (leaf entry case-insensitive match found)
- *		if (next entry satisfies case-insensitive match)
- *			return EDUPLICATE;
- *		if (prev entry satisfies case-insensitive match)
- *			return EDUPLICATE;
- *		return match;
- *	else
- *		return no match;
+ *	अगर (leaf entry हाल-insensitive match found)
+ *		अगर (next entry satisfies हाल-insensitive match)
+ *			वापस EDUPLICATE;
+ *		अगर (prev entry satisfies हाल-insensitive match)
+ *			वापस EDUPLICATE;
+ *		वापस match;
+ *	अन्यथा
+ *		वापस no match;
  *
  *	serialization:
- * target directory inode lock is being held on entry/exit
- * of all main directory service routines.
+ * target directory inode lock is being held on entry/निकास
+ * of all मुख्य directory service routines.
  *
  *	log based recovery:
  */
 
-#include <linux/fs.h>
-#include <linux/quotaops.h>
-#include <linux/slab.h>
-#include "jfs_incore.h"
-#include "jfs_superblock.h"
-#include "jfs_filsys.h"
-#include "jfs_metapage.h"
-#include "jfs_dmap.h"
-#include "jfs_unicode.h"
-#include "jfs_debug.h"
+#समावेश <linux/fs.h>
+#समावेश <linux/quotaops.h>
+#समावेश <linux/slab.h>
+#समावेश "jfs_incore.h"
+#समावेश "jfs_superblock.h"
+#समावेश "jfs_filsys.h"
+#समावेश "jfs_metapage.h"
+#समावेश "jfs_dmap.h"
+#समावेश "jfs_unicode.h"
+#समावेश "jfs_debug.h"
 
 /* dtree split parameter */
-struct dtsplit {
-	struct metapage *mp;
+काष्ठा dtsplit अणु
+	काष्ठा metapage *mp;
 	s16 index;
 	s16 nslot;
-	struct component_name *key;
+	काष्ठा component_name *key;
 	ddata_t *data;
-	struct pxdlist *pxdlist;
-};
+	काष्ठा pxdlist *pxdlist;
+पूर्ण;
 
-#define DT_PAGE(IP, MP) BT_PAGE(IP, MP, dtpage_t, i_dtroot)
+#घोषणा DT_PAGE(IP, MP) BT_PAGE(IP, MP, dtpage_t, i_dtroot)
 
-/* get page buffer for specified block address */
-#define DT_GETPAGE(IP, BN, MP, SIZE, P, RC)				\
-do {									\
+/* get page buffer क्रम specअगरied block address */
+#घोषणा DT_GETPAGE(IP, BN, MP, SIZE, P, RC)				\
+करो अणु									\
 	BT_GETPAGE(IP, BN, MP, dtpage_t, SIZE, P, RC, i_dtroot);	\
-	if (!(RC)) {							\
-		if (((P)->header.nextindex >				\
+	अगर (!(RC)) अणु							\
+		अगर (((P)->header.nextindex >				\
 		     (((BN) == 0) ? DTROOTMAXSLOT : (P)->header.maxslot)) || \
-		    ((BN) && ((P)->header.maxslot > DTPAGEMAXSLOT))) {	\
+		    ((BN) && ((P)->header.maxslot > DTPAGEMAXSLOT))) अणु	\
 			BT_PUTPAGE(MP);					\
 			jfs_error((IP)->i_sb,				\
 				  "DT_GETPAGE: dtree page corrupt\n");	\
-			MP = NULL;					\
+			MP = शून्य;					\
 			RC = -EIO;					\
-		}							\
-	}								\
-} while (0)
+		पूर्ण							\
+	पूर्ण								\
+पूर्ण जबतक (0)
 
-/* for consistency */
-#define DT_PUTPAGE(MP) BT_PUTPAGE(MP)
+/* क्रम consistency */
+#घोषणा DT_PUTPAGE(MP) BT_PUTPAGE(MP)
 
-#define DT_GETSEARCH(IP, LEAF, BN, MP, P, INDEX) \
+#घोषणा DT_GETSEARCH(IP, LEAF, BN, MP, P, INDEX) \
 	BT_GETSEARCH(IP, LEAF, BN, MP, dtpage_t, P, INDEX, i_dtroot)
 
 /*
- * forward references
+ * क्रमward references
  */
-static int dtSplitUp(tid_t tid, struct inode *ip,
-		     struct dtsplit * split, struct btstack * btstack);
+अटल पूर्णांक dtSplitUp(tid_t tid, काष्ठा inode *ip,
+		     काष्ठा dtsplit * split, काष्ठा btstack * btstack);
 
-static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
-		       struct metapage ** rmpp, dtpage_t ** rpp, pxd_t * rxdp);
+अटल पूर्णांक dtSplitPage(tid_t tid, काष्ठा inode *ip, काष्ठा dtsplit * split,
+		       काष्ठा metapage ** rmpp, dtpage_t ** rpp, pxd_t * rxdp);
 
-static int dtExtendPage(tid_t tid, struct inode *ip,
-			struct dtsplit * split, struct btstack * btstack);
+अटल पूर्णांक dtExtendPage(tid_t tid, काष्ठा inode *ip,
+			काष्ठा dtsplit * split, काष्ठा btstack * btstack);
 
-static int dtSplitRoot(tid_t tid, struct inode *ip,
-		       struct dtsplit * split, struct metapage ** rmpp);
+अटल पूर्णांक dtSplitRoot(tid_t tid, काष्ठा inode *ip,
+		       काष्ठा dtsplit * split, काष्ठा metapage ** rmpp);
 
-static int dtDeleteUp(tid_t tid, struct inode *ip, struct metapage * fmp,
-		      dtpage_t * fp, struct btstack * btstack);
+अटल पूर्णांक dtDeleteUp(tid_t tid, काष्ठा inode *ip, काष्ठा metapage * fmp,
+		      dtpage_t * fp, काष्ठा btstack * btstack);
 
-static int dtRelink(tid_t tid, struct inode *ip, dtpage_t * p);
+अटल पूर्णांक dtRelink(tid_t tid, काष्ठा inode *ip, dtpage_t * p);
 
-static int dtReadFirst(struct inode *ip, struct btstack * btstack);
+अटल पूर्णांक dtReadFirst(काष्ठा inode *ip, काष्ठा btstack * btstack);
 
-static int dtReadNext(struct inode *ip,
-		      loff_t * offset, struct btstack * btstack);
+अटल पूर्णांक dtReadNext(काष्ठा inode *ip,
+		      loff_t * offset, काष्ठा btstack * btstack);
 
-static int dtCompare(struct component_name * key, dtpage_t * p, int si);
+अटल पूर्णांक dtCompare(काष्ठा component_name * key, dtpage_t * p, पूर्णांक si);
 
-static int ciCompare(struct component_name * key, dtpage_t * p, int si,
-		     int flag);
+अटल पूर्णांक ciCompare(काष्ठा component_name * key, dtpage_t * p, पूर्णांक si,
+		     पूर्णांक flag);
 
-static void dtGetKey(dtpage_t * p, int i, struct component_name * key,
-		     int flag);
+अटल व्योम dtGetKey(dtpage_t * p, पूर्णांक i, काष्ठा component_name * key,
+		     पूर्णांक flag);
 
-static int ciGetLeafPrefixKey(dtpage_t * lp, int li, dtpage_t * rp,
-			      int ri, struct component_name * key, int flag);
+अटल पूर्णांक ciGetLeafPrefixKey(dtpage_t * lp, पूर्णांक li, dtpage_t * rp,
+			      पूर्णांक ri, काष्ठा component_name * key, पूर्णांक flag);
 
-static void dtInsertEntry(dtpage_t * p, int index, struct component_name * key,
-			  ddata_t * data, struct dt_lock **);
+अटल व्योम dtInsertEntry(dtpage_t * p, पूर्णांक index, काष्ठा component_name * key,
+			  ddata_t * data, काष्ठा dt_lock **);
 
-static void dtMoveEntry(dtpage_t * sp, int si, dtpage_t * dp,
-			struct dt_lock ** sdtlock, struct dt_lock ** ddtlock,
-			int do_index);
+अटल व्योम dtMoveEntry(dtpage_t * sp, पूर्णांक si, dtpage_t * dp,
+			काष्ठा dt_lock ** sdtlock, काष्ठा dt_lock ** ddtlock,
+			पूर्णांक करो_index);
 
-static void dtDeleteEntry(dtpage_t * p, int fi, struct dt_lock ** dtlock);
+अटल व्योम dtDeleteEntry(dtpage_t * p, पूर्णांक fi, काष्ठा dt_lock ** dtlock);
 
-static void dtTruncateEntry(dtpage_t * p, int ti, struct dt_lock ** dtlock);
+अटल व्योम dtTruncateEntry(dtpage_t * p, पूर्णांक ti, काष्ठा dt_lock ** dtlock);
 
-static void dtLinelockFreelist(dtpage_t * p, int m, struct dt_lock ** dtlock);
+अटल व्योम dtLinelockFreelist(dtpage_t * p, पूर्णांक m, काष्ठा dt_lock ** dtlock);
 
-#define ciToUpper(c)	UniStrupr((c)->name)
+#घोषणा ciToUpper(c)	UniStrupr((c)->name)
 
 /*
- *	read_index_page()
+ *	पढ़ो_index_page()
  *
  *	Reads a page of a directory's index table.
- *	Having metadata mapped into the directory inode's address space
- *	presents a multitude of problems.  We avoid this by mapping to
- *	the absolute address space outside of the *_metapage routines
+ *	Having metadata mapped पूर्णांकo the directory inode's address space
+ *	presents a multitude of problems.  We aव्योम this by mapping to
+ *	the असलolute address space outside of the *_metapage routines
  */
-static struct metapage *read_index_page(struct inode *inode, s64 blkno)
-{
-	int rc;
+अटल काष्ठा metapage *पढ़ो_index_page(काष्ठा inode *inode, s64 blkno)
+अणु
+	पूर्णांक rc;
 	s64 xaddr;
-	int xflag;
+	पूर्णांक xflag;
 	s32 xlen;
 
 	rc = xtLookup(inode, blkno, 1, &xflag, &xaddr, &xlen, 1);
-	if (rc || (xaddr == 0))
-		return NULL;
+	अगर (rc || (xaddr == 0))
+		वापस शून्य;
 
-	return read_metapage(inode, xaddr, PSIZE, 1);
-}
+	वापस पढ़ो_metapage(inode, xaddr, PSIZE, 1);
+पूर्ण
 
 /*
  *	get_index_page()
  *
- *	Same as get_index_page(), but get's a new page without reading
+ *	Same as get_index_page(), but get's a new page without पढ़ोing
  */
-static struct metapage *get_index_page(struct inode *inode, s64 blkno)
-{
-	int rc;
+अटल काष्ठा metapage *get_index_page(काष्ठा inode *inode, s64 blkno)
+अणु
+	पूर्णांक rc;
 	s64 xaddr;
-	int xflag;
+	पूर्णांक xflag;
 	s32 xlen;
 
 	rc = xtLookup(inode, blkno, 1, &xflag, &xaddr, &xlen, 1);
-	if (rc || (xaddr == 0))
-		return NULL;
+	अगर (rc || (xaddr == 0))
+		वापस शून्य;
 
-	return get_metapage(inode, xaddr, PSIZE, 1);
-}
+	वापस get_metapage(inode, xaddr, PSIZE, 1);
+पूर्ण
 
 /*
  *	find_index()
  *
- *	Returns dtree page containing directory table entry for specified
- *	index and pointer to its entry.
+ *	Returns dtree page containing directory table entry क्रम specअगरied
+ *	index and poपूर्णांकer to its entry.
  *
  *	mp must be released by caller.
  */
-static struct dir_table_slot *find_index(struct inode *ip, u32 index,
-					 struct metapage ** mp, s64 *lblock)
-{
-	struct jfs_inode_info *jfs_ip = JFS_IP(ip);
+अटल काष्ठा dir_table_slot *find_index(काष्ठा inode *ip, u32 index,
+					 काष्ठा metapage ** mp, s64 *lblock)
+अणु
+	काष्ठा jfs_inode_info *jfs_ip = JFS_IP(ip);
 	s64 blkno;
 	s64 offset;
-	int page_offset;
-	struct dir_table_slot *slot;
-	static int maxWarnings = 10;
+	पूर्णांक page_offset;
+	काष्ठा dir_table_slot *slot;
+	अटल पूर्णांक maxWarnings = 10;
 
-	if (index < 2) {
-		if (maxWarnings) {
+	अगर (index < 2) अणु
+		अगर (maxWarnings) अणु
 			jfs_warn("find_entry called with index = %d", index);
 			maxWarnings--;
-		}
-		return NULL;
-	}
+		पूर्ण
+		वापस शून्य;
+	पूर्ण
 
-	if (index >= jfs_ip->next_index) {
+	अगर (index >= jfs_ip->next_index) अणु
 		jfs_warn("find_entry called with index >= next_index");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 
-	if (jfs_dirtable_inline(ip)) {
+	अगर (jfs_dirtable_अंतरभूत(ip)) अणु
 		/*
 		 * Inline directory table
 		 */
-		*mp = NULL;
+		*mp = शून्य;
 		slot = &jfs_ip->i_dirtable[index - 2];
-	} else {
-		offset = (index - 2) * sizeof(struct dir_table_slot);
+	पूर्ण अन्यथा अणु
+		offset = (index - 2) * माप(काष्ठा dir_table_slot);
 		page_offset = offset & (PSIZE - 1);
 		blkno = ((offset + 1) >> L2PSIZE) <<
 		    JFS_SBI(ip->i_sb)->l2nbperpage;
 
-		if (*mp && (*lblock != blkno)) {
+		अगर (*mp && (*lblock != blkno)) अणु
 			release_metapage(*mp);
-			*mp = NULL;
-		}
-		if (!(*mp)) {
+			*mp = शून्य;
+		पूर्ण
+		अगर (!(*mp)) अणु
 			*lblock = blkno;
-			*mp = read_index_page(ip, blkno);
-		}
-		if (!(*mp)) {
+			*mp = पढ़ो_index_page(ip, blkno);
+		पूर्ण
+		अगर (!(*mp)) अणु
 			jfs_err("free_index: error reading directory table");
-			return NULL;
-		}
+			वापस शून्य;
+		पूर्ण
 
 		slot =
-		    (struct dir_table_slot *) ((char *) (*mp)->data +
+		    (काष्ठा dir_table_slot *) ((अक्षर *) (*mp)->data +
 					       page_offset);
-	}
-	return slot;
-}
+	पूर्ण
+	वापस slot;
+पूर्ण
 
-static inline void lock_index(tid_t tid, struct inode *ip, struct metapage * mp,
+अटल अंतरभूत व्योम lock_index(tid_t tid, काष्ठा inode *ip, काष्ठा metapage * mp,
 			      u32 index)
-{
-	struct tlock *tlck;
-	struct linelock *llck;
-	struct lv *lv;
+अणु
+	काष्ठा tlock *tlck;
+	काष्ठा linelock *llck;
+	काष्ठा lv *lv;
 
 	tlck = txLock(tid, ip, mp, tlckDATA);
-	llck = (struct linelock *) tlck->lock;
+	llck = (काष्ठा linelock *) tlck->lock;
 
-	if (llck->index >= llck->maxcnt)
+	अगर (llck->index >= llck->maxcnt)
 		llck = txLinelock(llck);
 	lv = &llck->lv[llck->index];
 
@@ -309,7 +310,7 @@ static inline void lock_index(tid_t tid, struct inode *ip, struct metapage * mp,
 	lv->offset = ((index - 2) & 511) >> 1;
 	lv->length = 1;
 	llck->index++;
-}
+पूर्ण
 
 /*
  *	add_index()
@@ -318,69 +319,69 @@ static inline void lock_index(tid_t tid, struct inode *ip, struct metapage * mp,
  *	each directory entry with a persistent index in which to resume
  *	directory traversals
  */
-static u32 add_index(tid_t tid, struct inode *ip, s64 bn, int slot)
-{
-	struct super_block *sb = ip->i_sb;
-	struct jfs_sb_info *sbi = JFS_SBI(sb);
-	struct jfs_inode_info *jfs_ip = JFS_IP(ip);
+अटल u32 add_index(tid_t tid, काष्ठा inode *ip, s64 bn, पूर्णांक slot)
+अणु
+	काष्ठा super_block *sb = ip->i_sb;
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(sb);
+	काष्ठा jfs_inode_info *jfs_ip = JFS_IP(ip);
 	u64 blkno;
-	struct dir_table_slot *dirtab_slot;
+	काष्ठा dir_table_slot *dirtab_slot;
 	u32 index;
-	struct linelock *llck;
-	struct lv *lv;
-	struct metapage *mp;
+	काष्ठा linelock *llck;
+	काष्ठा lv *lv;
+	काष्ठा metapage *mp;
 	s64 offset;
-	uint page_offset;
-	struct tlock *tlck;
+	uपूर्णांक page_offset;
+	काष्ठा tlock *tlck;
 	s64 xaddr;
 
 	ASSERT(DO_INDEX(ip));
 
-	if (jfs_ip->next_index < 2) {
+	अगर (jfs_ip->next_index < 2) अणु
 		jfs_warn("add_index: next_index = %d.  Resetting!",
 			   jfs_ip->next_index);
 		jfs_ip->next_index = 2;
-	}
+	पूर्ण
 
 	index = jfs_ip->next_index++;
 
-	if (index <= MAX_INLINE_DIRTABLE_ENTRY) {
+	अगर (index <= MAX_INLINE_सूचीTABLE_ENTRY) अणु
 		/*
 		 * i_size reflects size of index table, or 8 bytes per entry.
 		 */
 		ip->i_size = (loff_t) (index - 1) << 3;
 
 		/*
-		 * dir table fits inline within inode
+		 * dir table fits अंतरभूत within inode
 		 */
 		dirtab_slot = &jfs_ip->i_dirtable[index-2];
-		dirtab_slot->flag = DIR_INDEX_VALID;
+		dirtab_slot->flag = सूची_INDEX_VALID;
 		dirtab_slot->slot = slot;
 		DTSaddress(dirtab_slot, bn);
 
 		set_cflag(COMMIT_Dirtable, ip);
 
-		return index;
-	}
-	if (index == (MAX_INLINE_DIRTABLE_ENTRY + 1)) {
-		struct dir_table_slot temp_table[12];
+		वापस index;
+	पूर्ण
+	अगर (index == (MAX_INLINE_सूचीTABLE_ENTRY + 1)) अणु
+		काष्ठा dir_table_slot temp_table[12];
 
 		/*
-		 * It's time to move the inline table to an external
+		 * It's समय to move the अंतरभूत table to an बाह्यal
 		 * page and begin to build the xtree
 		 */
-		if (dquot_alloc_block(ip, sbi->nbperpage))
-			goto clean_up;
-		if (dbAlloc(ip, 0, sbi->nbperpage, &xaddr)) {
-			dquot_free_block(ip, sbi->nbperpage);
-			goto clean_up;
-		}
+		अगर (dquot_alloc_block(ip, sbi->nbperpage))
+			जाओ clean_up;
+		अगर (dbAlloc(ip, 0, sbi->nbperpage, &xaddr)) अणु
+			dquot_मुक्त_block(ip, sbi->nbperpage);
+			जाओ clean_up;
+		पूर्ण
 
 		/*
-		 * Save the table, we're going to overwrite it with the
+		 * Save the table, we're going to overग_लिखो it with the
 		 * xtree root
 		 */
-		memcpy(temp_table, &jfs_ip->i_dirtable, sizeof(temp_table));
+		स_नकल(temp_table, &jfs_ip->i_dirtable, माप(temp_table));
 
 		/*
 		 * Initialize empty x-tree
@@ -390,27 +391,27 @@ static u32 add_index(tid_t tid, struct inode *ip, s64 bn, int slot)
 		/*
 		 * Add the first block to the xtree
 		 */
-		if (xtInsert(tid, ip, 0, 0, sbi->nbperpage, &xaddr, 0)) {
+		अगर (xtInsert(tid, ip, 0, 0, sbi->nbperpage, &xaddr, 0)) अणु
 			/* This really shouldn't fail */
 			jfs_warn("add_index: xtInsert failed!");
-			memcpy(&jfs_ip->i_dirtable, temp_table,
-			       sizeof (temp_table));
+			स_नकल(&jfs_ip->i_dirtable, temp_table,
+			       माप (temp_table));
 			dbFree(ip, xaddr, sbi->nbperpage);
-			dquot_free_block(ip, sbi->nbperpage);
-			goto clean_up;
-		}
+			dquot_मुक्त_block(ip, sbi->nbperpage);
+			जाओ clean_up;
+		पूर्ण
 		ip->i_size = PSIZE;
 
 		mp = get_index_page(ip, 0);
-		if (!mp) {
+		अगर (!mp) अणु
 			jfs_err("add_index: get_metapage failed!");
 			xtTruncate(tid, ip, 0, COMMIT_PWMAP);
-			memcpy(&jfs_ip->i_dirtable, temp_table,
-			       sizeof (temp_table));
-			goto clean_up;
-		}
+			स_नकल(&jfs_ip->i_dirtable, temp_table,
+			       माप (temp_table));
+			जाओ clean_up;
+		पूर्ण
 		tlck = txLock(tid, ip, mp, tlckDATA);
-		llck = (struct linelock *) & tlck->lock;
+		llck = (काष्ठा linelock *) & tlck->lock;
 		ASSERT(llck->index == 0);
 		lv = &llck->lv[0];
 
@@ -418,7 +419,7 @@ static u32 add_index(tid_t tid, struct inode *ip, s64 bn, int slot)
 		lv->length = 6;	/* tlckDATA slot size is 16 bytes */
 		llck->index++;
 
-		memcpy(mp->data, temp_table, sizeof(temp_table));
+		स_नकल(mp->data, temp_table, माप(temp_table));
 
 		mark_metapage_dirty(mp);
 		release_metapage(mp);
@@ -427,202 +428,202 @@ static u32 add_index(tid_t tid, struct inode *ip, s64 bn, int slot)
 		 * Logging is now directed by xtree tlocks
 		 */
 		clear_cflag(COMMIT_Dirtable, ip);
-	}
+	पूर्ण
 
-	offset = (index - 2) * sizeof(struct dir_table_slot);
+	offset = (index - 2) * माप(काष्ठा dir_table_slot);
 	page_offset = offset & (PSIZE - 1);
 	blkno = ((offset + 1) >> L2PSIZE) << sbi->l2nbperpage;
-	if (page_offset == 0) {
+	अगर (page_offset == 0) अणु
 		/*
 		 * This will be the beginning of a new page
 		 */
 		xaddr = 0;
-		if (xtInsert(tid, ip, 0, blkno, sbi->nbperpage, &xaddr, 0)) {
+		अगर (xtInsert(tid, ip, 0, blkno, sbi->nbperpage, &xaddr, 0)) अणु
 			jfs_warn("add_index: xtInsert failed!");
-			goto clean_up;
-		}
+			जाओ clean_up;
+		पूर्ण
 		ip->i_size += PSIZE;
 
-		if ((mp = get_index_page(ip, blkno)))
-			memset(mp->data, 0, PSIZE);	/* Just looks better */
-		else
+		अगर ((mp = get_index_page(ip, blkno)))
+			स_रखो(mp->data, 0, PSIZE);	/* Just looks better */
+		अन्यथा
 			xtTruncate(tid, ip, offset, COMMIT_PWMAP);
-	} else
-		mp = read_index_page(ip, blkno);
+	पूर्ण अन्यथा
+		mp = पढ़ो_index_page(ip, blkno);
 
-	if (!mp) {
+	अगर (!mp) अणु
 		jfs_err("add_index: get/read_metapage failed!");
-		goto clean_up;
-	}
+		जाओ clean_up;
+	पूर्ण
 
 	lock_index(tid, ip, mp, index);
 
 	dirtab_slot =
-	    (struct dir_table_slot *) ((char *) mp->data + page_offset);
-	dirtab_slot->flag = DIR_INDEX_VALID;
+	    (काष्ठा dir_table_slot *) ((अक्षर *) mp->data + page_offset);
+	dirtab_slot->flag = सूची_INDEX_VALID;
 	dirtab_slot->slot = slot;
 	DTSaddress(dirtab_slot, bn);
 
 	mark_metapage_dirty(mp);
 	release_metapage(mp);
 
-	return index;
+	वापस index;
 
       clean_up:
 
 	jfs_ip->next_index--;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- *	free_index()
+ *	मुक्त_index()
  *
- *	Marks an entry to the directory index table as free.
+ *	Marks an entry to the directory index table as मुक्त.
  */
-static void free_index(tid_t tid, struct inode *ip, u32 index, u32 next)
-{
-	struct dir_table_slot *dirtab_slot;
+अटल व्योम मुक्त_index(tid_t tid, काष्ठा inode *ip, u32 index, u32 next)
+अणु
+	काष्ठा dir_table_slot *dirtab_slot;
 	s64 lblock;
-	struct metapage *mp = NULL;
+	काष्ठा metapage *mp = शून्य;
 
 	dirtab_slot = find_index(ip, index, &mp, &lblock);
 
-	if (!dirtab_slot)
-		return;
+	अगर (!dirtab_slot)
+		वापस;
 
-	dirtab_slot->flag = DIR_INDEX_FREE;
+	dirtab_slot->flag = सूची_INDEX_FREE;
 	dirtab_slot->slot = dirtab_slot->addr1 = 0;
 	dirtab_slot->addr2 = cpu_to_le32(next);
 
-	if (mp) {
+	अगर (mp) अणु
 		lock_index(tid, ip, mp, index);
 		mark_metapage_dirty(mp);
 		release_metapage(mp);
-	} else
+	पूर्ण अन्यथा
 		set_cflag(COMMIT_Dirtable, ip);
-}
+पूर्ण
 
 /*
- *	modify_index()
+ *	modअगरy_index()
  *
  *	Changes an entry in the directory index table
  */
-static void modify_index(tid_t tid, struct inode *ip, u32 index, s64 bn,
-			 int slot, struct metapage ** mp, s64 *lblock)
-{
-	struct dir_table_slot *dirtab_slot;
+अटल व्योम modअगरy_index(tid_t tid, काष्ठा inode *ip, u32 index, s64 bn,
+			 पूर्णांक slot, काष्ठा metapage ** mp, s64 *lblock)
+अणु
+	काष्ठा dir_table_slot *dirtab_slot;
 
 	dirtab_slot = find_index(ip, index, mp, lblock);
 
-	if (!dirtab_slot)
-		return;
+	अगर (!dirtab_slot)
+		वापस;
 
 	DTSaddress(dirtab_slot, bn);
 	dirtab_slot->slot = slot;
 
-	if (*mp) {
+	अगर (*mp) अणु
 		lock_index(tid, ip, *mp, index);
 		mark_metapage_dirty(*mp);
-	} else
+	पूर्ण अन्यथा
 		set_cflag(COMMIT_Dirtable, ip);
-}
+पूर्ण
 
 /*
- *	read_index()
+ *	पढ़ो_index()
  *
- *	reads a directory table slot
+ *	पढ़ोs a directory table slot
  */
-static int read_index(struct inode *ip, u32 index,
-		     struct dir_table_slot * dirtab_slot)
-{
+अटल पूर्णांक पढ़ो_index(काष्ठा inode *ip, u32 index,
+		     काष्ठा dir_table_slot * dirtab_slot)
+अणु
 	s64 lblock;
-	struct metapage *mp = NULL;
-	struct dir_table_slot *slot;
+	काष्ठा metapage *mp = शून्य;
+	काष्ठा dir_table_slot *slot;
 
 	slot = find_index(ip, index, &mp, &lblock);
-	if (!slot) {
-		return -EIO;
-	}
+	अगर (!slot) अणु
+		वापस -EIO;
+	पूर्ण
 
-	memcpy(dirtab_slot, slot, sizeof(struct dir_table_slot));
+	स_नकल(dirtab_slot, slot, माप(काष्ठा dir_table_slot));
 
-	if (mp)
+	अगर (mp)
 		release_metapage(mp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  *	dtSearch()
  *
  * function:
- *	Search for the entry with specified key
+ *	Search क्रम the entry with specअगरied key
  *
  * parameter:
  *
- * return: 0 - search result on stack, leaf page pinned;
- *	   errno - I/O error
+ * वापस: 0 - search result on stack, leaf page pinned;
+ *	   त्रुटि_सं - I/O error
  */
-int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
-	     struct btstack * btstack, int flag)
-{
-	int rc = 0;
-	int cmp = 1;		/* init for empty page */
+पूर्णांक dtSearch(काष्ठा inode *ip, काष्ठा component_name * key, ino_t * data,
+	     काष्ठा btstack * btstack, पूर्णांक flag)
+अणु
+	पूर्णांक rc = 0;
+	पूर्णांक cmp = 1;		/* init क्रम empty page */
 	s64 bn;
-	struct metapage *mp;
+	काष्ठा metapage *mp;
 	dtpage_t *p;
 	s8 *stbl;
-	int base, index, lim;
-	struct btframe *btsp;
+	पूर्णांक base, index, lim;
+	काष्ठा btframe *btsp;
 	pxd_t *pxd;
-	int psize = 288;	/* initial in-line directory */
+	पूर्णांक psize = 288;	/* initial in-line directory */
 	ino_t inumber;
-	struct component_name ciKey;
-	struct super_block *sb = ip->i_sb;
+	काष्ठा component_name ciKey;
+	काष्ठा super_block *sb = ip->i_sb;
 
-	ciKey.name = kmalloc_array(JFS_NAME_MAX + 1, sizeof(wchar_t),
+	ciKey.name = kदो_स्मृति_array(JFS_NAME_MAX + 1, माप(ब_अक्षर_प्रकार),
 				   GFP_NOFS);
-	if (!ciKey.name) {
+	अगर (!ciKey.name) अणु
 		rc = -ENOMEM;
-		goto dtSearch_Exit2;
-	}
+		जाओ dtSearch_Exit2;
+	पूर्ण
 
 
-	/* uppercase search key for c-i directory */
+	/* upperहाल search key क्रम c-i directory */
 	UniStrcpy(ciKey.name, key->name);
 	ciKey.namlen = key->namlen;
 
-	/* only uppercase if case-insensitive support is on */
-	if ((JFS_SBI(sb)->mntflag & JFS_OS2) == JFS_OS2) {
+	/* only upperहाल अगर हाल-insensitive support is on */
+	अगर ((JFS_SBI(sb)->mntflag & JFS_OS2) == JFS_OS2) अणु
 		ciToUpper(&ciKey);
-	}
+	पूर्ण
 	BT_CLR(btstack);	/* reset stack */
 
-	/* init level count for max pages to split */
+	/* init level count क्रम max pages to split */
 	btstack->nsplit = 1;
 
 	/*
-	 *	search down tree from root:
+	 *	search करोwn tree from root:
 	 *
 	 * between two consecutive entries of <Ki, Pi> and <Kj, Pj> of
-	 * internal page, child page Pi contains entry with k, Ki <= K < Kj.
+	 * पूर्णांकernal page, child page Pi contains entry with k, Ki <= K < Kj.
 	 *
-	 * if entry with search key K is not found
-	 * internal page search find the entry with largest key Ki
-	 * less than K which point to the child page to search;
+	 * अगर entry with search key K is not found
+	 * पूर्णांकernal page search find the entry with largest key Ki
+	 * less than K which poपूर्णांक to the child page to search;
 	 * leaf page search find the entry with smallest key Kj
-	 * greater than K so that the returned index is the position of
-	 * the entry to be shifted right for insertion of new entry.
-	 * for empty tree, search key is greater than any key of the tree.
+	 * greater than K so that the वापसed index is the position of
+	 * the entry to be shअगरted right क्रम insertion of new entry.
+	 * क्रम empty tree, search key is greater than any key of the tree.
 	 *
 	 * by convention, root bn = 0.
 	 */
-	for (bn = 0;;) {
+	क्रम (bn = 0;;) अणु
 		/* get/pin the page to search */
 		DT_GETPAGE(ip, bn, mp, psize, p, rc);
-		if (rc)
-			goto dtSearch_Exit1;
+		अगर (rc)
+			जाओ dtSearch_Exit1;
 
 		/* get sorted entry table of the page */
 		stbl = DT_GETSTBL(p);
@@ -630,62 +631,62 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
 		/*
 		 * binary search with search key K on the current page.
 		 */
-		for (base = 0, lim = p->header.nextindex; lim; lim >>= 1) {
+		क्रम (base = 0, lim = p->header.nextindex; lim; lim >>= 1) अणु
 			index = base + (lim >> 1);
 
-			if (p->header.flag & BT_LEAF) {
-				/* uppercase leaf name to compare */
+			अगर (p->header.flag & BT_LEAF) अणु
+				/* upperहाल leaf name to compare */
 				cmp =
 				    ciCompare(&ciKey, p, stbl[index],
 					      JFS_SBI(sb)->mntflag);
-			} else {
-				/* router key is in uppercase */
+			पूर्ण अन्यथा अणु
+				/* router key is in upperहाल */
 
 				cmp = dtCompare(&ciKey, p, stbl[index]);
 
 
-			}
-			if (cmp == 0) {
+			पूर्ण
+			अगर (cmp == 0) अणु
 				/*
 				 *	search hit
 				 */
 				/* search hit - leaf page:
-				 * return the entry found
+				 * वापस the entry found
 				 */
-				if (p->header.flag & BT_LEAF) {
+				अगर (p->header.flag & BT_LEAF) अणु
 					inumber = le32_to_cpu(
-			((struct ldtentry *) & p->slot[stbl[index]])->inumber);
+			((काष्ठा ldtentry *) & p->slot[stbl[index]])->inumber);
 
 					/*
-					 * search for JFS_LOOKUP
+					 * search क्रम JFS_LOOKUP
 					 */
-					if (flag == JFS_LOOKUP) {
+					अगर (flag == JFS_LOOKUP) अणु
 						*data = inumber;
 						rc = 0;
-						goto out;
-					}
+						जाओ out;
+					पूर्ण
 
 					/*
-					 * search for JFS_CREATE
+					 * search क्रम JFS_CREATE
 					 */
-					if (flag == JFS_CREATE) {
+					अगर (flag == JFS_CREATE) अणु
 						*data = inumber;
 						rc = -EEXIST;
-						goto out;
-					}
+						जाओ out;
+					पूर्ण
 
 					/*
-					 * search for JFS_REMOVE or JFS_RENAME
+					 * search क्रम JFS_REMOVE or JFS_RENAME
 					 */
-					if ((flag == JFS_REMOVE ||
+					अगर ((flag == JFS_REMOVE ||
 					     flag == JFS_RENAME) &&
-					    *data != inumber) {
+					    *data != inumber) अणु
 						rc = -ESTALE;
-						goto out;
-					}
+						जाओ out;
+					पूर्ण
 
 					/*
-					 * JFS_REMOVE|JFS_FINDDIR|JFS_RENAME
+					 * JFS_REMOVE|JFS_FINDसूची|JFS_RENAME
 					 */
 					/* save search result */
 					*data = inumber;
@@ -695,20 +696,20 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
 					btsp->mp = mp;
 
 					rc = 0;
-					goto dtSearch_Exit1;
-				}
+					जाओ dtSearch_Exit1;
+				पूर्ण
 
-				/* search hit - internal page:
+				/* search hit - पूर्णांकernal page:
 				 * descend/search its child page
 				 */
-				goto getChild;
-			}
+				जाओ getChild;
+			पूर्ण
 
-			if (cmp > 0) {
+			अगर (cmp > 0) अणु
 				base = index + 1;
 				--lim;
-			}
-		}
+			पूर्ण
+		पूर्ण
 
 		/*
 		 *	search miss
@@ -719,21 +720,21 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
 		/*
 		 * search miss - leaf page
 		 *
-		 * return location of entry (base) where new entry with
+		 * वापस location of entry (base) where new entry with
 		 * search key K is to be inserted.
 		 */
-		if (p->header.flag & BT_LEAF) {
+		अगर (p->header.flag & BT_LEAF) अणु
 			/*
-			 * search for JFS_LOOKUP, JFS_REMOVE, or JFS_RENAME
+			 * search क्रम JFS_LOOKUP, JFS_REMOVE, or JFS_RENAME
 			 */
-			if (flag == JFS_LOOKUP || flag == JFS_REMOVE ||
-			    flag == JFS_RENAME) {
+			अगर (flag == JFS_LOOKUP || flag == JFS_REMOVE ||
+			    flag == JFS_RENAME) अणु
 				rc = -ENOENT;
-				goto out;
-			}
+				जाओ out;
+			पूर्ण
 
 			/*
-			 * search for JFS_CREATE|JFS_FINDDIR:
+			 * search क्रम JFS_CREATE|JFS_FINDसूची:
 			 *
 			 * save search result
 			 */
@@ -744,31 +745,31 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
 			btsp->mp = mp;
 
 			rc = 0;
-			goto dtSearch_Exit1;
-		}
+			जाओ dtSearch_Exit1;
+		पूर्ण
 
 		/*
-		 * search miss - internal page
+		 * search miss - पूर्णांकernal page
 		 *
-		 * if base is non-zero, decrement base by one to get the parent
+		 * अगर base is non-zero, decrement base by one to get the parent
 		 * entry of the child page to search.
 		 */
 		index = base ? base - 1 : base;
 
 		/*
-		 * go down to child page
+		 * go करोwn to child page
 		 */
 	      getChild:
 		/* update max. number of pages to split */
-		if (BT_STACK_FULL(btstack)) {
-			/* Something's corrupted, mark filesystem dirty so
+		अगर (BT_STACK_FULL(btstack)) अणु
+			/* Something's corrupted, mark fileप्रणाली dirty so
 			 * chkdsk will fix it.
 			 */
 			jfs_error(sb, "stack overrun!\n");
 			BT_STACK_DUMP(btstack);
 			rc = -EIO;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 		btstack->nsplit++;
 
 		/* push (bn, index) of the parent page/entry */
@@ -781,19 +782,19 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
 
 		/* unpin the parent page */
 		DT_PUTPAGE(mp);
-	}
+	पूर्ण
 
       out:
 	DT_PUTPAGE(mp);
 
       dtSearch_Exit1:
 
-	kfree(ciKey.name);
+	kमुक्त(ciKey.name);
 
       dtSearch_Exit2:
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /*
@@ -803,78 +804,78 @@ int dtSearch(struct inode *ip, struct component_name * key, ino_t * data,
  *
  * parameter:
  *
- * return: 0 - success;
- *	   errno - failure;
+ * वापस: 0 - success;
+ *	   त्रुटि_सं - failure;
  */
-int dtInsert(tid_t tid, struct inode *ip,
-	 struct component_name * name, ino_t * fsn, struct btstack * btstack)
-{
-	int rc = 0;
-	struct metapage *mp;	/* meta-page buffer */
+पूर्णांक dtInsert(tid_t tid, काष्ठा inode *ip,
+	 काष्ठा component_name * name, ino_t * fsn, काष्ठा btstack * btstack)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा metapage *mp;	/* meta-page buffer */
 	dtpage_t *p;		/* base B+-tree index page */
 	s64 bn;
-	int index;
-	struct dtsplit split;	/* split information */
+	पूर्णांक index;
+	काष्ठा dtsplit split;	/* split inक्रमmation */
 	ddata_t data;
-	struct dt_lock *dtlck;
-	int n;
-	struct tlock *tlck;
-	struct lv *lv;
+	काष्ठा dt_lock *dtlck;
+	पूर्णांक n;
+	काष्ठा tlock *tlck;
+	काष्ठा lv *lv;
 
 	/*
 	 *	retrieve search result
 	 *
-	 * dtSearch() returns (leaf page pinned, index at which to insert).
-	 * n.b. dtSearch() may return index of (maxindex + 1) of
+	 * dtSearch() वापसs (leaf page pinned, index at which to insert).
+	 * n.b. dtSearch() may वापस index of (maxindex + 1) of
 	 * the full page.
 	 */
 	DT_GETSEARCH(ip, btstack->top, bn, mp, p, index);
 
 	/*
-	 *	insert entry for new key
+	 *	insert entry क्रम new key
 	 */
-	if (DO_INDEX(ip)) {
-		if (JFS_IP(ip)->next_index == DIREND) {
+	अगर (DO_INDEX(ip)) अणु
+		अगर (JFS_IP(ip)->next_index == सूचीEND) अणु
 			DT_PUTPAGE(mp);
-			return -EMLINK;
-		}
+			वापस -EMLINK;
+		पूर्ण
 		n = NDTLEAF(name->namlen);
 		data.leaf.tid = tid;
 		data.leaf.ip = ip;
-	} else {
+	पूर्ण अन्यथा अणु
 		n = NDTLEAF_LEGACY(name->namlen);
-		data.leaf.ip = NULL;	/* signifies legacy directory format */
-	}
+		data.leaf.ip = शून्य;	/* signअगरies legacy directory क्रमmat */
+	पूर्ण
 	data.leaf.ino = *fsn;
 
 	/*
-	 *	leaf page does not have enough room for new entry:
+	 *	leaf page करोes not have enough room क्रम new entry:
 	 *
 	 *	extend/split the leaf page;
 	 *
 	 * dtSplitUp() will insert the entry and unpin the leaf page.
 	 */
-	if (n > p->header.freecnt) {
+	अगर (n > p->header.मुक्तcnt) अणु
 		split.mp = mp;
 		split.index = index;
 		split.nslot = n;
 		split.key = name;
 		split.data = &data;
 		rc = dtSplitUp(tid, ip, &split, btstack);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/*
-	 *	leaf page does have enough room for new entry:
+	 *	leaf page करोes have enough room क्रम new entry:
 	 *
-	 *	insert the new data entry into the leaf page;
+	 *	insert the new data entry पूर्णांकo the leaf page;
 	 */
-	BT_MARK_DIRTY(mp, ip);
+	BT_MARK_सूचीTY(mp, ip);
 	/*
 	 * acquire a transaction lock on the leaf page
 	 */
 	tlck = txLock(tid, ip, mp, tlckDTREE | tlckENTRY);
-	dtlck = (struct dt_lock *) & tlck->lock;
+	dtlck = (काष्ठा dt_lock *) & tlck->lock;
 	ASSERT(dtlck->index == 0);
 	lv = & dtlck->lv[0];
 
@@ -886,22 +887,22 @@ int dtInsert(tid_t tid, struct inode *ip,
 	dtInsertEntry(p, index, name, &data, &dtlck);
 
 	/* linelock stbl of non-root leaf page */
-	if (!(p->header.flag & BT_ROOT)) {
-		if (dtlck->index >= dtlck->maxcnt)
-			dtlck = (struct dt_lock *) txLinelock(dtlck);
+	अगर (!(p->header.flag & BT_ROOT)) अणु
+		अगर (dtlck->index >= dtlck->maxcnt)
+			dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 		lv = & dtlck->lv[dtlck->index];
 		n = index >> L2DTSLOTSIZE;
 		lv->offset = p->header.stblindex + n;
 		lv->length =
 		    ((p->header.nextindex - 1) >> L2DTSLOTSIZE) - n + 1;
 		dtlck->index++;
-	}
+	पूर्ण
 
 	/* unpin the leaf page */
 	DT_PUTPAGE(mp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
@@ -911,46 +912,46 @@ int dtInsert(tid_t tid, struct inode *ip,
  *
  * parameter:
  *
- * return: 0 - success;
- *	   errno - failure;
+ * वापस: 0 - success;
+ *	   त्रुटि_सं - failure;
  *	leaf page unpinned;
  */
-static int dtSplitUp(tid_t tid,
-	  struct inode *ip, struct dtsplit * split, struct btstack * btstack)
-{
-	struct jfs_sb_info *sbi = JFS_SBI(ip->i_sb);
-	int rc = 0;
-	struct metapage *smp;
+अटल पूर्णांक dtSplitUp(tid_t tid,
+	  काष्ठा inode *ip, काष्ठा dtsplit * split, काष्ठा btstack * btstack)
+अणु
+	काष्ठा jfs_sb_info *sbi = JFS_SBI(ip->i_sb);
+	पूर्णांक rc = 0;
+	काष्ठा metapage *smp;
 	dtpage_t *sp;		/* split page */
-	struct metapage *rmp;
+	काष्ठा metapage *rmp;
 	dtpage_t *rp;		/* new right page split from sp */
 	pxd_t rpxd;		/* new right page extent descriptor */
-	struct metapage *lmp;
+	काष्ठा metapage *lmp;
 	dtpage_t *lp;		/* left child page */
-	int skip;		/* index of entry of insertion */
-	struct btframe *parent;	/* parent page entry on traverse stack */
+	पूर्णांक skip;		/* index of entry of insertion */
+	काष्ठा btframe *parent;	/* parent page entry on traverse stack */
 	s64 xaddr, nxaddr;
-	int xlen, xsize;
-	struct pxdlist pxdlist;
+	पूर्णांक xlen, xsize;
+	काष्ठा pxdlist pxdlist;
 	pxd_t *pxd;
-	struct component_name key = { 0, NULL };
+	काष्ठा component_name key = अणु 0, शून्य पूर्ण;
 	ddata_t *data = split->data;
-	int n;
-	struct dt_lock *dtlck;
-	struct tlock *tlck;
-	struct lv *lv;
-	int quota_allocation = 0;
+	पूर्णांक n;
+	काष्ठा dt_lock *dtlck;
+	काष्ठा tlock *tlck;
+	काष्ठा lv *lv;
+	पूर्णांक quota_allocation = 0;
 
 	/* get split page */
 	smp = split->mp;
 	sp = DT_PAGE(ip, smp);
 
-	key.name = kmalloc_array(JFS_NAME_MAX + 2, sizeof(wchar_t), GFP_NOFS);
-	if (!key.name) {
+	key.name = kदो_स्मृति_array(JFS_NAME_MAX + 2, माप(ब_अक्षर_प्रकार), GFP_NOFS);
+	अगर (!key.name) अणु
 		DT_PUTPAGE(smp);
 		rc = -ENOMEM;
-		goto dtSplitUp_Exit;
-	}
+		जाओ dtSplitUp_Exit;
+	पूर्ण
 
 	/*
 	 *	split leaf page
@@ -961,20 +962,20 @@ static int dtSplitUp(tid_t tid,
 	/*
 	 *	split root leaf page:
 	 */
-	if (sp->header.flag & BT_ROOT) {
+	अगर (sp->header.flag & BT_ROOT) अणु
 		/*
 		 * allocate a single extent child page
 		 */
 		xlen = 1;
 		n = sbi->bsize >> L2DTSLOTSIZE;
 		n -= (n + 31) >> L2DTSLOTSIZE;	/* stbl size */
-		n -= DTROOTMAXSLOT - sp->header.freecnt; /* header + entries */
-		if (n <= split->nslot)
+		n -= DTROOTMAXSLOT - sp->header.मुक्तcnt; /* header + entries */
+		अगर (n <= split->nslot)
 			xlen++;
-		if ((rc = dbAlloc(ip, 0, (s64) xlen, &xaddr))) {
+		अगर ((rc = dbAlloc(ip, 0, (s64) xlen, &xaddr))) अणु
 			DT_PUTPAGE(smp);
-			goto freeKeyName;
-		}
+			जाओ मुक्तKeyName;
+		पूर्ण
 
 		pxdlist.maxnpxd = 1;
 		pxdlist.npxd = 0;
@@ -984,46 +985,46 @@ static int dtSplitUp(tid_t tid,
 		split->pxdlist = &pxdlist;
 		rc = dtSplitRoot(tid, ip, split, &rmp);
 
-		if (rc)
+		अगर (rc)
 			dbFree(ip, xaddr, xlen);
-		else
+		अन्यथा
 			DT_PUTPAGE(rmp);
 
 		DT_PUTPAGE(smp);
 
-		if (!DO_INDEX(ip))
+		अगर (!DO_INDEX(ip))
 			ip->i_size = xlen << sbi->l2bsize;
 
-		goto freeKeyName;
-	}
+		जाओ मुक्तKeyName;
+	पूर्ण
 
 	/*
 	 *	extend first leaf page
 	 *
-	 * extend the 1st extent if less than buffer page size
+	 * extend the 1st extent अगर less than buffer page size
 	 * (dtExtendPage() reurns leaf page unpinned)
 	 */
 	pxd = &sp->header.self;
 	xlen = lengthPXD(pxd);
 	xsize = xlen << sbi->l2bsize;
-	if (xsize < PSIZE) {
+	अगर (xsize < PSIZE) अणु
 		xaddr = addressPXD(pxd);
 		n = xsize >> L2DTSLOTSIZE;
 		n -= (n + 31) >> L2DTSLOTSIZE;	/* stbl size */
-		if ((n + sp->header.freecnt) <= split->nslot)
+		अगर ((n + sp->header.मुक्तcnt) <= split->nslot)
 			n = xlen + (xlen << 1);
-		else
+		अन्यथा
 			n = xlen;
 
 		/* Allocate blocks to quota. */
 		rc = dquot_alloc_block(ip, n);
-		if (rc)
-			goto extendOut;
+		अगर (rc)
+			जाओ extendOut;
 		quota_allocation += n;
 
-		if ((rc = dbReAlloc(sbi->ipbmap, xaddr, (s64) xlen,
+		अगर ((rc = dbReAlloc(sbi->ipbmap, xaddr, (s64) xlen,
 				    (s64) n, &nxaddr)))
-			goto extendOut;
+			जाओ extendOut;
 
 		pxdlist.maxnpxd = 1;
 		pxdlist.npxd = 0;
@@ -1031,104 +1032,104 @@ static int dtSplitUp(tid_t tid,
 		PXDaddress(pxd, nxaddr);
 		PXDlength(pxd, xlen + n);
 		split->pxdlist = &pxdlist;
-		if ((rc = dtExtendPage(tid, ip, split, btstack))) {
+		अगर ((rc = dtExtendPage(tid, ip, split, btstack))) अणु
 			nxaddr = addressPXD(pxd);
-			if (xaddr != nxaddr) {
-				/* free relocated extent */
+			अगर (xaddr != nxaddr) अणु
+				/* मुक्त relocated extent */
 				xlen = lengthPXD(pxd);
 				dbFree(ip, nxaddr, (s64) xlen);
-			} else {
-				/* free extended delta */
+			पूर्ण अन्यथा अणु
+				/* मुक्त extended delta */
 				xlen = lengthPXD(pxd) - n;
 				xaddr = addressPXD(pxd) + xlen;
 				dbFree(ip, xaddr, (s64) n);
-			}
-		} else if (!DO_INDEX(ip))
+			पूर्ण
+		पूर्ण अन्यथा अगर (!DO_INDEX(ip))
 			ip->i_size = lengthPXD(pxd) << sbi->l2bsize;
 
 
 	      extendOut:
 		DT_PUTPAGE(smp);
-		goto freeKeyName;
-	}
+		जाओ मुक्तKeyName;
+	पूर्ण
 
 	/*
-	 *	split leaf page <sp> into <sp> and a new right page <rp>.
+	 *	split leaf page <sp> पूर्णांकo <sp> and a new right page <rp>.
 	 *
-	 * return <rp> pinned and its extent descriptor <rpxd>
+	 * वापस <rp> pinned and its extent descriptor <rpxd>
 	 */
 	/*
 	 * allocate new directory page extent and
 	 * new index page(s) to cover page split(s)
 	 *
-	 * allocation hint: ?
+	 * allocation hपूर्णांक: ?
 	 */
 	n = btstack->nsplit;
 	pxdlist.maxnpxd = pxdlist.npxd = 0;
 	xlen = sbi->nbperpage;
-	for (pxd = pxdlist.pxd; n > 0; n--, pxd++) {
-		if ((rc = dbAlloc(ip, 0, (s64) xlen, &xaddr)) == 0) {
+	क्रम (pxd = pxdlist.pxd; n > 0; n--, pxd++) अणु
+		अगर ((rc = dbAlloc(ip, 0, (s64) xlen, &xaddr)) == 0) अणु
 			PXDaddress(pxd, xaddr);
 			PXDlength(pxd, xlen);
 			pxdlist.maxnpxd++;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		DT_PUTPAGE(smp);
 
-		/* undo allocation */
-		goto splitOut;
-	}
+		/* unकरो allocation */
+		जाओ splitOut;
+	पूर्ण
 
 	split->pxdlist = &pxdlist;
-	if ((rc = dtSplitPage(tid, ip, split, &rmp, &rp, &rpxd))) {
+	अगर ((rc = dtSplitPage(tid, ip, split, &rmp, &rp, &rpxd))) अणु
 		DT_PUTPAGE(smp);
 
-		/* undo allocation */
-		goto splitOut;
-	}
+		/* unकरो allocation */
+		जाओ splitOut;
+	पूर्ण
 
-	if (!DO_INDEX(ip))
+	अगर (!DO_INDEX(ip))
 		ip->i_size += PSIZE;
 
 	/*
-	 * propagate up the router entry for the leaf page just split
+	 * propagate up the router entry क्रम the leaf page just split
 	 *
-	 * insert a router entry for the new page into the parent page,
+	 * insert a router entry क्रम the new page पूर्णांकo the parent page,
 	 * propagate the insert/split up the tree by walking back the stack
 	 * of (bn of parent page, index of child page entry in parent page)
-	 * that were traversed during the search for the page that split.
+	 * that were traversed during the search क्रम the page that split.
 	 *
-	 * the propagation of insert/split up the tree stops if the root
-	 * splits or the page inserted into doesn't have to split to hold
+	 * the propagation of insert/split up the tree stops अगर the root
+	 * splits or the page inserted पूर्णांकo करोesn't have to split to hold
 	 * the new entry.
 	 *
-	 * the parent entry for the split page remains the same, and
+	 * the parent entry क्रम the split page reमुख्यs the same, and
 	 * a new entry is inserted at its right with the first key and
 	 * block number of the new right page.
 	 *
-	 * There are a maximum of 4 pages pinned at any time:
+	 * There are a maximum of 4 pages pinned at any समय:
 	 * two children, left parent and right parent (when the parent splits).
-	 * keep the child pages pinned while working on the parent.
-	 * make sure that all pins are released at exit.
+	 * keep the child pages pinned जबतक working on the parent.
+	 * make sure that all pins are released at निकास.
 	 */
-	while ((parent = BT_POP(btstack)) != NULL) {
-		/* parent page specified by stack frame <parent> */
+	जबतक ((parent = BT_POP(btstack)) != शून्य) अणु
+		/* parent page specअगरied by stack frame <parent> */
 
 		/* keep current child pages (<lp>, <rp>) pinned */
 		lmp = smp;
 		lp = sp;
 
 		/*
-		 * insert router entry in parent for new right child page <rp>
+		 * insert router entry in parent क्रम new right child page <rp>
 		 */
 		/* get the parent page <sp> */
 		DT_GETPAGE(ip, parent->bn, smp, PSIZE, sp, rc);
-		if (rc) {
+		अगर (rc) अणु
 			DT_PUTPAGE(lmp);
 			DT_PUTPAGE(rmp);
-			goto splitOut;
-		}
+			जाओ splitOut;
+		पूर्ण
 
 		/*
 		 * The new key entry goes ONE AFTER the index of parent entry,
@@ -1137,88 +1138,88 @@ static int dtSplitUp(tid_t tid,
 		skip = parent->index + 1;
 
 		/*
-		 * compute the key for the router entry
+		 * compute the key क्रम the router entry
 		 *
 		 * key suffix compression:
-		 * for internal pages that have leaf pages as children,
+		 * क्रम पूर्णांकernal pages that have leaf pages as children,
 		 * retain only what's needed to distinguish between
 		 * the new entry and the entry on the page to its left.
 		 * If the keys compare equal, retain the entire key.
 		 *
-		 * note that compression is performed only at computing
-		 * router key at the lowest internal level.
+		 * note that compression is perक्रमmed only at computing
+		 * router key at the lowest पूर्णांकernal level.
 		 * further compression of the key between pairs of higher
-		 * level internal pages loses too much information and
+		 * level पूर्णांकernal pages loses too much inक्रमmation and
 		 * the search may fail.
-		 * (e.g., two adjacent leaf pages of {a, ..., x} {xx, ...,}
+		 * (e.g., two adjacent leaf pages of अणुa, ..., xपूर्ण अणुxx, ...,पूर्ण
 		 * results in two adjacent parent entries (a)(xx).
-		 * if split occurs between these two entries, and
-		 * if compression is applied, the router key of parent entry
-		 * of right page (x) will divert search for x into right
+		 * अगर split occurs between these two entries, and
+		 * अगर compression is applied, the router key of parent entry
+		 * of right page (x) will भागert search क्रम x पूर्णांकo right
 		 * subtree and miss x in the left subtree.)
 		 *
-		 * the entire key must be retained for the next-to-leftmost
-		 * internal key at any level of the tree, or search may fail
+		 * the entire key must be retained क्रम the next-to-lefपंचांगost
+		 * पूर्णांकernal key at any level of the tree, or search may fail
 		 * (e.g., ?)
 		 */
-		switch (rp->header.flag & BT_TYPE) {
-		case BT_LEAF:
+		चयन (rp->header.flag & BT_TYPE) अणु
+		हाल BT_LEAF:
 			/*
-			 * compute the length of prefix for suffix compression
+			 * compute the length of prefix क्रम suffix compression
 			 * between last entry of left page and first entry
 			 * of right page
 			 */
-			if ((sp->header.flag & BT_ROOT && skip > 1) ||
-			    sp->header.prev != 0 || skip > 1) {
-				/* compute uppercase router prefix key */
+			अगर ((sp->header.flag & BT_ROOT && skip > 1) ||
+			    sp->header.prev != 0 || skip > 1) अणु
+				/* compute upperहाल router prefix key */
 				rc = ciGetLeafPrefixKey(lp,
 							lp->header.nextindex-1,
 							rp, 0, &key,
 							sbi->mntflag);
-				if (rc) {
+				अगर (rc) अणु
 					DT_PUTPAGE(lmp);
 					DT_PUTPAGE(rmp);
 					DT_PUTPAGE(smp);
-					goto splitOut;
-				}
-			} else {
-				/* next to leftmost entry of
-				   lowest internal level */
+					जाओ splitOut;
+				पूर्ण
+			पूर्ण अन्यथा अणु
+				/* next to lefपंचांगost entry of
+				   lowest पूर्णांकernal level */
 
-				/* compute uppercase router key */
+				/* compute upperहाल router key */
 				dtGetKey(rp, 0, &key, sbi->mntflag);
 				key.name[key.namlen] = 0;
 
-				if ((sbi->mntflag & JFS_OS2) == JFS_OS2)
+				अगर ((sbi->mntflag & JFS_OS2) == JFS_OS2)
 					ciToUpper(&key);
-			}
+			पूर्ण
 
 			n = NDTINTERNAL(key.namlen);
-			break;
+			अवरोध;
 
-		case BT_INTERNAL:
+		हाल BT_INTERNAL:
 			dtGetKey(rp, 0, &key, sbi->mntflag);
 			n = NDTINTERNAL(key.namlen);
-			break;
+			अवरोध;
 
-		default:
+		शेष:
 			jfs_err("dtSplitUp(): UFO!");
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		/* unpin left child page */
 		DT_PUTPAGE(lmp);
 
 		/*
-		 * compute the data for the router entry
+		 * compute the data क्रम the router entry
 		 */
 		data->xd = rpxd;	/* child page xd */
 
 		/*
 		 * parent page is full - split the parent page
 		 */
-		if (n > sp->header.freecnt) {
-			/* init for parent page split */
+		अगर (n > sp->header.मुक्तcnt) अणु
+			/* init क्रम parent page split */
 			split->mp = smp;
 			split->index = skip;	/* index at insert */
 			split->nslot = n;
@@ -1230,28 +1231,28 @@ static int dtSplitUp(tid_t tid,
 
 			/* The split routines insert the new entry,
 			 * acquire txLock as appropriate.
-			 * return <rp> pinned and its block number <rbn>.
+			 * वापस <rp> pinned and its block number <rbn>.
 			 */
 			rc = (sp->header.flag & BT_ROOT) ?
 			    dtSplitRoot(tid, ip, split, &rmp) :
 			    dtSplitPage(tid, ip, split, &rmp, &rp, &rpxd);
-			if (rc) {
+			अगर (rc) अणु
 				DT_PUTPAGE(smp);
-				goto splitOut;
-			}
+				जाओ splitOut;
+			पूर्ण
 
 			/* smp and rmp are pinned */
-		}
+		पूर्ण
 		/*
 		 * parent page is not full - insert router entry in parent page
 		 */
-		else {
-			BT_MARK_DIRTY(smp, ip);
+		अन्यथा अणु
+			BT_MARK_सूचीTY(smp, ip);
 			/*
 			 * acquire a transaction lock on the parent page
 			 */
 			tlck = txLock(tid, ip, smp, tlckDTREE | tlckENTRY);
-			dtlck = (struct dt_lock *) & tlck->lock;
+			dtlck = (काष्ठा dt_lock *) & tlck->lock;
 			ASSERT(dtlck->index == 0);
 			lv = & dtlck->lv[0];
 
@@ -1261,7 +1262,7 @@ static int dtSplitUp(tid_t tid,
 			dtlck->index++;
 
 			/* linelock stbl of non-root parent page */
-			if (!(sp->header.flag & BT_ROOT)) {
+			अगर (!(sp->header.flag & BT_ROOT)) अणु
 				lv++;
 				n = skip >> L2DTSLOTSIZE;
 				lv->offset = sp->header.stblindex + n;
@@ -1269,39 +1270,39 @@ static int dtSplitUp(tid_t tid,
 				    ((sp->header.nextindex -
 				      1) >> L2DTSLOTSIZE) - n + 1;
 				dtlck->index++;
-			}
+			पूर्ण
 
 			dtInsertEntry(sp, skip, &key, data, &dtlck);
 
-			/* exit propagate up */
-			break;
-		}
-	}
+			/* निकास propagate up */
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
 	/* unpin current split and its right page */
 	DT_PUTPAGE(smp);
 	DT_PUTPAGE(rmp);
 
 	/*
-	 * free remaining extents allocated for split
+	 * मुक्त reमुख्यing extents allocated क्रम split
 	 */
       splitOut:
 	n = pxdlist.npxd;
 	pxd = &pxdlist.pxd[n];
-	for (; n < pxdlist.maxnpxd; n++, pxd++)
+	क्रम (; n < pxdlist.maxnpxd; n++, pxd++)
 		dbFree(ip, addressPXD(pxd), (s64) lengthPXD(pxd));
 
-      freeKeyName:
-	kfree(key.name);
+      मुक्तKeyName:
+	kमुक्त(key.name);
 
 	/* Rollback quota allocation */
-	if (rc && quota_allocation)
-		dquot_free_block(ip, quota_allocation);
+	अगर (rc && quota_allocation)
+		dquot_मुक्त_block(ip, quota_allocation);
 
       dtSplitUp_Exit:
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /*
@@ -1311,79 +1312,79 @@ static int dtSplitUp(tid_t tid,
  *
  * parameter:
  *
- * return: 0 - success;
- *	   errno - failure;
- *	return split and new page pinned;
+ * वापस: 0 - success;
+ *	   त्रुटि_सं - failure;
+ *	वापस split and new page pinned;
  */
-static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
-	    struct metapage ** rmpp, dtpage_t ** rpp, pxd_t * rpxdp)
-{
-	int rc = 0;
-	struct metapage *smp;
+अटल पूर्णांक dtSplitPage(tid_t tid, काष्ठा inode *ip, काष्ठा dtsplit * split,
+	    काष्ठा metapage ** rmpp, dtpage_t ** rpp, pxd_t * rpxdp)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा metapage *smp;
 	dtpage_t *sp;
-	struct metapage *rmp;
+	काष्ठा metapage *rmp;
 	dtpage_t *rp;		/* new right page allocated */
 	s64 rbn;		/* new right page block number */
-	struct metapage *mp;
+	काष्ठा metapage *mp;
 	dtpage_t *p;
 	s64 nextbn;
-	struct pxdlist *pxdlist;
+	काष्ठा pxdlist *pxdlist;
 	pxd_t *pxd;
-	int skip, nextindex, half, left, nxt, off, si;
-	struct ldtentry *ldtentry;
-	struct idtentry *idtentry;
+	पूर्णांक skip, nextindex, half, left, nxt, off, si;
+	काष्ठा ldtentry *ldtentry;
+	काष्ठा idtentry *idtentry;
 	u8 *stbl;
-	struct dtslot *f;
-	int fsi, stblsize;
-	int n;
-	struct dt_lock *sdtlck, *rdtlck;
-	struct tlock *tlck;
-	struct dt_lock *dtlck;
-	struct lv *slv, *rlv, *lv;
+	काष्ठा dtslot *f;
+	पूर्णांक fsi, stblsize;
+	पूर्णांक n;
+	काष्ठा dt_lock *sdtlck, *rdtlck;
+	काष्ठा tlock *tlck;
+	काष्ठा dt_lock *dtlck;
+	काष्ठा lv *slv, *rlv, *lv;
 
 	/* get split page */
 	smp = split->mp;
 	sp = DT_PAGE(ip, smp);
 
 	/*
-	 * allocate the new right page for the split
+	 * allocate the new right page क्रम the split
 	 */
 	pxdlist = split->pxdlist;
 	pxd = &pxdlist->pxd[pxdlist->npxd];
 	pxdlist->npxd++;
 	rbn = addressPXD(pxd);
 	rmp = get_metapage(ip, rbn, PSIZE, 1);
-	if (rmp == NULL)
-		return -EIO;
+	अगर (rmp == शून्य)
+		वापस -EIO;
 
 	/* Allocate blocks to quota. */
 	rc = dquot_alloc_block(ip, lengthPXD(pxd));
-	if (rc) {
+	अगर (rc) अणु
 		release_metapage(rmp);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	jfs_info("dtSplitPage: ip:0x%p smp:0x%p rmp:0x%p", ip, smp, rmp);
 
-	BT_MARK_DIRTY(rmp, ip);
+	BT_MARK_सूचीTY(rmp, ip);
 	/*
 	 * acquire a transaction lock on the new right page
 	 */
 	tlck = txLock(tid, ip, rmp, tlckDTREE | tlckNEW);
-	rdtlck = (struct dt_lock *) & tlck->lock;
+	rdtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 	rp = (dtpage_t *) rmp->data;
 	*rpp = rp;
 	rp->header.self = *pxd;
 
-	BT_MARK_DIRTY(smp, ip);
+	BT_MARK_सूचीTY(smp, ip);
 	/*
 	 * acquire a transaction lock on the split page
 	 *
 	 * action:
 	 */
 	tlck = txLock(tid, ip, smp, tlckDTREE | tlckENTRY);
-	sdtlck = (struct dt_lock *) & tlck->lock;
+	sdtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 	/* linelock header of split page */
 	ASSERT(sdtlck->index == 0);
@@ -1393,7 +1394,7 @@ static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
 	sdtlck->index++;
 
 	/*
-	 * initialize/update sibling pointers between sp and rp
+	 * initialize/update sibling poपूर्णांकers between sp and rp
 	 */
 	nextbn = le64_to_cpu(sp->header.next);
 	rp->header.next = cpu_to_le64(nextbn);
@@ -1413,10 +1414,10 @@ static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
 	rp->header.maxslot = n;
 	stblsize = (n + 31) >> L2DTSLOTSIZE;	/* in unit of slot */
 
-	/* init freelist */
+	/* init मुक्तlist */
 	fsi = rp->header.stblindex + stblsize;
-	rp->header.freelist = fsi;
-	rp->header.freecnt = rp->header.maxslot - fsi;
+	rp->header.मुक्तlist = fsi;
+	rp->header.मुक्तcnt = rp->header.maxslot - fsi;
 
 	/*
 	 *	sequential append at tail: append without split
@@ -1425,13 +1426,13 @@ static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
 	 * a entry to it (skip is maxentry), it's likely that the access is
 	 * sequential. Adding an empty page on the side of the level is less
 	 * work and can push the fill factor much higher than normal.
-	 * If we're wrong it's no big deal, we'll just do the split the right
-	 * way next time.
-	 * (It may look like it's equally easy to do a similar hack for
+	 * If we're wrong it's no big deal, we'll just करो the split the right
+	 * way next समय.
+	 * (It may look like it's equally easy to करो a similar hack क्रम
 	 * reverse sorted data, that is, split the tree left,
 	 * but it's not. Be my guest.)
 	 */
-	if (nextbn == 0 && split->index == sp->header.nextindex) {
+	अगर (nextbn == 0 && split->index == sp->header.nextindex) अणु
 		/* linelock header + stbl (first slot) of new page */
 		rlv = & rdtlck->lv[rdtlck->index];
 		rlv->offset = 0;
@@ -1439,41 +1440,41 @@ static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
 		rdtlck->index++;
 
 		/*
-		 * initialize freelist of new right page
+		 * initialize मुक्तlist of new right page
 		 */
 		f = &rp->slot[fsi];
-		for (fsi++; fsi < rp->header.maxslot; f++, fsi++)
+		क्रम (fsi++; fsi < rp->header.maxslot; f++, fsi++)
 			f->next = fsi;
 		f->next = -1;
 
 		/* insert entry at the first entry of the new right page */
 		dtInsertEntry(rp, 0, split->key, split->data, &rdtlck);
 
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/*
 	 *	non-sequential insert (at possibly middle page)
 	 */
 
 	/*
-	 * update prev pointer of previous right sibling page;
+	 * update prev poपूर्णांकer of previous right sibling page;
 	 */
-	if (nextbn != 0) {
+	अगर (nextbn != 0) अणु
 		DT_GETPAGE(ip, nextbn, mp, PSIZE, p, rc);
-		if (rc) {
+		अगर (rc) अणु
 			discard_metapage(rmp);
-			return rc;
-		}
+			वापस rc;
+		पूर्ण
 
-		BT_MARK_DIRTY(mp, ip);
+		BT_MARK_सूचीTY(mp, ip);
 		/*
 		 * acquire a transaction lock on the next page
 		 */
 		tlck = txLock(tid, ip, mp, tlckDTREE | tlckRELINK);
 		jfs_info("dtSplitPage: tlck = 0x%p, ip = 0x%p, mp=0x%p",
 			tlck, ip, mp);
-		dtlck = (struct dt_lock *) & tlck->lock;
+		dtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 		/* linelock header of previous right sibling page */
 		lv = & dtlck->lv[dtlck->index];
@@ -1484,7 +1485,7 @@ static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
 		p->header.prev = cpu_to_le64(rbn);
 
 		DT_PUTPAGE(mp);
-	}
+	पूर्ण
 
 	/*
 	 * split the data between the split and right pages.
@@ -1494,52 +1495,52 @@ static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
 	left = 0;
 
 	/*
-	 *	compute fill factor for split pages
+	 *	compute fill factor क्रम split pages
 	 *
 	 * <nxt> traces the next entry to move to rp
 	 * <off> traces the next entry to stay in sp
 	 */
 	stbl = (u8 *) & sp->slot[sp->header.stblindex];
 	nextindex = sp->header.nextindex;
-	for (nxt = off = 0; nxt < nextindex; ++off) {
-		if (off == skip)
-			/* check for fill factor with new entry size */
+	क्रम (nxt = off = 0; nxt < nextindex; ++off) अणु
+		अगर (off == skip)
+			/* check क्रम fill factor with new entry size */
 			n = split->nslot;
-		else {
+		अन्यथा अणु
 			si = stbl[nxt];
-			switch (sp->header.flag & BT_TYPE) {
-			case BT_LEAF:
-				ldtentry = (struct ldtentry *) & sp->slot[si];
-				if (DO_INDEX(ip))
+			चयन (sp->header.flag & BT_TYPE) अणु
+			हाल BT_LEAF:
+				ldtentry = (काष्ठा ldtentry *) & sp->slot[si];
+				अगर (DO_INDEX(ip))
 					n = NDTLEAF(ldtentry->namlen);
-				else
+				अन्यथा
 					n = NDTLEAF_LEGACY(ldtentry->
 							   namlen);
-				break;
+				अवरोध;
 
-			case BT_INTERNAL:
-				idtentry = (struct idtentry *) & sp->slot[si];
+			हाल BT_INTERNAL:
+				idtentry = (काष्ठा idtentry *) & sp->slot[si];
 				n = NDTINTERNAL(idtentry->namlen);
-				break;
+				अवरोध;
 
-			default:
-				break;
-			}
+			शेष:
+				अवरोध;
+			पूर्ण
 
 			++nxt;	/* advance to next entry to move in sp */
-		}
+		पूर्ण
 
 		left += n;
-		if (left >= half)
-			break;
-	}
+		अगर (left >= half)
+			अवरोध;
+	पूर्ण
 
 	/* <nxt> poins to the 1st entry to move */
 
 	/*
 	 *	move entries to right page
 	 *
-	 * dtMoveEntry() initializes rp and reserves entry for insertion
+	 * dtMoveEntry() initializes rp and reserves entry क्रम insertion
 	 *
 	 * split page moved out entries are linelocked;
 	 * new/right page moved in entries are linelocked;
@@ -1555,65 +1556,65 @@ static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
 	sp->header.nextindex = nxt;
 
 	/*
-	 * finalize freelist of new right page
+	 * finalize मुक्तlist of new right page
 	 */
-	fsi = rp->header.freelist;
+	fsi = rp->header.मुक्तlist;
 	f = &rp->slot[fsi];
-	for (fsi++; fsi < rp->header.maxslot; f++, fsi++)
+	क्रम (fsi++; fsi < rp->header.maxslot; f++, fsi++)
 		f->next = fsi;
 	f->next = -1;
 
 	/*
-	 * Update directory index table for entries now in right page
+	 * Update directory index table क्रम entries now in right page
 	 */
-	if ((rp->header.flag & BT_LEAF) && DO_INDEX(ip)) {
+	अगर ((rp->header.flag & BT_LEAF) && DO_INDEX(ip)) अणु
 		s64 lblock;
 
-		mp = NULL;
+		mp = शून्य;
 		stbl = DT_GETSTBL(rp);
-		for (n = 0; n < rp->header.nextindex; n++) {
-			ldtentry = (struct ldtentry *) & rp->slot[stbl[n]];
-			modify_index(tid, ip, le32_to_cpu(ldtentry->index),
+		क्रम (n = 0; n < rp->header.nextindex; n++) अणु
+			ldtentry = (काष्ठा ldtentry *) & rp->slot[stbl[n]];
+			modअगरy_index(tid, ip, le32_to_cpu(ldtentry->index),
 				     rbn, n, &mp, &lblock);
-		}
-		if (mp)
+		पूर्ण
+		अगर (mp)
 			release_metapage(mp);
-	}
+	पूर्ण
 
 	/*
 	 * the skipped index was on the left page,
 	 */
-	if (skip <= off) {
+	अगर (skip <= off) अणु
 		/* insert the new entry in the split page */
 		dtInsertEntry(sp, skip, split->key, split->data, &sdtlck);
 
 		/* linelock stbl of split page */
-		if (sdtlck->index >= sdtlck->maxcnt)
-			sdtlck = (struct dt_lock *) txLinelock(sdtlck);
+		अगर (sdtlck->index >= sdtlck->maxcnt)
+			sdtlck = (काष्ठा dt_lock *) txLinelock(sdtlck);
 		slv = & sdtlck->lv[sdtlck->index];
 		n = skip >> L2DTSLOTSIZE;
 		slv->offset = sp->header.stblindex + n;
 		slv->length =
 		    ((sp->header.nextindex - 1) >> L2DTSLOTSIZE) - n + 1;
 		sdtlck->index++;
-	}
+	पूर्ण
 	/*
 	 * the skipped index was on the right page,
 	 */
-	else {
+	अन्यथा अणु
 		/* adjust the skip index to reflect the new position */
 		skip -= nxt;
 
 		/* insert the new entry in the right page */
 		dtInsertEntry(rp, skip, split->key, split->data, &rdtlck);
-	}
+	पूर्ण
 
       out:
 	*rmpp = rmp;
 	*rpxdp = *pxd;
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /*
@@ -1623,33 +1624,33 @@ static int dtSplitPage(tid_t tid, struct inode *ip, struct dtsplit * split,
  *
  * parameter:
  *
- * return: 0 - success;
- *	   errno - failure;
- *	return extended page pinned;
+ * वापस: 0 - success;
+ *	   त्रुटि_सं - failure;
+ *	वापस extended page pinned;
  */
-static int dtExtendPage(tid_t tid,
-	     struct inode *ip, struct dtsplit * split, struct btstack * btstack)
-{
-	struct super_block *sb = ip->i_sb;
-	int rc;
-	struct metapage *smp, *pmp, *mp;
+अटल पूर्णांक dtExtendPage(tid_t tid,
+	     काष्ठा inode *ip, काष्ठा dtsplit * split, काष्ठा btstack * btstack)
+अणु
+	काष्ठा super_block *sb = ip->i_sb;
+	पूर्णांक rc;
+	काष्ठा metapage *smp, *pmp, *mp;
 	dtpage_t *sp, *pp;
-	struct pxdlist *pxdlist;
+	काष्ठा pxdlist *pxdlist;
 	pxd_t *pxd, *tpxd;
-	int xlen, xsize;
-	int newstblindex, newstblsize;
-	int oldstblindex, oldstblsize;
-	int fsi, last;
-	struct dtslot *f;
-	struct btframe *parent;
-	int n;
-	struct dt_lock *dtlck;
+	पूर्णांक xlen, xsize;
+	पूर्णांक newstblindex, newstblsize;
+	पूर्णांक oldstblindex, oldstblsize;
+	पूर्णांक fsi, last;
+	काष्ठा dtslot *f;
+	काष्ठा btframe *parent;
+	पूर्णांक n;
+	काष्ठा dt_lock *dtlck;
 	s64 xaddr, txaddr;
-	struct tlock *tlck;
-	struct pxd_lock *pxdlock;
-	struct lv *lv;
-	uint type;
-	struct ldtentry *ldtentry;
+	काष्ठा tlock *tlck;
+	काष्ठा pxd_lock *pxdlock;
+	काष्ठा lv *lv;
+	uपूर्णांक type;
+	काष्ठा ldtentry *ldtentry;
 	u8 *stbl;
 
 	/* get page to extend */
@@ -1659,8 +1660,8 @@ static int dtExtendPage(tid_t tid,
 	/* get parent/root page */
 	parent = BT_POP(btstack);
 	DT_GETPAGE(ip, parent->bn, pmp, PSIZE, pp, rc);
-	if (rc)
-		return (rc);
+	अगर (rc)
+		वापस (rc);
 
 	/*
 	 *	extend the extent
@@ -1673,16 +1674,16 @@ static int dtExtendPage(tid_t tid,
 	tpxd = &sp->header.self;
 	txaddr = addressPXD(tpxd);
 	/* in-place extension */
-	if (xaddr == txaddr) {
+	अगर (xaddr == txaddr) अणु
 		type = tlckEXTEND;
-	}
+	पूर्ण
 	/* relocation */
-	else {
+	अन्यथा अणु
 		type = tlckNEW;
 
-		/* save moved extent descriptor for later free */
+		/* save moved extent descriptor क्रम later मुक्त */
 		tlck = txMaplock(tid, ip, tlckDTREE | tlckRELOCATE);
-		pxdlock = (struct pxd_lock *) & tlck->lock;
+		pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
 		pxdlock->flag = mlckFREEPXD;
 		pxdlock->pxd = sp->header.self;
 		pxdlock->index = 1;
@@ -1690,22 +1691,22 @@ static int dtExtendPage(tid_t tid,
 		/*
 		 * Update directory index table to reflect new page address
 		 */
-		if (DO_INDEX(ip)) {
+		अगर (DO_INDEX(ip)) अणु
 			s64 lblock;
 
-			mp = NULL;
+			mp = शून्य;
 			stbl = DT_GETSTBL(sp);
-			for (n = 0; n < sp->header.nextindex; n++) {
+			क्रम (n = 0; n < sp->header.nextindex; n++) अणु
 				ldtentry =
-				    (struct ldtentry *) & sp->slot[stbl[n]];
-				modify_index(tid, ip,
+				    (काष्ठा ldtentry *) & sp->slot[stbl[n]];
+				modअगरy_index(tid, ip,
 					     le32_to_cpu(ldtentry->index),
 					     xaddr, n, &mp, &lblock);
-			}
-			if (mp)
+			पूर्ण
+			अगर (mp)
 				release_metapage(mp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	/*
 	 *	extend the page
@@ -1714,12 +1715,12 @@ static int dtExtendPage(tid_t tid,
 
 	jfs_info("dtExtendPage: ip:0x%p smp:0x%p sp:0x%p", ip, smp, sp);
 
-	BT_MARK_DIRTY(smp, ip);
+	BT_MARK_सूचीTY(smp, ip);
 	/*
 	 * acquire a transaction lock on the extended/leaf page
 	 */
 	tlck = txLock(tid, ip, smp, tlckDTREE | type);
-	dtlck = (struct dt_lock *) & tlck->lock;
+	dtlck = (काष्ठा dt_lock *) & tlck->lock;
 	lv = & dtlck->lv[0];
 
 	/* update buffer extent descriptor of extended page */
@@ -1734,13 +1735,13 @@ static int dtExtendPage(tid_t tid,
 	newstblindex = sp->header.maxslot;
 	n = xsize >> L2DTSLOTSIZE;
 	newstblsize = (n + 31) >> L2DTSLOTSIZE;
-	memcpy(&sp->slot[newstblindex], &sp->slot[oldstblindex],
+	स_नकल(&sp->slot[newstblindex], &sp->slot[oldstblindex],
 	       sp->header.nextindex);
 
 	/*
 	 * in-line extension: linelock old area of extended page
 	 */
-	if (type == tlckEXTEND) {
+	अगर (type == tlckEXTEND) अणु
 		/* linelock header */
 		lv->offset = 0;
 		lv->length = 1;
@@ -1750,73 +1751,73 @@ static int dtExtendPage(tid_t tid,
 		/* linelock new stbl of extended page */
 		lv->offset = newstblindex;
 		lv->length = newstblsize;
-	}
+	पूर्ण
 	/*
 	 * relocation: linelock whole relocated area
 	 */
-	else {
+	अन्यथा अणु
 		lv->offset = 0;
 		lv->length = sp->header.maxslot + newstblsize;
-	}
+	पूर्ण
 
 	dtlck->index++;
 
 	sp->header.maxslot = n;
 	sp->header.stblindex = newstblindex;
-	/* sp->header.nextindex remains the same */
+	/* sp->header.nextindex reमुख्यs the same */
 
 	/*
-	 * add old stbl region at head of freelist
+	 * add old stbl region at head of मुक्तlist
 	 */
 	fsi = oldstblindex;
 	f = &sp->slot[fsi];
-	last = sp->header.freelist;
-	for (n = 0; n < oldstblsize; n++, fsi++, f++) {
+	last = sp->header.मुक्तlist;
+	क्रम (n = 0; n < oldstblsize; n++, fsi++, f++) अणु
 		f->next = last;
 		last = fsi;
-	}
-	sp->header.freelist = last;
-	sp->header.freecnt += oldstblsize;
+	पूर्ण
+	sp->header.मुक्तlist = last;
+	sp->header.मुक्तcnt += oldstblsize;
 
 	/*
-	 * append free region of newly extended area at tail of freelist
+	 * append मुक्त region of newly extended area at tail of मुक्तlist
 	 */
-	/* init free region of newly extended area */
+	/* init मुक्त region of newly extended area */
 	fsi = n = newstblindex + newstblsize;
 	f = &sp->slot[fsi];
-	for (fsi++; fsi < sp->header.maxslot; f++, fsi++)
+	क्रम (fsi++; fsi < sp->header.maxslot; f++, fsi++)
 		f->next = fsi;
 	f->next = -1;
 
-	/* append new free region at tail of old freelist */
-	fsi = sp->header.freelist;
-	if (fsi == -1)
-		sp->header.freelist = n;
-	else {
-		do {
+	/* append new मुक्त region at tail of old मुक्तlist */
+	fsi = sp->header.मुक्तlist;
+	अगर (fsi == -1)
+		sp->header.मुक्तlist = n;
+	अन्यथा अणु
+		करो अणु
 			f = &sp->slot[fsi];
 			fsi = f->next;
-		} while (fsi != -1);
+		पूर्ण जबतक (fsi != -1);
 
 		f->next = n;
-	}
+	पूर्ण
 
-	sp->header.freecnt += sp->header.maxslot - n;
+	sp->header.मुक्तcnt += sp->header.maxslot - n;
 
 	/*
 	 * insert the new entry
 	 */
 	dtInsertEntry(sp, split->index, split->key, split->data, &dtlck);
 
-	BT_MARK_DIRTY(pmp, ip);
+	BT_MARK_सूचीTY(pmp, ip);
 	/*
-	 * linelock any freeslots residing in old extent
+	 * linelock any मुक्तslots residing in old extent
 	 */
-	if (type == tlckEXTEND) {
+	अगर (type == tlckEXTEND) अणु
 		n = sp->header.maxslot >> 2;
-		if (sp->header.freelist < n)
+		अगर (sp->header.मुक्तlist < n)
 			dtLinelockFreelist(sp, n, &dtlck);
-	}
+	पूर्ण
 
 	/*
 	 *	update parent entry on the parent/root page
@@ -1825,7 +1826,7 @@ static int dtExtendPage(tid_t tid,
 	 * acquire a transaction lock on the parent/root page
 	 */
 	tlck = txLock(tid, ip, pmp, tlckDTREE | tlckENTRY);
-	dtlck = (struct dt_lock *) & tlck->lock;
+	dtlck = (काष्ठा dt_lock *) & tlck->lock;
 	lv = & dtlck->lv[dtlck->index];
 
 	/* linelock parent entry - 1st slot */
@@ -1833,55 +1834,55 @@ static int dtExtendPage(tid_t tid,
 	lv->length = 1;
 	dtlck->index++;
 
-	/* update the parent pxd for page extension */
+	/* update the parent pxd क्रम page extension */
 	tpxd = (pxd_t *) & pp->slot[1];
 	*tpxd = *pxd;
 
 	DT_PUTPAGE(pmp);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  *	dtSplitRoot()
  *
  * function:
- *	split the full root page into
+ *	split the full root page पूर्णांकo
  *	original/root/split page and new right page
- *	i.e., root remains fixed in tree anchor (inode) and
+ *	i.e., root reमुख्यs fixed in tree anchor (inode) and
  *	the root is copied to a single new right child page
  *	since root page << non-root page, and
- *	the split root page contains a single entry for the
+ *	the split root page contains a single entry क्रम the
  *	new right child page.
  *
  * parameter:
  *
- * return: 0 - success;
- *	   errno - failure;
- *	return new page pinned;
+ * वापस: 0 - success;
+ *	   त्रुटि_सं - failure;
+ *	वापस new page pinned;
  */
-static int dtSplitRoot(tid_t tid,
-	    struct inode *ip, struct dtsplit * split, struct metapage ** rmpp)
-{
-	struct super_block *sb = ip->i_sb;
-	struct metapage *smp;
+अटल पूर्णांक dtSplitRoot(tid_t tid,
+	    काष्ठा inode *ip, काष्ठा dtsplit * split, काष्ठा metapage ** rmpp)
+अणु
+	काष्ठा super_block *sb = ip->i_sb;
+	काष्ठा metapage *smp;
 	dtroot_t *sp;
-	struct metapage *rmp;
+	काष्ठा metapage *rmp;
 	dtpage_t *rp;
 	s64 rbn;
-	int xlen;
-	int xsize;
-	struct dtslot *f;
+	पूर्णांक xlen;
+	पूर्णांक xsize;
+	काष्ठा dtslot *f;
 	s8 *stbl;
-	int fsi, stblsize, n;
-	struct idtentry *s;
+	पूर्णांक fsi, stblsize, n;
+	काष्ठा idtentry *s;
 	pxd_t *ppxd;
-	struct pxdlist *pxdlist;
+	काष्ठा pxdlist *pxdlist;
 	pxd_t *pxd;
-	struct dt_lock *dtlck;
-	struct tlock *tlck;
-	struct lv *lv;
-	int rc;
+	काष्ठा dt_lock *dtlck;
+	काष्ठा tlock *tlck;
+	काष्ठा lv *lv;
+	पूर्णांक rc;
 
 	/* get split root page */
 	smp = split->mp;
@@ -1900,35 +1901,35 @@ static int dtSplitRoot(tid_t tid,
 	xlen = lengthPXD(pxd);
 	xsize = xlen << JFS_SBI(sb)->l2bsize;
 	rmp = get_metapage(ip, rbn, xsize, 1);
-	if (!rmp)
-		return -EIO;
+	अगर (!rmp)
+		वापस -EIO;
 
 	rp = rmp->data;
 
 	/* Allocate blocks to quota. */
 	rc = dquot_alloc_block(ip, lengthPXD(pxd));
-	if (rc) {
+	अगर (rc) अणु
 		release_metapage(rmp);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
-	BT_MARK_DIRTY(rmp, ip);
+	BT_MARK_सूचीTY(rmp, ip);
 	/*
 	 * acquire a transaction lock on the new right page
 	 */
 	tlck = txLock(tid, ip, rmp, tlckDTREE | tlckNEW);
-	dtlck = (struct dt_lock *) & tlck->lock;
+	dtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 	rp->header.flag =
 	    (sp->header.flag & BT_LEAF) ? BT_LEAF : BT_INTERNAL;
 	rp->header.self = *pxd;
 
-	/* initialize sibling pointers */
+	/* initialize sibling poपूर्णांकers */
 	rp->header.next = 0;
 	rp->header.prev = 0;
 
 	/*
-	 *	move in-line root page into new right page extent
+	 *	move in-line root page पूर्णांकo new right page extent
 	 */
 	/* linelock header + copied entries + new stbl (1st slot) in new page */
 	ASSERT(dtlck->index == 0);
@@ -1944,58 +1945,58 @@ static int dtSplitRoot(tid_t tid,
 	/* copy old stbl to new stbl at start of extended area */
 	rp->header.stblindex = DTROOTMAXSLOT;
 	stbl = (s8 *) & rp->slot[DTROOTMAXSLOT];
-	memcpy(stbl, sp->header.stbl, sp->header.nextindex);
+	स_नकल(stbl, sp->header.stbl, sp->header.nextindex);
 	rp->header.nextindex = sp->header.nextindex;
 
 	/* copy old data area to start of new data area */
-	memcpy(&rp->slot[1], &sp->slot[1], IDATASIZE);
+	स_नकल(&rp->slot[1], &sp->slot[1], IDATASIZE);
 
 	/*
-	 * append free region of newly extended area at tail of freelist
+	 * append मुक्त region of newly extended area at tail of मुक्तlist
 	 */
-	/* init free region of newly extended area */
+	/* init मुक्त region of newly extended area */
 	fsi = n = DTROOTMAXSLOT + stblsize;
 	f = &rp->slot[fsi];
-	for (fsi++; fsi < rp->header.maxslot; f++, fsi++)
+	क्रम (fsi++; fsi < rp->header.maxslot; f++, fsi++)
 		f->next = fsi;
 	f->next = -1;
 
-	/* append new free region at tail of old freelist */
-	fsi = sp->header.freelist;
-	if (fsi == -1)
-		rp->header.freelist = n;
-	else {
-		rp->header.freelist = fsi;
+	/* append new मुक्त region at tail of old मुक्तlist */
+	fsi = sp->header.मुक्तlist;
+	अगर (fsi == -1)
+		rp->header.मुक्तlist = n;
+	अन्यथा अणु
+		rp->header.मुक्तlist = fsi;
 
-		do {
+		करो अणु
 			f = &rp->slot[fsi];
 			fsi = f->next;
-		} while (fsi != -1);
+		पूर्ण जबतक (fsi != -1);
 
 		f->next = n;
-	}
+	पूर्ण
 
-	rp->header.freecnt = sp->header.freecnt + rp->header.maxslot - n;
+	rp->header.मुक्तcnt = sp->header.मुक्तcnt + rp->header.maxslot - n;
 
 	/*
-	 * Update directory index table for entries now in right page
+	 * Update directory index table क्रम entries now in right page
 	 */
-	if ((rp->header.flag & BT_LEAF) && DO_INDEX(ip)) {
+	अगर ((rp->header.flag & BT_LEAF) && DO_INDEX(ip)) अणु
 		s64 lblock;
-		struct metapage *mp = NULL;
-		struct ldtentry *ldtentry;
+		काष्ठा metapage *mp = शून्य;
+		काष्ठा ldtentry *ldtentry;
 
 		stbl = DT_GETSTBL(rp);
-		for (n = 0; n < rp->header.nextindex; n++) {
-			ldtentry = (struct ldtentry *) & rp->slot[stbl[n]];
-			modify_index(tid, ip, le32_to_cpu(ldtentry->index),
+		क्रम (n = 0; n < rp->header.nextindex; n++) अणु
+			ldtentry = (काष्ठा ldtentry *) & rp->slot[stbl[n]];
+			modअगरy_index(tid, ip, le32_to_cpu(ldtentry->index),
 				     rbn, n, &mp, &lblock);
-		}
-		if (mp)
+		पूर्ण
+		अगर (mp)
 			release_metapage(mp);
-	}
+	पूर्ण
 	/*
-	 * insert the new entry into the new right/child page
+	 * insert the new entry पूर्णांकo the new right/child page
 	 * (skip index in the new right page will not change)
 	 */
 	dtInsertEntry(rp, split->index, split->key, split->data, &dtlck);
@@ -2003,18 +2004,18 @@ static int dtSplitRoot(tid_t tid,
 	/*
 	 *	reset parent/root page
 	 *
-	 * set the 1st entry offset to 0, which force the left-most key
+	 * set the 1st entry offset to 0, which क्रमce the left-most key
 	 * at any level of the tree to be less than any search key.
 	 *
 	 * The btree comparison code guarantees that the left-most key on any
-	 * level of the tree is never used, so it doesn't need to be filled in.
+	 * level of the tree is never used, so it करोesn't need to be filled in.
 	 */
-	BT_MARK_DIRTY(smp, ip);
+	BT_MARK_सूचीTY(smp, ip);
 	/*
 	 * acquire a transaction lock on the root page (in-memory inode)
 	 */
 	tlck = txLock(tid, ip, smp, tlckDTREE | tlckNEW | tlckBTROOT);
-	dtlck = (struct dt_lock *) & tlck->lock;
+	dtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 	/* linelock root */
 	ASSERT(dtlck->index == 0);
@@ -2024,13 +2025,13 @@ static int dtSplitRoot(tid_t tid,
 	dtlck->index++;
 
 	/* update page header of root */
-	if (sp->header.flag & BT_LEAF) {
+	अगर (sp->header.flag & BT_LEAF) अणु
 		sp->header.flag &= ~BT_LEAF;
 		sp->header.flag |= BT_INTERNAL;
-	}
+	पूर्ण
 
 	/* init the first entry */
-	s = (struct idtentry *) & sp->slot[DTENTRYSTART];
+	s = (काष्ठा idtentry *) & sp->slot[DTENTRYSTART];
 	ppxd = (pxd_t *) s;
 	*ppxd = *pxd;
 	s->next = -1;
@@ -2040,22 +2041,22 @@ static int dtSplitRoot(tid_t tid,
 	stbl[0] = DTENTRYSTART;
 	sp->header.nextindex = 1;
 
-	/* init freelist */
+	/* init मुक्तlist */
 	fsi = DTENTRYSTART + 1;
 	f = &sp->slot[fsi];
 
-	/* init free region of remaining area */
-	for (fsi++; fsi < DTROOTMAXSLOT; f++, fsi++)
+	/* init मुक्त region of reमुख्यing area */
+	क्रम (fsi++; fsi < DTROOTMAXSLOT; f++, fsi++)
 		f->next = fsi;
 	f->next = -1;
 
-	sp->header.freelist = DTENTRYSTART + 1;
-	sp->header.freecnt = DTROOTMAXSLOT - (DTENTRYSTART + 1);
+	sp->header.मुक्तlist = DTENTRYSTART + 1;
+	sp->header.मुक्तcnt = DTROOTMAXSLOT - (DTENTRYSTART + 1);
 
 	*rmpp = rmp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
@@ -2065,115 +2066,115 @@ static int dtSplitRoot(tid_t tid,
  *
  * parameter:
  *
- * return:
+ * वापस:
  */
-int dtDelete(tid_t tid,
-	 struct inode *ip, struct component_name * key, ino_t * ino, int flag)
-{
-	int rc = 0;
+पूर्णांक dtDelete(tid_t tid,
+	 काष्ठा inode *ip, काष्ठा component_name * key, ino_t * ino, पूर्णांक flag)
+अणु
+	पूर्णांक rc = 0;
 	s64 bn;
-	struct metapage *mp, *imp;
+	काष्ठा metapage *mp, *imp;
 	dtpage_t *p;
-	int index;
-	struct btstack btstack;
-	struct dt_lock *dtlck;
-	struct tlock *tlck;
-	struct lv *lv;
-	int i;
-	struct ldtentry *ldtentry;
+	पूर्णांक index;
+	काष्ठा btstack btstack;
+	काष्ठा dt_lock *dtlck;
+	काष्ठा tlock *tlck;
+	काष्ठा lv *lv;
+	पूर्णांक i;
+	काष्ठा ldtentry *ldtentry;
 	u8 *stbl;
 	u32 table_index, next_index;
-	struct metapage *nmp;
+	काष्ठा metapage *nmp;
 	dtpage_t *np;
 
 	/*
-	 *	search for the entry to delete:
+	 *	search क्रम the entry to delete:
 	 *
-	 * dtSearch() returns (leaf page pinned, index at which to delete).
+	 * dtSearch() वापसs (leaf page pinned, index at which to delete).
 	 */
-	if ((rc = dtSearch(ip, key, ino, &btstack, flag)))
-		return rc;
+	अगर ((rc = dtSearch(ip, key, ino, &btstack, flag)))
+		वापस rc;
 
 	/* retrieve search result */
 	DT_GETSEARCH(ip, btstack.top, bn, mp, p, index);
 
 	/*
-	 * We need to find put the index of the next entry into the
-	 * directory index table in order to resume a readdir from this
+	 * We need to find put the index of the next entry पूर्णांकo the
+	 * directory index table in order to resume a सूची_पढ़ो from this
 	 * entry.
 	 */
-	if (DO_INDEX(ip)) {
+	अगर (DO_INDEX(ip)) अणु
 		stbl = DT_GETSTBL(p);
-		ldtentry = (struct ldtentry *) & p->slot[stbl[index]];
+		ldtentry = (काष्ठा ldtentry *) & p->slot[stbl[index]];
 		table_index = le32_to_cpu(ldtentry->index);
-		if (index == (p->header.nextindex - 1)) {
+		अगर (index == (p->header.nextindex - 1)) अणु
 			/*
 			 * Last entry in this leaf page
 			 */
-			if ((p->header.flag & BT_ROOT)
+			अगर ((p->header.flag & BT_ROOT)
 			    || (p->header.next == 0))
 				next_index = -1;
-			else {
+			अन्यथा अणु
 				/* Read next leaf page */
 				DT_GETPAGE(ip, le64_to_cpu(p->header.next),
 					   nmp, PSIZE, np, rc);
-				if (rc)
+				अगर (rc)
 					next_index = -1;
-				else {
+				अन्यथा अणु
 					stbl = DT_GETSTBL(np);
 					ldtentry =
-					    (struct ldtentry *) & np->
+					    (काष्ठा ldtentry *) & np->
 					    slot[stbl[0]];
 					next_index =
 					    le32_to_cpu(ldtentry->index);
 					DT_PUTPAGE(nmp);
-				}
-			}
-		} else {
+				पूर्ण
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			ldtentry =
-			    (struct ldtentry *) & p->slot[stbl[index + 1]];
+			    (काष्ठा ldtentry *) & p->slot[stbl[index + 1]];
 			next_index = le32_to_cpu(ldtentry->index);
-		}
-		free_index(tid, ip, table_index, next_index);
-	}
+		पूर्ण
+		मुक्त_index(tid, ip, table_index, next_index);
+	पूर्ण
 	/*
 	 * the leaf page becomes empty, delete the page
 	 */
-	if (p->header.nextindex == 1) {
+	अगर (p->header.nextindex == 1) अणु
 		/* delete empty page */
 		rc = dtDeleteUp(tid, ip, mp, p, &btstack);
-	}
+	पूर्ण
 	/*
-	 * the leaf page has other entries remaining:
+	 * the leaf page has other entries reमुख्यing:
 	 *
 	 * delete the entry from the leaf page.
 	 */
-	else {
-		BT_MARK_DIRTY(mp, ip);
+	अन्यथा अणु
+		BT_MARK_सूचीTY(mp, ip);
 		/*
 		 * acquire a transaction lock on the leaf page
 		 */
 		tlck = txLock(tid, ip, mp, tlckDTREE | tlckENTRY);
-		dtlck = (struct dt_lock *) & tlck->lock;
+		dtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 		/*
 		 * Do not assume that dtlck->index will be zero.  During a
-		 * rename within a directory, this transaction may have
-		 * modified this page already when adding the new entry.
+		 * नाम within a directory, this transaction may have
+		 * modअगरied this page alपढ़ोy when adding the new entry.
 		 */
 
 		/* linelock header */
-		if (dtlck->index >= dtlck->maxcnt)
-			dtlck = (struct dt_lock *) txLinelock(dtlck);
+		अगर (dtlck->index >= dtlck->maxcnt)
+			dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 		lv = & dtlck->lv[dtlck->index];
 		lv->offset = 0;
 		lv->length = 1;
 		dtlck->index++;
 
 		/* linelock stbl of non-root leaf page */
-		if (!(p->header.flag & BT_ROOT)) {
-			if (dtlck->index >= dtlck->maxcnt)
-				dtlck = (struct dt_lock *) txLinelock(dtlck);
+		अगर (!(p->header.flag & BT_ROOT)) अणु
+			अगर (dtlck->index >= dtlck->maxcnt)
+				dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 			lv = & dtlck->lv[dtlck->index];
 			i = index >> L2DTSLOTSIZE;
 			lv->offset = p->header.stblindex + i;
@@ -2181,66 +2182,66 @@ int dtDelete(tid_t tid,
 			    ((p->header.nextindex - 1) >> L2DTSLOTSIZE) -
 			    i + 1;
 			dtlck->index++;
-		}
+		पूर्ण
 
-		/* free the leaf entry */
+		/* मुक्त the leaf entry */
 		dtDeleteEntry(p, index, &dtlck);
 
 		/*
-		 * Update directory index table for entries moved in stbl
+		 * Update directory index table क्रम entries moved in stbl
 		 */
-		if (DO_INDEX(ip) && index < p->header.nextindex) {
+		अगर (DO_INDEX(ip) && index < p->header.nextindex) अणु
 			s64 lblock;
 
-			imp = NULL;
+			imp = शून्य;
 			stbl = DT_GETSTBL(p);
-			for (i = index; i < p->header.nextindex; i++) {
+			क्रम (i = index; i < p->header.nextindex; i++) अणु
 				ldtentry =
-				    (struct ldtentry *) & p->slot[stbl[i]];
-				modify_index(tid, ip,
+				    (काष्ठा ldtentry *) & p->slot[stbl[i]];
+				modअगरy_index(tid, ip,
 					     le32_to_cpu(ldtentry->index),
 					     bn, i, &imp, &lblock);
-			}
-			if (imp)
+			पूर्ण
+			अगर (imp)
 				release_metapage(imp);
-		}
+		पूर्ण
 
 		DT_PUTPAGE(mp);
-	}
+	पूर्ण
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /*
  *	dtDeleteUp()
  *
  * function:
- *	free empty pages as propagating deletion up the tree
+ *	मुक्त empty pages as propagating deletion up the tree
  *
  * parameter:
  *
- * return:
+ * वापस:
  */
-static int dtDeleteUp(tid_t tid, struct inode *ip,
-	   struct metapage * fmp, dtpage_t * fp, struct btstack * btstack)
-{
-	int rc = 0;
-	struct metapage *mp;
+अटल पूर्णांक dtDeleteUp(tid_t tid, काष्ठा inode *ip,
+	   काष्ठा metapage * fmp, dtpage_t * fp, काष्ठा btstack * btstack)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा metapage *mp;
 	dtpage_t *p;
-	int index, nextindex;
-	int xlen;
-	struct btframe *parent;
-	struct dt_lock *dtlck;
-	struct tlock *tlck;
-	struct lv *lv;
-	struct pxd_lock *pxdlock;
-	int i;
+	पूर्णांक index, nextindex;
+	पूर्णांक xlen;
+	काष्ठा btframe *parent;
+	काष्ठा dt_lock *dtlck;
+	काष्ठा tlock *tlck;
+	काष्ठा lv *lv;
+	काष्ठा pxd_lock *pxdlock;
+	पूर्णांक i;
 
 	/*
 	 *	keep the root leaf page which has become empty
 	 */
-	if (BT_IS_ROOT(fmp)) {
+	अगर (BT_IS_ROOT(fmp)) अणु
 		/*
 		 * reset the root
 		 *
@@ -2250,73 +2251,73 @@ static int dtDeleteUp(tid_t tid, struct inode *ip,
 
 		DT_PUTPAGE(fmp);
 
-		return 0;
-	}
+		वापस 0;
+	पूर्ण
 
 	/*
-	 *	free the non-root leaf page
+	 *	मुक्त the non-root leaf page
 	 */
 	/*
 	 * acquire a transaction lock on the page
 	 *
-	 * write FREEXTENT|NOREDOPAGE log record
-	 * N.B. linelock is overlaid as freed extent descriptor, and
-	 * the buffer page is freed;
+	 * ग_लिखो FREEXTENT|NOREDOPAGE log record
+	 * N.B. linelock is overlaid as मुक्तd extent descriptor, and
+	 * the buffer page is मुक्तd;
 	 */
 	tlck = txMaplock(tid, ip, tlckDTREE | tlckFREE);
-	pxdlock = (struct pxd_lock *) & tlck->lock;
+	pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
 	pxdlock->flag = mlckFREEPXD;
 	pxdlock->pxd = fp->header.self;
 	pxdlock->index = 1;
 
-	/* update sibling pointers */
-	if ((rc = dtRelink(tid, ip, fp))) {
+	/* update sibling poपूर्णांकers */
+	अगर ((rc = dtRelink(tid, ip, fp))) अणु
 		BT_PUTPAGE(fmp);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	xlen = lengthPXD(&fp->header.self);
 
 	/* Free quota allocation. */
-	dquot_free_block(ip, xlen);
+	dquot_मुक्त_block(ip, xlen);
 
-	/* free/invalidate its buffer page */
+	/* मुक्त/invalidate its buffer page */
 	discard_metapage(fmp);
 
 	/*
 	 *	propagate page deletion up the directory tree
 	 *
 	 * If the delete from the parent page makes it empty,
-	 * continue all the way up the tree.
-	 * stop if the root page is reached (which is never deleted) or
-	 * if the entry deletion does not empty the page.
+	 * जारी all the way up the tree.
+	 * stop अगर the root page is reached (which is never deleted) or
+	 * अगर the entry deletion करोes not empty the page.
 	 */
-	while ((parent = BT_POP(btstack)) != NULL) {
+	जबतक ((parent = BT_POP(btstack)) != शून्य) अणु
 		/* pin the parent page <sp> */
 		DT_GETPAGE(ip, parent->bn, mp, PSIZE, p, rc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		/*
-		 * free the extent of the child page deleted
+		 * मुक्त the extent of the child page deleted
 		 */
 		index = parent->index;
 
 		/*
-		 * delete the entry for the child page from parent
+		 * delete the entry क्रम the child page from parent
 		 */
 		nextindex = p->header.nextindex;
 
 		/*
 		 * the parent has the single entry being deleted:
 		 *
-		 * free the parent page which has become empty.
+		 * मुक्त the parent page which has become empty.
 		 */
-		if (nextindex == 1) {
+		अगर (nextindex == 1) अणु
 			/*
-			 * keep the root internal page which has become empty
+			 * keep the root पूर्णांकernal page which has become empty
 			 */
-			if (p->header.flag & BT_ROOT) {
+			अगर (p->header.flag & BT_ROOT) अणु
 				/*
 				 * reset the root
 				 *
@@ -2326,142 +2327,142 @@ static int dtDeleteUp(tid_t tid, struct inode *ip,
 
 				DT_PUTPAGE(mp);
 
-				return 0;
-			}
+				वापस 0;
+			पूर्ण
 			/*
-			 * free the parent page
+			 * मुक्त the parent page
 			 */
-			else {
+			अन्यथा अणु
 				/*
 				 * acquire a transaction lock on the page
 				 *
-				 * write FREEXTENT|NOREDOPAGE log record
+				 * ग_लिखो FREEXTENT|NOREDOPAGE log record
 				 */
 				tlck =
 				    txMaplock(tid, ip,
 					      tlckDTREE | tlckFREE);
-				pxdlock = (struct pxd_lock *) & tlck->lock;
+				pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
 				pxdlock->flag = mlckFREEPXD;
 				pxdlock->pxd = p->header.self;
 				pxdlock->index = 1;
 
-				/* update sibling pointers */
-				if ((rc = dtRelink(tid, ip, p))) {
+				/* update sibling poपूर्णांकers */
+				अगर ((rc = dtRelink(tid, ip, p))) अणु
 					DT_PUTPAGE(mp);
-					return rc;
-				}
+					वापस rc;
+				पूर्ण
 
 				xlen = lengthPXD(&p->header.self);
 
 				/* Free quota allocation */
-				dquot_free_block(ip, xlen);
+				dquot_मुक्त_block(ip, xlen);
 
-				/* free/invalidate its buffer page */
+				/* मुक्त/invalidate its buffer page */
 				discard_metapage(mp);
 
 				/* propagate up */
-				continue;
-			}
-		}
+				जारी;
+			पूर्ण
+		पूर्ण
 
 		/*
-		 * the parent has other entries remaining:
+		 * the parent has other entries reमुख्यing:
 		 *
 		 * delete the router entry from the parent page.
 		 */
-		BT_MARK_DIRTY(mp, ip);
+		BT_MARK_सूचीTY(mp, ip);
 		/*
 		 * acquire a transaction lock on the page
 		 *
 		 * action: router entry deletion
 		 */
 		tlck = txLock(tid, ip, mp, tlckDTREE | tlckENTRY);
-		dtlck = (struct dt_lock *) & tlck->lock;
+		dtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 		/* linelock header */
-		if (dtlck->index >= dtlck->maxcnt)
-			dtlck = (struct dt_lock *) txLinelock(dtlck);
+		अगर (dtlck->index >= dtlck->maxcnt)
+			dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 		lv = & dtlck->lv[dtlck->index];
 		lv->offset = 0;
 		lv->length = 1;
 		dtlck->index++;
 
 		/* linelock stbl of non-root leaf page */
-		if (!(p->header.flag & BT_ROOT)) {
-			if (dtlck->index < dtlck->maxcnt)
+		अगर (!(p->header.flag & BT_ROOT)) अणु
+			अगर (dtlck->index < dtlck->maxcnt)
 				lv++;
-			else {
-				dtlck = (struct dt_lock *) txLinelock(dtlck);
+			अन्यथा अणु
+				dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 				lv = & dtlck->lv[0];
-			}
+			पूर्ण
 			i = index >> L2DTSLOTSIZE;
 			lv->offset = p->header.stblindex + i;
 			lv->length =
 			    ((p->header.nextindex - 1) >> L2DTSLOTSIZE) -
 			    i + 1;
 			dtlck->index++;
-		}
+		पूर्ण
 
-		/* free the router entry */
+		/* मुक्त the router entry */
 		dtDeleteEntry(p, index, &dtlck);
 
-		/* reset key of new leftmost entry of level (for consistency) */
-		if (index == 0 &&
+		/* reset key of new lefपंचांगost entry of level (क्रम consistency) */
+		अगर (index == 0 &&
 		    ((p->header.flag & BT_ROOT) || p->header.prev == 0))
 			dtTruncateEntry(p, 0, &dtlck);
 
 		/* unpin the parent page */
 		DT_PUTPAGE(mp);
 
-		/* exit propagation up */
-		break;
-	}
+		/* निकास propagation up */
+		अवरोध;
+	पूर्ण
 
-	if (!DO_INDEX(ip))
+	अगर (!DO_INDEX(ip))
 		ip->i_size -= PSIZE;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#ifdef _NOTYET
+#अगर_घोषित _NOTYET
 /*
  * NAME:	dtRelocate()
  *
- * FUNCTION:	relocate dtpage (internal or leaf) of directory;
- *		This function is mainly used by defragfs utility.
+ * FUNCTION:	relocate dtpage (पूर्णांकernal or leaf) of directory;
+ *		This function is मुख्यly used by defragfs utility.
  */
-int dtRelocate(tid_t tid, struct inode *ip, s64 lmxaddr, pxd_t * opxd,
+पूर्णांक dtRelocate(tid_t tid, काष्ठा inode *ip, s64 lmxaddr, pxd_t * opxd,
 	       s64 nxaddr)
-{
-	int rc = 0;
-	struct metapage *mp, *pmp, *lmp, *rmp;
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा metapage *mp, *pmp, *lmp, *rmp;
 	dtpage_t *p, *pp, *rp = 0, *lp= 0;
 	s64 bn;
-	int index;
-	struct btstack btstack;
+	पूर्णांक index;
+	काष्ठा btstack btstack;
 	pxd_t *pxd;
 	s64 oxaddr, nextbn, prevbn;
-	int xlen, xsize;
-	struct tlock *tlck;
-	struct dt_lock *dtlck;
-	struct pxd_lock *pxdlock;
+	पूर्णांक xlen, xsize;
+	काष्ठा tlock *tlck;
+	काष्ठा dt_lock *dtlck;
+	काष्ठा pxd_lock *pxdlock;
 	s8 *stbl;
-	struct lv *lv;
+	काष्ठा lv *lv;
 
 	oxaddr = addressPXD(opxd);
 	xlen = lengthPXD(opxd);
 
 	jfs_info("dtRelocate: lmxaddr:%Ld xaddr:%Ld:%Ld xlen:%d",
-		   (long long)lmxaddr, (long long)oxaddr, (long long)nxaddr,
+		   (दीर्घ दीर्घ)lmxaddr, (दीर्घ दीर्घ)oxaddr, (दीर्घ दीर्घ)nxaddr,
 		   xlen);
 
 	/*
-	 *	1. get the internal parent dtpage covering
-	 *	router entry for the tartget page to be relocated;
+	 *	1. get the पूर्णांकernal parent dtpage covering
+	 *	router entry क्रम the tartget page to be relocated;
 	 */
 	rc = dtSearchNode(ip, lmxaddr, opxd, &btstack);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/* retrieve search result */
 	DT_GETSEARCH(ip, btstack.top, bn, pmp, pp, index);
@@ -2470,49 +2471,49 @@ int dtRelocate(tid_t tid, struct inode *ip, s64 lmxaddr, pxd_t * opxd,
 	/*
 	 *	2. relocate the target dtpage
 	 */
-	/* read in the target page from src extent */
+	/* पढ़ो in the target page from src extent */
 	DT_GETPAGE(ip, oxaddr, mp, PSIZE, p, rc);
-	if (rc) {
+	अगर (rc) अणु
 		/* release the pinned parent page */
 		DT_PUTPAGE(pmp);
-		return rc;
-	}
+		वापस rc;
+	पूर्ण
 
 	/*
-	 * read in sibling pages if any to update sibling pointers;
+	 * पढ़ो in sibling pages अगर any to update sibling poपूर्णांकers;
 	 */
-	rmp = NULL;
-	if (p->header.next) {
+	rmp = शून्य;
+	अगर (p->header.next) अणु
 		nextbn = le64_to_cpu(p->header.next);
 		DT_GETPAGE(ip, nextbn, rmp, PSIZE, rp, rc);
-		if (rc) {
+		अगर (rc) अणु
 			DT_PUTPAGE(mp);
 			DT_PUTPAGE(pmp);
-			return (rc);
-		}
-	}
+			वापस (rc);
+		पूर्ण
+	पूर्ण
 
-	lmp = NULL;
-	if (p->header.prev) {
+	lmp = शून्य;
+	अगर (p->header.prev) अणु
 		prevbn = le64_to_cpu(p->header.prev);
 		DT_GETPAGE(ip, prevbn, lmp, PSIZE, lp, rc);
-		if (rc) {
+		अगर (rc) अणु
 			DT_PUTPAGE(mp);
 			DT_PUTPAGE(pmp);
-			if (rmp)
+			अगर (rmp)
 				DT_PUTPAGE(rmp);
-			return (rc);
-		}
-	}
+			वापस (rc);
+		पूर्ण
+	पूर्ण
 
-	/* at this point, all xtpages to be updated are in memory */
+	/* at this poपूर्णांक, all xtpages to be updated are in memory */
 
 	/*
-	 * update sibling pointers of sibling dtpages if any;
+	 * update sibling poपूर्णांकers of sibling dtpages अगर any;
 	 */
-	if (lmp) {
+	अगर (lmp) अणु
 		tlck = txLock(tid, ip, lmp, tlckDTREE | tlckRELINK);
-		dtlck = (struct dt_lock *) & tlck->lock;
+		dtlck = (काष्ठा dt_lock *) & tlck->lock;
 		/* linelock header */
 		ASSERT(dtlck->index == 0);
 		lv = & dtlck->lv[0];
@@ -2522,11 +2523,11 @@ int dtRelocate(tid_t tid, struct inode *ip, s64 lmxaddr, pxd_t * opxd,
 
 		lp->header.next = cpu_to_le64(nxaddr);
 		DT_PUTPAGE(lmp);
-	}
+	पूर्ण
 
-	if (rmp) {
+	अगर (rmp) अणु
 		tlck = txLock(tid, ip, rmp, tlckDTREE | tlckRELINK);
-		dtlck = (struct dt_lock *) & tlck->lock;
+		dtlck = (काष्ठा dt_lock *) & tlck->lock;
 		/* linelock header */
 		ASSERT(dtlck->index == 0);
 		lv = & dtlck->lv[0];
@@ -2536,19 +2537,19 @@ int dtRelocate(tid_t tid, struct inode *ip, s64 lmxaddr, pxd_t * opxd,
 
 		rp->header.prev = cpu_to_le64(nxaddr);
 		DT_PUTPAGE(rmp);
-	}
+	पूर्ण
 
 	/*
 	 * update the target dtpage to be relocated
 	 *
-	 * write LOG_REDOPAGE of LOG_NEW type for dst page
-	 * for the whole target page (logredo() will apply
-	 * after image and update bmap for allocation of the
-	 * dst extent), and update bmap for allocation of
+	 * ग_लिखो LOG_REDOPAGE of LOG_NEW type क्रम dst page
+	 * क्रम the whole target page (logreकरो() will apply
+	 * after image and update bmap क्रम allocation of the
+	 * dst extent), and update bmap क्रम allocation of
 	 * the dst extent;
 	 */
 	tlck = txLock(tid, ip, mp, tlckDTREE | tlckNEW);
-	dtlck = (struct dt_lock *) & tlck->lock;
+	dtlck = (काष्ठा dt_lock *) & tlck->lock;
 	/* linelock header */
 	ASSERT(dtlck->index == 0);
 	lv = & dtlck->lv[0];
@@ -2558,7 +2559,7 @@ int dtRelocate(tid_t tid, struct inode *ip, s64 lmxaddr, pxd_t * opxd,
 	PXDaddress(pxd, nxaddr);
 
 	/* the dst page is the same as the src page, i.e.,
-	 * linelock for afterimage of the whole page;
+	 * linelock क्रम afterimage of the whole page;
 	 */
 	lv->offset = 0;
 	lv->length = p->header.maxslot;
@@ -2572,34 +2573,34 @@ int dtRelocate(tid_t tid, struct inode *ip, s64 lmxaddr, pxd_t * opxd,
 	jfs_info("dtRelocate: target dtpage relocated.");
 
 	/* the moved extent is dtpage, then a LOG_NOREDOPAGE log rec
-	 * needs to be written (in logredo(), the LOG_NOREDOPAGE log rec
-	 * will also force a bmap update ).
+	 * needs to be written (in logreकरो(), the LOG_NOREDOPAGE log rec
+	 * will also क्रमce a bmap update ).
 	 */
 
 	/*
-	 *	3. acquire maplock for the source extent to be freed;
+	 *	3. acquire maplock क्रम the source extent to be मुक्तd;
 	 */
-	/* for dtpage relocation, write a LOG_NOREDOPAGE record
-	 * for the source dtpage (logredo() will init NoRedoPage
-	 * filter and will also update bmap for free of the source
-	 * dtpage), and upadte bmap for free of the source dtpage;
+	/* क्रम dtpage relocation, ग_लिखो a LOG_NOREDOPAGE record
+	 * क्रम the source dtpage (logreकरो() will init NoReकरोPage
+	 * filter and will also update bmap क्रम मुक्त of the source
+	 * dtpage), and upadte bmap क्रम मुक्त of the source dtpage;
 	 */
 	tlck = txMaplock(tid, ip, tlckDTREE | tlckFREE);
-	pxdlock = (struct pxd_lock *) & tlck->lock;
+	pxdlock = (काष्ठा pxd_lock *) & tlck->lock;
 	pxdlock->flag = mlckFREEPXD;
 	PXDaddress(&pxdlock->pxd, oxaddr);
 	PXDlength(&pxdlock->pxd, xlen);
 	pxdlock->index = 1;
 
 	/*
-	 *	4. update the parent router entry for relocation;
+	 *	4. update the parent router entry क्रम relocation;
 	 *
-	 * acquire tlck for the parent entry covering the target dtpage;
-	 * write LOG_REDOPAGE to apply after image only;
+	 * acquire tlck क्रम the parent entry covering the target dtpage;
+	 * ग_लिखो LOG_REDOPAGE to apply after image only;
 	 */
 	jfs_info("dtRelocate: update parent router entry.");
 	tlck = txLock(tid, ip, pmp, tlckDTREE | tlckENTRY);
-	dtlck = (struct dt_lock *) & tlck->lock;
+	dtlck = (काष्ठा dt_lock *) & tlck->lock;
 	lv = & dtlck->lv[dtlck->index];
 
 	/* update the PXD with the new address */
@@ -2613,64 +2614,64 @@ int dtRelocate(tid_t tid, struct inode *ip, s64 lmxaddr, pxd_t * opxd,
 	/* unpin the parent dtpage */
 	DT_PUTPAGE(pmp);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 /*
  * NAME:	dtSearchNode()
  *
- * FUNCTION:	Search for an dtpage containing a specified address
- *		This function is mainly used by defragfs utility.
+ * FUNCTION:	Search क्रम an dtpage containing a specअगरied address
+ *		This function is मुख्यly used by defragfs utility.
  *
- * NOTE:	Search result on stack, the found page is pinned at exit.
- *		The result page must be an internal dtpage.
+ * NOTE:	Search result on stack, the found page is pinned at निकास.
+ *		The result page must be an पूर्णांकernal dtpage.
  *		lmxaddr give the address of the left most page of the
  *		dtree level, in which the required dtpage resides.
  */
-static int dtSearchNode(struct inode *ip, s64 lmxaddr, pxd_t * kpxd,
-			struct btstack * btstack)
-{
-	int rc = 0;
+अटल पूर्णांक dtSearchNode(काष्ठा inode *ip, s64 lmxaddr, pxd_t * kpxd,
+			काष्ठा btstack * btstack)
+अणु
+	पूर्णांक rc = 0;
 	s64 bn;
-	struct metapage *mp;
+	काष्ठा metapage *mp;
 	dtpage_t *p;
-	int psize = 288;	/* initial in-line directory */
+	पूर्णांक psize = 288;	/* initial in-line directory */
 	s8 *stbl;
-	int i;
+	पूर्णांक i;
 	pxd_t *pxd;
-	struct btframe *btsp;
+	काष्ठा btframe *btsp;
 
 	BT_CLR(btstack);	/* reset stack */
 
 	/*
-	 *	descend tree to the level with specified leftmost page
+	 *	descend tree to the level with specअगरied lefपंचांगost page
 	 *
 	 *  by convention, root bn = 0.
 	 */
-	for (bn = 0;;) {
+	क्रम (bn = 0;;) अणु
 		/* get/pin the page to search */
 		DT_GETPAGE(ip, bn, mp, psize, p, rc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
-		/* does the xaddr of leftmost page of the levevl
+		/* करोes the xaddr of lefपंचांगost page of the levevl
 		 * matches levevl search key ?
 		 */
-		if (p->header.flag & BT_ROOT) {
-			if (lmxaddr == 0)
-				break;
-		} else if (addressPXD(&p->header.self) == lmxaddr)
-			break;
+		अगर (p->header.flag & BT_ROOT) अणु
+			अगर (lmxaddr == 0)
+				अवरोध;
+		पूर्ण अन्यथा अगर (addressPXD(&p->header.self) == lmxaddr)
+			अवरोध;
 
 		/*
-		 * descend down to leftmost child page
+		 * descend करोwn to lefपंचांगost child page
 		 */
-		if (p->header.flag & BT_LEAF) {
+		अगर (p->header.flag & BT_LEAF) अणु
 			DT_PUTPAGE(mp);
-			return -ESTALE;
-		}
+			वापस -ESTALE;
+		पूर्ण
 
-		/* get the leftmost entry */
+		/* get the lefपंचांगost entry */
 		stbl = DT_GETSTBL(p);
 		pxd = (pxd_t *) & p->slot[stbl[0]];
 
@@ -2679,91 +2680,91 @@ static int dtSearchNode(struct inode *ip, s64 lmxaddr, pxd_t * kpxd,
 		psize = lengthPXD(pxd) << JFS_SBI(ip->i_sb)->l2bsize;
 		/* unpin the parent page */
 		DT_PUTPAGE(mp);
-	}
+	पूर्ण
 
 	/*
 	 *	search each page at the current levevl
 	 */
       loop:
 	stbl = DT_GETSTBL(p);
-	for (i = 0; i < p->header.nextindex; i++) {
+	क्रम (i = 0; i < p->header.nextindex; i++) अणु
 		pxd = (pxd_t *) & p->slot[stbl[i]];
 
-		/* found the specified router entry */
-		if (addressPXD(pxd) == addressPXD(kpxd) &&
-		    lengthPXD(pxd) == lengthPXD(kpxd)) {
+		/* found the specअगरied router entry */
+		अगर (addressPXD(pxd) == addressPXD(kpxd) &&
+		    lengthPXD(pxd) == lengthPXD(kpxd)) अणु
 			btsp = btstack->top;
 			btsp->bn = bn;
 			btsp->index = i;
 			btsp->mp = mp;
 
-			return 0;
-		}
-	}
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	/* get the right sibling page if any */
-	if (p->header.next)
+	/* get the right sibling page अगर any */
+	अगर (p->header.next)
 		bn = le64_to_cpu(p->header.next);
-	else {
+	अन्यथा अणु
 		DT_PUTPAGE(mp);
-		return -ESTALE;
-	}
+		वापस -ESTALE;
+	पूर्ण
 
 	/* unpin current page */
 	DT_PUTPAGE(mp);
 
 	/* get the right sibling page */
 	DT_GETPAGE(ip, bn, mp, PSIZE, p, rc);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	goto loop;
-}
-#endif /* _NOTYET */
+	जाओ loop;
+पूर्ण
+#पूर्ण_अगर /* _NOTYET */
 
 /*
  *	dtRelink()
  *
  * function:
- *	link around a freed page.
+ *	link around a मुक्तd page.
  *
  * parameter:
- *	fp:	page to be freed
+ *	fp:	page to be मुक्तd
  *
- * return:
+ * वापस:
  */
-static int dtRelink(tid_t tid, struct inode *ip, dtpage_t * p)
-{
-	int rc;
-	struct metapage *mp;
+अटल पूर्णांक dtRelink(tid_t tid, काष्ठा inode *ip, dtpage_t * p)
+अणु
+	पूर्णांक rc;
+	काष्ठा metapage *mp;
 	s64 nextbn, prevbn;
-	struct tlock *tlck;
-	struct dt_lock *dtlck;
-	struct lv *lv;
+	काष्ठा tlock *tlck;
+	काष्ठा dt_lock *dtlck;
+	काष्ठा lv *lv;
 
 	nextbn = le64_to_cpu(p->header.next);
 	prevbn = le64_to_cpu(p->header.prev);
 
-	/* update prev pointer of the next page */
-	if (nextbn != 0) {
+	/* update prev poपूर्णांकer of the next page */
+	अगर (nextbn != 0) अणु
 		DT_GETPAGE(ip, nextbn, mp, PSIZE, p, rc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
-		BT_MARK_DIRTY(mp, ip);
+		BT_MARK_सूचीTY(mp, ip);
 		/*
 		 * acquire a transaction lock on the next page
 		 *
-		 * action: update prev pointer;
+		 * action: update prev poपूर्णांकer;
 		 */
 		tlck = txLock(tid, ip, mp, tlckDTREE | tlckRELINK);
 		jfs_info("dtRelink nextbn: tlck = 0x%p, ip = 0x%p, mp=0x%p",
 			tlck, ip, mp);
-		dtlck = (struct dt_lock *) & tlck->lock;
+		dtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 		/* linelock header */
-		if (dtlck->index >= dtlck->maxcnt)
-			dtlck = (struct dt_lock *) txLinelock(dtlck);
+		अगर (dtlck->index >= dtlck->maxcnt)
+			dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 		lv = & dtlck->lv[dtlck->index];
 		lv->offset = 0;
 		lv->length = 1;
@@ -2771,28 +2772,28 @@ static int dtRelink(tid_t tid, struct inode *ip, dtpage_t * p)
 
 		p->header.prev = cpu_to_le64(prevbn);
 		DT_PUTPAGE(mp);
-	}
+	पूर्ण
 
-	/* update next pointer of the previous page */
-	if (prevbn != 0) {
+	/* update next poपूर्णांकer of the previous page */
+	अगर (prevbn != 0) अणु
 		DT_GETPAGE(ip, prevbn, mp, PSIZE, p, rc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
-		BT_MARK_DIRTY(mp, ip);
+		BT_MARK_सूचीTY(mp, ip);
 		/*
 		 * acquire a transaction lock on the prev page
 		 *
-		 * action: update next pointer;
+		 * action: update next poपूर्णांकer;
 		 */
 		tlck = txLock(tid, ip, mp, tlckDTREE | tlckRELINK);
 		jfs_info("dtRelink prevbn: tlck = 0x%p, ip = 0x%p, mp=0x%p",
 			tlck, ip, mp);
-		dtlck = (struct dt_lock *) & tlck->lock;
+		dtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 		/* linelock header */
-		if (dtlck->index >= dtlck->maxcnt)
-			dtlck = (struct dt_lock *) txLinelock(dtlck);
+		अगर (dtlck->index >= dtlck->maxcnt)
+			dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 		lv = & dtlck->lv[dtlck->index];
 		lv->offset = 0;
 		lv->length = 1;
@@ -2800,35 +2801,35 @@ static int dtRelink(tid_t tid, struct inode *ip, dtpage_t * p)
 
 		p->header.next = cpu_to_le64(nextbn);
 		DT_PUTPAGE(mp);
-	}
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  *	dtInitRoot()
  *
- * initialize directory root (inline in inode)
+ * initialize directory root (अंतरभूत in inode)
  */
-void dtInitRoot(tid_t tid, struct inode *ip, u32 idotdot)
-{
-	struct jfs_inode_info *jfs_ip = JFS_IP(ip);
+व्योम dtInitRoot(tid_t tid, काष्ठा inode *ip, u32 iकरोtकरोt)
+अणु
+	काष्ठा jfs_inode_info *jfs_ip = JFS_IP(ip);
 	dtroot_t *p;
-	int fsi;
-	struct dtslot *f;
-	struct tlock *tlck;
-	struct dt_lock *dtlck;
-	struct lv *lv;
+	पूर्णांक fsi;
+	काष्ठा dtslot *f;
+	काष्ठा tlock *tlck;
+	काष्ठा dt_lock *dtlck;
+	काष्ठा lv *lv;
 	u16 xflag_save;
 
 	/*
-	 * If this was previously an non-empty directory, we need to remove
+	 * If this was previously an non-empty directory, we need to हटाओ
 	 * the old directory table.
 	 */
-	if (DO_INDEX(ip)) {
-		if (!jfs_dirtable_inline(ip)) {
-			struct tblock *tblk = tid_to_tblock(tid);
+	अगर (DO_INDEX(ip)) अणु
+		अगर (!jfs_dirtable_अंतरभूत(ip)) अणु
+			काष्ठा tblock *tblk = tid_to_tblock(tid);
 			/*
 			 * We're playing games with the tid's xflag.  If
 			 * we're removing a regular file, the file's xtree
@@ -2840,7 +2841,7 @@ void dtInitRoot(tid_t tid, struct inode *ip, u32 idotdot)
 			/*
 			 * xtTruncate isn't guaranteed to fully truncate
 			 * the xtree.  The caller needs to check i_size
-			 * after committing the transaction to see if
+			 * after committing the transaction to see अगर
 			 * additional truncation is needed.  The
 			 * COMMIT_Stale flag tells caller that we
 			 * initiated the truncation.
@@ -2849,11 +2850,11 @@ void dtInitRoot(tid_t tid, struct inode *ip, u32 idotdot)
 			set_cflag(COMMIT_Stale, ip);
 
 			tblk->xflag = xflag_save;
-		} else
+		पूर्ण अन्यथा
 			ip->i_size = 1;
 
 		jfs_ip->next_index = 2;
-	} else
+	पूर्ण अन्यथा
 		ip->i_size = IDATASIZE;
 
 	/*
@@ -2861,9 +2862,9 @@ void dtInitRoot(tid_t tid, struct inode *ip, u32 idotdot)
 	 *
 	 * action: directory initialization;
 	 */
-	tlck = txLock(tid, ip, (struct metapage *) & jfs_ip->bxflag,
+	tlck = txLock(tid, ip, (काष्ठा metapage *) & jfs_ip->bxflag,
 		      tlckDTREE | tlckENTRY | tlckBTROOT);
-	dtlck = (struct dt_lock *) & tlck->lock;
+	dtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 	/* linelock root */
 	ASSERT(dtlck->index == 0);
@@ -2878,338 +2879,338 @@ void dtInitRoot(tid_t tid, struct inode *ip, u32 idotdot)
 
 	p->header.nextindex = 0;
 
-	/* init freelist */
+	/* init मुक्तlist */
 	fsi = 1;
 	f = &p->slot[fsi];
 
 	/* init data area of root */
-	for (fsi++; fsi < DTROOTMAXSLOT; f++, fsi++)
+	क्रम (fsi++; fsi < DTROOTMAXSLOT; f++, fsi++)
 		f->next = fsi;
 	f->next = -1;
 
-	p->header.freelist = 1;
-	p->header.freecnt = 8;
+	p->header.मुक्तlist = 1;
+	p->header.मुक्तcnt = 8;
 
 	/* init '..' entry */
-	p->header.idotdot = cpu_to_le32(idotdot);
+	p->header.iकरोtकरोt = cpu_to_le32(iकरोtकरोt);
 
-	return;
-}
+	वापस;
+पूर्ण
 
 /*
  *	add_missing_indices()
  *
  * function: Fix dtree page in which one or more entries has an invalid index.
- *	     fsck.jfs should really fix this, but it currently does not.
- *	     Called from jfs_readdir when bad index is detected.
+ *	     fsck.jfs should really fix this, but it currently करोes not.
+ *	     Called from jfs_सूची_पढ़ो when bad index is detected.
  */
-static void add_missing_indices(struct inode *inode, s64 bn)
-{
-	struct ldtentry *d;
-	struct dt_lock *dtlck;
-	int i;
-	uint index;
-	struct lv *lv;
-	struct metapage *mp;
+अटल व्योम add_missing_indices(काष्ठा inode *inode, s64 bn)
+अणु
+	काष्ठा ldtentry *d;
+	काष्ठा dt_lock *dtlck;
+	पूर्णांक i;
+	uपूर्णांक index;
+	काष्ठा lv *lv;
+	काष्ठा metapage *mp;
 	dtpage_t *p;
-	int rc;
+	पूर्णांक rc;
 	s8 *stbl;
 	tid_t tid;
-	struct tlock *tlck;
+	काष्ठा tlock *tlck;
 
 	tid = txBegin(inode->i_sb, 0);
 
 	DT_GETPAGE(inode, bn, mp, PSIZE, p, rc);
 
-	if (rc) {
-		printk(KERN_ERR "DT_GETPAGE failed!\n");
-		goto end;
-	}
-	BT_MARK_DIRTY(mp, inode);
+	अगर (rc) अणु
+		prपूर्णांकk(KERN_ERR "DT_GETPAGE failed!\n");
+		जाओ end;
+	पूर्ण
+	BT_MARK_सूचीTY(mp, inode);
 
 	ASSERT(p->header.flag & BT_LEAF);
 
 	tlck = txLock(tid, inode, mp, tlckDTREE | tlckENTRY);
-	if (BT_IS_ROOT(mp))
+	अगर (BT_IS_ROOT(mp))
 		tlck->type |= tlckBTROOT;
 
-	dtlck = (struct dt_lock *) &tlck->lock;
+	dtlck = (काष्ठा dt_lock *) &tlck->lock;
 
 	stbl = DT_GETSTBL(p);
-	for (i = 0; i < p->header.nextindex; i++) {
-		d = (struct ldtentry *) &p->slot[stbl[i]];
+	क्रम (i = 0; i < p->header.nextindex; i++) अणु
+		d = (काष्ठा ldtentry *) &p->slot[stbl[i]];
 		index = le32_to_cpu(d->index);
-		if ((index < 2) || (index >= JFS_IP(inode)->next_index)) {
+		अगर ((index < 2) || (index >= JFS_IP(inode)->next_index)) अणु
 			d->index = cpu_to_le32(add_index(tid, inode, bn, i));
-			if (dtlck->index >= dtlck->maxcnt)
-				dtlck = (struct dt_lock *) txLinelock(dtlck);
+			अगर (dtlck->index >= dtlck->maxcnt)
+				dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 			lv = &dtlck->lv[dtlck->index];
 			lv->offset = stbl[i];
 			lv->length = 1;
 			dtlck->index++;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	DT_PUTPAGE(mp);
-	(void) txCommit(tid, 1, &inode, 0);
+	(व्योम) txCommit(tid, 1, &inode, 0);
 end:
 	txEnd(tid);
-}
+पूर्ण
 
 /*
- * Buffer to hold directory entry info while traversing a dtree page
- * before being fed to the filldir function
+ * Buffer to hold directory entry info जबतक traversing a dtree page
+ * beक्रमe being fed to the filldir function
  */
-struct jfs_dirent {
+काष्ठा jfs_dirent अणु
 	loff_t position;
-	int ino;
+	पूर्णांक ino;
 	u16 name_len;
-	char name[];
-};
+	अक्षर name[];
+पूर्ण;
 
 /*
  * function to determine next variable-sized jfs_dirent in buffer
  */
-static inline struct jfs_dirent *next_jfs_dirent(struct jfs_dirent *dirent)
-{
-	return (struct jfs_dirent *)
-		((char *)dirent +
-		 ((sizeof (struct jfs_dirent) + dirent->name_len + 1 +
-		   sizeof (loff_t) - 1) &
-		  ~(sizeof (loff_t) - 1)));
-}
+अटल अंतरभूत काष्ठा jfs_dirent *next_jfs_dirent(काष्ठा jfs_dirent *dirent)
+अणु
+	वापस (काष्ठा jfs_dirent *)
+		((अक्षर *)dirent +
+		 ((माप (काष्ठा jfs_dirent) + dirent->name_len + 1 +
+		   माप (loff_t) - 1) &
+		  ~(माप (loff_t) - 1)));
+पूर्ण
 
 /*
- *	jfs_readdir()
+ *	jfs_सूची_पढ़ो()
  *
- * function: read directory entries sequentially
- *	from the specified entry offset
+ * function: पढ़ो directory entries sequentially
+ *	from the specअगरied entry offset
  *
  * parameter:
  *
- * return: offset = (pn, index) of start entry
- *	of next jfs_readdir()/dtRead()
+ * वापस: offset = (pn, index) of start entry
+ *	of next jfs_सूची_पढ़ो()/dtRead()
  */
-int jfs_readdir(struct file *file, struct dir_context *ctx)
-{
-	struct inode *ip = file_inode(file);
-	struct nls_table *codepage = JFS_SBI(ip->i_sb)->nls_tab;
-	int rc = 0;
+पूर्णांक jfs_सूची_पढ़ो(काष्ठा file *file, काष्ठा dir_context *ctx)
+अणु
+	काष्ठा inode *ip = file_inode(file);
+	काष्ठा nls_table *codepage = JFS_SBI(ip->i_sb)->nls_tab;
+	पूर्णांक rc = 0;
 	loff_t dtpos;	/* legacy OS/2 style position */
-	struct dtoffset {
+	काष्ठा dtoffset अणु
 		s16 pn;
 		s16 index;
 		s32 unused;
-	} *dtoffset = (struct dtoffset *) &dtpos;
+	पूर्ण *dtoffset = (काष्ठा dtoffset *) &dtpos;
 	s64 bn;
-	struct metapage *mp;
+	काष्ठा metapage *mp;
 	dtpage_t *p;
-	int index;
+	पूर्णांक index;
 	s8 *stbl;
-	struct btstack btstack;
-	int i, next;
-	struct ldtentry *d;
-	struct dtslot *t;
-	int d_namleft, len, outlen;
-	unsigned long dirent_buf;
-	char *name_ptr;
+	काष्ठा btstack btstack;
+	पूर्णांक i, next;
+	काष्ठा ldtentry *d;
+	काष्ठा dtslot *t;
+	पूर्णांक d_namleft, len, outlen;
+	अचिन्हित दीर्घ dirent_buf;
+	अक्षर *name_ptr;
 	u32 dir_index;
-	int do_index = 0;
-	uint loop_count = 0;
-	struct jfs_dirent *jfs_dirent;
-	int jfs_dirents;
-	int overflow, fix_page, page_fixed = 0;
-	static int unique_pos = 2;	/* If we can't fix broken index */
+	पूर्णांक करो_index = 0;
+	uपूर्णांक loop_count = 0;
+	काष्ठा jfs_dirent *jfs_dirent;
+	पूर्णांक jfs_dirents;
+	पूर्णांक overflow, fix_page, page_fixed = 0;
+	अटल पूर्णांक unique_pos = 2;	/* If we can't fix broken index */
 
-	if (ctx->pos == DIREND)
-		return 0;
+	अगर (ctx->pos == सूचीEND)
+		वापस 0;
 
-	if (DO_INDEX(ip)) {
+	अगर (DO_INDEX(ip)) अणु
 		/*
 		 * persistent index is stored in directory entries.
-		 * Special cases:	 0 = .
+		 * Special हालs:	 0 = .
 		 *			 1 = ..
 		 *			-1 = End of directory
 		 */
-		do_index = 1;
+		करो_index = 1;
 
 		dir_index = (u32) ctx->pos;
 
 		/*
-		 * NFSv4 reserves cookies 1 and 2 for . and .. so the value
-		 * we return to the vfs is one greater than the one we use
-		 * internally.
+		 * NFSv4 reserves cookies 1 and 2 क्रम . and .. so the value
+		 * we वापस to the vfs is one greater than the one we use
+		 * पूर्णांकernally.
 		 */
-		if (dir_index)
+		अगर (dir_index)
 			dir_index--;
 
-		if (dir_index > 1) {
-			struct dir_table_slot dirtab_slot;
+		अगर (dir_index > 1) अणु
+			काष्ठा dir_table_slot dirtab_slot;
 
-			if (dtEmpty(ip) ||
-			    (dir_index >= JFS_IP(ip)->next_index)) {
+			अगर (dtEmpty(ip) ||
+			    (dir_index >= JFS_IP(ip)->next_index)) अणु
 				/* Stale position.  Directory has shrunk */
-				ctx->pos = DIREND;
-				return 0;
-			}
+				ctx->pos = सूचीEND;
+				वापस 0;
+			पूर्ण
 		      repeat:
-			rc = read_index(ip, dir_index, &dirtab_slot);
-			if (rc) {
-				ctx->pos = DIREND;
-				return rc;
-			}
-			if (dirtab_slot.flag == DIR_INDEX_FREE) {
-				if (loop_count++ > JFS_IP(ip)->next_index) {
+			rc = पढ़ो_index(ip, dir_index, &dirtab_slot);
+			अगर (rc) अणु
+				ctx->pos = सूचीEND;
+				वापस rc;
+			पूर्ण
+			अगर (dirtab_slot.flag == सूची_INDEX_FREE) अणु
+				अगर (loop_count++ > JFS_IP(ip)->next_index) अणु
 					jfs_err("jfs_readdir detected infinite loop!");
-					ctx->pos = DIREND;
-					return 0;
-				}
+					ctx->pos = सूचीEND;
+					वापस 0;
+				पूर्ण
 				dir_index = le32_to_cpu(dirtab_slot.addr2);
-				if (dir_index == -1) {
-					ctx->pos = DIREND;
-					return 0;
-				}
-				goto repeat;
-			}
+				अगर (dir_index == -1) अणु
+					ctx->pos = सूचीEND;
+					वापस 0;
+				पूर्ण
+				जाओ repeat;
+			पूर्ण
 			bn = addressDTS(&dirtab_slot);
 			index = dirtab_slot.slot;
 			DT_GETPAGE(ip, bn, mp, PSIZE, p, rc);
-			if (rc) {
-				ctx->pos = DIREND;
-				return 0;
-			}
-			if (p->header.flag & BT_INTERNAL) {
+			अगर (rc) अणु
+				ctx->pos = सूचीEND;
+				वापस 0;
+			पूर्ण
+			अगर (p->header.flag & BT_INTERNAL) अणु
 				jfs_err("jfs_readdir: bad index table");
 				DT_PUTPAGE(mp);
-				ctx->pos = DIREND;
-				return 0;
-			}
-		} else {
-			if (dir_index == 0) {
+				ctx->pos = सूचीEND;
+				वापस 0;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (dir_index == 0) अणु
 				/*
 				 * self "."
 				 */
 				ctx->pos = 1;
-				if (!dir_emit(ctx, ".", 1, ip->i_ino, DT_DIR))
-					return 0;
-			}
+				अगर (!dir_emit(ctx, ".", 1, ip->i_ino, DT_सूची))
+					वापस 0;
+			पूर्ण
 			/*
 			 * parent ".."
 			 */
 			ctx->pos = 2;
-			if (!dir_emit(ctx, "..", 2, PARENT(ip), DT_DIR))
-				return 0;
+			अगर (!dir_emit(ctx, "..", 2, PARENT(ip), DT_सूची))
+				वापस 0;
 
 			/*
 			 * Find first entry of left-most leaf
 			 */
-			if (dtEmpty(ip)) {
-				ctx->pos = DIREND;
-				return 0;
-			}
+			अगर (dtEmpty(ip)) अणु
+				ctx->pos = सूचीEND;
+				वापस 0;
+			पूर्ण
 
-			if ((rc = dtReadFirst(ip, &btstack)))
-				return rc;
+			अगर ((rc = dtReadFirst(ip, &btstack)))
+				वापस rc;
 
 			DT_GETSEARCH(ip, btstack.top, bn, mp, p, index);
-		}
-	} else {
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		/*
-		 * Legacy filesystem - OS/2 & Linux JFS < 0.3.6
+		 * Legacy fileप्रणाली - OS/2 & Linux JFS < 0.3.6
 		 *
 		 * pn = 0; index = 1:	First entry "."
 		 * pn = 0; index = 2:	Second entry ".."
-		 * pn > 0:		Real entries, pn=1 -> leftmost page
+		 * pn > 0:		Real entries, pn=1 -> lefपंचांगost page
 		 * pn = index = -1:	No more entries
 		 */
 		dtpos = ctx->pos;
-		if (dtpos < 2) {
+		अगर (dtpos < 2) अणु
 			/* build "." entry */
 			ctx->pos = 1;
-			if (!dir_emit(ctx, ".", 1, ip->i_ino, DT_DIR))
-				return 0;
+			अगर (!dir_emit(ctx, ".", 1, ip->i_ino, DT_सूची))
+				वापस 0;
 			dtoffset->index = 2;
 			ctx->pos = dtpos;
-		}
+		पूर्ण
 
-		if (dtoffset->pn == 0) {
-			if (dtoffset->index == 2) {
+		अगर (dtoffset->pn == 0) अणु
+			अगर (dtoffset->index == 2) अणु
 				/* build ".." entry */
-				if (!dir_emit(ctx, "..", 2, PARENT(ip), DT_DIR))
-					return 0;
-			} else {
+				अगर (!dir_emit(ctx, "..", 2, PARENT(ip), DT_सूची))
+					वापस 0;
+			पूर्ण अन्यथा अणु
 				jfs_err("jfs_readdir called with invalid offset!");
-			}
+			पूर्ण
 			dtoffset->pn = 1;
 			dtoffset->index = 0;
 			ctx->pos = dtpos;
-		}
+		पूर्ण
 
-		if (dtEmpty(ip)) {
-			ctx->pos = DIREND;
-			return 0;
-		}
+		अगर (dtEmpty(ip)) अणु
+			ctx->pos = सूचीEND;
+			वापस 0;
+		पूर्ण
 
-		if ((rc = dtReadNext(ip, &ctx->pos, &btstack))) {
+		अगर ((rc = dtReadNext(ip, &ctx->pos, &btstack))) अणु
 			jfs_err("jfs_readdir: unexpected rc = %d from dtReadNext",
 				rc);
-			ctx->pos = DIREND;
-			return 0;
-		}
+			ctx->pos = सूचीEND;
+			वापस 0;
+		पूर्ण
 		/* get start leaf page and index */
 		DT_GETSEARCH(ip, btstack.top, bn, mp, p, index);
 
 		/* offset beyond directory eof ? */
-		if (bn < 0) {
-			ctx->pos = DIREND;
-			return 0;
-		}
-	}
+		अगर (bn < 0) अणु
+			ctx->pos = सूचीEND;
+			वापस 0;
+		पूर्ण
+	पूर्ण
 
-	dirent_buf = __get_free_page(GFP_KERNEL);
-	if (dirent_buf == 0) {
+	dirent_buf = __get_मुक्त_page(GFP_KERNEL);
+	अगर (dirent_buf == 0) अणु
 		DT_PUTPAGE(mp);
 		jfs_warn("jfs_readdir: __get_free_page failed!");
-		ctx->pos = DIREND;
-		return -ENOMEM;
-	}
+		ctx->pos = सूचीEND;
+		वापस -ENOMEM;
+	पूर्ण
 
-	while (1) {
-		jfs_dirent = (struct jfs_dirent *) dirent_buf;
+	जबतक (1) अणु
+		jfs_dirent = (काष्ठा jfs_dirent *) dirent_buf;
 		jfs_dirents = 0;
 		overflow = fix_page = 0;
 
 		stbl = DT_GETSTBL(p);
 
-		for (i = index; i < p->header.nextindex; i++) {
-			d = (struct ldtentry *) & p->slot[stbl[i]];
+		क्रम (i = index; i < p->header.nextindex; i++) अणु
+			d = (काष्ठा ldtentry *) & p->slot[stbl[i]];
 
-			if (((long) jfs_dirent + d->namlen + 1) >
-			    (dirent_buf + PAGE_SIZE)) {
+			अगर (((दीर्घ) jfs_dirent + d->namlen + 1) >
+			    (dirent_buf + PAGE_SIZE)) अणु
 				/* DBCS codepages could overrun dirent_buf */
 				index = i;
 				overflow = 1;
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
 			d_namleft = d->namlen;
 			name_ptr = jfs_dirent->name;
 			jfs_dirent->ino = le32_to_cpu(d->inumber);
 
-			if (do_index) {
+			अगर (करो_index) अणु
 				len = min(d_namleft, DTLHDRDATALEN);
 				jfs_dirent->position = le32_to_cpu(d->index);
 				/*
 				 * d->index should always be valid, but it
 				 * isn't.  fsck.jfs doesn't create the
-				 * directory index for the lost+found
+				 * directory index क्रम the lost+found
 				 * directory.  Rather than let it go,
 				 * we can try to fix it.
 				 */
-				if ((jfs_dirent->position < 2) ||
+				अगर ((jfs_dirent->position < 2) ||
 				    (jfs_dirent->position >=
-				     JFS_IP(ip)->next_index)) {
-					if (!page_fixed && !isReadOnly(ip)) {
+				     JFS_IP(ip)->next_index)) अणु
+					अगर (!page_fixed && !isReadOnly(ip)) अणु
 						fix_page = 1;
 						/*
 						 * setting overflow and setting
@@ -3219,20 +3220,20 @@ int jfs_readdir(struct file *file, struct dir_context *ctx)
 						 */
 						overflow = 1;
 						index = i;
-						break;
-					}
+						अवरोध;
+					पूर्ण
 					jfs_dirent->position = unique_pos++;
-				}
+				पूर्ण
 				/*
 				 * We add 1 to the index because we may
-				 * use a value of 2 internally, and NFSv4
-				 * doesn't like that.
+				 * use a value of 2 पूर्णांकernally, and NFSv4
+				 * करोesn't like that.
 				 */
 				jfs_dirent->position++;
-			} else {
+			पूर्ण अन्यथा अणु
 				jfs_dirent->position = dtpos;
 				len = min(d_namleft, DTLHDRDATALEN_LEGACY);
-			}
+			पूर्ण
 
 			/* copy the name of head/only segment */
 			outlen = jfs_strfromUCS_le(name_ptr, d->name, len,
@@ -3241,141 +3242,141 @@ int jfs_readdir(struct file *file, struct dir_context *ctx)
 
 			/* copy name in the additional segment(s) */
 			next = d->next;
-			while (next >= 0) {
-				t = (struct dtslot *) & p->slot[next];
+			जबतक (next >= 0) अणु
+				t = (काष्ठा dtslot *) & p->slot[next];
 				name_ptr += outlen;
 				d_namleft -= len;
 				/* Sanity Check */
-				if (d_namleft == 0) {
+				अगर (d_namleft == 0) अणु
 					jfs_error(ip->i_sb,
 						  "JFS:Dtree error: ino = %ld, bn=%lld, index = %d\n",
-						  (long)ip->i_ino,
-						  (long long)bn,
+						  (दीर्घ)ip->i_ino,
+						  (दीर्घ दीर्घ)bn,
 						  i);
-					goto skip_one;
-				}
+					जाओ skip_one;
+				पूर्ण
 				len = min(d_namleft, DTSLOTDATALEN);
 				outlen = jfs_strfromUCS_le(name_ptr, t->name,
 							   len, codepage);
 				jfs_dirent->name_len += outlen;
 
 				next = t->next;
-			}
+			पूर्ण
 
 			jfs_dirents++;
 			jfs_dirent = next_jfs_dirent(jfs_dirent);
 skip_one:
-			if (!do_index)
+			अगर (!करो_index)
 				dtoffset->index++;
-		}
+		पूर्ण
 
-		if (!overflow) {
-			/* Point to next leaf page */
-			if (p->header.flag & BT_ROOT)
+		अगर (!overflow) अणु
+			/* Poपूर्णांक to next leaf page */
+			अगर (p->header.flag & BT_ROOT)
 				bn = 0;
-			else {
+			अन्यथा अणु
 				bn = le64_to_cpu(p->header.next);
 				index = 0;
-				/* update offset (pn:index) for new page */
-				if (!do_index) {
+				/* update offset (pn:index) क्रम new page */
+				अगर (!करो_index) अणु
 					dtoffset->pn++;
 					dtoffset->index = 0;
-				}
-			}
+				पूर्ण
+			पूर्ण
 			page_fixed = 0;
-		}
+		पूर्ण
 
 		/* unpin previous leaf page */
 		DT_PUTPAGE(mp);
 
-		jfs_dirent = (struct jfs_dirent *) dirent_buf;
-		while (jfs_dirents--) {
+		jfs_dirent = (काष्ठा jfs_dirent *) dirent_buf;
+		जबतक (jfs_dirents--) अणु
 			ctx->pos = jfs_dirent->position;
-			if (!dir_emit(ctx, jfs_dirent->name,
+			अगर (!dir_emit(ctx, jfs_dirent->name,
 				    jfs_dirent->name_len,
 				    jfs_dirent->ino, DT_UNKNOWN))
-				goto out;
+				जाओ out;
 			jfs_dirent = next_jfs_dirent(jfs_dirent);
-		}
+		पूर्ण
 
-		if (fix_page) {
+		अगर (fix_page) अणु
 			add_missing_indices(ip, bn);
 			page_fixed = 1;
-		}
+		पूर्ण
 
-		if (!overflow && (bn == 0)) {
-			ctx->pos = DIREND;
-			break;
-		}
+		अगर (!overflow && (bn == 0)) अणु
+			ctx->pos = सूचीEND;
+			अवरोध;
+		पूर्ण
 
 		DT_GETPAGE(ip, bn, mp, PSIZE, p, rc);
-		if (rc) {
-			free_page(dirent_buf);
-			return rc;
-		}
-	}
+		अगर (rc) अणु
+			मुक्त_page(dirent_buf);
+			वापस rc;
+		पूर्ण
+	पूर्ण
 
       out:
-	free_page(dirent_buf);
+	मुक्त_page(dirent_buf);
 
-	return rc;
-}
+	वापस rc;
+पूर्ण
 
 
 /*
  *	dtReadFirst()
  *
- * function: get the leftmost page of the directory
+ * function: get the lefपंचांगost page of the directory
  */
-static int dtReadFirst(struct inode *ip, struct btstack * btstack)
-{
-	int rc = 0;
+अटल पूर्णांक dtReadFirst(काष्ठा inode *ip, काष्ठा btstack * btstack)
+अणु
+	पूर्णांक rc = 0;
 	s64 bn;
-	int psize = 288;	/* initial in-line directory */
-	struct metapage *mp;
+	पूर्णांक psize = 288;	/* initial in-line directory */
+	काष्ठा metapage *mp;
 	dtpage_t *p;
 	s8 *stbl;
-	struct btframe *btsp;
+	काष्ठा btframe *btsp;
 	pxd_t *xd;
 
 	BT_CLR(btstack);	/* reset stack */
 
 	/*
-	 *	descend leftmost path of the tree
+	 *	descend lefपंचांगost path of the tree
 	 *
 	 * by convention, root bn = 0.
 	 */
-	for (bn = 0;;) {
+	क्रम (bn = 0;;) अणु
 		DT_GETPAGE(ip, bn, mp, psize, p, rc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		/*
-		 * leftmost leaf page
+		 * lefपंचांगost leaf page
 		 */
-		if (p->header.flag & BT_LEAF) {
-			/* return leftmost entry */
+		अगर (p->header.flag & BT_LEAF) अणु
+			/* वापस lefपंचांगost entry */
 			btsp = btstack->top;
 			btsp->bn = bn;
 			btsp->index = 0;
 			btsp->mp = mp;
 
-			return 0;
-		}
+			वापस 0;
+		पूर्ण
 
 		/*
-		 * descend down to leftmost child page
+		 * descend करोwn to lefपंचांगost child page
 		 */
-		if (BT_STACK_FULL(btstack)) {
+		अगर (BT_STACK_FULL(btstack)) अणु
 			DT_PUTPAGE(mp);
 			jfs_error(ip->i_sb, "btstack overrun\n");
 			BT_STACK_DUMP(btstack);
-			return -EIO;
-		}
+			वापस -EIO;
+		पूर्ण
 		/* push (bn, index) of the parent page/entry */
 		BT_PUSH(btstack, bn, 0);
 
-		/* get the leftmost entry */
+		/* get the lefपंचांगost entry */
 		stbl = DT_GETSTBL(p);
 		xd = (pxd_t *) & p->slot[stbl[0]];
 
@@ -3385,77 +3386,77 @@ static int dtReadFirst(struct inode *ip, struct btstack * btstack)
 
 		/* unpin the parent page */
 		DT_PUTPAGE(mp);
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /*
  *	dtReadNext()
  *
- * function: get the page of the specified offset (pn:index)
+ * function: get the page of the specअगरied offset (pn:index)
  *
- * return: if (offset > eof), bn = -1;
+ * वापस: अगर (offset > eof), bn = -1;
  *
- * note: if index > nextindex of the target leaf page,
+ * note: अगर index > nextindex of the target leaf page,
  * start with 1st entry of next leaf page;
  */
-static int dtReadNext(struct inode *ip, loff_t * offset,
-		      struct btstack * btstack)
-{
-	int rc = 0;
-	struct dtoffset {
+अटल पूर्णांक dtReadNext(काष्ठा inode *ip, loff_t * offset,
+		      काष्ठा btstack * btstack)
+अणु
+	पूर्णांक rc = 0;
+	काष्ठा dtoffset अणु
 		s16 pn;
 		s16 index;
 		s32 unused;
-	} *dtoffset = (struct dtoffset *) offset;
+	पूर्ण *dtoffset = (काष्ठा dtoffset *) offset;
 	s64 bn;
-	struct metapage *mp;
+	काष्ठा metapage *mp;
 	dtpage_t *p;
-	int index;
-	int pn;
+	पूर्णांक index;
+	पूर्णांक pn;
 	s8 *stbl;
-	struct btframe *btsp, *parent;
+	काष्ठा btframe *btsp, *parent;
 	pxd_t *xd;
 
 	/*
-	 * get leftmost leaf page pinned
+	 * get lefपंचांगost leaf page pinned
 	 */
-	if ((rc = dtReadFirst(ip, btstack)))
-		return rc;
+	अगर ((rc = dtReadFirst(ip, btstack)))
+		वापस rc;
 
 	/* get leaf page */
 	DT_GETSEARCH(ip, btstack->top, bn, mp, p, index);
 
 	/* get the start offset (pn:index) */
-	pn = dtoffset->pn - 1;	/* Now pn = 0 represents leftmost leaf */
+	pn = dtoffset->pn - 1;	/* Now pn = 0 represents lefपंचांगost leaf */
 	index = dtoffset->index;
 
-	/* start at leftmost page ? */
-	if (pn == 0) {
+	/* start at lefपंचांगost page ? */
+	अगर (pn == 0) अणु
 		/* offset beyond eof ? */
-		if (index < p->header.nextindex)
-			goto out;
+		अगर (index < p->header.nextindex)
+			जाओ out;
 
-		if (p->header.flag & BT_ROOT) {
+		अगर (p->header.flag & BT_ROOT) अणु
 			bn = -1;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* start with 1st entry of next leaf page */
 		dtoffset->pn++;
 		dtoffset->index = index = 0;
-		goto a;
-	}
+		जाओ a;
+	पूर्ण
 
-	/* start at non-leftmost page: scan parent pages for large pn */
-	if (p->header.flag & BT_ROOT) {
+	/* start at non-lefपंचांगost page: scan parent pages क्रम large pn */
+	अगर (p->header.flag & BT_ROOT) अणु
 		bn = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	/* start after next leaf page ? */
-	if (pn > 1)
-		goto b;
+	अगर (pn > 1)
+		जाओ b;
 
 	/* get leaf page pn = 1 */
       a:
@@ -3465,18 +3466,18 @@ static int dtReadNext(struct inode *ip, loff_t * offset,
 	DT_PUTPAGE(mp);
 
 	/* offset beyond eof ? */
-	if (bn == 0) {
+	अगर (bn == 0) अणु
 		bn = -1;
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	goto c;
+	जाओ c;
 
 	/*
-	 * scan last internal page level to get target leaf page
+	 * scan last पूर्णांकernal page level to get target leaf page
 	 */
       b:
-	/* unpin leftmost leaf page */
+	/* unpin lefपंचांगost leaf page */
 	DT_PUTPAGE(mp);
 
 	/* get left most parent page */
@@ -3484,11 +3485,11 @@ static int dtReadNext(struct inode *ip, loff_t * offset,
 	parent = btsp - 1;
 	bn = parent->bn;
 	DT_GETPAGE(ip, bn, mp, PSIZE, p, rc);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	/* scan parent pages at last internal page level */
-	while (pn >= p->header.nextindex) {
+	/* scan parent pages at last पूर्णांकernal page level */
+	जबतक (pn >= p->header.nextindex) अणु
 		pn -= p->header.nextindex;
 
 		/* get next parent page address */
@@ -3498,19 +3499,19 @@ static int dtReadNext(struct inode *ip, loff_t * offset,
 		DT_PUTPAGE(mp);
 
 		/* offset beyond eof ? */
-		if (bn == 0) {
+		अगर (bn == 0) अणु
 			bn = -1;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* get next parent page */
 		DT_GETPAGE(ip, bn, mp, PSIZE, p, rc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		/* update parent page stack frame */
 		parent->bn = bn;
-	}
+	पूर्ण
 
 	/* get leaf page address */
 	stbl = DT_GETSTBL(p);
@@ -3525,86 +3526,86 @@ static int dtReadNext(struct inode *ip, loff_t * offset,
 	 */
       c:
 	DT_GETPAGE(ip, bn, mp, PSIZE, p, rc);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
 	/*
 	 * leaf page has been completed:
 	 * start with 1st entry of next leaf page
 	 */
-	if (index >= p->header.nextindex) {
+	अगर (index >= p->header.nextindex) अणु
 		bn = le64_to_cpu(p->header.next);
 
 		/* unpin leaf page */
 		DT_PUTPAGE(mp);
 
 		/* offset beyond eof ? */
-		if (bn == 0) {
+		अगर (bn == 0) अणु
 			bn = -1;
-			goto out;
-		}
+			जाओ out;
+		पूर्ण
 
 		/* get next leaf page */
 		DT_GETPAGE(ip, bn, mp, PSIZE, p, rc);
-		if (rc)
-			return rc;
+		अगर (rc)
+			वापस rc;
 
 		/* start with 1st entry of next leaf page */
 		dtoffset->pn++;
 		dtoffset->index = 0;
-	}
+	पूर्ण
 
       out:
-	/* return target leaf page pinned */
+	/* वापस target leaf page pinned */
 	btsp = btstack->top;
 	btsp->bn = bn;
 	btsp->index = dtoffset->index;
 	btsp->mp = mp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 
 /*
  *	dtCompare()
  *
- * function: compare search key with an internal entry
+ * function: compare search key with an पूर्णांकernal entry
  *
- * return:
- *	< 0 if k is < record
- *	= 0 if k is = record
- *	> 0 if k is > record
+ * वापस:
+ *	< 0 अगर k is < record
+ *	= 0 अगर k is = record
+ *	> 0 अगर k is > record
  */
-static int dtCompare(struct component_name * key,	/* search key */
+अटल पूर्णांक dtCompare(काष्ठा component_name * key,	/* search key */
 		     dtpage_t * p,	/* directory page */
-		     int si)
-{				/* entry slot index */
-	wchar_t *kname;
+		     पूर्णांक si)
+अणु				/* entry slot index */
+	ब_अक्षर_प्रकार *kname;
 	__le16 *name;
-	int klen, namlen, len, rc;
-	struct idtentry *ih;
-	struct dtslot *t;
+	पूर्णांक klen, namlen, len, rc;
+	काष्ठा idtentry *ih;
+	काष्ठा dtslot *t;
 
 	/*
-	 * force the left-most key on internal pages, at any level of
+	 * क्रमce the left-most key on पूर्णांकernal pages, at any level of
 	 * the tree, to be less than any search key.
-	 * this obviates having to update the leftmost key on an internal
+	 * this obviates having to update the lefपंचांगost key on an पूर्णांकernal
 	 * page when the user inserts a new key in the tree smaller than
 	 * anything that has been stored.
 	 *
-	 * (? if/when dtSearch() narrows down to 1st entry (index = 0),
-	 * at any internal page at any level of the tree,
+	 * (? अगर/when dtSearch() narrows करोwn to 1st entry (index = 0),
+	 * at any पूर्णांकernal page at any level of the tree,
 	 * it descends to child of the entry anyway -
 	 * ? make the entry as min size dummy entry)
 	 *
-	 * if (e->index == 0 && h->prevpg == P_INVALID && !(h->flags & BT_LEAF))
-	 * return (1);
+	 * अगर (e->index == 0 && h->prevpg == P_INVALID && !(h->flags & BT_LEAF))
+	 * वापस (1);
 	 */
 
 	kname = key->name;
 	klen = key->namlen;
 
-	ih = (struct idtentry *) & p->slot[si];
+	ih = (काष्ठा idtentry *) & p->slot[si];
 	si = ih->next;
 	name = ih->name;
 	namlen = ih->namlen;
@@ -3612,31 +3613,31 @@ static int dtCompare(struct component_name * key,	/* search key */
 
 	/* compare with head/only segment */
 	len = min(klen, len);
-	if ((rc = UniStrncmp_le(kname, name, len)))
-		return rc;
+	अगर ((rc = UniStrncmp_le(kname, name, len)))
+		वापस rc;
 
 	klen -= len;
 	namlen -= len;
 
 	/* compare with additional segment(s) */
 	kname += len;
-	while (klen > 0 && namlen > 0) {
+	जबतक (klen > 0 && namlen > 0) अणु
 		/* compare with next name segment */
-		t = (struct dtslot *) & p->slot[si];
+		t = (काष्ठा dtslot *) & p->slot[si];
 		len = min(namlen, DTSLOTDATALEN);
 		len = min(klen, len);
 		name = t->name;
-		if ((rc = UniStrncmp_le(kname, name, len)))
-			return rc;
+		अगर ((rc = UniStrncmp_le(kname, name, len)))
+			वापस rc;
 
 		klen -= len;
 		namlen -= len;
 		kname += len;
 		si = t->next;
-	}
+	पूर्ण
 
-	return (klen - namlen);
-}
+	वापस (klen - namlen);
+पूर्ण
 
 
 
@@ -3644,40 +3645,40 @@ static int dtCompare(struct component_name * key,	/* search key */
 /*
  *	ciCompare()
  *
- * function: compare search key with an (leaf/internal) entry
+ * function: compare search key with an (leaf/पूर्णांकernal) entry
  *
- * return:
- *	< 0 if k is < record
- *	= 0 if k is = record
- *	> 0 if k is > record
+ * वापस:
+ *	< 0 अगर k is < record
+ *	= 0 अगर k is = record
+ *	> 0 अगर k is > record
  */
-static int ciCompare(struct component_name * key,	/* search key */
+अटल पूर्णांक ciCompare(काष्ठा component_name * key,	/* search key */
 		     dtpage_t * p,	/* directory page */
-		     int si,	/* entry slot index */
-		     int flag)
-{
-	wchar_t *kname, x;
+		     पूर्णांक si,	/* entry slot index */
+		     पूर्णांक flag)
+अणु
+	ब_अक्षर_प्रकार *kname, x;
 	__le16 *name;
-	int klen, namlen, len, rc;
-	struct ldtentry *lh;
-	struct idtentry *ih;
-	struct dtslot *t;
-	int i;
+	पूर्णांक klen, namlen, len, rc;
+	काष्ठा ldtentry *lh;
+	काष्ठा idtentry *ih;
+	काष्ठा dtslot *t;
+	पूर्णांक i;
 
 	/*
-	 * force the left-most key on internal pages, at any level of
+	 * क्रमce the left-most key on पूर्णांकernal pages, at any level of
 	 * the tree, to be less than any search key.
-	 * this obviates having to update the leftmost key on an internal
+	 * this obviates having to update the lefपंचांगost key on an पूर्णांकernal
 	 * page when the user inserts a new key in the tree smaller than
 	 * anything that has been stored.
 	 *
-	 * (? if/when dtSearch() narrows down to 1st entry (index = 0),
-	 * at any internal page at any level of the tree,
+	 * (? अगर/when dtSearch() narrows करोwn to 1st entry (index = 0),
+	 * at any पूर्णांकernal page at any level of the tree,
 	 * it descends to child of the entry anyway -
 	 * ? make the entry as min size dummy entry)
 	 *
-	 * if (e->index == 0 && h->prevpg == P_INVALID && !(h->flags & BT_LEAF))
-	 * return (1);
+	 * अगर (e->index == 0 && h->prevpg == P_INVALID && !(h->flags & BT_LEAF))
+	 * वापस (1);
 	 */
 
 	kname = key->name;
@@ -3686,67 +3687,67 @@ static int ciCompare(struct component_name * key,	/* search key */
 	/*
 	 * leaf page entry
 	 */
-	if (p->header.flag & BT_LEAF) {
-		lh = (struct ldtentry *) & p->slot[si];
+	अगर (p->header.flag & BT_LEAF) अणु
+		lh = (काष्ठा ldtentry *) & p->slot[si];
 		si = lh->next;
 		name = lh->name;
 		namlen = lh->namlen;
-		if (flag & JFS_DIR_INDEX)
+		अगर (flag & JFS_सूची_INDEX)
 			len = min(namlen, DTLHDRDATALEN);
-		else
+		अन्यथा
 			len = min(namlen, DTLHDRDATALEN_LEGACY);
-	}
+	पूर्ण
 	/*
-	 * internal page entry
+	 * पूर्णांकernal page entry
 	 */
-	else {
-		ih = (struct idtentry *) & p->slot[si];
+	अन्यथा अणु
+		ih = (काष्ठा idtentry *) & p->slot[si];
 		si = ih->next;
 		name = ih->name;
 		namlen = ih->namlen;
 		len = min(namlen, DTIHDRDATALEN);
-	}
+	पूर्ण
 
 	/* compare with head/only segment */
 	len = min(klen, len);
-	for (i = 0; i < len; i++, kname++, name++) {
-		/* only uppercase if case-insensitive support is on */
-		if ((flag & JFS_OS2) == JFS_OS2)
+	क्रम (i = 0; i < len; i++, kname++, name++) अणु
+		/* only upperहाल अगर हाल-insensitive support is on */
+		अगर ((flag & JFS_OS2) == JFS_OS2)
 			x = UniToupper(le16_to_cpu(*name));
-		else
+		अन्यथा
 			x = le16_to_cpu(*name);
-		if ((rc = *kname - x))
-			return rc;
-	}
+		अगर ((rc = *kname - x))
+			वापस rc;
+	पूर्ण
 
 	klen -= len;
 	namlen -= len;
 
 	/* compare with additional segment(s) */
-	while (klen > 0 && namlen > 0) {
+	जबतक (klen > 0 && namlen > 0) अणु
 		/* compare with next name segment */
-		t = (struct dtslot *) & p->slot[si];
+		t = (काष्ठा dtslot *) & p->slot[si];
 		len = min(namlen, DTSLOTDATALEN);
 		len = min(klen, len);
 		name = t->name;
-		for (i = 0; i < len; i++, kname++, name++) {
-			/* only uppercase if case-insensitive support is on */
-			if ((flag & JFS_OS2) == JFS_OS2)
+		क्रम (i = 0; i < len; i++, kname++, name++) अणु
+			/* only upperहाल अगर हाल-insensitive support is on */
+			अगर ((flag & JFS_OS2) == JFS_OS2)
 				x = UniToupper(le16_to_cpu(*name));
-			else
+			अन्यथा
 				x = le16_to_cpu(*name);
 
-			if ((rc = *kname - x))
-				return rc;
-		}
+			अगर ((rc = *kname - x))
+				वापस rc;
+		पूर्ण
 
 		klen -= len;
 		namlen -= len;
 		si = t->next;
-	}
+	पूर्ण
 
-	return (klen - namlen);
-}
+	वापस (klen - namlen);
+पूर्ण
 
 
 /*
@@ -3756,68 +3757,68 @@ static int ciCompare(struct component_name * key,	/* search key */
  *	     from two adjacent leaf entries
  *	     across page boundary
  *
- * return: non-zero on error
+ * वापस: non-zero on error
  *
  */
-static int ciGetLeafPrefixKey(dtpage_t * lp, int li, dtpage_t * rp,
-			       int ri, struct component_name * key, int flag)
-{
-	int klen, namlen;
-	wchar_t *pl, *pr, *kname;
-	struct component_name lkey;
-	struct component_name rkey;
+अटल पूर्णांक ciGetLeafPrefixKey(dtpage_t * lp, पूर्णांक li, dtpage_t * rp,
+			       पूर्णांक ri, काष्ठा component_name * key, पूर्णांक flag)
+अणु
+	पूर्णांक klen, namlen;
+	ब_अक्षर_प्रकार *pl, *pr, *kname;
+	काष्ठा component_name lkey;
+	काष्ठा component_name rkey;
 
-	lkey.name = kmalloc_array(JFS_NAME_MAX + 1, sizeof(wchar_t),
+	lkey.name = kदो_स्मृति_array(JFS_NAME_MAX + 1, माप(ब_अक्षर_प्रकार),
 					GFP_KERNEL);
-	if (lkey.name == NULL)
-		return -ENOMEM;
+	अगर (lkey.name == शून्य)
+		वापस -ENOMEM;
 
-	rkey.name = kmalloc_array(JFS_NAME_MAX + 1, sizeof(wchar_t),
+	rkey.name = kदो_स्मृति_array(JFS_NAME_MAX + 1, माप(ब_अक्षर_प्रकार),
 					GFP_KERNEL);
-	if (rkey.name == NULL) {
-		kfree(lkey.name);
-		return -ENOMEM;
-	}
+	अगर (rkey.name == शून्य) अणु
+		kमुक्त(lkey.name);
+		वापस -ENOMEM;
+	पूर्ण
 
 	/* get left and right key */
 	dtGetKey(lp, li, &lkey, flag);
 	lkey.name[lkey.namlen] = 0;
 
-	if ((flag & JFS_OS2) == JFS_OS2)
+	अगर ((flag & JFS_OS2) == JFS_OS2)
 		ciToUpper(&lkey);
 
 	dtGetKey(rp, ri, &rkey, flag);
 	rkey.name[rkey.namlen] = 0;
 
 
-	if ((flag & JFS_OS2) == JFS_OS2)
+	अगर ((flag & JFS_OS2) == JFS_OS2)
 		ciToUpper(&rkey);
 
 	/* compute prefix */
 	klen = 0;
 	kname = key->name;
 	namlen = min(lkey.namlen, rkey.namlen);
-	for (pl = lkey.name, pr = rkey.name;
-	     namlen; pl++, pr++, namlen--, klen++, kname++) {
+	क्रम (pl = lkey.name, pr = rkey.name;
+	     namlen; pl++, pr++, namlen--, klen++, kname++) अणु
 		*kname = *pr;
-		if (*pl != *pr) {
+		अगर (*pl != *pr) अणु
 			key->namlen = klen + 1;
-			goto free_names;
-		}
-	}
+			जाओ मुक्त_names;
+		पूर्ण
+	पूर्ण
 
 	/* l->namlen <= r->namlen since l <= r */
-	if (lkey.namlen < rkey.namlen) {
+	अगर (lkey.namlen < rkey.namlen) अणु
 		*kname = *pr;
 		key->namlen = klen + 1;
-	} else			/* l->namelen == r->namelen */
+	पूर्ण अन्यथा			/* l->namelen == r->namelen */
 		key->namlen = klen;
 
-free_names:
-	kfree(lkey.name);
-	kfree(rkey.name);
-	return 0;
-}
+मुक्त_names:
+	kमुक्त(lkey.name);
+	kमुक्त(rkey.name);
+	वापस 0;
+पूर्ण
 
 
 
@@ -3826,37 +3827,37 @@ free_names:
  *
  * function: get key of the entry
  */
-static void dtGetKey(dtpage_t * p, int i,	/* entry index */
-		     struct component_name * key, int flag)
-{
-	int si;
+अटल व्योम dtGetKey(dtpage_t * p, पूर्णांक i,	/* entry index */
+		     काष्ठा component_name * key, पूर्णांक flag)
+अणु
+	पूर्णांक si;
 	s8 *stbl;
-	struct ldtentry *lh;
-	struct idtentry *ih;
-	struct dtslot *t;
-	int namlen, len;
-	wchar_t *kname;
+	काष्ठा ldtentry *lh;
+	काष्ठा idtentry *ih;
+	काष्ठा dtslot *t;
+	पूर्णांक namlen, len;
+	ब_अक्षर_प्रकार *kname;
 	__le16 *name;
 
 	/* get entry */
 	stbl = DT_GETSTBL(p);
 	si = stbl[i];
-	if (p->header.flag & BT_LEAF) {
-		lh = (struct ldtentry *) & p->slot[si];
+	अगर (p->header.flag & BT_LEAF) अणु
+		lh = (काष्ठा ldtentry *) & p->slot[si];
 		si = lh->next;
 		namlen = lh->namlen;
 		name = lh->name;
-		if (flag & JFS_DIR_INDEX)
+		अगर (flag & JFS_सूची_INDEX)
 			len = min(namlen, DTLHDRDATALEN);
-		else
+		अन्यथा
 			len = min(namlen, DTLHDRDATALEN_LEGACY);
-	} else {
-		ih = (struct idtentry *) & p->slot[si];
+	पूर्ण अन्यथा अणु
+		ih = (काष्ठा idtentry *) & p->slot[si];
 		si = ih->next;
 		namlen = ih->namlen;
 		name = ih->name;
 		len = min(namlen, DTIHDRDATALEN);
-	}
+	पूर्ण
 
 	key->namlen = namlen;
 	kname = key->name;
@@ -3869,7 +3870,7 @@ static void dtGetKey(dtpage_t * p, int i,	/* entry index */
 	/*
 	 * move additional segment(s)
 	 */
-	while (si >= 0) {
+	जबतक (si >= 0) अणु
 		/* get next segment */
 		t = &p->slot[si];
 		kname += len;
@@ -3878,109 +3879,109 @@ static void dtGetKey(dtpage_t * p, int i,	/* entry index */
 		UniStrncpy_from_le(kname, t->name, len);
 
 		si = t->next;
-	}
-}
+	पूर्ण
+पूर्ण
 
 
 /*
  *	dtInsertEntry()
  *
- * function: allocate free slot(s) and
- *	     write a leaf/internal entry
+ * function: allocate मुक्त slot(s) and
+ *	     ग_लिखो a leaf/पूर्णांकernal entry
  *
- * return: entry slot index
+ * वापस: entry slot index
  */
-static void dtInsertEntry(dtpage_t * p, int index, struct component_name * key,
-			  ddata_t * data, struct dt_lock ** dtlock)
-{
-	struct dtslot *h, *t;
-	struct ldtentry *lh = NULL;
-	struct idtentry *ih = NULL;
-	int hsi, fsi, klen, len, nextindex;
-	wchar_t *kname;
+अटल व्योम dtInsertEntry(dtpage_t * p, पूर्णांक index, काष्ठा component_name * key,
+			  ddata_t * data, काष्ठा dt_lock ** dtlock)
+अणु
+	काष्ठा dtslot *h, *t;
+	काष्ठा ldtentry *lh = शून्य;
+	काष्ठा idtentry *ih = शून्य;
+	पूर्णांक hsi, fsi, klen, len, nextindex;
+	ब_अक्षर_प्रकार *kname;
 	__le16 *name;
 	s8 *stbl;
 	pxd_t *xd;
-	struct dt_lock *dtlck = *dtlock;
-	struct lv *lv;
-	int xsi, n;
+	काष्ठा dt_lock *dtlck = *dtlock;
+	काष्ठा lv *lv;
+	पूर्णांक xsi, n;
 	s64 bn = 0;
-	struct metapage *mp = NULL;
+	काष्ठा metapage *mp = शून्य;
 
 	klen = key->namlen;
 	kname = key->name;
 
-	/* allocate a free slot */
-	hsi = fsi = p->header.freelist;
+	/* allocate a मुक्त slot */
+	hsi = fsi = p->header.मुक्तlist;
 	h = &p->slot[fsi];
-	p->header.freelist = h->next;
-	--p->header.freecnt;
+	p->header.मुक्तlist = h->next;
+	--p->header.मुक्तcnt;
 
-	/* open new linelock */
-	if (dtlck->index >= dtlck->maxcnt)
-		dtlck = (struct dt_lock *) txLinelock(dtlck);
+	/* खोलो new linelock */
+	अगर (dtlck->index >= dtlck->maxcnt)
+		dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 
 	lv = & dtlck->lv[dtlck->index];
 	lv->offset = hsi;
 
-	/* write head/only segment */
-	if (p->header.flag & BT_LEAF) {
-		lh = (struct ldtentry *) h;
+	/* ग_लिखो head/only segment */
+	अगर (p->header.flag & BT_LEAF) अणु
+		lh = (काष्ठा ldtentry *) h;
 		lh->next = h->next;
 		lh->inumber = cpu_to_le32(data->leaf.ino);
 		lh->namlen = klen;
 		name = lh->name;
-		if (data->leaf.ip) {
+		अगर (data->leaf.ip) अणु
 			len = min(klen, DTLHDRDATALEN);
-			if (!(p->header.flag & BT_ROOT))
+			अगर (!(p->header.flag & BT_ROOT))
 				bn = addressPXD(&p->header.self);
 			lh->index = cpu_to_le32(add_index(data->leaf.tid,
 							  data->leaf.ip,
 							  bn, index));
-		} else
+		पूर्ण अन्यथा
 			len = min(klen, DTLHDRDATALEN_LEGACY);
-	} else {
-		ih = (struct idtentry *) h;
+	पूर्ण अन्यथा अणु
+		ih = (काष्ठा idtentry *) h;
 		ih->next = h->next;
 		xd = (pxd_t *) ih;
 		*xd = data->xd;
 		ih->namlen = klen;
 		name = ih->name;
 		len = min(klen, DTIHDRDATALEN);
-	}
+	पूर्ण
 
 	UniStrncpy_to_le(name, kname, len);
 
 	n = 1;
 	xsi = hsi;
 
-	/* write additional segment(s) */
+	/* ग_लिखो additional segment(s) */
 	t = h;
 	klen -= len;
-	while (klen) {
-		/* get free slot */
-		fsi = p->header.freelist;
+	जबतक (klen) अणु
+		/* get मुक्त slot */
+		fsi = p->header.मुक्तlist;
 		t = &p->slot[fsi];
-		p->header.freelist = t->next;
-		--p->header.freecnt;
+		p->header.मुक्तlist = t->next;
+		--p->header.मुक्तcnt;
 
 		/* is next slot contiguous ? */
-		if (fsi != xsi + 1) {
-			/* close current linelock */
+		अगर (fsi != xsi + 1) अणु
+			/* बंद current linelock */
 			lv->length = n;
 			dtlck->index++;
 
-			/* open new linelock */
-			if (dtlck->index < dtlck->maxcnt)
+			/* खोलो new linelock */
+			अगर (dtlck->index < dtlck->maxcnt)
 				lv++;
-			else {
-				dtlck = (struct dt_lock *) txLinelock(dtlck);
+			अन्यथा अणु
+				dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 				lv = & dtlck->lv[0];
-			}
+			पूर्ण
 
 			lv->offset = fsi;
 			n = 0;
-		}
+		पूर्ण
 
 		kname += len;
 		len = min(klen, DTSLOTDATALEN);
@@ -3989,55 +3990,55 @@ static void dtInsertEntry(dtpage_t * p, int index, struct component_name * key,
 		n++;
 		xsi = fsi;
 		klen -= len;
-	}
+	पूर्ण
 
-	/* close current linelock */
+	/* बंद current linelock */
 	lv->length = n;
 	dtlck->index++;
 
 	*dtlock = dtlck;
 
 	/* terminate last/only segment */
-	if (h == t) {
+	अगर (h == t) अणु
 		/* single segment entry */
-		if (p->header.flag & BT_LEAF)
+		अगर (p->header.flag & BT_LEAF)
 			lh->next = -1;
-		else
+		अन्यथा
 			ih->next = -1;
-	} else
+	पूर्ण अन्यथा
 		/* multi-segment entry */
 		t->next = -1;
 
-	/* if insert into middle, shift right succeeding entries in stbl */
+	/* अगर insert पूर्णांकo middle, shअगरt right succeeding entries in stbl */
 	stbl = DT_GETSTBL(p);
 	nextindex = p->header.nextindex;
-	if (index < nextindex) {
-		memmove(stbl + index + 1, stbl + index, nextindex - index);
+	अगर (index < nextindex) अणु
+		स_हटाओ(stbl + index + 1, stbl + index, nextindex - index);
 
-		if ((p->header.flag & BT_LEAF) && data->leaf.ip) {
+		अगर ((p->header.flag & BT_LEAF) && data->leaf.ip) अणु
 			s64 lblock;
 
 			/*
-			 * Need to update slot number for entries that moved
+			 * Need to update slot number क्रम entries that moved
 			 * in the stbl
 			 */
-			mp = NULL;
-			for (n = index + 1; n <= nextindex; n++) {
-				lh = (struct ldtentry *) & (p->slot[stbl[n]]);
-				modify_index(data->leaf.tid, data->leaf.ip,
+			mp = शून्य;
+			क्रम (n = index + 1; n <= nextindex; n++) अणु
+				lh = (काष्ठा ldtentry *) & (p->slot[stbl[n]]);
+				modअगरy_index(data->leaf.tid, data->leaf.ip,
 					     le32_to_cpu(lh->index), bn, n,
 					     &mp, &lblock);
-			}
-			if (mp)
+			पूर्ण
+			अगर (mp)
 				release_metapage(mp);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	stbl[index] = hsi;
 
 	/* advance next available entry index of stbl */
 	++p->header.nextindex;
-}
+पूर्ण
 
 
 /*
@@ -4045,31 +4046,31 @@ static void dtInsertEntry(dtpage_t * p, int index, struct component_name * key,
  *
  * function: move entries from split/left page to new/right page
  *
- *	nextindex of dst page and freelist/freecnt of both pages
+ *	nextindex of dst page and मुक्तlist/मुक्तcnt of both pages
  *	are updated.
  */
-static void dtMoveEntry(dtpage_t * sp, int si, dtpage_t * dp,
-			struct dt_lock ** sdtlock, struct dt_lock ** ddtlock,
-			int do_index)
-{
-	int ssi, next;		/* src slot index */
-	int di;			/* dst entry index */
-	int dsi;		/* dst slot index */
+अटल व्योम dtMoveEntry(dtpage_t * sp, पूर्णांक si, dtpage_t * dp,
+			काष्ठा dt_lock ** sdtlock, काष्ठा dt_lock ** ddtlock,
+			पूर्णांक करो_index)
+अणु
+	पूर्णांक ssi, next;		/* src slot index */
+	पूर्णांक di;			/* dst entry index */
+	पूर्णांक dsi;		/* dst slot index */
 	s8 *sstbl, *dstbl;	/* sorted entry table */
-	int snamlen, len;
-	struct ldtentry *slh, *dlh = NULL;
-	struct idtentry *sih, *dih = NULL;
-	struct dtslot *h, *s, *d;
-	struct dt_lock *sdtlck = *sdtlock, *ddtlck = *ddtlock;
-	struct lv *slv, *dlv;
-	int xssi, ns, nd;
-	int sfsi;
+	पूर्णांक snamlen, len;
+	काष्ठा ldtentry *slh, *dlh = शून्य;
+	काष्ठा idtentry *sih, *dih = शून्य;
+	काष्ठा dtslot *h, *s, *d;
+	काष्ठा dt_lock *sdtlck = *sdtlock, *ddtlck = *ddtlock;
+	काष्ठा lv *slv, *dlv;
+	पूर्णांक xssi, ns, nd;
+	पूर्णांक sfsi;
 
 	sstbl = (s8 *) & sp->slot[sp->header.stblindex];
 	dstbl = (s8 *) & dp->slot[dp->header.stblindex];
 
-	dsi = dp->header.freelist;	/* first (whole page) free slot */
-	sfsi = sp->header.freelist;
+	dsi = dp->header.मुक्तlist;	/* first (whole page) मुक्त slot */
+	sfsi = sp->header.मुक्तlist;
 
 	/* linelock destination entry slot */
 	dlv = & ddtlck->lv[ddtlck->index];
@@ -4084,27 +4085,27 @@ static void dtMoveEntry(dtpage_t * sp, int si, dtpage_t * dp,
 	 * move entries
 	 */
 	ns = nd = 0;
-	for (di = 0; si < sp->header.nextindex; si++, di++) {
+	क्रम (di = 0; si < sp->header.nextindex; si++, di++) अणु
 		ssi = sstbl[si];
 		dstbl[di] = dsi;
 
 		/* is next slot contiguous ? */
-		if (ssi != xssi + 1) {
-			/* close current linelock */
+		अगर (ssi != xssi + 1) अणु
+			/* बंद current linelock */
 			slv->length = ns;
 			sdtlck->index++;
 
-			/* open new linelock */
-			if (sdtlck->index < sdtlck->maxcnt)
+			/* खोलो new linelock */
+			अगर (sdtlck->index < sdtlck->maxcnt)
 				slv++;
-			else {
-				sdtlck = (struct dt_lock *) txLinelock(sdtlck);
+			अन्यथा अणु
+				sdtlck = (काष्ठा dt_lock *) txLinelock(sdtlck);
 				slv = & sdtlck->lv[0];
-			}
+			पूर्ण
 
 			slv->offset = ssi;
 			ns = 0;
-		}
+		पूर्ण
 
 		/*
 		 * move head/only segment of an entry
@@ -4114,39 +4115,39 @@ static void dtMoveEntry(dtpage_t * sp, int si, dtpage_t * dp,
 
 		/* get src slot and move */
 		s = &sp->slot[ssi];
-		if (sp->header.flag & BT_LEAF) {
+		अगर (sp->header.flag & BT_LEAF) अणु
 			/* get source entry */
-			slh = (struct ldtentry *) s;
-			dlh = (struct ldtentry *) h;
+			slh = (काष्ठा ldtentry *) s;
+			dlh = (काष्ठा ldtentry *) h;
 			snamlen = slh->namlen;
 
-			if (do_index) {
+			अगर (करो_index) अणु
 				len = min(snamlen, DTLHDRDATALEN);
 				dlh->index = slh->index; /* little-endian */
-			} else
+			पूर्ण अन्यथा
 				len = min(snamlen, DTLHDRDATALEN_LEGACY);
 
-			memcpy(dlh, slh, 6 + len * 2);
+			स_नकल(dlh, slh, 6 + len * 2);
 
 			next = slh->next;
 
 			/* update dst head/only segment next field */
 			dsi++;
 			dlh->next = dsi;
-		} else {
-			sih = (struct idtentry *) s;
+		पूर्ण अन्यथा अणु
+			sih = (काष्ठा idtentry *) s;
 			snamlen = sih->namlen;
 
 			len = min(snamlen, DTIHDRDATALEN);
-			dih = (struct idtentry *) h;
-			memcpy(dih, sih, 10 + len * 2);
+			dih = (काष्ठा idtentry *) h;
+			स_नकल(dih, sih, 10 + len * 2);
 			next = sih->next;
 
 			dsi++;
 			dih->next = dsi;
-		}
+		पूर्ण
 
-		/* free src head/only segment */
+		/* मुक्त src head/only segment */
 		s->next = sfsi;
 		s->cnt = 1;
 		sfsi = ssi;
@@ -4159,31 +4160,31 @@ static void dtMoveEntry(dtpage_t * sp, int si, dtpage_t * dp,
 		 * move additional segment(s) of the entry
 		 */
 		snamlen -= len;
-		while ((ssi = next) >= 0) {
+		जबतक ((ssi = next) >= 0) अणु
 			/* is next slot contiguous ? */
-			if (ssi != xssi + 1) {
-				/* close current linelock */
+			अगर (ssi != xssi + 1) अणु
+				/* बंद current linelock */
 				slv->length = ns;
 				sdtlck->index++;
 
-				/* open new linelock */
-				if (sdtlck->index < sdtlck->maxcnt)
+				/* खोलो new linelock */
+				अगर (sdtlck->index < sdtlck->maxcnt)
 					slv++;
-				else {
+				अन्यथा अणु
 					sdtlck =
-					    (struct dt_lock *)
+					    (काष्ठा dt_lock *)
 					    txLinelock(sdtlck);
 					slv = & sdtlck->lv[0];
-				}
+				पूर्ण
 
 				slv->offset = ssi;
 				ns = 0;
-			}
+			पूर्ण
 
 			/* get next source segment */
 			s = &sp->slot[ssi];
 
-			/* get next destination free slot */
+			/* get next destination मुक्त slot */
 			d++;
 
 			len = min(snamlen, DTSLOTDATALEN);
@@ -4196,28 +4197,28 @@ static void dtMoveEntry(dtpage_t * sp, int si, dtpage_t * dp,
 			dsi++;
 			d->next = dsi;
 
-			/* free source segment */
+			/* मुक्त source segment */
 			next = s->next;
 			s->next = sfsi;
 			s->cnt = 1;
 			sfsi = ssi;
 
 			snamlen -= len;
-		}		/* end while */
+		पूर्ण		/* end जबतक */
 
 		/* terminate dst last/only segment */
-		if (h == d) {
+		अगर (h == d) अणु
 			/* single segment entry */
-			if (dp->header.flag & BT_LEAF)
+			अगर (dp->header.flag & BT_LEAF)
 				dlh->next = -1;
-			else
+			अन्यथा
 				dih->next = -1;
-		} else
+		पूर्ण अन्यथा
 			/* multi-segment entry */
 			d->next = -1;
-	}			/* end for */
+	पूर्ण			/* end क्रम */
 
-	/* close current linelock */
+	/* बंद current linelock */
 	slv->length = ns;
 	sdtlck->index++;
 	*sdtlock = sdtlck;
@@ -4227,140 +4228,140 @@ static void dtMoveEntry(dtpage_t * sp, int si, dtpage_t * dp,
 	*ddtlock = ddtlck;
 
 	/* update source header */
-	sp->header.freelist = sfsi;
-	sp->header.freecnt += nd;
+	sp->header.मुक्तlist = sfsi;
+	sp->header.मुक्तcnt += nd;
 
 	/* update destination header */
 	dp->header.nextindex = di;
 
-	dp->header.freelist = dsi;
-	dp->header.freecnt -= nd;
-}
+	dp->header.मुक्तlist = dsi;
+	dp->header.मुक्तcnt -= nd;
+पूर्ण
 
 
 /*
  *	dtDeleteEntry()
  *
- * function: free a (leaf/internal) entry
+ * function: मुक्त a (leaf/पूर्णांकernal) entry
  *
- * log freelist header, stbl, and each segment slot of entry
- * (even though last/only segment next field is modified,
+ * log मुक्तlist header, stbl, and each segment slot of entry
+ * (even though last/only segment next field is modअगरied,
  * physical image logging requires all segment slots of
- * the entry logged to avoid applying previous updates
+ * the entry logged to aव्योम applying previous updates
  * to the same slots)
  */
-static void dtDeleteEntry(dtpage_t * p, int fi, struct dt_lock ** dtlock)
-{
-	int fsi;		/* free entry slot index */
+अटल व्योम dtDeleteEntry(dtpage_t * p, पूर्णांक fi, काष्ठा dt_lock ** dtlock)
+अणु
+	पूर्णांक fsi;		/* मुक्त entry slot index */
 	s8 *stbl;
-	struct dtslot *t;
-	int si, freecnt;
-	struct dt_lock *dtlck = *dtlock;
-	struct lv *lv;
-	int xsi, n;
+	काष्ठा dtslot *t;
+	पूर्णांक si, मुक्तcnt;
+	काष्ठा dt_lock *dtlck = *dtlock;
+	काष्ठा lv *lv;
+	पूर्णांक xsi, n;
 
-	/* get free entry slot index */
+	/* get मुक्त entry slot index */
 	stbl = DT_GETSTBL(p);
 	fsi = stbl[fi];
 
-	/* open new linelock */
-	if (dtlck->index >= dtlck->maxcnt)
-		dtlck = (struct dt_lock *) txLinelock(dtlck);
+	/* खोलो new linelock */
+	अगर (dtlck->index >= dtlck->maxcnt)
+		dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 	lv = & dtlck->lv[dtlck->index];
 
 	lv->offset = fsi;
 
 	/* get the head/only segment */
 	t = &p->slot[fsi];
-	if (p->header.flag & BT_LEAF)
-		si = ((struct ldtentry *) t)->next;
-	else
-		si = ((struct idtentry *) t)->next;
+	अगर (p->header.flag & BT_LEAF)
+		si = ((काष्ठा ldtentry *) t)->next;
+	अन्यथा
+		si = ((काष्ठा idtentry *) t)->next;
 	t->next = si;
 	t->cnt = 1;
 
-	n = freecnt = 1;
+	n = मुक्तcnt = 1;
 	xsi = fsi;
 
 	/* find the last/only segment */
-	while (si >= 0) {
+	जबतक (si >= 0) अणु
 		/* is next slot contiguous ? */
-		if (si != xsi + 1) {
-			/* close current linelock */
+		अगर (si != xsi + 1) अणु
+			/* बंद current linelock */
 			lv->length = n;
 			dtlck->index++;
 
-			/* open new linelock */
-			if (dtlck->index < dtlck->maxcnt)
+			/* खोलो new linelock */
+			अगर (dtlck->index < dtlck->maxcnt)
 				lv++;
-			else {
-				dtlck = (struct dt_lock *) txLinelock(dtlck);
+			अन्यथा अणु
+				dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 				lv = & dtlck->lv[0];
-			}
+			पूर्ण
 
 			lv->offset = si;
 			n = 0;
-		}
+		पूर्ण
 
 		n++;
 		xsi = si;
-		freecnt++;
+		मुक्तcnt++;
 
 		t = &p->slot[si];
 		t->cnt = 1;
 		si = t->next;
-	}
+	पूर्ण
 
-	/* close current linelock */
+	/* बंद current linelock */
 	lv->length = n;
 	dtlck->index++;
 
 	*dtlock = dtlck;
 
-	/* update freelist */
-	t->next = p->header.freelist;
-	p->header.freelist = fsi;
-	p->header.freecnt += freecnt;
+	/* update मुक्तlist */
+	t->next = p->header.मुक्तlist;
+	p->header.मुक्तlist = fsi;
+	p->header.मुक्तcnt += मुक्तcnt;
 
-	/* if delete from middle,
-	 * shift left the succedding entries in the stbl
+	/* अगर delete from middle,
+	 * shअगरt left the succedding entries in the stbl
 	 */
 	si = p->header.nextindex;
-	if (fi < si - 1)
-		memmove(&stbl[fi], &stbl[fi + 1], si - fi - 1);
+	अगर (fi < si - 1)
+		स_हटाओ(&stbl[fi], &stbl[fi + 1], si - fi - 1);
 
 	p->header.nextindex--;
-}
+पूर्ण
 
 
 /*
  *	dtTruncateEntry()
  *
- * function: truncate a (leaf/internal) entry
+ * function: truncate a (leaf/पूर्णांकernal) entry
  *
- * log freelist header, stbl, and each segment slot of entry
- * (even though last/only segment next field is modified,
+ * log मुक्तlist header, stbl, and each segment slot of entry
+ * (even though last/only segment next field is modअगरied,
  * physical image logging requires all segment slots of
- * the entry logged to avoid applying previous updates
+ * the entry logged to aव्योम applying previous updates
  * to the same slots)
  */
-static void dtTruncateEntry(dtpage_t * p, int ti, struct dt_lock ** dtlock)
-{
-	int tsi;		/* truncate entry slot index */
+अटल व्योम dtTruncateEntry(dtpage_t * p, पूर्णांक ti, काष्ठा dt_lock ** dtlock)
+अणु
+	पूर्णांक tsi;		/* truncate entry slot index */
 	s8 *stbl;
-	struct dtslot *t;
-	int si, freecnt;
-	struct dt_lock *dtlck = *dtlock;
-	struct lv *lv;
-	int fsi, xsi, n;
+	काष्ठा dtslot *t;
+	पूर्णांक si, मुक्तcnt;
+	काष्ठा dt_lock *dtlck = *dtlock;
+	काष्ठा lv *lv;
+	पूर्णांक fsi, xsi, n;
 
-	/* get free entry slot index */
+	/* get मुक्त entry slot index */
 	stbl = DT_GETSTBL(p);
 	tsi = stbl[ti];
 
-	/* open new linelock */
-	if (dtlck->index >= dtlck->maxcnt)
-		dtlck = (struct dt_lock *) txLinelock(dtlck);
+	/* खोलो new linelock */
+	अगर (dtlck->index >= dtlck->maxcnt)
+		dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 	lv = & dtlck->lv[dtlck->index];
 
 	lv->offset = tsi;
@@ -4368,79 +4369,79 @@ static void dtTruncateEntry(dtpage_t * p, int ti, struct dt_lock ** dtlock)
 	/* get the head/only segment */
 	t = &p->slot[tsi];
 	ASSERT(p->header.flag & BT_INTERNAL);
-	((struct idtentry *) t)->namlen = 0;
-	si = ((struct idtentry *) t)->next;
-	((struct idtentry *) t)->next = -1;
+	((काष्ठा idtentry *) t)->namlen = 0;
+	si = ((काष्ठा idtentry *) t)->next;
+	((काष्ठा idtentry *) t)->next = -1;
 
 	n = 1;
-	freecnt = 0;
+	मुक्तcnt = 0;
 	fsi = si;
 	xsi = tsi;
 
 	/* find the last/only segment */
-	while (si >= 0) {
+	जबतक (si >= 0) अणु
 		/* is next slot contiguous ? */
-		if (si != xsi + 1) {
-			/* close current linelock */
+		अगर (si != xsi + 1) अणु
+			/* बंद current linelock */
 			lv->length = n;
 			dtlck->index++;
 
-			/* open new linelock */
-			if (dtlck->index < dtlck->maxcnt)
+			/* खोलो new linelock */
+			अगर (dtlck->index < dtlck->maxcnt)
 				lv++;
-			else {
-				dtlck = (struct dt_lock *) txLinelock(dtlck);
+			अन्यथा अणु
+				dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 				lv = & dtlck->lv[0];
-			}
+			पूर्ण
 
 			lv->offset = si;
 			n = 0;
-		}
+		पूर्ण
 
 		n++;
 		xsi = si;
-		freecnt++;
+		मुक्तcnt++;
 
 		t = &p->slot[si];
 		t->cnt = 1;
 		si = t->next;
-	}
+	पूर्ण
 
-	/* close current linelock */
+	/* बंद current linelock */
 	lv->length = n;
 	dtlck->index++;
 
 	*dtlock = dtlck;
 
-	/* update freelist */
-	if (freecnt == 0)
-		return;
-	t->next = p->header.freelist;
-	p->header.freelist = fsi;
-	p->header.freecnt += freecnt;
-}
+	/* update मुक्तlist */
+	अगर (मुक्तcnt == 0)
+		वापस;
+	t->next = p->header.मुक्तlist;
+	p->header.मुक्तlist = fsi;
+	p->header.मुक्तcnt += मुक्तcnt;
+पूर्ण
 
 
 /*
  *	dtLinelockFreelist()
  */
-static void dtLinelockFreelist(dtpage_t * p,	/* directory page */
-			       int m,	/* max slot index */
-			       struct dt_lock ** dtlock)
-{
-	int fsi;		/* free entry slot index */
-	struct dtslot *t;
-	int si;
-	struct dt_lock *dtlck = *dtlock;
-	struct lv *lv;
-	int xsi, n;
+अटल व्योम dtLinelockFreelist(dtpage_t * p,	/* directory page */
+			       पूर्णांक m,	/* max slot index */
+			       काष्ठा dt_lock ** dtlock)
+अणु
+	पूर्णांक fsi;		/* मुक्त entry slot index */
+	काष्ठा dtslot *t;
+	पूर्णांक si;
+	काष्ठा dt_lock *dtlck = *dtlock;
+	काष्ठा lv *lv;
+	पूर्णांक xsi, n;
 
-	/* get free entry slot index */
-	fsi = p->header.freelist;
+	/* get मुक्त entry slot index */
+	fsi = p->header.मुक्तlist;
 
-	/* open new linelock */
-	if (dtlck->index >= dtlck->maxcnt)
-		dtlck = (struct dt_lock *) txLinelock(dtlck);
+	/* खोलो new linelock */
+	अगर (dtlck->index >= dtlck->maxcnt)
+		dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 	lv = & dtlck->lv[dtlck->index];
 
 	lv->offset = fsi;
@@ -4452,91 +4453,91 @@ static void dtLinelockFreelist(dtpage_t * p,	/* directory page */
 	si = t->next;
 
 	/* find the last/only segment */
-	while (si < m && si >= 0) {
+	जबतक (si < m && si >= 0) अणु
 		/* is next slot contiguous ? */
-		if (si != xsi + 1) {
-			/* close current linelock */
+		अगर (si != xsi + 1) अणु
+			/* बंद current linelock */
 			lv->length = n;
 			dtlck->index++;
 
-			/* open new linelock */
-			if (dtlck->index < dtlck->maxcnt)
+			/* खोलो new linelock */
+			अगर (dtlck->index < dtlck->maxcnt)
 				lv++;
-			else {
-				dtlck = (struct dt_lock *) txLinelock(dtlck);
+			अन्यथा अणु
+				dtlck = (काष्ठा dt_lock *) txLinelock(dtlck);
 				lv = & dtlck->lv[0];
-			}
+			पूर्ण
 
 			lv->offset = si;
 			n = 0;
-		}
+		पूर्ण
 
 		n++;
 		xsi = si;
 
 		t = &p->slot[si];
 		si = t->next;
-	}
+	पूर्ण
 
-	/* close current linelock */
+	/* बंद current linelock */
 	lv->length = n;
 	dtlck->index++;
 
 	*dtlock = dtlck;
-}
+पूर्ण
 
 
 /*
- * NAME: dtModify
+ * NAME: dtModअगरy
  *
- * FUNCTION: Modify the inode number part of a directory entry
+ * FUNCTION: Modअगरy the inode number part of a directory entry
  *
  * PARAMETERS:
  *	tid	- Transaction id
  *	ip	- Inode of parent directory
- *	key	- Name of entry to be modified
+ *	key	- Name of entry to be modअगरied
  *	orig_ino	- Original inode number expected in entry
- *	new_ino	- New inode number to put into entry
+ *	new_ino	- New inode number to put पूर्णांकo entry
  *	flag	- JFS_RENAME
  *
  * RETURNS:
- *	-ESTALE	- If entry found does not match orig_ino passed in
+ *	-ESTALE	- If entry found करोes not match orig_ino passed in
  *	-ENOENT	- If no entry can be found to match key
- *	0	- If successfully modified entry
+ *	0	- If successfully modअगरied entry
  */
-int dtModify(tid_t tid, struct inode *ip,
-	 struct component_name * key, ino_t * orig_ino, ino_t new_ino, int flag)
-{
-	int rc;
+पूर्णांक dtModअगरy(tid_t tid, काष्ठा inode *ip,
+	 काष्ठा component_name * key, ino_t * orig_ino, ino_t new_ino, पूर्णांक flag)
+अणु
+	पूर्णांक rc;
 	s64 bn;
-	struct metapage *mp;
+	काष्ठा metapage *mp;
 	dtpage_t *p;
-	int index;
-	struct btstack btstack;
-	struct tlock *tlck;
-	struct dt_lock *dtlck;
-	struct lv *lv;
+	पूर्णांक index;
+	काष्ठा btstack btstack;
+	काष्ठा tlock *tlck;
+	काष्ठा dt_lock *dtlck;
+	काष्ठा lv *lv;
 	s8 *stbl;
-	int entry_si;		/* entry slot index */
-	struct ldtentry *entry;
+	पूर्णांक entry_si;		/* entry slot index */
+	काष्ठा ldtentry *entry;
 
 	/*
-	 *	search for the entry to modify:
+	 *	search क्रम the entry to modअगरy:
 	 *
-	 * dtSearch() returns (leaf page pinned, index at which to modify).
+	 * dtSearch() वापसs (leaf page pinned, index at which to modअगरy).
 	 */
-	if ((rc = dtSearch(ip, key, orig_ino, &btstack, flag)))
-		return rc;
+	अगर ((rc = dtSearch(ip, key, orig_ino, &btstack, flag)))
+		वापस rc;
 
 	/* retrieve search result */
 	DT_GETSEARCH(ip, btstack.top, bn, mp, p, index);
 
-	BT_MARK_DIRTY(mp, ip);
+	BT_MARK_सूचीTY(mp, ip);
 	/*
 	 * acquire a transaction lock on the leaf page of named entry
 	 */
 	tlck = txLock(tid, ip, mp, tlckDTREE | tlckENTRY);
-	dtlck = (struct dt_lock *) & tlck->lock;
+	dtlck = (काष्ठा dt_lock *) & tlck->lock;
 
 	/* get slot index of the entry */
 	stbl = DT_GETSTBL(p);
@@ -4550,7 +4551,7 @@ int dtModify(tid_t tid, struct inode *ip,
 	dtlck->index++;
 
 	/* get the head/only segment */
-	entry = (struct ldtentry *) & p->slot[entry_si];
+	entry = (काष्ठा ldtentry *) & p->slot[entry_si];
 
 	/* substitute the inode number of the entry */
 	entry->inumber = cpu_to_le32(new_ino);
@@ -4558,5 +4559,5 @@ int dtModify(tid_t tid, struct inode *ip,
 	/* unpin the leaf page */
 	DT_PUTPAGE(mp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण

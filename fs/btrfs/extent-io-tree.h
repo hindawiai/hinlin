@@ -1,43 +1,44 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 
-#ifndef BTRFS_EXTENT_IO_TREE_H
-#define BTRFS_EXTENT_IO_TREE_H
+#अगर_अघोषित BTRFS_EXTENT_IO_TREE_H
+#घोषणा BTRFS_EXTENT_IO_TREE_H
 
-struct extent_changeset;
-struct io_failure_record;
+काष्ठा extent_changeset;
+काष्ठा io_failure_record;
 
-/* Bits for the extent state */
-#define EXTENT_DIRTY		(1U << 0)
-#define EXTENT_UPTODATE		(1U << 1)
-#define EXTENT_LOCKED		(1U << 2)
-#define EXTENT_NEW		(1U << 3)
-#define EXTENT_DELALLOC		(1U << 4)
-#define EXTENT_DEFRAG		(1U << 5)
-#define EXTENT_BOUNDARY		(1U << 6)
-#define EXTENT_NODATASUM	(1U << 7)
-#define EXTENT_CLEAR_META_RESV	(1U << 8)
-#define EXTENT_NEED_WAIT	(1U << 9)
-#define EXTENT_DAMAGED		(1U << 10)
-#define EXTENT_NORESERVE	(1U << 11)
-#define EXTENT_QGROUP_RESERVED	(1U << 12)
-#define EXTENT_CLEAR_DATA_RESV	(1U << 13)
+/* Bits क्रम the extent state */
+#घोषणा EXTENT_सूचीTY		(1U << 0)
+#घोषणा EXTENT_UPTODATE		(1U << 1)
+#घोषणा EXTENT_LOCKED		(1U << 2)
+#घोषणा EXTENT_NEW		(1U << 3)
+#घोषणा EXTENT_DELALLOC		(1U << 4)
+#घोषणा EXTENT_DEFRAG		(1U << 5)
+#घोषणा EXTENT_BOUNDARY		(1U << 6)
+#घोषणा EXTENT_NODATASUM	(1U << 7)
+#घोषणा EXTENT_CLEAR_META_RESV	(1U << 8)
+#घोषणा EXTENT_NEED_WAIT	(1U << 9)
+#घोषणा EXTENT_DAMAGED		(1U << 10)
+#घोषणा EXTENT_NORESERVE	(1U << 11)
+#घोषणा EXTENT_QGROUP_RESERVED	(1U << 12)
+#घोषणा EXTENT_CLEAR_DATA_RESV	(1U << 13)
 /*
- * Must be cleared only during ordered extent completion or on error paths if we
- * did not manage to submit bios and create the ordered extents for the range.
- * Should not be cleared during page release and page invalidation (if there is
- * an ordered extent in flight), that is left for the ordered extent completion.
+ * Must be cleared only during ordered extent completion or on error paths अगर we
+ * did not manage to submit bios and create the ordered extents क्रम the range.
+ * Should not be cleared during page release and page invalidation (अगर there is
+ * an ordered extent in flight), that is left क्रम the ordered extent completion.
  */
-#define EXTENT_DELALLOC_NEW	(1U << 14)
+#घोषणा EXTENT_DELALLOC_NEW	(1U << 14)
 /*
- * When an ordered extent successfully completes for a region marked as a new
+ * When an ordered extent successfully completes क्रम a region marked as a new
  * delalloc range, use this flag when clearing a new delalloc range to indicate
  * that the VFS' inode number of bytes should be incremented and the inode's new
  * delalloc bytes decremented, in an atomic way to prevent races with stat(2).
  */
-#define EXTENT_ADD_INODE_BYTES  (1U << 15)
-#define EXTENT_DO_ACCOUNTING    (EXTENT_CLEAR_META_RESV | \
+#घोषणा EXTENT_ADD_INODE_BYTES  (1U << 15)
+#घोषणा EXTENT_DO_ACCOUNTING    (EXTENT_CLEAR_META_RESV | \
 				 EXTENT_CLEAR_DATA_RESV)
-#define EXTENT_CTLBITS		(EXTENT_DO_ACCOUNTING | \
+#घोषणा EXTENT_CTLBITS		(EXTENT_DO_ACCOUNTING | \
 				 EXTENT_ADD_INODE_BYTES)
 
 /*
@@ -46,30 +47,30 @@ struct io_failure_record;
  * / EXTENT_CLEAR_DATA_RESV because they have special meaning to the bit
  * manipulation functions
  */
-#define CHUNK_ALLOCATED				EXTENT_DIRTY
-#define CHUNK_TRIMMED				EXTENT_DEFRAG
-#define CHUNK_STATE_MASK			(CHUNK_ALLOCATED |		\
+#घोषणा CHUNK_ALLOCATED				EXTENT_सूचीTY
+#घोषणा CHUNK_TRIMMED				EXTENT_DEFRAG
+#घोषणा CHUNK_STATE_MASK			(CHUNK_ALLOCATED |		\
 						 CHUNK_TRIMMED)
 
-enum {
+क्रमागत अणु
 	IO_TREE_FS_PINNED_EXTENTS,
 	IO_TREE_FS_EXCLUDED_EXTENTS,
 	IO_TREE_BTREE_INODE_IO,
 	IO_TREE_INODE_IO,
 	IO_TREE_INODE_IO_FAILURE,
 	IO_TREE_RELOC_BLOCKS,
-	IO_TREE_TRANS_DIRTY_PAGES,
-	IO_TREE_ROOT_DIRTY_LOG_PAGES,
-	IO_TREE_INODE_FILE_EXTENT,
+	IO_TREE_TRANS_सूचीTY_PAGES,
+	IO_TREE_ROOT_सूचीTY_LOG_PAGES,
+	IO_TREE_INODE_खाता_EXTENT,
 	IO_TREE_LOG_CSUM_RANGE,
 	IO_TREE_SELFTEST,
 	IO_TREE_DEVICE_ALLOC_STATE,
-};
+पूर्ण;
 
-struct extent_io_tree {
-	struct rb_root state;
-	struct btrfs_fs_info *fs_info;
-	void *private_data;
+काष्ठा extent_io_tree अणु
+	काष्ठा rb_root state;
+	काष्ठा btrfs_fs_info *fs_info;
+	व्योम *निजी_data;
 	u64 dirty_bytes;
 	bool track_uptodate;
 
@@ -77,191 +78,191 @@ struct extent_io_tree {
 	u8 owner;
 
 	spinlock_t lock;
-};
+पूर्ण;
 
-struct extent_state {
+काष्ठा extent_state अणु
 	u64 start;
 	u64 end; /* inclusive */
-	struct rb_node rb_node;
+	काष्ठा rb_node rb_node;
 
 	/* ADD NEW ELEMENTS AFTER THIS */
-	wait_queue_head_t wq;
+	रुको_queue_head_t wq;
 	refcount_t refs;
 	u32 state;
 
-	struct io_failure_record *failrec;
+	काष्ठा io_failure_record *failrec;
 
-#ifdef CONFIG_BTRFS_DEBUG
-	struct list_head leak_list;
-#endif
-};
+#अगर_घोषित CONFIG_BTRFS_DEBUG
+	काष्ठा list_head leak_list;
+#पूर्ण_अगर
+पूर्ण;
 
-int __init extent_state_cache_init(void);
-void __cold extent_state_cache_exit(void);
+पूर्णांक __init extent_state_cache_init(व्योम);
+व्योम __cold extent_state_cache_निकास(व्योम);
 
-void extent_io_tree_init(struct btrfs_fs_info *fs_info,
-			 struct extent_io_tree *tree, unsigned int owner,
-			 void *private_data);
-void extent_io_tree_release(struct extent_io_tree *tree);
+व्योम extent_io_tree_init(काष्ठा btrfs_fs_info *fs_info,
+			 काष्ठा extent_io_tree *tree, अचिन्हित पूर्णांक owner,
+			 व्योम *निजी_data);
+व्योम extent_io_tree_release(काष्ठा extent_io_tree *tree);
 
-int lock_extent_bits(struct extent_io_tree *tree, u64 start, u64 end,
-		     struct extent_state **cached);
+पूर्णांक lock_extent_bits(काष्ठा extent_io_tree *tree, u64 start, u64 end,
+		     काष्ठा extent_state **cached);
 
-static inline int lock_extent(struct extent_io_tree *tree, u64 start, u64 end)
-{
-	return lock_extent_bits(tree, start, end, NULL);
-}
+अटल अंतरभूत पूर्णांक lock_extent(काष्ठा extent_io_tree *tree, u64 start, u64 end)
+अणु
+	वापस lock_extent_bits(tree, start, end, शून्य);
+पूर्ण
 
-int try_lock_extent(struct extent_io_tree *tree, u64 start, u64 end);
+पूर्णांक try_lock_extent(काष्ठा extent_io_tree *tree, u64 start, u64 end);
 
-int __init extent_io_init(void);
-void __cold extent_io_exit(void);
+पूर्णांक __init extent_io_init(व्योम);
+व्योम __cold extent_io_निकास(व्योम);
 
-u64 count_range_bits(struct extent_io_tree *tree,
+u64 count_range_bits(काष्ठा extent_io_tree *tree,
 		     u64 *start, u64 search_end,
-		     u64 max_bytes, u32 bits, int contig);
+		     u64 max_bytes, u32 bits, पूर्णांक contig);
 
-void free_extent_state(struct extent_state *state);
-int test_range_bit(struct extent_io_tree *tree, u64 start, u64 end,
-		   u32 bits, int filled, struct extent_state *cached_state);
-int clear_record_extent_bits(struct extent_io_tree *tree, u64 start, u64 end,
-			     u32 bits, struct extent_changeset *changeset);
-int clear_extent_bit(struct extent_io_tree *tree, u64 start, u64 end,
-		     u32 bits, int wake, int delete,
-		     struct extent_state **cached);
-int __clear_extent_bit(struct extent_io_tree *tree, u64 start, u64 end,
-		     u32 bits, int wake, int delete,
-		     struct extent_state **cached, gfp_t mask,
-		     struct extent_changeset *changeset);
+व्योम मुक्त_extent_state(काष्ठा extent_state *state);
+पूर्णांक test_range_bit(काष्ठा extent_io_tree *tree, u64 start, u64 end,
+		   u32 bits, पूर्णांक filled, काष्ठा extent_state *cached_state);
+पूर्णांक clear_record_extent_bits(काष्ठा extent_io_tree *tree, u64 start, u64 end,
+			     u32 bits, काष्ठा extent_changeset *changeset);
+पूर्णांक clear_extent_bit(काष्ठा extent_io_tree *tree, u64 start, u64 end,
+		     u32 bits, पूर्णांक wake, पूर्णांक delete,
+		     काष्ठा extent_state **cached);
+पूर्णांक __clear_extent_bit(काष्ठा extent_io_tree *tree, u64 start, u64 end,
+		     u32 bits, पूर्णांक wake, पूर्णांक delete,
+		     काष्ठा extent_state **cached, gfp_t mask,
+		     काष्ठा extent_changeset *changeset);
 
-static inline int unlock_extent(struct extent_io_tree *tree, u64 start, u64 end)
-{
-	return clear_extent_bit(tree, start, end, EXTENT_LOCKED, 1, 0, NULL);
-}
+अटल अंतरभूत पूर्णांक unlock_extent(काष्ठा extent_io_tree *tree, u64 start, u64 end)
+अणु
+	वापस clear_extent_bit(tree, start, end, EXTENT_LOCKED, 1, 0, शून्य);
+पूर्ण
 
-static inline int unlock_extent_cached(struct extent_io_tree *tree, u64 start,
-		u64 end, struct extent_state **cached)
-{
-	return __clear_extent_bit(tree, start, end, EXTENT_LOCKED, 1, 0, cached,
-				GFP_NOFS, NULL);
-}
+अटल अंतरभूत पूर्णांक unlock_extent_cached(काष्ठा extent_io_tree *tree, u64 start,
+		u64 end, काष्ठा extent_state **cached)
+अणु
+	वापस __clear_extent_bit(tree, start, end, EXTENT_LOCKED, 1, 0, cached,
+				GFP_NOFS, शून्य);
+पूर्ण
 
-static inline int unlock_extent_cached_atomic(struct extent_io_tree *tree,
-		u64 start, u64 end, struct extent_state **cached)
-{
-	return __clear_extent_bit(tree, start, end, EXTENT_LOCKED, 1, 0, cached,
-				GFP_ATOMIC, NULL);
-}
+अटल अंतरभूत पूर्णांक unlock_extent_cached_atomic(काष्ठा extent_io_tree *tree,
+		u64 start, u64 end, काष्ठा extent_state **cached)
+अणु
+	वापस __clear_extent_bit(tree, start, end, EXTENT_LOCKED, 1, 0, cached,
+				GFP_ATOMIC, शून्य);
+पूर्ण
 
-static inline int clear_extent_bits(struct extent_io_tree *tree, u64 start,
+अटल अंतरभूत पूर्णांक clear_extent_bits(काष्ठा extent_io_tree *tree, u64 start,
 				    u64 end, u32 bits)
-{
-	int wake = 0;
+अणु
+	पूर्णांक wake = 0;
 
-	if (bits & EXTENT_LOCKED)
+	अगर (bits & EXTENT_LOCKED)
 		wake = 1;
 
-	return clear_extent_bit(tree, start, end, bits, wake, 0, NULL);
-}
+	वापस clear_extent_bit(tree, start, end, bits, wake, 0, शून्य);
+पूर्ण
 
-int set_record_extent_bits(struct extent_io_tree *tree, u64 start, u64 end,
-			   u32 bits, struct extent_changeset *changeset);
-int set_extent_bit(struct extent_io_tree *tree, u64 start, u64 end,
-		   u32 bits, unsigned exclusive_bits, u64 *failed_start,
-		   struct extent_state **cached_state, gfp_t mask,
-		   struct extent_changeset *changeset);
-int set_extent_bits_nowait(struct extent_io_tree *tree, u64 start, u64 end,
+पूर्णांक set_record_extent_bits(काष्ठा extent_io_tree *tree, u64 start, u64 end,
+			   u32 bits, काष्ठा extent_changeset *changeset);
+पूर्णांक set_extent_bit(काष्ठा extent_io_tree *tree, u64 start, u64 end,
+		   u32 bits, अचिन्हित exclusive_bits, u64 *failed_start,
+		   काष्ठा extent_state **cached_state, gfp_t mask,
+		   काष्ठा extent_changeset *changeset);
+पूर्णांक set_extent_bits_noरुको(काष्ठा extent_io_tree *tree, u64 start, u64 end,
 			   u32 bits);
 
-static inline int set_extent_bits(struct extent_io_tree *tree, u64 start,
+अटल अंतरभूत पूर्णांक set_extent_bits(काष्ठा extent_io_tree *tree, u64 start,
 		u64 end, u32 bits)
-{
-	return set_extent_bit(tree, start, end, bits, 0, NULL, NULL, GFP_NOFS,
-			      NULL);
-}
+अणु
+	वापस set_extent_bit(tree, start, end, bits, 0, शून्य, शून्य, GFP_NOFS,
+			      शून्य);
+पूर्ण
 
-static inline int clear_extent_uptodate(struct extent_io_tree *tree, u64 start,
-		u64 end, struct extent_state **cached_state)
-{
-	return __clear_extent_bit(tree, start, end, EXTENT_UPTODATE, 0, 0,
-				cached_state, GFP_NOFS, NULL);
-}
+अटल अंतरभूत पूर्णांक clear_extent_uptodate(काष्ठा extent_io_tree *tree, u64 start,
+		u64 end, काष्ठा extent_state **cached_state)
+अणु
+	वापस __clear_extent_bit(tree, start, end, EXTENT_UPTODATE, 0, 0,
+				cached_state, GFP_NOFS, शून्य);
+पूर्ण
 
-static inline int set_extent_dirty(struct extent_io_tree *tree, u64 start,
+अटल अंतरभूत पूर्णांक set_extent_dirty(काष्ठा extent_io_tree *tree, u64 start,
 		u64 end, gfp_t mask)
-{
-	return set_extent_bit(tree, start, end, EXTENT_DIRTY, 0, NULL, NULL,
-			      mask, NULL);
-}
+अणु
+	वापस set_extent_bit(tree, start, end, EXTENT_सूचीTY, 0, शून्य, शून्य,
+			      mask, शून्य);
+पूर्ण
 
-static inline int clear_extent_dirty(struct extent_io_tree *tree, u64 start,
-				     u64 end, struct extent_state **cached)
-{
-	return clear_extent_bit(tree, start, end,
-				EXTENT_DIRTY | EXTENT_DELALLOC |
+अटल अंतरभूत पूर्णांक clear_extent_dirty(काष्ठा extent_io_tree *tree, u64 start,
+				     u64 end, काष्ठा extent_state **cached)
+अणु
+	वापस clear_extent_bit(tree, start, end,
+				EXTENT_सूचीTY | EXTENT_DELALLOC |
 				EXTENT_DO_ACCOUNTING, 0, 0, cached);
-}
+पूर्ण
 
-int convert_extent_bit(struct extent_io_tree *tree, u64 start, u64 end,
+पूर्णांक convert_extent_bit(काष्ठा extent_io_tree *tree, u64 start, u64 end,
 		       u32 bits, u32 clear_bits,
-		       struct extent_state **cached_state);
+		       काष्ठा extent_state **cached_state);
 
-static inline int set_extent_delalloc(struct extent_io_tree *tree, u64 start,
+अटल अंतरभूत पूर्णांक set_extent_delalloc(काष्ठा extent_io_tree *tree, u64 start,
 				      u64 end, u32 extra_bits,
-				      struct extent_state **cached_state)
-{
-	return set_extent_bit(tree, start, end,
+				      काष्ठा extent_state **cached_state)
+अणु
+	वापस set_extent_bit(tree, start, end,
 			      EXTENT_DELALLOC | EXTENT_UPTODATE | extra_bits,
-			      0, NULL, cached_state, GFP_NOFS, NULL);
-}
+			      0, शून्य, cached_state, GFP_NOFS, शून्य);
+पूर्ण
 
-static inline int set_extent_defrag(struct extent_io_tree *tree, u64 start,
-		u64 end, struct extent_state **cached_state)
-{
-	return set_extent_bit(tree, start, end,
+अटल अंतरभूत पूर्णांक set_extent_defrag(काष्ठा extent_io_tree *tree, u64 start,
+		u64 end, काष्ठा extent_state **cached_state)
+अणु
+	वापस set_extent_bit(tree, start, end,
 			      EXTENT_DELALLOC | EXTENT_UPTODATE | EXTENT_DEFRAG,
-			      0, NULL, cached_state, GFP_NOFS, NULL);
-}
+			      0, शून्य, cached_state, GFP_NOFS, शून्य);
+पूर्ण
 
-static inline int set_extent_new(struct extent_io_tree *tree, u64 start,
+अटल अंतरभूत पूर्णांक set_extent_new(काष्ठा extent_io_tree *tree, u64 start,
 		u64 end)
-{
-	return set_extent_bit(tree, start, end, EXTENT_NEW, 0, NULL, NULL,
-			      GFP_NOFS, NULL);
-}
+अणु
+	वापस set_extent_bit(tree, start, end, EXTENT_NEW, 0, शून्य, शून्य,
+			      GFP_NOFS, शून्य);
+पूर्ण
 
-static inline int set_extent_uptodate(struct extent_io_tree *tree, u64 start,
-		u64 end, struct extent_state **cached_state, gfp_t mask)
-{
-	return set_extent_bit(tree, start, end, EXTENT_UPTODATE, 0, NULL,
-			      cached_state, mask, NULL);
-}
+अटल अंतरभूत पूर्णांक set_extent_uptodate(काष्ठा extent_io_tree *tree, u64 start,
+		u64 end, काष्ठा extent_state **cached_state, gfp_t mask)
+अणु
+	वापस set_extent_bit(tree, start, end, EXTENT_UPTODATE, 0, शून्य,
+			      cached_state, mask, शून्य);
+पूर्ण
 
-int find_first_extent_bit(struct extent_io_tree *tree, u64 start,
+पूर्णांक find_first_extent_bit(काष्ठा extent_io_tree *tree, u64 start,
 			  u64 *start_ret, u64 *end_ret, u32 bits,
-			  struct extent_state **cached_state);
-void find_first_clear_extent_bit(struct extent_io_tree *tree, u64 start,
+			  काष्ठा extent_state **cached_state);
+व्योम find_first_clear_extent_bit(काष्ठा extent_io_tree *tree, u64 start,
 				 u64 *start_ret, u64 *end_ret, u32 bits);
-int find_contiguous_extent_bit(struct extent_io_tree *tree, u64 start,
+पूर्णांक find_contiguous_extent_bit(काष्ठा extent_io_tree *tree, u64 start,
 			       u64 *start_ret, u64 *end_ret, u32 bits);
-int extent_invalidatepage(struct extent_io_tree *tree,
-			  struct page *page, unsigned long offset);
-bool btrfs_find_delalloc_range(struct extent_io_tree *tree, u64 *start,
+पूर्णांक extent_invalidatepage(काष्ठा extent_io_tree *tree,
+			  काष्ठा page *page, अचिन्हित दीर्घ offset);
+bool btrfs_find_delalloc_range(काष्ठा extent_io_tree *tree, u64 *start,
 			       u64 *end, u64 max_bytes,
-			       struct extent_state **cached_state);
+			       काष्ठा extent_state **cached_state);
 
-/* This should be reworked in the future and put elsewhere. */
-struct io_failure_record *get_state_failrec(struct extent_io_tree *tree, u64 start);
-int set_state_failrec(struct extent_io_tree *tree, u64 start,
-		      struct io_failure_record *failrec);
-void btrfs_free_io_failure_record(struct btrfs_inode *inode, u64 start,
+/* This should be reworked in the future and put अन्यथाwhere. */
+काष्ठा io_failure_record *get_state_failrec(काष्ठा extent_io_tree *tree, u64 start);
+पूर्णांक set_state_failrec(काष्ठा extent_io_tree *tree, u64 start,
+		      काष्ठा io_failure_record *failrec);
+व्योम btrfs_मुक्त_io_failure_record(काष्ठा btrfs_inode *inode, u64 start,
 		u64 end);
-int free_io_failure(struct extent_io_tree *failure_tree,
-		    struct extent_io_tree *io_tree,
-		    struct io_failure_record *rec);
-int clean_io_failure(struct btrfs_fs_info *fs_info,
-		     struct extent_io_tree *failure_tree,
-		     struct extent_io_tree *io_tree, u64 start,
-		     struct page *page, u64 ino, unsigned int pg_offset);
+पूर्णांक मुक्त_io_failure(काष्ठा extent_io_tree *failure_tree,
+		    काष्ठा extent_io_tree *io_tree,
+		    काष्ठा io_failure_record *rec);
+पूर्णांक clean_io_failure(काष्ठा btrfs_fs_info *fs_info,
+		     काष्ठा extent_io_tree *failure_tree,
+		     काष्ठा extent_io_tree *io_tree, u64 start,
+		     काष्ठा page *page, u64 ino, अचिन्हित पूर्णांक pg_offset);
 
-#endif /* BTRFS_EXTENT_IO_TREE_H */
+#पूर्ण_अगर /* BTRFS_EXTENT_IO_TREE_H */

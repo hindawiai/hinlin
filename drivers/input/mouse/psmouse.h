@@ -1,51 +1,52 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _PSMOUSE_H
-#define _PSMOUSE_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _PSMOUSE_H
+#घोषणा _PSMOUSE_H
 
-#define PSMOUSE_OOB_NONE	0x00
-#define PSMOUSE_OOB_EXTRA_BTNS	0x01
+#घोषणा PSMOUSE_OOB_NONE	0x00
+#घोषणा PSMOUSE_OOB_EXTRA_BTNS	0x01
 
-#define PSMOUSE_CMD_SETSCALE11	0x00e6
-#define PSMOUSE_CMD_SETSCALE21	0x00e7
-#define PSMOUSE_CMD_SETRES	0x10e8
-#define PSMOUSE_CMD_GETINFO	0x03e9
-#define PSMOUSE_CMD_SETSTREAM	0x00ea
-#define PSMOUSE_CMD_SETPOLL	0x00f0
-#define PSMOUSE_CMD_POLL	0x00eb	/* caller sets number of bytes to receive */
-#define PSMOUSE_CMD_RESET_WRAP	0x00ec
-#define PSMOUSE_CMD_GETID	0x02f2
-#define PSMOUSE_CMD_SETRATE	0x10f3
-#define PSMOUSE_CMD_ENABLE	0x00f4
-#define PSMOUSE_CMD_DISABLE	0x00f5
-#define PSMOUSE_CMD_RESET_DIS	0x00f6
-#define PSMOUSE_CMD_RESET_BAT	0x02ff
+#घोषणा PSMOUSE_CMD_SETSCALE11	0x00e6
+#घोषणा PSMOUSE_CMD_SETSCALE21	0x00e7
+#घोषणा PSMOUSE_CMD_SETRES	0x10e8
+#घोषणा PSMOUSE_CMD_GETINFO	0x03e9
+#घोषणा PSMOUSE_CMD_SETSTREAM	0x00ea
+#घोषणा PSMOUSE_CMD_SETPOLL	0x00f0
+#घोषणा PSMOUSE_CMD_POLL	0x00eb	/* caller sets number of bytes to receive */
+#घोषणा PSMOUSE_CMD_RESET_WRAP	0x00ec
+#घोषणा PSMOUSE_CMD_GETID	0x02f2
+#घोषणा PSMOUSE_CMD_SETRATE	0x10f3
+#घोषणा PSMOUSE_CMD_ENABLE	0x00f4
+#घोषणा PSMOUSE_CMD_DISABLE	0x00f5
+#घोषणा PSMOUSE_CMD_RESET_DIS	0x00f6
+#घोषणा PSMOUSE_CMD_RESET_BAT	0x02ff
 
-#define PSMOUSE_RET_BAT		0xaa
-#define PSMOUSE_RET_ID		0x00
-#define PSMOUSE_RET_ACK		0xfa
-#define PSMOUSE_RET_NAK		0xfe
+#घोषणा PSMOUSE_RET_BAT		0xaa
+#घोषणा PSMOUSE_RET_ID		0x00
+#घोषणा PSMOUSE_RET_ACK		0xfa
+#घोषणा PSMOUSE_RET_NAK		0xfe
 
-enum psmouse_state {
+क्रमागत psmouse_state अणु
 	PSMOUSE_IGNORE,
 	PSMOUSE_INITIALIZING,
 	PSMOUSE_RESYNCING,
 	PSMOUSE_CMD_MODE,
 	PSMOUSE_ACTIVATED,
-};
+पूर्ण;
 
-/* psmouse protocol handler return codes */
-typedef enum {
+/* psmouse protocol handler वापस codes */
+प्रकार क्रमागत अणु
 	PSMOUSE_BAD_DATA,
 	PSMOUSE_GOOD_DATA,
 	PSMOUSE_FULL_PACKET
-} psmouse_ret_t;
+पूर्ण psmouse_ret_t;
 
-enum psmouse_scale {
+क्रमागत psmouse_scale अणु
 	PSMOUSE_SCALE11,
 	PSMOUSE_SCALE21
-};
+पूर्ण;
 
-enum psmouse_type {
+क्रमागत psmouse_type अणु
 	PSMOUSE_NONE,
 	PSMOUSE_PS2,
 	PSMOUSE_PS2PP,
@@ -70,180 +71,180 @@ enum psmouse_type {
 	PSMOUSE_SYNAPTICS_SMBUS,
 	PSMOUSE_ELANTECH_SMBUS,
 	PSMOUSE_AUTO		/* This one should always be last */
-};
+पूर्ण;
 
-struct psmouse;
+काष्ठा psmouse;
 
-struct psmouse_protocol {
-	enum psmouse_type type;
+काष्ठा psmouse_protocol अणु
+	क्रमागत psmouse_type type;
 	bool maxproto;
 	bool ignore_parity; /* Protocol should ignore parity errors from KBC */
 	bool try_passthru; /* Try protocol also on passthrough ports */
 	bool smbus_companion; /* "Protocol" is a stub, device is on SMBus */
-	const char *name;
-	const char *alias;
-	int (*detect)(struct psmouse *, bool);
-	int (*init)(struct psmouse *);
-};
+	स्थिर अक्षर *name;
+	स्थिर अक्षर *alias;
+	पूर्णांक (*detect)(काष्ठा psmouse *, bool);
+	पूर्णांक (*init)(काष्ठा psmouse *);
+पूर्ण;
 
-struct psmouse {
-	void *private;
-	struct input_dev *dev;
-	struct ps2dev ps2dev;
-	struct delayed_work resync_work;
-	const char *vendor;
-	const char *name;
-	const struct psmouse_protocol *protocol;
-	unsigned char packet[8];
-	unsigned char badbyte;
-	unsigned char pktcnt;
-	unsigned char pktsize;
-	unsigned char oob_data_type;
-	unsigned char extra_buttons;
+काष्ठा psmouse अणु
+	व्योम *निजी;
+	काष्ठा input_dev *dev;
+	काष्ठा ps2dev ps2dev;
+	काष्ठा delayed_work resync_work;
+	स्थिर अक्षर *venकरोr;
+	स्थिर अक्षर *name;
+	स्थिर काष्ठा psmouse_protocol *protocol;
+	अचिन्हित अक्षर packet[8];
+	अचिन्हित अक्षर badbyte;
+	अचिन्हित अक्षर pktcnt;
+	अचिन्हित अक्षर pktsize;
+	अचिन्हित अक्षर oob_data_type;
+	अचिन्हित अक्षर extra_buttons;
 	bool acks_disable_command;
-	unsigned int model;
-	unsigned long last;
-	unsigned long out_of_sync_cnt;
-	unsigned long num_resyncs;
-	enum psmouse_state state;
-	char devname[64];
-	char phys[32];
+	अचिन्हित पूर्णांक model;
+	अचिन्हित दीर्घ last;
+	अचिन्हित दीर्घ out_of_sync_cnt;
+	अचिन्हित दीर्घ num_resyncs;
+	क्रमागत psmouse_state state;
+	अक्षर devname[64];
+	अक्षर phys[32];
 
-	unsigned int rate;
-	unsigned int resolution;
-	unsigned int resetafter;
-	unsigned int resync_time;
+	अचिन्हित पूर्णांक rate;
+	अचिन्हित पूर्णांक resolution;
+	अचिन्हित पूर्णांक resetafter;
+	अचिन्हित पूर्णांक resync_समय;
 	bool smartscroll;	/* Logitech only */
 
-	psmouse_ret_t (*protocol_handler)(struct psmouse *psmouse);
-	void (*set_rate)(struct psmouse *psmouse, unsigned int rate);
-	void (*set_resolution)(struct psmouse *psmouse, unsigned int resolution);
-	void (*set_scale)(struct psmouse *psmouse, enum psmouse_scale scale);
+	psmouse_ret_t (*protocol_handler)(काष्ठा psmouse *psmouse);
+	व्योम (*set_rate)(काष्ठा psmouse *psmouse, अचिन्हित पूर्णांक rate);
+	व्योम (*set_resolution)(काष्ठा psmouse *psmouse, अचिन्हित पूर्णांक resolution);
+	व्योम (*set_scale)(काष्ठा psmouse *psmouse, क्रमागत psmouse_scale scale);
 
-	int (*reconnect)(struct psmouse *psmouse);
-	int (*fast_reconnect)(struct psmouse *psmouse);
-	void (*disconnect)(struct psmouse *psmouse);
-	void (*cleanup)(struct psmouse *psmouse);
-	int (*poll)(struct psmouse *psmouse);
+	पूर्णांक (*reconnect)(काष्ठा psmouse *psmouse);
+	पूर्णांक (*fast_reconnect)(काष्ठा psmouse *psmouse);
+	व्योम (*disconnect)(काष्ठा psmouse *psmouse);
+	व्योम (*cleanup)(काष्ठा psmouse *psmouse);
+	पूर्णांक (*poll)(काष्ठा psmouse *psmouse);
 
-	void (*pt_activate)(struct psmouse *psmouse);
-	void (*pt_deactivate)(struct psmouse *psmouse);
-};
+	व्योम (*pt_activate)(काष्ठा psmouse *psmouse);
+	व्योम (*pt_deactivate)(काष्ठा psmouse *psmouse);
+पूर्ण;
 
-void psmouse_queue_work(struct psmouse *psmouse, struct delayed_work *work,
-		unsigned long delay);
-int psmouse_reset(struct psmouse *psmouse);
-void psmouse_set_state(struct psmouse *psmouse, enum psmouse_state new_state);
-void psmouse_set_resolution(struct psmouse *psmouse, unsigned int resolution);
-psmouse_ret_t psmouse_process_byte(struct psmouse *psmouse);
-int psmouse_activate(struct psmouse *psmouse);
-int psmouse_deactivate(struct psmouse *psmouse);
-bool psmouse_matches_pnp_id(struct psmouse *psmouse, const char * const ids[]);
+व्योम psmouse_queue_work(काष्ठा psmouse *psmouse, काष्ठा delayed_work *work,
+		अचिन्हित दीर्घ delay);
+पूर्णांक psmouse_reset(काष्ठा psmouse *psmouse);
+व्योम psmouse_set_state(काष्ठा psmouse *psmouse, क्रमागत psmouse_state new_state);
+व्योम psmouse_set_resolution(काष्ठा psmouse *psmouse, अचिन्हित पूर्णांक resolution);
+psmouse_ret_t psmouse_process_byte(काष्ठा psmouse *psmouse);
+पूर्णांक psmouse_activate(काष्ठा psmouse *psmouse);
+पूर्णांक psmouse_deactivate(काष्ठा psmouse *psmouse);
+bool psmouse_matches_pnp_id(काष्ठा psmouse *psmouse, स्थिर अक्षर * स्थिर ids[]);
 
-void psmouse_report_standard_buttons(struct input_dev *, u8 buttons);
-void psmouse_report_standard_motion(struct input_dev *, u8 *packet);
-void psmouse_report_standard_packet(struct input_dev *, u8 *packet);
+व्योम psmouse_report_standard_buttons(काष्ठा input_dev *, u8 buttons);
+व्योम psmouse_report_standard_motion(काष्ठा input_dev *, u8 *packet);
+व्योम psmouse_report_standard_packet(काष्ठा input_dev *, u8 *packet);
 
-struct psmouse_attribute {
-	struct device_attribute dattr;
-	void *data;
-	ssize_t (*show)(struct psmouse *psmouse, void *data, char *buf);
-	ssize_t (*set)(struct psmouse *psmouse, void *data,
-			const char *buf, size_t count);
+काष्ठा psmouse_attribute अणु
+	काष्ठा device_attribute dattr;
+	व्योम *data;
+	sमाप_प्रकार (*show)(काष्ठा psmouse *psmouse, व्योम *data, अक्षर *buf);
+	sमाप_प्रकार (*set)(काष्ठा psmouse *psmouse, व्योम *data,
+			स्थिर अक्षर *buf, माप_प्रकार count);
 	bool protect;
-};
-#define to_psmouse_attr(a)	container_of((a), struct psmouse_attribute, dattr)
+पूर्ण;
+#घोषणा to_psmouse_attr(a)	container_of((a), काष्ठा psmouse_attribute, dattr)
 
-ssize_t psmouse_attr_show_helper(struct device *dev, struct device_attribute *attr,
-				 char *buf);
-ssize_t psmouse_attr_set_helper(struct device *dev, struct device_attribute *attr,
-				const char *buf, size_t count);
+sमाप_प्रकार psmouse_attr_show_helper(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				 अक्षर *buf);
+sमाप_प्रकार psmouse_attr_set_helper(काष्ठा device *dev, काष्ठा device_attribute *attr,
+				स्थिर अक्षर *buf, माप_प्रकार count);
 
-#define __PSMOUSE_DEFINE_ATTR_VAR(_name, _mode, _data, _show, _set, _protect)	\
-static struct psmouse_attribute psmouse_attr_##_name = {			\
-	.dattr	= {								\
-		.attr	= {							\
-			.name	= __stringify(_name),				\
+#घोषणा __PSMOUSE_DEFINE_ATTR_VAR(_name, _mode, _data, _show, _set, _protect)	\
+अटल काष्ठा psmouse_attribute psmouse_attr_##_name = अणु			\
+	.dattr	= अणु								\
+		.attr	= अणु							\
+			.name	= __stringअगरy(_name),				\
 			.mode	= _mode,					\
-		},								\
+		पूर्ण,								\
 		.show	= psmouse_attr_show_helper,				\
 		.store	= psmouse_attr_set_helper,				\
-	},									\
+	पूर्ण,									\
 	.data	= _data,							\
 	.show	= _show,							\
 	.set	= _set,								\
 	.protect = _protect,							\
-}
+पूर्ण
 
-#define __PSMOUSE_DEFINE_ATTR(_name, _mode, _data, _show, _set, _protect)	\
-	static ssize_t _show(struct psmouse *, void *, char *);			\
-	static ssize_t _set(struct psmouse *, void *, const char *, size_t);	\
+#घोषणा __PSMOUSE_DEFINE_ATTR(_name, _mode, _data, _show, _set, _protect)	\
+	अटल sमाप_प्रकार _show(काष्ठा psmouse *, व्योम *, अक्षर *);			\
+	अटल sमाप_प्रकार _set(काष्ठा psmouse *, व्योम *, स्थिर अक्षर *, माप_प्रकार);	\
 	__PSMOUSE_DEFINE_ATTR_VAR(_name, _mode, _data, _show, _set, _protect)
 
-#define PSMOUSE_DEFINE_ATTR(_name, _mode, _data, _show, _set)			\
+#घोषणा PSMOUSE_DEFINE_ATTR(_name, _mode, _data, _show, _set)			\
 	__PSMOUSE_DEFINE_ATTR(_name, _mode, _data, _show, _set, true)
 
-#define PSMOUSE_DEFINE_RO_ATTR(_name, _mode, _data, _show)			\
-	static ssize_t _show(struct psmouse *, void *, char *);			\
-	__PSMOUSE_DEFINE_ATTR_VAR(_name, _mode, _data, _show, NULL, true)
+#घोषणा PSMOUSE_DEFINE_RO_ATTR(_name, _mode, _data, _show)			\
+	अटल sमाप_प्रकार _show(काष्ठा psmouse *, व्योम *, अक्षर *);			\
+	__PSMOUSE_DEFINE_ATTR_VAR(_name, _mode, _data, _show, शून्य, true)
 
-#define PSMOUSE_DEFINE_WO_ATTR(_name, _mode, _data, _set)			\
-	static ssize_t _set(struct psmouse *, void *, const char *, size_t);	\
-	__PSMOUSE_DEFINE_ATTR_VAR(_name, _mode, _data, NULL, _set, true)
+#घोषणा PSMOUSE_DEFINE_WO_ATTR(_name, _mode, _data, _set)			\
+	अटल sमाप_प्रकार _set(काष्ठा psmouse *, व्योम *, स्थिर अक्षर *, माप_प्रकार);	\
+	__PSMOUSE_DEFINE_ATTR_VAR(_name, _mode, _data, शून्य, _set, true)
 
-#ifndef psmouse_fmt
-#define psmouse_fmt(fmt)	KBUILD_BASENAME ": " fmt
-#endif
+#अगर_अघोषित psmouse_fmt
+#घोषणा psmouse_fmt(fmt)	KBUILD_BASENAME ": " fmt
+#पूर्ण_अगर
 
-#define psmouse_dbg(psmouse, format, ...)		\
+#घोषणा psmouse_dbg(psmouse, क्रमmat, ...)		\
 	dev_dbg(&(psmouse)->ps2dev.serio->dev,		\
-		psmouse_fmt(format), ##__VA_ARGS__)
-#define psmouse_info(psmouse, format, ...)		\
+		psmouse_fmt(क्रमmat), ##__VA_ARGS__)
+#घोषणा psmouse_info(psmouse, क्रमmat, ...)		\
 	dev_info(&(psmouse)->ps2dev.serio->dev,		\
-		 psmouse_fmt(format), ##__VA_ARGS__)
-#define psmouse_warn(psmouse, format, ...)		\
+		 psmouse_fmt(क्रमmat), ##__VA_ARGS__)
+#घोषणा psmouse_warn(psmouse, क्रमmat, ...)		\
 	dev_warn(&(psmouse)->ps2dev.serio->dev,		\
-		 psmouse_fmt(format), ##__VA_ARGS__)
-#define psmouse_err(psmouse, format, ...)		\
+		 psmouse_fmt(क्रमmat), ##__VA_ARGS__)
+#घोषणा psmouse_err(psmouse, क्रमmat, ...)		\
 	dev_err(&(psmouse)->ps2dev.serio->dev,		\
-		psmouse_fmt(format), ##__VA_ARGS__)
-#define psmouse_notice(psmouse, format, ...)		\
+		psmouse_fmt(क्रमmat), ##__VA_ARGS__)
+#घोषणा psmouse_notice(psmouse, क्रमmat, ...)		\
 	dev_notice(&(psmouse)->ps2dev.serio->dev,	\
-		   psmouse_fmt(format), ##__VA_ARGS__)
-#define psmouse_printk(level, psmouse, format, ...)	\
-	dev_printk(level,				\
+		   psmouse_fmt(क्रमmat), ##__VA_ARGS__)
+#घोषणा psmouse_prपूर्णांकk(level, psmouse, क्रमmat, ...)	\
+	dev_prपूर्णांकk(level,				\
 		   &(psmouse)->ps2dev.serio->dev,	\
-		   psmouse_fmt(format), ##__VA_ARGS__)
+		   psmouse_fmt(क्रमmat), ##__VA_ARGS__)
 
-#ifdef CONFIG_MOUSE_PS2_SMBUS
+#अगर_घोषित CONFIG_MOUSE_PS2_SMBUS
 
-int psmouse_smbus_module_init(void);
-void psmouse_smbus_module_exit(void);
+पूर्णांक psmouse_smbus_module_init(व्योम);
+व्योम psmouse_smbus_module_निकास(व्योम);
 
-struct i2c_board_info;
+काष्ठा i2c_board_info;
 
-int psmouse_smbus_init(struct psmouse *psmouse,
-		       const struct i2c_board_info *board,
-		       const void *pdata, size_t pdata_size,
+पूर्णांक psmouse_smbus_init(काष्ठा psmouse *psmouse,
+		       स्थिर काष्ठा i2c_board_info *board,
+		       स्थिर व्योम *pdata, माप_प्रकार pdata_size,
 		       bool need_deactivate,
-		       bool leave_breadcrumbs);
-void psmouse_smbus_cleanup(struct psmouse *psmouse);
+		       bool leave_bपढ़ोcrumbs);
+व्योम psmouse_smbus_cleanup(काष्ठा psmouse *psmouse);
 
-#else /* !CONFIG_MOUSE_PS2_SMBUS */
+#अन्यथा /* !CONFIG_MOUSE_PS2_SMBUS */
 
-static inline int psmouse_smbus_module_init(void)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक psmouse_smbus_module_init(व्योम)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void psmouse_smbus_module_exit(void)
-{
-}
+अटल अंतरभूत व्योम psmouse_smbus_module_निकास(व्योम)
+अणु
+पूर्ण
 
-static inline void psmouse_smbus_cleanup(struct psmouse *psmouse)
-{
-}
+अटल अंतरभूत व्योम psmouse_smbus_cleanup(काष्ठा psmouse *psmouse)
+अणु
+पूर्ण
 
-#endif /* CONFIG_MOUSE_PS2_SMBUS */
+#पूर्ण_अगर /* CONFIG_MOUSE_PS2_SMBUS */
 
-#endif /* _PSMOUSE_H */
+#पूर्ण_अगर /* _PSMOUSE_H */

@@ -1,58 +1,59 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Platform keyring for firmware/platform keys
+ * Platक्रमm keyring क्रम firmware/platक्रमm keys
  *
  * Copyright IBM Corporation, 2018
  * Author(s): Nayna Jain <nayna@linux.ibm.com>
  */
 
-#include <linux/export.h>
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/cred.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include "../integrity.h"
+#समावेश <linux/export.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/cred.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश "../integrity.h"
 
 /**
- * add_to_platform_keyring - Add to platform keyring without validation.
+ * add_to_platक्रमm_keyring - Add to platक्रमm keyring without validation.
  * @source: Source of key
  * @data: The blob holding the key
  * @len: The length of the data blob
  *
- * Add a key to the platform keyring without checking its trust chain.  This
+ * Add a key to the platक्रमm keyring without checking its trust chain.  This
  * is available only during kernel initialisation.
  */
-void __init add_to_platform_keyring(const char *source, const void *data,
-				    size_t len)
-{
+व्योम __init add_to_platक्रमm_keyring(स्थिर अक्षर *source, स्थिर व्योम *data,
+				    माप_प्रकार len)
+अणु
 	key_perm_t perm;
-	int rc;
+	पूर्णांक rc;
 
 	perm = (KEY_POS_ALL & ~KEY_POS_SETATTR) | KEY_USR_VIEW;
 
-	rc = integrity_load_cert(INTEGRITY_KEYRING_PLATFORM, source, data, len,
+	rc = पूर्णांकegrity_load_cert(INTEGRITY_KEYRING_PLATFORM, source, data, len,
 				 perm);
-	if (rc)
+	अगर (rc)
 		pr_info("Error adding keys to platform keyring %s\n", source);
-}
+पूर्ण
 
 /*
  * Create the trusted keyrings.
  */
-static __init int platform_keyring_init(void)
-{
-	int rc;
+अटल __init पूर्णांक platक्रमm_keyring_init(व्योम)
+अणु
+	पूर्णांक rc;
 
-	rc = integrity_init_keyring(INTEGRITY_KEYRING_PLATFORM);
-	if (rc)
-		return rc;
+	rc = पूर्णांकegrity_init_keyring(INTEGRITY_KEYRING_PLATFORM);
+	अगर (rc)
+		वापस rc;
 
 	pr_notice("Platform Keyring initialized\n");
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
- * Must be initialised before we try and load the keys into the keyring.
+ * Must be initialised beक्रमe we try and load the keys पूर्णांकo the keyring.
  */
-device_initcall(platform_keyring_init);
+device_initcall(platक्रमm_keyring_init);

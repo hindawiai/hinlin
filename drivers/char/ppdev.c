@@ -1,394 +1,395 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
- * linux/drivers/char/ppdev.c
+ * linux/drivers/अक्षर/ppdev.c
  *
  * This is the code behind /dev/parport* -- it allows a user-space
- * application to use the parport subsystem.
+ * application to use the parport subप्रणाली.
  *
  * Copyright (C) 1998-2000, 2002 Tim Waugh <tim@cyberelk.net>
  *
  * A /dev/parportx device node represents an arbitrary device
  * on port 'x'.  The following operations are possible:
  *
- * open		do nothing, set up default IEEE 1284 protocol to be COMPAT
- * close	release port and unregister device (if necessary)
+ * खोलो		करो nothing, set up शेष IEEE 1284 protocol to be COMPAT
+ * बंद	release port and unरेजिस्टर device (अगर necessary)
  * ioctl
- *   EXCL	register device exclusively (may fail)
- *   CLAIM	(register device first time) parport_claim_or_block
+ *   EXCL	रेजिस्टर device exclusively (may fail)
+ *   CLAIM	(रेजिस्टर device first समय) parport_claim_or_block
  *   RELEASE	parport_release
- *   SETMODE	set the IEEE 1284 protocol to use for read/write
+ *   SETMODE	set the IEEE 1284 protocol to use क्रम पढ़ो/ग_लिखो
  *   SETPHASE	set the IEEE 1284 phase of a particular mode.  Not to be
  *              confused with ioctl(fd, SETPHASER, &stun). ;-)
- *   DATADIR	data_forward / data_reverse
- *   WDATA	write_data
- *   RDATA	read_data
- *   WCONTROL	write_control
- *   RCONTROL	read_control
+ *   DATAसूची	data_क्रमward / data_reverse
+ *   WDATA	ग_लिखो_data
+ *   RDATA	पढ़ो_data
+ *   WCONTROL	ग_लिखो_control
+ *   RCONTROL	पढ़ो_control
  *   FCONTROL	frob_control
- *   RSTATUS	read_status
+ *   RSTATUS	पढ़ो_status
  *   NEGOT	parport_negotiate
  *   YIELD	parport_yield_blocking
- *   WCTLONIRQ	on interrupt, set control lines
- *   CLRIRQ	clear (and return) interrupt count
- *   SETTIME	sets device timeout (struct timeval)
- *   GETTIME	gets device timeout (struct timeval)
- *   GETMODES	gets hardware supported modes (unsigned int)
- *   GETMODE	gets the current IEEE1284 mode
- *   GETPHASE   gets the current IEEE1284 phase
- *   GETFLAGS   gets current (user-visible) flags
+ *   WCTLONIRQ	on पूर्णांकerrupt, set control lines
+ *   CLRIRQ	clear (and वापस) पूर्णांकerrupt count
+ *   SETTIME	sets device समयout (काष्ठा समयval)
+ *   GETTIME	माला_लो device समयout (काष्ठा समयval)
+ *   GETMODES	माला_लो hardware supported modes (अचिन्हित पूर्णांक)
+ *   GETMODE	माला_लो the current IEEE1284 mode
+ *   GETPHASE   माला_लो the current IEEE1284 phase
+ *   GETFLAGS   माला_लो current (user-visible) flags
  *   SETFLAGS   sets current (user-visible) flags
- * read/write	read or write in current IEEE 1284 protocol
- * select	wait for interrupt (in readfds)
+ * पढ़ो/ग_लिखो	पढ़ो or ग_लिखो in current IEEE 1284 protocol
+ * select	रुको क्रम पूर्णांकerrupt (in पढ़ोfds)
  *
  * Changes:
  * Added SETTIME/GETTIME ioctl, Fred Barnes, 1999.
  *
- * Arnaldo Carvalho de Melo <acme@conectiva.com.br> 2000/08/25
- * - On error, copy_from_user and copy_to_user do not return -EFAULT,
- *   They return the positive number of bytes *not* copied due to address
+ * Arnalकरो Carvalho de Melo <acme@conectiva.com.br> 2000/08/25
+ * - On error, copy_from_user and copy_to_user करो not वापस -EFAULT,
+ *   They वापस the positive number of bytes *not* copied due to address
  *   space errors.
  *
  * Added GETMODES/GETMODE/GETPHASE ioctls, Fred Barnes <frmb2@ukc.ac.uk>, 03/01/2001.
  * Added GETFLAGS/SETFLAGS ioctls, Fred Barnes, 04/2001
  */
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/sched/signal.h>
-#include <linux/device.h>
-#include <linux/ioctl.h>
-#include <linux/parport.h>
-#include <linux/ctype.h>
-#include <linux/poll.h>
-#include <linux/slab.h>
-#include <linux/major.h>
-#include <linux/ppdev.h>
-#include <linux/mutex.h>
-#include <linux/uaccess.h>
-#include <linux/compat.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/device.h>
+#समावेश <linux/ioctl.h>
+#समावेश <linux/parport.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/poll.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/major.h>
+#समावेश <linux/ppdev.h>
+#समावेश <linux/mutex.h>
+#समावेश <linux/uaccess.h>
+#समावेश <linux/compat.h>
 
-#define PP_VERSION "ppdev: user-space parallel port driver"
-#define CHRDEV "ppdev"
+#घोषणा PP_VERSION "ppdev: user-space parallel port driver"
+#घोषणा CHRDEV "ppdev"
 
-struct pp_struct {
-	struct pardevice *pdev;
-	wait_queue_head_t irq_wait;
+काष्ठा pp_काष्ठा अणु
+	काष्ठा pardevice *pdev;
+	रुको_queue_head_t irq_रुको;
 	atomic_t irqc;
-	unsigned int flags;
-	int irqresponse;
-	unsigned char irqctl;
-	struct ieee1284_info state;
-	struct ieee1284_info saved_state;
-	long default_inactivity;
-	int index;
-};
+	अचिन्हित पूर्णांक flags;
+	पूर्णांक irqresponse;
+	अचिन्हित अक्षर irqctl;
+	काष्ठा ieee1284_info state;
+	काष्ठा ieee1284_info saved_state;
+	दीर्घ शेष_inactivity;
+	पूर्णांक index;
+पूर्ण;
 
 /* should we use PARDEVICE_MAX here? */
-static struct device *devices[PARPORT_MAX];
+अटल काष्ठा device *devices[PARPORT_MAX];
 
-static DEFINE_IDA(ida_index);
+अटल DEFINE_IDA(ida_index);
 
-/* pp_struct.flags bitfields */
-#define PP_CLAIMED    (1<<0)
-#define PP_EXCL       (1<<1)
+/* pp_काष्ठा.flags bitfields */
+#घोषणा PP_CLAIMED    (1<<0)
+#घोषणा PP_EXCL       (1<<1)
 
-/* Other constants */
-#define PP_INTERRUPT_TIMEOUT (10 * HZ) /* 10s */
-#define PP_BUFFER_SIZE 1024
-#define PARDEVICE_MAX 8
+/* Other स्थिरants */
+#घोषणा PP_INTERRUPT_TIMEOUT (10 * HZ) /* 10s */
+#घोषणा PP_BUFFER_SIZE 1024
+#घोषणा PARDEVICE_MAX 8
 
-static DEFINE_MUTEX(pp_do_mutex);
+अटल DEFINE_MUTEX(pp_करो_mutex);
 
-/* define fixed sized ioctl cmd for y2038 migration */
-#define PPGETTIME32	_IOR(PP_IOCTL, 0x95, s32[2])
-#define PPSETTIME32	_IOW(PP_IOCTL, 0x96, s32[2])
-#define PPGETTIME64	_IOR(PP_IOCTL, 0x95, s64[2])
-#define PPSETTIME64	_IOW(PP_IOCTL, 0x96, s64[2])
+/* define fixed sized ioctl cmd क्रम y2038 migration */
+#घोषणा PPGETTIME32	_IOR(PP_IOCTL, 0x95, s32[2])
+#घोषणा PPSETTIME32	_IOW(PP_IOCTL, 0x96, s32[2])
+#घोषणा PPGETTIME64	_IOR(PP_IOCTL, 0x95, s64[2])
+#घोषणा PPSETTIME64	_IOW(PP_IOCTL, 0x96, s64[2])
 
-static inline void pp_enable_irq(struct pp_struct *pp)
-{
-	struct parport *port = pp->pdev->port;
+अटल अंतरभूत व्योम pp_enable_irq(काष्ठा pp_काष्ठा *pp)
+अणु
+	काष्ठा parport *port = pp->pdev->port;
 
 	port->ops->enable_irq(port);
-}
+पूर्ण
 
-static ssize_t pp_read(struct file *file, char __user *buf, size_t count,
+अटल sमाप_प्रकार pp_पढ़ो(काष्ठा file *file, अक्षर __user *buf, माप_प्रकार count,
 		       loff_t *ppos)
-{
-	unsigned int minor = iminor(file_inode(file));
-	struct pp_struct *pp = file->private_data;
-	char *kbuffer;
-	ssize_t bytes_read = 0;
-	struct parport *pport;
-	int mode;
+अणु
+	अचिन्हित पूर्णांक minor = iminor(file_inode(file));
+	काष्ठा pp_काष्ठा *pp = file->निजी_data;
+	अक्षर *kbuffer;
+	sमाप_प्रकार bytes_पढ़ो = 0;
+	काष्ठा parport *pport;
+	पूर्णांक mode;
 
-	if (!(pp->flags & PP_CLAIMED)) {
+	अगर (!(pp->flags & PP_CLAIMED)) अणु
 		/* Don't have the port claimed */
 		pr_debug(CHRDEV "%x: claim the port first\n", minor);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	/* Trivial case. */
-	if (count == 0)
-		return 0;
+	/* Trivial हाल. */
+	अगर (count == 0)
+		वापस 0;
 
-	kbuffer = kmalloc(min_t(size_t, count, PP_BUFFER_SIZE), GFP_KERNEL);
-	if (!kbuffer)
-		return -ENOMEM;
+	kbuffer = kदो_स्मृति(min_t(माप_प्रकार, count, PP_BUFFER_SIZE), GFP_KERNEL);
+	अगर (!kbuffer)
+		वापस -ENOMEM;
 	pport = pp->pdev->port;
 	mode = pport->ieee1284.mode & ~(IEEE1284_DEVICEID | IEEE1284_ADDR);
 
-	parport_set_timeout(pp->pdev,
+	parport_set_समयout(pp->pdev,
 			    (file->f_flags & O_NONBLOCK) ?
 			    PARPORT_INACTIVITY_O_NONBLOCK :
-			    pp->default_inactivity);
+			    pp->शेष_inactivity);
 
-	while (bytes_read == 0) {
-		ssize_t need = min_t(unsigned long, count, PP_BUFFER_SIZE);
+	जबतक (bytes_पढ़ो == 0) अणु
+		sमाप_प्रकार need = min_t(अचिन्हित दीर्घ, count, PP_BUFFER_SIZE);
 
-		if (mode == IEEE1284_MODE_EPP) {
-			/* various specials for EPP mode */
-			int flags = 0;
-			size_t (*fn)(struct parport *, void *, size_t, int);
+		अगर (mode == IEEE1284_MODE_EPP) अणु
+			/* various specials क्रम EPP mode */
+			पूर्णांक flags = 0;
+			माप_प्रकार (*fn)(काष्ठा parport *, व्योम *, माप_प्रकार, पूर्णांक);
 
-			if (pp->flags & PP_W91284PIC)
+			अगर (pp->flags & PP_W91284PIC)
 				flags |= PARPORT_W91284PIC;
-			if (pp->flags & PP_FASTREAD)
+			अगर (pp->flags & PP_FASTREAD)
 				flags |= PARPORT_EPP_FAST;
-			if (pport->ieee1284.mode & IEEE1284_ADDR)
-				fn = pport->ops->epp_read_addr;
-			else
-				fn = pport->ops->epp_read_data;
-			bytes_read = (*fn)(pport, kbuffer, need, flags);
-		} else {
-			bytes_read = parport_read(pport, kbuffer, need);
-		}
+			अगर (pport->ieee1284.mode & IEEE1284_ADDR)
+				fn = pport->ops->epp_पढ़ो_addr;
+			अन्यथा
+				fn = pport->ops->epp_पढ़ो_data;
+			bytes_पढ़ो = (*fn)(pport, kbuffer, need, flags);
+		पूर्ण अन्यथा अणु
+			bytes_पढ़ो = parport_पढ़ो(pport, kbuffer, need);
+		पूर्ण
 
-		if (bytes_read != 0)
-			break;
+		अगर (bytes_पढ़ो != 0)
+			अवरोध;
 
-		if (file->f_flags & O_NONBLOCK) {
-			bytes_read = -EAGAIN;
-			break;
-		}
+		अगर (file->f_flags & O_NONBLOCK) अणु
+			bytes_पढ़ो = -EAGAIN;
+			अवरोध;
+		पूर्ण
 
-		if (signal_pending(current)) {
-			bytes_read = -ERESTARTSYS;
-			break;
-		}
+		अगर (संकेत_pending(current)) अणु
+			bytes_पढ़ो = -ERESTARTSYS;
+			अवरोध;
+		पूर्ण
 
 		cond_resched();
-	}
+	पूर्ण
 
-	parport_set_timeout(pp->pdev, pp->default_inactivity);
+	parport_set_समयout(pp->pdev, pp->शेष_inactivity);
 
-	if (bytes_read > 0 && copy_to_user(buf, kbuffer, bytes_read))
-		bytes_read = -EFAULT;
+	अगर (bytes_पढ़ो > 0 && copy_to_user(buf, kbuffer, bytes_पढ़ो))
+		bytes_पढ़ो = -EFAULT;
 
-	kfree(kbuffer);
+	kमुक्त(kbuffer);
 	pp_enable_irq(pp);
-	return bytes_read;
-}
+	वापस bytes_पढ़ो;
+पूर्ण
 
-static ssize_t pp_write(struct file *file, const char __user *buf,
-			size_t count, loff_t *ppos)
-{
-	unsigned int minor = iminor(file_inode(file));
-	struct pp_struct *pp = file->private_data;
-	char *kbuffer;
-	ssize_t bytes_written = 0;
-	ssize_t wrote;
-	int mode;
-	struct parport *pport;
+अटल sमाप_प्रकार pp_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *buf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	अचिन्हित पूर्णांक minor = iminor(file_inode(file));
+	काष्ठा pp_काष्ठा *pp = file->निजी_data;
+	अक्षर *kbuffer;
+	sमाप_प्रकार bytes_written = 0;
+	sमाप_प्रकार wrote;
+	पूर्णांक mode;
+	काष्ठा parport *pport;
 
-	if (!(pp->flags & PP_CLAIMED)) {
+	अगर (!(pp->flags & PP_CLAIMED)) अणु
 		/* Don't have the port claimed */
 		pr_debug(CHRDEV "%x: claim the port first\n", minor);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	kbuffer = kmalloc(min_t(size_t, count, PP_BUFFER_SIZE), GFP_KERNEL);
-	if (!kbuffer)
-		return -ENOMEM;
+	kbuffer = kदो_स्मृति(min_t(माप_प्रकार, count, PP_BUFFER_SIZE), GFP_KERNEL);
+	अगर (!kbuffer)
+		वापस -ENOMEM;
 
 	pport = pp->pdev->port;
 	mode = pport->ieee1284.mode & ~(IEEE1284_DEVICEID | IEEE1284_ADDR);
 
-	parport_set_timeout(pp->pdev,
+	parport_set_समयout(pp->pdev,
 			    (file->f_flags & O_NONBLOCK) ?
 			    PARPORT_INACTIVITY_O_NONBLOCK :
-			    pp->default_inactivity);
+			    pp->शेष_inactivity);
 
-	while (bytes_written < count) {
-		ssize_t n = min_t(unsigned long, count - bytes_written, PP_BUFFER_SIZE);
+	जबतक (bytes_written < count) अणु
+		sमाप_प्रकार n = min_t(अचिन्हित दीर्घ, count - bytes_written, PP_BUFFER_SIZE);
 
-		if (copy_from_user(kbuffer, buf + bytes_written, n)) {
+		अगर (copy_from_user(kbuffer, buf + bytes_written, n)) अणु
 			bytes_written = -EFAULT;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if ((pp->flags & PP_FASTWRITE) && (mode == IEEE1284_MODE_EPP)) {
-			/* do a fast EPP write */
-			if (pport->ieee1284.mode & IEEE1284_ADDR) {
-				wrote = pport->ops->epp_write_addr(pport,
+		अगर ((pp->flags & PP_FASTWRITE) && (mode == IEEE1284_MODE_EPP)) अणु
+			/* करो a fast EPP ग_लिखो */
+			अगर (pport->ieee1284.mode & IEEE1284_ADDR) अणु
+				wrote = pport->ops->epp_ग_लिखो_addr(pport,
 					kbuffer, n, PARPORT_EPP_FAST);
-			} else {
-				wrote = pport->ops->epp_write_data(pport,
+			पूर्ण अन्यथा अणु
+				wrote = pport->ops->epp_ग_लिखो_data(pport,
 					kbuffer, n, PARPORT_EPP_FAST);
-			}
-		} else {
-			wrote = parport_write(pp->pdev->port, kbuffer, n);
-		}
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			wrote = parport_ग_लिखो(pp->pdev->port, kbuffer, n);
+		पूर्ण
 
-		if (wrote <= 0) {
-			if (!bytes_written)
+		अगर (wrote <= 0) अणु
+			अगर (!bytes_written)
 				bytes_written = wrote;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
 		bytes_written += wrote;
 
-		if (file->f_flags & O_NONBLOCK) {
-			if (!bytes_written)
+		अगर (file->f_flags & O_NONBLOCK) अणु
+			अगर (!bytes_written)
 				bytes_written = -EAGAIN;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (signal_pending(current))
-			break;
+		अगर (संकेत_pending(current))
+			अवरोध;
 
 		cond_resched();
-	}
+	पूर्ण
 
-	parport_set_timeout(pp->pdev, pp->default_inactivity);
+	parport_set_समयout(pp->pdev, pp->शेष_inactivity);
 
-	kfree(kbuffer);
+	kमुक्त(kbuffer);
 	pp_enable_irq(pp);
-	return bytes_written;
-}
+	वापस bytes_written;
+पूर्ण
 
-static void pp_irq(void *private)
-{
-	struct pp_struct *pp = private;
+अटल व्योम pp_irq(व्योम *निजी)
+अणु
+	काष्ठा pp_काष्ठा *pp = निजी;
 
-	if (pp->irqresponse) {
-		parport_write_control(pp->pdev->port, pp->irqctl);
+	अगर (pp->irqresponse) अणु
+		parport_ग_लिखो_control(pp->pdev->port, pp->irqctl);
 		pp->irqresponse = 0;
-	}
+	पूर्ण
 
 	atomic_inc(&pp->irqc);
-	wake_up_interruptible(&pp->irq_wait);
-}
+	wake_up_पूर्णांकerruptible(&pp->irq_रुको);
+पूर्ण
 
-static int register_device(int minor, struct pp_struct *pp)
-{
-	struct parport *port;
-	struct pardevice *pdev = NULL;
-	char *name;
-	struct pardev_cb ppdev_cb;
-	int rc = 0, index;
+अटल पूर्णांक रेजिस्टर_device(पूर्णांक minor, काष्ठा pp_काष्ठा *pp)
+अणु
+	काष्ठा parport *port;
+	काष्ठा pardevice *pdev = शून्य;
+	अक्षर *name;
+	काष्ठा pardev_cb ppdev_cb;
+	पूर्णांक rc = 0, index;
 
-	name = kasprintf(GFP_KERNEL, CHRDEV "%x", minor);
-	if (name == NULL)
-		return -ENOMEM;
+	name = kaप्र_लिखो(GFP_KERNEL, CHRDEV "%x", minor);
+	अगर (name == शून्य)
+		वापस -ENOMEM;
 
 	port = parport_find_number(minor);
-	if (!port) {
+	अगर (!port) अणु
 		pr_warn("%s: no associated port!\n", name);
 		rc = -ENXIO;
-		goto err;
-	}
+		जाओ err;
+	पूर्ण
 
 	index = ida_simple_get(&ida_index, 0, 0, GFP_KERNEL);
-	memset(&ppdev_cb, 0, sizeof(ppdev_cb));
+	स_रखो(&ppdev_cb, 0, माप(ppdev_cb));
 	ppdev_cb.irq_func = pp_irq;
 	ppdev_cb.flags = (pp->flags & PP_EXCL) ? PARPORT_FLAG_EXCL : 0;
-	ppdev_cb.private = pp;
-	pdev = parport_register_dev_model(port, name, &ppdev_cb, index);
+	ppdev_cb.निजी = pp;
+	pdev = parport_रेजिस्टर_dev_model(port, name, &ppdev_cb, index);
 	parport_put_port(port);
 
-	if (!pdev) {
+	अगर (!pdev) अणु
 		pr_warn("%s: failed to register device!\n", name);
 		rc = -ENXIO;
-		ida_simple_remove(&ida_index, index);
-		goto err;
-	}
+		ida_simple_हटाओ(&ida_index, index);
+		जाओ err;
+	पूर्ण
 
 	pp->pdev = pdev;
 	pp->index = index;
 	dev_dbg(&pdev->dev, "registered pardevice\n");
 err:
-	kfree(name);
-	return rc;
-}
+	kमुक्त(name);
+	वापस rc;
+पूर्ण
 
-static enum ieee1284_phase init_phase(int mode)
-{
-	switch (mode & ~(IEEE1284_DEVICEID
-			 | IEEE1284_ADDR)) {
-	case IEEE1284_MODE_NIBBLE:
-	case IEEE1284_MODE_BYTE:
-		return IEEE1284_PH_REV_IDLE;
-	}
-	return IEEE1284_PH_FWD_IDLE;
-}
+अटल क्रमागत ieee1284_phase init_phase(पूर्णांक mode)
+अणु
+	चयन (mode & ~(IEEE1284_DEVICEID
+			 | IEEE1284_ADDR)) अणु
+	हाल IEEE1284_MODE_NIBBLE:
+	हाल IEEE1284_MODE_BYTE:
+		वापस IEEE1284_PH_REV_IDLE;
+	पूर्ण
+	वापस IEEE1284_PH_FWD_IDLE;
+पूर्ण
 
-static int pp_set_timeout(struct pardevice *pdev, long tv_sec, int tv_usec)
-{
-	long to_jiffies;
+अटल पूर्णांक pp_set_समयout(काष्ठा pardevice *pdev, दीर्घ tv_sec, पूर्णांक tv_usec)
+अणु
+	दीर्घ to_jअगरfies;
 
-	if ((tv_sec < 0) || (tv_usec < 0))
-		return -EINVAL;
+	अगर ((tv_sec < 0) || (tv_usec < 0))
+		वापस -EINVAL;
 
-	to_jiffies = usecs_to_jiffies(tv_usec);
-	to_jiffies += tv_sec * HZ;
-	if (to_jiffies <= 0)
-		return -EINVAL;
+	to_jअगरfies = usecs_to_jअगरfies(tv_usec);
+	to_jअगरfies += tv_sec * HZ;
+	अगर (to_jअगरfies <= 0)
+		वापस -EINVAL;
 
-	pdev->timeout = to_jiffies;
-	return 0;
-}
+	pdev->समयout = to_jअगरfies;
+	वापस 0;
+पूर्ण
 
-static int pp_do_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	unsigned int minor = iminor(file_inode(file));
-	struct pp_struct *pp = file->private_data;
-	struct parport *port;
-	void __user *argp = (void __user *)arg;
-	struct ieee1284_info *info;
-	unsigned char reg;
-	unsigned char mask;
-	int mode;
-	s32 time32[2];
-	s64 time64[2];
-	struct timespec64 ts;
-	int ret;
+अटल पूर्णांक pp_करो_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	अचिन्हित पूर्णांक minor = iminor(file_inode(file));
+	काष्ठा pp_काष्ठा *pp = file->निजी_data;
+	काष्ठा parport *port;
+	व्योम __user *argp = (व्योम __user *)arg;
+	काष्ठा ieee1284_info *info;
+	अचिन्हित अक्षर reg;
+	अचिन्हित अक्षर mask;
+	पूर्णांक mode;
+	s32 समय32[2];
+	s64 समय64[2];
+	काष्ठा बारpec64 ts;
+	पूर्णांक ret;
 
-	/* First handle the cases that don't take arguments. */
-	switch (cmd) {
-	case PPCLAIM:
-	    {
-		if (pp->flags & PP_CLAIMED) {
+	/* First handle the हालs that करोn't take arguments. */
+	चयन (cmd) अणु
+	हाल PPCLAIM:
+	    अणु
+		अगर (pp->flags & PP_CLAIMED) अणु
 			dev_dbg(&pp->pdev->dev, "you've already got it!\n");
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
 		/* Deferred device registration. */
-		if (!pp->pdev) {
-			int err = register_device(minor, pp);
+		अगर (!pp->pdev) अणु
+			पूर्णांक err = रेजिस्टर_device(minor, pp);
 
-			if (err)
-				return err;
-		}
+			अगर (err)
+				वापस err;
+		पूर्ण
 
 		ret = parport_claim_or_block(pp->pdev);
-		if (ret < 0)
-			return ret;
+		अगर (ret < 0)
+			वापस ret;
 
 		pp->flags |= PP_CLAIMED;
 
-		/* For interrupt-reporting to work, we need to be
-		 * informed of each interrupt. */
+		/* For पूर्णांकerrupt-reporting to work, we need to be
+		 * inक्रमmed of each पूर्णांकerrupt. */
 		pp_enable_irq(pp);
 
 		/* We may need to fix up the state machine. */
@@ -397,147 +398,147 @@ static int pp_do_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		pp->saved_state.phase = info->phase;
 		info->mode = pp->state.mode;
 		info->phase = pp->state.phase;
-		pp->default_inactivity = parport_set_timeout(pp->pdev, 0);
-		parport_set_timeout(pp->pdev, pp->default_inactivity);
+		pp->शेष_inactivity = parport_set_समयout(pp->pdev, 0);
+		parport_set_समयout(pp->pdev, pp->शेष_inactivity);
 
-		return 0;
-	    }
-	case PPEXCL:
-		if (pp->pdev) {
+		वापस 0;
+	    पूर्ण
+	हाल PPEXCL:
+		अगर (pp->pdev) अणु
 			dev_dbg(&pp->pdev->dev,
 				"too late for PPEXCL; already registered\n");
-			if (pp->flags & PP_EXCL)
+			अगर (pp->flags & PP_EXCL)
 				/* But it's not really an error. */
-				return 0;
+				वापस 0;
 			/* There's no chance of making the driver happy. */
-			return -EINVAL;
-		}
+			वापस -EINVAL;
+		पूर्ण
 
-		/* Just remember to register the device exclusively
-		 * when we finally do the registration. */
+		/* Just remember to रेजिस्टर the device exclusively
+		 * when we finally करो the registration. */
 		pp->flags |= PP_EXCL;
-		return 0;
-	case PPSETMODE:
-	    {
-		int mode;
+		वापस 0;
+	हाल PPSETMODE:
+	    अणु
+		पूर्णांक mode;
 
-		if (copy_from_user(&mode, argp, sizeof(mode)))
-			return -EFAULT;
+		अगर (copy_from_user(&mode, argp, माप(mode)))
+			वापस -EFAULT;
 		/* FIXME: validate mode */
 		pp->state.mode = mode;
 		pp->state.phase = init_phase(mode);
 
-		if (pp->flags & PP_CLAIMED) {
+		अगर (pp->flags & PP_CLAIMED) अणु
 			pp->pdev->port->ieee1284.mode = mode;
 			pp->pdev->port->ieee1284.phase = pp->state.phase;
-		}
+		पूर्ण
 
-		return 0;
-	    }
-	case PPGETMODE:
-	    {
-		int mode;
+		वापस 0;
+	    पूर्ण
+	हाल PPGETMODE:
+	    अणु
+		पूर्णांक mode;
 
-		if (pp->flags & PP_CLAIMED)
+		अगर (pp->flags & PP_CLAIMED)
 			mode = pp->pdev->port->ieee1284.mode;
-		else
+		अन्यथा
 			mode = pp->state.mode;
 
-		if (copy_to_user(argp, &mode, sizeof(mode)))
-			return -EFAULT;
-		return 0;
-	    }
-	case PPSETPHASE:
-	    {
-		int phase;
+		अगर (copy_to_user(argp, &mode, माप(mode)))
+			वापस -EFAULT;
+		वापस 0;
+	    पूर्ण
+	हाल PPSETPHASE:
+	    अणु
+		पूर्णांक phase;
 
-		if (copy_from_user(&phase, argp, sizeof(phase)))
-			return -EFAULT;
+		अगर (copy_from_user(&phase, argp, माप(phase)))
+			वापस -EFAULT;
 
 		/* FIXME: validate phase */
 		pp->state.phase = phase;
 
-		if (pp->flags & PP_CLAIMED)
+		अगर (pp->flags & PP_CLAIMED)
 			pp->pdev->port->ieee1284.phase = phase;
 
-		return 0;
-	    }
-	case PPGETPHASE:
-	    {
-		int phase;
+		वापस 0;
+	    पूर्ण
+	हाल PPGETPHASE:
+	    अणु
+		पूर्णांक phase;
 
-		if (pp->flags & PP_CLAIMED)
+		अगर (pp->flags & PP_CLAIMED)
 			phase = pp->pdev->port->ieee1284.phase;
-		else
+		अन्यथा
 			phase = pp->state.phase;
-		if (copy_to_user(argp, &phase, sizeof(phase)))
-			return -EFAULT;
-		return 0;
-	    }
-	case PPGETMODES:
-	    {
-		unsigned int modes;
+		अगर (copy_to_user(argp, &phase, माप(phase)))
+			वापस -EFAULT;
+		वापस 0;
+	    पूर्ण
+	हाल PPGETMODES:
+	    अणु
+		अचिन्हित पूर्णांक modes;
 
 		port = parport_find_number(minor);
-		if (!port)
-			return -ENODEV;
+		अगर (!port)
+			वापस -ENODEV;
 
 		modes = port->modes;
 		parport_put_port(port);
-		if (copy_to_user(argp, &modes, sizeof(modes)))
-			return -EFAULT;
-		return 0;
-	    }
-	case PPSETFLAGS:
-	    {
-		int uflags;
+		अगर (copy_to_user(argp, &modes, माप(modes)))
+			वापस -EFAULT;
+		वापस 0;
+	    पूर्ण
+	हाल PPSETFLAGS:
+	    अणु
+		पूर्णांक uflags;
 
-		if (copy_from_user(&uflags, argp, sizeof(uflags)))
-			return -EFAULT;
+		अगर (copy_from_user(&uflags, argp, माप(uflags)))
+			वापस -EFAULT;
 		pp->flags &= ~PP_FLAGMASK;
 		pp->flags |= (uflags & PP_FLAGMASK);
-		return 0;
-	    }
-	case PPGETFLAGS:
-	    {
-		int uflags;
+		वापस 0;
+	    पूर्ण
+	हाल PPGETFLAGS:
+	    अणु
+		पूर्णांक uflags;
 
 		uflags = pp->flags & PP_FLAGMASK;
-		if (copy_to_user(argp, &uflags, sizeof(uflags)))
-			return -EFAULT;
-		return 0;
-	    }
-	}	/* end switch() */
+		अगर (copy_to_user(argp, &uflags, माप(uflags)))
+			वापस -EFAULT;
+		वापस 0;
+	    पूर्ण
+	पूर्ण	/* end चयन() */
 
-	/* Everything else requires the port to be claimed, so check
+	/* Everything अन्यथा requires the port to be claimed, so check
 	 * that now. */
-	if ((pp->flags & PP_CLAIMED) == 0) {
+	अगर ((pp->flags & PP_CLAIMED) == 0) अणु
 		pr_debug(CHRDEV "%x: claim the port first\n", minor);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	port = pp->pdev->port;
-	switch (cmd) {
-	case PPRSTATUS:
-		reg = parport_read_status(port);
-		if (copy_to_user(argp, &reg, sizeof(reg)))
-			return -EFAULT;
-		return 0;
-	case PPRDATA:
-		reg = parport_read_data(port);
-		if (copy_to_user(argp, &reg, sizeof(reg)))
-			return -EFAULT;
-		return 0;
-	case PPRCONTROL:
-		reg = parport_read_control(port);
-		if (copy_to_user(argp, &reg, sizeof(reg)))
-			return -EFAULT;
-		return 0;
-	case PPYIELD:
+	चयन (cmd) अणु
+	हाल PPRSTATUS:
+		reg = parport_पढ़ो_status(port);
+		अगर (copy_to_user(argp, &reg, माप(reg)))
+			वापस -EFAULT;
+		वापस 0;
+	हाल PPRDATA:
+		reg = parport_पढ़ो_data(port);
+		अगर (copy_to_user(argp, &reg, माप(reg)))
+			वापस -EFAULT;
+		वापस 0;
+	हाल PPRCONTROL:
+		reg = parport_पढ़ो_control(port);
+		अगर (copy_to_user(argp, &reg, माप(reg)))
+			वापस -EFAULT;
+		वापस 0;
+	हाल PPYIELD:
 		parport_yield_blocking(pp->pdev);
-		return 0;
+		वापस 0;
 
-	case PPRELEASE:
+	हाल PPRELEASE:
 		/* Save the state machine's state. */
 		info = &pp->pdev->port->ieee1284;
 		pp->state.mode = info->mode;
@@ -546,173 +547,173 @@ static int pp_do_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		info->phase = pp->saved_state.phase;
 		parport_release(pp->pdev);
 		pp->flags &= ~PP_CLAIMED;
-		return 0;
+		वापस 0;
 
-	case PPWCONTROL:
-		if (copy_from_user(&reg, argp, sizeof(reg)))
-			return -EFAULT;
-		parport_write_control(port, reg);
-		return 0;
+	हाल PPWCONTROL:
+		अगर (copy_from_user(&reg, argp, माप(reg)))
+			वापस -EFAULT;
+		parport_ग_लिखो_control(port, reg);
+		वापस 0;
 
-	case PPWDATA:
-		if (copy_from_user(&reg, argp, sizeof(reg)))
-			return -EFAULT;
-		parport_write_data(port, reg);
-		return 0;
+	हाल PPWDATA:
+		अगर (copy_from_user(&reg, argp, माप(reg)))
+			वापस -EFAULT;
+		parport_ग_लिखो_data(port, reg);
+		वापस 0;
 
-	case PPFCONTROL:
-		if (copy_from_user(&mask, argp,
-				   sizeof(mask)))
-			return -EFAULT;
-		if (copy_from_user(&reg, 1 + (unsigned char __user *) arg,
-				   sizeof(reg)))
-			return -EFAULT;
+	हाल PPFCONTROL:
+		अगर (copy_from_user(&mask, argp,
+				   माप(mask)))
+			वापस -EFAULT;
+		अगर (copy_from_user(&reg, 1 + (अचिन्हित अक्षर __user *) arg,
+				   माप(reg)))
+			वापस -EFAULT;
 		parport_frob_control(port, mask, reg);
-		return 0;
+		वापस 0;
 
-	case PPDATADIR:
-		if (copy_from_user(&mode, argp, sizeof(mode)))
-			return -EFAULT;
-		if (mode)
+	हाल PPDATAसूची:
+		अगर (copy_from_user(&mode, argp, माप(mode)))
+			वापस -EFAULT;
+		अगर (mode)
 			port->ops->data_reverse(port);
-		else
-			port->ops->data_forward(port);
-		return 0;
+		अन्यथा
+			port->ops->data_क्रमward(port);
+		वापस 0;
 
-	case PPNEGOT:
-		if (copy_from_user(&mode, argp, sizeof(mode)))
-			return -EFAULT;
-		switch ((ret = parport_negotiate(port, mode))) {
-		case 0: break;
-		case -1: /* handshake failed, peripheral not IEEE 1284 */
+	हाल PPNEGOT:
+		अगर (copy_from_user(&mode, argp, माप(mode)))
+			वापस -EFAULT;
+		चयन ((ret = parport_negotiate(port, mode))) अणु
+		हाल 0: अवरोध;
+		हाल -1: /* handshake failed, peripheral not IEEE 1284 */
 			ret = -EIO;
-			break;
-		case 1:  /* handshake succeeded, peripheral rejected mode */
+			अवरोध;
+		हाल 1:  /* handshake succeeded, peripheral rejected mode */
 			ret = -ENXIO;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		pp_enable_irq(pp);
-		return ret;
+		वापस ret;
 
-	case PPWCTLONIRQ:
-		if (copy_from_user(&reg, argp, sizeof(reg)))
-			return -EFAULT;
+	हाल PPWCTLONIRQ:
+		अगर (copy_from_user(&reg, argp, माप(reg)))
+			वापस -EFAULT;
 
-		/* Remember what to set the control lines to, for next
-		 * time we get an interrupt. */
+		/* Remember what to set the control lines to, क्रम next
+		 * समय we get an पूर्णांकerrupt. */
 		pp->irqctl = reg;
 		pp->irqresponse = 1;
-		return 0;
+		वापस 0;
 
-	case PPCLRIRQ:
-		ret = atomic_read(&pp->irqc);
-		if (copy_to_user(argp, &ret, sizeof(ret)))
-			return -EFAULT;
+	हाल PPCLRIRQ:
+		ret = atomic_पढ़ो(&pp->irqc);
+		अगर (copy_to_user(argp, &ret, माप(ret)))
+			वापस -EFAULT;
 		atomic_sub(ret, &pp->irqc);
-		return 0;
+		वापस 0;
 
-	case PPSETTIME32:
-		if (copy_from_user(time32, argp, sizeof(time32)))
-			return -EFAULT;
+	हाल PPSETTIME32:
+		अगर (copy_from_user(समय32, argp, माप(समय32)))
+			वापस -EFAULT;
 
-		if ((time32[0] < 0) || (time32[1] < 0))
-			return -EINVAL;
+		अगर ((समय32[0] < 0) || (समय32[1] < 0))
+			वापस -EINVAL;
 
-		return pp_set_timeout(pp->pdev, time32[0], time32[1]);
+		वापस pp_set_समयout(pp->pdev, समय32[0], समय32[1]);
 
-	case PPSETTIME64:
-		if (copy_from_user(time64, argp, sizeof(time64)))
-			return -EFAULT;
+	हाल PPSETTIME64:
+		अगर (copy_from_user(समय64, argp, माप(समय64)))
+			वापस -EFAULT;
 
-		if ((time64[0] < 0) || (time64[1] < 0))
-			return -EINVAL;
+		अगर ((समय64[0] < 0) || (समय64[1] < 0))
+			वापस -EINVAL;
 
-		if (IS_ENABLED(CONFIG_SPARC64) && !in_compat_syscall())
-			time64[1] >>= 32;
+		अगर (IS_ENABLED(CONFIG_SPARC64) && !in_compat_syscall())
+			समय64[1] >>= 32;
 
-		return pp_set_timeout(pp->pdev, time64[0], time64[1]);
+		वापस pp_set_समयout(pp->pdev, समय64[0], समय64[1]);
 
-	case PPGETTIME32:
-		jiffies_to_timespec64(pp->pdev->timeout, &ts);
-		time32[0] = ts.tv_sec;
-		time32[1] = ts.tv_nsec / NSEC_PER_USEC;
+	हाल PPGETTIME32:
+		jअगरfies_to_बारpec64(pp->pdev->समयout, &ts);
+		समय32[0] = ts.tv_sec;
+		समय32[1] = ts.tv_nsec / NSEC_PER_USEC;
 
-		if (copy_to_user(argp, time32, sizeof(time32)))
-			return -EFAULT;
+		अगर (copy_to_user(argp, समय32, माप(समय32)))
+			वापस -EFAULT;
 
-		return 0;
+		वापस 0;
 
-	case PPGETTIME64:
-		jiffies_to_timespec64(pp->pdev->timeout, &ts);
-		time64[0] = ts.tv_sec;
-		time64[1] = ts.tv_nsec / NSEC_PER_USEC;
+	हाल PPGETTIME64:
+		jअगरfies_to_बारpec64(pp->pdev->समयout, &ts);
+		समय64[0] = ts.tv_sec;
+		समय64[1] = ts.tv_nsec / NSEC_PER_USEC;
 
-		if (IS_ENABLED(CONFIG_SPARC64) && !in_compat_syscall())
-			time64[1] <<= 32;
+		अगर (IS_ENABLED(CONFIG_SPARC64) && !in_compat_syscall())
+			समय64[1] <<= 32;
 
-		if (copy_to_user(argp, time64, sizeof(time64)))
-			return -EFAULT;
+		अगर (copy_to_user(argp, समय64, माप(समय64)))
+			वापस -EFAULT;
 
-		return 0;
+		वापस 0;
 
-	default:
+	शेष:
 		dev_dbg(&pp->pdev->dev, "What? (cmd=0x%x)\n", cmd);
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
 	/* Keep the compiler happy */
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static long pp_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
-{
-	long ret;
+अटल दीर्घ pp_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd, अचिन्हित दीर्घ arg)
+अणु
+	दीर्घ ret;
 
-	mutex_lock(&pp_do_mutex);
-	ret = pp_do_ioctl(file, cmd, arg);
-	mutex_unlock(&pp_do_mutex);
-	return ret;
-}
+	mutex_lock(&pp_करो_mutex);
+	ret = pp_करो_ioctl(file, cmd, arg);
+	mutex_unlock(&pp_करो_mutex);
+	वापस ret;
+पूर्ण
 
-static int pp_open(struct inode *inode, struct file *file)
-{
-	unsigned int minor = iminor(inode);
-	struct pp_struct *pp;
+अटल पूर्णांक pp_खोलो(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अचिन्हित पूर्णांक minor = iminor(inode);
+	काष्ठा pp_काष्ठा *pp;
 
-	if (minor >= PARPORT_MAX)
-		return -ENXIO;
+	अगर (minor >= PARPORT_MAX)
+		वापस -ENXIO;
 
-	pp = kmalloc(sizeof(struct pp_struct), GFP_KERNEL);
-	if (!pp)
-		return -ENOMEM;
+	pp = kदो_स्मृति(माप(काष्ठा pp_काष्ठा), GFP_KERNEL);
+	अगर (!pp)
+		वापस -ENOMEM;
 
 	pp->state.mode = IEEE1284_MODE_COMPAT;
 	pp->state.phase = init_phase(pp->state.mode);
 	pp->flags = 0;
 	pp->irqresponse = 0;
 	atomic_set(&pp->irqc, 0);
-	init_waitqueue_head(&pp->irq_wait);
+	init_रुकोqueue_head(&pp->irq_रुको);
 
 	/* Defer the actual device registration until the first claim.
 	 * That way, we know whether or not the driver wants to have
 	 * exclusive access to the port (PPEXCL).
 	 */
-	pp->pdev = NULL;
-	file->private_data = pp;
+	pp->pdev = शून्य;
+	file->निजी_data = pp;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int pp_release(struct inode *inode, struct file *file)
-{
-	unsigned int minor = iminor(inode);
-	struct pp_struct *pp = file->private_data;
-	int compat_negot;
+अटल पूर्णांक pp_release(काष्ठा inode *inode, काष्ठा file *file)
+अणु
+	अचिन्हित पूर्णांक minor = iminor(inode);
+	काष्ठा pp_काष्ठा *pp = file->निजी_data;
+	पूर्णांक compat_negot;
 
 	compat_negot = 0;
-	if (!(pp->flags & PP_CLAIMED) && pp->pdev &&
-	    (pp->state.mode != IEEE1284_MODE_COMPAT)) {
-		struct ieee1284_info *info;
+	अगर (!(pp->flags & PP_CLAIMED) && pp->pdev &&
+	    (pp->state.mode != IEEE1284_MODE_COMPAT)) अणु
+		काष्ठा ieee1284_info *info;
 
 		/* parport released, but not in compatibility mode */
 		parport_claim_or_block(pp->pdev);
@@ -723,18 +724,18 @@ static int pp_release(struct inode *inode, struct file *file)
 		info->mode = pp->state.mode;
 		info->phase = pp->state.phase;
 		compat_negot = 1;
-	} else if ((pp->flags & PP_CLAIMED) && pp->pdev &&
-	    (pp->pdev->port->ieee1284.mode != IEEE1284_MODE_COMPAT)) {
+	पूर्ण अन्यथा अगर ((pp->flags & PP_CLAIMED) && pp->pdev &&
+	    (pp->pdev->port->ieee1284.mode != IEEE1284_MODE_COMPAT)) अणु
 		compat_negot = 2;
-	}
-	if (compat_negot) {
+	पूर्ण
+	अगर (compat_negot) अणु
 		parport_negotiate(pp->pdev->port, IEEE1284_MODE_COMPAT);
 		dev_dbg(&pp->pdev->dev,
 			"negotiated back to compatibility mode because user-space forgot\n");
-	}
+	पूर्ण
 
-	if ((pp->flags & PP_CLAIMED) && pp->pdev) {
-		struct ieee1284_info *info;
+	अगर ((pp->flags & PP_CLAIMED) && pp->pdev) अणु
+		काष्ठा ieee1284_info *info;
 
 		info = &pp->pdev->port->ieee1284;
 		pp->state.mode = info->mode;
@@ -742,137 +743,137 @@ static int pp_release(struct inode *inode, struct file *file)
 		info->mode = pp->saved_state.mode;
 		info->phase = pp->saved_state.phase;
 		parport_release(pp->pdev);
-		if (compat_negot != 1) {
+		अगर (compat_negot != 1) अणु
 			pr_debug(CHRDEV "%x: released pardevice "
 				"because user-space forgot\n", minor);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (pp->pdev) {
-		parport_unregister_device(pp->pdev);
-		ida_simple_remove(&ida_index, pp->index);
-		pp->pdev = NULL;
+	अगर (pp->pdev) अणु
+		parport_unरेजिस्टर_device(pp->pdev);
+		ida_simple_हटाओ(&ida_index, pp->index);
+		pp->pdev = शून्य;
 		pr_debug(CHRDEV "%x: unregistered pardevice\n", minor);
-	}
+	पूर्ण
 
-	kfree(pp);
+	kमुक्त(pp);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /* No kernel lock held - fine */
-static __poll_t pp_poll(struct file *file, poll_table *wait)
-{
-	struct pp_struct *pp = file->private_data;
+अटल __poll_t pp_poll(काष्ठा file *file, poll_table *रुको)
+अणु
+	काष्ठा pp_काष्ठा *pp = file->निजी_data;
 	__poll_t mask = 0;
 
-	poll_wait(file, &pp->irq_wait, wait);
-	if (atomic_read(&pp->irqc))
+	poll_रुको(file, &pp->irq_रुको, रुको);
+	अगर (atomic_पढ़ो(&pp->irqc))
 		mask |= EPOLLIN | EPOLLRDNORM;
 
-	return mask;
-}
+	वापस mask;
+पूर्ण
 
-static struct class *ppdev_class;
+अटल काष्ठा class *ppdev_class;
 
-static const struct file_operations pp_fops = {
+अटल स्थिर काष्ठा file_operations pp_fops = अणु
 	.owner		= THIS_MODULE,
 	.llseek		= no_llseek,
-	.read		= pp_read,
-	.write		= pp_write,
+	.पढ़ो		= pp_पढ़ो,
+	.ग_लिखो		= pp_ग_लिखो,
 	.poll		= pp_poll,
 	.unlocked_ioctl	= pp_ioctl,
 	.compat_ioctl   = compat_ptr_ioctl,
-	.open		= pp_open,
+	.खोलो		= pp_खोलो,
 	.release	= pp_release,
-};
+पूर्ण;
 
-static void pp_attach(struct parport *port)
-{
-	struct device *ret;
+अटल व्योम pp_attach(काष्ठा parport *port)
+अणु
+	काष्ठा device *ret;
 
-	if (devices[port->number])
-		return;
+	अगर (devices[port->number])
+		वापस;
 
 	ret = device_create(ppdev_class, port->dev,
-			    MKDEV(PP_MAJOR, port->number), NULL,
+			    MKDEV(PP_MAJOR, port->number), शून्य,
 			    "parport%d", port->number);
-	if (IS_ERR(ret)) {
+	अगर (IS_ERR(ret)) अणु
 		pr_err("Failed to create device parport%d\n",
 		       port->number);
-		return;
-	}
+		वापस;
+	पूर्ण
 	devices[port->number] = ret;
-}
+पूर्ण
 
-static void pp_detach(struct parport *port)
-{
-	if (!devices[port->number])
-		return;
+अटल व्योम pp_detach(काष्ठा parport *port)
+अणु
+	अगर (!devices[port->number])
+		वापस;
 
 	device_destroy(ppdev_class, MKDEV(PP_MAJOR, port->number));
-	devices[port->number] = NULL;
-}
+	devices[port->number] = शून्य;
+पूर्ण
 
-static int pp_probe(struct pardevice *par_dev)
-{
-	struct device_driver *drv = par_dev->dev.driver;
-	int len = strlen(drv->name);
+अटल पूर्णांक pp_probe(काष्ठा pardevice *par_dev)
+अणु
+	काष्ठा device_driver *drv = par_dev->dev.driver;
+	पूर्णांक len = म_माप(drv->name);
 
-	if (strncmp(par_dev->name, drv->name, len))
-		return -ENODEV;
+	अगर (म_भेदन(par_dev->name, drv->name, len))
+		वापस -ENODEV;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static struct parport_driver pp_driver = {
+अटल काष्ठा parport_driver pp_driver = अणु
 	.name		= CHRDEV,
 	.probe		= pp_probe,
 	.match_port	= pp_attach,
 	.detach		= pp_detach,
 	.devmodel	= true,
-};
+पूर्ण;
 
-static int __init ppdev_init(void)
-{
-	int err = 0;
+अटल पूर्णांक __init ppdev_init(व्योम)
+अणु
+	पूर्णांक err = 0;
 
-	if (register_chrdev(PP_MAJOR, CHRDEV, &pp_fops)) {
+	अगर (रेजिस्टर_chrdev(PP_MAJOR, CHRDEV, &pp_fops)) अणु
 		pr_warn(CHRDEV ": unable to get major %d\n", PP_MAJOR);
-		return -EIO;
-	}
+		वापस -EIO;
+	पूर्ण
 	ppdev_class = class_create(THIS_MODULE, CHRDEV);
-	if (IS_ERR(ppdev_class)) {
+	अगर (IS_ERR(ppdev_class)) अणु
 		err = PTR_ERR(ppdev_class);
-		goto out_chrdev;
-	}
-	err = parport_register_driver(&pp_driver);
-	if (err < 0) {
+		जाओ out_chrdev;
+	पूर्ण
+	err = parport_रेजिस्टर_driver(&pp_driver);
+	अगर (err < 0) अणु
 		pr_warn(CHRDEV ": unable to register with parport\n");
-		goto out_class;
-	}
+		जाओ out_class;
+	पूर्ण
 
 	pr_info(PP_VERSION "\n");
-	goto out;
+	जाओ out;
 
 out_class:
 	class_destroy(ppdev_class);
 out_chrdev:
-	unregister_chrdev(PP_MAJOR, CHRDEV);
+	unरेजिस्टर_chrdev(PP_MAJOR, CHRDEV);
 out:
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static void __exit ppdev_cleanup(void)
-{
+अटल व्योम __निकास ppdev_cleanup(व्योम)
+अणु
 	/* Clean up all parport stuff */
-	parport_unregister_driver(&pp_driver);
+	parport_unरेजिस्टर_driver(&pp_driver);
 	class_destroy(ppdev_class);
-	unregister_chrdev(PP_MAJOR, CHRDEV);
-}
+	unरेजिस्टर_chrdev(PP_MAJOR, CHRDEV);
+पूर्ण
 
 module_init(ppdev_init);
-module_exit(ppdev_cleanup);
+module_निकास(ppdev_cleanup);
 
 MODULE_LICENSE("GPL");
 MODULE_ALIAS_CHARDEV_MAJOR(PP_MAJOR);

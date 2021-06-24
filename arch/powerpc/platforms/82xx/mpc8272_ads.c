@@ -1,121 +1,122 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
 /*
  * MPC8272 ADS board support
  *
  * Copyright 2007 Freescale Semiconductor, Inc.
- * Author: Scott Wood <scottwood@freescale.com>
+ * Author: Scott Wood <scottwood@मुक्तscale.com>
  *
  * Based on code by Vitaly Bordug <vbordug@ru.mvista.com>
  * Copyright (c) 2006 MontaVista Software, Inc.
  */
 
-#include <linux/init.h>
-#include <linux/interrupt.h>
-#include <linux/fsl_devices.h>
-#include <linux/of_address.h>
-#include <linux/of_fdt.h>
-#include <linux/of_platform.h>
-#include <linux/io.h>
+#समावेश <linux/init.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/fsl_devices.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/of_fdt.h>
+#समावेश <linux/of_platक्रमm.h>
+#समावेश <linux/पन.स>
 
-#include <asm/cpm2.h>
-#include <asm/udbg.h>
-#include <asm/machdep.h>
-#include <asm/time.h>
+#समावेश <यंत्र/cpm2.h>
+#समावेश <यंत्र/udbg.h>
+#समावेश <यंत्र/machdep.h>
+#समावेश <यंत्र/समय.स>
 
-#include <platforms/82xx/pq2.h>
+#समावेश <platक्रमms/82xx/pq2.h>
 
-#include <sysdev/fsl_soc.h>
-#include <sysdev/cpm2_pic.h>
+#समावेश <sysdev/fsl_soc.h>
+#समावेश <sysdev/cpm2_pic.h>
 
-#include "pq2.h"
+#समावेश "pq2.h"
 
-static void __init mpc8272_ads_pic_init(void)
-{
-	struct device_node *np = of_find_compatible_node(NULL, NULL,
+अटल व्योम __init mpc8272_ads_pic_init(व्योम)
+अणु
+	काष्ठा device_node *np = of_find_compatible_node(शून्य, शून्य,
 	                                                 "fsl,cpm2-pic");
-	if (!np) {
-		printk(KERN_ERR "PIC init: can not find fsl,cpm2-pic node\n");
-		return;
-	}
+	अगर (!np) अणु
+		prपूर्णांकk(KERN_ERR "PIC init: can not find fsl,cpm2-pic node\n");
+		वापस;
+	पूर्ण
 
 	cpm2_pic_init(np);
 	of_node_put(np);
 
-	/* Initialize stuff for the 82xx CPLD IC and install demux  */
+	/* Initialize stuff क्रम the 82xx CPLD IC and install demux  */
 	pq2ads_pci_init_irq();
-}
+पूर्ण
 
-struct cpm_pin {
-	int port, pin, flags;
-};
+काष्ठा cpm_pin अणु
+	पूर्णांक port, pin, flags;
+पूर्ण;
 
-static struct cpm_pin mpc8272_ads_pins[] = {
+अटल काष्ठा cpm_pin mpc8272_ads_pins[] = अणु
 	/* SCC1 */
-	{3, 30, CPM_PIN_OUTPUT | CPM_PIN_SECONDARY},
-	{3, 31, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
+	अणु3, 30, CPM_PIN_OUTPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु3, 31, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
 
 	/* SCC4 */
-	{3, 21, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{3, 22, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
+	अणु3, 21, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु3, 22, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
 
 	/* FCC1 */
-	{0, 14, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{0, 15, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{0, 16, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{0, 17, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{0, 18, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{0, 19, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{0, 20, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{0, 21, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{0, 26, CPM_PIN_INPUT | CPM_PIN_SECONDARY},
-	{0, 27, CPM_PIN_INPUT | CPM_PIN_SECONDARY},
-	{0, 28, CPM_PIN_OUTPUT | CPM_PIN_SECONDARY},
-	{0, 29, CPM_PIN_OUTPUT | CPM_PIN_SECONDARY},
-	{0, 30, CPM_PIN_INPUT | CPM_PIN_SECONDARY},
-	{0, 31, CPM_PIN_INPUT | CPM_PIN_SECONDARY},
-	{2, 21, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{2, 22, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
+	अणु0, 14, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 15, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 16, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 17, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 18, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 19, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 20, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 21, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु0, 26, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 27, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 28, CPM_PIN_OUTPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 29, CPM_PIN_OUTPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 30, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु0, 31, CPM_PIN_INPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु2, 21, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु2, 22, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
 
 	/* FCC2 */
-	{1, 18, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{1, 19, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{1, 20, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{1, 21, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{1, 22, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{1, 23, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{1, 24, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{1, 25, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{1, 26, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{1, 27, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{1, 28, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{1, 29, CPM_PIN_OUTPUT | CPM_PIN_SECONDARY},
-	{1, 30, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{1, 31, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{2, 16, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{2, 17, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
+	अणु1, 18, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 19, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 20, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 21, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 22, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 23, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 24, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 25, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 26, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 27, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 28, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 29, CPM_PIN_OUTPUT | CPM_PIN_SECONDARYपूर्ण,
+	अणु1, 30, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु1, 31, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु2, 16, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु2, 17, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
 
 	/* I2C */
-	{3, 14, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_OPENDRAIN},
-	{3, 15, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_OPENDRAIN},
+	अणु3, 14, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_OPENDRAINपूर्ण,
+	अणु3, 15, CPM_PIN_INPUT | CPM_PIN_SECONDARY | CPM_PIN_OPENDRAINपूर्ण,
 
 	/* USB */
-	{2, 10, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{2, 11, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{2, 20, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{2, 24, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-	{3, 23, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{3, 24, CPM_PIN_OUTPUT | CPM_PIN_PRIMARY},
-	{3, 25, CPM_PIN_INPUT | CPM_PIN_PRIMARY},
-};
+	अणु2, 10, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु2, 11, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु2, 20, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु2, 24, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु3, 23, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु3, 24, CPM_PIN_OUTPUT | CPM_PIN_PRIMARYपूर्ण,
+	अणु3, 25, CPM_PIN_INPUT | CPM_PIN_PRIMARYपूर्ण,
+पूर्ण;
 
-static void __init init_ioports(void)
-{
-	int i;
+अटल व्योम __init init_ioports(व्योम)
+अणु
+	पूर्णांक i;
 
-	for (i = 0; i < ARRAY_SIZE(mpc8272_ads_pins); i++) {
-		struct cpm_pin *pin = &mpc8272_ads_pins[i];
+	क्रम (i = 0; i < ARRAY_SIZE(mpc8272_ads_pins); i++) अणु
+		काष्ठा cpm_pin *pin = &mpc8272_ads_pins[i];
 		cpm2_set_pin(pin->port, pin->pin, pin->flags);
-	}
+	पूर्ण
 
 	cpm2_clk_setup(CPM_CLK_SCC1, CPM_BRG1, CPM_CLK_RX);
 	cpm2_clk_setup(CPM_CLK_SCC1, CPM_BRG1, CPM_CLK_TX);
@@ -127,38 +128,38 @@ static void __init init_ioports(void)
 	cpm2_clk_setup(CPM_CLK_FCC1, CPM_CLK10, CPM_CLK_TX);
 	cpm2_clk_setup(CPM_CLK_FCC2, CPM_CLK15, CPM_CLK_RX);
 	cpm2_clk_setup(CPM_CLK_FCC2, CPM_CLK16, CPM_CLK_TX);
-}
+पूर्ण
 
-static void __init mpc8272_ads_setup_arch(void)
-{
-	struct device_node *np;
+अटल व्योम __init mpc8272_ads_setup_arch(व्योम)
+अणु
+	काष्ठा device_node *np;
 	__be32 __iomem *bcsr;
 
-	if (ppc_md.progress)
+	अगर (ppc_md.progress)
 		ppc_md.progress("mpc8272_ads_setup_arch()", 0);
 
 	cpm2_reset();
 
-	np = of_find_compatible_node(NULL, NULL, "fsl,mpc8272ads-bcsr");
-	if (!np) {
-		printk(KERN_ERR "No bcsr in device tree\n");
-		return;
-	}
+	np = of_find_compatible_node(शून्य, शून्य, "fsl,mpc8272ads-bcsr");
+	अगर (!np) अणु
+		prपूर्णांकk(KERN_ERR "No bcsr in device tree\n");
+		वापस;
+	पूर्ण
 
 	bcsr = of_iomap(np, 0);
 	of_node_put(np);
-	if (!bcsr) {
-		printk(KERN_ERR "Cannot map BCSR registers\n");
-		return;
-	}
+	अगर (!bcsr) अणु
+		prपूर्णांकk(KERN_ERR "Cannot map BCSR registers\n");
+		वापस;
+	पूर्ण
 
-#define BCSR1_FETHIEN		0x08000000
-#define BCSR1_FETH_RST		0x04000000
-#define BCSR1_RS232_EN1		0x02000000
-#define BCSR1_RS232_EN2		0x01000000
-#define BCSR3_USB_nEN		0x80000000
-#define BCSR3_FETHIEN2		0x10000000
-#define BCSR3_FETH2_RST		0x08000000
+#घोषणा BCSR1_FETHIEN		0x08000000
+#घोषणा BCSR1_FETH_RST		0x04000000
+#घोषणा BCSR1_RS232_EN1		0x02000000
+#घोषणा BCSR1_RS232_EN2		0x01000000
+#घोषणा BCSR3_USB_nEN		0x80000000
+#घोषणा BCSR3_FETHIEN2		0x10000000
+#घोषणा BCSR3_FETH2_RST		0x08000000
 
 	clrbits32(&bcsr[1], BCSR1_RS232_EN1 | BCSR1_RS232_EN2 | BCSR1_FETHIEN);
 	setbits32(&bcsr[1], BCSR1_FETH_RST);
@@ -172,35 +173,35 @@ static void __init mpc8272_ads_setup_arch(void)
 
 	init_ioports();
 
-	if (ppc_md.progress)
+	अगर (ppc_md.progress)
 		ppc_md.progress("mpc8272_ads_setup_arch(), finish", 0);
-}
+पूर्ण
 
-static const struct of_device_id of_bus_ids[] __initconst = {
-	{ .name = "soc", },
-	{ .name = "cpm", },
-	{ .name = "localbus", },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id of_bus_ids[] __initस्थिर = अणु
+	अणु .name = "soc", पूर्ण,
+	अणु .name = "cpm", पूर्ण,
+	अणु .name = "localbus", पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 
-static int __init declare_of_platform_devices(void)
-{
+अटल पूर्णांक __init declare_of_platक्रमm_devices(व्योम)
+अणु
 	/* Publish the QE devices */
-	of_platform_bus_probe(NULL, of_bus_ids, NULL);
-	return 0;
-}
-machine_device_initcall(mpc8272_ads, declare_of_platform_devices);
+	of_platक्रमm_bus_probe(शून्य, of_bus_ids, शून्य);
+	वापस 0;
+पूर्ण
+machine_device_initcall(mpc8272_ads, declare_of_platक्रमm_devices);
 
 /*
  * Called very early, device-tree isn't unflattened
  */
-static int __init mpc8272_ads_probe(void)
-{
-	return of_machine_is_compatible("fsl,mpc8272ads");
-}
+अटल पूर्णांक __init mpc8272_ads_probe(व्योम)
+अणु
+	वापस of_machine_is_compatible("fsl,mpc8272ads");
+पूर्ण
 
 define_machine(mpc8272_ads)
-{
+अणु
 	.name = "Freescale MPC8272 ADS",
 	.probe = mpc8272_ads_probe,
 	.setup_arch = mpc8272_ads_setup_arch,
@@ -210,4 +211,4 @@ define_machine(mpc8272_ads)
 	.calibrate_decr = generic_calibrate_decr,
 	.restart = pq2_restart,
 	.progress = udbg_progress,
-};
+पूर्ण;

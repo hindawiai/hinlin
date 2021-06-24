@@ -1,40 +1,41 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
-/* ASN.1 Object identifier (OID) registry
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-or-later
+/* ASN.1 Object identअगरier (OID) registry
  *
  * Copyright (C) 2012 Red Hat, Inc. All Rights Reserved.
  * Written by David Howells (dhowells@redhat.com)
  */
 
-#include <linux/module.h>
-#include <linux/export.h>
-#include <linux/oid_registry.h>
-#include <linux/kernel.h>
-#include <linux/errno.h>
-#include <linux/bug.h>
-#include <linux/asn1.h>
-#include "oid_registry_data.c"
+#समावेश <linux/module.h>
+#समावेश <linux/export.h>
+#समावेश <linux/oid_registry.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/bug.h>
+#समावेश <linux/asn1.h>
+#समावेश "oid_registry_data.c"
 
 MODULE_DESCRIPTION("OID Registry");
 MODULE_AUTHOR("Red Hat, Inc.");
 MODULE_LICENSE("GPL");
 
 /**
- * look_up_OID - Find an OID registration for the specified data
+ * look_up_OID - Find an OID registration क्रम the specअगरied data
  * @data: Binary representation of the OID
  * @datasize: Size of the binary representation
  */
-enum OID look_up_OID(const void *data, size_t datasize)
-{
-	const unsigned char *octets = data;
-	enum OID oid;
-	unsigned char xhash;
-	unsigned i, j, k, hash;
-	size_t len;
+क्रमागत OID look_up_OID(स्थिर व्योम *data, माप_प्रकार datasize)
+अणु
+	स्थिर अचिन्हित अक्षर *octets = data;
+	क्रमागत OID oid;
+	अचिन्हित अक्षर xhash;
+	अचिन्हित i, j, k, hash;
+	माप_प्रकार len;
 
 	/* Hash the OID data */
 	hash = datasize - 1;
 
-	for (i = 0; i < datasize; i++)
+	क्रम (i = 0; i < datasize; i++)
 		hash += octets[i] * 33;
 	hash = (hash >> 24) ^ (hash >> 16) ^ (hash >> 8) ^ hash;
 	hash &= 0xff;
@@ -45,155 +46,155 @@ enum OID look_up_OID(const void *data, size_t datasize)
 	 */
 	i = 0;
 	k = OID__NR;
-	while (i < k) {
+	जबतक (i < k) अणु
 		j = (i + k) / 2;
 
 		xhash = oid_search_table[j].hash;
-		if (xhash > hash) {
+		अगर (xhash > hash) अणु
 			k = j;
-			continue;
-		}
-		if (xhash < hash) {
+			जारी;
+		पूर्ण
+		अगर (xhash < hash) अणु
 			i = j + 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		oid = oid_search_table[j].oid;
 		len = oid_index[oid + 1] - oid_index[oid];
-		if (len > datasize) {
+		अगर (len > datasize) अणु
 			k = j;
-			continue;
-		}
-		if (len < datasize) {
+			जारी;
+		पूर्ण
+		अगर (len < datasize) अणु
 			i = j + 1;
-			continue;
-		}
+			जारी;
+		पूर्ण
 
 		/* Variation is most likely to be at the tail end of the
-		 * OID, so do the comparison in reverse.
+		 * OID, so करो the comparison in reverse.
 		 */
-		while (len > 0) {
-			unsigned char a = oid_data[oid_index[oid] + --len];
-			unsigned char b = octets[len];
-			if (a > b) {
+		जबतक (len > 0) अणु
+			अचिन्हित अक्षर a = oid_data[oid_index[oid] + --len];
+			अचिन्हित अक्षर b = octets[len];
+			अगर (a > b) अणु
 				k = j;
-				goto next;
-			}
-			if (a < b) {
+				जाओ next;
+			पूर्ण
+			अगर (a < b) अणु
 				i = j + 1;
-				goto next;
-			}
-		}
-		return oid;
+				जाओ next;
+			पूर्ण
+		पूर्ण
+		वापस oid;
 	next:
 		;
-	}
+	पूर्ण
 
-	return OID__NR;
-}
+	वापस OID__NR;
+पूर्ण
 EXPORT_SYMBOL_GPL(look_up_OID);
 
 /**
  * parse_OID - Parse an OID from a bytestream
  * @data: Binary representation of the header + OID
  * @datasize: Size of the binary representation
- * @oid: Pointer to oid to return result
+ * @oid: Poपूर्णांकer to oid to वापस result
  *
- * Parse an OID from a bytestream that holds the OID in the format
+ * Parse an OID from a bytestream that holds the OID in the क्रमmat
  * ASN1_OID | length | oid. The length indicator must equal to datasize - 2.
- * -EBADMSG is returned if the bytestream is too short.
+ * -EBADMSG is वापसed अगर the bytestream is too लघु.
  */
-int parse_OID(const void *data, size_t datasize, enum OID *oid)
-{
-	const unsigned char *v = data;
+पूर्णांक parse_OID(स्थिर व्योम *data, माप_प्रकार datasize, क्रमागत OID *oid)
+अणु
+	स्थिर अचिन्हित अक्षर *v = data;
 
-	/* we need 2 bytes of header and at least 1 byte for oid */
-	if (datasize < 3 || v[0] != ASN1_OID || v[1] != datasize - 2)
-		return -EBADMSG;
+	/* we need 2 bytes of header and at least 1 byte क्रम oid */
+	अगर (datasize < 3 || v[0] != ASN1_OID || v[1] != datasize - 2)
+		वापस -EBADMSG;
 
 	*oid = look_up_OID(data + 2, datasize - 2);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(parse_OID);
 
 /*
- * sprint_OID - Print an Object Identifier into a buffer
- * @data: The encoded OID to print
+ * sprपूर्णांक_OID - Prपूर्णांक an Object Identअगरier पूर्णांकo a buffer
+ * @data: The encoded OID to prपूर्णांक
  * @datasize: The size of the encoded OID
- * @buffer: The buffer to render into
+ * @buffer: The buffer to render पूर्णांकo
  * @bufsize: The size of the buffer
  *
- * The OID is rendered into the buffer in "a.b.c.d" format and the number of
- * bytes is returned.  -EBADMSG is returned if the data could not be intepreted
- * and -ENOBUFS if the buffer was too small.
+ * The OID is rendered पूर्णांकo the buffer in "a.b.c.d" क्रमmat and the number of
+ * bytes is वापसed.  -EBADMSG is वापसed अगर the data could not be पूर्णांकepreted
+ * and -ENOBUFS अगर the buffer was too small.
  */
-int sprint_oid(const void *data, size_t datasize, char *buffer, size_t bufsize)
-{
-	const unsigned char *v = data, *end = v + datasize;
-	unsigned long num;
-	unsigned char n;
-	size_t ret;
-	int count;
+पूर्णांक sprपूर्णांक_oid(स्थिर व्योम *data, माप_प्रकार datasize, अक्षर *buffer, माप_प्रकार bufsize)
+अणु
+	स्थिर अचिन्हित अक्षर *v = data, *end = v + datasize;
+	अचिन्हित दीर्घ num;
+	अचिन्हित अक्षर n;
+	माप_प्रकार ret;
+	पूर्णांक count;
 
-	if (v >= end)
-		goto bad;
+	अगर (v >= end)
+		जाओ bad;
 
 	n = *v++;
-	ret = count = snprintf(buffer, bufsize, "%u.%u", n / 40, n % 40);
-	if (count >= bufsize)
-		return -ENOBUFS;
+	ret = count = snम_लिखो(buffer, bufsize, "%u.%u", n / 40, n % 40);
+	अगर (count >= bufsize)
+		वापस -ENOBUFS;
 	buffer += count;
 	bufsize -= count;
 
-	while (v < end) {
+	जबतक (v < end) अणु
 		num = 0;
 		n = *v++;
-		if (!(n & 0x80)) {
+		अगर (!(n & 0x80)) अणु
 			num = n;
-		} else {
+		पूर्ण अन्यथा अणु
 			num = n & 0x7f;
-			do {
-				if (v >= end)
-					goto bad;
+			करो अणु
+				अगर (v >= end)
+					जाओ bad;
 				n = *v++;
 				num <<= 7;
 				num |= n & 0x7f;
-			} while (n & 0x80);
-		}
-		ret += count = snprintf(buffer, bufsize, ".%lu", num);
-		if (count >= bufsize)
-			return -ENOBUFS;
+			पूर्ण जबतक (n & 0x80);
+		पूर्ण
+		ret += count = snम_लिखो(buffer, bufsize, ".%lu", num);
+		अगर (count >= bufsize)
+			वापस -ENOBUFS;
 		buffer += count;
 		bufsize -= count;
-	}
+	पूर्ण
 
-	return ret;
+	वापस ret;
 
 bad:
-	snprintf(buffer, bufsize, "(bad)");
-	return -EBADMSG;
-}
-EXPORT_SYMBOL_GPL(sprint_oid);
+	snम_लिखो(buffer, bufsize, "(bad)");
+	वापस -EBADMSG;
+पूर्ण
+EXPORT_SYMBOL_GPL(sprपूर्णांक_oid);
 
 /**
- * sprint_OID - Print an Object Identifier into a buffer
- * @oid: The OID to print
- * @buffer: The buffer to render into
+ * sprपूर्णांक_OID - Prपूर्णांक an Object Identअगरier पूर्णांकo a buffer
+ * @oid: The OID to prपूर्णांक
+ * @buffer: The buffer to render पूर्णांकo
  * @bufsize: The size of the buffer
  *
- * The OID is rendered into the buffer in "a.b.c.d" format and the number of
- * bytes is returned.
+ * The OID is rendered पूर्णांकo the buffer in "a.b.c.d" क्रमmat and the number of
+ * bytes is वापसed.
  */
-int sprint_OID(enum OID oid, char *buffer, size_t bufsize)
-{
-	int ret;
+पूर्णांक sprपूर्णांक_OID(क्रमागत OID oid, अक्षर *buffer, माप_प्रकार bufsize)
+अणु
+	पूर्णांक ret;
 
 	BUG_ON(oid >= OID__NR);
 
-	ret = sprint_oid(oid_data + oid_index[oid],
+	ret = sprपूर्णांक_oid(oid_data + oid_index[oid],
 			 oid_index[oid + 1] - oid_index[oid],
 			 buffer, bufsize);
 	BUG_ON(ret == -EBADMSG);
-	return ret;
-}
-EXPORT_SYMBOL_GPL(sprint_OID);
+	वापस ret;
+पूर्ण
+EXPORT_SYMBOL_GPL(sprपूर्णांक_OID);

@@ -1,86 +1,87 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _ASM_S390X_COMPAT_H
-#define _ASM_S390X_COMPAT_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _ASM_S390X_COMPAT_H
+#घोषणा _ASM_S390X_COMPAT_H
 /*
- * Architecture specific compatibility types
+ * Architecture specअगरic compatibility types
  */
-#include <linux/types.h>
-#include <linux/sched.h>
-#include <linux/sched/task_stack.h>
-#include <linux/thread_info.h>
+#समावेश <linux/types.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/sched/task_stack.h>
+#समावेश <linux/thपढ़ो_info.h>
 
-#include <asm-generic/compat.h>
+#समावेश <यंत्र-generic/compat.h>
 
-#define __TYPE_IS_PTR(t) (!__builtin_types_compatible_p( \
-				typeof(0?(__force t)0:0ULL), u64))
+#घोषणा __TYPE_IS_PTR(t) (!__builtin_types_compatible_p( \
+				typeof(0?(__क्रमce t)0:0ULL), u64))
 
-#define __SC_DELOUSE(t,v) ({ \
-	BUILD_BUG_ON(sizeof(t) > 4 && !__TYPE_IS_PTR(t)); \
-	(__force t)(__TYPE_IS_PTR(t) ? ((v) & 0x7fffffff) : (v)); \
-})
+#घोषणा __SC_DELOUSE(t,v) (अणु \
+	BUILD_BUG_ON(माप(t) > 4 && !__TYPE_IS_PTR(t)); \
+	(__क्रमce t)(__TYPE_IS_PTR(t) ? ((v) & 0x7fffffff) : (v)); \
+पूर्ण)
 
-#define PSW32_MASK_PER		0x40000000UL
-#define PSW32_MASK_DAT		0x04000000UL
-#define PSW32_MASK_IO		0x02000000UL
-#define PSW32_MASK_EXT		0x01000000UL
-#define PSW32_MASK_KEY		0x00F00000UL
-#define PSW32_MASK_BASE		0x00080000UL	/* Always one */
-#define PSW32_MASK_MCHECK	0x00040000UL
-#define PSW32_MASK_WAIT		0x00020000UL
-#define PSW32_MASK_PSTATE	0x00010000UL
-#define PSW32_MASK_ASC		0x0000C000UL
-#define PSW32_MASK_CC		0x00003000UL
-#define PSW32_MASK_PM		0x00000f00UL
-#define PSW32_MASK_RI		0x00000080UL
+#घोषणा PSW32_MASK_PER		0x40000000UL
+#घोषणा PSW32_MASK_DAT		0x04000000UL
+#घोषणा PSW32_MASK_IO		0x02000000UL
+#घोषणा PSW32_MASK_EXT		0x01000000UL
+#घोषणा PSW32_MASK_KEY		0x00F00000UL
+#घोषणा PSW32_MASK_BASE		0x00080000UL	/* Always one */
+#घोषणा PSW32_MASK_MCHECK	0x00040000UL
+#घोषणा PSW32_MASK_WAIT		0x00020000UL
+#घोषणा PSW32_MASK_PSTATE	0x00010000UL
+#घोषणा PSW32_MASK_ASC		0x0000C000UL
+#घोषणा PSW32_MASK_CC		0x00003000UL
+#घोषणा PSW32_MASK_PM		0x00000f00UL
+#घोषणा PSW32_MASK_RI		0x00000080UL
 
-#define PSW32_MASK_USER		0x0000FF00UL
+#घोषणा PSW32_MASK_USER		0x0000FF00UL
 
-#define PSW32_ADDR_AMODE	0x80000000UL
-#define PSW32_ADDR_INSN		0x7FFFFFFFUL
+#घोषणा PSW32_ADDR_AMODE	0x80000000UL
+#घोषणा PSW32_ADDR_INSN		0x7FFFFFFFUL
 
-#define PSW32_DEFAULT_KEY	(((u32) PAGE_DEFAULT_ACC) << 20)
+#घोषणा PSW32_DEFAULT_KEY	(((u32) PAGE_DEFAULT_ACC) << 20)
 
-#define PSW32_ASC_PRIMARY	0x00000000UL
-#define PSW32_ASC_ACCREG	0x00004000UL
-#define PSW32_ASC_SECONDARY	0x00008000UL
-#define PSW32_ASC_HOME		0x0000C000UL
+#घोषणा PSW32_ASC_PRIMARY	0x00000000UL
+#घोषणा PSW32_ASC_ACCREG	0x00004000UL
+#घोषणा PSW32_ASC_SECONDARY	0x00008000UL
+#घोषणा PSW32_ASC_HOME		0x0000C000UL
 
-#define PSW32_USER_BITS (PSW32_MASK_DAT | PSW32_MASK_IO | PSW32_MASK_EXT | \
+#घोषणा PSW32_USER_BITS (PSW32_MASK_DAT | PSW32_MASK_IO | PSW32_MASK_EXT | \
 			 PSW32_DEFAULT_KEY | PSW32_MASK_BASE | \
 			 PSW32_MASK_MCHECK | PSW32_MASK_PSTATE | \
 			 PSW32_ASC_PRIMARY)
 
-#define COMPAT_USER_HZ		100
-#define COMPAT_UTS_MACHINE	"s390\0\0\0\0"
+#घोषणा COMPAT_USER_HZ		100
+#घोषणा COMPAT_UTS_MACHINE	"s390\0\0\0\0"
 
-typedef u16		__compat_uid_t;
-typedef u16		__compat_gid_t;
-typedef u32		__compat_uid32_t;
-typedef u32		__compat_gid32_t;
-typedef u16		compat_mode_t;
-typedef u16		compat_dev_t;
-typedef u16		compat_nlink_t;
-typedef u16		compat_ipc_pid_t;
-typedef u32		compat_caddr_t;
-typedef __kernel_fsid_t	compat_fsid_t;
+प्रकार u16		__compat_uid_t;
+प्रकार u16		__compat_gid_t;
+प्रकार u32		__compat_uid32_t;
+प्रकार u32		__compat_gid32_t;
+प्रकार u16		compat_mode_t;
+प्रकार u16		compat_dev_t;
+प्रकार u16		compat_nlink_t;
+प्रकार u16		compat_ipc_pid_t;
+प्रकार u32		compat_caddr_t;
+प्रकार __kernel_fsid_t	compat_fsid_t;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	u32 mask;
 	u32 addr;
-} __aligned(8) psw_compat_t;
+पूर्ण __aligned(8) psw_compat_t;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	psw_compat_t psw;
 	u32 gprs[NUM_GPRS];
 	u32 acrs[NUM_ACRS];
 	u32 orig_gpr2;
-} s390_compat_regs;
+पूर्ण s390_compat_regs;
 
-typedef struct {
+प्रकार काष्ठा अणु
 	u32 gprs_high[NUM_GPRS];
-} s390_compat_regs_high;
+पूर्ण s390_compat_regs_high;
 
-struct compat_stat {
+काष्ठा compat_stat अणु
 	compat_dev_t	st_dev;
 	u16		__pad1;
 	compat_ino_t	st_ino;
@@ -93,164 +94,164 @@ struct compat_stat {
 	u32		st_size;
 	u32		st_blksize;
 	u32		st_blocks;
-	u32		st_atime;
-	u32		st_atime_nsec;
-	u32		st_mtime;
-	u32		st_mtime_nsec;
-	u32		st_ctime;
-	u32		st_ctime_nsec;
+	u32		st_aसमय;
+	u32		st_aसमय_nsec;
+	u32		st_mसमय;
+	u32		st_mसमय_nsec;
+	u32		st_स_समय;
+	u32		st_स_समय_nsec;
 	u32		__unused4;
 	u32		__unused5;
-};
+पूर्ण;
 
-struct compat_flock {
-	short		l_type;
-	short		l_whence;
+काष्ठा compat_flock अणु
+	लघु		l_type;
+	लघु		l_whence;
 	compat_off_t	l_start;
 	compat_off_t	l_len;
 	compat_pid_t	l_pid;
-};
+पूर्ण;
 
-#define F_GETLK64       12
-#define F_SETLK64       13
-#define F_SETLKW64      14    
+#घोषणा F_GETLK64       12
+#घोषणा F_SETLK64       13
+#घोषणा F_SETLKW64      14    
 
-struct compat_flock64 {
-	short		l_type;
-	short		l_whence;
+काष्ठा compat_flock64 अणु
+	लघु		l_type;
+	लघु		l_whence;
 	compat_loff_t	l_start;
 	compat_loff_t	l_len;
 	compat_pid_t	l_pid;
-};
+पूर्ण;
 
-struct compat_statfs {
+काष्ठा compat_statfs अणु
 	u32		f_type;
 	u32		f_bsize;
 	u32		f_blocks;
-	u32		f_bfree;
+	u32		f_bमुक्त;
 	u32		f_bavail;
 	u32		f_files;
-	u32		f_ffree;
+	u32		f_fमुक्त;
 	compat_fsid_t	f_fsid;
 	u32		f_namelen;
 	u32		f_frsize;
 	u32		f_flags;
 	u32		f_spare[4];
-};
+पूर्ण;
 
-struct compat_statfs64 {
+काष्ठा compat_statfs64 अणु
 	u32		f_type;
 	u32		f_bsize;
 	u64		f_blocks;
-	u64		f_bfree;
+	u64		f_bमुक्त;
 	u64		f_bavail;
 	u64		f_files;
-	u64		f_ffree;
+	u64		f_fमुक्त;
 	compat_fsid_t	f_fsid;
 	u32		f_namelen;
 	u32		f_frsize;
 	u32		f_flags;
 	u32		f_spare[4];
-};
+पूर्ण;
 
-#define COMPAT_RLIM_INFINITY		0xffffffff
+#घोषणा COMPAT_RLIM_अनन्त		0xffffffff
 
-typedef u32		compat_old_sigset_t;	/* at least 32 bits */
+प्रकार u32		compat_old_sigset_t;	/* at least 32 bits */
 
-#define _COMPAT_NSIG		64
-#define _COMPAT_NSIG_BPW	32
+#घोषणा _COMPAT_NSIG		64
+#घोषणा _COMPAT_NSIG_BPW	32
 
-typedef u32		compat_sigset_word;
+प्रकार u32		compat_sigset_word;
 
-#define COMPAT_OFF_T_MAX	0x7fffffff
+#घोषणा COMPAT_OFF_T_MAX	0x7fffffff
 
 /*
- * A pointer passed in from user mode. This should not
- * be used for syscall parameters, just declare them
- * as pointers because the syscall entry code will have
- * appropriately converted them already.
+ * A poपूर्णांकer passed in from user mode. This should not
+ * be used क्रम syscall parameters, just declare them
+ * as poपूर्णांकers because the syscall entry code will have
+ * appropriately converted them alपढ़ोy.
  */
 
-static inline void __user *compat_ptr(compat_uptr_t uptr)
-{
-	return (void __user *)(unsigned long)(uptr & 0x7fffffffUL);
-}
-#define compat_ptr(uptr) compat_ptr(uptr)
+अटल अंतरभूत व्योम __user *compat_ptr(compat_uptr_t uptr)
+अणु
+	वापस (व्योम __user *)(अचिन्हित दीर्घ)(uptr & 0x7fffffffUL);
+पूर्ण
+#घोषणा compat_ptr(uptr) compat_ptr(uptr)
 
-#ifdef CONFIG_COMPAT
+#अगर_घोषित CONFIG_COMPAT
 
-static inline int is_compat_task(void)
-{
-	return test_thread_flag(TIF_31BIT);
-}
+अटल अंतरभूत पूर्णांक is_compat_task(व्योम)
+अणु
+	वापस test_thपढ़ो_flag(TIF_31BIT);
+पूर्ण
 
-static inline void __user *arch_compat_alloc_user_space(long len)
-{
-	unsigned long stack;
+अटल अंतरभूत व्योम __user *arch_compat_alloc_user_space(दीर्घ len)
+अणु
+	अचिन्हित दीर्घ stack;
 
 	stack = KSTK_ESP(current);
-	if (is_compat_task())
+	अगर (is_compat_task())
 		stack &= 0x7fffffffUL;
-	return (void __user *) (stack - len);
-}
+	वापस (व्योम __user *) (stack - len);
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-struct compat_ipc64_perm {
+काष्ठा compat_ipc64_perm अणु
 	compat_key_t key;
 	__compat_uid32_t uid;
 	__compat_gid32_t gid;
 	__compat_uid32_t cuid;
 	__compat_gid32_t cgid;
 	compat_mode_t mode;
-	unsigned short __pad1;
-	unsigned short seq;
-	unsigned short __pad2;
-	unsigned int __unused1;
-	unsigned int __unused2;
-};
+	अचिन्हित लघु __pad1;
+	अचिन्हित लघु seq;
+	अचिन्हित लघु __pad2;
+	अचिन्हित पूर्णांक __unused1;
+	अचिन्हित पूर्णांक __unused2;
+पूर्ण;
 
-struct compat_semid64_ds {
-	struct compat_ipc64_perm sem_perm;
-	compat_ulong_t sem_otime;
-	compat_ulong_t sem_otime_high;
-	compat_ulong_t sem_ctime;
-	compat_ulong_t sem_ctime_high;
-	compat_ulong_t sem_nsems;
-	compat_ulong_t __unused1;
-	compat_ulong_t __unused2;
-};
+काष्ठा compat_semid64_ds अणु
+	काष्ठा compat_ipc64_perm sem_perm;
+	compat_uदीर्घ_t sem_oसमय;
+	compat_uदीर्घ_t sem_oसमय_high;
+	compat_uदीर्घ_t sem_स_समय;
+	compat_uदीर्घ_t sem_स_समय_high;
+	compat_uदीर्घ_t sem_nsems;
+	compat_uदीर्घ_t __unused1;
+	compat_uदीर्घ_t __unused2;
+पूर्ण;
 
-struct compat_msqid64_ds {
-	struct compat_ipc64_perm msg_perm;
-	compat_ulong_t msg_stime;
-	compat_ulong_t msg_stime_high;
-	compat_ulong_t msg_rtime;
-	compat_ulong_t msg_rtime_high;
-	compat_ulong_t msg_ctime;
-	compat_ulong_t msg_ctime_high;
-	compat_ulong_t msg_cbytes;
-	compat_ulong_t msg_qnum;
-	compat_ulong_t msg_qbytes;
+काष्ठा compat_msqid64_ds अणु
+	काष्ठा compat_ipc64_perm msg_perm;
+	compat_uदीर्घ_t msg_sसमय;
+	compat_uदीर्घ_t msg_sसमय_high;
+	compat_uदीर्घ_t msg_rसमय;
+	compat_uदीर्घ_t msg_rसमय_high;
+	compat_uदीर्घ_t msg_स_समय;
+	compat_uदीर्घ_t msg_स_समय_high;
+	compat_uदीर्घ_t msg_cbytes;
+	compat_uदीर्घ_t msg_qnum;
+	compat_uदीर्घ_t msg_qbytes;
 	compat_pid_t   msg_lspid;
 	compat_pid_t   msg_lrpid;
-	compat_ulong_t __unused1;
-	compat_ulong_t __unused2;
-};
+	compat_uदीर्घ_t __unused1;
+	compat_uदीर्घ_t __unused2;
+पूर्ण;
 
-struct compat_shmid64_ds {
-	struct compat_ipc64_perm shm_perm;
-	compat_size_t  shm_segsz;
-	compat_ulong_t shm_atime;
-	compat_ulong_t shm_atime_high;
-	compat_ulong_t shm_dtime;
-	compat_ulong_t shm_dtime_high;
-	compat_ulong_t shm_ctime;
-	compat_ulong_t shm_ctime_high;
+काष्ठा compat_shmid64_ds अणु
+	काष्ठा compat_ipc64_perm shm_perm;
+	compat_माप_प्रकार  shm_segsz;
+	compat_uदीर्घ_t shm_aसमय;
+	compat_uदीर्घ_t shm_aसमय_high;
+	compat_uदीर्घ_t shm_dसमय;
+	compat_uदीर्घ_t shm_dसमय_high;
+	compat_uदीर्घ_t shm_स_समय;
+	compat_uदीर्घ_t shm_स_समय_high;
 	compat_pid_t   shm_cpid;
 	compat_pid_t   shm_lpid;
-	compat_ulong_t shm_nattch;
-	compat_ulong_t __unused1;
-	compat_ulong_t __unused2;
-};
-#endif /* _ASM_S390X_COMPAT_H */
+	compat_uदीर्घ_t shm_nattch;
+	compat_uदीर्घ_t __unused1;
+	compat_uदीर्घ_t __unused2;
+पूर्ण;
+#पूर्ण_अगर /* _ASM_S390X_COMPAT_H */

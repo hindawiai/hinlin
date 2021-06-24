@@ -1,100 +1,101 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- * Copyright © 2015 Broadcom Corporation
+ * Copyright तऊ 2015 Broadcom Corporation
  */
 
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/ioport.h>
-#include <linux/module.h>
-#include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/platform_device.h>
-#include <linux/slab.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/ioport.h>
+#समावेश <linux/module.h>
+#समावेश <linux/of.h>
+#समावेश <linux/of_address.h>
+#समावेश <linux/platक्रमm_device.h>
+#समावेश <linux/slab.h>
 
-#include "brcmnand.h"
+#समावेश "brcmnand.h"
 
-struct bcm63138_nand_soc {
-	struct brcmnand_soc soc;
-	void __iomem *base;
-};
+काष्ठा bcm63138_nand_soc अणु
+	काष्ठा brcmnand_soc soc;
+	व्योम __iomem *base;
+पूर्ण;
 
-#define BCM63138_NAND_INT_STATUS		0x00
-#define BCM63138_NAND_INT_EN			0x04
+#घोषणा BCM63138_न_अंकD_INT_STATUS		0x00
+#घोषणा BCM63138_न_अंकD_INT_EN			0x04
 
-enum {
+क्रमागत अणु
 	BCM63138_CTLRDY		= BIT(4),
-};
+पूर्ण;
 
-static bool bcm63138_nand_intc_ack(struct brcmnand_soc *soc)
-{
-	struct bcm63138_nand_soc *priv =
-			container_of(soc, struct bcm63138_nand_soc, soc);
-	void __iomem *mmio = priv->base + BCM63138_NAND_INT_STATUS;
-	u32 val = brcmnand_readl(mmio);
+अटल bool bcm63138_nand_पूर्णांकc_ack(काष्ठा brcmnand_soc *soc)
+अणु
+	काष्ठा bcm63138_nand_soc *priv =
+			container_of(soc, काष्ठा bcm63138_nand_soc, soc);
+	व्योम __iomem *mmio = priv->base + BCM63138_न_अंकD_INT_STATUS;
+	u32 val = brcmnand_पढ़ोl(mmio);
 
-	if (val & BCM63138_CTLRDY) {
-		brcmnand_writel(val & ~BCM63138_CTLRDY, mmio);
-		return true;
-	}
+	अगर (val & BCM63138_CTLRDY) अणु
+		brcmnand_ग_लिखोl(val & ~BCM63138_CTLRDY, mmio);
+		वापस true;
+	पूर्ण
 
-	return false;
-}
+	वापस false;
+पूर्ण
 
-static void bcm63138_nand_intc_set(struct brcmnand_soc *soc, bool en)
-{
-	struct bcm63138_nand_soc *priv =
-			container_of(soc, struct bcm63138_nand_soc, soc);
-	void __iomem *mmio = priv->base + BCM63138_NAND_INT_EN;
-	u32 val = brcmnand_readl(mmio);
+अटल व्योम bcm63138_nand_पूर्णांकc_set(काष्ठा brcmnand_soc *soc, bool en)
+अणु
+	काष्ठा bcm63138_nand_soc *priv =
+			container_of(soc, काष्ठा bcm63138_nand_soc, soc);
+	व्योम __iomem *mmio = priv->base + BCM63138_न_अंकD_INT_EN;
+	u32 val = brcmnand_पढ़ोl(mmio);
 
-	if (en)
+	अगर (en)
 		val |= BCM63138_CTLRDY;
-	else
+	अन्यथा
 		val &= ~BCM63138_CTLRDY;
 
-	brcmnand_writel(val, mmio);
-}
+	brcmnand_ग_लिखोl(val, mmio);
+पूर्ण
 
-static int bcm63138_nand_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct bcm63138_nand_soc *priv;
-	struct brcmnand_soc *soc;
-	struct resource *res;
+अटल पूर्णांक bcm63138_nand_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा bcm63138_nand_soc *priv;
+	काष्ठा brcmnand_soc *soc;
+	काष्ठा resource *res;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 	soc = &priv->soc;
 
-	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "nand-int-base");
+	res = platक्रमm_get_resource_byname(pdev, IORESOURCE_MEM, "nand-int-base");
 	priv->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->base))
-		return PTR_ERR(priv->base);
+	अगर (IS_ERR(priv->base))
+		वापस PTR_ERR(priv->base);
 
-	soc->ctlrdy_ack = bcm63138_nand_intc_ack;
-	soc->ctlrdy_set_enabled = bcm63138_nand_intc_set;
+	soc->ctlrdy_ack = bcm63138_nand_पूर्णांकc_ack;
+	soc->ctlrdy_set_enabled = bcm63138_nand_पूर्णांकc_set;
 
-	return brcmnand_probe(pdev, soc);
-}
+	वापस brcmnand_probe(pdev, soc);
+पूर्ण
 
-static const struct of_device_id bcm63138_nand_of_match[] = {
-	{ .compatible = "brcm,nand-bcm63138" },
-	{},
-};
+अटल स्थिर काष्ठा of_device_id bcm63138_nand_of_match[] = अणु
+	अणु .compatible = "brcm,nand-bcm63138" पूर्ण,
+	अणुपूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, bcm63138_nand_of_match);
 
-static struct platform_driver bcm63138_nand_driver = {
+अटल काष्ठा platक्रमm_driver bcm63138_nand_driver = अणु
 	.probe			= bcm63138_nand_probe,
-	.remove			= brcmnand_remove,
-	.driver = {
+	.हटाओ			= brcmnand_हटाओ,
+	.driver = अणु
 		.name		= "bcm63138_nand",
 		.pm		= &brcmnand_pm_ops,
 		.of_match_table	= bcm63138_nand_of_match,
-	}
-};
-module_platform_driver(bcm63138_nand_driver);
+	पूर्ण
+पूर्ण;
+module_platक्रमm_driver(bcm63138_nand_driver);
 
 MODULE_LICENSE("GPL v2");
 MODULE_AUTHOR("Brian Norris");

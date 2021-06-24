@@ -1,67 +1,68 @@
-/* SPDX-License-Identifier: GPL-2.0-only */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0-only */
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
-#ifndef __HFI_PLATFORM_H__
-#define __HFI_PLATFORM_H__
+#अगर_अघोषित __HFI_PLATFORM_H__
+#घोषणा __HFI_PLATFORM_H__
 
-#include <linux/types.h>
-#include <linux/videodev2.h>
+#समावेश <linux/types.h>
+#समावेश <linux/videodev2.h>
 
-#include "hfi.h"
-#include "hfi_plat_bufs.h"
-#include "hfi_helper.h"
+#समावेश "hfi.h"
+#समावेश "hfi_plat_bufs.h"
+#समावेश "hfi_helper.h"
 
-#define MAX_PLANES		4
-#define MAX_FMT_ENTRIES		32
-#define MAX_CAP_ENTRIES		32
-#define MAX_ALLOC_MODE_ENTRIES	16
-#define MAX_CODEC_NUM		32
-#define MAX_SESSIONS		16
+#घोषणा MAX_PLANES		4
+#घोषणा MAX_FMT_ENTRIES		32
+#घोषणा MAX_CAP_ENTRIES		32
+#घोषणा MAX_ALLOC_MODE_ENTRIES	16
+#घोषणा MAX_CODEC_NUM		32
+#घोषणा MAX_SESSIONS		16
 
-struct raw_formats {
+काष्ठा raw_क्रमmats अणु
 	u32 buftype;
 	u32 fmt;
-};
+पूर्ण;
 
-struct hfi_plat_caps {
+काष्ठा hfi_plat_caps अणु
 	u32 codec;
-	u32 domain;
+	u32 करोमुख्य;
 	bool cap_bufs_mode_dynamic;
-	unsigned int num_caps;
-	struct hfi_capability caps[MAX_CAP_ENTRIES];
-	unsigned int num_pl;
-	struct hfi_profile_level pl[HFI_MAX_PROFILE_COUNT];
-	unsigned int num_fmts;
-	struct raw_formats fmts[MAX_FMT_ENTRIES];
-	bool valid;	/* used only for Venus v1xx */
-};
+	अचिन्हित पूर्णांक num_caps;
+	काष्ठा hfi_capability caps[MAX_CAP_ENTRIES];
+	अचिन्हित पूर्णांक num_pl;
+	काष्ठा hfi_profile_level pl[HFI_MAX_PROखाता_COUNT];
+	अचिन्हित पूर्णांक num_fmts;
+	काष्ठा raw_क्रमmats fmts[MAX_FMT_ENTRIES];
+	bool valid;	/* used only क्रम Venus v1xx */
+पूर्ण;
 
-struct hfi_platform_codec_freq_data {
+काष्ठा hfi_platक्रमm_codec_freq_data अणु
 	u32 pixfmt;
 	u32 session_type;
-	unsigned long vpp_freq;
-	unsigned long vsp_freq;
-};
+	अचिन्हित दीर्घ vpp_freq;
+	अचिन्हित दीर्घ vsp_freq;
+पूर्ण;
 
-struct hfi_platform {
-	unsigned long (*codec_vpp_freq)(u32 session_type, u32 codec);
-	unsigned long (*codec_vsp_freq)(u32 session_type, u32 codec);
-	void (*codecs)(u32 *enc_codecs, u32 *dec_codecs, u32 *count);
-	const struct hfi_plat_caps *(*capabilities)(unsigned int *entries);
-	u8 (*num_vpp_pipes)(void);
-	int (*bufreq)(struct hfi_plat_buffers_params *params, u32 session_type,
-		      u32 buftype, struct hfi_buffer_requirements *bufreq);
-};
+काष्ठा hfi_platक्रमm अणु
+	अचिन्हित दीर्घ (*codec_vpp_freq)(u32 session_type, u32 codec);
+	अचिन्हित दीर्घ (*codec_vsp_freq)(u32 session_type, u32 codec);
+	व्योम (*codecs)(u32 *enc_codecs, u32 *dec_codecs, u32 *count);
+	स्थिर काष्ठा hfi_plat_caps *(*capabilities)(अचिन्हित पूर्णांक *entries);
+	u8 (*num_vpp_pipes)(व्योम);
+	पूर्णांक (*bufreq)(काष्ठा hfi_plat_buffers_params *params, u32 session_type,
+		      u32 buftype, काष्ठा hfi_buffer_requirements *bufreq);
+पूर्ण;
 
-extern const struct hfi_platform hfi_plat_v4;
-extern const struct hfi_platform hfi_plat_v6;
+बाह्य स्थिर काष्ठा hfi_platक्रमm hfi_plat_v4;
+बाह्य स्थिर काष्ठा hfi_platक्रमm hfi_plat_v6;
 
-const struct hfi_platform *hfi_platform_get(enum hfi_version version);
-unsigned long hfi_platform_get_codec_vpp_freq(enum hfi_version version, u32 codec,
+स्थिर काष्ठा hfi_platक्रमm *hfi_platक्रमm_get(क्रमागत hfi_version version);
+अचिन्हित दीर्घ hfi_platक्रमm_get_codec_vpp_freq(क्रमागत hfi_version version, u32 codec,
 					      u32 session_type);
-unsigned long hfi_platform_get_codec_vsp_freq(enum hfi_version version, u32 codec,
+अचिन्हित दीर्घ hfi_platक्रमm_get_codec_vsp_freq(क्रमागत hfi_version version, u32 codec,
 					      u32 session_type);
-u8 hfi_platform_num_vpp_pipes(enum hfi_version version);
-#endif
+u8 hfi_platक्रमm_num_vpp_pipes(क्रमागत hfi_version version);
+#पूर्ण_अगर

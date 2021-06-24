@@ -1,2 +1,3 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#include <asm/bl_bit_32.h>
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#समावेश <यंत्र/bl_bit_32.h>

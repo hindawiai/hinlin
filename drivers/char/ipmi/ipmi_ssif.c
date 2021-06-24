@@ -1,15 +1,16 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * ipmi_ssif.c
+ * ipmi_ssअगर.c
  *
- * The interface to the IPMI driver for SMBus access to a SMBus
+ * The पूर्णांकerface to the IPMI driver क्रम SMBus access to a SMBus
  * compliant device.  Called SSIF by the IPMI spec.
  *
  * Author: Intel Corporation
- *         Todd Davis <todd.c.davis@intel.com>
+ *         Todd Davis <todd.c.davis@पूर्णांकel.com>
  *
  * Rewritten by Corey Minyard <minyard@acm.org> to support the
- * non-blocking I2C interface, add support for multi-part
+ * non-blocking I2C पूर्णांकerface, add support क्रम multi-part
  * transactions, add PEC support, and general clenaup.
  *
  * Copyright 2003 Intel Corporation
@@ -17,112 +18,112 @@
  */
 
 /*
- * This file holds the "policy" for the interface to the SSIF state
- * machine.  It does the configuration, handles timers and interrupts,
+ * This file holds the "policy" क्रम the पूर्णांकerface to the SSIF state
+ * machine.  It करोes the configuration, handles समयrs and पूर्णांकerrupts,
  * and drives the real SSIF state machine.
  */
 
-#define pr_fmt(fmt) "ipmi_ssif: " fmt
-#define dev_fmt(fmt) "ipmi_ssif: " fmt
+#घोषणा pr_fmt(fmt) "ipmi_ssif: " fmt
+#घोषणा dev_fmt(fmt) "ipmi_ssif: " fmt
 
-#if defined(MODVERSIONS)
-#include <linux/modversions.h>
-#endif
+#अगर defined(MODVERSIONS)
+#समावेश <linux/modversions.h>
+#पूर्ण_अगर
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/sched.h>
-#include <linux/seq_file.h>
-#include <linux/timer.h>
-#include <linux/delay.h>
-#include <linux/errno.h>
-#include <linux/spinlock.h>
-#include <linux/slab.h>
-#include <linux/list.h>
-#include <linux/i2c.h>
-#include <linux/ipmi_smi.h>
-#include <linux/init.h>
-#include <linux/dmi.h>
-#include <linux/kthread.h>
-#include <linux/acpi.h>
-#include <linux/ctype.h>
-#include <linux/time64.h>
-#include "ipmi_dmi.h"
+#समावेश <linux/module.h>
+#समावेश <linux/moduleparam.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/seq_file.h>
+#समावेश <linux/समयr.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/त्रुटिसं.स>
+#समावेश <linux/spinlock.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list.h>
+#समावेश <linux/i2c.h>
+#समावेश <linux/ipmi_smi.h>
+#समावेश <linux/init.h>
+#समावेश <linux/dmi.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/acpi.h>
+#समावेश <linux/प्रकार.स>
+#समावेश <linux/समय64.h>
+#समावेश "ipmi_dmi.h"
 
-#define DEVICE_NAME "ipmi_ssif"
+#घोषणा DEVICE_NAME "ipmi_ssif"
 
-#define IPMI_GET_SYSTEM_INTERFACE_CAPABILITIES_CMD	0x57
+#घोषणा IPMI_GET_SYSTEM_INTERFACE_CAPABILITIES_CMD	0x57
 
-#define	SSIF_IPMI_REQUEST			2
-#define	SSIF_IPMI_MULTI_PART_REQUEST_START	6
-#define	SSIF_IPMI_MULTI_PART_REQUEST_MIDDLE	7
-#define	SSIF_IPMI_MULTI_PART_REQUEST_END	8
-#define	SSIF_IPMI_RESPONSE			3
-#define	SSIF_IPMI_MULTI_PART_RESPONSE_MIDDLE	9
+#घोषणा	SSIF_IPMI_REQUEST			2
+#घोषणा	SSIF_IPMI_MULTI_PART_REQUEST_START	6
+#घोषणा	SSIF_IPMI_MULTI_PART_REQUEST_MIDDLE	7
+#घोषणा	SSIF_IPMI_MULTI_PART_REQUEST_END	8
+#घोषणा	SSIF_IPMI_RESPONSE			3
+#घोषणा	SSIF_IPMI_MULTI_PART_RESPONSE_MIDDLE	9
 
-/* ssif_debug is a bit-field
+/* ssअगर_debug is a bit-field
  *	SSIF_DEBUG_MSG -	commands and their responses
  *	SSIF_DEBUG_STATES -	message states
- *	SSIF_DEBUG_TIMING -	 Measure times between events in the driver
+ *	SSIF_DEBUG_TIMING -	 Measure बार between events in the driver
  */
-#define SSIF_DEBUG_TIMING	4
-#define SSIF_DEBUG_STATE	2
-#define SSIF_DEBUG_MSG		1
-#define SSIF_NODEBUG		0
-#define SSIF_DEFAULT_DEBUG	(SSIF_NODEBUG)
+#घोषणा SSIF_DEBUG_TIMING	4
+#घोषणा SSIF_DEBUG_STATE	2
+#घोषणा SSIF_DEBUG_MSG		1
+#घोषणा SSIF_NODEBUG		0
+#घोषणा SSIF_DEFAULT_DEBUG	(SSIF_NODEBUG)
 
 /*
  * Timer values
  */
-#define SSIF_MSG_USEC		20000	/* 20ms between message tries. */
-#define SSIF_MSG_PART_USEC	5000	/* 5ms for a message part */
+#घोषणा SSIF_MSG_USEC		20000	/* 20ms between message tries. */
+#घोषणा SSIF_MSG_PART_USEC	5000	/* 5ms क्रम a message part */
 
-/* How many times to we retry sending/receiving the message. */
-#define	SSIF_SEND_RETRIES	5
-#define	SSIF_RECV_RETRIES	250
+/* How many बार to we retry sending/receiving the message. */
+#घोषणा	SSIF_SEND_RETRIES	5
+#घोषणा	SSIF_RECV_RETRIES	250
 
-#define SSIF_MSG_MSEC		(SSIF_MSG_USEC / 1000)
-#define SSIF_MSG_JIFFIES	((SSIF_MSG_USEC * 1000) / TICK_NSEC)
-#define SSIF_MSG_PART_JIFFIES	((SSIF_MSG_PART_USEC * 1000) / TICK_NSEC)
+#घोषणा SSIF_MSG_MSEC		(SSIF_MSG_USEC / 1000)
+#घोषणा SSIF_MSG_JIFFIES	((SSIF_MSG_USEC * 1000) / TICK_NSEC)
+#घोषणा SSIF_MSG_PART_JIFFIES	((SSIF_MSG_PART_USEC * 1000) / TICK_NSEC)
 
 /*
- * Timeout for the watch, only used for get flag timer.
+ * Timeout क्रम the watch, only used क्रम get flag समयr.
  */
-#define SSIF_WATCH_MSG_TIMEOUT		msecs_to_jiffies(10)
-#define SSIF_WATCH_WATCHDOG_TIMEOUT	msecs_to_jiffies(250)
+#घोषणा SSIF_WATCH_MSG_TIMEOUT		msecs_to_jअगरfies(10)
+#घोषणा SSIF_WATCH_WATCHDOG_TIMEOUT	msecs_to_jअगरfies(250)
 
-enum ssif_intf_state {
+क्रमागत ssअगर_पूर्णांकf_state अणु
 	SSIF_NORMAL,
 	SSIF_GETTING_FLAGS,
 	SSIF_GETTING_EVENTS,
 	SSIF_CLEARING_FLAGS,
 	SSIF_GETTING_MESSAGES,
-	/* FIXME - add watchdog stuff. */
-};
+	/* FIXME - add watchकरोg stuff. */
+पूर्ण;
 
-#define SSIF_IDLE(ssif)	 ((ssif)->ssif_state == SSIF_NORMAL \
-			  && (ssif)->curr_msg == NULL)
+#घोषणा SSIF_IDLE(ssअगर)	 ((ssअगर)->ssअगर_state == SSIF_NORMAL \
+			  && (ssअगर)->curr_msg == शून्य)
 
 /*
- * Indexes into stats[] in ssif_info below.
+ * Indexes पूर्णांकo stats[] in ssअगर_info below.
  */
-enum ssif_stat_indexes {
+क्रमागत ssअगर_stat_indexes अणु
 	/* Number of total messages sent. */
 	SSIF_STAT_sent_messages = 0,
 
 	/*
-	 * Number of message parts sent.  Messages may be broken into
-	 * parts if they are long.
+	 * Number of message parts sent.  Messages may be broken पूर्णांकo
+	 * parts अगर they are दीर्घ.
 	 */
 	SSIF_STAT_sent_messages_parts,
 
 	/*
-	 * Number of time a message was retried.
+	 * Number of समय a message was retried.
 	 */
 	SSIF_STAT_send_retries,
 
 	/*
-	 * Number of times the send of a message failed.
+	 * Number of बार the send of a message failed.
 	 */
 	SSIF_STAT_send_errors,
 
@@ -137,7 +138,7 @@ enum ssif_stat_indexes {
 	SSIF_STAT_received_message_parts,
 
 	/*
-	 * Number of times the receive of a message was retried.
+	 * Number of बार the receive of a message was retried.
 	 */
 	SSIF_STAT_receive_retries,
 
@@ -147,12 +148,12 @@ enum ssif_stat_indexes {
 	SSIF_STAT_receive_errors,
 
 	/*
-	 * Number of times a flag fetch was requested.
+	 * Number of बार a flag fetch was requested.
 	 */
 	SSIF_STAT_flag_fetches,
 
 	/*
-	 * Number of times the hardware didn't follow the state machine.
+	 * Number of बार the hardware didn't follow the state machine.
 	 */
 	SSIF_STAT_hosed,
 
@@ -164,178 +165,178 @@ enum ssif_stat_indexes {
 	/* Number of asyncronous messages received. */
 	SSIF_STAT_incoming_messages,
 
-	/* Number of watchdog pretimeouts. */
-	SSIF_STAT_watchdog_pretimeouts,
+	/* Number of watchकरोg preसमयouts. */
+	SSIF_STAT_watchकरोg_preसमयouts,
 
 	/* Number of alers received. */
 	SSIF_STAT_alerts,
 
-	/* Always add statistics before this value, it must be last. */
+	/* Always add statistics beक्रमe this value, it must be last. */
 	SSIF_NUM_STATS
-};
+पूर्ण;
 
-struct ssif_addr_info {
-	struct i2c_board_info binfo;
-	char *adapter_name;
-	int debug;
-	int slave_addr;
-	enum ipmi_addr_src addr_src;
-	union ipmi_smi_info_union addr_info;
-	struct device *dev;
-	struct i2c_client *client;
+काष्ठा ssअगर_addr_info अणु
+	काष्ठा i2c_board_info binfo;
+	अक्षर *adapter_name;
+	पूर्णांक debug;
+	पूर्णांक slave_addr;
+	क्रमागत ipmi_addr_src addr_src;
+	जोड़ ipmi_smi_info_जोड़ addr_info;
+	काष्ठा device *dev;
+	काष्ठा i2c_client *client;
 
-	struct mutex clients_mutex;
-	struct list_head clients;
+	काष्ठा mutex clients_mutex;
+	काष्ठा list_head clients;
 
-	struct list_head link;
-};
+	काष्ठा list_head link;
+पूर्ण;
 
-struct ssif_info;
+काष्ठा ssअगर_info;
 
-typedef void (*ssif_i2c_done)(struct ssif_info *ssif_info, int result,
-			     unsigned char *data, unsigned int len);
+प्रकार व्योम (*ssअगर_i2c_करोne)(काष्ठा ssअगर_info *ssअगर_info, पूर्णांक result,
+			     अचिन्हित अक्षर *data, अचिन्हित पूर्णांक len);
 
-struct ssif_info {
-	struct ipmi_smi     *intf;
+काष्ठा ssअगर_info अणु
+	काष्ठा ipmi_smi     *पूर्णांकf;
 	spinlock_t	    lock;
-	struct ipmi_smi_msg *waiting_msg;
-	struct ipmi_smi_msg *curr_msg;
-	enum ssif_intf_state ssif_state;
-	unsigned long       ssif_debug;
+	काष्ठा ipmi_smi_msg *रुकोing_msg;
+	काष्ठा ipmi_smi_msg *curr_msg;
+	क्रमागत ssअगर_पूर्णांकf_state ssअगर_state;
+	अचिन्हित दीर्घ       ssअगर_debug;
 
-	struct ipmi_smi_handlers handlers;
+	काष्ठा ipmi_smi_handlers handlers;
 
-	enum ipmi_addr_src addr_source; /* ACPI, PCI, SMBIOS, hardcode, etc. */
-	union ipmi_smi_info_union addr_info;
+	क्रमागत ipmi_addr_src addr_source; /* ACPI, PCI, SMBIOS, hardcode, etc. */
+	जोड़ ipmi_smi_info_जोड़ addr_info;
 
 	/*
 	 * Flags from the last GET_MSG_FLAGS command, used when an ATTN
-	 * is set to hold the flags until we are done handling everything
+	 * is set to hold the flags until we are करोne handling everything
 	 * from the flags.
 	 */
-#define RECEIVE_MSG_AVAIL	0x01
-#define EVENT_MSG_BUFFER_FULL	0x02
-#define WDT_PRE_TIMEOUT_INT	0x08
-	unsigned char       msg_flags;
+#घोषणा RECEIVE_MSG_AVAIL	0x01
+#घोषणा EVENT_MSG_BUFFER_FULL	0x02
+#घोषणा WDT_PRE_TIMEOUT_INT	0x08
+	अचिन्हित अक्षर       msg_flags;
 
 	u8		    global_enables;
 	bool		    has_event_buffer;
 	bool		    supports_alert;
 
 	/*
-	 * Used to tell what we should do with alerts.  If we are
-	 * waiting on a response, read the data immediately.
+	 * Used to tell what we should करो with alerts.  If we are
+	 * रुकोing on a response, पढ़ो the data immediately.
 	 */
 	bool		    got_alert;
-	bool		    waiting_alert;
+	bool		    रुकोing_alert;
 
 	/*
-	 * If set to true, this will request events the next time the
+	 * If set to true, this will request events the next समय the
 	 * state machine is idle.
 	 */
 	bool                req_events;
 
 	/*
-	 * If set to true, this will request flags the next time the
+	 * If set to true, this will request flags the next समय the
 	 * state machine is idle.
 	 */
 	bool                req_flags;
 
 	/*
-	 * Used to perform timer operations when run-to-completion
-	 * mode is on.  This is a countdown timer.
+	 * Used to perक्रमm समयr operations when run-to-completion
+	 * mode is on.  This is a countकरोwn समयr.
 	 */
-	int                 rtc_us_timer;
+	पूर्णांक                 rtc_us_समयr;
 
-	/* Used for sending/receiving data.  +1 for the length. */
-	unsigned char data[IPMI_MAX_MSG_LENGTH + 1];
-	unsigned int  data_len;
+	/* Used क्रम sending/receiving data.  +1 क्रम the length. */
+	अचिन्हित अक्षर data[IPMI_MAX_MSG_LENGTH + 1];
+	अचिन्हित पूर्णांक  data_len;
 
-	/* Temp receive buffer, gets copied into data. */
-	unsigned char recv[I2C_SMBUS_BLOCK_MAX];
+	/* Temp receive buffer, माला_लो copied पूर्णांकo data. */
+	अचिन्हित अक्षर recv[I2C_SMBUS_BLOCK_MAX];
 
-	struct i2c_client *client;
-	ssif_i2c_done done_handler;
+	काष्ठा i2c_client *client;
+	ssअगर_i2c_करोne करोne_handler;
 
-	/* Thread interface handling */
-	struct task_struct *thread;
-	struct completion wake_thread;
+	/* Thपढ़ो पूर्णांकerface handling */
+	काष्ठा task_काष्ठा *thपढ़ो;
+	काष्ठा completion wake_thपढ़ो;
 	bool stopping;
-	int i2c_read_write;
-	int i2c_command;
-	unsigned char *i2c_data;
-	unsigned int i2c_size;
+	पूर्णांक i2c_पढ़ो_ग_लिखो;
+	पूर्णांक i2c_command;
+	अचिन्हित अक्षर *i2c_data;
+	अचिन्हित पूर्णांक i2c_size;
 
-	struct timer_list retry_timer;
-	int retries_left;
+	काष्ठा समयr_list retry_समयr;
+	पूर्णांक retries_left;
 
-	long watch_timeout;		/* Timeout for flags check, 0 if off. */
-	struct timer_list watch_timer;	/* Flag fetch timer. */
+	दीर्घ watch_समयout;		/* Timeout क्रम flags check, 0 अगर off. */
+	काष्ठा समयr_list watch_समयr;	/* Flag fetch समयr. */
 
 	/* Info from SSIF cmd */
-	unsigned char max_xmit_msg_size;
-	unsigned char max_recv_msg_size;
-	bool cmd8_works; /* See test_multipart_messages() for details. */
-	unsigned int  multi_support;
-	int           supports_pec;
+	अचिन्हित अक्षर max_xmit_msg_size;
+	अचिन्हित अक्षर max_recv_msg_size;
+	bool cmd8_works; /* See test_multipart_messages() क्रम details. */
+	अचिन्हित पूर्णांक  multi_support;
+	पूर्णांक           supports_pec;
 
-#define SSIF_NO_MULTI		0
-#define SSIF_MULTI_2_PART	1
-#define SSIF_MULTI_n_PART	2
-	unsigned char *multi_data;
-	unsigned int  multi_len;
-	unsigned int  multi_pos;
+#घोषणा SSIF_NO_MULTI		0
+#घोषणा SSIF_MULTI_2_PART	1
+#घोषणा SSIF_MULTI_n_PART	2
+	अचिन्हित अक्षर *multi_data;
+	अचिन्हित पूर्णांक  multi_len;
+	अचिन्हित पूर्णांक  multi_pos;
 
 	atomic_t stats[SSIF_NUM_STATS];
-};
+पूर्ण;
 
-#define ssif_inc_stat(ssif, stat) \
-	atomic_inc(&(ssif)->stats[SSIF_STAT_ ## stat])
-#define ssif_get_stat(ssif, stat) \
-	((unsigned int) atomic_read(&(ssif)->stats[SSIF_STAT_ ## stat]))
+#घोषणा ssअगर_inc_stat(ssअगर, stat) \
+	atomic_inc(&(ssअगर)->stats[SSIF_STAT_ ## stat])
+#घोषणा ssअगर_get_stat(ssअगर, stat) \
+	((अचिन्हित पूर्णांक) atomic_पढ़ो(&(ssअगर)->stats[SSIF_STAT_ ## stat]))
 
-static bool initialized;
-static bool platform_registered;
+अटल bool initialized;
+अटल bool platक्रमm_रेजिस्टरed;
 
-static void return_hosed_msg(struct ssif_info *ssif_info,
-			     struct ipmi_smi_msg *msg);
-static void start_next_msg(struct ssif_info *ssif_info, unsigned long *flags);
-static int start_send(struct ssif_info *ssif_info,
-		      unsigned char   *data,
-		      unsigned int    len);
+अटल व्योम वापस_hosed_msg(काष्ठा ssअगर_info *ssअगर_info,
+			     काष्ठा ipmi_smi_msg *msg);
+अटल व्योम start_next_msg(काष्ठा ssअगर_info *ssअगर_info, अचिन्हित दीर्घ *flags);
+अटल पूर्णांक start_send(काष्ठा ssअगर_info *ssअगर_info,
+		      अचिन्हित अक्षर   *data,
+		      अचिन्हित पूर्णांक    len);
 
-static unsigned long *ipmi_ssif_lock_cond(struct ssif_info *ssif_info,
-					  unsigned long *flags)
-	__acquires(&ssif_info->lock)
-{
-	spin_lock_irqsave(&ssif_info->lock, *flags);
-	return flags;
-}
+अटल अचिन्हित दीर्घ *ipmi_ssअगर_lock_cond(काष्ठा ssअगर_info *ssअगर_info,
+					  अचिन्हित दीर्घ *flags)
+	__acquires(&ssअगर_info->lock)
+अणु
+	spin_lock_irqsave(&ssअगर_info->lock, *flags);
+	वापस flags;
+पूर्ण
 
-static void ipmi_ssif_unlock_cond(struct ssif_info *ssif_info,
-				  unsigned long *flags)
-	__releases(&ssif_info->lock)
-{
-	spin_unlock_irqrestore(&ssif_info->lock, *flags);
-}
+अटल व्योम ipmi_ssअगर_unlock_cond(काष्ठा ssअगर_info *ssअगर_info,
+				  अचिन्हित दीर्घ *flags)
+	__releases(&ssअगर_info->lock)
+अणु
+	spin_unlock_irqrestore(&ssअगर_info->lock, *flags);
+पूर्ण
 
-static void deliver_recv_msg(struct ssif_info *ssif_info,
-			     struct ipmi_smi_msg *msg)
-{
-	if (msg->rsp_size < 0) {
-		return_hosed_msg(ssif_info, msg);
-		dev_err(&ssif_info->client->dev,
+अटल व्योम deliver_recv_msg(काष्ठा ssअगर_info *ssअगर_info,
+			     काष्ठा ipmi_smi_msg *msg)
+अणु
+	अगर (msg->rsp_size < 0) अणु
+		वापस_hosed_msg(ssअगर_info, msg);
+		dev_err(&ssअगर_info->client->dev,
 			"%s: Malformed message: rsp_size = %d\n",
 		       __func__, msg->rsp_size);
-	} else {
-		ipmi_smi_msg_received(ssif_info->intf, msg);
-	}
-}
+	पूर्ण अन्यथा अणु
+		ipmi_smi_msg_received(ssअगर_info->पूर्णांकf, msg);
+	पूर्ण
+पूर्ण
 
-static void return_hosed_msg(struct ssif_info *ssif_info,
-			     struct ipmi_smi_msg *msg)
-{
-	ssif_inc_stat(ssif_info, hosed);
+अटल व्योम वापस_hosed_msg(काष्ठा ssअगर_info *ssअगर_info,
+			     काष्ठा ipmi_smi_msg *msg)
+अणु
+	ssअगर_inc_stat(ssअगर_info, hosed);
 
 	/* Make it a response */
 	msg->rsp[0] = msg->data[0] | 4;
@@ -343,864 +344,864 @@ static void return_hosed_msg(struct ssif_info *ssif_info,
 	msg->rsp[2] = 0xFF; /* Unknown error. */
 	msg->rsp_size = 3;
 
-	deliver_recv_msg(ssif_info, msg);
-}
+	deliver_recv_msg(ssअगर_info, msg);
+पूर्ण
 
 /*
  * Must be called with the message lock held.  This will release the
  * message lock.  Note that the caller will check SSIF_IDLE and start a
- * new operation, so there is no need to check for new messages to
+ * new operation, so there is no need to check क्रम new messages to
  * start in here.
  */
-static void start_clear_flags(struct ssif_info *ssif_info, unsigned long *flags)
-{
-	unsigned char msg[3];
+अटल व्योम start_clear_flags(काष्ठा ssअगर_info *ssअगर_info, अचिन्हित दीर्घ *flags)
+अणु
+	अचिन्हित अक्षर msg[3];
 
-	ssif_info->msg_flags &= ~WDT_PRE_TIMEOUT_INT;
-	ssif_info->ssif_state = SSIF_CLEARING_FLAGS;
-	ipmi_ssif_unlock_cond(ssif_info, flags);
+	ssअगर_info->msg_flags &= ~WDT_PRE_TIMEOUT_INT;
+	ssअगर_info->ssअगर_state = SSIF_CLEARING_FLAGS;
+	ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
 
-	/* Make sure the watchdog pre-timeout flag is not set at startup. */
+	/* Make sure the watchकरोg pre-समयout flag is not set at startup. */
 	msg[0] = (IPMI_NETFN_APP_REQUEST << 2);
 	msg[1] = IPMI_CLEAR_MSG_FLAGS_CMD;
 	msg[2] = WDT_PRE_TIMEOUT_INT;
 
-	if (start_send(ssif_info, msg, 3) != 0) {
+	अगर (start_send(ssअगर_info, msg, 3) != 0) अणु
 		/* Error, just go to normal state. */
-		ssif_info->ssif_state = SSIF_NORMAL;
-	}
-}
+		ssअगर_info->ssअगर_state = SSIF_NORMAL;
+	पूर्ण
+पूर्ण
 
-static void start_flag_fetch(struct ssif_info *ssif_info, unsigned long *flags)
-{
-	unsigned char mb[2];
+अटल व्योम start_flag_fetch(काष्ठा ssअगर_info *ssअगर_info, अचिन्हित दीर्घ *flags)
+अणु
+	अचिन्हित अक्षर mb[2];
 
-	ssif_info->req_flags = false;
-	ssif_info->ssif_state = SSIF_GETTING_FLAGS;
-	ipmi_ssif_unlock_cond(ssif_info, flags);
+	ssअगर_info->req_flags = false;
+	ssअगर_info->ssअगर_state = SSIF_GETTING_FLAGS;
+	ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
 
 	mb[0] = (IPMI_NETFN_APP_REQUEST << 2);
 	mb[1] = IPMI_GET_MSG_FLAGS_CMD;
-	if (start_send(ssif_info, mb, 2) != 0)
-		ssif_info->ssif_state = SSIF_NORMAL;
-}
+	अगर (start_send(ssअगर_info, mb, 2) != 0)
+		ssअगर_info->ssअगर_state = SSIF_NORMAL;
+पूर्ण
 
-static void check_start_send(struct ssif_info *ssif_info, unsigned long *flags,
-			     struct ipmi_smi_msg *msg)
-{
-	if (start_send(ssif_info, msg->data, msg->data_size) != 0) {
-		unsigned long oflags;
+अटल व्योम check_start_send(काष्ठा ssअगर_info *ssअगर_info, अचिन्हित दीर्घ *flags,
+			     काष्ठा ipmi_smi_msg *msg)
+अणु
+	अगर (start_send(ssअगर_info, msg->data, msg->data_size) != 0) अणु
+		अचिन्हित दीर्घ oflags;
 
-		flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-		ssif_info->curr_msg = NULL;
-		ssif_info->ssif_state = SSIF_NORMAL;
-		ipmi_ssif_unlock_cond(ssif_info, flags);
-		ipmi_free_smi_msg(msg);
-	}
-}
+		flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+		ssअगर_info->curr_msg = शून्य;
+		ssअगर_info->ssअगर_state = SSIF_NORMAL;
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+		ipmi_मुक्त_smi_msg(msg);
+	पूर्ण
+पूर्ण
 
-static void start_event_fetch(struct ssif_info *ssif_info, unsigned long *flags)
-{
-	struct ipmi_smi_msg *msg;
+अटल व्योम start_event_fetch(काष्ठा ssअगर_info *ssअगर_info, अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा ipmi_smi_msg *msg;
 
-	ssif_info->req_events = false;
+	ssअगर_info->req_events = false;
 
 	msg = ipmi_alloc_smi_msg();
-	if (!msg) {
-		ssif_info->ssif_state = SSIF_NORMAL;
-		ipmi_ssif_unlock_cond(ssif_info, flags);
-		return;
-	}
+	अगर (!msg) अणु
+		ssअगर_info->ssअगर_state = SSIF_NORMAL;
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+		वापस;
+	पूर्ण
 
-	ssif_info->curr_msg = msg;
-	ssif_info->ssif_state = SSIF_GETTING_EVENTS;
-	ipmi_ssif_unlock_cond(ssif_info, flags);
+	ssअगर_info->curr_msg = msg;
+	ssअगर_info->ssअगर_state = SSIF_GETTING_EVENTS;
+	ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
 
 	msg->data[0] = (IPMI_NETFN_APP_REQUEST << 2);
 	msg->data[1] = IPMI_READ_EVENT_MSG_BUFFER_CMD;
 	msg->data_size = 2;
 
-	check_start_send(ssif_info, flags, msg);
-}
+	check_start_send(ssअगर_info, flags, msg);
+पूर्ण
 
-static void start_recv_msg_fetch(struct ssif_info *ssif_info,
-				 unsigned long *flags)
-{
-	struct ipmi_smi_msg *msg;
+अटल व्योम start_recv_msg_fetch(काष्ठा ssअगर_info *ssअगर_info,
+				 अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा ipmi_smi_msg *msg;
 
 	msg = ipmi_alloc_smi_msg();
-	if (!msg) {
-		ssif_info->ssif_state = SSIF_NORMAL;
-		ipmi_ssif_unlock_cond(ssif_info, flags);
-		return;
-	}
+	अगर (!msg) अणु
+		ssअगर_info->ssअगर_state = SSIF_NORMAL;
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+		वापस;
+	पूर्ण
 
-	ssif_info->curr_msg = msg;
-	ssif_info->ssif_state = SSIF_GETTING_MESSAGES;
-	ipmi_ssif_unlock_cond(ssif_info, flags);
+	ssअगर_info->curr_msg = msg;
+	ssअगर_info->ssअगर_state = SSIF_GETTING_MESSAGES;
+	ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
 
 	msg->data[0] = (IPMI_NETFN_APP_REQUEST << 2);
 	msg->data[1] = IPMI_GET_MSG_CMD;
 	msg->data_size = 2;
 
-	check_start_send(ssif_info, flags, msg);
-}
+	check_start_send(ssअगर_info, flags, msg);
+पूर्ण
 
 /*
  * Must be called with the message lock held.  This will release the
  * message lock.  Note that the caller will check SSIF_IDLE and start a
- * new operation, so there is no need to check for new messages to
+ * new operation, so there is no need to check क्रम new messages to
  * start in here.
  */
-static void handle_flags(struct ssif_info *ssif_info, unsigned long *flags)
-{
-	if (ssif_info->msg_flags & WDT_PRE_TIMEOUT_INT) {
-		/* Watchdog pre-timeout */
-		ssif_inc_stat(ssif_info, watchdog_pretimeouts);
-		start_clear_flags(ssif_info, flags);
-		ipmi_smi_watchdog_pretimeout(ssif_info->intf);
-	} else if (ssif_info->msg_flags & RECEIVE_MSG_AVAIL)
+अटल व्योम handle_flags(काष्ठा ssअगर_info *ssअगर_info, अचिन्हित दीर्घ *flags)
+अणु
+	अगर (ssअगर_info->msg_flags & WDT_PRE_TIMEOUT_INT) अणु
+		/* Watchकरोg pre-समयout */
+		ssअगर_inc_stat(ssअगर_info, watchकरोg_preसमयouts);
+		start_clear_flags(ssअगर_info, flags);
+		ipmi_smi_watchकरोg_preसमयout(ssअगर_info->पूर्णांकf);
+	पूर्ण अन्यथा अगर (ssअगर_info->msg_flags & RECEIVE_MSG_AVAIL)
 		/* Messages available. */
-		start_recv_msg_fetch(ssif_info, flags);
-	else if (ssif_info->msg_flags & EVENT_MSG_BUFFER_FULL)
+		start_recv_msg_fetch(ssअगर_info, flags);
+	अन्यथा अगर (ssअगर_info->msg_flags & EVENT_MSG_BUFFER_FULL)
 		/* Events available. */
-		start_event_fetch(ssif_info, flags);
-	else {
-		ssif_info->ssif_state = SSIF_NORMAL;
-		ipmi_ssif_unlock_cond(ssif_info, flags);
-	}
-}
+		start_event_fetch(ssअगर_info, flags);
+	अन्यथा अणु
+		ssअगर_info->ssअगर_state = SSIF_NORMAL;
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+	पूर्ण
+पूर्ण
 
-static int ipmi_ssif_thread(void *data)
-{
-	struct ssif_info *ssif_info = data;
+अटल पूर्णांक ipmi_ssअगर_thपढ़ो(व्योम *data)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = data;
 
-	while (!kthread_should_stop()) {
-		int result;
+	जबतक (!kthपढ़ो_should_stop()) अणु
+		पूर्णांक result;
 
-		/* Wait for something to do */
-		result = wait_for_completion_interruptible(
-						&ssif_info->wake_thread);
-		if (ssif_info->stopping)
-			break;
-		if (result == -ERESTARTSYS)
-			continue;
-		init_completion(&ssif_info->wake_thread);
+		/* Wait क्रम something to करो */
+		result = रुको_क्रम_completion_पूर्णांकerruptible(
+						&ssअगर_info->wake_thपढ़ो);
+		अगर (ssअगर_info->stopping)
+			अवरोध;
+		अगर (result == -ERESTARTSYS)
+			जारी;
+		init_completion(&ssअगर_info->wake_thपढ़ो);
 
-		if (ssif_info->i2c_read_write == I2C_SMBUS_WRITE) {
-			result = i2c_smbus_write_block_data(
-				ssif_info->client, ssif_info->i2c_command,
-				ssif_info->i2c_data[0],
-				ssif_info->i2c_data + 1);
-			ssif_info->done_handler(ssif_info, result, NULL, 0);
-		} else {
-			result = i2c_smbus_read_block_data(
-				ssif_info->client, ssif_info->i2c_command,
-				ssif_info->i2c_data);
-			if (result < 0)
-				ssif_info->done_handler(ssif_info, result,
-							NULL, 0);
-			else
-				ssif_info->done_handler(ssif_info, 0,
-							ssif_info->i2c_data,
+		अगर (ssअगर_info->i2c_पढ़ो_ग_लिखो == I2C_SMBUS_WRITE) अणु
+			result = i2c_smbus_ग_लिखो_block_data(
+				ssअगर_info->client, ssअगर_info->i2c_command,
+				ssअगर_info->i2c_data[0],
+				ssअगर_info->i2c_data + 1);
+			ssअगर_info->करोne_handler(ssअगर_info, result, शून्य, 0);
+		पूर्ण अन्यथा अणु
+			result = i2c_smbus_पढ़ो_block_data(
+				ssअगर_info->client, ssअगर_info->i2c_command,
+				ssअगर_info->i2c_data);
+			अगर (result < 0)
+				ssअगर_info->करोne_handler(ssअगर_info, result,
+							शून्य, 0);
+			अन्यथा
+				ssअगर_info->करोne_handler(ssअगर_info, 0,
+							ssअगर_info->i2c_data,
 							result);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void ssif_i2c_send(struct ssif_info *ssif_info,
-			ssif_i2c_done handler,
-			int read_write, int command,
-			unsigned char *data, unsigned int size)
-{
-	ssif_info->done_handler = handler;
+अटल व्योम ssअगर_i2c_send(काष्ठा ssअगर_info *ssअगर_info,
+			ssअगर_i2c_करोne handler,
+			पूर्णांक पढ़ो_ग_लिखो, पूर्णांक command,
+			अचिन्हित अक्षर *data, अचिन्हित पूर्णांक size)
+अणु
+	ssअगर_info->करोne_handler = handler;
 
-	ssif_info->i2c_read_write = read_write;
-	ssif_info->i2c_command = command;
-	ssif_info->i2c_data = data;
-	ssif_info->i2c_size = size;
-	complete(&ssif_info->wake_thread);
-}
+	ssअगर_info->i2c_पढ़ो_ग_लिखो = पढ़ो_ग_लिखो;
+	ssअगर_info->i2c_command = command;
+	ssअगर_info->i2c_data = data;
+	ssअगर_info->i2c_size = size;
+	complete(&ssअगर_info->wake_thपढ़ो);
+पूर्ण
 
 
-static void msg_done_handler(struct ssif_info *ssif_info, int result,
-			     unsigned char *data, unsigned int len);
+अटल व्योम msg_करोne_handler(काष्ठा ssअगर_info *ssअगर_info, पूर्णांक result,
+			     अचिन्हित अक्षर *data, अचिन्हित पूर्णांक len);
 
-static void start_get(struct ssif_info *ssif_info)
-{
-	ssif_info->rtc_us_timer = 0;
-	ssif_info->multi_pos = 0;
+अटल व्योम start_get(काष्ठा ssअगर_info *ssअगर_info)
+अणु
+	ssअगर_info->rtc_us_समयr = 0;
+	ssअगर_info->multi_pos = 0;
 
-	ssif_i2c_send(ssif_info, msg_done_handler, I2C_SMBUS_READ,
+	ssअगर_i2c_send(ssअगर_info, msg_करोne_handler, I2C_SMBUS_READ,
 		  SSIF_IPMI_RESPONSE,
-		  ssif_info->recv, I2C_SMBUS_BLOCK_DATA);
-}
+		  ssअगर_info->recv, I2C_SMBUS_BLOCK_DATA);
+पूर्ण
 
-static void retry_timeout(struct timer_list *t)
-{
-	struct ssif_info *ssif_info = from_timer(ssif_info, t, retry_timer);
-	unsigned long oflags, *flags;
-	bool waiting;
+अटल व्योम retry_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = from_समयr(ssअगर_info, t, retry_समयr);
+	अचिन्हित दीर्घ oflags, *flags;
+	bool रुकोing;
 
-	if (ssif_info->stopping)
-		return;
+	अगर (ssअगर_info->stopping)
+		वापस;
 
-	flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-	waiting = ssif_info->waiting_alert;
-	ssif_info->waiting_alert = false;
-	ipmi_ssif_unlock_cond(ssif_info, flags);
+	flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+	रुकोing = ssअगर_info->रुकोing_alert;
+	ssअगर_info->रुकोing_alert = false;
+	ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
 
-	if (waiting)
-		start_get(ssif_info);
-}
+	अगर (रुकोing)
+		start_get(ssअगर_info);
+पूर्ण
 
-static void watch_timeout(struct timer_list *t)
-{
-	struct ssif_info *ssif_info = from_timer(ssif_info, t, watch_timer);
-	unsigned long oflags, *flags;
+अटल व्योम watch_समयout(काष्ठा समयr_list *t)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = from_समयr(ssअगर_info, t, watch_समयr);
+	अचिन्हित दीर्घ oflags, *flags;
 
-	if (ssif_info->stopping)
-		return;
+	अगर (ssअगर_info->stopping)
+		वापस;
 
-	flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-	if (ssif_info->watch_timeout) {
-		mod_timer(&ssif_info->watch_timer,
-			  jiffies + ssif_info->watch_timeout);
-		if (SSIF_IDLE(ssif_info)) {
-			start_flag_fetch(ssif_info, flags); /* Releases lock */
-			return;
-		}
-		ssif_info->req_flags = true;
-	}
-	ipmi_ssif_unlock_cond(ssif_info, flags);
-}
+	flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+	अगर (ssअगर_info->watch_समयout) अणु
+		mod_समयr(&ssअगर_info->watch_समयr,
+			  jअगरfies + ssअगर_info->watch_समयout);
+		अगर (SSIF_IDLE(ssअगर_info)) अणु
+			start_flag_fetch(ssअगर_info, flags); /* Releases lock */
+			वापस;
+		पूर्ण
+		ssअगर_info->req_flags = true;
+	पूर्ण
+	ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+पूर्ण
 
-static void ssif_alert(struct i2c_client *client, enum i2c_alert_protocol type,
-		       unsigned int data)
-{
-	struct ssif_info *ssif_info = i2c_get_clientdata(client);
-	unsigned long oflags, *flags;
-	bool do_get = false;
+अटल व्योम ssअगर_alert(काष्ठा i2c_client *client, क्रमागत i2c_alert_protocol type,
+		       अचिन्हित पूर्णांक data)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = i2c_get_clientdata(client);
+	अचिन्हित दीर्घ oflags, *flags;
+	bool करो_get = false;
 
-	if (type != I2C_PROTOCOL_SMBUS_ALERT)
-		return;
+	अगर (type != I2C_PROTOCOL_SMBUS_ALERT)
+		वापस;
 
-	ssif_inc_stat(ssif_info, alerts);
+	ssअगर_inc_stat(ssअगर_info, alerts);
 
-	flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-	if (ssif_info->waiting_alert) {
-		ssif_info->waiting_alert = false;
-		del_timer(&ssif_info->retry_timer);
-		do_get = true;
-	} else if (ssif_info->curr_msg) {
-		ssif_info->got_alert = true;
-	}
-	ipmi_ssif_unlock_cond(ssif_info, flags);
-	if (do_get)
-		start_get(ssif_info);
-}
+	flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+	अगर (ssअगर_info->रुकोing_alert) अणु
+		ssअगर_info->रुकोing_alert = false;
+		del_समयr(&ssअगर_info->retry_समयr);
+		करो_get = true;
+	पूर्ण अन्यथा अगर (ssअगर_info->curr_msg) अणु
+		ssअगर_info->got_alert = true;
+	पूर्ण
+	ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+	अगर (करो_get)
+		start_get(ssअगर_info);
+पूर्ण
 
-static int start_resend(struct ssif_info *ssif_info);
+अटल पूर्णांक start_resend(काष्ठा ssअगर_info *ssअगर_info);
 
-static void msg_done_handler(struct ssif_info *ssif_info, int result,
-			     unsigned char *data, unsigned int len)
-{
-	struct ipmi_smi_msg *msg;
-	unsigned long oflags, *flags;
+अटल व्योम msg_करोne_handler(काष्ठा ssअगर_info *ssअगर_info, पूर्णांक result,
+			     अचिन्हित अक्षर *data, अचिन्हित पूर्णांक len)
+अणु
+	काष्ठा ipmi_smi_msg *msg;
+	अचिन्हित दीर्घ oflags, *flags;
 
 	/*
-	 * We are single-threaded here, so no need for a lock until we
+	 * We are single-thपढ़ोed here, so no need क्रम a lock until we
 	 * start messing with driver states or the queues.
 	 */
 
-	if (result < 0) {
-		ssif_info->retries_left--;
-		if (ssif_info->retries_left > 0) {
-			ssif_inc_stat(ssif_info, receive_retries);
+	अगर (result < 0) अणु
+		ssअगर_info->retries_left--;
+		अगर (ssअगर_info->retries_left > 0) अणु
+			ssअगर_inc_stat(ssअगर_info, receive_retries);
 
-			flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-			ssif_info->waiting_alert = true;
-			ssif_info->rtc_us_timer = SSIF_MSG_USEC;
-			if (!ssif_info->stopping)
-				mod_timer(&ssif_info->retry_timer,
-					  jiffies + SSIF_MSG_JIFFIES);
-			ipmi_ssif_unlock_cond(ssif_info, flags);
-			return;
-		}
+			flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+			ssअगर_info->रुकोing_alert = true;
+			ssअगर_info->rtc_us_समयr = SSIF_MSG_USEC;
+			अगर (!ssअगर_info->stopping)
+				mod_समयr(&ssअगर_info->retry_समयr,
+					  jअगरfies + SSIF_MSG_JIFFIES);
+			ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+			वापस;
+		पूर्ण
 
-		ssif_inc_stat(ssif_info, receive_errors);
+		ssअगर_inc_stat(ssअगर_info, receive_errors);
 
-		if  (ssif_info->ssif_debug & SSIF_DEBUG_MSG)
-			dev_dbg(&ssif_info->client->dev,
+		अगर  (ssअगर_info->ssअगर_debug & SSIF_DEBUG_MSG)
+			dev_dbg(&ssअगर_info->client->dev,
 				"%s: Error %d\n", __func__, result);
 		len = 0;
-		goto continue_op;
-	}
+		जाओ जारी_op;
+	पूर्ण
 
-	if ((len > 1) && (ssif_info->multi_pos == 0)
-				&& (data[0] == 0x00) && (data[1] == 0x01)) {
-		/* Start of multi-part read.  Start the next transaction. */
-		int i;
+	अगर ((len > 1) && (ssअगर_info->multi_pos == 0)
+				&& (data[0] == 0x00) && (data[1] == 0x01)) अणु
+		/* Start of multi-part पढ़ो.  Start the next transaction. */
+		पूर्णांक i;
 
-		ssif_inc_stat(ssif_info, received_message_parts);
+		ssअगर_inc_stat(ssअगर_info, received_message_parts);
 
-		/* Remove the multi-part read marker. */
+		/* Remove the multi-part पढ़ो marker. */
 		len -= 2;
 		data += 2;
-		for (i = 0; i < len; i++)
-			ssif_info->data[i] = data[i];
-		ssif_info->multi_len = len;
-		ssif_info->multi_pos = 1;
+		क्रम (i = 0; i < len; i++)
+			ssअगर_info->data[i] = data[i];
+		ssअगर_info->multi_len = len;
+		ssअगर_info->multi_pos = 1;
 
-		ssif_i2c_send(ssif_info, msg_done_handler, I2C_SMBUS_READ,
+		ssअगर_i2c_send(ssअगर_info, msg_करोne_handler, I2C_SMBUS_READ,
 			 SSIF_IPMI_MULTI_PART_RESPONSE_MIDDLE,
-			 ssif_info->recv, I2C_SMBUS_BLOCK_DATA);
-		return;
-	} else if (ssif_info->multi_pos) {
-		/* Middle of multi-part read.  Start the next transaction. */
-		int i;
-		unsigned char blocknum;
+			 ssअगर_info->recv, I2C_SMBUS_BLOCK_DATA);
+		वापस;
+	पूर्ण अन्यथा अगर (ssअगर_info->multi_pos) अणु
+		/* Middle of multi-part पढ़ो.  Start the next transaction. */
+		पूर्णांक i;
+		अचिन्हित अक्षर blocknum;
 
-		if (len == 0) {
+		अगर (len == 0) अणु
 			result = -EIO;
-			if (ssif_info->ssif_debug & SSIF_DEBUG_MSG)
-				dev_dbg(&ssif_info->client->dev,
+			अगर (ssअगर_info->ssअगर_debug & SSIF_DEBUG_MSG)
+				dev_dbg(&ssअगर_info->client->dev,
 					"Middle message with no data\n");
 
-			goto continue_op;
-		}
+			जाओ जारी_op;
+		पूर्ण
 
 		blocknum = data[0];
 		len--;
 		data++;
 
-		if (blocknum != 0xff && len != 31) {
+		अगर (blocknum != 0xff && len != 31) अणु
 		    /* All blocks but the last must have 31 data bytes. */
 			result = -EIO;
-			if (ssif_info->ssif_debug & SSIF_DEBUG_MSG)
-				dev_dbg(&ssif_info->client->dev,
+			अगर (ssअगर_info->ssअगर_debug & SSIF_DEBUG_MSG)
+				dev_dbg(&ssअगर_info->client->dev,
 					"Received middle message <31\n");
 
-			goto continue_op;
-		}
+			जाओ जारी_op;
+		पूर्ण
 
-		if (ssif_info->multi_len + len > IPMI_MAX_MSG_LENGTH) {
-			/* Received message too big, abort the operation. */
+		अगर (ssअगर_info->multi_len + len > IPMI_MAX_MSG_LENGTH) अणु
+			/* Received message too big, पात the operation. */
 			result = -E2BIG;
-			if (ssif_info->ssif_debug & SSIF_DEBUG_MSG)
-				dev_dbg(&ssif_info->client->dev,
+			अगर (ssअगर_info->ssअगर_debug & SSIF_DEBUG_MSG)
+				dev_dbg(&ssअगर_info->client->dev,
 					"Received message too big\n");
 
-			goto continue_op;
-		}
+			जाओ जारी_op;
+		पूर्ण
 
-		for (i = 0; i < len; i++)
-			ssif_info->data[i + ssif_info->multi_len] = data[i];
-		ssif_info->multi_len += len;
-		if (blocknum == 0xff) {
-			/* End of read */
-			len = ssif_info->multi_len;
-			data = ssif_info->data;
-		} else if (blocknum + 1 != ssif_info->multi_pos) {
+		क्रम (i = 0; i < len; i++)
+			ssअगर_info->data[i + ssअगर_info->multi_len] = data[i];
+		ssअगर_info->multi_len += len;
+		अगर (blocknum == 0xff) अणु
+			/* End of पढ़ो */
+			len = ssअगर_info->multi_len;
+			data = ssअगर_info->data;
+		पूर्ण अन्यथा अगर (blocknum + 1 != ssअगर_info->multi_pos) अणु
 			/*
-			 * Out of sequence block, just abort.  Block
-			 * numbers start at zero for the second block,
+			 * Out of sequence block, just पात.  Block
+			 * numbers start at zero क्रम the second block,
 			 * but multi_pos starts at one, so the +1.
 			 */
-			if (ssif_info->ssif_debug & SSIF_DEBUG_MSG)
-				dev_dbg(&ssif_info->client->dev,
+			अगर (ssअगर_info->ssअगर_debug & SSIF_DEBUG_MSG)
+				dev_dbg(&ssअगर_info->client->dev,
 					"Received message out of sequence, expected %u, got %u\n",
-					ssif_info->multi_pos - 1, blocknum);
+					ssअगर_info->multi_pos - 1, blocknum);
 			result = -EIO;
-		} else {
-			ssif_inc_stat(ssif_info, received_message_parts);
+		पूर्ण अन्यथा अणु
+			ssअगर_inc_stat(ssअगर_info, received_message_parts);
 
-			ssif_info->multi_pos++;
+			ssअगर_info->multi_pos++;
 
-			ssif_i2c_send(ssif_info, msg_done_handler,
+			ssअगर_i2c_send(ssअगर_info, msg_करोne_handler,
 				  I2C_SMBUS_READ,
 				  SSIF_IPMI_MULTI_PART_RESPONSE_MIDDLE,
-				  ssif_info->recv,
+				  ssअगर_info->recv,
 				  I2C_SMBUS_BLOCK_DATA);
-			return;
-		}
-	}
+			वापस;
+		पूर्ण
+	पूर्ण
 
- continue_op:
-	if (result < 0) {
-		ssif_inc_stat(ssif_info, receive_errors);
-	} else {
-		ssif_inc_stat(ssif_info, received_messages);
-		ssif_inc_stat(ssif_info, received_message_parts);
-	}
+ जारी_op:
+	अगर (result < 0) अणु
+		ssअगर_inc_stat(ssअगर_info, receive_errors);
+	पूर्ण अन्यथा अणु
+		ssअगर_inc_stat(ssअगर_info, received_messages);
+		ssअगर_inc_stat(ssअगर_info, received_message_parts);
+	पूर्ण
 
-	if (ssif_info->ssif_debug & SSIF_DEBUG_STATE)
-		dev_dbg(&ssif_info->client->dev,
+	अगर (ssअगर_info->ssअगर_debug & SSIF_DEBUG_STATE)
+		dev_dbg(&ssअगर_info->client->dev,
 			"DONE 1: state = %d, result=%d\n",
-			ssif_info->ssif_state, result);
+			ssअगर_info->ssअगर_state, result);
 
-	flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-	msg = ssif_info->curr_msg;
-	if (msg) {
-		if (data) {
-			if (len > IPMI_MAX_MSG_LENGTH)
+	flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+	msg = ssअगर_info->curr_msg;
+	अगर (msg) अणु
+		अगर (data) अणु
+			अगर (len > IPMI_MAX_MSG_LENGTH)
 				len = IPMI_MAX_MSG_LENGTH;
-			memcpy(msg->rsp, data, len);
-		} else {
+			स_नकल(msg->rsp, data, len);
+		पूर्ण अन्यथा अणु
 			len = 0;
-		}
+		पूर्ण
 		msg->rsp_size = len;
-		ssif_info->curr_msg = NULL;
-	}
+		ssअगर_info->curr_msg = शून्य;
+	पूर्ण
 
-	switch (ssif_info->ssif_state) {
-	case SSIF_NORMAL:
-		ipmi_ssif_unlock_cond(ssif_info, flags);
-		if (!msg)
-			break;
+	चयन (ssअगर_info->ssअगर_state) अणु
+	हाल SSIF_NORMAL:
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+		अगर (!msg)
+			अवरोध;
 
-		if (result < 0)
-			return_hosed_msg(ssif_info, msg);
-		else
-			deliver_recv_msg(ssif_info, msg);
-		break;
+		अगर (result < 0)
+			वापस_hosed_msg(ssअगर_info, msg);
+		अन्यथा
+			deliver_recv_msg(ssअगर_info, msg);
+		अवरोध;
 
-	case SSIF_GETTING_FLAGS:
+	हाल SSIF_GETTING_FLAGS:
 		/* We got the flags from the SSIF, now handle them. */
-		if ((result < 0) || (len < 4) || (data[2] != 0)) {
+		अगर ((result < 0) || (len < 4) || (data[2] != 0)) अणु
 			/*
 			 * Error fetching flags, or invalid length,
-			 * just give up for now.
+			 * just give up क्रम now.
 			 */
-			ssif_info->ssif_state = SSIF_NORMAL;
-			ipmi_ssif_unlock_cond(ssif_info, flags);
-			dev_warn(&ssif_info->client->dev,
+			ssअगर_info->ssअगर_state = SSIF_NORMAL;
+			ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+			dev_warn(&ssअगर_info->client->dev,
 				 "Error getting flags: %d %d, %x\n",
 				 result, len, (len >= 3) ? data[2] : 0);
-		} else if (data[0] != (IPMI_NETFN_APP_REQUEST | 1) << 2
-			   || data[1] != IPMI_GET_MSG_FLAGS_CMD) {
+		पूर्ण अन्यथा अगर (data[0] != (IPMI_NETFN_APP_REQUEST | 1) << 2
+			   || data[1] != IPMI_GET_MSG_FLAGS_CMD) अणु
 			/*
-			 * Don't abort here, maybe it was a queued
+			 * Don't पात here, maybe it was a queued
 			 * response to a previous command.
 			 */
-			ipmi_ssif_unlock_cond(ssif_info, flags);
-			dev_warn(&ssif_info->client->dev,
+			ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+			dev_warn(&ssअगर_info->client->dev,
 				 "Invalid response getting flags: %x %x\n",
 				 data[0], data[1]);
-		} else {
-			ssif_inc_stat(ssif_info, flag_fetches);
-			ssif_info->msg_flags = data[3];
-			handle_flags(ssif_info, flags);
-		}
-		break;
+		पूर्ण अन्यथा अणु
+			ssअगर_inc_stat(ssअगर_info, flag_fetches);
+			ssअगर_info->msg_flags = data[3];
+			handle_flags(ssअगर_info, flags);
+		पूर्ण
+		अवरोध;
 
-	case SSIF_CLEARING_FLAGS:
+	हाल SSIF_CLEARING_FLAGS:
 		/* We cleared the flags. */
-		if ((result < 0) || (len < 3) || (data[2] != 0)) {
+		अगर ((result < 0) || (len < 3) || (data[2] != 0)) अणु
 			/* Error clearing flags */
-			dev_warn(&ssif_info->client->dev,
+			dev_warn(&ssअगर_info->client->dev,
 				 "Error clearing flags: %d %d, %x\n",
 				 result, len, (len >= 3) ? data[2] : 0);
-		} else if (data[0] != (IPMI_NETFN_APP_REQUEST | 1) << 2
-			   || data[1] != IPMI_CLEAR_MSG_FLAGS_CMD) {
-			dev_warn(&ssif_info->client->dev,
+		पूर्ण अन्यथा अगर (data[0] != (IPMI_NETFN_APP_REQUEST | 1) << 2
+			   || data[1] != IPMI_CLEAR_MSG_FLAGS_CMD) अणु
+			dev_warn(&ssअगर_info->client->dev,
 				 "Invalid response clearing flags: %x %x\n",
 				 data[0], data[1]);
-		}
-		ssif_info->ssif_state = SSIF_NORMAL;
-		ipmi_ssif_unlock_cond(ssif_info, flags);
-		break;
+		पूर्ण
+		ssअगर_info->ssअगर_state = SSIF_NORMAL;
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+		अवरोध;
 
-	case SSIF_GETTING_EVENTS:
-		if ((result < 0) || (len < 3) || (msg->rsp[2] != 0)) {
-			/* Error getting event, probably done. */
-			msg->done(msg);
+	हाल SSIF_GETTING_EVENTS:
+		अगर ((result < 0) || (len < 3) || (msg->rsp[2] != 0)) अणु
+			/* Error getting event, probably करोne. */
+			msg->करोne(msg);
 
 			/* Take off the event flag. */
-			ssif_info->msg_flags &= ~EVENT_MSG_BUFFER_FULL;
-			handle_flags(ssif_info, flags);
-		} else if (msg->rsp[0] != (IPMI_NETFN_APP_REQUEST | 1) << 2
-			   || msg->rsp[1] != IPMI_READ_EVENT_MSG_BUFFER_CMD) {
-			dev_warn(&ssif_info->client->dev,
+			ssअगर_info->msg_flags &= ~EVENT_MSG_BUFFER_FULL;
+			handle_flags(ssअगर_info, flags);
+		पूर्ण अन्यथा अगर (msg->rsp[0] != (IPMI_NETFN_APP_REQUEST | 1) << 2
+			   || msg->rsp[1] != IPMI_READ_EVENT_MSG_BUFFER_CMD) अणु
+			dev_warn(&ssअगर_info->client->dev,
 				 "Invalid response getting events: %x %x\n",
 				 msg->rsp[0], msg->rsp[1]);
-			msg->done(msg);
+			msg->करोne(msg);
 			/* Take off the event flag. */
-			ssif_info->msg_flags &= ~EVENT_MSG_BUFFER_FULL;
-			handle_flags(ssif_info, flags);
-		} else {
-			handle_flags(ssif_info, flags);
-			ssif_inc_stat(ssif_info, events);
-			deliver_recv_msg(ssif_info, msg);
-		}
-		break;
+			ssअगर_info->msg_flags &= ~EVENT_MSG_BUFFER_FULL;
+			handle_flags(ssअगर_info, flags);
+		पूर्ण अन्यथा अणु
+			handle_flags(ssअगर_info, flags);
+			ssअगर_inc_stat(ssअगर_info, events);
+			deliver_recv_msg(ssअगर_info, msg);
+		पूर्ण
+		अवरोध;
 
-	case SSIF_GETTING_MESSAGES:
-		if ((result < 0) || (len < 3) || (msg->rsp[2] != 0)) {
-			/* Error getting event, probably done. */
-			msg->done(msg);
+	हाल SSIF_GETTING_MESSAGES:
+		अगर ((result < 0) || (len < 3) || (msg->rsp[2] != 0)) अणु
+			/* Error getting event, probably करोne. */
+			msg->करोne(msg);
 
 			/* Take off the msg flag. */
-			ssif_info->msg_flags &= ~RECEIVE_MSG_AVAIL;
-			handle_flags(ssif_info, flags);
-		} else if (msg->rsp[0] != (IPMI_NETFN_APP_REQUEST | 1) << 2
-			   || msg->rsp[1] != IPMI_GET_MSG_CMD) {
-			dev_warn(&ssif_info->client->dev,
+			ssअगर_info->msg_flags &= ~RECEIVE_MSG_AVAIL;
+			handle_flags(ssअगर_info, flags);
+		पूर्ण अन्यथा अगर (msg->rsp[0] != (IPMI_NETFN_APP_REQUEST | 1) << 2
+			   || msg->rsp[1] != IPMI_GET_MSG_CMD) अणु
+			dev_warn(&ssअगर_info->client->dev,
 				 "Invalid response clearing flags: %x %x\n",
 				 msg->rsp[0], msg->rsp[1]);
-			msg->done(msg);
+			msg->करोne(msg);
 
 			/* Take off the msg flag. */
-			ssif_info->msg_flags &= ~RECEIVE_MSG_AVAIL;
-			handle_flags(ssif_info, flags);
-		} else {
-			ssif_inc_stat(ssif_info, incoming_messages);
-			handle_flags(ssif_info, flags);
-			deliver_recv_msg(ssif_info, msg);
-		}
-		break;
-	}
+			ssअगर_info->msg_flags &= ~RECEIVE_MSG_AVAIL;
+			handle_flags(ssअगर_info, flags);
+		पूर्ण अन्यथा अणु
+			ssअगर_inc_stat(ssअगर_info, incoming_messages);
+			handle_flags(ssअगर_info, flags);
+			deliver_recv_msg(ssअगर_info, msg);
+		पूर्ण
+		अवरोध;
+	पूर्ण
 
-	flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-	if (SSIF_IDLE(ssif_info) && !ssif_info->stopping) {
-		if (ssif_info->req_events)
-			start_event_fetch(ssif_info, flags);
-		else if (ssif_info->req_flags)
-			start_flag_fetch(ssif_info, flags);
-		else
-			start_next_msg(ssif_info, flags);
-	} else
-		ipmi_ssif_unlock_cond(ssif_info, flags);
+	flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+	अगर (SSIF_IDLE(ssअगर_info) && !ssअगर_info->stopping) अणु
+		अगर (ssअगर_info->req_events)
+			start_event_fetch(ssअगर_info, flags);
+		अन्यथा अगर (ssअगर_info->req_flags)
+			start_flag_fetch(ssअगर_info, flags);
+		अन्यथा
+			start_next_msg(ssअगर_info, flags);
+	पूर्ण अन्यथा
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
 
-	if (ssif_info->ssif_debug & SSIF_DEBUG_STATE)
-		dev_dbg(&ssif_info->client->dev,
-			"DONE 2: state = %d.\n", ssif_info->ssif_state);
-}
+	अगर (ssअगर_info->ssअगर_debug & SSIF_DEBUG_STATE)
+		dev_dbg(&ssअगर_info->client->dev,
+			"DONE 2: state = %d.\n", ssअगर_info->ssअगर_state);
+पूर्ण
 
-static void msg_written_handler(struct ssif_info *ssif_info, int result,
-				unsigned char *data, unsigned int len)
-{
-	/* We are single-threaded here, so no need for a lock. */
-	if (result < 0) {
-		ssif_info->retries_left--;
-		if (ssif_info->retries_left > 0) {
-			if (!start_resend(ssif_info)) {
-				ssif_inc_stat(ssif_info, send_retries);
-				return;
-			}
-			/* request failed, just return the error. */
-			ssif_inc_stat(ssif_info, send_errors);
+अटल व्योम msg_written_handler(काष्ठा ssअगर_info *ssअगर_info, पूर्णांक result,
+				अचिन्हित अक्षर *data, अचिन्हित पूर्णांक len)
+अणु
+	/* We are single-thपढ़ोed here, so no need क्रम a lock. */
+	अगर (result < 0) अणु
+		ssअगर_info->retries_left--;
+		अगर (ssअगर_info->retries_left > 0) अणु
+			अगर (!start_resend(ssअगर_info)) अणु
+				ssअगर_inc_stat(ssअगर_info, send_retries);
+				वापस;
+			पूर्ण
+			/* request failed, just वापस the error. */
+			ssअगर_inc_stat(ssअगर_info, send_errors);
 
-			if (ssif_info->ssif_debug & SSIF_DEBUG_MSG)
-				dev_dbg(&ssif_info->client->dev,
+			अगर (ssअगर_info->ssअगर_debug & SSIF_DEBUG_MSG)
+				dev_dbg(&ssअगर_info->client->dev,
 					"%s: Out of retries\n", __func__);
-			msg_done_handler(ssif_info, -EIO, NULL, 0);
-			return;
-		}
+			msg_करोne_handler(ssअगर_info, -EIO, शून्य, 0);
+			वापस;
+		पूर्ण
 
-		ssif_inc_stat(ssif_info, send_errors);
+		ssअगर_inc_stat(ssअगर_info, send_errors);
 
 		/*
-		 * Got an error on transmit, let the done routine
+		 * Got an error on transmit, let the करोne routine
 		 * handle it.
 		 */
-		if (ssif_info->ssif_debug & SSIF_DEBUG_MSG)
-			dev_dbg(&ssif_info->client->dev,
+		अगर (ssअगर_info->ssअगर_debug & SSIF_DEBUG_MSG)
+			dev_dbg(&ssअगर_info->client->dev,
 				"%s: Error  %d\n", __func__, result);
 
-		msg_done_handler(ssif_info, result, NULL, 0);
-		return;
-	}
+		msg_करोne_handler(ssअगर_info, result, शून्य, 0);
+		वापस;
+	पूर्ण
 
-	if (ssif_info->multi_data) {
+	अगर (ssअगर_info->multi_data) अणु
 		/*
-		 * In the middle of a multi-data write.  See the comment
-		 * in the SSIF_MULTI_n_PART case in the probe function
-		 * for details on the intricacies of this.
+		 * In the middle of a multi-data ग_लिखो.  See the comment
+		 * in the SSIF_MULTI_n_PART हाल in the probe function
+		 * क्रम details on the पूर्णांकricacies of this.
 		 */
-		int left, to_write;
-		unsigned char *data_to_send;
-		unsigned char cmd;
+		पूर्णांक left, to_ग_लिखो;
+		अचिन्हित अक्षर *data_to_send;
+		अचिन्हित अक्षर cmd;
 
-		ssif_inc_stat(ssif_info, sent_messages_parts);
+		ssअगर_inc_stat(ssअगर_info, sent_messages_parts);
 
-		left = ssif_info->multi_len - ssif_info->multi_pos;
-		to_write = left;
-		if (to_write > 32)
-			to_write = 32;
+		left = ssअगर_info->multi_len - ssअगर_info->multi_pos;
+		to_ग_लिखो = left;
+		अगर (to_ग_लिखो > 32)
+			to_ग_लिखो = 32;
 		/* Length byte. */
-		ssif_info->multi_data[ssif_info->multi_pos] = to_write;
-		data_to_send = ssif_info->multi_data + ssif_info->multi_pos;
-		ssif_info->multi_pos += to_write;
+		ssअगर_info->multi_data[ssअगर_info->multi_pos] = to_ग_लिखो;
+		data_to_send = ssअगर_info->multi_data + ssअगर_info->multi_pos;
+		ssअगर_info->multi_pos += to_ग_लिखो;
 		cmd = SSIF_IPMI_MULTI_PART_REQUEST_MIDDLE;
-		if (ssif_info->cmd8_works) {
-			if (left == to_write) {
+		अगर (ssअगर_info->cmd8_works) अणु
+			अगर (left == to_ग_लिखो) अणु
 				cmd = SSIF_IPMI_MULTI_PART_REQUEST_END;
-				ssif_info->multi_data = NULL;
-			}
-		} else if (to_write < 32) {
-			ssif_info->multi_data = NULL;
-		}
+				ssअगर_info->multi_data = शून्य;
+			पूर्ण
+		पूर्ण अन्यथा अगर (to_ग_लिखो < 32) अणु
+			ssअगर_info->multi_data = शून्य;
+		पूर्ण
 
-		ssif_i2c_send(ssif_info, msg_written_handler,
+		ssअगर_i2c_send(ssअगर_info, msg_written_handler,
 			  I2C_SMBUS_WRITE, cmd,
 			  data_to_send, I2C_SMBUS_BLOCK_DATA);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Ready to request the result. */
-		unsigned long oflags, *flags;
+		अचिन्हित दीर्घ oflags, *flags;
 
-		ssif_inc_stat(ssif_info, sent_messages);
-		ssif_inc_stat(ssif_info, sent_messages_parts);
+		ssअगर_inc_stat(ssअगर_info, sent_messages);
+		ssअगर_inc_stat(ssअगर_info, sent_messages_parts);
 
-		flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-		if (ssif_info->got_alert) {
-			/* The result is already ready, just start it. */
-			ssif_info->got_alert = false;
-			ipmi_ssif_unlock_cond(ssif_info, flags);
-			start_get(ssif_info);
-		} else {
-			/* Wait a jiffie then request the next message */
-			ssif_info->waiting_alert = true;
-			ssif_info->retries_left = SSIF_RECV_RETRIES;
-			ssif_info->rtc_us_timer = SSIF_MSG_PART_USEC;
-			if (!ssif_info->stopping)
-				mod_timer(&ssif_info->retry_timer,
-					  jiffies + SSIF_MSG_PART_JIFFIES);
-			ipmi_ssif_unlock_cond(ssif_info, flags);
-		}
-	}
-}
+		flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+		अगर (ssअगर_info->got_alert) अणु
+			/* The result is alपढ़ोy पढ़ोy, just start it. */
+			ssअगर_info->got_alert = false;
+			ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+			start_get(ssअगर_info);
+		पूर्ण अन्यथा अणु
+			/* Wait a jअगरfie then request the next message */
+			ssअगर_info->रुकोing_alert = true;
+			ssअगर_info->retries_left = SSIF_RECV_RETRIES;
+			ssअगर_info->rtc_us_समयr = SSIF_MSG_PART_USEC;
+			अगर (!ssअगर_info->stopping)
+				mod_समयr(&ssअगर_info->retry_समयr,
+					  jअगरfies + SSIF_MSG_PART_JIFFIES);
+			ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int start_resend(struct ssif_info *ssif_info)
-{
-	int command;
+अटल पूर्णांक start_resend(काष्ठा ssअगर_info *ssअगर_info)
+अणु
+	पूर्णांक command;
 
-	ssif_info->got_alert = false;
+	ssअगर_info->got_alert = false;
 
-	if (ssif_info->data_len > 32) {
+	अगर (ssअगर_info->data_len > 32) अणु
 		command = SSIF_IPMI_MULTI_PART_REQUEST_START;
-		ssif_info->multi_data = ssif_info->data;
-		ssif_info->multi_len = ssif_info->data_len;
+		ssअगर_info->multi_data = ssअगर_info->data;
+		ssअगर_info->multi_len = ssअगर_info->data_len;
 		/*
 		 * Subtle thing, this is 32, not 33, because we will
-		 * overwrite the thing at position 32 (which was just
+		 * overग_लिखो the thing at position 32 (which was just
 		 * transmitted) with the new length.
 		 */
-		ssif_info->multi_pos = 32;
-		ssif_info->data[0] = 32;
-	} else {
-		ssif_info->multi_data = NULL;
+		ssअगर_info->multi_pos = 32;
+		ssअगर_info->data[0] = 32;
+	पूर्ण अन्यथा अणु
+		ssअगर_info->multi_data = शून्य;
 		command = SSIF_IPMI_REQUEST;
-		ssif_info->data[0] = ssif_info->data_len;
-	}
+		ssअगर_info->data[0] = ssअगर_info->data_len;
+	पूर्ण
 
-	ssif_i2c_send(ssif_info, msg_written_handler, I2C_SMBUS_WRITE,
-		   command, ssif_info->data, I2C_SMBUS_BLOCK_DATA);
-	return 0;
-}
+	ssअगर_i2c_send(ssअगर_info, msg_written_handler, I2C_SMBUS_WRITE,
+		   command, ssअगर_info->data, I2C_SMBUS_BLOCK_DATA);
+	वापस 0;
+पूर्ण
 
-static int start_send(struct ssif_info *ssif_info,
-		      unsigned char   *data,
-		      unsigned int    len)
-{
-	if (len > IPMI_MAX_MSG_LENGTH)
-		return -E2BIG;
-	if (len > ssif_info->max_xmit_msg_size)
-		return -E2BIG;
+अटल पूर्णांक start_send(काष्ठा ssअगर_info *ssअगर_info,
+		      अचिन्हित अक्षर   *data,
+		      अचिन्हित पूर्णांक    len)
+अणु
+	अगर (len > IPMI_MAX_MSG_LENGTH)
+		वापस -E2BIG;
+	अगर (len > ssअगर_info->max_xmit_msg_size)
+		वापस -E2BIG;
 
-	ssif_info->retries_left = SSIF_SEND_RETRIES;
-	memcpy(ssif_info->data + 1, data, len);
-	ssif_info->data_len = len;
-	return start_resend(ssif_info);
-}
+	ssअगर_info->retries_left = SSIF_SEND_RETRIES;
+	स_नकल(ssअगर_info->data + 1, data, len);
+	ssअगर_info->data_len = len;
+	वापस start_resend(ssअगर_info);
+पूर्ण
 
 /* Must be called with the message lock held. */
-static void start_next_msg(struct ssif_info *ssif_info, unsigned long *flags)
-{
-	struct ipmi_smi_msg *msg;
-	unsigned long oflags;
+अटल व्योम start_next_msg(काष्ठा ssअगर_info *ssअगर_info, अचिन्हित दीर्घ *flags)
+अणु
+	काष्ठा ipmi_smi_msg *msg;
+	अचिन्हित दीर्घ oflags;
 
  restart:
-	if (!SSIF_IDLE(ssif_info)) {
-		ipmi_ssif_unlock_cond(ssif_info, flags);
-		return;
-	}
+	अगर (!SSIF_IDLE(ssअगर_info)) अणु
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+		वापस;
+	पूर्ण
 
-	if (!ssif_info->waiting_msg) {
-		ssif_info->curr_msg = NULL;
-		ipmi_ssif_unlock_cond(ssif_info, flags);
-	} else {
-		int rv;
+	अगर (!ssअगर_info->रुकोing_msg) अणु
+		ssअगर_info->curr_msg = शून्य;
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+	पूर्ण अन्यथा अणु
+		पूर्णांक rv;
 
-		ssif_info->curr_msg = ssif_info->waiting_msg;
-		ssif_info->waiting_msg = NULL;
-		ipmi_ssif_unlock_cond(ssif_info, flags);
-		rv = start_send(ssif_info,
-				ssif_info->curr_msg->data,
-				ssif_info->curr_msg->data_size);
-		if (rv) {
-			msg = ssif_info->curr_msg;
-			ssif_info->curr_msg = NULL;
-			return_hosed_msg(ssif_info, msg);
-			flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-			goto restart;
-		}
-	}
-}
+		ssअगर_info->curr_msg = ssअगर_info->रुकोing_msg;
+		ssअगर_info->रुकोing_msg = शून्य;
+		ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+		rv = start_send(ssअगर_info,
+				ssअगर_info->curr_msg->data,
+				ssअगर_info->curr_msg->data_size);
+		अगर (rv) अणु
+			msg = ssअगर_info->curr_msg;
+			ssअगर_info->curr_msg = शून्य;
+			वापस_hosed_msg(ssअगर_info, msg);
+			flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+			जाओ restart;
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static void sender(void                *send_info,
-		   struct ipmi_smi_msg *msg)
-{
-	struct ssif_info *ssif_info = (struct ssif_info *) send_info;
-	unsigned long oflags, *flags;
+अटल व्योम sender(व्योम                *send_info,
+		   काष्ठा ipmi_smi_msg *msg)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = (काष्ठा ssअगर_info *) send_info;
+	अचिन्हित दीर्घ oflags, *flags;
 
-	BUG_ON(ssif_info->waiting_msg);
-	ssif_info->waiting_msg = msg;
+	BUG_ON(ssअगर_info->रुकोing_msg);
+	ssअगर_info->रुकोing_msg = msg;
 
-	flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-	start_next_msg(ssif_info, flags);
+	flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+	start_next_msg(ssअगर_info, flags);
 
-	if (ssif_info->ssif_debug & SSIF_DEBUG_TIMING) {
-		struct timespec64 t;
+	अगर (ssअगर_info->ssअगर_debug & SSIF_DEBUG_TIMING) अणु
+		काष्ठा बारpec64 t;
 
-		ktime_get_real_ts64(&t);
-		dev_dbg(&ssif_info->client->dev,
+		kसमय_get_real_ts64(&t);
+		dev_dbg(&ssअगर_info->client->dev,
 			"**Enqueue %02x %02x: %lld.%6.6ld\n",
 			msg->data[0], msg->data[1],
-			(long long)t.tv_sec, (long)t.tv_nsec / NSEC_PER_USEC);
-	}
-}
+			(दीर्घ दीर्घ)t.tv_sec, (दीर्घ)t.tv_nsec / NSEC_PER_USEC);
+	पूर्ण
+पूर्ण
 
-static int get_smi_info(void *send_info, struct ipmi_smi_info *data)
-{
-	struct ssif_info *ssif_info = send_info;
+अटल पूर्णांक get_smi_info(व्योम *send_info, काष्ठा ipmi_smi_info *data)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = send_info;
 
-	data->addr_src = ssif_info->addr_source;
-	data->dev = &ssif_info->client->dev;
-	data->addr_info = ssif_info->addr_info;
+	data->addr_src = ssअगर_info->addr_source;
+	data->dev = &ssअगर_info->client->dev;
+	data->addr_info = ssअगर_info->addr_info;
 	get_device(data->dev);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
 /*
  * Upper layer wants us to request events.
  */
-static void request_events(void *send_info)
-{
-	struct ssif_info *ssif_info = (struct ssif_info *) send_info;
-	unsigned long oflags, *flags;
+अटल व्योम request_events(व्योम *send_info)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = (काष्ठा ssअगर_info *) send_info;
+	अचिन्हित दीर्घ oflags, *flags;
 
-	if (!ssif_info->has_event_buffer)
-		return;
+	अगर (!ssअगर_info->has_event_buffer)
+		वापस;
 
-	flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-	ssif_info->req_events = true;
-	ipmi_ssif_unlock_cond(ssif_info, flags);
-}
+	flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+	ssअगर_info->req_events = true;
+	ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+पूर्ण
 
 /*
  * Upper layer is changing the flag saying whether we need to request
  * flags periodically or not.
  */
-static void ssif_set_need_watch(void *send_info, unsigned int watch_mask)
-{
-	struct ssif_info *ssif_info = (struct ssif_info *) send_info;
-	unsigned long oflags, *flags;
-	long timeout = 0;
+अटल व्योम ssअगर_set_need_watch(व्योम *send_info, अचिन्हित पूर्णांक watch_mask)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = (काष्ठा ssअगर_info *) send_info;
+	अचिन्हित दीर्घ oflags, *flags;
+	दीर्घ समयout = 0;
 
-	if (watch_mask & IPMI_WATCH_MASK_CHECK_MESSAGES)
-		timeout = SSIF_WATCH_MSG_TIMEOUT;
-	else if (watch_mask)
-		timeout = SSIF_WATCH_WATCHDOG_TIMEOUT;
+	अगर (watch_mask & IPMI_WATCH_MASK_CHECK_MESSAGES)
+		समयout = SSIF_WATCH_MSG_TIMEOUT;
+	अन्यथा अगर (watch_mask)
+		समयout = SSIF_WATCH_WATCHDOG_TIMEOUT;
 
-	flags = ipmi_ssif_lock_cond(ssif_info, &oflags);
-	if (timeout != ssif_info->watch_timeout) {
-		ssif_info->watch_timeout = timeout;
-		if (ssif_info->watch_timeout)
-			mod_timer(&ssif_info->watch_timer,
-				  jiffies + ssif_info->watch_timeout);
-	}
-	ipmi_ssif_unlock_cond(ssif_info, flags);
-}
+	flags = ipmi_ssअगर_lock_cond(ssअगर_info, &oflags);
+	अगर (समयout != ssअगर_info->watch_समयout) अणु
+		ssअगर_info->watch_समयout = समयout;
+		अगर (ssअगर_info->watch_समयout)
+			mod_समयr(&ssअगर_info->watch_समयr,
+				  jअगरfies + ssअगर_info->watch_समयout);
+	पूर्ण
+	ipmi_ssअगर_unlock_cond(ssअगर_info, flags);
+पूर्ण
 
-static int ssif_start_processing(void            *send_info,
-				 struct ipmi_smi *intf)
-{
-	struct ssif_info *ssif_info = send_info;
+अटल पूर्णांक ssअगर_start_processing(व्योम            *send_info,
+				 काष्ठा ipmi_smi *पूर्णांकf)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = send_info;
 
-	ssif_info->intf = intf;
+	ssअगर_info->पूर्णांकf = पूर्णांकf;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-#define MAX_SSIF_BMCS 4
+#घोषणा MAX_SSIF_BMCS 4
 
-static unsigned short addr[MAX_SSIF_BMCS];
-static int num_addrs;
-module_param_array(addr, ushort, &num_addrs, 0);
+अटल अचिन्हित लघु addr[MAX_SSIF_BMCS];
+अटल पूर्णांक num_addrs;
+module_param_array(addr, uलघु, &num_addrs, 0);
 MODULE_PARM_DESC(addr, "The addresses to scan for IPMI BMCs on the SSIFs.");
 
-static char *adapter_name[MAX_SSIF_BMCS];
-static int num_adapter_names;
-module_param_array(adapter_name, charp, &num_adapter_names, 0);
+अटल अक्षर *adapter_name[MAX_SSIF_BMCS];
+अटल पूर्णांक num_adapter_names;
+module_param_array(adapter_name, अक्षरp, &num_adapter_names, 0);
 MODULE_PARM_DESC(adapter_name, "The string name of the I2C device that has the BMC.  By default all devices are scanned.");
 
-static int slave_addrs[MAX_SSIF_BMCS];
-static int num_slave_addrs;
-module_param_array(slave_addrs, int, &num_slave_addrs, 0);
+अटल पूर्णांक slave_addrs[MAX_SSIF_BMCS];
+अटल पूर्णांक num_slave_addrs;
+module_param_array(slave_addrs, पूर्णांक, &num_slave_addrs, 0);
 MODULE_PARM_DESC(slave_addrs,
 		 "The default IPMB slave address for the controller.");
 
-static bool alerts_broken;
+अटल bool alerts_broken;
 module_param(alerts_broken, bool, 0);
 MODULE_PARM_DESC(alerts_broken, "Don't enable alerts for the controller.");
 
 /*
  * Bit 0 enables message debugging, bit 1 enables state debugging, and
  * bit 2 enables timing debugging.  This is an array indexed by
- * interface number"
+ * पूर्णांकerface number"
  */
-static int dbg[MAX_SSIF_BMCS];
-static int num_dbg;
-module_param_array(dbg, int, &num_dbg, 0);
+अटल पूर्णांक dbg[MAX_SSIF_BMCS];
+अटल पूर्णांक num_dbg;
+module_param_array(dbg, पूर्णांक, &num_dbg, 0);
 MODULE_PARM_DESC(dbg, "Turn on debugging.");
 
-static bool ssif_dbg_probe;
-module_param_named(dbg_probe, ssif_dbg_probe, bool, 0);
+अटल bool ssअगर_dbg_probe;
+module_param_named(dbg_probe, ssअगर_dbg_probe, bool, 0);
 MODULE_PARM_DESC(dbg_probe, "Enable debugging of probing of adapters.");
 
-static bool ssif_tryacpi = true;
-module_param_named(tryacpi, ssif_tryacpi, bool, 0);
+अटल bool ssअगर_tryacpi = true;
+module_param_named(tryacpi, ssअगर_tryacpi, bool, 0);
 MODULE_PARM_DESC(tryacpi, "Setting this to zero will disable the default scan of the interfaces identified via ACPI");
 
-static bool ssif_trydmi = true;
-module_param_named(trydmi, ssif_trydmi, bool, 0);
+अटल bool ssअगर_trydmi = true;
+module_param_named(trydmi, ssअगर_trydmi, bool, 0);
 MODULE_PARM_DESC(trydmi, "Setting this to zero will disable the default scan of the interfaces identified via DMI (SMBIOS)");
 
-static DEFINE_MUTEX(ssif_infos_mutex);
-static LIST_HEAD(ssif_infos);
+अटल DEFINE_MUTEX(ssअगर_infos_mutex);
+अटल LIST_HEAD(ssअगर_infos);
 
-#define IPMI_SSIF_ATTR(name) \
-static ssize_t ipmi_##name##_show(struct device *dev,			\
-				  struct device_attribute *attr,	\
-				  char *buf)				\
-{									\
-	struct ssif_info *ssif_info = dev_get_drvdata(dev);		\
+#घोषणा IPMI_SSIF_ATTR(name) \
+अटल sमाप_प्रकार ipmi_##name##_show(काष्ठा device *dev,			\
+				  काष्ठा device_attribute *attr,	\
+				  अक्षर *buf)				\
+अणु									\
+	काष्ठा ssअगर_info *ssअगर_info = dev_get_drvdata(dev);		\
 									\
-	return snprintf(buf, 10, "%u\n", ssif_get_stat(ssif_info, name));\
-}									\
-static DEVICE_ATTR(name, S_IRUGO, ipmi_##name##_show, NULL)
+	वापस snम_लिखो(buf, 10, "%u\n", ssअगर_get_stat(ssअगर_info, name));\
+पूर्ण									\
+अटल DEVICE_ATTR(name, S_IRUGO, ipmi_##name##_show, शून्य)
 
-static ssize_t ipmi_type_show(struct device *dev,
-			      struct device_attribute *attr,
-			      char *buf)
-{
-	return snprintf(buf, 10, "ssif\n");
-}
-static DEVICE_ATTR(type, S_IRUGO, ipmi_type_show, NULL);
+अटल sमाप_प्रकार ipmi_type_show(काष्ठा device *dev,
+			      काष्ठा device_attribute *attr,
+			      अक्षर *buf)
+अणु
+	वापस snम_लिखो(buf, 10, "ssif\n");
+पूर्ण
+अटल DEVICE_ATTR(type, S_IRUGO, ipmi_type_show, शून्य);
 
 IPMI_SSIF_ATTR(sent_messages);
 IPMI_SSIF_ATTR(sent_messages_parts);
@@ -1213,10 +1214,10 @@ IPMI_SSIF_ATTR(receive_errors);
 IPMI_SSIF_ATTR(flag_fetches);
 IPMI_SSIF_ATTR(hosed);
 IPMI_SSIF_ATTR(events);
-IPMI_SSIF_ATTR(watchdog_pretimeouts);
+IPMI_SSIF_ATTR(watchकरोg_preसमयouts);
 IPMI_SSIF_ATTR(alerts);
 
-static struct attribute *ipmi_ssif_dev_attrs[] = {
+अटल काष्ठा attribute *ipmi_ssअगर_dev_attrs[] = अणु
 	&dev_attr_type.attr,
 	&dev_attr_sent_messages.attr,
 	&dev_attr_sent_messages_parts.attr,
@@ -1229,912 +1230,912 @@ static struct attribute *ipmi_ssif_dev_attrs[] = {
 	&dev_attr_flag_fetches.attr,
 	&dev_attr_hosed.attr,
 	&dev_attr_events.attr,
-	&dev_attr_watchdog_pretimeouts.attr,
+	&dev_attr_watchकरोg_preसमयouts.attr,
 	&dev_attr_alerts.attr,
-	NULL
-};
+	शून्य
+पूर्ण;
 
-static const struct attribute_group ipmi_ssif_dev_attr_group = {
-	.attrs		= ipmi_ssif_dev_attrs,
-};
+अटल स्थिर काष्ठा attribute_group ipmi_ssअगर_dev_attr_group = अणु
+	.attrs		= ipmi_ssअगर_dev_attrs,
+पूर्ण;
 
-static void shutdown_ssif(void *send_info)
-{
-	struct ssif_info *ssif_info = send_info;
+अटल व्योम shutकरोwn_ssअगर(व्योम *send_info)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = send_info;
 
-	device_remove_group(&ssif_info->client->dev, &ipmi_ssif_dev_attr_group);
-	dev_set_drvdata(&ssif_info->client->dev, NULL);
+	device_हटाओ_group(&ssअगर_info->client->dev, &ipmi_ssअगर_dev_attr_group);
+	dev_set_drvdata(&ssअगर_info->client->dev, शून्य);
 
-	/* make sure the driver is not looking for flags any more. */
-	while (ssif_info->ssif_state != SSIF_NORMAL)
-		schedule_timeout(1);
+	/* make sure the driver is not looking क्रम flags any more. */
+	जबतक (ssअगर_info->ssअगर_state != SSIF_NORMAL)
+		schedule_समयout(1);
 
-	ssif_info->stopping = true;
-	del_timer_sync(&ssif_info->watch_timer);
-	del_timer_sync(&ssif_info->retry_timer);
-	if (ssif_info->thread) {
-		complete(&ssif_info->wake_thread);
-		kthread_stop(ssif_info->thread);
-	}
-}
+	ssअगर_info->stopping = true;
+	del_समयr_sync(&ssअगर_info->watch_समयr);
+	del_समयr_sync(&ssअगर_info->retry_समयr);
+	अगर (ssअगर_info->thपढ़ो) अणु
+		complete(&ssअगर_info->wake_thपढ़ो);
+		kthपढ़ो_stop(ssअगर_info->thपढ़ो);
+	पूर्ण
+पूर्ण
 
-static int ssif_remove(struct i2c_client *client)
-{
-	struct ssif_info *ssif_info = i2c_get_clientdata(client);
-	struct ssif_addr_info *addr_info;
+अटल पूर्णांक ssअगर_हटाओ(काष्ठा i2c_client *client)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = i2c_get_clientdata(client);
+	काष्ठा ssअगर_addr_info *addr_info;
 
-	if (!ssif_info)
-		return 0;
+	अगर (!ssअगर_info)
+		वापस 0;
 
 	/*
-	 * After this point, we won't deliver anything asychronously
-	 * to the message handler.  We can unregister ourself.
+	 * After this poपूर्णांक, we won't deliver anything asychronously
+	 * to the message handler.  We can unरेजिस्टर ourself.
 	 */
-	ipmi_unregister_smi(ssif_info->intf);
+	ipmi_unरेजिस्टर_smi(ssअगर_info->पूर्णांकf);
 
-	list_for_each_entry(addr_info, &ssif_infos, link) {
-		if (addr_info->client == client) {
-			addr_info->client = NULL;
-			break;
-		}
-	}
+	list_क्रम_each_entry(addr_info, &ssअगर_infos, link) अणु
+		अगर (addr_info->client == client) अणु
+			addr_info->client = शून्य;
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	kfree(ssif_info);
+	kमुक्त(ssअगर_info);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int read_response(struct i2c_client *client, unsigned char *resp)
-{
-	int ret = -ENODEV, retry_cnt = SSIF_RECV_RETRIES;
+अटल पूर्णांक पढ़ो_response(काष्ठा i2c_client *client, अचिन्हित अक्षर *resp)
+अणु
+	पूर्णांक ret = -ENODEV, retry_cnt = SSIF_RECV_RETRIES;
 
-	while (retry_cnt > 0) {
-		ret = i2c_smbus_read_block_data(client, SSIF_IPMI_RESPONSE,
+	जबतक (retry_cnt > 0) अणु
+		ret = i2c_smbus_पढ़ो_block_data(client, SSIF_IPMI_RESPONSE,
 						resp);
-		if (ret > 0)
-			break;
+		अगर (ret > 0)
+			अवरोध;
 		msleep(SSIF_MSG_MSEC);
 		retry_cnt--;
-		if (retry_cnt <= 0)
-			break;
-	}
+		अगर (retry_cnt <= 0)
+			अवरोध;
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int do_cmd(struct i2c_client *client, int len, unsigned char *msg,
-		  int *resp_len, unsigned char *resp)
-{
-	int retry_cnt;
-	int ret;
+अटल पूर्णांक करो_cmd(काष्ठा i2c_client *client, पूर्णांक len, अचिन्हित अक्षर *msg,
+		  पूर्णांक *resp_len, अचिन्हित अक्षर *resp)
+अणु
+	पूर्णांक retry_cnt;
+	पूर्णांक ret;
 
 	retry_cnt = SSIF_SEND_RETRIES;
  retry1:
-	ret = i2c_smbus_write_block_data(client, SSIF_IPMI_REQUEST, len, msg);
-	if (ret) {
+	ret = i2c_smbus_ग_लिखो_block_data(client, SSIF_IPMI_REQUEST, len, msg);
+	अगर (ret) अणु
 		retry_cnt--;
-		if (retry_cnt > 0)
-			goto retry1;
-		return -ENODEV;
-	}
+		अगर (retry_cnt > 0)
+			जाओ retry1;
+		वापस -ENODEV;
+	पूर्ण
 
-	ret = read_response(client, resp);
-	if (ret > 0) {
+	ret = पढ़ो_response(client, resp);
+	अगर (ret > 0) अणु
 		/* Validate that the response is correct. */
-		if (ret < 3 ||
+		अगर (ret < 3 ||
 		    (resp[0] != (msg[0] | (1 << 2))) ||
 		    (resp[1] != msg[1]))
 			ret = -EINVAL;
-		else if (ret > IPMI_MAX_MSG_LENGTH) {
+		अन्यथा अगर (ret > IPMI_MAX_MSG_LENGTH) अणु
 			ret = -E2BIG;
-		} else {
+		पूर्ण अन्यथा अणु
 			*resp_len = ret;
 			ret = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int ssif_detect(struct i2c_client *client, struct i2c_board_info *info)
-{
-	unsigned char *resp;
-	unsigned char msg[3];
-	int           rv;
-	int           len;
+अटल पूर्णांक ssअगर_detect(काष्ठा i2c_client *client, काष्ठा i2c_board_info *info)
+अणु
+	अचिन्हित अक्षर *resp;
+	अचिन्हित अक्षर msg[3];
+	पूर्णांक           rv;
+	पूर्णांक           len;
 
-	resp = kmalloc(IPMI_MAX_MSG_LENGTH, GFP_KERNEL);
-	if (!resp)
-		return -ENOMEM;
+	resp = kदो_स्मृति(IPMI_MAX_MSG_LENGTH, GFP_KERNEL);
+	अगर (!resp)
+		वापस -ENOMEM;
 
 	/* Do a Get Device ID command, since it is required. */
 	msg[0] = IPMI_NETFN_APP_REQUEST << 2;
 	msg[1] = IPMI_GET_DEVICE_ID_CMD;
-	rv = do_cmd(client, 2, msg, &len, resp);
-	if (rv)
+	rv = करो_cmd(client, 2, msg, &len, resp);
+	अगर (rv)
 		rv = -ENODEV;
-	else
+	अन्यथा
 		strlcpy(info->type, DEVICE_NAME, I2C_NAME_SIZE);
-	kfree(resp);
-	return rv;
-}
+	kमुक्त(resp);
+	वापस rv;
+पूर्ण
 
-static int strcmp_nospace(char *s1, char *s2)
-{
-	while (*s1 && *s2) {
-		while (isspace(*s1))
+अटल पूर्णांक म_भेद_nospace(अक्षर *s1, अक्षर *s2)
+अणु
+	जबतक (*s1 && *s2) अणु
+		जबतक (है_खाली(*s1))
 			s1++;
-		while (isspace(*s2))
+		जबतक (है_खाली(*s2))
 			s2++;
-		if (*s1 > *s2)
-			return 1;
-		if (*s1 < *s2)
-			return -1;
+		अगर (*s1 > *s2)
+			वापस 1;
+		अगर (*s1 < *s2)
+			वापस -1;
 		s1++;
 		s2++;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static struct ssif_addr_info *ssif_info_find(unsigned short addr,
-					     char *adapter_name,
+अटल काष्ठा ssअगर_addr_info *ssअगर_info_find(अचिन्हित लघु addr,
+					     अक्षर *adapter_name,
 					     bool match_null_name)
-{
-	struct ssif_addr_info *info, *found = NULL;
+अणु
+	काष्ठा ssअगर_addr_info *info, *found = शून्य;
 
 restart:
-	list_for_each_entry(info, &ssif_infos, link) {
-		if (info->binfo.addr == addr) {
-			if (info->addr_src == SI_SMBIOS)
+	list_क्रम_each_entry(info, &ssअगर_infos, link) अणु
+		अगर (info->binfo.addr == addr) अणु
+			अगर (info->addr_src == SI_SMBIOS)
 				info->adapter_name = kstrdup(adapter_name,
 							     GFP_KERNEL);
 
-			if (info->adapter_name || adapter_name) {
-				if (!info->adapter_name != !adapter_name) {
-					/* One is NULL and one is not */
-					continue;
-				}
-				if (adapter_name &&
-				    strcmp_nospace(info->adapter_name,
+			अगर (info->adapter_name || adapter_name) अणु
+				अगर (!info->adapter_name != !adapter_name) अणु
+					/* One is शून्य and one is not */
+					जारी;
+				पूर्ण
+				अगर (adapter_name &&
+				    म_भेद_nospace(info->adapter_name,
 						   adapter_name))
-					/* Names do not match */
-					continue;
-			}
+					/* Names करो not match */
+					जारी;
+			पूर्ण
 			found = info;
-			break;
-		}
-	}
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	if (!found && match_null_name) {
-		/* Try to get an exact match first, then try with a NULL name */
-		adapter_name = NULL;
+	अगर (!found && match_null_name) अणु
+		/* Try to get an exact match first, then try with a शून्य name */
+		adapter_name = शून्य;
 		match_null_name = false;
-		goto restart;
-	}
+		जाओ restart;
+	पूर्ण
 
-	return found;
-}
+	वापस found;
+पूर्ण
 
-static bool check_acpi(struct ssif_info *ssif_info, struct device *dev)
-{
-#ifdef CONFIG_ACPI
+अटल bool check_acpi(काष्ठा ssअगर_info *ssअगर_info, काष्ठा device *dev)
+अणु
+#अगर_घोषित CONFIG_ACPI
 	acpi_handle acpi_handle;
 
 	acpi_handle = ACPI_HANDLE(dev);
-	if (acpi_handle) {
-		ssif_info->addr_source = SI_ACPI;
-		ssif_info->addr_info.acpi_info.acpi_handle = acpi_handle;
+	अगर (acpi_handle) अणु
+		ssअगर_info->addr_source = SI_ACPI;
+		ssअगर_info->addr_info.acpi_info.acpi_handle = acpi_handle;
 		request_module("acpi_ipmi");
-		return true;
-	}
-#endif
-	return false;
-}
+		वापस true;
+	पूर्ण
+#पूर्ण_अगर
+	वापस false;
+पूर्ण
 
-static int find_slave_address(struct i2c_client *client, int slave_addr)
-{
-#ifdef CONFIG_IPMI_DMI_DECODE
-	if (!slave_addr)
+अटल पूर्णांक find_slave_address(काष्ठा i2c_client *client, पूर्णांक slave_addr)
+अणु
+#अगर_घोषित CONFIG_IPMI_DMI_DECODE
+	अगर (!slave_addr)
 		slave_addr = ipmi_dmi_get_slave_addr(
 			SI_TYPE_INVALID,
 			i2c_adapter_id(client->adapter),
 			client->addr);
-#endif
+#पूर्ण_अगर
 
-	return slave_addr;
-}
+	वापस slave_addr;
+पूर्ण
 
-static int start_multipart_test(struct i2c_client *client,
-				unsigned char *msg, bool do_middle)
-{
-	int retry_cnt = SSIF_SEND_RETRIES, ret;
+अटल पूर्णांक start_multipart_test(काष्ठा i2c_client *client,
+				अचिन्हित अक्षर *msg, bool करो_middle)
+अणु
+	पूर्णांक retry_cnt = SSIF_SEND_RETRIES, ret;
 
-retry_write:
-	ret = i2c_smbus_write_block_data(client,
+retry_ग_लिखो:
+	ret = i2c_smbus_ग_लिखो_block_data(client,
 					 SSIF_IPMI_MULTI_PART_REQUEST_START,
 					 32, msg);
-	if (ret) {
+	अगर (ret) अणु
 		retry_cnt--;
-		if (retry_cnt > 0)
-			goto retry_write;
+		अगर (retry_cnt > 0)
+			जाओ retry_ग_लिखो;
 		dev_err(&client->dev, "Could not write multi-part start, though the BMC said it could handle it.  Just limit sends to one part.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	if (!do_middle)
-		return 0;
+	अगर (!करो_middle)
+		वापस 0;
 
-	ret = i2c_smbus_write_block_data(client,
+	ret = i2c_smbus_ग_लिखो_block_data(client,
 					 SSIF_IPMI_MULTI_PART_REQUEST_MIDDLE,
 					 32, msg + 32);
-	if (ret) {
+	अगर (ret) अणु
 		dev_err(&client->dev, "Could not write multi-part middle, though the BMC said it could handle it.  Just limit sends to one part.\n");
-		return ret;
-	}
+		वापस ret;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void test_multipart_messages(struct i2c_client *client,
-				    struct ssif_info *ssif_info,
-				    unsigned char *resp)
-{
-	unsigned char msg[65];
-	int ret;
-	bool do_middle;
+अटल व्योम test_multipart_messages(काष्ठा i2c_client *client,
+				    काष्ठा ssअगर_info *ssअगर_info,
+				    अचिन्हित अक्षर *resp)
+अणु
+	अचिन्हित अक्षर msg[65];
+	पूर्णांक ret;
+	bool करो_middle;
 
-	if (ssif_info->max_xmit_msg_size <= 32)
-		return;
+	अगर (ssअगर_info->max_xmit_msg_size <= 32)
+		वापस;
 
-	do_middle = ssif_info->max_xmit_msg_size > 63;
+	करो_middle = ssअगर_info->max_xmit_msg_size > 63;
 
-	memset(msg, 0, sizeof(msg));
+	स_रखो(msg, 0, माप(msg));
 	msg[0] = IPMI_NETFN_APP_REQUEST << 2;
 	msg[1] = IPMI_GET_DEVICE_ID_CMD;
 
 	/*
-	 * The specification is all messed up dealing with sending
-	 * multi-part messages.  Per what the specification says, it
+	 * The specअगरication is all messed up dealing with sending
+	 * multi-part messages.  Per what the specअगरication says, it
 	 * is impossible to send a message that is a multiple of 32
-	 * bytes, except for 32 itself.  It talks about a "start"
+	 * bytes, except क्रम 32 itself.  It talks about a "start"
 	 * transaction (cmd=6) that must be 32 bytes, "middle"
 	 * transaction (cmd=7) that must be 32 bytes, and an "end"
 	 * transaction.  The "end" transaction is shown as cmd=7 in
-	 * the text, but if that's the case there is no way to
-	 * differentiate between a middle and end part except the
+	 * the text, but अगर that's the हाल there is no way to
+	 * dअगरferentiate between a middle and end part except the
 	 * length being less than 32.  But there is a table at the far
 	 * end of the section (that I had never noticed until someone
-	 * pointed it out to me) that mentions it as cmd=8.
+	 * poपूर्णांकed it out to me) that mentions it as cmd=8.
 	 *
 	 * After some thought, I think the example is wrong and the
-	 * end transaction should be cmd=8.  But some systems don't
+	 * end transaction should be cmd=8.  But some प्रणालीs करोn't
 	 * implement cmd=8, they use a zero-length end transaction,
-	 * even though that violates the SMBus specification.
+	 * even though that violates the SMBus specअगरication.
 	 *
-	 * So, to work around this, this code tests if cmd=8 works.
-	 * If it does, then we use that.  If not, it tests zero-
+	 * So, to work around this, this code tests अगर cmd=8 works.
+	 * If it करोes, then we use that.  If not, it tests zero-
 	 * byte end transactions.  If that works, good.  If not,
 	 * we only allow 63-byte transactions max.
 	 */
 
-	ret = start_multipart_test(client, msg, do_middle);
-	if (ret)
-		goto out_no_multi_part;
+	ret = start_multipart_test(client, msg, करो_middle);
+	अगर (ret)
+		जाओ out_no_multi_part;
 
-	ret = i2c_smbus_write_block_data(client,
+	ret = i2c_smbus_ग_लिखो_block_data(client,
 					 SSIF_IPMI_MULTI_PART_REQUEST_END,
 					 1, msg + 64);
 
-	if (!ret)
-		ret = read_response(client, resp);
+	अगर (!ret)
+		ret = पढ़ो_response(client, resp);
 
-	if (ret > 0) {
+	अगर (ret > 0) अणु
 		/* End transactions work, we are good. */
-		ssif_info->cmd8_works = true;
-		return;
-	}
+		ssअगर_info->cmd8_works = true;
+		वापस;
+	पूर्ण
 
-	ret = start_multipart_test(client, msg, do_middle);
-	if (ret) {
+	ret = start_multipart_test(client, msg, करो_middle);
+	अगर (ret) अणु
 		dev_err(&client->dev, "Second multipart test failed.\n");
-		goto out_no_multi_part;
-	}
+		जाओ out_no_multi_part;
+	पूर्ण
 
-	ret = i2c_smbus_write_block_data(client,
+	ret = i2c_smbus_ग_लिखो_block_data(client,
 					 SSIF_IPMI_MULTI_PART_REQUEST_MIDDLE,
 					 0, msg + 64);
-	if (!ret)
-		ret = read_response(client, resp);
-	if (ret > 0)
+	अगर (!ret)
+		ret = पढ़ो_response(client, resp);
+	अगर (ret > 0)
 		/* Zero-size end parts work, use those. */
-		return;
+		वापस;
 
-	/* Limit to 63 bytes and use a short middle command to mark the end. */
-	if (ssif_info->max_xmit_msg_size > 63)
-		ssif_info->max_xmit_msg_size = 63;
-	return;
+	/* Limit to 63 bytes and use a लघु middle command to mark the end. */
+	अगर (ssअगर_info->max_xmit_msg_size > 63)
+		ssअगर_info->max_xmit_msg_size = 63;
+	वापस;
 
 out_no_multi_part:
-	ssif_info->max_xmit_msg_size = 32;
-	return;
-}
+	ssअगर_info->max_xmit_msg_size = 32;
+	वापस;
+पूर्ण
 
 /*
  * Global enables we care about.
  */
-#define GLOBAL_ENABLES_MASK (IPMI_BMC_EVT_MSG_BUFF | IPMI_BMC_RCV_MSG_INTR | \
+#घोषणा GLOBAL_ENABLES_MASK (IPMI_BMC_EVT_MSG_BUFF | IPMI_BMC_RCV_MSG_INTR | \
 			     IPMI_BMC_EVT_MSG_INTR)
 
-static void ssif_remove_dup(struct i2c_client *client)
-{
-	struct ssif_info *ssif_info = i2c_get_clientdata(client);
+अटल व्योम ssअगर_हटाओ_dup(काष्ठा i2c_client *client)
+अणु
+	काष्ठा ssअगर_info *ssअगर_info = i2c_get_clientdata(client);
 
-	ipmi_unregister_smi(ssif_info->intf);
-	kfree(ssif_info);
-}
+	ipmi_unरेजिस्टर_smi(ssअगर_info->पूर्णांकf);
+	kमुक्त(ssअगर_info);
+पूर्ण
 
-static int ssif_add_infos(struct i2c_client *client)
-{
-	struct ssif_addr_info *info;
+अटल पूर्णांक ssअगर_add_infos(काष्ठा i2c_client *client)
+अणु
+	काष्ठा ssअगर_addr_info *info;
 
-	info = kzalloc(sizeof(*info), GFP_KERNEL);
-	if (!info)
-		return -ENOMEM;
+	info = kzalloc(माप(*info), GFP_KERNEL);
+	अगर (!info)
+		वापस -ENOMEM;
 	info->addr_src = SI_ACPI;
 	info->client = client;
 	info->adapter_name = kstrdup(client->adapter->name, GFP_KERNEL);
 	info->binfo.addr = client->addr;
-	list_add_tail(&info->link, &ssif_infos);
-	return 0;
-}
+	list_add_tail(&info->link, &ssअगर_infos);
+	वापस 0;
+पूर्ण
 
 /*
- * Prefer ACPI over SMBIOS, if both are available.
- * So if we get an ACPI interface and have already registered a SMBIOS
- * interface at the same address, remove the SMBIOS and add the ACPI one.
+ * Prefer ACPI over SMBIOS, अगर both are available.
+ * So अगर we get an ACPI पूर्णांकerface and have alपढ़ोy रेजिस्टरed a SMBIOS
+ * पूर्णांकerface at the same address, हटाओ the SMBIOS and add the ACPI one.
  */
-static int ssif_check_and_remove(struct i2c_client *client,
-			      struct ssif_info *ssif_info)
-{
-	struct ssif_addr_info *info;
+अटल पूर्णांक ssअगर_check_and_हटाओ(काष्ठा i2c_client *client,
+			      काष्ठा ssअगर_info *ssअगर_info)
+अणु
+	काष्ठा ssअगर_addr_info *info;
 
-	list_for_each_entry(info, &ssif_infos, link) {
-		if (!info->client)
-			return 0;
-		if (!strcmp(info->adapter_name, client->adapter->name) &&
-		    info->binfo.addr == client->addr) {
-			if (info->addr_src == SI_ACPI)
-				return -EEXIST;
+	list_क्रम_each_entry(info, &ssअगर_infos, link) अणु
+		अगर (!info->client)
+			वापस 0;
+		अगर (!म_भेद(info->adapter_name, client->adapter->name) &&
+		    info->binfo.addr == client->addr) अणु
+			अगर (info->addr_src == SI_ACPI)
+				वापस -EEXIST;
 
-			if (ssif_info->addr_source == SI_ACPI &&
-			    info->addr_src == SI_SMBIOS) {
+			अगर (ssअगर_info->addr_source == SI_ACPI &&
+			    info->addr_src == SI_SMBIOS) अणु
 				dev_info(&client->dev,
 					 "Removing %s-specified SSIF interface in favor of ACPI\n",
 					 ipmi_addr_src_to_str(info->addr_src));
-				ssif_remove_dup(info->client);
-				return 0;
-			}
-		}
-	}
-	return 0;
-}
+				ssअगर_हटाओ_dup(info->client);
+				वापस 0;
+			पूर्ण
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static int ssif_probe(struct i2c_client *client, const struct i2c_device_id *id)
-{
-	unsigned char     msg[3];
-	unsigned char     *resp;
-	struct ssif_info   *ssif_info;
-	int               rv = 0;
-	int               len;
-	int               i;
+अटल पूर्णांक ssअगर_probe(काष्ठा i2c_client *client, स्थिर काष्ठा i2c_device_id *id)
+अणु
+	अचिन्हित अक्षर     msg[3];
+	अचिन्हित अक्षर     *resp;
+	काष्ठा ssअगर_info   *ssअगर_info;
+	पूर्णांक               rv = 0;
+	पूर्णांक               len;
+	पूर्णांक               i;
 	u8		  slave_addr = 0;
-	struct ssif_addr_info *addr_info = NULL;
+	काष्ठा ssअगर_addr_info *addr_info = शून्य;
 
-	mutex_lock(&ssif_infos_mutex);
-	resp = kmalloc(IPMI_MAX_MSG_LENGTH, GFP_KERNEL);
-	if (!resp) {
-		mutex_unlock(&ssif_infos_mutex);
-		return -ENOMEM;
-	}
+	mutex_lock(&ssअगर_infos_mutex);
+	resp = kदो_स्मृति(IPMI_MAX_MSG_LENGTH, GFP_KERNEL);
+	अगर (!resp) अणु
+		mutex_unlock(&ssअगर_infos_mutex);
+		वापस -ENOMEM;
+	पूर्ण
 
-	ssif_info = kzalloc(sizeof(*ssif_info), GFP_KERNEL);
-	if (!ssif_info) {
-		kfree(resp);
-		mutex_unlock(&ssif_infos_mutex);
-		return -ENOMEM;
-	}
+	ssअगर_info = kzalloc(माप(*ssअगर_info), GFP_KERNEL);
+	अगर (!ssअगर_info) अणु
+		kमुक्त(resp);
+		mutex_unlock(&ssअगर_infos_mutex);
+		वापस -ENOMEM;
+	पूर्ण
 
-	if (!check_acpi(ssif_info, &client->dev)) {
-		addr_info = ssif_info_find(client->addr, client->adapter->name,
+	अगर (!check_acpi(ssअगर_info, &client->dev)) अणु
+		addr_info = ssअगर_info_find(client->addr, client->adapter->name,
 					   true);
-		if (!addr_info) {
+		अगर (!addr_info) अणु
 			/* Must have come in through sysfs. */
-			ssif_info->addr_source = SI_HOTMOD;
-		} else {
-			ssif_info->addr_source = addr_info->addr_src;
-			ssif_info->ssif_debug = addr_info->debug;
-			ssif_info->addr_info = addr_info->addr_info;
+			ssअगर_info->addr_source = SI_HOTMOD;
+		पूर्ण अन्यथा अणु
+			ssअगर_info->addr_source = addr_info->addr_src;
+			ssअगर_info->ssअगर_debug = addr_info->debug;
+			ssअगर_info->addr_info = addr_info->addr_info;
 			addr_info->client = client;
 			slave_addr = addr_info->slave_addr;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	rv = ssif_check_and_remove(client, ssif_info);
-	/* If rv is 0 and addr source is not SI_ACPI, continue probing */
-	if (!rv && ssif_info->addr_source == SI_ACPI) {
-		rv = ssif_add_infos(client);
-		if (rv) {
+	rv = ssअगर_check_and_हटाओ(client, ssअगर_info);
+	/* If rv is 0 and addr source is not SI_ACPI, जारी probing */
+	अगर (!rv && ssअगर_info->addr_source == SI_ACPI) अणु
+		rv = ssअगर_add_infos(client);
+		अगर (rv) अणु
 			dev_err(&client->dev, "Out of memory!, exiting ..\n");
-			goto out;
-		}
-	} else if (rv) {
+			जाओ out;
+		पूर्ण
+	पूर्ण अन्यथा अगर (rv) अणु
 		dev_err(&client->dev, "Not probing, Interface already present\n");
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	slave_addr = find_slave_address(client, slave_addr);
 
 	dev_info(&client->dev,
 		 "Trying %s-specified SSIF interface at i2c address 0x%x, adapter %s, slave address 0x%x\n",
-		ipmi_addr_src_to_str(ssif_info->addr_source),
+		ipmi_addr_src_to_str(ssअगर_info->addr_source),
 		client->addr, client->adapter->name, slave_addr);
 
-	ssif_info->client = client;
-	i2c_set_clientdata(client, ssif_info);
+	ssअगर_info->client = client;
+	i2c_set_clientdata(client, ssअगर_info);
 
-	/* Now check for system interface capabilities */
+	/* Now check क्रम प्रणाली पूर्णांकerface capabilities */
 	msg[0] = IPMI_NETFN_APP_REQUEST << 2;
 	msg[1] = IPMI_GET_SYSTEM_INTERFACE_CAPABILITIES_CMD;
 	msg[2] = 0; /* SSIF */
-	rv = do_cmd(client, 3, msg, &len, resp);
-	if (!rv && (len >= 3) && (resp[2] == 0)) {
-		if (len < 7) {
-			if (ssif_dbg_probe)
-				dev_dbg(&ssif_info->client->dev,
+	rv = करो_cmd(client, 3, msg, &len, resp);
+	अगर (!rv && (len >= 3) && (resp[2] == 0)) अणु
+		अगर (len < 7) अणु
+			अगर (ssअगर_dbg_probe)
+				dev_dbg(&ssअगर_info->client->dev,
 					"SSIF info too short: %d\n", len);
-			goto no_support;
-		}
+			जाओ no_support;
+		पूर्ण
 
 		/* Got a good SSIF response, handle it. */
-		ssif_info->max_xmit_msg_size = resp[5];
-		ssif_info->max_recv_msg_size = resp[6];
-		ssif_info->multi_support = (resp[4] >> 6) & 0x3;
-		ssif_info->supports_pec = (resp[4] >> 3) & 0x1;
+		ssअगर_info->max_xmit_msg_size = resp[5];
+		ssअगर_info->max_recv_msg_size = resp[6];
+		ssअगर_info->multi_support = (resp[4] >> 6) & 0x3;
+		ssअगर_info->supports_pec = (resp[4] >> 3) & 0x1;
 
 		/* Sanitize the data */
-		switch (ssif_info->multi_support) {
-		case SSIF_NO_MULTI:
-			if (ssif_info->max_xmit_msg_size > 32)
-				ssif_info->max_xmit_msg_size = 32;
-			if (ssif_info->max_recv_msg_size > 32)
-				ssif_info->max_recv_msg_size = 32;
-			break;
+		चयन (ssअगर_info->multi_support) अणु
+		हाल SSIF_NO_MULTI:
+			अगर (ssअगर_info->max_xmit_msg_size > 32)
+				ssअगर_info->max_xmit_msg_size = 32;
+			अगर (ssअगर_info->max_recv_msg_size > 32)
+				ssअगर_info->max_recv_msg_size = 32;
+			अवरोध;
 
-		case SSIF_MULTI_2_PART:
-			if (ssif_info->max_xmit_msg_size > 63)
-				ssif_info->max_xmit_msg_size = 63;
-			if (ssif_info->max_recv_msg_size > 62)
-				ssif_info->max_recv_msg_size = 62;
-			break;
+		हाल SSIF_MULTI_2_PART:
+			अगर (ssअगर_info->max_xmit_msg_size > 63)
+				ssअगर_info->max_xmit_msg_size = 63;
+			अगर (ssअगर_info->max_recv_msg_size > 62)
+				ssअगर_info->max_recv_msg_size = 62;
+			अवरोध;
 
-		case SSIF_MULTI_n_PART:
-			/* We take whatever size given, but do some testing. */
-			break;
+		हाल SSIF_MULTI_n_PART:
+			/* We take whatever size given, but करो some testing. */
+			अवरोध;
 
-		default:
+		शेष:
 			/* Data is not sane, just give up. */
-			goto no_support;
-		}
-	} else {
+			जाओ no_support;
+		पूर्ण
+	पूर्ण अन्यथा अणु
  no_support:
 		/* Assume no multi-part or PEC support */
-		dev_info(&ssif_info->client->dev,
+		dev_info(&ssअगर_info->client->dev,
 			 "Error fetching SSIF: %d %d %2.2x, your system probably doesn't support this command so using defaults\n",
 			rv, len, resp[2]);
 
-		ssif_info->max_xmit_msg_size = 32;
-		ssif_info->max_recv_msg_size = 32;
-		ssif_info->multi_support = SSIF_NO_MULTI;
-		ssif_info->supports_pec = 0;
-	}
+		ssअगर_info->max_xmit_msg_size = 32;
+		ssअगर_info->max_recv_msg_size = 32;
+		ssअगर_info->multi_support = SSIF_NO_MULTI;
+		ssअगर_info->supports_pec = 0;
+	पूर्ण
 
-	test_multipart_messages(client, ssif_info, resp);
+	test_multipart_messages(client, ssअगर_info, resp);
 
-	/* Make sure the NMI timeout is cleared. */
+	/* Make sure the NMI समयout is cleared. */
 	msg[0] = IPMI_NETFN_APP_REQUEST << 2;
 	msg[1] = IPMI_CLEAR_MSG_FLAGS_CMD;
 	msg[2] = WDT_PRE_TIMEOUT_INT;
-	rv = do_cmd(client, 3, msg, &len, resp);
-	if (rv || (len < 3) || (resp[2] != 0))
-		dev_warn(&ssif_info->client->dev,
+	rv = करो_cmd(client, 3, msg, &len, resp);
+	अगर (rv || (len < 3) || (resp[2] != 0))
+		dev_warn(&ssअगर_info->client->dev,
 			 "Unable to clear message flags: %d %d %2.2x\n",
 			 rv, len, resp[2]);
 
 	/* Attempt to enable the event buffer. */
 	msg[0] = IPMI_NETFN_APP_REQUEST << 2;
 	msg[1] = IPMI_GET_BMC_GLOBAL_ENABLES_CMD;
-	rv = do_cmd(client, 2, msg, &len, resp);
-	if (rv || (len < 4) || (resp[2] != 0)) {
-		dev_warn(&ssif_info->client->dev,
+	rv = करो_cmd(client, 2, msg, &len, resp);
+	अगर (rv || (len < 4) || (resp[2] != 0)) अणु
+		dev_warn(&ssअगर_info->client->dev,
 			 "Error getting global enables: %d %d %2.2x\n",
 			 rv, len, resp[2]);
 		rv = 0; /* Not fatal */
-		goto found;
-	}
+		जाओ found;
+	पूर्ण
 
-	ssif_info->global_enables = resp[3];
+	ssअगर_info->global_enables = resp[3];
 
-	if (resp[3] & IPMI_BMC_EVT_MSG_BUFF) {
-		ssif_info->has_event_buffer = true;
-		/* buffer is already enabled, nothing to do. */
-		goto found;
-	}
-
-	msg[0] = IPMI_NETFN_APP_REQUEST << 2;
-	msg[1] = IPMI_SET_BMC_GLOBAL_ENABLES_CMD;
-	msg[2] = ssif_info->global_enables | IPMI_BMC_EVT_MSG_BUFF;
-	rv = do_cmd(client, 3, msg, &len, resp);
-	if (rv || (len < 2)) {
-		dev_warn(&ssif_info->client->dev,
-			 "Error setting global enables: %d %d %2.2x\n",
-			 rv, len, resp[2]);
-		rv = 0; /* Not fatal */
-		goto found;
-	}
-
-	if (resp[2] == 0) {
-		/* A successful return means the event buffer is supported. */
-		ssif_info->has_event_buffer = true;
-		ssif_info->global_enables |= IPMI_BMC_EVT_MSG_BUFF;
-	}
-
-	/* Some systems don't behave well if you enable alerts. */
-	if (alerts_broken)
-		goto found;
+	अगर (resp[3] & IPMI_BMC_EVT_MSG_BUFF) अणु
+		ssअगर_info->has_event_buffer = true;
+		/* buffer is alपढ़ोy enabled, nothing to करो. */
+		जाओ found;
+	पूर्ण
 
 	msg[0] = IPMI_NETFN_APP_REQUEST << 2;
 	msg[1] = IPMI_SET_BMC_GLOBAL_ENABLES_CMD;
-	msg[2] = ssif_info->global_enables | IPMI_BMC_RCV_MSG_INTR;
-	rv = do_cmd(client, 3, msg, &len, resp);
-	if (rv || (len < 2)) {
-		dev_warn(&ssif_info->client->dev,
+	msg[2] = ssअगर_info->global_enables | IPMI_BMC_EVT_MSG_BUFF;
+	rv = करो_cmd(client, 3, msg, &len, resp);
+	अगर (rv || (len < 2)) अणु
+		dev_warn(&ssअगर_info->client->dev,
 			 "Error setting global enables: %d %d %2.2x\n",
 			 rv, len, resp[2]);
 		rv = 0; /* Not fatal */
-		goto found;
-	}
+		जाओ found;
+	पूर्ण
 
-	if (resp[2] == 0) {
-		/* A successful return means the alert is supported. */
-		ssif_info->supports_alert = true;
-		ssif_info->global_enables |= IPMI_BMC_RCV_MSG_INTR;
-	}
+	अगर (resp[2] == 0) अणु
+		/* A successful वापस means the event buffer is supported. */
+		ssअगर_info->has_event_buffer = true;
+		ssअगर_info->global_enables |= IPMI_BMC_EVT_MSG_BUFF;
+	पूर्ण
+
+	/* Some प्रणालीs करोn't behave well अगर you enable alerts. */
+	अगर (alerts_broken)
+		जाओ found;
+
+	msg[0] = IPMI_NETFN_APP_REQUEST << 2;
+	msg[1] = IPMI_SET_BMC_GLOBAL_ENABLES_CMD;
+	msg[2] = ssअगर_info->global_enables | IPMI_BMC_RCV_MSG_INTR;
+	rv = करो_cmd(client, 3, msg, &len, resp);
+	अगर (rv || (len < 2)) अणु
+		dev_warn(&ssअगर_info->client->dev,
+			 "Error setting global enables: %d %d %2.2x\n",
+			 rv, len, resp[2]);
+		rv = 0; /* Not fatal */
+		जाओ found;
+	पूर्ण
+
+	अगर (resp[2] == 0) अणु
+		/* A successful वापस means the alert is supported. */
+		ssअगर_info->supports_alert = true;
+		ssअगर_info->global_enables |= IPMI_BMC_RCV_MSG_INTR;
+	पूर्ण
 
  found:
-	if (ssif_dbg_probe) {
-		dev_dbg(&ssif_info->client->dev,
+	अगर (ssअगर_dbg_probe) अणु
+		dev_dbg(&ssअगर_info->client->dev,
 		       "%s: i2c_probe found device at i2c address %x\n",
 		       __func__, client->addr);
-	}
+	पूर्ण
 
-	spin_lock_init(&ssif_info->lock);
-	ssif_info->ssif_state = SSIF_NORMAL;
-	timer_setup(&ssif_info->retry_timer, retry_timeout, 0);
-	timer_setup(&ssif_info->watch_timer, watch_timeout, 0);
+	spin_lock_init(&ssअगर_info->lock);
+	ssअगर_info->ssअगर_state = SSIF_NORMAL;
+	समयr_setup(&ssअगर_info->retry_समयr, retry_समयout, 0);
+	समयr_setup(&ssअगर_info->watch_समयr, watch_समयout, 0);
 
-	for (i = 0; i < SSIF_NUM_STATS; i++)
-		atomic_set(&ssif_info->stats[i], 0);
+	क्रम (i = 0; i < SSIF_NUM_STATS; i++)
+		atomic_set(&ssअगर_info->stats[i], 0);
 
-	if (ssif_info->supports_pec)
-		ssif_info->client->flags |= I2C_CLIENT_PEC;
+	अगर (ssअगर_info->supports_pec)
+		ssअगर_info->client->flags |= I2C_CLIENT_PEC;
 
-	ssif_info->handlers.owner = THIS_MODULE;
-	ssif_info->handlers.start_processing = ssif_start_processing;
-	ssif_info->handlers.shutdown = shutdown_ssif;
-	ssif_info->handlers.get_smi_info = get_smi_info;
-	ssif_info->handlers.sender = sender;
-	ssif_info->handlers.request_events = request_events;
-	ssif_info->handlers.set_need_watch = ssif_set_need_watch;
+	ssअगर_info->handlers.owner = THIS_MODULE;
+	ssअगर_info->handlers.start_processing = ssअगर_start_processing;
+	ssअगर_info->handlers.shutकरोwn = shutकरोwn_ssअगर;
+	ssअगर_info->handlers.get_smi_info = get_smi_info;
+	ssअगर_info->handlers.sender = sender;
+	ssअगर_info->handlers.request_events = request_events;
+	ssअगर_info->handlers.set_need_watch = ssअगर_set_need_watch;
 
-	{
-		unsigned int thread_num;
+	अणु
+		अचिन्हित पूर्णांक thपढ़ो_num;
 
-		thread_num = ((i2c_adapter_id(ssif_info->client->adapter)
+		thपढ़ो_num = ((i2c_adapter_id(ssअगर_info->client->adapter)
 			       << 8) |
-			      ssif_info->client->addr);
-		init_completion(&ssif_info->wake_thread);
-		ssif_info->thread = kthread_run(ipmi_ssif_thread, ssif_info,
-					       "kssif%4.4x", thread_num);
-		if (IS_ERR(ssif_info->thread)) {
-			rv = PTR_ERR(ssif_info->thread);
-			dev_notice(&ssif_info->client->dev,
+			      ssअगर_info->client->addr);
+		init_completion(&ssअगर_info->wake_thपढ़ो);
+		ssअगर_info->thपढ़ो = kthपढ़ो_run(ipmi_ssअगर_thपढ़ो, ssअगर_info,
+					       "kssif%4.4x", thपढ़ो_num);
+		अगर (IS_ERR(ssअगर_info->thपढ़ो)) अणु
+			rv = PTR_ERR(ssअगर_info->thपढ़ो);
+			dev_notice(&ssअगर_info->client->dev,
 				   "Could not start kernel thread: error %d\n",
 				   rv);
-			goto out;
-		}
-	}
+			जाओ out;
+		पूर्ण
+	पूर्ण
 
-	dev_set_drvdata(&ssif_info->client->dev, ssif_info);
-	rv = device_add_group(&ssif_info->client->dev,
-			      &ipmi_ssif_dev_attr_group);
-	if (rv) {
-		dev_err(&ssif_info->client->dev,
+	dev_set_drvdata(&ssअगर_info->client->dev, ssअगर_info);
+	rv = device_add_group(&ssअगर_info->client->dev,
+			      &ipmi_ssअगर_dev_attr_group);
+	अगर (rv) अणु
+		dev_err(&ssअगर_info->client->dev,
 			"Unable to add device attributes: error %d\n",
 			rv);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
-	rv = ipmi_register_smi(&ssif_info->handlers,
-			       ssif_info,
-			       &ssif_info->client->dev,
+	rv = ipmi_रेजिस्टर_smi(&ssअगर_info->handlers,
+			       ssअगर_info,
+			       &ssअगर_info->client->dev,
 			       slave_addr);
-	if (rv) {
-		dev_err(&ssif_info->client->dev,
+	अगर (rv) अणु
+		dev_err(&ssअगर_info->client->dev,
 			"Unable to register device: error %d\n", rv);
-		goto out_remove_attr;
-	}
+		जाओ out_हटाओ_attr;
+	पूर्ण
 
  out:
-	if (rv) {
-		if (addr_info)
-			addr_info->client = NULL;
+	अगर (rv) अणु
+		अगर (addr_info)
+			addr_info->client = शून्य;
 
-		dev_err(&ssif_info->client->dev,
+		dev_err(&ssअगर_info->client->dev,
 			"Unable to start IPMI SSIF: %d\n", rv);
-		kfree(ssif_info);
-	}
-	kfree(resp);
-	mutex_unlock(&ssif_infos_mutex);
-	return rv;
+		kमुक्त(ssअगर_info);
+	पूर्ण
+	kमुक्त(resp);
+	mutex_unlock(&ssअगर_infos_mutex);
+	वापस rv;
 
-out_remove_attr:
-	device_remove_group(&ssif_info->client->dev, &ipmi_ssif_dev_attr_group);
-	dev_set_drvdata(&ssif_info->client->dev, NULL);
-	goto out;
-}
+out_हटाओ_attr:
+	device_हटाओ_group(&ssअगर_info->client->dev, &ipmi_ssअगर_dev_attr_group);
+	dev_set_drvdata(&ssअगर_info->client->dev, शून्य);
+	जाओ out;
+पूर्ण
 
-static int new_ssif_client(int addr, char *adapter_name,
-			   int debug, int slave_addr,
-			   enum ipmi_addr_src addr_src,
-			   struct device *dev)
-{
-	struct ssif_addr_info *addr_info;
-	int rv = 0;
+अटल पूर्णांक new_ssअगर_client(पूर्णांक addr, अक्षर *adapter_name,
+			   पूर्णांक debug, पूर्णांक slave_addr,
+			   क्रमागत ipmi_addr_src addr_src,
+			   काष्ठा device *dev)
+अणु
+	काष्ठा ssअगर_addr_info *addr_info;
+	पूर्णांक rv = 0;
 
-	mutex_lock(&ssif_infos_mutex);
-	if (ssif_info_find(addr, adapter_name, false)) {
+	mutex_lock(&ssअगर_infos_mutex);
+	अगर (ssअगर_info_find(addr, adapter_name, false)) अणु
 		rv = -EEXIST;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	addr_info = kzalloc(sizeof(*addr_info), GFP_KERNEL);
-	if (!addr_info) {
+	addr_info = kzalloc(माप(*addr_info), GFP_KERNEL);
+	अगर (!addr_info) अणु
 		rv = -ENOMEM;
-		goto out_unlock;
-	}
+		जाओ out_unlock;
+	पूर्ण
 
-	if (adapter_name) {
+	अगर (adapter_name) अणु
 		addr_info->adapter_name = kstrdup(adapter_name, GFP_KERNEL);
-		if (!addr_info->adapter_name) {
-			kfree(addr_info);
+		अगर (!addr_info->adapter_name) अणु
+			kमुक्त(addr_info);
 			rv = -ENOMEM;
-			goto out_unlock;
-		}
-	}
+			जाओ out_unlock;
+		पूर्ण
+	पूर्ण
 
-	strncpy(addr_info->binfo.type, DEVICE_NAME,
-		sizeof(addr_info->binfo.type));
+	म_नकलन(addr_info->binfo.type, DEVICE_NAME,
+		माप(addr_info->binfo.type));
 	addr_info->binfo.addr = addr;
-	addr_info->binfo.platform_data = addr_info;
+	addr_info->binfo.platक्रमm_data = addr_info;
 	addr_info->debug = debug;
 	addr_info->slave_addr = slave_addr;
 	addr_info->addr_src = addr_src;
 	addr_info->dev = dev;
 
-	if (dev)
+	अगर (dev)
 		dev_set_drvdata(dev, addr_info);
 
-	list_add_tail(&addr_info->link, &ssif_infos);
+	list_add_tail(&addr_info->link, &ssअगर_infos);
 
 	/* Address list will get it */
 
 out_unlock:
-	mutex_unlock(&ssif_infos_mutex);
-	return rv;
-}
+	mutex_unlock(&ssअगर_infos_mutex);
+	वापस rv;
+पूर्ण
 
-static void free_ssif_clients(void)
-{
-	struct ssif_addr_info *info, *tmp;
+अटल व्योम मुक्त_ssअगर_clients(व्योम)
+अणु
+	काष्ठा ssअगर_addr_info *info, *पंचांगp;
 
-	mutex_lock(&ssif_infos_mutex);
-	list_for_each_entry_safe(info, tmp, &ssif_infos, link) {
+	mutex_lock(&ssअगर_infos_mutex);
+	list_क्रम_each_entry_safe(info, पंचांगp, &ssअगर_infos, link) अणु
 		list_del(&info->link);
-		kfree(info->adapter_name);
-		kfree(info);
-	}
-	mutex_unlock(&ssif_infos_mutex);
-}
+		kमुक्त(info->adapter_name);
+		kमुक्त(info);
+	पूर्ण
+	mutex_unlock(&ssअगर_infos_mutex);
+पूर्ण
 
-static unsigned short *ssif_address_list(void)
-{
-	struct ssif_addr_info *info;
-	unsigned int count = 0, i = 0;
-	unsigned short *address_list;
+अटल अचिन्हित लघु *ssअगर_address_list(व्योम)
+अणु
+	काष्ठा ssअगर_addr_info *info;
+	अचिन्हित पूर्णांक count = 0, i = 0;
+	अचिन्हित लघु *address_list;
 
-	list_for_each_entry(info, &ssif_infos, link)
+	list_क्रम_each_entry(info, &ssअगर_infos, link)
 		count++;
 
-	address_list = kcalloc(count + 1, sizeof(*address_list),
+	address_list = kसुस्मृति(count + 1, माप(*address_list),
 			       GFP_KERNEL);
-	if (!address_list)
-		return NULL;
+	अगर (!address_list)
+		वापस शून्य;
 
-	list_for_each_entry(info, &ssif_infos, link) {
-		unsigned short addr = info->binfo.addr;
-		int j;
+	list_क्रम_each_entry(info, &ssअगर_infos, link) अणु
+		अचिन्हित लघु addr = info->binfo.addr;
+		पूर्णांक j;
 
-		for (j = 0; j < i; j++) {
-			if (address_list[j] == addr)
+		क्रम (j = 0; j < i; j++) अणु
+			अगर (address_list[j] == addr)
 				/* Found a dup. */
-				break;
-		}
-		if (j == i) /* Didn't find it in the list. */
+				अवरोध;
+		पूर्ण
+		अगर (j == i) /* Didn't find it in the list. */
 			address_list[i++] = addr;
-	}
+	पूर्ण
 	address_list[i] = I2C_CLIENT_END;
 
-	return address_list;
-}
+	वापस address_list;
+पूर्ण
 
-#ifdef CONFIG_ACPI
-static const struct acpi_device_id ssif_acpi_match[] = {
-	{ "IPI0001", 0 },
-	{ },
-};
-MODULE_DEVICE_TABLE(acpi, ssif_acpi_match);
-#endif
+#अगर_घोषित CONFIG_ACPI
+अटल स्थिर काष्ठा acpi_device_id ssअगर_acpi_match[] = अणु
+	अणु "IPI0001", 0 पूर्ण,
+	अणु पूर्ण,
+पूर्ण;
+MODULE_DEVICE_TABLE(acpi, ssअगर_acpi_match);
+#पूर्ण_अगर
 
-#ifdef CONFIG_DMI
-static int dmi_ipmi_probe(struct platform_device *pdev)
-{
+#अगर_घोषित CONFIG_DMI
+अटल पूर्णांक dmi_ipmi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
 	u8 slave_addr = 0;
 	u16 i2c_addr;
-	int rv;
+	पूर्णांक rv;
 
-	if (!ssif_trydmi)
-		return -ENODEV;
+	अगर (!ssअगर_trydmi)
+		वापस -ENODEV;
 
-	rv = device_property_read_u16(&pdev->dev, "i2c-addr", &i2c_addr);
-	if (rv) {
+	rv = device_property_पढ़ो_u16(&pdev->dev, "i2c-addr", &i2c_addr);
+	अगर (rv) अणु
 		dev_warn(&pdev->dev, "No i2c-addr property\n");
-		return -ENODEV;
-	}
+		वापस -ENODEV;
+	पूर्ण
 
-	rv = device_property_read_u8(&pdev->dev, "slave-addr", &slave_addr);
-	if (rv)
+	rv = device_property_पढ़ो_u8(&pdev->dev, "slave-addr", &slave_addr);
+	अगर (rv)
 		slave_addr = 0x20;
 
-	return new_ssif_client(i2c_addr, NULL, 0,
+	वापस new_ssअगर_client(i2c_addr, शून्य, 0,
 			       slave_addr, SI_SMBIOS, &pdev->dev);
-}
-#else
-static int dmi_ipmi_probe(struct platform_device *pdev)
-{
-	return -ENODEV;
-}
-#endif
+पूर्ण
+#अन्यथा
+अटल पूर्णांक dmi_ipmi_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	वापस -ENODEV;
+पूर्ण
+#पूर्ण_अगर
 
-static const struct i2c_device_id ssif_id[] = {
-	{ DEVICE_NAME, 0 },
-	{ }
-};
-MODULE_DEVICE_TABLE(i2c, ssif_id);
+अटल स्थिर काष्ठा i2c_device_id ssअगर_id[] = अणु
+	अणु DEVICE_NAME, 0 पूर्ण,
+	अणु पूर्ण
+पूर्ण;
+MODULE_DEVICE_TABLE(i2c, ssअगर_id);
 
-static struct i2c_driver ssif_i2c_driver = {
+अटल काष्ठा i2c_driver ssअगर_i2c_driver = अणु
 	.class		= I2C_CLASS_HWMON,
-	.driver		= {
+	.driver		= अणु
 		.name			= DEVICE_NAME
-	},
-	.probe		= ssif_probe,
-	.remove		= ssif_remove,
-	.alert		= ssif_alert,
-	.id_table	= ssif_id,
-	.detect		= ssif_detect
-};
+	पूर्ण,
+	.probe		= ssअगर_probe,
+	.हटाओ		= ssअगर_हटाओ,
+	.alert		= ssअगर_alert,
+	.id_table	= ssअगर_id,
+	.detect		= ssअगर_detect
+पूर्ण;
 
-static int ssif_platform_probe(struct platform_device *dev)
-{
-	return dmi_ipmi_probe(dev);
-}
+अटल पूर्णांक ssअगर_platक्रमm_probe(काष्ठा platक्रमm_device *dev)
+अणु
+	वापस dmi_ipmi_probe(dev);
+पूर्ण
 
-static int ssif_platform_remove(struct platform_device *dev)
-{
-	struct ssif_addr_info *addr_info = dev_get_drvdata(&dev->dev);
+अटल पूर्णांक ssअगर_platक्रमm_हटाओ(काष्ठा platक्रमm_device *dev)
+अणु
+	काष्ठा ssअगर_addr_info *addr_info = dev_get_drvdata(&dev->dev);
 
-	if (!addr_info)
-		return 0;
+	अगर (!addr_info)
+		वापस 0;
 
-	mutex_lock(&ssif_infos_mutex);
+	mutex_lock(&ssअगर_infos_mutex);
 	list_del(&addr_info->link);
-	kfree(addr_info);
-	mutex_unlock(&ssif_infos_mutex);
-	return 0;
-}
+	kमुक्त(addr_info);
+	mutex_unlock(&ssअगर_infos_mutex);
+	वापस 0;
+पूर्ण
 
-static const struct platform_device_id ssif_plat_ids[] = {
-    { "dmi-ipmi-ssif", 0 },
-    { }
-};
+अटल स्थिर काष्ठा platक्रमm_device_id ssअगर_plat_ids[] = अणु
+    अणु "dmi-ipmi-ssif", 0 पूर्ण,
+    अणु पूर्ण
+पूर्ण;
 
-static struct platform_driver ipmi_driver = {
-	.driver = {
+अटल काष्ठा platक्रमm_driver ipmi_driver = अणु
+	.driver = अणु
 		.name = DEVICE_NAME,
-	},
-	.probe		= ssif_platform_probe,
-	.remove		= ssif_platform_remove,
-	.id_table       = ssif_plat_ids
-};
+	पूर्ण,
+	.probe		= ssअगर_platक्रमm_probe,
+	.हटाओ		= ssअगर_platक्रमm_हटाओ,
+	.id_table       = ssअगर_plat_ids
+पूर्ण;
 
-static int init_ipmi_ssif(void)
-{
-	int i;
-	int rv;
+अटल पूर्णांक init_ipmi_ssअगर(व्योम)
+अणु
+	पूर्णांक i;
+	पूर्णांक rv;
 
-	if (initialized)
-		return 0;
+	अगर (initialized)
+		वापस 0;
 
 	pr_info("IPMI SSIF Interface driver\n");
 
-	/* build list for i2c from addr list */
-	for (i = 0; i < num_addrs; i++) {
-		rv = new_ssif_client(addr[i], adapter_name[i],
+	/* build list क्रम i2c from addr list */
+	क्रम (i = 0; i < num_addrs; i++) अणु
+		rv = new_ssअगर_client(addr[i], adapter_name[i],
 				     dbg[i], slave_addrs[i],
-				     SI_HARDCODED, NULL);
-		if (rv)
+				     SI_HARDCODED, शून्य);
+		अगर (rv)
 			pr_err("Couldn't add hardcoded device at addr 0x%x\n",
 			       addr[i]);
-	}
+	पूर्ण
 
-	if (ssif_tryacpi)
-		ssif_i2c_driver.driver.acpi_match_table	=
-			ACPI_PTR(ssif_acpi_match);
+	अगर (ssअगर_tryacpi)
+		ssअगर_i2c_driver.driver.acpi_match_table	=
+			ACPI_PTR(ssअगर_acpi_match);
 
-	if (ssif_trydmi) {
-		rv = platform_driver_register(&ipmi_driver);
-		if (rv)
+	अगर (ssअगर_trydmi) अणु
+		rv = platक्रमm_driver_रेजिस्टर(&ipmi_driver);
+		अगर (rv)
 			pr_err("Unable to register driver: %d\n", rv);
-		else
-			platform_registered = true;
-	}
+		अन्यथा
+			platक्रमm_रेजिस्टरed = true;
+	पूर्ण
 
-	ssif_i2c_driver.address_list = ssif_address_list();
+	ssअगर_i2c_driver.address_list = ssअगर_address_list();
 
-	rv = i2c_add_driver(&ssif_i2c_driver);
-	if (!rv)
+	rv = i2c_add_driver(&ssअगर_i2c_driver);
+	अगर (!rv)
 		initialized = true;
 
-	return rv;
-}
-module_init(init_ipmi_ssif);
+	वापस rv;
+पूर्ण
+module_init(init_ipmi_ssअगर);
 
-static void cleanup_ipmi_ssif(void)
-{
-	if (!initialized)
-		return;
+अटल व्योम cleanup_ipmi_ssअगर(व्योम)
+अणु
+	अगर (!initialized)
+		वापस;
 
 	initialized = false;
 
-	i2c_del_driver(&ssif_i2c_driver);
+	i2c_del_driver(&ssअगर_i2c_driver);
 
-	kfree(ssif_i2c_driver.address_list);
+	kमुक्त(ssअगर_i2c_driver.address_list);
 
-	if (ssif_trydmi && platform_registered)
-		platform_driver_unregister(&ipmi_driver);
+	अगर (ssअगर_trydmi && platक्रमm_रेजिस्टरed)
+		platक्रमm_driver_unरेजिस्टर(&ipmi_driver);
 
-	free_ssif_clients();
-}
-module_exit(cleanup_ipmi_ssif);
+	मुक्त_ssअगर_clients();
+पूर्ण
+module_निकास(cleanup_ipmi_ssअगर);
 
 MODULE_ALIAS("platform:dmi-ipmi-ssif");
 MODULE_AUTHOR("Todd C Davis <todd.c.davis@intel.com>, Corey Minyard <minyard@acm.org>");

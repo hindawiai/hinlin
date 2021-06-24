@@ -1,52 +1,53 @@
-// SPDX-License-Identifier: BSD-3-Clause OR GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: BSD-3-Clause OR GPL-2.0
 /******************************************************************************
  *
- * Module Name: psxface - Parser external interfaces
+ * Module Name: psxface - Parser बाह्यal पूर्णांकerfaces
  *
  * Copyright (C) 2000 - 2021, Intel Corp.
  *
  *****************************************************************************/
 
-#include <acpi/acpi.h>
-#include "accommon.h"
-#include "acparser.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "actables.h"
-#include "acnamesp.h"
+#समावेश <acpi/acpi.h>
+#समावेश "accommon.h"
+#समावेश "acparser.h"
+#समावेश "acdispat.h"
+#समावेश "acinterp.h"
+#समावेश "actables.h"
+#समावेश "acnamesp.h"
 
-#define _COMPONENT          ACPI_PARSER
+#घोषणा _COMPONENT          ACPI_PARSER
 ACPI_MODULE_NAME("psxface")
 
 /* Local Prototypes */
-static void
-acpi_ps_update_parameter_list(struct acpi_evaluate_info *info, u16 action);
+अटल व्योम
+acpi_ps_update_parameter_list(काष्ठा acpi_evaluate_info *info, u16 action);
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_debug_trace
  *
  * PARAMETERS:  method_name     - Valid ACPI name string
- *              debug_level     - Optional level mask. 0 to use default
- *              debug_layer     - Optional layer mask. 0 to use default
+ *              debug_level     - Optional level mask. 0 to use शेष
+ *              debug_layer     - Optional layer mask. 0 to use शेष
  *              flags           - bit 1: one shot(1) or persistent(0)
  *
  * RETURN:      Status
  *
- * DESCRIPTION: External interface to enable debug tracing during control
+ * DESCRIPTION: External पूर्णांकerface to enable debug tracing during control
  *              method execution
  *
  ******************************************************************************/
 
 acpi_status
-acpi_debug_trace(const char *name, u32 debug_level, u32 debug_layer, u32 flags)
-{
+acpi_debug_trace(स्थिर अक्षर *name, u32 debug_level, u32 debug_layer, u32 flags)
+अणु
 	acpi_status status;
 
 	status = acpi_ut_acquire_mutex(ACPI_MTX_NAMESPACE);
-	if (ACPI_FAILURE(status)) {
-		return (status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस (status);
+	पूर्ण
 
 	acpi_gbl_trace_method_name = name;
 	acpi_gbl_trace_flags = flags;
@@ -54,9 +55,9 @@ acpi_debug_trace(const char *name, u32 debug_level, u32 debug_layer, u32 flags)
 	acpi_gbl_trace_dbg_layer = debug_layer;
 	status = AE_OK;
 
-	(void)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
-	return (status);
-}
+	(व्योम)acpi_ut_release_mutex(ACPI_MTX_NAMESPACE);
+	वापस (status);
+पूर्ण
 
 /*******************************************************************************
  *
@@ -66,13 +67,13 @@ acpi_debug_trace(const char *name, u32 debug_level, u32 debug_layer, u32 flags)
  *                  node            - Method Node to execute
  *                  obj_desc        - Method object
  *                  parameters      - List of parameters to pass to the method,
- *                                    terminated by NULL. Params itself may be
- *                                    NULL if no parameters are being passed.
- *                  return_object   - Where to put method's return value (if
- *                                    any). If NULL, no value is returned.
+ *                                    terminated by शून्य. Params itself may be
+ *                                    शून्य अगर no parameters are being passed.
+ *                  वापस_object   - Where to put method's वापस value (अगर
+ *                                    any). If शून्य, no value is वापसed.
  *                  parameter_type  - Type of Parameter list
- *                  return_object   - Where to put method's return value (if
- *                                    any). If NULL, no value is returned.
+ *                  वापस_object   - Where to put method's वापस value (अगर
+ *                                    any). If शून्य, no value is वापसed.
  *                  pass_number     - Parse or execute pass
  *
  * RETURN:      Status
@@ -81,11 +82,11 @@ acpi_debug_trace(const char *name, u32 debug_level, u32 debug_layer, u32 flags)
  *
  ******************************************************************************/
 
-acpi_status acpi_ps_execute_method(struct acpi_evaluate_info *info)
-{
+acpi_status acpi_ps_execute_method(काष्ठा acpi_evaluate_info *info)
+अणु
 	acpi_status status;
-	union acpi_parse_object *op;
-	struct acpi_walk_state *walk_state;
+	जोड़ acpi_parse_object *op;
+	काष्ठा acpi_walk_state *walk_state;
 
 	ACPI_FUNCTION_TRACE(ps_execute_method);
 
@@ -95,17 +96,17 @@ acpi_status acpi_ps_execute_method(struct acpi_evaluate_info *info)
 
 	/* Validate the Info and method Node */
 
-	if (!info || !info->node) {
-		return_ACPI_STATUS(AE_NULL_ENTRY);
-	}
+	अगर (!info || !info->node) अणु
+		वापस_ACPI_STATUS(AE_शून्य_ENTRY);
+	पूर्ण
 
-	/* Init for new method, wait on concurrency semaphore */
+	/* Init क्रम new method, रुको on concurrency semaphore */
 
 	status =
-	    acpi_ds_begin_method_execution(info->node, info->obj_desc, NULL);
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	    acpi_ds_begin_method_execution(info->node, info->obj_desc, शून्य);
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/*
 	 * The caller "owns" the parameters, so give each one an extra reference
@@ -113,7 +114,7 @@ acpi_status acpi_ps_execute_method(struct acpi_evaluate_info *info)
 	acpi_ps_update_parameter_list(info, REF_INCREMENT);
 
 	/*
-	 * Execute the method. Performs parse simultaneously
+	 * Execute the method. Perक्रमms parse simultaneously
 	 */
 	ACPI_DEBUG_PRINT((ACPI_DB_PARSE,
 			  "**** Begin Method Parse/Execute [%4.4s] **** Node=%p Obj=%p\n",
@@ -122,44 +123,44 @@ acpi_status acpi_ps_execute_method(struct acpi_evaluate_info *info)
 	/* Create and init a Root Node */
 
 	op = acpi_ps_create_scope_op(info->obj_desc->method.aml_start);
-	if (!op) {
+	अगर (!op) अणु
 		status = AE_NO_MEMORY;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/* Create and initialize a new walk state */
 
 	info->pass_number = ACPI_IMODE_EXECUTE;
 	walk_state =
-	    acpi_ds_create_walk_state(info->obj_desc->method.owner_id, NULL,
-				      NULL, NULL);
-	if (!walk_state) {
+	    acpi_ds_create_walk_state(info->obj_desc->method.owner_id, शून्य,
+				      शून्य, शून्य);
+	अगर (!walk_state) अणु
 		status = AE_NO_MEMORY;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	status = acpi_ds_init_aml_walk(walk_state, op, info->node,
 				       info->obj_desc->method.aml_start,
 				       info->obj_desc->method.aml_length, info,
 				       info->pass_number);
-	if (ACPI_FAILURE(status)) {
+	अगर (ACPI_FAILURE(status)) अणु
 		acpi_ds_delete_walk_state(walk_state);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	walk_state->method_pathname = info->full_pathname;
 	walk_state->method_is_nested = FALSE;
 
-	if (info->obj_desc->method.info_flags & ACPI_METHOD_MODULE_LEVEL) {
+	अगर (info->obj_desc->method.info_flags & ACPI_METHOD_MODULE_LEVEL) अणु
 		walk_state->parse_flags |= ACPI_PARSE_MODULE_LEVEL;
-	}
+	पूर्ण
 
-	/* Invoke an internal method if necessary */
+	/* Invoke an पूर्णांकernal method अगर necessary */
 
-	if (info->obj_desc->method.info_flags & ACPI_METHOD_INTERNAL_ONLY) {
+	अगर (info->obj_desc->method.info_flags & ACPI_METHOD_INTERNAL_ONLY) अणु
 		status =
 		    info->obj_desc->method.dispatch.implementation(walk_state);
-		info->return_object = walk_state->return_desc;
+		info->वापस_object = walk_state->वापस_desc;
 
 		/* Cleanup states */
 
@@ -168,22 +169,22 @@ acpi_status acpi_ps_execute_method(struct acpi_evaluate_info *info)
 		acpi_ds_terminate_control_method(walk_state->method_desc,
 						 walk_state);
 		acpi_ds_delete_walk_state(walk_state);
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/*
-	 * Start method evaluation with an implicit return of zero.
-	 * This is done for Windows compatibility.
+	 * Start method evaluation with an implicit वापस of zero.
+	 * This is करोne क्रम Winकरोws compatibility.
 	 */
-	if (acpi_gbl_enable_interpreter_slack) {
-		walk_state->implicit_return_obj =
-		    acpi_ut_create_integer_object((u64) 0);
-		if (!walk_state->implicit_return_obj) {
+	अगर (acpi_gbl_enable_पूर्णांकerpreter_slack) अणु
+		walk_state->implicit_वापस_obj =
+		    acpi_ut_create_पूर्णांकeger_object((u64) 0);
+		अगर (!walk_state->implicit_वापस_obj) अणु
 			status = AE_NO_MEMORY;
 			acpi_ds_delete_walk_state(walk_state);
-			goto cleanup;
-		}
-	}
+			जाओ cleanup;
+		पूर्ण
+	पूर्ण
 
 	/* Parse the AML */
 
@@ -198,35 +199,35 @@ cleanup:
 
 	acpi_ps_update_parameter_list(info, REF_DECREMENT);
 
-	/* Exit now if error above */
+	/* Exit now अगर error above */
 
-	if (ACPI_FAILURE(status)) {
-		return_ACPI_STATUS(status);
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		वापस_ACPI_STATUS(status);
+	पूर्ण
 
 	/*
-	 * If the method has returned an object, signal this to the caller with
+	 * If the method has वापसed an object, संकेत this to the caller with
 	 * a control exception code
 	 */
-	if (info->return_object) {
+	अगर (info->वापस_object) अणु
 		ACPI_DEBUG_PRINT((ACPI_DB_PARSE, "Method returned ObjDesc=%p\n",
-				  info->return_object));
-		ACPI_DUMP_STACK_ENTRY(info->return_object);
+				  info->वापस_object));
+		ACPI_DUMP_STACK_ENTRY(info->वापस_object);
 
 		status = AE_CTRL_RETURN_VALUE;
-	}
+	पूर्ण
 
-	return_ACPI_STATUS(status);
-}
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ps_execute_table
  *
  * PARAMETERS:  info            - Method info block, contains:
- *              node            - Node to where the is entered into the
+ *              node            - Node to where the is entered पूर्णांकo the
  *                                namespace
- *              obj_desc        - Pseudo method object describing the AML
+ *              obj_desc        - Pseuकरो method object describing the AML
  *                                code of the entire table
  *              pass_number     - Parse or execute pass
  *
@@ -236,81 +237,81 @@ cleanup:
  *
  ******************************************************************************/
 
-acpi_status acpi_ps_execute_table(struct acpi_evaluate_info *info)
-{
+acpi_status acpi_ps_execute_table(काष्ठा acpi_evaluate_info *info)
+अणु
 	acpi_status status;
-	union acpi_parse_object *op = NULL;
-	struct acpi_walk_state *walk_state = NULL;
+	जोड़ acpi_parse_object *op = शून्य;
+	काष्ठा acpi_walk_state *walk_state = शून्य;
 
 	ACPI_FUNCTION_TRACE(ps_execute_table);
 
 	/* Create and init a Root Node */
 
 	op = acpi_ps_create_scope_op(info->obj_desc->method.aml_start);
-	if (!op) {
+	अगर (!op) अणु
 		status = AE_NO_MEMORY;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	/* Create and initialize a new walk state */
 
 	walk_state =
-	    acpi_ds_create_walk_state(info->obj_desc->method.owner_id, NULL,
-				      NULL, NULL);
-	if (!walk_state) {
+	    acpi_ds_create_walk_state(info->obj_desc->method.owner_id, शून्य,
+				      शून्य, शून्य);
+	अगर (!walk_state) अणु
 		status = AE_NO_MEMORY;
-		goto cleanup;
-	}
+		जाओ cleanup;
+	पूर्ण
 
 	status = acpi_ds_init_aml_walk(walk_state, op, info->node,
 				       info->obj_desc->method.aml_start,
 				       info->obj_desc->method.aml_length, info,
 				       info->pass_number);
-	if (ACPI_FAILURE(status)) {
-		goto cleanup;
-	}
+	अगर (ACPI_FAILURE(status)) अणु
+		जाओ cleanup;
+	पूर्ण
 
 	walk_state->method_pathname = info->full_pathname;
 	walk_state->method_is_nested = FALSE;
 
-	if (info->obj_desc->method.info_flags & ACPI_METHOD_MODULE_LEVEL) {
+	अगर (info->obj_desc->method.info_flags & ACPI_METHOD_MODULE_LEVEL) अणु
 		walk_state->parse_flags |= ACPI_PARSE_MODULE_LEVEL;
-	}
+	पूर्ण
 
-	/* Info->Node is the default location to load the table  */
+	/* Info->Node is the शेष location to load the table  */
 
-	if (info->node && info->node != acpi_gbl_root_node) {
+	अगर (info->node && info->node != acpi_gbl_root_node) अणु
 		status =
 		    acpi_ds_scope_stack_push(info->node, ACPI_TYPE_METHOD,
 					     walk_state);
-		if (ACPI_FAILURE(status)) {
-			goto cleanup;
-		}
-	}
+		अगर (ACPI_FAILURE(status)) अणु
+			जाओ cleanup;
+		पूर्ण
+	पूर्ण
 
 	/*
 	 * Parse the AML, walk_state will be deleted by parse_aml
 	 */
-	acpi_ex_enter_interpreter();
+	acpi_ex_enter_पूर्णांकerpreter();
 	status = acpi_ps_parse_aml(walk_state);
-	acpi_ex_exit_interpreter();
-	walk_state = NULL;
+	acpi_ex_निकास_पूर्णांकerpreter();
+	walk_state = शून्य;
 
 cleanup:
-	if (walk_state) {
+	अगर (walk_state) अणु
 		acpi_ds_delete_walk_state(walk_state);
-	}
-	if (op) {
+	पूर्ण
+	अगर (op) अणु
 		acpi_ps_delete_parse_tree(op);
-	}
-	return_ACPI_STATUS(status);
-}
+	पूर्ण
+	वापस_ACPI_STATUS(status);
+पूर्ण
 
 /*******************************************************************************
  *
  * FUNCTION:    acpi_ps_update_parameter_list
  *
- * PARAMETERS:  info            - See struct acpi_evaluate_info
+ * PARAMETERS:  info            - See काष्ठा acpi_evaluate_info
  *                                (Used: parameter_type and Parameters)
  *              action          - Add or Remove reference
  *
@@ -320,22 +321,22 @@ cleanup:
  *
  ******************************************************************************/
 
-static void
-acpi_ps_update_parameter_list(struct acpi_evaluate_info *info, u16 action)
-{
+अटल व्योम
+acpi_ps_update_parameter_list(काष्ठा acpi_evaluate_info *info, u16 action)
+अणु
 	u32 i;
 
-	if (info->parameters) {
+	अगर (info->parameters) अणु
 
-		/* Update reference count for each parameter */
+		/* Update reference count क्रम each parameter */
 
-		for (i = 0; info->parameters[i]; i++) {
+		क्रम (i = 0; info->parameters[i]; i++) अणु
 
-			/* Ignore errors, just do them all */
+			/* Ignore errors, just करो them all */
 
-			(void)acpi_ut_update_object_reference(info->
+			(व्योम)acpi_ut_update_object_reference(info->
 							      parameters[i],
 							      action);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण

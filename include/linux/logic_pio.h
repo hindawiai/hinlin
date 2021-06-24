@@ -1,124 +1,125 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
  * Copyright (C) 2017 HiSilicon Limited, All Rights Reserved.
  * Author: Gabriele Paoloni <gabriele.paoloni@huawei.com>
  * Author: Zhichang Yuan <yuanzhichang@hisilicon.com>
  */
 
-#ifndef __LINUX_LOGIC_PIO_H
-#define __LINUX_LOGIC_PIO_H
+#अगर_अघोषित __LINUX_LOGIC_PIO_H
+#घोषणा __LINUX_LOGIC_PIO_H
 
-#include <linux/fwnode.h>
+#समावेश <linux/fwnode.h>
 
-enum {
-	LOGIC_PIO_INDIRECT,		/* Indirect IO flag */
+क्रमागत अणु
+	LOGIC_PIO_INसूचीECT,		/* Indirect IO flag */
 	LOGIC_PIO_CPU_MMIO,		/* Memory-mapped IO flag */
-};
+पूर्ण;
 
-struct logic_pio_hwaddr {
-	struct list_head list;
-	struct fwnode_handle *fwnode;
-	resource_size_t hw_start;
-	resource_size_t io_start;
-	resource_size_t size; /* range size populated */
-	unsigned long flags;
+काष्ठा logic_pio_hwaddr अणु
+	काष्ठा list_head list;
+	काष्ठा fwnode_handle *fwnode;
+	resource_माप_प्रकार hw_start;
+	resource_माप_प्रकार io_start;
+	resource_माप_प्रकार size; /* range size populated */
+	अचिन्हित दीर्घ flags;
 
-	void *hostdata;
-	const struct logic_pio_host_ops *ops;
-};
+	व्योम *hostdata;
+	स्थिर काष्ठा logic_pio_host_ops *ops;
+पूर्ण;
 
-struct logic_pio_host_ops {
-	u32 (*in)(void *hostdata, unsigned long addr, size_t dwidth);
-	void (*out)(void *hostdata, unsigned long addr, u32 val,
-		    size_t dwidth);
-	u32 (*ins)(void *hostdata, unsigned long addr, void *buffer,
-		   size_t dwidth, unsigned int count);
-	void (*outs)(void *hostdata, unsigned long addr, const void *buffer,
-		     size_t dwidth, unsigned int count);
-};
+काष्ठा logic_pio_host_ops अणु
+	u32 (*in)(व्योम *hostdata, अचिन्हित दीर्घ addr, माप_प्रकार dwidth);
+	व्योम (*out)(व्योम *hostdata, अचिन्हित दीर्घ addr, u32 val,
+		    माप_प्रकार dwidth);
+	u32 (*ins)(व्योम *hostdata, अचिन्हित दीर्घ addr, व्योम *buffer,
+		   माप_प्रकार dwidth, अचिन्हित पूर्णांक count);
+	व्योम (*outs)(व्योम *hostdata, अचिन्हित दीर्घ addr, स्थिर व्योम *buffer,
+		     माप_प्रकार dwidth, अचिन्हित पूर्णांक count);
+पूर्ण;
 
-#ifdef CONFIG_INDIRECT_PIO
-u8 logic_inb(unsigned long addr);
-void logic_outb(u8 value, unsigned long addr);
-void logic_outw(u16 value, unsigned long addr);
-void logic_outl(u32 value, unsigned long addr);
-u16 logic_inw(unsigned long addr);
-u32 logic_inl(unsigned long addr);
-void logic_outb(u8 value, unsigned long addr);
-void logic_outw(u16 value, unsigned long addr);
-void logic_outl(u32 value, unsigned long addr);
-void logic_insb(unsigned long addr, void *buffer, unsigned int count);
-void logic_insl(unsigned long addr, void *buffer, unsigned int count);
-void logic_insw(unsigned long addr, void *buffer, unsigned int count);
-void logic_outsb(unsigned long addr, const void *buffer, unsigned int count);
-void logic_outsw(unsigned long addr, const void *buffer, unsigned int count);
-void logic_outsl(unsigned long addr, const void *buffer, unsigned int count);
+#अगर_घोषित CONFIG_INसूचीECT_PIO
+u8 logic_inb(अचिन्हित दीर्घ addr);
+व्योम logic_outb(u8 value, अचिन्हित दीर्घ addr);
+व्योम logic_outw(u16 value, अचिन्हित दीर्घ addr);
+व्योम logic_outl(u32 value, अचिन्हित दीर्घ addr);
+u16 logic_inw(अचिन्हित दीर्घ addr);
+u32 logic_inl(अचिन्हित दीर्घ addr);
+व्योम logic_outb(u8 value, अचिन्हित दीर्घ addr);
+व्योम logic_outw(u16 value, अचिन्हित दीर्घ addr);
+व्योम logic_outl(u32 value, अचिन्हित दीर्घ addr);
+व्योम logic_insb(अचिन्हित दीर्घ addr, व्योम *buffer, अचिन्हित पूर्णांक count);
+व्योम logic_insl(अचिन्हित दीर्घ addr, व्योम *buffer, अचिन्हित पूर्णांक count);
+व्योम logic_insw(अचिन्हित दीर्घ addr, व्योम *buffer, अचिन्हित पूर्णांक count);
+व्योम logic_outsb(अचिन्हित दीर्घ addr, स्थिर व्योम *buffer, अचिन्हित पूर्णांक count);
+व्योम logic_outsw(अचिन्हित दीर्घ addr, स्थिर व्योम *buffer, अचिन्हित पूर्णांक count);
+व्योम logic_outsl(अचिन्हित दीर्घ addr, स्थिर व्योम *buffer, अचिन्हित पूर्णांक count);
 
-#ifndef inb
-#define inb logic_inb
-#endif
+#अगर_अघोषित inb
+#घोषणा inb logic_inb
+#पूर्ण_अगर
 
-#ifndef inw
-#define inw logic_inw
-#endif
+#अगर_अघोषित inw
+#घोषणा inw logic_inw
+#पूर्ण_अगर
 
-#ifndef inl
-#define inl logic_inl
-#endif
+#अगर_अघोषित inl
+#घोषणा inl logic_inl
+#पूर्ण_अगर
 
-#ifndef outb
-#define outb logic_outb
-#endif
+#अगर_अघोषित outb
+#घोषणा outb logic_outb
+#पूर्ण_अगर
 
-#ifndef outw
-#define outw logic_outw
-#endif
+#अगर_अघोषित outw
+#घोषणा outw logic_outw
+#पूर्ण_अगर
 
-#ifndef outl
-#define outl logic_outl
-#endif
+#अगर_अघोषित outl
+#घोषणा outl logic_outl
+#पूर्ण_अगर
 
-#ifndef insb
-#define insb logic_insb
-#endif
+#अगर_अघोषित insb
+#घोषणा insb logic_insb
+#पूर्ण_अगर
 
-#ifndef insw
-#define insw logic_insw
-#endif
+#अगर_अघोषित insw
+#घोषणा insw logic_insw
+#पूर्ण_अगर
 
-#ifndef insl
-#define insl logic_insl
-#endif
+#अगर_अघोषित insl
+#घोषणा insl logic_insl
+#पूर्ण_अगर
 
-#ifndef outsb
-#define outsb logic_outsb
-#endif
+#अगर_अघोषित outsb
+#घोषणा outsb logic_outsb
+#पूर्ण_अगर
 
-#ifndef outsw
-#define outsw logic_outsw
-#endif
+#अगर_अघोषित outsw
+#घोषणा outsw logic_outsw
+#पूर्ण_अगर
 
-#ifndef outsl
-#define outsl logic_outsl
-#endif
+#अगर_अघोषित outsl
+#घोषणा outsl logic_outsl
+#पूर्ण_अगर
 
 /*
- * We reserve 0x4000 bytes for Indirect IO as so far this library is only
+ * We reserve 0x4000 bytes क्रम Indirect IO as so far this library is only
  * used by the HiSilicon LPC Host. If needed, we can reserve a wider IO
  * area by redefining the macro below.
  */
-#define PIO_INDIRECT_SIZE 0x4000
-#else
-#define PIO_INDIRECT_SIZE 0
-#endif /* CONFIG_INDIRECT_PIO */
-#define MMIO_UPPER_LIMIT (IO_SPACE_LIMIT - PIO_INDIRECT_SIZE)
+#घोषणा PIO_INसूचीECT_SIZE 0x4000
+#अन्यथा
+#घोषणा PIO_INसूचीECT_SIZE 0
+#पूर्ण_अगर /* CONFIG_INसूचीECT_PIO */
+#घोषणा MMIO_UPPER_LIMIT (IO_SPACE_LIMIT - PIO_INसूचीECT_SIZE)
 
-struct logic_pio_hwaddr *find_io_range_by_fwnode(struct fwnode_handle *fwnode);
-unsigned long logic_pio_trans_hwaddr(struct fwnode_handle *fwnode,
-			resource_size_t hw_addr, resource_size_t size);
-int logic_pio_register_range(struct logic_pio_hwaddr *newrange);
-void logic_pio_unregister_range(struct logic_pio_hwaddr *range);
-resource_size_t logic_pio_to_hwaddr(unsigned long pio);
-unsigned long logic_pio_trans_cpuaddr(resource_size_t hw_addr);
+काष्ठा logic_pio_hwaddr *find_io_range_by_fwnode(काष्ठा fwnode_handle *fwnode);
+अचिन्हित दीर्घ logic_pio_trans_hwaddr(काष्ठा fwnode_handle *fwnode,
+			resource_माप_प्रकार hw_addr, resource_माप_प्रकार size);
+पूर्णांक logic_pio_रेजिस्टर_range(काष्ठा logic_pio_hwaddr *newrange);
+व्योम logic_pio_unरेजिस्टर_range(काष्ठा logic_pio_hwaddr *range);
+resource_माप_प्रकार logic_pio_to_hwaddr(अचिन्हित दीर्घ pio);
+अचिन्हित दीर्घ logic_pio_trans_cpuaddr(resource_माप_प्रकार hw_addr);
 
-#endif /* __LINUX_LOGIC_PIO_H */
+#पूर्ण_अगर /* __LINUX_LOGIC_PIO_H */

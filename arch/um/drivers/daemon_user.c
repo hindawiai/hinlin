@@ -1,194 +1,195 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2001 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2001 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  * Copyright (C) 2001 Lennert Buytenhek (buytenh@gnu.org) and
  * James Leu (jleu@mindspring.net).
  * Copyright (C) 2001 by various other people who didn't put their name here.
  */
 
-#include <stdint.h>
-#include <string.h>
-#include <unistd.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/un.h>
-#include "daemon.h"
-#include <net_user.h>
-#include <os.h>
-#include <um_malloc.h>
+#समावेश <मानक_निवेशt.h>
+#समावेश <माला.स>
+#समावेश <unistd.h>
+#समावेश <त्रुटिसं.स>
+#समावेश <sys/types.h>
+#समावेश <sys/socket.h>
+#समावेश <sys/समय.स>
+#समावेश <sys/un.h>
+#समावेश "daemon.h"
+#समावेश <net_user.h>
+#समावेश <os.h>
+#समावेश <um_दो_स्मृति.h>
 
-enum request_type { REQ_NEW_CONTROL };
+क्रमागत request_type अणु REQ_NEW_CONTROL पूर्ण;
 
-#define SWITCH_MAGIC 0xfeedface
+#घोषणा SWITCH_MAGIC 0xfeedface
 
-struct request_v3 {
-	uint32_t magic;
-	uint32_t version;
-	enum request_type type;
-	struct sockaddr_un sock;
-};
+काष्ठा request_v3 अणु
+	uपूर्णांक32_t magic;
+	uपूर्णांक32_t version;
+	क्रमागत request_type type;
+	काष्ठा sockaddr_un sock;
+पूर्ण;
 
-static struct sockaddr_un *new_addr(void *name, int len)
-{
-	struct sockaddr_un *sun;
+अटल काष्ठा sockaddr_un *new_addr(व्योम *name, पूर्णांक len)
+अणु
+	काष्ठा sockaddr_un *sun;
 
-	sun = uml_kmalloc(sizeof(struct sockaddr_un), UM_GFP_KERNEL);
-	if (sun == NULL) {
-		printk(UM_KERN_ERR "new_addr: allocation of sockaddr_un "
+	sun = uml_kदो_स्मृति(माप(काष्ठा sockaddr_un), UM_GFP_KERNEL);
+	अगर (sun == शून्य) अणु
+		prपूर्णांकk(UM_KERN_ERR "new_addr: allocation of sockaddr_un "
 		       "failed\n");
-		return NULL;
-	}
+		वापस शून्य;
+	पूर्ण
 	sun->sun_family = AF_UNIX;
-	memcpy(sun->sun_path, name, len);
-	return sun;
-}
+	स_नकल(sun->sun_path, name, len);
+	वापस sun;
+पूर्ण
 
-static int connect_to_switch(struct daemon_data *pri)
-{
-	struct sockaddr_un *ctl_addr = pri->ctl_addr;
-	struct sockaddr_un *local_addr = pri->local_addr;
-	struct sockaddr_un *sun;
-	struct request_v3 req;
-	int fd, n, err;
+अटल पूर्णांक connect_to_चयन(काष्ठा daemon_data *pri)
+अणु
+	काष्ठा sockaddr_un *ctl_addr = pri->ctl_addr;
+	काष्ठा sockaddr_un *local_addr = pri->local_addr;
+	काष्ठा sockaddr_un *sun;
+	काष्ठा request_v3 req;
+	पूर्णांक fd, n, err;
 
 	pri->control = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (pri->control < 0) {
-		err = -errno;
-		printk(UM_KERN_ERR "daemon_open : control socket failed, "
+	अगर (pri->control < 0) अणु
+		err = -त्रुटि_सं;
+		prपूर्णांकk(UM_KERN_ERR "daemon_open : control socket failed, "
 		       "errno = %d\n", -err);
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
-	if (connect(pri->control, (struct sockaddr *) ctl_addr,
-		   sizeof(*ctl_addr)) < 0) {
-		err = -errno;
-		printk(UM_KERN_ERR "daemon_open : control connect failed, "
+	अगर (connect(pri->control, (काष्ठा sockaddr *) ctl_addr,
+		   माप(*ctl_addr)) < 0) अणु
+		err = -त्रुटि_सं;
+		prपूर्णांकk(UM_KERN_ERR "daemon_open : control connect failed, "
 		       "errno = %d\n", -err);
-		goto out;
-	}
+		जाओ out;
+	पूर्ण
 
 	fd = socket(AF_UNIX, SOCK_DGRAM, 0);
-	if (fd < 0) {
-		err = -errno;
-		printk(UM_KERN_ERR "daemon_open : data socket failed, "
+	अगर (fd < 0) अणु
+		err = -त्रुटि_सं;
+		prपूर्णांकk(UM_KERN_ERR "daemon_open : data socket failed, "
 		       "errno = %d\n", -err);
-		goto out;
-	}
-	if (bind(fd, (struct sockaddr *) local_addr, sizeof(*local_addr)) < 0) {
-		err = -errno;
-		printk(UM_KERN_ERR "daemon_open : data bind failed, "
+		जाओ out;
+	पूर्ण
+	अगर (bind(fd, (काष्ठा sockaddr *) local_addr, माप(*local_addr)) < 0) अणु
+		err = -त्रुटि_सं;
+		prपूर्णांकk(UM_KERN_ERR "daemon_open : data bind failed, "
 		       "errno = %d\n", -err);
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
-	sun = uml_kmalloc(sizeof(struct sockaddr_un), UM_GFP_KERNEL);
-	if (sun == NULL) {
-		printk(UM_KERN_ERR "new_addr: allocation of sockaddr_un "
+	sun = uml_kदो_स्मृति(माप(काष्ठा sockaddr_un), UM_GFP_KERNEL);
+	अगर (sun == शून्य) अणु
+		prपूर्णांकk(UM_KERN_ERR "new_addr: allocation of sockaddr_un "
 		       "failed\n");
 		err = -ENOMEM;
-		goto out_close;
-	}
+		जाओ out_बंद;
+	पूर्ण
 
 	req.magic = SWITCH_MAGIC;
 	req.version = SWITCH_VERSION;
 	req.type = REQ_NEW_CONTROL;
 	req.sock = *local_addr;
-	n = write(pri->control, &req, sizeof(req));
-	if (n != sizeof(req)) {
-		printk(UM_KERN_ERR "daemon_open : control setup request "
-		       "failed, err = %d\n", -errno);
+	n = ग_लिखो(pri->control, &req, माप(req));
+	अगर (n != माप(req)) अणु
+		prपूर्णांकk(UM_KERN_ERR "daemon_open : control setup request "
+		       "failed, err = %d\n", -त्रुटि_सं);
 		err = -ENOTCONN;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	n = read(pri->control, sun, sizeof(*sun));
-	if (n != sizeof(*sun)) {
-		printk(UM_KERN_ERR "daemon_open : read of data socket failed, "
-		       "err = %d\n", -errno);
+	n = पढ़ो(pri->control, sun, माप(*sun));
+	अगर (n != माप(*sun)) अणु
+		prपूर्णांकk(UM_KERN_ERR "daemon_open : read of data socket failed, "
+		       "err = %d\n", -त्रुटि_सं);
 		err = -ENOTCONN;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
 	pri->data_addr = sun;
-	return fd;
+	वापस fd;
 
- out_free:
-	kfree(sun);
- out_close:
-	close(fd);
+ out_मुक्त:
+	kमुक्त(sun);
+ out_बंद:
+	बंद(fd);
  out:
-	close(pri->control);
-	return err;
-}
+	बंद(pri->control);
+	वापस err;
+पूर्ण
 
-static int daemon_user_init(void *data, void *dev)
-{
-	struct daemon_data *pri = data;
-	struct timeval tv;
-	struct {
-		char zero;
-		int pid;
-		int usecs;
-	} name;
+अटल पूर्णांक daemon_user_init(व्योम *data, व्योम *dev)
+अणु
+	काष्ठा daemon_data *pri = data;
+	काष्ठा समयval tv;
+	काष्ठा अणु
+		अक्षर zero;
+		पूर्णांक pid;
+		पूर्णांक usecs;
+	पूर्ण name;
 
-	if (!strcmp(pri->sock_type, "unix"))
+	अगर (!म_भेद(pri->sock_type, "unix"))
 		pri->ctl_addr = new_addr(pri->ctl_sock,
-					 strlen(pri->ctl_sock) + 1);
+					 म_माप(pri->ctl_sock) + 1);
 	name.zero = 0;
 	name.pid = os_getpid();
-	gettimeofday(&tv, NULL);
+	समय_लोofday(&tv, शून्य);
 	name.usecs = tv.tv_usec;
-	pri->local_addr = new_addr(&name, sizeof(name));
+	pri->local_addr = new_addr(&name, माप(name));
 	pri->dev = dev;
-	pri->fd = connect_to_switch(pri);
-	if (pri->fd < 0) {
-		kfree(pri->local_addr);
-		pri->local_addr = NULL;
-		return pri->fd;
-	}
+	pri->fd = connect_to_चयन(pri);
+	अगर (pri->fd < 0) अणु
+		kमुक्त(pri->local_addr);
+		pri->local_addr = शून्य;
+		वापस pri->fd;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int daemon_open(void *data)
-{
-	struct daemon_data *pri = data;
-	return pri->fd;
-}
+अटल पूर्णांक daemon_खोलो(व्योम *data)
+अणु
+	काष्ठा daemon_data *pri = data;
+	वापस pri->fd;
+पूर्ण
 
-static void daemon_remove(void *data)
-{
-	struct daemon_data *pri = data;
+अटल व्योम daemon_हटाओ(व्योम *data)
+अणु
+	काष्ठा daemon_data *pri = data;
 
-	close(pri->fd);
+	बंद(pri->fd);
 	pri->fd = -1;
-	close(pri->control);
+	बंद(pri->control);
 	pri->control = -1;
 
-	kfree(pri->data_addr);
-	pri->data_addr = NULL;
-	kfree(pri->ctl_addr);
-	pri->ctl_addr = NULL;
-	kfree(pri->local_addr);
-	pri->local_addr = NULL;
-}
+	kमुक्त(pri->data_addr);
+	pri->data_addr = शून्य;
+	kमुक्त(pri->ctl_addr);
+	pri->ctl_addr = शून्य;
+	kमुक्त(pri->local_addr);
+	pri->local_addr = शून्य;
+पूर्ण
 
-int daemon_user_write(int fd, void *buf, int len, struct daemon_data *pri)
-{
-	struct sockaddr_un *data_addr = pri->data_addr;
+पूर्णांक daemon_user_ग_लिखो(पूर्णांक fd, व्योम *buf, पूर्णांक len, काष्ठा daemon_data *pri)
+अणु
+	काष्ठा sockaddr_un *data_addr = pri->data_addr;
 
-	return net_sendto(fd, buf, len, data_addr, sizeof(*data_addr));
-}
+	वापस net_sendto(fd, buf, len, data_addr, माप(*data_addr));
+पूर्ण
 
-const struct net_user_info daemon_user_info = {
+स्थिर काष्ठा net_user_info daemon_user_info = अणु
 	.init		= daemon_user_init,
-	.open		= daemon_open,
-	.close	 	= NULL,
-	.remove	 	= daemon_remove,
-	.add_address	= NULL,
-	.delete_address = NULL,
+	.खोलो		= daemon_खोलो,
+	.बंद	 	= शून्य,
+	.हटाओ	 	= daemon_हटाओ,
+	.add_address	= शून्य,
+	.delete_address = शून्य,
 	.mtu		= ETH_MAX_PACKET,
 	.max_packet	= ETH_MAX_PACKET + ETH_HEADER_OTHER,
-};
+पूर्ण;

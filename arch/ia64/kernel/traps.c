@@ -1,308 +1,309 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Architecture-specific trap handling.
+ * Architecture-specअगरic trap handling.
  *
  * Copyright (C) 1998-2003 Hewlett-Packard Co
  *	David Mosberger-Tang <davidm@hpl.hp.com>
  *
- * 05/12/00 grao <goutham.rao@intel.com> : added isr in siginfo for SIGFPE
+ * 05/12/00 grao <goutham.rao@पूर्णांकel.com> : added isr in siginfo क्रम संक_भ_त्रुटि
  */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/sched/signal.h>
-#include <linux/sched/debug.h>
-#include <linux/tty.h>
-#include <linux/vt_kern.h>		/* For unblank_screen() */
-#include <linux/export.h>
-#include <linux/extable.h>
-#include <linux/hardirq.h>
-#include <linux/kprobes.h>
-#include <linux/delay.h>		/* for ssleep() */
-#include <linux/kdebug.h>
-#include <linux/uaccess.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/init.h>
+#समावेश <linux/sched/संकेत.स>
+#समावेश <linux/sched/debug.h>
+#समावेश <linux/tty.h>
+#समावेश <linux/vt_kern.h>		/* For unblank_screen() */
+#समावेश <linux/export.h>
+#समावेश <linux/extable.h>
+#समावेश <linux/hardirq.h>
+#समावेश <linux/kprobes.h>
+#समावेश <linux/delay.h>		/* क्रम ssleep() */
+#समावेश <linux/kdebug.h>
+#समावेश <linux/uaccess.h>
 
-#include <asm/fpswa.h>
-#include <asm/intrinsics.h>
-#include <asm/processor.h>
-#include <asm/exception.h>
-#include <asm/setup.h>
+#समावेश <यंत्र/fpswa.h>
+#समावेश <यंत्र/पूर्णांकrinsics.h>
+#समावेश <यंत्र/processor.h>
+#समावेश <यंत्र/exception.h>
+#समावेश <यंत्र/setup.h>
 
-fpswa_interface_t *fpswa_interface;
-EXPORT_SYMBOL(fpswa_interface);
+fpswa_पूर्णांकerface_t *fpswa_पूर्णांकerface;
+EXPORT_SYMBOL(fpswa_पूर्णांकerface);
 
-void __init
-trap_init (void)
-{
-	if (ia64_boot_param->fpswa)
-		/* FPSWA fixup: make the interface pointer a kernel virtual address: */
-		fpswa_interface = __va(ia64_boot_param->fpswa);
-}
+व्योम __init
+trap_init (व्योम)
+अणु
+	अगर (ia64_boot_param->fpswa)
+		/* FPSWA fixup: make the पूर्णांकerface poपूर्णांकer a kernel भव address: */
+		fpswa_पूर्णांकerface = __va(ia64_boot_param->fpswa);
+पूर्ण
 
-int
-die (const char *str, struct pt_regs *regs, long err)
-{
-	static struct {
+पूर्णांक
+die (स्थिर अक्षर *str, काष्ठा pt_regs *regs, दीर्घ err)
+अणु
+	अटल काष्ठा अणु
 		spinlock_t lock;
 		u32 lock_owner;
-		int lock_owner_depth;
-	} die = {
+		पूर्णांक lock_owner_depth;
+	पूर्ण die = अणु
 		.lock =	__SPIN_LOCK_UNLOCKED(die.lock),
 		.lock_owner = -1,
 		.lock_owner_depth = 0
-	};
-	static int die_counter;
-	int cpu = get_cpu();
+	पूर्ण;
+	अटल पूर्णांक die_counter;
+	पूर्णांक cpu = get_cpu();
 
-	if (die.lock_owner != cpu) {
+	अगर (die.lock_owner != cpu) अणु
 		console_verbose();
 		spin_lock_irq(&die.lock);
 		die.lock_owner = cpu;
 		die.lock_owner_depth = 0;
 		bust_spinlocks(1);
-	}
+	पूर्ण
 	put_cpu();
 
-	if (++die.lock_owner_depth < 3) {
-		printk("%s[%d]: %s %ld [%d]\n",
+	अगर (++die.lock_owner_depth < 3) अणु
+		prपूर्णांकk("%s[%d]: %s %ld [%d]\n",
 		current->comm, task_pid_nr(current), str, err, ++die_counter);
-		if (notify_die(DIE_OOPS, str, regs, err, 255, SIGSEGV)
+		अगर (notअगरy_die(DIE_OOPS, str, regs, err, 255, संक_अंश)
 	            != NOTIFY_STOP)
 			show_regs(regs);
-		else
-			regs = NULL;
-  	} else
-		printk(KERN_ERR "Recursive die() failure, output suppressed\n");
+		अन्यथा
+			regs = शून्य;
+  	पूर्ण अन्यथा
+		prपूर्णांकk(KERN_ERR "Recursive die() failure, output suppressed\n");
 
 	bust_spinlocks(0);
 	die.lock_owner = -1;
-	add_taint(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
+	add_taपूर्णांक(TAINT_DIE, LOCKDEP_NOW_UNRELIABLE);
 	spin_unlock_irq(&die.lock);
 
-	if (!regs)
-		return 1;
+	अगर (!regs)
+		वापस 1;
 
-	if (panic_on_oops)
+	अगर (panic_on_oops)
 		panic("Fatal exception");
 
-  	do_exit(SIGSEGV);
-	return 0;
-}
+  	करो_निकास(संक_अंश);
+	वापस 0;
+पूर्ण
 
-int
-die_if_kernel (char *str, struct pt_regs *regs, long err)
-{
-	if (!user_mode(regs))
-		return die(str, regs, err);
-	return 0;
-}
+पूर्णांक
+die_अगर_kernel (अक्षर *str, काष्ठा pt_regs *regs, दीर्घ err)
+अणु
+	अगर (!user_mode(regs))
+		वापस die(str, regs, err);
+	वापस 0;
+पूर्ण
 
-void
-__kprobes ia64_bad_break (unsigned long break_num, struct pt_regs *regs)
-{
-	int sig, code;
+व्योम
+__kprobes ia64_bad_अवरोध (अचिन्हित दीर्घ अवरोध_num, काष्ठा pt_regs *regs)
+अणु
+	पूर्णांक sig, code;
 
-	switch (break_num) {
-	      case 0: /* unknown error (used by GCC for __builtin_abort()) */
-		if (notify_die(DIE_BREAK, "break 0", regs, break_num, TRAP_BRKPT, SIGTRAP)
+	चयन (अवरोध_num) अणु
+	      हाल 0: /* unknown error (used by GCC क्रम __builtin_पात()) */
+		अगर (notअगरy_die(DIE_BREAK, "break 0", regs, अवरोध_num, TRAP_BRKPT, SIGTRAP)
 			       	== NOTIFY_STOP)
-			return;
-		if (die_if_kernel("bugcheck!", regs, break_num))
-			return;
-		sig = SIGILL; code = ILL_ILLOPC;
-		break;
+			वापस;
+		अगर (die_अगर_kernel("bugcheck!", regs, अवरोध_num))
+			वापस;
+		sig = संक_अवैध; code = ILL_ILLOPC;
+		अवरोध;
 
-	      case 1: /* integer divide by zero */
-		sig = SIGFPE; code = FPE_INTDIV;
-		break;
+	      हाल 1: /* पूर्णांकeger भागide by zero */
+		sig = संक_भ_त्रुटि; code = FPE_INTDIV;
+		अवरोध;
 
-	      case 2: /* integer overflow */
-		sig = SIGFPE; code = FPE_INTOVF;
-		break;
+	      हाल 2: /* पूर्णांकeger overflow */
+		sig = संक_भ_त्रुटि; code = FPE_INTOVF;
+		अवरोध;
 
-	      case 3: /* range check/bounds check */
-		sig = SIGFPE; code = FPE_FLTSUB;
-		break;
+	      हाल 3: /* range check/bounds check */
+		sig = संक_भ_त्रुटि; code = FPE_FLTSUB;
+		अवरोध;
 
-	      case 4: /* null pointer dereference */
-		sig = SIGSEGV; code = SEGV_MAPERR;
-		break;
+	      हाल 4: /* null poपूर्णांकer dereference */
+		sig = संक_अंश; code = SEGV_MAPERR;
+		अवरोध;
 
-	      case 5: /* misaligned data */
-		sig = SIGSEGV; code = BUS_ADRALN;
-		break;
+	      हाल 5: /* misaligned data */
+		sig = संक_अंश; code = BUS_ADRALN;
+		अवरोध;
 
-	      case 6: /* decimal overflow */
-		sig = SIGFPE; code = __FPE_DECOVF;
-		break;
+	      हाल 6: /* decimal overflow */
+		sig = संक_भ_त्रुटि; code = __FPE_DECOVF;
+		अवरोध;
 
-	      case 7: /* decimal divide by zero */
-		sig = SIGFPE; code = __FPE_DECDIV;
-		break;
+	      हाल 7: /* decimal भागide by zero */
+		sig = संक_भ_त्रुटि; code = __FPE_DECDIV;
+		अवरोध;
 
-	      case 8: /* packed decimal error */
-		sig = SIGFPE; code = __FPE_DECERR;
-		break;
+	      हाल 8: /* packed decimal error */
+		sig = संक_भ_त्रुटि; code = __FPE_DECERR;
+		अवरोध;
 
-	      case 9: /* invalid ASCII digit */
-		sig = SIGFPE; code = __FPE_INVASC;
-		break;
+	      हाल 9: /* invalid ASCII digit */
+		sig = संक_भ_त्रुटि; code = __FPE_INVASC;
+		अवरोध;
 
-	      case 10: /* invalid decimal digit */
-		sig = SIGFPE; code = __FPE_INVDEC;
-		break;
+	      हाल 10: /* invalid decimal digit */
+		sig = संक_भ_त्रुटि; code = __FPE_INVDEC;
+		अवरोध;
 
-	      case 11: /* paragraph stack overflow */
-		sig = SIGSEGV; code = __SEGV_PSTKOVF;
-		break;
+	      हाल 11: /* paragraph stack overflow */
+		sig = संक_अंश; code = __SEGV_PSTKOVF;
+		अवरोध;
 
-	      case 0x3f000 ... 0x3ffff:	/* bundle-update in progress */
-		sig = SIGILL; code = __ILL_BNDMOD;
-		break;
+	      हाल 0x3f000 ... 0x3ffff:	/* bundle-update in progress */
+		sig = संक_अवैध; code = __ILL_BNDMOD;
+		अवरोध;
 
-	      default:
-		if ((break_num < 0x40000 || break_num > 0x100000)
-		    && die_if_kernel("Bad break", regs, break_num))
-			return;
+	      शेष:
+		अगर ((अवरोध_num < 0x40000 || अवरोध_num > 0x100000)
+		    && die_अगर_kernel("Bad break", regs, अवरोध_num))
+			वापस;
 
-		if (break_num < 0x80000) {
-			sig = SIGILL; code = __ILL_BREAK;
-		} else {
-			if (notify_die(DIE_BREAK, "bad break", regs, break_num, TRAP_BRKPT, SIGTRAP)
+		अगर (अवरोध_num < 0x80000) अणु
+			sig = संक_अवैध; code = __ILL_BREAK;
+		पूर्ण अन्यथा अणु
+			अगर (notअगरy_die(DIE_BREAK, "bad break", regs, अवरोध_num, TRAP_BRKPT, SIGTRAP)
 					== NOTIFY_STOP)
-				return;
+				वापस;
 			sig = SIGTRAP; code = TRAP_BRKPT;
-		}
-	}
-	force_sig_fault(sig, code,
-			(void __user *) (regs->cr_iip + ia64_psr(regs)->ri),
-			break_num, 0 /* clear __ISR_VALID */, 0);
-}
+		पूर्ण
+	पूर्ण
+	क्रमce_sig_fault(sig, code,
+			(व्योम __user *) (regs->cr_iip + ia64_psr(regs)->ri),
+			अवरोध_num, 0 /* clear __ISR_VALID */, 0);
+पूर्ण
 
 /*
  * disabled_fph_fault() is called when a user-level process attempts to access f32..f127
- * and it doesn't own the fp-high register partition.  When this happens, we save the
- * current fph partition in the task_struct of the fpu-owner (if necessary) and then load
- * the fp-high partition of the current task (if necessary).  Note that the kernel has
- * access to fph by the time we get here, as the IVT's "Disabled FP-Register" handler takes
+ * and it करोesn't own the fp-high रेजिस्टर partition.  When this happens, we save the
+ * current fph partition in the task_काष्ठा of the fpu-owner (अगर necessary) and then load
+ * the fp-high partition of the current task (अगर necessary).  Note that the kernel has
+ * access to fph by the समय we get here, as the IVT's "Disabled FP-Register" handler takes
  * care of clearing psr.dfh.
  */
-static inline void
-disabled_fph_fault (struct pt_regs *regs)
-{
-	struct ia64_psr *psr = ia64_psr(regs);
+अटल अंतरभूत व्योम
+disabled_fph_fault (काष्ठा pt_regs *regs)
+अणु
+	काष्ठा ia64_psr *psr = ia64_psr(regs);
 
 	/* first, grant user-level access to fph partition: */
 	psr->dfh = 0;
 
 	/*
-	 * Make sure that no other task gets in on this processor
-	 * while we're claiming the FPU
+	 * Make sure that no other task माला_लो in on this processor
+	 * जबतक we're claiming the FPU
 	 */
 	preempt_disable();
-#ifndef CONFIG_SMP
-	{
-		struct task_struct *fpu_owner
-			= (struct task_struct *)ia64_get_kr(IA64_KR_FPU_OWNER);
+#अगर_अघोषित CONFIG_SMP
+	अणु
+		काष्ठा task_काष्ठा *fpu_owner
+			= (काष्ठा task_काष्ठा *)ia64_get_kr(IA64_KR_FPU_OWNER);
 
-		if (ia64_is_local_fpu_owner(current)) {
+		अगर (ia64_is_local_fpu_owner(current)) अणु
 			preempt_enable_no_resched();
-			return;
-		}
+			वापस;
+		पूर्ण
 
-		if (fpu_owner)
+		अगर (fpu_owner)
 			ia64_flush_fph(fpu_owner);
-	}
-#endif /* !CONFIG_SMP */
+	पूर्ण
+#पूर्ण_अगर /* !CONFIG_SMP */
 	ia64_set_local_fpu_owner(current);
-	if ((current->thread.flags & IA64_THREAD_FPH_VALID) != 0) {
-		__ia64_load_fpu(current->thread.fph);
+	अगर ((current->thपढ़ो.flags & IA64_THREAD_FPH_VALID) != 0) अणु
+		__ia64_load_fpu(current->thपढ़ो.fph);
 		psr->mfh = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		__ia64_init_fpu();
 		/*
-		 * Set mfh because the state in thread.fph does not match the state in
+		 * Set mfh because the state in thपढ़ो.fph करोes not match the state in
 		 * the fph partition.
 		 */
 		psr->mfh = 1;
-	}
+	पूर्ण
 	preempt_enable_no_resched();
-}
+पूर्ण
 
-static inline int
-fp_emulate (int fp_fault, void *bundle, long *ipsr, long *fpsr, long *isr, long *pr, long *ifs,
-	    struct pt_regs *regs)
-{
+अटल अंतरभूत पूर्णांक
+fp_emulate (पूर्णांक fp_fault, व्योम *bundle, दीर्घ *ipsr, दीर्घ *fpsr, दीर्घ *isr, दीर्घ *pr, दीर्घ *अगरs,
+	    काष्ठा pt_regs *regs)
+अणु
 	fp_state_t fp_state;
 	fpswa_ret_t ret;
 
-	if (!fpswa_interface)
-		return -1;
+	अगर (!fpswa_पूर्णांकerface)
+		वापस -1;
 
-	memset(&fp_state, 0, sizeof(fp_state_t));
+	स_रखो(&fp_state, 0, माप(fp_state_t));
 
 	/*
-	 * compute fp_state.  only FP registers f6 - f11 are used by the
-	 * kernel, so set those bits in the mask and set the low volatile
-	 * pointer to point to these registers.
+	 * compute fp_state.  only FP रेजिस्टरs f6 - f11 are used by the
+	 * kernel, so set those bits in the mask and set the low अस्थिर
+	 * poपूर्णांकer to poपूर्णांक to these रेजिस्टरs.
 	 */
-	fp_state.bitmask_low64 = 0xfc0;  /* bit6..bit11 */
+	fp_state.biपंचांगask_low64 = 0xfc0;  /* bit6..bit11 */
 
-	fp_state.fp_state_low_volatile = (fp_state_low_volatile_t *) &regs->f6;
+	fp_state.fp_state_low_अस्थिर = (fp_state_low_अस्थिर_t *) &regs->f6;
 	/*
-	 * unsigned long (*EFI_FPSWA) (
-	 *      unsigned long    trap_type,
-	 *	void             *Bundle,
-	 *	unsigned long    *pipsr,
-	 *	unsigned long    *pfsr,
-	 *	unsigned long    *pisr,
-	 *	unsigned long    *ppreds,
-	 *	unsigned long    *pifs,
-	 *	void             *fp_state);
+	 * अचिन्हित दीर्घ (*EFI_FPSWA) (
+	 *      अचिन्हित दीर्घ    trap_type,
+	 *	व्योम             *Bundle,
+	 *	अचिन्हित दीर्घ    *pipsr,
+	 *	अचिन्हित दीर्घ    *pfsr,
+	 *	अचिन्हित दीर्घ    *pisr,
+	 *	अचिन्हित दीर्घ    *ppreds,
+	 *	अचिन्हित दीर्घ    *pअगरs,
+	 *	व्योम             *fp_state);
 	 */
-	ret = (*fpswa_interface->fpswa)((unsigned long) fp_fault, bundle,
-					(unsigned long *) ipsr, (unsigned long *) fpsr,
-					(unsigned long *) isr, (unsigned long *) pr,
-					(unsigned long *) ifs, &fp_state);
+	ret = (*fpswa_पूर्णांकerface->fpswa)((अचिन्हित दीर्घ) fp_fault, bundle,
+					(अचिन्हित दीर्घ *) ipsr, (अचिन्हित दीर्घ *) fpsr,
+					(अचिन्हित दीर्घ *) isr, (अचिन्हित दीर्घ *) pr,
+					(अचिन्हित दीर्घ *) अगरs, &fp_state);
 
-	return ret.status;
-}
+	वापस ret.status;
+पूर्ण
 
-struct fpu_swa_msg {
-	unsigned long count;
-	unsigned long time;
-};
-static DEFINE_PER_CPU(struct fpu_swa_msg, cpulast);
-DECLARE_PER_CPU(struct fpu_swa_msg, cpulast);
-static struct fpu_swa_msg last __cacheline_aligned;
+काष्ठा fpu_swa_msg अणु
+	अचिन्हित दीर्घ count;
+	अचिन्हित दीर्घ समय;
+पूर्ण;
+अटल DEFINE_PER_CPU(काष्ठा fpu_swa_msg, cpulast);
+DECLARE_PER_CPU(काष्ठा fpu_swa_msg, cpulast);
+अटल काष्ठा fpu_swa_msg last __cacheline_aligned;
 
 
 /*
- * Handle floating-point assist faults and traps.
+ * Handle भग्नing-poपूर्णांक assist faults and traps.
  */
-static int
-handle_fpu_swa (int fp_fault, struct pt_regs *regs, unsigned long isr)
-{
-	long exception, bundle[2];
-	unsigned long fault_ip;
+अटल पूर्णांक
+handle_fpu_swa (पूर्णांक fp_fault, काष्ठा pt_regs *regs, अचिन्हित दीर्घ isr)
+अणु
+	दीर्घ exception, bundle[2];
+	अचिन्हित दीर्घ fault_ip;
 
 	fault_ip = regs->cr_iip;
-	if (!fp_fault && (ia64_psr(regs)->ri == 0))
+	अगर (!fp_fault && (ia64_psr(regs)->ri == 0))
 		fault_ip -= 16;
-	if (copy_from_user(bundle, (void __user *) fault_ip, sizeof(bundle)))
-		return -1;
+	अगर (copy_from_user(bundle, (व्योम __user *) fault_ip, माप(bundle)))
+		वापस -1;
 
-	if (!(current->thread.flags & IA64_THREAD_FPEMU_NOPRINT))  {
-		unsigned long count, current_jiffies = jiffies;
-		struct fpu_swa_msg *cp = this_cpu_ptr(&cpulast);
+	अगर (!(current->thपढ़ो.flags & IA64_THREAD_FPEMU_NOPRINT))  अणु
+		अचिन्हित दीर्घ count, current_jअगरfies = jअगरfies;
+		काष्ठा fpu_swa_msg *cp = this_cpu_ptr(&cpulast);
 
-		if (unlikely(current_jiffies > cp->time))
+		अगर (unlikely(current_jअगरfies > cp->समय))
 			cp->count = 0;
-		if (unlikely(cp->count < 5)) {
+		अगर (unlikely(cp->count < 5)) अणु
 			cp->count++;
-			cp->time = current_jiffies + 5 * HZ;
+			cp->समय = current_jअगरfies + 5 * HZ;
 
-			/* minimize races by grabbing a copy of count BEFORE checking last.time. */
+			/* minimize races by grabbing a copy of count BEFORE checking last.समय. */
 			count = last.count;
 			barrier();
 
@@ -312,115 +313,115 @@ handle_fpu_swa (int fp_fault, struct pt_regs *regs, unsigned long isr)
 			 * fail is seqno has changed. This minimizes mutiple cpus
 			 * resetting the count.
 			 */
-			if (current_jiffies > last.time)
-				(void) cmpxchg_acq(&last.count, count, 16 + (count & ~15));
+			अगर (current_jअगरfies > last.समय)
+				(व्योम) cmpxchg_acq(&last.count, count, 16 + (count & ~15));
 
 			/* used fetchadd to atomically update the count */
-			if ((last.count & 15) < 5 && (ia64_fetchadd(1, &last.count, acq) & 15) < 5) {
-				last.time = current_jiffies + 5 * HZ;
-				printk(KERN_WARNING
+			अगर ((last.count & 15) < 5 && (ia64_fetchadd(1, &last.count, acq) & 15) < 5) अणु
+				last.समय = current_jअगरfies + 5 * HZ;
+				prपूर्णांकk(KERN_WARNING
 		       			"%s(%d): floating-point assist fault at ip %016lx, isr %016lx\n",
 		       			current->comm, task_pid_nr(current), regs->cr_iip + ia64_psr(regs)->ri, isr);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	exception = fp_emulate(fp_fault, bundle, &regs->cr_ipsr, &regs->ar_fpsr, &isr, &regs->pr,
-			       &regs->cr_ifs, regs);
-	if (fp_fault) {
-		if (exception == 0) {
+			       &regs->cr_अगरs, regs);
+	अगर (fp_fault) अणु
+		अगर (exception == 0) अणु
 			/* emulation was successful */
 			ia64_increment_ip(regs);
-		} else if (exception == -1) {
-			printk(KERN_ERR "handle_fpu_swa: fp_emulate() returned -1\n");
-			return -1;
-		} else {
-			/* is next instruction a trap? */
-			int si_code;
+		पूर्ण अन्यथा अगर (exception == -1) अणु
+			prपूर्णांकk(KERN_ERR "handle_fpu_swa: fp_emulate() returned -1\n");
+			वापस -1;
+		पूर्ण अन्यथा अणु
+			/* is next inकाष्ठाion a trap? */
+			पूर्णांक si_code;
 
-			if (exception & 2) {
+			अगर (exception & 2) अणु
 				ia64_increment_ip(regs);
-			}
-			si_code = FPE_FLTUNK;	/* default code */
-			if (isr & 0x11) {
+			पूर्ण
+			si_code = FPE_FLTUNK;	/* शेष code */
+			अगर (isr & 0x11) अणु
 				si_code = FPE_FLTINV;
-			} else if (isr & 0x22) {
-				/* denormal operand gets the same si_code as underflow 
+			पूर्ण अन्यथा अगर (isr & 0x22) अणु
+				/* denormal opeअक्रम माला_लो the same si_code as underflow 
 				* see arch/i386/kernel/traps.c:math_error()  */
 				si_code = FPE_FLTUND;
-			} else if (isr & 0x44) {
+			पूर्ण अन्यथा अगर (isr & 0x44) अणु
 				si_code = FPE_FLTDIV;
-			}
-			force_sig_fault(SIGFPE, si_code,
-					(void __user *) (regs->cr_iip + ia64_psr(regs)->ri),
+			पूर्ण
+			क्रमce_sig_fault(संक_भ_त्रुटि, si_code,
+					(व्योम __user *) (regs->cr_iip + ia64_psr(regs)->ri),
 					0, __ISR_VALID, isr);
-		}
-	} else {
-		if (exception == -1) {
-			printk(KERN_ERR "handle_fpu_swa: fp_emulate() returned -1\n");
-			return -1;
-		} else if (exception != 0) {
-			/* raise exception */
-			int si_code;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		अगर (exception == -1) अणु
+			prपूर्णांकk(KERN_ERR "handle_fpu_swa: fp_emulate() returned -1\n");
+			वापस -1;
+		पूर्ण अन्यथा अगर (exception != 0) अणु
+			/* उठाओ exception */
+			पूर्णांक si_code;
 
-			si_code = FPE_FLTUNK;	/* default code */
-			if (isr & 0x880) {
+			si_code = FPE_FLTUNK;	/* शेष code */
+			अगर (isr & 0x880) अणु
 				si_code = FPE_FLTOVF;
-			} else if (isr & 0x1100) {
+			पूर्ण अन्यथा अगर (isr & 0x1100) अणु
 				si_code = FPE_FLTUND;
-			} else if (isr & 0x2200) {
+			पूर्ण अन्यथा अगर (isr & 0x2200) अणु
 				si_code = FPE_FLTRES;
-			}
-			force_sig_fault(SIGFPE, si_code,
-					(void __user *) (regs->cr_iip + ia64_psr(regs)->ri),
+			पूर्ण
+			क्रमce_sig_fault(संक_भ_त्रुटि, si_code,
+					(व्योम __user *) (regs->cr_iip + ia64_psr(regs)->ri),
 					0, __ISR_VALID, isr);
-		}
-	}
-	return 0;
-}
+		पूर्ण
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-struct illegal_op_return {
-	unsigned long fkt, arg1, arg2, arg3;
-};
+काष्ठा illegal_op_वापस अणु
+	अचिन्हित दीर्घ fkt, arg1, arg2, arg3;
+पूर्ण;
 
-struct illegal_op_return
-ia64_illegal_op_fault (unsigned long ec, long arg1, long arg2, long arg3,
-		       long arg4, long arg5, long arg6, long arg7,
-		       struct pt_regs regs)
-{
-	struct illegal_op_return rv;
-	char buf[128];
+काष्ठा illegal_op_वापस
+ia64_illegal_op_fault (अचिन्हित दीर्घ ec, दीर्घ arg1, दीर्घ arg2, दीर्घ arg3,
+		       दीर्घ arg4, दीर्घ arg5, दीर्घ arg6, दीर्घ arg7,
+		       काष्ठा pt_regs regs)
+अणु
+	काष्ठा illegal_op_वापस rv;
+	अक्षर buf[128];
 
-#ifdef CONFIG_IA64_BRL_EMU
-	{
-		extern struct illegal_op_return ia64_emulate_brl (struct pt_regs *, unsigned long);
+#अगर_घोषित CONFIG_IA64_BRL_EMU
+	अणु
+		बाह्य काष्ठा illegal_op_वापस ia64_emulate_brl (काष्ठा pt_regs *, अचिन्हित दीर्घ);
 
 		rv = ia64_emulate_brl(&regs, ec);
-		if (rv.fkt != (unsigned long) -1)
-			return rv;
-	}
-#endif
+		अगर (rv.fkt != (अचिन्हित दीर्घ) -1)
+			वापस rv;
+	पूर्ण
+#पूर्ण_अगर
 
-	sprintf(buf, "IA-64 Illegal operation fault");
+	प्र_लिखो(buf, "IA-64 Illegal operation fault");
 	rv.fkt = 0;
-	if (die_if_kernel(buf, &regs, 0))
-		return rv;
+	अगर (die_अगर_kernel(buf, &regs, 0))
+		वापस rv;
 
-	force_sig_fault(SIGILL, ILL_ILLOPC,
-			(void __user *) (regs.cr_iip + ia64_psr(&regs)->ri),
+	क्रमce_sig_fault(संक_अवैध, ILL_ILLOPC,
+			(व्योम __user *) (regs.cr_iip + ia64_psr(&regs)->ri),
 			0, 0, 0);
-	return rv;
-}
+	वापस rv;
+पूर्ण
 
-void __kprobes
-ia64_fault (unsigned long vector, unsigned long isr, unsigned long ifa,
-	    unsigned long iim, unsigned long itir, long arg5, long arg6,
-	    long arg7, struct pt_regs regs)
-{
-	unsigned long code, error = isr, iip;
-	char buf[128];
-	int result, sig, si_code;
-	static const char *reason[] = {
+व्योम __kprobes
+ia64_fault (अचिन्हित दीर्घ vector, अचिन्हित दीर्घ isr, अचिन्हित दीर्घ अगरa,
+	    अचिन्हित दीर्घ iim, अचिन्हित दीर्घ itir, दीर्घ arg5, दीर्घ arg6,
+	    दीर्घ arg7, काष्ठा pt_regs regs)
+अणु
+	अचिन्हित दीर्घ code, error = isr, iip;
+	अक्षर buf[128];
+	पूर्णांक result, sig, si_code;
+	अटल स्थिर अक्षर *reason[] = अणु
 		"IA-64 Illegal Operation fault",
 		"IA-64 Privileged Operation fault",
 		"IA-64 Privileged Register fault",
@@ -429,184 +430,184 @@ ia64_fault (unsigned long vector, unsigned long isr, unsigned long ifa,
 		"Unknown fault 5", "Unknown fault 6", "Unknown fault 7", "Illegal Hazard fault",
 		"Unknown fault 9", "Unknown fault 10", "Unknown fault 11", "Unknown fault 12",
 		"Unknown fault 13", "Unknown fault 14", "Unknown fault 15"
-	};
+	पूर्ण;
 
-	if ((isr & IA64_ISR_NA) && ((isr & IA64_ISR_CODE_MASK) == IA64_ISR_CODE_LFETCH)) {
+	अगर ((isr & IA64_ISR_NA) && ((isr & IA64_ISR_CODE_MASK) == IA64_ISR_CODE_LFETCH)) अणु
 		/*
 		 * This fault was due to lfetch.fault, set "ed" bit in the psr to cancel
 		 * the lfetch.
 		 */
 		ia64_psr(&regs)->ed = 1;
-		return;
-	}
+		वापस;
+	पूर्ण
 
 	iip = regs.cr_iip + ia64_psr(&regs)->ri;
 
-	switch (vector) {
-	      case 24: /* General Exception */
+	चयन (vector) अणु
+	      हाल 24: /* General Exception */
 		code = (isr >> 4) & 0xf;
-		sprintf(buf, "General Exception: %s%s", reason[code],
+		प्र_लिखो(buf, "General Exception: %s%s", reason[code],
 			(code == 3) ? ((isr & (1UL << 37))
 				       ? " (RSE access)" : " (data access)") : "");
-		if (code == 8) {
-# ifdef CONFIG_IA64_PRINT_HAZARDS
-			printk("%s[%d]: possible hazard @ ip=%016lx (pr = %016lx)\n",
+		अगर (code == 8) अणु
+# अगरdef CONFIG_IA64_PRINT_HAZARDS
+			prपूर्णांकk("%s[%d]: possible hazard @ ip=%016lx (pr = %016lx)\n",
 			       current->comm, task_pid_nr(current),
 			       regs.cr_iip + ia64_psr(&regs)->ri, regs.pr);
-# endif
-			return;
-		}
-		break;
+# endअगर
+			वापस;
+		पूर्ण
+		अवरोध;
 
-	      case 25: /* Disabled FP-Register */
-		if (isr & 2) {
+	      हाल 25: /* Disabled FP-Register */
+		अगर (isr & 2) अणु
 			disabled_fph_fault(&regs);
-			return;
-		}
-		sprintf(buf, "Disabled FPL fault---not supposed to happen!");
-		break;
+			वापस;
+		पूर्ण
+		प्र_लिखो(buf, "Disabled FPL fault---not supposed to happen!");
+		अवरोध;
 
-	      case 26: /* NaT Consumption */
-		if (user_mode(&regs)) {
-			void __user *addr;
+	      हाल 26: /* NaT Consumption */
+		अगर (user_mode(&regs)) अणु
+			व्योम __user *addr;
 
-			if (((isr >> 4) & 0xf) == 2) {
+			अगर (((isr >> 4) & 0xf) == 2) अणु
 				/* NaT page consumption */
-				sig = SIGSEGV;
+				sig = संक_अंश;
 				code = SEGV_ACCERR;
-				addr = (void __user *) ifa;
-			} else {
-				/* register NaT consumption */
-				sig = SIGILL;
+				addr = (व्योम __user *) अगरa;
+			पूर्ण अन्यथा अणु
+				/* रेजिस्टर NaT consumption */
+				sig = संक_अवैध;
 				code = ILL_ILLOPN;
-				addr = (void __user *) (regs.cr_iip
+				addr = (व्योम __user *) (regs.cr_iip
 							+ ia64_psr(&regs)->ri);
-			}
-			force_sig_fault(sig, code, addr,
+			पूर्ण
+			क्रमce_sig_fault(sig, code, addr,
 					vector, __ISR_VALID, isr);
-			return;
-		} else if (ia64_done_with_exception(&regs))
-			return;
-		sprintf(buf, "NaT consumption");
-		break;
+			वापस;
+		पूर्ण अन्यथा अगर (ia64_करोne_with_exception(&regs))
+			वापस;
+		प्र_लिखो(buf, "NaT consumption");
+		अवरोध;
 
-	      case 31: /* Unsupported Data Reference */
-		if (user_mode(&regs)) {
-			force_sig_fault(SIGILL, ILL_ILLOPN, (void __user *) iip,
+	      हाल 31: /* Unsupported Data Reference */
+		अगर (user_mode(&regs)) अणु
+			क्रमce_sig_fault(संक_अवैध, ILL_ILLOPN, (व्योम __user *) iip,
 					vector, __ISR_VALID, isr);
-			return;
-		}
-		sprintf(buf, "Unsupported data reference");
-		break;
+			वापस;
+		पूर्ण
+		प्र_लिखो(buf, "Unsupported data reference");
+		अवरोध;
 
-	      case 29: /* Debug */
-	      case 35: /* Taken Branch Trap */
-	      case 36: /* Single Step Trap */
-		if (fsys_mode(current, &regs)) {
-			extern char __kernel_syscall_via_break[];
+	      हाल 29: /* Debug */
+	      हाल 35: /* Taken Branch Trap */
+	      हाल 36: /* Single Step Trap */
+		अगर (fsys_mode(current, &regs)) अणु
+			बाह्य अक्षर __kernel_syscall_via_अवरोध[];
 			/*
 			 * Got a trap in fsys-mode: Taken Branch Trap
 			 * and Single Step trap need special handling;
 			 * Debug trap is ignored (we disable it here
 			 * and re-enable it in the lower-privilege trap).
 			 */
-			if (unlikely(vector == 29)) {
-				set_thread_flag(TIF_DB_DISABLED);
+			अगर (unlikely(vector == 29)) अणु
+				set_thपढ़ो_flag(TIF_DB_DISABLED);
 				ia64_psr(&regs)->db = 0;
 				ia64_psr(&regs)->lp = 1;
-				return;
-			}
-			/* re-do the system call via break 0x100000: */
-			regs.cr_iip = (unsigned long) __kernel_syscall_via_break;
+				वापस;
+			पूर्ण
+			/* re-करो the प्रणाली call via अवरोध 0x100000: */
+			regs.cr_iip = (अचिन्हित दीर्घ) __kernel_syscall_via_अवरोध;
 			ia64_psr(&regs)->ri = 0;
 			ia64_psr(&regs)->cpl = 3;
-			return;
-		}
-		switch (vector) {
-		      default:
-		      case 29:
+			वापस;
+		पूर्ण
+		चयन (vector) अणु
+		      शेष:
+		      हाल 29:
 			si_code = TRAP_HWBKPT;
-#ifdef CONFIG_ITANIUM
+#अगर_घोषित CONFIG_ITANIUM
 			/*
 			 * Erratum 10 (IFA may contain incorrect address) now has
-			 * "NoFix" status.  There are no plans for fixing this.
+			 * "NoFix" status.  There are no plans क्रम fixing this.
 			 */
-			if (ia64_psr(&regs)->is == 0)
-			  ifa = regs.cr_iip;
-#endif
-			break;
-		      case 35: si_code = TRAP_BRANCH; ifa = 0; break;
-		      case 36: si_code = TRAP_TRACE; ifa = 0; break;
-		}
-		if (notify_die(DIE_FAULT, "ia64_fault", &regs, vector, si_code, SIGTRAP)
+			अगर (ia64_psr(&regs)->is == 0)
+			  अगरa = regs.cr_iip;
+#पूर्ण_अगर
+			अवरोध;
+		      हाल 35: si_code = TRAP_BRANCH; अगरa = 0; अवरोध;
+		      हाल 36: si_code = TRAP_TRACE; अगरa = 0; अवरोध;
+		पूर्ण
+		अगर (notअगरy_die(DIE_FAULT, "ia64_fault", &regs, vector, si_code, SIGTRAP)
 			       	== NOTIFY_STOP)
-			return;
-		force_sig_fault(SIGTRAP, si_code, (void __user *) ifa,
+			वापस;
+		क्रमce_sig_fault(SIGTRAP, si_code, (व्योम __user *) अगरa,
 				0, __ISR_VALID, isr);
-		return;
+		वापस;
 
-	      case 32: /* fp fault */
-	      case 33: /* fp trap */
+	      हाल 32: /* fp fault */
+	      हाल 33: /* fp trap */
 		result = handle_fpu_swa((vector == 32) ? 1 : 0, &regs, isr);
-		if ((result < 0) || (current->thread.flags & IA64_THREAD_FPEMU_SIGFPE)) {
-			force_sig_fault(SIGFPE, FPE_FLTINV, (void __user *) iip,
+		अगर ((result < 0) || (current->thपढ़ो.flags & IA64_THREAD_FPEMU_संक_भ_त्रुटि)) अणु
+			क्रमce_sig_fault(संक_भ_त्रुटि, FPE_FLTINV, (व्योम __user *) iip,
 					0, __ISR_VALID, isr);
-		}
-		return;
+		पूर्ण
+		वापस;
 
-	      case 34:
-		if (isr & 0x2) {
+	      हाल 34:
+		अगर (isr & 0x2) अणु
 			/* Lower-Privilege Transfer Trap */
 
 			/* If we disabled debug traps during an fsyscall,
 			 * re-enable them here.
 			 */
-			if (test_thread_flag(TIF_DB_DISABLED)) {
-				clear_thread_flag(TIF_DB_DISABLED);
+			अगर (test_thपढ़ो_flag(TIF_DB_DISABLED)) अणु
+				clear_thपढ़ो_flag(TIF_DB_DISABLED);
 				ia64_psr(&regs)->db = 1;
-			}
+			पूर्ण
 
 			/*
-			 * Just clear PSR.lp and then return immediately:
-			 * all the interesting work (e.g., signal delivery)
-			 * is done in the kernel exit path.
+			 * Just clear PSR.lp and then वापस immediately:
+			 * all the पूर्णांकeresting work (e.g., संकेत delivery)
+			 * is करोne in the kernel निकास path.
 			 */
 			ia64_psr(&regs)->lp = 0;
-			return;
-		} else {
+			वापस;
+		पूर्ण अन्यथा अणु
 			/* Unimplemented Instr. Address Trap */
-			if (user_mode(&regs)) {
-				force_sig_fault(SIGILL, ILL_BADIADDR,
-						(void __user *) iip,
+			अगर (user_mode(&regs)) अणु
+				क्रमce_sig_fault(संक_अवैध, ILL_BADIADDR,
+						(व्योम __user *) iip,
 						0, 0, 0);
-				return;
-			}
-			sprintf(buf, "Unimplemented Instruction Address fault");
-		}
-		break;
+				वापस;
+			पूर्ण
+			प्र_लिखो(buf, "Unimplemented Instruction Address fault");
+		पूर्ण
+		अवरोध;
 
-	      case 45:
-		printk(KERN_ERR "Unexpected IA-32 exception (Trap 45)\n");
-		printk(KERN_ERR "  iip - 0x%lx, ifa - 0x%lx, isr - 0x%lx\n",
-		       iip, ifa, isr);
-		force_sig(SIGSEGV);
-		return;
+	      हाल 45:
+		prपूर्णांकk(KERN_ERR "Unexpected IA-32 exception (Trap 45)\n");
+		prपूर्णांकk(KERN_ERR "  iip - 0x%lx, ifa - 0x%lx, isr - 0x%lx\n",
+		       iip, अगरa, isr);
+		क्रमce_sig(संक_अंश);
+		वापस;
 
-	      case 46:
-		printk(KERN_ERR "Unexpected IA-32 intercept trap (Trap 46)\n");
-		printk(KERN_ERR "  iip - 0x%lx, ifa - 0x%lx, isr - 0x%lx, iim - 0x%lx\n",
-		       iip, ifa, isr, iim);
-		force_sig(SIGSEGV);
-		return;
+	      हाल 46:
+		prपूर्णांकk(KERN_ERR "Unexpected IA-32 intercept trap (Trap 46)\n");
+		prपूर्णांकk(KERN_ERR "  iip - 0x%lx, ifa - 0x%lx, isr - 0x%lx, iim - 0x%lx\n",
+		       iip, अगरa, isr, iim);
+		क्रमce_sig(संक_अंश);
+		वापस;
 
-	      case 47:
-		sprintf(buf, "IA-32 Interruption Fault (int 0x%lx)", isr >> 16);
-		break;
+	      हाल 47:
+		प्र_लिखो(buf, "IA-32 Interruption Fault (int 0x%lx)", isr >> 16);
+		अवरोध;
 
-	      default:
-		sprintf(buf, "Fault %lu", vector);
-		break;
-	}
-	if (!die_if_kernel(buf, &regs, error))
-		force_sig(SIGILL);
-}
+	      शेष:
+		प्र_लिखो(buf, "Fault %lu", vector);
+		अवरोध;
+	पूर्ण
+	अगर (!die_अगर_kernel(buf, &regs, error))
+		क्रमce_sig(संक_अवैध);
+पूर्ण

@@ -1,49 +1,50 @@
-// SPDX-License-Identifier: GPL-2.0-only
-#define pr_fmt(fmt) "%s: " fmt, __func__
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
+#घोषणा pr_fmt(fmt) "%s: " fmt, __func__
 
-#include <linux/kernel.h>
-#include <linux/sched.h>
-#include <linux/wait.h>
-#include <linux/slab.h>
-#include <linux/mm.h>
-#include <linux/percpu-refcount.h>
+#समावेश <linux/kernel.h>
+#समावेश <linux/sched.h>
+#समावेश <linux/रुको.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/percpu-refcount.h>
 
 /*
  * Initially, a percpu refcount is just a set of percpu counters. Initially, we
- * don't try to detect the ref hitting 0 - which means that get/put can just
+ * करोn't try to detect the ref hitting 0 - which means that get/put can just
  * increment or decrement the local counter. Note that the counter on a
- * particular cpu can (and will) wrap - this is fine, when we go to shutdown the
+ * particular cpu can (and will) wrap - this is fine, when we go to shutकरोwn the
  * percpu counters will all sum to the correct value
  *
  * (More precisely: because modular arithmetic is commutative the sum of all the
- * percpu_count vars will be equal to what it would have been if all the gets
- * and puts were done to a single integer, even if some of the percpu integers
+ * percpu_count vars will be equal to what it would have been अगर all the माला_लो
+ * and माला_दो were करोne to a single पूर्णांकeger, even अगर some of the percpu पूर्णांकegers
  * overflow or underflow).
  *
- * The real trick to implementing percpu refcounts is shutdown. We can't detect
+ * The real trick to implementing percpu refcounts is shutकरोwn. We can't detect
  * the ref hitting 0 on every put - this would require global synchronization
  * and defeat the whole purpose of using percpu refs.
  *
- * What we do is require the user to keep track of the initial refcount; we know
- * the ref can't hit 0 before the user drops the initial ref, so as long as we
- * convert to non percpu mode before the initial ref is dropped everything
+ * What we करो is require the user to keep track of the initial refcount; we know
+ * the ref can't hit 0 beक्रमe the user drops the initial ref, so as दीर्घ as we
+ * convert to non percpu mode beक्रमe the initial ref is dropped everything
  * works.
  *
- * Converting to non percpu mode is done with some RCUish stuff in
- * percpu_ref_kill. Additionally, we need a bias value so that the
- * atomic_long_t can't hit 0 before we've added up all the percpu refs.
+ * Converting to non percpu mode is करोne with some RCUish stuff in
+ * percpu_ref_समाप्त. Additionally, we need a bias value so that the
+ * atomic_दीर्घ_t can't hit 0 before we've added up all the percpu refs.
  */
 
-#define PERCPU_COUNT_BIAS	(1LU << (BITS_PER_LONG - 1))
+#घोषणा PERCPU_COUNT_BIAS	(1LU << (BITS_PER_LONG - 1))
 
-static DEFINE_SPINLOCK(percpu_ref_switch_lock);
-static DECLARE_WAIT_QUEUE_HEAD(percpu_ref_switch_waitq);
+अटल DEFINE_SPINLOCK(percpu_ref_चयन_lock);
+अटल DECLARE_WAIT_QUEUE_HEAD(percpu_ref_चयन_रुकोq);
 
-static unsigned long __percpu *percpu_count_ptr(struct percpu_ref *ref)
-{
-	return (unsigned long __percpu *)
+अटल अचिन्हित दीर्घ __percpu *percpu_count_ptr(काष्ठा percpu_ref *ref)
+अणु
+	वापस (अचिन्हित दीर्घ __percpu *)
 		(ref->percpu_count_ptr & ~__PERCPU_REF_ATOMIC_DEAD);
-}
+पूर्ण
 
 /**
  * percpu_ref_init - initialize a percpu refcount
@@ -55,197 +56,197 @@ static unsigned long __percpu *percpu_count_ptr(struct percpu_ref *ref)
  * Initializes @ref.  @ref starts out in percpu mode with a refcount of 1 unless
  * @flags contains PERCPU_REF_INIT_ATOMIC or PERCPU_REF_INIT_DEAD.  These flags
  * change the start state to atomic with the latter setting the initial refcount
- * to 0.  See the definitions of PERCPU_REF_INIT_* flags for flag behaviors.
+ * to 0.  See the definitions of PERCPU_REF_INIT_* flags क्रम flag behaviors.
  *
  * Note that @release must not sleep - it may potentially be called from RCU
- * callback context by percpu_ref_kill().
+ * callback context by percpu_ref_समाप्त().
  */
-int percpu_ref_init(struct percpu_ref *ref, percpu_ref_func_t *release,
-		    unsigned int flags, gfp_t gfp)
-{
-	size_t align = max_t(size_t, 1 << __PERCPU_REF_FLAG_BITS,
-			     __alignof__(unsigned long));
-	unsigned long start_count = 0;
-	struct percpu_ref_data *data;
+पूर्णांक percpu_ref_init(काष्ठा percpu_ref *ref, percpu_ref_func_t *release,
+		    अचिन्हित पूर्णांक flags, gfp_t gfp)
+अणु
+	माप_प्रकार align = max_t(माप_प्रकार, 1 << __PERCPU_REF_FLAG_BITS,
+			     __alignof__(अचिन्हित दीर्घ));
+	अचिन्हित दीर्घ start_count = 0;
+	काष्ठा percpu_ref_data *data;
 
-	ref->percpu_count_ptr = (unsigned long)
-		__alloc_percpu_gfp(sizeof(unsigned long), align, gfp);
-	if (!ref->percpu_count_ptr)
-		return -ENOMEM;
+	ref->percpu_count_ptr = (अचिन्हित दीर्घ)
+		__alloc_percpu_gfp(माप(अचिन्हित दीर्घ), align, gfp);
+	अगर (!ref->percpu_count_ptr)
+		वापस -ENOMEM;
 
-	data = kzalloc(sizeof(*ref->data), gfp);
-	if (!data) {
-		free_percpu((void __percpu *)ref->percpu_count_ptr);
-		return -ENOMEM;
-	}
+	data = kzalloc(माप(*ref->data), gfp);
+	अगर (!data) अणु
+		मुक्त_percpu((व्योम __percpu *)ref->percpu_count_ptr);
+		वापस -ENOMEM;
+	पूर्ण
 
-	data->force_atomic = flags & PERCPU_REF_INIT_ATOMIC;
+	data->क्रमce_atomic = flags & PERCPU_REF_INIT_ATOMIC;
 	data->allow_reinit = flags & PERCPU_REF_ALLOW_REINIT;
 
-	if (flags & (PERCPU_REF_INIT_ATOMIC | PERCPU_REF_INIT_DEAD)) {
+	अगर (flags & (PERCPU_REF_INIT_ATOMIC | PERCPU_REF_INIT_DEAD)) अणु
 		ref->percpu_count_ptr |= __PERCPU_REF_ATOMIC;
 		data->allow_reinit = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		start_count += PERCPU_COUNT_BIAS;
-	}
+	पूर्ण
 
-	if (flags & PERCPU_REF_INIT_DEAD)
+	अगर (flags & PERCPU_REF_INIT_DEAD)
 		ref->percpu_count_ptr |= __PERCPU_REF_DEAD;
-	else
+	अन्यथा
 		start_count++;
 
-	atomic_long_set(&data->count, start_count);
+	atomic_दीर्घ_set(&data->count, start_count);
 
 	data->release = release;
-	data->confirm_switch = NULL;
+	data->confirm_चयन = शून्य;
 	data->ref = ref;
 	ref->data = data;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(percpu_ref_init);
 
-static void __percpu_ref_exit(struct percpu_ref *ref)
-{
-	unsigned long __percpu *percpu_count = percpu_count_ptr(ref);
+अटल व्योम __percpu_ref_निकास(काष्ठा percpu_ref *ref)
+अणु
+	अचिन्हित दीर्घ __percpu *percpu_count = percpu_count_ptr(ref);
 
-	if (percpu_count) {
-		/* non-NULL confirm_switch indicates switching in progress */
-		WARN_ON_ONCE(ref->data && ref->data->confirm_switch);
-		free_percpu(percpu_count);
+	अगर (percpu_count) अणु
+		/* non-शून्य confirm_चयन indicates चयनing in progress */
+		WARN_ON_ONCE(ref->data && ref->data->confirm_चयन);
+		मुक्त_percpu(percpu_count);
 		ref->percpu_count_ptr = __PERCPU_REF_ATOMIC_DEAD;
-	}
-}
+	पूर्ण
+पूर्ण
 
 /**
- * percpu_ref_exit - undo percpu_ref_init()
- * @ref: percpu_ref to exit
+ * percpu_ref_निकास - unकरो percpu_ref_init()
+ * @ref: percpu_ref to निकास
  *
- * This function exits @ref.  The caller is responsible for ensuring that
- * @ref is no longer in active use.  The usual places to invoke this
+ * This function निकासs @ref.  The caller is responsible क्रम ensuring that
+ * @ref is no दीर्घer in active use.  The usual places to invoke this
  * function from are the @ref->release() callback or in init failure path
  * where percpu_ref_init() succeeded but other parts of the initialization
  * of the embedding object failed.
  */
-void percpu_ref_exit(struct percpu_ref *ref)
-{
-	struct percpu_ref_data *data = ref->data;
-	unsigned long flags;
+व्योम percpu_ref_निकास(काष्ठा percpu_ref *ref)
+अणु
+	काष्ठा percpu_ref_data *data = ref->data;
+	अचिन्हित दीर्घ flags;
 
-	__percpu_ref_exit(ref);
+	__percpu_ref_निकास(ref);
 
-	if (!data)
-		return;
+	अगर (!data)
+		वापस;
 
-	spin_lock_irqsave(&percpu_ref_switch_lock, flags);
-	ref->percpu_count_ptr |= atomic_long_read(&ref->data->count) <<
+	spin_lock_irqsave(&percpu_ref_चयन_lock, flags);
+	ref->percpu_count_ptr |= atomic_दीर्घ_पढ़ो(&ref->data->count) <<
 		__PERCPU_REF_FLAG_BITS;
-	ref->data = NULL;
-	spin_unlock_irqrestore(&percpu_ref_switch_lock, flags);
+	ref->data = शून्य;
+	spin_unlock_irqrestore(&percpu_ref_चयन_lock, flags);
 
-	kfree(data);
-}
-EXPORT_SYMBOL_GPL(percpu_ref_exit);
+	kमुक्त(data);
+पूर्ण
+EXPORT_SYMBOL_GPL(percpu_ref_निकास);
 
-static void percpu_ref_call_confirm_rcu(struct rcu_head *rcu)
-{
-	struct percpu_ref_data *data = container_of(rcu,
-			struct percpu_ref_data, rcu);
-	struct percpu_ref *ref = data->ref;
+अटल व्योम percpu_ref_call_confirm_rcu(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा percpu_ref_data *data = container_of(rcu,
+			काष्ठा percpu_ref_data, rcu);
+	काष्ठा percpu_ref *ref = data->ref;
 
-	data->confirm_switch(ref);
-	data->confirm_switch = NULL;
-	wake_up_all(&percpu_ref_switch_waitq);
+	data->confirm_चयन(ref);
+	data->confirm_चयन = शून्य;
+	wake_up_all(&percpu_ref_चयन_रुकोq);
 
-	if (!data->allow_reinit)
-		__percpu_ref_exit(ref);
+	अगर (!data->allow_reinit)
+		__percpu_ref_निकास(ref);
 
-	/* drop ref from percpu_ref_switch_to_atomic() */
+	/* drop ref from percpu_ref_चयन_to_atomic() */
 	percpu_ref_put(ref);
-}
+पूर्ण
 
-static void percpu_ref_switch_to_atomic_rcu(struct rcu_head *rcu)
-{
-	struct percpu_ref_data *data = container_of(rcu,
-			struct percpu_ref_data, rcu);
-	struct percpu_ref *ref = data->ref;
-	unsigned long __percpu *percpu_count = percpu_count_ptr(ref);
-	static atomic_t underflows;
-	unsigned long count = 0;
-	int cpu;
+अटल व्योम percpu_ref_चयन_to_atomic_rcu(काष्ठा rcu_head *rcu)
+अणु
+	काष्ठा percpu_ref_data *data = container_of(rcu,
+			काष्ठा percpu_ref_data, rcu);
+	काष्ठा percpu_ref *ref = data->ref;
+	अचिन्हित दीर्घ __percpu *percpu_count = percpu_count_ptr(ref);
+	अटल atomic_t underflows;
+	अचिन्हित दीर्घ count = 0;
+	पूर्णांक cpu;
 
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		count += *per_cpu_ptr(percpu_count, cpu);
 
 	pr_debug("global %lu percpu %lu\n",
-		 atomic_long_read(&data->count), count);
+		 atomic_दीर्घ_पढ़ो(&data->count), count);
 
 	/*
-	 * It's crucial that we sum the percpu counters _before_ adding the sum
-	 * to &ref->count; since gets could be happening on one cpu while puts
+	 * It's crucial that we sum the percpu counters _beक्रमe_ adding the sum
+	 * to &ref->count; since माला_लो could be happening on one cpu जबतक माला_दो
 	 * happen on another, adding a single cpu's count could cause
-	 * @ref->count to hit 0 before we've got a consistent value - but the
+	 * @ref->count to hit 0 beक्रमe we've got a consistent value - but the
 	 * sum of all the counts will be consistent and correct.
 	 *
 	 * Subtracting the bias value then has to happen _after_ adding count to
 	 * &ref->count; we need the bias value to prevent &ref->count from
-	 * reaching 0 before we add the percpu counts. But doing it at the same
-	 * time is equivalent and saves us atomic operations:
+	 * reaching 0 beक्रमe we add the percpu counts. But करोing it at the same
+	 * समय is equivalent and saves us atomic operations:
 	 */
-	atomic_long_add((long)count - PERCPU_COUNT_BIAS, &data->count);
+	atomic_दीर्घ_add((दीर्घ)count - PERCPU_COUNT_BIAS, &data->count);
 
-	if (WARN_ONCE(atomic_long_read(&data->count) <= 0,
+	अगर (WARN_ONCE(atomic_दीर्घ_पढ़ो(&data->count) <= 0,
 		      "percpu ref (%ps) <= 0 (%ld) after switching to atomic",
-		      data->release, atomic_long_read(&data->count)) &&
-	    atomic_inc_return(&underflows) < 4) {
+		      data->release, atomic_दीर्घ_पढ़ो(&data->count)) &&
+	    atomic_inc_वापस(&underflows) < 4) अणु
 		pr_err("%s(): percpu_ref underflow", __func__);
 		mem_dump_obj(data);
-	}
+	पूर्ण
 
-	/* @ref is viewed as dead on all CPUs, send out switch confirmation */
+	/* @ref is viewed as dead on all CPUs, send out चयन confirmation */
 	percpu_ref_call_confirm_rcu(rcu);
-}
+पूर्ण
 
-static void percpu_ref_noop_confirm_switch(struct percpu_ref *ref)
-{
-}
+अटल व्योम percpu_ref_noop_confirm_चयन(काष्ठा percpu_ref *ref)
+अणु
+पूर्ण
 
-static void __percpu_ref_switch_to_atomic(struct percpu_ref *ref,
-					  percpu_ref_func_t *confirm_switch)
-{
-	if (ref->percpu_count_ptr & __PERCPU_REF_ATOMIC) {
-		if (confirm_switch)
-			confirm_switch(ref);
-		return;
-	}
+अटल व्योम __percpu_ref_चयन_to_atomic(काष्ठा percpu_ref *ref,
+					  percpu_ref_func_t *confirm_चयन)
+अणु
+	अगर (ref->percpu_count_ptr & __PERCPU_REF_ATOMIC) अणु
+		अगर (confirm_चयन)
+			confirm_चयन(ref);
+		वापस;
+	पूर्ण
 
-	/* switching from percpu to atomic */
+	/* चयनing from percpu to atomic */
 	ref->percpu_count_ptr |= __PERCPU_REF_ATOMIC;
 
 	/*
-	 * Non-NULL ->confirm_switch is used to indicate that switching is
-	 * in progress.  Use noop one if unspecified.
+	 * Non-शून्य ->confirm_चयन is used to indicate that चयनing is
+	 * in progress.  Use noop one अगर unspecअगरied.
 	 */
-	ref->data->confirm_switch = confirm_switch ?:
-		percpu_ref_noop_confirm_switch;
+	ref->data->confirm_चयन = confirm_चयन ?:
+		percpu_ref_noop_confirm_चयन;
 
 	percpu_ref_get(ref);	/* put after confirmation */
-	call_rcu(&ref->data->rcu, percpu_ref_switch_to_atomic_rcu);
-}
+	call_rcu(&ref->data->rcu, percpu_ref_चयन_to_atomic_rcu);
+पूर्ण
 
-static void __percpu_ref_switch_to_percpu(struct percpu_ref *ref)
-{
-	unsigned long __percpu *percpu_count = percpu_count_ptr(ref);
-	int cpu;
+अटल व्योम __percpu_ref_चयन_to_percpu(काष्ठा percpu_ref *ref)
+अणु
+	अचिन्हित दीर्घ __percpu *percpu_count = percpu_count_ptr(ref);
+	पूर्णांक cpu;
 
 	BUG_ON(!percpu_count);
 
-	if (!(ref->percpu_count_ptr & __PERCPU_REF_ATOMIC))
-		return;
+	अगर (!(ref->percpu_count_ptr & __PERCPU_REF_ATOMIC))
+		वापस;
 
-	if (WARN_ON_ONCE(!ref->data->allow_reinit))
-		return;
+	अगर (WARN_ON_ONCE(!ref->data->allow_reinit))
+		वापस;
 
-	atomic_long_add(PERCPU_COUNT_BIAS, &ref->data->count);
+	atomic_दीर्घ_add(PERCPU_COUNT_BIAS, &ref->data->count);
 
 	/*
 	 * Restore per-cpu operation.  smp_store_release() is paired
@@ -253,176 +254,176 @@ static void __percpu_ref_switch_to_percpu(struct percpu_ref *ref)
 	 * zeroing is visible to all percpu accesses which can see the
 	 * following __PERCPU_REF_ATOMIC clearing.
 	 */
-	for_each_possible_cpu(cpu)
+	क्रम_each_possible_cpu(cpu)
 		*per_cpu_ptr(percpu_count, cpu) = 0;
 
 	smp_store_release(&ref->percpu_count_ptr,
 			  ref->percpu_count_ptr & ~__PERCPU_REF_ATOMIC);
-}
+पूर्ण
 
-static void __percpu_ref_switch_mode(struct percpu_ref *ref,
-				     percpu_ref_func_t *confirm_switch)
-{
-	struct percpu_ref_data *data = ref->data;
+अटल व्योम __percpu_ref_चयन_mode(काष्ठा percpu_ref *ref,
+				     percpu_ref_func_t *confirm_चयन)
+अणु
+	काष्ठा percpu_ref_data *data = ref->data;
 
-	lockdep_assert_held(&percpu_ref_switch_lock);
+	lockdep_निश्चित_held(&percpu_ref_चयन_lock);
 
 	/*
-	 * If the previous ATOMIC switching hasn't finished yet, wait for
-	 * its completion.  If the caller ensures that ATOMIC switching
+	 * If the previous ATOMIC चयनing hasn't finished yet, रुको क्रम
+	 * its completion.  If the caller ensures that ATOMIC चयनing
 	 * isn't in progress, this function can be called from any context.
 	 */
-	wait_event_lock_irq(percpu_ref_switch_waitq, !data->confirm_switch,
-			    percpu_ref_switch_lock);
+	रुको_event_lock_irq(percpu_ref_चयन_रुकोq, !data->confirm_चयन,
+			    percpu_ref_चयन_lock);
 
-	if (data->force_atomic || percpu_ref_is_dying(ref))
-		__percpu_ref_switch_to_atomic(ref, confirm_switch);
-	else
-		__percpu_ref_switch_to_percpu(ref);
-}
+	अगर (data->क्रमce_atomic || percpu_ref_is_dying(ref))
+		__percpu_ref_चयन_to_atomic(ref, confirm_चयन);
+	अन्यथा
+		__percpu_ref_चयन_to_percpu(ref);
+पूर्ण
 
 /**
- * percpu_ref_switch_to_atomic - switch a percpu_ref to atomic mode
- * @ref: percpu_ref to switch to atomic mode
- * @confirm_switch: optional confirmation callback
+ * percpu_ref_चयन_to_atomic - चयन a percpu_ref to atomic mode
+ * @ref: percpu_ref to चयन to atomic mode
+ * @confirm_चयन: optional confirmation callback
  *
- * There's no reason to use this function for the usual reference counting.
- * Use percpu_ref_kill[_and_confirm]().
+ * There's no reason to use this function क्रम the usual reference counting.
+ * Use percpu_ref_समाप्त[_and_confirm]().
  *
- * Schedule switching of @ref to atomic mode.  All its percpu counts will
- * be collected to the main atomic counter.  On completion, when all CPUs
- * are guaraneed to be in atomic mode, @confirm_switch, which may not
+ * Schedule चयनing of @ref to atomic mode.  All its percpu counts will
+ * be collected to the मुख्य atomic counter.  On completion, when all CPUs
+ * are guaraneed to be in atomic mode, @confirm_चयन, which may not
  * block, is invoked.  This function may be invoked concurrently with all
- * the get/put operations and can safely be mixed with kill and reinit
- * operations.  Note that @ref will stay in atomic mode across kill/reinit
- * cycles until percpu_ref_switch_to_percpu() is called.
+ * the get/put operations and can safely be mixed with समाप्त and reinit
+ * operations.  Note that @ref will stay in atomic mode across समाप्त/reinit
+ * cycles until percpu_ref_चयन_to_percpu() is called.
  *
- * This function may block if @ref is in the process of switching to atomic
+ * This function may block अगर @ref is in the process of चयनing to atomic
  * mode.  If the caller ensures that @ref is not in the process of
- * switching to atomic mode, this function can be called from any context.
+ * चयनing to atomic mode, this function can be called from any context.
  */
-void percpu_ref_switch_to_atomic(struct percpu_ref *ref,
-				 percpu_ref_func_t *confirm_switch)
-{
-	unsigned long flags;
+व्योम percpu_ref_चयन_to_atomic(काष्ठा percpu_ref *ref,
+				 percpu_ref_func_t *confirm_चयन)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&percpu_ref_switch_lock, flags);
+	spin_lock_irqsave(&percpu_ref_चयन_lock, flags);
 
-	ref->data->force_atomic = true;
-	__percpu_ref_switch_mode(ref, confirm_switch);
+	ref->data->क्रमce_atomic = true;
+	__percpu_ref_चयन_mode(ref, confirm_चयन);
 
-	spin_unlock_irqrestore(&percpu_ref_switch_lock, flags);
-}
-EXPORT_SYMBOL_GPL(percpu_ref_switch_to_atomic);
+	spin_unlock_irqrestore(&percpu_ref_चयन_lock, flags);
+पूर्ण
+EXPORT_SYMBOL_GPL(percpu_ref_चयन_to_atomic);
 
 /**
- * percpu_ref_switch_to_atomic_sync - switch a percpu_ref to atomic mode
- * @ref: percpu_ref to switch to atomic mode
+ * percpu_ref_चयन_to_atomic_sync - चयन a percpu_ref to atomic mode
+ * @ref: percpu_ref to चयन to atomic mode
  *
- * Schedule switching the ref to atomic mode, and wait for the
- * switch to complete.  Caller must ensure that no other thread
- * will switch back to percpu mode.
+ * Schedule चयनing the ref to atomic mode, and रुको क्रम the
+ * चयन to complete.  Caller must ensure that no other thपढ़ो
+ * will चयन back to percpu mode.
  */
-void percpu_ref_switch_to_atomic_sync(struct percpu_ref *ref)
-{
-	percpu_ref_switch_to_atomic(ref, NULL);
-	wait_event(percpu_ref_switch_waitq, !ref->data->confirm_switch);
-}
-EXPORT_SYMBOL_GPL(percpu_ref_switch_to_atomic_sync);
+व्योम percpu_ref_चयन_to_atomic_sync(काष्ठा percpu_ref *ref)
+अणु
+	percpu_ref_चयन_to_atomic(ref, शून्य);
+	रुको_event(percpu_ref_चयन_रुकोq, !ref->data->confirm_चयन);
+पूर्ण
+EXPORT_SYMBOL_GPL(percpu_ref_चयन_to_atomic_sync);
 
 /**
- * percpu_ref_switch_to_percpu - switch a percpu_ref to percpu mode
- * @ref: percpu_ref to switch to percpu mode
+ * percpu_ref_चयन_to_percpu - चयन a percpu_ref to percpu mode
+ * @ref: percpu_ref to चयन to percpu mode
  *
- * There's no reason to use this function for the usual reference counting.
+ * There's no reason to use this function क्रम the usual reference counting.
  * To re-use an expired ref, use percpu_ref_reinit().
  *
  * Switch @ref to percpu mode.  This function may be invoked concurrently
- * with all the get/put operations and can safely be mixed with kill and
+ * with all the get/put operations and can safely be mixed with समाप्त and
  * reinit operations.  This function reverses the sticky atomic state set
- * by PERCPU_REF_INIT_ATOMIC or percpu_ref_switch_to_atomic().  If @ref is
- * dying or dead, the actual switching takes place on the following
+ * by PERCPU_REF_INIT_ATOMIC or percpu_ref_चयन_to_atomic().  If @ref is
+ * dying or dead, the actual चयनing takes place on the following
  * percpu_ref_reinit().
  *
- * This function may block if @ref is in the process of switching to atomic
+ * This function may block अगर @ref is in the process of चयनing to atomic
  * mode.  If the caller ensures that @ref is not in the process of
- * switching to atomic mode, this function can be called from any context.
+ * चयनing to atomic mode, this function can be called from any context.
  */
-void percpu_ref_switch_to_percpu(struct percpu_ref *ref)
-{
-	unsigned long flags;
+व्योम percpu_ref_चयन_to_percpu(काष्ठा percpu_ref *ref)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&percpu_ref_switch_lock, flags);
+	spin_lock_irqsave(&percpu_ref_चयन_lock, flags);
 
-	ref->data->force_atomic = false;
-	__percpu_ref_switch_mode(ref, NULL);
+	ref->data->क्रमce_atomic = false;
+	__percpu_ref_चयन_mode(ref, शून्य);
 
-	spin_unlock_irqrestore(&percpu_ref_switch_lock, flags);
-}
-EXPORT_SYMBOL_GPL(percpu_ref_switch_to_percpu);
+	spin_unlock_irqrestore(&percpu_ref_चयन_lock, flags);
+पूर्ण
+EXPORT_SYMBOL_GPL(percpu_ref_चयन_to_percpu);
 
 /**
- * percpu_ref_kill_and_confirm - drop the initial ref and schedule confirmation
- * @ref: percpu_ref to kill
- * @confirm_kill: optional confirmation callback
+ * percpu_ref_समाप्त_and_confirm - drop the initial ref and schedule confirmation
+ * @ref: percpu_ref to समाप्त
+ * @confirm_समाप्त: optional confirmation callback
  *
- * Equivalent to percpu_ref_kill() but also schedules kill confirmation if
- * @confirm_kill is not NULL.  @confirm_kill, which may not block, will be
- * called after @ref is seen as dead from all CPUs at which point all
+ * Equivalent to percpu_ref_समाप्त() but also schedules समाप्त confirmation अगर
+ * @confirm_समाप्त is not शून्य.  @confirm_समाप्त, which may not block, will be
+ * called after @ref is seen as dead from all CPUs at which poपूर्णांक all
  * further invocations of percpu_ref_tryget_live() will fail.  See
- * percpu_ref_tryget_live() for details.
+ * percpu_ref_tryget_live() क्रम details.
  *
- * This function normally doesn't block and can be called from any context
- * but it may block if @confirm_kill is specified and @ref is in the
- * process of switching to atomic mode by percpu_ref_switch_to_atomic().
+ * This function normally करोesn't block and can be called from any context
+ * but it may block अगर @confirm_समाप्त is specअगरied and @ref is in the
+ * process of चयनing to atomic mode by percpu_ref_चयन_to_atomic().
  *
- * There are no implied RCU grace periods between kill and release.
+ * There are no implied RCU grace periods between समाप्त and release.
  */
-void percpu_ref_kill_and_confirm(struct percpu_ref *ref,
-				 percpu_ref_func_t *confirm_kill)
-{
-	unsigned long flags;
+व्योम percpu_ref_समाप्त_and_confirm(काष्ठा percpu_ref *ref,
+				 percpu_ref_func_t *confirm_समाप्त)
+अणु
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&percpu_ref_switch_lock, flags);
+	spin_lock_irqsave(&percpu_ref_चयन_lock, flags);
 
 	WARN_ONCE(percpu_ref_is_dying(ref),
 		  "%s called more than once on %ps!", __func__,
 		  ref->data->release);
 
 	ref->percpu_count_ptr |= __PERCPU_REF_DEAD;
-	__percpu_ref_switch_mode(ref, confirm_kill);
+	__percpu_ref_चयन_mode(ref, confirm_समाप्त);
 	percpu_ref_put(ref);
 
-	spin_unlock_irqrestore(&percpu_ref_switch_lock, flags);
-}
-EXPORT_SYMBOL_GPL(percpu_ref_kill_and_confirm);
+	spin_unlock_irqrestore(&percpu_ref_चयन_lock, flags);
+पूर्ण
+EXPORT_SYMBOL_GPL(percpu_ref_समाप्त_and_confirm);
 
 /**
  * percpu_ref_is_zero - test whether a percpu refcount reached zero
  * @ref: percpu_ref to test
  *
- * Returns %true if @ref reached zero.
+ * Returns %true अगर @ref reached zero.
  *
- * This function is safe to call as long as @ref is between init and exit.
+ * This function is safe to call as दीर्घ as @ref is between init and निकास.
  */
-bool percpu_ref_is_zero(struct percpu_ref *ref)
-{
-	unsigned long __percpu *percpu_count;
-	unsigned long count, flags;
+bool percpu_ref_is_zero(काष्ठा percpu_ref *ref)
+अणु
+	अचिन्हित दीर्घ __percpu *percpu_count;
+	अचिन्हित दीर्घ count, flags;
 
-	if (__ref_is_percpu(ref, &percpu_count))
-		return false;
+	अगर (__ref_is_percpu(ref, &percpu_count))
+		वापस false;
 
 	/* protect us from being destroyed */
-	spin_lock_irqsave(&percpu_ref_switch_lock, flags);
-	if (ref->data)
-		count = atomic_long_read(&ref->data->count);
-	else
+	spin_lock_irqsave(&percpu_ref_चयन_lock, flags);
+	अगर (ref->data)
+		count = atomic_दीर्घ_पढ़ो(&ref->data->count);
+	अन्यथा
 		count = ref->percpu_count_ptr >> __PERCPU_REF_FLAG_BITS;
-	spin_unlock_irqrestore(&percpu_ref_switch_lock, flags);
+	spin_unlock_irqrestore(&percpu_ref_चयन_lock, flags);
 
-	return count == 0;
-}
+	वापस count == 0;
+पूर्ण
 EXPORT_SYMBOL_GPL(percpu_ref_is_zero);
 
 /**
@@ -431,47 +432,47 @@ EXPORT_SYMBOL_GPL(percpu_ref_is_zero);
  *
  * Re-initialize @ref so that it's in the same state as when it finished
  * percpu_ref_init() ignoring %PERCPU_REF_INIT_DEAD.  @ref must have been
- * initialized successfully and reached 0 but not exited.
+ * initialized successfully and reached 0 but not निकासed.
  *
- * Note that percpu_ref_tryget[_live]() are safe to perform on @ref while
+ * Note that percpu_ref_tryget[_live]() are safe to perक्रमm on @ref जबतक
  * this function is in progress.
  */
-void percpu_ref_reinit(struct percpu_ref *ref)
-{
+व्योम percpu_ref_reinit(काष्ठा percpu_ref *ref)
+अणु
 	WARN_ON_ONCE(!percpu_ref_is_zero(ref));
 
 	percpu_ref_resurrect(ref);
-}
+पूर्ण
 EXPORT_SYMBOL_GPL(percpu_ref_reinit);
 
 /**
- * percpu_ref_resurrect - modify a percpu refcount from dead to live
+ * percpu_ref_resurrect - modअगरy a percpu refcount from dead to live
  * @ref: perpcu_ref to resurrect
  *
- * Modify @ref so that it's in the same state as before percpu_ref_kill() was
- * called. @ref must be dead but must not yet have exited.
+ * Modअगरy @ref so that it's in the same state as beक्रमe percpu_ref_समाप्त() was
+ * called. @ref must be dead but must not yet have निकासed.
  *
- * If @ref->release() frees @ref then the caller is responsible for
- * guaranteeing that @ref->release() does not get called while this
+ * If @ref->release() मुक्तs @ref then the caller is responsible क्रम
+ * guaranteeing that @ref->release() करोes not get called जबतक this
  * function is in progress.
  *
- * Note that percpu_ref_tryget[_live]() are safe to perform on @ref while
+ * Note that percpu_ref_tryget[_live]() are safe to perक्रमm on @ref जबतक
  * this function is in progress.
  */
-void percpu_ref_resurrect(struct percpu_ref *ref)
-{
-	unsigned long __percpu *percpu_count;
-	unsigned long flags;
+व्योम percpu_ref_resurrect(काष्ठा percpu_ref *ref)
+अणु
+	अचिन्हित दीर्घ __percpu *percpu_count;
+	अचिन्हित दीर्घ flags;
 
-	spin_lock_irqsave(&percpu_ref_switch_lock, flags);
+	spin_lock_irqsave(&percpu_ref_चयन_lock, flags);
 
 	WARN_ON_ONCE(!percpu_ref_is_dying(ref));
 	WARN_ON_ONCE(__ref_is_percpu(ref, &percpu_count));
 
 	ref->percpu_count_ptr &= ~__PERCPU_REF_DEAD;
 	percpu_ref_get(ref);
-	__percpu_ref_switch_mode(ref, NULL);
+	__percpu_ref_चयन_mode(ref, शून्य);
 
-	spin_unlock_irqrestore(&percpu_ref_switch_lock, flags);
-}
+	spin_unlock_irqrestore(&percpu_ref_चयन_lock, flags);
+पूर्ण
 EXPORT_SYMBOL_GPL(percpu_ref_resurrect);

@@ -1,200 +1,201 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 /*
- * Copyright (C) 2000 - 2007 Jeff Dike (jdike@{addtoit,linux.intel}.com)
+ * Copyright (C) 2000 - 2007 Jeff Dike (jdike@अणुaddtoit,linux.पूर्णांकelपूर्ण.com)
  */
 
-#include <linux/stddef.h>
-#include <linux/module.h>
-#include <linux/memblock.h>
-#include <linux/highmem.h>
-#include <linux/mm.h>
-#include <linux/swap.h>
-#include <linux/slab.h>
-#include <asm/fixmap.h>
-#include <asm/page.h>
-#include <as-layout.h>
-#include <init.h>
-#include <kern.h>
-#include <kern_util.h>
-#include <mem_user.h>
-#include <os.h>
+#समावेश <linux/मानकघोष.स>
+#समावेश <linux/module.h>
+#समावेश <linux/memblock.h>
+#समावेश <linux/highस्मृति.स>
+#समावेश <linux/mm.h>
+#समावेश <linux/swap.h>
+#समावेश <linux/slab.h>
+#समावेश <यंत्र/fixmap.h>
+#समावेश <यंत्र/page.h>
+#समावेश <as-layout.h>
+#समावेश <init.h>
+#समावेश <kern.h>
+#समावेश <kern_util.h>
+#समावेश <mem_user.h>
+#समावेश <os.h>
 
 /* allocated in paging_init, zeroed in mem_init, and unchanged thereafter */
-unsigned long *empty_zero_page = NULL;
+अचिन्हित दीर्घ *empty_zero_page = शून्य;
 EXPORT_SYMBOL(empty_zero_page);
 
 /*
- * Initialized during boot, and readonly for initializing page tables
+ * Initialized during boot, and पढ़ोonly क्रम initializing page tables
  * afterwards
  */
 pgd_t swapper_pg_dir[PTRS_PER_PGD];
 
-/* Initialized at boot time, and readonly after that */
-unsigned long long highmem;
+/* Initialized at boot समय, and पढ़ोonly after that */
+अचिन्हित दीर्घ दीर्घ highmem;
 EXPORT_SYMBOL(highmem);
-int kmalloc_ok = 0;
+पूर्णांक kदो_स्मृति_ok = 0;
 
 /* Used during early boot */
-static unsigned long brk_end;
+अटल अचिन्हित दीर्घ brk_end;
 
-void __init mem_init(void)
-{
+व्योम __init mem_init(व्योम)
+अणु
 	/* clear the zero-page */
-	memset(empty_zero_page, 0, PAGE_SIZE);
+	स_रखो(empty_zero_page, 0, PAGE_SIZE);
 
-	/* Map in the area just after the brk now that kmalloc is about
+	/* Map in the area just after the brk now that kदो_स्मृति is about
 	 * to be turned on.
 	 */
-	brk_end = (unsigned long) UML_ROUND_UP(sbrk(0));
+	brk_end = (अचिन्हित दीर्घ) UML_ROUND_UP(sbrk(0));
 	map_memory(brk_end, __pa(brk_end), uml_reserved - brk_end, 1, 1, 0);
-	memblock_free(__pa(brk_end), uml_reserved - brk_end);
+	memblock_मुक्त(__pa(brk_end), uml_reserved - brk_end);
 	uml_reserved = brk_end;
 
-	/* this will put all low memory onto the freelists */
-	memblock_free_all();
+	/* this will put all low memory onto the मुक्तlists */
+	memblock_मुक्त_all();
 	max_low_pfn = totalram_pages();
 	max_pfn = max_low_pfn;
-	kmalloc_ok = 1;
-}
+	kदो_स्मृति_ok = 1;
+पूर्ण
 
 /*
- * Create a page table and place a pointer to it in a middle page
+ * Create a page table and place a poपूर्णांकer to it in a middle page
  * directory entry.
  */
-static void __init one_page_table_init(pmd_t *pmd)
-{
-	if (pmd_none(*pmd)) {
+अटल व्योम __init one_page_table_init(pmd_t *pmd)
+अणु
+	अगर (pmd_none(*pmd)) अणु
 		pte_t *pte = (pte_t *) memblock_alloc_low(PAGE_SIZE,
 							  PAGE_SIZE);
-		if (!pte)
+		अगर (!pte)
 			panic("%s: Failed to allocate %lu bytes align=%lx\n",
 			      __func__, PAGE_SIZE, PAGE_SIZE);
 
 		set_pmd(pmd, __pmd(_KERNPG_TABLE +
-					   (unsigned long) __pa(pte)));
+					   (अचिन्हित दीर्घ) __pa(pte)));
 		BUG_ON(pte != pte_offset_kernel(pmd, 0));
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init one_md_table_init(pud_t *pud)
-{
-#ifdef CONFIG_3_LEVEL_PGTABLES
+अटल व्योम __init one_md_table_init(pud_t *pud)
+अणु
+#अगर_घोषित CONFIG_3_LEVEL_PGTABLES
 	pmd_t *pmd_table = (pmd_t *) memblock_alloc_low(PAGE_SIZE, PAGE_SIZE);
-	if (!pmd_table)
+	अगर (!pmd_table)
 		panic("%s: Failed to allocate %lu bytes align=%lx\n",
 		      __func__, PAGE_SIZE, PAGE_SIZE);
 
-	set_pud(pud, __pud(_KERNPG_TABLE + (unsigned long) __pa(pmd_table)));
-	if (pmd_table != pmd_offset(pud, 0))
+	set_pud(pud, __pud(_KERNPG_TABLE + (अचिन्हित दीर्घ) __pa(pmd_table)));
+	अगर (pmd_table != pmd_offset(pud, 0))
 		BUG();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-static void __init fixrange_init(unsigned long start, unsigned long end,
+अटल व्योम __init fixrange_init(अचिन्हित दीर्घ start, अचिन्हित दीर्घ end,
 				 pgd_t *pgd_base)
-{
+अणु
 	pgd_t *pgd;
 	p4d_t *p4d;
 	pud_t *pud;
 	pmd_t *pmd;
-	int i, j;
-	unsigned long vaddr;
+	पूर्णांक i, j;
+	अचिन्हित दीर्घ vaddr;
 
 	vaddr = start;
 	i = pgd_index(vaddr);
 	j = pmd_index(vaddr);
 	pgd = pgd_base + i;
 
-	for ( ; (i < PTRS_PER_PGD) && (vaddr < end); pgd++, i++) {
+	क्रम ( ; (i < PTRS_PER_PGD) && (vaddr < end); pgd++, i++) अणु
 		p4d = p4d_offset(pgd, vaddr);
 		pud = pud_offset(p4d, vaddr);
-		if (pud_none(*pud))
+		अगर (pud_none(*pud))
 			one_md_table_init(pud);
 		pmd = pmd_offset(pud, vaddr);
-		for (; (j < PTRS_PER_PMD) && (vaddr < end); pmd++, j++) {
+		क्रम (; (j < PTRS_PER_PMD) && (vaddr < end); pmd++, j++) अणु
 			one_page_table_init(pmd);
 			vaddr += PMD_SIZE;
-		}
+		पूर्ण
 		j = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void __init fixaddr_user_init( void)
-{
-#ifdef CONFIG_ARCH_REUSE_HOST_VSYSCALL_AREA
-	long size = FIXADDR_USER_END - FIXADDR_USER_START;
+अटल व्योम __init fixaddr_user_init( व्योम)
+अणु
+#अगर_घोषित CONFIG_ARCH_REUSE_HOST_VSYSCALL_AREA
+	दीर्घ size = FIXADDR_USER_END - FIXADDR_USER_START;
 	pte_t *pte;
 	phys_t p;
-	unsigned long v, vaddr = FIXADDR_USER_START;
+	अचिन्हित दीर्घ v, vaddr = FIXADDR_USER_START;
 
-	if (!size)
-		return;
+	अगर (!size)
+		वापस;
 
 	fixrange_init( FIXADDR_USER_START, FIXADDR_USER_END, swapper_pg_dir);
-	v = (unsigned long) memblock_alloc_low(size, PAGE_SIZE);
-	if (!v)
+	v = (अचिन्हित दीर्घ) memblock_alloc_low(size, PAGE_SIZE);
+	अगर (!v)
 		panic("%s: Failed to allocate %lu bytes align=%lx\n",
 		      __func__, size, PAGE_SIZE);
 
-	memcpy((void *) v , (void *) FIXADDR_USER_START, size);
+	स_नकल((व्योम *) v , (व्योम *) FIXADDR_USER_START, size);
 	p = __pa(v);
-	for ( ; size > 0; size -= PAGE_SIZE, vaddr += PAGE_SIZE,
-		      p += PAGE_SIZE) {
+	क्रम ( ; size > 0; size -= PAGE_SIZE, vaddr += PAGE_SIZE,
+		      p += PAGE_SIZE) अणु
 		pte = virt_to_kpte(vaddr);
 		pte_set_val(*pte, p, PAGE_READONLY);
-	}
-#endif
-}
+	पूर्ण
+#पूर्ण_अगर
+पूर्ण
 
-void __init paging_init(void)
-{
-	unsigned long max_zone_pfn[MAX_NR_ZONES] = { 0 };
-	unsigned long vaddr;
+व्योम __init paging_init(व्योम)
+अणु
+	अचिन्हित दीर्घ max_zone_pfn[MAX_NR_ZONES] = अणु 0 पूर्ण;
+	अचिन्हित दीर्घ vaddr;
 
-	empty_zero_page = (unsigned long *) memblock_alloc_low(PAGE_SIZE,
+	empty_zero_page = (अचिन्हित दीर्घ *) memblock_alloc_low(PAGE_SIZE,
 							       PAGE_SIZE);
-	if (!empty_zero_page)
+	अगर (!empty_zero_page)
 		panic("%s: Failed to allocate %lu bytes align=%lx\n",
 		      __func__, PAGE_SIZE, PAGE_SIZE);
 
 	max_zone_pfn[ZONE_NORMAL] = end_iomem >> PAGE_SHIFT;
-	free_area_init(max_zone_pfn);
+	मुक्त_area_init(max_zone_pfn);
 
 	/*
-	 * Fixed mappings, only the page table structure has to be
+	 * Fixed mappings, only the page table काष्ठाure has to be
 	 * created - mappings will be set by set_fixmap():
 	 */
 	vaddr = __fix_to_virt(__end_of_fixed_addresses - 1) & PMD_MASK;
 	fixrange_init(vaddr, FIXADDR_TOP, swapper_pg_dir);
 
 	fixaddr_user_init();
-}
+पूर्ण
 
 /*
- * This can't do anything because nothing in the kernel image can be freed
+ * This can't करो anything because nothing in the kernel image can be मुक्तd
  * since it's not in kernel physical memory.
  */
 
-void free_initmem(void)
-{
-}
+व्योम मुक्त_iniपंचांगem(व्योम)
+अणु
+पूर्ण
 
-/* Allocate and free page tables. */
+/* Allocate and मुक्त page tables. */
 
-pgd_t *pgd_alloc(struct mm_struct *mm)
-{
-	pgd_t *pgd = (pgd_t *)__get_free_page(GFP_KERNEL);
+pgd_t *pgd_alloc(काष्ठा mm_काष्ठा *mm)
+अणु
+	pgd_t *pgd = (pgd_t *)__get_मुक्त_page(GFP_KERNEL);
 
-	if (pgd) {
-		memset(pgd, 0, USER_PTRS_PER_PGD * sizeof(pgd_t));
-		memcpy(pgd + USER_PTRS_PER_PGD,
+	अगर (pgd) अणु
+		स_रखो(pgd, 0, USER_PTRS_PER_PGD * माप(pgd_t));
+		स_नकल(pgd + USER_PTRS_PER_PGD,
 		       swapper_pg_dir + USER_PTRS_PER_PGD,
-		       (PTRS_PER_PGD - USER_PTRS_PER_PGD) * sizeof(pgd_t));
-	}
-	return pgd;
-}
+		       (PTRS_PER_PGD - USER_PTRS_PER_PGD) * माप(pgd_t));
+	पूर्ण
+	वापस pgd;
+पूर्ण
 
-void *uml_kmalloc(int size, int flags)
-{
-	return kmalloc(size, flags);
-}
+व्योम *uml_kदो_स्मृति(पूर्णांक size, पूर्णांक flags)
+अणु
+	वापस kदो_स्मृति(size, flags);
+पूर्ण

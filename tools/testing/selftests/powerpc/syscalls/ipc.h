@@ -1,48 +1,49 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifdef __NR_semop
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_घोषित __NR_semop
 DO_TEST(semop, __NR_semop)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_semget
+#अगर_घोषित __NR_semget
 DO_TEST(semget, __NR_semget)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_semctl
+#अगर_घोषित __NR_semctl
 DO_TEST(semctl, __NR_semctl)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_semtimedop
-DO_TEST(semtimedop, __NR_semtimedop)
-#endif
+#अगर_घोषित __NR_semसमयकरोp
+DO_TEST(semसमयकरोp, __NR_semसमयकरोp)
+#पूर्ण_अगर
 
-#ifdef __NR_msgsnd
+#अगर_घोषित __NR_msgsnd
 DO_TEST(msgsnd, __NR_msgsnd)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_msgrcv
+#अगर_घोषित __NR_msgrcv
 DO_TEST(msgrcv, __NR_msgrcv)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_msgget
+#अगर_घोषित __NR_msgget
 DO_TEST(msgget, __NR_msgget)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_msgctl
+#अगर_घोषित __NR_msgctl
 DO_TEST(msgctl, __NR_msgctl)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_shmat
+#अगर_घोषित __NR_shmat
 DO_TEST(shmat, __NR_shmat)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_shmdt
+#अगर_घोषित __NR_shmdt
 DO_TEST(shmdt, __NR_shmdt)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_shmget
+#अगर_घोषित __NR_shmget
 DO_TEST(shmget, __NR_shmget)
-#endif
+#पूर्ण_अगर
 
-#ifdef __NR_shmctl
+#अगर_घोषित __NR_shmctl
 DO_TEST(shmctl, __NR_shmctl)
-#endif
+#पूर्ण_अगर

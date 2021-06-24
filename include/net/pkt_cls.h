@@ -1,308 +1,309 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef __NET_PKT_CLS_H
-#define __NET_PKT_CLS_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित __NET_PKT_CLS_H
+#घोषणा __NET_PKT_CLS_H
 
-#include <linux/pkt_cls.h>
-#include <linux/workqueue.h>
-#include <net/sch_generic.h>
-#include <net/act_api.h>
-#include <net/net_namespace.h>
+#समावेश <linux/pkt_cls.h>
+#समावेश <linux/workqueue.h>
+#समावेश <net/sch_generic.h>
+#समावेश <net/act_api.h>
+#समावेश <net/net_namespace.h>
 
 /* TC action not accessible from user space */
-#define TC_ACT_CONSUMED		(TC_ACT_VALUE_MAX + 1)
+#घोषणा TC_ACT_CONSUMED		(TC_ACT_VALUE_MAX + 1)
 
-/* Basic packet classifier frontend definitions. */
+/* Basic packet classअगरier frontend definitions. */
 
-struct tcf_walker {
-	int	stop;
-	int	skip;
-	int	count;
+काष्ठा tcf_walker अणु
+	पूर्णांक	stop;
+	पूर्णांक	skip;
+	पूर्णांक	count;
 	bool	nonempty;
-	unsigned long cookie;
-	int	(*fn)(struct tcf_proto *, void *node, struct tcf_walker *);
-};
+	अचिन्हित दीर्घ cookie;
+	पूर्णांक	(*fn)(काष्ठा tcf_proto *, व्योम *node, काष्ठा tcf_walker *);
+पूर्ण;
 
-int register_tcf_proto_ops(struct tcf_proto_ops *ops);
-int unregister_tcf_proto_ops(struct tcf_proto_ops *ops);
+पूर्णांक रेजिस्टर_tcf_proto_ops(काष्ठा tcf_proto_ops *ops);
+पूर्णांक unरेजिस्टर_tcf_proto_ops(काष्ठा tcf_proto_ops *ops);
 
-struct tcf_block_ext_info {
-	enum flow_block_binder_type binder_type;
+काष्ठा tcf_block_ext_info अणु
+	क्रमागत flow_block_binder_type binder_type;
 	tcf_chain_head_change_t *chain_head_change;
-	void *chain_head_change_priv;
+	व्योम *chain_head_change_priv;
 	u32 block_index;
-};
+पूर्ण;
 
-struct tcf_qevent {
-	struct tcf_block	*block;
-	struct tcf_block_ext_info info;
-	struct tcf_proto __rcu *filter_chain;
-};
+काष्ठा tcf_qevent अणु
+	काष्ठा tcf_block	*block;
+	काष्ठा tcf_block_ext_info info;
+	काष्ठा tcf_proto __rcu *filter_chain;
+पूर्ण;
 
-struct tcf_block_cb;
-bool tcf_queue_work(struct rcu_work *rwork, work_func_t func);
+काष्ठा tcf_block_cb;
+bool tcf_queue_work(काष्ठा rcu_work *rwork, work_func_t func);
 
-#ifdef CONFIG_NET_CLS
-struct tcf_chain *tcf_chain_get_by_act(struct tcf_block *block,
+#अगर_घोषित CONFIG_NET_CLS
+काष्ठा tcf_chain *tcf_chain_get_by_act(काष्ठा tcf_block *block,
 				       u32 chain_index);
-void tcf_chain_put_by_act(struct tcf_chain *chain);
-struct tcf_chain *tcf_get_next_chain(struct tcf_block *block,
-				     struct tcf_chain *chain);
-struct tcf_proto *tcf_get_next_proto(struct tcf_chain *chain,
-				     struct tcf_proto *tp);
-void tcf_block_netif_keep_dst(struct tcf_block *block);
-int tcf_block_get(struct tcf_block **p_block,
-		  struct tcf_proto __rcu **p_filter_chain, struct Qdisc *q,
-		  struct netlink_ext_ack *extack);
-int tcf_block_get_ext(struct tcf_block **p_block, struct Qdisc *q,
-		      struct tcf_block_ext_info *ei,
-		      struct netlink_ext_ack *extack);
-void tcf_block_put(struct tcf_block *block);
-void tcf_block_put_ext(struct tcf_block *block, struct Qdisc *q,
-		       struct tcf_block_ext_info *ei);
+व्योम tcf_chain_put_by_act(काष्ठा tcf_chain *chain);
+काष्ठा tcf_chain *tcf_get_next_chain(काष्ठा tcf_block *block,
+				     काष्ठा tcf_chain *chain);
+काष्ठा tcf_proto *tcf_get_next_proto(काष्ठा tcf_chain *chain,
+				     काष्ठा tcf_proto *tp);
+व्योम tcf_block_netअगर_keep_dst(काष्ठा tcf_block *block);
+पूर्णांक tcf_block_get(काष्ठा tcf_block **p_block,
+		  काष्ठा tcf_proto __rcu **p_filter_chain, काष्ठा Qdisc *q,
+		  काष्ठा netlink_ext_ack *extack);
+पूर्णांक tcf_block_get_ext(काष्ठा tcf_block **p_block, काष्ठा Qdisc *q,
+		      काष्ठा tcf_block_ext_info *ei,
+		      काष्ठा netlink_ext_ack *extack);
+व्योम tcf_block_put(काष्ठा tcf_block *block);
+व्योम tcf_block_put_ext(काष्ठा tcf_block *block, काष्ठा Qdisc *q,
+		       काष्ठा tcf_block_ext_info *ei);
 
-static inline bool tcf_block_shared(struct tcf_block *block)
-{
-	return block->index;
-}
+अटल अंतरभूत bool tcf_block_shared(काष्ठा tcf_block *block)
+अणु
+	वापस block->index;
+पूर्ण
 
-static inline bool tcf_block_non_null_shared(struct tcf_block *block)
-{
-	return block && block->index;
-}
+अटल अंतरभूत bool tcf_block_non_null_shared(काष्ठा tcf_block *block)
+अणु
+	वापस block && block->index;
+पूर्ण
 
-static inline struct Qdisc *tcf_block_q(struct tcf_block *block)
-{
+अटल अंतरभूत काष्ठा Qdisc *tcf_block_q(काष्ठा tcf_block *block)
+अणु
 	WARN_ON(tcf_block_shared(block));
-	return block->q;
-}
+	वापस block->q;
+पूर्ण
 
-int tcf_classify(struct sk_buff *skb, const struct tcf_proto *tp,
-		 struct tcf_result *res, bool compat_mode);
-int tcf_classify_ingress(struct sk_buff *skb,
-			 const struct tcf_block *ingress_block,
-			 const struct tcf_proto *tp, struct tcf_result *res,
+पूर्णांक tcf_classअगरy(काष्ठा sk_buff *skb, स्थिर काष्ठा tcf_proto *tp,
+		 काष्ठा tcf_result *res, bool compat_mode);
+पूर्णांक tcf_classअगरy_ingress(काष्ठा sk_buff *skb,
+			 स्थिर काष्ठा tcf_block *ingress_block,
+			 स्थिर काष्ठा tcf_proto *tp, काष्ठा tcf_result *res,
 			 bool compat_mode);
 
-#else
-static inline bool tcf_block_shared(struct tcf_block *block)
-{
-	return false;
-}
+#अन्यथा
+अटल अंतरभूत bool tcf_block_shared(काष्ठा tcf_block *block)
+अणु
+	वापस false;
+पूर्ण
 
-static inline bool tcf_block_non_null_shared(struct tcf_block *block)
-{
-	return false;
-}
+अटल अंतरभूत bool tcf_block_non_null_shared(काष्ठा tcf_block *block)
+अणु
+	वापस false;
+पूर्ण
 
-static inline
-int tcf_block_get(struct tcf_block **p_block,
-		  struct tcf_proto __rcu **p_filter_chain, struct Qdisc *q,
-		  struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक tcf_block_get(काष्ठा tcf_block **p_block,
+		  काष्ठा tcf_proto __rcu **p_filter_chain, काष्ठा Qdisc *q,
+		  काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-int tcf_block_get_ext(struct tcf_block **p_block, struct Qdisc *q,
-		      struct tcf_block_ext_info *ei,
-		      struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक tcf_block_get_ext(काष्ठा tcf_block **p_block, काष्ठा Qdisc *q,
+		      काष्ठा tcf_block_ext_info *ei,
+		      काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void tcf_block_put(struct tcf_block *block)
-{
-}
+अटल अंतरभूत व्योम tcf_block_put(काष्ठा tcf_block *block)
+अणु
+पूर्ण
 
-static inline
-void tcf_block_put_ext(struct tcf_block *block, struct Qdisc *q,
-		       struct tcf_block_ext_info *ei)
-{
-}
+अटल अंतरभूत
+व्योम tcf_block_put_ext(काष्ठा tcf_block *block, काष्ठा Qdisc *q,
+		       काष्ठा tcf_block_ext_info *ei)
+अणु
+पूर्ण
 
-static inline struct Qdisc *tcf_block_q(struct tcf_block *block)
-{
-	return NULL;
-}
+अटल अंतरभूत काष्ठा Qdisc *tcf_block_q(काष्ठा tcf_block *block)
+अणु
+	वापस शून्य;
+पूर्ण
 
-static inline
-int tc_setup_cb_block_register(struct tcf_block *block, flow_setup_cb_t *cb,
-			       void *cb_priv)
-{
-	return 0;
-}
+अटल अंतरभूत
+पूर्णांक tc_setup_cb_block_रेजिस्टर(काष्ठा tcf_block *block, flow_setup_cb_t *cb,
+			       व्योम *cb_priv)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline
-void tc_setup_cb_block_unregister(struct tcf_block *block, flow_setup_cb_t *cb,
-				  void *cb_priv)
-{
-}
+अटल अंतरभूत
+व्योम tc_setup_cb_block_unरेजिस्टर(काष्ठा tcf_block *block, flow_setup_cb_t *cb,
+				  व्योम *cb_priv)
+अणु
+पूर्ण
 
-static inline int tcf_classify(struct sk_buff *skb, const struct tcf_proto *tp,
-			       struct tcf_result *res, bool compat_mode)
-{
-	return TC_ACT_UNSPEC;
-}
+अटल अंतरभूत पूर्णांक tcf_classअगरy(काष्ठा sk_buff *skb, स्थिर काष्ठा tcf_proto *tp,
+			       काष्ठा tcf_result *res, bool compat_mode)
+अणु
+	वापस TC_ACT_UNSPEC;
+पूर्ण
 
-static inline int tcf_classify_ingress(struct sk_buff *skb,
-				       const struct tcf_block *ingress_block,
-				       const struct tcf_proto *tp,
-				       struct tcf_result *res, bool compat_mode)
-{
-	return TC_ACT_UNSPEC;
-}
+अटल अंतरभूत पूर्णांक tcf_classअगरy_ingress(काष्ठा sk_buff *skb,
+				       स्थिर काष्ठा tcf_block *ingress_block,
+				       स्थिर काष्ठा tcf_proto *tp,
+				       काष्ठा tcf_result *res, bool compat_mode)
+अणु
+	वापस TC_ACT_UNSPEC;
+पूर्ण
 
-#endif
+#पूर्ण_अगर
 
-static inline unsigned long
-__cls_set_class(unsigned long *clp, unsigned long cl)
-{
-	return xchg(clp, cl);
-}
+अटल अंतरभूत अचिन्हित दीर्घ
+__cls_set_class(अचिन्हित दीर्घ *clp, अचिन्हित दीर्घ cl)
+अणु
+	वापस xchg(clp, cl);
+पूर्ण
 
-static inline void
-__tcf_bind_filter(struct Qdisc *q, struct tcf_result *r, unsigned long base)
-{
-	unsigned long cl;
+अटल अंतरभूत व्योम
+__tcf_bind_filter(काष्ठा Qdisc *q, काष्ठा tcf_result *r, अचिन्हित दीर्घ base)
+अणु
+	अचिन्हित दीर्घ cl;
 
 	cl = q->ops->cl_ops->bind_tcf(q, base, r->classid);
 	cl = __cls_set_class(&r->class, cl);
-	if (cl)
+	अगर (cl)
 		q->ops->cl_ops->unbind_tcf(q, cl);
-}
+पूर्ण
 
-static inline void
-tcf_bind_filter(struct tcf_proto *tp, struct tcf_result *r, unsigned long base)
-{
-	struct Qdisc *q = tp->chain->block->q;
+अटल अंतरभूत व्योम
+tcf_bind_filter(काष्ठा tcf_proto *tp, काष्ठा tcf_result *r, अचिन्हित दीर्घ base)
+अणु
+	काष्ठा Qdisc *q = tp->chain->block->q;
 
-	/* Check q as it is not set for shared blocks. In that case,
+	/* Check q as it is not set क्रम shared blocks. In that हाल,
 	 * setting class is not supported.
 	 */
-	if (!q)
-		return;
+	अगर (!q)
+		वापस;
 	sch_tree_lock(q);
 	__tcf_bind_filter(q, r, base);
 	sch_tree_unlock(q);
-}
+पूर्ण
 
-static inline void
-__tcf_unbind_filter(struct Qdisc *q, struct tcf_result *r)
-{
-	unsigned long cl;
+अटल अंतरभूत व्योम
+__tcf_unbind_filter(काष्ठा Qdisc *q, काष्ठा tcf_result *r)
+अणु
+	अचिन्हित दीर्घ cl;
 
-	if ((cl = __cls_set_class(&r->class, 0)) != 0)
+	अगर ((cl = __cls_set_class(&r->class, 0)) != 0)
 		q->ops->cl_ops->unbind_tcf(q, cl);
-}
+पूर्ण
 
-static inline void
-tcf_unbind_filter(struct tcf_proto *tp, struct tcf_result *r)
-{
-	struct Qdisc *q = tp->chain->block->q;
+अटल अंतरभूत व्योम
+tcf_unbind_filter(काष्ठा tcf_proto *tp, काष्ठा tcf_result *r)
+अणु
+	काष्ठा Qdisc *q = tp->chain->block->q;
 
-	if (!q)
-		return;
+	अगर (!q)
+		वापस;
 	__tcf_unbind_filter(q, r);
-}
+पूर्ण
 
-struct tcf_exts {
-#ifdef CONFIG_NET_CLS_ACT
-	__u32	type; /* for backward compat(TCA_OLD_COMPAT) */
-	int nr_actions;
-	struct tc_action **actions;
-	struct net *net;
-#endif
-	/* Map to export classifier specific extension TLV types to the
+काष्ठा tcf_exts अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	__u32	type; /* क्रम backward compat(TCA_OLD_COMPAT) */
+	पूर्णांक nr_actions;
+	काष्ठा tc_action **actions;
+	काष्ठा net *net;
+#पूर्ण_अगर
+	/* Map to export classअगरier specअगरic extension TLV types to the
 	 * generic extensions API. Unsupported extensions must be set to 0.
 	 */
-	int action;
-	int police;
-};
+	पूर्णांक action;
+	पूर्णांक police;
+पूर्ण;
 
-static inline int tcf_exts_init(struct tcf_exts *exts, struct net *net,
-				int action, int police)
-{
-#ifdef CONFIG_NET_CLS_ACT
+अटल अंतरभूत पूर्णांक tcf_exts_init(काष्ठा tcf_exts *exts, काष्ठा net *net,
+				पूर्णांक action, पूर्णांक police)
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
 	exts->type = 0;
 	exts->nr_actions = 0;
 	exts->net = net;
-	exts->actions = kcalloc(TCA_ACT_MAX_PRIO, sizeof(struct tc_action *),
+	exts->actions = kसुस्मृति(TCA_ACT_MAX_PRIO, माप(काष्ठा tc_action *),
 				GFP_KERNEL);
-	if (!exts->actions)
-		return -ENOMEM;
-#endif
+	अगर (!exts->actions)
+		वापस -ENOMEM;
+#पूर्ण_अगर
 	exts->action = action;
 	exts->police = police;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-/* Return false if the netns is being destroyed in cleanup_net(). Callers
- * need to do cleanup synchronously in this case, otherwise may race with
- * tc_action_net_exit(). Return true for other cases.
+/* Return false अगर the netns is being destroyed in cleanup_net(). Callers
+ * need to करो cleanup synchronously in this हाल, otherwise may race with
+ * tc_action_net_निकास(). Return true क्रम other हालs.
  */
-static inline bool tcf_exts_get_net(struct tcf_exts *exts)
-{
-#ifdef CONFIG_NET_CLS_ACT
+अटल अंतरभूत bool tcf_exts_get_net(काष्ठा tcf_exts *exts)
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
 	exts->net = maybe_get_net(exts->net);
-	return exts->net != NULL;
-#else
-	return true;
-#endif
-}
+	वापस exts->net != शून्य;
+#अन्यथा
+	वापस true;
+#पूर्ण_अगर
+पूर्ण
 
-static inline void tcf_exts_put_net(struct tcf_exts *exts)
-{
-#ifdef CONFIG_NET_CLS_ACT
-	if (exts->net)
+अटल अंतरभूत व्योम tcf_exts_put_net(काष्ठा tcf_exts *exts)
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	अगर (exts->net)
 		put_net(exts->net);
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
-#ifdef CONFIG_NET_CLS_ACT
-#define tcf_exts_for_each_action(i, a, exts) \
-	for (i = 0; i < TCA_ACT_MAX_PRIO && ((a) = (exts)->actions[i]); i++)
-#else
-#define tcf_exts_for_each_action(i, a, exts) \
-	for (; 0; (void)(i), (void)(a), (void)(exts))
-#endif
+#अगर_घोषित CONFIG_NET_CLS_ACT
+#घोषणा tcf_exts_क्रम_each_action(i, a, exts) \
+	क्रम (i = 0; i < TCA_ACT_MAX_PRIO && ((a) = (exts)->actions[i]); i++)
+#अन्यथा
+#घोषणा tcf_exts_क्रम_each_action(i, a, exts) \
+	क्रम (; 0; (व्योम)(i), (व्योम)(a), (व्योम)(exts))
+#पूर्ण_अगर
 
-static inline void
-tcf_exts_stats_update(const struct tcf_exts *exts,
+अटल अंतरभूत व्योम
+tcf_exts_stats_update(स्थिर काष्ठा tcf_exts *exts,
 		      u64 bytes, u64 packets, u64 drops, u64 lastuse,
 		      u8 used_hw_stats, bool used_hw_stats_valid)
-{
-#ifdef CONFIG_NET_CLS_ACT
-	int i;
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	पूर्णांक i;
 
 	preempt_disable();
 
-	for (i = 0; i < exts->nr_actions; i++) {
-		struct tc_action *a = exts->actions[i];
+	क्रम (i = 0; i < exts->nr_actions; i++) अणु
+		काष्ठा tc_action *a = exts->actions[i];
 
 		tcf_action_stats_update(a, bytes, packets, drops,
 					lastuse, true);
 		a->used_hw_stats = used_hw_stats;
 		a->used_hw_stats_valid = used_hw_stats_valid;
-	}
+	पूर्ण
 
 	preempt_enable();
-#endif
-}
+#पूर्ण_अगर
+पूर्ण
 
 /**
- * tcf_exts_has_actions - check if at least one action is present
+ * tcf_exts_has_actions - check अगर at least one action is present
  * @exts: tc filter extensions handle
  *
- * Returns true if at least one action is present.
+ * Returns true अगर at least one action is present.
  */
-static inline bool tcf_exts_has_actions(struct tcf_exts *exts)
-{
-#ifdef CONFIG_NET_CLS_ACT
-	return exts->nr_actions;
-#else
-	return false;
-#endif
-}
+अटल अंतरभूत bool tcf_exts_has_actions(काष्ठा tcf_exts *exts)
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	वापस exts->nr_actions;
+#अन्यथा
+	वापस false;
+#पूर्ण_अगर
+पूर्ण
 
 /**
  * tcf_exts_exec - execute tc filter extensions
@@ -311,490 +312,490 @@ static inline bool tcf_exts_has_actions(struct tcf_exts *exts)
  * @res: desired result
  *
  * Executes all configured extensions. Returns TC_ACT_OK on a normal execution,
- * a negative number if the filter must be considered unmatched or
- * a positive action code (TC_ACT_*) which must be returned to the
+ * a negative number अगर the filter must be considered unmatched or
+ * a positive action code (TC_ACT_*) which must be वापसed to the
  * underlying layer.
  */
-static inline int
-tcf_exts_exec(struct sk_buff *skb, struct tcf_exts *exts,
-	      struct tcf_result *res)
-{
-#ifdef CONFIG_NET_CLS_ACT
-	return tcf_action_exec(skb, exts->actions, exts->nr_actions, res);
-#endif
-	return TC_ACT_OK;
-}
+अटल अंतरभूत पूर्णांक
+tcf_exts_exec(काष्ठा sk_buff *skb, काष्ठा tcf_exts *exts,
+	      काष्ठा tcf_result *res)
+अणु
+#अगर_घोषित CONFIG_NET_CLS_ACT
+	वापस tcf_action_exec(skb, exts->actions, exts->nr_actions, res);
+#पूर्ण_अगर
+	वापस TC_ACT_OK;
+पूर्ण
 
-int tcf_exts_validate(struct net *net, struct tcf_proto *tp,
-		      struct nlattr **tb, struct nlattr *rate_tlv,
-		      struct tcf_exts *exts, bool ovr, bool rtnl_held,
-		      struct netlink_ext_ack *extack);
-void tcf_exts_destroy(struct tcf_exts *exts);
-void tcf_exts_change(struct tcf_exts *dst, struct tcf_exts *src);
-int tcf_exts_dump(struct sk_buff *skb, struct tcf_exts *exts);
-int tcf_exts_terse_dump(struct sk_buff *skb, struct tcf_exts *exts);
-int tcf_exts_dump_stats(struct sk_buff *skb, struct tcf_exts *exts);
+पूर्णांक tcf_exts_validate(काष्ठा net *net, काष्ठा tcf_proto *tp,
+		      काष्ठा nlattr **tb, काष्ठा nlattr *rate_tlv,
+		      काष्ठा tcf_exts *exts, bool ovr, bool rtnl_held,
+		      काष्ठा netlink_ext_ack *extack);
+व्योम tcf_exts_destroy(काष्ठा tcf_exts *exts);
+व्योम tcf_exts_change(काष्ठा tcf_exts *dst, काष्ठा tcf_exts *src);
+पूर्णांक tcf_exts_dump(काष्ठा sk_buff *skb, काष्ठा tcf_exts *exts);
+पूर्णांक tcf_exts_terse_dump(काष्ठा sk_buff *skb, काष्ठा tcf_exts *exts);
+पूर्णांक tcf_exts_dump_stats(काष्ठा sk_buff *skb, काष्ठा tcf_exts *exts);
 
 /**
- * struct tcf_pkt_info - packet information
+ * काष्ठा tcf_pkt_info - packet inक्रमmation
  */
-struct tcf_pkt_info {
-	unsigned char *		ptr;
-	int			nexthdr;
-};
+काष्ठा tcf_pkt_info अणु
+	अचिन्हित अक्षर *		ptr;
+	पूर्णांक			nexthdr;
+पूर्ण;
 
-#ifdef CONFIG_NET_EMATCH
+#अगर_घोषित CONFIG_NET_EMATCH
 
-struct tcf_ematch_ops;
+काष्ठा tcf_ematch_ops;
 
 /**
- * struct tcf_ematch - extended match (ematch)
+ * काष्ठा tcf_ematch - extended match (ematch)
  * 
- * @matchid: identifier to allow userspace to reidentify a match
- * @flags: flags specifying attributes and the relation to other matches
+ * @matchid: identअगरier to allow userspace to reidentअगरy a match
+ * @flags: flags specअगरying attributes and the relation to other matches
  * @ops: the operations lookup table of the corresponding ematch module
- * @datalen: length of the ematch specific configuration data
- * @data: ematch specific data
+ * @datalen: length of the ematch specअगरic configuration data
+ * @data: ematch specअगरic data
  */
-struct tcf_ematch {
-	struct tcf_ematch_ops * ops;
-	unsigned long		data;
-	unsigned int		datalen;
+काष्ठा tcf_ematch अणु
+	काष्ठा tcf_ematch_ops * ops;
+	अचिन्हित दीर्घ		data;
+	अचिन्हित पूर्णांक		datalen;
 	u16			matchid;
 	u16			flags;
-	struct net		*net;
-};
+	काष्ठा net		*net;
+पूर्ण;
 
-static inline int tcf_em_is_container(struct tcf_ematch *em)
-{
-	return !em->ops;
-}
+अटल अंतरभूत पूर्णांक tcf_em_is_container(काष्ठा tcf_ematch *em)
+अणु
+	वापस !em->ops;
+पूर्ण
 
-static inline int tcf_em_is_simple(struct tcf_ematch *em)
-{
-	return em->flags & TCF_EM_SIMPLE;
-}
+अटल अंतरभूत पूर्णांक tcf_em_is_simple(काष्ठा tcf_ematch *em)
+अणु
+	वापस em->flags & TCF_EM_SIMPLE;
+पूर्ण
 
-static inline int tcf_em_is_inverted(struct tcf_ematch *em)
-{
-	return em->flags & TCF_EM_INVERT;
-}
+अटल अंतरभूत पूर्णांक tcf_em_is_inverted(काष्ठा tcf_ematch *em)
+अणु
+	वापस em->flags & TCF_EM_INVERT;
+पूर्ण
 
-static inline int tcf_em_last_match(struct tcf_ematch *em)
-{
-	return (em->flags & TCF_EM_REL_MASK) == TCF_EM_REL_END;
-}
+अटल अंतरभूत पूर्णांक tcf_em_last_match(काष्ठा tcf_ematch *em)
+अणु
+	वापस (em->flags & TCF_EM_REL_MASK) == TCF_EM_REL_END;
+पूर्ण
 
-static inline int tcf_em_early_end(struct tcf_ematch *em, int result)
-{
-	if (tcf_em_last_match(em))
-		return 1;
+अटल अंतरभूत पूर्णांक tcf_em_early_end(काष्ठा tcf_ematch *em, पूर्णांक result)
+अणु
+	अगर (tcf_em_last_match(em))
+		वापस 1;
 
-	if (result == 0 && em->flags & TCF_EM_REL_AND)
-		return 1;
+	अगर (result == 0 && em->flags & TCF_EM_REL_AND)
+		वापस 1;
 
-	if (result != 0 && em->flags & TCF_EM_REL_OR)
-		return 1;
+	अगर (result != 0 && em->flags & TCF_EM_REL_OR)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 	
 /**
- * struct tcf_ematch_tree - ematch tree handle
+ * काष्ठा tcf_ematch_tree - ematch tree handle
  *
  * @hdr: ematch tree header supplied by userspace
  * @matches: array of ematches
  */
-struct tcf_ematch_tree {
-	struct tcf_ematch_tree_hdr hdr;
-	struct tcf_ematch *	matches;
+काष्ठा tcf_ematch_tree अणु
+	काष्ठा tcf_ematch_tree_hdr hdr;
+	काष्ठा tcf_ematch *	matches;
 	
-};
+पूर्ण;
 
 /**
- * struct tcf_ematch_ops - ematch module operations
+ * काष्ठा tcf_ematch_ops - ematch module operations
  * 
- * @kind: identifier (kind) of this ematch module
+ * @kind: identअगरier (kind) of this ematch module
  * @datalen: length of expected configuration data (optional)
  * @change: called during validation (optional)
- * @match: called during ematch tree evaluation, must return 1/0
+ * @match: called during ematch tree evaluation, must वापस 1/0
  * @destroy: called during destroyage (optional)
  * @dump: called during dumping process (optional)
  * @owner: owner, must be set to THIS_MODULE
- * @link: link to previous/next ematch module (internal use)
+ * @link: link to previous/next ematch module (पूर्णांकernal use)
  */
-struct tcf_ematch_ops {
-	int			kind;
-	int			datalen;
-	int			(*change)(struct net *net, void *,
-					  int, struct tcf_ematch *);
-	int			(*match)(struct sk_buff *, struct tcf_ematch *,
-					 struct tcf_pkt_info *);
-	void			(*destroy)(struct tcf_ematch *);
-	int			(*dump)(struct sk_buff *, struct tcf_ematch *);
-	struct module		*owner;
-	struct list_head	link;
-};
+काष्ठा tcf_ematch_ops अणु
+	पूर्णांक			kind;
+	पूर्णांक			datalen;
+	पूर्णांक			(*change)(काष्ठा net *net, व्योम *,
+					  पूर्णांक, काष्ठा tcf_ematch *);
+	पूर्णांक			(*match)(काष्ठा sk_buff *, काष्ठा tcf_ematch *,
+					 काष्ठा tcf_pkt_info *);
+	व्योम			(*destroy)(काष्ठा tcf_ematch *);
+	पूर्णांक			(*dump)(काष्ठा sk_buff *, काष्ठा tcf_ematch *);
+	काष्ठा module		*owner;
+	काष्ठा list_head	link;
+पूर्ण;
 
-int tcf_em_register(struct tcf_ematch_ops *);
-void tcf_em_unregister(struct tcf_ematch_ops *);
-int tcf_em_tree_validate(struct tcf_proto *, struct nlattr *,
-			 struct tcf_ematch_tree *);
-void tcf_em_tree_destroy(struct tcf_ematch_tree *);
-int tcf_em_tree_dump(struct sk_buff *, struct tcf_ematch_tree *, int);
-int __tcf_em_tree_match(struct sk_buff *, struct tcf_ematch_tree *,
-			struct tcf_pkt_info *);
+पूर्णांक tcf_em_रेजिस्टर(काष्ठा tcf_ematch_ops *);
+व्योम tcf_em_unरेजिस्टर(काष्ठा tcf_ematch_ops *);
+पूर्णांक tcf_em_tree_validate(काष्ठा tcf_proto *, काष्ठा nlattr *,
+			 काष्ठा tcf_ematch_tree *);
+व्योम tcf_em_tree_destroy(काष्ठा tcf_ematch_tree *);
+पूर्णांक tcf_em_tree_dump(काष्ठा sk_buff *, काष्ठा tcf_ematch_tree *, पूर्णांक);
+पूर्णांक __tcf_em_tree_match(काष्ठा sk_buff *, काष्ठा tcf_ematch_tree *,
+			काष्ठा tcf_pkt_info *);
 
 /**
  * tcf_em_tree_match - evaulate an ematch tree
  *
  * @skb: socket buffer of the packet in question
- * @tree: ematch tree to be used for evaluation
- * @info: packet information examined by classifier
+ * @tree: ematch tree to be used क्रम evaluation
+ * @info: packet inक्रमmation examined by classअगरier
  *
  * This function matches @skb against the ematch tree in @tree by going
- * through all ematches respecting their logic relations returning
+ * through all ematches respecting their logic relations वापसing
  * as soon as the result is obvious.
  *
- * Returns 1 if the ematch tree as-one matches, no ematches are configured
- * or ematch is not enabled in the kernel, otherwise 0 is returned.
+ * Returns 1 अगर the ematch tree as-one matches, no ematches are configured
+ * or ematch is not enabled in the kernel, otherwise 0 is वापसed.
  */
-static inline int tcf_em_tree_match(struct sk_buff *skb,
-				    struct tcf_ematch_tree *tree,
-				    struct tcf_pkt_info *info)
-{
-	if (tree->hdr.nmatches)
-		return __tcf_em_tree_match(skb, tree, info);
-	else
-		return 1;
-}
+अटल अंतरभूत पूर्णांक tcf_em_tree_match(काष्ठा sk_buff *skb,
+				    काष्ठा tcf_ematch_tree *tree,
+				    काष्ठा tcf_pkt_info *info)
+अणु
+	अगर (tree->hdr.nmatches)
+		वापस __tcf_em_tree_match(skb, tree, info);
+	अन्यथा
+		वापस 1;
+पूर्ण
 
-#define MODULE_ALIAS_TCF_EMATCH(kind)	MODULE_ALIAS("ematch-kind-" __stringify(kind))
+#घोषणा MODULE_ALIAS_TCF_EMATCH(kind)	MODULE_ALIAS("ematch-kind-" __stringअगरy(kind))
 
-#else /* CONFIG_NET_EMATCH */
+#अन्यथा /* CONFIG_NET_EMATCH */
 
-struct tcf_ematch_tree {
-};
+काष्ठा tcf_ematch_tree अणु
+पूर्ण;
 
-#define tcf_em_tree_validate(tp, tb, t) ((void)(t), 0)
-#define tcf_em_tree_destroy(t) do { (void)(t); } while(0)
-#define tcf_em_tree_dump(skb, t, tlv) (0)
-#define tcf_em_tree_match(skb, t, info) ((void)(info), 1)
+#घोषणा tcf_em_tree_validate(tp, tb, t) ((व्योम)(t), 0)
+#घोषणा tcf_em_tree_destroy(t) करो अणु (व्योम)(t); पूर्ण जबतक(0)
+#घोषणा tcf_em_tree_dump(skb, t, tlv) (0)
+#घोषणा tcf_em_tree_match(skb, t, info) ((व्योम)(info), 1)
 
-#endif /* CONFIG_NET_EMATCH */
+#पूर्ण_अगर /* CONFIG_NET_EMATCH */
 
-static inline unsigned char * tcf_get_base_ptr(struct sk_buff *skb, int layer)
-{
-	switch (layer) {
-		case TCF_LAYER_LINK:
-			return skb_mac_header(skb);
-		case TCF_LAYER_NETWORK:
-			return skb_network_header(skb);
-		case TCF_LAYER_TRANSPORT:
-			return skb_transport_header(skb);
-	}
+अटल अंतरभूत अचिन्हित अक्षर * tcf_get_base_ptr(काष्ठा sk_buff *skb, पूर्णांक layer)
+अणु
+	चयन (layer) अणु
+		हाल TCF_LAYER_LINK:
+			वापस skb_mac_header(skb);
+		हाल TCF_LAYER_NETWORK:
+			वापस skb_network_header(skb);
+		हाल TCF_LAYER_TRANSPORT:
+			वापस skb_transport_header(skb);
+	पूर्ण
 
-	return NULL;
-}
+	वापस शून्य;
+पूर्ण
 
-static inline int tcf_valid_offset(const struct sk_buff *skb,
-				   const unsigned char *ptr, const int len)
-{
-	return likely((ptr + len) <= skb_tail_pointer(skb) &&
+अटल अंतरभूत पूर्णांक tcf_valid_offset(स्थिर काष्ठा sk_buff *skb,
+				   स्थिर अचिन्हित अक्षर *ptr, स्थिर पूर्णांक len)
+अणु
+	वापस likely((ptr + len) <= skb_tail_poपूर्णांकer(skb) &&
 		      ptr >= skb->head &&
 		      (ptr <= (ptr + len)));
-}
+पूर्ण
 
-static inline int
-tcf_change_indev(struct net *net, struct nlattr *indev_tlv,
-		 struct netlink_ext_ack *extack)
-{
-	char indev[IFNAMSIZ];
-	struct net_device *dev;
+अटल अंतरभूत पूर्णांक
+tcf_change_indev(काष्ठा net *net, काष्ठा nlattr *indev_tlv,
+		 काष्ठा netlink_ext_ack *extack)
+अणु
+	अक्षर indev[IFNAMSIZ];
+	काष्ठा net_device *dev;
 
-	if (nla_strscpy(indev, indev_tlv, IFNAMSIZ) < 0) {
+	अगर (nla_strscpy(indev, indev_tlv, IFNAMSIZ) < 0) अणु
 		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
 				    "Interface name too long");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 	dev = __dev_get_by_name(net, indev);
-	if (!dev) {
+	अगर (!dev) अणु
 		NL_SET_ERR_MSG_ATTR(extack, indev_tlv,
 				    "Network device not found");
-		return -ENODEV;
-	}
-	return dev->ifindex;
-}
+		वापस -ENODEV;
+	पूर्ण
+	वापस dev->अगरindex;
+पूर्ण
 
-static inline bool
-tcf_match_indev(struct sk_buff *skb, int ifindex)
-{
-	if (!ifindex)
-		return true;
-	if  (!skb->skb_iif)
-		return false;
-	return ifindex == skb->skb_iif;
-}
+अटल अंतरभूत bool
+tcf_match_indev(काष्ठा sk_buff *skb, पूर्णांक अगरindex)
+अणु
+	अगर (!अगरindex)
+		वापस true;
+	अगर  (!skb->skb_iअगर)
+		वापस false;
+	वापस अगरindex == skb->skb_iअगर;
+पूर्ण
 
-int tc_setup_flow_action(struct flow_action *flow_action,
-			 const struct tcf_exts *exts);
-void tc_cleanup_flow_action(struct flow_action *flow_action);
+पूर्णांक tc_setup_flow_action(काष्ठा flow_action *flow_action,
+			 स्थिर काष्ठा tcf_exts *exts);
+व्योम tc_cleanup_flow_action(काष्ठा flow_action *flow_action);
 
-int tc_setup_cb_call(struct tcf_block *block, enum tc_setup_type type,
-		     void *type_data, bool err_stop, bool rtnl_held);
-int tc_setup_cb_add(struct tcf_block *block, struct tcf_proto *tp,
-		    enum tc_setup_type type, void *type_data, bool err_stop,
-		    u32 *flags, unsigned int *in_hw_count, bool rtnl_held);
-int tc_setup_cb_replace(struct tcf_block *block, struct tcf_proto *tp,
-			enum tc_setup_type type, void *type_data, bool err_stop,
-			u32 *old_flags, unsigned int *old_in_hw_count,
-			u32 *new_flags, unsigned int *new_in_hw_count,
+पूर्णांक tc_setup_cb_call(काष्ठा tcf_block *block, क्रमागत tc_setup_type type,
+		     व्योम *type_data, bool err_stop, bool rtnl_held);
+पूर्णांक tc_setup_cb_add(काष्ठा tcf_block *block, काष्ठा tcf_proto *tp,
+		    क्रमागत tc_setup_type type, व्योम *type_data, bool err_stop,
+		    u32 *flags, अचिन्हित पूर्णांक *in_hw_count, bool rtnl_held);
+पूर्णांक tc_setup_cb_replace(काष्ठा tcf_block *block, काष्ठा tcf_proto *tp,
+			क्रमागत tc_setup_type type, व्योम *type_data, bool err_stop,
+			u32 *old_flags, अचिन्हित पूर्णांक *old_in_hw_count,
+			u32 *new_flags, अचिन्हित पूर्णांक *new_in_hw_count,
 			bool rtnl_held);
-int tc_setup_cb_destroy(struct tcf_block *block, struct tcf_proto *tp,
-			enum tc_setup_type type, void *type_data, bool err_stop,
-			u32 *flags, unsigned int *in_hw_count, bool rtnl_held);
-int tc_setup_cb_reoffload(struct tcf_block *block, struct tcf_proto *tp,
+पूर्णांक tc_setup_cb_destroy(काष्ठा tcf_block *block, काष्ठा tcf_proto *tp,
+			क्रमागत tc_setup_type type, व्योम *type_data, bool err_stop,
+			u32 *flags, अचिन्हित पूर्णांक *in_hw_count, bool rtnl_held);
+पूर्णांक tc_setup_cb_reoffload(काष्ठा tcf_block *block, काष्ठा tcf_proto *tp,
 			  bool add, flow_setup_cb_t *cb,
-			  enum tc_setup_type type, void *type_data,
-			  void *cb_priv, u32 *flags, unsigned int *in_hw_count);
-unsigned int tcf_exts_num_actions(struct tcf_exts *exts);
+			  क्रमागत tc_setup_type type, व्योम *type_data,
+			  व्योम *cb_priv, u32 *flags, अचिन्हित पूर्णांक *in_hw_count);
+अचिन्हित पूर्णांक tcf_exts_num_actions(काष्ठा tcf_exts *exts);
 
-#ifdef CONFIG_NET_CLS_ACT
-int tcf_qevent_init(struct tcf_qevent *qe, struct Qdisc *sch,
-		    enum flow_block_binder_type binder_type,
-		    struct nlattr *block_index_attr,
-		    struct netlink_ext_ack *extack);
-void tcf_qevent_destroy(struct tcf_qevent *qe, struct Qdisc *sch);
-int tcf_qevent_validate_change(struct tcf_qevent *qe, struct nlattr *block_index_attr,
-			       struct netlink_ext_ack *extack);
-struct sk_buff *tcf_qevent_handle(struct tcf_qevent *qe, struct Qdisc *sch, struct sk_buff *skb,
-				  struct sk_buff **to_free, int *ret);
-int tcf_qevent_dump(struct sk_buff *skb, int attr_name, struct tcf_qevent *qe);
-#else
-static inline int tcf_qevent_init(struct tcf_qevent *qe, struct Qdisc *sch,
-				  enum flow_block_binder_type binder_type,
-				  struct nlattr *block_index_attr,
-				  struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+#अगर_घोषित CONFIG_NET_CLS_ACT
+पूर्णांक tcf_qevent_init(काष्ठा tcf_qevent *qe, काष्ठा Qdisc *sch,
+		    क्रमागत flow_block_binder_type binder_type,
+		    काष्ठा nlattr *block_index_attr,
+		    काष्ठा netlink_ext_ack *extack);
+व्योम tcf_qevent_destroy(काष्ठा tcf_qevent *qe, काष्ठा Qdisc *sch);
+पूर्णांक tcf_qevent_validate_change(काष्ठा tcf_qevent *qe, काष्ठा nlattr *block_index_attr,
+			       काष्ठा netlink_ext_ack *extack);
+काष्ठा sk_buff *tcf_qevent_handle(काष्ठा tcf_qevent *qe, काष्ठा Qdisc *sch, काष्ठा sk_buff *skb,
+				  काष्ठा sk_buff **to_मुक्त, पूर्णांक *ret);
+पूर्णांक tcf_qevent_dump(काष्ठा sk_buff *skb, पूर्णांक attr_name, काष्ठा tcf_qevent *qe);
+#अन्यथा
+अटल अंतरभूत पूर्णांक tcf_qevent_init(काष्ठा tcf_qevent *qe, काष्ठा Qdisc *sch,
+				  क्रमागत flow_block_binder_type binder_type,
+				  काष्ठा nlattr *block_index_attr,
+				  काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline void tcf_qevent_destroy(struct tcf_qevent *qe, struct Qdisc *sch)
-{
-}
+अटल अंतरभूत व्योम tcf_qevent_destroy(काष्ठा tcf_qevent *qe, काष्ठा Qdisc *sch)
+अणु
+पूर्ण
 
-static inline int tcf_qevent_validate_change(struct tcf_qevent *qe, struct nlattr *block_index_attr,
-					     struct netlink_ext_ack *extack)
-{
-	return 0;
-}
+अटल अंतरभूत पूर्णांक tcf_qevent_validate_change(काष्ठा tcf_qevent *qe, काष्ठा nlattr *block_index_attr,
+					     काष्ठा netlink_ext_ack *extack)
+अणु
+	वापस 0;
+पूर्ण
 
-static inline struct sk_buff *
-tcf_qevent_handle(struct tcf_qevent *qe, struct Qdisc *sch, struct sk_buff *skb,
-		  struct sk_buff **to_free, int *ret)
-{
-	return skb;
-}
+अटल अंतरभूत काष्ठा sk_buff *
+tcf_qevent_handle(काष्ठा tcf_qevent *qe, काष्ठा Qdisc *sch, काष्ठा sk_buff *skb,
+		  काष्ठा sk_buff **to_मुक्त, पूर्णांक *ret)
+अणु
+	वापस skb;
+पूर्ण
 
-static inline int tcf_qevent_dump(struct sk_buff *skb, int attr_name, struct tcf_qevent *qe)
-{
-	return 0;
-}
-#endif
+अटल अंतरभूत पूर्णांक tcf_qevent_dump(काष्ठा sk_buff *skb, पूर्णांक attr_name, काष्ठा tcf_qevent *qe)
+अणु
+	वापस 0;
+पूर्ण
+#पूर्ण_अगर
 
-struct tc_cls_u32_knode {
-	struct tcf_exts *exts;
-	struct tcf_result *res;
-	struct tc_u32_sel *sel;
+काष्ठा tc_cls_u32_knode अणु
+	काष्ठा tcf_exts *exts;
+	काष्ठा tcf_result *res;
+	काष्ठा tc_u32_sel *sel;
 	u32 handle;
 	u32 val;
 	u32 mask;
 	u32 link_handle;
-	u8 fshift;
-};
+	u8 fshअगरt;
+पूर्ण;
 
-struct tc_cls_u32_hnode {
+काष्ठा tc_cls_u32_hnode अणु
 	u32 handle;
 	u32 prio;
-	unsigned int divisor;
-};
+	अचिन्हित पूर्णांक भागisor;
+पूर्ण;
 
-enum tc_clsu32_command {
+क्रमागत tc_clsu32_command अणु
 	TC_CLSU32_NEW_KNODE,
 	TC_CLSU32_REPLACE_KNODE,
 	TC_CLSU32_DELETE_KNODE,
 	TC_CLSU32_NEW_HNODE,
 	TC_CLSU32_REPLACE_HNODE,
 	TC_CLSU32_DELETE_HNODE,
-};
+पूर्ण;
 
-struct tc_cls_u32_offload {
-	struct flow_cls_common_offload common;
+काष्ठा tc_cls_u32_offload अणु
+	काष्ठा flow_cls_common_offload common;
 	/* knode values */
-	enum tc_clsu32_command command;
-	union {
-		struct tc_cls_u32_knode knode;
-		struct tc_cls_u32_hnode hnode;
-	};
-};
+	क्रमागत tc_clsu32_command command;
+	जोड़ अणु
+		काष्ठा tc_cls_u32_knode knode;
+		काष्ठा tc_cls_u32_hnode hnode;
+	पूर्ण;
+पूर्ण;
 
-static inline bool tc_can_offload(const struct net_device *dev)
-{
-	return dev->features & NETIF_F_HW_TC;
-}
+अटल अंतरभूत bool tc_can_offload(स्थिर काष्ठा net_device *dev)
+अणु
+	वापस dev->features & NETIF_F_HW_TC;
+पूर्ण
 
-static inline bool tc_can_offload_extack(const struct net_device *dev,
-					 struct netlink_ext_ack *extack)
-{
+अटल अंतरभूत bool tc_can_offload_extack(स्थिर काष्ठा net_device *dev,
+					 काष्ठा netlink_ext_ack *extack)
+अणु
 	bool can = tc_can_offload(dev);
 
-	if (!can)
+	अगर (!can)
 		NL_SET_ERR_MSG(extack, "TC offload is disabled on net device");
 
-	return can;
-}
+	वापस can;
+पूर्ण
 
-static inline bool
-tc_cls_can_offload_and_chain0(const struct net_device *dev,
-			      struct flow_cls_common_offload *common)
-{
-	if (!tc_can_offload_extack(dev, common->extack))
-		return false;
-	if (common->chain_index) {
+अटल अंतरभूत bool
+tc_cls_can_offload_and_chain0(स्थिर काष्ठा net_device *dev,
+			      काष्ठा flow_cls_common_offload *common)
+अणु
+	अगर (!tc_can_offload_extack(dev, common->extack))
+		वापस false;
+	अगर (common->chain_index) अणु
 		NL_SET_ERR_MSG(common->extack,
 			       "Driver supports only offload of chain 0");
-		return false;
-	}
-	return true;
-}
+		वापस false;
+	पूर्ण
+	वापस true;
+पूर्ण
 
-static inline bool tc_skip_hw(u32 flags)
-{
-	return (flags & TCA_CLS_FLAGS_SKIP_HW) ? true : false;
-}
+अटल अंतरभूत bool tc_skip_hw(u32 flags)
+अणु
+	वापस (flags & TCA_CLS_FLAGS_SKIP_HW) ? true : false;
+पूर्ण
 
-static inline bool tc_skip_sw(u32 flags)
-{
-	return (flags & TCA_CLS_FLAGS_SKIP_SW) ? true : false;
-}
+अटल अंतरभूत bool tc_skip_sw(u32 flags)
+अणु
+	वापस (flags & TCA_CLS_FLAGS_SKIP_SW) ? true : false;
+पूर्ण
 
 /* SKIP_HW and SKIP_SW are mutually exclusive flags. */
-static inline bool tc_flags_valid(u32 flags)
-{
-	if (flags & ~(TCA_CLS_FLAGS_SKIP_HW | TCA_CLS_FLAGS_SKIP_SW |
+अटल अंतरभूत bool tc_flags_valid(u32 flags)
+अणु
+	अगर (flags & ~(TCA_CLS_FLAGS_SKIP_HW | TCA_CLS_FLAGS_SKIP_SW |
 		      TCA_CLS_FLAGS_VERBOSE))
-		return false;
+		वापस false;
 
 	flags &= TCA_CLS_FLAGS_SKIP_HW | TCA_CLS_FLAGS_SKIP_SW;
-	if (!(flags ^ (TCA_CLS_FLAGS_SKIP_HW | TCA_CLS_FLAGS_SKIP_SW)))
-		return false;
+	अगर (!(flags ^ (TCA_CLS_FLAGS_SKIP_HW | TCA_CLS_FLAGS_SKIP_SW)))
+		वापस false;
 
-	return true;
-}
+	वापस true;
+पूर्ण
 
-static inline bool tc_in_hw(u32 flags)
-{
-	return (flags & TCA_CLS_FLAGS_IN_HW) ? true : false;
-}
+अटल अंतरभूत bool tc_in_hw(u32 flags)
+अणु
+	वापस (flags & TCA_CLS_FLAGS_IN_HW) ? true : false;
+पूर्ण
 
-static inline void
-tc_cls_common_offload_init(struct flow_cls_common_offload *cls_common,
-			   const struct tcf_proto *tp, u32 flags,
-			   struct netlink_ext_ack *extack)
-{
+अटल अंतरभूत व्योम
+tc_cls_common_offload_init(काष्ठा flow_cls_common_offload *cls_common,
+			   स्थिर काष्ठा tcf_proto *tp, u32 flags,
+			   काष्ठा netlink_ext_ack *extack)
+अणु
 	cls_common->chain_index = tp->chain->index;
 	cls_common->protocol = tp->protocol;
 	cls_common->prio = tp->prio >> 16;
-	if (tc_skip_sw(flags) || flags & TCA_CLS_FLAGS_VERBOSE)
+	अगर (tc_skip_sw(flags) || flags & TCA_CLS_FLAGS_VERBOSE)
 		cls_common->extack = extack;
-}
+पूर्ण
 
-#if IS_ENABLED(CONFIG_NET_TC_SKB_EXT)
-static inline struct tc_skb_ext *tc_skb_ext_alloc(struct sk_buff *skb)
-{
-	struct tc_skb_ext *tc_skb_ext = skb_ext_add(skb, TC_SKB_EXT);
+#अगर IS_ENABLED(CONFIG_NET_TC_SKB_EXT)
+अटल अंतरभूत काष्ठा tc_skb_ext *tc_skb_ext_alloc(काष्ठा sk_buff *skb)
+अणु
+	काष्ठा tc_skb_ext *tc_skb_ext = skb_ext_add(skb, TC_SKB_EXT);
 
-	if (tc_skb_ext)
-		memset(tc_skb_ext, 0, sizeof(*tc_skb_ext));
-	return tc_skb_ext;
-}
-#endif
+	अगर (tc_skb_ext)
+		स_रखो(tc_skb_ext, 0, माप(*tc_skb_ext));
+	वापस tc_skb_ext;
+पूर्ण
+#पूर्ण_अगर
 
-enum tc_matchall_command {
+क्रमागत tc_matchall_command अणु
 	TC_CLSMATCHALL_REPLACE,
 	TC_CLSMATCHALL_DESTROY,
 	TC_CLSMATCHALL_STATS,
-};
+पूर्ण;
 
-struct tc_cls_matchall_offload {
-	struct flow_cls_common_offload common;
-	enum tc_matchall_command command;
-	struct flow_rule *rule;
-	struct flow_stats stats;
-	unsigned long cookie;
-};
+काष्ठा tc_cls_matchall_offload अणु
+	काष्ठा flow_cls_common_offload common;
+	क्रमागत tc_matchall_command command;
+	काष्ठा flow_rule *rule;
+	काष्ठा flow_stats stats;
+	अचिन्हित दीर्घ cookie;
+पूर्ण;
 
-enum tc_clsbpf_command {
+क्रमागत tc_clsbpf_command अणु
 	TC_CLSBPF_OFFLOAD,
 	TC_CLSBPF_STATS,
-};
+पूर्ण;
 
-struct tc_cls_bpf_offload {
-	struct flow_cls_common_offload common;
-	enum tc_clsbpf_command command;
-	struct tcf_exts *exts;
-	struct bpf_prog *prog;
-	struct bpf_prog *oldprog;
-	const char *name;
-	bool exts_integrated;
-};
+काष्ठा tc_cls_bpf_offload अणु
+	काष्ठा flow_cls_common_offload common;
+	क्रमागत tc_clsbpf_command command;
+	काष्ठा tcf_exts *exts;
+	काष्ठा bpf_prog *prog;
+	काष्ठा bpf_prog *oldprog;
+	स्थिर अक्षर *name;
+	bool exts_पूर्णांकegrated;
+पूर्ण;
 
-struct tc_mqprio_qopt_offload {
-	/* struct tc_mqprio_qopt must always be the first element */
-	struct tc_mqprio_qopt qopt;
+काष्ठा tc_mqprio_qopt_offload अणु
+	/* काष्ठा tc_mqprio_qopt must always be the first element */
+	काष्ठा tc_mqprio_qopt qopt;
 	u16 mode;
 	u16 shaper;
 	u32 flags;
 	u64 min_rate[TC_QOPT_MAX_QUEUE];
 	u64 max_rate[TC_QOPT_MAX_QUEUE];
-};
+पूर्ण;
 
-/* This structure holds cookie structure that is passed from user
- * to the kernel for actions and classifiers
+/* This काष्ठाure holds cookie काष्ठाure that is passed from user
+ * to the kernel क्रम actions and classअगरiers
  */
-struct tc_cookie {
+काष्ठा tc_cookie अणु
 	u8  *data;
 	u32 len;
-	struct rcu_head rcu;
-};
+	काष्ठा rcu_head rcu;
+पूर्ण;
 
-struct tc_qopt_offload_stats {
-	struct gnet_stats_basic_packed *bstats;
-	struct gnet_stats_queue *qstats;
-};
+काष्ठा tc_qopt_offload_stats अणु
+	काष्ठा gnet_stats_basic_packed *bstats;
+	काष्ठा gnet_stats_queue *qstats;
+पूर्ण;
 
-enum tc_mq_command {
+क्रमागत tc_mq_command अणु
 	TC_MQ_CREATE,
 	TC_MQ_DESTROY,
 	TC_MQ_STATS,
 	TC_MQ_GRAFT,
-};
+पूर्ण;
 
-struct tc_mq_opt_offload_graft_params {
-	unsigned long queue;
+काष्ठा tc_mq_opt_offload_graft_params अणु
+	अचिन्हित दीर्घ queue;
 	u32 child_handle;
-};
+पूर्ण;
 
-struct tc_mq_qopt_offload {
-	enum tc_mq_command command;
+काष्ठा tc_mq_qopt_offload अणु
+	क्रमागत tc_mq_command command;
 	u32 handle;
-	union {
-		struct tc_qopt_offload_stats stats;
-		struct tc_mq_opt_offload_graft_params graft_params;
-	};
-};
+	जोड़ अणु
+		काष्ठा tc_qopt_offload_stats stats;
+		काष्ठा tc_mq_opt_offload_graft_params graft_params;
+	पूर्ण;
+पूर्ण;
 
-enum tc_htb_command {
+क्रमागत tc_htb_command अणु
 	/* Root */
 	TC_HTB_CREATE, /* Initialize HTB offload. */
 	TC_HTB_DESTROY, /* Destroy HTB offload. */
@@ -802,43 +803,43 @@ enum tc_htb_command {
 	/* Classes */
 	/* Allocate qid and create leaf. */
 	TC_HTB_LEAF_ALLOC_QUEUE,
-	/* Convert leaf to inner, preserve and return qid, create new leaf. */
+	/* Convert leaf to inner, preserve and वापस qid, create new leaf. */
 	TC_HTB_LEAF_TO_INNER,
-	/* Delete leaf, while siblings remain. */
+	/* Delete leaf, जबतक siblings reमुख्य. */
 	TC_HTB_LEAF_DEL,
 	/* Delete leaf, convert parent to leaf, preserving qid. */
 	TC_HTB_LEAF_DEL_LAST,
 	/* TC_HTB_LEAF_DEL_LAST, but delete driver data on hardware errors. */
 	TC_HTB_LEAF_DEL_LAST_FORCE,
-	/* Modify parameters of a node. */
+	/* Modअगरy parameters of a node. */
 	TC_HTB_NODE_MODIFY,
 
 	/* Class qdisc */
 	TC_HTB_LEAF_QUERY_QUEUE, /* Query qid by classid. */
-};
+पूर्ण;
 
-struct tc_htb_qopt_offload {
-	struct netlink_ext_ack *extack;
-	enum tc_htb_command command;
+काष्ठा tc_htb_qopt_offload अणु
+	काष्ठा netlink_ext_ack *extack;
+	क्रमागत tc_htb_command command;
 	u16 classid;
 	u32 parent_classid;
 	u16 qid;
 	u16 moved_qid;
 	u64 rate;
-	u64 ceil;
-};
+	u64 उच्चमान;
+पूर्ण;
 
-#define TC_HTB_CLASSID_ROOT U32_MAX
+#घोषणा TC_HTB_CLASSID_ROOT U32_MAX
 
-enum tc_red_command {
+क्रमागत tc_red_command अणु
 	TC_RED_REPLACE,
 	TC_RED_DESTROY,
 	TC_RED_STATS,
 	TC_RED_XSTATS,
 	TC_RED_GRAFT,
-};
+पूर्ण;
 
-struct tc_red_qopt_offload_params {
+काष्ठा tc_red_qopt_offload_params अणु
 	u32 min;
 	u32 max;
 	u32 probability;
@@ -846,28 +847,28 @@ struct tc_red_qopt_offload_params {
 	bool is_ecn;
 	bool is_harddrop;
 	bool is_nodrop;
-	struct gnet_stats_queue *qstats;
-};
+	काष्ठा gnet_stats_queue *qstats;
+पूर्ण;
 
-struct tc_red_qopt_offload {
-	enum tc_red_command command;
+काष्ठा tc_red_qopt_offload अणु
+	क्रमागत tc_red_command command;
 	u32 handle;
 	u32 parent;
-	union {
-		struct tc_red_qopt_offload_params set;
-		struct tc_qopt_offload_stats stats;
-		struct red_stats *xstats;
+	जोड़ अणु
+		काष्ठा tc_red_qopt_offload_params set;
+		काष्ठा tc_qopt_offload_stats stats;
+		काष्ठा red_stats *xstats;
 		u32 child_handle;
-	};
-};
+	पूर्ण;
+पूर्ण;
 
-enum tc_gred_command {
+क्रमागत tc_gred_command अणु
 	TC_GRED_REPLACE,
 	TC_GRED_DESTROY,
 	TC_GRED_STATS,
-};
+पूर्ण;
 
-struct tc_gred_vq_qopt_offload_params {
+काष्ठा tc_gred_vq_qopt_offload_params अणु
 	bool present;
 	u32 limit;
 	u32 prio;
@@ -876,143 +877,143 @@ struct tc_gred_vq_qopt_offload_params {
 	bool is_ecn;
 	bool is_harddrop;
 	u32 probability;
-	/* Only need backlog, see struct tc_prio_qopt_offload_params */
+	/* Only need backlog, see काष्ठा tc_prio_qopt_offload_params */
 	u32 *backlog;
-};
+पूर्ण;
 
-struct tc_gred_qopt_offload_params {
+काष्ठा tc_gred_qopt_offload_params अणु
 	bool grio_on;
 	bool wred_on;
-	unsigned int dp_cnt;
-	unsigned int dp_def;
-	struct gnet_stats_queue *qstats;
-	struct tc_gred_vq_qopt_offload_params tab[MAX_DPs];
-};
+	अचिन्हित पूर्णांक dp_cnt;
+	अचिन्हित पूर्णांक dp_def;
+	काष्ठा gnet_stats_queue *qstats;
+	काष्ठा tc_gred_vq_qopt_offload_params tab[MAX_DPs];
+पूर्ण;
 
-struct tc_gred_qopt_offload_stats {
-	struct gnet_stats_basic_packed bstats[MAX_DPs];
-	struct gnet_stats_queue qstats[MAX_DPs];
-	struct red_stats *xstats[MAX_DPs];
-};
+काष्ठा tc_gred_qopt_offload_stats अणु
+	काष्ठा gnet_stats_basic_packed bstats[MAX_DPs];
+	काष्ठा gnet_stats_queue qstats[MAX_DPs];
+	काष्ठा red_stats *xstats[MAX_DPs];
+पूर्ण;
 
-struct tc_gred_qopt_offload {
-	enum tc_gred_command command;
+काष्ठा tc_gred_qopt_offload अणु
+	क्रमागत tc_gred_command command;
 	u32 handle;
 	u32 parent;
-	union {
-		struct tc_gred_qopt_offload_params set;
-		struct tc_gred_qopt_offload_stats stats;
-	};
-};
+	जोड़ अणु
+		काष्ठा tc_gred_qopt_offload_params set;
+		काष्ठा tc_gred_qopt_offload_stats stats;
+	पूर्ण;
+पूर्ण;
 
-enum tc_prio_command {
+क्रमागत tc_prio_command अणु
 	TC_PRIO_REPLACE,
 	TC_PRIO_DESTROY,
 	TC_PRIO_STATS,
 	TC_PRIO_GRAFT,
-};
+पूर्ण;
 
-struct tc_prio_qopt_offload_params {
-	int bands;
+काष्ठा tc_prio_qopt_offload_params अणु
+	पूर्णांक bands;
 	u8 priomap[TC_PRIO_MAX + 1];
-	/* At the point of un-offloading the Qdisc, the reported backlog and
+	/* At the poपूर्णांक of un-offloading the Qdisc, the reported backlog and
 	 * qlen need to be reduced by the portion that is in HW.
 	 */
-	struct gnet_stats_queue *qstats;
-};
+	काष्ठा gnet_stats_queue *qstats;
+पूर्ण;
 
-struct tc_prio_qopt_offload_graft_params {
+काष्ठा tc_prio_qopt_offload_graft_params अणु
 	u8 band;
 	u32 child_handle;
-};
+पूर्ण;
 
-struct tc_prio_qopt_offload {
-	enum tc_prio_command command;
+काष्ठा tc_prio_qopt_offload अणु
+	क्रमागत tc_prio_command command;
 	u32 handle;
 	u32 parent;
-	union {
-		struct tc_prio_qopt_offload_params replace_params;
-		struct tc_qopt_offload_stats stats;
-		struct tc_prio_qopt_offload_graft_params graft_params;
-	};
-};
+	जोड़ अणु
+		काष्ठा tc_prio_qopt_offload_params replace_params;
+		काष्ठा tc_qopt_offload_stats stats;
+		काष्ठा tc_prio_qopt_offload_graft_params graft_params;
+	पूर्ण;
+पूर्ण;
 
-enum tc_root_command {
+क्रमागत tc_root_command अणु
 	TC_ROOT_GRAFT,
-};
+पूर्ण;
 
-struct tc_root_qopt_offload {
-	enum tc_root_command command;
+काष्ठा tc_root_qopt_offload अणु
+	क्रमागत tc_root_command command;
 	u32 handle;
 	bool ingress;
-};
+पूर्ण;
 
-enum tc_ets_command {
+क्रमागत tc_ets_command अणु
 	TC_ETS_REPLACE,
 	TC_ETS_DESTROY,
 	TC_ETS_STATS,
 	TC_ETS_GRAFT,
-};
+पूर्ण;
 
-struct tc_ets_qopt_offload_replace_params {
-	unsigned int bands;
+काष्ठा tc_ets_qopt_offload_replace_params अणु
+	अचिन्हित पूर्णांक bands;
 	u8 priomap[TC_PRIO_MAX + 1];
-	unsigned int quanta[TCQ_ETS_MAX_BANDS];	/* 0 for strict bands. */
-	unsigned int weights[TCQ_ETS_MAX_BANDS];
-	struct gnet_stats_queue *qstats;
-};
+	अचिन्हित पूर्णांक quanta[TCQ_ETS_MAX_BANDS];	/* 0 क्रम strict bands. */
+	अचिन्हित पूर्णांक weights[TCQ_ETS_MAX_BANDS];
+	काष्ठा gnet_stats_queue *qstats;
+पूर्ण;
 
-struct tc_ets_qopt_offload_graft_params {
+काष्ठा tc_ets_qopt_offload_graft_params अणु
 	u8 band;
 	u32 child_handle;
-};
+पूर्ण;
 
-struct tc_ets_qopt_offload {
-	enum tc_ets_command command;
+काष्ठा tc_ets_qopt_offload अणु
+	क्रमागत tc_ets_command command;
 	u32 handle;
 	u32 parent;
-	union {
-		struct tc_ets_qopt_offload_replace_params replace_params;
-		struct tc_qopt_offload_stats stats;
-		struct tc_ets_qopt_offload_graft_params graft_params;
-	};
-};
+	जोड़ अणु
+		काष्ठा tc_ets_qopt_offload_replace_params replace_params;
+		काष्ठा tc_qopt_offload_stats stats;
+		काष्ठा tc_ets_qopt_offload_graft_params graft_params;
+	पूर्ण;
+पूर्ण;
 
-enum tc_tbf_command {
+क्रमागत tc_tbf_command अणु
 	TC_TBF_REPLACE,
 	TC_TBF_DESTROY,
 	TC_TBF_STATS,
-};
+पूर्ण;
 
-struct tc_tbf_qopt_offload_replace_params {
-	struct psched_ratecfg rate;
+काष्ठा tc_tbf_qopt_offload_replace_params अणु
+	काष्ठा psched_ratecfg rate;
 	u32 max_size;
-	struct gnet_stats_queue *qstats;
-};
+	काष्ठा gnet_stats_queue *qstats;
+पूर्ण;
 
-struct tc_tbf_qopt_offload {
-	enum tc_tbf_command command;
+काष्ठा tc_tbf_qopt_offload अणु
+	क्रमागत tc_tbf_command command;
 	u32 handle;
 	u32 parent;
-	union {
-		struct tc_tbf_qopt_offload_replace_params replace_params;
-		struct tc_qopt_offload_stats stats;
-	};
-};
+	जोड़ अणु
+		काष्ठा tc_tbf_qopt_offload_replace_params replace_params;
+		काष्ठा tc_qopt_offload_stats stats;
+	पूर्ण;
+पूर्ण;
 
-enum tc_fifo_command {
+क्रमागत tc_fअगरo_command अणु
 	TC_FIFO_REPLACE,
 	TC_FIFO_DESTROY,
 	TC_FIFO_STATS,
-};
+पूर्ण;
 
-struct tc_fifo_qopt_offload {
-	enum tc_fifo_command command;
+काष्ठा tc_fअगरo_qopt_offload अणु
+	क्रमागत tc_fअगरo_command command;
 	u32 handle;
 	u32 parent;
-	union {
-		struct tc_qopt_offload_stats stats;
-	};
-};
+	जोड़ अणु
+		काष्ठा tc_qopt_offload_stats stats;
+	पूर्ण;
+पूर्ण;
 
-#endif
+#पूर्ण_अगर

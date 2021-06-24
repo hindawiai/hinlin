@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
  * UniPhier eFuse driver
  *
  * Copyright (C) 2017 Socionext Inc.
  */
 
-#include <linux/device.h>
-#include <linux/io.h>
-#include <linux/module.h>
-#include <linux/mod_devicetable.h>
-#include <linux/nvmem-provider.h>
-#include <linux/platform_device.h>
+#समावेश <linux/device.h>
+#समावेश <linux/पन.स>
+#समावेश <linux/module.h>
+#समावेश <linux/mod_devicetable.h>
+#समावेश <linux/nvmem-provider.h>
+#समावेश <linux/platक्रमm_device.h>
 
-struct uniphier_efuse_priv {
-	void __iomem *base;
-};
+काष्ठा uniphier_efuse_priv अणु
+	व्योम __iomem *base;
+पूर्ण;
 
-static int uniphier_reg_read(void *context,
-			     unsigned int reg, void *_val, size_t bytes)
-{
-	struct uniphier_efuse_priv *priv = context;
+अटल पूर्णांक uniphier_reg_पढ़ो(व्योम *context,
+			     अचिन्हित पूर्णांक reg, व्योम *_val, माप_प्रकार bytes)
+अणु
+	काष्ठा uniphier_efuse_priv *priv = context;
 	u8 *val = _val;
-	int offs;
+	पूर्णांक offs;
 
-	for (offs = 0; offs < bytes; offs += sizeof(u8))
-		*val++ = readb(priv->base + reg + offs);
+	क्रम (offs = 0; offs < bytes; offs += माप(u8))
+		*val++ = पढ़ोb(priv->base + reg + offs);
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int uniphier_efuse_probe(struct platform_device *pdev)
-{
-	struct device *dev = &pdev->dev;
-	struct resource *res;
-	struct nvmem_device *nvmem;
-	struct nvmem_config econfig = {};
-	struct uniphier_efuse_priv *priv;
+अटल पूर्णांक uniphier_efuse_probe(काष्ठा platक्रमm_device *pdev)
+अणु
+	काष्ठा device *dev = &pdev->dev;
+	काष्ठा resource *res;
+	काष्ठा nvmem_device *nvmem;
+	काष्ठा nvmem_config econfig = अणुपूर्ण;
+	काष्ठा uniphier_efuse_priv *priv;
 
-	priv = devm_kzalloc(dev, sizeof(*priv), GFP_KERNEL);
-	if (!priv)
-		return -ENOMEM;
+	priv = devm_kzalloc(dev, माप(*priv), GFP_KERNEL);
+	अगर (!priv)
+		वापस -ENOMEM;
 
-	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
 	priv->base = devm_ioremap_resource(dev, res);
-	if (IS_ERR(priv->base))
-		return PTR_ERR(priv->base);
+	अगर (IS_ERR(priv->base))
+		वापस PTR_ERR(priv->base);
 
 	econfig.stride = 1;
 	econfig.word_size = 1;
-	econfig.read_only = true;
-	econfig.reg_read = uniphier_reg_read;
+	econfig.पढ़ो_only = true;
+	econfig.reg_पढ़ो = uniphier_reg_पढ़ो;
 	econfig.size = resource_size(res);
 	econfig.priv = priv;
 	econfig.dev = dev;
-	nvmem = devm_nvmem_register(dev, &econfig);
+	nvmem = devm_nvmem_रेजिस्टर(dev, &econfig);
 
-	return PTR_ERR_OR_ZERO(nvmem);
-}
+	वापस PTR_ERR_OR_ZERO(nvmem);
+पूर्ण
 
-static const struct of_device_id uniphier_efuse_of_match[] = {
-	{ .compatible = "socionext,uniphier-efuse",},
-	{/* sentinel */},
-};
+अटल स्थिर काष्ठा of_device_id uniphier_efuse_of_match[] = अणु
+	अणु .compatible = "socionext,uniphier-efuse",पूर्ण,
+	अणु/* sentinel */पूर्ण,
+पूर्ण;
 MODULE_DEVICE_TABLE(of, uniphier_efuse_of_match);
 
-static struct platform_driver uniphier_efuse_driver = {
+अटल काष्ठा platक्रमm_driver uniphier_efuse_driver = अणु
 	.probe = uniphier_efuse_probe,
-	.driver = {
+	.driver = अणु
 		.name = "uniphier-efuse",
 		.of_match_table = uniphier_efuse_of_match,
-	},
-};
-module_platform_driver(uniphier_efuse_driver);
+	पूर्ण,
+पूर्ण;
+module_platक्रमm_driver(uniphier_efuse_driver);
 
 MODULE_AUTHOR("Keiji Hayashibara <hayashibara.keiji@socionext.com>");
 MODULE_DESCRIPTION("UniPhier eFuse driver");

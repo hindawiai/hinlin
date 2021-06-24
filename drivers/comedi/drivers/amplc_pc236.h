@@ -1,7 +1,8 @@
-/* SPDX-License-Identifier: GPL-2.0+ */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0+ */
 /*
  * comedi/drivers/amplc_pc236.h
- * Header for "amplc_pc236", "amplc_pci236" and "amplc_pc236_common".
+ * Header क्रम "amplc_pc236", "amplc_pci236" and "amplc_pc236_common".
  *
  * Copyright (C) 2002-2014 MEV Ltd. <https://www.mev.co.uk/>
  *
@@ -9,25 +10,25 @@
  * Copyright (C) 2000 David A. Schleef <ds@schleef.org>
  */
 
-#ifndef AMPLC_PC236_H_INCLUDED
-#define AMPLC_PC236_H_INCLUDED
+#अगर_अघोषित AMPLC_PC236_H_INCLUDED
+#घोषणा AMPLC_PC236_H_INCLUDED
 
-#include <linux/types.h>
+#समावेश <linux/types.h>
 
-struct comedi_device;
+काष्ठा comedi_device;
 
-struct pc236_board {
-	const char *name;
-	void (*intr_update_cb)(struct comedi_device *dev, bool enable);
-	bool (*intr_chk_clr_cb)(struct comedi_device *dev);
-};
+काष्ठा pc236_board अणु
+	स्थिर अक्षर *name;
+	व्योम (*पूर्णांकr_update_cb)(काष्ठा comedi_device *dev, bool enable);
+	bool (*पूर्णांकr_chk_clr_cb)(काष्ठा comedi_device *dev);
+पूर्ण;
 
-struct pc236_private {
-	unsigned long lcr_iobase; /* PLX PCI9052 config registers in PCIBAR1 */
+काष्ठा pc236_निजी अणु
+	अचिन्हित दीर्घ lcr_iobase; /* PLX PCI9052 config रेजिस्टरs in PCIBAR1 */
 	bool enable_irq;
-};
+पूर्ण;
 
-int amplc_pc236_common_attach(struct comedi_device *dev, unsigned long iobase,
-			      unsigned int irq, unsigned long req_irq_flags);
+पूर्णांक amplc_pc236_common_attach(काष्ठा comedi_device *dev, अचिन्हित दीर्घ iobase,
+			      अचिन्हित पूर्णांक irq, अचिन्हित दीर्घ req_irq_flags);
 
-#endif
+#पूर्ण_अगर

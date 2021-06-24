@@ -1,33 +1,34 @@
-// SPDX-License-Identifier: GPL-2.0-only
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0-only
 /*
- *  Atari mouse driver for Linux/m68k
+ *  Atari mouse driver क्रम Linux/m68k
  *
  *  Copyright (c) 2005 Michael Schmitz
  *
  *  Based on:
- *  Amiga mouse driver for Linux/m68k
+ *  Amiga mouse driver क्रम Linux/m68k
  *
  *  Copyright (c) 2000-2002 Vojtech Pavlik
  */
 /*
- * The low level init and interrupt stuff is handled in arch/mm68k/atari/atakeyb.c
+ * The low level init and पूर्णांकerrupt stuff is handled in arch/mm68k/atari/atakeyb.c
  * (the keyboard ACIA also handles the mouse and joystick data, and the keyboard
- * interrupt is shared with the MIDI ACIA so MIDI data also get handled there).
+ * पूर्णांकerrupt is shared with the MIDI ACIA so MIDI data also get handled there).
  * This driver only deals with handing key events off to the input layer.
  *
  * Largely based on the old:
  *
- * Atari Mouse Driver for Linux
+ * Atari Mouse Driver क्रम Linux
  * by Robert de Vries (robert@and.nl) 19Jul93
  *
  * 16 Nov 1994 Andreas Schwab
  * Compatibility with busmouse
- * Support for three button mouse (shamelessly stolen from MiNT)
+ * Support क्रम three button mouse (shamelessly stolen from MiNT)
  * third button wired to one of the joystick directions on joystick 1
  *
  * 1996/02/11 Andreas Schwab
  * Module support
- * Allow multiple open's
+ * Allow multiple खोलो's
  *
  * Converted to use new generic busmouse code.  5 Apr 1998
  *   Russell King <rmk@arm.uk.linux.org>
@@ -35,40 +36,40 @@
 
 
 
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/input.h>
-#include <linux/interrupt.h>
+#समावेश <linux/module.h>
+#समावेश <linux/init.h>
+#समावेश <linux/input.h>
+#समावेश <linux/पूर्णांकerrupt.h>
 
-#include <asm/irq.h>
-#include <asm/setup.h>
-#include <linux/uaccess.h>
-#include <asm/atarihw.h>
-#include <asm/atarikb.h>
-#include <asm/atariints.h>
+#समावेश <यंत्र/irq.h>
+#समावेश <यंत्र/setup.h>
+#समावेश <linux/uaccess.h>
+#समावेश <यंत्र/atarihw.h>
+#समावेश <यंत्र/atarikb.h>
+#समावेश <यंत्र/atariपूर्णांकs.h>
 
 MODULE_AUTHOR("Michael Schmitz <schmitz@biophys.uni-duesseldorf.de>");
 MODULE_DESCRIPTION("Atari mouse driver");
 MODULE_LICENSE("GPL");
 
-static int mouse_threshold[2] = {2, 2};
-module_param_array(mouse_threshold, int, NULL, 0);
+अटल पूर्णांक mouse_threshold[2] = अणु2, 2पूर्ण;
+module_param_array(mouse_threshold, पूर्णांक, शून्य, 0);
 
-#ifdef FIXED_ATARI_JOYSTICK
-extern int atari_mouse_buttons;
-#endif
+#अगर_घोषित FIXED_ATARI_JOYSTICK
+बाह्य पूर्णांक atari_mouse_buttons;
+#पूर्ण_अगर
 
-static struct input_dev *atamouse_dev;
+अटल काष्ठा input_dev *atamouse_dev;
 
-static void atamouse_interrupt(char *buf)
-{
-	int buttons, dx, dy;
+अटल व्योम atamouse_पूर्णांकerrupt(अक्षर *buf)
+अणु
+	पूर्णांक buttons, dx, dy;
 
 	buttons = (buf[0] & 1) | ((buf[0] & 2) << 1);
-#ifdef FIXED_ATARI_JOYSTICK
+#अगर_घोषित FIXED_ATARI_JOYSTICK
 	buttons |= atari_mouse_buttons & 2;
 	atari_mouse_buttons = buttons;
-#endif
+#पूर्ण_अगर
 
 	/* only relative events get here */
 	dx = buf[1];
@@ -83,47 +84,47 @@ static void atamouse_interrupt(char *buf)
 
 	input_sync(atamouse_dev);
 
-	return;
-}
+	वापस;
+पूर्ण
 
-static int atamouse_open(struct input_dev *dev)
-{
-#ifdef FIXED_ATARI_JOYSTICK
+अटल पूर्णांक atamouse_खोलो(काष्ठा input_dev *dev)
+अणु
+#अगर_घोषित FIXED_ATARI_JOYSTICK
 	atari_mouse_buttons = 0;
-#endif
+#पूर्ण_अगर
 	ikbd_mouse_y0_top();
 	ikbd_mouse_thresh(mouse_threshold[0], mouse_threshold[1]);
 	ikbd_mouse_rel_pos();
-	atari_input_mouse_interrupt_hook = atamouse_interrupt;
+	atari_input_mouse_पूर्णांकerrupt_hook = atamouse_पूर्णांकerrupt;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void atamouse_close(struct input_dev *dev)
-{
+अटल व्योम atamouse_बंद(काष्ठा input_dev *dev)
+अणु
 	ikbd_mouse_disable();
-	atari_input_mouse_interrupt_hook = NULL;
-}
+	atari_input_mouse_पूर्णांकerrupt_hook = शून्य;
+पूर्ण
 
-static int __init atamouse_init(void)
-{
-	int error;
+अटल पूर्णांक __init atamouse_init(व्योम)
+अणु
+	पूर्णांक error;
 
-	if (!MACH_IS_ATARI || !ATARIHW_PRESENT(ST_MFP))
-		return -ENODEV;
+	अगर (!MACH_IS_ATARI || !ATARIHW_PRESENT(ST_MFP))
+		वापस -ENODEV;
 
 	error = atari_keyb_init();
-	if (error)
-		return error;
+	अगर (error)
+		वापस error;
 
 	atamouse_dev = input_allocate_device();
-	if (!atamouse_dev)
-		return -ENOMEM;
+	अगर (!atamouse_dev)
+		वापस -ENOMEM;
 
 	atamouse_dev->name = "Atari mouse";
 	atamouse_dev->phys = "atamouse/input0";
 	atamouse_dev->id.bustype = BUS_HOST;
-	atamouse_dev->id.vendor = 0x0001;
+	atamouse_dev->id.venकरोr = 0x0001;
 	atamouse_dev->id.product = 0x0002;
 	atamouse_dev->id.version = 0x0100;
 
@@ -132,22 +133,22 @@ static int __init atamouse_init(void)
 	atamouse_dev->keybit[BIT_WORD(BTN_LEFT)] = BIT_MASK(BTN_LEFT) |
 		BIT_MASK(BTN_MIDDLE) | BIT_MASK(BTN_RIGHT);
 
-	atamouse_dev->open = atamouse_open;
-	atamouse_dev->close = atamouse_close;
+	atamouse_dev->खोलो = atamouse_खोलो;
+	atamouse_dev->बंद = atamouse_बंद;
 
-	error = input_register_device(atamouse_dev);
-	if (error) {
-		input_free_device(atamouse_dev);
-		return error;
-	}
+	error = input_रेजिस्टर_device(atamouse_dev);
+	अगर (error) अणु
+		input_मुक्त_device(atamouse_dev);
+		वापस error;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void __exit atamouse_exit(void)
-{
-	input_unregister_device(atamouse_dev);
-}
+अटल व्योम __निकास atamouse_निकास(व्योम)
+अणु
+	input_unरेजिस्टर_device(atamouse_dev);
+पूर्ण
 
 module_init(atamouse_init);
-module_exit(atamouse_exit);
+module_निकास(atamouse_निकास);

@@ -1,6 +1,7 @@
-// SPDX-License-Identifier: GPL-2.0+
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0+
 /*
- * Driver for Realtek PCI-Express card reader
+ * Driver क्रम Realtek PCI-Express card पढ़ोer
  *
  * Copyright(c) 2009-2013 Realtek Semiconductor Corp. All rights reserved.
  *
@@ -9,63 +10,63 @@
  *   Micky Ching (micky_ching@realsil.com.cn)
  */
 
-#include <linux/blkdev.h>
-#include <linux/kthread.h>
-#include <linux/sched.h>
+#समावेश <linux/blkdev.h>
+#समावेश <linux/kthपढ़ो.h>
+#समावेश <linux/sched.h>
 
-#include "rtsx.h"
-#include "sd.h"
+#समावेश "rtsx.h"
+#समावेश "sd.h"
 
-#define SD_MAX_RETRY_COUNT	3
+#घोषणा SD_MAX_RETRY_COUNT	3
 
-static u16 REG_SD_CFG1;
-static u16 REG_SD_CFG2;
-static u16 REG_SD_CFG3;
-static u16 REG_SD_STAT1;
-static u16 REG_SD_STAT2;
-static u16 REG_SD_BUS_STAT;
-static u16 REG_SD_PAD_CTL;
-static u16 REG_SD_SAMPLE_POINT_CTL;
-static u16 REG_SD_PUSH_POINT_CTL;
-static u16 REG_SD_CMD0;
-static u16 REG_SD_CMD1;
-static u16 REG_SD_CMD2;
-static u16 REG_SD_CMD3;
-static u16 REG_SD_CMD4;
-static u16 REG_SD_CMD5;
-static u16 REG_SD_BYTE_CNT_L;
-static u16 REG_SD_BYTE_CNT_H;
-static u16 REG_SD_BLOCK_CNT_L;
-static u16 REG_SD_BLOCK_CNT_H;
-static u16 REG_SD_TRANSFER;
-static u16 REG_SD_VPCLK0_CTL;
-static u16 REG_SD_VPCLK1_CTL;
-static u16 REG_SD_DCMPS0_CTL;
-static u16 REG_SD_DCMPS1_CTL;
+अटल u16 REG_SD_CFG1;
+अटल u16 REG_SD_CFG2;
+अटल u16 REG_SD_CFG3;
+अटल u16 REG_SD_STAT1;
+अटल u16 REG_SD_STAT2;
+अटल u16 REG_SD_BUS_STAT;
+अटल u16 REG_SD_PAD_CTL;
+अटल u16 REG_SD_SAMPLE_POINT_CTL;
+अटल u16 REG_SD_PUSH_POINT_CTL;
+अटल u16 REG_SD_CMD0;
+अटल u16 REG_SD_CMD1;
+अटल u16 REG_SD_CMD2;
+अटल u16 REG_SD_CMD3;
+अटल u16 REG_SD_CMD4;
+अटल u16 REG_SD_CMD5;
+अटल u16 REG_SD_BYTE_CNT_L;
+अटल u16 REG_SD_BYTE_CNT_H;
+अटल u16 REG_SD_BLOCK_CNT_L;
+अटल u16 REG_SD_BLOCK_CNT_H;
+अटल u16 REG_SD_TRANSFER;
+अटल u16 REG_SD_VPCLK0_CTL;
+अटल u16 REG_SD_VPCLK1_CTL;
+अटल u16 REG_SD_DCMPS0_CTL;
+अटल u16 REG_SD_DCMPS1_CTL;
 
-static inline void sd_set_err_code(struct rtsx_chip *chip, u8 err_code)
-{
-	struct sd_info *sd_card = &chip->sd_card;
+अटल अंतरभूत व्योम sd_set_err_code(काष्ठा rtsx_chip *chip, u8 err_code)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
 
 	sd_card->err_code |= err_code;
-}
+पूर्ण
 
-static inline void sd_clr_err_code(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
+अटल अंतरभूत व्योम sd_clr_err_code(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
 
 	sd_card->err_code = 0;
-}
+पूर्ण
 
-static inline int sd_check_err_code(struct rtsx_chip *chip, u8 err_code)
-{
-	struct sd_info *sd_card = &chip->sd_card;
+अटल अंतरभूत पूर्णांक sd_check_err_code(काष्ठा rtsx_chip *chip, u8 err_code)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
 
-	return sd_card->err_code & err_code;
-}
+	वापस sd_card->err_code & err_code;
+पूर्ण
 
-static void sd_init_reg_addr(struct rtsx_chip *chip)
-{
+अटल व्योम sd_init_reg_addr(काष्ठा rtsx_chip *chip)
+अणु
 	REG_SD_CFG1 = 0xFD31;
 	REG_SD_CFG2 = 0xFD33;
 	REG_SD_CFG3 = 0xFD3E;
@@ -90,42 +91,42 @@ static void sd_init_reg_addr(struct rtsx_chip *chip)
 	REG_SD_VPCLK1_CTL = 0;
 	REG_SD_DCMPS0_CTL = 0;
 	REG_SD_DCMPS1_CTL = 0;
-}
+पूर्ण
 
-static int sd_check_data0_status(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक sd_check_data0_status(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 	u8 stat;
 
-	retval = rtsx_read_register(chip, REG_SD_STAT1, &stat);
-	if (retval)
-		return retval;
+	retval = rtsx_पढ़ो_रेजिस्टर(chip, REG_SD_STAT1, &stat);
+	अगर (retval)
+		वापस retval;
 
-	if (!(stat & SD_DAT0_STATUS)) {
+	अगर (!(stat & SD_DAT0_STATUS)) अणु
 		sd_set_err_code(chip, SD_BUSY);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_send_cmd_get_rsp(struct rtsx_chip *chip, u8 cmd_idx,
-			       u32 arg, u8 rsp_type, u8 *rsp, int rsp_len)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	int timeout = 100;
+अटल पूर्णांक sd_send_cmd_get_rsp(काष्ठा rtsx_chip *chip, u8 cmd_idx,
+			       u32 arg, u8 rsp_type, u8 *rsp, पूर्णांक rsp_len)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	पूर्णांक समयout = 100;
 	u16 reg_addr;
 	u8 *ptr;
-	int stat_idx = 0;
-	int rty_cnt = 0;
+	पूर्णांक stat_idx = 0;
+	पूर्णांक rty_cnt = 0;
 
 	sd_clr_err_code(chip);
 
 	dev_dbg(rtsx_dev(chip), "SD/MMC CMD %d, arg = 0x%08x\n", cmd_idx, arg);
 
-	if (rsp_type == SD_RSP_TYPE_R1b)
-		timeout = 3000;
+	अगर (rsp_type == SD_RSP_TYPE_R1b)
+		समयout = 3000;
 
 RTY_SEND_CMD:
 
@@ -146,142 +147,142 @@ RTY_SEND_CMD:
 		     SD_TRANSFER_END | SD_STAT_IDLE, SD_TRANSFER_END |
 		     SD_STAT_IDLE);
 
-	if (rsp_type == SD_RSP_TYPE_R2) {
-		for (reg_addr = PPBUF_BASE2; reg_addr < PPBUF_BASE2 + 16;
+	अगर (rsp_type == SD_RSP_TYPE_R2) अणु
+		क्रम (reg_addr = PPBUF_BASE2; reg_addr < PPBUF_BASE2 + 16;
 		     reg_addr++)
 			rtsx_add_cmd(chip, READ_REG_CMD, reg_addr, 0, 0);
 
 		stat_idx = 16;
-	} else if (rsp_type != SD_RSP_TYPE_R0) {
-		for (reg_addr = REG_SD_CMD0; reg_addr <= REG_SD_CMD4;
+	पूर्ण अन्यथा अगर (rsp_type != SD_RSP_TYPE_R0) अणु
+		क्रम (reg_addr = REG_SD_CMD0; reg_addr <= REG_SD_CMD4;
 		     reg_addr++)
 			rtsx_add_cmd(chip, READ_REG_CMD, reg_addr, 0, 0);
 
 		stat_idx = 5;
-	}
+	पूर्ण
 
 	rtsx_add_cmd(chip, READ_REG_CMD, REG_SD_STAT1, 0, 0);
 
-	retval = rtsx_send_cmd(chip, SD_CARD, timeout);
-	if (retval < 0) {
+	retval = rtsx_send_cmd(chip, SD_CARD, समयout);
+	अगर (retval < 0) अणु
 		u8 val;
 
-		rtsx_read_register(chip, REG_SD_STAT1, &val);
+		rtsx_पढ़ो_रेजिस्टर(chip, REG_SD_STAT1, &val);
 		dev_dbg(rtsx_dev(chip), "SD_STAT1: 0x%x\n", val);
 
-		rtsx_read_register(chip, REG_SD_CFG3, &val);
+		rtsx_पढ़ो_रेजिस्टर(chip, REG_SD_CFG3, &val);
 		dev_dbg(rtsx_dev(chip), "SD_CFG3: 0x%x\n", val);
 
-		if (retval == -ETIMEDOUT) {
-			if (rsp_type & SD_WAIT_BUSY_END) {
+		अगर (retval == -ETIMEDOUT) अणु
+			अगर (rsp_type & SD_WAIT_BUSY_END) अणु
 				retval = sd_check_data0_status(chip);
-				if (retval != STATUS_SUCCESS) {
+				अगर (retval != STATUS_SUCCESS) अणु
 					rtsx_clear_sd_error(chip);
-					return retval;
-				}
-			} else {
+					वापस retval;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				sd_set_err_code(chip, SD_TO_ERR);
-			}
+			पूर्ण
 			retval = STATUS_TIMEDOUT;
-		} else {
+		पूर्ण अन्यथा अणु
 			retval = STATUS_FAIL;
-		}
+		पूर्ण
 		rtsx_clear_sd_error(chip);
 
-		return retval;
-	}
+		वापस retval;
+	पूर्ण
 
-	if (rsp_type == SD_RSP_TYPE_R0)
-		return STATUS_SUCCESS;
+	अगर (rsp_type == SD_RSP_TYPE_R0)
+		वापस STATUS_SUCCESS;
 
 	ptr = rtsx_get_cmd_data(chip) + 1;
 
-	if ((ptr[0] & 0xC0) != 0) {
+	अगर ((ptr[0] & 0xC0) != 0) अणु
 		sd_set_err_code(chip, SD_STS_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (!(rsp_type & SD_NO_CHECK_CRC7)) {
-		if (ptr[stat_idx] & SD_CRC7_ERR) {
-			if (cmd_idx == WRITE_MULTIPLE_BLOCK) {
+	अगर (!(rsp_type & SD_NO_CHECK_CRC7)) अणु
+		अगर (ptr[stat_idx] & SD_CRC7_ERR) अणु
+			अगर (cmd_idx == WRITE_MULTIPLE_BLOCK) अणु
 				sd_set_err_code(chip, SD_CRC_ERR);
-				return STATUS_FAIL;
-			}
-			if (rty_cnt < SD_MAX_RETRY_COUNT) {
-				wait_timeout(20);
+				वापस STATUS_FAIL;
+			पूर्ण
+			अगर (rty_cnt < SD_MAX_RETRY_COUNT) अणु
+				रुको_समयout(20);
 				rty_cnt++;
-				goto RTY_SEND_CMD;
-			} else {
+				जाओ RTY_SEND_CMD;
+			पूर्ण अन्यथा अणु
 				sd_set_err_code(chip, SD_CRC_ERR);
-				return STATUS_FAIL;
-			}
-		}
-	}
+				वापस STATUS_FAIL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if ((rsp_type == SD_RSP_TYPE_R1) || (rsp_type == SD_RSP_TYPE_R1b)) {
-		if ((cmd_idx != SEND_RELATIVE_ADDR) &&
-		    (cmd_idx != SEND_IF_COND)) {
-			if (cmd_idx != STOP_TRANSMISSION) {
-				if (ptr[1] & 0x80)
-					return STATUS_FAIL;
-			}
-#ifdef SUPPORT_SD_LOCK
-			if (ptr[1] & 0x7D) {
-#else
-			if (ptr[1] & 0x7F) {
-#endif
+	अगर ((rsp_type == SD_RSP_TYPE_R1) || (rsp_type == SD_RSP_TYPE_R1b)) अणु
+		अगर ((cmd_idx != SEND_RELATIVE_ADDR) &&
+		    (cmd_idx != SEND_IF_COND)) अणु
+			अगर (cmd_idx != STOP_TRANSMISSION) अणु
+				अगर (ptr[1] & 0x80)
+					वापस STATUS_FAIL;
+			पूर्ण
+#अगर_घोषित SUPPORT_SD_LOCK
+			अगर (ptr[1] & 0x7D) अणु
+#अन्यथा
+			अगर (ptr[1] & 0x7F) अणु
+#पूर्ण_अगर
 				dev_dbg(rtsx_dev(chip), "ptr[1]: 0x%02x\n",
 					ptr[1]);
-				return STATUS_FAIL;
-			}
-			if (ptr[2] & 0xFF) {
+				वापस STATUS_FAIL;
+			पूर्ण
+			अगर (ptr[2] & 0xFF) अणु
 				dev_dbg(rtsx_dev(chip), "ptr[2]: 0x%02x\n",
 					ptr[2]);
-				return STATUS_FAIL;
-			}
-			if (ptr[3] & 0x80) {
+				वापस STATUS_FAIL;
+			पूर्ण
+			अगर (ptr[3] & 0x80) अणु
 				dev_dbg(rtsx_dev(chip), "ptr[3]: 0x%02x\n",
 					ptr[3]);
-				return STATUS_FAIL;
-			}
-			if (ptr[3] & 0x01)
-				sd_card->sd_data_buf_ready = 1;
-			else
-				sd_card->sd_data_buf_ready = 0;
-		}
-	}
+				वापस STATUS_FAIL;
+			पूर्ण
+			अगर (ptr[3] & 0x01)
+				sd_card->sd_data_buf_पढ़ोy = 1;
+			अन्यथा
+				sd_card->sd_data_buf_पढ़ोy = 0;
+		पूर्ण
+	पूर्ण
 
-	if (rsp && rsp_len)
-		memcpy(rsp, ptr, rsp_len);
+	अगर (rsp && rsp_len)
+		स_नकल(rsp, ptr, rsp_len);
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_read_data(struct rtsx_chip *chip,
-			u8 trans_mode, u8 *cmd, int cmd_len, u16 byte_cnt,
-			u16 blk_cnt, u8 bus_width, u8 *buf, int buf_len,
-			int timeout)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	int i;
+अटल पूर्णांक sd_पढ़ो_data(काष्ठा rtsx_chip *chip,
+			u8 trans_mode, u8 *cmd, पूर्णांक cmd_len, u16 byte_cnt,
+			u16 blk_cnt, u8 bus_width, u8 *buf, पूर्णांक buf_len,
+			पूर्णांक समयout)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	पूर्णांक i;
 
 	sd_clr_err_code(chip);
 
-	if (!buf)
+	अगर (!buf)
 		buf_len = 0;
 
-	if (buf_len > 512)
-		return STATUS_FAIL;
+	अगर (buf_len > 512)
+		वापस STATUS_FAIL;
 
 	rtsx_init_cmd(chip);
 
-	if (cmd_len) {
+	अगर (cmd_len) अणु
 		dev_dbg(rtsx_dev(chip), "SD/MMC CMD %d\n", cmd[0] - 0x40);
-		for (i = 0; i < (min(cmd_len, 6)); i++)
+		क्रम (i = 0; i < (min(cmd_len, 6)); i++)
 			rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_CMD0 + i,
 				     0xFF, cmd[i]);
-	}
+	पूर्ण
 	rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_BYTE_CNT_L, 0xFF,
 		     (u8)byte_cnt);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_BYTE_CNT_H, 0xFF,
@@ -296,7 +297,7 @@ static int sd_read_data(struct rtsx_chip *chip,
 	rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_CFG2, 0xFF,
 		     SD_CALCULATE_CRC7 | SD_CHECK_CRC16 | SD_NO_WAIT_BUSY_END |
 		     SD_CHECK_CRC7 | SD_RSP_LEN_6);
-	if (trans_mode != SD_TM_AUTO_TUNING)
+	अगर (trans_mode != SD_TM_AUTO_TUNING)
 		rtsx_add_cmd(chip, WRITE_REG_CMD,
 			     CARD_DATA_SOURCE, 0x01, PINGPONG_BUFFER);
 
@@ -305,58 +306,58 @@ static int sd_read_data(struct rtsx_chip *chip,
 	rtsx_add_cmd(chip, CHECK_REG_CMD, REG_SD_TRANSFER, SD_TRANSFER_END,
 		     SD_TRANSFER_END);
 
-	retval = rtsx_send_cmd(chip, SD_CARD, timeout);
-	if (retval < 0) {
-		if (retval == -ETIMEDOUT) {
+	retval = rtsx_send_cmd(chip, SD_CARD, समयout);
+	अगर (retval < 0) अणु
+		अगर (retval == -ETIMEDOUT) अणु
 			sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
-					    SD_RSP_TYPE_R1, NULL, 0);
-		}
+					    SD_RSP_TYPE_R1, शून्य, 0);
+		पूर्ण
 
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (buf && buf_len) {
-		retval = rtsx_read_ppbuf(chip, buf, buf_len);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	}
+	अगर (buf && buf_len) अणु
+		retval = rtsx_पढ़ो_ppbuf(chip, buf, buf_len);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_write_data(struct rtsx_chip *chip, u8 trans_mode,
-			 u8 *cmd, int cmd_len, u16 byte_cnt, u16 blk_cnt,
-			 u8 bus_width, u8 *buf, int buf_len, int timeout)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	int i;
+अटल पूर्णांक sd_ग_लिखो_data(काष्ठा rtsx_chip *chip, u8 trans_mode,
+			 u8 *cmd, पूर्णांक cmd_len, u16 byte_cnt, u16 blk_cnt,
+			 u8 bus_width, u8 *buf, पूर्णांक buf_len, पूर्णांक समयout)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	पूर्णांक i;
 
 	sd_clr_err_code(chip);
 
-	if (!buf)
+	अगर (!buf)
 		buf_len = 0;
 
-	if (buf_len > 512) {
-		/* This function can't write data more than one page */
-		return STATUS_FAIL;
-	}
+	अगर (buf_len > 512) अणु
+		/* This function can't ग_लिखो data more than one page */
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (buf && buf_len) {
-		retval = rtsx_write_ppbuf(chip, buf, buf_len);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	}
+	अगर (buf && buf_len) अणु
+		retval = rtsx_ग_लिखो_ppbuf(chip, buf, buf_len);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण
 
 	rtsx_init_cmd(chip);
 
-	if (cmd_len) {
+	अगर (cmd_len) अणु
 		dev_dbg(rtsx_dev(chip), "SD/MMC CMD %d\n", cmd[0] - 0x40);
-		for (i = 0; i < (min(cmd_len, 6)); i++) {
+		क्रम (i = 0; i < (min(cmd_len, 6)); i++) अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD,
 				     REG_SD_CMD0 + i, 0xFF, cmd[i]);
-		}
-	}
+		पूर्ण
+	पूर्ण
 	rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_BYTE_CNT_L, 0xFF,
 		     (u8)byte_cnt);
 	rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_BYTE_CNT_H, 0xFF,
@@ -377,43 +378,43 @@ static int sd_write_data(struct rtsx_chip *chip, u8 trans_mode,
 	rtsx_add_cmd(chip, CHECK_REG_CMD, REG_SD_TRANSFER, SD_TRANSFER_END,
 		     SD_TRANSFER_END);
 
-	retval = rtsx_send_cmd(chip, SD_CARD, timeout);
-	if (retval < 0) {
-		if (retval == -ETIMEDOUT) {
+	retval = rtsx_send_cmd(chip, SD_CARD, समयout);
+	अगर (retval < 0) अणु
+		अगर (retval == -ETIMEDOUT) अणु
 			sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
-					    SD_RSP_TYPE_R1, NULL, 0);
-		}
+					    SD_RSP_TYPE_R1, शून्य, 0);
+		पूर्ण
 
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_check_csd(struct rtsx_chip *chip, char check_wp)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	int i;
+अटल पूर्णांक sd_check_csd(काष्ठा rtsx_chip *chip, अक्षर check_wp)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	पूर्णांक i;
 	u8 csd_ver, trans_speed;
 	u8 rsp[16];
 
-	for (i = 0; i < 6; i++) {
-		if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+	क्रम (i = 0; i < 6; i++) अणु
+		अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 			sd_set_err_code(chip, SD_NO_CARD);
-			return STATUS_FAIL;
-		}
+			वापस STATUS_FAIL;
+		पूर्ण
 
 		retval = sd_send_cmd_get_rsp(chip, SEND_CSD, sd_card->sd_addr,
 					     SD_RSP_TYPE_R2, rsp, 16);
-		if (retval == STATUS_SUCCESS)
-			break;
-	}
+		अगर (retval == STATUS_SUCCESS)
+			अवरोध;
+	पूर्ण
 
-	if (i == 6)
-		return STATUS_FAIL;
+	अगर (i == 6)
+		वापस STATUS_FAIL;
 
-	memcpy(sd_card->raw_csd, rsp + 1, 15);
+	स_नकल(sd_card->raw_csd, rsp + 1, 15);
 
 	dev_dbg(rtsx_dev(chip), "CSD Response:\n");
 	dev_dbg(rtsx_dev(chip), "%*ph\n", 16, sd_card->raw_csd);
@@ -422,47 +423,47 @@ static int sd_check_csd(struct rtsx_chip *chip, char check_wp)
 	dev_dbg(rtsx_dev(chip), "csd_ver = %d\n", csd_ver);
 
 	trans_speed = rsp[4];
-	if ((trans_speed & 0x07) == 0x02) {
-		if ((trans_speed & 0xf8) >= 0x30) {
-			if (chip->asic_code)
-				sd_card->sd_clock = 47;
-			else
-				sd_card->sd_clock = CLK_50;
+	अगर ((trans_speed & 0x07) == 0x02) अणु
+		अगर ((trans_speed & 0xf8) >= 0x30) अणु
+			अगर (chip->asic_code)
+				sd_card->sd_घड़ी = 47;
+			अन्यथा
+				sd_card->sd_घड़ी = CLK_50;
 
-		} else if ((trans_speed & 0xf8) == 0x28) {
-			if (chip->asic_code)
-				sd_card->sd_clock = 39;
-			else
-				sd_card->sd_clock = CLK_40;
+		पूर्ण अन्यथा अगर ((trans_speed & 0xf8) == 0x28) अणु
+			अगर (chip->asic_code)
+				sd_card->sd_घड़ी = 39;
+			अन्यथा
+				sd_card->sd_घड़ी = CLK_40;
 
-		} else if ((trans_speed & 0xf8) == 0x20) {
-			if (chip->asic_code)
-				sd_card->sd_clock = 29;
-			else
-				sd_card->sd_clock = CLK_30;
+		पूर्ण अन्यथा अगर ((trans_speed & 0xf8) == 0x20) अणु
+			अगर (chip->asic_code)
+				sd_card->sd_घड़ी = 29;
+			अन्यथा
+				sd_card->sd_घड़ी = CLK_30;
 
-		} else if ((trans_speed & 0xf8) >= 0x10) {
-			if (chip->asic_code)
-				sd_card->sd_clock = 23;
-			else
-				sd_card->sd_clock = CLK_20;
+		पूर्ण अन्यथा अगर ((trans_speed & 0xf8) >= 0x10) अणु
+			अगर (chip->asic_code)
+				sd_card->sd_घड़ी = 23;
+			अन्यथा
+				sd_card->sd_घड़ी = CLK_20;
 
-		} else if ((trans_speed & 0x08) >= 0x08) {
-			if (chip->asic_code)
-				sd_card->sd_clock = 19;
-			else
-				sd_card->sd_clock = CLK_20;
-		} else {
-			return STATUS_FAIL;
-		}
-	} else {
-		return STATUS_FAIL;
-	}
+		पूर्ण अन्यथा अगर ((trans_speed & 0x08) >= 0x08) अणु
+			अगर (chip->asic_code)
+				sd_card->sd_घड़ी = 19;
+			अन्यथा
+				sd_card->sd_घड़ी = CLK_20;
+		पूर्ण अन्यथा अणु
+			वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (CHK_MMC_SECTOR_MODE(sd_card)) {
+	अगर (CHK_MMC_SECTOR_MODE(sd_card)) अणु
 		sd_card->capacity = 0;
-	} else {
-		if ((!CHK_SD_HCXC(sd_card)) || (csd_ver == 0)) {
+	पूर्ण अन्यथा अणु
+		अगर ((!CHK_SD_HCXC(sd_card)) || (csd_ver == 0)) अणु
 			u8 blk_size, c_size_mult;
 			u16 c_size;
 
@@ -475,415 +476,415 @@ static int sd_check_csd(struct rtsx_chip *chip, char check_wp)
 			sd_card->capacity = (((u32)(c_size + 1)) *
 					(1 << (c_size_mult + 2)))
 				<< (blk_size - 9);
-		} else {
+		पूर्ण अन्यथा अणु
 			u32 total_sector = 0;
 
 			total_sector = (((u32)rsp[8] & 0x3f) << 16) |
 				((u32)rsp[9] << 8) | (u32)rsp[10];
 			sd_card->capacity = (total_sector + 1) << 10;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (check_wp) {
-		if (rsp[15] & 0x30)
+	अगर (check_wp) अणु
+		अगर (rsp[15] & 0x30)
 			chip->card_wp |= SD_CARD;
 
 		dev_dbg(rtsx_dev(chip), "CSD WP Status: 0x%x\n", rsp[15]);
-	}
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_set_sample_push_timing(struct rtsx_chip *chip)
-{
-	int retval;
-	struct sd_info *sd_card = &chip->sd_card;
+अटल पूर्णांक sd_set_sample_push_timing(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
+	काष्ठा sd_info *sd_card = &chip->sd_card;
 	u8 val = 0;
 
-	if ((chip->sd_ctl & SD_PUSH_POINT_CTL_MASK) == SD_PUSH_POINT_DELAY)
+	अगर ((chip->sd_ctl & SD_PUSH_POINT_CTL_MASK) == SD_PUSH_POINT_DELAY)
 		val |= 0x10;
 
-	if ((chip->sd_ctl & SD_SAMPLE_POINT_CTL_MASK) == SD_SAMPLE_POINT_AUTO) {
-		if (chip->asic_code) {
-			if (CHK_SD_HS(sd_card) || CHK_MMC_52M(sd_card)) {
-				if (val & 0x10)
+	अगर ((chip->sd_ctl & SD_SAMPLE_POINT_CTL_MASK) == SD_SAMPLE_POINT_AUTO) अणु
+		अगर (chip->asic_code) अणु
+			अगर (CHK_SD_HS(sd_card) || CHK_MMC_52M(sd_card)) अणु
+				अगर (val & 0x10)
 					val |= 0x04;
-				else
+				अन्यथा
 					val |= 0x08;
-			}
-		} else {
-			if (val & 0x10)
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (val & 0x10)
 				val |= 0x04;
-			else
+			अन्यथा
 				val |= 0x08;
-		}
-	} else if ((chip->sd_ctl & SD_SAMPLE_POINT_CTL_MASK) ==
-		SD_SAMPLE_POINT_DELAY) {
-		if (val & 0x10)
+		पूर्ण
+	पूर्ण अन्यथा अगर ((chip->sd_ctl & SD_SAMPLE_POINT_CTL_MASK) ==
+		SD_SAMPLE_POINT_DELAY) अणु
+		अगर (val & 0x10)
 			val |= 0x04;
-		else
+		अन्यथा
 			val |= 0x08;
-	}
+	पूर्ण
 
-	retval = rtsx_write_register(chip, REG_SD_CFG1, 0x1C, val);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG1, 0x1C, val);
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static void sd_choose_proper_clock(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
+अटल व्योम sd_choose_proper_घड़ी(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
 
-	if (CHK_SD_SDR104(sd_card)) {
-		if (chip->asic_code)
-			sd_card->sd_clock = chip->asic_sd_sdr104_clk;
-		else
-			sd_card->sd_clock = chip->fpga_sd_sdr104_clk;
+	अगर (CHK_SD_SDR104(sd_card)) अणु
+		अगर (chip->asic_code)
+			sd_card->sd_घड़ी = chip->asic_sd_sdr104_clk;
+		अन्यथा
+			sd_card->sd_घड़ी = chip->fpga_sd_sdr104_clk;
 
-	} else if (CHK_SD_DDR50(sd_card)) {
-		if (chip->asic_code)
-			sd_card->sd_clock = chip->asic_sd_ddr50_clk;
-		else
-			sd_card->sd_clock = chip->fpga_sd_ddr50_clk;
+	पूर्ण अन्यथा अगर (CHK_SD_DDR50(sd_card)) अणु
+		अगर (chip->asic_code)
+			sd_card->sd_घड़ी = chip->asic_sd_ddr50_clk;
+		अन्यथा
+			sd_card->sd_घड़ी = chip->fpga_sd_ddr50_clk;
 
-	} else if (CHK_SD_SDR50(sd_card)) {
-		if (chip->asic_code)
-			sd_card->sd_clock = chip->asic_sd_sdr50_clk;
-		else
-			sd_card->sd_clock = chip->fpga_sd_sdr50_clk;
+	पूर्ण अन्यथा अगर (CHK_SD_SDR50(sd_card)) अणु
+		अगर (chip->asic_code)
+			sd_card->sd_घड़ी = chip->asic_sd_sdr50_clk;
+		अन्यथा
+			sd_card->sd_घड़ी = chip->fpga_sd_sdr50_clk;
 
-	} else if (CHK_SD_HS(sd_card)) {
-		if (chip->asic_code)
-			sd_card->sd_clock = chip->asic_sd_hs_clk;
-		else
-			sd_card->sd_clock = chip->fpga_sd_hs_clk;
+	पूर्ण अन्यथा अगर (CHK_SD_HS(sd_card)) अणु
+		अगर (chip->asic_code)
+			sd_card->sd_घड़ी = chip->asic_sd_hs_clk;
+		अन्यथा
+			sd_card->sd_घड़ी = chip->fpga_sd_hs_clk;
 
-	} else if (CHK_MMC_52M(sd_card) || CHK_MMC_DDR52(sd_card)) {
-		if (chip->asic_code)
-			sd_card->sd_clock = chip->asic_mmc_52m_clk;
-		else
-			sd_card->sd_clock = chip->fpga_mmc_52m_clk;
+	पूर्ण अन्यथा अगर (CHK_MMC_52M(sd_card) || CHK_MMC_DDR52(sd_card)) अणु
+		अगर (chip->asic_code)
+			sd_card->sd_घड़ी = chip->asic_mmc_52m_clk;
+		अन्यथा
+			sd_card->sd_घड़ी = chip->fpga_mmc_52m_clk;
 
-	} else if (CHK_MMC_26M(sd_card)) {
-		if (chip->asic_code)
-			sd_card->sd_clock = 48;
-		else
-			sd_card->sd_clock = CLK_50;
-	}
-}
+	पूर्ण अन्यथा अगर (CHK_MMC_26M(sd_card)) अणु
+		अगर (chip->asic_code)
+			sd_card->sd_घड़ी = 48;
+		अन्यथा
+			sd_card->sd_घड़ी = CLK_50;
+	पूर्ण
+पूर्ण
 
-static int sd_set_clock_divider(struct rtsx_chip *chip, u8 clk_div)
-{
-	int retval;
+अटल पूर्णांक sd_set_घड़ी_भागider(काष्ठा rtsx_chip *chip, u8 clk_भाग)
+अणु
+	पूर्णांक retval;
 	u8 mask = 0, val = 0;
 
 	mask = 0x60;
-	if (clk_div == SD_CLK_DIVIDE_0)
+	अगर (clk_भाग == SD_CLK_DIVIDE_0)
 		val = 0x00;
-	else if (clk_div == SD_CLK_DIVIDE_128)
+	अन्यथा अगर (clk_भाग == SD_CLK_DIVIDE_128)
 		val = 0x40;
-	else if (clk_div == SD_CLK_DIVIDE_256)
+	अन्यथा अगर (clk_भाग == SD_CLK_DIVIDE_256)
 		val = 0x20;
 
-	retval = rtsx_write_register(chip, REG_SD_CFG1, mask, val);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG1, mask, val);
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_set_init_para(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक sd_set_init_para(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 
 	retval = sd_set_sample_push_timing(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	sd_choose_proper_clock(chip);
+	sd_choose_proper_घड़ी(chip);
 
-	retval = switch_clock(chip, sd_card->sd_clock);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = चयन_घड़ी(chip, sd_card->sd_घड़ी);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int sd_select_card(struct rtsx_chip *chip, int select)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+पूर्णांक sd_select_card(काष्ठा rtsx_chip *chip, पूर्णांक select)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u8 cmd_idx, cmd_type;
 	u32 addr;
 
-	if (select) {
+	अगर (select) अणु
 		cmd_idx = SELECT_CARD;
 		cmd_type = SD_RSP_TYPE_R1;
 		addr = sd_card->sd_addr;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd_idx = DESELECT_CARD;
 		cmd_type = SD_RSP_TYPE_R0;
 		addr = 0;
-	}
+	पूर्ण
 
-	retval = sd_send_cmd_get_rsp(chip, cmd_idx, addr, cmd_type, NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_send_cmd_get_rsp(chip, cmd_idx, addr, cmd_type, शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-#ifdef SUPPORT_SD_LOCK
-static int sd_update_lock_status(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+#अगर_घोषित SUPPORT_SD_LOCK
+अटल पूर्णांक sd_update_lock_status(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u8 rsp[5];
 
 	retval = sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
 				     SD_RSP_TYPE_R1, rsp, 5);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (rsp[1] & 0x02)
+	अगर (rsp[1] & 0x02)
 		sd_card->sd_lock_status |= SD_LOCKED;
-	else
+	अन्यथा
 		sd_card->sd_lock_status &= ~SD_LOCKED;
 
 	dev_dbg(rtsx_dev(chip), "sd_card->sd_lock_status = 0x%x\n",
 		sd_card->sd_lock_status);
 
-	if (rsp[1] & 0x01)
-		return STATUS_FAIL;
+	अगर (rsp[1] & 0x01)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
-#endif
+	वापस STATUS_SUCCESS;
+पूर्ण
+#पूर्ण_अगर
 
-static int sd_wait_state_data_ready(struct rtsx_chip *chip, u8 state,
-				    u8 data_ready, int polling_cnt)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval, i;
+अटल पूर्णांक sd_रुको_state_data_पढ़ोy(काष्ठा rtsx_chip *chip, u8 state,
+				    u8 data_पढ़ोy, पूर्णांक polling_cnt)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval, i;
 	u8 rsp[5];
 
-	for (i = 0; i < polling_cnt; i++) {
+	क्रम (i = 0; i < polling_cnt; i++) अणु
 		retval = sd_send_cmd_get_rsp(chip, SEND_STATUS,
 					     sd_card->sd_addr, SD_RSP_TYPE_R1,
 					     rsp, 5);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
-		if (((rsp[3] & 0x1E) == state) &&
-		    ((rsp[3] & 0x01) == data_ready))
-			return STATUS_SUCCESS;
-	}
+		अगर (((rsp[3] & 0x1E) == state) &&
+		    ((rsp[3] & 0x01) == data_पढ़ोy))
+			वापस STATUS_SUCCESS;
+	पूर्ण
 
-	return STATUS_FAIL;
-}
+	वापस STATUS_FAIL;
+पूर्ण
 
-static int sd_change_bank_voltage(struct rtsx_chip *chip, u8 voltage)
-{
-	int retval;
+अटल पूर्णांक sd_change_bank_voltage(काष्ठा rtsx_chip *chip, u8 voltage)
+अणु
+	पूर्णांक retval;
 
-	if (voltage == SD_IO_3V3) {
-		if (chip->asic_code) {
-			retval = rtsx_write_phy_register(chip, 0x08,
+	अगर (voltage == SD_IO_3V3) अणु
+		अगर (chip->asic_code) अणु
+			retval = rtsx_ग_लिखो_phy_रेजिस्टर(chip, 0x08,
 							 0x4FC0 |
 							 chip->phy_voltage);
-			if (retval != STATUS_SUCCESS)
-				return STATUS_FAIL;
-		} else {
-			retval = rtsx_write_register(chip, SD_PAD_CTL,
+			अगर (retval != STATUS_SUCCESS)
+				वापस STATUS_FAIL;
+		पूर्ण अन्यथा अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_PAD_CTL,
 						     SD_IO_USING_1V8, 0);
-			if (retval)
-				return retval;
-		}
-	} else if (voltage == SD_IO_1V8) {
-		if (chip->asic_code) {
-			retval = rtsx_write_phy_register(chip, 0x08,
+			अगर (retval)
+				वापस retval;
+		पूर्ण
+	पूर्ण अन्यथा अगर (voltage == SD_IO_1V8) अणु
+		अगर (chip->asic_code) अणु
+			retval = rtsx_ग_लिखो_phy_रेजिस्टर(chip, 0x08,
 							 0x4C40 |
 							 chip->phy_voltage);
-			if (retval != STATUS_SUCCESS)
-				return STATUS_FAIL;
-		} else {
-			retval = rtsx_write_register(chip, SD_PAD_CTL,
+			अगर (retval != STATUS_SUCCESS)
+				वापस STATUS_FAIL;
+		पूर्ण अन्यथा अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_PAD_CTL,
 						     SD_IO_USING_1V8,
 						     SD_IO_USING_1V8);
-			if (retval)
-				return retval;
-		}
-	} else {
-		return STATUS_FAIL;
-	}
+			अगर (retval)
+				वापस retval;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_voltage_switch(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक sd_voltage_चयन(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 	u8 stat;
 
-	retval = rtsx_write_register(chip, SD_BUS_STAT,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_BUS_STAT,
 				     SD_CLK_TOGGLE_EN | SD_CLK_FORCE_STOP,
 				     SD_CLK_TOGGLE_EN);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	retval = sd_send_cmd_get_rsp(chip, VOLTAGE_SWITCH, 0, SD_RSP_TYPE_R1,
-				     NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+				     शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	udelay(chip->sd_voltage_switch_delay);
+	udelay(chip->sd_voltage_चयन_delay);
 
-	retval = rtsx_read_register(chip, SD_BUS_STAT, &stat);
-	if (retval)
-		return retval;
-	if (stat & (SD_CMD_STATUS | SD_DAT3_STATUS | SD_DAT2_STATUS |
-				SD_DAT1_STATUS | SD_DAT0_STATUS)) {
-		return STATUS_FAIL;
-	}
+	retval = rtsx_पढ़ो_रेजिस्टर(chip, SD_BUS_STAT, &stat);
+	अगर (retval)
+		वापस retval;
+	अगर (stat & (SD_CMD_STATUS | SD_DAT3_STATUS | SD_DAT2_STATUS |
+				SD_DAT1_STATUS | SD_DAT0_STATUS)) अणु
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	retval = rtsx_write_register(chip, SD_BUS_STAT, 0xFF,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_BUS_STAT, 0xFF,
 				     SD_CLK_FORCE_STOP);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 	retval = sd_change_bank_voltage(chip, SD_IO_1V8);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	wait_timeout(50);
+	रुको_समयout(50);
 
-	retval = rtsx_write_register(chip, SD_BUS_STAT, 0xFF,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_BUS_STAT, 0xFF,
 				     SD_CLK_TOGGLE_EN);
-	if (retval)
-		return retval;
-	wait_timeout(10);
+	अगर (retval)
+		वापस retval;
+	रुको_समयout(10);
 
-	retval = rtsx_read_register(chip, SD_BUS_STAT, &stat);
-	if (retval)
-		return retval;
-	if ((stat & (SD_CMD_STATUS | SD_DAT3_STATUS | SD_DAT2_STATUS |
+	retval = rtsx_पढ़ो_रेजिस्टर(chip, SD_BUS_STAT, &stat);
+	अगर (retval)
+		वापस retval;
+	अगर ((stat & (SD_CMD_STATUS | SD_DAT3_STATUS | SD_DAT2_STATUS |
 				SD_DAT1_STATUS | SD_DAT0_STATUS)) !=
 			(SD_CMD_STATUS | SD_DAT3_STATUS | SD_DAT2_STATUS |
-				SD_DAT1_STATUS | SD_DAT0_STATUS)) {
+				SD_DAT1_STATUS | SD_DAT0_STATUS)) अणु
 		dev_dbg(rtsx_dev(chip), "SD_BUS_STAT: 0x%x\n", stat);
-		rtsx_write_register(chip, SD_BUS_STAT, SD_CLK_TOGGLE_EN |
+		rtsx_ग_लिखो_रेजिस्टर(chip, SD_BUS_STAT, SD_CLK_TOGGLE_EN |
 				    SD_CLK_FORCE_STOP, 0);
-		rtsx_write_register(chip, CARD_CLK_EN, 0xFF, 0);
-		return STATUS_FAIL;
-	}
+		rtsx_ग_लिखो_रेजिस्टर(chip, CARD_CLK_EN, 0xFF, 0);
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	retval = rtsx_write_register(chip, SD_BUS_STAT,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_BUS_STAT,
 				     SD_CLK_TOGGLE_EN | SD_CLK_FORCE_STOP, 0);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_reset_dcm(struct rtsx_chip *chip, u8 tune_dir)
-{
-	int retval;
+अटल पूर्णांक sd_reset_dcm(काष्ठा rtsx_chip *chip, u8 tune_dir)
+अणु
+	पूर्णांक retval;
 
-	if (tune_dir == TUNE_RX) {
-		retval = rtsx_write_register(chip, DCM_DRP_CTL, 0xFF,
+	अगर (tune_dir == TUNE_RX) अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, DCM_DRP_CTL, 0xFF,
 					     DCM_RESET | DCM_RX);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, DCM_DRP_CTL, 0xFF, DCM_RX);
-		if (retval)
-			return retval;
-	} else {
-		retval = rtsx_write_register(chip, DCM_DRP_CTL, 0xFF,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, DCM_DRP_CTL, 0xFF, DCM_RX);
+		अगर (retval)
+			वापस retval;
+	पूर्ण अन्यथा अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, DCM_DRP_CTL, 0xFF,
 					     DCM_RESET | DCM_TX);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, DCM_DRP_CTL, 0xFF, DCM_TX);
-		if (retval)
-			return retval;
-	}
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, DCM_DRP_CTL, 0xFF, DCM_TX);
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_change_phase(struct rtsx_chip *chip, u8 sample_point, u8 tune_dir)
-{
-	struct sd_info *sd_card = &chip->sd_card;
+अटल पूर्णांक sd_change_phase(काष्ठा rtsx_chip *chip, u8 sample_poपूर्णांक, u8 tune_dir)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
 	u16 SD_VP_CTL, SD_DCMPS_CTL;
 	u8 val;
-	int retval;
+	पूर्णांक retval;
 	bool ddr_rx = false;
 
 	dev_dbg(rtsx_dev(chip), "%s (sample_point = %d, tune_dir = %d)\n",
-		__func__, sample_point, tune_dir);
+		__func__, sample_poपूर्णांक, tune_dir);
 
-	if (tune_dir == TUNE_RX) {
+	अगर (tune_dir == TUNE_RX) अणु
 		SD_VP_CTL = SD_VPRX_CTL;
 		SD_DCMPS_CTL = SD_DCMPS_RX_CTL;
-		if (CHK_SD_DDR50(sd_card))
+		अगर (CHK_SD_DDR50(sd_card))
 			ddr_rx = true;
-	} else {
+	पूर्ण अन्यथा अणु
 		SD_VP_CTL = SD_VPTX_CTL;
 		SD_DCMPS_CTL = SD_DCMPS_TX_CTL;
-	}
+	पूर्ण
 
-	if (chip->asic_code) {
-		retval = rtsx_write_register(chip, CLK_CTL, CHANGE_CLK,
+	अगर (chip->asic_code) अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, CLK_CTL, CHANGE_CLK,
 					     CHANGE_CLK);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, SD_VP_CTL, 0x1F,
-					     sample_point);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, SD_VPCLK0_CTL,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_VP_CTL, 0x1F,
+					     sample_poपूर्णांक);
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_VPCLK0_CTL,
 					     PHASE_NOT_RESET, 0);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, SD_VPCLK0_CTL,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_VPCLK0_CTL,
 					     PHASE_NOT_RESET, PHASE_NOT_RESET);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, CLK_CTL, CHANGE_CLK, 0);
-		if (retval)
-			return retval;
-	} else {
-		rtsx_read_register(chip, SD_VP_CTL, &val);
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, CLK_CTL, CHANGE_CLK, 0);
+		अगर (retval)
+			वापस retval;
+	पूर्ण अन्यथा अणु
+		rtsx_पढ़ो_रेजिस्टर(chip, SD_VP_CTL, &val);
 		dev_dbg(rtsx_dev(chip), "SD_VP_CTL: 0x%x\n", val);
-		rtsx_read_register(chip, SD_DCMPS_CTL, &val);
+		rtsx_पढ़ो_रेजिस्टर(chip, SD_DCMPS_CTL, &val);
 		dev_dbg(rtsx_dev(chip), "SD_DCMPS_CTL: 0x%x\n", val);
 
-		if (ddr_rx) {
-			retval = rtsx_write_register(chip, SD_VP_CTL,
+		अगर (ddr_rx) अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_VP_CTL,
 						     PHASE_CHANGE,
 						     PHASE_CHANGE);
-			if (retval)
-				return retval;
+			अगर (retval)
+				वापस retval;
 			udelay(50);
-			retval = rtsx_write_register(chip, SD_VP_CTL, 0xFF,
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_VP_CTL, 0xFF,
 						     PHASE_CHANGE |
 						     PHASE_NOT_RESET |
-						     sample_point);
-			if (retval)
-				return retval;
-		} else {
-			retval = rtsx_write_register(chip, CLK_CTL,
+						     sample_poपूर्णांक);
+			अगर (retval)
+				वापस retval;
+		पूर्ण अन्यथा अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, CLK_CTL,
 						     CHANGE_CLK, CHANGE_CLK);
-			if (retval)
-				return retval;
+			अगर (retval)
+				वापस retval;
 			udelay(50);
-			retval = rtsx_write_register(chip, SD_VP_CTL, 0xFF,
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_VP_CTL, 0xFF,
 						     PHASE_NOT_RESET |
-						     sample_point);
-			if (retval)
-				return retval;
-		}
+						     sample_poपूर्णांक);
+			अगर (retval)
+				वापस retval;
+		पूर्ण
 		udelay(100);
 
 		rtsx_init_cmd(chip);
@@ -892,64 +893,64 @@ static int sd_change_phase(struct rtsx_chip *chip, u8 sample_point, u8 tune_dir)
 		rtsx_add_cmd(chip, CHECK_REG_CMD, SD_DCMPS_CTL,
 			     DCMPS_CHANGE_DONE, DCMPS_CHANGE_DONE);
 		retval = rtsx_send_cmd(chip, SD_CARD, 100);
-		if (retval != STATUS_SUCCESS)
-			goto fail;
+		अगर (retval != STATUS_SUCCESS)
+			जाओ fail;
 
 		val = *rtsx_get_cmd_data(chip);
-		if (val & DCMPS_ERROR)
-			goto fail;
+		अगर (val & DCMPS_ERROR)
+			जाओ fail;
 
-		if ((val & DCMPS_CURRENT_PHASE) != sample_point)
-			goto fail;
+		अगर ((val & DCMPS_CURRENT_PHASE) != sample_poपूर्णांक)
+			जाओ fail;
 
-		retval = rtsx_write_register(chip, SD_DCMPS_CTL,
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_DCMPS_CTL,
 					     DCMPS_CHANGE, 0);
-		if (retval)
-			return retval;
-		if (ddr_rx) {
-			retval = rtsx_write_register(chip, SD_VP_CTL,
+		अगर (retval)
+			वापस retval;
+		अगर (ddr_rx) अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_VP_CTL,
 						     PHASE_CHANGE, 0);
-			if (retval)
-				return retval;
-		} else {
-			retval = rtsx_write_register(chip, CLK_CTL,
+			अगर (retval)
+				वापस retval;
+		पूर्ण अन्यथा अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, CLK_CTL,
 						     CHANGE_CLK, 0);
-			if (retval)
-				return retval;
-		}
+			अगर (retval)
+				वापस retval;
+		पूर्ण
 
 		udelay(50);
-	}
+	पूर्ण
 
-	retval = rtsx_write_register(chip, SD_CFG1, SD_ASYNC_FIFO_NOT_RST, 0);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG1, SD_ASYNC_FIFO_NOT_RST, 0);
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
+	वापस STATUS_SUCCESS;
 
 fail:
-	rtsx_read_register(chip, SD_VP_CTL, &val);
+	rtsx_पढ़ो_रेजिस्टर(chip, SD_VP_CTL, &val);
 	dev_dbg(rtsx_dev(chip), "SD_VP_CTL: 0x%x\n", val);
-	rtsx_read_register(chip, SD_DCMPS_CTL, &val);
+	rtsx_पढ़ो_रेजिस्टर(chip, SD_DCMPS_CTL, &val);
 	dev_dbg(rtsx_dev(chip), "SD_DCMPS_CTL: 0x%x\n", val);
 
-	rtsx_write_register(chip, SD_DCMPS_CTL, DCMPS_CHANGE, 0);
-	rtsx_write_register(chip, SD_VP_CTL, PHASE_CHANGE, 0);
+	rtsx_ग_लिखो_रेजिस्टर(chip, SD_DCMPS_CTL, DCMPS_CHANGE, 0);
+	rtsx_ग_लिखो_रेजिस्टर(chip, SD_VP_CTL, PHASE_CHANGE, 0);
 	mdelay(10);
 	sd_reset_dcm(chip, tune_dir);
-	return STATUS_FAIL;
-}
+	वापस STATUS_FAIL;
+पूर्ण
 
-static int sd_check_spec(struct rtsx_chip *chip, u8 bus_width)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक sd_check_spec(काष्ठा rtsx_chip *chip, u8 bus_width)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u8 cmd[5], buf[8];
 
 	retval = sd_send_cmd_get_rsp(chip, APP_CMD, sd_card->sd_addr,
-				     SD_RSP_TYPE_R1, NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+				     SD_RSP_TYPE_R1, शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	cmd[0] = 0x40 | SEND_SCR;
 	cmd[1] = 0;
@@ -957,176 +958,176 @@ static int sd_check_spec(struct rtsx_chip *chip, u8 bus_width)
 	cmd[3] = 0;
 	cmd[4] = 0;
 
-	retval = sd_read_data(chip, SD_TM_NORMAL_READ, cmd, 5, 8, 1, bus_width,
+	retval = sd_पढ़ो_data(chip, SD_TM_NORMAL_READ, cmd, 5, 8, 1, bus_width,
 			      buf, 8, 250);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		rtsx_clear_sd_error(chip);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	memcpy(sd_card->raw_scr, buf, 8);
+	स_नकल(sd_card->raw_scr, buf, 8);
 
-	if ((buf[0] & 0x0F) == 0)
-		return STATUS_FAIL;
+	अगर ((buf[0] & 0x0F) == 0)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_query_switch_result(struct rtsx_chip *chip, u8 func_group,
-				  u8 func_to_switch, u8 *buf, int buf_len)
-{
-	u8 support_mask = 0, query_switch = 0, switch_busy = 0;
-	int support_offset = 0, query_switch_offset = 0, check_busy_offset = 0;
+अटल पूर्णांक sd_query_चयन_result(काष्ठा rtsx_chip *chip, u8 func_group,
+				  u8 func_to_चयन, u8 *buf, पूर्णांक buf_len)
+अणु
+	u8 support_mask = 0, query_चयन = 0, चयन_busy = 0;
+	पूर्णांक support_offset = 0, query_चयन_offset = 0, check_busy_offset = 0;
 
-	if (func_group == SD_FUNC_GROUP_1) {
+	अगर (func_group == SD_FUNC_GROUP_1) अणु
 		support_offset = FUNCTION_GROUP1_SUPPORT_OFFSET;
-		query_switch_offset = FUNCTION_GROUP1_QUERY_SWITCH_OFFSET;
+		query_चयन_offset = FUNCTION_GROUP1_QUERY_SWITCH_OFFSET;
 		check_busy_offset = FUNCTION_GROUP1_CHECK_BUSY_OFFSET;
 
-		switch (func_to_switch) {
-		case HS_SUPPORT:
+		चयन (func_to_चयन) अणु
+		हाल HS_SUPPORT:
 			support_mask = HS_SUPPORT_MASK;
-			query_switch = HS_QUERY_SWITCH_OK;
-			switch_busy = HS_SWITCH_BUSY;
-			break;
+			query_चयन = HS_QUERY_SWITCH_OK;
+			चयन_busy = HS_SWITCH_BUSY;
+			अवरोध;
 
-		case SDR50_SUPPORT:
+		हाल SDR50_SUPPORT:
 			support_mask = SDR50_SUPPORT_MASK;
-			query_switch = SDR50_QUERY_SWITCH_OK;
-			switch_busy = SDR50_SWITCH_BUSY;
-			break;
+			query_चयन = SDR50_QUERY_SWITCH_OK;
+			चयन_busy = SDR50_SWITCH_BUSY;
+			अवरोध;
 
-		case SDR104_SUPPORT:
+		हाल SDR104_SUPPORT:
 			support_mask = SDR104_SUPPORT_MASK;
-			query_switch = SDR104_QUERY_SWITCH_OK;
-			switch_busy = SDR104_SWITCH_BUSY;
-			break;
+			query_चयन = SDR104_QUERY_SWITCH_OK;
+			चयन_busy = SDR104_SWITCH_BUSY;
+			अवरोध;
 
-		case DDR50_SUPPORT:
+		हाल DDR50_SUPPORT:
 			support_mask = DDR50_SUPPORT_MASK;
-			query_switch = DDR50_QUERY_SWITCH_OK;
-			switch_busy = DDR50_SWITCH_BUSY;
-			break;
+			query_चयन = DDR50_QUERY_SWITCH_OK;
+			चयन_busy = DDR50_SWITCH_BUSY;
+			अवरोध;
 
-		default:
-			return STATUS_FAIL;
-		}
-	} else if (func_group == SD_FUNC_GROUP_3) {
+		शेष:
+			वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण अन्यथा अगर (func_group == SD_FUNC_GROUP_3) अणु
 		support_offset = FUNCTION_GROUP3_SUPPORT_OFFSET;
-		query_switch_offset = FUNCTION_GROUP3_QUERY_SWITCH_OFFSET;
+		query_चयन_offset = FUNCTION_GROUP3_QUERY_SWITCH_OFFSET;
 		check_busy_offset = FUNCTION_GROUP3_CHECK_BUSY_OFFSET;
 
-		switch (func_to_switch) {
-		case DRIVING_TYPE_A:
+		चयन (func_to_चयन) अणु
+		हाल DRIVING_TYPE_A:
 			support_mask = DRIVING_TYPE_A_MASK;
-			query_switch = TYPE_A_QUERY_SWITCH_OK;
-			switch_busy = TYPE_A_SWITCH_BUSY;
-			break;
+			query_चयन = TYPE_A_QUERY_SWITCH_OK;
+			चयन_busy = TYPE_A_SWITCH_BUSY;
+			अवरोध;
 
-		case DRIVING_TYPE_C:
+		हाल DRIVING_TYPE_C:
 			support_mask = DRIVING_TYPE_C_MASK;
-			query_switch = TYPE_C_QUERY_SWITCH_OK;
-			switch_busy = TYPE_C_SWITCH_BUSY;
-			break;
+			query_चयन = TYPE_C_QUERY_SWITCH_OK;
+			चयन_busy = TYPE_C_SWITCH_BUSY;
+			अवरोध;
 
-		case DRIVING_TYPE_D:
+		हाल DRIVING_TYPE_D:
 			support_mask = DRIVING_TYPE_D_MASK;
-			query_switch = TYPE_D_QUERY_SWITCH_OK;
-			switch_busy = TYPE_D_SWITCH_BUSY;
-			break;
+			query_चयन = TYPE_D_QUERY_SWITCH_OK;
+			चयन_busy = TYPE_D_SWITCH_BUSY;
+			अवरोध;
 
-		default:
-			return STATUS_FAIL;
-		}
-	} else if (func_group == SD_FUNC_GROUP_4) {
+		शेष:
+			वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण अन्यथा अगर (func_group == SD_FUNC_GROUP_4) अणु
 		support_offset = FUNCTION_GROUP4_SUPPORT_OFFSET;
-		query_switch_offset = FUNCTION_GROUP4_QUERY_SWITCH_OFFSET;
+		query_चयन_offset = FUNCTION_GROUP4_QUERY_SWITCH_OFFSET;
 		check_busy_offset = FUNCTION_GROUP4_CHECK_BUSY_OFFSET;
 
-		switch (func_to_switch) {
-		case CURRENT_LIMIT_400:
+		चयन (func_to_चयन) अणु
+		हाल CURRENT_LIMIT_400:
 			support_mask = CURRENT_LIMIT_400_MASK;
-			query_switch = CURRENT_LIMIT_400_QUERY_SWITCH_OK;
-			switch_busy = CURRENT_LIMIT_400_SWITCH_BUSY;
-			break;
+			query_चयन = CURRENT_LIMIT_400_QUERY_SWITCH_OK;
+			चयन_busy = CURRENT_LIMIT_400_SWITCH_BUSY;
+			अवरोध;
 
-		case CURRENT_LIMIT_600:
+		हाल CURRENT_LIMIT_600:
 			support_mask = CURRENT_LIMIT_600_MASK;
-			query_switch = CURRENT_LIMIT_600_QUERY_SWITCH_OK;
-			switch_busy = CURRENT_LIMIT_600_SWITCH_BUSY;
-			break;
+			query_चयन = CURRENT_LIMIT_600_QUERY_SWITCH_OK;
+			चयन_busy = CURRENT_LIMIT_600_SWITCH_BUSY;
+			अवरोध;
 
-		case CURRENT_LIMIT_800:
+		हाल CURRENT_LIMIT_800:
 			support_mask = CURRENT_LIMIT_800_MASK;
-			query_switch = CURRENT_LIMIT_800_QUERY_SWITCH_OK;
-			switch_busy = CURRENT_LIMIT_800_SWITCH_BUSY;
-			break;
+			query_चयन = CURRENT_LIMIT_800_QUERY_SWITCH_OK;
+			चयन_busy = CURRENT_LIMIT_800_SWITCH_BUSY;
+			अवरोध;
 
-		default:
-			return STATUS_FAIL;
-		}
-	} else {
-		return STATUS_FAIL;
-	}
+		शेष:
+			वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (func_group == SD_FUNC_GROUP_1) {
-		if (!(buf[support_offset] & support_mask) ||
-		    ((buf[query_switch_offset] & 0x0F) != query_switch)) {
-			return STATUS_FAIL;
-		}
-	}
+	अगर (func_group == SD_FUNC_GROUP_1) अणु
+		अगर (!(buf[support_offset] & support_mask) ||
+		    ((buf[query_चयन_offset] & 0x0F) != query_चयन)) अणु
+			वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण
 
 	/* Check 'Busy Status' */
-	if ((buf[DATA_STRUCTURE_VER_OFFSET] == 0x01) &&
-	    ((buf[check_busy_offset] & switch_busy) == switch_busy)) {
-		return STATUS_FAIL;
-	}
+	अगर ((buf[DATA_STRUCTURE_VER_OFFSET] == 0x01) &&
+	    ((buf[check_busy_offset] & चयन_busy) == चयन_busy)) अणु
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_check_switch_mode(struct rtsx_chip *chip, u8 mode, u8 func_group,
-				u8 func_to_switch, u8 bus_width)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक sd_check_चयन_mode(काष्ठा rtsx_chip *chip, u8 mode, u8 func_group,
+				u8 func_to_चयन, u8 bus_width)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u8 cmd[5], buf[64];
 
 	dev_dbg(rtsx_dev(chip), "%s (mode = %d, func_group = %d, func_to_switch = %d)\n",
-		__func__, mode, func_group, func_to_switch);
+		__func__, mode, func_group, func_to_चयन);
 
 	cmd[0] = 0x40 | SWITCH;
 	cmd[1] = mode;
 
-	if (func_group == SD_FUNC_GROUP_1) {
+	अगर (func_group == SD_FUNC_GROUP_1) अणु
 		cmd[2] = 0xFF;
 		cmd[3] = 0xFF;
-		cmd[4] = 0xF0 + func_to_switch;
-	} else if (func_group == SD_FUNC_GROUP_3) {
+		cmd[4] = 0xF0 + func_to_चयन;
+	पूर्ण अन्यथा अगर (func_group == SD_FUNC_GROUP_3) अणु
 		cmd[2] = 0xFF;
-		cmd[3] = 0xF0 + func_to_switch;
+		cmd[3] = 0xF0 + func_to_चयन;
 		cmd[4] = 0xFF;
-	} else if (func_group == SD_FUNC_GROUP_4) {
+	पूर्ण अन्यथा अगर (func_group == SD_FUNC_GROUP_4) अणु
 		cmd[2] = 0xFF;
-		cmd[3] = 0x0F + (func_to_switch << 4);
+		cmd[3] = 0x0F + (func_to_चयन << 4);
 		cmd[4] = 0xFF;
-	} else {
+	पूर्ण अन्यथा अणु
 		cmd[1] = SD_CHECK_MODE;
 		cmd[2] = 0xFF;
 		cmd[3] = 0xFF;
 		cmd[4] = 0xFF;
-	}
+	पूर्ण
 
-	retval = sd_read_data(chip, SD_TM_NORMAL_READ, cmd, 5, 64, 1, bus_width,
+	retval = sd_पढ़ो_data(chip, SD_TM_NORMAL_READ, cmd, 5, 64, 1, bus_width,
 			      buf, 64, 250);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		rtsx_clear_sd_error(chip);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
 	dev_dbg(rtsx_dev(chip), "%*ph\n", 64, buf);
 
-	if (func_group == NO_ARGUMENT) {
+	अगर (func_group == NO_ARGUMENT) अणु
 		sd_card->func_group1_mask = buf[0x0D];
 		sd_card->func_group2_mask = buf[0x0B];
 		sd_card->func_group3_mask = buf[0x09];
@@ -1140,7 +1141,7 @@ static int sd_check_switch_mode(struct rtsx_chip *chip, u8 mode, u8 func_group,
 			buf[0x09]);
 		dev_dbg(rtsx_dev(chip), "func_group4_mask = 0x%02x\n",
 			buf[0x07]);
-	} else {
+	पूर्ण अन्यथा अणु
 		/* Maximum current consumption, check whether current is
 		 * acceptable; bit[511:496] = 0x0000 means some error happened.
 		 */
@@ -1148,289 +1149,289 @@ static int sd_check_switch_mode(struct rtsx_chip *chip, u8 mode, u8 func_group,
 
 		dev_dbg(rtsx_dev(chip), "Maximum current consumption: %dmA\n",
 			cc);
-		if ((cc == 0) || (cc > 800))
-			return STATUS_FAIL;
+		अगर ((cc == 0) || (cc > 800))
+			वापस STATUS_FAIL;
 
-		retval = sd_query_switch_result(chip, func_group,
-						func_to_switch, buf, 64);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+		retval = sd_query_चयन_result(chip, func_group,
+						func_to_चयन, buf, 64);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
-		if ((cc > 400) || (func_to_switch > CURRENT_LIMIT_400)) {
-			retval = rtsx_write_register(chip, OCPPARA2,
+		अगर ((cc > 400) || (func_to_चयन > CURRENT_LIMIT_400)) अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, OCPPARA2,
 						     SD_OCP_THD_MASK,
 						     chip->sd_800mA_ocp_thd);
-			if (retval)
-				return retval;
-			retval = rtsx_write_register(chip, CARD_PWR_CTL,
+			अगर (retval)
+				वापस retval;
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PWR_CTL,
 						     PMOS_STRG_MASK,
 						     PMOS_STRG_800mA);
-			if (retval)
-				return retval;
-		}
-	}
+			अगर (retval)
+				वापस retval;
+		पूर्ण
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static u8 downgrade_switch_mode(u8 func_group, u8 func_to_switch)
-{
-	if (func_group == SD_FUNC_GROUP_1) {
-		if (func_to_switch > HS_SUPPORT)
-			func_to_switch--;
+अटल u8 करोwngrade_चयन_mode(u8 func_group, u8 func_to_चयन)
+अणु
+	अगर (func_group == SD_FUNC_GROUP_1) अणु
+		अगर (func_to_चयन > HS_SUPPORT)
+			func_to_चयन--;
 
-	} else if (func_group == SD_FUNC_GROUP_4) {
-		if (func_to_switch > CURRENT_LIMIT_200)
-			func_to_switch--;
-	}
+	पूर्ण अन्यथा अगर (func_group == SD_FUNC_GROUP_4) अणु
+		अगर (func_to_चयन > CURRENT_LIMIT_200)
+			func_to_चयन--;
+	पूर्ण
 
-	return func_to_switch;
-}
+	वापस func_to_चयन;
+पूर्ण
 
-static int sd_check_switch(struct rtsx_chip *chip,
-			   u8 func_group, u8 func_to_switch, u8 bus_width)
-{
-	int retval;
-	int i;
-	bool switch_good = false;
+अटल पूर्णांक sd_check_चयन(काष्ठा rtsx_chip *chip,
+			   u8 func_group, u8 func_to_चयन, u8 bus_width)
+अणु
+	पूर्णांक retval;
+	पूर्णांक i;
+	bool चयन_good = false;
 
-	for (i = 0; i < 3; i++) {
-		if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+	क्रम (i = 0; i < 3; i++) अणु
+		अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 			sd_set_err_code(chip, SD_NO_CARD);
-			return STATUS_FAIL;
-		}
+			वापस STATUS_FAIL;
+		पूर्ण
 
-		retval = sd_check_switch_mode(chip, SD_CHECK_MODE, func_group,
-					      func_to_switch, bus_width);
-		if (retval == STATUS_SUCCESS) {
+		retval = sd_check_चयन_mode(chip, SD_CHECK_MODE, func_group,
+					      func_to_चयन, bus_width);
+		अगर (retval == STATUS_SUCCESS) अणु
 			u8 stat;
 
-			retval = sd_check_switch_mode(chip, SD_SWITCH_MODE,
+			retval = sd_check_चयन_mode(chip, SD_SWITCH_MODE,
 						      func_group,
-						      func_to_switch,
+						      func_to_चयन,
 						      bus_width);
-			if (retval == STATUS_SUCCESS) {
-				switch_good = true;
-				break;
-			}
+			अगर (retval == STATUS_SUCCESS) अणु
+				चयन_good = true;
+				अवरोध;
+			पूर्ण
 
-			retval = rtsx_read_register(chip, SD_STAT1, &stat);
-			if (retval)
-				return retval;
-			if (stat & SD_CRC16_ERR) {
+			retval = rtsx_पढ़ो_रेजिस्टर(chip, SD_STAT1, &stat);
+			अगर (retval)
+				वापस retval;
+			अगर (stat & SD_CRC16_ERR) अणु
 				dev_dbg(rtsx_dev(chip), "SD CRC16 error when switching mode\n");
-				return STATUS_FAIL;
-			}
-		}
+				वापस STATUS_FAIL;
+			पूर्ण
+		पूर्ण
 
-		func_to_switch = downgrade_switch_mode(func_group,
-						       func_to_switch);
+		func_to_चयन = करोwngrade_चयन_mode(func_group,
+						       func_to_चयन);
 
-		wait_timeout(20);
-	}
+		रुको_समयout(20);
+	पूर्ण
 
-	if (!switch_good)
-		return STATUS_FAIL;
+	अगर (!चयन_good)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_switch_function(struct rtsx_chip *chip, u8 bus_width)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	int i;
-	u8 func_to_switch = 0;
+अटल पूर्णांक sd_चयन_function(काष्ठा rtsx_chip *chip, u8 bus_width)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	पूर्णांक i;
+	u8 func_to_चयन = 0;
 
 	/* Get supported functions */
-	retval = sd_check_switch_mode(chip, SD_CHECK_MODE, NO_ARGUMENT,
+	retval = sd_check_चयन_mode(chip, SD_CHECK_MODE, NO_ARGUMENT,
 				      NO_ARGUMENT, bus_width);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	sd_card->func_group1_mask &= ~(sd_card->sd_switch_fail);
+	sd_card->func_group1_mask &= ~(sd_card->sd_चयन_fail);
 
 	/* Function Group 1: Access Mode */
-	for (i = 0; i < 4; i++) {
-		switch ((u8)(chip->sd_speed_prior >> (i * 8))) {
-		case SDR104_SUPPORT:
-			if ((sd_card->func_group1_mask & SDR104_SUPPORT_MASK) &&
-			    chip->sdr104_en) {
-				func_to_switch = SDR104_SUPPORT;
-			}
-			break;
+	क्रम (i = 0; i < 4; i++) अणु
+		चयन ((u8)(chip->sd_speed_prior >> (i * 8))) अणु
+		हाल SDR104_SUPPORT:
+			अगर ((sd_card->func_group1_mask & SDR104_SUPPORT_MASK) &&
+			    chip->sdr104_en) अणु
+				func_to_चयन = SDR104_SUPPORT;
+			पूर्ण
+			अवरोध;
 
-		case DDR50_SUPPORT:
-			if ((sd_card->func_group1_mask & DDR50_SUPPORT_MASK) &&
-			    chip->ddr50_en) {
-				func_to_switch = DDR50_SUPPORT;
-			}
-			break;
+		हाल DDR50_SUPPORT:
+			अगर ((sd_card->func_group1_mask & DDR50_SUPPORT_MASK) &&
+			    chip->ddr50_en) अणु
+				func_to_चयन = DDR50_SUPPORT;
+			पूर्ण
+			अवरोध;
 
-		case SDR50_SUPPORT:
-			if ((sd_card->func_group1_mask & SDR50_SUPPORT_MASK) &&
-			    chip->sdr50_en) {
-				func_to_switch = SDR50_SUPPORT;
-			}
-			break;
+		हाल SDR50_SUPPORT:
+			अगर ((sd_card->func_group1_mask & SDR50_SUPPORT_MASK) &&
+			    chip->sdr50_en) अणु
+				func_to_चयन = SDR50_SUPPORT;
+			पूर्ण
+			अवरोध;
 
-		case HS_SUPPORT:
-			if (sd_card->func_group1_mask & HS_SUPPORT_MASK)
-				func_to_switch = HS_SUPPORT;
+		हाल HS_SUPPORT:
+			अगर (sd_card->func_group1_mask & HS_SUPPORT_MASK)
+				func_to_चयन = HS_SUPPORT;
 
-			break;
+			अवरोध;
 
-		default:
-			continue;
-		}
+		शेष:
+			जारी;
+		पूर्ण
 
-		if (func_to_switch)
-			break;
-	}
+		अगर (func_to_चयन)
+			अवरोध;
+	पूर्ण
 	dev_dbg(rtsx_dev(chip), "SD_FUNC_GROUP_1: func_to_switch = 0x%02x",
-		func_to_switch);
+		func_to_चयन);
 
-#ifdef SUPPORT_SD_LOCK
-	if ((sd_card->sd_lock_status & SD_SDR_RST) &&
-	    (func_to_switch == DDR50_SUPPORT) &&
-	    (sd_card->func_group1_mask & SDR50_SUPPORT_MASK)) {
-		func_to_switch = SDR50_SUPPORT;
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर ((sd_card->sd_lock_status & SD_SDR_RST) &&
+	    (func_to_चयन == DDR50_SUPPORT) &&
+	    (sd_card->func_group1_mask & SDR50_SUPPORT_MASK)) अणु
+		func_to_चयन = SDR50_SUPPORT;
 		dev_dbg(rtsx_dev(chip), "Using SDR50 instead of DDR50 for SD Lock\n");
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
-	if (func_to_switch) {
-		retval = sd_check_switch(chip, SD_FUNC_GROUP_1, func_to_switch,
+	अगर (func_to_चयन) अणु
+		retval = sd_check_चयन(chip, SD_FUNC_GROUP_1, func_to_चयन,
 					 bus_width);
-		if (retval != STATUS_SUCCESS) {
-			if (func_to_switch == SDR104_SUPPORT) {
-				sd_card->sd_switch_fail = SDR104_SUPPORT_MASK;
-			} else if (func_to_switch == DDR50_SUPPORT) {
-				sd_card->sd_switch_fail = SDR104_SUPPORT_MASK |
+		अगर (retval != STATUS_SUCCESS) अणु
+			अगर (func_to_चयन == SDR104_SUPPORT) अणु
+				sd_card->sd_चयन_fail = SDR104_SUPPORT_MASK;
+			पूर्ण अन्यथा अगर (func_to_चयन == DDR50_SUPPORT) अणु
+				sd_card->sd_चयन_fail = SDR104_SUPPORT_MASK |
 					DDR50_SUPPORT_MASK;
-			} else if (func_to_switch == SDR50_SUPPORT) {
-				sd_card->sd_switch_fail = SDR104_SUPPORT_MASK |
+			पूर्ण अन्यथा अगर (func_to_चयन == SDR50_SUPPORT) अणु
+				sd_card->sd_चयन_fail = SDR104_SUPPORT_MASK |
 					DDR50_SUPPORT_MASK | SDR50_SUPPORT_MASK;
-			}
-			return STATUS_FAIL;
-		}
+			पूर्ण
+			वापस STATUS_FAIL;
+		पूर्ण
 
-		if (func_to_switch == SDR104_SUPPORT)
+		अगर (func_to_चयन == SDR104_SUPPORT)
 			SET_SD_SDR104(sd_card);
-		else if (func_to_switch == DDR50_SUPPORT)
+		अन्यथा अगर (func_to_चयन == DDR50_SUPPORT)
 			SET_SD_DDR50(sd_card);
-		else if (func_to_switch == SDR50_SUPPORT)
+		अन्यथा अगर (func_to_चयन == SDR50_SUPPORT)
 			SET_SD_SDR50(sd_card);
-		else
+		अन्यथा
 			SET_SD_HS(sd_card);
-	}
+	पूर्ण
 
-	if (CHK_SD_DDR50(sd_card)) {
-		retval = rtsx_write_register(chip, SD_PUSH_POINT_CTL, 0x06,
+	अगर (CHK_SD_DDR50(sd_card)) अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_PUSH_POINT_CTL, 0x06,
 					     0x04);
-		if (retval)
-			return retval;
+		अगर (retval)
+			वापस retval;
 		retval = sd_set_sample_push_timing(chip);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण
 
-	if (!func_to_switch || (func_to_switch == HS_SUPPORT)) {
-		/* Do not try to switch current limit if the card doesn't
-		 * support UHS mode or we don't want it to support UHS mode
+	अगर (!func_to_चयन || (func_to_चयन == HS_SUPPORT)) अणु
+		/* Do not try to चयन current limit अगर the card करोesn't
+		 * support UHS mode or we करोn't want it to support UHS mode
 		 */
-		return STATUS_SUCCESS;
-	}
+		वापस STATUS_SUCCESS;
+	पूर्ण
 
 	/* Function Group 4: Current Limit */
-	func_to_switch = 0xFF;
+	func_to_चयन = 0xFF;
 
-	for (i = 0; i < 4; i++) {
-		switch ((u8)(chip->sd_current_prior >> (i * 8))) {
-		case CURRENT_LIMIT_800:
-			if (sd_card->func_group4_mask & CURRENT_LIMIT_800_MASK)
-				func_to_switch = CURRENT_LIMIT_800;
+	क्रम (i = 0; i < 4; i++) अणु
+		चयन ((u8)(chip->sd_current_prior >> (i * 8))) अणु
+		हाल CURRENT_LIMIT_800:
+			अगर (sd_card->func_group4_mask & CURRENT_LIMIT_800_MASK)
+				func_to_चयन = CURRENT_LIMIT_800;
 
-			break;
+			अवरोध;
 
-		case CURRENT_LIMIT_600:
-			if (sd_card->func_group4_mask & CURRENT_LIMIT_600_MASK)
-				func_to_switch = CURRENT_LIMIT_600;
+		हाल CURRENT_LIMIT_600:
+			अगर (sd_card->func_group4_mask & CURRENT_LIMIT_600_MASK)
+				func_to_चयन = CURRENT_LIMIT_600;
 
-			break;
+			अवरोध;
 
-		case CURRENT_LIMIT_400:
-			if (sd_card->func_group4_mask & CURRENT_LIMIT_400_MASK)
-				func_to_switch = CURRENT_LIMIT_400;
+		हाल CURRENT_LIMIT_400:
+			अगर (sd_card->func_group4_mask & CURRENT_LIMIT_400_MASK)
+				func_to_चयन = CURRENT_LIMIT_400;
 
-			break;
+			अवरोध;
 
-		case CURRENT_LIMIT_200:
-			if (sd_card->func_group4_mask & CURRENT_LIMIT_200_MASK)
-				func_to_switch = CURRENT_LIMIT_200;
+		हाल CURRENT_LIMIT_200:
+			अगर (sd_card->func_group4_mask & CURRENT_LIMIT_200_MASK)
+				func_to_चयन = CURRENT_LIMIT_200;
 
-			break;
+			अवरोध;
 
-		default:
-			continue;
-		}
+		शेष:
+			जारी;
+		पूर्ण
 
-		if (func_to_switch != 0xFF)
-			break;
-	}
+		अगर (func_to_चयन != 0xFF)
+			अवरोध;
+	पूर्ण
 
 	dev_dbg(rtsx_dev(chip), "SD_FUNC_GROUP_4: func_to_switch = 0x%02x",
-		func_to_switch);
+		func_to_चयन);
 
-	if (func_to_switch <= CURRENT_LIMIT_800) {
-		retval = sd_check_switch(chip, SD_FUNC_GROUP_4, func_to_switch,
+	अगर (func_to_चयन <= CURRENT_LIMIT_800) अणु
+		retval = sd_check_चयन(chip, SD_FUNC_GROUP_4, func_to_चयन,
 					 bus_width);
-		if (retval != STATUS_SUCCESS) {
-			if (sd_check_err_code(chip, SD_NO_CARD))
-				return STATUS_FAIL;
-		}
+		अगर (retval != STATUS_SUCCESS) अणु
+			अगर (sd_check_err_code(chip, SD_NO_CARD))
+				वापस STATUS_FAIL;
+		पूर्ण
 		dev_dbg(rtsx_dev(chip), "Switch current limit finished! (%d)\n",
 			retval);
-	}
+	पूर्ण
 
-	if (CHK_SD_DDR50(sd_card)) {
-		retval = rtsx_write_register(chip, SD_PUSH_POINT_CTL, 0x06, 0);
-		if (retval)
-			return retval;
-	}
+	अगर (CHK_SD_DDR50(sd_card)) अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_PUSH_POINT_CTL, 0x06, 0);
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_wait_data_idle(struct rtsx_chip *chip)
-{
-	int retval = STATUS_TIMEDOUT;
-	int i;
+अटल पूर्णांक sd_रुको_data_idle(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval = STATUS_TIMEDOUT;
+	पूर्णांक i;
 	u8 val = 0;
 
-	for (i = 0; i < 100; i++) {
-		retval = rtsx_read_register(chip, SD_DATA_STATE, &val);
-		if (retval)
-			return retval;
-		if (val & SD_DATA_IDLE) {
+	क्रम (i = 0; i < 100; i++) अणु
+		retval = rtsx_पढ़ो_रेजिस्टर(chip, SD_DATA_STATE, &val);
+		अगर (retval)
+			वापस retval;
+		अगर (val & SD_DATA_IDLE) अणु
 			retval = STATUS_SUCCESS;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 		udelay(100);
-	}
+	पूर्ण
 	dev_dbg(rtsx_dev(chip), "SD_DATA_STATE: 0x%02x\n", val);
 
-	return retval;
-}
+	वापस retval;
+पूर्ण
 
-static int sd_sdr_tuning_rx_cmd(struct rtsx_chip *chip, u8 sample_point)
-{
-	int retval;
+अटल पूर्णांक sd_sdr_tuning_rx_cmd(काष्ठा rtsx_chip *chip, u8 sample_poपूर्णांक)
+अणु
+	पूर्णांक retval;
 	u8 cmd[5];
 
-	retval = sd_change_phase(chip, sample_point, TUNE_RX);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_change_phase(chip, sample_poपूर्णांक, TUNE_RX);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	cmd[0] = 0x40 | SEND_TUNING_PATTERN;
 	cmd[1] = 0;
@@ -1438,34 +1439,34 @@ static int sd_sdr_tuning_rx_cmd(struct rtsx_chip *chip, u8 sample_point)
 	cmd[3] = 0;
 	cmd[4] = 0;
 
-	retval = sd_read_data(chip, SD_TM_AUTO_TUNING, cmd, 5, 0x40, 1,
-			      SD_BUS_WIDTH_4, NULL, 0, 100);
-	if (retval != STATUS_SUCCESS) {
-		(void)sd_wait_data_idle(chip);
+	retval = sd_पढ़ो_data(chip, SD_TM_AUTO_TUNING, cmd, 5, 0x40, 1,
+			      SD_BUS_WIDTH_4, शून्य, 0, 100);
+	अगर (retval != STATUS_SUCCESS) अणु
+		(व्योम)sd_रुको_data_idle(chip);
 
 		rtsx_clear_sd_error(chip);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_ddr_tuning_rx_cmd(struct rtsx_chip *chip, u8 sample_point)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक sd_ddr_tuning_rx_cmd(काष्ठा rtsx_chip *chip, u8 sample_poपूर्णांक)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u8 cmd[5];
 
-	retval = sd_change_phase(chip, sample_point, TUNE_RX);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_change_phase(chip, sample_poपूर्णांक, TUNE_RX);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	dev_dbg(rtsx_dev(chip), "sd ddr tuning rx\n");
 
 	retval = sd_send_cmd_get_rsp(chip, APP_CMD, sd_card->sd_addr,
-				     SD_RSP_TYPE_R1, NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+				     SD_RSP_TYPE_R1, शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	cmd[0] = 0x40 | SD_STATUS;
 	cmd[1] = 0;
@@ -1473,34 +1474,34 @@ static int sd_ddr_tuning_rx_cmd(struct rtsx_chip *chip, u8 sample_point)
 	cmd[3] = 0;
 	cmd[4] = 0;
 
-	retval = sd_read_data(chip, SD_TM_NORMAL_READ, cmd, 5, 64, 1,
-			      SD_BUS_WIDTH_4, NULL, 0, 100);
-	if (retval != STATUS_SUCCESS) {
-		(void)sd_wait_data_idle(chip);
+	retval = sd_पढ़ो_data(chip, SD_TM_NORMAL_READ, cmd, 5, 64, 1,
+			      SD_BUS_WIDTH_4, शून्य, 0, 100);
+	अगर (retval != STATUS_SUCCESS) अणु
+		(व्योम)sd_रुको_data_idle(chip);
 
 		rtsx_clear_sd_error(chip);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int mmc_ddr_tuning_rx_cmd(struct rtsx_chip *chip, u8 sample_point)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक mmc_ddr_tuning_rx_cmd(काष्ठा rtsx_chip *chip, u8 sample_poपूर्णांक)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u8 cmd[5], bus_width;
 
-	if (CHK_MMC_8BIT(sd_card))
+	अगर (CHK_MMC_8BIT(sd_card))
 		bus_width = SD_BUS_WIDTH_8;
-	else if (CHK_MMC_4BIT(sd_card))
+	अन्यथा अगर (CHK_MMC_4BIT(sd_card))
 		bus_width = SD_BUS_WIDTH_4;
-	else
+	अन्यथा
 		bus_width = SD_BUS_WIDTH_1;
 
-	retval = sd_change_phase(chip, sample_point, TUNE_RX);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_change_phase(chip, sample_poपूर्णांक, TUNE_RX);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	dev_dbg(rtsx_dev(chip), "mmc ddr tuning rx\n");
 
@@ -1510,79 +1511,79 @@ static int mmc_ddr_tuning_rx_cmd(struct rtsx_chip *chip, u8 sample_point)
 	cmd[3] = 0;
 	cmd[4] = 0;
 
-	retval = sd_read_data(chip, SD_TM_NORMAL_READ, cmd, 5, 0x200, 1,
-			      bus_width, NULL, 0, 100);
-	if (retval != STATUS_SUCCESS) {
-		(void)sd_wait_data_idle(chip);
+	retval = sd_पढ़ो_data(chip, SD_TM_NORMAL_READ, cmd, 5, 0x200, 1,
+			      bus_width, शून्य, 0, 100);
+	अगर (retval != STATUS_SUCCESS) अणु
+		(व्योम)sd_रुको_data_idle(chip);
 
 		rtsx_clear_sd_error(chip);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_sdr_tuning_tx_cmd(struct rtsx_chip *chip, u8 sample_point)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक sd_sdr_tuning_tx_cmd(काष्ठा rtsx_chip *chip, u8 sample_poपूर्णांक)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 
-	retval = sd_change_phase(chip, sample_point, TUNE_TX);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_change_phase(chip, sample_poपूर्णांक, TUNE_TX);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
 				     SD_RSP_80CLK_TIMEOUT_EN);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	retval = sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
-				     SD_RSP_TYPE_R1, NULL, 0);
-	if (retval != STATUS_SUCCESS) {
-		if (sd_check_err_code(chip, SD_RSP_TIMEOUT)) {
-			rtsx_write_register(chip, SD_CFG3,
+				     SD_RSP_TYPE_R1, शून्य, 0);
+	अगर (retval != STATUS_SUCCESS) अणु
+		अगर (sd_check_err_code(chip, SD_RSP_TIMEOUT)) अणु
+			rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3,
 					    SD_RSP_80CLK_TIMEOUT_EN, 0);
-			return STATUS_FAIL;
-		}
-	}
+			वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण
 
-	retval = rtsx_write_register(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
 				     0);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_ddr_tuning_tx_cmd(struct rtsx_chip *chip, u8 sample_point)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक sd_ddr_tuning_tx_cmd(काष्ठा rtsx_chip *chip, u8 sample_poपूर्णांक)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u8 cmd[5], bus_width;
 
-	retval = sd_change_phase(chip, sample_point, TUNE_TX);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_change_phase(chip, sample_poपूर्णांक, TUNE_TX);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (CHK_SD(sd_card)) {
+	अगर (CHK_SD(sd_card)) अणु
 		bus_width = SD_BUS_WIDTH_4;
-	} else {
-		if (CHK_MMC_8BIT(sd_card))
+	पूर्ण अन्यथा अणु
+		अगर (CHK_MMC_8BIT(sd_card))
 			bus_width = SD_BUS_WIDTH_8;
-		else if (CHK_MMC_4BIT(sd_card))
+		अन्यथा अगर (CHK_MMC_4BIT(sd_card))
 			bus_width = SD_BUS_WIDTH_4;
-		else
+		अन्यथा
 			bus_width = SD_BUS_WIDTH_1;
-	}
+	पूर्ण
 
-	retval = sd_wait_state_data_ready(chip, 0x08, 1, 1000);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_रुको_state_data_पढ़ोy(chip, 0x08, 1, 1000);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
 				     SD_RSP_80CLK_TIMEOUT_EN);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	cmd[0] = 0x40 | PROGRAM_CSD;
 	cmd[1] = 0;
@@ -1590,100 +1591,100 @@ static int sd_ddr_tuning_tx_cmd(struct rtsx_chip *chip, u8 sample_point)
 	cmd[3] = 0;
 	cmd[4] = 0;
 
-	retval = sd_write_data(chip, SD_TM_AUTO_WRITE_2, cmd, 5, 16, 1,
+	retval = sd_ग_लिखो_data(chip, SD_TM_AUTO_WRITE_2, cmd, 5, 16, 1,
 			       bus_width, sd_card->raw_csd, 16, 100);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		rtsx_clear_sd_error(chip);
-		rtsx_write_register(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN, 0);
-		return STATUS_FAIL;
-	}
+		rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN, 0);
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	retval = rtsx_write_register(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
 				     0);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr, SD_RSP_TYPE_R1,
-			    NULL, 0);
+			    शून्य, 0);
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static u8 sd_search_final_phase(struct rtsx_chip *chip, u32 phase_map,
+अटल u8 sd_search_final_phase(काष्ठा rtsx_chip *chip, u32 phase_map,
 				u8 tune_dir)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	struct timing_phase_path path[MAX_PHASE + 1];
-	int i, j, cont_path_cnt;
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	काष्ठा timing_phase_path path[MAX_PHASE + 1];
+	पूर्णांक i, j, cont_path_cnt;
 	bool new_block;
-	int max_len, final_path_idx;
+	पूर्णांक max_len, final_path_idx;
 	u8 final_phase = 0xFF;
 
-	if (phase_map == 0xFFFFFFFF) {
-		if (tune_dir == TUNE_RX)
-			final_phase = (u8)chip->sd_default_rx_phase;
-		else
-			final_phase = (u8)chip->sd_default_tx_phase;
+	अगर (phase_map == 0xFFFFFFFF) अणु
+		अगर (tune_dir == TUNE_RX)
+			final_phase = (u8)chip->sd_शेष_rx_phase;
+		अन्यथा
+			final_phase = (u8)chip->sd_शेष_tx_phase;
 
-		goto search_finish;
-	}
+		जाओ search_finish;
+	पूर्ण
 
 	cont_path_cnt = 0;
 	new_block = true;
 	j = 0;
-	for (i = 0; i < MAX_PHASE + 1; i++) {
-		if (phase_map & (1 << i)) {
-			if (new_block) {
+	क्रम (i = 0; i < MAX_PHASE + 1; i++) अणु
+		अगर (phase_map & (1 << i)) अणु
+			अगर (new_block) अणु
 				new_block = false;
 				j = cont_path_cnt++;
 				path[j].start = i;
 				path[j].end = i;
-			} else {
+			पूर्ण अन्यथा अणु
 				path[j].end = i;
-			}
-		} else {
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			new_block = true;
-			if (cont_path_cnt) {
-				int idx = cont_path_cnt - 1;
+			अगर (cont_path_cnt) अणु
+				पूर्णांक idx = cont_path_cnt - 1;
 
 				path[idx].len = path[idx].end -
 					path[idx].start + 1;
 				path[idx].mid = path[idx].start +
 					path[idx].len / 2;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (cont_path_cnt == 0) {
+	अगर (cont_path_cnt == 0) अणु
 		dev_dbg(rtsx_dev(chip), "No continuous phase path\n");
-		goto search_finish;
-	} else {
-		int idx = cont_path_cnt - 1;
+		जाओ search_finish;
+	पूर्ण अन्यथा अणु
+		पूर्णांक idx = cont_path_cnt - 1;
 
 		path[idx].len = path[idx].end - path[idx].start + 1;
 		path[idx].mid = path[idx].start + path[idx].len / 2;
-	}
+	पूर्ण
 
-	if ((path[0].start == 0) &&
-	    (path[cont_path_cnt - 1].end == MAX_PHASE)) {
+	अगर ((path[0].start == 0) &&
+	    (path[cont_path_cnt - 1].end == MAX_PHASE)) अणु
 		path[0].start = path[cont_path_cnt - 1].start - MAX_PHASE - 1;
 		path[0].len += path[cont_path_cnt - 1].len;
 		path[0].mid = path[0].start + path[0].len / 2;
-		if (path[0].mid < 0)
+		अगर (path[0].mid < 0)
 			path[0].mid += MAX_PHASE + 1;
 
 		cont_path_cnt--;
-	}
+	पूर्ण
 
 	max_len = 0;
 	final_phase = 0;
 	final_path_idx = 0;
-	for (i = 0; i < cont_path_cnt; i++) {
-		if (path[i].len > max_len) {
+	क्रम (i = 0; i < cont_path_cnt; i++) अणु
+		अगर (path[i].len > max_len) अणु
 			max_len = path[i].len;
 			final_phase = (u8)path[i].mid;
 			final_path_idx = i;
-		}
+		पूर्ण
 
 		dev_dbg(rtsx_dev(chip), "path[%d].start = %d\n",
 			i, path[i].start);
@@ -1691,420 +1692,420 @@ static u8 sd_search_final_phase(struct rtsx_chip *chip, u32 phase_map,
 		dev_dbg(rtsx_dev(chip), "path[%d].len = %d\n", i, path[i].len);
 		dev_dbg(rtsx_dev(chip), "path[%d].mid = %d\n", i, path[i].mid);
 		dev_dbg(rtsx_dev(chip), "\n");
-	}
+	पूर्ण
 
-	if (tune_dir == TUNE_TX) {
-		if (CHK_SD_SDR104(sd_card)) {
-			if (max_len > 15) {
-				int temp_mid = (max_len - 16) / 2;
-				int temp_final_phase =
+	अगर (tune_dir == TUNE_TX) अणु
+		अगर (CHK_SD_SDR104(sd_card)) अणु
+			अगर (max_len > 15) अणु
+				पूर्णांक temp_mid = (max_len - 16) / 2;
+				पूर्णांक temp_final_phase =
 					path[final_path_idx].end -
 					(max_len - (6 + temp_mid));
 
-				if (temp_final_phase < 0)
+				अगर (temp_final_phase < 0)
 					final_phase = (u8)(temp_final_phase +
 							MAX_PHASE + 1);
-				else
+				अन्यथा
 					final_phase = (u8)temp_final_phase;
-			}
-		} else if (CHK_SD_SDR50(sd_card)) {
-			if (max_len > 12) {
-				int temp_mid = (max_len - 13) / 2;
-				int temp_final_phase =
+			पूर्ण
+		पूर्ण अन्यथा अगर (CHK_SD_SDR50(sd_card)) अणु
+			अगर (max_len > 12) अणु
+				पूर्णांक temp_mid = (max_len - 13) / 2;
+				पूर्णांक temp_final_phase =
 					path[final_path_idx].end -
 					(max_len - (3 + temp_mid));
 
-				if (temp_final_phase < 0)
+				अगर (temp_final_phase < 0)
 					final_phase = (u8)(temp_final_phase +
 							MAX_PHASE + 1);
-				else
+				अन्यथा
 					final_phase = (u8)temp_final_phase;
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 search_finish:
 	dev_dbg(rtsx_dev(chip), "Final chosen phase: %d\n", final_phase);
-	return final_phase;
-}
+	वापस final_phase;
+पूर्ण
 
-static int sd_tuning_rx(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	int i, j;
+अटल पूर्णांक sd_tuning_rx(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	पूर्णांक i, j;
 	u32 raw_phase_map[3], phase_map;
 	u8 final_phase;
-	int (*tuning_cmd)(struct rtsx_chip *chip, u8 sample_point);
+	पूर्णांक (*tuning_cmd)(काष्ठा rtsx_chip *chip, u8 sample_poपूर्णांक);
 
-	if (CHK_SD(sd_card)) {
-		if (CHK_SD_DDR50(sd_card))
+	अगर (CHK_SD(sd_card)) अणु
+		अगर (CHK_SD_DDR50(sd_card))
 			tuning_cmd = sd_ddr_tuning_rx_cmd;
-		else
+		अन्यथा
 			tuning_cmd = sd_sdr_tuning_rx_cmd;
 
-	} else {
-		if (CHK_MMC_DDR52(sd_card))
+	पूर्ण अन्यथा अणु
+		अगर (CHK_MMC_DDR52(sd_card))
 			tuning_cmd = mmc_ddr_tuning_rx_cmd;
-		else
-			return STATUS_FAIL;
-	}
+		अन्यथा
+			वापस STATUS_FAIL;
+	पूर्ण
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		raw_phase_map[i] = 0;
-		for (j = MAX_PHASE; j >= 0; j--) {
-			if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+		क्रम (j = MAX_PHASE; j >= 0; j--) अणु
+			अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 				sd_set_err_code(chip, SD_NO_CARD);
-				return STATUS_FAIL;
-			}
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			retval = tuning_cmd(chip, (u8)j);
-			if (retval == STATUS_SUCCESS)
+			अगर (retval == STATUS_SUCCESS)
 				raw_phase_map[i] |= 1 << j;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	phase_map = raw_phase_map[0] & raw_phase_map[1] & raw_phase_map[2];
-	for (i = 0; i < 3; i++)
+	क्रम (i = 0; i < 3; i++)
 		dev_dbg(rtsx_dev(chip), "RX raw_phase_map[%d] = 0x%08x\n",
 			i, raw_phase_map[i]);
 
 	dev_dbg(rtsx_dev(chip), "RX phase_map = 0x%08x\n", phase_map);
 
 	final_phase = sd_search_final_phase(chip, phase_map, TUNE_RX);
-	if (final_phase == 0xFF)
-		return STATUS_FAIL;
+	अगर (final_phase == 0xFF)
+		वापस STATUS_FAIL;
 
 	retval = sd_change_phase(chip, final_phase, TUNE_RX);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_ddr_pre_tuning_tx(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	int i;
+अटल पूर्णांक sd_ddr_pre_tuning_tx(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	पूर्णांक i;
 	u32 phase_map;
 	u8 final_phase;
 
-	retval = rtsx_write_register(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
 				     SD_RSP_80CLK_TIMEOUT_EN);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	phase_map = 0;
-	for (i = MAX_PHASE; i >= 0; i--) {
-		if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+	क्रम (i = MAX_PHASE; i >= 0; i--) अणु
+		अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 			sd_set_err_code(chip, SD_NO_CARD);
-			rtsx_write_register(chip, SD_CFG3,
+			rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3,
 					    SD_RSP_80CLK_TIMEOUT_EN, 0);
-			return STATUS_FAIL;
-		}
+			वापस STATUS_FAIL;
+		पूर्ण
 
 		retval = sd_change_phase(chip, (u8)i, TUNE_TX);
-		if (retval != STATUS_SUCCESS)
-			continue;
+		अगर (retval != STATUS_SUCCESS)
+			जारी;
 
 		retval = sd_send_cmd_get_rsp(chip, SEND_STATUS,
 					     sd_card->sd_addr, SD_RSP_TYPE_R1,
-					     NULL, 0);
-		if ((retval == STATUS_SUCCESS) ||
+					     शून्य, 0);
+		अगर ((retval == STATUS_SUCCESS) ||
 		    !sd_check_err_code(chip, SD_RSP_TIMEOUT))
 			phase_map |= 1 << i;
-	}
+	पूर्ण
 
-	retval = rtsx_write_register(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3, SD_RSP_80CLK_TIMEOUT_EN,
 				     0);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	dev_dbg(rtsx_dev(chip), "DDR TX pre tune phase_map = 0x%08x\n",
 		phase_map);
 
 	final_phase = sd_search_final_phase(chip, phase_map, TUNE_TX);
-	if (final_phase == 0xFF)
-		return STATUS_FAIL;
+	अगर (final_phase == 0xFF)
+		वापस STATUS_FAIL;
 
 	retval = sd_change_phase(chip, final_phase, TUNE_TX);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	dev_dbg(rtsx_dev(chip), "DDR TX pre tune phase: %d\n",
-		(int)final_phase);
+		(पूर्णांक)final_phase);
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_tuning_tx(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	int i, j;
+अटल पूर्णांक sd_tuning_tx(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	पूर्णांक i, j;
 	u32 raw_phase_map[3], phase_map;
 	u8 final_phase;
-	int (*tuning_cmd)(struct rtsx_chip *chip, u8 sample_point);
+	पूर्णांक (*tuning_cmd)(काष्ठा rtsx_chip *chip, u8 sample_poपूर्णांक);
 
-	if (CHK_SD(sd_card)) {
-		if (CHK_SD_DDR50(sd_card))
+	अगर (CHK_SD(sd_card)) अणु
+		अगर (CHK_SD_DDR50(sd_card))
 			tuning_cmd = sd_ddr_tuning_tx_cmd;
-		else
+		अन्यथा
 			tuning_cmd = sd_sdr_tuning_tx_cmd;
 
-	} else {
-		if (CHK_MMC_DDR52(sd_card))
+	पूर्ण अन्यथा अणु
+		अगर (CHK_MMC_DDR52(sd_card))
 			tuning_cmd = sd_ddr_tuning_tx_cmd;
-		else
-			return STATUS_FAIL;
-	}
+		अन्यथा
+			वापस STATUS_FAIL;
+	पूर्ण
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		raw_phase_map[i] = 0;
-		for (j = MAX_PHASE; j >= 0; j--) {
-			if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+		क्रम (j = MAX_PHASE; j >= 0; j--) अणु
+			अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 				sd_set_err_code(chip, SD_NO_CARD);
-				rtsx_write_register(chip, SD_CFG3,
+				rtsx_ग_लिखो_रेजिस्टर(chip, SD_CFG3,
 						    SD_RSP_80CLK_TIMEOUT_EN, 0);
-				return STATUS_FAIL;
-			}
+				वापस STATUS_FAIL;
+			पूर्ण
 
 			retval = tuning_cmd(chip, (u8)j);
-			if (retval == STATUS_SUCCESS)
+			अगर (retval == STATUS_SUCCESS)
 				raw_phase_map[i] |= 1 << j;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	phase_map = raw_phase_map[0] & raw_phase_map[1] & raw_phase_map[2];
-	for (i = 0; i < 3; i++)
+	क्रम (i = 0; i < 3; i++)
 		dev_dbg(rtsx_dev(chip), "TX raw_phase_map[%d] = 0x%08x\n",
 			i, raw_phase_map[i]);
 
 	dev_dbg(rtsx_dev(chip), "TX phase_map = 0x%08x\n", phase_map);
 
 	final_phase = sd_search_final_phase(chip, phase_map, TUNE_TX);
-	if (final_phase == 0xFF)
-		return STATUS_FAIL;
+	अगर (final_phase == 0xFF)
+		वापस STATUS_FAIL;
 
 	retval = sd_change_phase(chip, final_phase, TUNE_TX);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_sdr_tuning(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक sd_sdr_tuning(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
 	retval = sd_tuning_tx(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	retval = sd_tuning_rx(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_ddr_tuning(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक sd_ddr_tuning(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
-	if (!(chip->sd_ctl & SD_DDR_TX_PHASE_SET_BY_USER)) {
+	अगर (!(chip->sd_ctl & SD_DDR_TX_PHASE_SET_BY_USER)) अणु
 		retval = sd_ddr_pre_tuning_tx(chip);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	} else {
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण अन्यथा अणु
 		retval = sd_change_phase(chip, (u8)chip->sd_ddr_tx_phase,
 					 TUNE_TX);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण
 
 	retval = sd_tuning_rx(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (!(chip->sd_ctl & SD_DDR_TX_PHASE_SET_BY_USER)) {
+	अगर (!(chip->sd_ctl & SD_DDR_TX_PHASE_SET_BY_USER)) अणु
 		retval = sd_tuning_tx(chip);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int mmc_ddr_tuning(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक mmc_ddr_tuning(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
-	if (!(chip->sd_ctl & MMC_DDR_TX_PHASE_SET_BY_USER)) {
+	अगर (!(chip->sd_ctl & MMC_DDR_TX_PHASE_SET_BY_USER)) अणु
 		retval = sd_ddr_pre_tuning_tx(chip);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	} else {
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण अन्यथा अणु
 		retval = sd_change_phase(chip, (u8)chip->mmc_ddr_tx_phase,
 					 TUNE_TX);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण
 
 	retval = sd_tuning_rx(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (!(chip->sd_ctl & MMC_DDR_TX_PHASE_SET_BY_USER)) {
+	अगर (!(chip->sd_ctl & MMC_DDR_TX_PHASE_SET_BY_USER)) अणु
 		retval = sd_tuning_tx(chip);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int sd_switch_clock(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	int re_tuning = 0;
+पूर्णांक sd_चयन_घड़ी(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	पूर्णांक re_tuning = 0;
 
 	retval = select_card(chip, SD_CARD);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = switch_clock(chip, sd_card->sd_clock);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = चयन_घड़ी(chip, sd_card->sd_घड़ी);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (re_tuning) {
-		if (CHK_SD(sd_card)) {
-			if (CHK_SD_DDR50(sd_card))
+	अगर (re_tuning) अणु
+		अगर (CHK_SD(sd_card)) अणु
+			अगर (CHK_SD_DDR50(sd_card))
 				retval = sd_ddr_tuning(chip);
-			else
+			अन्यथा
 				retval = sd_sdr_tuning(chip);
-		} else {
-			if (CHK_MMC_DDR52(sd_card))
+		पूर्ण अन्यथा अणु
+			अगर (CHK_MMC_DDR52(sd_card))
 				retval = mmc_ddr_tuning(chip);
-		}
+		पूर्ण
 
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_prepare_reset(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक sd_prepare_reset(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 
-	if (chip->asic_code)
-		sd_card->sd_clock = 29;
-	else
-		sd_card->sd_clock = CLK_30;
+	अगर (chip->asic_code)
+		sd_card->sd_घड़ी = 29;
+	अन्यथा
+		sd_card->sd_घड़ी = CLK_30;
 
 	sd_card->sd_type = 0;
 	sd_card->seq_mode = 0;
-	sd_card->sd_data_buf_ready = 0;
+	sd_card->sd_data_buf_पढ़ोy = 0;
 	sd_card->capacity = 0;
 
-#ifdef SUPPORT_SD_LOCK
+#अगर_घोषित SUPPORT_SD_LOCK
 	sd_card->sd_lock_status = 0;
 	sd_card->sd_erase_status = 0;
-#endif
+#पूर्ण_अगर
 
 	chip->capacity[chip->card2lun[SD_CARD]] = 0;
 	chip->sd_io = 0;
 
 	retval = sd_set_init_para(chip);
-	if (retval != STATUS_SUCCESS)
-		return retval;
+	अगर (retval != STATUS_SUCCESS)
+		वापस retval;
 
-	retval = rtsx_write_register(chip, REG_SD_CFG1, 0xFF, 0x40);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG1, 0xFF, 0x40);
+	अगर (retval)
+		वापस retval;
 
-	retval = rtsx_write_register(chip, CARD_STOP, SD_STOP | SD_CLR_ERR,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_STOP, SD_STOP | SD_CLR_ERR,
 				     SD_STOP | SD_CLR_ERR);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
 	retval = select_card(chip, SD_CARD);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_pull_ctl_disable(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक sd_pull_ctl_disable(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
-	if (CHECK_PID(chip, 0x5208)) {
-		retval = rtsx_write_register(chip, CARD_PULL_CTL1, 0xFF,
+	अगर (CHECK_PID(chip, 0x5208)) अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL1, 0xFF,
 					     XD_D3_PD | SD_D7_PD | SD_CLK_PD |
 					     SD_D5_PD);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, CARD_PULL_CTL2, 0xFF,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL2, 0xFF,
 					     SD_D6_PD | SD_D0_PD | SD_D1_PD |
 					     XD_D5_PD);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, CARD_PULL_CTL3, 0xFF,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL3, 0xFF,
 					     SD_D4_PD | XD_CE_PD | XD_CLE_PD |
 					     XD_CD_PU);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, CARD_PULL_CTL4, 0xFF,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL4, 0xFF,
 					     XD_RDY_PD | SD_D3_PD | SD_D2_PD |
 					     XD_ALE_PD);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, CARD_PULL_CTL5, 0xFF,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL5, 0xFF,
 					     MS_INS_PU | SD_WP_PD | SD_CD_PU |
 					     SD_CMD_PD);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, CARD_PULL_CTL6, 0xFF,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL6, 0xFF,
 					     MS_D5_PD | MS_D4_PD);
-		if (retval)
-			return retval;
-	} else if (CHECK_PID(chip, 0x5288)) {
-		if (CHECK_BARO_PKG(chip, QFN)) {
-			retval = rtsx_write_register(chip, CARD_PULL_CTL1,
+		अगर (retval)
+			वापस retval;
+	पूर्ण अन्यथा अगर (CHECK_PID(chip, 0x5288)) अणु
+		अगर (CHECK_BARO_PKG(chip, QFN)) अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL1,
 						     0xFF, 0x55);
-			if (retval)
-				return retval;
-			retval = rtsx_write_register(chip, CARD_PULL_CTL2,
+			अगर (retval)
+				वापस retval;
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL2,
 						     0xFF, 0x55);
-			if (retval)
-				return retval;
-			retval = rtsx_write_register(chip, CARD_PULL_CTL3,
+			अगर (retval)
+				वापस retval;
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL3,
 						     0xFF, 0x4B);
-			if (retval)
-				return retval;
-			retval = rtsx_write_register(chip, CARD_PULL_CTL4,
+			अगर (retval)
+				वापस retval;
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_PULL_CTL4,
 						     0xFF, 0x69);
-			if (retval)
-				return retval;
-		}
-	}
+			अगर (retval)
+				वापस retval;
+		पूर्ण
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int sd_pull_ctl_enable(struct rtsx_chip *chip)
-{
-	int retval;
+पूर्णांक sd_pull_ctl_enable(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
 	rtsx_init_cmd(chip);
 
-	if (CHECK_PID(chip, 0x5208)) {
+	अगर (CHECK_PID(chip, 0x5208)) अणु
 		rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_PULL_CTL1, 0xFF,
 			     XD_D3_PD | SD_DAT7_PU | SD_CLK_NP | SD_D5_PU);
 		rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_PULL_CTL2, 0xFF,
@@ -2117,8 +2118,8 @@ int sd_pull_ctl_enable(struct rtsx_chip *chip)
 			     MS_INS_PU | SD_WP_PU | SD_CD_PU | SD_CMD_PU);
 		rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_PULL_CTL6, 0xFF,
 			     MS_D5_PD | MS_D4_PD);
-	} else if (CHECK_PID(chip, 0x5288)) {
-		if (CHECK_BARO_PKG(chip, QFN)) {
+	पूर्ण अन्यथा अगर (CHECK_PID(chip, 0x5288)) अणु
+		अगर (CHECK_BARO_PKG(chip, QFN)) अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_PULL_CTL1, 0xFF,
 				     0xA8);
 			rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_PULL_CTL2, 0xFF,
@@ -2127,85 +2128,85 @@ int sd_pull_ctl_enable(struct rtsx_chip *chip)
 				     0x95);
 			rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_PULL_CTL4, 0xFF,
 				     0xAA);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
 	retval = rtsx_send_cmd(chip, SD_CARD, 100);
-	if (retval < 0)
-		return STATUS_FAIL;
+	अगर (retval < 0)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_init_power(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक sd_init_घातer(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
-	retval = sd_power_off_card3v3(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_घातer_off_card3v3(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (!chip->ft2_fast_mode)
-		wait_timeout(250);
+	अगर (!chip->ft2_fast_mode)
+		रुको_समयout(250);
 
-	retval = enable_card_clock(chip, SD_CARD);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = enable_card_घड़ी(chip, SD_CARD);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (chip->asic_code) {
+	अगर (chip->asic_code) अणु
 		retval = sd_pull_ctl_enable(chip);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	} else {
-		retval = rtsx_write_register(chip, FPGA_PULL_CTL,
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण अन्यथा अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, FPGA_PULL_CTL,
 					     FPGA_SD_PULL_CTL_BIT | 0x20, 0);
-		if (retval)
-			return retval;
-	}
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
-	if (!chip->ft2_fast_mode) {
-		retval = card_power_on(chip, SD_CARD);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+	अगर (!chip->ft2_fast_mode) अणु
+		retval = card_घातer_on(chip, SD_CARD);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
-		wait_timeout(260);
+		रुको_समयout(260);
 
-#ifdef SUPPORT_OCP
-		if (chip->ocp_stat & (SD_OC_NOW | SD_OC_EVER)) {
+#अगर_घोषित SUPPORT_OCP
+		अगर (chip->ocp_stat & (SD_OC_NOW | SD_OC_EVER)) अणु
 			dev_dbg(rtsx_dev(chip), "Over current, OCPSTAT is 0x%x\n",
 				chip->ocp_stat);
-			return STATUS_FAIL;
-		}
-#endif
-	}
+			वापस STATUS_FAIL;
+		पूर्ण
+#पूर्ण_अगर
+	पूर्ण
 
-	retval = rtsx_write_register(chip, CARD_OE, SD_OUTPUT_EN,
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_OE, SD_OUTPUT_EN,
 				     SD_OUTPUT_EN);
-	if (retval)
-		return retval;
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_dummy_clock(struct rtsx_chip *chip)
-{
-	int retval;
+अटल पूर्णांक sd_dummy_घड़ी(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
-	retval = rtsx_write_register(chip, REG_SD_CFG3, 0x01, 0x01);
-	if (retval)
-		return retval;
-	wait_timeout(5);
-	retval = rtsx_write_register(chip, REG_SD_CFG3, 0x01, 0);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG3, 0x01, 0x01);
+	अगर (retval)
+		वापस retval;
+	रुको_समयout(5);
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG3, 0x01, 0);
+	अगर (retval)
+		वापस retval;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_read_lba0(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक sd_पढ़ो_lba0(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u8 cmd[5], bus_width;
 
 	cmd[0] = 0x40 | READ_SINGLE_BLOCK;
@@ -2214,39 +2215,39 @@ static int sd_read_lba0(struct rtsx_chip *chip)
 	cmd[3] = 0;
 	cmd[4] = 0;
 
-	if (CHK_SD(sd_card)) {
+	अगर (CHK_SD(sd_card)) अणु
 		bus_width = SD_BUS_WIDTH_4;
-	} else {
-		if (CHK_MMC_8BIT(sd_card))
+	पूर्ण अन्यथा अणु
+		अगर (CHK_MMC_8BIT(sd_card))
 			bus_width = SD_BUS_WIDTH_8;
-		else if (CHK_MMC_4BIT(sd_card))
+		अन्यथा अगर (CHK_MMC_4BIT(sd_card))
 			bus_width = SD_BUS_WIDTH_4;
-		else
+		अन्यथा
 			bus_width = SD_BUS_WIDTH_1;
-	}
+	पूर्ण
 
-	retval = sd_read_data(chip, SD_TM_NORMAL_READ, cmd, 5, 512, 1,
-			      bus_width, NULL, 0, 100);
-	if (retval != STATUS_SUCCESS) {
+	retval = sd_पढ़ो_data(chip, SD_TM_NORMAL_READ, cmd, 5, 512, 1,
+			      bus_width, शून्य, 0, 100);
+	अगर (retval != STATUS_SUCCESS) अणु
 		rtsx_clear_sd_error(chip);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int sd_check_wp_state(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक sd_check_wp_state(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u32 val;
 	u16 sd_card_type;
 	u8 cmd[5], buf[64];
 
 	retval = sd_send_cmd_get_rsp(chip, APP_CMD, sd_card->sd_addr,
-				     SD_RSP_TYPE_R1, NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+				     SD_RSP_TYPE_R1, शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	cmd[0] = 0x40 | SD_STATUS;
 	cmd[1] = 0;
@@ -2254,423 +2255,423 @@ static int sd_check_wp_state(struct rtsx_chip *chip)
 	cmd[3] = 0;
 	cmd[4] = 0;
 
-	retval = sd_read_data(chip, SD_TM_NORMAL_READ, cmd, 5, 64, 1,
+	retval = sd_पढ़ो_data(chip, SD_TM_NORMAL_READ, cmd, 5, 64, 1,
 			      SD_BUS_WIDTH_4, buf, 64, 250);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		rtsx_clear_sd_error(chip);
 
 		sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
-				    SD_RSP_TYPE_R1, NULL, 0);
-		return STATUS_FAIL;
-	}
+				    SD_RSP_TYPE_R1, शून्य, 0);
+		वापस STATUS_FAIL;
+	पूर्ण
 
 	dev_dbg(rtsx_dev(chip), "ACMD13:\n");
 	dev_dbg(rtsx_dev(chip), "%*ph\n", 64, buf);
 
 	sd_card_type = ((u16)buf[2] << 8) | buf[3];
 	dev_dbg(rtsx_dev(chip), "sd_card_type = 0x%04x\n", sd_card_type);
-	if ((sd_card_type == 0x0001) || (sd_card_type == 0x0002)) {
+	अगर ((sd_card_type == 0x0001) || (sd_card_type == 0x0002)) अणु
 		/* ROM card or OTP */
 		chip->card_wp |= SD_CARD;
-	}
+	पूर्ण
 
 	/* Check SD Machanical Write-Protect Switch */
-	val = rtsx_readl(chip, RTSX_BIPR);
-	if (val & SD_WRITE_PROTECT)
+	val = rtsx_पढ़ोl(chip, RTSX_BIPR);
+	अगर (val & SD_WRITE_PROTECT)
 		chip->card_wp |= SD_CARD;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int reset_sd(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
+अटल पूर्णांक reset_sd(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
 	bool hi_cap_flow = false;
-	int retval, i = 0, j = 0, k = 0;
-	bool sd_dont_switch = false;
+	पूर्णांक retval, i = 0, j = 0, k = 0;
+	bool sd_करोnt_चयन = false;
 	bool support_1v8 = false;
 	bool try_sdio = true;
 	u8 rsp[16];
-	u8 switch_bus_width;
+	u8 चयन_bus_width;
 	u32 voltage = 0;
 	bool sd20_mode = false;
 
 	SET_SD(sd_card);
 
-switch_fail:
+चयन_fail:
 
 	i = 0;
 	j = 0;
 	k = 0;
 	hi_cap_flow = false;
 
-#ifdef SUPPORT_SD_LOCK
-	if (sd_card->sd_lock_status & SD_UNLOCK_POW_ON)
-		goto SD_UNLOCK_ENTRY;
-#endif
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर (sd_card->sd_lock_status & SD_UNLOCK_POW_ON)
+		जाओ SD_UNLOCK_ENTRY;
+#पूर्ण_अगर
 
 	retval = sd_prepare_reset(chip);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
-	retval = sd_dummy_clock(chip);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+	retval = sd_dummy_घड़ी(chip);
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
-	if (CHK_SDIO_EXIST(chip) && !CHK_SDIO_IGNORED(chip) && try_sdio) {
-		int rty_cnt = 0;
+	अगर (CHK_SDIO_EXIST(chip) && !CHK_SDIO_IGNORED(chip) && try_sdio) अणु
+		पूर्णांक rty_cnt = 0;
 
-		for (; rty_cnt < chip->sdio_retry_cnt; rty_cnt++) {
-			if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+		क्रम (; rty_cnt < chip->sdio_retry_cnt; rty_cnt++) अणु
+			अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 				sd_set_err_code(chip, SD_NO_CARD);
-				goto status_fail;
-			}
+				जाओ status_fail;
+			पूर्ण
 
 			retval = sd_send_cmd_get_rsp(chip, IO_SEND_OP_COND, 0,
 						     SD_RSP_TYPE_R4, rsp, 5);
-			if (retval == STATUS_SUCCESS) {
-				int func_num = (rsp[1] >> 4) & 0x07;
+			अगर (retval == STATUS_SUCCESS) अणु
+				पूर्णांक func_num = (rsp[1] >> 4) & 0x07;
 
-				if (func_num) {
+				अगर (func_num) अणु
 					dev_dbg(rtsx_dev(chip), "SD_IO card (Function number: %d)!\n",
 						func_num);
 					chip->sd_io = 1;
-					goto status_fail;
-				}
+					जाओ status_fail;
+				पूर्ण
 
-				break;
-			}
+				अवरोध;
+			पूर्ण
 
-			sd_init_power(chip);
+			sd_init_घातer(chip);
 
-			sd_dummy_clock(chip);
-		}
+			sd_dummy_घड़ी(chip);
+		पूर्ण
 
 		dev_dbg(rtsx_dev(chip), "Normal card!\n");
-	}
+	पूर्ण
 
 	/* Start Initialization Process of SD Card */
 RTY_SD_RST:
 	retval = sd_send_cmd_get_rsp(chip, GO_IDLE_STATE, 0, SD_RSP_TYPE_R0,
-				     NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+				     शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
-	wait_timeout(20);
+	रुको_समयout(20);
 
 	retval = sd_send_cmd_get_rsp(chip, SEND_IF_COND, 0x000001AA,
 				     SD_RSP_TYPE_R7, rsp, 5);
-	if (retval == STATUS_SUCCESS) {
-		if ((rsp[4] == 0xAA) && ((rsp[3] & 0x0f) == 0x01)) {
+	अगर (retval == STATUS_SUCCESS) अणु
+		अगर ((rsp[4] == 0xAA) && ((rsp[3] & 0x0f) == 0x01)) अणु
 			hi_cap_flow = true;
 			voltage = SUPPORT_VOLTAGE | 0x40000000;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	if (!hi_cap_flow) {
+	अगर (!hi_cap_flow) अणु
 		voltage = SUPPORT_VOLTAGE;
 
 		retval = sd_send_cmd_get_rsp(chip, GO_IDLE_STATE, 0,
-					     SD_RSP_TYPE_R0, NULL, 0);
-		if (retval != STATUS_SUCCESS)
-			goto status_fail;
+					     SD_RSP_TYPE_R0, शून्य, 0);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ status_fail;
 
-		wait_timeout(20);
-	}
+		रुको_समयout(20);
+	पूर्ण
 
-	do {
+	करो अणु
 		retval = sd_send_cmd_get_rsp(chip, APP_CMD, 0, SD_RSP_TYPE_R1,
-					     NULL, 0);
-		if (retval != STATUS_SUCCESS) {
-			if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+					     शून्य, 0);
+		अगर (retval != STATUS_SUCCESS) अणु
+			अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 				sd_set_err_code(chip, SD_NO_CARD);
-				goto status_fail;
-			}
+				जाओ status_fail;
+			पूर्ण
 
 			j++;
-			if (j < 3)
-				goto RTY_SD_RST;
-			else
-				goto status_fail;
-		}
+			अगर (j < 3)
+				जाओ RTY_SD_RST;
+			अन्यथा
+				जाओ status_fail;
+		पूर्ण
 
 		retval = sd_send_cmd_get_rsp(chip, SD_APP_OP_COND, voltage,
 					     SD_RSP_TYPE_R3, rsp, 5);
-		if (retval != STATUS_SUCCESS) {
+		अगर (retval != STATUS_SUCCESS) अणु
 			k++;
-			if (k < 3)
-				goto RTY_SD_RST;
-			else
-				goto status_fail;
-		}
+			अगर (k < 3)
+				जाओ RTY_SD_RST;
+			अन्यथा
+				जाओ status_fail;
+		पूर्ण
 
 		i++;
-		wait_timeout(20);
-	} while (!(rsp[1] & 0x80) && (i < 255));
+		रुको_समयout(20);
+	पूर्ण जबतक (!(rsp[1] & 0x80) && (i < 255));
 
-	if (i == 255)
-		goto status_fail;
+	अगर (i == 255)
+		जाओ status_fail;
 
-	if (hi_cap_flow) {
-		if (rsp[1] & 0x40)
+	अगर (hi_cap_flow) अणु
+		अगर (rsp[1] & 0x40)
 			SET_SD_HCXC(sd_card);
-		else
+		अन्यथा
 			CLR_SD_HCXC(sd_card);
 
 		support_1v8 = false;
-	} else {
+	पूर्ण अन्यथा अणु
 		CLR_SD_HCXC(sd_card);
 		support_1v8 = false;
-	}
+	पूर्ण
 	dev_dbg(rtsx_dev(chip), "support_1v8 = %d\n", support_1v8);
 
-	if (support_1v8) {
-		retval = sd_voltage_switch(chip);
-		if (retval != STATUS_SUCCESS)
-			goto status_fail;
-	}
+	अगर (support_1v8) अणु
+		retval = sd_voltage_चयन(chip);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ status_fail;
+	पूर्ण
 
 	retval = sd_send_cmd_get_rsp(chip, ALL_SEND_CID, 0, SD_RSP_TYPE_R2,
-				     NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+				     शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		retval = sd_send_cmd_get_rsp(chip, SEND_RELATIVE_ADDR, 0,
 					     SD_RSP_TYPE_R6, rsp, 5);
-		if (retval != STATUS_SUCCESS)
-			goto status_fail;
+		अगर (retval != STATUS_SUCCESS)
+			जाओ status_fail;
 
 		sd_card->sd_addr = (u32)rsp[1] << 24;
 		sd_card->sd_addr += (u32)rsp[2] << 16;
 
-		if (sd_card->sd_addr)
-			break;
-	}
+		अगर (sd_card->sd_addr)
+			अवरोध;
+	पूर्ण
 
 	retval = sd_check_csd(chip, 1);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
 	retval = sd_select_card(chip, 1);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
-#ifdef SUPPORT_SD_LOCK
+#अगर_घोषित SUPPORT_SD_LOCK
 SD_UNLOCK_ENTRY:
 	retval = sd_update_lock_status(chip);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
-	if (sd_card->sd_lock_status & SD_LOCKED) {
+	अगर (sd_card->sd_lock_status & SD_LOCKED) अणु
 		sd_card->sd_lock_status |= (SD_LOCK_1BIT_MODE | SD_PWD_EXIST);
-		return STATUS_SUCCESS;
-	} else if (!(sd_card->sd_lock_status & SD_UNLOCK_POW_ON)) {
+		वापस STATUS_SUCCESS;
+	पूर्ण अन्यथा अगर (!(sd_card->sd_lock_status & SD_UNLOCK_POW_ON)) अणु
 		sd_card->sd_lock_status &= ~SD_PWD_EXIST;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	retval = sd_send_cmd_get_rsp(chip, APP_CMD, sd_card->sd_addr,
-				     SD_RSP_TYPE_R1, NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+				     SD_RSP_TYPE_R1, शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
 	retval = sd_send_cmd_get_rsp(chip, SET_CLR_CARD_DETECT, 0,
-				     SD_RSP_TYPE_R1, NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+				     SD_RSP_TYPE_R1, शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
-	if (support_1v8) {
+	अगर (support_1v8) अणु
 		retval = sd_send_cmd_get_rsp(chip, APP_CMD, sd_card->sd_addr,
-					     SD_RSP_TYPE_R1, NULL, 0);
-		if (retval != STATUS_SUCCESS)
-			goto status_fail;
+					     SD_RSP_TYPE_R1, शून्य, 0);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ status_fail;
 
 		retval = sd_send_cmd_get_rsp(chip, SET_BUS_WIDTH, 2,
-					     SD_RSP_TYPE_R1, NULL, 0);
-		if (retval != STATUS_SUCCESS)
-			goto status_fail;
+					     SD_RSP_TYPE_R1, शून्य, 0);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ status_fail;
 
-		switch_bus_width = SD_BUS_WIDTH_4;
-	} else {
-		switch_bus_width = SD_BUS_WIDTH_1;
-	}
+		चयन_bus_width = SD_BUS_WIDTH_4;
+	पूर्ण अन्यथा अणु
+		चयन_bus_width = SD_BUS_WIDTH_1;
+	पूर्ण
 
 	retval = sd_send_cmd_get_rsp(chip, SET_BLOCKLEN, 0x200, SD_RSP_TYPE_R1,
-				     NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+				     शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
-	retval = sd_set_clock_divider(chip, SD_CLK_DIVIDE_0);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+	retval = sd_set_घड़ी_भागider(chip, SD_CLK_DIVIDE_0);
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
-	if (!(sd_card->raw_csd[4] & 0x40))
-		sd_dont_switch = true;
+	अगर (!(sd_card->raw_csd[4] & 0x40))
+		sd_करोnt_चयन = true;
 
-	if (!sd_dont_switch) {
-		if (sd20_mode) {
-			/* Set sd_switch_fail here, because we needn't
-			 * switch to UHS mode
+	अगर (!sd_करोnt_चयन) अणु
+		अगर (sd20_mode) अणु
+			/* Set sd_चयन_fail here, because we needn't
+			 * चयन to UHS mode
 			 */
-			sd_card->sd_switch_fail = SDR104_SUPPORT_MASK |
+			sd_card->sd_चयन_fail = SDR104_SUPPORT_MASK |
 				DDR50_SUPPORT_MASK | SDR50_SUPPORT_MASK;
-		}
+		पूर्ण
 
 		/* Check the card whether follow SD1.1 spec or higher */
-		retval = sd_check_spec(chip, switch_bus_width);
-		if (retval == STATUS_SUCCESS) {
-			retval = sd_switch_function(chip, switch_bus_width);
-			if (retval != STATUS_SUCCESS) {
-				sd_init_power(chip);
-				sd_dont_switch = true;
+		retval = sd_check_spec(chip, चयन_bus_width);
+		अगर (retval == STATUS_SUCCESS) अणु
+			retval = sd_चयन_function(chip, चयन_bus_width);
+			अगर (retval != STATUS_SUCCESS) अणु
+				sd_init_घातer(chip);
+				sd_करोnt_चयन = true;
 				try_sdio = false;
 
-				goto switch_fail;
-			}
-		} else {
-			if (support_1v8) {
-				sd_init_power(chip);
-				sd_dont_switch = true;
+				जाओ चयन_fail;
+			पूर्ण
+		पूर्ण अन्यथा अणु
+			अगर (support_1v8) अणु
+				sd_init_घातer(chip);
+				sd_करोnt_चयन = true;
 				try_sdio = false;
 
-				goto switch_fail;
-			}
-		}
-	}
+				जाओ चयन_fail;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (!support_1v8) {
+	अगर (!support_1v8) अणु
 		retval = sd_send_cmd_get_rsp(chip, APP_CMD, sd_card->sd_addr,
-					     SD_RSP_TYPE_R1, NULL, 0);
-		if (retval != STATUS_SUCCESS)
-			goto status_fail;
+					     SD_RSP_TYPE_R1, शून्य, 0);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ status_fail;
 
 		retval = sd_send_cmd_get_rsp(chip, SET_BUS_WIDTH, 2,
-					     SD_RSP_TYPE_R1, NULL, 0);
-		if (retval != STATUS_SUCCESS)
-			goto status_fail;
-	}
+					     SD_RSP_TYPE_R1, शून्य, 0);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ status_fail;
+	पूर्ण
 
-#ifdef SUPPORT_SD_LOCK
+#अगर_घोषित SUPPORT_SD_LOCK
 	sd_card->sd_lock_status &= ~SD_LOCK_1BIT_MODE;
-#endif
+#पूर्ण_अगर
 
-	if (!sd20_mode && CHK_SD30_SPEED(sd_card)) {
-		int read_lba0 = 1;
+	अगर (!sd20_mode && CHK_SD30_SPEED(sd_card)) अणु
+		पूर्णांक पढ़ो_lba0 = 1;
 
-		retval = rtsx_write_register(chip, SD30_DRIVE_SEL, 0x07,
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD30_DRIVE_SEL, 0x07,
 					     chip->sd30_drive_sel_1v8);
-		if (retval)
-			return retval;
+		अगर (retval)
+			वापस retval;
 
 		retval = sd_set_init_para(chip);
-		if (retval != STATUS_SUCCESS)
-			goto status_fail;
+		अगर (retval != STATUS_SUCCESS)
+			जाओ status_fail;
 
-		if (CHK_SD_DDR50(sd_card))
+		अगर (CHK_SD_DDR50(sd_card))
 			retval = sd_ddr_tuning(chip);
-		else
+		अन्यथा
 			retval = sd_sdr_tuning(chip);
 
-		if (retval != STATUS_SUCCESS) {
-			retval = sd_init_power(chip);
-			if (retval != STATUS_SUCCESS)
-				goto status_fail;
+		अगर (retval != STATUS_SUCCESS) अणु
+			retval = sd_init_घातer(chip);
+			अगर (retval != STATUS_SUCCESS)
+				जाओ status_fail;
 
 			try_sdio = false;
 			sd20_mode = true;
-			goto switch_fail;
-		}
+			जाओ चयन_fail;
+		पूर्ण
 
 		sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
-				    SD_RSP_TYPE_R1, NULL, 0);
+				    SD_RSP_TYPE_R1, शून्य, 0);
 
-		if (CHK_SD_DDR50(sd_card)) {
-			retval = sd_wait_state_data_ready(chip, 0x08, 1, 1000);
-			if (retval != STATUS_SUCCESS)
-				read_lba0 = 0;
-		}
+		अगर (CHK_SD_DDR50(sd_card)) अणु
+			retval = sd_रुको_state_data_पढ़ोy(chip, 0x08, 1, 1000);
+			अगर (retval != STATUS_SUCCESS)
+				पढ़ो_lba0 = 0;
+		पूर्ण
 
-		if (read_lba0) {
-			retval = sd_read_lba0(chip);
-			if (retval != STATUS_SUCCESS) {
-				retval = sd_init_power(chip);
-				if (retval != STATUS_SUCCESS)
-					goto status_fail;
+		अगर (पढ़ो_lba0) अणु
+			retval = sd_पढ़ो_lba0(chip);
+			अगर (retval != STATUS_SUCCESS) अणु
+				retval = sd_init_घातer(chip);
+				अगर (retval != STATUS_SUCCESS)
+					जाओ status_fail;
 
 				try_sdio = false;
 				sd20_mode = true;
-				goto switch_fail;
-			}
-		}
-	}
+				जाओ चयन_fail;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
 	retval = sd_check_wp_state(chip);
-	if (retval != STATUS_SUCCESS)
-		goto status_fail;
+	अगर (retval != STATUS_SUCCESS)
+		जाओ status_fail;
 
 	chip->card_bus_width[chip->card2lun[SD_CARD]] = 4;
 
-#ifdef SUPPORT_SD_LOCK
-	if (sd_card->sd_lock_status & SD_UNLOCK_POW_ON) {
-		retval = rtsx_write_register(chip, REG_SD_BLOCK_CNT_H, 0xFF,
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर (sd_card->sd_lock_status & SD_UNLOCK_POW_ON) अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_BLOCK_CNT_H, 0xFF,
 					     0x02);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, REG_SD_BLOCK_CNT_L, 0xFF,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_BLOCK_CNT_L, 0xFF,
 					     0x00);
-		if (retval)
-			return retval;
-	}
-#endif
+		अगर (retval)
+			वापस retval;
+	पूर्ण
+#पूर्ण_अगर
 
-	return STATUS_SUCCESS;
+	वापस STATUS_SUCCESS;
 
 status_fail:
-	return STATUS_FAIL;
-}
+	वापस STATUS_FAIL;
+पूर्ण
 
-static int mmc_test_switch_bus(struct rtsx_chip *chip, u8 width)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
-	u8 buf[8] = {0}, bus_width, *ptr;
+अटल पूर्णांक mmc_test_चयन_bus(काष्ठा rtsx_chip *chip, u8 width)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
+	u8 buf[8] = अणु0पूर्ण, bus_width, *ptr;
 	u16 byte_cnt;
-	int len;
+	पूर्णांक len;
 
-	retval = sd_send_cmd_get_rsp(chip, BUSTEST_W, 0, SD_RSP_TYPE_R1, NULL,
+	retval = sd_send_cmd_get_rsp(chip, BUSTEST_W, 0, SD_RSP_TYPE_R1, शून्य,
 				     0);
-	if (retval != STATUS_SUCCESS)
-		return SWITCH_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस SWITCH_FAIL;
 
-	if (width == MMC_8BIT_BUS) {
+	अगर (width == MMC_8BIT_BUS) अणु
 		buf[0] = 0x55;
 		buf[1] = 0xAA;
 		len = 8;
 		byte_cnt = 8;
 		bus_width = SD_BUS_WIDTH_8;
-	} else {
+	पूर्ण अन्यथा अणु
 		buf[0] = 0x5A;
 		len = 4;
 		byte_cnt = 4;
 		bus_width = SD_BUS_WIDTH_4;
-	}
+	पूर्ण
 
-	retval = rtsx_write_register(chip, REG_SD_CFG3, 0x02, 0x02);
-	if (retval != STATUS_SUCCESS)
-		return SWITCH_ERR;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG3, 0x02, 0x02);
+	अगर (retval != STATUS_SUCCESS)
+		वापस SWITCH_ERR;
 
-	retval = sd_write_data(chip, SD_TM_AUTO_WRITE_3, NULL, 0, byte_cnt, 1,
+	retval = sd_ग_लिखो_data(chip, SD_TM_AUTO_WRITE_3, शून्य, 0, byte_cnt, 1,
 			       bus_width, buf, len, 100);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		rtsx_clear_sd_error(chip);
-		rtsx_write_register(chip, REG_SD_CFG3, 0x02, 0);
-		return SWITCH_ERR;
-	}
+		rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG3, 0x02, 0);
+		वापस SWITCH_ERR;
+	पूर्ण
 
-	retval = rtsx_write_register(chip, REG_SD_CFG3, 0x02, 0);
-	if (retval != STATUS_SUCCESS)
-		return SWITCH_ERR;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG3, 0x02, 0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस SWITCH_ERR;
 
 	dev_dbg(rtsx_dev(chip), "SD/MMC CMD %d\n", BUSTEST_R);
 
@@ -2678,10 +2679,10 @@ static int mmc_test_switch_bus(struct rtsx_chip *chip, u8 width)
 
 	rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_CMD0, 0xFF, 0x40 | BUSTEST_R);
 
-	if (width == MMC_8BIT_BUS)
+	अगर (width == MMC_8BIT_BUS)
 		rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_BYTE_CNT_L,
 			     0xFF, 0x08);
-	else
+	अन्यथा
 		rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_BYTE_CNT_L,
 			     0xFF, 0x04);
 
@@ -2699,61 +2700,61 @@ static int mmc_test_switch_bus(struct rtsx_chip *chip, u8 width)
 		     SD_TRANSFER_END);
 
 	rtsx_add_cmd(chip, READ_REG_CMD, PPBUF_BASE2, 0, 0);
-	if (width == MMC_8BIT_BUS)
+	अगर (width == MMC_8BIT_BUS)
 		rtsx_add_cmd(chip, READ_REG_CMD, PPBUF_BASE2 + 1, 0, 0);
 
 	retval = rtsx_send_cmd(chip, SD_CARD, 100);
-	if (retval < 0) {
+	अगर (retval < 0) अणु
 		rtsx_clear_sd_error(chip);
-		return SWITCH_ERR;
-	}
+		वापस SWITCH_ERR;
+	पूर्ण
 
 	ptr = rtsx_get_cmd_data(chip) + 1;
 
-	if (width == MMC_8BIT_BUS) {
+	अगर (width == MMC_8BIT_BUS) अणु
 		dev_dbg(rtsx_dev(chip), "BUSTEST_R [8bits]: 0x%02x 0x%02x\n",
 			ptr[0], ptr[1]);
-		if ((ptr[0] == 0xAA) && (ptr[1] == 0x55)) {
+		अगर ((ptr[0] == 0xAA) && (ptr[1] == 0x55)) अणु
 			u8 rsp[5];
 			u32 arg;
 
-			if (CHK_MMC_DDR52(sd_card))
+			अगर (CHK_MMC_DDR52(sd_card))
 				arg = 0x03B70600;
-			else
+			अन्यथा
 				arg = 0x03B70200;
 
 			retval = sd_send_cmd_get_rsp(chip, SWITCH, arg,
 						     SD_RSP_TYPE_R1b, rsp, 5);
-			if ((retval == STATUS_SUCCESS) &&
+			अगर ((retval == STATUS_SUCCESS) &&
 			    !(rsp[4] & MMC_SWITCH_ERR))
-				return SWITCH_SUCCESS;
-		}
-	} else {
+				वापस SWITCH_SUCCESS;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		dev_dbg(rtsx_dev(chip), "BUSTEST_R [4bits]: 0x%02x\n", ptr[0]);
-		if (ptr[0] == 0xA5) {
+		अगर (ptr[0] == 0xA5) अणु
 			u8 rsp[5];
 			u32 arg;
 
-			if (CHK_MMC_DDR52(sd_card))
+			अगर (CHK_MMC_DDR52(sd_card))
 				arg = 0x03B70500;
-			else
+			अन्यथा
 				arg = 0x03B70100;
 
 			retval = sd_send_cmd_get_rsp(chip, SWITCH, arg,
 						     SD_RSP_TYPE_R1b, rsp, 5);
-			if ((retval == STATUS_SUCCESS) &&
+			अगर ((retval == STATUS_SUCCESS) &&
 			    !(rsp[4] & MMC_SWITCH_ERR))
-				return SWITCH_SUCCESS;
-		}
-	}
+				वापस SWITCH_SUCCESS;
+		पूर्ण
+	पूर्ण
 
-	return SWITCH_FAIL;
-}
+	वापस SWITCH_FAIL;
+पूर्ण
 
-static int mmc_switch_timing_bus(struct rtsx_chip *chip, bool switch_ddr)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक mmc_चयन_timing_bus(काष्ठा rtsx_chip *chip, bool चयन_ddr)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 	u8 *ptr, card_type, card_type_mask = 0;
 
 	CLR_MMC_HS(sd_card);
@@ -2791,584 +2792,584 @@ static int mmc_switch_timing_bus(struct rtsx_chip *chip, bool switch_ddr)
 	rtsx_add_cmd(chip, READ_REG_CMD, PPBUF_BASE2 + 215, 0xFF, 0);
 
 	retval = rtsx_send_cmd(chip, SD_CARD, 1000);
-	if (retval < 0) {
-		if (retval == -ETIMEDOUT) {
+	अगर (retval < 0) अणु
+		अगर (retval == -ETIMEDOUT) अणु
 			rtsx_clear_sd_error(chip);
 			sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
-					    SD_RSP_TYPE_R1, NULL, 0);
-		}
-		return STATUS_FAIL;
-	}
+					    SD_RSP_TYPE_R1, शून्य, 0);
+		पूर्ण
+		वापस STATUS_FAIL;
+	पूर्ण
 
 	ptr = rtsx_get_cmd_data(chip);
-	if (ptr[0] & SD_TRANSFER_ERR) {
+	अगर (ptr[0] & SD_TRANSFER_ERR) अणु
 		sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
-				    SD_RSP_TYPE_R1, NULL, 0);
-		return STATUS_FAIL;
-	}
+				    SD_RSP_TYPE_R1, शून्य, 0);
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (CHK_MMC_SECTOR_MODE(sd_card)) {
+	अगर (CHK_MMC_SECTOR_MODE(sd_card)) अणु
 		sd_card->capacity = ((u32)ptr[5] << 24) | ((u32)ptr[4] << 16) |
 			((u32)ptr[3] << 8) | ((u32)ptr[2]);
-	}
+	पूर्ण
 
 	card_type_mask = 0x03;
 	card_type = ptr[1] & card_type_mask;
-	if (card_type) {
+	अगर (card_type) अणु
 		u8 rsp[5];
 
-		if (card_type & 0x04) {
-			if (switch_ddr)
+		अगर (card_type & 0x04) अणु
+			अगर (चयन_ddr)
 				SET_MMC_DDR52(sd_card);
-			else
+			अन्यथा
 				SET_MMC_52M(sd_card);
-		} else if (card_type & 0x02) {
+		पूर्ण अन्यथा अगर (card_type & 0x02) अणु
 			SET_MMC_52M(sd_card);
-		} else {
+		पूर्ण अन्यथा अणु
 			SET_MMC_26M(sd_card);
-		}
+		पूर्ण
 
 		retval = sd_send_cmd_get_rsp(chip, SWITCH, 0x03B90100,
 					     SD_RSP_TYPE_R1b, rsp, 5);
-		if ((retval != STATUS_SUCCESS) || (rsp[4] & MMC_SWITCH_ERR))
+		अगर ((retval != STATUS_SUCCESS) || (rsp[4] & MMC_SWITCH_ERR))
 			CLR_MMC_HS(sd_card);
-	}
+	पूर्ण
 
-	sd_choose_proper_clock(chip);
-	retval = switch_clock(chip, sd_card->sd_clock);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	sd_choose_proper_घड़ी(chip);
+	retval = चयन_घड़ी(chip, sd_card->sd_घड़ी);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	/* Test Bus Procedure */
-	retval = mmc_test_switch_bus(chip, MMC_8BIT_BUS);
-	if (retval == SWITCH_SUCCESS) {
+	retval = mmc_test_चयन_bus(chip, MMC_8BIT_BUS);
+	अगर (retval == SWITCH_SUCCESS) अणु
 		SET_MMC_8BIT(sd_card);
 		chip->card_bus_width[chip->card2lun[SD_CARD]] = 8;
-#ifdef SUPPORT_SD_LOCK
+#अगर_घोषित SUPPORT_SD_LOCK
 		sd_card->sd_lock_status &= ~SD_LOCK_1BIT_MODE;
-#endif
-	} else if (retval == SWITCH_FAIL) {
-		retval = mmc_test_switch_bus(chip, MMC_4BIT_BUS);
-		if (retval == SWITCH_SUCCESS) {
+#पूर्ण_अगर
+	पूर्ण अन्यथा अगर (retval == SWITCH_FAIL) अणु
+		retval = mmc_test_चयन_bus(chip, MMC_4BIT_BUS);
+		अगर (retval == SWITCH_SUCCESS) अणु
 			SET_MMC_4BIT(sd_card);
 			chip->card_bus_width[chip->card2lun[SD_CARD]] = 4;
-#ifdef SUPPORT_SD_LOCK
+#अगर_घोषित SUPPORT_SD_LOCK
 			sd_card->sd_lock_status &= ~SD_LOCK_1BIT_MODE;
-#endif
-		} else if (retval == SWITCH_FAIL) {
+#पूर्ण_अगर
+		पूर्ण अन्यथा अगर (retval == SWITCH_FAIL) अणु
 			CLR_MMC_8BIT(sd_card);
 			CLR_MMC_4BIT(sd_card);
-		} else {
-			return STATUS_FAIL;
-		}
-	} else {
-		return STATUS_FAIL;
-	}
+		पूर्ण अन्यथा अणु
+			वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int reset_mmc(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval, i = 0, j = 0, k = 0;
-	bool switch_ddr = true;
+अटल पूर्णांक reset_mmc(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval, i = 0, j = 0, k = 0;
+	bool चयन_ddr = true;
 	u8 rsp[16];
 	u8 spec_ver = 0;
 	u32 temp;
 
-#ifdef SUPPORT_SD_LOCK
-	if (sd_card->sd_lock_status & SD_UNLOCK_POW_ON)
-		goto MMC_UNLOCK_ENTRY;
-#endif
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर (sd_card->sd_lock_status & SD_UNLOCK_POW_ON)
+		जाओ MMC_UNLOCK_ENTRY;
+#पूर्ण_अगर
 
-switch_fail:
+चयन_fail:
 	retval = sd_prepare_reset(chip);
-	if (retval != STATUS_SUCCESS)
-		return retval;
+	अगर (retval != STATUS_SUCCESS)
+		वापस retval;
 
 	SET_MMC(sd_card);
 
 RTY_MMC_RST:
 	retval = sd_send_cmd_get_rsp(chip, GO_IDLE_STATE, 0, SD_RSP_TYPE_R0,
-				     NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+				     शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	do {
-		if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+	करो अणु
+		अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 			sd_set_err_code(chip, SD_NO_CARD);
-			return STATUS_FAIL;
-		}
+			वापस STATUS_FAIL;
+		पूर्ण
 
 		retval = sd_send_cmd_get_rsp(chip, SEND_OP_COND,
 					     (SUPPORT_VOLTAGE | 0x40000000),
 					     SD_RSP_TYPE_R3, rsp, 5);
-		if (retval != STATUS_SUCCESS) {
-			if (sd_check_err_code(chip, SD_BUSY) ||
-			    sd_check_err_code(chip, SD_TO_ERR)) {
+		अगर (retval != STATUS_SUCCESS) अणु
+			अगर (sd_check_err_code(chip, SD_BUSY) ||
+			    sd_check_err_code(chip, SD_TO_ERR)) अणु
 				k++;
-				if (k < 20) {
+				अगर (k < 20) अणु
 					sd_clr_err_code(chip);
-					goto RTY_MMC_RST;
-				} else {
-					return STATUS_FAIL;
-				}
-			} else {
+					जाओ RTY_MMC_RST;
+				पूर्ण अन्यथा अणु
+					वापस STATUS_FAIL;
+				पूर्ण
+			पूर्ण अन्यथा अणु
 				j++;
-				if (j < 100) {
+				अगर (j < 100) अणु
 					sd_clr_err_code(chip);
-					goto RTY_MMC_RST;
-				} else {
-					return STATUS_FAIL;
-				}
-			}
-		}
+					जाओ RTY_MMC_RST;
+				पूर्ण अन्यथा अणु
+					वापस STATUS_FAIL;
+				पूर्ण
+			पूर्ण
+		पूर्ण
 
-		wait_timeout(20);
+		रुको_समयout(20);
 		i++;
-	} while (!(rsp[1] & 0x80) && (i < 255));
+	पूर्ण जबतक (!(rsp[1] & 0x80) && (i < 255));
 
-	if (i == 255)
-		return STATUS_FAIL;
+	अगर (i == 255)
+		वापस STATUS_FAIL;
 
-	if ((rsp[1] & 0x60) == 0x40)
+	अगर ((rsp[1] & 0x60) == 0x40)
 		SET_MMC_SECTOR_MODE(sd_card);
-	else
+	अन्यथा
 		CLR_MMC_SECTOR_MODE(sd_card);
 
 	retval = sd_send_cmd_get_rsp(chip, ALL_SEND_CID, 0, SD_RSP_TYPE_R2,
-				     NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+				     शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	sd_card->sd_addr = 0x00100000;
 	retval = sd_send_cmd_get_rsp(chip, SET_RELATIVE_ADDR, sd_card->sd_addr,
 				     SD_RSP_TYPE_R6, rsp, 5);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	retval = sd_check_csd(chip, 1);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	spec_ver = (sd_card->raw_csd[0] & 0x3C) >> 2;
 
 	retval = sd_select_card(chip, 1);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	retval = sd_send_cmd_get_rsp(chip, SET_BLOCKLEN, 0x200, SD_RSP_TYPE_R1,
-				     NULL, 0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+				     शून्य, 0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-#ifdef SUPPORT_SD_LOCK
+#अगर_घोषित SUPPORT_SD_LOCK
 MMC_UNLOCK_ENTRY:
 	retval = sd_update_lock_status(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
-#endif
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
+#पूर्ण_अगर
 
-	retval = sd_set_clock_divider(chip, SD_CLK_DIVIDE_0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_set_घड़ी_भागider(chip, SD_CLK_DIVIDE_0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	chip->card_bus_width[chip->card2lun[SD_CARD]] = 1;
 
-	if (!sd_card->mmc_dont_switch_bus) {
-		if (spec_ver == 4) {
+	अगर (!sd_card->mmc_करोnt_चयन_bus) अणु
+		अगर (spec_ver == 4) अणु
 			/* MMC 4.x Cards */
-			retval = mmc_switch_timing_bus(chip, switch_ddr);
-			if (retval != STATUS_SUCCESS) {
-				retval = sd_init_power(chip);
-				if (retval != STATUS_SUCCESS)
-					return STATUS_FAIL;
-				sd_card->mmc_dont_switch_bus = 1;
-				goto switch_fail;
-			}
-		}
+			retval = mmc_चयन_timing_bus(chip, चयन_ddr);
+			अगर (retval != STATUS_SUCCESS) अणु
+				retval = sd_init_घातer(chip);
+				अगर (retval != STATUS_SUCCESS)
+					वापस STATUS_FAIL;
+				sd_card->mmc_करोnt_चयन_bus = 1;
+				जाओ चयन_fail;
+			पूर्ण
+		पूर्ण
 
-		if (CHK_MMC_SECTOR_MODE(sd_card) && (sd_card->capacity == 0))
-			return STATUS_FAIL;
+		अगर (CHK_MMC_SECTOR_MODE(sd_card) && (sd_card->capacity == 0))
+			वापस STATUS_FAIL;
 
-		if (switch_ddr && CHK_MMC_DDR52(sd_card)) {
+		अगर (चयन_ddr && CHK_MMC_DDR52(sd_card)) अणु
 			retval = sd_set_init_para(chip);
-			if (retval != STATUS_SUCCESS)
-				return STATUS_FAIL;
+			अगर (retval != STATUS_SUCCESS)
+				वापस STATUS_FAIL;
 
 			retval = mmc_ddr_tuning(chip);
-			if (retval != STATUS_SUCCESS) {
-				retval = sd_init_power(chip);
-				if (retval != STATUS_SUCCESS)
-					return STATUS_FAIL;
+			अगर (retval != STATUS_SUCCESS) अणु
+				retval = sd_init_घातer(chip);
+				अगर (retval != STATUS_SUCCESS)
+					वापस STATUS_FAIL;
 
-				switch_ddr = false;
-				goto switch_fail;
-			}
+				चयन_ddr = false;
+				जाओ चयन_fail;
+			पूर्ण
 
-			retval = sd_wait_state_data_ready(chip, 0x08, 1, 1000);
-			if (retval == STATUS_SUCCESS) {
-				retval = sd_read_lba0(chip);
-				if (retval != STATUS_SUCCESS) {
-					retval = sd_init_power(chip);
-					if (retval != STATUS_SUCCESS)
-						return STATUS_FAIL;
+			retval = sd_रुको_state_data_पढ़ोy(chip, 0x08, 1, 1000);
+			अगर (retval == STATUS_SUCCESS) अणु
+				retval = sd_पढ़ो_lba0(chip);
+				अगर (retval != STATUS_SUCCESS) अणु
+					retval = sd_init_घातer(chip);
+					अगर (retval != STATUS_SUCCESS)
+						वापस STATUS_FAIL;
 
-					switch_ddr = false;
-					goto switch_fail;
-				}
-			}
-		}
-	}
+					चयन_ddr = false;
+					जाओ चयन_fail;
+				पूर्ण
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-#ifdef SUPPORT_SD_LOCK
-	if (sd_card->sd_lock_status & SD_UNLOCK_POW_ON) {
-		retval = rtsx_write_register(chip, REG_SD_BLOCK_CNT_H, 0xFF,
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर (sd_card->sd_lock_status & SD_UNLOCK_POW_ON) अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_BLOCK_CNT_H, 0xFF,
 					     0x02);
-		if (retval)
-			return retval;
-		retval = rtsx_write_register(chip, REG_SD_BLOCK_CNT_L, 0xFF,
+		अगर (retval)
+			वापस retval;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_BLOCK_CNT_L, 0xFF,
 					     0x00);
-		if (retval)
-			return retval;
-	}
-#endif
+		अगर (retval)
+			वापस retval;
+	पूर्ण
+#पूर्ण_अगर
 
-	temp = rtsx_readl(chip, RTSX_BIPR);
-	if (temp & SD_WRITE_PROTECT)
+	temp = rtsx_पढ़ोl(chip, RTSX_BIPR);
+	अगर (temp & SD_WRITE_PROTECT)
 		chip->card_wp |= SD_CARD;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int reset_sd_card(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+पूर्णांक reset_sd_card(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 
 	sd_init_reg_addr(chip);
 
-	memset(sd_card, 0, sizeof(struct sd_info));
+	स_रखो(sd_card, 0, माप(काष्ठा sd_info));
 	chip->capacity[chip->card2lun[SD_CARD]] = 0;
 
-	retval = enable_card_clock(chip, SD_CARD);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = enable_card_घड़ी(chip, SD_CARD);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (chip->ignore_sd && CHK_SDIO_EXIST(chip) &&
-	    !CHK_SDIO_IGNORED(chip)) {
-		if (chip->asic_code) {
+	अगर (chip->ignore_sd && CHK_SDIO_EXIST(chip) &&
+	    !CHK_SDIO_IGNORED(chip)) अणु
+		अगर (chip->asic_code) अणु
 			retval = sd_pull_ctl_enable(chip);
-			if (retval != STATUS_SUCCESS)
-				return STATUS_FAIL;
-		} else {
-			retval = rtsx_write_register(chip, FPGA_PULL_CTL,
+			अगर (retval != STATUS_SUCCESS)
+				वापस STATUS_FAIL;
+		पूर्ण अन्यथा अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, FPGA_PULL_CTL,
 						     FPGA_SD_PULL_CTL_BIT |
 						     0x20, 0);
-			if (retval != STATUS_SUCCESS)
-				return STATUS_FAIL;
-		}
+			अगर (retval != STATUS_SUCCESS)
+				वापस STATUS_FAIL;
+		पूर्ण
 		retval = card_share_mode(chip, SD_CARD);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
 		chip->sd_io = 1;
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	retval = sd_init_power(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_init_घातer(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (chip->sd_ctl & RESET_MMC_FIRST) {
+	अगर (chip->sd_ctl & RESET_MMC_FIRST) अणु
 		retval = reset_mmc(chip);
-		if (retval != STATUS_SUCCESS) {
-			if (sd_check_err_code(chip, SD_NO_CARD))
-				return STATUS_FAIL;
+		अगर (retval != STATUS_SUCCESS) अणु
+			अगर (sd_check_err_code(chip, SD_NO_CARD))
+				वापस STATUS_FAIL;
 
 			retval = reset_sd(chip);
-			if (retval != STATUS_SUCCESS)
-				return STATUS_FAIL;
-		}
-	} else {
+			अगर (retval != STATUS_SUCCESS)
+				वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण अन्यथा अणु
 		retval = reset_sd(chip);
-		if (retval != STATUS_SUCCESS) {
-			if (sd_check_err_code(chip, SD_NO_CARD))
-				return STATUS_FAIL;
+		अगर (retval != STATUS_SUCCESS) अणु
+			अगर (sd_check_err_code(chip, SD_NO_CARD))
+				वापस STATUS_FAIL;
 
-			if (chip->sd_io)
-				return STATUS_FAIL;
+			अगर (chip->sd_io)
+				वापस STATUS_FAIL;
 			retval = reset_mmc(chip);
-			if (retval != STATUS_SUCCESS)
-				return STATUS_FAIL;
-		}
-	}
+			अगर (retval != STATUS_SUCCESS)
+				वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण
 
-	retval = sd_set_clock_divider(chip, SD_CLK_DIVIDE_0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_set_घड़ी_भागider(chip, SD_CLK_DIVIDE_0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, REG_SD_BYTE_CNT_L, 0xFF, 0);
-	if (retval)
-		return retval;
-	retval = rtsx_write_register(chip, REG_SD_BYTE_CNT_H, 0xFF, 2);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_BYTE_CNT_L, 0xFF, 0);
+	अगर (retval)
+		वापस retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_BYTE_CNT_H, 0xFF, 2);
+	अगर (retval)
+		वापस retval;
 
 	chip->capacity[chip->card2lun[SD_CARD]] = sd_card->capacity;
 
 	retval = sd_set_init_para(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	dev_dbg(rtsx_dev(chip), "sd_card->sd_type = 0x%x\n", sd_card->sd_type);
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-static int reset_mmc_only(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल पूर्णांक reset_mmc_only(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 
 	sd_card->sd_type = 0;
 	sd_card->seq_mode = 0;
-	sd_card->sd_data_buf_ready = 0;
+	sd_card->sd_data_buf_पढ़ोy = 0;
 	sd_card->capacity = 0;
-	sd_card->sd_switch_fail = 0;
+	sd_card->sd_चयन_fail = 0;
 
-#ifdef SUPPORT_SD_LOCK
+#अगर_घोषित SUPPORT_SD_LOCK
 	sd_card->sd_lock_status = 0;
 	sd_card->sd_erase_status = 0;
-#endif
+#पूर्ण_अगर
 
 	chip->capacity[chip->card2lun[SD_CARD]] = sd_card->capacity = 0;
 
-	retval = enable_card_clock(chip, SD_CARD);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = enable_card_घड़ी(chip, SD_CARD);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = sd_init_power(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_init_घातer(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	retval = reset_mmc(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = sd_set_clock_divider(chip, SD_CLK_DIVIDE_0);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_set_घड़ी_भागider(chip, SD_CLK_DIVIDE_0);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, REG_SD_BYTE_CNT_L, 0xFF, 0);
-	if (retval)
-		return retval;
-	retval = rtsx_write_register(chip, REG_SD_BYTE_CNT_H, 0xFF, 2);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_BYTE_CNT_L, 0xFF, 0);
+	अगर (retval)
+		वापस retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_BYTE_CNT_H, 0xFF, 2);
+	अगर (retval)
+		वापस retval;
 
 	chip->capacity[chip->card2lun[SD_CARD]] = sd_card->capacity;
 
 	retval = sd_set_init_para(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
 	dev_dbg(rtsx_dev(chip), "In %s, sd_card->sd_type = 0x%x\n",
 		__func__, sd_card->sd_type);
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-#define WAIT_DATA_READY_RTY_CNT		255
+#घोषणा WAIT_DATA_READY_RTY_CNT		255
 
-static int wait_data_buf_ready(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int i, retval;
+अटल पूर्णांक रुको_data_buf_पढ़ोy(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक i, retval;
 
-	for (i = 0; i < WAIT_DATA_READY_RTY_CNT; i++) {
-		if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+	क्रम (i = 0; i < WAIT_DATA_READY_RTY_CNT; i++) अणु
+		अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 			sd_set_err_code(chip, SD_NO_CARD);
-			return STATUS_FAIL;
-		}
+			वापस STATUS_FAIL;
+		पूर्ण
 
-		sd_card->sd_data_buf_ready = 0;
+		sd_card->sd_data_buf_पढ़ोy = 0;
 
 		retval = sd_send_cmd_get_rsp(chip, SEND_STATUS,
 					     sd_card->sd_addr, SD_RSP_TYPE_R1,
-					     NULL, 0);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+					     शून्य, 0);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
-		if (sd_card->sd_data_buf_ready) {
-			return sd_send_cmd_get_rsp(chip, SEND_STATUS,
-				sd_card->sd_addr, SD_RSP_TYPE_R1, NULL, 0);
-		}
-	}
+		अगर (sd_card->sd_data_buf_पढ़ोy) अणु
+			वापस sd_send_cmd_get_rsp(chip, SEND_STATUS,
+				sd_card->sd_addr, SD_RSP_TYPE_R1, शून्य, 0);
+		पूर्ण
+	पूर्ण
 
 	sd_set_err_code(chip, SD_TO_ERR);
 
-	return STATUS_FAIL;
-}
+	वापस STATUS_FAIL;
+पूर्ण
 
-void sd_stop_seq_mode(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+व्योम sd_stop_seq_mode(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 
-	if (sd_card->seq_mode) {
-		retval = sd_switch_clock(chip);
-		if (retval != STATUS_SUCCESS)
-			return;
+	अगर (sd_card->seq_mode) अणु
+		retval = sd_चयन_घड़ी(chip);
+		अगर (retval != STATUS_SUCCESS)
+			वापस;
 
 		retval = sd_send_cmd_get_rsp(chip, STOP_TRANSMISSION, 0,
-					     SD_RSP_TYPE_R1b, NULL, 0);
-		if (retval != STATUS_SUCCESS)
+					     SD_RSP_TYPE_R1b, शून्य, 0);
+		अगर (retval != STATUS_SUCCESS)
 			sd_set_err_code(chip, SD_STS_ERR);
 
-		retval = sd_wait_state_data_ready(chip, 0x08, 1, 1000);
-		if (retval != STATUS_SUCCESS)
+		retval = sd_रुको_state_data_पढ़ोy(chip, 0x08, 1, 1000);
+		अगर (retval != STATUS_SUCCESS)
 			sd_set_err_code(chip, SD_STS_ERR);
 
 		sd_card->seq_mode = 0;
 
-		rtsx_write_register(chip, RBCTL, RB_FLUSH, RB_FLUSH);
-	}
-}
+		rtsx_ग_लिखो_रेजिस्टर(chip, RBCTL, RB_FLUSH, RB_FLUSH);
+	पूर्ण
+पूर्ण
 
-static inline int sd_auto_tune_clock(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+अटल अंतरभूत पूर्णांक sd_स्वतः_tune_घड़ी(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 
-	if (chip->asic_code) {
-		if (sd_card->sd_clock > 30)
-			sd_card->sd_clock -= 20;
-	} else {
-		switch (sd_card->sd_clock) {
-		case CLK_200:
-			sd_card->sd_clock = CLK_150;
-			break;
+	अगर (chip->asic_code) अणु
+		अगर (sd_card->sd_घड़ी > 30)
+			sd_card->sd_घड़ी -= 20;
+	पूर्ण अन्यथा अणु
+		चयन (sd_card->sd_घड़ी) अणु
+		हाल CLK_200:
+			sd_card->sd_घड़ी = CLK_150;
+			अवरोध;
 
-		case CLK_150:
-			sd_card->sd_clock = CLK_120;
-			break;
+		हाल CLK_150:
+			sd_card->sd_घड़ी = CLK_120;
+			अवरोध;
 
-		case CLK_120:
-			sd_card->sd_clock = CLK_100;
-			break;
+		हाल CLK_120:
+			sd_card->sd_घड़ी = CLK_100;
+			अवरोध;
 
-		case CLK_100:
-			sd_card->sd_clock = CLK_80;
-			break;
+		हाल CLK_100:
+			sd_card->sd_घड़ी = CLK_80;
+			अवरोध;
 
-		case CLK_80:
-			sd_card->sd_clock = CLK_60;
-			break;
+		हाल CLK_80:
+			sd_card->sd_घड़ी = CLK_60;
+			अवरोध;
 
-		case CLK_60:
-			sd_card->sd_clock = CLK_50;
-			break;
+		हाल CLK_60:
+			sd_card->sd_घड़ी = CLK_50;
+			अवरोध;
 
-		default:
-			break;
-		}
-	}
+		शेष:
+			अवरोध;
+		पूर्ण
+	पूर्ण
 
-	retval = sd_switch_clock(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_चयन_घड़ी(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int sd_rw(struct scsi_cmnd *srb, struct rtsx_chip *chip, u32 start_sector,
+पूर्णांक sd_rw(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip, u32 start_sector,
 	  u16 sector_cnt)
-{
-	struct sd_info *sd_card = &chip->sd_card;
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
 	u32 data_addr;
 	u8 cfg2;
-	int retval;
+	पूर्णांक retval;
 
-	if (srb->sc_data_direction == DMA_FROM_DEVICE) {
+	अगर (srb->sc_data_direction == DMA_FROM_DEVICE) अणु
 		dev_dbg(rtsx_dev(chip), "%s: Read %d %s from 0x%x\n", __func__,
 			sector_cnt, (sector_cnt > 1) ? "sectors" : "sector",
 			start_sector);
-	} else {
+	पूर्ण अन्यथा अणु
 		dev_dbg(rtsx_dev(chip), "%s: Write %d %s to 0x%x\n", __func__,
 			sector_cnt, (sector_cnt > 1) ? "sectors" : "sector",
 			start_sector);
-	}
+	पूर्ण
 
 	sd_card->cleanup_counter = 0;
 
-	if (!(chip->card_ready & SD_CARD)) {
+	अगर (!(chip->card_पढ़ोy & SD_CARD)) अणु
 		sd_card->seq_mode = 0;
 
 		retval = reset_sd_card(chip);
-		if (retval == STATUS_SUCCESS) {
-			chip->card_ready |= SD_CARD;
+		अगर (retval == STATUS_SUCCESS) अणु
+			chip->card_पढ़ोy |= SD_CARD;
 			chip->card_fail &= ~SD_CARD;
-		} else {
-			chip->card_ready &= ~SD_CARD;
+		पूर्ण अन्यथा अणु
+			chip->card_पढ़ोy &= ~SD_CARD;
 			chip->card_fail |= SD_CARD;
 			chip->capacity[chip->card2lun[SD_CARD]] = 0;
 			chip->rw_need_retry = 1;
-			return STATUS_FAIL;
-		}
-	}
+			वापस STATUS_FAIL;
+		पूर्ण
+	पूर्ण
 
-	if (!CHK_SD_HCXC(sd_card) && !CHK_MMC_SECTOR_MODE(sd_card))
+	अगर (!CHK_SD_HCXC(sd_card) && !CHK_MMC_SECTOR_MODE(sd_card))
 		data_addr = start_sector << 9;
-	else
+	अन्यथा
 		data_addr = start_sector;
 
 	sd_clr_err_code(chip);
 
-	retval = sd_switch_clock(chip);
-	if (retval != STATUS_SUCCESS) {
+	retval = sd_चयन_घड़ी(chip);
+	अगर (retval != STATUS_SUCCESS) अणु
 		sd_set_err_code(chip, SD_IO_ERR);
-		goto RW_FAIL;
-	}
+		जाओ RW_FAIL;
+	पूर्ण
 
-	if (sd_card->seq_mode &&
+	अगर (sd_card->seq_mode &&
 	    ((sd_card->pre_dir != srb->sc_data_direction) ||
 	    ((sd_card->pre_sec_addr + sd_card->pre_sec_cnt) !=
-	    start_sector))) {
-		if ((sd_card->pre_sec_cnt < 0x80) &&
+	    start_sector))) अणु
+		अगर ((sd_card->pre_sec_cnt < 0x80) &&
 		    (sd_card->pre_dir == DMA_FROM_DEVICE) &&
 		    !CHK_SD30_SPEED(sd_card) &&
 		    !CHK_SD_HS(sd_card) &&
-		    !CHK_MMC_HS(sd_card)) {
+		    !CHK_MMC_HS(sd_card)) अणु
 			sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
-					    SD_RSP_TYPE_R1, NULL, 0);
-		}
+					    SD_RSP_TYPE_R1, शून्य, 0);
+		पूर्ण
 
 		retval = sd_send_cmd_get_rsp(chip, STOP_TRANSMISSION, 0,
-					     SD_RSP_TYPE_R1b, NULL, 0);
-		if (retval != STATUS_SUCCESS) {
+					     SD_RSP_TYPE_R1b, शून्य, 0);
+		अगर (retval != STATUS_SUCCESS) अणु
 			chip->rw_need_retry = 1;
 			sd_set_err_code(chip, SD_STS_ERR);
-			goto RW_FAIL;
-		}
+			जाओ RW_FAIL;
+		पूर्ण
 
 		sd_card->seq_mode = 0;
 
-		retval = rtsx_write_register(chip, RBCTL, RB_FLUSH, RB_FLUSH);
-		if (retval != STATUS_SUCCESS) {
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, RBCTL, RB_FLUSH, RB_FLUSH);
+		अगर (retval != STATUS_SUCCESS) अणु
 			sd_set_err_code(chip, SD_IO_ERR);
-			goto RW_FAIL;
-		}
+			जाओ RW_FAIL;
+		पूर्ण
 
-		if ((sd_card->pre_sec_cnt < 0x80) &&
+		अगर ((sd_card->pre_sec_cnt < 0x80) &&
 		    !CHK_SD30_SPEED(sd_card) &&
 		    !CHK_SD_HS(sd_card) &&
-		    !CHK_MMC_HS(sd_card)) {
+		    !CHK_MMC_HS(sd_card)) अणु
 			sd_send_cmd_get_rsp(chip, SEND_STATUS, sd_card->sd_addr,
-					    SD_RSP_TYPE_R1, NULL, 0);
-		}
-	}
+					    SD_RSP_TYPE_R1, शून्य, 0);
+		पूर्ण
+	पूर्ण
 
 	rtsx_init_cmd(chip);
 
@@ -3381,17 +3382,17 @@ int sd_rw(struct scsi_cmnd *srb, struct rtsx_chip *chip, u32 start_sector,
 
 	rtsx_add_cmd(chip, WRITE_REG_CMD, CARD_DATA_SOURCE, 0x01, RING_BUFFER);
 
-	if (CHK_MMC_8BIT(sd_card))
+	अगर (CHK_MMC_8BIT(sd_card))
 		rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_CFG1,
 			     0x03, SD_BUS_WIDTH_8);
-	else if (CHK_MMC_4BIT(sd_card) || CHK_SD(sd_card))
+	अन्यथा अगर (CHK_MMC_4BIT(sd_card) || CHK_SD(sd_card))
 		rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_CFG1,
 			     0x03, SD_BUS_WIDTH_4);
-	else
+	अन्यथा
 		rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_CFG1,
 			     0x03, SD_BUS_WIDTH_1);
 
-	if (sd_card->seq_mode) {
+	अगर (sd_card->seq_mode) अणु
 		cfg2 = SD_NO_CALCULATE_CRC7 | SD_CHECK_CRC16 |
 			SD_NO_WAIT_BUSY_END | SD_NO_CHECK_CRC7 |
 			SD_RSP_LEN_0;
@@ -3400,20 +3401,20 @@ int sd_rw(struct scsi_cmnd *srb, struct rtsx_chip *chip, u32 start_sector,
 		trans_dma_enable(srb->sc_data_direction, chip, sector_cnt * 512,
 				 DMA_512);
 
-		if (srb->sc_data_direction == DMA_FROM_DEVICE) {
+		अगर (srb->sc_data_direction == DMA_FROM_DEVICE) अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_TRANSFER, 0xFF,
 				     SD_TM_AUTO_READ_3 | SD_TRANSFER_START);
-		} else {
+		पूर्ण अन्यथा अणु
 			rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_TRANSFER, 0xFF,
 				     SD_TM_AUTO_WRITE_3 | SD_TRANSFER_START);
-		}
+		पूर्ण
 
 		rtsx_add_cmd(chip, CHECK_REG_CMD, REG_SD_TRANSFER,
 			     SD_TRANSFER_END, SD_TRANSFER_END);
 
-		rtsx_send_cmd_no_wait(chip);
-	} else {
-		if (srb->sc_data_direction == DMA_FROM_DEVICE) {
+		rtsx_send_cmd_no_रुको(chip);
+	पूर्ण अन्यथा अणु
+		अगर (srb->sc_data_direction == DMA_FROM_DEVICE) अणु
 			dev_dbg(rtsx_dev(chip), "SD/MMC CMD %d\n",
 				READ_MULTIPLE_BLOCK);
 			rtsx_add_cmd(chip, WRITE_REG_CMD, REG_SD_CMD0, 0xFF,
@@ -3441,31 +3442,31 @@ int sd_rw(struct scsi_cmnd *srb, struct rtsx_chip *chip, u32 start_sector,
 			rtsx_add_cmd(chip, CHECK_REG_CMD, REG_SD_TRANSFER,
 				     SD_TRANSFER_END, SD_TRANSFER_END);
 
-			rtsx_send_cmd_no_wait(chip);
-		} else {
+			rtsx_send_cmd_no_रुको(chip);
+		पूर्ण अन्यथा अणु
 			retval = rtsx_send_cmd(chip, SD_CARD, 50);
-			if (retval < 0) {
+			अगर (retval < 0) अणु
 				rtsx_clear_sd_error(chip);
 
 				chip->rw_need_retry = 1;
 				sd_set_err_code(chip, SD_TO_ERR);
-				goto RW_FAIL;
-			}
+				जाओ RW_FAIL;
+			पूर्ण
 
-			retval = wait_data_buf_ready(chip);
-			if (retval != STATUS_SUCCESS) {
+			retval = रुको_data_buf_पढ़ोy(chip);
+			अगर (retval != STATUS_SUCCESS) अणु
 				chip->rw_need_retry = 1;
 				sd_set_err_code(chip, SD_TO_ERR);
-				goto RW_FAIL;
-			}
+				जाओ RW_FAIL;
+			पूर्ण
 
 			retval = sd_send_cmd_get_rsp(chip, WRITE_MULTIPLE_BLOCK,
 						     data_addr, SD_RSP_TYPE_R1,
-						     NULL, 0);
-			if (retval != STATUS_SUCCESS) {
+						     शून्य, 0);
+			अगर (retval != STATUS_SUCCESS) अणु
 				chip->rw_need_retry = 1;
-				goto RW_FAIL;
-			}
+				जाओ RW_FAIL;
+			पूर्ण
 
 			rtsx_init_cmd(chip);
 
@@ -3483,110 +3484,110 @@ int sd_rw(struct scsi_cmnd *srb, struct rtsx_chip *chip, u32 start_sector,
 			rtsx_add_cmd(chip, CHECK_REG_CMD, REG_SD_TRANSFER,
 				     SD_TRANSFER_END, SD_TRANSFER_END);
 
-			rtsx_send_cmd_no_wait(chip);
-		}
+			rtsx_send_cmd_no_रुको(chip);
+		पूर्ण
 
 		sd_card->seq_mode = 1;
-	}
+	पूर्ण
 
 	retval = rtsx_transfer_data(chip, SD_CARD, scsi_sglist(srb),
 				    scsi_bufflen(srb), scsi_sg_count(srb),
-				srb->sc_data_direction, chip->sd_timeout);
-	if (retval < 0) {
+				srb->sc_data_direction, chip->sd_समयout);
+	अगर (retval < 0) अणु
 		u8 stat = 0;
-		int err;
+		पूर्णांक err;
 
 		sd_card->seq_mode = 0;
 
-		if (retval == -ETIMEDOUT)
+		अगर (retval == -ETIMEDOUT)
 			err = STATUS_TIMEDOUT;
-		else
+		अन्यथा
 			err = STATUS_FAIL;
 
-		rtsx_read_register(chip, REG_SD_STAT1, &stat);
+		rtsx_पढ़ो_रेजिस्टर(chip, REG_SD_STAT1, &stat);
 		rtsx_clear_sd_error(chip);
-		if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+		अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 			chip->rw_need_retry = 0;
 			dev_dbg(rtsx_dev(chip), "No card exist, exit %s\n",
 				__func__);
-			return STATUS_FAIL;
-		}
+			वापस STATUS_FAIL;
+		पूर्ण
 
 		chip->rw_need_retry = 1;
 
 		retval = sd_send_cmd_get_rsp(chip, STOP_TRANSMISSION, 0,
-					     SD_RSP_TYPE_R1b, NULL, 0);
-		if (retval != STATUS_SUCCESS) {
+					     SD_RSP_TYPE_R1b, शून्य, 0);
+		अगर (retval != STATUS_SUCCESS) अणु
 			sd_set_err_code(chip, SD_STS_ERR);
-			goto RW_FAIL;
-		}
+			जाओ RW_FAIL;
+		पूर्ण
 
-		if (stat & (SD_CRC7_ERR | SD_CRC16_ERR | SD_CRC_WRITE_ERR)) {
+		अगर (stat & (SD_CRC7_ERR | SD_CRC16_ERR | SD_CRC_WRITE_ERR)) अणु
 			dev_dbg(rtsx_dev(chip), "SD CRC error, tune clock!\n");
 			sd_set_err_code(chip, SD_CRC_ERR);
-			goto RW_FAIL;
-		}
+			जाओ RW_FAIL;
+		पूर्ण
 
-		if (err == STATUS_TIMEDOUT) {
+		अगर (err == STATUS_TIMEDOUT) अणु
 			sd_set_err_code(chip, SD_TO_ERR);
-			goto RW_FAIL;
-		}
+			जाओ RW_FAIL;
+		पूर्ण
 
-		return err;
-	}
+		वापस err;
+	पूर्ण
 
 	sd_card->pre_sec_addr = start_sector;
 	sd_card->pre_sec_cnt = sector_cnt;
 	sd_card->pre_dir = srb->sc_data_direction;
 
-	return STATUS_SUCCESS;
+	वापस STATUS_SUCCESS;
 
 RW_FAIL:
 	sd_card->seq_mode = 0;
 
-	if (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) {
+	अगर (detect_card_cd(chip, SD_CARD) != STATUS_SUCCESS) अणु
 		chip->rw_need_retry = 0;
 		dev_dbg(rtsx_dev(chip), "No card exist, exit %s\n", __func__);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (sd_check_err_code(chip, SD_CRC_ERR)) {
-		if (CHK_MMC_4BIT(sd_card) || CHK_MMC_8BIT(sd_card)) {
-			sd_card->mmc_dont_switch_bus = 1;
+	अगर (sd_check_err_code(chip, SD_CRC_ERR)) अणु
+		अगर (CHK_MMC_4BIT(sd_card) || CHK_MMC_8BIT(sd_card)) अणु
+			sd_card->mmc_करोnt_चयन_bus = 1;
 			reset_mmc_only(chip);
-			sd_card->mmc_dont_switch_bus = 0;
-		} else {
+			sd_card->mmc_करोnt_चयन_bus = 0;
+		पूर्ण अन्यथा अणु
 			sd_card->need_retune = 1;
-			sd_auto_tune_clock(chip);
-		}
-	} else if (sd_check_err_code(chip, SD_TO_ERR | SD_STS_ERR)) {
+			sd_स्वतः_tune_घड़ी(chip);
+		पूर्ण
+	पूर्ण अन्यथा अगर (sd_check_err_code(chip, SD_TO_ERR | SD_STS_ERR)) अणु
 		retval = reset_sd_card(chip);
-		if (retval != STATUS_SUCCESS) {
-			chip->card_ready &= ~SD_CARD;
+		अगर (retval != STATUS_SUCCESS) अणु
+			chip->card_पढ़ोy &= ~SD_CARD;
 			chip->card_fail |= SD_CARD;
 			chip->capacity[chip->card2lun[SD_CARD]] = 0;
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	return STATUS_FAIL;
-}
+	वापस STATUS_FAIL;
+पूर्ण
 
-#ifdef SUPPORT_CPRM
-int ext_sd_send_cmd_get_rsp(struct rtsx_chip *chip, u8 cmd_idx, u32 arg,
-			    u8 rsp_type, u8 *rsp, int rsp_len,
+#अगर_घोषित SUPPORT_CPRM
+पूर्णांक ext_sd_send_cmd_get_rsp(काष्ठा rtsx_chip *chip, u8 cmd_idx, u32 arg,
+			    u8 rsp_type, u8 *rsp, पूर्णांक rsp_len,
 			    bool special_check)
-{
-	int retval;
-	int timeout = 100;
+अणु
+	पूर्णांक retval;
+	पूर्णांक समयout = 100;
 	u16 reg_addr;
 	u8 *ptr;
-	int stat_idx = 0;
-	int rty_cnt = 0;
+	पूर्णांक stat_idx = 0;
+	पूर्णांक rty_cnt = 0;
 
 	dev_dbg(rtsx_dev(chip), "EXT SD/MMC CMD %d\n", cmd_idx);
 
-	if (rsp_type == SD_RSP_TYPE_R1b)
-		timeout = 3000;
+	अगर (rsp_type == SD_RSP_TYPE_R1b)
+		समयout = 3000;
 
 RTY_SEND_CMD:
 
@@ -3606,144 +3607,144 @@ RTY_SEND_CMD:
 	rtsx_add_cmd(chip, CHECK_REG_CMD, REG_SD_TRANSFER, SD_TRANSFER_END,
 		     SD_TRANSFER_END);
 
-	if (rsp_type == SD_RSP_TYPE_R2) {
-		for (reg_addr = PPBUF_BASE2; reg_addr < PPBUF_BASE2 + 16;
+	अगर (rsp_type == SD_RSP_TYPE_R2) अणु
+		क्रम (reg_addr = PPBUF_BASE2; reg_addr < PPBUF_BASE2 + 16;
 		     reg_addr++)
 			rtsx_add_cmd(chip, READ_REG_CMD, reg_addr, 0, 0);
 
 		stat_idx = 17;
-	} else if (rsp_type != SD_RSP_TYPE_R0) {
-		for (reg_addr = REG_SD_CMD0; reg_addr <= REG_SD_CMD4;
+	पूर्ण अन्यथा अगर (rsp_type != SD_RSP_TYPE_R0) अणु
+		क्रम (reg_addr = REG_SD_CMD0; reg_addr <= REG_SD_CMD4;
 		     reg_addr++)
 			rtsx_add_cmd(chip, READ_REG_CMD, reg_addr, 0, 0);
 
 		stat_idx = 6;
-	}
+	पूर्ण
 	rtsx_add_cmd(chip, READ_REG_CMD, REG_SD_CMD5, 0, 0);
 
 	rtsx_add_cmd(chip, READ_REG_CMD, REG_SD_STAT1, 0, 0);
 
-	retval = rtsx_send_cmd(chip, SD_CARD, timeout);
-	if (retval < 0) {
-		if (retval == -ETIMEDOUT) {
+	retval = rtsx_send_cmd(chip, SD_CARD, समयout);
+	अगर (retval < 0) अणु
+		अगर (retval == -ETIMEDOUT) अणु
 			rtsx_clear_sd_error(chip);
 
-			if (rsp_type & SD_WAIT_BUSY_END) {
+			अगर (rsp_type & SD_WAIT_BUSY_END) अणु
 				retval = sd_check_data0_status(chip);
-				if (retval != STATUS_SUCCESS)
-					return retval;
-			} else {
+				अगर (retval != STATUS_SUCCESS)
+					वापस retval;
+			पूर्ण अन्यथा अणु
 				sd_set_err_code(chip, SD_TO_ERR);
-			}
-		}
-		return STATUS_FAIL;
-	}
+			पूर्ण
+		पूर्ण
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (rsp_type == SD_RSP_TYPE_R0)
-		return STATUS_SUCCESS;
+	अगर (rsp_type == SD_RSP_TYPE_R0)
+		वापस STATUS_SUCCESS;
 
 	ptr = rtsx_get_cmd_data(chip) + 1;
 
-	if ((ptr[0] & 0xC0) != 0) {
+	अगर ((ptr[0] & 0xC0) != 0) अणु
 		sd_set_err_code(chip, SD_STS_ERR);
-		return STATUS_FAIL;
-	}
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	if (!(rsp_type & SD_NO_CHECK_CRC7)) {
-		if (ptr[stat_idx] & SD_CRC7_ERR) {
-			if (cmd_idx == WRITE_MULTIPLE_BLOCK) {
+	अगर (!(rsp_type & SD_NO_CHECK_CRC7)) अणु
+		अगर (ptr[stat_idx] & SD_CRC7_ERR) अणु
+			अगर (cmd_idx == WRITE_MULTIPLE_BLOCK) अणु
 				sd_set_err_code(chip, SD_CRC_ERR);
-				return STATUS_FAIL;
-			}
-			if (rty_cnt < SD_MAX_RETRY_COUNT) {
-				wait_timeout(20);
+				वापस STATUS_FAIL;
+			पूर्ण
+			अगर (rty_cnt < SD_MAX_RETRY_COUNT) अणु
+				रुको_समयout(20);
 				rty_cnt++;
-				goto RTY_SEND_CMD;
-			} else {
+				जाओ RTY_SEND_CMD;
+			पूर्ण अन्यथा अणु
 				sd_set_err_code(chip, SD_CRC_ERR);
-				return STATUS_FAIL;
-			}
-		}
-	}
+				वापस STATUS_FAIL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if ((cmd_idx == SELECT_CARD) || (cmd_idx == APP_CMD) ||
-	    (cmd_idx == SEND_STATUS) || (cmd_idx == STOP_TRANSMISSION)) {
-		if ((cmd_idx != STOP_TRANSMISSION) && !special_check) {
-			if (ptr[1] & 0x80)
-				return STATUS_FAIL;
-		}
-#ifdef SUPPORT_SD_LOCK
-		if (ptr[1] & 0x7D) {
-#else
-		if (ptr[1] & 0x7F) {
-#endif
-			return STATUS_FAIL;
-		}
-		if (ptr[2] & 0xF8)
-			return STATUS_FAIL;
+	अगर ((cmd_idx == SELECT_CARD) || (cmd_idx == APP_CMD) ||
+	    (cmd_idx == SEND_STATUS) || (cmd_idx == STOP_TRANSMISSION)) अणु
+		अगर ((cmd_idx != STOP_TRANSMISSION) && !special_check) अणु
+			अगर (ptr[1] & 0x80)
+				वापस STATUS_FAIL;
+		पूर्ण
+#अगर_घोषित SUPPORT_SD_LOCK
+		अगर (ptr[1] & 0x7D) अणु
+#अन्यथा
+		अगर (ptr[1] & 0x7F) अणु
+#पूर्ण_अगर
+			वापस STATUS_FAIL;
+		पूर्ण
+		अगर (ptr[2] & 0xF8)
+			वापस STATUS_FAIL;
 
-		if (cmd_idx == SELECT_CARD) {
-			if (rsp_type == SD_RSP_TYPE_R2) {
-				if ((ptr[3] & 0x1E) != 0x04)
-					return STATUS_FAIL;
-			}
-		}
-	}
+		अगर (cmd_idx == SELECT_CARD) अणु
+			अगर (rsp_type == SD_RSP_TYPE_R2) अणु
+				अगर ((ptr[3] & 0x1E) != 0x04)
+					वापस STATUS_FAIL;
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (rsp && rsp_len)
-		memcpy(rsp, ptr, rsp_len);
+	अगर (rsp && rsp_len)
+		स_नकल(rsp, ptr, rsp_len);
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int ext_sd_get_rsp(struct rtsx_chip *chip, int len, u8 *rsp, u8 rsp_type)
-{
-	int retval, rsp_len;
+पूर्णांक ext_sd_get_rsp(काष्ठा rtsx_chip *chip, पूर्णांक len, u8 *rsp, u8 rsp_type)
+अणु
+	पूर्णांक retval, rsp_len;
 	u16 reg_addr;
 
-	if (rsp_type == SD_RSP_TYPE_R0)
-		return STATUS_SUCCESS;
+	अगर (rsp_type == SD_RSP_TYPE_R0)
+		वापस STATUS_SUCCESS;
 
 	rtsx_init_cmd(chip);
 
-	if (rsp_type == SD_RSP_TYPE_R2) {
-		for (reg_addr = PPBUF_BASE2; reg_addr < PPBUF_BASE2 + 16;
+	अगर (rsp_type == SD_RSP_TYPE_R2) अणु
+		क्रम (reg_addr = PPBUF_BASE2; reg_addr < PPBUF_BASE2 + 16;
 		     reg_addr++)
 			rtsx_add_cmd(chip, READ_REG_CMD, reg_addr, 0xFF, 0);
 
 		rsp_len = 17;
-	} else if (rsp_type != SD_RSP_TYPE_R0) {
-		for (reg_addr = REG_SD_CMD0; reg_addr <= REG_SD_CMD4;
+	पूर्ण अन्यथा अगर (rsp_type != SD_RSP_TYPE_R0) अणु
+		क्रम (reg_addr = REG_SD_CMD0; reg_addr <= REG_SD_CMD4;
 		     reg_addr++)
 			rtsx_add_cmd(chip, READ_REG_CMD, reg_addr, 0xFF, 0);
 
 		rsp_len = 6;
-	}
+	पूर्ण
 	rtsx_add_cmd(chip, READ_REG_CMD, REG_SD_CMD5, 0xFF, 0);
 
 	retval = rtsx_send_cmd(chip, SD_CARD, 100);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	if (rsp) {
-		int min_len = (rsp_len < len) ? rsp_len : len;
+	अगर (rsp) अणु
+		पूर्णांक min_len = (rsp_len < len) ? rsp_len : len;
 
-		memcpy(rsp, rtsx_get_cmd_data(chip), min_len);
+		स_नकल(rsp, rtsx_get_cmd_data(chip), min_len);
 
 		dev_dbg(rtsx_dev(chip), "min_len = %d\n", min_len);
 		dev_dbg(rtsx_dev(chip), "Response in cmd buf: 0x%x 0x%x 0x%x 0x%x\n",
 			rsp[0], rsp[1], rsp[2], rsp[3]);
-	}
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int sd_pass_thru_mode(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	unsigned int lun = SCSI_LUN(srb);
-	int len;
-	u8 buf[18] = {
+पूर्णांक sd_pass_thru_mode(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	अचिन्हित पूर्णांक lun = SCSI_LUN(srb);
+	पूर्णांक len;
+	u8 buf[18] = अणु
 		0x00,
 		0x00,
 		0x00,
@@ -3762,40 +3763,40 @@ int sd_pass_thru_mode(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		0x00,
 		0x00,
 		0x00,
-	};
+	पूर्ण;
 
 	sd_card->pre_cmd_err = 0;
 
-	if (!(CHK_BIT(chip->lun_mc, lun))) {
+	अगर (!(CHK_BIT(chip->lun_mc, lun))) अणु
 		SET_BIT(chip->lun_mc, lun);
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_CHANGE);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	if ((srb->cmnd[2] != 0x53) || (srb->cmnd[3] != 0x44) ||
+	अगर ((srb->cmnd[2] != 0x53) || (srb->cmnd[3] != 0x44) ||
 	    (srb->cmnd[4] != 0x20) || (srb->cmnd[5] != 0x43) ||
 	    (srb->cmnd[6] != 0x61) || (srb->cmnd[7] != 0x72) ||
-	    (srb->cmnd[8] != 0x64)) {
+	    (srb->cmnd[8] != 0x64)) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	switch (srb->cmnd[1] & 0x0F) {
-	case 0:
+	चयन (srb->cmnd[1] & 0x0F) अणु
+	हाल 0:
 		sd_card->sd_pass_thru_en = 0;
-		break;
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		sd_card->sd_pass_thru_en = 1;
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
 	buf[5] = (CHK_SD(sd_card) == 1) ? 0x01 : 0x02;
-	if (chip->card_wp & SD_CARD)
+	अगर (chip->card_wp & SD_CARD)
 		buf[5] |= 0x80;
 
 	buf[6] = (u8)(sd_card->sd_addr >> 16);
@@ -3803,253 +3804,253 @@ int sd_pass_thru_mode(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 
 	buf[15] = chip->max_lun;
 
-	len = min_t(int, 18, scsi_bufflen(srb));
+	len = min_t(पूर्णांक, 18, scsi_bufflen(srb));
 	rtsx_stor_set_xfer_buf(buf, len, srb);
 
-	return TRANSPORT_GOOD;
-}
+	वापस TRANSPORT_GOOD;
+पूर्ण
 
-static inline int get_rsp_type(struct scsi_cmnd *srb, u8 *rsp_type,
-			       int *rsp_len)
-{
-	if (!rsp_type || !rsp_len)
-		return STATUS_FAIL;
+अटल अंतरभूत पूर्णांक get_rsp_type(काष्ठा scsi_cmnd *srb, u8 *rsp_type,
+			       पूर्णांक *rsp_len)
+अणु
+	अगर (!rsp_type || !rsp_len)
+		वापस STATUS_FAIL;
 
-	switch (srb->cmnd[10]) {
-	case 0x03:
+	चयन (srb->cmnd[10]) अणु
+	हाल 0x03:
 		*rsp_type = SD_RSP_TYPE_R0;
 		*rsp_len = 0;
-		break;
+		अवरोध;
 
-	case 0x04:
+	हाल 0x04:
 		*rsp_type = SD_RSP_TYPE_R1;
 		*rsp_len = 6;
-		break;
+		अवरोध;
 
-	case 0x05:
+	हाल 0x05:
 		*rsp_type = SD_RSP_TYPE_R1b;
 		*rsp_len = 6;
-		break;
+		अवरोध;
 
-	case 0x06:
+	हाल 0x06:
 		*rsp_type = SD_RSP_TYPE_R2;
 		*rsp_len = 17;
-		break;
+		अवरोध;
 
-	case 0x07:
+	हाल 0x07:
 		*rsp_type = SD_RSP_TYPE_R3;
 		*rsp_len = 6;
-		break;
+		अवरोध;
 
-	default:
-		return STATUS_FAIL;
-	}
+	शेष:
+		वापस STATUS_FAIL;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int sd_execute_no_data(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	unsigned int lun = SCSI_LUN(srb);
-	int retval, rsp_len;
+पूर्णांक sd_execute_no_data(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	अचिन्हित पूर्णांक lun = SCSI_LUN(srb);
+	पूर्णांक retval, rsp_len;
 	u8 cmd_idx, rsp_type;
 	bool standby = false, acmd = false;
 	u32 arg;
 
-	if (!sd_card->sd_pass_thru_en) {
+	अगर (!sd_card->sd_pass_thru_en) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	retval = sd_switch_clock(chip);
-	if (retval != STATUS_SUCCESS)
-		return TRANSPORT_FAILED;
+	retval = sd_चयन_घड़ी(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस TRANSPORT_FAILED;
 
-	if (sd_card->pre_cmd_err) {
+	अगर (sd_card->pre_cmd_err) अणु
 		sd_card->pre_cmd_err = 0;
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_CHANGE);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
 	cmd_idx = srb->cmnd[2] & 0x3F;
-	if (srb->cmnd[1] & 0x02)
+	अगर (srb->cmnd[1] & 0x02)
 		standby = true;
 
-	if (srb->cmnd[1] & 0x01)
+	अगर (srb->cmnd[1] & 0x01)
 		acmd = true;
 
 	arg = ((u32)srb->cmnd[3] << 24) | ((u32)srb->cmnd[4] << 16) |
 		((u32)srb->cmnd[5] << 8) | srb->cmnd[6];
 
 	retval = get_rsp_type(srb, &rsp_type, &rsp_len);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 	sd_card->last_rsp_type = rsp_type;
 
-	retval = sd_switch_clock(chip);
-	if (retval != STATUS_SUCCESS)
-		return TRANSPORT_FAILED;
+	retval = sd_चयन_घड़ी(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस TRANSPORT_FAILED;
 
-#ifdef SUPPORT_SD_LOCK
-	if ((sd_card->sd_lock_status & SD_LOCK_1BIT_MODE) == 0) {
-		if (CHK_MMC_8BIT(sd_card)) {
-			retval = rtsx_write_register(chip, REG_SD_CFG1, 0x03,
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर ((sd_card->sd_lock_status & SD_LOCK_1BIT_MODE) == 0) अणु
+		अगर (CHK_MMC_8BIT(sd_card)) अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG1, 0x03,
 						     SD_BUS_WIDTH_8);
-			if (retval != STATUS_SUCCESS)
-				return TRANSPORT_FAILED;
+			अगर (retval != STATUS_SUCCESS)
+				वापस TRANSPORT_FAILED;
 
-		} else if (CHK_SD(sd_card) || CHK_MMC_4BIT(sd_card)) {
-			retval = rtsx_write_register(chip, REG_SD_CFG1, 0x03,
+		पूर्ण अन्यथा अगर (CHK_SD(sd_card) || CHK_MMC_4BIT(sd_card)) अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG1, 0x03,
 						     SD_BUS_WIDTH_4);
-			if (retval != STATUS_SUCCESS)
-				return TRANSPORT_FAILED;
-		}
-	}
-#else
-	retval = rtsx_write_register(chip, REG_SD_CFG1, 0x03, SD_BUS_WIDTH_4);
-	if (retval != STATUS_SUCCESS)
-		return TRANSPORT_FAILED;
-#endif
+			अगर (retval != STATUS_SUCCESS)
+				वापस TRANSPORT_FAILED;
+		पूर्ण
+	पूर्ण
+#अन्यथा
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG1, 0x03, SD_BUS_WIDTH_4);
+	अगर (retval != STATUS_SUCCESS)
+		वापस TRANSPORT_FAILED;
+#पूर्ण_अगर
 
-	if (standby) {
+	अगर (standby) अणु
 		retval = sd_select_card(chip, 0);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_cmd_failed;
+	पूर्ण
 
-	if (acmd) {
+	अगर (acmd) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, APP_CMD,
 						 sd_card->sd_addr,
-						 SD_RSP_TYPE_R1, NULL, 0,
+						 SD_RSP_TYPE_R1, शून्य, 0,
 						 false);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_cmd_failed;
+	पूर्ण
 
 	retval = ext_sd_send_cmd_get_rsp(chip, cmd_idx, arg, rsp_type,
 					 sd_card->rsp, rsp_len, false);
-	if (retval != STATUS_SUCCESS)
-		goto sd_execute_cmd_failed;
+	अगर (retval != STATUS_SUCCESS)
+		जाओ sd_execute_cmd_failed;
 
-	if (standby) {
+	अगर (standby) अणु
 		retval = sd_select_card(chip, 1);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_cmd_failed;
+	पूर्ण
 
-#ifdef SUPPORT_SD_LOCK
+#अगर_घोषित SUPPORT_SD_LOCK
 	retval = sd_update_lock_status(chip);
-	if (retval != STATUS_SUCCESS)
-		goto sd_execute_cmd_failed;
-#endif
+	अगर (retval != STATUS_SUCCESS)
+		जाओ sd_execute_cmd_failed;
+#पूर्ण_अगर
 
 	scsi_set_resid(srb, 0);
-	return TRANSPORT_GOOD;
+	वापस TRANSPORT_GOOD;
 
 sd_execute_cmd_failed:
 	sd_card->pre_cmd_err = 1;
 	set_sense_type(chip, lun, SENSE_TYPE_NO_SENSE);
 	release_sd_card(chip);
-	do_reset_sd_card(chip);
-	if (!(chip->card_ready & SD_CARD))
+	करो_reset_sd_card(chip);
+	अगर (!(chip->card_पढ़ोy & SD_CARD))
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_NOT_PRESENT);
 
-	return TRANSPORT_FAILED;
-}
+	वापस TRANSPORT_FAILED;
+पूर्ण
 
-int sd_execute_read_data(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	unsigned int lun = SCSI_LUN(srb);
-	int retval, rsp_len, i;
-	bool read_err = false, cmd13_checkbit = false;
+पूर्णांक sd_execute_पढ़ो_data(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	अचिन्हित पूर्णांक lun = SCSI_LUN(srb);
+	पूर्णांक retval, rsp_len, i;
+	bool पढ़ो_err = false, cmd13_checkbit = false;
 	u8 cmd_idx, rsp_type, bus_width;
 	bool standby = false, send_cmd12 = false, acmd = false;
 	u32 data_len;
 
-	if (!sd_card->sd_pass_thru_en) {
+	अगर (!sd_card->sd_pass_thru_en) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	if (sd_card->pre_cmd_err) {
+	अगर (sd_card->pre_cmd_err) अणु
 		sd_card->pre_cmd_err = 0;
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_CHANGE);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	retval = sd_switch_clock(chip);
-	if (retval != STATUS_SUCCESS)
-		return TRANSPORT_FAILED;
+	retval = sd_चयन_घड़ी(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस TRANSPORT_FAILED;
 
 	cmd_idx = srb->cmnd[2] & 0x3F;
-	if (srb->cmnd[1] & 0x04)
+	अगर (srb->cmnd[1] & 0x04)
 		send_cmd12 = true;
 
-	if (srb->cmnd[1] & 0x02)
+	अगर (srb->cmnd[1] & 0x02)
 		standby = true;
 
-	if (srb->cmnd[1] & 0x01)
+	अगर (srb->cmnd[1] & 0x01)
 		acmd = true;
 
 	data_len = ((u32)srb->cmnd[7] << 16) | ((u32)srb->cmnd[8]
 						<< 8) | srb->cmnd[9];
 
 	retval = get_rsp_type(srb, &rsp_type, &rsp_len);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 	sd_card->last_rsp_type = rsp_type;
 
-	retval = sd_switch_clock(chip);
-	if (retval != STATUS_SUCCESS)
-		return TRANSPORT_FAILED;
+	retval = sd_चयन_घड़ी(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस TRANSPORT_FAILED;
 
-#ifdef SUPPORT_SD_LOCK
-	if ((sd_card->sd_lock_status & SD_LOCK_1BIT_MODE) == 0) {
-		if (CHK_MMC_8BIT(sd_card))
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर ((sd_card->sd_lock_status & SD_LOCK_1BIT_MODE) == 0) अणु
+		अगर (CHK_MMC_8BIT(sd_card))
 			bus_width = SD_BUS_WIDTH_8;
-		else if (CHK_SD(sd_card) || CHK_MMC_4BIT(sd_card))
+		अन्यथा अगर (CHK_SD(sd_card) || CHK_MMC_4BIT(sd_card))
 			bus_width = SD_BUS_WIDTH_4;
-		else
+		अन्यथा
 			bus_width = SD_BUS_WIDTH_1;
-	} else {
+	पूर्ण अन्यथा अणु
 		bus_width = SD_BUS_WIDTH_4;
-	}
+	पूर्ण
 	dev_dbg(rtsx_dev(chip), "bus_width = %d\n", bus_width);
-#else
+#अन्यथा
 	bus_width = SD_BUS_WIDTH_4;
-#endif
+#पूर्ण_अगर
 
-	if (data_len < 512) {
+	अगर (data_len < 512) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, SET_BLOCKLEN, data_len,
-						 SD_RSP_TYPE_R1, NULL, 0,
+						 SD_RSP_TYPE_R1, शून्य, 0,
 						 false);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_read_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_पढ़ो_cmd_failed;
+	पूर्ण
 
-	if (standby) {
+	अगर (standby) अणु
 		retval = sd_select_card(chip, 0);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_read_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_पढ़ो_cmd_failed;
+	पूर्ण
 
-	if (acmd) {
+	अगर (acmd) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, APP_CMD,
 						 sd_card->sd_addr,
-						 SD_RSP_TYPE_R1, NULL, 0,
+						 SD_RSP_TYPE_R1, शून्य, 0,
 						 false);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_read_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_पढ़ो_cmd_failed;
+	पूर्ण
 
-	if (data_len <= 512) {
-		int min_len;
+	अगर (data_len <= 512) अणु
+		पूर्णांक min_len;
 		u8 *buf;
 		u16 byte_cnt, blk_cnt;
 		u8 cmd[5];
@@ -4063,24 +4064,24 @@ int sd_execute_read_data(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		cmd[3] = srb->cmnd[5];
 		cmd[4] = srb->cmnd[6];
 
-		buf = kmalloc(data_len, GFP_KERNEL);
-		if (!buf)
-			return TRANSPORT_ERROR;
+		buf = kदो_स्मृति(data_len, GFP_KERNEL);
+		अगर (!buf)
+			वापस TRANSPORT_ERROR;
 
-		retval = sd_read_data(chip, SD_TM_NORMAL_READ, cmd, 5, byte_cnt,
+		retval = sd_पढ़ो_data(chip, SD_TM_NORMAL_READ, cmd, 5, byte_cnt,
 				      blk_cnt, bus_width, buf, data_len, 2000);
-		if (retval != STATUS_SUCCESS) {
-			read_err = true;
-			kfree(buf);
+		अगर (retval != STATUS_SUCCESS) अणु
+			पढ़ो_err = true;
+			kमुक्त(buf);
 			rtsx_clear_sd_error(chip);
-			goto sd_execute_read_cmd_failed;
-		}
+			जाओ sd_execute_पढ़ो_cmd_failed;
+		पूर्ण
 
 		min_len = min(data_len, scsi_bufflen(srb));
 		rtsx_stor_set_xfer_buf(buf, min_len, srb);
 
-		kfree(buf);
-	} else if (!(data_len & 0x1FF)) {
+		kमुक्त(buf);
+	पूर्ण अन्यथा अगर (!(data_len & 0x1FF)) अणु
 		rtsx_init_cmd(chip);
 
 		trans_dma_enable(DMA_FROM_DEVICE, chip, data_len, DMA_512);
@@ -4113,125 +4114,125 @@ int sd_execute_read_data(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		rtsx_add_cmd(chip, CHECK_REG_CMD, REG_SD_TRANSFER,
 			     SD_TRANSFER_END, SD_TRANSFER_END);
 
-		rtsx_send_cmd_no_wait(chip);
+		rtsx_send_cmd_no_रुको(chip);
 
 		retval = rtsx_transfer_data(chip, SD_CARD, scsi_sglist(srb),
 					    scsi_bufflen(srb),
 					    scsi_sg_count(srb),
 					    DMA_FROM_DEVICE, 10000);
-		if (retval < 0) {
-			read_err = true;
+		अगर (retval < 0) अणु
+			पढ़ो_err = true;
 			rtsx_clear_sd_error(chip);
-			goto sd_execute_read_cmd_failed;
-		}
+			जाओ sd_execute_पढ़ो_cmd_failed;
+		पूर्ण
 
-	} else {
-		goto sd_execute_read_cmd_failed;
-	}
+	पूर्ण अन्यथा अणु
+		जाओ sd_execute_पढ़ो_cmd_failed;
+	पूर्ण
 
 	retval = ext_sd_get_rsp(chip, rsp_len, sd_card->rsp, rsp_type);
-	if (retval != STATUS_SUCCESS)
-		goto sd_execute_read_cmd_failed;
+	अगर (retval != STATUS_SUCCESS)
+		जाओ sd_execute_पढ़ो_cmd_failed;
 
-	if (standby) {
+	अगर (standby) अणु
 		retval = sd_select_card(chip, 1);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_read_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_पढ़ो_cmd_failed;
+	पूर्ण
 
-	if (send_cmd12) {
+	अगर (send_cmd12) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, STOP_TRANSMISSION, 0,
-						 SD_RSP_TYPE_R1b, NULL, 0,
+						 SD_RSP_TYPE_R1b, शून्य, 0,
 						 false);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_read_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_पढ़ो_cmd_failed;
+	पूर्ण
 
-	if (data_len < 512) {
+	अगर (data_len < 512) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, SET_BLOCKLEN, 0x200,
-						 SD_RSP_TYPE_R1, NULL, 0,
+						 SD_RSP_TYPE_R1, शून्य, 0,
 						 false);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_read_cmd_failed;
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_पढ़ो_cmd_failed;
 
-		retval = rtsx_write_register(chip, SD_BYTE_CNT_H, 0xFF, 0x02);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_read_cmd_failed;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_BYTE_CNT_H, 0xFF, 0x02);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_पढ़ो_cmd_failed;
 
-		retval = rtsx_write_register(chip, SD_BYTE_CNT_L, 0xFF, 0x00);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_read_cmd_failed;
-	}
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_BYTE_CNT_L, 0xFF, 0x00);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_पढ़ो_cmd_failed;
+	पूर्ण
 
-	if ((srb->cmnd[1] & 0x02) || (srb->cmnd[1] & 0x04))
+	अगर ((srb->cmnd[1] & 0x02) || (srb->cmnd[1] & 0x04))
 		cmd13_checkbit = true;
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, SEND_STATUS,
 						 sd_card->sd_addr,
-						SD_RSP_TYPE_R1, NULL, 0,
+						SD_RSP_TYPE_R1, शून्य, 0,
 						cmd13_checkbit);
-		if (retval == STATUS_SUCCESS)
-			break;
-	}
-	if (retval != STATUS_SUCCESS)
-		goto sd_execute_read_cmd_failed;
+		अगर (retval == STATUS_SUCCESS)
+			अवरोध;
+	पूर्ण
+	अगर (retval != STATUS_SUCCESS)
+		जाओ sd_execute_पढ़ो_cmd_failed;
 
 	scsi_set_resid(srb, 0);
-	return TRANSPORT_GOOD;
+	वापस TRANSPORT_GOOD;
 
-sd_execute_read_cmd_failed:
+sd_execute_पढ़ो_cmd_failed:
 	sd_card->pre_cmd_err = 1;
 	set_sense_type(chip, lun, SENSE_TYPE_NO_SENSE);
-	if (read_err)
+	अगर (पढ़ो_err)
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_UNRECOVER_READ_ERR);
 
 	release_sd_card(chip);
-	do_reset_sd_card(chip);
-	if (!(chip->card_ready & SD_CARD))
+	करो_reset_sd_card(chip);
+	अगर (!(chip->card_पढ़ोy & SD_CARD))
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_NOT_PRESENT);
 
-	return TRANSPORT_FAILED;
-}
+	वापस TRANSPORT_FAILED;
+पूर्ण
 
-int sd_execute_write_data(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	unsigned int lun = SCSI_LUN(srb);
-	int retval, rsp_len, i;
-	bool write_err = false, cmd13_checkbit = false;
+पूर्णांक sd_execute_ग_लिखो_data(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	अचिन्हित पूर्णांक lun = SCSI_LUN(srb);
+	पूर्णांक retval, rsp_len, i;
+	bool ग_लिखो_err = false, cmd13_checkbit = false;
 	u8 cmd_idx, rsp_type;
 	bool standby = false, send_cmd12 = false, acmd = false;
 	u32 data_len, arg;
-#ifdef SUPPORT_SD_LOCK
-	int lock_cmd_fail = 0;
+#अगर_घोषित SUPPORT_SD_LOCK
+	पूर्णांक lock_cmd_fail = 0;
 	u8 sd_lock_state = 0;
 	u8 lock_cmd_type = 0;
-#endif
+#पूर्ण_अगर
 
-	if (!sd_card->sd_pass_thru_en) {
+	अगर (!sd_card->sd_pass_thru_en) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	if (sd_card->pre_cmd_err) {
+	अगर (sd_card->pre_cmd_err) अणु
 		sd_card->pre_cmd_err = 0;
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_CHANGE);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	retval = sd_switch_clock(chip);
-	if (retval != STATUS_SUCCESS)
-		return TRANSPORT_FAILED;
+	retval = sd_चयन_घड़ी(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस TRANSPORT_FAILED;
 
 	cmd_idx = srb->cmnd[2] & 0x3F;
-	if (srb->cmnd[1] & 0x04)
+	अगर (srb->cmnd[1] & 0x04)
 		send_cmd12 = true;
 
-	if (srb->cmnd[1] & 0x02)
+	अगर (srb->cmnd[1] & 0x02)
 		standby = true;
 
-	if (srb->cmnd[1] & 0x01)
+	अगर (srb->cmnd[1] & 0x01)
 		acmd = true;
 
 	data_len = ((u32)srb->cmnd[7] << 16) | ((u32)srb->cmnd[8]
@@ -4239,124 +4240,124 @@ int sd_execute_write_data(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 	arg = ((u32)srb->cmnd[3] << 24) | ((u32)srb->cmnd[4] << 16) |
 		((u32)srb->cmnd[5] << 8) | srb->cmnd[6];
 
-#ifdef SUPPORT_SD_LOCK
-	if (cmd_idx == LOCK_UNLOCK) {
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर (cmd_idx == LOCK_UNLOCK) अणु
 		sd_lock_state = sd_card->sd_lock_status;
 		sd_lock_state &= SD_LOCKED;
-	}
-#endif
+	पूर्ण
+#पूर्ण_अगर
 
 	retval = get_rsp_type(srb, &rsp_type, &rsp_len);
-	if (retval != STATUS_SUCCESS) {
+	अगर (retval != STATUS_SUCCESS) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 	sd_card->last_rsp_type = rsp_type;
 
-	retval = sd_switch_clock(chip);
-	if (retval != STATUS_SUCCESS)
-		return TRANSPORT_FAILED;
+	retval = sd_चयन_घड़ी(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस TRANSPORT_FAILED;
 
-#ifdef SUPPORT_SD_LOCK
-	if ((sd_card->sd_lock_status & SD_LOCK_1BIT_MODE) == 0) {
-		if (CHK_MMC_8BIT(sd_card)) {
-			retval = rtsx_write_register(chip, REG_SD_CFG1, 0x03,
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर ((sd_card->sd_lock_status & SD_LOCK_1BIT_MODE) == 0) अणु
+		अगर (CHK_MMC_8BIT(sd_card)) अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG1, 0x03,
 						     SD_BUS_WIDTH_8);
-			if (retval != STATUS_SUCCESS)
-				return TRANSPORT_FAILED;
+			अगर (retval != STATUS_SUCCESS)
+				वापस TRANSPORT_FAILED;
 
-		} else if (CHK_SD(sd_card) || CHK_MMC_4BIT(sd_card)) {
-			retval = rtsx_write_register(chip, REG_SD_CFG1, 0x03,
+		पूर्ण अन्यथा अगर (CHK_SD(sd_card) || CHK_MMC_4BIT(sd_card)) अणु
+			retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG1, 0x03,
 						     SD_BUS_WIDTH_4);
-			if (retval != STATUS_SUCCESS)
-				return TRANSPORT_FAILED;
-		}
-	}
-#else
-	retval = rtsx_write_register(chip, REG_SD_CFG1, 0x03, SD_BUS_WIDTH_4);
-	if (retval != STATUS_SUCCESS)
-		return TRANSPORT_FAILED;
-#endif
+			अगर (retval != STATUS_SUCCESS)
+				वापस TRANSPORT_FAILED;
+		पूर्ण
+	पूर्ण
+#अन्यथा
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, REG_SD_CFG1, 0x03, SD_BUS_WIDTH_4);
+	अगर (retval != STATUS_SUCCESS)
+		वापस TRANSPORT_FAILED;
+#पूर्ण_अगर
 
-	if (data_len < 512) {
+	अगर (data_len < 512) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, SET_BLOCKLEN, data_len,
-						 SD_RSP_TYPE_R1, NULL, 0,
+						 SD_RSP_TYPE_R1, शून्य, 0,
 						 false);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_write_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_ग_लिखो_cmd_failed;
+	पूर्ण
 
-	if (standby) {
+	अगर (standby) अणु
 		retval = sd_select_card(chip, 0);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_write_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_ग_लिखो_cmd_failed;
+	पूर्ण
 
-	if (acmd) {
+	अगर (acmd) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, APP_CMD,
 						 sd_card->sd_addr,
-						 SD_RSP_TYPE_R1, NULL, 0,
+						 SD_RSP_TYPE_R1, शून्य, 0,
 						 false);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_write_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_ग_लिखो_cmd_failed;
+	पूर्ण
 
 	retval = ext_sd_send_cmd_get_rsp(chip, cmd_idx, arg, rsp_type,
 					 sd_card->rsp, rsp_len, false);
-	if (retval != STATUS_SUCCESS)
-		goto sd_execute_write_cmd_failed;
+	अगर (retval != STATUS_SUCCESS)
+		जाओ sd_execute_ग_लिखो_cmd_failed;
 
-	if (data_len <= 512) {
+	अगर (data_len <= 512) अणु
 		u16 i;
 		u8 *buf;
 
-		buf = kmalloc(data_len, GFP_KERNEL);
-		if (!buf)
-			return TRANSPORT_ERROR;
+		buf = kदो_स्मृति(data_len, GFP_KERNEL);
+		अगर (!buf)
+			वापस TRANSPORT_ERROR;
 
 		rtsx_stor_get_xfer_buf(buf, data_len, srb);
 
-#ifdef SUPPORT_SD_LOCK
-		if (cmd_idx == LOCK_UNLOCK)
+#अगर_घोषित SUPPORT_SD_LOCK
+		अगर (cmd_idx == LOCK_UNLOCK)
 			lock_cmd_type = buf[0] & 0x0F;
-#endif
+#पूर्ण_अगर
 
-		if (data_len > 256) {
+		अगर (data_len > 256) अणु
 			rtsx_init_cmd(chip);
-			for (i = 0; i < 256; i++) {
+			क्रम (i = 0; i < 256; i++) अणु
 				rtsx_add_cmd(chip, WRITE_REG_CMD,
 					     PPBUF_BASE2 + i, 0xFF, buf[i]);
-			}
+			पूर्ण
 			retval = rtsx_send_cmd(chip, 0, 250);
-			if (retval != STATUS_SUCCESS) {
-				kfree(buf);
-				goto sd_execute_write_cmd_failed;
-			}
+			अगर (retval != STATUS_SUCCESS) अणु
+				kमुक्त(buf);
+				जाओ sd_execute_ग_लिखो_cmd_failed;
+			पूर्ण
 
 			rtsx_init_cmd(chip);
-			for (i = 256; i < data_len; i++) {
+			क्रम (i = 256; i < data_len; i++) अणु
 				rtsx_add_cmd(chip, WRITE_REG_CMD,
 					     PPBUF_BASE2 + i, 0xFF, buf[i]);
-			}
+			पूर्ण
 			retval = rtsx_send_cmd(chip, 0, 250);
-			if (retval != STATUS_SUCCESS) {
-				kfree(buf);
-				goto sd_execute_write_cmd_failed;
-			}
-		} else {
+			अगर (retval != STATUS_SUCCESS) अणु
+				kमुक्त(buf);
+				जाओ sd_execute_ग_लिखो_cmd_failed;
+			पूर्ण
+		पूर्ण अन्यथा अणु
 			rtsx_init_cmd(chip);
-			for (i = 0; i < data_len; i++) {
+			क्रम (i = 0; i < data_len; i++) अणु
 				rtsx_add_cmd(chip, WRITE_REG_CMD,
 					     PPBUF_BASE2 + i, 0xFF, buf[i]);
-			}
+			पूर्ण
 			retval = rtsx_send_cmd(chip, 0, 250);
-			if (retval != STATUS_SUCCESS) {
-				kfree(buf);
-				goto sd_execute_write_cmd_failed;
-			}
-		}
+			अगर (retval != STATUS_SUCCESS) अणु
+				kमुक्त(buf);
+				जाओ sd_execute_ग_लिखो_cmd_failed;
+			पूर्ण
+		पूर्ण
 
-		kfree(buf);
+		kमुक्त(buf);
 
 		rtsx_init_cmd(chip);
 
@@ -4377,7 +4378,7 @@ int sd_execute_write_data(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 			     SD_TRANSFER_END, SD_TRANSFER_END);
 
 		retval = rtsx_send_cmd(chip, SD_CARD, 250);
-	} else if (!(data_len & 0x1FF)) {
+	पूर्ण अन्यथा अगर (!(data_len & 0x1FF)) अणु
 		rtsx_init_cmd(chip);
 
 		trans_dma_enable(DMA_TO_DEVICE, chip, data_len, DMA_512);
@@ -4396,178 +4397,178 @@ int sd_execute_write_data(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		rtsx_add_cmd(chip, CHECK_REG_CMD, REG_SD_TRANSFER,
 			     SD_TRANSFER_END, SD_TRANSFER_END);
 
-		rtsx_send_cmd_no_wait(chip);
+		rtsx_send_cmd_no_रुको(chip);
 
 		retval = rtsx_transfer_data(chip, SD_CARD, scsi_sglist(srb),
 					    scsi_bufflen(srb),
 					    scsi_sg_count(srb),
 					    DMA_TO_DEVICE, 10000);
 
-	} else {
-		goto sd_execute_write_cmd_failed;
-	}
+	पूर्ण अन्यथा अणु
+		जाओ sd_execute_ग_लिखो_cmd_failed;
+	पूर्ण
 
-	if (retval < 0) {
-		write_err = true;
+	अगर (retval < 0) अणु
+		ग_लिखो_err = true;
 		rtsx_clear_sd_error(chip);
-		goto sd_execute_write_cmd_failed;
-	}
+		जाओ sd_execute_ग_लिखो_cmd_failed;
+	पूर्ण
 
-#ifdef SUPPORT_SD_LOCK
-	if (cmd_idx == LOCK_UNLOCK) {
-		if (lock_cmd_type == SD_ERASE) {
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर (cmd_idx == LOCK_UNLOCK) अणु
+		अगर (lock_cmd_type == SD_ERASE) अणु
 			sd_card->sd_erase_status = SD_UNDER_ERASING;
 			scsi_set_resid(srb, 0);
-			return TRANSPORT_GOOD;
-		}
+			वापस TRANSPORT_GOOD;
+		पूर्ण
 
 		rtsx_init_cmd(chip);
 		rtsx_add_cmd(chip, CHECK_REG_CMD, 0xFD30, 0x02, 0x02);
 
 		retval = rtsx_send_cmd(chip, SD_CARD, 250);
-		if (retval < 0) {
-			write_err = true;
+		अगर (retval < 0) अणु
+			ग_लिखो_err = true;
 			rtsx_clear_sd_error(chip);
-			goto sd_execute_write_cmd_failed;
-		}
+			जाओ sd_execute_ग_लिखो_cmd_failed;
+		पूर्ण
 
 		retval = sd_update_lock_status(chip);
-		if (retval != STATUS_SUCCESS) {
+		अगर (retval != STATUS_SUCCESS) अणु
 			dev_dbg(rtsx_dev(chip), "Lock command fail!\n");
 			lock_cmd_fail = 1;
-		}
-	}
-#endif /* SUPPORT_SD_LOCK */
+		पूर्ण
+	पूर्ण
+#पूर्ण_अगर /* SUPPORT_SD_LOCK */
 
-	if (standby) {
+	अगर (standby) अणु
 		retval = sd_select_card(chip, 1);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_write_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_ग_लिखो_cmd_failed;
+	पूर्ण
 
-	if (send_cmd12) {
+	अगर (send_cmd12) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, STOP_TRANSMISSION, 0,
-						 SD_RSP_TYPE_R1b, NULL, 0,
+						 SD_RSP_TYPE_R1b, शून्य, 0,
 						 false);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_write_cmd_failed;
-	}
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_ग_लिखो_cmd_failed;
+	पूर्ण
 
-	if (data_len < 512) {
+	अगर (data_len < 512) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, SET_BLOCKLEN, 0x200,
-						 SD_RSP_TYPE_R1, NULL, 0,
+						 SD_RSP_TYPE_R1, शून्य, 0,
 						 false);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_write_cmd_failed;
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_ग_लिखो_cmd_failed;
 
-		retval = rtsx_write_register(chip, SD_BYTE_CNT_H, 0xFF, 0x02);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_write_cmd_failed;
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_BYTE_CNT_H, 0xFF, 0x02);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_ग_लिखो_cmd_failed;
 
-		retval = rtsx_write_register(chip, SD_BYTE_CNT_L, 0xFF, 0x00);
-		if (retval != STATUS_SUCCESS)
-			goto sd_execute_write_cmd_failed;
-	}
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, SD_BYTE_CNT_L, 0xFF, 0x00);
+		अगर (retval != STATUS_SUCCESS)
+			जाओ sd_execute_ग_लिखो_cmd_failed;
+	पूर्ण
 
-	if ((srb->cmnd[1] & 0x02) || (srb->cmnd[1] & 0x04))
+	अगर ((srb->cmnd[1] & 0x02) || (srb->cmnd[1] & 0x04))
 		cmd13_checkbit = true;
 
-	for (i = 0; i < 3; i++) {
+	क्रम (i = 0; i < 3; i++) अणु
 		retval = ext_sd_send_cmd_get_rsp(chip, SEND_STATUS,
 						 sd_card->sd_addr,
-						 SD_RSP_TYPE_R1, NULL, 0,
+						 SD_RSP_TYPE_R1, शून्य, 0,
 						 cmd13_checkbit);
-		if (retval == STATUS_SUCCESS)
-			break;
-	}
-	if (retval != STATUS_SUCCESS)
-		goto sd_execute_write_cmd_failed;
+		अगर (retval == STATUS_SUCCESS)
+			अवरोध;
+	पूर्ण
+	अगर (retval != STATUS_SUCCESS)
+		जाओ sd_execute_ग_लिखो_cmd_failed;
 
-#ifdef SUPPORT_SD_LOCK
-	if (cmd_idx == LOCK_UNLOCK) {
-		if (!lock_cmd_fail) {
+#अगर_घोषित SUPPORT_SD_LOCK
+	अगर (cmd_idx == LOCK_UNLOCK) अणु
+		अगर (!lock_cmd_fail) अणु
 			dev_dbg(rtsx_dev(chip), "lock_cmd_type = 0x%x\n",
 				lock_cmd_type);
-			if (lock_cmd_type & SD_CLR_PWD)
+			अगर (lock_cmd_type & SD_CLR_PWD)
 				sd_card->sd_lock_status &= ~SD_PWD_EXIST;
 
-			if (lock_cmd_type & SD_SET_PWD)
+			अगर (lock_cmd_type & SD_SET_PWD)
 				sd_card->sd_lock_status |= SD_PWD_EXIST;
-		}
+		पूर्ण
 
 		dev_dbg(rtsx_dev(chip), "sd_lock_state = 0x%x, sd_card->sd_lock_status = 0x%x\n",
 			sd_lock_state, sd_card->sd_lock_status);
-		if (sd_lock_state ^ (sd_card->sd_lock_status & SD_LOCKED)) {
-			sd_card->sd_lock_notify = 1;
-			if (sd_lock_state &&
-			    (sd_card->sd_lock_status & SD_LOCK_1BIT_MODE)) {
+		अगर (sd_lock_state ^ (sd_card->sd_lock_status & SD_LOCKED)) अणु
+			sd_card->sd_lock_notअगरy = 1;
+			अगर (sd_lock_state &&
+			    (sd_card->sd_lock_status & SD_LOCK_1BIT_MODE)) अणु
 				sd_card->sd_lock_status |= (
 					SD_UNLOCK_POW_ON | SD_SDR_RST);
-				if (CHK_SD(sd_card)) {
+				अगर (CHK_SD(sd_card)) अणु
 					retval = reset_sd(chip);
-					if (retval != STATUS_SUCCESS) {
+					अगर (retval != STATUS_SUCCESS) अणु
 						sd_card->sd_lock_status &= ~(SD_UNLOCK_POW_ON | SD_SDR_RST);
-						goto sd_execute_write_cmd_failed;
-					}
-				}
+						जाओ sd_execute_ग_लिखो_cmd_failed;
+					पूर्ण
+				पूर्ण
 
 				sd_card->sd_lock_status &= ~(SD_UNLOCK_POW_ON | SD_SDR_RST);
-			}
-		}
-	}
+			पूर्ण
+		पूर्ण
+	पूर्ण
 
-	if (lock_cmd_fail) {
+	अगर (lock_cmd_fail) अणु
 		scsi_set_resid(srb, 0);
 		set_sense_type(chip, lun, SENSE_TYPE_NO_SENSE);
-		return TRANSPORT_FAILED;
-	}
-#endif  /* SUPPORT_SD_LOCK */
+		वापस TRANSPORT_FAILED;
+	पूर्ण
+#पूर्ण_अगर  /* SUPPORT_SD_LOCK */
 
 	scsi_set_resid(srb, 0);
-	return TRANSPORT_GOOD;
+	वापस TRANSPORT_GOOD;
 
-sd_execute_write_cmd_failed:
+sd_execute_ग_लिखो_cmd_failed:
 	sd_card->pre_cmd_err = 1;
 	set_sense_type(chip, lun, SENSE_TYPE_NO_SENSE);
-	if (write_err)
+	अगर (ग_लिखो_err)
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_WRITE_ERR);
 
 	release_sd_card(chip);
-	do_reset_sd_card(chip);
-	if (!(chip->card_ready & SD_CARD))
+	करो_reset_sd_card(chip);
+	अगर (!(chip->card_पढ़ोy & SD_CARD))
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_NOT_PRESENT);
 
-	return TRANSPORT_FAILED;
-}
+	वापस TRANSPORT_FAILED;
+पूर्ण
 
-int sd_get_cmd_rsp(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	unsigned int lun = SCSI_LUN(srb);
-	int count;
+पूर्णांक sd_get_cmd_rsp(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	अचिन्हित पूर्णांक lun = SCSI_LUN(srb);
+	पूर्णांक count;
 	u16 data_len;
 
-	if (!sd_card->sd_pass_thru_en) {
+	अगर (!sd_card->sd_pass_thru_en) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	if (sd_card->pre_cmd_err) {
+	अगर (sd_card->pre_cmd_err) अणु
 		sd_card->pre_cmd_err = 0;
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_CHANGE);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
 	data_len = ((u16)srb->cmnd[7] << 8) | srb->cmnd[8];
 
-	if (sd_card->last_rsp_type == SD_RSP_TYPE_R0) {
+	अगर (sd_card->last_rsp_type == SD_RSP_TYPE_R0) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	} else if (sd_card->last_rsp_type == SD_RSP_TYPE_R2) {
+		वापस TRANSPORT_FAILED;
+	पूर्ण अन्यथा अगर (sd_card->last_rsp_type == SD_RSP_TYPE_R2) अणु
 		count = (data_len < 17) ? data_len : 17;
-	} else {
+	पूर्ण अन्यथा अणु
 		count = (data_len < 6) ? data_len : 6;
-	}
+	पूर्ण
 	rtsx_stor_set_xfer_buf(sd_card->rsp, count, srb);
 
 	dev_dbg(rtsx_dev(chip), "Response length: %d\n", data_len);
@@ -4576,142 +4577,142 @@ int sd_get_cmd_rsp(struct scsi_cmnd *srb, struct rtsx_chip *chip)
 		sd_card->rsp[2], sd_card->rsp[3]);
 
 	scsi_set_resid(srb, 0);
-	return TRANSPORT_GOOD;
-}
+	वापस TRANSPORT_GOOD;
+पूर्ण
 
-int sd_hw_rst(struct scsi_cmnd *srb, struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	unsigned int lun = SCSI_LUN(srb);
-	int retval;
+पूर्णांक sd_hw_rst(काष्ठा scsi_cmnd *srb, काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	अचिन्हित पूर्णांक lun = SCSI_LUN(srb);
+	पूर्णांक retval;
 
-	if (!sd_card->sd_pass_thru_en) {
+	अगर (!sd_card->sd_pass_thru_en) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	if (sd_card->pre_cmd_err) {
+	अगर (sd_card->pre_cmd_err) अणु
 		sd_card->pre_cmd_err = 0;
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_CHANGE);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	if ((srb->cmnd[2] != 0x53) || (srb->cmnd[3] != 0x44) ||
+	अगर ((srb->cmnd[2] != 0x53) || (srb->cmnd[3] != 0x44) ||
 	    (srb->cmnd[4] != 0x20) || (srb->cmnd[5] != 0x43) ||
 	    (srb->cmnd[6] != 0x61) || (srb->cmnd[7] != 0x72) ||
-	    (srb->cmnd[8] != 0x64)) {
+	    (srb->cmnd[8] != 0x64)) अणु
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
-	switch (srb->cmnd[1] & 0x0F) {
-	case 0:
-#ifdef SUPPORT_SD_LOCK
-		if (srb->cmnd[9] == 0x64)
+	चयन (srb->cmnd[1] & 0x0F) अणु
+	हाल 0:
+#अगर_घोषित SUPPORT_SD_LOCK
+		अगर (srb->cmnd[9] == 0x64)
 			sd_card->sd_lock_status |= SD_SDR_RST;
-#endif
+#पूर्ण_अगर
 		retval = reset_sd_card(chip);
-		if (retval != STATUS_SUCCESS) {
-#ifdef SUPPORT_SD_LOCK
+		अगर (retval != STATUS_SUCCESS) अणु
+#अगर_घोषित SUPPORT_SD_LOCK
 			sd_card->sd_lock_status &= ~SD_SDR_RST;
-#endif
+#पूर्ण_अगर
 			set_sense_type(chip, lun, SENSE_TYPE_MEDIA_NOT_PRESENT);
 			sd_card->pre_cmd_err = 1;
-			return TRANSPORT_FAILED;
-		}
-#ifdef SUPPORT_SD_LOCK
+			वापस TRANSPORT_FAILED;
+		पूर्ण
+#अगर_घोषित SUPPORT_SD_LOCK
 		sd_card->sd_lock_status &= ~SD_SDR_RST;
-#endif
-		break;
+#पूर्ण_अगर
+		अवरोध;
 
-	case 1:
+	हाल 1:
 		retval = reset_sd(chip);
-		if (retval != STATUS_SUCCESS) {
+		अगर (retval != STATUS_SUCCESS) अणु
 			set_sense_type(chip, lun, SENSE_TYPE_MEDIA_NOT_PRESENT);
 			sd_card->pre_cmd_err = 1;
-			return TRANSPORT_FAILED;
-		}
-		break;
+			वापस TRANSPORT_FAILED;
+		पूर्ण
+		अवरोध;
 
-	default:
+	शेष:
 		set_sense_type(chip, lun, SENSE_TYPE_MEDIA_INVALID_CMD_FIELD);
-		return TRANSPORT_FAILED;
-	}
+		वापस TRANSPORT_FAILED;
+	पूर्ण
 
 	scsi_set_resid(srb, 0);
-	return TRANSPORT_GOOD;
-}
-#endif
+	वापस TRANSPORT_GOOD;
+पूर्ण
+#पूर्ण_अगर
 
-void sd_cleanup_work(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
+व्योम sd_cleanup_work(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
 
-	if (sd_card->seq_mode) {
+	अगर (sd_card->seq_mode) अणु
 		dev_dbg(rtsx_dev(chip), "SD: stop transmission\n");
 		sd_stop_seq_mode(chip);
 		sd_card->cleanup_counter = 0;
-	}
-}
+	पूर्ण
+पूर्ण
 
-int sd_power_off_card3v3(struct rtsx_chip *chip)
-{
-	int retval;
+पूर्णांक sd_घातer_off_card3v3(काष्ठा rtsx_chip *chip)
+अणु
+	पूर्णांक retval;
 
-	retval = disable_card_clock(chip, SD_CARD);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = disable_card_घड़ी(chip, SD_CARD);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	retval = rtsx_write_register(chip, CARD_OE, SD_OUTPUT_EN, 0);
-	if (retval)
-		return retval;
+	retval = rtsx_ग_लिखो_रेजिस्टर(chip, CARD_OE, SD_OUTPUT_EN, 0);
+	अगर (retval)
+		वापस retval;
 
-	if (!chip->ft2_fast_mode) {
-		retval = card_power_off(chip, SD_CARD);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
+	अगर (!chip->ft2_fast_mode) अणु
+		retval = card_घातer_off(chip, SD_CARD);
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
 
 		mdelay(50);
-	}
+	पूर्ण
 
-	if (chip->asic_code) {
+	अगर (chip->asic_code) अणु
 		retval = sd_pull_ctl_disable(chip);
-		if (retval != STATUS_SUCCESS)
-			return STATUS_FAIL;
-	} else {
-		retval = rtsx_write_register(chip, FPGA_PULL_CTL,
+		अगर (retval != STATUS_SUCCESS)
+			वापस STATUS_FAIL;
+	पूर्ण अन्यथा अणु
+		retval = rtsx_ग_लिखो_रेजिस्टर(chip, FPGA_PULL_CTL,
 					     FPGA_SD_PULL_CTL_BIT | 0x20,
 					     FPGA_SD_PULL_CTL_BIT);
-		if (retval)
-			return retval;
-	}
+		अगर (retval)
+			वापस retval;
+	पूर्ण
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण
 
-int release_sd_card(struct rtsx_chip *chip)
-{
-	struct sd_info *sd_card = &chip->sd_card;
-	int retval;
+पूर्णांक release_sd_card(काष्ठा rtsx_chip *chip)
+अणु
+	काष्ठा sd_info *sd_card = &chip->sd_card;
+	पूर्णांक retval;
 
-	chip->card_ready &= ~SD_CARD;
+	chip->card_पढ़ोy &= ~SD_CARD;
 	chip->card_fail &= ~SD_CARD;
 	chip->card_wp &= ~SD_CARD;
 
 	chip->sd_io = 0;
-	chip->sd_int = 0;
+	chip->sd_पूर्णांक = 0;
 
-#ifdef SUPPORT_SD_LOCK
+#अगर_घोषित SUPPORT_SD_LOCK
 	sd_card->sd_lock_status = 0;
 	sd_card->sd_erase_status = 0;
-#endif
+#पूर्ण_अगर
 
-	memset(sd_card->raw_csd, 0, 16);
-	memset(sd_card->raw_scr, 0, 8);
+	स_रखो(sd_card->raw_csd, 0, 16);
+	स_रखो(sd_card->raw_scr, 0, 8);
 
-	retval = sd_power_off_card3v3(chip);
-	if (retval != STATUS_SUCCESS)
-		return STATUS_FAIL;
+	retval = sd_घातer_off_card3v3(chip);
+	अगर (retval != STATUS_SUCCESS)
+		वापस STATUS_FAIL;
 
-	return STATUS_SUCCESS;
-}
+	वापस STATUS_SUCCESS;
+पूर्ण

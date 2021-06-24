@@ -1,158 +1,159 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef B43legacy_PIO_H_
-#define B43legacy_PIO_H_
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित B43legacy_PIO_H_
+#घोषणा B43legacy_PIO_H_
 
-#include "b43legacy.h"
+#समावेश "b43legacy.h"
 
-#include <linux/interrupt.h>
-#include <linux/list.h>
-#include <linux/skbuff.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/list.h>
+#समावेश <linux/skbuff.h>
 
 
-#define B43legacy_PIO_TXCTL		0x00
-#define B43legacy_PIO_TXDATA		0x02
-#define B43legacy_PIO_TXQBUFSIZE	0x04
-#define B43legacy_PIO_RXCTL		0x08
-#define B43legacy_PIO_RXDATA		0x0A
+#घोषणा B43legacy_PIO_TXCTL		0x00
+#घोषणा B43legacy_PIO_TXDATA		0x02
+#घोषणा B43legacy_PIO_TXQबफ_मानE	0x04
+#घोषणा B43legacy_PIO_RXCTL		0x08
+#घोषणा B43legacy_PIO_RXDATA		0x0A
 
-#define B43legacy_PIO_TXCTL_WRITELO	(1 << 0)
-#define B43legacy_PIO_TXCTL_WRITEHI	(1 << 1)
-#define B43legacy_PIO_TXCTL_COMPLETE	(1 << 2)
-#define B43legacy_PIO_TXCTL_INIT	(1 << 3)
-#define B43legacy_PIO_TXCTL_SUSPEND	(1 << 7)
+#घोषणा B43legacy_PIO_TXCTL_WRITELO	(1 << 0)
+#घोषणा B43legacy_PIO_TXCTL_WRITEHI	(1 << 1)
+#घोषणा B43legacy_PIO_TXCTL_COMPLETE	(1 << 2)
+#घोषणा B43legacy_PIO_TXCTL_INIT	(1 << 3)
+#घोषणा B43legacy_PIO_TXCTL_SUSPEND	(1 << 7)
 
-#define B43legacy_PIO_RXCTL_DATAAVAILABLE	(1 << 0)
-#define B43legacy_PIO_RXCTL_READY		(1 << 1)
+#घोषणा B43legacy_PIO_RXCTL_DATAAVAILABLE	(1 << 0)
+#घोषणा B43legacy_PIO_RXCTL_READY		(1 << 1)
 
-/* PIO constants */
-#define B43legacy_PIO_MAXTXDEVQPACKETS	31
-#define B43legacy_PIO_TXQADJUST		80
+/* PIO स्थिरants */
+#घोषणा B43legacy_PIO_MAXTXDEVQPACKETS	31
+#घोषणा B43legacy_PIO_TXQADJUST		80
 
 /* PIO tuning knobs */
-#define B43legacy_PIO_MAXTXPACKETS	256
+#घोषणा B43legacy_PIO_MAXTXPACKETS	256
 
 
 
-#ifdef CONFIG_B43LEGACY_PIO
+#अगर_घोषित CONFIG_B43LEGACY_PIO
 
 
-struct b43legacy_pioqueue;
-struct b43legacy_xmitstatus;
+काष्ठा b43legacy_pioqueue;
+काष्ठा b43legacy_xmitstatus;
 
-struct b43legacy_pio_txpacket {
-	struct b43legacy_pioqueue *queue;
-	struct sk_buff *skb;
-	struct list_head list;
-};
+काष्ठा b43legacy_pio_txpacket अणु
+	काष्ठा b43legacy_pioqueue *queue;
+	काष्ठा sk_buff *skb;
+	काष्ठा list_head list;
+पूर्ण;
 
-#define pio_txpacket_getindex(packet) ((int)((packet) - \
+#घोषणा pio_txpacket_getindex(packet) ((पूर्णांक)((packet) - \
 			      (packet)->queue->tx_packets_cache))
 
-struct b43legacy_pioqueue {
-	struct b43legacy_wldev *dev;
+काष्ठा b43legacy_pioqueue अणु
+	काष्ठा b43legacy_wldev *dev;
 	u16 mmio_base;
 
 	bool tx_suspended;
 	bool tx_frozen;
-	bool need_workarounds; /* Workarounds needed for core.rev < 3 */
+	bool need_workarounds; /* Workarounds needed क्रम core.rev < 3 */
 
-	/* Adjusted size of the device internal TX buffer. */
+	/* Adjusted size of the device पूर्णांकernal TX buffer. */
 	u16 tx_devq_size;
-	/* Used octets of the device internal TX buffer. */
+	/* Used octets of the device पूर्णांकernal TX buffer. */
 	u16 tx_devq_used;
-	/* Used packet slots in the device internal TX buffer. */
+	/* Used packet slots in the device पूर्णांकernal TX buffer. */
 	u8 tx_devq_packets;
-	/* Packets from the txfree list can
+	/* Packets from the txमुक्त list can
 	 * be taken on incoming TX requests.
 	 */
-	struct list_head txfree;
-	unsigned int nr_txfree;
+	काष्ठा list_head txमुक्त;
+	अचिन्हित पूर्णांक nr_txमुक्त;
 	/* Packets on the txqueue are queued,
 	 * but not completely written to the chip, yet.
 	 */
-	struct list_head txqueue;
+	काष्ठा list_head txqueue;
 	/* Packets on the txrunning queue are completely
-	 * posted to the device. We are waiting for the txstatus.
+	 * posted to the device. We are रुकोing क्रम the txstatus.
 	 */
-	struct list_head txrunning;
-	struct tasklet_struct txtask;
-	struct b43legacy_pio_txpacket
+	काष्ठा list_head txrunning;
+	काष्ठा tasklet_काष्ठा txtask;
+	काष्ठा b43legacy_pio_txpacket
 			 tx_packets_cache[B43legacy_PIO_MAXTXPACKETS];
-};
+पूर्ण;
 
-static inline
-u16 b43legacy_pio_read(struct b43legacy_pioqueue *queue,
+अटल अंतरभूत
+u16 b43legacy_pio_पढ़ो(काष्ठा b43legacy_pioqueue *queue,
 		     u16 offset)
-{
-	return b43legacy_read16(queue->dev, queue->mmio_base + offset);
-}
+अणु
+	वापस b43legacy_पढ़ो16(queue->dev, queue->mmio_base + offset);
+पूर्ण
 
-static inline
-void b43legacy_pio_write(struct b43legacy_pioqueue *queue,
+अटल अंतरभूत
+व्योम b43legacy_pio_ग_लिखो(काष्ठा b43legacy_pioqueue *queue,
 		       u16 offset, u16 value)
-{
-	b43legacy_write16(queue->dev, queue->mmio_base + offset, value);
-}
+अणु
+	b43legacy_ग_लिखो16(queue->dev, queue->mmio_base + offset, value);
+पूर्ण
 
 
-int b43legacy_pio_init(struct b43legacy_wldev *dev);
-void b43legacy_pio_free(struct b43legacy_wldev *dev);
+पूर्णांक b43legacy_pio_init(काष्ठा b43legacy_wldev *dev);
+व्योम b43legacy_pio_मुक्त(काष्ठा b43legacy_wldev *dev);
 
-int b43legacy_pio_tx(struct b43legacy_wldev *dev,
-		   struct sk_buff *skb);
-void b43legacy_pio_handle_txstatus(struct b43legacy_wldev *dev,
-				 const struct b43legacy_txstatus *status);
-void b43legacy_pio_rx(struct b43legacy_pioqueue *queue);
+पूर्णांक b43legacy_pio_tx(काष्ठा b43legacy_wldev *dev,
+		   काष्ठा sk_buff *skb);
+व्योम b43legacy_pio_handle_txstatus(काष्ठा b43legacy_wldev *dev,
+				 स्थिर काष्ठा b43legacy_txstatus *status);
+व्योम b43legacy_pio_rx(काष्ठा b43legacy_pioqueue *queue);
 
 /* Suspend TX queue in hardware. */
-void b43legacy_pio_tx_suspend(struct b43legacy_pioqueue *queue);
-void b43legacy_pio_tx_resume(struct b43legacy_pioqueue *queue);
-/* Suspend (freeze) the TX tasklet (software level). */
-void b43legacy_pio_freeze_txqueues(struct b43legacy_wldev *dev);
-void b43legacy_pio_thaw_txqueues(struct b43legacy_wldev *dev);
+व्योम b43legacy_pio_tx_suspend(काष्ठा b43legacy_pioqueue *queue);
+व्योम b43legacy_pio_tx_resume(काष्ठा b43legacy_pioqueue *queue);
+/* Suspend (मुक्तze) the TX tasklet (software level). */
+व्योम b43legacy_pio_मुक्तze_txqueues(काष्ठा b43legacy_wldev *dev);
+व्योम b43legacy_pio_thaw_txqueues(काष्ठा b43legacy_wldev *dev);
 
-#else /* CONFIG_B43LEGACY_PIO */
+#अन्यथा /* CONFIG_B43LEGACY_PIO */
 
-static inline
-int b43legacy_pio_init(struct b43legacy_wldev *dev)
-{
-	return 0;
-}
-static inline
-void b43legacy_pio_free(struct b43legacy_wldev *dev)
-{
-}
-static inline
-int b43legacy_pio_tx(struct b43legacy_wldev *dev,
-		   struct sk_buff *skb)
-{
-	return 0;
-}
-static inline
-void b43legacy_pio_handle_txstatus(struct b43legacy_wldev *dev,
-				 const struct b43legacy_txstatus *status)
-{
-}
-static inline
-void b43legacy_pio_rx(struct b43legacy_pioqueue *queue)
-{
-}
-static inline
-void b43legacy_pio_tx_suspend(struct b43legacy_pioqueue *queue)
-{
-}
-static inline
-void b43legacy_pio_tx_resume(struct b43legacy_pioqueue *queue)
-{
-}
-static inline
-void b43legacy_pio_freeze_txqueues(struct b43legacy_wldev *dev)
-{
-}
-static inline
-void b43legacy_pio_thaw_txqueues(struct b43legacy_wldev *dev)
-{
-}
+अटल अंतरभूत
+पूर्णांक b43legacy_pio_init(काष्ठा b43legacy_wldev *dev)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत
+व्योम b43legacy_pio_मुक्त(काष्ठा b43legacy_wldev *dev)
+अणु
+पूर्ण
+अटल अंतरभूत
+पूर्णांक b43legacy_pio_tx(काष्ठा b43legacy_wldev *dev,
+		   काष्ठा sk_buff *skb)
+अणु
+	वापस 0;
+पूर्ण
+अटल अंतरभूत
+व्योम b43legacy_pio_handle_txstatus(काष्ठा b43legacy_wldev *dev,
+				 स्थिर काष्ठा b43legacy_txstatus *status)
+अणु
+पूर्ण
+अटल अंतरभूत
+व्योम b43legacy_pio_rx(काष्ठा b43legacy_pioqueue *queue)
+अणु
+पूर्ण
+अटल अंतरभूत
+व्योम b43legacy_pio_tx_suspend(काष्ठा b43legacy_pioqueue *queue)
+अणु
+पूर्ण
+अटल अंतरभूत
+व्योम b43legacy_pio_tx_resume(काष्ठा b43legacy_pioqueue *queue)
+अणु
+पूर्ण
+अटल अंतरभूत
+व्योम b43legacy_pio_मुक्तze_txqueues(काष्ठा b43legacy_wldev *dev)
+अणु
+पूर्ण
+अटल अंतरभूत
+व्योम b43legacy_pio_thaw_txqueues(काष्ठा b43legacy_wldev *dev)
+अणु
+पूर्ण
 
-#endif /* CONFIG_B43LEGACY_PIO */
-#endif /* B43legacy_PIO_H_ */
+#पूर्ण_अगर /* CONFIG_B43LEGACY_PIO */
+#पूर्ण_अगर /* B43legacy_PIO_H_ */

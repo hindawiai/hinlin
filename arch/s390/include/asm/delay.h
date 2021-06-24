@@ -1,4 +1,5 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
 /*
  *  S390 version
  *    Copyright IBM Corp. 1999
@@ -10,15 +11,15 @@
  *  Delay routines calling functions in arch/s390/lib/delay.c
  */
  
-#ifndef _S390_DELAY_H
-#define _S390_DELAY_H
+#अगर_अघोषित _S390_DELAY_H
+#घोषणा _S390_DELAY_H
 
-void __ndelay(unsigned long nsecs);
-void __udelay(unsigned long usecs);
-void __delay(unsigned long loops);
+व्योम __ndelay(अचिन्हित दीर्घ nsecs);
+व्योम __udelay(अचिन्हित दीर्घ usecs);
+व्योम __delay(अचिन्हित दीर्घ loops);
 
-#define ndelay(n) __ndelay((unsigned long)(n))
-#define udelay(n) __udelay((unsigned long)(n))
-#define mdelay(n) __udelay((unsigned long)(n) * 1000)
+#घोषणा ndelay(n) __ndelay((अचिन्हित दीर्घ)(n))
+#घोषणा udelay(n) __udelay((अचिन्हित दीर्घ)(n))
+#घोषणा mdelay(n) __udelay((अचिन्हित दीर्घ)(n) * 1000)
 
-#endif /* defined(_S390_DELAY_H) */
+#पूर्ण_अगर /* defined(_S390_DELAY_H) */

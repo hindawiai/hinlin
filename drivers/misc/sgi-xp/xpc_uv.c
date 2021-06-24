@@ -1,7 +1,8 @@
+<शैली गुरु>
 /*
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the main directory of this archive
- * for more details.
+ * License.  See the file "COPYING" in the मुख्य directory of this archive
+ * क्रम more details.
  *
  * Copyright (c) 2008-2009 Silicon Graphics, Inc.  All Rights Reserved.
  */
@@ -9,34 +10,34 @@
 /*
  * Cross Partition Communication (XPC) uv-based functions.
  *
- *     Architecture specific implementation of common functions.
+ *     Architecture specअगरic implementation of common functions.
  *
  */
 
-#include <linux/kernel.h>
-#include <linux/mm.h>
-#include <linux/interrupt.h>
-#include <linux/delay.h>
-#include <linux/device.h>
-#include <linux/cpu.h>
-#include <linux/module.h>
-#include <linux/err.h>
-#include <linux/slab.h>
-#include <linux/numa.h>
-#include <asm/uv/uv_hub.h>
-#if defined CONFIG_X86_64
-#include <asm/uv/bios.h>
-#include <asm/uv/uv_irq.h>
-#elif defined CONFIG_IA64_SGI_UV
-#include <asm/sn/intr.h>
-#include <asm/sn/sn_sal.h>
-#endif
-#include "../sgi-gru/gru.h"
-#include "../sgi-gru/grukservices.h"
-#include "xpc.h"
+#समावेश <linux/kernel.h>
+#समावेश <linux/mm.h>
+#समावेश <linux/पूर्णांकerrupt.h>
+#समावेश <linux/delay.h>
+#समावेश <linux/device.h>
+#समावेश <linux/cpu.h>
+#समावेश <linux/module.h>
+#समावेश <linux/err.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/numa.h>
+#समावेश <यंत्र/uv/uv_hub.h>
+#अगर defined CONFIG_X86_64
+#समावेश <यंत्र/uv/मूलप्रण.स>
+#समावेश <यंत्र/uv/uv_irq.h>
+#या_अगर defined CONFIG_IA64_SGI_UV
+#समावेश <यंत्र/sn/पूर्णांकr.h>
+#समावेश <यंत्र/sn/sn_sal.h>
+#पूर्ण_अगर
+#समावेश "../sgi-gru/gru.h"
+#समावेश "../sgi-gru/grukservices.h"
+#समावेश "xpc.h"
 
-#if defined CONFIG_IA64_SGI_UV
-struct uv_IO_APIC_route_entry {
+#अगर defined CONFIG_IA64_SGI_UV
+काष्ठा uv_IO_APIC_route_entry अणु
 	__u64	vector		:  8,
 		delivery_mode	:  3,
 		dest_mode	:  1,
@@ -47,193 +48,193 @@ struct uv_IO_APIC_route_entry {
 		mask		:  1,
 		__reserved_2	: 15,
 		dest		: 32;
-};
+पूर्ण;
 
-#define sn_partition_id 0
-#endif
+#घोषणा sn_partition_id 0
+#पूर्ण_अगर
 
-static struct xpc_heartbeat_uv *xpc_heartbeat_uv;
+अटल काष्ठा xpc_heartbeat_uv *xpc_heartbeat_uv;
 
-#define XPC_ACTIVATE_MSG_SIZE_UV	(1 * GRU_CACHE_LINE_BYTES)
-#define XPC_ACTIVATE_MQ_SIZE_UV		(4 * XP_MAX_NPARTITIONS_UV * \
+#घोषणा XPC_ACTIVATE_MSG_SIZE_UV	(1 * GRU_CACHE_LINE_BYTES)
+#घोषणा XPC_ACTIVATE_MQ_SIZE_UV		(4 * XP_MAX_NPARTITIONS_UV * \
 					 XPC_ACTIVATE_MSG_SIZE_UV)
-#define XPC_ACTIVATE_IRQ_NAME		"xpc_activate"
+#घोषणा XPC_ACTIVATE_IRQ_NAME		"xpc_activate"
 
-#define XPC_NOTIFY_MSG_SIZE_UV		(2 * GRU_CACHE_LINE_BYTES)
-#define XPC_NOTIFY_MQ_SIZE_UV		(4 * XP_MAX_NPARTITIONS_UV * \
+#घोषणा XPC_NOTIFY_MSG_SIZE_UV		(2 * GRU_CACHE_LINE_BYTES)
+#घोषणा XPC_NOTIFY_MQ_SIZE_UV		(4 * XP_MAX_NPARTITIONS_UV * \
 					 XPC_NOTIFY_MSG_SIZE_UV)
-#define XPC_NOTIFY_IRQ_NAME		"xpc_notify"
+#घोषणा XPC_NOTIFY_IRQ_NAME		"xpc_notify"
 
-static int xpc_mq_node = NUMA_NO_NODE;
+अटल पूर्णांक xpc_mq_node = NUMA_NO_NODE;
 
-static struct xpc_gru_mq_uv *xpc_activate_mq_uv;
-static struct xpc_gru_mq_uv *xpc_notify_mq_uv;
+अटल काष्ठा xpc_gru_mq_uv *xpc_activate_mq_uv;
+अटल काष्ठा xpc_gru_mq_uv *xpc_notअगरy_mq_uv;
 
-static int
-xpc_setup_partitions_uv(void)
-{
-	short partid;
-	struct xpc_partition_uv *part_uv;
+अटल पूर्णांक
+xpc_setup_partitions_uv(व्योम)
+अणु
+	लघु partid;
+	काष्ठा xpc_partition_uv *part_uv;
 
-	for (partid = 0; partid < XP_MAX_NPARTITIONS_UV; partid++) {
+	क्रम (partid = 0; partid < XP_MAX_NPARTITIONS_UV; partid++) अणु
 		part_uv = &xpc_partitions[partid].sn.uv;
 
 		mutex_init(&part_uv->cached_activate_gru_mq_desc_mutex);
 		spin_lock_init(&part_uv->flags_lock);
 		part_uv->remote_act_state = XPC_P_AS_INACTIVE;
-	}
-	return 0;
-}
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static void
-xpc_teardown_partitions_uv(void)
-{
-	short partid;
-	struct xpc_partition_uv *part_uv;
-	unsigned long irq_flags;
+अटल व्योम
+xpc_tearकरोwn_partitions_uv(व्योम)
+अणु
+	लघु partid;
+	काष्ठा xpc_partition_uv *part_uv;
+	अचिन्हित दीर्घ irq_flags;
 
-	for (partid = 0; partid < XP_MAX_NPARTITIONS_UV; partid++) {
+	क्रम (partid = 0; partid < XP_MAX_NPARTITIONS_UV; partid++) अणु
 		part_uv = &xpc_partitions[partid].sn.uv;
 
-		if (part_uv->cached_activate_gru_mq_desc != NULL) {
+		अगर (part_uv->cached_activate_gru_mq_desc != शून्य) अणु
 			mutex_lock(&part_uv->cached_activate_gru_mq_desc_mutex);
 			spin_lock_irqsave(&part_uv->flags_lock, irq_flags);
 			part_uv->flags &= ~XPC_P_CACHED_ACTIVATE_GRU_MQ_DESC_UV;
 			spin_unlock_irqrestore(&part_uv->flags_lock, irq_flags);
-			kfree(part_uv->cached_activate_gru_mq_desc);
-			part_uv->cached_activate_gru_mq_desc = NULL;
+			kमुक्त(part_uv->cached_activate_gru_mq_desc);
+			part_uv->cached_activate_gru_mq_desc = शून्य;
 			mutex_unlock(&part_uv->
 				     cached_activate_gru_mq_desc_mutex);
-		}
-	}
-}
+		पूर्ण
+	पूर्ण
+पूर्ण
 
-static int
-xpc_get_gru_mq_irq_uv(struct xpc_gru_mq_uv *mq, int cpu, char *irq_name)
-{
-	int mmr_pnode = uv_blade_to_pnode(mq->mmr_blade);
+अटल पूर्णांक
+xpc_get_gru_mq_irq_uv(काष्ठा xpc_gru_mq_uv *mq, पूर्णांक cpu, अक्षर *irq_name)
+अणु
+	पूर्णांक mmr_pnode = uv_blade_to_pnode(mq->mmr_blade);
 
-#if defined CONFIG_X86_64
+#अगर defined CONFIG_X86_64
 	mq->irq = uv_setup_irq(irq_name, cpu, mq->mmr_blade, mq->mmr_offset,
 			UV_AFFINITY_CPU);
-	if (mq->irq < 0)
-		return mq->irq;
+	अगर (mq->irq < 0)
+		वापस mq->irq;
 
-	mq->mmr_value = uv_read_global_mmr64(mmr_pnode, mq->mmr_offset);
+	mq->mmr_value = uv_पढ़ो_global_mmr64(mmr_pnode, mq->mmr_offset);
 
-#elif defined CONFIG_IA64_SGI_UV
-	if (strcmp(irq_name, XPC_ACTIVATE_IRQ_NAME) == 0)
+#या_अगर defined CONFIG_IA64_SGI_UV
+	अगर (म_भेद(irq_name, XPC_ACTIVATE_IRQ_NAME) == 0)
 		mq->irq = SGI_XPC_ACTIVATE;
-	else if (strcmp(irq_name, XPC_NOTIFY_IRQ_NAME) == 0)
+	अन्यथा अगर (म_भेद(irq_name, XPC_NOTIFY_IRQ_NAME) == 0)
 		mq->irq = SGI_XPC_NOTIFY;
-	else
-		return -EINVAL;
+	अन्यथा
+		वापस -EINVAL;
 
-	mq->mmr_value = (unsigned long)cpu_physical_id(cpu) << 32 | mq->irq;
-	uv_write_global_mmr64(mmr_pnode, mq->mmr_offset, mq->mmr_value);
-#else
-	#error not a supported configuration
-#endif
+	mq->mmr_value = (अचिन्हित दीर्घ)cpu_physical_id(cpu) << 32 | mq->irq;
+	uv_ग_लिखो_global_mmr64(mmr_pnode, mq->mmr_offset, mq->mmr_value);
+#अन्यथा
+	#त्रुटि not a supported configuration
+#पूर्ण_अगर
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-xpc_release_gru_mq_irq_uv(struct xpc_gru_mq_uv *mq)
-{
-#if defined CONFIG_X86_64
-	uv_teardown_irq(mq->irq);
+अटल व्योम
+xpc_release_gru_mq_irq_uv(काष्ठा xpc_gru_mq_uv *mq)
+अणु
+#अगर defined CONFIG_X86_64
+	uv_tearकरोwn_irq(mq->irq);
 
-#elif defined CONFIG_IA64_SGI_UV
-	int mmr_pnode;
-	unsigned long mmr_value;
+#या_अगर defined CONFIG_IA64_SGI_UV
+	पूर्णांक mmr_pnode;
+	अचिन्हित दीर्घ mmr_value;
 
 	mmr_pnode = uv_blade_to_pnode(mq->mmr_blade);
 	mmr_value = 1UL << 16;
 
-	uv_write_global_mmr64(mmr_pnode, mq->mmr_offset, mmr_value);
-#else
-	#error not a supported configuration
-#endif
-}
+	uv_ग_लिखो_global_mmr64(mmr_pnode, mq->mmr_offset, mmr_value);
+#अन्यथा
+	#त्रुटि not a supported configuration
+#पूर्ण_अगर
+पूर्ण
 
-static int
-xpc_gru_mq_watchlist_alloc_uv(struct xpc_gru_mq_uv *mq)
-{
-	int ret;
+अटल पूर्णांक
+xpc_gru_mq_watchlist_alloc_uv(काष्ठा xpc_gru_mq_uv *mq)
+अणु
+	पूर्णांक ret;
 
-#if defined CONFIG_IA64_SGI_UV
-	int mmr_pnode = uv_blade_to_pnode(mq->mmr_blade);
+#अगर defined CONFIG_IA64_SGI_UV
+	पूर्णांक mmr_pnode = uv_blade_to_pnode(mq->mmr_blade);
 
-	ret = sn_mq_watchlist_alloc(mmr_pnode, (void *)uv_gpa(mq->address),
+	ret = sn_mq_watchlist_alloc(mmr_pnode, (व्योम *)uv_gpa(mq->address),
 				    mq->order, &mq->mmr_offset);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(xpc_part, "sn_mq_watchlist_alloc() failed, ret=%d\n",
 			ret);
-		return -EBUSY;
-	}
-#elif defined CONFIG_X86_64
+		वापस -EBUSY;
+	पूर्ण
+#या_अगर defined CONFIG_X86_64
 	ret = uv_bios_mq_watchlist_alloc(uv_gpa(mq->address),
 					 mq->order, &mq->mmr_offset);
-	if (ret < 0) {
+	अगर (ret < 0) अणु
 		dev_err(xpc_part, "uv_bios_mq_watchlist_alloc() failed, "
 			"ret=%d\n", ret);
-		return ret;
-	}
-#else
-	#error not a supported configuration
-#endif
+		वापस ret;
+	पूर्ण
+#अन्यथा
+	#त्रुटि not a supported configuration
+#पूर्ण_अगर
 
 	mq->watchlist_num = ret;
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-xpc_gru_mq_watchlist_free_uv(struct xpc_gru_mq_uv *mq)
-{
-	int ret;
-	int mmr_pnode = uv_blade_to_pnode(mq->mmr_blade);
+अटल व्योम
+xpc_gru_mq_watchlist_मुक्त_uv(काष्ठा xpc_gru_mq_uv *mq)
+अणु
+	पूर्णांक ret;
+	पूर्णांक mmr_pnode = uv_blade_to_pnode(mq->mmr_blade);
 
-#if defined CONFIG_X86_64
-	ret = uv_bios_mq_watchlist_free(mmr_pnode, mq->watchlist_num);
+#अगर defined CONFIG_X86_64
+	ret = uv_bios_mq_watchlist_मुक्त(mmr_pnode, mq->watchlist_num);
 	BUG_ON(ret != BIOS_STATUS_SUCCESS);
-#elif defined CONFIG_IA64_SGI_UV
-	ret = sn_mq_watchlist_free(mmr_pnode, mq->watchlist_num);
+#या_अगर defined CONFIG_IA64_SGI_UV
+	ret = sn_mq_watchlist_मुक्त(mmr_pnode, mq->watchlist_num);
 	BUG_ON(ret != SALRET_OK);
-#else
-	#error not a supported configuration
-#endif
-}
+#अन्यथा
+	#त्रुटि not a supported configuration
+#पूर्ण_अगर
+पूर्ण
 
-static struct xpc_gru_mq_uv *
-xpc_create_gru_mq_uv(unsigned int mq_size, int cpu, char *irq_name,
+अटल काष्ठा xpc_gru_mq_uv *
+xpc_create_gru_mq_uv(अचिन्हित पूर्णांक mq_size, पूर्णांक cpu, अक्षर *irq_name,
 		     irq_handler_t irq_handler)
-{
-	enum xp_retval xp_ret;
-	int ret;
-	int nid;
-	int nasid;
-	int pg_order;
-	struct page *page;
-	struct xpc_gru_mq_uv *mq;
-	struct uv_IO_APIC_route_entry *mmr_value;
+अणु
+	क्रमागत xp_retval xp_ret;
+	पूर्णांक ret;
+	पूर्णांक nid;
+	पूर्णांक nasid;
+	पूर्णांक pg_order;
+	काष्ठा page *page;
+	काष्ठा xpc_gru_mq_uv *mq;
+	काष्ठा uv_IO_APIC_route_entry *mmr_value;
 
-	mq = kmalloc(sizeof(struct xpc_gru_mq_uv), GFP_KERNEL);
-	if (mq == NULL) {
+	mq = kदो_स्मृति(माप(काष्ठा xpc_gru_mq_uv), GFP_KERNEL);
+	अगर (mq == शून्य) अणु
 		dev_err(xpc_part, "xpc_create_gru_mq_uv() failed to kmalloc() "
 			"a xpc_gru_mq_uv structure\n");
 		ret = -ENOMEM;
-		goto out_0;
-	}
+		जाओ out_0;
+	पूर्ण
 
-	mq->gru_mq_desc = kzalloc(sizeof(struct gru_message_queue_desc),
+	mq->gru_mq_desc = kzalloc(माप(काष्ठा gru_message_queue_desc),
 				  GFP_KERNEL);
-	if (mq->gru_mq_desc == NULL) {
+	अगर (mq->gru_mq_desc == शून्य) अणु
 		dev_err(xpc_part, "xpc_create_gru_mq_uv() failed to kmalloc() "
 			"a gru_message_queue_desc structure\n");
 		ret = -ENOMEM;
-		goto out_1;
-	}
+		जाओ out_1;
+	पूर्ण
 
 	pg_order = get_order(mq_size);
 	mq->order = pg_order + PAGE_SHIFT;
@@ -245,145 +246,145 @@ xpc_create_gru_mq_uv(unsigned int mq_size, int cpu, char *irq_name,
 	page = __alloc_pages_node(nid,
 				      GFP_KERNEL | __GFP_ZERO | __GFP_THISNODE,
 				      pg_order);
-	if (page == NULL) {
+	अगर (page == शून्य) अणु
 		dev_err(xpc_part, "xpc_create_gru_mq_uv() failed to alloc %d "
 			"bytes of memory on nid=%d for GRU mq\n", mq_size, nid);
 		ret = -ENOMEM;
-		goto out_2;
-	}
+		जाओ out_2;
+	पूर्ण
 	mq->address = page_address(page);
 
 	/* enable generation of irq when GRU mq operation occurs to this mq */
 	ret = xpc_gru_mq_watchlist_alloc_uv(mq);
-	if (ret != 0)
-		goto out_3;
+	अगर (ret != 0)
+		जाओ out_3;
 
 	ret = xpc_get_gru_mq_irq_uv(mq, cpu, irq_name);
-	if (ret != 0)
-		goto out_4;
+	अगर (ret != 0)
+		जाओ out_4;
 
-	ret = request_irq(mq->irq, irq_handler, 0, irq_name, NULL);
-	if (ret != 0) {
+	ret = request_irq(mq->irq, irq_handler, 0, irq_name, शून्य);
+	अगर (ret != 0) अणु
 		dev_err(xpc_part, "request_irq(irq=%d) returned error=%d\n",
 			mq->irq, -ret);
-		goto out_5;
-	}
+		जाओ out_5;
+	पूर्ण
 
 	nasid = UV_PNODE_TO_NASID(uv_cpu_to_pnode(cpu));
 
-	mmr_value = (struct uv_IO_APIC_route_entry *)&mq->mmr_value;
+	mmr_value = (काष्ठा uv_IO_APIC_route_entry *)&mq->mmr_value;
 	ret = gru_create_message_queue(mq->gru_mq_desc, mq->address, mq_size,
 				     nasid, mmr_value->vector, mmr_value->dest);
-	if (ret != 0) {
+	अगर (ret != 0) अणु
 		dev_err(xpc_part, "gru_create_message_queue() returned "
 			"error=%d\n", ret);
 		ret = -EINVAL;
-		goto out_6;
-	}
+		जाओ out_6;
+	पूर्ण
 
 	/* allow other partitions to access this GRU mq */
 	xp_ret = xp_expand_memprotect(xp_pa(mq->address), mq_size);
-	if (xp_ret != xpSuccess) {
+	अगर (xp_ret != xpSuccess) अणु
 		ret = -EACCES;
-		goto out_6;
-	}
+		जाओ out_6;
+	पूर्ण
 
-	return mq;
+	वापस mq;
 
 	/* something went wrong */
 out_6:
-	free_irq(mq->irq, NULL);
+	मुक्त_irq(mq->irq, शून्य);
 out_5:
 	xpc_release_gru_mq_irq_uv(mq);
 out_4:
-	xpc_gru_mq_watchlist_free_uv(mq);
+	xpc_gru_mq_watchlist_मुक्त_uv(mq);
 out_3:
-	free_pages((unsigned long)mq->address, pg_order);
+	मुक्त_pages((अचिन्हित दीर्घ)mq->address, pg_order);
 out_2:
-	kfree(mq->gru_mq_desc);
+	kमुक्त(mq->gru_mq_desc);
 out_1:
-	kfree(mq);
+	kमुक्त(mq);
 out_0:
-	return ERR_PTR(ret);
-}
+	वापस ERR_PTR(ret);
+पूर्ण
 
-static void
-xpc_destroy_gru_mq_uv(struct xpc_gru_mq_uv *mq)
-{
-	unsigned int mq_size;
-	int pg_order;
-	int ret;
+अटल व्योम
+xpc_destroy_gru_mq_uv(काष्ठा xpc_gru_mq_uv *mq)
+अणु
+	अचिन्हित पूर्णांक mq_size;
+	पूर्णांक pg_order;
+	पूर्णांक ret;
 
 	/* disallow other partitions to access GRU mq */
 	mq_size = 1UL << mq->order;
 	ret = xp_restrict_memprotect(xp_pa(mq->address), mq_size);
 	BUG_ON(ret != xpSuccess);
 
-	/* unregister irq handler and release mq irq/vector mapping */
-	free_irq(mq->irq, NULL);
+	/* unरेजिस्टर irq handler and release mq irq/vector mapping */
+	मुक्त_irq(mq->irq, शून्य);
 	xpc_release_gru_mq_irq_uv(mq);
 
 	/* disable generation of irq when GRU mq op occurs to this mq */
-	xpc_gru_mq_watchlist_free_uv(mq);
+	xpc_gru_mq_watchlist_मुक्त_uv(mq);
 
 	pg_order = mq->order - PAGE_SHIFT;
-	free_pages((unsigned long)mq->address, pg_order);
+	मुक्त_pages((अचिन्हित दीर्घ)mq->address, pg_order);
 
-	kfree(mq);
-}
+	kमुक्त(mq);
+पूर्ण
 
-static enum xp_retval
-xpc_send_gru_msg(struct gru_message_queue_desc *gru_mq_desc, void *msg,
-		 size_t msg_size)
-{
-	enum xp_retval xp_ret;
-	int ret;
+अटल क्रमागत xp_retval
+xpc_send_gru_msg(काष्ठा gru_message_queue_desc *gru_mq_desc, व्योम *msg,
+		 माप_प्रकार msg_size)
+अणु
+	क्रमागत xp_retval xp_ret;
+	पूर्णांक ret;
 
-	while (1) {
+	जबतक (1) अणु
 		ret = gru_send_message_gpa(gru_mq_desc, msg, msg_size);
-		if (ret == MQE_OK) {
+		अगर (ret == MQE_OK) अणु
 			xp_ret = xpSuccess;
-			break;
-		}
+			अवरोध;
+		पूर्ण
 
-		if (ret == MQE_QUEUE_FULL) {
+		अगर (ret == MQE_QUEUE_FULL) अणु
 			dev_dbg(xpc_chan, "gru_send_message_gpa() returned "
 				"error=MQE_QUEUE_FULL\n");
 			/* !!! handle QLimit reached; delay & try again */
 			/* ??? Do we add a limit to the number of retries? */
-			(void)msleep_interruptible(10);
-		} else if (ret == MQE_CONGESTION) {
+			(व्योम)msleep_पूर्णांकerruptible(10);
+		पूर्ण अन्यथा अगर (ret == MQE_CONGESTION) अणु
 			dev_dbg(xpc_chan, "gru_send_message_gpa() returned "
 				"error=MQE_CONGESTION\n");
 			/* !!! handle LB Overflow; simply try again */
 			/* ??? Do we add a limit to the number of retries? */
-		} else {
+		पूर्ण अन्यथा अणु
 			/* !!! Currently this is MQE_UNEXPECTED_CB_ERR */
 			dev_err(xpc_chan, "gru_send_message_gpa() returned "
 				"error=%d\n", ret);
 			xp_ret = xpGruSendMqError;
-			break;
-		}
-	}
-	return xp_ret;
-}
+			अवरोध;
+		पूर्ण
+	पूर्ण
+	वापस xp_ret;
+पूर्ण
 
-static void
-xpc_process_activate_IRQ_rcvd_uv(void)
-{
-	unsigned long irq_flags;
-	short partid;
-	struct xpc_partition *part;
+अटल व्योम
+xpc_process_activate_IRQ_rcvd_uv(व्योम)
+अणु
+	अचिन्हित दीर्घ irq_flags;
+	लघु partid;
+	काष्ठा xpc_partition *part;
 	u8 act_state_req;
 
 	DBUG_ON(xpc_activate_IRQ_rcvd == 0);
 
 	spin_lock_irqsave(&xpc_activate_IRQ_rcvd_lock, irq_flags);
-	for (partid = 0; partid < XP_MAX_NPARTITIONS_UV; partid++) {
+	क्रम (partid = 0; partid < XP_MAX_NPARTITIONS_UV; partid++) अणु
 		part = &xpc_partitions[partid];
 
-		if (part->sn.uv.act_state_req == 0)
-			continue;
+		अगर (part->sn.uv.act_state_req == 0)
+			जारी;
 
 		xpc_activate_IRQ_rcvd--;
 		BUG_ON(xpc_activate_IRQ_rcvd < 0);
@@ -392,108 +393,108 @@ xpc_process_activate_IRQ_rcvd_uv(void)
 		part->sn.uv.act_state_req = 0;
 		spin_unlock_irqrestore(&xpc_activate_IRQ_rcvd_lock, irq_flags);
 
-		if (act_state_req == XPC_P_ASR_ACTIVATE_UV) {
-			if (part->act_state == XPC_P_AS_INACTIVE)
+		अगर (act_state_req == XPC_P_ASR_ACTIVATE_UV) अणु
+			अगर (part->act_state == XPC_P_AS_INACTIVE)
 				xpc_activate_partition(part);
-			else if (part->act_state == XPC_P_AS_DEACTIVATING)
+			अन्यथा अगर (part->act_state == XPC_P_AS_DEACTIVATING)
 				XPC_DEACTIVATE_PARTITION(part, xpReactivating);
 
-		} else if (act_state_req == XPC_P_ASR_REACTIVATE_UV) {
-			if (part->act_state == XPC_P_AS_INACTIVE)
+		पूर्ण अन्यथा अगर (act_state_req == XPC_P_ASR_REACTIVATE_UV) अणु
+			अगर (part->act_state == XPC_P_AS_INACTIVE)
 				xpc_activate_partition(part);
-			else
+			अन्यथा
 				XPC_DEACTIVATE_PARTITION(part, xpReactivating);
 
-		} else if (act_state_req == XPC_P_ASR_DEACTIVATE_UV) {
+		पूर्ण अन्यथा अगर (act_state_req == XPC_P_ASR_DEACTIVATE_UV) अणु
 			XPC_DEACTIVATE_PARTITION(part, part->sn.uv.reason);
 
-		} else {
+		पूर्ण अन्यथा अणु
 			BUG();
-		}
+		पूर्ण
 
 		spin_lock_irqsave(&xpc_activate_IRQ_rcvd_lock, irq_flags);
-		if (xpc_activate_IRQ_rcvd == 0)
-			break;
-	}
+		अगर (xpc_activate_IRQ_rcvd == 0)
+			अवरोध;
+	पूर्ण
 	spin_unlock_irqrestore(&xpc_activate_IRQ_rcvd_lock, irq_flags);
 
-}
+पूर्ण
 
-static void
-xpc_handle_activate_mq_msg_uv(struct xpc_partition *part,
-			      struct xpc_activate_mq_msghdr_uv *msg_hdr,
-			      int part_setup,
-			      int *wakeup_hb_checker)
-{
-	unsigned long irq_flags;
-	struct xpc_partition_uv *part_uv = &part->sn.uv;
-	struct xpc_openclose_args *args;
+अटल व्योम
+xpc_handle_activate_mq_msg_uv(काष्ठा xpc_partition *part,
+			      काष्ठा xpc_activate_mq_msghdr_uv *msg_hdr,
+			      पूर्णांक part_setup,
+			      पूर्णांक *wakeup_hb_checker)
+अणु
+	अचिन्हित दीर्घ irq_flags;
+	काष्ठा xpc_partition_uv *part_uv = &part->sn.uv;
+	काष्ठा xpc_खोलोबंद_args *args;
 
 	part_uv->remote_act_state = msg_hdr->act_state;
 
-	switch (msg_hdr->type) {
-	case XPC_ACTIVATE_MQ_MSG_SYNC_ACT_STATE_UV:
-		/* syncing of remote_act_state was just done above */
-		break;
+	चयन (msg_hdr->type) अणु
+	हाल XPC_ACTIVATE_MQ_MSG_SYNC_ACT_STATE_UV:
+		/* syncing of remote_act_state was just करोne above */
+		अवरोध;
 
-	case XPC_ACTIVATE_MQ_MSG_ACTIVATE_REQ_UV: {
-		struct xpc_activate_mq_msg_activate_req_uv *msg;
+	हाल XPC_ACTIVATE_MQ_MSG_ACTIVATE_REQ_UV: अणु
+		काष्ठा xpc_activate_mq_msg_activate_req_uv *msg;
 
 		/*
-		 * ??? Do we deal here with ts_jiffies being different
-		 * ??? if act_state != XPC_P_AS_INACTIVE instead of
+		 * ??? Do we deal here with ts_jअगरfies being dअगरferent
+		 * ??? अगर act_state != XPC_P_AS_INACTIVE instead of
 		 * ??? below?
 		 */
-		msg = container_of(msg_hdr, struct
+		msg = container_of(msg_hdr, काष्ठा
 				   xpc_activate_mq_msg_activate_req_uv, hdr);
 
 		spin_lock_irqsave(&xpc_activate_IRQ_rcvd_lock, irq_flags);
-		if (part_uv->act_state_req == 0)
+		अगर (part_uv->act_state_req == 0)
 			xpc_activate_IRQ_rcvd++;
 		part_uv->act_state_req = XPC_P_ASR_ACTIVATE_UV;
 		part->remote_rp_pa = msg->rp_gpa; /* !!! _pa is _gpa */
-		part->remote_rp_ts_jiffies = msg_hdr->rp_ts_jiffies;
+		part->remote_rp_ts_jअगरfies = msg_hdr->rp_ts_jअगरfies;
 		part_uv->heartbeat_gpa = msg->heartbeat_gpa;
 
-		if (msg->activate_gru_mq_desc_gpa !=
-		    part_uv->activate_gru_mq_desc_gpa) {
+		अगर (msg->activate_gru_mq_desc_gpa !=
+		    part_uv->activate_gru_mq_desc_gpa) अणु
 			spin_lock(&part_uv->flags_lock);
 			part_uv->flags &= ~XPC_P_CACHED_ACTIVATE_GRU_MQ_DESC_UV;
 			spin_unlock(&part_uv->flags_lock);
 			part_uv->activate_gru_mq_desc_gpa =
 			    msg->activate_gru_mq_desc_gpa;
-		}
+		पूर्ण
 		spin_unlock_irqrestore(&xpc_activate_IRQ_rcvd_lock, irq_flags);
 
 		(*wakeup_hb_checker)++;
-		break;
-	}
-	case XPC_ACTIVATE_MQ_MSG_DEACTIVATE_REQ_UV: {
-		struct xpc_activate_mq_msg_deactivate_req_uv *msg;
+		अवरोध;
+	पूर्ण
+	हाल XPC_ACTIVATE_MQ_MSG_DEACTIVATE_REQ_UV: अणु
+		काष्ठा xpc_activate_mq_msg_deactivate_req_uv *msg;
 
-		msg = container_of(msg_hdr, struct
+		msg = container_of(msg_hdr, काष्ठा
 				   xpc_activate_mq_msg_deactivate_req_uv, hdr);
 
 		spin_lock_irqsave(&xpc_activate_IRQ_rcvd_lock, irq_flags);
-		if (part_uv->act_state_req == 0)
+		अगर (part_uv->act_state_req == 0)
 			xpc_activate_IRQ_rcvd++;
 		part_uv->act_state_req = XPC_P_ASR_DEACTIVATE_UV;
 		part_uv->reason = msg->reason;
 		spin_unlock_irqrestore(&xpc_activate_IRQ_rcvd_lock, irq_flags);
 
 		(*wakeup_hb_checker)++;
-		return;
-	}
-	case XPC_ACTIVATE_MQ_MSG_CHCTL_CLOSEREQUEST_UV: {
-		struct xpc_activate_mq_msg_chctl_closerequest_uv *msg;
+		वापस;
+	पूर्ण
+	हाल XPC_ACTIVATE_MQ_MSG_CHCTL_CLOSEREQUEST_UV: अणु
+		काष्ठा xpc_activate_mq_msg_chctl_बंदrequest_uv *msg;
 
-		if (!part_setup)
-			break;
+		अगर (!part_setup)
+			अवरोध;
 
-		msg = container_of(msg_hdr, struct
-				   xpc_activate_mq_msg_chctl_closerequest_uv,
+		msg = container_of(msg_hdr, काष्ठा
+				   xpc_activate_mq_msg_chctl_बंदrequest_uv,
 				   hdr);
-		args = &part->remote_openclose_args[msg->ch_number];
+		args = &part->remote_खोलोबंद_args[msg->ch_number];
 		args->reason = msg->reason;
 
 		spin_lock_irqsave(&part->chctl_lock, irq_flags);
@@ -501,16 +502,16 @@ xpc_handle_activate_mq_msg_uv(struct xpc_partition *part,
 		spin_unlock_irqrestore(&part->chctl_lock, irq_flags);
 
 		xpc_wakeup_channel_mgr(part);
-		break;
-	}
-	case XPC_ACTIVATE_MQ_MSG_CHCTL_CLOSEREPLY_UV: {
-		struct xpc_activate_mq_msg_chctl_closereply_uv *msg;
+		अवरोध;
+	पूर्ण
+	हाल XPC_ACTIVATE_MQ_MSG_CHCTL_CLOSEREPLY_UV: अणु
+		काष्ठा xpc_activate_mq_msg_chctl_बंदreply_uv *msg;
 
-		if (!part_setup)
-			break;
+		अगर (!part_setup)
+			अवरोध;
 
-		msg = container_of(msg_hdr, struct
-				   xpc_activate_mq_msg_chctl_closereply_uv,
+		msg = container_of(msg_hdr, काष्ठा
+				   xpc_activate_mq_msg_chctl_बंदreply_uv,
 				   hdr);
 
 		spin_lock_irqsave(&part->chctl_lock, irq_flags);
@@ -518,18 +519,18 @@ xpc_handle_activate_mq_msg_uv(struct xpc_partition *part,
 		spin_unlock_irqrestore(&part->chctl_lock, irq_flags);
 
 		xpc_wakeup_channel_mgr(part);
-		break;
-	}
-	case XPC_ACTIVATE_MQ_MSG_CHCTL_OPENREQUEST_UV: {
-		struct xpc_activate_mq_msg_chctl_openrequest_uv *msg;
+		अवरोध;
+	पूर्ण
+	हाल XPC_ACTIVATE_MQ_MSG_CHCTL_OPENREQUEST_UV: अणु
+		काष्ठा xpc_activate_mq_msg_chctl_खोलोrequest_uv *msg;
 
-		if (!part_setup)
-			break;
+		अगर (!part_setup)
+			अवरोध;
 
-		msg = container_of(msg_hdr, struct
-				   xpc_activate_mq_msg_chctl_openrequest_uv,
+		msg = container_of(msg_hdr, काष्ठा
+				   xpc_activate_mq_msg_chctl_खोलोrequest_uv,
 				   hdr);
-		args = &part->remote_openclose_args[msg->ch_number];
+		args = &part->remote_खोलोबंद_args[msg->ch_number];
 		args->entry_size = msg->entry_size;
 		args->local_nentries = msg->local_nentries;
 
@@ -538,843 +539,843 @@ xpc_handle_activate_mq_msg_uv(struct xpc_partition *part,
 		spin_unlock_irqrestore(&part->chctl_lock, irq_flags);
 
 		xpc_wakeup_channel_mgr(part);
-		break;
-	}
-	case XPC_ACTIVATE_MQ_MSG_CHCTL_OPENREPLY_UV: {
-		struct xpc_activate_mq_msg_chctl_openreply_uv *msg;
+		अवरोध;
+	पूर्ण
+	हाल XPC_ACTIVATE_MQ_MSG_CHCTL_OPENREPLY_UV: अणु
+		काष्ठा xpc_activate_mq_msg_chctl_खोलोreply_uv *msg;
 
-		if (!part_setup)
-			break;
+		अगर (!part_setup)
+			अवरोध;
 
-		msg = container_of(msg_hdr, struct
-				   xpc_activate_mq_msg_chctl_openreply_uv, hdr);
-		args = &part->remote_openclose_args[msg->ch_number];
+		msg = container_of(msg_hdr, काष्ठा
+				   xpc_activate_mq_msg_chctl_खोलोreply_uv, hdr);
+		args = &part->remote_खोलोबंद_args[msg->ch_number];
 		args->remote_nentries = msg->remote_nentries;
 		args->local_nentries = msg->local_nentries;
-		args->local_msgqueue_pa = msg->notify_gru_mq_desc_gpa;
+		args->local_msgqueue_pa = msg->notअगरy_gru_mq_desc_gpa;
 
 		spin_lock_irqsave(&part->chctl_lock, irq_flags);
 		part->chctl.flags[msg->ch_number] |= XPC_CHCTL_OPENREPLY;
 		spin_unlock_irqrestore(&part->chctl_lock, irq_flags);
 
 		xpc_wakeup_channel_mgr(part);
-		break;
-	}
-	case XPC_ACTIVATE_MQ_MSG_CHCTL_OPENCOMPLETE_UV: {
-		struct xpc_activate_mq_msg_chctl_opencomplete_uv *msg;
+		अवरोध;
+	पूर्ण
+	हाल XPC_ACTIVATE_MQ_MSG_CHCTL_OPENCOMPLETE_UV: अणु
+		काष्ठा xpc_activate_mq_msg_chctl_खोलोcomplete_uv *msg;
 
-		if (!part_setup)
-			break;
+		अगर (!part_setup)
+			अवरोध;
 
-		msg = container_of(msg_hdr, struct
-				xpc_activate_mq_msg_chctl_opencomplete_uv, hdr);
+		msg = container_of(msg_hdr, काष्ठा
+				xpc_activate_mq_msg_chctl_खोलोcomplete_uv, hdr);
 		spin_lock_irqsave(&part->chctl_lock, irq_flags);
 		part->chctl.flags[msg->ch_number] |= XPC_CHCTL_OPENCOMPLETE;
 		spin_unlock_irqrestore(&part->chctl_lock, irq_flags);
 
 		xpc_wakeup_channel_mgr(part);
-	}
+	पूर्ण
 		fallthrough;
-	case XPC_ACTIVATE_MQ_MSG_MARK_ENGAGED_UV:
+	हाल XPC_ACTIVATE_MQ_MSG_MARK_ENGAGED_UV:
 		spin_lock_irqsave(&part_uv->flags_lock, irq_flags);
 		part_uv->flags |= XPC_P_ENGAGED_UV;
 		spin_unlock_irqrestore(&part_uv->flags_lock, irq_flags);
-		break;
+		अवरोध;
 
-	case XPC_ACTIVATE_MQ_MSG_MARK_DISENGAGED_UV:
+	हाल XPC_ACTIVATE_MQ_MSG_MARK_DISENGAGED_UV:
 		spin_lock_irqsave(&part_uv->flags_lock, irq_flags);
 		part_uv->flags &= ~XPC_P_ENGAGED_UV;
 		spin_unlock_irqrestore(&part_uv->flags_lock, irq_flags);
-		break;
+		अवरोध;
 
-	default:
+	शेष:
 		dev_err(xpc_part, "received unknown activate_mq msg type=%d "
 			"from partition=%d\n", msg_hdr->type, XPC_PARTID(part));
 
 		/* get hb checker to deactivate from the remote partition */
 		spin_lock_irqsave(&xpc_activate_IRQ_rcvd_lock, irq_flags);
-		if (part_uv->act_state_req == 0)
+		अगर (part_uv->act_state_req == 0)
 			xpc_activate_IRQ_rcvd++;
 		part_uv->act_state_req = XPC_P_ASR_DEACTIVATE_UV;
 		part_uv->reason = xpBadMsgType;
 		spin_unlock_irqrestore(&xpc_activate_IRQ_rcvd_lock, irq_flags);
 
 		(*wakeup_hb_checker)++;
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	if (msg_hdr->rp_ts_jiffies != part->remote_rp_ts_jiffies &&
-	    part->remote_rp_ts_jiffies != 0) {
+	अगर (msg_hdr->rp_ts_jअगरfies != part->remote_rp_ts_jअगरfies &&
+	    part->remote_rp_ts_jअगरfies != 0) अणु
 		/*
-		 * ??? Does what we do here need to be sensitive to
+		 * ??? Does what we करो here need to be sensitive to
 		 * ??? act_state or remote_act_state?
 		 */
 		spin_lock_irqsave(&xpc_activate_IRQ_rcvd_lock, irq_flags);
-		if (part_uv->act_state_req == 0)
+		अगर (part_uv->act_state_req == 0)
 			xpc_activate_IRQ_rcvd++;
 		part_uv->act_state_req = XPC_P_ASR_REACTIVATE_UV;
 		spin_unlock_irqrestore(&xpc_activate_IRQ_rcvd_lock, irq_flags);
 
 		(*wakeup_hb_checker)++;
-	}
-}
+	पूर्ण
+पूर्ण
 
-static irqreturn_t
-xpc_handle_activate_IRQ_uv(int irq, void *dev_id)
-{
-	struct xpc_activate_mq_msghdr_uv *msg_hdr;
-	short partid;
-	struct xpc_partition *part;
-	int wakeup_hb_checker = 0;
-	int part_referenced;
+अटल irqवापस_t
+xpc_handle_activate_IRQ_uv(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा xpc_activate_mq_msghdr_uv *msg_hdr;
+	लघु partid;
+	काष्ठा xpc_partition *part;
+	पूर्णांक wakeup_hb_checker = 0;
+	पूर्णांक part_referenced;
 
-	while (1) {
+	जबतक (1) अणु
 		msg_hdr = gru_get_next_message(xpc_activate_mq_uv->gru_mq_desc);
-		if (msg_hdr == NULL)
-			break;
+		अगर (msg_hdr == शून्य)
+			अवरोध;
 
 		partid = msg_hdr->partid;
-		if (partid < 0 || partid >= XP_MAX_NPARTITIONS_UV) {
+		अगर (partid < 0 || partid >= XP_MAX_NPARTITIONS_UV) अणु
 			dev_err(xpc_part, "xpc_handle_activate_IRQ_uv() "
 				"received invalid partid=0x%x in message\n",
 				partid);
-		} else {
+		पूर्ण अन्यथा अणु
 			part = &xpc_partitions[partid];
 
 			part_referenced = xpc_part_ref(part);
 			xpc_handle_activate_mq_msg_uv(part, msg_hdr,
 						      part_referenced,
 						      &wakeup_hb_checker);
-			if (part_referenced)
+			अगर (part_referenced)
 				xpc_part_deref(part);
-		}
+		पूर्ण
 
-		gru_free_message(xpc_activate_mq_uv->gru_mq_desc, msg_hdr);
-	}
+		gru_मुक्त_message(xpc_activate_mq_uv->gru_mq_desc, msg_hdr);
+	पूर्ण
 
-	if (wakeup_hb_checker)
-		wake_up_interruptible(&xpc_activate_IRQ_wq);
+	अगर (wakeup_hb_checker)
+		wake_up_पूर्णांकerruptible(&xpc_activate_IRQ_wq);
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static enum xp_retval
-xpc_cache_remote_gru_mq_desc_uv(struct gru_message_queue_desc *gru_mq_desc,
-				unsigned long gru_mq_desc_gpa)
-{
-	enum xp_retval ret;
+अटल क्रमागत xp_retval
+xpc_cache_remote_gru_mq_desc_uv(काष्ठा gru_message_queue_desc *gru_mq_desc,
+				अचिन्हित दीर्घ gru_mq_desc_gpa)
+अणु
+	क्रमागत xp_retval ret;
 
-	ret = xp_remote_memcpy(uv_gpa(gru_mq_desc), gru_mq_desc_gpa,
-			       sizeof(struct gru_message_queue_desc));
-	if (ret == xpSuccess)
-		gru_mq_desc->mq = NULL;
+	ret = xp_remote_स_नकल(uv_gpa(gru_mq_desc), gru_mq_desc_gpa,
+			       माप(काष्ठा gru_message_queue_desc));
+	अगर (ret == xpSuccess)
+		gru_mq_desc->mq = शून्य;
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static enum xp_retval
-xpc_send_activate_IRQ_uv(struct xpc_partition *part, void *msg, size_t msg_size,
-			 int msg_type)
-{
-	struct xpc_activate_mq_msghdr_uv *msg_hdr = msg;
-	struct xpc_partition_uv *part_uv = &part->sn.uv;
-	struct gru_message_queue_desc *gru_mq_desc;
-	unsigned long irq_flags;
-	enum xp_retval ret;
+अटल क्रमागत xp_retval
+xpc_send_activate_IRQ_uv(काष्ठा xpc_partition *part, व्योम *msg, माप_प्रकार msg_size,
+			 पूर्णांक msg_type)
+अणु
+	काष्ठा xpc_activate_mq_msghdr_uv *msg_hdr = msg;
+	काष्ठा xpc_partition_uv *part_uv = &part->sn.uv;
+	काष्ठा gru_message_queue_desc *gru_mq_desc;
+	अचिन्हित दीर्घ irq_flags;
+	क्रमागत xp_retval ret;
 
 	DBUG_ON(msg_size > XPC_ACTIVATE_MSG_SIZE_UV);
 
 	msg_hdr->type = msg_type;
 	msg_hdr->partid = xp_partition_id;
 	msg_hdr->act_state = part->act_state;
-	msg_hdr->rp_ts_jiffies = xpc_rsvd_page->ts_jiffies;
+	msg_hdr->rp_ts_jअगरfies = xpc_rsvd_page->ts_jअगरfies;
 
 	mutex_lock(&part_uv->cached_activate_gru_mq_desc_mutex);
 again:
-	if (!(part_uv->flags & XPC_P_CACHED_ACTIVATE_GRU_MQ_DESC_UV)) {
+	अगर (!(part_uv->flags & XPC_P_CACHED_ACTIVATE_GRU_MQ_DESC_UV)) अणु
 		gru_mq_desc = part_uv->cached_activate_gru_mq_desc;
-		if (gru_mq_desc == NULL) {
-			gru_mq_desc = kmalloc(sizeof(struct
+		अगर (gru_mq_desc == शून्य) अणु
+			gru_mq_desc = kदो_स्मृति(माप(काष्ठा
 					      gru_message_queue_desc),
 					      GFP_ATOMIC);
-			if (gru_mq_desc == NULL) {
+			अगर (gru_mq_desc == शून्य) अणु
 				ret = xpNoMemory;
-				goto done;
-			}
+				जाओ करोne;
+			पूर्ण
 			part_uv->cached_activate_gru_mq_desc = gru_mq_desc;
-		}
+		पूर्ण
 
 		ret = xpc_cache_remote_gru_mq_desc_uv(gru_mq_desc,
 						      part_uv->
 						      activate_gru_mq_desc_gpa);
-		if (ret != xpSuccess)
-			goto done;
+		अगर (ret != xpSuccess)
+			जाओ करोne;
 
 		spin_lock_irqsave(&part_uv->flags_lock, irq_flags);
 		part_uv->flags |= XPC_P_CACHED_ACTIVATE_GRU_MQ_DESC_UV;
 		spin_unlock_irqrestore(&part_uv->flags_lock, irq_flags);
-	}
+	पूर्ण
 
 	/* ??? Is holding a spin_lock (ch->lock) during this call a bad idea? */
 	ret = xpc_send_gru_msg(part_uv->cached_activate_gru_mq_desc, msg,
 			       msg_size);
-	if (ret != xpSuccess) {
+	अगर (ret != xpSuccess) अणु
 		smp_rmb();	/* ensure a fresh copy of part_uv->flags */
-		if (!(part_uv->flags & XPC_P_CACHED_ACTIVATE_GRU_MQ_DESC_UV))
-			goto again;
-	}
-done:
+		अगर (!(part_uv->flags & XPC_P_CACHED_ACTIVATE_GRU_MQ_DESC_UV))
+			जाओ again;
+	पूर्ण
+करोne:
 	mutex_unlock(&part_uv->cached_activate_gru_mq_desc_mutex);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static void
-xpc_send_activate_IRQ_part_uv(struct xpc_partition *part, void *msg,
-			      size_t msg_size, int msg_type)
-{
-	enum xp_retval ret;
+अटल व्योम
+xpc_send_activate_IRQ_part_uv(काष्ठा xpc_partition *part, व्योम *msg,
+			      माप_प्रकार msg_size, पूर्णांक msg_type)
+अणु
+	क्रमागत xp_retval ret;
 
 	ret = xpc_send_activate_IRQ_uv(part, msg, msg_size, msg_type);
-	if (unlikely(ret != xpSuccess))
+	अगर (unlikely(ret != xpSuccess))
 		XPC_DEACTIVATE_PARTITION(part, ret);
-}
+पूर्ण
 
-static void
-xpc_send_activate_IRQ_ch_uv(struct xpc_channel *ch, unsigned long *irq_flags,
-			 void *msg, size_t msg_size, int msg_type)
-{
-	struct xpc_partition *part = &xpc_partitions[ch->partid];
-	enum xp_retval ret;
+अटल व्योम
+xpc_send_activate_IRQ_ch_uv(काष्ठा xpc_channel *ch, अचिन्हित दीर्घ *irq_flags,
+			 व्योम *msg, माप_प्रकार msg_size, पूर्णांक msg_type)
+अणु
+	काष्ठा xpc_partition *part = &xpc_partitions[ch->partid];
+	क्रमागत xp_retval ret;
 
 	ret = xpc_send_activate_IRQ_uv(part, msg, msg_size, msg_type);
-	if (unlikely(ret != xpSuccess)) {
-		if (irq_flags != NULL)
+	अगर (unlikely(ret != xpSuccess)) अणु
+		अगर (irq_flags != शून्य)
 			spin_unlock_irqrestore(&ch->lock, *irq_flags);
 
 		XPC_DEACTIVATE_PARTITION(part, ret);
 
-		if (irq_flags != NULL)
+		अगर (irq_flags != शून्य)
 			spin_lock_irqsave(&ch->lock, *irq_flags);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-xpc_send_local_activate_IRQ_uv(struct xpc_partition *part, int act_state_req)
-{
-	unsigned long irq_flags;
-	struct xpc_partition_uv *part_uv = &part->sn.uv;
+अटल व्योम
+xpc_send_local_activate_IRQ_uv(काष्ठा xpc_partition *part, पूर्णांक act_state_req)
+अणु
+	अचिन्हित दीर्घ irq_flags;
+	काष्ठा xpc_partition_uv *part_uv = &part->sn.uv;
 
 	/*
 	 * !!! Make our side think that the remote partition sent an activate
-	 * !!! mq message our way by doing what the activate IRQ handler would
-	 * !!! do had one really been sent.
+	 * !!! mq message our way by करोing what the activate IRQ handler would
+	 * !!! करो had one really been sent.
 	 */
 
 	spin_lock_irqsave(&xpc_activate_IRQ_rcvd_lock, irq_flags);
-	if (part_uv->act_state_req == 0)
+	अगर (part_uv->act_state_req == 0)
 		xpc_activate_IRQ_rcvd++;
 	part_uv->act_state_req = act_state_req;
 	spin_unlock_irqrestore(&xpc_activate_IRQ_rcvd_lock, irq_flags);
 
-	wake_up_interruptible(&xpc_activate_IRQ_wq);
-}
+	wake_up_पूर्णांकerruptible(&xpc_activate_IRQ_wq);
+पूर्ण
 
-static enum xp_retval
-xpc_get_partition_rsvd_page_pa_uv(void *buf, u64 *cookie, unsigned long *rp_pa,
-				  size_t *len)
-{
+अटल क्रमागत xp_retval
+xpc_get_partition_rsvd_page_pa_uv(व्योम *buf, u64 *cookie, अचिन्हित दीर्घ *rp_pa,
+				  माप_प्रकार *len)
+अणु
 	s64 status;
-	enum xp_retval ret;
+	क्रमागत xp_retval ret;
 
-#if defined CONFIG_X86_64
+#अगर defined CONFIG_X86_64
 	status = uv_bios_reserved_page_pa((u64)buf, cookie, (u64 *)rp_pa,
 					  (u64 *)len);
-	if (status == BIOS_STATUS_SUCCESS)
+	अगर (status == BIOS_STATUS_SUCCESS)
 		ret = xpSuccess;
-	else if (status == BIOS_STATUS_MORE_PASSES)
+	अन्यथा अगर (status == BIOS_STATUS_MORE_PASSES)
 		ret = xpNeedMoreInfo;
-	else
+	अन्यथा
 		ret = xpBiosError;
 
-#elif defined CONFIG_IA64_SGI_UV
+#या_अगर defined CONFIG_IA64_SGI_UV
 	status = sn_partition_reserved_page_pa((u64)buf, cookie, rp_pa, len);
-	if (status == SALRET_OK)
+	अगर (status == SALRET_OK)
 		ret = xpSuccess;
-	else if (status == SALRET_MORE_PASSES)
+	अन्यथा अगर (status == SALRET_MORE_PASSES)
 		ret = xpNeedMoreInfo;
-	else
+	अन्यथा
 		ret = xpSalError;
 
-#else
-	#error not a supported configuration
-#endif
+#अन्यथा
+	#त्रुटि not a supported configuration
+#पूर्ण_अगर
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static int
-xpc_setup_rsvd_page_uv(struct xpc_rsvd_page *rp)
-{
+अटल पूर्णांक
+xpc_setup_rsvd_page_uv(काष्ठा xpc_rsvd_page *rp)
+अणु
 	xpc_heartbeat_uv =
 	    &xpc_partitions[sn_partition_id].sn.uv.cached_heartbeat;
 	rp->sn.uv.heartbeat_gpa = uv_gpa(xpc_heartbeat_uv);
 	rp->sn.uv.activate_gru_mq_desc_gpa =
 	    uv_gpa(xpc_activate_mq_uv->gru_mq_desc);
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-xpc_allow_hb_uv(short partid)
-{
-}
+अटल व्योम
+xpc_allow_hb_uv(लघु partid)
+अणु
+पूर्ण
 
-static void
-xpc_disallow_hb_uv(short partid)
-{
-}
+अटल व्योम
+xpc_disallow_hb_uv(लघु partid)
+अणु
+पूर्ण
 
-static void
-xpc_disallow_all_hbs_uv(void)
-{
-}
+अटल व्योम
+xpc_disallow_all_hbs_uv(व्योम)
+अणु
+पूर्ण
 
-static void
-xpc_increment_heartbeat_uv(void)
-{
+अटल व्योम
+xpc_increment_heartbeat_uv(व्योम)
+अणु
 	xpc_heartbeat_uv->value++;
-}
+पूर्ण
 
-static void
-xpc_offline_heartbeat_uv(void)
-{
+अटल व्योम
+xpc_offline_heartbeat_uv(व्योम)
+अणु
 	xpc_increment_heartbeat_uv();
 	xpc_heartbeat_uv->offline = 1;
-}
+पूर्ण
 
-static void
-xpc_online_heartbeat_uv(void)
-{
+अटल व्योम
+xpc_online_heartbeat_uv(व्योम)
+अणु
 	xpc_increment_heartbeat_uv();
 	xpc_heartbeat_uv->offline = 0;
-}
+पूर्ण
 
-static void
-xpc_heartbeat_init_uv(void)
-{
+अटल व्योम
+xpc_heartbeat_init_uv(व्योम)
+अणु
 	xpc_heartbeat_uv->value = 1;
 	xpc_heartbeat_uv->offline = 0;
-}
+पूर्ण
 
-static void
-xpc_heartbeat_exit_uv(void)
-{
+अटल व्योम
+xpc_heartbeat_निकास_uv(व्योम)
+अणु
 	xpc_offline_heartbeat_uv();
-}
+पूर्ण
 
-static enum xp_retval
-xpc_get_remote_heartbeat_uv(struct xpc_partition *part)
-{
-	struct xpc_partition_uv *part_uv = &part->sn.uv;
-	enum xp_retval ret;
+अटल क्रमागत xp_retval
+xpc_get_remote_heartbeat_uv(काष्ठा xpc_partition *part)
+अणु
+	काष्ठा xpc_partition_uv *part_uv = &part->sn.uv;
+	क्रमागत xp_retval ret;
 
-	ret = xp_remote_memcpy(uv_gpa(&part_uv->cached_heartbeat),
+	ret = xp_remote_स_नकल(uv_gpa(&part_uv->cached_heartbeat),
 			       part_uv->heartbeat_gpa,
-			       sizeof(struct xpc_heartbeat_uv));
-	if (ret != xpSuccess)
-		return ret;
+			       माप(काष्ठा xpc_heartbeat_uv));
+	अगर (ret != xpSuccess)
+		वापस ret;
 
-	if (part_uv->cached_heartbeat.value == part->last_heartbeat &&
-	    !part_uv->cached_heartbeat.offline) {
+	अगर (part_uv->cached_heartbeat.value == part->last_heartbeat &&
+	    !part_uv->cached_heartbeat.offline) अणु
 
 		ret = xpNoHeartbeat;
-	} else {
+	पूर्ण अन्यथा अणु
 		part->last_heartbeat = part_uv->cached_heartbeat.value;
-	}
-	return ret;
-}
+	पूर्ण
+	वापस ret;
+पूर्ण
 
-static void
-xpc_request_partition_activation_uv(struct xpc_rsvd_page *remote_rp,
-				    unsigned long remote_rp_gpa, int nasid)
-{
-	short partid = remote_rp->SAL_partid;
-	struct xpc_partition *part = &xpc_partitions[partid];
-	struct xpc_activate_mq_msg_activate_req_uv msg;
+अटल व्योम
+xpc_request_partition_activation_uv(काष्ठा xpc_rsvd_page *remote_rp,
+				    अचिन्हित दीर्घ remote_rp_gpa, पूर्णांक nasid)
+अणु
+	लघु partid = remote_rp->SAL_partid;
+	काष्ठा xpc_partition *part = &xpc_partitions[partid];
+	काष्ठा xpc_activate_mq_msg_activate_req_uv msg;
 
 	part->remote_rp_pa = remote_rp_gpa; /* !!! _pa here is really _gpa */
-	part->remote_rp_ts_jiffies = remote_rp->ts_jiffies;
+	part->remote_rp_ts_jअगरfies = remote_rp->ts_jअगरfies;
 	part->sn.uv.heartbeat_gpa = remote_rp->sn.uv.heartbeat_gpa;
 	part->sn.uv.activate_gru_mq_desc_gpa =
 	    remote_rp->sn.uv.activate_gru_mq_desc_gpa;
 
 	/*
 	 * ??? Is it a good idea to make this conditional on what is
-	 * ??? potentially stale state information?
+	 * ??? potentially stale state inक्रमmation?
 	 */
-	if (part->sn.uv.remote_act_state == XPC_P_AS_INACTIVE) {
+	अगर (part->sn.uv.remote_act_state == XPC_P_AS_INACTIVE) अणु
 		msg.rp_gpa = uv_gpa(xpc_rsvd_page);
 		msg.heartbeat_gpa = xpc_rsvd_page->sn.uv.heartbeat_gpa;
 		msg.activate_gru_mq_desc_gpa =
 		    xpc_rsvd_page->sn.uv.activate_gru_mq_desc_gpa;
-		xpc_send_activate_IRQ_part_uv(part, &msg, sizeof(msg),
+		xpc_send_activate_IRQ_part_uv(part, &msg, माप(msg),
 					   XPC_ACTIVATE_MQ_MSG_ACTIVATE_REQ_UV);
-	}
+	पूर्ण
 
-	if (part->act_state == XPC_P_AS_INACTIVE)
+	अगर (part->act_state == XPC_P_AS_INACTIVE)
 		xpc_send_local_activate_IRQ_uv(part, XPC_P_ASR_ACTIVATE_UV);
-}
+पूर्ण
 
-static void
-xpc_request_partition_reactivation_uv(struct xpc_partition *part)
-{
+अटल व्योम
+xpc_request_partition_reactivation_uv(काष्ठा xpc_partition *part)
+अणु
 	xpc_send_local_activate_IRQ_uv(part, XPC_P_ASR_ACTIVATE_UV);
-}
+पूर्ण
 
-static void
-xpc_request_partition_deactivation_uv(struct xpc_partition *part)
-{
-	struct xpc_activate_mq_msg_deactivate_req_uv msg;
+अटल व्योम
+xpc_request_partition_deactivation_uv(काष्ठा xpc_partition *part)
+अणु
+	काष्ठा xpc_activate_mq_msg_deactivate_req_uv msg;
 
 	/*
 	 * ??? Is it a good idea to make this conditional on what is
-	 * ??? potentially stale state information?
+	 * ??? potentially stale state inक्रमmation?
 	 */
-	if (part->sn.uv.remote_act_state != XPC_P_AS_DEACTIVATING &&
-	    part->sn.uv.remote_act_state != XPC_P_AS_INACTIVE) {
+	अगर (part->sn.uv.remote_act_state != XPC_P_AS_DEACTIVATING &&
+	    part->sn.uv.remote_act_state != XPC_P_AS_INACTIVE) अणु
 
 		msg.reason = part->reason;
-		xpc_send_activate_IRQ_part_uv(part, &msg, sizeof(msg),
+		xpc_send_activate_IRQ_part_uv(part, &msg, माप(msg),
 					 XPC_ACTIVATE_MQ_MSG_DEACTIVATE_REQ_UV);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-xpc_cancel_partition_deactivation_request_uv(struct xpc_partition *part)
-{
-	/* nothing needs to be done */
-	return;
-}
+अटल व्योम
+xpc_cancel_partition_deactivation_request_uv(काष्ठा xpc_partition *part)
+अणु
+	/* nothing needs to be करोne */
+	वापस;
+पूर्ण
 
-static void
-xpc_init_fifo_uv(struct xpc_fifo_head_uv *head)
-{
-	head->first = NULL;
-	head->last = NULL;
+अटल व्योम
+xpc_init_fअगरo_uv(काष्ठा xpc_fअगरo_head_uv *head)
+अणु
+	head->first = शून्य;
+	head->last = शून्य;
 	spin_lock_init(&head->lock);
 	head->n_entries = 0;
-}
+पूर्ण
 
-static void *
-xpc_get_fifo_entry_uv(struct xpc_fifo_head_uv *head)
-{
-	unsigned long irq_flags;
-	struct xpc_fifo_entry_uv *first;
+अटल व्योम *
+xpc_get_fअगरo_entry_uv(काष्ठा xpc_fअगरo_head_uv *head)
+अणु
+	अचिन्हित दीर्घ irq_flags;
+	काष्ठा xpc_fअगरo_entry_uv *first;
 
 	spin_lock_irqsave(&head->lock, irq_flags);
 	first = head->first;
-	if (head->first != NULL) {
+	अगर (head->first != शून्य) अणु
 		head->first = first->next;
-		if (head->first == NULL)
-			head->last = NULL;
+		अगर (head->first == शून्य)
+			head->last = शून्य;
 
 		head->n_entries--;
 		BUG_ON(head->n_entries < 0);
 
-		first->next = NULL;
-	}
+		first->next = शून्य;
+	पूर्ण
 	spin_unlock_irqrestore(&head->lock, irq_flags);
-	return first;
-}
+	वापस first;
+पूर्ण
 
-static void
-xpc_put_fifo_entry_uv(struct xpc_fifo_head_uv *head,
-		      struct xpc_fifo_entry_uv *last)
-{
-	unsigned long irq_flags;
+अटल व्योम
+xpc_put_fअगरo_entry_uv(काष्ठा xpc_fअगरo_head_uv *head,
+		      काष्ठा xpc_fअगरo_entry_uv *last)
+अणु
+	अचिन्हित दीर्घ irq_flags;
 
-	last->next = NULL;
+	last->next = शून्य;
 	spin_lock_irqsave(&head->lock, irq_flags);
-	if (head->last != NULL)
+	अगर (head->last != शून्य)
 		head->last->next = last;
-	else
+	अन्यथा
 		head->first = last;
 	head->last = last;
 	head->n_entries++;
 	spin_unlock_irqrestore(&head->lock, irq_flags);
-}
+पूर्ण
 
-static int
-xpc_n_of_fifo_entries_uv(struct xpc_fifo_head_uv *head)
-{
-	return head->n_entries;
-}
+अटल पूर्णांक
+xpc_n_of_fअगरo_entries_uv(काष्ठा xpc_fअगरo_head_uv *head)
+अणु
+	वापस head->n_entries;
+पूर्ण
 
 /*
- * Setup the channel structures that are uv specific.
+ * Setup the channel काष्ठाures that are uv specअगरic.
  */
-static enum xp_retval
-xpc_setup_ch_structures_uv(struct xpc_partition *part)
-{
-	struct xpc_channel_uv *ch_uv;
-	int ch_number;
+अटल क्रमागत xp_retval
+xpc_setup_ch_काष्ठाures_uv(काष्ठा xpc_partition *part)
+अणु
+	काष्ठा xpc_channel_uv *ch_uv;
+	पूर्णांक ch_number;
 
-	for (ch_number = 0; ch_number < part->nchannels; ch_number++) {
+	क्रम (ch_number = 0; ch_number < part->nchannels; ch_number++) अणु
 		ch_uv = &part->channels[ch_number].sn.uv;
 
-		xpc_init_fifo_uv(&ch_uv->msg_slot_free_list);
-		xpc_init_fifo_uv(&ch_uv->recv_msg_list);
-	}
+		xpc_init_fअगरo_uv(&ch_uv->msg_slot_मुक्त_list);
+		xpc_init_fअगरo_uv(&ch_uv->recv_msg_list);
+	पूर्ण
 
-	return xpSuccess;
-}
+	वापस xpSuccess;
+पूर्ण
 
 /*
- * Teardown the channel structures that are uv specific.
+ * Tearकरोwn the channel काष्ठाures that are uv specअगरic.
  */
-static void
-xpc_teardown_ch_structures_uv(struct xpc_partition *part)
-{
-	/* nothing needs to be done */
-	return;
-}
+अटल व्योम
+xpc_tearकरोwn_ch_काष्ठाures_uv(काष्ठा xpc_partition *part)
+अणु
+	/* nothing needs to be करोne */
+	वापस;
+पूर्ण
 
-static enum xp_retval
-xpc_make_first_contact_uv(struct xpc_partition *part)
-{
-	struct xpc_activate_mq_msg_uv msg;
+अटल क्रमागत xp_retval
+xpc_make_first_contact_uv(काष्ठा xpc_partition *part)
+अणु
+	काष्ठा xpc_activate_mq_msg_uv msg;
 
 	/*
 	 * We send a sync msg to get the remote partition's remote_act_state
-	 * updated to our current act_state which at this point should
+	 * updated to our current act_state which at this poपूर्णांक should
 	 * be XPC_P_AS_ACTIVATING.
 	 */
-	xpc_send_activate_IRQ_part_uv(part, &msg, sizeof(msg),
+	xpc_send_activate_IRQ_part_uv(part, &msg, माप(msg),
 				      XPC_ACTIVATE_MQ_MSG_SYNC_ACT_STATE_UV);
 
-	while (!((part->sn.uv.remote_act_state == XPC_P_AS_ACTIVATING) ||
-		 (part->sn.uv.remote_act_state == XPC_P_AS_ACTIVE))) {
+	जबतक (!((part->sn.uv.remote_act_state == XPC_P_AS_ACTIVATING) ||
+		 (part->sn.uv.remote_act_state == XPC_P_AS_ACTIVE))) अणु
 
 		dev_dbg(xpc_part, "waiting to make first contact with "
 			"partition %d\n", XPC_PARTID(part));
 
-		/* wait a 1/4 of a second or so */
-		(void)msleep_interruptible(250);
+		/* रुको a 1/4 of a second or so */
+		(व्योम)msleep_पूर्णांकerruptible(250);
 
-		if (part->act_state == XPC_P_AS_DEACTIVATING)
-			return part->reason;
-	}
+		अगर (part->act_state == XPC_P_AS_DEACTIVATING)
+			वापस part->reason;
+	पूर्ण
 
-	return xpSuccess;
-}
+	वापस xpSuccess;
+पूर्ण
 
-static u64
-xpc_get_chctl_all_flags_uv(struct xpc_partition *part)
-{
-	unsigned long irq_flags;
-	union xpc_channel_ctl_flags chctl;
+अटल u64
+xpc_get_chctl_all_flags_uv(काष्ठा xpc_partition *part)
+अणु
+	अचिन्हित दीर्घ irq_flags;
+	जोड़ xpc_channel_ctl_flags chctl;
 
 	spin_lock_irqsave(&part->chctl_lock, irq_flags);
 	chctl = part->chctl;
-	if (chctl.all_flags != 0)
+	अगर (chctl.all_flags != 0)
 		part->chctl.all_flags = 0;
 
 	spin_unlock_irqrestore(&part->chctl_lock, irq_flags);
-	return chctl.all_flags;
-}
+	वापस chctl.all_flags;
+पूर्ण
 
-static enum xp_retval
-xpc_allocate_send_msg_slot_uv(struct xpc_channel *ch)
-{
-	struct xpc_channel_uv *ch_uv = &ch->sn.uv;
-	struct xpc_send_msg_slot_uv *msg_slot;
-	unsigned long irq_flags;
-	int nentries;
-	int entry;
-	size_t nbytes;
+अटल क्रमागत xp_retval
+xpc_allocate_send_msg_slot_uv(काष्ठा xpc_channel *ch)
+अणु
+	काष्ठा xpc_channel_uv *ch_uv = &ch->sn.uv;
+	काष्ठा xpc_send_msg_slot_uv *msg_slot;
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक nentries;
+	पूर्णांक entry;
+	माप_प्रकार nbytes;
 
-	for (nentries = ch->local_nentries; nentries > 0; nentries--) {
-		nbytes = nentries * sizeof(struct xpc_send_msg_slot_uv);
+	क्रम (nentries = ch->local_nentries; nentries > 0; nentries--) अणु
+		nbytes = nentries * माप(काष्ठा xpc_send_msg_slot_uv);
 		ch_uv->send_msg_slots = kzalloc(nbytes, GFP_KERNEL);
-		if (ch_uv->send_msg_slots == NULL)
-			continue;
+		अगर (ch_uv->send_msg_slots == शून्य)
+			जारी;
 
-		for (entry = 0; entry < nentries; entry++) {
+		क्रम (entry = 0; entry < nentries; entry++) अणु
 			msg_slot = &ch_uv->send_msg_slots[entry];
 
 			msg_slot->msg_slot_number = entry;
-			xpc_put_fifo_entry_uv(&ch_uv->msg_slot_free_list,
+			xpc_put_fअगरo_entry_uv(&ch_uv->msg_slot_मुक्त_list,
 					      &msg_slot->next);
-		}
+		पूर्ण
 
 		spin_lock_irqsave(&ch->lock, irq_flags);
-		if (nentries < ch->local_nentries)
+		अगर (nentries < ch->local_nentries)
 			ch->local_nentries = nentries;
 		spin_unlock_irqrestore(&ch->lock, irq_flags);
-		return xpSuccess;
-	}
+		वापस xpSuccess;
+	पूर्ण
 
-	return xpNoMemory;
-}
+	वापस xpNoMemory;
+पूर्ण
 
-static enum xp_retval
-xpc_allocate_recv_msg_slot_uv(struct xpc_channel *ch)
-{
-	struct xpc_channel_uv *ch_uv = &ch->sn.uv;
-	struct xpc_notify_mq_msg_uv *msg_slot;
-	unsigned long irq_flags;
-	int nentries;
-	int entry;
-	size_t nbytes;
+अटल क्रमागत xp_retval
+xpc_allocate_recv_msg_slot_uv(काष्ठा xpc_channel *ch)
+अणु
+	काष्ठा xpc_channel_uv *ch_uv = &ch->sn.uv;
+	काष्ठा xpc_notअगरy_mq_msg_uv *msg_slot;
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक nentries;
+	पूर्णांक entry;
+	माप_प्रकार nbytes;
 
-	for (nentries = ch->remote_nentries; nentries > 0; nentries--) {
+	क्रम (nentries = ch->remote_nentries; nentries > 0; nentries--) अणु
 		nbytes = nentries * ch->entry_size;
 		ch_uv->recv_msg_slots = kzalloc(nbytes, GFP_KERNEL);
-		if (ch_uv->recv_msg_slots == NULL)
-			continue;
+		अगर (ch_uv->recv_msg_slots == शून्य)
+			जारी;
 
-		for (entry = 0; entry < nentries; entry++) {
+		क्रम (entry = 0; entry < nentries; entry++) अणु
 			msg_slot = ch_uv->recv_msg_slots +
 			    entry * ch->entry_size;
 
 			msg_slot->hdr.msg_slot_number = entry;
-		}
+		पूर्ण
 
 		spin_lock_irqsave(&ch->lock, irq_flags);
-		if (nentries < ch->remote_nentries)
+		अगर (nentries < ch->remote_nentries)
 			ch->remote_nentries = nentries;
 		spin_unlock_irqrestore(&ch->lock, irq_flags);
-		return xpSuccess;
-	}
+		वापस xpSuccess;
+	पूर्ण
 
-	return xpNoMemory;
-}
+	वापस xpNoMemory;
+पूर्ण
 
 /*
  * Allocate msg_slots associated with the channel.
  */
-static enum xp_retval
-xpc_setup_msg_structures_uv(struct xpc_channel *ch)
-{
-	static enum xp_retval ret;
-	struct xpc_channel_uv *ch_uv = &ch->sn.uv;
+अटल क्रमागत xp_retval
+xpc_setup_msg_काष्ठाures_uv(काष्ठा xpc_channel *ch)
+अणु
+	अटल क्रमागत xp_retval ret;
+	काष्ठा xpc_channel_uv *ch_uv = &ch->sn.uv;
 
 	DBUG_ON(ch->flags & XPC_C_SETUP);
 
-	ch_uv->cached_notify_gru_mq_desc = kmalloc(sizeof(struct
+	ch_uv->cached_notअगरy_gru_mq_desc = kदो_स्मृति(माप(काष्ठा
 						   gru_message_queue_desc),
 						   GFP_KERNEL);
-	if (ch_uv->cached_notify_gru_mq_desc == NULL)
-		return xpNoMemory;
+	अगर (ch_uv->cached_notअगरy_gru_mq_desc == शून्य)
+		वापस xpNoMemory;
 
 	ret = xpc_allocate_send_msg_slot_uv(ch);
-	if (ret == xpSuccess) {
+	अगर (ret == xpSuccess) अणु
 
 		ret = xpc_allocate_recv_msg_slot_uv(ch);
-		if (ret != xpSuccess) {
-			kfree(ch_uv->send_msg_slots);
-			xpc_init_fifo_uv(&ch_uv->msg_slot_free_list);
-		}
-	}
-	return ret;
-}
+		अगर (ret != xpSuccess) अणु
+			kमुक्त(ch_uv->send_msg_slots);
+			xpc_init_fअगरo_uv(&ch_uv->msg_slot_मुक्त_list);
+		पूर्ण
+	पूर्ण
+	वापस ret;
+पूर्ण
 
 /*
- * Free up msg_slots and clear other stuff that were setup for the specified
+ * Free up msg_slots and clear other stuff that were setup क्रम the specअगरied
  * channel.
  */
-static void
-xpc_teardown_msg_structures_uv(struct xpc_channel *ch)
-{
-	struct xpc_channel_uv *ch_uv = &ch->sn.uv;
+अटल व्योम
+xpc_tearकरोwn_msg_काष्ठाures_uv(काष्ठा xpc_channel *ch)
+अणु
+	काष्ठा xpc_channel_uv *ch_uv = &ch->sn.uv;
 
-	lockdep_assert_held(&ch->lock);
+	lockdep_निश्चित_held(&ch->lock);
 
-	kfree(ch_uv->cached_notify_gru_mq_desc);
-	ch_uv->cached_notify_gru_mq_desc = NULL;
+	kमुक्त(ch_uv->cached_notअगरy_gru_mq_desc);
+	ch_uv->cached_notअगरy_gru_mq_desc = शून्य;
 
-	if (ch->flags & XPC_C_SETUP) {
-		xpc_init_fifo_uv(&ch_uv->msg_slot_free_list);
-		kfree(ch_uv->send_msg_slots);
-		xpc_init_fifo_uv(&ch_uv->recv_msg_list);
-		kfree(ch_uv->recv_msg_slots);
-	}
-}
+	अगर (ch->flags & XPC_C_SETUP) अणु
+		xpc_init_fअगरo_uv(&ch_uv->msg_slot_मुक्त_list);
+		kमुक्त(ch_uv->send_msg_slots);
+		xpc_init_fअगरo_uv(&ch_uv->recv_msg_list);
+		kमुक्त(ch_uv->recv_msg_slots);
+	पूर्ण
+पूर्ण
 
-static void
-xpc_send_chctl_closerequest_uv(struct xpc_channel *ch, unsigned long *irq_flags)
-{
-	struct xpc_activate_mq_msg_chctl_closerequest_uv msg;
+अटल व्योम
+xpc_send_chctl_बंदrequest_uv(काष्ठा xpc_channel *ch, अचिन्हित दीर्घ *irq_flags)
+अणु
+	काष्ठा xpc_activate_mq_msg_chctl_बंदrequest_uv msg;
 
 	msg.ch_number = ch->number;
 	msg.reason = ch->reason;
-	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, sizeof(msg),
+	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, माप(msg),
 				    XPC_ACTIVATE_MQ_MSG_CHCTL_CLOSEREQUEST_UV);
-}
+पूर्ण
 
-static void
-xpc_send_chctl_closereply_uv(struct xpc_channel *ch, unsigned long *irq_flags)
-{
-	struct xpc_activate_mq_msg_chctl_closereply_uv msg;
+अटल व्योम
+xpc_send_chctl_बंदreply_uv(काष्ठा xpc_channel *ch, अचिन्हित दीर्घ *irq_flags)
+अणु
+	काष्ठा xpc_activate_mq_msg_chctl_बंदreply_uv msg;
 
 	msg.ch_number = ch->number;
-	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, sizeof(msg),
+	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, माप(msg),
 				    XPC_ACTIVATE_MQ_MSG_CHCTL_CLOSEREPLY_UV);
-}
+पूर्ण
 
-static void
-xpc_send_chctl_openrequest_uv(struct xpc_channel *ch, unsigned long *irq_flags)
-{
-	struct xpc_activate_mq_msg_chctl_openrequest_uv msg;
+अटल व्योम
+xpc_send_chctl_खोलोrequest_uv(काष्ठा xpc_channel *ch, अचिन्हित दीर्घ *irq_flags)
+अणु
+	काष्ठा xpc_activate_mq_msg_chctl_खोलोrequest_uv msg;
 
 	msg.ch_number = ch->number;
 	msg.entry_size = ch->entry_size;
 	msg.local_nentries = ch->local_nentries;
-	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, sizeof(msg),
+	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, माप(msg),
 				    XPC_ACTIVATE_MQ_MSG_CHCTL_OPENREQUEST_UV);
-}
+पूर्ण
 
-static void
-xpc_send_chctl_openreply_uv(struct xpc_channel *ch, unsigned long *irq_flags)
-{
-	struct xpc_activate_mq_msg_chctl_openreply_uv msg;
+अटल व्योम
+xpc_send_chctl_खोलोreply_uv(काष्ठा xpc_channel *ch, अचिन्हित दीर्घ *irq_flags)
+अणु
+	काष्ठा xpc_activate_mq_msg_chctl_खोलोreply_uv msg;
 
 	msg.ch_number = ch->number;
 	msg.local_nentries = ch->local_nentries;
 	msg.remote_nentries = ch->remote_nentries;
-	msg.notify_gru_mq_desc_gpa = uv_gpa(xpc_notify_mq_uv->gru_mq_desc);
-	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, sizeof(msg),
+	msg.notअगरy_gru_mq_desc_gpa = uv_gpa(xpc_notअगरy_mq_uv->gru_mq_desc);
+	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, माप(msg),
 				    XPC_ACTIVATE_MQ_MSG_CHCTL_OPENREPLY_UV);
-}
+पूर्ण
 
-static void
-xpc_send_chctl_opencomplete_uv(struct xpc_channel *ch, unsigned long *irq_flags)
-{
-	struct xpc_activate_mq_msg_chctl_opencomplete_uv msg;
+अटल व्योम
+xpc_send_chctl_खोलोcomplete_uv(काष्ठा xpc_channel *ch, अचिन्हित दीर्घ *irq_flags)
+अणु
+	काष्ठा xpc_activate_mq_msg_chctl_खोलोcomplete_uv msg;
 
 	msg.ch_number = ch->number;
-	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, sizeof(msg),
+	xpc_send_activate_IRQ_ch_uv(ch, irq_flags, &msg, माप(msg),
 				    XPC_ACTIVATE_MQ_MSG_CHCTL_OPENCOMPLETE_UV);
-}
+पूर्ण
 
-static void
-xpc_send_chctl_local_msgrequest_uv(struct xpc_partition *part, int ch_number)
-{
-	unsigned long irq_flags;
+अटल व्योम
+xpc_send_chctl_local_msgrequest_uv(काष्ठा xpc_partition *part, पूर्णांक ch_number)
+अणु
+	अचिन्हित दीर्घ irq_flags;
 
 	spin_lock_irqsave(&part->chctl_lock, irq_flags);
 	part->chctl.flags[ch_number] |= XPC_CHCTL_MSGREQUEST;
 	spin_unlock_irqrestore(&part->chctl_lock, irq_flags);
 
 	xpc_wakeup_channel_mgr(part);
-}
+पूर्ण
 
-static enum xp_retval
-xpc_save_remote_msgqueue_pa_uv(struct xpc_channel *ch,
-			       unsigned long gru_mq_desc_gpa)
-{
-	struct xpc_channel_uv *ch_uv = &ch->sn.uv;
+अटल क्रमागत xp_retval
+xpc_save_remote_msgqueue_pa_uv(काष्ठा xpc_channel *ch,
+			       अचिन्हित दीर्घ gru_mq_desc_gpa)
+अणु
+	काष्ठा xpc_channel_uv *ch_uv = &ch->sn.uv;
 
-	DBUG_ON(ch_uv->cached_notify_gru_mq_desc == NULL);
-	return xpc_cache_remote_gru_mq_desc_uv(ch_uv->cached_notify_gru_mq_desc,
+	DBUG_ON(ch_uv->cached_notअगरy_gru_mq_desc == शून्य);
+	वापस xpc_cache_remote_gru_mq_desc_uv(ch_uv->cached_notअगरy_gru_mq_desc,
 					       gru_mq_desc_gpa);
-}
+पूर्ण
 
-static void
-xpc_indicate_partition_engaged_uv(struct xpc_partition *part)
-{
-	struct xpc_activate_mq_msg_uv msg;
+अटल व्योम
+xpc_indicate_partition_engaged_uv(काष्ठा xpc_partition *part)
+अणु
+	काष्ठा xpc_activate_mq_msg_uv msg;
 
-	xpc_send_activate_IRQ_part_uv(part, &msg, sizeof(msg),
+	xpc_send_activate_IRQ_part_uv(part, &msg, माप(msg),
 				      XPC_ACTIVATE_MQ_MSG_MARK_ENGAGED_UV);
-}
+पूर्ण
 
-static void
-xpc_indicate_partition_disengaged_uv(struct xpc_partition *part)
-{
-	struct xpc_activate_mq_msg_uv msg;
+अटल व्योम
+xpc_indicate_partition_disengaged_uv(काष्ठा xpc_partition *part)
+अणु
+	काष्ठा xpc_activate_mq_msg_uv msg;
 
-	xpc_send_activate_IRQ_part_uv(part, &msg, sizeof(msg),
+	xpc_send_activate_IRQ_part_uv(part, &msg, माप(msg),
 				      XPC_ACTIVATE_MQ_MSG_MARK_DISENGAGED_UV);
-}
+पूर्ण
 
-static void
-xpc_assume_partition_disengaged_uv(short partid)
-{
-	struct xpc_partition_uv *part_uv = &xpc_partitions[partid].sn.uv;
-	unsigned long irq_flags;
+अटल व्योम
+xpc_assume_partition_disengaged_uv(लघु partid)
+अणु
+	काष्ठा xpc_partition_uv *part_uv = &xpc_partitions[partid].sn.uv;
+	अचिन्हित दीर्घ irq_flags;
 
 	spin_lock_irqsave(&part_uv->flags_lock, irq_flags);
 	part_uv->flags &= ~XPC_P_ENGAGED_UV;
 	spin_unlock_irqrestore(&part_uv->flags_lock, irq_flags);
-}
+पूर्ण
 
-static int
-xpc_partition_engaged_uv(short partid)
-{
-	return (xpc_partitions[partid].sn.uv.flags & XPC_P_ENGAGED_UV) != 0;
-}
+अटल पूर्णांक
+xpc_partition_engaged_uv(लघु partid)
+अणु
+	वापस (xpc_partitions[partid].sn.uv.flags & XPC_P_ENGAGED_UV) != 0;
+पूर्ण
 
-static int
-xpc_any_partition_engaged_uv(void)
-{
-	struct xpc_partition_uv *part_uv;
-	short partid;
+अटल पूर्णांक
+xpc_any_partition_engaged_uv(व्योम)
+अणु
+	काष्ठा xpc_partition_uv *part_uv;
+	लघु partid;
 
-	for (partid = 0; partid < XP_MAX_NPARTITIONS_UV; partid++) {
+	क्रम (partid = 0; partid < XP_MAX_NPARTITIONS_UV; partid++) अणु
 		part_uv = &xpc_partitions[partid].sn.uv;
-		if ((part_uv->flags & XPC_P_ENGAGED_UV) != 0)
-			return 1;
-	}
-	return 0;
-}
+		अगर ((part_uv->flags & XPC_P_ENGAGED_UV) != 0)
+			वापस 1;
+	पूर्ण
+	वापस 0;
+पूर्ण
 
-static enum xp_retval
-xpc_allocate_msg_slot_uv(struct xpc_channel *ch, u32 flags,
-			 struct xpc_send_msg_slot_uv **address_of_msg_slot)
-{
-	enum xp_retval ret;
-	struct xpc_send_msg_slot_uv *msg_slot;
-	struct xpc_fifo_entry_uv *entry;
+अटल क्रमागत xp_retval
+xpc_allocate_msg_slot_uv(काष्ठा xpc_channel *ch, u32 flags,
+			 काष्ठा xpc_send_msg_slot_uv **address_of_msg_slot)
+अणु
+	क्रमागत xp_retval ret;
+	काष्ठा xpc_send_msg_slot_uv *msg_slot;
+	काष्ठा xpc_fअगरo_entry_uv *entry;
 
-	while (1) {
-		entry = xpc_get_fifo_entry_uv(&ch->sn.uv.msg_slot_free_list);
-		if (entry != NULL)
-			break;
+	जबतक (1) अणु
+		entry = xpc_get_fअगरo_entry_uv(&ch->sn.uv.msg_slot_मुक्त_list);
+		अगर (entry != शून्य)
+			अवरोध;
 
-		if (flags & XPC_NOWAIT)
-			return xpNoWait;
+		अगर (flags & XPC_NOWAIT)
+			वापस xpNoWait;
 
-		ret = xpc_allocate_msg_wait(ch);
-		if (ret != xpInterrupted && ret != xpTimeout)
-			return ret;
-	}
+		ret = xpc_allocate_msg_रुको(ch);
+		अगर (ret != xpInterrupted && ret != xpTimeout)
+			वापस ret;
+	पूर्ण
 
-	msg_slot = container_of(entry, struct xpc_send_msg_slot_uv, next);
+	msg_slot = container_of(entry, काष्ठा xpc_send_msg_slot_uv, next);
 	*address_of_msg_slot = msg_slot;
-	return xpSuccess;
-}
+	वापस xpSuccess;
+पूर्ण
 
-static void
-xpc_free_msg_slot_uv(struct xpc_channel *ch,
-		     struct xpc_send_msg_slot_uv *msg_slot)
-{
-	xpc_put_fifo_entry_uv(&ch->sn.uv.msg_slot_free_list, &msg_slot->next);
+अटल व्योम
+xpc_मुक्त_msg_slot_uv(काष्ठा xpc_channel *ch,
+		     काष्ठा xpc_send_msg_slot_uv *msg_slot)
+अणु
+	xpc_put_fअगरo_entry_uv(&ch->sn.uv.msg_slot_मुक्त_list, &msg_slot->next);
 
-	/* wakeup anyone waiting for a free msg slot */
-	if (atomic_read(&ch->n_on_msg_allocate_wq) > 0)
+	/* wakeup anyone रुकोing क्रम a मुक्त msg slot */
+	अगर (atomic_पढ़ो(&ch->n_on_msg_allocate_wq) > 0)
 		wake_up(&ch->msg_allocate_wq);
-}
+पूर्ण
 
-static void
-xpc_notify_sender_uv(struct xpc_channel *ch,
-		     struct xpc_send_msg_slot_uv *msg_slot,
-		     enum xp_retval reason)
-{
-	xpc_notify_func func = msg_slot->func;
+अटल व्योम
+xpc_notअगरy_sender_uv(काष्ठा xpc_channel *ch,
+		     काष्ठा xpc_send_msg_slot_uv *msg_slot,
+		     क्रमागत xp_retval reason)
+अणु
+	xpc_notअगरy_func func = msg_slot->func;
 
-	if (func != NULL && cmpxchg(&msg_slot->func, func, NULL) == func) {
+	अगर (func != शून्य && cmpxchg(&msg_slot->func, func, शून्य) == func) अणु
 
-		atomic_dec(&ch->n_to_notify);
+		atomic_dec(&ch->n_to_notअगरy);
 
 		dev_dbg(xpc_chan, "msg_slot->func() called, msg_slot=0x%p "
 			"msg_slot_number=%d partid=%d channel=%d\n", msg_slot,
@@ -1385,71 +1386,71 @@ xpc_notify_sender_uv(struct xpc_channel *ch,
 		dev_dbg(xpc_chan, "msg_slot->func() returned, msg_slot=0x%p "
 			"msg_slot_number=%d partid=%d channel=%d\n", msg_slot,
 			msg_slot->msg_slot_number, ch->partid, ch->number);
-	}
-}
+	पूर्ण
+पूर्ण
 
-static void
-xpc_handle_notify_mq_ack_uv(struct xpc_channel *ch,
-			    struct xpc_notify_mq_msg_uv *msg)
-{
-	struct xpc_send_msg_slot_uv *msg_slot;
-	int entry = msg->hdr.msg_slot_number % ch->local_nentries;
+अटल व्योम
+xpc_handle_notअगरy_mq_ack_uv(काष्ठा xpc_channel *ch,
+			    काष्ठा xpc_notअगरy_mq_msg_uv *msg)
+अणु
+	काष्ठा xpc_send_msg_slot_uv *msg_slot;
+	पूर्णांक entry = msg->hdr.msg_slot_number % ch->local_nentries;
 
 	msg_slot = &ch->sn.uv.send_msg_slots[entry];
 
 	BUG_ON(msg_slot->msg_slot_number != msg->hdr.msg_slot_number);
 	msg_slot->msg_slot_number += ch->local_nentries;
 
-	if (msg_slot->func != NULL)
-		xpc_notify_sender_uv(ch, msg_slot, xpMsgDelivered);
+	अगर (msg_slot->func != शून्य)
+		xpc_notअगरy_sender_uv(ch, msg_slot, xpMsgDelivered);
 
-	xpc_free_msg_slot_uv(ch, msg_slot);
-}
+	xpc_मुक्त_msg_slot_uv(ch, msg_slot);
+पूर्ण
 
-static void
-xpc_handle_notify_mq_msg_uv(struct xpc_partition *part,
-			    struct xpc_notify_mq_msg_uv *msg)
-{
-	struct xpc_partition_uv *part_uv = &part->sn.uv;
-	struct xpc_channel *ch;
-	struct xpc_channel_uv *ch_uv;
-	struct xpc_notify_mq_msg_uv *msg_slot;
-	unsigned long irq_flags;
-	int ch_number = msg->hdr.ch_number;
+अटल व्योम
+xpc_handle_notअगरy_mq_msg_uv(काष्ठा xpc_partition *part,
+			    काष्ठा xpc_notअगरy_mq_msg_uv *msg)
+अणु
+	काष्ठा xpc_partition_uv *part_uv = &part->sn.uv;
+	काष्ठा xpc_channel *ch;
+	काष्ठा xpc_channel_uv *ch_uv;
+	काष्ठा xpc_notअगरy_mq_msg_uv *msg_slot;
+	अचिन्हित दीर्घ irq_flags;
+	पूर्णांक ch_number = msg->hdr.ch_number;
 
-	if (unlikely(ch_number >= part->nchannels)) {
+	अगर (unlikely(ch_number >= part->nchannels)) अणु
 		dev_err(xpc_part, "xpc_handle_notify_IRQ_uv() received invalid "
 			"channel number=0x%x in message from partid=%d\n",
 			ch_number, XPC_PARTID(part));
 
 		/* get hb checker to deactivate from the remote partition */
 		spin_lock_irqsave(&xpc_activate_IRQ_rcvd_lock, irq_flags);
-		if (part_uv->act_state_req == 0)
+		अगर (part_uv->act_state_req == 0)
 			xpc_activate_IRQ_rcvd++;
 		part_uv->act_state_req = XPC_P_ASR_DEACTIVATE_UV;
 		part_uv->reason = xpBadChannelNumber;
 		spin_unlock_irqrestore(&xpc_activate_IRQ_rcvd_lock, irq_flags);
 
-		wake_up_interruptible(&xpc_activate_IRQ_wq);
-		return;
-	}
+		wake_up_पूर्णांकerruptible(&xpc_activate_IRQ_wq);
+		वापस;
+	पूर्ण
 
 	ch = &part->channels[ch_number];
 	xpc_msgqueue_ref(ch);
 
-	if (!(ch->flags & XPC_C_CONNECTED)) {
+	अगर (!(ch->flags & XPC_C_CONNECTED)) अणु
 		xpc_msgqueue_deref(ch);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* see if we're really dealing with an ACK for a previously sent msg */
-	if (msg->hdr.size == 0) {
-		xpc_handle_notify_mq_ack_uv(ch, msg);
+	/* see अगर we're really dealing with an ACK क्रम a previously sent msg */
+	अगर (msg->hdr.size == 0) अणु
+		xpc_handle_notअगरy_mq_ack_uv(ch, msg);
 		xpc_msgqueue_deref(ch);
-		return;
-	}
+		वापस;
+	पूर्ण
 
-	/* we're dealing with a normal message sent via the notify_mq */
+	/* we're dealing with a normal message sent via the notअगरy_mq */
 	ch_uv = &ch->sn.uv;
 
 	msg_slot = ch_uv->recv_msg_slots +
@@ -1457,232 +1458,232 @@ xpc_handle_notify_mq_msg_uv(struct xpc_partition *part,
 
 	BUG_ON(msg_slot->hdr.size != 0);
 
-	memcpy(msg_slot, msg, msg->hdr.size);
+	स_नकल(msg_slot, msg, msg->hdr.size);
 
-	xpc_put_fifo_entry_uv(&ch_uv->recv_msg_list, &msg_slot->hdr.u.next);
+	xpc_put_fअगरo_entry_uv(&ch_uv->recv_msg_list, &msg_slot->hdr.u.next);
 
-	if (ch->flags & XPC_C_CONNECTEDCALLOUT_MADE) {
+	अगर (ch->flags & XPC_C_CONNECTEDCALLOUT_MADE) अणु
 		/*
-		 * If there is an existing idle kthread get it to deliver
+		 * If there is an existing idle kthपढ़ो get it to deliver
 		 * the payload, otherwise we'll have to get the channel mgr
-		 * for this partition to create a kthread to do the delivery.
+		 * क्रम this partition to create a kthपढ़ो to करो the delivery.
 		 */
-		if (atomic_read(&ch->kthreads_idle) > 0)
+		अगर (atomic_पढ़ो(&ch->kthपढ़ोs_idle) > 0)
 			wake_up_nr(&ch->idle_wq, 1);
-		else
+		अन्यथा
 			xpc_send_chctl_local_msgrequest_uv(part, ch->number);
-	}
+	पूर्ण
 	xpc_msgqueue_deref(ch);
-}
+पूर्ण
 
-static irqreturn_t
-xpc_handle_notify_IRQ_uv(int irq, void *dev_id)
-{
-	struct xpc_notify_mq_msg_uv *msg;
-	short partid;
-	struct xpc_partition *part;
+अटल irqवापस_t
+xpc_handle_notअगरy_IRQ_uv(पूर्णांक irq, व्योम *dev_id)
+अणु
+	काष्ठा xpc_notअगरy_mq_msg_uv *msg;
+	लघु partid;
+	काष्ठा xpc_partition *part;
 
-	while ((msg = gru_get_next_message(xpc_notify_mq_uv->gru_mq_desc)) !=
-	       NULL) {
+	जबतक ((msg = gru_get_next_message(xpc_notअगरy_mq_uv->gru_mq_desc)) !=
+	       शून्य) अणु
 
 		partid = msg->hdr.partid;
-		if (partid < 0 || partid >= XP_MAX_NPARTITIONS_UV) {
+		अगर (partid < 0 || partid >= XP_MAX_NPARTITIONS_UV) अणु
 			dev_err(xpc_part, "xpc_handle_notify_IRQ_uv() received "
 				"invalid partid=0x%x in message\n", partid);
-		} else {
+		पूर्ण अन्यथा अणु
 			part = &xpc_partitions[partid];
 
-			if (xpc_part_ref(part)) {
-				xpc_handle_notify_mq_msg_uv(part, msg);
+			अगर (xpc_part_ref(part)) अणु
+				xpc_handle_notअगरy_mq_msg_uv(part, msg);
 				xpc_part_deref(part);
-			}
-		}
+			पूर्ण
+		पूर्ण
 
-		gru_free_message(xpc_notify_mq_uv->gru_mq_desc, msg);
-	}
+		gru_मुक्त_message(xpc_notअगरy_mq_uv->gru_mq_desc, msg);
+	पूर्ण
 
-	return IRQ_HANDLED;
-}
+	वापस IRQ_HANDLED;
+पूर्ण
 
-static int
-xpc_n_of_deliverable_payloads_uv(struct xpc_channel *ch)
-{
-	return xpc_n_of_fifo_entries_uv(&ch->sn.uv.recv_msg_list);
-}
+अटल पूर्णांक
+xpc_n_of_deliverable_payloads_uv(काष्ठा xpc_channel *ch)
+अणु
+	वापस xpc_n_of_fअगरo_entries_uv(&ch->sn.uv.recv_msg_list);
+पूर्ण
 
-static void
-xpc_process_msg_chctl_flags_uv(struct xpc_partition *part, int ch_number)
-{
-	struct xpc_channel *ch = &part->channels[ch_number];
-	int ndeliverable_payloads;
+अटल व्योम
+xpc_process_msg_chctl_flags_uv(काष्ठा xpc_partition *part, पूर्णांक ch_number)
+अणु
+	काष्ठा xpc_channel *ch = &part->channels[ch_number];
+	पूर्णांक ndeliverable_payloads;
 
 	xpc_msgqueue_ref(ch);
 
 	ndeliverable_payloads = xpc_n_of_deliverable_payloads_uv(ch);
 
-	if (ndeliverable_payloads > 0 &&
+	अगर (ndeliverable_payloads > 0 &&
 	    (ch->flags & XPC_C_CONNECTED) &&
-	    (ch->flags & XPC_C_CONNECTEDCALLOUT_MADE)) {
+	    (ch->flags & XPC_C_CONNECTEDCALLOUT_MADE)) अणु
 
-		xpc_activate_kthreads(ch, ndeliverable_payloads);
-	}
+		xpc_activate_kthपढ़ोs(ch, ndeliverable_payloads);
+	पूर्ण
 
 	xpc_msgqueue_deref(ch);
-}
+पूर्ण
 
-static enum xp_retval
-xpc_send_payload_uv(struct xpc_channel *ch, u32 flags, void *payload,
-		    u16 payload_size, u8 notify_type, xpc_notify_func func,
-		    void *key)
-{
-	enum xp_retval ret = xpSuccess;
-	struct xpc_send_msg_slot_uv *msg_slot = NULL;
-	struct xpc_notify_mq_msg_uv *msg;
+अटल क्रमागत xp_retval
+xpc_send_payload_uv(काष्ठा xpc_channel *ch, u32 flags, व्योम *payload,
+		    u16 payload_size, u8 notअगरy_type, xpc_notअगरy_func func,
+		    व्योम *key)
+अणु
+	क्रमागत xp_retval ret = xpSuccess;
+	काष्ठा xpc_send_msg_slot_uv *msg_slot = शून्य;
+	काष्ठा xpc_notअगरy_mq_msg_uv *msg;
 	u8 msg_buffer[XPC_NOTIFY_MSG_SIZE_UV];
-	size_t msg_size;
+	माप_प्रकार msg_size;
 
-	DBUG_ON(notify_type != XPC_N_CALL);
+	DBUG_ON(notअगरy_type != XPC_N_CALL);
 
-	msg_size = sizeof(struct xpc_notify_mq_msghdr_uv) + payload_size;
-	if (msg_size > ch->entry_size)
-		return xpPayloadTooBig;
+	msg_size = माप(काष्ठा xpc_notअगरy_mq_msghdr_uv) + payload_size;
+	अगर (msg_size > ch->entry_size)
+		वापस xpPayloadTooBig;
 
 	xpc_msgqueue_ref(ch);
 
-	if (ch->flags & XPC_C_DISCONNECTING) {
+	अगर (ch->flags & XPC_C_DISCONNECTING) अणु
 		ret = ch->reason;
-		goto out_1;
-	}
-	if (!(ch->flags & XPC_C_CONNECTED)) {
+		जाओ out_1;
+	पूर्ण
+	अगर (!(ch->flags & XPC_C_CONNECTED)) अणु
 		ret = xpNotConnected;
-		goto out_1;
-	}
+		जाओ out_1;
+	पूर्ण
 
 	ret = xpc_allocate_msg_slot_uv(ch, flags, &msg_slot);
-	if (ret != xpSuccess)
-		goto out_1;
+	अगर (ret != xpSuccess)
+		जाओ out_1;
 
-	if (func != NULL) {
-		atomic_inc(&ch->n_to_notify);
+	अगर (func != शून्य) अणु
+		atomic_inc(&ch->n_to_notअगरy);
 
 		msg_slot->key = key;
-		smp_wmb(); /* a non-NULL func must hit memory after the key */
+		smp_wmb(); /* a non-शून्य func must hit memory after the key */
 		msg_slot->func = func;
 
-		if (ch->flags & XPC_C_DISCONNECTING) {
+		अगर (ch->flags & XPC_C_DISCONNECTING) अणु
 			ret = ch->reason;
-			goto out_2;
-		}
-	}
+			जाओ out_2;
+		पूर्ण
+	पूर्ण
 
-	msg = (struct xpc_notify_mq_msg_uv *)&msg_buffer;
+	msg = (काष्ठा xpc_notअगरy_mq_msg_uv *)&msg_buffer;
 	msg->hdr.partid = xp_partition_id;
 	msg->hdr.ch_number = ch->number;
 	msg->hdr.size = msg_size;
 	msg->hdr.msg_slot_number = msg_slot->msg_slot_number;
-	memcpy(&msg->payload, payload, payload_size);
+	स_नकल(&msg->payload, payload, payload_size);
 
-	ret = xpc_send_gru_msg(ch->sn.uv.cached_notify_gru_mq_desc, msg,
+	ret = xpc_send_gru_msg(ch->sn.uv.cached_notअगरy_gru_mq_desc, msg,
 			       msg_size);
-	if (ret == xpSuccess)
-		goto out_1;
+	अगर (ret == xpSuccess)
+		जाओ out_1;
 
 	XPC_DEACTIVATE_PARTITION(&xpc_partitions[ch->partid], ret);
 out_2:
-	if (func != NULL) {
+	अगर (func != शून्य) अणु
 		/*
-		 * Try to NULL the msg_slot's func field. If we fail, then
-		 * xpc_notify_senders_of_disconnect_uv() beat us to it, in which
-		 * case we need to pretend we succeeded to send the message
-		 * since the user will get a callout for the disconnect error
-		 * by xpc_notify_senders_of_disconnect_uv(), and to also get an
-		 * error returned here will confuse them. Additionally, since
-		 * in this case the channel is being disconnected we don't need
-		 * to put the the msg_slot back on the free list.
+		 * Try to शून्य the msg_slot's func field. If we fail, then
+		 * xpc_notअगरy_senders_of_disconnect_uv() beat us to it, in which
+		 * हाल we need to pretend we succeeded to send the message
+		 * since the user will get a callout क्रम the disconnect error
+		 * by xpc_notअगरy_senders_of_disconnect_uv(), and to also get an
+		 * error वापसed here will confuse them. Additionally, since
+		 * in this हाल the channel is being disconnected we करोn't need
+		 * to put the the msg_slot back on the मुक्त list.
 		 */
-		if (cmpxchg(&msg_slot->func, func, NULL) != func) {
+		अगर (cmpxchg(&msg_slot->func, func, शून्य) != func) अणु
 			ret = xpSuccess;
-			goto out_1;
-		}
+			जाओ out_1;
+		पूर्ण
 
-		msg_slot->key = NULL;
-		atomic_dec(&ch->n_to_notify);
-	}
-	xpc_free_msg_slot_uv(ch, msg_slot);
+		msg_slot->key = शून्य;
+		atomic_dec(&ch->n_to_notअगरy);
+	पूर्ण
+	xpc_मुक्त_msg_slot_uv(ch, msg_slot);
 out_1:
 	xpc_msgqueue_deref(ch);
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
 /*
- * Tell the callers of xpc_send_notify() that the status of their payloads
+ * Tell the callers of xpc_send_notअगरy() that the status of their payloads
  * is unknown because the channel is now disconnecting.
  *
- * We don't worry about putting these msg_slots on the free list since the
- * msg_slots themselves are about to be kfree'd.
+ * We करोn't worry about putting these msg_slots on the मुक्त list since the
+ * msg_slots themselves are about to be kमुक्त'd.
  */
-static void
-xpc_notify_senders_of_disconnect_uv(struct xpc_channel *ch)
-{
-	struct xpc_send_msg_slot_uv *msg_slot;
-	int entry;
+अटल व्योम
+xpc_notअगरy_senders_of_disconnect_uv(काष्ठा xpc_channel *ch)
+अणु
+	काष्ठा xpc_send_msg_slot_uv *msg_slot;
+	पूर्णांक entry;
 
 	DBUG_ON(!(ch->flags & XPC_C_DISCONNECTING));
 
-	for (entry = 0; entry < ch->local_nentries; entry++) {
+	क्रम (entry = 0; entry < ch->local_nentries; entry++) अणु
 
-		if (atomic_read(&ch->n_to_notify) == 0)
-			break;
+		अगर (atomic_पढ़ो(&ch->n_to_notअगरy) == 0)
+			अवरोध;
 
 		msg_slot = &ch->sn.uv.send_msg_slots[entry];
-		if (msg_slot->func != NULL)
-			xpc_notify_sender_uv(ch, msg_slot, ch->reason);
-	}
-}
+		अगर (msg_slot->func != शून्य)
+			xpc_notअगरy_sender_uv(ch, msg_slot, ch->reason);
+	पूर्ण
+पूर्ण
 
 /*
  * Get the next deliverable message's payload.
  */
-static void *
-xpc_get_deliverable_payload_uv(struct xpc_channel *ch)
-{
-	struct xpc_fifo_entry_uv *entry;
-	struct xpc_notify_mq_msg_uv *msg;
-	void *payload = NULL;
+अटल व्योम *
+xpc_get_deliverable_payload_uv(काष्ठा xpc_channel *ch)
+अणु
+	काष्ठा xpc_fअगरo_entry_uv *entry;
+	काष्ठा xpc_notअगरy_mq_msg_uv *msg;
+	व्योम *payload = शून्य;
 
-	if (!(ch->flags & XPC_C_DISCONNECTING)) {
-		entry = xpc_get_fifo_entry_uv(&ch->sn.uv.recv_msg_list);
-		if (entry != NULL) {
-			msg = container_of(entry, struct xpc_notify_mq_msg_uv,
+	अगर (!(ch->flags & XPC_C_DISCONNECTING)) अणु
+		entry = xpc_get_fअगरo_entry_uv(&ch->sn.uv.recv_msg_list);
+		अगर (entry != शून्य) अणु
+			msg = container_of(entry, काष्ठा xpc_notअगरy_mq_msg_uv,
 					   hdr.u.next);
 			payload = &msg->payload;
-		}
-	}
-	return payload;
-}
+		पूर्ण
+	पूर्ण
+	वापस payload;
+पूर्ण
 
-static void
-xpc_received_payload_uv(struct xpc_channel *ch, void *payload)
-{
-	struct xpc_notify_mq_msg_uv *msg;
-	enum xp_retval ret;
+अटल व्योम
+xpc_received_payload_uv(काष्ठा xpc_channel *ch, व्योम *payload)
+अणु
+	काष्ठा xpc_notअगरy_mq_msg_uv *msg;
+	क्रमागत xp_retval ret;
 
-	msg = container_of(payload, struct xpc_notify_mq_msg_uv, payload);
+	msg = container_of(payload, काष्ठा xpc_notअगरy_mq_msg_uv, payload);
 
-	/* return an ACK to the sender of this message */
+	/* वापस an ACK to the sender of this message */
 
 	msg->hdr.partid = xp_partition_id;
 	msg->hdr.size = 0;	/* size of zero indicates this is an ACK */
 
-	ret = xpc_send_gru_msg(ch->sn.uv.cached_notify_gru_mq_desc, msg,
-			       sizeof(struct xpc_notify_mq_msghdr_uv));
-	if (ret != xpSuccess)
+	ret = xpc_send_gru_msg(ch->sn.uv.cached_notअगरy_gru_mq_desc, msg,
+			       माप(काष्ठा xpc_notअगरy_mq_msghdr_uv));
+	अगर (ret != xpSuccess)
 		XPC_DEACTIVATE_PARTITION(&xpc_partitions[ch->partid], ret);
-}
+पूर्ण
 
-static const struct xpc_arch_operations xpc_arch_ops_uv = {
+अटल स्थिर काष्ठा xpc_arch_operations xpc_arch_ops_uv = अणु
 	.setup_partitions = xpc_setup_partitions_uv,
-	.teardown_partitions = xpc_teardown_partitions_uv,
+	.tearकरोwn_partitions = xpc_tearकरोwn_partitions_uv,
 	.process_activate_IRQ_rcvd = xpc_process_activate_IRQ_rcvd_uv,
 	.get_partition_rsvd_page_pa = xpc_get_partition_rsvd_page_pa_uv,
 	.setup_rsvd_page = xpc_setup_rsvd_page_uv,
@@ -1694,7 +1695,7 @@ static const struct xpc_arch_operations xpc_arch_ops_uv = {
 	.offline_heartbeat = xpc_offline_heartbeat_uv,
 	.online_heartbeat = xpc_online_heartbeat_uv,
 	.heartbeat_init = xpc_heartbeat_init_uv,
-	.heartbeat_exit = xpc_heartbeat_exit_uv,
+	.heartbeat_निकास = xpc_heartbeat_निकास_uv,
 	.get_remote_heartbeat = xpc_get_remote_heartbeat_uv,
 
 	.request_partition_activation =
@@ -1706,23 +1707,23 @@ static const struct xpc_arch_operations xpc_arch_ops_uv = {
 	.cancel_partition_deactivation_request =
 		xpc_cancel_partition_deactivation_request_uv,
 
-	.setup_ch_structures = xpc_setup_ch_structures_uv,
-	.teardown_ch_structures = xpc_teardown_ch_structures_uv,
+	.setup_ch_काष्ठाures = xpc_setup_ch_काष्ठाures_uv,
+	.tearकरोwn_ch_काष्ठाures = xpc_tearकरोwn_ch_काष्ठाures_uv,
 
 	.make_first_contact = xpc_make_first_contact_uv,
 
 	.get_chctl_all_flags = xpc_get_chctl_all_flags_uv,
-	.send_chctl_closerequest = xpc_send_chctl_closerequest_uv,
-	.send_chctl_closereply = xpc_send_chctl_closereply_uv,
-	.send_chctl_openrequest = xpc_send_chctl_openrequest_uv,
-	.send_chctl_openreply = xpc_send_chctl_openreply_uv,
-	.send_chctl_opencomplete = xpc_send_chctl_opencomplete_uv,
+	.send_chctl_बंदrequest = xpc_send_chctl_बंदrequest_uv,
+	.send_chctl_बंदreply = xpc_send_chctl_बंदreply_uv,
+	.send_chctl_खोलोrequest = xpc_send_chctl_खोलोrequest_uv,
+	.send_chctl_खोलोreply = xpc_send_chctl_खोलोreply_uv,
+	.send_chctl_खोलोcomplete = xpc_send_chctl_खोलोcomplete_uv,
 	.process_msg_chctl_flags = xpc_process_msg_chctl_flags_uv,
 
 	.save_remote_msgqueue_pa = xpc_save_remote_msgqueue_pa_uv,
 
-	.setup_msg_structures = xpc_setup_msg_structures_uv,
-	.teardown_msg_structures = xpc_teardown_msg_structures_uv,
+	.setup_msg_काष्ठाures = xpc_setup_msg_काष्ठाures_uv,
+	.tearकरोwn_msg_काष्ठाures = xpc_tearकरोwn_msg_काष्ठाures_uv,
 
 	.indicate_partition_engaged = xpc_indicate_partition_engaged_uv,
 	.indicate_partition_disengaged = xpc_indicate_partition_disengaged_uv,
@@ -1734,84 +1735,84 @@ static const struct xpc_arch_operations xpc_arch_ops_uv = {
 	.send_payload = xpc_send_payload_uv,
 	.get_deliverable_payload = xpc_get_deliverable_payload_uv,
 	.received_payload = xpc_received_payload_uv,
-	.notify_senders_of_disconnect = xpc_notify_senders_of_disconnect_uv,
-};
+	.notअगरy_senders_of_disconnect = xpc_notअगरy_senders_of_disconnect_uv,
+पूर्ण;
 
-static int
-xpc_init_mq_node(int nid)
-{
-	int cpu;
+अटल पूर्णांक
+xpc_init_mq_node(पूर्णांक nid)
+अणु
+	पूर्णांक cpu;
 
 	get_online_cpus();
 
-	for_each_cpu(cpu, cpumask_of_node(nid)) {
+	क्रम_each_cpu(cpu, cpumask_of_node(nid)) अणु
 		xpc_activate_mq_uv =
 			xpc_create_gru_mq_uv(XPC_ACTIVATE_MQ_SIZE_UV, nid,
 					     XPC_ACTIVATE_IRQ_NAME,
 					     xpc_handle_activate_IRQ_uv);
-		if (!IS_ERR(xpc_activate_mq_uv))
-			break;
-	}
-	if (IS_ERR(xpc_activate_mq_uv)) {
+		अगर (!IS_ERR(xpc_activate_mq_uv))
+			अवरोध;
+	पूर्ण
+	अगर (IS_ERR(xpc_activate_mq_uv)) अणु
 		put_online_cpus();
-		return PTR_ERR(xpc_activate_mq_uv);
-	}
+		वापस PTR_ERR(xpc_activate_mq_uv);
+	पूर्ण
 
-	for_each_cpu(cpu, cpumask_of_node(nid)) {
-		xpc_notify_mq_uv =
+	क्रम_each_cpu(cpu, cpumask_of_node(nid)) अणु
+		xpc_notअगरy_mq_uv =
 			xpc_create_gru_mq_uv(XPC_NOTIFY_MQ_SIZE_UV, nid,
 					     XPC_NOTIFY_IRQ_NAME,
-					     xpc_handle_notify_IRQ_uv);
-		if (!IS_ERR(xpc_notify_mq_uv))
-			break;
-	}
-	if (IS_ERR(xpc_notify_mq_uv)) {
+					     xpc_handle_notअगरy_IRQ_uv);
+		अगर (!IS_ERR(xpc_notअगरy_mq_uv))
+			अवरोध;
+	पूर्ण
+	अगर (IS_ERR(xpc_notअगरy_mq_uv)) अणु
 		xpc_destroy_gru_mq_uv(xpc_activate_mq_uv);
 		put_online_cpus();
-		return PTR_ERR(xpc_notify_mq_uv);
-	}
+		वापस PTR_ERR(xpc_notअगरy_mq_uv);
+	पूर्ण
 
 	put_online_cpus();
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int
-xpc_init_uv(void)
-{
-	int nid;
-	int ret = 0;
+पूर्णांक
+xpc_init_uv(व्योम)
+अणु
+	पूर्णांक nid;
+	पूर्णांक ret = 0;
 
 	xpc_arch_ops = xpc_arch_ops_uv;
 
-	if (sizeof(struct xpc_notify_mq_msghdr_uv) > XPC_MSG_HDR_MAX_SIZE) {
+	अगर (माप(काष्ठा xpc_notअगरy_mq_msghdr_uv) > XPC_MSG_HDR_MAX_SIZE) अणु
 		dev_err(xpc_part, "xpc_notify_mq_msghdr_uv is larger than %d\n",
 			XPC_MSG_HDR_MAX_SIZE);
-		return -E2BIG;
-	}
+		वापस -E2BIG;
+	पूर्ण
 
-	if (xpc_mq_node < 0)
-		for_each_online_node(nid) {
+	अगर (xpc_mq_node < 0)
+		क्रम_each_online_node(nid) अणु
 			ret = xpc_init_mq_node(nid);
 
-			if (!ret)
-				break;
-		}
-	else
+			अगर (!ret)
+				अवरोध;
+		पूर्ण
+	अन्यथा
 		ret = xpc_init_mq_node(xpc_mq_node);
 
-	if (ret < 0)
+	अगर (ret < 0)
 		dev_err(xpc_part, "xpc_init_mq_node() returned error=%d\n",
 			-ret);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-void
-xpc_exit_uv(void)
-{
-	xpc_destroy_gru_mq_uv(xpc_notify_mq_uv);
+व्योम
+xpc_निकास_uv(व्योम)
+अणु
+	xpc_destroy_gru_mq_uv(xpc_notअगरy_mq_uv);
 	xpc_destroy_gru_mq_uv(xpc_activate_mq_uv);
-}
+पूर्ण
 
-module_param(xpc_mq_node, int, 0);
+module_param(xpc_mq_node, पूर्णांक, 0);
 MODULE_PARM_DESC(xpc_mq_node, "Node number on which to allocate message queues.");

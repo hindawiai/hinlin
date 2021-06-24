@@ -1,77 +1,78 @@
-// SPDX-License-Identifier: GPL-2.0
+<शैली गुरु>
+// SPDX-License-Identअगरier: GPL-2.0
 
-#ifndef __USB_TYPEC_MUX
-#define __USB_TYPEC_MUX
+#अगर_अघोषित __USB_TYPEC_MUX
+#घोषणा __USB_TYPEC_MUX
 
-#include <linux/property.h>
-#include <linux/usb/typec.h>
+#समावेश <linux/property.h>
+#समावेश <linux/usb/typec.h>
 
-struct device;
-struct typec_mux;
-struct typec_switch;
-struct typec_altmode;
-struct fwnode_handle;
+काष्ठा device;
+काष्ठा typec_mux;
+काष्ठा typec_चयन;
+काष्ठा typec_alपंचांगode;
+काष्ठा fwnode_handle;
 
-typedef int (*typec_switch_set_fn_t)(struct typec_switch *sw,
-				     enum typec_orientation orientation);
+प्रकार पूर्णांक (*typec_चयन_set_fn_t)(काष्ठा typec_चयन *sw,
+				     क्रमागत typec_orientation orientation);
 
-struct typec_switch_desc {
-	struct fwnode_handle *fwnode;
-	typec_switch_set_fn_t set;
-	const char *name;
-	void *drvdata;
-};
+काष्ठा typec_चयन_desc अणु
+	काष्ठा fwnode_handle *fwnode;
+	typec_चयन_set_fn_t set;
+	स्थिर अक्षर *name;
+	व्योम *drvdata;
+पूर्ण;
 
-struct typec_switch *fwnode_typec_switch_get(struct fwnode_handle *fwnode);
-void typec_switch_put(struct typec_switch *sw);
-int typec_switch_set(struct typec_switch *sw,
-		     enum typec_orientation orientation);
+काष्ठा typec_चयन *fwnode_typec_चयन_get(काष्ठा fwnode_handle *fwnode);
+व्योम typec_चयन_put(काष्ठा typec_चयन *sw);
+पूर्णांक typec_चयन_set(काष्ठा typec_चयन *sw,
+		     क्रमागत typec_orientation orientation);
 
-static inline struct typec_switch *typec_switch_get(struct device *dev)
-{
-	return fwnode_typec_switch_get(dev_fwnode(dev));
-}
+अटल अंतरभूत काष्ठा typec_चयन *typec_चयन_get(काष्ठा device *dev)
+अणु
+	वापस fwnode_typec_चयन_get(dev_fwnode(dev));
+पूर्ण
 
-struct typec_switch *
-typec_switch_register(struct device *parent,
-		      const struct typec_switch_desc *desc);
-void typec_switch_unregister(struct typec_switch *sw);
+काष्ठा typec_चयन *
+typec_चयन_रेजिस्टर(काष्ठा device *parent,
+		      स्थिर काष्ठा typec_चयन_desc *desc);
+व्योम typec_चयन_unरेजिस्टर(काष्ठा typec_चयन *sw);
 
-void typec_switch_set_drvdata(struct typec_switch *sw, void *data);
-void *typec_switch_get_drvdata(struct typec_switch *sw);
+व्योम typec_चयन_set_drvdata(काष्ठा typec_चयन *sw, व्योम *data);
+व्योम *typec_चयन_get_drvdata(काष्ठा typec_चयन *sw);
 
-struct typec_mux_state {
-	struct typec_altmode *alt;
-	unsigned long mode;
-	void *data;
-};
+काष्ठा typec_mux_state अणु
+	काष्ठा typec_alपंचांगode *alt;
+	अचिन्हित दीर्घ mode;
+	व्योम *data;
+पूर्ण;
 
-typedef int (*typec_mux_set_fn_t)(struct typec_mux *mux,
-				  struct typec_mux_state *state);
+प्रकार पूर्णांक (*typec_mux_set_fn_t)(काष्ठा typec_mux *mux,
+				  काष्ठा typec_mux_state *state);
 
-struct typec_mux_desc {
-	struct fwnode_handle *fwnode;
+काष्ठा typec_mux_desc अणु
+	काष्ठा fwnode_handle *fwnode;
 	typec_mux_set_fn_t set;
-	const char *name;
-	void *drvdata;
-};
+	स्थिर अक्षर *name;
+	व्योम *drvdata;
+पूर्ण;
 
-struct typec_mux *fwnode_typec_mux_get(struct fwnode_handle *fwnode,
-				       const struct typec_altmode_desc *desc);
-void typec_mux_put(struct typec_mux *mux);
-int typec_mux_set(struct typec_mux *mux, struct typec_mux_state *state);
+काष्ठा typec_mux *fwnode_typec_mux_get(काष्ठा fwnode_handle *fwnode,
+				       स्थिर काष्ठा typec_alपंचांगode_desc *desc);
+व्योम typec_mux_put(काष्ठा typec_mux *mux);
+पूर्णांक typec_mux_set(काष्ठा typec_mux *mux, काष्ठा typec_mux_state *state);
 
-static inline struct typec_mux *
-typec_mux_get(struct device *dev, const struct typec_altmode_desc *desc)
-{
-	return fwnode_typec_mux_get(dev_fwnode(dev), desc);
-}
+अटल अंतरभूत काष्ठा typec_mux *
+typec_mux_get(काष्ठा device *dev, स्थिर काष्ठा typec_alपंचांगode_desc *desc)
+अणु
+	वापस fwnode_typec_mux_get(dev_fwnode(dev), desc);
+पूर्ण
 
-struct typec_mux *
-typec_mux_register(struct device *parent, const struct typec_mux_desc *desc);
-void typec_mux_unregister(struct typec_mux *mux);
+काष्ठा typec_mux *
+typec_mux_रेजिस्टर(काष्ठा device *parent, स्थिर काष्ठा typec_mux_desc *desc);
+व्योम typec_mux_unरेजिस्टर(काष्ठा typec_mux *mux);
 
-void typec_mux_set_drvdata(struct typec_mux *mux, void *data);
-void *typec_mux_get_drvdata(struct typec_mux *mux);
+व्योम typec_mux_set_drvdata(काष्ठा typec_mux *mux, व्योम *data);
+व्योम *typec_mux_get_drvdata(काष्ठा typec_mux *mux);
 
-#endif /* __USB_TYPEC_MUX */
+#पूर्ण_अगर /* __USB_TYPEC_MUX */

@@ -1,3 +1,4 @@
+<शैली गुरु>
 /*
  * NXP Wireless LAN device driver: debugfs
  *
@@ -5,27 +6,27 @@
  *
  * This software file (the "File") is distributed by NXP
  * under the terms of the GNU General Public License Version 2, June 1991
- * (the "License").  You may use, redistribute and/or modify this File in
+ * (the "License").  You may use, redistribute and/or modअगरy this File in
  * accordance with the terms and conditions of the License, a copy of which
  * is available by writing to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA or on the
+ * 51 Franklin Street, Fअगरth Floor, Boston, MA 02110-1301 USA or on the
  * worldwide web at http://www.gnu.org/licenses/old-licenses/gpl-2.0.txt.
  *
- * THE FILE IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
+ * THE खाता IS DISTRIBUTED AS-IS, WITHOUT WARRANTY OF ANY KIND, AND THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE
  * ARE EXPRESSLY DISCLAIMED.  The License provides additional details about
  * this warranty disclaimer.
  */
 
-#include <linux/debugfs.h>
+#समावेश <linux/debugfs.h>
 
-#include "main.h"
-#include "11n.h"
+#समावेश "main.h"
+#समावेश "11n.h"
 
 
-static struct dentry *mwifiex_dfs_dir;
+अटल काष्ठा dentry *mwअगरiex_dfs_dir;
 
-static char *bss_modes[] = {
+अटल अक्षर *bss_modes[] = अणु
 	"UNSPECIFIED",
 	"ADHOC",
 	"STATION",
@@ -37,13 +38,13 @@ static char *bss_modes[] = {
 	"P2P_CLIENT",
 	"P2P_GO",
 	"P2P_DEVICE",
-};
+पूर्ण;
 
 /*
- * Proc info file read handler.
+ * Proc info file पढ़ो handler.
  *
- * This function is called when the 'info' file is opened for reading.
- * It prints the following driver related information -
+ * This function is called when the 'info' file is खोलोed क्रम पढ़ोing.
+ * It prपूर्णांकs the following driver related inक्रमmation -
  *      - Driver name
  *      - Driver version
  *      - Driver extended version
@@ -62,7 +63,7 @@ static char *bss_modes[] = {
  *      - Carrier status (on or off)
  *      - Tx queue status (started or stopped)
  *
- * For STA mode drivers, it also prints the following extra -
+ * For STA mode drivers, it also prपूर्णांकs the following extra -
  *      - ESSID
  *      - BSSID
  *      - Channel
@@ -70,94 +71,94 @@ static char *bss_modes[] = {
  *      - Multicast count
  *      - Multicast addresses
  */
-static ssize_t
-mwifiex_info_read(struct file *file, char __user *ubuf,
-		  size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv =
-		(struct mwifiex_private *) file->private_data;
-	struct net_device *netdev = priv->netdev;
-	struct netdev_hw_addr *ha;
-	struct netdev_queue *txq;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
-	char *p = (char *) page, fmt[64];
-	struct mwifiex_bss_info info;
-	ssize_t ret;
-	int i = 0;
+अटल sमाप_प्रकार
+mwअगरiex_info_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+		  माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv =
+		(काष्ठा mwअगरiex_निजी *) file->निजी_data;
+	काष्ठा net_device *netdev = priv->netdev;
+	काष्ठा netdev_hw_addr *ha;
+	काष्ठा netdev_queue *txq;
+	अचिन्हित दीर्घ page = get_zeroed_page(GFP_KERNEL);
+	अक्षर *p = (अक्षर *) page, fmt[64];
+	काष्ठा mwअगरiex_bss_info info;
+	sमाप_प्रकार ret;
+	पूर्णांक i = 0;
 
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
-	memset(&info, 0, sizeof(info));
-	ret = mwifiex_get_bss_info(priv, &info);
-	if (ret)
-		goto free_and_exit;
+	स_रखो(&info, 0, माप(info));
+	ret = mwअगरiex_get_bss_info(priv, &info);
+	अगर (ret)
+		जाओ मुक्त_and_निकास;
 
-	mwifiex_drv_get_driver_version(priv->adapter, fmt, sizeof(fmt) - 1);
+	mwअगरiex_drv_get_driver_version(priv->adapter, fmt, माप(fmt) - 1);
 
-	mwifiex_get_ver_ext(priv, 0);
+	mwअगरiex_get_ver_ext(priv, 0);
 
-	p += sprintf(p, "driver_name = " "\"mwifiex\"\n");
-	p += sprintf(p, "driver_version = %s", fmt);
-	p += sprintf(p, "\nverext = %s", priv->version_str);
-	p += sprintf(p, "\ninterface_name=\"%s\"\n", netdev->name);
+	p += प्र_लिखो(p, "driver_name = " "\"mwifiex\"\n");
+	p += प्र_लिखो(p, "driver_version = %s", fmt);
+	p += प्र_लिखो(p, "\nverext = %s", priv->version_str);
+	p += प्र_लिखो(p, "\ninterface_name=\"%s\"\n", netdev->name);
 
-	if (info.bss_mode >= ARRAY_SIZE(bss_modes))
-		p += sprintf(p, "bss_mode=\"%d\"\n", info.bss_mode);
-	else
-		p += sprintf(p, "bss_mode=\"%s\"\n", bss_modes[info.bss_mode]);
+	अगर (info.bss_mode >= ARRAY_SIZE(bss_modes))
+		p += प्र_लिखो(p, "bss_mode=\"%d\"\n", info.bss_mode);
+	अन्यथा
+		p += प्र_लिखो(p, "bss_mode=\"%s\"\n", bss_modes[info.bss_mode]);
 
-	p += sprintf(p, "media_state=\"%s\"\n",
+	p += प्र_लिखो(p, "media_state=\"%s\"\n",
 		     (!priv->media_connected ? "Disconnected" : "Connected"));
-	p += sprintf(p, "mac_address=\"%pM\"\n", netdev->dev_addr);
+	p += प्र_लिखो(p, "mac_address=\"%pM\"\n", netdev->dev_addr);
 
-	if (GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_STA) {
-		p += sprintf(p, "multicast_count=\"%d\"\n",
+	अगर (GET_BSS_ROLE(priv) == MWIFIEX_BSS_ROLE_STA) अणु
+		p += प्र_लिखो(p, "multicast_count=\"%d\"\n",
 			     netdev_mc_count(netdev));
-		p += sprintf(p, "essid=\"%.*s\"\n", info.ssid.ssid_len,
+		p += प्र_लिखो(p, "essid=\"%.*s\"\n", info.ssid.ssid_len,
 			     info.ssid.ssid);
-		p += sprintf(p, "bssid=\"%pM\"\n", info.bssid);
-		p += sprintf(p, "channel=\"%d\"\n", (int) info.bss_chan);
-		p += sprintf(p, "country_code = \"%s\"\n", info.country_code);
-		p += sprintf(p, "region_code=\"0x%x\"\n",
+		p += प्र_लिखो(p, "bssid=\"%pM\"\n", info.bssid);
+		p += प्र_लिखो(p, "channel=\"%d\"\n", (पूर्णांक) info.bss_chan);
+		p += प्र_लिखो(p, "country_code = \"%s\"\n", info.country_code);
+		p += प्र_लिखो(p, "region_code=\"0x%x\"\n",
 			     priv->adapter->region_code);
 
-		netdev_for_each_mc_addr(ha, netdev)
-			p += sprintf(p, "multicast_address[%d]=\"%pM\"\n",
+		netdev_क्रम_each_mc_addr(ha, netdev)
+			p += प्र_लिखो(p, "multicast_address[%d]=\"%pM\"\n",
 					i++, ha->addr);
-	}
+	पूर्ण
 
-	p += sprintf(p, "num_tx_bytes = %lu\n", priv->stats.tx_bytes);
-	p += sprintf(p, "num_rx_bytes = %lu\n", priv->stats.rx_bytes);
-	p += sprintf(p, "num_tx_pkts = %lu\n", priv->stats.tx_packets);
-	p += sprintf(p, "num_rx_pkts = %lu\n", priv->stats.rx_packets);
-	p += sprintf(p, "num_tx_pkts_dropped = %lu\n", priv->stats.tx_dropped);
-	p += sprintf(p, "num_rx_pkts_dropped = %lu\n", priv->stats.rx_dropped);
-	p += sprintf(p, "num_tx_pkts_err = %lu\n", priv->stats.tx_errors);
-	p += sprintf(p, "num_rx_pkts_err = %lu\n", priv->stats.rx_errors);
-	p += sprintf(p, "carrier %s\n", ((netif_carrier_ok(priv->netdev))
+	p += प्र_लिखो(p, "num_tx_bytes = %lu\n", priv->stats.tx_bytes);
+	p += प्र_लिखो(p, "num_rx_bytes = %lu\n", priv->stats.rx_bytes);
+	p += प्र_लिखो(p, "num_tx_pkts = %lu\n", priv->stats.tx_packets);
+	p += प्र_लिखो(p, "num_rx_pkts = %lu\n", priv->stats.rx_packets);
+	p += प्र_लिखो(p, "num_tx_pkts_dropped = %lu\n", priv->stats.tx_dropped);
+	p += प्र_लिखो(p, "num_rx_pkts_dropped = %lu\n", priv->stats.rx_dropped);
+	p += प्र_लिखो(p, "num_tx_pkts_err = %lu\n", priv->stats.tx_errors);
+	p += प्र_लिखो(p, "num_rx_pkts_err = %lu\n", priv->stats.rx_errors);
+	p += प्र_लिखो(p, "carrier %s\n", ((netअगर_carrier_ok(priv->netdev))
 					 ? "on" : "off"));
-	p += sprintf(p, "tx queue");
-	for (i = 0; i < netdev->num_tx_queues; i++) {
+	p += प्र_लिखो(p, "tx queue");
+	क्रम (i = 0; i < netdev->num_tx_queues; i++) अणु
 		txq = netdev_get_tx_queue(netdev, i);
-		p += sprintf(p, " %d:%s", i, netif_tx_queue_stopped(txq) ?
+		p += प्र_लिखो(p, " %d:%s", i, netअगर_tx_queue_stopped(txq) ?
 			     "stopped" : "started");
-	}
-	p += sprintf(p, "\n");
+	पूर्ण
+	p += प्र_लिखो(p, "\n");
 
-	ret = simple_read_from_buffer(ubuf, count, ppos, (char *) page,
-				      (unsigned long) p - page);
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, (अक्षर *) page,
+				      (अचिन्हित दीर्घ) p - page);
 
-free_and_exit:
-	free_page(page);
-	return ret;
-}
+मुक्त_and_निकास:
+	मुक्त_page(page);
+	वापस ret;
+पूर्ण
 
 /*
- * Proc getlog file read handler.
+ * Proc getlog file पढ़ो handler.
  *
- * This function is called when the 'getlog' file is opened for reading
- * It prints the following log information -
+ * This function is called when the 'getlog' file is खोलोed क्रम पढ़ोing
+ * It prपूर्णांकs the following log inक्रमmation -
  *      - Number of multicast Tx frames
  *      - Number of failed packets
  *      - Number of Tx retries
@@ -174,26 +175,26 @@ free_and_exit:
  *      - Number of received beacons
  *      - Number of missed beacons
  */
-static ssize_t
-mwifiex_getlog_read(struct file *file, char __user *ubuf,
-		    size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv =
-		(struct mwifiex_private *) file->private_data;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
-	char *p = (char *) page;
-	ssize_t ret;
-	struct mwifiex_ds_get_stats stats;
+अटल sमाप_प्रकार
+mwअगरiex_getlog_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+		    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv =
+		(काष्ठा mwअगरiex_निजी *) file->निजी_data;
+	अचिन्हित दीर्घ page = get_zeroed_page(GFP_KERNEL);
+	अक्षर *p = (अक्षर *) page;
+	sमाप_प्रकार ret;
+	काष्ठा mwअगरiex_ds_get_stats stats;
 
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
-	memset(&stats, 0, sizeof(stats));
-	ret = mwifiex_get_stats_info(priv, &stats);
-	if (ret)
-		goto free_and_exit;
+	स_रखो(&stats, 0, माप(stats));
+	ret = mwअगरiex_get_stats_info(priv, &stats);
+	अगर (ret)
+		जाओ मुक्त_and_निकास;
 
-	p += sprintf(p, "\n"
+	p += प्र_लिखो(p, "\n"
 		     "mcasttxframe     %u\n"
 		     "failed           %u\n"
 		     "retry            %u\n"
@@ -232,116 +233,116 @@ mwifiex_getlog_read(struct file *file, char __user *ubuf,
 		     stats.bcn_miss_cnt);
 
 
-	ret = simple_read_from_buffer(ubuf, count, ppos, (char *) page,
-				      (unsigned long) p - page);
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, (अक्षर *) page,
+				      (अचिन्हित दीर्घ) p - page);
 
-free_and_exit:
-	free_page(page);
-	return ret;
-}
+मुक्त_and_निकास:
+	मुक्त_page(page);
+	वापस ret;
+पूर्ण
 
-/* Sysfs histogram file read handler.
+/* Sysfs histogram file पढ़ो handler.
  *
- * This function is called when the 'histogram' file is opened for reading
- * It prints the following histogram information -
+ * This function is called when the 'histogram' file is खोलोed क्रम पढ़ोing
+ * It prपूर्णांकs the following histogram inक्रमmation -
  *      - Number of histogram samples
  *      - Receive packet number of each rx_rate
  *      - Receive packet number of each snr
  *      - Receive packet number of each nosie_flr
- *      - Receive packet number of each signal streath
+ *      - Receive packet number of each संकेत streath
  */
-static ssize_t
-mwifiex_histogram_read(struct file *file, char __user *ubuf,
-		       size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv =
-		(struct mwifiex_private *)file->private_data;
-	ssize_t ret;
-	struct mwifiex_histogram_data *phist_data;
-	int i, value;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
-	char *p = (char *)page;
+अटल sमाप_प्रकार
+mwअगरiex_histogram_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+		       माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv =
+		(काष्ठा mwअगरiex_निजी *)file->निजी_data;
+	sमाप_प्रकार ret;
+	काष्ठा mwअगरiex_histogram_data *phist_data;
+	पूर्णांक i, value;
+	अचिन्हित दीर्घ page = get_zeroed_page(GFP_KERNEL);
+	अक्षर *p = (अक्षर *)page;
 
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
-	if (!priv || !priv->hist_data)
-		return -EFAULT;
+	अगर (!priv || !priv->hist_data)
+		वापस -EFAULT;
 	phist_data = priv->hist_data;
 
-	p += sprintf(p, "\n"
+	p += प्र_लिखो(p, "\n"
 		     "total samples = %d\n",
-		     atomic_read(&phist_data->num_samples));
+		     atomic_पढ़ो(&phist_data->num_samples));
 
-	p += sprintf(p,
+	p += प्र_लिखो(p,
 		     "rx rates (in Mbps): 0=1M   1=2M 2=5.5M  3=11M   4=6M   5=9M  6=12M\n"
 		     "7=18M  8=24M  9=36M  10=48M  11=54M 12-27=MCS0-15(BW20) 28-43=MCS0-15(BW40)\n");
 
-	if (ISSUPP_11ACENABLED(priv->adapter->fw_cap_info)) {
-		p += sprintf(p,
+	अगर (ISSUPP_11ACENABLED(priv->adapter->fw_cap_info)) अणु
+		p += प्र_लिखो(p,
 			     "44-53=MCS0-9(VHT:BW20) 54-63=MCS0-9(VHT:BW40) 64-73=MCS0-9(VHT:BW80)\n\n");
-	} else {
-		p += sprintf(p, "\n");
-	}
+	पूर्ण अन्यथा अणु
+		p += प्र_लिखो(p, "\n");
+	पूर्ण
 
-	for (i = 0; i < MWIFIEX_MAX_RX_RATES; i++) {
-		value = atomic_read(&phist_data->rx_rate[i]);
-		if (value)
-			p += sprintf(p, "rx_rate[%02d] = %d\n", i, value);
-	}
+	क्रम (i = 0; i < MWIFIEX_MAX_RX_RATES; i++) अणु
+		value = atomic_पढ़ो(&phist_data->rx_rate[i]);
+		अगर (value)
+			p += प्र_लिखो(p, "rx_rate[%02d] = %d\n", i, value);
+	पूर्ण
 
-	if (ISSUPP_11ACENABLED(priv->adapter->fw_cap_info)) {
-		for (i = MWIFIEX_MAX_RX_RATES; i < MWIFIEX_MAX_AC_RX_RATES;
-		     i++) {
-			value = atomic_read(&phist_data->rx_rate[i]);
-			if (value)
-				p += sprintf(p, "rx_rate[%02d] = %d\n",
+	अगर (ISSUPP_11ACENABLED(priv->adapter->fw_cap_info)) अणु
+		क्रम (i = MWIFIEX_MAX_RX_RATES; i < MWIFIEX_MAX_AC_RX_RATES;
+		     i++) अणु
+			value = atomic_पढ़ो(&phist_data->rx_rate[i]);
+			अगर (value)
+				p += प्र_लिखो(p, "rx_rate[%02d] = %d\n",
 					   i, value);
-		}
-	}
+		पूर्ण
+	पूर्ण
 
-	for (i = 0; i < MWIFIEX_MAX_SNR; i++) {
-		value =  atomic_read(&phist_data->snr[i]);
-		if (value)
-			p += sprintf(p, "snr[%02ddB] = %d\n", i, value);
-	}
-	for (i = 0; i < MWIFIEX_MAX_NOISE_FLR; i++) {
-		value = atomic_read(&phist_data->noise_flr[i]);
-		if (value)
-			p += sprintf(p, "noise_flr[%02ddBm] = %d\n",
-				(int)(i-128), value);
-	}
-	for (i = 0; i < MWIFIEX_MAX_SIG_STRENGTH; i++) {
-		value = atomic_read(&phist_data->sig_str[i]);
-		if (value)
-			p += sprintf(p, "sig_strength[-%02ddBm] = %d\n",
+	क्रम (i = 0; i < MWIFIEX_MAX_SNR; i++) अणु
+		value =  atomic_पढ़ो(&phist_data->snr[i]);
+		अगर (value)
+			p += प्र_लिखो(p, "snr[%02ddB] = %d\n", i, value);
+	पूर्ण
+	क्रम (i = 0; i < MWIFIEX_MAX_NOISE_FLR; i++) अणु
+		value = atomic_पढ़ो(&phist_data->noise_flr[i]);
+		अगर (value)
+			p += प्र_लिखो(p, "noise_flr[%02ddBm] = %d\n",
+				(पूर्णांक)(i-128), value);
+	पूर्ण
+	क्रम (i = 0; i < MWIFIEX_MAX_SIG_STRENGTH; i++) अणु
+		value = atomic_पढ़ो(&phist_data->sig_str[i]);
+		अगर (value)
+			p += प्र_लिखो(p, "sig_strength[-%02ddBm] = %d\n",
 				i, value);
-	}
+	पूर्ण
 
-	ret = simple_read_from_buffer(ubuf, count, ppos, (char *)page,
-				      (unsigned long)p - page);
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, (अक्षर *)page,
+				      (अचिन्हित दीर्घ)p - page);
 
-	return ret;
-}
+	वापस ret;
+पूर्ण
 
-static ssize_t
-mwifiex_histogram_write(struct file *file, const char __user *ubuf,
-			size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv = (void *)file->private_data;
+अटल sमाप_प्रकार
+mwअगरiex_histogram_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = (व्योम *)file->निजी_data;
 
-	if (priv && priv->hist_data)
-		mwifiex_hist_data_reset(priv);
-	return 0;
-}
+	अगर (priv && priv->hist_data)
+		mwअगरiex_hist_data_reset(priv);
+	वापस 0;
+पूर्ण
 
-static struct mwifiex_debug_info info;
+अटल काष्ठा mwअगरiex_debug_info info;
 
 /*
- * Proc debug file read handler.
+ * Proc debug file पढ़ो handler.
  *
- * This function is called when the 'debug' file is opened for reading
- * It prints the following log information -
+ * This function is called when the 'debug' file is खोलोed क्रम पढ़ोing
+ * It prपूर्णांकs the following log inक्रमmation -
  *      - Interrupt count
  *      - WMM AC VO packets count
  *      - WMM AC VI packets count
@@ -357,10 +358,10 @@ static struct mwifiex_debug_info info;
  *      - Number of wakeup tries
  *      - Host Sleep configured status
  *      - Host Sleep activated status
- *      - Number of Tx timeouts
- *      - Number of command timeouts
- *      - Last timed out command ID
- *      - Last timed out command action
+ *      - Number of Tx समयouts
+ *      - Number of command समयouts
+ *      - Last समयd out command ID
+ *      - Last समयd out command action
  *      - Last command ID
  *      - Last command action
  *      - Last command index
@@ -382,640 +383,640 @@ static struct mwifiex_debug_info info;
  *      - Number of command responses received
  *      - Number of events received
  *      - Tx BA stream table (TID, RA)
- *      - Rx reorder table (TID, TA, Start window, Window size, Buffer)
+ *      - Rx reorder table (TID, TA, Start winकरोw, Winकरोw size, Buffer)
  */
-static ssize_t
-mwifiex_debug_read(struct file *file, char __user *ubuf,
-		   size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv =
-		(struct mwifiex_private *) file->private_data;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
-	char *p = (char *) page;
-	ssize_t ret;
+अटल sमाप_प्रकार
+mwअगरiex_debug_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+		   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv =
+		(काष्ठा mwअगरiex_निजी *) file->निजी_data;
+	अचिन्हित दीर्घ page = get_zeroed_page(GFP_KERNEL);
+	अक्षर *p = (अक्षर *) page;
+	sमाप_प्रकार ret;
 
-	if (!p)
-		return -ENOMEM;
+	अगर (!p)
+		वापस -ENOMEM;
 
-	ret = mwifiex_get_debug_info(priv, &info);
-	if (ret)
-		goto free_and_exit;
+	ret = mwअगरiex_get_debug_info(priv, &info);
+	अगर (ret)
+		जाओ मुक्त_and_निकास;
 
-	p += mwifiex_debug_info_to_buffer(priv, p, &info);
+	p += mwअगरiex_debug_info_to_buffer(priv, p, &info);
 
-	ret = simple_read_from_buffer(ubuf, count, ppos, (char *) page,
-				      (unsigned long) p - page);
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, (अक्षर *) page,
+				      (अचिन्हित दीर्घ) p - page);
 
-free_and_exit:
-	free_page(page);
-	return ret;
-}
+मुक्त_and_निकास:
+	मुक्त_page(page);
+	वापस ret;
+पूर्ण
 
-static u32 saved_reg_type, saved_reg_offset, saved_reg_value;
+अटल u32 saved_reg_type, saved_reg_offset, saved_reg_value;
 
 /*
- * Proc regrdwr file write handler.
+ * Proc regrdwr file ग_लिखो handler.
  *
- * This function is called when the 'regrdwr' file is opened for writing
+ * This function is called when the 'regrdwr' file is खोलोed क्रम writing
  *
- * This function can be used to write to a register.
+ * This function can be used to ग_लिखो to a रेजिस्टर.
  */
-static ssize_t
-mwifiex_regrdwr_write(struct file *file,
-		      const char __user *ubuf, size_t count, loff_t *ppos)
-{
-	char *buf;
-	int ret;
-	u32 reg_type = 0, reg_offset = 0, reg_value = UINT_MAX;
+अटल sमाप_प्रकार
+mwअगरiex_regrdwr_ग_लिखो(काष्ठा file *file,
+		      स्थिर अक्षर __user *ubuf, माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *buf;
+	पूर्णांक ret;
+	u32 reg_type = 0, reg_offset = 0, reg_value = अच_पूर्णांक_उच्च;
 
-	buf = memdup_user_nul(ubuf, min(count, (size_t)(PAGE_SIZE - 1)));
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	buf = memdup_user_nul(ubuf, min(count, (माप_प्रकार)(PAGE_SIZE - 1)));
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	sscanf(buf, "%u %x %x", &reg_type, &reg_offset, &reg_value);
+	माला_पूछो(buf, "%u %x %x", &reg_type, &reg_offset, &reg_value);
 
-	if (reg_type == 0 || reg_offset == 0) {
+	अगर (reg_type == 0 || reg_offset == 0) अणु
 		ret = -EINVAL;
-		goto done;
-	} else {
+		जाओ करोne;
+	पूर्ण अन्यथा अणु
 		saved_reg_type = reg_type;
 		saved_reg_offset = reg_offset;
 		saved_reg_value = reg_value;
 		ret = count;
-	}
-done:
-	kfree(buf);
-	return ret;
-}
+	पूर्ण
+करोne:
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /*
- * Proc regrdwr file read handler.
+ * Proc regrdwr file पढ़ो handler.
  *
- * This function is called when the 'regrdwr' file is opened for reading
+ * This function is called when the 'regrdwr' file is खोलोed क्रम पढ़ोing
  *
- * This function can be used to read from a register.
+ * This function can be used to पढ़ो from a रेजिस्टर.
  */
-static ssize_t
-mwifiex_regrdwr_read(struct file *file, char __user *ubuf,
-		     size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv =
-		(struct mwifiex_private *) file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *) addr;
-	int pos = 0, ret = 0;
+अटल sमाप_प्रकार
+mwअगरiex_regrdwr_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+		     माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv =
+		(काष्ठा mwअगरiex_निजी *) file->निजी_data;
+	अचिन्हित दीर्घ addr = get_zeroed_page(GFP_KERNEL);
+	अक्षर *buf = (अक्षर *) addr;
+	पूर्णांक pos = 0, ret = 0;
 	u32 reg_value;
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	if (!saved_reg_type) {
+	अगर (!saved_reg_type) अणु
 		/* No command has been given */
-		pos += snprintf(buf, PAGE_SIZE, "0");
-		goto done;
-	}
+		pos += snम_लिखो(buf, PAGE_SIZE, "0");
+		जाओ करोne;
+	पूर्ण
 	/* Set command has been given */
-	if (saved_reg_value != UINT_MAX) {
-		ret = mwifiex_reg_write(priv, saved_reg_type, saved_reg_offset,
+	अगर (saved_reg_value != अच_पूर्णांक_उच्च) अणु
+		ret = mwअगरiex_reg_ग_लिखो(priv, saved_reg_type, saved_reg_offset,
 					saved_reg_value);
 
-		pos += snprintf(buf, PAGE_SIZE, "%u 0x%x 0x%x\n",
+		pos += snम_लिखो(buf, PAGE_SIZE, "%u 0x%x 0x%x\n",
 				saved_reg_type, saved_reg_offset,
 				saved_reg_value);
 
-		ret = simple_read_from_buffer(ubuf, count, ppos, buf, pos);
+		ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, pos);
 
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 	/* Get command has been given */
-	ret = mwifiex_reg_read(priv, saved_reg_type,
+	ret = mwअगरiex_reg_पढ़ो(priv, saved_reg_type,
 			       saved_reg_offset, &reg_value);
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	pos += snprintf(buf, PAGE_SIZE, "%u 0x%x 0x%x\n", saved_reg_type,
+	pos += snम_लिखो(buf, PAGE_SIZE, "%u 0x%x 0x%x\n", saved_reg_type,
 			saved_reg_offset, reg_value);
 
-	ret = simple_read_from_buffer(ubuf, count, ppos, buf, pos);
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, pos);
 
-done:
-	free_page(addr);
-	return ret;
-}
+करोne:
+	मुक्त_page(addr);
+	वापस ret;
+पूर्ण
 
-/* Proc debug_mask file read handler.
- * This function is called when the 'debug_mask' file is opened for reading
- * This function can be used read driver debugging mask value.
+/* Proc debug_mask file पढ़ो handler.
+ * This function is called when the 'debug_mask' file is खोलोed क्रम पढ़ोing
+ * This function can be used पढ़ो driver debugging mask value.
  */
-static ssize_t
-mwifiex_debug_mask_read(struct file *file, char __user *ubuf,
-			size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv =
-		(struct mwifiex_private *)file->private_data;
-	unsigned long page = get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)page;
-	size_t ret = 0;
-	int pos = 0;
+अटल sमाप_प्रकार
+mwअगरiex_debug_mask_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+			माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv =
+		(काष्ठा mwअगरiex_निजी *)file->निजी_data;
+	अचिन्हित दीर्घ page = get_zeroed_page(GFP_KERNEL);
+	अक्षर *buf = (अक्षर *)page;
+	माप_प्रकार ret = 0;
+	पूर्णांक pos = 0;
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	pos += snprintf(buf, PAGE_SIZE, "debug mask=0x%08x\n",
+	pos += snम_लिखो(buf, PAGE_SIZE, "debug mask=0x%08x\n",
 			priv->adapter->debug_mask);
-	ret = simple_read_from_buffer(ubuf, count, ppos, buf, pos);
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, pos);
 
-	free_page(page);
-	return ret;
-}
+	मुक्त_page(page);
+	वापस ret;
+पूर्ण
 
-/* Proc debug_mask file read handler.
- * This function is called when the 'debug_mask' file is opened for reading
- * This function can be used read driver debugging mask value.
+/* Proc debug_mask file पढ़ो handler.
+ * This function is called when the 'debug_mask' file is खोलोed क्रम पढ़ोing
+ * This function can be used पढ़ो driver debugging mask value.
  */
-static ssize_t
-mwifiex_debug_mask_write(struct file *file, const char __user *ubuf,
-			 size_t count, loff_t *ppos)
-{
-	int ret;
-	unsigned long debug_mask;
-	struct mwifiex_private *priv = (void *)file->private_data;
-	char *buf;
+अटल sमाप_प्रकार
+mwअगरiex_debug_mask_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
+			 माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret;
+	अचिन्हित दीर्घ debug_mask;
+	काष्ठा mwअगरiex_निजी *priv = (व्योम *)file->निजी_data;
+	अक्षर *buf;
 
-	buf = memdup_user_nul(ubuf, min(count, (size_t)(PAGE_SIZE - 1)));
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	buf = memdup_user_nul(ubuf, min(count, (माप_प्रकार)(PAGE_SIZE - 1)));
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	if (kstrtoul(buf, 0, &debug_mask)) {
+	अगर (kम_से_अदीर्घ(buf, 0, &debug_mask)) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
 	priv->adapter->debug_mask = debug_mask;
 	ret = count;
-done:
-	kfree(buf);
-	return ret;
-}
+करोne:
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-/* debugfs verext file write handler.
- * This function is called when the 'verext' file is opened for write
+/* debugfs verext file ग_लिखो handler.
+ * This function is called when the 'verext' file is खोलोed क्रम ग_लिखो
  */
-static ssize_t
-mwifiex_verext_write(struct file *file, const char __user *ubuf,
-		     size_t count, loff_t *ppos)
-{
-	int ret;
+अटल sमाप_प्रकार
+mwअगरiex_verext_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
+		     माप_प्रकार count, loff_t *ppos)
+अणु
+	पूर्णांक ret;
 	u32 versionstrsel;
-	struct mwifiex_private *priv = (void *)file->private_data;
-	char buf[16];
+	काष्ठा mwअगरiex_निजी *priv = (व्योम *)file->निजी_data;
+	अक्षर buf[16];
 
-	memset(buf, 0, sizeof(buf));
+	स_रखो(buf, 0, माप(buf));
 
-	if (copy_from_user(&buf, ubuf, min_t(size_t, sizeof(buf) - 1, count)))
-		return -EFAULT;
+	अगर (copy_from_user(&buf, ubuf, min_t(माप_प्रकार, माप(buf) - 1, count)))
+		वापस -EFAULT;
 
 	ret = kstrtou32(buf, 10, &versionstrsel);
-	if (ret)
-		return ret;
+	अगर (ret)
+		वापस ret;
 
 	priv->versionstrsel = versionstrsel;
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-/* Proc verext file read handler.
- * This function is called when the 'verext' file is opened for reading
- * This function can be used read driver exteneed verion string.
+/* Proc verext file पढ़ो handler.
+ * This function is called when the 'verext' file is खोलोed क्रम पढ़ोing
+ * This function can be used पढ़ो driver exteneed verion string.
  */
-static ssize_t
-mwifiex_verext_read(struct file *file, char __user *ubuf,
-		    size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv =
-		(struct mwifiex_private *)file->private_data;
-	char buf[256];
-	int ret;
+अटल sमाप_प्रकार
+mwअगरiex_verext_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+		    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv =
+		(काष्ठा mwअगरiex_निजी *)file->निजी_data;
+	अक्षर buf[256];
+	पूर्णांक ret;
 
-	mwifiex_get_ver_ext(priv, priv->versionstrsel);
-	ret = snprintf(buf, sizeof(buf), "version string: %s\n",
+	mwअगरiex_get_ver_ext(priv, priv->versionstrsel);
+	ret = snम_लिखो(buf, माप(buf), "version string: %s\n",
 		       priv->version_str);
 
-	return simple_read_from_buffer(ubuf, count, ppos, buf, ret);
-}
+	वापस simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, ret);
+पूर्ण
 
-/* Proc memrw file write handler.
- * This function is called when the 'memrw' file is opened for writing
- * This function can be used to write to a memory location.
+/* Proc memrw file ग_लिखो handler.
+ * This function is called when the 'memrw' file is खोलोed क्रम writing
+ * This function can be used to ग_लिखो to a memory location.
  */
-static ssize_t
-mwifiex_memrw_write(struct file *file, const char __user *ubuf, size_t count,
+अटल sमाप_प्रकार
+mwअगरiex_memrw_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf, माप_प्रकार count,
 		    loff_t *ppos)
-{
-	int ret;
-	char cmd;
-	struct mwifiex_ds_mem_rw mem_rw;
+अणु
+	पूर्णांक ret;
+	अक्षर cmd;
+	काष्ठा mwअगरiex_ds_mem_rw mem_rw;
 	u16 cmd_action;
-	struct mwifiex_private *priv = (void *)file->private_data;
-	char *buf;
+	काष्ठा mwअगरiex_निजी *priv = (व्योम *)file->निजी_data;
+	अक्षर *buf;
 
-	buf = memdup_user_nul(ubuf, min(count, (size_t)(PAGE_SIZE - 1)));
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	buf = memdup_user_nul(ubuf, min(count, (माप_प्रकार)(PAGE_SIZE - 1)));
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	ret = sscanf(buf, "%c %x %x", &cmd, &mem_rw.addr, &mem_rw.value);
-	if (ret != 3) {
+	ret = माला_पूछो(buf, "%c %x %x", &cmd, &mem_rw.addr, &mem_rw.value);
+	अगर (ret != 3) अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if ((cmd == 'r') || (cmd == 'R')) {
+	अगर ((cmd == 'r') || (cmd == 'R')) अणु
 		cmd_action = HostCmd_ACT_GEN_GET;
 		mem_rw.value = 0;
-	} else if ((cmd == 'w') || (cmd == 'W')) {
+	पूर्ण अन्यथा अगर ((cmd == 'w') || (cmd == 'W')) अणु
 		cmd_action = HostCmd_ACT_GEN_SET;
-	} else {
+	पूर्ण अन्यथा अणु
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	memcpy(&priv->mem_rw, &mem_rw, sizeof(mem_rw));
-	if (mwifiex_send_cmd(priv, HostCmd_CMD_MEM_ACCESS, cmd_action, 0,
+	स_नकल(&priv->mem_rw, &mem_rw, माप(mem_rw));
+	अगर (mwअगरiex_send_cmd(priv, HostCmd_CMD_MEM_ACCESS, cmd_action, 0,
 			     &mem_rw, true))
 		ret = -1;
-	else
+	अन्यथा
 		ret = count;
 
-done:
-	kfree(buf);
-	return ret;
-}
+करोne:
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-/* Proc memrw file read handler.
- * This function is called when the 'memrw' file is opened for reading
- * This function can be used to read from a memory location.
+/* Proc memrw file पढ़ो handler.
+ * This function is called when the 'memrw' file is खोलोed क्रम पढ़ोing
+ * This function can be used to पढ़ो from a memory location.
  */
-static ssize_t
-mwifiex_memrw_read(struct file *file, char __user *ubuf,
-		   size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv = (void *)file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
-	int ret, pos = 0;
+अटल sमाप_प्रकार
+mwअगरiex_memrw_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+		   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = (व्योम *)file->निजी_data;
+	अचिन्हित दीर्घ addr = get_zeroed_page(GFP_KERNEL);
+	अक्षर *buf = (अक्षर *)addr;
+	पूर्णांक ret, pos = 0;
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	pos += snprintf(buf, PAGE_SIZE, "0x%x 0x%x\n", priv->mem_rw.addr,
+	pos += snम_लिखो(buf, PAGE_SIZE, "0x%x 0x%x\n", priv->mem_rw.addr,
 			priv->mem_rw.value);
-	ret = simple_read_from_buffer(ubuf, count, ppos, buf, pos);
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, pos);
 
-	free_page(addr);
-	return ret;
-}
+	मुक्त_page(addr);
+	वापस ret;
+पूर्ण
 
-static u32 saved_offset = -1, saved_bytes = -1;
+अटल u32 saved_offset = -1, saved_bytes = -1;
 
 /*
- * Proc rdeeprom file write handler.
+ * Proc rdeeprom file ग_लिखो handler.
  *
- * This function is called when the 'rdeeprom' file is opened for writing
+ * This function is called when the 'rdeeprom' file is खोलोed क्रम writing
  *
- * This function can be used to write to a RDEEPROM location.
+ * This function can be used to ग_लिखो to a RDEEPROM location.
  */
-static ssize_t
-mwifiex_rdeeprom_write(struct file *file,
-		       const char __user *ubuf, size_t count, loff_t *ppos)
-{
-	char *buf;
-	int ret = 0;
-	int offset = -1, bytes = -1;
+अटल sमाप_प्रकार
+mwअगरiex_rdeeprom_ग_लिखो(काष्ठा file *file,
+		       स्थिर अक्षर __user *ubuf, माप_प्रकार count, loff_t *ppos)
+अणु
+	अक्षर *buf;
+	पूर्णांक ret = 0;
+	पूर्णांक offset = -1, bytes = -1;
 
-	buf = memdup_user_nul(ubuf, min(count, (size_t)(PAGE_SIZE - 1)));
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	buf = memdup_user_nul(ubuf, min(count, (माप_प्रकार)(PAGE_SIZE - 1)));
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	sscanf(buf, "%d %d", &offset, &bytes);
+	माला_पूछो(buf, "%d %d", &offset, &bytes);
 
-	if (offset == -1 || bytes == -1) {
+	अगर (offset == -1 || bytes == -1) अणु
 		ret = -EINVAL;
-		goto done;
-	} else {
+		जाओ करोne;
+	पूर्ण अन्यथा अणु
 		saved_offset = offset;
 		saved_bytes = bytes;
 		ret = count;
-	}
-done:
-	kfree(buf);
-	return ret;
-}
+	पूर्ण
+करोne:
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
 /*
- * Proc rdeeprom read write handler.
+ * Proc rdeeprom पढ़ो ग_लिखो handler.
  *
- * This function is called when the 'rdeeprom' file is opened for reading
+ * This function is called when the 'rdeeprom' file is खोलोed क्रम पढ़ोing
  *
- * This function can be used to read from a RDEEPROM location.
+ * This function can be used to पढ़ो from a RDEEPROM location.
  */
-static ssize_t
-mwifiex_rdeeprom_read(struct file *file, char __user *ubuf,
-		      size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv =
-		(struct mwifiex_private *) file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *) addr;
-	int pos, ret, i;
+अटल sमाप_प्रकार
+mwअगरiex_rdeeprom_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+		      माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv =
+		(काष्ठा mwअगरiex_निजी *) file->निजी_data;
+	अचिन्हित दीर्घ addr = get_zeroed_page(GFP_KERNEL);
+	अक्षर *buf = (अक्षर *) addr;
+	पूर्णांक pos, ret, i;
 	u8 value[MAX_EEPROM_DATA];
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	if (saved_offset == -1) {
+	अगर (saved_offset == -1) अणु
 		/* No command has been given */
-		pos = snprintf(buf, PAGE_SIZE, "0");
-		goto done;
-	}
+		pos = snम_लिखो(buf, PAGE_SIZE, "0");
+		जाओ करोne;
+	पूर्ण
 
 	/* Get command has been given */
-	ret = mwifiex_eeprom_read(priv, (u16) saved_offset,
+	ret = mwअगरiex_eeprom_पढ़ो(priv, (u16) saved_offset,
 				  (u16) saved_bytes, value);
-	if (ret) {
+	अगर (ret) अणु
 		ret = -EINVAL;
-		goto out_free;
-	}
+		जाओ out_मुक्त;
+	पूर्ण
 
-	pos = snprintf(buf, PAGE_SIZE, "%d %d ", saved_offset, saved_bytes);
+	pos = snम_लिखो(buf, PAGE_SIZE, "%d %d ", saved_offset, saved_bytes);
 
-	for (i = 0; i < saved_bytes; i++)
-		pos += scnprintf(buf + pos, PAGE_SIZE - pos, "%d ", value[i]);
+	क्रम (i = 0; i < saved_bytes; i++)
+		pos += scnम_लिखो(buf + pos, PAGE_SIZE - pos, "%d ", value[i]);
 
-done:
-	ret = simple_read_from_buffer(ubuf, count, ppos, buf, pos);
-out_free:
-	free_page(addr);
-	return ret;
-}
+करोne:
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, pos);
+out_मुक्त:
+	मुक्त_page(addr);
+	वापस ret;
+पूर्ण
 
-/* Proc hscfg file write handler
+/* Proc hscfg file ग_लिखो handler
  * This function can be used to configure the host sleep parameters.
  */
-static ssize_t
-mwifiex_hscfg_write(struct file *file, const char __user *ubuf,
-		    size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv = (void *)file->private_data;
-	char *buf;
-	int ret, arg_num;
-	struct mwifiex_ds_hs_cfg hscfg;
-	int conditions = HS_CFG_COND_DEF;
+अटल sमाप_प्रकार
+mwअगरiex_hscfg_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
+		    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = (व्योम *)file->निजी_data;
+	अक्षर *buf;
+	पूर्णांक ret, arg_num;
+	काष्ठा mwअगरiex_ds_hs_cfg hscfg;
+	पूर्णांक conditions = HS_CFG_COND_DEF;
 	u32 gpio = HS_CFG_GPIO_DEF, gap = HS_CFG_GAP_DEF;
 
-	buf = memdup_user_nul(ubuf, min(count, (size_t)(PAGE_SIZE - 1)));
-	if (IS_ERR(buf))
-		return PTR_ERR(buf);
+	buf = memdup_user_nul(ubuf, min(count, (माप_प्रकार)(PAGE_SIZE - 1)));
+	अगर (IS_ERR(buf))
+		वापस PTR_ERR(buf);
 
-	arg_num = sscanf(buf, "%d %x %x", &conditions, &gpio, &gap);
+	arg_num = माला_पूछो(buf, "%d %x %x", &conditions, &gpio, &gap);
 
-	memset(&hscfg, 0, sizeof(struct mwifiex_ds_hs_cfg));
+	स_रखो(&hscfg, 0, माप(काष्ठा mwअगरiex_ds_hs_cfg));
 
-	if (arg_num > 3) {
-		mwifiex_dbg(priv->adapter, ERROR,
+	अगर (arg_num > 3) अणु
+		mwअगरiex_dbg(priv->adapter, ERROR,
 			    "Too many arguments\n");
 		ret = -EINVAL;
-		goto done;
-	}
+		जाओ करोne;
+	पूर्ण
 
-	if (arg_num >= 1 && arg_num < 3)
-		mwifiex_set_hs_params(priv, HostCmd_ACT_GEN_GET,
+	अगर (arg_num >= 1 && arg_num < 3)
+		mwअगरiex_set_hs_params(priv, HostCmd_ACT_GEN_GET,
 				      MWIFIEX_SYNC_CMD, &hscfg);
 
-	if (arg_num) {
-		if (conditions == HS_CFG_CANCEL) {
-			mwifiex_cancel_hs(priv, MWIFIEX_ASYNC_CMD);
+	अगर (arg_num) अणु
+		अगर (conditions == HS_CFG_CANCEL) अणु
+			mwअगरiex_cancel_hs(priv, MWIFIEX_ASYNC_CMD);
 			ret = count;
-			goto done;
-		}
+			जाओ करोne;
+		पूर्ण
 		hscfg.conditions = conditions;
-	}
-	if (arg_num >= 2)
+	पूर्ण
+	अगर (arg_num >= 2)
 		hscfg.gpio = gpio;
-	if (arg_num == 3)
+	अगर (arg_num == 3)
 		hscfg.gap = gap;
 
 	hscfg.is_invoke_hostcmd = false;
-	mwifiex_set_hs_params(priv, HostCmd_ACT_GEN_SET,
+	mwअगरiex_set_hs_params(priv, HostCmd_ACT_GEN_SET,
 			      MWIFIEX_SYNC_CMD, &hscfg);
 
-	mwifiex_enable_hs(priv->adapter);
+	mwअगरiex_enable_hs(priv->adapter);
 	clear_bit(MWIFIEX_IS_HS_ENABLING, &priv->adapter->work_flags);
 	ret = count;
-done:
-	kfree(buf);
-	return ret;
-}
+करोne:
+	kमुक्त(buf);
+	वापस ret;
+पूर्ण
 
-/* Proc hscfg file read handler
- * This function can be used to read host sleep configuration
+/* Proc hscfg file पढ़ो handler
+ * This function can be used to पढ़ो host sleep configuration
  * parameters from driver.
  */
-static ssize_t
-mwifiex_hscfg_read(struct file *file, char __user *ubuf,
-		   size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv = (void *)file->private_data;
-	unsigned long addr = get_zeroed_page(GFP_KERNEL);
-	char *buf = (char *)addr;
-	int pos, ret;
-	struct mwifiex_ds_hs_cfg hscfg;
+अटल sमाप_प्रकार
+mwअगरiex_hscfg_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+		   माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = (व्योम *)file->निजी_data;
+	अचिन्हित दीर्घ addr = get_zeroed_page(GFP_KERNEL);
+	अक्षर *buf = (अक्षर *)addr;
+	पूर्णांक pos, ret;
+	काष्ठा mwअगरiex_ds_hs_cfg hscfg;
 
-	if (!buf)
-		return -ENOMEM;
+	अगर (!buf)
+		वापस -ENOMEM;
 
-	mwifiex_set_hs_params(priv, HostCmd_ACT_GEN_GET,
+	mwअगरiex_set_hs_params(priv, HostCmd_ACT_GEN_GET,
 			      MWIFIEX_SYNC_CMD, &hscfg);
 
-	pos = snprintf(buf, PAGE_SIZE, "%u 0x%x 0x%x\n", hscfg.conditions,
+	pos = snम_लिखो(buf, PAGE_SIZE, "%u 0x%x 0x%x\n", hscfg.conditions,
 		       hscfg.gpio, hscfg.gap);
 
-	ret = simple_read_from_buffer(ubuf, count, ppos, buf, pos);
+	ret = simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, pos);
 
-	free_page(addr);
-	return ret;
-}
+	मुक्त_page(addr);
+	वापस ret;
+पूर्ण
 
-static ssize_t
-mwifiex_timeshare_coex_read(struct file *file, char __user *ubuf,
-			    size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv = file->private_data;
-	char buf[3];
-	bool timeshare_coex;
-	int ret;
-	unsigned int len;
+अटल sमाप_प्रकार
+mwअगरiex_बारhare_coex_पढ़ो(काष्ठा file *file, अक्षर __user *ubuf,
+			    माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = file->निजी_data;
+	अक्षर buf[3];
+	bool बारhare_coex;
+	पूर्णांक ret;
+	अचिन्हित पूर्णांक len;
 
-	if (priv->adapter->fw_api_ver != MWIFIEX_FW_V15)
-		return -EOPNOTSUPP;
+	अगर (priv->adapter->fw_api_ver != MWIFIEX_FW_V15)
+		वापस -EOPNOTSUPP;
 
-	ret = mwifiex_send_cmd(priv, HostCmd_CMD_ROBUST_COEX,
-			       HostCmd_ACT_GEN_GET, 0, &timeshare_coex, true);
-	if (ret)
-		return ret;
+	ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_ROBUST_COEX,
+			       HostCmd_ACT_GEN_GET, 0, &बारhare_coex, true);
+	अगर (ret)
+		वापस ret;
 
-	len = sprintf(buf, "%d\n", timeshare_coex);
-	return simple_read_from_buffer(ubuf, count, ppos, buf, len);
-}
+	len = प्र_लिखो(buf, "%d\n", बारhare_coex);
+	वापस simple_पढ़ो_from_buffer(ubuf, count, ppos, buf, len);
+पूर्ण
 
-static ssize_t
-mwifiex_timeshare_coex_write(struct file *file, const char __user *ubuf,
-			     size_t count, loff_t *ppos)
-{
-	bool timeshare_coex;
-	struct mwifiex_private *priv = file->private_data;
-	char kbuf[16];
-	int ret;
+अटल sमाप_प्रकार
+mwअगरiex_बारhare_coex_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
+			     माप_प्रकार count, loff_t *ppos)
+अणु
+	bool बारhare_coex;
+	काष्ठा mwअगरiex_निजी *priv = file->निजी_data;
+	अक्षर kbuf[16];
+	पूर्णांक ret;
 
-	if (priv->adapter->fw_api_ver != MWIFIEX_FW_V15)
-		return -EOPNOTSUPP;
+	अगर (priv->adapter->fw_api_ver != MWIFIEX_FW_V15)
+		वापस -EOPNOTSUPP;
 
-	memset(kbuf, 0, sizeof(kbuf));
+	स_रखो(kbuf, 0, माप(kbuf));
 
-	if (copy_from_user(&kbuf, ubuf, min_t(size_t, sizeof(kbuf) - 1, count)))
-		return -EFAULT;
+	अगर (copy_from_user(&kbuf, ubuf, min_t(माप_प्रकार, माप(kbuf) - 1, count)))
+		वापस -EFAULT;
 
-	if (strtobool(kbuf, &timeshare_coex))
-		return -EINVAL;
+	अगर (strtobool(kbuf, &बारhare_coex))
+		वापस -EINVAL;
 
-	ret = mwifiex_send_cmd(priv, HostCmd_CMD_ROBUST_COEX,
-			       HostCmd_ACT_GEN_SET, 0, &timeshare_coex, true);
-	if (ret)
-		return ret;
-	else
-		return count;
-}
+	ret = mwअगरiex_send_cmd(priv, HostCmd_CMD_ROBUST_COEX,
+			       HostCmd_ACT_GEN_SET, 0, &बारhare_coex, true);
+	अगर (ret)
+		वापस ret;
+	अन्यथा
+		वापस count;
+पूर्ण
 
-static ssize_t
-mwifiex_reset_write(struct file *file,
-		    const char __user *ubuf, size_t count, loff_t *ppos)
-{
-	struct mwifiex_private *priv = file->private_data;
-	struct mwifiex_adapter *adapter = priv->adapter;
+अटल sमाप_प्रकार
+mwअगरiex_reset_ग_लिखो(काष्ठा file *file,
+		    स्थिर अक्षर __user *ubuf, माप_प्रकार count, loff_t *ppos)
+अणु
+	काष्ठा mwअगरiex_निजी *priv = file->निजी_data;
+	काष्ठा mwअगरiex_adapter *adapter = priv->adapter;
 	bool result;
-	int rc;
+	पूर्णांक rc;
 
 	rc = kstrtobool_from_user(ubuf, count, &result);
-	if (rc)
-		return rc;
+	अगर (rc)
+		वापस rc;
 
-	if (!result)
-		return -EINVAL;
+	अगर (!result)
+		वापस -EINVAL;
 
-	if (adapter->if_ops.card_reset) {
+	अगर (adapter->अगर_ops.card_reset) अणु
 		dev_info(adapter->dev, "Resetting per request\n");
-		adapter->if_ops.card_reset(adapter);
-	}
+		adapter->अगर_ops.card_reset(adapter);
+	पूर्ण
 
-	return count;
-}
+	वापस count;
+पूर्ण
 
-#define MWIFIEX_DFS_ADD_FILE(name) do {                                 \
+#घोषणा MWIFIEX_DFS_ADD_खाता(name) करो अणु                                 \
 	debugfs_create_file(#name, 0644, priv->dfs_dev_dir, priv,       \
-			    &mwifiex_dfs_##name##_fops);                \
-} while (0);
+			    &mwअगरiex_dfs_##name##_fops);                \
+पूर्ण जबतक (0);
 
-#define MWIFIEX_DFS_FILE_OPS(name)                                      \
-static const struct file_operations mwifiex_dfs_##name##_fops = {       \
-	.read = mwifiex_##name##_read,                                  \
-	.write = mwifiex_##name##_write,                                \
-	.open = simple_open,                                            \
-};
+#घोषणा MWIFIEX_DFS_खाता_OPS(name)                                      \
+अटल स्थिर काष्ठा file_operations mwअगरiex_dfs_##name##_fops = अणु       \
+	.पढ़ो = mwअगरiex_##name##_पढ़ो,                                  \
+	.ग_लिखो = mwअगरiex_##name##_ग_लिखो,                                \
+	.खोलो = simple_खोलो,                                            \
+पूर्ण;
 
-#define MWIFIEX_DFS_FILE_READ_OPS(name)                                 \
-static const struct file_operations mwifiex_dfs_##name##_fops = {       \
-	.read = mwifiex_##name##_read,                                  \
-	.open = simple_open,                                            \
-};
+#घोषणा MWIFIEX_DFS_खाता_READ_OPS(name)                                 \
+अटल स्थिर काष्ठा file_operations mwअगरiex_dfs_##name##_fops = अणु       \
+	.पढ़ो = mwअगरiex_##name##_पढ़ो,                                  \
+	.खोलो = simple_खोलो,                                            \
+पूर्ण;
 
-#define MWIFIEX_DFS_FILE_WRITE_OPS(name)                                \
-static const struct file_operations mwifiex_dfs_##name##_fops = {       \
-	.write = mwifiex_##name##_write,                                \
-	.open = simple_open,                                            \
-};
+#घोषणा MWIFIEX_DFS_खाता_WRITE_OPS(name)                                \
+अटल स्थिर काष्ठा file_operations mwअगरiex_dfs_##name##_fops = अणु       \
+	.ग_लिखो = mwअगरiex_##name##_ग_लिखो,                                \
+	.खोलो = simple_खोलो,                                            \
+पूर्ण;
 
 
-MWIFIEX_DFS_FILE_READ_OPS(info);
-MWIFIEX_DFS_FILE_READ_OPS(debug);
-MWIFIEX_DFS_FILE_READ_OPS(getlog);
-MWIFIEX_DFS_FILE_OPS(regrdwr);
-MWIFIEX_DFS_FILE_OPS(rdeeprom);
-MWIFIEX_DFS_FILE_OPS(memrw);
-MWIFIEX_DFS_FILE_OPS(hscfg);
-MWIFIEX_DFS_FILE_OPS(histogram);
-MWIFIEX_DFS_FILE_OPS(debug_mask);
-MWIFIEX_DFS_FILE_OPS(timeshare_coex);
-MWIFIEX_DFS_FILE_WRITE_OPS(reset);
-MWIFIEX_DFS_FILE_OPS(verext);
+MWIFIEX_DFS_खाता_READ_OPS(info);
+MWIFIEX_DFS_खाता_READ_OPS(debug);
+MWIFIEX_DFS_खाता_READ_OPS(getlog);
+MWIFIEX_DFS_खाता_OPS(regrdwr);
+MWIFIEX_DFS_खाता_OPS(rdeeprom);
+MWIFIEX_DFS_खाता_OPS(memrw);
+MWIFIEX_DFS_खाता_OPS(hscfg);
+MWIFIEX_DFS_खाता_OPS(histogram);
+MWIFIEX_DFS_खाता_OPS(debug_mask);
+MWIFIEX_DFS_खाता_OPS(बारhare_coex);
+MWIFIEX_DFS_खाता_WRITE_OPS(reset);
+MWIFIEX_DFS_खाता_OPS(verext);
 
 /*
- * This function creates the debug FS directory structure and the files.
+ * This function creates the debug FS directory काष्ठाure and the files.
  */
-void
-mwifiex_dev_debugfs_init(struct mwifiex_private *priv)
-{
-	if (!mwifiex_dfs_dir || !priv)
-		return;
+व्योम
+mwअगरiex_dev_debugfs_init(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	अगर (!mwअगरiex_dfs_dir || !priv)
+		वापस;
 
 	priv->dfs_dev_dir = debugfs_create_dir(priv->netdev->name,
-					       mwifiex_dfs_dir);
+					       mwअगरiex_dfs_dir);
 
-	if (!priv->dfs_dev_dir)
-		return;
+	अगर (!priv->dfs_dev_dir)
+		वापस;
 
-	MWIFIEX_DFS_ADD_FILE(info);
-	MWIFIEX_DFS_ADD_FILE(debug);
-	MWIFIEX_DFS_ADD_FILE(getlog);
-	MWIFIEX_DFS_ADD_FILE(regrdwr);
-	MWIFIEX_DFS_ADD_FILE(rdeeprom);
+	MWIFIEX_DFS_ADD_खाता(info);
+	MWIFIEX_DFS_ADD_खाता(debug);
+	MWIFIEX_DFS_ADD_खाता(getlog);
+	MWIFIEX_DFS_ADD_खाता(regrdwr);
+	MWIFIEX_DFS_ADD_खाता(rdeeprom);
 
-	MWIFIEX_DFS_ADD_FILE(memrw);
-	MWIFIEX_DFS_ADD_FILE(hscfg);
-	MWIFIEX_DFS_ADD_FILE(histogram);
-	MWIFIEX_DFS_ADD_FILE(debug_mask);
-	MWIFIEX_DFS_ADD_FILE(timeshare_coex);
-	MWIFIEX_DFS_ADD_FILE(reset);
-	MWIFIEX_DFS_ADD_FILE(verext);
-}
+	MWIFIEX_DFS_ADD_खाता(memrw);
+	MWIFIEX_DFS_ADD_खाता(hscfg);
+	MWIFIEX_DFS_ADD_खाता(histogram);
+	MWIFIEX_DFS_ADD_खाता(debug_mask);
+	MWIFIEX_DFS_ADD_खाता(बारhare_coex);
+	MWIFIEX_DFS_ADD_खाता(reset);
+	MWIFIEX_DFS_ADD_खाता(verext);
+पूर्ण
 
 /*
- * This function removes the debug FS directory structure and the files.
+ * This function हटाओs the debug FS directory काष्ठाure and the files.
  */
-void
-mwifiex_dev_debugfs_remove(struct mwifiex_private *priv)
-{
-	if (!priv)
-		return;
+व्योम
+mwअगरiex_dev_debugfs_हटाओ(काष्ठा mwअगरiex_निजी *priv)
+अणु
+	अगर (!priv)
+		वापस;
 
-	debugfs_remove_recursive(priv->dfs_dev_dir);
-}
+	debugfs_हटाओ_recursive(priv->dfs_dev_dir);
+पूर्ण
 
 /*
  * This function creates the top level proc directory.
  */
-void
-mwifiex_debugfs_init(void)
-{
-	if (!mwifiex_dfs_dir)
-		mwifiex_dfs_dir = debugfs_create_dir("mwifiex", NULL);
-}
+व्योम
+mwअगरiex_debugfs_init(व्योम)
+अणु
+	अगर (!mwअगरiex_dfs_dir)
+		mwअगरiex_dfs_dir = debugfs_create_dir("mwifiex", शून्य);
+पूर्ण
 
 /*
- * This function removes the top level proc directory.
+ * This function हटाओs the top level proc directory.
  */
-void
-mwifiex_debugfs_remove(void)
-{
-	debugfs_remove(mwifiex_dfs_dir);
-}
+व्योम
+mwअगरiex_debugfs_हटाओ(व्योम)
+अणु
+	debugfs_हटाओ(mwअगरiex_dfs_dir);
+पूर्ण

@@ -1,35 +1,36 @@
-/* SPDX-License-Identifier: GPL-2.0 */
-#ifndef _LINUX_TASK_WORK_H
-#define _LINUX_TASK_WORK_H
+<शैली गुरु>
+/* SPDX-License-Identअगरier: GPL-2.0 */
+#अगर_अघोषित _LINUX_TASK_WORK_H
+#घोषणा _LINUX_TASK_WORK_H
 
-#include <linux/list.h>
-#include <linux/sched.h>
+#समावेश <linux/list.h>
+#समावेश <linux/sched.h>
 
-typedef void (*task_work_func_t)(struct callback_head *);
+प्रकार व्योम (*task_work_func_t)(काष्ठा callback_head *);
 
-static inline void
-init_task_work(struct callback_head *twork, task_work_func_t func)
-{
+अटल अंतरभूत व्योम
+init_task_work(काष्ठा callback_head *twork, task_work_func_t func)
+अणु
 	twork->func = func;
-}
+पूर्ण
 
-enum task_work_notify_mode {
+क्रमागत task_work_notअगरy_mode अणु
 	TWA_NONE,
 	TWA_RESUME,
 	TWA_SIGNAL,
-};
+पूर्ण;
 
-int task_work_add(struct task_struct *task, struct callback_head *twork,
-			enum task_work_notify_mode mode);
+पूर्णांक task_work_add(काष्ठा task_काष्ठा *task, काष्ठा callback_head *twork,
+			क्रमागत task_work_notअगरy_mode mode);
 
-struct callback_head *task_work_cancel_match(struct task_struct *task,
-	bool (*match)(struct callback_head *, void *data), void *data);
-struct callback_head *task_work_cancel(struct task_struct *, task_work_func_t);
-void task_work_run(void);
+काष्ठा callback_head *task_work_cancel_match(काष्ठा task_काष्ठा *task,
+	bool (*match)(काष्ठा callback_head *, व्योम *data), व्योम *data);
+काष्ठा callback_head *task_work_cancel(काष्ठा task_काष्ठा *, task_work_func_t);
+व्योम task_work_run(व्योम);
 
-static inline void exit_task_work(struct task_struct *task)
-{
+अटल अंतरभूत व्योम निकास_task_work(काष्ठा task_काष्ठा *task)
+अणु
 	task_work_run();
-}
+पूर्ण
 
-#endif	/* _LINUX_TASK_WORK_H */
+#पूर्ण_अगर	/* _LINUX_TASK_WORK_H */

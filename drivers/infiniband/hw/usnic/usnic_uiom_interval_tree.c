@@ -1,23 +1,24 @@
+<शैली गुरु>
 /*
  * Copyright (c) 2014, Cisco Systems, Inc. All rights reserved.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
  * General Public License (GPL) Version 2, available from the file
- * COPYING in the main directory of this source tree, or the
+ * COPYING in the मुख्य directory of this source tree, or the
  * BSD license below:
  *
- *     Redistribution and use in source and binary forms, with or
- *     without modification, are permitted provided that the following
+ *     Redistribution and use in source and binary क्रमms, with or
+ *     without modअगरication, are permitted provided that the following
  *     conditions are met:
  *
  *      - Redistributions of source code must retain the above
  *        copyright notice, this list of conditions and the following
  *        disclaimer.
  *
- *      - Redistributions in binary form must reproduce the above
+ *      - Redistributions in binary क्रमm must reproduce the above
  *        copyright notice, this list of conditions and the following
- *        disclaimer in the documentation and/or other materials
+ *        disclaimer in the करोcumentation and/or other materials
  *        provided with the distribution.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
@@ -31,241 +32,241 @@
  *
  */
 
-#include <linux/init.h>
-#include <linux/list.h>
-#include <linux/slab.h>
-#include <linux/list_sort.h>
+#समावेश <linux/init.h>
+#समावेश <linux/list.h>
+#समावेश <linux/slab.h>
+#समावेश <linux/list_sort.h>
 
-#include <linux/interval_tree_generic.h>
-#include "usnic_uiom_interval_tree.h"
+#समावेश <linux/पूर्णांकerval_tree_generic.h>
+#समावेश "usnic_uiom_interval_tree.h"
 
-#define START(node) ((node)->start)
-#define LAST(node) ((node)->last)
+#घोषणा START(node) ((node)->start)
+#घोषणा LAST(node) ((node)->last)
 
-#define MAKE_NODE(node, start, end, ref_cnt, flags, err, err_out)	\
-		do {							\
-			node = usnic_uiom_interval_node_alloc(start,	\
+#घोषणा MAKE_NODE(node, start, end, ref_cnt, flags, err, err_out)	\
+		करो अणु							\
+			node = usnic_uiom_पूर्णांकerval_node_alloc(start,	\
 					end, ref_cnt, flags);		\
-				if (!node) {				\
+				अगर (!node) अणु				\
 					err = -ENOMEM;			\
-					goto err_out;			\
-				}					\
-		} while (0)
+					जाओ err_out;			\
+				पूर्ण					\
+		पूर्ण जबतक (0)
 
-#define MARK_FOR_ADD(node, list) (list_add_tail(&node->link, list))
+#घोषणा MARK_FOR_ADD(node, list) (list_add_tail(&node->link, list))
 
-#define MAKE_NODE_AND_APPEND(node, start, end, ref_cnt, flags, err,	\
+#घोषणा MAKE_NODE_AND_APPEND(node, start, end, ref_cnt, flags, err,	\
 				err_out, list)				\
-				do {					\
+				करो अणु					\
 					MAKE_NODE(node, start, end,	\
 						ref_cnt, flags, err,	\
 						err_out);		\
 					MARK_FOR_ADD(node, list);	\
-				} while (0)
+				पूर्ण जबतक (0)
 
-#define FLAGS_EQUAL(flags1, flags2, mask)				\
+#घोषणा FLAGS_EQUAL(flags1, flags2, mask)				\
 			(((flags1) & (mask)) == ((flags2) & (mask)))
 
-static struct usnic_uiom_interval_node*
-usnic_uiom_interval_node_alloc(long int start, long int last, int ref_cnt,
-				int flags)
-{
-	struct usnic_uiom_interval_node *interval = kzalloc(sizeof(*interval),
+अटल काष्ठा usnic_uiom_पूर्णांकerval_node*
+usnic_uiom_पूर्णांकerval_node_alloc(दीर्घ पूर्णांक start, दीर्घ पूर्णांक last, पूर्णांक ref_cnt,
+				पूर्णांक flags)
+अणु
+	काष्ठा usnic_uiom_पूर्णांकerval_node *पूर्णांकerval = kzalloc(माप(*पूर्णांकerval),
 								GFP_ATOMIC);
-	if (!interval)
-		return NULL;
+	अगर (!पूर्णांकerval)
+		वापस शून्य;
 
-	interval->start = start;
-	interval->last = last;
-	interval->flags = flags;
-	interval->ref_cnt = ref_cnt;
+	पूर्णांकerval->start = start;
+	पूर्णांकerval->last = last;
+	पूर्णांकerval->flags = flags;
+	पूर्णांकerval->ref_cnt = ref_cnt;
 
-	return interval;
-}
+	वापस पूर्णांकerval;
+पूर्ण
 
-static int interval_cmp(void *priv, const struct list_head *a,
-			const struct list_head *b)
-{
-	struct usnic_uiom_interval_node *node_a, *node_b;
+अटल पूर्णांक पूर्णांकerval_cmp(व्योम *priv, स्थिर काष्ठा list_head *a,
+			स्थिर काष्ठा list_head *b)
+अणु
+	काष्ठा usnic_uiom_पूर्णांकerval_node *node_a, *node_b;
 
-	node_a = list_entry(a, struct usnic_uiom_interval_node, link);
-	node_b = list_entry(b, struct usnic_uiom_interval_node, link);
+	node_a = list_entry(a, काष्ठा usnic_uiom_पूर्णांकerval_node, link);
+	node_b = list_entry(b, काष्ठा usnic_uiom_पूर्णांकerval_node, link);
 
-	/* long to int */
-	if (node_a->start < node_b->start)
-		return -1;
-	else if (node_a->start > node_b->start)
-		return 1;
+	/* दीर्घ to पूर्णांक */
+	अगर (node_a->start < node_b->start)
+		वापस -1;
+	अन्यथा अगर (node_a->start > node_b->start)
+		वापस 1;
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static void
-find_intervals_intersection_sorted(struct rb_root_cached *root,
-				   unsigned long start, unsigned long last,
-				   struct list_head *list)
-{
-	struct usnic_uiom_interval_node *node;
+अटल व्योम
+find_पूर्णांकervals_पूर्णांकersection_sorted(काष्ठा rb_root_cached *root,
+				   अचिन्हित दीर्घ start, अचिन्हित दीर्घ last,
+				   काष्ठा list_head *list)
+अणु
+	काष्ठा usnic_uiom_पूर्णांकerval_node *node;
 
 	INIT_LIST_HEAD(list);
 
-	for (node = usnic_uiom_interval_tree_iter_first(root, start, last);
+	क्रम (node = usnic_uiom_पूर्णांकerval_tree_iter_first(root, start, last);
 		node;
-		node = usnic_uiom_interval_tree_iter_next(node, start, last))
+		node = usnic_uiom_पूर्णांकerval_tree_iter_next(node, start, last))
 		list_add_tail(&node->link, list);
 
-	list_sort(NULL, list, interval_cmp);
-}
+	list_sort(शून्य, list, पूर्णांकerval_cmp);
+पूर्ण
 
-int usnic_uiom_get_intervals_diff(unsigned long start, unsigned long last,
-					int flags, int flag_mask,
-					struct rb_root_cached *root,
-					struct list_head *diff_set)
-{
-	struct usnic_uiom_interval_node *interval, *tmp;
-	int err = 0;
-	long int pivot = start;
-	LIST_HEAD(intersection_set);
+पूर्णांक usnic_uiom_get_पूर्णांकervals_dअगरf(अचिन्हित दीर्घ start, अचिन्हित दीर्घ last,
+					पूर्णांक flags, पूर्णांक flag_mask,
+					काष्ठा rb_root_cached *root,
+					काष्ठा list_head *dअगरf_set)
+अणु
+	काष्ठा usnic_uiom_पूर्णांकerval_node *पूर्णांकerval, *पंचांगp;
+	पूर्णांक err = 0;
+	दीर्घ पूर्णांक pivot = start;
+	LIST_HEAD(पूर्णांकersection_set);
 
-	INIT_LIST_HEAD(diff_set);
+	INIT_LIST_HEAD(dअगरf_set);
 
-	find_intervals_intersection_sorted(root, start, last,
-						&intersection_set);
+	find_पूर्णांकervals_पूर्णांकersection_sorted(root, start, last,
+						&पूर्णांकersection_set);
 
-	list_for_each_entry(interval, &intersection_set, link) {
-		if (pivot < interval->start) {
-			MAKE_NODE_AND_APPEND(tmp, pivot, interval->start - 1,
+	list_क्रम_each_entry(पूर्णांकerval, &पूर्णांकersection_set, link) अणु
+		अगर (pivot < पूर्णांकerval->start) अणु
+			MAKE_NODE_AND_APPEND(पंचांगp, pivot, पूर्णांकerval->start - 1,
 						1, flags, err, err_out,
-						diff_set);
-			pivot = interval->start;
-		}
+						dअगरf_set);
+			pivot = पूर्णांकerval->start;
+		पूर्ण
 
 		/*
-		 * Invariant: Set [start, pivot] is either in diff_set or root,
+		 * Invariant: Set [start, pivot] is either in dअगरf_set or root,
 		 * but not in both.
 		 */
 
-		if (pivot > interval->last) {
-			continue;
-		} else if (pivot <= interval->last &&
-				FLAGS_EQUAL(interval->flags, flags,
-				flag_mask)) {
-			pivot = interval->last + 1;
-		}
-	}
+		अगर (pivot > पूर्णांकerval->last) अणु
+			जारी;
+		पूर्ण अन्यथा अगर (pivot <= पूर्णांकerval->last &&
+				FLAGS_EQUAL(पूर्णांकerval->flags, flags,
+				flag_mask)) अणु
+			pivot = पूर्णांकerval->last + 1;
+		पूर्ण
+	पूर्ण
 
-	if (pivot <= last)
-		MAKE_NODE_AND_APPEND(tmp, pivot, last, 1, flags, err, err_out,
-					diff_set);
+	अगर (pivot <= last)
+		MAKE_NODE_AND_APPEND(पंचांगp, pivot, last, 1, flags, err, err_out,
+					dअगरf_set);
 
-	return 0;
+	वापस 0;
 
 err_out:
-	list_for_each_entry_safe(interval, tmp, diff_set, link) {
-		list_del(&interval->link);
-		kfree(interval);
-	}
+	list_क्रम_each_entry_safe(पूर्णांकerval, पंचांगp, dअगरf_set, link) अणु
+		list_del(&पूर्णांकerval->link);
+		kमुक्त(पूर्णांकerval);
+	पूर्ण
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void usnic_uiom_put_interval_set(struct list_head *intervals)
-{
-	struct usnic_uiom_interval_node *interval, *tmp;
-	list_for_each_entry_safe(interval, tmp, intervals, link)
-		kfree(interval);
-}
+व्योम usnic_uiom_put_पूर्णांकerval_set(काष्ठा list_head *पूर्णांकervals)
+अणु
+	काष्ठा usnic_uiom_पूर्णांकerval_node *पूर्णांकerval, *पंचांगp;
+	list_क्रम_each_entry_safe(पूर्णांकerval, पंचांगp, पूर्णांकervals, link)
+		kमुक्त(पूर्णांकerval);
+पूर्ण
 
-int usnic_uiom_insert_interval(struct rb_root_cached *root, unsigned long start,
-				unsigned long last, int flags)
-{
-	struct usnic_uiom_interval_node *interval, *tmp;
-	unsigned long istart, ilast;
-	int iref_cnt, iflags;
-	unsigned long lpivot = start;
-	int err = 0;
+पूर्णांक usnic_uiom_insert_पूर्णांकerval(काष्ठा rb_root_cached *root, अचिन्हित दीर्घ start,
+				अचिन्हित दीर्घ last, पूर्णांक flags)
+अणु
+	काष्ठा usnic_uiom_पूर्णांकerval_node *पूर्णांकerval, *पंचांगp;
+	अचिन्हित दीर्घ istart, ilast;
+	पूर्णांक iref_cnt, अगरlags;
+	अचिन्हित दीर्घ lpivot = start;
+	पूर्णांक err = 0;
 	LIST_HEAD(to_add);
-	LIST_HEAD(intersection_set);
+	LIST_HEAD(पूर्णांकersection_set);
 
-	find_intervals_intersection_sorted(root, start, last,
-						&intersection_set);
+	find_पूर्णांकervals_पूर्णांकersection_sorted(root, start, last,
+						&पूर्णांकersection_set);
 
-	list_for_each_entry(interval, &intersection_set, link) {
+	list_क्रम_each_entry(पूर्णांकerval, &पूर्णांकersection_set, link) अणु
 		/*
-		 * Invariant - lpivot is the left edge of next interval to be
+		 * Invariant - lpivot is the left edge of next पूर्णांकerval to be
 		 * inserted
 		 */
-		istart = interval->start;
-		ilast = interval->last;
-		iref_cnt = interval->ref_cnt;
-		iflags = interval->flags;
+		istart = पूर्णांकerval->start;
+		ilast = पूर्णांकerval->last;
+		iref_cnt = पूर्णांकerval->ref_cnt;
+		अगरlags = पूर्णांकerval->flags;
 
-		if (istart < lpivot) {
-			MAKE_NODE_AND_APPEND(tmp, istart, lpivot - 1, iref_cnt,
-						iflags, err, err_out, &to_add);
-		} else if (istart > lpivot) {
-			MAKE_NODE_AND_APPEND(tmp, lpivot, istart - 1, 1, flags,
+		अगर (istart < lpivot) अणु
+			MAKE_NODE_AND_APPEND(पंचांगp, istart, lpivot - 1, iref_cnt,
+						अगरlags, err, err_out, &to_add);
+		पूर्ण अन्यथा अगर (istart > lpivot) अणु
+			MAKE_NODE_AND_APPEND(पंचांगp, lpivot, istart - 1, 1, flags,
 						err, err_out, &to_add);
 			lpivot = istart;
-		} else {
+		पूर्ण अन्यथा अणु
 			lpivot = istart;
-		}
+		पूर्ण
 
-		if (ilast > last) {
-			MAKE_NODE_AND_APPEND(tmp, lpivot, last, iref_cnt + 1,
-						iflags | flags, err, err_out,
+		अगर (ilast > last) अणु
+			MAKE_NODE_AND_APPEND(पंचांगp, lpivot, last, iref_cnt + 1,
+						अगरlags | flags, err, err_out,
 						&to_add);
-			MAKE_NODE_AND_APPEND(tmp, last + 1, ilast, iref_cnt,
-						iflags, err, err_out, &to_add);
-		} else {
-			MAKE_NODE_AND_APPEND(tmp, lpivot, ilast, iref_cnt + 1,
-						iflags | flags, err, err_out,
+			MAKE_NODE_AND_APPEND(पंचांगp, last + 1, ilast, iref_cnt,
+						अगरlags, err, err_out, &to_add);
+		पूर्ण अन्यथा अणु
+			MAKE_NODE_AND_APPEND(पंचांगp, lpivot, ilast, iref_cnt + 1,
+						अगरlags | flags, err, err_out,
 						&to_add);
-		}
+		पूर्ण
 
 		lpivot = ilast + 1;
-	}
+	पूर्ण
 
-	if (lpivot <= last)
-		MAKE_NODE_AND_APPEND(tmp, lpivot, last, 1, flags, err, err_out,
+	अगर (lpivot <= last)
+		MAKE_NODE_AND_APPEND(पंचांगp, lpivot, last, 1, flags, err, err_out,
 					&to_add);
 
-	list_for_each_entry_safe(interval, tmp, &intersection_set, link) {
-		usnic_uiom_interval_tree_remove(interval, root);
-		kfree(interval);
-	}
+	list_क्रम_each_entry_safe(पूर्णांकerval, पंचांगp, &पूर्णांकersection_set, link) अणु
+		usnic_uiom_पूर्णांकerval_tree_हटाओ(पूर्णांकerval, root);
+		kमुक्त(पूर्णांकerval);
+	पूर्ण
 
-	list_for_each_entry(interval, &to_add, link)
-		usnic_uiom_interval_tree_insert(interval, root);
+	list_क्रम_each_entry(पूर्णांकerval, &to_add, link)
+		usnic_uiom_पूर्णांकerval_tree_insert(पूर्णांकerval, root);
 
-	return 0;
+	वापस 0;
 
 err_out:
-	list_for_each_entry_safe(interval, tmp, &to_add, link)
-		kfree(interval);
+	list_क्रम_each_entry_safe(पूर्णांकerval, पंचांगp, &to_add, link)
+		kमुक्त(पूर्णांकerval);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-void usnic_uiom_remove_interval(struct rb_root_cached *root,
-				unsigned long start, unsigned long last,
-				struct list_head *removed)
-{
-	struct usnic_uiom_interval_node *interval;
+व्योम usnic_uiom_हटाओ_पूर्णांकerval(काष्ठा rb_root_cached *root,
+				अचिन्हित दीर्घ start, अचिन्हित दीर्घ last,
+				काष्ठा list_head *हटाओd)
+अणु
+	काष्ठा usnic_uiom_पूर्णांकerval_node *पूर्णांकerval;
 
-	for (interval = usnic_uiom_interval_tree_iter_first(root, start, last);
-			interval;
-			interval = usnic_uiom_interval_tree_iter_next(interval,
+	क्रम (पूर्णांकerval = usnic_uiom_पूर्णांकerval_tree_iter_first(root, start, last);
+			पूर्णांकerval;
+			पूर्णांकerval = usnic_uiom_पूर्णांकerval_tree_iter_next(पूर्णांकerval,
 									start,
-									last)) {
-		if (--interval->ref_cnt == 0)
-			list_add_tail(&interval->link, removed);
-	}
+									last)) अणु
+		अगर (--पूर्णांकerval->ref_cnt == 0)
+			list_add_tail(&पूर्णांकerval->link, हटाओd);
+	पूर्ण
 
-	list_for_each_entry(interval, removed, link)
-		usnic_uiom_interval_tree_remove(interval, root);
-}
+	list_क्रम_each_entry(पूर्णांकerval, हटाओd, link)
+		usnic_uiom_पूर्णांकerval_tree_हटाओ(पूर्णांकerval, root);
+पूर्ण
 
-INTERVAL_TREE_DEFINE(struct usnic_uiom_interval_node, rb,
-			unsigned long, __subtree_last,
-			START, LAST, , usnic_uiom_interval_tree)
+INTERVAL_TREE_DEFINE(काष्ठा usnic_uiom_पूर्णांकerval_node, rb,
+			अचिन्हित दीर्घ, __subtree_last,
+			START, LAST, , usnic_uiom_पूर्णांकerval_tree)

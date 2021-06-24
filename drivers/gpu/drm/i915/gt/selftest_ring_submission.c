@@ -1,55 +1,56 @@
-// SPDX-License-Identifier: MIT
+<शैली गुरु>
+// SPDX-License-Identअगरier: MIT
 /*
- * Copyright © 2020 Intel Corporation
+ * Copyright तऊ 2020 Intel Corporation
  */
 
-#include "intel_engine_pm.h"
-#include "selftests/igt_flush_test.h"
+#समावेश "intel_engine_pm.h"
+#समावेश "selftests/igt_flush_test.h"
 
-static struct i915_vma *create_wally(struct intel_engine_cs *engine)
-{
-	struct drm_i915_gem_object *obj;
-	struct i915_vma *vma;
+अटल काष्ठा i915_vma *create_wally(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा drm_i915_gem_object *obj;
+	काष्ठा i915_vma *vma;
 	u32 *cs;
-	int err;
+	पूर्णांक err;
 
-	obj = i915_gem_object_create_internal(engine->i915, 4096);
-	if (IS_ERR(obj))
-		return ERR_CAST(obj);
+	obj = i915_gem_object_create_पूर्णांकernal(engine->i915, 4096);
+	अगर (IS_ERR(obj))
+		वापस ERR_CAST(obj);
 
-	vma = i915_vma_instance(obj, engine->gt->vm, NULL);
-	if (IS_ERR(vma)) {
+	vma = i915_vma_instance(obj, engine->gt->vm, शून्य);
+	अगर (IS_ERR(vma)) अणु
 		i915_gem_object_put(obj);
-		return vma;
-	}
+		वापस vma;
+	पूर्ण
 
 	err = i915_vma_pin(vma, 0, 0, PIN_USER | PIN_HIGH);
-	if (err) {
+	अगर (err) अणु
 		i915_gem_object_put(obj);
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	err = i915_vma_sync(vma);
-	if (err) {
+	अगर (err) अणु
 		i915_gem_object_put(obj);
-		return ERR_PTR(err);
-	}
+		वापस ERR_PTR(err);
+	पूर्ण
 
 	cs = i915_gem_object_pin_map_unlocked(obj, I915_MAP_WC);
-	if (IS_ERR(cs)) {
+	अगर (IS_ERR(cs)) अणु
 		i915_gem_object_put(obj);
-		return ERR_CAST(cs);
-	}
+		वापस ERR_CAST(cs);
+	पूर्ण
 
-	if (INTEL_GEN(engine->i915) >= 6) {
+	अगर (INTEL_GEN(engine->i915) >= 6) अणु
 		*cs++ = MI_STORE_DWORD_IMM_GEN4;
 		*cs++ = 0;
-	} else if (INTEL_GEN(engine->i915) >= 4) {
+	पूर्ण अन्यथा अगर (INTEL_GEN(engine->i915) >= 4) अणु
 		*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 		*cs++ = 0;
-	} else {
+	पूर्ण अन्यथा अणु
 		*cs++ = MI_STORE_DWORD_IMM | MI_MEM_VIRTUAL;
-	}
+	पूर्ण
 	*cs++ = vma->node.start + 4000;
 	*cs++ = STACK_MAGIC;
 
@@ -58,241 +59,241 @@ static struct i915_vma *create_wally(struct intel_engine_cs *engine)
 	i915_gem_object_flush_map(obj);
 	i915_gem_object_unpin_map(obj);
 
-	vma->private = intel_context_create(engine); /* dummy residuals */
-	if (IS_ERR(vma->private)) {
-		vma = ERR_CAST(vma->private);
+	vma->निजी = पूर्णांकel_context_create(engine); /* dummy residuals */
+	अगर (IS_ERR(vma->निजी)) अणु
+		vma = ERR_CAST(vma->निजी);
 		i915_gem_object_put(obj);
-	}
+	पूर्ण
 
-	return vma;
-}
+	वापस vma;
+पूर्ण
 
-static int context_sync(struct intel_context *ce)
-{
-	struct i915_request *rq;
-	int err = 0;
+अटल पूर्णांक context_sync(काष्ठा पूर्णांकel_context *ce)
+अणु
+	काष्ठा i915_request *rq;
+	पूर्णांक err = 0;
 
-	rq = intel_context_create_request(ce);
-	if (IS_ERR(rq))
-		return PTR_ERR(rq);
+	rq = पूर्णांकel_context_create_request(ce);
+	अगर (IS_ERR(rq))
+		वापस PTR_ERR(rq);
 
 	i915_request_get(rq);
 	i915_request_add(rq);
 
-	if (i915_request_wait(rq, 0, HZ / 5) < 0)
+	अगर (i915_request_रुको(rq, 0, HZ / 5) < 0)
 		err = -ETIME;
 	i915_request_put(rq);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int new_context_sync(struct intel_engine_cs *engine)
-{
-	struct intel_context *ce;
-	int err;
+अटल पूर्णांक new_context_sync(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा पूर्णांकel_context *ce;
+	पूर्णांक err;
 
-	ce = intel_context_create(engine);
-	if (IS_ERR(ce))
-		return PTR_ERR(ce);
+	ce = पूर्णांकel_context_create(engine);
+	अगर (IS_ERR(ce))
+		वापस PTR_ERR(ce);
 
 	err = context_sync(ce);
-	intel_context_put(ce);
+	पूर्णांकel_context_put(ce);
 
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int mixed_contexts_sync(struct intel_engine_cs *engine, u32 *result)
-{
-	int pass;
-	int err;
+अटल पूर्णांक mixed_contexts_sync(काष्ठा पूर्णांकel_engine_cs *engine, u32 *result)
+अणु
+	पूर्णांक pass;
+	पूर्णांक err;
 
-	for (pass = 0; pass < 2; pass++) {
+	क्रम (pass = 0; pass < 2; pass++) अणु
 		WRITE_ONCE(*result, 0);
 		err = context_sync(engine->kernel_context);
-		if (err || READ_ONCE(*result)) {
-			if (!err) {
+		अगर (err || READ_ONCE(*result)) अणु
+			अगर (!err) अणु
 				pr_err("pass[%d] wa_bb emitted for the kernel context\n",
 				       pass);
 				err = -EINVAL;
-			}
-			return err;
-		}
+			पूर्ण
+			वापस err;
+		पूर्ण
 
 		WRITE_ONCE(*result, 0);
 		err = new_context_sync(engine);
-		if (READ_ONCE(*result) != STACK_MAGIC) {
-			if (!err) {
+		अगर (READ_ONCE(*result) != STACK_MAGIC) अणु
+			अगर (!err) अणु
 				pr_err("pass[%d] wa_bb *NOT* emitted after the kernel context\n",
 				       pass);
 				err = -EINVAL;
-			}
-			return err;
-		}
+			पूर्ण
+			वापस err;
+		पूर्ण
 
 		WRITE_ONCE(*result, 0);
 		err = new_context_sync(engine);
-		if (READ_ONCE(*result) != STACK_MAGIC) {
-			if (!err) {
+		अगर (READ_ONCE(*result) != STACK_MAGIC) अणु
+			अगर (!err) अणु
 				pr_err("pass[%d] wa_bb *NOT* emitted for the user context switch\n",
 				       pass);
 				err = -EINVAL;
-			}
-			return err;
-		}
-	}
+			पूर्ण
+			वापस err;
+		पूर्ण
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int double_context_sync_00(struct intel_engine_cs *engine, u32 *result)
-{
-	struct intel_context *ce;
-	int err, i;
+अटल पूर्णांक द्विगुन_context_sync_00(काष्ठा पूर्णांकel_engine_cs *engine, u32 *result)
+अणु
+	काष्ठा पूर्णांकel_context *ce;
+	पूर्णांक err, i;
 
-	ce = intel_context_create(engine);
-	if (IS_ERR(ce))
-		return PTR_ERR(ce);
+	ce = पूर्णांकel_context_create(engine);
+	अगर (IS_ERR(ce))
+		वापस PTR_ERR(ce);
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		WRITE_ONCE(*result, 0);
 		err = context_sync(ce);
-		if (err)
-			break;
-	}
-	intel_context_put(ce);
-	if (err)
-		return err;
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	पूर्णांकel_context_put(ce);
+	अगर (err)
+		वापस err;
 
-	if (READ_ONCE(*result)) {
+	अगर (READ_ONCE(*result)) अणु
 		pr_err("wa_bb emitted between the same user context\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int kernel_context_sync_00(struct intel_engine_cs *engine, u32 *result)
-{
-	struct intel_context *ce;
-	int err, i;
+अटल पूर्णांक kernel_context_sync_00(काष्ठा पूर्णांकel_engine_cs *engine, u32 *result)
+अणु
+	काष्ठा पूर्णांकel_context *ce;
+	पूर्णांक err, i;
 
-	ce = intel_context_create(engine);
-	if (IS_ERR(ce))
-		return PTR_ERR(ce);
+	ce = पूर्णांकel_context_create(engine);
+	अगर (IS_ERR(ce))
+		वापस PTR_ERR(ce);
 
-	for (i = 0; i < 2; i++) {
+	क्रम (i = 0; i < 2; i++) अणु
 		WRITE_ONCE(*result, 0);
 		err = context_sync(ce);
-		if (err)
-			break;
+		अगर (err)
+			अवरोध;
 
 		err = context_sync(engine->kernel_context);
-		if (err)
-			break;
-	}
-	intel_context_put(ce);
-	if (err)
-		return err;
+		अगर (err)
+			अवरोध;
+	पूर्ण
+	पूर्णांकel_context_put(ce);
+	अगर (err)
+		वापस err;
 
-	if (READ_ONCE(*result)) {
+	अगर (READ_ONCE(*result)) अणु
 		pr_err("wa_bb emitted between the same user context [with intervening kernel]\n");
-		return -EINVAL;
-	}
+		वापस -EINVAL;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-static int __live_ctx_switch_wa(struct intel_engine_cs *engine)
-{
-	struct i915_vma *bb;
+अटल पूर्णांक __live_ctx_चयन_wa(काष्ठा पूर्णांकel_engine_cs *engine)
+अणु
+	काष्ठा i915_vma *bb;
 	u32 *result;
-	int err;
+	पूर्णांक err;
 
 	bb = create_wally(engine);
-	if (IS_ERR(bb))
-		return PTR_ERR(bb);
+	अगर (IS_ERR(bb))
+		वापस PTR_ERR(bb);
 
 	result = i915_gem_object_pin_map_unlocked(bb->obj, I915_MAP_WC);
-	if (IS_ERR(result)) {
-		intel_context_put(bb->private);
+	अगर (IS_ERR(result)) अणु
+		पूर्णांकel_context_put(bb->निजी);
 		i915_vma_unpin_and_release(&bb, 0);
-		return PTR_ERR(result);
-	}
+		वापस PTR_ERR(result);
+	पूर्ण
 	result += 1000;
 
 	engine->wa_ctx.vma = bb;
 
 	err = mixed_contexts_sync(engine, result);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
-	err = double_context_sync_00(engine, result);
-	if (err)
-		goto out;
+	err = द्विगुन_context_sync_00(engine, result);
+	अगर (err)
+		जाओ out;
 
 	err = kernel_context_sync_00(engine, result);
-	if (err)
-		goto out;
+	अगर (err)
+		जाओ out;
 
 out:
-	intel_context_put(engine->wa_ctx.vma->private);
+	पूर्णांकel_context_put(engine->wa_ctx.vma->निजी);
 	i915_vma_unpin_and_release(&engine->wa_ctx.vma, I915_VMA_RELEASE_MAP);
-	return err;
-}
+	वापस err;
+पूर्ण
 
-static int live_ctx_switch_wa(void *arg)
-{
-	struct intel_gt *gt = arg;
-	struct intel_engine_cs *engine;
-	enum intel_engine_id id;
+अटल पूर्णांक live_ctx_चयन_wa(व्योम *arg)
+अणु
+	काष्ठा पूर्णांकel_gt *gt = arg;
+	काष्ठा पूर्णांकel_engine_cs *engine;
+	क्रमागत पूर्णांकel_engine_id id;
 
 	/*
-	 * Exercise the inter-context wa batch.
+	 * Exercise the पूर्णांकer-context wa batch.
 	 *
 	 * Between each user context we run a wa batch, and since it may
-	 * have implications for user visible state, we have to check that
-	 * we do actually execute it.
+	 * have implications क्रम user visible state, we have to check that
+	 * we करो actually execute it.
 	 *
 	 * The trick we use is to replace the normal wa batch with a custom
-	 * one that writes to a marker within it, and we can then look for
-	 * that marker to confirm if the batch was run when we expect it,
+	 * one that ग_लिखोs to a marker within it, and we can then look क्रम
+	 * that marker to confirm अगर the batch was run when we expect it,
 	 * and equally important it was wasn't run when we don't!
 	 */
 
-	for_each_engine(engine, gt, id) {
-		struct i915_vma *saved_wa;
-		int err;
+	क्रम_each_engine(engine, gt, id) अणु
+		काष्ठा i915_vma *saved_wa;
+		पूर्णांक err;
 
-		if (!intel_engine_can_store_dword(engine))
-			continue;
+		अगर (!पूर्णांकel_engine_can_store_dword(engine))
+			जारी;
 
-		if (IS_GEN_RANGE(gt->i915, 4, 5))
-			continue; /* MI_STORE_DWORD is privileged! */
+		अगर (IS_GEN_RANGE(gt->i915, 4, 5))
+			जारी; /* MI_STORE_DWORD is privileged! */
 
 		saved_wa = fetch_and_zero(&engine->wa_ctx.vma);
 
-		intel_engine_pm_get(engine);
-		err = __live_ctx_switch_wa(engine);
-		intel_engine_pm_put(engine);
-		if (igt_flush_test(gt->i915))
+		पूर्णांकel_engine_pm_get(engine);
+		err = __live_ctx_चयन_wa(engine);
+		पूर्णांकel_engine_pm_put(engine);
+		अगर (igt_flush_test(gt->i915))
 			err = -EIO;
 
 		engine->wa_ctx.vma = saved_wa;
-		if (err)
-			return err;
-	}
+		अगर (err)
+			वापस err;
+	पूर्ण
 
-	return 0;
-}
+	वापस 0;
+पूर्ण
 
-int intel_ring_submission_live_selftests(struct drm_i915_private *i915)
-{
-	static const struct i915_subtest tests[] = {
-		SUBTEST(live_ctx_switch_wa),
-	};
+पूर्णांक पूर्णांकel_ring_submission_live_selftests(काष्ठा drm_i915_निजी *i915)
+अणु
+	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+		SUBTEST(live_ctx_चयन_wa),
+	पूर्ण;
 
-	if (HAS_EXECLISTS(i915))
-		return 0;
+	अगर (HAS_EXECLISTS(i915))
+		वापस 0;
 
-	return intel_gt_live_subtests(tests, &i915->gt);
-}
+	वापस पूर्णांकel_gt_live_subtests(tests, &i915->gt);
+पूर्ण
